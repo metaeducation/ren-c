@@ -2,7 +2,14 @@
 # This makefile is intentional kept simple to make builds possible on
 # a wider range of target platforms.
 
-# To cross compile or build for other target:
+# To regenerate this file:
+#    make make
+
+# To generate this file for a different platform, check systems.r file
+# and provide an OS_ID (from the systems table). Linux 2.5 for example:
+#    make make OS_ID=0.4.3
+
+# To cross compile using a different toolchain and include files:
 #    $TOOLS - should point to bin where gcc is found
 #    $INCL  - should point to the dir for includes
 # Example make:
@@ -13,13 +20,13 @@ CC=	$(TOOLS)gcc
 STRIP=	$(TOOLS)strip
 
 # CP allows different copy progs:
-CP= cp
+CP=	 cp
 # LS allows different ls progs:
 LS=	-dir
 # UP - some systems do not use ../
-UP= ..
+UP=	 ..
 # CD - some systems do not use ./
-CD= ./
+CD=	 ./
 # Special tools:
 T=	$(UP)/src/tools
 # Paths used by make:
@@ -29,8 +36,8 @@ R=	$S/core
 INCL ?= .
 I= -I$(INCL) -I$S/include/ -I $S/codecs/png/ -I $S/codecs/rc4/ -I $S/codecs/rsa/
 
-TO_OS= TO_WIN32
-OS_ID= 0.3.1
+TO_OS?= TO_WIN32
+OS_ID?= 0.3.1
 BIN_SUFFIX= .exe
 RAPI_FLAGS=  -O2 -DUNICODE
 HOST_CORE_FLAGS= -DREB_CORE -DREB_EXE -O2 -DUNICODE -DCUSTOM_STARTUP -D_FILE_OFFSET_BITS=64
@@ -139,7 +146,6 @@ purge:
 	-rm host$(BIN_SUFFIX)
 	make lib
 	make r3-core-host
-
 
 test:
 	$(CP) r3$(BIN_SUFFIX) $(UP)/src/tests/
