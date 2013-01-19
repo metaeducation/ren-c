@@ -40,7 +40,7 @@
 #include "rsa.h"
 //#include "os_port.h"
 //#include "crypto.h"
-#include <Windows.h>
+#include <windows.h>
 #include "wincrypt.h"
 
 static HCRYPTPROV gCryptProv;
