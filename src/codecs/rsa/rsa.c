@@ -90,19 +90,19 @@ void RSA_priv_key_new(RSA_CTX **ctx,
     bi_permanent(rsa_ctx->d);
 
 #ifdef CONFIG_BIGINT_CRT
-	if (dP && dQ && p && q && qInv)
-	{
-		rsa_ctx->p = bi_import(bi_ctx, p, p_len);
-		rsa_ctx->q = bi_import(bi_ctx, q, q_len);
-		rsa_ctx->dP = bi_import(bi_ctx, dP, dP_len);
-		rsa_ctx->dQ = bi_import(bi_ctx, dQ, dQ_len);
-		rsa_ctx->qInv = bi_import(bi_ctx, qInv, qInv_len);
-		bi_permanent(rsa_ctx->dP);
-		bi_permanent(rsa_ctx->dQ);
-		bi_permanent(rsa_ctx->qInv);
-		bi_set_mod(bi_ctx, rsa_ctx->p, BIGINT_P_OFFSET);
-		bi_set_mod(bi_ctx, rsa_ctx->q, BIGINT_Q_OFFSET);
-	}
+    if (dP && dQ && p && q && qInv)
+    {
+        rsa_ctx->p = bi_import(bi_ctx, p, p_len);
+        rsa_ctx->q = bi_import(bi_ctx, q, q_len);
+        rsa_ctx->dP = bi_import(bi_ctx, dP, dP_len);
+        rsa_ctx->dQ = bi_import(bi_ctx, dQ, dQ_len);
+        rsa_ctx->qInv = bi_import(bi_ctx, qInv, qInv_len);
+        bi_permanent(rsa_ctx->dP);
+        bi_permanent(rsa_ctx->dQ);
+        bi_permanent(rsa_ctx->qInv);
+        bi_set_mod(bi_ctx, rsa_ctx->p, BIGINT_P_OFFSET);
+        bi_set_mod(bi_ctx, rsa_ctx->q, BIGINT_Q_OFFSET);
+    }
 #endif
 }
 
@@ -147,17 +147,17 @@ void RSA_free(RSA_CTX *rsa_ctx)
         bi_depermanent(rsa_ctx->d);
         bi_free(bi_ctx, rsa_ctx->d);
 #ifdef CONFIG_BIGINT_CRT
-		if (rsa_ctx->dP) //it is enough to check only one value - complete check is in already in RSA_priv_key_new()
-		{
-			bi_depermanent(rsa_ctx->dP);
-			bi_depermanent(rsa_ctx->dQ);
-			bi_depermanent(rsa_ctx->qInv);
-			bi_free(bi_ctx, rsa_ctx->dP);
-			bi_free(bi_ctx, rsa_ctx->dQ);
-			bi_free(bi_ctx, rsa_ctx->qInv);
-			bi_free_mod(rsa_ctx->bi_ctx, BIGINT_P_OFFSET);
-			bi_free_mod(rsa_ctx->bi_ctx, BIGINT_Q_OFFSET);
-		}
+        if (rsa_ctx->dP) //it is enough to check only one value - complete check is in already in RSA_priv_key_new()
+        {
+            bi_depermanent(rsa_ctx->dP);
+            bi_depermanent(rsa_ctx->dQ);
+            bi_depermanent(rsa_ctx->qInv);
+            bi_free(bi_ctx, rsa_ctx->dP);
+            bi_free(bi_ctx, rsa_ctx->dQ);
+            bi_free(bi_ctx, rsa_ctx->qInv);
+            bi_free_mod(rsa_ctx->bi_ctx, BIGINT_P_OFFSET);
+            bi_free_mod(rsa_ctx->bi_ctx, BIGINT_Q_OFFSET);
+        }
 #endif
     }
 
@@ -226,13 +226,13 @@ int RSA_decrypt(const RSA_CTX *ctx, const uint8_t *in_data,
 bigint *RSA_private(const RSA_CTX *c, bigint *bi_msg)
 {
 #ifdef CONFIG_BIGINT_CRT
-	if (c->dP) //it is enough to check only one value - complete check is in already in RSA_priv_key_new()
-		return bi_crt(c->bi_ctx, bi_msg, c->dP, c->dQ, c->p, c->q, c->qInv);
-	else {
-		BI_CTX *ctx = c->bi_ctx;
-		ctx->mod_offset = BIGINT_M_OFFSET;
-		return bi_mod_power(ctx, bi_msg, c->d);
-	}
+    if (c->dP) //it is enough to check only one value - complete check is in already in RSA_priv_key_new()
+        return bi_crt(c->bi_ctx, bi_msg, c->dP, c->dQ, c->p, c->q, c->qInv);
+    else {
+        BI_CTX *ctx = c->bi_ctx;
+        ctx->mod_offset = BIGINT_M_OFFSET;
+        return bi_mod_power(ctx, bi_msg, c->d);
+    }
 #else
     BI_CTX *ctx = c->bi_ctx;
     ctx->mod_offset = BIGINT_M_OFFSET;
