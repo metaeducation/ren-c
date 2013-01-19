@@ -7,7 +7,7 @@ load-gui: func [
     /local data
 ][
     print "Fetching GUI..."
-    either error? data: try [load http://www.saphirion.com/development/downloads-2/files/r3-gui.r3] [
+    either error? data: try [load http://development.saphirion.com/resources/r3-gui.r3] [
         either data/id = 'protocol [print "Cannot load GUI from web."] [do err]
     ] [
         do data
