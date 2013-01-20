@@ -109,7 +109,7 @@ prep-view:
 prep-encap-view:
 	$(REBOL) $T/encap-init.r
 	$(REBOL) $T/core-ext.r
-	$(REBOL) $T/licensing-ext.r	
+	$(REBOL) $T/licensing-ext.r
 	$(REBOL) $T/view-ext.r
 	$(eval HOST_FLAGS =$(ENCAP_VIEW_FLAGS))
 	-rm -f $(HOST)
@@ -118,7 +118,7 @@ prep-encap-view:
 prep-encap-boot-view:
 	$(REBOL) $T/encap-boot-init.r
 	$(REBOL) $T/core-ext.r
-	$(REBOL) $T/licensing-ext.r	
+	$(REBOL) $T/licensing-ext.r
 	$(REBOL) $T/view-ext.r
 	$(eval HOST_FLAGS =$(ENCAP_VIEW_FLAGS))
 	-rm -f $(HOST)
@@ -127,7 +127,7 @@ prep-encap-boot-view:
 prep-encap-core:
 	$(REBOL) $T/encap-init.r
 	$(REBOL) $T/core-ext.r
-	$(REBOL) $T/licensing-ext.r	
+	$(REBOL) $T/licensing-ext.r
 	$(eval HOST_FLAGS =$(ENCAP_CORE_FLAGS))
 	-rm -f $(HOST)
 	-rm -f $(HOST_ENCAP)
@@ -135,7 +135,7 @@ prep-encap-core:
 prep-encap-boot-core:
 	$(REBOL) $T/encap-boot-init.r
 	$(REBOL) $T/core-ext.r
-	$(REBOL) $T/licensing-ext.r	
+	$(REBOL) $T/licensing-ext.r
 	$(eval HOST_FLAGS =$(ENCAP_CORE_FLAGS))
 	-rm -f $(HOST)
 	-rm -f $(HOST_ENCAP)
@@ -194,7 +194,7 @@ OBJS =	objs/a-constants.o objs/a-globals.o objs/a-lib.o objs/b-boot.o \
 	objs/u-zlib.o
 
 HOST_ENCAP = objs/host-licensing.o
-	
+
 HOST =	objs/host-main.o objs/host-core.o objs/host-args.o objs/host-device.o objs/host-stdio.o \
 	objs/dev-net.o objs/dev-dns.o objs/host-lib.o objs/dev-stdio.o \
 	objs/dev-file.o objs/dev-event.o objs/dev-clipboard.o \
@@ -239,6 +239,10 @@ r3-core: prep-core objs $(OBJS) $(HOST)
 	$(CC) -o r3-core$(BIN_SUFFIX) $(OBJS) $(HOST) $(CLIB)
 	$(STRIP) r3-core$(BIN_SUFFIX)
 	$(LS) r3-core$(BIN_SUFFIX)
+
+# Lint r3 core
+lint-r3-core: prep-core
+	lint-nt c:/lint/include.lnt std.lnt -I../src/include -dTO_WIN32 $(wildcard ../src/core/*.c) > lint.out
 
 # Directly linked r3 view executable:
 r3-view: prep-view objs $(OBJS) $(HOST) $(GFX) $(AGG)
