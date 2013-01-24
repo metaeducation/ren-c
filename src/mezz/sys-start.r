@@ -46,7 +46,8 @@ start: func [
 	path: dirize any [path home]
 	home: dirize home
 	;if slash <> first boot [boot: clean-path boot] ;;;;; HAVE C CODE DO IT PROPERLY !!!!
-	home: file: first split-path boot
+	;home: file: first split-path boot ;doesn't work when system/options/home is NONE, patched with line below for now --cyphre
+	file: home
 	if file? script [ ; Get the path (needed for SECURE setup)
 		script-path: split-path script
 		case [

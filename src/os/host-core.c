@@ -24,8 +24,10 @@
 **    5. Test everything, then test it again.
 **
 ***********************************************************************/
-
+#ifdef TO_WIN32
 #include <windows.h>
+#endif
+
 #include "reb-host.h"
 
 #include "lodepng.h"
@@ -37,11 +39,12 @@
 #include "host-ext-core.h"
 
 //***** Externs *****
-
+#ifdef TO_WIN32
 extern void Console_Window(BOOL show);
 extern void Console_Output(BOOL state);
 extern REBINT As_OS_Str(REBSER *series, REBCHR **string);
 extern REBOOL OS_Request_Dir(REBCHR *title, REBCHR **folder, REBCHR *path);
+#endif
 
 RL_LIB *RL; // Link back to reb-lib from embedded extensions
 static u32 *core_ext_words;
@@ -57,11 +60,15 @@ static u32 *core_ext_words;
     switch (cmd) {
 
     case CMD_CORE_SHOW_CONSOLE:
+#ifdef TO_WIN32	
         Console_Window(TRUE);
+#endif
         break;
 
     case CMD_CORE_HIDE_CONSOLE:
+#ifdef TO_WIN32	
         Console_Window(FALSE);
+#endif
         break;
 
     case CMD_CORE_TO_PNG:
@@ -111,11 +118,14 @@ static u32 *core_ext_words;
         break;
 
     case CMD_CORE_CONSOLE_OUTPUT:
+#ifdef TO_WIN32
         Console_Output(RXA_LOGIC(frm, 1));
+#endif		
         break;
 
 	case CMD_CORE_REQ_DIR:
 		{
+#ifdef TO_WIN32
 			REBCHR *title;
 			REBSER *string;
 			REBCHR *stringBuffer;
@@ -156,6 +166,7 @@ static u32 *core_ext_words;
 			if (osPath) OS_Free(path);
 			
 			return RXR_VALUE;
+#endif
 		}
 		break;
 		
