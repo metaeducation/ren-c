@@ -3,7 +3,7 @@ REBOL [
 	name: 'tls
 	type: 'module
 	author: rights: "Richard 'Cyphre' Smolak"
-	version: 0.1.0
+	version: 0.2.0
 	todo: {
 		-cached sessions
 		-automagic cert data lookup
@@ -177,6 +177,8 @@ write-proto-states: [
 	client-key-exchange [change-cipher-spec]
 	change-cipher-spec [finished]
 	encrypted-handshake [application]
+	application [application alert]
+	alert []
 ]
 
 get-next-proto-state: func [
@@ -346,7 +348,7 @@ application-data: func [
 finished: func [
 	ctx [object!]
 ][
-	ctx/seq-num: 0
+	ctx/seq-num-w: 0
 	return rejoin [
 		#{14}		; protocol message type	(20=Finished)
 		#{00 00 0c} ; protocol message length (12 bytes)
@@ -368,7 +370,8 @@ encrypt-data: func [
 		data
 		;MAC code
 		checksum/method/key rejoin [
-			#{00000000} to-bin ctx/seq-num 4		;sequence number (limited to 32-bits here)			
+;			#{00000000} to-bin ctx/seq-num-w 4		;sequence number (limited to 32-bits here in R2)
+			to-bin ctx/seq-num-w 8				;sequence number (64-bit int in R3)
 			any [msg-type #{17}]				;msg type
 			ctx/version								;version
 			to-bin length? data 2				;msg content length				
@@ -484,7 +487,7 @@ parse-messages: func [
 		change data decrypt-data ctx data
 		debug ["decrypted:" data]
 	]
-	debug [ctx/seq-num "-->" proto/type]
+	debug [ctx/seq-num-r ctx/seq-num-w "READ <--" proto/type]
 	switch proto/type [
 		alert [
 			append result reduce [
@@ -556,6 +559,7 @@ parse-messages: func [
 						]
 					]
 					finished [
+						ctx/seq-num-r: 0
 						msg-content: copy/part at data 5 len
 						either msg-content <> prf ctx/master-secret either ctx/server? ["client finished"]["server finished"] rejoin [checksum/method ctx/handshake-messages 'md5 checksum/method ctx/handshake-messages 'sha1] 12 [
 							do make error! "Bad 'finished' MAC"
@@ -576,7 +580,8 @@ parse-messages: func [
 					;check the MAC
 					mac: copy/part skip data len + 4 ctx/hash-size
 					if mac <> checksum/method/key rejoin [
-							#{00000000} to-bin ctx/seq-num 4			;sequence number (limited to 32-bits here)
+;							#{00000000} to-bin ctx/seq-num-r 4			;sequence number (limited to 32-bits here in R2)
+							to-bin ctx/seq-num-r 8						;sequence number (64-bit int in R3)
 							#{16}										;msg type
 							ctx/version										;version
 							to-bin len + 4 2							;msg content length												
@@ -592,7 +597,6 @@ parse-messages: func [
 			]
 		]
 		change-cipher-spec [
-			ctx/seq-num: -1
 			ctx/encrypted?: true
 			append result context [
 				type: 'ccs-message-type
@@ -605,7 +609,7 @@ parse-messages: func [
 			]
 		]
 	]
-	ctx/seq-num: ctx/seq-num + 1
+	ctx/seq-num-r: ctx/seq-num-r + 1
 	return result
 ]
 
@@ -692,8 +696,8 @@ do-commands: func [
 				| 'finished (encrypted-handshake-msg ctx finished ctx)
 				| 'application  set arg [string! | binary!] (application-data ctx arg)
 			] (
-				debug [ctx/seq-num "<--" cmd]
-				ctx/seq-num: ctx/seq-num + 1
+				debug [ctx/seq-num-r ctx/seq-num-w "WRITE -->" cmd]
+				ctx/seq-num-w: ctx/seq-num-w + 1
 				update-proto-state/write-state ctx cmd
 			)
 		]
@@ -713,7 +717,8 @@ do-commands: func [
 tls-init: func [
 	ctx [object!]
 ][
-	ctx/seq-num: 0
+	ctx/seq-num-r: 0
+	ctx/seq-num-w: 0
 	ctx/protocol-state: none
 	ctx/encrypted?: false
 ;	if port [close port]
@@ -873,9 +878,8 @@ tls-awake: funct [event [event!]] [
 			return true
 		]
 	] [
-		print ["Unexpected TLS event:" event/type]
 		close port
-		return true
+		do make error! rejoin ["Unexpected TLS event: " event/type]
 	]
 	false
 ]
@@ -897,18 +901,11 @@ sys/make-scheme [
 		]
 
 		write: func [port [port!] value [any-type!]][
-			foreach proto port/state/resp [
-				if proto/type = 'handshake [
-					foreach msg proto/messages [
-						if msg/type = 'finished [
-							;server sent "finished" msg so we can finally start sending app data
-							do-commands/no-wait port/state compose [
-								application (value)
-							]
-							return port
-						]
-					]
+			if find [encrypted-handshake application] port/state/protocol-state [
+				do-commands/no-wait port/state compose [
+					application (value)
 				]
+				return port
 			]
 		]
 		open: func [port [port!] /local conn][
@@ -936,7 +933,8 @@ sys/make-scheme [
 				server-crypt-key:
 				server-mac-key: none
 				
-				seq-num: 0
+				seq-num-r: 0
+				seq-num-w: 0
 				
 				msg: make binary! 4096
 				handshake-messages: make binary! 4096 ;all messages from Handshake records except 'HelloRequest's
