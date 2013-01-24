@@ -173,7 +173,7 @@ OBJS =	objs/a-constants.o objs/a-globals.o objs/a-lib.o objs/b-boot.o \
 	objs/b-init.o objs/c-do.o objs/c-error.o objs/c-frame.o \
 	objs/c-function.o objs/c-port.o objs/c-task.o objs/c-word.o \
 	objs/d-crash.o objs/d-dump.o objs/d-print.o objs/f-blocks.o \
-	objs/f-deci.o objs/f-enbase.o objs/f-extension.o objs/f-math.o \
+	objs/f-deci.o objs/f-dtoa.o objs/f-enbase.o objs/f-extension.o objs/f-math.o \
 	objs/f-modify.o objs/f-random.o objs/f-round.o objs/f-series.o \
 	objs/f-stubs.o objs/l-scan.o objs/l-types.o objs/m-gc.o \
 	objs/m-pools.o objs/m-series.o objs/n-control.o objs/n-data.o \
@@ -358,6 +358,9 @@ objs/f-blocks.o:      $R/f-blocks.c
 
 objs/f-deci.o:        $R/f-deci.c
 	$(CC) $R/f-deci.c $(RFLAGS) -o objs/f-deci.o
+
+objs/f-dtoa.o:        $R/f-dtoa.c
+	$(CC) $R/f-dtoa.c $(RFLAGS) -o objs/f-dtoa.o
 
 objs/f-enbase.o:      $R/f-enbase.c
 	$(CC) $R/f-enbase.c $(RFLAGS) -o objs/f-enbase.o
