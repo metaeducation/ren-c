@@ -28,37 +28,29 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef HEADER_CRYPTO_H
-#define HEADER_CRYPTO_H
+#ifndef HEADER_RSA_H
+#define HEADER_RSA_H
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#undef CONFIG_SSL_FULL_MODE
+/*
+ * RSA Options
+ */
+
+/*
+		CONFIG_SSL_DEBUG
+		Enable diagnostics. Most of the extra size in this mode is
+		due to the storage of various strings that are used.
+*/
+#undef CONFIG_SSL_DEBUG
+	
 #define CONFIG_SSL_CERT_VERIFICATION
 #undef CONFIG_SSL_GENERATE_X509_CERT
 
-/*
- * BigInt Options
- */
-#undef CONFIG_BIGINT_CLASSICAL
-#undef CONFIG_BIGINT_MONTGOMERY
-#define CONFIG_BIGINT_BARRETT 1
-#define CONFIG_BIGINT_CRT 1
-#undef CONFIG_BIGINT_KARATSUBA
-#define MUL_KARATSUBA_THRESH
-#define SQU_KARATSUBA_THRESH
-#define CONFIG_BIGINT_SLIDING_WINDOW 1
-#define CONFIG_BIGINT_SQUARE 1
-#undef CONFIG_BIGINT_CHECK_ON
-#define CONFIG_INTEGER_32BIT 1
-#undef CONFIG_INTEGER_16BIT
-#undef CONFIG_INTEGER_8BIT
-
 #include <stdint.h>
-#include "bigint_impl.h"
-#include "bigint.h"
+#include "../bigint/bigint.h"
 
 /*  To use this exported function of dll, include this header
  *  in your project.

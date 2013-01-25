@@ -66,7 +66,9 @@
 #include <stdio.h>
 #include <time.h>
 //#include "os_port.h"
-#include "rsa.h"
+#include "bigint_config.h"
+#include "bigint_impl.h"
+#include "bigint.h"
 
 #define V1      v->comps[v->size-1]                 /**< v1 for division */
 #define V2      v->comps[v->size-2]                 /**< v2 for division */
@@ -122,7 +124,7 @@ void bi_terminate(BI_CTX *ctx)
 
     if (ctx->active_count != 0)
     {
-#ifdef CONFIG_SSL_FULL_MODE
+#ifdef CONFIG_BIGINT_DEBUG
         printf("bi_terminate: there were %d un-freed bigints\n",
                        ctx->active_count);
 #endif
@@ -179,7 +181,7 @@ void bi_permanent(bigint *bi)
     check(bi);
     if (bi->refs != 1)
     {
-#ifdef CONFIG_SSL_FULL_MODE
+#ifdef CONFIG_BIGINT_DEBUG
         printf("bi_permanent: refs was not 1\n");
 #endif
         abort();
@@ -197,7 +199,7 @@ void bi_depermanent(bigint *bi)
     check(bi);
     if (bi->refs != PERMANENT)
     {
-#ifdef CONFIG_SSL_FULL_MODE
+#ifdef CONFIG_BIGINT_DEBUG
         printf("bi_depermanent: bigint was not permanent\n");
 #endif
         abort();
@@ -232,7 +234,7 @@ void bi_free(BI_CTX *ctx, bigint *bi)
 
     if (--ctx->active_count < 0)
     {
-#ifdef CONFIG_SSL_FULL_MODE
+#ifdef CONFIG_BIGINT_DEBUG
         printf("bi_free: active_count went negative "
                 "- double-freed bigint?\n");
 #endif
@@ -640,7 +642,7 @@ bigint *bi_import(BI_CTX *ctx, const uint8_t *data, int size)
     return trim(biR);
 }
 
-#ifdef CONFIG_SSL_FULL_MODE
+#ifdef CONFIG_BIGINT_DEBUG
 /**
  * @brief The testharness uses this code to import text hex-streams and
  * convert them into bigints.
@@ -1097,7 +1099,7 @@ static bigint *alloc(BI_CTX *ctx, int size)
 
         if (biR->refs != 0)
         {
-#ifdef CONFIG_SSL_FULL_MODE
+#ifdef CONFIG_BIGINT_DEBUG
             printf("alloc: refs was not 0\n");
 #endif
             abort();    /* create a stack trace from a core dump */

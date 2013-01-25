@@ -37,9 +37,8 @@
 #include <time.h>
 #include <stdlib.h>
 #include <malloc.h>
+
 #include "rsa.h"
-//#include "os_port.h"
-//#include "crypto.h"
 #ifdef TO_WIN32
 	#include <Windows.h>
 	#include "wincrypt.h"
@@ -255,7 +254,7 @@ bigint *RSA_private(const RSA_CTX *c, bigint *bi_msg)
 #endif
 }
 
-#ifdef CONFIG_SSL_FULL_MODE
+#ifdef CONFIG_SSL_DEBUG
 /**
  * Used for diagnostics.
  */
@@ -266,9 +265,11 @@ void RSA_print(const RSA_CTX *rsa_ctx)
 
     printf("-----------------   RSA DEBUG   ----------------\n");
     printf("Size:\t%d\n", rsa_ctx->num_octets);
+#ifdef CONFIG_BIGINT_DEBUG	
     bi_print("Modulus", rsa_ctx->m);
     bi_print("Public Key", rsa_ctx->e);
     bi_print("Private Key", rsa_ctx->d);
+#endif	
 }
 #endif
 

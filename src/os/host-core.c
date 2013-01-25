@@ -34,6 +34,8 @@
  
 #include "rc4.h"
 #include "rsa.h"
+#include "dh.h"
+#include "aes.h"
 
 #define INCLUDE_EXT_DATA
 #include "host-ext-core.h"
@@ -176,34 +178,142 @@ static u32 *core_ext_words;
 			REBSER *data, key;
 			REBYTE *dataBuffer;
 
-			if (RXA_TYPE(frm, 5) == RXT_HANDLE) {
+			if (RXA_TYPE(frm, 4) == RXT_HANDLE) {
 				//set current context
-				ctx = (RC4_CTX*)RXA_HANDLE(frm,5);
+				ctx = (RC4_CTX*)RXA_HANDLE(frm, 4);
 
-				if (RXA_TYPE(frm, 1) == RXT_NONE) {
+				if (RXA_TYPE(frm, 5) == RXT_NONE) {
 					//destroy context
 					OS_Free(ctx);
+					RXA_LOGIC(frm, 1) = TRUE;
+					RXA_TYPE(frm,1) = RXT_LOGIC;
 					return RXR_VALUE;
 				}
-			}
-			
-			data = RXA_SERIES(frm,1);
-			dataBuffer = (REBYTE *)RL_SERIES(data, RXI_SER_DATA) + RXA_INDEX(frm,1);
+				
+				//get data
+				data = RXA_SERIES(frm,5);
+				dataBuffer = (REBYTE *)RL_SERIES(data, RXI_SER_DATA) + RXA_INDEX(frm,5);
 
-			if (RXA_TYPE(frm, 3) == RXT_BINARY) {
+				RC4_crypt(ctx, dataBuffer, dataBuffer, RL_SERIES(data, RXI_SER_TAIL) - RXA_INDEX(frm,5));
+
+			} else if (RXA_TYPE(frm, 2) == RXT_BINARY) {
 				//key defined - setup new context
 				ctx = (RC4_CTX*)OS_Make(sizeof(*ctx));
 				memset(ctx, 0, sizeof(*ctx));
 				
-				key = RXA_SERIES(frm,3);
+				key = RXA_SERIES(frm, 2);
 
-				RC4_setup(ctx, (REBYTE *)RL_SERIES(key, RXI_SER_DATA) + RXA_INDEX(frm,3), RL_SERIES(key, RXI_SER_TAIL) - RXA_INDEX(frm,3));
+				RC4_setup(ctx, (REBYTE *)RL_SERIES(key, RXI_SER_DATA) + RXA_INDEX(frm, 2), RL_SERIES(key, RXI_SER_TAIL) - RXA_INDEX(frm, 2));
+
+				RXA_TYPE(frm, 1) = RXT_HANDLE;
+				RXA_HANDLE(frm,1) = ctx;
+			} 
+
+			return RXR_VALUE;
+		}
+
+		case CMD_CORE_AES:
+		{
+			AES_CTX *ctx;
+			REBSER *data, key;
+			REBYTE *dataBuffer, *pad_data = NULL;
+			REBINT len, pad_len;
+
+			if (RXA_TYPE(frm, 4) == RXT_HANDLE) {
+				REBINT *s;
+				REBSER *binaryOut;
+				REBYTE *binaryOutBuffer;
+
+				//set current context
+				ctx = (AES_CTX*)RXA_HANDLE(frm,4);
+
+				if (RXA_TYPE(frm, 5) == RXT_NONE) {
+					//destroy context
+					OS_Free(ctx);
+					RXA_LOGIC(frm, 1) = TRUE;
+					RXA_TYPE(frm,1) = RXT_LOGIC;
+					return RXR_VALUE;
+				}
+
+				//get data
+				data = RXA_SERIES(frm,5);
+				dataBuffer = (REBYTE *)RL_SERIES(data, RXI_SER_DATA) + RXA_INDEX(frm,5);
+				len = RL_SERIES(data, RXI_SER_TAIL) - RXA_INDEX(frm,5);
+				
+				if (len == 0) return RXT_NONE;
+
+				//calculate padded length
+				pad_len = (((len - 1) >> 4) << 4) + AES_BLOCKSIZE;
+
+				if (len < pad_len)
+				{
+					//make new data input with zero-padding
+					pad_data = (REBYTE *)OS_Make(pad_len);
+					memset(pad_data, 0, pad_len);
+					memcpy(pad_data, dataBuffer, len);
+					dataBuffer = pad_data;
+				}
+
+				//allocate new binary! for output
+				binaryOut = (REBSER*)RL_Make_String(pad_len, FALSE);
+				binaryOutBuffer =(REBYTE *)RL_SERIES(binaryOut, RXI_SER_DATA);
+				memset(binaryOutBuffer, 0, pad_len);
+
+				if (ctx->key_mode == AES_MODE_DECRYPT) // check the key mode
+				{
+					AES_cbc_decrypt(
+						ctx,
+						(const uint8_t *)dataBuffer, 
+						binaryOutBuffer, pad_len
+					);
+				} else {
+					AES_cbc_encrypt(
+						ctx,
+						(const uint8_t *)dataBuffer, 
+						binaryOutBuffer, pad_len
+					);
+				}
+
+				if (pad_data) OS_Free(pad_data);
+		
+				//hack! - will set the tail to buffersize
+				s = (REBINT*)binaryOut;
+				s[1] = pad_len;
+		
+				//setup returned binary! value
+				RXA_TYPE(frm,1) = RXT_BINARY;		
+				RXA_SERIES(frm,1) = binaryOut;
+				RXA_INDEX(frm,1) = 0;
+
 			}
-			
-			RC4_crypt(ctx, dataBuffer, dataBuffer, RL_SERIES(data, RXI_SER_TAIL) - RXA_INDEX(frm,1));
+			else if (RXA_TYPE(frm, 2) == RXT_BINARY)
+			{
+				uint8_t iv[AES_IV_SIZE];
+				memset(iv, 0, AES_IV_SIZE);
 
-			RXA_TYPE(frm, 1) = RXT_HANDLE;
-			RXA_HANDLE(frm,1) = ctx;
+				//key defined - setup new context
+				ctx = (AES_CTX*)OS_Make(sizeof(*ctx));
+				memset(ctx, 0, sizeof(*ctx));
+				
+				key = RXA_SERIES(frm,2);
+				len = (RL_SERIES(key, RXI_SER_TAIL) - RXA_INDEX(frm,2)) << 3;
+
+				if (len != 128 && len != 256) return RXR_NONE;
+
+				AES_set_key(
+					ctx,
+					(const uint8_t *)RL_SERIES(key, RXI_SER_DATA) + RXA_INDEX(frm,2),
+					(const uint8_t *)iv,
+					(len == 128) ? AES_MODE_128 : AES_MODE_256
+				);
+
+				if (RXA_WORD(frm, 6)) // decrypt refinement
+					AES_convert_key(ctx);
+
+				RXA_TYPE(frm, 1) = RXT_HANDLE;
+				RXA_HANDLE(frm,1) = ctx;
+			}
+
 			return RXR_VALUE;
 		}
 
@@ -309,6 +419,124 @@ static u32 *core_ext_words;
 			//hack! - will set the tail to buffersize
 			s = (REBINT*)binary;
 			s[1] = binary_len;
+			
+			//setup returned binary! value
+			RXA_TYPE(frm,1) = RXT_BINARY;			
+			RXA_SERIES(frm,1) = binary;
+			RXA_INDEX(frm,1) = 0;			
+			return RXR_VALUE;
+		}
+		
+		case CMD_CORE_DH_GENERATE_KEY:
+		{
+			DH_CTX dh_ctx;
+			RXIARG val, priv_key, pub_key;
+			REBCNT type;
+			REBSER *obj = RXA_OBJECT(frm, 1);
+			u32 *words = RL_WORDS_OF_OBJECT(obj);
+			REBYTE *objData;
+			REBINT *s;
+
+            while (type = RL_GET_FIELD(obj, words[0], &val))
+            {
+				if (type == RXT_BINARY)
+				{
+					objData = (REBYTE *)RL_SERIES(val.series, RXI_SER_DATA) + val.index;
+					
+					switch(RL_FIND_WORD(core_ext_words,words[0]))
+					{
+						case W_CORE_P:
+							dh_ctx.p = objData;
+							dh_ctx.len = RL_SERIES(val.series, RXI_SER_TAIL) - val.index;
+							break;
+						case W_CORE_G:
+							dh_ctx.g = objData;
+							break;
+					}
+				}
+				words++;
+			}
+			
+			if (!dh_ctx.p || !dh_ctx.g) break;
+
+			//allocate new binary! blocks for priv/pub keys
+			priv_key.series = (REBSER*)RL_Make_String(dh_ctx.len, FALSE);
+			priv_key.index = 0;
+			dh_ctx.x = (REBYTE *)RL_SERIES(priv_key.series, RXI_SER_DATA);
+			memset(dh_ctx.x, 0, dh_ctx.len);
+			//hack! - will set the tail to key size
+			s = (REBINT*)priv_key.series;
+			s[1] = dh_ctx.len;
+
+			
+			pub_key.series = (REBSER*)RL_Make_String(dh_ctx.len, FALSE);
+			pub_key.index = 0;
+			dh_ctx.gx = (REBYTE *)RL_SERIES(pub_key.series, RXI_SER_DATA);
+			memset(dh_ctx.gx, 0, dh_ctx.len);
+			//hack! - will set the tail to key size
+			s = (REBINT*)pub_key.series;
+			s[1] = dh_ctx.len;
+
+
+			//generate keys
+			DH_generate_key(&dh_ctx);
+
+			//set the object fields
+			RL_Set_Field(obj, core_ext_words[W_CORE_PRIV_KEY], priv_key, RXT_BINARY);	
+			RL_Set_Field(obj, core_ext_words[W_CORE_PUB_KEY], pub_key, RXT_BINARY);	
+			
+			break;
+		}
+
+		case CMD_CORE_DH_COMPUTE_KEY:
+		{
+			DH_CTX dh_ctx;
+			RXIARG val;
+			REBCNT type;
+			REBSER *obj = RXA_OBJECT(frm, 1);
+			REBSER *pub_key = RXA_SERIES(frm, 2);
+			u32 *words = RL_WORDS_OF_OBJECT(obj);
+			REBYTE *objData;
+			REBSER *binary;
+			REBYTE *binaryBuffer;
+			REBINT *s;
+
+            while (type = RL_GET_FIELD(obj, words[0], &val))
+            {
+				if (type == RXT_BINARY)
+				{
+					objData = (REBYTE *)RL_SERIES(val.series, RXI_SER_DATA) + val.index;
+					
+					switch(RL_FIND_WORD(core_ext_words,words[0]))
+					{
+						case W_CORE_P:
+							dh_ctx.p = objData;
+							dh_ctx.len = RL_SERIES(val.series, RXI_SER_TAIL) - val.index;
+							break;
+						case W_CORE_PRIV_KEY:
+							dh_ctx.x = objData;
+							break;
+					}
+				}
+				words++;
+			}
+			
+			dh_ctx.gy = (REBYTE *)RL_SERIES(pub_key, RXI_SER_DATA) + RXA_INDEX(frm, 2);
+
+			if (!dh_ctx.p || !dh_ctx.x || !dh_ctx.gy) return RXR_NONE;
+
+			//allocate new binary!
+			binary = (REBSER*)RL_Make_String(dh_ctx.len, FALSE);
+			binaryBuffer = (REBYTE *)RL_SERIES(binary, RXI_SER_DATA);
+			memset(binaryBuffer, 0, dh_ctx.len);
+			//hack! - will set the tail to buffersize
+			s = (REBINT*)binary;
+			s[1] = dh_ctx.len;
+
+			dh_ctx.k = binaryBuffer;
+
+			DH_compute_key(&dh_ctx);
+
 			
 			//setup returned binary! value
 			RXA_TYPE(frm,1) = RXT_BINARY;			

@@ -381,11 +381,10 @@ encrypt-data: func [
 
 	switch ctx/crypt-method [
 		rc4 [
-			either ctx/encrypt-stream [
-				rc4/stream data ctx/encrypt-stream
-			][
-				ctx/encrypt-stream: rc4/key data ctx/client-crypt-key
+			unless ctx/encrypt-stream [
+				ctx/encrypt-stream: rc4/key ctx/client-crypt-key
 			]
+			rc4/stream ctx/encrypt-stream data
 		]
 	]
 	
@@ -400,11 +399,10 @@ decrypt-data: func [
 ][
 	switch ctx/crypt-method [
 		rc4 [
-			either ctx/decrypt-stream [
-				rc4/stream data ctx/decrypt-stream
-			][
-				ctx/decrypt-stream: rc4/key data ctx/server-crypt-key
+			unless ctx/decrypt-stream [
+				ctx/decrypt-stream: rc4/key ctx/server-crypt-key
 			]
+			rc4/stream ctx/decrypt-stream data
 		]
 	]
 
@@ -726,10 +724,10 @@ tls-init: func [
 	switch ctx/crypt-method [
 		rc4 [
 			if ctx/encrypt-stream [
-				ctx/encrypt-stream: rc4 none ctx/encrypt-stream
+				ctx/encrypt-stream: rc4/stream ctx/encrypt-stream none
 			]
 			if ctx/decrypt-stream [
-				ctx/decrypt-stream: rc4 none ctx/decrypt-stream
+				ctx/decrypt-stream: rc4/stream ctx/decrypt-stream none
 			]
 		]
 	]

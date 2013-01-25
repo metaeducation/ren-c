@@ -34,7 +34,7 @@ S=	../src
 R=	$S/core
 
 INCL ?= .
-I= -I$(INCL) -I$S/include/ -I $S/codecs/png/ -I $S/codecs/rc4/ -I $S/codecs/rsa/
+I= -I$(INCL) -I$S/include/ -I $S/codecs/png/ -I $S/codecs/rc4/ -I $S/codecs/rsa/ -I $S/codecs/dh/  -I $S/codecs/aes/
 
 TO_OS?= TO_WIN32
 OS_ID?= 0.3.1
@@ -198,7 +198,7 @@ HOST_ENCAP = objs/host-licensing.o
 HOST =	objs/host-main.o objs/host-core.o objs/host-args.o objs/host-device.o objs/host-stdio.o \
 	objs/dev-net.o objs/dev-dns.o objs/host-lib.o objs/dev-stdio.o \
 	objs/dev-file.o objs/dev-event.o objs/dev-clipboard.o \
-	objs/lodepng.o objs/rc4.o objs/bigint.o objs/rsa.o
+	objs/lodepng.o objs/rc4.o objs/aes.o objs/bigint.o objs/rsa.o objs/dh.o
 
 GFX= \
 	objs/host-graphics.o\
@@ -634,11 +634,17 @@ objs/lodepng.o:    $S/codecs/png/lodepng.c
 objs/rc4.o:    $S/codecs/rc4/rc4.c $(INCS)
 	$(CC) $S/codecs/rc4/rc4.c $(HFLAGS) -o objs/rc4.o
 
-objs/bigint.o:    $S/codecs/rsa/bigint.c
-	$(CC) $S/codecs/rsa/bigint.c $(HFLAGS) -o objs/bigint.o
+objs/aes.o:    $S/codecs/aes/aes.c $(INCS)
+	$(CC) $S/codecs/aes/aes.c $(HFLAGS) -o objs/aes.o
+
+objs/bigint.o:    $S/codecs/bigint/bigint.c
+	$(CC) $S/codecs/bigint/bigint.c $(HFLAGS) -o objs/bigint.o
 
 objs/rsa.o:    $S/codecs/rsa/rsa.c
 	$(CC) $S/codecs/rsa/rsa.c $(HFLAGS) -o objs/rsa.o
+
+objs/dh.o:    $S/codecs/dh/dh.c
+	$(CC) $S/codecs/dh/dh.c $(HFLAGS) -o objs/dh.o
 
 #--- AGG Library:
 
