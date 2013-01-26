@@ -24,20 +24,18 @@
 **  Section: functional
 **  Author:  Ladislav Mecir for REBOL Technologies
 **  Notes:
+**    Deci significands are 87-bit long, unsigned, unnormalized, stored in
+**    little endian order. (Maximal deci significand is 1e26 - 1, i.e. 26
+**    nines)
+**
+**    Sign is one-bit, 1 means nonpositive, 0 means nonnegative.
+**
+**    Exponent is 8-bit, unbiased.
+**
+**    Functions may be inlined (especially the ones marked by INLINE).
+**    64-bit and/or double arithmetic used where they bring advantage.
 **
 ***********************************************************************/
-/*
-	    Deci significands are 87-bit long, unsigned, unnormalized,
-        stored in little endian order.
-        (Maximal deci significand is 1e26 - 1, i.e. 26 nines)
-
-	    Sign is one-bit, 1 means nonpositive, 0 means nonnegative.
-	    Exponent is 8-bit, unbiased.
-
-        Functions may be inlined (especially the ones marked by INLINE).
-        
-        64-bit and/or double arithmetic used where they bring advantage.
-*/
 
 #include "sys-core.h"
 #include "sys-deci-funcs.h"
@@ -541,7 +539,7 @@ deci decimal_to_deci (REBDEC a) {
 	REBINT s; /* sign */
 	REBYTE *c;
 	REBYTE *rve;
-	
+
     /* convert a to string */
 	c = (REBYTE *) dtoa (a, 0, DOUBLE_DIGITS, &e, &s, (char **) &rve);
 
@@ -1082,7 +1080,7 @@ REBINT deci_to_string(REBYTE *string, const deci a, const REBYTE symbol, const R
 	if (a.s) *s++ = '-';
 
 	if (symbol) *s++ = symbol;
-	
+
 	if (deci_is_zero (a)) {
 		*s++ = '0';
 		*s = '\0';

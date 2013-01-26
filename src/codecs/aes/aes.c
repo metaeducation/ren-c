@@ -37,6 +37,8 @@
 #include <string.h>
 #ifdef WIN32
 #include <winsock.h>
+#else
+#include <arpa/inet.h>
 #endif
 #include "aes.h"
 
