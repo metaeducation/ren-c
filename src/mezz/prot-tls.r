@@ -3,7 +3,7 @@ REBOL [
 	name: 'tls
 	type: 'module
 	author: rights: "Richard 'Cyphre' Smolak"
-	version: 0.2.0
+	version: 0.3.0
 	todo: {
 		-cached sessions
 		-automagic cert data lookup
@@ -165,11 +165,12 @@ read-proto-states: [
 	client-hello [server-hello]
 	server-hello [certificate]
 	certificate [server-hello-done]
-	server-hello-done []
+	server-hello-done [#complete]
 	finished [change-cipher-spec alert]
 	change-cipher-spec [encrypted-handshake]
-	application [application alert]
-	alert []
+	encrypted-handshake [application #complete]
+	application [application alert #complete]
+	alert [#complete]
 ]
 
 write-proto-states: [
@@ -798,7 +799,7 @@ tls-read-data: func [
 		debug ["State:" ctx/protocol-state "-->" next-state]
 		ctx/data-buffer: copy port-data
 
-		unless next-state [
+		if all [tail? port-data find next-state #complete] [
 			debug ["READING FINISHED" length? head ctx/data-buffer length? result]
 			append ctx/resp parse-response ctx result
 			return true
@@ -846,25 +847,25 @@ tls-awake: funct [event [event!]] [
 			read port
 			return false
 		]
-		read  [
-			debug ["Read" length? port/data "bytes" tls-port/state/protocol-state]
-
+		read [
+			debug ["Read" length? port/data "bytes proto-state:" tls-port/state/protocol-state]
 			complete?: tls-read-data tls-port/state port/data
 			application?: false
-
+			port-data: clear #{}
 			foreach proto tls-port/state/resp [
 				if proto/type = 'application [
 					foreach msg proto/messages [
 						if msg/type = 'app-data [
-							append tls-port/data msg/content 
+							append port-data msg/content 
 							application?: true
 							msg/type: none
 						]
 					]
 				]
 			]
-
+			debug ["data complete?:" complete? "application?:" application?]
 			either application? [
+				append clear head tls-port/data port-data
 				insert system/ports/system make event! [type: 'read port: tls-port]
 			][
 				read port
@@ -885,7 +886,7 @@ tls-awake: funct [event [event!]] [
 
 sys/make-scheme [
 	name: 'tls
-	title: "TLS protocol"
+	title: "TLS protocol v1.0"
 	spec: make system/standard/port-spec-net []
 	actor: [
 		read: func [
