@@ -10,7 +10,7 @@ void DH_generate_key(DH_CTX *dh_ctx)
     BI_CTX *bi_ctx = bi_initialize();
 	int len = dh_ctx->len;
 	bigint *p = bi_import(bi_ctx, dh_ctx->p, len); //p modulus
-	bigint *g = bi_import(bi_ctx, dh_ctx->g, len); //pub key
+	bigint *g = bi_import(bi_ctx, dh_ctx->g, dh_ctx->glen); //generator
 	bigint *x, *gx;
 
 	bi_permanent(g);
@@ -20,6 +20,7 @@ void DH_generate_key(DH_CTX *dh_ctx)
 	x = bi_import(bi_ctx, dh_ctx->x, len);
 	bi_permanent(x);
 
+	//calculate public key gx = g^x mod p
 	bi_set_mod(bi_ctx, p,  BIGINT_M_OFFSET);
 	bi_ctx->mod_offset = BIGINT_M_OFFSET;
 	gx = bi_mod_power(bi_ctx, g, x);
@@ -46,12 +47,12 @@ void DH_compute_key(DH_CTX *dh_ctx)
 	bigint *p = bi_import(bi_ctx, dh_ctx->p, len); //p modulus
 	bigint *x = bi_import(bi_ctx, dh_ctx->x, len); //private key
 	bigint *gy = bi_import(bi_ctx, dh_ctx->gy, len);  //public key(peer)
-	bigint *k;										//negotiated key
+	bigint *k;										//negotiated(session) key
 
 	bi_permanent(x);
 	bi_permanent(gy);
 
-	//calculate session key
+	//calculate session key k = gy^x mod p
 	bi_set_mod(bi_ctx, p,  BIGINT_M_OFFSET);
 	bi_ctx->mod_offset = BIGINT_M_OFFSET;
 	k = bi_mod_power(bi_ctx, gy, x);

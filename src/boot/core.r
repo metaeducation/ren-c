@@ -131,6 +131,7 @@ aes: command [
 	"Encrypt/decrypt data using AES algorithm. Returns stream cipher context handle or encrypted/decrypted data."
 	/key
 		crypt-key [binary!] "Crypt key. Have to be provided only for the first time to get stream handle!."
+		iv [binary! none!] "Optional initialization vector."
 	/stream
 		ctx [handle!] "Stream cipher context."
 		data [binary! none!] "Data to encrypt/decrypt. Or NONE to close the cipher stream."

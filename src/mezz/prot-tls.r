@@ -1,15 +1,15 @@
 REBOL [
-	title: "REBOL 3 TLS protocol scheme"
+	title: "REBOL 3 TLSv1.0 protocol scheme"
 	name: 'tls
 	type: 'module
 	author: rights: "Richard 'Cyphre' Smolak"
-	version: 0.3.0
+	version: 0.5.0
 	todo: {
 		-cached sessions
 		-automagic cert data lookup
-		-add more cipher suites
+		-add more cipher suites (based on DSA, 3DES, ECDH, ECDHE, ECDSA, SHA256, SHA384 ...)
 		-server role support
-		-SSL3.0, TLS1.1 compatibility
+		-SSL3.0, TLS1.1/1.2 compatibility
 		-cert validation
 	}
 ]
@@ -31,7 +31,7 @@ to-bin: func [
 	val [integer!]
 	width [integer!]
 ][
-	skip tail to-binary val negate width
+	skip tail to binary! val negate width
 ]
 
 make-tls-error: func [
@@ -51,6 +51,19 @@ tls-error: func [
 	message [string! block!]
 ] [
 	do make-tls-error message
+]
+
+cipher-suites: make object! [
+	TLS_RSA_WITH_RC4_128_MD5:				#{00 04}
+	TLS_RSA_WITH_RC4_128_SHA:				#{00 05}
+	TLS_DHE_DSS_WITH_AES_128_CBC_SHA:		#{00 32}
+
+;	TLS_DHE_DSS_WITH_AES_256_CBC_SHA:      #{00 38}
+;	TLS_DHE_RSA_WITH_AES_128_CBC_SHA:      #{00 33}
+;	TLS_DHE_RSA_WITH_AES_256_CBC_SHA:      #{00 39}
+;	TLS_RSA_WITH_AES_128_CBC_SHA:          #{00 2F}
+;	TLS_RSA_WITH_AES_256_CBC_SHA:          #{00 35}
+	
 ]
 
 ;ASN.1 format parser code
@@ -164,7 +177,8 @@ parse-asn: func [
 read-proto-states: [
 	client-hello [server-hello]
 	server-hello [certificate]
-	certificate [server-hello-done]
+	certificate [server-hello-done server-key-exchange]
+	server-key-exchange [server-hello-done]
 	server-hello-done [#complete]
 	finished [change-cipher-spec alert]
 	change-cipher-spec [encrypted-handshake]
@@ -222,12 +236,14 @@ update-proto-state: func [
 client-hello: func [
 	ctx [object!]
 	/local
-		beg len
+		beg len cs-data
 ][
 	;generate client random struct
-	ctx/client-random: to-bin to-integer difference now/precise 1-Jan-1970 4
+	ctx/client-random: to-bin to integer! difference now/precise 1-Jan-1970 4
 	random/seed now/time/precise
 	loop 28 [append ctx/client-random (random/secure 256) - 1]
+
+	cs-data: rejoin values-of cipher-suites
 
 	beg: length? ctx/msg
 	emit ctx [
@@ -239,8 +255,8 @@ client-hello: func [
 		ctx/version			; max supported version by client (TLS1.0)
 		ctx/client-random	; random struct (4 bytes gmt unix time + 28 random bytes)
 		#{00}			; session ID length
-		#{00 02}		; cipher suites length (only one suit for testing at the moment)
-		ctx/cipher-suite	; cipher suites list (0005 = TLS_RSA_WITH_RC4_128_SHA) (0004 = TLS_RSA_WITH_RC4_128_MD5) etc.
+		to-bin length? cs-data 2	; cipher suites length
+		cs-data						; cipher suites list
 		#{01}			; compression method length
 		#{00}			; no compression
 	]
@@ -257,19 +273,34 @@ client-hello: func [
 client-key-exchange: func [
 	ctx [object!]
 	/local
-	rsa-key pms-enc beg len
+	rsa-key key-data beg len
 ][
-	;generate pre-master-secret
-	ctx/pre-master-secret: copy ctx/version
-	random/seed now/time/precise
-	loop 46 [append ctx/pre-master-secret (random/secure 256) - 1]
-	
-	;encrypt pre-master-secret
-	rsa-key: rsa-make-key
-	rsa-key/e: ctx/pub-exp
-	rsa-key/n: ctx/pub-key
+	switch ctx/cipher-suite compose [
+		(cipher-suites/TLS_RSA_WITH_RC4_128_SHA) (cipher-suites/TLS_RSA_WITH_RC4_128_MD5) [
+			;generate pre-master-secret
+			ctx/pre-master-secret: copy ctx/version
+			random/seed now/time/precise
+			loop 46 [append ctx/pre-master-secret (random/secure 256) - 1]
 
-	pms-enc: rsa ctx/pre-master-secret rsa-key
+			;encrypt pre-master-secret
+			rsa-key: rsa-make-key
+			rsa-key/e: ctx/pub-exp
+			rsa-key/n: ctx/pub-key
+
+			;supply encrypted pre-master-secret to server
+			key-data: rsa ctx/pre-master-secret rsa-key
+		]
+		(cipher-suites/TLS_DHE_DSS_WITH_AES_128_CBC_SHA) [
+			;generate public/private keypair
+			dh-generate-key ctx/dh-key
+
+			;supply the client's public key to server
+			key-data: ctx/dh-key/pub-key
+
+			;generate pre-master-secret
+			ctx/pre-master-secret: dh-compute-key ctx/dh-key ctx/dh-pub
+		]
+	]
 
 	beg: length? ctx/msg
 	emit ctx [
@@ -278,18 +309,17 @@ client-key-exchange: func [
 		#{00 00}		; length of SSL record data
 		#{10}			; protocol message type	(16=ClientKeyExchange)
 		#{00 00 00} 	; protocol message length
-		to-bin length? pms-enc 2	;length of the key (2 bytes)
-		pms-enc
+		to-bin length? key-data 2	;length of the key (2 bytes)
+		key-data
 	]
 
 	; set the correct msg lengths
 	change at ctx/msg beg + 7 to-bin len: length? at ctx/msg beg + 10 3
 	change at ctx/msg beg + 4 to-bin len + 4 2
 
-	append ctx/handshake-messages copy at ctx/msg beg + 6
-
-	;make all secrue data
+	;make all secure data
 	make-master-secret ctx ctx/pre-master-secret
+
 	make-key-block ctx
 
 	;update keys
@@ -297,6 +327,11 @@ client-key-exchange: func [
 	ctx/server-mac-key: copy/part skip ctx/key-block ctx/hash-size ctx/hash-size
 	ctx/client-crypt-key: copy/part skip ctx/key-block 2 * ctx/hash-size ctx/crypt-size	
 	ctx/server-crypt-key: copy/part skip ctx/key-block 2 * ctx/hash-size + ctx/crypt-size ctx/crypt-size
+	if ctx/block-size [
+		ctx/client-iv: copy/part skip ctx/key-block 2 * (ctx/hash-size + ctx/crypt-size) ctx/block-size
+		ctx/server-iv: copy/part skip ctx/key-block 2 * (ctx/hash-size + ctx/crypt-size) + ctx/block-size ctx/block-size
+	]
+	append ctx/handshake-messages copy at ctx/msg beg + 6
 	
 	return ctx/msg
 ]
@@ -336,7 +371,7 @@ application-data: func [
 	ctx [object!]
 	message [binary! string!]
 ][
-	message: encrypt-data ctx to-binary message
+	message: encrypt-data ctx to binary! message
 	emit ctx [
 		#{17}			; protocol type (23=Application)
 		ctx/version			; protocol version (3|1 = TLS1.0)
@@ -365,19 +400,25 @@ encrypt-data: func [
 	/type
 		msg-type [binary!] "application data is default"
 	/local	
-		crypt-data
+		mac padding
 ][
-	data: rejoin [
+		data: rejoin [
 		data
 		;MAC code
-		checksum/method/key rejoin [
-;			#{00000000} to-bin ctx/seq-num-w 4		;sequence number (limited to 32-bits here in R2)
+		mac: checksum/method/key rejoin [
+;			#{00000000} to-bin ctx/seq-num-w 4	;sequence number (limited to 32-bits here in R2)
 			to-bin ctx/seq-num-w 8				;sequence number (64-bit int in R3)
 			any [msg-type #{17}]				;msg type
-			ctx/version								;version
+			ctx/version							;version
 			to-bin length? data 2				;msg content length				
 			data								;msg content
 		] ctx/hash-method decode 'text ctx/client-mac-key
+	]
+
+	if ctx/cipher-suite = cipher-suites/TLS_DHE_DSS_WITH_AES_128_CBC_SHA [
+		;add the padding data
+		padding: ctx/block-size - (1 + (length? data) // ctx/block-size)
+		append data head insert/dup copy #{} to-bin padding 1 1 + padding
 	]
 
 	switch ctx/crypt-method [
@@ -387,8 +428,14 @@ encrypt-data: func [
 			]
 			rc4/stream ctx/encrypt-stream data
 		]
+		aes [
+			unless ctx/encrypt-stream [
+				ctx/encrypt-stream: aes/key ctx/client-crypt-key ctx/client-iv
+			]
+			data: aes/stream ctx/encrypt-stream data
+		]
 	]
-	
+
 	return data
 ]
 
@@ -404,6 +451,12 @@ decrypt-data: func [
 				ctx/decrypt-stream: rc4/key ctx/server-crypt-key
 			]
 			rc4/stream ctx/decrypt-stream data
+		]
+		aes [
+			unless ctx/decrypt-stream [
+				ctx/decrypt-stream: aes/key/decrypt ctx/server-crypt-key ctx/server-iv
+			]
+			data: aes/stream ctx/decrypt-stream data
 		]
 	]
 
@@ -468,7 +521,7 @@ parse-protocol: func [
 	return context [
 		type: proto
 		version: pick [ssl-v3 tls-v1.0 tls-v1.1] data/3 + 1
-		length: to-integer copy/part at data 4 2
+		length: to integer! copy/part at data 4 2
 		messages: copy/part at data 6 length
 	]
 ]
@@ -485,6 +538,10 @@ parse-messages: func [
 	if ctx/encrypted? [
 		change data decrypt-data ctx data
 		debug ["decrypted:" data]
+		if ctx/cipher-suite = cipher-suites/TLS_DHE_DSS_WITH_AES_128_CBC_SHA [
+			data: copy/part data (length? data) - 1 - (to integer! last data)
+			debug ["depadded:" data]
+		]
 	]
 	debug [ctx/seq-num-r ctx/seq-num-w "READ <--" proto/type]
 	switch proto/type [
@@ -498,7 +555,7 @@ parse-messages: func [
 		]
 		handshake [
 			while [data/1][
-				len: to-integer copy/part at data 2 3
+				len: to integer! copy/part at data 2 3
 				append result switch msg-type: select message-types data/1 [
 					server-hello [
 						msg-content: copy/part at data 7 len
@@ -513,6 +570,37 @@ parse-messages: func [
 							compression-method-length: first at msg-content 36 + msg-content/33
 							compression-method: either compression-method-length = 0 [none][copy/part at msg-content 37 + msg-content/33 compression-method-length]
 						]
+						ctx/cipher-suite: msg-obj/cipher-suite
+
+						switch/default ctx/cipher-suite compose [
+							(cipher-suites/TLS_RSA_WITH_RC4_128_SHA) [
+								ctx/key-method: 'rsa
+								ctx/crypt-method: 'rc4
+								ctx/crypt-size: 16
+								ctx/hash-method: 'sha1
+								ctx/hash-size: 20
+							]
+							(cipher-suites/TLS_RSA_WITH_RC4_128_MD5) [
+								ctx/key-method: 'rsa
+								ctx/crypt-method: 'rc4
+								ctx/crypt-size: 16
+								ctx/hash-method: 'md5
+								ctx/hash-size: 16
+							]
+							(cipher-suites/TLS_DHE_DSS_WITH_AES_128_CBC_SHA) [
+								ctx/key-method: 'dhe-dss
+								ctx/crypt-method: 'aes
+								ctx/crypt-size: 16
+								ctx/block-size: 16
+								ctx/iv-size: 16
+								ctx/hash-method: 'sha1
+								ctx/hash-size: 20
+							]
+						][
+							do make error! rejoin ["Current TLS scheme doesn't support ciphersuite:" mold ctx/cipher-suite]
+						]
+
+
 						ctx/server-random: msg-obj/server-random
 						msg-obj
 					]
@@ -521,10 +609,10 @@ parse-messages: func [
 						msg-obj: context [
 							type: msg-type
 							length: len
-							certificates-length: to-integer copy/part msg-content 3
+							certificates-length: to integer! copy/part msg-content 3
 							certificate-list: copy []
 							while [msg-content/1][
-								if 0 < clen: to-integer copy/part skip msg-content 3 3 [
+								if 0 < clen: to integer! copy/part skip msg-content 3 3 [
 									append certificate-list copy/part at msg-content 7 clen
 								]
 								msg-content: skip msg-content 3 + clen										
@@ -532,15 +620,45 @@ parse-messages: func [
 						]
 						;no cert validation - just set it to be used
 						ctx/certificate: parse-asn msg-obj/certificate-list/1
-						
-						;get the public key and exponent (hardcoded for now)
-						ctx/pub-key: parse-asn next
+
+						either find reduce [cipher-suites/TLS_RSA_WITH_RC4_128_SHA cipher-suites/TLS_RSA_WITH_RC4_128_MD5] ctx/cipher-suite [
+							;get the public key and exponent (hardcoded for now)
+							ctx/pub-key: parse-asn next
 ;									ctx/certificate/1/sequence/4/1/sequence/4/6/sequence/4/2/bit-string/4
-								ctx/certificate/1/sequence/4/1/sequence/4/7/sequence/4/2/bit-string/4
-						ctx/pub-exp: ctx/pub-key/1/sequence/4/2/integer/4
-						ctx/pub-key: next ctx/pub-key/1/sequence/4/1/integer/4
-						
+									ctx/certificate/1/sequence/4/1/sequence/4/7/sequence/4/2/bit-string/4
+							ctx/pub-exp: ctx/pub-key/1/sequence/4/2/integer/4
+							ctx/pub-key: next ctx/pub-key/1/sequence/4/1/integer/4
+						][
+							;for DH cipher suites the certificate is used just for signing the key exchange data
+						]
 						msg-obj
+					]
+					server-key-exchange [
+						either ctx/cipher-suite = cipher-suites/TLS_DHE_DSS_WITH_AES_128_CBC_SHA [
+							msg-content: copy/part at data 5 len
+							msg-obj: context [
+								type: msg-type
+								length: len
+								p-length: to integer! copy/part msg-content 2
+								p: copy/part at msg-content 3 p-length
+								g-length: to integer! copy/part at msg-content 3 + p-length 2
+								g: copy/part at msg-content 3 + p-length + 2 g-length
+								ys-length: to integer! copy/part at msg-content 3 + p-length + 2 + g-length 2
+								ys: copy/part at msg-content 3 + p-length + 2 + g-length + 2 ys-length
+								signature-length: to integer! copy/part at msg-content 3 + p-length + 2 + g-length + 2 + ys-length 2
+								signature: copy/part at msg-content 3 + p-length + 2 + g-length + 2 + ys-length + 2 signature-length
+							]
+
+							ctx/dh-key: dh-make-key
+							ctx/dh-key/p: msg-obj/p
+							ctx/dh-key/g: msg-obj/g
+							ctx/dh-pub: msg-obj/ys
+
+							;NOTE: the signature sent by server should be verified using DSA algorithm(once it is integrates as native) to be sure the dh-key params are safe
+							msg-obj
+						][
+							do make error! "Server-key-exchange message has been sent illegally."
+						]
 					]
 					server-hello-done [
 						context [
@@ -641,7 +759,7 @@ prf: func [
 		len mid s-1 s-2 a p-sha1 p-md5
 ][
 	len: length? secret
-	mid: to-integer .5 * (len + either odd? len [1][0])
+	mid: to integer! .5 * (len + either odd? len [1][0])
 
 	s-1: copy/part secret mid
 	s-2: copy at secret mid + either odd? len [0][1]
@@ -669,7 +787,7 @@ prf: func [
 make-key-block: func [
 	ctx [object!]
 ][
-	ctx/key-block: prf ctx/master-secret "key expansion" rejoin [ctx/server-random ctx/client-random] 2 * ctx/hash-size + (2 * ctx/crypt-size)
+	ctx/key-block: prf ctx/master-secret "key expansion" rejoin [ctx/server-random ctx/client-random] ctx/hash-size + ctx/crypt-size + (either ctx/block-size [ctx/iv-size][0]) * 2
 ]
 
 make-master-secret: func [
@@ -755,7 +873,7 @@ tls-read-data: func [
 
 		append clear record data
 		
-		len: to-integer copy/part at data 4 2
+		len: to integer! copy/part at data 4 2
 
 		port-data: skip port-data 5
 
@@ -921,24 +1039,39 @@ sys/make-scheme [
 				server?: false
 
 				protocol-state: none
-				hash-method: 'sha1
-				hash-size: 20
-				crypt-method: 'rc4
-				crypt-size: 16	; 128bits
-				cipher-suite: #{00 05} ;TLS_RSA_WITH_RC4_128_SHA
+
+				key-method:
+
+				hash-method:
+				hash-size:
+
+				crypt-method:
+				crypt-size:
+				block-size:
+				iv-size:
+
+				cipher-suite: none
+
 
 				client-crypt-key:
 				client-mac-key:
+				client-iv:
 				server-crypt-key:
-				server-mac-key: none
+				server-mac-key:
+				server-iv: none
 				
 				seq-num-r: 0
 				seq-num-w: 0
 				
 				msg: make binary! 4096
 				handshake-messages: make binary! 4096 ;all messages from Handshake records except 'HelloRequest's
+
 				encrypted?: false
-				client-random: server-random: pre-master-secret: master-secret: key-block: certificate: pub-key: pub-exp: none
+
+				client-random: server-random: pre-master-secret: master-secret:
+				key-block: 
+				certificate: pub-key: pub-exp:
+				dh-key: dh-pub: none
 
 				encrypt-stream: decrypt-stream: none
 

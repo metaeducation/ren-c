@@ -219,15 +219,15 @@ static u32 *core_ext_words;
 			REBYTE *dataBuffer, *pad_data = NULL;
 			REBINT len, pad_len;
 
-			if (RXA_TYPE(frm, 4) == RXT_HANDLE) {
+			if (RXA_TYPE(frm, 5) == RXT_HANDLE) {
 				REBINT *s;
 				REBSER *binaryOut;
 				REBYTE *binaryOutBuffer;
 
 				//set current context
-				ctx = (AES_CTX*)RXA_HANDLE(frm,4);
+				ctx = (AES_CTX*)RXA_HANDLE(frm,5);
 
-				if (RXA_TYPE(frm, 5) == RXT_NONE) {
+				if (RXA_TYPE(frm, 6) == RXT_NONE) {
 					//destroy context
 					OS_Free(ctx);
 					RXA_LOGIC(frm, 1) = TRUE;
@@ -236,9 +236,9 @@ static u32 *core_ext_words;
 				}
 
 				//get data
-				data = RXA_SERIES(frm,5);
-				dataBuffer = (REBYTE *)RL_SERIES(data, RXI_SER_DATA) + RXA_INDEX(frm,5);
-				len = RL_SERIES(data, RXI_SER_TAIL) - RXA_INDEX(frm,5);
+				data = RXA_SERIES(frm, 6);
+				dataBuffer = (REBYTE *)RL_SERIES(data, RXI_SER_DATA) + RXA_INDEX(frm, 6);
+				len = RL_SERIES(data, RXI_SER_TAIL) - RXA_INDEX(frm, 6);
 				
 				if (len == 0) return RXT_NONE;
 
@@ -281,15 +281,28 @@ static u32 *core_ext_words;
 				s[1] = pad_len;
 		
 				//setup returned binary! value
-				RXA_TYPE(frm,1) = RXT_BINARY;		
-				RXA_SERIES(frm,1) = binaryOut;
-				RXA_INDEX(frm,1) = 0;
+				RXA_TYPE(frm, 1) = RXT_BINARY;		
+				RXA_SERIES(frm, 1) = binaryOut;
+				RXA_INDEX(frm, 1) = 0;
 
 			}
 			else if (RXA_TYPE(frm, 2) == RXT_BINARY)
 			{
 				uint8_t iv[AES_IV_SIZE];
-				memset(iv, 0, AES_IV_SIZE);
+
+				if (RXA_TYPE(frm, 3) == RXT_BINARY)
+				{
+					data = RXA_SERIES(frm, 3);
+					dataBuffer = (REBYTE *)RL_SERIES(data, RXI_SER_DATA) + RXA_INDEX(frm, 3);
+
+					if ((RL_SERIES(data, RXI_SER_TAIL) - RXA_INDEX(frm, 3)) < AES_IV_SIZE) return RXR_NONE;
+
+					memcpy(iv, dataBuffer, AES_IV_SIZE);
+				}
+				else
+				{
+					memset(iv, 0, AES_IV_SIZE);
+				}
 
 				//key defined - setup new context
 				ctx = (AES_CTX*)OS_Make(sizeof(*ctx));
@@ -307,7 +320,7 @@ static u32 *core_ext_words;
 					(len == 128) ? AES_MODE_128 : AES_MODE_256
 				);
 
-				if (RXA_WORD(frm, 6)) // decrypt refinement
+				if (RXA_WORD(frm, 7)) // decrypt refinement
 					AES_convert_key(ctx);
 
 				RXA_TYPE(frm, 1) = RXT_HANDLE;
@@ -451,6 +464,7 @@ static u32 *core_ext_words;
 							break;
 						case W_CORE_G:
 							dh_ctx.g = objData;
+							dh_ctx.glen = RL_SERIES(val.series, RXI_SER_TAIL) - val.index;
 							break;
 					}
 				}

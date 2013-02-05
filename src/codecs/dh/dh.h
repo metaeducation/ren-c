@@ -9,6 +9,7 @@ The code uses Bigint implementation Copyright (c) 2007, Cameron Rich
 typedef struct
 {
 	int	len;		//length of keys in bytes
+	int glen;		//length of generator in bytes
     uint8_t *p;		// prime modulus
     uint8_t *g;		// generator
     uint8_t *x;		// private key
