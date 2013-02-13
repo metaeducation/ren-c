@@ -3,7 +3,7 @@ REBOL [
 	name: 'tls
 	type: 'module
 	author: rights: "Richard 'Cyphre' Smolak"
-	version: 0.6.0
+	version: 0.6.1
 	todo: {
 		-cached sessions
 		-automagic cert data lookup
@@ -191,7 +191,8 @@ write-proto-states: [
 	change-cipher-spec [finished]
 	encrypted-handshake [application]
 	application [application alert]
-	alert []
+	alert [close-notify]
+	close-notify []
 ]
 
 get-next-proto-state: func [
@@ -381,6 +382,20 @@ application-data: func [
 	return ctx/msg
 ]
 
+alert-close-notify: func [
+	ctx [object!]
+][
+	message: encrypt-data ctx #{0100} ;close notify
+	emit ctx [
+		#{15}			; protocol type (21=Alert)
+		ctx/version			; protocol version (3|1 = TLS1.0)
+		to-bin length? message 2	; length of SSL record data			
+		message
+	]
+	return ctx/msg
+]
+
+
 finished: func [
 	ctx [object!]
 ][
@@ -538,12 +553,13 @@ parse-messages: func [
 	
 	if ctx/encrypted? [
 		change data decrypt-data ctx data
-		debug ["decrypted:" copy/part data 128 "..."]
+		debug ["decrypting..."]
 		if ctx/block-size [
 			;deal with padding in CBC mode
 			data: copy/part data (length? data) - 1 - (to integer! last data)
-			debug ["depadded:" copy/part data 128 "..."]
+			debug ["depadding..."]
 		]
+		debug ["data:" data]
 	]
 	debug [ctx/seq-num-r ctx/seq-num-w "READ <--" proto/type]
 	
@@ -765,7 +781,7 @@ parse-messages: func [
 							copy/part data len + 4
 						] ctx/hash-method decode 'text ctx/server-mac-key
 					[
-						do make error! "Bad record MAC"
+						do make error! "Bad handshake record MAC"
 					]
 					4 + ctx/hash-size
 				][
@@ -780,9 +796,22 @@ parse-messages: func [
 			]
 		]
 		application [
-			append result context [
+			append result msg-obj: context [
 				type: 'app-data
 				content: copy/part data (length? data) - ctx/hash-size
+			]
+			len: length? msg-obj/content
+			mac: copy/part skip data len ctx/hash-size
+			;check the MAC
+			if mac <> checksum/method/key rejoin [
+				to-bin ctx/seq-num-r 8	;sequence number (64-bit int in R3)
+				#{17}					;msg type
+				ctx/version				;version
+				to-bin len 2			;msg content length												
+				msg-obj/content			;content
+			] ctx/hash-method decode 'text ctx/server-mac-key
+			[
+				do make error! "Bad application record MAC"
 			]
 		]
 	]
@@ -871,6 +900,7 @@ do-commands: func [
 				| 'change-cipher-spec (change-cipher-spec ctx)
 				| 'finished (encrypted-handshake-msg ctx finished ctx)
 				| 'application  set arg [string! | binary!] (application-data ctx arg)
+				| 'close-notify (alert-close-notify ctx)
 			] (
 				debug [ctx/seq-num-r ctx/seq-num-w "WRITE -->" cmd]
 				ctx/seq-num-w: ctx/seq-num-w + 1
@@ -962,7 +992,10 @@ tls-awake: funct [event [event!]] [
 	tls-port: port/locals
 	tls-awake: :tls-port/awake
 	
-	unless port/data [
+	if all [
+		tls-port/state/protocol-state = 'application
+		not port/data
+	][
 		;reset the data field when interleaving port r/w states
 		tls-port/data: none
 	]
@@ -989,9 +1022,14 @@ tls-awake: funct [event [event!]] [
 			return false
 		]
 		wrote [
-			if tls-port/state/protocol-state = 'application [
-				insert system/ports/system make event! [type: 'wrote port: tls-port]
-				return false
+			switch tls-port/state/protocol-state [
+				close-notify [
+					return true
+				]
+				application [
+					insert system/ports/system make event! [type: 'wrote port: tls-port]
+					return false
+				]
 			]
 			read port
 			return false
@@ -1001,13 +1039,24 @@ tls-awake: funct [event [event!]] [
 			complete?: tls-read-data tls-port/state port/data
 			application?: false
 			foreach proto tls-port/state/resp [
-				if proto/type = 'application [
-					foreach msg proto/messages [
-						if msg/type = 'app-data [
-							unless tls-port/data [tls-port/data: clear tls-port/state/port-data]
-							append tls-port/data msg/content 
-							application?: true
-							msg/type: none
+				switch proto/type [
+					application [
+						foreach msg proto/messages [
+							if msg/type = 'app-data [
+								unless tls-port/data [tls-port/data: clear tls-port/state/port-data]
+								append tls-port/data msg/content 
+								application?: true
+								msg/type: none
+							]
+						]
+					]
+					alert [
+						foreach msg proto/messages [
+							if msg/description = "Close notify" [
+								do-commands tls-port/state [close-notify]
+								insert system/ports/system make event! [type: 'read port: tls-port]
+								return true
+							]
 						]
 					]
 				]
