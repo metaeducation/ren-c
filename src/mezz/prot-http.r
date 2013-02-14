@@ -356,6 +356,9 @@ do-redirect: func [port [port!] new-uri [url! string! file!] /local spec state] 
 		new-uri/port-id = spec/port-id
 	] [
 		spec/path: new-uri/path
+		;we need to reset tcp connection here before doing a redirect
+		close port/state/connection
+		open port/state/connection
 		do-request port
 		false
 	] [
