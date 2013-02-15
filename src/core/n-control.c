@@ -550,6 +550,7 @@ got_err:
 		if (IS_THROW(value)) return R_ARG1;
 		Throw_Error(VAL_ERR_OBJECT(value));
 
+	case REB_BINARY:
 	case REB_STRING:
 	case REB_URL:
 	case REB_FILE:
