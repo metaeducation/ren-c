@@ -11,7 +11,7 @@ REBOL [
 	}
 	Name: 'http
 	Type: 'module
-	Version: 0.1.1
+	Version: 0.1.4
 	File: %prot-http.r
 	Purpose: {
 		This program defines the HTTP protocol scheme for REBOL 3.
@@ -26,7 +26,13 @@ sync-op: func [port body /local state] [
 	state/awake: :read-sync-awake
 	do body
 	if state/state = 'ready [do-request port]
-	unless port? wait [state/connection port/spec/timeout] [http-error "Timeout"]
+	;NOTE: We'll wait in a WHILE loop so the timeout cannot occur during 'reading-data state.
+	;The timeout should be triggered only when the response from other side exceeds the timeout value.
+	;--Richard
+	while [not find [ready close] state/state][
+		unless port? wait [state/connection port/spec/timeout] [http-error "Timeout"]
+		if state/state = 'reading-data [read state/connection]
+	]
 	body: copy port
 	if all [
 		select state/info/headers 'Content-Type
@@ -97,6 +103,8 @@ http-awake: func [event /local port http-port state awake res] [
 						state/error: make-http-error "Server closed connection"
 						awake make event! [type: 'error port: http-port]
 					] [
+						;set state to CLOSE so the WAIT loop in 'sync-op can be interrupted --Richard
+						state/state: 'close
 						any [
 							awake make event! [type: 'done port: http-port]
 							awake make event! [type: 'close port: http-port]
@@ -374,12 +382,14 @@ check-data: func [port /local headers res data out chunk-size mk1 mk2 trailer st
 	case [
 		headers/transfer-encoding = "chunked" [
 			data: conn/data
-			out: port/data: make binary! length? data
+			;clear the port data only at the beginning of the request --Richard
+			unless port/data [port/data: make binary! length? data]
+			out: port/data
 			until [
 				either parse/all data [
 					copy chunk-size some hex-digits thru crlfbin mk1: to end
 				] [
-					chunk-size: to integer! to issue! chunk-size
+					chunk-size: to integer! to issue! to string! chunk-size
 					either chunk-size = 0 [
 						if parse/all mk1 [
 							crlfbin (trailer: "") to end | copy trailer to crlf2bin to end
@@ -406,7 +416,10 @@ check-data: func [port /local headers res data out chunk-size mk1 mk2 trailer st
 					true
 				]
 			]
-			unless state/state = 'ready [read conn]
+			unless state/state = 'ready [
+				;Awake from the WAIT loop to prevent timeout when reading big data. --Richard
+				res: true
+			]
 		]
 		integer? headers/content-length [
 			port/data: conn/data
@@ -415,12 +428,19 @@ check-data: func [port /local headers res data out chunk-size mk1 mk2 trailer st
 				conn/data: make binary! 32000
 				res: state/awake make event! [type: 'custom port: port code: 0]
 			] [
-				read conn
+				;Awake from the WAIT loop to prevent timeout when reading big data. --Richard
+				res: true
 			]
 		]
 		true [
 			port/data: conn/data
-			read conn
+			either state/info/response-parsed = 'ok [
+				;Awake from the WAIT loop to prevent timeout when reading big data. --Richard
+				res: true
+			][
+				;On other response than OK read all data asynchronously (assuming the data are small). --Richard
+				read conn
+			]
 		]
 	]
 	res
