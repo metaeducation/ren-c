@@ -16,12 +16,11 @@ REBOL [
 	Note: "Remove older/unused fields before beta release"
 ]
 
-product:  'core
-
-; Next three fields are updated during build:
+; Next four fields are updated during build:
 version:  0.0.0
 build:    1
 platform: none
+product:  'core
 
 license: {Copyright 2012 REBOL Technologies
 REBOL is a trademark of REBOL Technologies

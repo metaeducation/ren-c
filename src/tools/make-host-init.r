@@ -146,6 +146,12 @@ load-files: func [
 ][
 	data: make block! 100
 	;append data [print "REBOL Host-Init"] ; for startup debug only
+	if block? system/options/args [
+		;overwrite SYSTEM/PRODUCT value if specified explicitly as first argument
+		append data compose [
+			system/product: (to lit-word! system/options/args/1)
+		]
+	]
 	foreach file file-list [
 		print ["loading:" file]
 		file: load/header file

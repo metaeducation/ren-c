@@ -38,6 +38,8 @@ I= -I$(INCL) -I$S/include/ -I $S/codecs/png/ -I $S/codecs/rc4/ -I $S/codecs/rsa/
 
 TO_OS?= TO_WIN32
 OS_ID?= 0.3.1
+LIB_PRODUCT_NAME= core #note: this can be overriden by the HOST_PRODUCT_NAME
+HOST_PRODUCT_NAME= core
 BIN_SUFFIX= .exe
 RAPI_FLAGS=  -O2 -DUNICODE
 HOST_CORE_FLAGS= -DREB_CORE -DREB_EXE -O2 -DUNICODE -DCUSTOM_STARTUP -D_FILE_OFFSET_BITS=64
@@ -45,7 +47,6 @@ HOST_VIEW_FLAGS= -DREB_EXE -O2 -DUNICODE -DCUSTOM_STARTUP -D_FILE_OFFSET_BITS=64
 ENCAP_CORE_FLAGS= -DENCAP -DEXT_LICENSING $(HOST_CORE_FLAGS)
 ENCAP_VIEW_FLAGS= -DENCAP -DEXT_LICENSING $(HOST_VIEW_FLAGS)
 RLIB_FLAGS=
-
 # Flags for core and for host:
 RFLAGS= -c -D$(TO_OS) -DREB_API  $(RAPI_FLAGS) $I
 HFLAGS= -c -D$(TO_OS) $(HOST_FLAGS) $I
@@ -79,35 +80,35 @@ clean:
 all:
 	make clean
 	make lib
-	make r3-core-host
-	make r3-view-host
-	make r3-core
-	make r3-view
-	make encap-core
-	make encap-view
+	make r3-core-host HOST_PRODUCT_NAME=saphir-core-host
+	make r3-view-host HOST_PRODUCT_NAME=saphir-view-host
+	make r3-core HOST_PRODUCT_NAME=saphir-core
+	make r3-view HOST_PRODUCT_NAME=saphir-view
+	make encap-core HOST_PRODUCT_NAME=saphir-core-encap
+	make encap-view HOST_PRODUCT_NAME=saphir-view-encap
 
 prep-lib:
 	$(REBOL) $T/make-headers.r
-	$(REBOL) $T/make-boot.r $(OS_ID)
+	$(REBOL) $T/make-boot.r $(OS_ID) $(LIB_PRODUCT_NAME)
 	$(REBOL) $T/make-os-ext.r # ok, but not always
 	$(REBOL) $T/make-reb-lib.r
 	-rm -f $(OBJS)
 
 prep-core:
-	$(REBOL) $T/rma-init.r
+	$(REBOL) $T/rma-init.r $(HOST_PRODUCT_NAME)
 	$(REBOL) $T/core-ext.r
 	$(eval HOST_FLAGS =$(HOST_CORE_FLAGS))
 	-rm -f $(HOST)
 
 prep-view:
-	$(REBOL) $T/rma-init.r
+	$(REBOL) $T/rma-init.r $(HOST_PRODUCT_NAME)
 	$(REBOL) $T/core-ext.r
 	$(REBOL) $T/view-ext.r
 	$(eval HOST_FLAGS =$(HOST_VIEW_FLAGS))
 	-rm -f $(HOST)
 
 prep-encap-view:
-	$(REBOL) $T/encap-init.r
+	$(REBOL) $T/encap-init.r $(HOST_PRODUCT_NAME)
 	$(REBOL) $T/core-ext.r
 	$(REBOL) $T/licensing-ext.r
 	$(REBOL) $T/view-ext.r
@@ -116,7 +117,7 @@ prep-encap-view:
 	-rm -f $(HOST_ENCAP)
 
 prep-encap-boot-view:
-	$(REBOL) $T/encap-boot-init.r
+	$(REBOL) $T/encap-boot-init.r $(HOST_PRODUCT_NAME)
 	$(REBOL) $T/core-ext.r
 	$(REBOL) $T/licensing-ext.r
 	$(REBOL) $T/view-ext.r
@@ -133,7 +134,7 @@ prep-encap-core:
 	-rm -f $(HOST_ENCAP)
 
 prep-encap-boot-core:
-	$(REBOL) $T/encap-boot-init.r
+	$(REBOL) $T/encap-boot-init.r $(HOST_PRODUCT_NAME)
 	$(REBOL) $T/core-ext.r
 	$(REBOL) $T/licensing-ext.r
 	$(eval HOST_FLAGS =$(ENCAP_CORE_FLAGS))
