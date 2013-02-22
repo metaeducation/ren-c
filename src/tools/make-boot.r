@@ -788,7 +788,11 @@ when/zone: 0:00
 change at-value build when
 
 plats: load %platforms.r
-change/only at-value platform reduce [pick plats version/4 * 2 - 1 pick pick plats version/4 * 2 version/5]
+
+change/only at-value platform reduce [
+	any [pick plats version/4 * 2 - 1 "Unknown"]
+	any [select pick plats version/4 * 2 version/5 ""]
+]
 
 ob: context boot-sysobj
 

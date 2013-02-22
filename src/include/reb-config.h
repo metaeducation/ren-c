@@ -204,6 +204,12 @@ These are now obsolete (as of A107) and should be removed:
 #define NO_DL_LIB
 #endif
 
+#ifdef TO_ANDROID_ARM				// Android/ARM
+#undef MIN_OS
+#define ENDIAN_LITTLE
+#define HAS_LL_CONSTS
+#endif
+
 
 //* Defaults ***********************************************************
 
