@@ -374,8 +374,8 @@ static void Make_CRC32_Table(void) {
 	}
 }
 
-static unsigned long Update_CRC32(u32 crc, REBYTE *buf, int len) {
-	u32 c = crc;
+REBCNT Update_CRC32(u32 crc, REBYTE *buf, int len) {
+	u32 c = ~crc;
 	int n;
 
 	if(!crc32_table) Make_CRC32_Table();
@@ -383,7 +383,7 @@ static unsigned long Update_CRC32(u32 crc, REBYTE *buf, int len) {
 	for(n = 0; n < len; n++)
 		c = crc32_table[(c^buf[n])&0xff]^(c>>8);
 
-	return c;
+	return ~c;
 }
 
 /***********************************************************************
@@ -392,20 +392,9 @@ static unsigned long Update_CRC32(u32 crc, REBYTE *buf, int len) {
 /*
 ***********************************************************************/
 {
-	return Update_CRC32(0xffffffffL, buf, len) ^ 0xffffffffL;
+	return Update_CRC32(0x00000000L, buf, len);
 }
 
-/***********************************************************************
-**
-*/	REBCNT CRC32_Incremental(u32 crc, REBYTE *buf, REBCNT len)
-/*
-**		Incremental version of CRC32.
-**		Used for building checksum of chunked data.
-**
-***********************************************************************/
-{
-	return ~Update_CRC32(~crc, buf, len);
-}
 
 
 #ifdef ndef

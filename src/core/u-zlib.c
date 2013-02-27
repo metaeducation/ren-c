@@ -48,9 +48,9 @@ uLong ZEXPORT adler32(adler, buf, len)
 uLong crc32(uLong num, const Bytef *buf, uInt len)
 {
 #ifndef CRC_DEFINED
-	extern uLong CRC32_Incremental(uLong, unsigned char *, uInt);
+	extern uLong Update_CRC32(uLong, unsigned char *, uInt);
 #endif
-	return (len == 0) ? num : CRC32_Incremental(num, (unsigned char *)buf, len);
+	return (len == 0) ? num : Update_CRC32(num, (unsigned char *)buf, len);
 }
 
 ///////////////////////////////////////////
