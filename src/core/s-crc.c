@@ -395,6 +395,17 @@ static unsigned long Update_CRC32(u32 crc, REBYTE *buf, int len) {
 	return Update_CRC32(0xffffffffL, buf, len) ^ 0xffffffffL;
 }
 
+/***********************************************************************
+**
+*/	REBCNT CRC32_Incremental(u32 crc, REBYTE *buf, REBCNT len)
+/*
+**		Incremental version of CRC32.
+**		Used for building checksum of chunked data.
+**
+***********************************************************************/
+{
+	return ~Update_CRC32(~crc, buf, len);
+}
 
 
 #ifdef ndef
