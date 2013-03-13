@@ -21,6 +21,10 @@ either script-file: system/options/script [
 	
 	script: include/only script-file
 	
+	insert script compose [
+		system/script/header: (first load/header script-file)
+	]
+	
 	prin "Encapping data..."
 	
 	key: form now/precise
