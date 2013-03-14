@@ -273,4 +273,4 @@ typedef void(*CFUNC)(void *);
 
 #define MAKE_STR(n) (REBCHR*)(malloc((n) * sizeof(REBCHR)))  // OS chars!
 
-#define ROUND_TO_INT(d) (REBINT)(floor((d) + 0.5))
+#define ROUND_TO_INT(d) (REBINT)(floor((MAX(MIN_I32, MIN(MAX_I32, d))) + 0.5))
