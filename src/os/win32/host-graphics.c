@@ -565,6 +565,11 @@ void* Rich_Text;
                                 }
                             }
                             break;
+							
+							default:
+								//reset font styles
+								rt_set_font_styles(font, 0);
+								break;
                         }
                         break;
 
