@@ -38,6 +38,7 @@ I= -I$(INCL) -I$S/include/ -I $S/codecs/png/ -I $S/codecs/rc4/ -I $S/codecs/rsa/
 
 TO_OS?= TO_WIN32
 OS_ID?= 0.3.1
+BIT= -m32
 LIB_PRODUCT_NAME= core #note: this can be overriden by the HOST_PRODUCT_NAME
 HOST_PRODUCT_NAME= core
 BIN_SUFFIX= .exe
@@ -48,8 +49,8 @@ ENCAP_CORE_FLAGS= -DENCAP -DEXT_LICENSING $(HOST_CORE_FLAGS)
 ENCAP_VIEW_FLAGS= -DENCAP -DEXT_LICENSING $(HOST_VIEW_FLAGS)
 RLIB_FLAGS=
 # Flags for core and for host:
-RFLAGS= -c -D$(TO_OS) -DREB_API  $(RAPI_FLAGS) $I
-HFLAGS= -c -D$(TO_OS) $(HOST_FLAGS) $I
+RFLAGS= -c $(BIT) -D$(TO_OS) -DREB_API  $(RAPI_FLAGS) $I
+HFLAGS= -c $(BIT) -D$(TO_OS) $(HOST_FLAGS) $I
 #-DREB_CORE
 #CLIB= -lm  -lwsock32 -lcomdlg32 -lgdi32 -lstdc++ -mwindows -Wl,--stack=4194300
 CLIB= -L. -static-libgcc -lm -lwsock32 -lcomdlg32 -lgdi32 -lstdc++ -liphlpapi -Wl,--stack=4194300
@@ -241,6 +242,12 @@ r3-core: prep-core objs $(OBJS) $(HOST)
 	$(STRIP) r3-core$(BIN_SUFFIX)
 	$(LS) r3-core$(BIN_SUFFIX)
 
+# Directly linked r3 core 64bit executable:
+r3-core-64: prep-core objs $(OBJS) $(HOST)
+	$(CC) -o r3-core$(BIN_SUFFIX) $(OBJS) $(HOST) $(CLIB)
+	$(STRIP) r3-core$(BIN_SUFFIX)
+	$(LS) r3-core$(BIN_SUFFIX)
+
 # Lint r3 core
 lint-r3-core: prep-core
 	lint-nt c:/lint/include.lnt std.lnt -I../src/include -dTO_WIN32 $(wildcard ../src/core/*.c) > lint.out
@@ -269,6 +276,7 @@ encap-exe-view: prep-encap-view $(OBJS) $(HOST_ENCAP) $(HOST) $(GFX) $(AGG)
 encap-boot-view: prep-encap-boot-view objs $(OBJS) $(HOST_ENCAP) $(HOST) $(GFX) $(AGG)
 	$(CC) -o encap-boot.bin $(OBJS) $(HOST_ENCAP) $(HOST) $(GFX) $(AGG) $(GUI_CLIB)
 	$(STRIP) encap-boot.bin
+	upx --ultra-brute encap-boot.bin
 
 encap-exe-core: prep-encap-core $(OBJS) $(HOST_ENCAP) $(HOST)
 	$(CC) -o encap-core$(BIN_SUFFIX) $(OBJS) $(HOST_ENCAP) $(HOST) $(CLIB)
@@ -278,6 +286,7 @@ encap-exe-core: prep-encap-core $(OBJS) $(HOST_ENCAP) $(HOST)
 encap-boot-core: prep-encap-boot-core objs $(OBJS) $(HOST_ENCAP) $(HOST)
 	$(CC) -o encap-boot.bin $(OBJS) $(HOST_ENCAP) $(HOST) $(CLIB)
 	$(STRIP) encap-boot.bin
+	upx --ultra-brute encap-boot.bin
 
 objs:
 	mkdir -p objs
