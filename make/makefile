@@ -56,8 +56,10 @@ HFLAGS= -c $(BIT) -D$(TO_OS) $(HOST_FLAGS) $I
 CLIB= -L. -static-libgcc -lm -lwsock32 -lcomdlg32 -lgdi32 -lstdc++ -liphlpapi -Wl,--stack=4194300
 GUI_CLIB= -L. -static-libgcc -lm -lwsock32 -lcomdlg32 -lgdi32 -lstdc++ -liphlpapi -Wl,--stack=4194300 -mwindows
 
+UPX= $(CD)upx$(BIN_SUFFIX) --ultra-brute
+
 # REBOL builds various include files:
-REBOL=	$(CD)r3-make -qs >NUL:
+REBOL=	$(CD)r3-make$(BIN_SUFFIX) -qs >NUL:
 
 # For running tests, ship, build, etc.
 R3=	$(CD)r3$(BIN_SUFFIX) -qs
@@ -276,7 +278,7 @@ encap-exe-view: prep-encap-view $(OBJS) $(HOST_ENCAP) $(HOST) $(GFX) $(AGG)
 encap-boot-view: prep-encap-boot-view objs $(OBJS) $(HOST_ENCAP) $(HOST) $(GFX) $(AGG)
 	$(CC) -o encap-boot.bin $(OBJS) $(HOST_ENCAP) $(HOST) $(GFX) $(AGG) $(GUI_CLIB)
 	$(STRIP) encap-boot.bin
-	upx --ultra-brute encap-boot.bin
+	$(UPX) encap-boot.bin
 
 encap-exe-core: prep-encap-core $(OBJS) $(HOST_ENCAP) $(HOST)
 	$(CC) -o encap-core$(BIN_SUFFIX) $(OBJS) $(HOST_ENCAP) $(HOST) $(CLIB)
@@ -286,7 +288,7 @@ encap-exe-core: prep-encap-core $(OBJS) $(HOST_ENCAP) $(HOST)
 encap-boot-core: prep-encap-boot-core objs $(OBJS) $(HOST_ENCAP) $(HOST)
 	$(CC) -o encap-boot.bin $(OBJS) $(HOST_ENCAP) $(HOST) $(CLIB)
 	$(STRIP) encap-boot.bin
-	upx --ultra-brute encap-boot.bin
+	$(UPX) encap-boot.bin
 
 objs:
 	mkdir -p objs
