@@ -428,6 +428,10 @@ mark_obj:
 	for (seg = Mem_Pools[GOB_POOL].segs; seg; seg = seg->next) {
 		gob = (REBGOB *) (seg + 1);
 		for (n = Mem_Pools[GOB_POOL].units; n > 0; n--) {
+#ifdef MUNGWALL
+			gob = (gob *) (((REBYTE *)s)+MUNG_SIZE);
+			MUNG_CHECK(GOB_POOL, gob, sizeof(*gob));
+#endif
 			if (IS_GOB_USED(gob)) {
 				if (IS_GOB_MARK(gob))
 					UNMARK_GOB(gob);
@@ -437,6 +441,9 @@ mark_obj:
 				}
 			}
 			gob++;
+#ifdef MUNGWALL
+			gob = (gob *) (((REBYTE *)s)+MUNG_SIZE);
+#endif
 		}
 	}
 
