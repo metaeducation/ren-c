@@ -115,9 +115,11 @@ static void Mark_Series(REBSER *series, REBCNT depth);
 	REBGOB **pane;
 	REBCNT i;
 
+	if (IS_GOB_MARK(gob)) return;
+
 	MARK_GOB(gob);
 
-	if (GOB_PANE(gob) && !IS_MARK_SERIES(GOB_PANE(gob))) {
+	if (GOB_PANE(gob)) {
 		MARK_SERIES(GOB_PANE(gob));
 		pane = GOB_HEAD(gob);
 		for (i = 0; i < GOB_TAIL(gob); i++, pane++) {
