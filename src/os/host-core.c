@@ -75,7 +75,6 @@ static u32 *core_ext_words;
 
     case CMD_CORE_TO_PNG:
 		{
-			LodePNG_Encoder encoder; 
 			size_t buffersize;
 			REBYTE *buffer;
 			REBSER *binary;
@@ -83,23 +82,27 @@ static u32 *core_ext_words;
 			REBINT *s;
 			REBINT w = RXA_IMAGE_WIDTH(frm,1);
 			REBINT h = RXA_IMAGE_HEIGHT(frm,1);
-
-			//create encoder and set settings
-			LodePNG_Encoder_init(&encoder);
+			LodePNGState state;
+			unsigned error;
+			
+			lodepng_state_init(&state);
+			
 			//disable autopilot ;)
-			encoder.settings.auto_choose_color = 0;
+			state.encoder.auto_convert = LAC_NO;
 			//input format
-			encoder.infoRaw.color.colorType = 6;
-			encoder.infoRaw.color.bitDepth = 8;
+			state.info_raw.colortype = LCT_RGBA;
+			state.info_raw.bitdepth = 8;
 			//output format
-			encoder.infoPng.color.colorType = 2; //6 to save alpha channel as well
-			encoder.infoPng.color.bitDepth = 8;
-
-			//encode and save
-			LodePNG_Encoder_encode(&encoder, &buffer, &buffersize, RXA_IMAGE_BITS(frm,1), w, h);
-
+			state.info_png.color.colortype = LCT_RGBA;
+			state.info_png.color.bitdepth = 8;
+			
+			//encode
+			error = lodepng_encode(&buffer, &buffersize, RXA_IMAGE_BITS(frm,1), w, h, &state);
+			
 			//cleanup
-			LodePNG_Encoder_cleanup(&encoder);
+			lodepng_state_cleanup(&state);
+			
+			if (error) return RXR_NONE;
 
 			//allocate new binary!
 			binary = (REBSER*)RL_Make_String(buffersize, FALSE);

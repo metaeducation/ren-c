@@ -71,6 +71,7 @@ struct rebol_value {
 #define VAL_LOGIC(v)		((v)->data.int32)
 #define	VAL_TUPLE(v)		((v)->data.tuple.tuple+1)
 #define	VAL_TUPLE_LEN(v)	((v)->data.tuple.tuple[0])
+#define VAL_COLOR_TUPLE(v)  (TO_RGBA_COLOR(VAL_TUPLE(v)[1], VAL_TUPLE(v)[2], VAL_TUPLE(v)[3], VAL_TUPLE(v)[0] > 3 ? VAL_TUPLE(v)[4] : 0xff)) //always RGBA order
 #define	VAL_PAIR(v)			((v)->data.pair)
 #define VAL_WORD(v)			((v)->data.word.index)
 #define VAL_WORD_SYM(v)		((v)->data.word.sym)
@@ -82,4 +83,3 @@ struct rebol_value {
 #define	VAL_IMAGE_WIDE(v)	(IMG_WIDE(VAL_SERIES(v)))
 #define	VAL_IMAGE_HIGH(v)	(IMG_HIGH(VAL_SERIES(v)))
 #define	VAL_IMAGE_DATA(v)   (IMG_DATA(VAL_SERIES(v)))
-

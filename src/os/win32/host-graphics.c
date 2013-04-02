@@ -512,7 +512,7 @@ void* Rich_Text;
         break;
 
     case CMD_TEXT_COLOR:
-        rt_color(ctx->envr, RXA_TUPLE(frm,1) + 1);
+        rt_color(ctx->envr, RXA_COLOR_TUPLE(frm,1));
        break;
 
     case CMD_TEXT_DROP:
@@ -579,8 +579,10 @@ void* Rich_Text;
                         break;
 
                     case W_TEXT_COLOR:
-                        if (type == RXT_TUPLE)
-                            memcpy(font->color,val.bytes + 1 , 4);
+                        if (type == RXT_TUPLE) {
+							REBCNT col = RXI_COLOR_TUPLE(val);
+							memcpy(font->color,(REBYTE*)&col , 4);
+						}
                         break;
 
                     case W_TEXT_OFFSET:
@@ -621,7 +623,10 @@ void* Rich_Text;
                                             break;
 
                                         case RXT_TUPLE:
-                                            memcpy(font->shadow_color,shadowVal.bytes + 1 , 4);
+											{
+												REBCNT col = RXI_COLOR_TUPLE(shadowVal);
+												memcpy(font->shadow_color,(REBYTE*)&col , 4);
+											}
                                             break;
 
                                         case RXT_INTEGER:
@@ -732,7 +737,7 @@ void* Rich_Text;
 		break;
 
     case CMD_TEXT_SHADOW:
-        rt_shadow(ctx->envr, RXA_PAIR(frm, 1), RXA_TUPLE(frm,2) + 1, RXA_INT32(frm,3));
+        rt_shadow(ctx->envr, RXA_PAIR(frm, 1), RXA_COLOR_TUPLE(frm,2), RXA_INT32(frm,3));
         break;
 
 	case CMD_TEXT_SIZE:
@@ -927,7 +932,7 @@ void* Rich_Text;
 		break;
 
 	case CMD_DRAW_ARROW:
-		agg_arrow(ctx->envr, RXA_PAIR(frm, 1), (RXA_TYPE(frm, 2) == RXT_NONE) ? NULL : RXA_TUPLE(frm, 2)+1);
+		agg_arrow(ctx->envr, RXA_PAIR(frm, 1), (RXA_TYPE(frm, 2) == RXT_NONE) ? 0 : RXA_COLOR_TUPLE(frm, 2));
 		break;
 
 	case CMD_DRAW_BOX:
@@ -961,9 +966,9 @@ void* Rich_Text;
 			//REBSER* img;
 
         if (RXA_TYPE(frm, 1) == RXT_TUPLE)
-            agg_fill_pen(ctx->envr, RXA_TUPLE(frm, 1)+1);
+			agg_fill_pen(ctx->envr, RXA_COLOR_TUPLE(frm, 1));
         else if (RXA_TYPE(frm, 1) == RXT_LOGIC && !RXA_LOGIC(frm,1))
-            agg_fill_pen(ctx->envr, NULL);
+            agg_fill_pen(ctx->envr, 0);
         else {
             agg_fill_pen_image(ctx->envr, RXA_IMAGE_BITS(frm,1), RXA_IMAGE_WIDTH(frm,1), RXA_IMAGE_HEIGHT(frm,1));
             }
@@ -1012,7 +1017,7 @@ void* Rich_Text;
         break;
 
     case CMD_DRAW_IMAGE_OPTIONS:
-        agg_image_options(ctx->envr, (RXA_TYPE(frm, 1) == RXT_NONE) ? NULL : RXA_TUPLE(frm, 1)+1, RL_FIND_WORD(draw_ext_words , RXA_WORD(frm, 2)) - W_DRAW_NO_BORDER);
+        agg_image_options(ctx->envr, (RXA_TYPE(frm, 1) == RXT_NONE) ? 0 : RXA_COLOR_TUPLE(frm, 1), RL_FIND_WORD(draw_ext_words , RXA_WORD(frm, 2)) - W_DRAW_NO_BORDER);
         break;
 
     case CMD_DRAW_IMAGE_PATTERN:
@@ -1058,7 +1063,7 @@ void* Rich_Text;
 
 	case CMD_DRAW_LINE_PATTERN:
         if (RXA_TYPE(frm, 2) == RXT_NONE)
-            agg_line_pattern(ctx->envr, NULL, NULL);
+            agg_line_pattern(ctx->envr, 0, 0);
         else {
             REBSER patterns = RXA_SERIES(frm, 2);
             REBINT len = RL_SERIES(patterns, RXI_SER_TAIL);
@@ -1080,7 +1085,7 @@ void* Rich_Text;
                     else
                         break;
                 }
-                agg_line_pattern(ctx->envr, RXA_TUPLE(frm, 1)+1, pattern);
+                agg_line_pattern(ctx->envr, RXA_COLOR_TUPLE(frm, 1), pattern);
             }
 
         }
@@ -1096,9 +1101,9 @@ void* Rich_Text;
 
 	case CMD_DRAW_PEN:
         if (RXA_TYPE(frm, 1) == RXT_TUPLE)
-            agg_pen(ctx->envr, RXA_TUPLE(frm, 1)+1);
+            agg_pen(ctx->envr, RXA_COLOR_TUPLE(frm, 1));
         else if (RXA_TYPE(frm, 1) == RXT_LOGIC && !RXA_LOGIC(frm,1))
-            agg_pen(ctx->envr, NULL);
+            agg_pen(ctx->envr, 0);
         else
             agg_pen_image(ctx->envr, RXA_IMAGE_BITS(frm,1), RXA_IMAGE_WIDTH(frm,1), RXA_IMAGE_HEIGHT(frm,1));
 		break;
@@ -1216,15 +1221,15 @@ void* Rich_Text;
 
 	case CMD_DRAW_TRIANGLE:
         {
-            REBYTE b[4] = {0,0,0,0};
+            REBCNT b = 0xff000000;
             agg_triangle(
                 ctx->envr,
                 RXA_PAIR(frm, 1), // vertex-1
                 RXA_PAIR(frm, 2), // vertex-2
                 RXA_PAIR(frm, 3), // vertex-3
-                (RXA_TYPE(frm, 4) == RXT_NONE) ? NULL : RXA_TUPLE(frm, 4)+1, // color-1
-                (RXA_TYPE(frm, 5) == RXT_NONE) ? b : RXA_TUPLE(frm, 5)+1, // color-2
-                (RXA_TYPE(frm, 6) == RXT_NONE) ? b : RXA_TUPLE(frm, 6)+1, // color-3
+                (RXA_TYPE(frm, 4) == RXT_NONE) ? 0 : RXA_COLOR_TUPLE(frm, 4), // color-1
+                (RXA_TYPE(frm, 5) == RXT_NONE) ? b : RXA_COLOR_TUPLE(frm, 5), // color-2
+                (RXA_TYPE(frm, 6) == RXT_NONE) ? b : RXA_COLOR_TUPLE(frm, 6), // color-3
                 (RXA_TYPE(frm, 7) == RXT_DECIMAL) ? RXA_DEC64(frm, 7) : RXA_INT64(frm, 7) // dilation
             );
         }

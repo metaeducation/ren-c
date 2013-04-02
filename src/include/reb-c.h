@@ -274,3 +274,13 @@ typedef void(*CFUNC)(void *);
 #define MAKE_STR(n) (REBCHR*)(malloc((n) * sizeof(REBCHR)))  // OS chars!
 
 #define ROUND_TO_INT(d) (REBINT)(floor((MAX(MIN_I32, MIN(MAX_I32, d))) + 0.5))
+
+
+
+#ifdef ENDIAN_BIG
+#define TO_RGBA_COLOR(r,g,b,a) (REBCNT)((r)<<24 | (g)<<16 | (b)<<8 |  (a))
+#define TO_PIXEL_COLOR(r,g,b,a) (REBCNT)((b)<<24 | (g)<<16 | (r)<<8 |  (a))
+#else
+#define TO_RGBA_COLOR(r,g,b,a) (REBCNT)((a)<<24 | (b)<<16 | (g)<<8 |  (r))
+#define TO_PIXEL_COLOR(r,g,b,a) (REBCNT)((a)<<24 | (r)<<16 | (g)<<8 |  (b))
+#endif

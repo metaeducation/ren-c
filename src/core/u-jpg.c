@@ -271,7 +271,7 @@ void jpeg_load( char *buffer, int nbytes, char *output )
 	output = ( char * )dp;
 	for ( j=0; j<cinfo.image_width; j++ ) {
 		cp -= 3;
-		*--dp = cp[ 2 ] | ( cp[ 1 ] << 8 ) | ( ( uinteger32 )cp[ 0 ] << 16 );
+		*--dp = cp[ 2 ] | ( cp[ 1 ] << 8 ) | ( ( uinteger32 )cp[ 0 ] << 16 ) | 0xff000000;
 	}
   }
   else
@@ -285,7 +285,7 @@ void jpeg_load( char *buffer, int nbytes, char *output )
 	  output = ( char * )dp;
 	  for ( j=0; j<cinfo.image_width; j++ ) {
 		c = *--cp;
-		*--dp = c | (c << 8) | (c << 16);
+		*--dp = c | (c << 8) | (c << 16) | 0xff000000;
 	  }
 	}
 

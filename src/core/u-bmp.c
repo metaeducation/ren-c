@@ -365,7 +365,7 @@ void Unmap_Bytes(void *srcp, REBYTE **dstp, char *map) {
 						c = *cp++ & 0xff;
 					}
 					color = &ctab[(c&x) != 0];
-					*dp++ = ((int)color->rgbRed << 16) |
+					*dp++ = 0xff000000 | ((int)color->rgbRed << 16) |
 							((int)color->rgbGreen << 8) | color->rgbBlue;
 					x >>= 1;
 				}
@@ -385,7 +385,7 @@ void Unmap_Bytes(void *srcp, REBYTE **dstp, char *map) {
 						goto error;
 					}
 					color = &ctab[x];
-					*dp++ = ((int)color->rgbRed << 16) |
+					*dp++ = 0xff000000 | ((int)color->rgbRed << 16) |
 							((int)color->rgbGreen << 8) | color->rgbBlue;
 				}
 				i = (w+1) / 2;
@@ -399,7 +399,7 @@ void Unmap_Bytes(void *srcp, REBYTE **dstp, char *map) {
 						goto error;
 					}
 					color = &ctab[c];
-					*dp++ = ((int)color->rgbRed << 16) |
+					*dp++ = 0xff000000 | ((int)color->rgbRed << 16) |
 							((int)color->rgbGreen << 8) | color->rgbBlue;
 				}
 				break;
@@ -407,9 +407,9 @@ void Unmap_Bytes(void *srcp, REBYTE **dstp, char *map) {
 			case 24:
 				for (i = 0; i<w; i++) {
 #ifdef ENDIAN_BIG
-					*dp++=cp[0]|(cp[1]<<8)|(cp[2]<<16);
+					*dp++=cp[0]|(cp[1]<<8)|(cp[2]<<16)|0xff000000;
 #else
-					*dp++ = (*(int *)cp) & 0xffffffL;
+					*dp++ = (*(int *)cp) | 0xff000000;
 #endif
 					cp += 3;
 				}
@@ -446,7 +446,7 @@ void Unmap_Bytes(void *srcp, REBYTE **dstp, char *map) {
 						}
 						else
 							color = &ctab[x&0x0f];
-						*dp++ = ((int)color->rgbRed << 16) |
+						*dp++ = 0xff000000 | ((int)color->rgbRed << 16) |
 							((int)color->rgbGreen << 8) | color->rgbBlue;
 					}
 					j = (c+1) / 2;
@@ -464,7 +464,7 @@ void Unmap_Bytes(void *srcp, REBYTE **dstp, char *map) {
 							color = &ctab[x&0x0f];
 						else
 							color = &ctab[x>>4];
-						*dp++ = ((int)color->rgbRed << 16) |
+						*dp++ = 0xff000000 | ((int)color->rgbRed << 16) |
 							((int)color->rgbGreen << 8) | color->rgbBlue;
 					}
 				}
@@ -487,7 +487,7 @@ void Unmap_Bytes(void *srcp, REBYTE **dstp, char *map) {
 					for (j = 0; j<c; j++) {
 						x = *cp++ & 0xff;
 						color = &ctab[x];
-						*dp++ = ((int)color->rgbRed << 16) |
+						*dp++ = 0xff000000 | ((int)color->rgbRed << 16) |
 							((int)color->rgbGreen << 8) | color->rgbBlue;
 					}
 					while (j++ % 2)
@@ -497,7 +497,7 @@ void Unmap_Bytes(void *srcp, REBYTE **dstp, char *map) {
 					x = *cp++ & 0xff;
 					for (j = 0; j<c; j++) {
 						color = &ctab[x];
-						*dp++ = ((int)color->rgbRed << 16) |
+						*dp++ = 0xff000000 | ((int)color->rgbRed << 16) |
 							((int)color->rgbGreen << 8) | color->rgbBlue;
 					}
 				}
