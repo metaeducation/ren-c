@@ -26,12 +26,6 @@
 **  Notes:
 **
 ***********************************************************************/
-/*
-**  It's a bit of a shame that alpha channels are represented with
-**  an inverted level compared to many standards. Alpha zero must
-**  be opaque in order for RGB tuples to be equal RGBA tuples.
-**  That is: 10.20.30 = 10.20.30.0
-*/
 
 #include "sys-core.h"
 
@@ -127,9 +121,10 @@
 /*
 ***********************************************************************/
 {
-	if (only) // only RGB, do not touch Alpha
+	if (only) {// only RGB, do not touch Alpha
+		color &= 0xffffff;
 		for (; len > 0; len--, ip++) *ip = (*ip & 0xff000000) | color;
-	else
+	} else
 		for (; len > 0; len--) *ip++ = color;
 }
 
