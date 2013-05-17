@@ -176,27 +176,6 @@ void* Rich_Text;
         case CMD_GRAPHICS_SHOW:
         {
             REBGOB* gob = (REBGOB*)RXA_SERIES(frm, 1);
-
-            switch (RL_FIND_WORD(graphics_ext_words,RXA_WORD(frm, 3))){
-                case 0: //most used case first
-                    break;
-                case W_GRAPHICS_RESTORE:
-                    CLR_GOB_STATES(gob, GOBS_MINIMIZED, GOBS_MAXIMIZED);
-                    SET_GOB_STATE(gob, GOBS_RESTORED);
-                    break;
-                case W_GRAPHICS_MINIMIZE:
-                    CLR_GOB_STATES(gob, GOBS_MAXIMIZED, GOBS_RESTORED);
-                    SET_GOB_STATE(gob, GOBS_MINIMIZED);
-                    break;
-                case W_GRAPHICS_MAXIMIZE:
-                    CLR_GOB_STATES(gob, GOBS_MINIMIZED, GOBS_RESTORED);
-                    SET_GOB_STATE(gob, GOBS_MAXIMIZED);
-                    break;
-                case W_GRAPHICS_ACTIVATE:
-                    SET_GOB_STATE(gob, GOBS_ACTIVE);
-                    break;
-            }
-
             Show_Gob(gob);
             RXA_TYPE(frm, 1) = RXT_GOB;
             return RXR_VALUE;

@@ -41,6 +41,10 @@ const REBCNT Gob_Flag_Words[] = {
 	SYM_MODAL,       GOBF_MODAL,
 	SYM_ON_TOP,      GOBF_ON_TOP,
 	SYM_HIDDEN,      GOBF_HIDDEN,
+	SYM_ACTIVE,      GOBF_ACTIVE,
+	SYM_MINIMIZE,    GOBF_MINIMIZE,
+	SYM_MAXIMIZE,    GOBF_MAXIMIZE,
+	SYM_RESTORE,     GOBF_RESTORE,
 	0, 0
 };
 
@@ -308,7 +312,20 @@ const REBCNT Gob_Flag_Words[] = {
 
 	for (i = 0; Gob_Flag_Words[i]; i += 2) {
 		if (VAL_WORD_CANON(word) == Gob_Flag_Words[i]) {
-			SET_GOB_FLAG(gob, Gob_Flag_Words[i+1]);
+			REBCNT flag = Gob_Flag_Words[i+1];
+			SET_GOB_FLAG(gob, flag);
+			//handle mutual exclusive states
+			switch (flag) {
+				case GOBF_RESTORE:
+					CLR_GOB_FLAGS(gob, GOBF_MINIMIZE, GOBF_MAXIMIZE);
+					break;
+				case GOBF_MINIMIZE:
+					CLR_GOB_FLAGS(gob, GOBF_MAXIMIZE, GOBF_RESTORE);
+					break;
+				case GOBF_MAXIMIZE:
+					CLR_GOB_FLAGS(gob, GOBF_MINIMIZE, GOBF_RESTORE);
+					break;
+			}
 			break;
 		}
 	}
@@ -432,10 +449,13 @@ const REBCNT Gob_Flag_Words[] = {
 	case SYM_FLAGS:
 		if (IS_WORD(val)) Set_Gob_Flag(gob, val);
 		else if (IS_BLOCK(val)) {
-			gob->flags = 0;
-			for (val = VAL_BLK(val); NOT_END(val); val++) {
+			REBINT i;		
+			//clear only flags defined by words
+			for (i = 0; Gob_Flag_Words[i]; i += 2)
+				CLR_FLAG(gob->flags, Gob_Flag_Words[i+1]);
+			
+			for (val = VAL_BLK(val); NOT_END(val); val++)
 				if (IS_WORD(val)) Set_Gob_Flag(gob, val);
-			}
 		}
 		break;
 

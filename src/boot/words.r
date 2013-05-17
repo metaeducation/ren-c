@@ -189,6 +189,10 @@ modal
 on-top
 hidden
 owner
+active
+minimize
+maximize
+restore 
 
 *port-modes*
 

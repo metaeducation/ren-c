@@ -282,15 +282,7 @@ static void Free_Window(REBGOB *gob) {
 	windex = Alloc_Window(gob);
 	if (windex < 0) Host_Crash("Too many windows");
 
-	//save minimized/maximized option before STATE is cleared
-	REBCNT state = 0;
-	if (GET_GOB_STATE(gob, GOBS_MAXIMIZED)) state = GOBS_MAXIMIZED;
-	if (GET_GOB_STATE(gob, GOBS_MINIMIZED)) state = GOBS_MINIMIZED;
-
 	CLEAR_GOB_STATE(gob);
-	
-	//restore initial window state if it has been requested by SHOW
-	if (state != 0) SET_GOB_STATE(gob, state);
 	
 	x = GOB_X_INT(gob);
 	y = GOB_Y_INT(gob);
@@ -415,8 +407,8 @@ static void Free_Window(REBGOB *gob) {
 
 	Gob_Windows[windex].win = window;
 	SET_GOB_FLAG(gob, GOBF_WINDOW);
+	SET_GOB_FLAG(gob, GOBF_ACTIVE);	
 	SET_GOB_STATE(gob, GOBS_OPEN);
-	SET_GOB_STATE(gob, GOBS_ACTIVE);
 
 	// Provide pointer from window back to REBOL window:
 	SetWindowLong(window, GWL_USERDATA, (long)gob);
@@ -474,7 +466,7 @@ static void Free_Window(REBGOB *gob) {
 		}
 		DestroyWindow(GOB_HWIN(gob));
 		CLR_GOB_FLAG(gob, GOBF_WINDOW);
-		CLEAR_GOB_STATE(gob); // set here or in the destory?
+		CLEAR_GOB_STATE(gob); // set here or in the destroy?
 		Free_Window(gob);
 	}
 }
@@ -551,17 +543,18 @@ static void Free_Window(REBGOB *gob) {
 		if (osString) OS_Free(title);
 	}
 
-//    RL_Print("Update win: rs %d mi %d mx %d ac %d\n", GET_GOB_STATE(gob, GOBS_RESTORED),GET_GOB_STATE(gob, GOBS_MINIMIZED),GET_GOB_STATE(gob, GOBS_MAXIMIZED),GET_GOB_STATE(gob, GOBS_ACTIVE));
-
+//	RL_Print("Win Flags: rs %d mi %d mx %d ac %d\n", GET_GOB_FLAG(gob, GOBF_RESTORE),GET_GOB_FLAG(gob, GOBF_MINIMIZE),GET_GOB_FLAG(gob, GOBF_MAXIMIZE), GET_GOB_FLAG(gob, GOBF_ACTIVE));
 	ShowWindow(
-        window, (GET_GOB_STATE(gob, GOBS_RESTORED)) ? SW_RESTORE
-            : GET_GOB_STATE(gob, GOBS_MINIMIZED) ? SW_MINIMIZE
-            : GET_GOB_STATE(gob, GOBS_MAXIMIZED) ? SW_MAXIMIZE
+        window, (GET_GOB_FLAG(gob, GOBF_RESTORE)) ? SW_RESTORE
+            : GET_GOB_FLAG(gob, GOBF_MINIMIZE) ? SW_MINIMIZE
+            : GET_GOB_FLAG(gob, GOBF_MAXIMIZE) ? SW_MAXIMIZE
             : SW_SHOWNOACTIVATE
 	);
 
-	if (GET_GOB_STATE(gob, GOBS_ACTIVE)) SetForegroundWindow(window);
-
+	if (GET_GOB_FLAG(gob, GOBF_ACTIVE)) {
+		CLR_GOB_FLAG(gob, GOBF_ACTIVE);	
+		SetForegroundWindow(window);
+	} 
 }
 
 

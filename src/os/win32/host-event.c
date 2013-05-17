@@ -241,8 +241,10 @@ static Check_Modifiers(REBINT flags)
 				//Invalidate the size but not win buffer
 				gob->old_size.x = 0;
 				gob->old_size.y = 0;
-				CLR_GOB_STATES(gob, GOBS_RESTORED, GOBS_MAXIMIZED);
-				SET_GOB_STATE(gob, GOBS_MINIMIZED);
+				if (!GET_GOB_FLAG(gob, GOBF_MINIMIZE)){
+					SET_GOB_FLAG(gob, GOBF_MINIMIZE);
+					CLR_GOB_FLAGS(gob, GOBF_RESTORE, GOBF_MAXIMIZE);
+				}
 				Add_Event_XY(gob, EVT_MINIMIZE, xy, flags);
 			} else {
 				gob->size.x = (i16)LOWORD(xy);
@@ -266,12 +268,16 @@ static Check_Modifiers(REBINT flags)
 				//Otherwise send combo of 'resize + maximize/restore events
 				if (wParam == SIZE_MAXIMIZED) {
 					i = EVT_MAXIMIZE;
-					CLR_GOB_STATES(gob, GOBS_RESTORED, GOBS_MINIMIZED);
-					SET_GOB_STATE(gob, GOBS_MAXIMIZED);
+					if (!GET_GOB_FLAG(gob, GOBF_MAXIMIZE)){
+						SET_GOB_FLAG(gob, GOBF_MAXIMIZE);
+						CLR_GOB_FLAGS(gob, GOBF_RESTORE, GOBF_MINIMIZE);
+					}
 				} else if (wParam == SIZE_RESTORED) {
 					i = EVT_RESTORE;
-					CLR_GOB_STATES(gob, GOBS_MAXIMIZED, GOBS_MINIMIZED);
-					SET_GOB_STATE(gob, GOBS_RESTORED);
+					if (!GET_GOB_FLAG(gob, GOBF_RESTORE)){
+						SET_GOB_FLAG(gob, GOBF_RESTORE);
+						CLR_GOB_FLAGS(gob, GOBF_MAXIMIZE, GOBF_MINIMIZE);
+					}
 				}
 				else i = 0;
 				Add_Event_XY(gob, EVT_RESIZE, xy, flags);

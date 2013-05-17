@@ -63,8 +63,6 @@ offset-to-caret: command [ ;returns pair! instead of the block..needs to be fixe
 show: command [
 	"Display or update a graphical object or block of them."
 	gob [gob! none!]
-	/window
-		state [word!] "Sets the specified window GOB's show state. Keywords: RESTORE, MINIMIZE, MAXIMIZE, ACTIVATE."
 ]
 
 size-text: command [
