@@ -40,8 +40,8 @@
 
 #include "rsa.h"
 #ifdef TO_WIN32
-	#include <Windows.h>
-	#include "wincrypt.h"
+	#include <windows.h>
+	#include <wincrypt.h>
 #else
 	#include <fcntl.h>
 #endif
