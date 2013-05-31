@@ -73,7 +73,7 @@ Special functions:
   Chat - open DevBase developer forum/BBS
   Docs - open DocBase document wiki (web)
   Bugs - open CureCode bug database (web)
-  Demo - run demo launcher (from rebol.com)
+  Demo - run demo launcher (from saphirion.com)
   Help - show built-in help information
   Upgrade - check for newer releases
   Changes - what's new about this version (web)

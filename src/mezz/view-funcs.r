@@ -216,11 +216,6 @@ init-view-system: func [
 	; The init function called here resides in this module
 	init system/view/screen-gob: make gob! [text: "Top Gob"]
 
-	;update the metrics object (temp - will become mezz later)
-	foreach w words-of system/view/metrics [
-		set in system/view/metrics w gui-metric w
-	]
-
 	; Already initialized?
 	if system/view/event-port [exit]
 

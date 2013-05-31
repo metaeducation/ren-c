@@ -20,6 +20,8 @@ words: [
 	border-fixed
 	border-size
 	screen-size
+	unit-size
+	screen-dpi
 	title-size
 	window-min-size
 	work-origin
@@ -78,7 +80,15 @@ draw: command [
 
 gui-metric: command [
 	"Returns specific gui related metric setting."
-	keyword [word!] "Available keywords: BORDER-FIXED, BORDER-SIZE, SCREEN-SIZE, TITLE-SIZE, WINDOW-MIN-SIZE, WORK-ORIGIN and WORK-SIZE."
+	keyword [word!] "Available keywords: BORDER-FIXED, BORDER-SIZE, SCREEN-DPI, UNIT-SIZE, SCREEN-SIZE, TITLE-SIZE, WINDOW-MIN-SIZE, WORK-ORIGIN and WORK-SIZE."
+	/set
+		val
+]
+
+show-soft-keyboard: command [
+	"Display on-screen keyboard for user input."
+	/attach
+		gob [gob!] "GOB which should be visible during the input operation"
 ]
 
 ;#not-yet-used [

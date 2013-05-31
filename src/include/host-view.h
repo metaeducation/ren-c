@@ -19,10 +19,8 @@
 **
 ************************************************************************
 **
-**  Title: EFFECT Dialect Backend
-**  Author: Cyphre, Carl
-**  Purpose: Evaluates effect commands; calls graphics functions.
-**  Tools: make-host-ext.r
+**  Title: Misc View related shared definitions
+**  Author: Richard Smolak
 **
 ************************************************************************
 **
@@ -36,34 +34,20 @@
 **
 ***********************************************************************/
 
-#include "reb-host.h"
-//#include "host-lib.h"
-
-//#define INCLUDE_EXT_DATA
-//#include "host-ext-effect.h"
-
-//***** Externs *****
-
-//***** Locals *****
-
-static u32* effect_ext_words;
-
-/***********************************************************************
-**
-*/	RXIEXT int RXD_Effect(int cmd, RXIFRM *frm, REBCEC *ctx)
-/*
-**		EFFECT command dispatcher.
-**
-***********************************************************************/
-{
-	switch (cmd) {
-
-    case CMD_EFFECT_INIT_WORDS:
-        effect_ext_words = RL_MAP_WORDS(RXA_SERIES(frm,1));
-        break;
-
-	default:
-		return RXR_NO_COMMAND;
-	}
-    return RXR_UNSET;
-}
+typedef enum {
+	SM_SCREEN_WIDTH = 0,
+	SM_SCREEN_HEIGHT,
+	SM_WORK_WIDTH,
+	SM_WORK_HEIGHT,
+	SM_TITLE_HEIGHT,
+	SM_SCREEN_DPI_X,
+	SM_SCREEN_DPI_Y,
+	SM_BORDER_WIDTH,
+	SM_BORDER_HEIGHT,
+	SM_BORDER_FIXED_WIDTH,
+	SM_BORDER_FIXED_HEIGHT,
+	SM_WINDOW_MIN_WIDTH,
+	SM_WINDOW_MIN_HEIGHT,
+	SM_WORK_X,
+	SM_WORK_Y
+} METRIC_TYPE;

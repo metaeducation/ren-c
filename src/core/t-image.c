@@ -114,7 +114,6 @@
 	tup[3] = dp[C_A];
 }
 
-
 /***********************************************************************
 **
 */	void Fill_Line(REBCNT *ip, REBCNT color, REBCNT len, REBOOL only)
@@ -242,11 +241,11 @@
 {
 	if (len > (REBINT)size) len = size; // avoid over-run
 
-	// Convert from BGRA format to internal image (integer):
+	// Convert from RGBA format to internal image (integer):
 	for (; len > 0; len--, rgba += 4, bin += 4) {
-		rgba[C_B] = bin[0];
+		rgba[C_R] = bin[0];
 		rgba[C_G] = bin[1];
-		rgba[C_R] = bin[2];
+		rgba[C_B] = bin[2];
 		if (!only) rgba[C_A] = bin[3];
 	}
 }
@@ -316,15 +315,15 @@
 
 /***********************************************************************
 **
-*/	void Image_To_BGRA(REBYTE *rgba, REBYTE *bin, REBINT len)
+*/	void Image_To_RGBA(REBYTE *rgba, REBYTE *bin, REBINT len)
 /*
 ***********************************************************************/
 {
-	// Convert from BGRA format to internal image (integer):
+	// Convert from internal image (integer) to RGBA binary order:
 	for (; len > 0; len--, rgba += 4, bin += 4) {
-		bin[0] = rgba[C_B];
+		bin[0] = rgba[C_R];
 		bin[1] = rgba[C_G];
-		bin[2] = rgba[C_R];
+		bin[2] = rgba[C_B];
 		bin[3] = rgba[C_A];
 	}
 }
@@ -349,7 +348,8 @@ INLINE REBCNT ARGB_To_BGR(REBCNT i)
 	REBCNT len;
 	REBCNT size;
 	REBCNT *data;
-
+	REBYTE* pixel;
+	
 	Emit(mold, "IxI #{", VAL_IMAGE_WIDE(value), VAL_IMAGE_HIGH(value));
 
 	// Output RGB image:
@@ -358,8 +358,9 @@ INLINE REBCNT ARGB_To_BGR(REBCNT i)
 	up = Prep_Uni_Series(mold, (size * 6) + (size / 10) + 1);
 
 	for (len = 0; len < size; len++) {
+		pixel = (REBYTE*)data++;
 		if ((len % 10) == 0) *up++ = LF;
-		up = Form_RGB_Uni(up, *data++);
+		up = Form_RGB_Uni(up, TO_RGBA_COLOR(pixel[C_R],pixel[C_G],pixel[C_B],pixel[C_A]));
 	}
 
 	// Output Alpha channel, if it has one:
@@ -388,14 +389,11 @@ INLINE REBCNT ARGB_To_BGR(REBCNT i)
 ***********************************************************************/
 {
 	REBSER *ser;
-
-#ifdef XENDIAN_BIG
-	ser = Make_Quad(0, VAL_IMAGE_LEN(image));
-	ser->tail = VAL_IMAGE_LEN(image) * 4;
-	Image_To_BGRA(VAL_IMAGE_DATA(image), QUAD_HEAD(ser), VAL_IMAGE_LEN(image));
-#else
-	ser = Copy_Bytes(VAL_IMAGE_DATA(image), VAL_IMAGE_LEN(image)*4);
-#endif
+	REBINT len;
+	len =  VAL_IMAGE_LEN(image) * 4;
+	ser = Make_Binary(len);
+	SERIES_TAIL(ser) = len;
+	Image_To_RGBA(VAL_IMAGE_DATA(image), QUAD_HEAD(ser), VAL_IMAGE_LEN(image));
 	return ser;
 }
 

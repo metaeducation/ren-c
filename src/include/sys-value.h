@@ -591,22 +591,12 @@ typedef struct Reb_Series_Ref
 
 // New Image Datatype defines:
 
+//tuple to image! pixel order bytes
 #define TO_PIXEL_TUPLE(t) TO_PIXEL_COLOR(VAL_TUPLE(t)[0], VAL_TUPLE(t)[1], VAL_TUPLE(t)[2], \
 							VAL_TUPLE_LEN(t) > 3 ? VAL_TUPLE(t)[3] : 0xff)
-
-// Maps color components to correct byte positions for RGBA:
-#ifdef ENDIAN_BIG
-#define C_A 0
-#define C_R 1
-#define C_G 2
-#define C_B 3
-#else
-#define C_B 0
-#define C_G 1
-#define C_R 2
-#define C_A 3
-#endif
-
+//tuple to RGBA bytes
+#define TO_COLOR_TUPLE(t) TO_RGBA_COLOR(VAL_TUPLE(t)[0], VAL_TUPLE(t)[1], VAL_TUPLE(t)[2], \
+							VAL_TUPLE_LEN(t) > 3 ? VAL_TUPLE(t)[3] : 0xff)
 
 /***********************************************************************
 **

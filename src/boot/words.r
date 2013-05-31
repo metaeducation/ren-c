@@ -180,6 +180,7 @@ rgb
 alpha
 data
 resize
+rotate
 no-title
 no-border
 dropable

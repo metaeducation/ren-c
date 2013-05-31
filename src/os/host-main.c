@@ -73,7 +73,7 @@ HINSTANCE App_Instance = 0;
 
 #ifndef REB_CORE
 extern void Init_Windows(void);
-extern void Init_Graphics(void);
+extern void OS_Init_Graphics(void);
 #endif
 
 extern void Init_Core_Ext(void);
@@ -199,7 +199,7 @@ int main(int argc, char **argv)
 	// Common code for console & GUI version
 #ifndef REB_CORE
 	Init_Windows();
-	Init_Graphics();
+	OS_Init_Graphics();
 #endif // REB_CORE
 
 #ifdef ENCAP

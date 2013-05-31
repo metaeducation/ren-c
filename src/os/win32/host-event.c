@@ -43,6 +43,7 @@
 #include <windows.h>
 #include <commctrl.h>	// For WM_MOUSELEAVE event
 #include <zmouse.h>
+#include <math.h>	//for floor()
 
 //-- Not currently used:
 //#include <windowsx.h>
@@ -96,13 +97,14 @@ const REBCNT Key_To_Event[] = {
 
 //***** Externs *****
 
-extern HCURSOR Cursor;
+extern void *Cursor;
 extern void Done_Device(int handle, int error);
 extern void Paint_Window(HWND window);
 extern void Close_Window(REBGOB *gob);
 extern REBOOL Resize_Window(REBGOB *gob, REBOOL redraw);
 extern HWND Find_Window(REBGOB *gob);
 extern BOOL osDialogOpen; //this flag is checked to block rebol events loop when specific non-modal OS dialog(request-file, request-dir etc.) is opened
+extern REBXYF dp_scale;
 
 /***********************************************************************
 **
@@ -185,6 +187,7 @@ static Check_Modifiers(REBINT flags)
 **
 ***********************************************************************/
 {
+	LPARAM xyd;
 	REBGOB *gob;
 	REBCNT flags = 0;
 	REBCNT i;
@@ -221,6 +224,8 @@ static Check_Modifiers(REBINT flags)
 		return 0;
 	}
 
+	//downscaled, resolution independent xy event position
+	xyd = (ROUND_TO_INT(((i16)LOWORD(xy)) / dp_scale.x)) + (ROUND_TO_INT(((i16)HIWORD(xy)) / dp_scale.y) << 16);
 	// Handle message:
 	switch(msg)
 	{
@@ -229,7 +234,7 @@ static Check_Modifiers(REBINT flags)
 			break;
 
 		case WM_MOUSEMOVE:
-			Add_Event_XY(gob, EVT_MOVE, xy, flags);
+			Add_Event_XY(gob, EVT_MOVE, xyd, flags);
 			//if (!(WIN_FLAGS(wp) & WINDOW_TRACK_LEAVE))
 			//	Track_Mouse_Leave(wp);
 			break;
@@ -238,6 +243,7 @@ static Check_Modifiers(REBINT flags)
 //			RL_Print("SIZE %d\n", mode);
 
             if (wParam == SIZE_MINIMIZED) {
+//				RL_Print("MINIMIZE!\n");
 				//Invalidate the size but not win buffer
 				gob->old_size.x = 0;
 				gob->old_size.y = 0;
@@ -245,34 +251,38 @@ static Check_Modifiers(REBINT flags)
 					SET_GOB_FLAG(gob, GOBF_MINIMIZE);
 					CLR_GOB_FLAGS(gob, GOBF_RESTORE, GOBF_MAXIMIZE);
 				}
-				Add_Event_XY(gob, EVT_MINIMIZE, xy, flags);
+				Add_Event_XY(gob, EVT_MINIMIZE, xyd, flags);
 			} else {
-				gob->size.x = (i16)LOWORD(xy);
+//				RL_Print("SIZE OTHER!\n");
+				gob->size.x = (i16)LOWORD(xyd);
 
-				gob->size.y = (i16)HIWORD(xy);
+				gob->size.y = (i16)HIWORD(xyd);
 
-				last_xy = xy;
+				last_xy = xyd;
 				if (mode) {
 					//Resize and redraw the window buffer (when resize dragging)
 					Resize_Window(gob, TRUE);
 					mode = EVT_RESIZE;
 					break;
 				} else {
+//					RL_Print("resize WINDOW\n");
 					//Resize only the window buffer (when win gob size changed by REBOL code or using min/max buttons)
 					if (!Resize_Window(gob, FALSE)){
 						//size has been changed programatically - return only 'resize event
-						Add_Event_XY(gob, EVT_RESIZE, xy, flags);
+						Add_Event_XY(gob, EVT_RESIZE, xyd, flags);
 						break;
 					}
 				}
 				//Otherwise send combo of 'resize + maximize/restore events
 				if (wParam == SIZE_MAXIMIZED) {
+//					RL_Print("MAXIMIZE!\n");
 					i = EVT_MAXIMIZE;
 					if (!GET_GOB_FLAG(gob, GOBF_MAXIMIZE)){
 						SET_GOB_FLAG(gob, GOBF_MAXIMIZE);
 						CLR_GOB_FLAGS(gob, GOBF_RESTORE, GOBF_MINIMIZE);
 					}
 				} else if (wParam == SIZE_RESTORED) {
+//					RL_Print("RESTORE!\n");
 					i = EVT_RESTORE;
 					if (!GET_GOB_FLAG(gob, GOBF_RESTORE)){
 						SET_GOB_FLAG(gob, GOBF_RESTORE);
@@ -280,20 +290,20 @@ static Check_Modifiers(REBINT flags)
 					}
 				}
 				else i = 0;
-				Add_Event_XY(gob, EVT_RESIZE, xy, flags);
-				if (i) Add_Event_XY(gob, i, xy, flags);
+				Add_Event_XY(gob, EVT_RESIZE, xyd, flags);
+				if (i) Add_Event_XY(gob, i, xyd, flags);
 			}
 			break;
 
 		case WM_MOVE:
 			// Minimize and maximize call this w/o mode set.
-			gob->offset.x = (i16)LOWORD(xy);
+			gob->offset.x = (i16)LOWORD(xyd);
 
-			gob->offset.y = (i16)HIWORD(xy);
+			gob->offset.y = (i16)HIWORD(xyd);
 
-			last_xy = xy;
+			last_xy = xyd;
 			if (mode) mode = EVT_OFFSET;
-			else Add_Event_XY(gob, EVT_OFFSET, xy, flags);
+			else Add_Event_XY(gob, EVT_OFFSET, xyd, flags);
 			break;
 
 		case WM_ENTERSIZEMOVE:
@@ -310,7 +320,7 @@ static Check_Modifiers(REBINT flags)
 			//GetCursorPos(&x_y);
 			//ScreenToClient(hwnd, &x_y);
 			//xy = (x_y.y << 16) + (x_y.x & 0xffff);
-			Add_Event_XY(gob, EVT_MOVE, xy, flags);
+			Add_Event_XY(gob, EVT_MOVE, xyd, flags);
 			// WIN_FLAGS(wp) &= ~WINDOW_TRACK_LEAVE;
 			break;
 
@@ -379,7 +389,7 @@ static Check_Modifiers(REBINT flags)
 
 		case WM_SETCURSOR:
 			if (LOWORD(xy) == 1) {
-				SetCursor(Cursor);
+				OS_Set_Cursor(Cursor);
 				return TRUE;
 			} else goto default_case;
 
@@ -388,7 +398,7 @@ static Check_Modifiers(REBINT flags)
 		case WM_LBUTTONDOWN:
 			//if (!WIN_CAPTURED(wp)) {
 			flags = Check_Modifiers(flags);
-			Add_Event_XY(gob, EVT_DOWN, xy, flags);
+			Add_Event_XY(gob, EVT_DOWN, xyd, flags);
 			SetCapture(hwnd);
 			//WIN_CAPTURED(wp) = EVT_BTN1_UP;
 			break;
@@ -396,7 +406,7 @@ static Check_Modifiers(REBINT flags)
 		case WM_LBUTTONUP:
 			//if (WIN_CAPTURED(wp) == EVT_BTN1_UP) {
 			flags = Check_Modifiers(flags);
-			Add_Event_XY(gob, EVT_UP, xy, flags);
+			Add_Event_XY(gob, EVT_UP, xyd, flags);
 			ReleaseCapture();
 			//WIN_CAPTURED(wp) = 0;
 			break;
@@ -406,7 +416,7 @@ static Check_Modifiers(REBINT flags)
 		case WM_RBUTTONDOWN:
 			//if (!WIN_CAPTURED(wp)) {
 			flags = Check_Modifiers(flags);
-			Add_Event_XY(gob, EVT_ALT_DOWN, xy, flags);
+			Add_Event_XY(gob, EVT_ALT_DOWN, xyd, flags);
 			SetCapture(hwnd);
 			//WIN_CAPTURED(wp) = EVT_BTN2_UP;
 			break;
@@ -414,7 +424,7 @@ static Check_Modifiers(REBINT flags)
 		case WM_RBUTTONUP:
 			//if (WIN_CAPTURED(wp) == EVT_BTN2_UP) {
 			flags = Check_Modifiers(flags);
-			Add_Event_XY(gob, EVT_ALT_UP, xy, flags);
+			Add_Event_XY(gob, EVT_ALT_UP, xyd, flags);
 			ReleaseCapture();
 			//WIN_CAPTURED(wp) = 0;
 			break;
@@ -424,14 +434,14 @@ static Check_Modifiers(REBINT flags)
 		case WM_MBUTTONDOWN:
 			//if (!WIN_CAPTURED(wp)) {
 			flags = Check_Modifiers(flags);
-			Add_Event_XY(gob, EVT_AUX_DOWN, xy, flags);
+			Add_Event_XY(gob, EVT_AUX_DOWN, xyd, flags);
 			SetCapture(hwnd);
 			break;
 
 		case WM_MBUTTONUP:
 			//if (WIN_CAPTURED(wp) == EVT_BTN2_UP) {
 			flags = Check_Modifiers(flags);
-			Add_Event_XY(gob, EVT_AUX_UP, xy, flags);
+			Add_Event_XY(gob, EVT_AUX_UP, xyd, flags);
 			ReleaseCapture();
 			break;
 
@@ -489,7 +499,7 @@ static Check_Modifiers(REBINT flags)
 			break;
 
 		case WM_CLOSE:
-			Add_Event_XY(gob, EVT_CLOSE, xy, flags);
+			Add_Event_XY(gob, EVT_CLOSE, xyd, flags);
 //			Close_Window(gob);	// Needs to be removed - should be done by REBOL event handling
 //			DestroyWindow(hwnd);// This is done in Close_Window()
 			break;

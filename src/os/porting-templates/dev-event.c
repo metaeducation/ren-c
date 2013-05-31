@@ -19,7 +19,7 @@
 **
 ************************************************************************
 **
-**  Title: Device: Event handler for Posix
+**  Title: Device: Event handler for <platform>
 **  Author: Carl Sassenrath
 **  Purpose:
 **      Processes events to pass to REBOL. Note that events are

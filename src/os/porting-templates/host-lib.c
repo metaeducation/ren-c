@@ -19,15 +19,13 @@
 **
 ************************************************************************
 **
-**  Title: OS API function library called by REBOL interpreter
-**  Author: Carl Sassenrath
+**  Title: <platform> OS API function library called by REBOL interpreter
+**  Author: Carl Sassenrath, Richard Smolak
 **  Purpose:
 **      This module provides the functions that REBOL calls
 **      to interface to the native (host) operating system.
 **      REBOL accesses these functions through the structure
 **      defined in host-lib.h (auto-generated, do not modify).
-**
-**	Flags: compile with -DUNICODE for Win32 wide char API
 **
 **  Special note:
 **      This module is parsed for function declarations used to
@@ -54,75 +52,78 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-#include <windows.h>
-#include <process.h>
-#include <shlobj.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <time.h>
+#include <string.h>
+
+#ifndef timeval // for older systems
+#include <sys/time.h>
+#endif
 
 #include "reb-host.h"
 #include "host-lib.h"
 
-//used to detect non-modal OS dialogs
-BOOL osDialogOpen = FALSE; 
+#ifndef NO_DL_LIB
+#include <dlfcn.h>
+#endif
 
 // Semaphore lock to sync sub-task launch:
 static void *Task_Ready;
 
+#ifndef PATH_MAX
+#define PATH_MAX 4096  // generally lacking in Posix
+#endif
+
+
 
 /***********************************************************************
 **
-*/	void Convert_Date(SYSTEMTIME *stime, REBOL_DAT *dat, long zone)
+*/	static int Get_Timezone(struct tm *local_tm)
 /*
-**		Convert local format of system time into standard date
-**		and time structure.
+**		Get the time zone in minutes from GMT.
+**		NOT consistently supported in Posix OSes!
+**		We have to use a few different methods.
 **
 ***********************************************************************/
 {
-	dat->year  = stime->wYear;
-	dat->month = stime->wMonth;
-	dat->day   = stime->wDay;
-	dat->time  = stime->wHour * 3600 + stime->wMinute * 60 + stime->wSecond;
-	dat->nano  = 1000000 * stime->wMilliseconds;
-	dat->zone  = zone;
+#ifdef HAS_SMART_TIMEZONE
+	time_t rightnow;
+	time(&rightnow);
+	return (int)difftime(mktime(localtime(&rightnow)), mktime(gmtime(&rightnow))) / 60;
+#else
+	struct tm tm2;
+	time_t rightnow;
+	time(&rightnow);
+	tm2 = *localtime(&rightnow);
+	tm2.tm_isdst=0;
+	return (int)difftime(mktime(&tm2), mktime(gmtime(&rightnow))) / 60;
+#endif
+//	 return local_tm->tm_gmtoff / 60;  // makes the most sense, but no longer used
 }
 
+
 /***********************************************************************
 **
-*/	static void Insert_Command_Arg(REBCHR *cmd, REBCHR *arg, REBINT limit)
+*/	void Convert_Date(time_t *stime, REBOL_DAT *dat, long zone)
 /*
-**		Insert an argument into a command line at the %1 position,
-**		or at the end if there is no %1. (An INSERT action.)
-**		Do not exceed the specified limit length.
-**
-**		Too bad std Clib does not provide INSERT or REPLACE functions.
+**		Convert local format of system time into standard date
+**		and time structure (for date/time and file timestamps).
 **
 ***********************************************************************/
 {
-	#define HOLD_SIZE 2000
-	REBCHR *spot;
-	REBCHR hold[HOLD_SIZE+4];
+	struct tm *time;
 
-	if ((REBINT)LEN_STR(cmd) >= limit) return; // invalid case, ignore it.
+	CLEARS(dat);
 
-	// Find %1:
-	spot = FIND_STR(cmd, TEXT("%1"));
+	time = gmtime(stime);
 
-	if (spot) {
-		// Save rest of cmd line (such as end quote, -flags, etc.)
-		COPY_STR(hold, spot+2, HOLD_SIZE);
-
-		// Terminate at the arg location:
-		spot[0] = 0;
-
-		// Insert the arg:
-		JOIN_STR(spot, arg, limit - LEN_STR(cmd) - 1);
-
-		// Add back the rest of cmd:
-		JOIN_STR(spot, hold, limit - LEN_STR(cmd) - 1);
-	}
-	else {
-		JOIN_STR(cmd, TEXT(" "), 1);
-		JOIN_STR(cmd, arg, limit - LEN_STR(cmd) - 1);
-	}
+	dat->year  = time->tm_year + 1900;
+	dat->month = time->tm_mon + 1;
+	dat->day   = time->tm_mday;
+	dat->time  = time->tm_hour * 3600 + time->tm_min * 60 + time->tm_sec;
+	dat->nano  = 0;
+	dat->zone  = Get_Timezone(time);
 }
 
 
@@ -215,12 +216,11 @@ static void *Task_Ready;
 
 	// A title tells us we should alert the user:
 	if (title) {
-	//	OS_Put_Str(title);
-	//	OS_Put_Str(":\n");
-		// Use ASCII only (in case we are on non-unicode win32):
-		MessageBoxA(NULL, content, title, MB_ICONHAND);
+		fputs(title, stderr);
+		fputs(":\n", stderr);
 	}
-	//	OS_Put_Str(content);
+	fputs(content, stderr);
+	fputs("\n\n", stderr);
 	exit(100);
 }
 
@@ -234,29 +234,7 @@ static void *Task_Ready;
 **
 ***********************************************************************/
 {
-	LPVOID lpMsgBuf;
-	int ok;
-
-	if (!errnum) errnum = GetLastError();
-
-	ok = FormatMessage(
-			FORMAT_MESSAGE_ALLOCATE_BUFFER |
-			FORMAT_MESSAGE_FROM_SYSTEM |
-			FORMAT_MESSAGE_IGNORE_INSERTS,
-			NULL,
-			errnum,
-			MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), // Default language
-			(LPTSTR) &lpMsgBuf,
-			0,
-			NULL);
-
-	len--; // termination
-
-	if (!ok) COPY_STR(str, TEXT("unknown error"), len);
-	else {
-		COPY_STR(str, lpMsgBuf, len);
-		LocalFree(lpMsgBuf);
-	}
+	strerror_r(errnum, str, len);
 	return str;
 }
 
@@ -271,7 +249,7 @@ static void *Task_Ready;
 **
 ***********************************************************************/
 {
-	return (GetModuleFileName(0, name, MAX_FILE_NAME) > 0);
+	return FALSE; // not yet used
 }
 
 
@@ -284,23 +262,7 @@ static void *Task_Ready;
 **
 ***********************************************************************/
 {
-	LCTYPE type;
-	int len;
-	REBCHR *data;
-	LCTYPE types[] = {
-		LOCALE_SENGLANGUAGE,
-		LOCALE_SNATIVELANGNAME,
-		LOCALE_SENGCOUNTRY,
-		LOCALE_SCOUNTRY,
-	};
-
-	type = types[what];
-
-	len = GetLocaleInfo(0, type, 0, 0);
-	data = MAKE_STR(len);
-	len = GetLocaleInfo(0, type, data, len);
-
-	return data;
+	return 0; // not yet used
 }
 
 
@@ -315,16 +277,21 @@ static void *Task_Ready;
 **
 ***********************************************************************/
 {
-	// Note: The Windows variant of this API is NOT case-sensitive
+	// Note: The Posix variant of this API is case-sensitive
 
-	REBINT result = GetEnvironmentVariable(envname, envval, valsize);
-	if (result == 0) { // some failure...
-		if (GetLastError() == ERROR_ENVVAR_NOT_FOUND) {
-			return 0; // not found
-		}
-		return -1; // other error
+	REBINT len;
+	const REBCHR* value = getenv(envname);
+	if (value == 0) return 0;
+
+	len = LEN_STR(value);
+	if (len == 0) return -1; // shouldn't have saved an empty env string
+
+	if (len + 1 > valsize) {
+		return len + 1;
 	}
-	return result;
+
+	COPY_STR(envval, value, len);
+	return len;
 }
 
 
@@ -337,7 +304,60 @@ static void *Task_Ready;
 **
 ***********************************************************************/
 {
-	return SetEnvironmentVariable(envname, envval);
+	if (envval) {
+#ifdef setenv
+		// we pass 1 for overwrite (make call to OS_Get_Env if you 
+		// want to check if already exists)
+
+		if (setenv(envname, envval, 1) == -1)
+			return FALSE;
+#else
+		// WARNING: KNOWN MEMORY LEAK!
+
+		// putenv is *fatally flawed*, and was obsoleted by setenv
+		// and unsetenv System V...
+
+		// http://stackoverflow.com/a/5876818/211160
+
+		// once you have passed a string to it you never know when that
+		// string will no longer be needed.  Thus it may either not be
+		// dynamic or you must leak it, or track a local copy of the 
+		// environment yourself.
+
+		// If you're stuck without setenv on some old platform, but
+		// really need to set an environment variable, here's a way
+		// that just leaks a string each time you call.  
+
+		char* expr = MAKE_STR(LEN_STR(envname) + 1 + LEN_STR(envval) + 1);
+
+		strcpy(expr, envname);
+		strcat(expr, "=");
+		strcat(expr, envval);
+
+		if (putenv(expr) == -1)
+			return FALSE;
+#endif
+		return TRUE;
+	}
+
+#ifdef unsetenv
+	if (unsetenv(envname) == -1)
+		return FALSE;
+#else
+	// WARNING: KNOWN PORTABILITY ISSUE
+
+	// Simply saying putenv("FOO") will delete FOO from
+	// the environment, but it's not consistent...does
+	// nothing on NetBSD for instance.  But not all
+	// other systems have unsetenv...
+	//
+	// http://julipedia.meroh.net/2004/10/portability-unsetenvfoo-vs-putenvfoo.html 
+
+	// going to hope this case doesn't hold onto the string...
+	if (putenv((char*)envname) == -1)
+		return FALSE;
+#endif
+	return TRUE;
 }
 
 
@@ -347,23 +367,26 @@ static void *Task_Ready;
 /*
 ***********************************************************************/
 {
-	REBCHR *env = GetEnvironmentStrings();
-	REBCNT n, len = 0;
-	REBCHR *str;
+	extern char **environ;
+	int n, len = 0;
+	char *str, *cp;
 
-	str = env;
-	while (n = LEN_STR(str)) {
-		len += n + 1;
-		str = env + len; // next
+	// compute total size:
+	for (n = 0; environ[n]; n++) len += 1 + LEN_STR(environ[n]);
+
+	cp = str = OS_Make(len + 1); // +terminator
+	*cp = 0;
+
+	// combine all strings into one:
+	for (n = 0; environ[n]; n++) {
+		len = LEN_STR(environ[n]);
+		strcat(cp, environ[n]);
+		cp += len;
+		*cp++ = 0;
+		*cp = 0;
 	}
-	len++;
 
-	str = OS_Make(len * sizeof(REBCHR));
-	MOVE_MEM(str, env, len * sizeof(REBCHR));
-
-	FreeEnvironmentStrings(env);
-
-	return str;
+	return str; // caller will free it
 }
 
 
@@ -375,15 +398,13 @@ static void *Task_Ready;
 **
 ***********************************************************************/
 {
-	SYSTEMTIME stime;
-	TIME_ZONE_INFORMATION tzone;
+	struct timeval tv;
+	time_t stime;
 
-	GetSystemTime(&stime);
-
-	if (TIME_ZONE_ID_DAYLIGHT == GetTimeZoneInformation(&tzone))
-		tzone.Bias += tzone.DaylightBias;
-
-	Convert_Date(&stime, dat, -tzone.Bias);
+	gettimeofday(&tv, 0); // (tz field obsolete)
+	stime = tv.tv_sec;
+	Convert_Date(&stime, dat, -1);
+	dat->nano  = tv.tv_usec * 1000;
 }
 
 
@@ -394,22 +415,22 @@ static void *Task_Ready;
 **		Return time difference in microseconds. If base = 0, then
 **		return the counter. If base != 0, compute the time difference.
 **
-**		Note: Requires high performance timer.
-** 		Q: If not found, use timeGetTime() instead ?!
+**		NOTE: This needs to be precise, but many OSes do not
+**		provide a precise time sampling method. So, if the target
+**		posix OS does, add the ifdef code in here.
 **
 ***********************************************************************/
 {
-	LARGE_INTEGER freq;
-	LARGE_INTEGER time;
+	struct timeval tv;
+	i64 time;
 
-	if (!QueryPerformanceCounter(&time))
-		OS_Crash("Missing resource", "High performance timer");
+	gettimeofday(&tv,0);
 
-	if (base == 0) return time.QuadPart; // counter (may not be time)
+	time = ((i64)tv.tv_sec * 1000000) + tv.tv_usec;
 
-	QueryPerformanceFrequency(&freq);
+	if (base == 0) return time;
 
-	return ((time.QuadPart - base) * 1000) / (freq.QuadPart / 1000);
+	return time - base;
 }
 
 
@@ -424,14 +445,9 @@ static void *Task_Ready;
 **
 ***********************************************************************/
 {
-	int len;
-
-	len = GetCurrentDirectory(0, NULL); // length, incl terminator.
-	*path = MAKE_STR(len);
-	GetCurrentDirectory(len, *path);
-	len--; // less terminator
-
-	return len; // Be sure to call free() after usage
+	*path = MAKE_STR(PATH_MAX);
+	if (!getcwd(*path, PATH_MAX-1)) *path[0] = 0;
+	return LEN_STR(*path); // Be sure to call free() after usage
 }
 
 
@@ -444,7 +460,7 @@ static void *Task_Ready;
 **
 ***********************************************************************/
 {
-	return SetCurrentDirectory(path);
+	return chdir(path) == 0;
 }
 
 
@@ -457,14 +473,7 @@ static void *Task_Ready;
 **
 ***********************************************************************/
 {
-	SYSTEMTIME stime;
-	TIME_ZONE_INFORMATION tzone;
-
-	if (TIME_ZONE_ID_DAYLIGHT == GetTimeZoneInformation(&tzone))
-		tzone.Bias += tzone.DaylightBias;
-
-	FileTimeToSystemTime((FILETIME *)(&(file->file.time)), &stime);
-	Convert_Date(&stime, dat, -tzone.Bias);
+	Convert_Date((time_t *)&(file->file.time.l), dat, 0);
 }
 
 
@@ -477,10 +486,14 @@ static void *Task_Ready;
 **
 ***********************************************************************/
 {
-	void *dll = LoadLibraryW(path);
-	*error = GetLastError();
-
+#ifndef NO_DL_LIB
+	void *dll = dlopen(path, RTLD_LAZY/*|RTLD_GLOBAL*/);
+	*error = 0; // dlerror() returns a char* error message, so there's
+				// no immediate way to return an "error code" in *error
 	return dll;
+#else
+	return 0;
+#endif
 }
 
 
@@ -492,7 +505,9 @@ static void *Task_Ready;
 **
 ***********************************************************************/
 {
-	FreeLibrary((HINSTANCE)dll);
+#ifndef NO_DL_LIB
+	dlclose(dll);
+#endif
 }
 
 
@@ -504,10 +519,12 @@ static void *Task_Ready;
 **
 ***********************************************************************/
 {
-	void *fp = GetProcAddress((HMODULE)dll, funcname);
-	//DWORD err = GetLastError();
-
+#ifndef NO_DL_LIB
+	void *fp = dlsym(dll, funcname);
 	return fp;
+#else
+	return 0;
+#endif
 }
 
 
@@ -527,15 +544,15 @@ static void *Task_Ready;
 ***********************************************************************/
 {
 	REBINT thread;
-
-	Task_Ready = CreateEvent(NULL, TRUE, FALSE, TEXT("REBOL_Task_Launch"));
+/*
+	Task_Ready = CreateEvent(NULL, TRUE, FALSE, "REBOL_Task_Launch");
 	if (!Task_Ready) return -1;
 
 	thread = _beginthread(init, stack_size, arg);
 
 	if (thread) WaitForSingleObject(Task_Ready, 2000);
 	CloseHandle(Task_Ready);
-
+*/
 	return 1;
 }
 
@@ -548,7 +565,7 @@ static void *Task_Ready;
 **
 ***********************************************************************/
 {
-	_endthread();
+	//_endthread();
 }
 
 
@@ -561,7 +578,7 @@ static void *Task_Ready;
 **
 ***********************************************************************/
 {
-	SetEvent(Task_Ready);
+	//SetEvent(Task_Ready);
 }
 
 
@@ -569,60 +586,28 @@ static void *Task_Ready;
 **
 */	int OS_Create_Process(REBCHR *call, u32 flags)
 /*
-**		Return -1 on error.
-**		For right now, set flags to 1 for /wait.
+**		Return -1 on error, otherwise the process return code.
 **
 ***********************************************************************/
 {
-	STARTUPINFO			si;
-	PROCESS_INFORMATION	pi;
-//	REBOOL				is_NT;
-//	OSVERSIONINFO		info;
-	REBINT				result;
-
-//	GetVersionEx(&info);
-//	is_NT = info.dwPlatformId >= VER_PLATFORM_WIN32_NT;
-
-	si.cb = sizeof(si);
-	si.lpReserved = NULL;
-	si.lpDesktop = NULL;
-	si.lpTitle = NULL;
-	si.dwFlags = STARTF_USESHOWWINDOW;
-	si.dwFlags |= STARTF_USESTDHANDLES;
-	si.wShowWindow = SW_SHOWNORMAL;
-	si.cbReserved2 = 0;
-	si.lpReserved2 = NULL;
-
-	si.hStdInput  = GetStdHandle(STD_INPUT_HANDLE);
-	si.hStdOutput = GetStdHandle(STD_OUTPUT_HANDLE);
-	si.hStdError  = GetStdHandle(STD_ERROR_HANDLE);
-
-	result = CreateProcess(
-		NULL,						// Executable name
-		call,						// Command to execute
-		NULL,						// Process security attributes
-		NULL,						// Thread security attributes
-		FALSE,						// Inherit handles
-		NORMAL_PRIORITY_CLASS		// Creation flags
-		| CREATE_DEFAULT_ERROR_MODE,
-		NULL,						// Environment
-		NULL,						// Current directory
-		&si,						// Startup information
-		&pi							// Process information
-	);
-
-	// Wait for termination:
-	if (result && (flags & 1)) {
-		result = 0;
-		WaitForSingleObject(pi.hProcess, INFINITE); // check result??
-		GetExitCodeProcess(pi.hProcess, (PDWORD)&result);
-		CloseHandle(pi.hThread);
-		CloseHandle(pi.hProcess);
-	}
-
-	return result;  // meaning depends on flags
+	return system(call); // returns -1 on system call error
 }
 
+static int Try_Browser(char *browser, REBCHR *url)
+{
+	REBCHR *cmd = MAKE_STR(LEN_STR(browser) + LEN_STR(url) + 10);
+	int result;
+
+	// A temporary solution -- for some versions...
+	strcpy(cmd, browser);
+	strcat(cmd, " \"");
+	strcat(cmd, url);
+	strcat(cmd, "\"");
+	result = (system(cmd) == 0);
+	// printf("result: %d\n", result);
+	free(cmd);
+	return result;
+}
 
 /***********************************************************************
 **
@@ -630,36 +615,9 @@ static void *Task_Ready;
 /*
 ***********************************************************************/
 {
-	#define MAX_BRW_PATH 2044
-	long flag;
-	long len;
-	long type;
-	HKEY key;
-	REBCHR *path;
-	HWND hWnd = GetFocus();
-
-	if (RegOpenKeyEx(HKEY_CLASSES_ROOT, TEXT("http\\shell\\open\\command"), 0, KEY_READ, &key) != ERROR_SUCCESS)
-		return 0;
-
-	if (!url) url = TEXT("");
-
-	path = MAKE_STR(MAX_BRW_PATH+4);
-	len = MAX_BRW_PATH;
-
-	flag = RegQueryValueEx(key, TEXT(""), 0, &type, (LPBYTE)path, &len);
-	RegCloseKey(key);
-	if (flag != ERROR_SUCCESS) {
-		FREE_MEM(path);
-		return 0;
-	}
-	//if (ExpandEnvironmentStrings(&str[0], result, len))
-
-	Insert_Command_Arg(path, url, MAX_BRW_PATH);
-
-	len = OS_Create_Process(path, 0);
-
-	FREE_MEM(path);
-	return len;
+	if (Try_Browser("xdg-open", url) || Try_Browser("x-www-browser", url))
+		return TRUE;
+	return FALSE;
 }
 
 
@@ -669,61 +627,8 @@ static void *Task_Ready;
 /*
 ***********************************************************************/
 {
-	OPENFILENAME ofn = {0};
-	BOOL ret;
-	//int err;
-	REBCHR *filters = TEXT("All files\0*.*\0REBOL scripts\0*.r\0Text files\0*.txt\0"	);
-
-	ofn.lStructSize = sizeof(ofn);
-
-	// ofn.hwndOwner = WIN_WIN(win); // Must find a way to set this
-
-	ofn.lpstrTitle = fr->title;
-	ofn.lpstrInitialDir = fr->dir;
-	ofn.lpstrFile = fr->files;
-	ofn.lpstrFilter = fr->filter ? fr->filter : filters;
-	ofn.nMaxFile = fr->len;
-	ofn.lpstrFileTitle = 0;
-	ofn.nMaxFileTitle = 0;
-
-	ofn.Flags = OFN_HIDEREADONLY | OFN_EXPLORER | OFN_NOCHANGEDIR; //|OFN_NONETWORKBUTTON; //;
-
-	if (GET_FLAG(fr->flags, FRF_MULTI)) ofn.Flags |= OFN_ALLOWMULTISELECT;
-
-	osDialogOpen = TRUE;
-	
-	if (GET_FLAG(fr->flags, FRF_SAVE))
-		ret = GetSaveFileName(&ofn);
-	else
-		ret = GetOpenFileName(&ofn);
-
-	osDialogOpen = FALSE;
-	
-	//if (!ret)
-	//	err = CommDlgExtendedError(); // CDERR_FINDRESFAILURE
-
-	return ret;
+	return FALSE;
 }
-
-int CALLBACK ReqDirCallbackProc( HWND hWnd, UINT uMsg, LPARAM lParam, LPARAM lpData )
-{
-	static REBOOL inited = FALSE; 
-	switch (uMsg) {
-		case BFFM_INITIALIZED:
-			if (lpData) SendMessage(hWnd,BFFM_SETSELECTION,TRUE,lpData);
-			SetForegroundWindow(hWnd);			
-			inited = TRUE;
-			break;
-		case BFFM_SELCHANGED:
-			if (inited && lpData) {
-				SendMessage(hWnd,BFFM_SETSELECTION,TRUE,lpData);
-				inited = FALSE;
-			}
-			break;
-	}
-	return 0;
-}
-
 
 /***********************************************************************
 **
@@ -734,25 +639,8 @@ int CALLBACK ReqDirCallbackProc( HWND hWnd, UINT uMsg, LPARAM lParam, LPARAM lpD
 **
 ***********************************************************************/
 {
-	BROWSEINFO bi;
-	REBCHR buffer[MAX_PATH];
-	ZeroMemory(buffer, MAX_PATH);
-	ZeroMemory(&bi, sizeof(bi));
-	bi.hwndOwner = NULL;
-	bi.pszDisplayName = buffer;
-	bi.lpszTitle = title;
-	bi.ulFlags = BIF_EDITBOX | BIF_NEWDIALOGSTYLE | BIF_RETURNONLYFSDIRS | BIF_SHAREABLE;
-	bi.lpfn = ReqDirCallbackProc;
-	bi.lParam = (LPARAM)path;
-
-	osDialogOpen = TRUE;
-	LPCITEMIDLIST pFolder = SHBrowseForFolder(&bi);
-	osDialogOpen = FALSE;
-	if (pFolder == NULL) return FALSE;
-	if (!SHGetPathFromIDList(pFolder, buffer) ) return FALSE;
-	wcscpy(*folder, (REBCHR*)buffer);
-	return TRUE;
-}
+	return FALSE;
+} 
 
 /***********************************************************************
 **
@@ -763,20 +651,18 @@ int CALLBACK ReqDirCallbackProc( HWND hWnd, UINT uMsg, LPARAM lParam, LPARAM lpD
 **
 ***********************************************************************/
 {
-
 #if (defined REB_CORE)
 	return 0;
 #else
 	return (REBSER*)Gob_To_Image(gob);
-#endif
-
+#endif 
 }
 
 /***********************************************************************
 **
 */	REBOOL As_OS_Str(REBSER *series, REBCHR **string)
 /*
-**	If necessary, convert a string series to Win32 wide-chars.
+**	If necessary, convert a string series to platform specific format.
 **  (Handy for GOB/TEXT handling).
 **  If the string series is empty the resulting string is set to NULL
 **
@@ -788,21 +674,5 @@ int CALLBACK ReqDirCallbackProc( HWND hWnd, UINT uMsg, LPARAM lParam, LPARAM lpD
 **
 ***********************************************************************/
 {
-	int len, n;
-	void *str;
-	wchar_t *wstr;
-
-	if ((len = RL_Get_String(series, 0, &str)) < 0) {
-		// Latin1 byte string - convert to wide chars
-        len = -len;
-		wstr = OS_Make((len+1) * sizeof(wchar_t));
-		for (n = 0; n < len; n++)
-			wstr[n] = (wchar_t)((unsigned char*)str)[n];
-		wstr[len] = 0;
-		//note: following string needs be deallocated in the code that uses this function
-		*string = (REBCHR*)wstr;
-		return TRUE;
-	}
-	*string = (len == 0) ? NULL : str; //empty string check
 	return FALSE;
 }

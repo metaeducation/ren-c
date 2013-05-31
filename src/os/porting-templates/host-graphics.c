@@ -19,11 +19,10 @@
 **
 ************************************************************************
 **
-**  Title: Device: Event handler for Posix
-**  Author: Carl Sassenrath
-**  Purpose:
-**      Processes events to pass to REBOL. Note that events are
-**      used for more than just windowing.
+**  Title: Graphics Commmands
+**  Author: Richard Smolak, Carl Sassenrath
+**  Purpose: "View" commands support.
+**  Tools: make-host-ext.r
 **
 ************************************************************************
 **
@@ -37,103 +36,99 @@
 **
 ***********************************************************************/
 
-#include <stdio.h>
-#include <string.h>
-#include <unistd.h>
-#include <sys/time.h>
-
 #include "reb-host.h"
-#include "host-lib.h"
+#include "host-view.h"
 
-void Done_Device(int handle, int error);
+//***** Externs *****
+RXIEXT int RXD_Graphics(int cmd, RXIFRM *frm, REBCEC *data);
+RXIEXT int RXD_Draw(int cmd, RXIFRM *frm, REBCEC *ctx);
+RXIEXT int RXD_Shape(int cmd, RXIFRM *frm, REBCEC *ctx);
+RXIEXT int RXD_Text(int cmd, RXIFRM *frm, REBCEC *ctx);
+
+extern const unsigned char RX_graphics[];
+extern const unsigned char RX_draw[];
+extern const unsigned char RX_shape[];
+extern const unsigned char RX_text[];
+
+//**********************************************************************
+//** Helper Functions **************************************************
+//**********************************************************************
+
 
 /***********************************************************************
 **
-*/	DEVICE_CMD Init_Events(REBREQ *dr)
+*/	void* OS_Image_To_Cursor(REBYTE* image, REBINT width, REBINT height)
 /*
-**		Initialize the event device.
-**
-**		Create a hidden window to handle special events,
-**		such as timers and async DNS.
+**      Converts REBOL image! to Windows CURSOR
 **
 ***********************************************************************/
 {
-	REBDEV *dev = (REBDEV*)dr; // just to keep compiler happy
-	SET_FLAG(dev->flags, RDF_INIT);
-	return DR_DONE;
+	return 0;
 }
-
 
 /***********************************************************************
 **
-*/	DEVICE_CMD Poll_Events(REBREQ *req)
+*/	void OS_Set_Cursor(void *cursor)
 /*
-**		Poll for events and process them.
-**		Returns 1 if event found, else 0.
+**
 **
 ***********************************************************************/
 {
-	int flag = DR_DONE;
-	return flag;	// different meaning compared to most commands
 }
-
 
 /***********************************************************************
 **
-*/	DEVICE_CMD Query_Events(REBREQ *req)
+*/	void* OS_Load_Cursor(void *cursor)
 /*
-**		Wait for an event or a timeout sepecified by req->length.
-**		This is used by WAIT as the main timing method.
+**
 **
 ***********************************************************************/
 {
-	struct timeval tv;
-	int result;
-
-	tv.tv_sec = 0;
-	tv.tv_usec = req->length * 1000;
-	//printf("usec %d\n", tv.tv_usec);
-	
-	result = select(0, 0, 0, 0, &tv);
-	if (result < 0) {
-		// !!! set error code
-		printf("ERROR!!!!\n");
-		return DR_ERROR;
-	}
-
-	return DR_DONE;
+	return 0;
 }
-
 
 /***********************************************************************
 **
-*/	DEVICE_CMD Connect_Events(REBREQ *req)
+*/	void OS_Destroy_Cursor(void *cursor)
 /*
-**		Simply keeps the request pending for polling purposes.
-**		Use Abort_Device to remove it.
+**
 **
 ***********************************************************************/
 {
-	return DR_PEND;	// keep pending
 }
-
 
 /***********************************************************************
 **
-**	Command Dispatch Table (RDC_ enum order)
+*/	REBD32 OS_Get_Metrics(METRIC_TYPE type)
+/*
+**	Provide OS specific UI related information.
 **
 ***********************************************************************/
+{
+	return 0;
+}
 
-static DEVICE_CMD_FUNC Dev_Cmds[RDC_MAX] = {
-	Init_Events,			// init device driver resources
-	0,	// RDC_QUIT,		// cleanup device driver resources
-	0,	// RDC_OPEN,		// open device unit (port)
-	0,	// RDC_CLOSE,		// close device unit
-	0,	// RDC_READ,		// read from unit
-	0,	// RDC_WRITE,		// write to unit
-	Poll_Events,
-	Connect_Events,
-	Query_Events,
-};
+/***********************************************************************
+**
+*/	void OS_Show_Soft_Keyboard(REBINT win, REBINT x, REBINT y)
+/*
+**  Display software/virtual keyboard on the screen.
+**  (mainly used on mobile platforms)
+**
+***********************************************************************/
+{
+}
 
-DEFINE_DEV(Dev_Event, "OS Events", 1, Dev_Cmds, RDC_MAX, 0);
+/***********************************************************************
+**
+*/	void OS_Init_Graphics(void)
+/*
+**	Initialize special variables of the graphics subsystem.
+**
+***********************************************************************/
+{
+	RL_Extend((REBYTE *)(&RX_graphics[0]), &RXD_Graphics);
+	RL_Extend((REBYTE *)(&RX_draw[0]), &RXD_Draw);
+	RL_Extend((REBYTE *)(&RX_shape[0]), &RXD_Shape);
+	RL_Extend((REBYTE *)(&RX_text[0]), &RXD_Text);
+}

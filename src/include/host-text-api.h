@@ -1,6 +1,5 @@
-//typedef struct REBOL_FONT REBFNT;
 typedef struct REBOL_FONT {
-	wchar_t *name;
+	REBCHR *name;
 	REBCNT name_free;
 	REBINT bold;
 	REBINT italic;
@@ -17,7 +16,6 @@ typedef struct REBOL_FONT {
 	REBINT shadow_blur;
 } REBFNT;
 
-//typedef struct REBOL_PARA REBPRA;
 typedef struct REBOL_PARA {
 		REBINT origin_x;
 		REBINT origin_y;
@@ -33,7 +31,7 @@ typedef struct REBOL_PARA {
 		REBINT valign;
 } REBPRA;
 
-//extern AGG-based compositor functions
+//extern AGG-based text functions
 
 extern void* Create_RichText();
 extern void Destroy_RichText(void* rt);
@@ -59,8 +57,7 @@ extern void rt_size_text(void* rt, REBGOB* gob, REBXYF* size);
 extern void rt_text(void* gr, REBCHR* text, REBINT index, REBCNT gc);
 extern void rt_underline(void* rt, REBINT state);
 
-extern REBINT rt_offset_to_caret(void* rt, REBGOB *gob, REBXYF xy, REBINT *element, REBINT *position);
-extern REBINT rt_caret_to_offset(void* rt, REBGOB *gob, REBXYF* xy, REBINT element, REBINT position);
-
-
-
+extern void rt_offset_to_caret(void* rt, REBGOB *gob, REBXYF xy, REBINT *element, REBINT *position);
+extern void rt_caret_to_offset(void* rt, REBGOB *gob, REBXYF* xy, REBINT element, REBINT position);
+extern REBINT rt_gob_text(REBGOB *gob, REBYTE* buf, REBXYI buf_size, REBXYI abs_oft, REBXYI clip_oft, REBXYI clip_siz);
+extern void rt_block_text(void *rt, REBSER *block);

@@ -613,13 +613,14 @@ static REBREQ *Req_SIO;
 **
 ***********************************************************************/
 {
-	up[0] = Hex_Digits[(val >> 20) & 0xf];
-	up[1] = Hex_Digits[(val >> 16) & 0xf];
+	up[0] = Hex_Digits[(val >>  4) & 0xf];
+	up[1] = Hex_Digits[val & 0xf];
 	up[2] = Hex_Digits[(val >> 12) & 0xf];
 	up[3] = Hex_Digits[(val >>  8) & 0xf];
-	up[4] = Hex_Digits[(val >>  4) & 0xf];
-	up[5] = Hex_Digits[val & 0xf];
+	up[4] = Hex_Digits[(val >> 20) & 0xf];
+	up[5] = Hex_Digits[(val >> 16) & 0xf];
 	up[6] = 0;
+
 	return up+6;
 }
 

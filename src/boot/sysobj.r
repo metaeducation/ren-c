@@ -282,14 +282,6 @@ view: context [
 	screen-gob: none
 	handler: none
 	event-port: none
-	metrics: context [
-		screen-size: 0x0
-		border-size: 0x0
-		border-fixed: 0x0
-		title-size: 0x0
-		work-origin: 0x0
-		work-size: 0x0
-	]
 	event-types: [
 		; Event types. Order dependent for C and REBOL.
 		; Due to fixed C constants, this list cannot be reordered after release!
@@ -318,6 +310,7 @@ view: context [
 		hide
 		offset
 		resize
+		rotate
 		active
 		inactive 
 		minimize

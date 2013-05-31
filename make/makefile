@@ -54,7 +54,7 @@ HFLAGS= -c $(BIT) -D$(TO_OS) $(HOST_FLAGS) $I
 #-DREB_CORE
 #CLIB= -lm  -lwsock32 -lcomdlg32 -lgdi32 -lstdc++ -mwindows -Wl,--stack=4194300
 CLIB= -L. -static-libgcc -lm -lwsock32 -lcomdlg32 -lgdi32 -lstdc++ -liphlpapi -Wl,--stack=4194300
-GUI_CLIB= -L. -static-libgcc -lm -lwsock32 -lcomdlg32 -lgdi32 -lstdc++ -liphlpapi -Wl,--stack=4194300 -mwindows
+GUI_CLIB= -L. -static-libgcc -lm -lwsock32 -lcomdlg32 -lgdi32 -lmsimg32 -lstdc++ -liphlpapi -Wl,--stack=4194300 -mwindows
 
 UPX= $(CD)upx$(BIN_SUFFIX) --ultra-brute
 
@@ -205,9 +205,16 @@ HOST =	objs/host-main.o objs/host-core.o objs/host-args.o objs/host-device.o obj
 	objs/lodepng.o objs/rc4.o objs/aes.o objs/bigint.o objs/rsa.o objs/dh.o
 
 GFX= \
+	objs/host-view.o\
+	objs/host-window.o\
 	objs/host-graphics.o\
-	objs/host-event.o\
-	objs/host-window.o
+	objs/host-draw.o\
+	objs/host-draw-api.o\
+	objs/host-text.o\
+	objs/host-text-api.o\
+	objs/host-compositor.o\
+	objs/host-event.o
+
 
 AGG= \
 	objs/agg_arc.o\
@@ -230,13 +237,9 @@ AGG= \
 	objs/agg_vcgen_smooth_poly1.o\
 	objs/agg_vcgen_stroke.o\
 	objs/agg_vpgen_segmentator.o\
-	objs/agg_compo.o\
 	objs/agg_graphics.o\
 	objs/agg_font_win32_tt.o\
 	objs/agg_truetype_text.o\
-	objs/compositor.o\
-	objs/graphics.o\
-	objs/rich_text.o
 
 # Directly linked r3 core executable:
 r3-core: prep-core objs $(OBJS) $(HOST)
@@ -312,7 +315,7 @@ r3-core-host: prep-core objs $(HOST)
 # PUBLIC: View Host using the shared lib:
 
 r3-view-host: prep-view objs $(HOST) $(GFX) $(AGG)
-	$(CC) -o r3-view-host$(BIN_SUFFIX) $(HOST) $(GFX) $(AGG) $(R3LIB) $(GUI_CLIB)
+	$(CC) -o r3-view-host$(BIN_SUFFIX) $(HOST) $(GFX) $(R3LIB) $(GUI_CLIB) $(AGG)	
 	$(STRIP) r3-view-host$(BIN_SUFFIX)
 	$(LS) r3-view-host$(BIN_SUFFIX)
 
@@ -616,6 +619,12 @@ objs/dev-net.o:       $S/os/dev-net.c
 objs/dev-dns.o:       $S/os/dev-dns.c
 	$(CC) $S/os/dev-dns.c $(HFLAGS) -o objs/dev-dns.o
 
+objs/host-view.o: $S/os/host-view.c
+	$(CC) $S/os/host-view.c $(HFLAGS) -o objs/host-view.o
+
+objs/host-draw.o: $S/os/host-draw.c
+	$(CC) $S/os/host-draw.c $(HFLAGS) -o objs/host-draw.o
+
 objs/host-lib.o:      $S/os/win32/host-lib.c
 	$(CC) $S/os/win32/host-lib.c $(HFLAGS) -o objs/host-lib.o
 
@@ -630,6 +639,18 @@ objs/dev-event.o:     $S/os/win32/dev-event.c
 
 objs/dev-clipboard.o: $S/os/win32/dev-clipboard.c
 	$(CC) $S/os/win32/dev-clipboard.c $(HFLAGS) -o objs/dev-clipboard.o
+
+objs/host-draw-api.o: $S/os/host-draw-api-agg.cpp
+	$(CC) $S/os/host-draw-api-agg.cpp $(HFLAGS) -o objs/host-draw-api.o
+
+objs/host-text-api.o: $S/os/host-text-api-agg.cpp
+	$(CC) $S/os/host-text-api-agg.cpp $(HFLAGS) -o objs/host-text-api.o
+
+objs/host-compositor.o: $S/os/win32/host-compositor-gdi.c
+	$(CC) $S/os/win32/host-compositor-gdi.c $(HFLAGS) -o objs/host-compositor.o
+
+objs/host-text.o: $S/os/host-text.c
+	$(CC) $S/os/host-text.c $(HFLAGS) -o objs/host-text.o
 
 objs/host-graphics.o: $S/os/win32/host-graphics.c
 	$(CC) $S/os/win32/host-graphics.c $(HFLAGS) -o objs/host-graphics.o
@@ -720,9 +741,6 @@ objs/agg_vcgen_stroke.o:$S/agg/agg_vcgen_stroke.cpp
 objs/agg_vpgen_segmentator.o:$S/agg/agg_vpgen_segmentator.cpp
 	$(CC) $S/agg/agg_vpgen_segmentator.cpp $(HFLAGS) -o objs/agg_vpgen_segmentator.o
 
-objs/agg_compo.o:     $S/agg/agg_compo.cpp
-	$(CC) $S/agg/agg_compo.cpp $(HFLAGS) -o objs/agg_compo.o
-
 objs/agg_graphics.o:  $S/agg/agg_graphics.cpp
 	$(CC) $S/agg/agg_graphics.cpp $(HFLAGS) -o objs/agg_graphics.o
 
@@ -731,12 +749,6 @@ objs/agg_font_win32_tt.o:$S/agg/agg_font_win32_tt.cpp
 
 objs/agg_truetype_text.o:$S/agg/agg_truetype_text.cpp
 	$(CC) $S/agg/agg_truetype_text.cpp $(HFLAGS) -o objs/agg_truetype_text.o
-
-objs/compositor.o:    $S/agg/compositor.cpp
-	$(CC) $S/agg/compositor.cpp $(HFLAGS) -o objs/compositor.o
-
-objs/graphics.o:      $S/agg/graphics.cpp
-	$(CC) $S/agg/graphics.cpp $(HFLAGS) -o objs/graphics.o
 
 objs/rich_text.o:     $S/agg/rich_text.cpp
 	$(CC) $S/agg/rich_text.cpp $(HFLAGS) -o objs/rich_text.o

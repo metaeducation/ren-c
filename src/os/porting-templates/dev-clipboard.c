@@ -19,11 +19,11 @@
 **
 ************************************************************************
 **
-**  Title: Device: Event handler for Posix
-**  Author: Carl Sassenrath
+**  Title: Device: Clipboard access for <platform>
+**  Author: Carl Sassenrath, Richard Smolak
 **  Purpose:
-**      Processes events to pass to REBOL. Note that events are
-**      used for more than just windowing.
+**      Provides a very simple interface to the clipboard for text.
+**      May be expanded in the future for images, etc.
 **
 ************************************************************************
 **
@@ -38,83 +38,91 @@
 ***********************************************************************/
 
 #include <stdio.h>
-#include <string.h>
-#include <unistd.h>
-#include <sys/time.h>
 
 #include "reb-host.h"
 #include "host-lib.h"
-
-void Done_Device(int handle, int error);
+#include "sys-net.h"
 
 /***********************************************************************
 **
-*/	DEVICE_CMD Init_Events(REBREQ *dr)
+*/	DEVICE_CMD Open_Clipboard(REBREQ *req)
 /*
-**		Initialize the event device.
-**
-**		Create a hidden window to handle special events,
-**		such as timers and async DNS.
-**
 ***********************************************************************/
 {
-	REBDEV *dev = (REBDEV*)dr; // just to keep compiler happy
-	SET_FLAG(dev->flags, RDF_INIT);
+	SET_OPEN(req);
 	return DR_DONE;
 }
 
 
 /***********************************************************************
 **
-*/	DEVICE_CMD Poll_Events(REBREQ *req)
+*/	DEVICE_CMD Close_Clipboard(REBREQ *req)
 /*
-**		Poll for events and process them.
-**		Returns 1 if event found, else 0.
-**
 ***********************************************************************/
 {
-	int flag = DR_DONE;
-	return flag;	// different meaning compared to most commands
+	SET_CLOSED(req);
+	return DR_DONE;
 }
 
 
 /***********************************************************************
 **
-*/	DEVICE_CMD Query_Events(REBREQ *req)
+*/	DEVICE_CMD Read_Clipboard(REBREQ *req)
 /*
-**		Wait for an event or a timeout sepecified by req->length.
-**		This is used by WAIT as the main timing method.
-**
 ***********************************************************************/
 {
-	struct timeval tv;
-	int result;
+	REBYTE *data;
 
-	tv.tv_sec = 0;
-	tv.tv_usec = req->length * 1000;
-	//printf("usec %d\n", tv.tv_usec);
+	//put the OS specific code here
+	//=============================
+	//
+	//=============================
 	
-	result = select(0, 0, 0, 0, &tv);
-	if (result < 0) {
-		// !!! set error code
-		printf("ERROR!!!!\n");
+	req->actual = 0;
+	
+	if ((data) == NULL) {
+		req->error = 30;
 		return DR_ERROR;
 	}
-
+	
+	//make sure "bytes mode" is set
+	CLR_FLAG(req->flags, RRF_WIDE);
+	
+	req->data = data;
+	req->actual = LEN_STR(data);
+	
 	return DR_DONE;
 }
 
 
 /***********************************************************************
 **
-*/	DEVICE_CMD Connect_Events(REBREQ *req)
+*/	DEVICE_CMD Write_Clipboard(REBREQ *req)
 /*
-**		Simply keeps the request pending for polling purposes.
-**		Use Abort_Device to remove it.
+**		Works for Unicode and ASCII strings.
+**		Length is number of bytes passed (not number of chars).
 **
 ***********************************************************************/
 {
-	return DR_PEND;	// keep pending
+	req->actual = 0;
+	
+	//put the OS specific code here
+	//=============================
+	//
+	//=============================
+	
+	req->actual = req->length;
+	return DR_DONE;
+}
+
+
+/***********************************************************************
+**
+*/	DEVICE_CMD Poll_Clipboard(REBREQ *req)
+/*
+***********************************************************************/
+{
+	return DR_DONE;
 }
 
 
@@ -124,16 +132,15 @@ void Done_Device(int handle, int error);
 **
 ***********************************************************************/
 
-static DEVICE_CMD_FUNC Dev_Cmds[RDC_MAX] = {
-	Init_Events,			// init device driver resources
-	0,	// RDC_QUIT,		// cleanup device driver resources
-	0,	// RDC_OPEN,		// open device unit (port)
-	0,	// RDC_CLOSE,		// close device unit
-	0,	// RDC_READ,		// read from unit
-	0,	// RDC_WRITE,		// write to unit
-	Poll_Events,
-	Connect_Events,
-	Query_Events,
+static DEVICE_CMD_FUNC Dev_Cmds[RDC_MAX] =
+{
+	0,
+	0,
+	Open_Clipboard,
+	Close_Clipboard,
+	Read_Clipboard,
+	Write_Clipboard,
+	Poll_Clipboard,
 };
 
-DEFINE_DEV(Dev_Event, "OS Events", 1, Dev_Cmds, RDC_MAX, 0);
+DEFINE_DEV(Dev_Clipboard, "Clipboard", 1, Dev_Cmds, RDC_MAX, 0);

@@ -206,6 +206,7 @@ These are now obsolete (as of A107) and should be removed:
 
 #ifdef TO_ANDROID_ARM				// Android/ARM
 #undef MIN_OS
+#undef NO_GRAPHICS
 #define ENDIAN_LITTLE
 #define HAS_LL_CONSTS
 #endif

@@ -193,9 +193,9 @@ static void process_chunk(char *type,unsigned char *p,int length) {
 }
 
 static unsigned int calc_color(unsigned int color,unsigned short alpha) {
-	if(alpha==65535)
-		return 0xff000000|color;
-	else if(alpha==0) {
+	if(alpha==65535){
+		return TO_PIXEL_COLOR(color>>16, color>>8&255, color&255, 0xff);
+	}else if(alpha==0) {
 		hasalpha=TRUE;
 		return 0x00000000;
 	} else {
@@ -204,7 +204,7 @@ static unsigned int calc_color(unsigned int color,unsigned short alpha) {
 		red=color>>16;
 		green=(color>>8)&255;
 		blue=color&255;
-		return ((alpha/255)<<24)|(red<<16)|(green<<8)|blue;
+		return TO_PIXEL_COLOR(red, green, blue, (alpha/255));
 	}
 }
 
@@ -220,8 +220,10 @@ static void process_row_0_1(unsigned char *p,int width,int r,int hoff,int hskip)
 		if(v==transparent_gray) {
 			hasalpha=TRUE;
 			*imgp=0x00000000;
-		} else
-			*imgp=(v?0xffffffff:0xff000000);
+		} else {
+			v ? v=0xff : 0x00;
+			*imgp=TO_PIXEL_COLOR(v, v, v, 0xff);
+		}
 		imgp+=hskip;
 		m<<=1;
 	}
@@ -242,8 +244,7 @@ static void process_row_0_2(unsigned char *p,int width,int r,int hoff,int hskip)
 			*imgp=0x00000000;
 		} else {
 			v=bytetab2[v];
-			v|=(v<<8)|(v<<16)|0xff000000;
-			*imgp=v;
+			*imgp=TO_PIXEL_COLOR(v, v, v, 0xff);			
 		}
 		imgp+=hskip;
 		m<<=2;
@@ -265,8 +266,7 @@ static void process_row_0_4(unsigned char *p,int width,int r,int hoff,int hskip)
 			*imgp=0x00000000;
 		} else {
 			v|=(v<<4);
-			v|=(v<<8)|(v<<16)|0xff000000;
-			*imgp=v;
+			*imgp=TO_PIXEL_COLOR(v, v, v, 0xff);			
 		}
 		imgp+=hskip;
 		m<<=4;
@@ -284,8 +284,7 @@ static void process_row_0_8(unsigned char *p,int width,int r,int hoff,int hskip)
 			hasalpha=TRUE;
 			*imgp=0x00000000;
 		} else {
-			v|=(v<<8)|(v<<16)|0xff000000;
-			*imgp=v;
+			*imgp=TO_PIXEL_COLOR(v, v, v, 0xff);
 		}
 		imgp+=hskip;
 	}
@@ -304,8 +303,7 @@ static void process_row_0_16(unsigned char *p,int width,int r,int hoff,int hskip
 			*imgp=0x00000000;
 		} else {
 			v>>=8;
-			v|=(v<<8)|(v<<16)|0xff000000;
-			*imgp=v;
+			*imgp=TO_PIXEL_COLOR(v, v, v, 0xff);
 		}
 		imgp+=hskip;
 	}
@@ -325,7 +323,7 @@ static void process_row_2_8(unsigned char *p,int width,int r,int hoff,int hskip)
 			hasalpha=TRUE;
 			*imgp=0x00000000;
 		} else
-			*imgp=0xff000000|(red<<16)|(green<<8)|blue;
+			*imgp=TO_PIXEL_COLOR(red, green, blue, 0xff);
 		imgp+=hskip;
 	}
 }
@@ -344,7 +342,7 @@ static void process_row_2_16(unsigned char *p,int width,int r,int hoff,int hskip
 			hasalpha=TRUE;
 			*imgp=0x00000000;
 		} else
-			*imgp=0xff000000|((red>>8)<<16)|(green&0xff00)|(blue>>8);
+			*imgp=TO_PIXEL_COLOR((red>>8), (green&0xff00), (blue>>8), 0xff);
 		imgp+=hskip;
 	}
 }
