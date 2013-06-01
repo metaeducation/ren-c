@@ -202,11 +202,13 @@ int main(int argc, char **argv)
 	OS_Init_Graphics();
 #endif // REB_CORE
 
+#ifdef TO_WIN32
 #ifdef ENCAP
 	Console_Output(FALSE);
 #else
 	if (Main_Args.script) Console_Output(FALSE);
 #endif // ENCAP
+#endif // TO_WIN32
 
 	// Call sys/start function. If a compressed script is provided, it will be
 	// decompressed, stored in system/options/boot-host, loaded, and evaluated.
@@ -218,11 +220,15 @@ int main(int argc, char **argv)
 	n = RL_Start(0, 0, 0);
 #endif
 
+#ifdef TO_WIN32
 #ifdef ENCAP
 	Console_Output(TRUE);
 #else
 	if (Main_Args.script) Console_Output(TRUE);
+#endif // TO_WIN32
+#endif // ENCAP
 
+#ifndef ENCAP
 	// Console line input loop (just an example, can be improved):
 	if (
 		!(Main_Args.options & RO_CGI)
@@ -243,7 +249,7 @@ int main(int argc, char **argv)
 			else break; // EOS
 		}
 	}
-#endif //ENCAP
+#endif //!ENCAP
 	OS_Quit_Devices(0);
 
 	// A QUIT does not exit this way, so the only valid return code is zero.
