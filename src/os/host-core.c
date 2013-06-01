@@ -30,12 +30,12 @@
 
 #include "reb-host.h"
 
-#include "lodepng.h"
+#include "png/lodepng.h"
  
-#include "rc4.h"
-#include "rsa.h"
-#include "dh.h"
-#include "aes.h"
+#include "rc4/rc4.h"
+#include "rsa/rsa.h"
+#include "dh/dh.h"
+#include "aes/aes.h"
 
 #define INCLUDE_EXT_DATA
 #include "host-ext-core.h"
