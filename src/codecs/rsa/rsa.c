@@ -36,7 +36,12 @@
 #include <string.h>
 #include <time.h>
 #include <stdlib.h>
-#include <malloc.h>
+
+#ifdef TO_OSXI
+	#include <sys/malloc.h>
+#else
+	#include <malloc.h>
+#endif
 
 #include "rsa.h"
 #ifdef TO_WIN32
