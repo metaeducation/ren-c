@@ -82,7 +82,7 @@ void Done_Device(int handle, int error);
 **
 */	DEVICE_CMD Query_Events(REBREQ *req)
 /*
-**		Wait for an event or a timeout sepecified by req->length.
+**		Wait for an event or a timeout specified by req->length.
 **		This is used by WAIT as the main timing method.
 **
 ***********************************************************************/
@@ -93,7 +93,7 @@ void Done_Device(int handle, int error);
 	tv.tv_sec = 0;
 	tv.tv_usec = req->length * 1000;
 	//printf("usec %d\n", tv.tv_usec);
-	
+
 	result = select(0, 0, 0, 0, &tv);
 	if (result < 0) {
 		// !!! set error code

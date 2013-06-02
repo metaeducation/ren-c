@@ -24,9 +24,9 @@
 **  File:  host-compositor.c
 **  Purpose: Provides simple example of gfx backend specific compositor.
 **  Note: This is not fully working code, see the notes for insertion
-**        of your backend speicific code. Ofcourse the examplecan be fully 
+**        of your backend specific code. Of course the example can be fully
 **        modified according to the specific backend. Only the declarations
-**		  of compositro API calls must remain consistent.
+**        of compositor API calls must remain consistent.
 **
 ************************************************************************
 **
@@ -38,7 +38,7 @@
 **    4. Keep in mind Linux, OS X, BSD, big/little endian CPUs.
 **    5. Test everything, then test it again.
 **
-***********************************************************************/ 
+***********************************************************************/
 
 #include <math.h>	//for floor()
 #include "reb-host.h"
@@ -63,7 +63,7 @@ typedef struct {
 //The structure can be extended/modified according to the specific backend needs.
 typedef struct {
 	REBYTE *Window_Buffer;
-	REBXYI winBufSize;	
+	REBXYI winBufSize;
 	REBGOB *Win_Gob;
 	REBGOB *Root_Gob;
 	REBXYF absOffset;
@@ -116,11 +116,11 @@ typedef struct {
 		//------------------------------
 		//Put backend specific code here
 		//------------------------------
-		
+
 		//update the buffer size values
 		ctx->winBufSize.x = w;
 		ctx->winBufSize.y = h;
-		
+
 		//update old gob area
 		GOB_XO(winGob) = GOB_PX(winGob);
 		GOB_YO(winGob) = GOB_PY(winGob);
@@ -141,15 +141,15 @@ typedef struct {
 {
 	//new compositor struct
 	REBCMP_CTX *ctx = (REBCMP_CTX*)OS_Make(sizeof(REBCMP_CTX));
-	
+
 	//shortcuts
 	ctx->Root_Gob = rootGob;
 	ctx->Win_Gob = gob;
-	
+
 	//------------------------------
 	//Put backend specific code here
 	//------------------------------
-	
+
 	//call resize to init buffer
 	rebcmp_resize_buffer(ctx, gob);
 	return ctx;
@@ -198,13 +198,13 @@ typedef struct {
 	//------------------------------
 	//Put backend specific code here
 	//------------------------------
-	
+
 	//get the current Window clip box
 	REBRECT gob_clip;
 	//------------------------------
 	//Put backend specific code here
 	//------------------------------
-	
+
 	if (valid_intersection)
 	{
 		//render GOB content
@@ -213,16 +213,16 @@ typedef struct {
 				//------------------------------
 				//Put backend specific code here
 				//------------------------------
-				// or use the simmilar draw api call:
+				// or use the similar draw api call:
 				// rebdrw_gob_color(gob, ctx->Window_Buffer, ctx->winBufSize, (REBXYI){x,y}, (REBXYI){gob_clip.left, gob_clip.top}, (REBXYI){gob_clip.right, gob_clip.bottom});
 				break;
-			
+
 			case GOBT_IMAGE:
 				{
 					//------------------------------
 					//Put backend specific code here
 					//------------------------------
-					// or use the simmilar draw api call:
+					// or use the similar draw api call:
 					// rebdrw_gob_image(gob, ctx->Window_Buffer, ctx->winBufSize, (REBXYI){x,y}, (REBXYI){gob_clip.left, gob_clip.top}, (REBXYI){gob_clip.right, gob_clip.bottom});
 				}
 				break;
@@ -232,7 +232,7 @@ typedef struct {
 					//------------------------------
 					//Put backend specific code here
 					//------------------------------
-					// or use the simmilar draw api call:
+					// or use the similar draw api call:
 					// rebdrw_gob_draw(gob, ctx->Window_Buffer ,ctx->winBufSize, (REBXYI){x,y}, (REBXYI){gob_clip.left, gob_clip.top}, (REBXYI){gob_clip.right, gob_clip.bottom});
 				}
 				break;
@@ -242,10 +242,10 @@ typedef struct {
 				//------------------------------
 				//Put backend specific code here
 				//------------------------------
-				// or use the simmilar draw api call:
+				// or use the similar draw api call:
 				// rt_gob_text(gob, ctx->Window_Buffer ,ctx->winBufSize,ctx->absOffset, (REBXYI){gob_clip.left, gob_clip.top}, (REBXYI){gob_clip.right, gob_clip.bottom});
 				break;
-				
+
 			case GOBT_EFFECT:
 				//not yet implemented
 				break;
@@ -256,7 +256,7 @@ typedef struct {
 			REBINT n;
 			REBINT len = GOB_TAIL(gob);
 			REBGOB **gp = GOB_HEAD(gob);
-			
+
 			for (n = 0; n < len; n++, gp++) {
 				REBINT g_x = GOB_PX(*gp);
 				REBINT g_y = GOB_PY(*gp);
@@ -265,10 +265,10 @@ typedef struct {
 				//------------------------------
 				//Put backend specific code here
 				//------------------------------
-				
+
 				ctx->absOffset.x += g_x;
 				ctx->absOffset.y += g_y;
-				
+
 				process_gobs(ctx, *gp);
 
 				ctx->absOffset.x -= g_x;
@@ -297,27 +297,27 @@ typedef struct {
 	//------------------------------
 	//Put backend specific code here
 	//------------------------------
-	
+
 	//calculate absolute offset of the gob
 	while (GOB_PARENT(parent_gob) && (max_depth-- > 0) && !GET_GOB_FLAG(parent_gob, GOBF_WINDOW))
 	{
 		abs_x += GOB_PX(parent_gob);
 		abs_y += GOB_PY(parent_gob);
 		parent_gob = GOB_PARENT(parent_gob);
-	} 
+	}
 
 	//handle newly added gob case
 	if (!GET_GOB_STATE(gob, GOBS_NEW)){
 		//calculate absolute old offset of the gob
 		abs_ox = abs_x + (GOB_XO(gob) - GOB_PX(gob));
 		abs_oy = abs_y + (GOB_YO(gob) - GOB_PY(gob));
-		
+
 		//set region with old gob location and dimensions
 		//------------------------------
 		//Put backend specific code here
 		//------------------------------
 	}
-	
+
 	//Create union of "new" and "old" gob location
 	REBOOL valid_intersection;
 	//------------------------------
@@ -335,15 +335,15 @@ typedef struct {
 		ctx->absOffset.y = 0;
 
 		ctx->Window_Buffer = rebcmp_get_buffer(ctx);
-		
+
 		//redraw gobs
 		process_gobs(ctx, winGob);
 
 		rebcmp_release_buffer(ctx);
-		
-		ctx->Window_Buffer = NULL;		
+
+		ctx->Window_Buffer = NULL;
 	}
-	
+
 	//update old GOB area
 	GOB_XO(gob) = GOB_PX(gob);
 	GOB_YO(gob) = GOB_PY(gob);

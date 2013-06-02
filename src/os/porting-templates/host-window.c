@@ -54,7 +54,7 @@ extern void Draw_Window(REBGOB *wingob, REBGOB *gob);
 //***** Locals *****
 
 static REBXYF Zero_Pair = {0, 0};
- 
+
 //**********************************************************************
 //** OSAL Library Functions ********************************************
 //**********************************************************************
@@ -63,7 +63,7 @@ static REBXYF Zero_Pair = {0, 0};
 **
 */	void OS_Init_Windows()
 /*
-**  Initialize special variables of the graphics subsystem.
+**		Initialize special variables of the graphics subsystem.
 **
 ***********************************************************************/
 {
@@ -83,13 +83,13 @@ static REBXYF Zero_Pair = {0, 0};
 **
 */  void* OS_Open_Window(REBGOB *gob)
 /*
-**      Initialize the graphics window.
+**		Initialize the graphics window.
 **
 **		The window handle is returned, but not expected to be used
 **		other than for debugging conditions.
 **
 ***********************************************************************/
-{ 
+{
 }
 
 /***********************************************************************

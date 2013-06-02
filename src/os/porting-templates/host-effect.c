@@ -58,9 +58,9 @@ static u32* effect_ext_words;
 {
 	switch (cmd) {
 
-    case CMD_EFFECT_INIT_WORDS:
-        effect_ext_words = RL_MAP_WORDS(RXA_SERIES(frm,1));
-        break;
+	case CMD_EFFECT_INIT_WORDS:
+		effect_ext_words = RL_MAP_WORDS(RXA_SERIES(frm,1));
+		break;
 
 	default:
 		return RXR_NO_COMMAND;

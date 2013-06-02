@@ -77,20 +77,20 @@
 	//=============================
 	//
 	//=============================
-	
+
 	req->actual = 0;
-	
+
 	if ((data) == NULL) {
 		req->error = 30;
 		return DR_ERROR;
 	}
-	
+
 	//make sure "bytes mode" is set
 	CLR_FLAG(req->flags, RRF_WIDE);
-	
+
 	req->data = data;
 	req->actual = LEN_STR(data);
-	
+
 	return DR_DONE;
 }
 
@@ -105,12 +105,12 @@
 ***********************************************************************/
 {
 	req->actual = 0;
-	
+
 	//put the OS specific code here
 	//=============================
 	//
 	//=============================
-	
+
 	req->actual = req->length;
 	return DR_DONE;
 }

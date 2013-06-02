@@ -93,15 +93,14 @@ static void Add_Event_Key(REBGOB *gob, REBINT id, REBINT key, REBINT flags)
 	RL_Event(&evt);	// returns 0 if queue is full
 }
 
-void dispatchEvent(REBGOB *gob, REBINT type, REBINT x, REBINT y)
+void dispatch_event(REBGOB *gob, REBINT type, REBINT x, REBINT y)
 {
 //	LOGI("Got event! %d %dx%d", type, x, y);
 	REBGOB* g = (REBGOB*)gob;
 	REBINT ev_type = -1;
 	REBINT dp_x = ROUND_TO_INT(x / dp_scale.x);
 	REBINT dp_y = ROUND_TO_INT(y / dp_scale.y);
-	switch (type)
-	{
+	switch (type) {
 		case EV_MOVE:
 			ev_type = EVT_MOVE;
 			break;
@@ -117,21 +116,17 @@ void dispatchEvent(REBGOB *gob, REBINT type, REBINT x, REBINT y)
 			Add_Event_Key(g, ((ev_type == -1) ? EVT_KEY_UP : ev_type) , x, 0);
 			return;
 		case EV_RESIZE:
-			{
-				g->size.x = dp_x;
-				g->size.y = dp_y;
-				Resize_Window(g, FALSE);
-				ev_type = EVT_RESIZE;
-				break;				
-			}
+			g->size.x = dp_x;
+			g->size.y = dp_y;
+			Resize_Window(g, FALSE);
+			ev_type = EVT_RESIZE;
+			break;
 		case EV_ROTATE:
-			{
-				g->size.x = dp_x;
-				g->size.y = dp_y;
-				Resize_Window(g, TRUE);
-				ev_type = EVT_ROTATE;
-				break;
-			}
+			g->size.x = dp_x;
+			g->size.y = dp_y;
+			Resize_Window(g, TRUE);
+			ev_type = EVT_ROTATE;
+			break;
 		case EV_CLOSE:
 			ev_type = EVT_CLOSE;
 			break;
