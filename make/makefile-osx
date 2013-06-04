@@ -77,11 +77,11 @@ all:
 
 prep:
 	$(REBOL) $T/make-headers.r
-	$(REBOL) $T/make-boot.r $(OS_ID)
-	$(REBOL) $T/make-host-init.r
+	$(REBOL) $T/make-boot.r $(OS_ID) saphir-core
 	$(REBOL) $T/make-os-ext.r # ok, but not always
-	$(REBOL) $T/make-host-ext.r
 	$(REBOL) $T/make-reb-lib.r
+	$(REBOL) $T/rma-init.r saphir-core
+	$(REBOL) $T/core-ext.r
 
 ### Post build actions
 purge:
