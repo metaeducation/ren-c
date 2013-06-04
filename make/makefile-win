@@ -34,7 +34,7 @@ S=	../src
 R=	$S/core
 
 INCL ?= .
-I= -I$(INCL) -I$S/include/ -I $S/codecs/png/ -I $S/codecs/rc4/ -I $S/codecs/rsa/ -I $S/codecs/dh/  -I $S/codecs/aes/
+I= -I$(INCL) -I$S/include/ -I $S/codecs/
 
 TO_OS?= TO_WIN32
 OS_ID?= 0.3.1
