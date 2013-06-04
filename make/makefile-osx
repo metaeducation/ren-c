@@ -41,7 +41,7 @@ TO_OS?= TO_OSXI
 OS_ID?= 0.2.5
 BIN_SUFFIX= -osx
 RAPI_FLAGS=  -O1 -fvisibility=hidden -Wno-pointer-sign -fPIC -fno-common -arch i386 -mmacosx-version-min=10.4
-HOST_FLAGS=	-DREB_EXE -O1 -fvisibility=hidden -Wno-pointer-sign -arch i386 -mmacosx-version-min=10.4 -D_FILE_OFFSET_BITS=64
+HOST_FLAGS=	-DREB_EXE -O1 -fvisibility=hidden -Wno-pointer-sign -arch i386 -mmacosx-version-min=10.4 -D_FILE_OFFSET_BITS=64 -DCUSTOM_STARTUP
 RLIB_FLAGS=
 
 # Flags for core and for host:
