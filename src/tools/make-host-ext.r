@@ -158,8 +158,3 @@ emit-file: func [
 ;	emit form-header/gen join title " - Module Initialization" second split-path file %make-host-ext.r
 ;	write rejoin [%../os/ file %.c] out
 ]
-
-emit-file %host-ext-core [
-	%../boot/core.r
-]
-
