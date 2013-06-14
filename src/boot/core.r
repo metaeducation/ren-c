@@ -17,6 +17,7 @@ words: [
 	priv-key	;private key
 	pub-key		;public key
 	g			;generator
+	pkcs1		;padding type
 ]
 
 init-words: command [
@@ -92,11 +93,13 @@ rsa-make-key: func [
 ]
 
 rsa: command [
-	"Encrypt/decrypt data using the RSA algorithm (with PKCS#1 padding)."
+	"Encrypt/decrypt data using the RSA algorithm (with default PKCS#1 padding)."
 	data [binary!]
 	key-object [object!]
 	/decrypt "Decrypts the data (default is to encrypt)"
 	/private "Uses an RSA private key (default is a public key)"
+	/padding "Selects the type of padding to use"
+		padding-type [word! none!] "Type of padding. Available values: PKCS1 or NONE"
 ]
 
 

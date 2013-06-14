@@ -347,11 +347,16 @@ static u32 *core_ext_words;
 			REBINT binary_len;
 			REBYTE *binaryBuffer;
 			REBINT *s;
+			REBOOL padding = TRUE; //PKCS1 is on by default
 
 			BI_CTX *bi_ctx;
 			bigint *data_bi;
 			RSA_CTX *rsa_ctx = NULL;
 
+			if (RXA_WORD(frm, 5)) { //padding refinement
+				padding = (RXA_TYPE(frm, 6) != RXT_NONE);
+			}
+			
             words = RL_WORDS_OF_OBJECT(obj);
             w = words;
 
@@ -425,11 +430,12 @@ static u32 *core_ext_words;
 			if (RXA_WORD(frm, 3)) // decrypt refinement
 			{
 
-				binary_len = RSA_decrypt(rsa_ctx, dataBuffer, binaryBuffer, RXA_WORD(frm, 4));
+				binary_len = RSA_decrypt(rsa_ctx, dataBuffer, binaryBuffer, RXA_WORD(frm, 4), padding);
 
 				if (binary_len == -1) return RXR_NONE;
 			} else {
-				RSA_encrypt(rsa_ctx, dataBuffer, data_len, binaryBuffer, RXA_WORD(frm, 4));
+				if (-1 == RSA_encrypt(rsa_ctx, dataBuffer, data_len, binaryBuffer, RXA_WORD(frm, 4), padding))
+					return RXR_NONE;
 			}
 
 			//hack! - will set the tail to buffersize

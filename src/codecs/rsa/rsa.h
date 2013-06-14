@@ -93,14 +93,14 @@ void RSA_pub_key_new(RSA_CTX **rsa_ctx,
         const uint8_t *pub_exp, int pub_len);
 void RSA_free(RSA_CTX *ctx);
 int RSA_decrypt(const RSA_CTX *ctx, const uint8_t *in_data, uint8_t *out_data,
-        int is_decryption);
+        int is_decryption, int padding);
 bigint *RSA_private(const RSA_CTX *c, bigint *bi_msg);
 #if defined(CONFIG_SSL_CERT_VERIFICATION) || defined(CONFIG_SSL_GENERATE_X509_CERT)
 bigint *RSA_sign_verify(BI_CTX *ctx, const uint8_t *sig, int sig_len,
         bigint *modulus, bigint *pub_exp);
 bigint *RSA_public(const RSA_CTX * c, bigint *bi_msg);
 int RSA_encrypt(const RSA_CTX *ctx, const uint8_t *in_data, uint16_t in_len,
-        uint8_t *out_data, int is_signing);
+        uint8_t *out_data, int is_signing, int padding);
 void RSA_print(const RSA_CTX *ctx);
 #endif
 

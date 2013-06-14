@@ -183,6 +183,12 @@ static struct digest {
 			return R_RET;
 		}
 
+		if (sym == SYM_ADLER32) {
+			if (D_REF(ARG_CHECKSUM_SECURE) || D_REF(ARG_CHECKSUM_KEY)) Trap0(RE_BAD_REFINES);
+			DS_RET_INT(ADLER32(data, len));
+			return R_RET;
+		}
+		
 		for (i = 0; i < sizeof(digests) / sizeof(digests[0]); i++) {
 
 			if (digests[i].index == sym) {

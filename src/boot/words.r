@@ -147,6 +147,7 @@ sha1
 md4
 md5
 crc32
+adler32
 
 ; Codec actions
 identify

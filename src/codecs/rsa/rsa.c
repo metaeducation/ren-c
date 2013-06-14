@@ -194,7 +194,7 @@ void RSA_free(RSA_CTX *rsa_ctx)
  * @see http://www.rsasecurity.com/rsalabs/node.asp?id=2125
  */
 int RSA_decrypt(const RSA_CTX *ctx, const uint8_t *in_data,
-                            uint8_t *out_data, int is_decryption)
+                            uint8_t *out_data, int is_decryption, int padding)
 {
     const int byte_size = ctx->num_octets;
     int i, size;
@@ -215,21 +215,29 @@ int RSA_decrypt(const RSA_CTX *ctx, const uint8_t *in_data,
     /* convert to a normal block */
     bi_export(ctx->bi_ctx, decrypted_bi, block, byte_size);
 
-    i = 10; /* start at the first possible non-padded byte */
+	if (padding)
+	{
+		i = 0;
+	} 
+	else
+	{
+
+		i = 10; /* start at the first possible non-padded byte */
 
 #ifdef CONFIG_SSL_CERT_VERIFICATION
-    if (is_decryption == 0) /* PKCS1.5 signing pads with "0xff"s */
-    {
-        while (block[i++] == 0xff && i < byte_size);
+		if (is_decryption == 0) /* PKCS1.5 signing pads with "0xff"s */
+		{
+			while (block[i++] == 0xff && i < byte_size);
 
-        if (block[i-2] != 0xff)
-            i = byte_size;     /*ensure size is 0 */
-    }
-    else                    /* PKCS1.5 encryption padding is random */
+			if (block[i-2] != 0xff)
+				i = byte_size;     /*ensure size is 0 */
+		}
+		else                    /* PKCS1.5 encryption padding is random */
 #endif
-    {
-        while (block[i++] && i < byte_size);
-    }
+		{
+			while (block[i++] && i < byte_size);
+		}
+	}
     size = byte_size - i;
 
     /* get only the bit we want */
@@ -293,28 +301,39 @@ bigint *RSA_public(const RSA_CTX * c, bigint *bi_msg)
  * see http://www.rsasecurity.com/rsalabs/node.asp?id=2125
  */
 int RSA_encrypt(const RSA_CTX *ctx, const uint8_t *in_data, uint16_t in_len,
-        uint8_t *out_data, int is_signing)
+        uint8_t *out_data, int is_signing, int padding)
 {
     int byte_size = ctx->num_octets;
-    int num_pads_needed = byte_size-in_len-3;
     bigint *dat_bi, *encrypt_bi;
 
-    /* note: in_len+11 must be > byte_size */
-    out_data[0] = 0;     /* ensure encryption block is < modulus */
+	if (padding)
+	{
+		int num_pads_needed = byte_size-in_len-3;
 
-    if (is_signing)
-    {
-        out_data[1] = 1;        /* PKCS1.5 signing pads with "0xff"'s */
-        memset(&out_data[2], 0xff, num_pads_needed);
-    }
-    else /* randomize the encryption padding with non-zero bytes */
-    {
-        out_data[1] = 2;
-        get_random_NZ(num_pads_needed, &out_data[2]);
-    }
-
-    out_data[2+num_pads_needed] = 0;
-    memcpy(&out_data[3+num_pads_needed], in_data, in_len);
+		//input won't fit pkcs output
+		if (num_pads_needed < 0) return -1;	
+		
+		/* note: in_len+11 must be > byte_size */
+		out_data[0] = 0;     /* ensure encryption block is < modulus */
+		
+		if (is_signing)
+		{
+			out_data[1] = 1;        /* PKCS1.5 signing pads with "0xff"'s */
+			memset(&out_data[2], 0xff, num_pads_needed);
+		}
+		else /* randomize the encryption padding with non-zero bytes */
+		{
+			out_data[1] = 2;
+			get_random_NZ(num_pads_needed, &out_data[2]);
+		}
+		
+		out_data[2+num_pads_needed] = 0;
+		memcpy(&out_data[3+num_pads_needed], in_data, in_len);
+	}
+	else
+	{
+		memcpy(out_data, in_data, in_len);
+	}
 
     /* now encrypt it */
     dat_bi = bi_import(ctx->bi_ctx, out_data, byte_size);
