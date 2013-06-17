@@ -47,7 +47,7 @@ RLIB_FLAGS=
 # Flags for core and for host:
 RFLAGS= -c -D$(TO_OS) -DREB_API  $(RAPI_FLAGS) $I
 HFLAGS= -c -D$(TO_OS) -DREB_CORE $(HOST_FLAGS) $I
-CLIB=  -arch i386 -lm
+CLIB=  -arch i386 -lm -mmacosx-version-min=10.4
 
 # REBOL builds various include files:
 REBOL=	$(CD)r3-make -qs
@@ -143,7 +143,7 @@ HOST =	objs/host-main.o objs/host-args.o objs/host-device.o objs/host-stdio.o \
 CODECS = objs/aes.o objs/bigint.o objs/dh.o objs/lodepng.o objs/rc4.o objs/rsa.o
 
 # Directly linked r3 executable:
-r3$(BIN_SUFFIX):	$(OBJS) $(HOST) $(CODECS)
+r3$(BIN_SUFFIX):	objs $(OBJS) $(HOST) $(CODECS)
 	$(CC) -o r3$(BIN_SUFFIX) $(OBJS) $(HOST) $(CODECS) $(CLIB)
 	$(STRIP) r3$(BIN_SUFFIX)
 	-$(NM) -a r3$(BIN_SUFFIX)
