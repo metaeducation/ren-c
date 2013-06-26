@@ -22,7 +22,7 @@ systems: [
 	[plat  os-name   os-base  build-flags]
 	[0.1.03 "amiga"      posix  [HID NPS +SC CMT COP -SP -LM]]
 	[0.2.04 "osx"        posix  [+OS NCM -LM]]			; no shared lib possible
-	[0.2.05 "osxi"       posix  [ARC +O1 NPS PIC NCM HID STX -LM]]
+	[0.2.05 "osxi"       osx    [ARC +O1 NPS PIC NCM HID STX -LM]]
 	[0.3.01 "win32"      win32  [+O2 UNI W32 WIN S4M EXE DIR -LM]]
 	[0.4.02 "linux"      posix  [+O2 LDL ST1 -LM]]		; libc 2.3
 	[0.4.03 "linux"      posix  [+O2 HID LDL ST1 -LM]]	; libc 2.5

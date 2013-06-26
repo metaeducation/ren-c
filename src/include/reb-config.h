@@ -173,6 +173,7 @@ These are now obsolete (as of A107) and should be removed:
 #ifdef TO_OSXI					// OSX/Intel
 #define ENDIAN_LITTLE
 #define HAS_LL_CONSTS
+#undef NO_GRAPHICS
 #endif
 
 #ifdef TO_OSX					// OSX/PPC

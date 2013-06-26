@@ -346,7 +346,7 @@ REBINT Alloc_Window(REBGOB *gob) {
             RXA_TYPE(frm, 1) = RXT_GOB;
             return RXR_VALUE;
         }
-
+#if defined(AGG_WIN32_FONTS) || defined(AGG_FREETYPE)
         case CMD_GRAPHICS_SIZE_TEXT:
 		
             if (Rich_Text) {
@@ -409,7 +409,7 @@ REBINT Alloc_Window(REBGOB *gob) {
                 return RXR_VALUE;
             }
             break;
-
+#endif
         case CMD_GRAPHICS_DRAW:
             {
                 REBYTE* img = 0;
@@ -510,9 +510,11 @@ REBINT Alloc_Window(REBGOB *gob) {
             Gob_Root->size.x = OS_Get_Metrics(SM_SCREEN_WIDTH);
             Gob_Root->size.y = OS_Get_Metrics(SM_SCREEN_HEIGHT);
 
+#if defined(AGG_WIN32_FONTS) || defined(AGG_FREETYPE)
             //Initialize text rendering context
             if (Rich_Text) Destroy_RichText(Rich_Text);
             Rich_Text = (void*)Create_RichText();
+#endif
             break;
 
         case CMD_GRAPHICS_INIT_WORDS:
