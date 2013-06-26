@@ -14,23 +14,23 @@ REBOL [
 	}
 ]
 
-;support functions
+; support functions
 
-debug: 
+debug:
 ;:print
 none
 
 emit: func [
 	ctx [object!]
 	code [block! binary!]
-][
+] [
 	repend ctx/msg code
 ]
 
 to-bin: func [
 	val [integer!]
 	width [integer!]
-][
+] [
 	skip tail to binary! val negate width
 ]
 
@@ -64,7 +64,7 @@ cipher-suites: make object! [
 	TLS_DHE_RSA_WITH_AES_256_CBC_SHA:		#{00 39}
 ]
 
-;ASN.1 format parser code
+; ASN.1 format parser code
 
 universal-tags: [
 	eoc
@@ -106,16 +106,16 @@ parse-asn: func [
 	data [binary!]
 	/local
 		mode d constructed? class tag ln length result val
-][
+] [
 	result: make block! 16
 	mode: 'type
 
-	while [d: data/1][
+	while [d: data/1] [
 		switch mode [
 			type [
 				constructed?: to logic! (d and 32)
 				class: pick class-types 1 + shift d -6
-				 
+
 				switch class [
 					universal [
 						tag: pick universal-tags 1 + (d and 31)
@@ -125,35 +125,35 @@ parse-asn: func [
 						val: d and 31
 					]
 				]
-				mode: 'length				
+				mode: 'length
 			]
-		
+
 			length [
 				length: d and 127
 				unless zero? (d and 128) [
-					;long form
+					; long form
 					ln: length
 					length: to integer! copy/part next data length
 					data: skip data ln
 				]
 				either zero? length [
-					append/only result compose/deep [(tag) [(either constructed? ["constructed"]["primitive"]) (index? data) (length) #[none]]]
+					append/only result compose/deep [(tag) [(either constructed? ["constructed"] ["primitive"]) (index? data) (length) #[none]]]
 					mode: 'type
-				][
+				] [
 					mode: 'value
 				]
 			]
-			
+
 			value [
 				switch class [
 					universal [
 						val: copy/part data length
-						append/only result compose/deep [(tag) [(either constructed? ["constructed"]["primitive"]) (index? data) (length) (either constructed? [none][val])]]
+						append/only result compose/deep [(tag) [(either constructed? ["constructed"] ["primitive"]) (index? data) (length) (either constructed? [none] [val])]]
 						if constructed? [
 							poke second last result 4	parse-asn val
 						]
 					]
-					
+
 					context-specific [
 						append/only result compose/deep [(tag) [(val) (length)]]
 						parse-asn copy/part data length
@@ -164,13 +164,13 @@ parse-asn: func [
 				mode: 'type
 			]
 		]
-		
+
 		data: next data
 	]
 	result
 ]
 
-;protocol state handling
+; protocol state handling
 
 read-proto-states: [
 	client-hello [server-hello]
@@ -200,9 +200,9 @@ get-next-proto-state: func [
 	/write-state "default is read state"
 	/local
 		next-state
-][
+] [
 	all [
-		next-state: select/only/skip either write-state [write-proto-states][read-proto-states] ctx/protocol-state 2
+		next-state: select/only/skip either write-state [write-proto-states] [read-proto-states] ctx/protocol-state 2
 		not empty? next-state
 		next-state
 	]
@@ -214,7 +214,7 @@ update-proto-state: func [
 	/write-state
 	/local
 		next-state
-][
+] [
 	debug [ctx/protocol-state "->" new-state write-state]
 	either any [
 		none? ctx/protocol-state
@@ -222,22 +222,22 @@ update-proto-state: func [
 			next-state: apply :get-next-proto-state [ctx write-state]
 			find next-state new-state
 		]
-	][
+	] [
 		debug ["new-state:" new-state]
 		ctx/protocol-state: new-state
-	][
+	] [
 		do make error! "invalid protocol state"
 	]
 ]
 
-;TLS protocol code
+; TLS protocol code
 
 client-hello: func [
 	ctx [object!]
 	/local
 		beg len cs-data
-][
-	;generate client random struct
+] [
+	; generate client random struct
 	ctx/client-random: to-bin to integer! difference now/precise 1-Jan-1970 4
 	random/seed now/time/precise
 	loop 28 [append ctx/client-random (random/secure 256) - 1]
@@ -246,26 +246,26 @@ client-hello: func [
 
 	beg: length? ctx/msg
 	emit ctx [
-		#{16}			; protocol type (22=Handshake)
-		ctx/version			; protocol version (3|1 = TLS1.0)
-		#{00 00}		; length of SSL record data
-		#{01}			; protocol message type	(1=ClientHello)
-		#{00 00 00} 	; protocol message length
-		ctx/version			; max supported version by client (TLS1.0)
-		ctx/client-random	; random struct (4 bytes gmt unix time + 28 random bytes)
-		#{00}			; session ID length
+		#{16}						; protocol type (22=Handshake)
+		ctx/version					; protocol version (3|1 = TLS1.0)
+		#{00 00}					; length of SSL record data
+		#{01}						; protocol message type	(1=ClientHello)
+		#{00 00 00} 				; protocol message length
+		ctx/version					; max supported version by client (TLS1.0)
+		ctx/client-random			; random struct (4 bytes gmt unix time + 28 random bytes)
+		#{00}						; session ID length
 		to-bin length? cs-data 2	; cipher suites length
 		cs-data						; cipher suites list
-		#{01}			; compression method length
-		#{00}			; no compression
+		#{01}						; compression method length
+		#{00}						; no compression
 	]
-	
+
 	; set the correct msg lengths
 	change at ctx/msg beg + 7 to-bin len: length? at ctx/msg beg + 10 3
 	change at ctx/msg beg + 4 to-bin len + 4 2
 
 	append clear ctx/handshake-messages copy at ctx/msg beg + 6
-	
+
 	return ctx/msg
 ]
 
@@ -273,42 +273,42 @@ client-key-exchange: func [
 	ctx [object!]
 	/local
 	rsa-key key-data beg len
-][
+] [
 	switch ctx/key-method [
 		rsa [
-			;generate pre-master-secret
+			; generate pre-master-secret
 			ctx/pre-master-secret: copy ctx/version
 			random/seed now/time/precise
 			loop 46 [append ctx/pre-master-secret (random/secure 256) - 1]
 
-			;encrypt pre-master-secret
+			; encrypt pre-master-secret
 			rsa-key: rsa-make-key
 			rsa-key/e: ctx/pub-exp
 			rsa-key/n: ctx/pub-key
 
-			;supply encrypted pre-master-secret to server
+			; supply encrypted pre-master-secret to server
 			key-data: rsa ctx/pre-master-secret rsa-key
 		]
 		dhe-dss dhe-rsa [
-			;generate public/private keypair
+			; generate public/private keypair
 			dh-generate-key ctx/dh-key
 
-			;supply the client's public key to server
+			; supply the client's public key to server
 			key-data: ctx/dh-key/pub-key
 
-			;generate pre-master-secret
+			; generate pre-master-secret
 			ctx/pre-master-secret: dh-compute-key ctx/dh-key ctx/dh-pub
 		]
 	]
 
 	beg: length? ctx/msg
 	emit ctx [
-		#{16}			; protocol type (22=Handshake)
-		ctx/version			; protocol version (3|1 = TLS1.0)
-		#{00 00}		; length of SSL record data
-		#{10}			; protocol message type	(16=ClientKeyExchange)
-		#{00 00 00} 	; protocol message length
-		to-bin length? key-data 2	;length of the key (2 bytes)
+		#{16}						; protocol type (22=Handshake)
+		ctx/version					; protocol version (3|1 = TLS1.0)
+		#{00 00}					; length of SSL record data
+		#{10}						; protocol message type	(16=ClientKeyExchange)
+		#{00 00 00} 				; protocol message length
+		to-bin length? key-data 2	; length of the key (2 bytes)
 		key-data
 	]
 
@@ -316,34 +316,34 @@ client-key-exchange: func [
 	change at ctx/msg beg + 7 to-bin len: length? at ctx/msg beg + 10 3
 	change at ctx/msg beg + 4 to-bin len + 4 2
 
-	;make all secure data
+	; make all secure data
 	make-master-secret ctx ctx/pre-master-secret
 
 	make-key-block ctx
 
-	;update keys
+	; update keys
 	ctx/client-mac-key: copy/part ctx/key-block ctx/hash-size
 	ctx/server-mac-key: copy/part skip ctx/key-block ctx/hash-size ctx/hash-size
-	ctx/client-crypt-key: copy/part skip ctx/key-block 2 * ctx/hash-size ctx/crypt-size	
+	ctx/client-crypt-key: copy/part skip ctx/key-block 2 * ctx/hash-size ctx/crypt-size
 	ctx/server-crypt-key: copy/part skip ctx/key-block 2 * ctx/hash-size + ctx/crypt-size ctx/crypt-size
-	
+
 	if ctx/block-size [
 		ctx/client-iv: copy/part skip ctx/key-block 2 * (ctx/hash-size + ctx/crypt-size) ctx/block-size
 		ctx/server-iv: copy/part skip ctx/key-block 2 * (ctx/hash-size + ctx/crypt-size) + ctx/block-size ctx/block-size
 	]
-	
+
 	append ctx/handshake-messages copy at ctx/msg beg + 6
-	
+
 	return ctx/msg
 ]
 
 
 change-cipher-spec: func [
 	ctx [object!]
-][
+] [
 	emit ctx [
-		#{14} ; protocol type (20=ChangeCipherSpec)
-		ctx/version			; protocol version (3|1 = TLS1.0)
+		#{14}			; protocol type (20=ChangeCipherSpec)
+		ctx/version		; protocol version (3|1 = TLS1.0)
 		#{00 01}		; length of SSL record data
 		#{01}			; CCS protocol type
 	]
@@ -355,12 +355,12 @@ encrypted-handshake-msg: func [
 	message [binary!]
 	/local
 		plain-msg
-][
+] [
 	plain-msg: message
 	message: encrypt-data/type ctx message #{16}
 	emit ctx [
-		#{16}			; protocol type (22=Handshake)
-		ctx/version			; protocol version (3|1 = TLS1.0)
+		#{16}						; protocol type (22=Handshake)
+		ctx/version					; protocol version (3|1 = TLS1.0)
 		to-bin length? message 2	; length of SSL record data
 		message
 	]
@@ -371,12 +371,12 @@ encrypted-handshake-msg: func [
 application-data: func [
 	ctx [object!]
 	message [binary! string!]
-][
+] [
 	message: encrypt-data ctx to binary! message
 	emit ctx [
-		#{17}			; protocol type (23=Application)
-		ctx/version			; protocol version (3|1 = TLS1.0)
-		to-bin length? message 2	; length of SSL record data			
+		#{17}						; protocol type (23=Application)
+		ctx/version					; protocol version (3|1 = TLS1.0)
+		to-bin length? message 2	; length of SSL record data
 		message
 	]
 	return ctx/msg
@@ -384,12 +384,12 @@ application-data: func [
 
 alert-close-notify: func [
 	ctx [object!]
-][
-	message: encrypt-data ctx #{0100} ;close notify
+] [
+	message: encrypt-data ctx #{0100} ; close notify
 	emit ctx [
-		#{15}			; protocol type (21=Alert)
-		ctx/version			; protocol version (3|1 = TLS1.0)
-		to-bin length? message 2	; length of SSL record data			
+		#{15}						; protocol type (21=Alert)
+		ctx/version					; protocol version (3|1 = TLS1.0)
+		to-bin length? message 2	; length of SSL record data
 		message
 	]
 	return ctx/msg
@@ -398,12 +398,12 @@ alert-close-notify: func [
 
 finished: func [
 	ctx [object!]
-][
+] [
 	ctx/seq-num-w: 0
 	return rejoin [
 		#{14}		; protocol message type	(20=Finished)
 		#{00 00 0c} ; protocol message length (12 bytes)
-		prf ctx/master-secret either ctx/server? ["server finished"]["client finished"] rejoin [
+		prf ctx/master-secret either ctx/server? ["server finished"] ["client finished"] rejoin [
 			checksum/method ctx/handshake-messages 'md5 checksum/method ctx/handshake-messages 'sha1
 		] 12
 	]
@@ -414,24 +414,24 @@ encrypt-data: func [
 	data [binary!]
 	/type
 		msg-type [binary!] "application data is default"
-	/local	
+	/local
 		mac padding len
-][
+] [
 		data: rejoin [
 		data
-		;MAC code
+		; MAC code
 		mac: checksum/method/key rejoin [
-;			#{00000000} to-bin ctx/seq-num-w 4	;sequence number (limited to 32-bits here in R2)
-			to-bin ctx/seq-num-w 8				;sequence number (64-bit int in R3)
-			any [msg-type #{17}]				;msg type
-			ctx/version							;version
-			to-bin length? data 2				;msg content length				
-			data								;msg content
+;			#{00000000} to-bin ctx/seq-num-w 4	; sequence number (limited to 32-bits here in R2)
+			to-bin ctx/seq-num-w 8				; sequence number (64-bit int in R3)
+			any [msg-type #{17}]				; msg type
+			ctx/version							; version
+			to-bin length? data 2				; msg content length
+			data								; msg content
 		] ctx/hash-method decode 'text ctx/client-mac-key
 	]
 
 	if ctx/block-size [
-		;add the padding data in CBC mode
+		; add the padding data in CBC mode
 		padding: ctx/block-size - (1 + (length? data) // ctx/block-size)
 		len: 1 + padding
 		append data head insert/dup make binary! len to-bin padding 1 len
@@ -458,9 +458,9 @@ encrypt-data: func [
 decrypt-data: func [
 	ctx [object!]
 	data [binary!]
-	/local	
+	/local
 		crypt-data
-][
+] [
 	switch ctx/crypt-method [
 		rc4 [
 			unless ctx/decrypt-stream [
@@ -477,7 +477,7 @@ decrypt-data: func [
 	]
 
 	return data
-]	
+]
 
 protocol-types: [
 	20 change-cipher-spec
@@ -488,7 +488,7 @@ protocol-types: [
 
 message-types: [
 	0 hello-request
-	1 client-hello 
+	1 client-hello
 	2 server-hello
 	11 certificate
 	12 server-key-exchange
@@ -508,7 +508,7 @@ alert-descriptions: [
 	30 "Decompression failure"
 	40 "Handshake failure"
 	41 "No certificate"
-	42 "Bad certificate"   
+	42 "Bad certificate"
 	43 "Unsupported certificate"
 	44 "Certificate revoked"
 	45 "Certificate expired"
@@ -530,10 +530,10 @@ alert-descriptions: [
 parse-protocol: func [
 	data [binary!]
 	/local proto
-][
+] [
 	unless proto: select protocol-types data/1 [
 		do make error! "unknown/invalid protocol type"
-	]						
+	]
 	return context [
 		type: proto
 		version: pick [ssl-v3 tls-v1.0 tls-v1.1] data/3 + 1
@@ -547,26 +547,26 @@ parse-messages: func [
 	proto [object!]
 	/local
 		result data msg-type len clen msg-content mac msg-obj
-][
+] [
 	result: make block! 8
 	data: proto/messages
-	
+
 	if ctx/encrypted? [
 		change data decrypt-data ctx data
 		debug ["decrypting..."]
 		if ctx/block-size [
-			;deal with padding in CBC mode
+			; deal with padding in CBC mode
 			data: copy/part data (length? data) - 1 - (to integer! last data)
 			debug ["depadding..."]
 		]
 		debug ["data:" data]
 	]
 	debug [ctx/seq-num-r ctx/seq-num-w "READ <--" proto/type]
-	
+
 	unless proto/type = 'handshake [
 		update-proto-state ctx proto/type
 	]
-	
+
 	switch proto/type [
 		alert [
 			append result reduce [
@@ -577,16 +577,16 @@ parse-messages: func [
 			]
 		]
 		handshake [
-			while [data/1][
+			while [data/1] [
 				msg-type: select message-types data/1
-				
-				update-proto-state ctx either ctx/encrypted? ['encrypted-handshake][msg-type]
-			
+
+				update-proto-state ctx either ctx/encrypted? ['encrypted-handshake] [msg-type]
+
 				len: to integer! copy/part at data 2 3
 				append result switch msg-type [
 					server-hello [
 						msg-content: copy/part at data 7 len
-						
+
 						msg-obj: context [
 							type: msg-type
 							version: pick [ssl-v3 tls-v1.0 tls-v1.1] data/6 + 1
@@ -595,11 +595,11 @@ parse-messages: func [
 							session-id: copy/part at msg-content 34 msg-content/33
 							cipher-suite: copy/part at msg-content 34 + msg-content/33 2
 							compression-method-length: first at msg-content 36 + msg-content/33
-							compression-method: either compression-method-length = 0 [none][copy/part at msg-content 37 + msg-content/33 compression-method-length]
+							compression-method: either compression-method-length = 0 [none] [copy/part at msg-content 37 + msg-content/33 compression-method-length]
 						]
 						ctx/cipher-suite: msg-obj/cipher-suite
 
-						;note: the cipher-suite config will be more automatized in later versions
+						; note: the cipher-suite config will be more automatized in later versions
 						switch/default ctx/cipher-suite reduce bind [
 							TLS_RSA_WITH_RC4_128_SHA [
 								ctx/key-method: 'rsa
@@ -683,27 +683,27 @@ parse-messages: func [
 							length: len
 							certificates-length: to integer! copy/part msg-content 3
 							certificate-list: make block! 4
-							while [msg-content/1][
+							while [msg-content/1] [
 								if 0 < clen: to integer! copy/part skip msg-content 3 3 [
 									append certificate-list copy/part at msg-content 7 clen
 								]
-								msg-content: skip msg-content 3 + clen										
+								msg-content: skip msg-content 3 + clen
 							]
 						]
-						;no cert validation - just set it to be used
+						; no cert validation - just set it to be used
 						ctx/certificate: parse-asn msg-obj/certificate-list/1
 
 						switch/default ctx/key-method [
 							rsa [
-								;get the public key and exponent (hardcoded for now)
+								; get the public key and exponent (hardcoded for now)
 								ctx/pub-key: parse-asn next
 ;								ctx/certificate/1/sequence/4/1/sequence/4/6/sequence/4/2/bit-string/4
 								ctx/certificate/1/sequence/4/1/sequence/4/7/sequence/4/2/bit-string/4
 								ctx/pub-exp: ctx/pub-key/1/sequence/4/2/integer/4
 								ctx/pub-key: next ctx/pub-key/1/sequence/4/1/integer/4
 							]
-						][
-							;for DH cipher suites the certificate is used just for signing the key exchange data
+						] [
+							; for DH cipher suites the certificate is used just for signing the key exchange data
 						]
 						msg-obj
 					]
@@ -729,10 +729,10 @@ parse-messages: func [
 								ctx/dh-key/g: msg-obj/g
 								ctx/dh-pub: msg-obj/ys
 
-								;TODO: the signature sent by server should be verified using DSA or RSA algorithm to be sure the dh-key params are safe
+								; TODO: the signature sent by server should be verified using DSA or RSA algorithm to be sure the dh-key params are safe
 								msg-obj
 							]
-						][
+						] [
 							do make error! "Server-key-exchange message has been sent illegally."
 						]
 					]
@@ -754,9 +754,9 @@ parse-messages: func [
 					finished [
 						ctx/seq-num-r: 0
 						msg-content: copy/part at data 5 len
-						either msg-content <> prf ctx/master-secret either ctx/server? ["client finished"]["server finished"] rejoin [checksum/method ctx/handshake-messages 'md5 checksum/method ctx/handshake-messages 'sha1] 12 [
+						either msg-content <> prf ctx/master-secret either ctx/server? ["client finished"] ["server finished"] rejoin [checksum/method ctx/handshake-messages 'md5 checksum/method ctx/handshake-messages 'sha1] 12 [
 							do make error! "Bad 'finished' MAC"
-						][
+						] [
 							debug "FINISHED MAC verify: OK"
 						]
 						context [
@@ -770,21 +770,21 @@ parse-messages: func [
 				append ctx/handshake-messages copy/part data len + 4
 
 				data: skip data len + either ctx/encrypted? [
-					;check the MAC
+					; check the MAC
 					mac: copy/part skip data len + 4 ctx/hash-size
 					if mac <> checksum/method/key rejoin [
-;							#{00000000} to-bin ctx/seq-num-r 4			;sequence number (limited to 32-bits here in R2)
-							to-bin ctx/seq-num-r 8						;sequence number (64-bit int in R3)
-							#{16}										;msg type
-							ctx/version										;version
-							to-bin len + 4 2							;msg content length												
+;							#{00000000} to-bin ctx/seq-num-r 4		; sequence number (limited to 32-bits here in R2)
+							to-bin ctx/seq-num-r 8					; sequence number (64-bit int in R3)
+							#{16}									; msg type
+							ctx/version								; version
+							to-bin len + 4 2						; msg content length
 							copy/part data len + 4
 						] ctx/hash-method decode 'text ctx/server-mac-key
 					[
 						do make error! "Bad handshake record MAC"
 					]
 					4 + ctx/hash-size
-				][
+				] [
 					4
 				]
 			]
@@ -802,13 +802,13 @@ parse-messages: func [
 			]
 			len: length? msg-obj/content
 			mac: copy/part skip data len ctx/hash-size
-			;check the MAC
+			; check the MAC
 			if mac <> checksum/method/key rejoin [
-				to-bin ctx/seq-num-r 8	;sequence number (64-bit int in R3)
-				#{17}					;msg type
-				ctx/version				;version
-				to-bin len 2			;msg content length												
-				msg-obj/content			;content
+				to-bin ctx/seq-num-r 8	; sequence number (64-bit int in R3)
+				#{17}					; msg type
+				ctx/version				; version
+				to-bin len 2			; msg content length
+				msg-obj/content			; content
 			] ctx/hash-method decode 'text ctx/server-mac-key
 			[
 				do make error! "Bad application record MAC"
@@ -824,18 +824,18 @@ parse-response: func [
 	msg [binary!]
 	/local
 		proto messages
-][
+] [
 	proto: parse-protocol msg
 	either empty? messages: parse-messages ctx proto [
 		do make error! "unknown/invalid protocol message"
-	][
+	] [
 		proto/messages: messages
 	]
-	
+
 	debug ["processed protocol type:" proto/type "messages:" length? proto/messages]
-		
+
 	unless tail? skip msg proto/length + 5 [do make error! "invalid length of response fragment"]
-	
+
 	return proto
 ]
 
@@ -846,27 +846,27 @@ prf: func [
 	output-length [integer!]
 	/local
 		len mid s-1 s-2 a p-sha1 p-md5
-][
+] [
 	len: length? secret
-	mid: to integer! .5 * (len + either odd? len [1][0])
+	mid: to integer! .5 * (len + either odd? len [1] [0])
 
 	s-1: copy/part secret mid
-	s-2: copy at secret mid + either odd? len [0][1]
+	s-2: copy at secret mid + either odd? len [0] [1]
 
 	seed: rejoin [#{} label seed]
-	
+
 	p-md5: clear #{}
-	a: seed ;A(0)
-	while [output-length > length? p-md5][
-		a: checksum/method/key a 'md5 decode 'text s-1 ;A(n)
+	a: seed ; A(0)
+	while [output-length > length? p-md5] [
+		a: checksum/method/key a 'md5 decode 'text s-1 ; A(n)
 		append p-md5 checksum/method/key rejoin [a seed] 'md5 decode 'text s-1
 
 	]
 
 	p-sha1: clear #{}
-	a: seed ;A(0)
-	while [output-length > length? p-sha1][
-		a: checksum/method/key a 'sha1 decode 'text s-2 ;A(n)
+	a: seed ; A(0)
+	while [output-length > length? p-sha1] [
+		a: checksum/method/key a 'sha1 decode 'text s-2 ; A(n)
 		append p-sha1 checksum/method/key rejoin [a seed] 'sha1 decode 'text s-2
 	]
 	return ((copy/part p-md5 output-length) xor copy/part p-sha1 output-length)
@@ -874,14 +874,14 @@ prf: func [
 
 make-key-block: func [
 	ctx [object!]
-][
-	ctx/key-block: prf ctx/master-secret "key expansion" rejoin [ctx/server-random ctx/client-random] ctx/hash-size + ctx/crypt-size + (either ctx/block-size [ctx/iv-size][0]) * 2
+] [
+	ctx/key-block: prf ctx/master-secret "key expansion" rejoin [ctx/server-random ctx/client-random] ctx/hash-size + ctx/crypt-size + (either ctx/block-size [ctx/iv-size] [0]) * 2
 ]
 
 make-master-secret: func [
 	ctx [object!]
 	pre-master-secret [binary!]
-][
+] [
 	ctx/master-secret: prf pre-master-secret "master secret" rejoin [ctx/client-random ctx/server-random] 48
 ]
 
@@ -890,7 +890,7 @@ do-commands: func [
 	commands [block!]
 	/no-wait
 	/local arg cmd
-][
+] [
 	clear ctx/msg
 	parse commands [
 		some [
@@ -913,16 +913,16 @@ do-commands: func [
 	write ctx/connection ctx/msg
 
 	unless no-wait [
-		unless port? wait [ctx/connection 30][do make error! "port timeout"]
+		unless port? wait [ctx/connection 30] [do make error! "port timeout"]
 	]
 	ctx/resp
 ]
 
-;TLS scheme
+; TLS scheme
 
 tls-init: func [
 	ctx [object!]
-][
+] [
 	ctx/seq-num-r: 0
 	ctx/seq-num-w: 0
 	ctx/protocol-state: none
@@ -945,35 +945,35 @@ tls-read-data: func [
 	ctx [object!]
 	port-data [binary!]
 	/local len data fragment next-state
-][
+] [
 	debug ["tls-read-data:" length? port-data "bytes"]
 	data: append ctx/data-buffer port-data
 	clear port-data
-	
+
 	while [
 		5 = length? copy/part data 5
-	][
+	] [
 		len: 5 + to integer! copy/part at data 4 2
 
 		debug ["reading bytes:" len]
 
 		fragment: copy/part data len
-		
+
 		if len > length? fragment [
 			debug ["incomplete fragment: read" length? fragment "of" len "bytes"]
 			break
 		]
-		
+
 		debug ["received bytes:" length? fragment newline "parsing response..."]
-		
+
 		append ctx/resp parse-response ctx fragment
 
 		next-state: get-next-proto-state ctx
-		
+
 		debug ["State:" ctx/protocol-state "-->" next-state]
 
 		data: skip data len
-		
+
 		if all [tail? data find next-state #complete] [
 			debug ["READING FINISHED" length? head ctx/data-buffer index? data same? tail ctx/data-buffer data]
 			clear ctx/data-buffer
@@ -991,15 +991,15 @@ tls-awake: funct [event [event!]] [
 	port: event/port
 	tls-port: port/locals
 	tls-awake: :tls-port/awake
-	
+
 	if all [
 		tls-port/state/protocol-state = 'application
 		not port/data
-	][
-		;reset the data field when interleaving port r/w states
+	] [
+		; reset the data field when interleaving port r/w states
 		tls-port/data: none
 	]
-	
+
 	switch/default event/type [
 		lookup [
 			open port
@@ -1044,7 +1044,7 @@ tls-awake: funct [event [event!]] [
 						foreach msg proto/messages [
 							if msg/type = 'app-data [
 								unless tls-port/data [tls-port/data: clear tls-port/state/port-data]
-								append tls-port/data msg/content 
+								append tls-port/data msg/content
 								application?: true
 								msg/type: none
 							]
@@ -1064,7 +1064,7 @@ tls-awake: funct [event [event!]] [
 			debug ["data complete?:" complete? "application?:" application?]
 			either application? [
 				insert system/ports/system make event! [type: 'read port: tls-port]
-			][
+			] [
 				read port
 			]
 			return complete?
@@ -1090,13 +1090,13 @@ sys/make-scheme [
 			port [port!]
 			/local
 				resp data msg
-		][
+		] [
 			debug ["READ" open? port/state/connection]
 			read port/state/connection
 			return port
 		]
 
-		write: func [port [port!] value [any-type!]][
+		write: func [port [port!] value [any-type!]] [
 			if find [encrypted-handshake application] port/state/protocol-state [
 				do-commands/no-wait port/state compose [
 					application (value)
@@ -1104,7 +1104,7 @@ sys/make-scheme [
 				return port
 			]
 		]
-		open: func [port [port!] /local conn][
+		open: func [port [port!] /local conn] [
 			if port/state [return port]
 
 			if none? port/spec/host [tls-error "Missing host address"]
@@ -1114,7 +1114,7 @@ sys/make-scheme [
 				port-data: make binary! 32000
 				resp: none
 
-				version: #{03 01} ;protocol version used
+				version: #{03 01} ; protocol version used
 
 				server?: false
 
@@ -1139,17 +1139,17 @@ sys/make-scheme [
 				server-crypt-key:
 				server-mac-key:
 				server-iv: none
-				
+
 				seq-num-r: 0
 				seq-num-w: 0
-				
+
 				msg: make binary! 4096
-				handshake-messages: make binary! 4096 ;all messages from Handshake records except 'HelloRequest's
+				handshake-messages: make binary! 4096 ; all messages from Handshake records except 'HelloRequest's
 
 				encrypted?: false
 
 				client-random: server-random: pre-master-secret: master-secret:
-				key-block: 
+				key-block:
 				certificate: pub-key: pub-exp:
 				dh-key: dh-pub: none
 
@@ -1172,10 +1172,10 @@ sys/make-scheme [
 			open conn
 			port
 		]
-		open?: func [port [port!]][
+		open?: func [port [port!]] [
 			found? all [port/state open? port/state/connection]
 		]
-		close: func [port [port!]][
+		close: func [port [port!]] [
 			if port/state [
 				close port/state/connection
 				debug "TLS/TCP port closed"
@@ -1184,13 +1184,13 @@ sys/make-scheme [
 			]
 			port
 		]
-		copy: func [port [port!]][
+		copy: func [port [port!]] [
 			if port/data [copy port/data]
 		]
-		query: func [port [port!]][
+		query: func [port [port!]] [
 			all [port/state query port/state/connection]
 		]
-		length?: func [port [port!]][
+		length?: func [port [port!]] [
 			either port/data [length? port/data] [0]
 		]
 	]
