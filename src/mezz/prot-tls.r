@@ -421,7 +421,6 @@ encrypt-data: func [
 		data
 		; MAC code
 		mac: checksum/method/key rejoin [
-;			#{00000000} to-bin ctx/seq-num-w 4	; sequence number (limited to 32-bits here in R2)
 			to-bin ctx/seq-num-w 8				; sequence number (64-bit int in R3)
 			any [msg-type #{17}]				; msg type
 			ctx/version							; version
@@ -773,7 +772,6 @@ parse-messages: func [
 					; check the MAC
 					mac: copy/part skip data len + 4 ctx/hash-size
 					if mac <> checksum/method/key rejoin [
-;							#{00000000} to-bin ctx/seq-num-r 4		; sequence number (limited to 32-bits here in R2)
 							to-bin ctx/seq-num-r 8					; sequence number (64-bit int in R3)
 							#{16}									; msg type
 							ctx/version								; version
@@ -927,7 +925,6 @@ tls-init: func [
 	ctx/seq-num-w: 0
 	ctx/protocol-state: none
 	ctx/encrypted?: false
-;	if port [close port]
 
 	switch ctx/crypt-method [
 		rc4 [
@@ -1004,7 +1001,6 @@ tls-awake: funct [event [event!]] [
 		lookup [
 			open port
 			tls-init tls-port/state
-;			return tls-awake make event! [type: 'lookup port: tls-port]
 			insert system/ports/system make event! [type: 'lookup port: tls-port]
 			return false
 		]
