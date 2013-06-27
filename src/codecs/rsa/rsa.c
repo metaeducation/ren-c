@@ -37,7 +37,7 @@
 #include <time.h>
 #include <stdlib.h>
 
-#ifdef TO_OSXI
+#if defined(TO_OSXI) || defined(TO_OSX)
 	#include <sys/malloc.h>
 #else
 	#include <malloc.h>

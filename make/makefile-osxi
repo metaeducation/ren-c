@@ -38,14 +38,14 @@ R= $S/core
 INCL ?= .
 I= -I$(INCL) -I$S/include/ -I$S/codecs/ -I../src/freetype-2.4.12/include
 
-TO_OS?= TO_OSX
-OS_ID?= 0.2.4
+TO_OS?= TO_OSXI
+OS_ID?= 0.2.5
 LIB_PRODUCT_NAME= core #note: this can be overriden by the HOST_PRODUCT_NAME
 HOST_PRODUCT_NAME= core
-BIN_SUFFIX= -osx
-RAPI_FLAGS= -O2 -fvisibility=hidden -Wno-pointer-sign -fPIC -fno-common -arch ppc -mmacosx-version-min=10.4
-HOST_CORE_FLAGS= -DREB_CORE -DREB_EXE -O2 -fvisibility=hidden -arch ppc -mmacosx-version-min=10.4 -D_FILE_OFFSET_BITS=64 -DCUSTOM_STARTUP
-HOST_VIEW_FLAGS= -DREB_EXE -O2 -fvisibility=hidden -arch ppc -mmacosx-version-min=10.4 -D_FILE_OFFSET_BITS=64 -DCUSTOM_STARTUP
+BIN_SUFFIX= -osxi
+RAPI_FLAGS= -O2 -fvisibility=hidden -Wno-pointer-sign -fPIC -fno-common -arch i386 -mmacosx-version-min=10.4
+HOST_CORE_FLAGS= -DREB_CORE -DREB_EXE -O2 -fvisibility=hidden -arch i386 -mmacosx-version-min=10.4 -D_FILE_OFFSET_BITS=64 -DCUSTOM_STARTUP
+HOST_VIEW_FLAGS= -DREB_EXE -O2 -fvisibility=hidden -arch i386 -mmacosx-version-min=10.4 -D_FILE_OFFSET_BITS=64 -DCUSTOM_STARTUP
 RLIB_FLAGS=
 
 # Flags for core and for host:
@@ -53,11 +53,11 @@ RFLAGS= -c -D$(TO_OS) -DREB_API  $(RAPI_FLAGS) $I
 HFLAGS= -c -D$(TO_OS) -Wno-pointer-sign $(HOST_FLAGS) $I
 HFLAGS_CPP= -c -D$(TO_OS) $(HOST_FLAGS) $I
 
-CLIB= -arch ppc -static-libgcc -lm -mmacosx-version-min=10.4
-GUI_CLIB= -arch ppc -static-libgcc -lm -mmacosx-version-min=10.4 -lstdc++ -lfreetype -L../src/freetype-2.4.12/objs/.libs/
+CLIB= -arch i386 -static-libgcc -lm -mmacosx-version-min=10.4
+GUI_CLIB= -arch i386 -static-libgcc -lm -mmacosx-version-min=10.4 -lstdc++ -lfreetype -L../src/freetype-2.4.12/objs/.libs/
 
 # REBOL builds various include files:
-REBOL=	$(CD)r3-make-osx -qs
+REBOL=	$(CD)r3-make-osxi -qs
 
 # For running tests, ship, build, etc.
 R3=	$(CD)r3$(BIN_SUFFIX) -qs

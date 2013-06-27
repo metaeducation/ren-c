@@ -180,6 +180,7 @@ These are now obsolete (as of A107) and should be removed:
 #define ENDIAN_BIG
 #define HAS_LL_CONSTS
 #define OLD_COMPILER
+#undef NO_GRAPHICS
 #endif
 
 #ifdef TO_FREEBSD

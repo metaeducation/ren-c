@@ -517,8 +517,8 @@ error:
 {
 	REBINT i, y;
 	REBINT w, h;
-	REBYTE *cp;
-	REBCNT *dp, v;
+	REBYTE *cp, *v;
+	REBCNT *dp;
 	BITMAPFILEHEADER bmfh;
 	BITMAPINFOHEADER bmih;
 
@@ -555,10 +555,10 @@ error:
 
 	for (y = 0; y<h; y++) {
 		for (i = 0; i<w; i++) {
-			v = *dp++;
-			cp[0] = v & 0xff;
-			cp[1] = (v >> 8) & 0xff;
-			cp[2] = (v >> 16) & 0xff;
+			v = (REBYTE*)dp++;
+			cp[0] = v[C_B];
+			cp[1] = v[C_G];
+			cp[2] = v[C_R];
 			cp += 3;
 		}
 		i = w * 3;

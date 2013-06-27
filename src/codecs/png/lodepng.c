@@ -37,6 +37,9 @@ Rename this file to lodepng.cpp to use it for C++, or to lodepng.c to use it for
 #include <fstream>
 #endif /*LODEPNG_COMPILE_CPP*/
 
+#include "reb-config.h"
+#include "reb-c.h"
+
 #define VERSION_STRING "20130311"
 
 /*
@@ -5707,10 +5710,10 @@ unsigned lodepng_encode(unsigned char** out, size_t* outsize,
 
 			for (i=0; i<size; i++, src+=4,dst+=4)
 			{
-					dst[2] = src[0]; //B
-					dst[1] = src[1]; //G
-					dst[0] = src[2]; //R
-					dst[3] = src[3]; //A
+					dst[0] = src[C_R];
+					dst[1] = src[C_G];
+					dst[2] = src[C_B];
+					dst[3] = src[C_A];
 			}
 		} else {
 			state->error = lodepng_convert(converted, image, &info.color, &state->info_raw, w, h);

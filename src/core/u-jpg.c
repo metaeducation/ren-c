@@ -1,5 +1,6 @@
 #define JPEG_INTERNALS
 #define NO_GETENV
+#include "reb-config.h"
 #include "reb-c.h"
 #include <setjmp.h>
 #include "sys-jpg.h"
