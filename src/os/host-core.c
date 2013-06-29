@@ -48,6 +48,8 @@ extern REBINT As_OS_Str(REBSER *series, REBCHR **string);
 extern REBOOL OS_Request_Dir(REBCHR *title, REBCHR **folder, REBCHR *path);
 #endif
 
+REBYTE *encapBuffer = NULL;
+REBINT encapBufferLen;
 RL_LIB *RL; // Link back to reb-lib from embedded extensions
 static u32 *core_ext_words;
 
@@ -73,6 +75,27 @@ static u32 *core_ext_words;
 #endif
         break;
 
+	case CMD_CORE_GET_ENCAP_DATA:
+		if (encapBuffer != NULL)
+		{
+			REBINT *s;
+			REBSER *encapData = (REBSER*)RL_Make_String(encapBufferLen, FALSE);
+			COPY_MEM((REBYTE *)RL_SERIES(encapData, RXI_SER_DATA), encapBuffer, encapBufferLen);
+			FREE_MEM(encapBuffer);
+			encapBuffer = NULL;
+			
+			//hack! - will set the tail to data size
+			s = (REBINT*)encapData;
+			s[1] = encapBufferLen;
+			
+			//setup returned binary! value
+			RXA_TYPE(frm,1) = RXT_BINARY;
+			RXA_SERIES(frm,1) = encapData;
+			RXA_INDEX(frm,1) = 0;
+			return RXR_VALUE;
+		}
+		return RXR_NONE;
+		
     case CMD_CORE_TO_PNG:
 		{
 			size_t buffersize;

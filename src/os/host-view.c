@@ -400,12 +400,12 @@ REBINT Alloc_Window(REBGOB *gob) {
                 } else {
                     pos = RXA_INDEX(frm, 3);
                 }
-    //            RL_Print("CTO: %d, %d\n", element, position);
+
                 rt_caret_to_offset(Rich_Text, (REBGOB*)RXA_SERIES(frm, 1), &result, elem, pos);
 
-                RXA_PAIR(frm, 1).x = result.x;
-                RXA_PAIR(frm, 1).y = result.y;
                 RXA_TYPE(frm, 1) = RXT_PAIR;
+				RXA_ARG(frm, 1).pair.x = result.x * dp_scale.x;
+				RXA_ARG(frm, 1).pair.y = result.y * dp_scale.y;
                 return RXR_VALUE;
             }
             break;
@@ -420,8 +420,9 @@ REBINT Alloc_Window(REBGOB *gob) {
                     h = RXA_IMAGE_HEIGHT(frm, 1);
                 } else {
                     REBSER* i;
-                    w = RXA_PAIR(frm,1).x;
-                    h = RXA_PAIR(frm,1).y;
+					REBXYF s = RXA_PAIR(frm,1);
+                    w = s.x;
+                    h = s.y;
                     i = RL_MAKE_IMAGE(w,h);
                     img = (REBYTE *)RL_SERIES(i, RXI_SER_DATA);
 

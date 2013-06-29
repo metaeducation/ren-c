@@ -39,6 +39,10 @@ hide-console: command [
 	"Hides console window if already open"
 ]
 
+get-encap-data: command [
+	"Returns encapped binary data"
+]
+
 to-png: command [
 	"Save an image to PNG format"
 	image [image!]
