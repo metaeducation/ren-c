@@ -28,6 +28,8 @@
 #include <windows.h>
 #endif
 
+#include <stdlib.h> //for free()
+
 #include "reb-host.h"
 
 #include "png/lodepng.h"
