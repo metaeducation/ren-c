@@ -369,7 +369,7 @@ REBINT Alloc_Window(REBGOB *gob) {
                 REBCNT n, type;
 
                 rt_offset_to_caret(Rich_Text, (REBGOB*)RXA_SERIES(frm, 1), RXA_PAIR(frm, 2), &element, &position);
-    //            RL_Print("OTC: %d, %d\n", element, position);
+//                RL_Print("OTC: %dx%d %d, %d\n", (int)RXA_PAIR(frm, 2).x, (int)RXA_PAIR(frm, 2).y, element, position);
                 dialect = (REBSER *)GOB_CONTENT((REBGOB*)RXA_SERIES(frm, 1));
                 block = RL_MAKE_BLOCK(RL_SERIES(dialect, RXI_SER_TAIL));
                 for (n = 0; type = RL_GET_VALUE(dialect, n, &val); n++) {
@@ -404,8 +404,8 @@ REBINT Alloc_Window(REBGOB *gob) {
                 rt_caret_to_offset(Rich_Text, (REBGOB*)RXA_SERIES(frm, 1), &result, elem, pos);
 
                 RXA_TYPE(frm, 1) = RXT_PAIR;
-				RXA_ARG(frm, 1).pair.x = result.x * dp_scale.x;
-				RXA_ARG(frm, 1).pair.y = result.y * dp_scale.y;
+				RXA_ARG(frm, 1).pair.x = ROUND_TO_INT(result.x / dp_scale.x);
+				RXA_ARG(frm, 1).pair.y = ROUND_TO_INT(result.y / dp_scale.y);
                 return RXR_VALUE;
             }
             break;
