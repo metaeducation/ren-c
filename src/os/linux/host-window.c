@@ -64,6 +64,19 @@ Display *x_display;
 EGLDisplay egl_display;
 //***** Locals *****
 
+#define MAX_WINDOWS 64 //must be in sync with os/host-view.c
+
+REBGOB *Find_Gob(Window win)
+{
+	int i = 0;
+	for(i = 0; i < MAX_WINDOWS; i ++ ){
+		if (((egl_window_t*)Gob_Windows[i].win)->x_window == win){
+			return Gob_Windows[i].gob;
+		}
+	}
+	return NULL;
+}
+
 static REBXYF Zero_Pair = {0, 0};
 const char vertex_src [] =
 	// uniforms used by the vertex shader
@@ -220,11 +233,11 @@ load_shader (
 	Window root;
 	XSetWindowAttributes swa;
 
-	egl_window_t *reb_egl_window;	
+	egl_window_t *reb_egl_window;
 
 	RL_Print("x: %d, y: %d, width: %d, height: %d\n", x, y, w, h);
 	root = DefaultRootWindow(x_display);
-	swa.event_mask  =  ExposureMask | PointerMotionMask | KeyPressMask;
+	swa.event_mask  =  ExposureMask | PointerMotionMask | KeyPressMask | KeyReleaseMask| ButtonPressMask |ButtonReleaseMask | StructureNotifyMask;
 	window = XCreateWindow(x_display, 
 						   root,
 						   x, y, w, h,
@@ -232,11 +245,16 @@ load_shader (
 						   CopyFromParent, InputOutput,
 						   CopyFromParent, CWEventMask,
 						   &swa);
+
+	Atom wmDelete=XInternAtom(x_display, "WM_DELETE_WINDOW", 1);
+	XSetWMProtocols(x_display, window, &wmDelete, 1);
+
 	XMapWindow(x_display, window);
 
 	windex = Alloc_Window(gob);
 
 	if (windex < 0) Host_Crash("Too many windows");
+
 	EGLint attr[] = {       // some attributes to set up our egl-interface
 		EGL_BUFFER_SIZE, 16,
 		EGL_RENDERABLE_TYPE,

@@ -42,11 +42,39 @@
 #include <unistd.h>
 #include <sys/time.h>
 
+#include  <X11/Xlib.h>
+
 #include "reb-host.h"
 #include "host-lib.h"
 
+extern Display *x_display;
 void Done_Device(int handle, int error);
 
+static void Add_Event_XY(REBGOB *gob, REBINT id, REBINT xy, REBINT flags)
+{
+	REBEVT evt;
+
+	evt.type  = id;
+	evt.flags = (u8) (flags | (1<<EVF_HAS_XY));
+	evt.model = EVM_GUI;
+	evt.data  = xy;
+	evt.ser = (void*)gob;
+
+	RL_Event(&evt);	// returns 0 if queue is full
+}
+
+static void Add_Event_Key(REBGOB *gob, REBINT id, REBINT key, REBINT flags)
+{
+	REBEVT evt;
+
+	evt.type  = id;
+	evt.flags = flags;
+	evt.model = EVM_GUI;
+	evt.data  = key;
+	evt.ser = (void*)gob;
+
+	RL_Event(&evt);	// returns 0 if queue is full
+}
 /***********************************************************************
 **
 */	DEVICE_CMD Init_Events(REBREQ *dr)
@@ -74,6 +102,81 @@ void Done_Device(int handle, int error);
 ***********************************************************************/
 {
 	int flag = DR_DONE;
+	XEvent ev;
+	REBGOB *gob = NULL;
+	// Handle XEvents and flush the input 
+	KeySym *keysym = NULL;
+    REBINT keysyms_per_keycode_return;
+	REBINT xyd = 0;
+	while(XPending(x_display)) {
+		XNextEvent(x_display, &ev);
+		switch (ev.type) {
+			case Expose:
+				RL_Print("exposed\n");
+				break;
+			case ButtonPress:
+				RL_Print("Button %d pressed\n", ev.xbutton.button);
+				xyd = (ROUND_TO_INT(ev.xbutton.x / dp_scale.x)) + (ROUND_TO_INT(ev.xbutton.y / dp_scale.y) << 16);
+				Add_Event_XY(gob, EVT_DOWN, xyd, 0);
+				break;
+
+			case ButtonRelease:
+				RL_Print("Button %d is released\n", ev.xbutton.button);
+				xyd = (ROUND_TO_INT(ev.xbutton.x / dp_scale.x)) + (ROUND_TO_INT(ev.xbutton.y / dp_scale.y) << 16);
+				Add_Event_XY(gob, EVT_UP, xyd, 0);
+				break;
+
+			case MotionNotify:
+				RL_Print ("mouse motion\n");
+				gob = Find_Gob(ev.xmotion.window);
+				xyd = (ROUND_TO_INT(ev.xmotion.x / dp_scale.x)) + (ROUND_TO_INT(ev.xmotion.y / dp_scale.y) << 16);
+				Add_Event_XY(gob, EVT_MOVE, xyd, 0);
+				break;
+			case KeyPress:
+				RL_Print ("key %s is pressed\n", XKeysymToString(XKeycodeToKeysym(x_display, ev.xkey.keycode, 0)));
+				keysym = XGetKeyboardMapping(x_display,
+											 ev.xkey.keycode,
+											 1,
+											 &keysyms_per_keycode_return);
+
+				gob = Find_Gob(ev.xkey.window);
+				if(gob != NULL){
+					Add_Event_Key(gob, EVT_KEY, keysym[0], 0);
+				}
+
+				XFree(keysym);
+				break;
+			case KeyRelease:
+				RL_Print ("key %s is released\n", XKeysymToString(XKeycodeToKeysym(x_display, ev.xkey.keycode, 0)));
+				keysym = XGetKeyboardMapping(x_display,
+													 ev.xkey.keycode,
+													 1,
+													 &keysyms_per_keycode_return);
+
+				gob = Find_Gob(ev.xkey.window);
+				if(gob != NULL){
+					Add_Event_Key(gob, EVT_KEY_UP, keysym[0], 0);
+				}
+
+				XFree(keysym);
+				RL_Print ("key %s is released\n", XKeysymToString(XKeycodeToKeysym(x_display, ev.xkey.keycode, 0)));
+				break;
+			case ResizeRequest:
+				RL_Print ("request to resize to %dx%d", ev.xresizerequest.width, ev.xresizerequest.height);
+				break;
+			case DestroyNotify:
+				RL_Print ("destroyed\n");
+				break;
+			case ClientMessage:
+				RL_Print ("closed\n");
+				gob = Find_Gob(ev.xclient.window);
+				Add_Event_XY(gob, EVT_CLOSE, 0, 0);
+				break;
+			default:
+				RL_Print("default event type\n");
+				break;
+		}
+	}
 	return flag;	// different meaning compared to most commands
 }
 
@@ -89,16 +192,27 @@ void Done_Device(int handle, int error);
 {
 	struct timeval tv;
 	int result;
+	fd_set in_fds;
 
 	tv.tv_sec = 0;
 	tv.tv_usec = req->length * 1000;
 	//printf("usec %d\n", tv.tv_usec);
 	
-	result = select(0, 0, 0, 0, &tv);
-	if (result < 0) {
-		// !!! set error code
-		printf("ERROR!!!!\n");
-		return DR_ERROR;
+    // This returns the FD of the X11 display (or something like that)
+    int x11_fd = ConnectionNumber(x_display);
+
+        // Create a File Description Set containing x11_fd
+	FD_ZERO(&in_fds);
+	FD_SET(x11_fd, &in_fds);
+
+	// Wait for X Event or a Timer
+	if (select(x11_fd+1, &in_fds, 0, 0, &tv)){
+		RL_Print("Event Received!\n");
+		return DR_PEND;
+	}
+	else {
+		// Handle timer here
+		//RL_Print("Timer Fired!\n");
 	}
 
 	return DR_DONE;
