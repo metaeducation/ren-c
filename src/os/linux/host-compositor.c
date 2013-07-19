@@ -44,6 +44,8 @@
 #include <math.h>	//for floor()
 #include "reb-host.h"
 
+#include "egl-window.h"
+
 //***** Macros *****
 #define GOB_HWIN(gob)	(Find_Window(gob))
 
@@ -70,6 +72,8 @@ typedef struct {
 	REBXYF absOffset;
 } REBCMP_CTX;
 
+extern EGLDisplay egl_display;
+
 /***********************************************************************
 **
 */ REBYTE* rebcmp_get_buffer(REBCMP_CTX* ctx)
@@ -82,7 +86,9 @@ typedef struct {
 **
 ***********************************************************************/
 {
-	return NULL;
+	egl_window_t *ew = GOB_HWIN(ctx->Win_Gob);
+	//eglMakeCurrent(ew->egl_display, ew->egl_surface, ew->egl_surface, ew->egl_context );
+	return ew->pixbuf;
 }
 
 /***********************************************************************
@@ -180,9 +186,11 @@ typedef struct {
 **
 ***********************************************************************/
 {
+	RL_Print("process_gobs: %x\n", gob);
 
 	REBINT x = ROUND_TO_INT(ctx->absOffset.x);
 	REBINT y = ROUND_TO_INT(ctx->absOffset.y);
+	REBYTE* color;
 
 	if (GET_GOB_STATE(gob, GOBS_NEW)){
 		//reset old-offset and old-size if newly added
@@ -195,17 +203,23 @@ typedef struct {
 	}
 
 	//intersect gob dimensions with actual window clip region
-	REBOOL valid_intersection;
+	REBOOL valid_intersection = 1;
 	//------------------------------
 	//Put backend specific code here
 	//------------------------------
 
 	//get the current Window clip box
-	REBRECT gob_clip;
+	REBRECT gob_clip = {
+		GOB_PX(gob), //left
+		GOB_PY(gob), //top
+		GOB_PW(gob) + GOB_PX(gob), //right
+		GOB_PH(gob) + GOB_PY(gob), //bottom
+	};
 	//------------------------------
 	//Put backend specific code here
 	//------------------------------
 
+	RL_Print("Window_Buffer: 0x%x\n", ctx->Window_Buffer);
 	if (valid_intersection)
 	{
 		//render GOB content
@@ -215,42 +229,48 @@ typedef struct {
 				//Put backend specific code here
 				//------------------------------
 				// or use the similar draw api call:
-				// rebdrw_gob_color(gob, ctx->Window_Buffer, ctx->winBufSize, (REBXYI){x,y}, (REBXYI){gob_clip.left, gob_clip.top}, (REBXYI){gob_clip.right, gob_clip.bottom});
+				rebdrw_gob_color(gob, ctx->Window_Buffer, ctx->winBufSize, (REBXYI){x,y}, (REBXYI){gob_clip.left, gob_clip.top}, (REBXYI){gob_clip.right, gob_clip.bottom});
 				break;
 
 			case GOBT_IMAGE:
 				{
+				RL_Print("Draw Image\n");
 					//------------------------------
 					//Put backend specific code here
 					//------------------------------
 					// or use the similar draw api call:
-					// rebdrw_gob_image(gob, ctx->Window_Buffer, ctx->winBufSize, (REBXYI){x,y}, (REBXYI){gob_clip.left, gob_clip.top}, (REBXYI){gob_clip.right, gob_clip.bottom});
+					rebdrw_gob_image(gob, ctx->Window_Buffer, ctx->winBufSize, (REBXYI){x,y}, (REBXYI){gob_clip.left, gob_clip.top}, (REBXYI){gob_clip.right, gob_clip.bottom});
 				}
 				break;
 
 			case GOBT_DRAW:
 				{
+				RL_Print("Draw Draw\n");
 					//------------------------------
 					//Put backend specific code here
 					//------------------------------
 					// or use the similar draw api call:
-					// rebdrw_gob_draw(gob, ctx->Window_Buffer ,ctx->winBufSize, (REBXYI){x,y}, (REBXYI){gob_clip.left, gob_clip.top}, (REBXYI){gob_clip.right, gob_clip.bottom});
+					rebdrw_gob_draw(gob, ctx->Window_Buffer ,ctx->winBufSize, (REBXYI){x,y}, (REBXYI){gob_clip.left, gob_clip.top}, (REBXYI){gob_clip.right, gob_clip.bottom});
 				}
 				break;
 
 			case GOBT_TEXT:
 			case GOBT_STRING:
+				RL_Print("Draw Text\n");
 				//------------------------------
 				//Put backend specific code here
 				//------------------------------
 				// or use the similar draw api call:
-				// rt_gob_text(gob, ctx->Window_Buffer ,ctx->winBufSize,ctx->absOffset, (REBXYI){gob_clip.left, gob_clip.top}, (REBXYI){gob_clip.right, gob_clip.bottom});
+				rt_gob_text(gob, ctx->Window_Buffer ,ctx->winBufSize,ctx->absOffset, (REBXYI){gob_clip.left, gob_clip.top}, (REBXYI){gob_clip.right, gob_clip.bottom});
 				break;
 
 			case GOBT_EFFECT:
+				RL_Print("Draw Effect\n");
 				//not yet implemented
 				break;
 		}
+
+	RL_Print("glDrawn\n");
 
 		//recursively process sub GOBs
 		if (GOB_PANE(gob)) {
@@ -293,6 +313,10 @@ typedef struct {
 	REBD32 abs_ox;
 	REBD32 abs_oy;
 	REBGOB* parent_gob = gob;
+	REBINT x = GOB_PX_INT(gob);
+	REBINT y = GOB_PY_INT(gob);
+	REBINT w = GOB_PW_INT(gob);
+	REBINT h = GOB_PH_INT(gob);
 
 	//reset clip region to window area
 	//------------------------------
@@ -317,10 +341,11 @@ typedef struct {
 		//------------------------------
 		//Put backend specific code here
 		//------------------------------
+		glViewport (x, y, w, h);
 	}
 
 	//Create union of "new" and "old" gob location
-	REBOOL valid_intersection;
+	REBOOL valid_intersection = 1;
 	//------------------------------
 	//Put backend specific code here
 	//------------------------------
@@ -360,7 +385,59 @@ typedef struct {
 **
 ***********************************************************************/
 {
-	//------------------------------
-	//Put backend specific code here
-	//------------------------------
+	RL_Print("rebcmp_blit\n");
+	REBINT w = GOB_PW_INT(ctx->Win_Gob);
+	REBINT h = GOB_PH_INT(ctx->Win_Gob);
+	egl_window_t *ew = GOB_HWIN(ctx->Win_Gob);
+	GLfloat vVertices[] = {
+	  	-1.0f,  -1.0f, 0.0f,
+		0.0f, 0.0f,
+	  	-1.0f,  1.0f, 0.0f,
+		0.0f, 0.1f,
+	  	1.0f,  1.0f, 0.0f,
+		1.0f, 1.0f,
+	  	1.0f,  -1.0f, 0.0f,
+		1.0f, 0.0f,
+	};
+	GLuint	indices [] = {
+		0, 1, 2,
+		0, 2, 3
+	};
+
+	glUseProgram(ew->shaderProgram );    // and select it for usage
+	//GLint color = glGetAttribLocation(ew->shaderProgram, "a_color");
+	//GLfloat v_color[4] = {1.0f, 0.0f, 0.0f, 1.0f};
+	//glVertexAttrib4fv(color, v_color);
+
+	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+
+	GLint texture_id;
+	glGenTextures(1, &texture_id);
+	glBindTexture(GL_TEXTURE_2D, texture_id);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, ew->pixbuf);
+	//glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, w, h, 0, GL_RGB, GL_UNSIGNED_BYTE, ew->pixbuf);
+
+	GLuint text0 = glGetUniformLocation(ew->shaderProgram, "s_texture");
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, texture_id);
+	glUniform1i(text0, 0);
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER,GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,GL_NEAREST);
+
+   	glViewport ( 0, 0, w, h);
+
+	GLint loc = glGetAttribLocation(ew->shaderProgram, "a_position");
+	glVertexAttribPointer(loc, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), vVertices);
+	glEnableVertexAttribArray (loc); //coordinates
+
+	GLint sampler = glGetAttribLocation(ew->shaderProgram, "a_texture_coord");
+	glVertexAttribPointer(sampler, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), vVertices);
+	glEnableVertexAttribArray (sampler); //coordinates
+
+	glDrawElements (GL_TRIANGLES, 6, GL_UNSIGNED_INT, indices);
+	eglSwapBuffers(egl_display, ew->egl_surface);
+	RL_Print("rebcmp_blit done\n");
 }
