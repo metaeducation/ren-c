@@ -134,3 +134,13 @@ extern const unsigned char RX_text[];
 	RL_Extend((REBYTE *)(&RX_text[0]), &RXD_Text);
 #endif
 }
+
+/***********************************************************************
+**
+*/	void OS_Destroy_Graphics(void)
+/*
+**	Finalize any special variables of the graphics subsystem.
+**
+***********************************************************************/
+{
+}

@@ -189,6 +189,9 @@ static void *Task_Ready;
 {
 	//OS_Call_Device(RDI_STDIO, RDC_CLOSE); // close echo
 	OS_Quit_Devices(0);
+#ifndef REB_CORE	
+	OS_Destroy_Graphics();
+#endif
 	exit(code);
 }
 

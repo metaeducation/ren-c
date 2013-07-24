@@ -251,6 +251,9 @@ int main(int argc, char **argv)
 	}
 #endif //!ENCAP
 	OS_Quit_Devices(0);
+#ifndef REB_CORE	
+	OS_Destroy_Graphics();
+#endif
 
 	// A QUIT does not exit this way, so the only valid return code is zero.
 	return 0;
