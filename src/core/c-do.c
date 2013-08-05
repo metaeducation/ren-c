@@ -342,7 +342,7 @@ void Trace_Arg(REBINT num, REBVAL *arg, REBVAL *path)
 	VAL_WORD_SYM(tos) = word ? word : SYM__APPLY_;
 	VAL_WORD_INDEX(tos) = -1; // avoid GC access to invalid FRAME above
 	if (func) {
-		VAL_WORD_FRAME(tos) = VAL_FUNC_BODY(func);
+		VAL_WORD_FRAME(tos) = VAL_FUNC_ARGS(func);
 		// Save FUNC value for safety (spec, args, code):
 		tos++;
 		*tos = *func;	// the DSF_FUNC
