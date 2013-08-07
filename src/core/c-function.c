@@ -265,17 +265,22 @@ xx*/	REBSER *Make_Func_Words(REBSER *spec)
 /*
 ***********************************************************************/
 {
-	REBVAL *spec = VAL_BLK(args);
-	REBVAL *body = VAL_BLK_SKIP(args, 1);
+	REBVAL *spec;
+	REBVAL *body;
 
-	if (IS_END(spec)) body = 0;
-	else {
+	if (!args || ((spec = VAL_BLK(args)) && IS_END(spec))) {
+		body = 0;
+		if (IS_FUNCTION(value)) VAL_FUNC_ARGS(value) = Copy_Block(VAL_FUNC_ARGS(value), 0);
+	} else {
+		body = VAL_BLK_SKIP(args, 1);
 		// Spec given, must be block or *
 		if (IS_BLOCK(spec)) {
 			VAL_FUNC_SPEC(value) = VAL_SERIES(spec);
 			VAL_FUNC_ARGS(value) = Check_Func_Spec(VAL_SERIES(spec));
-		} else
+		} else {
 			if (!IS_STAR(spec)) return FALSE;
+			VAL_FUNC_ARGS(value) = Copy_Block(VAL_FUNC_ARGS(value), 0);
+		}
 	}
 
 	if (body && !IS_END(body)) {
@@ -284,7 +289,7 @@ xx*/	REBSER *Make_Func_Words(REBSER *spec)
 		if (!IS_BLOCK(body)) return FALSE;
 		VAL_FUNC_BODY(value) = VAL_SERIES(body);
 	}
-	// No body, use protytpe:
+	// No body, use prototype:
 	else if (IS_FUNCTION(value) || IS_CLOSURE(value))
 		VAL_FUNC_BODY(value) = Clone_Block(VAL_FUNC_BODY(value));
 
