@@ -107,7 +107,7 @@ typedef struct {
 ***********************************************************************/
 {
 
-	//check if window size really changed
+	//check if window size really changed or buffer needs to be created
 	if ((GOB_PW(winGob) != GOB_WO(winGob)) || (GOB_PH(winGob) != GOB_HO(winGob))) {
 
 		REBINT w = GOB_PW_INT(winGob);
@@ -280,9 +280,12 @@ typedef struct {
 
 /***********************************************************************
 **
-*/ void rebcmp_compose(REBCMP_CTX* ctx, REBGOB* winGob, REBGOB* gob)
+*/ void rebcmp_compose(REBCMP_CTX* ctx, REBGOB* winGob, REBGOB* gob, REBOOL only)
 /*
 **	Compose content of the specified gob. Main compositing function.
+**
+**  If the ONLY arg is TRUE then the specified gob area will be
+**  rendered to the buffer at 0x0 offset.(used by TO-IMAGE)
 **
 ***********************************************************************/
 {
@@ -304,6 +307,17 @@ typedef struct {
 		abs_x += GOB_PX(parent_gob);
 		abs_y += GOB_PY(parent_gob);
 		parent_gob = GOB_PARENT(parent_gob);
+	}
+
+	//the offset is shifted to render given gob at offset 0x0 (used by TO-IMAGE)
+	if (only){
+		ctx->absOffset.x = -abs_x;
+		ctx->absOffset.y = -abs_y;
+		abs_x = 0;
+		abs_y = 0;
+	} else {
+		ctx->absOffset.x = 0;
+		ctx->absOffset.y = 0;
 	}
 
 	//handle newly added gob case
@@ -331,9 +345,6 @@ typedef struct {
 
 	if (valid_intersection)
 	{
-		ctx->absOffset.x = 0;
-		ctx->absOffset.y = 0;
-
 		ctx->Window_Buffer = rebcmp_get_buffer(ctx);
 
 		//redraw gobs

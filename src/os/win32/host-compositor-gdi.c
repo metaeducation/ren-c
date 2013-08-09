@@ -104,8 +104,8 @@ typedef struct compositor_ctx {
 **
 ***********************************************************************/
 {
-	//check if window size really changed
-	if ((GOB_PW(winGob) != GOB_WO(winGob)) || (GOB_PH(winGob) != GOB_HO(winGob))) {
+	//check if window size really changed or buffer needs to be created
+	if ((GOB_PW(winGob) != GOB_WO(winGob)) || (GOB_PH(winGob) != GOB_HO(winGob)) || ctx->Back_Buffer == 0) {
 		HBITMAP new_buffer;
 		HDC newDC;
 		REBYTE *new_bytes;
@@ -115,7 +115,7 @@ typedef struct compositor_ctx {
 		///set window size in bitmapinfo struct
 		ctx->bmpInfo.bmiHeader.biWidth = w;
 		ctx->bmpInfo.bmiHeader.biHeight = -h;
-		
+
 		//create new window backbuffer and DC
 		new_buffer = CreateDIBSection(ctx->winDC, &ctx->bmpInfo, DIB_RGB_COLORS,(VOID **)&new_bytes, 0, 0);
 		newDC = CreateCompatibleDC(ctx->winDC);
@@ -191,7 +191,7 @@ typedef struct compositor_ctx {
 	ctx->winDC = GetDC(GOB_HWIN(gob));
 	ctx->backDC = 0;
 	ctx->Back_Buffer = 0;
-	
+
 	//custom color brush
 	ctx->DCbrush = GetStockObject(DC_BRUSH);
 	
@@ -266,130 +266,13 @@ typedef struct compositor_ctx {
 		//render GOB content
 		switch (GOB_TYPE(gob)) {
 			case GOBT_COLOR:
-				{
-//				RL_Print("draw color gob\n");
-					REBCNT color = (REBCNT)GOB_CONTENT(gob);    //source gob/color
-					REBYTE a = color >> 24;
-					
-					if ((GOB_ALPHA(gob) == 255) && (a == 255)) {
-						//draw opaque color gob
-						RECT rect = {x,y, x + GOB_PW_INT(gob), y + GOB_PH_INT(gob)};
-						SetDCBrushColor(ctx->backDC, ((color >> 16) & 255) | ((color & 255) << 16) | (color & 255<<8));		
-						FillRect(ctx->backDC, &rect, ctx->DCbrush); // excludes bottom & right borders 
-					} else {
-						//draw transparent color gob
-
-						//todo: cache the 'pen' bitmap to speed it up
-						BLENDFUNCTION bf;
-						REBCNT* buf;
-						REBYTE* img;
-						REBINT len;
-						HDC hdc = CreateCompatibleDC(ctx->backDC);
-
-
-						ctx->bmpInfo.bmiHeader.biWidth = 1;
-						ctx->bmpInfo.bmiHeader.biHeight = 1;
-						
-						HBITMAP tmp = CreateDIBSection(
-							ctx->backDC,
-							&ctx->bmpInfo,
-							DIB_RGB_COLORS,
-							(VOID**)&buf,
-							0,
-							0
-						);
-						
-						buf[0] = color; 
-						
-						SelectObject(hdc, tmp);
-						
-						bf.BlendOp = AC_SRC_OVER;
-						bf.BlendFlags = 0;
-						bf.SourceConstantAlpha = (a * GOB_ALPHA(gob)) >> 8;    // premultiply the source gob/color alpha with the gob/alpha transparency 
-						bf.AlphaFormat = 0;    // ignore source alpha channel
-
-						AlphaBlend(
-							ctx->backDC,
-							x,y, 
-							GOB_PW_INT(gob), GOB_PH_INT(gob),
-							hdc, 
-							0, 0,
-							1, 1,
-							bf
-						);
-						
-						//cleanup
-						DeleteDC(hdc);
-						DeleteObject(tmp);
-					}
-				}
+//					RL_Print("draw color gob %dx%d\n", x, y);
+				rebdrw_gob_color(gob, ctx->Window_Buffer, ctx->winBufSize, (REBXYI){x,y}, (REBXYI){gob_clip.left, gob_clip.top}, (REBXYI){gob_clip.right, gob_clip.bottom});
 				break;
 			
 			case GOBT_IMAGE:
-				{
-//					RL_Print("draw image gob\n");
-					BLENDFUNCTION bf;
-					HBITMAP tmp;
-					REBYTE* buf;
-					REBYTE *img = GOB_BITMAP(gob);
-					REBCNT size = ((REBCNT*)GOB_CONTENT(gob))[4];	//get the real image size - HACK!!!!!!!
-					REBINT w = size & 0xffff;
-					REBINT h = size >> 16;
-					REBINT len =  w * h;
-					HDC hdc = CreateCompatibleDC(ctx->backDC);
-					
-					//set bitmapinfo size
-					//note: ctx->bmpInfo struct can be safely shared with main window(no usage collisions)
-					ctx->bmpInfo.bmiHeader.biWidth = w;
-					ctx->bmpInfo.bmiHeader.biHeight = -h;
-					
-					//create temp image bitmap for blending
-					tmp = CreateDIBSection(				//todo: restrict bitmap to clip only!!!
-						ctx->backDC,
-						&ctx->bmpInfo,
-						DIB_RGB_COLORS,
-						(VOID**)&buf,
-						0,
-						0
-					);
-					
-					do
-					{
-						REBYTE a = img[3];
-						if (a == 255)
-							*(REBCNT*)buf = *(REBCNT*)img;
-						else if (a != 0) {
-							buf[0] = (img[0] * a) >> 8;
-							buf[1] = (img[1] * a) >> 8;
-							buf[2] = (img[2] * a) >> 8;
-							buf[3] = a;
-						}
-						img += 4;
-						buf += 4;
-					}
-					while (len--);
-					
-					SelectObject(hdc, tmp);
-					
-					bf.BlendOp = AC_SRC_OVER;
-					bf.BlendFlags = 0;
-					bf.SourceConstantAlpha = GOB_ALPHA(gob);  // gob/alpha transparency 
-					bf.AlphaFormat = AC_SRC_ALPHA;   // use source per-pixel alpha 
-
-					AlphaBlend(
-						ctx->backDC,
-						x,y, 
-						GOB_PW_INT(gob), GOB_PH_INT(gob),
-						hdc, 
-						0, 0, 
-						w, h,
-						bf
-					);
-					
-					//cleanup
-					DeleteDC(hdc);
-					DeleteObject(tmp);
-				}
+//				RL_Print("draw image gob\n");
+				rebdrw_gob_image(gob, ctx->Window_Buffer, ctx->winBufSize, (REBXYI){x,y}, (REBXYI){gob_clip.left, gob_clip.top}, (REBXYI){gob_clip.right, gob_clip.bottom});
 				break;
 
 			case GOBT_DRAW:
@@ -444,9 +327,12 @@ typedef struct compositor_ctx {
 
 /***********************************************************************
 **
-*/ void rebcmp_compose(REBCMP_CTX* ctx, REBGOB* winGob, REBGOB* gob)
+*/ void rebcmp_compose(REBCMP_CTX* ctx, REBGOB* winGob, REBGOB* gob, REBOOL only)
 /*
 **	Compose content of the specified gob. Main compositing function.
+**
+**  If the ONLY arg is TRUE then the specified gob area will be
+**  rendered to the buffer at 0x0 offset.(used by TO-IMAGE)
 **
 ***********************************************************************/
 {
@@ -475,6 +361,17 @@ typedef struct compositor_ctx {
 		parent_gob = GOB_PARENT(parent_gob);
 	} 
 
+	//the offset is shifted to render given gob at offset 0x0 (used by TO-IMAGE)
+	if (only){
+		ctx->absOffset.x = -abs_x;
+		ctx->absOffset.y = -abs_y;
+		abs_x = 0;
+		abs_y = 0;
+	} else {
+		ctx->absOffset.x = 0;
+		ctx->absOffset.y = 0;
+	}
+	
 	if (!GET_GOB_STATE(gob, GOBS_NEW)){
 		//calculate absolute old offset of the gob
 		abs_ox = abs_x + (GOB_XO(gob) - GOB_PX(gob));
@@ -501,13 +398,8 @@ typedef struct compositor_ctx {
 //	RL_Print("old+new clip: %dx%d %dx%d\n", gob_clip.left, gob_clip.top, gob_clip.right, gob_clip.bottom);
 	
 	if (intersection_result != NULLREGION)
-	{
-		ctx->absOffset.x = 0;
-		ctx->absOffset.y = 0;
-
 		//redraw gobs
 		process_gobs(ctx, winGob);
-	}
 	
 	//update old GOB area
 	GOB_XO(gob) = GOB_PX(gob);

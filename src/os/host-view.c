@@ -173,7 +173,7 @@ REBINT Alloc_Window(REBGOB *gob) {
 	compositor = GOB_COMPOSITOR(gob);
 	changed = rebcmp_resize_buffer(compositor, gob);
 	if (redraw){
-		rebcmp_compose(compositor, gob, gob);
+		rebcmp_compose(compositor, gob, gob, FALSE);
 		rebcmp_blit(compositor);
 	}
 	return changed;
@@ -207,14 +207,14 @@ REBINT Alloc_Window(REBGOB *gob) {
 	int ow = GOB_PW_INT(wingob);
 	int oh = GOB_PH_INT(wingob);
     compositor = GOB_COMPOSITOR(wingob);
-	rebcmp_compose(compositor, wingob, gob);
+	rebcmp_compose(compositor, wingob, gob, FALSE);
 
     SwapBuffers( paintDC );
 	ReleaseDC(GOB_HWIN(gob),paintDC);
 #else
 	//render and blit the GOB
 	compositor = GOB_COMPOSITOR(wingob);
-	rebcmp_compose(compositor, wingob, gob);
+	rebcmp_compose(compositor, wingob, gob, FALSE);
 	rebcmp_blit(compositor);
 #endif
 }
@@ -293,24 +293,20 @@ REBINT Alloc_Window(REBGOB *gob) {
 	REBSER* img;
 	void* cp;
 	REBGOB* parent;
-	REBGOB* wingob;
+	REBGOB* topgob;
 
 	w = (REBINT)GOB_PW(gob);
 	h = (REBINT)GOB_PH(gob);
 	img = (REBSER*)RL_MAKE_IMAGE(w,h);
 
 	//search the window(or topmost) gob
-	wingob = gob;
-	while (GOB_PARENT(wingob) && GOB_PARENT(wingob) != Gob_Root
-		&& GOB_PARENT(wingob) != wingob) // avoid infinite loop
-		wingob = GOB_PARENT(wingob);
+	topgob = gob;
+	while (GOB_PARENT(topgob) && GOB_PARENT(topgob) != Gob_Root
+		&& GOB_PARENT(topgob) != topgob) // avoid infinite loop
+		topgob = GOB_PARENT(topgob);
 
-	//remove the parent so gob composing stops at the wingob
-	parent = GOB_PARENT(wingob);
-	GOB_PARENT(wingob) = 0;
-	
 	cp = rebcmp_create(Gob_Root, gob);
-	rebcmp_compose(cp, wingob, gob);
+	rebcmp_compose(cp, topgob, gob, TRUE);
 
 	//copy the composed result to image
 	memcpy((REBYTE *)RL_SERIES(img, RXI_SER_DATA), rebcmp_get_buffer(cp), w * h * 4);
@@ -318,11 +314,8 @@ REBINT Alloc_Window(REBGOB *gob) {
 	rebcmp_release_buffer(cp);
 	
 	rebcmp_destroy(cp);
-	
-	//restore wingob parent
-	GOB_PARENT(wingob) = parent;
 
-	return ((result == 0) ? img : 0);
+	return img;
 }
 
 //**********************************************************************
