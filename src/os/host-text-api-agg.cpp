@@ -27,13 +27,15 @@ namespace agg
 		agg_graphics::pixfmt pixf_win(rbuf_win);
 		agg_graphics::ren_base rb_win(pixf_win);
 		rich_text* rt = (rich_text*)Rich_Text;
-		REBINT w = GOB_PW_INT(gob)-1;	//note: rt_set_clip() includes bottom-right values so we need to subtract
-		REBINT h = GOB_PH_INT(gob)-1;
+		REBINT w = GOB_PW_INT(gob);	
+		REBINT h = GOB_PH_INT(gob);
 		
 		rt->rt_reset();
 		rt->rt_attach_buffer(&rbuf_win, buf_size.x, buf_size.y);
+		//note: rt_set_clip() include bottom-right values
 //		rt->rt_set_clip(abs_oft.x, abs_oft.y, abs_oft.x+w, abs_oft.y+h, w, h);
-		rt->rt_set_clip(clip_oft.x, clip_oft.y, clip_siz.x, clip_siz.y, w, h);		
+		rt->rt_set_clip(clip_oft.x, clip_oft.y, clip_siz.x, clip_siz.y, w, h);
+
 		if (GOB_TYPE(gob) == GOBT_TEXT)
 			rt_block_text(rt, (REBSER *)GOB_CONTENT(gob));
 		else {
