@@ -1737,7 +1737,7 @@ eval_func2:
 	REBINT n;
 
 	// Caller must: Prep_Func + Args above
-	VAL_WORD_FRAME(DSF_WORD(DSF)) = VAL_FUNC_BODY(func_val);
+	VAL_WORD_FRAME(DSF_WORD(DSF)) = VAL_FUNC_ARGS(func_val);
 	n = DS_ARGC - (SERIES_TAIL(VAL_FUNC_WORDS(func_val)) - 1);
 	for (; n > 0; n--) DS_PUSH_NONE;
 	Func_Dispatch[VAL_TYPE(func_val)-REB_NATIVE](func_val);
@@ -1818,7 +1818,7 @@ push_arg:
 	memmove(DS_ARG(1), DS_TOP-(inew-1), inew * sizeof(REBVAL));
 	DSP = DS_ARG_BASE + inew; // new TOS
 	//Dump_Block(DS_ARG(1), inew);
-	VAL_WORD_FRAME(DSF_WORD(DSF)) = VAL_FUNC_BODY(func_val);
+	VAL_WORD_FRAME(DSF_WORD(DSF)) = VAL_FUNC_ARGS(func_val);
 	*DSF_FUNC(DSF) = *func_val;
 	Func_Dispatch[VAL_TYPE(func_val)-REB_NATIVE](func_val);
 }
