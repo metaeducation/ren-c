@@ -7,7 +7,6 @@ files: [
 	%mezz/prot-tls.r
 	%mezz/prot-http.r
 	%mezz/rma-patches.r
-	%mezz/patches.r3
 ]
 
 code: load-files files

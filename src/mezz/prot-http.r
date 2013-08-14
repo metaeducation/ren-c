@@ -347,6 +347,9 @@ http-response-headers: context [
 do-redirect: func [port [port!] new-uri [url! string! file!] /local spec state] [
 	spec: port/spec
 	state: port/state
+	if #"/" = first new-uri [
+		new-uri: to url! ajoin [spec/scheme "://" spec/host new-uri]
+	]
 	new-uri: decode-url new-uri
 	unless select new-uri 'port-id [
 		switch new-uri/scheme [
