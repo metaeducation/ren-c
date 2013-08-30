@@ -630,15 +630,14 @@
 	if (parent1) Collect_Object(parent1);
 	// Add parent2 words to binding table and BUF_WORDS:
 	Collect_Words(BLK_SKIP(FRM_WORD_SERIES(parent2), 1), BIND_ALL);
-	wrds = Copy_Series(BUF_WORDS);
-	SAVE_SERIES(wrds); // GC - has just been allocated
+
 	// Allocate child (now that we know the correct size):
+	wrds = Copy_Series(BUF_WORDS);
 	child = Make_Block(SERIES_TAIL(wrds));
 	value = Append_Value(child);
 	VAL_SET(value, REB_FRAME);
 	VAL_FRM_WORDS(value) = wrds;
 	VAL_FRM_SPEC(value) = 0;
-	UNSAVE_SERIES(wrds); // wrds is safe now if child is safe
 
 	// Copy parent1 values:
 	COPY_VALUES(FRM_VALUES(parent1)+1, FRM_VALUES(child)+1, SERIES_TAIL(parent1)-1);
