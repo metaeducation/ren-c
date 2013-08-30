@@ -34,15 +34,6 @@ sync-op: func [port body /local state] [
 		if state/state = 'reading-data [read state/connection]
 	]
 	body: copy port
-	if all [
-		select state/info/headers 'Content-Type
-		state/info/headers/Content-Type
-		parse state/info/headers/Content-Type [
-			"text/" thru "; charset=UTF-8"
-		]
-	] [
-		body: to string! body
-	]
 	if state/close? [close port]
 	body
 ]
