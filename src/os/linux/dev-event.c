@@ -47,8 +47,10 @@
 #include "reb-host.h"
 #include "host-lib.h"
 
-extern Display *x_display;
 void Done_Device(int handle, int error);
+
+#ifndef REB_CORE
+extern Display *x_display;
 
 static void Add_Event_XY(REBGOB *gob, REBINT id, REBINT xy, REBINT flags)
 {
@@ -75,6 +77,8 @@ static void Add_Event_Key(REBGOB *gob, REBINT id, REBINT key, REBINT flags)
 
 	RL_Event(&evt);	// returns 0 if queue is full
 }
+#endif
+
 /***********************************************************************
 **
 */	DEVICE_CMD Init_Events(REBREQ *dr)
@@ -102,6 +106,7 @@ static void Add_Event_Key(REBGOB *gob, REBINT id, REBINT key, REBINT flags)
 ***********************************************************************/
 {
 	int flag = DR_DONE;
+#ifndef REB_CORE
 	XEvent ev;
 	REBGOB *gob = NULL;
 	// Handle XEvents and flush the input 
@@ -177,6 +182,7 @@ static void Add_Event_Key(REBGOB *gob, REBINT id, REBINT key, REBINT flags)
 				break;
 		}
 	}
+#endif
 	return flag;	// different meaning compared to most commands
 }
 
@@ -193,17 +199,20 @@ static void Add_Event_Key(REBGOB *gob, REBINT id, REBINT key, REBINT flags)
 	struct timeval tv;
 	int result;
 	fd_set in_fds;
+	int x11_fd = 0;
 
 	tv.tv_sec = 0;
 	tv.tv_usec = req->length * 1000;
+	FD_ZERO(&in_fds);
 	//printf("usec %d\n", tv.tv_usec);
 	
+#ifndef REB_CORE
     // This returns the FD of the X11 display (or something like that)
-    int x11_fd = ConnectionNumber(x_display);
+    x11_fd = ConnectionNumber(x_display);
 
         // Create a File Description Set containing x11_fd
-	FD_ZERO(&in_fds);
 	FD_SET(x11_fd, &in_fds);
+#endif
 
 	// Wait for X Event or a Timer
 	if (select(x11_fd+1, &in_fds, 0, 0, &tv)){
