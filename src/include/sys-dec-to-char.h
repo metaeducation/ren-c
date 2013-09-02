@@ -25,4 +25,5 @@
 **
 ***********************************************************************/
 
-char * dtoa (double dd, int mode, int ndigits, int *decpt, int *sign, char **rve);
+char *dtoa(double dd, int mode, int ndigits, int *decpt, int *sign, char **rve);
+double STRTOD(const char *s00, char **se);
