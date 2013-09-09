@@ -5,6 +5,8 @@
 **  Copyright 2012 REBOL Technologies
 **  REBOL is a trademark of REBOL Technologies
 **
+**  Additional code modifications and improvements Copyright 2012 Saphirion AG
+**
 **  Licensed under the Apache License, Version 2.0 (the "License");
 **  you may not use this file except in compliance with the License.
 **  You may obtain a copy of the License at
@@ -19,8 +21,8 @@
 **
 ************************************************************************
 **
-**  Title: TEXT Dialect Backend
-**  Author: Cyphre, Carl
+**  Title: TEXT Dialect command dispatcher
+**  Author: Richard Smolak, Carl Sassenrath
 **  Purpose: Evaluates rich-text commands; calls graphics functions.
 **  Tools: make-host-ext.r
 **
@@ -51,7 +53,6 @@
 
 //***** Externs *****
 
-extern REBXYF dp_scale;
 extern REBINT As_OS_Str(REBSER *series, REBCHR **string);
 
 //***** Locals *****
@@ -241,7 +242,7 @@ static u32* text_ext_words;
             while (type = RL_GET_FIELD(obj, w[0], &val))
             {
 				if (type == RXT_PAIR)
-					val.pair = RXI_PAIR(val);
+					val.pair = RXI_LOG_PAIR(val);
 					
                 switch(RL_FIND_WORD(text_ext_words,w[0]))
                 {
@@ -285,7 +286,7 @@ static u32* text_ext_words;
 
                     case W_TEXT_SIZE:
                         if (type == RXT_INTEGER)
-                            font->size = val.int64 * dp_scale.y;
+                            font->size = LOG_COORD_Y(val.int64);
                         break;
 
                     case W_TEXT_COLOR:
@@ -328,7 +329,7 @@ static u32* text_ext_words;
                                     switch (shadowType)
                                     {
                                         case RXT_PAIR:
-											shadowVal.pair = RXI_PAIR(shadowVal);
+											shadowVal.pair = RXI_LOG_PAIR(shadowVal);
                                             font->shadow_x = shadowVal.pair.x;
                                             font->shadow_y = shadowVal.pair.y;
                                             break;
@@ -385,7 +386,7 @@ static u32* text_ext_words;
             while (type = RL_GET_FIELD(obj, w[0], &val))
             {
 				if (type == RXT_PAIR)
-					val.pair = RXI_PAIR(val);
+					val.pair = RXI_LOG_PAIR(val);
 			
                 switch(RL_FIND_WORD(text_ext_words,w[0]))
                 {
@@ -447,15 +448,15 @@ static u32* text_ext_words;
         break;
 
 	case CMD_TEXT_SCROLL:
-		rt_scroll(ctx->envr, RXA_PAIR(frm, 1));
+		rt_scroll(ctx->envr, RXA_LOG_PAIR(frm, 1));
 		break;
 
     case CMD_TEXT_SHADOW:
-        rt_shadow(ctx->envr, RXA_PAIR(frm, 1), RXA_COLOR_TUPLE(frm,2), RXA_INT32(frm,3));
+        rt_shadow(ctx->envr, RXA_LOG_PAIR(frm, 1), RXA_COLOR_TUPLE(frm,2), RXA_INT32(frm,3));
         break;
 
 	case CMD_TEXT_SIZE:
-		rt_font_size(ctx->envr, RXA_INT32(frm,1) * dp_scale.y);
+		rt_font_size(ctx->envr, LOG_COORD_Y(RXA_INT32(frm,1)));
 		break;
 
     case CMD_TEXT_TEXT:

@@ -499,14 +499,15 @@ demo: funct [
 	exit
 ]
 
-load-gui: funct [
-	"Download current GUI module from web. (Temporary)"
+load-gui: func [
+    "Download current Spahirion's R3-GUI module from web."
+    /local data
 ][
-	print "Fetching GUI..."
-	either error? data: try [load http://development.saphirion.com/resources/r3-gui.r3][
-		either data/id = 'protocol [print "Cannot load GUI from web."][do err]
-	][
-		do data
-	]
-	exit
+    print "Fetching GUI..."
+    either error? data: try [load http://development.saphirion.com/resources/r3-gui.r3] [
+        either data/id = 'protocol [print "Cannot load GUI from web."] [do err]
+    ] [
+        do data
+    ]
+    exit
 ]

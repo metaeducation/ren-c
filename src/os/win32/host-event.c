@@ -5,6 +5,8 @@
 **  Copyright 2012 REBOL Technologies
 **  REBOL is a trademark of REBOL Technologies
 **
+**  Additional code modifications and improvements Copyright 2012 Saphirion AG
+**
 **  Licensed under the Apache License, Version 2.0 (the "License");
 **  you may not use this file except in compliance with the License.
 **  You may obtain a copy of the License at
@@ -20,7 +22,7 @@
 ************************************************************************
 **
 **  Title: Windowing Event Handler
-**  Author: Carl Sassenrath
+**  Author: Carl Sassenrath, Richard Smolak
 **  Purpose: This code handles windowing related events.
 **	Related: host-window.c, dev-event.c
 **
@@ -104,7 +106,6 @@ extern void Close_Window(REBGOB *gob);
 extern REBOOL Resize_Window(REBGOB *gob, REBOOL redraw);
 extern HWND Find_Window(REBGOB *gob);
 extern BOOL osDialogOpen; //this flag is checked to block rebol events loop when specific non-modal OS dialog(request-file, request-dir etc.) is opened
-extern REBXYF dp_scale;
 
 /***********************************************************************
 **
@@ -225,7 +226,7 @@ static Check_Modifiers(REBINT flags)
 	}
 
 	//downscaled, resolution independent xy event position
-	xyd = (ROUND_TO_INT(((i16)LOWORD(xy)) / dp_scale.x)) + (ROUND_TO_INT(((i16)HIWORD(xy)) / dp_scale.y) << 16);
+	xyd = (ROUND_TO_INT(PHYS_COORD_X((i16)LOWORD(xy)))) + (ROUND_TO_INT(PHYS_COORD_Y((i16)HIWORD(xy))) << 16);
 	// Handle message:
 	switch(msg)
 	{

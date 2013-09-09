@@ -39,7 +39,14 @@ encode: funct [
 ][
 	unless all [
 		cod: select system/codecs type
-		data: do-codec cod/entry 'encode data
+		;encode patch replacing internal PNG encoder crash for now
+		data: switch/default cod/name [
+			png [
+				to-png data
+			]
+		][
+			do-codec cod/entry 'encode data
+		]
 	][
 		cause-error 'access 'no-codec type
 	]

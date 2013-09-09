@@ -1,4 +1,41 @@
-//exported functions
+/***********************************************************************
+**
+**  REBOL [R3] Language Interpreter and Run-time Environment
+**
+**  Copyright 2012 REBOL Technologies
+**  REBOL is a trademark of REBOL Technologies
+**
+**  Additional code modifications and improvements Copyright 2012 Saphirion AG
+**
+**  Licensed under the Apache License, Version 2.0 (the "License");
+**  you may not use this file except in compliance with the License.
+**  You may obtain a copy of the License at
+**
+**  http://www.apache.org/licenses/LICENSE-2.0
+**
+**  Unless required by applicable law or agreed to in writing, software
+**  distributed under the License is distributed on an "AS IS" BASIS,
+**  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+**  See the License for the specific language governing permissions and
+**  limitations under the License.
+**
+************************************************************************
+**
+**  Title: DRAW dialect API functions
+**  Author: Richard Smolak
+**
+************************************************************************
+**
+**  NOTE to PROGRAMMERS:
+**
+**    1. Keep code clear and simple.
+**    2. Document unusual code, reasoning, or gotchas.
+**    3. Use same style for code, vars, indent(4), comments, etc.
+**    4. Keep in mind Linux, OS X, BSD, big/little endian CPUs.
+**    5. Test everything, then test it again.
+**
+***********************************************************************/
+
 #include "../agg/agg_graphics.h"
 //#undef IS_ERROR
 extern "C" void *RL_Series(REBSER *ser, REBINT what);
@@ -155,11 +192,11 @@ namespace agg
 	extern "C" void rebdrw_image(void* gr, REBYTE* img, REBINT w, REBINT h,REBXYF offset)
 	{
 #ifndef AGG_OPENGL
-		if (dp_scale.x == 1 && dp_scale.y == 1)
+		if (log_size.x == 1 && log_size.y == 1)
 			((agg_graphics*)gr)->agg_image(img, offset.x, offset.y, w, h);
 		else {
-			REBINT x = offset.x + (w * dp_scale.x);
-			REBINT y = offset.y + (h * dp_scale.y);
+			REBINT x = offset.x + LOG_COORD_X(w);
+			REBINT y = offset.y + LOG_COORD_Y(h);
 			((agg_graphics*)gr)->agg_begin_poly(offset.x, offset.y);
 			((agg_graphics*)gr)->agg_add_vertex(x, offset.y);
 			((agg_graphics*)gr)->agg_add_vertex(x, y);
@@ -199,13 +236,13 @@ namespace agg
 
 			for (n = 0; type = RL_GET_VALUE(points, n, &a); n++) {
 				if (type == RXT_PAIR){
-					p[len] = RXI_PAIR(a);
+					p[len] = RXI_LOG_PAIR(a);
                     if (++len == 4) break;
 				}
 			}
 
             if (!len) return;
-            if (len == 1 && dp_scale.x == 1 && dp_scale.y == 1) {
+            if (len == 1 && log_size.x == 1 && log_size.y == 1) {
 				((agg_graphics*)gr)->agg_image(img, p[0].x, p[0].y, w, h);
 				return;
 			}
@@ -450,9 +487,9 @@ namespace agg
 		rb_win.clip_box(clip_oft.x,clip_oft.y,clip_siz.x-1,clip_siz.y-1);
 		
 		if ((GOB_ALPHA(gob) == 255) && (color[C_A] == 255))
-			rb_win.copy_bar(abs_oft.x, abs_oft.y, abs_oft.x+GOB_PW_INT(gob), abs_oft.y+GOB_PH_INT(gob), agg::rgba8(color[C_R], color[C_G], color[C_B], color[C_A]));
+			rb_win.copy_bar(abs_oft.x, abs_oft.y, abs_oft.x+GOB_LOG_W_INT(gob), abs_oft.y+GOB_LOG_H_INT(gob), agg::rgba8(color[C_R], color[C_G], color[C_B], color[C_A]));
 		else
-			rb_win.blend_bar(abs_oft.x, abs_oft.y, abs_oft.x+GOB_PW_INT(gob), abs_oft.y+GOB_PH_INT(gob), agg::rgba8(color[C_R], color[C_G], color[C_B], color[C_A]), GOB_ALPHA(gob));
+			rb_win.blend_bar(abs_oft.x, abs_oft.y, abs_oft.x+GOB_LOG_W_INT(gob), abs_oft.y+GOB_LOG_H_INT(gob), agg::rgba8(color[C_R], color[C_G], color[C_B], color[C_A]), GOB_ALPHA(gob));
 	}
 
 	extern "C" void rebdrw_gob_image(REBGOB *gob, REBYTE* buf, REBXYI buf_size, REBXYI abs_oft, REBXYI clip_oft, REBXYI clip_siz)
@@ -503,7 +540,7 @@ namespace agg
 
 		if (GOB_ALPHA(gob) == 255){
 			//render directly to the main buffer
-			graphics = new agg_graphics(&rbuf_win, GOB_PW_INT(gob), GOB_PH_INT(gob), abs_oft.x, abs_oft.y);
+			graphics = new agg_graphics(&rbuf_win, GOB_LOG_W_INT(gob), GOB_LOG_H_INT(gob), abs_oft.x, abs_oft.y);
 			rb = rb_win;
 
 			//!!!workaround to change agg clipping

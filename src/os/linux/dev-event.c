@@ -121,20 +121,20 @@ static void Add_Event_Key(REBGOB *gob, REBINT id, REBINT key, REBINT flags)
 				break;
 			case ButtonPress:
 				RL_Print("Button %d pressed\n", ev.xbutton.button);
-				xyd = (ROUND_TO_INT(ev.xbutton.x / dp_scale.x)) + (ROUND_TO_INT(ev.xbutton.y / dp_scale.y) << 16);
+				xyd = (ROUND_TO_INT(PHYS_COORD_X(ev.xbutton.x))) + (ROUND_TO_INT(PHYS_COORD_Y(ev.xbutton.y)) << 16);
 				Add_Event_XY(gob, EVT_DOWN, xyd, 0);
 				break;
 
 			case ButtonRelease:
 				RL_Print("Button %d is released\n", ev.xbutton.button);
-				xyd = (ROUND_TO_INT(ev.xbutton.x / dp_scale.x)) + (ROUND_TO_INT(ev.xbutton.y / dp_scale.y) << 16);
+				xyd = (ROUND_TO_INT(PHYS_COORD_X(ev.xbutton.x))) + (ROUND_TO_INT(PHYS_COORD_Y(ev.xbutton.y)) << 16);
 				Add_Event_XY(gob, EVT_UP, xyd, 0);
 				break;
 
 			case MotionNotify:
 				RL_Print ("mouse motion\n");
 				gob = Find_Gob(ev.xmotion.window);
-				xyd = (ROUND_TO_INT(ev.xmotion.x / dp_scale.x)) + (ROUND_TO_INT(ev.xmotion.y / dp_scale.y) << 16);
+				xyd = (ROUND_TO_INT(PHYS_COORD_X(ev.xmotion.x))) + (ROUND_TO_INT(PHYS_COORD_Y(ev.xmotion.y)) << 16);
 				Add_Event_XY(gob, EVT_MOVE, xyd, 0);
 				break;
 			case KeyPress:

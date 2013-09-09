@@ -5,6 +5,8 @@
 **  Copyright 2012 REBOL Technologies
 **  REBOL is a trademark of REBOL Technologies
 **
+**  Additional code modifications and improvements Copyright 2012 Saphirion AG
+**
 **  Licensed under the Apache License, Version 2.0 (the "License");
 **  you may not use this file except in compliance with the License.
 **  You may obtain a copy of the License at
@@ -108,10 +110,10 @@ typedef struct {
 {
 
 	//check if window size really changed or buffer needs to be created
-	if ((GOB_PW(winGob) != GOB_WO(winGob)) || (GOB_PH(winGob) != GOB_HO(winGob))) {
+	if ((GOB_LOG_W(winGob) != GOB_WO(winGob)) || (GOB_LOG_H(winGob) != GOB_HO(winGob))) {
 
-		REBINT w = GOB_PW_INT(winGob);
-		REBINT h = GOB_PH_INT(winGob);
+		REBINT w = GOB_LOG_W_INT(winGob);
+		REBINT h = GOB_LOG_H_INT(winGob);
 
 		//------------------------------
 		//Put backend specific code here
@@ -122,10 +124,10 @@ typedef struct {
 		ctx->winBufSize.y = h;
 
 		//update old gob area
-		GOB_XO(winGob) = GOB_PX(winGob);
-		GOB_YO(winGob) = GOB_PY(winGob);
-		GOB_WO(winGob) = GOB_PW(winGob);
-		GOB_HO(winGob) = GOB_PH(winGob);
+		GOB_XO(winGob) = GOB_LOG_X(winGob);
+		GOB_YO(winGob) = GOB_LOG_Y(winGob);
+		GOB_WO(winGob) = GOB_LOG_W(winGob);
+		GOB_HO(winGob) = GOB_LOG_H(winGob);
 		return TRUE;
 	}
 	return FALSE;
@@ -185,10 +187,10 @@ typedef struct {
 
 	if (GET_GOB_STATE(gob, GOBS_NEW)){
 		//reset old-offset and old-size if newly added
-		GOB_XO(gob) = GOB_PX(gob);
-		GOB_YO(gob) = GOB_PY(gob);
-		GOB_WO(gob) = GOB_PW(gob);
-		GOB_HO(gob) = GOB_PH(gob);
+		GOB_XO(gob) = GOB_LOG_X(gob);
+		GOB_YO(gob) = GOB_LOG_Y(gob);
+		GOB_WO(gob) = GOB_LOG_W(gob);
+		GOB_HO(gob) = GOB_LOG_H(gob);
 
 		CLR_GOB_STATE(gob, GOBS_NEW);
 	}
@@ -258,8 +260,8 @@ typedef struct {
 			REBGOB **gp = GOB_HEAD(gob);
 
 			for (n = 0; n < len; n++, gp++) {
-				REBINT g_x = GOB_PX(*gp);
-				REBINT g_y = GOB_PY(*gp);
+				REBINT g_x = GOB_LOG_X(*gp);
+				REBINT g_y = GOB_LOG_Y(*gp);
 
 				//restore the "parent gob" clip region
 				//------------------------------
@@ -304,8 +306,8 @@ typedef struct {
 	//calculate absolute offset of the gob
 	while (GOB_PARENT(parent_gob) && (max_depth-- > 0) && !GET_GOB_FLAG(parent_gob, GOBF_WINDOW))
 	{
-		abs_x += GOB_PX(parent_gob);
-		abs_y += GOB_PY(parent_gob);
+		abs_x += GOB_LOG_X(parent_gob);
+		abs_y += GOB_LOG_Y(parent_gob);
 		parent_gob = GOB_PARENT(parent_gob);
 	}
 
@@ -323,8 +325,8 @@ typedef struct {
 	//handle newly added gob case
 	if (!GET_GOB_STATE(gob, GOBS_NEW)){
 		//calculate absolute old offset of the gob
-		abs_ox = abs_x + (GOB_XO(gob) - GOB_PX(gob));
-		abs_oy = abs_y + (GOB_YO(gob) - GOB_PY(gob));
+		abs_ox = abs_x + (GOB_XO(gob) - GOB_LOG_X(gob));
+		abs_oy = abs_y + (GOB_YO(gob) - GOB_LOG_Y(gob));
 
 		//set region with old gob location and dimensions
 		//------------------------------
@@ -356,10 +358,10 @@ typedef struct {
 	}
 
 	//update old GOB area
-	GOB_XO(gob) = GOB_PX(gob);
-	GOB_YO(gob) = GOB_PY(gob);
-	GOB_WO(gob) = GOB_PW(gob);
-	GOB_HO(gob) = GOB_PH(gob);
+	GOB_XO(gob) = GOB_LOG_X(gob);
+	GOB_YO(gob) = GOB_LOG_Y(gob);
+	GOB_WO(gob) = GOB_LOG_W(gob);
+	GOB_HO(gob) = GOB_LOG_H(gob);
 }
 
 /***********************************************************************

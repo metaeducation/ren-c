@@ -5,6 +5,8 @@
 **  Copyright 2012 REBOL Technologies
 **  REBOL is a trademark of REBOL Technologies
 **
+**  Additional code modifications and improvements Copyright 2012 Saphirion AG
+**
 **  Licensed under the Apache License, Version 2.0 (the "License");
 **  you may not use this file except in compliance with the License.
 **  You may obtain a copy of the License at
@@ -21,6 +23,7 @@
 **
 **  Title: OS independent windowing/graphics code and dispatcher
 **  File:  host-view.c
+**  Author: Richard Smolak, Carl Sassenrath
 **  Purpose: Provides shared functions for windowing/graphics
 **
 ************************************************************************
@@ -38,9 +41,8 @@
 #include <string.h>
 #include <math.h>	//for floor()
 #include "reb-host.h"
-//#include "host-lib.h"
+
 #include "host-compositor.h"
-#include "host-view.h"
 
 #define INCLUDE_EXT_DATA
 #include "host-ext-graphics.h"
@@ -59,7 +61,8 @@ extern REBD32 OS_Get_Metrics(METRIC_TYPE type);
 //***** Globals *****
 REBGOBWINDOWS *Gob_Windows;
 REBGOB *Gob_Root;				// Top level GOB (the screen)
-REBXYF dp_scale = {1.0, 1.0};
+REBXYF log_size = {1.0, 1.0};	//logical pixel size measured in physical pixels (can be changed using GUI-METRIC command)
+REBXYF phys_size = {1.0, 1.0};	//physical pixel size measured in logical pixels(reciprocal value of log_size)
 void *Cursor; // active mouse cursor object
 void *Rich_Text;
 
@@ -204,8 +207,8 @@ REBINT Alloc_Window(REBGOB *gob) {
 
 #ifdef AGG_OPENGL
 	HDC paintDC = GetDC(GOB_HWIN(wingob));
-	int ow = GOB_PW_INT(wingob);
-	int oh = GOB_PH_INT(wingob);
+	int ow = GOB_LOG_W_INT(wingob);
+	int oh = GOB_LOG_H_INT(wingob);
     compositor = GOB_COMPOSITOR(wingob);
 	rebcmp_compose(compositor, wingob, gob, FALSE);
 
@@ -295,8 +298,8 @@ REBINT Alloc_Window(REBGOB *gob) {
 	REBGOB* parent;
 	REBGOB* topgob;
 
-	w = (REBINT)GOB_PW(gob);
-	h = (REBINT)GOB_PH(gob);
+	w = (REBINT)GOB_LOG_W(gob);
+	h = (REBINT)GOB_LOG_H(gob);
 	img = (REBSER*)RL_MAKE_IMAGE(w,h);
 
 	//search the window(or topmost) gob
@@ -344,9 +347,9 @@ REBINT Alloc_Window(REBGOB *gob) {
 		
             if (Rich_Text) {
                 RXA_TYPE(frm, 2) = RXT_PAIR;
-                rt_size_text(Rich_Text, (REBGOB*)RXA_SERIES(frm, 1),&RXA_DPAIR(frm, 2));
-                RXA_DPAIR(frm, 1).x = RXA_DPAIR(frm, 2).x / dp_scale.x;
-                RXA_DPAIR(frm, 1).y = RXA_DPAIR(frm, 2).y / dp_scale.y;
+                rt_size_text(Rich_Text, (REBGOB*)RXA_SERIES(frm, 1),&RXA_PAIR(frm, 2));
+				RXA_PAIR(frm, 1).x = PHYS_COORD_X(RXA_PAIR(frm, 2).x);
+				RXA_PAIR(frm, 1).y = PHYS_COORD_Y(RXA_PAIR(frm, 2).y);
                 RXA_TYPE(frm, 1) = RXT_PAIR;
                 return RXR_VALUE;
             }
@@ -361,8 +364,8 @@ REBINT Alloc_Window(REBGOB *gob) {
                 RXIARG val; //, str;
                 REBCNT n, type;
 
-                rt_offset_to_caret(Rich_Text, (REBGOB*)RXA_SERIES(frm, 1), RXA_PAIR(frm, 2), &element, &position);
-//                RL_Print("OTC: %dx%d %d, %d\n", (int)RXA_PAIR(frm, 2).x, (int)RXA_PAIR(frm, 2).y, element, position);
+                rt_offset_to_caret(Rich_Text, (REBGOB*)RXA_SERIES(frm, 1), RXA_LOG_PAIR(frm, 2), &element, &position);
+//                RL_Print("OTC: %dx%d %d, %d\n", (int)RXA_LOG_PAIR(frm, 2).x, (int)RXA_LOG_PAIR(frm, 2).y, element, position);
                 dialect = (REBSER *)GOB_CONTENT((REBGOB*)RXA_SERIES(frm, 1));
                 block = RL_MAKE_BLOCK(RL_SERIES(dialect, RXI_SER_TAIL));
                 for (n = 0; type = RL_GET_VALUE(dialect, n, &val); n++) {
@@ -397,8 +400,8 @@ REBINT Alloc_Window(REBGOB *gob) {
                 rt_caret_to_offset(Rich_Text, (REBGOB*)RXA_SERIES(frm, 1), &result, elem, pos);
 
                 RXA_TYPE(frm, 1) = RXT_PAIR;
-				RXA_ARG(frm, 1).pair.x = ROUND_TO_INT(result.x / dp_scale.x);
-				RXA_ARG(frm, 1).pair.y = ROUND_TO_INT(result.y / dp_scale.y);
+				RXA_ARG(frm, 1).pair.x = ROUND_TO_INT(PHYS_COORD_X(result.x));
+				RXA_ARG(frm, 1).pair.y = ROUND_TO_INT(PHYS_COORD_Y(result.y));
                 return RXR_VALUE;
             }
             break;
@@ -413,7 +416,7 @@ REBINT Alloc_Window(REBGOB *gob) {
                     h = RXA_IMAGE_HEIGHT(frm, 1);
                 } else {
                     REBSER* i;
-					REBXYF s = RXA_PAIR(frm,1);
+					REBXYF s = RXA_LOG_PAIR(frm,1);
                     w = s.x;
                     h = s.y;
                     i = RL_MAKE_IMAGE(w,h);
@@ -439,21 +442,29 @@ REBINT Alloc_Window(REBGOB *gob) {
                 switch(w)
                 {
                     case W_GRAPHICS_SCREEN_SIZE:
-					
-                        x = OS_Get_Metrics(SM_SCREEN_WIDTH) / dp_scale.x;
-                        y = OS_Get_Metrics(SM_SCREEN_HEIGHT) / dp_scale.y;
+                        x = PHYS_COORD_X(OS_Get_Metrics(SM_SCREEN_WIDTH));
+                        y = PHYS_COORD_Y(OS_Get_Metrics(SM_SCREEN_HEIGHT));
                         break;
-                    case W_GRAPHICS_UNIT_SIZE:
+						
+                    case W_GRAPHICS_LOG_SIZE:
 						if (RXA_TYPE(frm, 3) == RXT_PAIR){
-							dp_scale.x = RXA_DPAIR(frm, 3).x;
-							dp_scale.y = RXA_DPAIR(frm, 3).y;
+							log_size.x = RXA_PAIR(frm, 3).x;
+							log_size.y = RXA_PAIR(frm, 3).y;
+							phys_size.x = 1 / log_size.x;
+							phys_size.y = 1 / log_size.y;
 						}
-						x = dp_scale.x;
-						y = dp_scale.y;
+						x = log_size.x;
+						y = log_size.y;
                         break;
+
+                    case W_GRAPHICS_PHYS_SIZE:
+						x = phys_size.x;
+						y = phys_size.y;
+                        break;
+						
                     case W_GRAPHICS_TITLE_SIZE:
                         x = 0;
-                        y = OS_Get_Metrics(SM_TITLE_HEIGHT) / dp_scale.y;
+                        y = PHYS_COORD_Y(OS_Get_Metrics(SM_TITLE_HEIGHT));
                         break;
 
                     case W_GRAPHICS_BORDER_SIZE:
@@ -477,8 +488,8 @@ REBINT Alloc_Window(REBGOB *gob) {
                         break;
 
                     case W_GRAPHICS_WORK_SIZE:
-                        x = OS_Get_Metrics(SM_WORK_WIDTH) / dp_scale.x;
-                        y = OS_Get_Metrics(SM_WORK_HEIGHT) / dp_scale.y;
+                        x = PHYS_COORD_X(OS_Get_Metrics(SM_WORK_WIDTH));
+                        y = PHYS_COORD_Y(OS_Get_Metrics(SM_WORK_HEIGHT));
                         break;
 
 					case W_GRAPHICS_SCREEN_DPI:
@@ -488,8 +499,8 @@ REBINT Alloc_Window(REBGOB *gob) {
                 }
 	
                 if (w){
-                    RXA_DPAIR(frm, 1).x = x;
-                    RXA_DPAIR(frm, 1).y = y;
+                    RXA_PAIR(frm, 1).x = x;
+                    RXA_PAIR(frm, 1).y = y;
                     RXA_TYPE(frm, 1) = RXT_PAIR;
                 } else {
                     RXA_TYPE(frm, 1) = RXT_NONE;
@@ -555,8 +566,8 @@ REBINT Alloc_Window(REBGOB *gob) {
 					REBINT max_depth = 1000; // avoid infinite loops
 					while (GOB_PARENT(parent_gob) && (max_depth-- > 0) && !GET_GOB_FLAG(parent_gob, GOBF_WINDOW))
 					{
-						x += GOB_PX_INT(parent_gob);
-						y += GOB_PY_INT(parent_gob);
+						x += GOB_LOG_X_INT(parent_gob);
+						y += GOB_LOG_Y_INT(parent_gob);
 						parent_gob = GOB_PARENT(parent_gob);
 					} 
 					win = (REBINT)Find_Window(parent_gob);

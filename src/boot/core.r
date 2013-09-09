@@ -1,5 +1,14 @@
 REBOL [
-	Title: "REBOL Core"
+	Title: "REBOL Core extension"
+	Purpose: {
+		This extension contains commands not yet migrated to the core source code.
+	}
+	Author: "Richard Smolak"
+	Copyright: {2010 2011 2012 2013 Saphirion AG, Zug, Switzerland}
+	License: {
+		Licensed under the Apache License, Version 2.0.
+		See: http://www.apache.org/licenses/LICENSE-2.0
+	}
 	Name: core
 	Type: extension
 	Exports: [] ; added by make-host-ext.r

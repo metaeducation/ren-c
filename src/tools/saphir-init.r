@@ -1,5 +1,5 @@
 REBOL [
-	Title: "Original REBOL host init code generator"
+	Title: "Saphir host init code generator"
 	Author: "Richard Smolak"
 	Copyright: {2010 2011 2012 2013 Saphirion AG, Zug, Switzerland}
 	License: {
@@ -10,27 +10,12 @@ REBOL [
 
 do %make-host-init.r
 
-include-vid: off
-
 ; Files to include in the host program:
 files: [
+	%mezz/prot-tls.r
 	%mezz/prot-http.r
-;	%mezz/view-colors.r
+	%mezz/saphir-patches.r	
 ]
-
-vid-files: [
-	%mezz/dial-draw.r
-	%mezz/dial-text.r
-	%mezz/dial-effect.r
-	%mezz/view-funcs.r
-	%mezz/vid-face.r
-	%mezz/vid-events.r
-	%mezz/vid-styles.r
-	%mezz/mezz-splash.r
-]
-
-if include-vid [append files vid-files]
-
 
 code: load-files files
 

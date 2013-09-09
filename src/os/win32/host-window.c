@@ -5,6 +5,8 @@
 **  Copyright 2012 REBOL Technologies
 **  REBOL is a trademark of REBOL Technologies
 **
+**  Additional code modifications and improvements Copyright 2012 Saphirion AG
+**
 **  Licensed under the Apache License, Version 2.0 (the "License");
 **  you may not use this file except in compliance with the License.
 **  You may obtain a copy of the License at
@@ -205,10 +207,10 @@ extern void *Cursor;
 
 	window = GOB_HWIN(gob);
 
-	x = GOB_PX_INT(gob);
-	y = GOB_PY_INT(gob);
-	w = GOB_PW_INT(gob);
-	h = GOB_PH_INT(gob);
+	x = GOB_LOG_X_INT(gob);
+	y = GOB_LOG_Y_INT(gob);
+	w = GOB_LOG_W_INT(gob);
+	h = GOB_LOG_H_INT(gob);
 	
 	if ((x == GOB_XO_INT(gob)) && (y == GOB_YO_INT(gob)))
 		opts |= SWP_NOMOVE;
@@ -282,14 +284,14 @@ extern void *Cursor;
 
 	CLEAR_GOB_STATE(gob);
 	
-	x = GOB_PX_INT(gob);
-	y = GOB_PY_INT(gob);
+	x = GOB_LOG_X_INT(gob);
+	y = GOB_LOG_Y_INT(gob);
 #ifdef AGG_OPENGL
-	w = ow = GOB_PW_INT(gob);
-	h = oh = GOB_PH_INT(gob);
+	w = ow = GOB_LOG_W_INT(gob);
+	h = oh = GOB_LOG_H_INT(gob);
 #else	
-	w = GOB_PW_INT(gob);
-	h = GOB_PH_INT(gob);
+	w = GOB_LOG_W_INT(gob);
+	h = GOB_LOG_H_INT(gob);
 #endif
 	SET_GOB_STATE(gob, GOBS_NEW);
 

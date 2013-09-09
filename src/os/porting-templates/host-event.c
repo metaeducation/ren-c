@@ -5,6 +5,8 @@
 **  Copyright 2012 REBOL Technologies
 **  REBOL is a trademark of REBOL Technologies
 **
+**  Additional code modifications and improvements Copyright 2012 Saphirion AG
+**
 **  Licensed under the Apache License, Version 2.0 (the "License");
 **  you may not use this file except in compliance with the License.
 **  You may obtain a copy of the License at
@@ -58,7 +60,6 @@ enum input_events {
 
 //***** Externs *****
 extern REBOOL Resize_Window(REBGOB *gob, REBOOL redraw);
-extern REBXYF dp_scale;
 
 /***********************************************************************
 **
@@ -98,8 +99,8 @@ void dispatch_event(REBGOB *gob, REBINT type, REBINT x, REBINT y)
 //	LOGI("Got event! %d %dx%d", type, x, y);
 	REBGOB* g = (REBGOB*)gob;
 	REBINT ev_type = -1;
-	REBINT dp_x = ROUND_TO_INT(x / dp_scale.x);
-	REBINT dp_y = ROUND_TO_INT(y / dp_scale.y);
+	REBINT p_x = ROUND_TO_INT(PHYS_COORD_X(x));
+	REBINT p_y = ROUND_TO_INT(PHYS_COORD_Y(y));
 	switch (type) {
 		case EV_MOVE:
 			ev_type = EVT_MOVE;
@@ -116,14 +117,14 @@ void dispatch_event(REBGOB *gob, REBINT type, REBINT x, REBINT y)
 			Add_Event_Key(g, ((ev_type == -1) ? EVT_KEY_UP : ev_type) , x, 0);
 			return;
 		case EV_RESIZE:
-			g->size.x = dp_x;
-			g->size.y = dp_y;
+			g->size.x = p_x;
+			g->size.y = p_y;
 			Resize_Window(g, FALSE);
 			ev_type = EVT_RESIZE;
 			break;
 		case EV_ROTATE:
-			g->size.x = dp_x;
-			g->size.y = dp_y;
+			g->size.x = p_x;
+			g->size.y = p_y;
 			Resize_Window(g, TRUE);
 			ev_type = EVT_ROTATE;
 			break;
@@ -132,5 +133,5 @@ void dispatch_event(REBGOB *gob, REBINT type, REBINT x, REBINT y)
 			break;
 	}
 	if (ev_type != -1)
-		Add_Event_XY(g, ev_type, ((dp_y << 16) | (dp_x & 0xFFFF)), 0);
+		Add_Event_XY(g, ev_type, ((p_y << 16) | (p_x & 0xFFFF)), 0);
 }

@@ -33,6 +33,8 @@
 **
 ***********************************************************************/
 
+#include "host-view.h"
+
 enum GOB_FLAGS {		// GOB attribute and option flags
 	GOBF_TOP = 0,		// Top level (window or output image)
 	GOBF_WINDOW,		// Window (parent is OS window reference)
@@ -121,20 +123,20 @@ typedef struct gob_window {				// Maps gob to window
 #define GOB_W(g)		((g)->size.x)
 #define GOB_H(g)		((g)->size.y)
 
-#define GOB_PX(g)		((g)->offset.x * dp_scale.x)
-#define GOB_PY(g)		((g)->offset.y * dp_scale.y)
-#define GOB_PW(g)		((g)->size.x * dp_scale.x)
-#define GOB_PH(g)		((g)->size.y * dp_scale.y)
+#define GOB_LOG_X(g)		(LOG_COORD_X((g)->offset.x))
+#define GOB_LOG_Y(g)		(LOG_COORD_Y((g)->offset.y))
+#define GOB_LOG_W(g)		(LOG_COORD_X((g)->size.x))
+#define GOB_LOG_H(g)		(LOG_COORD_Y((g)->size.y))
 
 #define GOB_X_INT(g)	ROUND_TO_INT((g)->offset.x)
 #define GOB_Y_INT(g)	ROUND_TO_INT((g)->offset.y)
 #define GOB_W_INT(g)	ROUND_TO_INT((g)->size.x)
 #define GOB_H_INT(g)	ROUND_TO_INT((g)->size.y)
 
-#define GOB_PX_INT(g)	ROUND_TO_INT((g)->offset.x * dp_scale.x)
-#define GOB_PY_INT(g)	ROUND_TO_INT((g)->offset.y * dp_scale.y)
-#define GOB_PW_INT(g)	ROUND_TO_INT((g)->size.x * dp_scale.x)
-#define GOB_PH_INT(g)	ROUND_TO_INT((g)->size.y * dp_scale.y)
+#define GOB_LOG_X_INT(g)	ROUND_TO_INT(LOG_COORD_X((g)->offset.x))
+#define GOB_LOG_Y_INT(g)	ROUND_TO_INT(LOG_COORD_Y((g)->offset.y))
+#define GOB_LOG_W_INT(g)	ROUND_TO_INT(LOG_COORD_X((g)->size.x))
+#define GOB_LOG_H_INT(g)	ROUND_TO_INT(LOG_COORD_Y((g)->size.y))
 
 #define GOB_XO(g)		((g)->old_offset.x)
 #define GOB_YO(g)		((g)->old_offset.y)
@@ -209,4 +211,3 @@ enum {
 #define FREE_GOB(g)		((g)->resv &= ~GOB_USED)
 
 extern REBGOB *Gob_Root; // Top level GOB (the screen)
-extern REBXYF dp_scale;

@@ -1,9 +1,12 @@
 REBOL [
 	System: "REBOL [R3] Language Interpreter and Run-time Environment"
 	Title: "REBOL Graphics - TEXT commands"
+	Author: ["Richard Smolak" "Carl Sassenrath"]
 	Rights: {
 		Copyright 2012 REBOL Technologies
 		REBOL is a trademark of REBOL Technologies
+		
+		Additional code modifications and improvements Copyright 2012 Saphirion AG
 	}
 	License: {
 		Licensed under the Apache License, Version 2.0.

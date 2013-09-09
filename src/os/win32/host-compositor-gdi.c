@@ -5,6 +5,8 @@
 **  Copyright 2012 REBOL Technologies
 **  REBOL is a trademark of REBOL Technologies
 **
+**  Additional code modifications and improvements Copyright 2012 Saphirion AG
+**
 **  Licensed under the Apache License, Version 2.0 (the "License");
 **  you may not use this file except in compliance with the License.
 **  You may obtain a copy of the License at
@@ -105,12 +107,12 @@ typedef struct compositor_ctx {
 ***********************************************************************/
 {
 	//check if window size really changed or buffer needs to be created
-	if ((GOB_PW(winGob) != GOB_WO(winGob)) || (GOB_PH(winGob) != GOB_HO(winGob)) || ctx->Back_Buffer == 0) {
+	if ((GOB_LOG_W(winGob) != GOB_WO(winGob)) || (GOB_LOG_H(winGob) != GOB_HO(winGob)) || ctx->Back_Buffer == 0) {
 		HBITMAP new_buffer;
 		HDC newDC;
 		REBYTE *new_bytes;
-		REBINT w = GOB_PW_INT(winGob);
-		REBINT h = GOB_PH_INT(winGob);
+		REBINT w = GOB_LOG_W_INT(winGob);
+		REBINT h = GOB_LOG_H_INT(winGob);
 		
 		///set window size in bitmapinfo struct
 		ctx->bmpInfo.bmiHeader.biWidth = w;
@@ -158,10 +160,10 @@ typedef struct compositor_ctx {
 //		SelectClipRgn(ctx->backDC, ctx->Win_Clip);
 
 		//update old gob area
-		GOB_XO(winGob) = GOB_PX(winGob);
-		GOB_YO(winGob) = GOB_PY(winGob);
-		GOB_WO(winGob) = GOB_PW(winGob);
-		GOB_HO(winGob) = GOB_PH(winGob);
+		GOB_XO(winGob) = GOB_LOG_X(winGob);
+		GOB_YO(winGob) = GOB_LOG_Y(winGob);
+		GOB_WO(winGob) = GOB_LOG_W(winGob);
+		GOB_HO(winGob) = GOB_LOG_H(winGob);
 		return TRUE;
 	}
 	return FALSE;
@@ -196,7 +198,7 @@ typedef struct compositor_ctx {
 	ctx->DCbrush = GetStockObject(DC_BRUSH);
 	
 	//initialize clipping regions
-	ctx->Win_Clip = CreateRectRgn(0, 0, GOB_PW_INT(gob), GOB_PH_INT(gob));
+	ctx->Win_Clip = CreateRectRgn(0, 0, GOB_LOG_W_INT(gob), GOB_LOG_H_INT(gob));
 	ctx->New_Clip = CreateRectRgn(0, 0, 0, 0);
 	ctx->Old_Clip = CreateRectRgn(0, 0, 0, 0);	
 	
@@ -240,10 +242,10 @@ typedef struct compositor_ctx {
 
 	if (GET_GOB_STATE(gob, GOBS_NEW)){
 		//reset old-offset and old-size if newly added
-		GOB_XO(gob) = GOB_PX(gob);
-		GOB_YO(gob) = GOB_PY(gob);
-		GOB_WO(gob) = GOB_PW(gob);
-		GOB_HO(gob) = GOB_PH(gob);
+		GOB_XO(gob) = GOB_LOG_X(gob);
+		GOB_YO(gob) = GOB_LOG_Y(gob);
+		GOB_WO(gob) = GOB_LOG_W(gob);
+		GOB_HO(gob) = GOB_LOG_H(gob);
 
 		CLR_GOB_STATE(gob, GOBS_NEW);
 	}
@@ -251,7 +253,7 @@ typedef struct compositor_ctx {
 //	RL_Print("oft: %dx%d siz: %dx%d abs_oft: %dx%d \n", GOB_X_INT(gob), GOB_Y_INT(gob), GOB_W_INT(gob), GOB_H_INT(gob), x, y);
 
 	//intersect gob dimensions with actual window clip region
-	SetRectRgn(ctx->Win_Clip, x, y, x + GOB_PW_INT(gob), y + GOB_PH_INT(gob));
+	SetRectRgn(ctx->Win_Clip, x, y, x + GOB_LOG_W_INT(gob), y + GOB_LOG_H_INT(gob));
 	intersection_result = ExtSelectClipRgn(ctx->backDC, ctx->Win_Clip, RGN_AND);
 
 	RECT gob_clip;
@@ -305,8 +307,8 @@ typedef struct compositor_ctx {
 //			GetClipBox(ctx->backDC, &parent_clip);
 
 			for (n = 0; n < len; n++, gp++) {
-				REBINT g_x = GOB_PX(*gp);
-				REBINT g_y = GOB_PY(*gp);
+				REBINT g_x = GOB_LOG_X(*gp);
+				REBINT g_y = GOB_LOG_Y(*gp);
 
 				//restore the parent clip region
 //				SetRectRgn(ctx->Win_Clip, parent_clip.left, parent_clip.top, parent_clip.right, parent_clip.bottom);
@@ -350,14 +352,14 @@ typedef struct compositor_ctx {
 	abs_y = 0;
 
 	//reset clip region to window area
-	SetRectRgn(ctx->Win_Clip, 0, 0, GOB_PW_INT(winGob), GOB_PH_INT(winGob));
+	SetRectRgn(ctx->Win_Clip, 0, 0, GOB_LOG_W_INT(winGob), GOB_LOG_H_INT(winGob));
 	SelectClipRgn(ctx->backDC, ctx->Win_Clip);
 
 	//calculate absolute offset of the gob
 	while (GOB_PARENT(parent_gob) && (max_depth-- > 0) && !GET_GOB_FLAG(parent_gob, GOBF_WINDOW))
 	{
-		abs_x += GOB_PX(parent_gob);
-		abs_y += GOB_PY(parent_gob);
+		abs_x += GOB_LOG_X(parent_gob);
+		abs_y += GOB_LOG_Y(parent_gob);
 		parent_gob = GOB_PARENT(parent_gob);
 	} 
 
@@ -374,8 +376,8 @@ typedef struct compositor_ctx {
 	
 	if (!GET_GOB_STATE(gob, GOBS_NEW)){
 		//calculate absolute old offset of the gob
-		abs_ox = abs_x + (GOB_XO(gob) - GOB_PX(gob));
-		abs_oy = abs_y + (GOB_YO(gob) - GOB_PY(gob));
+		abs_ox = abs_x + (GOB_XO(gob) - GOB_LOG_X(gob));
+		abs_oy = abs_y + (GOB_YO(gob) - GOB_LOG_Y(gob));
 		
 //		RL_Print("OLD: %dx%d %dx%d\n",(REBINT)abs_ox, (REBINT)abs_oy, (REBINT)abs_ox + GOB_WO_INT(gob), (REBINT)abs_oy + GOB_HO_INT(gob));
 		
@@ -386,7 +388,7 @@ typedef struct compositor_ctx {
 //	RL_Print("NEW: %dx%d %dx%d\n",(REBINT)abs_x, (REBINT)abs_y, (REBINT)abs_x + GOB_W_INT(gob), (REBINT)abs_y + GOB_H_INT(gob));
 	
 	//Create union of "new" and "old" gob location
-	SetRectRgn(ctx->New_Clip, (REBINT)abs_x, (REBINT)abs_y, (REBINT)abs_x + GOB_PW_INT(gob), (REBINT)abs_y + GOB_PH_INT(gob));
+	SetRectRgn(ctx->New_Clip, (REBINT)abs_x, (REBINT)abs_y, (REBINT)abs_x + GOB_LOG_W_INT(gob), (REBINT)abs_y + GOB_LOG_H_INT(gob));
 	CombineRgn(ctx->Win_Clip, ctx->Old_Clip, ctx->New_Clip, RGN_OR);
 
 	
@@ -402,10 +404,10 @@ typedef struct compositor_ctx {
 		process_gobs(ctx, winGob);
 	
 	//update old GOB area
-	GOB_XO(gob) = GOB_PX(gob);
-	GOB_YO(gob) = GOB_PY(gob);
-	GOB_WO(gob) = GOB_PW(gob);
-	GOB_HO(gob) = GOB_PH(gob);
+	GOB_XO(gob) = GOB_LOG_X(gob);
+	GOB_YO(gob) = GOB_LOG_Y(gob);
+	GOB_WO(gob) = GOB_LOG_W(gob);
+	GOB_HO(gob) = GOB_LOG_H(gob);
 }
 
 /***********************************************************************
@@ -419,7 +421,7 @@ typedef struct compositor_ctx {
 	BitBlt(
 		ctx->winDC,
 		0, 0,
-		GOB_PW_INT(ctx->Win_Gob), GOB_PH_INT(ctx->Win_Gob),
+		GOB_LOG_W_INT(ctx->Win_Gob), GOB_LOG_H_INT(ctx->Win_Gob),
 		ctx->backDC,
 		0, 0,
 		SRCCOPY

@@ -5,6 +5,8 @@
 **  Copyright 2012 REBOL Technologies
 **  REBOL is a trademark of REBOL Technologies
 **
+**  Additional code modifications and improvements Copyright 2012 Saphirion AG
+**
 **  Licensed under the Apache License, Version 2.0 (the "License");
 **  you may not use this file except in compliance with the License.
 **  You may obtain a copy of the License at
@@ -33,6 +35,14 @@
 **    5. Test everything, then test it again.
 **
 ***********************************************************************/
+
+extern REBXYF log_size;
+extern REBXYF phys_size;
+
+#define LOG_COORD_X(p)	((p) * log_size.x)
+#define LOG_COORD_Y(p)	((p) * log_size.y)
+#define PHYS_COORD_X(p)	((p) * phys_size.x)
+#define PHYS_COORD_Y(p)	((p) * phys_size.y)
 
 typedef enum {
 	SM_SCREEN_WIDTH = 0,

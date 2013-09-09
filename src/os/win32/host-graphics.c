@@ -5,6 +5,8 @@
 **  Copyright 2012 REBOL Technologies
 **  REBOL is a trademark of REBOL Technologies
 **
+**  Additional code modifications and improvements Copyright 2012 Saphirion AG
+**
 **  Licensed under the Apache License, Version 2.0 (the "License");
 **  you may not use this file except in compliance with the License.
 **  You may obtain a copy of the License at
@@ -20,7 +22,7 @@
 ************************************************************************
 **
 **  Title: Graphics OS specific support
-**  Author: Cyphre, Carl
+**  Author: Richard Smolak, Carl Sassenrath
 **  Purpose: "View" commands support.
 **  Tools: make-host-ext.r
 **
@@ -39,9 +41,6 @@
 #include <windows.h>
 
 #include "reb-host.h"
-//#include "host-lib.h"
-
-#include "host-view.h"
 
 //***** Externs *****
 

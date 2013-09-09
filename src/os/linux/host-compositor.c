@@ -5,6 +5,8 @@
 **  Copyright 2012 REBOL Technologies
 **  REBOL is a trademark of REBOL Technologies
 **
+**  Additional code modifications and improvements Copyright 2012 Saphirion AG
+**
 **  Licensed under the Apache License, Version 2.0 (the "License");
 **  you may not use this file except in compliance with the License.
 **  You may obtain a copy of the License at
@@ -115,10 +117,10 @@ extern EGLDisplay egl_display;
 {
 
 	//check if window size really changed
-	if ((GOB_PW(winGob) != GOB_WO(winGob)) || (GOB_PH(winGob) != GOB_HO(winGob))) {
+	if ((GOB_LOG_W(winGob) != GOB_WO(winGob)) || (GOB_LOG_H(winGob) != GOB_HO(winGob))) {
 
-		REBINT w = GOB_PW_INT(winGob);
-		REBINT h = GOB_PH_INT(winGob);
+		REBINT w = GOB_LOG_W_INT(winGob);
+		REBINT h = GOB_LOG_H_INT(winGob);
 
 		//------------------------------
 		//Put backend specific code here
@@ -129,10 +131,10 @@ extern EGLDisplay egl_display;
 		ctx->winBufSize.y = h;
 
 		//update old gob area
-		GOB_XO(winGob) = GOB_PX(winGob);
-		GOB_YO(winGob) = GOB_PY(winGob);
-		GOB_WO(winGob) = GOB_PW(winGob);
-		GOB_HO(winGob) = GOB_PH(winGob);
+		GOB_XO(winGob) = GOB_LOG_X(winGob);
+		GOB_YO(winGob) = GOB_LOG_Y(winGob);
+		GOB_WO(winGob) = GOB_LOG_W(winGob);
+		GOB_HO(winGob) = GOB_LOG_H(winGob);
 		return TRUE;
 	}
 	return FALSE;
@@ -194,10 +196,10 @@ extern EGLDisplay egl_display;
 
 	if (GET_GOB_STATE(gob, GOBS_NEW)){
 		//reset old-offset and old-size if newly added
-		GOB_XO(gob) = GOB_PX(gob);
-		GOB_YO(gob) = GOB_PY(gob);
-		GOB_WO(gob) = GOB_PW(gob);
-		GOB_HO(gob) = GOB_PH(gob);
+		GOB_XO(gob) = GOB_LOG_X(gob);
+		GOB_YO(gob) = GOB_LOG_Y(gob);
+		GOB_WO(gob) = GOB_LOG_W(gob);
+		GOB_HO(gob) = GOB_LOG_H(gob);
 
 		CLR_GOB_STATE(gob, GOBS_NEW);
 	}
@@ -210,10 +212,10 @@ extern EGLDisplay egl_display;
 
 	//get the current Window clip box
 	REBRECT gob_clip = {
-		GOB_PX(gob), //left
-		GOB_PY(gob), //top
-		GOB_PW(gob) + GOB_PX(gob), //right
-		GOB_PH(gob) + GOB_PY(gob), //bottom
+		GOB_LOG_X(gob), //left
+		GOB_LOG_Y(gob), //top
+		GOB_LOG_W(gob) + GOB_LOG_X(gob), //right
+		GOB_LOG_H(gob) + GOB_LOG_Y(gob), //bottom
 	};
 	//------------------------------
 	//Put backend specific code here
@@ -279,8 +281,8 @@ extern EGLDisplay egl_display;
 			REBGOB **gp = GOB_HEAD(gob);
 
 			for (n = 0; n < len; n++, gp++) {
-				REBINT g_x = GOB_PX(*gp);
-				REBINT g_y = GOB_PY(*gp);
+				REBINT g_x = GOB_LOG_X(*gp);
+				REBINT g_y = GOB_LOG_Y(*gp);
 
 				//restore the "parent gob" clip region
 				//------------------------------
@@ -316,10 +318,10 @@ extern EGLDisplay egl_display;
 	REBD32 abs_ox;
 	REBD32 abs_oy;
 	REBGOB* parent_gob = gob;
-	REBINT x = GOB_PX_INT(gob);
-	REBINT y = GOB_PY_INT(gob);
-	REBINT w = GOB_PW_INT(gob);
-	REBINT h = GOB_PH_INT(gob);
+	REBINT x = GOB_LOG_X_INT(gob);
+	REBINT y = GOB_LOG_Y_INT(gob);
+	REBINT w = GOB_LOG_W_INT(gob);
+	REBINT h = GOB_LOG_H_INT(gob);
 
 	//reset clip region to window area
 	//------------------------------
@@ -329,8 +331,8 @@ extern EGLDisplay egl_display;
 	//calculate absolute offset of the gob
 	while (GOB_PARENT(parent_gob) && (max_depth-- > 0) && !GET_GOB_FLAG(parent_gob, GOBF_WINDOW))
 	{
-		abs_x += GOB_PX(parent_gob);
-		abs_y += GOB_PY(parent_gob);
+		abs_x += GOB_LOG_X(parent_gob);
+		abs_y += GOB_LOG_Y(parent_gob);
 		parent_gob = GOB_PARENT(parent_gob);
 	}
 
@@ -348,8 +350,8 @@ extern EGLDisplay egl_display;
 	//handle newly added gob case
 	if (!GET_GOB_STATE(gob, GOBS_NEW)){
 		//calculate absolute old offset of the gob
-		abs_ox = abs_x + (GOB_XO(gob) - GOB_PX(gob));
-		abs_oy = abs_y + (GOB_YO(gob) - GOB_PY(gob));
+		abs_ox = abs_x + (GOB_XO(gob) - GOB_LOG_X(gob));
+		abs_oy = abs_y + (GOB_YO(gob) - GOB_LOG_Y(gob));
 
 		//set region with old gob location and dimensions
 		//------------------------------
@@ -382,10 +384,10 @@ extern EGLDisplay egl_display;
 	}
 
 	//update old GOB area
-	GOB_XO(gob) = GOB_PX(gob);
-	GOB_YO(gob) = GOB_PY(gob);
-	GOB_WO(gob) = GOB_PW(gob);
-	GOB_HO(gob) = GOB_PH(gob);
+	GOB_XO(gob) = GOB_LOG_X(gob);
+	GOB_YO(gob) = GOB_LOG_Y(gob);
+	GOB_WO(gob) = GOB_LOG_W(gob);
+	GOB_HO(gob) = GOB_LOG_H(gob);
 }
 
 /***********************************************************************
@@ -397,8 +399,8 @@ extern EGLDisplay egl_display;
 ***********************************************************************/
 {
 	RL_Print("rebcmp_blit\n");
-	REBINT w = GOB_PW_INT(ctx->Win_Gob);
-	REBINT h = GOB_PH_INT(ctx->Win_Gob);
+	REBINT w = GOB_LOG_W_INT(ctx->Win_Gob);
+	REBINT h = GOB_LOG_H_INT(ctx->Win_Gob);
 	egl_window_t *ew = GOB_HWIN(ctx->Win_Gob);
 	GLfloat vVertices[] = {
 	  	-1.0f,  -1.0f, 0.0f,

@@ -199,10 +199,10 @@ load_shader (
 ***********************************************************************/
 {
 	RL_Print("updating window:");
-	REBINT x = GOB_PX_INT(gob);
-	REBINT y = GOB_PY_INT(gob);
-	REBINT w = GOB_PW_INT(gob);
-	REBINT h = GOB_PH_INT(gob);
+	REBINT x = GOB_LOG_X_INT(gob);
+	REBINT y = GOB_LOG_Y_INT(gob);
+	REBINT w = GOB_LOG_W_INT(gob);
+	REBINT h = GOB_LOG_H_INT(gob);
 	RL_Print("x: %d, y: %d, width: %d, height: %d\n", x, y, w, h);
 }
 
@@ -218,10 +218,10 @@ load_shader (
 ***********************************************************************/
 {
 	REBINT windex;
-	REBINT x = GOB_PX_INT(gob);
-	REBINT y = GOB_PY_INT(gob);
-	REBINT w = GOB_PW_INT(gob);
-	REBINT h = GOB_PH_INT(gob);
+	REBINT x = GOB_LOG_X_INT(gob);
+	REBINT y = GOB_LOG_Y_INT(gob);
+	REBINT w = GOB_LOG_W_INT(gob);
+	REBINT h = GOB_LOG_H_INT(gob);
 
 	Window window;
 	int screen_num;

@@ -40,8 +40,6 @@
 
 */
 
-extern REBXYF dp_scale;
-
 // Value structure (for passing args to and from):
 #pragma pack(4)
 typedef union rxi_arg_val {
@@ -103,8 +101,8 @@ typedef int (*RXICAL)(int cmd, RXIFRM *args, REBCEC *ctx);
 #define RXA_TIME(f,n)	(RXA_ARG(f,n).int64)
 #define RXA_DATE(f,n)	(RXA_ARG(f,n).int32a)
 #define RXA_WORD(f,n)	(RXA_ARG(f,n).int32a)
-#define RXA_PAIR(f,n)	((REBXYF){RXA_ARG(f,n).pair.x * dp_scale.x , RXA_ARG(f,n).pair.y  * dp_scale.y})
-#define RXA_DPAIR(f,n)	(RXA_ARG(f,n).pair)
+#define RXA_LOG_PAIR(f,n)	((REBXYF){LOG_COORD_X(RXA_ARG(f,n).pair.x) , LOG_COORD_Y(RXA_ARG(f,n).pair.y)})
+#define RXA_PAIR(f,n)	(RXA_ARG(f,n).pair)
 #define RXA_TUPLE(f,n)	(RXA_ARG(f,n).bytes)
 #define RXA_SERIES(f,n)	(RXA_ARG(f,n).series)
 #define RXA_INDEX(f,n)	(RXA_ARG(f,n).index)
@@ -117,7 +115,7 @@ typedef int (*RXICAL)(int cmd, RXIFRM *args, REBCEC *ctx);
 #define RXA_IMAGE_HEIGHT(f,n) (RXA_ARG(f,n).height)
 #define RXA_COLOR_TUPLE(f,n)  (TO_RGBA_COLOR(RXA_TUPLE(f,n)[1], RXA_TUPLE(f,n)[2], RXA_TUPLE(f,n)[3], RXA_TUPLE(f,n)[0] > 3 ? RXA_TUPLE(f,n)[4] : 0xff)) //always RGBA order
 
-#define RXI_PAIR(v)	((REBXYF){v.pair.x * dp_scale.x , v.pair.y  * dp_scale.y})
+#define RXI_LOG_PAIR(v)	((REBXYF){LOG_COORD_X(v.pair.x) , LOG_COORD_Y(v.pair.y)})
 
 // Command function return values:
 enum rxi_return {

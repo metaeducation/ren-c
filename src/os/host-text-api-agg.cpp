@@ -1,3 +1,41 @@
+/***********************************************************************
+**
+**  REBOL [R3] Language Interpreter and Run-time Environment
+**
+**  Copyright 2012 REBOL Technologies
+**  REBOL is a trademark of REBOL Technologies
+**
+**  Additional code modifications and improvements Copyright 2012 Saphirion AG
+**
+**  Licensed under the Apache License, Version 2.0 (the "License");
+**  you may not use this file except in compliance with the License.
+**  You may obtain a copy of the License at
+**
+**  http://www.apache.org/licenses/LICENSE-2.0
+**
+**  Unless required by applicable law or agreed to in writing, software
+**  distributed under the License is distributed on an "AS IS" BASIS,
+**  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+**  See the License for the specific language governing permissions and
+**  limitations under the License.
+**
+************************************************************************
+**
+**  Title: TEXT dialect API functions
+**  Author: Richard Smolak
+**
+************************************************************************
+**
+**  NOTE to PROGRAMMERS:
+**
+**    1. Keep code clear and simple.
+**    2. Document unusual code, reasoning, or gotchas.
+**    3. Use same style for code, vars, indent(4), comments, etc.
+**    4. Keep in mind Linux, OS X, BSD, big/little endian CPUs.
+**    5. Test everything, then test it again.
+**
+***********************************************************************/
+
 #include "../agg/agg_graphics.h"
 #include "../agg/agg_truetype_text.h"
 
@@ -27,8 +65,8 @@ namespace agg
 		agg_graphics::pixfmt pixf_win(rbuf_win);
 		agg_graphics::ren_base rb_win(pixf_win);
 		rich_text* rt = (rich_text*)Rich_Text;
-		REBINT w = GOB_PW_INT(gob);	
-		REBINT h = GOB_PH_INT(gob);
+		REBINT w = GOB_LOG_W_INT(gob);	
+		REBINT h = GOB_LOG_H_INT(gob);
 		
 		rt->rt_reset();
 		rt->rt_attach_buffer(&rbuf_win, buf_size.x, buf_size.y);
@@ -219,7 +257,7 @@ namespace agg
         REBCHR* str;
         REBOOL dealloc;
 		((rich_text*)rt)->rt_reset();
-		((rich_text*)rt)->rt_set_clip(0,0, GOB_PW_INT(gob),GOB_PH_INT(gob));
+		((rich_text*)rt)->rt_set_clip(0,0, GOB_LOG_W_INT(gob),GOB_LOG_H_INT(gob));
 		if (GOB_TYPE(gob) == GOBT_TEXT){
 			rt_block_text(rt, (REBSER *)GOB_CONTENT(gob));
 		} else if (GOB_TYPE(gob) == GOBT_STRING) {
@@ -278,7 +316,7 @@ namespace agg
         REBOOL dealloc;
 
 		((rich_text*)rt)->rt_reset();
-		((rich_text*)rt)->rt_set_clip(0,0, GOB_PW_INT(gob),GOB_PH_INT(gob));
+		((rich_text*)rt)->rt_set_clip(0,0, GOB_LOG_W_INT(gob),GOB_LOG_H_INT(gob));
 		if (GOB_TYPE(gob) == GOBT_TEXT){
 			rt_block_text(rt, (REBSER *)GOB_CONTENT(gob));
 		} else if (GOB_TYPE(gob) == GOBT_STRING) {
@@ -305,7 +343,7 @@ namespace agg
         REBCHR* str;
         REBOOL dealloc;
 		((rich_text*)rt)->rt_reset();
-		((rich_text*)rt)->rt_set_clip(0,0, GOB_PW_INT(gob),GOB_PH_INT(gob));
+		((rich_text*)rt)->rt_set_clip(0,0, GOB_LOG_W_INT(gob),GOB_LOG_H_INT(gob));
 		if (GOB_TYPE(gob) == GOBT_TEXT){
 			rt_block_text(rt, (REBSER *)GOB_CONTENT(gob));
 		} else if (GOB_TYPE(gob) == GOBT_STRING) {

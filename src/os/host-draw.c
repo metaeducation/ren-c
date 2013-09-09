@@ -5,6 +5,8 @@
 **  Copyright 2012 REBOL Technologies
 **  REBOL is a trademark of REBOL Technologies
 **
+**  Additional code modifications and improvements Copyright 2012 Saphirion AG
+**
 **  Licensed under the Apache License, Version 2.0 (the "License");
 **  you may not use this file except in compliance with the License.
 **  You may obtain a copy of the License at
@@ -19,8 +21,8 @@
 **
 ************************************************************************
 **
-**  Title: DRAW and SHAPE dialect backend 
-**  Author: Cyphre, Carl
+**  Title: DRAW and SHAPE dialect command dispatcher
+**  Author: Richard Smolak, Carl Sassenrath
 **  Purpose: Evaluates DRAW commands; calls graphics functions.
 **  Tools: make-host-ext.r
 **
@@ -77,8 +79,8 @@ static u32* shape_ext_words;
         rebshp_arc(
             ctx->envr,
             rel,
-            RXA_PAIR(frm, 1),
-            RXA_PAIR(frm, 2),
+            RXA_LOG_PAIR(frm, 1),
+            RXA_LOG_PAIR(frm, 2),
             (RXA_TYPE(frm, 3) == RXT_DECIMAL) ? RXA_DEC64(frm, 3) : RXA_INT64(frm, 3),
             RL_FIND_WORD(shape_ext_words , RXA_WORD(frm, 4)) - W_SHAPE_NEGATIVE,
             RL_FIND_WORD(shape_ext_words , RXA_WORD(frm, 5)) - W_SHAPE_SMALL
@@ -101,7 +103,7 @@ static u32* shape_ext_words;
 			for (n = 0; type = RL_GET_VALUE(blk, n, &val[m]); n++) {
 			    if (type == RXT_PAIR && ++m == 2) {
 //                    rebshp_curv(ctx->envr, rel, val[0].pair, val[1].pair);
-					rebshp_curv(ctx->envr, rel, RXI_PAIR(val[0]), RXI_PAIR(val[1]));
+					rebshp_curv(ctx->envr, rel, RXI_LOG_PAIR(val[0]), RXI_LOG_PAIR(val[1]));
                     m = 0;
 			    }
 			}
@@ -120,7 +122,7 @@ static u32* shape_ext_words;
 			for (n = 0; type = RL_GET_VALUE(blk, n, &val[m]); n++) {
                 if (type == RXT_PAIR && ++m == 3) {
 //                    rebshp_curve(ctx->envr, rel, val[0].pair, val[1].pair, val[2].pair);
-					rebshp_curve(ctx->envr, rel, RXI_PAIR(val[0]), RXI_PAIR(val[1]), RXI_PAIR(val[2]));
+					rebshp_curve(ctx->envr, rel, RXI_LOG_PAIR(val[0]), RXI_LOG_PAIR(val[1]), RXI_LOG_PAIR(val[2]));
                     m = 0;
                 }
 			}
@@ -130,14 +132,14 @@ static u32* shape_ext_words;
     case CMD_SHAPE_HLINE_LIT:
         rel = 1;
     case CMD_SHAPE_HLINE:
-        rebshp_hline(ctx->envr, rel, dp_scale.x * ((RXA_TYPE(frm, 1) == RXT_DECIMAL) ? RXA_DEC64(frm, 1) : RXA_INT64(frm, 1)));
+        rebshp_hline(ctx->envr, rel, LOG_COORD_X((RXA_TYPE(frm, 1) == RXT_DECIMAL) ? RXA_DEC64(frm, 1) : RXA_INT64(frm, 1)));
         break;
 
     case CMD_SHAPE_LINE_LIT:
         rel = 1;
     case CMD_SHAPE_LINE:
         if (RXA_TYPE(frm, 1) == RXT_PAIR)
-            rebshp_line(ctx->envr, rel, RXA_PAIR(frm, 1));
+            rebshp_line(ctx->envr, rel, RXA_LOG_PAIR(frm, 1));
         else {
 			RXIARG val;
 			REBCNT type;
@@ -147,7 +149,7 @@ static u32* shape_ext_words;
 			for (n = 0; type = RL_GET_VALUE(blk, n, &val); n++) {
 				if (type == RXT_PAIR)
 //                    rebshp_line(ctx->envr, rel, val.pair);
-					rebshp_line(ctx->envr, rel, RXI_PAIR(val));
+					rebshp_line(ctx->envr, rel, RXI_LOG_PAIR(val));
 			}
         }
         break;
@@ -155,13 +157,13 @@ static u32* shape_ext_words;
     case CMD_SHAPE_MOVE_LIT:
         rel = 1;
     case CMD_SHAPE_MOVE:
-        rebshp_move(ctx->envr, rel, RXA_PAIR(frm, 1));
+        rebshp_move(ctx->envr, rel, RXA_LOG_PAIR(frm, 1));
         break;
 
     case CMD_SHAPE_QCURV_LIT:
         rel = 1;
     case CMD_SHAPE_QCURV:
-        rebshp_qcurv(ctx->envr, rel, RXA_PAIR(frm, 1));
+        rebshp_qcurv(ctx->envr, rel, RXA_LOG_PAIR(frm, 1));
         break;
 
     case CMD_SHAPE_QCURVE_LIT:
@@ -176,7 +178,7 @@ static u32* shape_ext_words;
 			for (n = 0; type = RL_GET_VALUE(blk, n, &val[m]); n++) {
 			    if (type == RXT_PAIR && ++m == 2) {
 //                    rebshp_qcurve(ctx->envr, rel, val[0].pair, val[1].pair);
-					rebshp_qcurve(ctx->envr, rel, RXI_PAIR(val[0]), RXI_PAIR(val[1]));
+					rebshp_qcurve(ctx->envr, rel, RXI_LOG_PAIR(val[0]), RXI_LOG_PAIR(val[1]));
                     m = 0;
 			    }
 			}
@@ -186,7 +188,7 @@ static u32* shape_ext_words;
     case CMD_SHAPE_VLINE_LIT:
         rel = 1;
     case CMD_SHAPE_VLINE:
-        rebshp_vline(ctx->envr, rel, dp_scale.y * ((RXA_TYPE(frm, 1) == RXT_DECIMAL) ? RXA_DEC64(frm, 1) : RXA_INT64(frm, 1)));
+        rebshp_vline(ctx->envr, rel, LOG_COORD_Y((RXA_TYPE(frm, 1) == RXT_DECIMAL) ? RXA_DEC64(frm, 1) : RXA_INT64(frm, 1)));
         break;
 
     default:
@@ -216,8 +218,8 @@ static u32* shape_ext_words;
 	case CMD_DRAW_ARC:
 		rebdrw_arc(
             ctx->envr,
-            RXA_PAIR(frm, 1),
-            RXA_PAIR(frm, 2),
+            RXA_LOG_PAIR(frm, 1),
+            RXA_LOG_PAIR(frm, 2),
             (RXA_TYPE(frm, 3) == RXT_DECIMAL) ? RXA_DEC64(frm, 3) : RXA_INT64(frm, 3),
             (RXA_TYPE(frm, 4) == RXT_DECIMAL) ? RXA_DEC64(frm, 4) : RXA_INT64(frm, 4),
             RL_FIND_WORD(draw_ext_words , RXA_WORD(frm, 5)) - W_DRAW_OPENED
@@ -225,31 +227,31 @@ static u32* shape_ext_words;
 		break;
 
 	case CMD_DRAW_ARROW:
-		rebdrw_arrow(ctx->envr, RXA_DPAIR(frm, 1), (RXA_TYPE(frm, 2) == RXT_NONE) ? 0 : RXA_COLOR_TUPLE(frm, 2));
+		rebdrw_arrow(ctx->envr, RXA_PAIR(frm, 1), (RXA_TYPE(frm, 2) == RXT_NONE) ? 0 : RXA_COLOR_TUPLE(frm, 2));
 		break;
 
 	case CMD_DRAW_BOX:
-		rebdrw_box(ctx->envr, RXA_PAIR(frm, 1), RXA_PAIR(frm, 2), ((RXA_TYPE(frm, 3) == RXT_DECIMAL) ? RXA_DEC64(frm, 3) : RXA_INT64(frm, 3)) * dp_scale.x);
+		rebdrw_box(ctx->envr, RXA_LOG_PAIR(frm, 1), RXA_LOG_PAIR(frm, 2), LOG_COORD_X((RXA_TYPE(frm, 3) == RXT_DECIMAL) ? RXA_DEC64(frm, 3) : RXA_INT64(frm, 3)));
 		break;
 
 	case CMD_DRAW_CIRCLE:
-		rebdrw_circle(ctx->envr, RXA_PAIR(frm, 1), RXA_PAIR(frm, 2));
+		rebdrw_circle(ctx->envr, RXA_LOG_PAIR(frm, 1), RXA_LOG_PAIR(frm, 2));
 		break;
 
 	case CMD_DRAW_CLIP:
-		rebdrw_clip(ctx->envr, RXA_PAIR(frm, 1), RXA_PAIR(frm, 2));
+		rebdrw_clip(ctx->envr, RXA_LOG_PAIR(frm, 1), RXA_LOG_PAIR(frm, 2));
 		break;
 
 	case CMD_DRAW_CURVE:
         if (RXA_TYPE(frm, 4) == RXT_NONE)
-			rebdrw_curve3(ctx->envr, RXA_PAIR(frm, 1), RXA_PAIR(frm, 2), RXA_PAIR(frm, 3));
+			rebdrw_curve3(ctx->envr, RXA_LOG_PAIR(frm, 1), RXA_LOG_PAIR(frm, 2), RXA_LOG_PAIR(frm, 3));
         else
-			rebdrw_curve4(ctx->envr, RXA_PAIR(frm, 1), RXA_PAIR(frm, 2), RXA_PAIR(frm, 3), RXA_PAIR(frm, 4));
+			rebdrw_curve4(ctx->envr, RXA_LOG_PAIR(frm, 1), RXA_LOG_PAIR(frm, 2), RXA_LOG_PAIR(frm, 3), RXA_LOG_PAIR(frm, 4));
 
 		break;
 
 	case CMD_DRAW_ELLIPSE:
-		rebdrw_ellipse(ctx->envr, RXA_PAIR(frm, 1), RXA_PAIR(frm, 2));
+		rebdrw_ellipse(ctx->envr, RXA_LOG_PAIR(frm, 1), RXA_LOG_PAIR(frm, 2));
 		break;
 
 	case CMD_DRAW_FILL_PEN:
@@ -284,17 +286,17 @@ static u32* shape_ext_words;
                 ctx->envr,
                 RL_FIND_WORD(draw_ext_words , RXA_WORD(frm, 1)), //type
                 RL_FIND_WORD(draw_ext_words , RXA_WORD(frm, 2)), //mode
-                RXA_PAIR(frm, 3), //offset
-                RXA_PAIR(frm, 4), //range - (begin, end)
+                RXA_LOG_PAIR(frm, 3), //offset
+                RXA_LOG_PAIR(frm, 4), //range - (begin, end)
                 (RXA_TYPE(frm, 5) == RXT_DECIMAL) ? RXA_DEC64(frm, 5) : RXA_INT64(frm, 5), // angle
-                RXA_DPAIR(frm, 6), // scale
+                RXA_PAIR(frm, 6), // scale
                 RXA_SERIES(frm, 7) // unsigned char *colors
             );
         break;
 
     case CMD_DRAW_IMAGE:
         if (RXA_TYPE(frm, 2) == RXT_PAIR)
-            rebdrw_image(ctx->envr, RXA_IMAGE_BITS(frm,1), RXA_IMAGE_WIDTH(frm,1), RXA_IMAGE_HEIGHT(frm,1), RXA_PAIR(frm, 2));
+            rebdrw_image(ctx->envr, RXA_IMAGE_BITS(frm,1), RXA_IMAGE_WIDTH(frm,1), RXA_IMAGE_HEIGHT(frm,1), RXA_LOG_PAIR(frm, 2));
         else {
             rebdrw_image_scale(ctx->envr, RXA_IMAGE_BITS(frm,1), RXA_IMAGE_WIDTH(frm,1), RXA_IMAGE_HEIGHT(frm,1), RXA_SERIES(frm, 2));
         }
@@ -314,7 +316,7 @@ static u32* shape_ext_words;
         break;
 
     case CMD_DRAW_IMAGE_PATTERN:
-        rebdrw_image_pattern(ctx->envr, RL_FIND_WORD(draw_ext_words , RXA_WORD(frm, 1)) - W_DRAW_NORMAL, RXA_DPAIR(frm, 2), RXA_DPAIR(frm, 3));
+        rebdrw_image_pattern(ctx->envr, RL_FIND_WORD(draw_ext_words , RXA_WORD(frm, 1)) - W_DRAW_NORMAL, RXA_PAIR(frm, 2), RXA_PAIR(frm, 3));
         break;
 
 
@@ -333,7 +335,7 @@ static u32* shape_ext_words;
                             break;
 				        case 2:
 //                            rebdrw_line(ctx->envr, val[0].pair,val[1].pair);
-                            rebdrw_line(ctx->envr, RXI_PAIR(val[0]),RXI_PAIR(val[1]));
+                            rebdrw_line(ctx->envr, RXI_LOG_PAIR(val[0]),RXI_LOG_PAIR(val[1]));
                             val[0] = val[1];
                             m--;
                             break;
@@ -373,9 +375,9 @@ static u32* shape_ext_words;
 
                 for (n = 0; type = RL_GET_VALUE(patterns, n, &val); n++) {
                     if (type == RXT_DECIMAL)
-                        pattern[n+1] = val.dec64 * dp_scale.x;
+                        pattern[n+1] = LOG_COORD_X(val.dec64);
                     else if (type == RXT_INTEGER)
-                        pattern[n+1] = val.int64 * dp_scale.x;
+                        pattern[n+1] = LOG_COORD_X(val.int64);
                     else
                         break;
                 }
@@ -413,10 +415,10 @@ static u32* shape_ext_words;
 				if (type == RXT_PAIR) {
 					if (n > 0)
 //						rebdrw_add_vertex(ctx->envr, val.pair);
-						rebdrw_add_vertex(ctx->envr, RXI_PAIR(val));
+						rebdrw_add_vertex(ctx->envr, RXI_LOG_PAIR(val));
 					else
 //						rebdrw_begin_poly(ctx->envr, val.pair);
-						rebdrw_begin_poly(ctx->envr, RXI_PAIR(val));
+						rebdrw_begin_poly(ctx->envr, RXI_LOG_PAIR(val));
 				}
 			}
 			rebdrw_end_poly(ctx->envr);
@@ -446,7 +448,7 @@ static u32* shape_ext_words;
         break;
 
     case CMD_DRAW_SCALE:
-        rebdrw_scale(ctx->envr, RXA_DPAIR(frm, 1));
+        rebdrw_scale(ctx->envr, RXA_PAIR(frm, 1));
         break;
 
     case CMD_DRAW_SHAPE:
@@ -464,7 +466,7 @@ static u32* shape_ext_words;
         break;
 
     case CMD_DRAW_SKEW:
-        rebdrw_skew(ctx->envr, RXA_DPAIR(frm, 1));
+        rebdrw_skew(ctx->envr, RXA_PAIR(frm, 1));
         break;
 
 	case CMD_DRAW_SPLINE:
@@ -481,10 +483,10 @@ static u32* shape_ext_words;
                     if (type == RXT_PAIR) {
                         if (n > 0)
 //                            rebdrw_add_vertex(ctx->envr, val.pair);
-							rebdrw_add_vertex(ctx->envr, RXI_PAIR(val));
+							rebdrw_add_vertex(ctx->envr, RXI_LOG_PAIR(val));
                         else
 //                            rebdrw_begin_poly(ctx->envr, val.pair);
-							rebdrw_begin_poly(ctx->envr, RXI_PAIR(val));
+							rebdrw_begin_poly(ctx->envr, RXI_LOG_PAIR(val));
                     }
                 }
                 rebdrw_end_spline(ctx->envr, RXA_INT32(frm, 2), RL_FIND_WORD(draw_ext_words , RXA_WORD(frm, 3)) - W_DRAW_OPENED);
@@ -498,8 +500,8 @@ static u32* shape_ext_words;
         rebdrw_text(
             ctx->envr,
             (RL_FIND_WORD(draw_ext_words , RXA_WORD(frm, 3)) == W_DRAW_VECTORIAL) ? 1 : 0,
-             &RXA_PAIR(frm, 1),
-             (RXA_TYPE(frm, 2) == RXT_PAIR) ? &RXA_PAIR(frm, 2) : NULL,
+             &RXA_LOG_PAIR(frm, 1),
+             (RXA_TYPE(frm, 2) == RXT_PAIR) ? &RXA_LOG_PAIR(frm, 2) : NULL,
              RXA_SERIES(frm, 4)
         );
 #endif		
@@ -509,14 +511,14 @@ static u32* shape_ext_words;
 		rebdrw_transform(
             ctx->envr,
             (RXA_TYPE(frm, 1) == RXT_DECIMAL) ? RXA_DEC64(frm, 1) : RXA_INT64(frm, 1), // angle
-            RXA_PAIR(frm, 2), // center
-            RXA_DPAIR(frm, 3), // scale
-            RXA_PAIR(frm, 4) // offset
+            RXA_LOG_PAIR(frm, 2), // center
+            RXA_PAIR(frm, 3), // scale
+            RXA_LOG_PAIR(frm, 4) // offset
         );
         break;
 
     case CMD_DRAW_TRANSLATE:
-        rebdrw_translate(ctx->envr, RXA_PAIR(frm, 1));
+        rebdrw_translate(ctx->envr, RXA_LOG_PAIR(frm, 1));
 		break;
 
 	case CMD_DRAW_TRIANGLE:
@@ -524,9 +526,9 @@ static u32* shape_ext_words;
             REBCNT b = 0xff000000;
             rebdrw_triangle(
                 ctx->envr,
-                RXA_PAIR(frm, 1), // vertex-1
-                RXA_PAIR(frm, 2), // vertex-2
-                RXA_PAIR(frm, 3), // vertex-3
+                RXA_LOG_PAIR(frm, 1), // vertex-1
+                RXA_LOG_PAIR(frm, 2), // vertex-2
+                RXA_LOG_PAIR(frm, 3), // vertex-3
                 (RXA_TYPE(frm, 4) == RXT_NONE) ? 0 : RXA_COLOR_TUPLE(frm, 4), // color-1
                 (RXA_TYPE(frm, 5) == RXT_NONE) ? b : RXA_COLOR_TUPLE(frm, 5), // color-2
                 (RXA_TYPE(frm, 6) == RXT_NONE) ? b : RXA_COLOR_TUPLE(frm, 6), // color-3

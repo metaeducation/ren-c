@@ -1,6 +1,7 @@
 REBOL [R3] Language Interpreter and Run-time Environment
 Copyright 2012 REBOL Technologies
 REBOL is a trademark of REBOL Technologies
+Additional code modifications and improvements Copyright 2012 Saphirion
 Licensed under the Apache License, Version 2.0
 See included LICENSE file for details
 
@@ -32,3 +33,21 @@ This file is part of the Independent JPEG Group's software.
 dtoa:
 The author of this software is David M. Gay.
 Copyright (c) 1991, 2000, 2001 by Lucent Technologies.
+
+bigint:
+Copyright (c) 2007, Cameron Rich
+
+AES:
+Copyright (c) 2007, Cameron Rich
+
+DH:
+Copyright (c) 2013 Richard Smolak
+
+RC4:
+Copyright (c) 2007, Cameron Rich
+
+LodePNG:
+Copyright (c) 2005-2013 Lode Vandevenne
+
+Anti-Grain Geometry:
+Copyright (C) 2002-2005 Maxim Shemanarev
