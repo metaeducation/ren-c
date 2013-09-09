@@ -9,6 +9,7 @@ make/r3-view.exe
 make/r3-view-host.exe
 make/objs/
 src/boot/boot-code.r
+src/boot/host-init.r
 src/core/b-boot.c
 src/include/ext-types.h
 src/include/host-ext-*
