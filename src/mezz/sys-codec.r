@@ -42,7 +42,7 @@ encode: funct [
 		;encode patch replacing internal PNG encoder crash for now
 		data: switch/default cod/name [
 			png [
-				to-png data
+				lib/to-png data
 			]
 		][
 			do-codec cod/entry 'encode data
