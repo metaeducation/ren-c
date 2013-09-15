@@ -69,7 +69,7 @@ make:
 	$(REBOL) $T/make-make.r $(OS_ID)
 
 clean:
-	@-rm -rf $(R3LIB) r3-core-host$(BIN_SUFFIX) r3-view-host$(BIN_SUFFIX) r3-core$(BIN_SUFFIX) r3-view$(BIN_SUFFIX) objs/ 
+	@-rm -rf $(R3LIB) r3-core-host$(BIN_SUFFIX) r3-view-host$(BIN_SUFFIX) r3-core$(BIN_SUFFIX) r3-view$(BIN_SUFFIX) objs/
 
 all:
 	$(MAKE) -f $(MAKEFILE) clean
@@ -77,14 +77,14 @@ all:
 	$(MAKE) -f $(MAKEFILE) r3-core-host$(BIN_SUFFIX) HOST_PRODUCT_NAME=saphir-core-host
 	$(MAKE) -f $(MAKEFILE) r3-view-host$(BIN_SUFFIX) HOST_PRODUCT_NAME=saphir-view-host
 	$(MAKE) -f $(MAKEFILE) r3-core$(BIN_SUFFIX) HOST_PRODUCT_NAME=saphir-core
-	$(MAKE) -f $(MAKEFILE) r3-view$(BIN_SUFFIX) HOST_PRODUCT_NAME=saphir-view 
+	$(MAKE) -f $(MAKEFILE) r3-view$(BIN_SUFFIX) HOST_PRODUCT_NAME=saphir-view
 
 prep-lib:
 	$(REBOL) $T/make-headers.r
 	$(REBOL) $T/make-boot.r $(OS_ID) $(LIB_PRODUCT_NAME)
 	$(REBOL) $T/make-os-ext.r # ok, but not always
 	$(REBOL) $T/make-reb-lib.r
-	-rm -f $(OBJS) 
+	-rm -f $(OBJS)
 
 prep-core: prep-lib
 	$(REBOL) $T/saphir-init.r $(HOST_PRODUCT_NAME)
@@ -97,7 +97,7 @@ prep-view: prep-lib
 	$(REBOL) $T/core-ext.r
 	$(REBOL) $T/view-ext.r
 	$(eval HOST_FLAGS =$(HOST_VIEW_FLAGS))
-	-rm -f $(HOST) 
+	-rm -f $(HOST)
 
 ### Post build actions
 purge:
@@ -150,7 +150,7 @@ OBJS =	objs/a-constants.o objs/a-globals.o objs/a-lib.o objs/b-boot.o \
 	objs/t-typeset.o objs/t-utype.o objs/t-vector.o objs/t-word.o \
 	objs/u-bmp.o objs/u-compress.o objs/u-dialect.o objs/u-gif.o \
 	objs/u-jpg.o objs/u-md5.o objs/u-parse.o objs/u-png.o \
-	objs/u-sha1.o objs/u-zlib.o 
+	objs/u-sha1.o objs/u-zlib.o
 
 HOST =	objs/host-main.o objs/host-args.o objs/host-device.o objs/host-stdio.o \
 	objs/dev-net.o objs/dev-dns.o objs/host-lib.o objs/host-readline.o \
@@ -230,7 +230,7 @@ r3-core-host$(BIN_SUFFIX): prep-core objs $(HOST) $(CODECS)
 # PUBLIC: View Host using the shared lib:
 
 r3-view-host$(BIN_SUFFIX): prep-view objs $(HOST) $(CODECS) $(GFX) $(AGG)
-	$(CC) -o r3-view-host$(BIN_SUFFIX) $(HOST) $(CODECS) $(GFX) $(R3LIB) $(GUI_CLIB) $(AGG)	
+	$(CC) -o r3-view-host$(BIN_SUFFIX) $(HOST) $(CODECS) $(GFX) $(R3LIB) $(GUI_CLIB) $(AGG)
 	$(STRIP) r3-view-host$(BIN_SUFFIX)
 	$(LS) r3-view-host$(BIN_SUFFIX)
 	@echo 'export LD_LIBRARY_PATH=.:$$LD_LIBRARY_PATH'
@@ -534,7 +534,7 @@ objs/host-view.o: $S/os/host-view.c
 	$(CC) $S/os/host-view.c $(HFLAGS) -o objs/host-view.o
 
 objs/host-draw.o: $S/os/host-draw.c
-	$(CC) $S/os/host-draw.c $(HFLAGS) -o objs/host-draw.o 
+	$(CC) $S/os/host-draw.c $(HFLAGS) -o objs/host-draw.o
 
 objs/host-lib.o:      $S/os/linux/host-lib.c
 	$(CC) $S/os/linux/host-lib.c $(HFLAGS) -o objs/host-lib.o
@@ -561,7 +561,7 @@ objs/host-text.o: $S/os/host-text.c
 	$(CC) $S/os/host-text.c $(HFLAGS) -o objs/host-text.o
 
 objs/host-graphics.o: $S/os/linux/host-graphics.c
-	$(CC) $S/os/linux/host-graphics.c $(HFLAGS) -o objs/host-graphics.o 
+	$(CC) $S/os/linux/host-graphics.c $(HFLAGS) -o objs/host-graphics.o
 
 objs/host-window.o: $S/os/linux/host-window.c
 	$(CC) $S/os/linux/host-window.c $(HFLAGS) -o objs/host-window.o

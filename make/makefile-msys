@@ -310,7 +310,7 @@ r3-core-host: prep-core objs $(HOST)
 # PUBLIC: View Host using the shared lib:
 
 r3-view-host: prep-view objs $(HOST) $(GFX) $(AGG)
-	$(CC) -o r3-view-host$(BIN_SUFFIX) $(HOST) $(GFX) $(R3LIB) $(GUI_CLIB) $(AGG)	
+	$(CC) -o r3-view-host$(BIN_SUFFIX) $(HOST) $(GFX) $(R3LIB) $(GUI_CLIB) $(AGG)
 	$(STRIP) r3-view-host$(BIN_SUFFIX)
 	$(LS) r3-view-host$(BIN_SUFFIX)
 
