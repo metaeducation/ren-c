@@ -92,13 +92,13 @@ prep-lib:
 	$(REBOL) $T/make-reb-lib.r
 	-rm -f $(OBJS)
 
-prep-core:
+prep-core: prep-lib
 	$(REBOL) $T/saphir-init.r $(HOST_PRODUCT_NAME)
 	$(REBOL) $T/core-ext.r
 	$(eval HOST_FLAGS =$(HOST_CORE_FLAGS))
 	-rm -f $(HOST)
 
-prep-view:
+prep-view: prep-lib
 	$(REBOL) $T/saphir-init.r $(HOST_PRODUCT_NAME)
 	$(REBOL) $T/core-ext.r
 	$(REBOL) $T/view-ext.r

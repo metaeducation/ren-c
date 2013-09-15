@@ -88,13 +88,13 @@ prep-lib:
 	$(REBOL) $T/make-reb-lib.r
 	-rm -f $(OBJS) 
 
-prep-core:
+prep-core: prep-lib
 	$(REBOL) $T/saphir-init.r $(HOST_PRODUCT_NAME)
 	$(REBOL) $T/core-ext.r
 	$(eval HOST_FLAGS =$(HOST_CORE_FLAGS))
 	-rm -f $(HOST)
 
-prep-view:
+prep-view: prep-lib
 	$(REBOL) $T/saphir-init.r $(HOST_PRODUCT_NAME)
 	$(REBOL) $T/core-ext.r
 	$(REBOL) $T/view-ext.r
@@ -666,4 +666,4 @@ objs/agg_truetype_text.o:$S/agg/agg_truetype_text.cpp
 
 objs/rich_text.o:     $S/agg/rich_text.cpp
 	$(CXX) $S/agg/rich_text.cpp $(HFLAGS_CPP) -o objs/rich_text.o
- 
+
