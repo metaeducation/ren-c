@@ -12,7 +12,7 @@ REBOL [
 ]
 
 ; MOVE THIS INTERNAL FUNC:
-dump-obj: funct [
+dump-obj: function [
 	"Returns a block of information about an object or port."
 	obj [object! port!]
 	/match "Include only those that match a string or datatype" pat
@@ -134,9 +134,13 @@ dump-obj: funct [
 
 			Other information:
 
-				demo - run demo launcher (from saphirion.com)
+				chat - open DevBase developer forum/BBS
+				docs - open DocBase document wiki website
+				bugs - open CureCore bug database website
+				demo - run demo launcher (from rebol.com)
 				about - see general product info
 				upgrade - check for newer versions
+				changes - show changes for recent version
 				install - install (when applicable)
 				license - show user license
 				usage - program cmd line options
@@ -451,7 +455,7 @@ why?: func [
 	exit
 ]
 
-demo: funct [
+demo: function [
 	"Run R3 demo."
 ][
 	print "Fetching demo..."
@@ -461,9 +465,8 @@ demo: funct [
 	exit
 ]
 
-load-gui: func [
-    "Download current Spahirion's R3-GUI module from web."
-    /local data
+load-gui: function [
+	"Download current Spahirion's R3-GUI module from web."
 ][
     print "Fetching GUI..."
     either error? data: try [load http://www.atronixengineering.com/r3/r3-gui.r3] [
