@@ -1074,6 +1074,9 @@ typedef struct Reb_All {
 		REBHED flags;
 		REBCNT header;
 	} flags;
+#ifdef __LP64__
+	REBINT	padding; //make it 32-bit
+#endif
 	union Reb_Val_Data {
 		REBWRD	word;
 		REBSRI	series;

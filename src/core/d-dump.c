@@ -71,7 +71,7 @@
 
 	cp = buf;
 	for (l = 0; l < max_lines; l++) {
-		cp = Form_Hex_Pad(cp, (REBCNT) bp, 8);
+		cp = Form_Hex_Pad(cp, (REBU64) bp, 8);
 
 		*cp++ = ':';
 		*cp++ = ' ';
@@ -122,7 +122,8 @@
 
 	cp = buf;
 	for (l = 0; l < count; l++) {
-		cp = Form_Hex_Pad(cp, (REBCNT) l, 4);
+		cp = Form_Hex_Pad(cp, l, 8);
+
 		*cp++ = ':';
 		*cp++ = ' ';
 
