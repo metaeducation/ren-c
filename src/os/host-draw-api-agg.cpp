@@ -38,10 +38,11 @@
 
 #include "../agg/agg_graphics.h"
 //#undef IS_ERROR
-extern "C" void *RL_Series(REBSER *ser, REBINT what);
 
 namespace agg
 {
+	extern "C" uintptr_t RL_Series(REBSER *ser, REBCNT what);
+
 	extern "C" RL_LIB *RL;
 
 	extern "C" void rebdrw_add_vertex (void* gr, REBXYF p)

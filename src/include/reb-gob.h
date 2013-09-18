@@ -181,9 +181,9 @@ typedef struct gob_window {				// Maps gob to window
 #define GOB_TAIL(g)		SERIES_TAIL((g)->pane)
 #define GOB_HEAD(g)		((REBGOB **)(SERIES_DATA(GOB_PANE(g))))
 #else
-#define GOB_STRING(g)	((REBYTE *)RL_Series(GOB_CONTENT(g), RXI_SER_DATA))
-#define GOB_TAIL(g)		((REBCNT)RL_Series(GOB_PANE(g), RXI_SER_TAIL))
-#define GOB_HEAD(g)		((REBGOB **)RL_Series(GOB_PANE(g), RXI_SER_DATA))
+#define GOB_STRING(g)	((REBYTE *)RL_Series(GOB_CONTENT(g), (REBCNT)RXI_SER_DATA))
+#define GOB_TAIL(g)		((REBCNT)RL_Series(GOB_PANE(g), (REBCNT)RXI_SER_TAIL))
+#define GOB_HEAD(g)		((REBGOB **)RL_Series(GOB_PANE(g), (REBCNT)RXI_SER_DATA))
 #endif
 #define GOB_BITMAP(g)	GOB_STRING(g)
 #define GOB_SKIP(g,n)	(GOB_HEAD(g)+n)

@@ -566,7 +566,7 @@ is_none:
 			SET_BINARY(val, GOB_DATA(gob));
 		}
 		else if (GOB_DTYPE(gob) == GOBD_INTEGER) {
-			SET_INTEGER(val, (REBI64)GOB_DATA(gob));
+			SET_INTEGER(val, (intptr_t)GOB_DATA(gob));
 		}
 		else goto is_none;
 		break;

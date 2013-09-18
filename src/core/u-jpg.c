@@ -10789,7 +10789,7 @@ extern void Register_Codec(char *name, codo dispatcher);
 
 /***********************************************************************
 **
-*/	int Codec_JPEG_Image(REBCDI *codi)
+*/	REBINT Codec_JPEG_Image(REBCDI *codi)
 /*
 ***********************************************************************/
 {
@@ -10811,7 +10811,7 @@ extern void Register_Codec(char *name, codo dispatcher);
 	if (codi->action == CODI_DECODE) {
 		int w, h;
 		jpeg_info(codi->data, codi->len, &w, &h);
-		codi->bits = (unsigned int *)Make_Mem(w * h * 4);
+		codi->bits = (u32 *)Make_Mem(w * h * 4);
 		jpeg_load(codi->data, codi->len, (char *)codi->bits);
 		codi->w = w;
 		codi->h = h;
