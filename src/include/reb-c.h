@@ -54,17 +54,24 @@ typedef char			i8;
 typedef unsigned char	u8;
 typedef short			i16;
 typedef unsigned short	u16;
-#ifdef __LP64__
 typedef int				i32;
 typedef unsigned int	u32;
+#ifndef _INTPTR_T_DEFINED
+#define _INTPTR_T_DEFINED
+#ifndef __intptr_t_defined
+#define __intptr_t_defined
+#undef intptr_t
 typedef long			intptr_t;
+#endif /* __intptr_t_defined */
+#endif /* _INTPTR_T_DEFINED */
+#ifndef _UINTPTR_T_DEFINED
+#define _UINTPTR_T_DEFINED
+#ifndef __uintptr_t_defined
+#define __uintptr_t_defined
+#undef uintptr_t
 typedef unsigned long	uintptr_t;
-#else
-typedef long			i32;
-typedef unsigned long	u32;
-typedef int				intptr_t;
-typedef unsigned int	uintptr_t;
-#endif
+#endif /* __uintptr_t_defined */
+#endif /* _UINTPTR_T_DEFINED */
 
 #ifndef DEF_UINT		// some systems define it, don't define it again
 typedef unsigned int    uint;
@@ -108,10 +115,6 @@ typedef char            REBOOL;     // 8  bit flag (for struct usage)
 typedef u32    			REBFLG;     // 32 bit flag (for cpu efficiency)
 typedef float           REBD32;     // 32 bit decimal
 typedef double          REBDEC;     // 64 bit decimal
-
-#ifdef HAS_LONG_DOUBLE
-typedef long double     REBDCL;     // more than 80 or more bits
-#endif
 
 typedef unsigned char   REBYTE;     // unsigned byte data
 typedef unsigned short  REBUNI;     // unicode char
