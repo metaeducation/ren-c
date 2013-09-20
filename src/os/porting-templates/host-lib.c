@@ -70,6 +70,10 @@
 #include <dlfcn.h>
 #endif
 
+#ifndef REB_CORE
+REBSER* Gob_To_Image(REBGOB *gob);
+#endif
+
 // Semaphore lock to sync sub-task launch:
 static void *Task_Ready;
 
@@ -659,7 +663,7 @@ static int Try_Browser(char *browser, REBCHR *url)
 #if (defined REB_CORE)
 	return 0;
 #else
-	return (REBSER*)Gob_To_Image(gob);
+	return Gob_To_Image(gob);
 #endif
 }
 

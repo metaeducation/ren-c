@@ -124,8 +124,12 @@ typedef struct /**< A big integer "session" context. */
 } BI_CTX;
 
 //#ifndef WIN32
-#define max(a,b) ((a)>(b)?(a):(b))  /**< Find the maximum of 2 numbers. */
+#ifndef max
+	#define max(a,b) ((a)>(b)?(a):(b))  /**< Find the maximum of 2 numbers. */
+#endif
+#ifndef min
 #define min(a,b) ((a)<(b)?(a):(b))  /**< Find the minimum of 2 numbers. */
+#endif
 //#endif
 
 #define PERMANENT           0x7FFF55AA  /**< A magic number for permanents. */

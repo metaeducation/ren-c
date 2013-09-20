@@ -8,7 +8,7 @@
 # Example make:
 #    make TOOLS=~/amiga/amiga/bin/ppc-amigaos- INCL=/SDK/newlib/include
 
-MAKEFILE = makefile-msys
+MAKEFILE = makefile-msys-64
 
 # For the build toolchain:
 CC=	$(TOOLS)gcc
@@ -33,14 +33,14 @@ INCL ?= .
 I= -I$(INCL) -I$S/include/ -I $S/codecs/
 
 TO_OS?= TO_WIN32
-OS_ID?= 0.3.1
-BIT= -m32
+OS_ID?= 0.3.3
+BIT= -m64
 LIB_PRODUCT_NAME= core #note: this can be overriden by the HOST_PRODUCT_NAME
 HOST_PRODUCT_NAME= core
 BIN_SUFFIX= .exe
-RAPI_FLAGS=  -O2 -DUNICODE
-HOST_CORE_FLAGS= -DREB_CORE -DREB_EXE -O2 -DUNICODE -DCUSTOM_STARTUP -D_FILE_OFFSET_BITS=64
-HOST_VIEW_FLAGS= -DREB_EXE -O2 -DUNICODE -DCUSTOM_STARTUP -D_FILE_OFFSET_BITS=64
+RAPI_FLAGS=  -O2 -DUNICODE -D__LP64__
+HOST_CORE_FLAGS= -DREB_CORE -DREB_EXE -O2 -DUNICODE -DCUSTOM_STARTUP -D_FILE_OFFSET_BITS=64 -D__LP64__
+HOST_VIEW_FLAGS= -DREB_EXE -O2 -DUNICODE -DCUSTOM_STARTUP -D_FILE_OFFSET_BITS=64 -D__LP64__
 ENCAP_CORE_FLAGS= -DENCAP -DEXT_LICENSING -DNOWINIOCTLTYPEDEFS $(HOST_CORE_FLAGS)
 ENCAP_VIEW_FLAGS= -DENCAP -DEXT_LICENSING -DNOWINIOCTLTYPEDEFS $(HOST_VIEW_FLAGS)
 RLIB_FLAGS=
@@ -50,9 +50,9 @@ HFLAGS= -c $(BIT) -D$(TO_OS) $(HOST_FLAGS) $I
 #-DREB_CORE
 #CLIB= -lm  -lwsock32 -lcomdlg32 -lgdi32 -lstdc++ -mwindows -Wl,--stack=4194300
 CLIB= -L. -static-libgcc -lm -lwsock32 -lcomdlg32 -lgdi32 -liphlpapi -Wl,--stack=4194300
-GUI_CLIB= -L. -static-libgcc -lm -lwsock32 -lcomdlg32 -lgdi32 -lmsimg32 -liphlpapi -Wl,--stack=4194300 -mwindows -static -lstdc++
+GUI_CLIB= -L. -static-libgcc -static-libstdc++ -lm -lwsock32 -lcomdlg32 -lgdi32 -lmsimg32 -liphlpapi -Wl,--stack=4194300 -mwindows
 
-UPX= $(CD)upx$(BIN_SUFFIX) --ultra-brute
+UPX= $(CD)PESpin_x64$(BIN_SUFFIX)
 
 # REBOL builds various include files:
 REBOL=	$(CD)r3-make$(BIN_SUFFIX) -qs >NUL:

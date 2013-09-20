@@ -40,6 +40,7 @@
 #include <stdlib.h> //for free()
 
 #include "reb-host.h"
+#include "host-lib.h"
 
 #include "png/lodepng.h"
  

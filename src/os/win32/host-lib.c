@@ -63,6 +63,10 @@
 #include "reb-host.h"
 #include "host-lib.h"
 
+#ifndef REB_CORE
+REBSER* Gob_To_Image(REBGOB *gob);
+#endif
+
 //used to detect non-modal OS dialogs
 BOOL osDialogOpen = FALSE; 
 
@@ -772,7 +776,7 @@ int CALLBACK ReqDirCallbackProc( HWND hWnd, UINT uMsg, LPARAM lParam, LPARAM lpD
 #if (defined REB_CORE)
 	return 0;
 #else
-	return (REBSER*)Gob_To_Image(gob);
+	return Gob_To_Image(gob);
 #endif
 
 }

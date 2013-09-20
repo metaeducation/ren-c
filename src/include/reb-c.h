@@ -50,12 +50,15 @@
 **
 ***********************************************************************/
 
+#include <stdint.h> //first we try to get the u/intptr_t definitions from compiler headers
+
 typedef char			i8;
 typedef unsigned char	u8;
 typedef short			i16;
 typedef unsigned short	u16;
 typedef int				i32;
 typedef unsigned int	u32;
+
 #ifndef _INTPTR_T_DEFINED
 #define _INTPTR_T_DEFINED
 #ifndef __intptr_t_defined

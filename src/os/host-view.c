@@ -41,6 +41,7 @@
 #include <string.h>
 #include <math.h>	//for floor()
 #include "reb-host.h"
+#include "host-lib.h"
 
 #include "host-compositor.h"
 
@@ -57,6 +58,10 @@
 extern void OS_Init_Windows(void);
 extern void rebdrw_to_image(REBYTE *image, REBINT w, REBINT h, REBSER *block);
 extern REBD32 OS_Get_Metrics(METRIC_TYPE type);
+extern void* Create_RichText();
+extern void* OS_Load_Cursor(void *cursor);
+extern void* OS_Image_To_Cursor(REBYTE* image, REBINT width, REBINT height);
+extern void OS_Show_Soft_Keyboard(void* win, REBINT x, REBINT y);
 
 //***** Globals *****
 REBGOBWINDOWS *Gob_Windows;
@@ -518,7 +523,7 @@ REBINT Alloc_Window(REBGOB *gob) {
 #if defined(AGG_WIN32_FONTS) || defined(AGG_FREETYPE)
             //Initialize text rendering context
             if (Rich_Text) Destroy_RichText(Rich_Text);
-            Rich_Text = (void*)Create_RichText();
+            Rich_Text = Create_RichText();
 #endif
             break;
 
@@ -528,7 +533,7 @@ REBINT Alloc_Window(REBGOB *gob) {
 
         case CMD_GRAPHICS_CURSOR:
 			{
-                REBINT n = 0;
+                uintptr_t n = 0;
                 REBSER image = 0;
 
                 if (RXA_TYPE(frm, 1) == RXT_IMAGE) {
@@ -544,9 +549,9 @@ REBINT Alloc_Window(REBGOB *gob) {
                 }
 
                 if (n > 0)
-                    Cursor = (void*)OS_Load_Cursor(n);
+                    Cursor = OS_Load_Cursor((void*)n);
                 else if (image) {
-                    Cursor = (void*)OS_Image_To_Cursor(image, RXA_IMAGE_WIDTH(frm,1), RXA_IMAGE_HEIGHT(frm,1));
+                    Cursor = OS_Image_To_Cursor(image, RXA_IMAGE_WIDTH(frm,1), RXA_IMAGE_HEIGHT(frm,1));
                     Custom_Cursor = TRUE;
                 } else
                     Cursor = NULL;
@@ -559,7 +564,7 @@ REBINT Alloc_Window(REBGOB *gob) {
 			{
 				REBINT x = 0;
 				REBINT y = 0;
-				REBINT win = 0;
+				void * win = 0;
 				
 				if (RXA_TYPE(frm, 2) == RXT_GOB){
 					REBGOB* parent_gob = (REBGOB*)RXA_SERIES(frm, 2);
@@ -570,7 +575,7 @@ REBINT Alloc_Window(REBGOB *gob) {
 						y += GOB_LOG_Y_INT(parent_gob);
 						parent_gob = GOB_PARENT(parent_gob);
 					} 
-					win = (REBINT)Find_Window(parent_gob);
+					win = Find_Window(parent_gob);
 				}
 				OS_Show_Soft_Keyboard(win, x, y);
 			}

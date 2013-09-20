@@ -43,7 +43,7 @@
 //#include <windows.h>
 
 #include "reb-host.h"
-//#include "host-lib.h"
+#include "host-lib.h"
 
 //#include "agg-text.h"
 #include "host-text-api.h"

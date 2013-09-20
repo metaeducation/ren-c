@@ -64,6 +64,7 @@ extern void Free_Window(REBGOB *gob);
 extern void* Find_Compositor(REBGOB *gob);
 extern REBINT Alloc_Window(REBGOB *gob);
 extern void Draw_Window(REBGOB *wingob, REBGOB *gob);
+extern HWND Find_Window(REBGOB *gob);
 
 //***** Locals *****
 
@@ -153,7 +154,12 @@ extern void *Cursor;
 	PAINTSTRUCT ps;
 	REBGOB *gob;
 
+	
+#ifdef __LP64__	
+	gob = (REBGOB *)GetWindowLongPtr(window, GWLP_USERDATA);
+#else
 	gob = (REBGOB *)GetWindowLong(window, GWL_USERDATA);
+#endif
 
 	if (gob) {
 
@@ -413,8 +419,11 @@ extern void *Cursor;
 	SET_GOB_STATE(gob, GOBS_OPEN);
 
 	// Provide pointer from window back to REBOL window:
+#ifdef __LP64__	
+	SetWindowLongPtr(window, GWLP_USERDATA, (uintptr_t)gob);
+#else
 	SetWindowLong(window, GWL_USERDATA, (long)gob);
-
+#endif
     if (!GET_GOB_FLAG(gob, GOBF_HIDDEN)) {
         if (GET_GOB_FLAG(gob, GOBF_ON_TOP)) SetWindowPos(window, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_FRAMECHANGED | SWP_NOACTIVATE);
         OS_Update_Window(gob);

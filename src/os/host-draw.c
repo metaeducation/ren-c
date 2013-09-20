@@ -40,7 +40,7 @@
 
 #include <stdlib.h>
 #include "reb-host.h"
-//#include "host-lib.h"
+#include "host-lib.h"
 
 //#include "agg-draw.h"
 #include "host-draw-api.h"

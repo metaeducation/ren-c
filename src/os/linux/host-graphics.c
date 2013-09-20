@@ -109,7 +109,7 @@ extern const unsigned char RX_text[];
 
 /***********************************************************************
 **
-*/	void OS_Show_Soft_Keyboard(REBINT win, REBINT x, REBINT y)
+*/	void OS_Show_Soft_Keyboard(void* win, REBINT x, REBINT y)
 /*
 **  Display software/virtual keyboard on the screen.
 **  (mainly used on mobile platforms)

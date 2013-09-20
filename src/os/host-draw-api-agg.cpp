@@ -41,9 +41,9 @@
 
 namespace agg
 {
-	extern "C" uintptr_t RL_Series(REBSER *ser, REBCNT what);
+//	extern "C" RL_LIB *RL;
 
-	extern "C" RL_LIB *RL;
+	extern "C" uintptr_t RL_Series(REBSER *ser, REBCNT what);
 
 	extern "C" void rebdrw_add_vertex (void* gr, REBXYF p)
 	{
@@ -504,7 +504,7 @@ namespace agg
 		agg_graphics::pixfmt pixf_win(rbuf_win);
 		agg_graphics::ren_base rb_win(pixf_win);
 		
-		agg_graphics::ren_buf rbuf_img((REBYTE*)GOB_BITMAP(gob),w,h,w << 2);
+		agg_graphics::ren_buf rbuf_img(GOB_BITMAP(gob),w,h,w << 2);
 //		agg::pixfmt_bgra32 pixf_img(rbuf_img);
 		agg_graphics::pixfmt pixf_img(rbuf_img);
 

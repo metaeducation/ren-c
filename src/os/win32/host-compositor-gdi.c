@@ -44,6 +44,10 @@
 #include <math.h>	//for floor()
 #include <stdlib.h> //for rand()
 #include "reb-host.h"
+#include "host-lib.h"
+
+//***** Externs *****
+extern HWND Find_Window(REBGOB *gob);
 
 //***** Macros *****
 
