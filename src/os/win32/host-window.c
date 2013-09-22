@@ -154,8 +154,8 @@ extern void *Cursor;
 	PAINTSTRUCT ps;
 	REBGOB *gob;
 
-	
-#ifdef __LP64__	
+
+#ifdef __LP64__
 	gob = (REBGOB *)GetWindowLongPtr(window, GWLP_USERDATA);
 #else
 	gob = (REBGOB *)GetWindowLong(window, GWL_USERDATA);
@@ -419,7 +419,7 @@ extern void *Cursor;
 	SET_GOB_STATE(gob, GOBS_OPEN);
 
 	// Provide pointer from window back to REBOL window:
-#ifdef __LP64__	
+#ifdef __LP64__
 	SetWindowLongPtr(window, GWLP_USERDATA, (uintptr_t)gob);
 #else
 	SetWindowLong(window, GWL_USERDATA, (long)gob);

@@ -202,7 +202,7 @@ static Check_Modifiers(REBINT flags)
     static REBYTE keyboardState[256];
     static REBCHR buf[2];
 
-#ifdef __LP64__	
+#ifdef __LP64__
 	gob = (REBGOB *)GetWindowLongPtr(hwnd, GWLP_USERDATA);
 #else
 	gob = (REBGOB *)GetWindowLong(hwnd, GWL_USERDATA);
