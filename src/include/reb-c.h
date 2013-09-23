@@ -50,7 +50,9 @@
 **
 ***********************************************************************/
 
+#if __STDC_VERSION__ >= 199901L
 #include <stdint.h> //first we try to get the u/intptr_t definitions from compiler headers
+#endif
 
 typedef char			i8;
 typedef unsigned char	u8;
