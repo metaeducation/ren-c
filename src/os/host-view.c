@@ -533,7 +533,7 @@ REBINT Alloc_Window(REBGOB *gob) {
 
         case CMD_GRAPHICS_CURSOR:
 			{
-                uintptr_t n = 0;
+                REBUPT n = 0;
                 REBSER image = 0;
 
                 if (RXA_TYPE(frm, 1) == RXT_IMAGE) {
