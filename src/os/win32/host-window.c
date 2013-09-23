@@ -155,10 +155,11 @@ extern void *Cursor;
 	REBGOB *gob;
 
 
-	if (sizeof(void *) == 8)
-		gob = (REBGOB *)GetWindowLongPtr(window, GWLP_USERDATA);
-	else
-		gob = (REBGOB *)GetWindowLong(window, GWL_USERDATA);
+#ifdef __LLP64__
+	gob = (REBGOB *)GetWindowLongPtr(window, GWLP_USERDATA);
+#else
+	gob = (REBGOB *)GetWindowLong(window, GWL_USERDATA);
+#endif
 
 	if (gob) {
 
@@ -418,10 +419,11 @@ extern void *Cursor;
 	SET_GOB_STATE(gob, GOBS_OPEN);
 
 	// Provide pointer from window back to REBOL window:
-	if (sizeof(void *) == 8)
-		SetWindowLongPtr(window, GWLP_USERDATA, (REBUPT)gob);
-	else
-		SetWindowLong(window, GWL_USERDATA, (REBUPT)gob);
+#ifdef __LLP64__
+	SetWindowLongPtr(window, GWLP_USERDATA, (REBUPT)gob);
+#else
+	SetWindowLong(window, GWL_USERDATA, (REBUPT)gob);
+#endif
     if (!GET_GOB_FLAG(gob, GOBF_HIDDEN)) {
         if (GET_GOB_FLAG(gob, GOBF_ON_TOP)) SetWindowPos(window, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_FRAMECHANGED | SWP_NOACTIVATE);
         OS_Update_Window(gob);
