@@ -157,7 +157,8 @@ extern void *Cursor;
 
 	if (sizeof(void *) == 8)
 		gob = (REBGOB *)GetWindowLongPtr(window, GWLP_USERDATA);
-	else {gob = (REBGOB *)GetWindowLong(window, GWL_USERDATA);
+	else
+		gob = (REBGOB *)GetWindowLong(window, GWL_USERDATA);
 
 	if (gob) {
 
