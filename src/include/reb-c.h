@@ -82,12 +82,12 @@ typedef unsigned _int64 u64;
 typedef long long       i64;
 typedef unsigned long long u64;
 #endif
-#if defined(__LP64__) || defined(__LLP64__)
-typedef long			intptr_t;
-typedef unsigned long	uintptr_t;
-#else
+#ifdef __LLP64__
 typedef long long		intptr_t;
 typedef unsigned long long	uintptr_t;
+#else
+typedef long			intptr_t;
+typedef unsigned long	uintptr_t;
 #endif
 
 #define MAX_I32 ((int)0x7fffffff)
