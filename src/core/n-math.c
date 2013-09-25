@@ -272,8 +272,8 @@ enum {SINE, COSINE, TANGENT};
 			else if (VAL_INT64(a)) Trap0(RE_OVERFLOW);
 		} else
 			if (D_REF(3)) VAL_UNT64(a) <<= b;
-			else if (VAL_INT64(a)) {
-				c = (REBU64)1 << (63 - b);
+			else {
+				c = (REBU64)MIN_I64 >> b;
 				d = VAL_INT64(a) < 0 ? -VAL_UNT64(a) : VAL_UNT64(a);
 				if (c <= d)
 					if ((c < d) || (VAL_INT64(a) >= 0)) Trap0(RE_OVERFLOW);
