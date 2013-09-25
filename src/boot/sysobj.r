@@ -16,12 +16,11 @@ REBOL [
 	Note: "Remove older/unused fields before beta release"
 ]
 
-product:  'core
-
-; Next three fields are updated during build:
+; Next four fields are updated during build:
 version:  0.0.0
 build:    1
 platform: none
+product:  'core
 
 license: {Copyright 2012 REBOL Technologies
 REBOL is a trademark of REBOL Technologies
@@ -283,14 +282,6 @@ view: context [
 	screen-gob: none
 	handler: none
 	event-port: none
-	metrics: context [
-		screen-size: 0x0
-		border-size: 0x0
-		border-fixed: 0x0
-		title-size: 0x0
-		work-origin: 0x0
-		work-size: 0x0
-	]
 	event-types: [
 		; Event types. Order dependent for C and REBOL.
 		; Due to fixed C constants, this list cannot be reordered after release!
@@ -319,6 +310,7 @@ view: context [
 		hide
 		offset
 		resize
+		rotate
 		active
 		inactive 
 		minimize

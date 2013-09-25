@@ -174,6 +174,26 @@
 		else return FALSE;
 		break;
 
+	case SYM_FLAGS:
+		if (IS_BLOCK(val)) {
+			VAL_EVENT_FLAGS(value) &= ~(1<<EVF_DOUBLE | 1<<EVF_CONTROL | 1<<EVF_SHIFT);
+			for (val = VAL_BLK(val); NOT_END(val); val++)
+				if (IS_WORD(val))
+					switch (VAL_WORD_CANON(val)) {
+						case SYM_CONTROL:
+							SET_FLAG(VAL_EVENT_FLAGS(value), EVF_CONTROL);
+							break;
+						case SYM_SHIFT:
+							SET_FLAG(VAL_EVENT_FLAGS(value), EVF_SHIFT);
+							break;
+						case SYM_DOUBLE:
+							SET_FLAG(VAL_EVENT_FLAGS(value), EVF_DOUBLE);
+							break;
+					}
+		}
+		else return FALSE;
+		break;
+
 	default:
 			return FALSE;
 	}
