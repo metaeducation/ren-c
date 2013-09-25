@@ -88,8 +88,8 @@ typedef unsigned long long u64;
 typedef long long		REBIPT;		// integral counterpart of void*
 typedef unsigned long long	REBUPT;		// unsigned counterpart of void*
 #else
-typedef long			REBIPT;
-typedef unsigned long	REBUPT;
+typedef long			REBIPT;		// integral counterpart of void*
+typedef unsigned long	REBUPT;		// unsigned counterpart of void*
 #endif
 
 #define MAX_I32 ((int)0x7fffffff)
