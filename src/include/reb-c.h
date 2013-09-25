@@ -60,6 +60,8 @@ typedef int32_t			i32;
 typedef uint32_t		u32;
 typedef int64_t			i64;
 typedef uint64_t		u64;
+typedef intptr_t		REBIPT;		// integral counterpart of void*
+typedef uintptr_t		REBUPT;		// unsigned counterpart of void*
 
 #define MAX_I32 INT32_MAX
 #define MIN_I32 INT32_MIN
@@ -83,11 +85,11 @@ typedef long long       i64;
 typedef unsigned long long u64;
 #endif
 #ifdef __LLP64__
-typedef long long		intptr_t;
-typedef unsigned long long	uintptr_t;
+typedef long long		REBIPT;		// integral counterpart of void*
+typedef unsigned long long	REBUPT;		// unsigned counterpart of void*
 #else
-typedef long			intptr_t;
-typedef unsigned long	uintptr_t;
+typedef long			REBIPT;
+typedef unsigned long	REBUPT;
 #endif
 
 #define MAX_I32 ((int)0x7fffffff)
@@ -137,8 +139,6 @@ typedef i8				REBOOL;     // 8  bit flag (for struct usage)
 typedef u32    			REBFLG;     // 32 bit flag (for cpu efficiency)
 typedef float           REBD32;     // 32 bit decimal
 typedef double          REBDEC;     // 64 bit decimal
-typedef intptr_t		REBIPT;		// integral counterpart of void*
-typedef uintptr_t		REBUPT;		// unsigned counterpart of void*
 
 typedef unsigned char   REBYTE;     // unsigned byte data
 typedef u16				REBUNI;     // unicode char
