@@ -174,7 +174,7 @@ OBJS =	objs/a-constants.o objs/a-globals.o objs/a-lib.o objs/b-boot.o \
 	objs/c-function.o objs/c-port.o objs/c-task.o objs/c-word.o \
 	objs/d-crash.o objs/d-dump.o objs/d-print.o objs/f-blocks.o \
 	objs/f-deci.o objs/f-dtoa.o objs/f-enbase.o objs/f-extension.o objs/f-math.o \
-	objs/f-modify.o objs/f-random.o objs/f-round.o objs/f-series.o \
+	objs/f-modify.o objs/f-qsort.o objs/f-random.o objs/f-round.o objs/f-series.o \
 	objs/f-stubs.o objs/l-scan.o objs/l-types.o objs/m-gc.o \
 	objs/m-pools.o objs/m-series.o objs/n-control.o objs/n-data.o \
 	objs/n-io.o objs/n-loop.o objs/n-math.o objs/n-sets.o \
@@ -292,14 +292,14 @@ encap-boot-core: prep-encap-boot-core objs $(OBJS) $(HOST_ENCAP) $(HOST)
 objs:
 	mkdir -p objs
 
-lib:	r3.dll
+lib:	$(R3LIB)
 
 # PUBLIC: Shared library:
 # NOTE: Did not use "-Wl,-soname,libr3.dll" because won't find .dll in local dir.
-r3.dll: prep-lib objs $(OBJS)
-	$(CC) -o r3.dll $(BIT) -shared $(OBJS) $(CLIB)
-	$(STRIP) r3.dll
-	$(LS) r3.dll
+$(R3LIB): prep-lib objs $(OBJS)
+	$(CC) -o $(R3LIB) $(BIT) -shared $(OBJS) $(CLIB)
+	$(STRIP) $(R3LIB)
+	$(LS) $(R3LIB)
 
 # PUBLIC: Core Host using the shared lib:
 
@@ -384,6 +384,9 @@ objs/f-math.o:        $R/f-math.c
 
 objs/f-modify.o:      $R/f-modify.c
 	$(CC) $R/f-modify.c $(RFLAGS) -o objs/f-modify.o
+
+objs/f-qsort.o:      $R/f-qsort.c
+	$(CC) $R/f-qsort.c $(RFLAGS) -o objs/f-qsort.o
 
 objs/f-random.o:      $R/f-random.c
 	$(CC) $R/f-random.c $(RFLAGS) -o objs/f-random.o
