@@ -663,7 +663,7 @@
 	Rebind_Block(parent2, child, BLK_SKIP(child, 1), REBIND_FUNC | REBIND_TABLE);
 
 	// release the bind table 
-	Collect_End(wrds);
+	Collect_End(child);
 
 	return child;
 }
