@@ -43,7 +43,7 @@ namespace agg
 {
 //	extern "C" RL_LIB *RL;
 
-	extern "C" uintptr_t RL_Series(REBSER *ser, REBCNT what);
+	extern "C" REBUPT RL_Series(REBSER *ser, REBCNT what);
 
 	extern "C" void rebdrw_add_vertex (void* gr, REBXYF p)
 	{
