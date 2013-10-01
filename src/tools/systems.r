@@ -32,7 +32,7 @@ systems: [
 	[0.4.20 "linux_arm"  linux  [+O2 HID LDL ST1 -LM]]
 	[0.4.30 "linux_mips" linux  [+O2 HID LDL ST1 -LM]]  ; glibc does not need C++
 	[0.4.40 "linux_x64"  posix  [+O2 HID LDL ST1 -LM]]
-	[0.5.75 "haiku"      posix  [+O2 ST1 NWK UIN]]
+	[0.5.75 "haiku"      posix  [+O2 ST1 NWK]]
 	[0.7.02 "freebsd"    posix  [+O1 C++ ST1 -LM]]
 	[0.9.04 "openbsd"    posix  [+O1 C++ ST1 -LM]]
 	[0.13.01 "android_arm"  android  [HID F64 LDL LLOG -LM CST]]
@@ -54,7 +54,6 @@ compile-flags: [
 	PAK: "-fpack-struct"          ; pack structures
 	ARC: "-arch i386"             ; x86 32 bit architecture (OSX)
 	M32: "-m32"                   ; use 32-bit memory model
-	UIN: "-DDEF_UINT"             ; unsigned int defined
 ]
 
 linker-flags: [
