@@ -73,10 +73,9 @@ static REBOOL Equal_Object(REBVAL *val, REBVAL *arg)
 static void Append_Obj(REBSER *obj, REBVAL *arg)
 {
 	REBCNT i;
+	REBCNT len = 0;
 	REBVAL *val;
 	REBVAL *start = arg;
-	REBINT *binds; // for binding table
-	REBFLG copy = 1;
 
 	// Can be a word:
 	if (ANY_WORD(arg)) {
@@ -91,74 +90,48 @@ static void Append_Obj(REBSER *obj, REBVAL *arg)
 
 	if (!IS_BLOCK(arg)) Trap_Arg(arg);
 
-	// Process word/value argument block:
-
-	// Use binding table
-	binds = WORDS_HEAD(Bind_Table);
-	Collect_Start(BIND_ALL);
-	// Setup binding table with obj words:
-	Collect_Object(obj);
-
+	// Verify word/value argument block:
 	for (arg = VAL_BLK_DATA(arg); NOT_END(arg); arg += 2) {
 
-		if (!IS_WORD(arg) && !IS_SET_WORD(arg)) {
-			// release binding table
-			BLK_TERM(BUF_WORDS);
-			Collect_End(obj);
-			Trap_Arg(arg);
-		}
+		if (!IS_WORD(arg) && !IS_SET_WORD(arg)) Trap_Arg(arg);
 
-		if (i = binds[VAL_WORD_CANON(arg)]) {
-			// Just change the value, do not append the word.
+		if (NZ(i = Find_Word_Index(obj, VAL_WORD_SYM(arg), TRUE))) {
+			// Just change the value, do not append it.
 			val = FRM_VALUE(obj, i);
 			if (GET_FLAGS(VAL_OPTS(FRM_WORD(obj, i)), OPTS_HIDE, OPTS_LOCK)) { 
-				// release binding table
-				BLK_TERM(BUF_WORDS);
-				Collect_End(obj);
-				if (VAL_PROTECTED(FRM_WORD(obj, i)))
-					Trap1(RE_LOCKED_WORD, FRM_WORD(obj, i));
+				// Back out... reset any prior flags:
+				for (; arg != VAL_BLK_DATA(start); arg -= 2) VAL_CLR_OPT(arg, OPTS_TEMP);
+				if (VAL_PROTECTED(FRM_WORD(obj, i))) Trap1(RE_LOCKED_WORD, FRM_WORD(obj, i));
 				Trap0(RE_HIDDEN);
 			}
-
+			// Problem above: what about prior OPTS_FLAGS? Ok to leave them as is?
 			if (IS_END(arg+1)) SET_NONE(val);
 			else *val = arg[1];
+			VAL_SET_OPT(arg, OPTS_TEMP);
 		} else {
-			if (VAL_WORD_CANON(arg) == SYM_SELF) {
-				// release binding table
-				BLK_TERM(BUF_WORDS);
-				Collect_End(obj);
-				Trap0(RE_SELF_PROTECTED);
-			}
-
-			// collect the word
-			binds[VAL_WORD_CANON(arg)] = SERIES_TAIL(BUF_WORDS);
-			EXPAND_SERIES_TAIL(BUF_WORDS, 1);
-			val = BLK_LAST(BUF_WORDS);
-			VAL_SET(val, VAL_TYPE(arg));
-			VAL_SET_OPT(val, OPTS_UNWORD);
-			VAL_BIND_SYM(val) = VAL_WORD_SYM(arg);
-			// Allow all datatypes:
-			VAL_BIND_TYPESET(val) = ~((TYPESET(REB_END) | TYPESET(REB_UNSET))); // not END or UNSET
-
-			// Append new word and value to obj
-
-			// copy word table at most once
-			Expand_Frame(obj, 1, copy);
-			copy = 0;
-
-			val = Append_Frame(obj, 0, VAL_WORD_SYM(arg));
-			if (IS_END(arg+1)) {
-				SET_NONE(val);
-				break;
-			}
-			else *val = arg[1];
+			if (VAL_WORD_CANON(arg) == SYM_SELF) Trap0(RE_SELF_PROTECTED);
+			len++;
+			// was: Trap1(RE_DUP_VARS, arg);
 		}
+	
 		if (IS_END(arg+1)) break; // fix bug#708
 	}
 
-	// release binding table
-	BLK_TERM(BUF_WORDS);
-	Collect_End(obj);
+	// Append new values to end of frame (if necessary):
+	if (len > 0) {
+		Expand_Frame(obj, len, 1); // copy word table also
+		for (arg = VAL_BLK_DATA(start); NOT_END(arg); arg += 2) {
+			if (VAL_GET_OPT(arg, OPTS_TEMP)) VAL_CLR_OPT(arg, OPTS_TEMP);
+			else {
+				val = Append_Frame(obj, 0, VAL_WORD_SYM(arg));
+				if (IS_END(arg+1)) {
+					SET_NONE(val);
+					break;
+				}
+				else *val = arg[1];
+			}
+		}
+	}
 }
 
 static REBSER *Trim_Object(REBSER *obj)
