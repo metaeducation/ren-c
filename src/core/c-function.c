@@ -318,6 +318,9 @@
 		case R_ARG3:
 			*ds = *D_ARG(3);
 			break;
+		case R_ARG4:
+			*ds = *D_ARG(4);
+			break;
 		}
 	}
 }
@@ -367,6 +370,9 @@
 			break;
 		case R_ARG3:
 			*ds = *D_ARG(3);
+			break;
+		case R_ARG4:
+			*ds = *D_ARG(4);
 			break;
 		}
 	}

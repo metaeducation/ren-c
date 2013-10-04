@@ -293,7 +293,6 @@ enum {
 ***********************************************************************/
 {
 	Apply_Block(D_ARG(1), D_ARG(2), !D_REF(3)); // stack volatile
-	VAL_CLR_OPT(DS_TOP, OPTS_REVAL); // secure against return/redo
 	return R_TOS;
 }
 
@@ -369,14 +368,16 @@ enum {
 
 	if (D_REF(4)) {	//QUIT
 		if (Try_Block_Halt(VAL_SERIES(D_ARG(1)), VAL_INDEX(D_ARG(1)))) {
-			// We are here because of a QUIT/HALT condition.
+			// We can be here for 2 reasons:
+			// 1. a QUIT/HALT condition
+			// 2. an error condition
 			ret = DS_NEXT;
 			if (VAL_ERR_NUM(ret) == RE_QUIT)
 				ret = VAL_ERR_VALUE(ret);
 			else if (VAL_ERR_NUM(ret) == RE_HALT)
 				Halt_Code(RE_HALT, 0);
 			else
-				Crash(RP_NO_CATCH);
+				Throw_Error(VAL_ERR_OBJECT(ret));
 			*DS_RETURN = *ret;
 			return R_RET;
 		}
@@ -590,10 +591,14 @@ got_err:
 /*
 ***********************************************************************/
 {
-	REBVAL *block = IS_FALSE(D_ARG(1)) ? D_ARG(3) : D_ARG(2);
+	REBCNT argnum = IS_FALSE(D_ARG(1)) ? 3 : 2;
 
-	DO_BLK(block);
-	return R_TOS1;
+	if (IS_BLOCK(D_ARG(argnum))) {
+		DO_BLK(D_ARG(argnum));
+		return R_TOS1;
+	} else {
+		return argnum == 2 ? R_ARG2 : R_ARG3;
+	}
 }
 
 
@@ -614,13 +619,21 @@ got_err:
 /*
 ***********************************************************************/
 {
-	if (IS_FALSE(D_ARG(1))) return R_NONE;
-	if (IS_BLOCK(D_ARG(2)) && !D_REF(3) /* not using /ONLY */) {
-		DO_BLK(D_ARG(2));
+	REBVAL *cond = D_ARG(1);
+	REBCNT argnum = 2;
+
+	if (!D_REF(3)) {	// no /else
+		if (IS_FALSE(cond)) return R_NONE;
+	} else
+		if (IS_FALSE(cond)) argnum = 4;
+
+	if (IS_BLOCK(D_ARG(argnum))) {
+		DO_BLK(D_ARG(argnum));
 		return R_TOS1;
-	} else {
-		return R_ARG2;
+	} {
+		return argnum == 2 ? R_ARG2 : R_ARG4;
 	}
+
 }
 
 
@@ -760,8 +773,12 @@ got_err:
 ***********************************************************************/
 {
 	if (IS_FALSE(D_ARG(1))) {
-		DO_BLK(D_ARG(2));
-		return R_TOS1;
+		if (IS_BLOCK(D_ARG(2))) {
+			DO_BLK(D_ARG(2));
+			return R_TOS1;
+		} else {
+			return R_ARG2;
+		}
 	}
 	return R_NONE;
 }
