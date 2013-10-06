@@ -122,6 +122,7 @@
 
 	//DISABLE_GC;
 	words = Make_Block(len + 1); // size + room for SELF
+	BARE_SERIES(words);
 	frame = Make_Block(len + 1);
 	//ENABLE_GC;
 	// Note: cannot use Append_Frame for first word.
@@ -148,8 +149,10 @@
 	BLK_TERM(frame);
 
 	// Expand or copy WORDS block:
-	if (copy) FRM_WORD_SERIES(frame) = Copy_Expand_Block(words, delta);
-	else {
+	if (copy) {
+		FRM_WORD_SERIES(frame) = Copy_Expand_Block(words, delta);
+		BARE_SERIES(FRM_WORD_SERIES(frame));
+	} else {
 		Extend_Series(words, delta);
 		BLK_TERM(words);
 	}
@@ -164,8 +167,8 @@
 **      if necessary. Returns the value cell for the word. (Set to
 **      UNSET by default to avoid GC corruption.)
 **
-**      If sym is zero, use the word sym and bind the word value.
-**      If sym is set, use that sym.
+**      If word is not NULL, use the word sym and bind the word value,
+**      otherwise use sym.
 **
 **      WARNING: Invalidates pointers to values within the frame
 **      because the frame block may get expanded. (Use indexes.)
@@ -265,11 +268,13 @@
 **
 ***********************************************************************/
 {
-	REBVAL *words;
-	REBINT *binds = WORDS_HEAD(Bind_Table); // GC safe to do here
+	REBVAL *words = FRM_WORDS(prior);
+	REBINT *binds = WORDS_HEAD(Bind_Table);
 	REBINT n;
 
-	words = FRM_WORDS(prior);
+	// this is necessary for COPY_VALUES below
+	// to not overwrite memory BUF_WORDS does not own
+	RESIZE_SERIES(BUF_WORDS, SERIES_TAIL(prior));
 	COPY_VALUES(words, BLK_HEAD(BUF_WORDS), SERIES_TAIL(prior));
 	SERIES_TAIL(BUF_WORDS) = SERIES_TAIL(prior);
 	for (n = 1, words++; NOT_END(words); words++) // skips first = SELF
@@ -281,7 +286,7 @@
 **
 */ void Collect_Words(REBVAL *block, REBFLG modes)
 /*
-**		The inner recursive loop used for Collect_Words function below.
+**		The inner recursive loop used for Collect_Frame function below.
 **
 ***********************************************************************/
 {
@@ -859,9 +864,6 @@
 
 	CHECK_BIND_TABLE;
 
-//	for (index = 0; index < Bind_Table->tail; index++)
-//		if (binds[index] != 0) Crash(1333);
-
 	// Note about optimization: it's not a big win to avoid the
 	// binding table for short blocks (size < 4), because testing
 	// every block for the rare case adds up.
@@ -879,6 +881,8 @@
 	// Reset binding table:
 	for (words = FRM_WORDS(frame)+1; NOT_END(words); words++)
 		binds[VAL_BIND_CANON(words)] = 0;
+
+	CHECK_BIND_TABLE;
 }
 
 
@@ -981,6 +985,8 @@
 	// Reset binding table:
 	for (args = BLK_SKIP(words, 1); NOT_END(args); args++)
 		binds[VAL_BIND_CANON(args)] = 0;
+
+	CHECK_BIND_TABLE;
 }
 
 
