@@ -167,8 +167,8 @@
 **      if necessary. Returns the value cell for the word. (Set to
 **      UNSET by default to avoid GC corruption.)
 **
-**      If word is not NULL, use the word sym and bind the word value,
-**      otherwise use sym.
+**      If sym is zero, use the word sym and bind the word value.
+**      If sym is set, use that sym.
 **
 **      WARNING: Invalidates pointers to values within the frame
 **      because the frame block may get expanded. (Use indexes.)
@@ -268,13 +268,11 @@
 **
 ***********************************************************************/
 {
-	REBVAL *words = FRM_WORDS(prior);
-	REBINT *binds = WORDS_HEAD(Bind_Table);
+	REBVAL *words;
+	REBINT *binds = WORDS_HEAD(Bind_Table); // GC safe to do here
 	REBINT n;
 
-	// this is necessary for COPY_VALUES below
-	// to not overwrite memory BUF_WORDS does not own
-	RESIZE_SERIES(BUF_WORDS, SERIES_TAIL(prior));
+	words = FRM_WORDS(prior);
 	COPY_VALUES(words, BLK_HEAD(BUF_WORDS), SERIES_TAIL(prior));
 	SERIES_TAIL(BUF_WORDS) = SERIES_TAIL(prior);
 	for (n = 1, words++; NOT_END(words); words++) // skips first = SELF
@@ -286,7 +284,7 @@
 **
 */ void Collect_Words(REBVAL *block, REBFLG modes)
 /*
-**		The inner recursive loop used for Collect_Frame function below.
+**		The inner recursive loop used for Collect_Words function below.
 **
 ***********************************************************************/
 {
@@ -1277,6 +1275,8 @@
 	REBINT index = VAL_WORD_INDEX(word);
 	REBINT dsf;
 	REBSER *frm;
+
+	if (THROWN(value)) return;
 
 	if (!HAS_FRAME(word)) Trap1(RE_NOT_DEFINED, word);
 
