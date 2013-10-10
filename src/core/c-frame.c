@@ -167,8 +167,8 @@
 **      if necessary. Returns the value cell for the word. (Set to
 **      UNSET by default to avoid GC corruption.)
 **
-**      If sym is zero, use the word sym and bind the word value.
-**      If sym is set, use that sym.
+**      If word is not NULL, use the word sym and bind the word value,
+**      otherwise use sym.
 **
 **      WARNING: Invalidates pointers to values within the frame
 **      because the frame block may get expanded. (Use indexes.)
