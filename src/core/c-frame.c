@@ -268,11 +268,13 @@
 **
 ***********************************************************************/
 {
-	REBVAL *words;
-	REBINT *binds = WORDS_HEAD(Bind_Table); // GC safe to do here
+	REBVAL *words = FRM_WORDS(prior);
+	REBINT *binds = WORDS_HEAD(Bind_Table);
 	REBINT n;
 
-	words = FRM_WORDS(prior);
+	// this is necessary for COPY_VALUES below
+	// to not overwrite memory BUF_WORDS does not own
+	RESIZE_SERIES(BUF_WORDS, SERIES_TAIL(prior));
 	COPY_VALUES(words, BLK_HEAD(BUF_WORDS), SERIES_TAIL(prior));
 	SERIES_TAIL(BUF_WORDS) = SERIES_TAIL(prior);
 	for (n = 1, words++; NOT_END(words); words++) // skips first = SELF
@@ -284,7 +286,7 @@
 **
 */ void Collect_Words(REBVAL *block, REBFLG modes)
 /*
-**		The inner recursive loop used for Collect_Words function below.
+**		The inner recursive loop used for Collect_Frame function below.
 **
 ***********************************************************************/
 {
