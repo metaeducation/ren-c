@@ -90,15 +90,13 @@ static u32 *core_ext_words;
 	case CMD_CORE_GET_ENCAP_DATA:
 		if (encapBuffer != NULL)
 		{
-			REBINT *s;
 			REBSER *encapData = (REBSER*)RL_Make_String(encapBufferLen, FALSE);
 			COPY_MEM((REBYTE *)RL_SERIES(encapData, RXI_SER_DATA), encapBuffer, encapBufferLen);
 			FREE_MEM(encapBuffer);
 			encapBuffer = NULL;
 			
 			//hack! - will set the tail to data size
-			s = (REBINT*)encapData;
-			s[1] = encapBufferLen;
+			*((REBCNT*)(encapData+1)) = encapBufferLen;
 			
 			//setup returned binary! value
 			RXA_TYPE(frm,1) = RXT_BINARY;
@@ -114,7 +112,6 @@ static u32 *core_ext_words;
 			REBYTE *buffer;
 			REBSER *binary;
 			REBYTE *binaryBuffer;
-			REBINT *s;
 			REBINT w = RXA_IMAGE_WIDTH(frm,1);
 			REBINT h = RXA_IMAGE_HEIGHT(frm,1);
 			LodePNGState state;
@@ -138,7 +135,7 @@ static u32 *core_ext_words;
 			lodepng_state_cleanup(&state);
 			
 			if (error) return RXR_NONE;
-
+RL_Print("buff size: %d\n",buffersize);
 			//allocate new binary!
 			binary = (REBSER*)RL_Make_String(buffersize, FALSE);
 			binaryBuffer = (REBYTE *)RL_SERIES(binary, RXI_SER_DATA);
@@ -146,8 +143,7 @@ static u32 *core_ext_words;
 			memcpy(binaryBuffer, buffer, buffersize);
 			
 			//hack! - will set the tail to buffersize
-			s = (REBINT*)binary;
-			s[1] = buffersize;
+			*((REBCNT*)(binary+1)) = buffersize;
 			
 			//setup returned binary! value
 			RXA_TYPE(frm,1) = RXT_BINARY;			
@@ -189,10 +185,8 @@ static u32 *core_ext_words;
 			}
 			
 			if (OS_Request_Dir(title , &stringBuffer, path)){
-				REBINT *s = (REBINT*)string;
-
 				//hack! - will set the tail to string length
-				s[1] = wcslen(stringBuffer);
+				*((REBCNT*)(string+1)) = wcslen(stringBuffer);
 				
 				RXA_TYPE(frm, 1) = RXT_STRING;
 				RXA_SERIES(frm,1) = string;
@@ -258,7 +252,6 @@ static u32 *core_ext_words;
 			REBINT len, pad_len;
 
 			if (RXA_TYPE(frm, 5) == RXT_HANDLE) {
-				REBINT *s;
 				REBSER *binaryOut;
 				REBYTE *binaryOutBuffer;
 
@@ -315,8 +308,7 @@ static u32 *core_ext_words;
 				if (pad_data) OS_Free(pad_data);
 		
 				//hack! - will set the tail to buffersize
-				s = (REBINT*)binaryOut;
-				s[1] = pad_len;
+				*((REBCNT*)(binaryOut+1)) = pad_len;
 		
 				//setup returned binary! value
 				RXA_TYPE(frm, 1) = RXT_BINARY;		
@@ -381,7 +373,6 @@ static u32 *core_ext_words;
 			REBSER *binary;
 			REBINT binary_len;
 			REBYTE *binaryBuffer;
-			REBINT *s;
 			REBOOL padding = TRUE; //PKCS1 is on by default
 
 			BI_CTX *bi_ctx;
@@ -474,8 +465,7 @@ static u32 *core_ext_words;
 			}
 
 			//hack! - will set the tail to buffersize
-			s = (REBINT*)binary;
-			s[1] = binary_len;
+			*((REBCNT*)(binary+1)) = binary_len;
 			
 			//setup returned binary! value
 			RXA_TYPE(frm,1) = RXT_BINARY;			
@@ -492,7 +482,6 @@ static u32 *core_ext_words;
 			REBSER *obj = RXA_OBJECT(frm, 1);
 			u32 *words = RL_WORDS_OF_OBJECT(obj);
 			REBYTE *objData;
-			REBINT *s;
 
             while (type = RL_GET_FIELD(obj, words[0], &val))
             {
@@ -523,18 +512,14 @@ static u32 *core_ext_words;
 			dh_ctx.x = (REBYTE *)RL_SERIES(priv_key.series, RXI_SER_DATA);
 			memset(dh_ctx.x, 0, dh_ctx.len);
 			//hack! - will set the tail to key size
-			s = (REBINT*)priv_key.series;
-			s[1] = dh_ctx.len;
-
+			*((REBCNT*)(priv_key.series+1)) = dh_ctx.len;
 			
 			pub_key.series = (REBSER*)RL_Make_String(dh_ctx.len, FALSE);
 			pub_key.index = 0;
 			dh_ctx.gx = (REBYTE *)RL_SERIES(pub_key.series, RXI_SER_DATA);
 			memset(dh_ctx.gx, 0, dh_ctx.len);
 			//hack! - will set the tail to key size
-			s = (REBINT*)pub_key.series;
-			s[1] = dh_ctx.len;
-
+			*((REBCNT*)(pub_key.series+1)) = dh_ctx.len;
 
 			//generate keys
 			DH_generate_key(&dh_ctx);
@@ -557,7 +542,6 @@ static u32 *core_ext_words;
 			REBYTE *objData;
 			REBSER *binary;
 			REBYTE *binaryBuffer;
-			REBINT *s;
 
             while (type = RL_GET_FIELD(obj, words[0], &val))
             {
@@ -588,8 +572,7 @@ static u32 *core_ext_words;
 			binaryBuffer = (REBYTE *)RL_SERIES(binary, RXI_SER_DATA);
 			memset(binaryBuffer, 0, dh_ctx.len);
 			//hack! - will set the tail to buffersize
-			s = (REBINT*)binary;
-			s[1] = dh_ctx.len;
+			*((REBCNT*)(binary+1)) = dh_ctx.len;
 
 			dh_ctx.k = binaryBuffer;
 
