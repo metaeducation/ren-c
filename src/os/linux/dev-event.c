@@ -51,6 +51,7 @@ void Done_Device(int handle, int error);
 
 #ifndef REB_CORE
 extern Display *x_display;
+REBGOB *Find_Gob_By_Window(Window win);
 
 static void Add_Event_XY(REBGOB *gob, REBINT id, REBINT xy, REBINT flags)
 {
@@ -133,7 +134,7 @@ static void Add_Event_Key(REBGOB *gob, REBINT id, REBINT key, REBINT flags)
 
 			case MotionNotify:
 				RL_Print ("mouse motion\n");
-				gob = Find_Gob(ev.xmotion.window);
+				gob = Find_Gob_By_Window(ev.xmotion.window);
 				xyd = (ROUND_TO_INT(PHYS_COORD_X(ev.xmotion.x))) + (ROUND_TO_INT(PHYS_COORD_Y(ev.xmotion.y)) << 16);
 				Add_Event_XY(gob, EVT_MOVE, xyd, 0);
 				break;
@@ -144,7 +145,7 @@ static void Add_Event_Key(REBGOB *gob, REBINT id, REBINT key, REBINT flags)
 											 1,
 											 &keysyms_per_keycode_return);
 
-				gob = Find_Gob(ev.xkey.window);
+				gob = Find_Gob_By_Window(ev.xkey.window);
 				if(gob != NULL){
 					Add_Event_Key(gob, EVT_KEY, keysym[0], 0);
 				}
@@ -158,7 +159,7 @@ static void Add_Event_Key(REBGOB *gob, REBINT id, REBINT key, REBINT flags)
 													 1,
 													 &keysyms_per_keycode_return);
 
-				gob = Find_Gob(ev.xkey.window);
+				gob = Find_Gob_By_Window(ev.xkey.window);
 				if(gob != NULL){
 					Add_Event_Key(gob, EVT_KEY_UP, keysym[0], 0);
 				}
@@ -174,7 +175,7 @@ static void Add_Event_Key(REBGOB *gob, REBINT id, REBINT key, REBINT flags)
 				break;
 			case ClientMessage:
 				RL_Print ("closed\n");
-				gob = Find_Gob(ev.xclient.window);
+				gob = Find_Gob_By_Window(ev.xclient.window);
 				Add_Event_XY(gob, EVT_CLOSE, 0, 0);
 				break;
 			default:

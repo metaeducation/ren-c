@@ -66,7 +66,7 @@ EGLDisplay egl_display;
 
 #define MAX_WINDOWS 64 //must be in sync with os/host-view.c
 
-REBGOB *Find_Gob(Window win)
+REBGOB *Find_Gob_By_Window(Window win)
 {
 	int i = 0;
 	for(i = 0; i < MAX_WINDOWS; i ++ ){
