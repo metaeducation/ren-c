@@ -36,6 +36,10 @@
 **
 ***********************************************************************/
 
+#include <stdlib.h>
+#include <math.h>
+#include <X11/Xlib.h>
+
 #include "reb-host.h"
 
 //***** Externs *****
@@ -48,6 +52,7 @@ extern const unsigned char RX_graphics[];
 extern const unsigned char RX_draw[];
 extern const unsigned char RX_shape[];
 extern const unsigned char RX_text[];
+extern Display *x_display;
 
 //**********************************************************************
 //** Helper Functions **************************************************
@@ -104,7 +109,42 @@ extern const unsigned char RX_text[];
 **
 ***********************************************************************/
 {
-	return 0;
+       Screen *sc = NULL;
+       int dot, mm;
+
+       if (x_display == NULL){
+               return 0;
+       }
+       sc = XDefaultScreenOfDisplay(x_display);
+       switch(type) {
+               case SM_SCREEN_WIDTH:
+                       return XWidthOfScreen(sc);
+               case SM_SCREEN_HEIGHT:
+                       return XHeightOfScreen(sc);
+               case SM_WORK_WIDTH:
+               case SM_WORK_HEIGHT:
+               case SM_TITLE_HEIGHT:
+                       return 0; //FIXME
+               case SM_SCREEN_DPI_X:
+                       dot = XWidthOfScreen(sc);
+                       mm = XWidthMMOfScreen(sc);
+                       return round(dot * 25.4 / mm);
+               case SM_SCREEN_DPI_Y:
+                       dot = XHeightOfScreen(sc);
+                       mm = XHeightMMOfScreen(sc);
+                       return round(dot * 25.4 / mm);
+               case SM_BORDER_WIDTH:
+               case SM_BORDER_HEIGHT:
+               case SM_BORDER_FIXED_WIDTH:
+               case SM_BORDER_FIXED_HEIGHT:
+                       return 0; //FIXME, hardcoded
+               case SM_WINDOW_MIN_WIDTH:
+               case SM_WINDOW_MIN_HEIGHT:
+               case SM_WORK_X:
+               case SM_WORK_Y:
+               default:
+                       return 0; //FIXME, not implemented
+       }
 }
 
 /***********************************************************************
