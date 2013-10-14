@@ -140,7 +140,7 @@ static void Add_Event_Key(REBGOB *gob, REBINT id, REBINT key, REBINT flags)
 				Add_Event_XY(gob, EVT_MOVE, xyd, 0);
 				break;
 			case KeyPress:
-				RL_Print ("key %s is pressed\n", XKeysymToString(XKeycodeToKeysym(x_display, ev.xkey.keycode, 0)));
+				//RL_Print ("key %s is pressed\n", XKeysymToString(XKeycodeToKeysym(x_display, ev.xkey.keycode, 0)));
 				keysym = XGetKeyboardMapping(x_display,
 											 ev.xkey.keycode,
 											 1,
@@ -154,7 +154,7 @@ static void Add_Event_Key(REBGOB *gob, REBINT id, REBINT key, REBINT flags)
 				XFree(keysym);
 				break;
 			case KeyRelease:
-				RL_Print ("key %s is released\n", XKeysymToString(XKeycodeToKeysym(x_display, ev.xkey.keycode, 0)));
+				//RL_Print ("key %s is released\n", XKeysymToString(XKeycodeToKeysym(x_display, ev.xkey.keycode, 0)));
 				keysym = XGetKeyboardMapping(x_display,
 													 ev.xkey.keycode,
 													 1,
@@ -166,7 +166,7 @@ static void Add_Event_Key(REBGOB *gob, REBINT id, REBINT key, REBINT flags)
 				}
 
 				XFree(keysym);
-				RL_Print ("key %s is released\n", XKeysymToString(XKeycodeToKeysym(x_display, ev.xkey.keycode, 0)));
+				//RL_Print ("key %s is released\n", XKeysymToString(XKeycodeToKeysym(x_display, ev.xkey.keycode, 0)));
 				break;
 			case ResizeRequest:
 				RL_Print ("request to resize to %dx%d", ev.xresizerequest.width, ev.xresizerequest.height);
