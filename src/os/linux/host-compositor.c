@@ -44,7 +44,10 @@
 
 #include <stdio.h> //for NULL
 #include <math.h>	//for floor()
+#include <unistd.h> //for size_t
+
 #include "reb-host.h"
+#include "host-lib.h" //for OS_Make
 
 #include "egl-window.h"
 

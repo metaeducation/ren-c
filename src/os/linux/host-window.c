@@ -36,9 +36,12 @@
 **
 ***********************************************************************/
 
+#include <math.h>
+#include <unistd.h>
 #include "reb-host.h"
 #include "host-compositor.h"
 
+#include "host-lib.h"
 #include  <X11/Xlib.h>
 #include  <X11/Xatom.h>
 #include  <X11/Xutil.h>
