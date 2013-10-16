@@ -41,6 +41,7 @@
 #include <X11/Xlib.h>
 
 #include "reb-host.h"
+#include "host-window.h"
 
 //***** Externs *****
 RXIEXT int RXD_Graphics(int cmd, RXIFRM *frm, REBCEC *data);
@@ -52,7 +53,8 @@ extern const unsigned char RX_graphics[];
 extern const unsigned char RX_draw[];
 extern const unsigned char RX_shape[];
 extern const unsigned char RX_text[];
-extern Display *x_display;
+
+extern x_info_t *global_x_info;
 
 //**********************************************************************
 //** Helper Functions **************************************************
@@ -112,10 +114,10 @@ extern Display *x_display;
        Screen *sc = NULL;
        int dot, mm;
 
-       if (x_display == NULL){
+       if (global_x_info->display == NULL){
                return 0;
        }
-       sc = XDefaultScreenOfDisplay(x_display);
+       sc = XDefaultScreenOfDisplay(global_x_info->display);
        switch(type) {
                case SM_SCREEN_WIDTH:
                        return XWidthOfScreen(sc);

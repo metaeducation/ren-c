@@ -51,8 +51,13 @@
 #include "host-lib.h" //for OS_Make
 
 #include "host-window.h"
-#include "xlibrgb.h"
+//#include "host-compositor.h"
 
+void rebdrw_gob_color(REBGOB *gob, REBYTE* buf, REBXYI buf_size, REBXYI abs_oft, REBXYI clip_oft, REBXYI clip_siz);
+void rebdrw_gob_image(REBGOB *gob, REBYTE* buf, REBXYI buf_size, REBXYI abs_oft, REBXYI clip_oft, REBXYI clip_siz);
+void rebdrw_gob_draw(REBGOB *gob, REBYTE* buf, REBXYI buf_size, REBXYI abs_oft, REBXYI clip_oft, REBXYI clip_siz);
+REBINT rt_gob_text(REBGOB *gob, REBYTE* buf, REBXYI buf_size, REBXYF abs_oft, REBXYI clip_oft, REBXYI clip_siz);
+void Host_Crash(const char *reason);
 //***** Macros *****
 #define GOB_HWIN(gob)	(Find_Window(gob))
 
@@ -91,8 +96,7 @@ typedef struct {
 **
 ***********************************************************************/
 {
-	host_window_t *ew = GOB_HWIN(ctx->Win_Gob);
-	//hostMakeCurrent(ew->host_display, ew->host_surface, ew->host_surface, ew->host_context );
+	host_window_t *ew = (host_window_t*)GOB_HWIN(ctx->Win_Gob);
 	memset(ew->pixbuf, 0, ew->pixbuf_len);
 	return ew->pixbuf;
 }
@@ -405,13 +409,23 @@ typedef struct {
 	RL_Print("rebcmp_blit\n");
 	REBINT w = GOB_LOG_W_INT(ctx->Win_Gob);
 	REBINT h = GOB_LOG_H_INT(ctx->Win_Gob);
-	host_window_t *ew = GOB_HWIN(ctx->Win_Gob);
-	xlib_draw_rgb_32_image (ew->x_window,
-				ew->x_gc,
-				0, 0,	//x, y
-				w, h,
-				XLIB_RGB_DITHER_NORMAL,
-				ew->pixbuf,
-				4 * w);
+	host_window_t *ew = (host_window_t*)GOB_HWIN(ctx->Win_Gob);
+	if (global_x_info->sys_pixmap_format == pix_format_bgra32){
+		XPutImage (global_x_info->display,
+				   ew->x_window,
+					ew->x_gc,
+					ew->x_image,
+					0, 0,	//src x, y
+					0, 0,	//dest x, y
+					w, h);
+	} else {
+		put_image(global_x_info->display,
+				  ew->x_window,
+				  ew->x_gc,
+				  ew->x_image,
+				  w, h,
+				  global_x_info->sys_pixmap_format);
+	}
+
 	RL_Print("rebcmp_blit done\n");
 }

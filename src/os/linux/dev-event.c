@@ -48,10 +48,12 @@
 #include "reb-host.h"
 #include "host-lib.h"
 
+#include "host-window.h"
+
 void Done_Device(int handle, int error);
 
 #ifndef REB_CORE
-extern Display *x_display;
+extern x_info_t *global_x_info;
 REBGOB *Find_Gob_By_Window(Window win);
 
 static void Add_Event_XY(REBGOB *gob, REBINT id, REBINT xy, REBINT flags)
@@ -115,8 +117,8 @@ static void Add_Event_Key(REBGOB *gob, REBINT id, REBINT key, REBINT flags)
 	KeySym *keysym = NULL;
     REBINT keysyms_per_keycode_return;
 	REBINT xyd = 0;
-	while(XPending(x_display)) {
-		XNextEvent(x_display, &ev);
+	while(XPending(global_x_info->display)) {
+		XNextEvent(global_x_info->display, &ev);
 		switch (ev.type) {
 			case Expose:
 				RL_Print("exposed\n");
@@ -140,8 +142,8 @@ static void Add_Event_Key(REBGOB *gob, REBINT id, REBINT key, REBINT flags)
 				Add_Event_XY(gob, EVT_MOVE, xyd, 0);
 				break;
 			case KeyPress:
-				//RL_Print ("key %s is pressed\n", XKeysymToString(XKeycodeToKeysym(x_display, ev.xkey.keycode, 0)));
-				keysym = XGetKeyboardMapping(x_display,
+				//RL_Print ("key %s is pressed\n", XKeysymToString(XKeycodeToKeysym(global_x_info->display, ev.xkey.keycode, 0)));
+				keysym = XGetKeyboardMapping(global_x_info->display,
 											 ev.xkey.keycode,
 											 1,
 											 &keysyms_per_keycode_return);
@@ -154,8 +156,8 @@ static void Add_Event_Key(REBGOB *gob, REBINT id, REBINT key, REBINT flags)
 				XFree(keysym);
 				break;
 			case KeyRelease:
-				//RL_Print ("key %s is released\n", XKeysymToString(XKeycodeToKeysym(x_display, ev.xkey.keycode, 0)));
-				keysym = XGetKeyboardMapping(x_display,
+				//RL_Print ("key %s is released\n", XKeysymToString(XKeycodeToKeysym(global_x_info->display, ev.xkey.keycode, 0)));
+				keysym = XGetKeyboardMapping(global_x_info->display,
 													 ev.xkey.keycode,
 													 1,
 													 &keysyms_per_keycode_return);
@@ -166,7 +168,7 @@ static void Add_Event_Key(REBGOB *gob, REBINT id, REBINT key, REBINT flags)
 				}
 
 				XFree(keysym);
-				//RL_Print ("key %s is released\n", XKeysymToString(XKeycodeToKeysym(x_display, ev.xkey.keycode, 0)));
+				//RL_Print ("key %s is released\n", XKeysymToString(XKeycodeToKeysym(global_x_info->display, ev.xkey.keycode, 0)));
 				break;
 			case ResizeRequest:
 				RL_Print ("request to resize to %dx%d", ev.xresizerequest.width, ev.xresizerequest.height);
@@ -210,7 +212,7 @@ static void Add_Event_Key(REBGOB *gob, REBINT id, REBINT key, REBINT flags)
 	
 #ifndef REB_CORE
     // This returns the FD of the X11 display (or something like that)
-    x11_fd = ConnectionNumber(x_display);
+    x11_fd = ConnectionNumber(global_x_info->display);
 
         // Create a File Description Set containing x11_fd
 	FD_SET(x11_fd, &in_fds);

@@ -60,7 +60,7 @@ extern void* Find_Compositor(REBGOB *gob);
 extern REBINT Alloc_Window(REBGOB *gob);
 extern void Draw_Window(REBGOB *wingob, REBGOB *gob);
 
-Display *x_display;
+x_info_t *global_x_info = NULL;
 //***** Locals *****
 
 #define MAX_WINDOWS 64 //must be in sync with os/host-view.c
@@ -89,14 +89,55 @@ static REBXYF Zero_Pair = {0, 0};
 **
 ***********************************************************************/
 {
-	x_display = XOpenDisplay(NULL);
-	if (x_display == NULL){
+	int depth;
+	int red_mask, green_mask, blue_mask;
+	global_x_info = OS_Make(sizeof(global_x_info));
+	global_x_info->display = XOpenDisplay(NULL);
+	if (global_x_info->display == NULL){
 		RL_Print("XOpenDisplay failed");
 	}else{
-		RL_Print("XOpenDisplay succeeded: x_dislay = %x\n", x_display);
+		RL_Print("XOpenDisplay succeeded: x_dislay = %x\n", global_x_info->display);
 	}
 
-	xlib_rgb_init (x_display, DefaultScreenOfDisplay(x_display));
+	global_x_info->default_screen = DefaultScreenOfDisplay(global_x_info->display);
+	global_x_info->default_visual = DefaultVisualOfScreen(global_x_info->default_screen);
+	depth = DefaultDepthOfScreen(global_x_info->default_screen);
+
+	red_mask = global_x_info->default_visual->red_mask;
+	green_mask = global_x_info->default_visual->green_mask;
+	blue_mask = global_x_info->default_visual->blue_mask;
+	if (depth < 15 || red_mask == 0 || green_mask == 0 || blue_mask == 0){
+		XCloseDisplay(global_x_info->display);
+		Host_Crash("Not supported X window system");
+	}
+	global_x_info->default_depth = depth;
+	global_x_info->sys_pixmap_format = pix_format_undefined;
+	switch (global_x_info->default_depth){
+		case 15:
+			global_x_info->bpp = 16;
+			if(red_mask = 0x7C00 && green_mask == 0x3E0 && blue_mask == 0x1F)
+				global_x_info->sys_pixmap_format = pix_format_bgr555;
+			break;
+		case 16:
+			global_x_info->bpp = 16;
+			if(red_mask = 0xF800 && green_mask == 0x7E0 && blue_mask == 0x1F)
+				global_x_info->sys_pixmap_format = pix_format_bgr565;
+			break;
+		case 24:
+		case 32:
+			global_x_info->bpp = 32;
+			if (red_mask = 0xFF0000 && green_mask == 0xFF00 && blue_mask == 0xFF)
+				global_x_info->sys_pixmap_format = pix_format_bgra32;
+			else if (blue_mask = 0xFF0000 && green_mask == 0xFF00 && red_mask == 0xFF)
+				global_x_info->sys_pixmap_format = pix_format_rgba32;
+			break;
+		defaut:
+			break;
+	}
+
+	if (global_x_info->sys_pixmap_format == pix_format_undefined) {
+		Host_Crash("System Pixmap format couldn't be determined");
+	}
 }
 
 /***********************************************************************
@@ -143,9 +184,9 @@ static REBXYF Zero_Pair = {0, 0};
 	host_window_t *reb_host_window;
 
 	RL_Print("x: %d, y: %d, width: %d, height: %d\n", x, y, w, h);
-	root = DefaultRootWindow(x_display);
+	root = DefaultRootWindow(global_x_info->display);
 	swa.event_mask  =  ExposureMask | PointerMotionMask | KeyPressMask | KeyReleaseMask| ButtonPressMask |ButtonReleaseMask | StructureNotifyMask;
-	window = XCreateWindow(x_display, 
+	window = XCreateWindow(global_x_info->display, 
 						   root,
 						   x, y, w, h,
 						   0,
@@ -153,27 +194,41 @@ static REBXYF Zero_Pair = {0, 0};
 						   CopyFromParent, CWEventMask,
 						   &swa);
 
-	Atom wmDelete=XInternAtom(x_display, "WM_DELETE_WINDOW", 1);
-	XSetWMProtocols(x_display, window, &wmDelete, 1);
+	Atom wmDelete=XInternAtom(global_x_info->display, "WM_DELETE_WINDOW", 1);
+	XSetWMProtocols(global_x_info->display, window, &wmDelete, 1);
 
-	XMapWindow(x_display, window);
+	XMapWindow(global_x_info->display, window);
 
 	windex = Alloc_Window(gob);
 
 	if (windex < 0) Host_Crash("Too many windows");
 
-	GC gc = XCreateGC(x_display, window, 0, 0);
-	screen_num = DefaultScreen(x_display);
-	unsigned long black = BlackPixel(x_display, screen_num);
-	unsigned long white = WhitePixel(x_display, screen_num);
-	XSetBackground(x_display, gc, white);
-	XSetForeground(x_display, gc, black);
+	GC gc = XCreateGC(global_x_info->display, window, 0, 0);
+	screen_num = DefaultScreen(global_x_info->display);
+	unsigned long black = BlackPixel(global_x_info->display, screen_num);
+	unsigned long white = WhitePixel(global_x_info->display, screen_num);
+	XSetBackground(global_x_info->display, gc, white);
+	XSetForeground(global_x_info->display, gc, black);
 
 	host_window_t *ew = OS_Make(sizeof(host_window_t));
 	ew->x_window = window;
 	ew->x_gc = gc;
-	ew->pixbuf_len = w * h * 4; //RGB32;
+	ew->pixbuf_len = w * h * 4; //BGRA32;
 	ew->pixbuf = OS_Make(ew->pixbuf_len);
+	ew->x_image = XCreateImage(global_x_info->display,
+							  global_x_info->default_visual,
+							  global_x_info->default_depth,
+							  ZPixmap,
+							  0,
+							  ew->pixbuf,
+							  w, h,
+							  global_x_info->bpp,
+							  w * global_x_info->bpp / 8);
+#ifdef ENDIAN_BIG
+	ew->x_image->byte_order = MSBFirst;
+#else
+	ew->x_image->byte_order = LSBFirst;
+#endif
 
 	Gob_Windows[windex].win = ew;
 	Gob_Windows[windex].compositor = rebcmp_create(Gob_Root, gob);
@@ -200,6 +255,6 @@ static REBXYF Zero_Pair = {0, 0};
 {
 	RL_Print("Closing %x\n", gob);
 	host_window_t *win = GOB_HWIN(gob);
-   	XDestroyWindow    (x_display, win->x_window);
+   	XDestroyWindow    (global_x_info->display, win->x_window);
 	OS_Free(win);
 }
