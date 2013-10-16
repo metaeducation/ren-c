@@ -44,12 +44,14 @@
 
 #include <stdio.h> //for NULL
 #include <math.h>	//for floor()
+#include <string.h> //for memset
 #include <unistd.h> //for size_t
 
 #include "reb-host.h"
 #include "host-lib.h" //for OS_Make
 
-#include "egl-window.h"
+#include "host-window.h"
+#include "xlibrgb.h"
 
 //***** Macros *****
 #define GOB_HWIN(gob)	(Find_Window(gob))
@@ -77,8 +79,6 @@ typedef struct {
 	REBXYF absOffset;
 } REBCMP_CTX;
 
-extern EGLDisplay egl_display;
-
 /***********************************************************************
 **
 */ REBYTE* rebcmp_get_buffer(REBCMP_CTX* ctx)
@@ -91,8 +91,9 @@ extern EGLDisplay egl_display;
 **
 ***********************************************************************/
 {
-	egl_window_t *ew = GOB_HWIN(ctx->Win_Gob);
-	//eglMakeCurrent(ew->egl_display, ew->egl_surface, ew->egl_surface, ew->egl_context );
+	host_window_t *ew = GOB_HWIN(ctx->Win_Gob);
+	//hostMakeCurrent(ew->host_display, ew->host_surface, ew->host_surface, ew->host_context );
+	memset(ew->pixbuf, 0, ew->pixbuf_len);
 	return ew->pixbuf;
 }
 
@@ -234,6 +235,7 @@ extern EGLDisplay egl_display;
 				//Put backend specific code here
 				//------------------------------
 				// or use the similar draw api call:
+				RL_Print("Draw Color\n");
 				rebdrw_gob_color(gob, ctx->Window_Buffer, ctx->winBufSize, (REBXYI){x,y}, (REBXYI){gob_clip.left, gob_clip.top}, (REBXYI){gob_clip.right, gob_clip.bottom});
 				break;
 
@@ -360,7 +362,6 @@ extern EGLDisplay egl_display;
 		//------------------------------
 		//Put backend specific code here
 		//------------------------------
-		glViewport (x, y, w, h);
 	}
 
 	//Create union of "new" and "old" gob location
@@ -404,57 +405,13 @@ extern EGLDisplay egl_display;
 	RL_Print("rebcmp_blit\n");
 	REBINT w = GOB_LOG_W_INT(ctx->Win_Gob);
 	REBINT h = GOB_LOG_H_INT(ctx->Win_Gob);
-	egl_window_t *ew = GOB_HWIN(ctx->Win_Gob);
-	GLfloat vVertices[] = {
-	  	-1.0f,  -1.0f, 0.0f,
-		0.0f, 0.0f,
-	  	-1.0f,  1.0f, 0.0f,
-		0.0f, 0.1f,
-	  	1.0f,  1.0f, 0.0f,
-		1.0f, 1.0f,
-	  	1.0f,  -1.0f, 0.0f,
-		1.0f, 0.0f,
-	};
-	GLuint	indices [] = {
-		0, 1, 2,
-		0, 2, 3
-	};
-
-	glUseProgram(ew->shaderProgram );    // and select it for usage
-	//GLint color = glGetAttribLocation(ew->shaderProgram, "a_color");
-	//GLfloat v_color[4] = {1.0f, 0.0f, 0.0f, 1.0f};
-	//glVertexAttrib4fv(color, v_color);
-
-	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-
-	GLint texture_id;
-	glGenTextures(1, &texture_id);
-	glBindTexture(GL_TEXTURE_2D, texture_id);
-	RL_Print("w: %d, h: %d\n", w, h);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, ew->pixbuf);
-	//glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, w, h, 0, GL_RGB, GL_UNSIGNED_BYTE, ew->pixbuf);
-
-	GLuint text0 = glGetUniformLocation(ew->shaderProgram, "s_texture");
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, texture_id);
-	glUniform1i(text0, 0);
-
-	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,GL_REPEAT);
-	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER,GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,GL_NEAREST);
-
-   	glViewport ( 0, 0, w, h);
-
-	GLint loc = glGetAttribLocation(ew->shaderProgram, "a_position");
-	glVertexAttribPointer(loc, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), vVertices);
-	glEnableVertexAttribArray (loc); //coordinates
-
-	GLint sampler = glGetAttribLocation(ew->shaderProgram, "a_texture_coord");
-	glVertexAttribPointer(sampler, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), vVertices);
-	glEnableVertexAttribArray (sampler); //coordinates
-
-	glDrawElements (GL_TRIANGLES, 6, GL_UNSIGNED_INT, indices);
-	eglSwapBuffers(egl_display, ew->egl_surface);
+	host_window_t *ew = GOB_HWIN(ctx->Win_Gob);
+	xlib_draw_rgb_32_image (ew->x_window,
+				ew->x_gc,
+				0, 0,	//x, y
+				w, h,
+				XLIB_RGB_DITHER_NORMAL,
+				ew->pixbuf,
+				4 * w);
 	RL_Print("rebcmp_blit done\n");
 }
