@@ -296,8 +296,8 @@ typedef void(*CFUNC)(void *);
 
 #define TO_RGBA_COLOR(r,g,b,a) (REBCNT)((a)<<24 | (b)<<16 | (g)<<8 |  (r))
 
-//we use RGBA pixelformat on Android and linux
-#if defined(TO_ANDROID_ARM) || defined(TO_LINUX) || defined(TO_LINUX_X64)
+//we use RGBA pixelformat on Android
+#ifdef TO_ANDROID_ARM
 #define C_R 0
 #define C_G 1
 #define C_B 2
