@@ -680,6 +680,7 @@ wait: native [
 	{Waits for a duration, port, or both.}
 	value [number! time! port! block! none!]
 	/all {Returns all in a block}
+	/only {only check for ports given in the block to this function}
 ]
 
 wake-up: native [
