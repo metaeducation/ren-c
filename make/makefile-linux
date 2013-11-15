@@ -166,7 +166,8 @@ GFX= \
 	objs/host-draw-api.o\
 	objs/host-compositor.o\
 	objs/host-text.o\
-	objs/host-text-api.o
+	objs/host-text-api.o\
+	objs/host-put-image.o
 
 AGG= \
 	objs/agg_arc.o\
@@ -568,6 +569,9 @@ objs/host-window.o: $S/os/linux/host-window.c
 
 objs/host-compositor.o: $S/os/linux/host-compositor.c
 	$(CC) $S/os/linux/host-compositor.c $(HFLAGS) -o objs/host-compositor.o
+
+objs/host-put-image.o: $S/os/linux/host-put-image.cpp
+	$(CXX) $S/os/linux/host-put-image.cpp $(HFLAGS_CPP) -o objs/host-put-image.o -I $S/agg
 
 objs/aes.o: $S/codecs/aes/aes.c
 	$(CC) $S/codecs/aes/aes.c $(HFLAGS) -o objs/aes.o
