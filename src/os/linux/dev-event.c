@@ -179,7 +179,7 @@ static void Add_Event_Key(REBGOB *gob, REBINT id, REBINT key, REBINT flags)
 			case FocusIn:
 				RL_Print ("FocusIn, type = %d, window = %x\n", ev.xfocus.type, ev.xfocus.window);
 				gob = Find_Gob_By_Window(ev.xfocus.window);
-				if (!GET_GOB_STATE(gob, GOBS_ACTIVE)) {
+				if (gob && !GET_GOB_STATE(gob, GOBS_ACTIVE)) {
 					SET_GOB_STATE(gob, GOBS_ACTIVE);
 					Add_Event_XY(gob, EVT_ACTIVE, 0, 0);
 				}
@@ -187,7 +187,7 @@ static void Add_Event_Key(REBGOB *gob, REBINT id, REBINT key, REBINT flags)
 			case FocusOut:
 				RL_Print ("FocusOut, type = %d, window = %x\n", ev.xfocus.type, ev.xfocus.window);
 				gob = Find_Gob_By_Window(ev.xfocus.window);
-				if (GET_GOB_STATE(gob, GOBS_ACTIVE)) {
+				if (gob && GET_GOB_STATE(gob, GOBS_ACTIVE)) {
 					CLR_GOB_STATE(gob, GOBS_ACTIVE);
 					Add_Event_XY(gob, EVT_INACTIVE, 0, 0);
 				}
