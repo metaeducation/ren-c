@@ -281,7 +281,6 @@ typedef struct {
 				break;
 		}
 
-	RL_Print("glDrawn\n");
 
 		//recursively process sub GOBs
 		if (GOB_PANE(gob)) {

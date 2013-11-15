@@ -256,4 +256,10 @@ extern x_info_t *global_x_info;
 **
 ***********************************************************************/
 {
+	if(global_x_info) {
+	   if(global_x_info->display){
+		   XCloseDisplay(global_x_info->display);
+	   }
+	   OS_Free(global_x_info);
+	}
 }

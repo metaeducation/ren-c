@@ -69,7 +69,8 @@ REBGOB *Find_Gob_By_Window(Window win)
 {
 	int i = 0;
 	for(i = 0; i < MAX_WINDOWS; i ++ ){
-		if (((host_window_t*)Gob_Windows[i].win)->x_window == win){
+		host_window_t *hw = Gob_Windows[i].win;
+		if (hw && hw->x_window == win){
 			return Gob_Windows[i].gob;
 		}
 	}
@@ -91,7 +92,7 @@ static REBXYF Zero_Pair = {0, 0};
 {
 	int depth;
 	int red_mask, green_mask, blue_mask;
-	global_x_info = OS_Make(sizeof(global_x_info));
+	global_x_info = OS_Make(sizeof(x_info_t));
 	global_x_info->display = XOpenDisplay(NULL);
 	if (global_x_info->display == NULL){
 		RL_Print("XOpenDisplay failed");
@@ -233,8 +234,6 @@ static REBXYF Zero_Pair = {0, 0};
 	Gob_Windows[windex].win = ew;
 	Gob_Windows[windex].compositor = rebcmp_create(Gob_Root, gob);
 
-	//glTexEnvf(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);
-	
 	CLEAR_GOB_STATE(gob);
 	SET_GOB_STATE(gob, GOBS_NEW);
 
@@ -255,6 +254,11 @@ static REBXYF Zero_Pair = {0, 0};
 {
 	RL_Print("Closing %x\n", gob);
 	host_window_t *win = GOB_HWIN(gob);
-   	XDestroyWindow    (global_x_info->display, win->x_window);
+	XDestroyImage(win->x_image); //frees win->pixbuf as well
+	XFreeGC(global_x_info->display, win->x_gc);
+	XUnmapWindow(global_x_info->display, win->x_window);
+   	XDestroyWindow(global_x_info->display, win->x_window);
 	OS_Free(win);
+
+	Free_Window(gob);
 }
