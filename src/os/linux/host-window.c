@@ -189,7 +189,7 @@ static REBXYF Zero_Pair = {0, 0};
 	window = XCreateWindow(global_x_info->display, 
 						   root,
 						   x, y, w, h,
-						   0,
+						   REB_WINDOW_BORDER_WIDTH,
 						   CopyFromParent, InputOutput,
 						   CopyFromParent, CWEventMask,
 						   &swa);

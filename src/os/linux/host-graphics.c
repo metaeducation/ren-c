@@ -112,7 +112,16 @@ extern x_info_t *global_x_info;
 ***********************************************************************/
 {
        Screen *sc = NULL;
+	   Window root = DefaultRootWindow(global_x_info->display);
        int dot, mm;
+	   Atom     actual_type;
+	   int      actual_format;
+	   long     nitems;
+	   long     bytes;
+	   long     *data = NULL;
+	   int      status;
+	   int 		i;
+	   REBD32	ret;
 
        if (global_x_info->display == NULL){
                return 0;
@@ -123,10 +132,72 @@ extern x_info_t *global_x_info;
                        return XWidthOfScreen(sc);
                case SM_SCREEN_HEIGHT:
                        return XHeightOfScreen(sc);
+               case SM_WORK_X:
+               case SM_WORK_Y:
                case SM_WORK_WIDTH:
                case SM_WORK_HEIGHT:
+					   status = XGetWindowProperty(global_x_info->display,
+												   RootWindowOfScreen(sc),
+												   XInternAtom(global_x_info->display, "_NET_WORKAREA", True),
+												   0,
+												   (~0L),
+												   False,
+												   AnyPropertyType,
+												   &actual_type,
+												   &actual_format,
+												   &nitems,
+												   &bytes,
+												   (unsigned char**)&data);
+					   if (status != Success) {
+						   RL_Print("status = %d\n", status);
+						   Host_Crash("XGetWindowProperty failed in OS_Get_Metrics");
+					   }
+
+					   RL_Print("actual_type %d\n", actual_type);
+					   RL_Print("actual_format %d\n", actual_format);
+					   RL_Print("nitems %d\n", nitems);
+					   RL_Print("bytes %d\n", bytes);
+					   for (i=0; i < nitems; i++){
+						   RL_Print("data[%d] %d\n", i, data[i]);
+					   }
+					   switch(type) {
+						   case SM_WORK_X:
+							   ret = data[0];
+							   break;
+						   case SM_WORK_Y:
+							   ret = data[1];
+							   break;
+						   case SM_WORK_WIDTH:
+							   ret = data[2];
+							   break;
+						   case SM_WORK_HEIGHT:
+							   ret = data[3];
+							   break;
+					   }
+					   XFree(data);
+					   return ret;
                case SM_TITLE_HEIGHT:
-                       return 0; //FIXME
+					   status = XGetWindowProperty(global_x_info->display,
+												   RootWindowOfScreen(sc),
+												   XInternAtom(global_x_info->display, "_NET_FRAME_EXTENTS", True),
+												   0,
+												   (~0L),
+												   False,
+												   AnyPropertyType,
+												   &actual_type,
+												   &actual_format,
+												   &nitems,
+												   &bytes,
+												   (unsigned char**)&data);
+					   if (status != Success || data == NULL) {
+						   RL_Print("status = %d, nitmes = %d\n", status, nitems);
+						   //Host_Crash("XGetWindowProperty failed in OS_Get_Metrics");
+						   return 20; //FIXME
+					   }
+
+                       ret = data[2]; //left, right, top, bottom
+					   XFree(data);
+					   return ret;
                case SM_SCREEN_DPI_X:
                        dot = XWidthOfScreen(sc);
                        mm = XWidthMMOfScreen(sc);
@@ -139,13 +210,14 @@ extern x_info_t *global_x_info;
                case SM_BORDER_HEIGHT:
                case SM_BORDER_FIXED_WIDTH:
                case SM_BORDER_FIXED_HEIGHT:
-                       return 0; //FIXME, hardcoded
+					   return REB_WINDOW_BORDER_WIDTH;
                case SM_WINDOW_MIN_WIDTH:
+					   return 132; //FIXME; from windows
                case SM_WINDOW_MIN_HEIGHT:
-               case SM_WORK_X:
-               case SM_WORK_Y:
+					   return 38; //FIXME; from windows
                default:
-                       return 0; //FIXME, not implemented
+					   Host_Crash("NOT implemented others in OS_Get_Metrics");
+                       return 0; //FIXME, not implemented 
        }
 }
 

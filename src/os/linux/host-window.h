@@ -5,6 +5,7 @@
 #include  <X11/Xatom.h>
 #include  <X11/Xutil.h>
 
+#define REB_WINDOW_BORDER_WIDTH 5
 #ifdef __cplusplus
 extern "C" {
 #endif
