@@ -204,6 +204,11 @@ static void Add_Event_Key(REBGOB *gob, REBINT id, REBINT key, REBINT flags)
 				RL_Print("configuranotify\n");
 				xce = ev.xconfigure;
 				gob = Find_Gob_By_Window(ev.xconfigure.window);
+				if (gob->offset.x != xce.x || gob->offset.y != xce.y){
+					xyd = (ROUND_TO_INT(xce.x)) + (ROUND_TO_INT(xce.y) << 16);
+					//RL_Print("%s, %s, %d: EVT_OFFSET is sent\n", __FILE__, __func__, __LINE__);
+					Add_Event_XY(gob, EVT_OFFSET, xyd, 0);
+				}
 				gob->offset.x = xce.x;
 				gob->offset.y = xce.y;
 				gob->size.x = xce.width;
