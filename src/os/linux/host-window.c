@@ -187,7 +187,7 @@ static REBXYF Zero_Pair = {0, 0};
 
 	RL_Print("x: %d, y: %d, width: %d, height: %d\n", x, y, w, h);
 	root = DefaultRootWindow(global_x_info->display);
-	swa.event_mask  =  ExposureMask | PointerMotionMask | KeyPressMask | KeyReleaseMask| ButtonPressMask |ButtonReleaseMask | StructureNotifyMask;
+	swa.event_mask  =  ExposureMask | PointerMotionMask | KeyPressMask | KeyReleaseMask| ButtonPressMask |ButtonReleaseMask | StructureNotifyMask | FocusChangeMask;
 	window = XCreateWindow(global_x_info->display, 
 						   root,
 						   x, y, w, h,

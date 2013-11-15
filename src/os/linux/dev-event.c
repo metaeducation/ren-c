@@ -176,6 +176,22 @@ static void Add_Event_Key(REBGOB *gob, REBINT id, REBINT key, REBINT flags)
 			case ResizeRequest:
 				RL_Print ("request to resize to %dx%d", ev.xresizerequest.width, ev.xresizerequest.height);
 				break;
+			case FocusIn:
+				RL_Print ("FocusIn, type = %d, window = %x\n", ev.xfocus.type, ev.xfocus.window);
+				gob = Find_Gob_By_Window(ev.xfocus.window);
+				if (!GET_GOB_STATE(gob, GOBS_ACTIVE)) {
+					SET_GOB_STATE(gob, GOBS_ACTIVE);
+					Add_Event_XY(gob, EVT_ACTIVE, 0, 0);
+				}
+				break;
+			case FocusOut:
+				RL_Print ("FocusOut, type = %d, window = %x\n", ev.xfocus.type, ev.xfocus.window);
+				gob = Find_Gob_By_Window(ev.xfocus.window);
+				if (GET_GOB_STATE(gob, GOBS_ACTIVE)) {
+					CLR_GOB_STATE(gob, GOBS_ACTIVE);
+					Add_Event_XY(gob, EVT_INACTIVE, 0, 0);
+				}
+				break;
 			case DestroyNotify:
 				RL_Print ("destroyed\n");
 				break;
