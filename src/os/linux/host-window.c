@@ -36,6 +36,7 @@
 **
 ***********************************************************************/
 
+#include <string.h>
 #include <math.h>
 #include <unistd.h>
 #include "reb-host.h"
@@ -212,25 +213,9 @@ static REBXYF Zero_Pair = {0, 0};
 	XSetForeground(global_x_info->display, gc, black);
 
 	host_window_t *ew = OS_Make(sizeof(host_window_t));
+	memset(ew, 0, sizeof(host_window_t));
 	ew->x_window = window;
 	ew->x_gc = gc;
-	ew->pixbuf_len = w * h * 4; //BGRA32;
-	ew->pixbuf = OS_Make(ew->pixbuf_len);
-	ew->x_image = XCreateImage(global_x_info->display,
-							  global_x_info->default_visual,
-							  global_x_info->default_depth,
-							  ZPixmap,
-							  0,
-							  ew->pixbuf,
-							  w, h,
-							  global_x_info->bpp,
-							  w * global_x_info->bpp / 8);
-#ifdef ENDIAN_BIG
-	ew->x_image->byte_order = MSBFirst;
-#else
-	ew->x_image->byte_order = LSBFirst;
-#endif
-
 	Gob_Windows[windex].win = ew;
 	Gob_Windows[windex].compositor = rebcmp_create(Gob_Root, gob);
 

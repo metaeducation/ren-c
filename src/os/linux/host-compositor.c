@@ -134,6 +134,28 @@ typedef struct {
 		//Put backend specific code here
 		//------------------------------
 
+		host_window_t *ew = (host_window_t*)GOB_HWIN(ctx->Win_Gob);
+		if (ew->x_image) {
+			XDestroyImage(ew->x_image); //frees win->pixbuf as well
+		}
+		ew->pixbuf_len = w * h * 4; //BGRA32;
+		ew->pixbuf = OS_Make(ew->pixbuf_len);
+		memset(ew->pixbuf, 0, ew->pixbuf_len);
+		ew->x_image = XCreateImage(global_x_info->display,
+								  global_x_info->default_visual,
+								  global_x_info->default_depth,
+								  ZPixmap,
+								  0,
+								  ew->pixbuf,
+								  w, h,
+								  global_x_info->bpp,
+								  w * global_x_info->bpp / 8);
+
+#ifdef ENDIAN_BIG
+	ew->x_image->byte_order = MSBFirst;
+#else
+	ew->x_image->byte_order = LSBFirst;
+#endif
 		//update the buffer size values
 		ctx->winBufSize.x = w;
 		ctx->winBufSize.y = h;
@@ -408,6 +430,7 @@ typedef struct {
 	RL_Print("rebcmp_blit\n");
 	REBINT w = GOB_LOG_W_INT(ctx->Win_Gob);
 	REBINT h = GOB_LOG_H_INT(ctx->Win_Gob);
+	RL_Print("rebcmp_blit, w = %d, h = %d\n", w, h);
 	host_window_t *ew = (host_window_t*)GOB_HWIN(ctx->Win_Gob);
 	if (global_x_info->sys_pixmap_format == pix_format_bgra32){
 		XPutImage (global_x_info->display,

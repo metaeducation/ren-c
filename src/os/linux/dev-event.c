@@ -117,6 +117,7 @@ static void Add_Event_Key(REBGOB *gob, REBINT id, REBINT key, REBINT flags)
 	KeySym *keysym = NULL;
     REBINT keysyms_per_keycode_return;
 	REBINT xyd = 0;
+	XConfigureEvent xce;
 	while(XPending(global_x_info->display)) {
 		XNextEvent(global_x_info->display, &ev);
 		switch (ev.type) {
@@ -125,12 +126,14 @@ static void Add_Event_Key(REBGOB *gob, REBINT id, REBINT key, REBINT flags)
 				break;
 			case ButtonPress:
 				RL_Print("Button %d pressed\n", ev.xbutton.button);
+				gob = Find_Gob_By_Window(ev.xbutton.window);
 				xyd = (ROUND_TO_INT(PHYS_COORD_X(ev.xbutton.x))) + (ROUND_TO_INT(PHYS_COORD_Y(ev.xbutton.y)) << 16);
 				Add_Event_XY(gob, EVT_DOWN, xyd, 0);
 				break;
 
 			case ButtonRelease:
 				RL_Print("Button %d is released\n", ev.xbutton.button);
+				gob = Find_Gob_By_Window(ev.xbutton.window);
 				xyd = (ROUND_TO_INT(PHYS_COORD_X(ev.xbutton.x))) + (ROUND_TO_INT(PHYS_COORD_Y(ev.xbutton.y)) << 16);
 				Add_Event_XY(gob, EVT_UP, xyd, 0);
 				break;
@@ -180,6 +183,20 @@ static void Add_Event_Key(REBGOB *gob, REBINT id, REBINT key, REBINT flags)
 				RL_Print ("closed\n");
 				gob = Find_Gob_By_Window(ev.xclient.window);
 				Add_Event_XY(gob, EVT_CLOSE, 0, 0);
+				break;
+			case ConfigureNotify:
+				RL_Print("configuranotify\n");
+				xce = ev.xconfigure;
+				gob = Find_Gob_By_Window(ev.xconfigure.window);
+				gob->offset.x = xce.x;
+				gob->offset.y = xce.y;
+				gob->size.x = xce.width;
+				gob->size.y = xce.height;
+				if (Resize_Window(gob, TRUE)){
+					xyd = (ROUND_TO_INT(xce.width)) + (ROUND_TO_INT(xce.height) << 16);
+					RL_Print("%s, %s, %d: EVT_RESIZE is sent\n", __FILE__, __func__, __LINE__);
+					Add_Event_XY(gob, EVT_RESIZE, xyd, 0);
+				}
 				break;
 			default:
 				RL_Print("default event type\n");
