@@ -175,6 +175,8 @@ static REBXYF Zero_Pair = {0, 0};
 	REBINT w = GOB_LOG_W_INT(gob);
 	REBINT h = GOB_LOG_H_INT(gob);
 
+	REBCHR *title;
+
 	Window window;
 	int screen_num;
 	u32 mask = 0;
@@ -186,6 +188,12 @@ static REBXYF Zero_Pair = {0, 0};
 	host_window_t *reb_host_window;
 
 	RL_Print("x: %d, y: %d, width: %d, height: %d\n", x, y, w, h);
+
+	if (IS_GOB_STRING(gob))
+        As_OS_Str(GOB_CONTENT(gob), (REBCHR**)&title);
+    else
+        title = TXT("REBOL Window");
+
 	root = DefaultRootWindow(global_x_info->display);
 	swa.event_mask  =  ExposureMask | PointerMotionMask | KeyPressMask | KeyReleaseMask| ButtonPressMask |ButtonReleaseMask | StructureNotifyMask | FocusChangeMask;
 	window = XCreateWindow(global_x_info->display, 
@@ -195,6 +203,13 @@ static REBXYF Zero_Pair = {0, 0};
 						   CopyFromParent, InputOutput,
 						   CopyFromParent, CWEventMask,
 						   &swa);
+
+
+	XTextProperty title_prop;
+	Atom title_atom = XInternAtom(global_x_info->display, "_NET_WM_NAME", 1);
+	XmbTextListToTextProperty(global_x_info->display, (char **)&title, 1, XUTF8StringStyle, &title_prop);
+	XSetTextProperty(global_x_info->display, window, &title_prop, title_atom);
+	XStoreName(global_x_info->display, window, title); //backup for non NET Wms
 
 	Atom wmDelete=XInternAtom(global_x_info->display, "WM_DELETE_WINDOW", 1);
 	XSetWMProtocols(global_x_info->display, window, &wmDelete, 1);
