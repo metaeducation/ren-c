@@ -80,7 +80,7 @@ static u32* text_ext_words;
 {
 	int res, len, n;
 	void *str;
-	unsigned long *wstr;
+	u32 *wstr;
 
 	if ((res = RL_Get_String(series, 0, &str)) == 0) {
 		*string = NULL;
@@ -88,7 +88,7 @@ static u32* text_ext_words;
 	}
 	
 	len = abs(res);
-	wstr = (unsigned long *)OS_Make((len+1) * sizeof(unsigned long));
+	wstr = (u32 *)OS_Make((len+1) * sizeof(u32));
 	
 	if (res < 0) {
 		for (n = 0; n < len; n++)
