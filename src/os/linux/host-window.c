@@ -286,12 +286,16 @@ static REBXYF Zero_Pair = {0, 0};
 ***********************************************************************/
 {
 	RL_Print("Closing %x\n", gob);
-	host_window_t *win = GOB_HWIN(gob);
-	XDestroyImage(win->x_image); //frees win->pixbuf as well
-	XFreeGC(global_x_info->display, win->x_gc);
-	XUnmapWindow(global_x_info->display, win->x_window);
-   	XDestroyWindow(global_x_info->display, win->x_window);
-	OS_Free(win);
+	if (GET_GOB_FLAG(gob, GOBF_WINDOW)) {
+		host_window_t *win = GOB_HWIN(gob);
+		if (win != NULL){
+			XDestroyImage(win->x_image); //frees win->pixbuf as well
+			XFreeGC(global_x_info->display, win->x_gc);
+			XUnmapWindow(global_x_info->display, win->x_window);
+			XDestroyWindow(global_x_info->display, win->x_window);
+			OS_Free(win);
 
-	Free_Window(gob);
+			Free_Window(gob);
+		}
+	}
 }
