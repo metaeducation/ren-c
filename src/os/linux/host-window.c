@@ -156,6 +156,11 @@ static REBXYF Zero_Pair = {0, 0};
 	REBINT w = GOB_LOG_W_INT(gob);
 	REBINT h = GOB_LOG_H_INT(gob);
 	RL_Print("x: %d, y: %d, width: %d, height: %d\n", x, y, w, h);
+	host_window_t *window = GOB_HWIN(gob);
+	Resize_Window(gob, FALSE);
+	if (x != GOB_XO_INT(gob) || y != GOB_YO_INT(gob)){
+		XMoveWindow(global_x_info->display, window->x_window, x, y);
+	}
 }
 
 /***********************************************************************
