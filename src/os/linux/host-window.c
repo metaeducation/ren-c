@@ -181,12 +181,15 @@ static REBXYF Zero_Pair = {0, 0};
 	REBINT h = GOB_LOG_H_INT(gob);
 
 	REBCHR *title;
+	REBYTE os_string = FALSE;
 
 	Window window;
 	int screen_num;
 	u32 mask = 0;
 	u32 values[6];
 	//xcb_drawable_t d;
+	
+	Display *display = global_x_info->display;
 	Window root;
 	XSetWindowAttributes swa;
 
@@ -194,14 +197,10 @@ static REBXYF Zero_Pair = {0, 0};
 
 	RL_Print("x: %d, y: %d, width: %d, height: %d\n", x, y, w, h);
 
-	if (IS_GOB_STRING(gob))
-        As_OS_Str(GOB_CONTENT(gob), (REBCHR**)&title);
-    else
-        title = TXT("REBOL Window");
-
-	root = DefaultRootWindow(global_x_info->display);
+	root = DefaultRootWindow(display);
 	swa.event_mask  =  ExposureMask | PointerMotionMask | KeyPressMask | KeyReleaseMask| ButtonPressMask |ButtonReleaseMask | StructureNotifyMask | FocusChangeMask;
-	window = XCreateWindow(global_x_info->display, 
+
+	window = XCreateWindow(display, 
 						   root,
 						   x, y, w, h,
 						   REB_WINDOW_BORDER_WIDTH,
@@ -209,28 +208,57 @@ static REBXYF Zero_Pair = {0, 0};
 						   CopyFromParent, CWEventMask,
 						   &swa);
 
+	if (IS_GOB_STRING(gob))
+        os_string = As_OS_Str(GOB_CONTENT(gob), (REBCHR**)&title);
+    else
+        title = TXT("REBOL Window");
 
 	XTextProperty title_prop;
-	Atom title_atom = XInternAtom(global_x_info->display, "_NET_WM_NAME", 1);
-	XmbTextListToTextProperty(global_x_info->display, (char **)&title, 1, XUTF8StringStyle, &title_prop);
-	XSetTextProperty(global_x_info->display, window, &title_prop, title_atom);
-	XStoreName(global_x_info->display, window, title); //backup for non NET Wms
+	Atom title_atom = XInternAtom(display, "_NET_WM_NAME", False);
+	XmbTextListToTextProperty(display, (char **)&title, 1, XUTF8StringStyle, &title_prop);
+	XSetTextProperty(display, window, &title_prop, title_atom);
+	XStoreName(display, window, title); //backup for non NET Wms
 
-	Atom wmDelete=XInternAtom(global_x_info->display, "WM_DELETE_WINDOW", 1);
-	XSetWMProtocols(global_x_info->display, window, &wmDelete, 1);
+	XClassHint *class_hint = XAllocClassHint();
+	if (class_hint) {
+		class_hint->res_name = title;
+		class_hint->res_class = title;
+		int status = XSetClassHint(display, window, class_hint);
+		if (status != Success) {
+			RL_Print("Failed to set class hint: %d", status);
+		}
+		XFree(class_hint);
+	}
 
-	XMapWindow(global_x_info->display, window);
+	if (os_string)
+		OS_Free(title);
+
+	Atom wmDelete=XInternAtom(display, "WM_DELETE_WINDOW", 1);
+	XSetWMProtocols(display, window, &wmDelete, 1);
+
+	Atom window_type_atom = XInternAtom(display, "_NET_WM_WINDOW_TYPE", False);
+	Atom window_type;
+	if (GET_FLAGS(gob->flags, GOBF_NO_TITLE, GOBF_NO_BORDER)) {
+		window_type = XInternAtom(display, "_NET_WM_WINDOW_TYPE_DROPDOWN_MENU", False);
+	} else {
+		window_type = XInternAtom(display, "_NET_WM_WINDOW_TYPE_NORMAL", False);
+	}
+	XChangeProperty(display, window, window_type_atom, XA_ATOM, 32,
+					PropModeReplace,
+					(unsigned char *)&window_type, 1); 
+
+	XMapWindow(display, window);
 
 	windex = Alloc_Window(gob);
 
 	if (windex < 0) Host_Crash("Too many windows");
 
-	GC gc = XCreateGC(global_x_info->display, window, 0, 0);
-	screen_num = DefaultScreen(global_x_info->display);
-	unsigned long black = BlackPixel(global_x_info->display, screen_num);
-	unsigned long white = WhitePixel(global_x_info->display, screen_num);
-	XSetBackground(global_x_info->display, gc, white);
-	XSetForeground(global_x_info->display, gc, black);
+	GC gc = XCreateGC(display, window, 0, 0);
+	screen_num = DefaultScreen(display);
+	unsigned long black = BlackPixel(display, screen_num);
+	unsigned long white = WhitePixel(display, screen_num);
+	XSetBackground(display, gc, white);
+	XSetForeground(display, gc, black);
 
 	host_window_t *ew = OS_Make(sizeof(host_window_t));
 	memset(ew, 0, sizeof(host_window_t));
