@@ -257,6 +257,36 @@ static REBXYF Zero_Pair = {0, 0};
 					PropModeReplace,
 					(unsigned char *)&window_type, 1); 
 
+	Atom wm_allowed_action = XInternAtom(display, "_NET_WM_ALLOWED_ACTIONS", True);
+	if (GET_GOB_FLAG(gob, GOBF_RESIZE)) {
+		//RL_Print("Resizable\n");
+		Atom wm_actions[] = {
+			XInternAtom(display, "_NET_WM_ACTION_RESIZE", True),
+			XInternAtom(display, "_NET_WM_ACTION_CLOSE", True)
+		};
+		XChangeProperty(display, window, wm_allowed_action, XA_ATOM, 32,
+						PropModeReplace, (unsigned char*)&wm_actions[0],
+						sizeof(wm_actions)/sizeof(wm_actions[0]));
+	} else {
+		//RL_Print("Non-Resizable\n");
+		Atom wm_actions[] = {
+			XInternAtom(display, "_NET_WM_ACTION_CLOSE", True)
+		};
+		XChangeProperty(display, window, wm_allowed_action, XA_ATOM, 32,
+						PropModeReplace, (unsigned char*)&wm_actions[0],
+						sizeof(wm_actions)/sizeof(wm_actions[0])); /* FIXME, this didn't work */
+
+		XSizeHints *size_hints = XAllocSizeHints ();
+		if (size_hints) {
+			//RL_Print("Setting normal size hints %dx%d\n", w, h);
+			size_hints->min_width = size_hints->max_width = w;
+			size_hints->min_height = size_hints->max_height = h;
+			size_hints->flags = PMinSize | PMaxSize;
+			XSetWMNormalHints(display, window, size_hints);
+			XFree(size_hints);
+		}
+	}
+
 	XMapWindow(display, window);
 
 	windex = Alloc_Window(gob);
