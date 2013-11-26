@@ -261,6 +261,7 @@ static REBXYF Zero_Pair = {0, 0};
 	if (GET_GOB_FLAG(gob, GOBF_RESIZE)) {
 		//RL_Print("Resizable\n");
 		Atom wm_actions[] = {
+			XInternAtom(display, "_NET_WM_ACTION_MOVE", True),
 			XInternAtom(display, "_NET_WM_ACTION_RESIZE", True),
 			XInternAtom(display, "_NET_WM_ACTION_CLOSE", True)
 		};
@@ -270,6 +271,7 @@ static REBXYF Zero_Pair = {0, 0};
 	} else {
 		//RL_Print("Non-Resizable\n");
 		Atom wm_actions[] = {
+			XInternAtom(display, "_NET_WM_ACTION_MOVE", True),
 			XInternAtom(display, "_NET_WM_ACTION_CLOSE", True)
 		};
 		XChangeProperty(display, window, wm_allowed_action, XA_ATOM, 32,
