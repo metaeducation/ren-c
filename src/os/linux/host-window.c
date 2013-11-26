@@ -241,7 +241,17 @@ static REBXYF Zero_Pair = {0, 0};
 	if (GET_FLAGS(gob->flags, GOBF_NO_TITLE, GOBF_NO_BORDER)) {
 		window_type = XInternAtom(display, "_NET_WM_WINDOW_TYPE_DROPDOWN_MENU", False);
 	} else {
-		window_type = XInternAtom(display, "_NET_WM_WINDOW_TYPE_NORMAL", False);
+		if (GET_GOB_FLAG(gob, GOBF_MODAL)) {
+			Atom wm_state = XInternAtom(display, "_NET_WM_STATE", True);
+			Atom wm_state_modal = XInternAtom(display, "_NET_WM_STATE_MODAL", True);
+			host_window_t *parent_win = GOB_HWIN(GOB_TMP_OWNER(gob));
+			XSetTransientForHint(display, window, parent_win->x_window);
+			int status = XChangeProperty(display, window, wm_state, XA_ATOM, 32,
+										 PropModeReplace, (unsigned char*)&wm_state_modal, 1);
+			window_type = XInternAtom(display, "_NET_WM_WINDOW_TYPE_DIALOG", False);
+		} else {
+			window_type = XInternAtom(display, "_NET_WM_WINDOW_TYPE_NORMAL", False);
+		}
 	}
 	XChangeProperty(display, window, window_type_atom, XA_ATOM, 32,
 					PropModeReplace,
