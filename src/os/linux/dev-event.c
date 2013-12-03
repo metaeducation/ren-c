@@ -69,6 +69,19 @@ static void Add_Event_XY(REBGOB *gob, REBINT id, REBINT xy, REBINT flags)
 	RL_Event(&evt);	// returns 0 if queue is full
 }
 
+static void Update_Event_XY(REBGOB *gob, REBINT id, REBINT xy, REBINT flags)
+{
+	REBEVT evt;
+
+	evt.type  = id;
+	evt.flags = (u8) (flags | (1<<EVF_HAS_XY));
+	evt.model = EVM_GUI;
+	evt.data  = xy;
+	evt.ser = (void*)gob;
+
+	RL_Update_Event(&evt);
+}
+
 static void Add_Event_Key(REBGOB *gob, REBINT id, REBINT key, REBINT flags)
 {
 	REBEVT evt;
@@ -142,7 +155,7 @@ static void Add_Event_Key(REBGOB *gob, REBINT id, REBINT key, REBINT flags)
 				RL_Print ("mouse motion\n");
 				gob = Find_Gob_By_Window(ev.xmotion.window);
 				xyd = (ROUND_TO_INT(PHYS_COORD_X(ev.xmotion.x))) + (ROUND_TO_INT(PHYS_COORD_Y(ev.xmotion.y)) << 16);
-				Add_Event_XY(gob, EVT_MOVE, xyd, 0);
+				Update_Event_XY(gob, EVT_MOVE, xyd, 0);
 				break;
 			case KeyPress:
 				//RL_Print ("key %s is pressed\n", XKeysymToString(XKeycodeToKeysym(global_x_info->display, ev.xkey.keycode, 0)));
@@ -207,7 +220,7 @@ static void Add_Event_Key(REBGOB *gob, REBINT id, REBINT key, REBINT flags)
 				if (gob->offset.x != xce.x || gob->offset.y != xce.y){
 					xyd = (ROUND_TO_INT(xce.x)) + (ROUND_TO_INT(xce.y) << 16);
 					//RL_Print("%s, %s, %d: EVT_OFFSET is sent\n", __FILE__, __func__, __LINE__);
-					Add_Event_XY(gob, EVT_OFFSET, xyd, 0);
+					Update_Event_XY(gob, EVT_OFFSET, xyd, 0);
 				}
 				gob->offset.x = xce.x;
 				gob->offset.y = xce.y;
@@ -216,7 +229,7 @@ static void Add_Event_Key(REBGOB *gob, REBINT id, REBINT key, REBINT flags)
 				if (Resize_Window(gob, TRUE)){
 					xyd = (ROUND_TO_INT(xce.width)) + (ROUND_TO_INT(xce.height) << 16);
 					RL_Print("%s, %s, %d: EVT_RESIZE is sent\n", __FILE__, __func__, __LINE__);
-					Add_Event_XY(gob, EVT_RESIZE, xyd, 0);
+					Update_Event_XY(gob, EVT_RESIZE, xyd, 0);
 				}
 				break;
 			default:
