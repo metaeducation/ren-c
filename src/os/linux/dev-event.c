@@ -50,51 +50,10 @@
 
 #include "host-window.h"
 
-void Done_Device(int handle, int error);
-
-#ifndef REB_CORE
 extern x_info_t *global_x_info;
-REBGOB *Find_Gob_By_Window(Window win);
 
-static void Add_Event_XY(REBGOB *gob, REBINT id, REBINT xy, REBINT flags)
-{
-	REBEVT evt;
-
-	evt.type  = id;
-	evt.flags = (u8) (flags | (1<<EVF_HAS_XY));
-	evt.model = EVM_GUI;
-	evt.data  = xy;
-	evt.ser = (void*)gob;
-
-	RL_Event(&evt);	// returns 0 if queue is full
-}
-
-static void Update_Event_XY(REBGOB *gob, REBINT id, REBINT xy, REBINT flags)
-{
-	REBEVT evt;
-
-	evt.type  = id;
-	evt.flags = (u8) (flags | (1<<EVF_HAS_XY));
-	evt.model = EVM_GUI;
-	evt.data  = xy;
-	evt.ser = (void*)gob;
-
-	RL_Update_Event(&evt);
-}
-
-static void Add_Event_Key(REBGOB *gob, REBINT id, REBINT key, REBINT flags)
-{
-	REBEVT evt;
-
-	evt.type  = id;
-	evt.flags = flags;
-	evt.model = EVM_GUI;
-	evt.data  = key;
-	evt.ser = (void*)gob;
-
-	RL_Event(&evt);	// returns 0 if queue is full
-}
-#endif
+void Done_Device(int handle, int error);
+void Dispatch_Events();
 
 /***********************************************************************
 **
@@ -124,119 +83,7 @@ static void Add_Event_Key(REBGOB *gob, REBINT id, REBINT key, REBINT flags)
 {
 	int flag = DR_DONE;
 #ifndef REB_CORE
-	XEvent ev;
-	REBGOB *gob = NULL;
-	// Handle XEvents and flush the input 
-	KeySym *keysym = NULL;
-    REBINT keysyms_per_keycode_return;
-	REBINT xyd = 0;
-	XConfigureEvent xce;
-	while(XPending(global_x_info->display)) {
-		XNextEvent(global_x_info->display, &ev);
-		switch (ev.type) {
-			case Expose:
-				RL_Print("exposed\n");
-				break;
-			case ButtonPress:
-				RL_Print("Button %d pressed\n", ev.xbutton.button);
-				gob = Find_Gob_By_Window(ev.xbutton.window);
-				xyd = (ROUND_TO_INT(PHYS_COORD_X(ev.xbutton.x))) + (ROUND_TO_INT(PHYS_COORD_Y(ev.xbutton.y)) << 16);
-				Add_Event_XY(gob, EVT_DOWN, xyd, 0);
-				break;
-
-			case ButtonRelease:
-				RL_Print("Button %d is released\n", ev.xbutton.button);
-				gob = Find_Gob_By_Window(ev.xbutton.window);
-				xyd = (ROUND_TO_INT(PHYS_COORD_X(ev.xbutton.x))) + (ROUND_TO_INT(PHYS_COORD_Y(ev.xbutton.y)) << 16);
-				Add_Event_XY(gob, EVT_UP, xyd, 0);
-				break;
-
-			case MotionNotify:
-				RL_Print ("mouse motion\n");
-				gob = Find_Gob_By_Window(ev.xmotion.window);
-				xyd = (ROUND_TO_INT(PHYS_COORD_X(ev.xmotion.x))) + (ROUND_TO_INT(PHYS_COORD_Y(ev.xmotion.y)) << 16);
-				Update_Event_XY(gob, EVT_MOVE, xyd, 0);
-				break;
-			case KeyPress:
-				//RL_Print ("key %s is pressed\n", XKeysymToString(XKeycodeToKeysym(global_x_info->display, ev.xkey.keycode, 0)));
-				keysym = XGetKeyboardMapping(global_x_info->display,
-											 ev.xkey.keycode,
-											 1,
-											 &keysyms_per_keycode_return);
-
-				gob = Find_Gob_By_Window(ev.xkey.window);
-				if(gob != NULL){
-					Add_Event_Key(gob, EVT_KEY, keysym[0], 0);
-				}
-
-				XFree(keysym);
-				break;
-			case KeyRelease:
-				//RL_Print ("key %s is released\n", XKeysymToString(XKeycodeToKeysym(global_x_info->display, ev.xkey.keycode, 0)));
-				keysym = XGetKeyboardMapping(global_x_info->display,
-													 ev.xkey.keycode,
-													 1,
-													 &keysyms_per_keycode_return);
-
-				gob = Find_Gob_By_Window(ev.xkey.window);
-				if(gob != NULL){
-					Add_Event_Key(gob, EVT_KEY_UP, keysym[0], 0);
-				}
-
-				XFree(keysym);
-				//RL_Print ("key %s is released\n", XKeysymToString(XKeycodeToKeysym(global_x_info->display, ev.xkey.keycode, 0)));
-				break;
-			case ResizeRequest:
-				RL_Print ("request to resize to %dx%d", ev.xresizerequest.width, ev.xresizerequest.height);
-				break;
-			case FocusIn:
-				RL_Print ("FocusIn, type = %d, window = %x\n", ev.xfocus.type, ev.xfocus.window);
-				gob = Find_Gob_By_Window(ev.xfocus.window);
-				if (gob && !GET_GOB_STATE(gob, GOBS_ACTIVE)) {
-					SET_GOB_STATE(gob, GOBS_ACTIVE);
-					Add_Event_XY(gob, EVT_ACTIVE, 0, 0);
-				}
-				break;
-			case FocusOut:
-				RL_Print ("FocusOut, type = %d, window = %x\n", ev.xfocus.type, ev.xfocus.window);
-				gob = Find_Gob_By_Window(ev.xfocus.window);
-				if (gob && GET_GOB_STATE(gob, GOBS_ACTIVE)) {
-					CLR_GOB_STATE(gob, GOBS_ACTIVE);
-					Add_Event_XY(gob, EVT_INACTIVE, 0, 0);
-				}
-				break;
-			case DestroyNotify:
-				RL_Print ("destroyed\n");
-				break;
-			case ClientMessage:
-				RL_Print ("closed\n");
-				gob = Find_Gob_By_Window(ev.xclient.window);
-				Add_Event_XY(gob, EVT_CLOSE, 0, 0);
-				break;
-			case ConfigureNotify:
-				RL_Print("configuranotify\n");
-				xce = ev.xconfigure;
-				gob = Find_Gob_By_Window(ev.xconfigure.window);
-				if (gob->offset.x != xce.x || gob->offset.y != xce.y){
-					xyd = (ROUND_TO_INT(xce.x)) + (ROUND_TO_INT(xce.y) << 16);
-					//RL_Print("%s, %s, %d: EVT_OFFSET is sent\n", __FILE__, __func__, __LINE__);
-					Update_Event_XY(gob, EVT_OFFSET, xyd, 0);
-				}
-				gob->offset.x = xce.x;
-				gob->offset.y = xce.y;
-				gob->size.x = xce.width;
-				gob->size.y = xce.height;
-				if (Resize_Window(gob, TRUE)){
-					xyd = (ROUND_TO_INT(xce.width)) + (ROUND_TO_INT(xce.height) << 16);
-					RL_Print("%s, %s, %d: EVT_RESIZE is sent\n", __FILE__, __func__, __LINE__);
-					Update_Event_XY(gob, EVT_RESIZE, xyd, 0);
-				}
-				break;
-			default:
-				RL_Print("default event type\n");
-				break;
-		}
-	}
+	Dispatch_Events();
 #endif
 	return flag;	// different meaning compared to most commands
 }
@@ -271,7 +118,7 @@ static void Add_Event_Key(REBGOB *gob, REBINT id, REBINT key, REBINT flags)
 
 	// Wait for X Event or a Timer
 	if (select(x11_fd+1, &in_fds, 0, 0, &tv)){
-		RL_Print("Event Received!\n");
+		//RL_Print("Event Received!\n");
 		return DR_PEND;
 	}
 	else {
