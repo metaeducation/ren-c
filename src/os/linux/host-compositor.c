@@ -45,6 +45,7 @@
 #include <stdio.h> //for NULL
 #include <math.h>	//for floor()
 #include <string.h> //for memset
+#include <assert.h>
 #include <unistd.h> //for size_t
 
 #include "reb-host.h"
@@ -59,7 +60,7 @@ void rebdrw_gob_draw(REBGOB *gob, REBYTE* buf, REBXYI buf_size, REBXYI abs_oft, 
 REBINT rt_gob_text(REBGOB *gob, REBYTE* buf, REBXYI buf_size, REBXYF abs_oft, REBXYI clip_oft, REBXYI clip_siz);
 void Host_Crash(const char *reason);
 //***** Macros *****
-#define GOB_HWIN(gob)	(Find_Window(gob))
+#define GOB_HWIN(gob)	((Window)Find_Window(gob))
 
 //***** Locals *****
 
@@ -81,7 +82,17 @@ typedef struct {
 	REBXYI winBufSize;
 	REBGOB *Win_Gob;
 	REBGOB *Root_Gob;
-	REBXYF absOffset;
+	REBXYF absOffset; //Offset of current gob, relative to the gob passed to rebcmp_compose 
+	Window x_window;
+	GC	   x_gc;
+	XImage *x_image;
+	pixmap_format_t pixmap_format;
+	REBYTE *pixbuf;
+	REBCNT pixbuf_len;
+	Region Win_Region;
+	XRectangle Win_Clip;
+	XRectangle New_Clip;
+	XRectangle Old_Clip;
 } REBCMP_CTX;
 
 /***********************************************************************
@@ -96,9 +107,8 @@ typedef struct {
 **
 ***********************************************************************/
 {
-	host_window_t *ew = (host_window_t*)GOB_HWIN(ctx->Win_Gob);
-	memset(ew->pixbuf, 0, ew->pixbuf_len);
-	return ew->pixbuf;
+	memset(ctx->pixbuf, 0, ctx->pixbuf_len);
+	return ctx->pixbuf;
 }
 
 /***********************************************************************
@@ -130,31 +140,27 @@ typedef struct {
 		REBINT w = GOB_LOG_W_INT(winGob);
 		REBINT h = GOB_LOG_H_INT(winGob);
 
-		//------------------------------
-		//Put backend specific code here
-		//------------------------------
-
-		host_window_t *ew = (host_window_t*)GOB_HWIN(ctx->Win_Gob);
-		if (ew->x_image) {
-			XDestroyImage(ew->x_image); //frees win->pixbuf as well
+		Window win = GOB_HWIN(ctx->Win_Gob);
+		if (ctx->x_image) {
+			XDestroyImage(ctx->x_image); //frees win->pixbuf as well
 		}
-		ew->pixbuf_len = w * h * 4; //BGRA32;
-		ew->pixbuf = OS_Make(ew->pixbuf_len);
-		memset(ew->pixbuf, 0, ew->pixbuf_len);
-		ew->x_image = XCreateImage(global_x_info->display,
+		ctx->pixbuf_len = w * h * 4; //BGRA32;
+		ctx->pixbuf = OS_Make(ctx->pixbuf_len);
+		memset(ctx->pixbuf, 0, ctx->pixbuf_len);
+		ctx->x_image = XCreateImage(global_x_info->display,
 								  global_x_info->default_visual,
 								  global_x_info->default_depth,
 								  ZPixmap,
 								  0,
-								  ew->pixbuf,
+								  ctx->pixbuf,
 								  w, h,
 								  global_x_info->bpp,
 								  w * global_x_info->bpp / 8);
 
 #ifdef ENDIAN_BIG
-	ew->x_image->byte_order = MSBFirst;
+		ctx->x_image->byte_order = MSBFirst;
 #else
-	ew->x_image->byte_order = LSBFirst;
+		ctx->x_image->byte_order = LSBFirst;
 #endif
 		//update the buffer size values
 		ctx->winBufSize.x = w;
@@ -185,9 +191,19 @@ typedef struct {
 	ctx->Root_Gob = rootGob;
 	ctx->Win_Gob = gob;
 
-	//------------------------------
-	//Put backend specific code here
-	//------------------------------
+	//initialize clipping regions
+
+	ctx->x_window = GOB_HWIN(gob);
+	ctx->x_gc = XCreateGC(global_x_info->display, ctx->x_window, 0, 0);
+	int screen_num = DefaultScreen(global_x_info->display);
+	unsigned long black = BlackPixel(global_x_info->display, screen_num);
+	unsigned long white = WhitePixel(global_x_info->display, screen_num);
+	XSetBackground(global_x_info->display, ctx->x_gc, white);
+	XSetForeground(global_x_info->display, ctx->x_gc, black);
+
+	ctx->x_image = NULL;
+	ctx->pixbuf = NULL;
+	ctx->pixbuf_len = 0;
 
 	//call resize to init buffer
 	rebcmp_resize_buffer(ctx, gob);
@@ -202,9 +218,12 @@ typedef struct {
 **
 ***********************************************************************/
 {
-	//------------------------------
-	//Put backend specific code here
-	//------------------------------
+	XDestroyImage(ctx->x_image); //frees win->pixbuf as well
+	XFreeGC(global_x_info->display, ctx->x_gc);
+
+	if (ctx->Win_Region) {
+		XDestroyRegion(ctx->Win_Region);
+	}
 	OS_Free(ctx);
 }
 
@@ -366,6 +385,8 @@ typedef struct {
 		parent_gob = GOB_PARENT(parent_gob);
 	}
 
+	assert(max_depth > 0);
+
 	//the offset is shifted to render given gob at offset 0x0 (used by TO-IMAGE)
 	if (only){
 		ctx->absOffset.x = -abs_x;
@@ -434,17 +455,17 @@ typedef struct {
 	host_window_t *ew = (host_window_t*)GOB_HWIN(ctx->Win_Gob);
 	if (global_x_info->sys_pixmap_format == pix_format_bgra32){
 		XPutImage (global_x_info->display,
-				   ew->x_window,
-					ew->x_gc,
-					ew->x_image,
+				   ctx->x_window,
+					ctx->x_gc,
+					ctx->x_image,
 					0, 0,	//src x, y
 					0, 0,	//dest x, y
 					w, h);
 	} else {
 		put_image(global_x_info->display,
-				  ew->x_window,
-				  ew->x_gc,
-				  ew->x_image,
+				  ctx->x_window,
+				  ctx->x_gc,
+				  ctx->x_image,
 				  w, h,
 				  global_x_info->sys_pixmap_format);
 	}

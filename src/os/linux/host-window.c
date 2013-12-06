@@ -51,7 +51,7 @@
 
 //***** Constants *****
 
-#define GOB_HWIN(gob)	(Find_Window(gob))
+#define GOB_HWIN(gob)	((Window)Find_Window(gob))
 #define GOB_COMPOSITOR(gob)	(Find_Compositor(gob)) //gets handle to window's compositor
 
 //***** Externs *****
@@ -60,6 +60,7 @@ extern void Free_Window(REBGOB *gob);
 extern void* Find_Compositor(REBGOB *gob);
 extern REBINT Alloc_Window(REBGOB *gob);
 extern void Draw_Window(REBGOB *wingob, REBGOB *gob);
+extern void Dispatch_Events();
 
 x_info_t *global_x_info = NULL;
 //***** Locals *****
@@ -70,8 +71,7 @@ REBGOB *Find_Gob_By_Window(Window win)
 {
 	int i = 0;
 	for(i = 0; i < MAX_WINDOWS; i ++ ){
-		host_window_t *hw = Gob_Windows[i].win;
-		if (hw && hw->x_window == win){
+		if (Gob_Windows[i].win == (void*)win){
 			return Gob_Windows[i].gob;
 		}
 	}
@@ -156,10 +156,24 @@ static REBXYF Zero_Pair = {0, 0};
 	REBINT w = GOB_LOG_W_INT(gob);
 	REBINT h = GOB_LOG_H_INT(gob);
 	RL_Print("x: %d, y: %d, width: %d, height: %d\n", x, y, w, h);
-	host_window_t *window = GOB_HWIN(gob);
+	Window win = GOB_HWIN(gob);
+	if (!win) {
+		return;
+	}
 	Resize_Window(gob, FALSE);
 	if (x != GOB_XO_INT(gob) || y != GOB_YO_INT(gob)){
-		XMoveWindow(global_x_info->display, window->x_window, x, y);
+		RL_Print("Moving window: %x\n", win);
+		XMoveWindow(global_x_info->display, win, x, y);
+		if (x + w < 0 
+			|| y + h < 0
+			|| x > OS_Get_Metrics(SM_SCREEN_WIDTH)
+			|| y > OS_Get_Metrics(SM_SCREEN_HEIGHT)) {
+			RL_Print("Hiding window: %x\n", win);
+			XUnmapWindow(global_x_info->display, win); //hide the out-of-bound window
+		} else {
+			RL_Print("Unhiding window: %x\n", win);
+			XMapWindow(global_x_info->display, win); //unhide the window
+		}
 	}
 }
 
@@ -184,29 +198,84 @@ static REBXYF Zero_Pair = {0, 0};
 	REBYTE os_string = FALSE;
 
 	Window window;
-	int screen_num;
 	u32 mask = 0;
 	u32 values[6];
 	//xcb_drawable_t d;
 	
 	Display *display = global_x_info->display;
-	Window root;
 	XSetWindowAttributes swa;
 
-	host_window_t *reb_host_window;
+	Window parent_window;
 
-	RL_Print("x: %d, y: %d, width: %d, height: %d\n", x, y, w, h);
+	RL_Print("%s, %d, x: %d, y: %d, width: %d, height: %d\n", __func__, __LINE__, x, y, w, h);
 
-	root = DefaultRootWindow(display);
-	swa.event_mask  =  ExposureMask | PointerMotionMask | KeyPressMask | KeyReleaseMask| ButtonPressMask |ButtonReleaseMask | StructureNotifyMask | FocusChangeMask;
+	swa.event_mask = ExposureMask 
+					| PointerMotionMask 
+					| KeyPressMask 
+					| KeyReleaseMask
+					| ButtonPressMask 
+					| ButtonReleaseMask 
+					| StructureNotifyMask 
+					| FocusChangeMask;
 
-	window = XCreateWindow(display, 
-						   root,
-						   x, y, w, h,
-						   REB_WINDOW_BORDER_WIDTH,
-						   CopyFromParent, InputOutput,
-						   CopyFromParent, CWEventMask,
-						   &swa);
+	Atom window_type_atom = XInternAtom(display, "_NET_WM_WINDOW_TYPE", True);
+	Atom window_type;
+	parent_window = DefaultRootWindow(display);
+	if (GET_FLAGS(gob->flags, GOBF_NO_TITLE, GOBF_NO_BORDER)) {
+		window_type = XInternAtom(display, "_NET_WM_WINDOW_TYPE_DROPDOWN_MENU", True);
+		if (GOB_HWIN(GOB_TMP_OWNER(gob))) {
+			parent_window = GOB_HWIN(GOB_TMP_OWNER(gob));
+			int parent_x, parent_y, parent_w, parent_h, parent_border_width, parent_depth;
+			Window root, grand_window, *children = NULL;
+			int n_children = 0;
+
+			XQueryTree(display, parent_window, &root, &grand_window, &children, &n_children);
+			if (children){
+				XFree(children);
+			}
+
+			XGetGeometry(display, parent_window, &root, &parent_x, &parent_y, 
+						&parent_w, &parent_h, &parent_border_width, &parent_depth);
+ 
+			int abs_x, abs_y;
+			Window child;
+			XTranslateCoordinates(display, grand_window, root, parent_x, parent_y, &abs_x, &abs_y, &child);
+			x -= abs_x;
+	  		y -= abs_y;	   
+			RL_Print("%s, %d, x: %d, y: %d, parent_x: %d, parent_y: %d, abs_x: %d, abs_y: %d, width: %d, height: %d\n", __func__, __LINE__, 
+					 x, y, parent_x, parent_y, abs_x, abs_y, w, h);
+		}
+		window = XCreateWindow(display, 
+							   parent_window,
+							   x, y, w, h,
+							   REB_WINDOW_BORDER_WIDTH,
+							   CopyFromParent, InputOutput,
+							   CopyFromParent, CWEventMask,
+							   &swa);
+		XSetTransientForHint(display, window, parent_window);
+	} else {
+		window = XCreateWindow(display, 
+							   parent_window,
+							   x, y, w, h,
+							   REB_WINDOW_BORDER_WIDTH,
+							   CopyFromParent, InputOutput,
+							   CopyFromParent, CWEventMask,
+							   &swa);
+		if (GET_GOB_FLAG(gob, GOBF_MODAL)) {
+			Atom wm_state = XInternAtom(display, "_NET_WM_STATE", True);
+			Atom wm_state_modal = XInternAtom(display, "_NET_WM_STATE_MODAL", True);
+			parent_window = GOB_HWIN(GOB_TMP_OWNER(gob));
+			XSetTransientForHint(display, window, parent_window);
+			int status = XChangeProperty(display, window, wm_state, XA_ATOM, 32,
+										 PropModeReplace, (unsigned char*)&wm_state_modal, 1);
+			window_type = XInternAtom(display, "_NET_WM_WINDOW_TYPE_DIALOG", True);
+		} else {
+			window_type = XInternAtom(display, "_NET_WM_WINDOW_TYPE_NORMAL", True);
+		}
+	}
+	XChangeProperty(display, window, window_type_atom, XA_ATOM, 32,
+					PropModeReplace,
+					(unsigned char *)&window_type, 1); 
 
 	if (IS_GOB_STRING(gob))
         os_string = As_OS_Str(GOB_CONTENT(gob), (REBCHR**)&title);
@@ -219,15 +288,12 @@ static REBXYF Zero_Pair = {0, 0};
 	XSetTextProperty(display, window, &title_prop, title_atom);
 	XStoreName(display, window, title); //backup for non NET Wms
 
-	XClassHint *class_hint = XAllocClassHint();
-	if (class_hint) {
-		class_hint->res_name = title;
-		class_hint->res_class = title;
-		int status = XSetClassHint(display, window, class_hint);
-		if (status != Success) {
-			RL_Print("Failed to set class hint: %d", status);
-		}
-		XFree(class_hint);
+	XClassHint *class_hints = XAllocClassHint();
+	if (class_hints) {
+		class_hints->res_name = title;
+		class_hints->res_class = title;
+		XSetClassHint(display, window, class_hints);
+		XFree(class_hints);
 	}
 
 	if (os_string)
@@ -236,27 +302,12 @@ static REBXYF Zero_Pair = {0, 0};
 	Atom wmDelete=XInternAtom(display, "WM_DELETE_WINDOW", 1);
 	XSetWMProtocols(display, window, &wmDelete, 1);
 
-	Atom window_type_atom = XInternAtom(display, "_NET_WM_WINDOW_TYPE", False);
-	Atom window_type;
-	if (GET_FLAGS(gob->flags, GOBF_NO_TITLE, GOBF_NO_BORDER)) {
-		window_type = XInternAtom(display, "_NET_WM_WINDOW_TYPE_DROPDOWN_MENU", False);
-	} else {
-		if (GET_GOB_FLAG(gob, GOBF_MODAL)) {
-			Atom wm_state = XInternAtom(display, "_NET_WM_STATE", True);
-			Atom wm_state_modal = XInternAtom(display, "_NET_WM_STATE_MODAL", True);
-			host_window_t *parent_win = GOB_HWIN(GOB_TMP_OWNER(gob));
-			XSetTransientForHint(display, window, parent_win->x_window);
-			int status = XChangeProperty(display, window, wm_state, XA_ATOM, 32,
-										 PropModeReplace, (unsigned char*)&wm_state_modal, 1);
-			window_type = XInternAtom(display, "_NET_WM_WINDOW_TYPE_DIALOG", False);
-		} else {
-			window_type = XInternAtom(display, "_NET_WM_WINDOW_TYPE_NORMAL", False);
-		}
+	XSizeHints *size_hints = XAllocSizeHints();
+	if (size_hints) {
+		size_hints->flags = PPosition | PSize | PMinSize;
+		size_hints->min_width = w;
+		size_hints->min_height = h;
 	}
-	XChangeProperty(display, window, window_type_atom, XA_ATOM, 32,
-					PropModeReplace,
-					(unsigned char *)&window_type, 1); 
-
 	Atom wm_allowed_action = XInternAtom(display, "_NET_WM_ALLOWED_ACTIONS", True);
 	if (GET_GOB_FLAG(gob, GOBF_RESIZE)) {
 		//RL_Print("Resizable\n");
@@ -278,36 +329,39 @@ static REBXYF Zero_Pair = {0, 0};
 						PropModeReplace, (unsigned char*)&wm_actions[0],
 						sizeof(wm_actions)/sizeof(wm_actions[0])); /* FIXME, this didn't work */
 
-		XSizeHints *size_hints = XAllocSizeHints ();
 		if (size_hints) {
 			//RL_Print("Setting normal size hints %dx%d\n", w, h);
-			size_hints->min_width = size_hints->max_width = w;
-			size_hints->min_height = size_hints->max_height = h;
-			size_hints->flags = PMinSize | PMaxSize;
-			XSetWMNormalHints(display, window, size_hints);
-			XFree(size_hints);
+			size_hints->max_width = w;
+			size_hints->max_height = h;
+			size_hints->flags |= PMaxSize;
 		}
 	}
-
-	XMapWindow(display, window);
+	if (size_hints){
+		XSetWMNormalHints(display, window, size_hints);
+		XFree(size_hints);
+	}
 
 	windex = Alloc_Window(gob);
 
 	if (windex < 0) Host_Crash("Too many windows");
 
-	GC gc = XCreateGC(display, window, 0, 0);
-	screen_num = DefaultScreen(display);
-	unsigned long black = BlackPixel(display, screen_num);
-	unsigned long white = WhitePixel(display, screen_num);
-	XSetBackground(display, gc, white);
-	XSetForeground(display, gc, black);
-
-	host_window_t *ew = OS_Make(sizeof(host_window_t));
-	memset(ew, 0, sizeof(host_window_t));
-	ew->x_window = window;
-	ew->x_gc = gc;
-	Gob_Windows[windex].win = ew;
+	Gob_Windows[windex].win = (void*)window;
 	Gob_Windows[windex].compositor = rebcmp_create(Gob_Root, gob);
+
+	if ((x + w > 0 && x < OS_Get_Metrics(SM_SCREEN_WIDTH))
+		&& (y + h > 0 && y < OS_Get_Metrics(SM_SCREEN_HEIGHT))) {
+		RL_Print("Mapping %x\n", window);
+		XMapWindow(display, window);
+	}
+
+	int actual_x, actual_y, actual_w, actual_h, actual_border_width, actual_depth;
+	Window root;
+	XGetGeometry(display, window, &root, &actual_x, &actual_y, 
+				 &actual_w, &actual_h, &actual_border_width, &actual_depth);
+	RL_Print("%s %d, created an X window: %x for gob %x, x: %d, y: %d, w: %d, h: %d, border: %d, depth: %d\n", 
+			 __func__, __LINE__, window, gob,
+			 actual_x, actual_y, actual_w, actual_h,
+			 actual_border_width, actual_depth);
 
 	CLEAR_GOB_STATE(gob);
 	SET_GOB_STATE(gob, GOBS_NEW);
@@ -316,7 +370,7 @@ static REBXYF Zero_Pair = {0, 0};
 	SET_GOB_FLAG(gob, GOBF_ACTIVE);	
 	SET_GOB_STATE(gob, GOBS_OPEN);
 
-	return ew;
+	return (void*)window;
 }
 
 /***********************************************************************
@@ -329,13 +383,13 @@ static REBXYF Zero_Pair = {0, 0};
 {
 	RL_Print("Closing %x\n", gob);
 	if (GET_GOB_FLAG(gob, GOBF_WINDOW)) {
-		host_window_t *win = GOB_HWIN(gob);
-		if (win != NULL){
-			XDestroyImage(win->x_image); //frees win->pixbuf as well
-			XFreeGC(global_x_info->display, win->x_gc);
-			XUnmapWindow(global_x_info->display, win->x_window);
-			XDestroyWindow(global_x_info->display, win->x_window);
-			OS_Free(win);
+		XSync(global_x_info->display, FALSE); //wait child window to be destroyed and notified
+		Dispatch_Events();
+		Window win = GOB_HWIN(gob);
+		if (win) {
+			//RL_Print("Destroying window: %x\n", win);
+			XDestroyWindow(global_x_info->display, win);
+			Dispatch_Events();
 
 			Free_Window(gob);
 		}
