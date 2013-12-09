@@ -78,16 +78,19 @@ static void Add_Event_Key(REBGOB *gob, REBINT id, REBINT key, REBINT flags)
 	RL_Event(&evt);	// returns 0 if queue is full
 }
 
-void Dispatch_Events()
+void Dispatch_Events(int at_most)
 {
 	XEvent ev;
 	REBGOB *gob = NULL;
 	// Handle XEvents and flush the input 
-	KeySym *keysym = NULL;
     REBINT keysyms_per_keycode_return;
 	REBINT xyd = 0;
 	XConfigureEvent xce;
-	while(XPending(global_x_info->display)) {
+	REBEVT *evt = NULL;
+	REBINT flags = 0;
+	int n = 0;
+	while(XPending(global_x_info->display) && (at_most < 0 || n < at_most)) {
+		++ n;
 		XNextEvent(global_x_info->display, &ev);
 		switch (ev.type) {
 			case Expose:

@@ -53,7 +53,9 @@
 extern x_info_t *global_x_info;
 
 void Done_Device(int handle, int error);
-void Dispatch_Events();
+void Dispatch_Events(int at_most);
+
+#define NUM_EVENTS_AT_A_TIME 8
 
 /***********************************************************************
 **
@@ -83,7 +85,7 @@ void Dispatch_Events();
 {
 	int flag = DR_DONE;
 #ifndef REB_CORE
-	Dispatch_Events();
+	Dispatch_Events(NUM_EVENTS_AT_A_TIME);
 #endif
 	return flag;	// different meaning compared to most commands
 }

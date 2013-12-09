@@ -384,12 +384,12 @@ static REBXYF Zero_Pair = {0, 0};
 	RL_Print("Closing %x\n", gob);
 	if (GET_GOB_FLAG(gob, GOBF_WINDOW)) {
 		XSync(global_x_info->display, FALSE); //wait child window to be destroyed and notified
-		Dispatch_Events();
+		Dispatch_Events(-1);
 		Window win = GOB_HWIN(gob);
 		if (win) {
 			//RL_Print("Destroying window: %x\n", win);
 			XDestroyWindow(global_x_info->display, win);
-			Dispatch_Events();
+			Dispatch_Events(-1);
 
 			Free_Window(gob);
 		}
