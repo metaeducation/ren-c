@@ -48,11 +48,14 @@
 #include <assert.h>
 #include <unistd.h> //for size_t
 
+#include <X11/Xlib.h>
+#include <X11/Xregion.h>
+#include <X11/Xutil.h>
+
 #include "reb-host.h"
 #include "host-lib.h" //for OS_Make
 
 #include "host-window.h"
-//#include "host-compositor.h"
 
 void rebdrw_gob_color(REBGOB *gob, REBYTE* buf, REBXYI buf_size, REBXYI abs_oft, REBXYI clip_oft, REBXYI clip_siz);
 void rebdrw_gob_image(REBGOB *gob, REBYTE* buf, REBXYI buf_size, REBXYI abs_oft, REBXYI clip_oft, REBXYI clip_siz);
@@ -192,6 +195,22 @@ typedef struct {
 	ctx->Win_Gob = gob;
 
 	//initialize clipping regions
+	ctx->Win_Clip.x = 0;
+	ctx->Win_Clip.y = 0;
+	ctx->Win_Clip.width = GOB_LOG_W_INT(gob);
+	ctx->Win_Clip.height = GOB_LOG_H_INT(gob);
+
+	ctx->New_Clip.x = 0;
+	ctx->New_Clip.y = 0;
+	ctx->New_Clip.width = 0;
+	ctx->New_Clip.height = 0;
+
+	ctx->Old_Clip.x = 0;
+	ctx->Old_Clip.y = 0;
+	ctx->Old_Clip.width = 0;
+	ctx->Old_Clip.height = 0;
+
+	ctx->Win_Region = NULL;
 
 	ctx->x_window = GOB_HWIN(gob);
 	ctx->x_gc = XCreateGC(global_x_info->display, ctx->x_window, 0, 0);
@@ -237,7 +256,7 @@ typedef struct {
 **
 ***********************************************************************/
 {
-	RL_Print("process_gobs: %x\n", gob);
+	//RL_Print("process_gobs: %x\n", gob);
 
 	REBINT x = ROUND_TO_INT(ctx->absOffset.x);
 	REBINT y = ROUND_TO_INT(ctx->absOffset.y);
@@ -255,23 +274,68 @@ typedef struct {
 
 	//intersect gob dimensions with actual window clip region
 	REBOOL valid_intersection = 1;
+
+	
 	//------------------------------
 	//Put backend specific code here
 	//------------------------------
+	XRectangle rect;
+	rect.x = x;
+	rect.y = y;
+	rect.width = GOB_LOG_W(gob);
+	rect.height = GOB_LOG_H(gob);
+	/*
+	RL_Print("gob        , left: %d,\ttop: %d,\tright: %d,\tbottom: %d\n",
+			 rect.x,
+			 rect.y,
+			 rect.x + rect.width,
+			 rect.y + rect.height);
+	*/
+
+	Region reg = XCreateRegion();
+	XUnionRectWithRegion(&rect, reg, reg);
+	/*
+	XClipBox(ctx->Win_Region, &rect);
+	RL_Print("Win Region , left: %d,\ttop: %d,\tright: %d,\tbottom: %d\n",
+			 rect.x,
+			 rect.y,
+			 rect.x + rect.width,
+			 rect.y + rect.height);
+	*/
+	XIntersectRegion(reg, ctx->Win_Region, reg);
+	/*
+	XClipBox(reg, &rect);
+	RL_Print("Win and Gob, left: %d,\ttop: %d,\tright: %d,\tbottom: %d\n",
+			 rect.x,
+			 rect.y,
+			 rect.x + rect.width,
+			 rect.y + rect.height);
+			 */
 
 	//get the current Window clip box
 	REBRECT gob_clip = {
+		rect.x, //left
+		rect.y, //top
+		rect.width + rect.x, //right
+		rect.height + rect.y //bottom
+			/*
 		GOB_LOG_X(gob), //left
 		GOB_LOG_Y(gob), //top
 		GOB_LOG_W(gob) + GOB_LOG_X(gob), //right
 		GOB_LOG_H(gob) + GOB_LOG_Y(gob), //bottom
+		*/
 	};
-	//------------------------------
-	//Put backend specific code here
-	//------------------------------
 
-	RL_Print("Window_Buffer: 0x%x\n", ctx->Window_Buffer);
-	if (valid_intersection)
+	//RL_Print("Window_Buffer: 0x%x\n", ctx->Window_Buffer);
+	/*
+	RL_Print("gob clip   , left: %d,\ttop: %d,\tright: %d,\tbottom: %d\n",
+			 gob_clip.left,
+			 gob_clip.top,
+			 gob_clip.right,
+			 gob_clip.bottom);
+			 */
+	if (!XEmptyRegion(reg))
+	//if (valid_intersection)
 	{
 		//render GOB content
 		switch (GOB_TYPE(gob)) {
@@ -280,13 +344,13 @@ typedef struct {
 				//Put backend specific code here
 				//------------------------------
 				// or use the similar draw api call:
-				RL_Print("Draw Color\n");
+				//RL_Print("Draw Color at: %d, %d\n", x, y);
 				rebdrw_gob_color(gob, ctx->Window_Buffer, ctx->winBufSize, (REBXYI){x,y}, (REBXYI){gob_clip.left, gob_clip.top}, (REBXYI){gob_clip.right, gob_clip.bottom});
 				break;
 
 			case GOBT_IMAGE:
 				{
-				RL_Print("Draw Image\n");
+				//RL_Print("Draw Image\n");
 					//------------------------------
 					//Put backend specific code here
 					//------------------------------
@@ -297,7 +361,7 @@ typedef struct {
 
 			case GOBT_DRAW:
 				{
-				RL_Print("Draw Draw\n");
+				//RL_Print("Draw Draw at: %d, %d\n", x, y);
 					//------------------------------
 					//Put backend specific code here
 					//------------------------------
@@ -308,7 +372,7 @@ typedef struct {
 
 			case GOBT_TEXT:
 			case GOBT_STRING:
-				RL_Print("Draw Text\n");
+				//RL_Print("Draw Text at: %d, %d\n", x, y);
 				//------------------------------
 				//Put backend specific code here
 				//------------------------------
@@ -317,7 +381,7 @@ typedef struct {
 				break;
 
 			case GOBT_EFFECT:
-				RL_Print("Draw Effect\n");
+				//RL_Print("Draw Effect\n");
 				//not yet implemented
 				break;
 		}
@@ -348,6 +412,7 @@ typedef struct {
 			}
 		}
 	}
+	XDestroyRegion(reg);
 }
 
 /***********************************************************************
@@ -371,11 +436,22 @@ typedef struct {
 	REBINT y = GOB_LOG_Y_INT(gob);
 	REBINT w = GOB_LOG_W_INT(gob);
 	REBINT h = GOB_LOG_H_INT(gob);
+	XRectangle win_rect;
+	/*
+	RL_Print("Composing gob: %x (%dx%d, %dx%d) in wingob %x\n", 
+			 gob,
+			 (int)GOB_LOG_X(gob),
+			 (int)GOB_LOG_Y(gob),
+			 GOB_W_INT(gob),
+			 GOB_H_INT(gob),
+			 winGob);
+			 */
 
 	//reset clip region to window area
-	//------------------------------
-	//Put backend specific code here
-	//------------------------------
+	if (ctx->Win_Region != NULL){
+		XDestroyRegion(ctx->Win_Region);
+	}
+	ctx->Win_Region = XCreateRegion();
 
 	//calculate absolute offset of the gob
 	while (GOB_PARENT(parent_gob) && (max_depth-- > 0) && !GET_GOB_FLAG(parent_gob, GOBF_WINDOW))
@@ -398,6 +474,11 @@ typedef struct {
 		ctx->absOffset.y = 0;
 	}
 
+	ctx->New_Clip.x = abs_x;
+	ctx->New_Clip.y = abs_y;
+	ctx->New_Clip.width = abs_x + GOB_W_INT(gob);
+	ctx->New_Clip.height = abs_y + GOB_H_INT(gob);
+
 	//handle newly added gob case
 	if (!GET_GOB_STATE(gob, GOBS_NEW)){
 		//calculate absolute old offset of the gob
@@ -405,23 +486,45 @@ typedef struct {
 		abs_oy = abs_y + (GOB_YO(gob) - GOB_LOG_Y(gob));
 
 		//set region with old gob location and dimensions
-		//------------------------------
-		//Put backend specific code here
-		//------------------------------
+		ctx->Old_Clip.x = abs_ox;
+		ctx->Old_Clip.y = abs_oy;
+		ctx->Old_Clip.width = abs_ox + GOB_WO_INT(gob);
+		ctx->Old_Clip.height = abs_oy + GOB_HO_INT(gob);
+		XUnionRectWithRegion(&ctx->Old_Clip, ctx->Win_Region, ctx->Win_Region);
+		//RL_Print("OLD: %dx%d %dx%d\n",(REBINT)abs_ox, (REBINT)abs_oy, (REBINT)abs_ox + GOB_WO_INT(gob), (REBINT)abs_oy + GOB_HO_INT(gob));
 	}
+	//RL_Print("NEW: %dx%d %dx%d\n",(REBINT)abs_x, (REBINT)abs_y, (REBINT)abs_x + GOB_W_INT(gob), (REBINT)abs_y + GOB_H_INT(gob));
 
 	//Create union of "new" and "old" gob location
-	REBOOL valid_intersection = 1;
-	//------------------------------
-	//Put backend specific code here
-	//------------------------------
+	XUnionRectWithRegion(&ctx->New_Clip, ctx->Win_Region, ctx->Win_Region);
+	/*
+	XClipBox(ctx->Win_Region, &win_rect);
+	RL_Print("Old+New, %dx%d,%dx%d\n",
+			 win_rect.x,
+			 win_rect.y,
+			 win_rect.x + win_rect.width,
+			 win_rect.y + win_rect.height);
+			 */
 
 	//intersect resulting region with window clip region
-	//------------------------------
-	//Put backend specific code here
-	//------------------------------
+	Region win_region = XCreateRegion();
+	win_rect.x = 0;
+	win_rect.y = 0;
+	win_rect.width = GOB_LOG_W_INT(winGob);
+	win_rect.height = GOB_LOG_H_INT(winGob);
+	XUnionRectWithRegion(&win_rect, win_region, win_region);
 
-	if (valid_intersection)
+	XIntersectRegion(ctx->Win_Region, win_region, ctx->Win_Region);
+	XClipBox(ctx->Win_Region, &win_rect);
+/*
+	RL_Print("Start winre, %dx%d,%dx%d\n",
+			 win_rect.x,
+			 win_rect.y,
+			 win_rect.x + win_rect.width,
+			 win_rect.y + win_rect.height);
+			 */
+
+	if (!XEmptyRegion(ctx->Win_Region))
 	{
 		ctx->Window_Buffer = rebcmp_get_buffer(ctx);
 
@@ -448,11 +551,12 @@ typedef struct {
 **
 ***********************************************************************/
 {
-	RL_Print("rebcmp_blit\n");
+	//RL_Print("rebcmp_blit\n");
 	REBINT w = GOB_LOG_W_INT(ctx->Win_Gob);
 	REBINT h = GOB_LOG_H_INT(ctx->Win_Gob);
-	RL_Print("rebcmp_blit, w = %d, h = %d\n", w, h);
-	host_window_t *ew = (host_window_t*)GOB_HWIN(ctx->Win_Gob);
+	//RL_Print("rebcmp_blit, w = %d, h = %d\n", w, h);
+	XSetRegion(global_x_info->display, ctx->x_gc, ctx->Win_Region);
+
 	if (global_x_info->sys_pixmap_format == pix_format_bgra32){
 		XPutImage (global_x_info->display,
 				   ctx->x_window,
@@ -470,5 +574,5 @@ typedef struct {
 				  global_x_info->sys_pixmap_format);
 	}
 
-	RL_Print("rebcmp_blit done\n");
+	//RL_Print("rebcmp_blit done\n");
 }
