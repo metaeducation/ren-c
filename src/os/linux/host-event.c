@@ -32,12 +32,59 @@
 
 #include "host-window.h"
 #include "host-compositor.h"
+#include "keysym2ucs.h"
 
 extern x_info_t *global_x_info;
 REBGOB *Find_Gob_By_Window(Window win);
-extern void* Find_Compositor(REBGOB *gob);
+void* Find_Compositor(REBGOB *gob);
+REBEVT *RL_Find_Event (REBINT model, REBINT type);
 
 #define GOB_COMPOSITOR(gob)	(Find_Compositor(gob)) //gets handle to window's compositor
+
+// Virtual key conversion table, sorted by first column.
+const REBCNT keysym_to_event[] = {
+    /* 0xff09 */    XK_Tab,     	EVK_NONE,   //EVK_NONE means it is passed 'as-is'
+	/* 0xff50 */	XK_Home,		EVK_HOME,
+	/* 0xff51 */	XK_Left,		EVK_LEFT,
+	/* 0xff52 */	XK_Up,			EVK_UP,
+	/* 0xff53 */	XK_Right,		EVK_RIGHT,
+	/* 0xff54 */	XK_Down,		EVK_DOWN,
+	/* 0xff55 */	XK_Page_Up,		EVK_PAGE_UP,
+	/* 0xff56 */	XK_Page_Down,	EVK_PAGE_DOWN,
+	/* 0xff57 */	XK_End,			EVK_END,
+	/* 0xff63 */	XK_Insert,		EVK_INSERT,
+
+	/* 0xff91 */	XK_KP_F1,		EVK_F1,
+	/* 0xff92 */	XK_KP_F2,		EVK_F2,
+	/* 0xff93 */	XK_KP_F3,		EVK_F3,
+	/* 0xff94 */	XK_KP_F4,		EVK_F4,
+	/* 0xff95 */	XK_KP_Home,		EVK_HOME,
+	/* 0xff96 */	XK_KP_Left,		EVK_LEFT,
+	/* 0xff97 */	XK_KP_Up,		EVK_UP,
+	/* 0xff98 */	XK_KP_Right,	EVK_RIGHT,
+	/* 0xff99 */	XK_KP_Down,		EVK_DOWN,
+	/* 0xff9a */	XK_KP_Page_Up,	EVK_PAGE_UP,
+	/* 0xff9b */	XK_KP_Page_Down, EVK_PAGE_DOWN,
+	/* 0xff9c */	XK_KP_End,		EVK_END,
+	/* 0xff9e */	XK_KP_Insert,	EVK_INSERT,
+	/* 0xff9f */	XK_KP_Delete,   EVK_DELETE,
+
+	/* 0xffbe */	XK_F1,			EVK_F1,
+	/* 0xffbf */	XK_F2,			EVK_F2,
+	/* 0xffc0 */	XK_F3,			EVK_F3,
+	/* 0xffc1 */	XK_F4,			EVK_F4,
+	/* 0xffc2 */	XK_F5,			EVK_F5,
+	/* 0xffc3 */	XK_F6,			EVK_F6,
+	/* 0xffc4 */	XK_F7,			EVK_F7,
+	/* 0xffc5 */	XK_F8,			EVK_F8,
+	/* 0xffc6 */	XK_F9,			EVK_F9,
+	/* 0xffc7 */	XK_F10,			EVK_F10,
+	/* 0xffc8 */	XK_F11,			EVK_F11,
+	/* 0xffc9 */	XK_F12,			EVK_F12,
+	/* 0xffff */	XK_Delete,		EVK_DELETE,
+					0x0,			0
+
+};
 
 static void Add_Event_XY(REBGOB *gob, REBINT id, REBINT xy, REBINT flags)
 {
@@ -76,6 +123,13 @@ static void Add_Event_Key(REBGOB *gob, REBINT id, REBINT key, REBINT flags)
 	evt.ser = (void*)gob;
 
 	RL_Event(&evt);	// returns 0 if queue is full
+}
+
+static Check_Modifiers(REBINT flags, unsigned state)
+{
+	if (state & ShiftMask) flags |= (1<<EVF_SHIFT);
+	if (state & ControlMask) flags |= (1<<EVF_CONTROL);
+	return flags;
 }
 
 void Dispatch_Events(int at_most)
@@ -127,33 +181,41 @@ void Dispatch_Events(int at_most)
 				}
 				break;
 			case KeyPress:
-				//RL_Print ("key %s is pressed\n", XKeysymToString(XKeycodeToKeysym(global_x_info->display, ev.xkey.keycode, 0)));
-				keysym = XGetKeyboardMapping(global_x_info->display,
-											 ev.xkey.keycode,
-											 1,
-											 &keysyms_per_keycode_return);
-
-				gob = Find_Gob_By_Window(ev.xkey.window);
-				if(gob != NULL){
-					Add_Event_Key(gob, EVT_KEY, keysym[0], 0);
-				}
-
-				XFree(keysym);
-				break;
 			case KeyRelease:
-				//RL_Print ("key %s is released\n", XKeysymToString(XKeycodeToKeysym(global_x_info->display, ev.xkey.keycode, 0)));
-				keysym = XGetKeyboardMapping(global_x_info->display,
-													 ev.xkey.keycode,
-													 1,
-													 &keysyms_per_keycode_return);
-
 				gob = Find_Gob_By_Window(ev.xkey.window);
 				if(gob != NULL){
-					Add_Event_Key(gob, EVT_KEY_UP, keysym[0], 0);
+					KeySym keysym;
+					flags = Check_Modifiers(0, ev.xkey.state);
+					char key_string[8];
+					XComposeStatus compose_status;
+					int i = 0, key = -1;
+					int len = XLookupString(&ev.xkey, key_string, sizeof(key_string), &keysym, &compose_status);
+					key_string[len] = '\0';
+					//RL_Print ("key %s (%x) is released\n", key_string, key_string[0]);
+	
+
+					for (i = 0; keysym_to_event[i] && keysym > keysym_to_event[i]; i += 2);
+					if (keysym == keysym_to_event[i]) {
+						key = keysym_to_event[i + 1] << 16;
+					} else {
+						key = keysym2ucs(keysym);
+						if (key < 0 && len > 0){
+							key = key_string[0]; /* FIXME, key_string could be longer than 1 */
+						}
+					}
+
+					if (key > 0){
+					   Add_Event_Key(gob,
+									 ev.type == KeyPress? EVT_KEY : EVT_KEY_UP, 
+									 key, flags);
+
+						RL_Print ("Key event %s with key %x (flags: %x) is sent\n",
+									 ev.type == KeyPress? "EVT_KEY" : "EVT_KEY_UP", 
+									 key,
+									 flags);
+					}
 				}
 
-				XFree(keysym);
-				//RL_Print ("key %s is released\n", XKeysymToString(XKeycodeToKeysym(global_x_info->display, ev.xkey.keycode, 0)));
 				break;
 			case ResizeRequest:
 				RL_Print ("request to resize to %dx%d", ev.xresizerequest.width, ev.xresizerequest.height);
