@@ -40,6 +40,7 @@ void* Find_Compositor(REBGOB *gob);
 REBEVT *RL_Find_Event (REBINT model, REBINT type);
 
 #define GOB_COMPOSITOR(gob)	(Find_Compositor(gob)) //gets handle to window's compositor
+#define DOUBLE_CLICK_DIFF 300 /* in milliseconds */
 
 // Virtual key conversion table, sorted by first column.
 const REBCNT keysym_to_event[] = {
@@ -143,6 +144,8 @@ void Dispatch_Events(int at_most)
 	REBEVT *evt = NULL;
 	REBINT flags = 0;
 	int n = 0;
+	static Time last_click = 0;
+	static REBINT last_click_button = 0;
 	while(XPending(global_x_info->display) && (at_most < 0 || n < at_most)) {
 		++ n;
 		XNextEvent(global_x_info->display, &ev);
@@ -155,20 +158,79 @@ void Dispatch_Events(int at_most)
 				}
 				break;
 			case ButtonPress:
-				RL_Print("Button %d pressed\n", ev.xbutton.button);
-				gob = Find_Gob_By_Window(ev.xbutton.window);
-				if (gob != NULL){
-					xyd = (ROUND_TO_INT(PHYS_COORD_X(ev.xbutton.x))) + (ROUND_TO_INT(PHYS_COORD_Y(ev.xbutton.y)) << 16);
-					Add_Event_XY(gob, EVT_DOWN, xyd, 0);
-				}
-				break;
-
 			case ButtonRelease:
-				RL_Print("Button %d is released\n", ev.xbutton.button);
+				RL_Print("Button %d event at %d\n", ev.xbutton.button, ev.xbutton.time);
 				gob = Find_Gob_By_Window(ev.xbutton.window);
-				if (gob != NULL){
+				if (gob != NULL) {
 					xyd = (ROUND_TO_INT(PHYS_COORD_X(ev.xbutton.x))) + (ROUND_TO_INT(PHYS_COORD_Y(ev.xbutton.y)) << 16);
-					Add_Event_XY(gob, EVT_UP, xyd, 0);
+					REBINT id = 0, flags = 0;
+					flags = Check_Modifiers(0, ev.xbutton.state);
+					if (ev.xbutton.button < 4) {
+						if (ev.type == ButtonPress
+							&& last_click_button == ev.xbutton.button
+							&& ev.xbutton.time - last_click < DOUBLE_CLICK_DIFF){
+							/* FIXME, a hack to detect double click: a double click would be a single click followed by a double click */
+							flags |= EVF_DOUBLE;
+							RL_Print("Button %d double clicked\n", ev.xbutton.button);
+						}
+						switch (ev.xbutton.button){
+							case 1: //left button
+								id = (ev.type == ButtonPress)? EVT_DOWN: EVT_UP;
+								break;
+							case 2: //middle button
+								id = (ev.type == ButtonPress)? EVT_AUX_DOWN: EVT_AUX_UP;
+								break;
+							case 3: //right button
+								id = (ev.type == ButtonPress)? EVT_ALT_DOWN: EVT_ALT_UP;
+								break;
+						}
+						Add_Event_XY(gob, id, xyd, flags);
+					} else {
+						switch (ev.xbutton.button){
+							case 4: //wheel scroll up
+								if (ev.type == ButtonRelease) {
+									RL_Print("Scrolling up by 1 line\n");
+									evt = RL_Find_Event(EVM_GUI, 
+														ev.xbutton.state & ControlMask? EVT_SCROLL_PAGE: EVT_SCROLL_LINE);
+									if (evt != NULL){
+										RL_Print("Current line = %x\n", evt->data >> 16);
+										if (evt->data < 0){
+											evt->data = 0;
+										}
+										evt->data += 3 << 16;
+									} else {
+										Add_Event_XY(gob, 
+													 ev.xbutton.state & ControlMask? EVT_SCROLL_PAGE: EVT_SCROLL_LINE, 
+													 1 << 16, 0);
+									}
+								}
+								break;
+							case 5: //wheel scroll down
+								if (ev.type == ButtonRelease) {
+									RL_Print("Scrolling down by 1 line\n");
+									evt = RL_Find_Event(EVM_GUI, 
+														ev.xbutton.state & ControlMask? EVT_SCROLL_PAGE: EVT_SCROLL_LINE);
+									if (evt != NULL){
+										RL_Print("Current line = %x\n", evt->data >> 16);
+										if (evt->data > 0){
+											evt->data = 0;
+										}
+										evt->data -= 3 << 16;
+									} else {
+										Add_Event_XY(gob, 
+													 ev.xbutton.state & ControlMask? EVT_SCROLL_PAGE: EVT_SCROLL_LINE, 
+													 -1 << 16, 0);
+									}
+								}
+								break;
+							default:
+								RL_Print("Unrecognized mouse button %d", ev.xbutton.button);
+						}
+					}
+				}
+				if (ev.type == ButtonPress) {
+					last_click_button = ev.xbutton.button;
+					last_click = ev.xbutton.time;
 				}
 				break;
 
