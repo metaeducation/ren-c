@@ -60,7 +60,7 @@ extern void Free_Window(REBGOB *gob);
 extern void* Find_Compositor(REBGOB *gob);
 extern REBINT Alloc_Window(REBGOB *gob);
 extern void Draw_Window(REBGOB *wingob, REBGOB *gob);
-extern void Dispatch_Events();
+extern void X_Event_Loop();
 
 x_info_t *global_x_info = NULL;
 //***** Locals *****
@@ -386,12 +386,12 @@ static REBXYF Zero_Pair = {0, 0};
 	//RL_Print("Closing %x\n", gob);
 	if (GET_GOB_FLAG(gob, GOBF_WINDOW)) {
 		XSync(global_x_info->display, FALSE); //wait child window to be destroyed and notified
-		Dispatch_Events(-1);
+		X_Event_Loop(-1);
 		Window win = GOB_HWIN(gob);
 		if (win) {
 			//RL_Print("Destroying window: %x\n", win);
 			XDestroyWindow(global_x_info->display, win);
-			Dispatch_Events(-1);
+			X_Event_Loop(-1);
 
 			Free_Window(gob);
 		}

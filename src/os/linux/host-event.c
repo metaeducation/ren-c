@@ -133,9 +133,8 @@ static Check_Modifiers(REBINT flags, unsigned state)
 	return flags;
 }
 
-void Dispatch_Events(int at_most)
+void Dispatch_Event(XEvent *ev)
 {
-	XEvent ev;
 	REBGOB *gob = NULL;
 	// Handle XEvents and flush the input 
     REBINT keysyms_per_keycode_return;
@@ -143,208 +142,214 @@ void Dispatch_Events(int at_most)
 	XConfigureEvent xce;
 	REBEVT *evt = NULL;
 	REBINT flags = 0;
-	int n = 0;
 	static Time last_click = 0;
 	static REBINT last_click_button = 0;
+	switch (ev->type) {
+		case Expose:
+			//RL_Print("exposed\n");
+			gob = Find_Gob_By_Window(ev->xexpose.window);
+			if (gob != NULL){
+				rebcmp_blit(GOB_COMPOSITOR(gob));
+			}
+			break;
+		case ButtonPress:
+		case ButtonRelease:
+			//RL_Print("Button %d event at %d\n", ev->xbutton.button, ev->xbutton.time);
+			gob = Find_Gob_By_Window(ev->xbutton.window);
+			if (gob != NULL) {
+				xyd = (ROUND_TO_INT(PHYS_COORD_X(ev->xbutton.x))) + (ROUND_TO_INT(PHYS_COORD_Y(ev->xbutton.y)) << 16);
+				REBINT id = 0, flags = 0;
+				flags = Check_Modifiers(0, ev->xbutton.state);
+				if (ev->xbutton.button < 4) {
+					if (ev->type == ButtonPress
+						&& last_click_button == ev->xbutton.button
+						&& ev->xbutton.time - last_click < DOUBLE_CLICK_DIFF){
+						/* FIXME, a hack to detect double click: a double click would be a single click followed by a double click */
+						flags |= EVF_DOUBLE;
+						//RL_Print("Button %d double clicked\n", ev->xbutton.button);
+					}
+					switch (ev->xbutton.button){
+						case 1: //left button
+							id = (ev->type == ButtonPress)? EVT_DOWN: EVT_UP;
+							break;
+						case 2: //middle button
+							id = (ev->type == ButtonPress)? EVT_AUX_DOWN: EVT_AUX_UP;
+							break;
+						case 3: //right button
+							id = (ev->type == ButtonPress)? EVT_ALT_DOWN: EVT_ALT_UP;
+							break;
+					}
+					Add_Event_XY(gob, id, xyd, flags);
+				} else {
+					switch (ev->xbutton.button){
+						case 4: //wheel scroll up
+							if (ev->type == ButtonRelease) {
+								//RL_Print("Scrolling up by 1 line\n");
+								evt = RL_Find_Event(EVM_GUI,
+													ev->xbutton.state & ControlMask? EVT_SCROLL_PAGE: EVT_SCROLL_LINE);
+								if (evt != NULL){
+									//RL_Print("Current line = %x\n", evt->data >> 16);
+									if (evt->data < 0){
+										evt->data = 0;
+									}
+									evt->data += 3 << 16;
+								} else {
+									Add_Event_XY(gob,
+												 ev->xbutton.state & ControlMask? EVT_SCROLL_PAGE: EVT_SCROLL_LINE,
+												 1 << 16, 0);
+								}
+							}
+							break;
+						case 5: //wheel scroll down
+							if (ev->type == ButtonRelease) {
+								//RL_Print("Scrolling down by 1 line\n");
+								evt = RL_Find_Event(EVM_GUI, 
+													ev->xbutton.state & ControlMask? EVT_SCROLL_PAGE: EVT_SCROLL_LINE);
+								if (evt != NULL){
+									//RL_Print("Current line = %x\n", evt->data >> 16);
+									if (evt->data > 0){
+										evt->data = 0;
+									}
+									evt->data -= 3 << 16;
+								} else {
+									Add_Event_XY(gob, 
+												 ev->xbutton.state & ControlMask? EVT_SCROLL_PAGE: EVT_SCROLL_LINE, 
+												 -1 << 16, 0);
+								}
+							}
+							break;
+						default:
+							RL_Print("Unrecognized mouse button %d", ev->xbutton.button);
+					}
+				}
+			}
+			if (ev->type == ButtonPress) {
+				last_click_button = ev->xbutton.button;
+				last_click = ev->xbutton.time;
+			}
+			break;
+
+		case MotionNotify:
+			//RL_Print ("mouse motion\n");
+			gob = Find_Gob_By_Window(ev->xmotion.window);
+			if (gob != NULL){
+				xyd = (ROUND_TO_INT(PHYS_COORD_X(ev->xmotion.x))) + (ROUND_TO_INT(PHYS_COORD_Y(ev->xmotion.y)) << 16);
+				Update_Event_XY(gob, EVT_MOVE, xyd, 0);
+			}
+			break;
+		case KeyPress:
+		case KeyRelease:
+			gob = Find_Gob_By_Window(ev->xkey.window);
+			if(gob != NULL){
+				KeySym keysym;
+				flags = Check_Modifiers(0, ev->xkey.state);
+				char key_string[8];
+				XComposeStatus compose_status;
+				int i = 0, key = -1;
+				int len = XLookupString(&ev->xkey, key_string, sizeof(key_string), &keysym, &compose_status);
+				key_string[len] = '\0';
+				//RL_Print ("key %s (%x) is released\n", key_string, key_string[0]);
+
+
+				for (i = 0; keysym_to_event[i] && keysym > keysym_to_event[i]; i += 2);
+				if (keysym == keysym_to_event[i]) {
+					key = keysym_to_event[i + 1] << 16;
+				} else {
+					key = keysym2ucs(keysym);
+					if (key < 0 && len > 0){
+						key = key_string[0]; /* FIXME, key_string could be longer than 1 */
+					}
+				}
+
+				if (key > 0){
+				   Add_Event_Key(gob,
+								 ev->type == KeyPress? EVT_KEY : EVT_KEY_UP, 
+								 key, flags);
+
+				   /*
+					RL_Print ("Key event %s with key %x (flags: %x) is sent\n",
+								 ev->type == KeyPress? "EVT_KEY" : "EVT_KEY_UP", 
+								 key,
+								 flags);
+					 */
+				}
+			}
+
+			break;
+		case ResizeRequest:
+			//RL_Print ("request to resize to %dx%d", ev->xresizerequest.width, ev->xresizerequest.height);
+			break;
+		case FocusIn:
+			if (ev->xfocus.mode != NotifyWhileGrabbed) {
+				//RL_Print ("FocusIn, type = %d, window = %x\n", ev->xfocus.type, ev->xfocus.window);
+				gob = Find_Gob_By_Window(ev->xfocus.window);
+				if (gob && !GET_GOB_STATE(gob, GOBS_ACTIVE)) {
+					SET_GOB_STATE(gob, GOBS_ACTIVE);
+					Add_Event_XY(gob, EVT_ACTIVE, 0, 0);
+				}
+			}
+			break;
+		case FocusOut:
+			if (ev->xfocus.mode != NotifyWhileGrabbed) {
+				//RL_Print ("FocusOut, type = %d, window = %x\n", ev->xfocus.type, ev->xfocus.window);
+				gob = Find_Gob_By_Window(ev->xfocus.window);
+				if (gob && GET_GOB_STATE(gob, GOBS_ACTIVE)) {
+					CLR_GOB_STATE(gob, GOBS_ACTIVE);
+					Add_Event_XY(gob, EVT_INACTIVE, 0, 0);
+				}
+			}
+			break;
+		case DestroyNotify:
+			//RL_Print ("destroyed %x\n", ev->xdestroywindow.window);
+			gob = Find_Gob_By_Window(ev->xdestroywindow.window);
+			if (gob != NULL){
+				Free_Window(gob);
+			}
+			break;
+		case ClientMessage:
+			//RL_Print ("closed\n");
+			gob = Find_Gob_By_Window(ev->xclient.window);
+			if (gob != NULL){
+				Add_Event_XY(gob, EVT_CLOSE, 0, 0);
+			}
+			break;
+		case ConfigureNotify:
+			//RL_Print("configuranotify\n");
+			xce = ev->xconfigure;
+			gob = Find_Gob_By_Window(ev->xconfigure.window);
+			if (gob != NULL) {
+				if (gob->offset.x != xce.x || gob->offset.y != xce.y){
+					xyd = (ROUND_TO_INT(xce.x)) + (ROUND_TO_INT(xce.y) << 16);
+					//RL_Print("%s, %s, %d: EVT_OFFSET is sent\n", __FILE__, __func__, __LINE__);
+					Update_Event_XY(gob, EVT_OFFSET, xyd, 0);
+				}
+				xyd = (ROUND_TO_INT(xce.x)) + (ROUND_TO_INT(xce.y) << 16);
+				gob->offset.x = xce.x;
+				gob->offset.y = xce.y;
+				//RL_Print("WM_MOVE: %x\n", xyd);
+				if (gob->size.x != xce.width || gob->size.y != xce.height){
+					Resize_Window(gob, TRUE);
+					xyd = (ROUND_TO_INT(xce.width)) + (ROUND_TO_INT(xce.height) << 16);
+					//RL_Print("%s, %s, %d: EVT_RESIZE is sent\n", __FILE__, __func__, __LINE__);
+					Update_Event_XY(gob, EVT_RESIZE, xyd, 0);
+				}
+				gob->size.x = xce.width;
+				gob->size.y = xce.height;
+			}
+			break;
+		default:
+			//RL_Print("default event type\n");
+			break;
+	}
+}
+
+void X_Event_Loop(int at_most)
+{
+	XEvent ev;
+	int n = 0;
 	while(XPending(global_x_info->display) && (at_most < 0 || n < at_most)) {
 		++ n;
 		XNextEvent(global_x_info->display, &ev);
-		switch (ev.type) {
-			case Expose:
-				//RL_Print("exposed\n");
-				gob = Find_Gob_By_Window(ev.xexpose.window);
-				if (gob != NULL){
-					rebcmp_blit(GOB_COMPOSITOR(gob));
-				}
-				break;
-			case ButtonPress:
-			case ButtonRelease:
-				//RL_Print("Button %d event at %d\n", ev.xbutton.button, ev.xbutton.time);
-				gob = Find_Gob_By_Window(ev.xbutton.window);
-				if (gob != NULL) {
-					xyd = (ROUND_TO_INT(PHYS_COORD_X(ev.xbutton.x))) + (ROUND_TO_INT(PHYS_COORD_Y(ev.xbutton.y)) << 16);
-					REBINT id = 0, flags = 0;
-					flags = Check_Modifiers(0, ev.xbutton.state);
-					if (ev.xbutton.button < 4) {
-						if (ev.type == ButtonPress
-							&& last_click_button == ev.xbutton.button
-							&& ev.xbutton.time - last_click < DOUBLE_CLICK_DIFF){
-							/* FIXME, a hack to detect double click: a double click would be a single click followed by a double click */
-							flags |= EVF_DOUBLE;
-							//RL_Print("Button %d double clicked\n", ev.xbutton.button);
-						}
-						switch (ev.xbutton.button){
-							case 1: //left button
-								id = (ev.type == ButtonPress)? EVT_DOWN: EVT_UP;
-								break;
-							case 2: //middle button
-								id = (ev.type == ButtonPress)? EVT_AUX_DOWN: EVT_AUX_UP;
-								break;
-							case 3: //right button
-								id = (ev.type == ButtonPress)? EVT_ALT_DOWN: EVT_ALT_UP;
-								break;
-						}
-						Add_Event_XY(gob, id, xyd, flags);
-					} else {
-						switch (ev.xbutton.button){
-							case 4: //wheel scroll up
-								if (ev.type == ButtonRelease) {
-									//RL_Print("Scrolling up by 1 line\n");
-									evt = RL_Find_Event(EVM_GUI, 
-														ev.xbutton.state & ControlMask? EVT_SCROLL_PAGE: EVT_SCROLL_LINE);
-									if (evt != NULL){
-										//RL_Print("Current line = %x\n", evt->data >> 16);
-										if (evt->data < 0){
-											evt->data = 0;
-										}
-										evt->data += 3 << 16;
-									} else {
-										Add_Event_XY(gob, 
-													 ev.xbutton.state & ControlMask? EVT_SCROLL_PAGE: EVT_SCROLL_LINE, 
-													 1 << 16, 0);
-									}
-								}
-								break;
-							case 5: //wheel scroll down
-								if (ev.type == ButtonRelease) {
-									//RL_Print("Scrolling down by 1 line\n");
-									evt = RL_Find_Event(EVM_GUI, 
-														ev.xbutton.state & ControlMask? EVT_SCROLL_PAGE: EVT_SCROLL_LINE);
-									if (evt != NULL){
-										//RL_Print("Current line = %x\n", evt->data >> 16);
-										if (evt->data > 0){
-											evt->data = 0;
-										}
-										evt->data -= 3 << 16;
-									} else {
-										Add_Event_XY(gob, 
-													 ev.xbutton.state & ControlMask? EVT_SCROLL_PAGE: EVT_SCROLL_LINE, 
-													 -1 << 16, 0);
-									}
-								}
-								break;
-							default:
-								RL_Print("Unrecognized mouse button %d", ev.xbutton.button);
-						}
-					}
-				}
-				if (ev.type == ButtonPress) {
-					last_click_button = ev.xbutton.button;
-					last_click = ev.xbutton.time;
-				}
-				break;
-
-			case MotionNotify:
-				//RL_Print ("mouse motion\n");
-				gob = Find_Gob_By_Window(ev.xmotion.window);
-				if (gob != NULL){
-					xyd = (ROUND_TO_INT(PHYS_COORD_X(ev.xmotion.x))) + (ROUND_TO_INT(PHYS_COORD_Y(ev.xmotion.y)) << 16);
-					Update_Event_XY(gob, EVT_MOVE, xyd, 0);
-				}
-				break;
-			case KeyPress:
-			case KeyRelease:
-				gob = Find_Gob_By_Window(ev.xkey.window);
-				if(gob != NULL){
-					KeySym keysym;
-					flags = Check_Modifiers(0, ev.xkey.state);
-					char key_string[8];
-					XComposeStatus compose_status;
-					int i = 0, key = -1;
-					int len = XLookupString(&ev.xkey, key_string, sizeof(key_string), &keysym, &compose_status);
-					key_string[len] = '\0';
-					//RL_Print ("key %s (%x) is released\n", key_string, key_string[0]);
-	
-
-					for (i = 0; keysym_to_event[i] && keysym > keysym_to_event[i]; i += 2);
-					if (keysym == keysym_to_event[i]) {
-						key = keysym_to_event[i + 1] << 16;
-					} else {
-						key = keysym2ucs(keysym);
-						if (key < 0 && len > 0){
-							key = key_string[0]; /* FIXME, key_string could be longer than 1 */
-						}
-					}
-
-					if (key > 0){
-					   Add_Event_Key(gob,
-									 ev.type == KeyPress? EVT_KEY : EVT_KEY_UP, 
-									 key, flags);
-
-					   /*
-						RL_Print ("Key event %s with key %x (flags: %x) is sent\n",
-									 ev.type == KeyPress? "EVT_KEY" : "EVT_KEY_UP", 
-									 key,
-									 flags);
-						 */
-					}
-				}
-
-				break;
-			case ResizeRequest:
-				//RL_Print ("request to resize to %dx%d", ev.xresizerequest.width, ev.xresizerequest.height);
-				break;
-			case FocusIn:
-				if (ev.xfocus.mode != NotifyWhileGrabbed) {
-					//RL_Print ("FocusIn, type = %d, window = %x\n", ev.xfocus.type, ev.xfocus.window);
-					gob = Find_Gob_By_Window(ev.xfocus.window);
-					if (gob && !GET_GOB_STATE(gob, GOBS_ACTIVE)) {
-						SET_GOB_STATE(gob, GOBS_ACTIVE);
-						Add_Event_XY(gob, EVT_ACTIVE, 0, 0);
-					}
-				}
-				break;
-			case FocusOut:
-				if (ev.xfocus.mode != NotifyWhileGrabbed) {
-					//RL_Print ("FocusOut, type = %d, window = %x\n", ev.xfocus.type, ev.xfocus.window);
-					gob = Find_Gob_By_Window(ev.xfocus.window);
-					if (gob && GET_GOB_STATE(gob, GOBS_ACTIVE)) {
-						CLR_GOB_STATE(gob, GOBS_ACTIVE);
-						Add_Event_XY(gob, EVT_INACTIVE, 0, 0);
-					}
-				}
-				break;
-			case DestroyNotify:
-				//RL_Print ("destroyed %x\n", ev.xdestroywindow.window);
-				gob = Find_Gob_By_Window(ev.xdestroywindow.window);
-				if (gob != NULL){
-					Free_Window(gob);
-				}
-				break;
-			case ClientMessage:
-				//RL_Print ("closed\n");
-				gob = Find_Gob_By_Window(ev.xclient.window);
-				if (gob != NULL){
-					Add_Event_XY(gob, EVT_CLOSE, 0, 0);
-				}
-				break;
-			case ConfigureNotify:
-				//RL_Print("configuranotify\n");
-				xce = ev.xconfigure;
-				gob = Find_Gob_By_Window(ev.xconfigure.window);
-				if (gob != NULL) {
-					if (gob->offset.x != xce.x || gob->offset.y != xce.y){
-						xyd = (ROUND_TO_INT(xce.x)) + (ROUND_TO_INT(xce.y) << 16);
-						//RL_Print("%s, %s, %d: EVT_OFFSET is sent\n", __FILE__, __func__, __LINE__);
-						Update_Event_XY(gob, EVT_OFFSET, xyd, 0);
-					}
-					xyd = (ROUND_TO_INT(xce.x)) + (ROUND_TO_INT(xce.y) << 16);
-					gob->offset.x = xce.x;
-					gob->offset.y = xce.y;
-					//RL_Print("WM_MOVE: %x\n", xyd);
-					if (gob->size.x != xce.width || gob->size.y != xce.height){
-						Resize_Window(gob, TRUE);
-						xyd = (ROUND_TO_INT(xce.width)) + (ROUND_TO_INT(xce.height) << 16);
-						//RL_Print("%s, %s, %d: EVT_RESIZE is sent\n", __FILE__, __func__, __LINE__);
-						Update_Event_XY(gob, EVT_RESIZE, xyd, 0);
-					}
-					gob->size.x = xce.width;
-					gob->size.y = xce.height;
-				}
-				break;
-			default:
-				//RL_Print("default event type\n");
-				break;
-		}
+		Dispatch_Event(&ev);
 	}
 }
