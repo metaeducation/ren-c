@@ -525,7 +525,29 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 	return RL_Event(evt) - 1;
 }
 
-RL_API void *RL_Make_Block(u32 size)
+/***********************************************************************
+**
+*/ RL_API REBEVT *RL_Find_Event (REBINT model, REBINT type)
+/*
+**	Find an application event (e.g. GUI) to the event port.
+**
+**	Returns:
+**  	A pointer to the find event
+**  Arguments:
+**      model - event model
+**      type - event type
+*/
+{
+	REBVAL * val = Find_Event(model, type);
+	if (val != NULL) {
+		return &val->data.event;
+	}
+	return NULL;
+}
+
+/***********************************************************************
+**
+*/ RL_API void *RL_Make_Block(u32 size)
 /*
 **	Allocate a new block.
 **
