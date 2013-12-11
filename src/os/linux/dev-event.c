@@ -111,23 +111,24 @@ void X_Event_Loop(int at_most);
 	//printf("usec %d\n", tv.tv_usec);
 	
 #ifndef REB_CORE
+	XEvent ev;
+	i64 base = OS_Delta_Time(0, 0) ;
     // This returns the FD of the X11 display (or something like that)
     x11_fd = ConnectionNumber(global_x_info->display);
 
         // Create a File Description Set containing x11_fd
 	FD_SET(x11_fd, &in_fds);
-#endif
 
 	// Wait for X Event or a Timer
-	if (select(x11_fd+1, &in_fds, 0, 0, &tv)){
-		//RL_Print("Event Received!\n");
-		return DR_PEND;
+	while (select(x11_fd+1, &in_fds, 0, 0, &tv) > 0){
+		XNextEvent(global_x_info->display, &ev);
+		Dispatch_Event(&ev);
+		tv.tv_usec = (req->length - OS_Delta_Time(base, 0)) * 1000;
+		tv.tv_sec = 0;
 	}
-	else {
-		// Handle timer here
-		//RL_Print("Timer Fired!\n");
-	}
-
+#else
+	select(x11_fd+1, &in_fds, 0, 0, &tv);
+#endif
 	return DR_DONE;
 }
 
