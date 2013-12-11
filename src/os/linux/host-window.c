@@ -98,7 +98,7 @@ static REBXYF Zero_Pair = {0, 0};
 	if (global_x_info->display == NULL){
 		RL_Print("XOpenDisplay failed");
 	}else{
-		RL_Print("XOpenDisplay succeeded: x_dislay = %x\n", global_x_info->display);
+		//RL_Print("XOpenDisplay succeeded: x_dislay = %x\n", global_x_info->display);
 	}
 
 	global_x_info->default_screen = DefaultScreenOfDisplay(global_x_info->display);
@@ -150,28 +150,28 @@ static REBXYF Zero_Pair = {0, 0};
 **
 ***********************************************************************/
 {
-	RL_Print("updating window:");
+	//RL_Print("updating window:");
 	REBINT x = GOB_LOG_X_INT(gob);
 	REBINT y = GOB_LOG_Y_INT(gob);
 	REBINT w = GOB_LOG_W_INT(gob);
 	REBINT h = GOB_LOG_H_INT(gob);
-	RL_Print("x: %d, y: %d, width: %d, height: %d\n", x, y, w, h);
+	//RL_Print("x: %d, y: %d, width: %d, height: %d\n", x, y, w, h);
 	Window win = GOB_HWIN(gob);
 	if (!win) {
 		return;
 	}
 	Resize_Window(gob, FALSE);
 	if (x != GOB_XO_INT(gob) || y != GOB_YO_INT(gob)){
-		RL_Print("Moving window: %x\n", win);
+		//RL_Print("Moving window: %x\n", win);
 		XMoveWindow(global_x_info->display, win, x, y);
 		if (x + w < 0 
 			|| y + h < 0
 			|| x > OS_Get_Metrics(SM_SCREEN_WIDTH)
 			|| y > OS_Get_Metrics(SM_SCREEN_HEIGHT)) {
-			RL_Print("Hiding window: %x\n", win);
+			//RL_Print("Hiding window: %x\n", win);
 			XUnmapWindow(global_x_info->display, win); //hide the out-of-bound window
 		} else {
-			RL_Print("Unhiding window: %x\n", win);
+			//RL_Print("Unhiding window: %x\n", win);
 			XMapWindow(global_x_info->display, win); //unhide the window
 		}
 	}
@@ -207,7 +207,7 @@ static REBXYF Zero_Pair = {0, 0};
 
 	Window parent_window;
 
-	RL_Print("%s, %d, x: %d, y: %d, width: %d, height: %d\n", __func__, __LINE__, x, y, w, h);
+	//RL_Print("%s, %d, x: %d, y: %d, width: %d, height: %d\n", __func__, __LINE__, x, y, w, h);
 
 	swa.event_mask = ExposureMask 
 					| PointerMotionMask 
@@ -242,8 +242,8 @@ static REBXYF Zero_Pair = {0, 0};
 			XTranslateCoordinates(display, grand_window, root, parent_x, parent_y, &abs_x, &abs_y, &child);
 			x -= abs_x;
 	  		y -= abs_y;	   
-			RL_Print("%s, %d, x: %d, y: %d, parent_x: %d, parent_y: %d, abs_x: %d, abs_y: %d, width: %d, height: %d\n", __func__, __LINE__, 
-					 x, y, parent_x, parent_y, abs_x, abs_y, w, h);
+			//RL_Print("%s, %d, x: %d, y: %d, parent_x: %d, parent_y: %d, abs_x: %d, abs_y: %d, width: %d, height: %d\n", __func__, __LINE__, 
+			//		 x, y, parent_x, parent_y, abs_x, abs_y, w, h);
 		}
 		window = XCreateWindow(display, 
 							   parent_window,
@@ -350,7 +350,7 @@ static REBXYF Zero_Pair = {0, 0};
 
 	if ((x + w > 0 && x < OS_Get_Metrics(SM_SCREEN_WIDTH))
 		&& (y + h > 0 && y < OS_Get_Metrics(SM_SCREEN_HEIGHT))) {
-		RL_Print("Mapping %x\n", window);
+		//RL_Print("Mapping %x\n", window);
 		XMapWindow(display, window);
 	}
 
@@ -358,10 +358,12 @@ static REBXYF Zero_Pair = {0, 0};
 	Window root;
 	XGetGeometry(display, window, &root, &actual_x, &actual_y, 
 				 &actual_w, &actual_h, &actual_border_width, &actual_depth);
+	/*
 	RL_Print("%s %d, created an X window: %x for gob %x, x: %d, y: %d, w: %d, h: %d, border: %d, depth: %d\n", 
 			 __func__, __LINE__, window, gob,
 			 actual_x, actual_y, actual_w, actual_h,
 			 actual_border_width, actual_depth);
+	*/
 
 	CLEAR_GOB_STATE(gob);
 	SET_GOB_STATE(gob, GOBS_NEW);
@@ -381,7 +383,7 @@ static REBXYF Zero_Pair = {0, 0};
 **
 ***********************************************************************/
 {
-	RL_Print("Closing %x\n", gob);
+	//RL_Print("Closing %x\n", gob);
 	if (GET_GOB_FLAG(gob, GOBF_WINDOW)) {
 		XSync(global_x_info->display, FALSE); //wait child window to be destroyed and notified
 		Dispatch_Events(-1);

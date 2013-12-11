@@ -149,10 +149,11 @@ extern x_info_t *global_x_info;
 												   &bytes,
 												   (unsigned char**)&data);
 					   if (status != Success) {
-						   RL_Print("status = %d\n", status);
+						   //RL_Print("status = %d\n", status);
 						   Host_Crash("XGetWindowProperty failed in OS_Get_Metrics");
 					   }
 
+					   /*
 					   RL_Print("actual_type %d\n", actual_type);
 					   RL_Print("actual_format %d\n", actual_format);
 					   RL_Print("nitems %d\n", nitems);
@@ -160,6 +161,7 @@ extern x_info_t *global_x_info;
 					   for (i=0; i < nitems; i++){
 						   RL_Print("data[%d] %d\n", i, data[i]);
 					   }
+					   */
 					   switch(type) {
 						   case SM_WORK_X:
 							   ret = data[0];
@@ -190,7 +192,7 @@ extern x_info_t *global_x_info;
 												   &bytes,
 												   (unsigned char**)&data);
 					   if (status != Success || data == NULL) {
-						   RL_Print("status = %d, nitmes = %d\n", status, nitems);
+						   //RL_Print("status = %d, nitmes = %d\n", status, nitems);
 						   //Host_Crash("XGetWindowProperty failed in OS_Get_Metrics");
 						   return 20; //FIXME
 					   }

@@ -151,7 +151,7 @@ void Dispatch_Events(int at_most)
 		XNextEvent(global_x_info->display, &ev);
 		switch (ev.type) {
 			case Expose:
-				RL_Print("exposed\n");
+				//RL_Print("exposed\n");
 				gob = Find_Gob_By_Window(ev.xexpose.window);
 				if (gob != NULL){
 					rebcmp_blit(GOB_COMPOSITOR(gob));
@@ -159,7 +159,7 @@ void Dispatch_Events(int at_most)
 				break;
 			case ButtonPress:
 			case ButtonRelease:
-				RL_Print("Button %d event at %d\n", ev.xbutton.button, ev.xbutton.time);
+				//RL_Print("Button %d event at %d\n", ev.xbutton.button, ev.xbutton.time);
 				gob = Find_Gob_By_Window(ev.xbutton.window);
 				if (gob != NULL) {
 					xyd = (ROUND_TO_INT(PHYS_COORD_X(ev.xbutton.x))) + (ROUND_TO_INT(PHYS_COORD_Y(ev.xbutton.y)) << 16);
@@ -171,7 +171,7 @@ void Dispatch_Events(int at_most)
 							&& ev.xbutton.time - last_click < DOUBLE_CLICK_DIFF){
 							/* FIXME, a hack to detect double click: a double click would be a single click followed by a double click */
 							flags |= EVF_DOUBLE;
-							RL_Print("Button %d double clicked\n", ev.xbutton.button);
+							//RL_Print("Button %d double clicked\n", ev.xbutton.button);
 						}
 						switch (ev.xbutton.button){
 							case 1: //left button
@@ -189,11 +189,11 @@ void Dispatch_Events(int at_most)
 						switch (ev.xbutton.button){
 							case 4: //wheel scroll up
 								if (ev.type == ButtonRelease) {
-									RL_Print("Scrolling up by 1 line\n");
+									//RL_Print("Scrolling up by 1 line\n");
 									evt = RL_Find_Event(EVM_GUI, 
 														ev.xbutton.state & ControlMask? EVT_SCROLL_PAGE: EVT_SCROLL_LINE);
 									if (evt != NULL){
-										RL_Print("Current line = %x\n", evt->data >> 16);
+										//RL_Print("Current line = %x\n", evt->data >> 16);
 										if (evt->data < 0){
 											evt->data = 0;
 										}
@@ -207,11 +207,11 @@ void Dispatch_Events(int at_most)
 								break;
 							case 5: //wheel scroll down
 								if (ev.type == ButtonRelease) {
-									RL_Print("Scrolling down by 1 line\n");
+									//RL_Print("Scrolling down by 1 line\n");
 									evt = RL_Find_Event(EVM_GUI, 
 														ev.xbutton.state & ControlMask? EVT_SCROLL_PAGE: EVT_SCROLL_LINE);
 									if (evt != NULL){
-										RL_Print("Current line = %x\n", evt->data >> 16);
+										//RL_Print("Current line = %x\n", evt->data >> 16);
 										if (evt->data > 0){
 											evt->data = 0;
 										}
@@ -271,20 +271,22 @@ void Dispatch_Events(int at_most)
 									 ev.type == KeyPress? EVT_KEY : EVT_KEY_UP, 
 									 key, flags);
 
+					   /*
 						RL_Print ("Key event %s with key %x (flags: %x) is sent\n",
 									 ev.type == KeyPress? "EVT_KEY" : "EVT_KEY_UP", 
 									 key,
 									 flags);
+						 */
 					}
 				}
 
 				break;
 			case ResizeRequest:
-				RL_Print ("request to resize to %dx%d", ev.xresizerequest.width, ev.xresizerequest.height);
+				//RL_Print ("request to resize to %dx%d", ev.xresizerequest.width, ev.xresizerequest.height);
 				break;
 			case FocusIn:
 				if (ev.xfocus.mode != NotifyWhileGrabbed) {
-					RL_Print ("FocusIn, type = %d, window = %x\n", ev.xfocus.type, ev.xfocus.window);
+					//RL_Print ("FocusIn, type = %d, window = %x\n", ev.xfocus.type, ev.xfocus.window);
 					gob = Find_Gob_By_Window(ev.xfocus.window);
 					if (gob && !GET_GOB_STATE(gob, GOBS_ACTIVE)) {
 						SET_GOB_STATE(gob, GOBS_ACTIVE);
@@ -294,7 +296,7 @@ void Dispatch_Events(int at_most)
 				break;
 			case FocusOut:
 				if (ev.xfocus.mode != NotifyWhileGrabbed) {
-					RL_Print ("FocusOut, type = %d, window = %x\n", ev.xfocus.type, ev.xfocus.window);
+					//RL_Print ("FocusOut, type = %d, window = %x\n", ev.xfocus.type, ev.xfocus.window);
 					gob = Find_Gob_By_Window(ev.xfocus.window);
 					if (gob && GET_GOB_STATE(gob, GOBS_ACTIVE)) {
 						CLR_GOB_STATE(gob, GOBS_ACTIVE);
@@ -303,21 +305,21 @@ void Dispatch_Events(int at_most)
 				}
 				break;
 			case DestroyNotify:
-				RL_Print ("destroyed %x\n", ev.xdestroywindow.window);
+				//RL_Print ("destroyed %x\n", ev.xdestroywindow.window);
 				gob = Find_Gob_By_Window(ev.xdestroywindow.window);
 				if (gob != NULL){
 					Free_Window(gob);
 				}
 				break;
 			case ClientMessage:
-				RL_Print ("closed\n");
+				//RL_Print ("closed\n");
 				gob = Find_Gob_By_Window(ev.xclient.window);
 				if (gob != NULL){
 					Add_Event_XY(gob, EVT_CLOSE, 0, 0);
 				}
 				break;
 			case ConfigureNotify:
-				RL_Print("configuranotify\n");
+				//RL_Print("configuranotify\n");
 				xce = ev.xconfigure;
 				gob = Find_Gob_By_Window(ev.xconfigure.window);
 				if (gob != NULL) {
@@ -329,11 +331,11 @@ void Dispatch_Events(int at_most)
 					xyd = (ROUND_TO_INT(xce.x)) + (ROUND_TO_INT(xce.y) << 16);
 					gob->offset.x = xce.x;
 					gob->offset.y = xce.y;
-					RL_Print("WM_MOVE: %x\n", xyd);
+					//RL_Print("WM_MOVE: %x\n", xyd);
 					if (gob->size.x != xce.width || gob->size.y != xce.height){
 						Resize_Window(gob, TRUE);
 						xyd = (ROUND_TO_INT(xce.width)) + (ROUND_TO_INT(xce.height) << 16);
-						RL_Print("%s, %s, %d: EVT_RESIZE is sent\n", __FILE__, __func__, __LINE__);
+						//RL_Print("%s, %s, %d: EVT_RESIZE is sent\n", __FILE__, __func__, __LINE__);
 						Update_Event_XY(gob, EVT_RESIZE, xyd, 0);
 					}
 					gob->size.x = xce.width;
@@ -341,7 +343,7 @@ void Dispatch_Events(int at_most)
 				}
 				break;
 			default:
-				RL_Print("default event type\n");
+				//RL_Print("default event type\n");
 				break;
 		}
 	}
