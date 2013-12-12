@@ -284,8 +284,10 @@ static REBXYF Zero_Pair = {0, 0};
 
 	XTextProperty title_prop;
 	Atom title_atom = XInternAtom(display, "_NET_WM_NAME", False);
-	XmbTextListToTextProperty(display, (char **)&title, 1, XUTF8StringStyle, &title_prop);
-	XSetTextProperty(display, window, &title_prop, title_atom);
+	if (XmbTextListToTextProperty(display, (char **)&title, 1, XUTF8StringStyle, &title_prop) >= 0){
+		XSetTextProperty(display, window, &title_prop, title_atom);
+		XFree(title_prop.value);
+	};
 	XStoreName(display, window, title); //backup for non NET Wms
 
 	XClassHint *class_hints = XAllocClassHint();
