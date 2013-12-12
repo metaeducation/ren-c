@@ -120,11 +120,9 @@ void X_Event_Loop(int at_most);
 	FD_SET(x11_fd, &in_fds);
 
 	// Wait for X Event or a Timer
-	while (select(x11_fd+1, &in_fds, 0, 0, &tv) > 0){
+	if (select(x11_fd+1, &in_fds, 0, 0, &tv) > 0){
 		XNextEvent(global_x_info->display, &ev);
 		Dispatch_Event(&ev);
-		tv.tv_usec = (req->length - OS_Delta_Time(base, 0)) * 1000;
-		tv.tv_sec = 0;
 	}
 #else
 	select(x11_fd+1, &in_fds, 0, 0, &tv);
