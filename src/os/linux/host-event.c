@@ -39,6 +39,9 @@ REBGOB *Find_Gob_By_Window(Window win);
 void* Find_Compositor(REBGOB *gob);
 REBEVT *RL_Find_Event (REBINT model, REBINT type);
 
+typedef struct rebcmp_ctx REBCMP_CTX;
+void rebcmp_compose_region(REBCMP_CTX* ctx, REBGOB* winGob, REBGOB* gob, XRectangle *rect, REBOOL only);
+
 #define GOB_COMPOSITOR(gob)	(Find_Compositor(gob)) //gets handle to window's compositor
 #define DOUBLE_CLICK_DIFF 300 /* in milliseconds */
 
@@ -149,7 +152,20 @@ void Dispatch_Event(XEvent *ev)
 			//RL_Print("exposed\n");
 			gob = Find_Gob_By_Window(ev->xexpose.window);
 			if (gob != NULL){
-				rebcmp_blit(GOB_COMPOSITOR(gob));
+				/* find wingob, copied from Draw_Window */
+				REBGOB *wingob = gob;
+				while (GOB_PARENT(wingob) && GOB_PARENT(wingob) != Gob_Root
+					   && GOB_PARENT(wingob) != wingob) // avoid infinite loop
+					wingob = GOB_PARENT(wingob);
+
+				//check if it is really open
+				if (!IS_WINDOW(wingob) || !GET_GOB_STATE(wingob, GOBS_OPEN)) return;
+
+				void *compositor = GOB_COMPOSITOR(gob);
+				XRectangle rect = {ev->xexpose.x, ev->xexpose.y, ev->xexpose.width, ev->xexpose.height};
+				//RL_Print("exposed: x %d, y %d, w %d, h %d\n", rect.x, rect.y, rect.width, rect.height);
+				rebcmp_compose_region(compositor, wingob, gob, &rect, FALSE);
+				rebcmp_blit(compositor);
 			}
 			break;
 		case ButtonPress:
