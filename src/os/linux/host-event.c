@@ -330,27 +330,27 @@ void Dispatch_Event(XEvent *ev)
 			}
 			break;
 		case ConfigureNotify:
-			//RL_Print("configuranotify\n");
 			xce = ev->xconfigure;
+			/*
+			RL_Print("configuranotify, x = %d, y = %d, w = %d, h = %d\n",
+					 xce.x, xce.y, xce.width, xce.height);
+			*/
 			gob = Find_Gob_By_Window(ev->xconfigure.window);
 			if (gob != NULL) {
 				if (gob->offset.x != xce.x || gob->offset.y != xce.y){
 					xyd = (ROUND_TO_INT(xce.x)) + (ROUND_TO_INT(xce.y) << 16);
 					//RL_Print("%s, %s, %d: EVT_OFFSET is sent\n", __FILE__, __func__, __LINE__);
+					gob->offset.x = xce.x;
+					gob->offset.y = xce.y;
 					Update_Event_XY(gob, EVT_OFFSET, xyd, 0);
 				}
-				xyd = (ROUND_TO_INT(xce.x)) + (ROUND_TO_INT(xce.y) << 16);
-				gob->offset.x = xce.x;
-				gob->offset.y = xce.y;
 				//RL_Print("WM_MOVE: %x\n", xyd);
-				if (gob->size.x != xce.width || gob->size.y != xce.height){
-					Resize_Window(gob, TRUE);
-					xyd = (ROUND_TO_INT(xce.width)) + (ROUND_TO_INT(xce.height) << 16);
-					//RL_Print("%s, %s, %d: EVT_RESIZE is sent\n", __FILE__, __func__, __LINE__);
-					Update_Event_XY(gob, EVT_RESIZE, xyd, 0);
-				}
+				xyd = (ROUND_TO_INT(xce.width)) + (ROUND_TO_INT(xce.height) << 16);
 				gob->size.x = xce.width;
 				gob->size.y = xce.height;
+				Resize_Window(gob, TRUE);
+				//RL_Print("%s, %s, %d: EVT_RESIZE is sent: %x\n", __FILE__, __func__, __LINE__, xyd);
+				Update_Event_XY(gob, EVT_RESIZE, xyd, 0); //This is needed even when Resize_Window returns false, in which case, Rebol changed the window size and OS_Update_Window has been called.
 			}
 			break;
 		default:
