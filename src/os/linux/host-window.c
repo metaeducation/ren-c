@@ -164,16 +164,14 @@ static REBXYF Zero_Pair = {0, 0};
 	if (x != GOB_XO_INT(gob) || y != GOB_YO_INT(gob)){
 		//RL_Print("Moving window: %x\n", win);
 		XMoveWindow(global_x_info->display, win, x, y);
-		if (x + w < 0 
-			|| y + h < 0
-			|| x > OS_Get_Metrics(SM_SCREEN_WIDTH)
-			|| y > OS_Get_Metrics(SM_SCREEN_HEIGHT)) {
-			//RL_Print("Hiding window: %x\n", win);
-			XUnmapWindow(global_x_info->display, win); //hide the out-of-bound window
-		} else {
-			//RL_Print("Unhiding window: %x\n", win);
-			XMapWindow(global_x_info->display, win); //unhide the window
-		}
+	}
+
+	if (GET_GOB_FLAG(gob, GOBF_HIDDEN)) {
+		//RL_Print("Hiding window: %x\n", win);
+		XUnmapWindow(global_x_info->display, win);
+	} else {
+		//RL_Print("Unhiding window: %x\n", win);
+		XMapWindow(global_x_info->display, win);
 	}
 }
 
@@ -350,8 +348,7 @@ static REBXYF Zero_Pair = {0, 0};
 	Gob_Windows[windex].win = (void*)window;
 	Gob_Windows[windex].compositor = rebcmp_create(Gob_Root, gob);
 
-	if ((x + w > 0 && x < OS_Get_Metrics(SM_SCREEN_WIDTH))
-		&& (y + h > 0 && y < OS_Get_Metrics(SM_SCREEN_HEIGHT))) {
+	if (! GET_GOB_FLAG(gob, GOBF_HIDDEN)) {
 		//RL_Print("Mapping %x\n", window);
 		XMapWindow(display, window);
 	}
