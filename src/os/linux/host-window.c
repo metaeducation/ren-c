@@ -36,6 +36,7 @@
 **
 ***********************************************************************/
 
+#include <assert.h>
 #include <string.h>
 #include <math.h>
 #include <unistd.h>
@@ -142,6 +143,36 @@ static REBXYF Zero_Pair = {0, 0};
 	}
 }
 
+
+X11_change_state (REBOOL   add,
+				 Window window,
+				 Atom    state1,
+				 Atom    state2)
+{
+	XClientMessageEvent xclient;
+	Atom wm_state = XInternAtom(global_x_info->display, "_NET_WM_STATE", True);
+	Window root = DefaultRootWindow(global_x_info->display);
+
+#define _NET_WM_STATE_REMOVE        0    /* remove/unset property */
+#define _NET_WM_STATE_ADD           1    /* add/set property */
+#define _NET_WM_STATE_TOGGLE        2    /* toggle property  */
+ 
+	memset (&xclient, 0, sizeof (xclient));
+	xclient.type = ClientMessage;
+	xclient.window = window;
+	xclient.message_type = wm_state;
+	xclient.format = 32;
+	xclient.data.l[0] = add ? _NET_WM_STATE_ADD : _NET_WM_STATE_REMOVE;
+	xclient.data.l[1] = state1;
+	xclient.data.l[2] = state2;
+	xclient.data.l[3] = 1; /* source indication */
+	xclient.data.l[4] = 0;
+
+	XSendEvent (global_x_info->display, window, False,
+				SubstructureRedirectMask | SubstructureNotifyMask,
+				(XEvent *)&xclient);
+}
+
 /***********************************************************************
 **
 */	void OS_Update_Window(REBGOB *gob)
@@ -155,12 +186,52 @@ static REBXYF Zero_Pair = {0, 0};
 	REBINT y = GOB_LOG_Y_INT(gob);
 	REBINT w = GOB_LOG_W_INT(gob);
 	REBINT h = GOB_LOG_H_INT(gob);
-	//RL_Print("x: %d, y: %d, width: %d, height: %d\n", x, y, w, h);
+	int actual_x, actual_y, actual_w, actual_h, actual_border_width, actual_depth;
+	Window root;
+	/*
+	RL_Print("Updating window %x to (x: %d, y: %d, width: %d, height: %d) from (w %d, h %d)\n", gob, x, y, w, h,
+			 GOB_WO_INT(gob), GOB_HO_INT(gob));
+	*/
 	Window win = GOB_HWIN(gob);
+	//assert (win != 0);
 	if (!win) {
 		return;
 	}
+	X11_change_state(GET_GOB_FLAG(gob, GOBF_MAXIMIZE),
+					 win,
+					 XInternAtom(global_x_info->display, "_NET_WM_STATE_MAXIMIZED_HORZ", True),
+					 XInternAtom(global_x_info->display, "_NET_WM_STATE_MAXIMIZED_VERT", True));
 	Resize_Window(gob, FALSE);
+	XGetGeometry(global_x_info->display, win, &root, &actual_x, &actual_y, 
+				 &actual_w, &actual_h, &actual_border_width, &actual_depth);
+	/*
+	RL_Print("%s %d, Updating an X window %x for gob %x, x: %d, y: %d, w: %d, h: %d, border: %d, depth: %d\n",
+			 __func__, __LINE__, win, gob,
+			 actual_x, actual_y, actual_w, actual_h,
+			 actual_border_width, actual_depth);
+			 */
+	if (actual_w != w || actual_h != h){
+		XResizeWindow(global_x_info->display, win, w, h);
+#if 0 //XResizeWindow could fail
+		XGetGeometry(global_x_info->display, win, &root, &actual_x, &actual_y, 
+					 &actual_w, &actual_h, &actual_border_width, &actual_depth);
+		RL_Print("%s %d, After resizing X window %x for gob %x, x: %d, y: %d, w: %d, h: %d, border: %d, depth: %d\n",
+				 __func__, __LINE__, win, gob,
+				 actual_x, actual_y, actual_w, actual_h,
+				 actual_border_width, actual_depth);
+		if (actual_w != w
+			|| actual_h != h){
+			RL_Print("Resizing a window failed\n");
+			gob->size.x = actual_w;
+			gob->size.y = actual_h;
+
+			Resize_Window(gob, False);
+		} else {
+			Update_Event_XY(gob, EVT_RESIZE, xyd, 0);
+		}
+#endif
+	}
+
 	if (x != GOB_XO_INT(gob) || y != GOB_YO_INT(gob)){
 		//RL_Print("Moving window: %x\n", win);
 		XMoveWindow(global_x_info->display, win, x, y);
