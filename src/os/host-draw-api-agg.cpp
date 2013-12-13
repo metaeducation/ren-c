@@ -156,7 +156,6 @@ namespace agg
         //gradient fill
         RXIARG val;
         REBCNT type,i,j,k;
-        REBDEC *matrix = new REBDEC[6];
 		REBCNT *ptuples = (REBCNT*)&colorTuples[5];
 		
         for (i = 0, j = 1, k = 5; type = RL_GET_VALUE(colors, i, &val); i++) {
