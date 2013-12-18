@@ -605,13 +605,13 @@ x*/	static REBINT Do_Args_Light(REBVAL *func, REBVAL *path, REBSER *block, REBCN
 
 /***********************************************************************
 **
-*/	static REBINT Do_Args(REBVAL *func, REBVAL *path, REBSER *block, REBCNT index)
+*/	static REBINT Do_Args(REBCNT func_offset, REBVAL *path, REBSER *block, REBCNT index)
 /*
 **		Evaluate code block according to the function arg spec.
 **		Args are pushed onto the data stack in the same order
 **		as the function frame.
 **
-**			func:  function or path value
+**			func_offset:  offset of the function or path value, relative to DS_Base
 **			path:  refinements or object/function path
 **			block: current evaluation block
 **			index: current evaluation index
@@ -625,11 +625,15 @@ x*/	static REBINT Do_Args_Light(REBVAL *func, REBVAL *path, REBSER *block, REBCN
 	REBINT dsp = DSP + 1;	// stack base
 	REBINT dsf = dsp - DSF_BIAS;
 	REBVAL *tos;
+	REBVAL *func;
+
+	if ((dsp + 100) > (REBINT)SERIES_REST(DS_Series)) {
+		Expand_Stack(STACK_MIN);
+	}
+
+	func = &DS_Base[func_offset];
 
 	if (IS_OP(func)) dsf--; // adjust for extra arg
-
-	if ((dsp + 100) > (REBINT)SERIES_REST(DS_Series)) 
-		Trap0(RE_STACK_OVERFLOW); //Expand_Stack();
 
 	// Get list of words:
 	words = VAL_FUNC_WORDS(func);
@@ -653,6 +657,8 @@ x*/	static REBINT Do_Args_Light(REBVAL *func, REBVAL *path, REBSER *block, REBCN
 	// Go thru the word list args:
 	ds = dsp;
 	for (; NOT_END(args); args++, ds++) {
+
+		func = &DS_Base[func_offset]; //DS_Base could be changed
 
 		//if (Trace_Flags) Trace_Arg(ds - dsp, args, path);
 
@@ -865,7 +871,8 @@ eval_func:
 			Debug_Value(word, 4, 0);
 			Dump_Values(value, 4);
 		}
-		index = Do_Args(value, 0, block, index+1); // uses old DSF, updates DSP
+		index = Do_Args(dsf + 3, 0, block, index+1); // uses old DSF, updates DSP
+		value = DSF_FUNC(dsf); //reevaluate value, because stack could be expanded in Do_Args
 eval_func2:
 		// Evaluate the function:
 		DSF = dsf;	// Set new DSF
@@ -924,8 +931,10 @@ eval_func2:
 				// Can be object/func or func/refinements or object/func/refinement:
 				dsf = Push_Func(TRUE, block, index, VAL_WORD_SYM(word), value); // Do not unset TOS1 (it is the value)
 				value = DS_TOP;
-				index = Do_Args(value, word+1, block, index+1);
+				REBCNT offset = value - DS_Base;
 				ftype = VAL_TYPE(value)-REB_NATIVE;
+				index = Do_Args(offset, word+1, block, index+1);
+				value = &DS_Base[offset]; //restore in case the stack is expanded
 				goto eval_func2;
 			} else
 				index++;
@@ -1368,6 +1377,7 @@ eval_func2:
 
 	// Evaluate the function:
 	DSF = dsf;
+	func = DSF_FUNC(dsf); //stack could be expanded
 	Func_Dispatch[ftype](func);
 	DSP = dsf;
 	DSF = PRIOR_DSF(dsf);
