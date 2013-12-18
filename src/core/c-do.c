@@ -1346,6 +1346,7 @@ eval_func2:
 		// Copy block contents to stack:
 		n = VAL_BLK_LEN(args);
 		if (len < n) n = len;
+		if (start + n + 100 > SERIES_REST(DS_Series)) Expand_Stack(STACK_MIN);
 		memcpy(&DS_Base[start], BLK_SKIP(block, index), n * sizeof(REBVAL));
 		DSP = start + n - 1;
 	}
@@ -1411,6 +1412,10 @@ eval_func2:
 	func = DSF_FUNC(dsf); // for safety
 	words = VAL_FUNC_WORDS(func);
 	ds = SERIES_TAIL(words)-1;	// length of stack fill below
+	if (DSP + ds + 100 > SERIES_REST(DS_Series)) {//unlikely
+		Expand_Stack(STACK_MIN);
+		func = DSF_FUNC(dsf); //reevaluate func
+	}
 
 	// Gather arguments from C stack:
 	for (; ds > 0; ds--) {
