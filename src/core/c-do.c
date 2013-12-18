@@ -1285,12 +1285,16 @@ eval_func2:
 		else if (deep) {
 			if (IS_BLOCK(value)) Compose_Block(value, TRUE, only, 0);
 			else {
+				if (DSP + 100 > SERIES_REST(DS_Series)) Expand_Stack(STACK_MIN);
 				DS_PUSH(value);
 				if (ANY_BLOCK(value)) // Include PATHS
 					VAL_SERIES(DS_TOP) = Copy_Block(VAL_SERIES(value), 0);
 			}
 		}
-		else DS_PUSH(value);
+		else {
+			if (DSP + 100 > SERIES_REST(DS_Series)) Expand_Stack(STACK_MIN);
+			DS_PUSH(value);
+		}
 	}
 
 	Copy_Stack_Values(start, into);
