@@ -1094,14 +1094,33 @@ eval_func2:
 **
 ***********************************************************************/
 {
-	REBINT start = DSP + 1;
+	REBCNT len = 0;
+	REBSER *ser = NULL;
+	REBVAL blk;
+	enum REBOL_Types type;
+
+	if (into != NULL) {
+		ser = VAL_SERIES(into);
+		type = VAL_TYPE(into);
+		len = VAL_INDEX(into) + SERIES_LEN(block) - index;
+	} else {
+		ser = Make_Block(SERIES_LEN(block) - index + 1);
+		if (ser == NULL) return;
+		type = REB_BLOCK;
+		len = 0;
+	}
 
 	while (index < BLK_LEN(block)) {
 		index = Do_Next(block, index, 0);
 		if (THROWN(DS_TOP)) return;
+		Append_Val(ser, DS_POP);
 	}
 
-	Copy_Stack_Values(start, into);
+	VAL_SET(&blk, type);
+	VAL_SERIES(&blk) = ser;
+	VAL_INDEX(&blk) = len;
+	VAL_SERIES_SIDE(&blk) = 0;
+	DS_PUSH(&blk);
 }
 
 
@@ -1119,6 +1138,22 @@ eval_func2:
 	REBSER *ser = 0;
 	REBCNT idx = 0;
 
+	REBCNT len = 0;
+	REBSER *dest_ser = NULL;
+	REBVAL blk;
+	enum REBOL_Types type;
+
+	if (into != NULL) {
+		dest_ser = VAL_SERIES(into);
+		type = VAL_TYPE(into);
+		len = VAL_INDEX(into) + SERIES_LEN(block) - index;
+	} else {
+		dest_ser = Make_Block(SERIES_LEN(block) - index + 1);
+		if (dest_ser == NULL) return;
+		type = REB_BLOCK;
+		len = 0;
+	}
+
 	if (IS_BLOCK(words)) {
 		ser = VAL_SERIES(words);
 		idx = VAL_INDEX(words);
@@ -1128,11 +1163,11 @@ eval_func2:
 		if (IS_WORD(val)) {
 			// Check for keyword:
 			if (ser && NOT_FOUND != Find_Word(ser, idx, VAL_WORD_CANON(val))) {
-				DS_PUSH(val);
+				Append_Val(dest_ser, val);
 				continue;
 			}
 			v = Get_Var(val);
-			DS_PUSH(v);
+			Append_Val(dest_ser, v);
 		}
 		else if (IS_PATH(val)) {
 			if (ser) {
@@ -1140,20 +1175,25 @@ eval_func2:
 				v = VAL_BLK_DATA(val);
 				if (IS_WORD(v)) {
 					if (NOT_FOUND != Find_Word(ser, idx, VAL_WORD_CANON(v))) {
-						DS_PUSH(val);
+						Append_Val(dest_ser, val);
 						continue;
 					}
 				}
 			}
 			v = val;
 			Do_Path(&v, 0); // pushes val on stack
+			Append_Val(dest_ser, DS_POP);
 		}
-		else DS_PUSH(val);
+		else Append_Val(dest_ser, val);
 		// No need to check for unwinds (THROWN) here, because unwinds should
 		// never be accessible via words or paths.
 	}
 
-	Copy_Stack_Values(start, into);
+	VAL_SET(&blk, type);
+	VAL_SERIES(&blk) = dest_ser;
+	VAL_INDEX(&blk) = len;
+	VAL_SERIES_SIDE(&blk) = 0;
+	DS_PUSH(&blk);
 }
 
 
@@ -1163,8 +1203,22 @@ eval_func2:
 /*
 ***********************************************************************/
 {
-	REBINT start = DSP + 1;
-	REBVAL *val;
+	REBCNT len = 0;
+	REBSER *ser = NULL;
+	REBVAL blk;
+	REBVAL *val = NULL;
+	enum REBOL_Types type;
+
+	if (into != NULL) {
+		ser = VAL_SERIES(into);
+		type = VAL_TYPE(into);
+		len = VAL_INDEX(into) + SERIES_LEN(block) - index;
+	} else {
+		ser = Make_Block(SERIES_LEN(block) - index + 1);
+		if (ser == NULL) return;
+		type = REB_BLOCK;
+		len = 0;
+	}
 
 	while (index < BLK_LEN(block)) {
 		if (IS_SET_WORD(val = BLK_SKIP(block, index))) {
@@ -1173,9 +1227,14 @@ eval_func2:
 		} else
 			index = Do_Next(block, index, 0);
 		if (THROWN(DS_TOP)) return;
+		Append_Val(ser, DS_POP);
 	}
 
-	Copy_Stack_Values(start, into);
+	VAL_SET(&blk, type);
+	VAL_SERIES(&blk) = ser;
+	VAL_INDEX(&blk) = len;
+	VAL_SERIES_SIDE(&blk) = 0;
+	DS_PUSH(&blk);
 }
 
 
@@ -1264,40 +1323,65 @@ eval_func2:
 {
 	REBVAL *value;
 	REBINT start = DSP + 1;
+	REBCNT len = 0;
+	REBINT needs_free = 0;
+	REBSER *ser = NULL;
+	REBVAL blk;
+	enum REBOL_Types type;
+
+	if (into != NULL) {
+		ser = VAL_SERIES(into);
+		type = VAL_TYPE(into);
+		len = VAL_INDEX(into) + VAL_BLK_LEN(block);
+	} else {
+		ser = Make_Block(VAL_BLK_LEN(block) + 1);
+		if (ser == NULL) return;
+		type = REB_BLOCK;
+		len = 0;
+		needs_free = 1;
+	}
 
 	for (value = VAL_BLK_DATA(block); NOT_END(value); value++) {
 		if (IS_PAREN(value)) {
 			// Eval the paren, and leave result on the stack:
-			DO_BLK(value);
-			DSP++; // !!!DSP temp
-			if (THROWN(DS_TOP)) return;
+			REBVAL *paren = DO_BLK(value);
+			if (THROWN(paren)) {
+				if (needs_free) Free_Series(ser);
+				DSP ++;
+				return;
+			}
+			Append_Val(ser, paren);
 
 			// If result is a block, and not /only, insert its contents:
-			if (IS_BLOCK(DS_TOP) && !only) {
-				// Append series to the stack:
-				SERIES_TAIL(DS_Series) = DSP; // overwrites TOP value
-				Append_Series(DS_Series, (REBYTE *)VAL_BLK_DATA(DS_TOP), VAL_BLK_LEN(DS_TOP));
-				DSP = SERIES_TAIL(DS_Series) - 1;
-				// Note: stack may have moved
+			if (IS_BLOCK(paren) && !only) {
+				// Append series:
+				-- SERIES_TAIL(ser); // overwrites the last value
+				Append_Series(ser, (REBYTE *)VAL_BLK_DATA(paren), VAL_BLK_LEN(paren));
 			}
-			else if (IS_UNSET(DS_TOP)) DS_DROP; // remove unset values
+			else if (IS_UNSET(paren)) -- SERIES_TAIL(ser); // remove unset values
 		}
 		else if (deep) {
-			if (IS_BLOCK(value)) Compose_Block(value, TRUE, only, 0);
+			if (IS_BLOCK(value)) {
+				Compose_Block(value, TRUE, only, 0);
+				Append_Val(ser, DS_POP);
+			}
 			else {
-				if (DSP + 100 > SERIES_REST(DS_Series)) Expand_Stack(STACK_MIN);
-				DS_PUSH(value);
+				REBVAL tmp = *value;
 				if (ANY_BLOCK(value)) // Include PATHS
-					VAL_SERIES(DS_TOP) = Copy_Block(VAL_SERIES(value), 0);
+					VAL_SERIES(&tmp) = Copy_Block(VAL_SERIES(value), 0);
+				Append_Val(ser, &tmp);
 			}
 		}
 		else {
-			if (DSP + 100 > SERIES_REST(DS_Series)) Expand_Stack(STACK_MIN);
-			DS_PUSH(value);
+			Append_Val(ser, value);
 		}
 	}
 
-	Copy_Stack_Values(start, into);
+	VAL_SET(&blk, type);
+	VAL_SERIES(&blk) = ser;
+	VAL_INDEX(&blk) = len;
+	VAL_SERIES_SIDE(&blk) = 0;
+	DS_PUSH(&blk);
 }
 
 
