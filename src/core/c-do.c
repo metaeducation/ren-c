@@ -1104,8 +1104,9 @@ eval_func2:
 		type = VAL_TYPE(into);
 		len = VAL_INDEX(into) + SERIES_LEN(block) - index;
 	} else {
-		ser = Make_Block(SERIES_LEN(block) - index + 1);
-		if (ser == NULL) return;
+		ser = Make_Block(SERIES_LEN(block) - index);
+		if (ser == NULL)
+			Crash(RE_NO_MEMORY);
 		type = REB_BLOCK;
 		len = 0;
 	}
@@ -1148,8 +1149,8 @@ eval_func2:
 		type = VAL_TYPE(into);
 		len = VAL_INDEX(into) + SERIES_LEN(block) - index;
 	} else {
-		dest_ser = Make_Block(SERIES_LEN(block) - index + 1);
-		if (dest_ser == NULL) return;
+		dest_ser = Make_Block(SERIES_LEN(block) - index);
+		if (dest_ser == NULL) Crash(RE_NO_MEMORY);
 		type = REB_BLOCK;
 		len = 0;
 	}
@@ -1214,8 +1215,8 @@ eval_func2:
 		type = VAL_TYPE(into);
 		len = VAL_INDEX(into) + SERIES_LEN(block) - index;
 	} else {
-		ser = Make_Block(SERIES_LEN(block) - index + 1);
-		if (ser == NULL) return;
+		ser = Make_Block(SERIES_LEN(block) - index);
+		if (ser == NULL) Crash(RE_NO_MEMORY);
 		type = REB_BLOCK;
 		len = 0;
 	}
@@ -1334,8 +1335,8 @@ eval_func2:
 		type = VAL_TYPE(into);
 		len = VAL_INDEX(into) + VAL_BLK_LEN(block);
 	} else {
-		ser = Make_Block(VAL_BLK_LEN(block) + 1);
-		if (ser == NULL) return;
+		ser = Make_Block(VAL_BLK_LEN(block));
+		if (ser == NULL) Crash(RE_NO_MEMORY);
 		type = REB_BLOCK;
 		len = 0;
 		needs_free = 1;
