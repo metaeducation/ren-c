@@ -1111,17 +1111,17 @@ eval_func2:
 		len = 0;
 	}
 
+	VAL_SET(&blk, type);
+	VAL_SERIES(&blk) = ser;
+	VAL_INDEX(&blk) = len;
+	VAL_SERIES_SIDE(&blk) = 0;
+	DS_PUSH(&blk); //push here avoid the blk being GC'ed later
+
 	while (index < BLK_LEN(block)) {
 		index = Do_Next(block, index, 0);
 		if (THROWN(DS_TOP)) return;
 		Append_Val(ser, DS_POP);
 	}
-
-	VAL_SET(&blk, type);
-	VAL_SERIES(&blk) = ser;
-	VAL_INDEX(&blk) = len;
-	VAL_SERIES_SIDE(&blk) = 0;
-	DS_PUSH(&blk);
 }
 
 
@@ -1154,6 +1154,12 @@ eval_func2:
 		type = REB_BLOCK;
 		len = 0;
 	}
+
+	VAL_SET(&blk, type);
+	VAL_SERIES(&blk) = dest_ser;
+	VAL_INDEX(&blk) = len;
+	VAL_SERIES_SIDE(&blk) = 0;
+	DS_PUSH(&blk); //push here avoid the blk being GC'ed later
 
 	if (IS_BLOCK(words)) {
 		ser = VAL_SERIES(words);
@@ -1189,12 +1195,6 @@ eval_func2:
 		// No need to check for unwinds (THROWN) here, because unwinds should
 		// never be accessible via words or paths.
 	}
-
-	VAL_SET(&blk, type);
-	VAL_SERIES(&blk) = dest_ser;
-	VAL_INDEX(&blk) = len;
-	VAL_SERIES_SIDE(&blk) = 0;
-	DS_PUSH(&blk);
 }
 
 
@@ -1221,6 +1221,12 @@ eval_func2:
 		len = 0;
 	}
 
+	VAL_SET(&blk, type);
+	VAL_SERIES(&blk) = ser;
+	VAL_INDEX(&blk) = len;
+	VAL_SERIES_SIDE(&blk) = 0;
+	DS_PUSH(&blk); //push here avoid the blk being GC'ed later
+
 	while (index < BLK_LEN(block)) {
 		if (IS_SET_WORD(val = BLK_SKIP(block, index))) {
 			DS_PUSH(val);
@@ -1231,11 +1237,6 @@ eval_func2:
 		Append_Val(ser, DS_POP);
 	}
 
-	VAL_SET(&blk, type);
-	VAL_SERIES(&blk) = ser;
-	VAL_INDEX(&blk) = len;
-	VAL_SERIES_SIDE(&blk) = 0;
-	DS_PUSH(&blk);
 }
 
 
@@ -1342,6 +1343,12 @@ eval_func2:
 		needs_free = 1;
 	}
 
+	VAL_SET(&blk, type);
+	VAL_SERIES(&blk) = ser;
+	VAL_INDEX(&blk) = len;
+	VAL_SERIES_SIDE(&blk) = 0;
+	DS_PUSH(&blk); //push here avoid the blk being GC'ed later
+
 	for (value = VAL_BLK_DATA(block); NOT_END(value); value++) {
 		if (IS_PAREN(value)) {
 			// Eval the paren, and leave result on the stack:
@@ -1378,11 +1385,6 @@ eval_func2:
 		}
 	}
 
-	VAL_SET(&blk, type);
-	VAL_SERIES(&blk) = ser;
-	VAL_INDEX(&blk) = len;
-	VAL_SERIES_SIDE(&blk) = 0;
-	DS_PUSH(&blk);
 }
 
 
