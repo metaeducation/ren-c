@@ -24,6 +24,9 @@ extern "C" {
 		int 	default_depth;
 		int		bpp;
 		pixmap_format_t sys_pixmap_format;
+#ifdef USE_XSHM
+		REBOOL  has_xshm;
+#endif
 	} x_info_t;
 
 	typedef struct {

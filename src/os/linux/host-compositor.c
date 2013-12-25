@@ -51,6 +51,10 @@
 #include <X11/Xlib.h>
 #include <X11/Xregion.h>
 #include <X11/Xutil.h>
+#ifdef USE_XSHM
+#include <sys/shm.h>
+#include <X11/extensions/XShm.h>
+#endif
 
 #include "reb-host.h"
 #include "host-lib.h" //for OS_Make
@@ -89,6 +93,9 @@ typedef struct rebcmp_ctx {
 	Window x_window;
 	GC	   x_gc;
 	XImage *x_image;
+#ifdef USE_XSHM
+	XShmSegmentInfo x_shminfo;
+#endif
 	pixmap_format_t pixmap_format;
 	REBYTE *pixbuf;
 	REBCNT pixbuf_len;
@@ -147,18 +154,40 @@ typedef struct rebcmp_ctx {
 		if (ctx->x_image) {
 			XDestroyImage(ctx->x_image); //frees win->pixbuf as well
 		}
-		ctx->pixbuf_len = w * h * 4; //BGRA32;
-		ctx->pixbuf = OS_Make(ctx->pixbuf_len);
-		memset(ctx->pixbuf, 0, ctx->pixbuf_len);
-		ctx->x_image = XCreateImage(global_x_info->display,
-								  global_x_info->default_visual,
-								  global_x_info->default_depth,
-								  ZPixmap,
-								  0,
-								  ctx->pixbuf,
-								  w, h,
-								  global_x_info->bpp,
-								  w * global_x_info->bpp / 8);
+#ifdef USE_XSHM
+		if (global_x_info->has_xshm
+			&& global_x_info->sys_pixmap_format == pix_format_bgra32) {
+			ctx->x_image = XShmCreateImage(global_x_info->display,
+										   global_x_info->default_visual,
+										   global_x_info->default_depth,
+										   ZPixmap,
+										   0,
+										   &ctx->x_shminfo,
+										   w, h);
+			ctx->x_shminfo.shmid = shmget(IPC_PRIVATE,
+										  ctx->x_image->bytes_per_line * ctx->x_image->height,
+										  IPC_CREAT | 0777 );
+			ctx->pixbuf = ctx->x_shminfo.shmaddr = ctx->x_image->data
+				= (char *)shmat(ctx->x_shminfo.shmid, 0, 0);
+			ctx->x_shminfo.readOnly = False;
+			XShmAttach(global_x_info->display, &ctx->x_shminfo);
+		} else {
+#endif
+			ctx->pixbuf_len = w * h * 4; //BGRA32;
+			ctx->pixbuf = OS_Make(ctx->pixbuf_len);
+			memset(ctx->pixbuf, 0, ctx->pixbuf_len);
+			ctx->x_image = XCreateImage(global_x_info->display,
+									  global_x_info->default_visual,
+									  global_x_info->default_depth,
+									  ZPixmap,
+									  0,
+									  ctx->pixbuf,
+									  w, h,
+									  global_x_info->bpp,
+									  w * global_x_info->bpp / 8);
+#ifdef USE_XSHM
+		}
+#endif
 
 #ifdef ENDIAN_BIG
 		ctx->x_image->byte_order = MSBFirst;
@@ -237,7 +266,17 @@ typedef struct rebcmp_ctx {
 **
 ***********************************************************************/
 {
+#ifdef USE_XSHM
+	if (global_x_info->has_xshm) {
+		XShmDetach(global_x_info->display, &ctx->x_shminfo);
+	}
+#endif
 	XDestroyImage(ctx->x_image); //frees win->pixbuf as well
+#ifdef USE_XSHM
+	if (global_x_info->has_xshm) {
+		shmdt(ctx->x_shminfo.shmaddr);
+	}
+#endif
 	XFreeGC(global_x_info->display, ctx->x_gc);
 
 	if (ctx->Win_Region) {
@@ -568,13 +607,29 @@ void rebcmp_compose_region(REBCMP_CTX* ctx, REBGOB* winGob, REBGOB* gob, XRectan
 	XSetRegion(global_x_info->display, ctx->x_gc, ctx->Win_Region);
 
 	if (global_x_info->sys_pixmap_format == pix_format_bgra32){
-		XPutImage (global_x_info->display,
-				   ctx->x_window,
-					ctx->x_gc,
-					ctx->x_image,
-					0, 0,	//src x, y
-					0, 0,	//dest x, y
-					w, h);
+#ifdef USE_XSHM
+		if (global_x_info->has_xshm) {
+			//RL_Print("XshmPutImage\n");
+			XShmPutImage(global_x_info->display, 
+						 ctx->x_window, 
+						 ctx->x_gc, 
+						 ctx->x_image, 
+						 0, 0, 	//src x, y
+						 0, 0, 	//dest x, y
+						 w, h, 
+						 False);
+		} else {
+#endif
+			XPutImage (global_x_info->display,
+					   ctx->x_window,
+					   ctx->x_gc,
+					   ctx->x_image,
+					   0, 0,	//src x, y
+					   0, 0,	//dest x, y
+					   w, h);
+#ifdef USE_XSHM
+		}
+#endif
 	} else {
 		put_image(global_x_info->display,
 				  ctx->x_window,
