@@ -29,7 +29,7 @@
 
 #include "sys-core.h"
 
-#define CLEAR_IMAGE(p, x, y) memset(p, 0, x * y * sizeof(long))
+#define CLEAR_IMAGE(p, x, y) memset(p, 0, x * y * sizeof(u32))
 
 #define RESET_IMAGE(p, l) do { \
 	REBCNT *start = (REBCNT*)p; \
@@ -415,7 +415,7 @@ INLINE REBCNT ARGB_To_BGR(REBCNT i)
 		else return 0;
 	}
 	
-	img = Make_Series(w * h + 1, sizeof(REBINT), FALSE);
+	img = Make_Series(w * h + 1, sizeof(u32), FALSE);
 	LABEL_SERIES(img, "make image");
 	img->tail = w * h;
 	RESET_IMAGE(img->data, img->tail); //length in 'pixels'
