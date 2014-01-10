@@ -193,7 +193,7 @@ init-schemes: func [
 
 			; Are any of the requested ports awake?
 			forall ports [
-				if port: find waked first ports [remove port return true]
+				if port: find waked first ports [return true]
 			]
 
 			false ; keep waiting
