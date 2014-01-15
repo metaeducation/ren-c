@@ -288,6 +288,7 @@ X11_change_state (REBOOL   add,
 	
 	Display *display = global_x_info->display;
 	XSetWindowAttributes swa;
+	long swa_mask = CWEventMask;
 
 	Window parent_window;
 
@@ -307,43 +308,24 @@ X11_change_state (REBOOL   add,
 	parent_window = DefaultRootWindow(display);
 	if (GET_FLAGS(gob->flags, GOBF_NO_TITLE, GOBF_NO_BORDER)) {
 		window_type = XInternAtom(display, "_NET_WM_WINDOW_TYPE_DROPDOWN_MENU", True);
-		if (GOB_HWIN(GOB_TMP_OWNER(gob))) {
-			parent_window = GOB_HWIN(GOB_TMP_OWNER(gob));
-			int parent_x, parent_y, parent_w, parent_h, parent_border_width, parent_depth;
-			Window root, grand_window, *children = NULL;
-			int n_children = 0;
-
-			XQueryTree(display, parent_window, &root, &grand_window, &children, &n_children);
-			if (children){
-				XFree(children);
-			}
-
-			XGetGeometry(display, parent_window, &root, &parent_x, &parent_y, 
-						&parent_w, &parent_h, &parent_border_width, &parent_depth);
- 
-			int abs_x, abs_y;
-			Window child;
-			XTranslateCoordinates(display, grand_window, root, parent_x, parent_y, &abs_x, &abs_y, &child);
-			x -= abs_x;
-	  		y -= abs_y;	   
-			//RL_Print("%s, %d, x: %d, y: %d, parent_x: %d, parent_y: %d, abs_x: %d, abs_y: %d, width: %d, height: %d\n", __func__, __LINE__, 
-			//		 x, y, parent_x, parent_y, abs_x, abs_y, w, h);
-		}
+		swa.save_under = True;
+		swa.override_redirect = True;
+		swa.cursor = None;
+		swa_mask |= CWSaveUnder | CWOverrideRedirect | CWCursor;
 		window = XCreateWindow(display, 
 							   parent_window,
 							   x, y, w, h,
 							   REB_WINDOW_BORDER_WIDTH,
 							   CopyFromParent, InputOutput,
-							   CopyFromParent, CWEventMask,
+							   CopyFromParent, swa_mask,
 							   &swa);
-		XSetTransientForHint(display, window, parent_window);
 	} else {
 		window = XCreateWindow(display, 
 							   parent_window,
 							   x, y, w, h,
 							   REB_WINDOW_BORDER_WIDTH,
 							   CopyFromParent, InputOutput,
-							   CopyFromParent, CWEventMask,
+							   CopyFromParent, swa_mask,
 							   &swa);
 		if (GET_GOB_FLAG(gob, GOBF_MODAL)) {
 			Atom wm_state = XInternAtom(display, "_NET_WM_STATE", True);
@@ -359,7 +341,7 @@ X11_change_state (REBOOL   add,
 	}
 	XChangeProperty(display, window, window_type_atom, XA_ATOM, 32,
 					PropModeReplace,
-					(unsigned char *)&window_type, 1); 
+					(unsigned char *)&window_type, 1);
 
 	if (IS_GOB_STRING(gob))
         os_string = As_OS_Str(GOB_CONTENT(gob), (REBCHR**)&title);
