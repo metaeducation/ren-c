@@ -183,6 +183,7 @@ read-proto-states: [
 	encrypted-handshake [application #complete]
 	application [application alert #complete]
 	alert [#complete]
+	close-notify [alert]
 ]
 
 write-proto-states: [
