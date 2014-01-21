@@ -62,26 +62,6 @@ extern REBGOBWINDOWS *Gob_Windows;
 //** Helper Functions **************************************************
 //**********************************************************************
 
-REBUPT cursor_maps [] = {
-	32512, XC_left_ptr,		/* Standard arrow*/
-	32513, XC_xterm,	/* I-beam*/
-	32514, XC_watch, /* Hourglass*/
-	32515, XC_crosshair, 	/* Crosshair*/
-	32516, XC_center_ptr, /* Vertical arrow*/
-	32640, XC_sizing, /* Obsolete for applications marked version 4.0 or later. Use IDC_SIZEALL.*/
-	32641, XC_icon, /* Obsolete for applications marked version 4.0 or later.*/
-	32642, 0, /* Double-pointed arrow pointing northwest and southeast*/
-	32643, 0, /* Double-pointed arrow pointing northeast and southwest*/
-	32644, XC_sb_h_double_arrow, /* Double-pointed arrow pointing west and east*/
-	32645, XC_sb_v_double_arrow, /* Double-pointed arrow pointing north and south*/
-	32646, XC_sizing, /* Four-pointed arrow pointing north, south, east, and west*/
-	32648, XC_circle, /* Slashed circle*/
-	32649, XC_hand2,		/* Hand*/
-	32650, XC_watch, 		/* Standard arrow and small hourglass*/
-	32651, XC_question_arrow, /* Arrow and question mark*/
-	0, 0
-};
-
 /***********************************************************************
 **
 */	void* OS_Image_To_Cursor(REBYTE* image, REBINT width, REBINT height)
@@ -117,20 +97,12 @@ REBUPT cursor_maps [] = {
 **
 **
 ***********************************************************************/
-{
-	unsigned int shape = 0;
-	REBUPT *ptr = NULL;
-	for (ptr = cursor_maps; *ptr != 0; ptr += 2){
-		if (*ptr > (REBUPT)cursor)
-			break;
-		if (*ptr == (REBUPT)cursor){
-			shape = *(ptr + 1);
-			break;
-		}
+{ 
+	/* all cursor shapes are even numbers in the range of 0~154 as defined in cursorfont.h */
+	if (((REBUPT)cursor) < 155 && ((REBUPT)cursor) % 2 == 0) {
+		return (void*)XCreateFontCursor(global_x_info->display, (REBUPT)cursor);
 	}
-	if (shape != 0) {
-		return (void*)XCreateFontCursor(global_x_info->display, shape);
-	}
+
 	return NULL;
 }
 
