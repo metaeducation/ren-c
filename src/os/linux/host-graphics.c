@@ -82,6 +82,8 @@ extern REBGOBWINDOWS *Gob_Windows;
 ***********************************************************************/
 {
 #define MAX_WINDOWS 64
+	if (cursor == NULL)
+		return;
 	int i = 0;
 	for(i = 0; i < MAX_WINDOWS; i ++){
 		if (Gob_Windows[i].win != 0){
