@@ -266,7 +266,6 @@ void Dispatch_Event(XEvent *ev)
 				key_string[len] = '\0';
 				//RL_Print ("key %s (%x) is released\n", key_string, key_string[0]);
 
-
 				for (i = 0; keysym_to_event[i] && keysym > keysym_to_event[i]; i += 2);
 				if (keysym == keysym_to_event[i]) {
 					key = keysym_to_event[i + 1] << 16;
@@ -274,6 +273,15 @@ void Dispatch_Event(XEvent *ev)
 					key = keysym2ucs(keysym);
 					if (key < 0 && len > 0){
 						key = key_string[0]; /* FIXME, key_string could be longer than 1 */
+					}
+					/* map control characters */
+					if (flags & (1 << EVF_CONTROL)
+						&& !(flags & (1 << EVF_SHIFT))) {
+						if (key >= 'A' && key <= '_') {
+							key = key - 'A' + 1;
+						} else if (key >= 'a' && key <= 'z') {
+							key = key - 'a' + 1;
+						}
 					}
 				}
 
