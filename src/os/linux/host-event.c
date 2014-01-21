@@ -46,7 +46,7 @@ void rebcmp_compose_region(REBCMP_CTX* ctx, REBGOB* winGob, REBGOB* gob, XRectan
 #define DOUBLE_CLICK_DIFF 300 /* in milliseconds */
 
 // Virtual key conversion table, sorted by first column.
-const REBCNT keysym_to_event[] = {
+static const REBCNT keysym_to_event[] = {
     /* 0xff09 */    XK_Tab,     	EVK_NONE,   //EVK_NONE means it is passed 'as-is'
 	/* 0xff50 */	XK_Home,		EVK_HOME,
 	/* 0xff51 */	XK_Left,		EVK_LEFT,
