@@ -128,8 +128,6 @@ These are now obsolete (as of A107) and should be removed:
 
 //* Non Windows ********************************************************
 
-#define MIN_OS					// not all devices are working
-#define NO_GRAPHICS				// no graphics yet
 #define AGG_FREETYPE            //use freetype2 library for fonts by default
 #define FINITE finite
 #define INLINE
