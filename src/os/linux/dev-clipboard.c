@@ -95,7 +95,7 @@ static REBINT decode_to_req(REBREQ *req, char* data, REBCNT data_len)
 	return DR_DONE;
 }
 
-static REBINT do_read_clipboard(REBREQ * req)
+static REBINT do_read_clipboard(REBREQ * req, Atom property)
 {
 	Atom     actual_type;
 	int      actual_format;
@@ -106,11 +106,11 @@ static REBINT do_read_clipboard(REBREQ * req)
 	if (global_x_info->selection.property){
 		status = XGetWindowProperty(global_x_info->display,
 									global_x_info->selection.win,
-									XA_PRIMARY,
+									property,
 									0,
 									(~0L),
 									False,
-									XA_STRING,
+									AnyPropertyType,
 									&actual_type,
 									&actual_format,
 									&nitems,
@@ -151,6 +151,7 @@ static REBINT do_read_clipboard(REBREQ * req)
 	Window owner = 0;
 	Display *display = global_x_info->display;
 	Atom XA_CLIPBOARD = XInternAtom(display, "CLIPBOARD", 0);
+	Atom XA_SELECTION = XInternAtom(global_x_info->display, "REBOL_SELECTION", False);
 	//XSync(display, False);
 	owner = XGetSelectionOwner(display, XA_CLIPBOARD);
 	if (global_x_info->selection.win == owner){
@@ -177,15 +178,16 @@ static REBINT do_read_clipboard(REBREQ * req)
 							   	CopyFromParent, 0,0);
 		}
 		//XSync(display, False);
+		Atom XA_TARGETS = XInternAtom(global_x_info->display, "TARGETS", False);
 		XConvertSelection(display,
-						  XA_CLIPBOARD, XA_STRING, XA_PRIMARY,
+						  XA_CLIPBOARD, XA_TARGETS, XA_SELECTION,
 						  global_x_info->selection.win,
 						  CurrentTime);
 		global_x_info->selection.status = 0; /* pending */
 		return DR_PEND;
 	} else if (status) { /* response received */
 		global_x_info->selection.status = -1; /* prep for next read */
-		return do_read_clipboard(req);
+		return do_read_clipboard(req, XA_SELECTION);
 	} else { /* request sent and response not received yet */
 		return DR_PEND;
 	}

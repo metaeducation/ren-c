@@ -147,6 +147,9 @@ void Dispatch_Event(XEvent *ev)
 	REBINT flags = 0;
 	static Time last_click = 0;
 	static REBINT last_click_button = 0;
+	Atom XA_UTF8_STRING = XInternAtom(global_x_info->display, "UTF8_STRING", True);
+	Atom XA_TARGETS = XInternAtom(global_x_info->display, "TARGETS", True);
+	Atom XA_CLIPBOARD = XInternAtom(global_x_info->display, "CLIPBOARD", True);
 	switch (ev->type) {
 		case Expose:
 			//RL_Print("exposed\n");
@@ -365,8 +368,6 @@ void Dispatch_Event(XEvent *ev)
 			//RL_Print("SelectionRequest\n");
 			{
 				XEvent selection_event;
-				Atom XA_UTF8_STRING = XInternAtom(global_x_info->display, "UTF8_STRING", True);
-				Atom XA_TARGETS = XInternAtom(global_x_info->display, "TARGETS", True);
 #if 0
 				const REBYTE *target = XGetAtomName(global_x_info->display, ev->xselectionrequest.target);
 				const REBYTE *property = XGetAtomName(global_x_info->display, ev->xselectionrequest.property);
@@ -377,7 +378,7 @@ void Dispatch_Event(XEvent *ev)
 				selection_event.type = SelectionNotify;
 				if (ev->xselectionrequest.target == XA_TARGETS) {
 					selection_event.xselection.property = ev->xselectionrequest.property;
-					Atom targets[] = {XA_UTF8_STRING, XA_STRING};
+					Atom targets[] = {XA_TARGETS, XA_UTF8_STRING, XA_STRING};
 					XChangeProperty(global_x_info->display,
 									ev->xselectionrequest.requestor,
 									ev->xselectionrequest.property,
@@ -416,8 +417,45 @@ void Dispatch_Event(XEvent *ev)
 			break;
 		case SelectionNotify:
 			//RL_Print("SelectionNotify\n");
-			global_x_info->selection.property = ev->xselection.property;
-			global_x_info->selection.status = 1; /* response received */
+			if (ev->xselection.target == XA_TARGETS){
+				Atom     actual_type;
+				int      actual_format;
+				long     nitems;
+				long     bytes;
+				Atom     *data = NULL;
+				int      status;
+				if (ev->xselection.property){
+					status = XGetWindowProperty(ev->xselection.display,
+												ev->xselection.requestor,
+												ev->xselection.property,
+												0,
+												(~0L),
+												False,
+												XA_ATOM,
+												&actual_type,
+												&actual_format,
+												&nitems,
+												&bytes,
+												(unsigned char**)&data);
+					int i = 0;
+					for(i; i < nitems; i ++){
+						if (data[i] == XA_UTF8_STRING
+							|| data[i] == XA_STRING) {
+							XConvertSelection(ev->xselection.display,
+											  XA_CLIPBOARD,
+											  data[i],
+											  ev->xselection.property,
+											  ev->xselection.requestor,
+											  CurrentTime);
+							break;
+						}
+					}
+				}
+			} else if (ev->xselection.target == XA_UTF8_STRING
+					   || ev->xselection.target == XA_STRING) {
+				global_x_info->selection.property = ev->xselection.property;
+				global_x_info->selection.status = 1; /* response received */
+			}
 			break;
 		case SelectionClear:
 			if (global_x_info->selection.data != NULL) {
