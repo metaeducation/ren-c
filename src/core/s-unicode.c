@@ -991,6 +991,39 @@ ConversionResult ConvertUTF8toUTF32 (
 	return size;
 }
 
+/***********************************************************************
+**
+*/	REBCNT UTF8_Length(REBYTE *src, REBCNT len)
+/*
+**		Returns how many character the UTF8 string has
+**
+***********************************************************************/
+{
+	int i = 0;
+	int n = 0;
+	while (i < len){
+		if (src[i] == 0){
+			return n;
+		}
+		if (src[i] < 0x80) i += 1;
+		else if (src[i] < 0xE0) {
+			if (src[i] >= 0xC0) {
+				i += 2;
+			} else {
+				return -1;
+			}
+		}
+		else if (src[i] < 0xF0) i += 3;
+		else if (src[i] < 0xF8) i += 4;
+		else if (src[i] < 0xFC) i += 5;
+		else if (src[i] < 0xFE) i += 6;
+		else {
+			return -1;
+		}
+		n ++;
+	}
+	return n;
+}
 
 /***********************************************************************
 **
