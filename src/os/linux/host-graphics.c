@@ -275,6 +275,14 @@ extern REBGOBWINDOWS *Gob_Windows;
 **
 ***********************************************************************/
 {
+	if(global_x_info->selection.data != NULL){
+		OS_Free(global_x_info->selection.data);
+	}
+
+	if(global_x_info->selection.win != 0){
+		XDestroyWindow(global_x_info->display, global_x_info->selection.win);
+	}
+
 	if(global_x_info) {
 	   if(global_x_info->display){
 		   XCloseDisplay(global_x_info->display);

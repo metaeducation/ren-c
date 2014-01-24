@@ -156,6 +156,12 @@ static REBXYF Zero_Pair = {0, 0};
 		}
 	}
 #endif
+
+	/* initialize selection */
+	global_x_info->selection.win = 0;
+	global_x_info->selection.status = -1;
+	global_x_info->selection.data = NULL;
+	global_x_info->selection.data_length = 0;
 }
 
 

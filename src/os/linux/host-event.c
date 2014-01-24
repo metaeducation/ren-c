@@ -361,6 +361,71 @@ void Dispatch_Event(XEvent *ev)
 				Update_Event_XY(gob, EVT_RESIZE, xyd, 0); //This is needed even when Resize_Window returns false, in which case, Rebol changed the window size and OS_Update_Window has been called.
 			}
 			break;
+		case SelectionRequest:
+			//RL_Print("SelectionRequest\n");
+			{
+				XEvent selection_event;
+				Atom XA_UTF8_STRING = XInternAtom(global_x_info->display, "UTF8_STRING", True);
+				Atom XA_TARGETS = XInternAtom(global_x_info->display, "TARGETS", True);
+#if 0
+				const REBYTE *target = XGetAtomName(global_x_info->display, ev->xselectionrequest.target);
+				const REBYTE *property = XGetAtomName(global_x_info->display, ev->xselectionrequest.property);
+				RL_Print("selection target = %s, property = %s\n", target, property);
+				XFree((void*)property);
+				XFree((void*)target);
+#endif
+				selection_event.type = SelectionNotify;
+				if (ev->xselectionrequest.target == XA_TARGETS) {
+					selection_event.xselection.property = ev->xselectionrequest.property;
+					Atom targets[] = {XA_UTF8_STRING, XA_STRING};
+					XChangeProperty(global_x_info->display,
+									ev->xselectionrequest.requestor,
+									ev->xselectionrequest.property,
+									XA_ATOM,
+									32,
+									PropModeReplace,
+									(unsigned char*)&targets,
+									sizeof(targets)/sizeof(targets[0]));
+				} else if (ev->xselectionrequest.target == XA_STRING
+						   || ev->xselectionrequest.target == XA_UTF8_STRING) {
+					selection_event.xselection.property = ev->xselectionrequest.property;
+					XChangeProperty(global_x_info->display,
+									ev->xselectionrequest.requestor,
+									ev->xselectionrequest.property,
+									ev->xselectionrequest.target,
+									16,			/* format, unsigned short */
+									PropModeReplace,
+									global_x_info->selection.data,
+									global_x_info->selection.data_length / sizeof(REBUNI));
+				} else {
+					selection_event.xselection.property = 0;
+				}
+				selection_event.xselection.send_event = 1;
+				selection_event.xselection.display = ev->xselectionrequest.display;
+				selection_event.xselection.requestor = ev->xselectionrequest.requestor;
+				selection_event.xselection.selection = ev->xselectionrequest.selection;
+				selection_event.xselection.target = ev->xselectionrequest.target;
+				selection_event.xselection.time = ev->xselectionrequest.time;
+				//RL_Print("Sending selection_event\n");
+				XSendEvent(selection_event.xselection.display,
+						   selection_event.xselection.requestor,
+						   False,
+						   0,
+						   &selection_event);
+			}
+			break;
+		case SelectionNotify:
+			//RL_Print("SelectionNotify\n");
+			global_x_info->selection.property = ev->xselection.property;
+			global_x_info->selection.status = 1; /* response received */
+			break;
+		case SelectionClear:
+			if (global_x_info->selection.data != NULL) {
+				OS_Free(global_x_info->selection.data);
+				global_x_info->selection.data = NULL;
+				global_x_info->selection.data_length = 0;
+			}
+			break;
 		default:
 			//RL_Print("default event type\n");
 			break;

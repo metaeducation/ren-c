@@ -18,6 +18,16 @@ extern "C" {
 	} pixmap_format_t;
 
 	typedef struct {
+		Window win; /* the hidden window for copy and paste */
+		int		status; /* -1 request hasn't been sent
+						   0, request sent
+						   1, response received */
+		Atom 	property;
+		void	*data;
+		REBCNT	data_length;
+	} selection_t;
+
+	typedef struct {
 		Display *display;
 		Screen 	*default_screen;
 		Visual 	*default_visual;
@@ -27,6 +37,7 @@ extern "C" {
 #ifdef USE_XSHM
 		REBOOL  has_xshm;
 #endif
+		selection_t selection; /* for copy and paste */
 	} x_info_t;
 
 	typedef struct {
