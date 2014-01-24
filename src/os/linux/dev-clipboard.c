@@ -142,7 +142,7 @@ static REBINT do_read_clipboard(REBREQ * req, Atom property)
 	Window owner = 0;
 	Display *display = global_x_info->display;
 	Atom XA_CLIPBOARD = XInternAtom(display, "CLIPBOARD", 0);
-	Atom XA_SELECTION = XInternAtom(global_x_info->display, "REBOL_SELECTION", False);
+	Atom XA_SELECTION = XInternAtom(display, "REBOL_SELECTION", False);
 	//XSync(display, False);
 	owner = XGetSelectionOwner(display, XA_CLIPBOARD);
 	if (global_x_info->selection.win == owner){
