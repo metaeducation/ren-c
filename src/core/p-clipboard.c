@@ -93,8 +93,8 @@
 		} else {
 			REBSER *ser = Make_Binary(len);
 			COPY_MEM(BIN_HEAD(ser), req->data, len);
+			SERIES_TAIL(ser) = len;
 			Set_Binary(arg, ser);
-			//Set_String(arg, Copy_OS_Str(req->data, len));
 		}
 
 		OS_FREE(req->data); // release the copy buffer
