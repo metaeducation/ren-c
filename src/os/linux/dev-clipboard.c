@@ -74,24 +74,15 @@ extern x_info_t *global_x_info;
 	return DR_DONE;
 }
 
-static REBINT decode_to_req(REBREQ *req, char* data, REBCNT data_len)
+static REBINT copy_to_req(REBREQ *req, char* data, REBCNT data_len)
 {
-	int len = UTF8_Length(data, data_len);
-	if (len < 0){
-		return DR_ERROR;
-	}
-	if (req->data != NULL) {
-		OS_Free(req->data);
-	}
-	//RL_Print("len = %d\n", len);
-	req->actual = (len + 1) * sizeof(REBUNI); /* 1 extra for the trailing '0' */
-	req->data = OS_Make(req->actual);
+	req->data = OS_Make(data_len + 1);
 	if (req->data == NULL){
 		return DR_ERROR;
 	}
-	Decode_UTF8(req->data, data, data_len, 0);
-	((REBUNI*)req->data)[len] = 0;
-	SET_FLAG(req->flags, RRF_WIDE);
+	COPY_STR(req->data, data, data_len);
+	req->data[data_len] = '\0';
+	req->actual = data_len;
 	return DR_DONE;
 }
 
@@ -121,7 +112,7 @@ static REBINT do_read_clipboard(REBREQ * req, Atom property)
 			return DR_ERROR;
 		}
 
-		if (DR_ERROR == decode_to_req(req, data, nitems)){;
+		if (DR_ERROR == copy_to_req(req, data, nitems)){;
 			XFree(data);
 			return DR_ERROR;
 		}
@@ -157,9 +148,9 @@ static REBINT do_read_clipboard(REBREQ * req, Atom property)
 	if (global_x_info->selection.win == owner){
 		/* same process, bypass the server */
 		if (global_x_info->selection.data != NULL){
-			if (DR_ERROR == decode_to_req(req,
-										  global_x_info->selection.data,
-										  global_x_info->selection.data_length)){
+			if (DR_ERROR == copy_to_req(req,
+										global_x_info->selection.data,
+										global_x_info->selection.data_length)){
 				return DR_ERROR;
 			}
 			global_x_info->selection.status = -1;
