@@ -59,12 +59,9 @@
 			if (GET_FLAG(req->flags, RRF_WIDE)) {
 				len /= sizeof(REBUNI); //correct length
 				// Copy the string (convert to latin-8 if it fits):
-				Set_Binary(arg, Copy_Wide_Str(req->data, len));
+				Set_String(arg, Copy_Wide_Str(req->data, len));
 			} else {
-				REBSER *ser = Make_Binary(len);
-				COPY_MEM(BIN_HEAD(ser), req->data, len);
-				SERIES_TAIL(ser) = len;
-				Set_Binary(arg, ser);
+				Set_String(arg, Copy_OS_Str(req->data, len));
 			}
 		}
 		else if (req->command == RDC_WRITE) {
@@ -89,12 +86,9 @@
 		if (GET_FLAG(req->flags, RRF_WIDE)) {
 			len /= sizeof(REBUNI); //correct length
 			// Copy the string (convert to latin-8 if it fits):
-			Set_Binary(arg, Copy_Wide_Str(req->data, len));
+			Set_String(arg, Copy_Wide_Str(req->data, len));
 		} else {
-			REBSER *ser = Make_Binary(len);
-			COPY_MEM(BIN_HEAD(ser), req->data, len);
-			SERIES_TAIL(ser) = len;
-			Set_Binary(arg, ser);
+			Set_String(arg, Copy_OS_Str(req->data, len));
 		}
 
 		OS_FREE(req->data); // release the copy buffer
