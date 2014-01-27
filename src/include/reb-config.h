@@ -129,6 +129,7 @@ These are now obsolete (as of A107) and should be removed:
 //* Non Windows ********************************************************
 
 #define AGG_FREETYPE            //use freetype2 library for fonts by default
+#define AGG_FONTCONFIG            //use fontconfig library for fonts by default
 #define FINITE finite
 #define INLINE
 
