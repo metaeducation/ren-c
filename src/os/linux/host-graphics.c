@@ -41,6 +41,8 @@
 #include <X11/Xlib.h>
 #include <X11/cursorfont.h>
 
+#include <fontconfig/fontconfig.h>
+
 #include "reb-host.h"
 #include "host-window.h"
 
@@ -289,4 +291,5 @@ extern REBGOBWINDOWS *Gob_Windows;
 	   }
 	   OS_Free(global_x_info);
 	}
+	FcFini();
 }
