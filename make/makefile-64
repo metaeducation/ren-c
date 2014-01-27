@@ -54,9 +54,10 @@ RLIB_FLAGS=
 RFLAGS= -c -D$(TO_OS) -DREB_API  $(RAPI_FLAGS) $I
 HFLAGS= -c -D$(TO_OS) $(HOST_FLAGS) $I
 HFLAGS_CPP= -c -D$(TO_OS) $(HOST_FLAGS) $I
+HFLAGS_FONT_CONFIG=`pkg-config fontconfig --cflags`
 
 CLIB= -ldl -lm 
-GUI_CLIB=  -ldl -lm -lstdc++ -lfreetype -L../src/freetype-2.4.12/objs/.libs/ `pkg-config freetype2 --libs` -lX11
+GUI_CLIB=  -ldl -lm -lstdc++ -lfreetype -L../src/freetype-2.4.12/objs/.libs/ `pkg-config freetype2 --libs` -lX11 `pkg-config fontconfig --libs` 
 # REBOL builds various include files:
 REBOL=	$(CD)r3-make-linux -qs
 
@@ -201,7 +202,8 @@ AGG= \
 	objs/agg_vpgen_segmentator.o\
 	objs/agg_graphics.o\
 	objs/agg_font_freetype.o\
-	objs/agg_truetype_text.o
+	objs/agg_truetype_text.o\
+	objs/agg_fontconfig.o
 
 # Directly linked r3 executable:
 r3-core$(BIN_SUFFIX): prep-core objs $(OBJS) $(HOST) $(CODECS)
@@ -679,6 +681,9 @@ objs/agg_font_freetype.o:$S/agg/agg_font_freetype.cpp
 
 objs/agg_truetype_text.o:$S/agg/agg_truetype_text.cpp
 	$(CXX) $S/agg/agg_truetype_text.cpp $(HFLAGS_CPP) -o objs/agg_truetype_text.o
+
+objs/agg_fontconfig.o:$S/agg/agg_fontconfig.cpp
+	$(CXX) $S/agg/agg_fontconfig.cpp $(HFLAGS_CPP) $(HFLAGS_FONT_CONFIG) -o objs/agg_fontconfig.o
 
 objs/rich_text.o:     $S/agg/rich_text.cpp
 	$(CXX) $S/agg/rich_text.cpp $(HFLAGS_CPP) -o objs/rich_text.o
