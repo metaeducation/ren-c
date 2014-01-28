@@ -38,6 +38,7 @@
 **    5. Test everything, then test it again.
 **
 ***********************************************************************/
+#ifndef REB_CORE //only available with graphics
 
 #include <stdio.h>
 #include <string.h>
@@ -252,3 +253,5 @@ static DEVICE_CMD_FUNC Dev_Cmds[RDC_MAX] =
 };
 
 DEFINE_DEV(Dev_Clipboard, "Clipboard", 1, Dev_Cmds, RDC_MAX, 0);
+
+#endif //REB_CORE
