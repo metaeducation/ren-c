@@ -474,6 +474,9 @@ void X_Event_Loop(int at_most)
 {
 	XEvent ev;
 	int n = 0;
+	if (global_x_info->display == NULL) {
+		return;
+	}
 	while(XPending(global_x_info->display) && (at_most < 0 || n < at_most)) {
 		++ n;
 		XNextEvent(global_x_info->display, &ev);

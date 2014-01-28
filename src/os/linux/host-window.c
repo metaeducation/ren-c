@@ -95,10 +95,18 @@ static REBXYF Zero_Pair = {0, 0};
 	int depth;
 	int red_mask, green_mask, blue_mask;
 	global_x_info = OS_Make(sizeof(x_info_t));
+
+	/* initialize selection */
+	global_x_info->selection.win = 0;
+	global_x_info->selection.status = -1;
+	global_x_info->selection.data = NULL;
+	global_x_info->selection.data_length = 0;
 	global_x_info->display = XOpenDisplay(NULL);
+
 	if (global_x_info->display == NULL){
 		RL_Print("XOpenDisplay failed");
-	}else{
+		return;
+	} else {
 		//RL_Print("XOpenDisplay succeeded: x_dislay = %x\n", global_x_info->display);
 	}
 
@@ -157,11 +165,6 @@ static REBXYF Zero_Pair = {0, 0};
 	}
 #endif
 
-	/* initialize selection */
-	global_x_info->selection.win = 0;
-	global_x_info->selection.status = -1;
-	global_x_info->selection.data = NULL;
-	global_x_info->selection.data_length = 0;
 }
 
 
@@ -215,7 +218,7 @@ X11_change_state (REBOOL   add,
 	*/
 	Window win = GOB_HWIN(gob);
 	//assert (win != 0);
-	if (!win) {
+	if (!win || global_x_info->display == NULL) {
 		return;
 	}
 	X11_change_state(GET_GOB_FLAG(gob, GOBF_MAXIMIZE),
@@ -293,6 +296,10 @@ X11_change_state (REBOOL   add,
 	//xcb_drawable_t d;
 	
 	Display *display = global_x_info->display;
+
+	if (display == NULL) {
+		return NULL;
+	}
 	XSetWindowAttributes swa;
 	long swa_mask = CWEventMask;
 
@@ -458,6 +465,9 @@ X11_change_state (REBOOL   add,
 {
 	//RL_Print("Closing %x\n", gob);
 	if (GET_GOB_FLAG(gob, GOBF_WINDOW)) {
+		if (global_x_info->display == NULL){
+			return;
+		}
 		XSync(global_x_info->display, FALSE); //wait child window to be destroyed and notified
 		X_Event_Loop(-1);
 		Window win = GOB_HWIN(gob);

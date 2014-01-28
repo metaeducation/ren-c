@@ -142,6 +142,9 @@ static REBINT do_read_clipboard(REBREQ * req, Atom property)
 	req->actual = 0;
 	Window owner = 0;
 	Display *display = global_x_info->display;
+	if (display == NULL) {
+		return DR_ERROR;
+	}
 	Atom XA_CLIPBOARD = XInternAtom(display, "CLIPBOARD", 0);
 	Atom XA_SELECTION = XInternAtom(display, "REBOL_SELECTION", False);
 	//XSync(display, False);
@@ -160,6 +163,7 @@ static REBINT do_read_clipboard(REBREQ * req, Atom property)
 			return DR_ERROR;
 		}
 	}
+
 	if (status < 0) { /* request not sent yet */
 		if (global_x_info->selection.win == 0){
 			global_x_info->selection.win
@@ -199,6 +203,9 @@ static REBINT do_read_clipboard(REBREQ * req, Atom property)
 	//XStoreBytes(global_x_info->display, req->data, len);
 	Window win = global_x_info->selection.win;
 	Display *display = global_x_info->display;
+	if (display == NULL) {
+		return DR_ERROR;
+	}
 	Atom XA_CLIPBOARD = XInternAtom(display, "CLIPBOARD", 0);
 
 	if (win == 0){
