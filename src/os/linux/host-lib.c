@@ -80,6 +80,8 @@ static void *Task_Ready;
 #define PATH_MAX 4096  // generally lacking in Posix
 #endif
 
+const char ** iso639_find_entry_by_2_code(const char* code);
+const char ** iso3166_find_entry_by_2_code(const char* code);
 
 
 /***********************************************************************
@@ -270,7 +272,56 @@ static void *Task_Ready;
 **
 ***********************************************************************/
 {
-	return 0; // not yet used
+	if (what > 3 || what < 0) {
+		return NULL;
+	}
+	int i = 0, j = 0;
+	char *lang = NULL;
+	char *territory = NULL;
+	const char *lang_env = getenv("LANG"); /* something like: lang_territory.codeset */
+	if (lang_env == NULL){
+		return NULL;
+	}
+	for(i = 0; i < strlen(lang_env); i ++){
+		if (lang_env[i] == '_'){
+			lang = OS_Make(i + 1);
+			if (lang == NULL) goto error;
+			COPY_STR(lang, lang_env, i);
+			lang[i] = '\0';
+			j = i;
+		} else if (lang_env[i] == '.'){
+			if (i == j) goto error;
+			territory = OS_Make(i - j);
+			if (territory == NULL) goto error;
+			COPY_STR(territory, lang_env + j + 1, i - j - 1);
+			territory[i - j - 1] = '\0';
+		}
+	}
+
+	if (lang == NULL || territory == NULL) goto error;
+
+	const char ** iso639_entry = iso639_find_entry_by_2_code(lang);
+	OS_Free(lang);
+	lang = NULL;
+	if (iso639_entry == NULL) goto error;
+
+	const char ** iso3166_entry = iso3166_find_entry_by_2_code(territory);
+	OS_Free(territory);
+	territory = NULL;
+
+	const REBCHR *ret[] = {
+		iso639_entry[3], iso639_entry[3], iso3166_entry[1], iso3166_entry[1]
+	};
+	return strdup(ret[what]);
+
+error:
+	if (lang != NULL) {
+		OS_Free(lang);
+	}
+	if (territory != NULL) {
+		OS_Free(territory);
+	}
+	return NULL;
 }
 
 
