@@ -335,9 +335,27 @@ void Dispatch_Event(XEvent *ev)
 			break;
 		case ClientMessage:
 			//RL_Print ("closed\n");
-			gob = Find_Gob_By_Window(ev->xclient.window);
-			if (gob != NULL){
-				Add_Event_XY(gob, EVT_CLOSE, 0, 0);
+			{
+				const REBYTE *message_type = XGetAtomName(global_x_info->display, ev->xclient.message_type);
+				//RL_Print("client message: %s\n", message_type);
+				Atom XA_DELETE_WINDOW = XInternAtom(global_x_info->display, "WM_DELETE_WINDOW", False);
+				Atom XA_PING = XInternAtom(global_x_info->display, "_NET_WM_PING", False);
+				if (XA_DELETE_WINDOW
+					&& XA_DELETE_WINDOW == ev->xclient.data.l[0]) {
+					gob = Find_Gob_By_Window(ev->xclient.window);
+					if (gob != NULL){
+						Add_Event_XY(gob, EVT_CLOSE, 0, 0);
+					}
+				} else if (XA_PING
+						   && XA_PING == ev->xclient.data.l[0]) {
+					//RL_Print("Ping from window manager\n");
+					ev->xclient.window = DefaultRootWindow(global_x_info->display);
+					XSendEvent(global_x_info->display,
+							  ev->xclient.window,
+							  False,
+							  (SubstructureNotifyMask | SubstructureRedirectMask),
+							  ev);
+				}
 			}
 			break;
 		case ConfigureNotify:

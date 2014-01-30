@@ -67,6 +67,9 @@ x_info_t *global_x_info = NULL;
 //***** Locals *****
 
 #define MAX_WINDOWS 64 //must be in sync with os/host-view.c
+#ifndef HOST_NAME_MAX
+  #define HOST_NAME_MAX 256
+#endif
 
 REBGOB *Find_Gob_By_Window(Window win)
 {
@@ -356,6 +359,24 @@ X11_change_state (REBOOL   add,
 					PropModeReplace,
 					(unsigned char *)&window_type, 1);
 
+	Atom window_pid = XInternAtom(display, "_NET_WM_PID", True);
+	if (window_pid) {
+		pid_t pid = getpid();
+		XChangeProperty(display, window, window_pid, XA_CARDINAL, 32,
+						PropModeReplace,
+						(unsigned char *)&pid, 1);
+	}
+
+	XTextProperty client_machine;
+	char hostname[HOST_NAME_MAX];
+	if (!gethostname(hostname, HOST_NAME_MAX)) {
+		client_machine.value = hostname;
+		client_machine.encoding = XA_STRING;
+		client_machine.format = 8;
+		client_machine.nitems = strlen(hostname);
+		XSetWMClientMachine(display, window, &client_machine);
+	}
+
 	if (IS_GOB_STRING(gob))
         os_string = As_OS_Str(GOB_CONTENT(gob), (REBCHR**)&title);
     else
@@ -380,8 +401,11 @@ X11_change_state (REBOOL   add,
 	if (os_string)
 		OS_Free(title);
 
-	Atom wmDelete=XInternAtom(display, "WM_DELETE_WINDOW", 1);
-	XSetWMProtocols(display, window, &wmDelete, 1);
+	Atom wm_protocols[] = {
+		XInternAtom(display, "WM_DELETE_WINDOW", True),
+		XInternAtom(display, "_NET_WM_PING", True)
+	};
+	XSetWMProtocols(display, window, wm_protocols, sizeof(wm_protocols)/sizeof(wm_protocols[0]));
 
 	XSizeHints *size_hints = XAllocSizeHints();
 	if (size_hints) {
