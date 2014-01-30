@@ -46,7 +46,7 @@ HOST_PRODUCT_NAME= core
 BIN_SUFFIX= -linux
 CFLAGS ?= -O2
 RAPI_FLAGS=  $(CFLAGS) -m32 -fvisibility=hidden -fPIC
-HOST_CORE_FLAGS= $(CFLAGS) -DREB_CORE -DREB_EXE  -m32 -fvisibility=hidden  -D_FILE_OFFSET_BITS=64 -DCUSTOM_STARTUP
+HOST_CORE_FLAGS= $(CFLAGS) -DREB_CORE -DMIN_OS -DREB_EXE  -m32 -fvisibility=hidden  -D_FILE_OFFSET_BITS=64 -DCUSTOM_STARTUP
 HOST_VIEW_FLAGS= $(CFLAGS) -DREB_EXE -m32 -fvisibility=hidden  -D_FILE_OFFSET_BITS=64 -DCUSTOM_STARTUP
 RLIB_FLAGS=
 
@@ -162,7 +162,8 @@ OBJS =	objs/a-constants.o objs/a-globals.o objs/a-lib.o objs/b-boot.o \
 
 HOST =	objs/host-main.o objs/host-args.o objs/host-device.o objs/host-stdio.o \
 	objs/dev-net.o objs/dev-dns.o objs/host-lib.o objs/host-readline.o \
-	objs/dev-stdio.o objs/dev-event.o objs/dev-file.o objs/host-core.o objs/dev-clipboard.o
+	objs/dev-stdio.o objs/dev-event.o objs/dev-file.o objs/host-core.o objs/dev-clipboard.o \
+	objs/iso-639.o objs/iso-3166.o
 
 CODECS = objs/aes.o objs/bigint.o objs/dh.o objs/lodepng.o objs/rc4.o objs/rsa.o
 
@@ -550,6 +551,12 @@ objs/host-draw.o: $S/os/host-draw.c
 
 objs/host-lib.o:      $S/os/linux/host-lib.c
 	$(CC) $S/os/linux/host-lib.c $(HFLAGS) -o objs/host-lib.o
+
+objs/iso-639.o:      $S/os/linux/iso-639.c
+	$(CC) $S/os/linux/iso-639.c $(HFLAGS) -o objs/iso-639.o
+
+objs/iso-3166.o:      $S/os/linux/iso-3166.c
+	$(CC) $S/os/linux/iso-3166.c $(HFLAGS) -o objs/iso-3166.o
 
 objs/host-readline.o: $S/os/linux/host-readline.c
 	$(CC) $S/os/linux/host-readline.c $(HFLAGS) -o objs/host-readline.o
