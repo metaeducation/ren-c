@@ -220,6 +220,10 @@ static void update_gob_window_state(REBGOB *gob,
 	X11_change_state(GET_GOB_FLAG(gob, GOBF_ACTIVE),
 					 window,
 					 XInternAtom(display, "_NET_WM_STATE_FOCUSED", False), 0);
+
+	X11_change_state(GET_GOB_FLAG(gob, GOBF_ON_TOP),
+					 window,
+					 XInternAtom(display, "_NET_WM_STATE_ABOVE", False), 0);
 }
 
 /***********************************************************************
