@@ -271,6 +271,9 @@ X11_change_state (REBOOL   add,
 		//RL_Print("Unhiding window: %x\n", win);
 		XMapWindow(global_x_info->display, win);
 	}
+	X11_change_state(GET_GOB_FLAG(gob, GOBF_HIDDEN),
+					 win,
+					 XInternAtom(global_x_info->display, "_NET_WM_STATE_HIDDEN", False), 0);
 }
 
 /***********************************************************************
