@@ -419,36 +419,17 @@ X11_change_state (REBOOL   add,
 		size_hints->flags = PPosition | PSize | PMinSize;
 		size_hints->min_width = w;
 		size_hints->min_height = h;
-	}
-	Atom wm_allowed_action = XInternAtom(display, "_NET_WM_ALLOWED_ACTIONS", True);
-	if (GET_GOB_FLAG(gob, GOBF_RESIZE)) {
-		//RL_Print("Resizable\n");
-		Atom wm_actions[] = {
-			XInternAtom(display, "_NET_WM_ACTION_MOVE", True),
-			XInternAtom(display, "_NET_WM_ACTION_RESIZE", True),
-			XInternAtom(display, "_NET_WM_ACTION_CLOSE", True)
-		};
-		XChangeProperty(display, window, wm_allowed_action, XA_ATOM, 32,
-						PropModeReplace, (unsigned char*)&wm_actions[0],
-						sizeof(wm_actions)/sizeof(wm_actions[0]));
-	} else {
-		//RL_Print("Non-Resizable\n");
-		Atom wm_actions[] = {
-			XInternAtom(display, "_NET_WM_ACTION_MOVE", True),
-			XInternAtom(display, "_NET_WM_ACTION_CLOSE", True)
-		};
-		XChangeProperty(display, window, wm_allowed_action, XA_ATOM, 32,
-						PropModeReplace, (unsigned char*)&wm_actions[0],
-						sizeof(wm_actions)/sizeof(wm_actions[0])); /* FIXME, this didn't work */
-
-		if (size_hints) {
+		if (GET_GOB_FLAG(gob, GOBF_RESIZE)
+			|| GET_GOB_FLAG(gob, GOBF_MAXIMIZE)) {
+			//RL_Print("Resizable\n");
+			size_hints->flags ^= PMaxSize; /* do not set max size fo re-sizable window */
+		} else {
+			//RL_Print("Non-Resizable\n");
 			//RL_Print("Setting normal size hints %dx%d\n", w, h);
 			size_hints->max_width = w;
 			size_hints->max_height = h;
 			size_hints->flags |= PMaxSize;
 		}
-	}
-	if (size_hints){
 		XSetWMNormalHints(display, window, size_hints);
 		XFree(size_hints);
 	}
