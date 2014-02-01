@@ -195,7 +195,7 @@ X11_change_state (REBOOL   add,
 	xclient.data.l[3] = 1; /* source indication */
 	xclient.data.l[4] = 0;
 
-	XSendEvent (global_x_info->display, window, False,
+	XSendEvent (global_x_info->display, root, False,
 				SubstructureRedirectMask | SubstructureNotifyMask,
 				(XEvent *)&xclient);
 }
