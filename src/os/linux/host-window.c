@@ -361,6 +361,10 @@ X11_change_state (REBOOL   add,
 	XChangeProperty(display, window, window_type_atom, XA_ATOM, 32,
 					PropModeReplace,
 					(unsigned char *)&window_type, 1);
+	X11_change_state(GET_GOB_FLAG(gob, GOBF_MAXIMIZE),
+					 window,
+					 XInternAtom(global_x_info->display, "_NET_WM_STATE_MAXIMIZED_HORZ", True),
+					 XInternAtom(global_x_info->display, "_NET_WM_STATE_MAXIMIZED_VERT", True));
 
 	Atom window_pid = XInternAtom(display, "_NET_WM_PID", True);
 	if (window_pid) {
