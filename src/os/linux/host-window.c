@@ -200,6 +200,24 @@ X11_change_state (REBOOL   add,
 				(XEvent *)&xclient);
 }
 
+static void update_gob_window_state(REBGOB *gob,
+									Display *display,
+									Window window)
+{
+	X11_change_state(GET_GOB_FLAG(gob, GOBF_MAXIMIZE),
+					 window,
+					 XInternAtom(display, "_NET_WM_STATE_MAXIMIZED_HORZ", True),
+					 XInternAtom(display, "_NET_WM_STATE_MAXIMIZED_VERT", True));
+	//RL_Print("%s fullscreen flag for window %x\n", GET_GOB_FLAG(gob, GOBF_FULLSCREEN) ? "Setting" : "Clearing", window);
+	X11_change_state(GET_GOB_FLAG(gob, GOBF_FULLSCREEN),
+					 window,
+					 XInternAtom(display, "_NET_WM_STATE_FULLSCREEN", True),
+					 0);
+	X11_change_state(GET_GOB_FLAG(gob, GOBF_HIDDEN),
+					 window,
+					 XInternAtom(display, "_NET_WM_STATE_HIDDEN", False), 0);
+}
+
 /***********************************************************************
 **
 */	void OS_Update_Window(REBGOB *gob)
@@ -225,14 +243,7 @@ X11_change_state (REBOOL   add,
 		return;
 	}
 
-	X11_change_state(GET_GOB_FLAG(gob, GOBF_MAXIMIZE),
-					 win,
-					 XInternAtom(global_x_info->display, "_NET_WM_STATE_MAXIMIZED_HORZ", True),
-					 XInternAtom(global_x_info->display, "_NET_WM_STATE_MAXIMIZED_VERT", True));
-	X11_change_state(GET_GOB_FLAG(gob, GOBF_FULLSCREEN),
-					 win,
-					 XInternAtom(global_x_info->display, "_NET_WM_STATE_FULLSCREEN", True),
-					 0);
+	update_gob_window_state(gob, global_x_info->display, win);
 	Resize_Window(gob, FALSE);
 	XGetGeometry(global_x_info->display, win, &root, &actual_x, &actual_y, 
 				 &actual_w, &actual_h, &actual_border_width, &actual_depth);
@@ -276,9 +287,141 @@ X11_change_state (REBOOL   add,
 		//RL_Print("Unhiding window: %x\n", win);
 		XMapWindow(global_x_info->display, win);
 	}
-	X11_change_state(GET_GOB_FLAG(gob, GOBF_HIDDEN),
-					 win,
-					 XInternAtom(global_x_info->display, "_NET_WM_STATE_HIDDEN", False), 0);
+}
+
+static void set_wm_name(Display *display,
+						Window window,
+						REBCHR *title)
+{
+	Atom XA_TITLE = XInternAtom(display, "_NET_WM_NAME", False);
+	Atom XA_UTF8_STRING = XInternAtom(display, "UTF8_STRING", False);
+	XChangeProperty(display, window, XA_TITLE, XA_UTF8_STRING, 8,
+					PropModeReplace, title, strlen(title));
+	XStoreName(display, window, title); //backup for non NET Wms
+}
+
+static void set_class_hint(Display *display,
+						   Window window,
+						   REBCHR *title)
+{
+	XClassHint *class_hint = XAllocClassHint();
+	if (class_hint) {
+		class_hint->res_name = title;
+		class_hint->res_class = "REBOL";
+		XSetClassHint(display, window, class_hint);
+		XFree(class_hint);
+	}
+}
+
+static void set_gob_window_title(REBGOB *gob,
+								 Display *display,
+								 Window window)
+{
+	REBCHR *title;
+	REBYTE os_string = FALSE;
+	XTextProperty title_prop;
+	Atom XA_TITLE;
+	Atom XA_UTF8_STRING;
+
+	if (IS_GOB_STRING(gob))
+        os_string = As_OS_Str(GOB_CONTENT(gob), (REBCHR**)&title);
+    else
+        title = TXT("REBOL Window");
+	
+	set_wm_name(display, window, title);
+	set_class_hint(display, window, title);
+
+	if (os_string)
+		OS_Free(title);
+}
+
+static void set_gob_window_size_hints(REBGOB *gob,
+									  Display *display,
+									  Window window)
+{
+	REBINT w = GOB_LOG_W_INT(gob);
+	REBINT h = GOB_LOG_H_INT(gob);
+	XSizeHints *size_hints = XAllocSizeHints();
+	if (size_hints) {
+		size_hints->flags = PPosition | PSize | PMinSize;
+		size_hints->min_width = w;
+		size_hints->min_height = h;
+		if (GET_GOB_FLAG(gob, GOBF_RESIZE)
+			|| GET_GOB_FLAG(gob, GOBF_MAXIMIZE)
+			|| GET_GOB_FLAG(gob, GOBF_FULLSCREEN)) {
+			//RL_Print("Resizable\n");
+			size_hints->flags ^= PMaxSize; /* do not set max size fo re-sizable window */
+		} else {
+			//RL_Print("Non-Resizable\n");
+			//RL_Print("Setting normal size hints %dx%d\n", w, h);
+			size_hints->max_width = w;
+			size_hints->max_height = h;
+			size_hints->flags |= PMaxSize;
+		}
+		XSetWMNormalHints(display, window, size_hints);
+		XFree(size_hints);
+	}
+}
+
+static void set_window_protocols(Display *display,
+								 Window window)
+{
+	Atom wm_protocols[] = {
+		XInternAtom(display, "WM_DELETE_WINDOW", True),
+		XInternAtom(display, "_NET_WM_PING", True)
+	};
+	XSetWMProtocols(display, window, wm_protocols, sizeof(wm_protocols)/sizeof(wm_protocols[0]));
+}
+
+static void set_wm_client_machine(Display *display,
+									  Window window)
+{
+	XTextProperty client_machine;
+	char hostname[HOST_NAME_MAX];
+	if (!gethostname(hostname, HOST_NAME_MAX)) {
+		client_machine.value = hostname;
+		client_machine.encoding = XA_STRING;
+		client_machine.format = 8;
+		client_machine.nitems = strlen(hostname);
+		XSetWMClientMachine(display, window, &client_machine);
+	}
+}
+
+static void set_wm_pid(Display *display,
+					   Window window)
+{
+	Atom window_pid = XInternAtom(display, "_NET_WM_PID", True);
+	if (window_pid) {
+		pid_t pid = getpid();
+		XChangeProperty(display, window, window_pid, XA_CARDINAL, 32,
+						PropModeReplace,
+						(unsigned char *)&pid, 1);
+	}
+}
+
+static void set_gob_window_type(REBGOB *gob,
+								Display *display,
+								Window window)
+{
+	Window parent_window;
+	Atom window_type;
+	Atom window_type_atom = XInternAtom(display, "_NET_WM_WINDOW_TYPE", True);
+	if (GET_FLAGS(gob->flags, GOBF_NO_TITLE, GOBF_NO_BORDER)) {
+		window_type = XInternAtom(display, "_NET_WM_WINDOW_TYPE_DROPDOWN_MENU", True);
+	} else if (GET_GOB_FLAG(gob, GOBF_MODAL)) {
+		Atom wm_state = XInternAtom(display, "_NET_WM_STATE", True);
+		Atom wm_state_modal = XInternAtom(display, "_NET_WM_STATE_MODAL", True);
+		parent_window = GOB_HWIN(GOB_TMP_OWNER(gob));
+		XSetTransientForHint(display, window, parent_window);
+		int status = XChangeProperty(display, window, wm_state, XA_ATOM, 32,
+									 PropModeReplace, (unsigned char*)&wm_state_modal, 1);
+		window_type = XInternAtom(display, "_NET_WM_WINDOW_TYPE_DIALOG", True);
+	} else {
+		window_type = XInternAtom(display, "_NET_WM_WINDOW_TYPE_NORMAL", True);
+	}
+	XChangeProperty(display, window, window_type_atom, XA_ATOM, 32,
+					PropModeReplace,
+					(unsigned char *)&window_type, 1);
 }
 
 /***********************************************************************
@@ -297,9 +440,6 @@ X11_change_state (REBOOL   add,
 	REBINT y = GOB_LOG_Y_INT(gob);
 	REBINT w = GOB_LOG_W_INT(gob);
 	REBINT h = GOB_LOG_H_INT(gob);
-
-	REBCHR *title;
-	REBYTE os_string = FALSE;
 
 	Window window;
 	u32 mask = 0;
@@ -327,11 +467,8 @@ X11_change_state (REBOOL   add,
 					| StructureNotifyMask 
 					| FocusChangeMask;
 
-	Atom window_type_atom = XInternAtom(display, "_NET_WM_WINDOW_TYPE", True);
-	Atom window_type;
 	parent_window = DefaultRootWindow(display);
 	if (GET_FLAGS(gob->flags, GOBF_NO_TITLE, GOBF_NO_BORDER)) {
-		window_type = XInternAtom(display, "_NET_WM_WINDOW_TYPE_DROPDOWN_MENU", True);
 		swa.save_under = True;
 		swa.override_redirect = True;
 		swa.cursor = None;
@@ -351,98 +488,18 @@ X11_change_state (REBOOL   add,
 							   CopyFromParent, InputOutput,
 							   CopyFromParent, swa_mask,
 							   &swa);
-		if (GET_GOB_FLAG(gob, GOBF_MODAL)) {
-			Atom wm_state = XInternAtom(display, "_NET_WM_STATE", True);
-			Atom wm_state_modal = XInternAtom(display, "_NET_WM_STATE_MODAL", True);
-			parent_window = GOB_HWIN(GOB_TMP_OWNER(gob));
-			XSetTransientForHint(display, window, parent_window);
-			int status = XChangeProperty(display, window, wm_state, XA_ATOM, 32,
-										 PropModeReplace, (unsigned char*)&wm_state_modal, 1);
-			window_type = XInternAtom(display, "_NET_WM_WINDOW_TYPE_DIALOG", True);
-		} else {
-			window_type = XInternAtom(display, "_NET_WM_WINDOW_TYPE_NORMAL", True);
-		}
-	}
-	XChangeProperty(display, window, window_type_atom, XA_ATOM, 32,
-					PropModeReplace,
-					(unsigned char *)&window_type, 1);
-	X11_change_state(GET_GOB_FLAG(gob, GOBF_MAXIMIZE),
-					 window,
-					 XInternAtom(global_x_info->display, "_NET_WM_STATE_MAXIMIZED_HORZ", True),
-					 XInternAtom(global_x_info->display, "_NET_WM_STATE_MAXIMIZED_VERT", True));
-
-	X11_change_state(GET_GOB_FLAG(gob, GOBF_FULLSCREEN),
-					 window,
-					 XInternAtom(global_x_info->display, "_NET_WM_STATE_FULLSCREEN", True), 0);
-
-	Atom window_pid = XInternAtom(display, "_NET_WM_PID", True);
-	if (window_pid) {
-		pid_t pid = getpid();
-		XChangeProperty(display, window, window_pid, XA_CARDINAL, 32,
-						PropModeReplace,
-						(unsigned char *)&pid, 1);
 	}
 
-	XTextProperty client_machine;
-	char hostname[HOST_NAME_MAX];
-	if (!gethostname(hostname, HOST_NAME_MAX)) {
-		client_machine.value = hostname;
-		client_machine.encoding = XA_STRING;
-		client_machine.format = 8;
-		client_machine.nitems = strlen(hostname);
-		XSetWMClientMachine(display, window, &client_machine);
-	}
+	set_gob_window_type(gob, display, window);
 
-	if (IS_GOB_STRING(gob))
-        os_string = As_OS_Str(GOB_CONTENT(gob), (REBCHR**)&title);
-    else
-        title = TXT("REBOL Window");
+	set_wm_pid(display, window);
+	set_wm_client_machine(display, window);
+	set_gob_window_title(gob, display, window);
 
-	XTextProperty title_prop;
-	Atom title_atom = XInternAtom(display, "_NET_WM_NAME", False);
-	if (XmbTextListToTextProperty(display, (char **)&title, 1, XUTF8StringStyle, &title_prop) >= 0){
-		XSetTextProperty(display, window, &title_prop, title_atom);
-		XFree(title_prop.value);
-	};
-	XStoreName(display, window, title); //backup for non NET Wms
+	set_window_protocols(display, window);
 
-	XClassHint *class_hints = XAllocClassHint();
-	if (class_hints) {
-		class_hints->res_name = title;
-		class_hints->res_class = title;
-		XSetClassHint(display, window, class_hints);
-		XFree(class_hints);
-	}
-
-	if (os_string)
-		OS_Free(title);
-
-	Atom wm_protocols[] = {
-		XInternAtom(display, "WM_DELETE_WINDOW", True),
-		XInternAtom(display, "_NET_WM_PING", True)
-	};
-	XSetWMProtocols(display, window, wm_protocols, sizeof(wm_protocols)/sizeof(wm_protocols[0]));
-
-	XSizeHints *size_hints = XAllocSizeHints();
-	if (size_hints) {
-		size_hints->flags = PPosition | PSize | PMinSize;
-		size_hints->min_width = w;
-		size_hints->min_height = h;
-		if (GET_GOB_FLAG(gob, GOBF_RESIZE)
-			|| GET_GOB_FLAG(gob, GOBF_MAXIMIZE)
-			|| GET_GOB_FLAG(gob, GOBF_FULLSCREEN)) {
-			//RL_Print("Resizable\n");
-			size_hints->flags ^= PMaxSize; /* do not set max size fo re-sizable window */
-		} else {
-			//RL_Print("Non-Resizable\n");
-			//RL_Print("Setting normal size hints %dx%d\n", w, h);
-			size_hints->max_width = w;
-			size_hints->max_height = h;
-			size_hints->flags |= PMaxSize;
-		}
-		XSetWMNormalHints(display, window, size_hints);
-		XFree(size_hints);
-	}
+	set_gob_window_size_hints(gob, display, window);
+	update_gob_window_state(gob, display, window);
 
 	windex = Alloc_Window(gob);
 
@@ -456,11 +513,11 @@ X11_change_state (REBOOL   add,
 		XMapWindow(display, window);
 	}
 
+	/*
 	int actual_x, actual_y, actual_w, actual_h, actual_border_width, actual_depth;
 	Window root;
 	XGetGeometry(display, window, &root, &actual_x, &actual_y, 
 				 &actual_w, &actual_h, &actual_border_width, &actual_depth);
-	/*
 	RL_Print("%s %d, created an X window: %x for gob %x, x: %d, y: %d, w: %d, h: %d, border: %d, depth: %d\n", 
 			 __func__, __LINE__, window, gob,
 			 actual_x, actual_y, actual_w, actual_h,
