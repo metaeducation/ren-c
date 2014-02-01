@@ -45,6 +45,7 @@ const REBCNT Gob_Flag_Words[] = {
 	SYM_MINIMIZE,    GOBF_MINIMIZE,
 	SYM_MAXIMIZE,    GOBF_MAXIMIZE,
 	SYM_RESTORE,     GOBF_RESTORE,
+	SYM_FULLSCREEN,  GOBF_FULLSCREEN,
 	0, 0
 };
 
@@ -319,13 +320,19 @@ const REBCNT Gob_Flag_Words[] = {
 			switch (flag) {
 				case GOBF_RESTORE:
 					CLR_GOB_FLAGS(gob, GOBF_MINIMIZE, GOBF_MAXIMIZE);
+					CLR_GOB_FLAG(gob, GOBF_FULLSCREEN);
 					break;
 				case GOBF_MINIMIZE:
 					CLR_GOB_FLAGS(gob, GOBF_MAXIMIZE, GOBF_RESTORE);
+					CLR_GOB_FLAG(gob, GOBF_FULLSCREEN);
 					break;
 				case GOBF_MAXIMIZE:
 					CLR_GOB_FLAGS(gob, GOBF_MINIMIZE, GOBF_RESTORE);
+					CLR_GOB_FLAG(gob, GOBF_FULLSCREEN);
 					break;
+				case GOBF_FULLSCREEN:
+					CLR_GOB_FLAGS(gob, GOBF_MINIMIZE, GOBF_RESTORE);
+					CLR_GOB_FLAG(gob, GOBF_MAXIMIZE);
 			}
 			break;
 		}

@@ -53,6 +53,7 @@ enum GOB_FLAGS {		// GOB attribute and option flags
 	GOBF_MINIMIZE,		// Window is minimized
 	GOBF_MAXIMIZE,		// Window is maximized
 	GOBF_RESTORE,		// Window is restored
+	GOBF_FULLSCREEN,	// Window is fullscreen
 };
 
 enum GOB_STATE {		// GOB state flags

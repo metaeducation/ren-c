@@ -195,6 +195,7 @@ active
 minimize
 maximize
 restore 
+fullscreen
 
 *port-modes*
 
