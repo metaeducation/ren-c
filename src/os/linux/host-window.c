@@ -224,10 +224,15 @@ X11_change_state (REBOOL   add,
 	if (!win || global_x_info->display == NULL) {
 		return;
 	}
+
 	X11_change_state(GET_GOB_FLAG(gob, GOBF_MAXIMIZE),
 					 win,
 					 XInternAtom(global_x_info->display, "_NET_WM_STATE_MAXIMIZED_HORZ", True),
 					 XInternAtom(global_x_info->display, "_NET_WM_STATE_MAXIMIZED_VERT", True));
+	X11_change_state(GET_GOB_FLAG(gob, GOBF_FULLSCREEN),
+					 win,
+					 XInternAtom(global_x_info->display, "_NET_WM_STATE_FULLSCREEN", True),
+					 0);
 	Resize_Window(gob, FALSE);
 	XGetGeometry(global_x_info->display, win, &root, &actual_x, &actual_y, 
 				 &actual_w, &actual_h, &actual_border_width, &actual_depth);
@@ -366,6 +371,10 @@ X11_change_state (REBOOL   add,
 					 XInternAtom(global_x_info->display, "_NET_WM_STATE_MAXIMIZED_HORZ", True),
 					 XInternAtom(global_x_info->display, "_NET_WM_STATE_MAXIMIZED_VERT", True));
 
+	X11_change_state(GET_GOB_FLAG(gob, GOBF_FULLSCREEN),
+					 window,
+					 XInternAtom(global_x_info->display, "_NET_WM_STATE_FULLSCREEN", True), 0);
+
 	Atom window_pid = XInternAtom(display, "_NET_WM_PID", True);
 	if (window_pid) {
 		pid_t pid = getpid();
@@ -420,7 +429,8 @@ X11_change_state (REBOOL   add,
 		size_hints->min_width = w;
 		size_hints->min_height = h;
 		if (GET_GOB_FLAG(gob, GOBF_RESIZE)
-			|| GET_GOB_FLAG(gob, GOBF_MAXIMIZE)) {
+			|| GET_GOB_FLAG(gob, GOBF_MAXIMIZE)
+			|| GET_GOB_FLAG(gob, GOBF_FULLSCREEN)) {
 			//RL_Print("Resizable\n");
 			size_hints->flags ^= PMaxSize; /* do not set max size fo re-sizable window */
 		} else {

@@ -378,6 +378,40 @@ void Dispatch_Event(XEvent *ev)
 				gob->size.x = xce.width;
 				gob->size.y = xce.height;
 				Resize_Window(gob, TRUE);
+				/* check if it's fullscreen */
+				Atom XA_FULLSCREEN = XInternAtom(global_x_info->display, "_NET_WM_STATE_FULLSCREEN", False);
+				if (XA_FULLSCREEN) {
+					Atom XA_WM_STATE = XInternAtom(global_x_info->display, "_NET_WM_STATE", False);
+					if (XA_WM_STATE) {
+						Atom     actual_type;
+						int      actual_format;
+						long     nitems;
+						long     bytes;
+						Atom     *data = NULL;
+						int i = 0;
+						XGetWindowProperty(global_x_info->display,
+										   xce.window,
+										   XA_WM_STATE,
+										   0,
+										   (~0L),
+										   False,
+										   XA_ATOM,
+										   &actual_type,
+										   &actual_format,
+										   &nitems,
+										   &bytes,
+										   (unsigned char**)&data);
+						for(i = 0; i < nitems; i ++){
+							if (data[i] == XA_FULLSCREEN){
+								RL_Print("Window %d is Fullscreen\n", xce.window);
+								SET_GOB_FLAG(gob, GOBF_FULLSCREEN);
+							}
+						}
+						if (data != NULL){
+							XFree(data);
+						}
+					}
+				}
 				//RL_Print("%s, %s, %d: EVT_RESIZE is sent: %x\n", __FILE__, __func__, __LINE__, xyd);
 				Update_Event_XY(gob, EVT_RESIZE, xyd, 0); //This is needed even when Resize_Window returns false, in which case, Rebol changed the window size and OS_Update_Window has been called.
 			}
