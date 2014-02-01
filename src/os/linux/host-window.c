@@ -216,6 +216,10 @@ static void update_gob_window_state(REBGOB *gob,
 	X11_change_state(GET_GOB_FLAG(gob, GOBF_HIDDEN),
 					 window,
 					 XInternAtom(display, "_NET_WM_STATE_HIDDEN", False), 0);
+
+	X11_change_state(GET_GOB_FLAG(gob, GOBF_ACTIVE),
+					 window,
+					 XInternAtom(display, "_NET_WM_STATE_FOCUSED", False), 0);
 }
 
 /***********************************************************************
