@@ -380,6 +380,8 @@ void Dispatch_Event(XEvent *ev)
 				Resize_Window(gob, TRUE);
 				/* check if it's fullscreen */
 				Atom XA_FULLSCREEN = XInternAtom(global_x_info->display, "_NET_WM_STATE_FULLSCREEN", False);
+				Atom XA_MAX_HORZ = XInternAtom(global_x_info->display, "_NET_WM_STATE_MAXIMIZED_HORZ", False);
+				Atom XA_MAX_VERT = XInternAtom(global_x_info->display, "_NET_WM_STATE_MAXIMIZED_VERT", False);
 				if (XA_FULLSCREEN) {
 					Atom XA_WM_STATE = XInternAtom(global_x_info->display, "_NET_WM_STATE", False);
 					if (XA_WM_STATE) {
@@ -389,6 +391,9 @@ void Dispatch_Event(XEvent *ev)
 						long     bytes;
 						Atom     *data = NULL;
 						int i = 0;
+						int maximized_horz = 0;
+						int maximized_vert = 0;
+						int fullscreen = 0;
 						XGetWindowProperty(global_x_info->display,
 										   xce.window,
 										   XA_WM_STATE,
@@ -403,12 +408,31 @@ void Dispatch_Event(XEvent *ev)
 										   (unsigned char**)&data);
 						for(i = 0; i < nitems; i ++){
 							if (data[i] == XA_FULLSCREEN){
-								RL_Print("Window %d is Fullscreen\n", xce.window);
+								//RL_Print("Window %d is Fullscreen\n", xce.window);
+								fullscreen = 1;
 								SET_GOB_FLAG(gob, GOBF_FULLSCREEN);
+								break;
+							} else if (data[i] == XA_MAX_HORZ) {
+								maximized_horz = 1;
+							} else if (data[i] == XA_MAX_VERT) {
+								maximized_vert = 1;
+							}
+							if (maximized_horz && maximized_vert) {// shortcut: maximization and fullscreen are exclusive
+								SET_GOB_FLAG(gob, GOBF_MAXIMIZE);
+								break;
 							}
 						}
+
 						if (data != NULL){
 							XFree(data);
+						}
+
+						if (!fullscreen) {
+							CLR_GOB_FLAG(gob, GOBF_FULLSCREEN);
+						}
+
+						if (!maximized_horz || !maximized_vert) {
+							CLR_GOB_FLAG(gob, GOBF_MAXIMIZE);
 						}
 					}
 				}
