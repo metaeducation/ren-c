@@ -38,6 +38,7 @@ extern "C" {
 		REBOOL  has_xshm;
 #endif
 		selection_t selection; /* for copy and paste */
+		Window leader_window;
 	} x_info_t;
 
 	typedef struct {

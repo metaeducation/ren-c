@@ -104,6 +104,7 @@ static REBXYF Zero_Pair = {0, 0};
 	global_x_info->selection.status = -1;
 	global_x_info->selection.data = NULL;
 	global_x_info->selection.data_length = 0;
+	global_x_info->leader_window = 0;
 	global_x_info->display = XOpenDisplay(NULL);
 
 	if (global_x_info->display == NULL){
@@ -167,6 +168,14 @@ static REBXYF Zero_Pair = {0, 0};
 		}
 	}
 #endif
+
+	global_x_info->leader_window = XCreateWindow(global_x_info->display,
+												 DefaultRootWindow(global_x_info->display),
+												 10, 10, 10, 10, /* x, y, w, h */
+												 0, /* borderwidth */
+												 CopyFromParent, InputOutput,
+												 CopyFromParent, 0, NULL);
+
 
 }
 
@@ -321,6 +330,18 @@ static void set_class_hint(Display *display,
 	}
 }
 
+static void set_wm_hints(Display *display,
+						 Window window)
+{
+	XWMHints *hints = XAllocWMHints();
+	if (hints) {
+		hints->flags = WindowGroupHint;
+		hints->window_group = global_x_info->leader_window;
+		XSetWMHints(display, window, hints);
+		XFree(hints);
+	}
+}
+
 static void set_gob_window_title(REBGOB *gob,
 								 Display *display,
 								 Window window)
@@ -402,6 +423,17 @@ static void set_wm_pid(Display *display,
 						PropModeReplace,
 						(unsigned char *)&pid, 1);
 	}
+}
+
+static void set_window_leader(Display *display,
+							  Window window)
+{
+	Atom XA_WM_CLIENT_LEADER = XInternAtom(display, "WM_CLIENT_LEADER", True);
+	if (!global_x_info->leader_window) {
+		global_x_info->leader_window = window;
+	}
+	int status = XChangeProperty(display, window, XA_WM_CLIENT_LEADER, XA_WINDOW, 32,
+								 PropModeReplace, (unsigned char*)&(global_x_info->leader_window), 1);
 }
 
 static void set_gob_window_type(REBGOB *gob,
@@ -496,6 +528,9 @@ static void set_gob_window_type(REBGOB *gob,
 	}
 
 	set_gob_window_type(gob, display, window);
+	set_window_leader(display, window);
+
+	set_wm_hints(display, window);
 
 	set_wm_pid(display, window);
 	set_wm_client_machine(display, window);
