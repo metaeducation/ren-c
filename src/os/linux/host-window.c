@@ -351,20 +351,17 @@ static void set_gob_window_size_hints(REBGOB *gob,
 	REBINT h = GOB_LOG_H_INT(gob);
 	XSizeHints *size_hints = XAllocSizeHints();
 	if (size_hints) {
-		size_hints->flags = PPosition | PSize | PMinSize;
-		size_hints->min_width = w;
-		size_hints->min_height = h;
-		if (GET_GOB_FLAG(gob, GOBF_RESIZE)
-			|| GET_GOB_FLAG(gob, GOBF_MAXIMIZE)
-			|| GET_GOB_FLAG(gob, GOBF_FULLSCREEN)) {
-			//RL_Print("Resizable\n");
-			size_hints->flags ^= PMaxSize; /* do not set max size fo re-sizable window */
-		} else {
-			//RL_Print("Non-Resizable\n");
-			//RL_Print("Setting normal size hints %dx%d\n", w, h);
+		size_hints->flags = PBaseSize;
+		size_hints->base_width = w;
+		size_hints->base_height = h;
+		if (!GET_GOB_FLAG(gob, GOBF_RESIZE)
+			&& !GET_GOB_FLAG(gob, GOBF_MAXIMIZE)
+			&& !GET_GOB_FLAG(gob, GOBF_FULLSCREEN)) {
+			size_hints->flags |= (PMaxSize | PMinSize);
+			size_hints->min_width = w;
+			size_hints->min_height = h;
 			size_hints->max_width = w;
 			size_hints->max_height = h;
-			size_hints->flags |= PMaxSize;
 		}
 		XSetWMNormalHints(display, window, size_hints);
 		XFree(size_hints);
