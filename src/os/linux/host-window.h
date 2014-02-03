@@ -42,12 +42,9 @@ extern "C" {
 	} x_info_t;
 
 	typedef struct {
-		Window 			x_window;
-		GC				x_gc;
-		XImage			*x_image;
-		pixmap_format_t pixmap_format;
-		REBYTE			*pixbuf;
-		REBCNT			pixbuf_len;
+		Window 			x_id;
+		unsigned int	old_width;
+		unsigned int	old_height;
 	} host_window_t;
 
 	extern x_info_t *global_x_info;

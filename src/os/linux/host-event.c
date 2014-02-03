@@ -26,6 +26,7 @@
 */
 
 #include <math.h>
+#include <assert.h>
 #include  <X11/Xlib.h>
 
 #include "reb-host.h"
@@ -36,6 +37,7 @@
 
 extern x_info_t *global_x_info;
 REBGOB *Find_Gob_By_Window(Window win);
+host_window_t *Find_Host_Window_By_ID(Window win);
 void* Find_Compositor(REBGOB *gob);
 REBEVT *RL_Find_Event (REBINT model, REBINT type);
 
@@ -373,10 +375,13 @@ void Dispatch_Event(XEvent *ev)
 					gob->offset.y = xce.y;
 					Update_Event_XY(gob, EVT_OFFSET, xyd, 0);
 				}
-				//RL_Print("WM_MOVE: %x\n", xyd);
+				host_window_t* hw = Find_Host_Window_By_ID(ev->xconfigure.window);
+				assert(hw != NULL);
+				if (hw->old_width == xce.width && hw->old_height == xce.height)
+					return;
 				xyd = (ROUND_TO_INT(xce.width)) + (ROUND_TO_INT(xce.height) << 16);
-				gob->size.x = xce.width;
-				gob->size.y = xce.height;
+				gob->size.x = hw->old_width = xce.width;
+				gob->size.y = hw->old_height = xce.height;
 				Resize_Window(gob, TRUE);
 				/* check if it's fullscreen */
 				Atom XA_FULLSCREEN = XInternAtom(global_x_info->display, "_NET_WM_STATE_FULLSCREEN", False);

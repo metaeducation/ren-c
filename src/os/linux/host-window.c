@@ -52,7 +52,8 @@
 
 //***** Constants *****
 
-#define GOB_HWIN(gob)	((Window)Find_Window(gob))
+void* Find_Window(REBGOB *gob);
+#define GOB_HWIN(gob)	((host_window_t*)Find_Window(gob))
 #define GOB_COMPOSITOR(gob)	(Find_Compositor(gob)) //gets handle to window's compositor
 
 //***** Externs *****
@@ -75,8 +76,21 @@ REBGOB *Find_Gob_By_Window(Window win)
 {
 	int i = 0;
 	for(i = 0; i < MAX_WINDOWS; i ++ ){
-		if (Gob_Windows[i].win == (void*)win){
+		host_window_t *hw = Gob_Windows[i].win;
+		if (hw != NULL && hw->x_id == win) {
 			return Gob_Windows[i].gob;
+		}
+	}
+	return NULL;
+}
+
+host_window_t *Find_Host_Window_By_ID(Window win)
+{
+	int i = 0;
+	for(i = 0; i < MAX_WINDOWS; i ++ ){
+		host_window_t *hw = Gob_Windows[i].win;
+		if (hw != NULL && hw->x_id == win) {
+			return (host_window_t*)Gob_Windows[i].win;
 		}
 	}
 	return NULL;
@@ -254,29 +268,29 @@ static void update_gob_window_state(REBGOB *gob,
 	RL_Print("Updating window %x to (x: %d, y: %d, width: %d, height: %d) from (w %d, h %d)\n", gob, x, y, w, h,
 			 GOB_WO_INT(gob), GOB_HO_INT(gob));
 	*/
-	Window win = GOB_HWIN(gob);
+	host_window_t *hw = GOB_HWIN(gob);
 	//assert (win != 0);
-	if (!win || global_x_info->display == NULL) {
+	if (!hw || global_x_info->display == NULL) {
 		return;
 	}
 
-	update_gob_window_state(gob, global_x_info->display, win);
+	update_gob_window_state(gob, global_x_info->display, hw->x_id);
 	Resize_Window(gob, FALSE);
-	XGetGeometry(global_x_info->display, win, &root, &actual_x, &actual_y, 
+	XGetGeometry(global_x_info->display, hw->x_id, &root, &actual_x, &actual_y, 
 				 &actual_w, &actual_h, &actual_border_width, &actual_depth);
 	/*
 	RL_Print("%s %d, Updating an X window %x for gob %x, x: %d, y: %d, w: %d, h: %d, border: %d, depth: %d\n",
-			 __func__, __LINE__, win, gob,
+			 __func__, __LINE__, hw->x_id, gob,
 			 actual_x, actual_y, actual_w, actual_h,
 			 actual_border_width, actual_depth);
 			 */
 	if (actual_w != w || actual_h != h){
-		XResizeWindow(global_x_info->display, win, w, h);
+		XResizeWindow(global_x_info->display, hw->x_id, w, h);
 #if 0 //XResizeWindow could fail
-		XGetGeometry(global_x_info->display, win, &root, &actual_x, &actual_y, 
+		XGetGeometry(global_x_info->display, hw->x_id, &root, &actual_x, &actual_y, 
 					 &actual_w, &actual_h, &actual_border_width, &actual_depth);
 		RL_Print("%s %d, After resizing X window %x for gob %x, x: %d, y: %d, w: %d, h: %d, border: %d, depth: %d\n",
-				 __func__, __LINE__, win, gob,
+				 __func__, __LINE__, hw->x_id, gob,
 				 actual_x, actual_y, actual_w, actual_h,
 				 actual_border_width, actual_depth);
 		if (actual_w != w
@@ -293,16 +307,16 @@ static void update_gob_window_state(REBGOB *gob,
 	}
 
 	if (x != GOB_XO_INT(gob) || y != GOB_YO_INT(gob)){
-		//RL_Print("Moving window: %x\n", win);
-		XMoveWindow(global_x_info->display, win, x, y);
+		//RL_Print("Moving window: %x\n", hw->x_id);
+		XMoveWindow(global_x_info->display, hw->x_id, x, y);
 	}
 
 	if (GET_GOB_FLAG(gob, GOBF_HIDDEN)) {
-		//RL_Print("Hiding window: %x\n", win);
-		XUnmapWindow(global_x_info->display, win);
+		//RL_Print("Hiding window: %x\n", hw->x_id);
+		XUnmapWindow(global_x_info->display, hw->x_id);
 	} else {
-		//RL_Print("Unhiding window: %x\n", win);
-		XMapWindow(global_x_info->display, win);
+		//RL_Print("Unhiding window: %x\n", hw->x_id);
+		XMapWindow(global_x_info->display, hw->x_id);
 	}
 }
 
@@ -448,7 +462,11 @@ static void set_gob_window_type(REBGOB *gob,
 	} else if (GET_GOB_FLAG(gob, GOBF_MODAL)) {
 		Atom wm_state = XInternAtom(display, "_NET_WM_STATE", True);
 		Atom wm_state_modal = XInternAtom(display, "_NET_WM_STATE_MODAL", True);
-		parent_window = GOB_HWIN(GOB_TMP_OWNER(gob));
+		host_window_t *hw = GOB_HWIN(GOB_TMP_OWNER(gob));
+		if (!hw) {
+			Host_Crash("Parent window can't be found\n");
+		}
+		parent_window = hw->x_id;
 		XSetTransientForHint(display, window, parent_window);
 		int status = XChangeProperty(display, window, wm_state, XA_ATOM, 32,
 									 PropModeReplace, (unsigned char*)&wm_state_modal, 1);
@@ -545,7 +563,14 @@ static void set_gob_window_type(REBGOB *gob,
 
 	if (windex < 0) Host_Crash("Too many windows");
 
-	Gob_Windows[windex].win = (void*)window;
+	host_window_t *hw = OS_Make(sizeof(host_window_t));
+	if (hw == NULL) {
+		Host_Crash("Not enough memory\n");
+	}
+	hw->x_id = window;
+	hw->old_width = w;
+	hw->old_height = h;
+	Gob_Windows[windex].win = hw;
 	Gob_Windows[windex].compositor = rebcmp_create(Gob_Root, gob);
 
 	if (! GET_GOB_FLAG(gob, GOBF_HIDDEN)) {
@@ -568,10 +593,10 @@ static void set_gob_window_type(REBGOB *gob,
 	SET_GOB_STATE(gob, GOBS_NEW);
 
 	SET_GOB_FLAG(gob, GOBF_WINDOW);
-	SET_GOB_FLAG(gob, GOBF_ACTIVE);	
+	SET_GOB_FLAG(gob, GOBF_ACTIVE);
 	SET_GOB_STATE(gob, GOBS_OPEN);
 
-	return (void*)window;
+	return hw;
 }
 
 /***********************************************************************
@@ -589,13 +614,14 @@ static void set_gob_window_type(REBGOB *gob,
 		}
 		XSync(global_x_info->display, FALSE); //wait child window to be destroyed and notified
 		X_Event_Loop(-1);
-		Window win = GOB_HWIN(gob);
-		if (win) {
+		host_window_t *hw = GOB_HWIN(gob);
+		if (hw) {
 			//RL_Print("Destroying window: %x\n", win);
-			XDestroyWindow(global_x_info->display, win);
+			XDestroyWindow(global_x_info->display, hw->x_id);
 			X_Event_Loop(-1);
 
 			Free_Window(gob);
+			OS_Free(hw);
 		}
 	}
 }

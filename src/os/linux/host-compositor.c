@@ -67,7 +67,7 @@ void rebdrw_gob_draw(REBGOB *gob, REBYTE* buf, REBXYI buf_size, REBXYI abs_oft, 
 REBINT rt_gob_text(REBGOB *gob, REBYTE* buf, REBXYI buf_size, REBXYF abs_oft, REBXYI clip_oft, REBXYI clip_siz);
 void Host_Crash(const char *reason);
 //***** Macros *****
-#define GOB_HWIN(gob)	((Window)Find_Window(gob))
+#define GOB_HWIN(gob)	((host_window_t*)Find_Window(gob))
 
 //***** Locals *****
 
@@ -150,9 +150,8 @@ typedef struct rebcmp_ctx {
 		REBINT w = GOB_LOG_W_INT(winGob);
 		REBINT h = GOB_LOG_H_INT(winGob);
 
-		Window win = GOB_HWIN(ctx->Win_Gob);
 		if (ctx->x_image) {
-			XDestroyImage(ctx->x_image); //frees win->pixbuf as well
+			XDestroyImage(ctx->x_image); //frees ctx->pixbuf as well
 		}
 #ifdef USE_XSHM
 		if (global_x_info->has_xshm
@@ -241,7 +240,7 @@ typedef struct rebcmp_ctx {
 
 	ctx->Win_Region = NULL;
 
-	ctx->x_window = GOB_HWIN(gob);
+	ctx->x_window = GOB_HWIN(gob)->x_id;
 	ctx->x_gc = XCreateGC(global_x_info->display, ctx->x_window, 0, 0);
 	int screen_num = DefaultScreen(global_x_info->display);
 	unsigned long black = BlackPixel(global_x_info->display, screen_num);
@@ -271,7 +270,7 @@ typedef struct rebcmp_ctx {
 		XShmDetach(global_x_info->display, &ctx->x_shminfo);
 	}
 #endif
-	XDestroyImage(ctx->x_image); //frees win->pixbuf as well
+	XDestroyImage(ctx->x_image); //frees ctx->pixbuf as well
 #ifdef USE_XSHM
 	if (global_x_info->has_xshm) {
 		shmdt(ctx->x_shminfo.shmaddr);
