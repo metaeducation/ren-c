@@ -185,7 +185,7 @@ static REBXYF Zero_Pair = {0, 0};
 
 	global_x_info->leader_window = XCreateWindow(global_x_info->display,
 												 DefaultRootWindow(global_x_info->display),
-												 10, 10, 10, 10, /* x, y, w, h */
+												 0, 0, 10, 10, /* x, y, w, h */
 												 0, /* borderwidth */
 												 CopyFromParent, InputOutput,
 												 CopyFromParent, 0, NULL);
