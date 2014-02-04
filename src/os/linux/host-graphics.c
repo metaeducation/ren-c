@@ -89,7 +89,7 @@ extern REBGOBWINDOWS *Gob_Windows;
 	int i = 0;
 	for(i = 0; i < MAX_WINDOWS; i ++){
 		if (Gob_Windows[i].win != 0){
-			XDefineCursor(global_x_info->display, (Window)Gob_Windows[i].win, (Cursor)cursor);
+			XDefineCursor(global_x_info->display, ((host_window_t*)Gob_Windows[i].win)->x_id, (Cursor)cursor);
 		}
 	}
 }
