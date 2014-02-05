@@ -338,7 +338,7 @@ void Dispatch_Event(XEvent *ev)
 		case ClientMessage:
 			//RL_Print ("closed\n");
 			{
-				const REBYTE *message_type = XGetAtomName(global_x_info->display, ev->xclient.message_type);
+				//const REBYTE *message_type = XGetAtomName(global_x_info->display, ev->xclient.message_type);
 				//RL_Print("client message: %s\n", message_type);
 				Atom XA_DELETE_WINDOW = XInternAtom(global_x_info->display, "WM_DELETE_WINDOW", False);
 				Atom XA_PING = XInternAtom(global_x_info->display, "_NET_WM_PING", False);
