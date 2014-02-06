@@ -49,8 +49,11 @@
 #include "host-lib.h"
 
 #include "host-window.h"
+extern REBCNT Length_As_UTF8(REBUNI *src, REBCNT len, REBOOL uni, REBOOL ccr); // s-unicode.c
+extern REBCNT Encode_UTF8(REBYTE *dst, REBINT max, void *src, REBCNT *len, REBFLG uni, REBFLG ccr); // s-unicode.c
 
 extern x_info_t *global_x_info;
+extern void Signal_Device(REBREQ *req, REBINT type);
 
 /***********************************************************************
 **

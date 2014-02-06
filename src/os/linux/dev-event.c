@@ -54,6 +54,7 @@ extern x_info_t *global_x_info;
 
 void Done_Device(int handle, int error);
 void X_Event_Loop(int at_most);
+void Dispatch_Event(XEvent *ev);
 
 #define NUM_EVENTS_AT_A_TIME 8
 

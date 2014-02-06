@@ -83,6 +83,7 @@ static void *Task_Ready;
 const char ** iso639_find_entry_by_2_code(const char* code);
 const char ** iso3166_find_entry_by_2_code(const char* code);
 
+void OS_Destroy_Graphics(void);
 
 /***********************************************************************
 **

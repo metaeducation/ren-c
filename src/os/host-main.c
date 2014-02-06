@@ -77,6 +77,7 @@ HINSTANCE App_Instance = 0;
 #ifndef REB_CORE
 extern void Init_Windows(void);
 extern void OS_Init_Graphics(void);
+extern void OS_Destroy_Graphics(void);
 #endif
 
 extern void Init_Core_Ext(void);
