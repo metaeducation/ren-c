@@ -144,20 +144,20 @@ static REBXYF Zero_Pair = {0, 0};
 	switch (global_x_info->default_depth){
 		case 15:
 			global_x_info->bpp = 16;
-			if(red_mask = 0x7C00 && green_mask == 0x3E0 && blue_mask == 0x1F)
+			if(red_mask == 0x7C00 && green_mask == 0x3E0 && blue_mask == 0x1F)
 				global_x_info->sys_pixmap_format = pix_format_bgr555;
 			break;
 		case 16:
 			global_x_info->bpp = 16;
-			if(red_mask = 0xF800 && green_mask == 0x7E0 && blue_mask == 0x1F)
+			if(red_mask == 0xF800 && green_mask == 0x7E0 && blue_mask == 0x1F)
 				global_x_info->sys_pixmap_format = pix_format_bgr565;
 			break;
 		case 24:
 		case 32:
 			global_x_info->bpp = 32;
-			if (red_mask = 0xFF0000 && green_mask == 0xFF00 && blue_mask == 0xFF)
+			if (red_mask == 0xFF0000 && green_mask == 0xFF00 && blue_mask == 0xFF)
 				global_x_info->sys_pixmap_format = pix_format_bgra32;
-			else if (blue_mask = 0xFF0000 && green_mask == 0xFF00 && red_mask == 0xFF)
+			else if (blue_mask == 0xFF0000 && green_mask == 0xFF00 && red_mask == 0xFF)
 				global_x_info->sys_pixmap_format = pix_format_rgba32;
 			break;
 		defaut:
