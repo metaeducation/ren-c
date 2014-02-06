@@ -225,7 +225,7 @@ static REBINT do_read_clipboard(REBREQ * req, Atom property)
 	if (GET_FLAG(req->flags, RRF_WIDE)){
 		src_len /= sizeof(REBUNI);
 	}
-	REBCNT len = Length_As_UTF8(req->data, src_len, TRUE, 0);
+	REBCNT len = Length_As_UTF8((REBUNI*)req->data, src_len, GET_FLAG(req->flags, RRF_WIDE), 0);
 	data = global_x_info->selection.data = OS_Make(len);
 	if (data == NULL) {
 		return DR_ERROR;
