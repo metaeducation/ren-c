@@ -30,6 +30,7 @@
 #include  <X11/Xlib.h>
 
 #include "reb-host.h"
+#include "host-lib.h"
 
 #include "host-window.h"
 #include "host-compositor.h"
@@ -519,7 +520,7 @@ void Dispatch_Event(XEvent *ev)
 												&bytes,
 												(unsigned char**)&data);
 					int i = 0;
-					for(i; i < nitems; i ++){
+					for(i = 0; i < nitems; i ++){
 						if (data[i] == XA_UTF8_STRING
 							|| data[i] == XA_STRING) {
 							XConvertSelection(ev->xselection.display,
