@@ -194,7 +194,7 @@ static REBXYF Zero_Pair = {0, 0};
 }
 
 
-X11_change_state (REBOOL   add,
+static void X11_change_state (REBOOL   add,
 				 Window window,
 				 Atom    state1,
 				 Atom    state2)
