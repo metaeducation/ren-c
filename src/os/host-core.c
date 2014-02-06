@@ -386,7 +386,7 @@ RL_Print("buff size: %d\n",buffersize);
             words = RL_WORDS_OF_OBJECT(obj);
             w = words;
 
-            while (type = RL_GET_FIELD(obj, w[0], &val))
+            while ((type = RL_GET_FIELD(obj, w[0], &val)))
             {
 				if (type == RXT_BINARY){
 					objData = (REBYTE *)RL_SERIES(val.series, RXI_SER_DATA) + val.index;
@@ -483,7 +483,7 @@ RL_Print("buff size: %d\n",buffersize);
 			u32 *words = RL_WORDS_OF_OBJECT(obj);
 			REBYTE *objData;
 
-            while (type = RL_GET_FIELD(obj, words[0], &val))
+            while ((type = RL_GET_FIELD(obj, words[0], &val)))
             {
 				if (type == RXT_BINARY)
 				{
@@ -543,7 +543,7 @@ RL_Print("buff size: %d\n",buffersize);
 			REBSER *binary;
 			REBYTE *binaryBuffer;
 
-            while (type = RL_GET_FIELD(obj, words[0], &val))
+            while ((type = RL_GET_FIELD(obj, words[0], &val)))
             {
 				if (type == RXT_BINARY)
 				{
