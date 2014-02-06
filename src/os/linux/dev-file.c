@@ -382,6 +382,7 @@ fail:
 **
 ***********************************************************************/
 {
+	ssize_t bytes = 0;
 	if (!file->id) {
 		file->error = -RFE_NO_HANDLE;
 		return DR_ERROR;
@@ -401,8 +402,8 @@ fail:
 
 	if (file->length == 0) return DR_DONE;
 
-	file->actual = write(file->id, file->data, file->length);
-	if (file->actual < 0) {
+	file->actual = bytes = write(file->id, file->data, file->length);
+	if (bytes < 0) {
 		if (errno == ENOSPC) file->error = -RFE_DISK_FULL;
 		else file->error = -RFE_BAD_WRITE;
 		return DR_ERROR;
