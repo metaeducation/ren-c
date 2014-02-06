@@ -132,7 +132,7 @@ static void Add_Event_Key(REBGOB *gob, REBINT id, REBINT key, REBINT flags)
 	RL_Event(&evt);	// returns 0 if queue is full
 }
 
-static Check_Modifiers(REBINT flags, unsigned state)
+static REBINT Check_Modifiers(REBINT flags, unsigned state)
 {
 	if (state & ShiftMask) flags |= (1<<EVF_SHIFT);
 	if (state & ControlMask) flags |= (1<<EVF_CONTROL);
