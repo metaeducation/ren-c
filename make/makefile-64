@@ -16,8 +16,10 @@
 #    make TOOLS=~/amiga/amiga/bin/ppc-amigaos- INCL=/SDK/newlib/include
 
 # For the build toolchain:
-CC=	$(TOOLS)gcc
-CXX  = $(TOOLS)g++
+#CC=	$(TOOLS)gcc
+CC=	$(TOOLS)clang
+#CXX  = $(TOOLS)g++
+CXX  = $(TOOLS)clang
 NM=	$(TOOLS)nm
 STRIP=	$(TOOLS)strip
 
@@ -45,9 +47,9 @@ LIB_PRODUCT_NAME= core #note: this can be overriden by the HOST_PRODUCT_NAME
 HOST_PRODUCT_NAME= core
 BIN_SUFFIX= -linux
 CFLAGS ?= -O2
-RAPI_FLAGS= $(CFLAGS) -fvisibility=hidden -fPIC -Woverflow
-HOST_CORE_FLAGS= -DREB_CORE -DMIN_OS -DREB_EXE $(CFLAGS) -fvisibility=hidden  -D_FILE_OFFSET_BITS=64 -DCUSTOM_STARTUP
-HOST_VIEW_FLAGS= -DREB_EXE $(CFLAGS) -fvisibility=hidden  -D_FILE_OFFSET_BITS=64 -DCUSTOM_STARTUP
+RAPI_FLAGS= $(CFLAGS) -Wno-pointer-sign -fvisibility=hidden -fPIC -Woverflow
+HOST_CORE_FLAGS= -DREB_CORE -DMIN_OS -DREB_EXE $(CFLAGS) -Wno-pointer-sign -fvisibility=hidden  -D_FILE_OFFSET_BITS=64 -DCUSTOM_STARTUP
+HOST_VIEW_FLAGS= -DREB_EXE $(CFLAGS) -Wno-pointer-sign -fvisibility=hidden  -D_FILE_OFFSET_BITS=64 -DCUSTOM_STARTUP
 RLIB_FLAGS=
 
 # Flags for core and for host:
