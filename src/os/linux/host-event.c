@@ -155,6 +155,14 @@ void Dispatch_Event(XEvent *ev)
 	Atom XA_TARGETS = XInternAtom(global_x_info->display, "TARGETS", True);
 	Atom XA_CLIPBOARD = XInternAtom(global_x_info->display, "CLIPBOARD", True);
 	switch (ev->type) {
+		case CreateNotify:
+			/*
+			RL_Print("window %x created at: %dx%d, size: %dx%d\n",
+					 ev->xcreatewindow.window,
+					 ev->xcreatewindow.x, ev->xcreatewindow.y,
+					 ev->xcreatewindow.width, ev->xcreatewindow.height);
+					 */
+			break;
 		case Expose:
 			//RL_Print("exposed\n");
 			gob = Find_Gob_By_Window(ev->xexpose.window);
@@ -563,8 +571,14 @@ void Dispatch_Event(XEvent *ev)
 				global_x_info->selection.data_length = 0;
 			}
 			break;
+		case MapNotify:
+			//RL_Print("Window %x is mapped\n", ev->xmap.window);
+			break;
+		case ReparentNotify:
+			//RL_Print("Window %x is reparented to %x\n", ev->xreparent.window, ev->xreparent.parent);
+			break;
 		default:
-			//RL_Print("default event type\n");
+			//RL_Print("default event type: %d\n", ev->type);
 			break;
 	}
 }
