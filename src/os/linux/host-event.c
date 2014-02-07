@@ -158,7 +158,7 @@ void Dispatch_Event(XEvent *ev)
 		case Expose:
 			//RL_Print("exposed\n");
 			gob = Find_Gob_By_Window(ev->xexpose.window);
-			if (gob != NULL){
+			if (gob != NULL && ev->xexpose.count == 0){
 				/* find wingob, copied from Draw_Window */
 				REBGOB *wingob = gob;
 				while (GOB_PARENT(wingob) && GOB_PARENT(wingob) != Gob_Root
