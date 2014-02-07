@@ -360,8 +360,10 @@ int reb_x11_get_window_extens(Display *display,
 	}
 
 	if (x != GOB_XO_INT(gob) || y != GOB_YO_INT(gob)){
+		/*
 		RL_Print("Moving window: %x from %dx%d to %dx%d\n",
 				 hw->x_id, GOB_XO_INT(gob), GOB_YO_INT(gob), x, y);
+				 */
 		unsigned left = 0, top = 0;
 		if (reb_x11_get_window_extens(global_x_info->display,
 									  hw->x_id,
