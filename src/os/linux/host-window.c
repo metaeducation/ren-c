@@ -250,11 +250,11 @@ static void update_gob_window_state(REBGOB *gob,
 }
 
 int reb_x11_get_window_extens(Display *display,
-                                                         Window window,
-                                                         unsigned *left,
-                                                         unsigned *right,
-                                                         unsigned *top,
-                                                         unsigned *bottom)
+							  Window window,
+							  unsigned *left,
+							  unsigned *right,
+							  unsigned *top,
+							  unsigned *bottom)
 {
        Atom     actual_type;
        int      actual_format;
@@ -263,44 +263,44 @@ int reb_x11_get_window_extens(Display *display,
        long     *data = NULL;
        int      status;
        status = XGetWindowProperty(display,
-                                                               window,
-                                                               XInternAtom(display, "_NET_FRAME_EXTENTS", True),
-                                                               0,
-                                                               (~0L),
-                                                               False,
-                                                               XA_CARDINAL,
-                                                               &actual_type,
-                                                               &actual_format,
-                                                               &nitems,
-                                                               &bytes,
-                                                               (unsigned char**)&data);
+								   window,
+								   XInternAtom(display, "_NET_FRAME_EXTENTS", True),
+								   0,
+								   (~0L),
+								   False,
+								   XA_CARDINAL,
+								   &actual_type,
+								   &actual_format,
+								   &nitems,
+								   &bytes,
+								   (unsigned char**)&data);
        if (status != Success
-               || data == NULL
-               || nitems != 4
-               || actual_type != XA_CARDINAL
-               || actual_format != 32) {
-               if (data) {
-                       XFree(data);
-               }
-               return -1;
-       }
+		   || data == NULL
+		   || nitems != 4
+		   || actual_type != XA_CARDINAL
+		   || actual_format != 32) {
+		   if (data) {
+			   XFree(data);
+		   }
+		   return -1;
+	   }
 
-       //left, right, top, bottom
-       if (left) {
-               *left = data[0];
-       }
-       if (right) {
-               *right = data[1];
-       }
-       if (top) {
-               *top = data[2];
-       }
-       if (bottom) {
-               *bottom = data[3];
-       }
-       XFree(data);
+	   //left, right, top, bottom
+	   if (left) {
+		   *left = data[0];
+	   }
+	   if (right) {
+		   *right = data[1];
+	   }
+	   if (top) {
+		   *top = data[2];
+	   }
+	   if (bottom) {
+		   *bottom = data[3];
+	   }
+	   XFree(data);
 
-       return 0;
+	   return 0;
 }
 /***********************************************************************
 **
