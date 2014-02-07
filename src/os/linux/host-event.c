@@ -396,7 +396,8 @@ void Dispatch_Event(XEvent *ev)
 				}
 				if (gob->offset.x != x || gob->offset.y != y){
 					xyd = (ROUND_TO_INT(x)) + (ROUND_TO_INT(y) << 16);
-					//RL_Print("%s, %s, %d: EVT_OFFSET is sent\n", __FILE__, __func__, __LINE__);
+					RL_Print("%s, %s, %d: EVT_OFFSET (%dx%d) is sent\n", __FILE__, __func__, __LINE__,
+							 ROUND_TO_INT(x), ROUND_TO_INT(y));
 					gob->offset.x = x;
 					gob->offset.y = y;
 					Update_Event_XY(gob, EVT_OFFSET, xyd, 0);

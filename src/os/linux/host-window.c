@@ -249,6 +249,59 @@ static void update_gob_window_state(REBGOB *gob,
 					 XInternAtom(display, "_NET_WM_STATE_ABOVE", False), 0);
 }
 
+int reb_x11_get_window_extens(Display *display,
+                                                         Window window,
+                                                         unsigned *left,
+                                                         unsigned *right,
+                                                         unsigned *top,
+                                                         unsigned *bottom)
+{
+       Atom     actual_type;
+       int      actual_format;
+       long     nitems;
+       long     bytes;
+       long     *data = NULL;
+       int      status;
+       status = XGetWindowProperty(display,
+                                                               window,
+                                                               XInternAtom(display, "_NET_FRAME_EXTENTS", True),
+                                                               0,
+                                                               (~0L),
+                                                               False,
+                                                               XA_CARDINAL,
+                                                               &actual_type,
+                                                               &actual_format,
+                                                               &nitems,
+                                                               &bytes,
+                                                               (unsigned char**)&data);
+       if (status != Success
+               || data == NULL
+               || nitems != 4
+               || actual_type != XA_CARDINAL
+               || actual_format != 32) {
+               if (data) {
+                       XFree(data);
+               }
+               return -1;
+       }
+
+       //left, right, top, bottom
+       if (left) {
+               *left = data[0];
+       }
+       if (right) {
+               *right = data[1];
+       }
+       if (top) {
+               *top = data[2];
+       }
+       if (bottom) {
+               *bottom = data[3];
+       }
+       XFree(data);
+
+       return 0;
+}
 /***********************************************************************
 **
 */	void OS_Update_Window(REBGOB *gob)
@@ -307,8 +360,17 @@ static void update_gob_window_state(REBGOB *gob,
 	}
 
 	if (x != GOB_XO_INT(gob) || y != GOB_YO_INT(gob)){
-		//RL_Print("Moving window: %x\n", hw->x_id);
-		XMoveWindow(global_x_info->display, hw->x_id, x, y);
+		RL_Print("Moving window: %x from %dx%d to %dx%d\n",
+				 hw->x_id, GOB_XO_INT(gob), GOB_YO_INT(gob), x, y);
+		unsigned left = 0, top = 0;
+		if (reb_x11_get_window_extens(global_x_info->display,
+									  hw->x_id,
+									  &left, NULL, &top, NULL) == 0){
+			RL_Print("left: %d, top: %d\n", left, top);
+			XMoveWindow(global_x_info->display, hw->x_id, x - left, y - top);
+		} else {
+			XMoveWindow(global_x_info->display, hw->x_id, x, y);
+		}
 	}
 
 	if (GET_GOB_FLAG(gob, GOBF_HIDDEN)) {
@@ -586,7 +648,8 @@ static void set_gob_window_type(REBGOB *gob,
 	set_window_protocols(display, window);
 
 	set_gob_window_size_hints(gob, display, window);
-	update_gob_window_state(gob, display, window);
+	//update_gob_window_state(gob, display, window);
+	OS_Update_Window(gob);
 
 	windex = Alloc_Window(gob);
 
