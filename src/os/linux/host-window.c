@@ -358,6 +358,27 @@ int reb_x11_get_window_extens(Display *display,
 		}
 #endif
 	}
+	REBGOB *parent_gob = GOB_TMP_OWNER(gob);
+	//RL_Print("%s, %d, gob: %x, parent gob: %x, pos: %dx%d, size: %dx%d\n", __func__, __LINE__, gob, parent_gob, x, y, w, h);
+	if (parent_gob != NULL) {
+			host_window_t *parent_hw = GOB_HWIN(parent_gob);
+			if (hw != NULL) {
+					Window gob_parent_window = parent_hw->x_id;
+					Window child;
+					Window root, x_parent_window, *children;
+					int n_children;
+					XQueryTree(global_x_info->display, hw->x_id, &root, &x_parent_window, &children, &n_children);
+					if (GET_GOB_FLAG(gob, GOBF_POPUP)) {
+						/* x, y are in screen coordinates for POPUP windows */
+						if (x_parent_window != root) {
+							XTranslateCoordinates(global_x_info->display, root, x_parent_window, x, y, &x, &y, &child);
+						}
+					} else {
+						/* x, y are in parent window coordinates */
+						XTranslateCoordinates(global_x_info->display, gob_parent_window, x_parent_window, x, y, &x, &y, &child);
+					}
+			}
+	}
 
 	if (x != GOB_XO_INT(gob) || y != GOB_YO_INT(gob)){
 		/*
@@ -368,7 +389,7 @@ int reb_x11_get_window_extens(Display *display,
 		if (reb_x11_get_window_extens(global_x_info->display,
 									  hw->x_id,
 									  &left, NULL, &top, NULL) == 0){
-			RL_Print("left: %d, top: %d\n", left, top);
+			//RL_Print("left: %d, top: %d\n", left, top);
 			XMoveWindow(global_x_info->display, hw->x_id, x - left, y - top);
 		} else {
 			XMoveWindow(global_x_info->display, hw->x_id, x, y);
@@ -609,7 +630,7 @@ static void set_gob_window_type(REBGOB *gob,
 						if (parent_window != root) {
 							XTranslateCoordinates(display, root, parent_window, x, y, &x, &y, &child);
 						}
-					} else{
+					} else {
 						/* x, y are in parent window coordinates */
 						XTranslateCoordinates(display, gob_parent_window, parent_window, x, y, &x, &y, &child);
 					}
@@ -650,7 +671,6 @@ static void set_gob_window_type(REBGOB *gob,
 	set_window_protocols(display, window);
 
 	set_gob_window_size_hints(gob, display, window);
-	//update_gob_window_state(gob, display, window);
 	OS_Update_Window(gob);
 
 	windex = Alloc_Window(gob);
