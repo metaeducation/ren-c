@@ -510,6 +510,7 @@ static void set_gob_window_type(REBGOB *gob,
 	long swa_mask = CWEventMask;
 
 	Window parent_window;
+	Window root;
 
 	//RL_Print("%s, %d, x: %d, y: %d, width: %d, height: %d\n", __func__, __LINE__, x, y, w, h);
 
@@ -522,7 +523,29 @@ static void set_gob_window_type(REBGOB *gob,
 					| StructureNotifyMask 
 					| FocusChangeMask;
 
-	parent_window = DefaultRootWindow(display);
+	parent_window = root = DefaultRootWindow(display);
+	REBGOB *parent_gob = GOB_TMP_OWNER(gob);
+	//RL_Print("%s, %d, gob: %x, parent gob: %x, pos: %dx%d, size: %dx%d\n", __func__, __LINE__, gob, parent_gob, x, y, w, h);
+	if (parent_gob != NULL) {
+			host_window_t *hw = GOB_HWIN(parent_gob);
+			if (hw != NULL) {
+					Window gob_parent_window = hw->x_id;
+					Window child;
+					if (GET_GOB_FLAG(gob, GOBF_POPUP)) {
+						/* try to mimic CreateWindowsEx on win32,
+						 * x, y are in screen coordinates for POPUP windows, see
+						 * http://msdn.microsoft.com/en-us/library/windows/desktop/ms632680%28v=vs.85%29.aspx
+						 **/
+						if (parent_window != root) {
+							XTranslateCoordinates(display, root, parent_window, x, y, &x, &y, &child);
+						}
+					} else{
+						/* x, y are in parent window coordinates */
+						XTranslateCoordinates(display, gob_parent_window, parent_window, x, y, &x, &y, &child);
+					}
+			}
+	}
+
 	if (GET_FLAGS(gob->flags, GOBF_NO_TITLE, GOBF_NO_BORDER)) {
 		swa.save_under = True;
 		swa.override_redirect = True;
@@ -577,17 +600,6 @@ static void set_gob_window_type(REBGOB *gob,
 		//RL_Print("Mapping %x\n", window);
 		XMapWindow(display, window);
 	}
-
-	/*
-	int actual_x, actual_y, actual_w, actual_h, actual_border_width, actual_depth;
-	Window root;
-	XGetGeometry(display, window, &root, &actual_x, &actual_y, 
-				 &actual_w, &actual_h, &actual_border_width, &actual_depth);
-	RL_Print("%s %d, created an X window: %x for gob %x, x: %d, y: %d, w: %d, h: %d, border: %d, depth: %d\n", 
-			 __func__, __LINE__, window, gob,
-			 actual_x, actual_y, actual_w, actual_h,
-			 actual_border_width, actual_depth);
-	*/
 
 	CLEAR_GOB_STATE(gob);
 	SET_GOB_STATE(gob, GOBS_NEW);

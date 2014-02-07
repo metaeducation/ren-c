@@ -44,6 +44,7 @@ REBEVT *RL_Find_Event (REBINT model, REBINT type);
 
 typedef struct rebcmp_ctx REBCMP_CTX;
 void rebcmp_compose_region(REBCMP_CTX* ctx, REBGOB* winGob, REBGOB* gob, XRectangle *rect, REBOOL only);
+#define GOB_HWIN(gob)	((host_window_t*)Find_Window(gob))
 
 #define GOB_COMPOSITOR(gob)	(Find_Compositor(gob)) //gets handle to window's compositor
 #define DOUBLE_CLICK_DIFF 300 /* in milliseconds */
@@ -364,16 +365,32 @@ void Dispatch_Event(XEvent *ev)
 		case ConfigureNotify:
 			xce = ev->xconfigure;
 			/*
-			RL_Print("configuranotify, x = %d, y = %d, w = %d, h = %d\n",
+			RL_Print("configuranotify, window = %x, x = %d, y = %d, w = %d, h = %d\n",
+					 xce.window,
 					 xce.x, xce.y, xce.width, xce.height);
 			*/
 			gob = Find_Gob_By_Window(ev->xconfigure.window);
 			if (gob != NULL) {
-				if (gob->offset.x != xce.x || gob->offset.y != xce.y){
-					xyd = (ROUND_TO_INT(xce.x)) + (ROUND_TO_INT(xce.y) << 16);
+				/* translate x,y to its gob_parent coordinates */
+				int x = xce.x, y = xce.y;
+				REBGOB *gob_parent = GOB_TMP_OWNER(gob);
+				if (gob_parent != NULL) {
+					host_window_t *hw = GOB_HWIN(gob_parent);
+					if (hw != NULL) {
+						Window gob_parent_window = hw->x_id;
+						Window child;
+						XTranslateCoordinates(xce.display,
+											  xce.window,
+											  GET_GOB_FLAG(gob, GOBF_POPUP)? DefaultRootWindow(xce.display) : gob_parent_window, /* for popup windows, the x, y are in screen coordinates, see OS_Create_Window */
+											  0, 0,
+											  &x, &y, &child);
+					}
+				}
+				if (gob->offset.x != x || gob->offset.y != y){
+					xyd = (ROUND_TO_INT(x)) + (ROUND_TO_INT(y) << 16);
 					//RL_Print("%s, %s, %d: EVT_OFFSET is sent\n", __FILE__, __func__, __LINE__);
-					gob->offset.x = xce.x;
-					gob->offset.y = xce.y;
+					gob->offset.x = x;
+					gob->offset.y = y;
 					Update_Event_XY(gob, EVT_OFFSET, xyd, 0);
 				}
 				host_window_t* hw = Find_Host_Window_By_ID(ev->xconfigure.window);
