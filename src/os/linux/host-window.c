@@ -459,6 +459,12 @@ static void set_gob_window_type(REBGOB *gob,
 	Atom window_type_atom = XInternAtom(display, "_NET_WM_WINDOW_TYPE", True);
 	if (GET_FLAGS(gob->flags, GOBF_NO_TITLE, GOBF_NO_BORDER)) {
 		window_type = XInternAtom(display, "_NET_WM_WINDOW_TYPE_DROPDOWN_MENU", True);
+		host_window_t *hw = GOB_HWIN(GOB_TMP_OWNER(gob));
+		if (!hw) {
+			Host_Crash("Parent window can't be found\n");
+		}
+		parent_window = hw->x_id;
+		XSetTransientForHint(display, window, parent_window);
 	} else if (GET_GOB_FLAG(gob, GOBF_MODAL)) {
 		Atom wm_state = XInternAtom(display, "_NET_WM_STATE", True);
 		Atom wm_state_modal = XInternAtom(display, "_NET_WM_STATE_MODAL", True);
