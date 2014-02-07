@@ -339,24 +339,6 @@ int reb_x11_get_window_extens(Display *display,
 			 */
 	if (actual_w != w || actual_h != h){
 		XResizeWindow(global_x_info->display, hw->x_id, w, h);
-#if 0 //XResizeWindow could fail
-		XGetGeometry(global_x_info->display, hw->x_id, &root, &actual_x, &actual_y, 
-					 &actual_w, &actual_h, &actual_border_width, &actual_depth);
-		RL_Print("%s %d, After resizing X window %x for gob %x, x: %d, y: %d, w: %d, h: %d, border: %d, depth: %d\n",
-				 __func__, __LINE__, hw->x_id, gob,
-				 actual_x, actual_y, actual_w, actual_h,
-				 actual_border_width, actual_depth);
-		if (actual_w != w
-			|| actual_h != h){
-			RL_Print("Resizing a window failed\n");
-			gob->size.x = actual_w;
-			gob->size.y = actual_h;
-
-			Resize_Window(gob, False);
-		} else {
-			Update_Event_XY(gob, EVT_RESIZE, xyd, 0);
-		}
-#endif
 	}
 	REBGOB *parent_gob = GOB_TMP_OWNER(gob);
 	//RL_Print("%s, %d, gob: %x, parent gob: %x, pos: %dx%d, size: %dx%d\n", __func__, __LINE__, gob, parent_gob, x, y, w, h);
@@ -365,7 +347,7 @@ int reb_x11_get_window_extens(Display *display,
 			if (hw != NULL) {
 					Window gob_parent_window = parent_hw->x_id;
 					Window child;
-					Window root, x_parent_window, *children;
+					Window x_parent_window, *children;
 					int n_children;
 					XQueryTree(global_x_info->display, hw->x_id, &root, &x_parent_window, &children, &n_children);
 					if (GET_GOB_FLAG(gob, GOBF_POPUP)) {
