@@ -584,6 +584,7 @@ static void set_gob_window_type(REBGOB *gob,
 					| ButtonPressMask 
 					| ButtonReleaseMask 
 					| StructureNotifyMask 
+					| PropertyChangeMask
 					| FocusChangeMask;
 
 	parent_window = root = DefaultRootWindow(display);
