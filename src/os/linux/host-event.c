@@ -348,8 +348,13 @@ void Dispatch_Event(XEvent *ev)
 		case ClientMessage:
 			//RL_Print ("closed\n");
 			{
-				//const REBYTE *message_type = XGetAtomName(global_x_info->display, ev->xclient.message_type);
-				//RL_Print("client message: %s\n", message_type);
+				/*
+				const REBYTE *message_type = XGetAtomName(global_x_info->display, ev->xclient.message_type);
+				const REBYTE *protocol = XGetAtomName(global_x_info->display, ev->xclient.data.l[0]);
+				RL_Print("client message: %s, %s\n", message_type, protocol);
+				XFree(message_type);
+				XFree(protocol);
+				*/
 				Atom XA_DELETE_WINDOW = XInternAtom(global_x_info->display, "WM_DELETE_WINDOW", False);
 				Atom XA_PING = XInternAtom(global_x_info->display, "_NET_WM_PING", False);
 				if (XA_DELETE_WINDOW
@@ -373,10 +378,10 @@ void Dispatch_Event(XEvent *ev)
 		case PropertyNotify:
 			/* check if it's fullscreen */
 			{
+				/*
 				REBYTE *target = XGetAtomName(global_x_info->display, ev->xproperty.atom);
 				RL_Print("Property (%s, %d) changed: %d\n", target, ev->xproperty.atom, ev->xproperty.state);
 				XFree(target);
-				/*
 				*/
 				Atom XA_WM_STATE = XInternAtom(global_x_info->display, "_NET_WM_STATE", False);
 				Atom XA_FULLSCREEN = XInternAtom(global_x_info->display, "_NET_WM_STATE_FULLSCREEN", False);
@@ -393,7 +398,7 @@ void Dispatch_Event(XEvent *ev)
 					break;
 				}
 
-				RL_Print("XA_WM_STATE: %d\n", XA_WM_STATE);
+				//RL_Print("XA_WM_STATE: %d\n", XA_WM_STATE);
 
 				if (ev->xproperty.atom == XA_WM_STATE) {
 					Atom     actual_type;
@@ -410,6 +415,7 @@ void Dispatch_Event(XEvent *ev)
 					int old_maximized = GET_GOB_FLAG(gob, GOBF_MAXIMIZE);
 					int old_fullscreen = GET_GOB_FLAG(gob, GOBF_FULLSCREEN);
 					int old_hidden = GET_GOB_FLAG(gob, GOBF_HIDDEN);
+					host_window_t *hw = GOB_HWIN(gob);
 					XGetWindowProperty(global_x_info->display,
 									   ev->xproperty.window,
 									   XA_WM_STATE,
@@ -422,63 +428,65 @@ void Dispatch_Event(XEvent *ev)
 									   &nitems,
 									   &bytes,
 									   (unsigned char**)&data);
-					if (actual_type != XA_ATOM
-						|| actual_format != 32
-						|| data == NULL
-						|| nitems <= 0) {
-						RL_Print("early return: actual_format (%d), data (%x), nitems (%d)\n", actual_format, data, nitems);
-						break;
-					}
 					for(i = 0; i < nitems; i ++){
 						if (data[i] == XA_FULLSCREEN){
 							//RL_Print("Window %x is Fullscreen\n", ev->xproperty.window);
 							fullscreen = 1;
-							CLR_GOB_FLAG(gob, GOBF_MAXIMIZE);
-							SET_GOB_FLAG(gob, GOBF_FULLSCREEN);
 						} else if (data[i] == XA_MAX_HORZ) {
 							maximized_horz = 1;
-							if (maximized_vert) {
-								CLR_GOB_FLAG(gob, GOBF_FULLSCREEN);
-								SET_GOB_FLAG(gob, GOBF_MAXIMIZE);
-							}
 						} else if (data[i] == XA_MAX_VERT) {
 							maximized_vert = 1;
-							if (maximized_horz) {
-								CLR_GOB_FLAG(gob, GOBF_FULLSCREEN);
-								SET_GOB_FLAG(gob, GOBF_MAXIMIZE);
-							}
 						} else if (data[i] == XA_ABOVE) {
 							on_top = 1;
-							SET_GOB_FLAG(gob, GOBF_TOP);
 						} else if (data[i] == XA_HIDDEN) {
 							hidden = 1;
-							SET_GOB_FLAG(gob, GOBF_HIDDEN);
 						}
 					}
 
 					if (data != NULL){
 						XFree(data);
 					}
-					if (!fullscreen) {
-						RL_Print("Not fullscreen\n");
+
+					if (!hw->wm_state_initialized) {
+						/* ignore _NET_WM_STATE changes before setting from OS_Update_Window
+						 * PropertyNotify might be sent out when only one of max props was changed
+						 * */
+						hw->wm_state_initialized = (old_fullscreen == fullscreen
+													&& old_maximized == (maximized_horz && maximized_horz));
+						break;
+					}
+
+					if (fullscreen) {
+						CLR_GOB_FLAG(gob, GOBF_MAXIMIZE);
+						SET_GOB_FLAG(gob, GOBF_FULLSCREEN);
+					} else {
+						//RL_Print("Not fullscreen\n");
 						CLR_GOB_FLAG(gob, GOBF_FULLSCREEN);
 					}
-					if (!maximized_horz || !maximized_vert) {
-						RL_Print("Not maxed\n");
+
+					if (maximized_horz && maximized_vert) {
+						CLR_GOB_FLAG(gob, GOBF_FULLSCREEN);
+						SET_GOB_FLAG(gob, GOBF_MAXIMIZE);
+					} else {
+						//RL_Print("Not maxed\n");
 						CLR_GOB_FLAG(gob, GOBF_MAXIMIZE);
 					}
-					if (!on_top) {
-						RL_Print("Not no_top\n");
+
+					if (on_top) {
+						SET_GOB_FLAG(gob, GOBF_TOP);
+					} else {
+						//RL_Print("Not no_top\n");
 						CLR_GOB_FLAG(gob, GOBF_TOP);
 					}
-					if (!hidden) {
-						RL_Print("Not hidden\n");
+
+					if (hidden) {
+						SET_GOB_FLAG(gob, GOBF_HIDDEN);
+					} else {
+						//RL_Print("Not hidden\n");
 						CLR_GOB_FLAG(gob, GOBF_HIDDEN);
 					}
 
-					if (fullscreen != old_fullscreen
-						|| (maximized_horz && maximized_vert) != old_maximized
-						|| hidden != old_hidden) {
+					if (hw->window_flags != gob->flags) {
 						/* fake a resize event to force the script to update the gob
 						 * and make it work even when the propertynotify comes after 
 						 * the configurationnotify in case of fullscreen/maximazation
@@ -489,16 +497,16 @@ void Dispatch_Event(XEvent *ev)
 									 &actual_w, &actual_h, &actual_border_width, &actual_depth);
 						xyd = (ROUND_TO_INT(actual_w)) + (ROUND_TO_INT(actual_h) << 16);
 						Resize_Window(gob, TRUE);
-						RL_Print("%s, %s, %d: EVT_RESIZE is sent: %x\n", __FILE__, __func__, __LINE__, xyd);
+						//RL_Print("%s, %s, %d: EVT_RESIZE is sent: %x\n", __FILE__, __func__, __LINE__, xyd);
 						Update_Event_XY(gob, EVT_RESIZE, xyd, 0);
 					} else {
-						RL_Print("No new events being sent\n");
+						//RL_Print("No new events being sent\n");
 					}
+					hw->window_flags = gob->flags; /* save a copy of current window flags */
 				} else {
-					RL_Print("Not WM_STATE, ignoring\n");
+					//RL_Print("Not WM_STATE, ignoring\n");
 				}
 			}
-			RL_Print("PropertyNotify processed\n");
 			break;
 		case ConfigureNotify:
 			xce = ev->xconfigure;

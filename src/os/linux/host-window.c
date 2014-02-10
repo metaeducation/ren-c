@@ -225,26 +225,39 @@ static void X11_change_state (REBOOL   add,
 
 static void update_gob_window_state(REBGOB *gob,
 									Display *display,
-									Window window)
+									host_window_t *hw)
 {
 	//RL_Print("%s fullscreen flag for window %x, gob %x\n", GET_GOB_FLAG(gob, GOBF_FULLSCREEN) ? "Setting" : "Clearing", window, gob);
-	X11_change_state(GET_GOB_FLAG(gob, GOBF_FULLSCREEN),
-					 window,
-					 XInternAtom(display, "_NET_WM_STATE_FULLSCREEN", True),
-					 0);
+	Window window = hw->x_id;
+	if (GET_GOB_FLAG(gob, GOBF_FULLSCREEN)
+		!= GET_FLAG(hw->window_flags, GOBF_FULLSCREEN)) {
+		X11_change_state(GET_GOB_FLAG(gob, GOBF_FULLSCREEN),
+						 window,
+						 XInternAtom(display, "_NET_WM_STATE_FULLSCREEN", True),
+						 0);
+	}
 
-	X11_change_state(GET_GOB_FLAG(gob, GOBF_MAXIMIZE),
-					 window,
-					 XInternAtom(display, "_NET_WM_STATE_MAXIMIZED_HORZ", True),
-					 XInternAtom(display, "_NET_WM_STATE_MAXIMIZED_VERT", True));
+	if (GET_GOB_FLAG(gob, GOBF_MAXIMIZE)
+		!= GET_FLAG(hw->window_flags, GOBF_MAXIMIZE)) {
+		X11_change_state(GET_GOB_FLAG(gob, GOBF_MAXIMIZE),
+						 window,
+						 XInternAtom(display, "_NET_WM_STATE_MAXIMIZED_HORZ", True),
+						 XInternAtom(display, "_NET_WM_STATE_MAXIMIZED_VERT", True));
+	}
 
-	X11_change_state(GET_GOB_FLAG(gob, GOBF_ACTIVE),
-					 window,
-					 XInternAtom(display, "_NET_WM_STATE_FOCUSED", False), 0);
+	if (GET_GOB_FLAG(gob, GOBF_ACTIVE)
+		!= GET_FLAG(hw->window_flags, GOBF_ACTIVE)) {
+		X11_change_state(GET_GOB_FLAG(gob, GOBF_ACTIVE),
+						 window,
+						 XInternAtom(display, "_NET_WM_STATE_FOCUSED", False), 0);
+	}
 
-	X11_change_state(GET_GOB_FLAG(gob, GOBF_ON_TOP),
-					 window,
-					 XInternAtom(display, "_NET_WM_STATE_ABOVE", False), 0);
+	if (GET_GOB_FLAG(gob, GOBF_ON_TOP)
+		!= GET_FLAG(hw->window_flags, GOBF_ON_TOP)) {
+		X11_change_state(GET_GOB_FLAG(gob, GOBF_ON_TOP),
+						 window,
+						 XInternAtom(display, "_NET_WM_STATE_ABOVE", False), 0);
+	}
 }
 
 int reb_x11_get_window_extens(Display *display,
@@ -325,7 +338,7 @@ int reb_x11_get_window_extens(Display *display,
 		return;
 	}
 
-	update_gob_window_state(gob, global_x_info->display, hw->x_id);
+	update_gob_window_state(gob, global_x_info->display, hw);
 	Resize_Window(gob, FALSE);
 	XGetGeometry(global_x_info->display, hw->x_id, &root, &actual_x, &actual_y, 
 				 &actual_w, &actual_h, &actual_border_width, &actual_depth);
@@ -569,6 +582,17 @@ static void set_gob_window_type(REBGOB *gob,
 	if (display == NULL) {
 		return NULL;
 	}
+
+	windex = Alloc_Window(gob);
+
+	if (windex < 0) Host_Crash("Too many windows");
+
+	host_window_t *hw = OS_Make(sizeof(host_window_t));
+	if (hw == NULL) {
+		Host_Crash("Not enough memory\n");
+	}
+
+
 	XSetWindowAttributes swa;
 	long swa_mask = CWEventMask;
 
@@ -632,6 +656,14 @@ static void set_gob_window_type(REBGOB *gob,
 							   &swa);
 	}
 
+	//update_gob_window_state(gob, display, window); //has to be first call after window creation
+	hw->x_id = window;
+	hw->old_width = w;
+	hw->old_height = h;
+	hw->wm_state_initialized = 0;
+	Gob_Windows[windex].win = hw;
+	Gob_Windows[windex].compositor = rebcmp_create(Gob_Root, gob);
+
 	set_gob_window_type(gob, display, window);
 	set_window_leader(display, window);
 
@@ -645,20 +677,6 @@ static void set_gob_window_type(REBGOB *gob,
 
 	set_gob_window_size_hints(gob, display, window);
 	OS_Update_Window(gob);
-
-	windex = Alloc_Window(gob);
-
-	if (windex < 0) Host_Crash("Too many windows");
-
-	host_window_t *hw = OS_Make(sizeof(host_window_t));
-	if (hw == NULL) {
-		Host_Crash("Not enough memory\n");
-	}
-	hw->x_id = window;
-	hw->old_width = w;
-	hw->old_height = h;
-	Gob_Windows[windex].win = hw;
-	Gob_Windows[windex].compositor = rebcmp_create(Gob_Root, gob);
 
 	if (! GET_GOB_FLAG(gob, GOBF_HIDDEN)) {
 		//RL_Print("Mapping %x\n", window);
