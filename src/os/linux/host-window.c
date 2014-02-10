@@ -227,18 +227,16 @@ static void update_gob_window_state(REBGOB *gob,
 									Display *display,
 									Window window)
 {
-	X11_change_state(GET_GOB_FLAG(gob, GOBF_MAXIMIZE),
-					 window,
-					 XInternAtom(display, "_NET_WM_STATE_MAXIMIZED_HORZ", True),
-					 XInternAtom(display, "_NET_WM_STATE_MAXIMIZED_VERT", True));
-	//RL_Print("%s fullscreen flag for window %x\n", GET_GOB_FLAG(gob, GOBF_FULLSCREEN) ? "Setting" : "Clearing", window);
+	//RL_Print("%s fullscreen flag for window %x, gob %x\n", GET_GOB_FLAG(gob, GOBF_FULLSCREEN) ? "Setting" : "Clearing", window, gob);
 	X11_change_state(GET_GOB_FLAG(gob, GOBF_FULLSCREEN),
 					 window,
 					 XInternAtom(display, "_NET_WM_STATE_FULLSCREEN", True),
 					 0);
-	X11_change_state(GET_GOB_FLAG(gob, GOBF_HIDDEN),
+
+	X11_change_state(GET_GOB_FLAG(gob, GOBF_MAXIMIZE),
 					 window,
-					 XInternAtom(display, "_NET_WM_STATE_HIDDEN", False), 0);
+					 XInternAtom(display, "_NET_WM_STATE_MAXIMIZED_HORZ", True),
+					 XInternAtom(display, "_NET_WM_STATE_MAXIMIZED_VERT", True));
 
 	X11_change_state(GET_GOB_FLAG(gob, GOBF_ACTIVE),
 					 window,
