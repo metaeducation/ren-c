@@ -377,14 +377,6 @@ int reb_x11_get_window_extens(Display *display,
 			XMoveWindow(global_x_info->display, hw->x_id, x, y);
 		}
 	}
-
-	if (GET_GOB_FLAG(gob, GOBF_HIDDEN)) {
-		//RL_Print("Hiding window: %x\n", hw->x_id);
-		XUnmapWindow(global_x_info->display, hw->x_id);
-	} else {
-		//RL_Print("Unhiding window: %x\n", hw->x_id);
-		XMapWindow(global_x_info->display, hw->x_id);
-	}
 }
 
 static void set_wm_name(Display *display,
