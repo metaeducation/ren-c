@@ -660,7 +660,6 @@ static void set_gob_window_type(REBGOB *gob,
 	hw->x_id = window;
 	hw->old_width = w;
 	hw->old_height = h;
-	hw->wm_state_initialized = 0;
 	Gob_Windows[windex].win = hw;
 	Gob_Windows[windex].compositor = rebcmp_create(Gob_Root, gob);
 
@@ -676,12 +675,9 @@ static void set_gob_window_type(REBGOB *gob,
 	set_window_protocols(display, window);
 
 	set_gob_window_size_hints(gob, display, window);
-	OS_Update_Window(gob);
 
-	if (! GET_GOB_FLAG(gob, GOBF_HIDDEN)) {
-		//RL_Print("Mapping %x\n", window);
-		XMapWindow(display, window);
-	}
+	XMapWindow(display, window);
+	OS_Update_Window(gob);
 
 	CLEAR_GOB_STATE(gob);
 	SET_GOB_STATE(gob, GOBS_NEW);

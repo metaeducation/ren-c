@@ -46,7 +46,6 @@ extern "C" {
 		unsigned int	old_width;
 		unsigned int	old_height;
 		unsigned int	window_flags; /* last window flags from _NET_WM_STATE */
-		unsigned char	wm_state_initialized;
 	} host_window_t;
 
 	extern x_info_t *global_x_info;

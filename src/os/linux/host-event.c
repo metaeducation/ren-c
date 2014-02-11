@@ -447,15 +447,6 @@ void Dispatch_Event(XEvent *ev)
 						XFree(data);
 					}
 
-					if (!hw->wm_state_initialized) {
-						/* ignore _NET_WM_STATE changes before setting from OS_Update_Window
-						 * PropertyNotify might be sent out when only one of max props was changed
-						 * */
-						hw->wm_state_initialized = (old_fullscreen == fullscreen
-													&& old_maximized == (maximized_horz && maximized_horz));
-						break;
-					}
-
 					if (fullscreen) {
 						CLR_GOB_FLAG(gob, GOBF_MAXIMIZE);
 						SET_GOB_FLAG(gob, GOBF_FULLSCREEN);
