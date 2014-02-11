@@ -485,23 +485,6 @@ void Dispatch_Event(XEvent *ev)
 						//RL_Print("Not hidden\n");
 						CLR_GOB_FLAG(gob, GOBF_HIDDEN);
 					}
-
-					if (hw->window_flags != gob->flags) {
-						/* fake a resize event to force the script to update the gob
-						 * and make it work even when the propertynotify comes after 
-						 * the configurationnotify in case of fullscreen/maximazation
-						 * */
-						int actual_x, actual_y, actual_w, actual_h, actual_border_width, actual_depth;
-						Window root;
-						XGetGeometry(ev->xproperty.display, ev->xproperty.window, &root, &actual_x, &actual_y, 
-									 &actual_w, &actual_h, &actual_border_width, &actual_depth);
-						xyd = (ROUND_TO_INT(actual_w)) + (ROUND_TO_INT(actual_h) << 16);
-						Resize_Window(gob, TRUE);
-						//RL_Print("%s, %s, %d: EVT_RESIZE is sent: %x\n", __FILE__, __func__, __LINE__, xyd);
-						Update_Event_XY(gob, EVT_RESIZE, xyd, 0);
-					} else {
-						//RL_Print("No new events being sent\n");
-					}
 					hw->window_flags = gob->flags; /* save a copy of current window flags */
 				} else {
 					//RL_Print("Not WM_STATE, ignoring\n");
