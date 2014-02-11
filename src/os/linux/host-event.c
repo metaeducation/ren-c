@@ -140,17 +140,254 @@ static REBINT Check_Modifiers(REBINT flags, unsigned state)
 	return flags;
 }
 
-void Dispatch_Event(XEvent *ev)
+static void handle_property_notify(XEvent *ev, REBGOB *gob)
 {
-	REBGOB *gob = NULL;
-	// Handle XEvents and flush the input 
-    REBINT keysyms_per_keycode_return;
-	REBINT xyd = 0;
-	XConfigureEvent xce;
-	REBEVT *evt = NULL;
-	REBINT flags = 0;
+	/*
+	   REBYTE *target = XGetAtomName(global_x_info->display, ev->xproperty.atom);
+	   RL_Print("Property (%s, %d) changed: %d\n", target, ev->xproperty.atom, ev->xproperty.state);
+	   XFree(target);
+	   */
+	Atom XA_WM_STATE = x_atom_list_find_atom(global_x_info->x_atom_list,
+											 global_x_info->display,
+											 "_NET_WM_STATE",
+											 False);
+	Atom XA_FULLSCREEN = x_atom_list_find_atom(global_x_info->x_atom_list,
+											   global_x_info->display,
+											   "_NET_WM_STATE_FULLSCREEN",
+											   False);
+	Atom XA_MAX_HORZ = x_atom_list_find_atom(global_x_info->x_atom_list,
+											 global_x_info->display,
+											 "_NET_WM_STATE_MAXIMIZED_HORZ",
+											 False);
+	Atom XA_MAX_VERT = x_atom_list_find_atom(global_x_info->x_atom_list,
+											 global_x_info->display,
+											 "_NET_WM_STATE_MAXIMIZED_VERT",
+											 False);
+	Atom XA_ABOVE = x_atom_list_find_atom(global_x_info->x_atom_list,
+										  global_x_info->display,
+										  "_NET_WM_STATE_ABOVE",
+										  False);
+	Atom XA_HIDDEN = x_atom_list_find_atom(global_x_info->x_atom_list,
+										   global_x_info->display,
+										   "_NET_WM_STATE_HIDDEN",
+										   False);
+	if (!XA_WM_STATE
+		|| !XA_FULLSCREEN
+		|| !XA_MAX_HORZ
+		|| !XA_MAX_VERT
+		|| gob == NULL){
+		return;
+	}
+
+	//RL_Print("XA_WM_STATE: %d\n", XA_WM_STATE);
+
+	if (ev->xproperty.atom == XA_WM_STATE) {
+		Atom     actual_type;
+		int      actual_format;
+		long     nitems;
+		long     bytes;
+		Atom     *data = NULL;
+		int i = 0;
+		int maximized_horz = 0;
+		int maximized_vert = 0;
+		int fullscreen = 0;
+		int on_top = 0;
+		int hidden = 0;
+		int old_maximized = GET_GOB_FLAG(gob, GOBF_MAXIMIZE);
+		int old_fullscreen = GET_GOB_FLAG(gob, GOBF_FULLSCREEN);
+		int old_hidden = GET_GOB_FLAG(gob, GOBF_HIDDEN);
+		host_window_t *hw = GOB_HWIN(gob);
+		XGetWindowProperty(global_x_info->display,
+						   ev->xproperty.window,
+						   XA_WM_STATE,
+						   0,
+						   (~0L),
+						   False,
+						   XA_ATOM,
+						   &actual_type,
+						   &actual_format,
+						   &nitems,
+						   &bytes,
+						   (unsigned char**)&data);
+		for(i = 0; i < nitems; i ++){
+			if (data[i] == XA_FULLSCREEN){
+				//RL_Print("Window %x is Fullscreen\n", ev->xproperty.window);
+				fullscreen = 1;
+			} else if (data[i] == XA_MAX_HORZ) {
+				maximized_horz = 1;
+			} else if (data[i] == XA_MAX_VERT) {
+				maximized_vert = 1;
+			} else if (data[i] == XA_ABOVE) {
+				on_top = 1;
+			} else if (data[i] == XA_HIDDEN) {
+				hidden = 1;
+			}
+		}
+
+		if (data != NULL){
+			XFree(data);
+		}
+
+		if (fullscreen) {
+			CLR_GOB_FLAG(gob, GOBF_MAXIMIZE);
+			SET_GOB_FLAG(gob, GOBF_FULLSCREEN);
+		} else {
+			//RL_Print("Not fullscreen\n");
+			CLR_GOB_FLAG(gob, GOBF_FULLSCREEN);
+		}
+
+		if (maximized_horz && maximized_vert) {
+			CLR_GOB_FLAG(gob, GOBF_FULLSCREEN);
+			SET_GOB_FLAG(gob, GOBF_MAXIMIZE);
+		} else {
+			//RL_Print("Not maxed\n");
+			CLR_GOB_FLAG(gob, GOBF_MAXIMIZE);
+		}
+
+		if (on_top) {
+			SET_GOB_FLAG(gob, GOBF_TOP);
+		} else {
+			//RL_Print("Not no_top\n");
+			CLR_GOB_FLAG(gob, GOBF_TOP);
+		}
+
+		if (hidden) {
+			SET_GOB_FLAG(gob, GOBF_HIDDEN);
+		} else {
+			//RL_Print("Not hidden\n");
+			CLR_GOB_FLAG(gob, GOBF_HIDDEN);
+		}
+		hw->window_flags = gob->flags; /* save a copy of current window flags */
+	} else {
+		//RL_Print("Not WM_STATE, ignoring\n");
+	}
+}
+
+static void handle_button(XEvent *ev, REBGOB *gob)
+{
+	//RL_Print("Button %d event at %d\n", ev->xbutton.button, ev->xbutton.time);
 	static Time last_click = 0;
 	static REBINT last_click_button = 0;
+	// Handle XEvents and flush the input 
+	REBINT xyd = 0;
+	REBEVT *evt = NULL;
+	xyd = (ROUND_TO_INT(PHYS_COORD_X(ev->xbutton.x))) + (ROUND_TO_INT(PHYS_COORD_Y(ev->xbutton.y)) << 16);
+	REBINT id = 0, flags = 0;
+	flags = Check_Modifiers(0, ev->xbutton.state);
+	if (ev->xbutton.button < 4) {
+		if (ev->type == ButtonPress
+			&& last_click_button == ev->xbutton.button
+			&& ev->xbutton.time - last_click < DOUBLE_CLICK_DIFF){
+			/* FIXME, a hack to detect double click: a double click would be a single click followed by a double click */
+			flags |= EVF_DOUBLE;
+			//RL_Print("Button %d double clicked\n", ev->xbutton.button);
+		}
+		switch (ev->xbutton.button){
+			case 1: //left button
+				id = (ev->type == ButtonPress)? EVT_DOWN: EVT_UP;
+				break;
+			case 2: //middle button
+				id = (ev->type == ButtonPress)? EVT_AUX_DOWN: EVT_AUX_UP;
+				break;
+			case 3: //right button
+				id = (ev->type == ButtonPress)? EVT_ALT_DOWN: EVT_ALT_UP;
+				break;
+		}
+		Add_Event_XY(gob, id, xyd, flags);
+	} else {
+		switch (ev->xbutton.button){
+			case 4: //wheel scroll up
+				if (ev->type == ButtonRelease) {
+					//RL_Print("Scrolling up by 1 line\n");
+					evt = RL_Find_Event(EVM_GUI,
+										ev->xbutton.state & ControlMask? EVT_SCROLL_PAGE: EVT_SCROLL_LINE);
+					if (evt != NULL){
+						//RL_Print("Current line = %x\n", evt->data >> 16);
+						if (evt->data < 0){
+							evt->data = 0;
+						}
+						evt->data += 3 << 16;
+					} else {
+						Add_Event_XY(gob,
+									 ev->xbutton.state & ControlMask? EVT_SCROLL_PAGE: EVT_SCROLL_LINE,
+									 1 << 16, 0);
+					}
+				}
+				break;
+			case 5: //wheel scroll down
+				if (ev->type == ButtonRelease) {
+					//RL_Print("Scrolling down by 1 line\n");
+					evt = RL_Find_Event(EVM_GUI, 
+										ev->xbutton.state & ControlMask? EVT_SCROLL_PAGE: EVT_SCROLL_LINE);
+					if (evt != NULL){
+						//RL_Print("Current line = %x\n", evt->data >> 16);
+						if (evt->data > 0){
+							evt->data = 0;
+						}
+						evt->data -= 3 << 16;
+					} else {
+						Add_Event_XY(gob, 
+									 ev->xbutton.state & ControlMask? EVT_SCROLL_PAGE: EVT_SCROLL_LINE, 
+									 -1 << 16, 0);
+					}
+				}
+				break;
+			default:
+				RL_Print("Unrecognized mouse button %d", ev->xbutton.button);
+		}
+	}
+	if (ev->type == ButtonPress) {
+		last_click_button = ev->xbutton.button;
+		last_click = ev->xbutton.time;
+	}
+}
+
+static void handle_client_message(XEvent *ev)
+{
+	/*
+	   const REBYTE *message_type = XGetAtomName(global_x_info->display, ev->xclient.message_type);
+	   const REBYTE *protocol = XGetAtomName(global_x_info->display, ev->xclient.data.l[0]);
+	   RL_Print("client message: %s, %s\n", message_type, protocol);
+	   XFree(message_type);
+	   XFree(protocol);
+	   */
+	Atom XA_DELETE_WINDOW = x_atom_list_find_atom(global_x_info->x_atom_list,
+												  global_x_info->display,
+												  "WM_DELETE_WINDOW",
+												  False);
+	Atom XA_PING = x_atom_list_find_atom(global_x_info->x_atom_list,
+										 global_x_info->display,
+										 "_NET_WM_PING",
+										 False);
+	REBGOB *gob = NULL;
+	if (XA_DELETE_WINDOW
+		&& XA_DELETE_WINDOW == ev->xclient.data.l[0]) {
+		gob = Find_Gob_By_Window(ev->xclient.window);
+		if (gob != NULL){
+			Add_Event_XY(gob, EVT_CLOSE, 0, 0);
+		}
+	} else if (XA_PING
+			   && XA_PING == ev->xclient.data.l[0]) {
+		//RL_Print("Ping from window manager\n");
+		ev->xclient.window = DefaultRootWindow(global_x_info->display);
+		XSendEvent(global_x_info->display,
+				   ev->xclient.window,
+				   False,
+				   (SubstructureNotifyMask | SubstructureRedirectMask),
+				   ev);
+	}
+}
+
+static void handle_selection_request(XEvent *ev)
+{
+	XEvent selection_event;
+#if 0
+	const REBYTE *target = XGetAtomName(global_x_info->display, ev->xselectionrequest.target);
+	const REBYTE *property = XGetAtomName(global_x_info->display, ev->xselectionrequest.property);
+	RL_Print("selection target = %s, property = %s\n", target, property);
+	XFree((void*)property);
+	XFree((void*)target);
+#endif
 	Atom XA_UTF8_STRING = x_atom_list_find_atom(global_x_info->x_atom_list,
 												global_x_info->display,
 												"UTF8_STRING",
@@ -163,6 +400,196 @@ void Dispatch_Event(XEvent *ev)
 											  global_x_info->display,
 											  "CLIPBOARD",
 											  True);
+	selection_event.type = SelectionNotify;
+	if (ev->xselectionrequest.target == XA_TARGETS) {
+		selection_event.xselection.property = ev->xselectionrequest.property;
+		Atom targets[] = {XA_TARGETS, XA_UTF8_STRING, XA_STRING};
+		XChangeProperty(global_x_info->display,
+						ev->xselectionrequest.requestor,
+						ev->xselectionrequest.property,
+						XA_ATOM,
+						32,
+						PropModeReplace,
+						(unsigned char*)&targets,
+						sizeof(targets)/sizeof(targets[0]));
+	} else if (ev->xselectionrequest.target == XA_STRING
+			   || ev->xselectionrequest.target == XA_UTF8_STRING) {
+		selection_event.xselection.property = ev->xselectionrequest.property;
+		XChangeProperty(global_x_info->display,
+						ev->xselectionrequest.requestor,
+						ev->xselectionrequest.property,
+						ev->xselectionrequest.target,
+						16,			/* format, unsigned short */
+						PropModeReplace,
+						global_x_info->selection.data,
+						global_x_info->selection.data_length / sizeof(REBUNI));
+	} else {
+		selection_event.xselection.property = 0;
+	}
+	selection_event.xselection.send_event = 1;
+	selection_event.xselection.display = ev->xselectionrequest.display;
+	selection_event.xselection.requestor = ev->xselectionrequest.requestor;
+	selection_event.xselection.selection = ev->xselectionrequest.selection;
+	selection_event.xselection.target = ev->xselectionrequest.target;
+	selection_event.xselection.time = ev->xselectionrequest.time;
+	//RL_Print("Sending selection_event\n");
+	XSendEvent(selection_event.xselection.display,
+			   selection_event.xselection.requestor,
+			   False,
+			   0,
+			   &selection_event);
+}
+
+static void handle_selection_notify(XEvent *ev)
+{
+	Atom XA_UTF8_STRING = x_atom_list_find_atom(global_x_info->x_atom_list,
+												global_x_info->display,
+												"UTF8_STRING",
+												True);
+	Atom XA_TARGETS = x_atom_list_find_atom(global_x_info->x_atom_list,
+											global_x_info->display,
+											"TARGETS",
+											True);
+	Atom XA_CLIPBOARD = x_atom_list_find_atom(global_x_info->x_atom_list,
+											  global_x_info->display,
+											  "CLIPBOARD",
+											  True);
+	if (ev->xselection.target == XA_TARGETS){
+		Atom     actual_type;
+		int      actual_format;
+		long     nitems;
+		long     bytes;
+		Atom     *data = NULL;
+		int      status;
+		if (ev->xselection.property){
+			status = XGetWindowProperty(ev->xselection.display,
+										ev->xselection.requestor,
+										ev->xselection.property,
+										0,
+										(~0L),
+										False,
+										XA_ATOM,
+										&actual_type,
+										&actual_format,
+										&nitems,
+										&bytes,
+										(unsigned char**)&data);
+			int i = 0;
+			for(i = 0; i < nitems; i ++){
+				if (data[i] == XA_UTF8_STRING
+					|| data[i] == XA_STRING) {
+					XConvertSelection(ev->xselection.display,
+									  XA_CLIPBOARD,
+									  data[i],
+									  ev->xselection.property,
+									  ev->xselection.requestor,
+									  CurrentTime);
+					break;
+				}
+			}
+		}
+	} else if (ev->xselection.target == XA_UTF8_STRING
+			   || ev->xselection.target == XA_STRING) {
+		global_x_info->selection.property = ev->xselection.property;
+		global_x_info->selection.status = 1; /* response received */
+	}
+}
+
+static void handle_configure_notify(XEvent *ev, REBGOB *gob)
+{
+	XConfigureEvent xce = ev->xconfigure;
+	REBINT xyd = 0;
+	/* translate x,y to its gob_parent coordinates */
+	int x = xce.x, y = xce.y;
+	/*
+	   RL_Print("configuranotify, window = %x, x = %d, y = %d, w = %d, h = %d\n",
+	   xce.window,
+	   xce.x, xce.y, xce.width, xce.height);
+	   */
+	REBGOB *gob_parent = GOB_TMP_OWNER(gob);
+	if (gob_parent != NULL) {
+		host_window_t *hw = GOB_HWIN(gob_parent);
+		if (hw != NULL) {
+			Window gob_parent_window = hw->x_id;
+			Window child;
+			XTranslateCoordinates(xce.display,
+								  xce.window,
+								  GET_GOB_FLAG(gob, GOBF_POPUP)? DefaultRootWindow(xce.display) : gob_parent_window, /* for popup windows, the x, y are in screen coordinates, see OS_Create_Window */
+								  0, 0,
+								  &x, &y, &child);
+		}
+	}
+	if (gob->offset.x != x || gob->offset.y != y){
+		xyd = (ROUND_TO_INT(x)) + (ROUND_TO_INT(y) << 16);
+		/*
+		   RL_Print("%s, %s, %d: EVT_OFFSET (%dx%d) is sent\n", __FILE__, __func__, __LINE__,
+		   ROUND_TO_INT(x), ROUND_TO_INT(y));
+		   */
+		gob->offset.x = x;
+		gob->offset.y = y;
+		Update_Event_XY(gob, EVT_OFFSET, xyd, 0);
+	}
+	host_window_t* hw = Find_Host_Window_By_ID(ev->xconfigure.window);
+	assert(hw != NULL);
+	if (hw->old_width == xce.width && hw->old_height == xce.height)
+		return;
+	xyd = (ROUND_TO_INT(xce.width)) + (ROUND_TO_INT(xce.height) << 16);
+	gob->size.x = hw->old_width = xce.width;
+	gob->size.y = hw->old_height = xce.height;
+	Resize_Window(gob, TRUE);
+	//RL_Print("%s, %s, %d: EVT_RESIZE is sent: %x\n", __FILE__, __func__, __LINE__, xyd);
+	Update_Event_XY(gob, EVT_RESIZE, xyd, 0); //This is needed even when Resize_Window returns false, in which case, Rebol changed the window size and OS_Update_Window has been called.
+}
+
+void handle_key(XEvent *ev, REBGOB *gob)
+{
+	KeySym keysym;
+	REBFLG flags = Check_Modifiers(0, ev->xkey.state);
+	char key_string[8];
+	XComposeStatus compose_status;
+	int i = 0, key = -1;
+	int len = XLookupString(&ev->xkey, key_string, sizeof(key_string), &keysym, &compose_status);
+	key_string[len] = '\0';
+	//RL_Print ("key %s (%x) is released\n", key_string, key_string[0]);
+
+	for (i = 0; keysym_to_event[i] && keysym > keysym_to_event[i]; i += 2);
+	if (keysym == keysym_to_event[i]) {
+		key = keysym_to_event[i + 1] << 16;
+	} else {
+		key = keysym2ucs(keysym);
+		if (key < 0 && len > 0){
+			key = key_string[0]; /* FIXME, key_string could be longer than 1 */
+		}
+		/* map control characters */
+		if (flags & (1 << EVF_CONTROL)
+			&& !(flags & (1 << EVF_SHIFT))) {
+			if (key >= 'A' && key <= '_') {
+				key = key - 'A' + 1;
+			} else if (key >= 'a' && key <= 'z') {
+				key = key - 'a' + 1;
+			}
+		}
+	}
+
+	if (key > 0){
+		Add_Event_Key(gob,
+					  ev->type == KeyPress? EVT_KEY : EVT_KEY_UP, 
+					  key, flags);
+
+		/*
+		   RL_Print ("Key event %s with key %x (flags: %x) is sent\n",
+		   ev->type == KeyPress? "EVT_KEY" : "EVT_KEY_UP", 
+		   key,
+		   flags);
+		   */
+	}
+}
+
+void Dispatch_Event(XEvent *ev)
+{
+	REBGOB *gob = NULL;
+	// Handle XEvents and flush the input 
+	REBINT flags = 0;
 	switch (ev->type) {
 		case CreateNotify:
 			/*
@@ -194,134 +621,24 @@ void Dispatch_Event(XEvent *ev)
 			break;
 		case ButtonPress:
 		case ButtonRelease:
-			//RL_Print("Button %d event at %d\n", ev->xbutton.button, ev->xbutton.time);
 			gob = Find_Gob_By_Window(ev->xbutton.window);
-			if (gob != NULL) {
-				xyd = (ROUND_TO_INT(PHYS_COORD_X(ev->xbutton.x))) + (ROUND_TO_INT(PHYS_COORD_Y(ev->xbutton.y)) << 16);
-				REBINT id = 0, flags = 0;
-				flags = Check_Modifiers(0, ev->xbutton.state);
-				if (ev->xbutton.button < 4) {
-					if (ev->type == ButtonPress
-						&& last_click_button == ev->xbutton.button
-						&& ev->xbutton.time - last_click < DOUBLE_CLICK_DIFF){
-						/* FIXME, a hack to detect double click: a double click would be a single click followed by a double click */
-						flags |= EVF_DOUBLE;
-						//RL_Print("Button %d double clicked\n", ev->xbutton.button);
-					}
-					switch (ev->xbutton.button){
-						case 1: //left button
-							id = (ev->type == ButtonPress)? EVT_DOWN: EVT_UP;
-							break;
-						case 2: //middle button
-							id = (ev->type == ButtonPress)? EVT_AUX_DOWN: EVT_AUX_UP;
-							break;
-						case 3: //right button
-							id = (ev->type == ButtonPress)? EVT_ALT_DOWN: EVT_ALT_UP;
-							break;
-					}
-					Add_Event_XY(gob, id, xyd, flags);
-				} else {
-					switch (ev->xbutton.button){
-						case 4: //wheel scroll up
-							if (ev->type == ButtonRelease) {
-								//RL_Print("Scrolling up by 1 line\n");
-								evt = RL_Find_Event(EVM_GUI,
-													ev->xbutton.state & ControlMask? EVT_SCROLL_PAGE: EVT_SCROLL_LINE);
-								if (evt != NULL){
-									//RL_Print("Current line = %x\n", evt->data >> 16);
-									if (evt->data < 0){
-										evt->data = 0;
-									}
-									evt->data += 3 << 16;
-								} else {
-									Add_Event_XY(gob,
-												 ev->xbutton.state & ControlMask? EVT_SCROLL_PAGE: EVT_SCROLL_LINE,
-												 1 << 16, 0);
-								}
-							}
-							break;
-						case 5: //wheel scroll down
-							if (ev->type == ButtonRelease) {
-								//RL_Print("Scrolling down by 1 line\n");
-								evt = RL_Find_Event(EVM_GUI, 
-													ev->xbutton.state & ControlMask? EVT_SCROLL_PAGE: EVT_SCROLL_LINE);
-								if (evt != NULL){
-									//RL_Print("Current line = %x\n", evt->data >> 16);
-									if (evt->data > 0){
-										evt->data = 0;
-									}
-									evt->data -= 3 << 16;
-								} else {
-									Add_Event_XY(gob, 
-												 ev->xbutton.state & ControlMask? EVT_SCROLL_PAGE: EVT_SCROLL_LINE, 
-												 -1 << 16, 0);
-								}
-							}
-							break;
-						default:
-							RL_Print("Unrecognized mouse button %d", ev->xbutton.button);
-					}
-				}
-			}
-			if (ev->type == ButtonPress) {
-				last_click_button = ev->xbutton.button;
-				last_click = ev->xbutton.time;
-			}
+			if (gob != NULL)
+				handle_button(ev, gob);
 			break;
 
 		case MotionNotify:
 			//RL_Print ("mouse motion\n");
 			gob = Find_Gob_By_Window(ev->xmotion.window);
 			if (gob != NULL){
-				xyd = (ROUND_TO_INT(PHYS_COORD_X(ev->xmotion.x))) + (ROUND_TO_INT(PHYS_COORD_Y(ev->xmotion.y)) << 16);
+				REBINT xyd = (ROUND_TO_INT(PHYS_COORD_X(ev->xmotion.x))) + (ROUND_TO_INT(PHYS_COORD_Y(ev->xmotion.y)) << 16);
 				Update_Event_XY(gob, EVT_MOVE, xyd, 0);
 			}
 			break;
 		case KeyPress:
 		case KeyRelease:
 			gob = Find_Gob_By_Window(ev->xkey.window);
-			if(gob != NULL){
-				KeySym keysym;
-				flags = Check_Modifiers(0, ev->xkey.state);
-				char key_string[8];
-				XComposeStatus compose_status;
-				int i = 0, key = -1;
-				int len = XLookupString(&ev->xkey, key_string, sizeof(key_string), &keysym, &compose_status);
-				key_string[len] = '\0';
-				//RL_Print ("key %s (%x) is released\n", key_string, key_string[0]);
-
-				for (i = 0; keysym_to_event[i] && keysym > keysym_to_event[i]; i += 2);
-				if (keysym == keysym_to_event[i]) {
-					key = keysym_to_event[i + 1] << 16;
-				} else {
-					key = keysym2ucs(keysym);
-					if (key < 0 && len > 0){
-						key = key_string[0]; /* FIXME, key_string could be longer than 1 */
-					}
-					/* map control characters */
-					if (flags & (1 << EVF_CONTROL)
-						&& !(flags & (1 << EVF_SHIFT))) {
-						if (key >= 'A' && key <= '_') {
-							key = key - 'A' + 1;
-						} else if (key >= 'a' && key <= 'z') {
-							key = key - 'a' + 1;
-						}
-					}
-				}
-
-				if (key > 0){
-				   Add_Event_Key(gob,
-								 ev->type == KeyPress? EVT_KEY : EVT_KEY_UP, 
-								 key, flags);
-
-				   /*
-					RL_Print ("Key event %s with key %x (flags: %x) is sent\n",
-								 ev->type == KeyPress? "EVT_KEY" : "EVT_KEY_UP", 
-								 key,
-								 flags);
-					 */
-				}
-			}
+			if(gob != NULL)
+				handle_key(ev, gob);
 
 			break;
 		case ResizeRequest:
@@ -356,303 +673,28 @@ void Dispatch_Event(XEvent *ev)
 			break;
 		case ClientMessage:
 			//RL_Print ("closed\n");
-			{
-				/*
-				const REBYTE *message_type = XGetAtomName(global_x_info->display, ev->xclient.message_type);
-				const REBYTE *protocol = XGetAtomName(global_x_info->display, ev->xclient.data.l[0]);
-				RL_Print("client message: %s, %s\n", message_type, protocol);
-				XFree(message_type);
-				XFree(protocol);
-				*/
-				Atom XA_DELETE_WINDOW = x_atom_list_find_atom(global_x_info->x_atom_list,
-															  global_x_info->display,
-															  "WM_DELETE_WINDOW",
-															  False);
-				Atom XA_PING = x_atom_list_find_atom(global_x_info->x_atom_list,
-													 global_x_info->display,
-													 "_NET_WM_PING",
-													 False);
-				if (XA_DELETE_WINDOW
-					&& XA_DELETE_WINDOW == ev->xclient.data.l[0]) {
-					gob = Find_Gob_By_Window(ev->xclient.window);
-					if (gob != NULL){
-						Add_Event_XY(gob, EVT_CLOSE, 0, 0);
-					}
-				} else if (XA_PING
-						   && XA_PING == ev->xclient.data.l[0]) {
-					//RL_Print("Ping from window manager\n");
-					ev->xclient.window = DefaultRootWindow(global_x_info->display);
-					XSendEvent(global_x_info->display,
-							  ev->xclient.window,
-							  False,
-							  (SubstructureNotifyMask | SubstructureRedirectMask),
-							  ev);
-				}
-			}
+			handle_client_message(ev);
 			break;
 		case PropertyNotify:
 			/* check if it's fullscreen */
-			{
-				/*
-				REBYTE *target = XGetAtomName(global_x_info->display, ev->xproperty.atom);
-				RL_Print("Property (%s, %d) changed: %d\n", target, ev->xproperty.atom, ev->xproperty.state);
-				XFree(target);
-				*/
-				Atom XA_WM_STATE = x_atom_list_find_atom(global_x_info->x_atom_list,
-														 global_x_info->display,
-														 "_NET_WM_STATE",
-														 False);
-				Atom XA_FULLSCREEN = x_atom_list_find_atom(global_x_info->x_atom_list,
-														   global_x_info->display,
-														   "_NET_WM_STATE_FULLSCREEN",
-														   False);
-				Atom XA_MAX_HORZ = x_atom_list_find_atom(global_x_info->x_atom_list,
-														 global_x_info->display,
-														 "_NET_WM_STATE_MAXIMIZED_HORZ",
-														 False);
-				Atom XA_MAX_VERT = x_atom_list_find_atom(global_x_info->x_atom_list,
-														 global_x_info->display,
-														 "_NET_WM_STATE_MAXIMIZED_VERT",
-														 False);
-				Atom XA_ABOVE = x_atom_list_find_atom(global_x_info->x_atom_list,
-													  global_x_info->display,
-													  "_NET_WM_STATE_ABOVE",
-													  False);
-				Atom XA_HIDDEN = x_atom_list_find_atom(global_x_info->x_atom_list,
-													   global_x_info->display,
-													   "_NET_WM_STATE_HIDDEN",
-													   False);
-				gob = Find_Gob_By_Window(ev->xproperty.window);
-				if (!XA_WM_STATE
-					|| !XA_FULLSCREEN
-					|| !XA_MAX_HORZ
-					|| !XA_MAX_VERT
-					|| gob == NULL){
-					break;
-				}
-
-				//RL_Print("XA_WM_STATE: %d\n", XA_WM_STATE);
-
-				if (ev->xproperty.atom == XA_WM_STATE) {
-					Atom     actual_type;
-					int      actual_format;
-					long     nitems;
-					long     bytes;
-					Atom     *data = NULL;
-					int i = 0;
-					int maximized_horz = 0;
-					int maximized_vert = 0;
-					int fullscreen = 0;
-					int on_top = 0;
-					int hidden = 0;
-					int old_maximized = GET_GOB_FLAG(gob, GOBF_MAXIMIZE);
-					int old_fullscreen = GET_GOB_FLAG(gob, GOBF_FULLSCREEN);
-					int old_hidden = GET_GOB_FLAG(gob, GOBF_HIDDEN);
-					host_window_t *hw = GOB_HWIN(gob);
-					XGetWindowProperty(global_x_info->display,
-									   ev->xproperty.window,
-									   XA_WM_STATE,
-									   0,
-									   (~0L),
-									   False,
-									   XA_ATOM,
-									   &actual_type,
-									   &actual_format,
-									   &nitems,
-									   &bytes,
-									   (unsigned char**)&data);
-					for(i = 0; i < nitems; i ++){
-						if (data[i] == XA_FULLSCREEN){
-							//RL_Print("Window %x is Fullscreen\n", ev->xproperty.window);
-							fullscreen = 1;
-						} else if (data[i] == XA_MAX_HORZ) {
-							maximized_horz = 1;
-						} else if (data[i] == XA_MAX_VERT) {
-							maximized_vert = 1;
-						} else if (data[i] == XA_ABOVE) {
-							on_top = 1;
-						} else if (data[i] == XA_HIDDEN) {
-							hidden = 1;
-						}
-					}
-
-					if (data != NULL){
-						XFree(data);
-					}
-
-					if (fullscreen) {
-						CLR_GOB_FLAG(gob, GOBF_MAXIMIZE);
-						SET_GOB_FLAG(gob, GOBF_FULLSCREEN);
-					} else {
-						//RL_Print("Not fullscreen\n");
-						CLR_GOB_FLAG(gob, GOBF_FULLSCREEN);
-					}
-
-					if (maximized_horz && maximized_vert) {
-						CLR_GOB_FLAG(gob, GOBF_FULLSCREEN);
-						SET_GOB_FLAG(gob, GOBF_MAXIMIZE);
-					} else {
-						//RL_Print("Not maxed\n");
-						CLR_GOB_FLAG(gob, GOBF_MAXIMIZE);
-					}
-
-					if (on_top) {
-						SET_GOB_FLAG(gob, GOBF_TOP);
-					} else {
-						//RL_Print("Not no_top\n");
-						CLR_GOB_FLAG(gob, GOBF_TOP);
-					}
-
-					if (hidden) {
-						SET_GOB_FLAG(gob, GOBF_HIDDEN);
-					} else {
-						//RL_Print("Not hidden\n");
-						CLR_GOB_FLAG(gob, GOBF_HIDDEN);
-					}
-					hw->window_flags = gob->flags; /* save a copy of current window flags */
-				} else {
-					//RL_Print("Not WM_STATE, ignoring\n");
-				}
-			}
+			gob = Find_Gob_By_Window(ev->xproperty.window);
+			if (gob != NULL)
+				handle_property_notify(ev, gob);
 			break;
 		case ConfigureNotify:
-			xce = ev->xconfigure;
-			/*
-			RL_Print("configuranotify, window = %x, x = %d, y = %d, w = %d, h = %d\n",
-					 xce.window,
-					 xce.x, xce.y, xce.width, xce.height);
-			*/
 			gob = Find_Gob_By_Window(ev->xconfigure.window);
 			if (gob != NULL) {
-				/* translate x,y to its gob_parent coordinates */
-				int x = xce.x, y = xce.y;
-				REBGOB *gob_parent = GOB_TMP_OWNER(gob);
-				if (gob_parent != NULL) {
-					host_window_t *hw = GOB_HWIN(gob_parent);
-					if (hw != NULL) {
-						Window gob_parent_window = hw->x_id;
-						Window child;
-						XTranslateCoordinates(xce.display,
-											  xce.window,
-											  GET_GOB_FLAG(gob, GOBF_POPUP)? DefaultRootWindow(xce.display) : gob_parent_window, /* for popup windows, the x, y are in screen coordinates, see OS_Create_Window */
-											  0, 0,
-											  &x, &y, &child);
-					}
-				}
-				if (gob->offset.x != x || gob->offset.y != y){
-					xyd = (ROUND_TO_INT(x)) + (ROUND_TO_INT(y) << 16);
-					/*
-					RL_Print("%s, %s, %d: EVT_OFFSET (%dx%d) is sent\n", __FILE__, __func__, __LINE__,
-							 ROUND_TO_INT(x), ROUND_TO_INT(y));
-							 */
-					gob->offset.x = x;
-					gob->offset.y = y;
-					Update_Event_XY(gob, EVT_OFFSET, xyd, 0);
-				}
-				host_window_t* hw = Find_Host_Window_By_ID(ev->xconfigure.window);
-				assert(hw != NULL);
-				if (hw->old_width == xce.width && hw->old_height == xce.height)
-					return;
-				xyd = (ROUND_TO_INT(xce.width)) + (ROUND_TO_INT(xce.height) << 16);
-				gob->size.x = hw->old_width = xce.width;
-				gob->size.y = hw->old_height = xce.height;
-				Resize_Window(gob, TRUE);
-				//RL_Print("%s, %s, %d: EVT_RESIZE is sent: %x\n", __FILE__, __func__, __LINE__, xyd);
-				Update_Event_XY(gob, EVT_RESIZE, xyd, 0); //This is needed even when Resize_Window returns false, in which case, Rebol changed the window size and OS_Update_Window has been called.
+				handle_configure_notify(ev, gob);
 			}
+			break;
 			break;
 		case SelectionRequest:
 			//RL_Print("SelectionRequest\n");
-			{
-				XEvent selection_event;
-#if 0
-				const REBYTE *target = XGetAtomName(global_x_info->display, ev->xselectionrequest.target);
-				const REBYTE *property = XGetAtomName(global_x_info->display, ev->xselectionrequest.property);
-				RL_Print("selection target = %s, property = %s\n", target, property);
-				XFree((void*)property);
-				XFree((void*)target);
-#endif
-				selection_event.type = SelectionNotify;
-				if (ev->xselectionrequest.target == XA_TARGETS) {
-					selection_event.xselection.property = ev->xselectionrequest.property;
-					Atom targets[] = {XA_TARGETS, XA_UTF8_STRING, XA_STRING};
-					XChangeProperty(global_x_info->display,
-									ev->xselectionrequest.requestor,
-									ev->xselectionrequest.property,
-									XA_ATOM,
-									32,
-									PropModeReplace,
-									(unsigned char*)&targets,
-									sizeof(targets)/sizeof(targets[0]));
-				} else if (ev->xselectionrequest.target == XA_STRING
-						   || ev->xselectionrequest.target == XA_UTF8_STRING) {
-					selection_event.xselection.property = ev->xselectionrequest.property;
-					XChangeProperty(global_x_info->display,
-									ev->xselectionrequest.requestor,
-									ev->xselectionrequest.property,
-									ev->xselectionrequest.target,
-									16,			/* format, unsigned short */
-									PropModeReplace,
-									global_x_info->selection.data,
-									global_x_info->selection.data_length / sizeof(REBUNI));
-				} else {
-					selection_event.xselection.property = 0;
-				}
-				selection_event.xselection.send_event = 1;
-				selection_event.xselection.display = ev->xselectionrequest.display;
-				selection_event.xselection.requestor = ev->xselectionrequest.requestor;
-				selection_event.xselection.selection = ev->xselectionrequest.selection;
-				selection_event.xselection.target = ev->xselectionrequest.target;
-				selection_event.xselection.time = ev->xselectionrequest.time;
-				//RL_Print("Sending selection_event\n");
-				XSendEvent(selection_event.xselection.display,
-						   selection_event.xselection.requestor,
-						   False,
-						   0,
-						   &selection_event);
-			}
+			handle_selection_request(ev);
 			break;
 		case SelectionNotify:
 			//RL_Print("SelectionNotify\n");
-			if (ev->xselection.target == XA_TARGETS){
-				Atom     actual_type;
-				int      actual_format;
-				long     nitems;
-				long     bytes;
-				Atom     *data = NULL;
-				int      status;
-				if (ev->xselection.property){
-					status = XGetWindowProperty(ev->xselection.display,
-												ev->xselection.requestor,
-												ev->xselection.property,
-												0,
-												(~0L),
-												False,
-												XA_ATOM,
-												&actual_type,
-												&actual_format,
-												&nitems,
-												&bytes,
-												(unsigned char**)&data);
-					int i = 0;
-					for(i = 0; i < nitems; i ++){
-						if (data[i] == XA_UTF8_STRING
-							|| data[i] == XA_STRING) {
-							XConvertSelection(ev->xselection.display,
-											  XA_CLIPBOARD,
-											  data[i],
-											  ev->xselection.property,
-											  ev->xselection.requestor,
-											  CurrentTime);
-							break;
-						}
-					}
-				}
-			} else if (ev->xselection.target == XA_UTF8_STRING
-					   || ev->xselection.target == XA_STRING) {
-				global_x_info->selection.property = ev->xselection.property;
-				global_x_info->selection.status = 1; /* response received */
-			}
+			handle_selection_notify(ev);
 			break;
 		case SelectionClear:
 			if (global_x_info->selection.data != NULL) {
