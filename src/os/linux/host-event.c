@@ -151,9 +151,18 @@ void Dispatch_Event(XEvent *ev)
 	REBINT flags = 0;
 	static Time last_click = 0;
 	static REBINT last_click_button = 0;
-	Atom XA_UTF8_STRING = XInternAtom(global_x_info->display, "UTF8_STRING", True);
-	Atom XA_TARGETS = XInternAtom(global_x_info->display, "TARGETS", True);
-	Atom XA_CLIPBOARD = XInternAtom(global_x_info->display, "CLIPBOARD", True);
+	Atom XA_UTF8_STRING = x_atom_list_find_atom(global_x_info->x_atom_list,
+												global_x_info->display,
+												"UTF8_STRING",
+												True);
+	Atom XA_TARGETS = x_atom_list_find_atom(global_x_info->x_atom_list,
+											global_x_info->display,
+											"TARGETS",
+											True);
+	Atom XA_CLIPBOARD = x_atom_list_find_atom(global_x_info->x_atom_list,
+											  global_x_info->display,
+											  "CLIPBOARD",
+											  True);
 	switch (ev->type) {
 		case CreateNotify:
 			/*
@@ -355,8 +364,14 @@ void Dispatch_Event(XEvent *ev)
 				XFree(message_type);
 				XFree(protocol);
 				*/
-				Atom XA_DELETE_WINDOW = XInternAtom(global_x_info->display, "WM_DELETE_WINDOW", False);
-				Atom XA_PING = XInternAtom(global_x_info->display, "_NET_WM_PING", False);
+				Atom XA_DELETE_WINDOW = x_atom_list_find_atom(global_x_info->x_atom_list,
+															  global_x_info->display,
+															  "WM_DELETE_WINDOW",
+															  False);
+				Atom XA_PING = x_atom_list_find_atom(global_x_info->x_atom_list,
+													 global_x_info->display,
+													 "_NET_WM_PING",
+													 False);
 				if (XA_DELETE_WINDOW
 					&& XA_DELETE_WINDOW == ev->xclient.data.l[0]) {
 					gob = Find_Gob_By_Window(ev->xclient.window);
@@ -383,12 +398,30 @@ void Dispatch_Event(XEvent *ev)
 				RL_Print("Property (%s, %d) changed: %d\n", target, ev->xproperty.atom, ev->xproperty.state);
 				XFree(target);
 				*/
-				Atom XA_WM_STATE = XInternAtom(global_x_info->display, "_NET_WM_STATE", False);
-				Atom XA_FULLSCREEN = XInternAtom(global_x_info->display, "_NET_WM_STATE_FULLSCREEN", False);
-				Atom XA_MAX_HORZ = XInternAtom(global_x_info->display, "_NET_WM_STATE_MAXIMIZED_HORZ", False);
-				Atom XA_MAX_VERT = XInternAtom(global_x_info->display, "_NET_WM_STATE_MAXIMIZED_VERT", False);
-				Atom XA_ABOVE = XInternAtom(global_x_info->display, "_NET_WM_STATE_ABOVE", False);
-				Atom XA_HIDDEN = XInternAtom(global_x_info->display, "_NET_WM_STATE_HIDDEN", False);
+				Atom XA_WM_STATE = x_atom_list_find_atom(global_x_info->x_atom_list,
+														 global_x_info->display,
+														 "_NET_WM_STATE",
+														 False);
+				Atom XA_FULLSCREEN = x_atom_list_find_atom(global_x_info->x_atom_list,
+														   global_x_info->display,
+														   "_NET_WM_STATE_FULLSCREEN",
+														   False);
+				Atom XA_MAX_HORZ = x_atom_list_find_atom(global_x_info->x_atom_list,
+														 global_x_info->display,
+														 "_NET_WM_STATE_MAXIMIZED_HORZ",
+														 False);
+				Atom XA_MAX_VERT = x_atom_list_find_atom(global_x_info->x_atom_list,
+														 global_x_info->display,
+														 "_NET_WM_STATE_MAXIMIZED_VERT",
+														 False);
+				Atom XA_ABOVE = x_atom_list_find_atom(global_x_info->x_atom_list,
+													  global_x_info->display,
+													  "_NET_WM_STATE_ABOVE",
+													  False);
+				Atom XA_HIDDEN = x_atom_list_find_atom(global_x_info->x_atom_list,
+													   global_x_info->display,
+													   "_NET_WM_STATE_HIDDEN",
+													   False);
 				gob = Find_Gob_By_Window(ev->xproperty.window);
 				if (!XA_WM_STATE
 					|| !XA_FULLSCREEN

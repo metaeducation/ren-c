@@ -27,6 +27,23 @@ extern "C" {
 		REBCNT	data_length;
 	} selection_t;
 
+	typedef struct x_atom_node {
+		Atom				atom;
+		char 				*name;
+		struct x_atom_node 	*next;
+	} x_atom_node_t;
+
+	typedef struct {
+		struct x_atom_node *next;
+	} x_atom_list_t;
+
+	Atom x_atom_list_find_atom(x_atom_list_t *list,
+							   Display *display,
+							   const char* atom_name,
+							   unsigned char only_if_exists);
+
+	void x_atom_list_free(x_atom_list_t *list);
+
 	typedef struct {
 		Display *display;
 		Screen 	*default_screen;
@@ -39,6 +56,7 @@ extern "C" {
 #endif
 		selection_t selection; /* for copy and paste */
 		Window leader_window;
+		x_atom_list_t *x_atom_list;
 	} x_info_t;
 
 	typedef struct {

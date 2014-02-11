@@ -72,6 +72,66 @@ x_info_t *global_x_info = NULL;
   #define HOST_NAME_MAX 256
 #endif
 
+x_atom_list_t *x_atom_list_new() 
+{
+	x_atom_list_t *ret = OS_Make(sizeof(x_atom_list_t));
+	ret->next = NULL;
+	return ret;
+}
+
+void x_atom_list_add(x_atom_list_t *list,
+					  x_atom_node_t *node)
+{
+	node->next = list->next;
+	list->next = node;
+}
+
+void x_atom_list_add_atom(x_atom_list_t *list,
+							 const char * atom_name,
+							 Atom atom)
+{
+	x_atom_node_t *node = OS_Make(sizeof(x_atom_node_t));
+	node->next = NULL;
+	node->name = strdup(atom_name);
+	node->atom = atom;
+	x_atom_list_add(list, node);
+}
+
+Atom x_atom_list_find_atom(x_atom_list_t *list,
+						   Display *display,
+						   const char* atom_name,
+						   unsigned char only_if_exists)
+{
+	if (list == NULL) return NULL;
+	x_atom_node_t *next = list->next;
+	while (next != NULL) {
+		if (!strncasecmp(next->name, atom_name, strlen(atom_name) + 1)) return next->atom;
+		next = next->next;
+	}
+
+	Atom ret = XInternAtom(display, atom_name, only_if_exists);
+	if (ret != 0) {
+		x_atom_list_add_atom(list, atom_name, ret);
+		return ret;
+	}
+	return 0;
+}
+
+void x_atom_list_free(x_atom_list_t *list)
+{
+	if (list == NULL) return;
+	x_atom_node_t *head = list->next;
+	OS_Free(list);
+	while (head != NULL) {
+		x_atom_node_t *tmp = head->next;
+		if (head->name) {
+			OS_Free(head->name);
+		}
+		OS_Free(head);
+		head = tmp;
+	}
+}
+
 REBGOB *Find_Gob_By_Window(Window win)
 {
 	int i = 0;
@@ -127,6 +187,8 @@ static REBXYF Zero_Pair = {0, 0};
 	} else {
 		//RL_Print("XOpenDisplay succeeded: x_dislay = %x\n", global_x_info->display);
 	}
+
+	global_x_info->x_atom_list = x_atom_list_new();
 
 	global_x_info->default_screen = DefaultScreenOfDisplay(global_x_info->display);
 	global_x_info->default_visual = DefaultVisualOfScreen(global_x_info->default_screen);
@@ -200,7 +262,10 @@ static void X11_change_state (REBOOL   add,
 				 Atom    state2)
 {
 	XClientMessageEvent xclient;
-	Atom wm_state = XInternAtom(global_x_info->display, "_NET_WM_STATE", True);
+	Atom wm_state = x_atom_list_find_atom(global_x_info->x_atom_list,
+										  global_x_info->display,
+										  "_NET_WM_STATE",
+										  True);
 	Window root = DefaultRootWindow(global_x_info->display);
 
 #define _NET_WM_STATE_REMOVE        0    /* remove/unset property */
@@ -233,7 +298,10 @@ static void update_gob_window_state(REBGOB *gob,
 		!= GET_FLAG(hw->window_flags, GOBF_FULLSCREEN)) {
 		X11_change_state(GET_GOB_FLAG(gob, GOBF_FULLSCREEN),
 						 window,
-						 XInternAtom(display, "_NET_WM_STATE_FULLSCREEN", True),
+						 x_atom_list_find_atom(global_x_info->x_atom_list,
+											   global_x_info->display,
+											   "_NET_WM_STATE_FULLSCREEN",
+											   True),
 						 0);
 	}
 
@@ -241,22 +309,36 @@ static void update_gob_window_state(REBGOB *gob,
 		!= GET_FLAG(hw->window_flags, GOBF_MAXIMIZE)) {
 		X11_change_state(GET_GOB_FLAG(gob, GOBF_MAXIMIZE),
 						 window,
-						 XInternAtom(display, "_NET_WM_STATE_MAXIMIZED_HORZ", True),
-						 XInternAtom(display, "_NET_WM_STATE_MAXIMIZED_VERT", True));
+						 x_atom_list_find_atom(global_x_info->x_atom_list,
+											   global_x_info->display,
+											   "_NET_WM_STATE_MAXIMIZED_HORZ",
+											   True),
+						 x_atom_list_find_atom(global_x_info->x_atom_list,
+											   global_x_info->display,
+											   "_NET_WM_STATE_MAXIMIZED_VERT",
+											   True));
 	}
 
 	if (GET_GOB_FLAG(gob, GOBF_ACTIVE)
 		!= GET_FLAG(hw->window_flags, GOBF_ACTIVE)) {
 		X11_change_state(GET_GOB_FLAG(gob, GOBF_ACTIVE),
 						 window,
-						 XInternAtom(display, "_NET_WM_STATE_FOCUSED", False), 0);
+						 x_atom_list_find_atom(global_x_info->x_atom_list,
+											   global_x_info->display,
+											   "_NET_WM_STATE_FOCUSED",
+											   True),
+						 0);
 	}
 
 	if (GET_GOB_FLAG(gob, GOBF_ON_TOP)
 		!= GET_FLAG(hw->window_flags, GOBF_ON_TOP)) {
 		X11_change_state(GET_GOB_FLAG(gob, GOBF_ON_TOP),
 						 window,
-						 XInternAtom(display, "_NET_WM_STATE_ABOVE", False), 0);
+						 x_atom_list_find_atom(global_x_info->x_atom_list,
+											   global_x_info->display,
+											   "_NET_WM_STATE_ABOVE",
+											   True),
+						 0);
 	}
 }
 
@@ -275,7 +357,10 @@ int reb_x11_get_window_extens(Display *display,
        int      status;
        status = XGetWindowProperty(display,
 								   window,
-								   XInternAtom(display, "_NET_FRAME_EXTENTS", True),
+								   x_atom_list_find_atom(global_x_info->x_atom_list,
+														 display,
+														 "_NET_FRAME_EXTENTS",
+														 True),
 								   0,
 								   (~0L),
 								   False,
@@ -394,8 +479,14 @@ static void set_wm_name(Display *display,
 						Window window,
 						REBCHR *title)
 {
-	Atom XA_TITLE = XInternAtom(display, "_NET_WM_NAME", False);
-	Atom XA_UTF8_STRING = XInternAtom(display, "UTF8_STRING", False);
+	Atom XA_TITLE = x_atom_list_find_atom(global_x_info->x_atom_list,
+										  display,
+										  "_NET_WM_NAME",
+										  False);
+	Atom XA_UTF8_STRING = x_atom_list_find_atom(global_x_info->x_atom_list,
+												display,
+												"UTF8_STRING",
+												False);
 	XChangeProperty(display, window, XA_TITLE, XA_UTF8_STRING, 8,
 					PropModeReplace, title, strlen(title));
 	XStoreName(display, window, title); //backup for non NET Wms
@@ -477,10 +568,17 @@ static void set_window_protocols(Display *display,
 								 Window window)
 {
 	Atom wm_protocols[] = {
-		XInternAtom(display, "WM_DELETE_WINDOW", True),
-		XInternAtom(display, "_NET_WM_PING", True)
+		x_atom_list_find_atom(global_x_info->x_atom_list,
+							  display,
+							  "WM_DELETE_WINDOW",
+							  True),
+		x_atom_list_find_atom(global_x_info->x_atom_list,
+							  display,
+							  "_NET_WM_PING",
+							  True)
 	};
-	XSetWMProtocols(display, window, wm_protocols, sizeof(wm_protocols)/sizeof(wm_protocols[0]));
+	XSetWMProtocols(display, window, wm_protocols,
+					sizeof(wm_protocols)/sizeof(wm_protocols[0]));
 }
 
 static void set_wm_client_machine(Display *display,
@@ -500,7 +598,8 @@ static void set_wm_client_machine(Display *display,
 static void set_wm_pid(Display *display,
 					   Window window)
 {
-	Atom window_pid = XInternAtom(display, "_NET_WM_PID", True);
+	Atom window_pid = x_atom_list_find_atom(global_x_info->x_atom_list,
+											display, "_NET_WM_PID", True);
 	if (window_pid) {
 		pid_t pid = getpid();
 		XChangeProperty(display, window, window_pid, XA_CARDINAL, 32,
@@ -512,7 +611,8 @@ static void set_wm_pid(Display *display,
 static void set_window_leader(Display *display,
 							  Window window)
 {
-	Atom XA_WM_CLIENT_LEADER = XInternAtom(display, "WM_CLIENT_LEADER", True);
+	Atom XA_WM_CLIENT_LEADER = x_atom_list_find_atom(global_x_info->x_atom_list,
+													 display, "WM_CLIENT_LEADER", True);
 	if (!global_x_info->leader_window) {
 		global_x_info->leader_window = window;
 	}
@@ -526,9 +626,15 @@ static void set_gob_window_type(REBGOB *gob,
 {
 	Window parent_window;
 	Atom window_type;
-	Atom window_type_atom = XInternAtom(display, "_NET_WM_WINDOW_TYPE", True);
+	Atom window_type_atom = x_atom_list_find_atom(global_x_info->x_atom_list,
+												  display,
+												  "_NET_WM_WINDOW_TYPE",
+												  True);
 	if (GET_FLAGS(gob->flags, GOBF_NO_TITLE, GOBF_NO_BORDER)) {
-		window_type = XInternAtom(display, "_NET_WM_WINDOW_TYPE_DROPDOWN_MENU", True);
+		window_type = x_atom_list_find_atom(global_x_info->x_atom_list,
+											display,
+											"_NET_WM_WINDOW_TYPE_DROPDOWN_MENU",
+											True);
 		host_window_t *hw = GOB_HWIN(GOB_TMP_OWNER(gob));
 		if (!hw) {
 			Host_Crash("Parent window can't be found\n");
@@ -536,8 +642,14 @@ static void set_gob_window_type(REBGOB *gob,
 		parent_window = hw->x_id;
 		XSetTransientForHint(display, window, parent_window);
 	} else if (GET_GOB_FLAG(gob, GOBF_MODAL)) {
-		Atom wm_state = XInternAtom(display, "_NET_WM_STATE", True);
-		Atom wm_state_modal = XInternAtom(display, "_NET_WM_STATE_MODAL", True);
+		Atom wm_state = x_atom_list_find_atom(global_x_info->x_atom_list,
+											  display,
+											  "_NET_WM_STATE",
+											  True);
+		Atom wm_state_modal = x_atom_list_find_atom(global_x_info->x_atom_list,
+													display,
+													"_NET_WM_STATE_MODAL",
+													True);
 		host_window_t *hw = GOB_HWIN(GOB_TMP_OWNER(gob));
 		if (!hw) {
 			Host_Crash("Parent window can't be found\n");
@@ -546,9 +658,15 @@ static void set_gob_window_type(REBGOB *gob,
 		XSetTransientForHint(display, window, parent_window);
 		int status = XChangeProperty(display, window, wm_state, XA_ATOM, 32,
 									 PropModeReplace, (unsigned char*)&wm_state_modal, 1);
-		window_type = XInternAtom(display, "_NET_WM_WINDOW_TYPE_DIALOG", True);
+		window_type = x_atom_list_find_atom(global_x_info->x_atom_list,
+											display,
+											"_NET_WM_WINDOW_TYPE_DIALOG",
+											True);
 	} else {
-		window_type = XInternAtom(display, "_NET_WM_WINDOW_TYPE_NORMAL", True);
+		window_type = x_atom_list_find_atom(global_x_info->x_atom_list,
+											display,
+											"_NET_WM_WINDOW_TYPE_NORMAL",
+											True);
 	}
 	XChangeProperty(display, window, window_type_atom, XA_ATOM, 32,
 					PropModeReplace,
