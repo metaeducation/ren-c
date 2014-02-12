@@ -24,11 +24,11 @@ int os_create_file_selection (void *libgtk,
 											  const gchar *first_button_text,
 											  ...)
 		= dlsym(libgtk, "gtk_file_chooser_dialog_new");
-	char * (*gtk_file_chooser_get_filename) (GtkWidget*)
+	char * (*gtk_file_chooser_get_filename) (GtkFileChooser*)
 		= dlsym(libgtk, "gtk_file_chooser_get_filename");
 	void (*gtk_widget_destroy) (GtkWidget *)
 	   	= dlsym(libgtk, "gtk_widget_destroy");
-	int (*gtk_dialog_run) (GtkWidget *)
+	int (*gtk_dialog_run) (GtkDialog *)
 		= dlsym(libgtk, "gtk_dialog_run");
 	void (*g_print) (const char*, ...)
 	   	= dlsym(libgtk, "g_print");
@@ -91,20 +91,20 @@ int os_create_file_selection (void *libgtk,
 	dialog = gtk_file_chooser_dialog_new ("Open File",
 											 NULL,
 											 save? GTK_FILE_CHOOSER_ACTION_SAVE : GTK_FILE_CHOOSER_ACTION_OPEN,
-											 GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
-											 GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT,
+											 "_Cancel", GTK_RESPONSE_CANCEL,
+											 save? "_Save" : "_Open", GTK_RESPONSE_ACCEPT,
 											 NULL);
 	if (multiple) {
 		gtk_file_chooser_set_select_multiple(GTK_FILE_CHOOSER(dialog), multiple);
 	}
-	if (gtk_dialog_run (GTK_DIALOG (dialog)) == GTK_RESPONSE_ACCEPT)
+	if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT)
 	{
 		if (multiple) {
 			char *dirname = getcwd(buf, len);
 			int dir_len = dirname == NULL? 0 : strlen(dirname);
 			GSList * list = gtk_file_chooser_get_filenames(GTK_FILE_CHOOSER(dialog));
 			int max_len = 1 + dir_len;
-			g_slist_foreach(list, total_len_of_filenames, &max_len);
+			g_slist_foreach(list, (GFunc)total_len_of_filenames, &max_len);
 			//g_print("total length should be %d\n", max_len);
 			if (max_len > len - 1) { /* one extra for last empty string */
 				max_len = len - 1;
