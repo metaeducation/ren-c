@@ -706,11 +706,11 @@ static int Try_Browser(char *browser, REBCHR *url)
 	REBINT error;
 	void *libgtk = OS_Open_Library("libgtk-3.so", &error);
 	if (libgtk == NULL) {
-		RL_Print("open libgtk-3.so failed: %s\n", dlerror());
+		//RL_Print("open libgtk-3.so failed: %s\n", dlerror());
 		return FALSE;
 	}
 	if (!os_init_gtk(libgtk)) {
-		RL_Print("init gtk failed\n");
+		//RL_Print("init gtk failed\n");
 		OS_Close_Library(libgtk);
 		return FALSE;
 	}
@@ -719,7 +719,7 @@ static int Try_Browser(char *browser, REBCHR *url)
 								 fr->len,
 								 GET_FLAG(fr->flags, FRF_SAVE),
 								 GET_FLAG(fr->flags, FRF_MULTI))) {
-		RL_Print("file opened returned\n");
+		//RL_Print("file opened returned\n");
 		ret = TRUE;
 	}
 	OS_Close_Library(libgtk);
