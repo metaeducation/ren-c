@@ -267,6 +267,7 @@ extern REBGOBWINDOWS *Gob_Windows;
 #if defined(AGG_WIN32_FONTS) || defined(AGG_FREETYPE)
 	RL_Extend((REBYTE *)(&RX_text[0]), &RXD_Text);
 #endif
+	FcInit();
 }
 
 /***********************************************************************
