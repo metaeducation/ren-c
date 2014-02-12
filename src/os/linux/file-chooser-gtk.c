@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <string.h>
+#include <assert.h>
 #include <dlfcn.h>
 #include <gtk/gtk.h>
 
@@ -143,6 +144,9 @@ int os_create_file_selection (void *libgtk,
 			strncpy(buf, filename, MIN(1 + strlen(filename), len));
 			g_free (filename);
 		}
+	} else {
+		assert(len > 1);
+		buf[0] = buf[1] = '\0';
 	}
 	gtk_widget_destroy (dialog);
 	while (gtk_events_pending ())
