@@ -11,15 +11,17 @@ static void total_len_of_filenames(const char* file,
 	*len += strlen(file) + 1; /* extra one for '\0' */
 }
 
-int os_create_file_selection (void *libgtk,
-							  char *buf,
-							  int len,
-							  int save,
-							  int multiple)
+int os_create_file_selection (void 			*libgtk,
+							  char 			*buf,
+							  int 			len,
+							  const char 	*title,
+							  const char 	*init_dir,
+							  int 			save,
+							  int 			multiple)
 {
 	GtkWidget *dialog;
 
-	GtkWidget* (*gtk_file_chooser_dialog_new)(char *title,
+	GtkWidget* (*gtk_file_chooser_dialog_new)(const char *title,
 											  GtkWindow *parent,
 											  GtkFileChooserAction action,
 											  const gchar *first_button_text,
@@ -27,6 +29,9 @@ int os_create_file_selection (void *libgtk,
 		= dlsym(libgtk, "gtk_file_chooser_dialog_new");
 	char * (*gtk_file_chooser_get_filename) (GtkFileChooser*)
 		= dlsym(libgtk, "gtk_file_chooser_get_filename");
+	void (*gtk_file_chooser_set_current_folder) (GtkFileChooser *chooser,
+											   const gchar *name)
+		= dlsym(libgtk, "gtk_file_chooser_set_current_folder");
 	void (*gtk_widget_destroy) (GtkWidget *)
 	   	= dlsym(libgtk, "gtk_widget_destroy");
 	int (*gtk_dialog_run) (GtkDialog *)
@@ -78,6 +83,7 @@ int os_create_file_selection (void *libgtk,
 		|| gtk_file_chooser_set_select_multiple == NULL
 		|| gtk_file_chooser_get_filenames == NULL
 		|| gtk_file_chooser_get_current_folder == NULL
+		|| gtk_file_chooser_set_current_folder == NULL
 		|| g_slist_foreach == NULL
 		|| g_slist_free == NULL
 		|| gtk_widget_destroy == NULL
@@ -89,14 +95,17 @@ int os_create_file_selection (void *libgtk,
 		return 0;
 	}
 
-	dialog = gtk_file_chooser_dialog_new ("Open File",
-											 NULL,
-											 save? GTK_FILE_CHOOSER_ACTION_SAVE : GTK_FILE_CHOOSER_ACTION_OPEN,
-											 "_Cancel", GTK_RESPONSE_CANCEL,
-											 save? "_Save" : "_Open", GTK_RESPONSE_ACCEPT,
-											 NULL);
+	dialog = gtk_file_chooser_dialog_new (title == NULL? (save? "Save file" : "Open File") : title,
+										  NULL,
+										  save? GTK_FILE_CHOOSER_ACTION_SAVE : GTK_FILE_CHOOSER_ACTION_OPEN,
+										  "_Cancel", GTK_RESPONSE_CANCEL,
+										  save? "_Save" : "_Open", GTK_RESPONSE_ACCEPT,
+										  NULL);
 	if (multiple) {
 		gtk_file_chooser_set_select_multiple(GTK_FILE_CHOOSER(dialog), multiple);
+	}
+	if (init_dir != NULL) {
+		gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER(dialog), init_dir);
 	}
 	if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT)
 	{

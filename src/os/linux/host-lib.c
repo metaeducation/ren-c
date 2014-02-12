@@ -83,11 +83,13 @@ static void *Task_Ready;
 const char ** iso639_find_entry_by_2_code(const char* code);
 const char ** iso3166_find_entry_by_2_code(const char* code);
 
-int os_create_file_selection (void * libgtk,
-								char *buf,
-								int len,
-								int save,
-								int multiple);
+int os_create_file_selection (void 			*libgtk,
+							  char 			*buf,
+							  int 			len,
+							  const char 	*title,
+							  const char 	*path,
+							  int 			save,
+							  int 			multiple);
 
 int os_init_gtk(void *libgtk);
 
@@ -717,6 +719,8 @@ static int Try_Browser(char *browser, REBCHR *url)
 	if (os_create_file_selection(libgtk,
 								 fr->files,
 								 fr->len,
+								 fr->title,
+								 fr->dir,
 								 GET_FLAG(fr->flags, FRF_SAVE),
 								 GET_FLAG(fr->flags, FRF_MULTI))) {
 		//RL_Print("file opened returned\n");
