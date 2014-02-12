@@ -102,7 +102,7 @@ Atom x_atom_list_find_atom(x_atom_list_t *list,
 						   const char* atom_name,
 						   unsigned char only_if_exists)
 {
-	if (list == NULL) return NULL;
+	if (list == NULL) return 0;
 	x_atom_node_t *next = list->next;
 	while (next != NULL) {
 		if (!strncasecmp(next->name, atom_name, strlen(atom_name) + 1)) return next->atom;
@@ -180,6 +180,7 @@ static REBXYF Zero_Pair = {0, 0};
 	global_x_info->selection.data_length = 0;
 	global_x_info->leader_window = 0;
 	global_x_info->display = XOpenDisplay(NULL);
+	global_x_info->x_atom_list = NULL;
 
 	if (global_x_info->display == NULL){
 		RL_Print("XOpenDisplay failed, graphics is not supported\n");

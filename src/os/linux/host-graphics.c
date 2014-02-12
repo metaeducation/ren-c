@@ -289,7 +289,9 @@ extern REBGOBWINDOWS *Gob_Windows;
 	   if(global_x_info->display){
 		   XCloseDisplay(global_x_info->display);
 	   }
-	   x_atom_list_free(global_x_info->x_atom_list);
+	   if (global_x_info->x_atom_list) {
+		   x_atom_list_free(global_x_info->x_atom_list);
+	   }
 	   OS_Free(global_x_info);
 	}
 	FcFini();
