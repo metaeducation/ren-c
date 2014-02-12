@@ -613,7 +613,6 @@ chk_neg:
 }
 
 
-#ifdef TO_WIN32
 /***********************************************************************
 **
 */	REBSER *Block_To_String_List(REBVAL *blk)
@@ -665,10 +664,11 @@ chk_neg:
 	n = LEN_STR(str);
 
 	if (len == 1) {  // First is full file path
-		dir = To_REBOL_Path(str, n, -1, 0);
+		dir = To_REBOL_Path(str, n, OS_WIDE, 0);
 		Set_Series(REB_FILE, Append_Value(blk), dir);
 	}
 	else {  // First is dir path for the rest of the files
+#ifdef TO_WIN32 /* directory followed by files */
 		dir = To_REBOL_Path(str, n, -1, TRUE);
 		str += n + 1; // next
 		len = dir->tail;
@@ -678,11 +678,18 @@ chk_neg:
 			Set_Series(REB_FILE, Append_Value(blk), Copy_String(dir, 0, -1));
 			str += n + 1; // next
 		}
+#else /* absolute pathes already */
+		str += n + 1;
+		while (n = LEN_STR(str)) {
+			dir = To_REBOL_Path(str, n, OS_WIDE, FALSE);
+			Set_Series(REB_FILE, Append_Value(blk), Copy_String(dir, 0, -1));
+			str += n + 1; // next
+		}
+#endif
 	}
 
 	return blk;
 }
-#endif
 
 
 /***********************************************************************
@@ -691,7 +698,6 @@ chk_neg:
 /*
 ***********************************************************************/
 {
-#ifdef TO_WIN32
 	REBRFR fr = {0};
 	REBSER *ser;
 	REBINT n;
@@ -740,9 +746,6 @@ chk_neg:
 	OS_FREE(fr.files);
 
 	return ser ? R_RET : R_NONE;
-#else
-	return R_NONE;
-#endif
 }
 
 

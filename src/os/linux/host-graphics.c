@@ -295,5 +295,5 @@ extern REBGOBWINDOWS *Gob_Windows;
 	   }
 	   OS_Free(global_x_info);
 	}
-	FcFini();
+	//FcFini(); /* FIXME: gtk file chooser causes this to segfault */
 }
