@@ -1,8 +1,6 @@
 # For the build toolchain:
-#CC=	$(TOOLS)gcc
-CC=	$(TOOLS)clang
-#CXX  = $(TOOLS)g++
-CXX  = $(TOOLS)clang
+CC=	$(TOOLS)gcc
+CXX= $(TOOLS)g++
 NM=	$(TOOLS)nm
 STRIP=	$(TOOLS)strip
 
@@ -63,7 +61,7 @@ OBJS =	objs/a-constants.o objs/a-globals.o objs/a-lib.o objs/b-boot.o \
 	objs/u-sha1.o objs/u-zlib.o 
 
 HOST_COMMON =	objs/host-main.o objs/host-args.o objs/host-device.o objs/host-stdio.o \
-	objs/dev-net.o objs/dev-dns.o objs/host-lib.o objs/host-readline.o \
+	objs/dev-net.o objs/dev-dns.o objs/host-lib.o \
 	objs/dev-stdio.o objs/dev-event.o objs/dev-file.o objs/host-core.o objs/dev-clipboard.o
 
 CODECS = objs/aes.o objs/bigint.o objs/dh.o objs/lodepng.o objs/rc4.o objs/rsa.o

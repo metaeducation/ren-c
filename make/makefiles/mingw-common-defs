@@ -1,0 +1,27 @@
+LIB_PRODUCT_NAME ?= atronix-view #note: this can be overriden by the HOST_PRODUCT_NAME
+HOST_PRODUCT_NAME ?= $(LIB_PRODUCT_NAME)
+BIN_SUFFIX= .exe
+CFLAGS ?= -O2
+INC= -I$(INCL) -I$S/include/ -I$S/codecs/
+RAPI_FLAGS= $(CFLAGS) -DUNICODE $(EXTRA_CFLAGS)
+HOST_CORE_FLAGS= -DREB_CORE -DREB_EXE $(CFLAGS) -DUNICODE -DCUSTOM_STARTUP -D_FILE_OFFSET_BITS=64 $(EXTRA_CFLAGS)
+HOST_VIEW_FLAGS= -DREB_EXE $(CFLAGS) -DUNICODE -DCUSTOM_STARTUP -D_FILE_OFFSET_BITS=64 $(EXTRA_CFLAGS)
+ENCAP_CORE_FLAGS= -DENCAP -DEXT_LICENSING -DNOWINIOCTLTYPEDEFS $(HOST_CORE_FLAGS)
+ENCAP_VIEW_FLAGS= -DENCAP -DEXT_LICENSING -DNOWINIOCTLTYPEDEFS $(HOST_VIEW_FLAGS)
+RLIB_FLAGS=
+# Flags for core and for host:
+RFLAGS= -c $(BIT) -D$(TO_OS) -DREB_API  $(RAPI_FLAGS) $(INC)
+HFLAGS= -c $(BIT) -D$(TO_OS) $(HOST_FLAGS) $(INC)
+#-DREB_CORE
+#CLIB= -lm  -lwsock32 -lcomdlg32 -lgdi32 -lstdc++ -mwindows -Wl,--stack=4194300
+CLIB= -L$(LIBPATH)-L. -static-libgcc -lm -lwsock32 -lcomdlg32 -lgdi32 -liphlpapi -Wl,--stack=4194300
+GUI_CLIB= -L$(LIBPATH) -L. -static-libgcc -lm -lwsock32 -lcomdlg32 -lgdi32 -lmsimg32 -liphlpapi -Wl,--stack=4194300 -mwindows -static -lstdc++
+
+UPX= $(CD)upx$(BIN_SUFFIX) --ultra-brute
+
+# REBOL builds various include files:
+REBOL=	$(CD)r3-make -qs
+
+HOST_MINGW=
+
+AGG_MINGW= objs/agg_font_win32_tt.o

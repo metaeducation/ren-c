@@ -37,15 +37,6 @@ objs/dev-file.o:      $S/os/linux/dev-file.c
 objs/dev-clipboard.o:      $S/os/linux/dev-clipboard.c
 	$(CC) $S/os/linux/dev-clipboard.c $(HFLAGS) -o objs/dev-clipboard.o
 
-objs/host-draw-api.o: $S/os/host-draw-api-agg.cpp
-	$(CXX) $S/os/host-draw-api-agg.cpp $(HFLAGS_CPP) -o objs/host-draw-api.o
-
-objs/host-text-api.o: $S/os/host-text-api-agg.cpp
-	$(CXX) $S/os/host-text-api-agg.cpp $(HFLAGS_CPP) -o objs/host-text-api.o
-
-objs/host-text.o: $S/os/host-text.c
-	$(CC) $S/os/host-text.c $(HFLAGS) -o objs/host-text.o
-
 objs/host-graphics.o: $S/os/linux/host-graphics.c
 	$(CC) $S/os/linux/host-graphics.c $(HFLAGS) -o objs/host-graphics.o 
 

@@ -1,4 +1,6 @@
 BIN_SUFFIX= -linux
+CC=	$(TOOLS)clang
+CXX  = $(TOOLS)clang
 
 INCL ?= .
 INC= -I$(INCL) -I$S/include/ -I$S/codecs/ -I../src/freetype-2.4.12/include `pkg-config freetype2 --cflags`
@@ -14,7 +16,10 @@ GUI_CLIB=  -ldl -lm -lstdc++ -lfreetype -L../src/freetype-2.4.12/objs/.libs/ `pk
 REBOL=	$(CD)r3-make-linux -qs
 
 HOST_LINUX = \
-	objs/iso-639.o objs/iso-3166.o objs/file-chooser-gtk.o
+	objs/host-readline.o \
+	objs/iso-639.o \
+	objs/iso-3166.o \
+	objs/file-chooser-gtk.o
 
 GFX_LINUX= \
 	objs/host-put-image.o \

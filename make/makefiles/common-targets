@@ -3,20 +3,20 @@ prep-lib:
 	$(REBOL) $T/make-boot.r $(OS_ID) $(HOST_PRODUCT_NAME)
 	$(REBOL) $T/make-os-ext.r # ok, but not always
 	$(REBOL) $T/make-reb-lib.r
-	-rm -f $(OBJS) 
+	#-rm -f $(OBJS) 
 
 prep-core: prep-lib
 	#$(REBOL) $T/rma-init.r $(HOST_PRODUCT_NAME)
 	$(REBOL) $T/core-ext.r
 	$(eval HOST_FLAGS =$(HOST_CORE_FLAGS))
-	-rm -f $(HOST)
+	#-rm -f $(HOST)
 
 prep-view: prep-lib
 	#$(REBOL) $T/rma-init.r $(HOST_PRODUCT_NAME)
 	$(REBOL) $T/core-ext.r
 	$(REBOL) $T/view-ext.r
 	$(eval HOST_FLAGS =$(HOST_VIEW_FLAGS))
-	-rm -f $(HOST) 
+	#-rm -f $(HOST) 
 
 # Directly linked r3 executable:
 r3-core$(BIN_SUFFIX): prep-core objs $(OBJS) $(HOST) $(CODECS)
@@ -26,7 +26,7 @@ r3-core$(BIN_SUFFIX): prep-core objs $(OBJS) $(HOST) $(CODECS)
 	#$(LS) r3-core$(BIN_SUFFIX)
 
 r3-view$(BIN_SUFFIX): prep-view objs $(OBJS) $(HOST) $(CODECS) $(GFX) $(AGG)
-	$(CC) -o r3-view$(BIN_SUFFIX) $(OBJS) $(HOST) $(CODECS) $(GUI_CLIB) $(GFX) $(AGG)
+	$(CXX) -o r3-view$(BIN_SUFFIX) $(OBJS) $(HOST) $(CODECS) $(GUI_CLIB) $(GFX) $(AGG)
 	#$(STRIP) r3-view$(BIN_SUFFIX)
 	#-$(NM) -a r3-view$(BIN_SUFFIX)
 	#$(LS) r3-view$(BIN_SUFFIX)
@@ -357,6 +357,15 @@ objs/host-view.o: $S/os/host-view.c
 
 objs/host-draw.o: $S/os/host-draw.c
 	$(CC) $S/os/host-draw.c $(HFLAGS) -o objs/host-draw.o 
+
+objs/host-draw-api.o: $S/os/host-draw-api-agg.cpp
+	$(CXX) $S/os/host-draw-api-agg.cpp $(HFLAGS_CPP) -o objs/host-draw-api.o
+
+objs/host-text-api.o: $S/os/host-text-api-agg.cpp
+	$(CXX) $S/os/host-text-api-agg.cpp $(HFLAGS_CPP) -o objs/host-text-api.o
+
+objs/host-text.o: $S/os/host-text.c
+	$(CC) $S/os/host-text.c $(HFLAGS) -o objs/host-text.o
 
 objs/aes.o: $S/codecs/aes/aes.c
 	$(CC) $S/codecs/aes/aes.c $(HFLAGS) -o objs/aes.o
