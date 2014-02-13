@@ -706,7 +706,20 @@ static int Try_Browser(char *browser, REBCHR *url)
 	REBOOL ret = FALSE;
 #ifdef USE_GTK_FILECHOOSER
 	REBINT error;
-	void *libgtk = OS_Open_Library("libgtk-3.so", &error);
+	const char * libs [] = {
+		"libgtk-3.so",
+		"libgtk-3.so.0", /* Some systems, like Ubuntu, don't have libgtk-3.so */
+		NULL
+	};
+	const char **ptr = NULL;
+	void *libgtk = NULL;
+	for (ptr = &libs[0]; *ptr != NULL; ptr ++) {
+		libgtk = OS_Open_Library(*ptr, &error);
+		if (libgtk != NULL) {
+			break;
+		}
+	}
+
 	if (libgtk == NULL) {
 		//RL_Print("open libgtk-3.so failed: %s\n", dlerror());
 		return FALSE;
