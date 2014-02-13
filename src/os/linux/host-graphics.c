@@ -84,7 +84,8 @@ extern REBGOBWINDOWS *Gob_Windows;
 ***********************************************************************/
 {
 #define MAX_WINDOWS 64
-	if (cursor == NULL)
+	if (cursor == NULL
+		|| global_x_info->display == NULL)
 		return;
 	int i = 0;
 	for(i = 0; i < MAX_WINDOWS; i ++){
@@ -103,7 +104,8 @@ extern REBGOBWINDOWS *Gob_Windows;
 ***********************************************************************/
 { 
 	/* all cursor shapes are even numbers in the range of 0~154 as defined in cursorfont.h */
-	if (((REBUPT)cursor) < 155 && ((REBUPT)cursor) % 2 == 0) {
+	if (((REBUPT)cursor) < 155 && ((REBUPT)cursor) % 2 == 0
+		&& global_x_info->display != NULL) {
 		return (void*)XCreateFontCursor(global_x_info->display, (REBUPT)cursor);
 	}
 
@@ -118,7 +120,8 @@ extern REBGOBWINDOWS *Gob_Windows;
 **
 ***********************************************************************/
 {
-	if (cursor != NULL)
+	if (cursor != NULL
+		&& global_x_info->display != NULL)
 		XFreeCursor(global_x_info->display, (Cursor)cursor);
 }
 
@@ -131,7 +134,7 @@ extern REBGOBWINDOWS *Gob_Windows;
 ***********************************************************************/
 {
        Screen *sc = NULL;
-	   Window root = DefaultRootWindow(global_x_info->display);
+	   Window root = 0;
        int dot, mm;
 	   Atom     actual_type;
 	   int      actual_format;
@@ -145,6 +148,7 @@ extern REBGOBWINDOWS *Gob_Windows;
        if (global_x_info->display == NULL){
                return 0;
        }
+	   root = DefaultRootWindow(global_x_info->display);
        sc = XDefaultScreenOfDisplay(global_x_info->display);
        switch(type) {
                case SM_SCREEN_WIDTH:
