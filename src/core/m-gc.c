@@ -173,7 +173,7 @@ static void Mark_Series(REBSER *series, REBCNT depth);
 		while(req) {
 			// The ->port field of the REBREQ is void*, so we must cast
 			// Comment says it is "link back to REBOL port object"
-			CHECK_MARK((REBSER*)req->port, depth);
+			if (req->port) CHECK_MARK((REBSER*)req->port, depth);
 			req = req->next;
 		}
 	}
