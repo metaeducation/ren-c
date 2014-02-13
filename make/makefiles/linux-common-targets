@@ -1,0 +1,59 @@
+objs/keysym2ucs.o: $S/os/linux/keysym2ucs.c
+	$(CC) $< $(HFLAGS) -o $@
+
+objs/iso-639.o: $S/os/linux/iso-639.c
+	$(CC) $< $(HFLAGS) -o $@
+
+objs/iso-3166.o: $S/os/linux/iso-3166.c
+	$(CC) $< $(HFLAGS) -o $@
+
+objs/host-put-image.o: $S/os/linux/host-put-image.cpp
+	$(CXX) $< $(HFLAGS_CPP) -o $@ -I $S/agg
+
+objs/agg_font_freetype.o: $S/agg/agg_font_freetype.cpp
+	$(CXX) $< $(HFLAGS_CPP) -o $@ -I $S/agg
+
+objs/agg_fontconfig.o:$S/agg/agg_fontconfig.cpp
+	$(CXX) $< $(HFLAGS_CPP) $(HFLAGS_FONT_CONFIG) -o $@
+
+objs/file-chooser-gtk.o:      $S/os/linux/file-chooser-gtk.c
+	$(CC) $< $(HFLAGS) `pkg-config gtk+-3.0 --cflags` -o $@
+
+objs/host-lib.o:      $S/os/linux/host-lib.c
+	$(CC) $S/os/linux/host-lib.c $(HFLAGS) -o objs/host-lib.o
+
+objs/host-readline.o: $S/os/linux/host-readline.c
+	$(CC) $S/os/linux/host-readline.c $(HFLAGS) -o objs/host-readline.o
+
+objs/dev-stdio.o:     $S/os/linux/dev-stdio.c
+	$(CC) $S/os/linux/dev-stdio.c $(HFLAGS) -o objs/dev-stdio.o
+
+objs/dev-event.o:     $S/os/linux/dev-event.c
+	$(CC) $S/os/linux/dev-event.c $(HFLAGS) -o objs/dev-event.o
+
+objs/dev-file.o:      $S/os/linux/dev-file.c
+	$(CC) $S/os/linux/dev-file.c $(HFLAGS) -o objs/dev-file.o
+
+objs/dev-clipboard.o:      $S/os/linux/dev-clipboard.c
+	$(CC) $S/os/linux/dev-clipboard.c $(HFLAGS) -o objs/dev-clipboard.o
+
+objs/host-draw-api.o: $S/os/host-draw-api-agg.cpp
+	$(CXX) $S/os/host-draw-api-agg.cpp $(HFLAGS_CPP) -o objs/host-draw-api.o
+
+objs/host-text-api.o: $S/os/host-text-api-agg.cpp
+	$(CXX) $S/os/host-text-api-agg.cpp $(HFLAGS_CPP) -o objs/host-text-api.o
+
+objs/host-text.o: $S/os/host-text.c
+	$(CC) $S/os/host-text.c $(HFLAGS) -o objs/host-text.o
+
+objs/host-graphics.o: $S/os/linux/host-graphics.c
+	$(CC) $S/os/linux/host-graphics.c $(HFLAGS) -o objs/host-graphics.o 
+
+objs/host-window.o: $S/os/linux/host-window.c
+	$(CC) $S/os/linux/host-window.c $(HFLAGS) -o objs/host-window.o
+
+objs/host-event.o: $S/os/linux/host-event.c
+	$(CC) $S/os/linux/host-event.c $(HFLAGS) -o objs/host-event.o
+
+objs/host-compositor.o: $S/os/linux/host-compositor.c
+	$(CC) $S/os/linux/host-compositor.c $(HFLAGS) -o objs/host-compositor.o

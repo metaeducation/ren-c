@@ -1,0 +1,25 @@
+BIN_SUFFIX= -linux
+
+INCL ?= .
+INC= -I$(INCL) -I$S/include/ -I$S/codecs/ -I../src/freetype-2.4.12/include `pkg-config freetype2 --cflags`
+
+RAPI_FLAGS=  $(CFLAGS) $(BIT) -Wno-pointer-sign -fvisibility=hidden -fPIC
+HOST_CORE_FLAGS= $(CFLAGS) -Wno-pointer-sign -DREB_CORE -DMIN_OS -DREB_EXE  $(BIT) -fvisibility=hidden  -D_FILE_OFFSET_BITS=64 -DCUSTOM_STARTUP
+HOST_VIEW_FLAGS= $(CFLAGS) -Wno-pointer-sign -DREB_EXE $(BIT) -fvisibility=hidden  -D_FILE_OFFSET_BITS=64 -DCUSTOM_STARTUP -DUSE_GTK_FILECHOOSER
+HFLAGS_FONT_CONFIG=`pkg-config fontconfig --cflags`
+
+CLIB= -ldl -lm 
+GUI_CLIB=  -ldl -lm -lstdc++ -lfreetype -L../src/freetype-2.4.12/objs/.libs/ `pkg-config freetype2 --libs` -lX11 `pkg-config fontconfig --libs` $(BIT)
+# REBOL builds various include files:
+REBOL=	$(CD)r3-make-linux -qs
+
+HOST_LINUX = \
+	objs/iso-639.o objs/iso-3166.o objs/file-chooser-gtk.o
+
+GFX_LINUX= \
+	objs/host-put-image.o \
+	objs/keysym2ucs.o
+
+AGG_LINUX= \
+	objs/agg_font_freetype.o\
+	objs/agg_fontconfig.o
