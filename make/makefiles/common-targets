@@ -1,35 +1,45 @@
-prep-lib:
+prep-lib-stamp:
 	$(REBOL) $T/make-headers.r
 	$(REBOL) $T/make-boot.r $(OS_ID) $(HOST_PRODUCT_NAME)
 	$(REBOL) $T/make-os-ext.r # ok, but not always
 	$(REBOL) $T/make-reb-lib.r
+	touch prep-lib-stamp
 	#-rm -f $(OBJS) 
 
-prep-core: prep-lib
-	#$(REBOL) $T/rma-init.r $(HOST_PRODUCT_NAME)
+prep-core-stamp: prep-lib-stamp
 	$(REBOL) $T/core-ext.r
+	touch prep-core-stamp
+
+prep-core:
+	#$(REBOL) $T/rma-init.r $(HOST_PRODUCT_NAME)
 	$(eval HOST_FLAGS =$(HOST_CORE_FLAGS))
 	#-rm -f $(HOST)
-
-prep-view: prep-lib
+	
+prep-view-stamp: prep-lib-stamp
 	#$(REBOL) $T/rma-init.r $(HOST_PRODUCT_NAME)
 	$(REBOL) $T/core-ext.r
 	$(REBOL) $T/view-ext.r
+	touch prep-view-stamp
+
+prep-view:
+	#$(REBOL) $T/rma-init.r $(HOST_PRODUCT_NAME)
 	$(eval HOST_FLAGS =$(HOST_VIEW_FLAGS))
 	#-rm -f $(HOST) 
 
 # Directly linked r3 executable:
-r3-core$(BIN_SUFFIX): prep-core objs $(OBJS) $(HOST) $(CODECS)
+r3-core$(BIN_SUFFIX): prep-core prep-core-stamp objs $(OBJS) $(HOST) $(CODECS)
 	$(CC) -o r3-core$(BIN_SUFFIX) $(OBJS) $(HOST) $(CODECS) $(CLIB)
-	#$(STRIP) r3-core$(BIN_SUFFIX)
+
+strip-core: r3-core$(BIN_SUFFIX)
+	$(STRIP) $<
 	#-$(NM) -a r3-core$(BIN_SUFFIX)
 	#$(LS) r3-core$(BIN_SUFFIX)
 
-r3-view$(BIN_SUFFIX): prep-view objs $(OBJS) $(HOST) $(CODECS) $(GFX) $(AGG)
+r3-view$(BIN_SUFFIX): prep-view prep-view-stamp objs $(OBJS) $(HOST) $(CODECS) $(GFX) $(AGG)
 	$(CXX) -o r3-view$(BIN_SUFFIX) $(OBJS) $(HOST) $(CODECS) $(GUI_CLIB) $(GFX) $(AGG)
-	#$(STRIP) r3-view$(BIN_SUFFIX)
-	#-$(NM) -a r3-view$(BIN_SUFFIX)
-	#$(LS) r3-view$(BIN_SUFFIX)
+
+strip-view: r3-view$(BIN_SUFFIX)
+	$(STRIP) $<
 
 objs:
 	mkdir -p objs
@@ -458,7 +468,8 @@ objs/rich_text.o:     $S/agg/rich_text.cpp
 
 clean:
 	@-rm -rf $(R3LIB) r3-core-host$(BIN_SUFFIX) r3-view-host$(BIN_SUFFIX) r3-core$(BIN_SUFFIX) r3-view$(BIN_SUFFIX) objs/ 
-	@rm -fr $(GENS)
+	@-rm -fr $(GENS)
+	@-rm prep-lib-stamp prep-core-stamp prep-view-stamp
 
 GENS = $I/tmp-funcargs.h \
 	   $I/tmp-funcs.h \
