@@ -134,7 +134,6 @@ dump-obj: funct [
 
 			Other information:
 
-				chat - open DevBase developer forum/BBS
 				docs - open DocBase document wiki website
 				bugs - open CureCore bug database website
 				demo - run demo launcher (from saphirion.com)
@@ -428,16 +427,6 @@ upgrade: funct [
 	print "Fetching upgrade check ..."
 	if error? err: try [do http://www.rebol.com/r3/upgrade.r none][
 		either err/id = 'protocol [print "Cannot upgrade from web."][do err]
-	]
-	exit
-]
-
-chat: funct [
-	"Open REBOL DevBase forum/BBS."
-][
-	print "Fetching chat..."
-	if error? err: try [do http://www.rebol.com/r3/chat.r none][
-		either err/id = 'protocol [print "Cannot load chat from web."][do err]
 	]
 	exit
 ]

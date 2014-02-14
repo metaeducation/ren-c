@@ -69,7 +69,6 @@ sys/boot-help:
 
 Special functions:
 
-  Chat - open DevBase developer forum/BBS
   Docs - open DocBase document wiki (web)
   Bugs - open CureCode bug database (web)
   Demo - run demo launcher (from saphirion.com)
