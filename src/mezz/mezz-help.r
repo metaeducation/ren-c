@@ -134,7 +134,6 @@ dump-obj: funct [
 
 			Other information:
 
-				bugs - open CureCore bug database website
 				demo - run demo launcher (from saphirion.com)
 				about - see general product info
 				upgrade - check for newer versions
@@ -427,14 +426,6 @@ upgrade: funct [
 	if error? err: try [do http://www.rebol.com/r3/upgrade.r none][
 		either err/id = 'protocol [print "Cannot upgrade from web."][do err]
 	]
-	exit
-]
-
-bugs: func [
-	"View bug database."
-][
-	say-browser
-	browse http://curecode.org/rebol3/
 	exit
 ]
 
