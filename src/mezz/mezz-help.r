@@ -137,7 +137,6 @@ dump-obj: funct [
 				demo - run demo launcher (from saphirion.com)
 				about - see general product info
 				upgrade - check for newer versions
-				changes - show changes for recent version
 				install - install (when applicable)
 				license - show user license
 				usage - program cmd line options
@@ -426,14 +425,6 @@ upgrade: funct [
 	if error? err: try [do http://www.rebol.com/r3/upgrade.r none][
 		either err/id = 'protocol [print "Cannot upgrade from web."][do err]
 	]
-	exit
-]
-
-changes: func [
-	"What's new about this version."
-][
-	say-browser
-	browse http://www.rebol.com/r3/changes.html
 	exit
 ]
 

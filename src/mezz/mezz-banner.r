@@ -72,7 +72,6 @@ Special functions:
   Demo - run demo launcher (from saphirion.com)
   Help - show built-in help information
   Upgrade - check for newer releases
-  Changes - what's new about this version (web)
 }
 
 ;print make-banner boot-banner halt
