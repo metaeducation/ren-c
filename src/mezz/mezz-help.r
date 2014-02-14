@@ -134,7 +134,6 @@ dump-obj: funct [
 
 			Other information:
 
-				docs - open DocBase document wiki website
 				bugs - open CureCore bug database website
 				demo - run demo launcher (from saphirion.com)
 				about - see general product info
@@ -428,14 +427,6 @@ upgrade: funct [
 	if error? err: try [do http://www.rebol.com/r3/upgrade.r none][
 		either err/id = 'protocol [print "Cannot upgrade from web."][do err]
 	]
-	exit
-]
-
-docs: func [
-	"Browse on-line documentation."
-][
-	say-browser
-	browse http://www.rebol.com/r3/docs
 	exit
 ]
 

@@ -69,7 +69,6 @@ sys/boot-help:
 
 Special functions:
 
-  Docs - open DocBase document wiki (web)
   Bugs - open CureCode bug database (web)
   Demo - run demo launcher (from saphirion.com)
   Help - show built-in help information
