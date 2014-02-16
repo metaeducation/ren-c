@@ -593,7 +593,7 @@ got_err:
 {
 	REBCNT argnum = IS_FALSE(D_ARG(1)) ? 3 : 2;
 
-	if (IS_BLOCK(D_ARG(argnum))) {
+	if (IS_BLOCK(D_ARG(argnum)) && !D_REF(4) /* not using /ONLY */) {
 		DO_BLK(D_ARG(argnum));
 		return R_TOS1;
 	} else {
@@ -627,7 +627,7 @@ got_err:
 	} else
 		if (IS_FALSE(cond)) argnum = 4;
 
-	if (IS_BLOCK(D_ARG(argnum))) {
+	if (IS_BLOCK(D_ARG(argnum)) && !D_REF(5) /* not using /ONLY */) {
 		DO_BLK(D_ARG(argnum));
 		return R_TOS1;
 	} {
@@ -779,7 +779,7 @@ got_err:
 ***********************************************************************/
 {
 	if (IS_FALSE(D_ARG(1))) {
-		if (IS_BLOCK(D_ARG(2))) {
+		if (IS_BLOCK(D_ARG(2)) && !D_REF(3) /* not using /ONLY */) {
 			DO_BLK(D_ARG(2));
 			return R_TOS1;
 		} else {
