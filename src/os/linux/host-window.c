@@ -779,6 +779,7 @@ static void set_gob_window_type(REBGOB *gob,
 	hw->x_id = window;
 	hw->old_width = w;
 	hw->old_height = h;
+	hw->window_flags = 0;
 	Gob_Windows[windex].win = hw;
 	Gob_Windows[windex].compositor = rebcmp_create(Gob_Root, gob);
 
