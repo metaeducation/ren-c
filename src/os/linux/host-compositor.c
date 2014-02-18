@@ -240,13 +240,19 @@ typedef struct rebcmp_ctx {
 
 	ctx->Win_Region = NULL;
 
-	ctx->x_window = GOB_HWIN(gob)->x_id;
-	ctx->x_gc = XCreateGC(global_x_info->display, ctx->x_window, 0, 0);
-	int screen_num = DefaultScreen(global_x_info->display);
-	unsigned long black = BlackPixel(global_x_info->display, screen_num);
-	unsigned long white = WhitePixel(global_x_info->display, screen_num);
-	XSetBackground(global_x_info->display, ctx->x_gc, white);
-	XSetForeground(global_x_info->display, ctx->x_gc, black);
+	host_window_t *hw = GOB_HWIN(gob);
+	if (hw != NULL) {
+		ctx->x_window = hw->x_id;
+		ctx->x_gc = XCreateGC(global_x_info->display, ctx->x_window, 0, 0);
+		int screen_num = DefaultScreen(global_x_info->display);
+		unsigned long black = BlackPixel(global_x_info->display, screen_num);
+		unsigned long white = WhitePixel(global_x_info->display, screen_num);
+		XSetBackground(global_x_info->display, ctx->x_gc, white);
+		XSetForeground(global_x_info->display, ctx->x_gc, black);
+	} else {
+		ctx->x_window = 0;
+		ctx->x_gc = 0;
+	}
 
 	ctx->x_image = NULL;
 	ctx->pixbuf = NULL;
@@ -276,7 +282,9 @@ typedef struct rebcmp_ctx {
 		shmdt(ctx->x_shminfo.shmaddr);
 	}
 #endif
-	XFreeGC(global_x_info->display, ctx->x_gc);
+	if (ctx->x_gc != 0) {
+		XFreeGC(global_x_info->display, ctx->x_gc);
+	}
 
 	if (ctx->Win_Region) {
 		XDestroyRegion(ctx->Win_Region);
