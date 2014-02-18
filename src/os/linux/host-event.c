@@ -677,7 +677,7 @@ void Dispatch_Event(XEvent *ev)
 			break;
 		case PropertyNotify:
 			/* check if it's fullscreen */
-			gob = Find_Gob_By_Window(ev->xproperty.window);
+			gob = Find_Gob_By_Window(ev->xproperty.window); /*this event could come after window is free'ed */
 			if (gob != NULL)
 				handle_property_notify(ev, gob);
 			break;
