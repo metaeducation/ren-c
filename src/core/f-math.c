@@ -210,6 +210,7 @@
 	return buf + len;
 }
 
+
 /***********************************************************************
 **
 */	REBYTE *Form_Integer(REBYTE *buf, REBI64 val)
@@ -242,7 +243,7 @@
 
 REBINT Emit_Decimal(REBYTE *cp, REBDEC d, REBFLG trim, REBYTE point, REBINT decimal_digits) {
 	REBYTE *start = cp, *sig, *rve;
-	REBINT e, sgn;
+	int e, sgn;
 	REBINT digits_obtained;
 
 	/* sanity checks */

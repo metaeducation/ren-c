@@ -75,8 +75,13 @@ typedef char			i8;
 typedef unsigned char	u8;
 typedef short			i16;
 typedef unsigned short	u16;
+#ifdef __LP64__
 typedef int				i32;
 typedef unsigned int	u32;
+#else
+typedef long				i32;
+typedef unsigned long	u32;
+ #endif
 #ifdef ODD_INT_64       // Windows VC6 nonstandard typing for 64 bits
 typedef _int64          i64;
 typedef unsigned _int64 u64;
@@ -92,8 +97,8 @@ typedef long			REBIPT;		// integral counterpart of void*
 typedef unsigned long	REBUPT;		// unsigned counterpart of void*
 #endif
 
-#define MAX_I32 ((int)0x7fffffff)
-#define MIN_I32 ((int)0x80000000)
+#define MAX_I32 ((i32)0x7fffffff)
+#define MIN_I32 ((i32)0x80000000)
 #ifdef HAS_LL_CONSTS
 #define MAX_I64 ((i64)0x7fffffffffffffffLL)
 #define MIN_I64 ((i64)0x8000000000000000LL)
@@ -131,16 +136,16 @@ typedef struct sInt64 {
 **
 ***********************************************************************/
 
-typedef i32             REBINT;     // 32 bit (64 bit defined below)
-typedef u32    			REBCNT;     // 32 bit (counting number)
-typedef i64             REBI64;     // 64 bit integer
-typedef u64             REBU64;     // 64 bit unsigned integer
+typedef i32				REBINT;     // 32 bit (64 bit defined below)
+typedef u32				REBCNT;     // 32 bit (counting number)
+typedef i64				REBI64;     // 64 bit integer
+typedef u64				REBU64;     // 64 bit unsigned integer
 typedef i8				REBOOL;     // 8  bit flag (for struct usage)
-typedef u32    			REBFLG;     // 32 bit flag (for cpu efficiency)
-typedef float           REBD32;     // 32 bit decimal
-typedef double          REBDEC;     // 64 bit decimal
+typedef u32				REBFLG;     // 32 bit flag (for cpu efficiency)
+typedef float			REBD32;     // 32 bit decimal
+typedef double			REBDEC;     // 64 bit decimal
 
-typedef unsigned char   REBYTE;     // unsigned byte data
+typedef unsigned char	REBYTE;     // unsigned byte data
 typedef u16				REBUNI;     // unicode char
 
 // REBCHR - only to refer to OS char strings (not internal strings)
