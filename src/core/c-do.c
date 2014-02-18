@@ -733,7 +733,10 @@ more_path:
 			Trap_Arg(args);
 		}
 
-		if (THROWN(DS_VALUE(ds))) return index;
+		if (THROWN(DS_VALUE(ds))) {
+			*DS_TOP = *DS_VALUE(ds); /* for Do_Next detection */
+			return index;
+		}
 
 		// If word is typed, verify correct argument datatype:
 		if (!TYPE_CHECK(args, VAL_TYPE(DS_VALUE(ds))))
