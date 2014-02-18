@@ -162,7 +162,7 @@ REBINT Alloc_Window(REBGOB *gob) {
 		if (Gob_Windows[n].gob == gob) {
 			rebcmp_destroy(Gob_Windows[n].compositor);
 //			Reb_Print("rebcmp_destroy %d", Gob_Windows[n].compositor);
-			Gob_Windows[n].gob = 0;
+			CLEAR(&Gob_Windows[n], sizeof(Gob_Windows[n]));
 			return;
 		}
 	}
