@@ -112,18 +112,22 @@ void Dispatch_Event(XEvent *ev);
 	//printf("usec %d\n", tv.tv_usec);
 	
 #ifndef REB_CORE
-	XEvent ev;
-	i64 base = OS_Delta_Time(0, 0) ;
-    // This returns the FD of the X11 display (or something like that)
-    x11_fd = ConnectionNumber(global_x_info->display);
+	if (global_x_info->display != NULL) {
+		XEvent ev;
+		i64 base = OS_Delta_Time(0, 0) ;
+	    // This returns the FD of the X11 display (or something like that)
+	    x11_fd = ConnectionNumber(global_x_info->display);
 
-        // Create a File Description Set containing x11_fd
-	FD_SET(x11_fd, &in_fds);
+		// Create a File Description Set containing x11_fd
+		FD_SET(x11_fd, &in_fds);
 
-	// Wait for X Event or a Timer
-	if (select(x11_fd+1, &in_fds, 0, 0, &tv) > 0){
-		XNextEvent(global_x_info->display, &ev);
-		Dispatch_Event(&ev);
+		// Wait for X Event or a Timer
+		if (select(x11_fd+1, &in_fds, 0, 0, &tv) > 0){
+			XNextEvent(global_x_info->display, &ev);
+			Dispatch_Event(&ev);
+		}
+	} else {
+		select(x11_fd+1, &in_fds, 0, 0, &tv);
 	}
 #else
 	select(x11_fd+1, &in_fds, 0, 0, &tv);
