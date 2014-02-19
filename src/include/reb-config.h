@@ -143,12 +143,14 @@ These are now obsolete (as of A107) and should be removed:
 #define API_IMPORT
 #endif
 
-#ifdef TO_LINUX					// Linux/Intel
+#ifdef TO_LINUX_X86				// Linux/Intel X86
+#define TO_LINUX
 #define ENDIAN_LITTLE
 #define HAS_LL_CONSTS
 #endif
 
 #ifdef TO_LINUX_X64				// Linux/AMD64
+#define TO_LINUX
 #define ENDIAN_LITTLE
 #define HAS_LL_CONSTS
 #ifndef __LP64__
@@ -157,16 +159,19 @@ These are now obsolete (as of A107) and should be removed:
 #endif
 
 #ifdef TO_LINUX_PPC				// Linux/PPC
+#define TO_LINUX
 #define ENDIAN_BIG
 #define HAS_LL_CONSTS
 #endif
 
 #ifdef TO_LINUX_ARM				// Linux/ARM
+#define TO_LINUX
 #define ENDIAN_LITTLE
 #define HAS_LL_CONSTS
 #endif
 
 #ifdef TO_LINUX_MIPS
+#define TO_LINUX
 #define ENDIAN_LITTLE
 #define HAS_LL_CONSTS
 #endif
