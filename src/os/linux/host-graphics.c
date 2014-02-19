@@ -59,6 +59,8 @@ extern const unsigned char RX_text[];
 
 extern x_info_t *global_x_info;
 extern REBGOBWINDOWS *Gob_Windows;
+void Host_Crash(REBYTE *reason);
+void OS_Free(void *mem);
 
 //**********************************************************************
 //** Helper Functions **************************************************
@@ -125,6 +127,71 @@ extern REBGOBWINDOWS *Gob_Windows;
 		XFreeCursor(global_x_info->display, (Cursor)cursor);
 }
 
+static int get_work_area(METRIC_TYPE type)
+{
+	   Atom     actual_type;
+	   int      actual_format;
+	   long     nitems;
+	   long     bytes;
+	   long     *data = NULL;
+	   int 		status;
+	   int 		index = 0;
+	   int		ret;
+	   status = XGetWindowProperty(global_x_info->display,
+								   DefaultRootWindow(global_x_info->display),
+								   XInternAtom(global_x_info->display, "_NET_WORKAREA", True),
+								   0,
+								   (~0L),
+								   False,
+								   AnyPropertyType,
+								   &actual_type,
+								   &actual_format,
+								   &nitems,
+								   &bytes,
+								   (unsigned char**)&data);
+
+	   /*
+		  RL_Print("actual_type %d\n", actual_type);
+		  RL_Print("actual_format %d\n", actual_format);
+		  RL_Print("nitems %d\n", nitems);
+		  RL_Print("bytes %d\n", bytes);
+		  for (i=0; i < nitems; i++){
+		  RL_Print("data[%d] %d\n", i, data[i]);
+		  }
+		  */
+	   switch(type) {
+		   case SM_WORK_X:
+			   index = 0;
+			   break;
+		   case SM_WORK_Y:
+			   index = 1;
+			   break;
+		   case SM_WORK_WIDTH:
+			   index = 2;
+			   break;
+		   case SM_WORK_HEIGHT:
+			   index = 3;
+			   break;
+	   }
+
+	   if (status != Success
+		   || data == NULL
+		   || actual_type != XA_CARDINAL
+		   || actual_format != 32
+		   || nitems < 4) {
+		   RL_Print("Falling back...\n");
+		   int fake_data[] = {0, 0, 1920, 1080};
+		   if (data) {
+			   XFree(data);
+		   }
+		   return fake_data[index];
+	   }
+
+	   ret = data[index];
+	   XFree(data);
+	   return ret;
+}
+
 /***********************************************************************
 **
 */	REBD32 OS_Get_Metrics(METRIC_TYPE type)
@@ -159,48 +226,7 @@ extern REBGOBWINDOWS *Gob_Windows;
                case SM_WORK_Y:
                case SM_WORK_WIDTH:
                case SM_WORK_HEIGHT:
-					   status = XGetWindowProperty(global_x_info->display,
-												   RootWindowOfScreen(sc),
-												   XInternAtom(global_x_info->display, "_NET_WORKAREA", True),
-												   0,
-												   (~0L),
-												   False,
-												   AnyPropertyType,
-												   &actual_type,
-												   &actual_format,
-												   &nitems,
-												   &bytes,
-												   (unsigned char**)&data);
-					   if (status != Success) {
-						   //RL_Print("status = %d\n", status);
-						   Host_Crash("XGetWindowProperty failed in OS_Get_Metrics");
-					   }
-
-					   /*
-					   RL_Print("actual_type %d\n", actual_type);
-					   RL_Print("actual_format %d\n", actual_format);
-					   RL_Print("nitems %d\n", nitems);
-					   RL_Print("bytes %d\n", bytes);
-					   for (i=0; i < nitems; i++){
-						   RL_Print("data[%d] %d\n", i, data[i]);
-					   }
-					   */
-					   switch(type) {
-						   case SM_WORK_X:
-							   ret = data[0];
-							   break;
-						   case SM_WORK_Y:
-							   ret = data[1];
-							   break;
-						   case SM_WORK_WIDTH:
-							   ret = data[2];
-							   break;
-						   case SM_WORK_HEIGHT:
-							   ret = data[3];
-							   break;
-					   }
-					   XFree(data);
-					   return ret;
+					   return get_work_area(type);
                case SM_TITLE_HEIGHT:
 					   status = XGetWindowProperty(global_x_info->display,
 												   RootWindowOfScreen(sc),
@@ -214,7 +240,11 @@ extern REBGOBWINDOWS *Gob_Windows;
 												   &nitems,
 												   &bytes,
 												   (unsigned char**)&data);
-					   if (status != Success || data == NULL) {
+					   if (status != Success
+						   || data == NULL
+						   || actual_type != XA_CARDINAL
+						   || actual_format != 32
+						   || nitems != 4) {
 						   //RL_Print("status = %d, nitmes = %d\n", status, nitems);
 						   //Host_Crash("XGetWindowProperty failed in OS_Get_Metrics");
 						   return 20; //FIXME
