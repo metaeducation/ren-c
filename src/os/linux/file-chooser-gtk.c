@@ -1,3 +1,5 @@
+#ifdef USE_GTK_FILECHOOSER
+
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
@@ -175,3 +177,5 @@ int os_init_gtk(void *libgtk)
 	int argc = 0;
 	return gtk_init_check(&argc, NULL);
 }
+
+#endif //USE_GTK_FILECHOOSER

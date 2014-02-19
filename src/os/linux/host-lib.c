@@ -83,6 +83,7 @@ static void *Task_Ready;
 const char ** iso639_find_entry_by_2_code(const char* code);
 const char ** iso3166_find_entry_by_2_code(const char* code);
 
+#ifdef USE_GTK_FILECHOOSER
 int os_create_file_selection (void 			*libgtk,
 							  char 			*buf,
 							  int 			len,
@@ -92,6 +93,7 @@ int os_create_file_selection (void 			*libgtk,
 							  int 			multiple);
 
 int os_init_gtk(void *libgtk);
+#endif
 
 void OS_Destroy_Graphics(void);
 
