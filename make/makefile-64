@@ -1,6 +1,7 @@
 makefile=makefile-64
 TO_OS= TO_LINUX_X64
 OS_ID= 0.4.40
+EXTRA_VIEW_FLAGS=-DUSE_GTK_FILECHOOSER
 
 MD=makefiles
 

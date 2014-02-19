@@ -2,6 +2,7 @@ makefile=makefile-32
 TO_OS?= TO_LINUX_X86
 OS_ID?= 0.4.4
 BIT="-m32"
+EXTRA_VIEW_FLAGS=-DUSE_GTK_FILECHOOSER
 
 MD=makefiles
 
