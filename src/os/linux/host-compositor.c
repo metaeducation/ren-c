@@ -174,6 +174,10 @@ typedef struct rebcmp_ctx {
 #endif
 			ctx->pixbuf_len = w * h * 4; //BGRA32;
 			ctx->pixbuf = OS_Make(ctx->pixbuf_len);
+			if (ctx->pixbuf == NULL){
+				RL_Print("Allocation of %d bytes memory failed\n", ctx->pixbuf_len);
+				Host_Crash("Not enough memory\n");
+			}
 			memset(ctx->pixbuf, 0, ctx->pixbuf_len);
 			ctx->x_image = XCreateImage(global_x_info->display,
 									  global_x_info->default_visual,
