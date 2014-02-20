@@ -186,11 +186,10 @@ halt: native [
 ]
 
 if: native [
-	{If condition is TRUE, evaluates the block.}
+	{If TRUE condition, return arg; evaluate blocks by default.}
 	condition
-	then-block [block!]
-	/else "If not true, evaluate this block"
-	else-block [block!]
+	true-branch
+	/only "Return block arg instead of evaluating it."
 ]
 
 loop: native [
@@ -306,9 +305,10 @@ try: native [
 ]
 
 unless: native [
-	{Evaluates the block if condition is not TRUE.}
+	{If FALSE condition, return arg; evaluate blocks by default.}
 	condition
-	block [block!]
+	false-branch
+	/only "Return block arg instead of evaluating it."
 ]
 
 until: native [

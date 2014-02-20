@@ -599,17 +599,6 @@ got_err:
 
 /***********************************************************************
 **
-*/	REBNATIVE(else)
-/*
-***********************************************************************/
-{
-	Trap0(RE_ELSE_GONE);
-	DEAD_END;
-}
-
-
-/***********************************************************************
-**
 */	REBNATIVE(exit)
 /*
 ***********************************************************************/
@@ -625,16 +614,13 @@ got_err:
 /*
 ***********************************************************************/
 {
-	REBVAL *cond = D_ARG(1);
-	REBVAL *body = D_ARG(2);
-
-	if (!D_REF(3)) {	// no /else
-		if (IS_FALSE(cond)) return R_NONE;
-	} else
-		if (IS_FALSE(cond)) body = D_ARG(4);
-
-	DO_BLK(body);
-	return R_TOS1;
+	if (IS_FALSE(D_ARG(1))) return R_NONE;
+	if (IS_BLOCK(D_ARG(2)) && !D_REF(3) /* not using /ONLY */) {
+		DO_BLK(D_ARG(2));
+		return R_TOS1;
+	} else {
+		return R_ARG2;
+	}
 }
 
 
