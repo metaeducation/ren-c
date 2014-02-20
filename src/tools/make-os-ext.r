@@ -134,7 +134,8 @@ process: func [file] [
 remit {
 typedef struct REBOL_Host_Lib ^{
 	int size;
-	unsigned int ver_sum;}
+	unsigned int ver_sum;
+	REBDEV **devices;}
 
 memit {
 extern	REBOL_HOST_LIB *Host_Lib;
@@ -156,6 +157,7 @@ out: reduce [
 #define HOST_LIB_SUM } checksum/tcp to-binary xsum {
 #define HOST_LIB_SIZE } cnt {
 
+extern REBDEV *Devices[];
 }
 rlib
 {
@@ -173,6 +175,7 @@ REBOL_HOST_LIB *Host_Lib;
 REBOL_HOST_LIB Host_Lib_Init = ^{  // Host library function vector table.
 	HOST_LIB_SIZE,
 	(HOST_LIB_VER << 16) + HOST_LIB_SUM,
+	(REBDEV**)&Devices,
 }
 dlib
 {^};
