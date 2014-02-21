@@ -585,6 +585,52 @@ void handle_key(XEvent *ev, REBGOB *gob)
 	}
 }
 
+void handle_expose(XEvent *ev, REBGOB *gob)
+{
+	host_window_t *hw = GOB_HWIN(gob);
+
+	XRectangle rect = {ev->xexpose.x, ev->xexpose.y, ev->xexpose.width, ev->xexpose.height};
+
+	assert (hw != NULL);
+	if (hw == NULL) {
+		return;
+	}
+
+	if (hw->exposed_region == NULL) {
+		hw->exposed_region = XCreateRegion();
+	}
+	XUnionRectWithRegion(&rect, hw->exposed_region, hw->exposed_region);
+	if (ev->xexpose.count == 0){
+		/* find wingob, copied from Draw_Window */
+		REBGOB *wingob = gob;
+		while (GOB_PARENT(wingob) && GOB_PARENT(wingob) != Gob_Root
+			   && GOB_PARENT(wingob) != wingob) // avoid infinite loop
+			wingob = GOB_PARENT(wingob);
+
+		//check if it is really open
+		if (!IS_WINDOW(wingob) || !GET_GOB_STATE(wingob, GOBS_OPEN)) return;
+
+		void *compositor = GOB_COMPOSITOR(gob);
+		assert (compositor != NULL);
+
+		XRectangle final_rect;
+		XClipBox(hw->exposed_region, &final_rect);
+		/*
+		RL_Print("Win Region , left: %d,\ttop: %d,\tright: %d,\tbottom: %d\n",
+				 rect.x,
+				 rect.y,
+				 rect.x + rect.width,
+				 rect.y + rect.height);
+		RL_Print("exposed: x %d, y %d, w %d, h %d\n", final_rect.x, final_rect.y, final_rect.width, final_rect.height);
+		*/
+		rebcmp_compose_region(compositor, wingob, gob, &final_rect, FALSE);
+		rebcmp_blit(compositor);
+
+		XDestroyRegion(hw->exposed_region);
+		hw->exposed_region = NULL;
+	}
+}
+
 void Dispatch_Event(XEvent *ev)
 {
 	REBGOB *gob = NULL;
@@ -602,23 +648,11 @@ void Dispatch_Event(XEvent *ev)
 		case Expose:
 			//RL_Print("exposed\n");
 			gob = Find_Gob_By_Window(ev->xexpose.window);
-			if (gob != NULL && ev->xexpose.count == 0){
-				/* find wingob, copied from Draw_Window */
-				REBGOB *wingob = gob;
-				while (GOB_PARENT(wingob) && GOB_PARENT(wingob) != Gob_Root
-					   && GOB_PARENT(wingob) != wingob) // avoid infinite loop
-					wingob = GOB_PARENT(wingob);
-
-				//check if it is really open
-				if (!IS_WINDOW(wingob) || !GET_GOB_STATE(wingob, GOBS_OPEN)) return;
-
-				void *compositor = GOB_COMPOSITOR(gob);
-				XRectangle rect = {ev->xexpose.x, ev->xexpose.y, ev->xexpose.width, ev->xexpose.height};
-				//RL_Print("exposed: x %d, y %d, w %d, h %d\n", rect.x, rect.y, rect.width, rect.height);
-				rebcmp_compose_region(compositor, wingob, gob, &rect, FALSE);
-				rebcmp_blit(compositor);
+			if (gob != NULL) {
+				handle_expose(ev, gob);
 			}
 			break;
+			
 		case ButtonPress:
 		case ButtonRelease:
 			gob = Find_Gob_By_Window(ev->xbutton.window);

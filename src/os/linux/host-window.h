@@ -61,6 +61,7 @@ extern "C" {
 
 	typedef struct {
 		Window 			x_id;
+		Region 			exposed_region;
 		unsigned int	old_width;
 		unsigned int	old_height;
 		unsigned int	window_flags; /* last window flags from _NET_WM_STATE */
