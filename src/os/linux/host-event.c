@@ -702,6 +702,10 @@ void Dispatch_Event(XEvent *ev)
 			//RL_Print ("destroyed %x\n", ev->xdestroywindow.window);
 			gob = Find_Gob_By_Window(ev->xdestroywindow.window);
 			if (gob != NULL){
+				host_window_t *hw = GOB_HWIN(gob);
+				if (hw != NULL) {
+					OS_Free(hw);
+				}
 				Free_Window(gob);
 			}
 			break;
@@ -720,7 +724,6 @@ void Dispatch_Event(XEvent *ev)
 			if (gob != NULL) {
 				handle_configure_notify(ev, gob);
 			}
-			break;
 			break;
 		case SelectionRequest:
 			//RL_Print("SelectionRequest\n");

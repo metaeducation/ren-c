@@ -830,9 +830,6 @@ static void set_gob_window_type(REBGOB *gob,
 			//RL_Print("Destroying window: %x\n", win);
 			XDestroyWindow(global_x_info->display, hw->x_id);
 			X_Event_Loop(-1);
-
-			Free_Window(gob);
-			OS_Free(hw);
 		}
 	}
 }
