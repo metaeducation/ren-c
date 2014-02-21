@@ -616,6 +616,12 @@ void rebcmp_compose_region(REBCMP_CTX* ctx, REBGOB* winGob, REBGOB* gob, XRectan
 	REBINT h = GOB_LOG_H_INT(ctx->Win_Gob);
 	//RL_Print("rebcmp_blit, w = %d, h = %d\n", w, h);
 	XSetRegion(global_x_info->display, ctx->x_gc, ctx->Win_Region);
+	/*
+	XRectangle rect;
+	XClipBox(ctx->Win_Region, &rect);
+	RL_Print("Setting window region at: %dx%d, size:%dx%d\n",
+			 rect.x, rect.y, rect.width, rect.height);
+			 */
 
 	if (global_x_info->sys_pixmap_format == pix_format_bgra32){
 #ifdef USE_XSHM
