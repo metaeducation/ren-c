@@ -518,8 +518,8 @@ void rebcmp_compose_region(REBCMP_CTX* ctx, REBGOB* winGob, REBGOB* gob, XRectan
 
 	ctx->New_Clip.x = abs_x;
 	ctx->New_Clip.y = abs_y;
-	ctx->New_Clip.width = abs_x + GOB_W_INT(gob);
-	ctx->New_Clip.height = abs_y + GOB_H_INT(gob);
+	ctx->New_Clip.width = abs_x + GOB_LOG_W_INT(gob);
+	ctx->New_Clip.height = abs_y + GOB_LOG_H_INT(gob);
 
 	//handle newly added gob case
 	if (!GET_GOB_STATE(gob, GOBS_NEW)){
