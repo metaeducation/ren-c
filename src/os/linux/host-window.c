@@ -414,15 +414,15 @@ int reb_x11_get_window_extens(Display *display,
 	REBINT h = GOB_LOG_H_INT(gob);
 	int actual_x, actual_y, actual_w, actual_h, actual_border_width, actual_depth;
 	Window root;
-	/*
-	RL_Print("Updating window %x to (x: %d, y: %d, width: %d, height: %d) from (w %d, h %d)\n", gob, x, y, w, h,
-			 GOB_WO_INT(gob), GOB_HO_INT(gob));
-	*/
 	host_window_t *hw = GOB_HWIN(gob);
 	//assert (win != 0);
 	if (!hw || global_x_info->display == NULL) {
 		return;
 	}
+	/*
+	RL_Print("Updating window %x to (x: %d, y: %d, width: %d, height: %d) from (w %d, h %d)\n", hw->x_id, x, y, w, h,
+			 GOB_WO_INT(gob), GOB_HO_INT(gob));
+	*/
 
 	update_gob_window_state(gob, global_x_info->display, hw);
 	Resize_Window(gob, FALSE);
