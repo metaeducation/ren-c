@@ -61,6 +61,7 @@
 
 #include "host-window.h"
 
+#define BYTE_PER_PIXEL 4
 void rebdrw_gob_color(REBGOB *gob, REBYTE* buf, REBXYI buf_size, REBXYI abs_oft, REBXYI clip_oft, REBXYI clip_siz);
 void rebdrw_gob_image(REBGOB *gob, REBYTE* buf, REBXYI buf_size, REBXYI abs_oft, REBXYI clip_oft, REBXYI clip_siz);
 void rebdrw_gob_draw(REBGOB *gob, REBYTE* buf, REBXYI buf_size, REBXYI abs_oft, REBXYI clip_oft, REBXYI clip_siz);
@@ -117,7 +118,7 @@ typedef struct rebcmp_ctx {
 **
 ***********************************************************************/
 {
-	memset(ctx->pixbuf, 0, ctx->pixbuf_len);
+	//memset(ctx->pixbuf, 0, ctx->pixbuf_len);
 	return ctx->pixbuf;
 }
 
@@ -172,7 +173,7 @@ typedef struct rebcmp_ctx {
 			XShmAttach(global_x_info->display, &ctx->x_shminfo);
 		} else {
 #endif
-			ctx->pixbuf_len = w * h * 4; //BGRA32;
+			ctx->pixbuf_len = w * h * BYTE_PER_PIXEL; //BGRA32;
 			ctx->pixbuf = OS_Make(ctx->pixbuf_len);
 			if (ctx->pixbuf == NULL){
 				RL_Print("Allocation of %d bytes memory failed\n", ctx->pixbuf_len);
@@ -353,8 +354,8 @@ typedef struct rebcmp_ctx {
 			 rect.y + rect.height);
 	*/
 	XIntersectRegion(reg, ctx->Win_Region, reg);
-	/*
 	XClipBox(reg, &rect);
+	/*
 	RL_Print("Win and Gob, left: %d,\ttop: %d,\tright: %d,\tbottom: %d\n",
 			 rect.x,
 			 rect.y,
