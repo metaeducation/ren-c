@@ -43,7 +43,8 @@ void* Find_Compositor(REBGOB *gob);
 REBEVT *RL_Find_Event (REBINT model, REBINT type);
 
 typedef struct rebcmp_ctx REBCMP_CTX;
-void rebcmp_compose_region(REBCMP_CTX* ctx, REBGOB* winGob, REBGOB* gob, XRectangle *rect, REBOOL only);
+void rebcmp_blit_region(REBCMP_CTX* ctx, Region reg);
+//void rebcmp_compose_region(REBCMP_CTX* ctx, REBGOB* winGob, REBGOB* gob, XRectangle *rect, REBOOL only);
 #define GOB_HWIN(gob)	((host_window_t*)Find_Window(gob))
 
 #define GOB_COMPOSITOR(gob)	(Find_Compositor(gob)) //gets handle to window's compositor
@@ -613,9 +614,9 @@ void handle_expose(XEvent *ev, REBGOB *gob)
 		void *compositor = GOB_COMPOSITOR(gob);
 		assert (compositor != NULL);
 
+		/*
 		XRectangle final_rect;
 		XClipBox(hw->exposed_region, &final_rect);
-		/*
 		RL_Print("Win Region , left: %d,\ttop: %d,\tright: %d,\tbottom: %d\n",
 				 rect.x,
 				 rect.y,
@@ -623,8 +624,8 @@ void handle_expose(XEvent *ev, REBGOB *gob)
 				 rect.y + rect.height);
 		RL_Print("exposed: x %d, y %d, w %d, h %d\n", final_rect.x, final_rect.y, final_rect.width, final_rect.height);
 		*/
-		rebcmp_compose_region(compositor, wingob, gob, &final_rect, FALSE);
-		rebcmp_blit(compositor);
+		//rebcmp_compose_region(compositor, wingob, gob, &final_rect, FALSE);
+		rebcmp_blit_region(compositor, hw->exposed_region);
 
 		XDestroyRegion(hw->exposed_region);
 		hw->exposed_region = NULL;

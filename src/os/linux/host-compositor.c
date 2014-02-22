@@ -604,19 +604,13 @@ void rebcmp_compose_region(REBCMP_CTX* ctx, REBGOB* winGob, REBGOB* gob, XRectan
 	rebcmp_compose_region(ctx, winGob, gob, &win_rect, only);
 }
 
-/***********************************************************************
-**
-*/ void rebcmp_blit(REBCMP_CTX* ctx)
-/*
-**	Blit window content on the screen.
-**
-***********************************************************************/
+void rebcmp_blit_region(REBCMP_CTX* ctx, Region reg)
 {
-	//RL_Print("rebcmp_blit\n");
+	//RL_Print("rebcmp_blit_region\n");
 	REBINT w = GOB_LOG_W_INT(ctx->Win_Gob);
 	REBINT h = GOB_LOG_H_INT(ctx->Win_Gob);
 	//RL_Print("rebcmp_blit, w = %d, h = %d\n", w, h);
-	XSetRegion(global_x_info->display, ctx->x_gc, ctx->Win_Region);
+	XSetRegion(global_x_info->display, ctx->x_gc, reg);
 	/*
 	XRectangle rect;
 	XClipBox(ctx->Win_Region, &rect);
@@ -652,10 +646,21 @@ void rebcmp_compose_region(REBCMP_CTX* ctx, REBGOB* winGob, REBGOB* gob, XRectan
 		put_image(global_x_info->display,
 				  ctx->x_window,
 				  ctx->x_gc,
-				  ctx->x_image,
+				  ctx->x_image, 
 				  w, h,
 				  global_x_info->sys_pixmap_format);
 	}
 
 	//RL_Print("rebcmp_blit done\n");
+}
+
+/***********************************************************************
+**
+*/ void rebcmp_blit(REBCMP_CTX* ctx)
+/*
+**	Blit window content on the screen.
+**
+***********************************************************************/
+{
+	rebcmp_blit_region(ctx, ctx->Win_Region);
 }
