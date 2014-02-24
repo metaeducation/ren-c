@@ -1361,15 +1361,13 @@ eval_func2:
 				DSP ++;
 				return;
 			}
-			Append_Val(ser, paren);
 
 			// If result is a block, and not /only, insert its contents:
 			if (IS_BLOCK(paren) && !only) {
 				// Append series:
-				-- SERIES_TAIL(ser); // overwrites the last value
 				Append_Series(ser, (REBYTE *)VAL_BLK_DATA(paren), VAL_BLK_LEN(paren));
 			}
-			else if (IS_UNSET(paren)) -- SERIES_TAIL(ser); // remove unset values
+			else if (!IS_UNSET(paren)) Append_Val(ser, paren); //don't append result if unset is returned
 		}
 		else if (deep) {
 			if (IS_BLOCK(value)) {
