@@ -134,6 +134,16 @@ typedef struct rebcmp_ctx {
 {
 }
 
+static int (*orig_error_handler)(Display *, XErrorEvent *);
+
+static int shm_error_handler(Display *d, XErrorEvent *e) {
+    if(e->error_code == BadAccess) {
+	global_x_info->has_xshm = 0;
+        return 0;
+    } else
+        return (*orig_error_handler)(d, e);
+}
+
 /***********************************************************************
 **
 */ REBOOL rebcmp_resize_buffer(REBCMP_CTX* ctx, REBGOB* winGob)
@@ -170,8 +180,20 @@ typedef struct rebcmp_ctx {
 			ctx->pixbuf = ctx->x_shminfo.shmaddr = ctx->x_image->data
 				= (char *)shmat(ctx->x_shminfo.shmid, 0, 0);
 			ctx->x_shminfo.readOnly = False;
-			XShmAttach(global_x_info->display, &ctx->x_shminfo);
-		} else {
+			XSync(global_x_info->display, True);
+			orig_error_handler = XSetErrorHandler(shm_error_handler);
+			XShmAttach(global_x_info->display, &ctx->x_shminfo); //Bad Access error when talking to a remote X server
+			XSync(global_x_info->display, True);
+			XSetErrorHandler(orig_error_handler);
+			if (!global_x_info->has_xshm) {
+				shmdt(ctx->x_shminfo.shmaddr);
+				if (ctx->x_image) {
+					XDestroyImage(ctx->x_image);
+				}
+			};
+		}
+
+		if (!global_x_info->has_xshm) {//fall back to non-xshm version
 #endif
 			ctx->pixbuf_len = w * h * BYTE_PER_PIXEL; //BGRA32;
 			ctx->pixbuf = OS_Make(ctx->pixbuf_len);
