@@ -238,10 +238,14 @@ static REBXYF Zero_Pair = {0, 0};
 	global_x_info->has_xshm = XQueryExtension(global_x_info->display, "MIT-SHM", &ignore, &ignore, &ignore);
 	if (global_x_info->has_xshm) {
 		if (XShmQueryVersion(global_x_info->display, &major, &minor, &pixmaps) == True) {
+			/*
 			printf("XShm extention version %d.%d %s shared pixmaps\n",
 				   major, minor, (pixmaps == True) ? "with" : "without");
+				   */
 		} else {
+			/*
 			printf("XShm is not supported\n");
+			*/
 		}
 	}
 #endif
