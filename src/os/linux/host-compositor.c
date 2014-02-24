@@ -167,6 +167,12 @@ static int shm_error_handler(Display *d, XErrorEvent *e) {
 #ifdef USE_XSHM
 		if (global_x_info->has_xshm
 			&& global_x_info->sys_pixmap_format == pix_format_bgra32) {
+
+			if (ctx->x_shminfo.shmaddr != NULL) {
+				shmdt(ctx->x_shminfo.shmaddr);
+				XShmDetach(global_x_info->display, &ctx->x_shminfo);
+			}
+
 			ctx->x_image = XShmCreateImage(global_x_info->display,
 										   global_x_info->default_visual,
 										   global_x_info->default_depth,
@@ -285,6 +291,10 @@ static int shm_error_handler(Display *d, XErrorEvent *e) {
 	ctx->pixbuf = NULL;
 	ctx->pixbuf_len = 0;
 
+#ifdef USE_XSHM
+	ctx->x_shminfo.shmaddr = NULL;
+#endif
+
 	//call resize to init buffer
 	rebcmp_resize_buffer(ctx, gob);
 	return ctx;
@@ -300,15 +310,14 @@ static int shm_error_handler(Display *d, XErrorEvent *e) {
 {
 #ifdef USE_XSHM
 	if (global_x_info->has_xshm) {
+		if (ctx->x_shminfo.shmaddr != NULL) {
+			shmdt(ctx->x_shminfo.shmaddr);
+		}
 		XShmDetach(global_x_info->display, &ctx->x_shminfo);
 	}
 #endif
 	XDestroyImage(ctx->x_image); //frees ctx->pixbuf as well
-#ifdef USE_XSHM
-	if (global_x_info->has_xshm) {
-		shmdt(ctx->x_shminfo.shmaddr);
-	}
-#endif
+
 	if (ctx->x_gc != 0) {
 		XFreeGC(global_x_info->display, ctx->x_gc);
 	}
