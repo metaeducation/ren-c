@@ -312,22 +312,22 @@ static int get_work_area(METRIC_TYPE type)
 **
 ***********************************************************************/
 {
-	if(global_x_info->selection.data != NULL){
-		OS_Free(global_x_info->selection.data);
-	}
+	if (global_x_info != NULL) {
+		if (global_x_info->selection.data != NULL) {
+			OS_Free(global_x_info->selection.data);
+		}
 
-	if(global_x_info->selection.win != 0){
-		XDestroyWindow(global_x_info->display, global_x_info->selection.win);
-	}
+		if (global_x_info->selection.win != 0) {
+			XDestroyWindow(global_x_info->display, global_x_info->selection.win);
+		}
 
-	if(global_x_info) {
-	   if(global_x_info->display){
-		   XCloseDisplay(global_x_info->display);
-	   }
-	   if (global_x_info->x_atom_list) {
-		   x_atom_list_free(global_x_info->x_atom_list);
-	   }
-	   OS_Free(global_x_info);
+		if (global_x_info->display) {
+			XCloseDisplay(global_x_info->display);
+		}
+		if (global_x_info->x_atom_list) {
+			x_atom_list_free(global_x_info->x_atom_list);
+		}
+		OS_Free(global_x_info);
 	}
 	//FcFini(); /* FIXME: gtk file chooser causes this to segfault */
 }
