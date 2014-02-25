@@ -317,7 +317,7 @@ static int get_work_area(METRIC_TYPE type)
 	//free any remaining shared memory segments, some of them might not have a chance to clear up
 	extern REBGOBWINDOWS *Gob_Windows;
 	int i = 0;
-	for (i = 0; i < MAX_WINDOWS; i ++) {
+	for (i = 0; Gob_Windows != NULL && i < MAX_WINDOWS; i ++) {
 		if (Gob_Windows[i].compositor != NULL) {
 			rebcmp_destroy(Gob_Windows[i].compositor);
 		}
