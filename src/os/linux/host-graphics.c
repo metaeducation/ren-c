@@ -312,6 +312,18 @@ static int get_work_area(METRIC_TYPE type)
 **
 ***********************************************************************/
 {
+#define MAX_WINDOWS 64 //keep in sync with host-view.c
+#ifdef USE_XSHM
+	//free any remaining shared memory segments, some of them might not have a chance to clear up
+	extern REBGOBWINDOWS *Gob_Windows;
+	int i = 0;
+	for (i = 0; i < MAX_WINDOWS; i ++) {
+		if (Gob_Windows[i].compositor != NULL) {
+			rebcmp_destroy(Gob_Windows[i].compositor);
+		}
+	}
+#endif
+
 	if (global_x_info != NULL) {
 		if (global_x_info->selection.data != NULL) {
 			OS_Free(global_x_info->selection.data);
