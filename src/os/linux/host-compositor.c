@@ -208,24 +208,28 @@ static int shm_error_handler(Display *d, XErrorEvent *e) {
 				Host_Crash("Not enough memory\n");
 			}
 			memset(ctx->pixbuf, 0, ctx->pixbuf_len);
-			ctx->x_image = XCreateImage(global_x_info->display,
-									  global_x_info->default_visual,
-									  global_x_info->default_depth,
-									  ZPixmap,
-									  0,
-									  ctx->pixbuf,
-									  w, h,
-									  global_x_info->bpp,
-									  w * global_x_info->bpp / 8);
+			if (global_x_info->display != NULL) {
+				ctx->x_image = XCreateImage(global_x_info->display,
+										  global_x_info->default_visual,
+										  global_x_info->default_depth,
+										  ZPixmap,
+										  0,
+										  ctx->pixbuf,
+										  w, h,
+										  global_x_info->bpp,
+										  w * global_x_info->bpp / 8);
+			}
 #ifdef USE_XSHM
 		}
 #endif
 
+		if (ctx->x_image != NULL) {
 #ifdef ENDIAN_BIG
-		ctx->x_image->byte_order = MSBFirst;
+			ctx->x_image->byte_order = MSBFirst;
 #else
-		ctx->x_image->byte_order = LSBFirst;
+			ctx->x_image->byte_order = LSBFirst;
 #endif
+		}
 		//update the buffer size values
 		ctx->winBufSize.x = w;
 		ctx->winBufSize.y = h;
@@ -251,6 +255,8 @@ static int shm_error_handler(Display *d, XErrorEvent *e) {
 	//new compositor struct
 	REBCMP_CTX *ctx = (REBCMP_CTX*)OS_Make(sizeof(REBCMP_CTX));
 
+	memset(ctx, 0, sizeof(REBCMP_CTX));
+
 	//shortcuts
 	ctx->Root_Gob = rootGob;
 	ctx->Win_Gob = gob;
@@ -261,18 +267,6 @@ static int shm_error_handler(Display *d, XErrorEvent *e) {
 	ctx->Win_Clip.width = GOB_LOG_W_INT(gob);
 	ctx->Win_Clip.height = GOB_LOG_H_INT(gob);
 
-	ctx->New_Clip.x = 0;
-	ctx->New_Clip.y = 0;
-	ctx->New_Clip.width = 0;
-	ctx->New_Clip.height = 0;
-
-	ctx->Old_Clip.x = 0;
-	ctx->Old_Clip.y = 0;
-	ctx->Old_Clip.width = 0;
-	ctx->Old_Clip.height = 0;
-
-	ctx->Win_Region = NULL;
-
 	host_window_t *hw = GOB_HWIN(gob);
 	if (hw != NULL) {
 		ctx->x_window = hw->x_id;
@@ -282,19 +276,8 @@ static int shm_error_handler(Display *d, XErrorEvent *e) {
 		unsigned long white = WhitePixel(global_x_info->display, screen_num);
 		XSetBackground(global_x_info->display, ctx->x_gc, white);
 		XSetForeground(global_x_info->display, ctx->x_gc, black);
-	} else {
-		ctx->x_window = 0;
-		ctx->x_gc = 0;
 	}
-
-	ctx->x_image = NULL;
-	ctx->pixbuf = NULL;
-	ctx->pixbuf_len = 0;
-
-#ifdef USE_XSHM
-	ctx->x_shminfo.shmaddr = NULL;
-#endif
-
+	
 	//call resize to init buffer
 	rebcmp_resize_buffer(ctx, gob);
 	return ctx;
@@ -316,7 +299,11 @@ static int shm_error_handler(Display *d, XErrorEvent *e) {
 		XShmDetach(global_x_info->display, &ctx->x_shminfo);
 	}
 #endif
-	XDestroyImage(ctx->x_image); //frees ctx->pixbuf as well
+	if (ctx->x_image) {
+		XDestroyImage(ctx->x_image); //frees ctx->pixbuf as well
+	} else { //no display
+		OS_Free(ctx->pixbuf);
+	}
 
 	if (ctx->x_gc != 0) {
 		XFreeGC(global_x_info->display, ctx->x_gc);

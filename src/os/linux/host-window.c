@@ -174,13 +174,9 @@ static REBXYF Zero_Pair = {0, 0};
 	global_x_info = OS_Make(sizeof(x_info_t));
 
 	/* initialize selection */
-	global_x_info->selection.win = 0;
+	memset(global_x_info, 0, sizeof(x_info_t));
 	global_x_info->selection.status = -1;
-	global_x_info->selection.data = NULL;
-	global_x_info->selection.data_length = 0;
-	global_x_info->leader_window = 0;
 	global_x_info->display = XOpenDisplay(NULL);
-	global_x_info->x_atom_list = NULL;
 
 	if (global_x_info->display == NULL){
 		RL_Print("XOpenDisplay failed, graphics is not supported\n");
