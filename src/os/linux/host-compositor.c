@@ -169,8 +169,9 @@ static int shm_error_handler(Display *d, XErrorEvent *e) {
 			&& global_x_info->sys_pixmap_format == pix_format_bgra32) {
 
 			if (ctx->x_shminfo.shmaddr != NULL) {
-				shmdt(ctx->x_shminfo.shmaddr);
 				XShmDetach(global_x_info->display, &ctx->x_shminfo);
+				shmdt(ctx->x_shminfo.shmaddr);
+				//RL_Print("Removing SHM %x\n", ctx->x_shminfo.shmid);
 				shmctl(ctx->x_shminfo.shmid, IPC_RMID, NULL);
 			}
 
@@ -185,6 +186,7 @@ static int shm_error_handler(Display *d, XErrorEvent *e) {
 			ctx->x_shminfo.shmid = shmget(IPC_PRIVATE,
 										  ctx->x_image->bytes_per_line * ctx->x_image->height,
 										  IPC_CREAT | 0644 );
+			//RL_Print("Allocated SHM %x\n", ctx->x_shminfo.shmid);
 			if (ctx->x_shminfo.shmid < 0) {
 				//RL_Print("shmget failed, fallback to non-shm\n");
 				global_x_info->has_xshm = 0;
@@ -195,6 +197,7 @@ static int shm_error_handler(Display *d, XErrorEvent *e) {
 			if (ctx->pixbuf == NULL) {
 				//RL_Print("shmat failed, fallback to non-shm\n");
 				global_x_info->has_xshm = 0;
+				//RL_Print("Removing SHM %x\n", ctx->x_shminfo.shmid);
 				shmctl(ctx->x_shminfo.shmid, IPC_RMID, NULL);
 			} else {
 				memset(ctx->pixbuf, 0, ctx->pixbuf_len);
@@ -210,6 +213,7 @@ static int shm_error_handler(Display *d, XErrorEvent *e) {
 						XDestroyImage(ctx->x_image);
 					}
 					shmdt(ctx->x_shminfo.shmaddr);
+					//RL_Print("Removing SHM %x\n", ctx->x_shminfo.shmid);
 					shmctl(ctx->x_shminfo.shmid, IPC_RMID, NULL);
 				};
 			}
@@ -315,6 +319,7 @@ static int shm_error_handler(Display *d, XErrorEvent *e) {
 		if (ctx->x_shminfo.shmaddr != NULL) {
 			shmdt(ctx->x_shminfo.shmaddr);
 		}
+		//RL_Print("Removing SHM %x\n", ctx->x_shminfo.shmid);
 		shmctl(ctx->x_shminfo.shmid, IPC_RMID, NULL);
 	}
 #endif

@@ -718,7 +718,7 @@ static void set_gob_window_type(REBGOB *gob,
 	Window parent_window;
 	Window root;
 
-	//RL_Print("%s, %d, x: %d, y: %d, width: %d, height: %d\n", __func__, __LINE__, x, y, w, h);
+	//RL_Print("%s, %d, pos: %dx%d, size: %dx%d, gob: %x\n", __func__, __LINE__, x, y, w, h, gob);
 
 	swa.event_mask = ExposureMask 
 					| PointerMotionMask 
