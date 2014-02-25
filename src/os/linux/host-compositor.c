@@ -171,6 +171,7 @@ static int shm_error_handler(Display *d, XErrorEvent *e) {
 			if (ctx->x_shminfo.shmaddr != NULL) {
 				shmdt(ctx->x_shminfo.shmaddr);
 				XShmDetach(global_x_info->display, &ctx->x_shminfo);
+				shmctl(ctx->x_shminfo.shmid, IPC_RMID, NULL);
 			}
 
 			ctx->x_image = XShmCreateImage(global_x_info->display,
@@ -180,31 +181,48 @@ static int shm_error_handler(Display *d, XErrorEvent *e) {
 										   0,
 										   &ctx->x_shminfo,
 										   w, h);
+
 			ctx->x_shminfo.shmid = shmget(IPC_PRIVATE,
 										  ctx->x_image->bytes_per_line * ctx->x_image->height,
-										  IPC_CREAT | 0777 );
-			ctx->pixbuf = ctx->x_shminfo.shmaddr = ctx->x_image->data
-				= (char *)shmat(ctx->x_shminfo.shmid, 0, 0);
-			ctx->x_shminfo.readOnly = False;
-			XSync(global_x_info->display, True);
-			orig_error_handler = XSetErrorHandler(shm_error_handler);
-			XShmAttach(global_x_info->display, &ctx->x_shminfo); //Bad Access error when talking to a remote X server
-			XSync(global_x_info->display, True);
-			XSetErrorHandler(orig_error_handler);
-			if (!global_x_info->has_xshm) {
-				shmdt(ctx->x_shminfo.shmaddr);
-				if (ctx->x_image) {
-					XDestroyImage(ctx->x_image);
-				}
-			};
+										  IPC_CREAT | 0644 );
+			if (ctx->x_shminfo.shmid < 0) {
+				//RL_Print("shmget failed, fallback to non-shm\n");
+				global_x_info->has_xshm = 0;
+			} else {
+				ctx->pixbuf = ctx->x_shminfo.shmaddr = ctx->x_image->data
+					= (char *)shmat(ctx->x_shminfo.shmid, 0, 0);
+			}
+			if (ctx->pixbuf == NULL) {
+				//RL_Print("shmat failed, fallback to non-shm\n");
+				global_x_info->has_xshm = 0;
+				shmctl(ctx->x_shminfo.shmid, IPC_RMID, NULL);
+			} else {
+				memset(ctx->pixbuf, 0, ctx->pixbuf_len);
+				ctx->x_shminfo.readOnly = False;
+				XSync(global_x_info->display, True);
+				orig_error_handler = XSetErrorHandler(shm_error_handler);
+				XShmAttach(global_x_info->display, &ctx->x_shminfo); //Bad Access error when talking to a remote X server
+				XSync(global_x_info->display, True);
+				XSetErrorHandler(orig_error_handler);
+				if (!global_x_info->has_xshm) {
+					//RL_Print("XShmAttach failed, fallback to non-shm\n");
+					if (ctx->x_image) {
+						XDestroyImage(ctx->x_image);
+					}
+					shmdt(ctx->x_shminfo.shmaddr);
+					shmctl(ctx->x_shminfo.shmid, IPC_RMID, NULL);
+				};
+			}
 		}
 
-		if (!global_x_info->has_xshm) {//fall back to non-xshm version
+		if (!global_x_info->has_xshm
+			|| global_x_info->sys_pixmap_format != pix_format_bgra32) {//fall back to non-xshm version
 #endif
+			//RL_Print("Non-shm version\n");
 			ctx->pixbuf_len = w * h * BYTE_PER_PIXEL; //BGRA32;
 			ctx->pixbuf = OS_Make(ctx->pixbuf_len);
 			if (ctx->pixbuf == NULL){
-				RL_Print("Allocation of %d bytes memory failed\n", ctx->pixbuf_len);
+				//RL_Print("Allocation of %d bytes memory failed\n", ctx->pixbuf_len);
 				Host_Crash("Not enough memory\n");
 			}
 			memset(ctx->pixbuf, 0, ctx->pixbuf_len);
@@ -293,10 +311,11 @@ static int shm_error_handler(Display *d, XErrorEvent *e) {
 {
 #ifdef USE_XSHM
 	if (global_x_info->has_xshm) {
+		XShmDetach(global_x_info->display, &ctx->x_shminfo);
 		if (ctx->x_shminfo.shmaddr != NULL) {
 			shmdt(ctx->x_shminfo.shmaddr);
 		}
-		XShmDetach(global_x_info->display, &ctx->x_shminfo);
+		shmctl(ctx->x_shminfo.shmid, IPC_RMID, NULL);
 	}
 #endif
 	if (ctx->x_image) {
