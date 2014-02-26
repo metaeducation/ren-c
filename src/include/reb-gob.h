@@ -148,11 +148,6 @@ typedef struct gob_window {				// Maps gob to window
 #define GOB_WO_INT(g)	ROUND_TO_INT((g)->old_size.x)
 #define GOB_HO_INT(g)	ROUND_TO_INT((g)->old_size.y)
 
-#define GOB_LOG_XO_INT(g)	ROUND_TO_INT(LOG_COORD_X((g)->old_offset.x))
-#define GOB_LOG_YO_INT(g)	ROUND_TO_INT(LOG_COORD_Y((g)->old_offset.y))
-#define GOB_LOG_WO_INT(g)	ROUND_TO_INT(LOG_COORD_X((g)->old_size.x))
-#define GOB_LOG_HO_INT(g)	ROUND_TO_INT(LOG_COORD_Y((g)->old_size.y))
-
 #define CLEAR_GOB_STATE(g) ((g)->state = 0)
 
 #define SET_GOB_FLAG(g,f)       SET_FLAG((g)->flags, f)

@@ -527,8 +527,8 @@ void rebcmp_compose_region(REBCMP_CTX* ctx, REBGOB* winGob, REBGOB* gob, XRectan
 			 gob,
 			 (int)GOB_LOG_X(gob),
 			 (int)GOB_LOG_Y(gob),
-			 GOB_LOG_W_INT(gob),
-			 GOB_LOG_H_INT(gob),
+			 GOB_W_INT(gob),
+			 GOB_H_INT(gob),
 			 winGob);
 			 */
 
@@ -573,10 +573,10 @@ void rebcmp_compose_region(REBCMP_CTX* ctx, REBGOB* winGob, REBGOB* gob, XRectan
 		//set region with old gob location and dimensions
 		ctx->Old_Clip.x = abs_ox;
 		ctx->Old_Clip.y = abs_oy;
-		ctx->Old_Clip.width = abs_ox + GOB_LOG_WO_INT(gob);
-		ctx->Old_Clip.height = abs_oy + GOB_LOG_HO_INT(gob);
+		ctx->Old_Clip.width = abs_ox + GOB_WO_INT(gob);
+		ctx->Old_Clip.height = abs_oy + GOB_HO_INT(gob);
 		XUnionRectWithRegion(&ctx->Old_Clip, ctx->Win_Region, ctx->Win_Region);
-		//RL_Print("OLD: %dx%d %dx%d\n",(REBINT)abs_ox, (REBINT)abs_oy, (REBINT)abs_ox + GOB_LOG_WO_INT(gob), (REBINT)abs_oy + GOB_LOG_HO_INT(gob));
+		//RL_Print("OLD: %dx%d %dx%d\n",(REBINT)abs_ox, (REBINT)abs_oy, (REBINT)abs_ox + GOB_WO_INT(gob), (REBINT)abs_oy + GOB_HO_INT(gob));
 	}
 	//RL_Print("NEW: %dx%d %dx%d\n",(REBINT)abs_x, (REBINT)abs_y, (REBINT)abs_x + GOB_LOG_W_INT(gob), (REBINT)abs_y + GOB_LOG_H_INT(gob));
 
