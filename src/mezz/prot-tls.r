@@ -113,7 +113,7 @@ parse-asn: func [
 	while [d: data/1] [
 		switch mode [
 			type [
-				constructed?: to logic! (d and 32)
+				constructed?: not zero? (d and 32)
 				class: pick class-types 1 + shift d -6
 
 				switch class [
@@ -150,7 +150,8 @@ parse-asn: func [
 						val: copy/part data length
 						append/only result compose/deep [(tag) [(either constructed? ["constructed"] ["primitive"]) (index? data) (length) (either constructed? [none] [val])]]
 						if constructed? [
-							poke second last result 4	parse-asn val
+							poke second last result 4
+							parse-asn val
 						]
 					]
 
