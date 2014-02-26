@@ -172,9 +172,8 @@ static REBXYF Zero_Pair = {0, 0};
 	int depth;
 	int red_mask, green_mask, blue_mask;
 	global_x_info = OS_Make(sizeof(x_info_t));
-
-	/* initialize selection */
 	memset(global_x_info, 0, sizeof(x_info_t));
+
 	global_x_info->selection.status = -1;
 	global_x_info->display = XOpenDisplay(NULL);
 
@@ -819,10 +818,10 @@ static void set_gob_window_type(REBGOB *gob,
 ***********************************************************************/
 {
 	//RL_Print("Closing %x\n", gob);
+	if (global_x_info->display == NULL){
+		return;
+	}
 	if (GET_GOB_FLAG(gob, GOBF_WINDOW)) {
-		if (global_x_info->display == NULL){
-			return;
-		}
 		XSync(global_x_info->display, FALSE); //wait child window to be destroyed and notified
 		X_Event_Loop(-1);
 		host_window_t *hw = GOB_HWIN(gob);
