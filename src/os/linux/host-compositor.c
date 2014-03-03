@@ -315,12 +315,14 @@ static int shm_error_handler(Display *d, XErrorEvent *e) {
 {
 #ifdef USE_XSHM
 	if (global_x_info->has_xshm) {
-		XShmDetach(global_x_info->display, &ctx->x_shminfo);
-		if (ctx->x_shminfo.shmaddr != NULL) {
-			shmdt(ctx->x_shminfo.shmaddr);
+		if (ctx->x_shminfo.shmid != 0) {
+			XShmDetach(global_x_info->display, &ctx->x_shminfo);
+			if (ctx->x_shminfo.shmaddr != NULL) {
+				shmdt(ctx->x_shminfo.shmaddr);
+			}
+			//RL_Print("Removing SHM %x\n", ctx->x_shminfo.shmid);
+			shmctl(ctx->x_shminfo.shmid, IPC_RMID, NULL);
 		}
-		//RL_Print("Removing SHM %x\n", ctx->x_shminfo.shmid);
-		shmctl(ctx->x_shminfo.shmid, IPC_RMID, NULL);
 	}
 #endif
 	if (ctx->x_image) {
