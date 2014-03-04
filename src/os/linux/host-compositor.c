@@ -137,6 +137,7 @@ typedef struct rebcmp_ctx {
 {
 }
 
+#ifdef USE_XSHM
 static int (*orig_error_handler)(Display *, XErrorEvent *);
 
 static int shm_error_handler(Display *d, XErrorEvent *e) {
@@ -146,6 +147,7 @@ static int shm_error_handler(Display *d, XErrorEvent *e) {
     } else
         return (*orig_error_handler)(d, e);
 }
+#endif
 
 /***********************************************************************
 **
