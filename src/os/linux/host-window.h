@@ -4,6 +4,7 @@
 #include  <X11/Xlib.h>
 #include  <X11/Xatom.h>
 #include  <X11/Xutil.h>
+#include  <X11/extensions/Xdbe.h>
 
 #define REB_WINDOW_BORDER_WIDTH 0
 #ifdef __cplusplus
@@ -51,20 +52,22 @@ extern "C" {
 		int 	default_depth;
 		int		bpp;
 		pixmap_format_t sys_pixmap_format;
-#ifdef USE_XSHM
-		REBOOL  has_xshm;
-#endif
 		selection_t selection; /* for copy and paste */
 		Window leader_window;
 		x_atom_list_t *x_atom_list;
 		Atom	*net_supported;
 		int		*n_net_supported; /* size of net_supported */
+#ifdef USE_XSHM
+		REBOOL  has_xshm;
+#endif
+		REBOOL has_double_buffer;
 	} x_info_t;
 
 	typedef struct {
 		Window 			x_id;
 		Window 			x_parent_id;
 		Region 			exposed_region;
+		XdbeBackBuffer		x_back_buffer;
 		unsigned int	old_width;
 		unsigned int	old_height;
 		unsigned int	window_flags; /* last window flags from _NET_WM_STATE */

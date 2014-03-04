@@ -54,6 +54,7 @@
 #ifdef USE_XSHM
 #include <sys/shm.h>
 #include <X11/extensions/XShm.h>
+#include <X11/extensions/Xdbe.h>
 #endif
 
 #include "reb-host.h"
@@ -91,7 +92,7 @@ typedef struct rebcmp_ctx {
 	REBGOB *Win_Gob;
 	REBGOB *Root_Gob;
 	REBXYF absOffset; //Offset of current gob, relative to the gob passed to rebcmp_compose 
-	Window x_window;
+	host_window_t *host_window;
 	GC	   x_gc;
 	XImage *x_image;
 #ifdef USE_XSHM
@@ -314,8 +315,8 @@ static int shm_error_handler(Display *d, XErrorEvent *e) {
 
 	host_window_t *hw = GOB_HWIN(gob);
 	if (hw != NULL) {
-		ctx->x_window = hw->x_id;
-		ctx->x_gc = XCreateGC(global_x_info->display, ctx->x_window, 0, 0);
+		ctx->host_window = hw;
+		ctx->x_gc = XCreateGC(global_x_info->display, ctx->host_window->x_id, 0, 0);
 		int screen_num = DefaultScreen(global_x_info->display);
 		unsigned long black = BlackPixel(global_x_info->display, screen_num);
 		unsigned long white = WhitePixel(global_x_info->display, screen_num);
@@ -706,38 +707,50 @@ void rebcmp_blit_region(REBCMP_CTX* ctx, Region reg)
 			 rect.x, rect.y, rect.width, rect.height);
 			 */
 
-	if (global_x_info->sys_pixmap_format == pix_format_bgra32){
 #ifdef USE_XSHM
-		if (global_x_info->has_xshm) {
-			//RL_Print("XshmPutImage\n");
-			XShmPutImage(global_x_info->display, 
-						 ctx->x_window, 
-						 ctx->x_gc, 
-						 ctx->x_image, 
-						 0, 0, 	//src x, y
-						 0, 0, 	//dest x, y
-						 w, h, 
-						 False);
-		} else {
-#endif
-			XPutImage (global_x_info->display,
-					   ctx->x_window,
-					   ctx->x_gc,
-					   ctx->x_image,
-					   0, 0,	//src x, y
-					   0, 0,	//dest x, y
-					   w, h);
-#ifdef USE_XSHM
-		}
-#endif
+	if (global_x_info->has_xshm) {
+		//RL_Print("XshmPutImage\n");
+		XShmPutImage(global_x_info->display, 
+				ctx->host_window->x_id, 
+				ctx->x_gc, 
+				ctx->x_image, 
+				0, 0, 	//src x, y
+				0, 0, 	//dest x, y
+				w, h, 
+				False);
 	} else {
-		put_image(global_x_info->display,
-				  ctx->x_window,
-				  ctx->x_gc,
-				  ctx->x_image, 
-				  w, h,
-				  global_x_info->sys_pixmap_format);
+#endif
+		Drawable dest = global_x_info->has_double_buffer ? 
+			ctx->host_window->x_back_buffer :
+			ctx->host_window->x_id;
+
+		if (global_x_info->sys_pixmap_format == pix_format_bgra32){
+			XPutImage (global_x_info->display,
+					dest,
+					ctx->x_gc,
+					ctx->x_image,
+					0, 0,	//src x, y
+					0, 0,	//dest x, y
+					w, h);
+		} else {
+			put_image(global_x_info->display,
+					dest,
+					ctx->x_gc,
+					ctx->x_image,
+					w, h,
+					global_x_info->sys_pixmap_format);
+		}
+
+		if (global_x_info->has_double_buffer) {
+			//RL_Print("Swapping...\n");
+			XdbeSwapInfo swapInfo;
+			swapInfo.swap_window = ctx->host_window->x_id;
+			swapInfo.swap_action = XdbeUndefined;
+			XdbeSwapBuffers(global_x_info->display, &swapInfo, 1);
+		}
+#ifdef USE_XSHM
 	}
+#endif
 
 	//RL_Print("rebcmp_blit done\n");
 }

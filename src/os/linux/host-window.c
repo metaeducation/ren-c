@@ -49,6 +49,7 @@
 #include  <X11/Xlib.h>
 #include  <X11/Xatom.h>
 #include  <X11/Xutil.h>
+#include  <X11/extensions/Xdbe.h>
 
 #include "host-window.h"
 
@@ -279,12 +280,13 @@ static REBXYF Zero_Pair = {0, 0};
 		Host_Crash("System Pixmap format couldn't be determined");
 	}
 #ifdef USE_XSHM
-	int ignore, major, minor;
+	int ignore;
 	REBOOL pixmaps;
 
 	/* Check for the XShm extension */
 	global_x_info->has_xshm = XQueryExtension(global_x_info->display, "MIT-SHM", &ignore, &ignore, &ignore);
 	if (global_x_info->has_xshm) {
+		int major, minor;
 		if (XShmQueryVersion(global_x_info->display, &major, &minor, &pixmaps) == True) {
 			const char *env_use_xshm = getenv("USE_XSHM");
 			if (env_use_xshm != NULL) {
@@ -304,6 +306,21 @@ static REBXYF Zero_Pair = {0, 0};
 		}
 	}
 #endif
+	int major, minor;
+	global_x_info->has_double_buffer = XdbeQueryExtension(global_x_info->display, &major, &minor);
+	if (global_x_info->has_double_buffer) {
+		const char *env_use_double_buffer = getenv("USE_DOUBLE_BUFFER");
+		if (env_use_double_buffer != NULL) {
+			int value = atoi(env_use_double_buffer);
+			if (!value) {
+				global_x_info->has_double_buffer = 0;
+			}
+		}
+	} else {
+		/*
+		   printf("XShm is not supported\n");
+		 */
+	}
 
 	global_x_info->leader_window = XCreateWindow(global_x_info->display,
 												 DefaultRootWindow(global_x_info->display),
@@ -873,6 +890,7 @@ static void set_wm_locale(Display *display,
 	//update_gob_window_state(gob, display, window); //has to be first call after window creation
 	hw->x_id = window;
 	hw->x_parent_id = parent_window;
+	hw->x_back_buffer = XdbeAllocateBackBufferName(display, window, XdbeUndefined);
 	hw->old_width = w;
 	hw->old_height = h;
 	hw->window_flags = 0;
@@ -925,6 +943,9 @@ static void set_wm_locale(Display *display,
 		host_window_t *hw = GOB_HWIN(gob);
 		if (hw) {
 			//RL_Print("Destroying window: %x\n", win);
+			if (global_x_info->has_double_buffer) {
+				XdbeDeallocateBackBufferName(global_x_info->display, hw->x_back_buffer);
+			}
 			XDestroyWindow(global_x_info->display, hw->x_id);
 			X_Event_Loop(-1);
 		}
