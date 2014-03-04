@@ -520,7 +520,8 @@ static void handle_configure_notify(XEvent *ev, REBGOB *gob)
 								  &x, &y, &child);
 		}
 	}
-	if (gob->offset.x != x || gob->offset.y != y){
+	if (ROUND_TO_INT(gob->offset.x) != x
+	    || ROUND_TO_INT(gob->offset.y) != y){
 		xyd = (ROUND_TO_INT(x)) + (ROUND_TO_INT(y) << 16);
 		/*
 		   RL_Print("%s, %s, %d: EVT_OFFSET (%dx%d) is sent\n", __FILE__, __func__, __LINE__,
