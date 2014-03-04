@@ -40,6 +40,7 @@
 #include <string.h>
 #include <math.h>
 #include <unistd.h>
+#include <locale.h>
 #include "reb-host.h"
 #include "host-compositor.h"
 
@@ -680,9 +681,27 @@ static void set_gob_window_type(REBGOB *gob,
 											"_NET_WM_WINDOW_TYPE_NORMAL",
 											True);
 	}
+
 	XChangeProperty(display, window, window_type_atom, XA_ATOM, 32,
 					PropModeReplace,
 					(unsigned char *)&window_type, 1);
+}
+
+static void set_wm_locale(Display *display,
+						  Window window)
+{
+	const unsigned char *locale = setlocale(LC_ALL, NULL);
+	if (locale != NULL) {
+		XChangeProperty(display, window,
+						x_atom_list_find_atom(global_x_info->x_atom_list,
+											  display,
+											  "WM_LOCALE_NAME",
+											  True),
+						XA_STRING, 8,
+						PropModeReplace,
+						locale, strlen(locale));
+	}
+
 }
 
 /***********************************************************************
@@ -803,6 +822,7 @@ static void set_gob_window_type(REBGOB *gob,
 
 	set_wm_pid(display, window);
 	set_wm_client_machine(display, window);
+	set_wm_locale(display, window);
 	set_gob_window_title(gob, display, window);
 
 	set_window_protocols(display, window);
