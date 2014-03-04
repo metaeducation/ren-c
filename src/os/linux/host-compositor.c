@@ -95,7 +95,9 @@ typedef struct rebcmp_ctx {
 	GC	   x_gc;
 	XImage *x_image;
 #ifdef USE_XSHM
+	XImage *x_image_back;
 	XShmSegmentInfo x_shminfo;
+	XShmSegmentInfo x_shminfo_back;
 #endif
 	pixmap_format_t pixmap_format;
 	REBYTE *pixbuf;
@@ -174,7 +176,6 @@ static int shm_error_handler(Display *d, XErrorEvent *e) {
 				//RL_Print("Removing SHM %x\n", ctx->x_shminfo.shmid);
 				shmctl(ctx->x_shminfo.shmid, IPC_RMID, NULL);
 			}
-
 			ctx->x_image = XShmCreateImage(global_x_info->display,
 										   global_x_info->default_visual,
 										   global_x_info->default_depth,
@@ -216,6 +217,28 @@ static int shm_error_handler(Display *d, XErrorEvent *e) {
 					//RL_Print("Removing SHM %x\n", ctx->x_shminfo.shmid);
 					shmctl(ctx->x_shminfo.shmid, IPC_RMID, NULL);
 				};
+			}
+			if (global_x_info->has_xshm) {
+				if (ctx->x_shminfo_back.shmaddr != NULL) {
+					XShmDetach(global_x_info->display, &ctx->x_shminfo_back);
+					shmdt(ctx->x_shminfo_back.shmaddr);
+					//RL_Print("Removing SHM %x\n", ctx->x_shminfo_back.shmid);
+					shmctl(ctx->x_shminfo_back.shmid, IPC_RMID, NULL);
+				}
+				ctx->x_image_back = XShmCreateImage(global_x_info->display,
+											   global_x_info->default_visual,
+											   global_x_info->default_depth,
+											   ZPixmap,
+											   0,
+											   &ctx->x_shminfo_back,
+											   w, h);
+
+				ctx->x_shminfo_back.shmid = shmget(IPC_PRIVATE,
+											  ctx->x_image_back->bytes_per_line * ctx->x_image->height,
+											  IPC_CREAT | 0644 );
+				ctx->x_shminfo_back.shmaddr = ctx->x_image_back->data
+					= (char *)shmat(ctx->x_shminfo_back.shmid, 0, 0);
+				XShmAttach(global_x_info->display, &ctx->x_shminfo_back); //Bad Access error when talking to a remote X server
 			}
 		}
 
@@ -322,6 +345,14 @@ static int shm_error_handler(Display *d, XErrorEvent *e) {
 			}
 			//RL_Print("Removing SHM %x\n", ctx->x_shminfo.shmid);
 			shmctl(ctx->x_shminfo.shmid, IPC_RMID, NULL);
+		}
+		if (ctx->x_shminfo_back.shmid != 0) {
+			XShmDetach(global_x_info->display, &ctx->x_shminfo_back);
+			if (ctx->x_shminfo_back.shmaddr != NULL) {
+				shmdt(ctx->x_shminfo_back.shmaddr);
+			}
+			//RL_Print("Removing SHM %x\n", ctx->x_shminfo.shmid);
+			shmctl(ctx->x_shminfo_back.shmid, IPC_RMID, NULL);
 		}
 	}
 #endif
@@ -510,6 +541,18 @@ static int shm_error_handler(Display *d, XErrorEvent *e) {
 	XDestroyRegion(reg);
 }
 
+static void swap_buffer(REBCMP_CTX* ctx)
+{
+#ifdef USE_XSHM
+	if (global_x_info->has_xshm) {
+		XImage *tmp = ctx->x_image;
+		ctx->x_image = ctx->x_image_back;
+		ctx->x_image_back = tmp;
+		ctx->pixbuf = ctx->x_image->data;
+	}
+#endif
+}
+
 /**	Compose content of the specified gob, only update the region in rect */
 void rebcmp_compose_region(REBCMP_CTX* ctx, REBGOB* winGob, REBGOB* gob, XRectangle *rect, REBOOL only)
 {
@@ -611,6 +654,7 @@ void rebcmp_compose_region(REBCMP_CTX* ctx, REBGOB* winGob, REBGOB* gob, XRectan
 
 	if (!XEmptyRegion(ctx->Win_Region))
 	{
+		swap_buffer(ctx);
 		ctx->Window_Buffer = rebcmp_get_buffer(ctx);
 
 		//redraw gobs
