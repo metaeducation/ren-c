@@ -514,6 +514,20 @@ static void set_wm_hints(Display *display,
 	}
 }
 
+static void set_wm_icon_name(Display *display,
+							 Window window,
+							 const char* title)
+{
+	XChangeProperty(display, window,
+					x_atom_list_find_atom(global_x_info->x_atom_list,
+										  display, "_NET_WM_ICON_NAME", True),
+					x_atom_list_find_atom(global_x_info->x_atom_list,
+										  display, "UTF8_STRING", True),
+					8, PropModeReplace,
+					title, strlen(title));
+
+}
+
 static void set_gob_window_title(REBGOB *gob,
 								 Display *display,
 								 Window window)
@@ -531,6 +545,7 @@ static void set_gob_window_title(REBGOB *gob,
 	
 	set_wm_name(display, window, title);
 	set_class_hint(display, window, title);
+	set_wm_icon_name(display, window, title);
 
 	if (os_string)
 		OS_Free(title);

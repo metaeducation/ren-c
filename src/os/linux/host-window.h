@@ -57,6 +57,8 @@ extern "C" {
 		selection_t selection; /* for copy and paste */
 		Window leader_window;
 		x_atom_list_t *x_atom_list;
+		Atom	*net_supported;
+		int		*n_net_supported; /* size of net_supported */
 	} x_info_t;
 
 	typedef struct {
