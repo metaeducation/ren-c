@@ -36,6 +36,7 @@
 **
 ***********************************************************************/
 
+#include <stdlib.h>
 #include <assert.h>
 #include <string.h>
 #include <math.h>
@@ -285,6 +286,13 @@ static REBXYF Zero_Pair = {0, 0};
 	global_x_info->has_xshm = XQueryExtension(global_x_info->display, "MIT-SHM", &ignore, &ignore, &ignore);
 	if (global_x_info->has_xshm) {
 		if (XShmQueryVersion(global_x_info->display, &major, &minor, &pixmaps) == True) {
+			const char *env_use_xshm = getenv("USE_XSHM");
+			if (env_use_xshm != NULL) {
+				int value = atoi(env_use_xshm);
+				if (!value) {
+					global_x_info->has_xshm = 0;
+				}
+			}
 			/*
 			printf("XShm extention version %d.%d %s shared pixmaps\n",
 				   major, minor, (pixmaps == True) ? "with" : "without");
