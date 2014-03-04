@@ -890,13 +890,22 @@ static void set_wm_locale(Display *display,
 	//update_gob_window_state(gob, display, window); //has to be first call after window creation
 	hw->x_id = window;
 	hw->x_parent_id = parent_window;
-	hw->x_back_buffer = XdbeAllocateBackBufferName(display, window, XdbeUndefined);
 	hw->old_width = w;
 	hw->old_height = h;
 	hw->window_flags = 0;
 	hw->exposed_region = NULL;
 	Gob_Windows[windex].win = hw;
-	Gob_Windows[windex].compositor = rebcmp_create(Gob_Root, gob);
+	Gob_Windows[windex].compositor = rebcmp_create(Gob_Root, gob); /* it updates has_xshm */
+	hw->x_back_buffer = 0; /* intialization */
+	if (global_x_info->has_double_buffer
+#ifdef USE_XSHM
+		&& !global_x_info->has_xshm
+#endif
+		) {
+		/* only use double buffer in non-xshm cases */
+		//RL_Print("Allocated buffer %x for window %x\n", hw->x_back_buffer, hw->x_id);
+		hw->x_back_buffer = XdbeAllocateBackBufferName(display, window, XdbeUndefined);
+	}
 
 	set_gob_window_type(gob, display, window);
 	set_window_leader(display, window);
@@ -943,7 +952,8 @@ static void set_wm_locale(Display *display,
 		host_window_t *hw = GOB_HWIN(gob);
 		if (hw) {
 			//RL_Print("Destroying window: %x\n", win);
-			if (global_x_info->has_double_buffer) {
+			if (hw->x_back_buffer != 0) {
+				//RL_Print("Deallocating buffer %x for window %x\n", hw->x_back_buffer, hw->x_id);
 				XdbeDeallocateBackBufferName(global_x_info->display, hw->x_back_buffer);
 			}
 			XDestroyWindow(global_x_info->display, hw->x_id);
