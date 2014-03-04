@@ -443,17 +443,14 @@ int reb_x11_get_window_extens(Display *display,
 			if (hw != NULL) {
 					Window gob_parent_window = parent_hw->x_id;
 					Window child;
-					Window x_parent_window, *children;
-					int n_children;
-					XQueryTree(global_x_info->display, hw->x_id, &root, &x_parent_window, &children, &n_children);
 					if (GET_GOB_FLAG(gob, GOBF_POPUP)) {
 						/* x, y are in screen coordinates for POPUP windows */
-						if (x_parent_window != root) {
-							XTranslateCoordinates(global_x_info->display, root, x_parent_window, x, y, &x, &y, &child);
+						if (hw->x_parent_id != root) {
+							XTranslateCoordinates(global_x_info->display, root, hw->x_parent_id, x, y, &x, &y, &child);
 						}
 					} else {
 						/* x, y are in parent window coordinates */
-						XTranslateCoordinates(global_x_info->display, gob_parent_window, x_parent_window, x, y, &x, &y, &child);
+						XTranslateCoordinates(global_x_info->display, gob_parent_window, hw->x_parent_id, x, y, &x, &y, &child);
 					}
 			}
 	}
@@ -776,6 +773,7 @@ static void set_gob_window_type(REBGOB *gob,
 
 	//update_gob_window_state(gob, display, window); //has to be first call after window creation
 	hw->x_id = window;
+	hw->x_parent_id = parent_window;
 	hw->old_width = w;
 	hw->old_height = h;
 	hw->window_flags = 0;

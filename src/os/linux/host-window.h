@@ -61,6 +61,7 @@ extern "C" {
 
 	typedef struct {
 		Window 			x_id;
+		Window 			x_parent_id;
 		Region 			exposed_region;
 		unsigned int	old_width;
 		unsigned int	old_height;

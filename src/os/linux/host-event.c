@@ -513,11 +513,23 @@ static void handle_configure_notify(XEvent *ev, REBGOB *gob)
 		if (hw != NULL) {
 			Window gob_parent_window = hw->x_id;
 			Window child;
-			XTranslateCoordinates(xce.display,
-								  xce.window,
-								  GET_GOB_FLAG(gob, GOBF_POPUP)? DefaultRootWindow(xce.display) : gob_parent_window, /* for popup windows, the x, y are in screen coordinates, see OS_Create_Window */
-								  0, 0,
-								  &x, &y, &child);
+			if (GET_GOB_FLAG(gob, GOBF_POPUP)) {
+				/* for popup windows, the x, y are in screen coordinates, see OS_Create_Window */
+				if (hw->x_parent_id != DefaultRootWindow(xce.display)) {
+					XTranslateCoordinates(xce.display,
+							xce.window,
+							DefaultRootWindow(xce.display),
+							0, 0,
+							&x, &y, &child);
+				}
+			} else {
+				XTranslateCoordinates(xce.display,
+						xce.window,
+						hw->x_parent_id,
+						0, 0,
+						&x, &y, &child);
+			}
+			//RL_Print("XTranslateCoordinates returns %d, pos: %dx%d\n", status, x, y);
 		}
 	}
 	if (ROUND_TO_INT(gob->offset.x) != x
@@ -747,6 +759,12 @@ void Dispatch_Event(XEvent *ev)
 			break;
 		case ReparentNotify:
 			//RL_Print("Window %x is reparented to %x\n", ev->xreparent.window, ev->xreparent.parent);
+			{
+				host_window_t *hw = Find_Host_Window_By_ID(ev->xreparent.window);
+				if (hw != NULL) {
+					hw->x_parent_id = ev->xreparent.parent;
+				}
+			}
 			break;
 		default:
 			//RL_Print("default event type: %d\n", ev->type);
