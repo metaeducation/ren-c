@@ -339,6 +339,9 @@ static int get_work_area(METRIC_TYPE type)
 		if (global_x_info->x_atom_list) {
 			x_atom_list_free(global_x_info->x_atom_list);
 		}
+		if (global_x_info->net_supported) {
+			XFree(global_x_info->net_supported);
+		}
 		OS_Free(global_x_info);
 	}
 	//FcFini(); /* FIXME: gtk file chooser causes this to segfault */

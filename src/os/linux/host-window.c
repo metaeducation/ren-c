@@ -157,6 +157,57 @@ host_window_t *Find_Host_Window_By_ID(Window win)
 	return NULL;
 }
 
+REBOOL is_net_supported(Atom atom)
+{
+	int i = 0;
+	if (global_x_info == NULL) return 0;
+	if (global_x_info->net_supported == NULL) return 0;
+	for(i = 0; i < global_x_info->n_net_supported; i ++) {
+		if (atom == global_x_info->net_supported[i]) {
+			return 1;
+		}
+	}
+	return 0;
+}
+
+static void retrieve_net_supported()
+{
+	Atom     actual_type;
+	int      actual_format;
+	long     nitems;
+	long     bytes;
+	long     *data = NULL;
+	int 	status;
+	int		ret;
+	status = XGetWindowProperty(global_x_info->display,
+								DefaultRootWindow(global_x_info->display),
+								x_atom_list_find_atom(global_x_info->x_atom_list,
+													  global_x_info->display,
+													  "_NET_SUPPORTED", False),
+								0,
+								(~0L),
+								False,
+								AnyPropertyType,
+								&actual_type,
+								&actual_format,
+								&nitems,
+								&bytes,
+								(unsigned char**)&data);
+
+	//RL_Print("status: %d, Actual type: %x, format: %x, nitems: %d\n", status, actual_type, actual_format, nitems);
+	if (status != Success
+		|| data == NULL
+		|| actual_type != XA_ATOM
+		|| actual_format != 32) {
+		global_x_info->net_supported = NULL;
+		global_x_info->n_net_supported = 0;
+		//RL_Print("_NET_SUPPORTED failed\n");
+		return;
+	}
+	global_x_info->net_supported = data;
+	global_x_info->n_net_supported = nitems;
+}
+
 static REBXYF Zero_Pair = {0, 0};
 //**********************************************************************
 //** OSAL Library Functions ********************************************
@@ -253,7 +304,7 @@ static REBXYF Zero_Pair = {0, 0};
 												 CopyFromParent, InputOutput,
 												 CopyFromParent, 0, NULL);
 
-
+	retrieve_net_supported();
 }
 
 
@@ -669,8 +720,11 @@ static void set_gob_window_type(REBGOB *gob,
 		}
 		parent_window = hw->x_id;
 		XSetTransientForHint(display, window, parent_window);
-		int status = XChangeProperty(display, window, wm_state, XA_ATOM, 32,
-									 PropModeReplace, (unsigned char*)&wm_state_modal, 1);
+		if (is_net_supported(wm_state)
+			&& is_net_supported(wm_state_modal)) {
+			XChangeProperty(display, window, wm_state, XA_ATOM, 32,
+							PropModeReplace, (unsigned char*)&wm_state_modal, 1);
+		}
 		window_type = x_atom_list_find_atom(global_x_info->x_atom_list,
 											display,
 											"_NET_WM_WINDOW_TYPE_DIALOG",
@@ -682,9 +736,12 @@ static void set_gob_window_type(REBGOB *gob,
 											True);
 	}
 
-	XChangeProperty(display, window, window_type_atom, XA_ATOM, 32,
-					PropModeReplace,
-					(unsigned char *)&window_type, 1);
+	if (is_net_supported(window_type_atom)
+		&& is_net_supported(window_type)) {
+		XChangeProperty(display, window, window_type_atom, XA_ATOM, 32,
+						PropModeReplace,
+						(unsigned char *)&window_type, 1);
+	}
 }
 
 static void set_wm_locale(Display *display,
