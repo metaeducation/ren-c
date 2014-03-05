@@ -501,38 +501,30 @@ int reb_x11_get_window_extens(Display *display,
 	*/
 
 	update_gob_window_state(gob, global_x_info->display, hw);
-	Resize_Window(gob, FALSE);
-	XGetGeometry(global_x_info->display, hw->x_id, &root, &actual_x, &actual_y, 
-				 &actual_w, &actual_h, &actual_border_width, &actual_depth);
-	/*
-	RL_Print("%s %d, Updating an X window %x for gob %x, x: %d, y: %d, w: %d, h: %d, border: %d, depth: %d\n",
-			 __func__, __LINE__, hw->x_id, gob,
-			 actual_x, actual_y, actual_w, actual_h,
-			 actual_border_width, actual_depth);
-			 */
-	if (actual_w != w || actual_h != h){
+	if (Resize_Window(gob, False)) { /* size changed from rebol script */
 		XResizeWindow(global_x_info->display, hw->x_id, w, h);
-	}
-	REBGOB *parent_gob = GOB_TMP_OWNER(gob);
-	//RL_Print("%s, %d, gob: %x, parent gob: %x, pos: %dx%d, size: %dx%d\n", __func__, __LINE__, gob, parent_gob, x, y, w, h);
-	if (parent_gob != NULL) {
-			host_window_t *parent_hw = GOB_HWIN(parent_gob);
-			if (hw != NULL) {
-					Window gob_parent_window = parent_hw->x_id;
-					Window child;
-					if (GET_GOB_FLAG(gob, GOBF_POPUP)) {
-						/* x, y are in screen coordinates for POPUP windows */
-						if (hw->x_parent_id != root) {
-							XTranslateCoordinates(global_x_info->display, root, hw->x_parent_id, x, y, &x, &y, &child);
-						}
-					} else {
-						/* x, y are in parent window coordinates */
-						XTranslateCoordinates(global_x_info->display, gob_parent_window, hw->x_parent_id, x, y, &x, &y, &child);
-					}
-			}
 	}
 
 	if (x != GOB_XO_INT(gob) || y != GOB_YO_INT(gob)){
+		/* offset changed from rebol script */
+		REBGOB *parent_gob = GOB_TMP_OWNER(gob);
+		//RL_Print("%s, %d, gob: %x, parent gob: %x, pos: %dx%d, size: %dx%d\n", __func__, __LINE__, gob, parent_gob, x, y, w, h);
+		if (parent_gob != NULL) {
+				host_window_t *parent_hw = GOB_HWIN(parent_gob);
+				if (hw != NULL) {
+						Window gob_parent_window = parent_hw->x_id;
+						Window child;
+						if (GET_GOB_FLAG(gob, GOBF_POPUP)) {
+							/* x, y are in screen coordinates for POPUP windows */
+							if (hw->x_parent_id != root) {
+								XTranslateCoordinates(global_x_info->display, root, hw->x_parent_id, x, y, &x, &y, &child);
+							}
+						} else {
+							/* x, y are in parent window coordinates */
+							XTranslateCoordinates(global_x_info->display, gob_parent_window, hw->x_parent_id, x, y, &x, &y, &child);
+						}
+				}
+		}
 		/*
 		RL_Print("Moving window: %x from %dx%d to %dx%d\n",
 				 hw->x_id, GOB_XO_INT(gob), GOB_YO_INT(gob), x, y);
