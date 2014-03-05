@@ -549,13 +549,15 @@ static void handle_configure_notify(XEvent *ev, REBGOB *gob)
 	host_window_t* hw = Find_Host_Window_By_ID(ev->xconfigure.window);
 	assert(hw != NULL);
 	if (hw->old_width == xce.width && hw->old_height == xce.height)
+		/* XResizeWindow failed */
 		return;
 	xyd = (ROUND_TO_INT(xce.width)) + (ROUND_TO_INT(xce.height) << 16);
 	gob->size.x = hw->old_width = xce.width;
 	gob->size.y = hw->old_height = xce.height;
-	Resize_Window(gob, TRUE);
-	//RL_Print("%s, %s, %d: EVT_RESIZE is sent: %x\n", __FILE__, __func__, __LINE__, xyd);
-	Update_Event_XY(gob, EVT_RESIZE, xyd, 0); //This is needed even when Resize_Window returns false, in which case, Rebol changed the window size and OS_Update_Window has been called.
+	if (Resize_Window(gob, TRUE)) {
+		//RL_Print("%s, %s, %d: EVT_RESIZE is sent: %x\n", __FILE__, __func__, __LINE__, xyd);
+		Update_Event_XY(gob, EVT_RESIZE, xyd, 0);
+	}
 }
 
 void handle_key(XEvent *ev, REBGOB *gob)
