@@ -190,8 +190,9 @@ static int shm_error_handler(Display *d, XErrorEvent *e) {
 										   &ctx->x_shminfo,
 										   w, h);
 
+			ctx->pixbuf_len = ctx->x_image->bytes_per_line * ctx->x_image->height;
 			ctx->x_shminfo.shmid = shmget(IPC_PRIVATE,
-										  ctx->x_image->bytes_per_line * ctx->x_image->height,
+										  ctx->pixbuf_len,
 										  IPC_CREAT | 0644 );
 			//RL_Print("Allocated SHM %x\n", ctx->x_shminfo.shmid);
 			if (ctx->x_shminfo.shmid < 0) {
@@ -556,6 +557,9 @@ static void swap_buffer(REBCMP_CTX* ctx)
 		ctx->x_image = ctx->x_image_back;
 		ctx->x_image_back = tmp;
 		ctx->pixbuf = ctx->x_image->data;
+		//printf("copy %d bytes from old data\n", ctx->pixbuf_len);
+		/* it could be a partial rendering, so copy the old data over */
+		memcpy(ctx->pixbuf, ctx->x_image_back->data, ctx->pixbuf_len);
 	}
 #endif
 }
