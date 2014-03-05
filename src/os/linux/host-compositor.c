@@ -247,6 +247,7 @@ static int shm_error_handler(Display *d, XErrorEvent *e) {
 
 		if (!global_x_info->has_xshm
 			|| global_x_info->sys_pixmap_format != pix_format_bgra32) {//fall back to non-xshm version
+			global_x_info->has_xshm = 0;
 #endif
 			//RL_Print("Non-shm version\n");
 			ctx->pixbuf_len = w * h * BYTE_PER_PIXEL; //BGRA32;
