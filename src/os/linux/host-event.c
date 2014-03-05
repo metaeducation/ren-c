@@ -542,6 +542,9 @@ static void handle_configure_notify(XEvent *ev, REBGOB *gob)
 		gob->offset.x = x;
 		gob->offset.y = y;
 		Update_Event_XY(gob, EVT_OFFSET, xyd, 0);
+		/* avoid a XMoveWindow call from OS_Update_Window */
+		GOB_XO(gob) = GOB_LOG_X(gob);
+		GOB_YO(gob) = GOB_LOG_Y(gob);
 	}
 	host_window_t* hw = Find_Host_Window_By_ID(ev->xconfigure.window);
 	assert(hw != NULL);
