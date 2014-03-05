@@ -170,6 +170,9 @@ static int shm_error_handler(Display *d, XErrorEvent *e) {
 			XDestroyImage(ctx->x_image); //frees ctx->pixbuf as well
 		}
 #ifdef USE_XSHM
+		if (ctx->x_image_back) {
+			XDestroyImage(ctx->x_image_back); //frees ctx->pixbuf as well
+		}
 		if (global_x_info->has_xshm
 			&& global_x_info->sys_pixmap_format == pix_format_bgra32) {
 
