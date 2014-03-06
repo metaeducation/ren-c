@@ -68,6 +68,13 @@ void rebdrw_gob_image(REBGOB *gob, REBYTE* buf, REBXYI buf_size, REBXYI abs_oft,
 void rebdrw_gob_draw(REBGOB *gob, REBYTE* buf, REBXYI buf_size, REBXYI abs_oft, REBXYI clip_oft, REBXYI clip_siz);
 REBINT rt_gob_text(REBGOB *gob, REBYTE* buf, REBXYI buf_size, REBXYF abs_oft, REBXYI clip_oft, REBXYI clip_siz);
 void Host_Crash(const char *reason);
+void put_image(Display *display,
+			   Drawable drawable,
+			   GC gc,
+			   XImage * image,
+			   int w,
+			   int h,
+			   pixmap_format_t sys_pixmap_format);
 //***** Macros *****
 #define GOB_HWIN(gob)	((host_window_t*)Find_Window(gob))
 
@@ -706,7 +713,7 @@ void rebcmp_compose_region(REBCMP_CTX* ctx, REBGOB* winGob, REBGOB* gob, XRectan
 
 void rebcmp_blit_region(REBCMP_CTX* ctx, Region reg)
 {
-	//RL_Print("rebcmp_blit_region\n");
+	//RL_Print("rebcmp_blit_region, ctx: %x\n", ctx);
 	REBINT w = GOB_LOG_W_INT(ctx->Win_Gob);
 	REBINT h = GOB_LOG_H_INT(ctx->Win_Gob);
 	//RL_Print("rebcmp_blit, w = %d, h = %d\n", w, h);
