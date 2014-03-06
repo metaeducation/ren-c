@@ -210,11 +210,11 @@ static int shm_error_handler(Display *d, XErrorEvent *e) {
 			} else {
 				memset(ctx->pixbuf, 0, ctx->pixbuf_len);
 				ctx->x_shminfo.readOnly = False;
-				XSync(global_x_info->display, True);
+				XSync(global_x_info->display, False);
 				orig_error_handler = XSetErrorHandler(shm_error_handler);
 				XShmAttach(global_x_info->display, &ctx->x_shminfo); //Bad Access error when talking to a remote X server
-				XSync(global_x_info->display, True);
 				XSetErrorHandler(orig_error_handler);
+				XSync(global_x_info->display, False);
 				if (!global_x_info->has_xshm) {
 					//RL_Print("XShmAttach failed, fallback to non-shm\n");
 					if (ctx->x_image) {
@@ -246,6 +246,7 @@ static int shm_error_handler(Display *d, XErrorEvent *e) {
 				ctx->x_shminfo_back.shmaddr = ctx->x_image_back->data
 					= (char *)shmat(ctx->x_shminfo_back.shmid, 0, 0);
 				XShmAttach(global_x_info->display, &ctx->x_shminfo_back); //Bad Access error when talking to a remote X server
+				XSync(global_x_info->display, False);
 			}
 		}
 
