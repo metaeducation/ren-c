@@ -573,7 +573,6 @@ static void handle_configure_notify(XEvent *ev, REBGOB *gob)
 	assert(hw != NULL);
 	if (hw->old_width == xce.width && hw->old_height == xce.height) {
 		/* XResizeWindow failed, or this is a window movement */
-		X_Finish_Resizing();
 		return;
 	}
 	xyd = (ROUND_TO_INT(xce.width)) + (ROUND_TO_INT(xce.height) << 16);
