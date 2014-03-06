@@ -25,6 +25,7 @@
 **      Processes X events to pass to REBOL
 */
 
+#include <stdio.h>
 #include <math.h>
 #include <assert.h>
 #include  <X11/Xlib.h>
@@ -49,6 +50,9 @@ void rebcmp_blit_region(REBCMP_CTX* ctx, Region reg);
 
 #define GOB_COMPOSITOR(gob)	(Find_Compositor(gob)) //gets handle to window's compositor
 #define DOUBLE_CLICK_DIFF 300 /* in milliseconds */
+
+#define MAX_WINDOWS 64
+static REBGOB *resize_events[MAX_WINDOWS];
 
 // Virtual key conversion table, sorted by first column.
 static const REBCNT keysym_to_event[] = {
@@ -139,6 +143,25 @@ static REBINT Check_Modifiers(REBINT flags, unsigned state)
 	if (state & ShiftMask) flags |= (1<<EVF_SHIFT);
 	if (state & ControlMask) flags |= (1<<EVF_CONTROL);
 	return flags;
+}
+
+void X_Init_Resizing()
+{
+	resize_events[0] = NULL; /* reset resize_events, only resetting first one is enough */
+}
+
+void X_Finish_Resizing()
+{
+	/* send out resize */
+	int i = 0;
+	for (i = 0; i < MAX_WINDOWS; i ++) {
+		if (resize_events[i] != NULL) {
+			Resize_Window(resize_events[i], TRUE);
+		} else {
+			break; /* end of the array */
+		}
+	}
+	X_Init_Resizing(); /* get ready for next call */
 }
 
 static void handle_property_notify(XEvent *ev, REBGOB *gob)
@@ -548,14 +571,31 @@ static void handle_configure_notify(XEvent *ev, REBGOB *gob)
 	}
 	host_window_t* hw = Find_Host_Window_By_ID(ev->xconfigure.window);
 	assert(hw != NULL);
-	if (hw->old_width == xce.width && hw->old_height == xce.height)
-		/* XResizeWindow failed */
+	if (hw->old_width == xce.width && hw->old_height == xce.height) {
+		/* XResizeWindow failed, or this is a window movement */
+		X_Finish_Resizing();
 		return;
+	}
 	xyd = (ROUND_TO_INT(xce.width)) + (ROUND_TO_INT(xce.height) << 16);
 	gob->size.x = hw->old_width = xce.width;
 	gob->size.y = hw->old_height = xce.height;
-	if (Resize_Window(gob, TRUE)) {
+	if (GOB_WO_INT(gob) != GOB_LOG_W_INT(gob)
+		|| GOB_HO_INT(gob) != GOB_LOG_H_INT(gob)) {
+		//RL_Print("Resize for gob: %x to %dx%d\n", gob, GOB_LOG_W_INT(gob), GOB_LOG_H_INT(gob));
 		//RL_Print("%s, %s, %d: EVT_RESIZE is sent: %x\n", __FILE__, __func__, __LINE__, xyd);
+		int i = 0;
+		for(i = 0; i < MAX_WINDOWS; i ++){
+			if (resize_events[i] == NULL){
+				//RL_Print("Filled resize_events[%d]\n", i);
+				resize_events[i] = gob;
+				if (i < MAX_WINDOWS - 1) {
+					resize_events[i + 1] = NULL; /* mark it the end of the array */
+				}
+				break;
+			}
+			if (resize_events[i] == gob)
+				break;
+		}
 		Update_Event_XY(gob, EVT_RESIZE, xyd, 0);
 	}
 }
@@ -655,6 +695,21 @@ void Dispatch_Event(XEvent *ev)
 	REBGOB *gob = NULL;
 	// Handle XEvents and flush the input 
 	REBINT flags = 0;
+	if (resize_events[0] != NULL
+	   	&& ev->type != ConfigureNotify) {/* handle expose after resizing */
+		if (ev->type == Expose) { /* ignore expose after resize */
+			int i = 0;
+			gob = Find_Gob_By_Window(ev->xexpose.window);
+			for (i = 0; i < MAX_WINDOWS; i ++) {
+				if (resize_events[i] == NULL) {
+					break;
+				} else if (resize_events[i] == gob) {
+					return;
+				}
+			}
+		}
+		X_Finish_Resizing();
+	}
 	switch (ev->type) {
 		case CreateNotify:
 			/*
@@ -784,9 +839,12 @@ void X_Event_Loop(int at_most)
 	if (global_x_info->display == NULL) {
 		return;
 	}
+	X_Init_Resizing();
 	while(XPending(global_x_info->display) && (at_most < 0 || n < at_most)) {
 		++ n;
 		XNextEvent(global_x_info->display, &ev);
 		Dispatch_Event(&ev);
 	}
+	X_Finish_Resizing();
 }
+
