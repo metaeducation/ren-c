@@ -115,30 +115,15 @@ void X_Finish_Resizing();
 	
 #ifndef REB_CORE
 	if (global_x_info->display != NULL) {
-		XEvent ev;
-		int n = 0;
-		i64 base = OS_Delta_Time(0, 0) ;
-	    // This returns the FD of the X11 display (or something like that)
-	    x11_fd = ConnectionNumber(global_x_info->display);
+		x11_fd = ConnectionNumber(global_x_info->display);
 
-		// Create a File Description Set containing x11_fd
 		FD_SET(x11_fd, &in_fds);
-
-		// Wait for X Event or a Timer
-		X_Init_Resizing();
-		while (select(x11_fd+1, &in_fds, 0, 0, &tv) > 0
-			   && n < NUM_EVENTS_AT_A_TIME){
-			XNextEvent(global_x_info->display, &ev);
-			Dispatch_Event(&ev);
-			n ++;
-		}
-		X_Finish_Resizing();
-	} else {
-		select(x11_fd+1, &in_fds, 0, 0, &tv);
 	}
-#else
-	select(x11_fd+1, &in_fds, 0, 0, &tv);
 #endif
+	select(x11_fd+1, &in_fds, 0, 0, &tv);
+
+	Poll_Events(NULL);
+
 	return DR_DONE;
 }
 
