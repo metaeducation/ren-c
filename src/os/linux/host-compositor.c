@@ -728,6 +728,7 @@ void rebcmp_blit_region(REBCMP_CTX* ctx, Region reg)
 				0, 0, 	//dest x, y
 				w, h, 
 				False);
+		XFlush(global_x_info->display); //x_image could change if we don't flush here
 	} else {
 #endif
 		Drawable dest = global_x_info->has_double_buffer ? 
