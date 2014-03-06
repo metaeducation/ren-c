@@ -807,9 +807,10 @@ static int Try_Browser(char *browser, REBCHR *url)
 		*string = NULL;
 	} else {
 		//convert to UTF8
-		*string = (REBCHR*)OS_Make(len+1);
-		for (n = 0; n < len; n++)
-			*string[n] = (unsigned char)((wchar_t*)str)[n]; 		
+		REBCNT utf8_len = Length_As_UTF8(str, len, TRUE, FALSE);
+		*string = (REBCHR*)OS_Make(utf8_len+1);
+		Encode_UTF8(*string, utf8_len, str, &len, TRUE, FALSE);
+		(*string)[utf8_len] = '\0';
 	}
 	return TRUE;
 }
