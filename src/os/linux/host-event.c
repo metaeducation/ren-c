@@ -319,45 +319,72 @@ static void handle_button(XEvent *ev, REBGOB *gob)
 		}
 		Add_Event_XY(gob, id, xyd, flags);
 	} else {
-		switch (ev->xbutton.button){
-			case 4: //wheel scroll up
-				if (ev->type == ButtonRelease) {
+		if (ev->type == ButtonRelease) {
+			evt = RL_Find_Event(EVM_GUI,
+								ev->xbutton.state & ControlMask? EVT_SCROLL_PAGE: EVT_SCROLL_LINE);
+			u32 data = 0;
+			u32 *pdata = NULL;
+			u32 tmp = 0;
+			if (evt != NULL) {
+				pdata = &evt->data;
+			} else {
+				pdata = &data;
+			}
+			int mw_num_lines = 3;
+			switch (ev->xbutton.button){
+				case 4: //wheel scroll up
 					//RL_Print("Scrolling up by 1 line\n");
-					evt = RL_Find_Event(EVM_GUI,
-										ev->xbutton.state & ControlMask? EVT_SCROLL_PAGE: EVT_SCROLL_LINE);
-					if (evt != NULL){
-						//RL_Print("Current line = %x\n", evt->data >> 16);
-						if (evt->data < 0){
-							evt->data = 0;
-						}
-						evt->data += 3 << 16;
-					} else {
-						Add_Event_XY(gob,
-									 ev->xbutton.state & ControlMask? EVT_SCROLL_PAGE: EVT_SCROLL_LINE,
-									 1 << 16, 0);
+					//RL_Print("Current line = %x\n", evt->data >> 16);
+					tmp = *pdata & 0xFFFF0000;
+					if (tmp < 0){
+						tmp = 0;
 					}
-				}
-				break;
-			case 5: //wheel scroll down
-				if (ev->type == ButtonRelease) {
-					//RL_Print("Scrolling down by 1 line\n");
-					evt = RL_Find_Event(EVM_GUI, 
-										ev->xbutton.state & ControlMask? EVT_SCROLL_PAGE: EVT_SCROLL_LINE);
-					if (evt != NULL){
-						//RL_Print("Current line = %x\n", evt->data >> 16);
-						if (evt->data > 0){
-							evt->data = 0;
-						}
-						evt->data -= 3 << 16;
-					} else {
-						Add_Event_XY(gob, 
-									 ev->xbutton.state & ControlMask? EVT_SCROLL_PAGE: EVT_SCROLL_LINE, 
-									 -1 << 16, 0);
+					if (tmp <= 0x7FFF - mw_num_lines) { /* avoid overflow */
+						tmp += mw_num_lines;
 					}
-				}
-				break;
-			default:
-				RL_Print("Unrecognized mouse button %d", ev->xbutton.button);
+					*pdata = (tmp << 16) | (*pdata & 0xFFFF); /* do not touch low 16-bit */
+					break;
+				case 5: //wheel scroll down
+					//RL_Print("Current line = %x\n", evt->data >> 16);
+					tmp = *pdata & 0xFFFF0000;
+					if (tmp > 0){
+						tmp = 0;
+					}
+					if (tmp < mw_num_lines) { /* avoid overflow */
+						tmp -= mw_num_lines;
+					}
+					*pdata = (tmp << 16) | (*pdata & 0xFFFF); /* do not touch low 16-bit */
+					break;
+				case 6:
+					/* scroll left */
+					tmp = *pdata & 0xFFFF;
+					if (tmp > 0){
+						tmp = 0;
+					}
+					if (tmp < mw_num_lines) { /* avoid overflow */
+						tmp -= mw_num_lines;
+					}
+					*pdata = tmp | (*pdata & 0xFFFF0000);
+				case 7:
+					/* scroll right */
+					tmp = *pdata & 0xFFFF;
+					if (*pdata < 0 || *pdata){
+						*pdata = 0;
+					}
+					if (tmp <= 0x7FFF - mw_num_lines) { /* avoid overflow */
+						tmp += mw_num_lines;
+					}
+					*pdata = tmp | (*pdata & 0xFFFF0000);
+					break;
+				default:
+					//RL_Print("Unrecognized mouse button %d", ev->xbutton.button);
+					return;
+			}
+			if (evt == NULL) {
+				Add_Event_XY(gob,
+							 ev->xbutton.state & ControlMask? EVT_SCROLL_PAGE: EVT_SCROLL_LINE,
+							 data, 0);
+			}
 		}
 	}
 	if (ev->type == ButtonPress) {
