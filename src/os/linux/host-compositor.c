@@ -714,9 +714,6 @@ void rebcmp_compose_region(REBCMP_CTX* ctx, REBGOB* winGob, REBGOB* gob, XRectan
 void rebcmp_blit_region(REBCMP_CTX* ctx, Region reg)
 {
 	//RL_Print("rebcmp_blit_region, ctx: %x\n", ctx);
-	REBINT w = GOB_LOG_W_INT(ctx->Win_Gob);
-	REBINT h = GOB_LOG_H_INT(ctx->Win_Gob);
-	//RL_Print("rebcmp_blit, w = %d, h = %d\n", w, h);
 	XSetRegion(global_x_info->display, ctx->x_gc, reg);
 	/*
 	XRectangle rect;
@@ -731,10 +728,10 @@ void rebcmp_blit_region(REBCMP_CTX* ctx, Region reg)
 		XShmPutImage(global_x_info->display, 
 				ctx->host_window->x_id, 
 				ctx->x_gc, 
-				ctx->x_image, 
+				ctx->x_image,
 				0, 0, 	//src x, y
 				0, 0, 	//dest x, y
-				w, h, 
+				ctx->x_image->width, ctx->x_image->height,
 				False);
 		XFlush(global_x_info->display); //x_image could change if we don't flush here
 	} else {
@@ -750,13 +747,13 @@ void rebcmp_blit_region(REBCMP_CTX* ctx, Region reg)
 					ctx->x_image,
 					0, 0,	//src x, y
 					0, 0,	//dest x, y
-					w, h);
+					ctx->x_image->width, ctx->x_image->height);
 		} else {
 			put_image(global_x_info->display,
 					dest,
 					ctx->x_gc,
 					ctx->x_image,
-					w, h,
+					ctx->x_image->width, ctx->x_image->height,
 					global_x_info->sys_pixmap_format);
 		}
 
