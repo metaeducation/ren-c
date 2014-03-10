@@ -584,13 +584,13 @@ static void handle_configure_notify(XEvent *ev, REBGOB *gob)
 	}
 	if (ROUND_TO_INT(gob->offset.x) != x
 	    || ROUND_TO_INT(gob->offset.y) != y){
-		xyd = (ROUND_TO_INT(x)) + (ROUND_TO_INT(y) << 16);
 		/*
 		   RL_Print("%s, %s, %d: EVT_OFFSET (%dx%d) is sent\n", __FILE__, __func__, __LINE__,
 		   ROUND_TO_INT(x), ROUND_TO_INT(y));
 		   */
-		gob->offset.x = x;
-		gob->offset.y = y;
+		gob->offset.x = ROUND_TO_INT(PHYS_COORD_X(x));
+		gob->offset.y = ROUND_TO_INT(PHYS_COORD_X(y));
+		xyd = (ROUND_TO_INT(gob->offset.x)) + (ROUND_TO_INT(gob->offset.y) << 16);
 		Update_Event_XY(gob, EVT_OFFSET, xyd, 0);
 		/* avoid a XMoveWindow call from OS_Update_Window */
 		GOB_XO(gob) = GOB_LOG_X(gob);
@@ -602,9 +602,9 @@ static void handle_configure_notify(XEvent *ev, REBGOB *gob)
 		/* XResizeWindow failed, or this is a window movement */
 		return;
 	}
-	xyd = (ROUND_TO_INT(xce.width)) + (ROUND_TO_INT(xce.height) << 16);
-	gob->size.x = hw->old_width = xce.width;
-	gob->size.y = hw->old_height = xce.height;
+	gob->size.x = ROUND_TO_INT(PHYS_COORD_X(hw->old_width = xce.width));
+	gob->size.y = ROUND_TO_INT(PHYS_COORD_Y(hw->old_height = xce.height));
+	xyd = (ROUND_TO_INT((gob->size.x))) + (ROUND_TO_INT(gob->size.y) << 16);
 	if (GOB_WO_INT(gob) != GOB_LOG_W_INT(gob)
 		|| GOB_HO_INT(gob) != GOB_LOG_H_INT(gob)) {
 		//RL_Print("Resize for gob: %x to %dx%d\n", gob, GOB_LOG_W_INT(gob), GOB_LOG_H_INT(gob));
@@ -674,7 +674,7 @@ void handle_expose(XEvent *ev, REBGOB *gob)
 {
 	host_window_t *hw = GOB_HWIN(gob);
 
-	XRectangle rect = {ev->xexpose.x, ev->xexpose.y, ev->xexpose.width, ev->xexpose.height};
+	XRectangle rect = {ev->xexpose.x, ev->xexpose.y, ev->xexpose.width, ev->xexpose.height}; /* in screen coordinates */
 
 	assert (hw != NULL);
 	if (hw == NULL) {
