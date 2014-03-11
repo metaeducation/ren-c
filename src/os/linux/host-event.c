@@ -37,6 +37,16 @@
 #include "host-compositor.h"
 #include "keysym2ucs.h"
 
+enum {
+	BUTTON_LEFT = 1,
+	BUTTON_MIDDLE = 2,
+	BUTTON_RIGHT = 3,
+	BUTTON_SCROLL_UP = 4,
+	BUTTON_SCROLL_DOWN = 5,
+	BUTTON_SCROLL_LEFT = 6,
+	BUTTON_SCROLL_RIGHT = 7
+};
+
 extern x_info_t *global_x_info;
 REBGOB *Find_Gob_By_Window(Window win);
 host_window_t *Find_Host_Window_By_ID(Window win);
@@ -307,13 +317,13 @@ static void handle_button(XEvent *ev, REBGOB *gob)
 			//RL_Print("Button %d double clicked\n", ev->xbutton.button);
 		}
 		switch (ev->xbutton.button){
-			case 1: //left button
+			case BUTTON_LEFT:
 				id = (ev->type == ButtonPress)? EVT_DOWN: EVT_UP;
 				break;
-			case 2: //middle button
+			case BUTTON_MIDDLE:
 				id = (ev->type == ButtonPress)? EVT_AUX_DOWN: EVT_AUX_UP;
 				break;
-			case 3: //right button
+			case BUTTON_RIGHT:
 				id = (ev->type == ButtonPress)? EVT_ALT_DOWN: EVT_ALT_UP;
 				break;
 		}
@@ -324,62 +334,51 @@ static void handle_button(XEvent *ev, REBGOB *gob)
 								ev->xbutton.state & ControlMask? EVT_SCROLL_PAGE: EVT_SCROLL_LINE);
 			u32 data = 0;
 			u32 *pdata = NULL;
-			u32 tmp = 0;
+			i16 tmp = 0;
 			if (evt != NULL) {
 				pdata = &evt->data;
 			} else {
 				pdata = &data;
 			}
 			int mw_num_lines = 3;
-			switch (ev->xbutton.button){
-				case 4: //wheel scroll up
-					//RL_Print("Scrolling up by 1 line\n");
-					//RL_Print("Current line = %x\n", evt->data >> 16);
-					tmp = *pdata & 0xFFFF0000;
-					if (tmp < 0){
-						tmp = 0;
-					}
-					if (tmp <= 0x7FFF - mw_num_lines) { /* avoid overflow */
-						tmp += mw_num_lines;
-					}
-					*pdata = (tmp << 16) | (*pdata & 0xFFFF); /* do not touch low 16-bit */
-					break;
-				case 5: //wheel scroll down
-					//RL_Print("Current line = %x\n", evt->data >> 16);
-					tmp = *pdata & 0xFFFF0000;
-					if (tmp > 0){
-						tmp = 0;
-					}
-					if (tmp < mw_num_lines) { /* avoid overflow */
-						tmp -= mw_num_lines;
-					}
-					*pdata = (tmp << 16) | (*pdata & 0xFFFF); /* do not touch low 16-bit */
-					break;
-				case 6:
-					/* scroll left */
-					tmp = *pdata & 0xFFFF;
-					if (tmp > 0){
-						tmp = 0;
-					}
-					if (tmp < mw_num_lines) { /* avoid overflow */
-						tmp -= mw_num_lines;
-					}
-					*pdata = tmp | (*pdata & 0xFFFF0000);
-				case 7:
-					/* scroll right */
-					tmp = *pdata & 0xFFFF;
-					if (*pdata < 0 || *pdata){
-						*pdata = 0;
-					}
-					if (tmp <= 0x7FFF - mw_num_lines) { /* avoid overflow */
-						tmp += mw_num_lines;
-					}
-					*pdata = tmp | (*pdata & 0xFFFF0000);
-					break;
-				default:
-					//RL_Print("Unrecognized mouse button %d", ev->xbutton.button);
-					return;
+
+			if (ev->xbutton.button == BUTTON_SCROLL_UP
+				|| ev->xbutton.button == BUTTON_SCROLL_DOWN) {
+				tmp = *pdata >> 16;
+			} else if (ev->xbutton.button == BUTTON_SCROLL_LEFT
+					   || ev->xbutton.button == BUTTON_SCROLL_RIGHT) {
+				tmp = *pdata & 0xFFFF;
+			} else {
+				return;
 			}
+
+			if (ev->xbutton.button == BUTTON_SCROLL_UP
+				|| ev->xbutton.button == BUTTON_SCROLL_RIGHT) {
+				if (tmp < 0){
+					tmp = 0;
+				}
+				if (tmp <= 0x7FFF - mw_num_lines) { /* avoid overflow */
+					tmp += mw_num_lines;
+				}
+			} else if (ev->xbutton.button == BUTTON_SCROLL_DOWN
+					   || ev->xbutton.button == BUTTON_SCROLL_LEFT) {
+				tmp = *pdata & 0xFFFF;
+				if (tmp > 0){
+					tmp = 0;
+				}
+				if (tmp > -0x8000 + mw_num_lines) { /* avoid overflow */
+					tmp -= mw_num_lines;
+				}
+			}
+
+			if (ev->xbutton.button == BUTTON_SCROLL_UP
+				|| ev->xbutton.button == BUTTON_SCROLL_DOWN) {
+				*pdata = (tmp << 16) | (*pdata & 0xFFFF); /* do not touch low 16-bit */
+			} else if (ev->xbutton.button == BUTTON_SCROLL_LEFT
+					   || ev->xbutton.button == BUTTON_SCROLL_RIGHT) {
+				*pdata = (tmp & 0xFFFF) | (*pdata & 0xFFFF0000); /* do not touch high 16-bit */
+			}
+
 			if (evt == NULL) {
 				Add_Event_XY(gob,
 							 ev->xbutton.state & ControlMask? EVT_SCROLL_PAGE: EVT_SCROLL_LINE,
