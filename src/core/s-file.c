@@ -66,6 +66,7 @@
 	for (i = 0; i < len;) {
 		c = uni ? ((REBUNI*)bp)[i] : ((REBYTE*)bp)[i];
 		i++;
+#ifdef TO_WIN32
 		if (c == ':') {
 			// Handle the vol:dir/file format:
 			if (colon || slash) return 0; // no prior : or / allowed
@@ -82,6 +83,7 @@
 			slash = 1;
 		}
 		else slash = 0;
+#endif
 		SET_ANY_CHAR(dst, n++, c);
 	}
 	if (dir && c != '/') {  // watch for %/c/ case
@@ -90,8 +92,10 @@
 	SERIES_TAIL(dst) = n;
 	TERM_SERIES(dst);
 
+#ifdef TO_WIN32
 	// Change C:/ to /C/ (and C:X to /C/X):
 	if (colon) Insert_Char(dst, 0, (REBCNT)'/');
+#endif
 
 	return dst;
 }
