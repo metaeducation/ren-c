@@ -58,7 +58,6 @@ void Dispatch_Event(XEvent *ev);
 void X_Init_Resizing();
 void X_Finish_Resizing();
 
-#define NUM_EVENTS_AT_A_TIME 8
 
 /***********************************************************************
 **
@@ -88,7 +87,7 @@ void X_Finish_Resizing();
 {
 	int flag = DR_DONE;
 #ifndef REB_CORE
-	X_Event_Loop(NUM_EVENTS_AT_A_TIME);
+	X_Event_Loop(-1);
 #endif
 	return flag;	// different meaning compared to most commands
 }
