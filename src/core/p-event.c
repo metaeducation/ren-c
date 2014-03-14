@@ -107,10 +107,10 @@ REBREQ *req;		//!!! move this global
 }
 /***********************************************************************
 **
-*/	REBVAL *Find_Event (REBINT model, REBINT type)
+*/	REBVAL *Find_Last_Event (REBINT model, REBINT type)
 /*
-**		Find the event in the queue by the model and type
-**		Return a pointer to the event value.
+**		Find the last event in the queue by the model
+**		Check its type, if it matches, then return the event or NULL
 **
 **
 ***********************************************************************/
@@ -125,10 +125,13 @@ REBREQ *req;		//!!! move this global
 	// Get queue block:
 	state = VAL_BLK_SKIP(port, STD_PORT_STATE);
 	if (!IS_BLOCK(state)) return NULL;
-	for(value = VAL_BLK(state); value != VAL_BLK_TAIL(state); ++ value){
-		if (VAL_EVENT_MODEL(value) == model
-			&& VAL_EVENT_TYPE(value) == type){
-			return value;
+	for (value = VAL_BLK_TAIL(state) - 1; value >= VAL_BLK(state); -- value) {
+		if (VAL_EVENT_MODEL(value) == model) {
+			if (VAL_EVENT_TYPE(value) == type) {
+				return value;
+			} else {
+				return NULL;
+			}
 		}
 	}
 

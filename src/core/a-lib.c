@@ -515,7 +515,7 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 ***********************************************************************/
 
 {
-	REBVAL *event = Find_Event(evt->model, evt->type);
+	REBVAL *event = Find_Last_Event(evt->model, evt->type);
 
 	if (event) {
 		event->data.event = *evt;
@@ -538,7 +538,7 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 **      type - event type
 */
 {
-	REBVAL * val = Find_Event(model, type);
+	REBVAL * val = Find_Last_Event(model, type);
 	if (val != NULL) {
 		return &val->data.event;
 	}
