@@ -515,7 +515,7 @@ xx*/	REBINT Wait_Device(REBREQ *req, REBCNT timeout)
 **
 ***********************************************************************/
 
-#define MAX_SCHEMES 10		// max native schemes
+#define MAX_SCHEMES 11		// max native schemes
 
 typedef struct rebol_scheme_actions {
 	REBCNT sym;
