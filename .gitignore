@@ -7,6 +7,7 @@ make/r3-core.exe
 make/r3-core-host.exe
 make/r3-view.exe
 make/r3-view-host.exe
+make/r3*
 make/objs/
 src/boot/boot-code.r
 src/boot/host-init.r
