@@ -1,10 +1,10 @@
 #ifndef _HOST_WINDOW_H_
 #define _HOST_WINDOW_H_
 
-#include  <X11/Xlib.h>
-#include  <X11/Xatom.h>
-#include  <X11/Xutil.h>
-#include  <X11/extensions/Xdbe.h>
+#include <X11/Xlib.h>
+#include <X11/Xatom.h>
+#include <X11/Xutil.h>
+#include <X11/extensions/Xdbe.h>
 
 #define REB_WINDOW_BORDER_WIDTH 0
 #ifdef __cplusplus
@@ -56,7 +56,7 @@ extern "C" {
 		Window leader_window;
 		x_atom_list_t *x_atom_list;
 		Atom	*net_supported;
-		int		*n_net_supported; /* size of net_supported */
+		long	n_net_supported; /* size of net_supported */
 #ifdef USE_XSHM
 		REBOOL  has_xshm;
 #endif
