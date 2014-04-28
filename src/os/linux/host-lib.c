@@ -803,8 +803,9 @@ static int Try_Browser(char *browser, REBCHR *url)
 	}
 	
 	//empty string check
-	if (len == 0) {
-		*string = NULL;
+	if (len == 0) { /* shortcut */
+		*string = (REBCHR*)OS_Make(1);
+		*string[0] = '\0';
 	} else {
 		//convert to UTF8
 		REBCNT utf8_len = Length_As_UTF8(str, len, TRUE, FALSE);
