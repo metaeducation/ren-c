@@ -51,6 +51,11 @@
 #include  <X11/Xutil.h>
 #include  <X11/extensions/Xdbe.h>
 
+#ifdef USE_XSHM
+#include <sys/shm.h>
+#include <X11/extensions/XShm.h>
+#endif
+
 #include "host-window.h"
 
 //***** Constants *****
@@ -66,6 +71,9 @@ extern void* Find_Compositor(REBGOB *gob);
 extern REBINT Alloc_Window(REBGOB *gob);
 extern void Draw_Window(REBGOB *wingob, REBGOB *gob);
 extern void X_Event_Loop();
+extern void Host_Crash(REBYTE *reason);
+extern REBOOL Resize_Window(REBGOB *gob, REBOOL redraw);
+REBOOL As_OS_Str(REBSER *series, REBCHR **string);
 
 x_info_t *global_x_info = NULL;
 //***** Locals *****
@@ -281,7 +289,7 @@ static REBXYF Zero_Pair = {0, 0};
 	}
 #ifdef USE_XSHM
 	int ignore;
-	REBOOL pixmaps;
+	Bool pixmaps;
 
 	/* Check for the XShm extension */
 	global_x_info->has_xshm = XQueryExtension(global_x_info->display, "MIT-SHM", &ignore, &ignore, &ignore);
