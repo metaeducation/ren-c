@@ -282,7 +282,7 @@ static void Mark_Series(REBSER *series, REBCNT depth);
 			goto mark_obj;
 
 		case REB_MODULE:
-			if (VAL_MOD_BODY(val)) CHECK_MARK(VAL_MOD_BODY(val), depth);
+			//if (VAL_MOD_BODY(val)) CHECK_MARK(VAL_MOD_BODY(val), depth); //MOD_BODY is not used anywhere or initialized
 		case REB_OBJECT:
 			// Object is just a block with special first value (context):
 mark_obj:
