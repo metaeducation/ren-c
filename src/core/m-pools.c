@@ -561,7 +561,7 @@ clear_header:
 ***********************************************************************/
 {
 	newser->info = oldser->info;
-	newser->size = oldser->size;
+	newser->all = oldser->all;
 #ifdef SERIES_LABELS
 	newser->label = oldser->label;
 #endif

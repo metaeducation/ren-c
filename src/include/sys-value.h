@@ -327,6 +327,7 @@ typedef struct Reb_Tuple {
 			REBCNT wide:16;
 			REBCNT high:16;
 		} area;
+		REBUPT all; /* for copying, must have the same size as the union */
 	};
 #ifdef SERIES_LABELS
 	REBYTE  *label;		// identify the series
