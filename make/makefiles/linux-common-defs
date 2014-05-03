@@ -1,6 +1,6 @@
 BIN_SUFFIX= -linux
-CC=	$(TOOLS)clang
-CXX  = $(TOOLS)clang
+CC ?=	$(TOOLS)clang
+CXX  ?= $(TOOLS)clang
 
 INCL ?= .
 INC= -I$(INCL) -I$S/include/ -I$S/codecs/ -I../src/freetype-2.4.12/include `pkg-config freetype2 --cflags`
