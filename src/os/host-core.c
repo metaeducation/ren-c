@@ -512,14 +512,14 @@ RL_Print("buff size: %d\n",buffersize);
 			dh_ctx.x = (REBYTE *)RL_SERIES(priv_key.series, RXI_SER_DATA);
 			memset(dh_ctx.x, 0, dh_ctx.len);
 			//hack! - will set the tail to key size
-			*((REBCNT*)(priv_key.series+1)) = dh_ctx.len;
+			*((REBCNT*)(((void**)priv_key.series)+1)) = dh_ctx.len;
 			
 			pub_key.series = (REBSER*)RL_Make_String(dh_ctx.len, FALSE);
 			pub_key.index = 0;
 			dh_ctx.gx = (REBYTE *)RL_SERIES(pub_key.series, RXI_SER_DATA);
 			memset(dh_ctx.gx, 0, dh_ctx.len);
 			//hack! - will set the tail to key size
-			*((REBCNT*)(pub_key.series+1)) = dh_ctx.len;
+			*((REBCNT*)(((void**)pub_key.series)+1)) = dh_ctx.len;
 
 			//generate keys
 			DH_generate_key(&dh_ctx);
