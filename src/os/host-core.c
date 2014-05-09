@@ -483,6 +483,8 @@ RL_Print("buff size: %d\n",buffersize);
 			u32 *words = RL_WORDS_OF_OBJECT(obj);
 			REBYTE *objData;
 
+			memset(&dh_ctx, 0, sizeof(dh_ctx));
+
             while ((type = RL_GET_FIELD(obj, words[0], &val)))
             {
 				if (type == RXT_BINARY)
@@ -542,6 +544,8 @@ RL_Print("buff size: %d\n",buffersize);
 			REBYTE *objData;
 			REBSER *binary;
 			REBYTE *binaryBuffer;
+
+			memset(&dh_ctx, 0, sizeof(dh_ctx));
 
             while ((type = RL_GET_FIELD(obj, words[0], &val)))
             {
