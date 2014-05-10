@@ -28,7 +28,7 @@ prep-view:
 
 # Directly linked r3 executable:
 r3-core$(BIN_SUFFIX): prep-core prep-core-stamp objs $(OBJS) $(HOST) $(CODECS)
-	$(CC) -o r3-core$(BIN_SUFFIX) $(OBJS) $(HOST) $(CODECS) $(CLIB)
+	$(CC) -o r3-core$(BIN_SUFFIX) $(BIT) $(OBJS) $(HOST) $(CODECS) $(CLIB)
 
 strip-core: r3-core$(BIN_SUFFIX)
 	$(STRIP) $<
@@ -36,7 +36,7 @@ strip-core: r3-core$(BIN_SUFFIX)
 	#$(LS) r3-core$(BIN_SUFFIX)
 
 r3-view$(BIN_SUFFIX): prep-view prep-view-stamp objs $(OBJS) $(HOST) $(CODECS) $(GFX) $(AGG)
-	$(CXX) -o r3-view$(BIN_SUFFIX) $(OBJS) $(HOST) $(CODECS) $(GFX) $(AGG) $(GUI_CLIB)
+	$(CXX) -o r3-view$(BIN_SUFFIX) $(BIT) $(OBJS) $(HOST) $(CODECS) $(GFX) $(AGG) $(GUI_CLIB)
 
 strip-view: r3-view$(BIN_SUFFIX)
 	$(STRIP) $<
