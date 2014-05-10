@@ -638,7 +638,11 @@ void handle_key(XEvent *ev, REBGOB *gob)
 
 	for (i = 0; keysym_to_event[i] && keysym > keysym_to_event[i]; i += 2);
 	if (keysym == keysym_to_event[i]) {
-		key = keysym_to_event[i + 1] << 16;
+		if (keysym_to_event[i + 1] == EVK_NONE) {
+			key = key_string[0]; /* pass-thru */
+		} else {
+			key = keysym_to_event[i + 1] << 16;
+		}
 	} else {
 		key = keysym2ucs(keysym);
 		if (key < 0 && len > 0){
