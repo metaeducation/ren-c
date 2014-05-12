@@ -68,26 +68,51 @@ typedef uintptr_t		REBUPT;		// unsigned counterpart of void*
 #define MAX_I64 INT64_MAX
 #define MIN_I64 INT64_MIN
 
+#define I8_C(c)			INT8_C(c)
+#define U8_C(c)			UINT8_C(c)
+
+#define I16_C(c)		INT16_C(c)
+#define U16_C(c)		UINT16_C(c)
+
+#define I32_C(c)		INT32_C(c)
+#define U32_C(c)		UINT32_C(c)
+
+#define I64_C(c)		INT64_C(c)
+#define U64_C(c)		UINT64_C(c)
+
 #else
 /* C-code types: C99 definitions unavailable, do it ourselves */
 
 typedef char			i8;
 typedef unsigned char	u8;
+#define I8(c) 			c
+#define U8(c) 			c
+
 typedef short			i16;
 typedef unsigned short	u16;
+#define I16(c) 			c
+#define U16(c) 			c
+
 #ifdef __LP64__
 typedef int				i32;
 typedef unsigned int	u32;
 #else
-typedef long				i32;
+typedef long			i32;
 typedef unsigned long	u32;
- #endif
+#endif
+#define I32_C(c) c
+#define U32_C(c) c ## U
+
 #ifdef ODD_INT_64       // Windows VC6 nonstandard typing for 64 bits
 typedef _int64          i64;
 typedef unsigned _int64 u64;
+#define I64_C(c) c ## I64
+#define U64_C(c) c ## U64
 #else
 typedef long long       i64;
 typedef unsigned long long u64;
+#define I64_C(c) c ## LL
+#define U64_C(c) c ## ULL
 #endif
 #ifdef __LLP64__
 typedef long long		REBIPT;		// integral counterpart of void*
@@ -97,15 +122,11 @@ typedef long			REBIPT;		// integral counterpart of void*
 typedef unsigned long	REBUPT;		// unsigned counterpart of void*
 #endif
 
-#define MAX_I32 ((i32)0x7fffffff)
-#define MIN_I32 ((i32)0x80000000)
-#ifdef HAS_LL_CONSTS
-#define MAX_I64 ((i64)0x7fffffffffffffffLL)
-#define MIN_I64 ((i64)0x8000000000000000LL)
-#else
-#define MAX_I64 ((i64)0x7fffffffffffffffI64)
-#define MIN_I64 ((i64)0x8000000000000000I64)
-#endif
+#define MAX_I32 I32_C(0x7fffffff)
+#define MIN_I32 ((i32)I32_C(0x80000000)) //compiler treats the hex literal as unsigned without casting
+
+#define MAX_I64 I64_C(0x7fffffffffffffff)
+#define MIN_I64 ((i64)I64_C(0x8000000000000000)) //compiler treats the hex literal as unsigned without casting
 
 #endif
 /* C-code types */
