@@ -122,6 +122,9 @@ objs/f-blocks.o:      $R/f-blocks.c
 objs/f-deci.o:        $R/f-deci.c
 	$(CC) $R/f-deci.c $(RFLAGS) -o objs/f-deci.o
 
+objs/f-int.o:        $R/f-int.c
+	$(CC) $R/f-int.c $(RFLAGS) -o objs/f-int.o
+
 objs/f-dtoa.o:        $R/f-dtoa.c
 	$(CC) $R/f-dtoa.c $(RFLAGS) -o objs/f-dtoa.o
 
