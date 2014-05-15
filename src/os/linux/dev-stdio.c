@@ -74,6 +74,8 @@ void Put_Str(char *buf);
 
 void *Term_IO;
 
+static int interrupted = 0;
+
 /*
 #define	PUTS(s)		fputs(s, stdout)
 #define GETS(s,len)	fgets(s, len, stdin);
@@ -85,7 +87,8 @@ static void Handle_Signal(int sig)
 	char *buf = strdup("[escape]");
 	Put_Str(buf);
 	free(buf);
-	RL_Escape(0);
+	RL_Escape(0); /* This will cause the next evalution escaped */
+	interrupted = 1;
 }
 
 static void Init_Signals(void)
@@ -249,17 +252,23 @@ static void close_stdio(void)
 
 	if (Std_Inp >= 0) {
 
+		interrupted = 0;
 		// Perform a processed read or a raw read?
 #ifndef HAS_SMART_CONSOLE
 		if (Term_IO)
 			total = Read_Line(Term_IO, req->data, len);
 		else
 #endif
-			total = read(Std_Inp, req->data, len);
+			total = read(Std_Inp, req->data, len); /* will be restarted in case of signal */
 
 		if (total < 0) {
 			req->error = errno;
 			return DR_ERROR;
+		}
+		if (interrupted) {
+			char noop[] = "does[]\n";
+			strncat(req->data, noop, len - strlen(req->data));
+			total += sizeof(noop);
 		}
 
 		req->actual = total;
