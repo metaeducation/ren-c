@@ -164,6 +164,7 @@ dns
 tcp
 udp
 clipboard
+serial
 
 ; Struct
 uint8

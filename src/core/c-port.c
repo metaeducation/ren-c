@@ -636,4 +636,5 @@ SCHEME_ACTIONS *Scheme_Actions;	// Initial Global (not threaded)
 #ifndef MIN_OS
 	Init_Clipboard_Scheme();
 #endif
+	Init_Serial_Scheme();
 }
