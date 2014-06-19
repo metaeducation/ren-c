@@ -31,6 +31,8 @@
 
 //#define HELPER
 
+static int waited = 0; //for recursive WAIT detection
+
 
 /** Helper Functions **************************************************/
 
@@ -309,7 +311,6 @@ static REBSER *Read_All_File(char *fname)
 }
 #endif
 
-
 /***********************************************************************
 **
 */	REBNATIVE(wait)
@@ -320,6 +321,12 @@ static REBSER *Read_All_File(char *fname)
 	REBINT timeout = 0;	// in milliseconds
 	REBSER *ports = 0;
 	REBINT n = 0;
+
+	if (waited != 0) {
+		Trap0(RE_RECURSIVE_WAIT);
+	}
+
+	++ waited;
 
 	SET_NONE(D_RET);
 
@@ -332,7 +339,10 @@ static REBSER *Read_All_File(char *fname)
 			if (IS_INTEGER(val) || IS_DECIMAL(val)) break;
 		}
 		if (IS_END(val)) {
-			if (n == 0) return R_NONE; // has no pending ports!
+			if (n == 0) { // has no pending ports!
+			   --waited;
+			   return R_NONE;
+			}
 			// SET_NONE(val); // no timeout -- BUG: unterminated block in GC
 		}
 	}
@@ -353,7 +363,10 @@ chk_neg:
 		break;
 
 	case REB_PORT:
-		if (!Pending_Port(val)) return R_NONE;
+		if (!Pending_Port(val)) {
+			-- waited;
+			return R_NONE;
+		}
 		ports = Make_Block(1);
 		Append_Val(ports, val);
 		// fall thru...
@@ -373,9 +386,13 @@ chk_neg:
 	// Process port events [stack-move]:
 	if (!Wait_Ports(ports, timeout)) {
 		Sieve_Ports(NULL); /* just reset the waked list */
+		-- waited;
 		return R_NONE;
 	}
-	if (!ports) return R_NONE;
+	if (!ports) {
+		-- waited;
+		return R_NONE;
+	}
 	DS_RELOAD(ds);
 
 	// Determine what port(s) waked us:
@@ -386,6 +403,8 @@ chk_neg:
 		if (IS_PORT(val)) *D_RET = *val;
 		else SET_NONE(D_RET);
 	}
+
+	-- waited;
 
 	return R_RET;
 }
