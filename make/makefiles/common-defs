@@ -1,6 +1,6 @@
 # For the build toolchain:
-CC=	$(TOOLS)gcc
-CXX= $(TOOLS)g++
+CC?=$(TOOLS)gcc
+CXX?= $(TOOLS)g++
 NM=	$(TOOLS)nm
 STRIP=	$(TOOLS)strip
 
