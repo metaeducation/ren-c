@@ -122,16 +122,17 @@ typedef long			REBIPT;		// integral counterpart of void*
 typedef unsigned long	REBUPT;		// unsigned counterpart of void*
 #endif
 
-#define MAX_U32 U32_C(0xffffffff)
 #define MAX_I32 I32_C(0x7fffffff)
 #define MIN_I32 ((i32)I32_C(0x80000000)) //compiler treats the hex literal as unsigned without casting
-
-#define MAX_U64 U64_C(0xffffffffffffffff)
 #define MAX_I64 I64_C(0x7fffffffffffffff)
 #define MIN_I64 ((i64)I64_C(0x8000000000000000)) //compiler treats the hex literal as unsigned without casting
 
 #endif
 /* C-code types */
+
+#define MAX_U32 U32_C(0xffffffff)
+#define MAX_U64 U64_C(0xffffffffffffffff)
+
 
 #ifndef DEF_UINT		// some systems define it, don't define it again
 typedef unsigned int    uint;
