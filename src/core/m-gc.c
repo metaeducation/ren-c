@@ -411,7 +411,7 @@ mark_obj:
 
 		case REB_STRUCT:
 			CHECK_MARK(VAL_STRUCT_SPEC(val), depth);  // is a block
-			CHECK_MARK(VAL_STRUCT_VALS(val), depth);  // "    "
+			CHECK_MARK(VAL_STRUCT_FIELDS(val), depth);  // "    "
 			MARK_SERIES(VAL_STRUCT_DATA(val));
 			break;
 

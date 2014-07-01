@@ -54,7 +54,7 @@ OBJS =	objs/a-constants.o objs/a-globals.o objs/a-lib.o objs/b-boot.o \
 	objs/t-decimal.o objs/t-event.o objs/t-function.o objs/t-gob.o \
 	objs/t-image.o objs/t-integer.o objs/t-logic.o objs/t-map.o \
 	objs/t-money.o objs/t-none.o objs/t-object.o objs/t-pair.o \
-	objs/t-port.o objs/t-string.o objs/t-time.o objs/t-tuple.o \
+	objs/t-port.o objs/t-string.o objs/t-time.o objs/t-tuple.o objs/t-struct.o\
 	objs/t-typeset.o objs/t-utype.o objs/t-vector.o objs/t-word.o \
 	objs/u-bmp.o objs/u-compress.o objs/u-dialect.o objs/u-gif.o \
 	objs/u-jpg.o objs/u-md5.o objs/u-parse.o objs/u-png.o \
