@@ -148,6 +148,26 @@ static void Mark_Series(REBSER *series, REBCNT depth);
 	}
 }
 
+/***********************************************************************
+**
+*/	static void Mark_Struct(REBSTU *stu, REBCNT depth)
+/*
+***********************************************************************/
+{
+	int len = 0;
+	REBSER *series = NULL;
+	CHECK_MARK(stu->spec, depth);
+	CHECK_MARK(stu->fields, depth);
+	CHECK_MARK(stu->data, depth);
+
+	series = stu->fields;
+	for (len = 0; len < series->tail; len++) {
+		struct Struct_Field *field = (struct Struct_Field*)BLK_SKIP(series, len);
+		if (field->type == REB_STRUCT) {
+			CHECK_MARK(field->fields, depth);
+		}
+	}
+}
 
 /***********************************************************************
 **
@@ -410,9 +430,7 @@ mark_obj:
 			break;
 
 		case REB_STRUCT:
-			CHECK_MARK(VAL_STRUCT_SPEC(val), depth);  // is a block
-			CHECK_MARK(VAL_STRUCT_FIELDS(val), depth);  // "    "
-			MARK_SERIES(VAL_STRUCT_DATA(val));
+			Mark_Struct(&VAL_STRUCT(val), depth);
 			break;
 
 		case REB_GOB:

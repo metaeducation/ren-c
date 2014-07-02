@@ -165,6 +165,19 @@ tcp
 udp
 clipboard
 
+; Struct
+uint8
+int8
+uint16
+int16
+uint32
+int32
+uint64
+int64
+float
+;double ;reuse earlier definition
+pointer
+
 ; Gobs:
 gob
 offset
