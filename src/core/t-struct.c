@@ -185,6 +185,7 @@ static REBOOL assign_scalar(struct Struct_Field *field, REBYTE *data, REBVAL *va
 	RL_Print("%s\n", __func__);
 	REBINT max_fields = 16;
 	VAL_STRUCT_FIELDS(out) = Make_Series(max_fields, sizeof(struct Struct_Field), FALSE);
+	BARE_SERIES(VAL_STRUCT_FIELDS(out));
 	if (IS_BLOCK(data)) {
 		//Reduce_Block_No_Set(VAL_SERIES(data), 0, NULL);
 		//data = DS_POP;
@@ -197,6 +198,7 @@ static REBOOL assign_scalar(struct Struct_Field *field, REBYTE *data, REBVAL *va
 
 		VAL_STRUCT_SPEC(out) = Copy_Series(VAL_SERIES(data));
 		VAL_STRUCT_DATA(out) = Make_Series(max_fields << 2, 1, FALSE);
+		BARE_SERIES(VAL_STRUCT_DATA(out));
 
 		/* set type early such that GC will handle it correctly, i.e, not collect series in the struct */
 		SET_TYPE(out, REB_STRUCT);
