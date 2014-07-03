@@ -484,6 +484,22 @@ failed:
 					   SERIES_TAIL(VAL_STRUCT_DATA(val)));
 			}
 			break;
+		case A_REFLECT:
+			{
+				REBINT n = What_Reflector(arg); // zero on error
+				switch (n) {
+					case OF_VALUES:
+						SET_BINARY(ret, Copy_Series(VAL_STRUCT_DATA(val)));
+						break;
+					case OF_SPEC:
+						Set_Block(ret, Clone_Block(VAL_STRUCT_SPEC(val)));
+						Unbind_Block(VAL_BLK(val), TRUE);
+						break;
+					default:
+						Trap_Reflect(REB_STRUCT, arg);
+				}
+			}
+			break;
 
 		case A_LENGTHQ:
 			SET_INTEGER(ret, SERIES_TAIL(VAL_STRUCT_DATA(val)));
