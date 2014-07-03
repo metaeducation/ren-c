@@ -473,6 +473,8 @@ failed:
 		case A_CHANGE:
 
 		case A_LENGTHQ:
+			SET_INTEGER(ret, SERIES_TAIL(VAL_STRUCT_DATA(val)));
+			break;
 		default:
 			Trap_Action(REB_STRUCT, action);
 	}
