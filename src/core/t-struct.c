@@ -280,7 +280,7 @@ static REBOOL assign_scalar(struct Struct_Field *field, REBYTE *data, REBVAL *va
 								return FALSE;
 							}
 
-							field->size = SERIES_LEN(VAL_STRUCT_DATA(inner));
+							field->size = SERIES_TAIL(VAL_STRUCT_DATA(inner));
 							field->type = REB_STRUCT;
 							field->fields = VAL_STRUCT_FIELDS(inner);
 							init = inner; /* a shortcut for struct intialization */
@@ -292,7 +292,7 @@ static REBOOL assign_scalar(struct Struct_Field *field, REBYTE *data, REBVAL *va
 						Trap_Type(blk);
 				}
 			} else if (IS_STRUCT(blk)) { //[struct-a b: val-a] 
-				field->size = SERIES_LEN(VAL_STRUCT_DATA(blk));
+				field->size = SERIES_TAIL(VAL_STRUCT_DATA(blk));
 				field->type = REB_STRUCT;
 				init = blk; /* a shortcut for struct intialization */
 			} else {
