@@ -5,9 +5,9 @@ CXX  ?= $(TOOLS)clang
 INCL ?= .
 INC= -I$(INCL) -I$S/include/ -I$S/codecs/ -I../src/freetype-2.4.12/include `pkg-config freetype2 --cflags`
 
-RAPI_FLAGS=  $(CFLAGS) $(BIT) -Wno-pointer-sign -fvisibility=hidden -fPIC
-HOST_CORE_FLAGS= $(CFLAGS) -Wno-pointer-sign -DREB_CORE -DMIN_OS -DREB_EXE  $(BIT) -fvisibility=hidden  -D_FILE_OFFSET_BITS=64 -DCUSTOM_STARTUP
-HOST_VIEW_FLAGS= $(CFLAGS) -Wno-pointer-sign -DREB_EXE $(BIT) -fvisibility=hidden  -D_FILE_OFFSET_BITS=64 -DCUSTOM_STARTUP $(EXTRA_VIEW_CFLAGS)
+RAPI_FLAGS=  $(CFLAGS) $(BIT) -Wno-pointer-sign -fvisibility=hidden -fPIC -ffloat-store
+HOST_CORE_FLAGS= $(CFLAGS) -Wno-pointer-sign -DREB_CORE -DMIN_OS -DREB_EXE  $(BIT) -fvisibility=hidden  -D_FILE_OFFSET_BITS=64 -DCUSTOM_STARTUP -ffloat-store
+HOST_VIEW_FLAGS= $(CFLAGS) -Wno-pointer-sign -DREB_EXE $(BIT) -fvisibility=hidden  -D_FILE_OFFSET_BITS=64 -DCUSTOM_STARTUP -ffloat-store $(EXTRA_VIEW_CFLAGS)
 HFLAGS_FONT_CONFIG=`pkg-config fontconfig --cflags`
 
 CLIB= -ldl -lm 
