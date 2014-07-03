@@ -282,7 +282,7 @@ static REBOOL assign_scalar(struct Struct_Field *field, REBYTE *data, REBVAL *va
 
 							field->size = SERIES_LEN(VAL_STRUCT_DATA(inner));
 							field->type = REB_STRUCT;
-							field->fields = Copy_Series(VAL_STRUCT_FIELDS(inner));
+							field->fields = VAL_STRUCT_FIELDS(inner);
 							init = inner; /* a shortcut for struct intialization */
 						} else {
 							Trap_Types(RE_EXPECT_VAL, REB_BLOCK, VAL_TYPE(blk));
@@ -384,7 +384,7 @@ static REBOOL assign_scalar(struct Struct_Field *field, REBYTE *data, REBVAL *va
 						goto failed;
 					}
 				}
-			} else if (field->type == REB_STRUCT && field->dimension == 1){ /* [struct-a sa] */
+			} else if (field->type == REB_STRUCT && field->dimension == 1) { /* [struct-a sa] */
 				memcpy(SERIES_SKIP(VAL_STRUCT_DATA(out), offset), SERIES_DATA(VAL_STRUCT_DATA(init)), field->size);
 			} else {
 				memset(SERIES_SKIP(VAL_STRUCT_DATA(out), offset), 0, field->size * field->dimension);
@@ -433,25 +433,26 @@ failed:
 	REBCNT len;
 
 	arg = D_ARG(2);
-	val = D_RET;
-	*val = *D_ARG(1);
+	val = D_ARG(1);
 	strut = 0;
 
+	REBVAL *ret = DS_RETURN;
 	// unary actions
 	switch(action) {
 		case A_MAKE:
-			RL_Print("%s, %d, Make struct action\n", __func__, __LINE__);
+			//RL_Print("%s, %d, Make struct action\n", __func__, __LINE__);
 		case A_TO:
-			RL_Print("%s, %d, To struct action\n", __func__, __LINE__);
-			val = D_ARG(1);
+			//RL_Print("%s, %d, To struct action\n", __func__, __LINE__);
 
-			REBVAL *ret = DS_RETURN;
 			// Clone an existing STRUCT:
 			if (IS_STRUCT(val)) {
 				*ret = *val;
-				VAL_STRUCT_SPEC(ret) = Copy_Series(VAL_STRUCT_SPEC(val));
+				/* Read only fields */
+				VAL_STRUCT_SPEC(ret) = VAL_STRUCT_SPEC(val);
+				VAL_STRUCT_FIELDS(ret) = VAL_STRUCT_FIELDS(val);
+
+				/* writable field */
 				VAL_STRUCT_DATA(ret) = Copy_Series(VAL_STRUCT_DATA(val));
-				VAL_STRUCT_FIELDS(ret) = Copy_Series(VAL_STRUCT_FIELDS(val));
 			} else if (!IS_DATATYPE(val)) {
 				goto is_arg_error;
 			} else {
