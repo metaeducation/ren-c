@@ -471,6 +471,19 @@ failed:
 			break;
 
 		case A_CHANGE:
+			{
+				if (!IS_BINARY(arg)) {
+					Trap_Types(RE_EXPECT_VAL, REB_BINARY, VAL_TYPE(arg));
+				}
+
+				if (VAL_LEN(arg) != SERIES_TAIL(VAL_STRUCT_DATA(val))) {
+					Trap_Arg(arg);
+				}
+				memcpy(SERIES_DATA(VAL_STRUCT_DATA(val)),
+					   SERIES_DATA(VAL_SERIES(arg)),
+					   SERIES_TAIL(VAL_STRUCT_DATA(val)));
+			}
+			break;
 
 		case A_LENGTHQ:
 			SET_INTEGER(ret, SERIES_TAIL(VAL_STRUCT_DATA(val)));
