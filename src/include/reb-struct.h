@@ -32,5 +32,6 @@ struct Struct_Field {
 	REBCNT dimension; /* for arrays */
 	REBCNT size; /* size of element, in bytes */
 	REBCNT sym;
+	REBSER* spec; /* for nested struct */
 	REBSER* fields; /* for nested struct */
 };

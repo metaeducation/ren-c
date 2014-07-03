@@ -35,6 +35,30 @@ const REBCNT Struct_Flag_Words[] = {
 	0, 0
 };
 
+enum {
+	TYPE_UINT8,
+	TYPE_INT8,
+	TYPE_UINT16,
+	TYPE_INT16,
+	TYPE_UINT32,
+	TYPE_INT32,
+	TYPE_INT64,
+	TYPE_UINT64,
+	TYPE_INTEGER,
+
+	TYPE_FLOAT,
+	TYPE_DOUBLE,
+	TYPE_DECIMAL,
+
+	TYPE_POINTER,
+	TYPE_STRUCT
+};
+
+#define IS_INTEGER_TYPE(t) ((t) < TYPE_INTEGER)
+#define IS_DECIMAL_TYPE(t) ((t) > TYPE_INTEGER && (t) < TYPE_DECIMAL)
+#define IS_NUMERIC_TYPE(t) (IS_INTEGER_TYPE(t) || IS_DECIMAL_TYPE(t))
+
+
 /***********************************************************************
 **
 */	REBINT CT_Struct(REBVAL *a, REBVAL *b, REBINT mode)
@@ -48,7 +72,7 @@ const REBCNT Struct_Flag_Words[] = {
 
 /***********************************************************************
 **
-*/	static REBFLG Set_STRUCT_Var(REBSTU *strut, REBVAL *word, REBVAL *val)
+*/	static REBFLG Set_Struct_Var(REBSTU *strut, REBVAL *word, REBVAL *val)
 /*
 ***********************************************************************/
 {
@@ -59,25 +83,96 @@ const REBCNT Struct_Flag_Words[] = {
 	return TRUE;
 }
 
+static get_scalar(struct Struct_Field *field, REBYTE *data, REBVAL *val)
+{
+	switch (field->type) {
+		case TYPE_UINT8:
+			SET_INTEGER(val, *(u8*)data);
+			break;
+		case TYPE_INT8:
+			SET_INTEGER(val, *(i8*)data);
+			break;
+		case TYPE_UINT16:
+			SET_INTEGER(val, *(u16*)data);
+			break;
+		case TYPE_INT16:
+			SET_INTEGER(val, *(i8*)data);
+			break;
+		case TYPE_UINT32:
+			SET_INTEGER(val, *(u32*)data);
+			break;
+		case TYPE_INT32:
+			SET_INTEGER(val, *(i32*)data);
+			break;
+		case TYPE_UINT64:
+			SET_INTEGER(val, *(u64*)data);
+			break;
+		case TYPE_INT64:
+			SET_INTEGER(val, *(i64*)data);
+			break;
+		case TYPE_FLOAT:
+			SET_DECIMAL(val, *(float*)data);
+			break;
+		case TYPE_DOUBLE:
+			SET_DECIMAL(val, *(double*)data);
+			break;
+		case TYPE_POINTER:
+			SET_INTEGER(val, (u64)*(void**)data);
+			break;
+		case TYPE_STRUCT:
+			{
+				SET_TYPE(val, REB_STRUCT);
+				REBSER *ser = Make_Series(field->size, 1, FALSE);
+				BARE_SERIES(ser);
+				EXPAND_SERIES_TAIL(ser, field->size);
+				memcpy(SERIES_DATA(ser), data, field->size);
+				VAL_STRUCT_DATA(val) = ser;
+				VAL_STRUCT_FIELDS(val) = field->fields;
+				VAL_STRUCT_SPEC(val) = field->spec;
+			}
+			break;
+		default:
+			/* should never be here */
+			return FALSE;
+	}
+	return TRUE;
+}
 
 /***********************************************************************
 **
-*/	static REBFLG Get_STRUCT_Var(REBSTU *strut, REBVAL *word, REBVAL *val)
+*/	static REBFLG Get_Struct_Var(REBSTU *stu, REBVAL *word, REBVAL *val)
 /*
 ***********************************************************************/
 {
-	switch (VAL_WORD_CANON(word)) {
-
-	default:
-		return FALSE;
+	struct Struct_Field *field = NULL;
+	REBCNT i = 0;
+	field = (struct Struct_Field *)SERIES_DATA(stu->fields);
+	for (i = 0; i < SERIES_TAIL(stu->fields); i ++, field ++) {
+		if (VAL_WORD_CANON(word) == VAL_SYM_CANON(BLK_SKIP(PG_Word_Table.series, field->sym))) {
+			if (field->dimension > 1) {
+				SET_TYPE(val, REB_BLOCK);
+				REBSER *ser = Make_Block(field->dimension);
+				REBCNT n = 0;
+				for (n = 0; n < field->dimension; n ++) {
+					REBVAL elem;
+					get_scalar(field, SERIES_SKIP(stu->data, field->offset + n * field->size), &elem);
+					Append_Val(ser, &elem);
+				}
+				VAL_SERIES(val) = ser;
+				VAL_INDEX(val) = 0;
+			} else {
+				get_scalar(field, SERIES_SKIP(stu->data, field->offset), val);
+			}
+			return TRUE;
+		}
 	}
-	return TRUE;
+	return FALSE;
 }
 
 
 /***********************************************************************
 **
-*/	static void Set_STRUCT_Vars(REBSTU *strut, REBVAL *blk)
+*/	static void Set_Struct_Vars(REBSTU *strut, REBVAL *blk)
 /*
 ***********************************************************************/
 {
@@ -98,75 +193,68 @@ const REBCNT Struct_Flag_Words[] = {
 
 static REBOOL assign_scalar(struct Struct_Field *field, REBYTE *data, REBVAL *val)
 {
-	switch (field->type) {
-		case REB_ISSUE: /* pointer */
-			if (!IS_INTEGER(val)) {
-				Trap_Types(RE_EXPECT_VAL, REB_INTEGER, VAL_TYPE(val));
+	u64 i = 0;
+	double d = 0;
+	switch (VAL_TYPE(val)) {
+		case REB_DECIMAL:
+			if (!IS_NUMERIC_TYPE(field->type)) {
+				Trap_Type(val);
 			}
-			*(void**)data = (void*)(VAL_INT64(val));
+			d = VAL_DECIMAL(val);
+			i = (u64) d;
 			break;
 		case REB_INTEGER:
-			{
-				u64 v = 0;
-				switch (VAL_TYPE(val)) {
-					case REB_DECIMAL:
-						v = (u64) VAL_DECIMAL(val);
-						break;
-					case REB_INTEGER:
-						v = (u64) VAL_INT64(val);
-						break;
-					default:
-						Trap_Type(val);
-				}
-				switch (field->size) {
-					case 1:
-						*(u8*)data = (u8)v;
-						break;
-					case 2:
-						*(u16*)data = (u16)v;
-						break;
-					case 4:
-						*(u32*)data = (u32)v;
-						break;
-					case 8:
-						*(u64*)data = v;
-						break;
-					default:
-						/* should never be here */
-						return FALSE;
-				}
+			if (!IS_NUMERIC_TYPE(field->type)
+				|| field->type == TYPE_POINTER) {
+				Trap_Type(val);
 			}
-			break;
-		case REB_DECIMAL:
-			{
-				double v = 0;
-				switch (VAL_TYPE(val)) {
-					case REB_DECIMAL:
-						v = (double)VAL_DECIMAL(val);
-						break;
-					case REB_INTEGER:
-						v = (double)VAL_INT64(val);
-						break;
-					default:
-						Trap_Type(val);
-				}
-				switch (field->size) {
-					case 4:
-						*(float*)data = (float)v;
-						break;
-					case 8:
-						*(double*)data = v;
-						break;
-					default:
-						/* should never be here */
-						return FALSE;
-				}
-			}
+			i = (u64) VAL_INT64(val);
+			d = (double)i;
 			break;
 		case REB_STRUCT:
-			if (!IS_STRUCT(val)) {
-				Trap_Types(RE_EXPECT_VAL, REB_STRUCT, VAL_TYPE(val));
+			if (TYPE_STRUCT != field->type) {
+				Trap_Type(val);
 			}
+			break;
+		default:
+			Trap_Type(val);
+	}
+
+	switch (field->type) {
+		case TYPE_INT8:
+			*(i8*)data = (i8)i;
+			break;
+		case TYPE_UINT8:
+			*(u8*)data = (u8)i;
+			break;
+		case TYPE_INT16:
+			*(i16*)data = (i16)i;
+			break;
+		case TYPE_UINT16:
+			*(u16*)data = (u16)i;
+			break;
+		case TYPE_INT32:
+			*(i32*)data = (i32)i;
+			break;
+		case TYPE_UINT32:
+			*(u32*)data = (u32)i;
+			break;
+		case TYPE_INT64:
+			*(i64*)data = (i64)i;
+			break;
+		case TYPE_UINT64:
+			*(u64*)data = (u64)i;
+			break;
+		case TYPE_POINTER:
+			*(void**)data = (void*)i;
+			break;
+		case TYPE_FLOAT:
+			*(float*)data = (float)d;
+			break;
+		case TYPE_DOUBLE:
+			*(double*)data = (double)d;
+			break;
+		case TYPE_STRUCT:
 			memcpy(data, VAL_STRUCT_DATA(val), field->size);
 			break;
 		default:
@@ -182,7 +270,7 @@ static REBOOL assign_scalar(struct Struct_Field *field, REBYTE *data, REBVAL *va
 /*
 ***********************************************************************/
 {
-	RL_Print("%s\n", __func__);
+	//RL_Print("%s\n", __func__);
 	REBINT max_fields = 16;
 	VAL_STRUCT_FIELDS(out) = Make_Series(max_fields, sizeof(struct Struct_Field), FALSE);
 	BARE_SERIES(VAL_STRUCT_FIELDS(out));
@@ -215,47 +303,49 @@ static REBOOL assign_scalar(struct Struct_Field *field, REBYTE *data, REBVAL *va
 			if (IS_WORD(blk)) {
 				switch (VAL_WORD_CANON(blk)) {
 					case SYM_UINT8:
+						field->type = TYPE_UINT8;
+						field->size = 1;
+						break;
 					case SYM_INT8:
-						field->type = REB_INTEGER;
+						field->type = TYPE_INT8;
 						field->size = 1;
 						break;
 					case SYM_UINT16:
+						field->type = TYPE_UINT16;
+						field->size = 2;
+						break;
 					case SYM_INT16:
-						field->type = REB_INTEGER;
+						field->type = TYPE_INT16;
 						field->size = 2;
 						break;
 					case SYM_UINT32:
+						field->type = TYPE_UINT32;
+						field->size = 4;
+						break;
 					case SYM_INT32:
-						field->type = REB_INTEGER;
+						field->type = TYPE_INT32;
 						field->size = 4;
 						break;
 					case SYM_UINT64:
+						field->type = TYPE_UINT64;
+						field->size = 8;
+						break;
 					case SYM_INT64:
-						field->type = REB_INTEGER;
+						field->type = TYPE_INT64;
 						field->size = 8;
 						break;
 					case SYM_FLOAT:
-						field->type = REB_DECIMAL;
+						field->type = TYPE_FLOAT;
 						field->size = 4;
 						break;
 					case SYM_DOUBLE:
-						field->type = REB_DECIMAL;
+						field->type = TYPE_DOUBLE;
 						field->size = 8;
 						break;
 					case SYM_POINTER:
-						field->type = REB_INTEGER;
+						field->type = TYPE_POINTER;
 						field->size = sizeof(void*);
 						break;
-						/* //These types are confusing
-					case SYM_INTEGER_TYPE:
-						field->type = REB_INTEGER;
-						field->size = 4;
-						break;
-					case SYM_DECIMAL_TYPE:
-						field->type = REB_DECIMAL;
-						field->size = 8;
-						break;
-						*/
 					case SYM_STRUCT_TYPE:
 						++ blk;
 						if (IS_BLOCK(blk)) {
@@ -281,8 +371,9 @@ static REBOOL assign_scalar(struct Struct_Field *field, REBYTE *data, REBVAL *va
 							}
 
 							field->size = SERIES_TAIL(VAL_STRUCT_DATA(inner));
-							field->type = REB_STRUCT;
+							field->type = TYPE_STRUCT;
 							field->fields = VAL_STRUCT_FIELDS(inner);
+							field->spec = VAL_STRUCT_SPEC(inner);
 							init = inner; /* a shortcut for struct intialization */
 						} else {
 							Trap_Types(RE_EXPECT_VAL, REB_BLOCK, VAL_TYPE(blk));
@@ -293,7 +384,7 @@ static REBOOL assign_scalar(struct Struct_Field *field, REBYTE *data, REBVAL *va
 				}
 			} else if (IS_STRUCT(blk)) { //[struct-a b: val-a] 
 				field->size = SERIES_TAIL(VAL_STRUCT_DATA(blk));
-				field->type = REB_STRUCT;
+				field->type = TYPE_STRUCT;
 				init = blk; /* a shortcut for struct intialization */
 			} else {
 				Trap_Type(blk);
@@ -384,7 +475,7 @@ static REBOOL assign_scalar(struct Struct_Field *field, REBYTE *data, REBVAL *va
 						goto failed;
 					}
 				}
-			} else if (field->type == REB_STRUCT && field->dimension == 1) { /* [struct-a sa] */
+			} else if (field->type == TYPE_STRUCT && field->dimension == 1) { /* [struct-a sa] */
 				memcpy(SERIES_SKIP(VAL_STRUCT_DATA(out), offset), SERIES_DATA(VAL_STRUCT_DATA(init)), field->size);
 			} else {
 				memset(SERIES_SKIP(VAL_STRUCT_DATA(out), offset), 0, field->size * field->dimension);
@@ -414,6 +505,17 @@ failed:
 /*
 ***********************************************************************/
 {
+	struct Struct_Field *field = NULL;
+	REBCNT i = 0;
+	REBSTU *stu = &VAL_STRUCT(pvs->value);
+	if (!IS_WORD(pvs->select)) {
+		return PE_BAD_SELECT;
+	}
+	if (! pvs->setval) {
+		if (Get_Struct_Var(stu, pvs->select, pvs->store)) {
+			return PE_USE;
+		}
+	}
 	return PE_BAD_SELECT;
 }
 

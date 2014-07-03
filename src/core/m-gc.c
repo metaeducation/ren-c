@@ -165,6 +165,7 @@ static void Mark_Series(REBSER *series, REBCNT depth);
 		struct Struct_Field *field = (struct Struct_Field*)BLK_SKIP(series, len);
 		if (field->type == REB_STRUCT) {
 			CHECK_MARK(field->fields, depth);
+			CHECK_MARK(field->spec, depth);
 		}
 	}
 }
