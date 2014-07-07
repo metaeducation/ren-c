@@ -507,8 +507,11 @@ static REBOOL assign_scalar(struct Struct_Field *field, REBYTE *data, REBVAL *va
 						goto failed;
 					}
 				}
-			} else if (field->type == TYPE_STRUCT && field->dimension == 1) { /* [struct-a sa] */
-				memcpy(SERIES_SKIP(VAL_STRUCT_DATA(out), offset), SERIES_DATA(VAL_STRUCT_DATA(init)), field->size);
+			} else if (field->type == TYPE_STRUCT) {
+				REBINT n = 0;
+				for (n = 0; n < field->dimension; n ++) {
+					memcpy(SERIES_SKIP(VAL_STRUCT_DATA(out), offset + n * field->size), SERIES_DATA(VAL_STRUCT_DATA(init)), field->size);
+				}
 			} else {
 				memset(SERIES_SKIP(VAL_STRUCT_DATA(out), offset), 0, field->size * field->dimension);
 			}
