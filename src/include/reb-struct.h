@@ -27,11 +27,14 @@
 ***********************************************************************/
 
 struct Struct_Field {
-	REBCNT offset;
-	REBCNT type; /* rebol type */
-	REBCNT dimension; /* for arrays */
-	REBCNT size; /* size of element, in bytes */
-	REBCNT sym;
 	REBSER* spec; /* for nested struct */
 	REBSER* fields; /* for nested struct */
+	REBCNT sym;
+
+	u16 type; /* rebol type */
+
+	/* size is limited by struct->offset, so only 16-bit */
+	u16 offset;
+	u16 dimension; /* for arrays */
+	u16 size; /* size of element, in bytes */
 };

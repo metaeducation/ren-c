@@ -70,20 +70,7 @@ enum {
 	return -1;
 }
 
-/***********************************************************************
-**
-*/	static REBFLG Set_Struct_Var(REBSTU *strut, REBVAL *word, REBVAL *val)
-/*
-***********************************************************************/
-{
-	switch (VAL_WORD_CANON(word)) {
-		default:
-			return FALSE;
-	}
-	return TRUE;
-}
-
-static get_scalar(struct Struct_Field *field, REBYTE *data, REBVAL *val)
+static get_scalar(REBSTU *stu, struct Struct_Field *field, REBYTE *data, REBVAL *val)
 {
 	switch (field->type) {
 		case TYPE_UINT8:
@@ -122,13 +109,11 @@ static get_scalar(struct Struct_Field *field, REBYTE *data, REBVAL *val)
 		case TYPE_STRUCT:
 			{
 				SET_TYPE(val, REB_STRUCT);
-				REBSER *ser = Make_Series(field->size, 1, FALSE);
-				BARE_SERIES(ser);
-				EXPAND_SERIES_TAIL(ser, field->size);
-				memcpy(SERIES_DATA(ser), data, field->size);
-				VAL_STRUCT_DATA(val) = ser;
 				VAL_STRUCT_FIELDS(val) = field->fields;
 				VAL_STRUCT_SPEC(val) = field->spec;
+				VAL_STRUCT_DATA(val) = stu->data;
+				VAL_STRUCT_OFFSET(val) = data - SERIES_DATA(VAL_STRUCT_DATA(val));
+				VAL_STRUCT_LEN(val) = field->size;
 			}
 			break;
 		default:
@@ -155,13 +140,13 @@ static get_scalar(struct Struct_Field *field, REBYTE *data, REBVAL *val)
 				REBCNT n = 0;
 				for (n = 0; n < field->dimension; n ++) {
 					REBVAL elem;
-					get_scalar(field, SERIES_SKIP(stu->data, field->offset + n * field->size), &elem);
+					get_scalar(stu, field, SERIES_SKIP(stu->data, stu->offset + field->offset + n * field->size), &elem);
 					Append_Val(ser, &elem);
 				}
 				VAL_SERIES(val) = ser;
 				VAL_INDEX(val) = 0;
 			} else {
-				get_scalar(field, SERIES_SKIP(stu->data, field->offset), val);
+				get_scalar(stu, field, SERIES_SKIP(stu->data, stu->offset + field->offset), val);
 			}
 			return TRUE;
 		}
@@ -266,6 +251,52 @@ static REBOOL assign_scalar(struct Struct_Field *field, REBYTE *data, REBVAL *va
 
 /***********************************************************************
 **
+*/	static REBFLG Set_Struct_Var(REBSTU *stu, REBVAL *word, REBVAL *elem, REBVAL *val)
+/*
+***********************************************************************/
+{
+	struct Struct_Field *field = NULL;
+	REBCNT i = 0;
+	field = (struct Struct_Field *)SERIES_DATA(stu->fields);
+	for (i = 0; i < SERIES_TAIL(stu->fields); i ++, field ++) {
+		if (VAL_WORD_CANON(word) == VAL_SYM_CANON(BLK_SKIP(PG_Word_Table.series, field->sym))) {
+			if (field->dimension > 1) {
+				if (elem == NULL) { //set the whole array
+					REBCNT n = 0;
+					if ((!IS_BLOCK(val) || field->dimension != VAL_LEN(val))) {
+						return FALSE;
+					}
+
+					for(n = 0; n < field->dimension; n ++) {
+						if (!assign_scalar(field, SERIES_SKIP(stu->data, field->offset + n * field->size), val)) {
+							return FALSE;
+						}
+					}
+
+				} else {// set only one element
+					if (!IS_INTEGER(elem)
+						|| VAL_INT32(elem) <= 0
+						|| VAL_INT32(elem) > field->dimension) {
+						return FALSE;
+					}
+					return assign_scalar(field,
+										 SERIES_SKIP(stu->data, stu->offset + field->offset + (VAL_INT32(elem) - 1) * field->size),
+										 val);
+				}
+				return TRUE;
+			} else {
+				return assign_scalar(field,
+									 SERIES_SKIP(stu->data, stu->offset + field->offset),
+									 val);
+			}
+			return TRUE;
+		}
+	}
+	return FALSE;
+}
+
+/***********************************************************************
+**
 */	REBFLG MT_Struct(REBVAL *out, REBVAL *data, REBCNT type)
 /*
 ***********************************************************************/
@@ -287,6 +318,7 @@ static REBOOL assign_scalar(struct Struct_Field *field, REBYTE *data, REBVAL *va
 		VAL_STRUCT_SPEC(out) = Copy_Series(VAL_SERIES(data));
 		VAL_STRUCT_DATA(out) = Make_Series(max_fields << 2, 1, FALSE);
 		BARE_SERIES(VAL_STRUCT_DATA(out));
+		VAL_STRUCT_OFFSET(out) = 0;
 
 		/* set type early such that GC will handle it correctly, i.e, not collect series in the struct */
 		SET_TYPE(out, REB_STRUCT);
@@ -481,12 +513,23 @@ static REBOOL assign_scalar(struct Struct_Field *field, REBYTE *data, REBVAL *va
 				memset(SERIES_SKIP(VAL_STRUCT_DATA(out), offset), 0, field->size * field->dimension);
 			}
 
-			offset += field->size * field->dimension;
+			REBCNT step = field->size * field->dimension;
+			if (step > VAL_STRUCT_LIMIT) {
+				Trap1(RE_SIZE_LIMIT, out);
+			}
+
+			offset +=  step;
+			if (offset > VAL_STRUCT_LIMIT) {
+				Trap1(RE_SIZE_LIMIT, out);
+			}
 
 			++ field_idx;
 
 			DS_POP; /* pop up the inner struct*/
 		}
+
+		VAL_STRUCT_LEN(out) = offset;
+
 		return TRUE;
 	}
 
@@ -511,10 +554,31 @@ failed:
 	if (!IS_WORD(pvs->select)) {
 		return PE_BAD_SELECT;
 	}
-	if (! pvs->setval) {
-		if (Get_Struct_Var(stu, pvs->select, pvs->store)) {
-			return PE_USE;
+	if (! pvs->setval || NOT_END(pvs->path + 1)) {
+		if (!Get_Struct_Var(stu, pvs->select, pvs->store)) {
+			return PE_BAD_SELECT;
 		}
+
+		/* Setting element to an array in the struct:
+		 * struct/field/1: 0
+		 * */
+		if (pvs->setval
+			&& IS_BLOCK(pvs->store)
+			&& IS_END(pvs->path + 2)) {
+			REBVAL *sel = pvs->select;
+			pvs->value = pvs->store;
+			Next_Path(pvs); // sets value in pvs->value
+			if (!Set_Struct_Var(stu, sel, pvs->select, pvs->value)) {
+				return PE_BAD_SET;
+			}
+			return PE_OK;
+		}
+		return PE_USE;
+	} else {// setval && END
+		if (!Set_Struct_Var(stu, pvs->select, NULL, pvs->setval)) {
+			return PE_BAD_SET;
+		}
+		return PE_OK;
 	}
 	return PE_BAD_SELECT;
 }
@@ -591,7 +655,7 @@ failed:
 				REBINT n = What_Reflector(arg); // zero on error
 				switch (n) {
 					case OF_VALUES:
-						SET_BINARY(ret, Copy_Series(VAL_STRUCT_DATA(val)));
+						SET_BINARY(ret, Copy_Series_Part(VAL_STRUCT_DATA(val), VAL_STRUCT_OFFSET(val), VAL_STRUCT_LEN(val)));
 						break;
 					case OF_SPEC:
 						Set_Block(ret, Clone_Block(VAL_STRUCT_SPEC(val)));
