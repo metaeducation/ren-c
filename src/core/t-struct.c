@@ -51,7 +51,27 @@ enum {
 	TYPE_DECIMAL,
 
 	TYPE_POINTER,
-	TYPE_STRUCT
+	TYPE_STRUCT,
+	TYPE_MAX
+};
+
+static REBINT type_to_sym [TYPE_MAX] = {
+	SYM_UINT8,
+	SYM_INT8,
+	SYM_UINT16,
+	SYM_INT16,
+	SYM_UINT32,
+	SYM_INT32,
+	SYM_INT64,
+	SYM_UINT64,
+	-1, //SYM_INTEGER,
+
+	SYM_FLOAT,
+	SYM_DOUBLE,
+	-1, //SYM_DECIMAL,
+
+	SYM_POINTER
+	//TYPE_MAX
 };
 
 #define IS_INTEGER_TYPE(t) ((t) < TYPE_INTEGER)
@@ -166,13 +186,63 @@ static get_scalar(REBSTU *stu, struct Struct_Field *field, REBYTE *data, REBVAL 
 
 /***********************************************************************
 **
-*/	REBSER *Struct_To_Block(REBSTU *strut)
+*/	REBSER *Struct_To_Block(REBSTU *stu)
 /*
 **		Used by MOLD to create a block.
 **
 ***********************************************************************/
 {
 	REBSER *ser = Make_Block(10);
+	struct Struct_Field *field = (struct Struct_Field*) SERIES_DATA(stu->fields);
+	REBCNT i;
+
+	for(i = 0; i < SERIES_TAIL(stu->fields); i ++, field ++) {
+		REBVAL *val = Append_Value(ser);
+
+		/* required type */
+		if (field->type == TYPE_STRUCT) {
+			REBVAL nested;
+			Init_Word(val, SYM_STRUCT_TYPE);
+			val = Append_Value(ser);
+			get_scalar(stu, field, SERIES_SKIP(stu->data, stu->offset + field->offset), &nested);
+			SET_TYPE(val, REB_BLOCK);
+			VAL_SERIES(val) = Struct_To_Block(&VAL_STRUCT(&nested));
+		} else {
+			REBINT sym = type_to_sym[field->type];
+			Init_Word(val, sym);
+		}
+
+		/* optional dimension */
+		if (field->dimension > 1) {
+			REBSER *dim = Make_Block(1);
+			REBVAL *dv = Append_Value(dim);
+			SET_INTEGER(dv, field->dimension);
+			val = Append_Value(ser);
+			SET_TYPE(val, REB_BLOCK);
+			VAL_SERIES(val) = dim;
+		}
+
+		/* required field name */
+		val = Append_Value(ser);
+		Init_Word(val, field->sym);
+		SET_TYPE(val, REB_SET_WORD);
+
+		/* optional initialization */
+		if (field->dimension > 1) {
+			REBSER *dim = Make_Block(1);
+			REBINT n = 0;
+			for (n = 0; n < field->dimension; n ++) {
+				REBVAL *dv = Append_Value(dim);
+				get_scalar(stu, field, SERIES_SKIP(stu->data, stu->offset + field->offset + n * field->size), dv);
+			}
+			val = Append_Value(ser);
+			SET_TYPE(val, REB_BLOCK);
+			VAL_SERIES(val) = dim;
+		} else {
+			val = Append_Value(ser);
+			get_scalar(stu, field, SERIES_SKIP(stu->data, stu->offset + field->offset), val);
+		}
+	}
 	return ser;
 }
 
