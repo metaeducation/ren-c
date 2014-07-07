@@ -176,7 +176,7 @@ static get_scalar(REBSTU *stu, struct Struct_Field *field, REBYTE *data, REBVAL 
 	return ser;
 }
 
-static REBOOL assign_scalar(struct Struct_Field *field, REBYTE *data, REBVAL *val)
+static REBOOL assign_scalar(REBSTU *stu, struct Struct_Field *field, REBYTE *data, REBVAL *val)
 {
 	u64 i = 0;
 	double d = 0;
@@ -240,7 +240,10 @@ static REBOOL assign_scalar(struct Struct_Field *field, REBYTE *data, REBVAL *va
 			*(double*)data = (double)d;
 			break;
 		case TYPE_STRUCT:
-			memcpy(data, VAL_STRUCT_DATA(val), field->size);
+			if (field->size != stu->len) {
+				Trap_Arg(val);
+			}
+			memcpy(data, SERIES_SKIP(VAL_STRUCT_DATA(val), stu->offset), field->size);
 			break;
 		default:
 			/* should never be here */
@@ -268,7 +271,7 @@ static REBOOL assign_scalar(struct Struct_Field *field, REBYTE *data, REBVAL *va
 					}
 
 					for(n = 0; n < field->dimension; n ++) {
-						if (!assign_scalar(field, SERIES_SKIP(stu->data, field->offset + n * field->size), val)) {
+						if (!assign_scalar(stu, field, SERIES_SKIP(stu->data, field->offset + n * field->size), VAL_BLK_SKIP(val, n))) {
 							return FALSE;
 						}
 					}
@@ -279,13 +282,13 @@ static REBOOL assign_scalar(struct Struct_Field *field, REBYTE *data, REBVAL *va
 						|| VAL_INT32(elem) > field->dimension) {
 						return FALSE;
 					}
-					return assign_scalar(field,
+					return assign_scalar(stu, field,
 										 SERIES_SKIP(stu->data, stu->offset + field->offset + (VAL_INT32(elem) - 1) * field->size),
 										 val);
 				}
 				return TRUE;
 			} else {
-				return assign_scalar(field,
+				return assign_scalar(stu, field,
 									 SERIES_SKIP(stu->data, stu->offset + field->offset),
 									 val);
 			}
@@ -490,7 +493,7 @@ static REBOOL assign_scalar(struct Struct_Field *field, REBYTE *data, REBVAL *va
 						REBVAL *elem = VAL_BLK_DATA(init);
 						REBCNT elem_offset = 0;
 						while (NOT_END(elem)) {
-							if (!assign_scalar(field, SERIES_SKIP(VAL_STRUCT_DATA(out), offset + elem_offset), elem)) {
+							if (!assign_scalar(&VAL_STRUCT(out), field, SERIES_SKIP(VAL_STRUCT_DATA(out), offset + elem_offset), elem)) {
 								RL_Print("Failed to assign element value\n");
 								goto failed;
 							}
@@ -502,7 +505,7 @@ static REBOOL assign_scalar(struct Struct_Field *field, REBYTE *data, REBVAL *va
 					}
 				} else {
 					/* scalar */
-					if (!assign_scalar(field, SERIES_SKIP(VAL_STRUCT_DATA(out), offset), init)) {
+					if (!assign_scalar(&VAL_STRUCT(out), field, SERIES_SKIP(VAL_STRUCT_DATA(out), offset), init)) {
 						RL_Print("Failed to assign scalar value\n");
 						goto failed;
 					}
