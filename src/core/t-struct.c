@@ -559,6 +559,11 @@ static REBOOL assign_scalar(struct Struct_Field *field, REBYTE *data, REBVAL *va
 
 			EXPAND_SERIES_TAIL(VAL_STRUCT_DATA(out), field->size * field->dimension);
 
+			REBCNT step = field->size * field->dimension;
+			if (step > VAL_STRUCT_LIMIT) {
+				Trap1(RE_SIZE_LIMIT, out);
+			}
+
 			if (expect_init) {
 				if (IS_BLOCK(blk)) {
 					Reduce_Block(VAL_SERIES(blk), 0, NULL); //result is on stack
@@ -623,11 +628,6 @@ static REBOOL assign_scalar(struct Struct_Field *field, REBYTE *data, REBVAL *va
 				}
 			} else {
 				memset(SERIES_SKIP(VAL_STRUCT_DATA(out), offset), 0, field->size * field->dimension);
-			}
-
-			REBCNT step = field->size * field->dimension;
-			if (step > VAL_STRUCT_LIMIT) {
-				Trap1(RE_SIZE_LIMIT, out);
 			}
 
 			offset +=  step;
