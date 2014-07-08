@@ -412,8 +412,9 @@ mark_obj:
 			}
 			break;
 
-#ifdef ndef
 		case REB_ROUTINE:
+			RL_Print("GCing a routine\n");
+#if 0
 		  // Deal with the co-joined struct value...
 			CHECK_MARK(VAL_STRUCT_SPEC(VAL_ROUTINE_SPEC(val)), depth);
 			CHECK_MARK(VAL_STRUCT_VALS(VAL_ROUTINE_SPEC(val)), depth);
@@ -421,13 +422,16 @@ mark_obj:
 			MARK_SERIES(VAL_ROUTINE_SPEC_SER(val));
 //!!!			if (Current_Closing_Library && VAL_ROUTINE_ID(val) == Current_Closing_Library)
 				VAL_ROUTINE_ID(val) = 0; // Invalidate the routine
-			break;
 #endif
+			break;
 
 		case REB_LIBRARY:
+			RL_Print("GCing a library\n");
+#if 0
 			MARK_SERIES(VAL_LIBRARY_NAME(val));
 //!!!			if (Current_Closing_Library && VAL_LIBRARY_ID(val) == Current_Closing_Library)
 				VAL_LIBRARY_ID(val) = 0; // Invalidate the library
+#endif
 			break;
 
 		case REB_STRUCT:

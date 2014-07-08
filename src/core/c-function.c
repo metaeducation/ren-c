@@ -20,9 +20,9 @@
 ************************************************************************
 **
 **  Module:  c-function.c
-**  Summary: support for functions, actions, and closures
+**  Summary: support for functions, actions, closures and routines
 **  Section: core
-**  Author:  Carl Sassenrath
+**  Author:  Carl Sassenrath, Shixin Zeng
 **  Notes:
 **
 ***********************************************************************/
@@ -468,4 +468,12 @@
 			SET_UNSET(ds);
 	}
 	else *ds = *result; // Set return value (atomic)
+}
+
+/***********************************************************************
+**
+*/	void Do_Routine(REBVAL *routine)
+/*
+ */
+{
 }

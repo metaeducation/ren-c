@@ -269,6 +269,12 @@ objs/t-gob.o:         $R/t-gob.c
 objs/t-struct.o:         $R/t-struct.c
 	$(CC) $R/t-struct.c $(RFLAGS) -o objs/t-struct.o
 
+objs/t-library.o:         $R/t-library.c
+	$(CC) $R/t-library.c $(RFLAGS) -o objs/t-library.o
+
+objs/t-routine.o:         $R/t-routine.c
+	$(CC) $R/t-routine.c $(RFLAGS) -o objs/t-routine.o
+
 objs/t-image.o:       $R/t-image.c
 	$(CC) $R/t-image.c $(RFLAGS) -o objs/t-image.o
 

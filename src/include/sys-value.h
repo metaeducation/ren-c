@@ -968,7 +968,7 @@ typedef struct Reb_Handle {
 ***********************************************************************/
 
 typedef struct Reb_Library {
-	long handle;        // ALPHA wants a long
+	REBUPT handle;
 	REBSER *name;
 	REBCNT id;
 } REBLIB;
