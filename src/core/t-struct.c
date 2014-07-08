@@ -260,22 +260,16 @@ static REBOOL same_fields(REBSER *tgt, REBSER *src)
 		if (tgt_fields[n].type != src_fields[n].type) {
 			return FALSE;
 		}
-		if (tgt_fields[n].type != TYPE_STRUCT) {
-			if (memcmp(&tgt_fields[n], &src_fields[n], sizeof(src_fields[n]))) {
-				return FALSE;
-			}
-		} else {
-			if (VAL_SYM_CANON(BLK_SKIP(PG_Word_Table.series, tgt_fields[n].sym))
-				!= VAL_SYM_CANON(BLK_SKIP(PG_Word_Table.series, src_fields[n].sym))
-				|| tgt_fields[n].offset != src_fields[n].offset
-				|| tgt_fields[n].dimension != src_fields[n].dimension
-				|| tgt_fields[n].size != src_fields[n].size) {
-				return FALSE;
-			}
-
-			if (! same_fields(tgt_fields[n].fields, src_fields[n].fields)) {
-				return FALSE;
-			}
+		if (VAL_SYM_CANON(BLK_SKIP(PG_Word_Table.series, tgt_fields[n].sym))
+			!= VAL_SYM_CANON(BLK_SKIP(PG_Word_Table.series, src_fields[n].sym))
+			|| tgt_fields[n].offset != src_fields[n].offset
+			|| tgt_fields[n].dimension != src_fields[n].dimension
+			|| tgt_fields[n].size != src_fields[n].size) {
+			return FALSE;
+		}
+		if (tgt_fields[n].type == TYPE_STRUCT
+			&& ! same_fields(tgt_fields[n].fields, src_fields[n].fields)) {
+			return FALSE;
 		}
 	}
 
