@@ -586,7 +586,12 @@ static REBOOL assign_scalar(struct Struct_Field *field, REBYTE *data, REBVAL *va
 				}
 
 				if (field->dimension > 1) {
-					if (IS_BLOCK(init)) {
+					if (IS_INTEGER(init)) { /* interpreted as a C pointer */
+						void *ptr = (void *)VAL_INT64(init);
+
+						/* assuming it's an valid pointer and holding enough space */
+						memcpy(SERIES_SKIP(VAL_STRUCT_DATA(out), offset), ptr, field->size * field->dimension);
+					} else if (IS_BLOCK(init)) {
 						if (VAL_LEN(init) != field->dimension) {
 							Trap1(RE_INVALID_DATA, init);
 						}
