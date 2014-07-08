@@ -537,24 +537,30 @@ static REBOOL assign_scalar(REBSTU *stu, struct Struct_Field *field, REBYTE *dat
 			EXPAND_SERIES_TAIL(VAL_STRUCT_DATA(out), field->size * field->dimension);
 
 			if (expect_init) {
-				eval_idx = blk - VAL_BLK_DATA(data);
+				if (IS_BLOCK(blk)) {
+					Reduce_Block(VAL_SERIES(blk), 0, NULL); //result is on stack
+					init = DS_POP;
+					++ blk;
+				} else {
+					eval_idx = blk - VAL_BLK_DATA(data);
 
-				/*
-				SAVE_SERIES(VAL_STRUCT_DATA(out));
-				SAVE_SERIES(VAL_STRUCT_SPEC(out));
-				SAVE_SERIES(VAL_STRUCT_FIELDS(out));
-				*/
+					/*
+					SAVE_SERIES(VAL_STRUCT_DATA(out));
+					SAVE_SERIES(VAL_STRUCT_SPEC(out));
+					SAVE_SERIES(VAL_STRUCT_FIELDS(out));
+					*/
 
-				eval_idx = Do_Next(VAL_SERIES(data), eval_idx, 0);
+					eval_idx = Do_Next(VAL_SERIES(data), eval_idx, 0);
 
-				/*
-				UNSAVE_SERIES(VAL_STRUCT_FIELDS(out));
-				UNSAVE_SERIES(VAL_STRUCT_SPEC(out));
-				UNSAVE_SERIES(VAL_STRUCT_DATA(out));
-				*/
+					/*
+					UNSAVE_SERIES(VAL_STRUCT_FIELDS(out));
+					UNSAVE_SERIES(VAL_STRUCT_SPEC(out));
+					UNSAVE_SERIES(VAL_STRUCT_DATA(out));
+					*/
 
-				blk = VAL_BLK_SKIP(data, eval_idx);
-				init = DS_POP; //Do_Next saves result on stack
+					blk = VAL_BLK_SKIP(data, eval_idx);
+					init = DS_POP; //Do_Next saves result on stack
+				}
 
 				if (field->dimension > 1) {
 					if (IS_BLOCK(init)) {
