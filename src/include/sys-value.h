@@ -1075,10 +1075,6 @@ typedef struct Reb_All {
 **
 ***********************************************************************/
 {
-	union Reb_Val_Head {
-		REBHED flags;
-		REBCNT header;
-	} flags;
 	union Reb_Val_Data {
 		REBWRD	word;
 		REBSRI	series;
@@ -1108,6 +1104,10 @@ typedef struct Reb_All {
 		REBHAN  handle;
 		REBALL  all;
 	} data;
+	union Reb_Val_Head {
+		REBHED flags;
+		REBCNT header;
+	} flags;
 };
 
 #define ANY_SERIES(v)		(VAL_TYPE(v) >= REB_BINARY && VAL_TYPE(v) <= REB_LIT_PATH)
