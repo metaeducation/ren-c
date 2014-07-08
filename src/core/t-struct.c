@@ -2,7 +2,6 @@
 **
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
-**  Copyright 2012 REBOL Technologies
 **  Copyright 2014 Atronix Engineering, Inc.
 **  REBOL is a trademark of REBOL Technologies
 **
@@ -21,7 +20,7 @@
 ************************************************************************
 **
 **  Module:  t-strut.c
-**  Summary: graphical object datatype
+**  Summary: C struct object datatype
 **  Section: datatypes
 **  Author:  Shixin Zeng
 **  Notes:
@@ -798,10 +797,4 @@ failed:
 
 is_arg_error:
 	Trap_Types(RE_EXPECT_VAL, REB_STRUCT, VAL_TYPE(arg));
-
-is_false:
-	return R_FALSE;
-
-is_true:
-	return R_TRUE;
 }
