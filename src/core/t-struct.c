@@ -79,17 +79,6 @@ static REBINT type_to_sym [TYPE_MAX] = {
 #define IS_NUMERIC_TYPE(t) (IS_INTEGER_TYPE(t) || IS_DECIMAL_TYPE(t))
 
 
-/***********************************************************************
-**
-*/	REBINT CT_Struct(REBVAL *a, REBVAL *b, REBINT mode)
-/*
-***********************************************************************/
-{
-	if (mode >= 0)
-		return VAL_STRUCT_DATA(a) == VAL_STRUCT_DATA(b);
-	return -1;
-}
-
 static get_scalar(REBSTU *stu, struct Struct_Field *field, REBYTE *data, REBVAL *val)
 {
 	switch (field->type) {
@@ -699,6 +688,21 @@ failed:
 		return PE_OK;
 	}
 	return PE_BAD_SELECT;
+}
+
+/***********************************************************************
+**
+*/	REBINT CT_Struct(REBVAL *a, REBVAL *b, REBINT mode)
+/*
+***********************************************************************/
+{
+	if (mode >= 0) {
+		return IS_STRUCT(a) && IS_STRUCT(b)
+			 && same_fields(VAL_STRUCT_FIELDS(a), VAL_STRUCT_FIELDS(b))
+			 && VAL_STRUCT_LEN(a) == VAL_STRUCT_LEN(b)
+			 && !memcmp(SERIES_DATA(VAL_STRUCT_DATA(a)), SERIES_DATA(VAL_STRUCT_DATA(b)), VAL_STRUCT_LEN(a));
+	}
+	return -1;
 }
 
 
