@@ -490,6 +490,8 @@ static REBOOL assign_scalar(REBSTU *stu, struct Struct_Field *field, REBYTE *dat
 			} else if (IS_STRUCT(blk)) { //[struct-a b: val-a] 
 				field->size = SERIES_TAIL(VAL_STRUCT_DATA(blk));
 				field->type = TYPE_STRUCT;
+				field->fields = VAL_STRUCT_FIELDS(blk);
+				field->spec = VAL_STRUCT_SPEC(blk);
 				init = blk; /* a shortcut for struct intialization */
 			} else {
 				Trap_Type(blk);
