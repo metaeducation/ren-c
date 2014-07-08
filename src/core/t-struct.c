@@ -28,12 +28,7 @@
 **
 ***********************************************************************/
 
-#include <stdlib.h>
 #include "sys-core.h"
-
-const REBCNT Struct_Flag_Words[] = {
-	0, 0
-};
 
 enum {
 	TYPE_UINT8,
@@ -55,7 +50,11 @@ enum {
 	TYPE_MAX
 };
 
-static REBINT type_to_sym [TYPE_MAX] = {
+#define IS_INTEGER_TYPE(t) ((t) < TYPE_INTEGER)
+#define IS_DECIMAL_TYPE(t) ((t) > TYPE_INTEGER && (t) < TYPE_DECIMAL)
+#define IS_NUMERIC_TYPE(t) (IS_INTEGER_TYPE(t) || IS_DECIMAL_TYPE(t))
+
+static const REBINT type_to_sym [TYPE_MAX] = {
 	SYM_UINT8,
 	SYM_INT8,
 	SYM_UINT16,
@@ -73,11 +72,6 @@ static REBINT type_to_sym [TYPE_MAX] = {
 	SYM_POINTER
 	//TYPE_MAX
 };
-
-#define IS_INTEGER_TYPE(t) ((t) < TYPE_INTEGER)
-#define IS_DECIMAL_TYPE(t) ((t) > TYPE_INTEGER && (t) < TYPE_DECIMAL)
-#define IS_NUMERIC_TYPE(t) (IS_INTEGER_TYPE(t) || IS_DECIMAL_TYPE(t))
-
 
 static get_scalar(REBSTU *stu, struct Struct_Field *field, REBYTE *data, REBVAL *val)
 {
