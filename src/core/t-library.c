@@ -63,6 +63,29 @@
 		case A_MAKE:
 			RL_Print("%s, %d, Make library action\n", __func__, __LINE__);
 		case A_TO:
+			if (!IS_DATATYPE(val)) {
+				Trap_Types(RE_EXPECT_VAL, REB_LIBRARY, VAL_TYPE(val));
+			}
+			if (!IS_FILE(arg)) {
+				Trap_Types(RE_EXPECT_VAL, REB_BLOCK, VAL_TYPE(arg));
+			} else {
+				REBCNT len = VAL_LEN(arg);
+				REBYTE *path = (REBYTE*)OS_MAKE(len + 1);
+				void *lib = NULL;
+				memcpy(path, VAL_DATA(arg), len);
+				path[len] = '\0';
+				lib = OS_OPEN_LIBRARY(path, NULL);
+				if (!lib) {
+					OS_Free(path);
+					Trap_Make(REB_LIBRARY, arg);
+				}
+				OS_Free(path);
+				VAL_LIB_HANDLE(ret) = (REBLHL*)Make_Node(LIB_POOL);
+				VAL_LIB_FD(ret) = lib;
+				USE_LIB(VAL_LIB_HANDLE(ret));
+				SET_TYPE(ret, REB_LIBRARY);
+			}
+			break;
 		default:
 			Trap_Action(REB_LIBRARY, action);
 	}

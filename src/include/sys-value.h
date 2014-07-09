@@ -967,16 +967,39 @@ typedef struct Reb_Handle {
 **
 ***********************************************************************/
 
+typedef struct Reb_Library_Handle {
+	void * fd;
+	REBFLG flags;
+} REBLHL;
+
 typedef struct Reb_Library {
-	REBUPT handle;
-	REBSER *name;
-	REBCNT id;
+	REBLHL *handle;
 } REBLIB;
 
-#define VAL_LIBRARY(v)        (v->data.library)
-#define VAL_LIBRARY_HANDLE(v) (v->data.library.handle)
-#define VAL_LIBRARY_NAME(v)   (v->data.library.name)
-#define VAL_LIBRARY_ID(v)     (v->data.library.id)
+#define LIB_FD(v) 			((v)->fd)
+#define LIB_FLAGS(v) 		((v)->flags)
+
+#define VAL_LIB(v)        	((v)->data.library)
+#define VAL_LIB_HANDLE(v) 	((v)->data.library.handle)
+#define VAL_LIB_FD(v) 		((v)->data.library.handle->fd)
+#define VAL_LIB_FLAGS(v) 	((v)->data.library.handle->flags)
+
+enum {
+	LIB_MARK = 1,		// library was found during GC mark scan.
+	LIB_USED = 1 << 1,
+};
+
+#define LIB_SET_FLAG(s, f) (LIB_FLAGS(s) |= (f))
+#define LIB_CLR_FLAG(s, f) (LIB_FLAGS(s) &= ~(f))
+#define LIB_GET_FLAG(s, f) (LIB_FLAGS(s) &  (f))
+
+#define MARK_LIB(s)    LIB_SET_FLAG(s, LIB_MARK)
+#define USE_LIB(s)     LIB_SET_FLAG(s, LIB_USED)
+#define UNUSE_LIB(s)   LIB_CLR_FLAG(s, LIB_USED)
+#define UNMARK_LIB(s)  LIB_CLR_FLAG(s, LIB_MARK)
+#define IS_MARK_LIB(s) LIB_GET_FLAG(s, LIB_MARK)
+#define IS_USED_LIB(s) LIB_GET_FLAG(s, LIB_MARK)
+
 
 
 /***********************************************************************

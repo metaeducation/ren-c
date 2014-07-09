@@ -428,6 +428,7 @@ mark_obj:
 
 		case REB_LIBRARY:
 			RL_Print("GCing a library\n");
+			MARK_LIB(VAL_LIB_HANDLE(val));
 #if 0
 			MARK_SERIES(VAL_LIBRARY_NAME(val));
 //!!!			if (Current_Closing_Library && VAL_LIBRARY_ID(val) == Current_Closing_Library)
@@ -537,6 +538,43 @@ mark_obj:
 	return count;
 }
 
+/***********************************************************************
+**
+*/	static REBCNT Sweep_Libs(void)
+/*
+**		Free all unmarked libs.
+**
+**		Scans all libs in all segments that are part of the
+**		LIB_POOL. Free libs that have not been marked.
+**
+***********************************************************************/
+{
+	REBSEG	*seg;
+	REBLHL	*lib;
+	REBCNT  n;
+	REBCNT	count = 0;
+
+	for (seg = Mem_Pools[LIB_POOL].segs; seg; seg = seg->next) {
+		lib = (REBLHL *) (seg + 1);
+		for (n = Mem_Pools[LIB_POOL].units; n > 0; n--) {
+			SKIP_WALL(lib);
+			if (IS_USED_LIB(lib)) {
+				if (IS_MARK_LIB(lib))
+					UNMARK_LIB(lib);
+				else {
+					UNUSE_LIB(lib);
+					Free_Node(LIB_POOL, (REBNOD*)lib);
+					count++;
+				}
+			}
+			lib++;
+		}
+	}
+
+	return count;
+}
+
+
 
 /***********************************************************************
 **
@@ -609,6 +647,7 @@ mark_obj:
 	
 	count = Sweep_Series();
 	count += Sweep_Gobs();
+	count += Sweep_Libs();
 
 	CHECK_MEMORY(4);
 

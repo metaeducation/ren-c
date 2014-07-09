@@ -94,6 +94,7 @@ typedef void *REBNOD;			// Just used for linking free nodes
 	MEM_BIG_POOLS   = MEM_MID_POOLS   +  4, // larger pools
 	SERIES_POOL     = MEM_BIG_POOLS,
 	GOB_POOL,
+	LIB_POOL,
 	SYSTEM_POOL,
 	MAX_POOLS
 };
