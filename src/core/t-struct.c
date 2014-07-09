@@ -750,14 +750,17 @@ failed:
 			break;
 		case A_REFLECT:
 			{
-				REBINT n = What_Reflector(arg); // zero on error
+				REBINT n = VAL_WORD_CANON(arg); // zero on error
 				switch (n) {
-					case OF_VALUES:
+					case SYM_VALUES:
 						SET_BINARY(ret, Copy_Series_Part(VAL_STRUCT_DATA_BIN(val), VAL_STRUCT_OFFSET(val), VAL_STRUCT_LEN(val)));
 						break;
-					case OF_SPEC:
+					case SYM_SPEC:
 						Set_Block(ret, Clone_Block(VAL_STRUCT_SPEC(val)));
 						Unbind_Block(VAL_BLK(val), TRUE);
+						break;
+					case SYM_ADDR:
+						SET_INTEGER(ret, (REBUPT)SERIES_SKIP(VAL_STRUCT_DATA_BIN(val), VAL_STRUCT_OFFSET(val)));
 						break;
 					default:
 						Trap_Reflect(REB_STRUCT, arg);

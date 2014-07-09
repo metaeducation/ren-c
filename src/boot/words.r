@@ -177,6 +177,7 @@ int64
 float
 ;double ;reuse earlier definition
 pointer
+addr
 
 ; Gobs:
 gob
