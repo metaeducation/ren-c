@@ -31,10 +31,33 @@ struct Struct_Field {
 	REBSER* fields; /* for nested struct */
 	REBCNT sym;
 
-	u16 type; /* rebol type */
+	REBINT type; /* rebol type */
 
 	/* size is limited by struct->offset, so only 16-bit */
-	u16 offset;
-	u16 dimension; /* for arrays */
-	u16 size; /* size of element, in bytes */
+	REBCNT offset;
+	REBCNT dimension; /* for arrays */
+	REBCNT size; /* size of element, in bytes */
 };
+
+/* this is hackish to work around the size limit of REBSTU
+ *	VAL_STRUCT_DATA(val) is not the actual data, but a series with 
+ *	one Struct_Data element, and this element has various infomation
+ *	about the struct data
+ * */
+struct Struct_Data {
+	REBSER *data;
+	REBCNT offset;
+	REBCNT len;
+	REBFLG flags;
+};
+
+#define STRUCT_DATA_BIN(v) (((struct Struct_Data*)SERIES_DATA((v)->data))->data)
+#define STRUCT_OFFSET(v) (((struct Struct_Data*)SERIES_DATA((v)->data))->offset)
+#define STRUCT_LEN(v) (((struct Struct_Data*)SERIES_DATA((v)->data))->len)
+#define STRUCT_FLAGS(v) (((struct Struct_Data*)SERIES_DATA((v)->data))->flags)
+
+#define VAL_STRUCT_DATA_BIN(v) (((struct Struct_Data*)SERIES_DATA(VAL_STRUCT_DATA(v)))->data)
+#define VAL_STRUCT_OFFSET(v) (((struct Struct_Data*)SERIES_DATA(VAL_STRUCT_DATA(v)))->offset)
+#define VAL_STRUCT_LEN(v) (((struct Struct_Data*)SERIES_DATA(VAL_STRUCT_DATA(v)))->len)
+#define VAL_STRUCT_FLAGS(v) (((struct Struct_Data*)SERIES_DATA(VAL_STRUCT_DATA(v)))->flags)
+#define VAL_STRUCT_LIMIT	MAX_U32

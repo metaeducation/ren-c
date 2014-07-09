@@ -158,6 +158,7 @@ static void Mark_Series(REBSER *series, REBCNT depth);
 	REBSER *series = NULL;
 	CHECK_MARK(stu->spec, depth);
 	CHECK_MARK(stu->fields, depth);
+	CHECK_MARK(STRUCT_DATA_BIN(stu), depth);
 	CHECK_MARK(stu->data, depth);
 
 	series = stu->fields;

@@ -1031,18 +1031,13 @@ typedef struct Reb_Struct {
 	REBSER	*spec;
 	REBSER	*fields;	// fields definition
 	REBSER	*data;
-	u16		offset; // real data starts from SERIES_SKIP(data, offset)
-	u16		len;	// sizeof the struct! in bytes
 } REBSTU;
 
 #define VAL_STRUCT(v)       ((v)->data.structure)
 #define VAL_STRUCT_SPEC(v)  ((v)->data.structure.spec)
 #define VAL_STRUCT_FIELDS(v)  ((v)->data.structure.fields)
 #define VAL_STRUCT_DATA(v)  ((v)->data.structure.data)
-#define VAL_STRUCT_OFFSET(v)  ((v)->data.structure.offset)
-#define VAL_STRUCT_LEN(v)   ((v)->data.structure.len)
 #define VAL_STRUCT_DP(v)    (STR_HEAD(VAL_STRUCT_DATA(v)))
-#define VAL_STRUCT_LIMIT	0xFFFFu
 
 /***********************************************************************
 **
@@ -1104,6 +1099,9 @@ typedef struct Reb_All {
 		REBHAN  handle;
 		REBALL  all;
 	} data;
+#if defined(__LP64__) || defined(__LLP64__)
+	REBINT	padding; //make it 32 bytes
+#endif
 	union Reb_Val_Head {
 		REBHED flags;
 		REBCNT header;
