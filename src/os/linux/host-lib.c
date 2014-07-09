@@ -560,7 +560,9 @@ error:
 {
 #ifndef NO_DL_LIB
 	void *dll = dlopen(path, RTLD_LAZY/*|RTLD_GLOBAL*/);
-	*error = 0; // dlerror() returns a char* error message, so there's
+	if (error) {
+		*error = 0; // dlerror() returns a char* error message, so there's
+	}
 				// no immediate way to return an "error code" in *error
 	return dll;
 #else
