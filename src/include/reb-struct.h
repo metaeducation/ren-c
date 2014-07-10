@@ -26,6 +26,26 @@
 **
 ***********************************************************************/
 
+enum {
+	STRUCT_TYPE_UINT8 = 0,
+	STRUCT_TYPE_INT8,
+	STRUCT_TYPE_UINT16,
+	STRUCT_TYPE_INT16,
+	STRUCT_TYPE_UINT32,
+	STRUCT_TYPE_INT32,
+	STRUCT_TYPE_UINT64,
+	STRUCT_TYPE_INT64,
+	STRUCT_TYPE_INTEGER,
+
+	STRUCT_TYPE_FLOAT,
+	STRUCT_TYPE_DOUBLE,
+	STRUCT_TYPE_DECIMAL,
+
+	STRUCT_TYPE_POINTER,
+	STRUCT_TYPE_STRUCT,
+	STRUCT_TYPE_MAX
+};
+
 struct Struct_Field {
 	REBSER* spec; /* for nested struct */
 	REBSER* fields; /* for nested struct */

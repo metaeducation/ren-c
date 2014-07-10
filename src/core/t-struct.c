@@ -31,39 +31,19 @@
 
 #define STATIC_ASSERT(e) do {(void)sizeof(char[1 - 2*!(e)]);} while(0)
 
-enum {
-	TYPE_UINT8,
-	TYPE_INT8,
-	TYPE_UINT16,
-	TYPE_INT16,
-	TYPE_UINT32,
-	TYPE_INT32,
-	TYPE_INT64,
-	TYPE_UINT64,
-	TYPE_INTEGER,
-
-	TYPE_FLOAT,
-	TYPE_DOUBLE,
-	TYPE_DECIMAL,
-
-	TYPE_POINTER,
-	TYPE_STRUCT,
-	TYPE_MAX
-};
-
-#define IS_INTEGER_TYPE(t) ((t) < TYPE_INTEGER)
-#define IS_DECIMAL_TYPE(t) ((t) > TYPE_INTEGER && (t) < TYPE_DECIMAL)
+#define IS_INTEGER_TYPE(t) ((t) < STRUCT_TYPE_INTEGER)
+#define IS_DECIMAL_TYPE(t) ((t) > STRUCT_TYPE_INTEGER && (t) < STRUCT_TYPE_DECIMAL)
 #define IS_NUMERIC_TYPE(t) (IS_INTEGER_TYPE(t) || IS_DECIMAL_TYPE(t))
 
-static const REBINT type_to_sym [TYPE_MAX] = {
+static const REBINT type_to_sym [STRUCT_TYPE_MAX] = {
 	SYM_UINT8,
 	SYM_INT8,
 	SYM_UINT16,
 	SYM_INT16,
 	SYM_UINT32,
 	SYM_INT32,
-	SYM_INT64,
 	SYM_UINT64,
+	SYM_INT64,
 	-1, //SYM_INTEGER,
 
 	SYM_FLOAT,
@@ -71,7 +51,7 @@ static const REBINT type_to_sym [TYPE_MAX] = {
 	-1, //SYM_DECIMAL,
 
 	SYM_POINTER
-	//TYPE_MAX
+	//STRUCT_TYPE_MAX
 };
 
 static get_scalar(REBSTU *stu,
@@ -82,40 +62,40 @@ static get_scalar(REBSTU *stu,
 	REBYTE *data = SERIES_SKIP(STRUCT_DATA_BIN(stu),
 							 STRUCT_OFFSET(stu) + field->offset + n * field->size);
 	switch (field->type) {
-		case TYPE_UINT8:
+		case STRUCT_TYPE_UINT8:
 			SET_INTEGER(val, *(u8*)data);
 			break;
-		case TYPE_INT8:
+		case STRUCT_TYPE_INT8:
 			SET_INTEGER(val, *(i8*)data);
 			break;
-		case TYPE_UINT16:
+		case STRUCT_TYPE_UINT16:
 			SET_INTEGER(val, *(u16*)data);
 			break;
-		case TYPE_INT16:
+		case STRUCT_TYPE_INT16:
 			SET_INTEGER(val, *(i8*)data);
 			break;
-		case TYPE_UINT32:
+		case STRUCT_TYPE_UINT32:
 			SET_INTEGER(val, *(u32*)data);
 			break;
-		case TYPE_INT32:
+		case STRUCT_TYPE_INT32:
 			SET_INTEGER(val, *(i32*)data);
 			break;
-		case TYPE_UINT64:
+		case STRUCT_TYPE_UINT64:
 			SET_INTEGER(val, *(u64*)data);
 			break;
-		case TYPE_INT64:
+		case STRUCT_TYPE_INT64:
 			SET_INTEGER(val, *(i64*)data);
 			break;
-		case TYPE_FLOAT:
+		case STRUCT_TYPE_FLOAT:
 			SET_DECIMAL(val, *(float*)data);
 			break;
-		case TYPE_DOUBLE:
+		case STRUCT_TYPE_DOUBLE:
 			SET_DECIMAL(val, *(double*)data);
 			break;
-		case TYPE_POINTER:
+		case STRUCT_TYPE_POINTER:
 			SET_INTEGER(val, (u64)*(void**)data);
 			break;
-		case TYPE_STRUCT:
+		case STRUCT_TYPE_STRUCT:
 			{
 				SET_TYPE(val, REB_STRUCT);
 				VAL_STRUCT_FIELDS(val) = field->fields;
@@ -190,7 +170,7 @@ static get_scalar(REBSTU *stu,
 		REBVAL *val = Append_Value(ser);
 
 		/* required type */
-		if (field->type == TYPE_STRUCT) {
+		if (field->type == STRUCT_TYPE_STRUCT) {
 			REBVAL nested;
 			Init_Word(val, SYM_STRUCT_TYPE);
 			val = Append_Value(ser);
@@ -257,7 +237,7 @@ static REBOOL same_fields(REBSER *tgt, REBSER *src)
 			|| tgt_fields[n].size != src_fields[n].size) {
 			return FALSE;
 		}
-		if (tgt_fields[n].type == TYPE_STRUCT
+		if (tgt_fields[n].type == STRUCT_TYPE_STRUCT
 			&& ! same_fields(tgt_fields[n].fields, src_fields[n].fields)) {
 			return FALSE;
 		}
@@ -285,14 +265,14 @@ static REBOOL assign_scalar(REBSTU *stu,
 			break;
 		case REB_INTEGER:
 			if (!IS_NUMERIC_TYPE(field->type)
-				|| field->type == TYPE_POINTER) {
+				|| field->type == STRUCT_TYPE_POINTER) {
 				Trap_Type(val);
 			}
 			i = (u64) VAL_INT64(val);
 			d = (double)i;
 			break;
 		case REB_STRUCT:
-			if (TYPE_STRUCT != field->type) {
+			if (STRUCT_TYPE_STRUCT != field->type) {
 				Trap_Type(val);
 			}
 			break;
@@ -301,40 +281,40 @@ static REBOOL assign_scalar(REBSTU *stu,
 	}
 
 	switch (field->type) {
-		case TYPE_INT8:
+		case STRUCT_TYPE_INT8:
 			*(i8*)data = (i8)i;
 			break;
-		case TYPE_UINT8:
+		case STRUCT_TYPE_UINT8:
 			*(u8*)data = (u8)i;
 			break;
-		case TYPE_INT16:
+		case STRUCT_TYPE_INT16:
 			*(i16*)data = (i16)i;
 			break;
-		case TYPE_UINT16:
+		case STRUCT_TYPE_UINT16:
 			*(u16*)data = (u16)i;
 			break;
-		case TYPE_INT32:
+		case STRUCT_TYPE_INT32:
 			*(i32*)data = (i32)i;
 			break;
-		case TYPE_UINT32:
+		case STRUCT_TYPE_UINT32:
 			*(u32*)data = (u32)i;
 			break;
-		case TYPE_INT64:
+		case STRUCT_TYPE_INT64:
 			*(i64*)data = (i64)i;
 			break;
-		case TYPE_UINT64:
+		case STRUCT_TYPE_UINT64:
 			*(u64*)data = (u64)i;
 			break;
-		case TYPE_POINTER:
+		case STRUCT_TYPE_POINTER:
 			*(void**)data = (void*)i;
 			break;
-		case TYPE_FLOAT:
+		case STRUCT_TYPE_FLOAT:
 			*(float*)data = (float)d;
 			break;
-		case TYPE_DOUBLE:
+		case STRUCT_TYPE_DOUBLE:
 			*(double*)data = (double)d;
 			break;
-		case TYPE_STRUCT:
+		case STRUCT_TYPE_STRUCT:
 			if (field->size != VAL_STRUCT_LEN(val)) {
 				Trap_Arg(val);
 			}
@@ -435,47 +415,47 @@ static REBOOL assign_scalar(REBSTU *stu,
 			if (IS_WORD(blk)) {
 				switch (VAL_WORD_CANON(blk)) {
 					case SYM_UINT8:
-						field->type = TYPE_UINT8;
+						field->type = STRUCT_TYPE_UINT8;
 						field->size = 1;
 						break;
 					case SYM_INT8:
-						field->type = TYPE_INT8;
+						field->type = STRUCT_TYPE_INT8;
 						field->size = 1;
 						break;
 					case SYM_UINT16:
-						field->type = TYPE_UINT16;
+						field->type = STRUCT_TYPE_UINT16;
 						field->size = 2;
 						break;
 					case SYM_INT16:
-						field->type = TYPE_INT16;
+						field->type = STRUCT_TYPE_INT16;
 						field->size = 2;
 						break;
 					case SYM_UINT32:
-						field->type = TYPE_UINT32;
+						field->type = STRUCT_TYPE_UINT32;
 						field->size = 4;
 						break;
 					case SYM_INT32:
-						field->type = TYPE_INT32;
+						field->type = STRUCT_TYPE_INT32;
 						field->size = 4;
 						break;
 					case SYM_UINT64:
-						field->type = TYPE_UINT64;
+						field->type = STRUCT_TYPE_UINT64;
 						field->size = 8;
 						break;
 					case SYM_INT64:
-						field->type = TYPE_INT64;
+						field->type = STRUCT_TYPE_INT64;
 						field->size = 8;
 						break;
 					case SYM_FLOAT:
-						field->type = TYPE_FLOAT;
+						field->type = STRUCT_TYPE_FLOAT;
 						field->size = 4;
 						break;
 					case SYM_DOUBLE:
-						field->type = TYPE_DOUBLE;
+						field->type = STRUCT_TYPE_DOUBLE;
 						field->size = 8;
 						break;
 					case SYM_POINTER:
-						field->type = TYPE_POINTER;
+						field->type = STRUCT_TYPE_POINTER;
 						field->size = sizeof(void*);
 						break;
 					case SYM_STRUCT_TYPE:
@@ -491,7 +471,7 @@ static REBOOL assign_scalar(REBSTU *stu,
 							}
 
 							field->size = SERIES_TAIL(VAL_STRUCT_DATA_BIN(inner));
-							field->type = TYPE_STRUCT;
+							field->type = STRUCT_TYPE_STRUCT;
 							field->fields = VAL_STRUCT_FIELDS(inner);
 							field->spec = VAL_STRUCT_SPEC(inner);
 							init = inner; /* a shortcut for struct intialization */
@@ -504,7 +484,7 @@ static REBOOL assign_scalar(REBSTU *stu,
 				}
 			} else if (IS_STRUCT(blk)) { //[struct-a b: val-a] 
 				field->size = SERIES_TAIL(VAL_STRUCT_DATA_BIN(blk));
-				field->type = TYPE_STRUCT;
+				field->type = STRUCT_TYPE_STRUCT;
 				field->fields = VAL_STRUCT_FIELDS(blk);
 				field->spec = VAL_STRUCT_SPEC(blk);
 				init = blk; /* a shortcut for struct intialization */
@@ -590,7 +570,7 @@ static REBOOL assign_scalar(REBSTU *stu,
 						goto failed;
 					}
 				}
-			} else if (field->type == TYPE_STRUCT) {
+			} else if (field->type == STRUCT_TYPE_STRUCT) {
 				REBINT n = 0;
 				for (n = 0; n < field->dimension; n ++) {
 					memcpy(SERIES_SKIP(VAL_STRUCT_DATA_BIN(out), ((REBCNT)offset) + n * field->size), SERIES_DATA(VAL_STRUCT_DATA(init)), field->size);
