@@ -994,11 +994,12 @@ enum {
 #define LIB_GET_FLAG(s, f) (LIB_FLAGS(s) &  (f))
 
 #define MARK_LIB(s)    LIB_SET_FLAG(s, LIB_MARK)
-#define USE_LIB(s)     LIB_SET_FLAG(s, LIB_USED)
-#define UNUSE_LIB(s)   LIB_CLR_FLAG(s, LIB_USED)
 #define UNMARK_LIB(s)  LIB_CLR_FLAG(s, LIB_MARK)
 #define IS_MARK_LIB(s) LIB_GET_FLAG(s, LIB_MARK)
-#define IS_USED_LIB(s) LIB_GET_FLAG(s, LIB_MARK)
+
+#define USE_LIB(s)     LIB_SET_FLAG(s, LIB_USED)
+#define UNUSE_LIB(s)   LIB_CLR_FLAG(s, LIB_USED)
+#define IS_USED_LIB(s) LIB_GET_FLAG(s, LIB_USED)
 
 
 
@@ -1007,27 +1008,49 @@ enum {
 **	ROUTINE -- External library routine structures
 **
 ***********************************************************************/
+typedef struct Reb_Routine_Info {
+	REBLHL	*lib;
+	FUNCPTR funcptr;
+	void	*cif;
+	REBSER  *args;
+	REBSER	*extra_mem; /* extra memory that needs to be free'ed */
+	REBINT	abi;
+	REBFLG	flags;
+} REBRIN;
 
 typedef struct Reb_Routine {
-	FUNCPTR funcptr;
+	REBRIN  *info; // a series of length 1, the elemet is of type REBRIN
 	REBSER  *spec; // struct-ptr
-	REBCNT  id;
 } REBROT;
 
-typedef struct Reb_Rot_Info {
-	REBCNT call_idx;
-	REBCNT pad1;
-	REBCNT pad2;
-} REBFRO;
+enum {
+	ROUTINE_MARK = 1,		// library was found during GC mark scan.
+	ROUTINE_USED = 1 << 1,
+};
 
-#define VAL_ROUTINE(v)          (v->data.routine)
-#define VAL_ROUTINE_FUNCPTR(v)  (v->data.routine.funcptr)
-#define VAL_ROUTINE_SPEC_SER(v) (v->data.routine.spec)
-#define VAL_ROUTINE_SPEC(v)     ((REBVAL *) (((REBFRO *)BLK_HEAD(VAL_ROUTINE_SPEC_SER(v))) + 1))
-#define VAL_ROUTINE_INFO(v)	((REBFRO *) (((REBFRO *)BLK_HEAD(VAL_ROUTINE_SPEC_SER(v)))))
-#define VAL_ROUTINE_ID(v)       (v->data.routine.id)
+#define VAL_ROUTINE(v)          	((v)->data.routine)
+#define VAL_ROUTINE_SPEC(v) 		((v)->data.routine.spec)
+#define VAL_ROUTINE_INFO(v) 		((v)->data.routine.info)
+#define VAL_ROUTINE_FUNCPTR(v)  	(VAL_ROUTINE_INFO(v)->funcptr)
+#define VAL_ROUTINE_LIB(v)  		(VAL_ROUTINE_INFO(v)->lib)
+#define VAL_ROUTINE_ABI(v)  		(VAL_ROUTINE_INFO(v)->abi)
+#define VAL_ROUTINE_ARGS(v)  		(VAL_ROUTINE_INFO(v)->args)
+#define VAL_ROUTINE_EXTRA_MEM(v) 	(VAL_ROUTINE_INFO(v)->extra_mem)
+#define VAL_ROUTINE_CIF(v) 			(VAL_ROUTINE_INFO(v)->cif)
 
-#define RFRO_CALLIDX(i) ((i)->call_idx)
+#define ROUTINE_FLAGS(s)	   ((s)->flags) 
+#define ROUTINE_SET_FLAG(s, f) (ROUTINE_FLAGS(s) |= (f))
+#define ROUTINE_CLR_FLAG(s, f) (ROUTINE_FLAGS(s) &= ~(f))
+#define ROUTINE_GET_FLAG(s, f) (ROUTINE_FLAGS(s) &  (f))
+
+#define MARK_ROUTINE(s)    ROUTINE_SET_FLAG(s, ROUTINE_MARK)
+#define UNMARK_ROUTINE(s)  ROUTINE_CLR_FLAG(s, ROUTINE_MARK)
+#define IS_MARK_ROUTINE(s) ROUTINE_GET_FLAG(s, ROUTINE_MARK)
+
+#define USE_ROUTINE(s)     ROUTINE_SET_FLAG(s, ROUTINE_USED)
+#define UNUSE_ROUTINE(s)   ROUTINE_CLR_FLAG(s, ROUTINE_USED)
+#define IS_USED_ROUTINE(s) ROUTINE_GET_FLAG(s, ROUTINE_USED)
+
 
 typedef struct Reb_Typeset {
 	REBCNT  pad;	// Allows us to overlay this type on WORD spec type

@@ -104,7 +104,8 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 
 	DEF_POOL(sizeof(REBSER), 4096),	// Series headers
 	DEF_POOL(sizeof(REBGOB), 128),	// Gobs
-	DEF_POOL(sizeof(REBLHL), 128), // external libraries
+	DEF_POOL(sizeof(REBLHL), 32), // external libraries
+	DEF_POOL(sizeof(REBRIN), 128), // external routines
 	DEF_POOL(1, 1),	// Just used for tracking main memory
 };
 

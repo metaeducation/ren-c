@@ -179,6 +179,19 @@ float
 pointer
 addr
 
+;routine
+library
+name
+abi
+stdcall
+fastcall
+sysv
+thiscall
+unix64
+ms-cdecl
+win64
+default
+
 ; Gobs:
 gob
 offset
