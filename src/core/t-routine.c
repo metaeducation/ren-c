@@ -188,8 +188,13 @@ static REBOOL rebol_type_to_ffi(REBVAL *out, REBVAL *elem, REBCNT idx)
 /* make a copy of the argument 
  * arg referes to return value when idx = 0
  * function args start from idx = 1
+ *
+ * For FFI_TYPE_POINTER, a temperary pointer could be needed 
+ * (whose address is returned). The pointer is stored in rebol 
+ * stack, so DS_POP is needed after the function call is done.
+ * The number to pop is returned by pop
  * */
-static void *arg_to_ffi(REBRIN *rin, REBVAL *arg, REBCNT idx)
+static void *arg_to_ffi(REBRIN *rin, REBVAL *arg, REBCNT idx, REBINT *pop)
 {
 	ffi_type **args = (ffi_type**)SERIES_DATA(rin->args);
 	switch (args[idx]->type) {
@@ -213,11 +218,9 @@ static void *arg_to_ffi(REBRIN *rin, REBVAL *arg, REBCNT idx)
 				case REB_BINARY:
 				case REB_VECTOR:
 					{
-						void **p = OS_MAKE(sizeof(void*));
-						p[0] = VAL_DATA(arg);
-
-						QUEUE_EXTRA_MEM(rin, p);
-						return p;
+						DS_PUSH_INTEGER((REBUPT)VAL_DATA(arg));
+						(*pop) ++;
+						return &VAL_INT64(DS_TOP);
 					}
 				defaut:
 					Trap_Arg(arg);
@@ -339,20 +342,27 @@ static void ffi_to_rebol(REBRIN *rin,
 {
 	REBCNT i = 0;
 	void *rvalue = NULL;
-	void ** ffi_args = OS_MAKE(SERIES_TAIL(VAL_ROUTINE_FFI_ARGS(rot)) - 1);
+	REBSER *ser = Make_Series(SERIES_TAIL(VAL_ROUTINE_FFI_ARGS(rot)) - 1, sizeof(void *), FALSE);
+	void ** ffi_args = (void **) SERIES_DATA(ser);
+	REBINT pop = 1;
+	REBVAL *tmp = NULL;
 
-	QUEUE_EXTRA_MEM(VAL_ROUTINE_INFO(rot), ffi_args);
+	DS_PUSH_NONE;
+	tmp = DS_TOP;
+	SET_TYPE(tmp, REB_BLOCK);
+	VAL_SERIES(tmp) = ser;
 
 	for (i = 1; i < SERIES_TAIL(VAL_ROUTINE_FFI_ARGS(rot)); i ++) {
-		ffi_args[i - 1] = arg_to_ffi(VAL_ROUTINE_INFO(rot), BLK_SKIP(args, i - 1), i);
+		ffi_args[i - 1] = arg_to_ffi(VAL_ROUTINE_INFO(rot), BLK_SKIP(args, i - 1), i, &pop);
 	}
 	prep_rvalue(VAL_ROUTINE_INFO(rot), ret);
-	rvalue = arg_to_ffi(VAL_ROUTINE_INFO(rot), ret, 0);
+	rvalue = arg_to_ffi(VAL_ROUTINE_INFO(rot), ret, 0, &pop);
 	ffi_call(VAL_ROUTINE_CIF(rot),
 			 (void (*) (void))VAL_ROUTINE_FUNCPTR(rot),
 			 rvalue,
 			 ffi_args);
 	ffi_to_rebol(VAL_ROUTINE_INFO(rot), ((ffi_type**)SERIES_DATA(VAL_ROUTINE_FFI_ARGS(rot)))[0], rvalue, ret);
+	DSP -= pop;
 }
 
 /***********************************************************************
