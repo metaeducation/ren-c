@@ -660,6 +660,22 @@ failed:
 	return -1;
 }
 
+void Copy_Struct(REBSTU *src, REBSTU *dst)
+{
+	/* Read only fields */
+	dst->spec = src->spec;
+	dst->fields = src->fields;
+	dst->data = src->data;
+
+	/* writable field */
+	STRUCT_DATA_BIN(dst) = Copy_Series(STRUCT_DATA_BIN(src));
+}
+
+void Copy_Struct_Val(REBVAL *src, REBVAL *dst)
+{
+	SET_TYPE(dst, REB_STRUCT);
+	Copy_Struct(&VAL_STRUCT(src), &VAL_STRUCT(dst));
+}
 
 /***********************************************************************
 **
@@ -689,14 +705,7 @@ failed:
 
 			// Clone an existing STRUCT:
 			if (IS_STRUCT(val)) {
-				*ret = *val;
-				/* Read only fields */
-				VAL_STRUCT_SPEC(ret) = VAL_STRUCT_SPEC(val);
-				VAL_STRUCT_FIELDS(ret) = VAL_STRUCT_FIELDS(val);
-				VAL_STRUCT_DATA(ret) = VAL_STRUCT_DATA(val);
-
-				/* writable field */
-				VAL_STRUCT_DATA_BIN(ret) = Copy_Series(VAL_STRUCT_DATA_BIN(val));
+				Copy_Struct_Val(val, ret);
 			} else if (!IS_DATATYPE(val)) {
 				goto is_arg_error;
 			} else {

@@ -27,9 +27,16 @@
 **
 ***********************************************************************/
 
+#include <stdio.h>
 #include "sys-core.h"
 
 #include <ffi.h>
+
+static void QUEUE_EXTRA_MEM(REBRIN *v, void *p)
+{
+	*(void**) SERIES_SKIP(v->extra_mem, SERIES_TAIL(v->extra_mem)) = p;
+	EXPAND_SERIES_TAIL(v->extra_mem, 1);
+}
 
 static ffi_type * struct_type_to_ffi [STRUCT_TYPE_MAX];
 
@@ -78,24 +85,21 @@ static REBCNT n_struct_fields (REBSER *fields)
 
 static ffi_type* struct_to_ffi(REBVAL *out, REBVAL *elem)
 {
-	ffi_type *args = (ffi_type*) SERIES_DATA(VAL_ROUTINE_ARGS(out));
+	ffi_type *args = (ffi_type*) SERIES_DATA(VAL_ROUTINE_FFI_ARGS(out));
 	REBSER *fields = VAL_STRUCT_FIELDS(elem);
-	REBSER *extra_mem = VAL_ROUTINE_EXTRA_MEM(out);
 	REBCNT i = 0, j = 0;
 	REBCNT n_basic_type = 0;
 
 	ffi_type *stype = OS_MAKE(sizeof(ffi_type));
 	printf("allocated stype at: %p\n", stype);
-	*(void**) SERIES_SKIP(extra_mem, SERIES_TAIL(extra_mem)) = stype;
-	EXPAND_SERIES_TAIL(extra_mem, 1);
+	QUEUE_EXTRA_MEM(VAL_ROUTINE_INFO(out), stype);
 
 	stype->size = stype->alignment = 0;
 	stype->type = FFI_TYPE_STRUCT;
 
 	stype->elements = OS_MAKE(sizeof(ffi_type *) * (1 + n_struct_fields(VAL_STRUCT_FIELDS(elem)))); /* one extra for NULL */
-	*(void**) SERIES_SKIP(extra_mem, SERIES_TAIL(extra_mem)) = stype->elements;
 	printf("allocated stype elements at: %p\n", stype->elements);
-	EXPAND_SERIES_TAIL(extra_mem, 1);
+	QUEUE_EXTRA_MEM(VAL_ROUTINE_INFO(out), stype->elements);
 
 	for (i = 0; i < SERIES_TAIL(fields); i ++) {
 		struct Struct_Field *field = (struct Struct_Field*)SERIES_SKIP(fields, i);
@@ -129,7 +133,7 @@ static ffi_type* struct_to_ffi(REBVAL *out, REBVAL *elem)
  */
 static REBOOL rebol_type_to_ffi(REBVAL *out, REBVAL *elem, REBCNT idx)
 {
-	ffi_type **args = (ffi_type**) SERIES_DATA(VAL_ROUTINE_ARGS(out));
+	ffi_type **args = (ffi_type**) SERIES_DATA(VAL_ROUTINE_FFI_ARGS(out));
 	if (IS_WORD(elem)) {
 		switch (VAL_WORD_CANON(elem)) {
 			case SYM_UINT8:
@@ -181,6 +185,176 @@ static REBOOL rebol_type_to_ffi(REBVAL *out, REBVAL *elem, REBCNT idx)
 	return TRUE;
 }
 
+/* make a copy of the argument 
+ * arg referes to return value when idx = 0
+ * function args start from idx = 1
+ * */
+static void *arg_to_ffi(REBRIN *rin, REBVAL *arg, REBCNT idx)
+{
+	ffi_type **args = (ffi_type**)SERIES_DATA(rin->args);
+	switch (args[idx]->type) {
+		case FFI_TYPE_UINT8:
+		case FFI_TYPE_SINT8:
+		case FFI_TYPE_UINT16:
+		case FFI_TYPE_SINT16:
+		case FFI_TYPE_UINT32:
+		case FFI_TYPE_SINT32:
+		case FFI_TYPE_UINT64:
+		case FFI_TYPE_SINT64:
+			if (!IS_INTEGER(arg)) {
+				Trap_Arg(arg);
+			}
+			return &VAL_INT64(arg);
+		case FFI_TYPE_POINTER:
+			switch (VAL_TYPE(arg)) {
+				case REB_INTEGER:
+					return &VAL_INT64(arg);
+				case REB_STRING:
+				case REB_BINARY:
+				case REB_VECTOR:
+					{
+						void **p = OS_MAKE(sizeof(void*));
+						p[0] = VAL_DATA(arg);
+
+						QUEUE_EXTRA_MEM(rin, p);
+						return p;
+					}
+				defaut:
+					Trap_Arg(arg);
+			}
+		case FFI_TYPE_FLOAT:
+		case FFI_TYPE_DOUBLE:
+			if (!IS_DECIMAL(arg)) {
+				Trap_Arg(arg);
+			}
+			return &VAL_DECIMAL(arg);
+		case FFI_TYPE_STRUCT:
+			if (IS_STRUCT(arg)) {
+				/* make a copy of old binary data, such that the original one won't be modified */
+				VAL_STRUCT_DATA_BIN(arg) = Copy_Series(VAL_STRUCT_DATA_BIN(arg));
+				return SERIES_SKIP(VAL_STRUCT_DATA_BIN(arg), VAL_STRUCT_OFFSET(arg));
+			} else {
+				Trap_Arg(arg);
+			}
+		case FFI_TYPE_VOID:
+			if (!idx) {
+				return NULL;
+			} else {
+				Trap_Arg(arg);
+			}
+		default:
+			Trap_Arg(arg);
+	}
+	return NULL;
+}
+
+static void prep_rvalue(REBRIN *rin,
+						REBVAL *val)
+{
+	ffi_type * rtype = *(ffi_type**) SERIES_DATA(rin->args);
+	switch (rtype->type) {
+		case FFI_TYPE_UINT8:
+		case FFI_TYPE_SINT8:
+		case FFI_TYPE_UINT16:
+		case FFI_TYPE_SINT16:
+		case FFI_TYPE_UINT32:
+		case FFI_TYPE_SINT32:
+		case FFI_TYPE_UINT64:
+		case FFI_TYPE_SINT64:
+		case FFI_TYPE_POINTER:
+			SET_INTEGER(val, 0);
+			break;
+		case FFI_TYPE_FLOAT:
+		case FFI_TYPE_DOUBLE:
+			SET_DECIMAL(val, 0);
+			break;
+		case FFI_TYPE_STRUCT:
+			SET_TYPE(val, REB_STRUCT);
+			
+			/* a shadow copy is enough, because arg_to_ffi will make another copy of data */
+			rin->rvalue = VAL_STRUCT(val);
+			break;
+		case FFI_TYPE_VOID:
+			break;
+		default:
+			Trap_Arg(val);
+	}
+}
+
+/* convert the return value to rebol
+ */
+static void ffi_to_rebol(REBRIN *rin,
+						 ffi_type *ffi_rtype,
+						 void *ffi_rvalue,
+						 REBVAL *rebol_ret)
+{
+	switch (ffi_rtype->type) {
+		case FFI_TYPE_UINT8:
+			SET_INTEGER(rebol_ret, *(u8*)ffi_rvalue);
+			break;
+		case FFI_TYPE_SINT8:
+			SET_INTEGER(rebol_ret, *(i8*)ffi_rvalue);
+			break;
+		case FFI_TYPE_UINT16:
+			SET_INTEGER(rebol_ret, *(u16*)ffi_rvalue);
+			break;
+		case FFI_TYPE_SINT16:
+			SET_INTEGER(rebol_ret, *(i16*)ffi_rvalue);
+			break;
+		case FFI_TYPE_UINT32:
+			SET_INTEGER(rebol_ret, *(u32*)ffi_rvalue);
+			break;
+		case FFI_TYPE_SINT32:
+			SET_INTEGER(rebol_ret, *(i32*)ffi_rvalue);
+			break;
+		case FFI_TYPE_UINT64:
+			SET_INTEGER(rebol_ret, *(u64*)ffi_rvalue);
+			break;
+		case FFI_TYPE_SINT64:
+			SET_INTEGER(rebol_ret, *(i64*)ffi_rvalue);
+			break;
+		case FFI_TYPE_POINTER:
+			SET_INTEGER(rebol_ret, (REBUPT)*(void**)ffi_rvalue);
+			break;
+		case FFI_TYPE_FLOAT:
+			SET_DECIMAL(rebol_ret, *(float*)ffi_rvalue);
+			break;
+		case FFI_TYPE_DOUBLE:
+			SET_DECIMAL(rebol_ret, *(double*)ffi_rvalue);
+			break;
+		case FFI_TYPE_STRUCT:
+			break;
+		case FFI_TYPE_VOID:
+			break;
+		default:
+			Trap_Arg(rebol_ret);
+	}
+}
+
+/***********************************************************************
+**
+*/	void Call_Routine(REBVAL *rot, REBSER *args, REBVAL *ret)
+/*
+***********************************************************************/
+{
+	REBCNT i = 0;
+	void *rvalue = NULL;
+	void ** ffi_args = OS_MAKE(SERIES_TAIL(VAL_ROUTINE_FFI_ARGS(rot)) - 1);
+
+	QUEUE_EXTRA_MEM(VAL_ROUTINE_INFO(rot), ffi_args);
+
+	for (i = 1; i < SERIES_TAIL(VAL_ROUTINE_FFI_ARGS(rot)); i ++) {
+		ffi_args[i - 1] = arg_to_ffi(VAL_ROUTINE_INFO(rot), BLK_SKIP(args, i - 1), i);
+	}
+	prep_rvalue(VAL_ROUTINE_INFO(rot), ret);
+	rvalue = arg_to_ffi(VAL_ROUTINE_INFO(rot), ret, 0);
+	ffi_call(VAL_ROUTINE_CIF(rot),
+			 (void (*) (void))VAL_ROUTINE_FUNCPTR(rot),
+			 rvalue,
+			 ffi_args);
+	ffi_to_rebol(VAL_ROUTINE_INFO(rot), ((ffi_type**)SERIES_DATA(VAL_ROUTINE_FFI_ARGS(rot)))[0], rvalue, ret);
+}
+
 /***********************************************************************
 **
 */	void Free_Routine(REBRIN *rin)
@@ -229,16 +403,23 @@ static REBOOL rebol_type_to_ffi(REBVAL *out, REBVAL *elem, REBCNT idx)
 	VAL_ROUTINE_INFO(out) = Make_Node(RIN_POOL);
 	USE_ROUTINE(VAL_ROUTINE_INFO(out));
 
+#define N_ARGS 8
+
 	VAL_ROUTINE_SPEC(out) = Copy_Series(VAL_SERIES(data));
-	VAL_ROUTINE_ARGS(out) = Make_Series(8, sizeof(ffi_type*), FALSE);
+	VAL_ROUTINE_FFI_ARGS(out) = Make_Series(N_ARGS, sizeof(ffi_type*), FALSE);
+	VAL_ROUTINE_ARGS(out) = Make_Block(N_ARGS);
+	Append_Value(VAL_ROUTINE_ARGS(out)); //FIXME: why?
+
 	VAL_ROUTINE_ABI(out) = FFI_DEFAULT_ABI;
 	VAL_ROUTINE_LIB(out) = NULL;
 
-	extra_mem = Make_Series(8, sizeof(void*), FALSE);
+	CLEAR(&VAL_ROUTINE_RVALUE(out), sizeof(REBSTU));
+
+	extra_mem = Make_Series(N_ARGS, sizeof(void*), FALSE);
 	VAL_ROUTINE_EXTRA_MEM(out) = extra_mem;
 
-	args = (ffi_type**)SERIES_DATA(VAL_ROUTINE_ARGS(out));
-	EXPAND_SERIES_TAIL(VAL_ROUTINE_ARGS(out), 1); //reserved for return type
+	args = (ffi_type**)SERIES_DATA(VAL_ROUTINE_FFI_ARGS(out));
+	EXPAND_SERIES_TAIL(VAL_ROUTINE_FFI_ARGS(out), 1); //reserved for return type
 	args[0] = &ffi_type_void;
 
 	init_type_map();
@@ -320,6 +501,9 @@ static REBOOL rebol_type_to_ffi(REBVAL *out, REBVAL *elem, REBCNT idx)
 						if (!rebol_type_to_ffi(out, val, 0)) {
 							Trap_Arg(val);
 						}
+						if (IS_STRUCT(val)) {
+							Copy_Struct(&VAL_STRUCT(val), &VAL_ROUTINE_RVALUE(out));
+						}
 					}
 					break;
 			   default:
@@ -331,9 +515,36 @@ static REBOOL rebol_type_to_ffi(REBVAL *out, REBVAL *elem, REBCNT idx)
 			//val = DS_POP;
 			for (n = 0; n < VAL_LEN(blk); n ++) {
 				REBVAL *elem = VAL_BLK_SKIP(blk, n);
-				EXPAND_SERIES_TAIL(VAL_ROUTINE_ARGS(out), 1);
+				REBVAL *arg = Append_Value(VAL_ROUTINE_ARGS(out));
+				EXPAND_SERIES_TAIL(VAL_ROUTINE_FFI_ARGS(out), 1);
 				if (!rebol_type_to_ffi(out, elem, n + 1)) {
 					Trap_Arg(elem);
+				}
+				Init_Word(arg, 0);
+
+				switch(args[n + 1]->type) {
+					case FFI_TYPE_FLOAT:
+					case FFI_TYPE_DOUBLE:
+						TYPE_SET(arg, REB_DECIMAL);
+						break;
+					case FFI_TYPE_UINT8:
+					case FFI_TYPE_SINT8:
+					case FFI_TYPE_UINT16:
+					case FFI_TYPE_SINT16:
+					case FFI_TYPE_UINT32:
+					case FFI_TYPE_SINT32:
+					case FFI_TYPE_UINT64:
+					case FFI_TYPE_SINT64:
+						TYPE_SET(arg, REB_INTEGER);
+						break;
+					case FFI_TYPE_POINTER:
+						TYPE_SET(arg, REB_INTEGER);
+						TYPE_SET(arg, REB_STRING);
+						TYPE_SET(arg, REB_BINARY);
+						TYPE_SET(arg, REB_VECTOR);
+						break;
+					default:
+						TYPE_SET(arg, REB_STRUCT);
 				}
 			}
 			++ blk;
@@ -347,20 +558,20 @@ static REBOOL rebol_type_to_ffi(REBVAL *out, REBVAL *elem, REBCNT idx)
 		ret = FALSE;
 	}
 	TERM_SERIES(VAL_SERIES(name));
-	FUNCPTR func = OS_FIND_FUNCTION(LIB_FD(VAL_ROUTINE_LIB(out)), VAL_DATA(name));
+	CFUNC func = OS_FIND_FUNCTION(LIB_FD(VAL_ROUTINE_LIB(out)), VAL_DATA(name));
 	if (!func) {
 		RL_Print("Couldn't find function\n");
 		ret = FALSE;
 	} else {
+		VAL_ROUTINE_FUNCPTR(out) = func;
 
 		VAL_ROUTINE_CIF(out) = OS_MAKE(sizeof(ffi_cif));
 		printf("allocated cif at: %p\n", VAL_ROUTINE_CIF(out));
-		*(void**) SERIES_SKIP(extra_mem, SERIES_TAIL(extra_mem)) = VAL_ROUTINE_CIF(out);
-		EXPAND_SERIES_TAIL(extra_mem, 1);
+		QUEUE_EXTRA_MEM(VAL_ROUTINE_INFO(out), VAL_ROUTINE_CIF(out));
 
 		if (FFI_OK != ffi_prep_cif((ffi_cif*)VAL_ROUTINE_CIF(out),
 								   VAL_ROUTINE_ABI(out),
-								   SERIES_TAIL(VAL_ROUTINE_ARGS(out)) - 1,
+								   SERIES_TAIL(VAL_ROUTINE_FFI_ARGS(out)) - 1,
 								   args[0],
 								   &args[1])) {
 			RL_Print("Couldn't prep CIF\n");

@@ -1002,6 +1002,24 @@ enum {
 #define IS_USED_LIB(s) LIB_GET_FLAG(s, LIB_USED)
 
 
+/***********************************************************************
+**
+**	STRUCT -- C Structures
+**
+***********************************************************************/
+
+typedef struct Reb_Struct {
+	REBSER	*spec;
+	REBSER	*fields;	// fields definition
+	REBSER	*data;
+} REBSTU;
+
+#define VAL_STRUCT(v)       ((v)->data.structure)
+#define VAL_STRUCT_SPEC(v)  ((v)->data.structure.spec)
+#define VAL_STRUCT_FIELDS(v)  ((v)->data.structure.fields)
+#define VAL_STRUCT_DATA(v)  ((v)->data.structure.data)
+#define VAL_STRUCT_DP(v)    (STR_HEAD(VAL_STRUCT_DATA(v)))
+
 
 /***********************************************************************
 **
@@ -1009,8 +1027,9 @@ enum {
 **
 ***********************************************************************/
 typedef struct Reb_Routine_Info {
+	REBSTU	rvalue; /* for returning a struct */
 	REBLHL	*lib;
-	FUNCPTR funcptr;
+	CFUNC funcptr;
 	void	*cif;
 	REBSER  *args;
 	REBSER	*extra_mem; /* extra memory that needs to be free'ed */
@@ -1019,8 +1038,11 @@ typedef struct Reb_Routine_Info {
 } REBRIN;
 
 typedef struct Reb_Routine {
+/* these two fields have to align with Reb_Function, or Do_Args will not work */
+	REBSER  *spec;
+	REBSER	*args;
+
 	REBRIN  *info; // a series of length 1, the elemet is of type REBRIN
-	REBSER  *spec; // struct-ptr
 } REBROT;
 
 enum {
@@ -1031,12 +1053,14 @@ enum {
 #define VAL_ROUTINE(v)          	((v)->data.routine)
 #define VAL_ROUTINE_SPEC(v) 		((v)->data.routine.spec)
 #define VAL_ROUTINE_INFO(v) 		((v)->data.routine.info)
+#define VAL_ROUTINE_ARGS(v) 		((v)->data.routine.args)
 #define VAL_ROUTINE_FUNCPTR(v)  	(VAL_ROUTINE_INFO(v)->funcptr)
 #define VAL_ROUTINE_LIB(v)  		(VAL_ROUTINE_INFO(v)->lib)
 #define VAL_ROUTINE_ABI(v)  		(VAL_ROUTINE_INFO(v)->abi)
-#define VAL_ROUTINE_ARGS(v)  		(VAL_ROUTINE_INFO(v)->args)
+#define VAL_ROUTINE_FFI_ARGS(v)  	(VAL_ROUTINE_INFO(v)->args)
 #define VAL_ROUTINE_EXTRA_MEM(v) 	(VAL_ROUTINE_INFO(v)->extra_mem)
 #define VAL_ROUTINE_CIF(v) 			(VAL_ROUTINE_INFO(v)->cif)
+#define VAL_ROUTINE_RVALUE(v) 		(VAL_ROUTINE_INFO(v)->rvalue)
 
 #define ROUTINE_FLAGS(s)	   ((s)->flags) 
 #define ROUTINE_SET_FLAG(s, f) (ROUTINE_FLAGS(s) |= (f))
@@ -1066,24 +1090,6 @@ typedef struct Reb_Typeset {
 //#define TYPE_CHECK(v,n) ((VAL_TYPESET(v)[(n)/32] & (1 << ((n)%32))) != 0)
 //#define TYPE_SET(v,n)   (VAL_TYPESET(v)[(n)/32] |= (1 << ((n)%32)))
 //#define EQUAL_TYPESET(v,n) (VAL_TYPESET(v)[0] == VAL_TYPESET(n)[0] && VAL_TYPESET(v)[1] == VAL_TYPESET(n)[1])
-
-/***********************************************************************
-**
-**	STRUCT -- C Structures
-**
-***********************************************************************/
-
-typedef struct Reb_Struct {
-	REBSER	*spec;
-	REBSER	*fields;	// fields definition
-	REBSER	*data;
-} REBSTU;
-
-#define VAL_STRUCT(v)       ((v)->data.structure)
-#define VAL_STRUCT_SPEC(v)  ((v)->data.structure.spec)
-#define VAL_STRUCT_FIELDS(v)  ((v)->data.structure.fields)
-#define VAL_STRUCT_DATA(v)  ((v)->data.structure.data)
-#define VAL_STRUCT_DP(v)    (STR_HEAD(VAL_STRUCT_DATA(v)))
 
 /***********************************************************************
 **

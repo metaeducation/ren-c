@@ -185,6 +185,10 @@ static void Mark_Series(REBSER *series, REBCNT depth);
 	MARK_LIB(rot->info->lib);
 	CHECK_MARK(rot->info->args, depth);
 	CHECK_MARK(rot->info->extra_mem, depth);
+
+	if (rot->info->rvalue.spec) {
+		Mark_Struct(&rot->info->rvalue, depth);
+	}
 }
 
 /***********************************************************************
@@ -431,6 +435,8 @@ mark_obj:
 
 		case REB_ROUTINE:
 			RL_Print("GCing a routine\n");
+			CHECK_MARK(VAL_ROUTINE_SPEC(val), depth);
+			CHECK_MARK(VAL_ROUTINE_ARGS(val), depth);
 			Mark_Routine(&VAL_ROUTINE(val), depth);
 #if 0
 		  // Deal with the co-joined struct value...
