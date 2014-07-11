@@ -906,6 +906,8 @@ typedef int  (*CMD_FUNC)(REBCNT n, REBSER *args);
 #define REBTYPE(n)   int T_##n(REBVAL *ds, REBCNT action)
 #define REBPACT(n)   int P_##n(REBVAL *ds)
 
+typedef struct Reb_Routine_Info REBRIN;
+
 typedef struct Reb_Function {
 	REBSER	*spec;	// Spec block for function
 	REBSER	*args;	// Block of Wordspecs (with typesets)
@@ -913,9 +915,23 @@ typedef struct Reb_Function {
 		REBFUN	code;
 		REBSER	*body;
 		REBCNT	act;
+		REBRIN	*info;
 	} func;
 } REBFCN;
 
+/* argument is of type REBFCN* */
+#define FUNC_SPEC(v)	  ((v)->spec)	// a series
+#define FUNC_SPEC_BLK(v)  BLK_HEAD((v)->spec)
+#define FUNC_ARGS(v)	  ((v)->args)
+#define FUNC_WORDS(v)     FUNC_ARGS(v)
+#define FUNC_CODE(v)	  ((v)->func.code)
+#define FUNC_BODY(v)	  ((v)->func.body)
+#define FUNC_ACT(v)       ((v)->func.act)
+#define FUNC_INFO(v)      ((v)->func.info)
+#define FUNC_ARGC(v)	  SERIES_TAIL((v)->args)
+
+/* argument is of type REBVAL* */
+#define VAL_FUNC(v)			  ((v)->data.func)
 #define VAL_FUNC_SPEC(v)	  ((v)->data.func.spec)	// a series
 #define VAL_FUNC_SPEC_BLK(v)  BLK_HEAD((v)->data.func.spec)
 #define VAL_FUNC_ARGS(v)	  ((v)->data.func.args)
@@ -923,6 +939,7 @@ typedef struct Reb_Function {
 #define VAL_FUNC_CODE(v)	  ((v)->data.func.func.code)
 #define VAL_FUNC_BODY(v)	  ((v)->data.func.func.body)
 #define VAL_FUNC_ACT(v)       ((v)->data.func.func.act)
+#define VAL_FUNC_INFO(v)      ((v)->data.func.func.info)
 #define VAL_FUNC_ARGC(v)	  SERIES_TAIL((v)->data.func.args)
 
 typedef struct Reb_Path_Value {
@@ -1026,7 +1043,7 @@ typedef struct Reb_Struct {
 **	ROUTINE -- External library routine structures
 **
 ***********************************************************************/
-typedef struct Reb_Routine_Info {
+struct Reb_Routine_Info {
 	REBSTU	rvalue; /* for returning a struct */
 	REBLHL	*lib;
 	CFUNC funcptr;
@@ -1035,25 +1052,29 @@ typedef struct Reb_Routine_Info {
 	REBSER	*extra_mem; /* extra memory that needs to be free'ed */
 	REBINT	abi;
 	REBFLG	flags;
-} REBRIN;
+};
 
-typedef struct Reb_Routine {
-/* these two fields have to align with Reb_Function, or Do_Args will not work */
-	REBSER  *spec;
-	REBSER	*args;
-
-	REBRIN  *info; // a series of length 1, the elemet is of type REBRIN
-} REBROT;
+typedef struct Reb_Function REBROT;
 
 enum {
 	ROUTINE_MARK = 1,		// library was found during GC mark scan.
 	ROUTINE_USED = 1 << 1,
 };
 
-#define VAL_ROUTINE(v)          	((v)->data.routine)
-#define VAL_ROUTINE_SPEC(v) 		((v)->data.routine.spec)
-#define VAL_ROUTINE_INFO(v) 		((v)->data.routine.info)
-#define VAL_ROUTINE_ARGS(v) 		((v)->data.routine.args)
+#define ROUTINE_SPEC(v)				FUNC_SPEC(v)
+#define ROUTINE_INFO(v)				FUNC_INFO(v)
+#define ROUTINE_ARGS(v)				FUNC_ARGS(v)
+#define ROUTINE_LIB(v)				(ROUTINE_INFO(v)->lib)
+#define ROUTINE_ABI(v)  			(ROUTINE_INFO(v)->abi)
+#define ROUTINE_FFI_ARGS(v)  		(ROUTINE_INFO(v)->args)
+#define ROUTINE_EXTRA_MEM(v) 		(ROUTINE_INFO(v)->extra_mem)
+#define ROUTINE_CIF(v) 				(ROUTINE_INFO(v)->cif)
+#define ROUTINE_RVALUE(v) 			(ROUTINE_INFO(v)->rvalue)
+
+#define VAL_ROUTINE(v)          	VAL_FUNC(v)
+#define VAL_ROUTINE_SPEC(v) 		VAL_FUNC_SPEC(v)
+#define VAL_ROUTINE_INFO(v) 		VAL_FUNC_INFO(v)
+#define VAL_ROUTINE_ARGS(v) 		VAL_FUNC_ARGS(v)
 #define VAL_ROUTINE_FUNCPTR(v)  	(VAL_ROUTINE_INFO(v)->funcptr)
 #define VAL_ROUTINE_LIB(v)  		(VAL_ROUTINE_INFO(v)->lib)
 #define VAL_ROUTINE_ABI(v)  		(VAL_ROUTINE_INFO(v)->abi)
@@ -1143,7 +1164,6 @@ typedef struct Reb_All {
 		REBXYF	pair;
 		REBEVT	event;
 		REBLIB  library;
-		REBROT  routine;
 		REBSTU  structure;
 		REBGBO	gob;
 		REBUDT  utype;

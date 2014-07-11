@@ -179,15 +179,15 @@ static void Mark_Series(REBSER *series, REBCNT depth);
 {
 	int len = 0;
 	REBSER *series = NULL;
-	CHECK_MARK(rot->spec, depth);
-	MARK_ROUTINE(rot->info);
+	CHECK_MARK(ROUTINE_SPEC(rot), depth);
+	MARK_ROUTINE(ROUTINE_INFO(rot));
 
-	MARK_LIB(rot->info->lib);
-	CHECK_MARK(rot->info->args, depth);
-	CHECK_MARK(rot->info->extra_mem, depth);
+	MARK_LIB(ROUTINE_LIB(rot));
+	CHECK_MARK(ROUTINE_FFI_ARGS(rot), depth);
+	CHECK_MARK(ROUTINE_EXTRA_MEM(rot), depth);
 
-	if (rot->info->rvalue.spec) {
-		Mark_Struct(&rot->info->rvalue, depth);
+	if (ROUTINE_RVALUE(rot).spec) {
+		Mark_Struct(&ROUTINE_RVALUE(rot), depth);
 	}
 }
 
