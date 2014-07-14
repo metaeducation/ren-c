@@ -82,10 +82,9 @@ static REBCNT n_struct_fields (REBSER *fields)
 	return n_fields;
 }
 
-static ffi_type* struct_to_ffi(REBVAL *out, REBVAL *elem)
+static ffi_type* struct_to_ffi(REBVAL *out, REBSER *fields)
 {
 	ffi_type *args = (ffi_type*) SERIES_DATA(VAL_ROUTINE_FFI_ARGS(out));
-	REBSER *fields = VAL_STRUCT_FIELDS(elem);
 	REBCNT i = 0, j = 0;
 	REBCNT n_basic_type = 0;
 
@@ -96,7 +95,7 @@ static ffi_type* struct_to_ffi(REBVAL *out, REBVAL *elem)
 	stype->size = stype->alignment = 0;
 	stype->type = FFI_TYPE_STRUCT;
 
-	stype->elements = OS_MAKE(sizeof(ffi_type *) * (1 + n_struct_fields(VAL_STRUCT_FIELDS(elem)))); /* one extra for NULL */
+	stype->elements = OS_MAKE(sizeof(ffi_type *) * (1 + n_struct_fields(fields))); /* one extra for NULL */
 	printf("allocated stype elements at: %p\n", stype->elements);
 	QUEUE_EXTRA_MEM(VAL_ROUTINE_INFO(out), stype->elements);
 
@@ -112,7 +111,7 @@ static ffi_type* struct_to_ffi(REBVAL *out, REBVAL *elem)
 				return NULL;
 			}
 		} else {
-			ffi_type *subtype = struct_to_ffi(out, elem);
+			ffi_type *subtype = struct_to_ffi(out, field->fields);
 			if (subtype) {
 				REBINT n = 0;
 				for (n = 0; n < field->dimension; n ++) {
@@ -189,7 +188,7 @@ static REBOOL rebol_type_to_ffi(REBVAL *out, REBVAL *elem, REBCNT idx)
 				return FALSE;
 		}
 	} else if (IS_STRUCT(elem)) {
-		ffi_type *ftype = struct_to_ffi(out, elem);
+		ffi_type *ftype = struct_to_ffi(out, VAL_STRUCT_FIELDS(elem));
 		if (ftype) {
 			args[idx] = ftype;
 			if (idx) {
@@ -313,13 +312,17 @@ static void *arg_to_ffi(REBRIN *rin, REBVAL *arg, REBCNT idx, REBINT *pop)
 			}
 			return &VAL_DECIMAL(arg);
 		case FFI_TYPE_STRUCT:
-			if (IS_STRUCT(arg)) {
-				/* make a copy of old binary data, such that the original one won't be modified */
-				VAL_STRUCT_DATA_BIN(arg) = Copy_Series(VAL_STRUCT_DATA_BIN(arg));
-				return SERIES_SKIP(VAL_STRUCT_DATA_BIN(arg), VAL_STRUCT_OFFSET(arg));
+			/* make a copy of old binary data, such that the original one won't be modified */
+			if (idx == 0) {/* returning a struct */
+				Copy_Struct(&rin->rvalue, &VAL_STRUCT(arg));
 			} else {
-				Trap_Arg(arg);
+				if (IS_STRUCT(arg)) {
+					VAL_STRUCT_DATA_BIN(arg) = Copy_Series(VAL_STRUCT_DATA_BIN(arg));
+				} else {
+					Trap_Arg(arg);
+				}
 			}
+			return SERIES_SKIP(VAL_STRUCT_DATA_BIN(arg), VAL_STRUCT_OFFSET(arg));
 		case FFI_TYPE_VOID:
 			if (!idx) {
 				return NULL;
@@ -354,9 +357,6 @@ static void prep_rvalue(REBRIN *rin,
 			break;
 		case FFI_TYPE_STRUCT:
 			SET_TYPE(val, REB_STRUCT);
-			
-			/* a shadow copy is enough, because arg_to_ffi will make another copy of data */
-			rin->rvalue = VAL_STRUCT(val);
 			break;
 		case FFI_TYPE_VOID:
 			break;
@@ -468,7 +468,8 @@ static void process_type_block(REBVAL *out, REBVAL *blk, REBCNT n)
 {
 	if (IS_BLOCK(blk)) {
 		REBVAL *t = VAL_BLK_DATA(blk);
-		if (VAL_WORD_CANON(t) == SYM_STRUCT_TYPE) {
+		if (IS_WORD(t)
+			&& VAL_WORD_CANON(t) == SYM_STRUCT_TYPE) {
 			/* followed by struct definition */
 			++ t;
 			if (!IS_BLOCK(t) || VAL_LEN(blk) != 2) {
