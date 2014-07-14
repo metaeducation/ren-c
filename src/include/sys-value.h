@@ -1046,7 +1046,7 @@ typedef struct Reb_Struct {
 struct Reb_Routine_Info {
 	REBSTU	rvalue; /* for returning a struct */
 	REBLHL	*lib;
-	CFUNC funcptr;
+	void (*funcptr) (void);
 	void	*cif;
 	REBSER  *args;
 	REBSER	*extra_mem; /* extra memory that needs to be free'ed */
