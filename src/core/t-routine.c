@@ -32,11 +32,10 @@
 
 #include <ffi.h>
 
-static void QUEUE_EXTRA_MEM(REBRIN *v, void *p)
-{
-	*(void**) SERIES_SKIP(v->extra_mem, SERIES_TAIL(v->extra_mem)) = p;
-	EXPAND_SERIES_TAIL(v->extra_mem, 1);
-}
+#define QUEUE_EXTRA_MEM(v, p) do {\
+	*(void**) SERIES_SKIP(v->extra_mem, SERIES_TAIL(v->extra_mem)) = p;\
+	EXPAND_SERIES_TAIL(v->extra_mem, 1);\
+} while (0)
 
 static ffi_type * struct_type_to_ffi [STRUCT_TYPE_MAX];
 
