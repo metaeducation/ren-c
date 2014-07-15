@@ -171,12 +171,17 @@ static get_scalar(REBSTU *stu,
 
 		/* required type */
 		if (field->type == STRUCT_TYPE_STRUCT) {
-			REBVAL nested;
+			REBVAL *nested = NULL;
+			DS_PUSH_NONE;
+			nested = DS_TOP;
+
 			Init_Word(val, SYM_STRUCT_TYPE);
 			val = Append_Value(ser);
-			get_scalar(stu, field, 0, &nested);
+			get_scalar(stu, field, 0, nested);
 			SET_TYPE(val, REB_BLOCK);
-			VAL_SERIES(val) = Struct_To_Block(&VAL_STRUCT(&nested));
+			VAL_SERIES(val) = Struct_To_Block(&VAL_STRUCT(nested));
+
+			DS_POP;
 		} else {
 			REBINT sym = type_to_sym[field->type];
 			Init_Word(val, sym);
