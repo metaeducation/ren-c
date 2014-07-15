@@ -713,6 +713,22 @@ static void process_type_block(REBVAL *out, REBVAL *blk, REBCNT n)
 				Trap_Types(RE_EXPECT_VAL, REB_BLOCK, VAL_TYPE(arg));
 			}
 			break;
+		case A_REFLECT:
+			{
+				REBINT n = VAL_WORD_CANON(arg); // zero on error
+				switch (n) {
+					case SYM_SPEC:
+						Set_Block(ret, Clone_Block(VAL_ROUTINE_SPEC(val)));
+						Unbind_Block(VAL_BLK(val), TRUE);
+						break;
+					case SYM_ADDR:
+						SET_INTEGER(ret, (REBUPT)VAL_ROUTINE_FUNCPTR(val));
+						break;
+					default:
+						Trap_Reflect(REB_STRUCT, arg);
+				}
+			}
+			break;
 		default:
 			Trap_Action(REB_ROUTINE, action);
 	}
