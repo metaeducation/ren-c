@@ -190,11 +190,13 @@ static get_scalar(REBSTU *stu,
 		/* optional dimension */
 		if (field->dimension > 1) {
 			REBSER *dim = Make_Block(1);
-			REBVAL *dv = Append_Value(dim);
-			SET_INTEGER(dv, field->dimension);
+			REBVAL *dv = NULL;
 			val = Append_Value(ser);
 			SET_TYPE(val, REB_BLOCK);
 			VAL_SERIES(val) = dim;
+
+			dv = Append_Value(dim);
+			SET_INTEGER(dv, field->dimension);
 		}
 
 		/* required field name */
@@ -206,13 +208,13 @@ static get_scalar(REBSTU *stu,
 		if (field->dimension > 1) {
 			REBSER *dim = Make_Block(1);
 			REBINT n = 0;
+			val = Append_Value(ser);
+			SET_TYPE(val, REB_BLOCK);
+			VAL_SERIES(val) = dim;
 			for (n = 0; n < field->dimension; n ++) {
 				REBVAL *dv = Append_Value(dim);
 				get_scalar(stu, field, n, dv);
 			}
-			val = Append_Value(ser);
-			SET_TYPE(val, REB_BLOCK);
-			VAL_SERIES(val) = dim;
 		} else {
 			val = Append_Value(ser);
 			get_scalar(stu, field, 0, val);
