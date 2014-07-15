@@ -272,7 +272,7 @@ static REBOOL assign_scalar(REBSTU *stu,
 			break;
 		case REB_INTEGER:
 			if (!IS_NUMERIC_TYPE(field->type)
-				|| field->type == STRUCT_TYPE_POINTER) {
+				&& field->type != STRUCT_TYPE_POINTER) {
 				Trap_Type(val);
 			}
 			i = (u64) VAL_INT64(val);
