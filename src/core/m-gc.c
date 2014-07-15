@@ -434,29 +434,13 @@ mark_obj:
 			break;
 
 		case REB_ROUTINE:
-			RL_Print("GCing a routine\n");
 			CHECK_MARK(VAL_ROUTINE_SPEC(val), depth);
 			CHECK_MARK(VAL_ROUTINE_ARGS(val), depth);
 			Mark_Routine(&VAL_ROUTINE(val), depth);
-#if 0
-		  // Deal with the co-joined struct value...
-			CHECK_MARK(VAL_STRUCT_SPEC(VAL_ROUTINE_SPEC(val)), depth);
-			CHECK_MARK(VAL_STRUCT_VALS(VAL_ROUTINE_SPEC(val)), depth);
-			MARK_SERIES(VAL_STRUCT_DATA(VAL_ROUTINE_SPEC(val)));
-			MARK_SERIES(VAL_ROUTINE_SPEC_SER(val));
-//!!!			if (Current_Closing_Library && VAL_ROUTINE_ID(val) == Current_Closing_Library)
-				VAL_ROUTINE_ID(val) = 0; // Invalidate the routine
-#endif
 			break;
 
 		case REB_LIBRARY:
-			RL_Print("GCing a library\n");
 			MARK_LIB(VAL_LIB_HANDLE(val));
-#if 0
-			MARK_SERIES(VAL_LIBRARY_NAME(val));
-//!!!			if (Current_Closing_Library && VAL_LIBRARY_ID(val) == Current_Closing_Library)
-				VAL_LIBRARY_ID(val) = 0; // Invalidate the library
-#endif
 			break;
 
 		case REB_STRUCT:
@@ -702,7 +686,7 @@ mark_obj:
 	// Mark all devices:
 	Mark_Devices(0);
 	
-	count = Sweep_Routines(); // this needs to run before Sweep_Series(), because Free_Routine has series with pointers, which can't be simply discarded by Sweep_Series
+	count = Sweep_Routines(); // this needs to run before Sweep_Series(), because Routine has series with pointers, which can't be simply discarded by Sweep_Series
 
 	count += Sweep_Series();
 	count += Sweep_Gobs();
