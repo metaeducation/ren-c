@@ -402,6 +402,8 @@ static REBOOL assign_scalar(REBSTU *stu,
 
 		VAL_STRUCT_SPEC(out) = Copy_Series(VAL_SERIES(data));
 		VAL_STRUCT_DATA(out) = Make_Series(1, sizeof(struct Struct_Data), FALSE);
+		EXPAND_SERIES_TAIL(VAL_STRUCT_DATA(out), 1);
+
 		VAL_STRUCT_DATA_BIN(out) = Make_Series(max_fields << 2, 1, FALSE);
 		BARE_SERIES(VAL_STRUCT_DATA(out));
 		BARE_SERIES(VAL_STRUCT_DATA_BIN(out));
