@@ -577,29 +577,29 @@ static void callback_dispatcher(ffi_cif *cif, void *ret, void **args, void *user
 		case FFI_TYPE_VOID:
 			break;
 		case FFI_TYPE_UINT8:
-			*((u8*)args[i]) = (u8)VAL_INT64(elem);
+			*((u8*)ret) = (u8)VAL_INT64(elem);
 			break;
 		case FFI_TYPE_SINT8:
-			*((i8*)args[i]) = (i8)VAL_INT64(elem);
+			*((i8*)ret) = (i8)VAL_INT64(elem);
 			break;
 		case FFI_TYPE_UINT16:
-			*((u16*)args[i]) = (u16)VAL_INT64(elem);
+			*((u16*)ret) = (u16)VAL_INT64(elem);
 			break;
 		case FFI_TYPE_SINT16:
-			*((i16*)args[i]) = (i16)VAL_INT64(elem);
+			*((i16*)ret) = (i16)VAL_INT64(elem);
 			break;
 		case FFI_TYPE_UINT32:
-			*((u32*)args[i]) = (u32)VAL_INT64(elem);
+			*((u32*)ret) = (u32)VAL_INT64(elem);
 			break;
 		case FFI_TYPE_SINT32:
-			*((i32*)args[i]) = (i32)VAL_INT64(elem);
+			*((i32*)ret) = (i32)VAL_INT64(elem);
 			break;
 		case FFI_TYPE_UINT64:
 		case FFI_TYPE_POINTER:
-			*((u64*)args[i]) = (u64)VAL_INT64(elem);
+			*((u64*)ret) = (u64)VAL_INT64(elem);
 			break;
 		case FFI_TYPE_SINT64:
-			*((i64*)args[i]) = (i64)VAL_INT64(elem);
+			*((i64*)ret) = (i64)VAL_INT64(elem);
 			break;
 		case FFI_TYPE_STRUCT:
 			memcpy(ret,
