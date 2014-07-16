@@ -178,6 +178,8 @@ float
 ;double ;reuse earlier definition
 pointer
 addr
+raw-memory
+raw-size
 
 ;routine
 library

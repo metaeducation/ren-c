@@ -399,6 +399,9 @@ static REBOOL assign_scalar(REBSTU *stu,
 		REBCNT eval_idx = 0; /* for spec block evaluation */
 		REBVAL *init = NULL; /* for result to save in data */
 		REBOOL expect_init = FALSE;
+		REBINT raw_size = -1;
+		REBCNT raw_addr = 0;
+		REBCNT alignment = 0;
 
 		VAL_STRUCT_SPEC(out) = Copy_Series(VAL_SERIES(data));
 		VAL_STRUCT_DATA(out) = Make_Series(1, sizeof(struct Struct_Data), FALSE);
@@ -411,6 +414,52 @@ static REBOOL assign_scalar(REBSTU *stu,
 
 		/* set type early such that GC will handle it correctly, i.e, not collect series in the struct */
 		SET_TYPE(out, REB_STRUCT);
+
+		if (IS_BLOCK(blk)) {
+			/* struct attribute */
+			REBVAL *attr = VAL_BLK_DATA(blk);
+			while (NOT_END(attr)) {
+				if (IS_SET_WORD(attr)) {
+					switch (VAL_WORD_CANON(attr)) {
+						case SYM_RAW_SIZE:
+							++ attr;
+							if (IS_INTEGER(attr)) {
+								raw_size = VAL_INT64(attr);
+							} else {
+								Trap_Arg(attr);
+							}
+							break;
+						case SYM_RAW_MEMORY:
+							++ attr;
+							if (IS_INTEGER(attr)) {
+								raw_addr = VAL_INT64(attr);
+								if (raw_addr == 0) {
+									Trap_Arg(attr);
+								}
+							} else {
+								Trap_Arg(attr);
+							}
+							break;
+							/*
+						case SYM_ALIGNMENT:
+							++ attr;
+							if (IS_INTEGER(attr)) {
+								alignment = VAL_INT64(attr);
+							} else {
+								Trap_Arg(attr);
+							}
+							break;
+							*/
+						default:
+							Trap_Arg(attr);
+					}
+				} else {
+					Trap_Arg(attr);
+				}
+				++ attr;
+			}
+			++ blk;
+		}
 
 		while (NOT_END(blk)) {
 			EXPAND_SERIES_TAIL(VAL_STRUCT_FIELDS(out), 1);
@@ -521,6 +570,10 @@ static REBOOL assign_scalar(REBSTU *stu,
 				field->sym = VAL_WORD_SYM(blk); 
 				++ blk;
 				expect_init = TRUE;
+				if (raw_addr) {
+					/* initialization is not allowed for raw memory struct */
+					Trap_Arg(blk);
+				}
 			} else if (IS_WORD(blk)) {
 				field->sym = VAL_WORD_SYM(blk); 
 				++ blk;
@@ -581,16 +634,23 @@ static REBOOL assign_scalar(REBSTU *stu,
 						goto failed;
 					}
 				}
-			} else if (field->type == STRUCT_TYPE_STRUCT) {
-				REBINT n = 0;
-				for (n = 0; n < field->dimension; n ++) {
-					memcpy(SERIES_SKIP(VAL_STRUCT_DATA_BIN(out), ((REBCNT)offset) + n * field->size), SERIES_DATA(VAL_STRUCT_DATA(init)), field->size);
+			} else if (raw_addr == 0) {
+				if (field->type == STRUCT_TYPE_STRUCT) {
+					REBINT n = 0;
+					for (n = 0; n < field->dimension; n ++) {
+						memcpy(SERIES_SKIP(VAL_STRUCT_DATA_BIN(out), ((REBCNT)offset) + n * field->size), SERIES_DATA(VAL_STRUCT_DATA(init)), field->size);
+					}
+				} else {
+					memset(SERIES_SKIP(VAL_STRUCT_DATA_BIN(out), (REBCNT)offset), 0, field->size * field->dimension);
 				}
-			} else {
-				memset(SERIES_SKIP(VAL_STRUCT_DATA_BIN(out), (REBCNT)offset), 0, field->size * field->dimension);
 			}
 
 			offset +=  step;
+			/* 
+			if (alignment != 0) {
+				offset = ((offset + alignment - 1) / alignment) * alignment;
+			}
+			*/
 			if (offset > VAL_STRUCT_LIMIT) {
 				Trap1(RE_SIZE_LIMIT, out);
 			}
@@ -601,6 +661,22 @@ static REBOOL assign_scalar(REBSTU *stu,
 		}
 
 		VAL_STRUCT_LEN(out) = (REBCNT)offset;
+
+		if (raw_addr) {
+			/* data is stored in external memory,
+			 * copy the structure to that memory*/
+			if (raw_size >= 0 && raw_size != VAL_STRUCT_LEN(out)) {
+				Trap0(RE_INVALID_DATA);
+			}
+
+			REBSER *ser = (REBSER *)Make_Node(SERIES_POOL);
+			Prop_Series(ser, VAL_STRUCT_DATA_BIN(out));
+			ser->data = (REBYTE*)raw_addr;
+			EXT_SERIES(ser);
+
+			VAL_STRUCT_DATA_BIN(out) = ser;
+			++ blk;
+		}
 
 		return TRUE;
 	}
