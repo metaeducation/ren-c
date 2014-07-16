@@ -57,6 +57,7 @@ struct Struct_Field {
 	REBCNT offset;
 	REBCNT dimension; /* for arrays */
 	REBCNT size; /* size of element, in bytes */
+	REBOOL array;
 };
 
 /* this is hackish to work around the size limit of REBSTU

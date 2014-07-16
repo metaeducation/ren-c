@@ -124,7 +124,7 @@ static get_scalar(REBSTU *stu,
 	field = (struct Struct_Field *)SERIES_DATA(stu->fields);
 	for (i = 0; i < SERIES_TAIL(stu->fields); i ++, field ++) {
 		if (VAL_WORD_CANON(word) == VAL_SYM_CANON(BLK_SKIP(PG_Word_Table.series, field->sym))) {
-			if (field->dimension > 1) {
+			if (field->array) {
 				SET_TYPE(val, REB_BLOCK);
 				REBSER *ser = Make_Block(field->dimension);
 				REBCNT n = 0;
@@ -349,7 +349,7 @@ static REBOOL assign_scalar(REBSTU *stu,
 	field = (struct Struct_Field *)SERIES_DATA(stu->fields);
 	for (i = 0; i < SERIES_TAIL(stu->fields); i ++, field ++) {
 		if (VAL_WORD_CANON(word) == VAL_SYM_CANON(BLK_SKIP(PG_Word_Table.series, field->sym))) {
-			if (field->dimension > 1) {
+			if (field->array) {
 				if (elem == NULL) { //set the whole array
 					REBCNT n = 0;
 					if ((!IS_BLOCK(val) || field->dimension != VAL_LEN(val))) {
@@ -510,9 +510,11 @@ static REBOOL assign_scalar(REBSTU *stu,
 					Trap_Types(RE_EXPECT_VAL, REB_INTEGER, VAL_TYPE(blk));
 				}
 				field->dimension = (REBCNT)VAL_INT64(ret);
+				field->array = TRUE;
 				++ blk;
 			} else {
 				field->dimension = 1; /* scalar */
+				field->array = FALSE;
 			}
 
 			if (IS_SET_WORD(blk)) {
@@ -551,7 +553,7 @@ static REBOOL assign_scalar(REBSTU *stu,
 					init = DS_POP; //Do_Next saves result on stack
 				}
 
-				if (field->dimension > 1) {
+				if (field->array) {
 					if (IS_INTEGER(init)) { /* interpreted as a C pointer */
 						void *ptr = (void *)VAL_INT64(init);
 
