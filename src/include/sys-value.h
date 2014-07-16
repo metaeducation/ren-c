@@ -1054,7 +1054,7 @@ struct Reb_Routine_Info {
 		} rot;
 		struct {
 			void *closure;
-			REBVAL *func;
+			REBFCN func;
 			void (*dispatcher) (void);
 		} cb;
 	} info;

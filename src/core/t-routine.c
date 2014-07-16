@@ -534,7 +534,10 @@ static void callback_dispatcher(ffi_cif *cif, void *ret, void **args, void *user
 	VAL_SERIES(blk) = ser = Make_Block(1 + cif->nargs);
 	VAL_INDEX(blk) = 0;
 
-	Append_Val(ser, RIN_FUNC((REBRIN*)user_data));
+	elem = Append_Value(ser);
+	SET_TYPE(elem, REB_FUNCTION);
+	VAL_FUNC(elem) = RIN_FUNC(rin);
+
 	for (i = 0; i < cif->nargs; i ++) {
 		elem = Append_Value(ser);
 		switch (cif->arg_types[i]->type) {
@@ -689,7 +692,8 @@ static void callback_dispatcher(ffi_cif *cif, void *ret, void **args, void *user
 			|| !IS_FUNCTION(&blk[1])) {
 			Trap_Arg(data);
 		}
-		VAL_CALLBACK_FUNC(out) = &blk[1];
+		VAL_CALLBACK_FUNC(out) = VAL_FUNC(&blk[1]);
+		printf("RIN: %p, func: %p\n", VAL_ROUTINE_INFO(out), &blk[1]);
 	}
 
 	if (type == REB_ROUTINE) {
