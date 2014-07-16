@@ -1047,7 +1047,6 @@ typedef struct Reb_Struct {
 typedef struct Reb_Value REBVAL;
 
 struct Reb_Routine_Info {
-	REBSTU	rvalue; /* for returning a struct */
 	union {
 		struct {
 			REBLHL	*lib;
@@ -1060,7 +1059,8 @@ struct Reb_Routine_Info {
 		} cb;
 	} info;
 	void	*cif;
-	REBSER  *args;
+	REBSER  *args; /* index 0 is the return type, */
+	REBSER  *arg_structs; /* for struct arguments */
 	REBSER	*extra_mem; /* extra memory that needs to be free'ed */
 	REBINT	abi;
 	REBFLG	flags;
@@ -1074,6 +1074,7 @@ enum {
 	ROUTINE_CALLBACK = 1 << 2, //this is a callback
 };
 
+/* argument is REBFCN */
 #define ROUTINE_SPEC(v)				FUNC_SPEC(v)
 #define ROUTINE_INFO(v)				FUNC_INFO(v)
 #define ROUTINE_ARGS(v)				FUNC_ARGS(v)
@@ -1081,19 +1082,24 @@ enum {
 #define ROUTINE_LIB(v)				(ROUTINE_INFO(v)->info.rot.lib)
 #define ROUTINE_ABI(v)  			(ROUTINE_INFO(v)->abi)
 #define ROUTINE_FFI_ARGS(v)  		(ROUTINE_INFO(v)->args)
+#define ROUTINE_FFI_ARG_STRUCTS(v)  (ROUTINE_INFO(v)->arg_structs)
 #define ROUTINE_EXTRA_MEM(v) 		(ROUTINE_INFO(v)->extra_mem)
 #define ROUTINE_CIF(v) 				(ROUTINE_INFO(v)->cif)
-#define ROUTINE_RVALUE(v) 			(ROUTINE_INFO(v)->rvalue)
+#define ROUTINE_RVALUE(v) 			VAL_STRUCT((REBVAL*)SERIES_DATA(ROUTINE_INFO(v)->arg_structs))
+#define ROUTINE_CLOSURE(v)			(ROUTINE_INFO(v)->info.cb.closure)
+#define ROUTINE_DISPATCHER(v)		(ROUTINE_INFO(v)->info.cb.dispatcher)
+#define CALLBACK_FUNC(v)  			(ROUTINE_INFO(v)->info.cb.func)
+
+/* argument is REBRIN */
 
 #define RIN_FUNCPTR(v)				((v)->info.rot.funcptr)
 #define RIN_LIB(v)					((v)->info.rot.lib)
 #define RIN_CLOSURE(v)				((v)->info.cb.closure)
 #define RIN_FUNC(v)					((v)->info.cb.func)
+#define RIN_ARGS_STRUCTS(v)			((v)->arg_structs)
+#define RIN_RVALUE(v)				VAL_STRUCT((REBVAL*)SERIES_DATA(RIN_ARGS_STRUCTS(v)))
 
-#define ROUTINE_CLOSURE(v)			(ROUTINE_INFO(v)->info.cb.closure)
-#define ROUTINE_DISPATCHER(v)		(ROUTINE_INFO(v)->info.cb.dispatcher)
-#define CALLBACK_FUNC(v)  			(ROUTINE_INFO(v)->info.cb.func)
-
+/* argument is REBVAL */
 #define VAL_ROUTINE(v)          	VAL_FUNC(v)
 #define VAL_ROUTINE_SPEC(v) 		VAL_FUNC_SPEC(v)
 #define VAL_ROUTINE_INFO(v) 		VAL_FUNC_INFO(v)
@@ -1102,9 +1108,10 @@ enum {
 #define VAL_ROUTINE_LIB(v)  		(VAL_ROUTINE_INFO(v)->info.rot.lib)
 #define VAL_ROUTINE_ABI(v)  		(VAL_ROUTINE_INFO(v)->abi)
 #define VAL_ROUTINE_FFI_ARGS(v)  	(VAL_ROUTINE_INFO(v)->args)
+#define VAL_ROUTINE_FFI_ARG_STRUCTS(v)  	(VAL_ROUTINE_INFO(v)->arg_structs)
 #define VAL_ROUTINE_EXTRA_MEM(v) 	(VAL_ROUTINE_INFO(v)->extra_mem)
 #define VAL_ROUTINE_CIF(v) 			(VAL_ROUTINE_INFO(v)->cif)
-#define VAL_ROUTINE_RVALUE(v) 		(VAL_ROUTINE_INFO(v)->rvalue)
+#define VAL_ROUTINE_RVALUE(v) 		VAL_STRUCT((REBVAL*)SERIES_DATA(VAL_ROUTINE_INFO(v)->arg_structs))
 
 #define VAL_ROUTINE_CLOSURE(v)  	(VAL_ROUTINE_INFO(v)->info.cb.closure)
 #define VAL_ROUTINE_DISPATCHER(v)  	(VAL_ROUTINE_INFO(v)->info.cb.dispatcher)

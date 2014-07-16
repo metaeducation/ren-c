@@ -143,6 +143,7 @@ static REBOOL rebol_type_to_ffi(REBVAL *out, REBVAL *elem, REBCNT idx)
 {
 	ffi_type **args = (ffi_type**) SERIES_DATA(VAL_ROUTINE_FFI_ARGS(out));
 	REBVAL *rebol_args = (REBVAL*)SERIES_DATA(VAL_ROUTINE_ARGS(out));
+	REBVAL *arg_structs = (REBVAL*)SERIES_DATA(VAL_ROUTINE_FFI_ARG_STRUCTS(out));
 	if (IS_WORD(elem)) {
 		switch (VAL_WORD_CANON(elem)) {
 			case SYM_UINT8:
@@ -197,8 +198,10 @@ static REBOOL rebol_type_to_ffi(REBVAL *out, REBVAL *elem, REBCNT idx)
 			default:
 				return FALSE;
 		}
+		Append_Value(VAL_ROUTINE_FFI_ARG_STRUCTS(out)); /* fill with none */
 	} else if (IS_STRUCT(elem)) {
 		ffi_type *ftype = struct_to_ffi(out, VAL_STRUCT_FIELDS(elem));
+		REBVAL *to = NULL;
 		if (ftype) {
 			args[idx] = ftype;
 			if (idx) {
@@ -207,6 +210,8 @@ static REBOOL rebol_type_to_ffi(REBVAL *out, REBVAL *elem, REBCNT idx)
 		} else {
 			return FALSE;
 		}
+		to = Append_Value(VAL_ROUTINE_FFI_ARG_STRUCTS(out));
+		Copy_Struct_Val(elem, to); //for callback and return value
 	} else {
 		return FALSE;
 	}
@@ -324,7 +329,7 @@ static void *arg_to_ffi(REBRIN *rin, REBVAL *arg, REBCNT idx, REBINT *pop)
 		case FFI_TYPE_STRUCT:
 			/* make a copy of old binary data, such that the original one won't be modified */
 			if (idx == 0) {/* returning a struct */
-				Copy_Struct(&rin->rvalue, &VAL_STRUCT(arg));
+				Copy_Struct(&RIN_RVALUE(rin), &VAL_STRUCT(arg));
 			} else {
 				if (IS_STRUCT(arg)) {
 					VAL_STRUCT_DATA_BIN(arg) = Copy_Series(VAL_STRUCT_DATA_BIN(arg));
@@ -417,6 +422,11 @@ static void ffi_to_rebol(REBRIN *rin,
 			SET_DECIMAL(rebol_ret, *(double*)ffi_rvalue);
 			break;
 		case FFI_TYPE_STRUCT:
+			Copy_Struct_Val(&RIN_RVALUE(rin), rebol_ret);
+			memcpy(SERIES_SKIP(VAL_STRUCT_DATA_BIN(rebol_ret), VAL_STRUCT_OFFSET(rebol_ret)),
+				   ffi_rvalue,
+				   VAL_STRUCT_LEN(rebol_ret));
+
 			break;
 		case FFI_TYPE_VOID:
 			break;
@@ -495,9 +505,6 @@ static void process_type_block(REBVAL *out, REBVAL *blk, REBCNT n)
 			if (!rebol_type_to_ffi(out, DS_TOP, n)) {
 				Trap_Arg(blk);
 			}
-			if (n == 0) { /* return type */
-				Copy_Struct(&VAL_STRUCT(DS_TOP), &VAL_ROUTINE_RVALUE(out));
-			}
 
 			DS_POP;
 		} else {
@@ -507,24 +514,15 @@ static void process_type_block(REBVAL *out, REBVAL *blk, REBCNT n)
 			if (!rebol_type_to_ffi(out, t, n)) {
 				Trap_Arg(t);
 			}
-			if (n == 0) { /* return type*/
-				ffi_type **args = (ffi_type**) SERIES_DATA(VAL_ROUTINE_FFI_ARGS(out));
-				if (args[0]->type == FFI_TYPE_STRUCT) {
-					Copy_Struct(&VAL_STRUCT(t), &VAL_ROUTINE_RVALUE(out));
-				}
-			}
 		}
 	} else {
 		Trap_Arg(blk);
 	}
 }
 
-static void ffi_to_rebol_struct(ffi_type* ffi_type, void *arg, REBVAL *val)
-{
-}
-
 static void callback_dispatcher(ffi_cif *cif, void *ret, void **args, void *user_data)
 {
+	REBRIN *rin = (REBRIN*)user_data;
 	REBINT i = 0;
 	REBVAL *blk = NULL;
 	REBSER *ser = NULL;
@@ -566,7 +564,13 @@ static void callback_dispatcher(ffi_cif *cif, void *ret, void **args, void *user
 				SET_INTEGER(elem, *(i64*)args[i]);
 				break;
 			case FFI_TYPE_STRUCT:
-				ffi_to_rebol_struct(cif->arg_types[i], args[i], elem);
+				if (!IS_STRUCT((REBVAL*)SERIES_SKIP(RIN_ARGS_STRUCTS(rin), i))) {
+					Trap_Arg(elem);
+				}
+				Copy_Struct_Val(SERIES_SKIP(RIN_ARGS_STRUCTS(rin), i), elem);
+				memcpy(SERIES_SKIP(VAL_STRUCT_DATA_BIN(elem), VAL_STRUCT_OFFSET(elem)),
+					   args[i],
+					   VAL_STRUCT_LEN(elem));
 				break;
 			default:
 				Trap_Arg(elem);
@@ -657,11 +661,10 @@ static void callback_dispatcher(ffi_cif *cif, void *ret, void **args, void *user
 	VAL_ROUTINE_FFI_ARGS(out) = Make_Series(N_ARGS, sizeof(ffi_type*), FALSE);
 	VAL_ROUTINE_ARGS(out) = Make_Block(N_ARGS);
 	Append_Value(VAL_ROUTINE_ARGS(out)); //first word should be 'self', but ignored here.
+	VAL_ROUTINE_FFI_ARG_STRUCTS(out) = Make_Block(N_ARGS);
 
 	VAL_ROUTINE_ABI(out) = FFI_DEFAULT_ABI;
 	VAL_ROUTINE_LIB(out) = NULL;
-
-	CLEAR(&VAL_ROUTINE_RVALUE(out), sizeof(REBSTU));
 
 	extra_mem = Make_Series(N_ARGS, sizeof(void*), FALSE);
 	VAL_ROUTINE_EXTRA_MEM(out) = extra_mem;

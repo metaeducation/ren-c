@@ -183,6 +183,7 @@ static void Mark_Series(REBSER *series, REBCNT depth);
 	MARK_ROUTINE(ROUTINE_INFO(rot));
 
 	CHECK_MARK(ROUTINE_FFI_ARGS(rot), depth);
+	CHECK_MARK(ROUTINE_FFI_ARG_STRUCTS(rot), depth);
 	CHECK_MARK(ROUTINE_EXTRA_MEM(rot), depth);
 
 	if (IS_CALLBACK_ROUTINE(ROUTINE_INFO(rot))) {
