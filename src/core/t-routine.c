@@ -67,6 +67,16 @@ static void init_type_map()
 	return -1;
 }
 
+/***********************************************************************
+**
+*/	REBINT CT_Callback(REBVAL *a, REBVAL *b, REBINT mode)
+/*
+***********************************************************************/
+{
+	RL_Print("%s, %d\n", __func__, __LINE__);
+	return -1;
+}
+
 static REBCNT n_struct_fields (REBSER *fields)
 {
 	REBCNT n_fields = 0;
@@ -461,6 +471,9 @@ static void ffi_to_rebol(REBRIN *rin,
 	}
 
 	UNMARK_ROUTINE(rin);
+	if (IS_CALLBACK_ROUTINE(rin)) {
+		ffi_closure_free(RIN_CLOSURE(rin));
+	}
 	Free_Node(RIN_POOL, (REBNOD*)rin);
 }
 
@@ -506,6 +519,100 @@ static void process_type_block(REBVAL *out, REBVAL *blk, REBCNT n)
 	}
 }
 
+static void ffi_to_rebol_struct(ffi_type* ffi_type, void *arg, REBVAL *val)
+{
+}
+
+static void callback_dispatcher(ffi_cif *cif, void *ret, void **args, void *user_data)
+{
+	REBINT i = 0;
+	REBVAL *blk = NULL;
+	REBSER *ser = NULL;
+	REBVAL *elem = NULL;
+
+	DS_PUSH_NONE;
+	blk = DS_TOP;
+	SET_TYPE(blk, REB_BLOCK);
+	VAL_SERIES(blk) = ser = Make_Block(1 + cif->nargs);
+	VAL_INDEX(blk) = 0;
+
+	Append_Val(ser, RIN_FUNC((REBRIN*)user_data));
+	for (i = 0; i < cif->nargs; i ++) {
+		elem = Append_Value(ser);
+		switch (cif->arg_types[i]->type) {
+			case FFI_TYPE_UINT8:
+				SET_INTEGER(elem, *(u8*)args[i]);
+				break;
+			case FFI_TYPE_SINT8:
+				SET_INTEGER(elem, *(i8*)args[i]);
+				break;
+			case FFI_TYPE_UINT16:
+				SET_INTEGER(elem, *(u16*)args[i]);
+				break;
+			case FFI_TYPE_SINT16:
+				SET_INTEGER(elem, *(i16*)args[i]);
+				break;
+			case FFI_TYPE_UINT32:
+				SET_INTEGER(elem, *(u32*)args[i]);
+				break;
+			case FFI_TYPE_SINT32:
+				SET_INTEGER(elem, *(i32*)args[i]);
+				break;
+			case FFI_TYPE_UINT64:
+			case FFI_TYPE_POINTER:
+				SET_INTEGER(elem, *(u64*)args[i]);
+				break;
+			case FFI_TYPE_SINT64:
+				SET_INTEGER(elem, *(i64*)args[i]);
+				break;
+			case FFI_TYPE_STRUCT:
+				ffi_to_rebol_struct(cif->arg_types[i], args[i], elem);
+				break;
+			default:
+				Trap_Arg(elem);
+		}
+	}
+	elem = Do_Blk(ser, 0);
+	switch (cif->rtype->type) {
+		case FFI_TYPE_VOID:
+			break;
+		case FFI_TYPE_UINT8:
+			*((u8*)args[i]) = (u8)VAL_INT64(elem);
+			break;
+		case FFI_TYPE_SINT8:
+			*((i8*)args[i]) = (i8)VAL_INT64(elem);
+			break;
+		case FFI_TYPE_UINT16:
+			*((u16*)args[i]) = (u16)VAL_INT64(elem);
+			break;
+		case FFI_TYPE_SINT16:
+			*((i16*)args[i]) = (i16)VAL_INT64(elem);
+			break;
+		case FFI_TYPE_UINT32:
+			*((u32*)args[i]) = (u32)VAL_INT64(elem);
+			break;
+		case FFI_TYPE_SINT32:
+			*((i32*)args[i]) = (i32)VAL_INT64(elem);
+			break;
+		case FFI_TYPE_UINT64:
+		case FFI_TYPE_POINTER:
+			*((u64*)args[i]) = (u64)VAL_INT64(elem);
+			break;
+		case FFI_TYPE_SINT64:
+			*((i64*)args[i]) = (i64)VAL_INT64(elem);
+			break;
+		case FFI_TYPE_STRUCT:
+			memcpy(ret,
+				   SERIES_SKIP(VAL_STRUCT_DATA_BIN(elem), VAL_STRUCT_OFFSET(elem)),
+				   VAL_STRUCT_LEN(elem));
+			break;
+		default:
+			Trap_Arg(elem);
+	}
+
+	DS_POP;
+}
+
 /***********************************************************************
 **
 */	REBFLG MT_Routine(REBVAL *out, REBVAL *data, REBCNT type)
@@ -535,10 +642,14 @@ static void process_type_block(REBVAL *out, REBVAL *blk, REBCNT n)
 		return FALSE;
 	}
 
-	SET_TYPE(out, REB_ROUTINE);
+	SET_TYPE(out, type);
 
 	VAL_ROUTINE_INFO(out) = Make_Node(RIN_POOL);
 	USE_ROUTINE(VAL_ROUTINE_INFO(out));
+
+	if (type == REB_CALLBACK) {
+		ROUTINE_SET_FLAG(VAL_ROUTINE_INFO(out), ROUTINE_CALLBACK);
+	}
 
 #define N_ARGS 8
 
@@ -562,25 +673,36 @@ static void process_type_block(REBVAL *out, REBVAL *blk, REBCNT n)
 	init_type_map();
 
 	blk = VAL_BLK_DATA(data);
-	if (VAL_LEN(data) != 3
-		|| !IS_BLOCK(&blk[0])
-		|| !IS_LIBRARY(&blk[1])
-		|| !IS_STRING(&blk[2])) {
-		Trap_Arg(data);
+	if (type == REB_ROUTINE) {
+		if (VAL_LEN(data) != 3
+			|| !IS_BLOCK(&blk[0])
+			|| !IS_LIBRARY(&blk[1])
+			|| !IS_STRING(&blk[2])) {
+			Trap_Arg(data);
+		}
+	} else if (type = REB_CALLBACK) {
+		if (VAL_LEN(data) != 2
+			|| !IS_BLOCK(&blk[0])
+			|| !IS_FUNCTION(&blk[1])) {
+			Trap_Arg(data);
+		}
+		VAL_CALLBACK_FUNC(out) = &blk[1];
 	}
 
-	VAL_ROUTINE_LIB(out) = VAL_LIB_HANDLE(&blk[1]);
-	if (!VAL_ROUTINE_LIB(out)) {
-		RL_Print("lib is not open\n");
-		ret = FALSE;
-	}
-	TERM_SERIES(VAL_SERIES(&blk[2]));
-	func = OS_FIND_FUNCTION(LIB_FD(VAL_ROUTINE_LIB(out)), VAL_DATA(&blk[2]));
-	if (!func) {
-		RL_Print("Couldn't find function\n");
-		ret = FALSE;
-	} else {
-		VAL_ROUTINE_FUNCPTR(out) = func;
+	if (type == REB_ROUTINE) {
+		VAL_ROUTINE_LIB(out) = VAL_LIB_HANDLE(&blk[1]);
+		if (!VAL_ROUTINE_LIB(out)) {
+			RL_Print("lib is not open\n");
+			ret = FALSE;
+		}
+		TERM_SERIES(VAL_SERIES(&blk[2]));
+		func = OS_FIND_FUNCTION(LIB_FD(VAL_ROUTINE_LIB(out)), VAL_DATA(&blk[2]));
+		if (!func) {
+			RL_Print("Couldn't find function\n");
+			ret = FALSE;
+		} else {
+			VAL_ROUTINE_FUNCPTR(out) = func;
+		}
 	}
 
 	blk = VAL_BLK_DATA(&blk[0]);
@@ -679,6 +801,23 @@ static void process_type_block(REBVAL *out, REBVAL *blk, REBCNT n)
 		ret = FALSE;
 	}
 
+	if (type == REB_CALLBACK) {
+		VAL_ROUTINE_CLOSURE(out) = ffi_closure_alloc(sizeof(ffi_closure), (void**)&VAL_ROUTINE_DISPATCHER(out));
+		if (VAL_ROUTINE_CLOSURE(out) == NULL) {
+			printf("No memory\n");
+			ret = FALSE;
+		} else {
+			if (FFI_OK != ffi_prep_closure_loc(VAL_ROUTINE_CLOSURE(out),
+											   VAL_ROUTINE_CIF(out),
+											   callback_dispatcher,
+											   VAL_ROUTINE_INFO(out),
+											   VAL_ROUTINE_DISPATCHER(out))) {
+				RL_Print("Couldn't prep closure\n");
+				ret = FALSE;
+			}
+		}
+	}
+
 	RL_Print("%s, %d, ret = %d\n", __func__, __LINE__, ret);
 	return ret;
 }
@@ -731,6 +870,58 @@ static void process_type_block(REBVAL *out, REBVAL *blk, REBCNT n)
 			break;
 		default:
 			Trap_Action(REB_ROUTINE, action);
+	}
+	return R_RET;
+}
+
+/***********************************************************************
+**
+*/	REBTYPE(Callback)
+/*
+***********************************************************************/
+{
+	REBVAL *val;
+	REBVAL *arg;
+	REBSTU *strut;
+	REBSTU *nstrut;
+	REBCNT index;
+	REBCNT tail;
+	REBCNT len;
+
+	arg = D_ARG(2);
+	val = D_ARG(1);
+	strut = 0;
+
+	REBVAL *ret = DS_RETURN;
+	// unary actions
+	switch(action) {
+		case A_MAKE:
+			RL_Print("%s, %d, Make routine action\n", __func__, __LINE__);
+		case A_TO:
+			if (IS_ROUTINE(val)) {
+				Trap_Types(RE_EXPECT_VAL, REB_ROUTINE, VAL_TYPE(arg));
+			} else if (!IS_BLOCK(arg) || !MT_Routine(ret, arg, REB_CALLBACK)) {
+				Trap_Types(RE_EXPECT_VAL, REB_BLOCK, VAL_TYPE(arg));
+			}
+			break;
+		case A_REFLECT:
+			{
+				REBINT n = VAL_WORD_CANON(arg); // zero on error
+				switch (n) {
+					case SYM_SPEC:
+						Set_Block(ret, Clone_Block(VAL_ROUTINE_SPEC(val)));
+						Unbind_Block(VAL_BLK(val), TRUE);
+						break;
+					case SYM_ADDR:
+						SET_INTEGER(ret, (REBUPT)VAL_ROUTINE_DISPATCHER(val));
+						break;
+					default:
+						Trap_Reflect(REB_STRUCT, arg);
+				}
+			}
+			break;
+		default:
+			Trap_Action(REB_CALLBACK, action);
 	}
 	return R_RET;
 }

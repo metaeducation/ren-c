@@ -1044,10 +1044,21 @@ typedef struct Reb_Struct {
 **	ROUTINE -- External library routine structures
 **
 ***********************************************************************/
+typedef struct Reb_Value REBVAL;
+
 struct Reb_Routine_Info {
 	REBSTU	rvalue; /* for returning a struct */
-	REBLHL	*lib;
-	void (*funcptr) (void);
+	union {
+		struct {
+			REBLHL	*lib;
+			void (*funcptr) (void);
+		} rot;
+		struct {
+			void *closure;
+			REBVAL *func;
+			void (*dispatcher) (void);
+		} cb;
+	} info;
 	void	*cif;
 	REBSER  *args;
 	REBSER	*extra_mem; /* extra memory that needs to be free'ed */
@@ -1058,31 +1069,46 @@ struct Reb_Routine_Info {
 typedef struct Reb_Function REBROT;
 
 enum {
-	ROUTINE_MARK = 1,		// library was found during GC mark scan.
+	ROUTINE_MARK = 1,		// routine was found during GC mark scan.
 	ROUTINE_USED = 1 << 1,
+	ROUTINE_CALLBACK = 1 << 2, //this is a callback
 };
 
 #define ROUTINE_SPEC(v)				FUNC_SPEC(v)
 #define ROUTINE_INFO(v)				FUNC_INFO(v)
 #define ROUTINE_ARGS(v)				FUNC_ARGS(v)
-#define ROUTINE_LIB(v)				(ROUTINE_INFO(v)->lib)
+#define ROUTINE_FUNCPTR(v)			(ROUTINE_INFO(v)->info.rot.funcptr)
+#define ROUTINE_LIB(v)				(ROUTINE_INFO(v)->info.rot.lib)
 #define ROUTINE_ABI(v)  			(ROUTINE_INFO(v)->abi)
 #define ROUTINE_FFI_ARGS(v)  		(ROUTINE_INFO(v)->args)
 #define ROUTINE_EXTRA_MEM(v) 		(ROUTINE_INFO(v)->extra_mem)
 #define ROUTINE_CIF(v) 				(ROUTINE_INFO(v)->cif)
 #define ROUTINE_RVALUE(v) 			(ROUTINE_INFO(v)->rvalue)
 
+#define RIN_FUNCPTR(v)				((v)->info.rot.funcptr)
+#define RIN_LIB(v)					((v)->info.rot.lib)
+#define RIN_CLOSURE(v)				((v)->info.cb.closure)
+#define RIN_FUNC(v)					((v)->info.cb.func)
+
+#define ROUTINE_CLOSURE(v)			(ROUTINE_INFO(v)->info.cb.closure)
+#define ROUTINE_DISPATCHER(v)		(ROUTINE_INFO(v)->info.cb.dispatcher)
+#define CALLBACK_FUNC(v)  			(ROUTINE_INFO(v)->info.cb.func)
+
 #define VAL_ROUTINE(v)          	VAL_FUNC(v)
 #define VAL_ROUTINE_SPEC(v) 		VAL_FUNC_SPEC(v)
 #define VAL_ROUTINE_INFO(v) 		VAL_FUNC_INFO(v)
 #define VAL_ROUTINE_ARGS(v) 		VAL_FUNC_ARGS(v)
-#define VAL_ROUTINE_FUNCPTR(v)  	(VAL_ROUTINE_INFO(v)->funcptr)
-#define VAL_ROUTINE_LIB(v)  		(VAL_ROUTINE_INFO(v)->lib)
+#define VAL_ROUTINE_FUNCPTR(v)  	(VAL_ROUTINE_INFO(v)->info.rot.funcptr)
+#define VAL_ROUTINE_LIB(v)  		(VAL_ROUTINE_INFO(v)->info.rot.lib)
 #define VAL_ROUTINE_ABI(v)  		(VAL_ROUTINE_INFO(v)->abi)
 #define VAL_ROUTINE_FFI_ARGS(v)  	(VAL_ROUTINE_INFO(v)->args)
 #define VAL_ROUTINE_EXTRA_MEM(v) 	(VAL_ROUTINE_INFO(v)->extra_mem)
 #define VAL_ROUTINE_CIF(v) 			(VAL_ROUTINE_INFO(v)->cif)
 #define VAL_ROUTINE_RVALUE(v) 		(VAL_ROUTINE_INFO(v)->rvalue)
+
+#define VAL_ROUTINE_CLOSURE(v)  	(VAL_ROUTINE_INFO(v)->info.cb.closure)
+#define VAL_ROUTINE_DISPATCHER(v)  	(VAL_ROUTINE_INFO(v)->info.cb.dispatcher)
+#define VAL_CALLBACK_FUNC(v)  		(VAL_ROUTINE_INFO(v)->info.cb.func)
 
 #define ROUTINE_FLAGS(s)	   ((s)->flags) 
 #define ROUTINE_SET_FLAG(s, f) (ROUTINE_FLAGS(s) |= (f))
@@ -1096,6 +1122,7 @@ enum {
 #define USE_ROUTINE(s)     ROUTINE_SET_FLAG(s, ROUTINE_USED)
 #define UNUSE_ROUTINE(s)   ROUTINE_CLR_FLAG(s, ROUTINE_USED)
 #define IS_USED_ROUTINE(s) ROUTINE_GET_FLAG(s, ROUTINE_USED)
+#define IS_CALLBACK_ROUTINE(s) ROUTINE_GET_FLAG(s, ROUTINE_CALLBACK)
 
 
 typedef struct Reb_Typeset {

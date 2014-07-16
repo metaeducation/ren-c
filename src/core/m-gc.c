@@ -182,12 +182,18 @@ static void Mark_Series(REBSER *series, REBCNT depth);
 	CHECK_MARK(ROUTINE_SPEC(rot), depth);
 	MARK_ROUTINE(ROUTINE_INFO(rot));
 
-	MARK_LIB(ROUTINE_LIB(rot));
 	CHECK_MARK(ROUTINE_FFI_ARGS(rot), depth);
 	CHECK_MARK(ROUTINE_EXTRA_MEM(rot), depth);
 
-	if (ROUTINE_RVALUE(rot).spec) {
-		Mark_Struct(&ROUTINE_RVALUE(rot), depth);
+	if (IS_CALLBACK_ROUTINE(ROUTINE_INFO(rot))) {
+		CHECK_MARK(VAL_FUNC_BODY(CALLBACK_FUNC(rot)), depth);
+		CHECK_MARK(VAL_FUNC_SPEC(CALLBACK_FUNC(rot)), depth);
+		MARK_SERIES(VAL_FUNC_ARGS(CALLBACK_FUNC(rot)));
+	} else {
+		MARK_LIB(ROUTINE_LIB(rot));
+		if (ROUTINE_RVALUE(rot).spec) {
+			Mark_Struct(&ROUTINE_RVALUE(rot), depth);
+		}
 	}
 }
 
@@ -433,6 +439,7 @@ mark_obj:
 			}
 			break;
 
+		case REB_CALLBACK:
 		case REB_ROUTINE:
 			CHECK_MARK(VAL_ROUTINE_SPEC(val), depth);
 			CHECK_MARK(VAL_ROUTINE_ARGS(val), depth);

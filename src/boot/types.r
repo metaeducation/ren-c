@@ -97,6 +97,7 @@ REBOL [
 
 	gob         self        gob         *        *       *      *   -  
 	event       self        event       *        *       *      *   -  
+	callback    self        callback    -        -       -      -   -  
 	handle      self        0           -        -       -      -   -  
 	struct      self        struct      *        *       *      -   -
 	library     self     	library     -        -       -      -   -
