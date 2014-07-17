@@ -799,6 +799,8 @@ static void callback_dispatcher(ffi_cif *cif, void *ret, void **args, void *user
 	printf("allocated cif at: %p\n", VAL_ROUTINE_CIF(out));
 	QUEUE_EXTRA_MEM(VAL_ROUTINE_INFO(out), VAL_ROUTINE_CIF(out));
 
+	/* series data could have moved */
+	args = (ffi_type**)SERIES_DATA(VAL_ROUTINE_FFI_ARGS(out));
 	if (FFI_OK != ffi_prep_cif((ffi_cif*)VAL_ROUTINE_CIF(out),
 							   VAL_ROUTINE_ABI(out),
 							   SERIES_TAIL(VAL_ROUTINE_FFI_ARGS(out)) - 1,
