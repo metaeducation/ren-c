@@ -146,6 +146,9 @@ static REBOOL rebol_type_to_ffi(REBVAL *out, REBVAL *elem, REBCNT idx)
 	REBVAL *arg_structs = (REBVAL*)SERIES_DATA(VAL_ROUTINE_FFI_ARG_STRUCTS(out));
 	if (IS_WORD(elem)) {
 		switch (VAL_WORD_CANON(elem)) {
+			case SYM_VOID:
+				args[idx] = &ffi_type_void;
+				break;
 			case SYM_UINT8:
 				args[idx] = &ffi_type_uint8;
 				if (idx) TYPE_SET(&rebol_args[idx], REB_INTEGER);
@@ -705,7 +708,7 @@ static void callback_dispatcher(ffi_cif *cif, void *ret, void **args, void *user
 		TERM_SERIES(VAL_SERIES(&blk[2]));
 		func = OS_FIND_FUNCTION(LIB_FD(VAL_ROUTINE_LIB(out)), VAL_DATA(&blk[2]));
 		if (!func) {
-			RL_Print("Couldn't find function\n");
+			printf("Couldn't find function: %s\n", VAL_DATA(&blk[2]));
 			ret = FALSE;
 		} else {
 			VAL_ROUTINE_FUNCPTR(out) = func;

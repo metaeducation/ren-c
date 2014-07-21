@@ -182,6 +182,7 @@ raw-memory
 raw-size
 
 ;routine
+void
 library
 name
 abi
