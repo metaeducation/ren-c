@@ -424,7 +424,7 @@ mark_obj:
 				break;
 			}
 #if (ALEVEL>0)
-			if (!IS_END(BLK_SKIP(ser, SERIES_TAIL(ser))) && ser != DS_Series)
+			if (SERIES_WIDE(ser) == sizeof(REBVAL) && !IS_END(BLK_SKIP(ser, SERIES_TAIL(ser))) && ser != DS_Series)
 				Crash(RP_MISSING_END);
 #endif
 			if (SERIES_WIDE(ser) != sizeof(REBVAL) && SERIES_WIDE(ser) != 4 && SERIES_WIDE(ser) != 0 && SERIES_WIDE(ser) != sizeof(void*))
@@ -469,7 +469,7 @@ mark_obj:
 	}
 
 #if (ALEVEL>0)
-	if (!IS_END(BLK_SKIP(series, len)) && series != DS_Series)
+	if (SERIES_WIDE(series) == sizeof(REBVAL) && !IS_END(BLK_SKIP(series, len)) && series != DS_Series)
 		Crash(RP_MISSING_END);
 #endif
 }
