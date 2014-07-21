@@ -1,0 +1,21 @@
+Steps to compile Atronix (http://www.atronixengineering.com) flavor of Rebol 3
+0. some directory variables:
+	#top points to the top directory of source
+1. get libffi compiled and installed
+	#cd $(top)/src/libffi
+	#./autogen.sh
+	#./configure --prefix=`pwd`/../../make/libffi
+	#make
+	#make install
+2. go back to top make directory
+	#cd $(top)/make
+    #make -f makefile-64 clean #ignore errors it generates
+	#make -f makefile-64 r3-view-linux
+    #possible makefiles are:
+	a. makefile-64 for 64-bit Linux systems
+	b. makefile-32 for 32-bit Linux systems
+	c. makefile-mingw-32 for cross-compiling for 32-bit windows systems from Linux
+    d. makefile-mingw-64 for cross-compileing for 64-bit windows sytems from Linux
+	e. makefile-armv7 for ARMv7 linux systems
+
+Notes: only r3-view-linux is tested, i.e. r3-core-linux might not even build
