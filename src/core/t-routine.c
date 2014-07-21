@@ -750,22 +750,14 @@ static void callback_dispatcher(ffi_cif *cif, void *ret, void **args, void *user
 							case SYM_DEFAULT:
 								VAL_ROUTINE_ABI(out) = FFI_DEFAULT_ABI;
 								break;
-							case SYM_STDCALL:
-								VAL_ROUTINE_ABI(out) = FFI_STDCALL;
-								break;
-							case SYM_UNIX64:
-								VAL_ROUTINE_ABI(out) = FFI_UNIX64;
-								break;
 #ifdef X86_WIN64
 							case SYM_WIN64:
 								VAL_ROUTINE_ABI(out) = FFI_WIN64;
 								break;
-#endif
-#ifdef X86_WIN32
-							case SYM_MS_CDECL:
-								VAL_ROUTINE_ABI(out) = FFI_MS_CDECL;
+#else
+							case SYM_STDCALL:
+								VAL_ROUTINE_ABI(out) = FFI_STDCALL;
 								break;
-#endif
 							case SYM_SYSV:
 								VAL_ROUTINE_ABI(out) = FFI_SYSV;
 								break;
@@ -775,6 +767,16 @@ static void callback_dispatcher(ffi_cif *cif, void *ret, void **args, void *user
 							case SYM_FASTCALL:
 								VAL_ROUTINE_ABI(out) = FFI_FASTCALL;
 								break;
+#ifdef X86_WIN32
+							case SYM_MS_CDECL:
+								VAL_ROUTINE_ABI(out) = FFI_MS_CDECL;
+								break;
+#else
+							case SYM_UNIX64:
+								VAL_ROUTINE_ABI(out) = FFI_UNIX64;
+								break;
+#endif
+#endif
 							default:
 								Trap_Arg(blk);
 						}
