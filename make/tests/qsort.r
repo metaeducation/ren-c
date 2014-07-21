@@ -2,6 +2,8 @@ REBOL []
 
 recycle/torture
 
+i386?: 4 = fifth system/version
+
 f: func [
     a [integer!] "pointer to an integer"
     b [integer!] "pointer to an integer"
@@ -32,11 +34,12 @@ cb: make callback! compose [
 
 libc: make library! %libc.so.6
 
-qsort: make routine! compose [
+size_t: either i386? ['int32]['int64]
+qsort: make routine! compose/deep [
     [
         base [pointer]
-        nmemb [int64]
-        size [int64]
+        nmemb [(size_t)]
+		size [(size_t)]
         comp [pointer]
     ]
     (libc) "qsort"
