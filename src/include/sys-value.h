@@ -1132,12 +1132,9 @@ enum {
 #define IS_CALLBACK_ROUTINE(s) ROUTINE_GET_FLAG(s, ROUTINE_CALLBACK)
 
 
-typedef struct Reb_Typeset {
-	REBCNT  pad;	// Allows us to overlay this type on WORD spec type
-	REBU64  bits;
-} REBTYS;
+typedef REBWRS REBTYS;
 
-#define VAL_TYPESET(v)  ((v)->data.typeset.bits)
+#define VAL_TYPESET(v)  ((v)->data.typeset.typeset)
 #define TYPE_CHECK(v,n) ((VAL_TYPESET(v) & ((REBU64)1 << (n))) != (REBU64)0)
 #define TYPE_SET(v,n)   (VAL_TYPESET(v) |= ((REBU64)1 << (n)))
 #define EQUAL_TYPESET(v,w) (VAL_TYPESET(v) == VAL_TYPESET(w))
