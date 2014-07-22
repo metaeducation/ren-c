@@ -35,7 +35,7 @@
 /*
 ***********************************************************************/
 {
-	RL_Print("%s, %d\n", __func__, __LINE__);
+	//RL_Print("%s, %d\n", __func__, __LINE__);
 	return -1;
 }
 
@@ -61,7 +61,7 @@
 	// unary actions
 	switch(action) {
 		case A_MAKE:
-			RL_Print("%s, %d, Make library action\n", __func__, __LINE__);
+			//RL_Print("%s, %d, Make library action\n", __func__, __LINE__);
 		case A_TO:
 			if (!IS_DATATYPE(val)) {
 				Trap_Types(RE_EXPECT_VAL, REB_LIBRARY, VAL_TYPE(val));

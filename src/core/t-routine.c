@@ -63,7 +63,7 @@ static void init_type_map()
 /*
 ***********************************************************************/
 {
-	RL_Print("%s, %d\n", __func__, __LINE__);
+	//RL_Print("%s, %d\n", __func__, __LINE__);
 	return -1;
 }
 
@@ -73,7 +73,7 @@ static void init_type_map()
 /*
 ***********************************************************************/
 {
-	RL_Print("%s, %d\n", __func__, __LINE__);
+	//RL_Print("%s, %d\n", __func__, __LINE__);
 	return -1;
 }
 
@@ -99,14 +99,14 @@ static ffi_type* struct_to_ffi(REBVAL *out, REBSER *fields)
 	REBCNT n_basic_type = 0;
 
 	ffi_type *stype = OS_MAKE(sizeof(ffi_type));
-	printf("allocated stype at: %p\n", stype);
+	//printf("allocated stype at: %p\n", stype);
 	QUEUE_EXTRA_MEM(VAL_ROUTINE_INFO(out), stype);
 
 	stype->size = stype->alignment = 0;
 	stype->type = FFI_TYPE_STRUCT;
 
 	stype->elements = OS_MAKE(sizeof(ffi_type *) * (1 + n_struct_fields(fields))); /* one extra for NULL */
-	printf("allocated stype elements at: %p\n", stype->elements);
+	//printf("allocated stype elements at: %p\n", stype->elements);
 	QUEUE_EXTRA_MEM(VAL_ROUTINE_INFO(out), stype->elements);
 
 	for (i = 0; i < SERIES_TAIL(fields); i ++) {
@@ -479,7 +479,7 @@ static void ffi_to_rebol(REBRIN *rin,
 	REBCNT n = 0;
 	for (n = 0; n < SERIES_TAIL(rin->extra_mem); n ++) {
 		void *addr = *(void **)SERIES_SKIP(rin->extra_mem, n);
-		printf("freeing %p\n", addr);
+		//printf("freeing %p\n", addr);
 		OS_FREE(addr);
 	}
 
@@ -640,7 +640,7 @@ static void callback_dispatcher(ffi_cif *cif, void *ret, void **args, void *user
 **
 ***********************************************************************/
 {
-	RL_Print("%s, %d\n", __func__, __LINE__);
+	//RL_Print("%s, %d\n", __func__, __LINE__);
 	ffi_type ** args = NULL;
 	REBVAL *blk = NULL;
 	REBCNT eval_idx = 0; /* for spec block evaluation */
@@ -703,7 +703,7 @@ static void callback_dispatcher(ffi_cif *cif, void *ret, void **args, void *user
 		if (!IS_FUNCTION(&blk[1]))
 			Trap_Arg(&blk[2]);
 		VAL_CALLBACK_FUNC(out) = VAL_FUNC(&blk[1]);
-		printf("RIN: %p, func: %p\n", VAL_ROUTINE_INFO(out), &blk[1]);
+		//printf("RIN: %p, func: %p\n", VAL_ROUTINE_INFO(out), &blk[1]);
 	}
 
 	if (type == REB_ROUTINE) {
@@ -810,7 +810,7 @@ static void callback_dispatcher(ffi_cif *cif, void *ret, void **args, void *user
 	}
 
 	VAL_ROUTINE_CIF(out) = OS_MAKE(sizeof(ffi_cif));
-	printf("allocated cif at: %p\n", VAL_ROUTINE_CIF(out));
+	//printf("allocated cif at: %p\n", VAL_ROUTINE_CIF(out));
 	QUEUE_EXTRA_MEM(VAL_ROUTINE_INFO(out), VAL_ROUTINE_CIF(out));
 
 	/* series data could have moved */
@@ -820,14 +820,14 @@ static void callback_dispatcher(ffi_cif *cif, void *ret, void **args, void *user
 							   SERIES_TAIL(VAL_ROUTINE_FFI_ARGS(out)) - 1,
 							   args[0],
 							   &args[1])) {
-		RL_Print("Couldn't prep CIF\n");
+		//RL_Print("Couldn't prep CIF\n");
 		ret = FALSE;
 	}
 
 	if (type == REB_CALLBACK) {
 		VAL_ROUTINE_CLOSURE(out) = ffi_closure_alloc(sizeof(ffi_closure), (void**)&VAL_ROUTINE_DISPATCHER(out));
 		if (VAL_ROUTINE_CLOSURE(out) == NULL) {
-			printf("No memory\n");
+			//printf("No memory\n");
 			ret = FALSE;
 		} else {
 			if (FFI_OK != ffi_prep_closure_loc(VAL_ROUTINE_CLOSURE(out),
@@ -835,13 +835,13 @@ static void callback_dispatcher(ffi_cif *cif, void *ret, void **args, void *user
 											   callback_dispatcher,
 											   VAL_ROUTINE_INFO(out),
 											   VAL_ROUTINE_DISPATCHER(out))) {
-				RL_Print("Couldn't prep closure\n");
+				//RL_Print("Couldn't prep closure\n");
 				ret = FALSE;
 			}
 		}
 	}
 
-	RL_Print("%s, %d, ret = %d\n", __func__, __LINE__, ret);
+	//RL_Print("%s, %d, ret = %d\n", __func__, __LINE__, ret);
 	return ret;
 }
 
@@ -867,7 +867,7 @@ static void callback_dispatcher(ffi_cif *cif, void *ret, void **args, void *user
 	// unary actions
 	switch(action) {
 		case A_MAKE:
-			RL_Print("%s, %d, Make routine action\n", __func__, __LINE__);
+			//RL_Print("%s, %d, Make routine action\n", __func__, __LINE__);
 		case A_TO:
 			if (IS_ROUTINE(val)) {
 				Trap_Types(RE_EXPECT_VAL, REB_ROUTINE, VAL_TYPE(arg));
@@ -919,7 +919,7 @@ static void callback_dispatcher(ffi_cif *cif, void *ret, void **args, void *user
 	// unary actions
 	switch(action) {
 		case A_MAKE:
-			RL_Print("%s, %d, Make routine action\n", __func__, __LINE__);
+			//RL_Print("%s, %d, Make routine action\n", __func__, __LINE__);
 		case A_TO:
 			if (IS_ROUTINE(val)) {
 				Trap_Types(RE_EXPECT_VAL, REB_ROUTINE, VAL_TYPE(arg));
