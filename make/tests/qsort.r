@@ -2,7 +2,6 @@ REBOL []
 
 recycle/torture
 
-i386?: 4 = fifth system/version
 
 f: func [
     a [integer!] "pointer to an integer"
@@ -34,6 +33,7 @@ cb: make callback! compose [
 
 libc: make library! %libc.so.6
 
+i386?: 4 = fifth system/version
 size_t: either i386? ['int32]['int64]
 qsort: make routine! compose/deep [
     [
@@ -45,12 +45,7 @@ qsort: make routine! compose/deep [
     (libc) "qsort"
 ]
 
-array: make vector! [integer! 32 5]
-array/1: 10
-array/2: 8
-array/3: 2
-array/4: 9
-array/5: 5
+array: make vector! [integer! 32 5 [10 8 2 9 5]]
 print ["array:" mold array]
 qsort array 5 4 (reflect cb 'addr)
 print ["array:" mold array] ; [2 5 8 9 10]
