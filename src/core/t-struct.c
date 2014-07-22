@@ -400,7 +400,7 @@ static REBOOL assign_scalar(REBSTU *stu,
 		REBVAL *init = NULL; /* for result to save in data */
 		REBOOL expect_init = FALSE;
 		REBINT raw_size = -1;
-		REBCNT raw_addr = 0;
+		REBUPT raw_addr = 0;
 		REBCNT alignment = 0;
 
 		VAL_STRUCT_SPEC(out) = Copy_Series(VAL_SERIES(data));
@@ -432,7 +432,7 @@ static REBOOL assign_scalar(REBSTU *stu,
 						case SYM_RAW_MEMORY:
 							++ attr;
 							if (IS_INTEGER(attr)) {
-								raw_addr = VAL_INT64(attr);
+								raw_addr = VAL_UNT64(attr);
 								if (raw_addr == 0) {
 									Trap_Arg(attr);
 								}
