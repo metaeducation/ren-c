@@ -70,16 +70,13 @@
 				Trap_Types(RE_EXPECT_VAL, REB_BLOCK, VAL_TYPE(arg));
 			} else {
 				REBCNT len = VAL_LEN(arg);
-				REBYTE *path = (REBYTE*)OS_MAKE(len + 1);
 				void *lib = NULL;
-				memcpy(path, VAL_DATA(arg), len);
-				path[len] = '\0';
-				lib = OS_OPEN_LIBRARY(path, NULL);
+				REBCNT error = 0;
+				REBSER *path = Value_To_OS_Path(arg);
+				lib = OS_OPEN_LIBRARY((REBCHR*)SERIES_DATA(path), &error);
 				if (!lib) {
-					OS_Free(path);
 					Trap_Make(REB_LIBRARY, arg);
 				}
-				OS_Free(path);
 				VAL_LIB_HANDLE(ret) = (REBLHL*)Make_Node(LIB_POOL);
 				VAL_LIB_FD(ret) = lib;
 				USE_LIB(VAL_LIB_HANDLE(ret));
