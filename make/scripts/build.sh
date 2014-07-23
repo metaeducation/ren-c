@@ -58,7 +58,11 @@ build() {
 	DIR=`pwd`
 	rm -fr $DIR/libffi
 	cd ../src/libffi
-	make clean
+	if [ -f configure ]; then
+		make clean
+	else
+		./autogen.sh
+	fi
 	echo "CFLAGS: $CFLAGS"
 	if [ -z $HOST ]; then
 		if [ -z $CFLAGS ]; then
