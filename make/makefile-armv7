@@ -3,6 +3,7 @@ TO_OS?= TO_LINUX_ARM
 OS_ID?= 0.4.20
 BIT=
 EXTRA_VIEW_CFLAGS=-DUSE_GTK_FILECHOOSER -DUSE_XSHM
+LIBFFI_A=libffi/lib/libffi.a
 
 MD=makefiles
 

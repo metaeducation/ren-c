@@ -194,6 +194,7 @@ unix64
 ms-cdecl
 win64
 default
+vfp ;arm
 
 ; Gobs:
 gob

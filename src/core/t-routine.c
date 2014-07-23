@@ -763,7 +763,7 @@ static void callback_dispatcher(ffi_cif *cif, void *ret, void **args, void *user
 							case SYM_WIN64:
 								VAL_ROUTINE_ABI(out) = FFI_WIN64;
 								break;
-#else
+#elif defined(X86_WIN32) || defined(TO_LINUX_X86) || defined(TO_LINUX_X64)
 							case SYM_STDCALL:
 								VAL_ROUTINE_ABI(out) = FFI_STDCALL;
 								break;
@@ -784,8 +784,14 @@ static void callback_dispatcher(ffi_cif *cif, void *ret, void **args, void *user
 							case SYM_UNIX64:
 								VAL_ROUTINE_ABI(out) = FFI_UNIX64;
 								break;
-#endif
-#endif
+#endif //X86_WIN32
+#elif defined (TO_LINUX_ARM)
+							case SYM_VFP:
+								VAL_ROUTINE_ABI(out) = FFI_VFP;
+							case SYM_SYSV:
+								VAL_ROUTINE_ABI(out) = FFI_SYSV;
+								break;
+#endif //X86_WIN64
 							default:
 								Trap_Arg(blk);
 						}
