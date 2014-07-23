@@ -382,8 +382,8 @@ open: action [
 ]
 
 close: action [
-	{Closes a port.}
-	port [port!]
+	{Closes a port/library.}
+	port [port! library!]
 ]
 
 read: action [

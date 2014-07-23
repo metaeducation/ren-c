@@ -83,6 +83,9 @@
 				SET_TYPE(ret, REB_LIBRARY);
 			}
 			break;
+		case A_CLOSE:
+			OS_CLOSE_LIBRARY(VAL_LIB_FD(val));
+			break;
 		default:
 			Trap_Action(REB_LIBRARY, action);
 	}
