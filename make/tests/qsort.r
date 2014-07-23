@@ -49,3 +49,5 @@ array: make vector! [integer! 32 5 [10 8 2 9 5]]
 print ["array:" mold array]
 qsort array 5 4 (reflect cb 'addr)
 print ["array:" mold array] ; [2 5 8 9 10]
+
+close libc
