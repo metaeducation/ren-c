@@ -33,8 +33,8 @@ cb: make callback! compose [
 
 libc: make library! %libc.so.6
 
-i386?: 4 = fifth system/version
-size_t: either i386? ['int32]['int64]
+x64?: 40 = fifth system/version
+size_t: either x64? ['int64]['int32]
 qsort: make routine! compose/deep [
     [
         base [pointer]
