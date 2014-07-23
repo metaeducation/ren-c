@@ -791,6 +791,25 @@ static void callback_dispatcher(ffi_cif *cif, void *ret, void **args, void *user
 							case SYM_SYSV:
 								VAL_ROUTINE_ABI(out) = FFI_SYSV;
 								break;
+#elif defined (TO_LINUX_MIPS)
+							case SYM_O32:
+								VAL_ROUTINE_ABI(out) = FFI_O32;
+								break;
+							case SYM_N32:
+								VAL_RNUTINE_ABI(out) = FFI_N32;
+								break;
+							case SYM_N64:
+								VAL_RNUTINE_ABI(out) = FFI_N64;
+								break;
+							case SYM_O32_SOFT_FLOAT:
+								VAL_ROUTINE_ABI(out) = FFI_O32_SOFT_FLOAT;
+								break;
+							case SYM_N32_SOFT_FLOAT:
+								VAL_RNUTINE_ABI(out) = FFI_N32_SOFT_FLOAT;
+								break;
+							case SYM_N64_SOFT_FLOAT:
+								VAL_RNUTINE_ABI(out) = FFI_N64_SOFT_FLOAT;
+								break;
 #endif //X86_WIN64
 							default:
 								Trap_Arg(blk);
