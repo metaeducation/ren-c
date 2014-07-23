@@ -34,7 +34,7 @@ catalog: context [
 	actions: none
 	natives: none
 	errors: none
-	reflectors: [spec body words values types title]
+	reflectors: [spec body words values types title addr]
 	; Official list of system/options/flags that can appear.
 	; Must match host reb-args.h enum!
 	boot-flags: [
