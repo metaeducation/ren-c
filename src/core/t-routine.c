@@ -696,6 +696,10 @@ static void callback_dispatcher(ffi_cif *cif, void *ret, void **args, void *user
 		if (!IS_STRING(&blk[fn_idx]))
 			Trap_Arg(&blk[fn_idx]);
 
+		if (NOT_END(&blk[fn_idx + 1])) {
+			Trap_Arg(&blk[fn_idx + 1]);
+		}
+
 		VAL_ROUTINE_LIB(out) = VAL_LIB_HANDLE(lib);
 		if (!VAL_ROUTINE_LIB(out)) {
 			Trap_Arg(lib);
