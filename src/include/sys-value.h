@@ -1007,6 +1007,7 @@ typedef struct Reb_Library {
 enum {
 	LIB_MARK = 1,		// library was found during GC mark scan.
 	LIB_USED = 1 << 1,
+	LIB_CLOSED = 1 << 2,
 };
 
 #define LIB_SET_FLAG(s, f) (LIB_FLAGS(s) |= (f))
@@ -1021,6 +1022,9 @@ enum {
 #define UNUSE_LIB(s)   LIB_CLR_FLAG(s, LIB_USED)
 #define IS_USED_LIB(s) LIB_GET_FLAG(s, LIB_USED)
 
+#define IS_CLOSED_LIB(s) 	LIB_GET_FLAG(s, LIB_CLOSED)
+#define CLOSE_LIB(s) 		LIB_SET_FLAG(s, LIB_CLOSED)
+#define OPEN_LIB(s) 		LIB_CLR_FLAG(s, LIB_CLOSED)
 
 /***********************************************************************
 **

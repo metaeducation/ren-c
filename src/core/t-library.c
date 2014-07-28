@@ -82,11 +82,13 @@
 				VAL_LIB_HANDLE(ret) = (REBLHL*)Make_Node(LIB_POOL);
 				VAL_LIB_FD(ret) = lib;
 				USE_LIB(VAL_LIB_HANDLE(ret));
+				OPEN_LIB(VAL_LIB_HANDLE(ret));
 				SET_TYPE(ret, REB_LIBRARY);
 			}
 			break;
 		case A_CLOSE:
 			OS_CLOSE_LIBRARY(VAL_LIB_FD(val));
+			CLOSE_LIB(VAL_LIB_HANDLE(val));
 			break;
 		default:
 			Trap_Action(REB_LIBRARY, action);

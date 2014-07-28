@@ -120,6 +120,7 @@ Script: [
 	parse-series:       [{PARSE - input must be a series:} :arg1]
 
 	recursive-wait: 	{recursive calls to WAIT}
+	bad-library:		{bad library (already closed?)}
 
 ;   bad-prompt:         [{Error executing prompt block}]
 ;   bad-port-action:    [{Cannot use} :arg1 {on this type port}]

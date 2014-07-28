@@ -455,6 +455,9 @@ static void ffi_to_rebol(REBRIN *rin,
 	REBINT pop = 1; /* for tmp */
 	REBVAL *tmp = NULL;
 
+	if (IS_CLOSED_LIB(VAL_ROUTINE_LIB(rot))) {
+		Trap0(RE_BAD_LIBRARY);
+	}
 	/* save ser on stack such that it won't be GC'ed */
 	DS_PUSH_NONE;
 	tmp = DS_TOP;
