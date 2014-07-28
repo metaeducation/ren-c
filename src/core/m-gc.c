@@ -191,7 +191,9 @@ static void Mark_Series(REBSER *series, REBCNT depth);
 		CHECK_MARK(FUNC_SPEC(&CALLBACK_FUNC(rot)), depth);
 		MARK_SERIES(FUNC_ARGS(&CALLBACK_FUNC(rot)));
 	} else {
-		MARK_LIB(ROUTINE_LIB(rot));
+		if (ROUTINE_LIB(rot) != NULL) { //this could be null it's called before the routine! has been fully constructed
+			MARK_LIB(ROUTINE_LIB(rot));
+		}
 		if (ROUTINE_RVALUE(rot).spec) {
 			Mark_Struct(&ROUTINE_RVALUE(rot), depth);
 		}

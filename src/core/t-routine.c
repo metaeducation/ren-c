@@ -683,16 +683,34 @@ static void callback_dispatcher(ffi_cif *cif, void *ret, void **args, void *user
 
 	blk = VAL_BLK_DATA(data);
 	if (type == REB_ROUTINE) {
-		if (VAL_LEN(data) > 3)
-			Trap0(RE_TOO_LONG);
-		if (VAL_LEN(data) < 3)
-			Trap0(RE_TOO_SHORT);
+		REBINT fn_idx = 0;
+		REBVAL *lib = NULL;
 		if (!IS_BLOCK(&blk[0]))
 			Trap_Types(RE_EXPECT_VAL, REB_BLOCK, VAL_TYPE(&blk[0]));
-		if (!IS_LIBRARY(&blk[1]))
-			Trap_Arg(&blk[1]);
-		if (!IS_STRING(&blk[2]))
-			Trap_Arg(&blk[2]);
+
+		fn_idx = Do_Next(VAL_SERIES(data), 1, 0);
+		lib = DS_POP; //Do_Next saves result on stack
+		if (!IS_LIBRARY(lib))
+			Trap_Arg(lib);
+
+		if (!IS_STRING(&blk[fn_idx]))
+			Trap_Arg(&blk[fn_idx]);
+
+		VAL_ROUTINE_LIB(out) = VAL_LIB_HANDLE(lib);
+		if (!VAL_ROUTINE_LIB(out)) {
+			Trap_Arg(lib);
+			//RL_Print("lib is not open\n");
+			ret = FALSE;
+		}
+		TERM_SERIES(VAL_SERIES(&blk[fn_idx]));
+		func = OS_FIND_FUNCTION(LIB_FD(VAL_ROUTINE_LIB(out)), VAL_DATA(&blk[fn_idx]));
+		if (!func) {
+			Trap_Arg(&blk[fn_idx]);
+			//printf("Couldn't find function: %s\n", VAL_DATA(&blk[2]));
+			ret = FALSE;
+		} else {
+			VAL_ROUTINE_FUNCPTR(out) = func;
+		}
 	} else if (type = REB_CALLBACK) {
 		if (VAL_LEN(data) > 2)
 			Trap0(RE_TOO_LONG);
@@ -704,24 +722,6 @@ static void callback_dispatcher(ffi_cif *cif, void *ret, void **args, void *user
 			Trap_Arg(&blk[2]);
 		VAL_CALLBACK_FUNC(out) = VAL_FUNC(&blk[1]);
 		//printf("RIN: %p, func: %p\n", VAL_ROUTINE_INFO(out), &blk[1]);
-	}
-
-	if (type == REB_ROUTINE) {
-		VAL_ROUTINE_LIB(out) = VAL_LIB_HANDLE(&blk[1]);
-		if (!VAL_ROUTINE_LIB(out)) {
-			Trap_Arg(&blk[1]);
-			//RL_Print("lib is not open\n");
-			ret = FALSE;
-		}
-		TERM_SERIES(VAL_SERIES(&blk[2]));
-		func = OS_FIND_FUNCTION(LIB_FD(VAL_ROUTINE_LIB(out)), VAL_DATA(&blk[2]));
-		if (!func) {
-			Trap_Arg(&blk[2]);
-			//printf("Couldn't find function: %s\n", VAL_DATA(&blk[2]));
-			ret = FALSE;
-		} else {
-			VAL_ROUTINE_FUNCPTR(out) = func;
-		}
 	}
 
 	blk = VAL_BLK_DATA(&blk[0]);
