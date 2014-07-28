@@ -712,15 +712,18 @@ static void callback_dispatcher(ffi_cif *cif, void *ret, void **args, void *user
 			VAL_ROUTINE_FUNCPTR(out) = func;
 		}
 	} else if (type = REB_CALLBACK) {
-		if (VAL_LEN(data) > 2)
-			Trap0(RE_TOO_LONG);
-		if (VAL_LEN(data) < 2)
-			Trap0(RE_TOO_SHORT);
+		REBINT fn_idx = 0;
+		REBVAL *fun = NULL;
 		if (!IS_BLOCK(&blk[0]))
-			Trap_Arg(&blk[1]);
-		if (!IS_FUNCTION(&blk[1]))
-			Trap_Arg(&blk[2]);
-		VAL_CALLBACK_FUNC(out) = VAL_FUNC(&blk[1]);
+			Trap_Arg(&blk[0]);
+		fn_idx = Do_Next(VAL_SERIES(data), 1, 0);
+		fun = DS_POP; //Do_Next saves result on stack
+		if (!IS_FUNCTION(fun))
+			Trap_Arg(fun);
+		VAL_CALLBACK_FUNC(out) = VAL_FUNC(fun);
+		if (NOT_END(&blk[fn_idx])) {
+			Trap_Arg(&blk[fn_idx]);
+		}
 		//printf("RIN: %p, func: %p\n", VAL_ROUTINE_INFO(out), &blk[1]);
 	}
 

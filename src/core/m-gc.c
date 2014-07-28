@@ -187,9 +187,11 @@ static void Mark_Series(REBSER *series, REBCNT depth);
 	CHECK_MARK(ROUTINE_EXTRA_MEM(rot), depth);
 
 	if (IS_CALLBACK_ROUTINE(ROUTINE_INFO(rot))) {
-		CHECK_MARK(FUNC_BODY(&CALLBACK_FUNC(rot)), depth);
-		CHECK_MARK(FUNC_SPEC(&CALLBACK_FUNC(rot)), depth);
-		MARK_SERIES(FUNC_ARGS(&CALLBACK_FUNC(rot)));
+		if (FUNC_BODY(&CALLBACK_FUNC(rot)) != NULL) { //this could be null it's called before the callback! has been fully constructed
+			CHECK_MARK(FUNC_BODY(&CALLBACK_FUNC(rot)), depth);
+			CHECK_MARK(FUNC_SPEC(&CALLBACK_FUNC(rot)), depth);
+			MARK_SERIES(FUNC_ARGS(&CALLBACK_FUNC(rot)));
+		}
 	} else {
 		if (ROUTINE_LIB(rot) != NULL) { //this could be null it's called before the routine! has been fully constructed
 			MARK_LIB(ROUTINE_LIB(rot));
