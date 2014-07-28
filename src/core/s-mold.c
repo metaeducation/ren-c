@@ -1255,6 +1255,11 @@ STOID Mold_Error(REBVAL *value, REB_MOLD *mold, REBFLG molded)
 	}
 		break;
 
+	case REB_ROUTINE:
+		Pre_Mold(value, mold);
+		Mold_Block_Series(mold, VAL_ROUTINE_SPEC(value), 0, NULL);
+		End_Mold(mold);
+		break;
 	case REB_LIBRARY:
 		Pre_Mold(value, mold);
 
