@@ -213,7 +213,11 @@ static REBOOL rebol_type_to_ffi(REBVAL *out, REBVAL *elem, REBCNT idx)
 		} else {
 			return FALSE;
 		}
-		to = Append_Value(VAL_ROUTINE_FFI_ARG_STRUCTS(out));
+		if (idx == 0) {
+			to = BLK_HEAD(VAL_ROUTINE_FFI_ARG_STRUCTS(out));
+		} else {
+			to = Append_Value(VAL_ROUTINE_FFI_ARG_STRUCTS(out));
+		}
 		Copy_Struct_Val(elem, to); //for callback and return value
 	} else {
 		return FALSE;
@@ -668,6 +672,7 @@ static void callback_dispatcher(ffi_cif *cif, void *ret, void **args, void *user
 	VAL_ROUTINE_ARGS(out) = Make_Block(N_ARGS);
 	Append_Value(VAL_ROUTINE_ARGS(out)); //first word should be 'self', but ignored here.
 	VAL_ROUTINE_FFI_ARG_STRUCTS(out) = Make_Block(N_ARGS);
+	Append_Value(VAL_ROUTINE_FFI_ARG_STRUCTS(out)); /* reserve for returning struct */
 
 	VAL_ROUTINE_ABI(out) = FFI_DEFAULT_ABI;
 	VAL_ROUTINE_LIB(out) = NULL;
