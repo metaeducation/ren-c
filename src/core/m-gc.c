@@ -449,6 +449,7 @@ mark_obj:
 
 		case REB_LIBRARY:
 			MARK_LIB(VAL_LIB_HANDLE(val));
+			CHECK_MARK(VAL_LIB_SPEC(val), depth);
 			break;
 
 		case REB_STRUCT:

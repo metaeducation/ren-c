@@ -992,12 +992,14 @@ typedef struct Reb_Library_Handle {
 
 typedef struct Reb_Library {
 	REBLHL *handle;
+	REBSER *spec;
 } REBLIB;
 
 #define LIB_FD(v) 			((v)->fd)
 #define LIB_FLAGS(v) 		((v)->flags)
 
 #define VAL_LIB(v)        	((v)->data.library)
+#define VAL_LIB_SPEC(v)     ((v)->data.library.spec)
 #define VAL_LIB_HANDLE(v) 	((v)->data.library.handle)
 #define VAL_LIB_FD(v) 		((v)->data.library.handle->fd)
 #define VAL_LIB_FLAGS(v) 	((v)->data.library.handle->flags)

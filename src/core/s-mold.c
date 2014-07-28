@@ -1255,11 +1255,20 @@ STOID Mold_Error(REBVAL *value, REB_MOLD *mold, REBFLG molded)
 	}
 		break;
 
+	case REB_LIBRARY:
+		Pre_Mold(value, mold);
+
+		DS_PUSH_NONE;
+		*DS_TOP = *(REBVAL*)SERIES_DATA(VAL_LIB_SPEC(value));
+		Mold_File(DS_TOP, mold);
+		DS_POP;
+
+		End_Mold(mold);
+		break;
 	case REB_REBCODE:
 	case REB_OP:
 	case REB_FRAME:
 	case REB_HANDLE:
-	case REB_LIBRARY:
 	case REB_UTYPE:
 		// Value has no printable form, so just print its name.
 		if (!molded) Emit(mold, "?T?", value);

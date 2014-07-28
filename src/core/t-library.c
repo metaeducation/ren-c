@@ -67,7 +67,7 @@
 				Trap_Types(RE_EXPECT_VAL, REB_LIBRARY, VAL_TYPE(val));
 			}
 			if (!IS_FILE(arg)) {
-				Trap_Types(RE_EXPECT_VAL, REB_BLOCK, VAL_TYPE(arg));
+				Trap_Types(RE_EXPECT_VAL, REB_FILE, VAL_TYPE(arg));
 			} else {
 				REBCNT len = VAL_LEN(arg);
 				void *lib = NULL;
@@ -77,6 +77,8 @@
 				if (!lib) {
 					Trap_Make(REB_LIBRARY, arg);
 				}
+				VAL_LIB_SPEC(ret) = Make_Block(1);
+				Append_Val(VAL_LIB_SPEC(ret), arg);
 				VAL_LIB_HANDLE(ret) = (REBLHL*)Make_Node(LIB_POOL);
 				VAL_LIB_FD(ret) = lib;
 				USE_LIB(VAL_LIB_HANDLE(ret));
