@@ -22,13 +22,13 @@ f: func [
      ]
 ]
     
-cb: make callback! compose [
+cb: make callback! [
     [
 		a [pointer]
 		b [pointer]
 		return: [int32]
     ]
-    (:f)
+    :f
 ]
 
 libc: make library! %libc.so.6

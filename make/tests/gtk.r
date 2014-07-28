@@ -197,7 +197,7 @@ mk-cb: func [
 	tmp-func: function r-args body
 
 	print ["tmp-func:" mold :tmp-func]
-	make callback! reduce [args :tmp-func]
+	make callback! compose/deep [[(args)] :tmp-func]
 ]
 
 on-click-callback: mk-cb [
