@@ -458,7 +458,8 @@ static void ffi_to_rebol(REBRIN *rin,
 	REBINT pop = 1; /* for tmp */
 	REBVAL *tmp = NULL;
 
-	if (IS_CLOSED_LIB(VAL_ROUTINE_LIB(rot))) {
+	if (VAL_ROUTINE_LIB(rot) != NULL //lib is NULL when routine is constructed from address directly
+		&& IS_CLOSED_LIB(VAL_ROUTINE_LIB(rot))) {
 		Trap0(RE_BAD_LIBRARY);
 	}
 	/* save ser on stack such that it won't be GC'ed */
@@ -701,30 +702,42 @@ static void callback_dispatcher(ffi_cif *cif, void *ret, void **args, void *user
 
 		fn_idx = Do_Next(VAL_SERIES(data), 1, 0);
 		lib = DS_POP; //Do_Next saves result on stack
-		if (!IS_LIBRARY(lib))
-			Trap_Arg(lib);
 
-		if (!IS_STRING(&blk[fn_idx]))
-			Trap_Arg(&blk[fn_idx]);
-
-		if (NOT_END(&blk[fn_idx + 1])) {
-			Trap_Arg(&blk[fn_idx + 1]);
-		}
-
-		VAL_ROUTINE_LIB(out) = VAL_LIB_HANDLE(lib);
-		if (!VAL_ROUTINE_LIB(out)) {
-			Trap_Arg(lib);
-			//RL_Print("lib is not open\n");
-			ret = FALSE;
-		}
-		TERM_SERIES(VAL_SERIES(&blk[fn_idx]));
-		func = OS_FIND_FUNCTION(LIB_FD(VAL_ROUTINE_LIB(out)), VAL_DATA(&blk[fn_idx]));
-		if (!func) {
-			Trap_Arg(&blk[fn_idx]);
-			//printf("Couldn't find function: %s\n", VAL_DATA(&blk[2]));
-			ret = FALSE;
+		if (IS_INTEGER(lib)) {
+			if (NOT_END(&blk[fn_idx])) {
+				Trap_Arg(&blk[fn_idx]);
+			}
+			//treated as a pointer to the function
+			if (VAL_INT64(lib) == 0) {
+				Trap_Arg(lib);
+			}
+			VAL_ROUTINE_FUNCPTR(out) = (void (*) (void))VAL_INT64(lib);
 		} else {
-			VAL_ROUTINE_FUNCPTR(out) = func;
+			if (!IS_LIBRARY(lib))
+				Trap_Arg(lib);
+
+			if (!IS_STRING(&blk[fn_idx]))
+				Trap_Arg(&blk[fn_idx]);
+
+			if (NOT_END(&blk[fn_idx + 1])) {
+				Trap_Arg(&blk[fn_idx + 1]);
+			}
+
+			VAL_ROUTINE_LIB(out) = VAL_LIB_HANDLE(lib);
+			if (!VAL_ROUTINE_LIB(out)) {
+				Trap_Arg(lib);
+				//RL_Print("lib is not open\n");
+				ret = FALSE;
+			}
+			TERM_SERIES(VAL_SERIES(&blk[fn_idx]));
+			func = OS_FIND_FUNCTION(LIB_FD(VAL_ROUTINE_LIB(out)), VAL_DATA(&blk[fn_idx]));
+			if (!func) {
+				Trap_Arg(&blk[fn_idx]);
+				//printf("Couldn't find function: %s\n", VAL_DATA(&blk[2]));
+				ret = FALSE;
+			} else {
+				VAL_ROUTINE_FUNCPTR(out) = func;
+			}
 		}
 	} else if (type = REB_CALLBACK) {
 		REBINT fn_idx = 0;
