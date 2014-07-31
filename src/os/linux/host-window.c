@@ -897,6 +897,7 @@ static void set_wm_locale(Display *display,
 	Gob_Windows[windex].win = hw;
 	Gob_Windows[windex].compositor = rebcmp_create(Gob_Root, gob); /* it updates has_xshm */
 	hw->x_back_buffer = 0; /* intialization */
+	hw->mapped = 0;
 	if (global_x_info->has_double_buffer
 #ifdef USE_XSHM
 		&& !global_x_info->has_xshm

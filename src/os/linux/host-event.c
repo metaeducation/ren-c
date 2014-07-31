@@ -845,6 +845,12 @@ void Dispatch_Event(XEvent *ev)
 			break;
 		case MapNotify:
 			//RL_Print("Window %x is mapped\n", ev->xmap.window);
+			{
+				host_window_t *hw = Find_Host_Window_By_ID(ev->xmap.window);
+				if (hw != NULL) {
+					hw->mapped = 1;
+				}
+			}
 			break;
 		case ReparentNotify:
 			//RL_Print("Window %x is reparented to %x\n", ev->xreparent.window, ev->xreparent.parent);

@@ -721,7 +721,10 @@ void rebcmp_blit_region(REBCMP_CTX* ctx, Region reg)
 	RL_Print("Setting window region at: %dx%d, size:%dx%d\n",
 			 rect.x, rect.y, rect.width, rect.height);
 			 */
-
+	/* make sure the window is mapped, or XPutImage will not work properly */
+	while (!ctx->host_window->mapped) {
+		X_Event_Loop(10);
+	}
 #ifdef USE_XSHM
 	if (global_x_info->has_xshm) {
 		//RL_Print("XshmPutImage\n");

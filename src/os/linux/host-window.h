@@ -71,6 +71,7 @@ extern "C" {
 		unsigned int	old_width;
 		unsigned int	old_height;
 		unsigned int	window_flags; /* last window flags from _NET_WM_STATE */
+		unsigned char	mapped; /* windows has to be mapped before calling PutImage */
 	} host_window_t;
 
 	extern x_info_t *global_x_info;
