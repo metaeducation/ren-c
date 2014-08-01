@@ -165,6 +165,43 @@ tcp
 udp
 clipboard
 
+; Struct
+uint8
+int8
+uint16
+int16
+uint32
+int32
+uint64
+int64
+float
+;double ;reuse earlier definition
+pointer
+addr
+raw-memory
+raw-size
+
+;routine
+void
+library
+name
+abi
+stdcall
+fastcall
+sysv
+thiscall
+unix64
+ms-cdecl
+win64
+default
+vfp ;arm
+o32; mips abi
+n32; mips abi
+n64; mips abi
+o32-soft-float; mips abi
+n32-soft-float; mips abi
+n64-soft-float; mips abi
+
 ; Gobs:
 gob
 offset

@@ -87,6 +87,8 @@
 #include "tmp-strings.h"
 #include "tmp-funcargs.h"
 
+#include "reb-struct.h"
+
 //-- Port actions (for native port schemes):
 typedef struct rebol_port_action_map {
 	const REBCNT action;

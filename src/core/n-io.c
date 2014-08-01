@@ -86,7 +86,7 @@ static REBSER *Read_All_File(char *fname)
 	Echo_File(0);
 
 	if (IS_FILE(val))
-		ser = Value_To_OS_Path(val);
+		ser = Value_To_OS_Path(val, TRUE);
 	else if (IS_LOGIC(val) && IS_TRUE(val))
 		ser = To_Local_Path("output.txt", 10, FALSE, TRUE);
 
@@ -484,7 +484,7 @@ chk_neg:
 	REBINT n;
 	REBVAL val;
 
-	ser = Value_To_OS_Path(arg);
+	ser = Value_To_OS_Path(arg, TRUE);
 	if (!ser) Trap_Arg(arg); // !!! ERROR MSG
 
 	Set_String(&val, ser); // may be unicode or utf-8
@@ -717,7 +717,7 @@ chk_neg:
 	if (D_REF(ARG_REQUEST_FILE_MULTI)) SET_FLAG(fr.flags, FRF_MULTI);
 
 	if (D_REF(ARG_REQUEST_FILE_FILE)) {
-		ser = Value_To_OS_Path(D_ARG(ARG_REQUEST_FILE_NAME));
+		ser = Value_To_OS_Path(D_ARG(ARG_REQUEST_FILE_NAME), TRUE);
 		fr.dir = (REBCHR*)(ser->data);
 		n = ser->tail;
 		if (fr.dir[n-1] != OS_DIR_SEP) {

@@ -104,6 +104,8 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 
 	DEF_POOL(sizeof(REBSER), 4096),	// Series headers
 	DEF_POOL(sizeof(REBGOB), 128),	// Gobs
+	DEF_POOL(sizeof(REBLHL), 32), // external libraries
+	DEF_POOL(sizeof(REBRIN), 128), // external routines
 	DEF_POOL(1, 1),	// Just used for tracking main memory
 };
 
@@ -475,7 +477,8 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 
 	// Verify that size matches pool size:
 	if (pool_num < SERIES_POOL) {
-		ASSERT(Mem_Pools[pool_num].wide == size, RP_FREE_NODE_SIZE);
+		/* size < wide when "wide" is not a multiple of element size */
+		ASSERT(Mem_Pools[pool_num].wide >= size, RP_FREE_NODE_SIZE);
 	}
 	MUNG_CHECK(pool_num,node, size);
 
@@ -521,7 +524,9 @@ clear_header:
 		if (Prior_Expand[n] == series) Prior_Expand[n] = 0;
 	}
 
-	Free_Series_Data(series, TRUE);
+	if (!IS_EXT_SERIES(series)) {
+		Free_Series_Data(series, TRUE);
+	}
 	series->info = 0; // includes width
 	//series->data = BAD_MEM_PTR;
 	//series->tail = 0xBAD2BAD2;

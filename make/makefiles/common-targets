@@ -36,7 +36,7 @@ strip-core: r3-core$(BIN_SUFFIX)
 	#$(LS) r3-core$(BIN_SUFFIX)
 
 r3-view$(BIN_SUFFIX): prep-view prep-view-stamp objs $(OBJS) $(HOST) $(CODECS) $(GFX) $(AGG)
-	$(CXX) -o r3-view$(BIN_SUFFIX) $(BIT) $(OBJS) $(HOST) $(CODECS) $(GFX) $(AGG) $(GUI_CLIB)
+	$(CXX) -o r3-view$(BIN_SUFFIX) $(BIT) $(OBJS) $(HOST) $(CODECS) $(GFX) $(AGG) $(CLIB) $(GUI_CLIB)
 
 strip-view: r3-view$(BIN_SUFFIX)
 	$(STRIP) $<
@@ -265,6 +265,15 @@ objs/t-function.o:    $R/t-function.c
 
 objs/t-gob.o:         $R/t-gob.c
 	$(CC) $R/t-gob.c $(RFLAGS) -o objs/t-gob.o
+
+objs/t-struct.o:         $R/t-struct.c
+	$(CC) $R/t-struct.c $(RFLAGS) -o objs/t-struct.o
+
+objs/t-library.o:         $R/t-library.c
+	$(CC) $R/t-library.c $(RFLAGS) -o objs/t-library.o
+
+objs/t-routine.o:         $R/t-routine.c
+	$(CC) $R/t-routine.c $(RFLAGS) -o objs/t-routine.o
 
 objs/t-image.o:       $R/t-image.c
 	$(CC) $R/t-image.c $(RFLAGS) -o objs/t-image.o

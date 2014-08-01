@@ -398,7 +398,7 @@ enum {
 	SER_MARK = 1,		// Series was found during GC mark scan.
 	SER_KEEP = 1<<1,	// Series is permanent, do not GC it.
 	SER_LOCK = 1<<2,	// Series is locked, do not expand it
-	SER_EXT  = 1<<3,	// Series is external (library), do not GC it.
+	SER_EXT  = 1<<3,	// Series data is external (library), do not GC it.
 	SER_FREE = 1<<4,	// mark series as removed
 	SER_BARE = 1<<5,	// Series has no links to GC-able values
 	SER_PROT = 1<<6,	// Series is protected from modification
@@ -409,11 +409,12 @@ enum {
 #define SERIES_CLR_FLAG(s, f) (SERIES_FLAGS(s) &= ~((f) << 8))
 #define SERIES_GET_FLAG(s, f) (SERIES_FLAGS(s) &  ((f) << 8))
 
-#define	IS_FREEABLE(s)    !SERIES_GET_FLAG(s, SER_MARK|SER_KEEP|SER_EXT|SER_FREE)
+#define	IS_FREEABLE(s)    !SERIES_GET_FLAG(s, SER_MARK|SER_KEEP|SER_FREE)
 #define MARK_SERIES(s)    SERIES_SET_FLAG(s, SER_MARK)
 #define UNMARK_SERIES(s)  SERIES_CLR_FLAG(s, SER_MARK)
 #define IS_MARK_SERIES(s) SERIES_GET_FLAG(s, SER_MARK)
 #define KEEP_SERIES(s,l)  do {SERIES_SET_FLAG(s, SER_KEEP); LABEL_SERIES(s,l);} while(0)
+#define EXT_SERIES(s)     SERIES_SET_FLAG(s, SER_EXT)
 #define IS_EXT_SERIES(s)  SERIES_GET_FLAG(s, SER_EXT)
 #define LOCK_SERIES(s)    SERIES_SET_FLAG(s, SER_LOCK)
 #define IS_LOCK_SERIES(s) SERIES_GET_FLAG(s, SER_LOCK)
@@ -906,6 +907,8 @@ typedef int  (*CMD_FUNC)(REBCNT n, REBSER *args);
 #define REBTYPE(n)   int T_##n(REBVAL *ds, REBCNT action)
 #define REBPACT(n)   int P_##n(REBVAL *ds)
 
+typedef struct Reb_Routine_Info REBRIN;
+
 typedef struct Reb_Function {
 	REBSER	*spec;	// Spec block for function
 	REBSER	*args;	// Block of Wordspecs (with typesets)
@@ -913,9 +916,23 @@ typedef struct Reb_Function {
 		REBFUN	code;
 		REBSER	*body;
 		REBCNT	act;
+		REBRIN	*info;
 	} func;
 } REBFCN;
 
+/* argument is of type REBFCN* */
+#define FUNC_SPEC(v)	  ((v)->spec)	// a series
+#define FUNC_SPEC_BLK(v)  BLK_HEAD((v)->spec)
+#define FUNC_ARGS(v)	  ((v)->args)
+#define FUNC_WORDS(v)     FUNC_ARGS(v)
+#define FUNC_CODE(v)	  ((v)->func.code)
+#define FUNC_BODY(v)	  ((v)->func.body)
+#define FUNC_ACT(v)       ((v)->func.act)
+#define FUNC_INFO(v)      ((v)->func.info)
+#define FUNC_ARGC(v)	  SERIES_TAIL((v)->args)
+
+/* argument is of type REBVAL* */
+#define VAL_FUNC(v)			  ((v)->data.func)
 #define VAL_FUNC_SPEC(v)	  ((v)->data.func.spec)	// a series
 #define VAL_FUNC_SPEC_BLK(v)  BLK_HEAD((v)->data.func.spec)
 #define VAL_FUNC_ARGS(v)	  ((v)->data.func.args)
@@ -923,6 +940,7 @@ typedef struct Reb_Function {
 #define VAL_FUNC_CODE(v)	  ((v)->data.func.func.code)
 #define VAL_FUNC_BODY(v)	  ((v)->data.func.func.body)
 #define VAL_FUNC_ACT(v)       ((v)->data.func.func.act)
+#define VAL_FUNC_INFO(v)      ((v)->data.func.func.info)
 #define VAL_FUNC_ARGC(v)	  SERIES_TAIL((v)->data.func.args)
 
 typedef struct Reb_Path_Value {
@@ -967,59 +985,46 @@ typedef struct Reb_Handle {
 **
 ***********************************************************************/
 
+typedef struct Reb_Library_Handle {
+	void * fd;
+	REBFLG flags;
+} REBLHL;
+
 typedef struct Reb_Library {
-	long handle;        // ALPHA wants a long
-	REBSER *name;
-	REBCNT id;
+	REBLHL *handle;
+	REBSER *spec;
 } REBLIB;
 
-#define VAL_LIBRARY(v)        (v->data.library)
-#define VAL_LIBRARY_HANDLE(v) (v->data.library.handle)
-#define VAL_LIBRARY_NAME(v)   (v->data.library.name)
-#define VAL_LIBRARY_ID(v)     (v->data.library.id)
+#define LIB_FD(v) 			((v)->fd)
+#define LIB_FLAGS(v) 		((v)->flags)
 
+#define VAL_LIB(v)        	((v)->data.library)
+#define VAL_LIB_SPEC(v)     ((v)->data.library.spec)
+#define VAL_LIB_HANDLE(v) 	((v)->data.library.handle)
+#define VAL_LIB_FD(v) 		((v)->data.library.handle->fd)
+#define VAL_LIB_FLAGS(v) 	((v)->data.library.handle->flags)
 
-/***********************************************************************
-**
-**	ROUTINE -- External library routine structures
-**
-***********************************************************************/
+enum {
+	LIB_MARK = 1,		// library was found during GC mark scan.
+	LIB_USED = 1 << 1,
+	LIB_CLOSED = 1 << 2,
+};
 
-typedef struct Reb_Routine {
-	FUNCPTR funcptr;
-	REBSER  *spec; // struct-ptr
-	REBCNT  id;
-} REBROT;
+#define LIB_SET_FLAG(s, f) (LIB_FLAGS(s) |= (f))
+#define LIB_CLR_FLAG(s, f) (LIB_FLAGS(s) &= ~(f))
+#define LIB_GET_FLAG(s, f) (LIB_FLAGS(s) &  (f))
 
-typedef struct Reb_Rot_Info {
-	REBCNT call_idx;
-	REBCNT pad1;
-	REBCNT pad2;
-} REBFRO;
+#define MARK_LIB(s)    LIB_SET_FLAG(s, LIB_MARK)
+#define UNMARK_LIB(s)  LIB_CLR_FLAG(s, LIB_MARK)
+#define IS_MARK_LIB(s) LIB_GET_FLAG(s, LIB_MARK)
 
-#define VAL_ROUTINE(v)          (v->data.routine)
-#define VAL_ROUTINE_FUNCPTR(v)  (v->data.routine.funcptr)
-#define VAL_ROUTINE_SPEC_SER(v) (v->data.routine.spec)
-#define VAL_ROUTINE_SPEC(v)     ((REBVAL *) (((REBFRO *)BLK_HEAD(VAL_ROUTINE_SPEC_SER(v))) + 1))
-#define VAL_ROUTINE_INFO(v)	((REBFRO *) (((REBFRO *)BLK_HEAD(VAL_ROUTINE_SPEC_SER(v)))))
-#define VAL_ROUTINE_ID(v)       (v->data.routine.id)
+#define USE_LIB(s)     LIB_SET_FLAG(s, LIB_USED)
+#define UNUSE_LIB(s)   LIB_CLR_FLAG(s, LIB_USED)
+#define IS_USED_LIB(s) LIB_GET_FLAG(s, LIB_USED)
 
-#define RFRO_CALLIDX(i) ((i)->call_idx)
-
-typedef struct Reb_Typeset {
-	REBCNT  pad;	// Allows us to overlay this type on WORD spec type
-	REBU64  bits;
-} REBTYS;
-
-#define VAL_TYPESET(v)  ((v)->data.typeset.bits)
-#define TYPE_CHECK(v,n) ((VAL_TYPESET(v) & ((REBU64)1 << (n))) != (REBU64)0)
-#define TYPE_SET(v,n)   (VAL_TYPESET(v) |= ((REBU64)1 << (n)))
-#define EQUAL_TYPESET(v,w) (VAL_TYPESET(v) == VAL_TYPESET(w))
-#define TYPESET(n) ((REBU64)1 << (n))
-
-//#define TYPE_CHECK(v,n) ((VAL_TYPESET(v)[(n)/32] & (1 << ((n)%32))) != 0)
-//#define TYPE_SET(v,n)   (VAL_TYPESET(v)[(n)/32] |= (1 << ((n)%32)))
-//#define EQUAL_TYPESET(v,n) (VAL_TYPESET(v)[0] == VAL_TYPESET(n)[0] && VAL_TYPESET(v)[1] == VAL_TYPESET(n)[1])
+#define IS_CLOSED_LIB(s) 	LIB_GET_FLAG(s, LIB_CLOSED)
+#define CLOSE_LIB(s) 		LIB_SET_FLAG(s, LIB_CLOSED)
+#define OPEN_LIB(s) 		LIB_CLR_FLAG(s, LIB_CLOSED)
 
 /***********************************************************************
 **
@@ -1029,16 +1034,121 @@ typedef struct Reb_Typeset {
 
 typedef struct Reb_Struct {
 	REBSER	*spec;
-	REBSER	*vals;
+	REBSER	*fields;	// fields definition
 	REBSER	*data;
 } REBSTU;
 
-#define VAL_STRUCT(v)       (v->data.structure)
-#define VAL_STRUCT_SPEC(v)  (v->data.structure.spec)
-#define VAL_STRUCT_VALS(v)  (v->data.structure.vals)
-#define VAL_STRUCT_DATA(v)  (v->data.structure.data)
+#define VAL_STRUCT(v)       ((v)->data.structure)
+#define VAL_STRUCT_SPEC(v)  ((v)->data.structure.spec)
+#define VAL_STRUCT_FIELDS(v)  ((v)->data.structure.fields)
+#define VAL_STRUCT_DATA(v)  ((v)->data.structure.data)
 #define VAL_STRUCT_DP(v)    (STR_HEAD(VAL_STRUCT_DATA(v)))
-#define VAL_STRUCT_LEN(v)   (SERIES_TAIL(VAL_STRUCT_DATA(v)))
+
+
+/***********************************************************************
+**
+**	ROUTINE -- External library routine structures
+**
+***********************************************************************/
+typedef struct Reb_Value REBVAL;
+
+struct Reb_Routine_Info {
+	union {
+		struct {
+			REBLHL	*lib;
+			void (*funcptr) (void);
+		} rot;
+		struct {
+			void *closure;
+			REBFCN func;
+			void (*dispatcher) (void);
+		} cb;
+	} info;
+	void	*cif;
+	REBSER  *args; /* index 0 is the return type, */
+	REBSER  *arg_structs; /* for struct arguments */
+	REBSER	*extra_mem; /* extra memory that needs to be free'ed */
+	REBINT	abi;
+	REBFLG	flags;
+};
+
+typedef struct Reb_Function REBROT;
+
+enum {
+	ROUTINE_MARK = 1,		// routine was found during GC mark scan.
+	ROUTINE_USED = 1 << 1,
+	ROUTINE_CALLBACK = 1 << 2, //this is a callback
+};
+
+/* argument is REBFCN */
+#define ROUTINE_SPEC(v)				FUNC_SPEC(v)
+#define ROUTINE_INFO(v)				FUNC_INFO(v)
+#define ROUTINE_ARGS(v)				FUNC_ARGS(v)
+#define ROUTINE_FUNCPTR(v)			(ROUTINE_INFO(v)->info.rot.funcptr)
+#define ROUTINE_LIB(v)				(ROUTINE_INFO(v)->info.rot.lib)
+#define ROUTINE_ABI(v)  			(ROUTINE_INFO(v)->abi)
+#define ROUTINE_FFI_ARGS(v)  		(ROUTINE_INFO(v)->args)
+#define ROUTINE_FFI_ARG_STRUCTS(v)  (ROUTINE_INFO(v)->arg_structs)
+#define ROUTINE_EXTRA_MEM(v) 		(ROUTINE_INFO(v)->extra_mem)
+#define ROUTINE_CIF(v) 				(ROUTINE_INFO(v)->cif)
+#define ROUTINE_RVALUE(v) 			VAL_STRUCT((REBVAL*)SERIES_DATA(ROUTINE_INFO(v)->arg_structs))
+#define ROUTINE_CLOSURE(v)			(ROUTINE_INFO(v)->info.cb.closure)
+#define ROUTINE_DISPATCHER(v)		(ROUTINE_INFO(v)->info.cb.dispatcher)
+#define CALLBACK_FUNC(v)  			(ROUTINE_INFO(v)->info.cb.func)
+
+/* argument is REBRIN */
+
+#define RIN_FUNCPTR(v)				((v)->info.rot.funcptr)
+#define RIN_LIB(v)					((v)->info.rot.lib)
+#define RIN_CLOSURE(v)				((v)->info.cb.closure)
+#define RIN_FUNC(v)					((v)->info.cb.func)
+#define RIN_ARGS_STRUCTS(v)			((v)->arg_structs)
+#define RIN_RVALUE(v)				VAL_STRUCT((REBVAL*)SERIES_DATA(RIN_ARGS_STRUCTS(v)))
+
+/* argument is REBVAL */
+#define VAL_ROUTINE(v)          	VAL_FUNC(v)
+#define VAL_ROUTINE_SPEC(v) 		VAL_FUNC_SPEC(v)
+#define VAL_ROUTINE_INFO(v) 		VAL_FUNC_INFO(v)
+#define VAL_ROUTINE_ARGS(v) 		VAL_FUNC_ARGS(v)
+#define VAL_ROUTINE_FUNCPTR(v)  	(VAL_ROUTINE_INFO(v)->info.rot.funcptr)
+#define VAL_ROUTINE_LIB(v)  		(VAL_ROUTINE_INFO(v)->info.rot.lib)
+#define VAL_ROUTINE_ABI(v)  		(VAL_ROUTINE_INFO(v)->abi)
+#define VAL_ROUTINE_FFI_ARGS(v)  	(VAL_ROUTINE_INFO(v)->args)
+#define VAL_ROUTINE_FFI_ARG_STRUCTS(v)  	(VAL_ROUTINE_INFO(v)->arg_structs)
+#define VAL_ROUTINE_EXTRA_MEM(v) 	(VAL_ROUTINE_INFO(v)->extra_mem)
+#define VAL_ROUTINE_CIF(v) 			(VAL_ROUTINE_INFO(v)->cif)
+#define VAL_ROUTINE_RVALUE(v) 		VAL_STRUCT((REBVAL*)SERIES_DATA(VAL_ROUTINE_INFO(v)->arg_structs))
+
+#define VAL_ROUTINE_CLOSURE(v)  	(VAL_ROUTINE_INFO(v)->info.cb.closure)
+#define VAL_ROUTINE_DISPATCHER(v)  	(VAL_ROUTINE_INFO(v)->info.cb.dispatcher)
+#define VAL_CALLBACK_FUNC(v)  		(VAL_ROUTINE_INFO(v)->info.cb.func)
+
+#define ROUTINE_FLAGS(s)	   ((s)->flags) 
+#define ROUTINE_SET_FLAG(s, f) (ROUTINE_FLAGS(s) |= (f))
+#define ROUTINE_CLR_FLAG(s, f) (ROUTINE_FLAGS(s) &= ~(f))
+#define ROUTINE_GET_FLAG(s, f) (ROUTINE_FLAGS(s) &  (f))
+
+#define MARK_ROUTINE(s)    ROUTINE_SET_FLAG(s, ROUTINE_MARK)
+#define UNMARK_ROUTINE(s)  ROUTINE_CLR_FLAG(s, ROUTINE_MARK)
+#define IS_MARK_ROUTINE(s) ROUTINE_GET_FLAG(s, ROUTINE_MARK)
+
+#define USE_ROUTINE(s)     ROUTINE_SET_FLAG(s, ROUTINE_USED)
+#define UNUSE_ROUTINE(s)   ROUTINE_CLR_FLAG(s, ROUTINE_USED)
+#define IS_USED_ROUTINE(s) ROUTINE_GET_FLAG(s, ROUTINE_USED)
+#define IS_CALLBACK_ROUTINE(s) ROUTINE_GET_FLAG(s, ROUTINE_CALLBACK)
+
+
+typedef REBWRS REBTYS;
+
+#define VAL_TYPESET(v)  ((v)->data.typeset.typeset)
+#define TYPE_CHECK(v,n) ((VAL_TYPESET(v) & ((REBU64)1 << (n))) != (REBU64)0)
+#define TYPE_SET(v,n)   (VAL_TYPESET(v) |= ((REBU64)1 << (n)))
+#define EQUAL_TYPESET(v,w) (VAL_TYPESET(v) == VAL_TYPESET(w))
+#define TYPESET(n) ((REBU64)1 << (n))
+
+//#define TYPE_CHECK(v,n) ((VAL_TYPESET(v)[(n)/32] & (1 << ((n)%32))) != 0)
+//#define TYPE_SET(v,n)   (VAL_TYPESET(v)[(n)/32] |= (1 << ((n)%32)))
+//#define EQUAL_TYPESET(v,n) (VAL_TYPESET(v)[0] == VAL_TYPESET(n)[0] && VAL_TYPESET(v)[1] == VAL_TYPESET(n)[1])
 
 /***********************************************************************
 **
@@ -1071,13 +1181,6 @@ typedef struct Reb_All {
 **
 ***********************************************************************/
 {
-	union Reb_Val_Head {
-		REBHED flags;
-		REBCNT header;
-	} flags;
-#if defined(__LP64__) || defined(__LLP64__)
-	REBINT	padding; //make it 32-bit
-#endif
 	union Reb_Val_Data {
 		REBWRD	word;
 		REBSRI	series;
@@ -1099,7 +1202,6 @@ typedef struct Reb_All {
 		REBXYF	pair;
 		REBEVT	event;
 		REBLIB  library;
-		REBROT  routine;
 		REBSTU  structure;
 		REBGBO	gob;
 		REBUDT  utype;
@@ -1107,6 +1209,13 @@ typedef struct Reb_All {
 		REBHAN  handle;
 		REBALL  all;
 	} data;
+#if defined(__LP64__) || defined(__LLP64__)
+	REBINT	padding; //make it 32 bytes
+#endif
+	union Reb_Val_Head {
+		REBHED flags;
+		REBCNT header;
+	} flags;
 };
 
 #define ANY_SERIES(v)		(VAL_TYPE(v) >= REB_BINARY && VAL_TYPE(v) <= REB_LIT_PATH)

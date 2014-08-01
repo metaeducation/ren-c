@@ -35,6 +35,7 @@ use [word title] [
 			spec        ["function or module"]
 			values      ["object or module"]
 			types title ["function"] ; title should include module Title too...
+			addr ["struct or callback"]
 		] ["function, object, or module"]] ; body, words
 		set word func
 			reduce [title 'value]

@@ -299,7 +299,7 @@ remove: action [
 
 change: action [
 	{Replaces element(s); returns just past the change.}
-	series [series! gob! port!]{At position (modified)}
+	series [series! gob! port! struct!]{At position (modified)}
 	value [any-type!] {The new value}
 	/part {Limits the amount to change to a given length or position}
 	length [number! series! pair!]
@@ -382,8 +382,8 @@ open: action [
 ]
 
 close: action [
-	{Closes a port.}
-	port [port!]
+	{Closes a port/library.}
+	port [port! library!]
 ]
 
 read: action [

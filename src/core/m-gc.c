@@ -148,6 +148,59 @@ static void Mark_Series(REBSER *series, REBCNT depth);
 	}
 }
 
+/***********************************************************************
+**
+*/	static void Mark_Struct(REBSTU *stu, REBCNT depth)
+/*
+***********************************************************************/
+{
+	int len = 0;
+	REBSER *series = NULL;
+	CHECK_MARK(stu->spec, depth);
+	CHECK_MARK(stu->fields, depth);
+	CHECK_MARK(STRUCT_DATA_BIN(stu), depth);
+	CHECK_MARK(stu->data, depth);
+
+	series = stu->fields;
+	for (len = 0; len < series->tail; len++) {
+		struct Struct_Field *field = (struct Struct_Field*)BLK_SKIP(series, len);
+		if (field->type == STRUCT_TYPE_STRUCT) {
+			CHECK_MARK(field->fields, depth);
+			CHECK_MARK(field->spec, depth);
+		}
+	}
+}
+
+/***********************************************************************
+**
+*/	static void Mark_Routine(REBROT *rot, REBCNT depth)
+/*
+***********************************************************************/
+{
+	int len = 0;
+	REBSER *series = NULL;
+	CHECK_MARK(ROUTINE_SPEC(rot), depth);
+	MARK_ROUTINE(ROUTINE_INFO(rot));
+
+	CHECK_MARK(ROUTINE_FFI_ARGS(rot), depth);
+	CHECK_MARK(ROUTINE_FFI_ARG_STRUCTS(rot), depth);
+	CHECK_MARK(ROUTINE_EXTRA_MEM(rot), depth);
+
+	if (IS_CALLBACK_ROUTINE(ROUTINE_INFO(rot))) {
+		if (FUNC_BODY(&CALLBACK_FUNC(rot)) != NULL) { //this could be null it's called before the callback! has been fully constructed
+			CHECK_MARK(FUNC_BODY(&CALLBACK_FUNC(rot)), depth);
+			CHECK_MARK(FUNC_SPEC(&CALLBACK_FUNC(rot)), depth);
+			MARK_SERIES(FUNC_ARGS(&CALLBACK_FUNC(rot)));
+		}
+	} else {
+		if (ROUTINE_LIB(rot) != NULL) { //this could be null it's called before the routine! has been fully constructed
+			MARK_LIB(ROUTINE_LIB(rot));
+		}
+		if (ROUTINE_RVALUE(rot).spec) {
+			Mark_Struct(&ROUTINE_RVALUE(rot), depth);
+		}
+	}
+}
 
 /***********************************************************************
 **
@@ -223,7 +276,7 @@ static void Mark_Series(REBSER *series, REBCNT depth);
 	MARK_SERIES(series);
 
 	// If not a block, go no further
-	if (SERIES_WIDE(series) != sizeof(REBVAL)) return;
+	if (SERIES_WIDE(series) != sizeof(REBVAL) || IS_BARE_SERIES(series)) return;
 
 	ASSERT2(RP_SERIES_OVERFLOW, SERIES_TAIL(series) < SERIES_REST(series));
 
@@ -375,10 +428,10 @@ mark_obj:
 				break;
 			}
 #if (ALEVEL>0)
-			if (!IS_END(BLK_SKIP(ser, SERIES_TAIL(ser))) && ser != DS_Series)
+			if (SERIES_WIDE(ser) == sizeof(REBVAL) && !IS_END(BLK_SKIP(ser, SERIES_TAIL(ser))) && ser != DS_Series)
 				Crash(RP_MISSING_END);
 #endif
-			if (SERIES_WIDE(ser) != sizeof(REBVAL) && SERIES_WIDE(ser) != 4 && SERIES_WIDE(ser) != 0)
+			if (SERIES_WIDE(ser) != sizeof(REBVAL) && SERIES_WIDE(ser) != 4 && SERIES_WIDE(ser) != 0 && SERIES_WIDE(ser) != sizeof(void*))
 				Crash(RP_BAD_WIDTH, 16, SERIES_WIDE(ser), VAL_TYPE(val));
 			CHECK_MARK(ser, depth);
 			break;
@@ -391,28 +444,20 @@ mark_obj:
 			}
 			break;
 
-#ifdef ndef
+		case REB_CALLBACK:
 		case REB_ROUTINE:
-		  // Deal with the co-joined struct value...
-			CHECK_MARK(VAL_STRUCT_SPEC(VAL_ROUTINE_SPEC(val)), depth);
-			CHECK_MARK(VAL_STRUCT_VALS(VAL_ROUTINE_SPEC(val)), depth);
-			MARK_SERIES(VAL_STRUCT_DATA(VAL_ROUTINE_SPEC(val)));
-			MARK_SERIES(VAL_ROUTINE_SPEC_SER(val));
-//!!!			if (Current_Closing_Library && VAL_ROUTINE_ID(val) == Current_Closing_Library)
-				VAL_ROUTINE_ID(val) = 0; // Invalidate the routine
+			CHECK_MARK(VAL_ROUTINE_SPEC(val), depth);
+			CHECK_MARK(VAL_ROUTINE_ARGS(val), depth);
+			Mark_Routine(&VAL_ROUTINE(val), depth);
 			break;
-#endif
 
 		case REB_LIBRARY:
-			MARK_SERIES(VAL_LIBRARY_NAME(val));
-//!!!			if (Current_Closing_Library && VAL_LIBRARY_ID(val) == Current_Closing_Library)
-				VAL_LIBRARY_ID(val) = 0; // Invalidate the library
+			MARK_LIB(VAL_LIB_HANDLE(val));
+			CHECK_MARK(VAL_LIB_SPEC(val), depth);
 			break;
 
 		case REB_STRUCT:
-			CHECK_MARK(VAL_STRUCT_SPEC(val), depth);  // is a block
-			CHECK_MARK(VAL_STRUCT_VALS(val), depth);  // "    "
-			MARK_SERIES(VAL_STRUCT_DATA(val));
+			Mark_Struct(&VAL_STRUCT(val), depth);
 			break;
 
 		case REB_GOB:
@@ -429,7 +474,7 @@ mark_obj:
 	}
 
 #if (ALEVEL>0)
-	if (!IS_END(BLK_SKIP(series, len)) && series != DS_Series)
+	if (SERIES_WIDE(series) == sizeof(REBVAL) && !IS_END(BLK_SKIP(series, len)) && series != DS_Series)
 		Crash(RP_MISSING_END);
 #endif
 }
@@ -513,6 +558,77 @@ mark_obj:
 	return count;
 }
 
+/***********************************************************************
+**
+*/	static REBCNT Sweep_Libs(void)
+/*
+**		Free all unmarked libs.
+**
+**		Scans all libs in all segments that are part of the
+**		LIB_POOL. Free libs that have not been marked.
+**
+***********************************************************************/
+{
+	REBSEG	*seg;
+	REBLHL	*lib;
+	REBCNT  n;
+	REBCNT	count = 0;
+
+	for (seg = Mem_Pools[LIB_POOL].segs; seg; seg = seg->next) {
+		lib = (REBLHL *) (seg + 1);
+		for (n = Mem_Pools[LIB_POOL].units; n > 0; n--) {
+			SKIP_WALL(lib);
+			if (IS_USED_LIB(lib)) {
+				if (IS_MARK_LIB(lib))
+					UNMARK_LIB(lib);
+				else {
+					UNUSE_LIB(lib);
+					Free_Node(LIB_POOL, (REBNOD*)lib);
+					count++;
+				}
+			}
+			lib++;
+		}
+	}
+
+	return count;
+}
+
+/***********************************************************************
+**
+*/	static REBCNT Sweep_Routines(void)
+/*
+**		Free all unmarked routines.
+**
+**		Scans all routines in all segments that are part of the
+**		RIN_POOL. Free routines that have not been marked.
+**
+***********************************************************************/
+{
+	REBSEG	*seg;
+	REBRIN	*info;
+	REBCNT  n;
+	REBCNT	count = 0;
+
+	for (seg = Mem_Pools[RIN_POOL].segs; seg; seg = seg->next) {
+		info = (REBRIN *) (seg + 1);
+		for (n = Mem_Pools[RIN_POOL].units; n > 0; n--) {
+			SKIP_WALL(info);
+			if (IS_USED_ROUTINE(info)) {
+				if (IS_MARK_ROUTINE(info))
+					UNMARK_ROUTINE(info);
+				else {
+					UNUSE_ROUTINE(info);
+					Free_Routine(info);
+					count ++;
+				}
+			}
+			info ++;
+		}
+	}
+
+	return count;
+}
 
 /***********************************************************************
 **
@@ -583,8 +699,11 @@ mark_obj:
 	// Mark all devices:
 	Mark_Devices(0);
 	
-	count = Sweep_Series();
+	count = Sweep_Routines(); // this needs to run before Sweep_Series(), because Routine has series with pointers, which can't be simply discarded by Sweep_Series
+
+	count += Sweep_Series();
 	count += Sweep_Gobs();
+	count += Sweep_Libs();
 
 	CHECK_MEMORY(4);
 
