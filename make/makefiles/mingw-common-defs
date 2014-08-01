@@ -2,7 +2,7 @@ LIB_PRODUCT_NAME ?= atronix-view #note: this can be overriden by the HOST_PRODUC
 HOST_PRODUCT_NAME ?= $(LIB_PRODUCT_NAME)
 BIN_SUFFIX= .exe
 CFLAGS ?= -O2
-INC= -I$(INCL) -I$S/include/ -I$S/codecs/
+INC= -I$(INCL) -I$S/include/ -I$S/codecs/ -Ilibffi/lib/libffi-3.1.1/include/
 RAPI_FLAGS= $(CFLAGS) -DUNICODE $(EXTRA_CFLAGS) -ffloat-store
 HOST_CORE_FLAGS= -DREB_CORE -DREB_EXE $(CFLAGS) -DUNICODE -DCUSTOM_STARTUP -D_FILE_OFFSET_BITS=64 -ffloat-store $(EXTRA_CFLAGS)
 HOST_VIEW_FLAGS= -DREB_EXE $(CFLAGS) -DUNICODE -DCUSTOM_STARTUP -D_FILE_OFFSET_BITS=64 -ffloat-store $(EXTRA_CFLAGS)
