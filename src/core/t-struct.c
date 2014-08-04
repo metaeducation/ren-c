@@ -732,6 +732,16 @@ failed:
 	return PE_BAD_SELECT;
 }
 
+REBINT Cmp_Struct(REBVAL *s, REBVAL *t)
+{
+	REBINT n = VAL_STRUCT_FIELDS(s) - VAL_STRUCT_FIELDS(t);
+	if (n != 0) {
+		return n;
+	}
+	n = VAL_STRUCT_DATA(s) - VAL_STRUCT_DATA(t);
+	return n;
+}
+
 /***********************************************************************
 **
 */	REBINT CT_Struct(REBVAL *a, REBVAL *b, REBINT mode)
