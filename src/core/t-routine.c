@@ -64,6 +64,9 @@ static void init_type_map()
 ***********************************************************************/
 {
 	//RL_Print("%s, %d\n", __func__, __LINE__);
+	if (mode >= 0) {
+		return VAL_ROUTINE_INFO(a) == VAL_ROUTINE_INFO(b);
+	}
 	return -1;
 }
 
