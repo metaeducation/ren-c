@@ -36,6 +36,9 @@
 ***********************************************************************/
 {
 	//RL_Print("%s, %d\n", __func__, __LINE__);
+	if (mode >= 0) {
+		return VAL_LIB_HANDLE(a) == VAL_LIB_HANDLE(b);
+	}
 	return -1;
 }
 
