@@ -748,11 +748,22 @@ REBINT Cmp_Struct(REBVAL *s, REBVAL *t)
 /*
 ***********************************************************************/
 {
-	if (mode >= 0) {
-		return IS_STRUCT(a) && IS_STRUCT(b)
-			 && same_fields(VAL_STRUCT_FIELDS(a), VAL_STRUCT_FIELDS(b))
-			 && VAL_STRUCT_LEN(a) == VAL_STRUCT_LEN(b)
-			 && !memcmp(SERIES_DATA(VAL_STRUCT_DATA_BIN(a)), SERIES_DATA(VAL_STRUCT_DATA_BIN(b)), VAL_STRUCT_LEN(a));
+	//printf("comparing struct a (%p) with b (%p), mode: %d\n", a, b, mode);
+	switch (mode) {
+		case 3: /* same? */
+		case 2: /* strict equality */
+			return 0 == Cmp_Struct(a, b);
+		case 1: /* equvilance */
+		case 0: /* coersed equality*/
+			if (Cmp_Struct(a, b) == 0) {
+				return 1;
+			}
+			return IS_STRUCT(a) && IS_STRUCT(b)
+				 && same_fields(VAL_STRUCT_FIELDS(a), VAL_STRUCT_FIELDS(b))
+				 && VAL_STRUCT_LEN(a) == VAL_STRUCT_LEN(b)
+				 && !memcmp(SERIES_DATA(VAL_STRUCT_DATA_BIN(a)), SERIES_DATA(VAL_STRUCT_DATA_BIN(b)), VAL_STRUCT_LEN(a));
+		default:
+			return -1;
 	}
 	return -1;
 }
