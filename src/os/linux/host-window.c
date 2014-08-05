@@ -925,6 +925,7 @@ static void set_wm_locale(Display *display,
 	XMapWindow(display, window);
 	OS_Update_Window(gob);
 
+	XFlush(display);
 	/* make sure the window is mapped, or XPutImage will not work properly */
 	while (!hw->mapped) {
 		X_Event_Loop(10);
