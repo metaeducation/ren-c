@@ -1,7 +1,19 @@
 REBOL []
-libgtk: make library! %libgtk-3.so
-libglib: make library! %libglib-2.0.so
-libgob: make library! %libgobject-2.0.so
+libgtk: try/except [
+	make library! %libgtk-3.so
+][
+	make library! %libgtk-3.so.0
+]
+libglib: try/except [
+	make library! %libglib-2.0.so
+][
+	make library! %libglib-2.0.so.0
+]
+libgob: try/except [
+	make library! %libgobject-2.0.so
+][
+	make library! %libgobject-2.0.so.0
+]
 
 gtk-init: make routine! compose [
 	[
