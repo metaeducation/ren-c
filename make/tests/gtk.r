@@ -30,6 +30,25 @@ gtk-window-new: make routine! compose [
 	(libgtk) "gtk_window_new"
 ]
 
+gtk-window-set-default-size: make routine! compose [
+	[
+		windown [pointer]
+		width	[int32]
+		height	[int32]
+		return: [void]
+	]
+	(libgtk) "gtk_window_set_default_size"
+]
+
+gtk-window-set-resizable: make routine! compose [
+	[
+		window [pointer]
+		resizable [int32]
+		return: [void]
+	]
+	(libgtk) "gtk_window_set_resizable"
+]
+
 gtk-window-set-title: make routine! compose [
 	[
 		win [pointer]
@@ -62,6 +81,24 @@ gtk-box-pack-start: make routine! compose [
 	]
 	(libgtk) "gtk_box_pack_start"
 ]
+
+gtk-box-set-spacing: make routine! compose [
+	[
+		box [pointer]
+		spacing [int32]
+		return: [void]
+	]
+	(libgtk) "gtk_box_set_spacing"
+]
+
+gtk-box-get-spacing: make routine! compose [
+	[
+		box [pointer]
+		return: [int32]
+	]
+	(libgtk) "gtk_box_get_spacing"
+]
+
 gtk-toggle-button-new-with-label: make routine! compose [
 	[
 		label [pointer]
@@ -180,6 +217,7 @@ init-gtk: function [app] [
 	print ["addr of addr-argv: " reflect addr-argv 'addr]
 
 	gtk-init (reflect argc 'addr) (reflect addr-argv 'addr)
+	print ["argc:" argc "argv:" argv]
 ]
 
 mk-cb: func [
@@ -242,11 +280,15 @@ init-gtk "./r3-view-linux"
 print ["gtk initialized"]
 
 win: gtk-window-new GTK_WINDOW_TOPLEVEL
+gtk-window-set-default-size win 10 10
+gtk-window-set-resizable win 1
 print ["win:" win]
 g-signal-connect win "destroy" (reflect :app-quit-callback 'addr) NULL
 gtk-window-set-title win "gtk+ from rebol"
 
 hbox: gtk-hbox-new
+gtk-box-set-spacing hbox 10
+
 gtk-container-add win hbox
 
 but1: gtk-button-new-with-label "button 1"
@@ -278,5 +320,5 @@ gtk-widget-show but2
 gtk-widget-show but3
 gtk-widget-show hbox
 gtk-widget-show win
-print ["calling gtk-main"]
+print ["spacing:" gtk-box-get-spacing hbox]
 gtk-main
