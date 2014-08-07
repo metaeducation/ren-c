@@ -193,6 +193,14 @@ static void Mark_Series(REBSER *series, REBCNT depth);
 			MARK_SERIES(FUNC_ARGS(&CALLBACK_FUNC(rot)));
 		}
 	} else {
+		if (ROUTINE_GET_FLAG(ROUTINE_INFO(rot), ROUTINE_VARARGS)) {
+			if (ROUTINE_FIXED_ARGS(rot) != NULL) {
+				CHECK_MARK(ROUTINE_FIXED_ARGS(rot), depth);
+			}
+			if (ROUTINE_ALL_ARGS(rot)) {
+				CHECK_MARK(ROUTINE_ALL_ARGS(rot), depth);
+			}
+		}
 		if (ROUTINE_LIB(rot) != NULL) { //this could be null it's called before the routine! has been fully constructed
 			MARK_LIB(ROUTINE_LIB(rot));
 		}

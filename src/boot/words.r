@@ -201,6 +201,8 @@ n64; mips abi
 o32-soft-float; mips abi
 n32-soft-float; mips abi
 n64-soft-float; mips abi
+...
+varargs
 
 ; Gobs:
 gob
