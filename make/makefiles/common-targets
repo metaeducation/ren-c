@@ -212,6 +212,9 @@ objs/p-file.o:        $R/p-file.c
 objs/p-net.o:         $R/p-net.c
 	$(CC) $R/p-net.c $(RFLAGS) -o objs/p-net.o
 
+objs/p-serial.o:         $R/p-serial.c
+	$(CC) $R/p-serial.c $(RFLAGS) -o objs/p-serial.o
+
 objs/s-cases.o:       $R/s-cases.c
 	$(CC) $R/s-cases.c $(RFLAGS) -o objs/s-cases.o
 

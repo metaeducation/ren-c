@@ -34,6 +34,9 @@ objs/dev-event.o:     $S/os/linux/dev-event.c
 objs/dev-file.o:      $S/os/linux/dev-file.c
 	$(CC) $S/os/linux/dev-file.c $(HFLAGS) -o objs/dev-file.o
 
+objs/dev-serial.o:      $S/os/linux/dev-serial.c
+	$(CC) $S/os/linux/dev-serial.c $(HFLAGS) -o objs/dev-serial.o
+
 objs/dev-clipboard.o:      $S/os/linux/dev-clipboard.c
 	$(CC) $S/os/linux/dev-clipboard.c $(HFLAGS) -o objs/dev-clipboard.o
 

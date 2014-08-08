@@ -47,7 +47,7 @@ OBJS =	objs/a-constants.o objs/a-globals.o objs/a-lib.o objs/b-boot.o \
 	objs/n-data.o objs/n-io.o objs/n-loop.o objs/n-math.o \
 	objs/n-sets.o objs/n-strings.o objs/n-system.o objs/p-clipboard.o \
 	objs/p-console.o objs/p-dir.o objs/p-dns.o objs/p-event.o \
-	objs/p-file.o objs/p-net.o objs/s-cases.o objs/s-crc.o \
+	objs/p-file.o objs/p-net.o objs/p-serial.o objs/s-cases.o objs/s-crc.o \
 	objs/s-file.o objs/s-find.o objs/s-make.o objs/s-mold.o \
 	objs/s-ops.o objs/s-trim.o objs/s-unicode.o objs/t-bitset.o \
 	objs/t-block.o objs/t-char.o objs/t-datatype.o objs/t-date.o \
@@ -62,7 +62,7 @@ OBJS =	objs/a-constants.o objs/a-globals.o objs/a-lib.o objs/b-boot.o \
 	objs/u-sha1.o objs/u-zlib.o 
 
 HOST_COMMON =	objs/host-main.o objs/host-args.o objs/host-device.o objs/host-stdio.o \
-	objs/dev-net.o objs/dev-dns.o objs/host-lib.o \
+	objs/dev-net.o objs/dev-dns.o objs/host-lib.o objs/dev-serial.o\
 	objs/dev-stdio.o objs/dev-event.o objs/dev-file.o objs/host-core.o objs/dev-clipboard.o
 
 CODECS = objs/aes.o objs/bigint.o objs/dh.o objs/lodepng.o objs/rc4.o objs/rsa.o
