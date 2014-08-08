@@ -543,7 +543,7 @@ static void ffi_to_rebol(REBRIN *rin,
 		args = (ffi_type**)SERIES_DATA(VAL_ROUTINE_FFI_ARGS(rot));
 		if (FFI_OK != ffi_prep_cif_var((ffi_cif*)VAL_ROUTINE_CIF(rot),
 				VAL_ROUTINE_ABI(rot),
-				SERIES_TAIL(VAL_ROUTINE_FIXED_ARGS(rot)) - 1, /* number of fixed arguments */
+				n_fixed, /* number of fixed arguments */
 				j - 1, /* number of all arguments */
 				args[0], /* return type */
 				&args[1])) {
