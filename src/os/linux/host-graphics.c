@@ -137,9 +137,31 @@ static int get_work_area(METRIC_TYPE type)
 	   int 		status;
 	   int 		index = 0;
 	   int		ret;
+	   Atom		XA_NET_WORKAREA = None;
+	   int fake_data[] = {0, 0, 1920, 1080};
+
+	   switch(type) {
+		   case SM_WORK_X:
+			   index = 0;
+			   break;
+		   case SM_WORK_Y:
+			   index = 1;
+			   break;
+		   case SM_WORK_WIDTH:
+			   index = 2;
+			   break;
+		   case SM_WORK_HEIGHT:
+			   index = 3;
+			   break;
+	   }
+
+	   XA_NET_WORKAREA = XInternAtom(global_x_info->display, "_NET_WORKAREA", True);
+	   if (XA_NET_WORKAREA == None) {
+		   return fake_data[index];
+	   }
 	   status = XGetWindowProperty(global_x_info->display,
 								   DefaultRootWindow(global_x_info->display),
-								   XInternAtom(global_x_info->display, "_NET_WORKAREA", True),
+								   XA_NET_WORKAREA,
 								   0,
 								   (~0L),
 								   False,
@@ -159,28 +181,12 @@ static int get_work_area(METRIC_TYPE type)
 		  RL_Print("data[%d] %d\n", i, data[i]);
 		  }
 		  */
-	   switch(type) {
-		   case SM_WORK_X:
-			   index = 0;
-			   break;
-		   case SM_WORK_Y:
-			   index = 1;
-			   break;
-		   case SM_WORK_WIDTH:
-			   index = 2;
-			   break;
-		   case SM_WORK_HEIGHT:
-			   index = 3;
-			   break;
-	   }
-
 	   if (status != Success
 		   || data == NULL
 		   || actual_type != XA_CARDINAL
 		   || actual_format != 32
 		   || nitems < 4) {
-		   RL_Print("Falling back...\n");
-		   int fake_data[] = {0, 0, 1920, 1080};
+		   //RL_Print("Falling back...\n");
 		   if (data) {
 			   XFree(data);
 		   }
@@ -211,6 +217,7 @@ static int get_work_area(METRIC_TYPE type)
 	   int      status;
 	   int 		i;
 	   REBD32	ret;
+	   Atom		XA_NET_FRAME_EXTENTS = None;
 
        if (global_x_info->display == NULL){
                return 0;
@@ -228,9 +235,13 @@ static int get_work_area(METRIC_TYPE type)
                case SM_WORK_HEIGHT:
 					   return get_work_area(type);
                case SM_TITLE_HEIGHT:
+					   XA_NET_FRAME_EXTENTS = XInternAtom(global_x_info->display, "_NET_FRAME_EXTENTS", True);
+					   if (XA_NET_FRAME_EXTENTS == None) {
+						   return 20; //FIXME
+					   }
 					   status = XGetWindowProperty(global_x_info->display,
 												   RootWindowOfScreen(sc),
-												   XInternAtom(global_x_info->display, "_NET_FRAME_EXTENTS", True),
+												   XA_NET_FRAME_EXTENTS,
 												   0,
 												   (~0L),
 												   False,
