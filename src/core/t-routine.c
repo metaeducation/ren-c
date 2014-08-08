@@ -750,6 +750,7 @@ static void callback_dispatcher(ffi_cif *cif, void *ret, void **args, void *user
 	SET_TYPE(out, type);
 
 	VAL_ROUTINE_INFO(out) = Make_Node(RIN_POOL);
+	memset(VAL_ROUTINE_INFO(out), 0, sizeof(REBRIN));
 	USE_ROUTINE(VAL_ROUTINE_INFO(out));
 
 	if (type == REB_CALLBACK) {
