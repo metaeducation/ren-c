@@ -168,7 +168,8 @@ static int shm_error_handler(Display *d, XErrorEvent *e) {
 {
 
 	//check if window size really changed
-	if ((GOB_LOG_W(winGob) != GOB_WO(winGob)) || (GOB_LOG_H(winGob) != GOB_HO(winGob))) {
+	if ((GOB_LOG_W(winGob) != GOB_WO(winGob)) || (GOB_LOG_H(winGob) != GOB_HO(winGob))
+		|| ctx->pixbuf == NULL) {//ctx might haven't been initialized yet
 
 		REBINT w = GOB_LOG_W_INT(winGob);
 		REBINT h = GOB_LOG_H_INT(winGob);
