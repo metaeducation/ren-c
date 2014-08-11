@@ -517,6 +517,7 @@ int reb_x11_get_window_extens(Display *display,
 	if (Resize_Window(gob, False)) { /* size changed from rebol script */
 		XResizeWindow(global_x_info->display, hw->x_id, w, h);
 	}
+	root = DefaultRootWindow(global_x_info->display);
 
 	if (x != GOB_XO_INT(gob) || y != GOB_YO_INT(gob)){
 		/* offset changed from rebol script */
