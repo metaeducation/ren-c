@@ -212,9 +212,11 @@ static REBINT Set_Serial_Settings(int ttyfd, int speed)
 #endif
 	if (req->actual < 0) {
 		req->error = -RFE_BAD_READ;
+		Signal_Device(req, EVT_ERROR);
 		return DR_ERROR;
 	} else {
 		req->serial.index += req->actual;
+		Signal_Device(req, EVT_READ);
 	}
 
 	return DR_DONE;
@@ -227,23 +229,35 @@ static REBINT Set_Serial_Settings(int ttyfd, int speed)
 /*
 ***********************************************************************/
 {
+	REBINT result = 0, len = 0;
+	len = req->length - req->actual;
 	if (!req->id) {
 		req->error = -RFE_NO_HANDLE;
 		return DR_ERROR;
 	}
 
-	if (req->length == 0) return DR_DONE;
+	if (len <= 0) return DR_DONE;
 
-	req->actual = write(req->id, req->data, req->length);
+	result = write(req->id, req->data, len);
 #ifdef DEBUG_SERIAL
-	printf("write %d ret: %d\n", req->length, req->actual);
+	printf("write %d ret: %d\n", len, result);
 #endif
-	if (req->actual < 0) {
+	if (result < 0) {
+		if (errno == EAGAIN) {
+			return DR_PEND;
+		}
 		req->error = -RFE_BAD_WRITE;
+		Signal_Device(req, EVT_ERROR);
 		return DR_ERROR;
 	}
-
-	return DR_DONE;
+	req->actual += result;
+	req->data += result;
+	if (req->actual >= req->length) {
+		Signal_Device(req, EVT_WROTE);
+		return DR_DONE;
+	} else {
+		return DR_PEND;
+	}
 }
 
 

@@ -120,7 +120,6 @@
 		}
 		printf("\n");
 #endif
-		Set_Binary(arg, Copy_Bytes(req->data, req->actual));
 		*D_RET = *arg;
 		return R_RET;
 
@@ -144,9 +143,7 @@
 		//Print("(write length %d)", len);
 		result = OS_DO_DEVICE(req, RDC_WRITE); // send can happen immediately
 		if (result < 0) Trap_Port(RE_WRITE_ERROR, port, req->error);
-		if (result == DR_DONE) SET_NONE(OFV(port, STD_PORT_DATA));
 		break;
-#ifdef UPDATE_IMPLEMENTED
 	case A_UPDATE:
 		// Update the port object after a READ or WRITE operation.
 		// This is normally called by the WAKE-UP function.
@@ -158,7 +155,6 @@
 			SET_NONE(arg);  // Write is done.
 		}
 		return R_NONE;
-#endif
 	case A_OPENQ:
 		return R_TRUE;
 
