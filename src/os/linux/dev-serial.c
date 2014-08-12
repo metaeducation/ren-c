@@ -156,9 +156,12 @@ static REBINT Set_Serial_Settings(int ttyfd, int speed)
 		return DR_ERROR;
 	}
 
-	strcpy(&devpath[0], "/dev/");
-	strncpy(&devpath[5], path, MAX_SERIAL_PATH-6);
-	h = open(&devpath[0], O_RDWR | O_NOCTTY | O_NONBLOCK);
+	if (path[0] != '/') { //relative path
+		strcpy(&devpath[0], "/dev/");
+		strncpy(&devpath[5], path, MAX_SERIAL_PATH-6);
+		path = &devpath[0];
+	}
+	h = open(path, O_RDWR | O_NOCTTY | O_NONBLOCK);
 	if (h < 0) {
 		req->error = -RFE_OPEN_FAIL;
 		return DR_ERROR;
