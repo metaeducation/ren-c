@@ -81,6 +81,60 @@
 			}
 			req->serial.baud = VAL_INT32(arg);
 			//Secure_Port(SYM_SERIAL, ???, path, ser);
+			arg = Obj_Value(spec, STD_PORT_SPEC_SERIAL_DATA_SIZE);
+			if (!IS_INTEGER(arg)
+				|| VAL_INT64(arg) < 5
+				|| VAL_INT64(arg) > 8) {
+				Trap1(RE_INVALID_PORT_ARG, arg);
+			}
+			req->serial.data_bits = VAL_INT32(arg);
+
+			arg = Obj_Value(spec, STD_PORT_SPEC_SERIAL_STOP_BITS);
+			if (!IS_INTEGER(arg)
+				|| VAL_INT64(arg) < 1
+				|| VAL_INT64(arg) > 2) {
+				Trap1(RE_INVALID_PORT_ARG, arg);
+			}
+			req->serial.stop_bits = VAL_INT32(arg);
+
+			arg = Obj_Value(spec, STD_PORT_SPEC_SERIAL_PARITY);
+			if (IS_NONE(arg)) {
+				req->serial.parity = SERIAL_PARITY_NONE;
+			} else {
+				if (!IS_WORD(arg)) {
+					Trap1(RE_INVALID_PORT_ARG, arg);
+				}
+				switch (VAL_WORD_CANON(arg)) {
+					case SYM_ODD:
+						req->serial.parity = SERIAL_PARITY_ODD;
+						break;
+					case SYM_EVEN:
+						req->serial.parity = SERIAL_PARITY_EVEN;
+						break;
+					default:
+						Trap1(RE_INVALID_PORT_ARG, arg);
+				}
+			}
+
+			arg = Obj_Value(spec, STD_PORT_SPEC_SERIAL_FLOW_CONTROL);
+			if (IS_NONE(arg)) {
+				req->serial.flow_control = SERIAL_FLOW_CONTROL_NONE;
+			} else {
+				if (!IS_WORD(arg)) {
+					Trap1(RE_INVALID_PORT_ARG, arg);
+				}
+				switch (VAL_WORD_CANON(arg)) {
+					case SYM_HARDWARE:
+						req->serial.flow_control = SERIAL_FLOW_CONTROL_HARDWARE;
+						break;
+					case SYM_SOFTWARE:
+						req->serial.flow_control = SERIAL_FLOW_CONTROL_SOFTWARE;
+						break;
+					default:
+						Trap1(RE_INVALID_PORT_ARG, arg);
+				}
+			}
+
 			if (OS_DO_DEVICE(req, RDC_OPEN)) Trap_Port(RE_CANNOT_OPEN, port, -12);
 			SET_OPEN(req);
 			return R_RET;

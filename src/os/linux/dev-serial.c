@@ -93,10 +93,11 @@ static struct termios *Get_Serial_Settings(int ttyfd)
 }
 
 
-static REBINT Set_Serial_Settings(int ttyfd, int speed)
+static REBINT Set_Serial_Settings(int ttyfd, REBREQ *req)
 {
 	REBINT n;
 	struct termios attr = {};
+	REBINT speed = req->serial.baud;
 #ifdef DEBUG_SERIAL
 	printf("setting attributes: speed %d\n", speed);
 #endif
@@ -113,7 +114,63 @@ static REBINT Set_Serial_Settings(int ttyfd, int speed)
 
 	// TTY has many attributes. Refer to "man tcgetattr" for descriptions.
 	// C-flags - control modes:
-	attr.c_cflag |= CREAD | CS8 | CLOCAL;
+	attr.c_cflag |= CREAD | CLOCAL;
+
+	attr.c_cflag &= ~CSIZE; /* clear data size bits */
+
+	switch (req->serial.data_bits) {
+		case 5:
+			attr.c_cflag |= CS5;
+			break;
+		case 6:
+			attr.c_cflag |= CS6;
+			break;
+		case 7:
+			attr.c_cflag |= CS7;
+			break;
+		case 8:
+		default:
+			attr.c_cflag |= CS8;
+	}
+
+	switch (req->serial.parity) {
+		case SERIAL_PARITY_ODD:
+			attr.c_cflag |= PARENB;
+			attr.c_cflag |= PARODD;
+			break;
+		case SERIAL_PARITY_EVEN:
+			attr.c_cflag |= PARENB;
+			attr.c_cflag &= ~PARODD;
+			break;
+		case SERIAL_PARITY_NONE:
+		default:
+			attr.c_cflag &= ~PARENB;
+			break;
+	}
+
+	switch (req->serial.stop_bits) {
+		case 2:
+			attr.c_cflag |= CSTOPB;
+			break;
+		case 1:
+		default:
+			attr.c_cflag &= ~CSTOPB;
+			break;
+	}
+
+#ifdef CNEW_RTSCTS
+	switch (req->serial.parity) {
+		case SERIAL_FLOW_CONTROL_HARDWARE:
+			attr.c_cflag |= CNEW_RTSCTS;
+			break;
+		case SERIAL_FLOW_CONTROL_SOFTWARE:
+			attr.c_cflag &= ~CNEW_RTSCTS;
+			break;
+		case SERIAL_FLOW_CONTROL_NONE:
+		default:
+			break;
+	}
+#endif
 
 	// L-flags - local modes:
 	attr.c_lflag = 0; // raw, not ICANON
@@ -171,7 +228,7 @@ static REBINT Set_Serial_Settings(int ttyfd, int speed)
 	req->serial.prior_attr = Get_Serial_Settings(h);
 	if (tcgetattr(h, req->serial.prior_attr)) return 1;	
 
-	if (Set_Serial_Settings(h, req->serial.baud)) {
+	if (Set_Serial_Settings(h, req)) {
 		close(h);
 		req->error = -RFE_OPEN_FAIL;
 		return DR_ERROR;

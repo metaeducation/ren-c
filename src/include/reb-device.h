@@ -109,6 +109,20 @@ enum {
 	RDM_NULL,		// Null device
 };
 
+// Serial Parity
+enum {
+	SERIAL_PARITY_NONE,
+	SERIAL_PARITY_ODD,
+	SERIAL_PARITY_EVEN
+};
+
+// Serial Flow Control
+enum {
+	SERIAL_FLOW_CONTROL_NONE,
+	SERIAL_FLOW_CONTROL_HARDWARE,
+	SERIAL_FLOW_CONTROL_SOFTWARE
+};
+
 #pragma pack(4)
 
 // Forward references:
@@ -182,9 +196,14 @@ struct rebol_devreq {
 		} net;
 		struct {
 			REBCHR *path;			//device path string (in OS local format)
-			i64 baud;				// baud rate of serial port
-			i64 index;				// serial index position
 			void *prior_attr;			// termios: retain previous settings to revert on close
+			i64 index;				// serial index position
+			i32 baud;				// baud rate of serial port
+			u8	data_bits;			// 5, 6, 7 or 8
+			u8	parity;				// odd, even, mark or space
+			u8	stop_bits;			// 1 or 2
+			u8	flow_control;		// hardware or software
+
 		} serial;
 	};
 };
