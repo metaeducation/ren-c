@@ -440,12 +440,17 @@ int reb_x11_get_window_extens(Display *display,
        long     bytes;
        long     *data = NULL;
        int      status;
+	   Atom		XA_NET_FRAME_EXTENTS = None;
+	   XA_NET_FRAME_EXTENTS = x_atom_list_find_atom(global_x_info->x_atom_list,
+													display,
+													"_NET_FRAME_EXTENTS",
+													True);
+	   if (XA_NET_FRAME_EXTENTS == None) {
+		   return -1;
+	   }
        status = XGetWindowProperty(display,
 								   window,
-								   x_atom_list_find_atom(global_x_info->x_atom_list,
-														 display,
-														 "_NET_FRAME_EXTENTS",
-														 True),
+								   XA_NET_FRAME_EXTENTS,
 								   0,
 								   (~0L),
 								   False,
@@ -702,6 +707,9 @@ static void set_window_leader(Display *display,
 {
 	Atom XA_WM_CLIENT_LEADER = x_atom_list_find_atom(global_x_info->x_atom_list,
 													 display, "WM_CLIENT_LEADER", True);
+	if (XA_WM_CLIENT_LEADER == None) {
+		return;
+	}
 	if (!global_x_info->leader_window) {
 		global_x_info->leader_window = window;
 	}
@@ -773,12 +781,16 @@ static void set_wm_locale(Display *display,
 						  Window window)
 {
 	const unsigned char *locale = setlocale(LC_ALL, NULL);
-	if (locale != NULL) {
-		XChangeProperty(display, window,
-						x_atom_list_find_atom(global_x_info->x_atom_list,
+	Atom XA_WM_LOCAL_NAME = x_atom_list_find_atom(global_x_info->x_atom_list,
 											  display,
 											  "WM_LOCALE_NAME",
-											  True),
+											  True);
+	if (XA_WM_LOCAL_NAME == None) {
+		return;
+	}
+	if (locale != NULL) {
+		XChangeProperty(display, window,
+						XA_WM_LOCAL_NAME,
 						XA_STRING, 8,
 						PropModeReplace,
 						locale, strlen(locale));
