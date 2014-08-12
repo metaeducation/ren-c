@@ -67,10 +67,11 @@ const int speeds[] = {
 **	Local Functions
 **
 ***********************************************************************/
-static REBINT Set_Serial_Settings(HANDLE h, int speed)
+static REBINT Set_Serial_Settings(HANDLE h, REBREQ *req)
 {
 	DCB dcbSerialParams = {0};
 	REBINT n;
+	int speed = req->serial.baud;
 
 	dcbSerialParams.DCBlength = sizeof(dcbSerialParams);
 	if (GetCommState(h, &dcbSerialParams) == 0) return 1;
@@ -84,9 +85,20 @@ static REBINT Set_Serial_Settings(HANDLE h, int speed)
 	}
 	if (speeds[n] == 0) dcbSerialParams.BaudRate = CBR_115200; // invalid, use default
 
-	dcbSerialParams.ByteSize = 8;
-	dcbSerialParams.StopBits = ONESTOPBIT;
-	dcbSerialParams.Parity = NOPARITY;
+	dcbSerialParams.ByteSize = req->serial.data_bits;
+	dcbSerialParams.StopBits = req->serial.stop_bits == 1? ONESTOPBIT : TWOSTOPBITS;
+	switch (req->serial.parity) {
+		case SERIAL_PARITY_ODD:
+			dcbSerialParams.Parity = ODDPARITY;
+			break;
+		case SERIAL_PARITY_EVEN:
+			dcbSerialParams.Parity = EVENPARITY;
+			break;
+		case SERIAL_PARITY_NONE:
+		default:
+			dcbSerialParams.Parity = NOPARITY;
+			break;
+	}
 
 
 	if(SetCommState(h, &dcbSerialParams) == 0) {
@@ -124,7 +136,7 @@ static REBINT Set_Serial_Settings(HANDLE h, int speed)
 		return DR_ERROR;
 	}
 
-	if (Set_Serial_Settings(h,req->serial.baud)==0) {
+	if (Set_Serial_Settings(h, req)==0) {
 		CloseHandle(h);
 		req->error = -RFE_OPEN_FAIL;
 		return DR_ERROR;
@@ -176,9 +188,11 @@ static REBINT Set_Serial_Settings(HANDLE h, int speed)
 
 	if (!ReadFile(req->handle, req->data, req->length, &req->actual, 0)) {
 		req->error = -RFE_BAD_READ;
+		Signal_Device(req, EVT_ERROR);
 		return DR_ERROR;
 	} else {
 		req->serial.index += req->actual;
+		Signal_Device(req, EVT_READ);
 	}
 
 #ifdef DEBUG_SERIAL
@@ -195,19 +209,16 @@ static REBINT Set_Serial_Settings(HANDLE h, int speed)
 /*
 ***********************************************************************/
 {
+	REBINT result = 0, len = 0;
+	len = req->length - req->actual;
 	if (!req->handle) {
 		req->error = -RFE_NO_HANDLE;
 		return DR_ERROR;
 	}
 
-	if (req->length == 0) return DR_DONE;
+	if (len <= 0) return DR_DONE;
 
-	if (!WriteFile(req->handle, req->data, req->length, &req->actual, NULL)){
-		req->error = -RFE_BAD_WRITE;
-		return DR_ERROR;
-	}
-
-	if (req->actual < 0) {
+	if (!WriteFile(req->handle, req->data, len, &result, NULL)){
 		req->error = -RFE_BAD_WRITE;
 		return DR_ERROR;
 	}
@@ -216,7 +227,20 @@ static REBINT Set_Serial_Settings(HANDLE h, int speed)
 	printf("write %d ret: %d\n", req->length, req->actual);
 #endif
 
-	return DR_DONE;
+	if (result < 0) {
+		req->error = -RFE_BAD_WRITE;
+		Signal_Device(req, EVT_ERROR);
+		return DR_ERROR;
+	}
+	req->actual += result;
+	req->data += result;
+	if (req->actual >= req->length) {
+		Signal_Device(req, EVT_WROTE);
+		return DR_DONE;
+	} else {
+		SET_FLAG(req->flags, RRF_ACTIVE); /* notify OS_WAIT of activity */
+		return DR_PEND;
+	}
 }
 
 
