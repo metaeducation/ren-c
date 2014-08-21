@@ -1050,8 +1050,6 @@ typedef struct Reb_Struct {
 **	ROUTINE -- External library routine structures
 **
 ***********************************************************************/
-typedef struct Reb_Value REBVAL;
-
 struct Reb_Routine_Info {
 	union {
 		struct {
