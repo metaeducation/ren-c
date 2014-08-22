@@ -164,6 +164,15 @@ dns
 tcp
 udp
 clipboard
+serial
+
+; Serial parameters
+; Parity
+odd
+even
+; Control flow
+hardware
+software
 
 ; Struct
 uint8

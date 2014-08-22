@@ -73,6 +73,7 @@ extern REBDEV Dev_DNS;
 #ifndef MIN_OS
 extern REBDEV Dev_Clipboard;
 #endif
+extern REBDEV Dev_Serial;
 
 REBDEV *Devices[RDI_LIMIT] =
 {
@@ -85,7 +86,10 @@ REBDEV *Devices[RDI_LIMIT] =
 	&Dev_DNS,
 #ifndef MIN_OS
 	&Dev_Clipboard,
+#else
+	0,
 #endif
+	&Dev_Serial,
 	0,
 };
 
@@ -102,9 +106,10 @@ static int Poll_Default(REBDEV *dev)
 	for (req = *prior; req; req = *prior) {
 
 		// Call command again:
-		if (req->command < RDC_MAX)
+		if (req->command < RDC_MAX) {
+			CLR_FLAG(req->flags, RRF_ACTIVE);
 			result = dev->commands[req->command](req);
-		else {
+		} else {
 			result = -1;	// invalid command, remove it
 			req->error = ((REBCNT)-1);
 		}
@@ -115,8 +120,12 @@ static int Poll_Default(REBDEV *dev)
 			req->next = 0;
 			CLR_FLAG(req->flags, RRF_PENDING);
 			change = TRUE;
+		} else {
+			prior = &req->next;
+			if (GET_FLAG(req->flags, RRF_ACTIVE)) {
+				change = TRUE;
+			}
 		}
-		else prior = &req->next;
 	}
 
 	return change;

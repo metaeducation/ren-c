@@ -10,6 +10,9 @@ objs/dev-stdio.o:     $S/os/win32/dev-stdio.c
 objs/dev-file.o:      $S/os/win32/dev-file.c
 	$(CC) $S/os/win32/dev-file.c $(HFLAGS) -o objs/dev-file.o
 
+objs/dev-serial.o:      $S/os/win32/dev-serial.c
+	$(CC) $S/os/win32/dev-serial.c $(HFLAGS) -o objs/dev-serial.o
+
 objs/dev-event.o:     $S/os/win32/dev-event.c
 	$(CC) $S/os/win32/dev-event.c $(HFLAGS) -o objs/dev-event.o
 
