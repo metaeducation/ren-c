@@ -131,6 +131,14 @@
 		return 1;
 	}
 
+#define MIN_I64_STR "-9223372036854775808"
+	if (val == MIN_I64) {
+		len = strlen(MIN_I64_STR);
+		if (maxl < len + 1) return 0;
+		COPY_MEM(buf, MIN_I64_STR, len + 1);
+		return len;
+	}
+
 	if (val < 0) {
 		val = -val;
 		*buf++ = '-';
