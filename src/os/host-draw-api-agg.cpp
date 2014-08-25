@@ -577,7 +577,7 @@ namespace agg
 			rb_win.blend_from(pixf_tmp,0,abs_oft.x, abs_oft.y, GOB_ALPHA(gob));
 
 			//deallocate temoprary buffer
-			delete tmp_buf;
+			delete [] tmp_buf;
 		}
 	}
 }
