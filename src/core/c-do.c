@@ -713,6 +713,9 @@ more_path:
 				ds = dsp;
 				args = BLK_SKIP(words, 1);
 				for (; NOT_END(args); args++, ds++) {
+					if (!IS_WORD(path)) {
+						Trap1(RE_BAD_REFINE, path);
+					}
 					if (IS_REFINEMENT(args) && VAL_WORD_CANON(args) == VAL_WORD_CANON(path)) {
 						SET_TRUE(DS_VALUE(ds)); // set refinement stack value true
 						path++;				// remove processed refinement
