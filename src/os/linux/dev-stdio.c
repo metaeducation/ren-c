@@ -82,8 +82,15 @@ static int interrupted = 0;
 #define FLUSH()		fflush(stdout)
 */
 
+static const void * backtrace_buf [1024];
 static void Handle_Signal(int sig)
 {
+	if (sig == SIGSEGV) {
+		fputs("Segmentation fault, Backtrace:\n", stderr);
+		int n_backtrace = backtrace(backtrace_buf, sizeof(backtrace_buf)/sizeof(backtrace_buf[0]));
+		backtrace_symbols_fd(backtrace_buf, n_backtrace, STDERR_FILENO);
+		exit(1);
+	}
 	char *buf = strdup("[escape]");
 	Put_Str(buf);
 	free(buf);
@@ -96,6 +103,7 @@ static void Init_Signals(void)
 	signal(SIGINT, Handle_Signal);
 	signal(SIGHUP, Handle_Signal);
 	signal(SIGTERM, Handle_Signal);
+	signal(SIGSEGV, Handle_Signal);
 }
 
 static void close_stdio(void)
