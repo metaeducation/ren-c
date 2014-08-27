@@ -98,10 +98,40 @@ REBOOL reb_i64_mul_overflow(i64 x, i64 y, i64 *prod)
 	u64 p = 0;
 
 	sgn = (x < 0);
-	if (sgn) x = -x;
+	if (sgn) {
+		if (x == MIN_I64) {
+			switch (y) {
+				case 0:
+					*prod = 0;
+					return 0;
+				case 1:
+					*prod = x;
+					return 0;
+				default:
+					return 1;
+			}
+		}
+		x = -x; /* undefined when x == MIN_I64 */
+	}
 	if (y < 0) {
 		sgn = !sgn;
-		y = -y;
+		if (y == MIN_I64) {
+			switch (x) {
+				case 0:
+					*prod = 0;
+					return 0;
+				case 1:
+					if (!sgn) {
+						return 1;
+					} else {
+						*prod = y;
+						return 0;
+					}
+				default:
+					return 1;
+			}
+		}
+		y = -y; /* undefined when y == MIN_I64 */
 	}
 
 	if (REB_U64_MUL_OF(x, y, (u64 *)&p)
