@@ -221,8 +221,8 @@ static int shm_error_handler(Display *d, XErrorEvent *e) {
 				XSync(global_x_info->display, False);
 				orig_error_handler = XSetErrorHandler(shm_error_handler);
 				XShmAttach(global_x_info->display, &ctx->x_shminfo); //Bad Access error when talking to a remote X server
-				XSetErrorHandler(orig_error_handler);
 				XSync(global_x_info->display, False);
+				XSetErrorHandler(orig_error_handler);
 				if (!global_x_info->has_xshm) {
 					//RL_Print("XShmAttach failed, fallback to non-shm\n");
 					if (ctx->x_image) {
