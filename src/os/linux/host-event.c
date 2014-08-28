@@ -313,7 +313,7 @@ static void handle_button(XEvent *ev, REBGOB *gob)
 			&& last_click_button == ev->xbutton.button
 			&& ev->xbutton.time - last_click < DOUBLE_CLICK_DIFF){
 			/* FIXME, a hack to detect double click: a double click would be a single click followed by a double click */
-			flags |= EVF_DOUBLE;
+			flags |= 1 << EVF_DOUBLE;
 			//RL_Print("Button %d double clicked\n", ev->xbutton.button);
 		}
 		switch (ev->xbutton.button){
