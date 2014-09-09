@@ -372,9 +372,6 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 
 	if (((REBU64)length * wide) > MAX_I32) Trap0(RE_NO_MEMORY);
 
-	PG_Reb_Stats->Series_Made++;
-	PG_Reb_Stats->Series_Memory += length * wide;
-
 	ASSERT(wide != 0, RP_BAD_SERIES);
 
 //	if (GC_TRIGGER) Recycle();
@@ -435,6 +432,9 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 	GC_Infants[GC_Last_Infant++] = series;
 
 	CHECK_MEMORY(2);
+
+	PG_Reb_Stats->Series_Made++;
+	PG_Reb_Stats->Series_Memory += length;
 
 	return series;
 }
