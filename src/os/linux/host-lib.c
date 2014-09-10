@@ -300,6 +300,9 @@ static const void * backtrace_buf [1024];
 	}
 	for(i = 0; i < strlen(lang_env); i ++){
 		if (lang_env[i] == '_'){
+			if (lang != NULL) { /* duplicate "_" */
+				goto error;
+			}
 			lang = OS_Make(i + 1);
 			if (lang == NULL) goto error;
 			COPY_STR(lang, lang_env, i);
@@ -311,6 +314,7 @@ static const void * backtrace_buf [1024];
 			if (territory == NULL) goto error;
 			COPY_STR(territory, lang_env + j + 1, i - j - 1);
 			territory[i - j - 1] = '\0';
+			break;
 		}
 	}
 
