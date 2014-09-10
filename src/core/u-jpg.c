@@ -2369,11 +2369,10 @@ get_dht (j_decompress_ptr cinfo)
       index -= 0x10;
       htblptr = &cinfo->ac_huff_tbl_ptrs[index];
     } else {			/* DC table definition */
+	  if (index < 0 || index >= NUM_HUFF_TBLS)
+		ERREXIT1(cinfo, JERR_DHT_INDEX, index);
       htblptr = &cinfo->dc_huff_tbl_ptrs[index];
     }
-
-    if (index < 0 || index >= NUM_HUFF_TBLS)
-      ERREXIT1(cinfo, JERR_DHT_INDEX, index);
 
     if (*htblptr == NULL)
       *htblptr = jpeg_alloc_huff_table((j_common_ptr) cinfo);
