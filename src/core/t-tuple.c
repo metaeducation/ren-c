@@ -198,6 +198,8 @@
 	if (IS_TUPLE(value)) {
 		vp = VAL_TUPLE(value);
 		len = VAL_TUPLE_LEN(value);
+	} else if (!(IS_DATATYPE(value) && action == A_MAKE)) {
+		Trap_Arg(value);
 	}
 	arg = D_ARG(2);
 
