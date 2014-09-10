@@ -371,7 +371,11 @@
 
 	secs = VAL_TIME(val); // note: not always valid REB_TIME (e.g. MAKE)
 
-	if (DS_ARGC > 1) arg = D_ARG(2);
+	if (DS_ARGC > 1) {
+		arg = D_ARG(2);
+	} else {
+		Trap0(RE_MISSING_ARG);
+	}
 
 	if (IS_BINARY_ACT(action)) {
 		REBINT	type = VAL_TYPE(arg);
