@@ -1171,7 +1171,12 @@ typedef struct Reb_Utype {
 
 // All bits of value fields:
 typedef struct Reb_All {
+#if defined(__LP64__) || defined(__LLP64__)
+	REBCNT bits[6];
+	REBINT padding; //make sizeof(REBVAL) 32 bytes
+#else
 	REBCNT bits[3];
+#endif
 } REBALL;
 
 #define VAL_ALL_BITS(v) ((v)->data.all.bits)
@@ -1214,9 +1219,6 @@ typedef struct Reb_All {
 		REBHAN  handle;
 		REBALL  all;
 	} data;
-#if defined(__LP64__) || defined(__LLP64__)
-	REBINT	padding; //make it 32 bytes
-#endif
 	union Reb_Val_Head {
 		REBHED flags;
 		REBCNT header;
