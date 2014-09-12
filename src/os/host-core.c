@@ -341,7 +341,10 @@ RL_Print("buff size: %d\n",buffersize);
 				key = RXA_SERIES(frm,2);
 				len = (RL_SERIES(key, RXI_SER_TAIL) - RXA_INDEX(frm,2)) << 3;
 
-				if (len != 128 && len != 256) return RXR_NONE;
+				if (len != 128 && len != 256) {
+					OS_Free(ctx);
+					return RXR_NONE;
+				}
 
 				AES_set_key(
 					ctx,
