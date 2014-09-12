@@ -501,6 +501,8 @@ REBINT Alloc_Window(REBGOB *gob) {
                         x = OS_Get_Metrics(SM_SCREEN_DPI_X);
                         y = OS_Get_Metrics(SM_SCREEN_DPI_Y);
                         break;
+					default:
+						return RXR_BAD_ARGS;
                 }
 	
                 if (w){
