@@ -226,7 +226,10 @@ static REBINT Set_Serial_Settings(int ttyfd, REBREQ *req)
 
 	//Getting prior atttributes:
 	req->serial.prior_attr = Get_Serial_Settings(h);
-	if (tcgetattr(h, req->serial.prior_attr)) return 1;	
+	if (tcgetattr(h, req->serial.prior_attr)) {
+		close(h);
+		return DR_ERROR;
+	}
 
 	if (Set_Serial_Settings(h, req)) {
 		close(h);
