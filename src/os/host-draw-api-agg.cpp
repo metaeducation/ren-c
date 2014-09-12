@@ -309,8 +309,10 @@ namespace agg
 				    matrix[n] = val.dec64;
 				else if (type == RXT_INTEGER)
 				    matrix[n] = val.int64;
-				else
+				else {
+					delete [] matrix;
                     return;
+				}
 			}
 
             if (n != 6) return;
