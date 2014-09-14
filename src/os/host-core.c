@@ -461,10 +461,15 @@ RL_Print("buff size: %d\n",buffersize);
 
 				binary_len = RSA_decrypt(rsa_ctx, dataBuffer, binaryBuffer, RXA_WORD(frm, 4), padding);
 
-				if (binary_len == -1) return RXR_NONE;
-			} else {
-				if (-1 == RSA_encrypt(rsa_ctx, dataBuffer, data_len, binaryBuffer, RXA_WORD(frm, 4), padding))
+				if (binary_len == -1) {
+					free(data_bi);
 					return RXR_NONE;
+				}
+			} else {
+				if (-1 == RSA_encrypt(rsa_ctx, dataBuffer, data_len, binaryBuffer, RXA_WORD(frm, 4), padding)) {
+					free(data_bi);
+					return RXR_NONE;
+				}
 			}
 
 			//hack! - will set the tail to buffersize
@@ -474,6 +479,7 @@ RL_Print("buff size: %d\n",buffersize);
 			RXA_TYPE(frm,1) = RXT_BINARY;			
 			RXA_SERIES(frm,1) = binary;
 			RXA_INDEX(frm,1) = 0;			
+			free(data_bi);
 			return RXR_VALUE;
 		}
 		
