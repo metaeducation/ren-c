@@ -113,6 +113,7 @@ static void Add_Event_XY(REBGOB *gob, REBINT id, REBINT xy, REBINT flags)
 {
 	REBEVT evt;
 
+	memset(&evt, 0, sizeof(evt));
 	evt.type  = id;
 	evt.flags = (u8) (flags | (1<<EVF_HAS_XY));
 	evt.model = EVM_GUI;
@@ -126,6 +127,7 @@ static void Update_Event_XY(REBGOB *gob, REBINT id, REBINT xy, REBINT flags)
 {
 	REBEVT evt;
 
+	memset(&evt, 0, sizeof(evt));
 	evt.type  = id;
 	evt.flags = (u8) (flags | (1<<EVF_HAS_XY));
 	evt.model = EVM_GUI;
@@ -139,6 +141,7 @@ static void Add_Event_Key(REBGOB *gob, REBINT id, REBINT key, REBINT flags)
 {
 	REBEVT evt;
 
+	memset(&evt, 0, sizeof(evt));
 	evt.type  = id;
 	evt.flags = flags;
 	evt.model = EVM_GUI;
