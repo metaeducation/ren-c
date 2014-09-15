@@ -364,7 +364,7 @@
 {
 	REBI64	secs;
 	REBVAL	*val;
-	REBVAL	*arg;
+	REBVAL	*arg = NULL;
 	REBI64	num;
 
 	val = D_ARG(1);
@@ -373,8 +373,6 @@
 
 	if (DS_ARGC > 1) {
 		arg = D_ARG(2);
-	} else {
-		Trap0(RE_MISSING_ARG);
 	}
 
 	if (IS_BINARY_ACT(action)) {
