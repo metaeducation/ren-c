@@ -694,6 +694,8 @@ STOID Mold_Block(REBVAL *value, REB_MOLD *mold)
 		case REB_SET_PATH:
 			sep = "/";
 			break;
+		default:
+			sep = NULL;
 		}
 
 		if (over) Append_Bytes(mold->series, sep ? sep : (REBYTE*)("[]"));
