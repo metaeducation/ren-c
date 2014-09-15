@@ -388,9 +388,15 @@
 
 	va_start(args, base);
 	while (NZ(n = va_arg(args, REBCNT))) {
-		if (n >= SERIES_TAIL(base)) return 0;
+		if (n >= SERIES_TAIL(base)) {
+			va_end(args);
+			return 0;
+		}
 		obj = OFV(base, n);
-		if (!IS_OBJECT(obj)) return 0;
+		if (!IS_OBJECT(obj)) {
+			va_end(args);
+			return 0;
+		}
 		base = VAL_OBJ_FRAME(obj);
 	}
 	va_end(args);
