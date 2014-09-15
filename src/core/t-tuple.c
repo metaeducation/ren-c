@@ -184,11 +184,11 @@
 /*
 ***********************************************************************/
 {
-	REBVAL	*value;
-	REBVAL	*arg;
-	REBYTE	*vp;
-	REBYTE	*ap;
-	REBINT	len;
+	REBVAL	*value = NULL;
+	REBVAL	*arg = NULL;
+	REBYTE	*vp = NULL;
+	REBYTE	*ap = NULL;
+	REBINT	len = 0;
 	REBINT	alen;
 	REBINT	v;
 	REBINT	a;
@@ -198,8 +198,6 @@
 	if (IS_TUPLE(value)) {
 		vp = VAL_TUPLE(value);
 		len = VAL_TUPLE_LEN(value);
-	} else if (!(IS_DATATYPE(value) && action == A_MAKE)) {
-		Trap_Arg(value);
 	}
 	arg = D_ARG(2);
 
