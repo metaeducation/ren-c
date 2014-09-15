@@ -27,6 +27,7 @@
 
 #include <stdio.h>
 #include <math.h>
+#include <string.h>
 #include <assert.h>
 #include  <X11/Xlib.h>
 
