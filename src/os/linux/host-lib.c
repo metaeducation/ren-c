@@ -219,6 +219,7 @@ void OS_Destroy_Graphics(void);
 static const void * backtrace_buf [1024];
 /***********************************************************************
 **
+** coverity[+kill]
 */	void OS_Crash(const REBYTE *title, const REBYTE *content)
 /*
 **		Tell user that REBOL has crashed. This function must use

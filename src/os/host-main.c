@@ -92,6 +92,7 @@ extern void Open_StdIO(void);
 extern void Put_Str(char *buf);
 extern REBYTE *Get_Str();
 
+/* coverity[+kill] */
 void Host_Crash(REBYTE *reason) {
 	OS_Crash("REBOL Host Failure", reason);
 }
