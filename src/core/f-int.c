@@ -32,8 +32,9 @@
 
 REBOOL reb_i32_add_overflow(i32 x, i32 y, i32 *sum)
 {
-	*sum = (i64)x + (i64)y;
-	if (*sum > MAX_I32 || *sum < MIN_I32) return TRUE;
+	i64 sum64 = (i64)x + (i64)y;
+	if (sum64 > MAX_I32 || sum64 < MIN_I32) return TRUE;
+	*sum = (i32)sum64;
 	return FALSE;
 }
 
