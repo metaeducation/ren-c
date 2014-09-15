@@ -176,8 +176,8 @@
 /*
 ***********************************************************************/
 {
-	REBVAL *val;
-	REBVAL *arg;
+	REBVAL *val = NULL;
+	REBVAL *arg = NULL;
 	REBINT n;
 	REBD32 x1, x2;
 	REBD32 y1, y2;
