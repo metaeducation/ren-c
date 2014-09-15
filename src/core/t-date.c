@@ -29,7 +29,6 @@
 **    when date computations are performed.
 **
 ***********************************************************************/
-
 #include "sys-core.h"
 
 
@@ -692,7 +691,7 @@ setDate:
 	REBDAT	date;
 	REBINT	day, month, year;
 	REBVAL	*val;
-	REBVAL	*arg;
+	REBVAL	*arg = NULL;
 	REBINT	num;
 
 	val = D_ARG(1);
