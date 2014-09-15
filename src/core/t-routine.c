@@ -824,7 +824,7 @@ static void callback_dispatcher(ffi_cif *cif, void *ret, void **args, void *user
 				VAL_ROUTINE_FUNCPTR(out) = func;
 			}
 		}
-	} else if (type = REB_CALLBACK) {
+	} else if (type == REB_CALLBACK) {
 		REBINT fn_idx = 0;
 		REBVAL *fun = NULL;
 		if (!IS_BLOCK(&blk[0]))
