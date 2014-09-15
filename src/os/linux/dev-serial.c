@@ -264,20 +264,22 @@ static REBINT Set_Serial_Settings(int ttyfd, REBREQ *req)
 /*
 ***********************************************************************/
 {
+	ssize_t result = 0;
 	if (!req->id) {
 		req->error = -RFE_NO_HANDLE;
 		return DR_ERROR;
 	}
 
-	req->actual = read(req->id, req->data, req->length);
+	result = read(req->id, req->data, req->length);
 #ifdef DEBUG_SERIAL
-	printf("read %d ret: %d\n", req->length, req->actual);
+	printf("read %d ret: %d\n", req->length, result);
 #endif
-	if (req->actual < 0) {
+	if (result < 0) {
 		req->error = -RFE_BAD_READ;
 		Signal_Device(req, EVT_ERROR);
 		return DR_ERROR;
 	} else {
+		req->actual = result;
 		req->serial.index += req->actual;
 		Signal_Device(req, EVT_READ);
 	}
