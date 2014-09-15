@@ -5269,7 +5269,14 @@ static unsigned filter(unsigned char* out, const unsigned char* in, unsigned w, 
     for(type = 0; type < 5; type++)
     {
       ucvector_init(&attempt[type]);
-      if(!ucvector_resize(&attempt[type], linebytes)) return 83; /*alloc fail*/
+      if(!ucvector_resize(&attempt[type], linebytes))
+	  {
+	    while(type > 0) {
+		  free(attempt[type - 1].data);
+		  type --;
+		}
+		return 83; /*alloc fail*/
+	  }
     }
 
     if(!error)
@@ -5328,7 +5335,14 @@ static unsigned filter(unsigned char* out, const unsigned char* in, unsigned w, 
     for(type = 0; type < 5; type++)
     {
       ucvector_init(&attempt[type]);
-      if(!ucvector_resize(&attempt[type], linebytes)) return 83; /*alloc fail*/
+      if(!ucvector_resize(&attempt[type], linebytes))
+	  {
+	    while(type > 0) {
+		  free(attempt[type - 1].data);
+		  type --;
+		}
+		return 83; /*alloc fail*/
+	  }
     }
 
     for(y = 0; y < h; y++)
