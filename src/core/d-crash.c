@@ -47,6 +47,7 @@ enum Crash_Msg_Nums {
 
 /***********************************************************************
 **
+** coverity[+kill]
 */	void Crash(REBINT id, ...)
 /*
 **		Print a failure message and abort.
