@@ -371,8 +371,16 @@ unsigned lodepng_load_file(unsigned char** out, size_t* outsize, const char* fil
   if(!file) return 78;
 
   /*get filesize:*/
-  fseek(file , 0 , SEEK_END);
+  if (fseek(file , 0 , SEEK_END) < 0) {
+	  fclose(file);
+	  return 90;
+  }
   size = ftell(file);
+  if (size <= 0) {
+	  /* file size can't be zero */
+	  fclose(file);
+	  return 91;
+  }
   rewind(file);
 
   /*read contents of the file into the vector*/
@@ -6034,6 +6042,8 @@ const char* lodepng_error_text(unsigned code)
     case 87: return "must provide custom zlib function pointer if LODEPNG_COMPILE_ZLIB is not defined";
     case 88: return "invalid filter strategy given for LodePNGEncoderSettings.filter_strategy";
     case 89: return "text chunk keyword too short or long: must have size 1-79";
+    case 90: return "failed to seek in the file";
+    case 91: return "failed to find the current position of the file";
   }
   return "unknown error code";
 }
