@@ -266,7 +266,7 @@ REBINT Alloc_Window(REBGOB *gob) {
 			for (n = GOB_TAIL(Gob_Root)-1; n >= 0; n--, gp++) {
 				if (!GET_GOB_FLAG(*gp, GOBF_WINDOW))
 					OS_Open_Window(*gp);
-					Draw_Window(0, *gp);
+				Draw_Window(0, *gp);
 			}
 		}
 		return;
