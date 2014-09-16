@@ -378,6 +378,8 @@
 	if (IS_BINARY_ACT(action)) {
 		REBINT	type = VAL_TYPE(arg);
 
+		ASSERT2(arg != NULL, RP_MISC);
+
 		if (type == REB_TIME) {		// handle TIME - TIME cases
 			REBI64	secs2 = VAL_TIME(arg);
 			REBINT	diff;
@@ -523,6 +525,8 @@
 			goto fixTime;
 
 		case A_PICK:
+			ASSERT2(arg != NULL, RP_MISC);
+
 			Pick_Path(val, arg, 0);
 			return R_TOS;
 
@@ -532,6 +536,8 @@
 
 		case A_MAKE:
 		case A_TO:
+			ASSERT2(arg != NULL, RP_MISC);
+
 			secs = Make_Time(arg);
 			if (secs == NO_TIME) Trap_Make(REB_TIME, arg);
 			goto setTime;
