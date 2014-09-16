@@ -756,6 +756,7 @@ setDate:
 		case A_ODDQ: DECIDE((day & 1) == 0);
 
 		case A_PICK:
+			ASSERT2(DS_ARGC > 1, RP_MISC);
 			Pick_Path(val, arg, 0);
 			return R_TOS;
 
@@ -765,6 +766,7 @@ setDate:
 
 		case A_MAKE:
 		case A_TO:
+			ASSERT2(DS_ARGC > 1, RP_MISC);
 			if (IS_DATE(arg)) {
 				val = arg;
 				goto ret_val;

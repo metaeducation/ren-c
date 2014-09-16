@@ -289,6 +289,7 @@
 			goto setPair;
 
 		case A_PICK:
+			ASSERT2(DS_ARGC > 1, RP_MISC);
 			if (IS_WORD(arg)) {
 				if (VAL_WORD_CANON(arg) == SYM_X) n = 0;
 				else if (VAL_WORD_CANON(arg) == SYM_Y) n = 1;
@@ -318,6 +319,7 @@
 
 		case A_MAKE:
 		case A_TO:
+			ASSERT2(DS_ARGC > 1, RP_MISC);
 			val = D_ARG(2);
 			x1 = y1 = 0;
 //			if (IS_NONE(val)) goto setPair;
