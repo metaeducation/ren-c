@@ -479,7 +479,7 @@ static void *Task_Ready;
 
 /***********************************************************************
 **
-*/	void *OS_Open_Library(REBCHR *path, REBCNT *error)
+*/	void *OS_Open_Library(const REBCHR *path, REBCNT *error)
 /*
 **		Load a DLL library and return the handle to it.
 **		If zero is returned, error indicates the reason.
