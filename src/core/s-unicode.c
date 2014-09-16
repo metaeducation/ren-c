@@ -934,7 +934,7 @@ ConversionResult ConvertUTF8toUTF32 (
 		if (utf) {
 			if (utf == 8) bp += 3, len -= 3;
 			else if (utf == -16 || utf == 16) bp += 2, len -= 2;
-			else if (utf == -32 || utf == 32) bp += 4, len -= 4;
+			//else if (utf == -32 || utf == 32) bp += 4, len -= 4;
 			else return NULL;
 		} else {
 			return NULL;
