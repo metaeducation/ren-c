@@ -372,9 +372,6 @@ err:
 {
 	Dump_Stack(0, 0);
 	return R_UNSET;
-
-	Dump_All(sizeof(REBVAL));
-	return R_RET;
 }
 
 
