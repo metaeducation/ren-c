@@ -585,7 +585,7 @@ static REBOOL assign_scalar(REBSTU *stu,
 			STATIC_ASSERT(sizeof(field->size) <= 4);
 			STATIC_ASSERT(sizeof(field->dimension) <= 4);
 
-			u64 step = field->size * field->dimension;
+			u64 step = (u64)field->size * (u64)field->dimension;
 			if (step > VAL_STRUCT_LIMIT) {
 				Trap1(RE_SIZE_LIMIT, out);
 			}
