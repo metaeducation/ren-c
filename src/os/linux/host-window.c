@@ -280,8 +280,6 @@ static REBXYF Zero_Pair = {0, 0};
 			else if (blue_mask == 0xFF0000 && green_mask == 0xFF00 && red_mask == 0xFF)
 				global_x_info->sys_pixmap_format = pix_format_rgba32;
 			break;
-		defaut:
-			break;
 	}
 
 	if (global_x_info->sys_pixmap_format == pix_format_undefined) {
