@@ -198,40 +198,42 @@ static int shm_error_handler(Display *d, XErrorEvent *e) {
 										   &ctx->x_shminfo,
 										   w, h);
 
-			ctx->pixbuf_len = ctx->x_image->bytes_per_line * ctx->x_image->height;
-			ctx->x_shminfo.shmid = shmget(IPC_PRIVATE,
-										  ctx->pixbuf_len,
-										  IPC_CREAT | 0644 );
-			//RL_Print("Allocated SHM %x\n", ctx->x_shminfo.shmid);
-			if (ctx->x_shminfo.shmid < 0) {
-				//RL_Print("shmget failed, fallback to non-shm\n");
+			if (ctx->x_image == NULL) {
 				global_x_info->has_xshm = 0;
 			} else {
-				ctx->pixbuf = ctx->x_shminfo.shmaddr = ctx->x_image->data
-					= (char *)shmat(ctx->x_shminfo.shmid, 0, 0);
-			}
-			if (ctx->pixbuf == NULL) {
-				//RL_Print("shmat failed, fallback to non-shm\n");
-				global_x_info->has_xshm = 0;
-				//RL_Print("Removing SHM %x\n", ctx->x_shminfo.shmid);
-				shmctl(ctx->x_shminfo.shmid, IPC_RMID, NULL);
-			} else {
-				memset(ctx->pixbuf, 0, ctx->pixbuf_len);
-				ctx->x_shminfo.readOnly = False;
-				XSync(global_x_info->display, False);
-				orig_error_handler = XSetErrorHandler(shm_error_handler);
-				XShmAttach(global_x_info->display, &ctx->x_shminfo); //Bad Access error when talking to a remote X server
-				XSync(global_x_info->display, False);
-				XSetErrorHandler(orig_error_handler);
-				if (!global_x_info->has_xshm) {
-					//RL_Print("XShmAttach failed, fallback to non-shm\n");
-					if (ctx->x_image) {
-						XDestroyImage(ctx->x_image);
-					}
-					shmdt(ctx->x_shminfo.shmaddr);
+				ctx->pixbuf_len = ctx->x_image->bytes_per_line * ctx->x_image->height;
+				ctx->x_shminfo.shmid = shmget(IPC_PRIVATE,
+											  ctx->pixbuf_len,
+											  IPC_CREAT | 0644 );
+				//RL_Print("Allocated SHM %x\n", ctx->x_shminfo.shmid);
+				if (ctx->x_shminfo.shmid < 0) {
+					//RL_Print("shmget failed, fallback to non-shm\n");
+					global_x_info->has_xshm = 0;
+				} else {
+					ctx->pixbuf = ctx->x_shminfo.shmaddr = ctx->x_image->data
+						= (char *)shmat(ctx->x_shminfo.shmid, 0, 0);
+				}
+				if (ctx->pixbuf == NULL) {
+					//RL_Print("shmat failed, fallback to non-shm\n");
+					global_x_info->has_xshm = 0;
 					//RL_Print("Removing SHM %x\n", ctx->x_shminfo.shmid);
 					shmctl(ctx->x_shminfo.shmid, IPC_RMID, NULL);
-				};
+				} else {
+					memset(ctx->pixbuf, 0, ctx->pixbuf_len);
+					ctx->x_shminfo.readOnly = False;
+					XSync(global_x_info->display, False);
+					orig_error_handler = XSetErrorHandler(shm_error_handler);
+					XShmAttach(global_x_info->display, &ctx->x_shminfo); //Bad Access error when talking to a remote X server
+					XSync(global_x_info->display, False);
+					XSetErrorHandler(orig_error_handler);
+					if (!global_x_info->has_xshm) {
+						//RL_Print("XShmAttach failed, fallback to non-shm\n");
+						XDestroyImage(ctx->x_image);
+						shmdt(ctx->x_shminfo.shmaddr);
+						//RL_Print("Removing SHM %x\n", ctx->x_shminfo.shmid);
+						shmctl(ctx->x_shminfo.shmid, IPC_RMID, NULL);
+					};
+				}
 			}
 			if (global_x_info->has_xshm) {
 				if (ctx->x_shminfo_back.shmaddr != NULL) {
@@ -247,6 +249,7 @@ static int shm_error_handler(Display *d, XErrorEvent *e) {
 											   0,
 											   &ctx->x_shminfo_back,
 											   w, h);
+				assert(ctx->x_image_back != NULL);
 
 				ctx->x_shminfo_back.shmid = shmget(IPC_PRIVATE,
 											  ctx->x_image_back->bytes_per_line * ctx->x_image->height,
