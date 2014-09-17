@@ -629,7 +629,7 @@ static void handle_configure_notify(XEvent *ev, REBGOB *gob)
 	}
 }
 
-void handle_key(XEvent *ev, REBGOB *gob)
+static void handle_key(XEvent *ev, REBGOB *gob)
 {
 	KeySym keysym;
 	REBFLG flags = Check_Modifiers(0, ev->xkey.state);
@@ -677,7 +677,7 @@ void handle_key(XEvent *ev, REBGOB *gob)
 	}
 }
 
-void handle_expose(XEvent *ev, REBGOB *gob)
+static void handle_expose(XEvent *ev, REBGOB *gob)
 {
 	host_window_t *hw = GOB_HWIN(gob);
 
