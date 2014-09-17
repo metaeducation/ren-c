@@ -294,7 +294,7 @@ static REBXYF Zero_Pair = {0, 0};
 	if (global_x_info->has_xshm) {
 		int major, minor;
 		if (XShmQueryVersion(global_x_info->display, &major, &minor, &pixmaps) == True) {
-			const char *env_use_xshm = getenv("USE_XSHM");
+			const char *env_use_xshm = getenv("R3_USE_XSHM");
 			if (env_use_xshm != NULL) {
 				int value = atoi(env_use_xshm);
 				if (!value) {
@@ -315,7 +315,7 @@ static REBXYF Zero_Pair = {0, 0};
 	int major, minor;
 	global_x_info->has_double_buffer = XdbeQueryExtension(global_x_info->display, &major, &minor);
 	if (global_x_info->has_double_buffer) {
-		const char *env_use_double_buffer = getenv("USE_DOUBLE_BUFFER");
+		const char *env_use_double_buffer = getenv("R3_USE_DOUBLE_BUFFER");
 		if (env_use_double_buffer != NULL) {
 			int value = atoi(env_use_double_buffer);
 			if (!value) {

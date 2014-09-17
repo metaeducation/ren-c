@@ -141,7 +141,7 @@ int main(int argc, char **argv)
 
 	Host_Lib = &Host_Lib_Init;
 
-	const char *env_always_malloc = getenv("ALWAYS_MALLOC");
+	const char *env_always_malloc = getenv("R3_ALWAYS_MALLOC");
 	if (env_always_malloc != NULL) {
 		always_malloc = atoi(env_always_malloc);
 	}
