@@ -975,6 +975,9 @@ static void set_wm_locale(Display *display,
 				XdbeDeallocateBackBufferName(global_x_info->display, hw->x_back_buffer);
 			}
 			XDestroyWindow(global_x_info->display, hw->x_id);
+			if (hw->exposed_region != NULL) {
+				XDestroyRegion(hw->exposed_region);
+			}
 			X_Event_Loop(-1);
 		}
 	}
