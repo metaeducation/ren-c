@@ -74,6 +74,9 @@ REBARGS Main_Args;
 HINSTANCE App_Instance = 0;
 #endif
 
+/* for memory allocation trouble shooting */
+unsigned int always_malloc = 0;
+
 #ifndef REB_CORE
 extern void Init_Windows(void);
 extern void OS_Init_Graphics(void);
@@ -137,6 +140,11 @@ int main(int argc, char **argv)
 #endif
 
 	Host_Lib = &Host_Lib_Init;
+
+	const char *env_always_malloc = getenv("ALWAYS_MALLOC");
+	if (env_always_malloc != NULL) {
+		always_malloc = atoi(env_always_malloc);
+	}
 
 	Parse_Args(argc, (REBCHR **)argv, &Main_Args);
 

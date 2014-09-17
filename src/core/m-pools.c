@@ -58,11 +58,12 @@
 //#define GC_TRIGGER (GC_Active && (GC_Ballast <= 0 || (GC_Pending && !GC_Disabled)))
 
 #ifdef POOL_MAP
-#define FIND_POOL(n) ((n <= 4 * MEM_BIG_SIZE) ? (REBCNT)(PG_Pool_Map[n]) : SYSTEM_POOL)
+#define FIND_POOL(n) (((!always_malloc) && (n <= 4 * MEM_BIG_SIZE)) ? (REBCNT)(PG_Pool_Map[n]) : SYSTEM_POOL)
 #else
-#define FIND_POOL(n) Find_Pool(n);
+#define FIND_POOL(n) (always_malloc? SYSTEM_POOL : Find_Pool(n);)
 #endif
 
+extern unsigned char always_malloc;
 
 /***********************************************************************
 **
