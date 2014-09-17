@@ -374,6 +374,9 @@ static int shm_error_handler(Display *d, XErrorEvent *e) {
 			//RL_Print("Removing SHM %x\n", ctx->x_shminfo.shmid);
 			shmctl(ctx->x_shminfo_back.shmid, IPC_RMID, NULL);
 		}
+		if (ctx->x_image_back) {
+			XDestroyImage(ctx->x_image_back);
+		}
 	}
 #endif
 	if (ctx->x_image) {
