@@ -940,8 +940,7 @@ ConversionResult ConvertUTF8toUTF32 (
 			return NULL;
 		}
 	}
-
-	if (utf == 0 || utf == 8) {
+	else if (utf == 0 || utf == 8) {
 		size = Decode_UTF8((REBUNI*)Reset_Buffer(ser, len), bp, len, TRUE);
 	} 
 	else if (utf == -16 || utf == 16) {
@@ -950,6 +949,9 @@ ConversionResult ConvertUTF8toUTF32 (
 //	else if (utf == -32 || utf == 32) {
 //		size = Decode_UTF32((REBUNI*)Reset_Buffer(ser, len/4 + 1), bp, len, utf < 0, TRUE);
 //	}
+	else {
+		return NULL; /* should never be here */
+	}
 
 	if (size < 0) {
 		size = -size;
