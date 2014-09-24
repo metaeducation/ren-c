@@ -1112,7 +1112,7 @@ eval_func2:
 		type = VAL_TYPE(into);
 		len = VAL_INDEX(into) + SERIES_LEN(block) - index;
 	} else {
-		ser = Make_Block(SERIES_LEN(block) - index);
+		ser = Make_Block(SERIES_TAIL(block) - index);
 		if (ser == NULL)
 			Crash(RE_NO_MEMORY);
 		type = REB_BLOCK;
