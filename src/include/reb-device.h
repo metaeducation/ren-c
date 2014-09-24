@@ -197,7 +197,6 @@ struct rebol_devreq {
 		struct {
 			REBCHR *path;			//device path string (in OS local format)
 			void *prior_attr;			// termios: retain previous settings to revert on close
-			i64 index;				// serial index position
 			i32 baud;				// baud rate of serial port
 			u8	data_bits;			// 5, 6, 7 or 8
 			u8	parity;				// odd, even, mark or space
