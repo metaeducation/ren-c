@@ -181,18 +181,25 @@ static REBINT Set_Serial_Settings(HANDLE h, REBREQ *req)
 /*
 ***********************************************************************/
 {
+	REBINT result = 0;
 	if (!req->handle) {
 		req->error = -RFE_NO_HANDLE;
 		return DR_ERROR;
 	}
 
-	if (!ReadFile(req->handle, req->data, req->length, &req->actual, 0)) {
+	//RL_Print("reading %d bytes\n", req->length);
+	if (!ReadFile(req->handle, req->data, req->length, &result, 0) || result < 0) {
 		req->error = -RFE_BAD_READ;
 		Signal_Device(req, EVT_ERROR);
 		return DR_ERROR;
 	} else {
-		req->serial.index += req->actual;
-		Signal_Device(req, EVT_READ);
+		if (result == 0) {
+			return DR_PEND;
+		} else if (result > 0){
+			//RL_Print("read %d bytes\n", req->actual);
+			req->actual = result;
+			Signal_Device(req, EVT_READ);
+		}
 	}
 
 #ifdef DEBUG_SERIAL

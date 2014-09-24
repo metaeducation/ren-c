@@ -278,6 +278,8 @@ static REBINT Set_Serial_Settings(int ttyfd, REBREQ *req)
 		req->error = -RFE_BAD_READ;
 		Signal_Device(req, EVT_ERROR);
 		return DR_ERROR;
+	} else if (result == 0) {
+		return DR_PEND;
 	} else {
 		req->actual = result;
 		req->serial.index += req->actual;
