@@ -317,9 +317,15 @@ typedef struct Reb_Tuple {
 ***********************************************************************/
 {
 	REBYTE	*data;		// series data head
+#ifdef SERIES_LABELS
+	REBYTE  *label;		// identify the series
+#endif
 	REBCNT	tail;		// one past end of useful data
 	REBCNT	rest;		// total number of units from bias to end
 	REBINT	info;		// holds width and flags
+#if defined(__LP64__) || defined(__LLP64__)
+	REBCNT padding; /* make next pointer is naturally aligned */
+#endif
 	union {
 		REBCNT size;	// used for vectors and bitsets
 		REBSER *series;	// MAP datatype uses this
@@ -329,9 +335,6 @@ typedef struct Reb_Tuple {
 		} area;
 		REBUPT all; /* for copying, must have the same size as the union */
 	};
-#ifdef SERIES_LABELS
-	REBYTE  *label;		// identify the series
-#endif
 };
 
 #define SERIES_TAIL(s)	 ((s)->tail)

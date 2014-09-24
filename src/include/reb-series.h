@@ -27,14 +27,17 @@
 **
 ***********************************************************************/
 
-typedef struct rebol_series {
+struct rebol_series {
 	REBYTE *data;
 	REBCNT tail;
 	REBCNT rest;
 	REBINT info;
+#if defined(__LP64__) || defined(__LLP64__)
+	REBCNT padding; /* make the size multiple of sizeof(pointer) */
+#endif
 	REBCNT size; // Temp - size of image w/h
 	// OPTIONAL Extensions
-} REBSER;
+};
 
 #define SERIES_TAIL(s) ((s)->tail)
 #define SERIES_DATA(s) ((s)->data)

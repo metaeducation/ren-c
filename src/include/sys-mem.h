@@ -46,6 +46,9 @@ typedef void *REBNOD;			// Just used for linking free nodes
 {
 	struct	rebol_mem_segment *next;
 	REBCNT	size;
+#if defined(__LP64__) || defined (__LLP64__)
+//	REBCNT	padding; /* make if 16 byte long, such that the next element is pointer aligned */
+#endif
 } REBSEG;
 
 
@@ -70,11 +73,11 @@ typedef void *REBNOD;			// Just used for linking free nodes
 **
 ***********************************************************************/
 {
+	REBSEG	*segs;				// first memory segment
+	REBNOD	*first;				// first free node in pool
 	REBCNT	wide;				// size of allocation unit
 	REBCNT	units;				// units per segment allocation
 	REBCNT	free;				// number of units remaining
-	REBSEG	*segs;				// first memory segment
-	REBNOD	*first;				// first free node in pool
 	REBCNT	has;				// total number of units
 //	UL		total;				// total bytes for all segs
 //	char	*name;				// identifying string

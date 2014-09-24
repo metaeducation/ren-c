@@ -37,6 +37,7 @@
 ***********************************************************************/
 
 #include "../agg/agg_graphics.h"
+#include "reb-series.h"
 //#undef IS_ERROR
 
 namespace agg
@@ -496,15 +497,9 @@ namespace agg
 
 	extern "C" void rebdrw_gob_image(REBGOB *gob, REBYTE* buf, REBXYI buf_size, REBXYI abs_oft, REBXYI clip_oft, REBXYI clip_siz)
 	{
-		//FIXME: temporary hack for getting image w,h
-		u16* d = (u16*)GOB_CONTENT(gob);
-#if defined(__LP64__) || defined(__LLP64__)		
-		int w = d[10];
-		int h = d[11];
-#else
-		int w = d[8];
-		int h = d[9];
-#endif
+		struct rebol_series* img = (struct rebol_series*)GOB_CONTENT(gob);
+		int w = IMG_WIDE(img);
+		int h = IMG_HIGH(img);
 
 		agg_graphics::ren_buf rbuf_win(buf, buf_size.x, buf_size.y, buf_size.x << 2);
 		agg_graphics::pixfmt pixf_win(rbuf_win);
