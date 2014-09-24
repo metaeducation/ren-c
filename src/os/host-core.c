@@ -109,7 +109,7 @@ static u32 *core_ext_words;
     case CMD_CORE_TO_PNG:
 		{
 			size_t buffersize;
-			REBYTE *buffer;
+			REBYTE *buffer = NULL;
 			REBSER *binary;
 			REBYTE *binaryBuffer;
 			REBINT w = RXA_IMAGE_WIDTH(frm,1);
@@ -134,8 +134,11 @@ static u32 *core_ext_words;
 			//cleanup
 			lodepng_state_cleanup(&state);
 			
-			if (error) return RXR_NONE;
-RL_Print("buff size: %d\n",buffersize);
+			if (error) {
+				if (buffer != NULL) free(buffer);
+				return RXR_NONE;
+			}
+			//RL_Print("buff size: %d\n",buffersize);
 			//allocate new binary!
 			binary = (REBSER*)RL_Make_String(buffersize, FALSE);
 			binaryBuffer = (REBYTE *)RL_SERIES(binary, RXI_SER_DATA);
@@ -149,6 +152,7 @@ RL_Print("buff size: %d\n",buffersize);
 			RXA_TYPE(frm,1) = RXT_BINARY;			
 			RXA_SERIES(frm,1) = binary;
 			RXA_INDEX(frm,1) = 0;			
+			free(buffer);
 			return RXR_VALUE;
 		}
         break;
