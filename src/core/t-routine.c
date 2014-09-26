@@ -494,16 +494,18 @@ static void ffi_to_rebol(REBRIN *rin,
 			Trap_Arg(varargs);
 		}
 		ser = Make_Series(n_fixed + (VAL_LEN(varargs) - n_fixed) / 2, sizeof(void *), FALSE);
-	} else {
+	} else if ((SERIES_TAIL(VAL_ROUTINE_FFI_ARGS(rot))) > 1) {
 		ser = Make_Series(SERIES_TAIL(VAL_ROUTINE_FFI_ARGS(rot)) - 1, sizeof(void *), FALSE);
 	}
 
 	/* save ser on stack such that it won't be GC'ed */
-	DS_PUSH_NONE;
-	tmp = DS_TOP;
-	SET_TYPE(tmp, REB_BLOCK);
-	VAL_SERIES(tmp) = ser;
-	ffi_args = (void **) SERIES_DATA(ser);
+	if (ser != NULL) {
+		DS_PUSH_NONE;
+		tmp = DS_TOP;
+		SET_TYPE(tmp, REB_BLOCK);
+		VAL_SERIES(tmp) = ser;
+		ffi_args = (void **) SERIES_DATA(ser);
+	}
 
 	if (ROUTINE_GET_FLAG(VAL_ROUTINE_INFO(rot), ROUTINE_VARARGS)) {
 		REBINT j = 1;
