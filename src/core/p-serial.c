@@ -223,7 +223,6 @@
 			OS_DO_DEVICE(req, RDC_CLOSE);
 			SET_CLOSED(req);
 		}
-		Free_Port_State(port);
 		break;
 
 	default:
