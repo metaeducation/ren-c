@@ -639,8 +639,8 @@ static void swap_buffer(REBCMP_CTX* ctx)
 
 	ctx->New_Clip.x = abs_x;
 	ctx->New_Clip.y = abs_y;
-	ctx->New_Clip.width = abs_x + GOB_LOG_W_INT(gob);
-	ctx->New_Clip.height = abs_y + GOB_LOG_H_INT(gob);
+	ctx->New_Clip.width = GOB_LOG_W_INT(gob);
+	ctx->New_Clip.height = GOB_LOG_H_INT(gob);
 
 	//handle newly added gob case
 	if (!GET_GOB_STATE(gob, GOBS_NEW)){
@@ -651,8 +651,8 @@ static void swap_buffer(REBCMP_CTX* ctx)
 		//set region with old gob location and dimensions
 		ctx->Old_Clip.x = abs_ox;
 		ctx->Old_Clip.y = abs_oy;
-		ctx->Old_Clip.width = abs_ox + GOB_WO_INT(gob);
-		ctx->Old_Clip.height = abs_oy + GOB_HO_INT(gob);
+		ctx->Old_Clip.width = GOB_WO_INT(gob);
+		ctx->Old_Clip.height = GOB_HO_INT(gob);
 		XUnionRectWithRegion(&ctx->Old_Clip, ctx->Win_Region, ctx->Win_Region);
 		//RL_Print("OLD: %dx%d %dx%d\n",(REBINT)abs_ox, (REBINT)abs_oy, (REBINT)abs_ox + GOB_WO_INT(gob), (REBINT)abs_oy + GOB_HO_INT(gob));
 	}
