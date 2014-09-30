@@ -579,8 +579,16 @@ static void swap_buffer(REBCMP_CTX* ctx)
 #endif
 }
 
-/**	Compose content of the specified gob, only update the region in rect */
-void rebcmp_compose_region(REBCMP_CTX* ctx, REBGOB* winGob, REBGOB* gob, XRectangle *rect, REBOOL only)
+/***********************************************************************
+**
+*/ void rebcmp_compose(REBCMP_CTX* ctx, REBGOB* winGob, REBGOB* gob, REBOOL only)
+/*
+**	Compose content of the specified gob. Main compositing function.
+**
+**  If the ONLY arg is TRUE then the specified gob area will be
+**  rendered to the buffer at 0x0 offset.(used by TO-IMAGE)
+**
+***********************************************************************/
 {
 	REBINT max_depth = 1000; // avoid infinite loops
 	REBD32 abs_x = 0;
@@ -592,7 +600,6 @@ void rebcmp_compose_region(REBCMP_CTX* ctx, REBGOB* winGob, REBGOB* gob, XRectan
 	REBINT y = GOB_LOG_Y_INT(gob);
 	REBINT w = GOB_LOG_W_INT(gob);
 	REBINT h = GOB_LOG_H_INT(gob);
-	XRectangle win_rect;
 	/*
 	RL_Print("Composing gob: %x (%dx%d, %dx%d) in wingob %x\n", 
 			 gob,
@@ -662,26 +669,13 @@ void rebcmp_compose_region(REBCMP_CTX* ctx, REBGOB* winGob, REBGOB* gob, XRectan
 			 win_rect.y + win_rect.height);
 			 */
 
-	//intersect resulting region with window clip region
-	Region win_region = XCreateRegion();
-	XUnionRectWithRegion(rect, win_region, win_region);
-
-	XIntersectRegion(ctx->Win_Region, win_region, ctx->Win_Region);
-	XDestroyRegion(win_region);
-
-	XClipBox(ctx->Win_Region, &win_rect);
-	/*
-	RL_Print("Start winre, %dx%d,%dx%d\n",
-			 win_rect.x,
-			 win_rect.y,
-			 win_rect.x + win_rect.width,
-			 win_rect.y + win_rect.height);
-	*/
-
 	if (!XEmptyRegion(ctx->Win_Region))
 	{
 		swap_buffer(ctx);
 		ctx->Window_Buffer = rebcmp_get_buffer(ctx);
+		if (gob == winGob) {
+			memset(ctx->Window_Buffer, 0, ctx->pixbuf_len);
+		}
 
 		//redraw gobs
 		process_gobs(ctx, winGob);
@@ -698,25 +692,6 @@ void rebcmp_compose_region(REBCMP_CTX* ctx, REBGOB* winGob, REBGOB* gob, XRectan
 	GOB_HO(gob) = GOB_LOG_H(gob);
 }
 
-/***********************************************************************
-**
-*/ void rebcmp_compose(REBCMP_CTX* ctx, REBGOB* winGob, REBGOB* gob, REBOOL only)
-/*
-**	Compose content of the specified gob. Main compositing function.
-**
-**  If the ONLY arg is TRUE then the specified gob area will be
-**  rendered to the buffer at 0x0 offset.(used by TO-IMAGE)
-**
-***********************************************************************/
-{
-	XRectangle win_rect;
-	win_rect.x = 0;
-	win_rect.y = 0;
-	win_rect.width = GOB_LOG_W_INT(winGob);
-	win_rect.height = GOB_LOG_H_INT(winGob);
-
-	rebcmp_compose_region(ctx, winGob, gob, &win_rect, only);
-}
 
 void rebcmp_blit_region(REBCMP_CTX* ctx, Region reg)
 {
