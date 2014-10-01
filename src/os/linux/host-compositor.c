@@ -410,6 +410,7 @@ static int shm_error_handler(Display *d, XErrorEvent *e) {
 	REBINT x = ROUND_TO_INT(ctx->absOffset.x);
 	REBINT y = ROUND_TO_INT(ctx->absOffset.y);
 	REBYTE* color;
+	Region saved_win_region = XCreateRegion();
 
 	if (GET_GOB_STATE(gob, GOBS_NEW)){
 		//reset old-offset and old-size if newly added
@@ -451,8 +452,9 @@ static int shm_error_handler(Display *d, XErrorEvent *e) {
 			 rect.x + rect.width,
 			 rect.y + rect.height);
 	*/
-	XIntersectRegion(reg, ctx->Win_Region, reg);
-	XClipBox(reg, &rect);
+	XUnionRegion(saved_win_region, ctx->Win_Region, saved_win_region);
+	XIntersectRegion(reg, ctx->Win_Region, ctx->Win_Region);
+	XClipBox(ctx->Win_Region, &rect);
 	/*
 	RL_Print("Win and Gob, left: %d,\ttop: %d,\tright: %d,\tbottom: %d\n",
 			 rect.x,
@@ -483,7 +485,7 @@ static int shm_error_handler(Display *d, XErrorEvent *e) {
 			 gob_clip.right,
 			 gob_clip.bottom);
 			 */
-	if (!XEmptyRegion(reg))
+	if (!XEmptyRegion(ctx->Win_Region))
 	//if (valid_intersection)
 	{
 		//render GOB content
@@ -562,6 +564,8 @@ static int shm_error_handler(Display *d, XErrorEvent *e) {
 		}
 	}
 	XDestroyRegion(reg);
+	XDestroyRegion(ctx->Win_Region);
+	ctx->Win_Region = saved_win_region;
 }
 
 static void swap_buffer(REBCMP_CTX* ctx)
