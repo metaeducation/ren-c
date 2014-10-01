@@ -813,6 +813,7 @@ void Dispatch_Event(XEvent *ev)
 				if (hw != NULL) {
 					OS_Free(hw);
 				}
+				CLR_GOB_STATES(gob, GOBS_OPEN, GOBS_ACTIVE);
 				Free_Window(gob);
 			}
 			break;

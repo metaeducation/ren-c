@@ -969,7 +969,7 @@ static void set_wm_locale(Display *display,
 		X_Event_Loop(-1);
 		host_window_t *hw = GOB_HWIN(gob);
 		if (hw) {
-			//RL_Print("Destroying window: %x\n", win);
+			//RL_Print("Destroying window: %x\n", hw->x_id);
 			if (hw->x_back_buffer != 0) {
 				//RL_Print("Deallocating buffer %x for window %x\n", hw->x_back_buffer, hw->x_id);
 				XdbeDeallocateBackBufferName(global_x_info->display, hw->x_back_buffer);
@@ -980,5 +980,9 @@ static void set_wm_locale(Display *display,
 			}
 			X_Event_Loop(-1);
 		}
+
+		/* DestroyNotify might have not been received yet */
+		CLR_GOB_STATES(gob, GOBS_OPEN, GOBS_ACTIVE);
+		Free_Window(gob);
 	}
 }
