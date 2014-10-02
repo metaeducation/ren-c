@@ -702,13 +702,13 @@ setDate:
 		year  = VAL_YEAR(val);
 		tz    = VAL_ZONE(val);
 		secs  = VAL_TIME(val);
+	} else if (!(IS_DATATYPE(val) && (action == A_MAKE || action == A_TO))) {
+		Trap_Arg(val);
 	}
 
 	if (DS_ARGC > 1) arg = D_ARG(2);
 
 	if (IS_BINARY_ACT(action)) {
-		ASSERT2(IS_DATE(val), RP_MISC);
-
 		REBINT	type = VAL_TYPE(arg);
 		
 		if (type == REB_DATE) {
