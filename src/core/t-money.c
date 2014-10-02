@@ -95,6 +95,10 @@
 		}
 	}
 #endif
+	else {
+		Trap_Arg(val);
+	}
+
 	memcpy(buf + 12 - len, buf, len); // shift to right side
 	memset(buf, 0, 12 - len);
 	VAL_DECI(result) = binary_to_deci(buf);
