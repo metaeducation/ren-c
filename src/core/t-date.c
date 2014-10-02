@@ -707,8 +707,10 @@ setDate:
 	if (DS_ARGC > 1) arg = D_ARG(2);
 
 	if (IS_BINARY_ACT(action)) {
-		REBINT	type = VAL_TYPE(arg);
+		ASSERT2(IS_DATE(val), RP_MISC);
 
+		REBINT	type = VAL_TYPE(arg);
+		
 		if (type == REB_DATE) {
 			if (action == A_SUBTRACT) {
 				num = Diff_Date(date, VAL_DATE(arg));
