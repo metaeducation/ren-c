@@ -188,6 +188,7 @@
 	if (DS_ARGC > 1) arg = D_ARG(2);
 
 	if (IS_BINARY_ACT(action)) {
+		ASSERT2(DS_ARGC > 1, RP_MISC);
 		n = VAL_TYPE(arg);
 
 		if (n == REB_PAIR) {		// handle PAIR - PAIR cases
