@@ -67,6 +67,11 @@ static u32* shape_ext_words;
 //    Reb_Print("SHAPE called\n");
     REBCNT rel = 0;
 
+	if (ctx == NULL && cmd != CMD_SHAPE_INIT_WORDS) {
+		/* this is not called from SHOW */
+		return RXR_ERROR;
+	}
+
 	switch (cmd) {
 
     case CMD_SHAPE_INIT_WORDS:
@@ -206,6 +211,10 @@ static u32* shape_ext_words;
 **
 ***********************************************************************/
 {
+	if (ctx == NULL && cmd != CMD_DRAW_INIT_WORDS) {
+		/* this is not called from SHOW */
+		return RXR_ERROR;
+	}
 	switch (cmd) {
 
     case CMD_DRAW_INIT_WORDS:

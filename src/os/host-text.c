@@ -120,6 +120,10 @@ static u32* text_ext_words;
 **
 ***********************************************************************/
 {
+	if (ctx == NULL && cmd != CMD_TEXT_INIT_WORDS) {
+		/* this is not called from SHOW */
+		return RXR_ERROR;
+	}
 	switch (cmd) {
 
     case CMD_TEXT_INIT_WORDS:
