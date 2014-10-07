@@ -576,7 +576,7 @@ static void *Task_Ready;
 
 /***********************************************************************
 **
-*/	int OS_Create_Process(REBCHR *call, u32 flags)
+*/	int OS_Create_Process(REBCHR *call, int argc, char* argv[], u32 flags, u64 *pid, u32 input_type, void *input, u32 input_len, u32 output_type, void **output, u32 *output_len, u32 err_type, void **err, u32 *err_len)
 /*
 **		Return -1 on error.
 **		For right now, set flags to 1 for /wait.
@@ -665,7 +665,14 @@ static void *Task_Ready;
 
 	Insert_Command_Arg(path, url, MAX_BRW_PATH);
 
-	len = OS_Create_Process(path, 0);
+	//len = OS_Create_Process(path, 0);
+
+	char * const argv[] = {path, NULL};
+	len = OS_Create_Process(path, 1, argv, 0, 
+							NULL, /* pid */
+							0, NULL, 0, /* input_type, void *input, u32 input_len, */
+							0, NULL, NULL, /* output_type, void **output, u32 *output_len, */
+							0, NULL, NULL); /* u32 err_type, void **err, u32 *err_len */
 
 	FREE_MEM(path);
 	return len;

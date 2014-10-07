@@ -254,3 +254,6 @@ watch-recycle
 watch-obj-copy
 stack-size
 
+;call/info
+id
+exit-code
