@@ -475,6 +475,8 @@ x*/	int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result)
 		SET_FALSE(val);
 		break;
 	case RXR_ERROR:
+		Trap0(RE_COMMAND_FAIL);
+		break;
 	default:
 		SET_UNSET(val);
 	}
@@ -596,6 +598,8 @@ x*/	int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result)
 			SET_FALSE(val);
 			break;
 		case RXR_ERROR:
+			Trap0(RE_COMMAND_FAIL);
+			break;
 		default:
 			SET_UNSET(val);
 		}

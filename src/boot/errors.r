@@ -205,6 +205,7 @@ Command: [
 ;   cant-free:          [{Cannot free} :arg1]
 ;   nothing-to-free:    {Nothing to free}
 ;   ssl-error:          [{SSL Error: } :arg1]
+	command-fail:		["Command failed"]
 ]
 
 resv700: [
