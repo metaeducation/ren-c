@@ -732,11 +732,10 @@ static void set_gob_window_type(REBGOB *gob,
 											"_NET_WM_WINDOW_TYPE_DROPDOWN_MENU",
 											True);
 		host_window_t *hw = GOB_HWIN(GOB_TMP_OWNER(gob));
-		if (!hw) {
-			Host_Crash("Parent window can't be found\n");
+		if (hw != NULL) {
+			parent_window = hw->x_id;
+			XSetTransientForHint(display, window, parent_window);
 		}
-		parent_window = hw->x_id;
-		XSetTransientForHint(display, window, parent_window);
 	} else if (GET_GOB_FLAG(gob, GOBF_MODAL)) {
 		Atom wm_state = x_atom_list_find_atom(global_x_info->x_atom_list,
 											  display,
@@ -747,11 +746,10 @@ static void set_gob_window_type(REBGOB *gob,
 													"_NET_WM_STATE_MODAL",
 													True);
 		host_window_t *hw = GOB_HWIN(GOB_TMP_OWNER(gob));
-		if (!hw) {
-			Host_Crash("Parent window can't be found\n");
+		if (hw != NULL) {
+			parent_window = hw->x_id;
+			XSetTransientForHint(display, window, parent_window);
 		}
-		parent_window = hw->x_id;
-		XSetTransientForHint(display, window, parent_window);
 		if (is_net_supported(wm_state)
 			&& is_net_supported(wm_state_modal)) {
 			XChangeProperty(display, window, wm_state, XA_ATOM, 32,
