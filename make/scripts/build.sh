@@ -82,7 +82,7 @@ build() {
 	cd $DIR
 	make -f $MK clean
 	make -f $MK $EXE
-	make -f $MK strip-view
+	#make -f $MK strip-view
 	cp $EXE $NAME
 }
 
