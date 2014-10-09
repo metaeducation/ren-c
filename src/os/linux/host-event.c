@@ -473,10 +473,10 @@ static void handle_selection_request(XEvent *ev)
 						ev->xselectionrequest.requestor,
 						ev->xselectionrequest.property,
 						ev->xselectionrequest.target,
-						16,			/* format, unsigned short */
+						8,			/* format, unsigned short */
 						PropModeReplace,
 						global_x_info->selection.data,
-						global_x_info->selection.data_length / sizeof(REBUNI));
+						global_x_info->selection.data_length);
 	} else {
 		selection_event.xselection.property = 0;
 	}
