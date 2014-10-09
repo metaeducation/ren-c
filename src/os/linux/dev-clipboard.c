@@ -112,23 +112,26 @@ static REBINT do_read_clipboard(REBREQ * req, Atom property)
 									&bytes,
 									(unsigned char**)&data);
 		if (nitems <= 0){
-			req->actual = 0;
-			return DR_ERROR;
+			goto error;
 		}
 
 		if (DR_ERROR == copy_to_req(req, data, nitems)){;
 			XFree(data);
-			return DR_ERROR;
+			goto error;
 		}
 		XFree(data);
 
 		Signal_Device(req, EVT_READ);
 		//RL_Print("do_read_clipboard succeeded\n");
-		return DR_DONE;
+		goto close;
 	}
 
 	//RL_Print("do_read_clipboard failed\n");
-	return DR_ERROR;
+error:
+	req->actual = 0;
+close:
+	Signal_Device(req, EVT_CLOSE);
+	return DR_DONE;
 }
 
 /***********************************************************************
@@ -146,24 +149,27 @@ static REBINT do_read_clipboard(REBREQ * req, Atom property)
 	Window owner = 0;
 	Display *display = global_x_info->display;
 	if (display == NULL) {
-		return DR_ERROR;
+		goto error;
 	}
 	Atom XA_CLIPBOARD = XInternAtom(display, "CLIPBOARD", 0);
 	Atom XA_SELECTION = XInternAtom(display, "REBOL_SELECTION", False);
 	//XSync(display, False);
 	owner = XGetSelectionOwner(display, XA_CLIPBOARD);
+	if (owner == None) {
+		goto error;
+	}
 	if (global_x_info->selection.win == owner){
 		/* same process, bypass the server */
 		if (global_x_info->selection.data != NULL){
 			if (DR_ERROR == copy_to_req(req,
 										global_x_info->selection.data,
 										global_x_info->selection.data_length)){
-				return DR_ERROR;
+				goto error;
 			}
 			global_x_info->selection.status = -1;
-			return DR_DONE;
+			goto close;
 		} else {
-			return DR_ERROR;
+			goto error;
 		}
 	}
 
@@ -190,6 +196,11 @@ static REBINT do_read_clipboard(REBREQ * req, Atom property)
 	} else { /* request sent and response not received yet */
 		return DR_PEND;
 	}
+error:
+	req->actual = 0;
+close:
+	Signal_Device(req, EVT_CLOSE);
+	return DR_DONE;
 }
 
 
