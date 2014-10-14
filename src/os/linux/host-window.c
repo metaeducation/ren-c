@@ -977,6 +977,7 @@ static void set_wm_locale(Display *display,
 				XDestroyRegion(hw->exposed_region);
 			}
 			X_Event_Loop(-1);
+			OS_Free(hw);
 		}
 
 		/* DestroyNotify might have not been received yet */
