@@ -731,13 +731,13 @@ chk_neg:
 		return R_RET;
 	}
 
-	if (flag_wait) {
-		SET_INTEGER(D_RET, r);
+	if (r >= 0) {
+		SET_INTEGER(D_RET, flag_wait ? r : pid);
 		return R_RET;
+	} else {
+		Trap1(RE_CALL_FAIL, Make_OS_Error());
+		return R_NONE;
 	}
-	
-	if (r < 0) Trap1(RE_CALL_FAIL, Make_OS_Error());
-	return R_NONE;
 }
 
 #ifdef not_used

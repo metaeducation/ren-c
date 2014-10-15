@@ -684,7 +684,7 @@ error:
 */	int OS_Create_Process(REBCHR *call, int argc, char* argv[], u32 flags, u64 *pid, u32 input_type, void *input, u32 input_len, u32 output_type, void **output, u32 *output_len, u32 err_type, void **err, u32 *err_len)
 /*
  * flags:
- * 		1: wait, is assumed in this implementation
+ * 		1: wait, is implied when I/O redirection is enabled
  * 		2: console
  * 		4: shell
  * 		8: info
@@ -836,6 +836,7 @@ error:
 		off_t err_size = 0;
 		int exited = 0;
 
+		if (!flag_wait) goto cleanup; /* I/O redirection implies wait */
 		if (stdin_pipe[W] > 0) {
 			//printf("stdin_pipe[W]: %d\n", stdin_pipe[W]);
 			input_size = strlen((char*)input); /* the passed in input_len is in character, not in bytes */
@@ -1004,6 +1005,20 @@ stdout_pipe_err:
 	}
 stdin_pipe_err:
 	return ret;
+}
+
+/***********************************************************************
+**
+*/	int OS_Wait_Process(int pid, int *status, int flags)
+/*
+ * flags:
+ * 		0: return immediately
+ * 		1: wait until one of child processes exits
+ *
+**		Return -1 on error, otherwise process ID
+***********************************************************************/
+{
+	return waitpid(pid, status, flags == 0? WNOHANG : 0);
 }
 
 static int Try_Browser(char *browser, REBCHR *url)

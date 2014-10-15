@@ -632,6 +632,19 @@ static void *Task_Ready;
 	return result;  // meaning depends on flags
 }
 
+/***********************************************************************
+**
+*/	int OS_Wait_Process(int pid, int *status, int flags)
+/*
+ * flags:
+ * 		0: return immediately
+ * 		1: wait until one of child processes exits
+ *
+**		Return -1 on error, otherwise process ID
+***********************************************************************/
+{
+	return 0;
+}
 
 /***********************************************************************
 **
