@@ -531,6 +531,8 @@
 		secs  = VAL_TIME(data);
 		tz    = VAL_ZONE(data);
 		if (i > 8) Split_Time(secs, &time);
+	} else {
+		Trap_Arg(data); // this should never happen
 	}
 
 	if (val == 0) {
