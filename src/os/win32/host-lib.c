@@ -815,3 +815,58 @@ int CALLBACK ReqDirCallbackProc( HWND hWnd, UINT uMsg, LPARAM lParam, LPARAM lpD
 	*string = (len == 0) ? NULL : str; //empty string check
 	return FALSE;
 }
+
+/***********************************************************************
+**
+**	Read embedded rebol script from the executable
+*/	REBYTE * OS_Read_Embedded (const REBCHR *path, REBI64 *script_size)
+/*
+ *  rebol script is appended to the executable file, with a PAYLOAD_NAME + '0' + 8-byte offset at the very end
+ *  offset refers to the starting offset of script in the executable file from the end
+***********************************************************************/
+{
+#define PAYLOAD_NAME L"EMBEDDEDREBOL"
+
+	FILE *script = NULL;
+	char *embedded_script = NULL;
+	HMODULE h_mod= 0;
+	HRSRC h_res = 0;
+	HGLOBAL h_res_mem = NULL;
+	void *res_ptr = NULL;
+
+	h_mod = GetModuleHandle(NULL);
+	if (h_mod == 0) {
+		return NULL;
+	}
+
+	h_res = FindResource(h_mod, PAYLOAD_NAME, RT_RCDATA);
+	if (h_res == 0) {
+		return NULL;
+	}
+
+	h_res_mem = LoadResource(h_mod, h_res);
+	if (h_res_mem == 0) {
+		return NULL;
+	}
+
+	res_ptr = LockResource(h_res_mem);
+	if (res_ptr == NULL) {
+		return NULL;
+	}
+
+	*script_size = SizeofResource(h_mod, h_res);
+
+	if (*script_size <= 0) {
+		return NULL;
+	}
+
+	embedded_script = OS_Make(*script_size);
+
+	if (embedded_script == NULL) {
+		return NULL;
+	}
+
+	memcpy(embedded_script, res_ptr, *script_size);
+
+	return embedded_script;
+}

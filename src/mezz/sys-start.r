@@ -134,6 +134,13 @@ start: func [
 	; Import module?
 	if import [lib/import import]
 
+	unless none? boot-embedded [
+		code: load boot-embedded
+		;boot-print ["executing embedded script:" mold code]
+		do code
+		quit ;ignore user script and "--do" argument
+	]
+
 	;-- Evaluate: --do "some code" if found
 	if do-arg [
 		do intern do-arg

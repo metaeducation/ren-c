@@ -133,6 +133,8 @@ int main(int argc, char **argv)
 	REBYTE vers[8];
 	REBYTE *line;
 	REBINT n;
+	REBYTE *embedded_script = NULL;
+	REBI64 embedded_size = 0;
 
 #ifdef TO_WIN32  // In Win32 get args manually:
 	// Fetch the win32 unicoded program arguments:
@@ -146,6 +148,7 @@ int main(int argc, char **argv)
 		always_malloc = atoi(env_always_malloc);
 	}
 
+	embedded_script = OS_Read_Embedded((REBCHR*)argv[0], &embedded_size);
 	Parse_Args(argc, (REBCHR **)argv, &Main_Args);
 
 	vers[0] = 5; // len
@@ -228,9 +231,9 @@ int main(int argc, char **argv)
 	// Returns: 0: ok, -1: error, 1: bad data.
 #ifdef CUSTOM_STARTUP
 	// For custom startup, you can provide compressed script code here:
-	n = RL_Start((REBYTE *)(&Reb_Init_Code[0]), REB_INIT_SIZE, 0); // TRUE on halt
+	n = RL_Start((REBYTE *)(&Reb_Init_Code[0]), REB_INIT_SIZE, embedded_script, (REBINT)embedded_size, 0); // TRUE on halt
 #else
-	n = RL_Start(0, 0, 0);
+	n = RL_Start(0, 0, embedded_script, (REBINT)embedded_size, 0);
 #endif
 
 #ifdef TO_WIN32

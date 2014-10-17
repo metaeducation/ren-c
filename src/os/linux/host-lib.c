@@ -69,6 +69,8 @@
 #include <dlfcn.h>
 #endif
 
+#include <elf.h>
+
 #ifndef REB_CORE
 REBSER* Gob_To_Image(REBGOB *gob);
 #endif
@@ -830,4 +832,113 @@ static int Try_Browser(char *browser, REBCHR *url)
 		(*string)[utf8_len] = '\0';
 	}
 	return TRUE;
+}
+
+/***********************************************************************
+**
+*/	REBYTE * OS_Read_Embedded (const REBCHR *path, REBI64 *script_size)
+/*
+***********************************************************************/
+{
+#ifdef __LP64__
+	Elf64_Ehdr file_header;
+	Elf64_Shdr *sec_headers;
+#else
+	Elf32_Ehdr file_header;
+	Elf32_Shdr *sec_headers;
+#endif
+
+#define PAYLOAD_NAME ".EmbEddEdREbol"
+
+	FILE *script = NULL;
+	REBI64 nbytes = 0;
+	int i = 0;
+	char *ret = NULL;
+	char *embedded_script = NULL;
+
+	script = fopen(path, "r");
+	if (script == NULL) return NULL;
+
+	nbytes = fread(&file_header, sizeof(file_header), 1, script);
+	if (nbytes < 1) {
+		fclose(script);
+		return NULL;
+	}
+
+	sec_headers = OS_Make(file_header.e_shnum * file_header.e_shentsize);
+	if (sec_headers == NULL) {
+		fclose(script);
+		return NULL;
+	}
+
+	if (fseek(script, file_header.e_shoff, SEEK_SET) < 0) {
+		OS_Free(sec_headers);
+		fclose(script);
+		return NULL;
+	}
+
+	nbytes = fread(sec_headers, file_header.e_shentsize, file_header.e_shnum, script);
+	if (nbytes < file_header.e_shnum) {
+		ret = NULL;
+		goto header_failed;
+	}
+
+	char *shstr = OS_Make(sec_headers[file_header.e_shstrndx].sh_size);
+	if (shstr == NULL) {
+		ret = NULL;
+		goto header_failed;
+	}
+	
+	if (fseek(script, sec_headers[file_header.e_shstrndx].sh_offset, SEEK_SET) < 0) {
+		ret = NULL;
+		goto shstr_failed;
+	}
+
+	nbytes = fread(shstr, sec_headers[file_header.e_shstrndx].sh_size, 1, script);
+	if (nbytes < 1) {
+		ret = NULL;
+		goto shstr_failed;
+	}
+
+	for (i = 0; i < file_header.e_shnum; i ++) {
+		/* check the section name */
+		if (!strncmp(shstr + sec_headers[i].sh_name, PAYLOAD_NAME, sizeof(PAYLOAD_NAME))) {
+			*script_size = sec_headers[i].sh_size;
+			break;
+		}
+	}
+
+	if (i == file_header.e_shnum) {
+		ret = NULL;
+		goto cleanup;
+	}
+
+	embedded_script = OS_Make(sec_headers[i].sh_size); /* will be free'ed by RL_Start */
+	if (embedded_script == NULL) {
+		ret = NULL;
+		goto shstr_failed;
+	}
+	if (fseek(script, sec_headers[i].sh_offset, SEEK_SET) < 0) {
+		ret = NULL;
+		goto embedded_failed;
+	}
+
+	nbytes = fread(embedded_script, 1, sec_headers[i].sh_size, script);
+	if (nbytes < sec_headers[i].sh_size) {
+		ret = NULL;
+		goto embedded_failed;
+	}
+
+	ret = embedded_script;
+	goto cleanup;
+
+embedded_failed:
+	OS_Free(embedded_script);
+cleanup:
+shstr_failed:
+	OS_Free(shstr);
+header_failed:
+	OS_Free(sec_headers);
+	fclose(script);
+	return ret;
 }

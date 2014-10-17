@@ -134,7 +134,7 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 
 /***********************************************************************
 **
-*/	RL_API int RL_Start(REBYTE *bin, REBINT len, REBCNT flags)
+*/	RL_API int RL_Start(REBYTE *bin, REBINT len, REBYTE *script, REBINT script_len, REBCNT flags)
 /*
 **	Evaluate the default boot function.
 **
@@ -161,6 +161,32 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 		if (!ser) return 1;
 
 		val = BLK_SKIP(Sys_Context, SYS_CTX_BOOT_HOST);
+		Set_Binary(val, ser);
+	}
+
+	if (script && script_len > 4) {
+		/* a 4-byte long payload type at the beginning */
+		i32 ptype = 0;
+		void *data = script + sizeof(ptype);
+		script_len -= sizeof(ptype);
+
+		COPY_MEM(&ptype, script, sizeof(ptype));
+
+		if (ptype == 1) {/* COMPRESSed data */
+			spec.data = data;
+			spec.tail = script_len;
+			ser = Decompress(&spec, 0, -1, 10000000, 0);
+		} else {
+			ser = Make_Binary(script_len);
+			if (ser == NULL) {
+				OS_Free(script);
+				return 1;
+			}
+			COPY_MEM(BIN_HEAD(ser), data, script_len);
+		}
+		OS_Free(script);
+
+		val = BLK_SKIP(Sys_Context, SYS_CTX_BOOT_EMBEDDED);
 		Set_Binary(val, ser);
 	}
 
