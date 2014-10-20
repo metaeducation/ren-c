@@ -821,8 +821,6 @@ int CALLBACK ReqDirCallbackProc( HWND hWnd, UINT uMsg, LPARAM lParam, LPARAM lpD
 **	Read embedded rebol script from the executable
 */	REBYTE * OS_Read_Embedded (const REBCHR *path, REBI64 *script_size)
 /*
- *  rebol script is appended to the executable file, with a PAYLOAD_NAME + '0' + 8-byte offset at the very end
- *  offset refers to the starting offset of script in the executable file from the end
 ***********************************************************************/
 {
 #define PAYLOAD_NAME L"EMBEDDEDREBOL"
