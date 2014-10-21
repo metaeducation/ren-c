@@ -43,10 +43,12 @@
 #include <unistd.h>
 #include <sys/time.h>
 
-#include  <X11/Xlib.h>
-
 #include "reb-host.h"
 #include "host-lib.h"
+
+
+#ifndef REB_CORE
+#include  <X11/Xlib.h>
 
 #include "host-window.h"
 
@@ -57,6 +59,7 @@ void X_Event_Loop(int at_most);
 void Dispatch_Event(XEvent *ev);
 void X_Init_Resizing();
 void X_Finish_Resizing();
+#endif  // REB_CORE
 
 
 /***********************************************************************
