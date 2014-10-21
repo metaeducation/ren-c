@@ -40,7 +40,7 @@ start: func [
 	][
 		boot-print boot-banner ; basic boot banner only
 	]
-	if any [do-arg script] [quiet: true]
+	if any [boot-embedded do-arg script] [quiet: true]
 
 	;-- Set up option/paths for /path, /boot, /home, and script path (for SECURE):
 	path: dirize any [path home]
