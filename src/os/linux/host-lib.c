@@ -247,9 +247,11 @@ static const void * backtrace_buf [1024];
 	}
 	fputs(content, stderr);
 	fputs("\n\n", stderr);
+#ifdef backtrace  // A GNU extension
 	fputs("Backtrace:\n", stderr);
 	int n_backtrace = backtrace(backtrace_buf, sizeof(backtrace_buf)/sizeof(backtrace_buf[0]));
 	backtrace_symbols_fd(backtrace_buf, n_backtrace, STDERR_FILENO);
+#endif
 	exit(100);
 }
 
