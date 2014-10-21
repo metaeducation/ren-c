@@ -118,6 +118,7 @@
 	SET_FLAG(req->flags, RRF_WIDE);
 	req->data = (REBYTE *)bin;
 	req->actual = len * sizeof(REBCHR);
+	Signal_Device(req, EVT_READ);
 	return DR_DONE;
 }
 
@@ -172,6 +173,7 @@
 	}
 
 	req->actual = len;
+	Signal_Device(req, EVT_WROTE);
 	return DR_DONE;
 }
 
