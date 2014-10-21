@@ -85,12 +85,14 @@ static int interrupted = 0;
 static const void * backtrace_buf [1024];
 static void Handle_Signal(int sig)
 {
+#ifdef backtrace  // A GNU extension
 	if (sig == SIGSEGV) {
 		fputs("Segmentation fault, Backtrace:\n", stderr);
 		int n_backtrace = backtrace(backtrace_buf, sizeof(backtrace_buf)/sizeof(backtrace_buf[0]));
 		backtrace_symbols_fd(backtrace_buf, n_backtrace, STDERR_FILENO);
 		exit(1);
 	}
+#endif
 	char *buf = strdup("[escape]");
 	Put_Str(buf);
 	free(buf);
