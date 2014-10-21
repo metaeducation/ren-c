@@ -867,7 +867,7 @@ static int Try_Browser(char *browser, REBCHR *url)
 		return NULL;
 	}
 
-	sec_headers = OS_Make(file_header.e_shnum * file_header.e_shentsize);
+	sec_headers = OS_Make(((size_t)file_header.e_shnum) * file_header.e_shentsize);
 	if (sec_headers == NULL) {
 		fclose(script);
 		return NULL;
