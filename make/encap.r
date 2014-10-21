@@ -4,6 +4,7 @@ args: parse system/script/args ""
 exe: none
 payload: none
 output: none
+as-is: false ;don't compress, in case people try to avoid decompression to speed up bootup
 windows?: 3 = fourth system/version
 
 while [not tail? args] [
@@ -29,6 +30,10 @@ while [not tail? args] [
 				 output: second args
 				 args: next args
 		]
+		any [arg = "/as-is"
+		     arg = "/a"] [
+				 as-is: true
+		]
 	]
 	args: next args
 ]
@@ -40,10 +45,16 @@ if any [none? exe
 	print ["^-/rebol | /r^- path-to-rebol"]
 	print ["^-/payload | /p^- path-to-payload"]
 	print ["^-/output | /o^- path-to-output"]
+	print ["^-/as-is | /a^- Do not compress the script"]
 	quit
 ]
 
-payload-data: join #{01000000} compress read to file! payload
+payload-data: read to file! payload
+either as-is [
+	payload-data: join #{00000000} payload-data
+][
+	payload-data: join #{01000000} compress payload-data
+]
 tmp: join payload ".tmp"
 write to file! tmp payload-data
 
