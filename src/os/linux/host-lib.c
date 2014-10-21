@@ -838,7 +838,7 @@ static int Try_Browser(char *browser, REBCHR *url)
 
 /***********************************************************************
 **
-*/	REBYTE * OS_Read_Embedded (const REBCHR *path, REBI64 *script_size)
+*/	REBYTE * OS_Read_Embedded (REBI64 *script_size)
 /*
 ***********************************************************************/
 {
@@ -858,7 +858,7 @@ static int Try_Browser(char *browser, REBCHR *url)
 	char *ret = NULL;
 	char *embedded_script = NULL;
 
-	script = fopen(path, "r");
+	script = fopen("/proc/self/exe", "r");
 	if (script == NULL) return NULL;
 
 	nbytes = fread(&file_header, sizeof(file_header), 1, script);

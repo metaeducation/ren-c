@@ -148,7 +148,7 @@ int main(int argc, char **argv)
 		always_malloc = atoi(env_always_malloc);
 	}
 
-	embedded_script = OS_Read_Embedded((REBCHR*)argv[0], &embedded_size);
+	embedded_script = OS_Read_Embedded(&embedded_size);
 	Parse_Args(argc, (REBCHR **)argv, &Main_Args);
 
 	vers[0] = 5; // len

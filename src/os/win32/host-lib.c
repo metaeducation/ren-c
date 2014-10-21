@@ -819,13 +819,12 @@ int CALLBACK ReqDirCallbackProc( HWND hWnd, UINT uMsg, LPARAM lParam, LPARAM lpD
 /***********************************************************************
 **
 **	Read embedded rebol script from the executable
-*/	REBYTE * OS_Read_Embedded (const REBCHR *path, REBI64 *script_size)
+*/	REBYTE * OS_Read_Embedded (REBI64 *script_size)
 /*
 ***********************************************************************/
 {
 #define PAYLOAD_NAME L"EMBEDDEDREBOL"
 
-	FILE *script = NULL;
 	char *embedded_script = NULL;
 	HMODULE h_mod= 0;
 	HRSRC h_res = 0;
