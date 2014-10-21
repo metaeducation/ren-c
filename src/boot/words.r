@@ -165,6 +165,7 @@ tcp
 udp
 clipboard
 serial
+signal
 
 ; Serial parameters
 ; Parity

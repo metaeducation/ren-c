@@ -27,6 +27,7 @@
 **
 ***********************************************************************/
 
+
 // REBOL Device Identifiers:
 // Critical: Must be in same order as Device table in host-device.c
 enum {
@@ -39,6 +40,9 @@ enum {
 	RDI_DNS,
 	RDI_CLIPBOARD,
 	RDI_SERIAL,
+#ifdef TO_LINUX
+	RDI_SIGNAL,
+#endif
 	RDI_MAX,
 	RDI_LIMIT = 32
 };
@@ -181,6 +185,11 @@ struct rebol_devreq {
 
 	// Special fields for common IO uses:
 	union {
+#ifdef TO_LINUX
+		struct {
+			int restore_omask; 		// restore old signal mask?
+		} signal;
+#endif
 		struct {
 			REBCHR *path;			// file string (in OS local format)
 			i64  size;				// file size
