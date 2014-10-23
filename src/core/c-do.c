@@ -932,11 +932,12 @@ eval_func2:
 			//Debug_Fmt("v: %r", value);
 			// Value returned only for functions that need evaluation (but not GET_PATH):
 			if (value && ANY_FUNC(value)) {
+				REBCNT offset = 0;
 				if (IS_OP(value)) Trap_Type(value); // (because prior value is wiped out above)
 				// Can be object/func or func/refinements or object/func/refinement:
 				dsf = Push_Func(TRUE, block, index, VAL_WORD_SYM(word), value); // Do not unset TOS1 (it is the value)
 				value = DS_TOP;
-				REBCNT offset = value - DS_Base;
+				offset = value - DS_Base;
 				ftype = VAL_TYPE(value)-REB_NATIVE;
 				index = Do_Args(offset, word+1, block, index+1);
 				value = &DS_Base[offset]; //restore in case the stack is expanded

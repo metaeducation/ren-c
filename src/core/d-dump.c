@@ -30,6 +30,9 @@
 #include <stdio.h>
 #include "sys-core.h"
 
+#ifdef _MSC_VER
+#define snprintf _snprintf
+#endif
 
 /***********************************************************************
 **

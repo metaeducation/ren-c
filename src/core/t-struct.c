@@ -125,9 +125,9 @@ static get_scalar(REBSTU *stu,
 	for (i = 0; i < SERIES_TAIL(stu->fields); i ++, field ++) {
 		if (VAL_WORD_CANON(word) == VAL_SYM_CANON(BLK_SKIP(PG_Word_Table.series, field->sym))) {
 			if (field->array) {
-				SET_TYPE(val, REB_BLOCK);
 				REBSER *ser = Make_Block(field->dimension);
 				REBCNT n = 0;
+				SET_TYPE(val, REB_BLOCK);
 				for (n = 0; n < field->dimension; n ++) {
 					REBVAL elem;
 					get_scalar(stu, field, n, &elem);
@@ -462,13 +462,16 @@ static REBOOL assign_scalar(REBSTU *stu,
 		}
 
 		while (NOT_END(blk)) {
-			EXPAND_SERIES_TAIL(VAL_STRUCT_FIELDS(out), 1);
 			REBVAL *inner;
+			struct Struct_Field *field = NULL;
+			u64 step = 0;
 
+			EXPAND_SERIES_TAIL(VAL_STRUCT_FIELDS(out), 1);
+			
 			DS_PUSH_NONE;
 			inner = DS_TOP; /* save in stack so that it won't be GC'ed when MT_Struct is recursively called */
 
-			struct Struct_Field *field = (struct Struct_Field *)SERIES_SKIP(VAL_STRUCT_FIELDS(out), field_idx);
+			field = (struct Struct_Field *)SERIES_SKIP(VAL_STRUCT_FIELDS(out), field_idx);
 			field->offset = (REBCNT)offset;
 			if (IS_WORD(blk)) {
 				switch (VAL_WORD_CANON(blk)) {
@@ -585,7 +588,7 @@ static REBOOL assign_scalar(REBSTU *stu,
 			STATIC_ASSERT(sizeof(field->size) <= 4);
 			STATIC_ASSERT(sizeof(field->dimension) <= 4);
 
-			u64 step = (u64)field->size * (u64)field->dimension;
+			step = (u64)field->size * (u64)field->dimension;
 			if (step > VAL_STRUCT_LIMIT) {
 				Trap1(RE_SIZE_LIMIT, out);
 			}
@@ -613,11 +616,12 @@ static REBOOL assign_scalar(REBSTU *stu,
 						/* assuming it's an valid pointer and holding enough space */
 						memcpy(SERIES_SKIP(VAL_STRUCT_DATA_BIN(out), (REBCNT)offset), ptr, field->size * field->dimension);
 					} else if (IS_BLOCK(init)) {
+						REBCNT n = 0;
+
 						if (VAL_LEN(init) != field->dimension) {
 							Trap1(RE_INVALID_DATA, init);
 						}
 						/* assign */
-						REBCNT n = 0;
 						for (n = 0; n < field->dimension; n ++) {
 							if (!assign_scalar(&VAL_STRUCT(out), field, n, VAL_BLK_SKIP(init, n))) {
 								RL_Print("Failed to assign element value\n");
@@ -663,13 +667,14 @@ static REBOOL assign_scalar(REBSTU *stu,
 		VAL_STRUCT_LEN(out) = (REBCNT)offset;
 
 		if (raw_addr) {
+			REBSER *ser = NULL;
 			/* data is stored in external memory,
 			 * copy the structure to that memory*/
 			if (raw_size >= 0 && raw_size != VAL_STRUCT_LEN(out)) {
 				Trap0(RE_INVALID_DATA);
 			}
 
-			REBSER *ser = (REBSER *)Make_Node(SERIES_POOL);
+			ser = (REBSER *)Make_Node(SERIES_POOL);
 			Prop_Series(ser, VAL_STRUCT_DATA_BIN(out));
 			ser->data = (REBYTE*)raw_addr;
 			EXT_SERIES(ser);
@@ -794,16 +799,13 @@ void Copy_Struct_Val(REBVAL *src, REBVAL *dst)
 	REBVAL *val;
 	REBVAL *arg;
 	REBSTU *strut;
-	REBSTU *nstrut;
-	REBCNT index;
-	REBCNT tail;
-	REBCNT len;
-
+	REBVAL *ret;
+	
 	arg = D_ARG(2);
 	val = D_ARG(1);
 	strut = 0;
 
-	REBVAL *ret = DS_RETURN;
+	ret = DS_RETURN;
 	// unary actions
 	switch(action) {
 		case A_MAKE:
