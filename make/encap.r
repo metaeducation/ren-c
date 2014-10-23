@@ -20,11 +20,6 @@ while [not tail? args] [
 				 payload: second args
 				 args: next args
 		]
-		any [arg = "/payload"
-		     arg = "/p"] [
-				 payload: second args
-				 args: next args
-		]
 		any [arg = "/output"
 		     arg = "/o"] [
 				 output: second args
