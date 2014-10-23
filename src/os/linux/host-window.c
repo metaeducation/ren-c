@@ -240,7 +240,7 @@ static REBXYF Zero_Pair = {0, 0};
 	global_x_info->display = XOpenDisplay(NULL);
 
 	if (global_x_info->display == NULL){
-		RL_Print("XOpenDisplay failed, graphics is not supported\n");
+		//RL_Print("XOpenDisplay failed, graphics is not supported\n");
 		return;
 	} else {
 		//RL_Print("XOpenDisplay succeeded: x_dislay = %x\n", global_x_info->display);
