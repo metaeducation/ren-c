@@ -206,7 +206,7 @@ REBINT Mode_Syms[] = {
 	if (args & (AM_READ_STRING | AM_READ_LINES)) {
 		REBSER *nser = Decode_UTF_String(BIN_HEAD(ser), file->actual, -1);
 		if (nser == NULL) {
-			nser = ser;
+			Trap0(RE_BAD_DECODE);
 		}
 		Set_String(ds, nser);
 		if (args & AM_READ_LINES) Set_Block(ds, Split_Lines(ds));
