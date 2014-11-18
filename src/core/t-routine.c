@@ -338,7 +338,7 @@ static void *arg_to_ffi(REBVAL *rot, REBVAL *arg, REBCNT idx, REBINT *pop)
 						(*pop) ++;
 						return &VAL_INT64(DS_TOP);
 					}
-				defaut:
+				default:
 					Trap3(RE_EXPECT_ARG, DSF_WORD(DSF), BLK_SKIP(rebol_args, idx), arg);
 			}
 		case FFI_TYPE_FLOAT:
