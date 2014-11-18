@@ -207,7 +207,7 @@ static get_scalar(REBSTU *stu,
 		/* optional initialization */
 		if (field->dimension > 1) {
 			REBSER *dim = Make_Block(1);
-			REBINT n = 0;
+			REBCNT n = 0;
 			val = Append_Value(ser);
 			SET_TYPE(val, REB_BLOCK);
 			VAL_SERIES(val) = dim;
@@ -227,7 +227,7 @@ static REBOOL same_fields(REBSER *tgt, REBSER *src)
 {
 	struct Struct_Field *tgt_fields = (struct Struct_Field *) SERIES_DATA(tgt);
 	struct Struct_Field *src_fields = (struct Struct_Field *) SERIES_DATA(src);
-	REBINT n;
+	REBCNT n;
 
 	if (SERIES_TAIL(tgt) != SERIES_TAIL(src)) {
 		return FALSE;
@@ -640,7 +640,7 @@ static REBOOL assign_scalar(REBSTU *stu,
 				}
 			} else if (raw_addr == 0) {
 				if (field->type == STRUCT_TYPE_STRUCT) {
-					REBINT n = 0;
+					REBCNT n = 0;
 					for (n = 0; n < field->dimension; n ++) {
 						memcpy(SERIES_SKIP(VAL_STRUCT_DATA_BIN(out), ((REBCNT)offset) + n * field->size), SERIES_DATA(VAL_STRUCT_DATA(init)), field->size);
 					}
