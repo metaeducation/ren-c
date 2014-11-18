@@ -527,7 +527,7 @@ static REBOOL assign_scalar(REBSTU *stu,
 							res = MT_Struct(inner, blk, REB_STRUCT);
 
 							if (!res) {
-								RL_Print("Failed to make nested struct!\n");
+								//RL_Print("Failed to make nested struct!\n");
 								return FALSE;
 							}
 
@@ -624,7 +624,7 @@ static REBOOL assign_scalar(REBSTU *stu,
 						/* assign */
 						for (n = 0; n < field->dimension; n ++) {
 							if (!assign_scalar(&VAL_STRUCT(out), field, n, VAL_BLK_SKIP(init, n))) {
-								RL_Print("Failed to assign element value\n");
+								//RL_Print("Failed to assign element value\n");
 								goto failed;
 							}
 						}
@@ -634,7 +634,7 @@ static REBOOL assign_scalar(REBSTU *stu,
 				} else {
 					/* scalar */
 					if (!assign_scalar(&VAL_STRUCT(out), field, 0, init)) {
-						RL_Print("Failed to assign scalar value\n");
+						//RL_Print("Failed to assign scalar value\n");
 						goto failed;
 					}
 				}

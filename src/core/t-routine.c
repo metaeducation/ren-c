@@ -550,7 +550,7 @@ static void ffi_to_rebol(REBRIN *rin,
 				j - 1, /* number of all arguments */
 				args[0], /* return type */
 				&args[1])) {
-			RL_Print("Couldn't prep CIF_VAR\n");
+			//RL_Print("Couldn't prep CIF_VAR\n");
 			Trap_Arg(varargs);
 		}
 	} else {
