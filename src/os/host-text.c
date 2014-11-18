@@ -52,10 +52,6 @@
 #define INCLUDE_EXT_DATA
 #include "host-ext-text.h"
 
-//***** Externs *****
-
-extern REBINT As_OS_Str(REBSER *series, REBCHR **string);
-
 //***** Locals *****
 
 static u32* text_ext_words;

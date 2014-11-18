@@ -158,6 +158,8 @@ out: reduce [
 #define HOST_LIB_SIZE } cnt {
 
 extern REBDEV *Devices[];
+
+REBOOL As_OS_Str(REBSER *series, REBCHR **string);
 }
 rlib
 {

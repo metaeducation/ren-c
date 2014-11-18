@@ -56,7 +56,6 @@
 #ifdef TO_WIN32
 extern void Console_Window(BOOL show);
 extern void Console_Output(BOOL state);
-extern REBINT As_OS_Str(REBSER *series, REBCHR **string);
 extern REBOOL OS_Request_Dir(REBCHR *title, REBCHR **folder, REBCHR *path);
 #endif
 
