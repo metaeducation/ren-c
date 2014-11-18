@@ -36,9 +36,9 @@ files: [
 ; If it is graphics enabled:
 if all [
 	not find any [system/options/args []] "no-gfx"
-	find [3] system/version/4
+	find [3 4] system/version/4
 ][
-	append files [%host-window.c]
+	append files [%host-window.c %host-graphics.c]
 ]
 
 cnt: 0
@@ -75,7 +75,7 @@ pads: func [start col] [
 
 func-header: [
 	[
-		thru "/***" 10 100 "*" newline
+		thru "/*************" 2 100 "*" newline
 		thru "*/"
 		copy spec to newline
 		(if all [
