@@ -46,7 +46,7 @@
 #include <math.h>
 
 #include "reb-host.h"
-//#include "host-lib.h"
+#include "host-lib.h"
 
 #include "host-compositor.h"
 
@@ -65,6 +65,8 @@ extern void* Find_Compositor(REBGOB *gob);
 extern REBINT Alloc_Window(REBGOB *gob);
 extern void Draw_Window(REBGOB *wingob, REBGOB *gob);
 extern HWND Find_Window(REBGOB *gob);
+extern REBOOL Resize_Window(REBGOB *gob, REBOOL redraw);
+extern void Host_Crash(REBYTE *reason);
 
 //***** Locals *****
 
