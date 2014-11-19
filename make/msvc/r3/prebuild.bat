@@ -9,3 +9,4 @@ set HOST_PRODUCT_NAME=atronix-view
 %REBOL% %T%/make-reb-lib.r
 %REBOL% %T%/core-ext.r
 %REBOL% %T%/view-ext.r
+%REBOL% %T%/saphir-init.r
