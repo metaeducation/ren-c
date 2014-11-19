@@ -45,7 +45,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions),FFI_BUILDING</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(ProjectDir);X:\r3.git\src\libffi\include;X:\r3.git\src\libffi\src\x86;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(SolutionDir)..\..\src\libffi\include;$(SolutionDir)..\..\src\libffi\src\x86;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -61,7 +61,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions),FFI_BUILDING</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(ProjectDir);$(SolutionDir)..\libffi\include;$(SolutionDir)..\libffi\src\x86;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(SolutionDir)..\..\src\libffi\include;$(SolutionDir)..\..\src\libffi\src\x86;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -73,7 +73,7 @@
   <ItemGroup>
     <CustomBuild Include="..\..\..\src\libffi\src\x86\win32.S">
       <FileType>Document</FileType>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">cl.exe /EP /I . /I "$(SolutionDir)..\libffi\include" /I"X:\r3.git\src\libffi\src\x86" /I "$(SolutionDir)..\libffi\src\x86" %(FullPath) &gt; $(Platform)/$(Configuration)/win32_plain.asm
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">cl.exe /EP /I . /I "$(SolutionDir)..\libffi\include" /I"$(SolutionDir)..\libffi\src\x86" /I "$(SolutionDir)..\libffi\src\x86" %(FullPath) &gt; $(Platform)/$(Configuration)/win32_plain.asm
 ml.exe /c /Cx /coff /Fo $(Platform)/$(Configuration)/win32.obj $(Platform)/$(Configuration)/win32_plain.asm</Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">cl.exe /EP /I . /I $(SolutionDir)..\libffi\include /I $(SolutionDir)..\libffi\src\x86 %(FullPath) &gt; $(Platform)/$(Configuration)/win32_plain.asm
 ml.exe /c /Cx /coff /Fo $(Platform)/$(Configuration)/win32.obj $(Platform)/$(Configuration)/win32_plain.asm</Command>
