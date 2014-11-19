@@ -237,7 +237,8 @@ namespace agg
 
 			for (n = 0; type = RL_GET_VALUE(points, n, &a); n++) {
 				if (type == RXT_PAIR){
-					p[len] = RXI_LOG_PAIR(a);
+					REBXYF tmp = RXI_LOG_PAIR(a);
+					p[len] = tmp;
                     if (++len == 4) break;
 				}
 			}

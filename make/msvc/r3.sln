@@ -1,0 +1,29 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual C++ Express 2010
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "r3-view", "r3\r3-view.vcxproj", "{F11D3511-DBB7-440C-932D-ADD9409188E8}"
+	ProjectSection(ProjectDependencies) = postProject
+		{793F0ABE-66E5-48C0-9690-3060FF08AFF5} = {793F0ABE-66E5-48C0-9690-3060FF08AFF5}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libffi", "libffi\libffi.vcxproj", "{793F0ABE-66E5-48C0-9690-3060FF08AFF5}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{F11D3511-DBB7-440C-932D-ADD9409188E8}.Debug|Win32.ActiveCfg = Debug|Win32
+		{F11D3511-DBB7-440C-932D-ADD9409188E8}.Debug|Win32.Build.0 = Debug|Win32
+		{F11D3511-DBB7-440C-932D-ADD9409188E8}.Release|Win32.ActiveCfg = Release|Win32
+		{F11D3511-DBB7-440C-932D-ADD9409188E8}.Release|Win32.Build.0 = Release|Win32
+		{793F0ABE-66E5-48C0-9690-3060FF08AFF5}.Debug|Win32.ActiveCfg = Debug|Win32
+		{793F0ABE-66E5-48C0-9690-3060FF08AFF5}.Debug|Win32.Build.0 = Debug|Win32
+		{793F0ABE-66E5-48C0-9690-3060FF08AFF5}.Release|Win32.ActiveCfg = Release|Win32
+		{793F0ABE-66E5-48C0-9690-3060FF08AFF5}.Release|Win32.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

@@ -368,8 +368,8 @@ REBINT Alloc_Window(REBGOB *gob) {
                 REBSER* block;
                 RXIARG val; //, str;
                 REBCNT n, type;
-
-                rt_offset_to_caret(Rich_Text, (REBGOB*)RXA_SERIES(frm, 1), RXA_LOG_PAIR(frm, 2), &element, &position);
+				REBXYF coord = RXA_LOG_PAIR(frm, 2);
+                rt_offset_to_caret(Rich_Text, (REBGOB*)RXA_SERIES(frm, 1), coord, &element, &position);
 //                RL_Print("OTC: %dx%d %d, %d\n", (int)RXA_LOG_PAIR(frm, 2).x, (int)RXA_LOG_PAIR(frm, 2).y, element, position);
                 dialect = (REBSER *)GOB_CONTENT((REBGOB*)RXA_SERIES(frm, 1));
                 block = RL_MAKE_BLOCK(RL_SERIES(dialect, RXI_SER_TAIL));

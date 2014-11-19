@@ -117,6 +117,7 @@ typedef struct compositor_ctx {
 		REBYTE *new_bytes;
 		REBINT w = GOB_LOG_W_INT(winGob);
 		REBINT h = GOB_LOG_H_INT(winGob);
+		RECT lprc = {0,0,w,h};
 		
 		///set window size in bitmapinfo struct
 		ctx->bmpInfo.bmiHeader.biWidth = w;
@@ -135,7 +136,7 @@ typedef struct compositor_ctx {
 
 		//fill the background color
 		SetDCBrushColor(newDC, RGB(200,200,200));		
-		FillRect(newDC,&(RECT){0,0,w,h}, ctx->DCbrush);
+		FillRect(newDC,&lprc, ctx->DCbrush);
 		
 		if (ctx->backDC != 0) {
 /*		
@@ -243,6 +244,7 @@ typedef struct compositor_ctx {
 	REBINT x = ROUND_TO_INT(ctx->absOffset.x);
 	REBINT y = ROUND_TO_INT(ctx->absOffset.y);
 	REBINT intersection_result;
+	RECT gob_clip;
 
 	if (GET_GOB_STATE(gob, GOBS_NEW)){
 		//reset old-offset and old-size if newly added
@@ -260,7 +262,7 @@ typedef struct compositor_ctx {
 	SetRectRgn(ctx->Win_Clip, x, y, x + GOB_LOG_W_INT(gob), y + GOB_LOG_H_INT(gob));
 	intersection_result = ExtSelectClipRgn(ctx->backDC, ctx->Win_Clip, RGN_AND);
 
-	RECT gob_clip;
+
 	GetClipBox(ctx->backDC, &gob_clip);
 //	RL_Print("clip: %dx%d %dx%d\n", gob_clip.left, gob_clip.top, gob_clip.right, gob_clip.bottom);
 	
@@ -270,24 +272,27 @@ typedef struct compositor_ctx {
 		
 //		if (!GET_GOB_FLAG(gob, GOBF_WINDOW))
 		//render GOB content
+		REBXYI offset = {x,y};
+		REBXYI top_left = {gob_clip.left, gob_clip.top};
+		REBXYI bottom_right = {gob_clip.right, gob_clip.bottom};
 		switch (GOB_TYPE(gob)) {
 			case GOBT_COLOR:
 //					RL_Print("draw color gob %dx%d\n", x, y);
-				rebdrw_gob_color(gob, ctx->Window_Buffer, ctx->winBufSize, (REBXYI){x,y}, (REBXYI){gob_clip.left, gob_clip.top}, (REBXYI){gob_clip.right, gob_clip.bottom});
+				rebdrw_gob_color(gob, ctx->Window_Buffer, ctx->winBufSize, offset, top_left, bottom_right);
 				break;
 			
 			case GOBT_IMAGE:
 //				RL_Print("draw image gob\n");
-				rebdrw_gob_image(gob, ctx->Window_Buffer, ctx->winBufSize, (REBXYI){x,y}, (REBXYI){gob_clip.left, gob_clip.top}, (REBXYI){gob_clip.right, gob_clip.bottom});
+				rebdrw_gob_image(gob, ctx->Window_Buffer, ctx->winBufSize, offset, top_left, bottom_right);
 				break;
 
 			case GOBT_DRAW:
-				rebdrw_gob_draw(gob, ctx->Window_Buffer ,ctx->winBufSize, (REBXYI){x,y}, (REBXYI){gob_clip.left, gob_clip.top}, (REBXYI){gob_clip.right, gob_clip.bottom});
+				rebdrw_gob_draw(gob, ctx->Window_Buffer ,ctx->winBufSize,  offset, top_left, bottom_right);
 				break;
 
 			case GOBT_TEXT:
 			case GOBT_STRING:
-				rt_gob_text(gob, ctx->Window_Buffer ,ctx->winBufSize,ctx->absOffset, (REBXYI){gob_clip.left, gob_clip.top}, (REBXYI){gob_clip.right, gob_clip.bottom});
+				rt_gob_text(gob, ctx->Window_Buffer ,ctx->winBufSize,ctx->absOffset, top_left, bottom_right);
 				break;
 				
 			case GOBT_EFFECT:
@@ -349,7 +354,8 @@ typedef struct compositor_ctx {
 	REBD32 abs_ox;
 	REBD32 abs_oy;
 	REBGOB* parent_gob = gob;
-	
+	RECT gob_clip;
+
 //	RL_Print("COMPOSE %d %d\n", GetDeviceCaps(ctx->backDC, SHADEBLENDCAPS), GetDeviceCaps(ctx->winDC, SHADEBLENDCAPS));
 	
 	abs_x = 0;
@@ -399,7 +405,6 @@ typedef struct compositor_ctx {
 	//intersect resulting region with window clip region
 	intersection_result = ExtSelectClipRgn(ctx->backDC, ctx->Win_Clip, RGN_AND);
 
-	RECT gob_clip;
 	GetClipBox(ctx->backDC, &gob_clip);
 //	RL_Print("old+new clip: %dx%d %dx%d\n", gob_clip.left, gob_clip.top, gob_clip.right, gob_clip.bottom);
 	

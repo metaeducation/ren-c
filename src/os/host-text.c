@@ -38,6 +38,7 @@
 **
 ***********************************************************************/
 
+#include <stdlib.h>
 #include <string.h>
 
 //#include <windows.h>
@@ -50,10 +51,6 @@
 
 #define INCLUDE_EXT_DATA
 #include "host-ext-text.h"
-
-//***** Externs *****
-
-extern REBINT As_OS_Str(REBSER *series, REBCHR **string);
 
 //***** Locals *****
 
@@ -245,8 +242,10 @@ static u32* text_ext_words;
 
             while (type = RL_GET_FIELD(obj, w[0], &val))
             {
-				if (type == RXT_PAIR)
-					val.pair = RXI_LOG_PAIR(val);
+				if (type == RXT_PAIR) {
+					REBXYF tmp = RXI_LOG_PAIR(val);
+					val.pair = tmp;
+				}
 					
                 switch(RL_FIND_WORD(text_ext_words,w[0]))
                 {
@@ -333,10 +332,13 @@ static u32* text_ext_words;
                                     switch (shadowType)
                                     {
                                         case RXT_PAIR:
-											shadowVal.pair = RXI_LOG_PAIR(shadowVal);
-                                            font->shadow_x = shadowVal.pair.x;
-                                            font->shadow_y = shadowVal.pair.y;
-                                            break;
+											{
+												REBXYF tmp = RXI_LOG_PAIR(shadowVal);
+												shadowVal.pair = tmp;
+												font->shadow_x = shadowVal.pair.x;
+												font->shadow_y = shadowVal.pair.y;
+											}
+											break;
 
                                         case RXT_TUPLE:
 											{
@@ -389,8 +391,10 @@ static u32* text_ext_words;
 
             while (type = RL_GET_FIELD(obj, w[0], &val))
             {
-				if (type == RXT_PAIR)
-					val.pair = RXI_LOG_PAIR(val);
+				if (type == RXT_PAIR) {
+					REBXYF tmp = RXI_LOG_PAIR(val);
+					val.pair = tmp;
+				}
 			
                 switch(RL_FIND_WORD(text_ext_words,w[0]))
                 {
@@ -452,11 +456,17 @@ static u32* text_ext_words;
         break;
 
 	case CMD_TEXT_SCROLL:
-		rt_scroll(ctx->envr, RXA_LOG_PAIR(frm, 1));
+		{
+			REBXYF offset = RXA_LOG_PAIR(frm, 1);
+			rt_scroll(ctx->envr, offset);
+		}
 		break;
 
     case CMD_TEXT_SHADOW:
-        rt_shadow(ctx->envr, RXA_LOG_PAIR(frm, 1), RXA_COLOR_TUPLE(frm,2), RXA_INT32(frm,3));
+		{
+			REBXYF d = RXA_LOG_PAIR(frm, 1);
+			rt_shadow(ctx->envr, d, RXA_COLOR_TUPLE(frm,2), RXA_INT32(frm,3));
+		}
         break;
 
 	case CMD_TEXT_SIZE:

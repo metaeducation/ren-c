@@ -301,6 +301,8 @@ enum encoding_opts {
 
 #define ALEVEL 2
 
+void Crash(REBINT id, ...);
+
 #define ASSERT(c,m) if (!(c)) Crash(m);		// (breakpoint in Crash() to see why)
 #if (ALEVEL>0)
 #define ASSERT1(c,m) if (!(c)) Crash(m);	// Not in beta releases

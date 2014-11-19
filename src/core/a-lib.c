@@ -179,12 +179,12 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 		} else {
 			ser = Make_Binary(script_len);
 			if (ser == NULL) {
-				OS_Free(script);
+				OS_FREE(script);
 				return 1;
 			}
 			COPY_MEM(BIN_HEAD(ser), data, script_len);
 		}
-		OS_Free(script);
+		OS_FREE(script);
 
 		val = BLK_SKIP(Sys_Context, SYS_CTX_BOOT_EMBEDDED);
 		Set_Binary(val, ser);

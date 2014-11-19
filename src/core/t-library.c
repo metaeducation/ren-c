@@ -51,16 +51,13 @@
 	REBVAL *val;
 	REBVAL *arg;
 	REBSTU *strut;
-	REBSTU *nstrut;
-	REBCNT index;
-	REBCNT tail;
-	REBCNT len;
+	REBVAL *ret;
 
 	arg = D_ARG(2);
 	val = D_ARG(1);
 	strut = 0;
 
-	REBVAL *ret = DS_RETURN;
+	ret = DS_RETURN;
 	// unary actions
 	switch(action) {
 		case A_MAKE:

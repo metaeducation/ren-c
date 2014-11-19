@@ -118,7 +118,7 @@ static ffi_type* struct_to_ffi(REBVAL *out, REBSER *fields)
 		struct Struct_Field *field = (struct Struct_Field*)SERIES_SKIP(fields, i);
 		if (field->type != STRUCT_TYPE_STRUCT) {
 			if (struct_type_to_ffi[field->type]) {
-				REBINT n = 0;
+				REBCNT n = 0;
 				for (n = 0; n < field->dimension; n ++) {
 					stype->elements[j++] = struct_type_to_ffi[field->type];
 				}
@@ -128,7 +128,7 @@ static ffi_type* struct_to_ffi(REBVAL *out, REBSER *fields)
 		} else {
 			ffi_type *subtype = struct_to_ffi(out, field->fields);
 			if (subtype) {
-				REBINT n = 0;
+				REBCNT n = 0;
 				for (n = 0; n < field->dimension; n ++) {
 					stype->elements[j++] = subtype;
 				}
@@ -338,7 +338,7 @@ static void *arg_to_ffi(REBVAL *rot, REBVAL *arg, REBCNT idx, REBINT *pop)
 						(*pop) ++;
 						return &VAL_INT64(DS_TOP);
 					}
-				defaut:
+				default:
 					Trap3(RE_EXPECT_ARG, DSF_WORD(DSF), BLK_SKIP(rebol_args, idx), arg);
 			}
 		case FFI_TYPE_FLOAT:
@@ -522,6 +522,7 @@ static void ffi_to_rebol(REBRIN *rin,
 			} else {
 				/* initialize rin->args */
 				REBVAL *reb_type = NULL;
+				REBVAL *v = NULL;
 				if (i == SERIES_TAIL(VAL_SERIES(varargs))) { /* type is missing */
 					Trap_Arg(reb_arg);
 				}
@@ -529,7 +530,7 @@ static void ffi_to_rebol(REBRIN *rin,
 				if (!IS_BLOCK(reb_type)) {
 					Trap_Arg(reb_type);
 				}
-				REBVAL *v = Append_Value(VAL_ROUTINE_ALL_ARGS(rot));
+				v = Append_Value(VAL_ROUTINE_ALL_ARGS(rot));
 				Init_Word(v, SYM_ELLIPSIS); //FIXME, be clear
 				process_type_block(rot, reb_type, j);
 				i ++;
@@ -549,7 +550,7 @@ static void ffi_to_rebol(REBRIN *rin,
 				j - 1, /* number of all arguments */
 				args[0], /* return type */
 				&args[1])) {
-			RL_Print("Couldn't prep CIF_VAR\n");
+			//RL_Print("Couldn't prep CIF_VAR\n");
 			Trap_Arg(varargs);
 		}
 	} else {
@@ -744,6 +745,9 @@ static void callback_dispatcher(ffi_cif *cif, void *ret, void **args, void *user
 	REBSER *extra_mem = NULL;
 	REBFLG ret = TRUE;
 	void (*func) (void) = NULL;
+	REBCNT n = 1; /* arguments start with the index 1 (return type has a index of 0) */
+	REBCNT has_return = 0;
+	REBCNT has_abi = 0;
 
 	if (!IS_BLOCK(data)) {
 		return FALSE;
@@ -843,9 +847,6 @@ static void callback_dispatcher(ffi_cif *cif, void *ret, void **args, void *user
 	}
 
 	blk = VAL_BLK_DATA(&blk[0]);
-	REBCNT n = 1; /* arguments start with the index 1 (return type has a index of 0) */
-	REBCNT has_return = 0;
-	REBCNT has_abi = 0;
 	if (NOT_END(blk) && IS_STRING(blk)) {
 		++ blk;
 	}
@@ -866,11 +867,12 @@ static void callback_dispatcher(ffi_cif *cif, void *ret, void **args, void *user
 						Init_Word(v, SYM_VARARGS);
 						TYPE_SET(v, REB_BLOCK);
 					} else {
+						REBVAL *v = NULL;
 						if (ROUTINE_GET_FLAG(VAL_ROUTINE_INFO(out), ROUTINE_VARARGS)) {
 							//... has to be the last argument
 							Trap_Arg(blk);
 						}
-						REBVAL *v = Append_Value(VAL_ROUTINE_ARGS(out));
+						v = Append_Value(VAL_ROUTINE_ARGS(out));
 						Init_Word(v, VAL_WORD_SYM(blk));
 						EXPAND_SERIES_TAIL(VAL_ROUTINE_FFI_ARGS(out), 1);
 
@@ -1017,16 +1019,13 @@ static void callback_dispatcher(ffi_cif *cif, void *ret, void **args, void *user
 	REBVAL *val;
 	REBVAL *arg;
 	REBSTU *strut;
-	REBSTU *nstrut;
-	REBCNT index;
-	REBCNT tail;
-	REBCNT len;
+	REBVAL *ret;
 
 	arg = D_ARG(2);
 	val = D_ARG(1);
 	strut = 0;
 
-	REBVAL *ret = DS_RETURN;
+	ret = DS_RETURN;
 	// unary actions
 	switch(action) {
 		case A_MAKE:
@@ -1069,16 +1068,13 @@ static void callback_dispatcher(ffi_cif *cif, void *ret, void **args, void *user
 	REBVAL *val;
 	REBVAL *arg;
 	REBSTU *strut;
-	REBSTU *nstrut;
-	REBCNT index;
-	REBCNT tail;
-	REBCNT len;
+	REBVAL *ret;
 
 	arg = D_ARG(2);
 	val = D_ARG(1);
 	strut = 0;
 
-	REBVAL *ret = DS_RETURN;
+	ret = DS_RETURN;
 	// unary actions
 	switch(action) {
 		case A_MAKE:

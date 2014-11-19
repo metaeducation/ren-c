@@ -5670,6 +5670,8 @@ unsigned lodepng_encode(unsigned char** out, size_t* outsize,
   ucvector outv;
   unsigned char* data = 0; /*uncompressed version of the IDAT chunk data*/
   size_t datasize = 0;
+  unsigned char* converted;
+  size_t size;
 
   /*provide some proper output values if error will happen*/
   *out = 0;
@@ -5713,8 +5715,7 @@ unsigned lodepng_encode(unsigned char** out, size_t* outsize,
 // REBOL patch - we need to always convert BGRA->RGBA
 //  if(!lodepng_color_mode_equal(&state->info_raw, &info.color))
 //  {
-    unsigned char* converted;
-    size_t size = (w * h * lodepng_get_bpp(&info.color) + 7) / 8;
+    size = (w * h * lodepng_get_bpp(&info.color) + 7) / 8;
 
     converted = (unsigned char*)lodepng_malloc(size);
     if(!converted && size) state->error = 83; /*alloc fail*/

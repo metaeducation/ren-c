@@ -42,7 +42,7 @@ REBOOL reb_u32_add_overflow(u32 x, u32 y, u32 *sum)
 {
 	u64 s = (u64)x + (u64)y;
 	if (s > MAX_I32) return TRUE;
-	*sum = s;
+	*sum = (u32)s;
 	return FALSE;
 }
 
@@ -81,7 +81,7 @@ REBOOL reb_i32_mul_overflow(i32 x, i32 y, i32 *prod)
 {
 	i64 p = (i64)x * (i64)y;
 	if (p > MAX_I32 || p < MIN_I32) return TRUE;
-	*prod = p;
+	*prod = (i32)p;
 	return FALSE;
 }
 
@@ -89,7 +89,7 @@ REBOOL reb_u32_mul_overflow(u32 x, u32 y, u32 *prod)
 {
 	u64 p = (u64)x * (u64)y;
 	if (p > MAX_U32) return TRUE;
-	*prod = p;
+	*prod = (u32)p;
 	return FALSE;
 }
 
