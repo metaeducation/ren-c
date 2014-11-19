@@ -135,9 +135,23 @@ start: func [
 	if import [lib/import import]
 
 	unless none? boot-embedded [
-		code: load boot-embedded
+		code: load/header/type boot-embedded 'unbound
 		;boot-print ["executing embedded script:" mold code]
-		do code
+		system/script: make system/standard/script [
+			title: select first code 'title
+			header: first code
+			parent: none
+			path: what-dir
+			args: script-args
+		]
+		either 'module = select first code 'type [
+			code: reduce [first+ code code]
+			if object? tmp: do-needs/no-user first code [append code tmp]
+			import make module! code
+		][
+			do-needs first+ code
+			do intern code
+		]
 		quit ;ignore user script and "--do" argument
 	]
 
