@@ -139,6 +139,11 @@ REBOOL reb_i64_mul_overflow(i64 x, i64 y, i64 *prod)
 		|| (!sgn && p > MAX_I64)
 		|| (sgn && p - 1 > MAX_I64)) return TRUE; /* assumes 2's complements */
 
+	if (sgn && p == (u64)MIN_I64) {
+		*prod = MIN_I64;
+		return FALSE;
+	}
+
 	*prod = sgn? -(i64)p : p;
 	return FALSE;
 }
