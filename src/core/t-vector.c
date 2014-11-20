@@ -201,16 +201,19 @@ void Set_Vector_Row(REBSER *ser, REBVAL *blk)
 	REBCNT len = VAL_LEN(vect);
 	REBYTE *data = VAL_SERIES(vect)->data;
 	REBCNT type = VECT_TYPE(VAL_SERIES(vect));
-	REBSER *ser = Make_Block(len);
+	REBSER *ser = NULL;
 	REBCNT n;
 	REBVAL *val;
 
-	if (len > 0) {
-		val = BLK_HEAD(ser);
-		for (n = VAL_INDEX(vect); n < VAL_TAIL(vect); n++, val++) {
-			VAL_SET(val, (type >= VTSF08) ? REB_DECIMAL : REB_INTEGER);
-			VAL_INT64(val) = get_vect(type, data, n); // can be int or decimal
-		}
+	if (len <= 0) {
+		Trap_Arg(vect);
+	}
+
+	ser = Make_Block(len);
+	val = BLK_HEAD(ser);
+	for (n = VAL_INDEX(vect); n < VAL_TAIL(vect); n++, val++) {
+		VAL_SET(val, (type >= VTSF08) ? REB_DECIMAL : REB_INTEGER);
+		VAL_INT64(val) = get_vect(type, data, n); // can be int or decimal
 	}
 
 	SET_END(val);
