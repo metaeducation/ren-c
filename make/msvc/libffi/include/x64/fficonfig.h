@@ -21,13 +21,16 @@
 /* Cannot use PROT_EXEC on this target, so, we revert to alternative means */
 /* #undef FFI_EXEC_TRAMPOLINE_TABLE */
 
+/* Define this if you want to enable pax emulated trampolines */
+/* #undef FFI_MMAP_EXEC_EMUTRAMP_PAX */
+
 /* Cannot use malloc on this target, so, we revert to alternative means */
 /* #undef FFI_MMAP_EXEC_WRIT */
 
-/* Define this is you do not want support for the raw API. */
+/* Define this if you do not want support for the raw API. */
 /* #undef FFI_NO_RAW_API */
 
-/* Define this is you do not want support for aggregate types. */
+/* Define this if you do not want support for aggregate types. */
 /* #undef FFI_NO_STRUCTS */
 
 /* Define to 1 if you have `alloca', as a function or macro. */
@@ -71,11 +74,17 @@
 /* Define if you have the long double type and it is bigger than a double */
 /* #undef HAVE_LONG_DOUBLE */
 
+/* Define if you support more than one size of the long double type */
+/* #undef HAVE_LONG_DOUBLE_VARIANT */
+
 /* Define to 1 if you have the `memcpy' function. */
-/* #undef HAVE_MEMCPY */
+#define HAVE_MEMCPY 1
 
 /* Define to 1 if you have the <memory.h> header file. */
 #define HAVE_MEMORY_H 1
+
+/* Define to 1 if you have the `mkostemp' function. */
+/* #undef HAVE_MKOSTEMP */
 
 /* Define to 1 if you have the `mmap' function. */
 /* #undef HAVE_MMAP */
@@ -120,9 +129,6 @@
    */
 #define LT_OBJDIR ".libs/"
 
-/* Define to 1 if your C compiler doesn't accept -c and -o together. */
-/* #undef NO_MINUS_C_MINUS_O */
-
 /* Name of package */
 #define PACKAGE "libffi"
 
@@ -133,7 +139,7 @@
 #define PACKAGE_NAME "libffi"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "libffi 3.0.11"
+#define PACKAGE_STRING "libffi 3.1.1"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "libffi"
@@ -142,13 +148,16 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "3.0.11"
+#define PACKAGE_VERSION "3.1.1"
 
 /* The size of `double', as computed by sizeof. */
-#define SIZEOF_DOUBLE 0
+#define SIZEOF_DOUBLE 8
 
 /* The size of `long double', as computed by sizeof. */
 #define SIZEOF_LONG_DOUBLE 0
+
+/* The size of `size_t', as computed by sizeof. */
+#define SIZEOF_SIZE_T 8
 
 /* If using the C implementation of alloca, define if you know the
    direction of stack growth for your system; otherwise it will be
@@ -169,7 +178,7 @@
 /* #undef USING_PURIFY */
 
 /* Version number of package */
-#define VERSION "3.0.11"
+#define VERSION "3.1.1"
 
 /* Define WORDS_BIGENDIAN to 1 if your processor stores words with the most
    significant byte first (like Motorola and SPARC, unlike Intel). */
@@ -179,7 +188,7 @@
 # endif
 #else
 # ifndef WORDS_BIGENDIAN
-#  define WORDS_BIGENDIAN 1
+/* #  undef WORDS_BIGENDIAN */
 # endif
 #endif
 
