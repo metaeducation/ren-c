@@ -137,6 +137,9 @@ objs/f-extension.o:   $R/f-extension.c
 objs/f-math.o:        $R/f-math.c
 	$(CC) $R/f-math.c $(RFLAGS) -o objs/f-math.o
 
+objs/f-qsort.o:        $R/f-qsort.c
+	$(CC) $R/f-qsort.c $(RFLAGS) -o objs/f-qsort.o
+
 objs/f-modify.o:      $R/f-modify.c
 	$(CC) $R/f-modify.c $(RFLAGS) -o objs/f-modify.o
 

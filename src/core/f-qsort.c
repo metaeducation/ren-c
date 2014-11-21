@@ -42,6 +42,8 @@ __FBSDID("$FreeBSD$");
 
 #include <stdlib.h>
 
+#define qsort reb_qsort
+
 #ifdef I_AM_QSORT_R
 typedef int		 cmp_t(void *, const void *, const void *);
 #else
