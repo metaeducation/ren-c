@@ -80,7 +80,7 @@ REBOL [
 
 	native      function    function    *        -       -      *   function  
 	action      function    function    *        -       -      *   function  
-	routine     function    routine     *        -       -      -   function
+	routine     function    routine     *        -       -      *   function
 	rebcode     function    0           -        -       -      *   function  
 	command     function    function    -        -       -      *   function  
 ;	macro       function    0           -        -       -      -   function  
@@ -99,7 +99,7 @@ REBOL [
 	event       self        event       *        *       *      *   -  
 	callback    self        callback    -        -       -      -   -  
 	handle      self        0           -        -       -      -   -  
-	struct      self        struct      *        *       *      -   -
+	struct      self        struct      *        *       *      *   -
 	library     self     	library     -        -       -      -   -
 	utype       self        utype       -        -       -      -   -  
 
