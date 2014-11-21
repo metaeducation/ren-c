@@ -249,6 +249,7 @@
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
       </PrecompiledHeaderFile>
     </ClCompile>
+    <ClCompile Include="..\..\..\src\core\f-qsort.c" />
     <ClCompile Include="..\..\..\src\core\f-random.c" />
     <ClCompile Include="..\..\..\src\core\f-round.c" />
     <ClCompile Include="..\..\..\src\core\f-series.c" />
