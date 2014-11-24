@@ -496,7 +496,7 @@ static REBYTE seed_str[SEED_LEN] = {
 	// Add missing CRs:
 	while (cnt > 0) {
 		bp[tail--] = bp[len]; // Copy src to dst.
-		if (bp[len] == LF && (len == 0 || bp[len] != CR)) {
+		if (bp[len] == LF && (len == 0 || bp[len - 1] != CR)) {
 			bp[tail--] = CR;
 			cnt--;
 		}
