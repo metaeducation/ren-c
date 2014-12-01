@@ -688,18 +688,26 @@ chk_neg:
 						  output_type, &os_output, &output_len,
 						  err_type, &os_err, &err_len);
 
-	if (output_type == STRING_TYPE
-		&& output != NULL
-		&& output_len > 0) {
-		REBSER *ser = Copy_OS_Str(os_output, output_len);
-		Set_Var_Series(output, REB_STRING, ser, 0);
+	if (output_type == STRING_TYPE) {
+		if (output != NULL
+			&& output_len > 0) {
+			REBSER *ser = Copy_OS_Str(os_output, output_len);
+			Set_Var_Series(output, REB_STRING, ser, 0);
+			OS_FREE(os_output);
+		} else {
+			Set_Var_Basic(output, REB_NONE);
+		}
 	}
 
-	if (err_type == STRING_TYPE
-		&& err != NULL
-		&& err_len > 0) {
-		REBSER *ser = Copy_OS_Str(os_err, err_len);
-		Set_Var_Series(err, REB_STRING, ser, 0);
+	if (err_type == STRING_TYPE) {
+		if (err != NULL
+			&& err_len > 0) {
+			REBSER *ser = Copy_OS_Str(os_err, err_len);
+			Set_Var_Series(err, REB_STRING, ser, 0);
+			OS_FREE(os_err);
+		} else {
+			Set_Var_Basic(err, REB_NONE);
+		}
 	}
 
 	if (flag_info) {
