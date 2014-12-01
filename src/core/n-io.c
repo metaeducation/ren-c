@@ -669,6 +669,7 @@ chk_neg:
 			}
 		}
 		argv[argc] = NULL;
+		cmd = NULL;
 	} else if (IS_FILE(arg)) {
 		REBSER * ser = NULL;
 		REBSER *path = Value_To_OS_Path(arg, FALSE);
@@ -677,6 +678,7 @@ chk_neg:
 		argv = (REBCHR**)SERIES_DATA(ser);
 		argv[0] = (REBCHR*) SERIES_DATA(path);
 		argv[argc] = NULL;
+		cmd = NULL;
 	} else {
 		Trap_Arg(arg);
 	}
