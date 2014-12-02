@@ -836,6 +836,12 @@ error:
 		off_t err_size = 0;
 		int exited = 0;
 
+		/* initialize outputs */
+		*output = NULL;
+		*output_len = 0;
+		*err = NULL;
+		*err_len = 0;
+
 		if (!flag_wait) goto cleanup; /* I/O redirection implies wait */
 		if (stdin_pipe[W] > 0) {
 			//printf("stdin_pipe[W]: %d\n", stdin_pipe[W]);
@@ -988,6 +994,12 @@ cleanup:
 	}
 	if (stderr_pipe[W] > 0) {
 		close(stderr_pipe[W]);
+	}
+	if (*output != NULL && *output_len <= 0) {
+		OS_Free(*output);
+	}
+	if (*err != NULL && *err_len <= 0) {
+		OS_Free(*err);
 	}
 stderr_pipe_err:
 	if (stdout_pipe[R] > 0) {
