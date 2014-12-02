@@ -575,11 +575,6 @@ static void *Task_Ready;
 	SetEvent(Task_Ready);
 }
 
-static HANDLE *child_processes = NULL;
-static HANDLE *child_threads = NULL;
-static int child_process_capacity = 0;
-static int child_process_size = 0;
-
 /***********************************************************************
 **
 */	int OS_Create_Process(REBCHR *call, int argc, char* argv[], u32 flags, u64 *pid, u32 input_type, void *input, u32 input_len, u32 output_type, void **output, u32 *output_len, u32 err_type, void **err, u32 *err_len)
@@ -928,24 +923,9 @@ static int child_process_size = 0;
 		}
 	} else if (result) {
 		/* no wait */
-#define N_CHILD_CHUNK 64
-		if (child_processes == NULL) {
-			child_processes = OS_Make(sizeof(HANDLE) * N_CHILD_CHUNK);
-			child_threads = OS_Make(sizeof(HANDLE) * N_CHILD_CHUNK);
-			child_process_capacity = N_CHILD_CHUNK;
-			child_process_size = 1;
-			child_processes[0] = pi.hProcess;
-			child_threads[0] = pi.hThread;
-		} else {
-			++ child_process_size;
-			if (child_process_size > child_process_capacity) {
-				child_process_capacity += N_CHILD_CHUNK;
-				child_processes = realloc(child_processes, child_process_capacity * sizeof(HANDLE));
-				child_threads = realloc(child_threads, child_process_capacity * sizeof(HANDLE));
-			}
-			child_processes[child_process_size - 1] = pi.hProcess;
-			child_threads[child_process_size - 1] = pi.hThread;
-		}
+		/* Close handles to avoid leaks */
+		CloseHandle(pi.hThread);
+		CloseHandle(pi.hProcess);
 	}
 
 	goto cleanup;
@@ -997,57 +977,19 @@ input_error:
 
 /***********************************************************************
 **
-*/	int OS_Wait_Process(int pid, int *status, int flags)
+*/	int OS_Reap_Process(int pid, int *status, int flags)
 /*
+ * pid: 
+ * 		> 0, a signle process
+ * 		-1, any child process
  * flags:
  * 		0: return immediately
- * 		1: wait until one of child processes exits
  *
-**		Return -1 on error, otherwise process ID
+**		Return -1 on error
 ***********************************************************************/
 {
-	if (pid > 0) {
-		if (WaitForSingleObject(pid, flags == 0? 0 : INFINITE) == WAIT_FAILED) {
-			return -1;
-		}
-		return pid;
-	} else if (pid == -1) { /* wait until any of children exits */
-		DWORD wait_result = 0;
-		DWORD result = 0;
-		if (child_processes == NULL || child_process_size <= 0) {
-			return -1;
-		}
-		wait_result = WaitForMultipleObjects(child_process_size,
-											 child_processes,
-											 FALSE,
-											 flags == 0? 0: INFINITE);
-		if (wait_result >= WAIT_OBJECT_0
-			&& wait_result < WAIT_OBJECT_0 + child_process_size) {
-			DWORD i = wait_result - WAIT_OBJECT_0;
-			result = GetProcessId(child_processes[i]);
-			CloseHandle(child_threads[i]);
-			CloseHandle(child_processes[i]);
-			if (i < child_process_size - 1) {
-				memmove(&child_processes[i], &child_processes[i + 1], sizeof(HANDLE) * (child_process_size - i - 1));
-				memmove(&child_threads[i], &child_threads[i + 1], sizeof(HANDLE) * (child_process_size - i - 1));
-			}
-			-- child_process_size;
-			if (child_process_size == 0) {
-				OS_Free(child_processes);
-				OS_Free(child_threads);
-				child_processes = NULL;
-				child_threads = NULL;
-			} else if (child_process_size < child_process_capacity / 2) {
-				child_processes = realloc(child_processes, sizeof(HANDLE) * child_process_size);
-				child_threads = realloc(child_threads, sizeof(HANDLE) * child_process_size);
-			}
-			return result;
-		} else {
-			return -1;
-		}
-	}
-
-	return -1;
+	/* It seems that process doesn't need to be reaped on Windows */
+	return 0;
 }
 
 /***********************************************************************

@@ -1009,13 +1009,15 @@ stdin_pipe_err:
 
 /***********************************************************************
 **
-*/	int OS_Wait_Process(int pid, int *status, int flags)
+*/	int OS_Reap_Process(int pid, int *status, int flags)
 /*
+ * pid: 
+ * 		> 0, a signle process
+ * 		-1, any child process
  * flags:
  * 		0: return immediately
- * 		1: wait until one of child processes exits
  *
-**		Return -1 on error, otherwise process ID
+**		Return -1 on error
 ***********************************************************************/
 {
 	return waitpid(pid, status, flags == 0? WNOHANG : 0);

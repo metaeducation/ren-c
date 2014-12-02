@@ -480,7 +480,7 @@ static int Poll_Default(REBDEV *dev)
 	CLEARS(&req);
 	req.device = RDI_EVENT;
 
-	OS_Wait_Process(-1, NULL, 0);
+	OS_Reap_Process(-1, NULL, 0);
 
 	// Let any pending device I/O have a chance to run:
 	if (OS_Poll_Devices()) return -1;
