@@ -875,12 +875,14 @@ static int child_process_size = 0;
 					}
 				} else {
 					RL_Print("Error READ");
-					break;
+					goto kill;
 				}
 			} else if (wait_result == WAIT_FAILED) { /* */
-				RL_Print("Wait Failed");
+				RL_Print("Wait Failed\n");
+				goto kill;
 			} else {
-				RL_Print("Wait returns expected result: %d", wait_result);
+				RL_Print("Wait returns expected result: %d\n", wait_result);
+				goto kill;
 			}
 		}
 
