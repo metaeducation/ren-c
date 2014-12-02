@@ -828,23 +828,27 @@ static int child_process_size = 0;
 				DWORD n = 0;
 
 				if (handles[i] == hInputWrite) {
-					if (!WriteFile(hInputWrite, (char*)input + input_pos, input_len - input_pos, &n, NULL)) {
+					if (!WriteFile(hInputWrite, (REBCHR*)input + input_pos, (input_len - input_pos) * sizeof(REBCHR), &n, NULL)) {
 						if (i < count - 1) {
-							memmove(&handles[i], &handles[i + 1], count - i - 1);
+							memmove(&handles[i], &handles[i + 1], (count - i - 1) * sizeof(HANDLE));
 						}
 						count--;
 					} else {
-						input_pos += n;
+						input_pos += n / sizeof(REBCHR);
 						if (input_pos >= input_len) {
 							/* done with input */
 							CloseHandle(hInputWrite);
 							hInputWrite = NULL;
+							if (i < count - 1) {
+								memmove(&handles[i], &handles[i + 1], (count - i - 1) * sizeof(HANDLE));
+							}
+							count--;
 						}
 					}
 				} else if (handles[i] == hOutputRead) {
 					if (!ReadFile(hOutputRead, *(char**)output + *output_len, output_size - *output_len, &n, NULL)) {
 						if (i < count - 1) {
-							memmove(&handles[i], &handles[i + 1], count - i - 1);
+							memmove(&handles[i], &handles[i + 1], (count - i - 1) * sizeof(HANDLE));
 						}
 						count--;
 					} else {
@@ -858,7 +862,7 @@ static int child_process_size = 0;
 				} else if (handles[i] == hErrorRead) {
 					if (!ReadFile(hErrorRead, *(char**)err + *err_len, err_size - *err_len, &n, NULL)) {
 						if (i < count - 1) {
-							memmove(&handles[i], &handles[i + 1], count - i - 1);
+							memmove(&handles[i], &handles[i + 1], (count - i - 1) * sizeof(HANDLE));
 						}
 						count--;
 					} else {
