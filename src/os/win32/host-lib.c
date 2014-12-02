@@ -948,9 +948,9 @@ kill:
 	if (TerminateProcess(pi.hProcess, 0)) {
 		WaitForSingleObject(pi.hProcess, INFINITE);
 		GetExitCodeProcess(pi.hProcess, (PDWORD)&result);
-		CloseHandle(pi.hThread);
-		CloseHandle(pi.hProcess);
 	}
+	CloseHandle(pi.hThread);
+	CloseHandle(pi.hProcess);
 
 cleanup:
 	if (*output != NULL && *output_len == 0) {
