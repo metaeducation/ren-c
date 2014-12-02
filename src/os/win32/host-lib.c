@@ -603,6 +603,7 @@ static void *Task_Ready;
 	HANDLE hInputWrite = 0, hInputRead = 0;
 	HANDLE hErrorWrite = 0, hErrorRead = 0;
 	REBCHR *cmd = NULL;
+	char *oem_input = NULL;
 
 	SECURITY_ATTRIBUTES sa;
 
@@ -799,7 +800,17 @@ static void *Task_Ready;
 
 		result = 0;
 		if (hInputWrite != NULL && input_len > 0) {
-			handles[count ++] = hInputWrite;
+			DWORD dest_len = 0;
+			/* convert input encoding from UNICODE to OEM */
+			dest_len = WideCharToMultiByte(CP_OEMCP, 0, input, input_len, oem_input, dest_len, NULL, NULL);
+			if (dest_len > 0) {
+				oem_input = OS_Make(dest_len);
+				if (oem_input != NULL) {
+					WideCharToMultiByte(CP_OEMCP, 0, input, input_len, oem_input, dest_len, NULL, NULL);
+					input_len = dest_len;
+					handles[count ++] = hInputWrite;
+				}
+			}
 		}
 		if (hOutputRead != NULL) {
 			output_size = BUF_SIZE_CHUNK;
@@ -823,17 +834,19 @@ static void *Task_Ready;
 				DWORD n = 0;
 
 				if (handles[i] == hInputWrite) {
-					if (!WriteFile(hInputWrite, (REBCHR*)input + input_pos, (input_len - input_pos) * sizeof(REBCHR), &n, NULL)) {
+					if (!WriteFile(hInputWrite, oem_input + input_pos, input_len - input_pos, &n, NULL)) {
 						if (i < count - 1) {
 							memmove(&handles[i], &handles[i + 1], (count - i - 1) * sizeof(HANDLE));
 						}
 						count--;
 					} else {
-						input_pos += n / sizeof(REBCHR);
+						input_pos += n;
 						if (input_pos >= input_len) {
 							/* done with input */
 							CloseHandle(hInputWrite);
 							hInputWrite = NULL;
+							OS_Free(oem_input);
+							oem_input = NULL;
 							if (i < count - 1) {
 								memmove(&handles[i], &handles[i + 1], (count - i - 1) * sizeof(HANDLE));
 							}
@@ -939,6 +952,10 @@ kill:
 	CloseHandle(pi.hProcess);
 
 cleanup:
+	if (oem_input != NULL) {
+		OS_Free(oem_input);
+	}
+
 	if (*output != NULL && *output_len == 0) {
 		OS_Free(*output);
 	}
