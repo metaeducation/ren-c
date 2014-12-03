@@ -540,6 +540,7 @@ chk_neg:
 #define NONE_TYPE 1
 #define STRING_TYPE 2
 #define FILE_TYPE 3
+#define BINARY_TYPE 4
 
 #define FLAG_WAIT 1
 #define FLAG_CONSOLE 2
@@ -583,6 +584,10 @@ chk_neg:
 			input_type = STRING_TYPE;
 			os_input = Val_Str_To_OS(param);
 			input_len = VAL_LEN(param);
+		} else if (IS_BINARY(param)) {
+			input_type = BINARY_TYPE;
+			os_input = VAL_BIN_DATA(param);
+			input_len = VAL_LEN(param);
 		} else if (IS_FILE(param)) {
 			REBSER *path = Value_To_OS_Path(param, FALSE);
 			input_type = FILE_TYPE;
@@ -600,6 +605,8 @@ chk_neg:
 		output = param;
 		if (IS_STRING(param)) {
 			output_type = STRING_TYPE;
+		} else if (IS_BINARY(param)) {
+			output_type = BINARY_TYPE;
 		} else if (IS_FILE(param)) {
 			REBSER *path = Value_To_OS_Path(param, FALSE);
 			output_type = FILE_TYPE;
@@ -617,6 +624,8 @@ chk_neg:
 		err = param;
 		if (IS_STRING(param)) {
 			err_type = STRING_TYPE;
+		} else if (IS_BINARY(param)) {
+			err_type = BINARY_TYPE;
 		} else if (IS_FILE(param)) {
 			REBSER *path = Value_To_OS_Path(param, FALSE);
 			err_type = FILE_TYPE;
@@ -629,9 +638,13 @@ chk_neg:
 		}
 	}
 
+	/* I/O redirection implies /wait */
 	if (input_type == STRING_TYPE
+		|| input_type == BINARY_TYPE
 		|| output_type == STRING_TYPE
-		|| err_type == STRING_TYPE) {
+		|| output_type == BINARY_TYPE
+		|| err_type == STRING_TYPE
+		|| err_type == BINARY_TYPE) {
 		flag_wait = TRUE;
 	}
 
@@ -695,6 +708,12 @@ chk_neg:
 			Append_String(VAL_SERIES(output), ser, 0, SERIES_TAIL(ser));
 			OS_FREE(os_output);
 		}
+	} else if (output_type == BINARY_TYPE) {
+		if (output != NULL
+			&& output_len > 0) {
+			Append_Bytes_Len(VAL_SERIES(output), os_output, output_len);
+			OS_FREE(os_output);
+		}
 	}
 
 	if (err_type == STRING_TYPE) {
@@ -702,6 +721,12 @@ chk_neg:
 			&& err_len > 0) {
 			REBSER *ser = Copy_OS_Str(os_err, err_len);
 			Append_String(VAL_SERIES(err), ser, 0, SERIES_TAIL(ser));
+			OS_FREE(os_err);
+		}
+	} else if (err_type == BINARY_TYPE) {
+		if (err != NULL
+			&& err_len > 0) {
+			Append_Bytes_Len(VAL_SERIES(err), os_err, err_len);
 			OS_FREE(os_err);
 		}
 	}

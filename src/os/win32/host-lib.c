@@ -588,6 +588,7 @@ static void *Task_Ready;
 #define NONE_TYPE 1
 #define STRING_TYPE 2
 #define FILE_TYPE 3
+#define BINARY_TYPE 4
 
 #define FLAG_WAIT 1
 #define FLAG_CONSOLE 2
@@ -643,6 +644,7 @@ static void *Task_Ready;
 
 	switch (input_type) {
 		case STRING_TYPE:
+		case BINARY_TYPE:
 			if (!CreatePipe(&hInputRead, &hInputWrite, NULL, 0)) {
 				goto input_error;
 			}
@@ -672,6 +674,7 @@ static void *Task_Ready;
 
 	switch (output_type) {
 		case STRING_TYPE:
+		case BINARY_TYPE:
 			if (!CreatePipe(&hOutputRead, &hOutputWrite, NULL, 0)) {
 				goto output_error;
 			}
@@ -711,6 +714,7 @@ static void *Task_Ready;
 
 	switch (err_type) {
 		case STRING_TYPE:
+		case BINARY_TYPE:
 			if (!CreatePipe(&hErrorRead, &hErrorWrite, NULL, 0)) {
 				goto error_error;
 			}
@@ -800,16 +804,21 @@ static void *Task_Ready;
 
 		result = 0;
 		if (hInputWrite != NULL && input_len > 0) {
-			DWORD dest_len = 0;
-			/* convert input encoding from UNICODE to OEM */
-			dest_len = WideCharToMultiByte(CP_OEMCP, 0, input, input_len, oem_input, dest_len, NULL, NULL);
-			if (dest_len > 0) {
-				oem_input = OS_Make(dest_len);
-				if (oem_input != NULL) {
-					WideCharToMultiByte(CP_OEMCP, 0, input, input_len, oem_input, dest_len, NULL, NULL);
-					input_len = dest_len;
-					handles[count ++] = hInputWrite;
+			if (input_type == STRING_TYPE) {
+				DWORD dest_len = 0;
+				/* convert input encoding from UNICODE to OEM */
+				dest_len = WideCharToMultiByte(CP_OEMCP, 0, input, input_len, oem_input, dest_len, NULL, NULL);
+				if (dest_len > 0) {
+					oem_input = OS_Make(dest_len);
+					if (oem_input != NULL) {
+						WideCharToMultiByte(CP_OEMCP, 0, input, input_len, oem_input, dest_len, NULL, NULL);
+						input_len = dest_len;
+						input = oem_input;
+						handles[count ++] = hInputWrite;
+					}
 				}
+			} else { /* BINARY_TYPE */
+				handles[count ++] = hInputWrite;
 			}
 		}
 		if (hOutputRead != NULL) {
@@ -834,7 +843,7 @@ static void *Task_Ready;
 				DWORD n = 0;
 
 				if (handles[i] == hInputWrite) {
-					if (!WriteFile(hInputWrite, oem_input + input_pos, input_len - input_pos, &n, NULL)) {
+					if (!WriteFile(hInputWrite, (char*)input + input_pos, input_len - input_pos, &n, NULL)) {
 						if (i < count - 1) {
 							memmove(&handles[i], &handles[i + 1], (count - i - 1) * sizeof(HANDLE));
 						}
@@ -899,7 +908,7 @@ static void *Task_Ready;
 		CloseHandle(pi.hThread);
 		CloseHandle(pi.hProcess);
 
-		if (*output != NULL && *output_len > 0) {
+		if (output_type == STRING_TYPE && *output != NULL && *output_len > 0) {
 			/* convert to wide char string */
 			int dest_len = 0;
 			wchar_t *dest = NULL;
@@ -917,7 +926,7 @@ static void *Task_Ready;
 			*output_len = dest_len;
 		}
 
-		if (*err != NULL && *err_len > 0) {
+		if (err_type == STRING_TYPE && *err != NULL && *err_len > 0) {
 			/* convert to wide char string */
 			int dest_len = 0;
 			wchar_t *dest = NULL;

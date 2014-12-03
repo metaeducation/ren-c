@@ -702,6 +702,7 @@ error:
 #define NONE_TYPE 1
 #define STRING_TYPE 2
 #define FILE_TYPE 3
+#define BINARY_TYPE 4
 
 #define FLAG_WAIT 1
 #define FLAG_CONSOLE 2
@@ -725,17 +726,20 @@ error:
 	if (flags & FLAG_SHELL) flag_shell = TRUE;
 	if (flags & FLAG_INFO) flag_info = TRUE;
 
-	if (input_type == STRING_TYPE) {
+	if (input_type == STRING_TYPE
+		|| input_type == BINARY_TYPE) {
 		if (pipe2(stdin_pipe, O_CLOEXEC | O_NONBLOCK) < 0) {
 			goto stdin_pipe_err;
 		}
 	}
-	if (output_type == STRING_TYPE) {
+	if (output_type == STRING_TYPE
+		|| output_type == BINARY_TYPE) {
 		if (pipe2(stdout_pipe, O_CLOEXEC | O_NONBLOCK) < 0) {
 			goto stdout_pipe_err;
 		}
 	}
-	if (err_type == STRING_TYPE) {
+	if (err_type == STRING_TYPE
+		|| err_type == BINARY_TYPE) {
 		if (pipe2(stderr_pipe, O_CLOEXEC | O_NONBLOCK) < 0) {
 			goto stderr_pipe_err;
 		}
@@ -744,7 +748,8 @@ error:
 	*pid = fork();
 	if (*pid == 0) {
 		/* child */
-		if (input_type == STRING_TYPE) {
+		if (input_type == STRING_TYPE
+			|| input_type == BINARY_TYPE) {
 			close(stdin_pipe[W]);
 			dup2(stdin_pipe[R], STDIN_FILENO);
 			close(stdin_pipe[R]);
@@ -765,7 +770,8 @@ error:
 		} else { /* inherit stdin from the parent */
 		}
 		
-		if (output_type == STRING_TYPE) {
+		if (output_type == STRING_TYPE
+			|| output_type == BINARY_TYPE) {
 			close(stdout_pipe[R]);
 			dup2(stdout_pipe[W], STDOUT_FILENO);
 			close(stdout_pipe[W]);
@@ -786,7 +792,8 @@ error:
 		} else { /* inherit stdout from the parent */
 		}
 
-		if (err_type == STRING_TYPE) {
+		if (err_type == STRING_TYPE
+			|| err_type == BINARY_TYPE) {
 			close(stderr_pipe[R]);
 			dup2(stderr_pipe[W], STDERR_FILENO);
 			close(stderr_pipe[W]);

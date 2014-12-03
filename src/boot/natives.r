@@ -893,9 +893,9 @@ call: native [
 	/console "Runs command with I/O redirected to console"
 	/shell "Forces command to be run from shell"
 	/info "Returns process information object"
-	/input in [string! file! none!] "Redirects stdin to in"
-	/output out [string! file! none!] "Redirects stdout to out"
-	/error err [string! file! none!] "Redirects stderr to err"
+	/input in [string! binary! file! none!] "Redirects stdin to in"
+	/output out [string! binary! file! none!] "Redirects stdout to out"
+	/error err [string! binary! file! none!] "Redirects stderr to err"
 ]
 
 browse: native [
