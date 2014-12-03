@@ -894,8 +894,8 @@ call: native [
 	/shell "Forces command to be run from shell"
 	/info "Returns process information object"
 	/input in [string! file! none!] "Redirects stdin to in"
-	/output out [word! file! none!] "Redirects stdout to out"
-	/error err [word! file! none!] "Redirects stderr to err"
+	/output out [string! file! none!] "Redirects stdout to out"
+	/error err [string! file! none!] "Redirects stderr to err"
 ]
 
 browse: native [

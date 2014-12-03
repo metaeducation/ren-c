@@ -598,7 +598,7 @@ chk_neg:
 	if (D_REF(8)) { /* output */
 		REBVAL *param = D_ARG(9);
 		output = param;
-		if (IS_WORD(param)) {
+		if (IS_STRING(param)) {
 			output_type = STRING_TYPE;
 		} else if (IS_FILE(param)) {
 			REBSER *path = Value_To_OS_Path(param, FALSE);
@@ -615,7 +615,7 @@ chk_neg:
 	if (D_REF(10)) { /* err */
 		REBVAL *param = D_ARG(11);
 		err = param;
-		if (IS_WORD(param)) {
+		if (IS_STRING(param)) {
 			err_type = STRING_TYPE;
 		} else if (IS_FILE(param)) {
 			REBSER *path = Value_To_OS_Path(param, FALSE);
@@ -692,10 +692,8 @@ chk_neg:
 		if (output != NULL
 			&& output_len > 0) {
 			REBSER *ser = Copy_OS_Str(os_output, output_len);
-			Set_Var_Series(output, REB_STRING, ser, 0);
+			Append_String(VAL_SERIES(output), ser, 0, SERIES_TAIL(ser));
 			OS_FREE(os_output);
-		} else {
-			Set_Var_Basic(output, REB_NONE);
 		}
 	}
 
@@ -703,10 +701,8 @@ chk_neg:
 		if (err != NULL
 			&& err_len > 0) {
 			REBSER *ser = Copy_OS_Str(os_err, err_len);
-			Set_Var_Series(err, REB_STRING, ser, 0);
+			Append_String(VAL_SERIES(err), ser, 0, SERIES_TAIL(ser));
 			OS_FREE(os_err);
-		} else {
-			Set_Var_Basic(err, REB_NONE);
 		}
 	}
 
