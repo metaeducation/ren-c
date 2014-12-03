@@ -57,6 +57,8 @@ foreach [codec handler] system/codecs [
 			type: 'image!
 			suffixes: select [
 				text [%.txt]
+				utf-16le [%.txt]
+				utf-16be [%.txt]
 				markup [%.html %.htm %.xml %.xsl %.wml %.sgml %.asp %.php %.cgi]
 				bmp  [%.bmp]
 				gif  [%.gif]
