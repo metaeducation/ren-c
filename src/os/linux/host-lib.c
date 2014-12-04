@@ -825,9 +825,9 @@ error:
 			argv_new[1] = "-c";
 			memcpy(&argv_new[2], argv, argc * sizeof(argv[0]));
 			argv_new[argc + 2] = NULL;
-			execv(sh, (char* const*)argv_new);
+			execvp(sh, (char* const*)argv_new);
 		} else {
-			execv(argv[0], argv);
+			execvp(argv[0], argv);
 		}
 		exit(EXIT_FAILURE); /* get here only when exec fails */
 	} else if (*pid > 0) {
