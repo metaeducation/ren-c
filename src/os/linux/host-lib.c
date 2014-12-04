@@ -718,8 +718,12 @@ error:
 	int stdin_pipe[] = {-1, -1};
 	int stdout_pipe[] = {-1, -1};
 	int stderr_pipe[] = {-1, -1};
+	int info_pipe[] = {-1, -1};
 	int status = 0;
 	int ret = 0;
+	char *info = NULL;
+	off_t info_size = 0;
+	u32 info_len = 0;
 
 	if (flags & FLAG_WAIT) flag_wait = TRUE;
 	if (flags & FLAG_CONSOLE) flag_console = TRUE;
@@ -743,6 +747,10 @@ error:
 		if (pipe2(stderr_pipe, O_CLOEXEC | O_NONBLOCK) < 0) {
 			goto stderr_pipe_err;
 		}
+	}
+
+	if (pipe2(info_pipe, O_CLOEXEC | O_NONBLOCK) < 0) {
+		goto info_pipe_err;
 	}
 
 	*pid = fork();
@@ -814,6 +822,8 @@ error:
 		} else { /* inherit stderr from the parent */
 		}
 
+		close(info_pipe[R]);
+
 		//printf("flag_shell in child: %hhu\n", flag_shell);
 		if (flag_shell) {
 			const char* sh = NULL;
@@ -829,6 +839,7 @@ error:
 		} else {
 			execvp(argv[0], argv);
 		}
+		write(info_pipe[W], &errno, sizeof(errno));
 		exit(EXIT_FAILURE); /* get here only when exec fails */
 	} else if (*pid > 0) {
 		/* parent */
@@ -849,7 +860,6 @@ error:
 		*err = NULL;
 		*err_len = 0;
 
-		if (!flag_wait) goto cleanup; /* I/O redirection implies wait */
 		if (stdin_pipe[W] > 0) {
 			//printf("stdin_pipe[W]: %d\n", stdin_pipe[W]);
 			input_size = strlen((char*)input); /* the passed in input_len is in character, not in bytes */
@@ -875,6 +885,14 @@ error:
 			stderr_pipe[W] = -1;
 		}
 
+		if (info_pipe[R] > 0) {
+			pfds[nfds++] = (struct pollfd){.fd = info_pipe[R], .events = POLLIN};
+			info_size = 4;
+			info = OS_Make(info_size);
+			close(info_pipe[W]);
+			info_pipe[W] = -1;
+		}
+
 		int valid_nfds = nfds;
 		while (valid_nfds > 0) {
 			xpid = waitpid(*pid, &status, WNOHANG);
@@ -894,6 +912,12 @@ error:
 					nbytes = read(stderr_pipe[R], *err + *err_len, err_size - *err_len);
 					if (nbytes > 0) {
 						*err_len += nbytes;
+					}
+				}
+				if (info_pipe[R] > 0) {
+					nbytes = read(info_pipe[R], info + info_len, info_size - info_len);
+					if (nbytes > 0) {
+						info_len += nbytes;
 					}
 				}
 
@@ -940,10 +964,14 @@ error:
 						buffer = (char**)output;
 						offset = output_len;
 						size = &output_size;
-					} else {
+					} else if (pfds[i].fd == stderr_pipe[R]) {
 						buffer = (char**)err;
 						offset = err_len;
 						size = &err_size;
+					} else { /* info pipe */
+						buffer = &info;
+						offset = &info_len;
+						size = &info_size;
 					}
 					do {
 						to_read = *size - *offset;
@@ -980,7 +1008,7 @@ error:
 			}
 		}
 
-		if (valid_nfds == 0) {
+		if (valid_nfds == 0 && flag_wait) {
 			if (waitpid(*pid, &status, 0) < 0) {
 				goto error;
 			}
@@ -991,7 +1019,10 @@ error:
 		goto error;
 	}
 
-	if (WIFEXITED(status)) {
+	if (info_len > 0) {
+		/* exec in child process failed */
+		ret = -1;
+	} else if (WIFEXITED(status)) {
 		ret = WEXITSTATUS(status);
 	} else {
 		ret = -1;
@@ -1004,17 +1035,27 @@ kill:
 error:
 	ret = -1;
 cleanup:
-	if (stderr_pipe[R] > 0) {
-		close(stderr_pipe[R]);
-	}
-	if (stderr_pipe[W] > 0) {
-		close(stderr_pipe[W]);
-	}
 	if (*output != NULL && *output_len <= 0) {
 		OS_Free(*output);
 	}
 	if (*err != NULL && *err_len <= 0) {
 		OS_Free(*err);
+	}
+	if (info != NULL) {
+		OS_Free(info);
+	}
+	if (info_pipe[R] > 0) {
+		close(info_pipe[R]);
+	}
+	if (info_pipe[W] > 0) {
+		close(info_pipe[W]);
+	}
+info_pipe_err:
+	if (stderr_pipe[R] > 0) {
+		close(stderr_pipe[R]);
+	}
+	if (stderr_pipe[W] > 0) {
+		close(stderr_pipe[W]);
 	}
 stderr_pipe_err:
 	if (stdout_pipe[R] > 0) {
