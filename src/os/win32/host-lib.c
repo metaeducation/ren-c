@@ -577,7 +577,7 @@ static void *Task_Ready;
 
 /***********************************************************************
 **
-*/	int OS_Create_Process(REBCHR *call, int argc, char* argv[], u32 flags, u64 *pid, u32 input_type, void *input, u32 input_len, u32 output_type, void **output, u32 *output_len, u32 err_type, void **err, u32 *err_len)
+*/	int OS_Create_Process(REBCHR *call, int argc, char* argv[], u32 flags, u64 *pid, int *exit_code, u32 input_type, void *input, u32 input_len, u32 output_type, void **output, u32 *output_len, u32 err_type, void **err, u32 *err_len)
 /*
 **		Return -1 on error.
 **		For right now, set flags to 1 for /wait.
@@ -600,6 +600,7 @@ static void *Task_Ready;
 //	REBOOL				is_NT;
 //	OSVERSIONINFO		info;
 	REBINT				result = -1;
+	REBINT				ret = 0;
 	HANDLE hOutputRead = 0, hOutputWrite = 0;
 	HANDLE hInputWrite = 0, hInputRead = 0;
 	HANDLE hErrorWrite = 0, hErrorRead = 0;
@@ -802,7 +803,6 @@ static void *Task_Ready;
 
 #define BUF_SIZE_CHUNK 4096
 
-		result = 0;
 		if (hInputWrite != NULL && input_len > 0) {
 			if (input_type == STRING_TYPE) {
 				DWORD dest_len = 0;
@@ -891,20 +891,23 @@ static void *Task_Ready;
 						}
 					}
 				} else {
-					RL_Print("Error READ");
+					//RL_Print("Error READ");
+					if (!ret) ret = GetLastError();
 					goto kill;
 				}
 			} else if (wait_result == WAIT_FAILED) { /* */
-				RL_Print("Wait Failed\n");
+				//RL_Print("Wait Failed\n");
+				if (!ret) ret = GetLastError();
 				goto kill;
 			} else {
-				RL_Print("Wait returns expected result: %d\n", wait_result);
+				//RL_Print("Wait returns unexpected result: %d\n", wait_result);
+				if (!ret) ret = GetLastError();
 				goto kill;
 			}
 		}
 
 		WaitForSingleObject(pi.hProcess, INFINITE); // check result??
-		GetExitCodeProcess(pi.hProcess, (PDWORD)&result);
+		GetExitCodeProcess(pi.hProcess, (PDWORD)exit_code);
 		CloseHandle(pi.hThread);
 		CloseHandle(pi.hProcess);
 
@@ -948,6 +951,9 @@ static void *Task_Ready;
 		/* Close handles to avoid leaks */
 		CloseHandle(pi.hThread);
 		CloseHandle(pi.hProcess);
+	} else {
+		/* CreateProcess failed */
+		ret = GetLastError();
 	}
 
 	goto cleanup;
@@ -955,8 +961,11 @@ static void *Task_Ready;
 kill:
 	if (TerminateProcess(pi.hProcess, 0)) {
 		WaitForSingleObject(pi.hProcess, INFINITE);
-		GetExitCodeProcess(pi.hProcess, (PDWORD)&result);
+		GetExitCodeProcess(pi.hProcess, (PDWORD)exit_code);
+	} else if (ret == 0) {
+		ret = GetLastError();
 	}
+
 	CloseHandle(pi.hThread);
 	CloseHandle(pi.hProcess);
 
@@ -997,8 +1006,7 @@ output_error:
 	}
 
 input_error:
-
-	return result;  // meaning depends on flags
+	return ret;  // meaning depends on flags
 }
 
 /***********************************************************************
@@ -1031,6 +1039,7 @@ input_error:
 	HKEY key;
 	REBCHR *path;
 	HWND hWnd = GetFocus();
+	int exit_code = 0;
 
 	if (RegOpenKeyEx(HKEY_CLASSES_ROOT, TEXT("http\\shell\\open\\command"), 0, KEY_READ, &key) != ERROR_SUCCESS)
 		return 0;
@@ -1055,6 +1064,7 @@ input_error:
 	char * const argv[] = {path, NULL};
 	len = OS_Create_Process(path, 1, argv, 0, 
 							NULL, /* pid */
+							&exit_code,
 							0, NULL, 0, /* input_type, void *input, u32 input_len, */
 							0, NULL, NULL, /* output_type, void **output, u32 *output_len, */
 							0, NULL, NULL); /* u32 err_type, void **err, u32 *err_len */

@@ -687,7 +687,7 @@ error:
 
 /***********************************************************************
 **
-*/	int OS_Create_Process(REBCHR *call, int argc, char* argv[], u32 flags, u64 *pid, u32 input_type, void *input, u32 input_len, u32 output_type, void **output, u32 *output_len, u32 err_type, void **err, u32 *err_len)
+*/	int OS_Create_Process(REBCHR *call, int argc, char* argv[], u32 flags, u64 *pid, int *exit_code, u32 input_type, void *input, u32 input_len, u32 output_type, void **output, u32 *output_len, u32 err_type, void **err, u32 *err_len)
 /*
  * flags:
  * 		1: wait, is implied when I/O redirection is enabled
@@ -1027,9 +1027,10 @@ error:
 
 	if (info_len > 0) {
 		/* exec in child process failed */
-		ret = -1;
+		/* set to errno for reporting */
+		ret = *(int*)info;
 	} else if (WIFEXITED(status)) {
-		ret = WEXITSTATUS(status);
+		*exit_code = WEXITSTATUS(status);
 	} else {
 		ret = -1;
 	}

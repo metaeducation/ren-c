@@ -570,6 +570,7 @@ chk_neg:
 	REBOOL flag_console = FALSE;
 	REBOOL flag_shell = FALSE;
 	REBOOL flag_info = FALSE;
+	int exit_code = 0;
 
 	Check_Security(SYM_CALL, POL_EXEC, arg);
 
@@ -696,7 +697,7 @@ chk_neg:
 		Trap_Arg(arg);
 	}
 
-	r = OS_CREATE_PROCESS(cmd, argc, argv, flags, &pid,
+	r = OS_CREATE_PROCESS(cmd, argc, argv, flags, &pid, &exit_code,
 						  input_type, os_input, input_len,
 						  output_type, &os_output, &output_len,
 						  err_type, &os_err, &err_len);
@@ -732,38 +733,21 @@ chk_neg:
 	}
 
 	if (flag_info) {
-		REBSER *blk = Make_Block(4);
-		REBVAL *val = Append_Value(blk);
-		REBSER *obj = NULL;
-		Init_Word(val, SYM_ID);
-		SET_TYPE(val, REB_SET_WORD);
-
-		val = Append_Value(blk);
+		REBSER *obj = Make_Frame(2);
+		REBVAL *val = Append_Frame(obj, NULL, SYM_ID);
 		SET_INTEGER(val, pid);
 
 		if (flag_wait) {
-			val = Append_Value(blk);
-			Init_Word(val, SYM_EXIT_CODE);
-			SET_TYPE(val, REB_SET_WORD);
-
-			val = Append_Value(blk);
-			SET_INTEGER(val, r);
-		}
-
-		obj = Make_Object(NULL, BLK_HEAD(blk));
-
-		SET_INTEGER(OFV(obj, 1), pid);
-
-		if (flag_wait) {
-			SET_INTEGER(OFV(obj, 2), r);
+			val = Append_Frame(obj, NULL, SYM_EXIT_CODE);
+			SET_INTEGER(val, exit_code);
 		}
 
 		SET_OBJECT(D_RET, obj);
 		return R_RET;
 	}
 
-	if (r >= 0) {
-		SET_INTEGER(D_RET, flag_wait ? r : pid);
+	if (r == 0) {
+		SET_INTEGER(D_RET, flag_wait ? exit_code : pid);
 		return R_RET;
 	} else {
 		Trap1(RE_CALL_FAIL, Make_OS_Error(r));
