@@ -271,8 +271,14 @@ static const void * backtrace_buf [1024];
 **
 ***********************************************************************/
 {
-	strerror_r(errnum, str, len);
-	return str;
+	char *msg = NULL;
+	if (!errnum) errnum = errno;
+	msg = strerror_r(errnum, str, len);
+	if (msg != NULL && msg != str) {
+		strncpy(str, msg, len);
+		str[len - 1] = '\0'; /* to be safe */
+	}
+	return msg;
 }
 
 
