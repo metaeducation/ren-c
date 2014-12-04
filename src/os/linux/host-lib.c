@@ -884,10 +884,18 @@ error:
 
 			if (xpid == *pid) {
 				/* try one more time to read any remainding output/err */
-				if (stdout_pipe[R] > 0)
-					read(stdout_pipe[R], *output + *output_len, output_size - *output_len);
-				if (stderr_pipe[R] > 0)
-					read(stderr_pipe[R], *err + *err_len, err_size - *err_len);
+				if (stdout_pipe[R] > 0) {
+					nbytes = read(stdout_pipe[R], *output + *output_len, output_size - *output_len);
+					if (nbytes > 0) {
+						*output_len += nbytes;
+					}
+				}
+				if (stderr_pipe[R] > 0) {
+					nbytes = read(stderr_pipe[R], *err + *err_len, err_size - *err_len);
+					if (nbytes > 0) {
+						*err_len += nbytes;
+					}
+				}
 
 				break;
 			}
