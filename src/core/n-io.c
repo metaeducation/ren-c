@@ -516,7 +516,7 @@ chk_neg:
 
 	r = OS_BROWSE(url, 0);
 
-	if (r == 0) Trap1(RE_CALL_FAIL, Make_OS_Error());
+	if (r == 0) Trap1(RE_CALL_FAIL, Make_OS_Error(r));
 
 	return R_UNSET;
 }
@@ -766,7 +766,7 @@ chk_neg:
 		SET_INTEGER(D_RET, flag_wait ? r : pid);
 		return R_RET;
 	} else {
-		Trap1(RE_CALL_FAIL, Make_OS_Error());
+		Trap1(RE_CALL_FAIL, Make_OS_Error(r));
 		return R_NONE;
 	}
 }
