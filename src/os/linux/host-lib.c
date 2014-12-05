@@ -775,7 +775,7 @@ error:
 			dup2(fd, STDIN_FILENO);
 			close(fd);
 		} else if (input_type == NONE_TYPE) {
-			int fd = open("/dev/null", O_WRONLY);
+			int fd = open("/dev/null", O_RDONLY);
 			if (fd < 0) {
 				exit(EXIT_FAILURE);
 			}
