@@ -274,7 +274,7 @@ static const void * backtrace_buf [1024];
 	char *msg = NULL;
 	if (!errnum) errnum = errno;
 	msg = strerror_r(errnum, str, len);
-	if (msg != NULL && msg != str) {
+	if (msg != NULL && msg != (char*)str) {
 		strncpy(str, msg, len);
 		str[len - 1] = '\0'; /* to be safe */
 	}
