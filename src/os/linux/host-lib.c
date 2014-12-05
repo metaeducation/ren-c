@@ -770,14 +770,14 @@ error:
 		} else if (input_type == FILE_TYPE) {
 			int fd = open(input, O_RDONLY);
 			if (fd < 0) {
-				exit(EXIT_FAILURE);
+				goto child_error;
 			}
 			dup2(fd, STDIN_FILENO);
 			close(fd);
 		} else if (input_type == NONE_TYPE) {
 			int fd = open("/dev/null", O_RDONLY);
 			if (fd < 0) {
-				exit(EXIT_FAILURE);
+				goto child_error;
 			}
 			dup2(fd, STDIN_FILENO);
 			close(fd);
@@ -792,14 +792,14 @@ error:
 		} else if (output_type == FILE_TYPE) {
 			int fd = open(*output, O_CREAT|O_WRONLY, 0666);
 			if (fd < 0) {
-				exit(EXIT_FAILURE);
+				goto child_error;
 			}
 			dup2(fd, STDOUT_FILENO);
 			close(fd);
 		} else if (output_type == NONE_TYPE) {
 			int fd = open("/dev/null", O_WRONLY);
 			if (fd < 0) {
-				exit(EXIT_FAILURE);
+				goto child_error;
 			}
 			dup2(fd, STDOUT_FILENO);
 			close(fd);
@@ -814,14 +814,14 @@ error:
 		} else if (err_type == FILE_TYPE) {
 			int fd = open(*err, O_CREAT|O_WRONLY, 0666);
 			if (fd < 0) {
-				exit(EXIT_FAILURE);
+				goto child_error;
 			}
 			dup2(fd, STDERR_FILENO);
 			close(fd);
 		} else if (err_type == NONE_TYPE) {
 			int fd = open("/dev/null", O_WRONLY);
 			if (fd < 0) {
-				exit(EXIT_FAILURE);
+				goto child_error;
 			}
 			dup2(fd, STDERR_FILENO);
 			close(fd);
@@ -835,7 +835,11 @@ error:
 			const char* sh = NULL;
 			const char ** argv_new = NULL;
 			sh = getenv("SHELL");
-			if (sh == NULL) exit(EXIT_FAILURE);
+			if (sh == NULL) {
+				int err = 2; /* shell does not exist */
+				write(info_pipe[W], &err, sizeof(err));
+				exit(EXIT_FAILURE);
+			}
 			argv_new = OS_Make((argc + 3) * sizeof(char*));
 			argv_new[0] = sh;
 			argv_new[1] = "-c";
@@ -845,6 +849,7 @@ error:
 		} else {
 			execvp(argv[0], argv);
 		}
+child_error:
 		write(info_pipe[W], &errno, sizeof(errno));
 		exit(EXIT_FAILURE); /* get here only when exec fails */
 	} else if (*pid > 0) {
