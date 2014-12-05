@@ -765,21 +765,27 @@ error:
 		if (input_type == STRING_TYPE
 			|| input_type == BINARY_TYPE) {
 			close(stdin_pipe[W]);
-			dup2(stdin_pipe[R], STDIN_FILENO);
+			if (dup2(stdin_pipe[R], STDIN_FILENO) < 0) {
+				goto child_error;
+			}
 			close(stdin_pipe[R]);
 		} else if (input_type == FILE_TYPE) {
 			int fd = open(input, O_RDONLY);
 			if (fd < 0) {
 				goto child_error;
 			}
-			dup2(fd, STDIN_FILENO);
+			if (dup2(fd, STDIN_FILENO) < 0) {
+				goto child_error;
+			}
 			close(fd);
 		} else if (input_type == NONE_TYPE) {
 			int fd = open("/dev/null", O_RDONLY);
 			if (fd < 0) {
 				goto child_error;
 			}
-			dup2(fd, STDIN_FILENO);
+			if (dup2(fd, STDIN_FILENO) < 0) {
+				goto child_error;
+			}
 			close(fd);
 		} else { /* inherit stdin from the parent */
 		}
@@ -787,21 +793,27 @@ error:
 		if (output_type == STRING_TYPE
 			|| output_type == BINARY_TYPE) {
 			close(stdout_pipe[R]);
-			dup2(stdout_pipe[W], STDOUT_FILENO);
+			if (dup2(stdout_pipe[W], STDOUT_FILENO) < 0) {
+				goto child_error;
+			}
 			close(stdout_pipe[W]);
 		} else if (output_type == FILE_TYPE) {
 			int fd = open(*output, O_CREAT|O_WRONLY, 0666);
 			if (fd < 0) {
 				goto child_error;
 			}
-			dup2(fd, STDOUT_FILENO);
+			if (dup2(fd, STDOUT_FILENO) < 0) {
+				goto child_error;
+			}
 			close(fd);
 		} else if (output_type == NONE_TYPE) {
 			int fd = open("/dev/null", O_WRONLY);
 			if (fd < 0) {
 				goto child_error;
 			}
-			dup2(fd, STDOUT_FILENO);
+			if (dup2(fd, STDOUT_FILENO) < 0) {
+				goto child_error;
+			}
 			close(fd);
 		} else { /* inherit stdout from the parent */
 		}
@@ -809,21 +821,27 @@ error:
 		if (err_type == STRING_TYPE
 			|| err_type == BINARY_TYPE) {
 			close(stderr_pipe[R]);
-			dup2(stderr_pipe[W], STDERR_FILENO);
+			if (dup2(stderr_pipe[W], STDERR_FILENO) < 0) {
+				goto child_error;
+			}
 			close(stderr_pipe[W]);
 		} else if (err_type == FILE_TYPE) {
 			int fd = open(*err, O_CREAT|O_WRONLY, 0666);
 			if (fd < 0) {
 				goto child_error;
 			}
-			dup2(fd, STDERR_FILENO);
+			if (dup2(fd, STDERR_FILENO) < 0) {
+				goto child_error;
+			}
 			close(fd);
 		} else if (err_type == NONE_TYPE) {
 			int fd = open("/dev/null", O_WRONLY);
 			if (fd < 0) {
 				goto child_error;
 			}
-			dup2(fd, STDERR_FILENO);
+			if (dup2(fd, STDERR_FILENO) < 0) {
+				goto child_error;
+			}
 			close(fd);
 		} else { /* inherit stderr from the parent */
 		}
