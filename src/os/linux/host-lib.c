@@ -926,6 +926,7 @@ child_error:
 		while (valid_nfds > 0) {
 			xpid = waitpid(*pid, &status, WNOHANG);
 			if (xpid == -1) {
+				ret = errno;
 				goto error;
 			}
 
@@ -960,6 +961,7 @@ child_error:
 			printf(" / %d\n", nfds);
 			*/
 			if (poll(pfds, nfds, -1) < 0) {
+				ret = errno;
 				goto kill;
 			}
 
@@ -974,6 +976,7 @@ child_error:
 					//printf("POLLOUT: %d [%d/%d]\n", pfds[i].fd, i, nfds);
 					nbytes = write(pfds[i].fd, input, input_size - input_len);
 					if (nbytes <= 0) {
+						ret = errno;
 						goto kill;
 					}
 					//printf("POLLOUT: %d bytes\n", nbytes);
@@ -1032,6 +1035,7 @@ child_error:
 					valid_nfds --;
 				} else if (pfds[i].revents & POLLNVAL) {
 					//printf("POLLNVAL: %d [%d/%d]\n", pfds[i].fd, i, nfds);
+					ret = errno;
 					goto kill;
 				}
 			}
@@ -1039,12 +1043,14 @@ child_error:
 
 		if (valid_nfds == 0 && flag_wait) {
 			if (waitpid(*pid, &status, 0) < 0) {
+				ret = errno;
 				goto error;
 			}
 		}
 
 	} else {
 		/* error */
+		ret = errno;
 		goto error;
 	}
 
@@ -1055,7 +1061,7 @@ child_error:
 	} else if (WIFEXITED(status)) {
 		*exit_code = WEXITSTATUS(status);
 	} else {
-		ret = -1;
+		goto error;
 	}
 
 	goto cleanup;
@@ -1063,7 +1069,7 @@ kill:
 	kill(*pid, SIGKILL);
 	waitpid(*pid, NULL, 0);
 error:
-	ret = -1;
+	if (!ret) ret = -1;
 cleanup:
 	if (*output != NULL && *output_len <= 0) {
 		OS_Free(*output);
