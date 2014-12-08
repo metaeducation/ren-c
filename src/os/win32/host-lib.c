@@ -760,7 +760,7 @@ static void *Task_Ready;
 			REBCHR *sh = _T("cmd.exe /C ");
 			size_t len = _tcslen(sh) + _tcslen(call) + 1;
 			cmd = OS_Make(sizeof(REBCHR) * len);
-			_sntprintf_s(cmd, len, len - 1, _T("%s%s"), sh, call);
+			_sntprintf(cmd, len, _T("%s%s"), sh, call);
 		} else {
 			cmd = _tcsdup(call); /* CreateProcess might write to this memory, so duplicate it to be safe */
 		}
