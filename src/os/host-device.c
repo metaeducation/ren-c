@@ -74,7 +74,9 @@ extern REBDEV Dev_DNS;
 extern REBDEV Dev_Clipboard;
 #endif
 extern REBDEV Dev_Serial;
+#ifdef HAS_POSIX_SIGNAL
 extern REBDEV Dev_Signal;
+#endif
 
 REBDEV *Devices[RDI_LIMIT] =
 {
@@ -91,7 +93,7 @@ REBDEV *Devices[RDI_LIMIT] =
 	0,
 #endif
 	&Dev_Serial,
-#ifdef TO_LINUX
+#ifdef HAS_POSIX_SIGNAL
 	&Dev_Signal,
 #endif
 	0,

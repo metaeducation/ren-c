@@ -237,9 +237,17 @@ form-header/gen "REBOL Host and Extension API" %reb-lib.r %make-reb-lib.r
 // method. This is concrete, not abstract. The macro below uses struct
 // sizes to inform the developer that something is wrong.
 #if defined(__LP64__) || defined(__LLP64__)
+#ifdef HAS_POSIX_SIGNAL
+#define CHECK_STRUCT_ALIGN (sizeof(REBREQ) == 196 && sizeof(REBEVT) == 16)
+#else
 #define CHECK_STRUCT_ALIGN (sizeof(REBREQ) == 100 && sizeof(REBEVT) == 16)
+#endif //HAS_POSIX_SIGNAL
+#else
+#ifdef HAS_POSIX_SIGNAL
+#define CHECK_STRUCT_ALIGN (sizeof(REBREQ) == 180 && sizeof(REBEVT) == 12)
 #else
 #define CHECK_STRUCT_ALIGN (sizeof(REBREQ) == 80 && sizeof(REBEVT) == 12)
+#endif //HAS_POSIX_SIGNAL
 #endif
 
 // Function entry points for reb-lib (used for MACROS below):}

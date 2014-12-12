@@ -292,6 +292,7 @@ init-schemes: func [
 		make-scheme [
 			title: "Signal"
 			name: 'signal
+			spec: system/standard/port-spec-signal
 		]
 	]
 

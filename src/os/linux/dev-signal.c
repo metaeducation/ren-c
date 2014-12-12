@@ -43,15 +43,11 @@
 #include <errno.h>
 
 #include <sys/signal.h>
-#include <sys/signalfd.h>
 
 #include "reb-host.h"
 #include "host-lib.h"
 
 extern void Signal_Device(REBREQ *req, REBINT type);
-
-static sigset_t omask; /* old signal mask */
-static REBOOL already_open = FALSE; /* signal port can only be open once */
 
 /***********************************************************************
 **
@@ -60,29 +56,34 @@ static REBOOL already_open = FALSE; /* signal port can only be open once */
 ***********************************************************************/
 {
 	//RL_Print("Open_Signal\n");
-	sigset_t mask;
 
-	if (already_open && req->socket == 0) {
+	sigset_t mask;
+	sigset_t overlap;
+
+#if CHECK_MASK_OVERLAP //doesn't work yet
+	if (sigprocmask(SIG_BLOCK, NULL, &mask) < 0) {
+		goto error;
+	}
+	if (sigandset(&overlap, &mask, &req->signal.mask) < 0) {
+		goto error;
+	}
+	if (!sigisemptyset(&overlap)) {
 		req->error = EBUSY;
 		return DR_ERROR;
 	}
+#endif
 
-	sigfillset(&mask);
-
-	/* old mask is only needed to be restored if signalfd is called for the first time */
-	sigprocmask(SIG_BLOCK, &mask, req->socket > 0 ? NULL : &omask);
-
-	req->signal.restore_omask = (req->socket <= 0);
-
-	req->socket = signalfd(req->socket > 0? req->socket : -1, &mask, SFD_NONBLOCK | SFD_CLOEXEC);
-	if (req->socket < 0) {
-		req->error = errno;
-		return DR_ERROR;
+	if (sigprocmask(SIG_BLOCK, &req->signal.mask, NULL) < 0) {
+		goto error;
 	}
+
 	SET_OPEN(req);
 
-	already_open = TRUE;
 	return DR_DONE;
+
+error:
+	req->error = errno;
+	return DR_ERROR;
 }
 
 /***********************************************************************
@@ -92,16 +93,15 @@ static REBOOL already_open = FALSE; /* signal port can only be open once */
 ***********************************************************************/
 {
 	//RL_Print("Close_Signal\n");
-	close(req->socket);
-	if (req->signal.restore_omask) {
-		sigset_t cmask;
-		sigprocmask(SIG_SETMASK, &omask, NULL); /* restore signal mask */
+	if (sigprocmask(SIG_UNBLOCK, &req->signal.mask, NULL) < 0) {
+		goto error;
 	}
 	SET_CLOSED(req);
-	if (already_open && req->signal.restore_omask) {
-		already_open = FALSE;
-	}
 	return DR_DONE;
+
+error:
+	req->error = errno;
+	return DR_ERROR;
 }
 
 /***********************************************************************
@@ -109,22 +109,30 @@ static REBOOL already_open = FALSE; /* signal port can only be open once */
 /*
 ***********************************************************************/
 {
+	struct timespec timeout = {0, 0};
+	int i = 0;
+
 	errno = 0;
-	ssize_t nbytes = read(req->socket, req->data,
-						  req->length * sizeof(struct signalfd_siginfo));
-	if (nbytes < 0) {
-		//perror("read signal failed");
-		if (errno != EAGAIN) {
-			Signal_Device(req, EVT_ERROR);
-			return DR_ERROR;
+
+	for (i = 0; i < req->length; i ++) {
+		if (sigtimedwait(&req->signal.mask, &((siginfo_t*)req->data)[i], &timeout) < 0) {
+			if (errno != EAGAIN && i == 0) {
+				Signal_Device(req, EVT_ERROR);
+				return DR_ERROR;
+			} else {
+				break;
+			}
 		}
-		return DR_PEND;
 	}
 
-	req->actual = nbytes / sizeof(struct signalfd_siginfo);
+	req->actual = i;
+	if (i > 0) {
 	//printf("read %d signals\n", req->actual);
-	Signal_Device(req, EVT_READ);
-	return DR_DONE;
+		Signal_Device(req, EVT_READ);
+		return DR_DONE;
+	} else {
+		return DR_PEND;
+	}
 }
 
 

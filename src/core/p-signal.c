@@ -29,11 +29,13 @@
 ***********************************************************************/
 
 #include "sys-core.h"
-#include <sys/signalfd.h>
+
+#ifdef HAS_POSIX_SIGNAL
+#include <sys/signal.h>
 
 static void update(REBREQ *req, REBINT len, REBVAL *arg)
 {
-	const struct signalfd_siginfo *sig = req->data;
+	const siginfo_t *sig = req->data;
 	int i = 0;
 
 	Extend_Series(VAL_SERIES(arg), len);
@@ -41,10 +43,14 @@ static void update(REBREQ *req, REBINT len, REBVAL *arg)
 	for (i = 0; i < len; i ++) {
 		REBSER *obj = Make_Frame(2);
 		REBVAL *val = Append_Frame(obj, NULL, Make_Word("signal-no", 0));
-		SET_INTEGER(val, sig[i].ssi_signo);
+		SET_INTEGER(val, sig[i].si_signo);
 
+		val = Append_Frame(obj, NULL, Make_Word("code", 0));
+		SET_INTEGER(val, sig[i].si_code);
 		val = Append_Frame(obj, NULL, Make_Word("source-pid", 0));
-		SET_INTEGER(val, sig[i].ssi_pid);
+		SET_INTEGER(val, sig[i].si_pid);
+		val = Append_Frame(obj, NULL, Make_Word("source-uid", 0));
+		SET_INTEGER(val, sig[i].si_uid);
 
 		Set_Object(VAL_BLK_SKIP(arg, VAL_TAIL(arg) + i), obj);
 	}
@@ -52,6 +58,74 @@ static void update(REBREQ *req, REBINT len, REBVAL *arg)
 	VAL_TAIL(arg) += len;
 
 	req->actual = 0; /* avoid duplicate updates */
+}
+
+static int sig_word_num(REBVAL *word)
+{
+	switch (VAL_WORD_CANON(word)) {
+		case SYM_SIGALRM:
+			return SIGALRM;
+		case SYM_SIGABRT:
+			return SIGABRT;
+		case SYM_SIGBUS:
+			return SIGBUS;
+		case SYM_SIGCHLD:
+			return SIGCHLD;
+		case SYM_SIGCONT:
+			return SIGCONT;
+		case SYM_SIGFPE:
+			return SIGFPE;
+		case SYM_SIGHUP:
+			return SIGHUP;
+		case SYM_SIGILL:
+			return SIGILL;
+		case SYM_SIGINT:
+			return SIGINT;
+/* can't be caught
+		case SYM_SIGKILL:
+			return SIGKILL;
+*/
+		case SYM_SIGPIPE:
+			return SIGPIPE;
+		case SYM_SIGQUIT:
+			return SIGQUIT;
+		case SYM_SIGSEGV:
+			return SIGSEGV;
+/* can't be caught
+		case SYM_SIGSTOP:
+			return SIGSTOP;
+*/
+		case SYM_SIGTERM:
+			return SIGTERM;
+		case SYM_SIGTTIN:
+			return SIGTTIN;
+		case SYM_SIGTTOU:
+			return SIGTTOU;
+		case SYM_SIGUSR1:
+			return SIGUSR1;
+		case SYM_SIGUSR2:
+			return SIGUSR2;
+		case SYM_SIGTSTP:
+			return SIGTSTP;
+		case SYM_SIGPOLL:
+			return SIGPOLL;
+		case SYM_SIGPROF:
+			return SIGPROF;
+		case SYM_SIGSYS:
+			return SIGSYS;
+		case SYM_SIGTRAP:
+			return SIGTRAP;
+		case SYM_SIGURG:
+			return SIGURG;
+		case SYM_SIGVTALRM:
+			return SIGVTALRM;
+		case SYM_SIGXCPU:
+			return SIGXCPU;
+		case SYM_SIGXFSZ:
+			return SIGXFSZ;
+		default:
+			Trap1(RE_INVALID_SPEC, word);
+	}
 }
 
 /***********************************************************************
@@ -63,76 +137,118 @@ static void update(REBREQ *req, REBINT len, REBVAL *arg)
 	REBREQ *req;
 	REBINT result;
 	REBVAL *arg;
-	REBCNT refs;	// refinement argument flags
 	REBINT len;
 	REBSER *ser;
+	REBVAL *spec;
+	REBVAL *val;
+	REBVAL *sig;
 
 	Validate_Port(port, action);
 
-	arg = D_ARG(2);
-
 	req = Use_Port_State(port, RDI_SIGNAL, sizeof(REBREQ));
+	spec = OFV(port, STD_PORT_SPEC);
 
-	switch (action) {
-	case A_UPDATE:
-		// Update the port object after a READ or WRITE operation.
-		// This is normally called by the WAKE-UP function.
-		arg = OFV(port, STD_PORT_DATA);
-		if (req->command == RDC_READ) {
-			len = req->actual;
-			if (len > 0) {
-				update(req, len, arg);
-			}
+	if (!IS_OPEN(req)) {
+		switch (action) {
+			case A_READ:
+			case A_OPEN:
+				val = Obj_Value(spec, STD_PORT_SPEC_SIGNAL_MASK);
+				if (!IS_BLOCK(val)) {
+					Trap1(RE_INVALID_SPEC, val);
+				}
+
+				sigemptyset(&req->signal.mask);
+				for(sig = VAL_BLK_SKIP(val, 0); NOT_END(sig); sig ++) {
+					if (IS_WORD(sig)) {
+						/* handle the special word "ALL" */
+						if (VAL_WORD_CANON(sig) == SYM_ALL) {
+							if (sigfillset(&req->signal.mask) < 0) {
+								Trap1(RE_INVALID_SPEC, sig); /* FIXME, better error */
+							}
+							break;
+						}
+
+						if (sigaddset(&req->signal.mask, sig_word_num(sig)) < 0) {
+							Trap1(RE_INVALID_SPEC, sig);
+						}
+					} else {
+						Trap1(RE_INVALID_SPEC, sig);
+					}
+				}
+
+				if (OS_DO_DEVICE(req, RDC_OPEN)) Trap_Port(RE_CANNOT_OPEN, port, req->error);
+				if (action == A_OPEN) {
+					return R_ARG1; //port
+				}
+				break;
+			case A_CLOSE:
+				return R_RET;
+
+			case A_OPENQ:
+				return R_FALSE;
+
+			case A_UPDATE:	// allowed after a close
+				break;
+
+			default:
+				Trap_Port(RE_NOT_OPEN, port, -12);
 		}
-		return R_NONE;
-
-	case A_READ:
-		// This device is opened on the READ:
-		if (!IS_OPEN(req)) {
-			if (OS_DO_DEVICE(req, RDC_OPEN)) Trap_Port(RE_CANNOT_OPEN, port, req->error);
-		}
-		// Issue the read request:
-		arg = OFV(port, STD_PORT_DATA);
-
-		len = req->length = 8;
-		ser = Make_Binary(len * sizeof(struct signalfd_siginfo));
-		req->data = BIN_HEAD(ser);
-		result = OS_DO_DEVICE(req, RDC_READ);
-		if (result < 0) Trap_Port(RE_READ_ERROR, port, req->error);
-
-		// Copy and set the string result:
-		arg = OFV(port, STD_PORT_DATA);
-		
-		if (!IS_BLOCK(arg)) {
-			Set_Block(arg, Make_Block(len));
-		}
-
-		len = req->actual;
-		if (len > 0) {
-			update(req, len, arg);
-			*D_RET = *arg;
-			return R_RET;
-		} else {
-			return R_NONE;
-		}
-
-	case A_OPEN:
-		if (OS_DO_DEVICE(req, RDC_OPEN)) Trap_Port(RE_CANNOT_OPEN, port, req->error);
-		break;
-
-	case A_CLOSE:
-		OS_DO_DEVICE(req, RDC_CLOSE);
-		break;
-
-	case A_OPENQ:
-		if (IS_OPEN(req)) return R_TRUE;
-		return R_FALSE;
-
-	default:
-		Trap_Action(REB_PORT, action);
 	}
 
-	return R_ARG1; // port
+	switch (action) {
+		case A_UPDATE:
+			// Update the port object after a READ or WRITE operation.
+			// This is normally called by the WAKE-UP function.
+			arg = OFV(port, STD_PORT_DATA);
+			if (req->command == RDC_READ) {
+				len = req->actual;
+				if (len > 0) {
+					update(req, len, arg);
+				}
+			}
+			return R_NONE;
+
+		case A_READ:
+			// This device is opened on the READ:
+			// Issue the read request:
+			arg = OFV(port, STD_PORT_DATA);
+
+			len = req->length = 8;
+			ser = Make_Binary(len * sizeof(siginfo_t));
+			req->data = BIN_HEAD(ser);
+			result = OS_DO_DEVICE(req, RDC_READ);
+			if (result < 0) Trap_Port(RE_READ_ERROR, port, req->error);
+
+			arg = OFV(port, STD_PORT_DATA);
+			if (!IS_BLOCK(arg)) {
+				Set_Block(arg, Make_Block(len));
+			}
+
+			len = req->actual;
+
+			if (len > 0) {
+				update(req, len, arg);
+				*D_RET = *arg;
+				return R_RET;
+			} else {
+				return R_NONE;
+			}
+
+		case A_CLOSE:
+			OS_DO_DEVICE(req, RDC_CLOSE);
+			return R_ARG1;
+
+		case A_OPENQ:
+			return R_TRUE;
+
+		case A_OPEN:
+			Trap1(RE_ALREADY_OPEN, D_ARG(1));
+
+		default:
+			Trap_Action(REB_PORT, action);
+	}
+
+	return R_RET;
 }
 
 
@@ -144,3 +260,5 @@ static void update(REBREQ *req, REBINT len, REBVAL *arg)
 {
 	Register_Scheme(SYM_SIGNAL, 0, Signal_Actor);
 }
+
+#endif //HAS_POSIX_SIGNAL
