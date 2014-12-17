@@ -939,6 +939,13 @@ do-codec: native [
 	data [binary! image! string!]
 ]
 
+access-os: native [
+	{Access to various operating system functions (getuid, setuid, getpid, kill, etc.)}
+	field [word!] "uid, euid, gid, egid, pid"
+	/set "To set or kill pid (sig 15)"
+	value [integer! block!] "Argument, such as uid, gid, or pid (in which case, it could be a block with the signal no)"
+]
+
 set-scheme: native [
 	"Low-level port scheme actor initialization."
 	scheme [object!]
