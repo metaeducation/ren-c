@@ -451,12 +451,16 @@ err:
 		return R_TRUE;
 
 	case CODI_TEXT: //used on decode
-		if (codi.w == 1) {
-			ser = Make_Binary(codi.len);
-		} else {
-			ser = Make_Unicode(codi.len);
+		switch (codi.w) {
+			default: /* some decoders might not set this field */
+			case 1:
+				ser = Make_Binary(codi.len);
+				break;
+			case 2:
+				ser = Make_Unicode(codi.len);
+				break;
 		}
-		memcpy(BIN_HEAD(ser), codi.data, codi.len * codi.w);
+		memcpy(BIN_HEAD(ser), codi.data, codi.w? (codi.len * codi.w) : codi.len);
 		ser->tail = codi.len;
 		Set_String(D_RET, ser);
 		break;
@@ -464,12 +468,16 @@ err:
 	case CODI_BINARY: //used on encode
 		ser = Make_Binary(codi.len);
 		ser->tail = codi.len;
-		memcpy(BIN_HEAD(ser), codi.data, codi.len);
+
+		// optimize for pass-thru decoders, which leave codi.data NULL
+		memcpy(BIN_HEAD(ser), codi.data == NULL? codi.other : codi.data, codi.len);
 		Set_Binary(D_RET, ser);
 
 		//don't free the text binary input buffer during decode (it's the 3rd arg value in fact)
 		// See notice in reb-codec.h on reb_codec_image 
-		Free_Mem(codi.data, codi.len);
+		if (codi.data) {
+			Free_Mem(codi.data, codi.len);
+		}
 		break;
 
 	case CODI_IMAGE: //used on decode
