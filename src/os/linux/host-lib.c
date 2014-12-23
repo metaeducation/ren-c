@@ -874,7 +874,7 @@ child_error:
 		/* parent */
 #define BUF_SIZE_CHUNK 4096
 		nfds_t nfds = 0;
-		struct pollfd pfds[3];
+		struct pollfd pfds[4];
 		pid_t xpid;
 		int i;
 		ssize_t nbytes;
