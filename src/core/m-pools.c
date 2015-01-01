@@ -564,6 +564,12 @@ clear_header:
 	FREE_GOB(gob);
 
 	Free_Node(GOB_POOL, (REBNOD *)gob);
+
+	if (REB_I32_ADD_OF(GC_Ballast, Mem_Pools[GOB_POOL].wide, &GC_Ballast)) {
+		GC_Ballast = MAX_I32;
+	}
+
+	if (GC_Ballast > 0) CLR_SIGNAL(SIG_RECYCLE);
 }
 
 
