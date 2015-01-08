@@ -732,8 +732,8 @@ static void callback_dispatcher(ffi_cif *cif, void *ret, void **args, void *user
 ** 	arg2 [type3] "note"
 ** 	...
 ** 	argn [typen] "note"
-** 	return: [type]
-** 	abi: word
+** 	return: [type] "note"
+** 	abi: word "note"
 ** ] lib "name"]
 **
 ***********************************************************************/
@@ -879,10 +879,6 @@ static void callback_dispatcher(ffi_cif *cif, void *ret, void **args, void *user
 						++ blk;
 						process_type_block(out, blk, n);
 					}
-					++ blk;
-					if (IS_STRING(blk)) { /* argument notes, ignoring */
-						++ blk;
-					}
 				}
 				n ++;
 				break;
@@ -965,10 +961,13 @@ static void callback_dispatcher(ffi_cif *cif, void *ret, void **args, void *user
 					default:
 						Trap_Arg(blk);
 				}
-				++ blk;
 				break;
 			default:
 				Trap_Arg(blk);
+		}
+		++ blk;
+		if (IS_STRING(blk)) { /* notes, ignoring */
+			++ blk;
 		}
 	}
 
