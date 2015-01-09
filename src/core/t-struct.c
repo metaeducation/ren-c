@@ -778,9 +778,9 @@ void Copy_Struct(REBSTU *src, REBSTU *dst)
 	/* Read only fields */
 	dst->spec = src->spec;
 	dst->fields = src->fields;
-	dst->data = src->data;
 
 	/* writable field */
+	dst->data = Copy_Series(src->data);
 	STRUCT_DATA_BIN(dst) = Copy_Series(STRUCT_DATA_BIN(src));
 }
 
