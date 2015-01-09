@@ -148,7 +148,7 @@ static REBOOL rebol_type_to_ffi(REBVAL *out, REBVAL *elem, REBCNT idx)
 {
 	ffi_type **args = (ffi_type**) SERIES_DATA(VAL_ROUTINE_FFI_ARGS(out));
 	REBVAL *rebol_args = NULL;
-	REBVAL *arg_structs = (REBVAL*)SERIES_DATA(VAL_ROUTINE_FFI_ARG_STRUCTS(out));
+	REBVAL *arg_structs = BLK_HEAD(VAL_ROUTINE_FFI_ARG_STRUCTS(out));
 	if (idx) {
 		// when it's first call for return type, all_args has not been initialized yet
 		if (ROUTINE_GET_FLAG(VAL_ROUTINE_INFO(out), ROUTINE_VARARGS)
@@ -668,10 +668,10 @@ static void callback_dispatcher(ffi_cif *cif, void *ret, void **args, void *user
 				SET_INTEGER(elem, *(i64*)args[i]);
 				break;
 			case FFI_TYPE_STRUCT:
-				if (!IS_STRUCT((REBVAL*)SERIES_SKIP(RIN_ARGS_STRUCTS(rin), i))) {
-					Trap_Arg(elem);
+				if (!IS_STRUCT(BLK_SKIP(RIN_ARGS_STRUCTS(rin), i + 1))) {
+					Trap_Arg(BLK_SKIP(RIN_ARGS_STRUCTS(rin), i + 1));
 				}
-				Copy_Struct_Val(SERIES_SKIP(RIN_ARGS_STRUCTS(rin), i), elem);
+				Copy_Struct_Val(BLK_SKIP(RIN_ARGS_STRUCTS(rin), i + 1), elem);
 				memcpy(SERIES_SKIP(VAL_STRUCT_DATA_BIN(elem), VAL_STRUCT_OFFSET(elem)),
 					   args[i],
 					   VAL_STRUCT_LEN(elem));
