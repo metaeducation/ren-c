@@ -110,7 +110,7 @@ REBVAL *N_watch(REBFRM *frame, REBVAL **inter_block)
 #endif
 
 static void Mark_Series(REBSER *series, REBCNT depth);
-
+static void Mark_Value(REBVAL *val, REBCNT depth);
 
 /***********************************************************************
 **
@@ -150,6 +150,30 @@ static void Mark_Series(REBSER *series, REBCNT depth);
 
 /***********************************************************************
 **
+*/	static void Mark_Struct_Field(REBSTU *stu, struct Struct_Field *field, REBCNT depth)
+/*
+***********************************************************************/
+{
+	if (field->type == STRUCT_TYPE_STRUCT) {
+		int len = 0;
+		REBSER *series = NULL;
+
+		CHECK_MARK(field->fields, depth);
+		CHECK_MARK(field->spec, depth);
+
+		series = field->fields;
+		for (len = 0; len < series->tail; len++) {
+			Mark_Struct_Field (stu, (struct Struct_Field*)BLK_SKIP(series, len), depth + 1);
+		}
+	} else if (field->type == STRUCT_TYPE_REBVAL) {
+		REBVAL *data = (REBVAL*)SERIES_SKIP(STRUCT_DATA_BIN(stu),
+											STRUCT_OFFSET(stu) + field->offset);
+		Mark_Value(data, depth);
+	}
+}
+
+/***********************************************************************
+**
 */	static void Mark_Struct(REBSTU *stu, REBCNT depth)
 /*
 ***********************************************************************/
@@ -164,10 +188,7 @@ static void Mark_Series(REBSER *series, REBCNT depth);
 	series = stu->fields;
 	for (len = 0; len < series->tail; len++) {
 		struct Struct_Field *field = (struct Struct_Field*)BLK_SKIP(series, len);
-		if (field->type == STRUCT_TYPE_STRUCT) {
-			CHECK_MARK(field->fields, depth);
-			CHECK_MARK(field->spec, depth);
-		}
+		Mark_Struct_Field(stu, field, depth + 1);
 	}
 }
 
@@ -267,44 +288,13 @@ static void Mark_Series(REBSER *series, REBCNT depth);
 
 /***********************************************************************
 **
-*/	static void Mark_Series(REBSER *series, REBCNT depth)
+*/	static void Mark_Value(REBVAL *val, REBCNT depth)
 /*
-**		Mark all series reachable from the block.
-**
 ***********************************************************************/
 {
-	REBCNT len;
-	REBSER *ser;
-	REBVAL *val;
+	REBSER *ser = NULL;
 
-	ASSERT(series != 0, RP_NULL_MARK_SERIES);
-
-	if (SERIES_FREED(series)) return; // series data freed already
-
-	MARK_SERIES(series);
-
-	// If not a block, go no further
-	if (SERIES_WIDE(series) != sizeof(REBVAL) || IS_BARE_SERIES(series)) return;
-
-	ASSERT2(RP_SERIES_OVERFLOW, SERIES_TAIL(series) < SERIES_REST(series));
-
-	//Moved to end: ASSERT1(IS_END(BLK_TAIL(series)), RP_MISSING_END);
-
-	//if (depth == 1 && series->label) Print("Marking %s", series->label);
-
-	depth++;
-
-	for (len = 0; len < series->tail; len++) {
-		val = BLK_SKIP(series, len);
-
-		switch (VAL_TYPE(val)) {
-
-		case REB_END:
-			// We should never reach the end before len above.
-			// Exception is the stack itself.
-			if (series != DS_Series) Crash(RP_UNEXPECTED_END);
-			break;
-
+	switch (VAL_TYPE(val)) {
 		case REB_UNSET:
 		case REB_TYPESET:
 		case REB_HANDLE:
@@ -478,6 +468,48 @@ mark_obj:
 
 		default:
 			Crash(RP_DATATYPE+1, VAL_TYPE(val));
+	}
+}
+
+/***********************************************************************
+**
+*/	static void Mark_Series(REBSER *series, REBCNT depth)
+/*
+**		Mark all series reachable from the block.
+**
+***********************************************************************/
+{
+	REBCNT len;
+	REBSER *ser;
+	REBVAL *val;
+
+	ASSERT(series != 0, RP_NULL_MARK_SERIES);
+
+	if (SERIES_FREED(series)) return; // series data freed already
+
+	MARK_SERIES(series);
+
+	// If not a block, go no further
+	if (SERIES_WIDE(series) != sizeof(REBVAL) || IS_BARE_SERIES(series)) return;
+
+	ASSERT2(RP_SERIES_OVERFLOW, SERIES_TAIL(series) < SERIES_REST(series));
+
+	//Moved to end: ASSERT1(IS_END(BLK_TAIL(series)), RP_MISSING_END);
+
+	//if (depth == 1 && series->label) Print("Marking %s", series->label);
+
+	depth++;
+
+	for (len = 0; len < series->tail; len++) {
+		val = BLK_SKIP(series, len);
+
+		if (VAL_TYPE(val) == REB_END
+			&& (series != DS_Series)) {
+			// We should never reach the end before len above.
+			// Exception is the stack itself.
+			Crash(RP_UNEXPECTED_END);
+		} else {
+			Mark_Value(val, depth);
 		}
 	}
 

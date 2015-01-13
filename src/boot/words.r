@@ -189,6 +189,7 @@ pointer
 addr
 raw-memory
 raw-size
+rebval
 
 ;routine
 void
