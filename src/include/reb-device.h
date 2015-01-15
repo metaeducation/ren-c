@@ -27,6 +27,10 @@
 **
 ***********************************************************************/
 
+#ifdef HAS_POSIX_SIGNAL
+#include <signal.h>
+#endif
+
 // REBOL Device Identifiers:
 // Critical: Must be in same order as Device table in host-device.c
 enum {
@@ -39,6 +43,9 @@ enum {
 	RDI_DNS,
 	RDI_CLIPBOARD,
 	RDI_SERIAL,
+#ifdef HAS_POSIX_SIGNAL
+	RDI_SIGNAL,
+#endif
 	RDI_MAX,
 	RDI_LIMIT = 32
 };
@@ -181,6 +188,11 @@ struct rebol_devreq {
 
 	// Special fields for common IO uses:
 	union {
+#ifdef HAS_POSIX_SIGNAL
+		struct {
+			sigset_t mask; 		// signal mask
+		} signal;
+#endif
 		struct {
 			REBCHR *path;			// file string (in OS local format)
 			i64  size;				// file size

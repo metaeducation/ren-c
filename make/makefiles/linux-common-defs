@@ -19,6 +19,8 @@ HOST_LINUX = \
 	objs/host-readline.o \
 	objs/iso-639.o \
 	objs/iso-3166.o \
+	objs/dev-signal.o \
+	objs/p-signal.o \
 	objs/file-chooser-gtk.o
 
 GFX_LINUX= \

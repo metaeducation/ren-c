@@ -288,6 +288,14 @@ init-schemes: func [
 		name: 'clipboard
 	]
 
+	if 4 == fourth system/version [
+		make-scheme [
+			title: "Signal"
+			name: 'signal
+			spec: system/standard/port-spec-signal
+		]
+	]
+
 	make-scheme [
 		title: "Serial Port"
 		name: 'serial

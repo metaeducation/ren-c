@@ -232,6 +232,10 @@ standard: context [
 		stop-bits: 1
 		flow-control: none ;not supported on all systems
 	]
+
+	port-spec-signal: make port-spec-head [
+		mask: [all]
+	]
 	
 	file-info: context [
 		name:

@@ -165,6 +165,7 @@ tcp
 udp
 clipboard
 serial
+signal
 
 ; Serial parameters
 ; Parity
@@ -246,6 +247,37 @@ restore
 fullscreen
 
 *port-modes*
+
+; posix signal names
+all
+sigalrm
+sigabrt
+sigbus
+sigchld
+sigcont
+sigfpe
+sighup
+sigill
+sigint
+sigkill
+sigpipe
+sigquit
+sigsegv
+sigstop
+sigterm
+sigtstp
+sigttin
+sigttou
+sigusr1
+sigusr2
+sigpoll
+sigprof
+sigsys
+sigtrap
+sigurg
+sigvtalrm
+sigxcpu
+sigxfsz
 
 bits
 crash

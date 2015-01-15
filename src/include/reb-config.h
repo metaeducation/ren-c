@@ -225,6 +225,9 @@ These are now obsolete (as of A107) and should be removed:
 #define HAS_LL_CONSTS
 #endif
 
+#ifdef TO_LINUX
+#define HAS_POSIX_SIGNAL
+#endif
 
 //* Defaults ***********************************************************
 

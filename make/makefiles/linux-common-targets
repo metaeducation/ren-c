@@ -34,11 +34,17 @@ objs/dev-event.o:     $S/os/linux/dev-event.c
 objs/dev-file.o:      $S/os/linux/dev-file.c
 	$(CC) $S/os/linux/dev-file.c $(HFLAGS) -o objs/dev-file.o
 
+objs/p-signal.o:      $S/core/p-signal.c
+	$(CC) $S/core/p-signal.c $(RFLAGS) -o objs/p-signal.o
+
 objs/dev-serial.o:      $S/os/linux/dev-serial.c
 	$(CC) $S/os/linux/dev-serial.c $(HFLAGS) -o objs/dev-serial.o
 
 objs/dev-clipboard.o:      $S/os/linux/dev-clipboard.c
 	$(CC) $S/os/linux/dev-clipboard.c $(HFLAGS) -o objs/dev-clipboard.o
+
+objs/dev-signal.o:      $S/os/linux/dev-signal.c
+	$(CC) $S/os/linux/dev-signal.c $(HFLAGS) -o objs/dev-signal.o
 
 objs/host-graphics.o: $S/os/linux/host-graphics.c
 	$(CC) $S/os/linux/host-graphics.c $(HFLAGS) -o objs/host-graphics.o 
