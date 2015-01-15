@@ -56,6 +56,8 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
+#include <tchar.h>
 #include <windows.h>
 #include <process.h>
 #include <shlobj.h>
@@ -724,24 +726,54 @@ static void *Task_Ready;
 	SetEvent(Task_Ready);
 }
 
-
 /***********************************************************************
 **
-*/	int OS_Create_Process(REBCHR *call, u32 flags)
+*/	int OS_Create_Process(REBCHR *call, int argc, char* argv[], u32 flags, u64 *pid, int *exit_code, u32 input_type, void *input, u32 input_len, u32 output_type, void **output, u32 *output_len, u32 err_type, void **err, u32 *err_len)
 /*
 **		Return -1 on error.
 **		For right now, set flags to 1 for /wait.
 **
 ***********************************************************************/
 {
+#define INHERIT_TYPE 0
+#define NONE_TYPE 1
+#define STRING_TYPE 2
+#define FILE_TYPE 3
+#define BINARY_TYPE 4
+
+#define FLAG_WAIT 1
+#define FLAG_CONSOLE 2
+#define FLAG_SHELL 4
+#define FLAG_INFO 8
+
 	STARTUPINFO			si;
 	PROCESS_INFORMATION	pi;
 //	REBOOL				is_NT;
 //	OSVERSIONINFO		info;
-	REBINT				result;
+	REBINT				result = -1;
+	REBINT				ret = 0;
+	HANDLE hOutputRead = 0, hOutputWrite = 0;
+	HANDLE hInputWrite = 0, hInputRead = 0;
+	HANDLE hErrorWrite = 0, hErrorRead = 0;
+	REBCHR *cmd = NULL;
+	char *oem_input = NULL;
 
-//	GetVersionEx(&info);
-//	is_NT = info.dwPlatformId >= VER_PLATFORM_WIN32_NT;
+	SECURITY_ATTRIBUTES sa;
+
+	unsigned char flag_wait = FALSE;
+	unsigned char flag_console = FALSE;
+	unsigned char flag_shell = FALSE;
+	unsigned char flag_info = FALSE;
+
+	if (flags & FLAG_WAIT) flag_wait = TRUE;
+	if (flags & FLAG_CONSOLE) flag_console = TRUE;
+	if (flags & FLAG_SHELL) flag_shell = TRUE;
+	if (flags & FLAG_INFO) flag_info = TRUE;
+
+	// Set up the security attributes struct.
+	sa.nLength= sizeof(SECURITY_ATTRIBUTES);
+	sa.lpSecurityDescriptor = NULL;
+	sa.bInheritHandle = TRUE;
 
 	si.cb = sizeof(si);
 	si.lpReserved = NULL;
@@ -753,16 +785,144 @@ static void *Task_Ready;
 	si.cbReserved2 = 0;
 	si.lpReserved2 = NULL;
 
-	si.hStdInput  = GetStdHandle(STD_INPUT_HANDLE);
-	si.hStdOutput = GetStdHandle(STD_OUTPUT_HANDLE);
-	si.hStdError  = GetStdHandle(STD_ERROR_HANDLE);
+//	GetVersionEx(&info);
+//	is_NT = info.dwPlatformId >= VER_PLATFORM_WIN32_NT;
+
+	/* initialize output/error */
+	*output = NULL;
+	*output_len = 0;
+	*err = NULL;
+	*err_len = 0;
+
+	switch (input_type) {
+		case STRING_TYPE:
+		case BINARY_TYPE:
+			if (!CreatePipe(&hInputRead, &hInputWrite, NULL, 0)) {
+				goto input_error;
+			}
+			/* make child side handle inheritable */
+			if (!SetHandleInformation(hInputRead, HANDLE_FLAG_INHERIT, HANDLE_FLAG_INHERIT)) {
+				goto input_error;
+			}
+			si.hStdInput = hInputRead;
+			break;
+		case FILE_TYPE:
+			hInputRead = CreateFile(input,
+				GENERIC_READ, /* desired mode*/
+				0, /* shared mode*/
+				&sa, /* security attributes */
+				OPEN_EXISTING, /* Creation disposition */
+				FILE_ATTRIBUTE_NORMAL | FILE_FLAG_SEQUENTIAL_SCAN, /* flag and attributes */
+				NULL /* template */);
+			si.hStdInput = hInputRead;
+			break;
+		case NONE_TYPE:
+			si.hStdInput = 0;
+			break;
+		default:
+			si.hStdInput = GetStdHandle(STD_INPUT_HANDLE);
+			break;
+	}
+
+	switch (output_type) {
+		case STRING_TYPE:
+		case BINARY_TYPE:
+			if (!CreatePipe(&hOutputRead, &hOutputWrite, NULL, 0)) {
+				goto output_error;
+			}
+
+			/* make child side handle inheritable */
+			if (!SetHandleInformation(hOutputWrite, HANDLE_FLAG_INHERIT, HANDLE_FLAG_INHERIT)) {
+				goto output_error;
+			}
+			si.hStdOutput = hOutputWrite;
+			break;
+		case FILE_TYPE:
+			si.hStdOutput = CreateFile(*(LPCTSTR*)output,
+				GENERIC_WRITE, /* desired mode*/
+				0, /* shared mode*/
+				&sa, /* security attributes */
+				CREATE_NEW, /* Creation disposition */
+				FILE_ATTRIBUTE_NORMAL, /* flag and attributes */
+				NULL /* template */);
+
+			if (si.hStdOutput == INVALID_HANDLE_VALUE && GetLastError() == ERROR_FILE_EXISTS) {
+				si.hStdOutput = CreateFile(*(LPCTSTR*)output,
+					GENERIC_WRITE, /* desired mode*/
+					0, /* shared mode*/
+					&sa, /* security attributes */
+					OPEN_EXISTING, /* Creation disposition */
+					FILE_ATTRIBUTE_NORMAL, /* flag and attributes */
+					NULL /* template */);
+			}
+			break;
+		case NONE_TYPE:
+			si.hStdOutput = 0;
+			break;
+		default:
+			si.hStdOutput = GetStdHandle(STD_OUTPUT_HANDLE);
+			break;
+	}
+
+	switch (err_type) {
+		case STRING_TYPE:
+		case BINARY_TYPE:
+			if (!CreatePipe(&hErrorRead, &hErrorWrite, NULL, 0)) {
+				goto error_error;
+			}
+			/* make child side handle inheritable */
+			if (!SetHandleInformation(hErrorWrite, HANDLE_FLAG_INHERIT, HANDLE_FLAG_INHERIT)) {
+				goto error_error;
+			}
+			si.hStdError = hErrorWrite;
+			break;
+		case FILE_TYPE:
+			si.hStdError = CreateFile(*(LPCTSTR*)err,
+				GENERIC_WRITE, /* desired mode*/
+				0, /* shared mode*/
+				&sa, /* security attributes */
+				CREATE_NEW, /* Creation disposition */
+				FILE_ATTRIBUTE_NORMAL, /* flag and attributes */
+				NULL /* template */);
+
+			if (si.hStdError == INVALID_HANDLE_VALUE && GetLastError() == ERROR_FILE_EXISTS) {
+				si.hStdError = CreateFile(*(LPCTSTR*)err,
+					GENERIC_WRITE, /* desired mode*/
+					0, /* shared mode*/
+					&sa, /* security attributes */
+					OPEN_EXISTING, /* Creation disposition */
+					FILE_ATTRIBUTE_NORMAL, /* flag and attributes */
+					NULL /* template */);
+			}
+			break;
+		case NONE_TYPE:
+			si.hStdError = 0;
+			break;
+		default:
+			si.hStdError = GetStdHandle(STD_ERROR_HANDLE);
+			break;
+	}
+
+	if (call == NULL) {
+		/* command in argv */
+		goto cleanup; /* NOT IMPLEMENTED*/
+	} else {
+		if (flag_shell) {
+			REBCHR *sh = _T("cmd.exe /C ");
+			size_t len = _tcslen(sh) + _tcslen(call) + 1;
+			cmd = OS_Make(sizeof(REBCHR) * len);
+			_sntprintf(cmd, len, _T("%s%s"), sh, call);
+		} else {
+			cmd = _tcsdup(call); /* CreateProcess might write to this memory, so duplicate it to be safe */
+		}
+	}
 
 	result = CreateProcess(
 		NULL,						// Executable name
-		call,						// Command to execute
+		cmd,						// Command to execute
 		NULL,						// Process security attributes
 		NULL,						// Thread security attributes
-		FALSE,						// Inherit handles
+		TRUE,						// Inherit handles, must be TRUE for I/O redirection
 		NORMAL_PRIORITY_CLASS		// Creation flags
 		| CREATE_DEFAULT_ERROR_MODE,
 		NULL,						// Environment
@@ -771,18 +931,251 @@ static void *Task_Ready;
 		&pi							// Process information
 	);
 
+	OS_Free(cmd);
+
+	*pid = pi.dwProcessId;
+
+	if (hInputRead != NULL)
+		CloseHandle(hInputRead);
+
+	if (hOutputWrite != NULL)
+		CloseHandle(hOutputWrite);
+
+	if (hErrorWrite != NULL)
+		CloseHandle(hErrorWrite);
+
 	// Wait for termination:
-	if (result && (flags & 1)) {
-		result = 0;
+	if (result && flag_wait) {
+		HANDLE handles[3];
+		int count = 0;
+		DWORD wait_result = 0;
+		DWORD output_size = 0;
+		DWORD err_size = 0;
+
+#define BUF_SIZE_CHUNK 4096
+
+		if (hInputWrite != NULL && input_len > 0) {
+			if (input_type == STRING_TYPE) {
+				DWORD dest_len = 0;
+				/* convert input encoding from UNICODE to OEM */
+				dest_len = WideCharToMultiByte(CP_OEMCP, 0, input, input_len, oem_input, dest_len, NULL, NULL);
+				if (dest_len > 0) {
+					oem_input = OS_Make(dest_len);
+					if (oem_input != NULL) {
+						WideCharToMultiByte(CP_OEMCP, 0, input, input_len, oem_input, dest_len, NULL, NULL);
+						input_len = dest_len;
+						input = oem_input;
+						handles[count ++] = hInputWrite;
+					}
+				}
+			} else { /* BINARY_TYPE */
+				handles[count ++] = hInputWrite;
+			}
+		}
+		if (hOutputRead != NULL) {
+			output_size = BUF_SIZE_CHUNK;
+			*output_len = 0;
+			*output = OS_Make(output_size);
+			handles[count ++] = hOutputRead;
+		}
+		if (hErrorRead != NULL) {
+			err_size = BUF_SIZE_CHUNK;
+			*err_len = 0;
+			*err = OS_Make(err_size);
+			handles[count++] = hErrorRead;
+		}
+
+		while (count > 0) {
+			wait_result = WaitForMultipleObjects(count, handles, FALSE, INFINITE);
+			if (wait_result >= WAIT_OBJECT_0
+				&& wait_result < WAIT_OBJECT_0 + count) {
+				int i = wait_result - WAIT_OBJECT_0;
+				DWORD input_pos = 0;
+				DWORD n = 0;
+
+				if (handles[i] == hInputWrite) {
+					if (!WriteFile(hInputWrite, (char*)input + input_pos, input_len - input_pos, &n, NULL)) {
+						if (i < count - 1) {
+							memmove(&handles[i], &handles[i + 1], (count - i - 1) * sizeof(HANDLE));
+						}
+						count--;
+					} else {
+						input_pos += n;
+						if (input_pos >= input_len) {
+							/* done with input */
+							CloseHandle(hInputWrite);
+							hInputWrite = NULL;
+							OS_Free(oem_input);
+							oem_input = NULL;
+							if (i < count - 1) {
+								memmove(&handles[i], &handles[i + 1], (count - i - 1) * sizeof(HANDLE));
+							}
+							count--;
+						}
+					}
+				} else if (handles[i] == hOutputRead) {
+					if (!ReadFile(hOutputRead, *(char**)output + *output_len, output_size - *output_len, &n, NULL)) {
+						if (i < count - 1) {
+							memmove(&handles[i], &handles[i + 1], (count - i - 1) * sizeof(HANDLE));
+						}
+						count--;
+					} else {
+						*output_len += n;
+						if (*output_len >= output_size) {
+							output_size += BUF_SIZE_CHUNK;
+							*output = realloc(*output, output_size);
+							if (*output == NULL) goto kill;
+						}
+					}
+				} else if (handles[i] == hErrorRead) {
+					if (!ReadFile(hErrorRead, *(char**)err + *err_len, err_size - *err_len, &n, NULL)) {
+						if (i < count - 1) {
+							memmove(&handles[i], &handles[i + 1], (count - i - 1) * sizeof(HANDLE));
+						}
+						count--;
+					} else {
+						*err_len += n;
+						if (*err_len >= err_size) {
+							err_size += BUF_SIZE_CHUNK;
+							*err = realloc(*err, err_size);
+							if (*err == NULL) goto kill;
+						}
+					}
+				} else {
+					//RL_Print("Error READ");
+					if (!ret) ret = GetLastError();
+					goto kill;
+				}
+			} else if (wait_result == WAIT_FAILED) { /* */
+				//RL_Print("Wait Failed\n");
+				if (!ret) ret = GetLastError();
+				goto kill;
+			} else {
+				//RL_Print("Wait returns unexpected result: %d\n", wait_result);
+				if (!ret) ret = GetLastError();
+				goto kill;
+			}
+		}
+
 		WaitForSingleObject(pi.hProcess, INFINITE); // check result??
-		GetExitCodeProcess(pi.hProcess, (PDWORD)&result);
+		GetExitCodeProcess(pi.hProcess, (PDWORD)exit_code);
 		CloseHandle(pi.hThread);
 		CloseHandle(pi.hProcess);
+
+		if (output_type == STRING_TYPE && *output != NULL && *output_len > 0) {
+			/* convert to wide char string */
+			int dest_len = 0;
+			wchar_t *dest = NULL;
+			dest_len = MultiByteToWideChar(CP_OEMCP, 0, *output, *output_len, dest, 0);
+			if (dest_len <= 0) {
+				OS_Free(*output);
+				*output = NULL;
+				*output_len = 0;
+			}
+			dest = OS_Make(*output_len * sizeof(wchar_t));
+			if (dest == NULL) goto cleanup;
+			MultiByteToWideChar(CP_OEMCP, 0, *output, *output_len, dest, dest_len);
+			OS_Free(*output);
+			*output = dest;
+			*output_len = dest_len;
+		}
+
+		if (err_type == STRING_TYPE && *err != NULL && *err_len > 0) {
+			/* convert to wide char string */
+			int dest_len = 0;
+			wchar_t *dest = NULL;
+			dest_len = MultiByteToWideChar(CP_OEMCP, 0, *err, *err_len, dest, 0);
+			if (dest_len <= 0) {
+				OS_Free(*err);
+				*err = NULL;
+				*err_len = 0;
+			}
+			dest = OS_Make(*err_len * sizeof(wchar_t));
+			if (dest == NULL) goto cleanup;
+			MultiByteToWideChar(CP_OEMCP, 0, *err, *err_len, dest, dest_len);
+			OS_Free(*err);
+			*err = dest;
+			*err_len = dest_len;
+		}
+	} else if (result) {
+		/* no wait */
+		/* Close handles to avoid leaks */
+		CloseHandle(pi.hThread);
+		CloseHandle(pi.hProcess);
+	} else {
+		/* CreateProcess failed */
+		ret = GetLastError();
 	}
 
-	return result;  // meaning depends on flags
+	goto cleanup;
+
+kill:
+	if (TerminateProcess(pi.hProcess, 0)) {
+		WaitForSingleObject(pi.hProcess, INFINITE);
+		GetExitCodeProcess(pi.hProcess, (PDWORD)exit_code);
+	} else if (ret == 0) {
+		ret = GetLastError();
+	}
+
+	CloseHandle(pi.hThread);
+	CloseHandle(pi.hProcess);
+
+cleanup:
+	if (oem_input != NULL) {
+		OS_Free(oem_input);
+	}
+
+	if (*output != NULL && *output_len == 0) {
+		OS_Free(*output);
+	}
+
+	if (*err != NULL && *err_len == 0) {
+		OS_Free(*err);
+	}
+
+	if (hInputWrite != NULL)
+		CloseHandle(hInputWrite);
+
+	if (hOutputRead != NULL)
+		CloseHandle(hOutputRead);
+
+	if (hErrorRead != NULL)
+		CloseHandle(hErrorRead);
+
+	if (err_type == FILE_TYPE) {
+		CloseHandle(si.hStdError);
+	}
+
+error_error:
+	if (output_type == FILE_TYPE) {
+		CloseHandle(si.hStdOutput);
+	}
+
+output_error:
+	if (input_type == FILE_TYPE) {
+		CloseHandle(si.hStdInput);
+	}
+
+input_error:
+	return ret;  // meaning depends on flags
 }
 
+/***********************************************************************
+**
+*/	int OS_Reap_Process(int pid, int *status, int flags)
+/*
+ * pid: 
+ * 		> 0, a signle process
+ * 		-1, any child process
+ * flags:
+ * 		0: return immediately
+ *
+**		Return -1 on error
+***********************************************************************/
+{
+	/* It seems that process doesn't need to be reaped on Windows */
+	return 0;
+}
 
 /***********************************************************************
 **
@@ -797,6 +1190,7 @@ static void *Task_Ready;
 	HKEY key;
 	REBCHR *path;
 	HWND hWnd = GetFocus();
+	int exit_code = 0;
 
 	if (RegOpenKeyEx(HKEY_CLASSES_ROOT, TEXT("http\\shell\\open\\command"), 0, KEY_READ, &key) != ERROR_SUCCESS)
 		return 0;
@@ -816,7 +1210,15 @@ static void *Task_Ready;
 
 	Insert_Command_Arg(path, url, MAX_BRW_PATH);
 
-	len = OS_Create_Process(path, 0);
+	//len = OS_Create_Process(path, 0);
+
+	char * const argv[] = {path, NULL};
+	len = OS_Create_Process(path, 1, argv, 0, 
+							NULL, /* pid */
+							&exit_code,
+							0, NULL, 0, /* input_type, void *input, u32 input_len, */
+							0, NULL, NULL, /* output_type, void **output, u32 *output_len, */
+							0, NULL, NULL); /* u32 err_type, void **err, u32 *err_len */
 
 	FREE_MEM(path);
 	return len;
