@@ -916,6 +916,7 @@ error:
 	char *info = NULL;
 	off_t info_size = 0;
 	u32 info_len = 0;
+	pid_t fpid = 0;
 
 	if (flags & FLAG_WAIT) flag_wait = TRUE;
 	if (flags & FLAG_CONSOLE) flag_console = TRUE;
@@ -945,8 +946,8 @@ error:
 		goto info_pipe_err;
 	}
 
-	*pid = fork();
-	if (*pid == 0) {
+	fpid = fork();
+	if (fpid == 0) {
 		/* child */
 		if (input_type == STRING_TYPE
 			|| input_type == BINARY_TYPE) {
@@ -1056,7 +1057,7 @@ error:
 child_error:
 		write(info_pipe[W], &errno, sizeof(errno));
 		exit(EXIT_FAILURE); /* get here only when exec fails */
-	} else if (*pid > 0) {
+	} else if (fpid > 0) {
 		/* parent */
 #define BUF_SIZE_CHUNK 4096
 		nfds_t nfds = 0;
@@ -1070,10 +1071,23 @@ child_error:
 		int exited = 0;
 
 		/* initialize outputs */
-		*output = NULL;
-		*output_len = 0;
-		*err = NULL;
-		*err_len = 0;
+		if (output_type != NONE_TYPE
+			&& output_type != INHERIT_TYPE
+			&& (output == NULL
+				|| output_len == NULL)) {
+			return -1;
+		}
+		if (output != NULL) *output = NULL;
+		if (output_len != NULL) *output_len = 0;
+
+		if (err_type != NONE_TYPE
+			&& err_type != INHERIT_TYPE
+			&& (err == NULL
+				|| err_len == NULL)) {
+			return -1;
+		}
+		if (err != NULL) *err = NULL;
+		if (err_len != NULL) *err_len = 0;
 
 		if (stdin_pipe[W] > 0) {
 			//printf("stdin_pipe[W]: %d\n", stdin_pipe[W]);
@@ -1110,13 +1124,13 @@ child_error:
 
 		int valid_nfds = nfds;
 		while (valid_nfds > 0) {
-			xpid = waitpid(*pid, &status, WNOHANG);
+			xpid = waitpid(fpid, &status, WNOHANG);
 			if (xpid == -1) {
 				ret = errno;
 				goto error;
 			}
 
-			if (xpid == *pid) {
+			if (xpid == fpid) {
 				/* try one more time to read any remainding output/err */
 				if (stdout_pipe[R] > 0) {
 					nbytes = read(stdout_pipe[R], *output + *output_len, output_size - *output_len);
@@ -1228,7 +1242,7 @@ child_error:
 		}
 
 		if (valid_nfds == 0 && flag_wait) {
-			if (waitpid(*pid, &status, 0) < 0) {
+			if (waitpid(fpid, &status, 0) < 0) {
 				ret = errno;
 				goto error;
 			}
@@ -1245,22 +1259,23 @@ child_error:
 		/* set to errno for reporting */
 		ret = *(int*)info;
 	} else if (WIFEXITED(status)) {
-		*exit_code = WEXITSTATUS(status);
+		if (exit_code != NULL) *exit_code = WEXITSTATUS(status);
+		if (pid != NULL) *pid = fpid;
 	} else {
 		goto error;
 	}
 
 	goto cleanup;
 kill:
-	kill(*pid, SIGKILL);
-	waitpid(*pid, NULL, 0);
+	kill(fpid, SIGKILL);
+	waitpid(fpid, NULL, 0);
 error:
 	if (!ret) ret = -1;
 cleanup:
-	if (*output != NULL && *output_len <= 0) {
+	if (output != NULL && *output != NULL && *output_len <= 0) {
 		OS_Free(*output);
 	}
-	if (*err != NULL && *err_len <= 0) {
+	if (err != NULL && *err != NULL && *err_len <= 0) {
 		OS_Free(*err);
 	}
 	if (info != NULL) {
@@ -1294,6 +1309,7 @@ stdout_pipe_err:
 		close(stdin_pipe[W]);
 	}
 stdin_pipe_err:
+	printf("ret: %d\n", ret);
 	return ret;
 }
 
@@ -1315,24 +1331,13 @@ stdin_pipe_err:
 
 static int Try_Browser(char *browser, REBCHR *url)
 {
-	pid_t pid;
-	int result, status;
-
-	switch (pid = fork()) {
-		case -1:
-			result = FALSE;
-			break;
-		case 0:
-			execlp(browser, browser, url, NULL);
-			exit(1);
-			break;
-		default:
-			waitpid(pid, &status, WUNTRACED);
-			result = WIFEXITED(status)
-					&& (WEXITSTATUS(status) == 0);
-	}
-
-	return result;
+	char * const argv[] = {browser, url, NULL};
+	return OS_Create_Process(browser, 2, argv, 0,
+							NULL, /* pid */
+							NULL, /* exit_code */
+							INHERIT_TYPE, NULL, 0, /* input_type, void *input, u32 input_len, */
+							INHERIT_TYPE, NULL, NULL, /* output_type, void **output, u32 *output_len, */
+							INHERIT_TYPE, NULL, NULL); /* u32 err_type, void **err, u32 *err_len */
 }
 
 /***********************************************************************
@@ -1341,9 +1346,7 @@ static int Try_Browser(char *browser, REBCHR *url)
 /*
 ***********************************************************************/
 {
-	if (Try_Browser("xdg-open", url) || Try_Browser("x-www-browser", url))
-		return TRUE;
-	return FALSE;
+	return (Try_Browser("xdg-open", url) && Try_Browser("x-www-browser", url));
 }
 
 
