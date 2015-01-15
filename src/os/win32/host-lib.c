@@ -789,10 +789,23 @@ static void *Task_Ready;
 //	is_NT = info.dwPlatformId >= VER_PLATFORM_WIN32_NT;
 
 	/* initialize output/error */
-	*output = NULL;
-	*output_len = 0;
-	*err = NULL;
-	*err_len = 0;
+	if (output_type != NONE_TYPE
+		&& output_type != INHERIT_TYPE
+		&& (output == NULL
+			|| output_len == NULL)) {
+		return -1;
+	}
+	if (output != NULL) *output = NULL;
+	if (output_len != NULL) *output_len = 0;
+
+	if (err_type != NONE_TYPE
+		&& err_type != INHERIT_TYPE
+		&& (err == NULL
+			|| err_len == NULL)) {
+		return -1;
+	}
+	if (err != NULL) *err = NULL;
+	if (err_len != NULL) *err_len = 0;
 
 	switch (input_type) {
 		case STRING_TYPE:
@@ -933,7 +946,7 @@ static void *Task_Ready;
 
 	OS_Free(cmd);
 
-	*pid = pi.dwProcessId;
+	if (pid != NULL) *pid = pi.dwProcessId;
 
 	if (hInputRead != NULL)
 		CloseHandle(hInputRead);
@@ -1125,11 +1138,11 @@ cleanup:
 		OS_Free(oem_input);
 	}
 
-	if (*output != NULL && *output_len == 0) {
+	if (output != NULL && *output != NULL && *output_len == 0) {
 		OS_Free(*output);
 	}
 
-	if (*err != NULL && *err_len == 0) {
+	if (err != NULL && *err != NULL && *err_len == 0) {
 		OS_Free(*err);
 	}
 
@@ -1216,9 +1229,9 @@ input_error:
 	len = OS_Create_Process(path, 1, argv, 0, 
 							NULL, /* pid */
 							&exit_code,
-							0, NULL, 0, /* input_type, void *input, u32 input_len, */
-							0, NULL, NULL, /* output_type, void **output, u32 *output_len, */
-							0, NULL, NULL); /* u32 err_type, void **err, u32 *err_len */
+							INHERIT_TYPE, NULL, 0, /* input_type, void *input, u32 input_len, */
+							INHERIT_TYPE, NULL, NULL, /* output_type, void **output, u32 *output_len, */
+							INHERIT_TYPE, NULL, NULL); /* u32 err_type, void **err, u32 *err_len */
 
 	FREE_MEM(path);
 	return len;
