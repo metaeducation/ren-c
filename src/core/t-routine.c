@@ -116,7 +116,10 @@ static ffi_type* struct_to_ffi(REBVAL *out, REBSER *fields)
 
 	for (i = 0; i < SERIES_TAIL(fields); i ++) {
 		struct Struct_Field *field = (struct Struct_Field*)SERIES_SKIP(fields, i);
-		if (field->type != STRUCT_TYPE_STRUCT) {
+		if (field->type == STRUCT_TYPE_REBVAL) {
+			/* don't see a point to pass a rebol value to external functions */
+			Trap_Arg(out);
+		} else if (field->type != STRUCT_TYPE_STRUCT) {
 			if (struct_type_to_ffi[field->type]) {
 				REBCNT n = 0;
 				for (n = 0; n < field->dimension; n ++) {

@@ -50,7 +50,9 @@ static const REBINT type_to_sym [STRUCT_TYPE_MAX] = {
 	SYM_DOUBLE,
 	-1, //SYM_DECIMAL,
 
-	SYM_POINTER
+	SYM_POINTER,
+	-1, //SYM_STRUCT
+	SYM_REBVAL
 	//STRUCT_TYPE_MAX
 };
 
@@ -105,6 +107,9 @@ static get_scalar(REBSTU *stu,
 				VAL_STRUCT_OFFSET(val) = data - SERIES_DATA(VAL_STRUCT_DATA_BIN(val));
 				VAL_STRUCT_LEN(val) = field->size;
 			}
+			break;
+		case STRUCT_TYPE_REBVAL:
+			memcpy(val, data, sizeof(REBVAL));
 			break;
 		default:
 			/* should never be here */
@@ -262,6 +267,12 @@ static REBOOL assign_scalar(REBSTU *stu,
 	double d = 0;
 	void *data = SERIES_SKIP(STRUCT_DATA_BIN(stu),
 							 STRUCT_OFFSET(stu) + field->offset + n * field->size);
+
+	if (field->type == STRUCT_TYPE_REBVAL) {
+		memcpy(data, val, sizeof(REBVAL));
+		return TRUE;
+	}
+
 	switch (VAL_TYPE(val)) {
 		case REB_DECIMAL:
 			if (!IS_NUMERIC_TYPE(field->type)) {
@@ -539,6 +550,10 @@ static REBOOL assign_scalar(REBSTU *stu,
 						} else {
 							Trap_Types(RE_EXPECT_VAL, REB_BLOCK, VAL_TYPE(blk));
 						}
+						break;
+					case SYM_REBVAL:
+						field->type = STRUCT_TYPE_REBVAL;
+						field->size = sizeof(REBVAL);
 						break;
 					default:
 						Trap_Type(blk);
