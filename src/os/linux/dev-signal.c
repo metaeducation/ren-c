@@ -78,6 +78,7 @@ extern void Signal_Device(REBREQ *req, REBINT type);
 	}
 
 	SET_OPEN(req);
+	Signal_Device(req, EVT_OPEN);
 
 	return DR_DONE;
 
