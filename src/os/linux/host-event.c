@@ -110,6 +110,11 @@ static const REBCNT keysym_to_event[] = {
 
 };
 
+static const REBCNT keysym_to_event_fallback[] = {
+    /* 0xfe20 */    XK_ISO_Left_Tab,     	0x09,   //Tab
+					0x0,			0
+};
+
 static void Add_Event_XY(REBGOB *gob, REBINT id, REBINT xy, REBINT flags)
 {
 	REBEVT evt;
@@ -665,7 +670,7 @@ static void handle_key(XEvent *ev, REBGOB *gob)
 
 	if (key > 0){
 		Add_Event_Key(gob,
-					  ev->type == KeyPress? EVT_KEY : EVT_KEY_UP, 
+					  ev->type == KeyPress? EVT_KEY : EVT_KEY_UP,
 					  key, flags);
 
 		/*
@@ -674,6 +679,14 @@ static void handle_key(XEvent *ev, REBGOB *gob)
 		   key,
 		   flags);
 		   */
+	} else {
+		for (i = 0; keysym_to_event_fallback[i] && keysym > keysym_to_event_fallback[i]; i += 2);
+		if (keysym == keysym_to_event_fallback[i] && keysym_to_event_fallback[i + 1] > 0) {
+			Add_Event_Key(gob,
+						  ev->type == KeyPress? EVT_KEY : EVT_KEY_UP,
+						  keysym_to_event_fallback[i + 1], flags);
+
+		}
 	}
 }
 
