@@ -1071,7 +1071,9 @@ static void *Task_Ready;
 		}
 
 		WaitForSingleObject(pi.hProcess, INFINITE); // check result??
-		GetExitCodeProcess(pi.hProcess, (PDWORD)exit_code);
+		if (exit_code != NULL) {
+			GetExitCodeProcess(pi.hProcess, (PDWORD)exit_code);
+		}
 		CloseHandle(pi.hThread);
 		CloseHandle(pi.hProcess);
 
@@ -1125,7 +1127,9 @@ static void *Task_Ready;
 kill:
 	if (TerminateProcess(pi.hProcess, 0)) {
 		WaitForSingleObject(pi.hProcess, INFINITE);
-		GetExitCodeProcess(pi.hProcess, (PDWORD)exit_code);
+		if (exit_code != NULL) {
+			GetExitCodeProcess(pi.hProcess, (PDWORD)exit_code);
+		}
 	} else if (ret == 0) {
 		ret = GetLastError();
 	}
