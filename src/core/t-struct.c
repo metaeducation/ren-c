@@ -661,10 +661,13 @@ static REBOOL assign_scalar(REBSTU *stu,
 					}
 				} else if (field->type == STRUCT_TYPE_REBVAL) {
 					REBVAL unset;
+					REBCNT n = 0;
 					SET_UNSET(&unset);
-					if (!assign_scalar(&VAL_STRUCT(out), field, 0, &unset)) {
-						//RL_Print("Failed to assign scalar value\n");
-						goto failed;
+					for (n = 0; n < field->dimension; n ++) {
+						if (!assign_scalar(&VAL_STRUCT(out), field, n, &unset)) {
+							//RL_Print("Failed to assign element value\n");
+							goto failed;
+						}
 					}
 				} else {
 					memset(SERIES_SKIP(VAL_STRUCT_DATA_BIN(out), (REBCNT)offset), 0, field->size * field->dimension);
