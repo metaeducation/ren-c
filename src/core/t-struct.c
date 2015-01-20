@@ -659,6 +659,13 @@ static REBOOL assign_scalar(REBSTU *stu,
 					for (n = 0; n < field->dimension; n ++) {
 						memcpy(SERIES_SKIP(VAL_STRUCT_DATA_BIN(out), ((REBCNT)offset) + n * field->size), SERIES_DATA(VAL_STRUCT_DATA(init)), field->size);
 					}
+				} else if (field->type == STRUCT_TYPE_REBVAL) {
+					REBVAL unset;
+					SET_UNSET(&unset);
+					if (!assign_scalar(&VAL_STRUCT(out), field, 0, &unset)) {
+						//RL_Print("Failed to assign scalar value\n");
+						goto failed;
+					}
 				} else {
 					memset(SERIES_SKIP(VAL_STRUCT_DATA_BIN(out), (REBCNT)offset), 0, field->size * field->dimension);
 				}
