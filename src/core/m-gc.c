@@ -163,7 +163,7 @@ static void Mark_Value(REBVAL *val, REBCNT depth);
 
 		series = field->fields;
 		for (len = 0; len < series->tail; len++) {
-			Mark_Struct_Field (stu, (struct Struct_Field*)BLK_SKIP(series, len), depth + 1);
+			Mark_Struct_Field (stu, (struct Struct_Field*)SERIES_SKIP(series, len), depth + 1);
 		}
 	} else if (field->type == STRUCT_TYPE_REBVAL) {
 		REBCNT i;
@@ -192,7 +192,7 @@ static void Mark_Value(REBVAL *val, REBCNT depth);
 
 	series = stu->fields;
 	for (len = 0; len < series->tail; len++) {
-		struct Struct_Field *field = (struct Struct_Field*)BLK_SKIP(series, len);
+		struct Struct_Field *field = (struct Struct_Field*)SERIES_SKIP(series, len);
 		Mark_Struct_Field(stu, field, depth + 1);
 	}
 }
