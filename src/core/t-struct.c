@@ -657,7 +657,7 @@ static REBOOL assign_scalar(REBSTU *stu,
 				if (field->type == STRUCT_TYPE_STRUCT) {
 					REBCNT n = 0;
 					for (n = 0; n < field->dimension; n ++) {
-						memcpy(SERIES_SKIP(VAL_STRUCT_DATA_BIN(out), ((REBCNT)offset) + n * field->size), SERIES_DATA(VAL_STRUCT_DATA(init)), field->size);
+						memcpy(SERIES_SKIP(VAL_STRUCT_DATA_BIN(out), ((REBCNT)offset) + n * field->size), SERIES_DATA(VAL_STRUCT_DATA_BIN(init)), field->size);
 					}
 				} else if (field->type == STRUCT_TYPE_REBVAL) {
 					REBVAL unset;
