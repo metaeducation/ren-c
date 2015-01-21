@@ -806,6 +806,7 @@ void Copy_Struct(REBSTU *src, REBSTU *dst)
 
 	/* writable field */
 	dst->data = Copy_Series(src->data);
+	BARE_SERIES(dst->data);
 	STRUCT_DATA_BIN(dst) = Copy_Series(STRUCT_DATA_BIN(src));
 }
 
