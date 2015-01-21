@@ -501,7 +501,7 @@ mark_obj:
 	MARK_SERIES(series);
 
 	// If not a block, go no further
-	if (SERIES_WIDE(series) != sizeof(REBVAL) || IS_BARE_SERIES(series)) return;
+	if (SERIES_WIDE(series) != sizeof(REBVAL) || IS_BARE_SERIES(series) || IS_EXT_SERIES(series)) return;
 
 	ASSERT2(SERIES_TAIL(series) < SERIES_REST(series), RP_SERIES_OVERFLOW);
 
