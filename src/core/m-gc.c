@@ -172,7 +172,9 @@ static void Mark_Value(REBVAL *val, REBCNT depth);
 		for (i = 0; i < field->dimension; i ++) {
 			REBVAL *data = (REBVAL*)SERIES_SKIP(STRUCT_DATA_BIN(stu),
 												STRUCT_OFFSET(stu) + field->offset + i * field->size);
-			Mark_Value(data, depth);
+			if (field->done) {
+				Mark_Value(data, depth);
+			}
 		}
 	}
 

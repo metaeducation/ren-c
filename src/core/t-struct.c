@@ -684,6 +684,8 @@ static REBOOL assign_scalar(REBSTU *stu,
 				Trap1(RE_SIZE_LIMIT, out);
 			}
 
+			field->done = TRUE;
+
 			++ field_idx;
 
 			DS_POP; /* pop up the inner struct*/
