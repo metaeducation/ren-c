@@ -168,7 +168,7 @@ static void Mark_Value(REBVAL *val, REBCNT depth);
 	} else if (field->type == STRUCT_TYPE_REBVAL) {
 		REBCNT i;
 
-		ASSERT2(RP_BAD_SIZE, field->size == sizeof(REBVAL));
+		ASSERT2(field->size == sizeof(REBVAL), RP_BAD_SIZE);
 		for (i = 0; i < field->dimension; i ++) {
 			REBVAL *data = (REBVAL*)SERIES_SKIP(STRUCT_DATA_BIN(stu),
 												STRUCT_OFFSET(stu) + field->offset + i * field->size);
@@ -191,8 +191,9 @@ static void Mark_Value(REBVAL *val, REBCNT depth);
 	CHECK_MARK(stu->fields, depth);
 	CHECK_MARK(STRUCT_DATA_BIN(stu), depth);
 
-	ASSERT2(RP_BAD_SERIES, IS_EXT_SERIES(stu->data));
-	ASSERT2(RP_BAD_SERIES, SERIES_TAIL(stu->data) == 1);
+	ASSERT2(IS_BARE_SERIES(stu->data), RP_BAD_SERIES);
+	ASSERT2(!IS_EXT_SERIES(stu->data), RP_BAD_SERIES);
+	ASSERT2(SERIES_TAIL(stu->data) == 1, RP_BAD_SERIES);
 	CHECK_MARK(stu->data, depth);
 
 	series = stu->fields;
@@ -502,7 +503,7 @@ mark_obj:
 	// If not a block, go no further
 	if (SERIES_WIDE(series) != sizeof(REBVAL) || IS_BARE_SERIES(series)) return;
 
-	ASSERT2(RP_SERIES_OVERFLOW, SERIES_TAIL(series) < SERIES_REST(series));
+	ASSERT2(SERIES_TAIL(series) < SERIES_REST(series), RP_SERIES_OVERFLOW);
 
 	//Moved to end: ASSERT1(IS_END(BLK_TAIL(series)), RP_MISSING_END);
 
