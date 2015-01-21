@@ -167,6 +167,8 @@ static void Mark_Value(REBVAL *val, REBCNT depth);
 		}
 	} else if (field->type == STRUCT_TYPE_REBVAL) {
 		REBCNT i;
+
+		ASSERT2(RP_BAD_SIZE, field->size == sizeof(REBVAL));
 		for (i = 0; i < field->dimension; i ++) {
 			REBVAL *data = (REBVAL*)SERIES_SKIP(STRUCT_DATA_BIN(stu),
 												STRUCT_OFFSET(stu) + field->offset + i * field->size);
@@ -188,6 +190,9 @@ static void Mark_Value(REBVAL *val, REBCNT depth);
 	CHECK_MARK(stu->spec, depth);
 	CHECK_MARK(stu->fields, depth);
 	CHECK_MARK(STRUCT_DATA_BIN(stu), depth);
+
+	ASSERT2(RP_BAD_SERIES, IS_EXT_SERIES(stu->data));
+	ASSERT2(RP_BAD_SERIES, SERIES_TAIL(stu->data) == 1);
 	CHECK_MARK(stu->data, depth);
 
 	series = stu->fields;
