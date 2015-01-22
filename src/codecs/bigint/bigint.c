@@ -407,7 +407,7 @@ bigint *bi_divide(BI_CTX *ctx, bigint *u, bigint *v, int is_mod)
     quotient = alloc(ctx, m+1);
     tmp_u = alloc(ctx, n+1);
     v = trim(v);        /* make sure we have no leading 0's */
-    d = (comp)((long_comp)COMP_RADIX/(V1+1));
+    d = (comp)((long_comp)COMP_RADIX/(((long_comp)V1)+1));
 
     /* clear things to start with */
     memset(quotient->comps, 0, ((quotient->size)*COMP_BYTE_SIZE));
@@ -750,7 +750,7 @@ buf_done:
 void bi_set_mod(BI_CTX *ctx, bigint *bim, int mod_offset)
 {
     int k = bim->size;
-    comp d = (comp)((long_comp)COMP_RADIX/(bim->comps[k-1]+1));
+    comp d = (comp)((long_comp)COMP_RADIX/(((long_comp)bim->comps[k-1])+1));
 #ifdef CONFIG_BIGINT_MONTGOMERY
     bigint *R, *R2;
 #endif
