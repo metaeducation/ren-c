@@ -1,7 +1,6 @@
 prep-lib-stamp:
 	$(REBOL) $T/make-headers.r
 	$(REBOL) $T/make-boot.r $(OS_ID) $(HOST_PRODUCT_NAME)
-	$(REBOL) $T/make-os-ext.r # ok, but not always
 	$(REBOL) $T/make-reb-lib.r
 	touch prep-lib-stamp
 	#-rm -f $(OBJS) 
@@ -11,6 +10,7 @@ prep-core-stamp: prep-lib-stamp
 	touch prep-core-stamp
 
 prep-core:
+	$(REBOL) $T/make-os-ext.r no-gfx
 	#$(REBOL) $T/rma-init.r $(HOST_PRODUCT_NAME)
 	$(eval HOST_FLAGS =$(HOST_CORE_FLAGS))
 	#-rm -f $(HOST)
@@ -22,6 +22,7 @@ prep-view-stamp: prep-lib-stamp
 	touch prep-view-stamp
 
 prep-view:
+	$(REBOL) $T/make-os-ext.r
 	#$(REBOL) $T/rma-init.r $(HOST_PRODUCT_NAME)
 	$(eval HOST_FLAGS =$(HOST_VIEW_FLAGS))
 	#-rm -f $(HOST) 
