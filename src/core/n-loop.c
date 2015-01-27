@@ -331,10 +331,10 @@
 			vars = FRM_VALUE(frame, i);
 			words = FRM_WORD(frame, i);
 
-			// var spec is WORD
-			if (IS_WORD(words)) {
+			if (index < tail) {
+				// var spec is WORD
+				if (IS_WORD(words)) {
 
-				if (index < tail) {
 
 					if (ANY_BLOCK(value)) {
 						*vars = *BLK_SKIP(series, index);
@@ -395,23 +395,24 @@
 							VAL_CHAR(vars) = GET_ANY_CHAR(series, index);
 						}
 					}
-					index++;
 				}
-				else SET_NONE(vars);
-			}
 
-			// var spec is WORD:
-			else if (IS_SET_WORD(words)) {
-				if (ANY_OBJECT(value) || IS_MAP(value)) {
-					*vars = *value;
-				} else {
-					VAL_SET(vars, REB_BLOCK);
-					VAL_SERIES(vars) = series;
-					VAL_INDEX(vars) = index;
+				// var spec is WORD:
+				else if (IS_SET_WORD(words)) {
+					if (ANY_OBJECT(value) || IS_MAP(value)) {
+						*vars = *value;
+					} else {
+						VAL_SET(vars, REB_BLOCK);
+						VAL_SERIES(vars) = series;
+						VAL_INDEX(vars) = index;
+					}
+					//if (index < tail) index++; // do not increment block.
 				}
-				//if (index < tail) index++; // do not increment block.
+				else Trap_Arg(words);
+
+				index++;
 			}
-			else Trap_Arg(words);
+			else SET_NONE(vars);
 		}
 
 		ds = Do_Blk(body, 0);
