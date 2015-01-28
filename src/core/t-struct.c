@@ -391,6 +391,81 @@ static REBOOL assign_scalar(REBSTU *stu,
 	return FALSE;
 }
 
+/* parse struct attribute */
+static void parse_attr (REBVAL *blk, REBINT *raw_size, REBUPT *raw_addr)
+{
+	*raw_size = -1;
+	*raw_addr = 0;
+
+	REBVAL *attr = VAL_BLK_DATA(blk);
+	while (NOT_END(attr)) {
+		if (IS_SET_WORD(attr)) {
+			switch (VAL_WORD_CANON(attr)) {
+				case SYM_RAW_SIZE:
+					++ attr;
+					if (IS_INTEGER(attr)) {
+						if (*raw_size > 0) { /* duplicate raw-size */
+							Trap_Arg(attr);
+						}
+						*raw_size = VAL_INT64(attr);
+						if (*raw_size <= 0) {
+							Trap_Arg(attr);
+						}
+					} else {
+						Trap_Arg(attr);
+					}
+					break;
+				case SYM_RAW_MEMORY:
+					++ attr;
+					if (IS_INTEGER(attr)) {
+						if (*raw_addr != 0) { /* duplicate raw-memory */
+							Trap_Arg(attr);
+						}
+						*raw_addr = VAL_UNT64(attr);
+						if (*raw_addr == 0) {
+							Trap_Arg(attr);
+						}
+					} else {
+						Trap_Arg(attr);
+					}
+					break;
+					/*
+					   case SYM_ALIGNMENT:
+					   ++ attr;
+					   if (IS_INTEGER(attr)) {
+					   alignment = VAL_INT64(attr);
+					   } else {
+					   Trap_Arg(attr);
+					   }
+					   break;
+					   */
+				default:
+					Trap_Arg(attr);
+			}
+		} else {
+			Trap_Arg(attr);
+		}
+		++ attr;
+	}
+}
+
+/* set storage memory to external addr: raw_addr */
+static void set_ext_storage (REBVAL *out, REBINT raw_size, REBUPT raw_addr)
+{
+	REBSER *ser = NULL;
+
+	if (raw_size >= 0 && raw_size != VAL_STRUCT_LEN(out)) {
+		Trap0(RE_INVALID_DATA);
+	}
+
+	ser = (REBSER *)Make_Node(SERIES_POOL);
+	Prop_Series(ser, VAL_STRUCT_DATA_BIN(out));
+	ser->data = (REBYTE*)raw_addr;
+	EXT_SERIES(ser);
+
+	VAL_STRUCT_DATA_BIN(out) = ser;
+}
+
 /***********************************************************************
 **
 */	REBFLG MT_Struct(REBVAL *out, REBVAL *data, REBCNT type)
@@ -427,48 +502,7 @@ static REBOOL assign_scalar(REBSTU *stu,
 		SET_TYPE(out, REB_STRUCT);
 
 		if (IS_BLOCK(blk)) {
-			/* struct attribute */
-			REBVAL *attr = VAL_BLK_DATA(blk);
-			while (NOT_END(attr)) {
-				if (IS_SET_WORD(attr)) {
-					switch (VAL_WORD_CANON(attr)) {
-						case SYM_RAW_SIZE:
-							++ attr;
-							if (IS_INTEGER(attr)) {
-								raw_size = VAL_INT64(attr);
-							} else {
-								Trap_Arg(attr);
-							}
-							break;
-						case SYM_RAW_MEMORY:
-							++ attr;
-							if (IS_INTEGER(attr)) {
-								raw_addr = VAL_UNT64(attr);
-								if (raw_addr == 0) {
-									Trap_Arg(attr);
-								}
-							} else {
-								Trap_Arg(attr);
-							}
-							break;
-							/*
-						case SYM_ALIGNMENT:
-							++ attr;
-							if (IS_INTEGER(attr)) {
-								alignment = VAL_INT64(attr);
-							} else {
-								Trap_Arg(attr);
-							}
-							break;
-							*/
-						default:
-							Trap_Arg(attr);
-					}
-				} else {
-					Trap_Arg(attr);
-				}
-				++ attr;
-			}
+			parse_attr(blk, &raw_size, &raw_addr);
 			++ blk;
 		}
 
@@ -694,19 +728,7 @@ static REBOOL assign_scalar(REBSTU *stu,
 		VAL_STRUCT_LEN(out) = (REBCNT)offset;
 
 		if (raw_addr) {
-			REBSER *ser = NULL;
-			/* data is stored in external memory,
-			 * copy the structure to that memory*/
-			if (raw_size >= 0 && raw_size != VAL_STRUCT_LEN(out)) {
-				Trap0(RE_INVALID_DATA);
-			}
-
-			ser = (REBSER *)Make_Node(SERIES_POOL);
-			Prop_Series(ser, VAL_STRUCT_DATA_BIN(out));
-			ser->data = (REBYTE*)raw_addr;
-			EXT_SERIES(ser);
-
-			VAL_STRUCT_DATA_BIN(out) = ser;
+			set_ext_storage(out, raw_size, raw_addr);
 		}
 
 		return TRUE;
@@ -817,6 +839,73 @@ void Copy_Struct_Val(REBVAL *src, REBVAL *dst)
 	Copy_Struct(&VAL_STRUCT(src), &VAL_STRUCT(dst));
 }
 
+/* a: make struct! [uint 8 i: 1]
+ * b: make a [i: 10]
+ */
+static void init_fields(REBVAL *ret, REBVAL *spec)
+{
+	REBVAL *blk = NULL;
+
+	for (blk = VAL_BLK_DATA(spec); NOT_END(blk); blk += 2) {
+		struct Struct_Field *fld = NULL;
+		REBSER *fields = VAL_STRUCT_FIELDS(ret);
+		int i = 0;
+		REBVAL *word = blk;
+		REBVAL *fld_val = blk + 1;
+
+		if (IS_BLOCK(word)) { /* options: raw-memory, etc */
+			REBINT raw_size = -1;
+			REBUPT raw_addr = 0;
+
+			if (VAL_TAIL(spec) != 1) { /* make sure no other field initialization */
+				Trap_Arg(spec);
+			}
+
+			parse_attr(word, &raw_size, &raw_addr);
+			set_ext_storage(ret, raw_size, raw_addr);
+
+			break;
+		} else if (! IS_SET_WORD(word)) {
+			Trap_Arg(word);
+		}
+
+		if (IS_END(fld_val)) {
+			Trap1(RE_NEED_VALUE, fld_val);
+		}
+
+		for (i = 0; i < SERIES_TAIL(fields); i ++) {
+			fld = (struct Struct_Field*)SERIES_SKIP(fields, i);
+			if (fld->sym == VAL_WORD_CANON(word)) {
+				if (fld->dimension > 1) {
+					REBCNT n = 0;
+					if (IS_BLOCK(fld_val)) {
+						Trap_Arg(fld_val);
+						for(n = 0; n < fld->dimension; n ++) {
+							if (!assign_scalar(&VAL_STRUCT(ret), fld, n, VAL_BLK_SKIP(fld_val, n))) {
+								Trap_Arg(fld_val);
+							}
+						}
+					} else if (IS_INTEGER(fld_val)) {
+						void *ptr = (void *)VAL_INT64(fld_val);
+
+						/* assuming it's an valid pointer and holding enough space */
+						memcpy(SERIES_SKIP(VAL_STRUCT_DATA_BIN(ret), fld->offset), ptr, fld->size * fld->dimension);
+					}
+				} else {
+					if (!assign_scalar(&VAL_STRUCT(ret), fld, 0, fld_val)) {
+						Trap_Arg(fld_val);
+					}
+				}
+				break;
+			}
+		}
+
+		if (i == SERIES_TAIL(fields)) {
+			Trap_Arg(word); /* field not found in the parent struct */
+		}
+	}
+}
+
 /***********************************************************************
 **
 */	REBTYPE(Struct)
@@ -843,6 +932,9 @@ void Copy_Struct_Val(REBVAL *src, REBVAL *dst)
 			// Clone an existing STRUCT:
 			if (IS_STRUCT(val)) {
 				Copy_Struct_Val(val, ret);
+
+				/* only accept value initialization */
+				init_fields(ret, arg);
 			} else if (!IS_DATATYPE(val)) {
 				goto is_arg_error;
 			} else {
