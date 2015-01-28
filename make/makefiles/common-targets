@@ -6,23 +6,23 @@ prep-lib-stamp:
 	#-rm -f $(OBJS) 
 
 prep-core-stamp: prep-lib-stamp
+	$(REBOL) $T/make-os-ext.r no-gfx
 	$(REBOL) $T/core-ext.r
 	touch prep-core-stamp
 
 prep-core:
-	$(REBOL) $T/make-os-ext.r no-gfx
 	#$(REBOL) $T/rma-init.r $(HOST_PRODUCT_NAME)
 	$(eval HOST_FLAGS =$(HOST_CORE_FLAGS))
 	#-rm -f $(HOST)
 	
 prep-view-stamp: prep-lib-stamp
 	#$(REBOL) $T/rma-init.r $(HOST_PRODUCT_NAME)
+	$(REBOL) $T/make-os-ext.r
 	$(REBOL) $T/core-ext.r
 	$(REBOL) $T/view-ext.r
 	touch prep-view-stamp
 
 prep-view:
-	$(REBOL) $T/make-os-ext.r
 	#$(REBOL) $T/rma-init.r $(HOST_PRODUCT_NAME)
 	$(eval HOST_FLAGS =$(HOST_VIEW_FLAGS))
 	#-rm -f $(HOST) 
