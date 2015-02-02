@@ -1066,7 +1066,7 @@ struct Reb_Routine_Info {
 		} cb;
 	} info;
 	void	*cif;
-	REBSER  *args; /* index 0 is the return type, */
+	REBSER  *arg_types; /* index 0 is the return type, */
 	REBSER	*fixed_args;
 	REBSER	*all_args;
 	REBSER  *arg_structs; /* for struct arguments */
@@ -1091,7 +1091,7 @@ enum {
 #define ROUTINE_FUNCPTR(v)			(ROUTINE_INFO(v)->info.rot.funcptr)
 #define ROUTINE_LIB(v)				(ROUTINE_INFO(v)->info.rot.lib)
 #define ROUTINE_ABI(v)  			(ROUTINE_INFO(v)->abi)
-#define ROUTINE_FFI_ARGS(v)  		(ROUTINE_INFO(v)->args)
+#define ROUTINE_FFI_ARG_TYPES(v)  	(ROUTINE_INFO(v)->arg_types)
 #define ROUTINE_FIXED_ARGS(v)  		(ROUTINE_INFO(v)->fixed_args)
 #define ROUTINE_ALL_ARGS(v)  		(ROUTINE_INFO(v)->all_args)
 #define ROUTINE_FFI_ARG_STRUCTS(v)  (ROUTINE_INFO(v)->arg_structs)
@@ -1133,10 +1133,10 @@ enum {
 #define VAL_ROUTINE_FUNCPTR(v)  	(VAL_ROUTINE_INFO(v)->info.rot.funcptr)
 #define VAL_ROUTINE_LIB(v)  		(VAL_ROUTINE_INFO(v)->info.rot.lib)
 #define VAL_ROUTINE_ABI(v)  		(VAL_ROUTINE_INFO(v)->abi)
-#define VAL_ROUTINE_FFI_ARGS(v)  	(VAL_ROUTINE_INFO(v)->args)
+#define VAL_ROUTINE_FFI_ARG_TYPES(v)	(VAL_ROUTINE_INFO(v)->arg_types)
 #define VAL_ROUTINE_FIXED_ARGS(v)  	(VAL_ROUTINE_INFO(v)->fixed_args)
 #define VAL_ROUTINE_ALL_ARGS(v)  	(VAL_ROUTINE_INFO(v)->all_args)
-#define VAL_ROUTINE_FFI_ARG_STRUCTS(v)  	(VAL_ROUTINE_INFO(v)->arg_structs)
+#define VAL_ROUTINE_FFI_ARG_STRUCTS(v)  (VAL_ROUTINE_INFO(v)->arg_structs)
 #define VAL_ROUTINE_EXTRA_MEM(v) 	(VAL_ROUTINE_INFO(v)->extra_mem)
 #define VAL_ROUTINE_CIF(v) 			(VAL_ROUTINE_INFO(v)->cif)
 #define VAL_ROUTINE_RVALUE(v) 		VAL_STRUCT((REBVAL*)SERIES_DATA(VAL_ROUTINE_INFO(v)->arg_structs))

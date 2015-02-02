@@ -216,7 +216,7 @@ static void Mark_Value(REBVAL *val, REBCNT depth);
 	CHECK_MARK(ROUTINE_SPEC(rot), depth);
 	MARK_ROUTINE(ROUTINE_INFO(rot));
 
-	CHECK_MARK(ROUTINE_FFI_ARGS(rot), depth);
+	CHECK_MARK(ROUTINE_FFI_ARG_TYPES(rot), depth);
 	CHECK_MARK(ROUTINE_FFI_ARG_STRUCTS(rot), depth);
 	CHECK_MARK(ROUTINE_EXTRA_MEM(rot), depth);
 
