@@ -512,7 +512,7 @@ static void ffi_to_rebol(REBRIN *rin,
 
 	if (ROUTINE_GET_FLAG(VAL_ROUTINE_INFO(rot), ROUTINE_VARARGS)) {
 		REBINT j = 1;
-		ffi_type **args = NULL;
+		ffi_type **arg_types = NULL;
 
 		VAL_ROUTINE_ALL_ARGS(rot) = Copy_Series(VAL_ROUTINE_FIXED_ARGS(rot));
 
@@ -546,13 +546,13 @@ static void ffi_to_rebol(REBRIN *rin,
 		}
 
 		/* series data could have moved */
-		args = (ffi_type**)SERIES_DATA(VAL_ROUTINE_FFI_ARG_TYPES(rot));
+		arg_types = (ffi_type**)SERIES_DATA(VAL_ROUTINE_FFI_ARG_TYPES(rot));
 		if (FFI_OK != ffi_prep_cif_var((ffi_cif*)VAL_ROUTINE_CIF(rot),
 				VAL_ROUTINE_ABI(rot),
 				n_fixed, /* number of fixed arguments */
 				j - 1, /* number of all arguments */
-				args[0], /* return type */
-				&args[1])) {
+				arg_types[0], /* return type */
+				&arg_types[1])) {
 			//RL_Print("Couldn't prep CIF_VAR\n");
 			Trap_Arg(varargs);
 		}
