@@ -513,6 +513,8 @@ static void ffi_to_rebol(REBRIN *rin,
 	if (ROUTINE_GET_FLAG(VAL_ROUTINE_INFO(rot), ROUTINE_VARARGS)) {
 		REBINT j = 1;
 		ffi_type **arg_types = NULL;
+		/* reset SERIES_TAIL */
+		SERIES_TAIL(VAL_ROUTINE_FFI_ARG_TYPES(rot)) = n_fixed + 1;
 
 		VAL_ROUTINE_ALL_ARGS(rot) = Copy_Series(VAL_ROUTINE_FIXED_ARGS(rot));
 
@@ -535,6 +537,7 @@ static void ffi_to_rebol(REBRIN *rin,
 				}
 				v = Append_Value(VAL_ROUTINE_ALL_ARGS(rot));
 				Init_Word(v, SYM_ELLIPSIS); //FIXME, be clear
+				EXPAND_SERIES_TAIL(VAL_ROUTINE_FFI_ARG_TYPES(rot), 1);
 				process_type_block(rot, reb_type, j);
 				i ++;
 			}
@@ -547,6 +550,9 @@ static void ffi_to_rebol(REBRIN *rin,
 
 		/* series data could have moved */
 		arg_types = (ffi_type**)SERIES_DATA(VAL_ROUTINE_FFI_ARG_TYPES(rot));
+
+		ASSERT2(j == SERIES_TAIL(VAL_ROUTINE_FFI_ARG_TYPES(rot)), RP_MISC);
+
 		if (FFI_OK != ffi_prep_cif_var((ffi_cif*)VAL_ROUTINE_CIF(rot),
 				VAL_ROUTINE_ABI(rot),
 				n_fixed, /* number of fixed arguments */
