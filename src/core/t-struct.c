@@ -879,7 +879,9 @@ static void init_fields(REBVAL *ret, REBVAL *spec)
 				if (fld->dimension > 1) {
 					REBCNT n = 0;
 					if (IS_BLOCK(fld_val)) {
-						Trap_Arg(fld_val);
+						if (VAL_LEN(fld_val) != fld->dimension) {
+							Trap_Arg(fld_val);
+						}
 						for(n = 0; n < fld->dimension; n ++) {
 							if (!assign_scalar(&VAL_STRUCT(ret), fld, n, VAL_BLK_SKIP(fld_val, n))) {
 								Trap_Arg(fld_val);
@@ -890,6 +892,8 @@ static void init_fields(REBVAL *ret, REBVAL *spec)
 
 						/* assuming it's an valid pointer and holding enough space */
 						memcpy(SERIES_SKIP(VAL_STRUCT_DATA_BIN(ret), fld->offset), ptr, fld->size * fld->dimension);
+					} else {
+						Trap_Arg(fld_val);
 					}
 				} else {
 					if (!assign_scalar(&VAL_STRUCT(ret), fld, 0, fld_val)) {
