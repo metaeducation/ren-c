@@ -35,6 +35,8 @@
 #define IS_DECIMAL_TYPE(t) ((t) > STRUCT_TYPE_INTEGER && (t) < STRUCT_TYPE_DECIMAL)
 #define IS_NUMERIC_TYPE(t) (IS_INTEGER_TYPE(t) || IS_DECIMAL_TYPE(t))
 
+REBFLG MT_Struct(REBVAL *out, REBVAL *data, REBCNT type);
+
 static const REBINT type_to_sym [STRUCT_TYPE_MAX] = {
 	SYM_UINT8,
 	SYM_INT8,
@@ -172,17 +174,27 @@ static get_scalar(REBSTU *stu,
 	REBCNT i;
 
 	for(i = 0; i < SERIES_TAIL(stu->fields); i ++, field ++) {
-		REBVAL *val = Append_Value(ser);
+		REBVAL *val = NULL;
+		REBVAL *type_blk = NULL;
+
+		/* required field name */
+		val = Append_Value(ser);
+		Init_Word(val, field->sym);
+		SET_TYPE(val, REB_SET_WORD);
 
 		/* required type */
+		type_blk = Append_Value(ser);
+		VAL_SERIES(type_blk) = Make_Block(1);
+		SET_TYPE(type_blk, REB_BLOCK);
+		val = Append_Value(VAL_SERIES(type_blk));
 		if (field->type == STRUCT_TYPE_STRUCT) {
 			REBVAL *nested = NULL;
 			DS_PUSH_NONE;
 			nested = DS_TOP;
 
 			Init_Word(val, SYM_STRUCT_TYPE);
-			val = Append_Value(ser);
 			get_scalar(stu, field, 0, nested);
+			val = Append_Value(VAL_SERIES(type_blk));
 			SET_TYPE(val, REB_BLOCK);
 			VAL_SERIES(val) = Struct_To_Block(&VAL_STRUCT(nested));
 
@@ -196,18 +208,13 @@ static get_scalar(REBSTU *stu,
 		if (field->dimension > 1) {
 			REBSER *dim = Make_Block(1);
 			REBVAL *dv = NULL;
-			val = Append_Value(ser);
+			val = Append_Value(VAL_SERIES(type_blk));
 			SET_TYPE(val, REB_BLOCK);
 			VAL_SERIES(val) = dim;
 
 			dv = Append_Value(dim);
 			SET_INTEGER(dv, field->dimension);
 		}
-
-		/* required field name */
-		val = Append_Value(ser);
-		Init_Word(val, field->sym);
-		SET_TYPE(val, REB_SET_WORD);
 
 		/* optional initialization */
 		if (field->dimension > 1) {
@@ -466,10 +473,129 @@ static void set_ext_storage (REBVAL *out, REBINT raw_size, REBUPT raw_addr)
 	VAL_STRUCT_DATA_BIN(out) = ser;
 }
 
+static REBOOL parse_field_type(struct Struct_Field *field, REBVAL *spec, REBVAL *inner, REBVAL **init)
+{
+	REBVAL *val = VAL_BLK_DATA(spec);
+
+	if (IS_WORD(val)){
+		switch (VAL_WORD_CANON(val)) {
+			case SYM_UINT8:
+				field->type = STRUCT_TYPE_UINT8;
+				field->size = 1;
+				break;
+			case SYM_INT8:
+				field->type = STRUCT_TYPE_INT8;
+				field->size = 1;
+				break;
+			case SYM_UINT16:
+				field->type = STRUCT_TYPE_UINT16;
+				field->size = 2;
+				break;
+			case SYM_INT16:
+				field->type = STRUCT_TYPE_INT16;
+				field->size = 2;
+				break;
+			case SYM_UINT32:
+				field->type = STRUCT_TYPE_UINT32;
+				field->size = 4;
+				break;
+			case SYM_INT32:
+				field->type = STRUCT_TYPE_INT32;
+				field->size = 4;
+				break;
+			case SYM_UINT64:
+				field->type = STRUCT_TYPE_UINT64;
+				field->size = 8;
+				break;
+			case SYM_INT64:
+				field->type = STRUCT_TYPE_INT64;
+				field->size = 8;
+				break;
+			case SYM_FLOAT:
+				field->type = STRUCT_TYPE_FLOAT;
+				field->size = 4;
+				break;
+			case SYM_DOUBLE:
+				field->type = STRUCT_TYPE_DOUBLE;
+				field->size = 8;
+				break;
+			case SYM_POINTER:
+				field->type = STRUCT_TYPE_POINTER;
+				field->size = sizeof(void*);
+				break;
+			case SYM_STRUCT_TYPE:
+				++ val;
+				if (IS_BLOCK(val)) {
+					REBFLG res;
+
+					res = MT_Struct(inner, val, REB_STRUCT);
+
+					if (!res) {
+						//RL_Print("Failed to make nested struct!\n");
+						return FALSE;
+					}
+
+					field->size = SERIES_TAIL(VAL_STRUCT_DATA_BIN(inner));
+					field->type = STRUCT_TYPE_STRUCT;
+					field->fields = VAL_STRUCT_FIELDS(inner);
+					field->spec = VAL_STRUCT_SPEC(inner);
+					*init = inner; /* a shortcut for struct intialization */
+				} else {
+					Trap_Types(RE_EXPECT_VAL, REB_BLOCK, VAL_TYPE(val));
+				}
+				break;
+			case SYM_REBVAL:
+				field->type = STRUCT_TYPE_REBVAL;
+				field->size = sizeof(REBVAL);
+				break;
+			default:
+				Trap_Type(val);
+		}
+	} else if (IS_STRUCT(val)) { //[b: [struct-a] val-a]
+		field->size = SERIES_TAIL(VAL_STRUCT_DATA_BIN(val));
+		field->type = STRUCT_TYPE_STRUCT;
+		field->fields = VAL_STRUCT_FIELDS(val);
+		field->spec = VAL_STRUCT_SPEC(val);
+		*init = val;
+	} else {
+		Trap_Type(val);
+	}
+	++ val;
+
+	if (IS_BLOCK(val)) {// make struct! [a: [int32 [2]] [0 0]]
+
+		REBVAL *ret = Do_Blk(VAL_SERIES(val), 0);
+
+		if (!IS_INTEGER(ret)) {
+			Trap_Types(RE_EXPECT_VAL, REB_INTEGER, VAL_TYPE(val));
+		}
+		field->dimension = (REBCNT)VAL_INT64(ret);
+		field->array = TRUE;
+		++ val;
+	} else {
+		field->dimension = 1; /* scalar */
+		field->array = FALSE;
+	}
+
+	if (NOT_END(val)) {
+		Trap_Type(val);
+	}
+
+	return TRUE;
+}
+
 /***********************************************************************
 **
 */	REBFLG MT_Struct(REBVAL *out, REBVAL *data, REBCNT type)
 /*
+ * Format:
+ * make struct! [
+ *     field1 [type1]
+ *     field2: [type2] field2-init-value
+ * 	   field3: [struct [field1 [type1]]]
+ * 	   field4: [type1[3]]
+ * 	   ...
+ * ]
 ***********************************************************************/
 {
 	//RL_Print("%s\n", __func__);
@@ -518,109 +644,8 @@ static void set_ext_storage (REBVAL *out, REBINT raw_size, REBUPT raw_addr)
 
 			field = (struct Struct_Field *)SERIES_SKIP(VAL_STRUCT_FIELDS(out), field_idx);
 			field->offset = (REBCNT)offset;
-			if (IS_WORD(blk)) {
-				switch (VAL_WORD_CANON(blk)) {
-					case SYM_UINT8:
-						field->type = STRUCT_TYPE_UINT8;
-						field->size = 1;
-						break;
-					case SYM_INT8:
-						field->type = STRUCT_TYPE_INT8;
-						field->size = 1;
-						break;
-					case SYM_UINT16:
-						field->type = STRUCT_TYPE_UINT16;
-						field->size = 2;
-						break;
-					case SYM_INT16:
-						field->type = STRUCT_TYPE_INT16;
-						field->size = 2;
-						break;
-					case SYM_UINT32:
-						field->type = STRUCT_TYPE_UINT32;
-						field->size = 4;
-						break;
-					case SYM_INT32:
-						field->type = STRUCT_TYPE_INT32;
-						field->size = 4;
-						break;
-					case SYM_UINT64:
-						field->type = STRUCT_TYPE_UINT64;
-						field->size = 8;
-						break;
-					case SYM_INT64:
-						field->type = STRUCT_TYPE_INT64;
-						field->size = 8;
-						break;
-					case SYM_FLOAT:
-						field->type = STRUCT_TYPE_FLOAT;
-						field->size = 4;
-						break;
-					case SYM_DOUBLE:
-						field->type = STRUCT_TYPE_DOUBLE;
-						field->size = 8;
-						break;
-					case SYM_POINTER:
-						field->type = STRUCT_TYPE_POINTER;
-						field->size = sizeof(void*);
-						break;
-					case SYM_STRUCT_TYPE:
-						++ blk;
-						if (IS_BLOCK(blk)) {
-							REBFLG res;
-
-							res = MT_Struct(inner, blk, REB_STRUCT);
-
-							if (!res) {
-								//RL_Print("Failed to make nested struct!\n");
-								return FALSE;
-							}
-
-							field->size = SERIES_TAIL(VAL_STRUCT_DATA_BIN(inner));
-							field->type = STRUCT_TYPE_STRUCT;
-							field->fields = VAL_STRUCT_FIELDS(inner);
-							field->spec = VAL_STRUCT_SPEC(inner);
-							init = inner; /* a shortcut for struct intialization */
-						} else {
-							Trap_Types(RE_EXPECT_VAL, REB_BLOCK, VAL_TYPE(blk));
-						}
-						break;
-					case SYM_REBVAL:
-						field->type = STRUCT_TYPE_REBVAL;
-						field->size = sizeof(REBVAL);
-						break;
-					default:
-						Trap_Type(blk);
-				}
-			} else if (IS_STRUCT(blk)) { //[struct-a b: val-a] 
-				field->size = SERIES_TAIL(VAL_STRUCT_DATA_BIN(blk));
-				field->type = STRUCT_TYPE_STRUCT;
-				field->fields = VAL_STRUCT_FIELDS(blk);
-				field->spec = VAL_STRUCT_SPEC(blk);
-				init = blk; /* a shortcut for struct intialization */
-			} else {
-				Trap_Type(blk);
-			}
-			++ blk;
-
-			if (IS_BLOCK(blk)) {// make struct! [integer! [2] a: [0 0]]
-
-				REBVAL *ret = Do_Blk(VAL_SERIES(blk), 0);
-
-				if (!IS_INTEGER(ret)) {
-					Trap_Types(RE_EXPECT_VAL, REB_INTEGER, VAL_TYPE(blk));
-				}
-				field->dimension = (REBCNT)VAL_INT64(ret);
-				field->array = TRUE;
-				++ blk;
-			} else {
-				field->dimension = 1; /* scalar */
-				field->array = FALSE;
-			}
-
 			if (IS_SET_WORD(blk)) {
 				field->sym = VAL_WORD_SYM(blk); 
-				++ blk;
 				expect_init = TRUE;
 				if (raw_addr) {
 					/* initialization is not allowed for raw memory struct */
@@ -628,12 +653,19 @@ static void set_ext_storage (REBVAL *out, REBINT raw_size, REBUPT raw_addr)
 				}
 			} else if (IS_WORD(blk)) {
 				field->sym = VAL_WORD_SYM(blk); 
-				++ blk;
 				expect_init = FALSE;
 			} else {
 				Trap_Type(blk);
 			}
-			
+			++ blk;
+
+			if (!IS_BLOCK(blk)) {
+				Trap_Arg(blk);
+			}
+
+			if (!parse_field_type(field, blk, inner, &init)) { return FALSE; }
+			++ blk;
+
 			STATIC_ASSERT(sizeof(field->size) <= 4);
 			STATIC_ASSERT(sizeof(field->dimension) <= 4);
 
@@ -668,7 +700,7 @@ static void set_ext_storage (REBVAL *out, REBINT raw_size, REBUPT raw_addr)
 						REBCNT n = 0;
 
 						if (VAL_LEN(init) != field->dimension) {
-							Trap1(RE_INVALID_DATA, init);
+							Trap_Arg(init);
 						}
 						/* assign */
 						for (n = 0; n < field->dimension; n ++) {
