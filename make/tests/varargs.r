@@ -61,7 +61,7 @@ printf compose [
 ]
 
 h: make struct! [
-	uint8 [128] a
+	a [uint8 [128]]
 ]
 len: sprintf reduce [
 	addr-of h

@@ -18,7 +18,7 @@ fp: fopen "/tmp/test.txt" "w+"
 cnt: "hello world"
 fwrite cnt length? cnt 1 fp
 
-buf: make struct! [uint8 [128] s]
+buf: make struct! [s [uint8 [128]]]
 fseek fp 0 0
 fread (reflect buf 'addr) length? buf 1 fp
 print ["read:" to string! values-of buf "(" values-of buf ")"]
@@ -42,18 +42,18 @@ fclose fp
 ;       };
 
 tm: make struct! [
-	int32 tm_sec
-	int32 tm_min
-   	int32 tm_hour;   /* Hours (0-23) */
-   	int32 tm_mday;   /* Day of the month (1-31) */
-   	int32 tm_mon;    /* Month (0-11) */
-   	int32 tm_year;   /* Year - 1900 */
-   	int32 tm_wday;   /* Day of the week (0-6, Sunday = 0) */
-   	int32 tm_yday;   /* Day in the year (0-365, 1 Jan = 0) */
-   	int32 tm_isdst;  /* Daylight saving time */
+	tm_sec [int32]  
+	tm_min [int32] 
+   	tm_hour [int32] ;   /* Hours (0-23) */
+   	tm_mday [int32] ;   /* Day of the month (1-31) */
+   	tm_mon  [int32] ;    /* Month (0-11) */
+   	tm_year [int32] ;   /* Year - 1900 */
+   	tm_wday [int32] ;   /* Day of the week (0-6, Sunday = 0) */
+   	tm_yday [int32] ;   /* Day in the year (0-365, 1 Jan = 0) */
+   	tm_isdst [int32];  /* Daylight saving time */
 ]
 time_t: make struct! [
-	int64 t
+	t [int64]
 ]
 
 time: make routine! compose [[t [pointer] return: [int64]] (libc) "time"]

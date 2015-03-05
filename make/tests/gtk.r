@@ -192,13 +192,13 @@ gtk-container-add: make routine! compose [
 ]
 
 init-gtk: function [app] [
-	arg0: make struct! [
-		uint8 [1 + length? app] appn
+	arg0: make struct! compose/deep [
+		appn [uint8 [(1 + length? app)]]
 	]
 	change arg0 append to binary! app #{00}
 
 	argv: make struct! [
-		pointer [2] args
+		args [pointer [2]]
 	]
 
 	print ["assign pointer"]
@@ -206,11 +206,11 @@ init-gtk: function [app] [
 
 	print ["argv:" argv]
 	argc: make struct! [
-		int32 c: 1
+		c: [int32] 1
 	]
 
 	addr-argv: make struct! [
-		pointer addr: (reflect argv 'addr)
+		addr: [pointer] (reflect argv 'addr)
 	]
 
 	print ["addr-argv: " addr-argv]
@@ -260,7 +260,7 @@ on-click-callback: mk-cb [
 			raw-memory: (data)
 			raw-size: 4
 	 	]
-		int32 i
+		i [int32]
 	]
 	i/i: i/i + 1
 	gtk-button-set-label widget rejoin ["clicked " i/i either i/i = 1 [" time"][" times"]]
@@ -294,7 +294,7 @@ gtk-container-add win hbox
 but1: gtk-button-new-with-label "button 1"
 gtk-box-pack-start hbox but1 1 1 0
 
-n-clicked: make struct! [int32 i: 0]
+n-clicked: make struct! [i: [int32] 0]
 g-signal-connect but1 "clicked" (reflect :on-click-callback 'addr) (reflect n-clicked 'addr)
 
 but2: gtk-button-new-with-label "button 2"

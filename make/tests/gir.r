@@ -16,7 +16,7 @@ stringfy: func [
 ] [
 	len: strlen ptr
 	s: make struct! [
-		uint8 [len] s: ptr
+		s: [uint8 [len]] ptr
 	]
 	to string! values-of s
 ]
@@ -102,9 +102,9 @@ g-function-info-get-symbol: make routine! compose [
 ]
 
 GError: make struct! [
-	uint32 domain
-	uint32 code
-	pointer message
+	domain [uint32]
+	code [uint32]
+	message [pointer]
 ]
 
 NULL: 0

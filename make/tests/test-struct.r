@@ -1,9 +1,9 @@
 REBOL[]
 recycle/torture
 a: make struct! [
-	struct! [int32 bi] bs
-	int32 [2] i
-	int32 j
+	bs [struct! [bi [int32]]]
+	i [int32 [2]]
+	j [int32]
 ]
 print ["a:" mold a]
 
