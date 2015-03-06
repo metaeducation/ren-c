@@ -400,7 +400,7 @@
 				else SET_NONE(vars);
 			}
 
-			// var spec is WORD:
+			// var spec is SET_WORD:
 			else if (IS_SET_WORD(words)) {
 				if (ANY_OBJECT(value) || IS_MAP(value)) {
 					*vars = *value;
@@ -413,6 +413,7 @@
 			}
 			else Trap_Arg(words);
 		}
+		if (index == rindex) index++; //the word block has only set-words: foreach [a:] [1 2 3][]
 
 		ds = Do_Blk(body, 0);
 
