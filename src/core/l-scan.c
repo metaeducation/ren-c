@@ -457,9 +457,9 @@
 
 		src++;
 
-		*UNI_SKIP(buf, buf->tail) = chr;
-
 		if (SERIES_LEN(buf) >= SERIES_REST(buf)) Extend_Series(buf, 1);
+
+		*UNI_SKIP(buf, buf->tail) = chr;
 
 		buf->tail ++;
     }
