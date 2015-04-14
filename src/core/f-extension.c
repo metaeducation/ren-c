@@ -474,6 +474,12 @@ x*/	int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result)
 	case RXR_FALSE:
 		SET_FALSE(val);
 		break;
+	case RXR_BAD_ARGS:
+		Trap0(RE_BAD_CMD_ARGS);
+		break;
+	case RXR_NO_COMMAND:
+		Trap0(RE_NO_CMD);
+		break;
 	case RXR_ERROR:
 		Trap0(RE_COMMAND_FAIL);
 		break;
