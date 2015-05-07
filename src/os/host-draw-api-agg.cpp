@@ -291,7 +291,15 @@ namespace agg
 
 	extern "C" void rebdrw_line_pattern(void* gr, REBCNT col, REBDEC* patterns)
 	{
-        ((agg_graphics*)gr)->agg_line_pattern((col) ? (REBYTE*)&col : NULL, patterns);
+		/* convert malloc'ed memory to new'ed memory */
+		REBDEC * new_patterns = NULL;
+		if (patterns != NULL) {
+			size_t len = patterns[0];
+			new_patterns = new REBDEC[len + 1];
+			memcpy(new_patterns, patterns, (len + 1) * sizeof(REBDEC));
+			free(patterns);
+		}
+        ((agg_graphics*)gr)->agg_line_pattern((col) ? (REBYTE*)&col : NULL, new_patterns);
 	}
 
 	extern "C" void rebdrw_line_width(void* gr, REBDEC width, REBINT mode)
