@@ -23,6 +23,7 @@ words: [
 	border-fixed
 	border-size
 	screen-size
+	virtual-screen-size
 	log-size
 	phys-size
 	screen-dpi

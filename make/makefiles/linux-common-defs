@@ -11,7 +11,7 @@ HOST_VIEW_FLAGS= $(CFLAGS) -Wno-pointer-sign -DREB_EXE $(BIT) -fvisibility=defau
 HFLAGS_FONT_CONFIG=`pkg-config fontconfig --cflags`
 
 CLIB= -ldl -lm $(LIBFFI_A)
-GUI_CLIB=  -ldl -lm -lstdc++ -lfreetype -L../src/freetype-2.4.12/objs/.libs/ `pkg-config freetype2 --libs` -lX11 `pkg-config fontconfig --libs` $(BIT) -lXext $(LDFLAGS)
+GUI_CLIB=  -ldl -lm -lstdc++ -lfreetype -L../src/freetype-2.4.12/objs/.libs/ `pkg-config freetype2 --libs` -lXrandr -lX11 `pkg-config fontconfig --libs` $(BIT) -lXext $(LDFLAGS)
 # REBOL builds various include files:
 REBOL=	$(CD)r3-make-linux -qs
 

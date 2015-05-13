@@ -451,6 +451,11 @@ REBINT Alloc_Window(REBGOB *gob) {
                         y = PHYS_COORD_Y(OS_Get_Metrics(SM_SCREEN_HEIGHT));
                         break;
 						
+					case W_GRAPHICS_VIRTUAL_SCREEN_SIZE:
+                        x = PHYS_COORD_X(OS_Get_Metrics(SM_VIRTUAL_SCREEN_WIDTH));
+                        y = PHYS_COORD_Y(OS_Get_Metrics(SM_VIRTUAL_SCREEN_HEIGHT));
+                        break;
+						
                     case W_GRAPHICS_LOG_SIZE:
 						if (RXA_TYPE(frm, 3) == RXT_PAIR){
 							log_size.x = RXA_PAIR(frm, 3).x;

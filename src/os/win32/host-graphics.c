@@ -166,6 +166,12 @@ extern const unsigned char RX_text[];
 {
 	REBD32 result = 0;
 	switch(type){
+		case SM_VIRTUAL_SCREEN_WIDTH:
+			result = GetSystemMetrics(SM_CXVIRTUALSCREEN);
+			break;
+		case SM_VIRTUAL_SCREEN_HEIGHT:
+			result = GetSystemMetrics(SM_CYVIRTUALSCREEN);
+			break;
 		case SM_SCREEN_WIDTH:
 			result = GetSystemMetrics(SM_CXSCREEN);
 			break;

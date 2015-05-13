@@ -40,6 +40,7 @@
 #include <math.h>
 #include <X11/Xlib.h>
 #include <X11/cursorfont.h>
+#include <X11/extensions/Xrandr.h>
 
 #include <fontconfig/fontconfig.h>
 
@@ -192,6 +193,29 @@ static int get_work_area(METRIC_TYPE type)
 		   }
 		   return fake_data[index];
 	   }
+       Screen *sc = XDefaultScreenOfDisplay(global_x_info->display);
+	   int virtual_width = XWidthOfScreen(sc);
+	   int virtual_height = XHeightOfScreen(sc);
+
+	   XRRScreenResources *res;
+	   RROutput primary_output;
+	   XRROutputInfo *info;
+	   XRRCrtcInfo *crtc;
+
+	   Window root = DefaultRootWindow(global_x_info->display);
+	   res = XRRGetScreenResourcesCurrent(global_x_info->display, root);
+	   primary_output = XRRGetOutputPrimary(global_x_info->display, root);
+	   info = XRRGetOutputInfo(global_x_info->display, res, primary_output);
+
+	   crtc = XRRGetCrtcInfo(global_x_info->display, res, info->crtc);
+
+	   /* adjust width/height for primary output */
+	   data [2] += crtc->width - virtual_width;
+	   data [3] += crtc->height - virtual_height;
+
+	   XRRFreeCrtcInfo(crtc);
+	   XRRFreeOutputInfo(info);
+	   XRRFreeScreenResources(res);
 
 	   ret = data[index];
 	   XFree(data);
@@ -225,10 +249,31 @@ static int get_work_area(METRIC_TYPE type)
 	   root = DefaultRootWindow(global_x_info->display);
        sc = XDefaultScreenOfDisplay(global_x_info->display);
        switch(type) {
-               case SM_SCREEN_WIDTH:
+			   case SM_VIRTUAL_SCREEN_WIDTH:
                        return XWidthOfScreen(sc);
-               case SM_SCREEN_HEIGHT:
+			   case SM_VIRTUAL_SCREEN_HEIGHT:
                        return XHeightOfScreen(sc);
+               case SM_SCREEN_WIDTH:
+               case SM_SCREEN_HEIGHT:
+					   {
+						   XRRScreenResources *res;
+						   RROutput primary_output;
+						   XRROutputInfo *info;
+						   XRRCrtcInfo *crtc;
+
+						   res = XRRGetScreenResourcesCurrent(global_x_info->display, root);
+						   primary_output = XRRGetOutputPrimary(global_x_info->display, root);
+						   info = XRRGetOutputInfo(global_x_info->display, res, primary_output);
+
+						   crtc = XRRGetCrtcInfo(global_x_info->display, res, info->crtc);
+
+						   ret = (type == SM_SCREEN_WIDTH)? crtc->width : crtc->height;
+						   XRRFreeCrtcInfo(crtc);
+						   XRRFreeOutputInfo(info);
+						   XRRFreeScreenResources(res);
+
+						   return ret;
+					   }
                case SM_WORK_X:
                case SM_WORK_Y:
                case SM_WORK_WIDTH:
