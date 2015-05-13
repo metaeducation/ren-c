@@ -1,9 +1,9 @@
-makefile=makefile-32
+MAKEFILE=makefile-32
 TO_OS?= TO_LINUX_X86
 OS_ID?= 0.4.4
 BIT="-m32"
 EXTRA_VIEW_CFLAGS=-DUSE_GTK_FILECHOOSER -DUSE_XSHM
-LIBFFI_A=libffi/lib32/libffi.a
+LIBFFI_A=libffi.$(MAKEFILE)/lib32/libffi.a
 
 MD=makefiles
 

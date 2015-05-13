@@ -56,7 +56,7 @@ build() {
 	#echo "make -f $MK $EXE"
 	#echo "copy $EXE $NAME"
 	DIR=`pwd`
-	rm -fr $DIR/libffi
+	#rm -fr $DIR/libffi.$MK
 	cd ../src/libffi
 	if [ -f configure ]; then
 		make clean
@@ -66,15 +66,15 @@ build() {
 	echo "CFLAGS: $CFLAGS"
 	if [ -z $HOST ]; then
 		if [ -z $CFLAGS ]; then
-			./configure --prefix=$DIR/libffi
+			./configure --prefix=$DIR/libffi.$MK
 		else
-			./configure --prefix=$DIR/libffi CFLAGS=$CFLAGS
+			./configure --prefix=$DIR/libffi.$MK CFLAGS=$CFLAGS
 		fi
 	else
 		if [ -z $CFLAGS ]; then
-			./configure --prefix=$DIR/libffi --host=$HOST
+			./configure --prefix=$DIR/libffi.$MK --host=$HOST
 		else
-			./configure --prefix=$DIR/libffi --host=$HOST CFLAGS=$CFLAGS
+			./configure --prefix=$DIR/libffi.$MK --host=$HOST CFLAGS=$CFLAGS
 		fi
 	fi
 	make

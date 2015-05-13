@@ -1,8 +1,8 @@
-makefile=makefile-64
+MAKEFILE=makefile-64
 TO_OS= TO_LINUX_X64
 OS_ID= 0.4.40
 EXTRA_VIEW_CFLAGS=-DUSE_GTK_FILECHOOSER -DUSE_XSHM
-LIBFFI_A=libffi/lib/libffi.a
+LIBFFI_A=libffi.$(MAKEFILE)/lib/libffi.a
 
 MD=makefiles
 

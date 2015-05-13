@@ -1,5 +1,5 @@
 MD=makefiles
-MAKEFILE = makefile-mingw
+MAKEFILE = makefile-mingw-32
 
 TO_OS= TO_WIN32
 OS_ID= 0.3.1

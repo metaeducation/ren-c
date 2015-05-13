@@ -1,35 +1,35 @@
-objs/host-licensing.o:     $S/os/win32/host-licensing.c
-	$(CC) $S/os/win32/host-licensing.c $(HFLAGS) -o objs/host-licensing.o
+$(OBJ_DIR)/host-licensing.o:     $S/os/win32/host-licensing.c
+	$(CC) $S/os/win32/host-licensing.c $(HFLAGS) -o $(OBJ_DIR)/host-licensing.o
 
-objs/host-lib.o:      $S/os/win32/host-lib.c
-	$(CC) $S/os/win32/host-lib.c $(HFLAGS) -o objs/host-lib.o
+$(OBJ_DIR)/host-lib.o:      $S/os/win32/host-lib.c
+	$(CC) $S/os/win32/host-lib.c $(HFLAGS) -o $(OBJ_DIR)/host-lib.o
 
-objs/dev-stdio.o:     $S/os/win32/dev-stdio.c
-	$(CC) $S/os/win32/dev-stdio.c $(HFLAGS) -o objs/dev-stdio.o
+$(OBJ_DIR)/dev-stdio.o:     $S/os/win32/dev-stdio.c
+	$(CC) $S/os/win32/dev-stdio.c $(HFLAGS) -o $(OBJ_DIR)/dev-stdio.o
 
-objs/dev-file.o:      $S/os/win32/dev-file.c
-	$(CC) $S/os/win32/dev-file.c $(HFLAGS) -o objs/dev-file.o
+$(OBJ_DIR)/dev-file.o:      $S/os/win32/dev-file.c
+	$(CC) $S/os/win32/dev-file.c $(HFLAGS) -o $(OBJ_DIR)/dev-file.o
 
-objs/dev-serial.o:      $S/os/win32/dev-serial.c
-	$(CC) $S/os/win32/dev-serial.c $(HFLAGS) -o objs/dev-serial.o
+$(OBJ_DIR)/dev-serial.o:      $S/os/win32/dev-serial.c
+	$(CC) $S/os/win32/dev-serial.c $(HFLAGS) -o $(OBJ_DIR)/dev-serial.o
 
-objs/dev-event.o:     $S/os/win32/dev-event.c
-	$(CC) $S/os/win32/dev-event.c $(HFLAGS) -o objs/dev-event.o
+$(OBJ_DIR)/dev-event.o:     $S/os/win32/dev-event.c
+	$(CC) $S/os/win32/dev-event.c $(HFLAGS) -o $(OBJ_DIR)/dev-event.o
 
-objs/dev-clipboard.o: $S/os/win32/dev-clipboard.c
-	$(CC) $S/os/win32/dev-clipboard.c $(HFLAGS) -o objs/dev-clipboard.o
+$(OBJ_DIR)/dev-clipboard.o: $S/os/win32/dev-clipboard.c
+	$(CC) $S/os/win32/dev-clipboard.c $(HFLAGS) -o $(OBJ_DIR)/dev-clipboard.o
 
-objs/host-compositor.o: $S/os/win32/host-compositor-gdi.c
-	$(CC) $S/os/win32/host-compositor-gdi.c $(HFLAGS) -o objs/host-compositor.o
+$(OBJ_DIR)/host-compositor.o: $S/os/win32/host-compositor-gdi.c
+	$(CC) $S/os/win32/host-compositor-gdi.c $(HFLAGS) -o $(OBJ_DIR)/host-compositor.o
 
-objs/host-graphics.o: $S/os/win32/host-graphics.c
-	$(CC) $S/os/win32/host-graphics.c $(HFLAGS) -o objs/host-graphics.o
+$(OBJ_DIR)/host-graphics.o: $S/os/win32/host-graphics.c
+	$(CC) $S/os/win32/host-graphics.c $(HFLAGS) -o $(OBJ_DIR)/host-graphics.o
 
-objs/host-event.o:    $S/os/win32/host-event.c
-	$(CC) $S/os/win32/host-event.c $(HFLAGS) -o objs/host-event.o
+$(OBJ_DIR)/host-event.o:    $S/os/win32/host-event.c
+	$(CC) $S/os/win32/host-event.c $(HFLAGS) -o $(OBJ_DIR)/host-event.o
 
-objs/host-window.o:   $S/os/win32/host-window.c
-	$(CC) $S/os/win32/host-window.c $(HFLAGS) -o objs/host-window.o
+$(OBJ_DIR)/host-window.o:   $S/os/win32/host-window.c
+	$(CC) $S/os/win32/host-window.c $(HFLAGS) -o $(OBJ_DIR)/host-window.o
 
-objs/agg_font_win32_tt.o:$S/agg/agg_font_win32_tt.cpp
-	$(CXX) $S/agg/agg_font_win32_tt.cpp $(HFLAGS) -o objs/agg_font_win32_tt.o
+$(OBJ_DIR)/agg_font_win32_tt.o:$S/agg/agg_font_win32_tt.cpp
+	$(CXX) $S/agg/agg_font_win32_tt.cpp $(HFLAGS) -o $(OBJ_DIR)/agg_font_win32_tt.o
