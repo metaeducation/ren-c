@@ -726,7 +726,8 @@ static void set_gob_window_type(REBGOB *gob,
 												  display,
 												  "_NET_WM_WINDOW_TYPE",
 												  True);
-	if (GET_FLAGS(gob->flags, GOBF_NO_TITLE, GOBF_NO_BORDER)) {
+	if (GET_FLAGS(gob->flags, GOBF_NO_TITLE, GOBF_NO_BORDER)
+		&& !GET_GOB_FLAG(gob, GOBF_FULLSCREEN)) {
 		window_type = x_atom_list_find_atom(global_x_info->x_atom_list,
 											display,
 											"_NET_WM_WINDOW_TYPE_DROPDOWN_MENU",
@@ -874,7 +875,8 @@ static void set_wm_locale(Display *display,
 			}
 	}
 
-	if (GET_FLAGS(gob->flags, GOBF_NO_TITLE, GOBF_NO_BORDER)) {
+	if (GET_FLAGS(gob->flags, GOBF_NO_TITLE, GOBF_NO_BORDER)
+		&& !GET_GOB_FLAG(gob, GOBF_FULLSCREEN)) {
 		swa.save_under = True;
 		swa.override_redirect = True;
 		swa.cursor = None;
