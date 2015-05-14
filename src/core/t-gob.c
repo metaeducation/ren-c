@@ -333,6 +333,8 @@ const REBCNT Gob_Flag_Words[] = {
 					CLR_GOB_FLAG(gob, GOBF_FULLSCREEN);
 					break;
 				case GOBF_FULLSCREEN:
+					SET_GOB_FLAG(gob, GOBF_NO_TITLE);
+					SET_GOB_FLAG(gob, GOBF_NO_BORDER);
 					CLR_GOB_FLAGS(gob, GOBF_MINIMIZE, GOBF_RESTORE);
 					CLR_GOB_FLAG(gob, GOBF_MAXIMIZE);
 			}
