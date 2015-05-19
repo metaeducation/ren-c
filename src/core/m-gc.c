@@ -535,7 +535,7 @@ mark_obj:
 
 /***********************************************************************
 **
-*/	static REBCNT Sweep_Series(void)
+*/	ATTRIBUTE_NO_SANITIZE_ADDRESS static REBCNT Sweep_Series(void)
 /*
 **		Free all unmarked series.
 **
@@ -572,7 +572,7 @@ mark_obj:
 
 /***********************************************************************
 **
-*/	static REBCNT Sweep_Gobs(void)
+*/	ATTRIBUTE_NO_SANITIZE_ADDRESS static REBCNT Sweep_Gobs(void)
 /*
 **		Free all unmarked gobs.
 **
@@ -613,7 +613,7 @@ mark_obj:
 
 /***********************************************************************
 **
-*/	static REBCNT Sweep_Libs(void)
+*/	ATTRIBUTE_NO_SANITIZE_ADDRESS static REBCNT Sweep_Libs(void)
 /*
 **		Free all unmarked libs.
 **
@@ -649,7 +649,7 @@ mark_obj:
 
 /***********************************************************************
 **
-*/	static REBCNT Sweep_Routines(void)
+*/	ATTRIBUTE_NO_SANITIZE_ADDRESS static REBCNT Sweep_Routines(void)
 /*
 **		Free all unmarked routines.
 **

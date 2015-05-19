@@ -52,6 +52,13 @@
 #include "sys-core.h"
 #include "sys-int-funcs.h"
 
+#ifdef HAVE_ASAN_INTERFACE_H
+#include <asan_interface.h>
+#else
+#define ASAN_POISON_MEMORY_REGION(reg, mem_size)
+#define ASAN_UNPOISON_MEMORY_REGION(reg, mem_size)
+#endif
+
 #define POOL_MAP
 
 #define	BAD_MEM_PTR ((REBYTE *)0xBAD1BAD1)
@@ -258,6 +265,7 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 	}
 #endif
 	*node = 0;
+	ASAN_POISON_MEMORY_REGION(seg, mem_size);
 }
 
 
@@ -276,6 +284,9 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 	pool = &Mem_Pools[pool_id];
 	if (!pool->first) Fill_Pool(pool);
 	node = pool->first;
+
+	ASAN_UNPOISON_MEMORY_REGION(node, pool->wide);
+
 	pool->first = *node;
 	pool->free--;
 	return (void *)node;
@@ -292,6 +303,9 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 {
 	MUNG_CHECK(pool_id, node, Mem_Pools[pool_id].wide);
 	*node = Mem_Pools[pool_id].first;
+
+	ASAN_POISON_MEMORY_REGION(node, Mem_Pools[pool_id].wide);
+
 	Mem_Pools[pool_id].first = node;
 	Mem_Pools[pool_id].free++;
 }
@@ -321,6 +335,7 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 		pool = &Mem_Pools[pool_num];
 		if (!pool->first) Fill_Pool(pool);
 		node = pool->first;
+		ASAN_UNPOISON_MEMORY_REGION(node, pool->wide);
 		pool->first = *node;
 		pool->free--;
 		length = pool->wide;
@@ -387,6 +402,7 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 		pool = &Mem_Pools[pool_num];
 		if (!pool->first) Fill_Pool(pool);
 		node = pool->first;
+		ASAN_UNPOISON_MEMORY_REGION(node, pool->wide);
 		pool->first = *node;
 		pool->free--;
 		length = pool->wide;
