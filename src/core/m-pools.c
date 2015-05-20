@@ -316,13 +316,12 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 	REBPOL *pool = &Mem_Pools[pool_id];
 
 	MUNG_CHECK(pool_id, node, pool->wide);
-	if (pool->last != NULL) {
-		ASAN_UNPOISON_MEMORY_REGION(pool->last, pool->wide);
-		*(pool->last) = node;
-		ASAN_POISON_MEMORY_REGION(pool->last, pool->wide);
-	} else { // pool is empty
-		pool->first = node;
+	if (pool->last == NULL) { //pool is empty
+		Fill_Pool(pool); //insert an empty segment, such that this node won't be picked by next Make_Node to enlongate the poisonous time of this area to catch stale pointers
 	}
+	ASAN_UNPOISON_MEMORY_REGION(pool->last, pool->wide);
+	*(pool->last) = node;
+	ASAN_POISON_MEMORY_REGION(pool->last, pool->wide);
 	pool->last = node;
 	*node = NULL;
 
