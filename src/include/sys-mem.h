@@ -75,6 +75,7 @@ typedef void *REBNOD;			// Just used for linking free nodes
 {
 	REBSEG	*segs;				// first memory segment
 	REBNOD	*first;				// first free node in pool
+	REBNOD	*last;				// last free node in pool
 	REBCNT	wide;				// size of allocation unit
 	REBCNT	units;				// units per segment allocation
 	REBCNT	free;				// number of units remaining

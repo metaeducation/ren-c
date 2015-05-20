@@ -248,7 +248,12 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 	pool->has += units;
 
 	// Add new nodes to the end of free list:
-	for (node = (REBNOD *)&pool->first; *node; node = *node);	// goto end
+	if (pool->last == NULL) {
+		node = &pool->first;
+	} else {
+		node = pool->last;
+		ASAN_UNPOISON_MEMORY_REGION(node, pool->wide);
+	}
 
 #ifdef MUNGWALL
 	for (next = (REBYTE *)(seg + 1); units > 0; units--) {
@@ -265,6 +270,10 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 	}
 #endif
 	*node = 0;
+	if (pool->last != NULL) {
+		ASAN_POISON_MEMORY_REGION(pool->last, pool->wide);
+	}
+	pool->last = node;
 	ASAN_POISON_MEMORY_REGION(seg, mem_size);
 }
 
@@ -288,6 +297,9 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 	ASAN_UNPOISON_MEMORY_REGION(node, pool->wide);
 
 	pool->first = *node;
+	if (node == pool->last) {
+		pool->last = NULL;
+	}
 	pool->free--;
 	return (void *)node;
 }
@@ -301,13 +313,22 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 **
 ***********************************************************************/
 {
-	MUNG_CHECK(pool_id, node, Mem_Pools[pool_id].wide);
-	*node = Mem_Pools[pool_id].first;
+	REBPOL *pool = &Mem_Pools[pool_id];
 
-	ASAN_POISON_MEMORY_REGION(node, Mem_Pools[pool_id].wide);
+	MUNG_CHECK(pool_id, node, pool->wide);
+	if (pool->last != NULL) {
+		ASAN_UNPOISON_MEMORY_REGION(pool->last, pool->wide);
+		*(pool->last) = node;
+		ASAN_POISON_MEMORY_REGION(pool->last, pool->wide);
+	} else { // pool is empty
+		pool->first = node;
+	}
+	pool->last = node;
+	*node = NULL;
 
-	Mem_Pools[pool_id].first = node;
-	Mem_Pools[pool_id].free++;
+	ASAN_POISON_MEMORY_REGION(node, pool->wide);
+
+	pool->free++;
 }
 
 
@@ -332,13 +353,8 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 	length *= SERIES_WIDE(series);
 	pool_num = FIND_POOL(length);
 	if (pool_num < SYSTEM_POOL) {
-		pool = &Mem_Pools[pool_num];
-		if (!pool->first) Fill_Pool(pool);
-		node = pool->first;
-		ASAN_UNPOISON_MEMORY_REGION(node, pool->wide);
-		pool->first = *node;
-		pool->free--;
-		length = pool->wide;
+		node = Make_Node(pool_num);
+		length = Mem_Pools[pool_num].wide;
 	} else {
 		length = ALIGN(length, 2048);
 #ifdef DEBUGGING
@@ -399,13 +415,8 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 
 	pool_num = FIND_POOL(length);
 	if (pool_num < SYSTEM_POOL) {
-		pool = &Mem_Pools[pool_num];
-		if (!pool->first) Fill_Pool(pool);
-		node = pool->first;
-		ASAN_UNPOISON_MEMORY_REGION(node, pool->wide);
-		pool->first = *node;
-		pool->free--;
-		length = pool->wide;
+		node = Make_Node(pool_num);
+		length = Mem_Pools[pool_num].wide;
 		memset(node, 0, length);
 	} else {
 		if (powerof2) {
@@ -508,10 +519,7 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 	MUNG_CHECK(pool_num,node, size);
 
 	if (pool_num < SYSTEM_POOL) {
-		pool = &Mem_Pools[pool_num];
-		*node = pool->first;
-		pool->first = node;
-		pool->free++;
+		Free_Node(pool_num, (REBNOD *)node);
 	} else {
 #ifdef MUNGWALL
 		Free_Mem(((REBYTE *)node)-MUNG_SIZE, size + MUNG_SIZE*2);
