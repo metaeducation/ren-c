@@ -53,7 +53,7 @@
 #include "sys-int-funcs.h"
 
 #ifdef HAVE_ASAN_INTERFACE_H
-#include <asan_interface.h>
+#include <sanitizer/asan_interface.h>
 #else
 #define ASAN_POISON_MEMORY_REGION(reg, mem_size)
 #define ASAN_UNPOISON_MEMORY_REGION(reg, mem_size)
