@@ -228,10 +228,17 @@
 		else if (ANY_STR(val)) {
 			REBYTE *bp;
 			REBCNT len;
-			bp = Qualify_String(val, MAX_INT_LEN, &len, FALSE);
-			if (memchr(bp, '.', len)) {
+			bp = Qualify_String(val, VAL_LEN(val), &len, FALSE);
+			if (memchr(bp, '.', len)
+			   	|| memchr(bp, 'e', len)
+			   	|| memchr(bp, 'E', len)) {
 				if (Scan_Decimal(bp, len, DS_RETURN, TRUE)) {
-					num = (REBINT)VAL_DECIMAL(DS_RETURN);
+					double v = VAL_DECIMAL(DS_RETURN);
+					if (v < MAX_D64 && v >= MIN_D64) {
+						num = (REBI64)v;
+					} else {
+						Trap0(RE_OVERFLOW);
+					}
 					break;
 				}
 			}
