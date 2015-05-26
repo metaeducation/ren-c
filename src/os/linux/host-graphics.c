@@ -128,6 +128,85 @@ void OS_Free(void *mem);
 		XFreeCursor(global_x_info->display, (Cursor)cursor);
 }
 
+static int get_output_resolution(XRROutputInfo *output_info, XRRScreenResources *res, unsigned *width, unsigned *height)
+{
+	XRRModeInfo *mode_info = NULL;
+	XRRCrtcInfo *crtc_info;
+	int m = 0;
+
+	if (output_info->crtc) {
+		crtc_info = XRRGetCrtcInfo(global_x_info->display, res, output_info->crtc);
+		if (crtc_info != NULL) {
+
+			*width = crtc_info->width;
+			*height = crtc_info->height;
+
+			XRRFreeCrtcInfo(crtc_info);
+			return 1;
+		}
+		XRRFreeCrtcInfo(crtc_info);
+	}
+	//printf("resolution through CRTC failed, res->nmode: %d at %p\n", res->nmode, res->modes);
+	//printf("output_info: nmode %d, preferred %d, modes: %p\n", output_info->nmode, output_info->npreferred, output_info->modes);
+
+	if (output_info->nmode > 0 && output_info->modes != NULL) {
+		RRMode mode_id = output_info->modes[output_info->npreferred - 1];
+		//printf("mode_id == %d\n", mode_id);
+		/* return its prefered resolution */
+		for(m = 0; m < res->nmode; m ++){
+			if (res->modes[m].id == mode_id) {
+				//printf("found mode\n");
+				*width = res->modes[m].width;
+				*height = res->modes[m].height;
+				return 0;
+			}
+		}
+	}
+	return -1;
+}
+
+static void get_primary_output_resolution(unsigned *width, unsigned *height)
+{
+	XRRScreenResources *res;
+	RROutput primary_output;
+	XRROutputInfo *output_info;
+	XRRCrtcInfo *crtc_info;
+	Screen *sc;
+
+	Window root = DefaultRootWindow(global_x_info->display);
+	res = XRRGetScreenResourcesCurrent(global_x_info->display, root);
+	if (res->noutput > 1) {
+		primary_output = XRRGetOutputPrimary(global_x_info->display, root);
+		if (primary_output) {
+			output_info = XRRGetOutputInfo(global_x_info->display, res, primary_output);
+			if (get_output_resolution(output_info, res, width, height) >= 0) {
+				XRRFreeOutputInfo(output_info);
+				goto cleanup;
+			}
+			XRRFreeOutputInfo(output_info);
+		} else {
+			/* FIXME: assuming first output is the primary output */
+			int i = 0;
+			for(i = 0; i < res->noutput; i ++) {
+				output_info = XRRGetOutputInfo(global_x_info->display, res, res->outputs[i]);
+				if (output_info->connection == RR_Connected) {
+					if (get_output_resolution(output_info, res, width, height) >= 0) {
+						XRRFreeOutputInfo(output_info);
+						goto cleanup;
+					}
+				}
+				XRRFreeOutputInfo(output_info);
+			}
+		}
+	}
+fallback:
+	sc = XDefaultScreenOfDisplay(global_x_info->display);
+	*width = XWidthOfScreen(sc);
+	*height = XHeightOfScreen(sc);
+cleanup:
+	XRRFreeScreenResources(res);
+}
+
 static int get_work_area(METRIC_TYPE type)
 {
 	   Atom     actual_type;
@@ -204,17 +283,15 @@ static int get_work_area(METRIC_TYPE type)
 
 	   Window root = DefaultRootWindow(global_x_info->display);
 	   res = XRRGetScreenResourcesCurrent(global_x_info->display, root);
-	   primary_output = XRRGetOutputPrimary(global_x_info->display, root);
-	   info = XRRGetOutputInfo(global_x_info->display, res, primary_output);
+	   if (res->noutput > 1) {
+		unsigned width, height;
 
-	   crtc = XRRGetCrtcInfo(global_x_info->display, res, info->crtc);
+		get_primary_output_resolution(&width, &height);
+		/* adjust width/height for primary output */
+		data [2] += width - virtual_width;
+		data [3] += height - virtual_height;
 
-	   /* adjust width/height for primary output */
-	   data [2] += crtc->width - virtual_width;
-	   data [3] += crtc->height - virtual_height;
-
-	   XRRFreeCrtcInfo(crtc);
-	   XRRFreeOutputInfo(info);
+	   }
 	   XRRFreeScreenResources(res);
 
 	   ret = data[index];
@@ -256,21 +333,9 @@ static int get_work_area(METRIC_TYPE type)
                case SM_SCREEN_WIDTH:
                case SM_SCREEN_HEIGHT:
 					   {
-						   XRRScreenResources *res;
-						   RROutput primary_output;
-						   XRROutputInfo *info;
-						   XRRCrtcInfo *crtc;
-
-						   res = XRRGetScreenResourcesCurrent(global_x_info->display, root);
-						   primary_output = XRRGetOutputPrimary(global_x_info->display, root);
-						   info = XRRGetOutputInfo(global_x_info->display, res, primary_output);
-
-						   crtc = XRRGetCrtcInfo(global_x_info->display, res, info->crtc);
-
-						   ret = (type == SM_SCREEN_WIDTH)? crtc->width : crtc->height;
-						   XRRFreeCrtcInfo(crtc);
-						   XRRFreeOutputInfo(info);
-						   XRRFreeScreenResources(res);
+						   unsigned width, height;
+						   get_primary_output_resolution(&width, &height);
+						   ret = (type == SM_SCREEN_WIDTH)? width : height;
 
 						   return ret;
 					   }

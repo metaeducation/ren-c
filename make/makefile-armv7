@@ -1,4 +1,4 @@
-makefile=makefile-armv7
+MAKEFILE=makefile-armv7
 TO_OS?= TO_LINUX_ARM
 OS_ID?= 0.4.20
 BIT=
