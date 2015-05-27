@@ -85,7 +85,7 @@ draw: command [
 
 gui-metric: command [
 	"Returns specific gui related metric setting."
-	keyword [word!] "Available keywords: BORDER-FIXED, BORDER-SIZE, SCREEN-DPI, LOG-SIZE, PHYS-SIZE, SCREEN-SIZE, TITLE-SIZE, WINDOW-MIN-SIZE, WORK-ORIGIN and WORK-SIZE."
+	keyword [word!] "Available keywords: BORDER-FIXED, BORDER-SIZE, SCREEN-DPI, LOG-SIZE, PHYS-SIZE, SCREEN-SIZE, VIRTUAL-SCREEN-SIZE, TITLE-SIZE, WINDOW-MIN-SIZE, WORK-ORIGIN and WORK-SIZE."
 	/set
 		val "Value used to set specific setting(works only on 'writable' keywords)."
 ]
