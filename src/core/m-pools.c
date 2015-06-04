@@ -249,7 +249,7 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 
 	// Add new nodes to the end of free list:
 	if (pool->last == NULL) {
-		node = &pool->first;
+		node = (REBNOD*)&pool->first;
 	} else {
 		node = pool->last;
 		ASAN_UNPOISON_MEMORY_REGION(node, pool->wide);
