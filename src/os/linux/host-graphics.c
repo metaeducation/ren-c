@@ -165,15 +165,26 @@ static int get_output_resolution(XRROutputInfo *output_info, XRRScreenResources 
 	return -1;
 }
 
+static REBOOL has_xrandr()
+{
+	int event_base, error_base;
+	int major, minor;
+
+	return XRRQueryExtension(global_x_info->display, &event_base, &error_base)
+		&& XRRQueryVersion(global_x_info->display, &major, &minor);
+}
+
 static void get_primary_output_resolution(unsigned *width, unsigned *height)
 {
-	XRRScreenResources *res;
+	XRRScreenResources *res = NULL;
 	RROutput primary_output;
 	XRROutputInfo *output_info;
 	XRRCrtcInfo *crtc_info;
 	Screen *sc;
+	Window root;
 
-	Window root = DefaultRootWindow(global_x_info->display);
+	if (!has_xrandr()) goto fallback;
+	root = DefaultRootWindow(global_x_info->display);
 	res = XRRGetScreenResourcesCurrent(global_x_info->display, root);
 	if (res->noutput > 1) {
 		primary_output = XRRGetOutputPrimary(global_x_info->display, root);
@@ -204,7 +215,9 @@ fallback:
 	*width = XWidthOfScreen(sc);
 	*height = XHeightOfScreen(sc);
 cleanup:
-	XRRFreeScreenResources(res);
+	if (res != NULL) {
+		XRRFreeScreenResources(res);
+	}
 }
 
 static int get_work_area(METRIC_TYPE type)
@@ -272,27 +285,25 @@ static int get_work_area(METRIC_TYPE type)
 		   }
 		   return fake_data[index];
 	   }
-       Screen *sc = XDefaultScreenOfDisplay(global_x_info->display);
+	   Screen *sc = XDefaultScreenOfDisplay(global_x_info->display);
 	   int virtual_width = XWidthOfScreen(sc);
 	   int virtual_height = XHeightOfScreen(sc);
 
-	   XRRScreenResources *res;
-	   RROutput primary_output;
-	   XRROutputInfo *info;
-	   XRRCrtcInfo *crtc;
+	   if (has_xrandr()) {
+		   XRRScreenResources *res;
+		   Window root = DefaultRootWindow(global_x_info->display);
+		   res = XRRGetScreenResourcesCurrent(global_x_info->display, root);
+		   if (res->noutput > 1) {
+			   unsigned width, height;
 
-	   Window root = DefaultRootWindow(global_x_info->display);
-	   res = XRRGetScreenResourcesCurrent(global_x_info->display, root);
-	   if (res->noutput > 1) {
-		unsigned width, height;
+			   get_primary_output_resolution(&width, &height);
+			   /* adjust width/height for primary output */
+			   data [2] += width - virtual_width;
+			   data [3] += height - virtual_height;
 
-		get_primary_output_resolution(&width, &height);
-		/* adjust width/height for primary output */
-		data [2] += width - virtual_width;
-		data [3] += height - virtual_height;
-
+		   }
+		   XRRFreeScreenResources(res);
 	   }
-	   XRRFreeScreenResources(res);
 
 	   ret = data[index];
 	   XFree(data);
