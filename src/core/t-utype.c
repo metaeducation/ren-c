@@ -34,7 +34,7 @@
 
 /***********************************************************************
 **
-*/	REBINT CT_Utype(REBVAL *a, REBVAL *b, REBINT mode)
+*/	REBINT CT_Utype(const REBVAL *a, const REBVAL *b, REBINT mode)
 /*
 ***********************************************************************/
 {

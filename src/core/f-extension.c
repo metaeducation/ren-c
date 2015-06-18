@@ -34,6 +34,8 @@
 
 #include "reb-lib.h"
 
+extern const REBRXT Reb_To_RXT[REB_MAX];
+
 // Extension evaluation categories:
 enum {
     RXE_NULL,	// unset
@@ -85,28 +87,28 @@ x*/	RXIARG Value_To_RXI(REBVAL *val)
 		arg.int64 = VAL_INT64(val);
 		break;
 	case RXE_SER:
-		arg.series = VAL_SERIES(val);
-		arg.index = VAL_INDEX(val);
+		arg.sri.series = VAL_SERIES(val);
+		arg.sri.index = VAL_INDEX(val);
 		break;
 	case RXE_PTR:
-		arg.addr = VAL_HANDLE(val);
+		arg.addr = VAL_HANDLE_DATA(val);
 		break;
 	case RXE_32:
-		arg.int32a = VAL_I32(val);
-		arg.int32b = 0;
+		arg.i2.int32a = VAL_I32(val);
+		arg.i2.int32b = 0;
 		break;
 	case RXE_DATE:
-		arg.int32a = VAL_ALL_BITS(val)[2];
-		arg.int32b = 0;
+		arg.i2.int32a = VAL_ALL_BITS(val)[2];
+		arg.i2.int32b = 0;
 		break;
 	case RXE_SYM:
-		arg.int32a = VAL_WORD_CANON(val);
-		arg.int32b = 0;
+		arg.i2.int32a = VAL_WORD_CANON(val);
+		arg.i2.int32b = 0;
 		break;
 	case RXE_IMAGE:
-		arg.series = VAL_SERIES(val);
-		arg.width = VAL_IMAGE_WIDE(val);
-		arg.height = VAL_IMAGE_HIGH(val);
+		arg.iwh.image = VAL_SERIES(val);
+		arg.iwh.width = VAL_IMAGE_WIDE(val);
+		arg.iwh.height = VAL_IMAGE_HIGH(val);
 		break;
 	case RXE_NULL:
 	default:
@@ -128,28 +130,28 @@ x*/	void RXI_To_Value(REBVAL *val, RXIARG arg, REBCNT type)
 		VAL_INT64(val) = arg.int64;
 		break;
 	case RXE_SER:
-		VAL_SERIES(val) = arg.series;
-		VAL_INDEX(val) = arg.index;
+		VAL_SERIES(val) = r_cast(REBSER *, arg.sri.series);
+		VAL_INDEX(val) = arg.sri.index;
 		break;
 	case RXE_PTR:
-		VAL_HANDLE(val) = arg.addr;
+		VAL_HANDLE_DATA(val) = arg.addr;
 		break;
 	case RXE_32:
-		VAL_I32(val) = arg.int32a;
+		VAL_I32(val) = arg.i2.int32a;
 		break;
 	case RXE_DATE:
 		VAL_TIME(val) = NO_TIME;
-		VAL_ALL_BITS(val)[2] = arg.int32a;
+		VAL_ALL_BITS(val)[2] = arg.i2.int32a;
 		break;
 	case RXE_SYM:
-		VAL_WORD_SYM(val) = arg.int32a;
+		VAL_WORD_SYM(val) = arg.i2.int32a;
 		VAL_WORD_FRAME(val) = 0;
 		VAL_WORD_INDEX(val) = 0;
 		break;
 	case RXE_IMAGE:
-		VAL_SERIES(val) = arg.series;
-		VAL_IMAGE_WIDE(val) = arg.width;
-		VAL_IMAGE_HIGH(val) = arg.height;
+		VAL_SERIES(val) = r_cast(REBSER *, arg.iwh.image);
+		VAL_IMAGE_WIDE(val) = arg.iwh.width;
+		VAL_IMAGE_HIGH(val) = arg.iwh.height;
 		break;
 	case RXE_NULL:
 		VAL_INT64(val) = 0;
@@ -190,18 +192,18 @@ x*/	int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result)
 ***********************************************************************/
 {
 	REBVAL *val;
-	REBCNT dsf;
+	REBINT dsf;
 	REBCNT len;
 	REBCNT n;
 	REBCNT dsp = DSP; // to restore stack on errors
 
 	// Find word in object, verify it is a function.
 	if (!(val = Find_Word_Value(obj, name))) {
-		SET_EXT_ERROR(result, RXE_NO_WORD);
+		SET_EXT_ERROR(result, RXX_NO_WORD);
 		return 0;
 	}
 	if (!ANY_FUNC(val)) {
-		SET_EXT_ERROR(result, RXE_NOT_FUNC);
+		SET_EXT_ERROR(result, RXX_NOT_FUNC);
 		return 0;
 	}
 
@@ -221,8 +223,8 @@ x*/	int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result)
 		RXI_To_Value(DS_TOP, args[n], RXI_TYPE(args, n));
 		// Check type for word at the given offset:
 		if (!TYPE_CHECK(BLK_SKIP(obj, n), VAL_TYPE(DS_TOP))) {
-			result->int32b = n;
-			SET_EXT_ERROR(result, RXE_BAD_ARGS);
+			result->i2.int32b = n;
+			SET_EXT_ERROR(result, RXX_BAD_ARGS);
 			DSP = dsp;
 			return 0;
 		}
@@ -232,8 +234,8 @@ x*/	int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result)
 		DS_SKIP;
 		SET_NONE(DS_TOP);
 		if (!TYPE_CHECK(BLK_SKIP(obj, n), VAL_TYPE(DS_TOP))) {
-			result->int32b = n;
-			SET_EXT_ERROR(result, RXE_BAD_ARGS);
+			result->i2.int32b = n;
+			SET_EXT_ERROR(result, RXX_BAD_ARGS);
 			DSP = dsp;
 			return 0;
 		}
@@ -264,10 +266,14 @@ x*/	int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result)
 	REBCNT n;
 
 	// Sanity check:
-	if (VAL_EVENT_TYPE(event) != EVT_CALLBACK || !(cbi = VAL_EVENT_SER(event)))
+	if (VAL_EVENT_TYPE(event) != EVT_CALLBACK)
 		return R_NONE;
 
-	n = Do_Callback(cbi->obj, cbi->word, cbi->args, &(cbi->result));
+	cbi = r_cast(RXICBI *, VAL_EVENT_SER(event));
+	if (!cbi)
+		return R_NONE;
+
+	n = Do_Callback(cbi->obj, cbi->word, cbi->args, &cbi->result);
 
 	SET_FLAG(cbi->flags, RXC_DONE);
 
@@ -276,6 +282,9 @@ x*/	int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result)
 	RXI_To_Value(ds, cbi->result, n);
 	return R_RET;
 }
+
+
+typedef REBYTE * (*INFO_FUNC)(REBINT opts, void *lib);
 
 
 /***********************************************************************
@@ -307,7 +316,7 @@ x*/	int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result)
 	void *dll;
 	REBCNT error;
 	REBYTE *code;
-	REBYTE *(*info)(REBINT opts, void *lib);
+	INFO_FUNC info;
 	REBSER *obj;
 	REBVAL *val = D_ARG(1);
 	REBEXT *ext;
@@ -328,7 +337,10 @@ x*/	int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result)
 		}
 
 		// Call its info() function for header and code body:
-		if (!(info = OS_FIND_FUNCTION(dll, BOOT_STR(RS_EXTENSION, 0)))){
+		info = r_cast(
+			INFO_FUNC, OS_FIND_FUNCTION(dll, BOOT_STR(RS_EXTENSION, 0))
+		);
+		if (!info) {
 			OS_CLOSE_LIBRARY(dll);
 			Trap1(RE_BAD_EXTENSION, val);
 		}
@@ -341,17 +353,21 @@ x*/	int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result)
 
 		// Import the string into REBOL-land:
 		src = Copy_Bytes(code, -1); // Nursery protected
-		call = OS_FIND_FUNCTION(dll, BOOT_STR(RS_EXTENSION, 2)); // zero is allowed
+
+		// null is allowed
+		call = r_cast(
+			RXICAL, OS_FIND_FUNCTION(dll, BOOT_STR(RS_EXTENSION, 2))
+		);
 	}
 	else {
 		// Hosted extension:
 		src = VAL_SERIES(val);
-		call = (RXICAL)VAL_HANDLE(D_ARG(3));
+		call = r_cast(RXICAL, VAL_HANDLE_CODE(D_ARG(3)));
 		dll = 0;
 	}
 
 	ext = &Ext_List[Ext_Next];
-	CLEARS(ext);
+	memset(ext, NUL, sizeof(*ext));
 	ext->call = call;
 	ext->dll = dll;
 	ext->index = Ext_Next++;
@@ -374,7 +390,7 @@ x*/	int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result)
 
 /***********************************************************************
 **
-*/	void Make_Command(REBVAL *value, REBVAL *def)
+*/	void Make_Command(REBVAL *value, const REBVAL *def)
 /*
 **		Assumes prior function has already stored the spec and args
 **		series. This function validates the body.
@@ -392,13 +408,13 @@ x*/	int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result)
 		|| !IS_HANDLE(VAL_OBJ_VALUE(val, 1))
 		|| !IS_INTEGER(val+1)
 		|| VAL_INT64(val+1) > 0xffff
-	) Trap1(RE_BAD_FUNC_DEF, def);
+	) vTrap1(RE_BAD_FUNC_DEF, def);
 
 	val = VAL_OBJ_VALUE(val, 1);
 	if (
 		!(ext = &Ext_List[VAL_I32(val)])
 		|| !(ext->call)
-	) Trap1(RE_BAD_EXTENSION, def);
+	) vTrap1(RE_BAD_EXTENSION, def);
 
 	// make command! [[arg-spec] handle cmd-index]
 	VAL_FUNC_BODY(value) = Copy_Block_Len(VAL_SERIES(def), 1, 2);
@@ -410,7 +426,7 @@ x*/	int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result)
 		// If the typeset contains args that are not valid:
 		// (3 is the default when no args given, for not END and UNSET)
 		if (3 != ~VAL_TYPESET(args) && (VAL_TYPESET(args) & ~RXT_ALLOWED_TYPES))
-			Trap1(RE_BAD_FUNC_ARG, args);
+			vTrap1(RE_BAD_FUNC_ARG, args);
 	}
 
 	VAL_SET(value, REB_COMMAND);
@@ -445,7 +461,7 @@ x*/	int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result)
 
 	// Copy args to command frame (array of args):
 	RXA_COUNT(&frm) = argc = SERIES_TAIL(VAL_FUNC_ARGS(value))-1; // not self
-	if (argc > 7) Trap0(RE_BAD_COMMAND);
+	if (argc > 7) vTrap0(RE_BAD_COMMAND);
 	val = DS_ARG(1);
 	for (n = 1; n <= argc; n++, val++) {
 		RXA_TYPE(&frm, n) = Reb_To_RXT[VAL_TYPE(val)];
@@ -506,7 +522,8 @@ x*/	int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result)
 	REBEXT *ext;
 	REBCEC *ctx;
 
-	if ((ctx = context)) ctx->block = cmds;
+	ctx = r_cast(REBCEC *, context);
+	if (ctx) ctx->block = cmds;
 	blk = BLK_HEAD(cmds);
 
 	while (NOT_END(blk)) {
@@ -525,7 +542,8 @@ x*/	int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result)
 			else func = Get_Var(blk); // fallback
 		} else func = blk;
 
-		if (!IS_COMMAND(func)) Trap2(RE_EXPECT_VAL, Get_Type_Word(REB_COMMAND), blk);
+		if (!IS_COMMAND(func))
+			vTrap2(RE_EXPECT_VAL, Get_Type_Word(REB_COMMAND), blk);
 
 		// Advance to next value
 		blk++;
@@ -543,7 +561,7 @@ x*/	int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result)
 			//Debug_Type(args);
 			val = blk++;
 			index++;
-			if (IS_END(val)) Trap2(RE_NO_ARG, cmd_word, args);
+			if (IS_END(val)) vTrap2(RE_NO_ARG, cmd_word, args);
 			//Debug_Type(val);
 
 			// actual arg is a word, lookup?
@@ -562,7 +580,7 @@ x*/	int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result)
 
 			// check datatype
 			if (!TYPE_CHECK(args, VAL_TYPE(val)))
-				Trap3(RE_EXPECT_ARG, cmd_word, args, Of_Type(val));
+				vTrap3(RE_EXPECT_ARG, cmd_word, args, Of_Type(val));
 
 			// put arg into command frame
 			n++;
@@ -572,9 +590,9 @@ x*/	int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result)
 
 		// Call the command (also supports different extension modules):
 		func  = BLK_HEAD(VAL_FUNC_BODY(func));
-		n = (REBCNT)VAL_INT64(func + 1);
+		n = cast(REBCNT, VAL_INT64(func + 1));
 		ext = &Ext_List[VAL_I32(VAL_OBJ_VALUE(func, 1))]; // Handler
-		n = ext->call(n, &frm, context);
+		n = ext->call(n, &frm, ctx);
 		val = DS_RETURN;
 		switch (n) {
 		case RXR_VALUE:
@@ -633,7 +651,7 @@ xx*/	REBVAL *Prior_Func_Frame(void)
 /*
 ***********************************************************************/
 {
-	REBCNT dsf = DSF;
+	REBINT dsf = DSF;
 	REBVAL *val;
 
 	for (dsf = DSF; dsf > 0; dsf = PRIOR_DSF(dsf)) {

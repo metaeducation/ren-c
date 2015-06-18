@@ -399,7 +399,7 @@ enum SHAPE_Lit_Words {
 							j++;
 
 						} else if (IS_TUPLE(slot+i)){
-							COPY_MEM(&colors[k], VAL_TUPLE(slot+i), 4);
+							memcpy(&colors[k], VAL_TUPLE(slot+i), 4);
 							k+=4;
 						}
 					}
@@ -529,7 +529,7 @@ enum SHAPE_Lit_Words {
 		case DW_LINE_PATTERN:
 			if (nargs > 3){
 				REBCNT n = 0;
-				REBDEC *patterns = (REBDEC*) MAKE_MEM((nargs-1) * sizeof(REBDEC)) ;
+				REBDEC *patterns = OS_ALLOC_ARRAY(REBDEC, nargs - 1);
 				patterns[0] = (REBDEC)nargs-2;
 				for (n = 2; n < nargs; n++) {
 					if (IS_DECIMAL(arg+n))

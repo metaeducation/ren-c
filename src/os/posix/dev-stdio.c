@@ -62,15 +62,13 @@ static REBOOL Redir_Inp = 0;
 
 #define PUTE(s)		if (Std_Echo) fputs(s, Std_Echo)
 
-extern REBDEV *Devices[];
-
 #ifndef HAS_SMART_CONSOLE	// console line-editing and recall needed
 void *Init_Terminal();
 void Quit_Terminal(void*);
 int  Read_Line(void*, char*, int);
 #endif
 
-void Put_Str(char *buf);
+void Put_Str(const REBYTE *buf);
 
 void *Term_IO;
 
@@ -82,9 +80,7 @@ void *Term_IO;
 
 static void Handle_Signal(int sig)
 {
-	char *buf = strdup("[escape]");
-	Put_Str(buf);
-	free(buf);
+	Put_Str(AS_CBYTES("[escape]"));
 	RL_Escape(0);
 }
 
@@ -111,11 +107,11 @@ static void close_stdio(void)
 
 /***********************************************************************
 **
-*/	DEVICE_CMD Quit_IO(REBREQ *dr)
+*/	DEVICE_CMD Quit_IO(REBREQ *dev_opaque)
 /*
 ***********************************************************************/
 {
-	REBDEV *dev = (REBDEV*)dr; // just to keep compiler happy above
+	REBDEV *dev = r_cast(REBDEV *, dev_opaque);
 
 	close_stdio();
 
@@ -202,7 +198,7 @@ static void close_stdio(void)
 
 	if (Std_Out >= 0) {
 
-		total = write(Std_Out, req->data, req->length);
+		total = write(Std_Out, req->common.data, req->length);
 
 		if (total < 0) {
 			req->error = errno;
@@ -217,7 +213,7 @@ static void close_stdio(void)
 	}
 
 	if (Std_Echo) {
-		fwrite(req->data, req->length, 1, Std_Echo);
+		fwrite(req->common.data, req->length, 1, Std_Echo);
 		//fflush(Std_Echo); //slow!
 	}
 
@@ -241,7 +237,7 @@ static void close_stdio(void)
 	int len = req->length;
 
 	if (GET_FLAG(req->modes, RDM_NULL)) {
-		req->data[0] = 0;
+		req->common.data[0] = 0;
 		return DR_DONE;
 	}
 
@@ -252,10 +248,10 @@ static void close_stdio(void)
 		// Perform a processed read or a raw read?
 #ifndef HAS_SMART_CONSOLE
 		if (Term_IO)
-			total = Read_Line(Term_IO, req->data, len);
+			total = Read_Line(Term_IO, AS_CHARS(req->common.data), len);
 		else
 #endif
-			total = read(Std_Inp, req->data, len);
+			total = read(Std_Inp, req->common.data, len);
 
 		if (total < 0) {
 			req->error = errno;
@@ -282,8 +278,8 @@ static void close_stdio(void)
 		Std_Echo = 0;
 	}
 
-	if (req->file.path) {
-		Std_Echo = fopen(req->file.path, "w");  // null on error
+	if (req->special.file.path) {
+		Std_Echo = fopen(req->special.file.path, "w");  // null on error
 		if (!Std_Echo) {
 			req->error = errno;
 			return DR_ERROR;

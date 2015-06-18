@@ -26,7 +26,7 @@
 ***********************************************************************/
 
 /* unary operators - logic */
-REBFLG deci_is_zero (const deci a);
+REBFLG deci_is_zero (deci a);
 
 /* unary operators - deci */
 deci deci_abs (deci a);
@@ -40,21 +40,21 @@ REBFLG deci_is_same (deci a, deci b);
 /* binary operators - deci */
 deci deci_add (deci a, deci b);
 deci deci_subtract (deci a, deci b);
-deci deci_multiply (const deci a, const deci b);
+deci deci_multiply (deci a, deci b);
 deci deci_divide (deci a, deci b);
 deci deci_mod (deci a, deci b);
 
 /* conversion to deci */
 deci int_to_deci (REBI64 a);
 deci decimal_to_deci (REBDEC a);
-deci string_to_deci (REBYTE *s, REBYTE **endptr);
-deci binary_to_deci(REBYTE *s);
+deci string_to_deci (const REBYTE *s, const REBYTE **endptr);
+deci binary_to_deci(const REBYTE *s);
 
 /* conversion to other datatypes */
-REBI64 deci_to_int (const deci a);
-REBDEC deci_to_decimal (const deci a);
-REBINT deci_to_string(REBYTE *string, const deci a, const REBYTE symbol, const REBYTE point);
-REBYTE *deci_to_binary(REBYTE binary[12], const deci a);
+REBI64 deci_to_int (deci a);
+REBDEC deci_to_decimal (deci a);
+REBINT deci_to_string(REBYTE *string, deci a, char symbol, char point);
+REBYTE *deci_to_binary(REBYTE binary[12], deci a);
 
 /* math functions */
 deci deci_ldexp (deci a, REBINT e);

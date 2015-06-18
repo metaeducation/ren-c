@@ -68,6 +68,7 @@ enum arg_opts {
 	ROF_NO_WINDOW,
 
 	ROF_IGNORE, // not an option
+	ROF_MAX
 };
 
 #define RO_EXT         (1<<ROF_EXT)

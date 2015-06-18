@@ -189,12 +189,11 @@ enum rebol_esc_codes {
 */
 
 typedef struct rebol_scan_state {
-    REBYTE *begin;
-    REBYTE *end;
-    REBYTE const *limit;    /* no chars after this point */
-//    REBYTE const *error_id; /* id string for errors (file name or URL path) */
+    const REBYTE *begin;
+    const REBYTE *end;
+    const REBYTE *limit;    /* no chars after this point */
     REBCNT line_count;
-	REBYTE *head_line;		// head of current line (used for errors)
+	const REBYTE *head_line;		// head of current line (used for errors)
 	REBCNT opts;
 	REBCNT errors;
 } SCAN_STATE;
@@ -207,6 +206,7 @@ enum {
 	SCAN_NEXT,	// load/next feature
 	SCAN_ONLY,  // only single value (no blocks)
 	SCAN_RELAX,	// no error throw
+	SCAN_MAX
 };
 
 /*
@@ -216,7 +216,7 @@ extern const REBYTE Lex_Map[256];
 
 /***********************************************************************
 **
-*/  static INLINE REBYTE *Skip_To_Char(REBYTE *cp, REBYTE *ep, REBYTE chr)
+*/  static const REBYTE *Skip_To_Char(const REBYTE *cp, const REBYTE *ep, REBYTE chr)
 /*
 **		Skip to the specified character but not past the end
 **		of the string.  Return zero if the char is not found.

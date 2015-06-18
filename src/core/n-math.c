@@ -37,6 +37,7 @@
 #define	LOG2	0.6931471805599453
 #define	EPS		2.718281828459045235360287471
 
+extern const double pi1;
 const double pi1 = 3.14159265358979323846;
 const double pi2 = 2.0 * 3.14159265358979323846;
 
@@ -91,7 +92,7 @@ enum {SINE, COSINE, TANGENT};
 	REBDEC	dval;
 
 	dval = AS_DECIMAL(D_ARG(1));
-	if (kind != TANGENT && (dval < -1 || dval > 1)) Trap0(RE_OVERFLOW);
+	if (kind != TANGENT && (dval < -1 || dval > 1)) vTrap0(RE_OVERFLOW);
 
 	if (kind == SINE) dval = asin(dval);
 	else if (kind == COSINE) dval = acos(dval);
@@ -535,8 +536,9 @@ compare:
 ***********************************************************************/
 {
 	REBVAL *val = &DS_Base[++DSP];
-	CLEARS(val);
-	VAL_SET(val, VAL_TYPE(D_ARG(1)));
+
+	VAL_SET_ZEROED(val, VAL_TYPE(D_ARG(1))); 
+
 	if (Compare_Values(D_ARG(1), D_ARG(2), -1)) return R_FALSE;
 	return R_TRUE;
 }
@@ -548,8 +550,9 @@ compare:
 ***********************************************************************/
 {
 	REBVAL *val = &DS_Base[++DSP];
-	CLEARS(val);
-	VAL_SET(val, VAL_TYPE(D_ARG(1)));
+
+	VAL_SET_ZEROED(val, VAL_TYPE(D_ARG(1)));
+
 	if (Compare_Values(D_ARG(1), D_ARG(2), -2)) return R_TRUE;
 	return R_FALSE;
 }
@@ -564,8 +567,9 @@ compare:
 
 	if (type >= REB_INTEGER && type <= REB_TIME) {
 		REBVAL *val = &DS_Base[++DSP];
-		CLEARS(val);
-		VAL_SET(val, type);
+
+		VAL_SET_ZEROED(val, type);
+
 		if (Compare_Values(D_ARG(1), D_ARG(2), 1)) return R_TRUE;
 	}
 	return R_FALSE;

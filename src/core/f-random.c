@@ -64,7 +64,7 @@ void ran_array(aa,n)	/* put n new random numbers in aa */
 	int n;				/* array length (must be at least KK) */
 #endif
 {
-	register int i,j;
+	int i,j;
 	for (j=0;j<KK;j++) aa[j]=ran_x[j];
 	for (;j<n;j++) aa[j]=mod_diff(aa[j-KK],aa[j-LL]);
 	for (i=0;i<LL;i++,j++) ran_x[i]=mod_diff(aa[j-KK],aa[j-LL]);
@@ -88,9 +88,9 @@ static REBI64 *ran_arr_ptr=&ran_arr_dummy;	/* the next random number, or -1 */
 /*
 ***********************************************************************/
 {
-	register int t,j;
+	int t,j;
 	REBI64 x[KK+KK-1];					/* the preparation buffer */
-	register REBI64 ss=(seed+2)&(MM-2);
+	REBI64 ss=(seed+2)&(MM-2);
 	for (j=0;j<KK;j++) {
 		x[j]=ss;						/* bootstrap the buffer */
 		ss<<=1; if (ss>=MM) ss-=MM-2;	/* cyclic shift 61 bits */
@@ -139,17 +139,16 @@ static REBI64 ran_arr_cycle()
 	if (secure) {
 		REBYTE srcbuf[20], dstbuf[20];
 
-		memcpy(srcbuf, (REBYTE*)&tmp, sizeof(tmp));
-		memset(srcbuf + sizeof(tmp), *(REBYTE*)&tmp, 20 - sizeof(tmp));
+		memcpy(srcbuf, r_cast(REBYTE *, &tmp), sizeof(tmp));
+		memset(srcbuf + sizeof(tmp), *r_cast(REBYTE *, &tmp), 20 - sizeof(tmp));
 
 		SHA1(srcbuf, 20, dstbuf);
-		memcpy((REBYTE*)&tmp, dstbuf, sizeof(tmp));
+		memcpy(r_cast(REBYTE *, &tmp), dstbuf, sizeof(tmp));
 	}
 
 	return tmp;
 }
 
-#define MAX_U64 ((REBU64)(REBI64)-1)
 /***********************************************************************
 **
 */	REBI64 Random_Range(REBI64 r, REBFLG secure)
@@ -163,7 +162,7 @@ static REBI64 ran_arr_cycle()
 	m = secure ? MAX_U64 - (MAX_U64 - s + 1) % s : MM - MM % s - 1; /* rejection limit */
 	do u = Random_Int(secure); while (u > m); /* get a random below the limit */
 	u = u % s + 1;
-	return (r > 0) ? u : - (REBI64)u;
+	return (r > 0) ? cast(REBI64, u) : -cast(REBI64, u);
 }
 
 /***********************************************************************

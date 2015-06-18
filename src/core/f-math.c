@@ -37,7 +37,7 @@
 
 /***********************************************************************
 **
-*/	REBYTE *Grab_Int(REBYTE *cp, REBINT *val)
+*/	const REBYTE *Grab_Int(const REBYTE *cp, REBINT *val)
 /*
 **		Grab an integer value from the string.
 **
@@ -70,7 +70,7 @@
 
 /***********************************************************************
 **
-*/	REBYTE *Grab_Int_Scale(REBYTE *cp, REBINT *val, REBCNT scale)
+*/	const REBYTE *Grab_Int_Scale(const REBYTE *cp, REBINT *val, REBCNT scale)
 /*
 **		Return integer scaled to the number of digits specified.
 **		Used for the decimal part of numbers (e.g. times).
@@ -100,7 +100,7 @@
 
 /***********************************************************************
 **
-*/	REBINT Form_Int_Len(REBYTE *buf, REBI64 val, REBINT maxl)
+*/	REBINT Form_Int_Len(char *buf, REBI64 val, REBINT maxl)
 /*
 **		Form an integer string into the given buffer. Result will
 **		not exceed maxl length, including terminator.
@@ -113,8 +113,8 @@
 **
 ***********************************************************************/
 {
-	REBYTE tmp[MAX_NUM_LEN];
-	REBYTE *tp = tmp;
+	char tmp[MAX_NUM_LEN];
+	char *tp = tmp;
 	REBI64 n;
 	REBI64 r;
 	REBINT len = 0;
@@ -147,7 +147,7 @@
 			r = -r;
 			n = -n;
 		}
-		*tp++ = (REBYTE)('0' + (REBYTE)(r));
+		*tp++ = '0' + r;
 		val = n;
 	}
 	tp--;
@@ -175,20 +175,20 @@
 	REBYTE tmp[MAX_NUM_LEN];
 	REBINT n;
 
-	n = Form_Int_Len(tmp, val, max);
+	n = Form_Int_Len(AS_CHARS(tmp), val, max);
 	if (n == 0) {
-		strcpy(buf, "??");
+		strcpy(AS_CHARS(buf), "??");
 		return buf;  // too long
 	}
 
 	if (len >= 0) {
-		strcpy(buf, tmp);
+		strcpy(AS_CHARS(buf), AS_CHARS(tmp));
 		buf += n;
 		for (; n < len; n++) *buf++ = pad;
 	}
 	else { // len < 0
 		for (; n < -len; len++) *buf++ = pad;
-		strcpy(buf, tmp);
+		strcpy(AS_CHARS(buf), AS_CHARS(tmp));
 		buf += n;
 	}
 
@@ -206,7 +206,7 @@
 **
 ***********************************************************************/
 {
-	REBINT len = Form_Int_Len(buf, val, MAX_NUM_LEN);
+	REBINT len = Form_Int_Len(AS_CHARS(buf), val, MAX_NUM_LEN);
 	return buf + len;
 }
 
@@ -219,8 +219,8 @@
 **
 ***********************************************************************/
 {
-	INT_TO_STR(val, buf);
-	return buf+LEN_BYTES(buf);
+	INT_TO_STR(val, AS_CHARS(buf));
+	return buf + strlen(AS_CHARS(buf));
 }
 
 
@@ -230,8 +230,8 @@
 /*
 ***********************************************************************/
 {
-	INT_TO_STR(val, buf);
-	return LEN_BYTES(buf);
+	INT_TO_STR(val, AS_CHARS(buf));
+	return strlen(AS_CHARS(buf));
 }
 
 
@@ -240,7 +240,12 @@
 /* this is appropriate for 64-bit IEEE754 binary floating point format */
 #define MAX_DIGITS 17
 
-REBINT Emit_Decimal(REBYTE *cp, REBDEC d, REBFLG trim, REBYTE point, REBINT decimal_digits) {
+/***********************************************************************
+**
+*/	REBINT Emit_Decimal(REBYTE *cp, REBDEC d, REBFLG trim, REBYTE point, REBINT decimal_digits)
+/*
+***********************************************************************/
+{
 	REBYTE *start = cp, *sig, *rve;
 	int e, sgn;
 	REBINT digits_obtained;
@@ -249,7 +254,9 @@ REBINT Emit_Decimal(REBYTE *cp, REBDEC d, REBFLG trim, REBYTE point, REBINT deci
 	if (decimal_digits < MIN_DIGITS) decimal_digits = MIN_DIGITS;
 	else if (decimal_digits > MAX_DIGITS) decimal_digits = MAX_DIGITS;
 
-	sig = (REBYTE *) dtoa (d, 0, decimal_digits, &e, &sgn, (char **) &rve);
+	sig = AS_BYTES(
+		dtoa(d, 0, decimal_digits, &e, &sgn, r_cast(char **, &rve))
+	);
 
 	digits_obtained = rve - sig;
 
@@ -266,27 +273,27 @@ REBINT Emit_Decimal(REBYTE *cp, REBDEC d, REBFLG trim, REBYTE point, REBINT deci
 		*cp++ = point;
 
 		/* insert the rest */
-		memcpy(cp, sig, digits_obtained - 1);
+		memcpy(AS_CHARS(cp), AS_CHARS(sig), digits_obtained - 1);
 		cp += digits_obtained - 1;
 	} else if (e > 0) {
 		if (e <= digits_obtained) {
 			/* insert digits preceding point */
-			memcpy (cp, sig, e);
+			memcpy(AS_CHARS(cp), AS_CHARS(sig), e);
 			cp += e;
 			sig += e;
 
 			*cp++ = point;
 
 			/* insert digits following point */
-			memcpy(cp, sig, digits_obtained -  e);
+			memcpy(AS_CHARS(cp), AS_CHARS(sig), digits_obtained -  e);
 			cp += digits_obtained - e;
 		} else {
 			/* insert all digits obtained */
-			memcpy (cp, sig, digits_obtained);
+			memcpy(AS_CHARS(cp), AS_CHARS(sig), digits_obtained);
 			cp += digits_obtained;
 
 			/* insert zeros preceding point */
-			memset (cp, '0', e - digits_obtained);
+			memset(AS_CHARS(cp), '0', e - digits_obtained);
 			cp += e - digits_obtained;
 
 			*cp++ = point;
@@ -297,10 +304,11 @@ REBINT Emit_Decimal(REBYTE *cp, REBDEC d, REBFLG trim, REBYTE point, REBINT deci
 
 		*cp++ = point;
 
-		memset(cp, '0', -e);
+		// Note: not a mistake
+		memset(AS_CHARS(cp), '0', -e);
 		cp -= e;
 
-		memcpy(cp, sig, digits_obtained);
+		memcpy(AS_CHARS(cp), AS_CHARS(sig), digits_obtained);
 		cp += digits_obtained;
 
 		e = 0;
@@ -312,8 +320,9 @@ REBINT Emit_Decimal(REBYTE *cp, REBDEC d, REBFLG trim, REBYTE point, REBINT deci
 	// Add E part if needed:
 	if (e) {
 		*cp++ = 'e';
-		INT_TO_STR(e - 1, cp);
-		cp = strchr(cp, 0);
+		// !!! Note it seeks the null, couldn't it use INT_TO_STR result?
+		INT_TO_STR(e - 1, AS_CHARS(cp));
+		cp = AS_BYTES(strchr(AS_CHARS(cp), NUL));
 	}
 
  	if (trim == DEC_MOLD_PERCENT) *cp++ = '%';

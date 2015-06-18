@@ -111,29 +111,3 @@ typedef void *REBNOD;			// Just used for linking free nodes
 #define ENABLE_GC		GC_Disabled--
 //Was: if (--GC_Disabled <= 0 && GC_Pending) Recycle()
 
-/*****************************************************************************
-**
-**	MUNGWALL
-**		Define MUNGWALL to enable "MungWall"-style sentinels for REBNODEs
-**
-*****************************************************************************/
-
-#ifdef MUNGWALL
-#define MUNG_PATTERN1 "Don't overwrite!"
-#define MUNG_PATTERN2 "Magic protection"
-#define MUNG_SIZE 16
-#define MUNG_CHECK(a,b,c) Mung_Check((a),(REBYTE *)(b),(c))
-#ifdef TO_WIN32
-void mywrite(int a, char *b, int c) {int i;for(i=0;i<c;i++) Put_Term(b[i]);}
-#else
-#define mywrite(a,b,c) write(a,b,c)
-#endif
-#else
-#define MUNG_CHECK(a,b,c)
-#endif
-
-#ifdef MUNGWALL
-#define SKIP_WALL(s) s = (REBSER *)(((REBYTE *)s)+MUNG_SIZE)
-#else
-#define SKIP_WALL(s)
-#endif

@@ -32,7 +32,7 @@
 
 /***********************************************************************
 **
-*/	REBINT Compare_Binary_Vals(REBVAL *v1, REBVAL *v2)
+*/	REBINT Compare_Binary_Vals(const REBVAL *v1, const REBVAL *v2)
 /*
 **		Compare two binary values.
 **
@@ -59,7 +59,7 @@
 
 /***********************************************************************
 **
-*/	REBINT Compare_Bytes(REBYTE *b1, REBYTE *b2, REBCNT len, REBOOL uncase)
+*/	REBINT Compare_Bytes(const REBYTE *b1, const REBYTE *b2, REBCNT len, REBOOL uncase)
 /*
 **		Compare two byte-wide strings. Return lexical difference.
 **
@@ -85,7 +85,7 @@
 
 /***********************************************************************
 **
-*/	REBYTE *Match_Bytes(REBYTE *src, REBYTE *pat)
+*/	const REBYTE *Match_Bytes(const REBYTE *src, const REBYTE *pat)
 /*
 **		Compare two binary strings. Return where the first differed.
 **		Case insensitive.
@@ -147,7 +147,7 @@
 
 /***********************************************************************
 **
-*/	REBINT Compare_Uni_Byte(REBUNI *u1, REBYTE *b2, REBCNT len, REBOOL uncase)
+*/	REBINT Compare_Uni_Byte(const REBUNI *u1, const REBYTE *b2, REBCNT len, REBOOL uncase)
 /*
 **		Compare unicode and byte-wide strings. Return lexical difference.
 **
@@ -178,7 +178,7 @@
 
 /***********************************************************************
 **
-*/	REBINT Compare_Uni_Str(REBUNI *u1, REBUNI *u2, REBCNT len, REBOOL uncase)
+*/	REBINT Compare_Uni_Str(const REBUNI *u1, const REBUNI *u2, REBCNT len, REBOOL uncase)
 /*
 **		Compare two unicode-wide strings. Return lexical difference.
 **
@@ -209,7 +209,7 @@
 
 /***********************************************************************
 **
-*/	REBINT Compare_String_Vals(REBVAL *v1, REBVAL *v2, REBOOL uncase)
+*/	REBINT Compare_String_Vals(const REBVAL *v1, const REBVAL *v2, REBOOL uncase)
 /*
 **		Compare two string values. Either can be byte or unicode wide.
 **
@@ -246,7 +246,7 @@
 
 /***********************************************************************
 **
-*/	REBINT Compare_UTF8(REBYTE *s1, REBYTE *s2, REBCNT l2)
+*/	REBINT Compare_UTF8(const REBYTE *s1, const REBYTE *s2, REBCNT l2)
 /*
 **		Compare two UTF8 strings.
 **
@@ -268,7 +268,7 @@
 ***********************************************************************/
 {
 	REBINT c1, c2;
-	REBCNT l1 = LEN_BYTES(s1);
+	REBCNT l1 = strlen(AS_CCHARS(s1));
 	REBINT result = 0;
 
 	for (; l1 > 0 && l2 > 0; s1++, s2++, l1--, l2--) {

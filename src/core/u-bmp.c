@@ -83,7 +83,7 @@ typedef struct tagBITMAPCOREHEADER
 typedef BITMAPCOREHEADER*      PBITMAPCOREHEADER;
 typedef BITMAPCOREHEADER *LPBITMAPCOREHEADER;
 
-char *mapBITMAPCOREHEADER = "lssss";
+const char *mapBITMAPCOREHEADER = "lssss";
 
 typedef struct tagBITMAPINFOHEADER
 {
@@ -100,7 +100,7 @@ typedef struct tagBITMAPINFOHEADER
     DWORD   biClrImportant;
 } BITMAPINFOHEADER;
 
-char *mapBITMAPINFOHEADER = "lllssllllll";
+const char *mapBITMAPINFOHEADER = "lllssllllll";
 
 typedef BITMAPINFOHEADER*      PBITMAPINFOHEADER;
 typedef BITMAPINFOHEADER *LPBITMAPINFOHEADER;
@@ -137,7 +137,7 @@ typedef struct tagBITMAPFILEHEADER
 typedef BITMAPFILEHEADER*      PBITMAPFILEHEADER;
 typedef BITMAPFILEHEADER *LPBITMAPFILEHEADER;
 
-char *mapBITMAPFILEHEADER = "bblssl";
+const char *mapBITMAPFILEHEADER = "bblssl";
 
 typedef RGBQUAD *RGBQUADPTR;
 
@@ -148,15 +148,15 @@ static int longaligned(void) {
 	struct {
 		unsigned short a;
 		unsigned int b;
-	} a={0};
+	} a;
 	memcpy(&a, filldata, 6);
 	if (a.b != 0x01010101) return TRUE;
 	return FALSE;
 }
 
-void Map_Bytes(void *dstp, REBYTE **srcp, char *map) {
+void Map_Bytes(void *dstp, REBYTE **srcp, const char *map) {
 	REBYTE *src = *srcp;
-	REBYTE *dst = dstp;
+	REBYTE *dst = r_cast(REBYTE *, dstp);
 	char c;
 #ifdef ENDIAN_LITTLE
 	while ((c = *map++) != 0) {
@@ -211,8 +211,8 @@ void Map_Bytes(void *dstp, REBYTE **srcp, char *map) {
 	*srcp = src;
 }
 
-void Unmap_Bytes(void *srcp, REBYTE **dstp, char *map) {
-	REBYTE *src = srcp;
+void Unmap_Bytes(void *srcp, REBYTE **dstp, const char *map) {
+	REBYTE *src = r_cast(REBYTE *, srcp);
 	REBYTE *dst = *dstp;
 	char c;
 #ifdef ENDIAN_LITTLE
@@ -274,7 +274,7 @@ void Unmap_Bytes(void *srcp, REBYTE **dstp, char *map) {
 */	static void Decode_BMP_Image(REBCDI *codi)
 /*
 **		Input:  BMP encoded image (codi->data, len)
-**		Output: Image bits (codi->bits, w, h)
+**		Output: Image bits (codi->extra.bits, w, h)
 **		Error:  Code in codi->error
 **		Return: Success as TRUE or FALSE
 **
@@ -297,7 +297,7 @@ void Unmap_Bytes(void *srcp, REBYTE **dstp, char *map) {
 		codi->error = CODI_ERR_SIGNATURE;
 		return;
 	}
-	if (codi->action == CODI_IDENTIFY) return; // no error means success
+	if (codi->action == CODI_ACT_IDENTIFY) return; // no error means success
 
 	tp = cp;
 	Map_Bytes(&bmih, &cp, mapBITMAPINFOHEADER);
@@ -316,7 +316,7 @@ void Unmap_Bytes(void *srcp, REBYTE **dstp, char *map) {
 			colors = 0;
 
 		if (colors) {
-			ctab = (RGBQUADPTR)Make_Mem(colors * sizeof(RGBQUAD));
+			ctab = ALLOC_ARRAY(RGBQUAD, colors);
 			for (i = 0; i<colors; i++) {
 				ctab[i].rgbBlue = *cp++;
 				ctab[i].rgbGreen = *cp++;
@@ -337,7 +337,7 @@ void Unmap_Bytes(void *srcp, REBYTE **dstp, char *map) {
 			colors = bmih.biClrUsed;
 
 		if (colors) {
-			ctab = (RGBQUADPTR)Make_Mem(colors * sizeof(RGBQUAD));
+			ctab = r_cast(RGBQUADPTR, Alloc_Mem(colors * sizeof(RGBQUAD)));
 			memcpy(ctab, cp, colors * sizeof(RGBQUAD));
 			cp += colors * sizeof(RGBQUAD);
 		}
@@ -348,9 +348,9 @@ void Unmap_Bytes(void *srcp, REBYTE **dstp, char *map) {
 
 	codi->w = w;
 	codi->h = h;
-	codi->bits = Make_Mem(w * h * 4);
+	codi->extra.bits = ALLOC_ARRAY(u32, w * h);
 
-	dp = (REBCNT *) codi->bits;
+	dp = cast(REBCNT *, codi->extra.bits);
 	dp += w * h - w;
 
 	for (y = 0; y<h; y++) {
@@ -519,7 +519,7 @@ error:
 **
 */	static void Encode_BMP_Image(REBCDI *codi)
 /*
-**		Input:  Image bits (codi->bits, w, h)
+**		Input:  Image bits (codi->extra.bits, w, h)
 **		Output: BMP encoded image (codi->data, len)
 **		Error:  Code in codi->error
 **		Return: Success as TRUE or FALSE
@@ -536,18 +536,19 @@ error:
 	w = codi->w;
 	h = codi->h;
 
-	memset(&bmfh, 0, sizeof(bmfh));
+	memset(&bmfh, NUL, sizeof(bmfh));
 	bmfh.bfType[0] = 'B';
 	bmfh.bfType[1] = 'M';
 	bmfh.bfSize = 14 + 40 + h * WADJUST(w);
 	bmfh.bfOffBits = 14 + 40;
 
 	// Create binary string:
-	cp = codi->data = Make_Mem(bmfh.bfSize);
+	codi->data = r_cast(unsigned char *, Alloc_Mem(bmfh.bfSize));
+	cp = codi->data;
 	codi->len = bmfh.bfSize;
 	Unmap_Bytes(&bmfh, &cp, mapBITMAPFILEHEADER);
 
-	memset(&bmih, 0, sizeof(bmih));
+	memset(&bmih, NUL, sizeof(bmih));
 	bmih.biSize = 40;
 	bmih.biWidth = w;
 	bmih.biHeight = h;
@@ -561,7 +562,7 @@ error:
 	bmih.biClrImportant = 0;
 	Unmap_Bytes(&bmih, &cp, mapBITMAPINFOHEADER);
 
-	dp = (REBCNT *) codi->bits;
+	dp = r_cast(REBCNT *, codi->extra.bits);
 	dp += w * h - w;
 
 	for (y = 0; y<h; y++) {
@@ -588,17 +589,17 @@ error:
 {
 	codi->error = 0;
 
-	if (codi->action == CODI_IDENTIFY) {
+	if (codi->action == CODI_ACT_IDENTIFY) {
 		Decode_BMP_Image(codi);
 		return CODI_CHECK; // error code is inverted result
 	}
 
-	if (codi->action == CODI_DECODE) {
+	if (codi->action == CODI_ACT_DECODE) {
 		Decode_BMP_Image(codi);
 		return CODI_IMAGE;
 	}
 
-	if (codi->action == CODI_ENCODE) {
+	if (codi->action == CODI_ACT_ENCODE) {
 		Encode_BMP_Image(codi);
 		return CODI_BINARY;
 	}
@@ -614,5 +615,5 @@ error:
 /*
 ***********************************************************************/
 {
-	Register_Codec("bmp", Codec_BMP_Image);
+	Register_Codec(AS_CBYTES("bmp"), Codec_BMP_Image);
 }

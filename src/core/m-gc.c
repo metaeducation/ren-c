@@ -216,7 +216,7 @@ static void Mark_Series(REBSER *series, REBCNT depth);
 	REBSER *ser;
 	REBVAL *val;
 
-	ASSERT(series != 0, RP_NULL_MARK_SERIES);
+	assert(series);
 
 	if (SERIES_FREED(series)) return; // series data freed already
 
@@ -225,9 +225,7 @@ static void Mark_Series(REBSER *series, REBCNT depth);
 	// If not a block, go no further
 	if (SERIES_WIDE(series) != sizeof(REBVAL)) return;
 
-	ASSERT2(RP_SERIES_OVERFLOW, SERIES_TAIL(series) < SERIES_REST(series));
-
-	//Moved to end: ASSERT1(IS_END(BLK_TAIL(series)), RP_MISSING_END);
+	assert(SERIES_TAIL(series) < SERIES_REST(series));
 
 	//if (depth == 1 && series->label) Print("Marking %s", series->label);
 
@@ -241,7 +239,7 @@ static void Mark_Series(REBSER *series, REBCNT depth);
 		case REB_END:
 			// We should never reach the end before len above.
 			// Exception is the stack itself.
-			if (series != DS_Series) Crash(RP_UNEXPECTED_END);
+			if (series != DS_Series) vCrash(RP_UNEXPECTED_END);
 			break;
 
 		case REB_UNSET:
@@ -288,8 +286,9 @@ static void Mark_Series(REBSER *series, REBCNT depth);
 mark_obj:
 			if (!IS_MARK_SERIES(VAL_OBJ_FRAME(val))) {
 				Mark_Series(VAL_OBJ_FRAME(val), depth);
-				if (SERIES_TAIL(VAL_OBJ_FRAME(val)) >= 1)
-					; //Dump_Frame(VAL_OBJ_FRAME(val), 4);
+				if (SERIES_TAIL(VAL_OBJ_FRAME(val)) >= 1) {
+					//Dump_Frame(VAL_OBJ_FRAME(val), 4);
+				}
 			}
 			break;
 
@@ -348,8 +347,15 @@ mark_obj:
 		case REB_TAG:
 		case REB_BITSET:
 			ser = VAL_SERIES(val);
-			if (SERIES_WIDE(ser) > sizeof(REBUNI))
-				Crash(RP_BAD_WIDTH, sizeof(REBUNI), SERIES_WIDE(ser), VAL_TYPE(val));
+			if (SERIES_WIDE(ser) > sizeof(REBUNI)) {
+				Crash_Core(
+					RP_BAD_WIDTH,
+					sizeof(REBUNI),
+					SERIES_WIDE(ser),
+					VAL_TYPE(val)
+				);
+				vDEAD_END;
+			}
 			MARK_SERIES(ser);
 			break;
 
@@ -369,25 +375,31 @@ mark_obj:
 		case REB_GET_PATH:
 		case REB_LIT_PATH:
 			ser = VAL_SERIES(val);
-			ASSERT(ser != 0, RP_NULL_SERIES);
+			assert(ser);
 			if (IS_BARE_SERIES(ser)) {
 				MARK_SERIES(ser);
 				break;
 			}
-#if (ALEVEL>0)
+
 			if (!IS_END(BLK_SKIP(ser, SERIES_TAIL(ser))) && ser != DS_Series)
-				Crash(RP_MISSING_END);
-#endif
-			if (SERIES_WIDE(ser) != sizeof(REBVAL) && SERIES_WIDE(ser) != 4 && SERIES_WIDE(ser) != 0)
-				Crash(RP_BAD_WIDTH, 16, SERIES_WIDE(ser), VAL_TYPE(val));
+				vCrash(RP_MISSING_END);
+
+			if (
+				SERIES_WIDE(ser) != sizeof(REBVAL)
+				&& SERIES_WIDE(ser) != 4
+				&& SERIES_WIDE(ser) != 0
+			) {
+				Crash_Core(RP_BAD_WIDTH, 16, SERIES_WIDE(ser), VAL_TYPE(val));
+				vDEAD_END;
+			}
 			CHECK_MARK(ser, depth);
 			break;
 
 		case REB_MAP:
 			ser = VAL_SERIES(val);
 			CHECK_MARK(ser, depth);
-			if (ser->series) {
-				MARK_SERIES(ser->series);
+			if (ser->extra.series) {
+				MARK_SERIES(ser->extra.series);
 			}
 			break;
 
@@ -424,14 +436,12 @@ mark_obj:
 			break;
 
 		default:
-			Crash(RP_DATATYPE+1, VAL_TYPE(val));
+			vCrash1(RP_DATATYPE + 1, VAL_TYPE(val));
 		}
 	}
 
-#if (ALEVEL>0)
 	if (!IS_END(BLK_SKIP(series, len)) && series != DS_Series)
-		Crash(RP_MISSING_END);
-#endif
+		vCrash(RP_MISSING_END);
 }
 
 
@@ -454,8 +464,6 @@ mark_obj:
 	for (seg = Mem_Pools[SERIES_POOL].segs; seg; seg = seg->next) {
 		series = (REBSER *) (seg + 1);
 		for (n = Mem_Pools[SERIES_POOL].units; n > 0; n--) {
-			SKIP_WALL(series);
-			MUNG_CHECK(SERIES_POOL, series, sizeof(*series));
 			if (!SERIES_FREED(series)) {
 				if (IS_FREEABLE(series)) {
 					Free_Series(series);
@@ -464,7 +472,6 @@ mark_obj:
 					UNMARK_SERIES(series);
 			}
 			series++;
-			SKIP_WALL(series);
 		}
 	}
 
@@ -491,10 +498,6 @@ mark_obj:
 	for (seg = Mem_Pools[GOB_POOL].segs; seg; seg = seg->next) {
 		gob = (REBGOB *) (seg + 1);
 		for (n = Mem_Pools[GOB_POOL].units; n > 0; n--) {
-#ifdef MUNGWALL
-			gob = (gob *) (((REBYTE *)s)+MUNG_SIZE);
-			MUNG_CHECK(GOB_POOL, gob, sizeof(*gob));
-#endif
 			if (IS_GOB_USED(gob)) {
 				if (IS_GOB_MARK(gob))
 					UNMARK_GOB(gob);
@@ -504,9 +507,6 @@ mark_obj:
 				}
 			}
 			gob++;
-#ifdef MUNGWALL
-			gob = (gob *) (((REBYTE *)s)+MUNG_SIZE);
-#endif
 		}
 	}
 
@@ -535,7 +535,7 @@ mark_obj:
 		return 0;
 	}
 
-	if (Reb_Opts->watch_recycle) Debug_Str(BOOT_STR(RS_WATCH, 0));
+	if (Reb_Opts->watch_recycle) Debug_Str(AS_CBYTES(BOOT_STR(RS_WATCH, 0)));
 
 	GC_Disabled = 1;
 
@@ -663,12 +663,12 @@ mark_obj:
 	GC_Disabled = 0;		// GC disabled counter for critical sections.
 	GC_Ballast = MEM_BALLAST;
 	GC_Last_Infant = 0;		// Keep the last N series safe from GC.
-	GC_Infants = Make_Mem((MAX_SAFE_SERIES + 2) * sizeof(REBSER*)); // extra
+	GC_Infants = ALLOC_ARRAY(REBSER *, MAX_SAFE_SERIES + 2); // extra
 
 	Init_Pools(scale);
 
-	Prior_Expand = Make_Mem(MAX_EXPAND_LIST * sizeof(REBSER*));
-	Prior_Expand[0] = (REBSER*)1;
+	Prior_Expand = ALLOC_ARRAY_ZEROFILL(REBSER *, MAX_EXPAND_LIST);
+	Prior_Expand[0] = r_cast(REBSER *, 1);
 
 	// Temporary series protected from GC. Holds series pointers.
 	GC_Protect = Make_Series(15, sizeof(REBSER *), FALSE);

@@ -50,7 +50,15 @@
 **     Do not even modify the argument names.
 */
 
+//	_XOPEN_SOURCE definition needed for putenv() / etc.  By making this the
+//	*first* include file we use, we ensure that later files which #include
+//	<stdlib.h> won't override our needs.
+//
+//		http://stackoverflow.com/a/16863757/211160
+
+#define _XOPEN_SOURCE 500
 #include <stdlib.h>
+
 #include <stdio.h>
 #include <unistd.h>
 #include <sys/types.h>
@@ -115,7 +123,7 @@ static void *Task_Ready;
 {
 	struct tm *time;
 
-	CLEARS(dat);
+	memset(dat, NUL, sizeof(*dat));
 
 	time = gmtime(stime);
 
@@ -155,7 +163,7 @@ static void *Task_Ready;
 
 /***********************************************************************
 **
-*/	void *OS_Make(size_t size)
+*/	void *OS_Alloc_Mem(size_t size)
 /*
 **		Allocate memory of given size.
 **
@@ -170,9 +178,9 @@ static void *Task_Ready;
 
 /***********************************************************************
 **
-*/	void OS_Free(void *mem)
+*/	void OS_Free_Mem(void *mem)
 /*
-**		Free memory allocated in this OS environment. (See OS_Make)
+**		Free memory allocated in this OS environment.
 **
 ***********************************************************************/
 {
@@ -217,10 +225,10 @@ static void *Task_Ready;
 
 	// A title tells us we should alert the user:
 	if (title) {
-		fputs(title, stderr);
+		fputs(AS_CCHARS(title), stderr);
 		fputs(":\n", stderr);
 	}
-	fputs(content, stderr);
+	fputs(AS_CCHARS(content), stderr);
 	fputs("\n\n", stderr);
 	exit(100);
 }
@@ -235,7 +243,16 @@ static void *Task_Ready;
 **
 ***********************************************************************/
 {
-	strerror_r(errnum, str, len);
+	// The strerror_r function is not standard, and the strerror
+	// function is not historically thread-safe.  What some
+	// programs do is keep their own copy of the error code table.
+	// That's a potential option, but for now we'll just stub in
+	// with the standard offering.
+
+	// !!! assert(sizeof(REBCHR) == sizeof(char));
+	// For better or worse, <assert.h> is not currently included (?)
+
+	strncpy(cast(char *, str), strerror(errnum), len);
 	return str;
 }
 
@@ -284,14 +301,14 @@ static void *Task_Ready;
 	const REBCHR* value = getenv(envname);
 	if (value == 0) return 0;
 
-	len = LEN_STR(value);
+	len = LEN_OS_STR(value);
 	if (len == 0) return -1; // shouldn't have saved an empty env string
 
 	if (len + 1 > valsize) {
 		return len + 1;
 	}
 
-	COPY_STR(envval, value, len);
+	COPY_OS_STR(envval, value, len);
 	return len;
 }
 
@@ -329,7 +346,7 @@ static void *Task_Ready;
 		// really need to set an environment variable, here's a way
 		// that just leaks a string each time you call.  
 
-		char* expr = MAKE_STR(LEN_STR(envname) + 1 + LEN_STR(envval) + 1);
+		char* expr = MAKE_OS_STR(LEN_OS_STR(envname) + 1 + LEN_OS_STR(envval) + 1);
 
 		strcpy(expr, envname);
 		strcat(expr, "=");
@@ -373,14 +390,16 @@ static void *Task_Ready;
 	char *str, *cp;
 
 	// compute total size:
-	for (n = 0; environ[n]; n++) len += 1 + LEN_STR(environ[n]);
+	for (n = 0; environ[n]; n++) len += 1 + LEN_OS_STR(environ[n]);
 
-	cp = str = OS_Make(len + 1); // +terminator
+	str = OS_ALLOC_ARRAY(char, len + 1); // +terminator
+
+	cp = str;
 	*cp = 0;
 
 	// combine all strings into one:
 	for (n = 0; environ[n]; n++) {
-		len = LEN_STR(environ[n]);
+		len = LEN_OS_STR(environ[n]);
 		strcat(cp, environ[n]);
 		cp += len;
 		*cp++ = 0;
@@ -446,9 +465,9 @@ static void *Task_Ready;
 **
 ***********************************************************************/
 {
-	*path = MAKE_STR(PATH_MAX);
+	*path = MAKE_OS_STR(PATH_MAX);
 	if (!getcwd(*path, PATH_MAX-1)) *path[0] = 0;
-	return LEN_STR(*path); // Be sure to call free() after usage
+	return LEN_OS_STR(*path); // Be sure to call free() after usage
 }
 
 
@@ -474,7 +493,7 @@ static void *Task_Ready;
 **
 ***********************************************************************/
 {
-	Convert_Date((time_t *)&(file->file.time.l), dat, 0);
+	Convert_Date((time_t *)&(file->special.file.time.l), dat, 0);
 }
 
 
@@ -514,17 +533,34 @@ static void *Task_Ready;
 
 /***********************************************************************
 **
-*/	void *OS_Find_Function(void *dll, char *funcname)
+*/	void (*OS_Find_Function(void *dll, const char *funcname))(void *)
 /*
 **		Get a DLL function address from its string name.
+**
+**		NOTE: For why the return value is so weird (causing the prototype
+**		to get warped), it's because in true standard C a function pointer
+**		is not guaranteed to be the same size as a void*.  (If you have
+**		less than 255 functions in your program, the compiler could store
+**		function pointers in just one byte!)  Hence this returns
+**		a generic "returns a void and takes a void" function pointer.
+**		*That* can be cast to other function types.
 **
 ***********************************************************************/
 {
 #ifndef NO_DL_LIB
-	void *fp = dlsym(dll, funcname);
+	// !!! Even though this is trying to stay on the right side of the
+	// specification in terms of the return value, there are practical
+	// difficulties given how OS APIs often are not standard C.  Hence
+	// this implementation is not guaranteed to work, just to get the
+	// basics down and not trigger strict compiler warnings.  See:
+	//
+	//		http://stackoverflow.com/a/1096349/211160
+
+	void (*fp)(void *);
+	*(void**)(&fp) = dlsym(dll, funcname);
 	return fp;
 #else
-	return 0;
+	return NULL;
 #endif
 }
 
@@ -594,7 +630,7 @@ static void *Task_Ready;
 	return system(call); // returns -1 on system call error
 }
 
-static int Try_Browser(char *browser, REBCHR *url)
+static int Try_Browser(const char *browser, const REBCHR *url)
 {
 	pid_t pid;
 	int result, status;
@@ -618,7 +654,7 @@ static int Try_Browser(char *browser, REBCHR *url)
 
 /***********************************************************************
 **
-*/	int OS_Browse(REBCHR *url, int reserved)
+*/	int OS_Browse(const REBCHR *url, int reserved)
 /*
 ***********************************************************************/
 {

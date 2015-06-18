@@ -32,7 +32,7 @@
 
 /***********************************************************************
 **
-*/	REBINT CT_Datatype(REBVAL *a, REBVAL *b, REBINT mode)
+*/	REBINT CT_Datatype(const REBVAL *a, const REBVAL *b, REBINT mode)
 /*
 ***********************************************************************/
 {
@@ -43,7 +43,7 @@
 
 /***********************************************************************
 **
-*/	REBFLG MT_Datatype(REBVAL *out, REBVAL *data, REBCNT type)
+*/	REBFLG MT_Datatype(REBVAL *out, const REBVAL *data, REBCNT type)
 /*
 ***********************************************************************/
 {

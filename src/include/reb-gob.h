@@ -47,12 +47,14 @@ enum GOB_FLAGS {		// GOB attribute and option flags
 	GOBF_POPUP,			// Window is a popup (with owner window)
 	GOBF_MODAL,			// Modal event filtering
 	GOBF_ON_TOP,		// The window is always on top
+	GOBF_MAX
 };
 
 enum GOB_STATE {		// GOB state flags
 	GOBS_OPEN = 0,		// Window is open
 	GOBS_ACTIVE,		// Window is active
 	GOBS_NEW,			// Gob is new to pane (old-offset, old-size wrong)
+	GOBS_MAX
 };
 
 enum GOB_TYPES {		// Types of content
@@ -73,7 +75,8 @@ enum GOB_DTYPES {		// Userdata types
 	GOBD_STRING,
 	GOBD_BINARY,
 	GOBD_RESV,			// unicode
-	GOBD_INTEGER
+	GOBD_INTEGER,
+	GOBD_MAX
 };
 
 
@@ -93,9 +96,8 @@ struct rebol_gob {		// size: 64 bytes!
 	REBYTE dtype;		// pointer data type
 	REBYTE resv;		// reserved
 
-	union {
-		REBGOB *owner;	// temp field - reused for different things
-	};
+	REBGOB *owner;		// !!! Was in a one-item anonymous union as "reused
+						// for different things"; union removed for convenience
 
 	REBSER *content;	// content value (block, string, color)
 	REBSER *data;		// user defined data

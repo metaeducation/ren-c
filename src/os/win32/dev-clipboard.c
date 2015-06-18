@@ -38,6 +38,7 @@
 ***********************************************************************/
 
 #include <stdio.h>
+#include <assert.h>
 
 #include "reb-host.h"
 #include "host-lib.h"
@@ -73,7 +74,7 @@
 ***********************************************************************/
 {
 	HANDLE data;
-	REBUNI *cp;
+	REBCHR *cp;
 	REBUNI *bin;
 	REBINT len;
 
@@ -97,7 +98,7 @@
 		return DR_ERROR;
 	}
 
-	cp = GlobalLock(data);
+	cp = r_cast(REBCHR *, GlobalLock(data));
 	if (!cp) {
 		GlobalUnlock(data);
 		CloseClipboard();
@@ -105,17 +106,19 @@
 		return DR_ERROR;
 	}
 
-	len = LEN_STR(cp); // wide chars
-	bin = OS_Make((len+1) * sizeof(REBCHR));
-	COPY_STR(bin, cp, len);
+	len = LEN_OS_STR(cp); // wide chars
+	bin = OS_ALLOC_ARRAY(REBUNI, len + 1);
+
+	assert(sizeof(REBCHR) == sizeof(REBUNI));
+	SET_FLAG(req->flags, RRF_WIDE);
+	COPY_OS_STR(r_cast(REBCHR *, bin), cp, len);
+	req->common.data = r_cast(REBYTE *, bin);
+	req->actual = len * sizeof(REBUNI);
 
 	GlobalUnlock(data);
 
 	CloseClipboard();
 
-	SET_FLAG(req->flags, RRF_WIDE);
-	req->data = (REBYTE *)bin;
-	req->actual = len * sizeof(REBCHR);
 	return DR_DONE;
 }
 
@@ -143,14 +146,14 @@
 	}
 
 	// Lock and copy the string:
-	bin = GlobalLock(data);
+	bin = r_cast(REBYTE *, GlobalLock(data));
 	if (bin == NULL) {
 		req->error = 10;
 		return DR_ERROR;
 	}
 
-	COPY_MEM(bin, req->data, len);
-	bin[len] = 0;
+	memcpy(AS_CHARS(bin), AS_CHARS(req->common.data), len);
+	bin[len] = NUL;
 	GlobalUnlock(data);
 
 	if (!OpenClipboard(NULL)) {
@@ -160,7 +163,9 @@
 
 	EmptyClipboard();
 
-	err = !SetClipboardData(GET_FLAG(req->flags, RRF_WIDE) ? CF_UNICODETEXT : CF_TEXT, data);
+	err = !SetClipboardData(
+		GET_FLAG(req->flags, RRF_WIDE) ? CF_UNICODETEXT : CF_TEXT, data
+	);
 
 	CloseClipboard();
 

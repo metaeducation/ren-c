@@ -58,7 +58,7 @@
 
 /***********************************************************************
 **
-*/	REBINT CT_Map(REBVAL *a, REBVAL *b, REBINT mode)
+*/	REBINT CT_Map(const REBVAL *a, const REBVAL *b, REBINT mode)
 /*
 ***********************************************************************/
 {
@@ -83,7 +83,7 @@
 
 	if (size >= MIN_DICT) ser = Make_Hash_Array(size);
 
-	blk->series = ser;
+	blk->extra.series = ser;
 
 	return blk;
 }
@@ -163,7 +163,7 @@
 		//Dump_Series(series, "hash");
 	}
 
-	return (mode > 0) ? -1 : hash;
+	return (mode > 0) ? NOT_FOUND : hash;
 }
 
 
@@ -180,13 +180,13 @@
 	REBCNT key;
 	REBCNT *hashes;
 
-	if (!series->series) return;
+	if (!series->extra.series) return;
 
-	hashes = (REBCNT*)(series->series->data);
+	hashes = r_cast(REBCNT *, series->extra.series->data);
 
 	val = BLK_HEAD(series);
 	for (n = 0; n < series->tail; n += 2, val += 2) {
-		key = Find_Key(series, series->series, val, 2, 0, 0);
+		key = Find_Key(series, series->extra.series, val, 2, 0, 0);
 		hashes[key] = n/2+1;
 	}
 }
@@ -204,7 +204,7 @@
 **
 ***********************************************************************/
 {
-	REBSER *hser = series->series; // can be null
+	REBSER *hser = series->extra.series; // can be null
 	REBCNT *hashes;
 	REBCNT hash;
 	REBVAL *v;
@@ -263,7 +263,7 @@
 
 		// Add hash table:
 		//Print("hash added %d", series->tail);
-		series->series = hser = Make_Hash_Array(series->tail);
+		series->extra.series = hser = Make_Hash_Array(series->tail);
 		Rehash_Hash(series);
 	}
 
@@ -340,7 +340,7 @@
 
 /***********************************************************************
 **
-*/	static void Append_Map(REBSER *ser, REBVAL *arg, REBCNT len)
+*/	static void Append_Map(REBSER *ser, const REBVAL *arg, REBCNT len)
 /*
 ***********************************************************************/
 {
@@ -356,7 +356,7 @@
 
 /***********************************************************************
 **
-*/	REBFLG MT_Map(REBVAL *out, REBVAL *data, REBCNT type)
+*/	REBFLG MT_Map(REBVAL *out, const REBVAL *data, REBCNT type)
 /*
 ***********************************************************************/
 {
@@ -428,7 +428,7 @@
 	REBCNT size = SERIES_TAIL(blk);
 
 	if (size >= MIN_DICT) ser = Make_Hash_Array(size);
-	blk->series = ser;
+	blk->extra.series = ser;
 	Rehash_Hash(blk);
 }
 
@@ -544,7 +544,7 @@
 
 	case A_CLEAR:
 		Clear_Series(series);
-		if (series->series) Clear_Series(series->series);
+		if (series->extra.series) Clear_Series(series->extra.series);
 		Set_Series(REB_MAP, D_RET, series);
 		break;
 

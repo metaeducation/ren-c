@@ -33,7 +33,7 @@
 
 /*********************************************************************
 **
-*/	REBOOL Is_Not_ASCII(REBYTE *bp, REBCNT len)
+*/	REBOOL Is_Not_ASCII(const REBYTE *bp, REBCNT len)
 /*
 **		Returns TRUE if byte string uses upper code page.
 **
@@ -48,7 +48,7 @@
 
 /*********************************************************************
 **
-*/	REBOOL Is_Wide(REBUNI *up, REBCNT len)
+*/	REBOOL Is_Wide(const REBUNI *up, REBCNT len)
 /*
 **		Returns TRUE if uni string needs 16 bits.
 **
@@ -63,7 +63,7 @@
 
 /*********************************************************************
 **
-*/	REBYTE *Qualify_String(REBVAL *val, REBINT max_len, REBCNT *length, REBINT opts)
+*/	const REBYTE *Qualify_String(const REBVAL *val, REBINT max_len, REBCNT *length, REBINT opts)
 /*
 **	Prequalifies a string before using it with a function that
 **	expects it to be 8-bits.
@@ -213,7 +213,7 @@
 		switch (action) {
 		case A_AND:
 			for (i = 0; i < mt; i++) *p2++ = *p0++ & *p1++;
-			CLEAR(p2, t2 - mt);
+			memset(p2, NUL, t2 - mt);
 			return series;
 		case A_OR:
 			for (i = 0; i < mt; i++) *p2++ = *p0++ | *p1++;
@@ -315,7 +315,7 @@ static REBYTE seed_str[SEED_LEN] = {
 
 		switch (VAL_TYPE(val)) {
 		case REB_BINARY:
-			kp = (void*)VAL_BIN_DATA(val);
+			kp = VAL_BIN_DATA(val);
 			klen = VAL_LEN(val);
 			break;
 		case REB_STRING:
@@ -323,8 +323,9 @@ static REBYTE seed_str[SEED_LEN] = {
 			kp = BIN_SKIP(ser, i);
 			break;
 		case REB_INTEGER:
-			INT_TO_STR(VAL_INT64(val), dst);
-			klen = LEN_BYTES(dst);
+			// !!! Couldn't it use a result of INT_TO_STR vs. strlen?
+			INT_TO_STR(VAL_INT64(val), AS_CHARS(dst));
+			klen = strlen(AS_CHARS(dst));
 			as_is = FALSE;
 			break;
 		}
@@ -703,7 +704,7 @@ static REBYTE seed_str[SEED_LEN] = {
 
 	// String series:
 
-	if (IS_PROTECT_SERIES(VAL_SERIES(val))) Trap0(RE_PROTECTED);
+	if (IS_PROTECT_SERIES(VAL_SERIES(val))) vTrap0(RE_PROTECTED);
 
 	len = Partial(val, 0, part, 0);
 	n = VAL_INDEX(val);
@@ -712,9 +713,9 @@ static REBYTE seed_str[SEED_LEN] = {
 	if (VAL_BYTE_SIZE(val)) {
 		REBYTE *bp = VAL_BIN(val);
 		if (upper)
-			for (; n < len; n++) bp[n] = (REBYTE)UP_CASE(bp[n]);
+			for (; n < len; n++) bp[n] = cast(REBYTE, UP_CASE(bp[n]));
 		else {
-			for (; n < len; n++) bp[n] = (REBYTE)LO_CASE(bp[n]);
+			for (; n < len; n++) bp[n] = cast(REBYTE, LO_CASE(bp[n]));
 		}
 	} else {
 		REBUNI *up = VAL_UNI(val);

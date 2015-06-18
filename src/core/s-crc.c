@@ -150,7 +150,7 @@ static REBCNT *CRC_Table;
 
 /***********************************************************************
 **
-*/	REBINT Hash_Word(REBYTE *str, REBINT len)
+*/	REBINT Hash_Word(const REBYTE *str, REBINT len)
 /*
 **		Return a case insensitive hash value for the string.
 **
@@ -160,7 +160,7 @@ static REBCNT *CRC_Table;
 	REBINT hash;
 	REBCNT ulen;
 
-	if (len < 0) len = LEN_BYTES(str);
+	if (len < 0) len = strlen(AS_CCHARS(str));
 
 	hash = (REBINT)len + (REBINT)((REBYTE)LO_CASE(*str));
 
@@ -323,7 +323,7 @@ static REBCNT *CRC_Table;
 /*
 ***********************************************************************/
 {
-	CRC_Table = Make_Mem(sizeof(REBCNT) * 256);
+	CRC_Table = ALLOC_ARRAY(REBCNT, 256);
 	Make_CRC_Table(PRZCRC);
 }
 
@@ -364,7 +364,7 @@ static void Make_CRC32_Table(void) {
 	unsigned long c;
 	int n,k;
 
-	crc32_table = Make_Mem(256 * sizeof(u32));
+	crc32_table = ALLOC_ARRAY(u32, 256);
 
 	for(n=0;n<256;n++) {
 		c=(unsigned long)n;
@@ -496,7 +496,7 @@ int CRCdemo::Get_CRC(char* text)
       unsigned char* buffer;
 
       // Get the length.
-      len = LEN_BYTES(text);
+      len = strlen(text);
       // Save the text in the buffer.
       buffer = (unsigned char*)text;
       // Perform the algorithm on each character

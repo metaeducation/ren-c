@@ -72,6 +72,11 @@
 ***********************************************************************/
 {
 	uLongf size;
+	// NOTE: The use_crc flag is not present in Zlib 1.2.8
+	// Instead, compress's fifth paramter is the compression level
+	// It can be a value from 1 to 9, or Z_DEFAULT_COMPRESSION if you
+	// want it to pick what the library author considers the "worth it"
+	// tradeoff of time to generally suggest.
 	REBSER *output;
 	REBINT err;
 	REBYTE out_size[sizeof(REBCNT)];
@@ -82,7 +87,13 @@
 
 	//DISABLE_GC;	// !!! why??
 	// dest, dest-len, src, src-len, level
-	err = Z_compress2(BIN_HEAD(output), (uLongf*)&size, BIN_HEAD(input) + index, len, use_crc);
+	err = z_compress2(
+		r_cast(z_Bytef *, BIN_HEAD(output)),
+		cast(uLongf *, &size),
+		r_cast(z_Bytef *, BIN_HEAD(input) + index),
+		len,
+		Z_DEFAULT_COMPRESSION
+	);
 	if (err) {
 		if (err == Z_MEM_ERROR) Trap0(RE_NO_MEMORY);
 		SET_INTEGER(DS_RETURN, err);
@@ -109,6 +120,8 @@
 ***********************************************************************/
 {
 	uLongf size;
+	// NOTE: The use_crc flag is not present in Zlib 1.2.8
+	// There is no fifth parameter to uncompress matching the fifth to compress
 	REBSER *output;
 	REBINT err;
 
@@ -123,7 +136,12 @@
 	output = Make_Binary(size);
 
 	//DISABLE_GC;
-	err = Z_uncompress(BIN_HEAD(output), (uLongf*)&size, BIN_HEAD(input) + index, len, use_crc);
+	err = z_uncompress(
+		r_cast(z_Bytef *, BIN_HEAD(output)),
+        &size,
+		r_cast(z_Bytef *, BIN_HEAD(input) + index),
+		len
+	);
 	if (err) {
 		if (PG_Boot_Phase < 2) return 0;
 		if (err == Z_MEM_ERROR) Trap0(RE_NO_MEMORY);

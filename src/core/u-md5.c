@@ -21,11 +21,16 @@ typedef struct MD5state_st {
 	int num;
 } MD5_CTX;
 
-void MD5_Init(MD5_CTX *c);
-void MD5_Update(MD5_CTX *c, unsigned char *data, MD5_LONG len);
-void MD5_Final(unsigned char *md, MD5_CTX *c);
+#ifdef __cplusplus
+extern "C" {
+#endif
+void MD5_Init(void *c);
+void MD5_Update(void *c, unsigned char *data, MD5_LONG len);
+void MD5_Final(unsigned char *md, void *c);
 int MD5_CtxSize(void);
-unsigned char *MD5(unsigned char *d, MD5_LONG n, unsigned char *md);
+#ifdef __cplusplus
+}
+#endif
 
 #define ULONG	MD5_LONG
 #define UCHAR	unsigned char
@@ -159,7 +164,8 @@ unsigned char *MD5(unsigned char *d, MD5_LONG n, unsigned char *md);
 
 static void md5_block(MD5_CTX *c, MD5_LONG *p);
 
-void MD5_Init(MD5_CTX *c) {
+void MD5_Init(void *c_opaque) {
+	MD5_CTX *c = (MD5_CTX*)c_opaque;
 	c->A=INIT_DATA_A;
 	c->B=INIT_DATA_B;
 	c->C=INIT_DATA_C;
@@ -169,9 +175,10 @@ void MD5_Init(MD5_CTX *c) {
 	c->num=0;
 }
 
-void MD5_Update(MD5_CTX *c, register unsigned char *data, MD5_LONG len)
+void MD5_Update(void *c_opaque, unsigned char *data, MD5_LONG len)
 {
-	register ULONG *p;
+	MD5_CTX *c = (MD5_CTX*)c_opaque;
+	ULONG *p;
 	int sw,sc;
 	ULONG l;
 
@@ -263,9 +270,9 @@ void MD5_Update(MD5_CTX *c, register unsigned char *data, MD5_LONG len)
 	}
 }
 
-static void md5_block(MD5_CTX *c, register ULONG *X)
+static void md5_block(MD5_CTX *c, ULONG *X)
 {
-	register ULONG A,B,C,D;
+	ULONG A,B,C,D;
 
 	A=c->A;
 	B=c->B;
@@ -347,13 +354,14 @@ static void md5_block(MD5_CTX *c, register ULONG *X)
 	c->D+=D&0xffffffffL;
 }
 
-void MD5_Final(unsigned char *md, MD5_CTX *c)
+void MD5_Final(unsigned char *md, void *c_opaque)
 {
-	register int i,j;
-	register ULONG l;
-	register ULONG *p;
+	int i,j;
+	ULONG l;
+	ULONG *p;
 	static unsigned char end[4]={0x80,0x00,0x00,0x00};
 	unsigned char *cp=end;
+	MD5_CTX *c = (MD5_CTX*)c_opaque;
 
 	/* c->num should definitly have room for at least one more byte. */
 	p=c->data;
@@ -385,23 +393,28 @@ void MD5_Final(unsigned char *md, MD5_CTX *c)
 	/* clear stuff, md5_block may be leaving some stuff on the stack
 	 * but I'm not worried :-) */
 	c->num=0;
-/*	memset((char *)&c,0,sizeof(c));*/
+/*	memset(&c, NUL, sizeof(c));*/
 }
 
 int MD5_CtxSize(void) {
 	return sizeof(MD5_CTX);
 }
 
-unsigned char *MD5(unsigned char *d, MD5_LONG n, unsigned char *md)
+
+/***********************************************************************
+**
+*/	REBYTE *MD5(REBYTE *d, REBCNT n, REBYTE *md)
+/*
+***********************************************************************/
 {
 	MD5_CTX c;
-	static unsigned char m[MD5_DIGEST_LENGTH];
+	static REBYTE m[MD5_DIGEST_LENGTH];
 
 	if (!md) md=m;
 	MD5_Init(&c);
-	MD5_Update(&c,d,n);
-	MD5_Final(md,&c);
-	memset(&c,0,sizeof(c)); /* security consideration */
-	return(md);
+	MD5_Update(&c,(unsigned char*)d,n);
+	MD5_Final((unsigned char*)md,&c);
+	memset(&c, NUL, sizeof(c)); /* security consideration */
+	return md;
 }
 

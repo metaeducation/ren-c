@@ -38,6 +38,7 @@ enum {
 	RFM_RESEEK,			// file index has moved, reseek
 	RFM_NAME_MEM,		// converted name allocated in mem
 	RFM_DIR = 16,
+	RFM_MAX
 };
 
 // RFE - REBOL File Error
@@ -51,6 +52,7 @@ enum {
 	RFE_BAD_READ,		// Read failed (general)
 	RFE_BAD_WRITE,		// Write failed (general)
 	RFE_DISK_FULL,		// No space on target volume
+	RFE_MAX
 };
 
 #define MAX_FILE_NAME 1022

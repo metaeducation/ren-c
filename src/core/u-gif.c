@@ -87,7 +87,10 @@ void Chrom_Key_Alpha(REBVAL *v,REBCNT col,REBINT blitmode) {
 	short	*prefix;
 	REBYTE	first, *pixel_stack, *suffix, *top_stack;
 
-	suffix = Make_Mem(MAX_STACK_SIZE * (sizeof(REBYTE) + sizeof(REBYTE) + sizeof(short)));
+	suffix = r_cast(
+		REBYTE *,
+		Alloc_Mem(MAX_STACK_SIZE * (sizeof(REBYTE) + sizeof(REBYTE) + sizeof(short)))
+	);
 	pixel_stack = suffix + MAX_STACK_SIZE;
 	prefix = (short *)(pixel_stack + MAX_STACK_SIZE);
 
@@ -200,7 +203,7 @@ void Chrom_Key_Alpha(REBVAL *v,REBCNT col,REBINT blitmode) {
 */	void Decode_GIF_Image(REBCDI *codi)
 /*
 **		Input:  GIF encoded image (codi->data, len)
-**		Output: Image bits (codi->bits, w, h)
+**		Output: Image bits (codi->extra.bits, w, h)
 **		Error:  Code in codi->error
 **		Return: Success as TRUE or FALSE
 **
@@ -223,7 +226,7 @@ void Chrom_Key_Alpha(REBVAL *v,REBCNT col,REBINT blitmode) {
 		codi->error = CODI_ERR_SIGNATURE;
 		return;
 	}
-	if (codi->action == CODI_IDENTIFY) return; // no error means success
+	if (codi->action == CODI_ACT_IDENTIFY) return; // no error means success
 
 	global_colors = 0;
 	global_colormap = (unsigned char *) NULL;
@@ -275,14 +278,15 @@ void Chrom_Key_Alpha(REBVAL *v,REBCNT col,REBINT blitmode) {
 		// if(w * h * 4 > VAL_STR_LEN(img)) 
 		//			h = 4 * VAL_STR_LEN(img) / w;
 
-		// Inititialize colormap.
-		colors = !local_colormap ? global_colors : 1 << ((cp[8] & 0x07)+1);
-		if (!local_colormap) {
-			colormap = global_colormap;
-		}
-		else {
+		// Initialize colormap.
+		if (local_colormap) {
+			colors = 1 << ((cp[8] & 0x07)+1);
 			colormap = cp + 9;
 			cp += 3 * colors;
+		}
+		else {
+			colors = global_colors;
+			colormap = global_colormap;
 		}
 		cp += 9;
 
@@ -294,7 +298,7 @@ void Chrom_Key_Alpha(REBVAL *v,REBCNT col,REBINT blitmode) {
 			Append_Series(VAL_SERIES(Temp2_Value), (REBMEM *)Temp_Value, 1);
 		}
 */
-		dp = codi->bits = (u32 *)Make_Mem(w * h * 4);
+		dp = codi->extra.bits = r_cast(u32 *, Alloc_Mem(w * h * 4));
 		codi->w = w;
 		codi->h = h;
 
@@ -322,12 +326,12 @@ void Chrom_Key_Alpha(REBVAL *v,REBCNT col,REBINT blitmode) {
 {
 	codi->error = 0;
 
-	if (codi->action == CODI_IDENTIFY) {
+	if (codi->action == CODI_ACT_IDENTIFY) {
 		Decode_GIF_Image(codi);
 		return CODI_CHECK; // error code is inverted result
 	}
 
-	if (codi->action == CODI_DECODE) {
+	if (codi->action == CODI_ACT_DECODE) {
 		Decode_GIF_Image(codi);
 		return CODI_IMAGE;
 	}
@@ -343,5 +347,5 @@ void Chrom_Key_Alpha(REBVAL *v,REBCNT col,REBINT blitmode) {
 /*
 ***********************************************************************/
 {
-	Register_Codec("gif", Codec_GIF_Image);
+	Register_Codec(AS_CBYTES("gif"), Codec_GIF_Image);
 }

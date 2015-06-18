@@ -301,7 +301,7 @@
 
 /***********************************************************************
 **
-*/  static REBINT Scan_Char(REBYTE **bp)
+*/  static REBINT Scan_Char(const REBYTE **bp)
 /*
 **      Scan a char, handling ^A, ^/, ^(null), ^(1234)
 **
@@ -314,7 +314,7 @@
 ***********************************************************************/
 {
 	REBINT n;
-	REBYTE *cp;
+	const REBYTE *cp;
 	REBYTE c;
 	REBYTE lex;
 
@@ -376,7 +376,7 @@
 
 		// Check for identifiers:
 		for (n = 0; n < ESC_MAX; n++) {
-			if (NZ(cp = Match_Bytes(*bp, (REBYTE*)(Esc_Names[n])))) {
+			if (NZ(cp = Match_Bytes(*bp, AS_CBYTES(Esc_Names[n])))) {
 				if (cp && *cp == ')') {
 					*bp = cp + 1;
 					return Esc_Codes[n];
@@ -398,7 +398,7 @@
 
 /***********************************************************************
 **
-*/  REBYTE *Scan_Quote(REBYTE *src, SCAN_STATE *scan_state)
+*/  const REBYTE *Scan_Quote(const REBYTE *src, SCAN_STATE *scan_state)
 /*
 **      Scan a quoted string, handling all the escape characters.
 **
@@ -474,7 +474,7 @@
 
 /***********************************************************************
 **
-*/  REBYTE *Scan_Item(REBYTE *src, REBYTE *end, REBUNI term, REBYTE *invalid)
+*/  const REBYTE *Scan_Item(const REBYTE *src, const REBYTE *end, REBUNI term, const REBYTE *invalid)
 /*
 **      Scan as UTF8 an item like a file or URL.
 **
@@ -526,7 +526,7 @@
 		}
 
 		// Is char as literal valid? (e.g. () [] etc.)
-		else if (invalid && strchr(invalid, c)) return 0;
+		else if (invalid && strchr(AS_CCHARS(invalid), c)) return 0;
 
 		src++;
 
@@ -545,7 +545,7 @@
 
 /***********************************************************************
 **
-*/  static REBYTE *Skip_Tag(REBYTE *cp)
+*/  static const REBYTE *Skip_Tag(const REBYTE *cp)
 /*
 **		Skip the entire contents of a tag, including quoted strings.
 **		The argument points to the opening '<'.  Zero is returned on
@@ -569,7 +569,7 @@
 
 /***********************************************************************
 **
-*/	static void Scan_Error(REBCNT errnum, SCAN_STATE *ss, REBCNT tkn, REBYTE *arg, REBCNT size, REBVAL *relax)
+*/	static void Scan_Error(REBCNT errnum, SCAN_STATE *ss, REBCNT tkn, const REBYTE *arg, REBCNT size, REBVAL *relax)
 /*
 **		Scanner error handler
 **
@@ -577,18 +577,18 @@
 {
 	ERROR_OBJ *error;
 	REBSER *errs;
-	REBYTE *name;
-	REBYTE *cp;
-	REBYTE *bp;
+	const REBYTE *name;
+	const REBYTE *cp;
+	const REBYTE *bp;
 	REBSER *ser;
 	REBCNT len = 0;
 
 	ss->errors++;
 
 	if (PG_Boot_Strs)
-		name = BOOT_STR(RS_SCAN,tkn);
+		name = AS_CBYTES(BOOT_STR(RS_SCAN, tkn));
 	else
-		name = (REBYTE*)"boot";
+		name = AS_CBYTES("boot");
 
 	cp = ss->head_line;
     while (IS_LEX_SPACE(*cp)) cp++;	// skip indentation
@@ -599,10 +599,10 @@
 	errs = Make_Error(errnum, 0, 0, 0);
 	error = (ERROR_OBJ *)FRM_VALUES(errs);
 	ser = Make_Binary(len + 16);
-	Append_Bytes(ser, "(line ");
+	Append_Bytes(ser, AS_CBYTES("(line "));
 	Append_Int(ser, ss->line_count);
-	Append_Bytes(ser, ") ");
-	Append_Series(ser, (REBYTE*)bp, len);
+	Append_Bytes(ser, AS_CBYTES(") "));
+	Append_Series(ser, bp, len);
 	Set_String(&error->nearest, ser);
 	Set_String(&error->arg1, Copy_Bytes(name, -1));
 	Set_String(&error->arg2, Copy_Bytes(arg, size));
@@ -637,7 +637,7 @@
 **
 ***********************************************************************/
 {
-    REBYTE *cp = scan_state->begin; /* char scan pointer */
+    const REBYTE *cp = scan_state->begin; /* char scan pointer */
     REBCNT flags = 0;               /* lexical flags */
 
     while (IS_LEX_SPACE(*cp)) cp++; /* skip white space */
@@ -689,7 +689,7 @@
 ***********************************************************************/
 {
     REBCNT flags;
-    REBYTE *cp;
+    const REBYTE *cp;
     REBINT type;
 
     flags = Prescan(scan_state);
@@ -994,7 +994,7 @@
         return -TOKEN_WORD;
     }
 
-#if ndef	// unreachable code
+#ifdef not_used	// unreachable code
     /* avoid '123 :123 from scanning as a word.... */
     if (IS_LEX_WORD(cp[1]) && !HAS_LEX_FLAGS(flags, LEX_WORD_FLAGS))
         return TOKEN_LIT;
@@ -1036,7 +1036,7 @@ scanword:
 
 /***********************************************************************
 **
-*/  static void Init_Scan_State(SCAN_STATE *scan_state, REBYTE *cp, REBCNT limit)
+*/  static void Init_Scan_State(SCAN_STATE *scan_state, const REBYTE *cp, REBCNT limit)
 /*
 **		Initialize a scanner state structure.  Set the standard
 **		scan pointers and the limit pointer.
@@ -1048,7 +1048,6 @@ scanword:
     scan_state->line_count = 1;
 	scan_state->opts = 0;
 	scan_state->errors = 0;
-//    scan_state->error_id = (REBYTE *)"";
 }
 
 
@@ -1074,9 +1073,9 @@ scanword:
 **
 ***********************************************************************/
 {
-	REBYTE *rp = 0;   /* pts to the REBOL word */
-	REBYTE *bp = 0;   /* pts to optional [ just before REBOL */
-    REBYTE *cp = scan_state->begin;
+	const REBYTE *rp = 0;   /* pts to the REBOL word */
+	const REBYTE *bp = 0;   /* pts to optional [ just before REBOL */
+    const REBYTE *cp = scan_state->begin;
 	REBCNT count = scan_state->line_count;
 
 	while (TRUE) {
@@ -1092,7 +1091,7 @@ scanword:
 			break;
         case 'R':
 		case 'r':
-			if (Match_Bytes(cp, (REBYTE *)&Str_REBOL[0])) {
+			if (Match_Bytes(cp, AS_CBYTES(Str_REBOL))) {
 				rp = cp;
                 cp += 5;
 				break;
@@ -1117,10 +1116,9 @@ scanword:
 }
 
 #ifdef not_used
-//!!!
 /***********************************************************************
 **
-	REBOOL Construct_Simple(REBVAL *value, REBSER *spec)
+*/	REBOOL Construct_Simple(REBVAL *value, REBSER *spec)
 /*
 **		Handle special #[type] constructs. These are used to
 **		boot REBOL, so must not require binding.
@@ -1159,8 +1157,8 @@ extern REBSER *Scan_Full_Block(SCAN_STATE *scan_state, REBYTE mode_char);
 {
     REBINT token;
     REBCNT len;
-    REBYTE *bp;
-	REBYTE *ep;
+    const REBYTE *bp;
+	const REBYTE *ep;
 	REBVAL *value = 0;
 	REBSER *emitbuf = BUF_EMIT;
 	REBSER *block;
@@ -1170,7 +1168,7 @@ extern REBSER *Scan_Full_Block(SCAN_STATE *scan_state, REBYTE mode_char);
 	REBINT linenum;
 #endif
 	REBCNT start = scan_state->line_count;
-	REBYTE *start_line = scan_state->head_line;
+	const REBYTE *start_line = scan_state->head_line;
 	// just_once for load/next see Load_Script for more info.
 	REBOOL just_once = GET_FLAG(scan_state->opts, SCAN_NEXT);
 
@@ -1553,7 +1551,7 @@ exit_block:
 
 /***********************************************************************
 **
-*/	REBSER *Scan_Source(REBYTE *src, REBCNT len)
+*/	REBSER *Scan_Source(const REBYTE *src, REBCNT len)
 /*
 **		Scan source code. Scan state initialized. No header required.
 **		If len = 0, then use the C string terminated length.
@@ -1563,7 +1561,7 @@ exit_block:
     SCAN_STATE scan_state;
 
 	Check_Stack();
-	if (!len) len = LEN_BYTES(src);
+	if (!len) len = strlen(AS_CCHARS(src));
     Init_Scan_State(&scan_state, src, len);
 	return Scan_Code(&scan_state, 0);
 }
@@ -1578,7 +1576,7 @@ exit_block:
 ***********************************************************************/
 {
     SCAN_STATE scan_state;
-	REBYTE *cp;
+	const REBYTE *cp;
 	REBINT result;
 
 	// Must be UTF8 byte-stream:
@@ -1638,7 +1636,7 @@ exit_block:
 
 /***********************************************************************
 **
-*/  REBCNT Scan_Word(REBYTE *cp, REBCNT len)
+*/  REBCNT Scan_Word(const REBYTE *cp, REBCNT len)
 /*
 **		Scan word chars and make word symbol for it.
 **		This method gets exactly the same results as scanner.
@@ -1658,13 +1656,13 @@ exit_block:
 
 /***********************************************************************
 **
-*/  REBCNT Scan_Issue(REBYTE *cp, REBCNT len)
+*/  REBCNT Scan_Issue(const REBYTE *cp, REBCNT len)
 /*
 **		Scan an issue word, allowing special characters.
 **
 ***********************************************************************/
 {
-	REBYTE *bp;
+	const REBYTE *bp;
 	REBCNT l = len;
 	REBCNT c;
 

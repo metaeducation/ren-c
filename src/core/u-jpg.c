@@ -1,4 +1,8 @@
 #define JPEG_INTERNALS
+#ifdef OS_WIDE_CHAR
+asdfasdf
+#endif
+
 #define NO_GETENV
 #include "reb-config.h"
 #include "reb-c.h"
@@ -3554,13 +3558,13 @@ jpeg_make_d_derived_tbl (j_decompress_ptr cinfo, boolean isDC, int tblno,
 
 GLOBAL(boolean)
 jpeg_fill_bit_buffer (bitread_working_state * state,
-		      register bit_buf_type get_buffer, register int bits_left,
+		      bit_buf_type get_buffer, int bits_left,
 		      int nbits)
 /* Load up the bit buffer to a depth of at least nbits */
 {
   /* Copy heavily used state fields into locals (hopefully registers) */
-  register const JOCTET * next_input_byte = state->next_input_byte;
-  register size_t bytes_in_buffer = state->bytes_in_buffer;
+  const JOCTET * next_input_byte = state->next_input_byte;
+  size_t bytes_in_buffer = state->bytes_in_buffer;
   j_decompress_ptr cinfo = state->cinfo;
 
   /* Attempt to load at least MIN_GET_BITS bits into get_buffer. */
@@ -3569,7 +3573,7 @@ jpeg_fill_bit_buffer (bitread_working_state * state,
 
   if (cinfo->unread_marker == 0) {	/* cannot advance past a marker */
     while (bits_left < MIN_GET_BITS) {
-      register int c;
+      int c;
 
       /* Attempt to read a byte */
       if (bytes_in_buffer == 0) {
@@ -3660,11 +3664,11 @@ jpeg_fill_bit_buffer (bitread_working_state * state,
 
 GLOBAL(int)
 jpeg_huff_decode (bitread_working_state * state,
-		  register bit_buf_type get_buffer, register int bits_left,
+		  bit_buf_type get_buffer, int bits_left,
 		  d_derived_tbl * htbl, int min_bits)
 {
-  register int l = min_bits;
-  register INT32 code;
+  int l = min_bits;
+  INT32 code;
 
   /* HUFF_DECODE has determined that the code is at least min_bits */
   /* bits long, so fetch that many bits in one swoop. */
@@ -3807,7 +3811,7 @@ decode_mcu (j_decompress_ptr cinfo, JBLOCKROW *MCU_data)
       JBLOCKROW block = MCU_data[blkn];
       d_derived_tbl * dctbl = entropy->dc_cur_tbls[blkn];
       d_derived_tbl * actbl = entropy->ac_cur_tbls[blkn];
-      register int s, k, r;
+      int s, k, r;
 
       /* Decode a single block's worth of coefficients */
 
@@ -3920,12 +3924,12 @@ jinit_huff_decoder (j_decompress_ptr cinfo)
  * This file is part of the Independent JPEG Group's software.
  * For conditions of distribution and use, see the accompanying README file.
  *
- * This file contains the main buffer controller for decompression.
- * The main buffer lies between the JPEG decompressor proper and the
+ * This file contains the main_ptr buffer controller for decompression.
+ * The main_ptr buffer lies between the JPEG decompressor proper and the
  * post-processor; it holds downsampled data in the JPEG colorspace.
  *
  * Note that this code is bypassed in raw-data mode, since the application
- * supplies the equivalent of the main buffer in that case.
+ * supplies the equivalent of the main_ptr buffer in that case.
  */
 
 #define JPEG_INTERNALS
@@ -3934,9 +3938,9 @@ jinit_huff_decoder (j_decompress_ptr cinfo)
 
 
 /*
- * In the current system design, the main buffer need never be a full-image
+ * In the current system design, the main_ptr buffer need never be a full-image
  * buffer; any full-height buffers will be found inside the coefficient or
- * postprocessing controllers.  Nonetheless, the main controller is not
+ * postprocessing controllers.  Nonetheless, the main_ptr controller is not
  * trivial.  Its responsibility is to provide context rows for upsampling/
  * rescaling, and doing this in an efficient fashion is a bit tricky.
  *
@@ -4074,7 +4078,7 @@ alloc_funny_pointers (j_decompress_ptr cinfo)
  * This is done only once, not once per pass.
  */
 {
-  my_main_ptr main = (my_main_ptr) cinfo->main;
+  my_main_ptr main_ptr = (my_main_ptr) cinfo->main;
   int ci, rgroup;
   int M = cinfo->min_DCT_scaled_size;
   jpeg_component_info *compptr;
@@ -4083,10 +4087,10 @@ alloc_funny_pointers (j_decompress_ptr cinfo)
   /* Get top-level space for component array pointers.
    * We alloc both arrays with one call to save a few cycles.
    */
-  main->xbuffer[0] = (JSAMPIMAGE)
+  main_ptr->xbuffer[0] = (JSAMPIMAGE)
     (*cinfo->mem->alloc_small) ((j_common_ptr) cinfo, JPOOL_IMAGE,
 				cinfo->num_components * 2 * SIZEOF(JSAMPARRAY));
-  main->xbuffer[1] = main->xbuffer[0] + cinfo->num_components;
+  main_ptr->xbuffer[1] = main_ptr->xbuffer[0] + cinfo->num_components;
 
   for (ci = 0, compptr = cinfo->comp_info; ci < cinfo->num_components;
        ci++, compptr++) {
@@ -4099,9 +4103,9 @@ alloc_funny_pointers (j_decompress_ptr cinfo)
       (*cinfo->mem->alloc_small) ((j_common_ptr) cinfo, JPOOL_IMAGE,
 				  2 * (rgroup * (M + 4)) * SIZEOF(JSAMPROW));
     xbuf += rgroup;		/* want one row group at negative offsets */
-    main->xbuffer[0][ci] = xbuf;
+    main_ptr->xbuffer[0][ci] = xbuf;
     xbuf += rgroup * (M + 4);
-    main->xbuffer[1][ci] = xbuf;
+    main_ptr->xbuffer[1][ci] = xbuf;
   }
 }
 
@@ -4109,13 +4113,13 @@ alloc_funny_pointers (j_decompress_ptr cinfo)
 LOCAL(void)
 make_funny_pointers (j_decompress_ptr cinfo)
 /* Create the funny pointer lists discussed in the comments above.
- * The actual workspace is already allocated (in main->buffer),
+ * The actual workspace is already allocated (in main_ptr->buffer),
  * and the space for the pointer lists is allocated too.
  * This routine just fills in the curiously ordered lists.
  * This will be repeated at the beginning of each pass.
  */
 {
-  my_main_ptr main = (my_main_ptr) cinfo->main;
+  my_main_ptr main_ptr = (my_main_ptr) cinfo->main;
   int ci, i, rgroup;
   int M = cinfo->min_DCT_scaled_size;
   jpeg_component_info *compptr;
@@ -4125,10 +4129,10 @@ make_funny_pointers (j_decompress_ptr cinfo)
        ci++, compptr++) {
     rgroup = (compptr->v_samp_factor * compptr->DCT_scaled_size) /
       cinfo->min_DCT_scaled_size; /* height of a row group of component */
-    xbuf0 = main->xbuffer[0][ci];
-    xbuf1 = main->xbuffer[1][ci];
+    xbuf0 = main_ptr->xbuffer[0][ci];
+    xbuf1 = main_ptr->xbuffer[1][ci];
     /* First copy the workspace pointers as-is */
-    buf = main->buffer[ci];
+    buf = main_ptr->buffer[ci];
     for (i = 0; i < rgroup * (M + 2); i++) {
       xbuf0[i] = xbuf1[i] = buf[i];
     }
@@ -4155,7 +4159,7 @@ set_wraparound_pointers (j_decompress_ptr cinfo)
  * This changes the pointer list state from top-of-image to the normal state.
  */
 {
-  my_main_ptr main = (my_main_ptr) cinfo->main;
+  my_main_ptr main_ptr = (my_main_ptr) cinfo->main;
   int ci, i, rgroup;
   int M = cinfo->min_DCT_scaled_size;
   jpeg_component_info *compptr;
@@ -4165,8 +4169,8 @@ set_wraparound_pointers (j_decompress_ptr cinfo)
        ci++, compptr++) {
     rgroup = (compptr->v_samp_factor * compptr->DCT_scaled_size) /
       cinfo->min_DCT_scaled_size; /* height of a row group of component */
-    xbuf0 = main->xbuffer[0][ci];
-    xbuf1 = main->xbuffer[1][ci];
+    xbuf0 = main_ptr->xbuffer[0][ci];
+    xbuf1 = main_ptr->xbuffer[1][ci];
     for (i = 0; i < rgroup; i++) {
       xbuf0[i - rgroup] = xbuf0[rgroup*(M+1) + i];
       xbuf1[i - rgroup] = xbuf1[rgroup*(M+1) + i];
@@ -4184,7 +4188,7 @@ set_bottom_pointers (j_decompress_ptr cinfo)
  * Also sets rowgroups_avail to indicate number of nondummy row groups in row.
  */
 {
-  my_main_ptr main = (my_main_ptr) cinfo->main;
+  my_main_ptr main_ptr = (my_main_ptr) cinfo->main;
   int ci, i, rgroup, iMCUheight, rows_left;
   jpeg_component_info *compptr;
   JSAMPARRAY xbuf;
@@ -4201,12 +4205,12 @@ set_bottom_pointers (j_decompress_ptr cinfo)
      * so we need only do it once.
      */
     if (ci == 0) {
-      main->rowgroups_avail = (JDIMENSION) ((rows_left-1) / rgroup + 1);
+      main_ptr->rowgroups_avail = (JDIMENSION) ((rows_left-1) / rgroup + 1);
     }
     /* Duplicate the last real sample row rgroup*2 times; this pads out the
      * last partial rowgroup and ensures at least one full rowgroup of context.
      */
-    xbuf = main->xbuffer[main->whichptr][ci];
+    xbuf = main_ptr->xbuffer[main_ptr->whichptr][ci];
     for (i = 0; i < rgroup * 2; i++) {
       xbuf[rows_left + i] = xbuf[rows_left-1];
     }
@@ -4221,27 +4225,27 @@ set_bottom_pointers (j_decompress_ptr cinfo)
 METHODDEF(void)
 start_pass_main (j_decompress_ptr cinfo, J_BUF_MODE pass_mode)
 {
-  my_main_ptr main = (my_main_ptr) cinfo->main;
+  my_main_ptr main_ptr = (my_main_ptr) cinfo->main;
 
   switch (pass_mode) {
   case JBUF_PASS_THRU:
     if (cinfo->upsample->need_context_rows) {
-      main->pub.process_data = process_data_context_main;
+      main_ptr->pub.process_data = process_data_context_main;
       make_funny_pointers(cinfo); /* Create the xbuffer[] lists */
-      main->whichptr = 0;	/* Read first iMCU row into xbuffer[0] */
-      main->context_state = CTX_PREPARE_FOR_IMCU;
-      main->iMCU_row_ctr = 0;
+      main_ptr->whichptr = 0;	/* Read first iMCU row into xbuffer[0] */
+      main_ptr->context_state = CTX_PREPARE_FOR_IMCU;
+      main_ptr->iMCU_row_ctr = 0;
     } else {
       /* Simple case with no context needed */
-      main->pub.process_data = process_data_simple_main;
+      main_ptr->pub.process_data = process_data_simple_main;
     }
-    main->buffer_full = FALSE;	/* Mark buffer empty */
-    main->rowgroup_ctr = 0;
+    main_ptr->buffer_full = FALSE;	/* Mark buffer empty */
+    main_ptr->rowgroup_ctr = 0;
     break;
 #ifdef QUANT_2PASS_SUPPORTED
   case JBUF_CRANK_DEST:
     /* For last pass of 2-pass quantization, just crank the postprocessor */
-    main->pub.process_data = process_data_crank_post;
+    main_ptr->pub.process_data = process_data_crank_post;
     break;
 #endif
   default:
@@ -4261,14 +4265,14 @@ process_data_simple_main (j_decompress_ptr cinfo,
 			  JSAMPARRAY output_buf, JDIMENSION *out_row_ctr,
 			  JDIMENSION out_rows_avail)
 {
-  my_main_ptr main = (my_main_ptr) cinfo->main;
+  my_main_ptr main_ptr = (my_main_ptr) cinfo->main;
   JDIMENSION rowgroups_avail;
 
-  /* Read input data if we haven't filled the main buffer yet */
-  if (! main->buffer_full) {
-    if (! (*cinfo->coef->decompress_data) (cinfo, main->buffer))
+  /* Read input data if we haven't filled the main_ptr buffer yet */
+  if (! main_ptr->buffer_full) {
+    if (! (*cinfo->coef->decompress_data) (cinfo, main_ptr->buffer))
       return;			/* suspension forced, can do nothing more */
-    main->buffer_full = TRUE;	/* OK, we have an iMCU row to work with */
+    main_ptr->buffer_full = TRUE;	/* OK, we have an iMCU row to work with */
   }
 
   /* There are always min_DCT_scaled_size row groups in an iMCU row. */
@@ -4279,14 +4283,14 @@ process_data_simple_main (j_decompress_ptr cinfo,
    */
 
   /* Feed the postprocessor */
-  (*cinfo->post->post_process_data) (cinfo, main->buffer,
-				     &main->rowgroup_ctr, rowgroups_avail,
+  (*cinfo->post->post_process_data) (cinfo, main_ptr->buffer,
+				     &main_ptr->rowgroup_ctr, rowgroups_avail,
 				     output_buf, out_row_ctr, out_rows_avail);
 
   /* Has postprocessor consumed all the data yet? If so, mark buffer empty */
-  if (main->rowgroup_ctr >= rowgroups_avail) {
-    main->buffer_full = FALSE;
-    main->rowgroup_ctr = 0;
+  if (main_ptr->rowgroup_ctr >= rowgroups_avail) {
+    main_ptr->buffer_full = FALSE;
+    main_ptr->rowgroup_ctr = 0;
   }
 }
 
@@ -4301,15 +4305,15 @@ process_data_context_main (j_decompress_ptr cinfo,
 			   JSAMPARRAY output_buf, JDIMENSION *out_row_ctr,
 			   JDIMENSION out_rows_avail)
 {
-  my_main_ptr main = (my_main_ptr) cinfo->main;
+  my_main_ptr main_ptr = (my_main_ptr) cinfo->main;
 
-  /* Read input data if we haven't filled the main buffer yet */
-  if (! main->buffer_full) {
+  /* Read input data if we haven't filled the main_ptr buffer yet */
+  if (! main_ptr->buffer_full) {
     if (! (*cinfo->coef->decompress_data) (cinfo,
-					   main->xbuffer[main->whichptr]))
+					   main_ptr->xbuffer[main_ptr->whichptr]))
       return;			/* suspension forced, can do nothing more */
-    main->buffer_full = TRUE;	/* OK, we have an iMCU row to work with */
-    main->iMCU_row_ctr++;	/* count rows received */
+    main_ptr->buffer_full = TRUE;	/* OK, we have an iMCU row to work with */
+    main_ptr->iMCU_row_ctr++;	/* count rows received */
   }
 
   /* Postprocessor typically will not swallow all the input data it is handed
@@ -4317,47 +4321,47 @@ process_data_context_main (j_decompress_ptr cinfo,
    * to exit and restart.  This switch lets us keep track of how far we got.
    * Note that each case falls through to the next on successful completion.
    */
-  switch (main->context_state) {
+  switch (main_ptr->context_state) {
   case CTX_POSTPONED_ROW:
     /* Call postprocessor using previously set pointers for postponed row */
-    (*cinfo->post->post_process_data) (cinfo, main->xbuffer[main->whichptr],
-			&main->rowgroup_ctr, main->rowgroups_avail,
+    (*cinfo->post->post_process_data) (cinfo, main_ptr->xbuffer[main_ptr->whichptr],
+			&main_ptr->rowgroup_ctr, main_ptr->rowgroups_avail,
 			output_buf, out_row_ctr, out_rows_avail);
-    if (main->rowgroup_ctr < main->rowgroups_avail)
+    if (main_ptr->rowgroup_ctr < main_ptr->rowgroups_avail)
       return;			/* Need to suspend */
-    main->context_state = CTX_PREPARE_FOR_IMCU;
+    main_ptr->context_state = CTX_PREPARE_FOR_IMCU;
     if (*out_row_ctr >= out_rows_avail)
       return;			/* Postprocessor exactly filled output buf */
     /*FALLTHROUGH*/
   case CTX_PREPARE_FOR_IMCU:
     /* Prepare to process first M-1 row groups of this iMCU row */
-    main->rowgroup_ctr = 0;
-    main->rowgroups_avail = (JDIMENSION) (cinfo->min_DCT_scaled_size - 1);
+    main_ptr->rowgroup_ctr = 0;
+    main_ptr->rowgroups_avail = (JDIMENSION) (cinfo->min_DCT_scaled_size - 1);
     /* Check for bottom of image: if so, tweak pointers to "duplicate"
      * the last sample row, and adjust rowgroups_avail to ignore padding rows.
      */
-    if (main->iMCU_row_ctr == cinfo->total_iMCU_rows)
+    if (main_ptr->iMCU_row_ctr == cinfo->total_iMCU_rows)
       set_bottom_pointers(cinfo);
-    main->context_state = CTX_PROCESS_IMCU;
+    main_ptr->context_state = CTX_PROCESS_IMCU;
     /*FALLTHROUGH*/
   case CTX_PROCESS_IMCU:
     /* Call postprocessor using previously set pointers */
-    (*cinfo->post->post_process_data) (cinfo, main->xbuffer[main->whichptr],
-			&main->rowgroup_ctr, main->rowgroups_avail,
+    (*cinfo->post->post_process_data) (cinfo, main_ptr->xbuffer[main_ptr->whichptr],
+			&main_ptr->rowgroup_ctr, main_ptr->rowgroups_avail,
 			output_buf, out_row_ctr, out_rows_avail);
-    if (main->rowgroup_ctr < main->rowgroups_avail)
+    if (main_ptr->rowgroup_ctr < main_ptr->rowgroups_avail)
       return;			/* Need to suspend */
     /* After the first iMCU, change wraparound pointers to normal state */
-    if (main->iMCU_row_ctr == 1)
+    if (main_ptr->iMCU_row_ctr == 1)
       set_wraparound_pointers(cinfo);
     /* Prepare to load new iMCU row using other xbuffer list */
-    main->whichptr ^= 1;	/* 0=>1 or 1=>0 */
-    main->buffer_full = FALSE;
+    main_ptr->whichptr ^= 1;	/* 0=>1 or 1=>0 */
+    main_ptr->buffer_full = FALSE;
     /* Still need to process last row group of this iMCU row, */
     /* which is saved at index M+1 of the other xbuffer */
-    main->rowgroup_ctr = (JDIMENSION) (cinfo->min_DCT_scaled_size + 1);
-    main->rowgroups_avail = (JDIMENSION) (cinfo->min_DCT_scaled_size + 2);
-    main->context_state = CTX_POSTPONED_ROW;
+    main_ptr->rowgroup_ctr = (JDIMENSION) (cinfo->min_DCT_scaled_size + 1);
+    main_ptr->rowgroups_avail = (JDIMENSION) (cinfo->min_DCT_scaled_size + 2);
+    main_ptr->context_state = CTX_POSTPONED_ROW;
   }
 }
 
@@ -4384,21 +4388,21 @@ process_data_crank_post (j_decompress_ptr cinfo,
 
 
 /*
- * Initialize main buffer controller.
+ * Initialize main_ptr buffer controller.
  */
 
 GLOBAL(void)
 jinit_d_main_controller (j_decompress_ptr cinfo, boolean need_full_buffer)
 {
-  my_main_ptr main;
+  my_main_ptr main_ptr;
   int ci, rgroup, ngroups;
   jpeg_component_info *compptr;
 
-  main = (my_main_ptr)
+  main_ptr = (my_main_ptr)
     (*cinfo->mem->alloc_small) ((j_common_ptr) cinfo, JPOOL_IMAGE,
 				SIZEOF(my_main_controller));
-  cinfo->main = (struct jpeg_d_main_controller *) main;
-  main->pub.start_pass = start_pass_main;
+  cinfo->main = (struct jpeg_d_main_controller *) main_ptr;
+  main_ptr->pub.start_pass = start_pass_main;
 
   if (need_full_buffer)		/* shouldn't happen */
     ERREXIT(cinfo, JERR_BAD_BUFFER_MODE);
@@ -4419,7 +4423,7 @@ jinit_d_main_controller (j_decompress_ptr cinfo, boolean need_full_buffer)
        ci++, compptr++) {
     rgroup = (compptr->v_samp_factor * compptr->DCT_scaled_size) /
       cinfo->min_DCT_scaled_size; /* height of a row group of component */
-    main->buffer[ci] = (*cinfo->mem->alloc_sarray)
+    main_ptr->buffer[ci] = (*cinfo->mem->alloc_sarray)
 			((j_common_ptr) cinfo, JPOOL_IMAGE,
 			 compptr->width_in_blocks * compptr->DCT_scaled_size,
 			 (JDIMENSION) (rgroup * ngroups));
@@ -4977,7 +4981,7 @@ decompress_smooth_data (j_decompress_ptr cinfo, JSAMPIMAGE output_buf)
 	next_block_row = buffer_ptr;
       else
 	next_block_row = buffer[block_row+1];
-      /* We fetch the surrounding DC values using a sliding-register approach.
+      /* We fetch the surrounding DC values using a sliding-approach.
        * Initialize all nine here so as to do the right thing on narrow pics.
        */
       DC1 = DC2 = DC3 = (int) prev_block_row[0][0];
@@ -6915,9 +6919,9 @@ int_upsample (j_decompress_ptr cinfo, jpeg_component_info * compptr,
 {
   my_upsample_ptr upsample = (my_upsample_ptr) cinfo->upsample;
   JSAMPARRAY output_data = *output_data_ptr;
-  register JSAMPROW inptr, outptr;
-  register JSAMPLE invalue;
-  register int h;
+  JSAMPROW inptr, outptr;
+  JSAMPLE invalue;
+  int h;
   JSAMPROW outend;
   int h_expand, v_expand;
   int inrow, outrow;
@@ -6958,8 +6962,8 @@ h2v1_upsample (j_decompress_ptr cinfo, jpeg_component_info * compptr,
 	       JSAMPARRAY input_data, JSAMPARRAY * output_data_ptr)
 {
   JSAMPARRAY output_data = *output_data_ptr;
-  register JSAMPROW inptr, outptr;
-  register JSAMPLE invalue;
+  JSAMPROW inptr, outptr;
+  JSAMPLE invalue;
   JSAMPROW outend;
   int inrow;
 
@@ -6986,8 +6990,8 @@ h2v2_upsample (j_decompress_ptr cinfo, jpeg_component_info * compptr,
 	       JSAMPARRAY input_data, JSAMPARRAY * output_data_ptr)
 {
   JSAMPARRAY output_data = *output_data_ptr;
-  register JSAMPROW inptr, outptr;
-  register JSAMPLE invalue;
+  JSAMPROW inptr, outptr;
+  JSAMPLE invalue;
   JSAMPROW outend;
   int inrow, outrow;
 
@@ -7029,9 +7033,9 @@ h2v1_fancy_upsample (j_decompress_ptr cinfo, jpeg_component_info * compptr,
 		     JSAMPARRAY input_data, JSAMPARRAY * output_data_ptr)
 {
   JSAMPARRAY output_data = *output_data_ptr;
-  register JSAMPROW inptr, outptr;
-  register int invalue;
-  register JDIMENSION colctr;
+  JSAMPROW inptr, outptr;
+  int invalue;
+  JDIMENSION colctr;
   int inrow;
 
   for (inrow = 0; inrow < cinfo->max_v_samp_factor; inrow++) {
@@ -7062,7 +7066,7 @@ h2v1_fancy_upsample (j_decompress_ptr cinfo, jpeg_component_info * compptr,
  * Again a triangle filter; see comments for h2v1 case, above.
  *
  * It is OK for us to reference the adjacent input rows because we demanded
- * context from the main buffer controller (see initialization code).
+ * context from the main_ptr buffer controller (see initialization code).
  */
 
 METHODDEF(void)
@@ -7070,13 +7074,13 @@ h2v2_fancy_upsample (j_decompress_ptr cinfo, jpeg_component_info * compptr,
 		     JSAMPARRAY input_data, JSAMPARRAY * output_data_ptr)
 {
   JSAMPARRAY output_data = *output_data_ptr;
-  register JSAMPROW inptr0, inptr1, outptr;
+  JSAMPROW inptr0, inptr1, outptr;
 #if BITS_IN_JSAMPLE == 8
-  register int thiscolsum, lastcolsum, nextcolsum;
+  int thiscolsum, lastcolsum, nextcolsum;
 #else
-  register INT32 thiscolsum, lastcolsum, nextcolsum;
+  INT32 thiscolsum, lastcolsum, nextcolsum;
 #endif
-  register JDIMENSION colctr;
+  JDIMENSION colctr;
   int inrow, outrow, v;
 
   inrow = outrow = 0;
@@ -7324,17 +7328,17 @@ ycc_rgb_convert (j_decompress_ptr cinfo,
 		 JSAMPARRAY output_buf, int num_rows)
 {
   my_cconvert_ptr cconvert = (my_cconvert_ptr) cinfo->cconvert;
-  register int y, cb, cr;
-  register JSAMPROW outptr;
-  register JSAMPROW inptr0, inptr1, inptr2;
-  register JDIMENSION col;
+  int y, cb, cr;
+  JSAMPROW outptr;
+  JSAMPROW inptr0, inptr1, inptr2;
+  JDIMENSION col;
   JDIMENSION num_cols = cinfo->output_width;
   /* copy these pointers into registers if possible */
-  register JSAMPLE * range_limit = cinfo->sample_range_limit;
-  register int * Crrtab = cconvert->Cr_r_tab;
-  register int * Cbbtab = cconvert->Cb_b_tab;
-  register INT32 * Crgtab = cconvert->Cr_g_tab;
-  register INT32 * Cbgtab = cconvert->Cb_g_tab;
+  JSAMPLE * range_limit = cinfo->sample_range_limit;
+  int * Crrtab = cconvert->Cr_r_tab;
+  int * Cbbtab = cconvert->Cb_b_tab;
+  INT32 * Crgtab = cconvert->Cr_g_tab;
+  INT32 * Cbgtab = cconvert->Cb_g_tab;
   SHIFT_TEMPS
 
   while (--num_rows >= 0) {
@@ -7372,9 +7376,9 @@ null_convert (j_decompress_ptr cinfo,
 	      JSAMPIMAGE input_buf, JDIMENSION input_row,
 	      JSAMPARRAY output_buf, int num_rows)
 {
-  register JSAMPROW inptr, outptr;
-  register JDIMENSION count;
-  register int num_components = cinfo->num_components;
+  JSAMPROW inptr, outptr;
+  JDIMENSION count;
+  int num_components = cinfo->num_components;
   JDIMENSION num_cols = cinfo->output_width;
   int ci;
 
@@ -7420,8 +7424,8 @@ gray_rgb_convert (j_decompress_ptr cinfo,
 		  JSAMPIMAGE input_buf, JDIMENSION input_row,
 		  JSAMPARRAY output_buf, int num_rows)
 {
-  register JSAMPROW inptr, outptr;
-  register JDIMENSION col;
+  JSAMPROW inptr, outptr;
+  JDIMENSION col;
   JDIMENSION num_cols = cinfo->output_width;
 
   while (--num_rows >= 0) {
@@ -7449,17 +7453,17 @@ ycck_cmyk_convert (j_decompress_ptr cinfo,
 		   JSAMPARRAY output_buf, int num_rows)
 {
   my_cconvert_ptr cconvert = (my_cconvert_ptr) cinfo->cconvert;
-  register int y, cb, cr;
-  register JSAMPROW outptr;
-  register JSAMPROW inptr0, inptr1, inptr2, inptr3;
-  register JDIMENSION col;
+  int y, cb, cr;
+  JSAMPROW outptr;
+  JSAMPROW inptr0, inptr1, inptr2, inptr3;
+  JDIMENSION col;
   JDIMENSION num_cols = cinfo->output_width;
   /* copy these pointers into registers if possible */
-  register JSAMPLE * range_limit = cinfo->sample_range_limit;
-  register int * Crrtab = cconvert->Cr_r_tab;
-  register int * Cbbtab = cconvert->Cb_b_tab;
-  register INT32 * Crgtab = cconvert->Cr_g_tab;
-  register INT32 * Cbgtab = cconvert->Cb_g_tab;
+  JSAMPLE * range_limit = cinfo->sample_range_limit;
+  int * Crrtab = cconvert->Cr_r_tab;
+  int * Cbbtab = cconvert->Cb_b_tab;
+  INT32 * Crgtab = cconvert->Cr_g_tab;
+  INT32 * Cbgtab = cconvert->Cb_g_tab;
   SHIFT_TEMPS
 
   while (--num_rows >= 0) {
@@ -7821,13 +7825,13 @@ jcopy_sample_rows (JSAMPARRAY input_array, int source_row,
  * The source and destination arrays must be at least as wide as num_cols.
  */
 {
-  register JSAMPROW inptr, outptr;
+  JSAMPROW inptr, outptr;
 #ifdef FMEMCOPY
-  register size_t count = (size_t) (num_cols * SIZEOF(JSAMPLE));
+  size_t count = (size_t) (num_cols * SIZEOF(JSAMPLE));
 #else
-  register JDIMENSION count;
+  JDIMENSION count;
 #endif
-  register int row;
+  int row;
 
   input_array += source_row;
   output_array += dest_row;
@@ -7853,8 +7857,8 @@ jcopy_block_row (JBLOCKROW input_row, JBLOCKROW output_row,
 #ifdef FMEMCOPY
   jui_jui_FMEMCOPY(output_row, input_row, num_blocks * (DCTSIZE2 * SIZEOF(JCOEF)));
 #else
-  register JCOEFPTR inptr, outptr;
-  register long count;
+  JCOEFPTR inptr, outptr;
+  long count;
 
   inptr = (JCOEFPTR) input_row;
   outptr = (JCOEFPTR) output_row;
@@ -7873,8 +7877,8 @@ jzero_far (void FAR * target, size_t bytestozero)
 #ifdef FMEMZERO
   jui_jui_FMEMZERO(target, bytestozero);
 #else
-  register char FAR * ptr = (char FAR *) target;
-  register size_t count;
+  char FAR * ptr = (char FAR *) target;
+  size_t count;
 
   for (count = bytestozero; count > 0; count--) {
     *ptr++ = 0;
@@ -8030,11 +8034,11 @@ jpeg_std_error (struct jpeg_error_mgr * err)
  *   * pool-based allocation and freeing of memory;
  *   * policy decisions about how to divide available memory among the
  *     virtual arrays;
- *   * control logic for swapping virtual arrays between main memory and
+ *   * control logic for swapping virtual arrays between main_ptr memory and
  *     backing storage.
  * The separate system-dependent file provides the actual backing-storage
  * access code, and it contains the policy decision about how much total
- * main memory to use.
+ * main_ptr memory to use.
  * This file is system-dependent in the sense that some of its functions
  * are unnecessary in some systems.  For example, if there is enough virtual
  * memory so that backing storage will never be used, much of the virtual
@@ -9146,7 +9150,7 @@ jinit_memory_mgr (j_common_ptr cinfo)
  * assumes that no backing-store files are needed: all required space
  * can be obtained from malloc().
  * This is very portable in the sense that it'll compile on almost anything,
- * but you'd better have lots of main memory (or virtual memory) if you want
+ * but you'd better have lots of main_ptr memory (or virtual memory) if you want
  * to process big images.
  * Note that the max_memory_to_use option is ignored by this implementation.
  */
@@ -9264,7 +9268,7 @@ jpeg_mem_term (j_common_ptr cinfo)
 
 
 /*
- * The main purpose of 1-pass quantization is to provide a fast, if not very
+ * The main_ptr purpose of 1-pass quantization is to provide a fast, if not very
  * high quality, colormapped output capability.  A 2-pass quantizer usually
  * gives better visual quality; however, for quantized grayscale output this
  * quantizer is perfectly adequate.  Dithering is highly recommended with this
@@ -9620,7 +9624,7 @@ create_colorindex (j_decompress_ptr cinfo)
     for (j = 0; j <= MAXJSAMPLE; j++) {
       while (j > k)		/* advance val if past boundary */
 	k = largest_input_value(cinfo, i, ++val, nci-1);
-      /* premultiply so that no multiplication needed in main processing */
+      /* premultiply so that no multiplication needed in main_ptr processing */
       indexptr[j] = (JSAMPLE) (val * blksize);
     }
     /* Pad at both ends if necessary */
@@ -9708,12 +9712,12 @@ color_quantize (j_decompress_ptr cinfo, JSAMPARRAY input_buf,
 {
   my_cquantize_ptr cquantize = (my_cquantize_ptr) cinfo->cquantize;
   JSAMPARRAY colorindex = cquantize->colorindex;
-  register int pixcode, ci;
-  register JSAMPROW ptrin, ptrout;
+  int pixcode, ci;
+  JSAMPROW ptrin, ptrout;
   int row;
   JDIMENSION col;
   JDIMENSION width = cinfo->output_width;
-  register int nc = cinfo->out_color_components;
+  int nc = cinfo->out_color_components;
 
   for (row = 0; row < num_rows; row++) {
     ptrin = input_buf[row];
@@ -9735,8 +9739,8 @@ color_quantize3 (j_decompress_ptr cinfo, JSAMPARRAY input_buf,
 /* Fast path for out_color_components==3, no dithering */
 {
   my_cquantize_ptr cquantize = (my_cquantize_ptr) cinfo->cquantize;
-  register int pixcode;
-  register JSAMPROW ptrin, ptrout;
+  int pixcode;
+  JSAMPROW ptrin, ptrout;
   JSAMPROW colorindex0 = cquantize->colorindex[0];
   JSAMPROW colorindex1 = cquantize->colorindex[1];
   JSAMPROW colorindex2 = cquantize->colorindex[2];
@@ -9763,8 +9767,8 @@ quantize_ord_dither (j_decompress_ptr cinfo, JSAMPARRAY input_buf,
 /* General case, with ordered dithering */
 {
   my_cquantize_ptr cquantize = (my_cquantize_ptr) cinfo->cquantize;
-  register JSAMPROW input_ptr;
-  register JSAMPROW output_ptr;
+  JSAMPROW input_ptr;
+  JSAMPROW output_ptr;
   JSAMPROW colorindex_ci;
   int * dither;			/* points to active row of dither matrix */
   int row_index, col_index;	/* current indexes into dither matrix */
@@ -9813,9 +9817,9 @@ quantize3_ord_dither (j_decompress_ptr cinfo, JSAMPARRAY input_buf,
 /* Fast path for out_color_components==3, with ordered dithering */
 {
   my_cquantize_ptr cquantize = (my_cquantize_ptr) cinfo->cquantize;
-  register int pixcode;
-  register JSAMPROW input_ptr;
-  register JSAMPROW output_ptr;
+  int pixcode;
+  JSAMPROW input_ptr;
+  JSAMPROW output_ptr;
   JSAMPROW colorindex0 = cquantize->colorindex[0];
   JSAMPROW colorindex1 = cquantize->colorindex[1];
   JSAMPROW colorindex2 = cquantize->colorindex[2];
@@ -9858,14 +9862,14 @@ quantize_fs_dither (j_decompress_ptr cinfo, JSAMPARRAY input_buf,
 /* General case, with Floyd-Steinberg dithering */
 {
   my_cquantize_ptr cquantize = (my_cquantize_ptr) cinfo->cquantize;
-  register LOCFSERROR cur;	/* current error or pixel value */
+  LOCFSERROR cur;	/* current error or pixel value */
   LOCFSERROR belowerr;		/* error for pixel below cur */
   LOCFSERROR bpreverr;		/* error for below/prev col */
   LOCFSERROR bnexterr;		/* error for below/next col */
   LOCFSERROR delta;
-  register FSERRPTR errorptr;	/* => fserrors[] at column before current */
-  register JSAMPROW input_ptr;
-  register JSAMPROW output_ptr;
+  FSERRPTR errorptr;	/* => fserrors[] at column before current */
+  JSAMPROW input_ptr;
+  JSAMPROW output_ptr;
   JSAMPROW colorindex_ci;
   JSAMPROW colormap_ci;
   int pixcode;
@@ -10390,7 +10394,7 @@ decode_mcu_DC_first (j_decompress_ptr cinfo, JBLOCKROW *MCU_data)
 {   
   phuff_entropy_ptr entropy = (phuff_entropy_ptr) cinfo->entropy;
   int Al = cinfo->Al;
-  register int s, r;
+  int s, r;
   int blkn, ci;
   JBLOCKROW block;
   BITREAD_STATE_VARS;
@@ -10462,7 +10466,7 @@ decode_mcu_AC_first (j_decompress_ptr cinfo, JBLOCKROW *MCU_data)
   phuff_entropy_ptr entropy = (phuff_entropy_ptr) cinfo->entropy;
   int Se = cinfo->Se;
   int Al = cinfo->Al;
-  register int s, k, r;
+  int s, k, r;
   unsigned int EOBRUN;
   JBLOCKROW block;
   BITREAD_STATE_VARS;
@@ -10597,7 +10601,7 @@ decode_mcu_AC_refine (j_decompress_ptr cinfo, JBLOCKROW *MCU_data)
   int Se = cinfo->Se;
   int p1 = 1 << cinfo->Al;	/* 1 in the bit position being coded */
   int m1 = (-1) << cinfo->Al;	/* -1 in the bit position being coded */
-  register int s, k, r;
+  int s, k, r;
   unsigned int EOBRUN;
   JBLOCKROW block;
   JCOEFPTR thiscoef;
@@ -10779,8 +10783,8 @@ jinit_phuff_decoder (j_decompress_ptr cinfo)
 
 #ifndef CODI_DEFINED
 #include "reb-codec.h"
-extern long* Make_Mem(size_t size);
-extern void Register_Codec(char *name, codo dispatcher);
+extern long* Alloc_Mem(size_t size);
+extern void Register_Codec(const REBYTE *name, codo dispatcher);
 #endif
 
 /***********************************************************************
@@ -10794,21 +10798,21 @@ extern void Register_Codec(char *name, codo dispatcher);
 	// Handle JPEG error throw:
 	if (setjmp(jpeg_state)) {
 		codi->error = CODI_ERR_BAD_DATA; // generic
-		if (codi->action == CODI_IDENTIFY) return CODI_CHECK;
+		if (codi->action == CODI_ACT_IDENTIFY) return CODI_CHECK;
 		return CODI_ERROR;
 	}
 
-	if (codi->action == CODI_IDENTIFY) {
+	if (codi->action == CODI_ACT_IDENTIFY) {
 		int w, h;
-		jpeg_info(codi->data, codi->len, &w, &h); // will throw errors
+		jpeg_info((char *)codi->data, codi->len, &w, &h); // will throw errors
 		return CODI_CHECK;
 	}
 
-	if (codi->action == CODI_DECODE) {
+	if (codi->action == CODI_ACT_DECODE) {
 		int w, h;
-		jpeg_info(codi->data, codi->len, &w, &h);
-		codi->bits = (u32 *)Make_Mem(w * h * 4);
-		jpeg_load(codi->data, codi->len, (char *)codi->bits);
+		jpeg_info((char *)codi->data, codi->len, &w, &h);
+		codi->extra.bits = ALLOC_ARRAY(u32, w * h);
+		jpeg_load((char *)codi->data, codi->len, (char *)codi->extra.bits);
 		codi->w = w;
 		codi->h = h;
 		return CODI_IMAGE;
@@ -10825,5 +10829,5 @@ extern void Register_Codec(char *name, codo dispatcher);
 /*
 ***********************************************************************/
 {
-	Register_Codec("jpeg", Codec_JPEG_Image);
+	Register_Codec(AS_CBYTES("jpeg"), Codec_JPEG_Image);
 }

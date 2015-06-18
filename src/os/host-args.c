@@ -67,7 +67,7 @@ const struct {const char *word; const int flag;} arg_words[] = {
 	{"trace",		RO_TRACE},
 	{"verbose",		RO_VERBOSE},
 	{"version",		RO_VERSION | RO_EXT},
-	{"",			0},
+	{"",			0}
 };
 
 // REBOL Option -Characters (in alpha sorted order):
@@ -83,14 +83,14 @@ const struct arg_chr {const char cflg; const int flag;} arg_chars[] = {
 	{'t',	RO_TRACE},
 	{'v',	RO_VERS},
 	{'w',	RO_NO_WINDOW},
-	{'\0',	0},
+	{NUL,	0}
 };
 
 // REBOL Option +Characters:
 
 const struct arg_chr arg_chars2[] = {
 	{'s',	RO_SECURE_MAX},
-	{'\0',	0},
+	{NUL,	0}
 };
 
 
@@ -206,7 +206,7 @@ const struct arg_chr arg_chars2[] = {
 	int flag;
 	int i;
 
-	CLEARS(rargs);
+	memset(rargs, NUL, sizeof(*rargs));
 
 	// First arg is path to execuable (on most systems):
 	if (argc > 0) rargs->exe_path = *argv;
@@ -263,18 +263,18 @@ const struct arg_chr arg_chars2[] = {
 			else {
 				int len;
 				if (!args) {
-					args = MAKE_STR(ARG_BUF_SIZE);
+					args = MAKE_OS_STR(ARG_BUF_SIZE);
 					args[0] = 0;
 				}
-				len = ARG_BUF_SIZE - LEN_STR(args) - 2; // space remaining
-				JOIN_STR(args, arg, len);
-				JOIN_STR(args, TXT(" "), 1);
+				len = ARG_BUF_SIZE - LEN_OS_STR(args) - 2; // space remaining
+				JOIN_OS_STR(args, arg, len);
+				JOIN_OS_STR(args, OS_TXT(" "), 1);
 			}
 		}
 	}
 
 	if (args) {
-		args[LEN_STR(args)-1] = 0; // remove trailing space
+		args[LEN_OS_STR(args) - 1] = 0; // remove trailing space
 		Get_Ext_Arg(RO_ARGS, rargs, args);
 	}
 }

@@ -101,7 +101,7 @@
 		REBREQ *req = (REBREQ*)STR_HEAD(data);
 		Guard_Series(data); // GC safe if no other references
 		req->clen = size;
-		CLEAR(STR_HEAD(data), size);
+		memset(STR_HEAD(data), NUL, size);
 		//data->tail = size; // makes it easier for ACCEPT to clone the port
 		SET_FLAG(req->flags, RRF_ALLOC); // not on stack
 		req->port = port;
@@ -109,7 +109,7 @@
 		Set_Binary(state, data);
 	}
 
-	return (void *)VAL_BIN(state);
+	return VAL_BIN(state);
 }
 
 
@@ -346,7 +346,7 @@ xx*/	REBINT Wait_Device(REBREQ *req, REBCNT timeout)
 
 	if (IS_BLOCK(arg)) {
 
-		if (newline) n = LEN_BYTES(newline);
+		if (newline) n = strlen(newline);
 
 		mo.series = series = Make_Binary(VAL_BLK_LEN(arg) * 10);
 
@@ -395,7 +395,7 @@ xx*/	REBINT Wait_Device(REBREQ *req, REBCNT timeout)
 	REBVAL *actor;
 	REBCNT n = 0;
 
-	ASSERT2(action < A_MAX_ACTION, RP_BAD_PORT_ACTION);
+	if (action >= A_MAX_ACTION) Crash(RP_BAD_PORT_ACTION);
 
 	// Verify valid port (all of these must be false):
 	if (
@@ -484,7 +484,7 @@ xx*/	REBINT Wait_Device(REBREQ *req, REBCNT timeout)
 		|| !IS_FRAME(BLK_HEAD(port))
 		|| !IS_OBJECT(BLK_SKIP(port, STD_PORT_SPEC))
 	)
-		Trap0(RE_INVALID_PORT);
+		vTrap0(RE_INVALID_PORT);
 }
 
 /***********************************************************************
@@ -534,7 +534,7 @@ SCHEME_ACTIONS *Scheme_Actions;	// Initial Global (not threaded)
 	REBINT n;
 
 	for (n = 0; n < MAX_SCHEMES && Scheme_Actions[n].sym; n++);
-	ASSERT2(n < MAX_SCHEMES, RP_MAX_SCHEMES);
+	if (n >= MAX_SCHEMES) vCrash(RP_MAX_SCHEMES);
 
 	Scheme_Actions[n].sym = sym;
 	Scheme_Actions[n].map = map;
@@ -617,7 +617,7 @@ SCHEME_ACTIONS *Scheme_Actions;	// Initial Global (not threaded)
 **
 ***********************************************************************/
 {
-	Scheme_Actions = Make_Mem(sizeof(SCHEME_ACTIONS) * MAX_SCHEMES);
+	Scheme_Actions = ALLOC_ARRAY_ZEROFILL(SCHEME_ACTIONS, MAX_SCHEMES);
 
 	Init_Console_Scheme();
 	Init_File_Scheme();

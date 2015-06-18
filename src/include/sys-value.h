@@ -65,6 +65,12 @@ typedef struct Reb_Series REBSER;
 #define VAL_SET(v,t)	((v)->flags.header = (t))		// set type, clear all flags
 // Note: b-init.c verifies that lower 8 bits of header = flags.type
 
+
+// !!! Questionable idea: does setting all bytes to zero of a type
+// and then poking in a type indicator make the "zero valued"
+// version of that type that you can compare against?  :-/
+#define VAL_SET_ZEROED(v,t) (memset((v), NUL, sizeof(REBVAL)), VAL_SET((v),(t)))
+
 // Clear type identifier:
 #define SET_END(v)			VAL_SET(v, 0)
 
@@ -76,6 +82,7 @@ enum {
 	OPTS_UNWORD,	// Not a normal word
 	OPTS_TEMP,		// Temporary flag - variety of uses
 	OPTS_HIDE,		// Hide the word
+	OPTS_MAX
 };
 
 #define VAL_OPTS(v)			((v)->flags.flags.opts)
@@ -277,8 +284,9 @@ typedef struct Reb_Tuple {
 #define	VAL_EVENT_MODEL(v)	((v)->data.event.model)
 #define	VAL_EVENT_DATA(v)	((v)->data.event.data)
 #define	VAL_EVENT_TIME(v)	((v)->data.event.time)
-#define	VAL_EVENT_REQ(v)	((v)->data.event.req)
-#define	VAL_EVENT_SER(v)	((v)->data.event.ser)
+#define	VAL_EVENT_REQ(v)	((v)->data.event.eventee.req)
+#define	VAL_EVENT_SER(v) \
+	(*r_cast(REBSER **, &(v)->data.event.eventee.ser))
 
 #define IS_EVENT_MODEL(v,f)	(VAL_EVENT_MODEL(v) == (f))
 
@@ -330,9 +338,9 @@ typedef struct Reb_Tuple {
 			REBCNT wide:16;
 			REBCNT high:16;
 		} area;
-	};
+	} extra;
 #ifdef SERIES_LABELS
-	REBYTE  *label;		// identify the series
+	const REBYTE  *label;	// identify the series
 #endif
 };
 
@@ -370,9 +378,7 @@ typedef struct Reb_Tuple {
 #define RESET_SERIES(s) s->tail = 0; TERM_SERIES(s)
 #define RESET_TAIL(s) s->tail = 0
 
-// Clear all and clear to tail:
-#define CLEAR_SERIES(s) CLEAR(SERIES_DATA(s), SERIES_SPACE(s))
-#define ZERO_SERIES(s) memset(SERIES_DATA(s), 0, SERIES_USED(s))
+// Terminate a series at its tail:
 #define TERM_SERIES(s) memset(SERIES_SKIP(s, SERIES_TAIL(s)), 0, SERIES_WIDE(s))
 
 // Returns space that a series has available (less terminator):
@@ -404,7 +410,7 @@ enum {
 	SER_FREE = 1<<4,	// mark series as removed
 	SER_BARE = 1<<5,	// Series has no links to GC-able values
 	SER_PROT = 1<<6,	// Series is protected from modification
-	SER_MON  = 1<<7,	// Monitoring
+	SER_MON  = 1<<7		// Monitoring
 };
 
 #define SERIES_SET_FLAG(s, f) (SERIES_FLAGS(s) |= ((f) << 8))
@@ -540,9 +546,14 @@ typedef struct Reb_Series_Ref
 #define VAL_UNI_DATA(v) UNI_SKIP(VAL_SERIES(v), VAL_INDEX(v))
 
 // Get a char, from either byte or unicode string:
-#define GET_ANY_CHAR(s,n)   (REBUNI)(BYTE_SIZE(s) ? BIN_HEAD(s)[n] : UNI_HEAD(s)[n])
-#define SET_ANY_CHAR(s,n,c) if BYTE_SIZE(s) BIN_HEAD(s)[n]=((REBYTE)c); else UNI_HEAD(s)[n]=((REBUNI)c)
-#define GET_CHAR_UNI(f,p,i) (uni ? ((REBUNI*)p)[i] : ((REBYTE*)bp)[i])
+#define GET_ANY_CHAR(s,n) \
+	cast(REBUNI, BYTE_SIZE(s) ? BIN_HEAD(s)[n] : UNI_HEAD(s)[n])
+
+#define SET_ANY_CHAR(s,n,c) \
+	(BYTE_SIZE(s) \
+		? (BIN_HEAD(s)[n]=(cast(REBYTE, (c)))) \
+		: (UNI_HEAD(s)[n]=(cast(REBUNI, (c)))) \
+	)
 
 #define VAL_ANY_CHAR(v) GET_ANY_CHAR(VAL_SERIES(v), VAL_INDEX(v))
 
@@ -568,9 +579,9 @@ typedef struct Reb_Series_Ref
 #define QUAD_TAIL(s)	(((REBYTE *)((s)->data))+((s)->tail * 4))
 #define	QUAD_LEN(s)		(SERIES_TAIL(s))
 
-#define	IMG_SIZE(s)		((s)->size)
-#define	IMG_WIDE(s)		((s)->area.wide)
-#define	IMG_HIGH(s)		((s)->area.high)
+#define	IMG_SIZE(s)		((s)->extra.size)
+#define	IMG_WIDE(s)		((s)->extra.area.wide)
+#define	IMG_HIGH(s)		((s)->extra.area.high)
 #define IMG_DATA(s)		((REBYTE *)((s)->data))
 
 #define VAL_IMAGE_HEAD(v)	QUAD_HEAD(VAL_SERIES(v))
@@ -833,7 +844,6 @@ typedef struct Reb_Object {
 #define VAL_MOD_BODY(v)		((v)->data.object.body)
 #define VAL_MOD_SPEC(v)		VAL_FRM_SPEC(VAL_OBJ_VALUES(v))
 
-#define SET_HANDLE(v,h)		VAL_SET(v, REB_HANDLE), VAL_HANDLE(v) = (void*)(h) // a place to put it.
 
 /***********************************************************************
 **
@@ -911,7 +921,6 @@ typedef int  (*REBACT)(REBVAL *ds, REBCNT a);	// Action function
 typedef void (*REBDOF)(REBVAL *ds);				// DO evaltype dispatch function
 typedef int  (*REBPAF)(REBVAL *ds, REBSER *p, REBCNT a); // Port action func
 
-typedef void (*ANYFUNC)(void *);
 typedef void (*TRYFUNC)(void *);
 typedef int  (*CMD_FUNC)(REBCNT n, REBSER *args);
 
@@ -960,19 +969,40 @@ enum Path_Eval_Result {
 
 typedef REBINT (*REBPEF)(REBPVS *pvs); // Path evaluator function
 
-typedef REBINT (*REBCTF)(REBVAL *a, REBVAL *b, REBINT s);
+typedef REBINT (*REBCTF)(const REBVAL *a, const REBVAL *b, REBINT s);
+
 
 /***********************************************************************
 **
 **	HANDLE
 **
+**	Type for holding an arbitrary code or data pointer inside
+**	of a Rebol data value.  What kind of function or data is not
+**	known to the garbage collector, so it ignores it.
+**
+**	!!! REVIEW usages of this value type where they occur!
+**
 ***********************************************************************/
 
 typedef struct Reb_Handle {
-	ANYFUNC	code;
+	union {
+		CFUNC code;
+		void *data;
+	} thing;
 } REBHAN;
 
-#define VAL_HANDLE(v)		((v)->data.handle.code)
+#define VAL_HANDLE_CODE(v) \
+	((v)->data.handle.thing.code)
+
+#define VAL_HANDLE_DATA(v) \
+	((v)->data.handle.thing.data)
+
+#define SET_HANDLE_CODE(v,c) \
+	VAL_SET(v, REB_HANDLE), VAL_HANDLE_CODE(v) = (c)
+
+#define SET_HANDLE_DATA(v,d) \
+	VAL_SET(v, REB_HANDLE), VAL_HANDLE_DATA(v) = (d)
+
 
 /***********************************************************************
 **

@@ -164,22 +164,29 @@
 /*
 **		Base-64 binary encoder table.
 **
+**		NOTE: Entered one-character-at-a-time in array initialization
+**		format to avoid the length of 65 which would be needed if
+**		a string literal were used.  This helps memory tools trap
+**		errant accesses to Enbase64[64] if there's an algorithm bug.
+**
 ***********************************************************************/
 {
-	"ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-	"abcdefghijklmnopqrstuvwxyz"
-	"0123456789+/"
+	'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
+	'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
+	'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm',
+	'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
+	'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '+', '/'
 };
 
 
 /***********************************************************************
 **
-*/	static REBSER *Decode_Base2(REBYTE **src, REBCNT len, REBYTE delim)
+*/	static REBSER *Decode_Base2(const REBYTE **src, REBCNT len, REBYTE delim)
 /*
 ***********************************************************************/
 {
 	REBYTE *bp;
-	REBYTE *cp;
+	const REBYTE *cp;
 	REBCNT count = 0;
 	REBINT accum = 0;
 	REBYTE lex;
@@ -224,12 +231,12 @@ err:
 
 /***********************************************************************
 **
-*/	static REBSER *Decode_Base16(REBYTE **src, REBCNT len, REBYTE delim)
+*/	static REBSER *Decode_Base16(const REBYTE **src, REBCNT len, REBYTE delim)
 /*
 ***********************************************************************/
 {
 	REBYTE *bp;
-	REBYTE *cp;
+	const REBYTE *cp;
 	REBCNT count = 0;
 	REBINT accum = 0;
 	REBYTE lex;
@@ -269,12 +276,12 @@ err:
 								
 /***********************************************************************
 **
-*/	static REBSER *Decode_Base64(REBYTE **src, REBCNT len, REBYTE delim)
+*/	static REBSER *Decode_Base64(const REBYTE **src, REBCNT len, REBYTE delim)
 /*
 ***********************************************************************/
 {
 	REBYTE *bp;
-	REBYTE *cp;
+	const REBYTE *cp;
 	REBCNT flip = 0;
 	REBINT accum = 0;
 	REBYTE lex;
@@ -347,7 +354,7 @@ err:
 
 /***********************************************************************
 **
-*/	REBYTE *Decode_Binary(REBVAL *value, REBYTE *src, REBCNT len, REBINT base, REBYTE delim)
+*/	const REBYTE *Decode_Binary(REBVAL *value, const REBYTE *src, REBCNT len, REBINT base, REBYTE delim)
 /*
 **		Scan and convert a binary string.
 **

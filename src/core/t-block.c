@@ -32,7 +32,7 @@
 
 /***********************************************************************
 **
-*/	REBINT CT_Block(REBVAL *a, REBVAL *b, REBINT mode)
+*/	REBINT CT_Block(const REBVAL *a, const REBVAL *b, REBINT mode)
 /*
 ***********************************************************************/
 {
@@ -50,13 +50,13 @@
 static void No_Nones(REBVAL *arg) {
 	arg = VAL_BLK_DATA(arg);
 	for (; NOT_END(arg); arg++) {
-		if (IS_NONE(arg)) Trap_Arg(arg);
+		if (IS_NONE(arg)) vTrap_Arg(arg);
 	}
 }
 
 /***********************************************************************
 **
-*/	REBFLG MT_Block(REBVAL *out, REBVAL *data, REBCNT type)
+*/	REBFLG MT_Block(REBVAL *out, const REBVAL *data, REBCNT type)
 /*
 ***********************************************************************/
 {
@@ -200,10 +200,10 @@ static void No_Nones(REBVAL *arg) {
 	REBCNT index = VAL_INDEX(block);
 	REBCNT tail  = VAL_TAIL(block);
 	REBFLG only  = DS_REF(AN_ONLY);
-	REBINT rlen;  // length to be removed
-	REBINT ilen  = 1;  // length to be inserted
-	REBINT cnt   = 1;  // DUP count
-	REBINT size;
+	REBCNT rlen;  // length to be removed
+	REBCNT ilen  = 1;  // length to be inserted
+	REBCNT cnt   = 1;  // DUP count
+	REBCNT size;
 	REBFLG is_blk = FALSE; // arg is a block not a value
 
 	// Length of target (may modify index): (arg can be anything)
@@ -340,7 +340,7 @@ static void No_Nones(REBVAL *arg) {
 			Set_Series(type, value, Make_Block(len));
 			return;
 		}
-		Trap_Arg(arg);
+		vTrap_Arg(arg);
 	}
 
 	ser = Copy_Values(arg, 1);
@@ -351,12 +351,13 @@ done:
 }
 
 // WARNING! Not re-entrant. !!!  Must find a way to push it on stack?
+// Fields initialized to zero due to global scope
 static struct {
 	REBFLG cased;
 	REBFLG reverse;
 	REBCNT offset;
 	REBVAL *compare;
-} sort_flags = {0};
+} sort_flags;
 
 /***********************************************************************
 **
@@ -367,9 +368,17 @@ static struct {
 	// !!!! BE SURE that 64 bit large difference comparisons work
 
 	if (sort_flags.reverse)
-		return Cmp_Value((REBVAL*)v2+sort_flags.offset, (REBVAL*)v1+sort_flags.offset, sort_flags.cased);
+		return Cmp_Value(
+			r_cast(const REBVAL *, v2) + sort_flags.offset,
+			r_cast(const REBVAL *, v1) + sort_flags.offset,
+			sort_flags.cased
+		);
 	else
-		return Cmp_Value((REBVAL*)v1+sort_flags.offset, (REBVAL*)v2+sort_flags.offset, sort_flags.cased);
+		return Cmp_Value(
+			r_cast(const REBVAL *, v1) + sort_flags.offset,
+			r_cast(const REBVAL *, v2) + sort_flags.offset,
+			sort_flags.cased
+		);
 
 /*
 	REBI64 n = VAL_INT64((REBVAL*)v1) - VAL_INT64((REBVAL*)v2);
@@ -450,7 +459,7 @@ static struct {
 	if (!IS_NONE(skipv)) {
 		skip = Get_Num_Arg(skipv);
 		if (skip <= 0 || len % skip != 0 || skip > len)
-			Trap_Range(skipv);
+			vTrap_Range(skipv);
 	}
 
 	// Use fast quicksort library function:
@@ -531,7 +540,7 @@ static struct {
 /*
 ***********************************************************************/
 {
-	REBINT n = 0;
+	REBCNT n = 0;
 
 	/* Issues!!!
 		a/1.3
@@ -551,7 +560,7 @@ static struct {
 		n = Find_Block_Simple(VAL_SERIES(pvs->value), VAL_INDEX(pvs->value), pvs->select) + 1;
 	}
 
-	if (n < 0 || (REBCNT)n >= VAL_TAIL(pvs->value)) {
+	if ((n == NOT_FOUND) || n >= VAL_TAIL(pvs->value)) {
 		if (pvs->setval) return PE_BAD_SELECT;
 		return PE_NONE;
 	}

@@ -78,12 +78,13 @@ extern HWND Event_Handle;
 #ifdef HAS_ASYNC_DNS
 	if (GET_FLAG(sock->flags, RRF_PENDING)) {
 		CLR_FLAG(sock->flags, RRF_PENDING);
-		if (sock->handle) WSACancelAsyncRequest(sock->handle);
+		if (sock->requestee.handle)
+			WSACancelAsyncRequest(sock->requestee.handle);
 	}
 #endif
-	if (sock->net.host_info) OS_Free(sock->net.host_info);
-	sock->net.host_info = 0;
-	sock->handle = 0;
+	if (sock->special.net.host_info) OS_Free_Mem(sock->special.net.host_info);
+	sock->special.net.host_info = 0;
+	sock->requestee.handle = 0;
 	SET_CLOSED(sock);
 	return DR_DONE; // Removes it from device's pending list (if needed)
 }
@@ -98,50 +99,69 @@ extern HWND Event_Handle;
 **
 ***********************************************************************/
 {
-	void *host;
+	char *host = OS_ALLOC_ARRAY(char, MAXGETHOSTSTRUCT);
+
 #ifdef HAS_ASYNC_DNS
 	HANDLE handle;
 #else
 	HOSTENT *he;
 #endif
 
-	host = OS_Make(MAXGETHOSTSTRUCT); // be sure to free it
-
 #ifdef HAS_ASYNC_DNS
 	if (!GET_FLAG(sock->modes, RST_REVERSE)) // hostname lookup
-		handle = WSAAsyncGetHostByName(Event_Handle, WM_DNS, sock->data, host, MAXGETHOSTSTRUCT);
+		handle = WSAAsyncGetHostByName(
+			Event_Handle,
+			WM_DNS,
+			AS_CHARS(sock->common.data),
+			host,
+			MAXGETHOSTSTRUCT
+		);
 	else
-		handle = WSAAsyncGetHostByAddr(Event_Handle, WM_DNS, (char*)&(sock->net.remote_ip), 4, AF_INET, host, MAXGETHOSTSTRUCT);
+		handle = WSAAsyncGetHostByAddr(
+			Event_Handle,
+			WM_DNS,
+			r_cast(char *, &sock->special.net.remote_ip),
+			4,
+			AF_INET,
+			host,
+			MAXGETHOSTSTRUCT
+		);
 
 	if (handle != 0) {
-		sock->net.host_info = host;
-		sock->handle = handle;
+		sock->special.net.host_info = host;
+		sock->requestee.handle = handle;
 		return DR_PEND; // keep it on pending list
 	}
 #else
 	// Use old-style blocking DNS (mainly for testing purposes):
 	if (GET_FLAG(sock->modes, RST_REVERSE)) {
-		he = gethostbyaddr((char*)&sock->net.remote_ip, 4, AF_INET);
+		he = gethostbyaddr(
+			r_cast(char *, &sock->special.net.remote_ip), 4, AF_INET
+		);
 		if (he) {
-			sock->net.host_info = host; //???
-			sock->data = he->h_name;
+			sock->special.net.host_info = host; //???
+			sock->common.data = AS_BYTES(he->h_name);
 			SET_FLAG(sock->flags, RRF_DONE);
 			return DR_DONE;
 		}
 	}
 	else {
-		he = gethostbyname(sock->data);
+		he = gethostbyname(AS_CHARS(sock->common.data));
 		if (he) {
-			sock->net.host_info = host; // ?? who deallocs?
-			COPY_MEM((char*)&(sock->net.remote_ip), (char *)(*he->h_addr_list), 4); //he->h_length);
+			sock->special.net.host_info = host; // ?? who deallocs?
+			memcpy(
+				r_cast(char *, &sock->special.net.remote_ip),
+				r_cast(char *, *he->h_addr_list),
+				4
+			); //he->h_length);
 			SET_FLAG(sock->flags, RRF_DONE);
 			return DR_DONE;
 		}
 	}
 #endif
 
-	OS_Free(host);
-	sock->net.host_info = 0;
+	OS_FREE_ARRAY(char, MAXGETHOSTSTRUCT, host);
+	sock->special.net.host_info = 0;
 
 	sock->error = GET_ERROR;
 	//Signal_Device(sock, EVT_ERROR);
@@ -151,7 +171,7 @@ extern HWND Event_Handle;
 
 /***********************************************************************
 **
-*/	DEVICE_CMD Poll_DNS(REBREQ *dr)
+*/	DEVICE_CMD Poll_DNS(REBREQ *dev_opaque)
 /*
 **		Check for completed DNS requests. These are marked with
 **		RRF_DONE by the windows message event handler (dev-event.c).
@@ -160,7 +180,7 @@ extern HWND Event_Handle;
 **
 ***********************************************************************/
 {
-	REBDEV *dev = (REBDEV*)dr;  // to keep compiler happy
+	REBDEV *dev = r_cast(REBDEV *, dev_opaque);
 	REBREQ **prior = &dev->pending;
 	REBREQ *req;
 	REBOOL change = FALSE;
@@ -176,11 +196,12 @@ extern HWND Event_Handle;
 			CLR_FLAG(req->flags, RRF_PENDING);
 
 			if (!req->error) { // success!
-				host = (HOSTENT*)req->net.host_info;
+				host = cast(HOSTENT *, req->special.net.host_info);
 				if (GET_FLAG(req->modes, RST_REVERSE))
-					req->data = host->h_name;
+					req->common.data = AS_BYTES(host->h_name);
 				else
-					COPY_MEM((char*)&(req->net.remote_ip), (char *)(*host->h_addr_list), 4); //he->h_length);
+					memcpy(&req->special.net.remote_ip, *host->h_addr_list, 4);
+					// !!! he->h_length);
 				Signal_Device(req, EVT_READ);
 			}
 			else

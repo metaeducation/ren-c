@@ -32,7 +32,7 @@
 
 /***********************************************************************
 **
-*/	REBINT CT_Tuple(REBVAL *a, REBVAL *b, REBINT mode)
+*/	REBINT CT_Tuple(const REBVAL *a, const REBVAL *b, REBINT mode)
 /*
 ***********************************************************************/
 {
@@ -46,7 +46,7 @@
 
 /***********************************************************************
 **
-*/	REBFLG MT_Tuple(REBVAL *out, REBVAL *data, REBCNT type)
+*/	REBFLG MT_Tuple(REBVAL *out, const REBVAL *data, REBCNT type)
 /*
 ***********************************************************************/
 {
@@ -79,14 +79,14 @@
 
 /***********************************************************************
 **
-*/	REBINT Cmp_Tuple(REBVAL *t1, REBVAL *t2)
+*/	REBINT Cmp_Tuple(const REBVAL *t1, const REBVAL *t2)
 /*
 **	Given two tuples, compare them.
 **
 ***********************************************************************/
 {
 	REBCNT	len;
-	REBYTE	*vp1, *vp2;
+	const REBYTE *vp1, *vp2;
 	REBINT	n;
 
 	len = MAX(VAL_TUPLE_LEN(t1), VAL_TUPLE_LEN(t2));
@@ -127,7 +127,7 @@
 		if (IS_INTEGER(val) || IS_DECIMAL(val)) i = Int32(val);
 		else if (IS_NONE(val)) {
 			n--;
-			CLEAR(dat+n, MAX_TUPLE-n);
+			memset(dat + n, NUL, MAX_TUPLE - n);
 			VAL_TUPLE_LEN(pvs->value) = n;
 			return PE_OK;
 		}
@@ -187,11 +187,11 @@
 	REBVAL	*value;
 	REBVAL	*arg;
 	REBYTE	*vp;
-	REBYTE	*ap;
-	REBINT	len;
-	REBINT	alen;
-	REBINT	v;
-	REBINT	a;
+	const REBYTE *ap;
+	REBCNT	len;
+	REBCNT	alen;
+	REBCNT	v;
+	REBCNT	a;
 	REBDEC	dec;
 
 	value = D_ARG(1);
@@ -225,14 +225,14 @@
 			case A_SUBTRACT: v -= a; break;
 			case A_MULTIPLY:
 				if (IS_DECIMAL(arg) || IS_PERCENT(arg))
-					v=(REBINT)(v*dec);
+					v = v * dec;
 				else
 					v *= a;
 				break;
 			case A_DIVIDE:
 				if (IS_DECIMAL(arg) || IS_PERCENT(arg)) {
 					if (dec == 0.0) Trap0(RE_ZERO_DIVIDE);
-					v=(REBINT)Round_Dec(v/dec, 0, 1.0);
+					v= Round_Dec(v/dec, 0, 1.0);
 				} else {
 					if (a == 0) Trap0(RE_ZERO_DIVIDE);
 					v /= a;
@@ -250,8 +250,7 @@
 			}
 
 			if (v > 255) v = 255;
-			else if (v < 0) v = 0;
-			*vp = (REBYTE) v;
+			*vp = cast(REBYTE, v);
 		}
 		goto ret_value;
 	}
@@ -259,7 +258,7 @@
 	// !!!! merge with SWITCH below !!!
 	if (action == A_COMPLEMENT) {
 		for (;len > 0; len--, vp++)
-			*vp = (REBYTE)~*vp;
+			*vp = cast(REBYTE, ~(*vp));
 		goto ret_value;
 	}
 	if (action == A_RANDOM) {
@@ -297,7 +296,6 @@
     case A_REVERSE:
 		if (D_REF(2)) {
 			len = Get_Num_Arg(D_ARG(3));
-			if (len < 0) Trap_Range(D_ARG(3));
 			len = MIN(len, VAL_TUPLE_LEN(value));
 		}
 		if (len > 0) {
@@ -351,7 +349,7 @@
 		if (IS_ISSUE(arg)) {
 			REBUNI c;
 			ap = Get_Word_Name(arg);
-			len = LEN_BYTES(ap);  // UTF-8 len
+			len = strlen(AS_CCHARS(ap));  // UTF-8 len
 			if (len & 1) goto bad_arg; // must have even # of chars
 			len /= 2;
 			if (len > MAX_TUPLE) goto bad_arg; // valid even for UTF-8

@@ -39,7 +39,7 @@
 
 /***********************************************************************
 **
-*/	REBINT CT_Logic(REBVAL *a, REBVAL *b, REBINT mode)
+*/	REBINT CT_Logic(const REBVAL *a, const REBVAL *b, REBINT mode)
 /*
 ***********************************************************************/
 {
@@ -50,7 +50,7 @@
 
 /***********************************************************************
 **
-*/	REBFLG MT_Logic(REBVAL *out, REBVAL *data, REBCNT type)
+*/	REBFLG MT_Logic(REBVAL *out, const REBVAL *data, REBCNT type)
 /*
 ***********************************************************************/
 {

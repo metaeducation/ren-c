@@ -61,7 +61,7 @@ struct gob_window {REBGOB *gob; HWND win; void* compositor;}; // Maps gob to win
 //***** Externs *****
 
 extern HINSTANCE App_Instance;		// Set by winmain function
-extern void Host_Crash(char *reason);
+extern void Host_Crash(const REBYTE *reason);
 extern LRESULT CALLBACK REBOL_Window_Proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 extern MSG Handle_Messages();
 
@@ -73,7 +73,7 @@ extern void* Create_Effects();
 //***** Locals *****
 
 static BOOL Registered = FALSE;		// Window has been registered
-static const REBCHR *Window_Class_Name = TXT("REBOLWindow");
+static const REBCHR *Window_Class_Name = OS_TXT("REBOLWindow");
 static struct gob_window *Gob_Windows;
 
 REBGOB *Gob_Root;				// Top level GOB (the screen)
@@ -105,7 +105,7 @@ REBPAR Zero_Pair = {0, 0};
 	if ((len = RL_Get_String(series, 0, &str)) < 0) {
 		// Latin1 byte string - convert to wide chars
 		len = -len;
-		wstr = OS_Make((len+1) * sizeof(wchar_t));
+		wstr = OS_ALLOC_ARRAY(wchar_t, len + 1);
 		for (n = 0; n < len; n++)
 			wstr[n] = (wchar_t)((char*)str)[n];
 		wstr[len] = 0;
@@ -126,9 +126,7 @@ REBPAR Zero_Pair = {0, 0};
 **
 ***********************************************************************/
 {
-	Gob_Windows = OS_Make(sizeof(struct gob_window) * (MAX_WINDOWS+1));
-	CLEAR(Gob_Windows, sizeof(struct gob_window) * (MAX_WINDOWS+1));
-
+	Gob_Windows = OS_ALLOC_ARRAY_ZEROFILL(struct gob_window, MAX_WINDOWS + 1);
 	Cursor = LoadCursor(NULL, IDC_ARROW);
 }
 
@@ -335,7 +333,7 @@ static void Free_Window(REBGOB *gob) {
 	if (IS_GOB_STRING(gob))
         osString = As_OS_Str(GOB_CONTENT(gob), (REBCHR**)&title);
     else
-        title = TXT("REBOL Window");
+        title = OS_TXT("REBOL Window");
 
 	if (GET_GOB_FLAG(gob, GOBF_POPUP)) {
 		parent = GOB_HWIN(GOB_TMP_OWNER(gob));
@@ -357,7 +355,7 @@ static void Free_Window(REBGOB *gob) {
 	);
 
     //don't let the string leak!
-    if (osString) OS_Free(title);
+    if (osString) OS_Free_Mem(title);
 	if (!window) Host_Crash("CreateWindow failed");
 
 	// Enable drag and drop
@@ -502,7 +500,7 @@ static void Free_Window(REBGOB *gob) {
         osString = As_OS_Str(GOB_CONTENT(gob), (REBCHR**)&title);
 		SetWindowText(window, title);
 		//don't let the string leak!
-        if (osString) OS_Free(title);
+        if (osString) OS_Free_Mem(title);
     }
 
 	/*

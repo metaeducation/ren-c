@@ -72,7 +72,7 @@
 
 /***********************************************************************
 **
-*/	REBINT CT_Date(REBVAL *a, REBVAL *b, REBINT mode)
+*/	REBINT CT_Date(const REBVAL *a, const REBVAL *b, REBINT mode)
 /*
 ***********************************************************************/
 {
@@ -104,7 +104,7 @@
 		|| VAL_DAY(value) == 0
 		|| VAL_DAY(value) > 31
 	) {
-		Append_Bytes(mold->series, "?date?");
+		Append_Bytes(mold->series, AS_CBYTES("?date?"));
 		return;
 	}
 
@@ -159,7 +159,7 @@
 ***********************************************************************/
 {
 	if (month != 1)
-		return (REBCNT)Month_Lengths[month];
+		return Month_Lengths_USUALLY[month];
 
 	return (
 		((year % 4) == 0) &&		// divisible by four is a leap year
@@ -185,7 +185,7 @@
 
 	days = 0;
 
-	for (i = 0; i < (date.date.month-1); i++)
+	for (i = 0; i < cast(REBCNT, date.date.month - 1); i++)
 		days += Month_Length(i, date.date.year);
 
 	return date.date.day + days;
@@ -244,7 +244,8 @@
 **
 ***********************************************************************/
 {
-	REBDAT year1 = {0};
+	REBDAT year1;
+	memset(&year1, NUL, sizeof(year1));
 	year1.date.day = 1;
 	year1.date.month = 1;
 
@@ -254,7 +255,7 @@
 
 /***********************************************************************
 **
-*/	void Normalize_Time(REBI64 *sp, REBINT *dp)
+*/	void Normalize_Time(REBI64 *sp, REBCNT *dp)
 /*
 **		Adjust *dp by number of days and set secs to less than a day.
 **
@@ -319,7 +320,12 @@
 		day += (REBINT)Month_Length(month, year);
 	}
 
-	if (year < 0 || year > MAX_YEAR) Trap1(RE_TYPE_LIMIT, Get_Type(REB_DATE));
+	if (year < 0 || year > MAX_YEAR) {
+		Throw_Error(Make_Error(RE_TYPE_LIMIT, Get_Type(REB_DATE), 0, 0));
+		// Unreachable, but we want to make the compiler happy
+		assert(FALSE);
+		return dr;
+	}
 
 	dr.date.year = year;
 	dr.date.month = month+1;
@@ -379,7 +385,8 @@
 	REBI64 t2;
 
 	diff  = Diff_Date(VAL_DATE(d1), VAL_DATE(d2));
-	if (abs(diff) > (((1U << 31) - 1) / SECS_IN_DAY)) Trap0(RE_OVERFLOW);
+	if (cast(REBCNT, abs(diff)) > (((1U << 31) - 1) / SECS_IN_DAY))
+		vTrap0(RE_OVERFLOW);
 
 	t1 = VAL_TIME(d1);
 	if (t1 == NO_TIME) t1 = 0L;
@@ -393,7 +400,7 @@
 
 /***********************************************************************
 **
-*/	REBINT Cmp_Date(REBVAL *d1, REBVAL *d2)
+*/	REBINT Cmp_Date(const REBVAL *d1, const REBVAL *d2)
 /*
 ***********************************************************************/
 {
@@ -408,7 +415,7 @@
 
 /***********************************************************************
 **
-*/	REBFLG MT_Date(REBVAL *val, REBVAL *arg, REBCNT type)
+*/	REBFLG MT_Date(REBVAL *val, const REBVAL *arg, REBCNT type)
 /*
 **		Given a block of values, construct a date datatype.
 **
@@ -437,7 +444,8 @@
 
 	if (month < 1 || month > 12) return FALSE;
 
-	if (year > MAX_YEAR || day < 1 || day > (REBINT)(Month_Lengths[month-1])) return FALSE;
+	if (year > MAX_YEAR || day < 1 || day > Month_Lengths_USUALLY[month - 1])
+		return FALSE;
 
 	// Check February for leap year or century:
 	if (month == 2 && day == 29) {
@@ -488,7 +496,7 @@
 	REBI64 secs;
 	REBINT tz;
 	REBDAT date;
-	REBINT day, month, year;
+	REBCNT day, month, year;
 	REBINT num;
 	REBVAL dat;
 	REB_TIMEF time;
@@ -643,11 +651,11 @@
 			goto setDate;
 		case 9:
 			time.h = n;
-			secs = Join_Time(&time);
+			secs = Join_Time(&time, FALSE);
 			break;
 		case 10:
 			time.m = n;
-			secs = Join_Time(&time);
+			secs = Join_Time(&time, FALSE);
 			break;
 		case 11:
 			if (IS_INTEGER(val)) {
@@ -659,7 +667,7 @@
 				time.s = (REBINT)VAL_DECIMAL(val);
 				time.n = (REBINT)((VAL_DECIMAL(val) - time.s) * SEC_SEC);
 			}
-			secs = Join_Time(&time);
+			secs = Join_Time(&time, FALSE);
 			break;
 
 		default:
@@ -690,7 +698,7 @@ setDate:
 	REBI64	secs;
 	REBINT  tz;
 	REBDAT	date;
-	REBINT	day, month, year;
+	REBCNT	day, month, year;
 	REBVAL	*val;
 	REBVAL	*arg;
 	REBINT	num;
@@ -771,7 +779,7 @@ setDate:
 				goto ret_val;
 			}
 			if (IS_STRING(arg)) {
-				REBYTE *bp;
+				const REBYTE *bp;
 				REBCNT len;
 				// 30-September-10000/12:34:56.123456789AM/12:34
 				bp = Qualify_String(arg, 45, &len, FALSE); // can trap, ret diff str

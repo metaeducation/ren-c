@@ -33,6 +33,7 @@ enum {
 	SOP_BOTH,		// combine and interate over both series
 	SOP_CHECK,		// check other series for value existence
 	SOP_INVERT,		// invert the result of the search
+	SOP_MAX
 };
 
 #define SET_OP_UNIQUE		0

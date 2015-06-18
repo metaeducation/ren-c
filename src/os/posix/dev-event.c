@@ -49,7 +49,7 @@ void Done_Device(int handle, int error);
 
 /***********************************************************************
 **
-*/	DEVICE_CMD Init_Events(REBREQ *dr)
+*/	DEVICE_CMD Init_Events(REBREQ *dev_opaque)
 /*
 **		Initialize the event device.
 **
@@ -58,7 +58,7 @@ void Done_Device(int handle, int error);
 **
 ***********************************************************************/
 {
-	REBDEV *dev = (REBDEV*)dr; // just to keep compiler happy
+	REBDEV *dev = r_cast(REBDEV *, dev_opaque);
 	SET_FLAG(dev->flags, RDF_INIT);
 	return DR_DONE;
 }

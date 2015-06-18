@@ -82,6 +82,7 @@ enum {
 	// Options:
 	RDO_MUST_INIT = 16,	// Do not allow auto init (manual init required)
 	RDO_AUTO_POLL,	// Poll device, even if no requests (e.g. interrupts)
+	RDO_MAX
 };
 
 // REBOL Request Flags (bitnums):
@@ -93,6 +94,7 @@ enum {
 	RRF_PENDING,	// Request is attached to pending list
 	RRF_ALLOC,		// Request is allocated, not a temp on stack
 	RRF_WIDE,		// Wide char IO
+	RRF_MAX
 };
 
 // REBOL Device Errors:
@@ -101,10 +103,12 @@ enum {
 	RDE_NO_DEVICE,	// command did not provide device
 	RDE_NO_COMMAND,	// command past end
 	RDE_NO_INIT,	// device has not been inited
+	RDE_MAX
 };
 
 enum {
 	RDM_NULL,		// Null device
+	RDM_MAX
 };
 
 #pragma pack(4)
@@ -119,14 +123,14 @@ typedef i32 (*DEVICE_CMD_FUNC)(REBREQ *req);
 
 // Device structure:
 struct rebol_device {
-	char *title;			// title of device
+	const char *title;		// title of device
 	u32 version;			// version, revision, release
 	u32 date;				// year, month, day, hour
 	DEVICE_CMD_FUNC *commands;	// command dispatch table
 	u32 max_command;		// keep commands in bounds
 	REBREQ *pending;		// pending requests
 	u32 flags;				// state: open, signal
-	i32 req_size;			// size of request struct
+	u32 req_size;			// size of request struct
 };
 
 // Inializer (keep ordered same as above)
@@ -144,11 +148,14 @@ struct rebol_devreq {
 		void *handle;		// OS object
 		int socket;			// OS identifier
 		int id;
-	};
+	} requestee;			// !!! REVIEW: Not always "receiver"?  The name is
+							// "bad" (?) but at least unique, making it easy
+							// to change.  See also rebol_event->eventee
 
 	// Command info:
 	i32  command;			// command code
-	u32  error;				// error code
+	i32  error;				// error code
+								// !!! Stores negative numbers for some reason
 	u32  modes;				// special modes, types or attributes
 	u16  flags;				// request flags
 	u16  state;				// device process flags
@@ -159,11 +166,11 @@ struct rebol_devreq {
 	union {
 		REBYTE *data;		// data to transfer
 		REBREQ *sock;		// temp link to related socket
-	};
+	} common;
 	u32  length;			// length to transfer
 	u32  actual;			// length actually transferred
 
-	// Special fields for common IO uses:
+	// Special fields:
 	union {
 		struct {
 			REBCHR *path;			// file string (in OS local format)
@@ -178,7 +185,7 @@ struct rebol_devreq {
 			u32  remote_port;		// remote port
 			void *host_info;		// for DNS usage
 		} net;
-	};
+	} special;
 };
 #pragma pack()
 

@@ -50,7 +50,7 @@
 	arg = D_ARG(2);
 	*D_RET = *D_ARG(1);
 
-	sock = Use_Port_State(port, RDI_DNS, sizeof(*sock));
+	sock = r_cast(REBREQ *, Use_Port_State(port, RDI_DNS, sizeof(*sock)));
 	spec = OFV(port, STD_PORT_SPEC);
 	if (!IS_OBJECT(spec)) Trap0(RE_INVALID_PORT);
 
@@ -66,12 +66,12 @@
 
 		arg = Obj_Value(spec, STD_PORT_SPEC_NET_HOST);
 
-		if (IS_TUPLE(arg) && Scan_Tuple(VAL_BIN(arg), strlen(VAL_BIN(arg)), &tmp)) {
+		if (IS_TUPLE(arg) && Scan_Tuple(VAL_BIN(arg), strlen(AS_CHARS(VAL_BIN(arg))), &tmp)) {
 			SET_FLAG(sock->modes, RST_REVERSE);
-			memcpy(&sock->net.remote_ip, VAL_TUPLE(&tmp), 4);
+			memcpy(&sock->special.net.remote_ip, VAL_TUPLE(&tmp), 4);
 		}
 		else if (IS_STRING(arg)) {
-			sock->data = VAL_BIN(arg);
+			sock->common.data = VAL_BIN(arg);
 		}
 		else Trap_Port(RE_INVALID_SPEC, port, -10);
 
@@ -97,15 +97,15 @@
 		len = Get_Num_Arg(arg); // Position
 pick:
 		if (len == 1) {
-			if (!sock->net.host_info || !GET_FLAG(sock->flags, RRF_DONE)) return R_NONE;
+			if (!sock->special.net.host_info || !GET_FLAG(sock->flags, RRF_DONE)) return R_NONE;
 			if (sock->error) {
 				OS_DO_DEVICE(sock, RDC_CLOSE);
 				Trap_Port(RE_READ_ERROR, port, sock->error);
 			}
 			if (GET_FLAG(sock->modes, RST_REVERSE)) {
-				Set_String(D_RET, Copy_Bytes(sock->data, LEN_BYTES(sock->data)));
+				Set_String(D_RET, Copy_Bytes(sock->common.data, strlen(AS_CHARS(sock->common.data))));
 			} else {
-				Set_Tuple(D_RET, (REBYTE*)&sock->net.remote_ip, 4);
+				Set_Tuple(D_RET, r_cast(REBYTE *, &sock->special.net.remote_ip), 4);
 			}
 			OS_DO_DEVICE(sock, RDC_CLOSE);
 		} else Trap_Range(arg);

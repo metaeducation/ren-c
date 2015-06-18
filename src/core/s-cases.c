@@ -29,7 +29,7 @@
 #include "sys-core.h"
 
 // Unicode 5.0 case folding table:
-static short const Char_Cases[] = {
+static const REBUNI Char_Cases[] = {
 	0x0041, 0x0061, // LATIN CAPITAL LETTER A
 	0x0042, 0x0062, // LATIN CAPITAL LETTER B
 	0x0043, 0x0063, // LATIN CAPITAL LETTER C
@@ -915,15 +915,15 @@ static short const Char_Cases[] = {
 	int n;
 
 	// Init whitespace table:
-	White_Chars = Make_Mem(34);
+	White_Chars = ALLOC_ARRAY(REBYTE, 34);
 	memset(White_Chars, 1, 33); // All white chars: NL, CR, BS, etc...
 	White_Chars[' ']  = 3;	// space
 	White_Chars['\t'] = 3;	// space
 	White_Chars[0]    = 0;	// special
 
 	// Casing tables:
-	Upper_Cases = Make_Mem(UNICODE_CASES * sizeof(REBUNI));
-	Lower_Cases = Make_Mem(UNICODE_CASES * sizeof(REBUNI));
+	Upper_Cases = ALLOC_ARRAY(REBUNI, UNICODE_CASES);
+	Lower_Cases = ALLOC_ARRAY(REBUNI, UNICODE_CASES);
 
 	for (n = 0; n < UNICODE_CASES; n++) {
 		UP_CASE(n) = n;
@@ -931,7 +931,6 @@ static short const Char_Cases[] = {
 	}
 
 	for (up = &Char_Cases[0]; *up; up += 2) {
-		//ASSERT2(UP_CASE(up[1]) == up[1], 910);
 		// Only map if not already set (multiple mappings exist):
 		if (UP_CASE(up[1]) == up[1]) UP_CASE(up[1]) = up[0];
 		if (LO_CASE(up[1]) == up[1]) LO_CASE(up[0]) = up[1];

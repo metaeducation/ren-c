@@ -36,7 +36,7 @@
 // Linkage back to HOST functions. Needed when we compile as a DLL
 // in order to use the OS_* macro functions.
 #ifdef REB_API  // Included by C command line
-REBOL_HOST_LIB *Host_Lib;
+extern REBOL_HOST_LIB *Host_Lib;
 #endif
 
 #include "reb-lib.h"
@@ -56,9 +56,7 @@ extern void RXI_To_Block(RXIFRM *frm, REBVAL *out); // f-extension.c
 extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 
 
-/***********************************************************************
-**
-*/	RL_API void RL_Version(REBYTE vers[])
+RL_API void RL_Version(REBYTE vers[])
 /*
 **	Obtain current REBOL interpreter version information.
 **
@@ -82,9 +80,7 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 }
 
 
-/***********************************************************************
-**
-*/	RL_API int RL_Init(REBARGS *rargs, void *lib)
+RL_API int RL_Init(REBARGS *rargs, void *lib)
 /*
 **	Initialize the REBOL interpreter.
 **
@@ -106,7 +102,7 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 	int marker;
 	REBUPT bounds;
 
-	Host_Lib = lib;
+	Host_Lib = r_cast(REBOL_HOST_LIB *, lib);
 
 	if (Host_Lib->size < HOST_LIB_SIZE) return 1;
 	if (((HOST_LIB_VER << 16) + HOST_LIB_SUM) != Host_Lib->ver_sum) return 2;
@@ -132,9 +128,7 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 }
 
 
-/***********************************************************************
-**
-*/	RL_API int RL_Start(REBYTE *bin, REBINT len, REBCNT flags)
+RL_API int RL_Start(REBYTE *bin, REBINT len, REBCNT flags)
 /*
 **	Evaluate the default boot function.
 **
@@ -151,7 +145,7 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 ***********************************************************************/
 {
 	REBVAL *val;
-	REBSER spec = {0};
+	REBSER spec;
 	REBSER *ser;
 
 	if (bin) {
@@ -168,9 +162,7 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 }
 
 
-/***********************************************************************
-**
-*/	RL_API void RL_Reset()
+RL_API void RL_Reset()
 /*
 **	Reset REBOL (not implemented)
 **
@@ -187,9 +179,7 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 }
 
 
-/***********************************************************************
-**
-*/	RL_API void *RL_Extend(REBYTE *source, RXICAL call)
+RL_API void *RL_Extend(REBYTE *source, RXICAL call)
 /*
 **	Appends embedded extension to system/catalog/boot-exts.
 **
@@ -221,15 +211,13 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 	value = Append_Value(ser);
 	Set_Binary(value, Copy_Bytes(source, -1)); // UTF-8
 	value = Append_Value(ser);
-	SET_HANDLE(value, call);
+	SET_HANDLE_CODE(value, r_cast(CFUNC, call));
 
 	return Extension_Lib();
 }
 
 
-/***********************************************************************
-**
-*/	RL_API void RL_Escape(REBINT reserved)
+RL_API void RL_Escape(REBINT reserved)
 /*
 **	Signal that code evaluation needs to be interrupted.
 **
@@ -249,9 +237,7 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 }
 
 
-/***********************************************************************
-**
-*/	RL_API int RL_Do_String(REBYTE *text, REBCNT flags, RXIARG *result)
+RL_API int RL_Do_String(REBYTE *text, REBCNT flags, RXIARG *result)
 /*
 **	Load a string and evaluate the resulting block.
 **
@@ -277,9 +263,7 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 }
 
 
-/***********************************************************************
-**
-*/	RL_API int RL_Do_Binary(REBYTE *bin, REBINT length, REBCNT flags, REBCNT key, RXIARG *result)
+RL_API int RL_Do_Binary(REBYTE *bin, REBINT length, REBCNT flags, REBCNT key, RXIARG *result)
 /*
 **	Evaluate an encoded binary script such as compressed text.
 **
@@ -297,14 +281,14 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 **
 ***********************************************************************/
 {
-	REBSER spec = {0};
+	REBSER spec;
 	REBSER *text;
 	REBVAL *val;
 #ifdef DUMP_INIT_SCRIPT
 	int f;
 #endif
 
-	//Cloak(TRUE, code, NAT_SPEC_SIZE, &key[0], 20, TRUE);
+	//Cloak(TRUE, code, NAT_UNCOMPRESSED_SIZE, &key[0], 20, TRUE);
 	spec.data = bin;
 	spec.tail = length;
 	text = Decompress(&spec, 0, -1, 10000000, 0);
@@ -313,7 +297,7 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 
 #ifdef DUMP_INIT_SCRIPT
 	f = _open("host-boot.r", _O_CREAT | _O_RDWR, _S_IREAD | _S_IWRITE );
-	_write(f, STR_HEAD(text), LEN_BYTES(STR_HEAD(text)));
+	_write(f, STR_HEAD(text), strlen(STR_HEAD(text)));
 	_close(f);
 #endif
 
@@ -331,9 +315,7 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 }
 
 
-/***********************************************************************
-**
-*/	RL_API int RL_Do_Block(REBSER *blk, REBCNT flags, RXIARG *result)
+RL_API int RL_Do_Block(REBSER *blk, REBCNT flags, RXIARG *result)
 /*
 **	Evaluate a block. (not implemented)
 **
@@ -353,9 +335,7 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 }
 
 
-/***********************************************************************
-**
-*/	RL_API void RL_Do_Commands(REBSER *blk, REBCNT flags, REBCEC *context)
+RL_API void RL_Do_Commands(REBSER *blk, REBCNT flags, REBCEC *context)
 /*
 **	Evaluate a block of extension commands at high speed.
 **
@@ -377,9 +357,7 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 }
 
 
-/***********************************************************************
-**
-*/	RL_API void RL_Print(REBYTE *fmt, ...)
+RL_API void RL_Print(const char *fmt, ...)
 /*
 **	Low level print of formatted data to the console.
 **
@@ -402,9 +380,7 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 }
 
 
-/***********************************************************************
-**
-*/	RL_API void RL_Print_TOS(REBCNT flags, REBYTE *marker)
+RL_API void RL_Print_TOS(REBCNT flags, const REBYTE *marker)
 /*
 **	Print top REBOL stack value to the console. (pending changes)
 **
@@ -457,7 +433,7 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 			if (VAL_ERR_NUM(top) != RE_HALT) {
 				Out_Value(top, 640, FALSE, 0); // error FORMed
 //				if (VAL_ERR_NUM(top) > RE_THROW_MAX) {
-//					Out_Str("** Note: use WHY? for more about this error", 1);
+//					Out_Str(AS_CBYTES("** Note: use WHY? for more about this error"), 1);
 //				}
 			}
 		}
@@ -468,9 +444,7 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 }
 
 
-/***********************************************************************
-**
-*/	RL_API int RL_Event(REBEVT *evt)
+RL_API int RL_Event(REBEVT *evt)
 /*
 **	Appends an application event (e.g. GUI) to the event port.
 **
@@ -648,7 +622,7 @@ RL_API u32 *RL_Map_Words(REBSER *series)
 	u32 *words;
 	REBVAL *val = BLK_HEAD(series);
 
-	words = OS_MAKE((series->tail+2) * sizeof(u32));
+	words = OS_ALLOC_ARRAY(u32, series->tail + 2);
 
 	for (; NOT_END(val); val++) {
 		if (ANY_WORD(val)) words[i++] = VAL_WORD_CANON(val);
@@ -680,8 +654,8 @@ RL_API REBYTE *RL_Word_String(u32 word)
 	// !!This code should use a function from c-words.c (but nothing perfect yet.)
 	if (word == 0 || word >= PG_Word_Table.series->tail) return 0;
 	s1 = VAL_SYM_NAME(BLK_SKIP(PG_Word_Table.series, word));
-	s2 = OS_MAKE(strlen(s1));
-	strcpy(s2, s1);
+	s2 = OS_ALLOC_ARRAY(REBYTE, strlen(AS_CHARS(s1)) + 1);
+	strcpy(AS_CHARS(s2), AS_CHARS(s1));
 	return s2;
 }
 
@@ -804,7 +778,7 @@ RL_API int RL_Set_Value(REBSER *series, u32 index, RXIARG val, int type)
 **		type - datatype of value
 */
 {
-	REBVAL value = {0};
+	REBVAL value;
 	RXI_To_Value(&value, val, type);
 	if (index >= series->tail) {
 		Append_Val(series, &value);
@@ -832,7 +806,8 @@ RL_API u32 *RL_Words_Of_Object(REBSER *obj)
 	REBVAL *syms;
 
 	syms = FRM_WORD(obj, 1);
-	words = OS_MAKE(obj->tail * sizeof(u32)); // One less, because SELF not included.
+	// One less, because SELF not included.
+	words = OS_ALLOC_ARRAY(u32, obj->tail);
 	for (index = 0; index < (obj->tail-1); syms++, index++) {
 		words[index] = VAL_BIND_CANON(syms);
 	}
@@ -872,7 +847,6 @@ RL_API int RL_Set_Field(REBSER *obj, u32 word, RXIARG val, int type)
 **		type - datatype of value
 */
 {
-	REBVAL value = {0};
 	if (!(word = Find_Word_Index(obj, word, FALSE))) return 0;
 	if (VAL_PROTECTED(FRM_WORDS(obj)+word)) return 0; //	Trap1(RE_LOCKED_WORD, word);
 	RXI_To_Value(FRM_VALUES(obj)+word, val, type);
@@ -910,10 +884,10 @@ RL_API int RL_Callback(RXICBI *cbi)
 		return Do_Callback(cbi->obj, cbi->word, cbi->args, &(cbi->result));
 	}
 
-	CLEARS(&evt);
+	memset(&evt, NUL, sizeof(evt));
 	evt.type = EVT_CALLBACK;
 	evt.model = EVM_CALLBACK;
-	evt.ser = (void*)cbi;
+	evt.eventee.ser = cbi;
 	SET_FLAG(cbi->flags, RXC_QUEUED);
 
 	return RL_Event(&evt);	// (returns 0 if queue is full, ignored)

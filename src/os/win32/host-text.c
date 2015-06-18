@@ -223,7 +223,7 @@ void set_font_styles(REBFNT* font, REBVAL* val){
 
 		val++;
 		if ((IS_TUPLE(val)) || (IS_NONE(val))) {
-			COPY_MEM(font->color,VAL_TUPLE(val), 4);
+			memcpy(font->color, VAL_TUPLE(val), 4);
 		}
 
 //		Reb_Print("font/color: %d.%d.%d.%d", font->color[0],font->color[1],font->color[2],font->color[3]);
@@ -263,7 +263,7 @@ void set_font_styles(REBFNT* font, REBVAL* val){
 					font->shadow_x = shadow.x;
 					font->shadow_y = shadow.y;
 				} else if (IS_TUPLE(slot)) {
-					COPY_MEM(font->shadow_color,VAL_TUPLE(slot), 4);
+					memcpy(font->shadow_color, VAL_TUPLE(slot), 4);
 				} else if (IS_INTEGER(slot)) {
 					font->shadow_blur = VAL_INT32(slot);
 				}

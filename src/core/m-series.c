@@ -79,7 +79,7 @@
 	}
 
 	// Range checks:
-	if (delta & 0x80000000) Trap0(RE_PAST_END); // 2GB max
+	if (delta & 0x80000000) vTrap0(RE_PAST_END); // 2GB max
 	if (index > series->tail) index = series->tail; // clip
 
 	// Width adjusted variables:
@@ -91,7 +91,7 @@
 	// Do we need to expand the current series allocation?
 	// WARNING: Do not use ">=" below or newser size may be the same!
 	if ((size + extra) > SERIES_SPACE(series)) {
-		if (IS_LOCK_SERIES(series)) Crash(RP_LOCKED_SERIES);
+		if (IS_LOCK_SERIES(series)) vCrash(RP_LOCKED_SERIES);
 		//DISABLE_GC; // Don't let GC occur just for an expansion.
 
 		if (Reb_Opts->watch_expand) {
@@ -154,7 +154,7 @@
 
 	if ((SERIES_TAIL(series) + SERIES_BIAS(series)) * wide >= SERIES_TOTAL(series)) {
 		Dump_Series(series, "Overflow");
-		ASSERT(0, RP_OVER_SERIES);
+		vCrash(RP_OVER_SERIES);
 	}
 
 	CHECK_MEMORY(3);
@@ -196,7 +196,7 @@
 
 /***********************************************************************
 **
-*/	void Append_Series(REBSER *series, REBYTE *data, REBCNT len)
+*/	void Append_Series(REBSER *series, const REBYTE *data, REBCNT len)
 /*
 **		Append value(s) onto the tail of a series.  The len is
 **		the number of units (bytes, REBVALS, etc.) of the data,
@@ -211,13 +211,17 @@
 
 	EXPAND_SERIES_TAIL(series, len);
 	memcpy(series->data + (wide * tail), data, wide * len);
-	CLEAR(series->data + (wide * series->tail), wide); // terminator
+
+	// !!! A value-based series REB_END is not canon; it only needs to
+	// write the type byte.  Review cost of testing series width vs. writes
+
+	memset(series->data + (wide * series->tail), NUL, wide); // terminator
 }
 
 
 /***********************************************************************
 **
-*/	void Append_Mem_Extra(REBSER *series, REBYTE *data, REBCNT len, REBCNT extra)
+*/	void Append_Mem_Extra(REBSER *series, const REBYTE *data, REBCNT len, REBCNT extra)
 /*
 **		An optimized function for appending raw memory bytes to
 **		a byte-sized series. The series will be expanded if room
@@ -277,7 +281,7 @@
 
 /***********************************************************************
 **
-*/	REBSER *Copy_Series_Value(REBVAL *value)
+*/	REBSER *Copy_Series_Value(const REBVAL *value)
 /*
 **		Copy a series from its value structure.
 **		Index does not need to be at head location.
@@ -341,7 +345,10 @@
 			SERIES_SET_BIAS(series, 0);
 			SERIES_REST(series) += len;
 			series->data -= SERIES_WIDE(series) * len;
-			CLEAR(series->data, SERIES_WIDE(series)); // terminate
+
+			// !!! Review in light of REB_END and non-canon...
+
+			memset(series->data, NUL, SERIES_WIDE(series)); // terminate
 		} else {
 			// Add bias to head:
 			SERIES_ADD_BIAS(series, len);
@@ -363,7 +370,7 @@
 	// Clip if past end and optimize the remove operation:
 	if (len + index >= series->tail) {
 		series->tail = index;
-		CLEAR(series->data + start, SERIES_WIDE(series));
+		memset(series->data + start, NUL, SERIES_WIDE(series));
 		return;
 	}
 
@@ -387,7 +394,15 @@
 {
 	if (series->tail == 0) return;
 	series->tail--;
-	CLEAR(series->data + SERIES_WIDE(series) * series->tail, SERIES_WIDE(series));
+
+	// !!! REB_END is not canon, so you only have to write the type
+	// byte... not zero everything.  Review.
+
+	memset(
+		series->data + SERIES_WIDE(series) * series->tail,
+		NUL,
+		SERIES_WIDE(series)
+	);
 }
 
 
@@ -422,7 +437,10 @@
 {
 	series->tail = 0;
 	if (SERIES_BIAS(series)) Reset_Bias(series);
-	CLEAR(series->data, SERIES_WIDE(series)); // re-terminate
+
+	// !!! REB_END is not canon, only type byte needs to be written
+
+	memset(series->data, NUL, SERIES_WIDE(series)); // re-terminate
 }
 
 
@@ -437,7 +455,10 @@
 {
 	series->tail = 0;
 	if (SERIES_BIAS(series)) Reset_Bias(series);
-	CLEAR(series->data, SERIES_SPACE(series));
+
+	// !!! Review in light of REB_END only needing type bytes as zero
+
+	memset(series->data, NUL, SERIES_SPACE(series));
 }
 
 
@@ -454,7 +475,10 @@
 	if (SERIES_BIAS(series)) Reset_Bias(series);
 	EXPAND_SERIES_TAIL(series, size);
 	series->tail = 0;
-	CLEAR(series->data, SERIES_WIDE(series)); // re-terminate
+
+	// !!! Review in light of REB_END only needing type bytes as zero
+
+	memset(series->data, NUL, SERIES_WIDE(series)); // re-terminate
 }
 
 
@@ -466,7 +490,15 @@
 **
 ***********************************************************************/
 {
-	CLEAR(series->data + SERIES_WIDE(series) * series->tail, SERIES_WIDE(series));
+	// !!! Note that since REB_END values are not canonized, terminating
+	// a value-based series only needs to write the byte indicating the
+	// type...the other fields may remain uninitialized.
+
+	memset(
+		series->data + SERIES_WIDE(series) * series->tail,
+		NUL,
+		SERIES_WIDE(series)
+	);
 }
 
 

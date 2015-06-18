@@ -46,7 +46,7 @@
 #include "reb-host.h"
 #include "host-lib.h"
 
-void Host_Crash(REBYTE *reason);
+void Host_Crash(const REBYTE *reason);
 
 // Temporary globals: (either move or remove?!)
 REBREQ Std_IO_Req;
@@ -66,10 +66,10 @@ static REBYTE *Get_Next_Line()
 	if (*bp) {
 		if (*bp == CR && bp[1] == LF) bp++;
 		len = bp - inbuf;
-		out = OS_Make(len + 2);
-		COPY_BYTES(out, inbuf, len+1);
+		out = OS_ALLOC_ARRAY(REBYTE, len + 2);
+		strncpy(AS_CHARS(out), AS_CHARS(inbuf), len + 1);
 		out[len+1] = 0;
-		MOVE_MEM(inbuf, bp+1, 1+strlen(bp+1));
+		memmove(inbuf, bp + 1, 1 + strlen(AS_CHARS(bp) + 1));
 		return out;
 	}
 
@@ -78,16 +78,16 @@ static REBYTE *Get_Next_Line()
 
 static int Fetch_Buf()
 {
-	REBCNT len = strlen(inbuf);
+	REBCNT len = strlen(AS_CHARS(inbuf));
 
-	Std_IO_Req.data   = inbuf + len;
+	Std_IO_Req.common.data   = inbuf + len;
 	Std_IO_Req.length = inbuf_len - len - 1;
 	Std_IO_Req.actual = 0;
 
 	OS_Do_Device(&Std_IO_Req, RDC_READ);
 
 	// If error, don't crash, just ignore it:
-	if (Std_IO_Req.error) return 0; //Host_Crash("stdio read");
+	if (Std_IO_Req.error) return 0; //Host_Crash(AS_CBYTES("stdio read"));
 
 	// Terminate (LF) last line?
 	if (len > 0 && Std_IO_Req.actual == 0) {
@@ -98,7 +98,7 @@ static int Fetch_Buf()
 
 	// Null terminate buffer:
 	len = Std_IO_Req.actual;
-	Std_IO_Req.data[len] = 0;
+	Std_IO_Req.common.data[len] = 0;
 	return len > 0;
 }
 
@@ -115,15 +115,15 @@ static int Fetch_Buf()
 **
 ***********************************************************************/
 {
-	CLEARS(&Std_IO_Req);
+	memset(&Std_IO_Req, NUL, sizeof(Std_IO_Req));
 	Std_IO_Req.clen = sizeof(Std_IO_Req);
 	Std_IO_Req.device = RDI_STDIO;
 
 	OS_Do_Device(&Std_IO_Req, RDC_OPEN);
 
-	if (Std_IO_Req.error) Host_Crash("stdio open");
+	if (Std_IO_Req.error) Host_Crash(AS_CBYTES("stdio open"));
 
-	inbuf = OS_Make(inbuf_len);
+	inbuf = OS_ALLOC_ARRAY(REBYTE, inbuf_len);
 	inbuf[0] = 0;
 }
 
@@ -151,7 +151,7 @@ static int Fetch_Buf()
 
 /***********************************************************************
 **
-*/	void Put_Str(REBYTE *buf)
+*/	void Put_Str(const REBYTE *buf)
 /*
 **		Outputs a null terminated UTF-8 string.
 **		If buf is larger than StdIO Device allows, error out.
@@ -159,11 +159,13 @@ static int Fetch_Buf()
 **
 ***********************************************************************/
 {
-	Std_IO_Req.length = strlen(buf);
-	Std_IO_Req.data = (REBYTE*)buf;
+	Std_IO_Req.length = strlen(AS_CCHARS(buf));
+	// !!! WARNING: This const cast may be very unsafe and lead to
+	// undefined behavior.  A better protocol is needed.  
+	Std_IO_Req.common.data = c_cast(REBYTE *, buf);
 	Std_IO_Req.actual = 0;
 
 	OS_Do_Device(&Std_IO_Req, RDC_WRITE);
 
-	if (Std_IO_Req.error) Host_Crash("stdio write");
+	if (Std_IO_Req.error) Host_Crash(AS_CBYTES("stdio write"));
 }

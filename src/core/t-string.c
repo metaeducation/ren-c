@@ -33,7 +33,7 @@
 
 /***********************************************************************
 **
-*/	REBINT CT_String(REBVAL *a, REBVAL *b, REBINT mode)
+*/	REBINT CT_String(const REBVAL *a, const REBVAL *b, REBINT mode)
 /*
 ***********************************************************************/
 {
@@ -272,7 +272,7 @@ static REBSER *make_binary(REBVAL *arg, REBOOL make)
 
 /***********************************************************************
 **
-*/	REBFLG MT_String(REBVAL *out, REBVAL *data, REBCNT type)
+*/	REBFLG MT_String(REBVAL *out, const REBVAL *data, REBCNT type)
 /*
 ***********************************************************************/
 {
@@ -294,7 +294,8 @@ static REBSER *make_binary(REBVAL *arg, REBOOL make)
 /*
 ***********************************************************************/
 {
-	return ((int)*(REBYTE*)v1) - ((int)*(REBYTE*)v2);
+	return cast(int, *r_cast(const REBYTE *, v1))
+		- cast(int, *r_cast(const REBYTE *, v2));
 }
 
 
@@ -304,7 +305,8 @@ static REBSER *make_binary(REBVAL *arg, REBOOL make)
 /*
 ***********************************************************************/
 {
-	return ((int)*(REBYTE*)v2) - ((int)*(REBYTE*)v1);
+	return cast(int, *r_cast(const REBYTE *, v2))
+		- cast(int, *r_cast(const REBYTE *, v1));
 }
 
 
@@ -327,7 +329,7 @@ static REBSER *make_binary(REBVAL *arg, REBOOL make)
 	if (!IS_NONE(skipv)) {
 		skip = Get_Num_Arg(skipv);
 		if (skip <= 0 || len % skip != 0 || skip > len)
-			Trap_Arg(skipv);
+			vTrap_Arg(skipv);
 	}
 
 	// Use fast quicksort library function:
@@ -406,7 +408,7 @@ static REBSER *make_binary(REBVAL *arg, REBOOL make)
 ***********************************************************************/
 {
 	REBSER *ser;
-	REB_MOLD mo = {0};
+	REB_MOLD mo;
 	REBCNT n;
 	REBUNI c;
 	REBSER *arg;
@@ -422,7 +424,7 @@ static REBSER *make_binary(REBVAL *arg, REBOOL make)
 	if (ANY_STR(pvs->select))
 		arg = VAL_SERIES(pvs->select);
 	else {
-		Reset_Mold(&mo);
+		Reset_Mold(&mo, 0);
 		Mold_Value(&mo, pvs->select, 0);
 		arg = mo.series;
 	}
@@ -665,11 +667,17 @@ zero_str:
 		args = Find_Refines(ds, ALL_TRIM_REFS);
 		if (
 			(args & (AM_TRIM_ALL | AM_TRIM_WITH)) &&
-			(args & (AM_TRIM_HEAD | AM_TRIM_TAIL | AM_TRIM_LINES | AM_TRIM_AUTO)) ||
+			(args & (AM_TRIM_HEAD | AM_TRIM_TAIL | AM_TRIM_LINES | AM_TRIM_AUTO))
+		) {
+			Trap0(RE_BAD_REFINES);
+		}
+
+		if (
 			(args & AM_TRIM_AUTO) && 
 			(args & (AM_TRIM_HEAD | AM_TRIM_TAIL | AM_TRIM_LINES | AM_TRIM_ALL | AM_TRIM_WITH))
-		)
+		) {
 			Trap0(RE_BAD_REFINES);
+		}
 
 		Trim_String(VAL_SERIES(value), VAL_INDEX(value), VAL_LEN(value), args, D_ARG(ARG_TRIM_STR));
 		break;

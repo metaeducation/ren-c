@@ -111,8 +111,8 @@ REBCNT Test_Sync_Callback(REBSER *obj, REBCNT word, RXIARG *result)
 	REBCNT n;
 
 	// These can be on the stack, because it's synchronous.
-	CLEAR(&cbi, sizeof(cbi));
-	CLEAR(&args[0], sizeof(args));
+	memset(&cbi, NUL, sizeof(cbi));
+	memset(&args[0], NUL, sizeof(args));
 	cbi.obj = obj;
 	cbi.word = word;
 	cbi.args = args;
@@ -138,10 +138,9 @@ REBCNT Test_Async_Callback(REBSER *obj, REBCNT word)
 
 	// These cannot be on the stack, because they are used
 	// when the callback happens later.
-	cbi = MAKE_NEW(*cbi);
-	CLEAR(cbi, sizeof(cbi));
-	args = MAKE_MEM(sizeof(RXIARG) * 4);
-	CLEAR(args, sizeof(RXIARG) * 4);
+	cbi = OS_ALLOC_ZEROFILL(RXICBI);
+	memset(cbi, NUL, sizeof(cbi));
+	args = OS_ALLOC_ARRAY_ZEROFILL(RXIARG, 4);
 	cbi->obj = obj;
 	cbi->word = word;
 	cbi->args = args;

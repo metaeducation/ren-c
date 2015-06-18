@@ -239,7 +239,9 @@
 
 	*D_RET = *image;
 	if (err = OS_DRAW_IMAGE(VAL_SERIES(image), ser = At_Head(D_ARG(2)))) {
-		Trap_Word(RE_DIALECT, SYM_DRAW, BLK_SKIP(ser, (-err)-1));
+		REBVAL word;
+		Init_Word(&word, SYM_DRAW);
+		vTrap2(num, &word, BLK_SKIP(ser, (-err)-1));
 	}
 #endif
 	return R_RET;
@@ -263,7 +265,9 @@
 
 	*D_RET = *image;
 	if (err = OS_EFFECT_IMAGE(VAL_SERIES(image), ser = At_Head(D_ARG(2)))) {
-		Trap_Word(RE_DIALECT, SYM_DRAW, BLK_SKIP(ser, (-err)-1));
+		REBVAL word;
+		Init_Word(&word, SYM_DRAW);
+		vTrap2(num, &word, BLK_SKIP(ser, (-err)-1));
 	}
 #endif
 	return R_RET;

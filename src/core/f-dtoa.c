@@ -556,7 +556,7 @@ Balloc
 	int x;
 	Bigint *rv;
 #ifndef Omit_Private_Memory
-	unsigned int len;
+	size_t len; // !!! Changed to a size_t by @HostileFork due to warnings
 #endif
 
 	ACQUIRE_DTOA_LOCK(0);
@@ -1888,9 +1888,10 @@ gethex( CONST char **sp, U *rvp, int rounding, int sign)
 			e1 = -e1;
 		e += e1;
 	  }
-	*sp = (char*)s;
+	// For why const_cast is needed: http://stackoverflow.com/a/3874281/211160
+	*sp = c_cast(char *, r_cast(const char *, s));
 	if (!havedig)
-		*sp = (char*)s0 - 1;
+		*sp = c_cast(char *, r_cast(const char *, s0) - 1);
 	if (zret)
 		goto retz1;
 	if (big) {
@@ -3556,8 +3557,9 @@ strtod
 		}
 #endif
  ret:
+ 	// For why const_cast is needed: http://stackoverflow.com/a/3874281/211160
 	if (se)
-		*se = (char *)s;
+		*se = c_cast(char *, s);
 	return sign ? -dval(&rv) : dval(&rv);
 	}
 
@@ -3565,21 +3567,23 @@ strtod
  static char *dtoa_result;
 #endif
 
+// !!! This routine was changed to use size_t to comply with strict warnings
+// by @HostileFork.  (sizeof() returns an unsigned value).
  static char *
 #ifdef KR_headers
-rv_alloc(i) int i;
+rv_alloc(i) size_t i;
 #else
-rv_alloc(int i)
+rv_alloc(size_t i)
 #endif
 {
-	int j, k, *r;
+	size_t j, k, *r;
 
 	j = sizeof(ULong);
 	for(k = 0;
 		sizeof(Bigint) - sizeof(ULong) - sizeof(int) + j <= i;
 		j <<= 1)
 			k++;
-	r = (int*)Balloc(k);
+	r = (size_t*)Balloc(k);
 	*r = k;
 	return
 #ifndef MULTIPLE_THREADS

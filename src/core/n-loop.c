@@ -109,7 +109,7 @@
 		VAL_INDEX(var) = si;
 		result = Do_Blk(body, 0);
 		if (THROWN(result) && Check_Error(result) >= 0) break;
-		if (VAL_TYPE(var) != type) Trap1(RE_INVALID_TYPE, var);
+		if (VAL_TYPE(var) != type) vTrap1(RE_INVALID_TYPE, var);
 		si = VAL_INDEX(var);
 	}
 }
@@ -129,7 +129,7 @@
 		VAL_INT64(var) = start;
 		result = Do_Blk(body, 0);
 		if (THROWN(result) && Check_Error(result) >= 0) break;
-		if (!IS_INTEGER(var)) Trap_Type(var);
+		if (!IS_INTEGER(var)) vTrap_Type(var);
 		start = VAL_INT64(var);
 	}
 }
@@ -146,17 +146,17 @@
 	REBDEC e;
 	REBDEC i;
 
-	if (IS_INTEGER(start)) s = (REBDEC)VAL_INT64(start);
+	if (IS_INTEGER(start)) s = cast(REBDEC, VAL_INT64(start));
 	else if (IS_DECIMAL(start) || IS_PERCENT(start)) s = VAL_DECIMAL(start);
-	else Trap_Arg(start);
+	else vTrap_Arg(start);
 
-	if (IS_INTEGER(end)) e = (REBDEC)VAL_INT64(end);
+	if (IS_INTEGER(end)) e = cast(REBDEC, VAL_INT64(end));
 	else if (IS_DECIMAL(end) || IS_PERCENT(end)) e = VAL_DECIMAL(end);
-	else Trap_Arg(end);
+	else vTrap_Arg(end);
 
-	if (IS_INTEGER(incr)) i = (REBDEC)VAL_INT64(incr);
+	if (IS_INTEGER(incr)) i = cast(REBDEC, VAL_INT64(incr));
 	else if (IS_DECIMAL(incr) || IS_PERCENT(incr)) i = VAL_DECIMAL(incr);
-	else Trap_Arg(incr);
+	else vTrap_Arg(incr);
 
 	VAL_SET(var, REB_DECIMAL);
 
@@ -164,7 +164,7 @@
 		VAL_DECIMAL(var) = s;
 		result = Do_Blk(body, 0);
 		if (THROWN(result) && Check_Error(result) >= 0) break;
-		if (!IS_DECIMAL(var)) Trap_Type(var);
+		if (!IS_DECIMAL(var)) vTrap_Type(var);
 		s = VAL_DECIMAL(var);
 	}
 }
@@ -202,8 +202,8 @@
 	bodi = VAL_INDEX(D_ARG(mode+2));
 
 	// Starting location when past end with negative skip:
-	if (inc < 0 && VAL_INDEX(var) >= (REBINT)VAL_TAIL(var)) {
-		VAL_INDEX(var) = (REBINT)VAL_TAIL(var) + inc;
+	if (inc < 0 && VAL_INDEX(var) >= VAL_TAIL(var)) {
+		VAL_INDEX(var) = VAL_TAIL(var) + inc;
 	}
 
 	// NOTE: This math only works for index in positive ranges!
@@ -211,11 +211,11 @@
 	if (ANY_SERIES(var)) {
 		while (TRUE) {
 			dat = VAL_SERIES(var);
-			idx = (REBINT)VAL_INDEX(var);
+			idx = VAL_INDEX(var);
 			if (idx < 0) break;
-			if (idx >= (REBINT)SERIES_TAIL(dat)) {
+			if (idx >= cast(REBINT, SERIES_TAIL(dat))) {
 				if (inc >= 0) break;
-				idx = (REBINT)SERIES_TAIL(dat) + inc; // negative
+				idx = SERIES_TAIL(dat) + inc; // negative
 				if (idx < 0) break;
 				VAL_INDEX(var) = idx;
 			}
@@ -484,7 +484,10 @@ skip_hidden: ;
 	else if (ANY_SERIES(start)) {
 		// Check that start and end are same type and series:
 		//if (ANY_SERIES(end) && VAL_SERIES(start) != VAL_SERIES(end)) Trap_Arg(end);
-		Loop_Series(var, body, start, ANY_SERIES(end) ? VAL_INDEX(end) : (Int32s(end, 1) - 1), Int32(incr));
+		if (ANY_SERIES(end))
+			Loop_Series(var, body, start, VAL_INDEX(end), Int32(incr));
+		else
+			Loop_Series(var, body, start, Int32s(end, 1) - 1, Int32(incr));
 	}
 	else
 		Loop_Number(var, body, start, end, incr);

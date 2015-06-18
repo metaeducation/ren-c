@@ -75,7 +75,7 @@ extern HINSTANCE App_Instance;	// From Main module.
 
 /***********************************************************************
 **
-*/	DEVICE_CMD Init_Events(REBREQ *dr)
+*/	DEVICE_CMD Init_Events(REBREQ *dev_opaque)
 /*
 **		Initialize the event device.
 **
@@ -84,8 +84,10 @@ extern HINSTANCE App_Instance;	// From Main module.
 **
 ***********************************************************************/
 {
-	REBDEV *dev = (REBDEV*)dr; // just to keep compiler happy
-	WNDCLASSEX wc = {0};
+	REBDEV *dev = r_cast(REBDEV *, dev_opaque);
+
+	WNDCLASSEX wc;
+	memset(&wc, NUL, sizeof(wc));
 
 	// Register event object class:
 	wc.cbSize        = sizeof(wc);

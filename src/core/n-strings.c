@@ -40,29 +40,47 @@
 #ifndef SHA_DEFINED
 #ifdef HAS_SHA1
 REBYTE *SHA1(REBYTE *, REBCNT, REBYTE *);
+#ifdef __cplusplus
+extern "C" {
+#endif
 void SHA1_Init(void *c);
 void SHA1_Update(void *c, REBYTE *data, REBCNT len);
 void SHA1_Final(REBYTE *md, void *c);
 int  SHA1_CtxSize(void);
+#ifdef __cplusplus
+}
+#endif
 #endif
 #endif
 
 #ifndef MD5_DEFINED
 #ifdef HAS_MD5
 REBYTE *MD5(REBYTE *, REBCNT, REBYTE *);
+#ifdef __cplusplus
+extern "C" {
+#endif
 void MD5_Init(void *c);
 void MD5_Update(void *c, REBYTE *data, REBCNT len);
 void MD5_Final(REBYTE *md, void *c);
 int  MD5_CtxSize(void);
+#ifdef __cplusplus
+}
+#endif
 #endif
 #endif
 
 #ifdef HAS_MD4
 REBYTE *MD4(REBYTE *, REBCNT, REBYTE *);
+#ifdef __cplusplus
+extern "C" {
+#endif
 void MD4_Init(void *c);
 void MD4_Update(void *c, REBYTE *data, REBCNT len);
 void MD4_Final(REBYTE *md, void *c);
 int  MD4_CtxSize(void);
+#ifdef __cplusplus
+}
+#endif
 #endif
 
 // Table of has functions and parameters:
@@ -89,7 +107,7 @@ static struct digest {
 	{MD5, MD5_Init, MD5_Update, MD5_Final, MD5_CtxSize, SYM_MD5, 16, 64},
 #endif
 
-	{0}
+	{NULL, NULL, NULL, NULL, NULL, SYM_NOT_USED, 0, 0}
 
 };
 
@@ -162,7 +180,7 @@ static struct digest {
 {
 	REBVAL *arg = D_ARG(ARG_CHECKSUM_DATA);
 	REBINT sum;
-	REBINT i;
+	REBCNT i;
 	REBINT j;
 	REBSER *digest;
 	REBINT sym = SYM_SHA1;
@@ -194,7 +212,7 @@ static struct digest {
 				if (D_REF(ARG_CHECKSUM_KEY)) {
 					REBYTE tmpdigest[20];		// Size must be max of all digest[].len;
 					REBYTE ipad[64],opad[64];	// Size must be max of all digest[].hmacblock;
-					void *ctx = Make_Mem(digests[i].ctxsize());
+					void *ctx = Alloc_Mem(digests[i].ctxsize());
 					REBVAL *key = D_ARG(ARG_CHECKSUM_KEY_VALUE);
 					REBYTE *keycp = VAL_BIN_DATA(key);
 					int keylen = VAL_LEN(key);
@@ -206,8 +224,8 @@ static struct digest {
 						keylen = digests[i].len;
 					}
 
-					memset(ipad, 0, blocklen);
-					memset(opad, 0, blocklen);
+					memset(ipad, NUL, blocklen);
+					memset(opad, NUL, blocklen);
 					memcpy(ipad, keycp, keylen);
 					memcpy(opad, keycp, keylen);
 
@@ -268,7 +286,7 @@ static struct digest {
 {
 	REBSER *ser;
 	REBCNT index;
-	REBINT len;
+	REBCNT len;
 
 	len = Partial1(D_ARG(1), D_ARG(3));
 
