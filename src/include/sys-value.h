@@ -342,6 +342,18 @@ typedef struct Reb_Tuple {
 #ifdef SERIES_LABELS
 	const REBYTE  *label;	// identify the series
 #endif
+
+#ifndef NDEBUG
+	REBINT *guard; // intentionally alloc'd and freed to use for crashing
+#endif
+
+	// !!! When REBSERs are managed by the memory pool, the pool has a feature
+	// to let you enumerate them.  When using a conventional allocator, we
+	// use a doubly-linked list.  See also REBGOB.
+#ifdef NO_MEM_POOLS  
+	REBSER *next;
+	REBSER *prev;
+#endif
 };
 
 #define SERIES_TAIL(s)	 ((s)->tail)
@@ -362,8 +374,12 @@ typedef struct Reb_Tuple {
 #define SET_SERIES_LABEL(s,l)
 #endif
 
-// Flag: If wide field is not set, series is free (not used):
-#define	SERIES_FREED(s)  (!SERIES_WIDE(s))
+#ifndef NO_MEM_POOLS
+	// Flag: If wide field is not set, series is free (not used):
+	// This convention is only used in the pooled allocator, and is an
+	// invalid condition otherwise.
+	#define SERIES_FREED(s) (!SERIES_WIDE(s))
+#endif
 
 // Size in bytes of memory allocated (including bias area):
 #define SERIES_TOTAL(s) ((SERIES_REST(s) + SERIES_BIAS(s)) * (REBCNT)SERIES_WIDE(s))
@@ -407,7 +423,9 @@ enum {
 	SER_KEEP = 1<<1,	// Series is permanent, do not GC it.
 	SER_LOCK = 1<<2,	// Series is locked, do not expand it
 	SER_EXT  = 1<<3,	// Series is external (library), do not GC it.
+#ifndef NO_MEM_POOLS
 	SER_FREE = 1<<4,	// mark series as removed
+#endif
 	SER_BARE = 1<<5,	// Series has no links to GC-able values
 	SER_PROT = 1<<6,	// Series is protected from modification
 	SER_MON  = 1<<7		// Monitoring
@@ -456,6 +474,31 @@ enum {
 //#define	SERIES_SIDE(s)	 ((s)->link.side)
 //#define	SERIES_FRAME(s)	 ((s)->link.frame)
 //#define SERIES_NOT_REBOLS(s) SERIES_SET_FLAG(s, SER_XLIB)
+
+
+// In debug builds, series have a guard field in them that is allocated
+// and then immediately freed.  This effectively captures the call stack
+// at the time of allocation for use if you notice something wrong and
+// want to indicate that series call stack for when it was created.
+
+#ifdef NDEBUG
+	#define Crash_Series(s) Crash(RP_MISC)
+	#define vCrash_Series(s) vCrash(RP_MISC)
+#else
+	#define Crash_Series(s) \
+		do { \
+			if (*((s)->guard) == 1020) Crash(RP_MISC); \
+			/* should have crashed memory checker; if not, crash anyway. */ \
+			Crash(RP_MISC); \
+		} while (0)
+
+	#define vCrash_Series(s) \
+		do { \
+			if (*((s)->guard) == 1020) vCrash(RP_MISC); \
+			/* should have crashed memory checker; if not, crash anyway. */ \
+			vCrash(RP_MISC); \
+		} while (0)
+#endif
 
 
 /***********************************************************************

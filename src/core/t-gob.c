@@ -62,12 +62,33 @@ const REBCNT Gob_Flag_Words[] = {
 **
 ***********************************************************************/
 {
-	REBGOB *gob = r_cast(REBGOB *, Make_Node(GOB_POOL));
+	REBGOB *gob;
+
+#ifndef NO_MEM_POOLS
+
+	gob = r_cast(REBGOB *, Make_Node(GOB_POOL));
 	memset(gob, NUL, sizeof(*gob));
+
+	gob->resv |= GOB_USED;
+
+#else
+
+	gob = ALLOC(REBGOB);
+	memset(gob, NUL, sizeof(*gob));
+
+	// For now, we always insert new allocations at the head of the linked list
+	gob->prev = NULL;
+	if (PG_Gob_List)
+		PG_Gob_List->prev = gob;
+	gob->next = PG_Gob_List;
+	PG_Gob_List = gob;
+	
+#endif
+
 	GOB_W(gob) = 100;
 	GOB_H(gob) = 100;
-	USE_GOB(gob);
-	if ((GC_Ballast -= Mem_Pools[GOB_POOL].wide) <= 0) SET_SIGNAL(SIG_RECYCLE);
+
+	if ((GC_Ballast -= sizeof(REBGOB)) <= 0) SET_SIGNAL(SIG_RECYCLE);
 	return gob;
 }
 

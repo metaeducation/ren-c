@@ -51,7 +51,19 @@ PVAR REBUNI *Upper_Cases;
 PVAR REBUNI *Lower_Cases;
 
 // Other:
-PVAR REBYTE *PG_Pool_Map;	// Memory pool size map (created on boot)
+#ifndef NO_MEM_POOLS
+	PVAR REBYTE *PG_Pool_Map;	// Memory pool size map (created on boot)
+#else
+	// When memory pools are not being used there needs to be some way of
+	// enumerating the allocated REBGOB and REBSER so that the garbage
+	// collector can see them.  These are the heads of two doubly linked
+	// lists for the Gob and Series allocations.
+
+	PVAR REBGOB *PG_Gob_List;
+	PVAR REBSER *PG_Series_List;
+#endif
+
+
 PVAR REBSER *PG_Root_Words;	// Root object word table (reused by threads)
 
 PVAR REBI64 PG_Boot_Time;	// Counter when boot started
@@ -74,7 +86,10 @@ TVAR TASK_CTX *Task_Context; // Main per-task variables
 TVAR REBSER *Task_Series;	// Series that holds Task_Context
 
 //-- Memory and GC:
-TVAR REBPOL *Mem_Pools;		// Memory pool array
+#ifndef NO_MEM_POOLS
+	TVAR REBPOL *Mem_Pools;		// Memory pool array
+#endif
+
 TVAR REBCNT	GC_Disabled;	// GC disabled counter for critical sections.
 TVAR REBINT	GC_Ballast;		// Bytes allocated to force automatic GC
 TVAR REBOOL	GC_Active;		// TRUE when recycle is enabled (set by RECYCLE func)

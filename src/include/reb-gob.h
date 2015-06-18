@@ -106,6 +106,14 @@ struct rebol_gob {		// size: 64 bytes!
 	REBXYF size;
 	REBXYF old_offset;	// prior location
 	REBXYF old_size;	// prior size
+
+	// !!! When REBGOBs are managed by the memory pool, the pool has a feature
+	// to let you enumerate them.  When using a conventional allocator, we
+	// use a doubly-linked list.  See also REBSER.
+#ifdef NO_MEM_POOLS  
+	REBGOB *next;
+	REBGOB *prev;
+#endif
 };
 #pragma pack()
 
@@ -185,8 +193,5 @@ enum {
 #define IS_GOB_MARK(g)	((g)->resv & GOB_MARK)
 #define MARK_GOB(g)		((g)->resv |= GOB_MARK)
 #define UNMARK_GOB(g)	((g)->resv &= ~GOB_MARK)
-#define IS_GOB_USED(g)	((g)->resv & GOB_USED)
-#define USE_GOB(g)		((g)->resv |= GOB_USED)
-#define FREE_GOB(g)		((g)->resv &= ~GOB_USED)
 
 extern REBGOB *Gob_Root; // Top level GOB (the screen)

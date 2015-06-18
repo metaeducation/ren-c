@@ -97,12 +97,17 @@ extern const char Str_Banner[];
 	printf("%d %s\n", sizeof(REBALL), "all");
 #endif
 
+	// !!! Review: binary dependencies on GOB size by clients
 	if (sizeof(void *) == 8) {
 		if (sizeof(REBVAL) != 32) vCrash(RP_REBVAL_ALIGNMENT);
+	#ifndef NO_MEM_POOLS
 		if (sizeof(REBGOB) != 84) vCrash(RP_BAD_SIZE);
+	#endif
 	} else {
 		if (sizeof(REBVAL) != 16) vCrash(RP_REBVAL_ALIGNMENT);
+	#ifndef NO_MEM_POOLS
 		if (sizeof(REBGOB) != 64) vCrash(RP_BAD_SIZE);
+	#endif
 	}
 	if (sizeof(REBDAT) != 4) vCrash(RP_BAD_SIZE);
 }

@@ -218,7 +218,9 @@ static void Mark_Series(REBSER *series, REBCNT depth);
 
 	assert(series);
 
+#ifndef NO_MEM_POOLS
 	if (SERIES_FREED(series)) return; // series data freed already
+#endif
 
 	MARK_SERIES(series);
 
@@ -440,7 +442,7 @@ mark_obj:
 		}
 	}
 
-	if (!IS_END(BLK_SKIP(series, len)) && series != DS_Series)
+	if (series != DS_Series && !IS_END(BLK_SKIP(series, len)))
 		vCrash(RP_MISSING_END);
 }
 
@@ -456,10 +458,13 @@ mark_obj:
 **
 ***********************************************************************/
 {
-	REBSEG	*seg;
-	REBSER	*series;
-	REBCNT  n;
 	REBCNT	count = 0;
+	REBSER	*series;
+
+#ifndef NO_MEM_POOLS
+
+	REBSEG	*seg;
+	REBCNT  n;
 
 	for (seg = Mem_Pools[SERIES_POOL].segs; seg; seg = seg->next) {
 		series = (REBSER *) (seg + 1);
@@ -474,6 +479,33 @@ mark_obj:
 			series++;
 		}
 	}
+	
+#else
+
+	REBSER *last = NULL;
+	REBSER *next;
+	
+	series = PG_Series_List;
+
+	while (series) {
+		next = series->next;
+		if (SERIES_GET_FLAG(series, SER_MARK)) {
+			SERIES_CLR_FLAG(series, SER_MARK);
+			last = series;
+		}
+		else {
+			if (last)
+				last->next = series->next;
+			else
+				PG_Series_List = series->next;
+
+			Free_Series(series);
+			count++;
+		}
+		series = next;
+	}
+
+#endif
 
 	return count;
 }
@@ -490,15 +522,18 @@ mark_obj:
 **
 ***********************************************************************/
 {
-	REBSEG	*seg;
-	REBGOB	*gob;
-	REBCNT  n;
 	REBCNT	count = 0;
+	REBGOB	*gob;
+
+#ifndef NO_MEM_POOLS
+
+	REBSEG	*seg;
+	REBCNT  n;
 
 	for (seg = Mem_Pools[GOB_POOL].segs; seg; seg = seg->next) {
 		gob = (REBGOB *) (seg + 1);
 		for (n = Mem_Pools[GOB_POOL].units; n > 0; n--) {
-			if (IS_GOB_USED(gob)) {
+			if (gob->resv & GOB_USED) {
 				if (IS_GOB_MARK(gob))
 					UNMARK_GOB(gob);
 				else {
@@ -509,6 +544,34 @@ mark_obj:
 			gob++;
 		}
 	}
+
+#else
+
+	REBGOB *last = NULL;
+	REBGOB *next;
+
+	gob = PG_Gob_List;
+
+	while (gob) {
+		next = gob->next;
+
+		if (IS_GOB_MARK(gob)) {
+			UNMARK_GOB(gob);
+			last = gob;
+		} else {
+			if (last)
+				last->next = gob->next;
+			else
+				PG_Gob_List = gob->next;
+
+			Free_Gob(gob);
+
+			count++;
+		}
+		gob = next;
+	}
+
+#endif
 
 	return count;
 }
@@ -540,7 +603,10 @@ mark_obj:
 	GC_Disabled = 1;
 
 	PG_Reb_Stats->Recycle_Counter++;
+
+#ifndef NO_MEM_POOLS
 	PG_Reb_Stats->Recycle_Series = Mem_Pools[SERIES_POOL].free;
+#endif
 
 	PG_Reb_Stats->Mark_Count = 0;
 
@@ -568,6 +634,11 @@ mark_obj:
 	// Mark the last MAX_SAFE "infant" series that were created.
 	// We must assume that infant blocks are valid - that they contain
 	// no partially valid datatypes (that are under construction).
+
+	// !!! FIX-COMING: It is not a rigorous concept to pick a random small
+	// number of series to protect.  A more formal process of managing the
+	// infant series status has been designed.
+
 	for (n = 0; n < MAX_SAFE_SERIES; n++) {
 		REBSER *ser;
 		if (NZ(ser = GC_Infants[n])) {
@@ -576,9 +647,36 @@ mark_obj:
 		} else break;
 	}
 
-	// Mark all root series:
-	Mark_Series(VAL_SERIES(ROOT_ROOT), 0);
-	Mark_Series(Task_Series, 0);
+#ifndef NO_MEM_POOLS
+	{
+		// Mark the root series.  (Will prevent any series with the SER_KEEP
+		// flag set from being freed by not considering it "Freeable" during
+		// the Sweep_Series enumeration.)
+
+		// !!! FIX-NEEDED: This was how Rebol historically handled the
+		// SER_KEEP flag.  It did not ensure the safety of any references
+		// inside of a value-containing kept series.  Aggressive stress
+		// testing via the non-pooled method (as well as adding new
+		// instances of SER_KEEP series) exposed bugs with this.
+
+		Mark_Series(VAL_SERIES(ROOT_ROOT), 0);
+		Mark_Series(Task_Series, 0);
+	}
+#else
+	{
+		// Mark all series that we have been told to KEEP, as well as their
+		// transitive dependencies.
+
+		// !!! FIX-COMING: Faster enumerations w/separate PG_Keep_Series list
+
+		REBSER *ser = PG_Series_List;
+		while (ser) {
+			if (SERIES_GET_FLAG(ser, SER_KEEP))
+				Mark_Series(ser, 0);
+			ser = ser->next;
+		}
+	}
+#endif // NO_MEM_POOLS
 
 	// Mark all devices:
 	Mark_Devices(0);
@@ -589,7 +687,9 @@ mark_obj:
 	CHECK_MEMORY(4);
 
 	// Compute new stats:
+#ifndef NO_MEM_POOLS
 	PG_Reb_Stats->Recycle_Series = Mem_Pools[SERIES_POOL].free - PG_Reb_Stats->Recycle_Series;
+#endif
 	PG_Reb_Stats->Recycle_Series_Total += PG_Reb_Stats->Recycle_Series;
 	PG_Reb_Stats->Recycle_Prior_Eval = Eval_Cycles;
 
@@ -665,7 +765,9 @@ mark_obj:
 	GC_Last_Infant = 0;		// Keep the last N series safe from GC.
 	GC_Infants = ALLOC_ARRAY(REBSER *, MAX_SAFE_SERIES + 2); // extra
 
+#ifndef NO_MEM_POOLS
 	Init_Pools(scale);
+#endif
 
 	Prior_Expand = ALLOC_ARRAY_ZEROFILL(REBSER *, MAX_EXPAND_LIST);
 	Prior_Expand[0] = r_cast(REBSER *, 1);

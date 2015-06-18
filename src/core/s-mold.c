@@ -1375,7 +1375,7 @@ append:
 	if (!buf) vCrash(RP_NO_BUFFER);
 
 	if (SERIES_REST(buf) > MAX_COMMON)
-		Shrink_Series(buf, MIN_COMMON);
+		Shrink_Series(buf, MIN_COMMON, FALSE);
 
 	BLK_RESET(MOLD_LOOP);
 	RESET_SERIES(buf);
