@@ -35,6 +35,7 @@ use [word title] [
 			spec        ["function or module"]
 			values      ["object or module"]
 			types title ["function"] ; title should include module Title too...
+			addr ["struct or callback"]
 		] ["function, object, or module"]] ; body, words
 		set word func
 			reduce [title 'value]
@@ -56,6 +57,8 @@ foreach [codec handler] system/codecs [
 			type: 'image!
 			suffixes: select [
 				text [%.txt]
+				utf-16le [%.txt]
+				utf-16be [%.txt]
 				markup [%.html %.htm %.xml %.xsl %.wml %.sgml %.asp %.php %.cgi]
 				bmp  [%.bmp]
 				gif  [%.gif]

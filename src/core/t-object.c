@@ -510,7 +510,6 @@ reflect:
 	}
 
 	if (type) {
-		memset(&VAL_ALL_BITS(value), 0, sizeof(VAL_ALL_BITS(value)));
 		VAL_SET(value, type);
 		VAL_OBJ_FRAME(value) = obj;
 	}

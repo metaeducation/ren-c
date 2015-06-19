@@ -1,0 +1,26 @@
+MD=makefiles
+MAKEFILE = makefile-mingw-64
+
+TO_OS?= TO_WIN32
+OS_ID?= 0.3.3
+BIT= -m64
+EXTRA_CFLAGS=-D__LLP64__
+
+TOOLS=/usr/bin/x86_64-w64-mingw32-
+INCL=/usr/x86_64-w64-mingw32/include/
+LIBPATH=/usr/x86_64-w64-mingw32/lib/
+
+include $(MD)/common-defs
+include $(MD)/mingw-common-defs
+
+HOST=$(HOST_COMMON) \
+	 $(HOST_MINGW)
+
+GFX=$(GFX_COMMON) \
+	$(GFX_MINGW)
+
+AGG=$(AGG_COMMON) \
+	$(AGG_MINGW)
+
+include $(MD)/common-targets
+include $(MD)/mingw-common-targets

@@ -23,32 +23,12 @@ print "--- Make Host Init Code ---"
 ;print ["REBOL version:" system/version]
 
 ; Options:
-include-vid: off
 proof: off
 
 do %form-header.r
 
 ; Output directory for temp files:
 dir: %os/
-
-; Files to include in the host program:
-files: [
-	%mezz/prot-http.r
-;	%mezz/view-colors.r
-]
-
-vid-files: [
-	%mezz/dial-draw.r
-	%mezz/dial-text.r
-	%mezz/dial-effect.r
-	%mezz/view-funcs.r
-	%mezz/vid-face.r
-	%mezz/vid-events.r
-	%mezz/vid-styles.r
-	%mezz/mezz-splash.r
-]
-
-if include-vid [append files vid-files]
 
 ; Change back to the main souce directory:
 change-dir %../
@@ -166,6 +146,12 @@ load-files: func [
 ][
 	data: make block! 100
 	;append data [print "REBOL Host-Init"] ; for startup debug only
+	if block? system/options/args [
+		;overwrite SYSTEM/PRODUCT value if specified explicitly as first argument
+		append data compose [
+			system/product: (to lit-word! system/options/args/1)
+		]
+	]
 	foreach file file-list [
 		print ["loading:" file]
 		file: load/header file
@@ -188,11 +174,3 @@ load-files: func [
 	]
 	data
 ]
-
-code: load-files files
-
-save %boot/host-init.r code
-
-write-c-file %include/host-init.h code
-
-print "   " ; (separate the output for build watch window)

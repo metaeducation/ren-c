@@ -29,7 +29,6 @@
 **    when date computations are performed.
 **
 ***********************************************************************/
-
 #include "sys-core.h"
 
 
@@ -532,6 +531,8 @@
 		secs  = VAL_TIME(data);
 		tz    = VAL_ZONE(data);
 		if (i > 8) Split_Time(secs, &time);
+	} else {
+		Trap_Arg(data); // this should never happen
 	}
 
 	if (val == 0) {
@@ -692,7 +693,7 @@ setDate:
 	REBDAT	date;
 	REBINT	day, month, year;
 	REBVAL	*val;
-	REBVAL	*arg;
+	REBVAL	*arg = NULL;
 	REBINT	num;
 
 	val = D_ARG(1);
@@ -703,13 +704,15 @@ setDate:
 		year  = VAL_YEAR(val);
 		tz    = VAL_ZONE(val);
 		secs  = VAL_TIME(val);
+	} else if (!(IS_DATATYPE(val) && (action == A_MAKE || action == A_TO))) {
+		Trap_Arg(val);
 	}
 
 	if (DS_ARGC > 1) arg = D_ARG(2);
 
 	if (IS_BINARY_ACT(action)) {
 		REBINT	type = VAL_TYPE(arg);
-
+		
 		if (type == REB_DATE) {
 			if (action == A_SUBTRACT) {
 				num = Diff_Date(date, VAL_DATE(arg));
@@ -757,6 +760,7 @@ setDate:
 		case A_ODDQ: DECIDE((day & 1) == 0);
 
 		case A_PICK:
+			ASSERT2(DS_ARGC > 1, RP_MISC);
 			Pick_Path(val, arg, 0);
 			return R_TOS;
 
@@ -766,6 +770,7 @@ setDate:
 
 		case A_MAKE:
 		case A_TO:
+			ASSERT2(DS_ARGC > 1, RP_MISC);
 			if (IS_DATE(arg)) {
 				val = arg;
 				goto ret_val;

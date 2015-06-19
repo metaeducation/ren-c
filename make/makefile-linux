@@ -1,0 +1,667 @@
+# REBOL Makefile --  version for Linux
+#
+# NOTE: This Makefile is temporary solution for now. It will be later replaced with multiplatform solution (CMAKE)
+#
+# To cross compile using a different toolchain and include files:
+#    $TOOLS - should point to bin where gcc is found
+#    $INCL  - should point to the dir for includes
+# Example make:
+#    make TOOLS=~/amiga/amiga/bin/ppc-amigaos- INCL=/SDK/newlib/include
+
+MAKEFILE = makefile-linux
+
+# For the build toolchain:
+CC=	$(TOOLS)gcc
+CXX  = $(TOOLS)g++
+NM=	$(TOOLS)nm
+STRIP=	$(TOOLS)strip
+
+# CP allows different copy progs:
+CP= cp
+# LS allows different ls progs:
+LS= ls -l
+# UP - some systems do not use ../
+UP= ..
+# CD - some systems do not use ./
+CD= ./
+# Special tools:
+T= $(UP)/src/tools
+# Paths used by make:
+S= ../src
+R= $S/core
+
+INCL ?= .
+I= -I$(INCL) -I$S/include/ -I$S/codecs/ -I../src/freetype-2.4.12/include
+
+TO_OS?= TO_LINUX
+OS_ID?= 0.4.2
+LIB_PRODUCT_NAME= core #note: this can be overriden by the HOST_PRODUCT_NAME
+HOST_PRODUCT_NAME= core
+BIN_SUFFIX= -linux
+RAPI_FLAGS=  -O2 -fvisibility=hidden -fPIC -m32
+HOST_CORE_FLAGS= -DREB_CORE -DREB_EXE -O2 -fvisibility=hidden -m32 -D_FILE_OFFSET_BITS=64 -DCUSTOM_STARTUP
+HOST_VIEW_FLAGS= -DREB_EXE -O2 -fvisibility=hidden -m32 -D_FILE_OFFSET_BITS=64 -DCUSTOM_STARTUP
+RLIB_FLAGS=
+
+# Flags for core and for host:
+RFLAGS= -c -D$(TO_OS) -DREB_API  $(RAPI_FLAGS) $I
+HFLAGS= -c -D$(TO_OS) $(HOST_FLAGS) $I
+HFLAGS_CPP= -c -D$(TO_OS) $(HOST_FLAGS) $I
+
+CLIB= -ldl -lm -m32
+GUI_CLIB= -m32 -ldl -lm -lstdc++ -lfreetype -L/usr/lib32/ -L../src/freetype-2.4.12/objs/.libs/
+# REBOL builds various include files:
+REBOL=	$(CD)r3-make-linux -qs
+
+# For running tests, ship, build, etc.
+R3=	$(CD)r3$(BIN_SUFFIX) -qs
+
+# Refernce to correct R3 libname
+R3LIB= libr3.so
+### Build targets:
+top:
+	$(MAKE) -f $(MAKEFILE) r3$(BIN_SUFFIX)
+
+update:
+	-cd $(UP)/; cvs -q update src
+
+make:
+	$(REBOL) $T/make-make.r $(OS_ID)
+
+clean:
+	@-rm -rf $(R3LIB) r3-core-host$(BIN_SUFFIX) r3-view-host$(BIN_SUFFIX) r3-core$(BIN_SUFFIX) r3-view$(BIN_SUFFIX) objs/
+
+all:
+	$(MAKE) -f $(MAKEFILE) clean
+	$(MAKE) -f $(MAKEFILE) lib
+	$(MAKE) -f $(MAKEFILE) r3-core-host$(BIN_SUFFIX) HOST_PRODUCT_NAME=saphir-core-host
+	$(MAKE) -f $(MAKEFILE) r3-view-host$(BIN_SUFFIX) HOST_PRODUCT_NAME=saphir-view-host
+	$(MAKE) -f $(MAKEFILE) r3-core$(BIN_SUFFIX) HOST_PRODUCT_NAME=saphir-core
+	$(MAKE) -f $(MAKEFILE) r3-view$(BIN_SUFFIX) HOST_PRODUCT_NAME=saphir-view
+
+prep-lib:
+	$(REBOL) $T/make-headers.r
+	$(REBOL) $T/make-boot.r $(OS_ID) $(LIB_PRODUCT_NAME)
+	$(REBOL) $T/make-os-ext.r # ok, but not always
+	$(REBOL) $T/make-reb-lib.r
+	-rm -f $(OBJS)
+
+prep-core: prep-lib
+	$(REBOL) $T/saphir-init.r $(HOST_PRODUCT_NAME)
+	$(REBOL) $T/core-ext.r
+	$(eval HOST_FLAGS =$(HOST_CORE_FLAGS))
+	-rm -f $(HOST)
+
+prep-view: prep-lib
+	$(REBOL) $T/saphir-init.r $(HOST_PRODUCT_NAME)
+	$(REBOL) $T/core-ext.r
+	$(REBOL) $T/view-ext.r
+	$(eval HOST_FLAGS =$(HOST_VIEW_FLAGS))
+	-rm -f $(HOST)
+
+### Post build actions
+purge:
+	-rm libr3.*
+	-rm host$(BIN_SUFFIX)
+	$(MAKE) -f $(MAKEFILE) lib
+	$(MAKE) -f $(MAKEFILE) host$(BIN_SUFFIX)
+
+test:
+	$(CP) r3$(BIN_SUFFIX) $(UP)/src/tests/
+	$(R3) $S/tests/test.r
+
+install:
+	sudo cp r3$(BIN_SUFFIX) /usr/local/bin
+
+ship:
+	$(R3) $S/tools/upload.r
+
+build:	libr3.so
+	$(R3) $S/tools/make-build.r
+
+cln:
+	rm libr3.* r3.o
+
+check:
+	$(STRIP) -s -o r3.s r3$(BIN_SUFFIX)
+	$(STRIP) -x -o r3.x r3$(BIN_SUFFIX)
+	$(STRIP) -X -o r3.X r3$(BIN_SUFFIX)
+	$(LS) r3*
+
+OBJS =	objs/a-constants.o objs/a-globals.o objs/a-lib.o objs/b-boot.o \
+	objs/b-init.o objs/c-do.o objs/c-error.o objs/c-frame.o \
+	objs/c-function.o objs/c-port.o objs/c-task.o objs/c-word.o \
+	objs/d-crash.o objs/d-dump.o objs/d-print.o objs/f-blocks.o \
+	objs/f-deci.o objs/f-dtoa.o objs/f-enbase.o objs/f-extension.o \
+	objs/f-math.o objs/f-modify.o objs/f-random.o objs/f-round.o \
+	objs/f-series.o objs/f-stubs.o objs/l-scan.o objs/l-types.o \
+	objs/m-gc.o objs/m-pools.o objs/m-series.o objs/n-control.o \
+	objs/n-data.o objs/n-io.o objs/n-loop.o objs/n-math.o \
+	objs/n-sets.o objs/n-strings.o objs/n-system.o objs/p-clipboard.o \
+	objs/p-console.o objs/p-dir.o objs/p-dns.o objs/p-event.o \
+	objs/p-file.o objs/p-net.o objs/s-cases.o objs/s-crc.o \
+	objs/s-file.o objs/s-find.o objs/s-make.o objs/s-mold.o \
+	objs/s-ops.o objs/s-trim.o objs/s-unicode.o objs/t-bitset.o \
+	objs/t-block.o objs/t-char.o objs/t-datatype.o objs/t-date.o \
+	objs/t-decimal.o objs/t-event.o objs/t-function.o objs/t-gob.o \
+	objs/t-image.o objs/t-integer.o objs/t-logic.o objs/t-map.o \
+	objs/t-money.o objs/t-none.o objs/t-object.o objs/t-pair.o \
+	objs/t-port.o objs/t-string.o objs/t-time.o objs/t-tuple.o \
+	objs/t-typeset.o objs/t-utype.o objs/t-vector.o objs/t-word.o \
+	objs/u-bmp.o objs/u-compress.o objs/u-dialect.o objs/u-gif.o \
+	objs/u-jpg.o objs/u-md5.o objs/u-parse.o objs/u-png.o \
+	objs/u-sha1.o objs/u-zlib.o
+
+HOST =	objs/host-main.o objs/host-args.o objs/host-device.o objs/host-stdio.o \
+	objs/dev-net.o objs/dev-dns.o objs/host-lib.o objs/host-readline.o \
+	objs/dev-stdio.o objs/dev-event.o objs/dev-file.o objs/host-core.o
+
+CODECS = objs/aes.o objs/bigint.o objs/dh.o objs/lodepng.o objs/rc4.o objs/rsa.o
+
+GFX= \
+	objs/host-view.o\
+	objs/host-window.o\
+	objs/host-graphics.o\
+	objs/host-draw.o\
+	objs/host-draw-api.o\
+	objs/host-compositor.o\
+	objs/host-text.o\
+	objs/host-text-api.o\
+	objs/host-put-image.o
+
+AGG= \
+	objs/agg_arc.o\
+	objs/agg_arrowhead.o\
+	objs/agg_bezier_arc.o\
+	objs/agg_bspline.o\
+	objs/agg_curves.o\
+	objs/agg_image_filters.o\
+	objs/agg_line_aa_basics.o\
+	objs/agg_path_storage.o\
+	objs/agg_rasterizer_scanline_aa.o\
+	objs/agg_rounded_rect.o\
+	objs/agg_sqrt_tables.o\
+	objs/agg_trans_affine.o\
+	objs/agg_trans_single_path.o\
+	objs/agg_vcgen_bspline.o\
+	objs/agg_vcgen_contour.o\
+	objs/agg_vcgen_dash.o\
+	objs/agg_vcgen_markers_term.o\
+	objs/agg_vcgen_smooth_poly1.o\
+	objs/agg_vcgen_stroke.o\
+	objs/agg_vpgen_segmentator.o\
+	objs/agg_graphics.o\
+	objs/agg_font_freetype.o\
+	objs/agg_truetype_text.o
+
+# Directly linked r3 executable:
+r3-core$(BIN_SUFFIX): prep-core objs $(OBJS) $(HOST) $(CODECS)
+	$(CC) -o r3-core$(BIN_SUFFIX) $(OBJS) $(HOST) $(CODECS) $(CLIB)
+	$(STRIP) r3-core$(BIN_SUFFIX)
+	-$(NM) -a r3-core$(BIN_SUFFIX)
+	$(LS) r3-core$(BIN_SUFFIX)
+
+r3-view$(BIN_SUFFIX): prep-view objs $(OBJS) $(HOST) $(CODECS) $(GFX) $(AGG)
+	$(CC) -o r3-view$(BIN_SUFFIX) $(OBJS) $(HOST) $(CODECS) $(GUI_CLIB) $(GFX) $(AGG)
+	$(STRIP) r3-view$(BIN_SUFFIX)
+	-$(NM) -a r3-view$(BIN_SUFFIX)
+	$(LS) r3-view$(BIN_SUFFIX)
+
+objs:
+	mkdir -p objs
+
+lib: $(R3LIB)
+
+# Private static library (to be used below for Linux):
+$(R3LIB): prep-lib objs $(OBJS)
+	$(CC) -o $(R3LIB) -shared $(OBJS) $(CLIB)
+	$(STRIP) $(R3LIB)
+	-$(NM) -D $(R3LIB)
+	-$(NM) -a $(R3LIB) | grep "Do_"
+	$(LS) $(R3LIB)
+
+# PUBLIC: Core Host using the shared lib:
+
+r3-core-host$(BIN_SUFFIX): prep-core objs $(HOST) $(CODECS)
+	$(CC) -o r3-core-host$(BIN_SUFFIX) $(HOST) $(CODECS) $(R3LIB) $(CLIB)
+	$(STRIP) r3-core-host$(BIN_SUFFIX)
+	$(LS) r3-core-host$(BIN_SUFFIX)
+	@echo 'export LD_LIBRARY_PATH=.:$$LD_LIBRARY_PATH'
+
+# PUBLIC: View Host using the shared lib:
+
+r3-view-host$(BIN_SUFFIX): prep-view objs $(HOST) $(CODECS) $(GFX) $(AGG)
+	$(CC) -o r3-view-host$(BIN_SUFFIX) $(HOST) $(CODECS) $(GFX) $(R3LIB) $(GUI_CLIB) $(AGG)
+	$(STRIP) r3-view-host$(BIN_SUFFIX)
+	$(LS) r3-view-host$(BIN_SUFFIX)
+	@echo 'export LD_LIBRARY_PATH=.:$$LD_LIBRARY_PATH'
+
+### File build targets:
+b-boot.c: $(SRC)/boot/boot.r
+	$(REBOL) -sqw $(SRC)/tools/make-boot.r
+
+objs/a-constants.o:   $R/a-constants.c
+	$(CC) $R/a-constants.c $(RFLAGS) -o objs/a-constants.o
+
+objs/a-globals.o:     $R/a-globals.c
+	$(CC) $R/a-globals.c $(RFLAGS) -o objs/a-globals.o
+
+objs/a-lib.o:         $R/a-lib.c
+	$(CC) $R/a-lib.c $(RFLAGS) -o objs/a-lib.o
+
+objs/b-boot.o:        $R/b-boot.c
+	$(CC) $R/b-boot.c $(RFLAGS) -o objs/b-boot.o
+
+objs/b-init.o:        $R/b-init.c
+	$(CC) $R/b-init.c $(RFLAGS) -o objs/b-init.o
+
+objs/c-do.o:          $R/c-do.c
+	$(CC) $R/c-do.c $(RFLAGS) -o objs/c-do.o
+
+objs/c-error.o:       $R/c-error.c
+	$(CC) $R/c-error.c $(RFLAGS) -o objs/c-error.o
+
+objs/c-frame.o:       $R/c-frame.c
+	$(CC) $R/c-frame.c $(RFLAGS) -o objs/c-frame.o
+
+objs/c-function.o:    $R/c-function.c
+	$(CC) $R/c-function.c $(RFLAGS) -o objs/c-function.o
+
+objs/c-port.o:        $R/c-port.c
+	$(CC) $R/c-port.c $(RFLAGS) -o objs/c-port.o
+
+objs/c-task.o:        $R/c-task.c
+	$(CC) $R/c-task.c $(RFLAGS) -o objs/c-task.o
+
+objs/c-word.o:        $R/c-word.c
+	$(CC) $R/c-word.c $(RFLAGS) -o objs/c-word.o
+
+objs/d-crash.o:       $R/d-crash.c
+	$(CC) $R/d-crash.c $(RFLAGS) -o objs/d-crash.o
+
+objs/d-dump.o:        $R/d-dump.c
+	$(CC) $R/d-dump.c $(RFLAGS) -o objs/d-dump.o
+
+objs/d-print.o:       $R/d-print.c
+	$(CC) $R/d-print.c $(RFLAGS) -o objs/d-print.o
+
+objs/f-blocks.o:      $R/f-blocks.c
+	$(CC) $R/f-blocks.c $(RFLAGS) -o objs/f-blocks.o
+
+objs/f-deci.o:        $R/f-deci.c
+	$(CC) $R/f-deci.c $(RFLAGS) -o objs/f-deci.o
+
+objs/f-dtoa.o:        $R/f-dtoa.c
+	$(CC) $R/f-dtoa.c $(RFLAGS) -o objs/f-dtoa.o
+
+objs/f-enbase.o:      $R/f-enbase.c
+	$(CC) $R/f-enbase.c $(RFLAGS) -o objs/f-enbase.o
+
+objs/f-extension.o:   $R/f-extension.c
+	$(CC) $R/f-extension.c $(RFLAGS) -o objs/f-extension.o
+
+objs/f-math.o:        $R/f-math.c
+	$(CC) $R/f-math.c $(RFLAGS) -o objs/f-math.o
+
+objs/f-modify.o:      $R/f-modify.c
+	$(CC) $R/f-modify.c $(RFLAGS) -o objs/f-modify.o
+
+objs/f-random.o:      $R/f-random.c
+	$(CC) $R/f-random.c $(RFLAGS) -o objs/f-random.o
+
+objs/f-round.o:       $R/f-round.c
+	$(CC) $R/f-round.c $(RFLAGS) -o objs/f-round.o
+
+objs/f-series.o:      $R/f-series.c
+	$(CC) $R/f-series.c $(RFLAGS) -o objs/f-series.o
+
+objs/f-stubs.o:       $R/f-stubs.c
+	$(CC) $R/f-stubs.c $(RFLAGS) -o objs/f-stubs.o
+
+objs/l-scan.o:        $R/l-scan.c
+	$(CC) $R/l-scan.c $(RFLAGS) -o objs/l-scan.o
+
+objs/l-types.o:       $R/l-types.c
+	$(CC) $R/l-types.c $(RFLAGS) -o objs/l-types.o
+
+objs/m-gc.o:          $R/m-gc.c
+	$(CC) $R/m-gc.c $(RFLAGS) -o objs/m-gc.o
+
+objs/m-pools.o:       $R/m-pools.c
+	$(CC) $R/m-pools.c $(RFLAGS) -o objs/m-pools.o
+
+objs/m-series.o:      $R/m-series.c
+	$(CC) $R/m-series.c $(RFLAGS) -o objs/m-series.o
+
+objs/n-control.o:     $R/n-control.c
+	$(CC) $R/n-control.c $(RFLAGS) -o objs/n-control.o
+
+objs/n-data.o:        $R/n-data.c
+	$(CC) $R/n-data.c $(RFLAGS) -o objs/n-data.o
+
+objs/n-io.o:          $R/n-io.c
+	$(CC) $R/n-io.c $(RFLAGS) -o objs/n-io.o
+
+objs/n-loop.o:        $R/n-loop.c
+	$(CC) $R/n-loop.c $(RFLAGS) -o objs/n-loop.o
+
+objs/n-math.o:        $R/n-math.c
+	$(CC) $R/n-math.c $(RFLAGS) -o objs/n-math.o
+
+objs/n-sets.o:        $R/n-sets.c
+	$(CC) $R/n-sets.c $(RFLAGS) -o objs/n-sets.o
+
+objs/n-strings.o:     $R/n-strings.c
+	$(CC) $R/n-strings.c $(RFLAGS) -o objs/n-strings.o
+
+objs/n-system.o:      $R/n-system.c
+	$(CC) $R/n-system.c $(RFLAGS) -o objs/n-system.o
+
+objs/p-clipboard.o:   $R/p-clipboard.c
+	$(CC) $R/p-clipboard.c $(RFLAGS) -o objs/p-clipboard.o
+
+objs/p-console.o:     $R/p-console.c
+	$(CC) $R/p-console.c $(RFLAGS) -o objs/p-console.o
+
+objs/p-dir.o:         $R/p-dir.c
+	$(CC) $R/p-dir.c $(RFLAGS) -o objs/p-dir.o
+
+objs/p-dns.o:         $R/p-dns.c
+	$(CC) $R/p-dns.c $(RFLAGS) -o objs/p-dns.o
+
+objs/p-event.o:       $R/p-event.c
+	$(CC) $R/p-event.c $(RFLAGS) -o objs/p-event.o
+
+objs/p-file.o:        $R/p-file.c
+	$(CC) $R/p-file.c $(RFLAGS) -o objs/p-file.o
+
+objs/p-net.o:         $R/p-net.c
+	$(CC) $R/p-net.c $(RFLAGS) -o objs/p-net.o
+
+objs/s-cases.o:       $R/s-cases.c
+	$(CC) $R/s-cases.c $(RFLAGS) -o objs/s-cases.o
+
+objs/s-crc.o:         $R/s-crc.c
+	$(CC) $R/s-crc.c $(RFLAGS) -o objs/s-crc.o
+
+objs/s-file.o:        $R/s-file.c
+	$(CC) $R/s-file.c $(RFLAGS) -o objs/s-file.o
+
+objs/s-find.o:        $R/s-find.c
+	$(CC) $R/s-find.c $(RFLAGS) -o objs/s-find.o
+
+objs/s-make.o:        $R/s-make.c
+	$(CC) $R/s-make.c $(RFLAGS) -o objs/s-make.o
+
+objs/s-mold.o:        $R/s-mold.c
+	$(CC) $R/s-mold.c $(RFLAGS) -o objs/s-mold.o
+
+objs/s-ops.o:         $R/s-ops.c
+	$(CC) $R/s-ops.c $(RFLAGS) -o objs/s-ops.o
+
+objs/s-trim.o:        $R/s-trim.c
+	$(CC) $R/s-trim.c $(RFLAGS) -o objs/s-trim.o
+
+objs/s-unicode.o:     $R/s-unicode.c
+	$(CC) $R/s-unicode.c $(RFLAGS) -o objs/s-unicode.o
+
+objs/t-bitset.o:      $R/t-bitset.c
+	$(CC) $R/t-bitset.c $(RFLAGS) -o objs/t-bitset.o
+
+objs/t-block.o:       $R/t-block.c
+	$(CC) $R/t-block.c $(RFLAGS) -o objs/t-block.o
+
+objs/t-char.o:        $R/t-char.c
+	$(CC) $R/t-char.c $(RFLAGS) -o objs/t-char.o
+
+objs/t-datatype.o:    $R/t-datatype.c
+	$(CC) $R/t-datatype.c $(RFLAGS) -o objs/t-datatype.o
+
+objs/t-date.o:        $R/t-date.c
+	$(CC) $R/t-date.c $(RFLAGS) -o objs/t-date.o
+
+objs/t-decimal.o:     $R/t-decimal.c
+	$(CC) $R/t-decimal.c $(RFLAGS) -o objs/t-decimal.o
+
+objs/t-event.o:       $R/t-event.c
+	$(CC) $R/t-event.c $(RFLAGS) -o objs/t-event.o
+
+objs/t-function.o:    $R/t-function.c
+	$(CC) $R/t-function.c $(RFLAGS) -o objs/t-function.o
+
+objs/t-gob.o:         $R/t-gob.c
+	$(CC) $R/t-gob.c $(RFLAGS) -o objs/t-gob.o
+
+objs/t-image.o:       $R/t-image.c
+	$(CC) $R/t-image.c $(RFLAGS) -o objs/t-image.o
+
+objs/t-integer.o:     $R/t-integer.c
+	$(CC) $R/t-integer.c $(RFLAGS) -o objs/t-integer.o
+
+objs/t-logic.o:       $R/t-logic.c
+	$(CC) $R/t-logic.c $(RFLAGS) -o objs/t-logic.o
+
+objs/t-map.o:         $R/t-map.c
+	$(CC) $R/t-map.c $(RFLAGS) -o objs/t-map.o
+
+objs/t-money.o:       $R/t-money.c
+	$(CC) $R/t-money.c $(RFLAGS) -o objs/t-money.o
+
+objs/t-none.o:        $R/t-none.c
+	$(CC) $R/t-none.c $(RFLAGS) -o objs/t-none.o
+
+objs/t-object.o:      $R/t-object.c
+	$(CC) $R/t-object.c $(RFLAGS) -o objs/t-object.o
+
+objs/t-pair.o:        $R/t-pair.c
+	$(CC) $R/t-pair.c $(RFLAGS) -o objs/t-pair.o
+
+objs/t-port.o:        $R/t-port.c
+	$(CC) $R/t-port.c $(RFLAGS) -o objs/t-port.o
+
+objs/t-string.o:      $R/t-string.c
+	$(CC) $R/t-string.c $(RFLAGS) -o objs/t-string.o
+
+objs/t-time.o:        $R/t-time.c
+	$(CC) $R/t-time.c $(RFLAGS) -o objs/t-time.o
+
+objs/t-tuple.o:       $R/t-tuple.c
+	$(CC) $R/t-tuple.c $(RFLAGS) -o objs/t-tuple.o
+
+objs/t-typeset.o:     $R/t-typeset.c
+	$(CC) $R/t-typeset.c $(RFLAGS) -o objs/t-typeset.o
+
+objs/t-utype.o:       $R/t-utype.c
+	$(CC) $R/t-utype.c $(RFLAGS) -o objs/t-utype.o
+
+objs/t-vector.o:      $R/t-vector.c
+	$(CC) $R/t-vector.c $(RFLAGS) -o objs/t-vector.o
+
+objs/t-word.o:        $R/t-word.c
+	$(CC) $R/t-word.c $(RFLAGS) -o objs/t-word.o
+
+objs/u-bmp.o:         $R/u-bmp.c
+	$(CC) $R/u-bmp.c $(RFLAGS) -o objs/u-bmp.o
+
+objs/u-compress.o:    $R/u-compress.c
+	$(CC) $R/u-compress.c $(RFLAGS) -o objs/u-compress.o
+
+objs/u-dialect.o:     $R/u-dialect.c
+	$(CC) $R/u-dialect.c $(RFLAGS) -o objs/u-dialect.o
+
+objs/u-gif.o:         $R/u-gif.c
+	$(CC) $R/u-gif.c $(RFLAGS) -o objs/u-gif.o
+
+objs/u-jpg.o:         $R/u-jpg.c
+	$(CC) $R/u-jpg.c $(RFLAGS) -o objs/u-jpg.o
+
+objs/u-md5.o:         $R/u-md5.c
+	$(CC) $R/u-md5.c $(RFLAGS) -o objs/u-md5.o
+
+objs/u-parse.o:       $R/u-parse.c
+	$(CC) $R/u-parse.c $(RFLAGS) -o objs/u-parse.o
+
+objs/u-png.o:         $R/u-png.c
+	$(CC) $R/u-png.c $(RFLAGS) -o objs/u-png.o
+
+objs/u-sha1.o:        $R/u-sha1.c
+	$(CC) $R/u-sha1.c $(RFLAGS) -o objs/u-sha1.o
+
+objs/u-zlib.o:        $R/u-zlib.c
+	$(CC) $R/u-zlib.c $(RFLAGS) -o objs/u-zlib.o
+
+objs/host-main.o:     $S/os/host-main.c
+	$(CC) $S/os/host-main.c $(HFLAGS) -o objs/host-main.o
+
+objs/host-args.o:     $S/os/host-args.c
+	$(CC) $S/os/host-args.c $(HFLAGS) -o objs/host-args.o
+
+objs/host-device.o:   $S/os/host-device.c
+	$(CC) $S/os/host-device.c $(HFLAGS) -o objs/host-device.o
+
+objs/host-stdio.o:    $S/os/host-stdio.c
+	$(CC) $S/os/host-stdio.c $(HFLAGS) -o objs/host-stdio.o
+
+objs/host-core.o:	$S/os/host-core.c
+	$(CC) $S/os/host-core.c $(HFLAGS) -o objs/host-core.o
+
+objs/dev-net.o:       $S/os/dev-net.c
+	$(CC) $S/os/dev-net.c $(HFLAGS) -o objs/dev-net.o
+
+objs/dev-dns.o:       $S/os/dev-dns.c
+	$(CC) $S/os/dev-dns.c $(HFLAGS) -o objs/dev-dns.o
+
+objs/host-view.o: $S/os/host-view.c
+	$(CC) $S/os/host-view.c $(HFLAGS) -o objs/host-view.o
+
+objs/host-draw.o: $S/os/host-draw.c
+	$(CC) $S/os/host-draw.c $(HFLAGS) -o objs/host-draw.o
+
+objs/host-lib.o:      $S/os/linux/host-lib.c
+	$(CC) $S/os/linux/host-lib.c $(HFLAGS) -o objs/host-lib.o
+
+objs/host-readline.o: $S/os/linux/host-readline.c
+	$(CC) $S/os/linux/host-readline.c $(HFLAGS) -o objs/host-readline.o
+
+objs/dev-stdio.o:     $S/os/linux/dev-stdio.c
+	$(CC) $S/os/linux/dev-stdio.c $(HFLAGS) -o objs/dev-stdio.o
+
+objs/dev-event.o:     $S/os/linux/dev-event.c
+	$(CC) $S/os/linux/dev-event.c $(HFLAGS) -o objs/dev-event.o
+
+objs/dev-file.o:      $S/os/linux/dev-file.c
+	$(CC) $S/os/linux/dev-file.c $(HFLAGS) -o objs/dev-file.o
+
+objs/host-draw-api.o: $S/os/host-draw-api-agg.cpp
+	$(CXX) $S/os/host-draw-api-agg.cpp $(HFLAGS_CPP) -o objs/host-draw-api.o
+
+objs/host-text-api.o: $S/os/host-text-api-agg.cpp
+	$(CXX) $S/os/host-text-api-agg.cpp $(HFLAGS_CPP) -o objs/host-text-api.o
+
+objs/host-text.o: $S/os/host-text.c
+	$(CC) $S/os/host-text.c $(HFLAGS) -o objs/host-text.o
+
+objs/host-graphics.o: $S/os/linux/host-graphics.c
+	$(CC) $S/os/linux/host-graphics.c $(HFLAGS) -o objs/host-graphics.o
+
+objs/host-window.o: $S/os/linux/host-window.c
+	$(CC) $S/os/linux/host-window.c $(HFLAGS) -o objs/host-window.o
+
+objs/host-compositor.o: $S/os/linux/host-compositor.c
+	$(CC) $S/os/linux/host-compositor.c $(HFLAGS) -o objs/host-compositor.o
+
+objs/host-put-image.o: $S/os/linux/host-put-image.cpp
+	$(CXX) $S/os/linux/host-put-image.cpp $(HFLAGS_CPP) -o objs/host-put-image.o -I $S/agg
+
+objs/aes.o: $S/codecs/aes/aes.c
+	$(CC) $S/codecs/aes/aes.c $(HFLAGS) -o objs/aes.o
+
+objs/bigint.o: $S/codecs/bigint/bigint.c
+	$(CC) $S/codecs/bigint/bigint.c $(HFLAGS) -o objs/bigint.o
+
+objs/dh.o: $S/codecs/dh/dh.c
+	$(CC) $S/codecs/dh/dh.c $(HFLAGS) -o objs/dh.o
+
+objs/lodepng.o: $S/codecs/png/lodepng.c
+	$(CC) $S/codecs/png/lodepng.c $(HFLAGS) -o objs/lodepng.o
+
+objs/rc4.o: $S/codecs/rc4/rc4.c
+	$(CC) $S/codecs/rc4/rc4.c $(HFLAGS) -o objs/rc4.o
+
+objs/rsa.o: $S/codecs/rsa/rsa.c
+	$(CC) $S/codecs/rsa/rsa.c $(HFLAGS) -o objs/rsa.o
+
+#--- AGG Library:
+
+objs/agg_arc.o:    $S/agg/agg_arc.cpp
+	$(CXX) $S/agg/agg_arc.cpp $(HFLAGS_CPP) -o objs/agg_arc.o
+
+objs/agg_arrowhead.o: $S/agg/agg_arrowhead.cpp
+	$(CXX) $S/agg/agg_arrowhead.cpp $(HFLAGS_CPP) -o objs/agg_arrowhead.o
+
+objs/agg_bezier_arc.o:$S/agg/agg_bezier_arc.cpp
+	$(CXX) $S/agg/agg_bezier_arc.cpp $(HFLAGS_CPP) -o objs/agg_bezier_arc.o
+
+objs/agg_bspline.o:   $S/agg/agg_bspline.cpp
+	$(CXX) $S/agg/agg_bspline.cpp $(HFLAGS_CPP) -o objs/agg_bspline.o
+
+objs/agg_curves.o:    $S/agg/agg_curves.cpp
+	$(CXX) $S/agg/agg_curves.cpp $(HFLAGS_CPP) -o objs/agg_curves.o
+
+objs/agg_image_filters.o:$S/agg/agg_image_filters.cpp
+	$(CXX) $S/agg/agg_image_filters.cpp $(HFLAGS_CPP) -o objs/agg_image_filters.o
+
+objs/agg_line_aa_basics.o:$S/agg/agg_line_aa_basics.cpp
+	$(CXX) $S/agg/agg_line_aa_basics.cpp $(HFLAGS_CPP) -o objs/agg_line_aa_basics.o
+
+objs/agg_path_storage.o:$S/agg/agg_path_storage.cpp
+	$(CXX) $S/agg/agg_path_storage.cpp $(HFLAGS_CPP) -o objs/agg_path_storage.o
+
+objs/agg_rasterizer_scanline_aa.o:$S/agg/agg_rasterizer_scanline_aa.cpp
+	$(CXX) $S/agg/agg_rasterizer_scanline_aa.cpp $(HFLAGS_CPP) -o objs/agg_rasterizer_scanline_aa.o
+
+objs/agg_rounded_rect.o:$S/agg/agg_rounded_rect.cpp
+	$(CXX) $S/agg/agg_rounded_rect.cpp $(HFLAGS_CPP) -o objs/agg_rounded_rect.o
+
+objs/agg_sqrt_tables.o:$S/agg/agg_sqrt_tables.cpp
+	$(CXX) $S/agg/agg_sqrt_tables.cpp $(HFLAGS_CPP) -o objs/agg_sqrt_tables.o
+
+objs/agg_trans_affine.o:$S/agg/agg_trans_affine.cpp
+	$(CXX) $S/agg/agg_trans_affine.cpp $(HFLAGS_CPP) -o objs/agg_trans_affine.o
+
+objs/agg_trans_single_path.o:$S/agg/agg_trans_single_path.cpp
+	$(CXX) $S/agg/agg_trans_single_path.cpp $(HFLAGS_CPP) -o objs/agg_trans_single_path.o
+
+objs/agg_vcgen_bspline.o:$S/agg/agg_vcgen_bspline.cpp
+	$(CXX) $S/agg/agg_vcgen_bspline.cpp $(HFLAGS_CPP) -o objs/agg_vcgen_bspline.o
+
+objs/agg_vcgen_contour.o:$S/agg/agg_vcgen_contour.cpp
+	$(CXX) $S/agg/agg_vcgen_contour.cpp $(HFLAGS_CPP) -o objs/agg_vcgen_contour.o
+
+objs/agg_vcgen_dash.o:$S/agg/agg_vcgen_dash.cpp
+	$(CXX) $S/agg/agg_vcgen_dash.cpp $(HFLAGS_CPP) -o objs/agg_vcgen_dash.o
+
+objs/agg_vcgen_markers_term.o:$S/agg/agg_vcgen_markers_term.cpp
+	$(CXX) $S/agg/agg_vcgen_markers_term.cpp $(HFLAGS_CPP) -o objs/agg_vcgen_markers_term.o
+
+objs/agg_vcgen_smooth_poly1.o:$S/agg/agg_vcgen_smooth_poly1.cpp
+	$(CXX) $S/agg/agg_vcgen_smooth_poly1.cpp $(HFLAGS_CPP) -o objs/agg_vcgen_smooth_poly1.o
+
+objs/agg_vcgen_stroke.o:$S/agg/agg_vcgen_stroke.cpp
+	$(CXX) $S/agg/agg_vcgen_stroke.cpp $(HFLAGS_CPP) -o objs/agg_vcgen_stroke.o
+
+objs/agg_vpgen_segmentator.o:$S/agg/agg_vpgen_segmentator.cpp
+	$(CXX) $S/agg/agg_vpgen_segmentator.cpp $(HFLAGS_CPP) -o objs/agg_vpgen_segmentator.o
+
+objs/agg_graphics.o:  $S/agg/agg_graphics.cpp
+	$(CXX) $S/agg/agg_graphics.cpp $(HFLAGS_CPP) -o objs/agg_graphics.o
+
+objs/agg_font_freetype.o:$S/agg/agg_font_freetype.cpp
+	$(CXX) $S/agg/agg_font_freetype.cpp $(HFLAGS_CPP) -o objs/agg_font_freetype.o
+
+objs/agg_truetype_text.o:$S/agg/agg_truetype_text.cpp
+	$(CXX) $S/agg/agg_truetype_text.cpp $(HFLAGS_CPP) -o objs/agg_truetype_text.o
+
+objs/rich_text.o:     $S/agg/rich_text.cpp
+	$(CXX) $S/agg/rich_text.cpp $(HFLAGS_CPP) -o objs/rich_text.o
+

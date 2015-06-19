@@ -41,6 +41,10 @@
 #include "reb-host.h"
 #include "host-lib.h"
 
+#ifndef HWND_MESSAGE
+#define HWND_MESSAGE (HWND)-3
+#endif
+
 void Done_Device(int handle, int error);
 
 // Move or remove globals? !?
@@ -99,7 +103,8 @@ extern HINSTANCE App_Instance;	// From Main module.
 		0,
 		wc.lpszClassName,
 		wc.lpszClassName,
-		0,0,0,0,0,0,
+		0,0,0,0,0,
+		HWND_MESSAGE,					//used for message-only windows
 		NULL, App_Instance, NULL
 	);
 
@@ -137,7 +142,6 @@ extern HINSTANCE App_Instance;	// From Main module.
 		if (msg.message == WM_DNS)
 			Done_Device(msg.wParam, msg.lParam>>16); // error code
 		else {
-			TranslateMessage(&msg);
 			DispatchMessage(&msg);
 		}
 	}
@@ -166,7 +170,6 @@ extern HINSTANCE App_Instance;	// From Main module.
 		if (msg.message == WM_DNS)
 			Done_Device(msg.wParam, msg.lParam>>16); // error code
 		else {
-			TranslateMessage(&msg);
 			DispatchMessage(&msg);
 		}
 	}

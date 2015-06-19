@@ -1,0 +1,432 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{F11D3511-DBB7-440C-932D-ADD9409188E8}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <RootNamespace>r3</RootNamespace>
+    <ProjectName>r3-view</ProjectName>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <CharacterSet>Unicode</CharacterSet>
+    <PlatformToolset>v120</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <CharacterSet>Unicode</CharacterSet>
+    <PlatformToolset>v120</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+    <PlatformToolset>v120</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+    <PlatformToolset>v120</PlatformToolset>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <LinkIncremental>false</LinkIncremental>
+    <CustomBuildBeforeTargets>
+    </CustomBuildBeforeTargets>
+    <PreBuildEventUseInBuild>true</PreBuildEventUseInBuild>
+    <TargetName>r3-32-view</TargetName>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <LinkIncremental>false</LinkIncremental>
+    <CustomBuildBeforeTargets />
+    <PreBuildEventUseInBuild>true</PreBuildEventUseInBuild>
+    <TargetName>r3-64-view</TargetName>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <LinkIncremental>false</LinkIncremental>
+    <PreBuildEventUseInBuild>true</PreBuildEventUseInBuild>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;TO_WIN32;REB_EXE;CUSTOM_STARTUP;FFI_BUILDING;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>..\..\..\src\include;..\..\..\make\msvc\libffi\include\Win32;..\..\..\src\codecs;..\..\..\src\agg\util;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>wsock32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <StackReserveSize>4194300</StackReserveSize>
+    </Link>
+    <ProjectReference>
+      <LinkLibraryDependencies>true</LinkLibraryDependencies>
+    </ProjectReference>
+    <CustomBuildStep>
+      <Command>
+      </Command>
+      <Outputs>
+      </Outputs>
+    </CustomBuildStep>
+    <PreBuildEvent>
+      <Command>prebuild.bat</Command>
+    </PreBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;TO_WIN32;REB_EXE;CUSTOM_STARTUP;FFI_BUILDING;__LLP64__;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>..\..\..\src\include;..\..\..\make\msvc\libffi\include\x64;..\..\..\src\codecs;..\..\..\src\agg\util;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>wsock32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <StackReserveSize>4194300</StackReserveSize>
+    </Link>
+    <ProjectReference>
+      <LinkLibraryDependencies>true</LinkLibraryDependencies>
+    </ProjectReference>
+    <CustomBuildStep>
+      <Command>
+      </Command>
+      <Outputs>
+      </Outputs>
+    </CustomBuildStep>
+    <PreBuildEvent>
+      <Command>prebuild64.bat</Command>
+    </PreBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;TO_WIN32;REB_EXE;CUSTOM_STARTUP;FFI_BUILDING;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>..\..\..\src\include;..\..\..\make\msvc\libffi\;..\..\..\src\codecs;..\..\..\src\agg\util;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <StackReserveSize>4194300</StackReserveSize>
+    </Link>
+    <PreBuildEvent>
+      <Command>prebuild.bat</Command>
+    </PreBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;TO_WIN32;REB_EXE;CUSTOM_STARTUP;FFI_BUILDING;__LLP64__;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>..\..\..\src\include;..\..\..\make\msvc\libffi\include\x64;..\..\..\src\codecs;..\..\..\src\agg\util;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <StackReserveSize>4194300</StackReserveSize>
+    </Link>
+    <PreBuildEvent>
+      <Command>prebuild64.bat</Command>
+    </PreBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <None Include="ReadMe.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\..\src\agg\agg_arc.cpp" />
+    <ClCompile Include="..\..\..\src\agg\agg_arrowhead.cpp" />
+    <ClCompile Include="..\..\..\src\agg\agg_bezier_arc.cpp" />
+    <ClCompile Include="..\..\..\src\agg\agg_bspline.cpp" />
+    <ClCompile Include="..\..\..\src\agg\agg_curves.cpp" />
+    <ClCompile Include="..\..\..\src\agg\agg_font_win32_tt.cpp" />
+    <ClCompile Include="..\..\..\src\agg\agg_graphics.cpp" />
+    <ClCompile Include="..\..\..\src\agg\agg_image_filters.cpp" />
+    <ClCompile Include="..\..\..\src\agg\agg_line_aa_basics.cpp" />
+    <ClCompile Include="..\..\..\src\agg\agg_path_storage.cpp" />
+    <ClCompile Include="..\..\..\src\agg\agg_rasterizer_scanline_aa.cpp" />
+    <ClCompile Include="..\..\..\src\agg\agg_rounded_rect.cpp" />
+    <ClCompile Include="..\..\..\src\agg\agg_sqrt_tables.cpp" />
+    <ClCompile Include="..\..\..\src\agg\agg_trans_affine.cpp" />
+    <ClCompile Include="..\..\..\src\agg\agg_trans_single_path.cpp" />
+    <ClCompile Include="..\..\..\src\agg\agg_truetype_text.cpp" />
+    <ClCompile Include="..\..\..\src\agg\agg_vcgen_bspline.cpp" />
+    <ClCompile Include="..\..\..\src\agg\agg_vcgen_contour.cpp" />
+    <ClCompile Include="..\..\..\src\agg\agg_vcgen_dash.cpp" />
+    <ClCompile Include="..\..\..\src\agg\agg_vcgen_markers_term.cpp" />
+    <ClCompile Include="..\..\..\src\agg\agg_vcgen_smooth_poly1.cpp" />
+    <ClCompile Include="..\..\..\src\agg\agg_vcgen_stroke.cpp" />
+    <ClCompile Include="..\..\..\src\agg\agg_vpgen_segmentator.cpp" />
+    <ClCompile Include="..\..\..\src\codecs\aes\aes.c" />
+    <ClCompile Include="..\..\..\src\codecs\bigint\bigint.c" />
+    <ClCompile Include="..\..\..\src\codecs\dh\dh.c" />
+    <ClCompile Include="..\..\..\src\codecs\png\lodepng.c" />
+    <ClCompile Include="..\..\..\src\codecs\rc4\rc4.c" />
+    <ClCompile Include="..\..\..\src\codecs\rsa\rsa.c" />
+    <ClCompile Include="..\..\..\src\core\a-constants.c" />
+    <ClCompile Include="..\..\..\src\core\a-globals.c" />
+    <ClCompile Include="..\..\..\src\core\a-lib.c" />
+    <ClCompile Include="..\..\..\src\core\a-stubs.c" />
+    <ClCompile Include="..\..\..\src\core\b-boot.c" />
+    <ClCompile Include="..\..\..\src\core\b-init.c" />
+    <ClCompile Include="..\..\..\src\core\c-do.c" />
+    <ClCompile Include="..\..\..\src\core\c-error.c" />
+    <ClCompile Include="..\..\..\src\core\c-frame.c" />
+    <ClCompile Include="..\..\..\src\core\c-function.c" />
+    <ClCompile Include="..\..\..\src\core\c-port.c" />
+    <ClCompile Include="..\..\..\src\core\c-task.c" />
+    <ClCompile Include="..\..\..\src\core\c-word.c" />
+    <ClCompile Include="..\..\..\src\core\d-crash.c" />
+    <ClCompile Include="..\..\..\src\core\d-dump.c" />
+    <ClCompile Include="..\..\..\src\core\d-print.c" />
+    <ClCompile Include="..\..\..\src\core\f-blocks.c" />
+    <ClCompile Include="..\..\..\src\core\f-deci.c" />
+    <ClCompile Include="..\..\..\src\core\f-dtoa.c" />
+    <ClCompile Include="..\..\..\src\core\f-enbase.c" />
+    <ClCompile Include="..\..\..\src\core\f-extension.c" />
+    <ClCompile Include="..\..\..\src\core\f-int.c" />
+    <ClCompile Include="..\..\..\src\core\f-math.c" />
+    <ClCompile Include="..\..\..\src\core\f-modify.c">
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+      </PrecompiledHeaderFile>
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+      </PrecompiledHeaderFile>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\core\f-qsort.c" />
+    <ClCompile Include="..\..\..\src\core\f-random.c" />
+    <ClCompile Include="..\..\..\src\core\f-round.c" />
+    <ClCompile Include="..\..\..\src\core\f-series.c" />
+    <ClCompile Include="..\..\..\src\core\f-stubs.c" />
+    <ClCompile Include="..\..\..\src\core\l-scan.c" />
+    <ClCompile Include="..\..\..\src\core\l-types.c" />
+    <ClCompile Include="..\..\..\src\core\m-gc.c" />
+    <ClCompile Include="..\..\..\src\core\m-pools.c" />
+    <ClCompile Include="..\..\..\src\core\m-series.c" />
+    <ClCompile Include="..\..\..\src\core\n-control.c" />
+    <ClCompile Include="..\..\..\src\core\n-data.c" />
+    <ClCompile Include="..\..\..\src\core\n-graphics.c" />
+    <ClCompile Include="..\..\..\src\core\n-io.c" />
+    <ClCompile Include="..\..\..\src\core\n-loop.c" />
+    <ClCompile Include="..\..\..\src\core\n-math.c" />
+    <ClCompile Include="..\..\..\src\core\n-sets.c" />
+    <ClCompile Include="..\..\..\src\core\n-strings.c" />
+    <ClCompile Include="..\..\..\src\core\n-system.c" />
+    <ClCompile Include="..\..\..\src\core\p-clipboard.c" />
+    <ClCompile Include="..\..\..\src\core\p-console.c" />
+    <ClCompile Include="..\..\..\src\core\p-dir.c" />
+    <ClCompile Include="..\..\..\src\core\p-dns.c" />
+    <ClCompile Include="..\..\..\src\core\p-event.c" />
+    <ClCompile Include="..\..\..\src\core\p-file.c" />
+    <ClCompile Include="..\..\..\src\core\p-net.c" />
+    <ClCompile Include="..\..\..\src\core\p-serial.c" />
+    <ClCompile Include="..\..\..\src\core\s-cases.c" />
+    <ClCompile Include="..\..\..\src\core\s-crc.c" />
+    <ClCompile Include="..\..\..\src\core\s-file.c" />
+    <ClCompile Include="..\..\..\src\core\s-find.c" />
+    <ClCompile Include="..\..\..\src\core\s-make.c" />
+    <ClCompile Include="..\..\..\src\core\s-mold.c" />
+    <ClCompile Include="..\..\..\src\core\s-ops.c" />
+    <ClCompile Include="..\..\..\src\core\s-trim.c" />
+    <ClCompile Include="..\..\..\src\core\s-unicode.c" />
+    <ClCompile Include="..\..\..\src\core\t-bitset.c" />
+    <ClCompile Include="..\..\..\src\core\t-block.c" />
+    <ClCompile Include="..\..\..\src\core\t-char.c" />
+    <ClCompile Include="..\..\..\src\core\t-datatype.c" />
+    <ClCompile Include="..\..\..\src\core\t-date.c" />
+    <ClCompile Include="..\..\..\src\core\t-decimal.c" />
+    <ClCompile Include="..\..\..\src\core\t-event.c" />
+    <ClCompile Include="..\..\..\src\core\t-function.c" />
+    <ClCompile Include="..\..\..\src\core\t-gob.c" />
+    <ClCompile Include="..\..\..\src\core\t-image.c" />
+    <ClCompile Include="..\..\..\src\core\t-integer.c" />
+    <ClCompile Include="..\..\..\src\core\t-library.c" />
+    <ClCompile Include="..\..\..\src\core\t-logic.c" />
+    <ClCompile Include="..\..\..\src\core\t-map.c" />
+    <ClCompile Include="..\..\..\src\core\t-money.c" />
+    <ClCompile Include="..\..\..\src\core\t-none.c" />
+    <ClCompile Include="..\..\..\src\core\t-object.c" />
+    <ClCompile Include="..\..\..\src\core\t-pair.c" />
+    <ClCompile Include="..\..\..\src\core\t-port.c" />
+    <ClCompile Include="..\..\..\src\core\t-routine.c" />
+    <ClCompile Include="..\..\..\src\core\t-string.c" />
+    <ClCompile Include="..\..\..\src\core\t-struct.c" />
+    <ClCompile Include="..\..\..\src\core\t-time.c" />
+    <ClCompile Include="..\..\..\src\core\t-tuple.c" />
+    <ClCompile Include="..\..\..\src\core\t-typeset.c" />
+    <ClCompile Include="..\..\..\src\core\t-utype.c" />
+    <ClCompile Include="..\..\..\src\core\t-vector.c" />
+    <ClCompile Include="..\..\..\src\core\t-word.c" />
+    <ClCompile Include="..\..\..\src\core\u-bmp.c" />
+    <ClCompile Include="..\..\..\src\core\u-compress.c" />
+    <ClCompile Include="..\..\..\src\core\u-dialect.c" />
+    <ClCompile Include="..\..\..\src\core\u-gif.c" />
+    <ClCompile Include="..\..\..\src\core\u-jpg.c" />
+    <ClCompile Include="..\..\..\src\core\u-md5.c" />
+    <ClCompile Include="..\..\..\src\core\u-parse.c" />
+    <ClCompile Include="..\..\..\src\core\u-png.c" />
+    <ClCompile Include="..\..\..\src\core\u-sha1.c" />
+    <ClCompile Include="..\..\..\src\core\u-zlib.c" />
+    <ClCompile Include="..\..\..\src\os\dev-dns.c" />
+    <ClCompile Include="..\..\..\src\os\dev-net.c" />
+    <ClCompile Include="..\..\..\src\os\host-args.c" />
+    <ClCompile Include="..\..\..\src\os\host-core.c" />
+    <ClCompile Include="..\..\..\src\os\host-device.c" />
+    <ClCompile Include="..\..\..\src\os\host-draw-api-agg.cpp" />
+    <ClCompile Include="..\..\..\src\os\host-draw.c" />
+    <ClCompile Include="..\..\..\src\os\host-ext-test.c" />
+    <ClCompile Include="..\..\..\src\os\host-main.c" />
+    <ClCompile Include="..\..\..\src\os\host-stdio.c" />
+    <ClCompile Include="..\..\..\src\os\host-text-api-agg.cpp" />
+    <ClCompile Include="..\..\..\src\os\host-text.c" />
+    <ClCompile Include="..\..\..\src\os\host-view.c" />
+    <ClCompile Include="..\..\..\src\os\win32\dev-clipboard.c" />
+    <ClCompile Include="..\..\..\src\os\win32\dev-event.c" />
+    <ClCompile Include="..\..\..\src\os\win32\dev-file.c" />
+    <ClCompile Include="..\..\..\src\os\win32\dev-serial.c" />
+    <ClCompile Include="..\..\..\src\os\win32\dev-stdio.c" />
+    <ClCompile Include="..\..\..\src\os\win32\host-compositor-gdi.c" />
+    <ClCompile Include="..\..\..\src\os\win32\host-event.c" />
+    <ClCompile Include="..\..\..\src\os\win32\host-graphics.c" />
+    <ClCompile Include="..\..\..\src\os\win32\host-lib.c" />
+    <ClCompile Include="..\..\..\src\os\win32\host-window.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\..\src\codecs\aes\aes.h" />
+    <ClInclude Include="..\..\..\src\codecs\bigint\bigint.h" />
+    <ClInclude Include="..\..\..\src\codecs\bigint\bigint_config.h" />
+    <ClInclude Include="..\..\..\src\codecs\bigint\bigint_impl.h" />
+    <ClInclude Include="..\..\..\src\codecs\dh\dh.h" />
+    <ClInclude Include="..\..\..\src\codecs\png\lodepng.h" />
+    <ClInclude Include="..\..\..\src\codecs\rc4\rc4.h" />
+    <ClInclude Include="..\..\..\src\codecs\rsa\rsa.h" />
+    <ClInclude Include="..\..\..\src\include\ext-types.h" />
+    <ClInclude Include="..\..\..\src\include\host-compositor.h" />
+    <ClInclude Include="..\..\..\src\include\host-draw-api.h" />
+    <ClInclude Include="..\..\..\src\include\host-ext-core.h" />
+    <ClInclude Include="..\..\..\src\include\host-ext-draw.h" />
+    <ClInclude Include="..\..\..\src\include\host-ext-effect.h" />
+    <ClInclude Include="..\..\..\src\include\host-ext-graphics.h" />
+    <ClInclude Include="..\..\..\src\include\host-ext-shape.h" />
+    <ClInclude Include="..\..\..\src\include\host-ext-text.h" />
+    <ClInclude Include="..\..\..\src\include\host-init.h" />
+    <ClInclude Include="..\..\..\src\include\host-lib.h" />
+    <ClInclude Include="..\..\..\src\include\host-text-api.h" />
+    <ClInclude Include="..\..\..\src\include\host-view.h" />
+    <ClInclude Include="..\..\..\src\include\reb-args.h" />
+    <ClInclude Include="..\..\..\src\include\reb-c.h" />
+    <ClInclude Include="..\..\..\src\include\reb-codec.h" />
+    <ClInclude Include="..\..\..\src\include\reb-config.h" />
+    <ClInclude Include="..\..\..\src\include\reb-defs.h" />
+    <ClInclude Include="..\..\..\src\include\reb-device.h" />
+    <ClInclude Include="..\..\..\src\include\reb-dialect.h" />
+    <ClInclude Include="..\..\..\src\include\reb-dtoa.h" />
+    <ClInclude Include="..\..\..\src\include\reb-event.h" />
+    <ClInclude Include="..\..\..\src\include\reb-evtypes.h" />
+    <ClInclude Include="..\..\..\src\include\reb-ext.h" />
+    <ClInclude Include="..\..\..\src\include\reb-file.h" />
+    <ClInclude Include="..\..\..\src\include\reb-filereq.h" />
+    <ClInclude Include="..\..\..\src\include\reb-gob.h" />
+    <ClInclude Include="..\..\..\src\include\reb-host.h" />
+    <ClInclude Include="..\..\..\src\include\reb-lib-lib.h" />
+    <ClInclude Include="..\..\..\src\include\reb-lib.h" />
+    <ClInclude Include="..\..\..\src\include\reb-math.h" />
+    <ClInclude Include="..\..\..\src\include\reb-net.h" />
+    <ClInclude Include="..\..\..\src\include\reb-series.h" />
+    <ClInclude Include="..\..\..\src\include\reb-struct.h" />
+    <ClInclude Include="..\..\..\src\include\reb-types.h" />
+    <ClInclude Include="..\..\..\src\include\reb-value.h" />
+    <ClInclude Include="..\..\..\src\include\sys-core.h" />
+    <ClInclude Include="..\..\..\src\include\sys-dec-to-char.h" />
+    <ClInclude Include="..\..\..\src\include\sys-deci-funcs.h" />
+    <ClInclude Include="..\..\..\src\include\sys-deci.h" />
+    <ClInclude Include="..\..\..\src\include\sys-globals.h" />
+    <ClInclude Include="..\..\..\src\include\sys-int-funcs.h" />
+    <ClInclude Include="..\..\..\src\include\sys-jpg.h" />
+    <ClInclude Include="..\..\..\src\include\sys-mem.h" />
+    <ClInclude Include="..\..\..\src\include\sys-net.h" />
+    <ClInclude Include="..\..\..\src\include\sys-panics.h" />
+    <ClInclude Include="..\..\..\src\include\sys-scan.h" />
+    <ClInclude Include="..\..\..\src\include\sys-stack.h" />
+    <ClInclude Include="..\..\..\src\include\sys-state.h" />
+    <ClInclude Include="..\..\..\src\include\sys-value.h" />
+    <ClInclude Include="..\..\..\src\include\sys-zlib.h" />
+    <ClInclude Include="..\..\..\src\include\tmp-boot.h" />
+    <ClInclude Include="..\..\..\src\include\tmp-bootdefs.h" />
+    <ClInclude Include="..\..\..\src\include\tmp-comptypes.h" />
+    <ClInclude Include="..\..\..\src\include\tmp-errnums.h" />
+    <ClInclude Include="..\..\..\src\include\tmp-evaltypes.h" />
+    <ClInclude Include="..\..\..\src\include\tmp-exttypes.h" />
+    <ClInclude Include="..\..\..\src\include\tmp-funcargs.h" />
+    <ClInclude Include="..\..\..\src\include\tmp-funcs.h" />
+    <ClInclude Include="..\..\..\src\include\tmp-maketypes.h" />
+    <ClInclude Include="..\..\..\src\include\tmp-portmodes.h" />
+    <ClInclude Include="..\..\..\src\include\tmp-strings.h" />
+    <ClInclude Include="..\..\..\src\include\tmp-sysctx.h" />
+    <ClInclude Include="..\..\..\src\include\tmp-sysobj.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\libffi\libffi.vcxproj">
+      <Project>{793f0abe-66e5-48c0-9690-3060ff08aff5}</Project>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

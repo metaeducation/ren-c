@@ -58,6 +58,8 @@
 
 REBREQ *req;		//!!! move this global
 
+#define EVENTS_LIMIT 0xFFFF //64k
+#define EVENTS_CHUNK 128
 
 /***********************************************************************
 **
@@ -84,7 +86,14 @@ REBREQ *req;		//!!! move this global
 	if (!IS_BLOCK(state)) return 0;
 
 	// Append to tail if room:
-	if (SERIES_FULL(VAL_SERIES(state))) Crash(RP_MAX_EVENTS);
+	if (SERIES_FULL(VAL_SERIES(state))) {
+		if (VAL_TAIL(state) > EVENTS_LIMIT) {
+			Crash(RP_MAX_EVENTS);
+		} else {
+			Extend_Series(VAL_SERIES(state), EVENTS_CHUNK);
+			//RL_Print("event queue increased to :%d\n", SERIES_REST(VAL_SERIES(state)));
+		}
+	}
 	VAL_TAIL(state)++;
 	value = VAL_BLK_TAIL(state);
 	SET_END(value);
@@ -96,7 +105,38 @@ REBREQ *req;		//!!! move this global
 
 	return value;
 }
+/***********************************************************************
+**
+*/	REBVAL *Find_Last_Event (REBINT model, REBINT type)
+/*
+**		Find the last event in the queue by the model
+**		Check its type, if it matches, then return the event or NULL
+**
+**
+***********************************************************************/
+{
+	REBVAL *port;
+	REBVAL *value;
+	REBVAL *state;
 
+	port = Get_System(SYS_PORTS, PORTS_SYSTEM);
+	if (!IS_PORT(port)) return NULL; // verify it is a port object
+
+	// Get queue block:
+	state = VAL_BLK_SKIP(port, STD_PORT_STATE);
+	if (!IS_BLOCK(state)) return NULL;
+	for (value = VAL_BLK_TAIL(state) - 1; value >= VAL_BLK(state); -- value) {
+		if (VAL_EVENT_MODEL(value) == model) {
+			if (VAL_EVENT_TYPE(value) == type) {
+				return value;
+			} else {
+				return NULL;
+			}
+		}
+	}
+
+	return NULL;
+}
 
 /***********************************************************************
 **
@@ -123,7 +163,7 @@ REBREQ *req;		//!!! move this global
 	if (!IS_OBJECT(spec)) Trap1(RE_INVALID_SPEC, spec);
 
 	// Get or setup internal state data:
-	if (!IS_BLOCK(state)) Set_Block(state, Make_Block(127));
+	if (!IS_BLOCK(state)) Set_Block(state, Make_Block(EVENTS_CHUNK - 1));
 
 	switch (action) {
 

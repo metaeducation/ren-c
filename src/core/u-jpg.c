@@ -268,7 +268,7 @@ void jpeg_load( char *buffer, int nbytes, char *output )
 	output = ( char * )dp;
 	for ( j=0; j<cinfo.image_width; j++ ) {
 		cp -= 3;
-		*--dp = cp[ 2 ] | ( cp[ 1 ] << 8 ) | ( ( uinteger32 )cp[ 0 ] << 16 );
+		*--dp = TO_PIXEL_COLOR(cp[ 0 ], cp[ 1 ], cp[ 2 ], 0xff);
 	}
   }
   else
@@ -282,7 +282,7 @@ void jpeg_load( char *buffer, int nbytes, char *output )
 	  output = ( char * )dp;
 	  for ( j=0; j<cinfo.image_width; j++ ) {
 		c = *--cp;
-		*--dp = c | (c << 8) | (c << 16);
+		*--dp = TO_PIXEL_COLOR(c, c, c, 0xff);
 	  }
 	}
 
@@ -2369,11 +2369,10 @@ get_dht (j_decompress_ptr cinfo)
       index -= 0x10;
       htblptr = &cinfo->ac_huff_tbl_ptrs[index];
     } else {			/* DC table definition */
+	  if (index < 0 || index >= NUM_HUFF_TBLS)
+		ERREXIT1(cinfo, JERR_DHT_INDEX, index);
       htblptr = &cinfo->dc_huff_tbl_ptrs[index];
     }
-
-    if (index < 0 || index >= NUM_HUFF_TBLS)
-      ERREXIT1(cinfo, JERR_DHT_INDEX, index);
 
     if (*htblptr == NULL)
       *htblptr = jpeg_alloc_huff_table((j_common_ptr) cinfo);
@@ -8230,7 +8229,7 @@ print_mem_stats (j_common_ptr cinfo, int pool_id)
 
 #endif /* MEM_STATS */
 
-
+/* coverity[+kill] */
 LOCAL(void)
 out_of_memory (j_common_ptr cinfo, int which)
 /* Report an out-of-memory error and stop execution */

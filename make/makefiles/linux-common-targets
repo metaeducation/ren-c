@@ -1,0 +1,59 @@
+$(OBJ_DIR)/keysym2ucs.o: $S/os/linux/keysym2ucs.c
+	$(CC) $< $(HFLAGS) -o $@
+
+$(OBJ_DIR)/iso-639.o: $S/os/linux/iso-639.c
+	$(CC) $< $(HFLAGS) -o $@
+
+$(OBJ_DIR)/iso-3166.o: $S/os/linux/iso-3166.c
+	$(CC) $< $(HFLAGS) -o $@
+
+$(OBJ_DIR)/host-put-image.o: $S/os/linux/host-put-image.cpp
+	$(CXX) $< $(HFLAGS_CPP) -o $@ -I $S/agg
+
+$(OBJ_DIR)/agg_font_freetype.o: $S/agg/agg_font_freetype.cpp
+	$(CXX) $< $(HFLAGS_CPP) -o $@ -I $S/agg
+
+$(OBJ_DIR)/agg_fontconfig.o:$S/agg/agg_fontconfig.cpp
+	$(CXX) $< $(HFLAGS_CPP) $(HFLAGS_FONT_CONFIG) -o $@
+
+$(OBJ_DIR)/file-chooser-gtk.o:      $S/os/linux/file-chooser-gtk.c
+	$(CC) $< $(HFLAGS) `pkg-config gtk+-3.0 --cflags` -o $@
+
+$(OBJ_DIR)/host-lib.o:      $S/os/linux/host-lib.c
+	$(CC) $S/os/linux/host-lib.c $(HFLAGS) -o $(OBJ_DIR)/host-lib.o
+
+$(OBJ_DIR)/host-readline.o: $S/os/linux/host-readline.c
+	$(CC) $S/os/linux/host-readline.c $(HFLAGS) -o $(OBJ_DIR)/host-readline.o
+
+$(OBJ_DIR)/dev-stdio.o:     $S/os/linux/dev-stdio.c
+	$(CC) $S/os/linux/dev-stdio.c $(HFLAGS) -o $(OBJ_DIR)/dev-stdio.o
+
+$(OBJ_DIR)/dev-event.o:     $S/os/linux/dev-event.c
+	$(CC) $S/os/linux/dev-event.c $(HFLAGS) -o $(OBJ_DIR)/dev-event.o
+
+$(OBJ_DIR)/dev-file.o:      $S/os/linux/dev-file.c
+	$(CC) $S/os/linux/dev-file.c $(HFLAGS) -o $(OBJ_DIR)/dev-file.o
+
+$(OBJ_DIR)/p-signal.o:      $S/core/p-signal.c
+	$(CC) $S/core/p-signal.c $(RFLAGS) -o $(OBJ_DIR)/p-signal.o
+
+$(OBJ_DIR)/dev-serial.o:      $S/os/linux/dev-serial.c
+	$(CC) $S/os/linux/dev-serial.c $(HFLAGS) -o $(OBJ_DIR)/dev-serial.o
+
+$(OBJ_DIR)/dev-clipboard.o:      $S/os/linux/dev-clipboard.c
+	$(CC) $S/os/linux/dev-clipboard.c $(HFLAGS) -o $(OBJ_DIR)/dev-clipboard.o
+
+$(OBJ_DIR)/dev-signal.o:      $S/os/linux/dev-signal.c
+	$(CC) $S/os/linux/dev-signal.c $(HFLAGS) -o $(OBJ_DIR)/dev-signal.o
+
+$(OBJ_DIR)/host-graphics.o: $S/os/linux/host-graphics.c
+	$(CC) $S/os/linux/host-graphics.c $(HFLAGS) -o $(OBJ_DIR)/host-graphics.o 
+
+$(OBJ_DIR)/host-window.o: $S/os/linux/host-window.c
+	$(CC) $S/os/linux/host-window.c $(HFLAGS) -o $(OBJ_DIR)/host-window.o
+
+$(OBJ_DIR)/host-event.o: $S/os/linux/host-event.c
+	$(CC) $S/os/linux/host-event.c $(HFLAGS) -o $(OBJ_DIR)/host-event.o
+
+$(OBJ_DIR)/host-compositor.o: $S/os/linux/host-compositor.c
+	$(CC) $S/os/linux/host-compositor.c $(HFLAGS) -o $(OBJ_DIR)/host-compositor.o

@@ -45,6 +45,15 @@ uLong ZEXPORT adler32(adler, buf, len)
     return (s2 << 16) | s1;
 }
 
+/***********************************************************************
+**
+*/	unsigned long ADLER32(const char *buf, unsigned int len)
+/*
+***********************************************************************/
+{
+	return adler32(1L, buf, len);
+}
+
 uLong crc32(uLong num, const Bytef *buf, uInt len)
 {
 #ifndef CRC_DEFINED

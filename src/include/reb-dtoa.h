@@ -2,9 +2,7 @@
 **
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
-**  REBOL is a trademark of REBOL Technologies
-**
-**  Copyright 2013 Saphirion AG
+**  Copyright 2012 Saphirion AG
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
 **  you may not use this file except in compliance with the License.
@@ -20,9 +18,8 @@
 **
 ************************************************************************
 **
-**  Title:  Settings for the f-dtoa.c file
+**  Title: Settings for the f-dtoa.c file
 **  Author: Ladislav Mecir
-**  Notes:
 **
 ************************************************************************
 **

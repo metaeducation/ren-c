@@ -1,9 +1,12 @@
 REBOL [
 	System: "REBOL [R3] Language Interpreter and Run-time Environment"
 	Title: "REBOL Graphics"
+	Author: ["Richard Smolak" "Carl Sassenrath"]
 	Rights: {
 		Copyright 2012 REBOL Technologies
 		REBOL is a trademark of REBOL Technologies
+		
+		Additional code modifications and improvements Copyright 2012 Saphirion AG
 	}
 	License: {
 		Licensed under the Apache License, Version 2.0.
@@ -17,12 +20,21 @@ REBOL [
 
 words: [
 	;gui-metric
-    screen-size
-    border-size
-    border-fixed
-    title-size
-    work-origin
-    work-size
+	border-fixed
+	border-size
+	screen-size
+	virtual-screen-size
+	log-size
+	phys-size
+	screen-dpi
+	title-size
+	window-min-size
+	work-origin
+	work-size
+	restore
+	minimize
+	maximize
+	activate
 ]
 
 ;temp hack - will be removed later
@@ -73,7 +85,15 @@ draw: command [
 
 gui-metric: command [
 	"Returns specific gui related metric setting."
-	keyword [word!] "Available keywords: SCREEN-SIZE, BORDER-SIZE, BORDER-FIXED, TITLE-SIZE, WORK-ORIGIN and WORK-SIZE."
+	keyword [word!] "Available keywords: BORDER-FIXED, BORDER-SIZE, SCREEN-DPI, LOG-SIZE, PHYS-SIZE, SCREEN-SIZE, VIRTUAL-SCREEN-SIZE, TITLE-SIZE, WINDOW-MIN-SIZE, WORK-ORIGIN and WORK-SIZE."
+	/set
+		val "Value used to set specific setting(works only on 'writable' keywords)."
+]
+
+show-soft-keyboard: command [
+	"Display on-screen keyboard for user input."
+	/attach
+		gob [gob!] "GOB which should be visible during the input operation"
 ]
 
 ;#not-yet-used [

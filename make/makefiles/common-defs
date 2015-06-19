@@ -1,0 +1,106 @@
+# For the build toolchain:
+CC=	$(TOOLS)gcc
+CXX= $(TOOLS)g++
+NM=	$(TOOLS)nm
+STRIP=	$(TOOLS)strip
+
+# CP allows different copy progs:
+CP= cp
+# LS allows different ls progs:
+LS= ls -l
+# UP - some systems do not use ../
+UP= ..
+# CD - some systems do not use ./
+CD= ./
+# Special tools:
+T= $(UP)/src/tools
+# Paths used by make:
+S= ../src
+R= $S/core
+I= $S/include
+
+LIB_PRODUCT_NAME ?= atronix-view #note: this can be overriden by the HOST_PRODUCT_NAME
+HOST_PRODUCT_NAME ?= $(LIB_PRODUCT_NAME)
+
+RLIB_FLAGS=
+
+# Flags for core and for host:
+CFLAGS ?= -O2
+RFLAGS= -c -D$(TO_OS) -DREB_API  $(RAPI_FLAGS) $(INC)
+HFLAGS= -c -D$(TO_OS) $(HOST_FLAGS) $(INC)
+HFLAGS_CPP= -c -D$(TO_OS) $(HOST_FLAGS) $(INC)
+
+# For running tests, ship, build, etc.
+R3=	$(CD)r3$(BIN_SUFFIX) -qs
+
+# Refernce to correct R3 libname
+R3LIB= libr3.so
+
+OBJ_DIR=objs.$(MAKEFILE)
+
+
+OBJS =	$(OBJ_DIR)/a-constants.o $(OBJ_DIR)/a-globals.o $(OBJ_DIR)/a-lib.o $(OBJ_DIR)/b-boot.o \
+	$(OBJ_DIR)/b-init.o $(OBJ_DIR)/c-do.o $(OBJ_DIR)/c-error.o $(OBJ_DIR)/c-frame.o \
+	$(OBJ_DIR)/c-function.o $(OBJ_DIR)/c-port.o $(OBJ_DIR)/c-task.o $(OBJ_DIR)/c-word.o \
+	$(OBJ_DIR)/d-crash.o $(OBJ_DIR)/d-dump.o $(OBJ_DIR)/d-print.o $(OBJ_DIR)/f-blocks.o \
+	$(OBJ_DIR)/f-deci.o $(OBJ_DIR)/f-int.o $(OBJ_DIR)/f-dtoa.o $(OBJ_DIR)/f-enbase.o $(OBJ_DIR)/f-extension.o \
+	$(OBJ_DIR)/f-math.o $(OBJ_DIR)/f-modify.o $(OBJ_DIR)/f-random.o $(OBJ_DIR)/f-round.o $(OBJ_DIR)/f-qsort.o\
+	$(OBJ_DIR)/f-series.o $(OBJ_DIR)/f-stubs.o $(OBJ_DIR)/l-scan.o $(OBJ_DIR)/l-types.o \
+	$(OBJ_DIR)/m-gc.o $(OBJ_DIR)/m-pools.o $(OBJ_DIR)/m-series.o $(OBJ_DIR)/n-control.o \
+	$(OBJ_DIR)/n-data.o $(OBJ_DIR)/n-io.o $(OBJ_DIR)/n-loop.o $(OBJ_DIR)/n-math.o \
+	$(OBJ_DIR)/n-sets.o $(OBJ_DIR)/n-strings.o $(OBJ_DIR)/n-system.o $(OBJ_DIR)/p-clipboard.o \
+	$(OBJ_DIR)/p-console.o $(OBJ_DIR)/p-dir.o $(OBJ_DIR)/p-dns.o $(OBJ_DIR)/p-event.o \
+	$(OBJ_DIR)/p-file.o $(OBJ_DIR)/p-net.o $(OBJ_DIR)/p-serial.o $(OBJ_DIR)/s-cases.o $(OBJ_DIR)/s-crc.o \
+	$(OBJ_DIR)/s-file.o $(OBJ_DIR)/s-find.o $(OBJ_DIR)/s-make.o $(OBJ_DIR)/s-mold.o \
+	$(OBJ_DIR)/s-ops.o $(OBJ_DIR)/s-trim.o $(OBJ_DIR)/s-unicode.o $(OBJ_DIR)/t-bitset.o \
+	$(OBJ_DIR)/t-block.o $(OBJ_DIR)/t-char.o $(OBJ_DIR)/t-datatype.o $(OBJ_DIR)/t-date.o \
+	$(OBJ_DIR)/t-decimal.o $(OBJ_DIR)/t-event.o $(OBJ_DIR)/t-function.o $(OBJ_DIR)/t-gob.o \
+	$(OBJ_DIR)/t-image.o $(OBJ_DIR)/t-integer.o $(OBJ_DIR)/t-logic.o $(OBJ_DIR)/t-map.o \
+	$(OBJ_DIR)/t-money.o $(OBJ_DIR)/t-none.o $(OBJ_DIR)/t-object.o $(OBJ_DIR)/t-pair.o \
+	$(OBJ_DIR)/t-port.o $(OBJ_DIR)/t-string.o $(OBJ_DIR)/t-time.o $(OBJ_DIR)/t-tuple.o \
+	$(OBJ_DIR)/t-struct.o $(OBJ_DIR)/t-library.o $(OBJ_DIR)/t-routine.o \
+	$(OBJ_DIR)/t-typeset.o $(OBJ_DIR)/t-utype.o $(OBJ_DIR)/t-vector.o $(OBJ_DIR)/t-word.o \
+	$(OBJ_DIR)/u-bmp.o $(OBJ_DIR)/u-compress.o $(OBJ_DIR)/u-dialect.o $(OBJ_DIR)/u-gif.o \
+	$(OBJ_DIR)/u-jpg.o $(OBJ_DIR)/u-md5.o $(OBJ_DIR)/u-parse.o $(OBJ_DIR)/u-png.o \
+	$(OBJ_DIR)/u-sha1.o $(OBJ_DIR)/u-zlib.o 
+
+HOST_COMMON =	$(OBJ_DIR)/host-main.o $(OBJ_DIR)/host-args.o $(OBJ_DIR)/host-device.o $(OBJ_DIR)/host-stdio.o \
+	$(OBJ_DIR)/dev-net.o $(OBJ_DIR)/dev-dns.o $(OBJ_DIR)/host-lib.o $(OBJ_DIR)/dev-serial.o\
+	$(OBJ_DIR)/dev-stdio.o $(OBJ_DIR)/dev-event.o $(OBJ_DIR)/dev-file.o $(OBJ_DIR)/host-core.o $(OBJ_DIR)/dev-clipboard.o
+
+CODECS = $(OBJ_DIR)/aes.o $(OBJ_DIR)/bigint.o $(OBJ_DIR)/dh.o $(OBJ_DIR)/lodepng.o $(OBJ_DIR)/rc4.o $(OBJ_DIR)/rsa.o
+
+GFX_COMMON= \
+	$(OBJ_DIR)/host-view.o\
+	$(OBJ_DIR)/host-window.o\
+	$(OBJ_DIR)/host-graphics.o\
+	$(OBJ_DIR)/host-draw.o\
+	$(OBJ_DIR)/host-draw-api.o\
+	$(OBJ_DIR)/host-compositor.o\
+	$(OBJ_DIR)/host-text.o\
+	$(OBJ_DIR)/host-text-api.o\
+	$(OBJ_DIR)/host-event.o
+
+AGG_COMMON= \
+	$(OBJ_DIR)/agg_arc.o\
+	$(OBJ_DIR)/agg_arrowhead.o\
+	$(OBJ_DIR)/agg_bezier_arc.o\
+	$(OBJ_DIR)/agg_bspline.o\
+	$(OBJ_DIR)/agg_curves.o\
+	$(OBJ_DIR)/agg_image_filters.o\
+	$(OBJ_DIR)/agg_line_aa_basics.o\
+	$(OBJ_DIR)/agg_path_storage.o\
+	$(OBJ_DIR)/agg_rasterizer_scanline_aa.o\
+	$(OBJ_DIR)/agg_rounded_rect.o\
+	$(OBJ_DIR)/agg_sqrt_tables.o\
+	$(OBJ_DIR)/agg_trans_affine.o\
+	$(OBJ_DIR)/agg_trans_single_path.o\
+	$(OBJ_DIR)/agg_vcgen_bspline.o\
+	$(OBJ_DIR)/agg_vcgen_contour.o\
+	$(OBJ_DIR)/agg_vcgen_dash.o\
+	$(OBJ_DIR)/agg_vcgen_markers_term.o\
+	$(OBJ_DIR)/agg_vcgen_smooth_poly1.o\
+	$(OBJ_DIR)/agg_vcgen_stroke.o\
+	$(OBJ_DIR)/agg_vpgen_segmentator.o\
+	$(OBJ_DIR)/agg_graphics.o\
+	$(OBJ_DIR)/agg_truetype_text.o

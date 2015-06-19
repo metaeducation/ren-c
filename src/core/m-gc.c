@@ -110,7 +110,7 @@ REBVAL *N_watch(REBFRM *frame, REBVAL **inter_block)
 #endif
 
 static void Mark_Series(REBSER *series, REBCNT depth);
-
+static void Mark_Value(REBVAL *val, REBCNT depth);
 
 /***********************************************************************
 **
@@ -148,6 +148,101 @@ static void Mark_Series(REBSER *series, REBCNT depth);
 	}
 }
 
+/***********************************************************************
+**
+*/	static void Mark_Struct_Field(REBSTU *stu, struct Struct_Field *field, REBCNT depth)
+/*
+***********************************************************************/
+{
+	if (field->type == STRUCT_TYPE_STRUCT) {
+		int len = 0;
+		REBSER *series = NULL;
+
+		CHECK_MARK(field->fields, depth);
+		CHECK_MARK(field->spec, depth);
+
+		series = field->fields;
+		for (len = 0; len < series->tail; len++) {
+			Mark_Struct_Field (stu, (struct Struct_Field*)SERIES_SKIP(series, len), depth + 1);
+		}
+	} else if (field->type == STRUCT_TYPE_REBVAL) {
+		REBCNT i;
+
+		ASSERT2(field->size == sizeof(REBVAL), RP_BAD_SIZE);
+		for (i = 0; i < field->dimension; i ++) {
+			REBVAL *data = (REBVAL*)SERIES_SKIP(STRUCT_DATA_BIN(stu),
+												STRUCT_OFFSET(stu) + field->offset + i * field->size);
+			if (field->done) {
+				Mark_Value(data, depth);
+			}
+		}
+	}
+
+	/* ignore primitive datatypes */
+}
+
+/***********************************************************************
+**
+*/	static void Mark_Struct(REBSTU *stu, REBCNT depth)
+/*
+***********************************************************************/
+{
+	int len = 0;
+	REBSER *series = NULL;
+	CHECK_MARK(stu->spec, depth);
+	CHECK_MARK(stu->fields, depth);
+	CHECK_MARK(STRUCT_DATA_BIN(stu), depth);
+
+	ASSERT2(IS_BARE_SERIES(stu->data), RP_BAD_SERIES);
+	ASSERT2(!IS_EXT_SERIES(stu->data), RP_BAD_SERIES);
+	ASSERT2(SERIES_TAIL(stu->data) == 1, RP_BAD_SERIES);
+	CHECK_MARK(stu->data, depth);
+
+	series = stu->fields;
+	for (len = 0; len < series->tail; len++) {
+		struct Struct_Field *field = (struct Struct_Field*)SERIES_SKIP(series, len);
+		Mark_Struct_Field(stu, field, depth + 1);
+	}
+}
+
+/***********************************************************************
+**
+*/	static void Mark_Routine(REBROT *rot, REBCNT depth)
+/*
+***********************************************************************/
+{
+	int len = 0;
+	REBSER *series = NULL;
+	CHECK_MARK(ROUTINE_SPEC(rot), depth);
+	MARK_ROUTINE(ROUTINE_INFO(rot));
+
+	CHECK_MARK(ROUTINE_FFI_ARG_TYPES(rot), depth);
+	CHECK_MARK(ROUTINE_FFI_ARG_STRUCTS(rot), depth);
+	CHECK_MARK(ROUTINE_EXTRA_MEM(rot), depth);
+
+	if (IS_CALLBACK_ROUTINE(ROUTINE_INFO(rot))) {
+		if (FUNC_BODY(&CALLBACK_FUNC(rot)) != NULL) { //this could be null it's called before the callback! has been fully constructed
+			CHECK_MARK(FUNC_BODY(&CALLBACK_FUNC(rot)), depth);
+			CHECK_MARK(FUNC_SPEC(&CALLBACK_FUNC(rot)), depth);
+			MARK_SERIES(FUNC_ARGS(&CALLBACK_FUNC(rot)));
+		}
+	} else {
+		if (ROUTINE_GET_FLAG(ROUTINE_INFO(rot), ROUTINE_VARARGS)) {
+			if (ROUTINE_FIXED_ARGS(rot) != NULL) {
+				CHECK_MARK(ROUTINE_FIXED_ARGS(rot), depth);
+			}
+			if (ROUTINE_ALL_ARGS(rot)) {
+				CHECK_MARK(ROUTINE_ALL_ARGS(rot), depth);
+			}
+		}
+		if (ROUTINE_LIB(rot) != NULL) { //this could be null it's called before the routine! has been fully constructed
+			MARK_LIB(ROUTINE_LIB(rot));
+		}
+		if (ROUTINE_RVALUE(rot).spec) {
+			Mark_Struct(&ROUTINE_RVALUE(rot), depth);
+		}
+	}
+}
 
 /***********************************************************************
 **
@@ -206,44 +301,13 @@ static void Mark_Series(REBSER *series, REBCNT depth);
 
 /***********************************************************************
 **
-*/	static void Mark_Series(REBSER *series, REBCNT depth)
+*/	static void Mark_Value(REBVAL *val, REBCNT depth)
 /*
-**		Mark all series reachable from the block.
-**
 ***********************************************************************/
 {
-	REBCNT len;
-	REBSER *ser;
-	REBVAL *val;
+	REBSER *ser = NULL;
 
-	ASSERT(series != 0, RP_NULL_MARK_SERIES);
-
-	if (SERIES_FREED(series)) return; // series data freed already
-
-	MARK_SERIES(series);
-
-	// If not a block, go no further
-	if (SERIES_WIDE(series) != sizeof(REBVAL)) return;
-
-	ASSERT2(RP_SERIES_OVERFLOW, SERIES_TAIL(series) < SERIES_REST(series));
-
-	//Moved to end: ASSERT1(IS_END(BLK_TAIL(series)), RP_MISSING_END);
-
-	//if (depth == 1 && series->label) Print("Marking %s", series->label);
-
-	depth++;
-
-	for (len = 0; len < series->tail; len++) {
-		val = BLK_SKIP(series, len);
-
-		switch (VAL_TYPE(val)) {
-
-		case REB_END:
-			// We should never reach the end before len above.
-			// Exception is the stack itself.
-			if (series != DS_Series) Crash(RP_UNEXPECTED_END);
-			break;
-
+	switch (VAL_TYPE(val)) {
 		case REB_UNSET:
 		case REB_TYPESET:
 		case REB_HANDLE:
@@ -282,7 +346,7 @@ static void Mark_Series(REBSER *series, REBCNT depth);
 			goto mark_obj;
 
 		case REB_MODULE:
-			if (VAL_MOD_BODY(val)) CHECK_MARK(VAL_MOD_BODY(val), depth);
+			//if (VAL_MOD_BODY(val)) CHECK_MARK(VAL_MOD_BODY(val), depth); //MOD_BODY is not used anywhere or initialized
 		case REB_OBJECT:
 			// Object is just a block with special first value (context):
 mark_obj:
@@ -375,10 +439,10 @@ mark_obj:
 				break;
 			}
 #if (ALEVEL>0)
-			if (!IS_END(BLK_SKIP(ser, SERIES_TAIL(ser))) && ser != DS_Series)
+			if (SERIES_WIDE(ser) == sizeof(REBVAL) && !IS_END(BLK_SKIP(ser, SERIES_TAIL(ser))) && ser != DS_Series)
 				Crash(RP_MISSING_END);
 #endif
-			if (SERIES_WIDE(ser) != sizeof(REBVAL) && SERIES_WIDE(ser) != 4 && SERIES_WIDE(ser) != 0)
+			if (SERIES_WIDE(ser) != sizeof(REBVAL) && SERIES_WIDE(ser) != 4 && SERIES_WIDE(ser) != 0 && SERIES_WIDE(ser) != sizeof(void*))
 				Crash(RP_BAD_WIDTH, 16, SERIES_WIDE(ser), VAL_TYPE(val));
 			CHECK_MARK(ser, depth);
 			break;
@@ -391,28 +455,20 @@ mark_obj:
 			}
 			break;
 
-#ifdef ndef
+		case REB_CALLBACK:
 		case REB_ROUTINE:
-		  // Deal with the co-joined struct value...
-			CHECK_MARK(VAL_STRUCT_SPEC(VAL_ROUTINE_SPEC(val)), depth);
-			CHECK_MARK(VAL_STRUCT_VALS(VAL_ROUTINE_SPEC(val)), depth);
-			MARK_SERIES(VAL_STRUCT_DATA(VAL_ROUTINE_SPEC(val)));
-			MARK_SERIES(VAL_ROUTINE_SPEC_SER(val));
-//!!!			if (Current_Closing_Library && VAL_ROUTINE_ID(val) == Current_Closing_Library)
-				VAL_ROUTINE_ID(val) = 0; // Invalidate the routine
+			CHECK_MARK(VAL_ROUTINE_SPEC(val), depth);
+			CHECK_MARK(VAL_ROUTINE_ARGS(val), depth);
+			Mark_Routine(&VAL_ROUTINE(val), depth);
 			break;
-#endif
 
 		case REB_LIBRARY:
-			MARK_SERIES(VAL_LIBRARY_NAME(val));
-//!!!			if (Current_Closing_Library && VAL_LIBRARY_ID(val) == Current_Closing_Library)
-				VAL_LIBRARY_ID(val) = 0; // Invalidate the library
+			MARK_LIB(VAL_LIB_HANDLE(val));
+			CHECK_MARK(VAL_LIB_SPEC(val), depth);
 			break;
 
 		case REB_STRUCT:
-			CHECK_MARK(VAL_STRUCT_SPEC(val), depth);  // is a block
-			CHECK_MARK(VAL_STRUCT_VALS(val), depth);  // "    "
-			MARK_SERIES(VAL_STRUCT_DATA(val));
+			Mark_Struct(&VAL_STRUCT(val), depth);
 			break;
 
 		case REB_GOB:
@@ -425,11 +481,53 @@ mark_obj:
 
 		default:
 			Crash(RP_DATATYPE+1, VAL_TYPE(val));
+	}
+}
+
+/***********************************************************************
+**
+*/	static void Mark_Series(REBSER *series, REBCNT depth)
+/*
+**		Mark all series reachable from the block.
+**
+***********************************************************************/
+{
+	REBCNT len;
+	REBSER *ser;
+	REBVAL *val;
+
+	ASSERT(series != 0, RP_NULL_MARK_SERIES);
+
+	if (SERIES_FREED(series)) return; // series data freed already
+
+	MARK_SERIES(series);
+
+	// If not a block, go no further
+	if (SERIES_WIDE(series) != sizeof(REBVAL) || IS_BARE_SERIES(series) || IS_EXT_SERIES(series)) return;
+
+	ASSERT2(SERIES_TAIL(series) < SERIES_REST(series), RP_SERIES_OVERFLOW);
+
+	//Moved to end: ASSERT1(IS_END(BLK_TAIL(series)), RP_MISSING_END);
+
+	//if (depth == 1 && series->label) Print("Marking %s", series->label);
+
+	depth++;
+
+	for (len = 0; len < series->tail; len++) {
+		val = BLK_SKIP(series, len);
+
+		if (VAL_TYPE(val) == REB_END
+			&& (series != DS_Series)) {
+			// We should never reach the end before len above.
+			// Exception is the stack itself.
+			Crash(RP_UNEXPECTED_END);
+		} else {
+			Mark_Value(val, depth);
 		}
 	}
 
 #if (ALEVEL>0)
-	if (!IS_END(BLK_SKIP(series, len)) && series != DS_Series)
+	if (SERIES_WIDE(series) == sizeof(REBVAL) && !IS_END(BLK_SKIP(series, len)) && series != DS_Series)
 		Crash(RP_MISSING_END);
 #endif
 }
@@ -437,7 +535,7 @@ mark_obj:
 
 /***********************************************************************
 **
-*/	static REBCNT Sweep_Series(void)
+*/	ATTRIBUTE_NO_SANITIZE_ADDRESS static REBCNT Sweep_Series(void)
 /*
 **		Free all unmarked series.
 **
@@ -474,7 +572,7 @@ mark_obj:
 
 /***********************************************************************
 **
-*/	static REBCNT Sweep_Gobs(void)
+*/	ATTRIBUTE_NO_SANITIZE_ADDRESS static REBCNT Sweep_Gobs(void)
 /*
 **		Free all unmarked gobs.
 **
@@ -513,6 +611,77 @@ mark_obj:
 	return count;
 }
 
+/***********************************************************************
+**
+*/	ATTRIBUTE_NO_SANITIZE_ADDRESS static REBCNT Sweep_Libs(void)
+/*
+**		Free all unmarked libs.
+**
+**		Scans all libs in all segments that are part of the
+**		LIB_POOL. Free libs that have not been marked.
+**
+***********************************************************************/
+{
+	REBSEG	*seg;
+	REBLHL	*lib;
+	REBCNT  n;
+	REBCNT	count = 0;
+
+	for (seg = Mem_Pools[LIB_POOL].segs; seg; seg = seg->next) {
+		lib = (REBLHL *) (seg + 1);
+		for (n = Mem_Pools[LIB_POOL].units; n > 0; n--) {
+			SKIP_WALL(lib);
+			if (IS_USED_LIB(lib)) {
+				if (IS_MARK_LIB(lib))
+					UNMARK_LIB(lib);
+				else {
+					UNUSE_LIB(lib);
+					Free_Node(LIB_POOL, (REBNOD*)lib);
+					count++;
+				}
+			}
+			lib++;
+		}
+	}
+
+	return count;
+}
+
+/***********************************************************************
+**
+*/	ATTRIBUTE_NO_SANITIZE_ADDRESS static REBCNT Sweep_Routines(void)
+/*
+**		Free all unmarked routines.
+**
+**		Scans all routines in all segments that are part of the
+**		RIN_POOL. Free routines that have not been marked.
+**
+***********************************************************************/
+{
+	REBSEG	*seg;
+	REBRIN	*info;
+	REBCNT  n;
+	REBCNT	count = 0;
+
+	for (seg = Mem_Pools[RIN_POOL].segs; seg; seg = seg->next) {
+		info = (REBRIN *) (seg + 1);
+		for (n = Mem_Pools[RIN_POOL].units; n > 0; n--) {
+			SKIP_WALL(info);
+			if (IS_USED_ROUTINE(info)) {
+				if (IS_MARK_ROUTINE(info))
+					UNMARK_ROUTINE(info);
+				else {
+					UNUSE_ROUTINE(info);
+					Free_Routine(info);
+					count ++;
+				}
+			}
+			info ++;
+		}
+	}
+
+	return count;
+}
 
 /***********************************************************************
 **
@@ -583,8 +752,11 @@ mark_obj:
 	// Mark all devices:
 	Mark_Devices(0);
 	
-	count = Sweep_Series();
+	count = Sweep_Routines(); // this needs to run before Sweep_Series(), because Routine has series with pointers, which can't be simply discarded by Sweep_Series
+
+	count += Sweep_Series();
 	count += Sweep_Gobs();
+	count += Sweep_Libs();
 
 	CHECK_MEMORY(4);
 
@@ -596,12 +768,28 @@ mark_obj:
 	// Reset stack to prevent invalid MOLD access:
 	RESET_TAIL(DS_Series);
 
+	if (GC_Ballast <= VAL_INT32(TASK_BALLAST) / 2
+		&& VAL_INT64(TASK_BALLAST) < MAX_I32) {
+		//increasing ballast by half
+		VAL_INT64(TASK_BALLAST) /= 2;
+		VAL_INT64(TASK_BALLAST) *= 3;
+	} else if (GC_Ballast >= VAL_INT64(TASK_BALLAST) * 2) {
+		//reduce ballast by half
+		VAL_INT64(TASK_BALLAST) /= 2;
+	}
+
+	/* avoid overflow */
+	if (VAL_INT64(TASK_BALLAST) < 0 || VAL_INT64(TASK_BALLAST) >= MAX_I32) {
+		VAL_INT64(TASK_BALLAST) = MAX_I32;
+	}
+
 	GC_Ballast = VAL_INT32(TASK_BALLAST);
 	GC_Disabled = 0;
 
 	if (Reb_Opts->watch_recycle) Debug_Fmt(BOOT_STR(RS_WATCH, 1), count);
 	return count;
 }
+
 
 
 /***********************************************************************
@@ -644,7 +832,7 @@ mark_obj:
 	sp = (REBSER **)GC_Series->data;
 	for (n = 0; n < SERIES_TAIL(GC_Series); n++) {
 		if (sp[n] == series) {
-			Remove_Series(GC_Series, n, sizeof(REBSER *));
+			Remove_Series(GC_Series, n, 1);
 			break;
 		}
 	}

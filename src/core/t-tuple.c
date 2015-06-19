@@ -198,10 +198,14 @@
 	if (IS_TUPLE(value)) {
 		vp = VAL_TUPLE(value);
 		len = VAL_TUPLE_LEN(value);
+	} else if (!(IS_DATATYPE(value) && (action == A_MAKE || action == A_TO))) {
+		Trap_Arg(value);
 	}
 	arg = D_ARG(2);
 
 	if (IS_BINARY_ACT(action)) {
+		ASSERT2(vp != NULL, RP_MISC);
+
 		if (IS_INTEGER(arg)) {
 			a = VAL_INT32(arg);
 			ap = 0;

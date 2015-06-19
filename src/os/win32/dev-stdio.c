@@ -62,6 +62,8 @@ static REBCHR *Std_Buf = 0;		// for input and output
 static BOOL Redir_Out = 0;
 static BOOL Redir_Inp = 0;
 
+static BOOL Con_Out = 1;		//controls the console text output
+
 // Special access:
 extern REBDEV *Devices[];
 
@@ -90,14 +92,6 @@ static dbgout(char *fmt, int d, char *s)
 // example: dbgout("handle: %x %s\n", hdl, name);
 #endif
 
-#ifdef NOT_USED
-static void attach_console(void) {
-	void *h = LoadLibraryW(TEXT("kernel32.dll"));
-	(BOOL (_stdcall *)(DWORD))GetProcAddress(h, "AttachConsole")(-1);
-	FreeLibrary(h);
-}
-#endif
-
 static void close_stdio(void)
 {
 	if (Std_Buf) {
@@ -111,6 +105,71 @@ static void close_stdio(void)
 	}
 }
 
+//accessor function to enable/disable output print to console
+void Console_Output(BOOL state)
+{
+    Con_Out = state;
+}
+
+HWND Get_Console_Window()
+{
+	void *h = LoadLibraryW(TEXT("kernel32.dll"));
+	HWND result = (HWND)(HWND (WINAPI *)())GetProcAddress(h, "GetConsoleWindow")();
+	FreeLibrary(h);
+	return result;
+}
+
+BOOL Init_Console()
+{
+    if (!Std_Out && Con_Out){
+
+        REBCHR *title = TEXT("REBOL 3");
+        HANDLE win;
+
+        if (!AllocConsole()) {
+            return FALSE;
+	}
+
+        SetConsoleTitle(title);
+
+        // The goof-balls at MS seem to require this:
+        // See: http://support.microsoft.com/kb/124103
+        Sleep(40);
+        win = Get_Console_Window();
+
+        if (win) {
+            SetForegroundWindow(win);
+            BringWindowToTop(win);
+	}
+
+        // Get the new stdio handles:
+        Std_Out = GetStdHandle(STD_OUTPUT_HANDLE);
+
+        if (!Redir_Inp)	{
+            Std_Inp = GetStdHandle(STD_INPUT_HANDLE);
+            // Make the Win32 console a bit smarter by default:
+            SetConsoleMode(Std_Inp, CONSOLE_MODES);
+        }
+
+		Std_Buf = OS_Make(BUF_SIZE * sizeof(REBCHR));
+
+		// Handle stdio CTRL-C interrupt:
+		SetConsoleCtrlHandler(Handle_Break, TRUE);
+        return TRUE;
+    }
+    return FALSE;
+}
+
+// show/hide console window - should be converted to OS_* function to be called by native func?
+void Console_Window(BOOL show)
+{
+    HWND win = Get_Console_Window();
+    Console_Output(TRUE);
+    if (win)
+        ShowWindow( win, (show) ? SW_SHOW : SW_HIDE );
+    else if (show)
+        Init_Console();
+}
 
 /***********************************************************************
 **
@@ -133,8 +192,6 @@ static void close_stdio(void)
 ***********************************************************************/
 {
 	REBDEV *dev;
-	REBCHR *title = TEXT("REBOL 3 Alpha");
-	HANDLE win;
 
 	dev = Devices[req->device];
 
@@ -158,41 +215,11 @@ static void close_stdio(void)
 		Redir_Out = (GetFileType(Std_Out) != 0);
 		Redir_Inp = (GetFileType(Std_Inp) != 0);
 
-		// attach_console();  // merges streams, not good
-
- 		// If output not redirected, open a console:
+ 		// Output not redirected, reset out handle
 		if (!Redir_Out) {
-			if (!AllocConsole()) {
-				req->error = GetLastError();
-				return DR_ERROR;
-			}
-
-			SetConsoleTitle(title);
-
-			// The goof-balls at MS seem to require this:
-			// See: http://support.microsoft.com/kb/124103
-			Sleep(40);
-			win = FindWindow(NULL, title); // What if more than one open ?!
-			if (win) {
-				SetForegroundWindow(win);
-				BringWindowToTop(win);
-			}
-
-			// Get the new stdio handles:
-			Std_Out = GetStdHandle(STD_OUTPUT_HANDLE);
-
-			if (!Redir_Inp)	{
-				Std_Inp = GetStdHandle(STD_INPUT_HANDLE);
-				// Make the Win32 console a bit smarter by default:
-				SetConsoleMode(Std_Inp, CONSOLE_MODES);
+		    Std_Out = 0;
 			}
 		}
-
-		Std_Buf = OS_Make(BUF_SIZE * sizeof(REBCHR));
-
-		// Handle stdio CTRL-C interrupt:
-		SetConsoleCtrlHandler(Handle_Break, TRUE);
-	}
 	else
 		SET_FLAG(dev->flags, SF_DEV_NULL);
 
@@ -213,7 +240,7 @@ static void close_stdio(void)
 
 	close_stdio();
 
-	CLR_FLAG(req->flags, RRF_OPEN);
+	CLR_FLAG(dev->flags, RRF_OPEN);
 
 	return DR_DONE;
 }
@@ -240,7 +267,9 @@ static void close_stdio(void)
 		return DR_DONE;
 	}
 
-	if (Std_Out) {
+    Init_Console();
+
+	if (Std_Out && Con_Out) {
 
 		if (Redir_Out) { // Always UTF-8
 			ok = WriteFile(Std_Out, req->data, req->length, &total, 0);

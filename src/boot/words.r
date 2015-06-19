@@ -147,6 +147,7 @@ sha1
 md4
 md5
 crc32
+adler32
 
 ; Codec actions
 identify
@@ -163,6 +164,56 @@ dns
 tcp
 udp
 clipboard
+serial
+signal
+
+; Serial parameters
+; Parity
+odd
+even
+; Control flow
+hardware
+software
+
+; Struct
+uint8
+int8
+uint16
+int16
+uint32
+int32
+uint64
+int64
+float
+;double ;reuse earlier definition
+pointer
+addr
+raw-memory
+raw-size
+rebval
+
+;routine
+void
+library
+name
+abi
+stdcall
+fastcall
+sysv
+thiscall
+unix64
+ms-cdecl
+win64
+default
+vfp ;arm
+o32; mips abi
+n32; mips abi
+n64; mips abi
+o32-soft-float; mips abi
+n32-soft-float; mips abi
+n64-soft-float; mips abi
+...
+varargs
 
 ; Gobs:
 gob
@@ -180,6 +231,7 @@ rgb
 alpha
 data
 resize
+rotate
 no-title
 no-border
 dropable
@@ -189,8 +241,44 @@ modal
 on-top
 hidden
 owner
+active
+minimize
+maximize
+restore 
+fullscreen
 
 *port-modes*
+
+; posix signal names
+all
+sigalrm
+sigabrt
+sigbus
+sigchld
+sigcont
+sigfpe
+sighup
+sigill
+sigint
+sigkill
+sigpipe
+sigquit
+sigsegv
+sigstop
+sigterm
+sigtstp
+sigttin
+sigttou
+sigusr1
+sigusr2
+sigpoll
+sigprof
+sigsys
+sigtrap
+sigurg
+sigvtalrm
+sigxcpu
+sigxfsz
 
 bits
 crash
@@ -199,3 +287,12 @@ watch-recycle
 watch-obj-copy
 stack-size
 
+uid
+euid
+gid
+egid
+pid
+
+;call/info
+id
+exit-code

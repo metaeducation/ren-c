@@ -43,16 +43,15 @@ make-banner: func [
 sys/boot-banner: make-banner [
 	*
 	-
-	"REBOL 3.0 [Alpha Test]"
+	"REBOL 3.0"
 	-
-	= Copyright: [system/build/year "REBOL Technologies"]
+	= Copyright: "2012 REBOL Technologies"
 	= "" "All rights reserved."
 	= Website:  "www.REBOL.com"
 	-
 	= Version:  system/version
 	= Platform: system/platform
 	= Build:    system/build
-	= Warning:  "For testing purposes only. Use at your own risk."
 	-
 	= Language: system/locale/language*
 	= Locale:   system/locale/locale*
@@ -70,13 +69,9 @@ sys/boot-help:
 
 Special functions:
 
-  Chat - open DevBase developer forum/BBS
-  Docs - open DocBase document wiki (web)
-  Bugs - open CureCode bug database (web)
-  Demo - run demo launcher (from rebol.com)
+  Demo - run demo launcher (from saphirion.com)
   Help - show built-in help information
   Upgrade - check for newer releases
-  Changes - what's new about this version (web)
 }
 
 ;print make-banner boot-banner halt

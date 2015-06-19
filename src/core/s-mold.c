@@ -694,6 +694,8 @@ STOID Mold_Block(REBVAL *value, REB_MOLD *mold)
 		case REB_SET_PATH:
 			sep = "/";
 			break;
+		default:
+			sep = NULL;
 		}
 
 		if (over) Append_Bytes(mold->series, sep ? sep : (REBYTE*)("[]"));
@@ -1245,12 +1247,40 @@ STOID Mold_Error(REBVAL *value, REB_MOLD *mold, REBFLG molded)
 		Mold_Event(value, mold);
 		break;
 
+	case REB_STRUCT:
+	{
+		REBSER *blk;
+		Pre_Mold(value, mold);
+		blk = Struct_To_Block(&VAL_STRUCT(value));
+		Mold_Block_Series(mold, blk, 0, 0);
+		End_Mold(mold);
+	}
+		break;
+
+	case REB_ROUTINE:
+		Pre_Mold(value, mold);
+		Mold_Block_Series(mold, VAL_ROUTINE_SPEC(value), 0, NULL);
+		End_Mold(mold);
+		break;
+	case REB_LIBRARY:
+		Pre_Mold(value, mold);
+
+		DS_PUSH_NONE;
+		*DS_TOP = *(REBVAL*)SERIES_DATA(VAL_LIB_SPEC(value));
+		Mold_File(DS_TOP, mold);
+		DS_POP;
+
+		End_Mold(mold);
+		break;
+	case REB_CALLBACK:
+		Pre_Mold(value, mold);
+		Mold_Block_Series(mold, VAL_ROUTINE_SPEC(value), 0, NULL);
+		End_Mold(mold);
+		break;
 	case REB_REBCODE:
 	case REB_OP:
 	case REB_FRAME:
 	case REB_HANDLE:
-	case REB_STRUCT:
-	case REB_LIBRARY:
 	case REB_UTYPE:
 		// Value has no printable form, so just print its name.
 		if (!molded) Emit(mold, "?T?", value);

@@ -16,12 +16,11 @@ REBOL [
 	Note: "Remove older/unused fields before beta release"
 ]
 
-product:  'core
-
-; Next three fields are updated during build:
+; Next four fields are updated during build:
 version:  0.0.0
 build:    1
 platform: none
+product:  'core
 
 license: {Copyright 2012 REBOL Technologies
 REBOL is a trademark of REBOL Technologies
@@ -35,7 +34,7 @@ catalog: context [
 	actions: none
 	natives: none
 	errors: none
-	reflectors: [spec body words values types title]
+	reflectors: [spec body words values types title addr]
 	; Official list of system/options/flags that can appear.
 	; Must match host reb-args.h enum!
 	boot-flags: [
@@ -225,6 +224,18 @@ standard: context [
 		port-id: 80
 			none
 	]
+
+	port-spec-serial: make port-spec-head [
+		speed: 115200
+		data-size: 8
+		parity: none
+		stop-bits: 1
+		flow-control: none ;not supported on all systems
+	]
+
+	port-spec-signal: make port-spec-head [
+		mask: [all]
+	]
 	
 	file-info: context [
 		name:
@@ -283,14 +294,6 @@ view: context [
 	screen-gob: none
 	handler: none
 	event-port: none
-	metrics: context [
-		screen-size: 0x0
-		border-size: 0x0
-		border-fixed: 0x0
-		title-size: 0x0
-		work-origin: 0x0
-		work-size: 0x0
-	]
 	event-types: [
 		; Event types. Order dependent for C and REBOL.
 		; Due to fixed C constants, this list cannot be reordered after release!
@@ -319,6 +322,7 @@ view: context [
 		hide
 		offset
 		resize
+		rotate
 		active
 		inactive 
 		minimize

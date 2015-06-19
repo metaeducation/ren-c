@@ -1,9 +1,12 @@
 REBOL [
 	System: "REBOL [R3] Language Interpreter and Run-time Environment"
 	Title: "REBOL Graphics - DRAW commands"
+	Author: ["Richard Smolak" "Carl Sassenrath"]
 	Rights: {
 		Copyright 2012 REBOL Technologies
 		REBOL is a trademark of REBOL Technologies
+		
+		Additional code modifications and improvements Copyright 2012 Saphirion AG
 	}
 	License: {
 		Licensed under the Apache License, Version 2.0.
@@ -268,8 +271,8 @@ spline: command [
 
 text: command [
 	"Draws a string of text."
-	offset [pair!] "offset from where should the text be rendered"
-	size [pair!] "size of the text area"
+	origin [pair!] "offset from where should the text be rendered"
+	end [pair! none!] "End point of text box (clips and wraps the text). NONE means no clip/wrap limit within the gob."
 	'render-mode [word!] "RASTER or VECTORIAL"
 	rich-text-block [block!]
 ]

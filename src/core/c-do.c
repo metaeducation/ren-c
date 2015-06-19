@@ -72,9 +72,7 @@ void Do_Rebcode(REBVAL *v) {;}
 
 static REBVAL *Func_Word(REBINT dsf)
 {
-	static REBVAL val;  // Safe: Lifetime is limited to passage to error object.
-	Init_Word(&val, VAL_WORD_SYM(DSF_WORD(dsf)));
-	return &val;
+	return DSF_WORD(dsf);
 }
 
 
@@ -288,8 +286,10 @@ void Trace_Arg(REBINT num, REBVAL *arg, REBVAL *path)
 {
 	static char tracebuf[64];
 	int depth;
+	int len = MIN(60, limit);
 	CHECK_DEPTH(depth);
-	memcpy(tracebuf, str, MIN(60, limit));
+	memcpy(tracebuf, str, len);
+	tracebuf[len] = '\0';
 	Debug_Fmt(BOOT_STR(RS_TRACE,n), tracebuf);
 }
 
@@ -338,9 +338,7 @@ void Trace_Arg(REBINT num, REBVAL *arg, REBVAL *path)
 
 	// Save WORD for function and fake frame for relative arg lookup:
 	tos++;
-	VAL_SET(tos, REB_HANDLE); // Was REB_WORD, but GC does not like bad fields.
-	VAL_WORD_SYM(tos) = word ? word : SYM__APPLY_;
-	VAL_WORD_INDEX(tos) = -1; // avoid GC access to invalid FRAME above
+	Init_Word(tos, word ? word : SYM__APPLY_);
 	if (func) {
 		VAL_WORD_FRAME(tos) = VAL_FUNC_ARGS(func);
 		// Save FUNC value for safety (spec, args, code):
@@ -451,7 +449,8 @@ void Trace_Arg(REBINT num, REBVAL *arg, REBVAL *path)
 	pvs.store = DS_TOP;		// Temp space for constructed results
 
 	// Get first block value:
-	pvs.path = VAL_BLK_DATA(pvs.orig = *path_val);
+	pvs.orig = *path_val;
+	pvs.path = VAL_BLK_DATA(pvs.orig);
 
 	// Lookup the value of the variable:
 	if (IS_WORD(pvs.path)) {
@@ -605,13 +604,13 @@ x*/	static REBINT Do_Args_Light(REBVAL *func, REBVAL *path, REBSER *block, REBCN
 
 /***********************************************************************
 **
-*/	static REBINT Do_Args(REBVAL *func, REBVAL *path, REBSER *block, REBCNT index)
+*/	static REBINT Do_Args(REBCNT func_offset, REBVAL *path, REBSER *block, REBCNT index)
 /*
 **		Evaluate code block according to the function arg spec.
 **		Args are pushed onto the data stack in the same order
 **		as the function frame.
 **
-**			func:  function or path value
+**			func_offset:  offset of the function or path value, relative to DS_Base
 **			path:  refinements or object/function path
 **			block: current evaluation block
 **			index: current evaluation index
@@ -625,11 +624,15 @@ x*/	static REBINT Do_Args_Light(REBVAL *func, REBVAL *path, REBSER *block, REBCN
 	REBINT dsp = DSP + 1;	// stack base
 	REBINT dsf = dsp - DSF_BIAS;
 	REBVAL *tos;
+	REBVAL *func;
+
+	if ((dsp + 100) > (REBINT)SERIES_REST(DS_Series)) {
+		Expand_Stack(STACK_MIN);
+	}
+
+	func = &DS_Base[func_offset];
 
 	if (IS_OP(func)) dsf--; // adjust for extra arg
-
-	if ((dsp + 100) > (REBINT)SERIES_REST(DS_Series)) 
-		Trap0(RE_STACK_OVERFLOW); //Expand_Stack();
 
 	// Get list of words:
 	words = VAL_FUNC_WORDS(func);
@@ -653,6 +656,8 @@ x*/	static REBINT Do_Args_Light(REBVAL *func, REBVAL *path, REBSER *block, REBCN
 	// Go thru the word list args:
 	ds = dsp;
 	for (; NOT_END(args); args++, ds++) {
+
+		func = &DS_Base[func_offset]; //DS_Base could be changed
 
 		//if (Trace_Flags) Trace_Arg(ds - dsp, args, path);
 
@@ -709,6 +714,9 @@ more_path:
 				ds = dsp;
 				args = BLK_SKIP(words, 1);
 				for (; NOT_END(args); args++, ds++) {
+					if (!IS_WORD(path)) {
+						Trap1(RE_BAD_REFINE, path);
+					}
 					if (IS_REFINEMENT(args) && VAL_WORD_CANON(args) == VAL_WORD_CANON(path)) {
 						SET_TRUE(DS_VALUE(ds)); // set refinement stack value true
 						path++;				// remove processed refinement
@@ -728,8 +736,7 @@ more_path:
 		}
 
 		if (THROWN(DS_VALUE(ds))) {
-			// Store THROWN value in TOS, so that Do_Next can handle it.
-			*DS_TOP = *DS_VALUE(ds);
+			*DS_TOP = *DS_VALUE(ds); /* for Do_Next detection */
 			return index;
 		}
 
@@ -869,7 +876,8 @@ eval_func:
 			Debug_Value(word, 4, 0);
 			Dump_Values(value, 4);
 		}
-		index = Do_Args(value, 0, block, index+1); // uses old DSF, updates DSP
+		index = Do_Args(dsf + 3, 0, block, index+1); // uses old DSF, updates DSP
+		value = DSF_FUNC(dsf); //reevaluate value, because stack could be expanded in Do_Args
 eval_func2:
 		// Evaluate the function:
 		DSF = dsf;	// Set new DSF
@@ -924,12 +932,15 @@ eval_func2:
 			//Debug_Fmt("v: %r", value);
 			// Value returned only for functions that need evaluation (but not GET_PATH):
 			if (value && ANY_FUNC(value)) {
+				REBCNT offset = 0;
 				if (IS_OP(value)) Trap_Type(value); // (because prior value is wiped out above)
 				// Can be object/func or func/refinements or object/func/refinement:
 				dsf = Push_Func(TRUE, block, index, VAL_WORD_SYM(word), value); // Do not unset TOS1 (it is the value)
 				value = DS_TOP;
-				index = Do_Args(value, word+1, block, index+1);
+				offset = value - DS_Base;
 				ftype = VAL_TYPE(value)-REB_NATIVE;
+				index = Do_Args(offset, word+1, block, index+1);
+				value = &DS_Base[offset]; //restore in case the stack is expanded
 				goto eval_func2;
 			} else
 				index++;
@@ -961,6 +972,10 @@ eval_func2:
 
 	case ET_END:
 		 return END_FLAG;
+
+	case ET_INVALID:
+		 Trap1(RE_NO_VALUE, value);
+		 break;
 
 	default:
 		//Debug_Fmt("Bad eval: %d %s", VAL_TYPE(value), Get_Type_Name(value));
@@ -1055,9 +1070,12 @@ eval_func2:
 {
 	REBOL_STATE state;
 	REBVAL *tos;
+	jmp_buf *Last_Halt_State = Halt_State;
 
 	PUSH_STATE(state, Saved_State);
 	if (SET_JUMP(state)) {
+		/* Halt_State might become invalid, restore the one above */
+		Halt_State = Last_Halt_State;
 		POP_STATE(state, Saved_State);
 		Catch_Error(DS_NEXT); // Stores error value here
 		return TRUE;
@@ -1089,14 +1107,34 @@ eval_func2:
 **
 ***********************************************************************/
 {
-	REBINT start = DSP + 1;
+	REBCNT len = 0;
+	REBSER *ser = NULL;
+	REBVAL blk;
+	enum REBOL_Types type;
+
+	if (into != NULL) {
+		ser = VAL_SERIES(into);
+		type = VAL_TYPE(into);
+		len = VAL_INDEX(into) + SERIES_LEN(block) - index;
+	} else {
+		ser = Make_Block(SERIES_TAIL(block) - index);
+		if (ser == NULL)
+			Crash(RE_NO_MEMORY);
+		type = REB_BLOCK;
+		len = 0;
+	}
+
+	VAL_SET(&blk, type);
+	VAL_SERIES(&blk) = ser;
+	VAL_INDEX(&blk) = len;
+	VAL_SERIES_SIDE(&blk) = 0;
+	DS_PUSH(&blk); //push here avoid the blk being GC'ed later
 
 	while (index < BLK_LEN(block)) {
 		index = Do_Next(block, index, 0);
 		if (THROWN(DS_TOP)) return;
+		Append_Val(ser, DS_POP);
 	}
-
-	Copy_Stack_Values(start, into);
 }
 
 
@@ -1114,6 +1152,28 @@ eval_func2:
 	REBSER *ser = 0;
 	REBCNT idx = 0;
 
+	REBCNT len = 0;
+	REBSER *dest_ser = NULL;
+	REBVAL blk;
+	enum REBOL_Types type;
+
+	if (into != NULL) {
+		dest_ser = VAL_SERIES(into);
+		type = VAL_TYPE(into);
+		len = VAL_INDEX(into) + SERIES_LEN(block) - index;
+	} else {
+		dest_ser = Make_Block(SERIES_LEN(block) - index);
+		if (dest_ser == NULL) Crash(RE_NO_MEMORY);
+		type = REB_BLOCK;
+		len = 0;
+	}
+
+	VAL_SET(&blk, type);
+	VAL_SERIES(&blk) = dest_ser;
+	VAL_INDEX(&blk) = len;
+	VAL_SERIES_SIDE(&blk) = 0;
+	DS_PUSH(&blk); //push here avoid the blk being GC'ed later
+
 	if (IS_BLOCK(words)) {
 		ser = VAL_SERIES(words);
 		idx = VAL_INDEX(words);
@@ -1123,11 +1183,11 @@ eval_func2:
 		if (IS_WORD(val)) {
 			// Check for keyword:
 			if (ser && NOT_FOUND != Find_Word(ser, idx, VAL_WORD_CANON(val))) {
-				DS_PUSH(val);
+				Append_Val(dest_ser, val);
 				continue;
 			}
 			v = Get_Var(val);
-			DS_PUSH(v);
+			Append_Val(dest_ser, v);
 		}
 		else if (IS_PATH(val)) {
 			if (ser) {
@@ -1135,20 +1195,19 @@ eval_func2:
 				v = VAL_BLK_DATA(val);
 				if (IS_WORD(v)) {
 					if (NOT_FOUND != Find_Word(ser, idx, VAL_WORD_CANON(v))) {
-						DS_PUSH(val);
+						Append_Val(dest_ser, val);
 						continue;
 					}
 				}
 			}
 			v = val;
 			Do_Path(&v, 0); // pushes val on stack
+			Append_Val(dest_ser, DS_POP);
 		}
-		else DS_PUSH(val);
+		else Append_Val(dest_ser, val);
 		// No need to check for unwinds (THROWN) here, because unwinds should
 		// never be accessible via words or paths.
 	}
-
-	Copy_Stack_Values(start, into);
 }
 
 
@@ -1158,8 +1217,28 @@ eval_func2:
 /*
 ***********************************************************************/
 {
-	REBINT start = DSP + 1;
-	REBVAL *val;
+	REBCNT len = 0;
+	REBSER *ser = NULL;
+	REBVAL blk;
+	REBVAL *val = NULL;
+	enum REBOL_Types type;
+
+	if (into != NULL) {
+		ser = VAL_SERIES(into);
+		type = VAL_TYPE(into);
+		len = VAL_INDEX(into) + SERIES_LEN(block) - index;
+	} else {
+		ser = Make_Block(SERIES_LEN(block) - index);
+		if (ser == NULL) Crash(RE_NO_MEMORY);
+		type = REB_BLOCK;
+		len = 0;
+	}
+
+	VAL_SET(&blk, type);
+	VAL_SERIES(&blk) = ser;
+	VAL_INDEX(&blk) = len;
+	VAL_SERIES_SIDE(&blk) = 0;
+	DS_PUSH(&blk); //push here avoid the blk being GC'ed later
 
 	while (index < BLK_LEN(block)) {
 		if (IS_SET_WORD(val = BLK_SKIP(block, index))) {
@@ -1168,9 +1247,9 @@ eval_func2:
 		} else
 			index = Do_Next(block, index, 0);
 		if (THROWN(DS_TOP)) return;
+		Append_Val(ser, DS_POP);
 	}
 
-	Copy_Stack_Values(start, into);
 }
 
 
@@ -1259,36 +1338,64 @@ eval_func2:
 {
 	REBVAL *value;
 	REBINT start = DSP + 1;
+	REBCNT len = 0;
+	REBINT needs_free = 0;
+	REBSER *ser = NULL;
+	REBVAL blk;
+	enum REBOL_Types type;
+
+	if (into != NULL) {
+		ser = VAL_SERIES(into);
+		type = VAL_TYPE(into);
+		len = VAL_INDEX(into) + VAL_BLK_LEN(block);
+	} else {
+		ser = Make_Block(VAL_BLK_LEN(block));
+		if (ser == NULL) Crash(RE_NO_MEMORY);
+		type = REB_BLOCK;
+		len = 0;
+		needs_free = 1;
+	}
+
+	VAL_SET(&blk, type);
+	VAL_SERIES(&blk) = ser;
+	VAL_INDEX(&blk) = len;
+	VAL_SERIES_SIDE(&blk) = 0;
+	DS_PUSH(&blk); //push here avoid the blk being GC'ed later
 
 	for (value = VAL_BLK_DATA(block); NOT_END(value); value++) {
 		if (IS_PAREN(value)) {
 			// Eval the paren, and leave result on the stack:
-			DO_BLK(value);
-			DSP++; // !!!DSP temp
-			if (THROWN(DS_TOP)) return;
+			REBVAL *paren = DO_BLK(value);
+			if (THROWN(paren)) {
+				if (needs_free) Free_Series(ser);
+				DSP ++;
+				return;
+			}
 
 			// If result is a block, and not /only, insert its contents:
-			if (IS_BLOCK(DS_TOP) && !only) {
-				// Append series to the stack:
-				SERIES_TAIL(DS_Series) = DSP; // overwrites TOP value
-				Append_Series(DS_Series, (REBYTE *)VAL_BLK_DATA(DS_TOP), VAL_BLK_LEN(DS_TOP));
-				DSP = SERIES_TAIL(DS_Series) - 1;
-				// Note: stack may have moved
+			if (IS_BLOCK(paren) && !only) {
+				// Append series:
+				Append_Series(ser, (REBYTE *)VAL_BLK_DATA(paren), VAL_BLK_LEN(paren));
 			}
-			else if (IS_UNSET(DS_TOP)) DS_DROP; // remove unset values
+			else if (!IS_UNSET(paren)) Append_Val(ser, paren); //don't append result if unset is returned
 		}
 		else if (deep) {
-			if (IS_BLOCK(value)) Compose_Block(value, TRUE, only, 0);
+			if (IS_BLOCK(value)) {
+				Compose_Block(value, TRUE, only, 0);
+				Append_Val(ser, DS_POP);
+			}
 			else {
-				DS_PUSH(value);
+				REBVAL tmp = *value;
 				if (ANY_BLOCK(value)) // Include PATHS
-					VAL_SERIES(DS_TOP) = Copy_Block(VAL_SERIES(value), 0);
+					VAL_SERIES(&tmp) = Copy_Block(VAL_SERIES(value), 0);
+				Append_Val(ser, &tmp);
 			}
 		}
-		else DS_PUSH(value);
+		else {
+			Append_Val(ser, value);
+		}
 	}
 
-	Copy_Stack_Values(start, into);
 }
 
 
@@ -1337,6 +1444,7 @@ eval_func2:
 		// Copy block contents to stack:
 		n = VAL_BLK_LEN(args);
 		if (len < n) n = len;
+		if (start + n + 100 > SERIES_REST(DS_Series)) Expand_Stack(STACK_MIN);
 		memcpy(&DS_Base[start], BLK_SKIP(block, index), n * sizeof(REBVAL));
 		DSP = start + n - 1;
 	}
@@ -1372,6 +1480,7 @@ eval_func2:
 
 	// Evaluate the function:
 	DSF = dsf;
+	func = DSF_FUNC(dsf); //stack could be expanded
 	Func_Dispatch[ftype](func);
 	DSP = dsf;
 	DSF = PRIOR_DSF(dsf);
@@ -1401,6 +1510,10 @@ eval_func2:
 	func = DSF_FUNC(dsf); // for safety
 	words = VAL_FUNC_WORDS(func);
 	ds = SERIES_TAIL(words)-1;	// length of stack fill below
+	if (DSP + ds + 100 > SERIES_REST(DS_Series)) {//unlikely
+		Expand_Stack(STACK_MIN);
+		func = DSF_FUNC(dsf); //reevaluate func
+	}
 
 	// Gather arguments from C stack:
 	for (; ds > 0; ds--) {
@@ -1623,6 +1736,7 @@ eval_func2:
 {
 	REBOL_STATE state;
 	REBVAL *val;
+	jmp_buf *Last_Saved_State = Saved_State;
 //	static D = 0;
 //	int depth = D++;
 
@@ -1631,6 +1745,8 @@ eval_func2:
 	PUSH_STATE(state, Halt_State);
 	if (SET_JUMP(state)) {
 //		Debug_Fmt("Throw Halt %d", depth);
+		/* Saved_State might become invalid, restore the one above */
+		Saved_State = Last_Saved_State;
 		POP_STATE(state, Halt_State);
 		Catch_Error(DS_NEXT); // Stores error value here
 		return TRUE;
@@ -1742,7 +1858,7 @@ eval_func2:
 	VAL_ERR_VALUE(err) = TASK_THIS_VALUE;
 	VAL_ERR_SYM(err) = 0;
 
-	longjmp(*Halt_State, 1);
+	LONG_JUMP(*Halt_State, 1);
 }
 
 

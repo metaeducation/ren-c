@@ -56,7 +56,7 @@
 	}
 
 	// Convert file name to OS format, let it GC later.
-	if (!(ser = Value_To_OS_Path(path)))
+	if (!(ser = Value_To_OS_Path(path, TRUE)))
 		Trap1(RE_BAD_FILE_PATH, path);
 	
 	file->file.path = (REBCHR*)(ser->data);
@@ -204,8 +204,11 @@ REBINT Mode_Syms[] = {
 	// Convert to string or block of strings.
 	// NOTE: This code is incorrect for files read in chunks!!!
 	if (args & (AM_READ_STRING | AM_READ_LINES)) {
-		ser = Decode_UTF_String(BIN_HEAD(ser), file->actual, -1);
-		Set_String(ds, ser);
+		REBSER *nser = Decode_UTF_String(BIN_HEAD(ser), file->actual, -1);
+		if (nser == NULL) {
+			Trap0(RE_BAD_DECODE);
+		}
+		Set_String(ds, nser);
 		if (args & AM_READ_LINES) Set_Block(ds, Split_Lines(ds));
 	}
 }
@@ -353,13 +356,14 @@ REBINT Mode_Syms[] = {
 		if (opened) {
 			OS_DO_DEVICE(file, RDC_CLOSE);
 			Cleanup_File(file);
-			Free_Port_State(port);
 		}
 
 		if (file->error) Trap_Port(RE_READ_ERROR, port, file->error);
 		break;
 
 	case A_APPEND:
+		if (!(IS_BINARY(D_ARG(2)) || IS_STRING(D_ARG(2)) || IS_BLOCK(D_ARG(2))))
+			Trap1(RE_INVALID_ARG, D_ARG(2));
 		file->file.index = file->file.size;
 		SET_FLAG(file->modes, RFM_RESEEK);
 
@@ -399,7 +403,6 @@ REBINT Mode_Syms[] = {
 		if (opened) {
 			OS_DO_DEVICE(file, RDC_CLOSE);
 			Cleanup_File(file);
-			Free_Port_State(port);
 		}
 
 		if (file->error) Trap1(RE_WRITE_ERROR, path);
@@ -427,7 +430,6 @@ REBINT Mode_Syms[] = {
 		if (IS_OPEN(file)) {
 			OS_DO_DEVICE(file, RDC_CLOSE);
 			Cleanup_File(file);
-			Free_Port_State(port);
 		}
 		break;
 
@@ -445,7 +447,7 @@ REBINT Mode_Syms[] = {
 			Setup_File(file, 0, path);
 
 			// Convert file name to OS format:
-			if (!(target = Value_To_OS_Path(D_ARG(2))))
+			if (!(target = Value_To_OS_Path(D_ARG(2), TRUE)))
 				Trap1(RE_BAD_FILE_PATH, D_ARG(2));
 			file->data = BIN_DATA(target);
 			OS_DO_DEVICE(file, RDC_RENAME);

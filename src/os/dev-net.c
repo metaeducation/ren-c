@@ -57,6 +57,7 @@ void Signal_Device(REBREQ *req, REBINT type);
 DEVICE_CMD Listen_Socket(REBREQ *sock);
 
 #ifdef TO_WIN32
+typedef int socklen_t;
 extern HWND Event_Handle; // For WSAAsync API
 #endif
 
@@ -70,6 +71,7 @@ extern HWND Event_Handle; // For WSAAsync API
 static void Set_Addr(SOCKAI *sa, long ip, int port)
 {
 	// Set the IP address and port number in a socket_addr struct.
+	memset(sa, 0, sizeof(*sa));
 	sa->sin_family = AF_INET;
 	sa->sin_addr.s_addr = ip;  //htonl(ip); NOTE: REBOL stays in network byte order
 	sa->sin_port = htons((unsigned short)port);
@@ -98,8 +100,7 @@ static REBOOL Nonblocking_Mode(SOCKET sock)
 	flags = fcntl(sock, F_GETFL, 0);
 	flags |= O_NONBLOCK;
 	//else flags &= ~O_NONBLOCK;
-	fcntl(sock, F_SETFL, flags);
-	return TRUE;
+	return fcntl(sock, F_SETFL, flags) >= 0;
 #endif
 }
 
@@ -354,7 +355,15 @@ static REBOOL Nonblocking_Mode(SOCKET sock)
 	if (GET_FLAG(sock->modes, RST_LISTEN))
 		return Listen_Socket(sock);
 
-	if (GET_FLAG(sock->state, RSM_CONNECT)) return DR_DONE; // already connected
+	if (GET_FLAG(sock->state, RSM_CONNECT)) return DR_DONE; // already connected 
+
+	if (GET_FLAG(sock->modes, RST_UDP)) {
+		CLR_FLAG(sock->state, RSM_ATTEMPT);
+		SET_FLAG(sock->state, RSM_CONNECT);
+		Get_Local_IP(sock);
+		Signal_Device(sock, EVT_CONNECT);
+		return DR_DONE; // done
+	}
 
 	Set_Addr(&sa, sock->net.remote_ip, sock->net.remote_port);
 	result = connect(sock->socket, (struct sockaddr *)&sa, sizeof(sa));
@@ -422,9 +431,12 @@ static REBOOL Nonblocking_Mode(SOCKET sock)
 {
 	int result;
 	long len;
+	SOCKAI remote_addr;
+	socklen_t addr_len = sizeof(remote_addr);
 	int mode = (sock->command == RDC_READ ? RSM_RECEIVE : RSM_SEND);
 
-	if (!GET_FLAG(sock->state, RSM_CONNECT)) {
+	if (!GET_FLAG(sock->state, RSM_CONNECT)
+		&&!GET_FLAG(sock->modes, RST_UDP)) {
 		sock->error = -18;
 		return DR_ERROR;
 	}
@@ -432,11 +444,13 @@ static REBOOL Nonblocking_Mode(SOCKET sock)
 	SET_FLAG(sock->state, mode);
 
 	// Limit size of transfer:
-	len = MIN(sock->length, MAX_TRANSFER);
+	len = MIN(sock->length - sock->actual, MAX_TRANSFER);
 
 	if (mode == RSM_SEND) {
 		// If host is no longer connected:
-		result = send(sock->socket, sock->data, len, 0);
+		Set_Addr(&remote_addr, sock->net.remote_ip, sock->net.remote_port);
+		result = sendto(sock->socket, sock->data, len, 0,
+						(struct sockaddr*)&remote_addr, addr_len);
 		WATCH2("send() len: %d actual: %d\n", len, result);
 
 		if (result >= 0) {
@@ -446,15 +460,21 @@ static REBOOL Nonblocking_Mode(SOCKET sock)
 				Signal_Device(sock, EVT_WROTE);
 				return DR_DONE;
 			}
+			SET_FLAG(sock->flags, RRF_ACTIVE); /* notify OS_WAIT of activity */
 			return DR_PEND;
 		}
 		// if (result < 0) ...
 	}
 	else {
-		result = recv(sock->socket, sock->data, len, 0);
+		result = recvfrom(sock->socket, sock->data, len, 0,
+						  (struct sockaddr*)&remote_addr, &addr_len);
 		WATCH2("recv() len: %d result: %d\n", len, result);
 
 		if (result > 0) {
+			if (GET_FLAG(sock->modes, RST_UDP)) {
+				sock->net.remote_ip = remote_addr.sin_addr.s_addr;
+				sock->net.remote_port = ntohs(remote_addr.sin_port);
+			}
 			sock->actual = result;
 			Signal_Device(sock, EVT_READ);
 			return DR_DONE;
@@ -583,7 +603,7 @@ lserr:
 	news->net.remote_port = ntohs(sa.sin_port);
 	Get_Local_IP(news);
 
-	//Nonblocking_Mode(news->socket);  ???Needed?
+	Nonblocking_Mode(news->socket);
 
 	Attach_Request((REBREQ**)&sock->data, news);
 	Signal_Device(sock, EVT_ACCEPT);
@@ -592,7 +612,6 @@ lserr:
 	// accept additional connections.
 	return DR_PEND;
 }
-
 
 /***********************************************************************
 **
