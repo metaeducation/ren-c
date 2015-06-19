@@ -1,3 +1,6 @@
-[submodule "src/libffi"]
-	path = src/libffi
+[submodule "external/libffi"]
+	path = external/libffi
 	url = git://github.com/atgreen/libffi.git
+[submodule "test"]
+	path = test
+	url = https://github.com/metaeducation/ren-c-test
