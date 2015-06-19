@@ -170,7 +170,7 @@
 
 /***********************************************************************
 **
-*/	static REBCNT Make_Word_Name(REBYTE *str, REBCNT len)
+*/	static REBCNT Make_Word_Name(const REBYTE *str, REBCNT len)
 /*
 **		Allocates and copies the text string of the word.
 **
@@ -186,7 +186,7 @@
 
 /***********************************************************************
 **
-*/	REBCNT Make_Word(REBYTE *str, REBCNT len)
+*/	REBCNT Make_Word(const REBYTE *str, REBCNT len)
 /*
 **		Given a string and its length, compute its hash value,
 **		search for a match, and if not found, add it to the table.
@@ -206,13 +206,13 @@
 
 	//REBYTE *sss = Get_Sym_Name(1);	// (Debugging method)
 
-	if (len == 0) len = LEN_BYTES(str);
+	if (len == 0) len = strlen(AS_CCHARS(str));
 
 	// If hash part of word table is too dense, expand it:
 	if (PG_Word_Table.series->tail > PG_Word_Table.hashes->tail/2)
 		Expand_Word_Table();
 
-	ASSERT((SERIES_TAIL(PG_Word_Table.series) == SERIES_TAIL(Bind_Table)), RP_BIND_TABLE_SIZE);
+	assert(SERIES_TAIL(PG_Word_Table.series) == SERIES_TAIL(Bind_Table));
 
 	// If word symbol part of word table is full, expand it:
 	if (SERIES_FULL(PG_Word_Table.series)) {
@@ -220,7 +220,7 @@
 	}
 	if (SERIES_FULL(Bind_Table)) {
 		Extend_Series(Bind_Table, 256);
-		CLEAR_SERIES(Bind_Table);
+		memset(SERIES_DATA(Bind_Table), NUL, SERIES_SPACE(Bind_Table));
 	}
 
 	size   = (REBINT)PG_Word_Table.hashes->tail;
@@ -331,29 +331,29 @@ make_sym:
 
 /***********************************************************************
 **
-*/	REBYTE *Get_Sym_Name(REBCNT num)
+*/	const REBYTE *Get_Sym_Name(REBCNT num)
 /*
 ***********************************************************************/
 {
-	if (num == 0 || num >= PG_Word_Table.series->tail) return (REBYTE*)"???";
+	if (num == 0 || num >= PG_Word_Table.series->tail) return AS_CBYTES("???");
 	return VAL_SYM_NAME(BLK_SKIP(PG_Word_Table.series, num));
 }
 
 
 /***********************************************************************
 **
-*/	REBYTE *Get_Word_Name(REBVAL *value)
+*/	const REBYTE *Get_Word_Name(const REBVAL *value)
 /*
 ***********************************************************************/
 {
 	if (value) return Get_Sym_Name(VAL_WORD_SYM(value));
-	return (REBYTE*)"(unnamed)";
+	return AS_CBYTES("(unnamed)");
 }
 
 
 /***********************************************************************
 **
-*/	REBYTE *Get_Type_Name(REBVAL *value)
+*/	const REBYTE *Get_Type_Name(const REBVAL *value)
 /*
 ***********************************************************************/
 {
@@ -363,7 +363,7 @@ make_sym:
 
 /***********************************************************************
 **
-*/	REBINT Compare_Word(REBVAL *s, REBVAL *t, REBFLG is_case)
+*/	REBINT Compare_Word(const REBVAL *s, const REBVAL *t, REBFLG is_case)
 /*
 **		Compare the names of two words and return the difference.
 **		Note that words are kept UTF8 encoded.
@@ -375,13 +375,13 @@ make_sym:
 	REBYTE *tp = VAL_WORD_NAME(t);
 
 	// Use a more strict comparison than normal:
-	if (is_case) return CMP_BYTES(sp, tp);
+	if (is_case) return strcmp(AS_CHARS(sp), AS_CHARS(tp));
 
 	// They are the equivalent words:
 	if (VAL_WORD_CANON(s) == VAL_WORD_CANON(t)) return 0;
 
 	// They must be differ by case:
-	return Compare_UTF8(sp, tp, LEN_BYTES(tp)) + 2;
+	return Compare_UTF8(sp, tp, strlen(AS_CHARS(tp))) + 2;
 }
 
 
@@ -418,6 +418,7 @@ make_sym:
 	// The bind table. Used to cache context indexes for given symbols.
 	Bind_Table = Make_Series(SERIES_REST(PG_Word_Table.series), 4, FALSE);
 	KEEP_SERIES(Bind_Table, "bind table"); // numeric table
-	CLEAR_SERIES(Bind_Table);
+	memset(SERIES_DATA(Bind_Table), NUL, SERIES_SPACE(Bind_Table));
+
 	Bind_Table->tail = PG_Word_Table.series->tail;
 }

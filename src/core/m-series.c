@@ -31,138 +31,6 @@
 
 /***********************************************************************
 **
-*/	void Expand_Series(REBSER *series, REBCNT index, REBCNT delta)
-/*
-**		Expand a series at a particular index point by the number
-**		number of units specified by delta.
-**
-**			index - where space is expanded (but not cleared)
-**			delta - number of UNITS to expand (keeping terminator)
-**			tail  - will be updated
-**
-**			        |<---rest--->|
-**			<-bias->|<-tail->|   |
-**			+--------------------+
-**			|       abcdefghi    |
-**			+--------------------+
-**			        |    |
-**			        data index
-**
-**		If the series has enough space within it, then it will be used,
-**		otherwise the series data will be reallocated.
-**
-**		When expanded at the head, if bias space is available, it will
-**		be used (if it provides enough space).
-**
-**		WARNING: never use direct pointers into the series data, as the
-**		series data can be relocated in memory.
-**
-***********************************************************************/
-{
-	REBCNT start;
-	REBCNT size;
-	REBCNT extra;
-	REBCNT wide;
-	REBSER *newser, swap;
-	REBUPT n;
-	REBCNT x;
-
-	if (delta == 0) return;
-
-	// Optimized case of head insertion:
-	if (index == 0 && SERIES_BIAS(series) >= delta) {
-		series->data -= SERIES_WIDE(series) * delta;
-		SERIES_TAIL(series) += delta;
-		SERIES_REST(series) += delta;
-		SERIES_SUB_BIAS(series, delta);
-		return;
-	}
-
-	// Range checks:
-	if (delta & 0x80000000) Trap0(RE_PAST_END); // 2GB max
-	if (index > series->tail) index = series->tail; // clip
-
-	// Width adjusted variables:
-	wide  = SERIES_WIDE(series);
-	start = index * wide;
-	extra = delta * wide;
-	size  = (series->tail + 1) * wide;
-
-	// Do we need to expand the current series allocation?
-	// WARNING: Do not use ">=" below or newser size may be the same!
-	if ((size + extra) > SERIES_SPACE(series)) {
-		if (IS_LOCK_SERIES(series)) Crash(RP_LOCKED_SERIES);
-		//DISABLE_GC; // Don't let GC occur just for an expansion.
-
-		if (Reb_Opts->watch_expand) {
-			Debug_Fmt("Expand %x wide: %d tail: %d delta: %d", series, wide, series->tail, delta);
-		}
-
-		// Create a new series that is bigger.
-		// Have we recently expanded the same series?
-		x = 1;
-		n = (REBUPT)(Prior_Expand[0]);
-		do {
-			if (Prior_Expand[n] == series) {
-				x = series->tail + delta + 1; // Double the size
-				break;
-			}
-			if (++n >= MAX_EXPAND_LIST) n = 1;
-		} while (n != (REBUPT)(Prior_Expand[0]));
-#ifdef DEBUGGING
-		Print_Num("Expand:", series->tail + delta + 1);
-#endif
-		newser = Make_Series(series->tail + delta + x, wide, TRUE);
-		// If necessary, add series to the recently expanded list:
-		if (Prior_Expand[n] != series) {
-			n = (REBUPT)(Prior_Expand[0]) + 1;
-			if (n >= MAX_EXPAND_LIST) n = 1;
-			Prior_Expand[n] = series;
-		}
-		Prior_Expand[0] = (REBSER*)n; // start next search here
-		Prop_Series(newser, series);
-		//ENABLE_GC;
-
-		// Copy the series up to the expansion point:
-		memcpy(newser->data, series->data, start);
-
-		// Copy the series after the expansion point:
-		// In AT_TAIL cases, this just moves the terminator to the new tail.
-		memcpy(newser->data + start + extra, series->data + start, size - start);
-
-		newser->tail = series->tail + delta;
-
-		// Swap new and old series, then free the old one.
-		// This seems silly, but this method isolates us from
-		// needing to know the internals series headers.
-		swap = *series;
-		*series = *newser;
-		*newser = swap;
-		Free_Series(newser);
-		SERIES_SET_BIAS(series, 0); // be sure it is reset
-
-		PG_Reb_Stats->Series_Expanded++;	// Metric
-		CHECK_MEMORY(3);
-		return;
-	}
-
-	// No expansion was need. Slide data down if necessary.
-	// Note that the tail is always moved here. This is probably faster
-	// than doing the computation to determine if it is needs to be done.
-	memmove(series->data + start + extra, series->data + start, size - start);
-	series->tail += delta;
-
-	if ((SERIES_TAIL(series) + SERIES_BIAS(series)) * wide >= SERIES_TOTAL(series)) {
-		Dump_Series(series, "Overflow");
-		ASSERT(0, RP_OVER_SERIES);
-	}
-
-	CHECK_MEMORY(3);
-}
-
-
-/***********************************************************************
-**
 */	void Extend_Series(REBSER *series, REBCNT delta)
 /*
 **		Extend a series at its end without affecting its tail index.
@@ -196,7 +64,7 @@
 
 /***********************************************************************
 **
-*/	void Append_Series(REBSER *series, REBYTE *data, REBCNT len)
+*/	void Append_Series(REBSER *series, const REBYTE *data, REBCNT len)
 /*
 **		Append value(s) onto the tail of a series.  The len is
 **		the number of units (bytes, REBVALS, etc.) of the data,
@@ -211,13 +79,17 @@
 
 	EXPAND_SERIES_TAIL(series, len);
 	memcpy(series->data + (wide * tail), data, wide * len);
-	CLEAR(series->data + (wide * series->tail), wide); // terminator
+
+	// !!! A value-based series REB_END is not canon; it only needs to
+	// write the type byte.  Review cost of testing series width vs. writes
+
+	memset(series->data + (wide * series->tail), NUL, wide); // terminator
 }
 
 
 /***********************************************************************
 **
-*/	void Append_Mem_Extra(REBSER *series, REBYTE *data, REBCNT len, REBCNT extra)
+*/	void Append_Mem_Extra(REBSER *series, const REBYTE *data, REBCNT len, REBCNT extra)
 /*
 **		An optimized function for appending raw memory bytes to
 **		a byte-sized series. The series will be expanded if room
@@ -277,7 +149,7 @@
 
 /***********************************************************************
 **
-*/	REBSER *Copy_Series_Value(REBVAL *value)
+*/	REBSER *Copy_Series_Value(const REBVAL *value)
 /*
 **		Copy a series from its value structure.
 **		Index does not need to be at head location.
@@ -341,7 +213,10 @@
 			SERIES_SET_BIAS(series, 0);
 			SERIES_REST(series) += len;
 			series->data -= SERIES_WIDE(series) * len;
-			CLEAR(series->data, SERIES_WIDE(series)); // terminate
+
+			// !!! Review in light of REB_END and non-canon...
+
+			memset(series->data, NUL, SERIES_WIDE(series)); // terminate
 		} else {
 			// Add bias to head:
 			SERIES_ADD_BIAS(series, len);
@@ -363,7 +238,7 @@
 	// Clip if past end and optimize the remove operation:
 	if (len + index >= series->tail) {
 		series->tail = index;
-		CLEAR(series->data + start, SERIES_WIDE(series));
+		memset(series->data + start, NUL, SERIES_WIDE(series));
 		return;
 	}
 
@@ -387,7 +262,15 @@
 {
 	if (series->tail == 0) return;
 	series->tail--;
-	CLEAR(series->data + SERIES_WIDE(series) * series->tail, SERIES_WIDE(series));
+
+	// !!! REB_END is not canon, so you only have to write the type
+	// byte... not zero everything.  Review.
+
+	memset(
+		series->data + SERIES_WIDE(series) * series->tail,
+		NUL,
+		SERIES_WIDE(series)
+	);
 }
 
 
@@ -422,7 +305,10 @@
 {
 	series->tail = 0;
 	if (SERIES_BIAS(series)) Reset_Bias(series);
-	CLEAR(series->data, SERIES_WIDE(series)); // re-terminate
+
+	// !!! REB_END is not canon, only type byte needs to be written
+
+	memset(series->data, NUL, SERIES_WIDE(series)); // re-terminate
 }
 
 
@@ -437,7 +323,10 @@
 {
 	series->tail = 0;
 	if (SERIES_BIAS(series)) Reset_Bias(series);
-	CLEAR(series->data, SERIES_SPACE(series));
+
+	// !!! Review in light of REB_END only needing type bytes as zero
+
+	memset(series->data, NUL, SERIES_SPACE(series));
 }
 
 
@@ -454,7 +343,10 @@
 	if (SERIES_BIAS(series)) Reset_Bias(series);
 	EXPAND_SERIES_TAIL(series, size);
 	series->tail = 0;
-	CLEAR(series->data, SERIES_WIDE(series)); // re-terminate
+
+	// !!! Review in light of REB_END only needing type bytes as zero
+
+	memset(series->data, NUL, SERIES_WIDE(series)); // re-terminate
 }
 
 
@@ -466,27 +358,15 @@
 **
 ***********************************************************************/
 {
-	CLEAR(series->data + SERIES_WIDE(series) * series->tail, SERIES_WIDE(series));
-}
+	// !!! Note that since REB_END values are not canonized, terminating
+	// a value-based series only needs to write the byte indicating the
+	// type...the other fields may remain uninitialized.
 
-
-/***********************************************************************
-**
-*/	void Shrink_Series(REBSER *series, REBCNT units)
-/*
-**		Shrink a series back to a given maximum size. All
-**		content is deleted and tail is reset.
-**
-**		WARNING: This should only be used for strings or other
-**		series that cannot contain internally referenced values.
-**
-***********************************************************************/
-{
-	if (SERIES_REST(series) <= units) return;
-	//DISABLE_GC;
-	Free_Series_Data(series, FALSE);
-	Make_Series_Data(series, units);
-	//ENABLE_GC;
+	memset(
+		series->data + SERIES_WIDE(series) * series->tail,
+		NUL,
+		SERIES_WIDE(series)
+	);
 }
 
 

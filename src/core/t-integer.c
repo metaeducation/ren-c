@@ -33,7 +33,7 @@
 
 /***********************************************************************
 **
-*/	REBINT CT_Integer(REBVAL *a, REBVAL *b, REBINT mode)
+*/	REBINT CT_Integer(const REBVAL *a, const REBVAL *b, REBINT mode)
 /*
 ***********************************************************************/
 {
@@ -53,7 +53,7 @@
 	REBVAL *val2 = D_ARG(2);
 	REBI64 num;
 	REBI64 arg;
-	REBINT n;
+	REBCNT n;
 
 	REBU64 p, a, b; // for overflow detection
 	REBCNT a1, a0, b1, b0;
@@ -232,15 +232,15 @@
 		else if (IS_MONEY(val))
 			num = deci_to_int(VAL_DECI(val));
 		else if (IS_ISSUE(val)) {
-			REBYTE *bp;
+			const REBYTE *bp;
 			REBCNT len;
 			bp = Get_Word_Name(val);
-			len = strlen(bp);
+			len = strlen(AS_CCHARS(bp));
 			n = MIN(MAX_HEX_LEN, len);
 			if (Scan_Hex(bp, &num, n, n) == 0) goto is_bad;
 		}
 		else if (IS_BINARY(val)) { // must be before STRING!
-			REBYTE	*bp;
+			const REBYTE *bp;
 			n = VAL_LEN(val);
 			if (n > sizeof(REBI64)) n = sizeof(REBI64);
 			num = 0;
@@ -248,7 +248,7 @@
 				num = (num << 8) | *bp;
 		}
 		else if (ANY_STR(val)) {
-			REBYTE *bp;
+			const REBYTE *bp;
 			REBCNT len;
 			bp = Qualify_String(val, MAX_INT_LEN, &len, FALSE);
 			if (memchr(bp, '.', len)) {

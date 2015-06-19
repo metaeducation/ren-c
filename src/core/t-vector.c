@@ -32,7 +32,7 @@
 #define	SET_VECTOR(v,s) VAL_SERIES(v)=(s), VAL_INDEX(v)=0, VAL_SET(v, REB_VECTOR)
 
 // Encoding Format:
-//		stored in series->size for now
+//		stored in series->extra.size for now
 //		[d d d d   d d d d   0 0 0 0   t s b b]
 
 // Encoding identifiers:
@@ -51,9 +51,11 @@ enum {
 	VTSF16,		// not used
 	VTSF32,
 	VTSF64,
+	
+	VTS_MAX
 };
 
-#define VECT_TYPE(s) ((s)->size & 0xff)
+#define VECT_TYPE(s) ((s)->extra.size & 0xff)
 
 static REBCNT bit_sizes[4] = {8, 16, 32, 64};
 
@@ -154,7 +156,7 @@ void set_vect(REBCNT bits, REBYTE *data, REBCNT n, REBI64 i, REBDEC f) {
 }
 
 
-void Set_Vector_Row(REBSER *ser, REBVAL *blk)
+void Set_Vector_Row(REBSER *ser, const REBVAL *blk)
 {
 	REBCNT idx = VAL_INDEX(blk);
 	REBCNT len = VAL_LEN(blk);
@@ -176,7 +178,7 @@ void Set_Vector_Row(REBSER *ser, REBVAL *blk)
 				f = VAL_DECIMAL(val);
 				if (bits <= VTUI64) i = (REBINT)(f);
 			}
-			else Trap_Arg(val);
+			else vTrap_Arg(val);
 			//if (n >= ser->tail) Expand_Vector(ser);
 			set_vect(bits, ser->data, n++, i, f);
 		}
@@ -203,10 +205,9 @@ void Set_Vector_Row(REBSER *ser, REBVAL *blk)
 	REBCNT type = VECT_TYPE(VAL_SERIES(vect));
 	REBSER *ser = Make_Block(len);
 	REBCNT n;
-	REBVAL *val;
+	REBVAL *val = BLK_HEAD(ser);
 
 	if (len > 0) {
-		val = BLK_HEAD(ser);
 		for (n = VAL_INDEX(vect); n < VAL_TAIL(vect); n++, val++) {
 			VAL_SET(val, (type >= VTSF08) ? REB_DECIMAL : REB_INTEGER);
 			VAL_INT64(val) = get_vect(type, data, n); // can be int or decimal
@@ -222,7 +223,7 @@ void Set_Vector_Row(REBSER *ser, REBVAL *blk)
 
 /***********************************************************************
 **
-*/	REBINT Compare_Vector(REBVAL *v1, REBVAL *v2)
+*/	REBINT Compare_Vector(const REBVAL *v1, const REBVAL *v2)
 /*
 ***********************************************************************/
 {
@@ -318,7 +319,7 @@ void Set_Vector_Row(REBSER *ser, REBVAL *blk)
 	if (len > 0x7fffffff) return 0;
 	ser = Make_Series(len+1, bits/8, TRUE); // !!! can width help extend the len?
 	LABEL_SERIES(ser, "make vector");
-	CLEAR(ser->data, len*bits/8);
+	memset(ser->data, NUL, (len * bits) / 8);
 	ser->tail = len;  // !!! another way to do it?
 
 	// Store info about the vector (could be moved to flags if necessary):
@@ -328,14 +329,14 @@ void Set_Vector_Row(REBSER *ser, REBVAL *blk)
 	case 32: bits = 2; break;
 	case 64: bits = 3; break;
 	}
-	ser->size = (dims << 8) | (type << 3) | (sign << 2) | bits;
+	ser->extra.size = (dims << 8) | (type << 3) | (sign << 2) | bits;
 
 	return ser;
 }
 
 /***********************************************************************
 **
-*/	REBVAL *Make_Vector_Spec(REBVAL *bp, REBVAL *value)
+*/	REBVAL *Make_Vector_Spec(const REBVAL *bp, REBVAL *value)
 /*
 **	Make a vector from a block spec.
 **
@@ -358,7 +359,7 @@ void Set_Vector_Row(REBSER *ser, REBVAL *blk)
 	REBINT bits = 32;
 	REBCNT size = 1;
 	REBSER *vect;
-	REBVAL *iblk = 0;
+	const REBVAL *iblk = 0;
 
 	// UNSIGNED
 	if (IS_WORD(bp) && VAL_WORD_CANON(bp) == SYM_UNSIGNED) { 
@@ -394,8 +395,8 @@ void Set_Vector_Row(REBSER *ser, REBVAL *blk)
 
 	// SIZE
 	if (IS_INTEGER(bp)) {
+		if (Int32(bp) < 0) return 0;
 		size = Int32(bp);
-		if (size < 0) return 0;
 		bp++;
 	}
 
@@ -432,7 +433,7 @@ void Set_Vector_Row(REBSER *ser, REBVAL *blk)
 
 /***********************************************************************
 **
-*/	REBFLG MT_Vector(REBVAL *out, REBVAL *data, REBCNT type)
+*/	REBFLG MT_Vector(REBVAL *out, const REBVAL *data, REBCNT type)
 /*
 ***********************************************************************/
 {
@@ -443,7 +444,7 @@ void Set_Vector_Row(REBSER *ser, REBVAL *blk)
 
 /***********************************************************************
 **
-*/	REBINT CT_Vector(REBVAL *a, REBVAL *b, REBINT mode)
+*/	REBINT CT_Vector(const REBVAL *a, const REBVAL *b, REBINT mode)
 /*
 ***********************************************************************/
 {
@@ -478,7 +479,7 @@ void Set_Vector_Row(REBSER *ser, REBVAL *blk)
 	vect = VAL_SERIES(pvs->value);
 	vp   = vect->data;
 	bits = VECT_TYPE(vect);
-	dims = vect->size >> 8;
+	dims = vect->extra.size >> 8;
 
 	if (pvs->setval == 0) {
 
@@ -503,11 +504,25 @@ void Set_Vector_Row(REBSER *ser, REBVAL *blk)
 
 	if (IS_INTEGER(pvs->setval)) {
 		i = VAL_INT64(pvs->setval);
-		if (bits > VTUI64) f = (REBDEC)(i);
+		if (bits > VTUI64) f = cast(REBDEC, i);
+		else {
+			// !!! REVIEW: f was not set in this case; compiler caught the
+			// unused parameter.  So fill with distinctive garbage to make it
+			// easier to search for if it ever is.
+			f = -646.699; 
+		}
 	}
 	else if (IS_DECIMAL(pvs->setval)) {
 		f = VAL_DECIMAL(pvs->setval);
-		if (bits <= VTUI64) i = (REBINT)(f);
+		if (bits <= VTUI64) i = cast(REBINT, f);
+		else {
+			// !!! REVIEW: i was not set in this case; compiler caught the
+			// unused parameter.  So fill with distinctive garbage to make it
+			// easier to search for if it ever is.
+			i = -646699; 
+
+			return PE_BAD_SET;
+		}
 	}
 	else return PE_BAD_SET;
 
@@ -555,8 +570,8 @@ void Set_Vector_Row(REBSER *ser, REBVAL *blk)
 
 		// CASE: make vector! 100
 		if (IS_INTEGER(arg) || IS_DECIMAL(arg)) {
+			if (Int32s(arg, 0) < 0) goto bad_make;
 			size = Int32s(arg, 0);
-			if (size < 0) goto bad_make;
 			ser = Make_Vector(0, 0, 1, 32, size);
 			SET_VECTOR(value, ser);
 			break;
@@ -574,13 +589,13 @@ void Set_Vector_Row(REBSER *ser, REBVAL *blk)
 		goto bad_make;
 
 	case A_LENGTHQ:
-		//bits = 1 << (vect->size & 3);
+		//bits = 1 << (vect->extra.size & 3);
 		SET_INTEGER(D_RET, vect->tail);
 		return R_RET;
 
 	case A_COPY:
 		ser = Copy_Series(vect);
-		ser->size = vect->size; // attributes
+		ser->extra.size = vect->extra.size; // attributes
 		SET_VECTOR(value, ser);
 		break;
 
@@ -611,7 +626,7 @@ bad_make:
 	REBSER *vect = VAL_SERIES(value);
 	REBYTE *data = vect->data;
 	REBCNT bits  = VECT_TYPE(vect);
-//	REBCNT dims  = vect->size >> 8;
+//	REBCNT dims  = vect->extra.size >> 8;
 	REBCNT len;
 	REBCNT n;
 	REBCNT c;
@@ -631,7 +646,8 @@ bad_make:
 		REBCNT type = (bits >= VTSF08) ? REB_DECIMAL : REB_INTEGER;
 		Pre_Mold(value, mold);
 		if (!GET_MOPT(mold, MOPT_MOLD_ALL)) Append_Byte(mold->series, '[');
-		if (bits >= VTUI08 && bits <= VTUI64) Append_Bytes(mold->series, "unsigned ");
+		if (bits >= VTUI08 && bits <= VTUI64)
+			Append_Bytes(mold->series, AS_CBYTES("unsigned "));
 		Emit(mold, "N I I [", type+1, bit_sizes[bits & 3], len);
 		if (len) New_Indented_Line(mold);
 	}

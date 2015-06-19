@@ -41,11 +41,6 @@
 #include "sys-deci-funcs.h"
 #include "sys-dec-to-char.h"
 
-#ifndef TEST_MODE
-#define OVERFLOW_ERROR Trap0(RE_OVERFLOW)
-#define DIVIDE_BY_ZERO_ERROR Trap0(RE_ZERO_DIVIDE)
-#endif
-
 #define IS_DIGIT(c) ((c) >= '0' && (c) <= '9')
 
 #define MASK32(i) (REBCNT)(i)
@@ -59,6 +54,22 @@ static const deci deci_one = {1u, 0u, 0u, 0u, 0};
 static const deci deci_minus_one = {1u, 0u, 0u, 1u, 0};
 /* end of deci constants */
 
+#ifndef TEST_MODE
+	#define OVERFLOW_ERROR \
+		do { \
+			assert(FALSE); /* fail here in Debug build */ \
+			Throw_Error(Make_Error(RE_OVERFLOW, 0, 0, 0)); \
+			return deci_minus_one; \
+		} while (0)
+
+	#define DIVIDE_BY_ZERO_ERROR \
+		do { \
+			assert(FALSE); /* fail here in Debug build */ \
+			Throw_Error(Make_Error(RE_ZERO_DIVIDE, 0, 0, 0)); \
+			return deci_minus_one; \
+		} while (0)
+#endif
+
 static const REBCNT min_int64_t_as_deci[] = {0u, 0x80000000u, 0u};
 
 /*
@@ -67,14 +78,14 @@ static const REBCNT min_int64_t_as_deci[] = {0u, 0x80000000u, 0u};
 	0 means a = b;
 	1 means a > b;
 */
-INLINE REBINT m_cmp (REBINT n, const REBCNT a[], const REBCNT b[]) {
+REBINT m_cmp (REBINT n, const REBCNT a[], const REBCNT b[]) {
 	REBINT i;
 	for (i = n - 1; i >= 0; i--)
 		if (a[i] != b[i]) return a[i] < b[i] ? -1 : 1;
 	return 0;
 }
 
-INLINE REBFLG m_is_zero (REBINT n, const REBCNT a[]) {
+REBFLG m_is_zero (REBINT n, const REBCNT a[]) {
 	REBINT i;
 	for (i = 0; (i < n) && (a[i] == 0); i++);
 	return i == n;
@@ -120,7 +131,7 @@ static const REBCNT P26_1[] = {3825205247u, 3704098002u, 5421010u};
 	Computes max decimal shift left for nonzero significand a with length 3;
 	using double arithmetic;
 */
-INLINE REBINT max_shift_left (const REBCNT a[]) {
+REBINT max_shift_left (const REBCNT a[]) {
     REBINT i;
 	i = (REBINT)(log10((a[2] * two_to_32 + a[1]) * two_to_32 + a[0]) + 0.5);
     return m_cmp (3, P[i], a) <= 0 ? 25 - i : 26 - i;
@@ -161,7 +172,7 @@ static const REBCNT Q[][6] = {
     to fit length 3;
 	using double arithmetic;
 */
-INLINE REBINT min_shift_right (const REBCNT a[6]) {
+REBINT min_shift_right (const REBCNT a[6]) {
     REBINT i;
     if (m_cmp (6, a, P26) < 0) return 0;
     i = (REBINT) (log10 (
@@ -172,7 +183,7 @@ INLINE REBINT min_shift_right (const REBCNT a[6]) {
 }
 
 /* Finds out if deci a is zero */
-REBFLG deci_is_zero (const deci a) {
+REBFLG deci_is_zero (deci a) {
 	return (a.m0 == 0) && (a.m1 == 0) && (a.m2 == 0);
 }
 
@@ -193,7 +204,7 @@ deci deci_abs (deci a) {
 	a must be "large enough" to contain the sum;
 	using 64-bit arithmetic;
 */
-INLINE void m_add_1 (REBCNT *a, const REBCNT b) {
+void m_add_1 (REBCNT *a, const REBCNT b) {
 	REBU64 c = (REBU64) b;
 	while (c) {
 		c += (REBU64) *a;
@@ -206,7 +217,7 @@ INLINE void m_add_1 (REBCNT *a, const REBCNT b) {
 	Subtracts unsigned 32-bit value b from significand a;
 	using 64-bit arithmetic;
 */
-INLINE void m_subtract_1 (REBCNT *a, const REBCNT b) {
+void m_subtract_1 (REBCNT *a, const REBCNT b) {
 	REBI64 c = - (REBI64) b;
 	while (c) {
 		c += 0xffffffffu + (REBI64)*a + 1;
@@ -219,7 +230,7 @@ INLINE void m_subtract_1 (REBCNT *a, const REBCNT b) {
 	Adds significand b to significand a yielding sum s;
 	using 64-bit arithmetic;
 */
-INLINE void m_add (REBINT n, REBCNT s[], const REBCNT a[], const REBCNT b[]) {
+void m_add (REBINT n, REBCNT s[], const REBCNT a[], const REBCNT b[]) {
 	REBU64 c = (REBU64) 0;
 	REBINT i;
 	for (i = 0; i < n; i++) {
@@ -235,7 +246,7 @@ INLINE void m_add (REBINT n, REBCNT s[], const REBCNT a[], const REBCNT b[]) {
 	returns carry flag to signal whether the result is negative;
 	using 64-bit arithmetic;
 */
-INLINE REBINT m_subtract (REBINT n, REBCNT d[], const REBCNT a[], const REBCNT b[]) {
+REBINT m_subtract (REBINT n, REBCNT d[], const REBCNT a[], const REBCNT b[]) {
 	REBU64 c = (REBU64) 1;
 	REBINT i;
 	for (i = 0; i < n; i++) {
@@ -250,7 +261,7 @@ INLINE REBINT m_subtract (REBINT n, REBCNT d[], const REBCNT a[], const REBCNT b
 	Negates significand a;
 	using 64-bit arithmetic;
 */
-INLINE void m_negate (REBINT n, REBCNT a[]) {
+void m_negate (REBINT n, REBCNT a[]) {
 	REBU64 c = (REBU64) 1;
 	REBINT i;
 	for (i = 0; i < n; i++) {
@@ -265,7 +276,7 @@ INLINE void m_negate (REBINT n, REBCNT a[]) {
 	p and a may be the same;
 	using 64-bit arithmetic;
 */
-INLINE void m_multiply_1 (REBINT n, REBCNT p[], const REBCNT a[], REBCNT b) {
+void m_multiply_1 (REBINT n, REBCNT p[], const REBCNT a[], REBCNT b) {
 	REBINT j;
 	REBU64 f = b, g = (REBU64) 0;
 	for (j = 0; j < n; j++) {
@@ -281,7 +292,7 @@ INLINE void m_multiply_1 (REBINT n, REBCNT p[], const REBCNT a[], REBCNT b) {
 	a must be longer than the complete result;
 	n is the initial length of a; 
 */
-INLINE void dsl (REBINT n, REBCNT a[], REBINT shift) {
+void dsl (REBINT n, REBCNT a[], REBINT shift) {
 	REBINT shift1;
 	for (; shift > 0; shift -= shift1) {
 		shift1 = 9 <= shift ? 9 : shift;
@@ -294,10 +305,10 @@ INLINE void dsl (REBINT n, REBCNT a[], REBINT shift) {
 	Multiplies significand a by significand b yielding the product p;
 	using 64-bit arithmetic;
 */
-INLINE void m_multiply (REBCNT p[/* n + m */], REBINT n, const REBCNT a[], REBINT m, const REBCNT b[]) {
+void m_multiply (REBCNT p[/* n + m */], REBINT n, const REBCNT a[], REBINT m, const REBCNT b[]) {
 	REBINT i, j;
 	REBU64 f, g;
-	memset (p, 0, (n + m) * sizeof (REBCNT));
+	memset(p, NUL, (n + m) * sizeof(REBCNT));
 	for (i = 0; i < m; i++) {
 		f = (REBU64) b[i];
 		g = (REBU64) 0;
@@ -316,7 +327,7 @@ INLINE void m_multiply (REBCNT p[/* n + m */], REBINT n, const REBCNT a[], REBIN
 	b must be nonzero!
 	using 64-bit arithmetic;
 */
-INLINE REBCNT m_divide_1 (REBINT n, REBCNT q[], const REBCNT a[], REBCNT b) {
+REBCNT m_divide_1 (REBINT n, REBCNT q[], const REBCNT a[], REBCNT b) {
 	REBINT i;
 	REBU64 f = 0, g = b;
 	for (i = n - 1; i >= 0; i--) {
@@ -335,7 +346,7 @@ INLINE REBCNT m_divide_1 (REBINT n, REBCNT q[], const REBCNT a[], REBCNT b) {
 	2 - exactly half of the least significant unit truncated
 	3 - more than half of the least significant unit truncated
 */
-INLINE void dsr (REBINT n, REBCNT a[], REBINT shift, REBINT *t_flag) {
+void dsr (REBINT n, REBCNT a[], REBINT shift, REBINT *t_flag) {
 	REBCNT remainder, divisor;
 	REBINT shift1;
 	for (; shift > 0; shift -= shift1) {
@@ -353,7 +364,7 @@ INLINE void dsr (REBINT n, REBCNT a[], REBINT shift, REBINT *t_flag) {
 	ea and eb are exponents;
 	ta and tb are truncate flags like above;
 */
-INLINE void make_comparable (REBCNT a[4], REBINT *ea, REBINT *ta, REBCNT b[4], REBINT *eb, REBINT *tb) {
+void make_comparable (REBCNT a[4], REBINT *ea, REBINT *ta, REBCNT b[4], REBINT *eb, REBINT *tb) {
 	REBCNT *c;
 	REBINT *p;
 	REBINT shift, shift1;
@@ -396,7 +407,7 @@ INLINE void make_comparable (REBCNT a[4], REBINT *ea, REBINT *ta, REBCNT b[4], R
 	if (shift > 26) {
 		/* significand underflow */
 		if (!m_is_zero (3, b)) *tb = 1; 		 
-		memset (b, 0, 3 * sizeof (REBCNT));
+		memset(b, NUL, 3 * sizeof(REBCNT));
 		*eb = *ea;
 		return;
 	}
@@ -497,7 +508,7 @@ deci int_to_deci (REBI64 a) {
 }
 
 /* using 64-bit arithmetic */
-REBI64 deci_to_int (const deci a) {
+REBI64 deci_to_int (deci a) {
 	REBCNT sa[] = {a.m0, a.m1, a.m2, 0};
 	REBINT ta;
 	REBI64 result;
@@ -506,29 +517,29 @@ REBI64 deci_to_int (const deci a) {
 	if (m_is_zero (3, sa) || (a.e < -26)) return (REBI64) 0;
 	
 	/* handle exponent */
-	if (a.e >= 20) OVERFLOW_ERROR;
+	if (a.e >= 20) Trap0(RE_OVERFLOW);
 	if (a.e > 0)
-		if (m_cmp (3, P[20 - a.e], sa) <= 0) OVERFLOW_ERROR;
+		if (m_cmp (3, P[20 - a.e], sa) <= 0) Trap0(RE_OVERFLOW);
 		else dsl (3, sa, a.e);
 	else if (a.e < 0) dsr (3, sa, -a.e, &ta);
 	
 	/* convert significand to integer */
-	if (m_cmp (3, sa, min_int64_t_as_deci) > 0) OVERFLOW_ERROR;
+	if (m_cmp (3, sa, min_int64_t_as_deci) > 0) Trap0(RE_OVERFLOW);
 	result = ((REBI64) sa[1] << 32) | (REBI64) sa[0];
 	
 	/* handle sign */
 	if (a.s) result = -result;
-	if (!a.s && (result < 0)) OVERFLOW_ERROR;
+	if (!a.s && (result < 0)) Trap0(RE_OVERFLOW);
 	 
 	return result;
 }
 
-REBDEC deci_to_decimal (const deci a) {
+REBDEC deci_to_decimal (deci a) {
 	/* use STRTOD */
 	char *se;
     REBYTE b [34];
 	deci_to_string(b, a, 0, '.');
-	return STRTOD((char *)b, &se);
+	return STRTOD(AS_CHARS(b), &se);
 }
 
 #define DOUBLE_DIGITS 17
@@ -538,11 +549,11 @@ deci decimal_to_deci (REBDEC a) {
 	REBI64 d; /* decimal significand */
 	int e; /* decimal exponent */
 	int s; /* sign */
-	REBYTE *c;
-	REBYTE *rve;
+	char *c;
+	char *rve;
 
     /* convert a to string */
-	c = (REBYTE *) dtoa (a, 0, DOUBLE_DIGITS, &e, &s, (char **) &rve);
+	c = dtoa (a, 0, DOUBLE_DIGITS, &e, &s, &rve);
 
 	e -= (rve - c);
 
@@ -550,8 +561,8 @@ deci decimal_to_deci (REBDEC a) {
 
 	result.s = s;
 	result.m2 = 0;
-	result.m1 = (REBCNT)(d >> 32);
-	result.m0 = (REBCNT)d;
+	result.m1 = cast(REBCNT, d >> 32);
+	result.m0 = cast(REBCNT, d);
 	result.e = 0;
 
 	return deci_ldexp(result, e);
@@ -563,7 +574,7 @@ deci decimal_to_deci (REBDEC a) {
 	ta is a truncate flag as described above;
 	*f is supposed to be in range [-128; 127];
 */
-INLINE void m_ldexp (REBCNT a[4], REBINT *f, REBINT e, REBINT ta) {
+void m_ldexp (REBCNT a[4], REBINT *f, REBINT e, REBINT ta) {
 	/* take care of zero significand */
 	if (m_is_zero (3, a)) {
 		*f = 0;
@@ -571,7 +582,7 @@ INLINE void m_ldexp (REBCNT a[4], REBINT *f, REBINT e, REBINT ta) {
 	}
 
 	/* take care of exponent overflow */
-	if (e >= 281) OVERFLOW_ERROR;
+	if (e >= 281) vTrap0(RE_OVERFLOW);
 	if (e < -281) e = -282;
 	
 	*f += e;
@@ -580,7 +591,7 @@ INLINE void m_ldexp (REBCNT a[4], REBINT *f, REBINT e, REBINT ta) {
 	if (*f < -128) {
 		if (*f < -154) {
 			/* underflow */
-			memset (a, 0, 3 * sizeof (REBCNT));
+			memset(a, NUL, 3 * sizeof(REBCNT));
 			*f = 0;
 			return;						
 		}
@@ -593,7 +604,8 @@ INLINE void m_ldexp (REBCNT a[4], REBINT *f, REBINT e, REBINT ta) {
 	
 	/* decimally shift the significand to the left if needed */
 	if (*f > 127) {
-		if ((*f >= 153) || (m_cmp (3, P[153 - *f], a) <= 0)) OVERFLOW_ERROR;
+		if ((*f >= 153) || (m_cmp (3, P[153 - *f], a) <= 0))
+			vTrap0(RE_OVERFLOW);
 		dsl (3, a, *f - 127);
 		*f = 127;
 	}
@@ -883,7 +895,7 @@ deci deci_half_floor (deci a, deci b) {
 	denormalize
 }
 
-deci deci_multiply (const deci a, const deci b) {
+deci deci_multiply (deci a, deci b) {
 	deci c;
 	REBCNT sa[] = {a.m0, a.m1, a.m2}, sb[] = {b.m0, b.m1, b.m2}, sc[7];
 	REBINT shift, tc = 0, e, f = 0;
@@ -920,7 +932,7 @@ deci deci_multiply (const deci a, const deci b) {
 #define MAX_N 7
 #define MAX_M 3
 
-INLINE void m_divide (
+void m_divide (
 	REBCNT q[/* n - m + 1 */],
 	REBCNT r[/* m */],
 	const REBINT n,
@@ -1044,7 +1056,7 @@ deci deci_divide (deci a, deci b) {
 
 #define MAX_NB 7
 
-INLINE REBINT m_to_string (REBYTE *s, REBINT n, const REBCNT a[]) {
+REBINT m_to_string (REBYTE *s, REBINT n, const REBCNT a[]) {
     REBCNT r, b[MAX_NB];
 	REBYTE v[10 * MAX_NB + 1], *vmax, *k;
     
@@ -1053,26 +1065,26 @@ INLINE REBINT m_to_string (REBYTE *s, REBINT n, const REBCNT a[]) {
     
     if (n == 0) {
     	s[0] = '0';
-    	s[1] = '\0';
+    	s[1] = NUL;
     	return 1;
 	}
 	
     /* copy a to preserve it */
-	memcpy (b, a, n * sizeof (REBCNT));
+	memcpy(b, a, n * sizeof(REBCNT));
 	
 	k = vmax = v + 10 * MAX_NB;
-	*k = '\0';
+	*k = NUL;
     while (n > 0) {
     	r = m_divide_1 (n, b, b, 10u);
 		if (b[n - 1] == 0) n--;
 		*--k = '0' + r;
 	}
 
-	strcpy(s, k);
+	strcpy(AS_CHARS(s), AS_CHARS(k));
     return vmax - k;
 }
 
-REBINT deci_to_string(REBYTE *string, const deci a, const REBYTE symbol, const REBYTE point) {
+REBINT deci_to_string(REBYTE *string, deci a, char symbol, char point) {
 	REBYTE *s = string;
 	REBCNT sa[] = {a.m0, a.m1, a.m2};
 	REBINT j, e;
@@ -1084,7 +1096,7 @@ REBINT deci_to_string(REBYTE *string, const deci a, const REBYTE symbol, const R
 
 	if (deci_is_zero (a)) {
 		*s++ = '0';
-		*s = '\0';
+		*s = NUL;
 		return s-string;
 	}
 
@@ -1096,23 +1108,26 @@ REBINT deci_to_string(REBYTE *string, const deci a, const REBYTE symbol, const R
 			if (e < -6) {
 				s++;
 				if (j > 1) {
-					memmove(s + 1, s, j);
+					memmove(AS_CHARS(s + 1), AS_CHARS(s), j);
 					*s = point;
 					s += j;
 				}
 				*s++ = 'e';
-				INT_TO_STR(e - 1, s);
-				s = strchr(s, '\0');
+				// !!! writes the integer (e - 1) into s and then searches
+				// to update the pointer to after the null, why not use a
+				// return result from INT_TO_STR?
+				INT_TO_STR(e - 1, AS_CHARS(s));
+				s = AS_BYTES(strchr(AS_CHARS(s), NUL));
 			} else { /* -6 <= e <= 0 */
-				memmove(s + 2 - e, s, j + 1);
+				memmove(AS_CHARS(s + 2 - e), AS_CHARS(s), j + 1);
 				*s++ = '0';
 				*s++ = point;
-				memset(s, '0', -e);
+				memset(AS_CHARS(s), '0', -e);
 				s += j - e;
 			}
 		} else { /* 0 < e < j */
 			s += e;
-			memmove(s + 1, s, j - e + 1);
+			memmove(AS_CHARS(s + 1), AS_CHARS(s), j - e + 1);
 			*s++ = point;
 			s += j - e;
 		}
@@ -1121,8 +1136,9 @@ REBINT deci_to_string(REBYTE *string, const deci a, const REBYTE symbol, const R
 	} else { /* j < e */
 			s += j;
 			*s++ = 'e';
-			INT_TO_STR(e - j, s);
-			s = strchr(s, '\0');
+			// !!! See notes above on "why not use INT_TO_STR return result"
+			INT_TO_STR(e - j, AS_CHARS(s));
+			s = AS_BYTES(strchr(AS_CHARS(s), NUL));
 	}
 	
 	return s - string;
@@ -1180,8 +1196,8 @@ deci deci_mod (deci a, deci b) {
 }
 
 /* in case of error the function returns deci_zero and *endptr = s */
-deci string_to_deci (REBYTE *s, REBYTE **endptr) {
-	REBYTE *a = s;
+deci string_to_deci(const REBYTE *s, const REBYTE **endptr) {
+	const REBYTE *a = s;
 	deci b = {0, 0, 0, 0, 0};
 	REBCNT sb[] = {0, 0, 0, 0}; /* significand */
 	REBINT f = 0, e = 0; /* exponents */
@@ -1281,7 +1297,7 @@ REBFLG deci_is_same (deci a, deci b) {
 	return (a.m0 == b.m0) && (a.m1 == b.m1) && (a.m2 == b.m2) && (a.s == b.s) && (a.e == b.e);
 }
 
-deci binary_to_deci(REBYTE s[12]) {
+deci binary_to_deci(const REBYTE s[12]) {
 	deci d;
 	/* this looks like the only way, since the order of bits in bitsets is compiler-dependent */
 	d.s = s[0] >> 7;
@@ -1298,7 +1314,7 @@ deci binary_to_deci(REBYTE s[12]) {
 	return d;
 }
 
-REBYTE *deci_to_binary(REBYTE s[12], const deci d) {
+REBYTE *deci_to_binary(REBYTE s[12], deci d) {
 	/* this looks like the only way, since the order of bits in bitsets is compiler-dependent */
 	s[0] = d.s << 7 | (REBYTE)d.e >> 1;
 	s[1] = (REBYTE)d.e << 7 | d.m2 >> 16;

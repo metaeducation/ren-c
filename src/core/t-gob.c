@@ -29,8 +29,6 @@
 
 #include "sys-core.h"
 
-void Trap_Temp(void) {Trap0(501);} //!!! temp trap function
-
 const REBCNT Gob_Flag_Words[] = {
 	SYM_RESIZE,      GOBF_RESIZE,
 	SYM_NO_TITLE,    GOBF_NO_TITLE,
@@ -47,7 +45,7 @@ const REBCNT Gob_Flag_Words[] = {
 
 /***********************************************************************
 **
-*/	REBINT CT_Gob(REBVAL *a, REBVAL *b, REBINT mode)
+*/	REBINT CT_Gob(const REBVAL *a, const REBVAL *b, REBINT mode)
 /*
 ***********************************************************************/
 {
@@ -64,19 +62,40 @@ const REBCNT Gob_Flag_Words[] = {
 **
 ***********************************************************************/
 {
-	REBGOB *gob = Make_Node(GOB_POOL);
-	CLEAR(gob, sizeof(REBGOB));
+	REBGOB *gob;
+
+#ifndef NO_MEM_POOLS
+
+	gob = r_cast(REBGOB *, Make_Node(GOB_POOL));
+	memset(gob, NUL, sizeof(*gob));
+
+	gob->resv |= GOB_USED;
+
+#else
+
+	gob = ALLOC(REBGOB);
+	memset(gob, NUL, sizeof(*gob));
+
+	// For now, we always insert new allocations at the head of the linked list
+	gob->prev = NULL;
+	if (PG_Gob_List)
+		PG_Gob_List->prev = gob;
+	gob->next = PG_Gob_List;
+	PG_Gob_List = gob;
+	
+#endif
+
 	GOB_W(gob) = 100;
 	GOB_H(gob) = 100;
-	USE_GOB(gob);
-	if ((GC_Ballast -= Mem_Pools[GOB_POOL].wide) <= 0) SET_SIGNAL(SIG_RECYCLE);
+
+	if ((GC_Ballast -= sizeof(REBGOB)) <= 0) SET_SIGNAL(SIG_RECYCLE);
 	return gob;
 }
 
 
 /***********************************************************************
 **
-*/  REBINT Cmp_Gob(REBVAL *g1, REBVAL *g2)
+*/  REBINT Cmp_Gob(const REBVAL *g1, const REBVAL *g2)
 /*
 ***********************************************************************/
 {
@@ -146,7 +165,7 @@ const REBCNT Gob_Flag_Words[] = {
 ***********************************************************************/
 {
 	REBGOB *par;
-	REBINT i;
+	REBCNT i;
 
 	par = GOB_PARENT(gob);
 	if (par && GOB_PANE(par) && (i = Find_Gob(par, gob)) != NOT_FOUND) {
@@ -218,7 +237,7 @@ const REBCNT Gob_Flag_Words[] = {
 		val = arg++;
 		if (IS_WORD(val)) val = Get_Var(val);
 		if (IS_GOB(val)) {
-			if GOB_PARENT(VAL_GOB(val)) Trap_Temp();
+			if GOB_PARENT(VAL_GOB(val)) vTrap0(RE_MISC);
 			*ptr++ = VAL_GOB(val);
 			GOB_PARENT(VAL_GOB(val)) = gob;
 			SET_GOB_STATE(VAL_GOB(val), GOBS_NEW);
@@ -422,7 +441,7 @@ const REBCNT Gob_Flag_Words[] = {
 		}
 		else if (IS_INTEGER(val)) {
 			SET_GOB_DTYPE(gob, GOBD_INTEGER);
-			SET_GOB_DATA(gob, (void*)(REBIPT)VAL_INT64(val));
+			SET_GOB_DATA(gob, r_cast(REBSER *, cast(REBIPT, VAL_INT64(val))));
 		}
 		else if (IS_NONE(val))
 			SET_GOB_TYPE(gob, GOBT_NONE);
@@ -569,11 +588,13 @@ is_none:
 	while (NOT_END(blk)) {
 		var = blk++;
 		val = blk++;
-		if (!IS_SET_WORD(var)) Trap2(RE_EXPECT_VAL, Get_Type(REB_SET_WORD), Of_Type(var));
+		if (!IS_SET_WORD(var))
+			vTrap2(RE_EXPECT_VAL, Get_Type(REB_SET_WORD), Of_Type(var));
 		if (IS_END(val) || IS_UNSET(val) || IS_SET_WORD(val))
-			Trap1(RE_NEED_VALUE, var);
+			vTrap1(RE_NEED_VALUE, var);
 		val = Get_Simple_Value(val);
-		if (!Set_GOB_Var(gob, var, val)) Trap2(RE_BAD_FIELD_SET, var, Of_Type(val));
+		if (!Set_GOB_Var(gob, var, val))
+			vTrap2(RE_BAD_FIELD_SET, var, Of_Type(val));
 	}
 }
 
@@ -639,7 +660,7 @@ is_none:
 
 /***********************************************************************
 **
-*/	REBFLG MT_Gob(REBVAL *out, REBVAL *data, REBCNT type)
+*/	REBFLG MT_Gob(REBVAL *out, const REBVAL *data, REBCNT type)
 /*
 ***********************************************************************/
 {
@@ -815,7 +836,7 @@ is_none:
 	case A_TAKE:
 		len = D_REF(2) ? Get_Num_Arg(D_ARG(3)) : 1;
 		if (index + len > tail) len = tail - index;
-		if (index < 0 || index >= tail) goto is_none;
+		if (index >= tail) goto is_none;
 		if (!D_REF(2)) { // just one value
 			VAL_SET(val, REB_GOB);
 			VAL_GOB(val) = *GOB_SKIP(gob, index);

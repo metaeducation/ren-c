@@ -45,5 +45,6 @@ enum {
 	FRF_MULTI,
 	FRF_SAVE,
 	FRF_KEEP,
+	FRF_MAX
 };
 

@@ -108,7 +108,7 @@ RL_LIB *RL; // Link back to reb-lib from embedded extensions
     ReleaseDC(NULL, hDC);
 
 	//Copy the image content to DIB
-	COPY_MEM(ppvBits, image, bmlen);
+	memcpy(ppvBits, image, bmlen);
 
 	//Invert alphachannel from the REBOL format
 	for (i = 3;i < bmlen;i+=4){
@@ -168,7 +168,7 @@ RL_LIB *RL; // Link back to reb-lib from embedded extensions
 
 /***********************************************************************
 **
-*/	RXIEXT int RXD_Graphics(int cmd, RXIFRM *frm, REBCEC *data)
+*/	RXIEXT int RXE_Graphics(int cmd, RXIFRM *frm, REBCEC *data)
 /*
 **		Graphics command extension dispatcher.
 **
@@ -379,7 +379,7 @@ RL_LIB *RL; // Link back to reb-lib from embedded extensions
 
 /***********************************************************************
 **
-*/	RXIEXT int RXD_Text(int cmd, RXIFRM *frm, REBCEC *ctx)
+*/	RXIEXT int RXE_Text(int cmd, RXIFRM *frm, REBCEC *ctx)
 /*
 **		DRAW command dispatcher.
 **
@@ -475,7 +475,7 @@ RL_LIB *RL; // Link back to reb-lib from embedded extensions
 
                 w++;
             }
-            OS_Free(words);
+            OS_Free_Mem(words);
             rt_caret(ctx->envr, pcaret, phighlightStart, highlightEnd);
         }
 
@@ -549,7 +549,7 @@ RL_LIB *RL; // Link back to reb-lib from embedded extensions
 
                     case W_TEXT_COLOR:
                         if (type == RXT_TUPLE)
-                            memcpy(font->color,val.bytes + 1 , 4);
+                            memcpy(font->color, val.bytes + 1 , 4);
                         break;
 
                     case W_TEXT_OFFSET:
@@ -590,7 +590,7 @@ RL_LIB *RL; // Link back to reb-lib from embedded extensions
                                             break;
 
                                         case RXT_TUPLE:
-                                            memcpy(font->shadow_color,shadowVal.bytes + 1 , 4);
+                                            memcpy(font->shadow_color, shadowVal.bytes + 1 , 4);
                                             break;
 
                                         case RXT_INTEGER:
@@ -606,7 +606,7 @@ RL_LIB *RL; // Link back to reb-lib from embedded extensions
 
                 w++;
             }
-            OS_Free(words);
+            OS_Free_Mem(words);
             rt_font(ctx->envr, font);
         }
         break;
@@ -687,7 +687,7 @@ RL_LIB *RL; // Link back to reb-lib from embedded extensions
 
                 w++;
             }
-            OS_Free(words);
+            OS_Free_Mem(words);
             rt_para(ctx->envr, para);
         }
         break;
@@ -729,7 +729,7 @@ RL_LIB *RL; // Link back to reb-lib from embedded extensions
 
 /***********************************************************************
 **
-*/	RXIEXT int RXD_Shape(int cmd, RXIFRM *frm, REBCEC *ctx)
+*/	RXIEXT int RXE_Shape(int cmd, RXIFRM *frm, REBCEC *ctx)
 /*
 **		DRAW command dispatcher.
 **
@@ -868,7 +868,7 @@ RL_LIB *RL; // Link back to reb-lib from embedded extensions
 
 /***********************************************************************
 **
-*/	RXIEXT int RXD_Draw(int cmd, RXIFRM *frm, REBCEC *ctx)
+*/	RXIEXT int RXE_Draw(int cmd, RXIFRM *frm, REBCEC *ctx)
 /*
 **		DRAW command dispatcher.
 **
@@ -1215,10 +1215,10 @@ RL_LIB *RL; // Link back to reb-lib from embedded extensions
 **
 ***********************************************************************/
 {
-	RL = RL_Extend((REBYTE *)(&RX_graphics[0]), &RXD_Graphics);
-	RL_Extend((REBYTE *)(&RX_draw[0]), &RXD_Draw);
-	RL_Extend((REBYTE *)(&RX_shape[0]), &RXD_Shape);
-	RL_Extend((REBYTE *)(&RX_text[0]), &RXD_Text);
+	RL = RL_Extend(r_cast(REBYTE *, &RX_graphics[0]), &RXE_Graphics);
+	RL_Extend(r_cast(REBYTE *, &RX_draw[0]), &RXE_Draw);
+	RL_Extend(r_cast(REBYTE *, &RX_shape[0]), &RXE_Shape);
+	RL_Extend(r_cast(REBYTE *, &RX_text[0]), &RXE_Text);
 }
 
 #ifdef OLD__FUNCS_NEED_CONVERSION

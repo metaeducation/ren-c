@@ -88,9 +88,9 @@ typedef struct SHAstate_st
 	unsigned int num;
 	} SHA_CTX;
 
-void SHA1_Init(SHA_CTX *c);
-void SHA1_Update(SHA_CTX *c, unsigned char *data, size_t len);
-void SHA1_Final(unsigned char *md, SHA_CTX *c);
+void SHA1_Init(void *c);
+void SHA1_Update(void *c, unsigned char *data, size_t len);
+void SHA1_Final(unsigned char *md, void *c);
 int SHA1_CtxSize(void);
 //unsigned char *SHA1(unsigned char *d, SHA_LONG n,unsigned char *md);
 //static void SHA1_Transform(SHA_CTX *c, unsigned char *data);
@@ -294,10 +294,10 @@ SHA_LONG __builtin_rol(SHA_LONG,int,int);
 #define K_60_79 0xca62c1d6L
 
 #  ifdef SHA1_ASM
-     void sha1_block_x86(SHA_CTX *c, register SHA_LONG *p, int num);
+	 void sha1_block_x86(SHA_CTX *c, SHA_LONG *p, int num);
 #    define sha1_block sha1_block_x86
 #  else
-     static void sha1_block(SHA_CTX *c, register SHA_LONG *p, int num);
+	 static void sha1_block(SHA_CTX *c, SHA_LONG *p, int num);
 #  endif
 
 
@@ -315,9 +315,9 @@ SHA_LONG __builtin_rol(SHA_LONG,int,int);
 #  define	M_nl2c		nl2c
 #endif
 
-void SHA1_Init(c)
-SHA_CTX *c;
+void SHA1_Init(void *c_opaque)
 	{
+	SHA_CTX *c = (SHA_CTX*)c_opaque;
 	c->h0=INIT_DATA_h0;
 	c->h1=INIT_DATA_h1;
 	c->h2=INIT_DATA_h2;
@@ -328,12 +328,10 @@ SHA_CTX *c;
 	c->num=0;
 	}
 
-void SHA1_Update(c, data, len)
-SHA_CTX *c;
-register unsigned char *data;
-size_t len;
+void SHA1_Update(void *c_opaque, unsigned char *data, size_t len)
 	{
-	register ULONG *p;
+	SHA_CTX *c = (SHA_CTX*)c_opaque;
+	ULONG *p;
 	int ew,ec,sw,sc;
 	ULONG l;
 
@@ -500,12 +498,9 @@ unsigned char *b;
 
 #ifndef SHA1_ASM
 
-static void sha1_block(c, W, num)
-SHA_CTX *c;
-register SHA_LONG *W;
-int num;
+static void sha1_block(SHA_CTX *c, SHA_LONG *W, int num)
 	{
-	register ULONG A,B,C,D,E,T;
+	ULONG A,B,C,D,E,T;
 	ULONG X[16];
 
 	A=c->h0;
@@ -620,13 +615,12 @@ int num;
 	}
 #endif
 
-void SHA1_Final(md, c)
-unsigned char *md;
-SHA_CTX *c;
+void SHA1_Final(unsigned char *md, void *c_opaque)
 	{
-	register int i,j;
-	register ULONG l;
-	register ULONG *p;
+	SHA_CTX *c = (SHA_CTX*)c_opaque;
+	int i,j;
+	ULONG l;
+	ULONG *p;
 	static unsigned char end[4]={0x80,0x00,0x00,0x00};
 	unsigned char *cp=end;
 
@@ -668,7 +662,7 @@ SHA_CTX *c;
 	/* clear stuff, sha1_block may be leaving some stuff on the stack
 	 * but I'm not worried :-) */
 	c->num=0;
-/*	memset((char *)&c,0,sizeof(c));*/
+/*	memset(&c, NUL, sizeof(c));*/
 	}
 
 int SHA1_CtxSize(void) {
@@ -685,11 +679,11 @@ int SHA1_CtxSize(void) {
 	SHA_CTX c;
 	static unsigned char m[SHA_DIGEST_LENGTH];
 
-	if (md == NULL) md=m;
+	if (md == NULL) md = (REBYTE*)m;
 	SHA1_Init(&c);
-	SHA1_Update(&c,d,n);
-	SHA1_Final(md,&c);
-	memset(&c,0,sizeof(c));
-	return(md);
+	SHA1_Update(&c,(unsigned char*)d,n);
+	SHA1_Final((unsigned char*)md,&c);
+	memset(&c, NUL, sizeof(c));
+	return md;
 }
 

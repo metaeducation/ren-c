@@ -32,13 +32,14 @@
 
 /***********************************************************************
 **
-*/	void Dump_Series(REBSER *series, REBYTE *memo)
+*/	void Dump_Series(REBSER *series, const char *memo)
 /*
 ***********************************************************************/
 {
 	if (!series) return;
 	Debug_Fmt(
-		Str_Dump[0], //"%s Series %x %s: Wide: %2d Size: %6d - Bias: %d Tail: %d Rest: %d Flags: %x"
+		//"%s Series %x %s: Wide: %2d Size: %6d - Bias: %d Tail: %d Rest: %d Flags: %x"
+		Str_Dump,
 		memo,
 		series,
 		(SERIES_LABEL(series) ? SERIES_LABEL(series) : "-"),
@@ -61,7 +62,7 @@
 /*
 ***********************************************************************/
 {
-	const max_lines = 120;
+	const REBCNT max_lines = 120;
 	REBYTE buf[2048];
 	REBYTE str[40];
 	REBYTE *cp, *tp;
@@ -117,8 +118,8 @@
 	REBYTE buf[2048];
 	REBYTE *cp;
 	REBCNT l, n;
-	REBCNT *bp = (REBCNT*)vp;
-	REBYTE *type;
+	REBCNT *bp = r_cast(REBCNT *, vp);
+	const REBYTE *type;
 
 	cp = buf;
 	for (l = 0; l < count; l++) {
@@ -127,7 +128,7 @@
 		*cp++ = ':';
 		*cp++ = ' ';
 
-		type = Get_Type_Name((REBVAL*)bp);
+		type = Get_Type_Name(r_cast(REBVAL *, bp));
 		for (n = 0; n < 11; n++) {
 			if (*type) *cp++ = *type++;
 			else *cp++ = ' ';
@@ -184,7 +185,7 @@ xx*/  REBSER *Dump_Value(REBVAL *block, REBSER *series)
 
 	if (VAL_TYPE(block) >= REB_MAX) Crash(RP_DATATYPE+7, VAL_TYPE(block));
 
-	ASSERT2(series, 9997);
+	assert(series);
 	mo.series = series; 
 	Emit(&mo, "T: ", block);
 
@@ -324,10 +325,10 @@ xx*/	void Dump_Bind_Table()
 ***********************************************************************/
 {
 	REBINT n;
-	REBINT nums [] = {
+	REBI64 nums [] = {
 		0,
 		0,
-		(REBINT)Eval_Cycles,
+		Eval_Cycles,
 		Eval_Count,
 		Eval_Dose,
 		Eval_Signals,

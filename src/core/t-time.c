@@ -53,28 +53,35 @@
 	tf->n = (REBCNT)n;
 }
 
+
 /***********************************************************************
 **
-*/	REBI64 Join_Time(REB_TIMEF *tf)
+*/	REBI64 Join_Time(REB_TIMEF *tf, REBFLG neg)
 /*
+**		!! A REB_TIMEF has lost the sign bit available on the REBI64
+**		used for times.  If you want to make it negative, you need
+**		pass in a flag here.  (Flag added to help document the
+**		issue, as previous code falsely tried to judge the sign
+**		of tf->h, which is always positive.)
+**
 ***********************************************************************/
 {
-	REBFLG neg = tf->h < 0;
 	REBI64 t;
 
-	t = tf->h * HR_SEC + tf->m * MIN_SEC + tf->s * SEC_SEC + tf->n;
-	return (neg ? -t : t);
+	t = (tf->h * HR_SEC) + (tf->m * MIN_SEC) + (tf->s * SEC_SEC) + tf->n;
+	return neg ? -t : t;
 }
+
 
 /***********************************************************************
 **
-*/	REBYTE *Scan_Time(REBYTE *cp, REBCNT len, REBVAL *value)
+*/	const REBYTE *Scan_Time(const REBYTE *cp, REBCNT len, REBVAL *value)
 /*
 **		Scan string and convert to time.  Return zero if error.
 **
 ***********************************************************************/
 {
-	REBYTE  *sp;
+	const REBYTE  *sp;
 	REBYTE	merid = FALSE;
 	REBOOL	neg = FALSE;
 	REBINT	part1, part2, part3 = -1;
@@ -140,7 +147,7 @@
 ***********************************************************************/
 {
 	REB_TIMEF tf;
-	REBYTE *fmt;
+	const char *fmt;
 
 	Split_Time(VAL_TIME(value), &tf); // loses sign
 
@@ -156,7 +163,7 @@
 
 /***********************************************************************
 **
-*/	REBINT CT_Time(REBVAL *a, REBVAL *b, REBINT mode)
+*/	REBINT CT_Time(const REBVAL *a, const REBVAL *b, REBINT mode)
 /*
 ***********************************************************************/
 {
@@ -169,7 +176,7 @@
 
 /***********************************************************************
 **
-*/  REBI64 Make_Time(REBVAL *val)
+*/  REBI64 Make_Time(const REBVAL *val_orig)
 /*
 **		Returns NO_TIME if error.
 **
@@ -177,11 +184,19 @@
 {
 	REBI64 secs = 0;
 
+	// !!! Isn't supposed to mutate the input value.  We make a copy, but
+	// don't make a copy of any series or otherwise.
+
+	REBVAL val_copy;
+	REBVAL *val = &val_copy;
+
+	*val = *val_orig;
+
 	if (IS_TIME(val)) {
 		secs = VAL_TIME(val);
 	}
 	else if (IS_STRING(val)) {
-		REBYTE *bp;
+		const REBYTE *bp;
 		REBCNT len;
 		bp = Qualify_String(val, 30, &len, FALSE); // can trap, ret diff str
 		if (!Scan_Time(bp, len, val)) goto no_time;
@@ -240,7 +255,7 @@
 
 /***********************************************************************
 **
-*/	REBFLG MT_Time(REBVAL *out, REBVAL *data, REBCNT type)
+*/	REBFLG MT_Time(REBVAL *out, const REBVAL *data, REBCNT type)
 /*
 ***********************************************************************/
 {
@@ -258,7 +273,7 @@
 
 /***********************************************************************
 **
-*/	REBINT Cmp_Time(REBVAL *v1, REBVAL *v2)
+*/	REBINT Cmp_Time(const REBVAL *v1, const REBVAL *v2)
 /*
 **	Given two times, compare them.
 **
@@ -350,7 +365,7 @@
 			return PE_BAD_SELECT;
 		}
 
-		VAL_TIME(pvs->value) = Join_Time(&tf);
+		VAL_TIME(pvs->value) = Join_Time(&tf, FALSE);
 		return PE_OK;
 	}
 }

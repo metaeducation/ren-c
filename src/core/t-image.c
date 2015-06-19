@@ -35,12 +35,12 @@
 
 #include "sys-core.h"
 
-#define CLEAR_IMAGE(p, x, y) memset(p, 0, x * y * sizeof(long))
+#define CLEAR_IMAGE(p, x, y) memset(p, NUL, x * y * sizeof(long))
 
 
 /***********************************************************************
 **
-*/	REBINT CT_Image(REBVAL *a, REBVAL *b, REBINT mode)
+*/	REBINT CT_Image(const REBVAL *a, const REBVAL *b, REBINT mode)
 /*
 ***********************************************************************/
 {
@@ -56,7 +56,7 @@
 
 /***********************************************************************
 **
-*/	REBFLG MT_Image(REBVAL *out, REBVAL *data, REBCNT type)
+*/	REBFLG MT_Image(REBVAL *out, const REBVAL *data, REBCNT type)
 /*
 ***********************************************************************/
 {
@@ -275,7 +275,7 @@
 
 /***********************************************************************
 **
-*/	REBFLG Valid_Tuples(REBVAL *blk)
+*/	REBFLG Valid_Tuples(const REBVAL *blk)
 /*
 ***********************************************************************/
 {
@@ -327,7 +327,7 @@
 }
 
 #ifdef ndef
-INLINE REBCNT ARGB_To_BGR(REBCNT i)
+REBCNT ARGB_To_BGR(REBCNT i)
 {
 	return
 		((i & 0x00ff0000) >> 16) | // red
@@ -351,7 +351,7 @@ INLINE REBCNT ARGB_To_BGR(REBCNT i)
 
 	// Output RGB image:
 	size = VAL_IMAGE_LEN(value); // # pixels (from index to tail)
-	data = (REBCNT *)VAL_IMAGE_DATA(value);
+	data = r_cast(REBCNT *, VAL_IMAGE_DATA(value));
 	up = Prep_Uni_Series(mold, (size * 6) + (size / 10) + 1);
 
 	for (len = 0; len < size; len++) {
@@ -362,11 +362,11 @@ INLINE REBCNT ARGB_To_BGR(REBCNT i)
 	// Output Alpha channel, if it has one:
 	if (Image_Has_Alpha(value, FALSE)) {
 
-		Append_Bytes(mold->series, "\n} #{");
+		Append_Bytes(mold->series, AS_CBYTES("\n} #{"));
 
 		up = Prep_Uni_Series(mold, (size * 2) + (size / 10) + 1);
 
-		data = (REBCNT *)VAL_IMAGE_DATA(value);
+		data = r_cast(REBCNT *, VAL_IMAGE_DATA(value));
 		for (len = 0; len < size; len++) {
 			if ((len % 10) == 0) *up++ = LF;
 			up = Form_Hex2_Uni(up, *data++ >> 24);
@@ -374,7 +374,7 @@ INLINE REBCNT ARGB_To_BGR(REBCNT i)
 	}
 	*up = 0; // tail already set from Prep.
 
-	Append_Bytes(mold->series, "\n}");
+	Append_Bytes(mold->series, AS_CBYTES("\n}"));
 }
 
 
@@ -417,7 +417,7 @@ INLINE REBCNT ARGB_To_BGR(REBCNT i)
 	img = Make_Series(w * h + 1, sizeof(REBINT), FALSE);
 	LABEL_SERIES(img, "make image");
 	img->tail = w * h;
-	CLEAR(img->data, (img->tail + 1) * sizeof(REBINT));
+	memset(img->data, NUL, (img->tail + 1) * sizeof(REBINT));
 	IMG_WIDE(img) = w;
 	IMG_HIGH(img) = h;
 	return img;
@@ -441,7 +441,7 @@ INLINE REBCNT ARGB_To_BGR(REBCNT i)
 
 /***********************************************************************
 **
-*/	REBVAL *Create_Image(REBVAL *block, REBVAL *val, REBCNT modes)
+*/	REBVAL *Create_Image(const REBVAL *block, REBVAL *val, REBCNT modes)
 /*
 **	Create an image value from components block [pair rgb alpha].
 **
@@ -495,7 +495,8 @@ INLINE REBCNT ARGB_To_BGR(REBCNT i)
 		}
 	}
 	else if (IS_BLOCK(block)) {
-		if (w = Valid_Tuples(block)) Trap_Arg(block+w-1);
+		w = Valid_Tuples(block);
+		if (w) Trap_Arg(block + w - 1);
 		Tuples_To_RGBA(ip, size, VAL_BLK_DATA(block), VAL_LEN(block));
 	}
 	else if (!IS_END(block)) return 0;
@@ -628,7 +629,7 @@ INLINE REBCNT ARGB_To_BGR(REBCNT i)
 	if (action == A_INSERT) {
 		if (index > tail) index = tail;
 		Expand_Series(VAL_SERIES(value), index, dup * part);
-		CLEAR(VAL_BIN(value) + (index * 4), dup * part * 4);
+		memset(VAL_BIN(value) + (index * 4), NUL, dup * part * 4);
 		Reset_Height(value);
 		tail = VAL_TAIL(value);
 		only = 0;

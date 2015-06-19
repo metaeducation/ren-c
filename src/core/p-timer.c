@@ -104,7 +104,7 @@ act_blk:
 
 	case A_OPEN:
 		if (!req) { //!!!
-			req = OS_MAKE_DEVREQ(RDI_EVENT);
+			req = OS_ALLOC_DEVREQ(RDI_EVENT);
 			SET_OPEN(req);
 			OS_DO_DEVICE(req, RDC_CONNECT);		// stays queued
 		}

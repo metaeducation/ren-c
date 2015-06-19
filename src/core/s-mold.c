@@ -32,12 +32,10 @@
 #include "sys-scan.h"
 #include <float.h>
 
-#define STOID static void
-
 #define	MAX_QUOTED_STR	50	// max length of "string" before going to { }
 
 //typedef REBSER *(*MOLD_FUNC)(REBVAL *, REBSER *, REBCNT);
-typedef void (*MOLD_FUNC)(REBVAL *, REB_MOLD *);
+typedef void (*MOLD_FUNC)(const REBVAL *, REB_MOLD *);
 
 //const REBYTE New_Line[4] = {LF, 0};
 
@@ -62,7 +60,7 @@ REBYTE *URL_Escapes;
 enum {
 	ESC_URL = 1,
 	ESC_FILE = 2,
-	ESC_EMAIL = 4,
+	ESC_EMAIL = 4
 };
 
 /***********************************************************************
@@ -75,7 +73,7 @@ enum {
 
 /***********************************************************************
 **
-*/  REBSER *Emit(REB_MOLD *mold, REBYTE *fmt, ...)
+*/  REBSER *Emit(REB_MOLD *mold, const char *fmt, ...)
 /*
 ***********************************************************************/
 {
@@ -83,7 +81,7 @@ enum {
 	REBYTE ender = 0;
 	REBSER *series = mold->series;
 
-	ASSERT2(SERIES_WIDE(series) ==2, 9997);
+	assert(SERIES_WIDE(series) == 2);
 
 	va_start(args, fmt);
 
@@ -96,7 +94,7 @@ enum {
 			Mold_Value(mold, va_arg(args, REBVAL*), TRUE);
 			break;
 		case 'S':	// String of bytes
-			Append_Bytes(series, va_arg(args, REBYTE*));
+			Append_Bytes(series, va_arg(args, const REBYTE*));
 			break;
 		case 'C':	// Char
 			Append_Byte(series, va_arg(args, REBCNT));
@@ -125,7 +123,7 @@ enum {
 			break;
 		case '+':	// Add #[ if mold/all
 			if (GET_MOPT(mold, MOPT_MOLD_ALL)) {
-				Append_Bytes(series, "#[");
+				Append_Bytes(series, AS_CBYTES("#["));
 				ender = ']';
 			}
 			break;
@@ -206,7 +204,10 @@ enum {
 **
 ***********************************************************************/
 {
-	Emit(mold, GET_MOPT(mold, MOPT_MOLD_ALL) ? "#[T " : "make T ", value);
+	if (GET_MOPT(mold, MOPT_MOLD_ALL))
+		Emit(mold, "#[T ", value);
+	else
+		Emit(mold, "make T ", value);
 }
 
 
@@ -263,7 +264,7 @@ enum {
 	// Add proper indentation:
 	if (!GET_MOPT(mold, MOPT_INDENT)) {
 		for (n = 0; n < mold->indent; n++)
-			Append_Bytes(mold->series, "    ");
+			Append_Bytes(mold->series, AS_CBYTES("    "));
 	}
 }
 
@@ -288,7 +289,7 @@ typedef struct REB_Str_Flags {
 } REB_STRF;
 
 
-STOID Sniff_String(REBSER *ser, REBCNT idx, REB_STRF *sf)
+static void Sniff_String(REBSER *ser, REBCNT idx, REB_STRF *sf)
 {
 	// Scan to find out what special chars the string contains?
 	REBYTE *bp = STR_HEAD(ser);
@@ -344,7 +345,7 @@ static REBUNI *Emit_Uni_Char(REBUNI *up, REBUNI chr, REBOOL parened)
 	return up;
 }
 
-STOID Mold_Uni_Char(REBSER *dst, REBUNI chr, REBOOL molded, REBOOL parened)
+static void Mold_Uni_Char(REBSER *dst, REBUNI chr, REBOOL molded, REBOOL parened)
 {
 	REBCNT tail = SERIES_TAIL(dst);
 	REBUNI *up;
@@ -365,22 +366,24 @@ STOID Mold_Uni_Char(REBSER *dst, REBUNI chr, REBOOL molded, REBOOL parened)
 	UNI_TERM(dst);
 }
 
-STOID Mold_String_Series(REBVAL *value, REB_MOLD *mold)
+static void Mold_String_Series(REBVAL *value, REB_MOLD *mold)
 {
 	REBCNT len = VAL_LEN(value);
 	REBSER *ser = VAL_SERIES(value);
 	REBCNT idx = VAL_INDEX(value);
-	REB_STRF sf = {0};
 	REBYTE *bp;
 	REBUNI *up;
 	REBUNI *dp;
 	REBOOL uni = !BYTE_SIZE(ser);
 	REBCNT n;
 	REBUNI c;
+	
+	REB_STRF sf;
+	memset(&sf, NUL, sizeof(sf));
 
 	// Empty string:
 	if (idx >= VAL_TAIL(value)) {
-		Append_Bytes(mold->series, "\"\"");  //Trap0(RE_PAST_END);
+		Append_Bytes(mold->series, AS_CBYTES("\"\""));  //Trap0(RE_PAST_END);
 		return;
 	}
 
@@ -440,7 +443,7 @@ STOID Mold_String_Series(REBVAL *value, REB_MOLD *mold)
 }
 
 #ifdef not_used
-STOID Mold_Issue(REBVAL *value, REB_MOLD *mold)
+static void Mold_Issue(REBVAL *value, REB_MOLD *mold)
 {
 	REBUNI *dp;
 	REBCNT n;
@@ -469,7 +472,7 @@ STOID Mold_Issue(REBVAL *value, REB_MOLD *mold)
 	unencoded within a URL.
 */
 
-STOID Mold_Url(REBVAL *value, REB_MOLD *mold)
+static void Mold_Url(REBVAL *value, REB_MOLD *mold)
 {
 	REBUNI *dp;
 	REBCNT n;
@@ -494,7 +497,7 @@ STOID Mold_Url(REBVAL *value, REB_MOLD *mold)
 	*dp = 0;
 }
 
-STOID Mold_File(REBVAL *value, REB_MOLD *mold)
+static void Mold_File(REBVAL *value, REB_MOLD *mold)
 {
 	REBUNI *dp;
 	REBCNT n;
@@ -523,7 +526,7 @@ STOID Mold_File(REBVAL *value, REB_MOLD *mold)
 	*dp = 0;
 }
 
-STOID Mold_Tag(REBVAL *value, REB_MOLD *mold)
+static void Mold_Tag(REBVAL *value, REB_MOLD *mold)
 {
 	Append_Byte(mold->series, '<');
 	Insert_String(mold->series, AT_TAIL, VAL_SERIES(value), VAL_INDEX(value), VAL_LEN(value), 0);
@@ -546,7 +549,7 @@ STOID Mold_Tag(REBVAL *value, REB_MOLD *mold)
 		out = Encode_Base16(value, 0, len > 32);
 		break;
 	case 64:
-		Append_Bytes(mold->series, "64");
+		Append_Bytes(mold->series, AS_CBYTES("64"));
 		out = Encode_Base64(value, 0, len > 64);
 		break;
 	case 2:
@@ -558,7 +561,7 @@ STOID Mold_Tag(REBVAL *value, REB_MOLD *mold)
 	Emit(mold, "#{E}", out);
 }
 
-STOID Mold_All_String(REBVAL *value, REB_MOLD *mold)
+static void Mold_All_String(REBVAL *value, REB_MOLD *mold)
 {
 	// The string that is molded for /all option:
 	REBVAL val;
@@ -585,14 +588,14 @@ STOID Mold_All_String(REBVAL *value, REB_MOLD *mold)
 ************************************************************************
 ***********************************************************************/
 
-STOID Mold_Block_Series(REB_MOLD *mold, REBSER *series, REBCNT index, REBYTE *sep)
+static void Mold_Block_Series(REB_MOLD *mold, REBSER *series, REBCNT index, const REBYTE *sep)
 {
 	REBSER *out = mold->series;
 	REBOOL line_flag = FALSE; // newline was part of block
 	REBOOL had_lines = FALSE;
 	REBVAL *value = BLK_SKIP(series, index);
 
-	if (!sep) sep = "[]";
+	if (!sep) sep = AS_CBYTES("[]");
 
 	if (IS_END(value)) {
 		Append_Bytes(out, sep);
@@ -637,15 +640,17 @@ STOID Mold_Block_Series(REB_MOLD *mold, REBSER *series, REBCNT index, REBYTE *se
 	Remove_Last(MOLD_LOOP);
 }
 
-STOID Mold_Block(REBVAL *value, REB_MOLD *mold)
+static void Mold_Block(REBVAL *value, REB_MOLD *mold)
 {
-	REBYTE *sep;
+	const REBYTE *sep;
 	REBOOL all = GET_MOPT(mold, MOPT_MOLD_ALL);
 	REBSER *series = mold->series;
 	REBFLG over = FALSE;
 
-	if (SERIES_WIDE(VAL_SERIES(value)) == 0)
-		Crash(RP_BAD_WIDTH, sizeof(REBVAL), 0, VAL_TYPE(value));
+	if (SERIES_WIDE(VAL_SERIES(value)) == 0) {
+		Crash_Core(RP_BAD_WIDTH, sizeof(REBVAL), 0, VAL_TYPE(value));
+		vDEAD_END;
+	}
 
 	// Optimize when no index needed:
 	if (VAL_INDEX(value) == 0 && !IS_MAP(value)) // && (VAL_TYPE(value) <= REB_LIT_PATH))
@@ -657,7 +662,7 @@ STOID Mold_Block(REBVAL *value, REB_MOLD *mold)
 	if (all || (over && !IS_BLOCK(value) && !IS_PAREN(value))) {
 		SET_FLAG(mold->opts, MOPT_MOLD_ALL);
 		Pre_Mold(value, mold); // #[block! part
-		//if (over) Append_Bytes(mold->series, "[]");
+		//if (over) Append_Bytes(mold->series, AS_CBYTES("[]"));
 		//else
 		Mold_Block_Series(mold, VAL_SERIES(value), 0, 0);
 		Post_Mold(value, mold);
@@ -673,18 +678,18 @@ STOID Mold_Block(REBVAL *value, REB_MOLD *mold)
 		case REB_BLOCK:
 			if (GET_MOPT(mold, MOPT_ONLY)) {
 				CLR_FLAG(mold->opts, MOPT_ONLY); // only top level
-				sep = "\000\000";
+				sep = AS_CBYTES("\000\000");
 			}
 			else sep = 0;
 			break;
 
 		case REB_PAREN:
-			sep = "()";
+			sep = AS_CBYTES("()");
 			break;
 
 		case REB_GET_PATH:
 			series = Append_Byte(series, ':');
-			sep = "/";
+			sep = AS_CBYTES("/");
 			break;
 
 		case REB_LIT_PATH:
@@ -692,11 +697,11 @@ STOID Mold_Block(REBVAL *value, REB_MOLD *mold)
 			/* fall through */
 		case REB_PATH:
 		case REB_SET_PATH:
-			sep = "/";
+			sep = AS_CBYTES("/");
 			break;
 		}
 
-		if (over) Append_Bytes(mold->series, sep ? sep : (REBYTE*)("[]"));
+		if (over) Append_Bytes(mold->series, sep ? sep : AS_CBYTES("[]"));
 		else Mold_Block_Series(mold, VAL_SERIES(value), VAL_INDEX(value), sep);
 
 		if (VAL_TYPE(value) == REB_SET_PATH)
@@ -704,7 +709,7 @@ STOID Mold_Block(REBVAL *value, REB_MOLD *mold)
 	}
 }
 
-STOID Mold_Simple_Block(REB_MOLD *mold, REBVAL *block, REBCNT len)
+static void Mold_Simple_Block(REB_MOLD *mold, REBVAL *block, REBCNT len)
 {
 	// Simple molder for error locations. Series must be valid.
 	// Max length in chars must be provided.
@@ -720,11 +725,11 @@ STOID Mold_Simple_Block(REB_MOLD *mold, REBVAL *block, REBCNT len)
 	// If it's too large, truncate it:
 	if ((SERIES_TAIL(mold->series) - start) > len) {
 		SERIES_TAIL(mold->series) = start + len;
-		Append_Bytes(mold->series, "...");
+		Append_Bytes(mold->series, AS_CBYTES("..."));
 	}
 }
 
-STOID Form_Block_Series(REBSER *blk, REBCNT index, REB_MOLD *mold, REBSER *frame)
+static void Form_Block_Series(REBSER *blk, REBCNT index, REB_MOLD *mold, REBSER *frame)
 {
 	// Form a series (part_mold means mold non-string values):
 	REBINT n;
@@ -767,7 +772,7 @@ STOID Form_Block_Series(REBSER *blk, REBCNT index, REB_MOLD *mold, REBSER *frame
 ***********************************************************************/
 
 #ifdef removed
-STOID Mold_Logic(REB_MOLD *mold, REBVAL *value)
+static void Mold_Logic(REB_MOLD *mold, REBVAL *value)
 {
 	REBYTE buf[20];
 	Pre_Mold(value, mold);
@@ -782,7 +787,7 @@ STOID Mold_Logic(REB_MOLD *mold, REBVAL *value)
 }
 #endif
 
-STOID Mold_Typeset(REBVAL *value, REB_MOLD *mold, REBFLG molded)
+static void Mold_Typeset(REBVAL *value, REB_MOLD *mold, REBFLG molded)
 {
 	REBINT n;
 
@@ -806,7 +811,7 @@ STOID Mold_Typeset(REBVAL *value, REB_MOLD *mold, REBFLG molded)
 	}
 }
 
-STOID Mold_Function(REBVAL *value, REB_MOLD *mold)
+static void Mold_Function(REBVAL *value, REB_MOLD *mold)
 {
 	Pre_Mold(value, mold);
 
@@ -821,14 +826,14 @@ STOID Mold_Function(REBVAL *value, REB_MOLD *mold)
 	End_Mold(mold);
 }
 
-STOID Mold_Map(REBVAL *value, REB_MOLD *mold, REBFLG molded)
+static void Mold_Map(REBVAL *value, REB_MOLD *mold, REBFLG molded)
 {
 	REBSER *mapser = VAL_SERIES(value);
 	REBVAL *val;
 
 	// Prevent endless mold loop:
 	if (Find_Same_Block(MOLD_LOOP, value) > 0) {
-		Append_Bytes(mold->series, "...]");
+		Append_Bytes(mold->series, AS_CBYTES("...]"));
 		return;
 	}
 	Append_Val(MOLD_LOOP, value);
@@ -858,7 +863,7 @@ STOID Mold_Map(REBVAL *value, REB_MOLD *mold, REBFLG molded)
 	Remove_Last(MOLD_LOOP);
 }
 
-STOID Form_Object(REBVAL *value, REB_MOLD *mold)
+static void Form_Object(REBVAL *value, REB_MOLD *mold)
 {
 	REBSER *wser = VAL_OBJ_WORDS(value);
 	REBVAL *words = BLK_HEAD(wser);
@@ -867,7 +872,7 @@ STOID Form_Object(REBVAL *value, REB_MOLD *mold)
 
 	// Prevent endless mold loop:
 	if (Find_Same_Block(MOLD_LOOP, value) > 0) {
-		Append_Bytes(mold->series, "...]");
+		Append_Bytes(mold->series, AS_CBYTES("...]"));
 		return;
 	}
 	Append_Val(MOLD_LOOP, value);
@@ -881,14 +886,14 @@ STOID Form_Object(REBVAL *value, REB_MOLD *mold)
 	Remove_Last(MOLD_LOOP);
 }
 
-STOID Mold_Object(REBVAL *value, REB_MOLD *mold)
+static void Mold_Object(REBVAL *value, REB_MOLD *mold)
 {
 	REBSER *wser;
 	REBVAL *words;
 	REBVAL *vals; // first value is context
 	REBCNT n;
 
-	ASSERT(VAL_OBJ_FRAME(value), RP_NO_OBJECT_FRAME);
+	assert(VAL_OBJ_FRAME(value));
 
 	wser = VAL_OBJ_WORDS(value);
 //	if (wser < 1000)
@@ -903,7 +908,7 @@ STOID Mold_Object(REBVAL *value, REB_MOLD *mold)
 
 	// Prevent infinite looping:
 	if (Find_Same_Block(MOLD_LOOP, value) > 0) {
-		Append_Bytes(mold->series, "...]");
+		Append_Bytes(mold->series, AS_CBYTES("...]"));
 		return;
 	}
 	Append_Val(MOLD_LOOP, value);
@@ -917,8 +922,9 @@ STOID Mold_Object(REBVAL *value, REB_MOLD *mold)
 			New_Indented_Line(mold);
 			Append_UTF8(mold->series, Get_Sym_Name(VAL_WORD_SYM(words+n)), -1);
 			//Print("Slot: %s", Get_Sym_Name(VAL_WORD_SYM(words+n)));
-			Append_Bytes(mold->series, ": ");
-			if (IS_WORD(vals+n) && !GET_MOPT(mold, MOPT_MOLD_ALL)) Append_Byte(mold->series, '\'');
+			Append_Bytes(mold->series, AS_CBYTES(": "));
+			if (IS_WORD(vals+n) && !GET_MOPT(mold, MOPT_MOLD_ALL))
+				Append_Byte(mold->series, '\'');
 			Mold_Value(mold, vals+n, TRUE);
 		}
 	}
@@ -930,7 +936,7 @@ STOID Mold_Object(REBVAL *value, REB_MOLD *mold)
 	Remove_Last(MOLD_LOOP);
 }
 
-STOID Mold_Error(REBVAL *value, REB_MOLD *mold, REBFLG molded)
+static void Mold_Error(REBVAL *value, REB_MOLD *mold, REBFLG molded)
 {
 	ERROR_OBJ *err;
 	REBVAL *msg;  // Error message block
@@ -1018,8 +1024,8 @@ STOID Mold_Error(REBVAL *value, REB_MOLD *mold, REBFLG molded)
 
 	CHECK_STACK(&len);
 
-	ASSERT2(SERIES_WIDE(mold->series) == sizeof(REBUNI), RP_BAD_SIZE);
-	ASSERT2(ser, RP_NO_BUFFER);
+	assert(SERIES_WIDE(mold->series) == sizeof(REBUNI));
+	assert(ser);
 
 	// Special handling of string series: {
 	if (ANY_STR(value) && !IS_TAG(value)) {
@@ -1104,7 +1110,7 @@ STOID Mold_Error(REBVAL *value, REB_MOLD *mold, REBFLG molded)
 
 	case REB_FILE:
 		if (VAL_LEN(value) == 0) {
-			Append_Bytes(ser, "%\"\"");
+			Append_Bytes(ser, AS_CBYTES("%\"\""));
 			break;
 		}
 		Mold_File(value, mold);
@@ -1263,7 +1269,7 @@ STOID Mold_Error(REBVAL *value, REB_MOLD *mold, REBFLG molded)
 		break;
 
 	default:
-		Crash(RP_DATATYPE+5, VAL_TYPE(value));
+		vCrash1(RP_DATATYPE + 5, VAL_TYPE(value));
 	}
 	return;
 
@@ -1281,10 +1287,9 @@ append:
 **
 ***********************************************************************/
 {
-	REB_MOLD mo = {0};
+	REB_MOLD mo;
 
-	mo.opts = opts;
-	Reset_Mold(&mo);
+	Reset_Mold(&mo, opts);
 	Mold_Value(&mo, value, 0);
 	return Copy_String(mo.series, 0, -1);
 }
@@ -1298,10 +1303,9 @@ append:
 **
 ***********************************************************************/
 {
-	REB_MOLD mo = {0};
+	REB_MOLD mo;
 
-	mo.opts = opts;
-	Reset_Mold(&mo);
+	Reset_Mold(&mo, opts);
 	Mold_Value(&mo, value, TRUE);
 	return Copy_String(mo.series, 0, -1);
 }
@@ -1318,7 +1322,7 @@ append:
 {
 	REBINT start = DSP + 1;
 	REBINT n;
-	REB_MOLD mo = {0};
+	REB_MOLD mo;
 
 	while (index < BLK_LEN(block)) {
 		index = Do_Next(block, index, 0);
@@ -1329,7 +1333,7 @@ append:
 		}
 	}
 
-	Reset_Mold(&mo);
+	Reset_Mold(&mo, 0);
 
 	for (n = start; n <= DSP; n++)
 		Mold_Value(&mo, &DS_Base[n], 0);
@@ -1346,10 +1350,10 @@ append:
 /*
 ***********************************************************************/
 {
-	REB_MOLD mo = {0};
+	REB_MOLD mo;
 	REBVAL *val;
 
-	Reset_Mold(&mo);
+	Reset_Mold(&mo, 0);
 	for (val = VAL_BLK_DATA(blk); NOT_END(val); val++)
 		Mold_Value(&mo, val, 0);
 	return Copy_String(mo.series, 0, -1);
@@ -1358,17 +1362,20 @@ append:
 
 /***********************************************************************
 **
-*/  void Reset_Mold(REB_MOLD *mold)
+*/  void Reset_Mold(REB_MOLD *mold, REBCNT opts)
 /*
 ***********************************************************************/
 {
 	REBSER *buf = BUF_MOLD;
 	REBINT len;
 
-	if (!buf) Crash(RP_NO_BUFFER);
+	memset(mold, NUL, sizeof(*mold));
+	mold->opts = opts;
+
+	if (!buf) vCrash(RP_NO_BUFFER);
 
 	if (SERIES_REST(buf) > MAX_COMMON)
-		Shrink_Series(buf, MIN_COMMON);
+		Shrink_Series(buf, MIN_COMMON, FALSE);
 
 	BLK_RESET(MOLD_LOOP);
 	RESET_SERIES(buf);
@@ -1396,15 +1403,15 @@ append:
 **
 ***********************************************************************/
 {
-	REB_MOLD mo = {0};
+	REB_MOLD mo;
 
-	Reset_Mold(&mo);
+	Reset_Mold(&mo, 0);
 
 	Mold_Value(&mo, value, mold);
 
 	if (limit != 0 && STR_LEN(mo.series) > limit) {
 		SERIES_TAIL(mo.series) = limit;
-		Append_Bytes(mo.series, "..."); // adds a null at the tail
+		Append_Bytes(mo.series, AS_CBYTES("...")); // adds a null at the tail
 	}
 
 	return mo.series;
@@ -1419,22 +1426,29 @@ append:
 {
 	REBYTE *cp;
 	REBYTE c;
-	REBYTE *dc;
+	const REBYTE *dc;
 
 	Set_Root_Series(TASK_MOLD_LOOP, Make_Block(size/10), "mold loop");
 	Set_Root_Series(TASK_BUF_MOLD, Make_Unicode(size), "mold buffer");
 
 	// Create quoted char escape table:
-	Char_Escapes = cp = Make_Mem(MAX_ESC_CHAR+1); // cleared
+	Char_Escapes = ALLOC_ARRAY_ZEROFILL(REBYTE, MAX_ESC_CHAR + 1);
+
+	cp = Char_Escapes;
+
 	for (c = '@'; c <= '_'; c++) *cp++ = c;
 	Char_Escapes[TAB] = '-';
 	Char_Escapes[LF]  = '/';
 	Char_Escapes['"'] = '"';
 	Char_Escapes['^'] = '^';
 
-	URL_Escapes = cp = Make_Mem(MAX_URL_CHAR+1); // cleared
+	URL_Escapes = ALLOC_ARRAY_ZEROFILL(REBYTE, MAX_URL_CHAR + 1);
+
+	cp = URL_Escapes;
+
 	//for (c = 0; c <= MAX_URL_CHAR; c++) if (IS_LEX_DELIMIT(c)) cp[c] = ESC_URL;
 	for (c = 0; c <= ' '; c++) cp[c] = ESC_URL | ESC_FILE;
-	dc = ";%\"()[]{}<>";
-	for (c = LEN_BYTES(dc); c > 0; c--) URL_Escapes[*dc++] = ESC_URL | ESC_FILE;
+	dc = AS_CBYTES(";%\"()[]{}<>");
+	for (c = strlen(AS_CCHARS(dc)); c > 0; c--)
+		URL_Escapes[*dc++] = ESC_URL | ESC_FILE;
 }

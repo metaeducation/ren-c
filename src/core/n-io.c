@@ -38,14 +38,14 @@
 // Used for file loading during very early development.
 static REBSER *Read_All_File(char *fname)
 {
-	REBREQ file;
 	REBSER *ser = 0;
 
-	CLEAR(&file, sizeof(file));
+	REBREQ file;
+	memset(&file, NUL, sizeof(file));
 
 	file.clen = sizeof(file);
 	file.device = RDI_FILE;
-	file.file.path = fname;
+	file.special.file.path = fname;
 
 	SET_FLAG(file.modes, RFM_READ);
 
@@ -53,10 +53,11 @@ static REBSER *Read_All_File(char *fname)
 
 	if (file.error) return 0;
 
-	ser = Make_Binary((REBCNT)(file.file.size));
+	// !!! File size is 64-bit value; review truncation here
+	ser = Make_Binary(cast(REBCNT, file.special.file.size));
 
 	file.data = BIN_DATA(ser);
-	file.length = (REBCNT)(file.file.size);
+	file.length = cast(REBCNT, file.special.file.size);
 
 	OS_DO_DEVICE(&file, RDC_READ);
 
@@ -128,14 +129,14 @@ static REBSER *Read_All_File(char *fname)
 ***********************************************************************/
 {
 	REBVAL *val = D_ARG(1);
-	REB_MOLD mo = {0};
+	REB_MOLD mo;
+	REBCNT opts = 0;
 
-	if (D_REF(3)) SET_FLAG(mo.opts, MOPT_MOLD_ALL);
-	if (D_REF(4)) SET_FLAG(mo.opts, MOPT_INDENT);
+	if (D_REF(3)) SET_FLAG(opts, MOPT_MOLD_ALL);
+	if (D_REF(4)) SET_FLAG(opts, MOPT_INDENT);
+	if (D_REF(2) && IS_BLOCK(val)) SET_FLAG(opts, MOPT_ONLY);
 
-	Reset_Mold(&mo);
-
-	if (D_REF(2) && IS_BLOCK(val)) SET_FLAG(mo.opts, MOPT_ONLY);
+	Reset_Mold(&mo, opts);
 
 	Mold_Value(&mo, val, TRUE);
 
@@ -400,7 +401,7 @@ chk_neg:
 	REBVAL *val = D_ARG(1);
 	REBSER *port = VAL_PORT(val);
 
-	if (SERIES_TAIL(port) < STD_PORT_MAX) Crash(9910);
+	if (SERIES_TAIL(port) < STD_PORT_MAX) Crash(RP_MISC);
 
 	val = OFV(port, STD_PORT_ACTOR);
 	if (IS_NATIVE(val)) {
@@ -462,8 +463,8 @@ chk_neg:
 
 	len = OS_GET_CURRENT_DIR(&lpath);
 	ser = To_REBOL_Path(lpath, len, OS_WIDE, TRUE); // allocates extra for end /
-	ASSERT1(ser, RP_MISC); // should never happen
-	OS_FREE(lpath);
+	assert(ser); // should never happen
+	OS_FREE_MEM(lpath);
 	Set_Series(REB_FILE, D_RET, ser);
 
 	return R_RET;
@@ -487,7 +488,11 @@ chk_neg:
 	Set_String(&val, ser); // may be unicode or utf-8
 	Check_Security(SYM_FILE, POL_EXEC, &val);
 
-	n = OS_SET_CURRENT_DIR((void*)ser->data);  // use len for bool
+	// API expects a REBCHR, e.g. you need to speak the platform's
+	// language.  We've hopefully accomplished this.
+	assert(SERIES_WIDE(ser) == sizeof(REBCHR));
+	// !!! Used to say "use len for bool", what would that mean?
+	n = OS_SET_CURRENT_DIR(r_cast(REBCHR *, ser->data));
 	if (!n) Trap_Arg(arg); // !!! ERROR MSG
 
 	return R_ARG1;
@@ -595,7 +600,7 @@ chk_neg:
 	REBCHR *eq;
 	REBSER *blk;
 
-	while (n = LEN_STR(str)) {
+	while (0 != (n = LEN_OS_STR(str))) {
 		len++;
 		str += n + 1; // next
 	}
@@ -603,7 +608,7 @@ chk_neg:
 	blk = Make_Block(len*2);
 
 	str = start;
-	while (NZ(eq = FIND_CHR(str+1, '=')) && NZ(n = LEN_STR(str))) {
+	while (NZ(eq = FIND_OS_CHR(str+1, '=')) && NZ(n = LEN_OS_STR(str))) {
 		Set_Series(REB_STRING, Append_Value(blk), Copy_OS_Str(str, eq-str));
 		Set_Series(REB_STRING, Append_Value(blk), Copy_OS_Str(eq+1, n-(eq-str)-1));
 		str += n + 1; // next
@@ -626,10 +631,10 @@ chk_neg:
 **
 ***********************************************************************/
 {
-	REB_MOLD mo = {0};
+	REB_MOLD mo;
 	REBVAL *value;
 
-	Reset_Mold(&mo);
+	Reset_Mold(&mo, 0);
 
 	for (value = VAL_BLK_DATA(blk); NOT_END(value); value++) {
 		Mold_Value(&mo, value, 0);
@@ -655,7 +660,7 @@ chk_neg:
 	REBSER *blk;
 	REBSER *dir;
 
-	while (n = LEN_STR(str)) {
+	while (n = LEN_OS_STR(str)) {
 		len++;
 		str += n + 1; // next
 	}
@@ -664,7 +669,7 @@ chk_neg:
 
 	// First is a dir path or full file path:
 	str = start;
-	n = LEN_STR(str);
+	n = LEN_OS_STR(str);
 
 	if (len == 1) {  // First is full file path
 		dir = To_REBOL_Path(str, n, -1, 0);
@@ -674,9 +679,24 @@ chk_neg:
 		dir = To_REBOL_Path(str, n, -1, TRUE);
 		str += n + 1; // next
 		len = dir->tail;
-		while (n = LEN_STR(str)) {
+		while (n = LEN_OS_STR(str)) {
 			dir->tail = len;
-			Append_Uni_Uni(dir, str, n);
+		#ifdef TO_WIN32
+			// str is an array in UCS-2
+			assert(sizeof(REBCHR) == sizeof(REBUNI));
+			Append_Uni_Uni(dir, r_cast(REBUNI *, str), n);
+		#else
+			// str is NOT an array in UCS-2, assume UTF-8 and needs decoding.
+			assert(sizeof(REBCHR) == sizeof(REBYTE));
+			
+			// !!! A proper solution needs to be written for this (assuming
+			// it is important).  At the moment the only way to get this
+			// routine to be called is if FRF_MULTI is set on a file
+			// request... and that is controlled by a #ifdef TO_WIN32
+			// switch.
+
+			Crash(RP_NOT_AVAILABLE);
+		#endif
 			Set_Series(REB_FILE, Append_Value(blk), Copy_String(dir, 0, -1));
 			str += n + 1; // next
 		}
@@ -694,11 +714,13 @@ chk_neg:
 ***********************************************************************/
 {
 #ifdef TO_WIN32
-	REBRFR fr = {0};
 	REBSER *ser;
 	REBINT n;
 
-	fr.files = OS_MAKE(MAX_FILE_REQ_BUF);
+	REBRFR fr;
+	memset(&fr, NUL, sizeof(fr));
+
+	fr.files = OS_ALLOC_ARRAY(REBCHR, MAX_FILE_REQ_BUF);
 	fr.len = MAX_FILE_REQ_BUF/sizeof(REBCHR) - 2;  
 	fr.files[0] = 0;
 
@@ -709,18 +731,18 @@ chk_neg:
 
 	if (D_REF(ARG_REQUEST_FILE_FILE)) {
 		ser = Value_To_OS_Path(D_ARG(ARG_REQUEST_FILE_NAME));
-		fr.dir = (REBCHR*)(ser->data);
+		fr.dir = r_cast(REBCHR *, ser->data);
 		n = ser->tail;
 		if (fr.dir[n-1] != OS_DIR_SEP) {
 			if (n+2 > fr.len) n = fr.len - 2;
-			COPY_STR(fr.files, (REBCHR*)(ser->data), n);
+			COPY_OS_STR(fr.files, r_cast(REBCHR *, ser->data), n);
 			fr.files[n] = 0;
 		}
 	}
 
 	if (D_REF(ARG_REQUEST_FILE_FILTER)) {
 		ser = Block_To_String_List(D_ARG(ARG_REQUEST_FILE_LIST));
-		fr.filter = (REBCHR*)(ser->data);
+		fr.filter = r_cast(REBCHR *, ser->data);
 	}
 
 	if (D_REF(ARG_REQUEST_FILE_TITLE))
@@ -732,14 +754,14 @@ chk_neg:
 			Set_Block(D_RET, ser);
 		}
 		else {
-			ser = To_REBOL_Path(fr.files, LEN_STR(fr.files), OS_WIDE, 0);
+			ser = To_REBOL_Path(fr.files, LEN_OS_STR(fr.files), OS_WIDE, 0);
 			Set_Series(REB_FILE, D_RET, ser);
 		}
 	} else
 		ser = 0;
 
 	ENABLE_GC;
-	OS_FREE(fr.files);
+	OS_FREE_MEM(fr.files);
 
 	return ser ? R_RET : R_NONE;
 #else
@@ -769,10 +791,10 @@ chk_neg:
 	if (lenplus < 0) return R_UNSET;
 
 	// Two copies...is there a better way?
-	buf = MAKE_STR(lenplus);
+	buf = MAKE_OS_STR(lenplus);
 	OS_GET_ENV(cmd, buf, lenplus);
 	Set_String(D_RET, Copy_OS_Str(buf, lenplus - 1));
-	FREE_MEM(buf);
+	free(buf);
 
 	return R_RET;
 }
@@ -799,7 +821,7 @@ chk_neg:
 		success = OS_SET_ENV(cmd, value);
 		if (success) {
 			// What function could reuse arg2 as-is?
-			Set_String(D_RET, Copy_OS_Str(value, LEN_STR(value)));
+			Set_String(D_RET, Copy_OS_Str(value, LEN_OS_STR(value)));
 			return R_RET;
 		}
 		return R_UNSET;

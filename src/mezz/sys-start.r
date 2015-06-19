@@ -59,11 +59,11 @@ start: func [
 	;-- Convert command line arg strings as needed:
 	script-args: args ; save for below
 	foreach [opt act] [
-		args    [parse args ""]
+		args    [if args [parse args ""]]
 		do-arg  block!
 		debug   block!
 		secure  word!
-		import  [to-rebol-file import]
+		import  [if import [to-rebol-file import]]
 		version tuple!
 	][
 		set opt attempt either block? act [act][

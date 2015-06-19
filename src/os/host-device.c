@@ -187,13 +187,14 @@ static int Poll_Default(REBDEV *dev)
 
 /***********************************************************************
 **
-*/	void Done_Device(REBUPT handle, int error)
+*/	void Done_Device(int handle_opaque, int error)
 /*
 **		Given a handle mark the related request as done.
 **		(Used by DNS device).
 **
 ***********************************************************************/
 {
+	REBUPT handle = cast(REBUPT, handle_opaque);
 	REBINT d;
 	REBDEV *dev;
 	REBREQ **prior;
@@ -204,7 +205,7 @@ static int Poll_Default(REBDEV *dev)
 		prior = &dev->pending;
 		// Scan the pending requests, mark the one we got:
 		for (req = *prior; req; req = *prior) {
-			if ((REBUPT)(req->handle) == handle) {
+			if (r_cast(REBUPT, req->requestee.handle) == handle) {
 				req->error = error; // zero when no error
 				SET_FLAG(req->flags, RRF_DONE);
 				return;
@@ -224,12 +225,11 @@ static int Poll_Default(REBDEV *dev)
 ***********************************************************************/
 {
 	REBEVT evt;
+	memset(&evt, NUL, sizeof(evt));
 
-	CLEARS(&evt);
-
-	evt.type = (REBYTE)type;
+	evt.type = cast(REBYTE, type);
 	evt.model = EVM_DEVICE;
-	evt.req  = req;
+	evt.eventee.req = req;
 	if (type == EVT_ERROR) evt.data = req->error;
 
 	RL_Event(&evt);	// (returns 0 if queue is full, ignored)
@@ -326,7 +326,7 @@ static int Poll_Default(REBDEV *dev)
 
 /***********************************************************************
 **
-*/	REBREQ *OS_Make_Devreq(int device)
+*/	REBREQ *OS_Alloc_Devreq(int device)
 /*
 ***********************************************************************/
 {
@@ -339,8 +339,7 @@ static int Poll_Default(REBDEV *dev)
 		return 0;
 
 	size = dev->req_size ? dev->req_size : sizeof(REBREQ);
-	req = OS_Make(size);
-	CLEARS(req);
+	req = OS_ALLOC_ZEROFILL(REBREQ);
 	SET_FLAG(req->flags, RRF_ALLOC);
 	req->clen = size;
 	req->device = device;
@@ -464,7 +463,7 @@ static int Poll_Default(REBDEV *dev)
 	base = OS_Delta_Time(0, 0); // start timing
 
 	// Setup for timing:
-	CLEARS(&req);
+	memset(&req, NUL, sizeof(req));
 	req.device = RDI_EVENT;
 
 	// Let any pending device I/O have a chance to run:

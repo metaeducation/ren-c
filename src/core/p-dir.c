@@ -47,31 +47,39 @@
 	REBCNT len;
 	REBSER *fname;
 	REBSER *name;
+	
 	REBREQ file;
+	memset(&file, NUL, sizeof(file));
 
 	RESET_TAIL(files);
-	CLEARS(&file);
 
 	// Temporary filename storage:
 	fname = BUF_OS_STR;
-	file.file.path = (REBCHR*)Reset_Buffer(fname, MAX_FILE_NAME);
+	file.special.file.path = r_cast(REBCHR *, Reset_Buffer(fname, MAX_FILE_NAME));
 
 	SET_FLAG(dir->modes, RFM_DIR);
 
-	dir->data = (REBYTE*)(&file);
+	dir->common.data = r_cast(REBYTE *, &file);
 
 	while ((result = OS_DO_DEVICE(dir, RDC_READ)) == 0 && !GET_FLAG(dir->flags, RRF_DONE)) {
-		len = LEN_STR(file.file.path);
+		len = LEN_OS_STR(file.special.file.path);
 		if (GET_FLAG(file.modes, RFM_DIR)) len++;
-		name = Copy_OS_Str(file.file.path, len);
+		name = Copy_OS_Str(file.special.file.path, len);
 		if (GET_FLAG(file.modes, RFM_DIR))
 			SET_ANY_CHAR(name, name->tail-1, '/');
 		Set_Series(REB_FILE, Append_Value(files), name);
 	}
 
-	if (result < 0 && dir->error != -RFE_OPEN_FAIL
-		&& (FIND_CHR(dir->file.path, '*') || FIND_CHR(dir->file.path, '?')))
+	if (
+		result < 0
+		&& dir->error != -RFE_OPEN_FAIL
+		&& (
+			FIND_OS_CHR(dir->special.file.path, '*')
+			|| FIND_OS_CHR(dir->special.file.path, '?')
+		)
+	) {
 		result = 0;  // no matches found, but not an error
+	}
 
 	return result;
 }
@@ -110,11 +118,12 @@
 	// We cannot tell from above, so we must check it (if file):
 	if (IS_FILE(path)) {
 		REBSER *ser;
-		REBREQ file;
 
-		CLEARS(&file); 
+		REBREQ file;
+		memset(&file, NUL, sizeof(file));
+		 
 		ser = Value_To_OS_Path(path);
-		file.file.path = (REBCHR*)(ser->data);
+		file.special.file.path = r_cast(REBCHR *, ser->data);
 		file.device = RDI_FILE;
 		len = OS_DO_DEVICE(&file, RDC_QUERY);
 		FREE_SERIES(ser);
@@ -166,44 +175,51 @@
 	// We depend on To_Local_Path giving us 2 extra chars for / and *
 	ser = Value_To_OS_Path(path);
 	len = ser->tail;
-	dir->file.path = (REBCHR*)(ser->data);
+	dir->special.file.path = r_cast(REBCHR *, ser->data);
 
 	Secure_Port(SYM_FILE, dir, path, ser);
 
-	if (len == 1 && dir->file.path[0] == '.') {
+	if (len == 1 && dir->special.file.path[0] == '.') {
 		if (wild > 0) {
-			dir->file.path[0] = '*';
-			dir->file.path[1] = 0;
+			dir->special.file.path[0] = '*';
+			dir->special.file.path[1] = 0;
 		}
 	}
-	else if (len == 2 && dir->file.path[0] == '.' && dir->file.path[1] == '.') {
+	else if (
+		len == 2
+		&& dir->special.file.path[0] == '.'
+		&& dir->special.file.path[1] == '.'
+	) {
 		// Insert * if needed:
 		if (wild > 0) {
-			dir->file.path[len++] = '/';
-			dir->file.path[len++] = '*';
-			dir->file.path[len] = 0;
+			dir->special.file.path[len++] = '/';
+			dir->special.file.path[len++] = '*';
+			dir->special.file.path[len] = 0;
 		}
 	}
-	else if (dir->file.path[len-1] == '/' || dir->file.path[len-1] == '\\') {
+	else if (
+		dir->special.file.path[len - 1] == '/'
+		|| dir->special.file.path[len - 1] == '\\'
+	) {
 		if (policy & REMOVE_TAIL_SLASH) {
-			dir->file.path[len-1] = 0;
+			dir->special.file.path[len - 1] = 0;
 		}
 		else {
 			// Insert * if needed:
 			if (wild > 0) {
-				dir->file.path[len++] = '*';
-				dir->file.path[len] = 0;
+				dir->special.file.path[len++] = '*';
+				dir->special.file.path[len] = 0;
 			}
 		}
 	} else {
 		// Path did not end with /, so we better be wild:
 		if (wild == 0) {
-			///OS_FREE(dir->file.path);
-			Trap1(RE_BAD_FILE_PATH, path);
+			///OS_FREE_MEM(dir->special.file.path);
+			vTrap1(RE_BAD_FILE_PATH, path);
 		}
 		else if (wild < 0) {
-			dir->file.path[len++] = OS_DIR_SEP;
-			dir->file.path[len] = 0;
+			dir->special.file.path[len++] = OS_DIR_SEP;
+			dir->special.file.path[len] = 0;
 		}
 	}
 }
@@ -220,16 +236,17 @@
 	REBVAL *spec;
 	REBVAL *path;
 	REBVAL *state;
-	REBREQ dir;
 	REBCNT args = 0;
 	REBINT result;
 	REBCNT len;
 	//REBYTE *flags;
 
+	REBREQ dir;
+	memset(&dir, NUL, sizeof(dir));
+
 	Validate_Port(port, action);
 
 	*D_RET = *D_ARG(1);
-	CLEARS(&dir);
 
 	// Validate and fetch relevant PORT fields:
 	spec  = BLK_SKIP(port, STD_PORT_SPEC);
@@ -257,7 +274,7 @@
 			Init_Dir_Path(&dir, path, 1, POL_READ);
 			Set_Block(state, Make_Block(7)); // initial guess
 			result = Read_Dir(&dir, VAL_SERIES(state));
-			///OS_FREE(dir.file.path);
+			///OS_FREE_MEM(dir.file.path);
 			if (result < 0) Trap_Port(RE_CANNOT_OPEN, port, dir.error);
 			*D_RET = *state;
 			SET_NONE(state);
@@ -274,7 +291,7 @@
 create:
 		Init_Dir_Path(&dir, path, 0, POL_WRITE | REMOVE_TAIL_SLASH); // Sets RFM_DIR too
 		result = OS_DO_DEVICE(&dir, RDC_CREATE);
-		///OS_FREE(dir.file.path);
+		///OS_FREE_MEM(dir.special.file.path);
 		if (result < 0) Trap1(RE_NO_CREATE, path);
 		if (action == A_CREATE) return R_ARG2;
 		SET_NONE(state);
@@ -288,7 +305,7 @@ create:
 			Init_Dir_Path(&dir, path, 0, POL_WRITE | REMOVE_TAIL_SLASH); // Sets RFM_DIR too
 			// Convert file name to OS format:
 			if (!(target = Value_To_OS_Path(D_ARG(2)))) Trap1(RE_BAD_FILE_PATH, D_ARG(2));
-			dir.data = BIN_DATA(target);
+			dir.common.data = BIN_DATA(target);
 			OS_DO_DEVICE(&dir, RDC_RENAME);
 			Free_Series(target);
 			if (dir.error) Trap1(RE_NO_RENAME, path);
@@ -302,7 +319,7 @@ create:
 		// !!! add *.r deletion
 		// !!! add recursive delete (?)
 		result = OS_DO_DEVICE(&dir, RDC_DELETE);
-		///OS_FREE(dir.file.path);
+		///OS_FREE_MEM(dir.file.path);
 		if (result < 0) Trap1(RE_NO_DELETE, path);
 		return R_ARG2;
 
@@ -316,7 +333,7 @@ create:
 		Set_Block(state, Make_Block(7));
 		Init_Dir_Path(&dir, path, 1, POL_READ);
 		result = Read_Dir(&dir, VAL_SERIES(state));
-		///OS_FREE(dir.file.path);
+		///OS_FREE_MEM(dir.file.path);
 		if (result < 0) Trap_Port(RE_CANNOT_OPEN, port, dir.error);
 		break;
 
@@ -334,7 +351,7 @@ create:
 		Init_Dir_Path(&dir, path, -1, REMOVE_TAIL_SLASH | POL_READ);
 		if (OS_DO_DEVICE(&dir, RDC_QUERY) < 0) return R_NONE;
 		Ret_Query_File(port, &dir, D_RET);
-		///OS_FREE(dir.file.path);
+		///OS_FREE_MEM(dir.special.file.path);
 		break;
 
 	//-- Port Series Actions (only called if opened as a port)

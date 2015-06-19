@@ -31,6 +31,7 @@ enum socket_types {
 	RST_UDP,					// TCP or UDP
 	RST_LISTEN = 8,				// LISTEN
 	RST_REVERSE,				// DNS reverse
+	RST_MAX
 };
 
 // REBOL Socket Modes (state flags)
@@ -43,6 +44,7 @@ enum {
 	RSM_SEND,					// sending
 	RSM_RECEIVE,				// receiving
 	RSM_ACCEPT,					// an inbound connection
+	RSM_MAX
 };
 
 #define IPA(a,b,c,d) (a<<24 | b<<16 | c<<8 | d)

@@ -219,6 +219,7 @@ User: [
 Internal: [
 	code: 900
 	type: "internal error"
+	misc:				[{miscellaneous error (add specific case to errors.r)}]
 	bad-path:           [{bad path:} arg1]
 	not-here:           [arg1 {not supported on your system}]
 	no-memory:          {not enough memory}

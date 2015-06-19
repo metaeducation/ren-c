@@ -52,20 +52,20 @@ typedef union rxi_arg_val {
 	struct {
 		i32 int32a;
 		i32 int32b;
-	};
+	} i2;
 	struct {
 		REBD32 dec32a;
 		REBD32 dec32b;
-	};
+	} d2;
 	struct {
 		void *series;
 		u32 index;
-	};
+	} sri;
 	struct {
 		void *image;
 		int width:16;
 		int height:16;
-	};
+	} iwh;
 } RXIARG;
 
 // For direct access to arg array:
@@ -83,6 +83,7 @@ typedef struct rxi_cmd_context {
 	REBCNT index;	// 0-based index of current command in block
 } REBCEC;
 
+typedef unsigned char REBRXT;
 typedef int (*RXICAL)(int cmd, RXIFRM *args, REBCEC *ctx);
 
 #pragma pack()
@@ -125,6 +126,7 @@ enum rxi_return {
 	RXR_ERROR,
 	RXR_BAD_ARGS,
 	RXR_NO_COMMAND,
+	RXR_MAX
 };
 
 // Used with RXI_SERIES_INFO:
@@ -134,18 +136,20 @@ enum {
 	RXI_SER_SIZE,	// size of series (in units)
 	RXI_SER_WIDE,	// width of series (in bytes)
 	RXI_SER_LEFT,	// units free in series (past tail)
+	RXI_MAX
 };
 
 // Error Codes (returned in result value from some API functions):
 enum {
-	RXE_NO_ERROR,
-	RXE_NO_WORD,	// the word cannot be found (e.g. in an object)
-	RXE_NOT_FUNC,	// the value is not a function (for callback)
-	RXE_BAD_ARGS,	// function arguments to not match
+	RXX_NO_ERROR,
+	RXX_NO_WORD,	// the word cannot be found (e.g. in an object)
+	RXX_NOT_FUNC,	// the value is not a function (for callback)
+	RXX_BAD_ARGS,	// function arguments to not match
+	RXX_MAX
 };
 
-#define SET_EXT_ERROR(v,n) ((v)->int32a = (n))
-#define GET_EXT_ERROR(v)   ((v)->int32a)
+#define SET_EXT_ERROR(v,n) ((v)->i2.int32a = (n))
+#define GET_EXT_ERROR(v)   ((v)->i2.int32a)
 
 typedef struct rxi_callback_info {
 	u32 flags;
@@ -160,4 +164,5 @@ enum {
 	RXC_ASYNC,		// async callback
 	RXC_QUEUED,		// pending in event queue
 	RXC_DONE,		// call completed, structs can be freed
+	RXC_MAX
 };

@@ -77,6 +77,8 @@ static unsigned int transparent_red,transparent_green,transparent_blue;
 static unsigned int transparent_gray;
 static void (*process_row)(unsigned char *p,int width,int r,int hoff,int hskip);
 
+typedef void (*ROW_PROCESSOR)(unsigned char *, int, int, int, int);
+
 static void process_row_0_1(unsigned char *p,int width,int r,int hoff,int hskip);
 static void process_row_0_2(unsigned char *p,int width,int r,int hoff,int hskip);
 static void process_row_0_4(unsigned char *p,int width,int r,int hoff,int hskip);
@@ -93,15 +95,32 @@ static void process_row_4_16(unsigned char *p,int width,int r,int hoff,int hskip
 static void process_row_6_8(unsigned char *p,int width,int r,int hoff,int hskip);
 static void process_row_6_16(unsigned char *p,int width,int r,int hoff,int hskip);
 
-static void *process_row0[]={(void *)process_row_0_1,(void *)process_row_0_2,(void *)process_row_0_4,
- (void *)process_row_0_8,(void *)process_row_0_16};
-static void *process_row2[]={0,0,0,(void *)process_row_2_8,(void *)process_row_2_16};
-static void *process_row3[]={(void *)process_row_3_1,(void *)process_row_3_2,(void *)process_row_3_4,
- (void *)process_row_3_8};
-static void *process_row4[]={0,0,0,(void *)process_row_4_8,(void *)process_row_4_16};
-static void *process_row6[]={0,0,0,(void *)process_row_6_8,(void *)process_row_6_16};
-
-static void **process_row_lookup[]={process_row0,0,process_row2,process_row3,process_row4,0,process_row6};
+static ROW_PROCESSOR process_row0[] = {
+	process_row_0_1, process_row_0_2, process_row_0_4,
+	process_row_0_8, process_row_0_16
+};
+static ROW_PROCESSOR process_row2[] = {
+	NULL, NULL, NULL, process_row_2_8, process_row_2_16
+};
+static ROW_PROCESSOR process_row3[] = {
+	process_row_3_1, process_row_3_2, process_row_3_4,
+	process_row_3_8, NULL
+};
+static ROW_PROCESSOR process_row4[] = {
+	NULL, NULL, NULL, process_row_4_8, process_row_4_16
+};
+static ROW_PROCESSOR process_row6[] = {
+	NULL, NULL, NULL, process_row_6_8, process_row_6_16
+};
+static ROW_PROCESSOR *process_row_lookup[]={
+	process_row0,
+	NULL,
+	process_row2,
+	process_row3,
+	process_row4,
+	NULL,
+	process_row6
+};
 
 jmp_buf png_state;
 
@@ -548,7 +567,9 @@ void png_load(unsigned char *buffer, int nbytes, char *output, REBOOL *alpha) {
 	int length,ret,adam7pass;
 	int awidth,aheight,r,comp_awidth;
 	char type[4];
-	z_stream zstream={0};
+	z_stream zstream;
+
+	memset(&zstream, NUL, sizeof(zstream));
 
 	img_output=(unsigned int *)output;
 	buffer+=33;
@@ -576,7 +597,7 @@ void png_load(unsigned char *buffer, int nbytes, char *output, REBOOL *alpha) {
 	if(ret!=Z_OK)
 		trap_png();
 	if(png_ihdr.interlace_method) {
-		imgbuffer=malloc(rowlength*((png_ihdr.height+1)/2+1));
+		imgbuffer=(unsigned char *)malloc(rowlength*((png_ihdr.height+1)/2+1));
 		for(adam7pass=0;adam7pass<7;adam7pass++) {
 			awidth=(((int)png_ihdr.width)-adam7hoff[adam7pass]+adam7hskip[adam7pass]-1)/adam7hskip[adam7pass];
 			aheight=(((int)png_ihdr.height)-adam7voff[adam7pass]+adam7vskip[adam7pass]-1)/adam7vskip[adam7pass];
@@ -606,7 +627,7 @@ void png_load(unsigned char *buffer, int nbytes, char *output, REBOOL *alpha) {
 			 adam7hskip[adam7pass],adam7voff[adam7pass],adam7vskip[adam7pass]);
 		}
 	} else {
-		imgbuffer=malloc(rowlength*(png_ihdr.height+1));
+		imgbuffer=(unsigned char *)malloc(rowlength*(png_ihdr.height+1));
 		comp_awidth=1+(png_ihdr.width*bitsperpixel+7)/8;
 		memset(imgbuffer,0,rowlength);
 		for(r=1;r<=(int)png_ihdr.height;r++) {
@@ -658,7 +679,7 @@ struct ihdrchunk {
 };
 
 
-static void emitchunk(unsigned char **cpp,char *type,char *data,int length) {
+static void emitchunk(unsigned char **cpp,const char *type,const char *data,int length) {
 	REBCNT tmplen;
 	unsigned char *cp=*cpp,*crcp;
 
@@ -684,7 +705,7 @@ static void emitchunk(unsigned char **cpp,char *type,char *data,int length) {
 **
 */	void Encode_PNG_Image(REBCDI *codi)
 /*
-**		Input:  Image bits (codi->bits, w, h)
+**		Input:  Image bits (codi->extra.bits, w, h)
 **		Output: PNG encoded image (codi->data, len)
 **		Error:  Code in codi->error
 **
@@ -696,9 +717,11 @@ static void emitchunk(unsigned char **cpp,char *type,char *data,int length) {
 	struct idatnode *firstidat,*currentidat;
 	unsigned char *linebuf,*cp;
 	int x,y,imgsize,ret;
-	z_stream zstream={0};
 	REBCNT *dp,cv;
 	REBOOL hasalpha;
+	z_stream zstream;
+
+	memset(&zstream, NUL, sizeof(zstream));
 
 	hasalpha = codi->alpha;
 
@@ -712,19 +735,21 @@ static void emitchunk(unsigned char **cpp,char *type,char *data,int length) {
 	ihdr.filter_method=0;
 	ihdr.interlace_method=0;
 
-	linebuf=malloc(hasalpha?(4*w+1):(3*w+1));
-	firstidat=currentidat=malloc(sizeof(struct idatnode));
+	linebuf=(unsigned char *)malloc(hasalpha?(4*w+1):(3*w+1));
+	firstidat=(struct idatnode *)malloc(sizeof(struct idatnode));
 
 	if(!firstidat) {
 		free(linebuf);
 		trap_png();
 	}
 
+	currentidat = firstidat;
+
 	currentidat->next=0;
 	deflateInit(&zstream, Z_DEFAULT_COMPRESSION);
 	zstream.next_out=currentidat->data;
 	zstream.avail_out=IDATLENGTH;
-	dp=codi->bits;
+	dp=codi->extra.bits;
 	for(y=0;y<h;y++) {
 		cp=linebuf;
 		*cp++=0;
@@ -752,7 +777,7 @@ static void emitchunk(unsigned char **cpp,char *type,char *data,int length) {
 
 		 refill:
 			currentidat->length=IDATLENGTH;
-			currentidat->next=malloc(sizeof(struct idatnode));
+			currentidat->next=(struct idatnode *)malloc(sizeof(struct idatnode));
 			currentidat=currentidat->next;
 			currentidat->next=0;
 			zstream.next_out=currentidat->data;
@@ -768,7 +793,7 @@ static void emitchunk(unsigned char **cpp,char *type,char *data,int length) {
 		currentidat=currentidat->next;
 	}
 
-	codi->data = Make_Mem(imgsize);
+	codi->data = ALLOC_ARRAY(unsigned char, imgsize);
 	codi->len = imgsize;
 
 	cp=(unsigned char *)codi->data;
@@ -798,7 +823,7 @@ error:
 */	void Decode_PNG_Image(REBCDI *codi)
 /*
 **		Input:  PNG encoded image (codi->data, len)
-**		Output: Image bits (codi->bits, w, h)
+**		Output: Image bits (codi->extra.bits, w, h)
 **		Error:  Code in codi->error
 **
 ***********************************************************************/
@@ -809,8 +834,8 @@ error:
 	if (!png_info(codi->data, codi->len, &w, &h )) trap_png();
 	codi->w = w;
 	codi->h = h;
-	codi->bits = Make_Mem(w * h * 4);
-	png_load((unsigned char *)(codi->data), codi->len, (unsigned char *)(codi->bits), &alpha);
+	codi->extra.bits = ALLOC_ARRAY(u32, w * h);
+	png_load(codi->data, codi->len, (char *)codi->extra.bits, &alpha);
 
 	//if(alpha) VAL_IMAGE_TRANSP(Temp_Value)=VITT_ALPHA;
 }
@@ -827,21 +852,21 @@ error:
 	// Handle JPEG error throw:
 	if (setjmp(png_state)) {
 		codi->error = CODI_ERR_BAD_DATA; // generic
-		if (codi->action == CODI_IDENTIFY) return CODI_CHECK;
+		if (codi->action == CODI_ACT_IDENTIFY) return CODI_CHECK;
 		return CODI_ERROR;
 	}
 
-	if (codi->action == CODI_IDENTIFY) {
+	if (codi->action == CODI_ACT_IDENTIFY) {
 		if (!png_info(codi->data, codi->len, 0, 0)) codi->error = CODI_ERR_SIGNATURE;
 		return CODI_CHECK; // error code is inverted result
 	}
 
-	if (codi->action == CODI_DECODE) {
+	if (codi->action == CODI_ACT_DECODE) {
 		Decode_PNG_Image(codi);
 		return CODI_IMAGE;
 	}
 
-	if (codi->action == CODI_ENCODE) {
+	if (codi->action == CODI_ACT_ENCODE) {
 		Encode_PNG_Image(codi);
 		return CODI_BINARY;
 	}
@@ -857,5 +882,5 @@ error:
 /*
 ***********************************************************************/
 {
-	Register_Codec("png", Codec_PNG_Image);
+	Register_Codec(AS_CBYTES("png"), Codec_PNG_Image);
 }

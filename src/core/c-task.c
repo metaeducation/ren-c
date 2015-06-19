@@ -67,14 +67,14 @@
 {
 	REBSER *body;
 
-	Debug_Str("Begin Task");
+	Debug_Str(AS_CBYTES("Begin Task"));
 
 	Init_Task();
 	body = Clone_Block(VAL_MOD_BODY(task));
 	OS_TASK_READY(0);
 	Do_Blk(body, 0);
 
-	Debug_Str("End Task");
+	Debug_Str(AS_CBYTES("End Task"));
 }
 
 
@@ -84,5 +84,5 @@
 /*
 ***********************************************************************/
 {
-	OS_CREATE_THREAD((void*)Launch_Task, task, 50000);
+	OS_CREATE_THREAD(r_cast(CFUNC, Launch_Task), task, 50000);
 }

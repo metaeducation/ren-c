@@ -109,7 +109,7 @@ static REBOL_STATE Top_State; // Boot var: holds error state during boot
 ***********************************************************************/
 {
 	if ((DSP + 100) > (REBINT)SERIES_REST(DS_Series))
-		Trap0(RE_STACK_OVERFLOW);
+		vTrap0(RE_STACK_OVERFLOW);
 }
 
 
@@ -122,7 +122,7 @@ static REBOL_STATE Top_State; // Boot var: holds error state during boot
 **
 ***********************************************************************/
 {
-	if (IS_NONE(TASK_THIS_ERROR)) Crash(RP_ERROR_CATCH);
+	if (IS_NONE(TASK_THIS_ERROR)) vCrash(RP_ERROR_CATCH);
 	*value = *TASK_THIS_ERROR;
 //	Print("CE: %r", value);
 	SET_NONE(TASK_THIS_ERROR);
@@ -138,7 +138,7 @@ static REBOL_STATE Top_State; // Boot var: holds error state during boot
 **
 ***********************************************************************/
 {
-	if (!Saved_State) Crash(RP_NO_SAVED_STATE);
+	if (!Saved_State) vCrash(RP_NO_SAVED_STATE);
 	SET_ERROR(TASK_THIS_ERROR, ERR_NUM(err), err);
 	if (Trace_Level) Trace_Error(TASK_THIS_ERROR);
 	longjmp(*Saved_State, 1);
@@ -154,7 +154,7 @@ static REBOL_STATE Top_State; // Boot var: holds error state during boot
 **
 ***********************************************************************/
 {
-	if (!Saved_State) Crash(RP_NO_SAVED_STATE);
+	if (!Saved_State) vCrash(RP_NO_SAVED_STATE);
 	*TASK_THIS_ERROR = *val;
 	longjmp(*Saved_State, 1);
 }
@@ -212,7 +212,7 @@ static REBOL_STATE Top_State; // Boot var: holds error state during boot
 {
 	if (IS_INTEGER(TASK_THIS_ERROR)) return; // composing prior error.
 
-	if (!Saved_State) Crash(RP_NO_SAVED_STATE);
+	if (!Saved_State) vCrash(RP_NO_SAVED_STATE);
 
 	*TASK_THIS_ERROR = *TASK_STACK_ERROR; // pre-allocated
 
@@ -280,7 +280,7 @@ static REBOL_STATE Top_State; // Boot var: holds error state during boot
 	n = code / 100 + 1;
 	cats = VAL_OBJ_FRAME(Get_System(SYS_CATALOG, CAT_ERRORS));
 
-	if (code >= 0 && n < SERIES_TAIL(cats) &&
+	if (n < SERIES_TAIL(cats) &&
 		NZ(cat = VAL_SERIES(BLK_SKIP(cats, n)))
 	) {
 		Set_Word(&error->type, FRM_WORD_SYM(cats, n), cats, n);
@@ -385,7 +385,7 @@ static REBOL_STATE Top_State; // Boot var: holds error state during boot
 			Set_Error_Type(error);
 		}
 		if (VAL_INT64(&error->code) < 100 || VAL_INT64(&error->code) > 1000)
-			Trap_Arg(arg);
+			vTrap_Arg(arg);
 	}
 
 	// If string arg, setup other fields
@@ -401,17 +401,17 @@ static REBOL_STATE Top_State; // Boot var: holds error state during boot
 //		Set_Error_Type(error);
 //	}
 	else
-		Trap_Arg(arg);
+		vTrap_Arg(arg);
 
 	if (!(VAL_ERR_NUM(value) = VAL_INT32(&error->code))) {
-		Trap_Arg(arg);
+		vTrap_Arg(arg);
 	}
 }
 
 
 /***********************************************************************
 **
-*/	REBSER *Make_Error(REBINT code, REBVAL *arg1, REBVAL *arg2, REBVAL *arg3)
+*/	REBSER *Make_Error(REBINT code, const REBVAL *arg1, const REBVAL *arg2, const REBVAL *arg3)
 /*
 **		Create and init a new error object.
 **
@@ -420,7 +420,7 @@ static REBOL_STATE Top_State; // Boot var: holds error state during boot
 	REBSER *err;		// Error object
 	ERROR_OBJ *error;	// Error object values
 
-	if (PG_Boot_Phase < BOOT_ERRORS) Crash(RP_EARLY_ERROR, code); // Not far enough!
+	if (PG_Boot_Phase < BOOT_ERRORS) Crash1(RP_EARLY_ERROR, code);
 
 	// Make a copy of the error object template:
 	err = CLONE_OBJECT(VAL_OBJ_FRAME(ROOT_ERROBJ));
@@ -449,118 +449,22 @@ static REBOL_STATE Top_State; // Boot var: holds error state during boot
 
 /***********************************************************************
 **
-*/	void Trap0(REBCNT num)
-/*
-***********************************************************************/
-{
-	Throw_Error(Make_Error(num, 0, 0, 0));
-}
-
-
-/***********************************************************************
-**
-*/	void Trap1(REBCNT num, REBVAL *arg1)
-/*
-***********************************************************************/
-{
-	Throw_Error(Make_Error(num, arg1, 0, 0));
-}
-
-
-/***********************************************************************
-**
-*/	void Trap2(REBCNT num, REBVAL *arg1, REBVAL *arg2)
-/*
-***********************************************************************/
-{
-	Throw_Error(Make_Error(num, arg1, arg2, 0));
-}
-
-
-/***********************************************************************
-**
-*/	void Trap3(REBCNT num, REBVAL *arg1, REBVAL *arg2, REBVAL *arg3)
-/*
-***********************************************************************/
-{
-	Throw_Error(Make_Error(num, arg1, arg2, arg3));
-}
-
-
-/***********************************************************************
-**
-*/	void Trap_Arg(REBVAL *arg)
-/*
-***********************************************************************/
-{
-	Trap1(RE_INVALID_ARG, arg);
-}
-
-
-/***********************************************************************
-**
-*/	void Trap_Type(REBVAL *arg)
-/*
-**		<type> type is not allowed here
-**
-***********************************************************************/
-{
-	Trap1(RE_INVALID_TYPE, Of_Type(arg));
-}
-
-
-/***********************************************************************
-**
-*/	void Trap_Range(REBVAL *arg)
-/*
-**		value out of range: <value>
-**
-***********************************************************************/
-{
-	Trap1(RE_OUT_OF_RANGE, arg);
-}
-
-
-/***********************************************************************
-**
-*/	void Trap_Word(REBCNT num, REBCNT sym, REBVAL *arg)
-/*
-***********************************************************************/
-{
-	Init_Word(DS_TOP, sym);
-	if (arg) Trap2(num, DS_TOP, arg);
-	else Trap1(num, DS_TOP);
-}
-
-
-/***********************************************************************
-**
-*/	void Trap_Action(REBCNT type, REBCNT action)
-/*
-***********************************************************************/
-{
-	Trap2(RE_CANNOT_USE, Get_Action_Word(action), Get_Type(type));
-}
-
-
-/***********************************************************************
-**
 */	void Trap_Math_Args(REBCNT type, REBCNT action)
 /*
 ***********************************************************************/
 {
-	Trap2(RE_NOT_RELATED, Get_Action_Word(action), Get_Type(type));
+	vTrap2(RE_NOT_RELATED, Get_Action_Word(action), Get_Type(type));
 }
 
 
 /***********************************************************************
 **
-*/	void Trap_Types(REBCNT errnum, REBCNT type1, REBCNT type2)
+*/	void Trap_Types_Core(REBCNT errnum, REBCNT type1, REBCNT type2)
 /*
 ***********************************************************************/
 {
-	if (type2 != 0) Trap2(errnum, Get_Type(type1), Get_Type(type2));
-	Trap1(errnum, Get_Type(type1));
+	if (type2 != 0) vTrap2(errnum, Get_Type(type1), Get_Type(type2));
+	vTrap1(errnum, Get_Type(type1));
 }
 
 
@@ -573,17 +477,7 @@ static REBOL_STATE Top_State; // Boot var: holds error state during boot
 **
 ***********************************************************************/
 {
-	Trap3(RE_EXPECT_TYPE, Of_Type(object), Obj_Word(object, index), Get_Type(type));
-}
-
-
-/***********************************************************************
-**
-*/	void Trap_Make(REBCNT type, REBVAL *spec)
-/*
-***********************************************************************/
-{
-	Trap2(RE_BAD_MAKE_ARG, Get_Type(type), spec);
+	vTrap3(RE_EXPECT_TYPE, Of_Type(object), Obj_Word(object, index), Get_Type(type));
 }
 
 
@@ -594,17 +488,7 @@ static REBOL_STATE Top_State; // Boot var: holds error state during boot
 ***********************************************************************/
 {
 	DS_PUSH_INTEGER(num);
-	Trap1(err, DS_TOP);
-}
-
-
-/***********************************************************************
-**
-*/	void Trap_Reflect(REBCNT type, REBVAL *arg)
-/*
-***********************************************************************/
-{
-	Trap_Arg(arg);
+	vTrap1(err, DS_TOP);
 }
 
 
@@ -617,13 +501,13 @@ static REBOL_STATE Top_State; // Boot var: holds error state during boot
 	REBVAL *spec = OFV(port, STD_PORT_SPEC);
 	REBVAL *val;
 
-	if (!IS_OBJECT(spec)) Trap0(RE_INVALID_PORT);
+	if (!IS_OBJECT(spec)) vTrap0(RE_INVALID_PORT);
 
 	val = Get_Object(spec, STD_PORT_SPEC_HEAD_REF); // most informative
 	if (IS_NONE(val)) val = Get_Object(spec, STD_PORT_SPEC_HEAD_TITLE);
 
 	DS_PUSH_INTEGER(err_code);
-	Trap2(errnum, val, DS_TOP);
+	vTrap2(errnum, val, DS_TOP);
 }
 
 
@@ -695,7 +579,7 @@ static REBOL_STATE Top_State; // Boot var: holds error state during boot
 		DSP++; // Room for return value
 		Catch_Error(DS_TOP); // Stores error value here
 		Print_Value(DS_TOP, 0, FALSE);
-		Crash(RP_NO_CATCH);
+		vCrash(RP_NO_CATCH);
 	}
 	SET_STATE(Top_State, Saved_State);
 }
@@ -812,7 +696,7 @@ error:
 			Init_Word(DS_TOP, sym);
 			value = DS_TOP;
 		}
-		Trap1(RE_SECURITY, value);
+		vTrap1(RE_SECURITY, value);
 	}
 	else if (flag == SEC_QUIT) OS_EXIT(101);
 }

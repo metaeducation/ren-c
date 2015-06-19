@@ -170,7 +170,7 @@
 	return R_RET;
 }
 
-REBYTE *evoke_help = "Evoke values:\n"
+const REBYTE evoke_help[] = "Evoke values:\n"
 	"[stack-size n] crash-dump delect\n"
 	"watch-recycle watch-obj-copy crash\n"
 	"1: watch expand\n"
@@ -215,7 +215,7 @@ REBYTE *evoke_help = "Evoke values:\n"
 				Expand_Stack(Int32s(arg, 1));
 				break;
 			case SYM_CRASH:
-				Crash(9999);
+				Crash(RP_MISC);
 				break;
 			default:
 				Out_Str(evoke_help, 1);
@@ -392,21 +392,21 @@ err:
 **
 ***********************************************************************/
 {
-	REBCDI codi;
 	REBVAL *val;
 	REBINT result;
 	REBSER *ser;
 
-	CLEAR(&codi, sizeof(codi));
+	REBCDI codi;
+	memset(&codi, NUL, sizeof(codi));
 
-	codi.action = CODI_DECODE;
+	codi.action = CODI_ACT_DECODE;
 
 	val = D_ARG(3);
 
 	switch (VAL_WORD_SYM(D_ARG(2))) {
 
 	case SYM_IDENTIFY:
-		codi.action = CODI_IDENTIFY;
+		codi.action = CODI_ACT_IDENTIFY;
 	case SYM_DECODE:
 		if (!IS_BINARY(val)) Trap1(RE_INVALID_ARG, val);
 		codi.data = VAL_BIN_DATA(D_ARG(3));
@@ -414,9 +414,9 @@ err:
 		break;
 
 	case SYM_ENCODE:
-		codi.action = CODI_ENCODE;
+		codi.action = CODI_ACT_ENCODE;
 		if (IS_IMAGE(val)) {
-			codi.bits = VAL_IMAGE_BITS(val);
+			codi.extra.bits = VAL_IMAGE_BITS(val);
 			codi.w = VAL_IMAGE_WIDE(val);
 			codi.h = VAL_IMAGE_HIGH(val);
 			codi.alpha = Image_Has_Alpha(val, 0);
@@ -431,7 +431,7 @@ err:
 
 	// Nasty alias, but it must be done:
 	// !!! add a check to validate the handle as a codec!!!!
-	result = ((codo) (VAL_HANDLE(D_ARG(1))))(&codi);
+	result = (r_cast(codo, VAL_HANDLE_CODE(D_ARG(1))))(&codi);
 
 	if (codi.error != 0) {
 		if (result == CODI_CHECK) return R_FALSE;
@@ -459,15 +459,15 @@ err:
 
 	case CODI_IMAGE: //used on decode
 		ser = Make_Image(codi.w, codi.h, TRUE); // Puts it into RETURN stack position
-		memcpy(IMG_DATA(ser), codi.bits, codi.w * codi.h * 4);
+		memcpy(IMG_DATA(ser), codi.extra.bits, codi.w * codi.h * 4);
 		SET_IMAGE(D_RET, ser);
 
 		// See notice in reb-codec.h on reb_codec_image 
-		Free_Mem(codi.bits, codi.w * codi.h * 4);
+		Free_Mem(codi.extra.bits, codi.w * codi.h * 4);
 		break;
 
 	case CODI_BLOCK:
-		Set_Block(D_RET, codi.other);
+		Set_Block(D_RET, r_cast(REBSER *, codi.extra.other));
 		break;
 
 	default:

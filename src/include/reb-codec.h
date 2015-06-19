@@ -31,13 +31,13 @@
 // Codec image interface:
 //
 // If your codec routine returns CODI_IMAGE, it is expected that the
-// ->bits field contains a block of memory allocated with Make_Mem
+// ->bits field contains a block of memory allocated with Alloc_Mem
 // of size (->w * ->h * 4).  This will be freed by the
 // REBNATIVE(do_codec) in n-system.c
 //
 // If your codec routine returns CODI_BINARY, it is
 // expected that the ->data field contains a block of memory
-// allocated with Make_Mem of size ->len.  This will be freed by
+// allocated with Alloc_Mem of size ->len.  This will be freed by
 // the REBNATIVE(do_codec) in n-system.c
 //
 // If your codec routine returns CODI_TEXT, it is
@@ -51,11 +51,11 @@ typedef struct reb_codec_image {
 	int h;
 	int len;
 	int alpha;
-	unsigned char *data;
+	unsigned char *data; // !!! Why unsigned, when char* is lingua ANSI?
 	union {
 		u32 *bits;
 		void *other;
-	};
+	} extra;
 	int error;
 } REBCDI;
 
@@ -70,13 +70,15 @@ enum {
 	CODI_IMAGE,
 	CODI_SOUND,
 	CODI_BLOCK,
+	CODI_MAX
 };
 
 // Codec commands:
 enum {
-	CODI_IDENTIFY,
-	CODI_DECODE,
-	CODI_ENCODE,
+	CODI_ACT_IDENTIFY,
+	CODI_ACT_DECODE,
+	CODI_ACT_ENCODE,
+	CODI_ACT_MAX
 };
 
 // Codec errors:
@@ -88,4 +90,5 @@ enum {
 	CODI_ERR_BIT_LEN,		// Bit length is not supported
 	CODI_ERR_BAD_TABLE,		// Image tables are wrong
 	CODI_ERR_BAD_DATA,		// Generic
+	CODI_ERR_MAX
 };

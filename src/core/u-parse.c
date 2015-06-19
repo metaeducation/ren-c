@@ -34,7 +34,7 @@
 enum Parse_Flags {
 	PF_ALL = 1,
 	PF_CASE = 2,
-	PF_CASED = 4, // was set as initial option
+	PF_CASED = 4 // was set as initial option
 };
 
 typedef struct reb_parse {
@@ -57,6 +57,7 @@ enum parse_flags {
 	PF_CHANGE,
 	PF_RETURN,
 	PF_WHILE,
+	PF_MAX
 };
 
 #define MAX_PARSE_DEPTH 512
@@ -329,7 +330,7 @@ no_result:
 
 /***********************************************************************
 **
-*/	static To_Thru(REBPARSE *parse, REBCNT index, REBVAL *block, REBFLG is_thru)
+*/	static REBINT To_Thru(REBPARSE *parse, REBCNT index, REBVAL *block, REBFLG is_thru)
 /*
 ***********************************************************************/
 {
@@ -349,7 +350,8 @@ no_result:
 
 			// Deal with words and commands
 			if (IS_WORD(item)) {
-				if (cmd = VAL_CMD(item)) {
+				cmd = VAL_CMD(item);
+				if (cmd) {
 					if (cmd == SYM_END) {
 						if (index >= series->tail) {
 							index = series->tail;
@@ -685,7 +687,8 @@ bad_target:
 		if (VAL_TYPE(item) >= REB_WORD && VAL_TYPE(item) <= REB_GET_WORD) {
 
 			// Is it a command word?
-			if (cmd = VAL_CMD(item)) {
+			cmd = VAL_CMD(item);
+			if (cmd) {
 
 				if (!IS_WORD(item)) Trap1(RE_PARSE_COMMAND, item); // SET or GET not allowed
 
@@ -985,7 +988,7 @@ post:
 				else index = begin;
 			}
 			if (index == NOT_FOUND) { // Failure actions:
-				// not decided: if (word) Set_Var_Basic(word, REB_NONE);
+				// not decided: if (word) Set_Var to NONE?
 				if (GET_FLAG(flags, PF_THEN)) {
 					SKIP_TO_BAR(rules);
 					if (!IS_END(rules)) rules++;

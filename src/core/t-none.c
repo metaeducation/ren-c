@@ -31,7 +31,7 @@
 
 /***********************************************************************
 **
-*/	REBINT CT_None(REBVAL *a, REBVAL *b, REBINT mode)
+*/	REBINT CT_None(const REBVAL *a, const REBVAL *b, REBINT mode)
 /*
 ***********************************************************************/
 {
@@ -42,7 +42,7 @@
 
 /***********************************************************************
 **
-*/	REBFLG MT_None(REBVAL *out, REBVAL *data, REBCNT type)
+*/	REBFLG MT_None(REBVAL *out, const REBVAL *data, REBCNT type)
 /*
 ***********************************************************************/
 {

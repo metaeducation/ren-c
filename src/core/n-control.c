@@ -37,6 +37,7 @@ enum {
 	PROT_DEEP,
 	PROT_HIDE,
 	PROT_WORD,
+	PROT_MAX
 };
 
 
@@ -54,9 +55,9 @@ enum {
 	if (index > 0) {
 		frm = VAL_WORD_FRAME(word);
 		if (VAL_PROTECTED(FRM_WORDS(frm)+index))
-			Trap1(RE_LOCKED_WORD, word);
+			vTrap1(RE_LOCKED_WORD, word);
 	}
-	else if (index == 0) Trap0(RE_SELF_PROTECTED);
+	else if (index == 0) vTrap0(RE_SELF_PROTECTED);
 }
 
 

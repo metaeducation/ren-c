@@ -38,7 +38,9 @@ typedef struct rebol_event {
 	union {
 		REBREQ *req;	// request (for device events)
 		void *ser;		// port or object
-	};
+	} eventee;				// !!! REVIEW: Not always "sender"?  The name is
+							// "bad" (?) but at least unique, making it easy
+							// to change.  See also rebol_devreq->requestee
 } REBEVT;
 #pragma pack()
 
@@ -50,6 +52,7 @@ enum {
 	EVF_DOUBLE,		// double click detected
 	EVF_CONTROL,
 	EVF_SHIFT,
+	EVF_MAX
 };
 
 
@@ -61,6 +64,7 @@ enum {
 	EVM_OBJECT,		// event holds object frame pointer
 	EVM_GUI,		// GUI event uses system/view/event/port
 	EVM_CALLBACK,	// Callback event uses system/ports/callback port
+	EVM_MAX
 };
 
 // Special messages

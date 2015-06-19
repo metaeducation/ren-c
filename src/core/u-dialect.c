@@ -49,11 +49,12 @@ enum {
 	RDIA_NO_CMD,		// do not store command in block
 	RDIA_LIT_CMD,		// 'command
 	RDIA_ALL,			// all commands, do not reset output
+	RDIA_MAX
 };
 
 static REBINT Delect_Debug = 0;
 static REBINT Total_Missed = 0;
-static char *Dia_Fmt = "DELECT - cmd: %s length: %d missed: %d total: %d";
+static const char *Dia_Fmt = "DELECT - cmd: %s length: %d missed: %d total: %d";
 
 
 /***********************************************************************
@@ -337,7 +338,8 @@ again:
 	}
 	else {
 		Resize_Series(dia->out, size+1); // tail = 0
-		CLEAR_SERIES(dia->out); // Be sure it is entirely cleared
+		// Be sure it is entirely cleared
+		memset(SERIES_DATA(dia->out), NUL, SERIES_SPACE(dia->out));
 	}
 
 	// Insert command word:
@@ -445,11 +447,11 @@ again:
 **
 ***********************************************************************/
 {
-	REBDIA dia;
 	REBINT n;
 	REBINT dsp = DSP; // Save stack position
 
-	CLEARS(&dia);
+	REBDIA dia;
+	memset(&dia, NUL, sizeof(dia));
 
 	if (*index >= SERIES_TAIL(block)) return 0; // end of block
 
@@ -489,11 +491,11 @@ again:
 /*
 ***********************************************************************/
 {
-	REBDIA dia;
 	REBINT err;
 	REBFLG all;
 
-	CLEARS(&dia);
+	REBDIA dia;
+	memset(&dia, NUL, sizeof(dia));
 
 	dia.dialect = VAL_OBJ_FRAME(D_ARG(1));
 	dia.args = VAL_SERIES(D_ARG(2));

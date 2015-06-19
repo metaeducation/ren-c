@@ -61,9 +61,6 @@
 
 /**********************************************************************/
 
-#define PROMPT_STR ">> "
-#define RESULT_STR "== "
-
 REBARGS Main_Args;
 
 #ifdef TO_WIN32
@@ -82,11 +79,11 @@ extern void Init_Ext_Test(void);	// see: host-ext-test.c
 
 // Host bare-bones stdio functs:
 extern void Open_StdIO(void);
-extern void Put_Str(char *buf);
+extern void Put_Str(const REBYTE *buf);
 extern REBYTE *Get_Str();
 
-void Host_Crash(REBYTE *reason) {
-	OS_Crash("REBOL Host Failure", reason);
+void Host_Crash(const REBYTE *reason) {
+	OS_Crash(AS_CBYTES("REBOL Host Failure"), reason);
 }
 
 
@@ -141,13 +138,16 @@ int main(int argc, char **argv)
 	Open_StdIO();  // also sets up interrupt handler
 
 	// Initialize the REBOL library (reb-lib):
-	if (!CHECK_STRUCT_ALIGN) Host_Crash("Incompatible struct alignment");
-	if (!Host_Lib) Host_Crash("Missing host lib");
+	if (!CHECK_STRUCT_ALIGN)
+		Host_Crash(AS_CBYTES("Incompatible struct alignment"));
+	if (!Host_Lib)
+		Host_Crash(AS_CBYTES("Missing host lib"));
 	// !!! Second part will become vers[2] < RL_REV on release!!!
-	if (vers[1] != RL_VER || vers[2] != RL_REV) Host_Crash("Incompatible reb-lib DLL");
+	if (vers[1] != RL_VER || vers[2] != RL_REV)
+		Host_Crash(AS_CBYTES("Incompatible reb-lib DLL"));
 	n = RL_Init(&Main_Args, Host_Lib);
-	if (n == 1) Host_Crash("Host-lib wrong size");
-	if (n == 2) Host_Crash("Host-lib wrong version/checksum");
+	if (n == 1) Host_Crash(AS_CBYTES("Host-lib wrong size"));
+	if (n == 2) Host_Crash(AS_CBYTES("Host-lib wrong version/checksum"));
 
 #ifndef REB_CORE
 	Init_Windows();
@@ -179,11 +179,11 @@ int main(int argc, char **argv)
 	){
 		n = 0;  // reset error code (but should be able to set it below too!)
 		while (TRUE) {
-			Put_Str(PROMPT_STR);
+			Put_Str(AS_CBYTES(">> "));
 			if ((line = Get_Str())) {
 				RL_Do_String(line, 0, 0);
-				RL_Print_TOS(0, RESULT_STR);
-				OS_Free(line);
+				RL_Print_TOS(0, AS_CBYTES("== "));
+				OS_Free_Mem(line);
 			}
 			else break; // EOS
 		}

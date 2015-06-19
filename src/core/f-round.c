@@ -99,7 +99,8 @@ enum {
 	/* is scale negligible? */
 	if (scale < ldexp(fabs(dec), -53)) return dec;
 
-	if (v = scale >= 1.0) dec = dec / scale;
+	v = scale >= 1.0;
+	if (v) dec = dec / scale;
 	else {
 		r = frexp(scale, &e);
 		if (e <= -1022) {
@@ -139,21 +140,30 @@ enum {
 }
 
 #define Int_Abs(x) ((x) < 0) ? -(x) : (x)
-#define Int_Trunc num = (num > 0) ? n - r : -(REBI64)(n - r)
-#define Int_Floor	{\
-    					if (num > 0) num = n - r;\
-						else if ((m = n + s) <= (REBU64)1 << 63) num = -(REBI64)m;\
-						else Trap0(RE_OVERFLOW);\
-					}
-#define Int_Ceil	{\
-						if (num < 0) num = -(REBI64)(n - r);\
-	        			else if ((m = n + s) < (REBU64)1 << 63) num = m;\
-	        			else Trap0(RE_OVERFLOW);\
-					}
-#define Int_Away	if ((m = n + s) >= (REBU64)1 << 63)\
-						if (num < 0 && m == (REBU64) 1 << 63) num = m;\
-		    			else Trap0(RE_OVERFLOW);\
-					else num = (num > 0) ? m : -(REBI64)m
+
+#define Int_Trunc \
+	num = (num > 0) ? cast(REBI64, n - r) : -cast(REBI64, n - r)
+
+#define Int_Floor \
+	{ \
+		if (num > 0) num = n - r; \
+		else if ((m = n + s) <= (REBU64)1 << 63) num = -(REBI64)m; \
+		else Trap0(RE_OVERFLOW); \
+	}
+
+#define Int_Ceil \
+	{ \
+		if (num < 0) num = -cast(REBI64, n - r); \
+		else if ((m = n + s) < cast(REBU64, 1) << 63) num = m; \
+		else Trap0(RE_OVERFLOW); \
+	}
+
+#define Int_Away \
+	if ((m = n + s) >= cast(REBU64, 1) << 63) \
+		if (num < 0 && m == cast(REBU64, 1) << 63) num = m; \
+		else Trap0(RE_OVERFLOW); \
+	else num = (num > 0) ? cast(REBI64, m) : -cast(REBI64, m)
+
 
 /***********************************************************************
 **
@@ -211,7 +221,12 @@ enum {
 	REBDCI deci_one = {1u, 0u, 0u, 0u, 0};
 
 	if (GET_FLAG(flags, RF_TO)) {
-		if (deci_is_zero(scale)) Trap0(RE_ZERO_DIVIDE);
+		if (deci_is_zero(scale)) {
+			Throw_Error(Make_Error(RE_ZERO_DIVIDE, 0, 0, 0));
+			// UNREACHABLE, but we want to make compiler happy...
+			assert(FALSE);
+			return deci_one;
+		}
 		scale = deci_abs(scale);
 	}
 	else scale = deci_one;

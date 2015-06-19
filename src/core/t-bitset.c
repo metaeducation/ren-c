@@ -31,11 +31,11 @@
 
 #define MAX_BITSET 0x7fffffff
 
-#define BITS_NOT(s) ((s)->size)
+#define BITS_NOT(s) ((s)->extra.size)
 
 /***********************************************************************
 **
-*/	REBINT CT_Bitset(REBVAL *a, REBVAL *b, REBINT mode)
+*/	REBINT CT_Bitset(const REBVAL *a, const REBVAL *b, REBINT mode)
 /*
 ***********************************************************************/
 {
@@ -79,7 +79,7 @@
 {
 	REBSER *ser = VAL_SERIES(value);
 
-	if (BITS_NOT(ser)) Append_Bytes(mold->series, "[not bits ");
+	if (BITS_NOT(ser)) Append_Bytes(mold->series, AS_CBYTES("[not bits "));
 	Mold_Binary(value, mold);
 	if (BITS_NOT(ser)) Append_Byte(mold->series, ']');
 }
@@ -87,7 +87,7 @@
 
 /***********************************************************************
 **
-*/	REBFLG MT_Bitset(REBVAL *out, REBVAL *data, REBCNT type)
+*/	REBFLG MT_Bitset(REBVAL *out, const REBVAL *data, REBCNT type)
 /*
 ***********************************************************************/
 {
@@ -112,7 +112,7 @@
 
 /***********************************************************************
 **
-*/	REBINT Find_Max_Bit(REBVAL *val)
+*/	REBINT Find_Max_Bit(const REBVAL *val)
 /*
 **		Return integer number for the maximum bit number defined by
 **		the value. Used to determine how much space to allocate.
@@ -252,7 +252,7 @@ retry:
 	if (i >= tail) {
 		if (!set) return; // no need to expand
 		Expand_Series(bset, tail, (i - tail) + 1);
-		CLEAR(BIN_SKIP(bset, tail), (i - tail) + 1);
+		memset(BIN_SKIP(bset, tail), NUL, (i - tail) + 1);
 	}
 
 	bit = 1 << (7 - ((n) & 7));
@@ -265,7 +265,7 @@ retry:
 
 /***********************************************************************
 **
-*/	void Set_Bit_Str(REBSER *bset, REBVAL *val, REBOOL set)
+*/	void Set_Bit_Str(REBSER *bset, const REBVAL *val, REBOOL set)
 /*
 ***********************************************************************/
 {
@@ -286,7 +286,7 @@ retry:
 
 /***********************************************************************
 **
-*/	REBFLG Set_Bits(REBSER *bset, REBVAL *val, REBOOL set)
+*/	REBFLG Set_Bits(REBSER *bset, const REBVAL *val, REBOOL set)
 /*
 **		Set/clear bits indicated by strings and chars and ranges.
 **
@@ -371,8 +371,8 @@ span_bits:
 			n = VAL_LEN(val);
 			c = bset->tail;
 			if (n >= c) {
-				Expand_Series(bset, c, (n - c));
-				CLEAR(BIN_SKIP(bset, c), (n - c));
+				Expand_Series(bset, c, n - c);
+				memset(BIN_SKIP(bset, c), NUL, n - c);
 			}
 			memcpy(BIN_HEAD(bset), VAL_BIN_DATA(val), n);
 			break;

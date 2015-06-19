@@ -55,7 +55,7 @@
 
 /***********************************************************************
 **
-*/	REBINT CT_Typeset(REBVAL *a, REBVAL *b, REBINT mode)
+*/	REBINT CT_Typeset(const REBVAL *a, const REBVAL *b, REBINT mode)
 /*
 ***********************************************************************/
 {
@@ -135,7 +135,7 @@
 
 /***********************************************************************
 **
-*/	REBFLG MT_Typeset(REBVAL *out, REBVAL *data, REBCNT type)
+*/	REBFLG MT_Typeset(REBVAL *out, const REBVAL *data, REBCNT type)
 /*
 ***********************************************************************/
 {

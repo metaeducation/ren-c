@@ -48,35 +48,16 @@ enum reb_panics {
 	RP_CORRUPT_MEMORY,		// Check_Memory() found a problem
 	RP_HASH_OVERFLOW,		// Hash ran out of space
 	RP_NO_PRINT_PTR,		// print is missing string pointer
-
-//  Assertion Errors (very rare, not worth using strings)
-//	NOTE: THESE ARE OPTIONAL. Many are only checked in debug builds.
-	RP_ASSERTS = 1200,
-	RP_BAD_SERIES,			// zero width series requested
-	RP_OVER_SERIES,			// series overflow happened
-	RP_BIND_TABLE_SIZE, 	// word table does not match bind table
-	RP_BAD_SET_INDEX,		// set word has no index
-	RP_BAD_SET_CONTEXT,		// set word has no frame
-	RP_UNEXPECTED_END,		// in GC, block ended before length reached
-	RP_MISSING_END,			// block did not have an END marker
-	RP_NULL_MARK_SERIES,	// in GC, mark series pointer is null
-	RP_NULL_SERIES,			// in GC, a series is null
-	RP_HOLD_SERIES_MALIGN,	// GC_Protect tail was wrong on UNSAVE
-	RP_THROW_IN_GC,			// tried to GC a THROW error value
-	RP_FREE_NODE_SIZE,		// node size is not what it should be
-	RP_NO_OBJECT_FRAME,		// object frame is missing
-	RP_BAD_OBJ_FRAME,		// object frame is invalid
-	RP_BAD_OBJ_INDEX,		// object index past tail
-	RP_BAD_IMPORT_WORD,		// the word index of context is invalid
 	RP_BAD_TYPE_ACTION,		// datatype out of range in action dispatch
-	RP_BAD_PORT_ACTION,		// datatype out of range for ports
-	RP_NO_ACTION,			// Action Value_Dispatch empty for this type
-	RP_GC_STUCK,			// GC_Disable did not get decremented
-	RP_GC_OF_BLOCK,			// Block has been GC'd
-	RP_TOS_DRIFT,			// TOS drifts during Do_Block
 	RP_MAX_SCHEMES,			// Too many native schemes
-	RP_BIND_BOUNDS,			// Bind is out of bounds for the frame
-	RP_SERIES_OVERFLOW,		// Tail has gone past end of series
+	RP_BAD_PORT_ACTION,		// datatype out of range for ports
+	RP_BAD_OBJ_INDEX,		// object index past tail
+	RP_MISSING_END,			// block did not have an END marker
+	RP_UNEXPECTED_END,		// in GC, block ended before length reached
+	RP_OVER_SERIES,			// series overflow happened
+
+//	!!! Reclaim (formerly for "ASSERT codes", which are now normal C asserts)
+	RP_UNUSED_CATEGORY_1200 = 1200,
 
 //  Datatype Errors (300 + N --indicates location)
 	RP_DATATYPE = 1300,
@@ -95,11 +76,10 @@ enum reb_panics {
 	RP_NO_CATCH,			// top level uncaught error
 	RP_NO_SAVED_STATE,		// saved state frame is missing
 	RP_MAX_EVENTS,			// event queue overflow
-	RP_NA,					// not available
+	RP_NOT_AVAILABLE,		// not available
 
 //	Unspecified (just count them)
-	RP_MISC,
+	RP_MISC
 };
 
-#define RP_ RP_ASSERTS
 

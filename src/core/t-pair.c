@@ -32,7 +32,7 @@
 
 /***********************************************************************
 **
-*/	REBINT CT_Pair(REBVAL *a, REBVAL *b, REBINT mode)
+*/	REBINT CT_Pair(const REBVAL *a, const REBVAL *b, REBINT mode)
 /*
 ***********************************************************************/
 {
@@ -48,7 +48,7 @@
 
 /***********************************************************************
 **
-*/	REBFLG MT_Pair(REBVAL *out, REBVAL *data, REBCNT type)
+*/	REBFLG MT_Pair(REBVAL *out, const REBVAL *data, REBCNT type)
 /*
 ***********************************************************************/
 {
@@ -82,7 +82,7 @@
 
 /***********************************************************************
 **
-*/	REBINT Cmp_Pair(REBVAL *t1, REBVAL *t2)
+*/	REBINT Cmp_Pair(const REBVAL *t1, const REBVAL *t2)
 /*
 **	Given two pairs, compare them.
 **
@@ -326,7 +326,7 @@
 				return R_RET;
 			}
 			if (IS_STRING(val)) {
-				REBYTE *bp;
+				const REBYTE *bp;
 				REBCNT len;
 				// -1234567890x-1234567890
 				bp = Qualify_String(val, 24, &len, FALSE);

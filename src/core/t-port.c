@@ -32,7 +32,7 @@
 
 /***********************************************************************
 **
-*/	REBINT CT_Port(REBVAL *a, REBVAL *b, REBINT mode)
+*/	REBINT CT_Port(const REBVAL *a, const REBVAL *b, REBINT mode)
 /*
 ***********************************************************************/
 {

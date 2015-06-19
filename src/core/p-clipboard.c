@@ -47,7 +47,7 @@
 
 	arg = D_ARG(2);
 
-	req = Use_Port_State(port, RDI_CLIPBOARD, sizeof(REBREQ));
+	req = r_cast(REBREQ *, Use_Port_State(port, RDI_CLIPBOARD, sizeof(REBREQ)));
 
 	switch (action) {
 
@@ -69,10 +69,10 @@
 		if (GET_FLAG(req->flags, RRF_WIDE)) len /= sizeof(REBUNI);
 
 		// Copy the string (convert to latin-8 if it fits):
-		Set_String(arg, Copy_OS_Str(req->data, len));
+		Set_String(arg, Copy_OS_Str(req->common.data, len));
 
-		OS_FREE(req->data); // release the copy buffer
-		req->data = 0;
+		OS_FREE_MEM(req->common.data); // release the copy buffer
+		req->common.data = 0;
 		*D_RET = *arg;
 		return R_RET;
 
@@ -96,7 +96,7 @@
 			if (Is_Not_ASCII(VAL_BIN_DATA(arg), len)) {
 				Set_String(arg, Copy_Bytes_To_Unicode(VAL_BIN_DATA(arg), len));
 			} else
-				req->data = VAL_BIN_DATA(arg);
+				req->common.data = VAL_BIN_DATA(arg);
 #endif
 
 			// Temp conversion:!!!
@@ -105,13 +105,13 @@
 			SERIES_TAIL(ser) = len = abs(len);
 			UNI_TERM(ser);
 			Set_String(arg, ser);
-			req->data = (REBYTE*) UNI_HEAD(ser);
+			req->common.data = r_cast(REBYTE *, UNI_HEAD(ser));
 			SET_FLAG(req->flags, RRF_WIDE);
 		}
 		else
 		// If unicode (may be from above conversion), handle it:
 		if (SERIES_WIDE(VAL_SERIES(arg)) == sizeof(REBUNI)) {
-			req->data = (REBYTE *)VAL_UNI_DATA(arg);
+			req->common.data = r_cast(REBYTE *, VAL_UNI_DATA(arg));
 			SET_FLAG(req->flags, RRF_WIDE);
 		}
 

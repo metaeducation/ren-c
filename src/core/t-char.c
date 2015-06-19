@@ -32,7 +32,7 @@
 
 /***********************************************************************
 **
-*/	REBINT CT_Char(REBVAL *a, REBVAL *b, REBINT mode)
+*/	REBINT CT_Char(const REBVAL *a, const REBVAL *b, REBINT mode)
 /*
 ***********************************************************************/
 {
@@ -130,7 +130,7 @@
 	
 		case REB_BINARY:
 		{
-			REBYTE *bp = VAL_BIN(val);
+			const REBYTE *bp = VAL_BIN(val);
 			arg = VAL_LEN(val);
 			if (arg == 0) goto bad_make;
 			if (*bp > 0x80) {

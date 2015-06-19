@@ -139,11 +139,12 @@ static int Check_Char_Range(REBVAL *val, REBINT limit)
 	if (IS_BLOCK(val)) {
 		for (types = VAL_BLK_DATA(val); NOT_END(types); types++) {
 			val = IS_WORD(types) ? Get_Var(types) : types;
-			if (IS_DATATYPE(val))
+			if (IS_DATATYPE(val)) {
 				if (VAL_DATATYPE(val) == (REBINT)VAL_TYPE(value)) return TRUE;
-			else if (IS_TYPESET(val))
+			}
+			else if (IS_TYPESET(val)) {
 				if (TYPE_CHECK(val, VAL_TYPE(value))) return TRUE;
-			else
+			} else
 				Trap1(RE_INVALID_TYPE, Of_Type(val));
 		}
 		return FALSE;
@@ -1006,13 +1007,13 @@ static int Do_Ordinal(REBVAL *ds, REBINT n)
 ***********************************************************************/
 {
 	REBVAL *val = D_ARG(1);
-	REBGOB *gob = VAL_EVENT_SER(val);
+	REBGOB *gob = r_cast(REBGOB *, VAL_EVENT_SER(val));
 	REBXYF xy;
 
 	if (gob && GET_FLAG(VAL_EVENT_FLAGS(val), EVF_HAS_XY)) {
 		xy.x = (REBD32)VAL_EVENT_X(val);
 		xy.y = (REBD32)VAL_EVENT_Y(val);
-		VAL_EVENT_SER(val) = Map_Gob_Inner(gob, &xy);
+		VAL_EVENT_SER(val) = r_cast(REBSER *, Map_Gob_Inner(gob, &xy));
 		SET_EVENT_XY(val, ROUND_TO_INT(xy.x), ROUND_TO_INT(xy.y));
 	}
 	return R_ARG1;

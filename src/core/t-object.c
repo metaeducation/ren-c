@@ -30,7 +30,7 @@
 #include "sys-core.h"
 
 
-static REBOOL Same_Object(REBVAL *val, REBVAL *arg)
+static REBOOL Same_Object(const REBVAL *val, const REBVAL *arg)
 {
 	if (
 		VAL_TYPE(arg) == VAL_TYPE(val) &&
@@ -41,7 +41,7 @@ static REBOOL Same_Object(REBVAL *val, REBVAL *arg)
 }
 
 
-static REBOOL Equal_Object(REBVAL *val, REBVAL *arg)
+static REBOOL Equal_Object(const REBVAL *val, const REBVAL *arg)
 {
 	REBSER *f1;
 	REBSER *f2;
@@ -70,10 +70,11 @@ static REBOOL Equal_Object(REBVAL *val, REBVAL *arg)
 	return TRUE;
 }
 
-static void Append_Obj(REBSER *obj, REBVAL *arg)
+static void Append_Obj(REBSER *obj, const REBVAL *arg)
 {
 	REBCNT i, len;
-	REBVAL *word, *val;
+	const REBVAL *word;
+	REBVAL *val;
 	REBINT *binds; // for binding table
 
 	// Can be a word:
@@ -81,7 +82,7 @@ static void Append_Obj(REBSER *obj, REBVAL *arg)
 		if (!Find_Word_Index(obj, VAL_WORD_SYM(arg), TRUE)) {
 			// bug fix, 'self is protected only in selfish frames
 			if ((VAL_WORD_CANON(arg) == SYM_SELF) && !IS_SELFLESS(obj))
-				Trap0(RE_SELF_PROTECTED);
+				vTrap0(RE_SELF_PROTECTED);
 			Expand_Frame(obj, 1, 1); // copy word table also
 			Append_Frame(obj, 0, VAL_WORD_SYM(arg));
 			// val is UNSET
@@ -89,7 +90,7 @@ static void Append_Obj(REBSER *obj, REBVAL *arg)
 		return;
 	}
 
-	if (!IS_BLOCK(arg)) Trap_Arg(arg);
+	if (!IS_BLOCK(arg)) vTrap_Arg(arg);
 
 	// Process word/value argument block:
 	arg = VAL_BLK_DATA(arg);
@@ -108,7 +109,7 @@ static void Append_Obj(REBSER *obj, REBVAL *arg)
 			// release binding table
 			BLK_TERM(BUF_WORDS);
 			Collect_End(obj);
-			Trap_Arg(word);
+			vTrap_Arg(word);
 		}
 
 		if (NZ(i = binds[VAL_WORD_CANON(word)])) {
@@ -117,7 +118,7 @@ static void Append_Obj(REBSER *obj, REBVAL *arg)
 				// release binding table
 				BLK_TERM(BUF_WORDS);
 				Collect_End(obj);
-				Trap0(RE_SELF_PROTECTED);
+				vTrap0(RE_SELF_PROTECTED);
 			}
 		} else {
 			// collect the word
@@ -146,8 +147,8 @@ static void Append_Obj(REBSER *obj, REBVAL *arg)
 			// release binding table
 			Collect_End(obj);
 			if (VAL_PROTECTED(FRM_WORD(obj, i)))
-				Trap1(RE_LOCKED_WORD, FRM_WORD(obj, i));
-			Trap0(RE_HIDDEN);
+				vTrap1(RE_LOCKED_WORD, FRM_WORD(obj, i));
+			vTrap0(RE_HIDDEN);
 		}
 
 		if (IS_END(word + 1)) SET_NONE(val);
@@ -196,7 +197,7 @@ static REBSER *Trim_Object(REBSER *obj)
 
 /***********************************************************************
 **
-*/	REBINT CT_Object(REBVAL *a, REBVAL *b, REBINT mode)
+*/	REBINT CT_Object(const REBVAL *a, const REBVAL *b, REBINT mode)
 /*
 ***********************************************************************/
 {
@@ -208,7 +209,7 @@ static REBSER *Trim_Object(REBSER *obj)
 
 /***********************************************************************
 **
-*/	REBINT CT_Frame(REBVAL *a, REBVAL *b, REBINT mode)
+*/	REBINT CT_Frame(const REBVAL *a, const REBVAL *b, REBINT mode)
 /*
 ***********************************************************************/
 {
@@ -220,7 +221,7 @@ static REBSER *Trim_Object(REBSER *obj)
 
 /***********************************************************************
 **
-*/	REBFLG MT_Object(REBVAL *out, REBVAL *data, REBCNT type)
+*/	REBFLG MT_Object(REBVAL *out, const REBVAL *data, REBCNT type)
 /*
 ***********************************************************************/
 {
@@ -510,7 +511,7 @@ reflect:
 	}
 
 	if (type) {
-		memset(&VAL_ALL_BITS(value), 0, sizeof(VAL_ALL_BITS(value)));
+		memset(&VAL_ALL_BITS(value), NUL, sizeof(VAL_ALL_BITS(value)));
 		VAL_SET(value, type);
 		VAL_OBJ_FRAME(value) = obj;
 	}

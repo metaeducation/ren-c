@@ -95,8 +95,7 @@ These are now obsolete (as of A107) and should be removed:
 #define ATOI64					// supports it
 #define ITOA64					// supports it
 #define NO_TTY_ATTRIBUTES		// used in read-line.c
-#define FINITE _finite			// name used for it
-#define INLINE __inline			// name used for it
+#define __inline			// name used for it
 
 #ifdef THREADED
 #ifndef __MINGW32__
@@ -131,7 +130,6 @@ These are now obsolete (as of A107) and should be removed:
 #define MIN_OS					// not all devices are working
 #define NO_GRAPHICS				// no graphics yet
 #define AGG_FREETYPE            //use freetype2 library for fonts by default
-#define FINITE finite
 #define INLINE
 
 #ifndef TO_HAIKU
@@ -216,8 +214,8 @@ These are now obsolete (as of A107) and should be removed:
 #endif
 
 #ifdef TO_OBSD					// OpenBSD
-#define COPY_STR(d,s,m) strlcpy(d,s,m)
-#define JOIN_STR(d,s,m) strlcat(d,s,m)
+#define COPY_OS_STR(d,s,m) strlcpy(d,s,m)
+#define JOIN_OS_STR(d,s,m) strlcat(d,s,m)
 #endif
 
 #ifdef TO_AMIGA					// Target for OS4

@@ -56,6 +56,7 @@
 #include <stdio.h>
 #include <windows.h>
 #include <process.h>
+#include <assert.h>
 
 #include "reb-host.h"
 #include "host-lib.h"
@@ -83,7 +84,7 @@ static void *Task_Ready;
 
 /***********************************************************************
 **
-*/	static void Insert_Command_Arg(REBCHR *cmd, REBCHR *arg, REBINT limit)
+*/	static void Insert_Command_Arg(REBCHR *cmd, const REBCHR *arg, REBCNT limit)
 /*
 **		Insert an argument into a command line at the %1 position,
 **		or at the end if there is no %1. (An INSERT action.)
@@ -97,27 +98,27 @@ static void *Task_Ready;
 	REBCHR *spot;
 	REBCHR hold[HOLD_SIZE+4];
 
-	if ((REBINT)LEN_STR(cmd) >= limit) return; // invalid case, ignore it.
+	if (LEN_OS_STR(cmd) >= limit) return; // invalid case, ignore it.
 
 	// Find %1:
-	spot = FIND_STR(cmd, TEXT("%1"));
+	spot = FIND_OS_STR(cmd, TEXT("%1"));
 
 	if (spot) {
 		// Save rest of cmd line (such as end quote, -flags, etc.)
-		COPY_STR(hold, spot+2, HOLD_SIZE);
+		COPY_OS_STR(hold, spot+2, HOLD_SIZE);
 
 		// Terminate at the arg location:
 		spot[0] = 0;
 
 		// Insert the arg:
-		JOIN_STR(spot, arg, limit - LEN_STR(cmd) - 1);
+		JOIN_OS_STR(spot, arg, limit - LEN_OS_STR(cmd) - 1);
 
 		// Add back the rest of cmd:
-		JOIN_STR(spot, hold, limit - LEN_STR(cmd) - 1);
+		JOIN_OS_STR(spot, hold, limit - LEN_OS_STR(cmd) - 1);
 	}
 	else {
-		JOIN_STR(cmd, TEXT(" "), 1);
-		JOIN_STR(cmd, arg, limit - LEN_STR(cmd) - 1);
+		JOIN_OS_STR(cmd, TEXT(" "), 1);
+		JOIN_OS_STR(cmd, arg, limit - LEN_OS_STR(cmd) - 1);
 	}
 }
 
@@ -149,7 +150,7 @@ static void *Task_Ready;
 
 /***********************************************************************
 **
-*/	void *OS_Make(size_t size)
+*/	void *OS_Alloc_Mem(size_t size)
 /*
 **		Allocate memory of given size.
 **
@@ -164,9 +165,9 @@ static void *Task_Ready;
 
 /***********************************************************************
 **
-*/	void OS_Free(void *mem)
+*/	void OS_Free_Mem(void *mem)
 /*
-**		Free memory allocated in this OS environment. (See OS_Make)
+**		Free memory allocated in this OS environment.
 **
 ***********************************************************************/
 {
@@ -214,7 +215,7 @@ static void *Task_Ready;
 	//	OS_Put_Str(title);
 	//	OS_Put_Str(":\n");
 		// Use ASCII only (in case we are on non-unicode win32):
-		MessageBoxA(NULL, content, title, MB_ICONHAND);
+		MessageBoxA(NULL, AS_CCHARS(content), AS_CCHARS(title), MB_ICONHAND);
 	}
 	//	OS_Put_Str(content);
 	exit(100);
@@ -230,10 +231,15 @@ static void *Task_Ready;
 **
 ***********************************************************************/
 {
-	LPVOID lpMsgBuf;
+	TCHAR *lpMsgBuf;
 	int ok;
 
 	if (!errnum) errnum = GetLastError();
+
+	// NOTE: if you use FORMAT_MESSAGE_ALLOCATE_BUFFER, there is a weird
+	// behavior in that the buffer is given back to you by writing it into
+	// the pointer you passed.  Though the interface asks for a TCHAR*, you
+	// effectively send it a TCHAR** ... but call it a TCHAR* (LPTSTR) :-/
 
 	ok = FormatMessage(
 			FORMAT_MESSAGE_ALLOCATE_BUFFER |
@@ -242,15 +248,16 @@ static void *Task_Ready;
 			NULL,
 			errnum,
 			MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), // Default language
-			(LPTSTR) &lpMsgBuf,
+			r_cast(LPTSTR, &lpMsgBuf),
 			0,
 			NULL);
 
-	len--; // termination
+	len--; // ensure room for termination
 
-	if (!ok) COPY_STR(str, TEXT("unknown error"), len);
+	if (!ok) COPY_OS_STR(str, TEXT("unknown error"), len);
 	else {
-		COPY_STR(str, lpMsgBuf, len);
+		assert(sizeof(TCHAR) == sizeof(REBCHR));
+		COPY_OS_STR(str, r_cast(REBCHR *, lpMsgBuf), len);
 		LocalFree(lpMsgBuf);
 	}
 	return str;
@@ -293,7 +300,7 @@ static void *Task_Ready;
 	type = types[what];
 
 	len = GetLocaleInfo(0, type, 0, 0);
-	data = MAKE_STR(len);
+	data = MAKE_OS_STR(len);
 	len = GetLocaleInfo(0, type, data, len);
 
 	return data;
@@ -348,14 +355,14 @@ static void *Task_Ready;
 	REBCHR *str;
 
 	str = env;
-	while (n = LEN_STR(str)) {
+	while (n = LEN_OS_STR(str)) {
 		len += n + 1;
 		str = env + len; // next
 	}
 	len++;
 
-	str = OS_Make(len * sizeof(REBCHR));
-	MOVE_MEM(str, env, len * sizeof(REBCHR));
+	str = OS_ALLOC_ARRAY(REBCHR, len);
+	memmove(str, env, len * sizeof(REBCHR));
 
 	FreeEnvironmentStrings(env);
 
@@ -399,7 +406,10 @@ static void *Task_Ready;
 	LARGE_INTEGER time;
 
 	if (!QueryPerformanceCounter(&time))
-		OS_Crash("Missing resource", "High performance timer");
+		OS_Crash(
+			AS_CBYTES("Missing resource"),
+			AS_CBYTES("High performance timer")
+		);
 
 	if (base == 0) return time.QuadPart; // counter (may not be time)
 
@@ -423,7 +433,7 @@ static void *Task_Ready;
 	int len;
 
 	len = GetCurrentDirectory(0, NULL); // length, incl terminator.
-	*path = MAKE_STR(len);
+	*path = MAKE_OS_STR(len);
 	GetCurrentDirectory(len, *path);
 	len--; // less terminator
 
@@ -459,7 +469,7 @@ static void *Task_Ready;
 	if (TIME_ZONE_ID_DAYLIGHT == GetTimeZoneInformation(&tzone))
 		tzone.Bias += tzone.DaylightBias;
 
-	FileTimeToSystemTime((FILETIME *)(&(file->file.time)), &stime);
+	FileTimeToSystemTime(r_cast(FILETIME *, &file->special.file.time), &stime);
 	Convert_Date(&stime, dat, -tzone.Bias);
 }
 
@@ -494,16 +504,15 @@ static void *Task_Ready;
 
 /***********************************************************************
 **
-*/	void *OS_Find_Function(void *dll, char *funcname)
+*/	void (*OS_Find_Function(void *dll, const char *funcname))(void *)
 /*
 **		Get a DLL function address from its string name.
 **
 ***********************************************************************/
 {
-	void *fp = GetProcAddress((HMODULE)dll, funcname);
-	//DWORD err = GetLastError();
+	FARPROC fp = GetProcAddress(r_cast(HMODULE, dll), funcname);
 
-	return fp;
+	return r_cast(void (*)(void *), fp);
 }
 
 
@@ -622,30 +631,41 @@ static void *Task_Ready;
 
 /***********************************************************************
 **
-*/	int OS_Browse(REBCHR *url, int reserved)
+*/	int OS_Browse(const REBCHR *url, int reserved)
 /*
 ***********************************************************************/
 {
 	#define MAX_BRW_PATH 2044
-	long flag;
-	long len;
-	long type;
+
+	LONG flag;
+	DWORD len;
+	DWORD type;
 	HKEY key;
 	REBCHR *path;
 	HWND hWnd = GetFocus();
 
-	if (RegOpenKeyEx(HKEY_CLASSES_ROOT, TEXT("http\\shell\\open\\command"), 0, KEY_READ, &key) != ERROR_SUCCESS)
+	if (
+		ERROR_SUCCESS
+		!= RegOpenKeyEx(
+			HKEY_CLASSES_ROOT,
+			TEXT("http\\shell\\open\\command"),
+			0,
+			KEY_READ,
+			&key
+		)
+	) {
 		return 0;
+	}
 
 	if (!url) url = TEXT("");
 
-	path = MAKE_STR(MAX_BRW_PATH+4);
+	path = MAKE_OS_STR(MAX_BRW_PATH+4);
 	len = MAX_BRW_PATH;
 
 	flag = RegQueryValueEx(key, TEXT(""), 0, &type, (LPBYTE)path, &len);
 	RegCloseKey(key);
 	if (flag != ERROR_SUCCESS) {
-		FREE_MEM(path);
+		free(path);
 		return 0;
 	}
 	//if (ExpandEnvironmentStrings(&str[0], result, len))
@@ -654,7 +674,7 @@ static void *Task_Ready;
 
 	len = OS_Create_Process(path, 0);
 
-	FREE_MEM(path);
+	free(path);
 	return len;
 }
 
@@ -665,11 +685,14 @@ static void *Task_Ready;
 /*
 ***********************************************************************/
 {
-	OPENFILENAME ofn = {0};
 	BOOL ret;
 	//int err;
-	REBCHR *filters = TEXT("All files\0*.*\0REBOL scripts\0*.r\0Text files\0*.txt\0"	);
+	REBCHR *filters = TEXT(
+		"All files\0*.*\0REBOL scripts\0*.r\0Text files\0*.txt\0"
+	);
 
+	OPENFILENAME ofn;
+	memset(&ofn, NUL, sizeof(ofn));
 	ofn.lStructSize = sizeof(ofn);
 
 	// ofn.hwndOwner = WIN_WIN(win); // Must find a way to set this

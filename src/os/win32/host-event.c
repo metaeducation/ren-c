@@ -111,7 +111,7 @@ static void Add_Event_XY(REBGOB *gob, REBINT id, REBINT xy, REBINT flags)
 	evt.flags = (u8) (flags | (1<<EVF_HAS_XY));
 	evt.model = EVM_GUI;
 	evt.data  = xy;
-	evt.ser = (void*)gob;
+	evt.eventee.ser = gob;
 
 	RL_Event(&evt);	// returns 0 if queue is full
 }
@@ -124,7 +124,7 @@ static void Add_Event_Key(REBGOB *gob, REBINT id, REBINT key, REBINT flags)
 	evt.flags = flags;
 	evt.model = EVM_GUI;
 	evt.data  = key;
-	evt.ser = (void*)gob;
+	evt.eventee.ser = gob;
 
 	RL_Event(&evt);	// returns 0 if queue is full
 }
@@ -151,12 +151,16 @@ static void Add_File_Events(REBGOB *gob, REBINT flags, HDROP drop)
 
 	for (i = 0; i < num; i++){
 		len = DragQueryFile(drop, i, NULL, 0);
-		buf = OS_Make(len+1);
+
+		// !!! Original code here passed in length as a byte count, despite
+		// REBCHR being two bytes wide on Windows.
+
+		buf = OS_ALLOC_ARRAY(REBCHR, len + 1);
 		DragQueryFile(drop, i, buf, len+1);
 		//Reb_Print("DROP: %s", buf);
 		buf[len] = 0;
 		// ?! convert to REBOL format? E.g.: evt.ser = OS_To_REBOL_File(buf, &len);
-		OS_Free(buf);
+		OS_Free_Mem(buf);
 		if (!RL_Event(&evt)) break;	// queue is full
 	}
 }
