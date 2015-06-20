@@ -123,13 +123,24 @@ These are now obsolete (as of A107) and should be removed:
 //#pragma warning(disable : 4057)
 //#pragma warning(disable : 4701)
 
-#define AGG_WIN32_FONTS //use WIN32 api for font handling
+// !!! No AGG definitions in Ren/C core
+//#define AGG_WIN32_FONTS //use WIN32 api for font handling
 #else
 
 //* Non Windows ********************************************************
 
-#define AGG_FREETYPE            //use freetype2 library for fonts by default
-#define AGG_FONTCONFIG            //use fontconfig library for fonts by default
+// !!! Historical Rebol implementation controlled the presence of a clipboard
+// device with this flag.  Atronix build has clipboard support under Linux
+// (not POSIX)... but depends on X11 to get it (Win32 only needs Win32 API).
+// Atronix build had removed this flag to get the clipboard.  Really this
+// should be done in a more modular way so that the core does not have a
+// static table for this (!)   
+#define MIN_OS
+
+// !!! No AGG definitions in Ren/C core
+//#define AGG_FREETYPE            //use freetype2 library for fonts by default
+//#define AGG_FONTCONFIG            //use fontconfig library for fonts by default
+
 #define FINITE finite
 #define INLINE
 
@@ -185,14 +196,16 @@ These are now obsolete (as of A107) and should be removed:
 #ifdef TO_OSXI					// OSX/Intel
 #define ENDIAN_LITTLE
 #define HAS_LL_CONSTS
-#undef NO_GRAPHICS
+// !!! Don't mention graphics in Ren/C core
+//#undef NO_GRAPHICS
 #endif
 
 #ifdef TO_OSX					// OSX/PPC
 #define ENDIAN_BIG
 #define HAS_LL_CONSTS
 #define OLD_COMPILER
-#undef NO_GRAPHICS
+// !!! Don't mention graphics in Ren/C core
+//#undef NO_GRAPHICS
 #endif
 
 #ifdef TO_FREEBSD
@@ -220,7 +233,8 @@ These are now obsolete (as of A107) and should be removed:
 
 #ifdef TO_ANDROID_ARM				// Android/ARM
 #undef MIN_OS
-#undef NO_GRAPHICS
+// !!! Don't mention graphics in Ren/C core
+//#undef NO_GRAPHICS
 #define ENDIAN_LITTLE
 #define HAS_LL_CONSTS
 #endif

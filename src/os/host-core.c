@@ -59,8 +59,9 @@ extern void Console_Output(BOOL state);
 extern REBOOL OS_Request_Dir(REBCHR *title, REBCHR **folder, REBCHR *path);
 #endif
 
-REBYTE *encapBuffer = NULL;
-REBINT encapBufferLen;
+// Encapping is not a feature supported by Ren/C
+//REBYTE *encapBuffer = NULL;
+//REBINT encapBufferLen;
 RL_LIB *RL; // Link back to reb-lib from embedded extensions
 static u32 *core_ext_words;
 
@@ -73,6 +74,9 @@ static u32 *core_ext_words;
 ***********************************************************************/
 {
     switch (cmd) {
+
+/* 
+	ENCAP and GUI commands are not supported by Ren/C
 
     case CMD_CORE_SHOW_CONSOLE:
 #ifdef TO_WIN32	
@@ -104,7 +108,8 @@ static u32 *core_ext_words;
 			return RXR_VALUE;
 		}
 		return RXR_NONE;
-		
+*/
+
     case CMD_CORE_TO_PNG:
 		{
 			size_t buffersize;
@@ -156,6 +161,9 @@ static u32 *core_ext_words;
 		}
         break;
 
+/*
+	No GUI in Ren/C or Rebol Core
+
     case CMD_CORE_CONSOLE_OUTPUT:
 #ifdef TO_WIN32
         Console_Output(RXA_LOGIC(frm, 1));
@@ -206,6 +214,7 @@ static u32 *core_ext_words;
 #endif
 		}
 		break;
+*/
 		
 		case CMD_CORE_RC4:
 		{

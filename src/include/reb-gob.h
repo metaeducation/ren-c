@@ -33,7 +33,13 @@
 **
 ***********************************************************************/
 
-#include "host-view.h"
+// We accept GOB for the moment in Core, but not view in general...
+// Ultimatley GOB represents a category of Ren/C external items that
+// can participate with the system and its GC but are not part of core.
+//
+// Atronix repository included host-view.h while rebol open source didn't
+
+// #include "host-view.h"
 
 enum GOB_FLAGS {		// GOB attribute and option flags
 	GOBF_TOP = 0,		// Top level (window or output image)

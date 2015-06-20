@@ -24,13 +24,236 @@
 **  Section: datatypes
 **  Author:  Shixin Zeng
 **  Notes:
+**		When Rebol3 was open-sourced in 12-Dec-2012, that version had lost
+**		support for the ROUTINE! type from Rebol2.  It was later 
+**		reimplemented by Atronix in their fork via the cross-platform (and
+**		popularly used) Foreign Function Interface library "libffi":
+**
+**	 		https://en.wikipedia.org/wiki/Libffi
+**
+**		Yet Rebol is very conservative about library dependencies that
+**		introduce their "own build step", due to the complexity introduced.
+**		If one is to build libffi for a particular platform, that requires
+**		having the rather messy GNU autotools installed.  Notice the
+**		`Makefile.am`, `acinclude.m4`, `autogen.sh`, `configure.ac`,
+**		`configure.host`, etc:
+**
+**			https://github.com/atgreen/libffi
+**
+**		Suddenly, you need more than just a C compiler (and a rebol.exe) to
+**		build Rebol.  You now need to have everything to configure and
+**		build libffi.  -OR- it would mean a dependency on a built library
+**		you had to find or get somewhere that was not part of the OS
+**		naturally, which can be a wild goose chase with version
+**		incompatibility.  If you `sudo apt-get libffi`, now you need apt-get
+**		*and* you pull down any dependencies as well!
+**
+**		(Note: Rebol's "just say no" attitude is the heart of the Rebellion:
+**
+** 			http://www.rebol.com/cgi-bin/blog.r?view=0497
+**
+**		...so keeping the core true to this principle is critical.  If this
+**		principle is compromised, the whole point of the project is lost.)
+**
+**		Yet Rebol2 had ROUTINE!.  Red also has ROUTINE!, and is hinging its
+**		story for rapid interoperability on it (you should not have to
+**		wrap and recompile a DLL of C functions just to call them).  Users
+**		want the feature and always ask...and Atronix needs it enough to have
+**		had @ShixinZeng write it!
+**
+**		Regarding the choice of libffi in particular, it's a strong sign to
+**		notice how many other language projects are using it.  Short list
+**		taken from 2015 Wikipedia:
+**
+**			Python, Haskell, Dalvik, F-Script, PyPy, PyObjC, RubyCocoa,
+**			JRuby, Rubinius, MacRuby, gcj, GNU Smalltalk, IcedTea, Cycript,
+**			Pawn, Squeak, Java Native Access, Common Lisp, Racket,
+**			Embeddable Common Lisp and Mozilla.
+**
+**		Rebol could roll its own implementation.  But that takes time and
+**		maintenance, and it's hard to imagine how much better a job could
+**		be done for a C-based foreign function interface on these platforms;
+**		it's light and quite small once built.  So it makes sense to
+**		"extract" libffi's code out of its repo to form one .h and .c file.
+**		They'd live in the Rebol sources and build with the existing process,
+**		with no need for GNU Autotools (which are *particularly* crufty!!!)
+**
+**		Doing such extractions by hand is how Rebol was originally done;
+**		that made it hard to merge updates.  As a more future-proof method,
+**		@HostileFork wrote a make-zlib.r extractor that can take a copy of
+**		the zlib repository and do the work (mostly) automatically.  Going
+**		forward it seems prudent to do the same with libffi and any other
+**		libraries that Rebol co-opts into its turnkey build process.
+**
+**		Until that happens for libffi, not definining HAVE_LIBFFI_AVAILABLE,
+**		will give you a short list of non-functional "stubs".  These can
+**		allow t-routine.c to compile anyway.  That assists with maintenance
+**		of the code and keeping it on the radar, even among those doing core
+**		maintenance who are not building against the FFI.
+**
+**		(Note: Longer term there may be a story by which a feature like
+**		ROUTINE! could be implemented as a third party extension.  There is
+**		short-term thinking trying to facilitate this for GOB! in Ren/C, to
+**		try and open the doors to more type extensions.  That's a hard
+**		problem in itself...and the needs of ROUTINE! are hooked a bit more
+**		tightly into the evaluation loop.  So possibly not happening.)
 **
 ***********************************************************************/
 
 #include <stdio.h>
 #include "sys-core.h"
 
-#include <ffi.h>
+#ifdef HAVE_LIBFFI_AVAILABLE
+	#include <ffi.h>
+#else
+	// Non-functional stubs, see notes at top of t-routine.c
+
+	typedef struct _ffi_type
+	{
+		size_t size;
+		unsigned short alignment;
+		unsigned short type;
+		struct _ffi_type **elements;
+	} ffi_type;
+
+	#define FFI_TYPE_VOID       0    
+	#define FFI_TYPE_INT        1
+	#define FFI_TYPE_FLOAT      2    
+	#define FFI_TYPE_DOUBLE     3
+	#define FFI_TYPE_LONGDOUBLE 4
+	#define FFI_TYPE_UINT8      5   
+	#define FFI_TYPE_SINT8      6
+	#define FFI_TYPE_UINT16     7 
+	#define FFI_TYPE_SINT16     8
+	#define FFI_TYPE_UINT32     9
+	#define FFI_TYPE_SINT32     10
+	#define FFI_TYPE_UINT64     11
+	#define FFI_TYPE_SINT64     12
+	#define FFI_TYPE_STRUCT     13
+	#define FFI_TYPE_POINTER    14
+	#define FFI_TYPE_COMPLEX    15
+
+	// !!! Heads-up to FFI lib authors: these aren't const definitions.  :-/
+	// Stray modifications could ruin these "constants".  Being const-correct
+	// in the parameter structs for the type arrays would have been nice...
+
+	ffi_type ffi_type_void = { 0, 0, FFI_TYPE_VOID, NULL };
+	ffi_type ffi_type_uint8 = { 0, 0, FFI_TYPE_UINT8, NULL };
+	ffi_type ffi_type_sint8 = { 0, 0, FFI_TYPE_SINT8, NULL };
+	ffi_type ffi_type_uint16 = { 0, 0, FFI_TYPE_UINT16, NULL };
+	ffi_type ffi_type_sint16 = { 0, 0, FFI_TYPE_SINT16, NULL };
+	ffi_type ffi_type_uint32 = { 0, 0, FFI_TYPE_UINT32, NULL };
+	ffi_type ffi_type_sint32 = { 0, 0, FFI_TYPE_SINT32, NULL };
+	ffi_type ffi_type_uint64 = { 0, 0, FFI_TYPE_UINT64, NULL };
+	ffi_type ffi_type_sint64 = { 0, 0, FFI_TYPE_SINT64, NULL };
+	ffi_type ffi_type_float = { 0, 0, FFI_TYPE_FLOAT, NULL };
+	ffi_type ffi_type_double = { 0, 0, FFI_TYPE_DOUBLE, NULL };
+	ffi_type ffi_type_pointer = { 0, 0, FFI_TYPE_POINTER, NULL };
+
+	typedef enum {
+		FFI_OK = 0,
+		FFI_BAD_TYPEDEF,
+		FFI_BAD_ABI
+	} ffi_status;
+
+	typedef enum ffi_abi
+	{
+		// !!! The real ffi_abi constants will be different per-platform,
+		// you would not have the full list.  Interestingly, a subsetting
+		// script *might* choose to alter libffi to produce a larger list
+		// vs being full of #ifdefs (though that's rather invasive change
+		// to the libffi code to be maintaining!)
+
+		FFI_FIRST_ABI = 0x0BAD,
+		FFI_WIN64,
+		FFI_STDCALL,
+		FFI_SYSV,
+		FFI_THISCALL,
+		FFI_FASTCALL,
+		FFI_MS_CDECL,
+		FFI_UNIX64,
+		FFI_VFP,
+		FFI_O32,
+		FFI_N32,
+		FFI_N64,
+		FFI_O32_SOFT_FLOAT,
+		FFI_N32_SOFT_FLOAT,
+		FFI_N64_SOFT_FLOAT,
+		FFI_LAST_ABI,
+		FFI_DEFAULT_ABI = FFI_FIRST_ABI
+	} ffi_abi;
+
+	typedef struct {
+		ffi_abi abi;
+		unsigned nargs;
+		ffi_type **arg_types;
+		ffi_type *rtype;
+		unsigned bytes;
+		unsigned flags;
+	} ffi_cif;
+
+	ffi_status ffi_prep_cif(
+		ffi_cif *cif,
+		ffi_abi abi,
+		unsigned int nargs,
+		ffi_type *rtype,
+		ffi_type **atypes
+	) {
+		// !!! TBD: Meaningful error
+		Crash(RP_MISC);
+	}
+
+	ffi_status ffi_prep_cif_var(
+		ffi_cif *cif,
+		ffi_abi abi,
+		unsigned int nfixedargs,
+		unsigned int ntotalargs,
+		ffi_type *rtype,
+		ffi_type **atypes
+	) {
+		// !!! TBD: Meaningful error
+		Crash(RP_MISC);
+	}
+
+	void ffi_call(
+		ffi_cif *cif,
+		void (*fn)(void),
+		void *rvalue,
+		void **avalue
+	) {
+		// !!! TBD: Meaningful error
+		Crash(RP_MISC);
+	}
+
+	// The closure is a "black box" but client code takes the sizeof() to
+	// pass into the alloc routine...
+
+	typedef struct {
+		int stub;
+	} ffi_closure;
+
+	void *ffi_closure_alloc(size_t size, void **code) {
+		// !!! TBD: Meaningful error
+		Crash(RP_MISC);
+	}
+
+	ffi_status ffi_prep_closure_loc(
+		ffi_closure *closure,
+		ffi_cif *cif,
+		void (*fun)(ffi_cif *, void *, void **, void *),
+		void *user_data,
+		void *codeloc
+	) {
+		// !!! TBD: Meaningful error
+		Crash(RP_MISC);
+	}
+
+	void ffi_closure_free (void *closure) {
+		// !!! TBD: Meaningful error
+		Crash(RP_MISC);
+	}
+#endif // HAVE_LIBFFI_AVAILABLE
+
 
 #define QUEUE_EXTRA_MEM(v, p) do {\
 	*(void**) SERIES_SKIP(v->extra_mem, SERIES_TAIL(v->extra_mem)) = p;\

@@ -35,50 +35,57 @@ init-words: command [
 
 init-words words
 
-show-console: command [
-	"Opens console window"
-]
+; There is no console in Ren/C
+;
+;show-console: command [
+;	"Opens console window"
+;]
+;
+;console-output: command [
+;	"Enables/Diables printing to console"
+;	state [logic!]
+;]
+;
+;hide-console: command [
+;	"Hides console window if already open"
+;]
 
-console-output: command [
-	"Enables/Diables printing to console"
-	state [logic!]
-]
-
-hide-console: command [
-	"Hides console window if already open"
-]
-
-get-encap-data: command [
-	"Returns encapped binary data"
-]
+; The Ren/C library itself is not involved in encapping; this is the
+; responsibility of the executable built with it to provide.
+;
+;get-encap-data: command [
+;	"Returns encapped binary data"
+;]
 
 to-png: command [
 	"Save an image to PNG format"
 	image [image!]
 ]
 
-<no-export> req-dir: command [
-	"low-level command used by REQUEST-DIR"
-	/title
-		text [string!]
-	/path
-		dir [string!]
-]
-
-request-dir: funct [
-	"Asks user to select a directory and returns it as file path"
-	/title
-		"Custom dialog title text"
-		text [string!]
-	/path
-		"Default directory path"
-		dir [file!]
-][
-	if dir [dir: lib/replace/all to-local-file dir "/" "//"]
-	if result: apply :req-dir [title text path dir] [
-		return to-rebol-file result
-	]
-]
+; There is no GUI in Ren/C to pop up directory selection dialogs
+;
+;<no-export> req-dir: command [
+;	"low-level command used by REQUEST-DIR"
+;	/title
+;		text [string!]
+;	/path
+;		dir [string!]
+;]
+;
+;request-dir: funct [
+;	"Asks user to select a directory and returns it as file path"
+;	/title
+;		"Custom dialog title text"
+;		text [string!]
+;	/path
+;		"Default directory path"
+;		dir [file!]
+;][
+;	if dir [dir: lib/replace/all to-local-file dir "/" "//"]
+;	if result: apply :req-dir [title text path dir] [
+;		return to-rebol-file result
+;	]
+;]
 
 rc4: command [
 	"Encrypt/decrypt data(modifies) using RC4 algorithm. Returns stream cipher context handle."

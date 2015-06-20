@@ -34,11 +34,14 @@ files: [
 ]
 
 ; If it is graphics enabled:
-if all [
-	not find any [system/options/args []] "no-gfx"
-	find [3 4] system/version/4
-][
-	append files [%host-window.c %host-graphics.c]
+; (Ren/C is a core build independent of graphics, so it never will be)
+comment [
+	if all [
+		not find any [system/options/args []] "no-gfx"
+		find [3 4] system/version/4
+	][
+		append files [%host-window.c %host-graphics.c]
+	]
 ]
 
 cnt: 0
