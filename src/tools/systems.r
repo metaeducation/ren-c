@@ -21,22 +21,19 @@ REBOL [
 systems: [
 	[plat  os-name   os-base  build-flags]
 	[0.1.03 "amiga"      posix  [HID NPS +SC CMT COP -SP -LM]]
-	[0.2.04 "osx"        posix  [+OS NCM -LM]]			; no shared lib possible
-	[0.2.05 "osxi"       posix  [ARC +O1 NPS PIC NCM HID STX -LM]]
-	[0.2.40 "osx_x64"    posix  [+O1 NPS PIC NCM HID STX -LM]]
-	[0.3.01 "win32"      win32  [+O2 UNI W32 CON S4M EXE DIR -LM]]
-	; platform 0.3.03 is reserved for win32-x64
-	[0.4.02 "linux"      posix  [+O2 LDL ST1 -LM]]		; libc 2.3
-	[0.4.03 "linux"      posix  [+O2 HID LDL ST1 -LM]]	; libc 2.5
-	[0.4.04 "linux"      posix  [+O2 HID LDL ST1 M32 -LM]]	; libc 2.11
-	[0.4.10 "linux_ppc"  posix  [+O1 HID LDL ST1 -LM]]
-	[0.4.20 "linux_arm"  posix  [+O2 HID LDL ST1 -LM]]
-	[0.4.21 "linux_arm"  posix  [+O2 HID LDL ST1 -LM PIE]]  ; bionic (Android)
-	[0.4.30 "linux_mips" posix  [+O2 HID LDL ST1 -LM]]  ; glibc does not need C++
-	[0.4.40 "linux_x64"  posix  [+O2 HID LDL ST1 -LM]]
+	[0.2.04 "osx"        osx    [+OS NCM -LM]]			; no shared lib possible
+	[0.2.05 "osxi"       osx    [ARC +O1 NPS PIC NCM HID STX -LM]]
+	[0.3.01 "win32"      win32  [+O2 UNI W32 WIN S4M EXE DIR -LM]]
+	[0.3.02 "win32_x64"  win32  [+O2 UNI W32 WIN S4M EXE DIR -LM]]
+	[0.4.02 "linux"      linux  [+O2 LDL ST1 -LM]]		; libc 2.3
+	[0.4.03 "linux"      linux  [+O2 HID LDL ST1 -LM]]	; libc 2.5
+	[0.4.04 "linux"      linux  [+O2 HID LDL ST1 M32 -LM]]	; libc 2.11
+	[0.4.10 "linux_ppc"  linux  [+O1 HID LDL ST1 -LM]]
+	[0.4.20 "linux_arm"  linux  [+O2 HID LDL ST1 -LM]]
+	[0.4.30 "linux_mips" linux  [+O2 HID LDL ST1 -LM]]  ; glibc does not need C++
+	[0.4.40 "linux_x64"  linux  [+O2 HID LDL ST1 -LM]]
 	[0.5.75 "haiku"      posix  [+O2 ST1 NWK]]
 	[0.7.02 "freebsd"    posix  [+O1 C++ ST1 -LM]]
-	[0.7.40 "freebsd_x64"   posix    [+O1 ST1 -LM]]
 	[0.9.04 "openbsd"    posix  [+O1 C++ ST1 -LM]]
 	[0.13.01 "android_arm"  android  [HID F64 LDL LLOG -LM CST]]
 ]
@@ -52,7 +49,6 @@ compile-flags: [
 	NPS: "-Wno-pointer-sign"      ; OSX fix
 	NSP: "-fno-stack-protector"   ; avoid insert of functions names
 	PIC: "-fPIC"                  ; position independent (used for libs)
-	PIE: "-fPIE"                  ; position independent (executables)
 	DYN: "-dynamic"               ; optimize for dll??
 	NCM: "-fno-common"            ; lib cannot have common vars
 	PAK: "-fpack-struct"          ; pack structures
@@ -69,8 +65,7 @@ linker-flags: [
 	ARC: "-arch i386" ; x86 32 bit architecture (OSX)
 	M32: "-m32"       ; use 32-bit memory model (Linux x64)
 	W32: "-lwsock32 -lcomdlg32"
-	WIN: "-mwindows" ; build as Windows GUI binary
-	CON: "-mconsole" ; build as Windows Console binary
+	WIN: "-mwindows"; build as Windows GUI binary
 	S4M: "-Wl,--stack=4194300"
 	-LM: "-lm" ; HaikuOS has math in libroot, for instance
 	NWK: "-lnetwork" ; Needed by HaikuOS

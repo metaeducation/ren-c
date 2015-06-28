@@ -141,7 +141,7 @@ static REBOL_STATE Top_State; // Boot var: holds error state during boot
 	if (!Saved_State) Crash(RP_NO_SAVED_STATE);
 	SET_ERROR(TASK_THIS_ERROR, ERR_NUM(err), err);
 	if (Trace_Level) Trace_Error(TASK_THIS_ERROR);
-	longjmp(*Saved_State, 1);
+	LONG_JUMP(*Saved_State, 1);
 }
 
 
@@ -156,7 +156,7 @@ static REBOL_STATE Top_State; // Boot var: holds error state during boot
 {
 	if (!Saved_State) Crash(RP_NO_SAVED_STATE);
 	*TASK_THIS_ERROR = *val;
-	longjmp(*Saved_State, 1);
+	LONG_JUMP(*Saved_State, 1);
 }
 
 
@@ -216,7 +216,7 @@ static REBOL_STATE Top_State; // Boot var: holds error state during boot
 
 	*TASK_THIS_ERROR = *TASK_STACK_ERROR; // pre-allocated
 
-	longjmp(*Saved_State, 1);
+	LONG_JUMP(*Saved_State, 1);
 }
 
 
@@ -272,7 +272,7 @@ static REBOL_STATE Top_State; // Boot var: holds error state during boot
 	REBSER *cats;		// Error catalog object
 	REBSER *cat;		// Error category object
 	REBCNT n;		// Word symbol number
-	REBCNT code;
+	REBINT code;
 
 	code = VAL_INT32(&error->code);
 
@@ -324,6 +324,7 @@ static REBOL_STATE Top_State; // Boot var: holds error state during boot
 
 	if (num) {
 		obj1 = Find_Word_Value(frame, SYM_CODE);
+		if (!obj1) return 0;
 		*num = VAL_INT32(obj1)
 			+ Find_Word_Index(frame, VAL_WORD_SYM(&error->id), FALSE)
 			- Find_Word_Index(frame, SYM_TYPE, FALSE) - 1;

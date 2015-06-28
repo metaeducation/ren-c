@@ -176,8 +176,8 @@
 /*
 ***********************************************************************/
 {
-	REBVAL *val;
-	REBVAL *arg;
+	REBVAL *val = NULL;
+	REBVAL *arg = NULL;
 	REBINT n;
 	REBD32 x1, x2;
 	REBD32 y1, y2;
@@ -188,6 +188,7 @@
 	if (DS_ARGC > 1) arg = D_ARG(2);
 
 	if (IS_BINARY_ACT(action)) {
+		ASSERT2(DS_ARGC > 1, RP_MISC);
 		n = VAL_TYPE(arg);
 
 		if (n == REB_PAIR) {		// handle PAIR - PAIR cases
@@ -289,6 +290,7 @@
 			goto setPair;
 
 		case A_PICK:
+			ASSERT2(DS_ARGC > 1, RP_MISC);
 			if (IS_WORD(arg)) {
 				if (VAL_WORD_CANON(arg) == SYM_X) n = 0;
 				else if (VAL_WORD_CANON(arg) == SYM_Y) n = 1;
@@ -318,6 +320,7 @@
 
 		case A_MAKE:
 		case A_TO:
+			ASSERT2(DS_ARGC > 1, RP_MISC);
 			val = D_ARG(2);
 			x1 = y1 = 0;
 //			if (IS_NONE(val)) goto setPair;
@@ -329,7 +332,7 @@
 				REBYTE *bp;
 				REBCNT len;
 				// -1234567890x-1234567890
-				bp = Qualify_String(val, 24, &len, FALSE);
+				bp = Qualify_String(val, VAL_LEN(val), &len, FALSE);
 				if (Scan_Pair(bp, len, DS_RETURN)) return R_RET;
 			}
 			if (IS_INTEGER(val)) {

@@ -5,6 +5,8 @@
 **  Copyright 2012 REBOL Technologies
 **  REBOL is a trademark of REBOL Technologies
 **
+**  Additional code modifications and improvements Copyright 2012 Saphirion AG
+**
 **  Licensed under the Apache License, Version 2.0 (the "License");
 **  you may not use this file except in compliance with the License.
 **  You may obtain a copy of the License at
@@ -36,6 +38,15 @@
 **    5. Test everything, then test it again.
 **
 ***********************************************************************/
+
+// !!! Unlike on Linux/Posix, the basic Win32 API is able to support
+// a clipboard device in a non-graphical build without an added
+// dependency.  For this reason, the Rebol core build included the
+// clipboard device...which finds its way into a fixed-size table
+// when it should be registered in a more dynamic and conditional way.
+// Ren/C needs to improve the way that per-platform code can be
+// included in a static build to not rely on this table the way
+// hostkit does.
 
 #include <stdio.h>
 
@@ -116,6 +127,7 @@
 	SET_FLAG(req->flags, RRF_WIDE);
 	req->data = (REBYTE *)bin;
 	req->actual = len * sizeof(REBCHR);
+	Signal_Device(req, EVT_READ);
 	return DR_DONE;
 }
 
@@ -170,6 +182,7 @@
 	}
 
 	req->actual = len;
+	Signal_Device(req, EVT_WROTE);
 	return DR_DONE;
 }
 

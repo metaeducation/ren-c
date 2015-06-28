@@ -428,14 +428,19 @@ x*/	REBSER *Copy_Block_Deep(REBSER *block, REBCNT index, REBINT len, REBCNT mode
 {
 	// The next line works because VAL_OBJ_FRAME(val) == VAL_SERIES(val)
 	REBSER *series = VAL_SERIES(val);
+	if (!ANY_SERIES(val)
+		&& !IS_OBJECT(val)
+		&& !IS_MODULE(val)
+		&& !IS_ERROR(val)
+		&& !IS_PORT(val)) {
+		return;
+	}
 
 	if (!IS_MARK_SERIES(series)) return; // avoid loop
 
 	UNMARK_SERIES(series);
 
 	for (val = VAL_BLK(val); NOT_END(val); val++) {
-		if (ANY_SERIES(val) || IS_OBJECT(val) || IS_MODULE(val)
-			|| IS_ERROR(val) || IS_PORT(val))
 			Unmark(val);
 	}
 }

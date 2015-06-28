@@ -43,9 +43,10 @@
 	out[3] = (REBYTE)(in >> 24);
 }
 
+
 /***********************************************************************
 **
-*/	REBCNT Bytes_To_REBCNT(REBYTE const *in)
+*/	REBCNT Bytes_To_REBCNT(REBYTE * const in)
 /*
 ***********************************************************************/
 {
@@ -387,9 +388,15 @@
 
 	va_start(args, base);
 	while (NZ(n = va_arg(args, REBCNT))) {
-		if (n >= SERIES_TAIL(base)) return 0;
+		if (n >= SERIES_TAIL(base)) {
+			va_end(args);
+			return 0;
+		}
 		obj = OFV(base, n);
-		if (!IS_OBJECT(obj)) return 0;
+		if (!IS_OBJECT(obj)) {
+			va_end(args);
+			return 0;
+		}
 		base = VAL_OBJ_FRAME(obj);
 	}
 	va_end(args);
@@ -862,13 +869,13 @@
 
 /***********************************************************************
 **
-*/	REBVAL *Make_OS_Error()
+*/	REBVAL *Make_OS_Error(int errnum)
 /*
 ***********************************************************************/
 {
 	REBCHR str[100];
 
-	OS_FORM_ERROR(0, str, 100);
+	OS_FORM_ERROR(errnum, str, 100);
 	Set_String(DS_RETURN, Copy_OS_Str(str, LEN_STR(str)));
 	return DS_RETURN;
 }

@@ -41,6 +41,11 @@ const REBCNT Gob_Flag_Words[] = {
 	SYM_MODAL,       GOBF_MODAL,
 	SYM_ON_TOP,      GOBF_ON_TOP,
 	SYM_HIDDEN,      GOBF_HIDDEN,
+	SYM_ACTIVE,      GOBF_ACTIVE,
+	SYM_MINIMIZE,    GOBF_MINIMIZE,
+	SYM_MAXIMIZE,    GOBF_MAXIMIZE,
+	SYM_RESTORE,     GOBF_RESTORE,
+	SYM_FULLSCREEN,  GOBF_FULLSCREEN,
 	0, 0
 };
 
@@ -68,6 +73,7 @@ const REBCNT Gob_Flag_Words[] = {
 	CLEAR(gob, sizeof(REBGOB));
 	GOB_W(gob) = 100;
 	GOB_H(gob) = 100;
+	GOB_ALPHA(gob) = 255;
 	USE_GOB(gob);
 	if ((GC_Ballast -= Mem_Pools[GOB_POOL].wide) <= 0) SET_SIGNAL(SIG_RECYCLE);
 	return gob;
@@ -189,15 +195,17 @@ const REBCNT Gob_Flag_Words[] = {
 					}
 				}
 				Detach_Gob(VAL_GOB(val));
-				if ((REBINT)index > i) index--;
+				if (i >= 0 && (REBINT)index > i) index--;
 			}
+		} else {
+			Trap_Arg(val);
 		}
 	}
 	arg = sarg;
 
 	// Create or expand the pane series:
 	if (!GOB_PANE(gob)) {
-		GOB_PANE(gob) = Make_Series(count, sizeof(REBGOB*), 0);
+		GOB_PANE(gob) = Make_Series(count + 1, sizeof(REBGOB*), 0);
 		LABEL_SERIES(GOB_PANE(gob), "gob pane");
 		GOB_TAIL(gob) = count;
 		index = 0;
@@ -308,7 +316,28 @@ const REBCNT Gob_Flag_Words[] = {
 
 	for (i = 0; Gob_Flag_Words[i]; i += 2) {
 		if (VAL_WORD_CANON(word) == Gob_Flag_Words[i]) {
-			SET_GOB_FLAG(gob, Gob_Flag_Words[i+1]);
+			REBCNT flag = Gob_Flag_Words[i+1];
+			SET_GOB_FLAG(gob, flag);
+			//handle mutual exclusive states
+			switch (flag) {
+				case GOBF_RESTORE:
+					CLR_GOB_FLAGS(gob, GOBF_MINIMIZE, GOBF_MAXIMIZE);
+					CLR_GOB_FLAG(gob, GOBF_FULLSCREEN);
+					break;
+				case GOBF_MINIMIZE:
+					CLR_GOB_FLAGS(gob, GOBF_MAXIMIZE, GOBF_RESTORE);
+					CLR_GOB_FLAG(gob, GOBF_FULLSCREEN);
+					break;
+				case GOBF_MAXIMIZE:
+					CLR_GOB_FLAGS(gob, GOBF_MINIMIZE, GOBF_RESTORE);
+					CLR_GOB_FLAG(gob, GOBF_FULLSCREEN);
+					break;
+				case GOBF_FULLSCREEN:
+					SET_GOB_FLAG(gob, GOBF_NO_TITLE);
+					SET_GOB_FLAG(gob, GOBF_NO_BORDER);
+					CLR_GOB_FLAGS(gob, GOBF_MINIMIZE, GOBF_RESTORE);
+					CLR_GOB_FLAG(gob, GOBF_MAXIMIZE);
+			}
 			break;
 		}
 	}
@@ -432,10 +461,13 @@ const REBCNT Gob_Flag_Words[] = {
 	case SYM_FLAGS:
 		if (IS_WORD(val)) Set_Gob_Flag(gob, val);
 		else if (IS_BLOCK(val)) {
-			gob->flags = 0;
-			for (val = VAL_BLK(val); NOT_END(val); val++) {
+			REBINT i;		
+			//clear only flags defined by words
+			for (i = 0; Gob_Flag_Words[i]; i += 2)
+				CLR_FLAG(gob->flags, Gob_Flag_Words[i+1]);
+			
+			for (val = VAL_BLK(val); NOT_END(val); val++)
 				if (IS_WORD(val)) Set_Gob_Flag(gob, val);
-			}
 		}
 		break;
 
@@ -722,6 +754,8 @@ is_none:
 		gob = VAL_GOB(val);
 		index = VAL_GOB_INDEX(val);
 		tail = GOB_PANE(gob) ? GOB_TAIL(gob) : 0;
+	} else if (!(IS_DATATYPE(val) && action == A_MAKE)){
+		Trap_Arg(val);
 	}
 
 	// unary actions
@@ -815,7 +849,7 @@ is_none:
 	case A_TAKE:
 		len = D_REF(2) ? Get_Num_Arg(D_ARG(3)) : 1;
 		if (index + len > tail) len = tail - index;
-		if (index < 0 || index >= tail) goto is_none;
+		if (index >= tail) goto is_none;
 		if (!D_REF(2)) { // just one value
 			VAL_SET(val, REB_GOB);
 			VAL_GOB(val) = *GOB_SKIP(gob, index);

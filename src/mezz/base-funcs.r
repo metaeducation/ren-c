@@ -32,6 +32,7 @@ function: funct: func [
 	/with {Define or use a persistent object (self)}
 	object [object! block! map!] {The object or spec}
 	/extern words [block!] {These words are not local}
+	/closure
 ][
 	; Copy the spec and add /local to the end if not found
 	unless find spec: copy/deep spec /local [append spec [
@@ -41,7 +42,7 @@ function: funct: func [
 	body: copy/deep body
 	; Collect all set-words in the body as words to be used as locals, and add
 	; them to the spec. Don't include the words already in the spec or object.
-	insert find/tail spec /local collect-words/deep/set/ignore body either with [
+	append spec collect-words/deep/set/ignore body either with [
 		; Make our own local object if a premade one is not provided
 		unless object? object [object: make object! object]
 		bind body object  ; Bind any object words found in the body
@@ -52,7 +53,7 @@ function: funct: func [
 		; Don't include the words in the spec, or any extern words.
 		either extern [append copy spec words] [spec]
 	]
-	make function! reduce [spec body]
+	make either closure [closure!][function!] reduce [spec body]
 ]
 
 does: func [

@@ -34,11 +34,14 @@ files: [
 ]
 
 ; If it is graphics enabled:
-if all [
-	not find any [system/options/args []] "no-gfx"
-	find [3] system/version/4
-][
-	append files [%host-window.c]
+; (Ren/C is a core build independent of graphics, so it never will be)
+comment [
+	if all [
+		not find any [system/options/args []] "no-gfx"
+		find [3 4] system/version/4
+	][
+		append files [%host-window.c %host-graphics.c]
+	]
 ]
 
 cnt: 0
@@ -75,13 +78,17 @@ pads: func [start col] [
 
 func-header: [
 	[
-		thru "/***" 10 100 "*" newline
+		thru "/*************" 2 100 "*" newline
 		thru "*/"
 		copy spec to newline
 		(if all [
 			spec
 			trim spec
 			not find spec "static"
+			fn: any [  ; make sure we got only functions with "OS_" at the beginning
+				find spec " *OS_"
+				find spec " OS_"
+			]
 			fn: find spec "OS_"
 			find spec #"("
 		][
@@ -154,6 +161,8 @@ out: reduce [
 #define HOST_LIB_SIZE } cnt {
 
 extern REBDEV *Devices[];
+
+REBOOL As_OS_Str(REBSER *series, REBCHR **string);
 }
 rlib
 {

@@ -33,6 +33,14 @@
 **
 ***********************************************************************/
 
+// We accept GOB for the moment in Core, but not view in general...
+// Ultimatley GOB represents a category of Ren/C external items that
+// can participate with the system and its GC but are not part of core.
+//
+// Atronix repository included host-view.h while rebol open source didn't
+
+// #include "host-view.h"
+
 enum GOB_FLAGS {		// GOB attribute and option flags
 	GOBF_TOP = 0,		// Top level (window or output image)
 	GOBF_WINDOW,		// Window (parent is OS window reference)
@@ -47,6 +55,11 @@ enum GOB_FLAGS {		// GOB attribute and option flags
 	GOBF_POPUP,			// Window is a popup (with owner window)
 	GOBF_MODAL,			// Modal event filtering
 	GOBF_ON_TOP,		// The window is always on top
+	GOBF_ACTIVE,		// Window is active
+	GOBF_MINIMIZE,		// Window is minimized
+	GOBF_MAXIMIZE,		// Window is maximized
+	GOBF_RESTORE,		// Window is restored
+	GOBF_FULLSCREEN,	// Window is fullscreen
 };
 
 enum GOB_STATE {		// GOB state flags
@@ -75,7 +88,6 @@ enum GOB_DTYPES {		// Userdata types
 	GOBD_RESV,			// unicode
 	GOBD_INTEGER
 };
-
 
 #pragma pack(4)
 
@@ -107,15 +119,31 @@ struct rebol_gob {		// size: 64 bytes!
 };
 #pragma pack()
 
+typedef struct gob_window {				// Maps gob to window
+	REBGOB *gob;
+	void* win;
+	void* compositor;
+} REBGOBWINDOWS;
+
 #define GOB_X(g)		((g)->offset.x)
 #define GOB_Y(g)		((g)->offset.y)
 #define GOB_W(g)		((g)->size.x)
 #define GOB_H(g)		((g)->size.y)
 
+#define GOB_LOG_X(g)		(LOG_COORD_X((g)->offset.x))
+#define GOB_LOG_Y(g)		(LOG_COORD_Y((g)->offset.y))
+#define GOB_LOG_W(g)		(LOG_COORD_X((g)->size.x))
+#define GOB_LOG_H(g)		(LOG_COORD_Y((g)->size.y))
+
 #define GOB_X_INT(g)	ROUND_TO_INT((g)->offset.x)
 #define GOB_Y_INT(g)	ROUND_TO_INT((g)->offset.y)
 #define GOB_W_INT(g)	ROUND_TO_INT((g)->size.x)
 #define GOB_H_INT(g)	ROUND_TO_INT((g)->size.y)
+
+#define GOB_LOG_X_INT(g)	ROUND_TO_INT(LOG_COORD_X((g)->offset.x))
+#define GOB_LOG_Y_INT(g)	ROUND_TO_INT(LOG_COORD_Y((g)->offset.y))
+#define GOB_LOG_W_INT(g)	ROUND_TO_INT(LOG_COORD_X((g)->size.x))
+#define GOB_LOG_H_INT(g)	ROUND_TO_INT(LOG_COORD_Y((g)->size.y))
 
 #define GOB_XO(g)		((g)->old_offset.x)
 #define GOB_YO(g)		((g)->old_offset.y)
@@ -128,12 +156,14 @@ struct rebol_gob {		// size: 64 bytes!
 
 #define CLEAR_GOB_STATE(g) ((g)->state = 0)
 
-#define SET_GOB_FLAG(g,f)  SET_FLAG((g)->flags, f)
-#define GET_GOB_FLAG(g,f)  GET_FLAG((g)->flags, f)
-#define CLR_GOB_FLAG(g,f)  CLR_FLAG((g)->flags, f)
-#define SET_GOB_STATE(g,f) SET_FLAG((g)->state, f)
-#define GET_GOB_STATE(g,f) GET_FLAG((g)->state, f)
-#define CLR_GOB_STATE(g,f) CLR_FLAG((g)->state, f)
+#define SET_GOB_FLAG(g,f)       SET_FLAG((g)->flags, f)
+#define GET_GOB_FLAG(g,f)       GET_FLAG((g)->flags, f)
+#define CLR_GOB_FLAG(g,f)       CLR_FLAG((g)->flags, f)
+#define CLR_GOB_FLAGS(g,f,h)    CLR_FLAGS((g)->flags, f, h)
+#define SET_GOB_STATE(g,f)      SET_FLAG((g)->state, f)
+#define GET_GOB_STATE(g,f)      GET_FLAG((g)->state, f)
+#define CLR_GOB_STATE(g,f)      CLR_FLAG((g)->state, f)
+#define CLR_GOB_STATES(g,f,h)   CLR_FLAGS((g)->state, f, h)
 
 #define GOB_ALPHA(g)		((g)->alpha)
 #define GOB_TYPE(g)			((g)->ctype)

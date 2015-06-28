@@ -66,6 +66,7 @@
 	for (i = 0; i < len;) {
 		c = uni ? ((REBUNI*)bp)[i] : ((REBYTE*)bp)[i];
 		i++;
+#ifdef TO_WIN32
 		if (c == ':') {
 			// Handle the vol:dir/file format:
 			if (colon || slash) return 0; // no prior : or / allowed
@@ -82,6 +83,7 @@
 			slash = 1;
 		}
 		else slash = 0;
+#endif
 		SET_ANY_CHAR(dst, n++, c);
 	}
 	if (dir && c != '/') {  // watch for %/c/ case
@@ -90,8 +92,10 @@
 	SERIES_TAIL(dst) = n;
 	TERM_SERIES(dst);
 
+#ifdef TO_WIN32
 	// Change C:/ to /C/ (and C:X to /C/X):
 	if (colon) Insert_Char(dst, 0, (REBCNT)'/');
+#endif
 
 	return dst;
 }
@@ -245,7 +249,7 @@
 
 /***********************************************************************
 **
-*/	REBSER *Value_To_OS_Path(REBVAL *val)
+*/	REBSER *Value_To_OS_Path(REBVAL *val, REBFLG full)
 /*
 **		Helper to above function.
 **
@@ -259,7 +263,7 @@
 
 	ASSERT1(ANY_BINSTR(val), RP_MISC);
 
-	ser = To_Local_Path(VAL_DATA(val), VAL_LEN(val), (REBOOL)!VAL_BYTE_SIZE(val), TRUE);
+	ser = To_Local_Path(VAL_DATA(val), VAL_LEN(val), (REBOOL)!VAL_BYTE_SIZE(val), full);
 
 #ifndef TO_WIN32
 	// Posix needs UTF8 conversion:

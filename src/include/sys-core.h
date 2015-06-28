@@ -87,6 +87,8 @@
 #include "tmp-strings.h"
 #include "tmp-funcargs.h"
 
+#include "reb-struct.h"
+
 //-- Port actions (for native port schemes):
 typedef struct rebol_port_action_map {
 	const REBCNT action;
@@ -298,6 +300,8 @@ enum encoding_opts {
 #define ALIGN(s, a) (((s) + (a)-1) & ~((a)-1))
 
 #define ALEVEL 2
+
+void Crash(REBINT id, ...);
 
 #define ASSERT(c,m) if (!(c)) Crash(m);		// (breakpoint in Crash() to see why)
 #if (ALEVEL>0)

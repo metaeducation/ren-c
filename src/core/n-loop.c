@@ -29,6 +29,7 @@
 ***********************************************************************/
 
 #include "sys-core.h"
+#include "sys-int-funcs.h" //REB_I64_ADD_OF
 
 
 /***********************************************************************
@@ -125,12 +126,16 @@
 
 	VAL_SET(var, REB_INTEGER);
 	
-	for (; (incr > 0) ? start <= end : start >= end; start += incr) {
+	while ((incr > 0) ? start <= end : start >= end) {
 		VAL_INT64(var) = start;
 		result = Do_Blk(body, 0);
 		if (THROWN(result) && Check_Error(result) >= 0) break;
 		if (!IS_INTEGER(var)) Trap_Type(var);
 		start = VAL_INT64(var);
+		
+		if (REB_I64_ADD_OF(start, incr, &start)) {
+			Trap0(RE_OVERFLOW);
+		}
 	}
 }
 
@@ -271,6 +276,8 @@
 	REBCNT i;
 	REBCNT j;
 
+	ASSERT2(mode >= 0 && mode < 3, RP_MISC);
+
 	value = D_ARG(2); // series
 	if (IS_NONE(value)) return R_NONE;
 
@@ -393,7 +400,7 @@
 				else SET_NONE(vars);
 			}
 
-			// var spec is WORD:
+			// var spec is SET_WORD:
 			else if (IS_SET_WORD(words)) {
 				if (ANY_OBJECT(value) || IS_MAP(value)) {
 					*vars = *value;
@@ -406,11 +413,15 @@
 			}
 			else Trap_Arg(words);
 		}
+		if (index == rindex) index++; //the word block has only set-words: foreach [a:] [1 2 3][]
 
 		ds = Do_Blk(body, 0);
 
 		if (THROWN(ds)) {
-			if ((err = Check_Error(ds)) >= 0) break;
+			if ((err = Check_Error(ds)) >= 0) {
+				index = rindex;
+				break;
+			}
 			// else CONTINUE:
 			if (mode == 1) SET_FALSE(ds); // keep the value (for mode == 1)
 		} else {

@@ -517,7 +517,7 @@ REBI64 deci_to_int (const deci a) {
 	result = ((REBI64) sa[1] << 32) | (REBI64) sa[0];
 	
 	/* handle sign */
-	if (a.s) result = -result;
+	if (a.s && result > MIN_I64) result = -result;
 	if (!a.s && (result < 0)) OVERFLOW_ERROR;
 	 
 	return result;

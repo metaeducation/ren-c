@@ -159,11 +159,15 @@ static int Fetch_Buf()
 **
 ***********************************************************************/
 {
-	Std_IO_Req.length = strlen(buf);
-	Std_IO_Req.data = (REBYTE*)buf;
-	Std_IO_Req.actual = 0;
+	/* This function could be called by signal handler and inside of Fetch_Buf */
+	REBREQ req;
+	memcpy(&req, &Std_IO_Req, sizeof(req));
 
-	OS_Do_Device(&Std_IO_Req, RDC_WRITE);
+	req.length = strlen(buf);
+	req.data = (REBYTE*)buf;
+	req.actual = 0;
 
-	if (Std_IO_Req.error) Host_Crash("stdio write");
+	OS_Do_Device(&req, RDC_WRITE);
+
+	if (req.error) Host_Crash("stdio write");
 }

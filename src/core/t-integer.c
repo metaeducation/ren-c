@@ -29,6 +29,7 @@
 
 #include "sys-core.h"
 #include "sys-deci-funcs.h"
+#include "sys-int-funcs.h"
 
 
 /***********************************************************************
@@ -110,41 +111,18 @@
 	switch (action) {
 
 	case A_ADD:
-		anum = (REBU64)num + (REBU64)arg;
-		if (
-			((num < 0) == (arg < 0)) && ((num < 0) != (anum < 0))
-		) Trap0(RE_OVERFLOW);
+		if (REB_I64_ADD_OF(num, arg, &anum)) Trap0(RE_OVERFLOW);
 		num = anum;
 		break;
 
 	case A_SUBTRACT:
-		anum = (REBU64)num - (REBU64)arg;
-		if (
-			((num < 0) != (arg < 0)) && ((num < 0) != (anum < 0))
-		) Trap0(RE_OVERFLOW);
+		if (REB_I64_SUB_OF(num, arg, &anum)) Trap0(RE_OVERFLOW);
 		num = anum;
 		break;
 
 	case A_MULTIPLY:
-		a = num;
-		sgn = (num < 0);
-		if (sgn) a = -a;
-		b = arg;
-		if (arg < 0) {
-			sgn = !sgn;
-			b = -b;
-		}
-		p = a * b;
-		a1 = a>>32;
-		a0 = a;
-		b1 = b>>32;
-		b0 = b;
-		if (
-			(a1 && b1)
-			|| ((REBU64)a0 * b1 + (REBU64)a1 * b0 > p >> 32)
-			|| ((p > (REBU64)MAX_I64) && (!sgn || (p > -(REBU64)MIN_I64)))
-		) Trap0(RE_OVERFLOW);
-		num = sgn ? -p : p;
+		if (REB_I64_MUL_OF(num, arg, &p)) Trap0(RE_OVERFLOW);
+		num = p;
 		break;
 
 	case A_DIVIDE:
@@ -250,10 +228,17 @@
 		else if (ANY_STR(val)) {
 			REBYTE *bp;
 			REBCNT len;
-			bp = Qualify_String(val, MAX_INT_LEN, &len, FALSE);
-			if (memchr(bp, '.', len)) {
+			bp = Qualify_String(val, VAL_LEN(val), &len, FALSE);
+			if (memchr(bp, '.', len)
+			   	|| memchr(bp, 'e', len)
+			   	|| memchr(bp, 'E', len)) {
 				if (Scan_Decimal(bp, len, DS_RETURN, TRUE)) {
-					num = (REBINT)VAL_DECIMAL(DS_RETURN);
+					double v = VAL_DECIMAL(DS_RETURN);
+					if (v < MAX_D64 && v >= MIN_D64) {
+						num = (REBI64)v;
+					} else {
+						Trap0(RE_OVERFLOW);
+					}
 					break;
 				}
 			}

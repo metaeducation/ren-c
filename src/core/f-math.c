@@ -131,6 +131,14 @@
 		return 1;
 	}
 
+#define MIN_I64_STR "-9223372036854775808"
+	if (val == MIN_I64) {
+		len = strlen(MIN_I64_STR);
+		if (maxl < len + 1) return 0;
+		COPY_MEM(buf, MIN_I64_STR, len + 1);
+		return len;
+	}
+
 	if (val < 0) {
 		val = -val;
 		*buf++ = '-';
@@ -140,19 +148,18 @@
 
 	// Generate string in reverse:
 	*tp++ = 0;
-	while (val != 0) {
+	while (val != 0 && maxl > 0 && tp < tmp + MAX_NUM_LEN) {
 		n = val / 10;	// not using ldiv for easier compatibility
 		r = val % 10;
-		if (r < 0) {	// check for overflow case when val = 0x80000000...
-			r = -r;
-			n = -n;
-		}
 		*tp++ = (REBYTE)('0' + (REBYTE)(r));
 		val = n;
+		maxl --;
 	}
 	tp--;
 
-	if (tp - tmp > maxl) return 0;
+	if (maxl == 0) {
+		return 0;
+	}
 
 	while (NZ(*buf++ = *tp--)) len++;
 	return len;
@@ -175,7 +182,7 @@
 	REBYTE tmp[MAX_NUM_LEN];
 	REBINT n;
 
-	n = Form_Int_Len(tmp, val, max);
+	n = Form_Int_Len(tmp, val, max + 1);
 	if (n == 0) {
 		strcpy(buf, "??");
 		return buf;  // too long
@@ -209,6 +216,7 @@
 	REBINT len = Form_Int_Len(buf, val, MAX_NUM_LEN);
 	return buf + len;
 }
+
 
 /***********************************************************************
 **

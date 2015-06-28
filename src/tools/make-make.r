@@ -69,7 +69,7 @@ S= ../src
 R= $S/core
 
 INCL ?= .
-I= -I$(INCL) -I$S/include/
+I= -I$(INCL) -I$S/include/ -I$S/codecs/
 
 TO_OS?=
 OS_ID?=
@@ -114,7 +114,8 @@ prep:
 	$(REBOL) $T/make-headers.r
 	$(REBOL) $T/make-boot.r $(OS_ID)
 	$(REBOL) $T/make-host-init.r
-	$(REBOL) $T/make-os-ext.r # ok, but not always
+	$(REBOL) $T/make-os-ext.r # !!! "ok, but not always" said old comment (?)
+	$(REBOL) $T/core-ext.r
 	$(REBOL) $T/make-host-ext.r
 	$(REBOL) $T/make-reb-lib.r
 
@@ -272,7 +273,13 @@ append plat-id os-plat/3
 to-def: join "TO_" uppercase copy os-name
 
 ; Collect OS-specific host files:
-os-specific-objs: select fb to word! join "os-" os-base
+unless os-specific-objs: select fb to word! join "os-" os-base [
+	do make error! rejoin [ 
+		"make-make.r requires os-specific obj list in file-base.r"
+		space "none was provided for os-" os-base
+	]
+]
+
 os-specific-dir: dirize to file! join %os/ os-base
 
 outdir: path-make
@@ -325,7 +332,12 @@ to-obj: func [
 	file
 ][
 	;?? file
-	file: to-file file ;second split-path file
+
+	; Use of split path to remove directory had been commented out, but
+	; was re-added to incorporate the paths on codecs in a stop-gap measure
+	; to use make-make.r with Atronix repo
+
+	file: (comment [to-file file] second split-path to-file file)
 	head change back tail file "o"
 ]
 

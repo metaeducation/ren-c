@@ -163,7 +163,7 @@ extern const REBYTE Str_Banner[];
 	{
 		REBSER spec;
 		REBSER *text;
-		REBCNT textlen;
+		REBINT textlen;
 
 		// REVIEW: This is a nasty casting away of a const.  But there's
 		// nothing that can be done about it as long as Decompress takes
@@ -249,6 +249,7 @@ extern const REBYTE Str_Banner[];
 
 	for (word++; NOT_END(word); word++, n++) {
 		COPY_BYTES(str, Get_Word_Name(word), 32);
+		str[31] = '\0';
 		str[LEN_BYTES(str)-1] = '?';
 		sym = Make_Word(str, 0);
 		//Print("sym: %s", Get_Sym_Name(sym));
@@ -674,6 +675,114 @@ extern const REBYTE Str_Banner[];
 	return CODI_ERROR;
 }
 
+/***********************************************************************
+**
+*/	REBINT Codec_UTF16(REBCDI *codi, int le)
+/*
+ * le: little endian
+***********************************************************************/
+{
+	codi->error = 0;
+
+	if (codi->action == CODI_IDENTIFY) {
+		return CODI_CHECK; // error code is inverted result
+	}
+
+	if (codi->action == CODI_DECODE) {
+		REBSER *ser = Make_Unicode(codi->len);
+		REBINT size = Decode_UTF16(UNI_HEAD(ser), codi->data, codi->len, le, FALSE);
+		SERIES_TAIL(ser) = size;
+		if (size < 0) { //ASCII
+			size = -size;
+			REBSER *dst = Make_Binary(size);
+			Append_Uni_Bytes(dst, UNI_HEAD(ser), size);
+			ser = dst;
+		}
+		codi->data = SERIES_DATA(ser);
+		codi->len = SERIES_TAIL(ser);
+		codi->w = SERIES_WIDE(ser);
+		return CODI_TEXT;
+	}
+
+	if (codi->action == CODI_ENCODE) {
+		u16 * data = codi->data = Make_Mem(codi->len * sizeof(u16));
+		if (codi->w == 1) {
+			/* in ASCII */
+			REBCNT i = 0;
+			for (i = 0; i < codi->len; i ++) {
+#ifdef ENDIAN_LITTLE
+				if (le) {
+					data[i] = ((char*)(codi->other))[i];
+				} else {
+					data[i] = ((char*)(codi->other))[i] << 8;
+				}
+#elif defined (ENDIAN_BIG)
+				if (le) {
+					data[i] = ((char*)(codi->other))[i] << 8;
+				} else {
+					data[i] = ((char*)(codi->other))[i];
+				}
+#else
+#error "Unsupported CPU endian"
+#endif
+			}
+		} else if (codi->w == 2) {
+			/* already in UTF16 */
+#ifdef ENDIAN_LITTLE
+			if (le) {
+				memcpy(data, codi->other, codi->len * sizeof(u16));
+			} else {
+				REBCNT i = 0;
+				for (i = 0; i < codi->len; i ++) {
+					REBUNI uni = ((REBUNI*)(codi->other))[i];
+					data[i] = ((uni & 0xff) << 8) | ((uni & 0xff00) >> 8);
+				}
+			}
+#elif defined (ENDIAN_BIG)
+			if (le) {
+				REBCNT i = 0;
+				for (i = 0; i < codi->len; i ++) {
+					REBUNI uni = ((REBUNI*)(codi->other))[i];
+					data[i] = ((uni & 0xff) << 8) | ((uni & 0xff00) >> 8);
+				}
+			} else {
+				memcpy(data, codi->other, codi->len * sizeof(u16));
+			}
+#else
+#error "Unsupported CPU endian"
+#endif
+		} else {
+			/* RESERVED for future unicode expansion */
+			codi->error = CODI_ERR_NA;
+			return CODI_ERROR;
+		}
+
+		codi->len *= sizeof(u16);
+
+		return CODI_BINARY;
+	}
+
+	codi->error = CODI_ERR_NA;
+	return CODI_ERROR;
+}
+
+/***********************************************************************
+**
+*/	REBINT Codec_UTF16LE(REBCDI *codi)
+/*
+***********************************************************************/
+{
+	return Codec_UTF16(codi, TRUE);
+}
+
+/***********************************************************************
+**
+*/	REBINT Codec_UTF16BE(REBCDI *codi)
+/*
+***********************************************************************/
+{
+	return Codec_UTF16(codi, FALSE);
+}
 
 /***********************************************************************
 **
@@ -720,6 +829,8 @@ extern const REBYTE Str_Banner[];
 ***********************************************************************/
 {
 	Register_Codec((REBYTE*)"text", Codec_Text);
+	Register_Codec((REBYTE*)"utf-16le", Codec_UTF16LE);
+	Register_Codec((REBYTE*)"utf-16be", Codec_UTF16BE);
 	Register_Codec((REBYTE*)"markup", Codec_Markup);
 	Init_BMP_Codec();
 	Init_GIF_Codec();
@@ -824,21 +935,25 @@ static REBCNT Set_Option_Word(REBCHR *str, REBCNT field)
 	if (NZ(data = OS_GET_LOCALE(0))) {
 		val = Get_System(SYS_LOCALE, LOCALE_LANGUAGE);
 		Set_String(val, Copy_OS_Str(data, LEN_STR(data)));
+		OS_FREE(data);
 	}
 
 	if (NZ(data = OS_GET_LOCALE(1))) {
 		val = Get_System(SYS_LOCALE, LOCALE_LANGUAGE_P);
 		Set_String(val, Copy_OS_Str(data, LEN_STR(data)));
+		OS_FREE(data);
 	}
 
 	if (NZ(data = OS_GET_LOCALE(2))) {
 		val = Get_System(SYS_LOCALE, LOCALE_LOCALE);
 		Set_String(val, Copy_OS_Str(data, LEN_STR(data)));
+		OS_FREE(data);
 	}
 
 	if (NZ(data = OS_GET_LOCALE(3))) {
 		val = Get_System(SYS_LOCALE, LOCALE_LOCALE_P);
 		Set_String(val, Copy_OS_Str(data, LEN_STR(data)));
+		OS_FREE(data);
 	}
 }
 

@@ -123,14 +123,24 @@ These are now obsolete (as of A107) and should be removed:
 //#pragma warning(disable : 4057)
 //#pragma warning(disable : 4701)
 
-#define AGG_WIN32_FONTS //use WIN32 api for font handling
+// !!! No AGG definitions in Ren/C core
+//#define AGG_WIN32_FONTS //use WIN32 api for font handling
 #else
 
 //* Non Windows ********************************************************
 
-#define MIN_OS					// not all devices are working
-#define NO_GRAPHICS				// no graphics yet
-#define AGG_FREETYPE            //use freetype2 library for fonts by default
+// !!! Historical Rebol implementation controlled the presence of a clipboard
+// device with this flag.  Atronix build has clipboard support under Linux
+// (not POSIX)... but depends on X11 to get it (Win32 only needs Win32 API).
+// Atronix build had removed this flag to get the clipboard.  Really this
+// should be done in a more modular way so that the core does not have a
+// static table for this (!)   
+#define MIN_OS
+
+// !!! No AGG definitions in Ren/C core
+//#define AGG_FREETYPE            //use freetype2 library for fonts by default
+//#define AGG_FONTCONFIG            //use fontconfig library for fonts by default
+
 #define FINITE finite
 #define INLINE
 
@@ -145,12 +155,14 @@ These are now obsolete (as of A107) and should be removed:
 #define API_IMPORT
 #endif
 
-#ifdef TO_LINUX					// Linux/Intel
+#ifdef TO_LINUX_X86				// Linux/Intel X86
+#define TO_LINUX
 #define ENDIAN_LITTLE
 #define HAS_LL_CONSTS
 #endif
 
 #ifdef TO_LINUX_X64				// Linux/AMD64
+#define TO_LINUX
 #define ENDIAN_LITTLE
 #define HAS_LL_CONSTS
 #ifndef __LP64__
@@ -159,16 +171,19 @@ These are now obsolete (as of A107) and should be removed:
 #endif
 
 #ifdef TO_LINUX_PPC				// Linux/PPC
+#define TO_LINUX
 #define ENDIAN_BIG
 #define HAS_LL_CONSTS
 #endif
 
 #ifdef TO_LINUX_ARM				// Linux/ARM
+#define TO_LINUX
 #define ENDIAN_LITTLE
 #define HAS_LL_CONSTS
 #endif
 
 #ifdef TO_LINUX_MIPS
+#define TO_LINUX
 #define ENDIAN_LITTLE
 #define HAS_LL_CONSTS
 #endif
@@ -181,33 +196,21 @@ These are now obsolete (as of A107) and should be removed:
 #ifdef TO_OSXI					// OSX/Intel
 #define ENDIAN_LITTLE
 #define HAS_LL_CONSTS
+// !!! Don't mention graphics in Ren/C core
+//#undef NO_GRAPHICS
 #endif
 
 #ifdef TO_OSX					// OSX/PPC
 #define ENDIAN_BIG
 #define HAS_LL_CONSTS
 #define OLD_COMPILER
-#endif
-
-#ifdef TO_OSX_X64				// OSX/AMD64
-#define ENDIAN_LITTLE
-#define HAS_LL_CONSTS
-#ifndef __LP64__
-#define __LP64__
-#endif
+// !!! Don't mention graphics in Ren/C core
+//#undef NO_GRAPHICS
 #endif
 
 #ifdef TO_FREEBSD
 #define ENDIAN_LITTLE
 #define HAS_LL_CONSTS
-#endif
-
-#ifdef TO_FREEBSD_X64			// FreeBSD/AMD64
-#define ENDIAN_LITTLE
-#define HAS_LL_CONSTS
-#ifndef __LP64__
-#define __LP64__
-#endif
 #endif
 
 #ifdef TO_OPENBSD
@@ -228,6 +231,17 @@ These are now obsolete (as of A107) and should be removed:
 #define NO_DL_LIB
 #endif
 
+#ifdef TO_ANDROID_ARM				// Android/ARM
+#undef MIN_OS
+// !!! Don't mention graphics in Ren/C core
+//#undef NO_GRAPHICS
+#define ENDIAN_LITTLE
+#define HAS_LL_CONSTS
+#endif
+
+#ifdef TO_LINUX
+#define HAS_POSIX_SIGNAL
+#endif
 
 //* Defaults ***********************************************************
 

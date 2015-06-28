@@ -27,6 +27,7 @@
 ***********************************************************************/
 
 #include "sys-core.h"
+#include "sys-int-funcs.h"
 
 
 /***********************************************************************
@@ -60,7 +61,7 @@
 ***********************************************************************/
 {
 	REBCNT start;
-	REBCNT size;
+	REBCNT size, new_size;
 	REBCNT extra;
 	REBCNT wide;
 	REBSER *newser, swap;
@@ -112,7 +113,13 @@
 #ifdef DEBUGGING
 		Print_Num("Expand:", series->tail + delta + 1);
 #endif
-		newser = Make_Series(series->tail + delta + x, wide, TRUE);
+		/* new_size = series->tail + delta + x with overflow checking */
+		if (REB_U32_ADD_OF(series->tail, delta, &new_size)
+			|| REB_U32_ADD_OF(new_size, x, &new_size)) {
+			Trap0(RE_PAST_END);
+		}
+
+		newser = Make_Series(new_size, wide, TRUE);
 		// If necessary, add series to the recently expanded list:
 		if (Prior_Expand[n] != series) {
 			n = (REBUPT)(Prior_Expand[0]) + 1;
@@ -344,13 +351,28 @@
 			CLEAR(series->data, SERIES_WIDE(series)); // terminate
 		} else {
 			// Add bias to head:
-			SERIES_ADD_BIAS(series, len);
-			SERIES_REST(series) -= len;
-			series->data += SERIES_WIDE(series) * len;
-			if (NZ(start = SERIES_BIAS(series))) {
-				// If more than half biased:
-				if (start >= MAX_SERIES_BIAS || start > SERIES_REST(series))
-					Reset_Bias(series);
+			REBCNT bias = SERIES_BIAS(series);
+			if (REB_U32_ADD_OF(bias, len, &bias)) {
+				Trap0(RE_OVERFLOW);
+			}
+			if (bias > 0xffff) { //bias is 16-bit, so a simple SERIES_ADD_BIAS could overflow it
+				REBYTE *data = series->data;
+
+				data += SERIES_WIDE(series) * len;
+				series->data -= SERIES_WIDE(series) * SERIES_BIAS(series);
+				SERIES_REST(series) += SERIES_BIAS(series);
+				SERIES_SET_BIAS(series, 0);
+
+				memmove(series->data, data, SERIES_USED(series));
+			} else {
+				SERIES_SET_BIAS(series, bias);
+				SERIES_REST(series) -= len;
+				series->data += SERIES_WIDE(series) * len;
+				if (NZ(start = SERIES_BIAS(series))) {
+					// If more than half biased:
+					if (start >= MAX_SERIES_BIAS || start > SERIES_REST(series))
+						Reset_Bias(series);
+				}
 			}
 		}
 		return;

@@ -172,19 +172,35 @@ init-schemes: func [
 		awake: func [
 			sport "System port (State block holds events)"
 			ports "Port list (Copy of block passed to WAIT)"
-			/local event port waked
+			/only
+			/local event event-list n-event port waked
 		][
 			waked: sport/data ; The wake list (pending awakes)
 
+			if only [
+				unless block? ports [return none] ;short cut for a pause
+			]
+
 			; Process all events (even if no awake ports).
-			; Do only 8 events at a time (to prevent polling lockout).
-			loop 8 [
-				unless event: take sport/state [break]
+			n-event: 0
+			event-list: sport/state
+			while [not empty? event-list][
+				if n-event > 8 [break] ; Do only 8 events at a time (to prevent polling lockout).
+				event: first event-list
 				port: event/port
-				if wake-up port event [
-					; Add port to wake list:
-					;print ["==System-waked:" port/spec/ref]
-					unless find waked port [append waked port]
+				either any [
+					none? only
+					find ports port
+				][
+					remove event-list ;avoid event overflow caused by wake-up recursively calling into wait
+					if wake-up port event [
+						; Add port to wake list:
+						;print ["==System-waked:" port/spec/ref]
+						unless find waked port [append waked port]
+					]
+					++ n-event
+				][
+					event-list: next event-list
 				]
 			]
 
@@ -193,7 +209,7 @@ init-schemes: func [
 
 			; Are any of the requested ports awake?
 			forall ports [
-				if find waked first ports [return true]
+				if port: find waked first ports [return true]
 			]
 
 			false ; keep waiting
@@ -260,8 +276,38 @@ init-schemes: func [
 	]
 
 	make-scheme [
+		title: "UDP Networking"
+		name: 'udp
+		spec: system/standard/port-spec-net
+		info: system/standard/net-info ; for C enums
+		awake: func [event] [print ['UDP-event event/type] true]
+	]
+
+	make-scheme [
 		title: "Clipboard"
 		name: 'clipboard
+	]
+
+	if 4 == fourth system/version [
+		make-scheme [
+			title: "Signal"
+			name: 'signal
+			spec: system/standard/port-spec-signal
+		]
+	]
+
+	make-scheme [
+		title: "Serial Port"
+		name: 'serial
+		spec: system/standard/port-spec-serial
+		init: func [port /local path speed] [
+			if url? port/spec/ref [
+				parse port/spec/ref
+					[thru #":" 0 2 slash copy path [to slash | end] skip copy speed to end]
+				if speed: try [to integer! speed] [port/spec/speed: speed]
+				port/spec/path: to file! path
+			]
+		]
 	]
 
 	system/ports/system:   open [scheme: 'system]

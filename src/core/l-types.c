@@ -335,7 +335,9 @@ bad_hex:	Trap0(RE_INVALID_CHARS);
 	if (len > 19) return 0;
 
 	// Convert, check, and return:
+	errno = 0;
 	n = CHR_TO_INT(buf);
+	if (errno != 0) return 0; //overflow
 	if ((n > 0 && neg) || (n < 0 && !neg)) return 0;
 	SET_INTEGER(value, n);
 	return cp;
@@ -835,13 +837,11 @@ end_date:
 
 	VAL_SET(value, type);
 	VAL_SERIES(value) = Append_UTF8(0, cp, len);
-	VAL_INDEX(value) = 0;
-	VAL_TAIL(value) = len;
 
 	if (VAL_BYTE_SIZE(value)) {
-		n = Deline_Bytes(VAL_BIN(value), len);
+		n = Deline_Bytes(VAL_BIN(value), VAL_LEN(value));
 	} else {
-		n = Deline_Uni(VAL_UNI(value), len);
+		n = Deline_Uni(VAL_UNI(value), VAL_LEN(value));
 	}
 	VAL_TAIL(value) = n;
 

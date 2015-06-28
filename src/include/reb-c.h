@@ -31,6 +31,12 @@
 **
 ***********************************************************************/
 
+#if defined(__clang__) || defined (__GNUC__)
+# define ATTRIBUTE_NO_SANITIZE_ADDRESS __attribute__((no_sanitize_address))
+#else
+# define ATTRIBUTE_NO_SANITIZE_ADDRESS
+#endif
+
 #ifndef FALSE
 #define FALSE 0
 #define TRUE (!0)
@@ -68,26 +74,51 @@ typedef uintptr_t		REBUPT;		// unsigned counterpart of void*
 #define MAX_I64 INT64_MAX
 #define MIN_I64 INT64_MIN
 
+#define I8_C(c)			INT8_C(c)
+#define U8_C(c)			UINT8_C(c)
+
+#define I16_C(c)		INT16_C(c)
+#define U16_C(c)		UINT16_C(c)
+
+#define I32_C(c)		INT32_C(c)
+#define U32_C(c)		UINT32_C(c)
+
+#define I64_C(c)		INT64_C(c)
+#define U64_C(c)		UINT64_C(c)
+
 #else
 /* C-code types: C99 definitions unavailable, do it ourselves */
 
 typedef char			i8;
 typedef unsigned char	u8;
+#define I8(c) 			c
+#define U8(c) 			c
+
 typedef short			i16;
 typedef unsigned short	u16;
+#define I16(c) 			c
+#define U16(c) 			c
+
 #ifdef __LP64__
 typedef int				i32;
 typedef unsigned int	u32;
 #else
-typedef long				i32;
+typedef long			i32;
 typedef unsigned long	u32;
 #endif
+#define I32_C(c) c
+#define U32_C(c) c ## U
+
 #ifdef ODD_INT_64       // Windows VC6 nonstandard typing for 64 bits
 typedef _int64          i64;
 typedef unsigned _int64 u64;
+#define I64_C(c) c ## I64
+#define U64_C(c) c ## U64
 #else
 typedef long long       i64;
 typedef unsigned long long u64;
+#define I64_C(c) c ## LL
+#define U64_C(c) c ## ULL
 #endif
 #ifdef __LLP64__
 typedef long long		REBIPT;		// integral counterpart of void*
@@ -97,18 +128,17 @@ typedef long			REBIPT;		// integral counterpart of void*
 typedef unsigned long	REBUPT;		// unsigned counterpart of void*
 #endif
 
-#define MAX_I32 ((i32)0x7fffffff)
-#define MIN_I32 ((i32)0x80000000)
-#ifdef HAS_LL_CONSTS
-#define MAX_I64 ((i64)0x7fffffffffffffffLL)
-#define MIN_I64 ((i64)0x8000000000000000LL)
-#else
-#define MAX_I64 ((i64)0x7fffffffffffffffI64)
-#define MIN_I64 ((i64)0x8000000000000000I64)
-#endif
+#define MAX_I32 I32_C(0x7fffffff)
+#define MIN_I32 ((i32)I32_C(0x80000000)) //compiler treats the hex literal as unsigned without casting
+#define MAX_I64 I64_C(0x7fffffffffffffff)
+#define MIN_I64 ((i64)I64_C(0x8000000000000000)) //compiler treats the hex literal as unsigned without casting
 
 #endif
 /* C-code types */
+
+#define MAX_U32 U32_C(0xffffffff)
+#define MAX_U64 U64_C(0xffffffffffffffff)
+
 
 #ifndef DEF_UINT		// some systems define it, don't define it again
 typedef unsigned int    uint;
@@ -180,7 +210,7 @@ enum {
 **
 ***********************************************************************/
 
-#define MAX_INT_LEN     20
+#define MAX_INT_LEN     21
 #define MAX_HEX_LEN     16
 
 #ifdef ITOA64           // Integer to ascii conversion
@@ -276,4 +306,45 @@ typedef void(*CFUNC)(void *);
 
 #define MAKE_STR(n) (REBCHR*)(malloc((n) * sizeof(REBCHR)))  // OS chars!
 
-#define ROUND_TO_INT(d) (REBINT)(floor((d) + 0.5))
+#define ROUND_TO_INT(d) (REBINT)(floor((MAX(MIN_I32, MIN(MAX_I32, d))) + 0.5))
+
+//global pixelformat setup for REBOL image!, image loaders, color handling, tuple! conversions etc.
+//the graphics compositor code should rely on this setting(and do specific conversions if needed)
+//notes:
+//TO_RGBA_COLOR always returns 32bit RGBA value, converts R,G,B,A components to native RGBA order
+//TO_PIXEL_COLOR must match internal image! datatype byte order, converts R,G,B,A components to native image format
+// C_R, C_G, C_B, C_A Maps color components to correct byte positions for image! datatype byte order
+
+#ifdef ENDIAN_BIG
+
+#define TO_RGBA_COLOR(r,g,b,a) (REBCNT)((r)<<24 | (g)<<16 | (b)<<8 |  (a))
+
+//ARGB pixelformat used on big endian systems
+#define C_A 0
+#define C_R 1
+#define C_G 2
+#define C_B 3
+
+#define TO_PIXEL_COLOR(r,g,b,a) (REBCNT)((a)<<24 | (r)<<16 | (g)<<8 |  (b))
+
+#else
+
+#define TO_RGBA_COLOR(r,g,b,a) (REBCNT)((a)<<24 | (b)<<16 | (g)<<8 |  (r))
+
+//we use RGBA pixelformat on Android
+#ifdef TO_ANDROID_ARM
+#define C_R 0
+#define C_G 1
+#define C_B 2
+#define C_A 3
+#define TO_PIXEL_COLOR(r,g,b,a) (REBCNT)((a)<<24 | (b)<<16 | (g)<<8 |  (r))
+#else
+//BGRA pixelformat is used on Windows
+#define C_B 0
+#define C_G 1
+#define C_R 2
+#define C_A 3
+#define TO_PIXEL_COLOR(r,g,b,a) (REBCNT)((a)<<24 | (r)<<16 | (g)<<8 |  (b))
+#endif
+
+#endif

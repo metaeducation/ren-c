@@ -119,6 +119,8 @@ Script: [
 	parse-command:      [{PARSE - command cannot be used as variable:} :arg1]
 	parse-series:       [{PARSE - input must be a series:} :arg1]
 
+	bad-library:		{bad library (already closed?)}
+
 ;   bad-prompt:         [{Error executing prompt block}]
 ;   bad-port-action:    [{Cannot use} :arg1 {on this type port}]
 ;   face-error:         [{Invalid graphics face object}]
@@ -185,11 +187,16 @@ Access: [
 
 	call-fail:          [{external process failed:} :arg1]
 
+	permission-denied: 	[{permission denied}]
+	process-not-found: 	[{process not found:} :arg1]
+
 ]
 
 Command: [
 	code: 600
 	type: "command error"
+	bad-cmd-args:		["Bad command arguments"]
+	no-cmd:				["No command"]
 ;   fmt-too-short:      {Format string is too short}
 ;   fmt-no-struct-size: [{Missing size spec for struct at arg#} :arg1]
 ;   fmt-no-struct-align: [{Missing align spec for struct at arg#} :arg1]
@@ -203,6 +210,7 @@ Command: [
 ;   cant-free:          [{Cannot free} :arg1]
 ;   nothing-to-free:    {Nothing to free}
 ;   ssl-error:          [{SSL Error: } :arg1]
+	command-fail:		["Command failed"]
 ]
 
 resv700: [

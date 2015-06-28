@@ -62,17 +62,6 @@ typedef struct rebol_dat {
 	int zone;
 } REBOL_DAT;  // not same as REBDAT
 
-// OS metrics: (not used as of A100!)
-typedef struct rebol_met {
-	int len; // # entries in this table
-	REBPAR screen_size;
-	REBPAR title_size;
-	REBPAR border_size;
-	REBPAR border_fixed;
-	REBPAR work_origin;
-	REBPAR work_size;
-} X_REBOL_OS_METRICS;
-
 #pragma pack()
 
 #endif

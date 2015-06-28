@@ -40,13 +40,14 @@ start: func [
 	][
 		boot-print boot-banner ; basic boot banner only
 	]
-	if any [do-arg script] [quiet: true]
+	if any [boot-embedded do-arg script] [quiet: true]
 
 	;-- Set up option/paths for /path, /boot, /home, and script path (for SECURE):
 	path: dirize any [path home]
 	home: dirize home
 	;if slash <> first boot [boot: clean-path boot] ;;;;; HAVE C CODE DO IT PROPERLY !!!!
-	home: file: first split-path boot
+	;home: file: first split-path boot ;doesn't work when system/options/home is NONE, patched with line below for now --cyphre
+	file: home
 	if file? script [ ; Get the path (needed for SECURE setup)
 		script-path: split-path script
 		case [
@@ -132,6 +133,27 @@ start: func [
 
 	; Import module?
 	if import [lib/import import]
+
+	unless none? boot-embedded [
+		code: load/header/type boot-embedded 'unbound
+		;boot-print ["executing embedded script:" mold code]
+		system/script: make system/standard/script [
+			title: select first code 'title
+			header: first code
+			parent: none
+			path: what-dir
+			args: script-args
+		]
+		either 'module = select first code 'type [
+			code: reduce [first+ code code]
+			if object? tmp: do-needs/no-user first code [append code tmp]
+			import make module! code
+		][
+			do-needs first+ code
+			do intern code
+		]
+		quit ;ignore user script and "--do" argument
+	]
 
 	;-- Evaluate: --do "some code" if found
 	if do-arg [

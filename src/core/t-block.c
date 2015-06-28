@@ -387,11 +387,27 @@ static struct {
 ***********************************************************************/
 {
 	REBVAL *val;
+
+	REBVAL *args = NULL;
+
+	const void *tmp = NULL;
+
+	if (!sort_flags.reverse) { /*swap v1 and v2 */
+		tmp = v1;
+		v1 = v2;
+		v2 = tmp;
+	}
+
+	args = BLK_SKIP(VAL_FUNC_ARGS(sort_flags.compare), 1);
+	if (NOT_END(args) && !TYPE_CHECK(args, VAL_TYPE((REBVAL*)v1))){
+		Trap3(RE_EXPECT_ARG, Of_Type(sort_flags.compare), args, Of_Type((REBVAL*)v1));
+	}
+	++ args;
+	if (NOT_END(args) && !TYPE_CHECK(args, VAL_TYPE((REBVAL*)v2))) {
+		Trap3(RE_EXPECT_ARG, Of_Type(sort_flags.compare), args, Of_Type((REBVAL*)v2));
+	}
 	
-	if (sort_flags.reverse)
-		val = Apply_Func(0, sort_flags.compare, v1, v2, 0);	
-	else
-		val = Apply_Func(0, sort_flags.compare, v2, v1, 0);	
+	val = Apply_Func(0, sort_flags.compare, v1, v2, 0);
 
 	if (IS_LOGIC(val)) {
 		if (IS_TRUE(val)) return 1;
@@ -457,9 +473,9 @@ static struct {
 	if (skip > 1) len /= skip, size *= skip;
 
 	if (sort_flags.compare)
-		qsort((void *)VAL_BLK_DATA(block), len, size, Compare_Call);
+		reb_qsort((void *)VAL_BLK_DATA(block), len, size, Compare_Call);
 	else
-		qsort((void *)VAL_BLK_DATA(block), len, size, Compare_Val);
+		reb_qsort((void *)VAL_BLK_DATA(block), len, size, Compare_Val);
 
 }
 

@@ -199,7 +199,7 @@
 	}
 	else if (ANY_BLOCK(val) && VAL_BLK_LEN(val) <= 3) {
 		REBFLG neg = FALSE;
-		REBINT i;
+		REBI64 i;
 
 		val = VAL_BLK_DATA(val);
 		if (!IS_INTEGER(val)) goto no_time;
@@ -364,17 +364,21 @@
 {
 	REBI64	secs;
 	REBVAL	*val;
-	REBVAL	*arg;
+	REBVAL	*arg = NULL;
 	REBI64	num;
 
 	val = D_ARG(1);
 
 	secs = VAL_TIME(val); // note: not always valid REB_TIME (e.g. MAKE)
 
-	if (DS_ARGC > 1) arg = D_ARG(2);
+	if (DS_ARGC > 1) {
+		arg = D_ARG(2);
+	}
 
 	if (IS_BINARY_ACT(action)) {
 		REBINT	type = VAL_TYPE(arg);
+
+		ASSERT2(arg != NULL, RP_MISC);
 
 		if (type == REB_TIME) {		// handle TIME - TIME cases
 			REBI64	secs2 = VAL_TIME(arg);
@@ -521,6 +525,8 @@
 			goto fixTime;
 
 		case A_PICK:
+			ASSERT2(arg != NULL, RP_MISC);
+
 			Pick_Path(val, arg, 0);
 			return R_TOS;
 
@@ -530,6 +536,8 @@
 
 		case A_MAKE:
 		case A_TO:
+			ASSERT2(arg != NULL, RP_MISC);
+
 			secs = Make_Time(arg);
 			if (secs == NO_TIME) Trap_Make(REB_TIME, arg);
 			goto setTime;

@@ -115,23 +115,6 @@
 
 /***********************************************************************
 **
-*/	void Free_Port_State(REBSER *port)
-/*
-***********************************************************************/
-{
-	REBVAL *state = BLK_SKIP(port, STD_PORT_STATE);
-
-	// ??? check that this is the binary we think it is? !!!
-
-	if (IS_BINARY(state)) {
-		Loose_Series(VAL_SERIES(state));
-		VAL_SET(state, REB_NONE);
-	}
-}
-
-
-/***********************************************************************
-**
 */	REBFLG Pending_Port(REBVAL *port)
 /*
 **		Return TRUE if port value is pending a signal.
@@ -155,7 +138,7 @@
 
 /***********************************************************************
 **
-*/	REBINT Awake_System(REBSER *ports)
+*/	REBINT Awake_System(REBSER *ports, REBINT only)
 /*
 **	Returns:
 **		-1 for errors
@@ -169,6 +152,7 @@
 	REBVAL *waked;
 	REBVAL *awake;
 	REBVAL tmp;
+	REBVAL ref_only;
 	REBVAL *v;
 
 	// Get the system port object:
@@ -194,8 +178,10 @@
 	if (ports) Set_Block(&tmp, ports);
 	else SET_NONE(&tmp);
 
+	if (only) SET_TRUE(&ref_only);
+	else SET_NONE(&ref_only);
 	// Call the system awake function:
-	v = Apply_Func(0, awake, port, &tmp, 0); // ds is return value
+	v = Apply_Func(0, awake, port, &tmp, &ref_only, 0); // ds is return value
 
 	// Awake function returns 1 for end of WAIT:
 	return (IS_LOGIC(v) && VAL_LOGIC(v)) ? 1 : 0;
@@ -204,7 +190,7 @@
 
 /***********************************************************************
 **
-*/	REBINT Wait_Ports(REBSER *ports, REBCNT timeout)
+*/	REBINT Wait_Ports(REBSER *ports, REBCNT timeout, REBINT only)
 /*
 **	Inputs:
 **		Ports: a block of ports or zero (on stack to avoid GC).
@@ -228,7 +214,7 @@
 		}
 
 		// Process any waiting events:
-		if ((result = Awake_System(ports)) > 0) return TRUE;
+		if ((result = Awake_System(ports, only)) > 0) return TRUE;
 
 		// If activity, use low wait time, otherwise increase it:
 		if (result == 0) wt = 1;
@@ -303,6 +289,7 @@ xx*/	REBINT Wait_Device(REBREQ *req, REBCNT timeout)
 */	void Sieve_Ports(REBSER *ports)
 /*
 **		Remove all ports not found in the WAKE list.
+**		ports could be NULL, in which case the WAKE list is cleared.
 **
 ***********************************************************************/
 {
@@ -316,16 +303,19 @@ xx*/	REBINT Wait_Device(REBREQ *req, REBCNT timeout)
 	waked = VAL_BLK_SKIP(port, STD_PORT_DATA);
 	if (!IS_BLOCK(waked)) return;
 
-	for (n = 0; n < SERIES_TAIL(ports);) {
+	for (n = 0; ports && n < SERIES_TAIL(ports);) {
 		val = BLK_SKIP(ports, n);
 		if (IS_PORT(val)) {
-			if (VAL_TAIL(waked) != Find_Block_Simple(VAL_SERIES(waked), 0, val)) {
-				Remove_Series(VAL_SERIES(waked), n, 1);
+			ASSERT(VAL_TAIL(waked) != 0, RP_IO_ERROR);
+			if (VAL_TAIL(waked) == Find_Block_Simple(VAL_SERIES(waked), 0, val)) {//not found
+				Remove_Series(ports, n, 1);
 				continue;
 			}
 		}
 		n++;
 	}
+	//clear waked list
+	RESET_SERIES(VAL_SERIES(waked));
 }
 
 
@@ -511,7 +501,11 @@ xx*/	REBINT Wait_Device(REBREQ *req, REBCNT timeout)
 **
 ***********************************************************************/
 
-#define MAX_SCHEMES 10		// max native schemes
+#ifdef HAS_POSIX_SIGNAL
+#define MAX_SCHEMES 12		// max native schemes
+#else
+#define MAX_SCHEMES 11		// max native schemes
+#endif
 
 typedef struct rebol_scheme_actions {
 	REBCNT sym;
@@ -563,10 +557,10 @@ SCHEME_ACTIONS *Scheme_Actions;	// Initial Global (not threaded)
 	if (!actor) return R_NONE;
 
 	// Does this scheme have native actor or actions?
-	for (n = 0; Scheme_Actions[n].sym; n++) {
+	for (n = 0; n < MAX_SCHEMES && Scheme_Actions[n].sym; n++) {
 		if (Scheme_Actions[n].sym == VAL_WORD_SYM(act)) break;
 	}
-	if (!Scheme_Actions[n].sym) return R_NONE;
+	if (n == MAX_SCHEMES || !Scheme_Actions[n].sym) return R_NONE;
 
 	// The scheme uses a native actor:
 	if (Scheme_Actions[n].fun) {
@@ -624,8 +618,13 @@ SCHEME_ACTIONS *Scheme_Actions;	// Initial Global (not threaded)
 	Init_Dir_Scheme();
 	Init_Event_Scheme();
 	Init_TCP_Scheme();
+	Init_UDP_Scheme();
 	Init_DNS_Scheme();
 #ifndef MIN_OS
 	Init_Clipboard_Scheme();
+#endif
+	Init_Serial_Scheme();
+#ifdef HAS_POSIX_SIGNAL
+	Init_Signal_Scheme();
 #endif
 }

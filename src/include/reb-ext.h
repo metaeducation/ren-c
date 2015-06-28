@@ -40,7 +40,6 @@
 
 */
 
-
 // Value structure (for passing args to and from):
 #pragma pack(4)
 typedef union rxi_arg_val {
@@ -71,6 +70,7 @@ typedef union rxi_arg_val {
 // For direct access to arg array:
 #define RXI_COUNT(a)	(a[0].bytes[0])
 #define RXI_TYPE(a,n)	(a[0].bytes[n])
+#define RXI_COLOR_TUPLE(a)    (TO_RGBA_COLOR(a.bytes[1], a.bytes[2], a.bytes[3], a.bytes[0] > 3 ? a.bytes[4] : 0xff))	//always RGBA order
 
 // Command function call frame:
 typedef struct rxi_cmd_frame {
@@ -101,6 +101,7 @@ typedef int (*RXICAL)(int cmd, RXIFRM *args, REBCEC *ctx);
 #define RXA_TIME(f,n)	(RXA_ARG(f,n).int64)
 #define RXA_DATE(f,n)	(RXA_ARG(f,n).int32a)
 #define RXA_WORD(f,n)	(RXA_ARG(f,n).int32a)
+#define RXA_LOG_PAIR(f,n)	{LOG_COORD_X(RXA_ARG(f,n).pair.x), LOG_COORD_Y(RXA_ARG(f,n).pair.y)}
 #define RXA_PAIR(f,n)	(RXA_ARG(f,n).pair)
 #define RXA_TUPLE(f,n)	(RXA_ARG(f,n).bytes)
 #define RXA_SERIES(f,n)	(RXA_ARG(f,n).series)
@@ -112,6 +113,9 @@ typedef int (*RXICAL)(int cmd, RXIFRM *args, REBCEC *ctx);
 #define RXA_IMAGE_BITS(f,n)	  ((REBYTE *)RL_SERIES((RXA_ARG(f,n).image), RXI_SER_DATA))
 #define RXA_IMAGE_WIDTH(f,n)  (RXA_ARG(f,n).width)
 #define RXA_IMAGE_HEIGHT(f,n) (RXA_ARG(f,n).height)
+#define RXA_COLOR_TUPLE(f,n)  (TO_RGBA_COLOR(RXA_TUPLE(f,n)[1], RXA_TUPLE(f,n)[2], RXA_TUPLE(f,n)[3], RXA_TUPLE(f,n)[0] > 3 ? RXA_TUPLE(f,n)[4] : 0xff)) //always RGBA order
+
+#define RXI_LOG_PAIR(v)	{LOG_COORD_X(v.pair.x) , LOG_COORD_Y(v.pair.y)}
 
 // Command function return values:
 enum rxi_return {

@@ -179,7 +179,7 @@ void Chrom_Key_Alpha(REBVAL *v,REBCNT col,REBINT blitmode) {
 			}
 			top_stack--;
 			rp = colortab + 3 * *top_stack;
-			*dp++ = rp[2] | (rp[1] << 8) | (rp[0] << 16);
+			*dp++ = TO_PIXEL_COLOR(rp[0], rp[1], rp[2], 0xff);
 			x++;
 		}
 		if (interlaced) {
@@ -285,7 +285,8 @@ void Chrom_Key_Alpha(REBVAL *v,REBCNT col,REBINT blitmode) {
 			cp += 3 * colors;
 		}
 		cp += 9;
-
+		
+		//note: animated GIFs support needs to be added!!!
 /*
 		if (image_count == 2) {
 			VAL_SERIES(Temp2_Value) = Make_Block(0, 0);

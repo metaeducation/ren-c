@@ -136,6 +136,7 @@ emit: func [data] [repend out data]
 to-c-name: func [word] [
 	word: form word
 	foreach [f t] [
+		"..." "ellipsis"
 		#"-" #"_"
 		#"." #"_"
 		#"?" #"q"

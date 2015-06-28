@@ -27,6 +27,10 @@
 **
 ***********************************************************************/
 
+#ifdef HAS_POSIX_SIGNAL
+#include <signal.h>
+#endif
+
 // REBOL Device Identifiers:
 // Critical: Must be in same order as Device table in host-device.c
 enum {
@@ -38,6 +42,10 @@ enum {
 	RDI_NET,
 	RDI_DNS,
 	RDI_CLIPBOARD,
+	RDI_SERIAL,
+#ifdef HAS_POSIX_SIGNAL
+	RDI_SIGNAL,
+#endif
 	RDI_MAX,
 	RDI_LIMIT = 32
 };
@@ -93,6 +101,7 @@ enum {
 	RRF_PENDING,	// Request is attached to pending list
 	RRF_ALLOC,		// Request is allocated, not a temp on stack
 	RRF_WIDE,		// Wide char IO
+	RRF_ACTIVE,		// Port is active, even no new events yet
 };
 
 // REBOL Device Errors:
@@ -105,6 +114,20 @@ enum {
 
 enum {
 	RDM_NULL,		// Null device
+};
+
+// Serial Parity
+enum {
+	SERIAL_PARITY_NONE,
+	SERIAL_PARITY_ODD,
+	SERIAL_PARITY_EVEN
+};
+
+// Serial Flow Control
+enum {
+	SERIAL_FLOW_CONTROL_NONE,
+	SERIAL_FLOW_CONTROL_HARDWARE,
+	SERIAL_FLOW_CONTROL_SOFTWARE
 };
 
 #pragma pack(4)
@@ -165,6 +188,11 @@ struct rebol_devreq {
 
 	// Special fields for common IO uses:
 	union {
+#ifdef HAS_POSIX_SIGNAL
+		struct {
+			sigset_t mask; 		// signal mask
+		} signal;
+#endif
 		struct {
 			REBCHR *path;			// file string (in OS local format)
 			i64  size;				// file size
@@ -178,6 +206,16 @@ struct rebol_devreq {
 			u32  remote_port;		// remote port
 			void *host_info;		// for DNS usage
 		} net;
+		struct {
+			REBCHR *path;			//device path string (in OS local format)
+			void *prior_attr;			// termios: retain previous settings to revert on close
+			i32 baud;				// baud rate of serial port
+			u8	data_bits;			// 5, 6, 7 or 8
+			u8	parity;				// odd, even, mark or space
+			u8	stop_bits;			// 1 or 2
+			u8	flow_control;		// hardware or software
+
+		} serial;
 	};
 };
 #pragma pack()

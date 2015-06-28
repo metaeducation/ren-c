@@ -195,6 +195,7 @@ boot-host: none ; any host add-ons to the lib (binary)
 boot-mezz: none ; built-in mezz code (put here on boot)
 boot-prot: none ; built-in boot protocols
 boot-exts: none ; boot extension list
+boot-embedded: none ; embedded script
 
 export: func [
 	"Low level export of values (e.g. functions) to lib."

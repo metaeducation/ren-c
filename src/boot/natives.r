@@ -187,10 +187,12 @@ halt: native [
 ]
 
 if: native [
-	{If TRUE condition, return arg; evaluate blocks by default.}
+	{If TRUE condition, return arg; evaluate block args by default}
 	condition
 	true-branch
-	/only "Return block arg instead of evaluating it."
+	/else "If FALSE condition, return second arg; evaluate block by default"
+	false-branch
+	/only "Suppress evaluation of block args."
 ]
 
 loop: native [
@@ -272,6 +274,7 @@ remove-each: native [
 return: native [
 	{Returns a value from a function.}
 	value [any-type!]
+	/redo {Upon return, re-evaluate the returned result. (Used for DO)}
 ]
 
 switch: native [
@@ -305,10 +308,10 @@ try: native [
 ]
 
 unless: native [
-	{If FALSE condition, return arg; evaluate blocks by default.}
+	{If FALSE condition, return arg; evaluate block args by default.}
 	condition
 	false-branch
-	/only "Return block arg instead of evaluating it."
+	/only "Suppress evaluation of block args."
 ]
 
 until: native [
@@ -677,6 +680,7 @@ wait: native [
 	{Waits for a duration, port, or both.}
 	value [number! time! port! block! none!]
 	/all {Returns all in a block}
+	/only {only check for ports given in the block to this function}
 ]
 
 wake-up: native [
@@ -884,8 +888,14 @@ list-env: native [
 
 call: native [
 	{Run another program; return immediately.}
-	command [string!] "An OS-local command line, quoted as necessary"
+	command [string! block! file!] "An OS-local command line (quoted as necessary), a block with arguments, or an executable file"
 	/wait "Wait for command to terminate before returning"
+	/console "Runs command with I/O redirected to console"
+	/shell "Forces command to be run from shell"
+	/info "Returns process information object"
+	/input in [string! binary! file! none!] "Redirects stdin to in"
+	/output out [string! binary! file! none!] "Redirects stdout to out"
+	/error err [string! binary! file! none!] "Redirects stderr to err"
 ]
 
 browse: native [
@@ -925,13 +935,21 @@ stats: native [
 	/profile {Returns profiler object}
 	/timer {High resolution time difference from start}
 	/evals {Number of values evaluated by interpreter}
+	/dump-series pool-id [integer!] {Dump all series in pool pool-id, -1 for all pools}
 ]
 
 do-codec: native [
 	{Evaluate a CODEC function to encode or decode media types.}
 	handle [handle!] "Internal link to codec"
 	action [word!] "Decode, encode, identify"
-	data [binary! image!]
+	data [binary! image! string!]
+]
+
+access-os: native [
+	{Access to various operating system functions (getuid, setuid, getpid, kill, etc.)}
+	field [word!] "uid, euid, gid, egid, pid"
+	/set "To set or kill pid (sig 15)"
+	value [integer! block!] "Argument, such as uid, gid, or pid (in which case, it could be a block with the signal no)"
 ]
 
 set-scheme: native [

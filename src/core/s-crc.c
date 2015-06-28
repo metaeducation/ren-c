@@ -32,8 +32,8 @@
 #define CRC_DEFINED
 
 #define CRCBITS 24			/* may be 16, 24, or 32 */
-#define MASK_CRC(crc) ((crc) & 0x00ffffffL)	  /* if CRCBITS is 24 */
-#define CRCHIBIT ((REBCNT) (1L<<(CRCBITS-1))) /* 0x8000 if CRCBITS is 16 */
+#define MASK_CRC(crc) ((crc) & I32_C(0x00ffffff))	  /* if CRCBITS is 24 */
+#define CRCHIBIT ((REBCNT) (I32_C(1)<<(CRCBITS-1))) /* 0x8000 if CRCBITS is 16 */
 #define CRCSHIFTS (CRCBITS-8)
 #define CCITTCRC 0x1021 	/* CCITT's 16-bit CRC generator polynomial */
 #define PRZCRC   0x864cfb	/* PRZ's 24-bit CRC generator polynomial */
@@ -158,17 +158,14 @@ static REBCNT *CRC_Table;
 {
 	REBINT m, n;
 	REBINT hash;
-	REBCNT ulen;
 
 	if (len < 0) len = LEN_BYTES(str);
 
 	hash = (REBINT)len + (REBINT)((REBYTE)LO_CASE(*str));
 
-	ulen = (REBCNT)len; // so the & operation later isn't for the wrong type
-
-	for (; ulen > 0; str++, ulen--) {
+	for (; len > 0; str++, len--) {
 		n = *str;
-		if (n > 127 && NZ(m = Decode_UTF8_Char(&str, &ulen))) n = m; // mods str, ulen
+		if (n > 127 && NZ(m = Decode_UTF8_Char(&str, &len))) n = m; // mods str, len
 		if (n < UNICODE_CASES) n = LO_CASE(n);
 		n = (REBYTE)((hash >> CRCSHIFTS) ^ (REBYTE)n); // drop upper 8 bits
 		hash = MASK_CRC(hash << 8) ^ (REBINT)CRC_Table[n];
@@ -361,16 +358,16 @@ static REBCNT *CRC_Table;
 static u32 *crc32_table = 0;
 
 static void Make_CRC32_Table(void) {
-	unsigned long c;
+	u32 c;
 	int n,k;
 
 	crc32_table = Make_Mem(256 * sizeof(u32));
 
 	for(n=0;n<256;n++) {
-		c=(unsigned long)n;
+		c=(u32)n;
 		for(k=0;k<8;k++) {
 			if(c&1)
-				c=0xedb88320L^(c>>1);
+				c=U32_C(0xedb88320)^(c>>1);
 			else
 				c=c>>1;
 		}
@@ -396,7 +393,7 @@ REBCNT Update_CRC32(u32 crc, REBYTE *buf, int len) {
 /*
 ***********************************************************************/
 {
-	return Update_CRC32(0x00000000L, buf, len);
+	return Update_CRC32(U32_C(0x00000000), buf, len);
 }
 
 
