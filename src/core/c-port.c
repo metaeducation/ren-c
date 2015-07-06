@@ -442,7 +442,7 @@ xx*/	REBINT Wait_Device(REBREQ *req, REBCNT timeout)
 **		req:  I/O request
 **		name: value that holds the original user spec
 **		path: the local path to compare with
-**		
+**
 ***********************************************************************/
 {
 	REBYTE *flags;

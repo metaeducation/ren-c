@@ -156,7 +156,7 @@ emit-line: func [prefix word cmt /var /define /code /decl /up1 /local str][
 	str: to-c-name word
 
 	if word = 0 [prefix: ""]
-	
+
 	if not any [code decl] [
 		either var [uppercase/part str 1] [uppercase str]
 	]

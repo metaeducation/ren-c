@@ -272,7 +272,7 @@ void Chrom_Key_Alpha(REBVAL *v,REBCNT col,REBINT blitmode) {
 
 		w = LSBFirstOrder(cp[4],cp[5]);
 		h = LSBFirstOrder(cp[6],cp[7]);
-		// if(w * h * 4 > VAL_STR_LEN(img)) 
+		// if(w * h * 4 > VAL_STR_LEN(img))
 		//			h = 4 * VAL_STR_LEN(img) / w;
 
 		// Inititialize colormap.
@@ -285,7 +285,7 @@ void Chrom_Key_Alpha(REBVAL *v,REBCNT col,REBINT blitmode) {
 			cp += 3 * colors;
 		}
 		cp += 9;
-		
+
 		//note: animated GIFs support needs to be added!!!
 /*
 		if (image_count == 2) {

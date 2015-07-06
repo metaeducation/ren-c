@@ -88,7 +88,7 @@
 
 		// Copy and set the string result:
 		arg = OFV(port, STD_PORT_DATA);
-		
+
 		len = req->actual;
 		if (GET_FLAG(req->flags, RRF_WIDE)) {
 			len /= sizeof(REBUNI); //correct length

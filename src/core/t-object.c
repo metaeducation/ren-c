@@ -142,7 +142,7 @@ static void Append_Obj(REBSER *obj, REBVAL *arg)
 
 		i = binds[VAL_WORD_CANON(word)];
 		val = FRM_VALUE(obj, i);
-		if (GET_FLAGS(VAL_OPTS(FRM_WORD(obj, i)), OPTS_HIDE, OPTS_LOCK)) { 
+		if (GET_FLAGS(VAL_OPTS(FRM_WORD(obj, i)), OPTS_HIDE, OPTS_LOCK)) {
 			// release binding table
 			Collect_End(obj);
 			if (VAL_PROTECTED(FRM_WORD(obj, i)))

@@ -36,7 +36,7 @@ form-header: func [title [string!] file [file!] /gen by] [
 **  Date:  } now/date {
 **  File:  } file {
 **
-} by 
+} by
 {***********************************************************************/
 
 }

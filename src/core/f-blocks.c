@@ -100,7 +100,7 @@
 ***********************************************************************/
 {
 	REBSER *series;
-	
+
 	series = Make_Series(length + 1, sizeof(REBVAL), FALSE);
 	COPY_BLK_PART(series, blk, length);
 
@@ -157,7 +157,7 @@
 	series = Copy_Values(BLK_SKIP(block, index), tail - index);
 
 	if (types != 0) Copy_Deep_Values(series, 0, SERIES_TAIL(series), types);
-	
+
 	return series;
 }
 
@@ -275,7 +275,7 @@ x*/	REBSER *Copy_Block_Deep(REBSER *block, REBCNT index, REBINT len, REBCNT mode
 	REBVAL *blk = DS_Base + start;
 	REBCNT len = DSP - start + 1;
 	REBCNT type;
-	
+
 	if (into) {
 		type = VAL_TYPE(into);
 		series = VAL_SERIES(into);
@@ -368,7 +368,7 @@ x*/	REBSER *Copy_Block_Deep(REBSER *block, REBCNT index, REBINT len, REBCNT mode
 	for (bp = BLK_HEAD(blk); NOT_END(bp); bp++, index++) {
 
 		if (VAL_TYPE(bp) >= REB_BLOCK &&
-			VAL_TYPE(bp) <= REB_MAP && 
+			VAL_TYPE(bp) <= REB_MAP &&
 			VAL_BLK(bp) == VAL_BLK(val)
 		) return index+1;
 

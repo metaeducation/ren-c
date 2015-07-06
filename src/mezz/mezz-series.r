@@ -421,7 +421,7 @@ printf: func [
 split: func [
 	"Split a series into pieces; fixed or variable size, fixed number, or at delimiters"
 	series	[series!] "The series to split"
-	dlm		[block! integer! char! bitset! any-string!] "Split size, delimiter(s), or rule(s)." 
+	dlm		[block! integer! char! bitset! any-string!] "Split size, delimiter(s), or rule(s)."
 	/into	"If dlm is an integer, split into n pieces, rather than pieces of length n."
 	/local size piece-size count mk1 mk2 res fill-val add-fill-val
 ][
@@ -480,7 +480,7 @@ split: func [
 				; implied empty field after it, which we add here.
 				case [
 					bitset? dlm [
-						; ATTEMPT is here because LAST will return NONE for an 
+						; ATTEMPT is here because LAST will return NONE for an
 						; empty series, and finding none in a bitest is not allowed.
 						if attempt [find dlm last series] [add-fill-val]
 					]
@@ -496,7 +496,7 @@ split: func [
 				]
 			]
 		]
-				
+
 		res
 	]
 ]

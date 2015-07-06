@@ -90,7 +90,7 @@ static REBFLG find_in_uni(REBUNI *up, REBINT len, REBUNI c)
 		}
 	}
 
-	SET_ANY_CHAR(ser, n, 0);	
+	SET_ANY_CHAR(ser, n, 0);
 	SERIES_TAIL(ser) = n;
 }
 
@@ -189,7 +189,7 @@ static REBFLG find_in_uni(REBUNI *up, REBINT len, REBUNI c)
 	// Remove extra end pad if found:
 	if (pad == 2) out--;
 
-	SET_ANY_CHAR(ser, out, 0);	
+	SET_ANY_CHAR(ser, out, 0);
 	SERIES_TAIL(ser) = out;
 }
 

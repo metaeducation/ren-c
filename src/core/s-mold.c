@@ -1242,7 +1242,7 @@ STOID Mold_Error(REBVAL *value, REB_MOLD *mold, REBFLG molded)
 	}
 		break;
 
-	
+
 	case REB_EVENT:
 		Mold_Event(value, mold);
 		break;

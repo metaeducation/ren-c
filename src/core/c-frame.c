@@ -566,7 +566,7 @@
 {
 	REBVAL *word  = BLK_HEAD(VAL_OBJ_WORDS(value));
 
-	for (; NOT_END(word); word++) 
+	for (; NOT_END(word); word++)
 		if (VAL_GET_OPT(word, OPTS_HIDE)) Trap0(RE_HIDDEN);
 }
 
@@ -667,7 +667,7 @@
 	Rebind_Block(parent1, child, BLK_SKIP(child, 1), REBIND_FUNC);
 	Rebind_Block(parent2, child, BLK_SKIP(child, 1), REBIND_FUNC | REBIND_TABLE);
 
-	// release the bind table 
+	// release the bind table
 	Collect_End(child);
 
 	return child;

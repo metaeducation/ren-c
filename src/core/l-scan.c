@@ -424,7 +424,7 @@
 
 		case 0:
 			return 0; // Scan_state shows error location.
-        
+
 		case '^':
 			chr = Scan_Char(&src);
 			if (chr == -1) return 0;
@@ -846,7 +846,7 @@
 			goto scanword;
 
 		case LEX_SPECIAL_GREATER:
-			if (IS_LEX_DELIMIT(cp[1])) return TOKEN_WORD;	// RAMBO 3903 
+			if (IS_LEX_DELIMIT(cp[1])) return TOKEN_WORD;	// RAMBO 3903
 			if (cp[1] == '>') {
 				if (IS_LEX_DELIMIT(cp[2])) return TOKEN_WORD;
 				return -TOKEN_WORD;
@@ -904,7 +904,7 @@
 			}
 			if (*cp == '"') { /* CHAR #"C" */
 				cp++;
-				type = Scan_Char(&cp); 
+				type = Scan_Char(&cp);
 				if (type >= 0 && *cp == '"') {
 					scan_state->end = cp+1;
 					return TOKEN_CHAR;
@@ -1177,7 +1177,7 @@ extern REBSER *Scan_Full_Block(SCAN_STATE *scan_state, REBYTE mode_char);
 	REBOOL just_once = GET_FLAG(scan_state->opts, SCAN_NEXT);
 
 	CHECK_STACK(&token);
-	
+
 	if (just_once)
 		CLR_FLAG(scan_state->opts, SCAN_NEXT); // no deeper
 

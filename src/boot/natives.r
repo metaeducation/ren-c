@@ -807,7 +807,7 @@ log-2: native [
 ]
 
 log-e: native [
-	{Returns the natural (base-E) logarithm of the given value} 
+	{Returns the natural (base-E) logarithm of the given value}
 	value [number!]
 ]
 
@@ -877,8 +877,8 @@ get-env: native [
 ]
 
 set-env: native [
-	{Sets the value of an operating system environment variable (for current process).} 
-	var [any-string! any-word!] "Variable to set" 
+	{Sets the value of an operating system environment variable (for current process).}
+	var [any-string! any-word!] "Variable to set"
 	value [string!  none!] "Value to set, or NONE to unset it"
 ]
 

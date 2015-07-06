@@ -80,7 +80,7 @@ func-header: [
 			copy line thru newline
 		]
 		thru "*/"
-		| 
+		|
 		none
 	]
 ]
@@ -168,7 +168,7 @@ make-arg-enums: func [word] [
 	]
 	remove back tail output
 	append output ")^/^/"
-	
+
 	;?? output halt
 ]
 

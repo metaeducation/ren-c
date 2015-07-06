@@ -117,7 +117,7 @@ func-header: [
 				copy line thru newline
 			]
 			thru "*/"
-			| 
+			|
 			none
 		]
 	]
@@ -185,7 +185,7 @@ REBOL_HOST_LIB Host_Lib_Init = ^{  // Host library function vector table.
 dlib
 {^};
 
-#endif //OS_LIB_TABLE 
+#endif //OS_LIB_TABLE
 
 #else //REB_DEF
 

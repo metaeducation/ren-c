@@ -349,7 +349,7 @@ INLINE REBCNT ARGB_To_BGR(REBCNT i)
 	REBCNT size;
 	REBCNT *data;
 	REBYTE* pixel;
-	
+
 	Emit(mold, "IxI #{", VAL_IMAGE_WIDE(value), VAL_IMAGE_HIGH(value));
 
 	// Output RGB image:
@@ -414,7 +414,7 @@ INLINE REBCNT ARGB_To_BGR(REBCNT i)
 		if (error) Trap1(RE_SIZE_LIMIT, Get_Type(REB_IMAGE));
 		else return 0;
 	}
-	
+
 	img = Make_Series(w * h + 1, sizeof(u32), FALSE);
 	LABEL_SERIES(img, "make image");
 	img->tail = w * h;

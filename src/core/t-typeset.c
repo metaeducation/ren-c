@@ -76,7 +76,7 @@
 {
 	REBVAL *value;
 	REBINT n;
-	
+
 	Set_Root_Series(ROOT_TYPESETS, Make_Block(40), "typeset presets");
 
 	for (n = 0; Typesets[n]; n += 2) {

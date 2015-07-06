@@ -102,7 +102,7 @@ utc
 parse
 |	 ; must be first
 ; prep words:
-set  
+set
 copy
 some
 any
@@ -244,7 +244,7 @@ owner
 active
 minimize
 maximize
-restore 
+restore
 fullscreen
 
 *port-modes*

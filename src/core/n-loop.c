@@ -102,7 +102,7 @@
 	REBCNT type = VAL_TYPE(start);
 
 	*var = *start;
-	
+
 	if (ei >= (REBINT)VAL_TAIL(start)) ei = (REBINT)VAL_TAIL(start);
 	if (ei < 0) ei = 0;
 
@@ -125,14 +125,14 @@
 	REBVAL *result;
 
 	VAL_SET(var, REB_INTEGER);
-	
+
 	while ((incr > 0) ? start <= end : start >= end) {
 		VAL_INT64(var) = start;
 		result = Do_Blk(body, 0);
 		if (THROWN(result) && Check_Error(result) >= 0) break;
 		if (!IS_INTEGER(var)) Trap_Type(var);
 		start = VAL_INT64(var);
-		
+
 		if (REB_I64_ADD_OF(start, incr, &start)) {
 			Trap0(RE_OVERFLOW);
 		}
@@ -489,7 +489,7 @@ skip_hidden: ;
 	// values must not be absolute.
 
 	if (IS_INTEGER(start) && IS_INTEGER(end) && IS_INTEGER(incr)) {
-		Loop_Integer(var, body, VAL_INT64(start), 
+		Loop_Integer(var, body, VAL_INT64(start),
 			IS_DECIMAL(end) ? (REBI64)VAL_DECIMAL(end) : VAL_INT64(end), VAL_INT64(incr));
 	}
 	else if (ANY_SERIES(start)) {

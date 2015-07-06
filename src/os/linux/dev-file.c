@@ -360,7 +360,7 @@ fail:
 	}
 
 	// printf("read %d len %d\n", file->id, file->length);
-	
+
 	bytes = read(file->id, file->data, file->length);
 	if (bytes < 0) {
 		file->error = -RFE_BAD_READ;

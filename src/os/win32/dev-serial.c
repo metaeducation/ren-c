@@ -142,12 +142,12 @@ static REBINT Set_Serial_Settings(HANDLE h, REBREQ *req)
 		return DR_ERROR;
 	}
 
-	
+
 	// See: http://msdn.microsoft.com/en-us/library/windows/desktop/aa363190%28v=vs.85%29.aspx
 	timeouts.ReadIntervalTimeout = MAXDWORD;
 	timeouts.ReadTotalTimeoutMultiplier = 0;
 	timeouts.ReadTotalTimeoutConstant = 0;
-	timeouts.WriteTotalTimeoutMultiplier = 1;   // These two write lines may need to be set to 0.  
+	timeouts.WriteTotalTimeoutMultiplier = 1;   // These two write lines may need to be set to 0.
 	timeouts.WriteTotalTimeoutConstant = 1;
 	if (!SetCommTimeouts(h, &timeouts)) {
 		CloseHandle(h);

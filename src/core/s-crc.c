@@ -407,7 +407,7 @@ protected:
       void Init_CRC32_Table();  // Builds lookup table array
       ULONG Reflect(ULONG ref, char ch);  // Reflects CRC bits in the lookup table
       int Get_CRC(CString& text);  // Creates a CRC from a text string
- 
+
 
 Source File
 // CRCdemo.cpp
@@ -502,11 +502,11 @@ int CRCdemo::Get_CRC(char* text)
             ulCRC = (ulCRC >> 8) ^ crc32_table[(ulCRC & 0xFF) ^ *buffer++];
       // Exclusive OR the result with the beginning value.
       return ulCRC ^ 0xffffffff;
-} 
+}
 
 //----------------
 
-/* 
+/*
  * crc32.c
  * This code is in the public domain; copyright abandoned.
  * Liability for non-performance of this code is limited to the amount
@@ -556,7 +556,7 @@ int CRCdemo::Get_CRC(char* text)
  *        other uses, or the previous crc32 value if computing incrementally.
  * @p   - pointer to buffer over which CRC is run
  * @len - length of buffer @p
- * 
+ *
  */
 uint32_t attribute((pure)) crc32_le(uint32_t crc, unsigned char const *p, size_t len)
 {
@@ -614,7 +614,7 @@ crc32cleanup_le(void)
  *        other uses, or the previous crc32 value if computing incrementally.
  * @p   - pointer to buffer over which CRC is run
  * @len - length of buffer @p
- * 
+ *
  */
 uint32_t attribute((pure)) crc32_le(uint32_t crc, unsigned char const *p, size_t len)
 {
@@ -659,7 +659,7 @@ uint32_t attribute((pure)) crc32_le(uint32_t crc, unsigned char const *p, size_t
  *        other uses, or the previous crc32 value if computing incrementally.
  * @p   - pointer to buffer over which CRC is run
  * @len - length of buffer @p
- * 
+ *
  */
 uint32_t attribute((pure)) crc32_be(uint32_t crc, unsigned char const *p, size_t len)
 {
@@ -717,7 +717,7 @@ crc32cleanup_be(void)
  *        other uses, or the previous crc32 value if computing incrementally.
  * @p   - pointer to buffer over which CRC is run
  * @len - length of buffer @p
- * 
+ *
  */
 uint32_t attribute((pure)) crc32_be(uint32_t crc, unsigned char const *p, size_t len)
 {
@@ -848,7 +848,7 @@ uint32_t attribute((pure)) crc32_be(uint32_t crc, unsigned char const *p, size_t
  * in the correct multiple to subtract, we can shift a byte at a time.
  * This produces a 40-bit (rather than a 33-bit) intermediate remainder,
  * but again the multiple of the polynomial to subtract depends only on
- * the high bits, the high 8 bits in this case.  
+ * the high bits, the high 8 bits in this case.
  *
  * The multile we need in that case is the low 32 bits of a 40-bit
  * value whose high 8 bits are given, and which is a multiple of the
@@ -870,7 +870,7 @@ uint32_t attribute((pure)) crc32_be(uint32_t crc, unsigned char const *p, size_t
 
 /**
  * init_crc32(): generates CRC32 tables
- * 
+ *
  * On successful initialization, use count is increased.
  * This guarantees that the library functions will stay resident
  * in memory, and prevents someone from 'rmmod crc32' while

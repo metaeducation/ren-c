@@ -12,7 +12,7 @@ Credits for Non-REBOL orginated C files and modules
 Unicode encoding/decoding functions:
 Copyright 2001-2004 Unicode, Inc.
 
-MD5: 
+MD5:
 This software contains code derived from the RSA Data Security
 Inc. MD5 Message-Digest Algorithm, including various
 modifications by Spyglass Inc., Carnegie Mellon University, and

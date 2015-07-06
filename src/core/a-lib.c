@@ -292,7 +292,7 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 ***********************************************************************/
 {
 	REBVAL *val;
-	
+
 	val = Do_String(text, 0);
 
 	if (result) {
@@ -534,7 +534,7 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 **		Returns 1 if updated, or 0 if event appended, and -1 if full.
 **	Arguments:
 **		evt - A properly initialized event structure. The
-**			 model and type of the event are used to address 
+**			 model and type of the event are used to address
 **           the unhandled event in the queue, when it is found,
 **           it will be replaced with this one
 **
@@ -547,7 +547,7 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 		event->data.event = *evt;
 		return 1;
 	}
-	
+
 	return RL_Event(evt) - 1;
 }
 

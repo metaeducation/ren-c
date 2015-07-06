@@ -37,7 +37,7 @@
 ***********************************************************************/
 {
 	REBINT num;
-	
+
 	if (mode >= 0) {
 		if (mode < 2)
 			num = LO_CASE(VAL_CHAR(a)) - LO_CASE(VAL_CHAR(b));
@@ -127,7 +127,7 @@
 			if (arg > MAX_UNI || arg < 0) goto bad_make;
 			chr = arg;
 			break;
-	
+
 		case REB_BINARY:
 		{
 			REBYTE *bp = VAL_BIN(val);
@@ -162,12 +162,12 @@ bad_make:
 		Trap_Make(REB_CHAR, val);
 	}
 		break;
-		
+
 	default:
 		Trap_Action(REB_CHAR, action);
 	}
 
-	if ((chr >> 16) != 0 && (chr >> 16) != 0xffff) Trap1(RE_TYPE_LIMIT, Get_Type(REB_CHAR)); 
+	if ((chr >> 16) != 0 && (chr >> 16) != 0xffff) Trap1(RE_TYPE_LIMIT, Get_Type(REB_CHAR));
 	SET_CHAR(DS_RETURN, chr);
 	return R_RET;
 

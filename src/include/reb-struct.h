@@ -63,7 +63,7 @@ struct Struct_Field {
 };
 
 /* this is hackish to work around the size limit of REBSTU
- *	VAL_STRUCT_DATA(val) is not the actual data, but a series with 
+ *	VAL_STRUCT_DATA(val) is not the actual data, but a series with
  *	one Struct_Data element, and this element has various infomation
  *	about the struct data
  * */

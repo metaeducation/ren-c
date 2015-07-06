@@ -404,7 +404,7 @@ void OS_Destroy_Graphics(void);
 {
 	//OS_Call_Device(RDI_STDIO, RDC_CLOSE); // close echo
 	OS_Quit_Devices(0);
-#ifndef REB_CORE	
+#ifndef REB_CORE
 	OS_Destroy_Graphics();
 #endif
 	exit(code);
@@ -976,7 +976,7 @@ error:
 			close(fd);
 		} else { /* inherit stdin from the parent */
 		}
-		
+
 		if (output_type == STRING_TYPE
 			|| output_type == BINARY_TYPE) {
 			close(stdout_pipe[R]);
@@ -1317,7 +1317,7 @@ stdin_pipe_err:
 **
 */	int OS_Reap_Process(int pid, int *status, int flags)
 /*
- * pid: 
+ * pid:
  * 		> 0, a signle process
  * 		-1, any child process
  * flags:
@@ -1452,7 +1452,7 @@ static int Try_Browser(char *browser, REBCHR *url)
 		*string = str;
 		return FALSE;
 	}
-	
+
 	//empty string check
 	if (len == 0) { /* shortcut */
 		*string = (REBCHR*)OS_Make(1);
@@ -1521,7 +1521,7 @@ static int Try_Browser(char *browser, REBCHR *url)
 		ret = NULL;
 		goto header_failed;
 	}
-	
+
 	if (fseek(script, sec_headers[file_header.e_shstrndx].sh_offset, SEEK_SET) < 0) {
 		ret = NULL;
 		goto shstr_failed;

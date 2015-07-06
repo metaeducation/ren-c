@@ -274,7 +274,7 @@ to-def: join "TO_" uppercase copy os-name
 
 ; Collect OS-specific host files:
 unless os-specific-objs: select fb to word! join "os-" os-base [
-	do make error! rejoin [ 
+	do make error! rejoin [
 		"make-make.r requires os-specific obj list in file-base.r"
 		space "none was provided for os-" os-base
 	]

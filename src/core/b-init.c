@@ -445,7 +445,7 @@ extern const REBYTE Str_Banner[];
 	REBVAL *obj;
 	REBINT n;
 
-	Insert_Series(FRM_WORD_SERIES(frm), 1, (REBYTE*)FRM_WORD(Lib_Context, Action_Marker+1), A_MAX_ACTION); 
+	Insert_Series(FRM_WORD_SERIES(frm), 1, (REBYTE*)FRM_WORD(Lib_Context, Action_Marker+1), A_MAX_ACTION);
 
 	SERIES_TAIL(frm) = A_MAX_ACTION;
 	for (n = 1; n < A_MAX_ACTION; n++)
@@ -886,7 +886,7 @@ static REBCNT Set_Option_Word(REBCHR *str, REBCNT field)
 	val = Get_System(SYS_CATALOG, CAT_BOOT_FLAGS);
 	for (val = VAL_BLK(val); NOT_END(val); val++) {
 		VAL_CLR_LINE(val);
-		if (rargs->options & n) Append_Val(ser, val); 
+		if (rargs->options & n) Append_Val(ser, val);
 		n <<= 1;
 	}
 	val = Append_Value(ser);

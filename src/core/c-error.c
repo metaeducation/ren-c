@@ -286,7 +286,7 @@ static REBOL_STATE Top_State; // Boot var: holds error state during boot
 		Set_Word(&error->type, FRM_WORD_SYM(cats, n), cats, n);
 
 		// Find word related to the error itself:
-		
+
 		n = code % 100 + 3;
 		if (n < SERIES_TAIL(cat))
 			Set_Word(&error->id, FRM_WORD_SYM(cat, n), cat, n);
@@ -830,7 +830,7 @@ error:
 ***********************************************************************/
 {
 	REBYTE *flags;
-	
+
 	flags = Security_Policy(sym, value);
 	Trap_Security(flags[policy], sym, value);
 }

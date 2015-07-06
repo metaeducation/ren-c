@@ -124,7 +124,7 @@ write-c-file: func [
 	print ["writing" c-file]
 	write c-file to-binary out
 ;	write h-file to-binary reform [
-;		form-header "Host custom init header" second split-path h-file newline  
+;		form-header "Host custom init header" second split-path h-file newline
 ;		"#define REB_INIT_SIZE" comp-size newline
 ;		"extern REBYTE Reb_Init_Code[REB_INIT_SIZE];" newline
 ;	]

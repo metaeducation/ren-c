@@ -11,7 +11,7 @@ REBOL [
 	}
 	Purpose: {
 		Defines the system object. This is a special block that is evaluted
-		such that its words do not get put into the current context. 
+		such that its words do not get put into the current context.
 	}
 	Note: "Remove older/unused fields before beta release"
 ]
@@ -160,11 +160,11 @@ standard: context [
 		where:
 			none
 	]
- 
+
 	script: context [
 		title:
 		header:
-		parent: 
+		parent:
 		path:
 		args:
 			none
@@ -236,7 +236,7 @@ standard: context [
 	port-spec-signal: make port-spec-head [
 		mask: [all]
 	]
-	
+
 	file-info: context [
 		name:
 		size:
@@ -324,7 +324,7 @@ view: context [
 		resize
 		rotate
 		active
-		inactive 
+		inactive
 		minimize
 		maximize
 		restore
@@ -332,10 +332,10 @@ view: context [
 		move
 		down
 		up
-		alt-down 
-		alt-up 
-		aux-down 
-		aux-up 
+		alt-down
+		alt-up
+		aux-down
+		aux-up
 		key
 		key-up ; Move above when version changes!!!
 

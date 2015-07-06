@@ -307,7 +307,7 @@ static void *Task_Ready;
 {
 	if (envval) {
 #ifdef setenv
-		// we pass 1 for overwrite (make call to OS_Get_Env if you 
+		// we pass 1 for overwrite (make call to OS_Get_Env if you
 		// want to check if already exists)
 
 		if (setenv(envname, envval, 1) == -1)
@@ -322,12 +322,12 @@ static void *Task_Ready;
 
 		// once you have passed a string to it you never know when that
 		// string will no longer be needed.  Thus it may either not be
-		// dynamic or you must leak it, or track a local copy of the 
+		// dynamic or you must leak it, or track a local copy of the
 		// environment yourself.
 
 		// If you're stuck without setenv on some old platform, but
 		// really need to set an environment variable, here's a way
-		// that just leaks a string each time you call.  
+		// that just leaks a string each time you call.
 
 		char* expr = MAKE_STR(LEN_STR(envname) + 1 + LEN_STR(envval) + 1);
 
@@ -352,7 +352,7 @@ static void *Task_Ready;
 	// nothing on NetBSD for instance.  But not all
 	// other systems have unsetenv...
 	//
-	// http://julipedia.meroh.net/2004/10/portability-unsetenvfoo-vs-putenvfoo.html 
+	// http://julipedia.meroh.net/2004/10/portability-unsetenvfoo-vs-putenvfoo.html
 
 	// going to hope this case doesn't hold onto the string...
 	if (putenv((char*)envname) == -1)

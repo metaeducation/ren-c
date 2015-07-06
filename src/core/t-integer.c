@@ -155,7 +155,7 @@
 
 	case A_COMPLEMENT: num = ~num; break;
 
-	case A_ABSOLUTE: 
+	case A_ABSOLUTE:
 		if (num == MIN_I64) Trap0(RE_OVERFLOW);
 		if (num < 0) num = -num;
 		break;

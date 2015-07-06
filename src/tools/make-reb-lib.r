@@ -157,7 +157,7 @@ func-header: [
 				copy line thru newline
 			]
 			thru "*/"
-			| 
+			|
 			none
 		]
 	]

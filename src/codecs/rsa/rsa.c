@@ -218,7 +218,7 @@ int RSA_decrypt(const RSA_CTX *ctx, const uint8_t *in_data,
 	if (padding)
 	{
 		i = 0;
-	} 
+	}
 	else
 	{
 
@@ -311,11 +311,11 @@ int RSA_encrypt(const RSA_CTX *ctx, const uint8_t *in_data, uint16_t in_len,
 		int num_pads_needed = byte_size-in_len-3;
 
 		//input won't fit pkcs output
-		if (num_pads_needed < 0) return -1;	
-		
+		if (num_pads_needed < 0) return -1;
+
 		/* note: in_len+11 must be > byte_size */
 		out_data[0] = 0;     /* ensure encryption block is < modulus */
-		
+
 		if (is_signing)
 		{
 			out_data[1] = 1;        /* PKCS1.5 signing pads with "0xff"'s */
@@ -326,7 +326,7 @@ int RSA_encrypt(const RSA_CTX *ctx, const uint8_t *in_data, uint16_t in_len,
 			out_data[1] = 2;
 			get_random_NZ(num_pads_needed, &out_data[2]);
 		}
-		
+
 		out_data[2+num_pads_needed] = 0;
 		memcpy(&out_data[3+num_pads_needed], in_data, in_len);
 	}

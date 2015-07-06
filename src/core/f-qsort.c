@@ -106,7 +106,7 @@ static __inline__ char *
 med3(char *a, char *b, char *c, cmp_t *cmp, void *thunk
 #ifndef I_AM_QSORT_R
 
-/* commented out by L.M. 
+/* commented out by L.M.
 __unused
 */
 
@@ -136,7 +136,7 @@ loop:	SWAPINIT(a, es);
 	swap_cnt = 0;
 	if (n < 7) {
 		for (pm = (char *)a + es; pm < (char *)a + n * es; pm += es)
-			for (pl = pm; 
+			for (pl = pm;
 			     pl > (char *)a && CMP(thunk, pl - es, pl) > 0;
 			     pl -= es)
 				swap(pl, pl - es);
@@ -184,7 +184,7 @@ loop:	SWAPINIT(a, es);
 	}
 	if (swap_cnt == 0) {  /* Switch to insertion sort */
 		for (pm = (char *)a + es; pm < (char *)a + n * es; pm += es)
-			for (pl = pm; 
+			for (pl = pm;
 			     pl > (char *)a && CMP(thunk, pl - es, pl) > 0;
 			     pl -= es)
 				swap(pl, pl - es);

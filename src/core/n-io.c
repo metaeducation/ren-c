@@ -920,7 +920,7 @@ chk_neg:
 	REBINT n;
 
 	fr.files = OS_MAKE(MAX_FILE_REQ_BUF);
-	fr.len = MAX_FILE_REQ_BUF/sizeof(REBCHR) - 2;  
+	fr.len = MAX_FILE_REQ_BUF/sizeof(REBCHR) - 2;
 	fr.files[0] = 0;
 
 	DISABLE_GC;
@@ -1011,7 +1011,7 @@ chk_neg:
 
 	if (ANY_WORD(arg1)) Set_String(arg1, Copy_Form_Value(arg1, 0));
 	cmd = Val_Str_To_OS(arg1);
-	
+
 	if (ANY_STR(arg2)) {
 		REBCHR *value = Val_Str_To_OS(arg2);
 		success = OS_SET_ENV(cmd, value);

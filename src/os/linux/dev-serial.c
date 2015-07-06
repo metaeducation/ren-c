@@ -50,7 +50,7 @@
 
 #define MAX_SERIAL_PATH 128
 
-/* BXXX constants are defined in termios.h */ 
+/* BXXX constants are defined in termios.h */
 const int speeds[] = {
 	50, B50,
 	75, B75,
@@ -177,7 +177,7 @@ static REBINT Set_Serial_Settings(int ttyfd, REBREQ *req)
 
 	// I-flags - input modes:
 	attr.c_iflag |= IGNPAR;
-	
+
 	// O-flags - output modes:
 	attr.c_oflag = 0;
 
@@ -235,7 +235,7 @@ static REBINT Set_Serial_Settings(int ttyfd, REBREQ *req)
 		close(h);
 		req->error = -RFE_OPEN_FAIL;
 		return DR_ERROR;
-	}		
+	}
 
 	req->id = h;
 	return DR_DONE;

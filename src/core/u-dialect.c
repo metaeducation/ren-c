@@ -151,7 +151,7 @@ static char *Dia_Fmt = "DELECT - cmd: %s length: %d missed: %d total: %d";
 		DS_SKIP; // do not overwrite TOS
 		break;
 	}
-	
+
 	return value;
 }
 
@@ -185,7 +185,7 @@ static char *Dia_Fmt = "DELECT - cmd: %s length: %d missed: %d total: %d";
 	for (fargi = dia->fargi;; fargi++) {
 
 		//Debug_Fmt("Add_Arg fargi: %d outi: %d", fargi, outi);
-		
+
 		if (IS_END(fargs = BLK_SKIP(dia->fargs, fargi))) return 0;
 
 again:
@@ -235,7 +235,7 @@ again:
 			outp = Append_Value(dia->out);
 		else if (!IS_NONE(outp)) {
 			// There's already an arg in this slot, so skip it...
-			if (dia->cmd > 1) outp++;	
+			if (dia->cmd > 1) outp++;
 			if (!rept) continue; // see if there's another farg that will work for it
 			// Look for first empty slot:
 			while (NOT_END(outp) && !IS_NONE(outp)) outp++;
@@ -460,7 +460,7 @@ again:
 	dia.dialect = dialect;
 	dia.args = block;
 	dia.argi = *index;
-	dia.out  = *out;	
+	dia.out  = *out;
 	SET_FLAG(dia.flags, RDIA_NO_CMD);
 
 	//Print("DSP: %d Dinp: %r - %m", DSP, BLK_SKIP(block, *index), block);
@@ -498,7 +498,7 @@ again:
 	dia.dialect = VAL_OBJ_FRAME(D_ARG(1));
 	dia.args = VAL_SERIES(D_ARG(2));
 	dia.argi = VAL_INDEX(D_ARG(2));
-	dia.out = VAL_SERIES(D_ARG(3));	
+	dia.out = VAL_SERIES(D_ARG(3));
 	dia.outi = VAL_INDEX(D_ARG(3));
 
 	if (dia.argi >= SERIES_TAIL(dia.args)) return R_NONE; // end of block
