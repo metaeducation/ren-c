@@ -103,7 +103,7 @@ pick:
 				Trap_Port(RE_READ_ERROR, port, sock->error);
 			}
 			if (GET_FLAG(sock->modes, RST_REVERSE)) {
-				Set_String(D_RET, Copy_Bytes(sock->data, LEN_BYTES(sock->data)));
+				Set_String(D_RET, Copy_Bytes(sock->data, strlen(sock->data)));
 			} else {
 				Set_Tuple(D_RET, (REBYTE*)&sock->net.remote_ip, 4);
 			}

@@ -1378,7 +1378,7 @@
 ***********************************************************************/
 {
 	ASSERT(frame, RP_BAD_SET_CONTEXT);
-	CLEARS(value);
+	memset(value, NUL, sizeof(*value));
 	SET_OBJECT(value, frame);
 }
 

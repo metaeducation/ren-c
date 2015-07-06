@@ -851,11 +851,11 @@ mark_obj:
 	GC_Disabled = 0;		// GC disabled counter for critical sections.
 	GC_Ballast = MEM_BALLAST;
 	GC_Last_Infant = 0;		// Keep the last N series safe from GC.
-	GC_Infants = Make_Mem((MAX_SAFE_SERIES + 2) * sizeof(REBSER*)); // extra
+	GC_Infants = Alloc_Mem((MAX_SAFE_SERIES + 2) * sizeof(REBSER*)); // extra
 
 	Init_Pools(scale);
 
-	Prior_Expand = Make_Mem(MAX_EXPAND_LIST * sizeof(REBSER*));
+	Prior_Expand = Alloc_Mem(MAX_EXPAND_LIST * sizeof(REBSER*));
 	Prior_Expand[0] = (REBSER*)1;
 
 	// Temporary series protected from GC. Holds series pointers.

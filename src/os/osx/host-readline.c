@@ -74,7 +74,7 @@ enum {
 #define MAX_HISTORY  300	// number of lines stored
 
 // Macros: (does not use reb-c.h)
-#define MAKE_STR(l) (char*)malloc(l)
+#define MAKE_OS_STR(l) (char*)malloc(l)
 #define WRITE_CHAR(s)    write(1, s, 1)
 #define WRITE_CHARS(s,l) write(1, s, l)
 #define WRITE_STR(s)     write(1, s, strlen(s))
@@ -141,9 +141,9 @@ static struct termios Term_Attrs;	// Initial settings, restored on exit
 
 	term = malloc(sizeof(*term));
 	memset(term, 0, sizeof(*term));
-	term->buffer = MAKE_STR(TERM_BUF_LEN);
+	term->buffer = MAKE_OS_STR(TERM_BUF_LEN);
 	term->buffer[0] = 0;
-	term->residue = MAKE_STR(TERM_BUF_LEN);
+	term->residue = MAKE_OS_STR(TERM_BUF_LEN);
 	term->residue[0] = 0;
 
 	Term_Init = TRUE;
@@ -204,7 +204,7 @@ static struct termios Term_Attrs;	// Initial settings, restored on exit
 ***********************************************************************/
 {
 	term->buffer[term->end] = 0;
-	term->out = MAKE_STR(term->end + 1);
+	term->out = MAKE_OS_STR(term->end + 1);
 	strcpy(term->out, term->buffer);
 
 	// If max history, drop older lines (but not [0] empty line):

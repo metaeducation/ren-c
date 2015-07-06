@@ -133,7 +133,7 @@ extern HWND Event_Handle;
 		he = gethostbyname(sock->data);
 		if (he) {
 			sock->net.host_info = host; // ?? who deallocs?
-			COPY_MEM((char*)&(sock->net.remote_ip), (char *)(*he->h_addr_list), 4); //he->h_length);
+			memcpy((char*)&(sock->net.remote_ip), (char *)(*he->h_addr_list), 4); //he->h_length);
 			SET_FLAG(sock->flags, RRF_DONE);
 			return DR_DONE;
 		}
@@ -180,7 +180,7 @@ extern HWND Event_Handle;
 				if (GET_FLAG(req->modes, RST_REVERSE))
 					req->data = host->h_name;
 				else
-					COPY_MEM((char*)&(req->net.remote_ip), (char *)(*host->h_addr_list), 4); //he->h_length);
+					memcpy((char*)&(req->net.remote_ip), (char *)(*host->h_addr_list), 4); //he->h_length);
 				Signal_Device(req, EVT_READ);
 			}
 			else

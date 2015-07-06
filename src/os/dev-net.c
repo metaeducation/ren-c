@@ -162,7 +162,7 @@ static REBOOL Nonblocking_Mode(SOCKET sock)
 
 	if (!(he = gethostbyname(hostname))) return DR_DONE;
 
-	COPY_MEM(hostaddr, (char *)(*he->h_addr_list), he->h_length);
+	memcpy(hostaddr, (char *)(*he->h_addr_list), he->h_length);
 
 	return he->h_length;
 }
@@ -288,7 +288,7 @@ static REBOOL Nonblocking_Mode(SOCKET sock)
 		CLR_FLAG(sock->flags, RRF_DONE);
 		if (!sock->error) { // Success!
 			host = (HOSTENT*)sock->net.host_info;
-			COPY_MEM((char*)&(sock->net.remote_ip), (char *)(*host->h_addr_list), 4); //he->h_length);
+			memcpy((char*)&(sock->net.remote_ip), (char *)(*host->h_addr_list), 4); //he->h_length);
 			Signal_Device(sock, EVT_LOOKUP);
 		}
 		else
@@ -315,7 +315,7 @@ static REBOOL Nonblocking_Mode(SOCKET sock)
 	sock->net.host_info = 0; // no allocated data
 
 	if (host) {
-		COPY_MEM((char*)&(sock->net.remote_ip), (char *)(*host->h_addr_list), 4); //he->h_length);
+		memcpy((char*)&(sock->net.remote_ip), (char *)(*host->h_addr_list), 4); //he->h_length);
 		CLR_FLAG(sock->flags, RRF_DONE);
 		Signal_Device(sock, EVT_LOOKUP);
 		return DR_DONE;
@@ -589,8 +589,8 @@ lserr:
 	// request and copies the listen request to it. Then, it stores
 	// the new values for IP and ports and links this request to the
 	// original via the sock->data.
-	news = MAKE_NEW(*news);	// Be sure to deallocate it
-	CLEARS(news);
+	news = OS_Make(sizeof(REBREQ));
+	memset(news, NUL, sizeof(*news));
 //	*news = *sock;
 	news->device = sock->device;
 

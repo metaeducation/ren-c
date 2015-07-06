@@ -144,7 +144,7 @@ void OS_Destroy_Graphics(void);
 {
 	struct tm *time;
 
-	CLEARS(dat);
+	memset(dat, NUL, sizeof(*dat));
 
 	time = gmtime(stime);
 
@@ -508,14 +508,14 @@ static const void * backtrace_buf [1024];
 			}
 			lang = OS_Make(i + 1);
 			if (lang == NULL) goto error;
-			COPY_STR(lang, lang_env, i);
+			COPY_OS_STR(lang, lang_env, i);
 			lang[i] = '\0';
 			j = i;
 		} else if (lang_env[i] == '.'){
 			if (i == j) goto error;
 			territory = OS_Make(i - j);
 			if (territory == NULL) goto error;
-			COPY_STR(territory, lang_env + j + 1, i - j - 1);
+			COPY_OS_STR(territory, lang_env + j + 1, i - j - 1);
 			territory[i - j - 1] = '\0';
 			break;
 		}
@@ -565,14 +565,14 @@ error:
 	const REBCHR* value = getenv(envname);
 	if (value == 0) return 0;
 
-	len = LEN_STR(value);
+	len = strlen(value);
 	if (len == 0) return -1; // shouldn't have saved an empty env string
 
 	if (len + 1 > valsize) {
 		return len + 1;
 	}
 
-	COPY_STR(envval, value, len);
+	COPY_OS_STR(envval, value, len);
 	return len;
 }
 
@@ -610,7 +610,7 @@ error:
 		// really need to set an environment variable, here's a way
 		// that just leaks a string each time you call.
 
-		char* expr = MAKE_STR(LEN_STR(envname) + 1 + LEN_STR(envval) + 1);
+		char* expr = MAKE_OS_STR(strlen(envname) + 1 + strlen(envval) + 1);
 
 		strcpy(expr, envname);
 		strcat(expr, "=");
@@ -654,14 +654,14 @@ error:
 	char *str, *cp;
 
 	// compute total size:
-	for (n = 0; environ[n]; n++) len += 1 + LEN_STR(environ[n]);
+	for (n = 0; environ[n]; n++) len += 1 + strlen(environ[n]);
 
 	cp = str = OS_Make(len + 1); // +terminator
 	*cp = 0;
 
 	// combine all strings into one:
 	for (n = 0; environ[n]; n++) {
-		len = LEN_STR(environ[n]);
+		len = strlen(environ[n]);
 		strcat(cp, environ[n]);
 		cp += len;
 		*cp++ = 0;
@@ -727,9 +727,9 @@ error:
 **
 ***********************************************************************/
 {
-	*path = MAKE_STR(PATH_MAX);
+	*path = MAKE_OS_STR(PATH_MAX);
 	if (!getcwd(*path, PATH_MAX-1)) *path[0] = 0;
-	return LEN_STR(*path); // Be sure to call free() after usage
+	return strlen(*path); // Be sure to call free() after usage
 }
 
 

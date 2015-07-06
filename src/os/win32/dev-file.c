@@ -168,7 +168,7 @@ static BOOL Seek_File_64(REBREQ *file)
 
 	file->modes = 0;
 	if (info.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) SET_FLAG(file->modes, RFM_DIR);
-	COPY_STR(file->file.path, info.cFileName, MAX_FILE_NAME);
+	COPY_OS_STR(file->file.path, info.cFileName, MAX_FILE_NAME);
 	file->file.size = ((i64)info.nFileSizeHigh << 32) + info.nFileSizeLow;
 
 	return DR_DONE;

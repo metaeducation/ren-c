@@ -67,9 +67,9 @@ static REBYTE *Get_Next_Line()
 		if (*bp == CR && bp[1] == LF) bp++;
 		len = bp - inbuf;
 		out = OS_Make(len + 2);
-		COPY_BYTES(out, inbuf, len+1);
+		strncpy(out, inbuf, len+1);
 		out[len+1] = 0;
-		MOVE_MEM(inbuf, bp+1, 1+strlen(bp+1));
+		memmove(inbuf, bp+1, 1+strlen(bp+1));
 		return out;
 	}
 
@@ -115,7 +115,7 @@ static int Fetch_Buf()
 **
 ***********************************************************************/
 {
-	CLEARS(&Std_IO_Req);
+	memset(&Std_IO_Req, NUL, sizeof(Std_IO_Req));
 	Std_IO_Req.clen = sizeof(Std_IO_Req);
 	Std_IO_Req.device = RDI_STDIO;
 

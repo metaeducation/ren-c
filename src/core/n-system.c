@@ -400,7 +400,7 @@ err:
 	REBINT result;
 	REBSER *ser;
 
-	CLEAR(&codi, sizeof(codi));
+	memset(&codi, NUL, sizeof(codi));
 
 	codi.action = CODI_DECODE;
 

@@ -135,7 +135,7 @@
 	if (val == MIN_I64) {
 		len = strlen(MIN_I64_STR);
 		if (maxl < len + 1) return 0;
-		COPY_MEM(buf, MIN_I64_STR, len + 1);
+		memcpy(buf, MIN_I64_STR, len + 1);
 		return len;
 	}
 
@@ -228,7 +228,7 @@
 ***********************************************************************/
 {
 	INT_TO_STR(val, buf);
-	return buf+LEN_BYTES(buf);
+	return buf+strlen(buf);
 }
 
 
@@ -239,7 +239,7 @@
 ***********************************************************************/
 {
 	INT_TO_STR(val, buf);
-	return LEN_BYTES(buf);
+	return strlen(buf);
 }
 
 

@@ -218,7 +218,7 @@
 
 	EXPAND_SERIES_TAIL(series, len);
 	memcpy(series->data + (wide * tail), data, wide * len);
-	CLEAR(series->data + (wide * series->tail), wide); // terminator
+	memset(series->data + (wide * series->tail), NUL, wide); // terminator
 }
 
 
@@ -348,7 +348,7 @@
 			SERIES_SET_BIAS(series, 0);
 			SERIES_REST(series) += len;
 			series->data -= SERIES_WIDE(series) * len;
-			CLEAR(series->data, SERIES_WIDE(series)); // terminate
+			memset(series->data, NUL, SERIES_WIDE(series)); // terminate
 		} else {
 			// Add bias to head:
 			REBCNT bias = SERIES_BIAS(series);
@@ -385,7 +385,7 @@
 	// Clip if past end and optimize the remove operation:
 	if (len + index >= series->tail) {
 		series->tail = index;
-		CLEAR(series->data + start, SERIES_WIDE(series));
+		memset(series->data + start, NUL, SERIES_WIDE(series));
 		return;
 	}
 
@@ -409,7 +409,11 @@
 {
 	if (series->tail == 0) return;
 	series->tail--;
-	CLEAR(series->data + SERIES_WIDE(series) * series->tail, SERIES_WIDE(series));
+	memset(
+		series->data + SERIES_WIDE(series) * series->tail,
+		NUL,
+		SERIES_WIDE(series)
+	);
 }
 
 
@@ -444,7 +448,7 @@
 {
 	series->tail = 0;
 	if (SERIES_BIAS(series)) Reset_Bias(series);
-	CLEAR(series->data, SERIES_WIDE(series)); // re-terminate
+	memset(series->data, NUL, SERIES_WIDE(series)); // re-terminate
 }
 
 
@@ -459,7 +463,7 @@
 {
 	series->tail = 0;
 	if (SERIES_BIAS(series)) Reset_Bias(series);
-	CLEAR(series->data, SERIES_SPACE(series));
+	memset(series->data, NUL, SERIES_SPACE(series));
 }
 
 
@@ -476,7 +480,7 @@
 	if (SERIES_BIAS(series)) Reset_Bias(series);
 	EXPAND_SERIES_TAIL(series, size);
 	series->tail = 0;
-	CLEAR(series->data, SERIES_WIDE(series)); // re-terminate
+	memset(series->data, NUL, SERIES_WIDE(series)); // re-terminate
 }
 
 
@@ -488,7 +492,11 @@
 **
 ***********************************************************************/
 {
-	CLEAR(series->data + SERIES_WIDE(series) * series->tail, SERIES_WIDE(series));
+	memset(
+		series->data + SERIES_WIDE(series) * series->tail,
+		NUL,
+		SERIES_WIDE(series)
+	);
 }
 
 

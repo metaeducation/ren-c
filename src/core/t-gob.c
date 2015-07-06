@@ -70,7 +70,7 @@ const REBCNT Gob_Flag_Words[] = {
 ***********************************************************************/
 {
 	REBGOB *gob = Make_Node(GOB_POOL);
-	CLEAR(gob, sizeof(REBGOB));
+	memset(gob, NUL, sizeof(REBGOB));
 	GOB_W(gob) = 100;
 	GOB_H(gob) = 100;
 	GOB_ALPHA(gob) = 255;

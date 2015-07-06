@@ -50,7 +50,7 @@
 	REBREQ file;
 
 	RESET_TAIL(files);
-	CLEARS(&file);
+	memset(&file, NUL, sizeof(file));
 
 	// Temporary filename storage:
 	fname = BUF_OS_STR;
@@ -61,7 +61,7 @@
 	dir->data = (REBYTE*)(&file);
 
 	while ((result = OS_DO_DEVICE(dir, RDC_READ)) == 0 && !GET_FLAG(dir->flags, RRF_DONE)) {
-		len = LEN_STR(file.file.path);
+		len = strlen(file.file.path);
 		if (GET_FLAG(file.modes, RFM_DIR)) len++;
 		name = Copy_OS_Str(file.file.path, len);
 		if (GET_FLAG(file.modes, RFM_DIR))
@@ -70,7 +70,7 @@
 	}
 
 	if (result < 0 && dir->error != -RFE_OPEN_FAIL
-		&& (FIND_CHR(dir->file.path, '*') || FIND_CHR(dir->file.path, '?')))
+		&& (strchr(dir->file.path, '*') || strchr(dir->file.path, '?')))
 		result = 0;  // no matches found, but not an error
 
 	return result;
@@ -112,7 +112,7 @@
 		REBSER *ser;
 		REBREQ file;
 
-		CLEARS(&file);
+		memset(&file, NUL, sizeof(file));
 		ser = Value_To_OS_Path(path, TRUE);
 		file.file.path = (REBCHR*)(ser->data);
 		file.device = RDI_FILE;
@@ -229,7 +229,7 @@
 	Validate_Port(port, action);
 
 	*D_RET = *D_ARG(1);
-	CLEARS(&dir);
+	memset(&dir, NUL, sizeof(dir));
 
 	// Validate and fetch relevant PORT fields:
 	spec  = BLK_SKIP(port, STD_PORT_SPEC);

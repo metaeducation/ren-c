@@ -240,7 +240,7 @@ static int Poll_Default(REBDEV *dev)
 {
 	REBEVT evt;
 
-	CLEARS(&evt);
+	memset(&evt, NUL, sizeof(evt));
 
 	evt.type = (REBYTE)type;
 	evt.model = EVM_DEVICE;
@@ -359,7 +359,7 @@ static int Poll_Default(REBDEV *dev)
 
 	size = dev->req_size ? dev->req_size : sizeof(REBREQ);
 	req = OS_Make(size);
-	CLEARS(req);
+	memset(req, NUL, sizeof(*req));
 	SET_FLAG(req->flags, RRF_ALLOC);
 	req->clen = size;
 	req->device = device;
@@ -483,7 +483,7 @@ static int Poll_Default(REBDEV *dev)
 	base = OS_Delta_Time(0, 0); // start timing
 
 	// Setup for timing:
-	CLEARS(&req);
+	memset(&req, NUL, sizeof(req));
 	req.device = RDI_EVENT;
 
 	OS_Reap_Process(-1, NULL, 0);

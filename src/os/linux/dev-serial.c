@@ -81,14 +81,13 @@ const int speeds[] = {
 
 static struct termios *Get_Serial_Settings(int ttyfd)
 {
-	struct termios *attr = NULL;
-	attr= (struct termios *) MAKE_NEW(struct termios);
+	struct termios *attr = OS_Make(sizeof(struct termios));
 	if (attr != NULL) {
-        	if (tcgetattr(ttyfd,attr) == -1) {
-          		FREE_MEM(attr);
-          		attr = NULL;
-        	}
-      	}
+		if (tcgetattr(ttyfd, attr) == -1) {
+			OS_Free(attr);
+			attr = NULL;
+		}
+	}
 	return attr;
 }
 

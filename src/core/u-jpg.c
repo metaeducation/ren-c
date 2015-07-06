@@ -10778,7 +10778,7 @@ jinit_phuff_decoder (j_decompress_ptr cinfo)
 
 #ifndef CODI_DEFINED
 #include "reb-codec.h"
-extern long* Make_Mem(size_t size);
+extern long* Alloc_Mem(size_t size);
 extern void Register_Codec(char *name, codo dispatcher);
 #endif
 
@@ -10806,7 +10806,7 @@ extern void Register_Codec(char *name, codo dispatcher);
 	if (codi->action == CODI_DECODE) {
 		int w, h;
 		jpeg_info(codi->data, codi->len, &w, &h);
-		codi->bits = (u32 *)Make_Mem(w * h * 4);
+		codi->bits = (u32 *)Alloc_Mem(w * h * 4);
 		jpeg_load(codi->data, codi->len, (char *)codi->bits);
 		codi->w = w;
 		codi->h = h;

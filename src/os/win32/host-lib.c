@@ -109,27 +109,27 @@ static void *Task_Ready;
 	REBCHR *spot;
 	REBCHR hold[HOLD_SIZE+4];
 
-	if ((REBINT)LEN_STR(cmd) >= limit) return; // invalid case, ignore it.
+	if ((REBINT)strlen(cmd) >= limit) return; // invalid case, ignore it.
 
 	// Find %1:
 	spot = FIND_STR(cmd, TEXT("%1"));
 
 	if (spot) {
 		// Save rest of cmd line (such as end quote, -flags, etc.)
-		COPY_STR(hold, spot+2, HOLD_SIZE);
+		COPY_OS_STR(hold, spot+2, HOLD_SIZE);
 
 		// Terminate at the arg location:
 		spot[0] = 0;
 
 		// Insert the arg:
-		JOIN_STR(spot, arg, limit - LEN_STR(cmd) - 1);
+		JOIN_OS_STR(spot, arg, limit - strlen(cmd) - 1);
 
 		// Add back the rest of cmd:
-		JOIN_STR(spot, hold, limit - LEN_STR(cmd) - 1);
+		JOIN_OS_STR(spot, hold, limit - strlen(cmd) - 1);
 	}
 	else {
-		JOIN_STR(cmd, TEXT(" "), 1);
-		JOIN_STR(cmd, arg, limit - LEN_STR(cmd) - 1);
+		JOIN_OS_STR(cmd, TEXT(" "), 1);
+		JOIN_OS_STR(cmd, arg, limit - strlen(cmd) - 1);
 	}
 }
 
@@ -414,9 +414,9 @@ static void *Task_Ready;
 
 	len--; // termination
 
-	if (!ok) COPY_STR(str, TEXT("unknown error"), len);
+	if (!ok) COPY_OS_STR(str, TEXT("unknown error"), len);
 	else {
-		COPY_STR(str, lpMsgBuf, len);
+		COPY_OS_STR(str, lpMsgBuf, len);
 		LocalFree(lpMsgBuf);
 	}
 	return str;
@@ -459,7 +459,7 @@ static void *Task_Ready;
 	type = types[what];
 
 	len = GetLocaleInfo(0, type, 0, 0);
-	data = MAKE_STR(len);
+	data = MAKE_OS_STR(len);
 	len = GetLocaleInfo(0, type, data, len);
 
 	return data;
@@ -514,14 +514,14 @@ static void *Task_Ready;
 	REBCHR *str;
 
 	str = env;
-	while (n = LEN_STR(str)) {
+	while (n = strlen(str)) {
 		len += n + 1;
 		str = env + len; // next
 	}
 	len++;
 
 	str = OS_Make(len * sizeof(REBCHR));
-	MOVE_MEM(str, env, len * sizeof(REBCHR));
+	memmove(str, env, len * sizeof(REBCHR));
 
 	FreeEnvironmentStrings(env);
 
@@ -589,7 +589,7 @@ static void *Task_Ready;
 	int len;
 
 	len = GetCurrentDirectory(0, NULL); // length, incl terminator.
-	*path = MAKE_STR(len);
+	*path = MAKE_OS_STR(len);
 	GetCurrentDirectory(len, *path);
 	len--; // less terminator
 
@@ -1214,7 +1214,7 @@ input_error:
 
 	if (!url) url = TEXT("");
 
-	path = MAKE_STR(MAX_BRW_PATH+4);
+	path = MAKE_OS_STR(MAX_BRW_PATH+4);
 	len = MAX_BRW_PATH;
 
 	flag = RegQueryValueEx(key, TEXT(""), 0, &type, (LPBYTE)path, &len);

@@ -170,7 +170,7 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 		void *data = script + sizeof(ptype);
 		script_len -= sizeof(ptype);
 
-		COPY_MEM(&ptype, script, sizeof(ptype));
+		memcpy(&ptype, script, sizeof(ptype));
 
 		if (ptype == 1) {/* COMPRESSed data */
 			spec.data = data;
@@ -182,7 +182,7 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 				OS_FREE(script);
 				return 1;
 			}
-			COPY_MEM(BIN_HEAD(ser), data, script_len);
+			memcpy(BIN_HEAD(ser), data, script_len);
 		}
 		OS_FREE(script);
 
@@ -339,7 +339,7 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 
 #ifdef DUMP_INIT_SCRIPT
 	f = _open("host-boot.r", _O_CREAT | _O_RDWR, _S_IREAD | _S_IWRITE );
-	_write(f, STR_HEAD(text), LEN_BYTES(STR_HEAD(text)));
+	_write(f, STR_HEAD(text), strlen(STR_HEAD(text)));
 	_close(f);
 #endif
 
@@ -984,7 +984,7 @@ RL_API int RL_Callback(RXICBI *cbi)
 		return Do_Callback(cbi->obj, cbi->word, cbi->args, &(cbi->result));
 	}
 
-	CLEARS(&evt);
+	memset(&evt, NUL, sizeof(evt));
 	evt.type = EVT_CALLBACK;
 	evt.model = EVM_CALLBACK;
 	evt.ser = (void*)cbi;

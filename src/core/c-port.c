@@ -101,7 +101,7 @@
 		REBREQ *req = (REBREQ*)STR_HEAD(data);
 		Guard_Series(data); // GC safe if no other references
 		req->clen = size;
-		CLEAR(STR_HEAD(data), size);
+		memset(STR_HEAD(data), NUL, size);
 		//data->tail = size; // makes it easier for ACCEPT to clone the port
 		SET_FLAG(req->flags, RRF_ALLOC); // not on stack
 		req->port = port;
@@ -336,7 +336,7 @@ xx*/	REBINT Wait_Device(REBREQ *req, REBCNT timeout)
 
 	if (IS_BLOCK(arg)) {
 
-		if (newline) n = LEN_BYTES(newline);
+		if (newline) n = strlen(newline);
 
 		mo.series = series = Make_Binary(VAL_BLK_LEN(arg) * 10);
 
@@ -611,7 +611,7 @@ SCHEME_ACTIONS *Scheme_Actions;	// Initial Global (not threaded)
 **
 ***********************************************************************/
 {
-	Scheme_Actions = Make_Mem(sizeof(SCHEME_ACTIONS) * MAX_SCHEMES);
+	Scheme_Actions = Alloc_Mem(sizeof(SCHEME_ACTIONS) * MAX_SCHEMES);
 
 	Init_Console_Scheme();
 	Init_File_Scheme();

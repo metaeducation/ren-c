@@ -449,7 +449,7 @@ again:
 	REBINT n;
 	REBINT dsp = DSP; // Save stack position
 
-	CLEARS(&dia);
+	memset(&dia, NUL, sizeof(dia));
 
 	if (*index >= SERIES_TAIL(block)) return 0; // end of block
 
@@ -493,7 +493,7 @@ again:
 	REBINT err;
 	REBFLG all;
 
-	CLEARS(&dia);
+	memset(&dia, NUL, sizeof(dia));
 
 	dia.dialect = VAL_OBJ_FRAME(D_ARG(1));
 	dia.args = VAL_SERIES(D_ARG(2));

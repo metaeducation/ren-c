@@ -128,7 +128,7 @@ static REBINT Set_Serial_Settings(HANDLE h, REBREQ *req)
 		return DR_ERROR;
 	}
 
-	JOIN_STR(fullpath,req->serial.path,MAX_SERIAL_DEV_PATH);
+	JOIN_OS_STR(fullpath,req->serial.path,MAX_SERIAL_DEV_PATH);
 
 	h = CreateFile(fullpath, GENERIC_READ|GENERIC_WRITE, 0, NULL,OPEN_EXISTING, 0, NULL );
 	if (h == INVALID_HANDLE_VALUE) {

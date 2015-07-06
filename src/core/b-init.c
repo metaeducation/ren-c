@@ -191,7 +191,7 @@ extern const REBYTE Str_Banner[];
 		REBYTE *cp;
 		REBINT i;
 
-		PG_Boot_Strs = (REBYTE **)Make_Mem(RS_MAX * sizeof(REBYTE *));
+		PG_Boot_Strs = (REBYTE **)Alloc_Mem(RS_MAX * sizeof(REBYTE *));
 		*ROOT_STRINGS = Boot_Block->strings;
 		cp = VAL_BIN(ROOT_STRINGS);
 		for (i = 0; i < RS_MAX; i++) {
@@ -200,9 +200,9 @@ extern const REBYTE Str_Banner[];
 		}
 	}
 
-	ASSERT(!CMP_BYTES("end!", Get_Sym_Name(SYM_END_TYPE)), RP_BAD_END_CANON_WORD);
-	ASSERT(!CMP_BYTES("true", Get_Sym_Name(SYM_TRUE)), RP_BAD_TRUE_CANON_WORD);
-	ASSERT(!CMP_BYTES("line", BOOT_STR(RS_SCAN,1)), RP_BAD_BOOT_STRING);
+	ASSERT(!strcmp("end!", Get_Sym_Name(SYM_END_TYPE)), RP_BAD_END_CANON_WORD);
+	ASSERT(!strcmp("true", Get_Sym_Name(SYM_TRUE)), RP_BAD_TRUE_CANON_WORD);
+	ASSERT(!strcmp("line", BOOT_STR(RS_SCAN,1)), RP_BAD_BOOT_STRING);
 }
 
 
@@ -248,9 +248,9 @@ extern const REBYTE Str_Banner[];
 	spec = VAL_SERIES(VAL_BLK(&Boot_Block->booters));
 
 	for (word++; NOT_END(word); word++, n++) {
-		COPY_BYTES(str, Get_Word_Name(word), 32);
+		strncpy(str, Get_Word_Name(word), 32);
 		str[31] = '\0';
-		str[LEN_BYTES(str)-1] = '?';
+		str[strlen(str)-1] = '?';
 		sym = Make_Word(str, 0);
 		//Print("sym: %s", Get_Sym_Name(sym));
 		value = Append_Frame(Lib_Context, 0, sym);
@@ -705,7 +705,7 @@ extern const REBYTE Str_Banner[];
 	}
 
 	if (codi->action == CODI_ENCODE) {
-		u16 * data = codi->data = Make_Mem(codi->len * sizeof(u16));
+		u16 * data = codi->data = Alloc_Mem(codi->len * sizeof(u16));
 		if (codi->w == 1) {
 			/* in ASCII */
 			REBCNT i = 0;
@@ -844,7 +844,7 @@ static void Set_Option_String(REBCHR *str, REBCNT field)
 	REBVAL *val;
 	if (str) {
 		val = Get_System(SYS_OPTIONS, field);
-		Set_String(val, Copy_OS_Str(str, LEN_STR(str)));
+		Set_String(val, Copy_OS_Str(str, strlen(str)));
 	}
 }
 
@@ -856,7 +856,7 @@ static REBCNT Set_Option_Word(REBCHR *str, REBCNT field)
 	REBCNT n = 0;
 
 	if (str) {
-		n = LEN_STR(str); // WC correct
+		n = strlen(str); // WC correct
 		if (n > 38) return 0;
 		bp = &buf[0];
 		while ((*bp++ = (REBYTE)*str++)); // clips unicode
@@ -934,25 +934,25 @@ static REBCNT Set_Option_Word(REBCHR *str, REBCNT field)
 
 	if (NZ(data = OS_GET_LOCALE(0))) {
 		val = Get_System(SYS_LOCALE, LOCALE_LANGUAGE);
-		Set_String(val, Copy_OS_Str(data, LEN_STR(data)));
+		Set_String(val, Copy_OS_Str(data, strlen(data)));
 		OS_FREE(data);
 	}
 
 	if (NZ(data = OS_GET_LOCALE(1))) {
 		val = Get_System(SYS_LOCALE, LOCALE_LANGUAGE_P);
-		Set_String(val, Copy_OS_Str(data, LEN_STR(data)));
+		Set_String(val, Copy_OS_Str(data, strlen(data)));
 		OS_FREE(data);
 	}
 
 	if (NZ(data = OS_GET_LOCALE(2))) {
 		val = Get_System(SYS_LOCALE, LOCALE_LOCALE);
-		Set_String(val, Copy_OS_Str(data, LEN_STR(data)));
+		Set_String(val, Copy_OS_Str(data, strlen(data)));
 		OS_FREE(data);
 	}
 
 	if (NZ(data = OS_GET_LOCALE(3))) {
 		val = Get_System(SYS_LOCALE, LOCALE_LOCALE_P);
-		Set_String(val, Copy_OS_Str(data, LEN_STR(data)));
+		Set_String(val, Copy_OS_Str(data, strlen(data)));
 		OS_FREE(data);
 	}
 }
@@ -1018,8 +1018,8 @@ static REBCNT Set_Option_Word(REBCHR *str, REBCNT field)
 	PG_Boot_Level = BOOT_LEVEL_FULL;
 	PG_Mem_Usage = 0;
 	PG_Mem_Limit = 0;
-	PG_Reb_Stats = Make_Mem(sizeof(*PG_Reb_Stats));
-	Reb_Opts = Make_Mem(sizeof(*Reb_Opts));
+	PG_Reb_Stats = Alloc_Mem(sizeof(*PG_Reb_Stats));
+	Reb_Opts = Alloc_Mem(sizeof(*Reb_Opts));
 
 	// Thread locals:
 	Trace_Level = 0;

@@ -1800,7 +1800,7 @@ eval_func2:
 	// Saved_State is safe.
 	Saved_State = Halt_State;
 
-	code = Scan_Source(text, LEN_BYTES(text));
+	code = Scan_Source(text, strlen(text));
 	SAVE_SERIES(code);
 
 	// Bind into lib or user spaces?

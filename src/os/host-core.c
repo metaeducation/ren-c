@@ -94,7 +94,7 @@ static u32 *core_ext_words;
 		if (encapBuffer != NULL)
 		{
 			REBSER *encapData = (REBSER*)RL_Make_String(encapBufferLen, FALSE);
-			COPY_MEM((REBYTE *)RL_SERIES(encapData, RXI_SER_DATA), encapBuffer, encapBufferLen);
+			memcpy((REBYTE *)RL_SERIES(encapData, RXI_SER_DATA), encapBuffer, encapBufferLen);
 			FREE_MEM(encapBuffer);
 			encapBuffer = NULL;
 

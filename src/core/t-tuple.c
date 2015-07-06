@@ -127,7 +127,7 @@
 		if (IS_INTEGER(val) || IS_DECIMAL(val)) i = Int32(val);
 		else if (IS_NONE(val)) {
 			n--;
-			CLEAR(dat+n, MAX_TUPLE-n);
+			memset(dat+n, NUL, MAX_TUPLE-n);
 			VAL_TUPLE_LEN(pvs->value) = n;
 			return PE_OK;
 		}
@@ -355,7 +355,7 @@
 		if (IS_ISSUE(arg)) {
 			REBUNI c;
 			ap = Get_Word_Name(arg);
-			len = LEN_BYTES(ap);  // UTF-8 len
+			len = strlen(ap);  // UTF-8 len
 			if (len & 1) goto bad_arg; // must have even # of chars
 			len /= 2;
 			if (len > MAX_TUPLE) goto bad_arg; // valid even for UTF-8

@@ -84,7 +84,7 @@
 		REBYTE *bp = &buf[0];
 		REBCNT alen;
 		REBUNI c;
-		len = LEN_BYTES(ap);  // UTF-8 len
+		len = strlen(ap);  // UTF-8 len
 		if (len & 1) return FALSE; // must have even # of chars
 		len /= 2;
 		if (len > 12) return FALSE; // valid even for UTF-8

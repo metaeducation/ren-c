@@ -213,7 +213,7 @@
 		switch (action) {
 		case A_AND:
 			for (i = 0; i < mt; i++) *p2++ = *p0++ & *p1++;
-			CLEAR(p2, t2 - mt);
+			memset(p2, NUL, t2 - mt);
 			return series;
 		case A_OR:
 			for (i = 0; i < mt; i++) *p2++ = *p0++ | *p1++;
@@ -324,7 +324,7 @@ static REBYTE seed_str[SEED_LEN] = {
 			break;
 		case REB_INTEGER:
 			INT_TO_STR(VAL_INT64(val), dst);
-			klen = LEN_BYTES(dst);
+			klen = strlen(dst);
 			as_is = FALSE;
 			break;
 		}

@@ -41,7 +41,7 @@ static REBSER *Read_All_File(char *fname)
 	REBREQ file;
 	REBSER *ser = 0;
 
-	CLEAR(&file, sizeof(file));
+	memset(&file, NUL, sizeof(file));
 
 	file.clen = sizeof(file);
 	file.device = RDI_FILE;
@@ -810,7 +810,7 @@ chk_neg:
 	REBCHR *eq;
 	REBSER *blk;
 
-	while (n = LEN_STR(str)) {
+	while (n = strlen(str)) {
 		len++;
 		str += n + 1; // next
 	}
@@ -818,7 +818,7 @@ chk_neg:
 	blk = Make_Block(len*2);
 
 	str = start;
-	while (NZ(eq = FIND_CHR(str+1, '=')) && NZ(n = LEN_STR(str))) {
+	while (NZ(eq = strchr(str+1, '=')) && NZ(n = strlen(str))) {
 		Set_Series(REB_STRING, Append_Value(blk), Copy_OS_Str(str, eq-str));
 		Set_Series(REB_STRING, Append_Value(blk), Copy_OS_Str(eq+1, n-(eq-str)-1));
 		str += n + 1; // next
@@ -869,7 +869,7 @@ chk_neg:
 	REBSER *blk;
 	REBSER *dir;
 
-	while (n = LEN_STR(str)) {
+	while (n = strlen(str)) {
 		len++;
 		str += n + 1; // next
 	}
@@ -878,7 +878,7 @@ chk_neg:
 
 	// First is a dir path or full file path:
 	str = start;
-	n = LEN_STR(str);
+	n = strlen(str);
 
 	if (len == 1) {  // First is full file path
 		dir = To_REBOL_Path(str, n, OS_WIDE, 0);
@@ -889,7 +889,7 @@ chk_neg:
 		dir = To_REBOL_Path(str, n, -1, TRUE);
 		str += n + 1; // next
 		len = dir->tail;
-		while (n = LEN_STR(str)) {
+		while (n = strlen(str)) {
 			dir->tail = len;
 			Append_Uni_Uni(dir, str, n);
 			Set_Series(REB_FILE, Append_Value(blk), Copy_String(dir, 0, -1));
@@ -897,7 +897,7 @@ chk_neg:
 		}
 #else /* absolute pathes already */
 		str += n + 1;
-		while (n = LEN_STR(str)) {
+		while (n = strlen(str)) {
 			dir = To_REBOL_Path(str, n, OS_WIDE, FALSE);
 			Set_Series(REB_FILE, Append_Value(blk), Copy_String(dir, 0, -1));
 			str += n + 1; // next
@@ -934,7 +934,7 @@ chk_neg:
 		n = ser->tail;
 		if (fr.dir[n-1] != OS_DIR_SEP) {
 			if (n+2 > fr.len) n = fr.len - 2;
-			COPY_STR(fr.files, (REBCHR*)(ser->data), n);
+			COPY_OS_STR(fr.files, (REBCHR*)(ser->data), n);
 			fr.files[n] = 0;
 		}
 	}
@@ -953,7 +953,7 @@ chk_neg:
 			Set_Block(D_RET, ser);
 		}
 		else {
-			ser = To_REBOL_Path(fr.files, LEN_STR(fr.files), OS_WIDE, 0);
+			ser = To_REBOL_Path(fr.files, strlen(fr.files), OS_WIDE, 0);
 			Set_Series(REB_FILE, D_RET, ser);
 		}
 	} else
@@ -987,10 +987,10 @@ chk_neg:
 	if (lenplus < 0) return R_UNSET;
 
 	// Two copies...is there a better way?
-	buf = MAKE_STR(lenplus);
+	buf = MAKE_OS_STR(lenplus);
 	OS_GET_ENV(cmd, buf, lenplus);
 	Set_String(D_RET, Copy_OS_Str(buf, lenplus - 1));
-	FREE_MEM(buf);
+	FREE_OS_STR(buf);
 
 	return R_RET;
 }
@@ -1017,7 +1017,7 @@ chk_neg:
 		success = OS_SET_ENV(cmd, value);
 		if (success) {
 			// What function could reuse arg2 as-is?
-			Set_String(D_RET, Copy_OS_Str(value, LEN_STR(value)));
+			Set_String(D_RET, Copy_OS_Str(value, strlen(value)));
 			return R_RET;
 		}
 		return R_UNSET;

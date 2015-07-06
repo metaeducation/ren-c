@@ -351,7 +351,7 @@ x*/	int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result)
 	}
 
 	ext = &Ext_List[Ext_Next];
-	CLEARS(ext);
+	memset(ext, NUL, sizeof(*ext));
 	ext->call = call;
 	ext->dll = dll;
 	ext->index = Ext_Next++;

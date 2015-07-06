@@ -340,7 +340,7 @@ is_none:
 ***********************************************************************/
 {
 	if (IS_BLOCK(data)) {
-		CLEARS(out);
+		memset(out, NUL, sizeof(*out));
 		Set_Event_Vars(out, VAL_BLK_DATA(data));
 		VAL_SET(out, REB_EVENT);
 		return TRUE;
@@ -388,7 +388,7 @@ is_none:
 			if (IS_EVENT(arg)) return R_ARG2;
 			//Trap_Make(REB_EVENT, value);
 			VAL_SET(D_RET, REB_EVENT);
-			CLEARS(&(D_RET->data.event));
+			memset(&(D_RET->data.event), NUL, sizeof(D_RET->data.event));
 		}
 		else
 is_arg_error:

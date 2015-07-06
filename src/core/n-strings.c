@@ -200,7 +200,7 @@ static struct digest {
 				if (D_REF(ARG_CHECKSUM_KEY)) {
 					REBYTE tmpdigest[20];		// Size must be max of all digest[].len;
 					REBYTE ipad[64],opad[64];	// Size must be max of all digest[].hmacblock;
-					void *ctx = Make_Mem(digests[i].ctxsize());
+					void *ctx = Alloc_Mem(digests[i].ctxsize());
 					REBVAL *key = D_ARG(ARG_CHECKSUM_KEY_VALUE);
 					REBYTE *keycp = VAL_BIN_DATA(key);
 					int keylen = VAL_LEN(key);
