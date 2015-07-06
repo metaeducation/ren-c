@@ -48,58 +48,58 @@ REBOL [
 	binary      self        string      +        +       *      *   [series]
 	string      self        string      +        f*      *      *   [series string]
 	file        self        string      +        f*      file   *   [series string]
-	email       self        string      +        f*      *      *   [series string]  
+	email       self        string      +        f*      *      *   [series string]
 	url         self        string      +        f*      file   *   [series string]
-	tag         self        string      +        +       *      *   [series string]  
+	tag         self        string      +        +       *      *   [series string]
 
 	bitset      self        bitset      *        *       *      *   -
 	image       self        image       +        +       *      *   series
-	vector      self        vector      -        -       *      *   series  
+	vector      self        vector      -        -       *      *   series
 
-	block       self        block       *        f*      *      *   [series block]  
+	block       self        block       *        f*      *      *   [series block]
 	paren       paren       block       *        f*      *      *   [series block]
 
 	path        path        block       *        *       *      *   [series block path]
-	set-path    path        block       *        *       *      *   [series block path]    
-	get-path    path        block       *        *       *      *   [series block path]  
-	lit-path    lit-path    block       *        *       *      *   [series block path]  
+	set-path    path        block       *        *       *      *   [series block path]
+	get-path    path        block       *        *       *      *   [series block path]
+	lit-path    lit-path    block       *        *       *      *   [series block path]
 
-	map         self        map         +        f*      *      *   -  
+	map         self        map         +        f*      *      *   -
 
-	datatype    self        datatype    +        f*      -      *   -  
-	typeset     self        typeset     +        f*      -      *   -  
+	datatype    self        datatype    +        f*      -      *   -
+	typeset     self        typeset     +        f*      -      *   -
 
 	; Order dependent: next few words
-	;symbol      invalid     word       *        *       -      -   word  
-	word        word        word        +        *       -      -   word  
-	set-word    set-word    word        +        *       -      -   word  
-	get-word    get-word    word        +        *       -      -   word  
-	lit-word    lit-word    word        +        *       -      -   word  
-	refinement  self        word        +        *       -      -   word  
+	;symbol      invalid     word       *        *       -      -   word
+	word        word        word        +        *       -      -   word
+	set-word    set-word    word        +        *       -      -   word
+	get-word    get-word    word        +        *       -      -   word
+	lit-word    lit-word    word        +        *       -      -   word
+	refinement  self        word        +        *       -      -   word
 	issue       self        word        +        *       -      -   word
 
-	native      function    function    *        -       -      *   function  
-	action      function    function    *        -       -      *   function  
+	native      function    function    *        -       -      *   function
+	action      function    function    *        -       -      *   function
 	routine     function    routine     *        -       -      *   function
-	rebcode     function    0           -        -       -      *   function  
-	command     function    function    -        -       -      *   function  
-;	macro       function    0           -        -       -      -   function  
-	op          operator    function    -        -       -      *   function  
-	closure     function    function    *        -       -      *   function  
-	function    function    function    *        -       -      *   function  
+	rebcode     function    0           -        -       -      *   function
+	command     function    function    -        -       -      *   function
+;	macro       function    0           -        -       -      -   function
+	op          operator    function    -        -       -      *   function
+	closure     function    function    *        -       -      *   function
+	function    function    function    *        -       -      *   function
 
-	frame       invalid     frame       -        -       *      -   -  
-	object      self        object      *        f*      *      *   object  
-	module      self        object      *        f*      *      *   object  
-	error       self        object      +        f+      *      *   object  
-	task        self        object      +        +       *      *   object  
+	frame       invalid     frame       -        -       *      -   -
+	object      self        object      *        f*      *      *   object
+	module      self        object      *        f*      *      *   object
+	error       self        object      +        f+      *      *   object
+	task        self        object      +        +       *      *   object
 	port        self        port        object   object  object -	object
 
-	gob         self        gob         *        *       *      *   -  
-	event       self        event       *        *       *      *   -  
-	callback    self        callback    -        -       -      -   -  
-	handle      self        0           -        -       -      -   -  
+	gob         self        gob         *        *       *      *   -
+	event       self        event       *        *       *      *   -
+	callback    self        callback    -        -       -      -   -
+	handle      self        0           -        -       -      -   -
 	struct      self        struct      *        *       *      *   -
 	library     self     	library     -        -       -      -   -
-	utype       self        utype       -        -       -      -   -  
+	utype       self        utype       -        -       -      -   -
 

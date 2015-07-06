@@ -92,7 +92,7 @@
 ***********************************************************************/
 {
 	REBFLG is_not = 0;
-	
+
 	if (IS_BLOCK(data)) {
 		REBINT len = Find_Max_Bit(data);
 		REBSER *ser;
@@ -207,7 +207,7 @@ retry:
 		uncased = FALSE;
 		goto retry;
 	}
-		
+
 	return (BITS_NOT(bset)) ? !flag : flag;
 }
 
@@ -385,7 +385,7 @@ span_bits:
 	return TRUE;
 }
 
-		
+
 /***********************************************************************
 **
 */	REBFLG Check_Bits(REBSER *bset, REBVAL *val, REBFLG uncased)
@@ -487,8 +487,8 @@ found:
 
 	t = IS_TRUE(val);
 	if (BITS_NOT(ser)) t = !t;
-	if (Set_Bits(ser, pvs->select, (REBOOL)t)) 
-		return PE_OK;	
+	if (Set_Bits(ser, pvs->select, (REBOOL)t))
+		return PE_OK;
 
 	return PE_BAD_SET;
 }

@@ -552,7 +552,7 @@ x*/	REBCNT Insert_Value(REBSER *series, REBCNT index, REBVAL *item, REBCNT type,
 ***********************************************************************/
 {
 	REBYTE buf[32];
-	
+
 	Form_Int(buf, num);
 	Append_Bytes(dst, buf);
 }

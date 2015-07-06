@@ -150,11 +150,11 @@ OBJS =	objs/a-constants.o objs/a-globals.o objs/a-lib.o objs/b-boot.o \
 	objs/t-tuple.o objs/t-typeset.o objs/t-utype.o objs/t-vector.o \
 	objs/t-word.o objs/u-bmp.o objs/u-compress.o objs/u-dialect.o \
 	objs/u-gif.o objs/u-jpg.o objs/u-md5.o objs/u-parse.o \
-	objs/u-png.o objs/u-sha1.o objs/u-zlib.o 
+	objs/u-png.o objs/u-sha1.o objs/u-zlib.o
 
 HOST =	objs/host-main.o objs/host-args.o objs/host-device.o objs/host-stdio.o \
 	objs/dev-net.o objs/dev-dns.o objs/host-lib.o objs/host-readline.o \
-	objs/dev-stdio.o objs/dev-event.o objs/dev-file.o 
+	objs/dev-stdio.o objs/dev-event.o objs/dev-file.o
 
 
 # Directly linked r3 executable:

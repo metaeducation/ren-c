@@ -58,9 +58,9 @@
 
 	if (len == 0)
 		len = uni ? wcslen((REBUNI*)bp) : LEN_BYTES((REBYTE*)bp);
-	
+
 	n = 0;
-	dst = ((uni == -1) || (uni && Is_Wide((REBUNI*)bp, len))) 
+	dst = ((uni == -1) || (uni && Is_Wide((REBUNI*)bp, len)))
 		? Make_Unicode(len+FN_PAD) : Make_Binary(len+FN_PAD);
 
 	for (i = 0; i < len;) {

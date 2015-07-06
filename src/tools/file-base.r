@@ -224,10 +224,10 @@ boot-files: [
 
 mezz-files: [
 ; The old style prot-http.r seems to have been replaced, was commented out.
-; 
+;
 ;	prot-http.r
 
-; Ren/C is core sources with no graphics.  See Atronix R3/View repository. 
+; Ren/C is core sources with no graphics.  See Atronix R3/View repository.
 ;
 ;	view-colors.r
 ;	view-funcs.r

@@ -74,7 +74,7 @@ static void swap_chars(REBVAL *val1, REBVAL *val2)
 
 	if (BYTE_SIZE(s1) && c2 > 0xff) Widen_String(s1);
 	SET_ANY_CHAR(s1, VAL_INDEX(val1), c2);
-	
+
 	if (BYTE_SIZE(s2) && c1 > 0xff) Widen_String(s2);
 	SET_ANY_CHAR(s2, VAL_INDEX(val2), c1);
 }
@@ -588,7 +588,7 @@ zero_str:
 				Set_Series(VAL_TYPE(value), D_RET, Make_Binary(0));
 				return R_RET;
 			}
-		} else 
+		} else
 			len = 1;
 
 		index = VAL_INDEX(value); // /part can change index
@@ -637,7 +637,7 @@ zero_str:
 
 		if (IS_NONE(arg)) Trap_Make(type, arg);
 
-		ser = (type != REB_BINARY) 
+		ser = (type != REB_BINARY)
 			? make_string(arg, (REBOOL)(action == A_MAKE))
 			: make_binary(arg, (REBOOL)(action == A_MAKE));
 
@@ -668,7 +668,7 @@ zero_str:
 		if (
 			(args & (AM_TRIM_ALL | AM_TRIM_WITH)) &&
 			(args & (AM_TRIM_HEAD | AM_TRIM_TAIL | AM_TRIM_LINES | AM_TRIM_AUTO)) ||
-			(args & AM_TRIM_AUTO) && 
+			(args & AM_TRIM_AUTO) &&
 			(args & (AM_TRIM_HEAD | AM_TRIM_TAIL | AM_TRIM_LINES | AM_TRIM_ALL | AM_TRIM_WITH))
 		)
 			Trap0(RE_BAD_REFINES);
@@ -816,7 +816,7 @@ x*/	void Modify_StringX(REBCNT action, REBVAL *string, REBVAL *arg)
 		// Always expand series for INSERT and APPEND actions:
 		Expand_Series(series, index, size);
 	} else {
-		if (size > rlen) 
+		if (size > rlen)
 			Expand_Series(series, index, size-rlen);
 		else if (size < rlen && DS_REF(AN_PART))
 			Remove_Series(series, index, rlen-size);

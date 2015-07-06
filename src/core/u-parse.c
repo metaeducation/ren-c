@@ -46,7 +46,7 @@ typedef struct reb_parse {
 } REBPARSE;
 
 enum parse_flags {
-	PF_SET_OR_COPY, // test PF_COPY first; if false, this means PF_SET 
+	PF_SET_OR_COPY, // test PF_COPY first; if false, this means PF_SET
 	PF_COPY,
 	PF_NOT,
 	PF_NOT2,
@@ -159,7 +159,7 @@ void Print_Parse_Index(REBCNT type, REBVAL *rules, REBSER *series, REBCNT index)
 		if (Do_Path(&path, 0)) return item; // found a function
 		item = DS_TOP;
 		// CureCode #1263 change
-		//		if (parse->type != VAL_TYPE(item) || VAL_SERIES(item) != parse->series) 
+		//		if (parse->type != VAL_TYPE(item) || VAL_SERIES(item) != parse->series)
 		if (!ANY_SERIES(item)) Trap1(RE_PARSE_SERIES, path);
 		*index = Set_Parse_Series(parse, item);
 		return 0;
@@ -207,7 +207,7 @@ void Print_Parse_Index(REBCNT type, REBVAL *rules, REBSER *series, REBCNT index)
 
 	case REB_EMAIL:
 	case REB_STRING:
-	case REB_BINARY: 
+	case REB_BINARY:
 		index = Find_Str_Str(series, 0, index, SERIES_TAIL(series), 1, VAL_SERIES(item), VAL_INDEX(item), VAL_LEN(item), flags);
 		break;
 
@@ -607,7 +607,7 @@ bad_target:
 		}
 		else if (n > 0)
 			Trap1(RE_PARSE_RULE, item);
-		else	
+		else
 			item = Get_Parse_Value(item); // variable
 	}
 	else if (IS_PATH(item)) {
@@ -723,7 +723,7 @@ bad_target:
 						SET_FLAG(flags, PF_NOT);
 						flags ^= (1<<PF_NOT2);
 						continue;
-	
+
 					case SYM_AND:
 						SET_FLAG(flags, PF_AND);
 						continue;
@@ -735,11 +735,11 @@ bad_target:
 					case SYM_REMOVE:
 						SET_FLAG(flags, PF_REMOVE);
 						continue;
-					
+
 					case SYM_INSERT:
 						SET_FLAG(flags, PF_INSERT);
 						goto post;
-					
+
 					case SYM_CHANGE:
 						SET_FLAG(flags, PF_CHANGE);
 						continue;
@@ -793,7 +793,7 @@ bad_target:
 				// Any other cmd must be a match command, so proceed...
 
 			} else { // It's not a PARSE command, get or set it:
-			
+
 				// word: - set a variable to the series at current index
 				if (IS_SET_WORD(item)) {
 					Set_Var_Series(item, parse->type, series, index);
@@ -885,7 +885,7 @@ bad_target:
 					rulen = 1;
 					i = Parse_To(parse, index, item, cmd == SYM_THRU);
 					break;
-					
+
 				case SYM_QUOTE:
 					if (IS_END(rules)) goto bad_end;
 					rulen = 1;
@@ -1121,7 +1121,7 @@ bad_end:
 
 		if (--Eval_Count <= 0 || Eval_Signals) Do_Signals();
 
-		// Skip whitespace if not /all refinement: 
+		// Skip whitespace if not /all refinement:
 		if (skip_spaces) {
 			uc = 0;
 			for (; index < tail; index++) {
@@ -1164,7 +1164,7 @@ bad_end:
 			if (Check_Bit(set, GET_ANY_CHAR(series, index), !(flags & PF_CASE))) index++;
 
 			// Append new string:
-			Set_String(Append_Value(blk), Copy_String(series, begin, end - begin)); 
+			Set_String(Append_Value(blk), Copy_String(series, begin, end - begin));
 		}
 	}
 	UNSAVE_SERIES(set);
@@ -1203,7 +1203,7 @@ bad_end:
 			Set_String(val, Copy_String(src, s, i - s));
 			VAL_SET_LINE(val);
 			// Skip CRLF if found:
-			if (c == CR && LF == uni ? up[i] : bp[i]) i++; 
+			if (c == CR && LF == uni ? up[i] : bp[i]) i++;
 			s = i;
 		}
 	}
@@ -1300,7 +1300,7 @@ bad_end:
 		item = DS_TOP;
 	}
 	else if (!IS_INTEGER(item))
-		Trap1(RE_PARSE_VARIABLE, hold); 
+		Trap1(RE_PARSE_VARIABLE, hold);
 
 	if (IS_INTEGER(item)) {
 		*index = Int32(item);

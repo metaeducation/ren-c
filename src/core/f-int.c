@@ -157,7 +157,7 @@ REBOOL reb_u64_mul_overflow(u64 x, u64 y, u64 *prod)
 	x0 = (u32)x;
 	y1 = y >> 32;
 	y0 = (u32)y;
-	
+
 	/* p = (x1 * y1) * b^2 + (x0 * y1 + x1 * y0) * b + x0 * y0 */
 
 	if (x1 && y1) return TRUE; /* (x1 * y1) * b^2 overflows */

@@ -115,7 +115,7 @@
 			VAL_EVENT_SER(value) = VAL_GOB(val);
 			break;
 		}
-		return FALSE; 
+		return FALSE;
 
 	case SYM_OFFSET:
 		if (IS_PAIR(val)) {

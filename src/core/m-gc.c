@@ -251,7 +251,7 @@ static void Mark_Value(REBVAL *val, REBCNT depth);
 ***********************************************************************/
 {
 	REBREQ *req;
-	
+
 	if (
 		   IS_EVENT_MODEL(value, EVM_PORT)
 		|| IS_EVENT_MODEL(value, EVM_OBJECT)
@@ -260,7 +260,7 @@ static void Mark_Value(REBVAL *val, REBCNT depth);
 		// The ->ser field of the REBEVT is void*, so we must cast
 		// Comment says it is a "port or object"
 		CHECK_MARK((REBSER*)VAL_EVENT_SER(value), depth);
-	} 
+	}
 
 	if (IS_EVENT_MODEL(value, EVM_DEVICE)) {
 		// In the case of being an EVM_DEVICE event type, the port! will
@@ -268,7 +268,7 @@ static void Mark_Value(REBVAL *val, REBCNT depth);
 		// indirectly by the REBREQ ->req field of the event, which
 		// in turn possibly holds a singly linked list of other requests.
 		req = VAL_EVENT_REQ(value);
-		
+
 		while(req) {
 			// The ->port field of the REBREQ is void*, so we must cast
 			// Comment says it is "link back to REBOL port object"
@@ -290,7 +290,7 @@ static void Mark_Value(REBVAL *val, REBCNT depth);
 	REBDEV *dev;
 	REBREQ *req;
 	REBDEV **devices = Host_Lib->devices;
-	
+
 	for (d = 0; d < RDI_MAX; d++) {
 		dev = devices[d];
 		if (dev)
@@ -751,7 +751,7 @@ mark_obj:
 
 	// Mark all devices:
 	Mark_Devices(0);
-	
+
 	count = Sweep_Routines(); // this needs to run before Sweep_Series(), because Routine has series with pointers, which can't be simply discarded by Sweep_Series
 
 	count += Sweep_Series();

@@ -638,21 +638,21 @@ static REBOOL parse_field_type(struct Struct_Field *field, REBVAL *spec, REBVAL 
 			u64 step = 0;
 
 			EXPAND_SERIES_TAIL(VAL_STRUCT_FIELDS(out), 1);
-			
+
 			DS_PUSH_NONE;
 			inner = DS_TOP; /* save in stack so that it won't be GC'ed when MT_Struct is recursively called */
 
 			field = (struct Struct_Field *)SERIES_SKIP(VAL_STRUCT_FIELDS(out), field_idx);
 			field->offset = (REBCNT)offset;
 			if (IS_SET_WORD(blk)) {
-				field->sym = VAL_WORD_SYM(blk); 
+				field->sym = VAL_WORD_SYM(blk);
 				expect_init = TRUE;
 				if (raw_addr) {
 					/* initialization is not allowed for raw memory struct */
 					Trap_Arg(blk);
 				}
 			} else if (IS_WORD(blk)) {
-				field->sym = VAL_WORD_SYM(blk); 
+				field->sym = VAL_WORD_SYM(blk);
 				expect_init = FALSE;
 			} else {
 				Trap_Type(blk);
@@ -741,7 +741,7 @@ static REBOOL parse_field_type(struct Struct_Field *field, REBVAL *spec, REBVAL 
 			}
 
 			offset +=  step;
-			/* 
+			/*
 			if (alignment != 0) {
 				offset = ((offset + alignment - 1) / alignment) * alignment;
 			}
@@ -952,7 +952,7 @@ static void init_fields(REBVAL *ret, REBVAL *spec)
 	REBVAL *arg;
 	REBSTU *strut;
 	REBVAL *ret;
-	
+
 	arg = D_ARG(2);
 	val = D_ARG(1);
 	strut = 0;

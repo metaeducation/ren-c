@@ -237,7 +237,7 @@ static void No_Nones(REBVAL *arg) {
 		// Always expand series for INSERT and APPEND actions:
 		Expand_Series(series, index, size);
 	} else {
-		if (size > rlen) 
+		if (size > rlen)
 			Expand_Series(series, index, size-rlen);
 		else if (size < rlen && DS_REF(AN_PART))
 			Remove_Series(series, index, rlen-size);
@@ -406,7 +406,7 @@ static struct {
 	if (NOT_END(args) && !TYPE_CHECK(args, VAL_TYPE((REBVAL*)v2))) {
 		Trap3(RE_EXPECT_ARG, Of_Type(sort_flags.compare), args, Of_Type((REBVAL*)v2));
 	}
-	
+
 	val = Apply_Func(0, sort_flags.compare, v1, v2, 0);
 
 	if (IS_LOGIC(val)) {
@@ -455,8 +455,8 @@ static struct {
 	sort_flags.compare = 0;
 	sort_flags.offset = 0;
 
-	if (IS_INTEGER(compv)) sort_flags.offset = Int32(compv)-1; 
-	if (ANY_FUNC(compv)) sort_flags.compare = compv; 
+	if (IS_INTEGER(compv)) sort_flags.offset = Int32(compv)-1;
+	if (ANY_FUNC(compv)) sort_flags.compare = compv;
 
 	// Determine length of sort:
 	len = Partial1(block, part);
@@ -700,7 +700,7 @@ zero_blk:
 				Set_Block(D_RET, Make_Block(0));
 				return R_RET;
 			}
-		} else 
+		} else
 			len = 1;
 
 		index = VAL_INDEX(value); // /part can change index

@@ -157,7 +157,7 @@ Access: [
 	invalid-port-arg:   [{invalid port argument:} arg1]
 	no-port-action:     [{this port does not support:} :arg1]
 	protocol:           [{protocol error:} :arg1]
-	invalid-check:      [{invalid checksum (tampered file):} :arg1] 
+	invalid-check:      [{invalid checksum (tampered file):} :arg1]
 
 	write-error:        [{write failed:} :arg1 {reason:} :arg2]
 	read-error:         [{read failed:} :arg1 {reason:} :arg2]

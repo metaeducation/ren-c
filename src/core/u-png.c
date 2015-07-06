@@ -124,7 +124,7 @@ static int is_supported_chunk(unsigned char *p) {
 	 memcmp(p,"tRNS",4)) {
 		if(p[0]&0x20)
 			return 0;
-		else 
+		else
 			trap_png();
 	}
 	return 1;
@@ -244,7 +244,7 @@ static void process_row_0_2(unsigned char *p,int width,int r,int hoff,int hskip)
 			*imgp=0x00000000;
 		} else {
 			v=bytetab2[v];
-			*imgp=TO_PIXEL_COLOR(v, v, v, 0xff);			
+			*imgp=TO_PIXEL_COLOR(v, v, v, 0xff);
 		}
 		imgp+=hskip;
 		m<<=2;
@@ -266,7 +266,7 @@ static void process_row_0_4(unsigned char *p,int width,int r,int hoff,int hskip)
 			*imgp=0x00000000;
 		} else {
 			v|=(v<<4);
-			*imgp=TO_PIXEL_COLOR(v, v, v, 0xff);			
+			*imgp=TO_PIXEL_COLOR(v, v, v, 0xff);
 		}
 		imgp+=hskip;
 		m<<=4;
@@ -555,7 +555,7 @@ void png_load(unsigned char *buffer, int nbytes, char *output, REBOOL *alpha) {
 	transparent_gray=transparent_red=transparent_green=transparent_blue=0x00ffffff;
 	while(1) {
 		p=get_chunk(&buffer,&nbytes,type,&length);
-		if(!memcmp(type,"IEND",4)) 
+		if(!memcmp(type,"IEND",4))
 			trap_png();
 		else if(!memcmp(type,"IDAT",4))
 			break;
@@ -741,7 +741,7 @@ static void emitchunk(unsigned char **cpp,char *type,char *data,int length) {
 			ret=deflate(&zstream,(y==h-1)?Z_FINISH:0);
 			if((ret==Z_OK)||(ret==Z_BUF_ERROR))
 				continue;
-			if(ret==Z_STREAM_END)	
+			if(ret==Z_STREAM_END)
 				break;
 
 			codi->error = CODI_ERR_ENCODING;

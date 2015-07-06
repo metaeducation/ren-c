@@ -25,7 +25,7 @@
 **  Author:  Shixin Zeng
 **  Notes:
 **		When Rebol3 was open-sourced in 12-Dec-2012, that version had lost
-**		support for the ROUTINE! type from Rebol2.  It was later 
+**		support for the ROUTINE! type from Rebol2.  It was later
 **		reimplemented by Atronix in their fork via the cross-platform (and
 **		popularly used) Foreign Function Interface library "libffi":
 **
@@ -116,14 +116,14 @@
 		struct _ffi_type **elements;
 	} ffi_type;
 
-	#define FFI_TYPE_VOID       0    
+	#define FFI_TYPE_VOID       0
 	#define FFI_TYPE_INT        1
-	#define FFI_TYPE_FLOAT      2    
+	#define FFI_TYPE_FLOAT      2
 	#define FFI_TYPE_DOUBLE     3
 	#define FFI_TYPE_LONGDOUBLE 4
-	#define FFI_TYPE_UINT8      5   
+	#define FFI_TYPE_UINT8      5
 	#define FFI_TYPE_SINT8      6
-	#define FFI_TYPE_UINT16     7 
+	#define FFI_TYPE_UINT16     7
 	#define FFI_TYPE_SINT16     8
 	#define FFI_TYPE_UINT32     9
 	#define FFI_TYPE_SINT32     10
@@ -466,12 +466,12 @@ static REBOOL rebol_type_to_ffi(REBVAL *out, REBVAL *elem, REBCNT idx)
 	return TRUE;
 }
 
-/* make a copy of the argument 
+/* make a copy of the argument
  * arg referes to return value when idx = 0
  * function args start from idx = 1
  *
- * For FFI_TYPE_POINTER, a temperary pointer could be needed 
- * (whose address is returned). The pointer is stored in rebol 
+ * For FFI_TYPE_POINTER, a temperary pointer could be needed
+ * (whose address is returned). The pointer is stored in rebol
  * stack, so DS_POP is needed after the function call is done.
  * The number to pop is returned by pop
  * */

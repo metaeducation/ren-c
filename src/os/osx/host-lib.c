@@ -195,7 +195,7 @@ static void *Task_Ready;
 {
 	//OS_Call_Device(RDI_STDIO, RDC_CLOSE); // close echo
 	OS_Quit_Devices(0);
-#ifndef REB_CORE	
+#ifndef REB_CORE
 	OS_Destroy_Graphics();
 #endif
 	exit(code);
@@ -697,7 +697,7 @@ static int Try_Browser(char *browser, REBCHR *url)
 		*string = str;
 		return FALSE;
 	}
-	
+
 	//empty string check
 	if (len == 0) {
 		*string = NULL;
@@ -705,7 +705,7 @@ static int Try_Browser(char *browser, REBCHR *url)
 		//convert to UTF8
 		*string = (REBCHR*)OS_Make(len+1);
 		for (n = 0; n < len; n++)
-			*string[n] = (unsigned char)((wchar_t*)str)[n]; 		
+			*string[n] = (unsigned char)((wchar_t*)str)[n];
 	}
 	return TRUE;
 }

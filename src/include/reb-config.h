@@ -134,7 +134,7 @@ These are now obsolete (as of A107) and should be removed:
 // (not POSIX)... but depends on X11 to get it (Win32 only needs Win32 API).
 // Atronix build had removed this flag to get the clipboard.  Really this
 // should be done in a more modular way so that the core does not have a
-// static table for this (!)   
+// static table for this (!)
 #define MIN_OS
 
 // !!! No AGG definitions in Ren/C core
@@ -150,7 +150,7 @@ These are now obsolete (as of A107) and should be removed:
 #else
 #define API_EXPORT
 #define DEF_UINT
-#endif 
+#endif
 
 #define API_IMPORT
 #endif

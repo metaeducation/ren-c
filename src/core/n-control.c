@@ -226,7 +226,7 @@ enum {
 			return R_ARG1;
 		}
 	}
-	
+
 	if (GET_FLAG(flags, PROT_HIDE)) Trap0(RE_BAD_REFINES);
 
 	Protect_Value(val, flags);

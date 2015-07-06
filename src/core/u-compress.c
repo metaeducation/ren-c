@@ -118,7 +118,7 @@
 	if (len <= 4) Trap0(RE_PAST_END); // !!! better msg needed
 	size = Bytes_To_REBCNT(BIN_SKIP(input, len) - sizeof(REBCNT));
 
-	if (limit && size > limit) Trap_Num(RE_SIZE_LIMIT, size); 
+	if (limit && size > limit) Trap_Num(RE_SIZE_LIMIT, size);
 
 	output = Make_Binary(size);
 

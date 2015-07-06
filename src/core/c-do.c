@@ -1847,7 +1847,7 @@ eval_func2:
 	if (arg) {
 		if (IS_NONE(arg)) {
 			SET_INTEGER(TASK_THIS_VALUE, 0);
-		} else 
+		} else
 			*TASK_THIS_VALUE = *arg;	// save the value
 	} else {
 		SET_NONE(TASK_THIS_VALUE);
@@ -2264,7 +2264,7 @@ xx*/	REBVAL *Do_Path(REBVAL **path_val, REBVAL *val)
 			// given then the func sets the value of the field.
 			value = func(value, selector, val); // val can be zero
 			if (!value) break; // done (field was set)
-			*DS_TOP = *value; 
+			*DS_TOP = *value;
 			if (!ANY_FUNC(value)) break; // done
 			// Now, use code at top of loop for FUNC
 		}

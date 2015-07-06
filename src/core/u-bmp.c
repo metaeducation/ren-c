@@ -478,7 +478,7 @@ void Unmap_Bytes(void *srcp, REBYTE **dstp, char *map) {
 					for (j = 0; j<c; j++) {
 						x = *cp++ & 0xff;
 						color = &ctab[x];
-						*dp++ = TO_PIXEL_COLOR(color->rgbRed, color->rgbGreen, color->rgbBlue, 0xff);						
+						*dp++ = TO_PIXEL_COLOR(color->rgbRed, color->rgbGreen, color->rgbBlue, 0xff);
 					}
 					while (j++ % 2)
 						cp++;

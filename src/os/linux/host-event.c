@@ -311,7 +311,7 @@ static void handle_button(XEvent *ev, REBGOB *gob)
 	//RL_Print("Button %d event at %d\n", ev->xbutton.button, ev->xbutton.time);
 	static Time last_click = 0;
 	static REBINT last_click_button = 0;
-	// Handle XEvents and flush the input 
+	// Handle XEvents and flush the input
 	REBINT xyd = 0;
 	REBEVT *evt = NULL;
 	xyd = (ROUND_TO_INT(PHYS_COORD_X(ev->xbutton.x))) + (ROUND_TO_INT(PHYS_COORD_Y(ev->xbutton.y)) << 16);
@@ -675,7 +675,7 @@ static void handle_key(XEvent *ev, REBGOB *gob)
 
 		/*
 		   RL_Print ("Key event %s with key %x (flags: %x) is sent\n",
-		   ev->type == KeyPress? "EVT_KEY" : "EVT_KEY_UP", 
+		   ev->type == KeyPress? "EVT_KEY" : "EVT_KEY_UP",
 		   key,
 		   flags);
 		   */
@@ -739,7 +739,7 @@ static void handle_expose(XEvent *ev, REBGOB *gob)
 void Dispatch_Event(XEvent *ev)
 {
 	REBGOB *gob = NULL;
-	// Handle XEvents and flush the input 
+	// Handle XEvents and flush the input
 	REBINT flags = 0;
 	if (resize_events[0] != NULL
 	   	&& ev->type != ConfigureNotify) {/* handle expose after resizing */
@@ -772,7 +772,7 @@ void Dispatch_Event(XEvent *ev)
 				handle_expose(ev, gob);
 			}
 			break;
-			
+
 		case ButtonPress:
 		case ButtonRelease:
 			gob = Find_Gob_By_Window(ev->xbutton.window);

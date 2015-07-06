@@ -74,7 +74,7 @@
 		// Always expand dst_ser for INSERT and APPEND actions:
 		Expand_Series(dst_ser, dst_idx, size);
 	} else {
-		if (size > dst_len) 
+		if (size > dst_len)
 			Expand_Series(dst_ser, dst_idx, size-dst_len);
 		else if (size < dst_len && GET_FLAG(flags, AN_PART))
 			Remove_Series(dst_ser, dst_idx, dst_len-size);
@@ -177,7 +177,7 @@
 		// Always expand dst_ser for INSERT and APPEND actions:
 		Expand_Series(dst_ser, dst_idx, size);
 	} else {
-		if (size > dst_len) 
+		if (size > dst_len)
 			Expand_Series(dst_ser, dst_idx, size - dst_len);
 		else if (size < dst_len && GET_FLAG(flags, AN_PART))
 			Remove_Series(dst_ser, dst_idx, dst_len - size);

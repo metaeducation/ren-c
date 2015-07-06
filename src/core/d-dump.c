@@ -195,7 +195,7 @@ xx*/  REBSER *Dump_Value(REBVAL *block, REBSER *series)
 	if (VAL_TYPE(block) >= REB_MAX) Crash(RP_DATATYPE+7, VAL_TYPE(block));
 
 	ASSERT2(series, 9997);
-	mo.series = series; 
+	mo.series = series;
 	Emit(&mo, "T: ", block);
 
 	Mold_Value(&mo, block, TRUE);

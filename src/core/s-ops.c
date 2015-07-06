@@ -721,7 +721,7 @@ static REBYTE seed_str[SEED_LEN] = {
 	} else {
 		REBUNI *up = VAL_UNI(val);
 		if (upper) {
-			for (; n < len; n++) { 
+			for (; n < len; n++) {
 				if (up[n] < UNICODE_CASES) up[n] = UP_CASE(up[n]);
 			}
 		}

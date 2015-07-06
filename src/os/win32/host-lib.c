@@ -70,7 +70,7 @@ REBSER* Gob_To_Image(REBGOB *gob);
 #endif
 
 //used to detect non-modal OS dialogs
-BOOL osDialogOpen = FALSE; 
+BOOL osDialogOpen = FALSE;
 
 // Semaphore lock to sync sub-task launch:
 static void *Task_Ready;
@@ -348,7 +348,7 @@ static void *Task_Ready;
 {
 	//OS_Call_Device(RDI_STDIO, RDC_CLOSE); // close echo
 	OS_Quit_Devices(0);
-#ifndef REB_CORE	
+#ifndef REB_CORE
 	OS_Destroy_Graphics();
 #endif
 	exit(code);
@@ -1181,7 +1181,7 @@ input_error:
 **
 */	int OS_Reap_Process(int pid, int *status, int flags)
 /*
- * pid: 
+ * pid:
  * 		> 0, a signle process
  * 		-1, any child process
  * flags:
@@ -1230,7 +1230,7 @@ input_error:
 	//len = OS_Create_Process(path, 0);
 
 	char * const argv[] = {path, NULL};
-	len = OS_Create_Process(path, 1, argv, 0, 
+	len = OS_Create_Process(path, 1, argv, 0,
 							NULL, /* pid */
 							&exit_code,
 							INHERIT_TYPE, NULL, 0, /* input_type, void *input, u32 input_len, */
@@ -1270,14 +1270,14 @@ input_error:
 	if (GET_FLAG(fr->flags, FRF_MULTI)) ofn.Flags |= OFN_ALLOWMULTISELECT;
 
 	osDialogOpen = TRUE;
-	
+
 	if (GET_FLAG(fr->flags, FRF_SAVE))
 		ret = GetSaveFileName(&ofn);
 	else
 		ret = GetOpenFileName(&ofn);
 
 	osDialogOpen = FALSE;
-	
+
 	//if (!ret)
 	//	err = CommDlgExtendedError(); // CDERR_FINDRESFAILURE
 
@@ -1286,11 +1286,11 @@ input_error:
 
 int CALLBACK ReqDirCallbackProc( HWND hWnd, UINT uMsg, LPARAM lParam, LPARAM lpData )
 {
-	static REBOOL inited = FALSE; 
+	static REBOOL inited = FALSE;
 	switch (uMsg) {
 		case BFFM_INITIALIZED:
 			if (lpData) SendMessage(hWnd,BFFM_SETSELECTION,TRUE,lpData);
-			SetForegroundWindow(hWnd);			
+			SetForegroundWindow(hWnd);
 			inited = TRUE;
 			break;
 		case BFFM_SELCHANGED:

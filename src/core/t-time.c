@@ -213,7 +213,7 @@
 			if ((i = Int32(val)) < 0) goto no_time;
 			secs += i * 60;
 			if (secs > MAX_SECONDS) goto no_time;
-	
+
 			if (NOT_END(++val)) {
 				if (IS_INTEGER(val)) {
 					if ((i = Int32(val)) < 0) goto no_time;

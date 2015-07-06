@@ -712,7 +712,7 @@ setDate:
 
 	if (IS_BINARY_ACT(action)) {
 		REBINT	type = VAL_TYPE(arg);
-		
+
 		if (type == REB_DATE) {
 			if (action == A_SUBTRACT) {
 				num = Diff_Date(date, VAL_DATE(arg));
@@ -789,7 +789,7 @@ setDate:
 			}
 //			else if (IS_NONE(arg)) {
 //				secs = nsec = day = month = year = tz = 0;
-//				goto fixTime; 
+//				goto fixTime;
 //			}
 			Trap_Make(REB_DATE, arg);
 

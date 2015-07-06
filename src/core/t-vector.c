@@ -65,7 +65,7 @@ REBU64 f_to_u64(float n) {
 	t.d = n;
 	return t.u;
 }
-		
+
 
 REBU64 get_vect(REBCNT bits, REBYTE *data, REBCNT n)
 {
@@ -98,7 +98,7 @@ REBU64 get_vect(REBCNT bits, REBYTE *data, REBCNT n)
 	case VTSF16:
 	case VTSF32:
 		return f_to_u64(((float*)data)[n]);
-	
+
 	case VTSF64:
 		return ((REBU64*)data)[n];
 	}
@@ -364,7 +364,7 @@ void Set_Vector_Row(REBSER *ser, REBVAL *blk)
 	REBVAL *iblk = 0;
 
 	// UNSIGNED
-	if (IS_WORD(bp) && VAL_WORD_CANON(bp) == SYM_UNSIGNED) { 
+	if (IS_WORD(bp) && VAL_WORD_CANON(bp) == SYM_UNSIGNED) {
 		sign = 1;
 		bp++;
 	}
@@ -604,7 +604,7 @@ bad_make:
 	DEAD_END;
 }
 
-    
+
 /***********************************************************************
 **
 */	void Mold_Vector(REBVAL *value, REB_MOLD *mold, REBFLG molded)
@@ -654,7 +654,7 @@ bad_make:
 			c = 0;
 		}
 		else
-			Append_Byte(mold->series, ' '); 
+			Append_Byte(mold->series, ' ');
 	}
 
 	if (len) mold->series->tail--; // remove final space

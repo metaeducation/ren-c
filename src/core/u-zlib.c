@@ -13,7 +13,7 @@
 
 /* adler32.c -- compute the Adler-32 checksum of a data stream
  * Copyright (C) 1995-1998 Mark Adler
- * For conditions of distribution and use, see copyright notice in zlib.h 
+ * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
 uLong ZEXPORT adler32(adler, buf, len)
@@ -65,7 +65,7 @@ uLong crc32(uLong num, const Bytef *buf, uInt len)
 ///////////////////////////////////////////
 /* deflate.c -- compress data using the deflation algorithm
  * Copyright (C) 1995-1998 Jean-loup Gailly.
- * For conditions of distribution and use, see copyright notice in zlib.h 
+ * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
 /*
@@ -297,7 +297,7 @@ int ZEXPORT deflateInit2_(strm, level, method, windowBits, memLevel, strategy,
     if (strm->zfree == Z_NULL) strm->zfree = zcfree;
 
 	if (!strm->checksum) strm->checksum = adler32;
-	
+
     if (level == Z_DEFAULT_COMPRESSION) level = 6;
 /* #ifdef FASTEST */
 /*     level = 1; */
@@ -359,7 +359,7 @@ int ZEXPORT deflateReset (strm)
     z_streamp strm;
 {
     deflate_state *s;
-    
+
     if (strm == Z_NULL || strm->state == Z_NULL ||
         strm->zalloc == Z_NULL || strm->zfree == Z_NULL) return Z_STREAM_ERROR;
 
@@ -396,7 +396,7 @@ local void putShortMSB (s, b)
 {
     put_byte(s, (Byte)(b >> 8));
     put_byte(s, (Byte)(b & 0xff));
-}   
+}
 
 /* =========================================================================
  * Flush as much pending output as possible. All deflate() output goes
@@ -958,14 +958,14 @@ local void fill_window(s)
  * IN assertion: strstart is set to the end of the current match.
  */
 static void
-FLUSH_BLOCK_ONLY(deflate_state *s, int eof) { 
-   _tr_flush_block(s, (s->block_start >= 0L ? 
-                   (charf *)&s->window[(unsigned)s->block_start] : 
-                   (charf *)Z_NULL), 
-		(ulg)((long)s->strstart - s->block_start), 
-		(eof)); 
-   s->block_start = s->strstart; 
-   flush_pending(s->strm); 
+FLUSH_BLOCK_ONLY(deflate_state *s, int eof) {
+   _tr_flush_block(s, (s->block_start >= 0L ?
+                   (charf *)&s->window[(unsigned)s->block_start] :
+                   (charf *)Z_NULL),
+		(ulg)((long)s->strstart - s->block_start),
+		(eof));
+   s->block_start = s->strstart;
+   flush_pending(s->strm);
 }
 
 /* Same but force premature exit if necessary. */
@@ -1163,7 +1163,7 @@ local block_state deflate_slow(s, flush)
 
 /* infblock.c -- interpret and process block types to last block
  * Copyright (C) 1995-1998 Mark Adler
- * For conditions of distribution and use, see copyright notice in zlib.h 
+ * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
 //rls#include "zutil.h"
@@ -1562,7 +1562,7 @@ z_streamp z;
 
 /* infcodes.c -- process literals and length/distance pairs
  * Copyright (C) 1995-1998 Mark Adler
- * For conditions of distribution and use, see copyright notice in zlib.h 
+ * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
 //rls#include "zutil.h"
@@ -1816,7 +1816,7 @@ z_streamp z;
 
 /* zutil.c -- target dependent utility functions for the compression library
  * Copyright (C) 1995-1998 Jean-loup Gailly.
- * For conditions of distribution and use, see copyright notice in zlib.h 
+ * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
 
@@ -2052,7 +2052,7 @@ void  zcfree (opaque, ptr)
 
 /* compress.c -- compress a memory buffer
  * Copyright (C) 1995-1998 Jean-loup Gailly.
- * For conditions of distribution and use, see copyright notice in zlib.h 
+ * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
 
@@ -2113,7 +2113,7 @@ int ZEXPORT compress2 (dest, destLen, source, sourceLen, use_crc)
 
 /* uncompr.c -- decompress a memory buffer
  * Copyright (C) 1995-1998 Jean-loup Gailly.
- * For conditions of distribution and use, see copyright notice in zlib.h 
+ * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
 
@@ -2177,7 +2177,7 @@ int ZEXPORT uncompress (dest, destLen, source, sourceLen, use_crc)
 
 /* inflate_util.c -- data and routines common to blocks and codes
  * Copyright (C) 1995-1998 Mark Adler
- * For conditions of distribution and use, see copyright notice in zlib.h 
+ * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
 //rls#include "zutil.h"
@@ -2270,7 +2270,7 @@ int r;
 
 /* trees.c -- output deflated data using Huffman coding
  * Copyright (C) 1995-1998 Jean-loup Gailly
- * For conditions of distribution and use, see copyright notice in zlib.h 
+ * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
 /*
@@ -2585,7 +2585,7 @@ local void gen_trees_header OF((void));
  */
 
 /* !!! #define */
-static void send_bits(deflate_state *s, int value, int length) 
+static void send_bits(deflate_state *s, int value, int length)
 { int len = length;
   if (s->bi_valid > (int)Buf_size - len) {
     int val = value;
@@ -3513,7 +3513,7 @@ local void copy_block(s, buf, len, header)
     s->last_eob_len = 8; /* enough lookahead for inflate */
 
     if (header) {
-        put_short(s, (ush)len);   
+        put_short(s, (ush)len);
         put_short(s, (ush)~len);
 /* #ifdef DEBUG */
 /*         s->bits_sent += 2*16; */
@@ -3533,7 +3533,7 @@ local void copy_block(s, buf, len, header)
 
 /* inftrees.c -- generate Huffman trees for efficient decoding
  * Copyright (C) 1995-1998 Mark Adler
- * For conditions of distribution and use, see copyright notice in zlib.h 
+ * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
 //rls#include "zutil.h"
@@ -3835,7 +3835,7 @@ z_streamp z;            /* for messages */
   if (r == Z_DATA_ERROR){
 //	  z->msg = (char*)"oversubscribed dynamic bit lengths tree";
 	  }
-  
+
   else if (r == Z_BUF_ERROR || *bb == 0)
   {
 //    z->msg = (char*)"incomplete dynamic bit lengths tree";
@@ -3872,7 +3872,7 @@ z_streamp z;            /* for messages */
 	  if (r == Z_DATA_ERROR){
 //		  z->msg = (char*)"oversubscribed literal/length tree";
 		  }
-	  
+
     else if (r != Z_MEM_ERROR)
     {
 //      z->msg = (char*)"incomplete literal/length tree";
@@ -3889,7 +3889,7 @@ z_streamp z;            /* for messages */
 	  if (r == Z_DATA_ERROR){
 //		  z->msg = (char*)"oversubscribed distance tree";
 		  }
-	  
+
     else if (r == Z_BUF_ERROR) {
 #ifdef PKZIP_BUG_WORKAROUND
       r = Z_OK;
@@ -3990,11 +3990,11 @@ z_streamp z;             /* for memory allocation */
 
 /* inflate.c -- zlib interface to inflate modules
  * Copyright (C) 1995-1998 Mark Adler
- * For conditions of distribution and use, see copyright notice in zlib.h 
+ * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
 //rls#include "zutil.h"
-//rls#include "infblock.h" 
+//rls#include "infblock.h"
 
 //rlsstruct inflate_blocks_state {int dummy;}; /* for buggy compilers */
 
@@ -4034,7 +4034,7 @@ struct inflate_internal_state {
   /* mode independent information */
   int  nowrap;          /* flag for no wrapper */
   uInt wbits;           /* log2(window size)  (8..15, defaults to 15) */
-  inflate_blocks_statef 
+  inflate_blocks_statef
     *blocks;            /* current inflate_blocks state */
 
 };

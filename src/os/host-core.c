@@ -43,7 +43,7 @@
 #include "host-lib.h"
 
 #include "png/lodepng.h"
- 
+
 #include "rc4/rc4.h"
 #include "rsa/rsa.h"
 #include "dh/dh.h"
@@ -75,17 +75,17 @@ static u32 *core_ext_words;
 {
     switch (cmd) {
 
-/* 
+/*
 	ENCAP and GUI commands are not supported by Ren/C
 
     case CMD_CORE_SHOW_CONSOLE:
-#ifdef TO_WIN32	
+#ifdef TO_WIN32
         Console_Window(TRUE);
 #endif
         break;
 
     case CMD_CORE_HIDE_CONSOLE:
-#ifdef TO_WIN32	
+#ifdef TO_WIN32
         Console_Window(FALSE);
 #endif
         break;
@@ -97,10 +97,10 @@ static u32 *core_ext_words;
 			COPY_MEM((REBYTE *)RL_SERIES(encapData, RXI_SER_DATA), encapBuffer, encapBufferLen);
 			FREE_MEM(encapBuffer);
 			encapBuffer = NULL;
-			
+
 			//hack! - will set the tail to data size
 			*((REBCNT*)(encapData+1)) = encapBufferLen;
-			
+
 			//setup returned binary! value
 			RXA_TYPE(frm,1) = RXT_BINARY;
 			RXA_SERIES(frm,1) = encapData;
@@ -120,9 +120,9 @@ static u32 *core_ext_words;
 			REBINT h = RXA_IMAGE_HEIGHT(frm,1);
 			LodePNGState state;
 			unsigned error;
-			
+
 			lodepng_state_init(&state);
-			
+
 			//disable autopilot ;)
 			state.encoder.auto_convert = LAC_NO;
 			//input format
@@ -131,13 +131,13 @@ static u32 *core_ext_words;
 			//output format
 			state.info_png.color.colortype = LCT_RGBA;
 			state.info_png.color.bitdepth = 8;
-			
+
 			//encode
 			error = lodepng_encode(&buffer, &buffersize, RXA_IMAGE_BITS(frm,1), w, h, &state);
-			
+
 			//cleanup
 			lodepng_state_cleanup(&state);
-			
+
 			if (error) {
 				if (buffer != NULL) free(buffer);
 				return RXR_NONE;
@@ -148,14 +148,14 @@ static u32 *core_ext_words;
 			binaryBuffer = (REBYTE *)RL_SERIES(binary, RXI_SER_DATA);
 			//copy PNG data
 			memcpy(binaryBuffer, buffer, buffersize);
-			
+
 			//hack! - will set the tail to buffersize
 			*((REBCNT*)(binary+1)) = buffersize;
-			
+
 			//setup returned binary! value
-			RXA_TYPE(frm,1) = RXT_BINARY;			
+			RXA_TYPE(frm,1) = RXT_BINARY;
 			RXA_SERIES(frm,1) = binary;
-			RXA_INDEX(frm,1) = 0;			
+			RXA_INDEX(frm,1) = 0;
 			free(buffer);
 			return RXR_VALUE;
 		}
@@ -167,7 +167,7 @@ static u32 *core_ext_words;
     case CMD_CORE_CONSOLE_OUTPUT:
 #ifdef TO_WIN32
         Console_Output(RXA_LOGIC(frm, 1));
-#endif		
+#endif
         break;
 
 	case CMD_CORE_REQ_DIR:
@@ -179,26 +179,26 @@ static u32 *core_ext_words;
 			REBCHR *path = NULL;
 			REBOOL osTitle = FALSE;
 			REBOOL osPath = FALSE;
-			
+
 			//allocate new string!
 			string = (REBSER*)RL_Make_String(MAX_PATH, TRUE);
 			stringBuffer = (REBCHR*)RL_SERIES(string, RXI_SER_DATA);
-			
-			
+
+
 			if (RXA_TYPE(frm, 2) == RXT_STRING) {
 				osTitle = As_OS_Str(RXA_SERIES(frm, 2),  (REBCHR**)&title);
 			} else {
 				title = L"Please, select a directory...";
 			}
-			
+
 			if (RXA_TYPE(frm, 4) == RXT_STRING) {
 				osPath = As_OS_Str(RXA_SERIES(frm, 4),  (REBCHR**)&path);
 			}
-			
+
 			if (OS_Request_Dir(title , &stringBuffer, path)){
 				//hack! - will set the tail to string length
 				*((REBCNT*)(string+1)) = wcslen(stringBuffer);
-				
+
 				RXA_TYPE(frm, 1) = RXT_STRING;
 				RXA_SERIES(frm,1) = string;
 				RXA_INDEX(frm,1) = 0;
@@ -209,13 +209,13 @@ static u32 *core_ext_words;
 			//don't let the strings leak!
 			if (osTitle) OS_Free(title);
 			if (osPath) OS_Free(path);
-			
+
 			return RXR_VALUE;
 #endif
 		}
 		break;
 */
-		
+
 		case CMD_CORE_RC4:
 		{
 			RC4_CTX *ctx;
@@ -233,7 +233,7 @@ static u32 *core_ext_words;
 					RXA_TYPE(frm,1) = RXT_LOGIC;
 					return RXR_VALUE;
 				}
-				
+
 				//get data
 				data = RXA_SERIES(frm,5);
 				dataBuffer = (REBYTE *)RL_SERIES(data, RXI_SER_DATA) + RXA_INDEX(frm,5);
@@ -244,14 +244,14 @@ static u32 *core_ext_words;
 				//key defined - setup new context
 				ctx = (RC4_CTX*)OS_Make(sizeof(*ctx));
 				memset(ctx, 0, sizeof(*ctx));
-				
+
 				key = RXA_SERIES(frm, 2);
 
 				RC4_setup(ctx, (REBYTE *)RL_SERIES(key, RXI_SER_DATA) + RXA_INDEX(frm, 2), RL_SERIES(key, RXI_SER_TAIL) - RXA_INDEX(frm, 2));
 
 				RXA_TYPE(frm, 1) = RXT_HANDLE;
 				RXA_HANDLE(frm,1) = ctx;
-			} 
+			}
 
 			return RXR_VALUE;
 		}
@@ -282,7 +282,7 @@ static u32 *core_ext_words;
 				data = RXA_SERIES(frm, 6);
 				dataBuffer = (REBYTE *)RL_SERIES(data, RXI_SER_DATA) + RXA_INDEX(frm, 6);
 				len = RL_SERIES(data, RXI_SER_TAIL) - RXA_INDEX(frm, 6);
-				
+
 				if (len == 0) return RXT_NONE;
 
 				//calculate padded length
@@ -306,24 +306,24 @@ static u32 *core_ext_words;
 				{
 					AES_cbc_decrypt(
 						ctx,
-						(const uint8_t *)dataBuffer, 
+						(const uint8_t *)dataBuffer,
 						binaryOutBuffer, pad_len
 					);
 				} else {
 					AES_cbc_encrypt(
 						ctx,
-						(const uint8_t *)dataBuffer, 
+						(const uint8_t *)dataBuffer,
 						binaryOutBuffer, pad_len
 					);
 				}
 
 				if (pad_data) OS_Free(pad_data);
-		
+
 				//hack! - will set the tail to buffersize
 				*((REBCNT*)(binaryOut+1)) = pad_len;
-		
+
 				//setup returned binary! value
-				RXA_TYPE(frm, 1) = RXT_BINARY;		
+				RXA_TYPE(frm, 1) = RXT_BINARY;
 				RXA_SERIES(frm, 1) = binaryOut;
 				RXA_INDEX(frm, 1) = 0;
 
@@ -349,7 +349,7 @@ static u32 *core_ext_words;
 				//key defined - setup new context
 				ctx = (AES_CTX*)OS_Make(sizeof(*ctx));
 				memset(ctx, 0, sizeof(*ctx));
-				
+
 				key = RXA_SERIES(frm,2);
 				len = (RL_SERIES(key, RXI_SER_TAIL) - RXA_INDEX(frm,2)) << 3;
 
@@ -397,7 +397,7 @@ static u32 *core_ext_words;
 			if (RXA_WORD(frm, 5)) { //padding refinement
 				padding = (RXA_TYPE(frm, 6) != RXT_NONE);
 			}
-			
+
             words = RL_WORDS_OF_OBJECT(obj);
             w = words;
 
@@ -406,7 +406,7 @@ static u32 *core_ext_words;
 				if (type == RXT_BINARY){
 					objData = (REBYTE *)RL_SERIES(val.series, RXI_SER_DATA) + val.index;
 					objData_len = RL_SERIES(val.series, RXI_SER_TAIL) - val.index;
-					
+
 					switch(RL_FIND_WORD(core_ext_words,w[0]))
 					{
 						case W_CORE_N:
@@ -486,15 +486,15 @@ static u32 *core_ext_words;
 
 			//hack! - will set the tail to buffersize
 			*((REBCNT*)(binary+1)) = binary_len;
-			
+
 			//setup returned binary! value
-			RXA_TYPE(frm,1) = RXT_BINARY;			
+			RXA_TYPE(frm,1) = RXT_BINARY;
 			RXA_SERIES(frm,1) = binary;
-			RXA_INDEX(frm,1) = 0;			
+			RXA_INDEX(frm,1) = 0;
 			free(data_bi);
 			return RXR_VALUE;
 		}
-		
+
 		case CMD_CORE_DH_GENERATE_KEY:
 		{
 			DH_CTX dh_ctx;
@@ -511,7 +511,7 @@ static u32 *core_ext_words;
 				if (type == RXT_BINARY)
 				{
 					objData = (REBYTE *)RL_SERIES(val.series, RXI_SER_DATA) + val.index;
-					
+
 					switch(RL_FIND_WORD(core_ext_words,words[0]))
 					{
 						case W_CORE_P:
@@ -526,7 +526,7 @@ static u32 *core_ext_words;
 				}
 				words++;
 			}
-			
+
 			if (!dh_ctx.p || !dh_ctx.g) break;
 
 			//allocate new binary! blocks for priv/pub keys
@@ -536,7 +536,7 @@ static u32 *core_ext_words;
 			memset(dh_ctx.x, 0, dh_ctx.len);
 			//hack! - will set the tail to key size
 			*((REBCNT*)(((void**)priv_key.series)+1)) = dh_ctx.len;
-			
+
 			pub_key.series = (REBSER*)RL_Make_String(dh_ctx.len, FALSE);
 			pub_key.index = 0;
 			dh_ctx.gx = (REBYTE *)RL_SERIES(pub_key.series, RXI_SER_DATA);
@@ -548,9 +548,9 @@ static u32 *core_ext_words;
 			DH_generate_key(&dh_ctx);
 
 			//set the object fields
-			RL_Set_Field(obj, core_ext_words[W_CORE_PRIV_KEY], priv_key, RXT_BINARY);	
-			RL_Set_Field(obj, core_ext_words[W_CORE_PUB_KEY], pub_key, RXT_BINARY);	
-			
+			RL_Set_Field(obj, core_ext_words[W_CORE_PRIV_KEY], priv_key, RXT_BINARY);
+			RL_Set_Field(obj, core_ext_words[W_CORE_PUB_KEY], pub_key, RXT_BINARY);
+
 			break;
 		}
 
@@ -573,7 +573,7 @@ static u32 *core_ext_words;
 				if (type == RXT_BINARY)
 				{
 					objData = (REBYTE *)RL_SERIES(val.series, RXI_SER_DATA) + val.index;
-					
+
 					switch(RL_FIND_WORD(core_ext_words,words[0]))
 					{
 						case W_CORE_P:
@@ -587,7 +587,7 @@ static u32 *core_ext_words;
 				}
 				words++;
 			}
-			
+
 			dh_ctx.gy = (REBYTE *)RL_SERIES(pub_key, RXI_SER_DATA) + RXA_INDEX(frm, 2);
 
 			if (!dh_ctx.p || !dh_ctx.x || !dh_ctx.gy) return RXR_NONE;
@@ -603,11 +603,11 @@ static u32 *core_ext_words;
 
 			DH_compute_key(&dh_ctx);
 
-			
+
 			//setup returned binary! value
-			RXA_TYPE(frm,1) = RXT_BINARY;			
+			RXA_TYPE(frm,1) = RXT_BINARY;
 			RXA_SERIES(frm,1) = binary;
-			RXA_INDEX(frm,1) = 0;			
+			RXA_INDEX(frm,1) = 0;
 			return RXR_VALUE;
 		}
 

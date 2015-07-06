@@ -461,11 +461,11 @@ const REBCNT Gob_Flag_Words[] = {
 	case SYM_FLAGS:
 		if (IS_WORD(val)) Set_Gob_Flag(gob, val);
 		else if (IS_BLOCK(val)) {
-			REBINT i;		
+			REBINT i;
 			//clear only flags defined by words
 			for (i = 0; Gob_Flag_Words[i]; i += 2)
 				CLR_FLAG(gob->flags, Gob_Flag_Words[i+1]);
-			
+
 			for (val = VAL_BLK(val); NOT_END(val); val++)
 				if (IS_WORD(val)) Set_Gob_Flag(gob, val);
 		}

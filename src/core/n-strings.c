@@ -189,7 +189,7 @@ static struct digest {
 			DS_RET_INT(ADLER32(data, len));
 			return R_RET;
 		}
-		
+
 		for (i = 0; i < sizeof(digests) / sizeof(digests[0]); i++) {
 
 			if (digests[i].index == sym) {
@@ -301,7 +301,7 @@ static struct digest {
 	len = Partial1(D_ARG(1), D_ARG(3));
 
 	if (D_REF(5)) limit = Int32s(D_ARG(6), 1); // /limit size
-	
+
 	Set_Binary(D_RET, Decompress(VAL_SERIES(arg), VAL_INDEX(arg), len, limit, D_REF(4))); // /gzip
 
 	return R_RET;
@@ -570,7 +570,7 @@ static struct digest {
 		ser = Entab_Unicode(VAL_UNI(val), VAL_INDEX(val), len, tabsize);
 
 	Set_Series(VAL_TYPE(val), D_RET, ser);
-	
+
 	return R_RET;
 }
 
@@ -595,7 +595,7 @@ static struct digest {
 		ser = Detab_Unicode(VAL_UNI(val), VAL_INDEX(val), len, tabsize);
 
 	Set_Series(VAL_TYPE(val), D_RET, ser);
-	
+
 	return R_RET;
 }
 

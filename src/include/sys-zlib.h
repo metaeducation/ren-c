@@ -1,6 +1,6 @@
 /* zconf.h -- configuration of the zlib compression library
  * Copyright (C) 1995-1998 Jean-loup Gailly.
- * For conditions of distribution and use, see copyright notice in zlib.h 
+ * For conditions of distribution and use, see copyright notice in zlib.h
  */
 #ifndef _ZCONF_H
 #define _ZCONF_H
@@ -328,7 +328,7 @@ typedef uLong FAR uLongf;
 extern "C" {
 #endif
 #define ZLIB_VERSION "1.1.2"
-/* 
+/*
      The 'zlib' compression library provides in-memory compression and
   decompression functions, including integrity checks of the uncompressed
   data.  This version of the library supports only one compression method
@@ -437,7 +437,7 @@ extern const char * ZEXPORT zlibVersion OF((void));
    not compatible with the zlib.h header file used by the application.
    This check is automatically made by deflateInit and inflateInit.
  */
-/* 
+/*
 extern int ZEXPORT deflateInit OF((z_streamp strm, int level));
      Initializes the internal stream state for compression. The fields
    zalloc, zfree and opaque must be initialized before by the caller.
@@ -502,7 +502,7 @@ extern int ZEXPORT deflate OF((z_streamp strm, int flush));
   more input data, until it returns with Z_STREAM_END or an error. After
   deflate has returned Z_STREAM_END, the only possible operations on the
   stream are deflateReset or deflateEnd.
-  
+
     Z_FINISH can be used immediately after deflateInit if all the compression
   is to be done in a single step. In this case, avail_out must be at least
   0.1% larger than avail_in plus 12 bytes.  If deflate does not return
@@ -530,7 +530,7 @@ extern int ZEXPORT deflateEnd OF((z_streamp strm));
    msg may be set but then points to a static string (which must not be
    deallocated).
 */
-/* 
+/*
 extern int ZEXPORT inflateInit OF((z_streamp strm));
      Initializes the internal stream state for decompression. The fields
    next_in, avail_in, zalloc, zfree and opaque must be initialized before by
@@ -588,7 +588,7 @@ extern int ZEXPORT inflate OF((z_streamp strm, int flush));
   may be used for the single inflate() call.
      If a preset dictionary is needed at this point (see inflateSetDictionary
   below), inflate sets strm-adler to the adler32 checksum of the
-  dictionary chosen by the compressor and returns Z_NEED_DICT; otherwise 
+  dictionary chosen by the compressor and returns Z_NEED_DICT; otherwise
   it sets strm->adler to the adler32 checksum of all output produced
   so far (that is, total_out bytes) and returns Z_OK, Z_STREAM_END or
   an error code as described below. At the end of the stream, inflate()
@@ -619,7 +619,7 @@ extern int ZEXPORT inflateEnd OF((z_streamp strm));
 /*
     The following functions are needed only in some special applications.
 */
-/*   
+/*
 extern int ZEXPORT deflateInit2 OF((z_streamp strm,
                                     int  level,
                                     int  method,
@@ -656,7 +656,7 @@ extern int ZEXPORT deflateInit2 OF((z_streamp strm,
    method). msg is set to null if there is no error message.  deflateInit2 does
    not perform any compression: this will be done by deflate().
 */
-                            
+
 /* extern int ZEXPORT deflateSetDictionary OF((z_streamp strm, */
 /*                                             const Bytef *dictionary, */
 /*                                             uInt  dictLength)); */
@@ -728,7 +728,7 @@ extern int ZEXPORT deflateParams OF((z_streamp strm, int level, int strategy));
    stream state was inconsistent or if a parameter was invalid, Z_BUF_ERROR
    if strm->avail_out was zero.
 */
-/*   
+/*
 extern int ZEXPORT inflateInit2 OF((z_streamp strm,
                                     int  windowBits));
      This is another version of inflateInit with an extra parameter. The
@@ -765,7 +765,7 @@ extern int ZEXPORT inflateInit2 OF((z_streamp strm,
    inflate().
 */
 extern int ZEXPORT inflateSync OF((z_streamp strm));
-/* 
+/*
     Skips invalid compressed data until a full flush point (see above the
   description of deflate with Z_FULL_FLUSH) can be found, or until all
   available input is skipped. No output is provided.
@@ -922,7 +922,7 @@ extern int ZEXPORT uncompress OF((Bytef *dest,   uLongf *destLen,
    degrade compression.
 */
 /* extern z_off_t ZEXPORT    gzseek OF((gzFile file, z_off_t offset, int whence)); */
-/* 
+/*
       Sets the starting position for the next gzread or gzwrite on the given
    compressed file. The offset represents a number of bytes in the
    uncompressed data stream. The whence parameter is defined as in lseek(2);
@@ -1231,7 +1231,7 @@ INLINE void  zcfree (voidpf opaque, voidpf ptr) {
 #define INFTREES_H
 /* inftrees.h -- header to use inftrees.c
  * Copyright (C) 1995-1998 Mark Adler
- * For conditions of distribution and use, see copyright notice in zlib.h 
+ * For conditions of distribution and use, see copyright notice in zlib.h
  */
 /* WARNING: this file should *not* be used by applications. It is
    part of the implementation of the compression library and is
@@ -1284,7 +1284,7 @@ extern int inflate_trees_fixed OF((
 #define INFBLOCK_H
 /* infblock.h -- header to use infblock.c
  * Copyright (C) 1995-1998 Mark Adler
- * For conditions of distribution and use, see copyright notice in zlib.h 
+ * For conditions of distribution and use, see copyright notice in zlib.h
  */
 /* WARNING: this file should *not* be used by applications. It is
    part of the implementation of the compression library and is
@@ -1318,7 +1318,7 @@ extern int inflate_blocks_sync_point OF((
 #define INFCODES_H
 /* infcodes.h -- header to use infcodes.c
  * Copyright (C) 1995-1998 Mark Adler
- * For conditions of distribution and use, see copyright notice in zlib.h 
+ * For conditions of distribution and use, see copyright notice in zlib.h
  */
 /* WARNING: this file should *not* be used by applications. It is
    part of the implementation of the compression library and is
@@ -1340,7 +1340,7 @@ extern void inflate_codes_free OF((
 #endif
 /* infutil.h -- types and macros common to blocks and codes
  * Copyright (C) 1995-1998 Mark Adler
- * For conditions of distribution and use, see copyright notice in zlib.h 
+ * For conditions of distribution and use, see copyright notice in zlib.h
  */
 /* WARNING: this file should *not* be used by applications. It is
    part of the implementation of the compression library and is
@@ -1375,7 +1375,7 @@ struct inflate_blocks_state {
       inflate_huft *tb;         /* bit length decoding tree */
     } trees;            /* if DTREE, decoding info for trees */
     struct {
-      inflate_codes_statef 
+      inflate_codes_statef
          *codes;
     } decode;           /* if CODES, current state */
   } sub;                /* submode */
@@ -1424,7 +1424,7 @@ extern int inflate_flush OF((
 #endif
 /* deflate.h -- internal compression state
  * Copyright (C) 1995-1998 Jean-loup Gailly
- * For conditions of distribution and use, see copyright notice in zlib.h 
+ * For conditions of distribution and use, see copyright notice in zlib.h
  */
 /* WARNING: this file should *not* be used by applications. It is
    part of the implementation of the compression library and is
@@ -1676,6 +1676,6 @@ void _tr_stored_block OF((deflate_state *s, charf *buf, ulg stored_len,
 #else
 # define _tr_tally_lit(s, c, flush) flush = _tr_tally(s, 0, c)
 # define _tr_tally_dist(s, distance, length, flush) \
-              flush = _tr_tally(s, distance, length) 
+              flush = _tr_tally(s, distance, length)
 #endif
 #endif

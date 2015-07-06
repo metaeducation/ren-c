@@ -45,7 +45,7 @@ extern "C" {
 		due to the storage of various strings that are used.
 */
 #undef CONFIG_SSL_DEBUG
-	
+
 #define CONFIG_SSL_CERT_VERIFICATION
 #undef CONFIG_SSL_GENERATE_X509_CERT
 

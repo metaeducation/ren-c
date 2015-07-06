@@ -266,7 +266,7 @@ err:
 	return 0;
 }
 
-								
+
 /***********************************************************************
 **
 */	static REBSER *Decode_Base64(REBYTE **src, REBCNT len, REBYTE delim)
@@ -404,7 +404,7 @@ err:
 		for (n = 0x80; n > 0; n = n>>1) {
 			*p++ = (b & n) ? '1' : '0';
 		}
-	
+
 		if ((i+1) % 8 == 0 && brk)
 			*p++ = LF;
 	}
@@ -445,7 +445,7 @@ err:
 
 	if (*(bp-1) != LF && (len >= 32) && brk) *bp++ = LF;
 	*bp = 0;
-	
+
 	SERIES_TAIL(series) = DIFF_PTRS(bp, series->data);
 
 	return series;
@@ -467,7 +467,7 @@ err:
 
 	len = VAL_LEN(value);
 	src = VAL_BIN(value);
-	
+
 	// slop-factor
   	series = Prep_String (series, &p, 4 * len / 3 + 2 * (len / 32) + 5);
 	loop = (int) (len / 3) - 1;

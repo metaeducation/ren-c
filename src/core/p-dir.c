@@ -112,7 +112,7 @@
 		REBSER *ser;
 		REBREQ file;
 
-		CLEARS(&file); 
+		CLEARS(&file);
 		ser = Value_To_OS_Path(path, TRUE);
 		file.file.path = (REBCHR*)(ser->data);
 		file.device = RDI_FILE;
@@ -239,7 +239,7 @@
 
 	if (IS_URL(path)) path = Obj_Value(spec, STD_PORT_SPEC_HEAD_PATH);
 	else if (!IS_FILE(path)) Trap1(RE_INVALID_SPEC, path);
-	
+
 	state = BLK_SKIP(port, STD_PORT_STATE); // if block, then port is open.
 
 	//flags = Security_Policy(SYM_FILE, path);

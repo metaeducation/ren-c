@@ -474,7 +474,7 @@ err:
 		Set_Binary(D_RET, ser);
 
 		//don't free the text binary input buffer during decode (it's the 3rd arg value in fact)
-		// See notice in reb-codec.h on reb_codec_image 
+		// See notice in reb-codec.h on reb_codec_image
 		if (codi.data) {
 			Free_Mem(codi.data, codi.len);
 		}
@@ -485,7 +485,7 @@ err:
 		memcpy(IMG_DATA(ser), codi.bits, codi.w * codi.h * 4);
 		SET_IMAGE(D_RET, ser);
 
-		// See notice in reb-codec.h on reb_codec_image 
+		// See notice in reb-codec.h on reb_codec_image
 		Free_Mem(codi.bits, codi.w * codi.h * 4);
 		break;
 

@@ -203,7 +203,7 @@ static int Check_Char_Range(REBVAL *val, REBINT limit)
 					Trap1(RE_WRONG_TYPE, value);
 			}
 			else Trap_Arg(type);
-		}		
+		}
 	}
 
 	return R_TRUE;
@@ -486,7 +486,7 @@ static int Check_Char_Range(REBVAL *val, REBINT limit)
 **		4 from
 **		5 /all
 **		6 /expand
-**		
+**
 ***********************************************************************/
 {
 	REBSER *target = VAL_OBJ_FRAME(D_ARG(1));
@@ -887,7 +887,7 @@ static int Do_Ordinal(REBVAL *ds, REBINT n)
 #ifdef _DEBUG
 	REBVAL *arg = D_ARG(1);
 
-	if (ANY_SERIES(arg)) 
+	if (ANY_SERIES(arg))
 		Dump_Series(VAL_SERIES(arg), "=>");
 	else
 		Dump_Values(arg, 1);

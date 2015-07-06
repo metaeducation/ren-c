@@ -225,7 +225,7 @@ INLINE void m_add (REBINT n, REBCNT s[], const REBCNT a[], const REBCNT b[]) {
 	for (i = 0; i < n; i++) {
 		c += (REBU64) a[i] + (REBU64) b[i];
 		s[i] = MASK32(c);
-		c >>= 32; 
+		c >>= 32;
 	}
 	s[n] = (REBCNT)c;
 }
@@ -260,7 +260,7 @@ INLINE void m_negate (REBINT n, REBCNT a[]) {
 	}
 }
 
-/* 
+/*
 	Multiplies significand a by b storing the product to p;
 	p and a may be the same;
 	using 64-bit arithmetic;
@@ -271,7 +271,7 @@ INLINE void m_multiply_1 (REBINT n, REBCNT p[], const REBCNT a[], REBCNT b) {
 	for (j = 0; j < n; j++) {
 		g += f * (REBU64) a[j];
 		p[j] = MASK32(g);
-		g >>= 32; 
+		g >>= 32;
 	}
 	p[n] = (REBCNT) g;
 }
@@ -279,7 +279,7 @@ INLINE void m_multiply_1 (REBINT n, REBCNT p[], const REBCNT a[], REBCNT b) {
 /*
 	Decimally shifts significand a to the "left";
 	a must be longer than the complete result;
-	n is the initial length of a; 
+	n is the initial length of a;
 */
 INLINE void dsl (REBINT n, REBCNT a[], REBINT shift) {
 	REBINT shift1;
@@ -307,10 +307,10 @@ INLINE void m_multiply (REBCNT p[/* n + m */], REBINT n, const REBCNT a[], REBIN
 			g >>= 32;
 		}
 		m_add_1 (p + i + j, (REBCNT) g);
-	}	
+	}
 }
 
-/* 
+/*
 	Divides significand a by b yielding quotient q;
 	returns the remainder;
 	b must be nonzero!
@@ -346,7 +346,7 @@ INLINE void dsr (REBINT n, REBCNT a[], REBINT shift, REBINT *t_flag) {
 		} else if ((remainder > divisor / 2) || *t_flag) *t_flag = 3;
 		else *t_flag = 2;
 	}
-} 
+}
 
 /*
 	Decimally shifts significands a and b to make them comparable;
@@ -357,23 +357,23 @@ INLINE void make_comparable (REBCNT a[4], REBINT *ea, REBINT *ta, REBCNT b[4], R
 	REBCNT *c;
 	REBINT *p;
 	REBINT shift, shift1;
-	
+
 	/* set truncate flags to zero */
 	*ta = 0;
-	*tb = 0;	
+	*tb = 0;
 
 	if (*ea == *eb) return; /* no work needed */
-	
+
 	if (*ea < *eb) {
 		/* swap a and b to fulfill the condition below */
 		c = a;
 		a = b;
 		b = c;
-		
+
 		p = ea;
 		ea = eb;
 		eb = p;
-		
+
 		p = ta;
 		ta = tb;
 		tb = p;
@@ -389,13 +389,13 @@ INLINE void make_comparable (REBCNT a[4], REBINT *ea, REBINT *ta, REBCNT b[4], R
 	shift = *ea - *eb;
     dsl (3, a, shift1 = shift1 < shift ? shift1 : shift);
     *ea -= shift1;
-	
+
 	/* decimally shift b to the right if necessary */
 	shift = *ea - *eb;
 	if (!shift) return;
 	if (shift > 26) {
 		/* significand underflow */
-		if (!m_is_zero (3, b)) *tb = 1; 		 
+		if (!m_is_zero (3, b)) *tb = 1;
 		memset (b, 0, 3 * sizeof (REBCNT));
 		*eb = *ea;
 		return;
@@ -407,9 +407,9 @@ INLINE void make_comparable (REBCNT a[4], REBINT *ea, REBINT *ta, REBCNT b[4], R
 REBFLG deci_is_equal (deci a, deci b) {
 	REBINT ea = a.e, eb = b.e, ta, tb;
 	REBCNT sa[] = {a.m0, a.m1, a.m2, 0}, sb[] = {b.m0, b.m1, b.m2, 0};
-	
+
 	make_comparable (sa, &ea, &ta, sb, &eb, &tb);
-	
+
 	/* round */
 	if ((ta == 3) || ((ta == 2) && (sa[0] % 2 == 1))) m_add_1 (sa, 1);
 	else if ((tb == 3) || ((tb == 2) && (sb[0] % 2 == 1))) m_add_1 (sb, 1);
@@ -429,7 +429,7 @@ REBFLG deci_is_lesser_or_equal (deci a, deci b) {
 	if ((ta == 3) || ((ta == 2) && (sa[0] % 2 == 1))) m_add_1 (sa, 1);
 	else if ((tb == 3) || ((tb == 2) && (sb[0] % 2 == 1))) m_add_1 (sb, 1);
 
-	return a.s ? (m_cmp (3, sa, sb) >= 0) : (m_cmp (3, sa, sb) <= 0); 
+	return a.s ? (m_cmp (3, sa, sb) >= 0) : (m_cmp (3, sa, sb) <= 0);
 }
 
 deci deci_add (deci a, deci b) {
@@ -437,15 +437,15 @@ deci deci_add (deci a, deci b) {
 	REBCNT sc[4];
 	REBINT ea = a.e, eb = b.e, ta, tb, tc, test;
 	REBCNT sa[] = {a.m0, a.m1, a.m2, 0}, sb[] = {b.m0, b.m1, b.m2, 0};
-	
+
 	make_comparable (sa, &ea, &ta, sb, &eb, &tb);
-	
+
 	c.s = a.s;
 	if (a.s == b.s) {
 		/* addition */
 		m_add (3, sc, sa, sb);
 		tc = ta + tb;
-		
+
 		/* significand normalization */
 		test = m_cmp (3, sc, P26_1);
 		if ((test > 0) || ((test == 0) && ((tc == 3) || ((tc == 2) && (sc[0] % 2 == 1))))) {
@@ -501,25 +501,25 @@ REBI64 deci_to_int (const deci a) {
 	REBCNT sa[] = {a.m0, a.m1, a.m2, 0};
 	REBINT ta;
 	REBI64 result;
-	
+
 	/* handle zero and small numbers */
 	if (m_is_zero (3, sa) || (a.e < -26)) return (REBI64) 0;
-	
+
 	/* handle exponent */
 	if (a.e >= 20) OVERFLOW_ERROR;
 	if (a.e > 0)
 		if (m_cmp (3, P[20 - a.e], sa) <= 0) OVERFLOW_ERROR;
 		else dsl (3, sa, a.e);
 	else if (a.e < 0) dsr (3, sa, -a.e, &ta);
-	
+
 	/* convert significand to integer */
 	if (m_cmp (3, sa, min_int64_t_as_deci) > 0) OVERFLOW_ERROR;
 	result = ((REBI64) sa[1] << 32) | (REBI64) sa[0];
-	
+
 	/* handle sign */
 	if (a.s && result > MIN_I64) result = -result;
 	if (!a.s && (result < 0)) OVERFLOW_ERROR;
-	 
+
 	return result;
 }
 
@@ -573,16 +573,16 @@ INLINE void m_ldexp (REBCNT a[4], REBINT *f, REBINT e, REBINT ta) {
 	/* take care of exponent overflow */
 	if (e >= 281) OVERFLOW_ERROR;
 	if (e < -281) e = -282;
-	
+
 	*f += e;
-	
+
 	/* decimally shift the significand to the right if needed */
 	if (*f < -128) {
 		if (*f < -154) {
 			/* underflow */
 			memset (a, 0, 3 * sizeof (REBCNT));
 			*f = 0;
-			return;						
+			return;
 		}
 		/* shift and round */
 		dsr (3, a, -128 - *f, &ta);
@@ -590,7 +590,7 @@ INLINE void m_ldexp (REBCNT a[4], REBINT *f, REBINT e, REBINT ta) {
 		if ((ta == 3) || ((ta == 2) && (a[0] % 2 == 1))) m_add_1 (a, 1);
 		return;
 	}
-	
+
 	/* decimally shift the significand to the left if needed */
 	if (*f > 127) {
 		if ((*f >= 153) || (m_cmp (3, P[153 - *f], a) <= 0)) OVERFLOW_ERROR;
@@ -603,7 +603,7 @@ INLINE void m_ldexp (REBCNT a[4], REBINT *f, REBINT e, REBINT ta) {
 deci deci_ldexp (deci a, REBINT e) {
 	REBCNT sa[] = {a.m0, a.m1, a.m2, 0};
 	REBINT f = a.e;
-	
+
 	m_ldexp (sa, &f, e, 0);
 	a.m0 = sa[0];
 	a.m1 = sa[1];
@@ -622,7 +622,7 @@ deci deci_ldexp (deci a, REBINT e) {
 	a.m1 = sa[1]; \
 	a.m2 = sa[2]; \
 	a.e = b.e; \
-	return a;	
+	return a;
 
 /* truncate a to obtain a multiple of b */
 deci deci_truncate (deci a, deci b) {
@@ -635,7 +635,7 @@ deci deci_truncate (deci a, deci b) {
 	c.s = !c.s;
 	a = deci_add (a, c);
 	/* a is now a multiple of b */
-	
+
 	denormalize
 }
 
@@ -654,7 +654,7 @@ deci deci_away (deci a, deci b) {
 	}
 	a = deci_add (a, c);
 	/* a is now a multiple of b */
-	
+
 	denormalize
 }
 
@@ -663,7 +663,7 @@ deci deci_floor (deci a, deci b) {
 	deci c;
 	REBCNT sa[3];
 	REBINT ta = 0;
-	
+
 	c = deci_mod (a, b);
 	/* negate c */
 	c.s = !c.s;
@@ -674,7 +674,7 @@ deci deci_floor (deci a, deci b) {
 	}
 	a = deci_add (a, c);
 	/* a is now a multiple of b */
-	
+
 	denormalize
 }
 
@@ -683,12 +683,12 @@ deci deci_ceil (deci a, deci b) {
 	deci c;
 	REBCNT sa[3];
 	REBINT ta = 0;
-	
+
 	c = deci_mod (a, b);
 	/* negate c */
 	c.s = !c.s;
 	if (c.s && !deci_is_zero (c)) {
-		/* c is negative, add positive b to obtain a positive value */ 
+		/* c is negative, add positive b to obtain a positive value */
 		b.s = 0;
 		c = deci_add (c, b);
 	}
@@ -704,9 +704,9 @@ deci deci_half_even (deci a, deci b) {
 	REBCNT sa[3];
 	REBINT ta = 0;
 	REBFLG g;
-	
+
 	c = deci_mod (a, b);
-	
+
 	/* compare c with b/2 not causing overflow */
 	b.s = 0;
 	c.s = 1;
@@ -729,7 +729,7 @@ deci deci_half_even (deci a, deci b) {
 	}
 	a = deci_add (a, c);
 	/* a is now a multiple of b */
-	
+
 	denormalize
 }
 
@@ -738,9 +738,9 @@ deci deci_half_away (deci a, deci b) {
 	deci c, d;
 	REBCNT sa[3];
 	REBINT ta = 0;
-	
+
 	c = deci_mod (a, b);
-	
+
 	/* compare c with b/2 not causing overflow */
 	b.s = 0;
 	c.s = 1;
@@ -756,7 +756,7 @@ deci deci_half_away (deci a, deci b) {
 	}
 	a = deci_add (a, c);
 	/* a is now a multiple of b */
-	
+
 	denormalize
 }
 
@@ -765,9 +765,9 @@ deci deci_half_truncate (deci a, deci b) {
 	deci c, d;
 	REBCNT sa[3];
 	REBINT ta = 0;
-	
+
 	c = deci_mod (a, b);
-	
+
 	/* compare c with b/2 not causing overflow */
 	b.s = 0;
 	c.s = 1;
@@ -783,7 +783,7 @@ deci deci_half_truncate (deci a, deci b) {
 	}
 	a = deci_add (a, c);
 	/* a is now a multiple of b */
-	
+
 	denormalize
 }
 
@@ -792,9 +792,9 @@ deci deci_half_ceil (deci a, deci b) {
 	deci c, d;
 	REBCNT sa[3];
 	REBINT ta = 0;
-	
+
 	c = deci_mod (a, b);
-	
+
 	/* compare c with b/2 not causing overflow */
 	b.s = 0;
 	c.s = 1;
@@ -831,7 +831,7 @@ deci deci_half_ceil (deci a, deci b) {
 #endif
 	a = deci_add(a, c);
 	/* a is now a multiple of b */
-	
+
 	denormalize
 }
 
@@ -840,9 +840,9 @@ deci deci_half_floor (deci a, deci b) {
 	deci c, d;
 	REBCNT sa[3];
 	REBINT ta = 0;
-	
+
 	c = deci_mod (a, b);
-	
+
 	/* compare c with b/2 not causing overflow */
 	b.s = 0;
 	c.s = 1;
@@ -879,7 +879,7 @@ deci deci_half_floor (deci a, deci b) {
 #endif
 	a = deci_add(a, c);
 	/* a is now a multiple of b */
-	
+
 	denormalize
 }
 
@@ -887,10 +887,10 @@ deci deci_multiply (const deci a, const deci b) {
 	deci c;
 	REBCNT sa[] = {a.m0, a.m1, a.m2}, sb[] = {b.m0, b.m1, b.m2}, sc[7];
 	REBINT shift, tc = 0, e, f = 0;
-	
+
 	/* compute the sign */
 	c.s = (!a.s && b.s) || (a.s && !b.s);
-	
+
 	/* multiply sa by sb yielding "double significand" sc */
 	m_multiply (sc, 3, sa, 3, sb);
 
@@ -932,7 +932,7 @@ INLINE void m_divide (
 	REBCNT bm = b[m - 1];
 	REBU64 cm, dm;
 	REBINT i, j, k;
-	
+
 	if (m == 1) {
 		r[0] = m_divide_1 (n, q, a, bm);
 		return;
@@ -949,19 +949,19 @@ INLINE void m_divide (
 		k = (i + j + 1) / 2;
 		if ((REBCNT)(1 << k) <= bm) i = k; else j = k - 1;
 	}
-	
+
 	/* shift the dividend to the left */
 	for (j = 0; j < n; j++) c[j] = a[j] << (31 - i);
 	c[n] = 0;
 	for (j = 0; j < n; j++) c[j + 1] |= a[j] >> (i + 1);
-	
+
 	/* shift the divisor to the left */
 	for (j = 0; j < m; j++) d[j] = b[j] << (31 - i);
 	d[m] = 0;
 	for (j = 0; j < m; j++) d[j + 1] |= b[j] >> (i + 1);
 
 	dm = (REBU64) d[m - 1];
-	
+
 	for (j = n - m; j >= 0; j--) {
 		cm = ((REBU64) c[j + m] << 32) + (REBU64) c[j + m - 1];
 		cm /= dm;
@@ -1003,7 +1003,7 @@ deci deci_divide (deci a, deci b) {
 		return c;
 	}
 
-	/* compute decimal shift needed to obtain the highest accuracy */	
+	/* compute decimal shift needed to obtain the highest accuracy */
 	a_dbl = (a.m2 * two_to_32 + a.m1) * two_to_32 + a.m0;
 	b_dbl = (b.m2 * two_to_32 + b.m1) * two_to_32 + b.m0;
 	l10 = log10 (a_dbl);
@@ -1014,10 +1014,10 @@ deci deci_divide (deci a, deci b) {
 	/* count radix 2 ** 32 digits of the shifted significand sa */
 	na = (REBINT)ceil ((l10 + shift) * 0.10381025296523 + 0.5);
 	if (sa[na - 1] == 0) na--;
-	
+
 	nb = b.m2 ? 3 : (b.m1 ? 2 : 1);
 	m_divide (q, r, na, sa, nb, sb);
-	
+
 	/* compute the truncate flag */
 	m_multiply_1 (nb, r, r, 2);
 	tc = m_cmp (nb + 1, r, sb);
@@ -1033,12 +1033,12 @@ deci deci_divide (deci a, deci b) {
 
 	/* round q if needed */
 	if (((tc == 3) || ((tc == 2) && (q[0] % 2 == 1))) && (e >= -128)) m_add_1 (q, 1);
-	
+
 	m_ldexp (q, &f, e, tc);
 	c.m0 = q[0];
 	c.m1 = q[1];
 	c.m2 = q[2];
-	c.e = f; 
+	c.e = f;
 	return c;
 }
 
@@ -1047,19 +1047,19 @@ deci deci_divide (deci a, deci b) {
 INLINE REBINT m_to_string (REBYTE *s, REBINT n, const REBCNT a[]) {
     REBCNT r, b[MAX_NB];
 	REBYTE v[10 * MAX_NB + 1], *vmax, *k;
-    
+
     /* finds the first nonzero radix 2 ** 32 "digit" */
     for (; (n > 0) && (a[n - 1] == 0); n--);
-    
+
     if (n == 0) {
     	s[0] = '0';
     	s[1] = '\0';
     	return 1;
 	}
-	
+
     /* copy a to preserve it */
 	memcpy (b, a, n * sizeof (REBCNT));
-	
+
 	k = vmax = v + 10 * MAX_NB;
 	*k = '\0';
     while (n > 0) {
@@ -1076,7 +1076,7 @@ REBINT deci_to_string(REBYTE *string, const deci a, const REBYTE symbol, const R
 	REBYTE *s = string;
 	REBCNT sa[] = {a.m0, a.m1, a.m2};
 	REBINT j, e;
-	
+
 	/* sign */
 	if (a.s) *s++ = '-';
 
@@ -1090,7 +1090,7 @@ REBINT deci_to_string(REBYTE *string, const deci a, const REBYTE symbol, const R
 
 	j = m_to_string(s, 3, sa);
 	e = j + a.e;
-	
+
 	if (e < j) {
 		if (e <= 0) {
 			if (e < -6) {
@@ -1124,7 +1124,7 @@ REBINT deci_to_string(REBYTE *string, const deci a, const REBYTE symbol, const R
 			INT_TO_STR(e - j, s);
 			s = strchr(s, '\0');
 	}
-	
+
 	return s - string;
 }
 
@@ -1134,7 +1134,7 @@ deci deci_mod (deci a, deci b) {
 	REBCNT sc[] = {10u, 0, 0};
 	REBCNT p[6]; /* for multiplication results */
 	REBINT e, nb;
-	
+
 	if (deci_is_zero (b)) DIVIDE_BY_ZERO_ERROR;
 	if (deci_is_zero (a)) return deci_zero;
 
@@ -1149,7 +1149,7 @@ deci deci_mod (deci a, deci b) {
 
 	/* count radix 2 ** 32 digits of sb */
 	nb = sb[2] ? 3 : (sb[1] ? 2 : 1);
-	
+
 	/* sa = remainder(sa, sb) */
 	m_divide (p, sa, 3, sa, nb, sb);
 
@@ -1171,7 +1171,7 @@ deci deci_mod (deci a, deci b) {
 		}
 	}
 	/* e = 0 */
-	
+
 	a.m0 = sa[0];
 	a.m1 = nb >= 2 ? sa[1] : 0;
 	a.m2 = nb == 3 ? sa[2] : 0;
@@ -1190,13 +1190,13 @@ deci string_to_deci (REBYTE *s, REBYTE **endptr) {
 	REBINT tb = 0; /* truncate flag */
 	REBINT d; /* digit */
 	REBINT es = 1; /* exponent sign */
-	
+
 	/* sign */
 	if ('+' == *a) a++; else if ('-' == *a) {
 		b.s = 1;
 		a++;
 	}
-	
+
 	// optional $
 	if ('$' == *a) a++;
 
@@ -1222,11 +1222,11 @@ deci string_to_deci (REBYTE *s, REBYTE **endptr) {
 			/* decimal point */
 			if (dp) {
 				*endptr = s;
-				return deci_zero;				
+				return deci_zero;
 			}
 			else dp = 1;
 		} else if ('\'' != *a) break;
-	
+
 	/* exponent */
 	if (('e' == *a) || ('E' == *a)) {
 		a++;
@@ -1251,7 +1251,7 @@ deci string_to_deci (REBYTE *s, REBYTE **endptr) {
 	*endptr = a;
 	e += f;
 	f = 0;
-	
+
 	/* round */
 	if (((tb == 3) || ((tb == 2) && (sb[0] % 2 == 1))) && (e >= -128)) {
 		if (m_cmp (3, sb, P26_1) < 0) m_add_1 (sb, 1);
@@ -1261,14 +1261,14 @@ deci string_to_deci (REBYTE *s, REBYTE **endptr) {
 			if ((tb == 3) || ((tb == 2) && (sb[0] % 2 == 1))) m_add_1 (sb, 1);
 		}
 	}
-	
+
 	m_ldexp (sb, &f, e, tb);
-	
+
 	b.m0 = sb[0];
 	b.m1 = sb[1];
 	b.m2 = sb[2];
 	b.e = f;
-	return b;  
+	return b;
 }
 
 deci deci_sign (deci a) {

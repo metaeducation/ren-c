@@ -184,7 +184,7 @@ int main(int argc, char **argv)
 	{
 		App_Instance = GetModuleHandle(NULL);
 	}
-#ifdef REB_CORE	
+#ifdef REB_CORE
 	else //use always the console for R3/core
 	{
 		// GetWindowsLongPtr support 32 & 64 bit windows
@@ -210,7 +210,7 @@ int main(int argc, char **argv)
 			MessageBox(0, L"CreateProcess() failed :(", L"", 0);
 		exit(0);
 	}
-#endif //REB_CORE	
+#endif //REB_CORE
 #endif //TO_WIN32
 
 	// Common code for console & GUI version
@@ -268,7 +268,7 @@ int main(int argc, char **argv)
 	}
 #endif //!ENCAP
 	OS_Quit_Devices(0);
-#ifndef REB_CORE	
+#ifndef REB_CORE
 	OS_Destroy_Graphics();
 #endif
 
