@@ -186,7 +186,7 @@ static struct digest {
 
 		if (sym == SYM_ADLER32) {
 			if (D_REF(ARG_CHECKSUM_SECURE) || D_REF(ARG_CHECKSUM_KEY)) Trap0(RE_BAD_REFINES);
-			DS_RET_INT(ADLER32(data, len));
+			DS_RET_INT(z_adler32(data, len));
 			return R_RET;
 		}
 
