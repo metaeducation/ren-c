@@ -125,7 +125,7 @@
 			VAL_TYPESET(value) |= VAL_TYPESET(val);
 		} else {
 			if (load) return FALSE;
-			Trap_Arg(block);
+			Trap_Arg_DEAD_END(block);
 		}
 	}
 
@@ -222,7 +222,7 @@
 		if (IS_DATATYPE(arg)) {
 			DECIDE(TYPE_CHECK(val, VAL_DATATYPE(arg)));
 		}
-		Trap_Arg(arg);
+		Trap_Arg_DEAD_END(arg);
 
 	case A_MAKE:
 	case A_TO:
@@ -237,13 +237,13 @@
 	//		return R_ARG2;
 	//	}
 		if (IS_TYPESET(arg)) return R_ARG2;
-		Trap_Make(REB_TYPESET, arg);
+		Trap_Make_DEAD_END(REB_TYPESET, arg);
 
 	case A_AND:
 	case A_OR:
 	case A_XOR:
 		if (IS_DATATYPE(arg)) VAL_TYPESET(arg) = TYPESET(VAL_DATATYPE(arg));
-		else if (!IS_TYPESET(arg)) Trap_Arg(arg);
+		else if (!IS_TYPESET(arg)) Trap_Arg_DEAD_END(arg);
 
 		if (action == A_OR) VAL_TYPESET(val) |= VAL_TYPESET(arg);
 		else if (action == A_AND) VAL_TYPESET(val) &= VAL_TYPESET(arg);
@@ -255,7 +255,7 @@
 		return R_ARG1;
 
 	default:
-		Trap_Action(REB_TYPESET, action);
+		Trap_Action_DEAD_END(REB_TYPESET, action);
 	}
 
 is_true:

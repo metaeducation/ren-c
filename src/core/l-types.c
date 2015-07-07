@@ -175,7 +175,7 @@ typedef REBFLG (*MAKE_FUNC)(REBVAL *, REBVAL *, REBCNT);
 			num = (num << 4) + c;
 		}
 		else {
-bad_hex:	Trap0(RE_INVALID_CHARS);
+bad_hex:	Trap_DEAD_END(RE_INVALID_CHARS);
 		}
 	}
 	return num;
@@ -281,7 +281,7 @@ bad_hex:	Trap0(RE_INVALID_CHARS);
 
 	VAL_SET(value, REB_DECIMAL);
 	VAL_DECIMAL(value) = STRTOD((char *)buf, &se); // need check for NaN, and INF !!!
-	if (fabs(VAL_DECIMAL(value)) == HUGE_VAL) Trap0(RE_OVERFLOW);
+	if (fabs(VAL_DECIMAL(value)) == HUGE_VAL) Trap_DEAD_END(RE_OVERFLOW);
 	return cp;
 }
 
@@ -396,7 +396,7 @@ bad_hex:	Trap0(RE_INVALID_CHARS);
 	if ((REBCNT)(cp-bp) != len) return 0;
 	VAL_SET(value, REB_MONEY);
 	VAL_MONEY_AMOUNT(value) = atof((char*)(&buf[0]));
-	if (fabs(VAL_MONEY_AMOUNT(value)) == HUGE_VAL) Trap0(RE_OVERFLOW);
+	if (fabs(VAL_MONEY_AMOUNT(value)) == HUGE_VAL) Trap_DEAD_END(RE_OVERFLOW);
 	return cp;
 #endif
 }

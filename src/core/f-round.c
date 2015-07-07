@@ -92,7 +92,7 @@ enum {
 	REBI64 j;
 
 	if (GET_FLAG(flags, RF_TO)) {
-		if (scale == 0.0) Trap0(RE_ZERO_DIVIDE);
+		if (scale == 0.0) Trap_DEAD_END(RE_ZERO_DIVIDE);
 		scale = fabs(scale);
 	} else scale = 1.0;
 
@@ -133,7 +133,7 @@ enum {
 
 	if (v) {
 		if (fabs(dec = dec * scale) != HUGE_VAL) return dec;
-		else Trap0(RE_OVERFLOW);
+		else Trap_DEAD_END(RE_OVERFLOW);
 	}
 	return ldexp(dec / scale, e);
 }
@@ -143,16 +143,16 @@ enum {
 #define Int_Floor	{\
     					if (num > 0) num = n - r;\
 						else if ((m = n + s) <= (REBU64)1 << 63) num = -(REBI64)m;\
-						else Trap0(RE_OVERFLOW);\
+						else Trap_DEAD_END(RE_OVERFLOW);\
 					}
 #define Int_Ceil	{\
 						if (num < 0) num = -(REBI64)(n - r);\
 	        			else if ((m = n + s) < (REBU64)1 << 63) num = m;\
-	        			else Trap0(RE_OVERFLOW);\
+	        			else Trap_DEAD_END(RE_OVERFLOW);\
 					}
 #define Int_Away	if ((m = n + s) >= (REBU64)1 << 63)\
 						if (num < 0 && m == (REBU64) 1 << 63) num = m;\
-		    			else Trap0(RE_OVERFLOW);\
+		    			else Trap_DEAD_END(RE_OVERFLOW);\
 					else num = (num > 0) ? m : -(REBI64)m
 
 /***********************************************************************
@@ -168,7 +168,7 @@ enum {
 	REBU64 sc, n, r, m, s;
 
 	if (GET_FLAG(flags, RF_TO)) {
-		if (scale == 0) Trap0(RE_ZERO_DIVIDE);
+		if (scale == 0) Trap_DEAD_END(RE_ZERO_DIVIDE);
 		sc = Int_Abs(scale);
 	}
 	else sc = 1;
@@ -211,7 +211,12 @@ enum {
 	REBDCI deci_one = {1u, 0u, 0u, 0u, 0};
 
 	if (GET_FLAG(flags, RF_TO)) {
-		if (deci_is_zero(scale)) Trap0(RE_ZERO_DIVIDE);
+		if (deci_is_zero(scale)) {
+			Throw_Error(Make_Error(RE_ZERO_DIVIDE, 0, 0, 0));
+			// UNREACHABLE, but we want to make compiler happy...
+			assert(FALSE);
+			return deci_one;
+		}
 		scale = deci_abs(scale);
 	}
 	else scale = deci_one;

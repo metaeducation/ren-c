@@ -61,7 +61,7 @@
 	// Validate and fetch relevant PORT fields:
 	state = BLK_SKIP(port, STD_PORT_STATE);
 	spec  = BLK_SKIP(port, STD_PORT_SPEC);
-	if (!IS_OBJECT(spec)) Trap1(RE_INVALID_SPEC, spec);
+	if (!IS_OBJECT(spec)) Trap1_DEAD_END(RE_INVALID_SPEC, spec);
 
 	// Get or setup internal state data:
 	if (!IS_BLOCK(state)) Set_Block(state, Make_Block(127));
@@ -73,13 +73,13 @@
 
 	// Normal block actions done on events:
 	case A_POKE:
-		if (!IS_EVENT(D_ARG(3))) Trap_Arg(D_ARG(3));
+		if (!IS_EVENT(D_ARG(3))) Trap_Arg_DEAD_END(D_ARG(3));
 		goto act_blk;
 	case A_INSERT:
 	case A_APPEND:
 	//case A_PATH:		// not allowed: port/foo is port object field access
 	//case A_PATH_SET:	// not allowed: above
-		if (!IS_EVENT(arg)) Trap_Arg(arg);
+		if (!IS_EVENT(arg)) Trap_Arg_DEAD_END(arg);
 	case A_PICK:
 act_blk:
 		save_port = *D_ARG(1); // save for return
@@ -111,7 +111,7 @@ act_blk:
 		break;
 
 	default:
-		Trap_Action(REB_PORT, action);
+		Trap_Action_DEAD_END(REB_PORT, action);
 	}
 
 	return R_RET;

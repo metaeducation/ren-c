@@ -137,7 +137,7 @@
 			src_ser = Make_Binary(6); // (I hate unicode)
 			src_ser->tail = Encode_UTF8_Char(BIN_HEAD(src_ser), VAL_CHAR(src_val));
 		}
-		else if (!ANY_BINSTR(src_val)) Trap_Arg(src_val);
+		else if (!ANY_BINSTR(src_val)) Trap_Arg_DEAD_END(src_val);
 	}
 	else if (IS_CHAR(src_val)) {
 		src_ser = Append_Byte(0, VAL_CHAR(src_val)); // unicode ok too

@@ -212,7 +212,7 @@
 	if (PG_Word_Table.series->tail > PG_Word_Table.hashes->tail/2)
 		Expand_Word_Table();
 
-	ASSERT((SERIES_TAIL(PG_Word_Table.series) == SERIES_TAIL(Bind_Table)), RP_BIND_TABLE_SIZE);
+	assert(SERIES_TAIL(PG_Word_Table.series) == SERIES_TAIL(Bind_Table));
 
 	// If word symbol part of word table is full, expand it:
 	if (SERIES_FULL(PG_Word_Table.series)) {

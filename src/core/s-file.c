@@ -109,7 +109,7 @@
 **
 ***********************************************************************/
 {
-	ASSERT1(ANY_BINSTR(val), RP_MISC);
+	assert(ANY_BINSTR(val));
 	return To_REBOL_Path(VAL_DATA(val), VAL_LEN(val), (REBOOL)!VAL_BYTE_SIZE(val), dir);
 }
 
@@ -242,7 +242,7 @@
 **
 ***********************************************************************/
 {
-	ASSERT1(ANY_BINSTR(val), RP_MISC);
+	assert(ANY_BINSTR(val));
 	return To_Local_Path(VAL_DATA(val), VAL_LEN(val), (REBOOL)!VAL_BYTE_SIZE(val), full);
 }
 
@@ -261,7 +261,7 @@
 	REBCNT n;
 #endif
 
-	ASSERT1(ANY_BINSTR(val), RP_MISC);
+	assert(ANY_BINSTR(val));
 
 	ser = To_Local_Path(VAL_DATA(val), VAL_LEN(val), (REBOOL)!VAL_BYTE_SIZE(val), full);
 

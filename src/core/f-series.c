@@ -129,7 +129,7 @@
 	case A_ODDQ:
 	case A_EVENQ:
 	case A_ABSOLUTE:
-		Trap_Action(VAL_TYPE(value), action);
+		Trap_Action_DEAD_END(VAL_TYPE(value), action);
 
 	default:
 		return -1;

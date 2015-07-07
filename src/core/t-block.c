@@ -400,11 +400,11 @@ static struct {
 
 	args = BLK_SKIP(VAL_FUNC_ARGS(sort_flags.compare), 1);
 	if (NOT_END(args) && !TYPE_CHECK(args, VAL_TYPE((REBVAL*)v1))){
-		Trap3(RE_EXPECT_ARG, Of_Type(sort_flags.compare), args, Of_Type((REBVAL*)v1));
+		Trap3_DEAD_END(RE_EXPECT_ARG, Of_Type(sort_flags.compare), args, Of_Type((REBVAL*)v1));
 	}
 	++ args;
 	if (NOT_END(args) && !TYPE_CHECK(args, VAL_TYPE((REBVAL*)v2))) {
-		Trap3(RE_EXPECT_ARG, Of_Type(sort_flags.compare), args, Of_Type((REBVAL*)v2));
+		Trap3_DEAD_END(RE_EXPECT_ARG, Of_Type(sort_flags.compare), args, Of_Type((REBVAL*)v2));
 	}
 
 	val = Apply_Func(0, sort_flags.compare, v1, v2, 0);
@@ -633,7 +633,7 @@ static struct {
 
 	// Check must be in this order (to avoid checking a non-series value);
 	if (action >= A_TAKE && action <= A_SORT && IS_PROTECT_SERIES(ser))
-		Trap0(RE_PROTECTED);
+		Trap_DEAD_END(RE_PROTECTED);
 
 	switch (action) {
 
@@ -665,7 +665,7 @@ repick:
 			if (!value) goto is_none;
 			*D_RET = *value;
 		} else {
-			if (!value) Trap_Range(arg);
+			if (!value) Trap_Range_DEAD_END(arg);
 			arg = D_ARG(3);
 			*value = *arg;
 			*D_RET = *arg;
@@ -678,7 +678,7 @@ repick:
 		if (len > 0) index--;
 		if (len == 0 || index < 0 || index >= tail) {
 			if (action == A_PICK) goto is_none;
-			Trap_Range(arg);
+			Trap_Range_DEAD_END(arg);
 		}
 		if (action == A_PICK) {
 pick_it:
@@ -803,14 +803,14 @@ zero_blk:
 
 	case A_TRIM:
 		args = Find_Refines(ds, ALL_TRIM_REFS);
-		if (args & ~(AM_TRIM_HEAD|AM_TRIM_TAIL)) Trap0(RE_BAD_REFINES);
+		if (args & ~(AM_TRIM_HEAD|AM_TRIM_TAIL)) Trap_DEAD_END(RE_BAD_REFINES);
 		Trim_Block(ser, index, args);
 		break;
 
 	case A_SWAP:
 		if (SERIES_WIDE(ser) != SERIES_WIDE(VAL_SERIES(arg)))
-			Trap_Arg(arg);
-		if (IS_PROTECT_SERIES(VAL_SERIES(arg))) Trap0(RE_PROTECTED);
+			Trap_Arg_DEAD_END(arg);
+		if (IS_PROTECT_SERIES(VAL_SERIES(arg))) Trap_DEAD_END(RE_PROTECTED);
 		if (index < tail && VAL_INDEX(arg) < VAL_TAIL(arg)) {
 			val = *VAL_BLK_DATA(value);
 			*VAL_BLK_DATA(value) = *VAL_BLK_DATA(arg);
@@ -845,8 +845,8 @@ zero_blk:
 		break;
 
 	case A_RANDOM:
-		if (!IS_BLOCK(value)) Trap_Action(VAL_TYPE(value), action);
-		if (D_REF(2)) Trap0(RE_BAD_REFINES); // seed
+		if (!IS_BLOCK(value)) Trap_Action_DEAD_END(VAL_TYPE(value), action);
+		if (D_REF(2)) Trap_DEAD_END(RE_BAD_REFINES); // seed
 		if (D_REF(4)) { // /only
 			if (index >= tail) goto is_none;
 			len = (REBCNT)Random_Int(D_REF(3)) % (tail - index);  // /secure
@@ -859,7 +859,7 @@ zero_blk:
 		break;
 
 	default:
-		Trap_Action(VAL_TYPE(value), action);
+		Trap_Action_DEAD_END(VAL_TYPE(value), action);
 	}
 
 	if (!value) value = D_ARG(1);

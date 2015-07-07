@@ -931,7 +931,7 @@ static short const Char_Cases[] = {
 	}
 
 	for (up = &Char_Cases[0]; *up; up += 2) {
-		//ASSERT2(UP_CASE(up[1]) == up[1], 910);
+		//assert(UP_CASE(up[1]) == up[1], 910);
 		// Only map if not already set (multiple mappings exist):
 		if (UP_CASE(up[1]) == up[1]) UP_CASE(up[1]) = up[0];
 		if (LO_CASE(up[1]) == up[1]) LO_CASE(up[0]) = up[1];

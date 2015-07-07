@@ -637,7 +637,7 @@ x*/	REBCNT Insert_Value(REBSER *series, REBCNT index, REBVAL *item, REBCNT type,
 		switch (VAL_TYPE(val)) {
 
 		case REB_INTEGER:
-			if (VAL_INT64(val) > (i64)255 || VAL_INT64(val) < 0) Trap_Range(val);
+			if (VAL_INT64(val) > (i64)255 || VAL_INT64(val) < 0) Trap_Range_DEAD_END(val);
 			EXPAND_SERIES_TAIL(series, 1);
 			*BIN_SKIP(series, tail) = (REBYTE)VAL_INT32(val);
 			break;
@@ -668,7 +668,7 @@ x*/	REBCNT Insert_Value(REBSER *series, REBCNT index, REBVAL *item, REBCNT type,
 			break;
 
 		default:
-			Trap_Arg(val);
+			Trap_Arg_DEAD_END(val);
 		}
 
 		tail = series->tail;

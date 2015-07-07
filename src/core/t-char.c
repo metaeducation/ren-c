@@ -86,11 +86,11 @@
 		break;
 	case A_MULTIPLY: chr *= arg; break;
 	case A_DIVIDE:
-		if (arg == 0) Trap0(RE_ZERO_DIVIDE);
+		if (arg == 0) Trap_DEAD_END(RE_ZERO_DIVIDE);
 		chr /= arg;
 		break;
 	case A_REMAINDER:
-		if (arg == 0) Trap0(RE_ZERO_DIVIDE);
+		if (arg == 0) Trap_DEAD_END(RE_ZERO_DIVIDE);
 		chr %= arg;
 		break;
 
@@ -153,21 +153,21 @@
 #endif
 
 		case REB_STRING:
-			if (VAL_INDEX(val) >= VAL_TAIL(val)) Trap_Make(REB_CHAR, val);
+			if (VAL_INDEX(val) >= VAL_TAIL(val)) Trap_Make_DEAD_END(REB_CHAR, val);
 			chr = GET_ANY_CHAR(VAL_SERIES(val), VAL_INDEX(val));
 			break;
 
 		default:
 bad_make:
-		Trap_Make(REB_CHAR, val);
+		Trap_Make_DEAD_END(REB_CHAR, val);
 	}
 		break;
 
 	default:
-		Trap_Action(REB_CHAR, action);
+		Trap_Action_DEAD_END(REB_CHAR, action);
 	}
 
-	if ((chr >> 16) != 0 && (chr >> 16) != 0xffff) Trap1(RE_TYPE_LIMIT, Get_Type(REB_CHAR));
+	if ((chr >> 16) != 0 && (chr >> 16) != 0xffff) Trap1_DEAD_END(RE_TYPE_LIMIT, Get_Type(REB_CHAR));
 	SET_CHAR(DS_RETURN, chr);
 	return R_RET;
 

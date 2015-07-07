@@ -189,12 +189,12 @@
 	}
 	else if (IS_INTEGER(val)) {
 		if (VAL_INT64(val) < -MAX_SECONDS || VAL_INT64(val) > MAX_SECONDS)
-			Trap_Range(val);
+			Trap_Range_DEAD_END(val);
 		secs = VAL_INT64(val) * SEC_SEC;
 	}
 	else if (IS_DECIMAL(val)) {
 		if (VAL_DECIMAL(val) < (REBDEC)(-MAX_SECONDS) || VAL_DECIMAL(val) > (REBDEC)MAX_SECONDS)
-			Trap_Range(val);
+			Trap_Range_DEAD_END(val);
 		secs = DEC_TO_SECS(VAL_DECIMAL(val));
 	}
 	else if (ANY_BLOCK(val) && VAL_BLK_LEN(val) <= 3) {
@@ -337,7 +337,7 @@
 		case 2:
 			if (IS_DECIMAL(val)) {
 				f = VAL_DECIMAL(val);
-				if (f < 0.0) Trap_Range(val);
+				if (f < 0.0) Trap_Range_DEAD_END(val);
 				tf.s = (REBINT)f;
 				tf.n = (REBINT)((f - tf.s) * SEC_SEC);
 			}
@@ -378,7 +378,7 @@
 	if (IS_BINARY_ACT(action)) {
 		REBINT	type = VAL_TYPE(arg);
 
-		ASSERT2(arg != NULL, RP_MISC);
+		assert(arg);
 
 		if (type == REB_TIME) {		// handle TIME - TIME cases
 			REBI64	secs2 = VAL_TIME(arg);
@@ -396,14 +396,14 @@
 				goto fixTime;
 
 			case A_DIVIDE:
-				if (secs2 == 0) Trap0(RE_ZERO_DIVIDE);
+				if (secs2 == 0) Trap_DEAD_END(RE_ZERO_DIVIDE);
 				//secs /= secs2;
 				VAL_SET(DS_RETURN, REB_DECIMAL);
 				VAL_DECIMAL(DS_RETURN) = (REBDEC)secs / (REBDEC)secs2;
 				return R_RET;
 
 			case A_REMAINDER:
-				if (secs2 == 0) Trap0(RE_ZERO_DIVIDE);
+				if (secs2 == 0) Trap_DEAD_END(RE_ZERO_DIVIDE);
 				secs %= secs2;
 				goto setTime;
 			}
@@ -424,17 +424,17 @@
 			case A_MULTIPLY:
 				secs *= num;
 				if (secs < -MAX_TIME || secs > MAX_TIME)
-					Trap1(RE_TYPE_LIMIT, Get_Type(REB_TIME));
+					Trap1_DEAD_END(RE_TYPE_LIMIT, Get_Type(REB_TIME));
 				goto setTime;
 
 			case A_DIVIDE:
-				if (num == 0) Trap0(RE_ZERO_DIVIDE);
+				if (num == 0) Trap_DEAD_END(RE_ZERO_DIVIDE);
 				secs /= num;
 				DS_RET_INT(secs);
 				goto setTime;
 
 			case A_REMAINDER:
-				if (num == 0) Trap0(RE_ZERO_DIVIDE);
+				if (num == 0) Trap_DEAD_END(RE_ZERO_DIVIDE);
 				secs %= num;
 				goto setTime;
 			}
@@ -456,7 +456,7 @@
 				goto setTime;
 
 			case A_DIVIDE:
-				if (dec == 0.0) Trap0(RE_ZERO_DIVIDE);
+				if (dec == 0.0) Trap_DEAD_END(RE_ZERO_DIVIDE);
 				secs = (REBI64)(secs / dec);
 				goto setTime;
 
@@ -509,7 +509,7 @@
 					VAL_SET(arg, REB_INTEGER);
 					return R_ARG3;
 				}
-				else Trap_Arg(arg);
+				else Trap_Arg_DEAD_END(arg);
 			}
 			else {
 				secs = Round_Int(secs, Get_Round_Flags(ds) | 1, SEC_SEC);
@@ -525,7 +525,7 @@
 			goto fixTime;
 
 		case A_PICK:
-			ASSERT2(arg != NULL, RP_MISC);
+			assert(arg);
 
 			Pick_Path(val, arg, 0);
 			return R_TOS;
@@ -536,14 +536,14 @@
 
 		case A_MAKE:
 		case A_TO:
-			ASSERT2(arg != NULL, RP_MISC);
+			assert(arg);
 
 			secs = Make_Time(arg);
-			if (secs == NO_TIME) Trap_Make(REB_TIME, arg);
+			if (secs == NO_TIME) Trap_Make_DEAD_END(REB_TIME, arg);
 			goto setTime;
 		}
 	}
-	Trap_Action(REB_TIME, action);
+	Trap_Action_DEAD_END(REB_TIME, action);
 
 fixTime:
 setTime:

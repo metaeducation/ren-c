@@ -82,7 +82,7 @@
 	REBINT err;
 	REBYTE out_size[sizeof(REBCNT)];
 
-	if (len < 0) Trap0(RE_PAST_END); // !!! better msg needed
+	if (len < 0) Trap_DEAD_END(RE_PAST_END); // !!! better msg needed
 	size = len + (len > STERLINGS_MAGIC_NUMBER ? len / 10 + 12 : STERLINGS_MAGIC_FIX);
 	output = Make_Binary(size);
 
@@ -90,9 +90,9 @@
 	// dest, dest-len, src, src-len, level
 	err = z_compress2(BIN_HEAD(output), &size, BIN_HEAD(input) + index, len, Z_DEFAULT_COMPRESSION);
 	if (err) {
-		if (err == Z_MEM_ERROR) Trap0(RE_NO_MEMORY);
+		if (err == Z_MEM_ERROR) Trap_DEAD_END(RE_NO_MEMORY);
 		SET_INTEGER(DS_RETURN, err);
-		Trap1(RE_BAD_PRESS, DS_RETURN); //!!!provide error string descriptions
+		Trap1_DEAD_END(RE_BAD_PRESS, DS_RETURN); //!!!provide error string descriptions
 	}
 	SET_STR_END(output, size);
 	SERIES_TAIL(output) = size;
@@ -124,7 +124,7 @@
 	if (len < 0 || (index + len > BIN_LEN(input))) len = BIN_LEN(input) - index;
 
 	// Get the size from the end and make the output buffer that size.
-	if (len <= 4) Trap0(RE_PAST_END); // !!! better msg needed
+	if (len <= 4) Trap_DEAD_END(RE_PAST_END); // !!! better msg needed
 	size = Bytes_To_REBCNT(BIN_SKIP(input, len) - sizeof(REBCNT));
 
 	if (limit && size > limit) Trap_Num(RE_SIZE_LIMIT, size);
@@ -135,9 +135,9 @@
 	err = z_uncompress(BIN_HEAD(output), &size, BIN_HEAD(input) + index, len);
 	if (err) {
 		if (PG_Boot_Phase < 2) return 0;
-		if (err == Z_MEM_ERROR) Trap0(RE_NO_MEMORY);
+		if (err == Z_MEM_ERROR) Trap_DEAD_END(RE_NO_MEMORY);
 		SET_INTEGER(DS_RETURN, err);
-		Trap1(RE_BAD_PRESS, DS_RETURN); //!!!provide error string descriptions
+		Trap1_DEAD_END(RE_BAD_PRESS, DS_RETURN); //!!!provide error string descriptions
 	}
 	SET_STR_END(output, size);
 	SERIES_TAIL(output) = size;

@@ -134,7 +134,8 @@
 {
 	if (Is_Port_Open(port)) Trap1(RE_ALREADY_OPEN, path);
 
-	if (OS_DO_DEVICE(file, RDC_OPEN) < 0) Trap_Port(RE_CANNOT_OPEN, port, file->error);
+	if (OS_DO_DEVICE(file, RDC_OPEN) < 0)
+		Trap_Port(RE_CANNOT_OPEN, port, file->error);
 
 	Set_Port_Open(port, TRUE);
 }
@@ -163,7 +164,7 @@ REBINT Mode_Syms[] = {
 	REBCNT id = 0;
 	if (IS_WORD(word)) {
 		id = Find_Int(&Mode_Syms[0], VAL_WORD_CANON(word));
-		if (id == NOT_FOUND) Trap_Arg(word);
+		if (id == NOT_FOUND) Trap_Arg_DEAD_END(word);
 	}
 	return id;
 }
@@ -197,7 +198,8 @@ REBINT Mode_Syms[] = {
 	// Do the read, check for errors:
 	file->data = BIN_HEAD(ser);
 	file->length = len;
-	if (OS_DO_DEVICE(file, RDC_READ) < 0) Trap_Port(RE_READ_ERROR, port, file->error);
+	if (OS_DO_DEVICE(file, RDC_READ) < 0)
+		Trap_Port(RE_READ_ERROR, port, file->error);
 	SERIES_TAIL(ser) = file->actual;
 	STR_TERM(ser);
 
@@ -206,7 +208,7 @@ REBINT Mode_Syms[] = {
 	if (args & (AM_READ_STRING | AM_READ_LINES)) {
 		REBSER *nser = Decode_UTF_String(BIN_HEAD(ser), file->actual, -1);
 		if (nser == NULL) {
-			Trap0(RE_BAD_DECODE);
+			Trap(RE_BAD_DECODE);
 		}
 		Set_String(ds, nser);
 		if (args & AM_READ_LINES) Set_Block(ds, Split_Lines(ds));
@@ -325,12 +327,12 @@ REBINT Mode_Syms[] = {
 
 	// Validate PORT fields:
 	spec = BLK_SKIP(port, STD_PORT_SPEC);
-	if (!IS_OBJECT(spec)) Trap1(RE_INVALID_SPEC, spec);
+	if (!IS_OBJECT(spec)) Trap1_DEAD_END(RE_INVALID_SPEC, spec);
 	path = Obj_Value(spec, STD_PORT_SPEC_HEAD_REF);
-	if (!path) Trap1(RE_INVALID_SPEC, spec);
+	if (!path) Trap1_DEAD_END(RE_INVALID_SPEC, spec);
 
 	if (IS_URL(path)) path = Obj_Value(spec, STD_PORT_SPEC_HEAD_PATH);
-	else if (!IS_FILE(path)) Trap1(RE_INVALID_SPEC, path);
+	else if (!IS_FILE(path)) Trap1_DEAD_END(RE_INVALID_SPEC, path);
 
 	// Get or setup internal state data:
 	file = (REBREQ*)Use_Port_State(port, RDI_FILE, sizeof(*file));
@@ -358,12 +360,12 @@ REBINT Mode_Syms[] = {
 			Cleanup_File(file);
 		}
 
-		if (file->error) Trap_Port(RE_READ_ERROR, port, file->error);
+		if (file->error) Trap_Port_DEAD_END(RE_READ_ERROR, port, file->error);
 		break;
 
 	case A_APPEND:
 		if (!(IS_BINARY(D_ARG(2)) || IS_STRING(D_ARG(2)) || IS_BLOCK(D_ARG(2))))
-			Trap1(RE_INVALID_ARG, D_ARG(2));
+			Trap1_DEAD_END(RE_INVALID_ARG, D_ARG(2));
 		file->file.index = file->file.size;
 		SET_FLAG(file->modes, RFM_RESEEK);
 
@@ -381,7 +383,7 @@ REBINT Mode_Syms[] = {
 			opened = TRUE;
 		}
 		else {
-			if (!GET_FLAG(file->modes, RFM_WRITE)) Trap1(RE_READ_ONLY, path);
+			if (!GET_FLAG(file->modes, RFM_WRITE)) Trap1_DEAD_END(RE_READ_ONLY, path);
 		}
 
 		// Setup for /append or /seek:
@@ -405,7 +407,7 @@ REBINT Mode_Syms[] = {
 			Cleanup_File(file);
 		}
 
-		if (file->error) Trap1(RE_WRITE_ERROR, path);
+		if (file->error) Trap1_DEAD_END(RE_WRITE_ERROR, path);
 		break;
 
 	case A_OPEN:
@@ -417,7 +419,7 @@ REBINT Mode_Syms[] = {
 		break;
 
 	case A_COPY:
-		if (!IS_OPEN(file)) Trap1(RE_NOT_OPEN, path); //!!!! wrong msg
+		if (!IS_OPEN(file)) Trap1_DEAD_END(RE_NOT_OPEN, path); //!!!! wrong msg
 		len = Set_Length(ds, file, 2);
 		Read_File_Port(port, file, path, args, len);
 		break;
@@ -434,13 +436,13 @@ REBINT Mode_Syms[] = {
 		break;
 
 	case A_DELETE:
-		if (IS_OPEN(file)) Trap1(RE_NO_DELETE, path);
+		if (IS_OPEN(file)) Trap1_DEAD_END(RE_NO_DELETE, path);
 		Setup_File(file, 0, path);
-		if (OS_DO_DEVICE(file, RDC_DELETE) < 0 ) Trap1(RE_NO_DELETE, path);
+		if (OS_DO_DEVICE(file, RDC_DELETE) < 0 ) Trap1_DEAD_END(RE_NO_DELETE, path);
 		break;
 
 	case A_RENAME:
-		if (IS_OPEN(file)) Trap1(RE_NO_RENAME, path);
+		if (IS_OPEN(file)) Trap1_DEAD_END(RE_NO_RENAME, path);
 		else {
 			REBSER *target;
 
@@ -448,11 +450,11 @@ REBINT Mode_Syms[] = {
 
 			// Convert file name to OS format:
 			if (!(target = Value_To_OS_Path(D_ARG(2), TRUE)))
-				Trap1(RE_BAD_FILE_PATH, D_ARG(2));
+				Trap1_DEAD_END(RE_BAD_FILE_PATH, D_ARG(2));
 			file->data = BIN_DATA(target);
 			OS_DO_DEVICE(file, RDC_RENAME);
 			Free_Series(target);
-			if (file->error) Trap1(RE_NO_RENAME, path);
+			if (file->error) Trap1_DEAD_END(RE_NO_RENAME, path);
 		}
 		break;
 
@@ -460,7 +462,7 @@ REBINT Mode_Syms[] = {
 		// !!! should it leave file open???
 		if (!IS_OPEN(file)) {
 			Setup_File(file, AM_OPEN_WRITE | AM_OPEN_NEW, path);
-			if (OS_DO_DEVICE(file, RDC_CREATE) < 0) Trap_Port(RE_CANNOT_OPEN, port, file->error);
+			if (OS_DO_DEVICE(file, RDC_CREATE) < 0) Trap_Port_DEAD_END(RE_CANNOT_OPEN, port, file->error);
 			OS_DO_DEVICE(file, RDC_CLOSE);
 		}
 		break;
@@ -525,7 +527,7 @@ REBINT Mode_Syms[] = {
 		SET_FLAG(file->modes, RFM_RESEEK);
 		SET_FLAG(file->modes, RFM_TRUNCATE);
 		file->length = 0;
-		if (OS_DO_DEVICE(file, RDC_WRITE) < 0) Trap1(RE_WRITE_ERROR, path);
+		if (OS_DO_DEVICE(file, RDC_WRITE) < 0) Trap1_DEAD_END(RE_WRITE_ERROR, path);
 		break;
 
 	/* Not yet implemented:
@@ -545,7 +547,7 @@ REBINT Mode_Syms[] = {
 	*/
 
 	default:
-		Trap_Action(REB_PORT, action);
+		Trap_Action_DEAD_END(REB_PORT, action);
 	}
 
 	return R_RET;

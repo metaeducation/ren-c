@@ -318,7 +318,12 @@
 		day += (REBINT)Month_Length(month, year);
 	}
 
-	if (year < 0 || year > MAX_YEAR) Trap1(RE_TYPE_LIMIT, Get_Type(REB_DATE));
+	if (year < 0 || year > MAX_YEAR) {
+		Throw_Error(Make_Error(RE_TYPE_LIMIT, Get_Type(REB_DATE), 0, 0));
+		// Unreachable, but we want to make the compiler happy
+		assert(FALSE);
+		return dr;
+	}
 
 	dr.date.year = year;
 	dr.date.month = month+1;
@@ -378,7 +383,7 @@
 	REBI64 t2;
 
 	diff  = Diff_Date(VAL_DATE(d1), VAL_DATE(d2));
-	if (abs(diff) > (((1U << 31) - 1) / SECS_IN_DAY)) Trap0(RE_OVERFLOW);
+	if (abs(diff) > (((1U << 31) - 1) / SECS_IN_DAY)) Trap(RE_OVERFLOW);
 
 	t1 = VAL_TIME(d1);
 	if (t1 == NO_TIME) t1 = 0L;
@@ -455,7 +460,7 @@
 
 	if (IS_TIME(arg)) {
 		tz = (REBINT)(VAL_TIME(arg) / (ZONE_MINS * MIN_SEC));
-		if (tz < -MAX_ZONE || tz > MAX_ZONE) Trap_Range(arg);
+		if (tz < -MAX_ZONE || tz > MAX_ZONE) Trap_Range_DEAD_END(arg);
 		arg++;
 	}
 
@@ -532,7 +537,7 @@
 		tz    = VAL_ZONE(data);
 		if (i > 8) Split_Time(secs, &time);
 	} else {
-		Trap_Arg(data); // this should never happen
+		Trap_Arg_DEAD_END(data); // this should never happen
 	}
 
 	if (val == 0) {
@@ -656,7 +661,7 @@
 				time.n = 0;
 			}
 			else {
-				//if (f < 0.0) Trap_Range(val);
+				//if (f < 0.0) Trap_Range_DEAD_END(val);
 				time.s = (REBINT)VAL_DECIMAL(val);
 				time.n = (REBINT)((VAL_DECIMAL(val) - time.s) * SEC_SEC);
 			}
@@ -705,7 +710,7 @@ setDate:
 		tz    = VAL_ZONE(val);
 		secs  = VAL_TIME(val);
 	} else if (!(IS_DATATYPE(val) && (action == A_MAKE || action == A_TO))) {
-		Trap_Arg(val);
+		Trap_Arg_DEAD_END(val);
 	}
 
 	if (DS_ARGC > 1) arg = D_ARG(2);
@@ -760,7 +765,7 @@ setDate:
 		case A_ODDQ: DECIDE((day & 1) == 0);
 
 		case A_PICK:
-			ASSERT2(DS_ARGC > 1, RP_MISC);
+			assert(DS_ARGC > 1);
 			Pick_Path(val, arg, 0);
 			return R_TOS;
 
@@ -770,7 +775,7 @@ setDate:
 
 		case A_MAKE:
 		case A_TO:
-			ASSERT2(DS_ARGC > 1, RP_MISC);
+			assert(DS_ARGC > 1);
 			if (IS_DATE(arg)) {
 				val = arg;
 				goto ret_val;
@@ -791,7 +796,7 @@ setDate:
 //				secs = nsec = day = month = year = tz = 0;
 //				goto fixTime;
 //			}
-			Trap_Make(REB_DATE, arg);
+			Trap_Make_DEAD_END(REB_DATE, arg);
 
 		case A_RANDOM:	//!!! needs further definition ?  random/zero
 			if (D_REF(2)) {
@@ -812,7 +817,7 @@ setDate:
 			goto setDate;
 		}
 	}
-	Trap_Action(REB_DATE, action);
+	Trap_Action_DEAD_END(REB_DATE, action);
 
 fixTime:
 	Normalize_Time(&secs, &day);

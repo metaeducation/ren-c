@@ -29,7 +29,7 @@
 
 #include "sys-core.h"
 
-#define STATIC_ASSERT(e) do {(void)sizeof(char[1 - 2*!(e)]);} while(0)
+#define STATIC_assert(e) do {(void)sizeof(char[1 - 2*!(e)]);} while(0)
 
 #define IS_INTEGER_TYPE(t) ((t) < STRUCT_TYPE_INTEGER)
 #define IS_DECIMAL_TYPE(t) ((t) > STRUCT_TYPE_INTEGER && (t) < STRUCT_TYPE_DECIMAL)
@@ -283,7 +283,7 @@ static REBOOL assign_scalar(REBSTU *stu,
 	switch (VAL_TYPE(val)) {
 		case REB_DECIMAL:
 			if (!IS_NUMERIC_TYPE(field->type)) {
-				Trap_Type(val);
+				Trap_Type_DEAD_END(val);
 			}
 			d = VAL_DECIMAL(val);
 			i = (u64) d;
@@ -291,18 +291,18 @@ static REBOOL assign_scalar(REBSTU *stu,
 		case REB_INTEGER:
 			if (!IS_NUMERIC_TYPE(field->type)
 				&& field->type != STRUCT_TYPE_POINTER) {
-				Trap_Type(val);
+				Trap_Type_DEAD_END(val);
 			}
 			i = (u64) VAL_INT64(val);
 			d = (double)i;
 			break;
 		case REB_STRUCT:
 			if (STRUCT_TYPE_STRUCT != field->type) {
-				Trap_Type(val);
+				Trap_Type_DEAD_END(val);
 			}
 			break;
 		default:
-			Trap_Type(val);
+			Trap_Type_DEAD_END(val);
 	}
 
 	switch (field->type) {
@@ -341,12 +341,12 @@ static REBOOL assign_scalar(REBSTU *stu,
 			break;
 		case STRUCT_TYPE_STRUCT:
 			if (field->size != VAL_STRUCT_LEN(val)) {
-				Trap_Arg(val);
+				Trap_Arg_DEAD_END(val);
 			}
 			if (same_fields(field->fields, VAL_STRUCT_FIELDS(val))) {
 				memcpy(data, SERIES_SKIP(VAL_STRUCT_DATA_BIN(val), VAL_STRUCT_OFFSET(val)), field->size);
 			} else {
-				Trap_Arg(val);
+				Trap_Arg_DEAD_END(val);
 			}
 			break;
 		default:
@@ -442,7 +442,7 @@ static void parse_attr (REBVAL *blk, REBINT *raw_size, REBUPT *raw_addr)
 					   if (IS_INTEGER(attr)) {
 					   alignment = VAL_INT64(attr);
 					   } else {
-					   Trap_Arg(attr);
+					   Trap_Arg_DEAD_END(attr);
 					   }
 					   break;
 					   */
@@ -462,7 +462,7 @@ static void set_ext_storage (REBVAL *out, REBINT raw_size, REBUPT raw_addr)
 	REBSER *ser = NULL;
 
 	if (raw_size >= 0 && raw_size != VAL_STRUCT_LEN(out)) {
-		Trap0(RE_INVALID_DATA);
+		Trap(RE_INVALID_DATA);
 	}
 
 	ser = (REBSER *)Make_Node(SERIES_POOL);
@@ -541,7 +541,7 @@ static REBOOL parse_field_type(struct Struct_Field *field, REBVAL *spec, REBVAL 
 					field->spec = VAL_STRUCT_SPEC(inner);
 					*init = inner; /* a shortcut for struct intialization */
 				} else {
-					Trap_Types(RE_EXPECT_VAL, REB_BLOCK, VAL_TYPE(val));
+					Trap_Types_DEAD_END(RE_EXPECT_VAL, REB_BLOCK, VAL_TYPE(val));
 				}
 				break;
 			case SYM_REBVAL:
@@ -549,7 +549,7 @@ static REBOOL parse_field_type(struct Struct_Field *field, REBVAL *spec, REBVAL 
 				field->size = sizeof(REBVAL);
 				break;
 			default:
-				Trap_Type(val);
+				Trap_Type_DEAD_END(val);
 		}
 	} else if (IS_STRUCT(val)) { //[b: [struct-a] val-a]
 		field->size = SERIES_TAIL(VAL_STRUCT_DATA_BIN(val));
@@ -558,7 +558,7 @@ static REBOOL parse_field_type(struct Struct_Field *field, REBVAL *spec, REBVAL 
 		field->spec = VAL_STRUCT_SPEC(val);
 		*init = val;
 	} else {
-		Trap_Type(val);
+		Trap_Type_DEAD_END(val);
 	}
 	++ val;
 
@@ -567,7 +567,7 @@ static REBOOL parse_field_type(struct Struct_Field *field, REBVAL *spec, REBVAL 
 		REBVAL *ret = Do_Blk(VAL_SERIES(val), 0);
 
 		if (!IS_INTEGER(ret)) {
-			Trap_Types(RE_EXPECT_VAL, REB_INTEGER, VAL_TYPE(val));
+			Trap_Types_DEAD_END(RE_EXPECT_VAL, REB_INTEGER, VAL_TYPE(val));
 		}
 		field->dimension = (REBCNT)VAL_INT64(ret);
 		field->array = TRUE;
@@ -578,7 +578,7 @@ static REBOOL parse_field_type(struct Struct_Field *field, REBVAL *spec, REBVAL 
 	}
 
 	if (NOT_END(val)) {
-		Trap_Type(val);
+		Trap_Type_DEAD_END(val);
 	}
 
 	return TRUE;
@@ -649,29 +649,29 @@ static REBOOL parse_field_type(struct Struct_Field *field, REBVAL *spec, REBVAL 
 				expect_init = TRUE;
 				if (raw_addr) {
 					/* initialization is not allowed for raw memory struct */
-					Trap_Arg(blk);
+					Trap_Arg_DEAD_END(blk);
 				}
 			} else if (IS_WORD(blk)) {
 				field->sym = VAL_WORD_SYM(blk);
 				expect_init = FALSE;
 			} else {
-				Trap_Type(blk);
+				Trap_Type_DEAD_END(blk);
 			}
 			++ blk;
 
 			if (!IS_BLOCK(blk)) {
-				Trap_Arg(blk);
+				Trap_Arg_DEAD_END(blk);
 			}
 
 			if (!parse_field_type(field, blk, inner, &init)) { return FALSE; }
 			++ blk;
 
-			STATIC_ASSERT(sizeof(field->size) <= 4);
-			STATIC_ASSERT(sizeof(field->dimension) <= 4);
+			STATIC_assert(sizeof(field->size) <= 4);
+			STATIC_assert(sizeof(field->dimension) <= 4);
 
 			step = (u64)field->size * (u64)field->dimension;
 			if (step > VAL_STRUCT_LIMIT) {
-				Trap1(RE_SIZE_LIMIT, out);
+				Trap1_DEAD_END(RE_SIZE_LIMIT, out);
 			}
 
 			EXPAND_SERIES_TAIL(VAL_STRUCT_DATA_BIN(out), step);
@@ -700,7 +700,7 @@ static REBOOL parse_field_type(struct Struct_Field *field, REBVAL *spec, REBVAL 
 						REBCNT n = 0;
 
 						if (VAL_LEN(init) != field->dimension) {
-							Trap_Arg(init);
+							Trap_Arg_DEAD_END(init);
 						}
 						/* assign */
 						for (n = 0; n < field->dimension; n ++) {
@@ -710,7 +710,7 @@ static REBOOL parse_field_type(struct Struct_Field *field, REBVAL *spec, REBVAL 
 							}
 						}
 					} else {
-						Trap_Types(RE_EXPECT_VAL, REB_BLOCK, VAL_TYPE(blk));
+						Trap_Types_DEAD_END(RE_EXPECT_VAL, REB_BLOCK, VAL_TYPE(blk));
 					}
 				} else {
 					/* scalar */
@@ -747,7 +747,7 @@ static REBOOL parse_field_type(struct Struct_Field *field, REBVAL *spec, REBVAL 
 			}
 			*/
 			if (offset > VAL_STRUCT_LIMIT) {
-				Trap1(RE_SIZE_LIMIT, out);
+				Trap1_DEAD_END(RE_SIZE_LIMIT, out);
 			}
 
 			field->done = TRUE;
@@ -982,7 +982,7 @@ static void init_fields(REBVAL *ret, REBVAL *spec)
 						goto is_arg_error;
 					}
 				} else {
-					Trap_Make(REB_STRUCT, arg);
+					Trap_Make_DEAD_END(REB_STRUCT, arg);
 				}
 			}
 			SET_TYPE(ret, REB_STRUCT);
@@ -991,11 +991,11 @@ static void init_fields(REBVAL *ret, REBVAL *spec)
 		case A_CHANGE:
 			{
 				if (!IS_BINARY(arg)) {
-					Trap_Types(RE_EXPECT_VAL, REB_BINARY, VAL_TYPE(arg));
+					Trap_Types_DEAD_END(RE_EXPECT_VAL, REB_BINARY, VAL_TYPE(arg));
 				}
 
 				if (VAL_LEN(arg) != SERIES_TAIL(VAL_STRUCT_DATA_BIN(val))) {
-					Trap_Arg(arg);
+					Trap_Arg_DEAD_END(arg);
 				}
 				memcpy(SERIES_DATA(VAL_STRUCT_DATA_BIN(val)),
 					   SERIES_DATA(VAL_SERIES(arg)),
@@ -1017,7 +1017,7 @@ static void init_fields(REBVAL *ret, REBVAL *spec)
 						SET_INTEGER(ret, (REBUPT)SERIES_SKIP(VAL_STRUCT_DATA_BIN(val), VAL_STRUCT_OFFSET(val)));
 						break;
 					default:
-						Trap_Reflect(REB_STRUCT, arg);
+						Trap_Reflect_DEAD_END(REB_STRUCT, arg);
 				}
 			}
 			break;
@@ -1026,10 +1026,10 @@ static void init_fields(REBVAL *ret, REBVAL *spec)
 			SET_INTEGER(ret, SERIES_TAIL(VAL_STRUCT_DATA_BIN(val)));
 			break;
 		default:
-			Trap_Action(REB_STRUCT, action);
+			Trap_Action_DEAD_END(REB_STRUCT, action);
 	}
 	return R_RET;
 
 is_arg_error:
-	Trap_Types(RE_EXPECT_VAL, REB_STRUCT, VAL_TYPE(arg));
+	Trap_Types_DEAD_END(RE_EXPECT_VAL, REB_STRUCT, VAL_TYPE(arg));
 }

@@ -42,11 +42,10 @@ const REBYTE * Str_Stack_Misaligned = {
 	BP("!! Stack misaligned: %d")
 };
 
-const REBYTE * const Crash_Msgs[] = {
+const REBYTE * const Panic_Msgs[] = {
 	BP"REBOL System Error",
 	BP"boot failure",
 	BP"internal problem",
-	BP"assertion failed",
 	BP"invalid datatype %d",
 	BP"unspecific",
 	BP"\n\nProgram terminated abnormally.\nThis should never happen.\nPlease contact www.REBOL.com with details."

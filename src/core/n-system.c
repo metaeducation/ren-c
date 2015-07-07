@@ -221,7 +221,7 @@ REBYTE *evoke_help = "Evoke values:\n"
 				Expand_Stack(Int32s(arg, 1));
 				break;
 			case SYM_CRASH:
-				Crash(9999);
+				Panic_DEAD_END(RP_MISC);
 				break;
 			default:
 				Out_Str(evoke_help, 1);
@@ -365,7 +365,7 @@ REBYTE *evoke_help = "Evoke values:\n"
 	}
 	return R_RET;
 err:
-	Trap0(RE_BAD_SERIES);
+	Trap_DEAD_END(RE_BAD_SERIES);
 	DEAD_END;
 }
 
@@ -411,7 +411,7 @@ err:
 	case SYM_IDENTIFY:
 		codi.action = CODI_IDENTIFY;
 	case SYM_DECODE:
-		if (!IS_BINARY(val)) Trap1(RE_INVALID_ARG, val);
+		if (!IS_BINARY(val)) Trap1_DEAD_END(RE_INVALID_ARG, val);
 		codi.data = VAL_BIN_DATA(D_ARG(3));
 		codi.len  = VAL_LEN(D_ARG(3));
 		break;
@@ -429,11 +429,11 @@ err:
 			codi.other = VAL_BIN_DATA(val);
 		}
 		else
-			Trap1(RE_INVALID_ARG, val);
+			Trap1_DEAD_END(RE_INVALID_ARG, val);
 		break;
 
 	default:
-		Trap1(RE_INVALID_ARG, D_ARG(2));
+		Trap1_DEAD_END(RE_INVALID_ARG, D_ARG(2));
 	}
 
 	// Nasty alias, but it must be done:
@@ -442,7 +442,7 @@ err:
 
 	if (codi.error != 0) {
 		if (result == CODI_CHECK) return R_FALSE;
-		Trap0(RE_BAD_MEDIA); // need better!!!
+		Trap_DEAD_END(RE_BAD_MEDIA); // need better!!!
 	}
 
 	switch (result) {
@@ -494,7 +494,7 @@ err:
 		break;
 
 	default:
-		Trap0(RE_BAD_MEDIA); // need better!!!
+		Trap_DEAD_END(RE_BAD_MEDIA); // need better!!!
 	}
 
 	return R_RET;
@@ -513,7 +513,7 @@ err:
 	if (ANY_WORD(val)) {
 		if (VAL_WORD_INDEX(val) < 0) return R_TRUE;
 		frm = VAL_WORD_FRAME(val);
-		if (!frm) Trap1(RE_NOT_DEFINED, val);
+		if (!frm) Trap1_DEAD_END(RE_NOT_DEFINED, val);
 	}
 	else frm = VAL_OBJ_FRAME(D_ARG(1));
 

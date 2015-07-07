@@ -168,7 +168,7 @@ static void Mark_Value(REBVAL *val, REBCNT depth);
 	} else if (field->type == STRUCT_TYPE_REBVAL) {
 		REBCNT i;
 
-		ASSERT2(field->size == sizeof(REBVAL), RP_BAD_SIZE);
+		assert(field->size == sizeof(REBVAL));
 		for (i = 0; i < field->dimension; i ++) {
 			REBVAL *data = (REBVAL*)SERIES_SKIP(STRUCT_DATA_BIN(stu),
 												STRUCT_OFFSET(stu) + field->offset + i * field->size);
@@ -193,9 +193,9 @@ static void Mark_Value(REBVAL *val, REBCNT depth);
 	CHECK_MARK(stu->fields, depth);
 	CHECK_MARK(STRUCT_DATA_BIN(stu), depth);
 
-	ASSERT2(IS_BARE_SERIES(stu->data), RP_BAD_SERIES);
-	ASSERT2(!IS_EXT_SERIES(stu->data), RP_BAD_SERIES);
-	ASSERT2(SERIES_TAIL(stu->data) == 1, RP_BAD_SERIES);
+	assert(IS_BARE_SERIES(stu->data));
+	assert(!IS_EXT_SERIES(stu->data));
+	assert(SERIES_TAIL(stu->data) == 1);
 	CHECK_MARK(stu->data, depth);
 
 	series = stu->fields;
@@ -327,7 +327,7 @@ static void Mark_Value(REBVAL *val, REBCNT depth);
 			if (VAL_ERR_NUM(val) > RE_THROW_MAX) {
 				if (VAL_ERR_OBJECT(val)) CHECK_MARK(VAL_ERR_OBJECT(val), depth);
 			}
-			// else Crash(RP_THROW_IN_GC); // !!!! in question - is it true?
+			// else Panic_DEAD_END(RP_THROW_IN_GC); // !!!! in question - is it true?
 			break;
 
 		case REB_TASK: // not yet implemented
@@ -412,8 +412,7 @@ mark_obj:
 		case REB_TAG:
 		case REB_BITSET:
 			ser = VAL_SERIES(val);
-			if (SERIES_WIDE(ser) > sizeof(REBUNI))
-				Crash(RP_BAD_WIDTH, sizeof(REBUNI), SERIES_WIDE(ser), VAL_TYPE(val));
+			assert(SERIES_WIDE(ser) <= sizeof(REBUNI));
 			MARK_SERIES(ser);
 			break;
 
@@ -433,17 +432,15 @@ mark_obj:
 		case REB_GET_PATH:
 		case REB_LIT_PATH:
 			ser = VAL_SERIES(val);
-			ASSERT(ser != 0, RP_NULL_SERIES);
+			assert(ser);
 			if (IS_BARE_SERIES(ser)) {
 				MARK_SERIES(ser);
 				break;
 			}
-#if (ALEVEL>0)
-			if (SERIES_WIDE(ser) == sizeof(REBVAL) && !IS_END(BLK_SKIP(ser, SERIES_TAIL(ser))) && ser != DS_Series)
-				Crash(RP_MISSING_END);
-#endif
-			if (SERIES_WIDE(ser) != sizeof(REBVAL) && SERIES_WIDE(ser) != 4 && SERIES_WIDE(ser) != 0 && SERIES_WIDE(ser) != sizeof(void*))
-				Crash(RP_BAD_WIDTH, 16, SERIES_WIDE(ser), VAL_TYPE(val));
+
+			assert(SERIES_WIDE(ser) == sizeof(REBVAL));
+			assert(IS_END(BLK_SKIP(ser, SERIES_TAIL(ser))) || ser == DS_Series);
+
 			CHECK_MARK(ser, depth);
 			break;
 
@@ -480,7 +477,7 @@ mark_obj:
 			break;
 
 		default:
-			Crash(RP_DATATYPE+1, VAL_TYPE(val));
+			Panic_Core(RP_DATATYPE+1, VAL_TYPE(val));
 	}
 }
 
@@ -496,7 +493,7 @@ mark_obj:
 	REBSER *ser;
 	REBVAL *val;
 
-	ASSERT(series != 0, RP_NULL_MARK_SERIES);
+	assert(series);
 
 	if (SERIES_FREED(series)) return; // series data freed already
 
@@ -505,9 +502,7 @@ mark_obj:
 	// If not a block, go no further
 	if (SERIES_WIDE(series) != sizeof(REBVAL) || IS_BARE_SERIES(series) || IS_EXT_SERIES(series)) return;
 
-	ASSERT2(SERIES_TAIL(series) < SERIES_REST(series), RP_SERIES_OVERFLOW);
-
-	//Moved to end: ASSERT1(IS_END(BLK_TAIL(series)), RP_MISSING_END);
+	assert(SERIES_TAIL(series) < SERIES_REST(series)); // overflow
 
 	//if (depth == 1 && series->label) Print("Marking %s", series->label);
 
@@ -515,21 +510,17 @@ mark_obj:
 
 	for (len = 0; len < series->tail; len++) {
 		val = BLK_SKIP(series, len);
-
-		if (VAL_TYPE(val) == REB_END
-			&& (series != DS_Series)) {
-			// We should never reach the end before len above.
-			// Exception is the stack itself.
-			Crash(RP_UNEXPECTED_END);
-		} else {
-			Mark_Value(val, depth);
-		}
+		// We should never reach the end before len above.
+		// Exception is the stack itself.
+		assert(VAL_TYPE(val) != REB_END || (series == DS_Series));
+		Mark_Value(val, depth);
 	}
 
-#if (ALEVEL>0)
-	if (SERIES_WIDE(series) == sizeof(REBVAL) && !IS_END(BLK_SKIP(series, len)) && series != DS_Series)
-		Crash(RP_MISSING_END);
-#endif
+	assert(
+		SERIES_WIDE(series) != sizeof(REBVAL)
+		|| IS_END(BLK_SKIP(series, len))
+		|| series == DS_Series
+	);
 }
 
 

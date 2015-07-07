@@ -63,7 +63,7 @@
 
 		// If not open, open it:
 		if (!IS_OPEN(req)) {
-			if (OS_DO_DEVICE(req, RDC_OPEN)) Trap_Port(RE_CANNOT_OPEN, port, req->error);
+			if (OS_DO_DEVICE(req, RDC_OPEN)) Trap_Port_DEAD_END(RE_CANNOT_OPEN, port, req->error);
 		}
 
 		// If no buffer, create a buffer:
@@ -90,7 +90,7 @@
 #endif
 
 		result = OS_DO_DEVICE(req, RDC_READ);
-		if (result < 0) Trap_Port(RE_READ_ERROR, port, req->error);
+		if (result < 0) Trap_Port_DEAD_END(RE_READ_ERROR, port, req->error);
 
 #ifdef nono
 		// Does not belong here!!
@@ -115,7 +115,7 @@
 
 	case A_OPEN:
 		// ?? why???
-		//if (OS_DO_DEVICE(req, RDC_OPEN)) Trap_Port(RE_CANNOT_OPEN, port);
+		//if (OS_DO_DEVICE(req, RDC_OPEN)) Trap_Port_DEAD_END(RE_CANNOT_OPEN, port);
 		SET_OPEN(req);
 		break;
 
@@ -129,7 +129,7 @@
 		return R_FALSE;
 
 	default:
-		Trap_Action(REB_PORT, action);
+		Trap_Action_DEAD_END(REB_PORT, action);
 	}
 
 	return R_RET;

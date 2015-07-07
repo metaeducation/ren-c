@@ -117,7 +117,7 @@ static struct digest {
 /*
 ***********************************************************************/
 {
-	Trap0(RE_DEPRECATED);
+	Trap_DEAD_END(RE_DEPRECATED);
 //	*D_RET = *D_ARG(1);
 //	VAL_SET(D_RET, REB_BINARY);
 	return R_RET;
@@ -130,7 +130,7 @@ static struct digest {
 /*
 ***********************************************************************/
 {
-	Trap0(RE_DEPRECATED);
+	Trap_DEAD_END(RE_DEPRECATED);
 //	*D_RET = *D_ARG(1);
 //	VAL_SET(D_RET, REB_STRING);
 	return R_RET;
@@ -178,14 +178,14 @@ static struct digest {
 	if (D_REF(ARG_CHECKSUM_METHOD) || D_REF(ARG_CHECKSUM_SECURE) || D_REF(ARG_CHECKSUM_KEY)) {
 
 		if (sym == SYM_CRC32) {
-			if (D_REF(ARG_CHECKSUM_SECURE) || D_REF(ARG_CHECKSUM_KEY)) Trap0(RE_BAD_REFINES);
+			if (D_REF(ARG_CHECKSUM_SECURE) || D_REF(ARG_CHECKSUM_KEY)) Trap_DEAD_END(RE_BAD_REFINES);
 			i = CRC32(data, len);
 			DS_RET_INT(i);
 			return R_RET;
 		}
 
 		if (sym == SYM_ADLER32) {
-			if (D_REF(ARG_CHECKSUM_SECURE) || D_REF(ARG_CHECKSUM_KEY)) Trap0(RE_BAD_REFINES);
+			if (D_REF(ARG_CHECKSUM_SECURE) || D_REF(ARG_CHECKSUM_KEY)) Trap_DEAD_END(RE_BAD_REFINES);
 			DS_RET_INT(z_adler32(data, len));
 			return R_RET;
 		}
@@ -244,7 +244,7 @@ static struct digest {
 			}
 		}
 
-		Trap_Arg(D_ARG(ARG_CHECKSUM_WORD));
+		Trap_Arg_DEAD_END(D_ARG(ARG_CHECKSUM_WORD));
 	}
 	else if (D_REF(ARG_CHECKSUM_TCP)) { // /tcp
 		i = Compute_IPC(data, len);
@@ -362,7 +362,7 @@ static struct digest {
 	if (D_REF(2)) base = VAL_INT32(D_ARG(3)); // /base
 
 	if (!Decode_Binary(D_RET, BIN_SKIP(ser, index), len, base, 0))
- 		Trap1(RE_INVALID_DATA, D_ARG(1));
+ 		Trap1_DEAD_END(RE_INVALID_DATA, D_ARG(1));
 
 	return R_RET;
 }
@@ -398,7 +398,7 @@ static struct digest {
 		ser = Encode_Base2(arg, 0, FALSE);
 		break;
 	default:
-		Trap_Arg(D_ARG(3));
+		Trap_Arg_DEAD_END(D_ARG(3));
 	}
 
 	Set_String(D_RET, ser);
@@ -419,7 +419,7 @@ static struct digest {
 	REBVAL *key  = D_ARG(2);
 
 	if (!Cloak(TRUE, VAL_BIN_DATA(data), VAL_LEN(data), (REBYTE*)key, 0, D_REF(3)))
-		Trap_Arg(key);
+		Trap_Arg_DEAD_END(key);
 
 	return R_ARG1;
 }
@@ -437,7 +437,7 @@ static struct digest {
 	REBVAL *key  = D_ARG(2);
 
 	if (!Cloak(FALSE, VAL_BIN_DATA(data), VAL_LEN(data), (REBYTE*)key, 0, D_REF(3)))
-		Trap_Arg(key);
+		Trap_Arg_DEAD_END(key);
 
 	return R_ARG1;
 }
@@ -641,7 +641,7 @@ static struct digest {
 		if (len < 3) len = 3;
 		len *= 2;
 	}
-	else Trap_Arg(arg);
+	else Trap_Arg_DEAD_END(arg);
 
 	else if (IS_DECIMAL(arg)) len = MAX_HEX_LEN;
 	else if (IS_MONEY(arg)) len = 24;
@@ -653,7 +653,7 @@ static struct digest {
 	len = -1;
 	if (D_REF(2)) {	// /size
 		len = (REBINT) VAL_INT64(D_ARG(3));
-		if (len < 0) Trap_Arg(D_ARG(3));
+		if (len < 0) Trap_Arg_DEAD_END(D_ARG(3));
 	}
 	if (IS_INTEGER(arg)) { // || IS_DECIMAL(arg)) {
 		if (len < 0 || len > MAX_HEX_LEN) len = MAX_HEX_LEN;
@@ -669,7 +669,7 @@ static struct digest {
 			buf = Form_Hex2(buf, 0);
 		*buf = 0;
 	}
-	else Trap_Arg(arg);
+	else Trap_Arg_DEAD_END(arg);
 
 #ifdef removed
 	else if (IS_CHAR(arg)) {

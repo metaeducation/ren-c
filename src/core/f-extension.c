@@ -318,25 +318,25 @@ x*/	int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result)
 
 	if (!D_REF(2)) { // No /dispatch, use the DLL file:
 
-		if (!IS_FILE(val)) Trap_Arg(val);
+		if (!IS_FILE(val)) Trap_Arg_DEAD_END(val);
 
 		name = Val_Str_To_OS(val);
 
 		// Try to load the DLL file:
 		if (!(dll = OS_OPEN_LIBRARY(name, &error))) {
-			Trap1(RE_NO_EXTENSION, val);
+			Trap1_DEAD_END(RE_NO_EXTENSION, val);
 		}
 
 		// Call its info() function for header and code body:
 		if (!(info = OS_FIND_FUNCTION(dll, BOOT_STR(RS_EXTENSION, 0)))){
 			OS_CLOSE_LIBRARY(dll);
-			Trap1(RE_BAD_EXTENSION, val);
+			Trap1_DEAD_END(RE_BAD_EXTENSION, val);
 		}
 
 		// Obtain info string as UTF8:
 		if (!(code = info(0, Extension_Lib()))) {
 			OS_CLOSE_LIBRARY(dll);
-			Trap1(RE_EXTENSION_INIT, val);
+			Trap1_DEAD_END(RE_EXTENSION_INIT, val);
 		}
 
 		// Import the string into REBOL-land:
@@ -445,7 +445,7 @@ x*/	int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result)
 
 	// Copy args to command frame (array of args):
 	RXA_COUNT(&frm) = argc = SERIES_TAIL(VAL_FUNC_ARGS(value))-1; // not self
-	if (argc > 7) Trap0(RE_BAD_COMMAND);
+	if (argc > 7) Trap(RE_BAD_COMMAND);
 	val = DS_ARG(1);
 	for (n = 1; n <= argc; n++, val++) {
 		RXA_TYPE(&frm, n) = Reb_To_RXT[VAL_TYPE(val)];
@@ -475,13 +475,13 @@ x*/	int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result)
 		SET_FALSE(val);
 		break;
 	case RXR_BAD_ARGS:
-		Trap0(RE_BAD_CMD_ARGS);
+		Trap(RE_BAD_CMD_ARGS);
 		break;
 	case RXR_NO_COMMAND:
-		Trap0(RE_NO_CMD);
+		Trap(RE_NO_CMD);
 		break;
 	case RXR_ERROR:
-		Trap0(RE_COMMAND_FAIL);
+		Trap(RE_COMMAND_FAIL);
 		break;
 	default:
 		SET_UNSET(val);
@@ -533,7 +533,8 @@ x*/	int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result)
 			else func = Get_Var(blk); // fallback
 		} else func = blk;
 
-		if (!IS_COMMAND(func)) Trap2(RE_EXPECT_VAL, Get_Type_Word(REB_COMMAND), blk);
+		if (!IS_COMMAND(func))
+			Trap2(RE_EXPECT_VAL, Get_Type_Word(REB_COMMAND), blk);
 
 		// Advance to next value
 		blk++;
@@ -604,7 +605,7 @@ x*/	int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result)
 			SET_FALSE(val);
 			break;
 		case RXR_ERROR:
-			Trap0(RE_COMMAND_FAIL);
+			Trap(RE_COMMAND_FAIL);
 			break;
 		default:
 			SET_UNSET(val);

@@ -41,10 +41,12 @@
 #include "sys-deci-funcs.h"
 #include "sys-dec-to-char.h"
 
-#ifndef TEST_MODE
-#define OVERFLOW_ERROR Trap0(RE_OVERFLOW)
-#define DIVIDE_BY_ZERO_ERROR Trap0(RE_ZERO_DIVIDE)
-#endif
+// Cannot use regular Trap_DEAD_END return 0 trick if returning a deci...
+#define Trap_DECI_END(re) \
+	do { \
+		Trap(re); \
+		return deci_minus_one; \
+	} while (0)
 
 #define IS_DIGIT(c) ((c) >= '0' && (c) <= '9')
 
@@ -449,13 +451,13 @@ deci deci_add (deci a, deci b) {
 		/* significand normalization */
 		test = m_cmp (3, sc, P26_1);
 		if ((test > 0) || ((test == 0) && ((tc == 3) || ((tc == 2) && (sc[0] % 2 == 1))))) {
-			if (ea == 127) OVERFLOW_ERROR;
+			if (ea == 127) Trap_DECI_END(RE_OVERFLOW);
 			ea++;
 			dsr (3, sc, 1, &tc);
 			/* the shift may be needed once again */
 			test = m_cmp (3, sc, P26_1);
 			if ((test > 0) || ((test == 0) && ((tc == 3) || ((tc == 2) && (sc[0] % 2 == 1))))) {
-				if (ea == 127) OVERFLOW_ERROR;
+				if (ea == 127) Trap_DECI_END(RE_OVERFLOW);
 				ea++;
 				dsr (3, sc, 1, &tc);
 			}
@@ -506,19 +508,19 @@ REBI64 deci_to_int (const deci a) {
 	if (m_is_zero (3, sa) || (a.e < -26)) return (REBI64) 0;
 
 	/* handle exponent */
-	if (a.e >= 20) OVERFLOW_ERROR;
+	if (a.e >= 20) Trap_DEAD_END(RE_OVERFLOW);
 	if (a.e > 0)
-		if (m_cmp (3, P[20 - a.e], sa) <= 0) OVERFLOW_ERROR;
+		if (m_cmp (3, P[20 - a.e], sa) <= 0) Trap_DEAD_END(RE_OVERFLOW);
 		else dsl (3, sa, a.e);
 	else if (a.e < 0) dsr (3, sa, -a.e, &ta);
 
 	/* convert significand to integer */
-	if (m_cmp (3, sa, min_int64_t_as_deci) > 0) OVERFLOW_ERROR;
+	if (m_cmp (3, sa, min_int64_t_as_deci) > 0) Trap_DEAD_END(RE_OVERFLOW);
 	result = ((REBI64) sa[1] << 32) | (REBI64) sa[0];
 
 	/* handle sign */
 	if (a.s && result > MIN_I64) result = -result;
-	if (!a.s && (result < 0)) OVERFLOW_ERROR;
+	if (!a.s && (result < 0)) Trap_DEAD_END(RE_OVERFLOW);
 
 	return result;
 }
@@ -571,7 +573,7 @@ INLINE void m_ldexp (REBCNT a[4], REBINT *f, REBINT e, REBINT ta) {
 	}
 
 	/* take care of exponent overflow */
-	if (e >= 281) OVERFLOW_ERROR;
+	if (e >= 281) Trap(RE_OVERFLOW);
 	if (e < -281) e = -282;
 
 	*f += e;
@@ -593,7 +595,8 @@ INLINE void m_ldexp (REBCNT a[4], REBINT *f, REBINT e, REBINT ta) {
 
 	/* decimally shift the significand to the left if needed */
 	if (*f > 127) {
-		if ((*f >= 153) || (m_cmp (3, P[153 - *f], a) <= 0)) OVERFLOW_ERROR;
+		if ((*f >= 153) || (m_cmp (3, P[153 - *f], a) <= 0))
+			Trap(RE_OVERFLOW);
 		dsl (3, a, *f - 127);
 		*f = 127;
 	}
@@ -990,7 +993,7 @@ deci deci_divide (deci a, deci b) {
 	double a_dbl, b_dbl, l10;
 	REBINT shift, na, nb, tc;
 
-	if (deci_is_zero (b)) DIVIDE_BY_ZERO_ERROR;
+	if (deci_is_zero (b)) Trap_DECI_END(RE_ZERO_DIVIDE);
 
 	/* compute sign */
 	c.s = (!a.s && b.s) || (a.s && !b.s);
@@ -1135,7 +1138,7 @@ deci deci_mod (deci a, deci b) {
 	REBCNT p[6]; /* for multiplication results */
 	REBINT e, nb;
 
-	if (deci_is_zero (b)) DIVIDE_BY_ZERO_ERROR;
+	if (deci_is_zero (b)) Trap_DECI_END(RE_ZERO_DIVIDE);
 	if (deci_is_zero (a)) return deci_zero;
 
 	e = a.e - b.e;
@@ -1240,7 +1243,7 @@ deci string_to_deci (REBYTE *s, REBYTE **endptr) {
 				d = *a - '0';
 				e = e * 10 + d;
 				if (e > 200000000) {
-					if (es == 1) OVERFLOW_ERROR;
+					if (es == 1) Trap_DECI_END(RE_OVERFLOW);
 					else e = 200000000;
 				}
 			} else break;
@@ -1292,8 +1295,9 @@ deci binary_to_deci(REBYTE s[12]) {
 	/* validity checks */
 	if (d.m2 >= 5421010u) {
 		if (d.m1 >= 3704098002u) {
-			if (d.m0 > 3825205247u || d.m1 > 3704098002u) OVERFLOW_ERROR;
-		} else if (d.m2 > 5421010u) OVERFLOW_ERROR;
+			if (d.m0 > 3825205247u || d.m1 > 3704098002u)
+				Trap_DECI_END(RE_OVERFLOW);
+		} else if (d.m2 > 5421010u) Trap_DECI_END(RE_OVERFLOW);
 	}
 	return d;
 }

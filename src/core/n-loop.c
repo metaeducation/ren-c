@@ -52,7 +52,7 @@
 
 	// Hand-make a FRAME (done for for speed):
 	len = IS_BLOCK(spec) ? VAL_LEN(spec) : 1;
-	if (len == 0) Trap_Arg(spec);
+	if (len == 0) Trap_Arg_DEAD_END(spec);
 	frame = Make_Frame(len);
 	SET_SELFLESS(frame);
 	SERIES_TAIL(frame) = len+1;
@@ -69,7 +69,7 @@
 			// Prevent inconsistent GC state:
 			Free_Series(FRM_WORD_SERIES(frame));
 			Free_Series(frame);
-			Trap_Arg(spec);
+			Trap_Arg_DEAD_END(spec);
 		}
 		VAL_SET(word, VAL_TYPE(spec));
 		VAL_BIND_SYM(word) = VAL_WORD_SYM(spec);
@@ -134,7 +134,7 @@
 		start = VAL_INT64(var);
 
 		if (REB_I64_ADD_OF(start, incr, &start)) {
-			Trap0(RE_OVERFLOW);
+			Trap(RE_OVERFLOW);
 		}
 	}
 }
@@ -235,12 +235,12 @@
 			}
 			*DS_RETURN = *ds;
 
-			if (VAL_TYPE(var) != type) Trap_Arg(var);
+			if (VAL_TYPE(var) != type) Trap_Arg_DEAD_END(var);
 
 			VAL_INDEX(var) += inc;
 		}
 	}
-	else Trap_Arg(var);
+	else Trap_Arg_DEAD_END(var);
 
 	// !!!!! ???? allowed to write VAR????
 	*var = *DS_ARG(1);
@@ -276,7 +276,7 @@
 	REBCNT i;
 	REBCNT j;
 
-	ASSERT2(mode >= 0 && mode < 3, RP_MISC);
+	assert(mode >= 0 && mode < 3);
 
 	value = D_ARG(2); // series
 	if (IS_NONE(value)) return R_NONE;
@@ -299,12 +299,12 @@
 		series = VAL_OBJ_FRAME(value);
 		out = FRM_WORD_SERIES(series); // words (the out local reused)
 		index = 1;
-		//if (frame->tail > 3) Trap_Arg(FRM_WORD(frame, 3));
+		//if (frame->tail > 3) Trap_Arg_DEAD_END(FRM_WORD(frame, 3));
 	}
 	else if (IS_MAP(value)) {
 		series = VAL_SERIES(value);
 		index = 0;
-		//if (frame->tail > 3) Trap_Arg(FRM_WORD(frame, 3));
+		//if (frame->tail > 3) Trap_Arg_DEAD_END(FRM_WORD(frame, 3));
 	}
 	else {
 		series = VAL_SERIES(value);
@@ -350,7 +350,7 @@
 							else if (j == 1)
 								*vars = *BLK_SKIP(series, index);
 							else
-								Trap_Arg(words);
+								Trap_Arg_DEAD_END(words);
 							j++;
 						}
 						else {
@@ -374,7 +374,7 @@
 							else if (j == 1)
 								*vars = *BLK_SKIP(series, index);
 							else
-								Trap_Arg(words);
+								Trap_Arg_DEAD_END(words);
 							j++;
 						}
 						else {
@@ -411,7 +411,7 @@
 				}
 				//if (index < tail) index++; // do not increment block.
 			}
-			else Trap_Arg(words);
+			else Trap_Arg_DEAD_END(words);
 		}
 		if (index == rindex) index++; //the word block has only set-words: foreach [a:] [1 2 3][]
 
@@ -429,7 +429,7 @@
 		}
 
 		if (mode > 0) {
-			//if (ANY_OBJECT(value)) Trap_Types(words, REB_BLOCK, VAL_TYPE(value)); //check not needed
+			//if (ANY_OBJECT(value)) Trap_Types_DEAD_END(words, REB_BLOCK, VAL_TYPE(value)); //check not needed
 
 			// If FALSE return, copy values to the write location:
 			if (mode == 1) {  // remove-each
@@ -494,7 +494,7 @@ skip_hidden: ;
 	}
 	else if (ANY_SERIES(start)) {
 		// Check that start and end are same type and series:
-		//if (ANY_SERIES(end) && VAL_SERIES(start) != VAL_SERIES(end)) Trap_Arg(end);
+		//if (ANY_SERIES(end) && VAL_SERIES(start) != VAL_SERIES(end)) Trap_Arg_DEAD_END(end);
 		Loop_Series(var, body, start, ANY_SERIES(end) ? VAL_INDEX(end) : (Int32s(end, 1) - 1), Int32(incr));
 	}
 	else
@@ -658,7 +658,7 @@ skip_hidden: ;
 	do {
 utop:
 		ds = Do_Blk(b1, i1);
-		if (IS_UNSET(ds)) Trap0(RE_NO_RETURN);
+		if (IS_UNSET(ds)) Trap_DEAD_END(RE_NO_RETURN);
 		if (THROWN(ds)) {
 			if (Check_Error(ds) >= 0) break;
 			goto utop;

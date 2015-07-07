@@ -96,7 +96,7 @@
 	}
 #endif
 	else {
-		Trap_Arg(val);
+		Trap_Arg_DEAD_END(val);
 	}
 
 	memcpy(buf + 12 - len, buf, len); // shift to right side
@@ -154,7 +154,7 @@
 			break;
 
 		default:
-			Trap_Action(REB_MONEY, action);
+			Trap_Action_DEAD_END(REB_MONEY, action);
 		}
 
 		SET_TYPE(D_RET, REB_MONEY);
@@ -175,7 +175,7 @@
 		if (D_REF(2)) {
 			if (IS_INTEGER(arg)) VAL_DECI(arg) = int_to_deci(VAL_INT64(arg));
 			else if (IS_DECIMAL(arg) || IS_PERCENT(arg)) VAL_DECI(arg) = decimal_to_deci(VAL_DECIMAL(arg));
-			else if (!IS_MONEY(arg)) Trap_Arg(arg);
+			else if (!IS_MONEY(arg)) Trap_Arg_DEAD_END(arg);
 		}
 		VAL_DECI(D_RET) = Round_Deci(VAL_DECI(val), Get_Round_Flags(ds), VAL_DECI(arg));
 		if (D_REF(2)) {
@@ -222,7 +222,7 @@
 			REBYTE *end;
 			str = Qualify_String(arg, 36, 0, FALSE);
 			VAL_DECI(D_RET) = string_to_deci(str, &end);
-			if (end == str || *end != 0) Trap_Make(REB_MONEY, arg);
+			if (end == str || *end != 0) Trap_Make_DEAD_END(REB_MONEY, arg);
 			break;
 		}
 
@@ -239,12 +239,12 @@
 
 		default:
 		err:
-			Trap_Make(REB_MONEY, arg);
+			Trap_Make_DEAD_END(REB_MONEY, arg);
 		}
 		break;
 
 	default:
-		Trap_Action(REB_MONEY, action);
+		Trap_Action_DEAD_END(REB_MONEY, action);
 	}
 
 	SET_TYPE(D_RET, REB_MONEY);

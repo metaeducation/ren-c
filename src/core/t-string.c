@@ -159,7 +159,7 @@ static REBSER *make_string(REBVAL *arg, REBOOL make)
 			len -= 3;
 			break;
 		default:
-			Trap0(RE_BAD_DECODE);
+			Trap_DEAD_END(RE_BAD_DECODE);
 		}
 		ser = Decode_UTF_String(bp, len, 8); // UTF-8
 	}
@@ -378,7 +378,7 @@ static REBSER *make_binary(REBVAL *arg, REBOOL make)
 		c = Int32(val);
 		if (c > MAX_CHAR || c < 0) return PE_BAD_SET;
 		if (IS_BINARY(data)) { // special case for binary
-			if (c > 0xff) Trap_Range(val);
+			if (c > 0xff) Trap_Range_DEAD_END(val);
 			BIN_HEAD(ser)[n] = (REBYTE)c;
 			return PE_OK;
 		}
@@ -469,7 +469,7 @@ static REBSER *make_binary(REBVAL *arg, REBOOL make)
 
 	// Check must be in this order (to avoid checking a non-series value);
 	if (action >= A_TAKE && action <= A_SORT && IS_PROTECT_SERIES(VAL_SERIES(value)))
-		Trap0(RE_PROTECTED);
+		Trap_DEAD_END(RE_PROTECTED);
 
 	switch (action) {
 
@@ -499,9 +499,9 @@ find:
 
 		if (IS_BINARY(value)) {
 			args |= AM_FIND_CASE;
-			if (!IS_BINARY(arg) && !IS_INTEGER(arg) && !IS_BITSET(arg)) Trap0(RE_NOT_SAME_TYPE);
+			if (!IS_BINARY(arg) && !IS_INTEGER(arg) && !IS_BITSET(arg)) Trap_DEAD_END(RE_NOT_SAME_TYPE);
 			if (IS_INTEGER(arg)) {
-				if (VAL_INT64(arg) < 0 || VAL_INT64(arg) > 255) Trap_Range(arg);
+				if (VAL_INT64(arg) < 0 || VAL_INT64(arg) > 255) Trap_Range_DEAD_END(arg);
 				len = 1;
 			}
 		}
@@ -547,7 +547,7 @@ find:
 			|| REB_I32_ADD_OF(index, len, &index)
 			|| index < 0 || index >= tail) {
 			if (action == A_PICK) goto is_none;
-			Trap_Range(arg);
+			Trap_Range_DEAD_END(arg);
 		}
 		if (action == A_PICK) {
 pick_it:
@@ -565,11 +565,11 @@ pick_it:
 				c = VAL_CHAR(arg);
 			else if (IS_INTEGER(arg) && VAL_UNT64(arg) <= MAX_CHAR)
 				c = VAL_INT32(arg);
-			else Trap_Arg(arg);
+			else Trap_Arg_DEAD_END(arg);
 
 			ser = VAL_SERIES(value);
 			if (IS_BINARY(value)) {
-				if (c > 0xff) Trap_Range(arg);
+				if (c > 0xff) Trap_Range_DEAD_END(arg);
 				BIN_HEAD(ser)[index] = (REBYTE)c;
 			}
 			else {
@@ -635,28 +635,28 @@ zero_str:
 		type = VAL_TYPE(value);
 		if (type == REB_DATATYPE) type = VAL_DATATYPE(value);
 
-		if (IS_NONE(arg)) Trap_Make(type, arg);
+		if (IS_NONE(arg)) Trap_Make_DEAD_END(type, arg);
 
 		ser = (type != REB_BINARY)
 			? make_string(arg, (REBOOL)(action == A_MAKE))
 			: make_binary(arg, (REBOOL)(action == A_MAKE));
 
 		if (ser) goto str_exit;
-		Trap_Arg(arg);
+		Trap_Arg_DEAD_END(arg);
 
 	//-- Bitwise:
 
 	case A_AND:
 	case A_OR:
 	case A_XOR:
-		if (!IS_BINARY(arg)) Trap_Arg(arg);
+		if (!IS_BINARY(arg)) Trap_Arg_DEAD_END(arg);
 		VAL_LIMIT_SERIES(value);
 		VAL_LIMIT_SERIES(arg);
 		ser = Xandor_Binary(action, value, arg);
 		goto ser_exit;
 
 	case A_COMPLEMENT:
-		if (!IS_BINARY(arg)) Trap_Arg(arg);
+		if (!IS_BINARY(arg)) Trap_Arg_DEAD_END(arg);
 		ser = Complement_Binary(value);
 		goto ser_exit;
 
@@ -671,17 +671,17 @@ zero_str:
 			(args & AM_TRIM_AUTO) &&
 			(args & (AM_TRIM_HEAD | AM_TRIM_TAIL | AM_TRIM_LINES | AM_TRIM_ALL | AM_TRIM_WITH))
 		)
-			Trap0(RE_BAD_REFINES);
+			Trap_DEAD_END(RE_BAD_REFINES);
 
 		Trim_String(VAL_SERIES(value), VAL_INDEX(value), VAL_LEN(value), args, D_ARG(ARG_TRIM_STR));
 		break;
 
 	case A_SWAP:
-		if (VAL_TYPE(value) != VAL_TYPE(arg)) Trap0(RE_NOT_SAME_TYPE);
-		if (IS_PROTECT_SERIES(VAL_SERIES(arg))) Trap0(RE_PROTECTED);
+		if (VAL_TYPE(value) != VAL_TYPE(arg)) Trap_DEAD_END(RE_NOT_SAME_TYPE);
+		if (IS_PROTECT_SERIES(VAL_SERIES(arg))) Trap_DEAD_END(RE_PROTECTED);
 		if (index < tail && VAL_INDEX(arg) < VAL_TAIL(arg))
 			swap_chars(value, arg);
-		// Trap_Range(arg);  // ignore range error
+		// Trap_Range_DEAD_END(arg);  // ignore range error
 		break;
 
 	case A_REVERSE:
@@ -715,7 +715,7 @@ zero_str:
 		break;
 
 	default:
-		Trap_Action(VAL_TYPE(value), action);
+		Trap_Action_DEAD_END(VAL_TYPE(value), action);
 	}
 
 	DS_RET_VALUE(value);
@@ -769,11 +769,11 @@ x*/	void Modify_StringX(REBCNT action, REBVAL *string, REBVAL *arg)
 	if (IS_BINARY(string)) {
 		if (IS_INTEGER(arg)) {
 			if (VAL_INT64(arg) > 255 || VAL_INT64(arg) < 0)
-				Trap_Range(arg);
+				Trap_Range_DEAD_END(arg);
 			arg_ser = Make_Binary(1);
 			Append_Byte(arg_ser, VAL_CHAR(arg)); // check for size!!!
 		}
-		else if (!ANY_BINSTR(arg)) Trap_Arg(arg);
+		else if (!ANY_BINSTR(arg)) Trap_Arg_DEAD_END(arg);
 	}
 	else if (IS_BLOCK(arg)) {
 		// MOVE!

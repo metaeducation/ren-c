@@ -105,13 +105,13 @@
 				bp = Qualify_String(arg, 255, &len, TRUE);
 				if (type == REB_ISSUE) sym = Scan_Issue(bp, len);
 				else sym = Scan_Word(bp, len);
-				if (!sym) Trap1(RE_BAD_CHAR, arg);
+				if (!sym) Trap1_DEAD_END(RE_BAD_CHAR, arg);
 			}
 			else if (IS_CHAR(arg)) {
 				REBYTE buf[8];
 				sym = Encode_UTF8_Char(&buf[0], VAL_CHAR(arg)); //returns length
 				sym = Scan_Word(&buf[0], sym);
-				if (!sym) Trap1(RE_BAD_CHAR, arg);
+				if (!sym) Trap1_DEAD_END(RE_BAD_CHAR, arg);
 			}
 			else if (IS_DATATYPE(arg)) {
 				sym = VAL_DATATYPE(arg)+1;
@@ -119,14 +119,14 @@
 			else if (IS_LOGIC(arg)) {
 				sym = IS_TRUE(arg) ? SYM_TRUE : SYM_FALSE;
 			}
-			else Trap_Types(RE_EXPECT_VAL, REB_WORD, VAL_TYPE(arg));
+			else Trap_Types_DEAD_END(RE_EXPECT_VAL, REB_WORD, VAL_TYPE(arg));
 			Set_Word(D_RET, sym, 0, 0);
 			VAL_SET(D_RET, type);
 		}
 		break;
 
 	default:
-		Trap_Action(type, action);
+		Trap_Action_DEAD_END(type, action);
 	}
 
 	return R_RET;

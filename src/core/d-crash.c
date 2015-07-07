@@ -29,16 +29,15 @@
 
 #include "sys-core.h"
 
-#define	CRASH_BUF_SIZE 512	// space for crash print string
+#define	PANIC_BUF_SIZE 512	// space for crash print string
 
-extern const REBYTE * const Crash_Msgs[];
+extern const REBYTE * const Panic_Msgs[];
 
-enum Crash_Msg_Nums {
-	// Must align with Crash_Msgs[] array.
+enum Panic_Msg_Nums {
+	// Must align with Panic_Msgs[] array.
 	CM_ERROR,
 	CM_BOOT,
 	CM_INTERNAL,
-	CM_ASSERT,
 	CM_DATATYPE,
 	CM_DEBUG,
 	CM_CONTACT
@@ -48,7 +47,7 @@ enum Crash_Msg_Nums {
 /***********************************************************************
 **
 ** coverity[+kill]
-*/	void Crash(REBINT id, ...)
+*/	void Panic_Core(REBINT id, ...)
 /*
 **		Print a failure message and abort.
 **
@@ -65,7 +64,7 @@ enum Crash_Msg_Nums {
 ***********************************************************************/
 {
 	va_list args;
-	REBYTE buf[CRASH_BUF_SIZE];
+	REBYTE buf[PANIC_BUF_SIZE];
 	const REBYTE *msg;
 	REBINT n = 0;
 
@@ -78,44 +77,43 @@ enum Crash_Msg_Nums {
 	}
 
 	// "REBOL PANIC #nnn:"
-	strncpy(TXT(buf), Crash_Msgs[CM_ERROR], CRASH_BUF_SIZE);
+	strncpy(TXT(buf), Panic_Msgs[CM_ERROR], PANIC_BUF_SIZE);
 
-	strncat(TXT(buf), " #", CRASH_BUF_SIZE - 1 - strlen(TXT(buf)));
+	strncat(TXT(buf), " #", PANIC_BUF_SIZE - 1 - strlen(TXT(buf)));
 
 	// !!! Careful about buffer length for other things, then no mention
-	// of CRASH_BUF_SIZE in this Form_Int call?  :-/
+	// of PANIC_BUF_SIZE in this Form_Int call?  :-/
 
 	Form_Int(buf + strlen(TXT(buf)), id);
 
-	strncat(TXT(buf), ": ", CRASH_BUF_SIZE - 1 - strlen(TXT(buf)));
+	strncat(TXT(buf), ": ", PANIC_BUF_SIZE - 1 - strlen(TXT(buf)));
 
 	// "REBOL PANIC #nnn: put error message here"
 	// The first few error types only print general error message.
 	// Those errors > RP_STR_BASE have specific error messages (from boot.r).
 	if      (id < RP_BOOT_DATA) n = CM_DEBUG;
 	else if (id < RP_INTERNAL) n = CM_BOOT;
-	else if (id < RP_ASSERTS)  n = CM_INTERNAL;
-	else if (id < RP_DATATYPE) n = CM_ASSERT;
+	else if (id < RP_DATATYPE)  n = CM_INTERNAL;
 	else if (id < RP_STR_BASE) n = CM_DATATYPE;
 	else if (id > RP_STR_BASE + RS_MAX - RS_ERROR) n = CM_DEBUG;
 
 	// Use the above string or the boot string for the error (in boot.r):
 	if (n >= 0)
-		msg = Crash_Msgs[n];
+		msg = Panic_Msgs[n];
 	else
 		msg = BOOT_STR(RS_ERROR, id - RP_STR_BASE - 1);
 
 	Form_Var_Args(
 		buf + strlen(TXT(buf)),
-		CRASH_BUF_SIZE - 1 - strlen(TXT(buf)),
+		PANIC_BUF_SIZE - 1 - strlen(TXT(buf)),
 		msg,
 		args
 	);
 
 	strncat(
 		TXT(buf),
-		Crash_Msgs[CM_CONTACT],
-		CRASH_BUF_SIZE - 1 - strlen(TXT(buf))
+		Panic_Msgs[CM_CONTACT],
+		PANIC_BUF_SIZE - 1 - strlen(TXT(buf))
 	);
 
 	// Convert to OS-specific char-type:
@@ -124,7 +122,7 @@ enum Crash_Msg_Nums {
 		REBCHR s1[512];
 		REBCHR s2[2000];
 
-		n = TO_OS_STR(s1, Crash_Msgs[CM_ERROR], strlen(Crash_Msgs[CM_ERROR]));
+		n = TO_OS_STR(s1, Panic_Msgs[CM_ERROR], strlen(Panic_Msgs[CM_ERROR]));
 		if (n > 0) s1[n] = 0; // terminate
 		else OS_EXIT(200); // bad conversion
 
@@ -135,7 +133,7 @@ enum Crash_Msg_Nums {
 		OS_CRASH(s1, s2);
 	}
 #else
-	OS_CRASH(CBYTES(Crash_Msgs[CM_ERROR]), buf);
+	OS_CRASH(CBYTES(Panic_Msgs[CM_ERROR]), buf);
 #endif
 }
 
@@ -147,5 +145,5 @@ enum Crash_Msg_Nums {
 **
 ***********************************************************************/
 {
-	Crash(RP_NA);
+	Panic(RP_NA);
 }

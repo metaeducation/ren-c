@@ -66,27 +66,27 @@
 	if (action == A_MAKE) {
 		// MAKE udef! [spec body]
 		if (IS_DATATYPE(value)) {
-			if (!IS_BLOCK(arg)) Trap_Arg(arg);
+			if (!IS_BLOCK(arg)) Trap_Arg_DEAD_END(arg);
 			spec = VAL_BLK(arg);
-			if (!IS_BLOCK(spec)) Trap_Arg(arg);
+			if (!IS_BLOCK(spec)) Trap_Arg_DEAD_END(arg);
 			body = VAL_BLK_SKIP(arg, 1);
-			if (!IS_BLOCK(body)) Trap_Arg(arg);
+			if (!IS_BLOCK(body)) Trap_Arg_DEAD_END(arg);
 
 			spec = Get_System(SYS_STANDARD, STD_UTYPE);
-			if (!IS_OBJECT(spec)) Trap_Arg(spec);
+			if (!IS_OBJECT(spec)) Trap_Arg_DEAD_END(spec);
 			SET_UTYPE(D_RET, Make_Object(VAL_OBJ_FRAME(spec), body));
 			VAL_UTYPE_DATA(D_RET) = 0;
 			return R_RET;
 		}
-		else Trap_Arg(arg);
+		else Trap_Arg_DEAD_END(arg);
 	}
 
-	if (!IS_UTYPE(value)) Trap1(RE_INVALID_TYPE, Get_Type(REB_UTYPE));
+	if (!IS_UTYPE(value)) Trap1_DEAD_END(RE_INVALID_TYPE, Get_Type(REB_UTYPE));
 //	if (!VAL_UTYPE_DATA(D_RET) || SERIES_TAIL(VAL_UTYPE_FUNC(value)) <= action)
-//		Trap_Action(REB_UTYPE, action);
+//		Trap_Action_DEAD_END(REB_UTYPE, action);
 
 	body = OFV(VAL_UTYPE_FUNC(value), action);
-	if (!IS_FUNCTION(body)) Trap_Action(REB_UTYPE, action);
+	if (!IS_FUNCTION(body)) Trap_Action_DEAD_END(REB_UTYPE, action);
 
 	Do_Function(body);
 

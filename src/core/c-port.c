@@ -45,7 +45,7 @@
 	REBVAL *value;
 
 	value = Do_Sys_Func(SYS_CTX_MAKE_PORT_P, spec, 0); // volatile
-	if (IS_NONE(value)) Trap1(RE_INVALID_SPEC, spec);
+	if (IS_NONE(value)) Trap1_DEAD_END(RE_INVALID_SPEC, spec);
 
 	return value;
 }
@@ -306,7 +306,7 @@ xx*/	REBINT Wait_Device(REBREQ *req, REBCNT timeout)
 	for (n = 0; ports && n < SERIES_TAIL(ports);) {
 		val = BLK_SKIP(ports, n);
 		if (IS_PORT(val)) {
-			ASSERT(VAL_TAIL(waked) != 0, RP_IO_ERROR);
+			assert(VAL_TAIL(waked) != 0);
 			if (VAL_TAIL(waked) == Find_Block_Simple(VAL_SERIES(waked), 0, val)) {//not found
 				Remove_Series(ports, n, 1);
 				continue;
@@ -385,7 +385,7 @@ xx*/	REBINT Wait_Device(REBREQ *req, REBCNT timeout)
 	REBVAL *actor;
 	REBCNT n = 0;
 
-	ASSERT2(action < A_MAX_ACTION, RP_BAD_PORT_ACTION);
+	assert(action < A_MAX_ACTION);
 
 	// Verify valid port (all of these must be false):
 	if (
@@ -396,7 +396,7 @@ xx*/	REBINT Wait_Device(REBREQ *req, REBCNT timeout)
 		// Must have a spec object:
 		!IS_OBJECT(BLK_SKIP(port, STD_PORT_SPEC))
 	)
-		Trap0(RE_INVALID_PORT);
+		Trap_DEAD_END(RE_INVALID_PORT);
 
 	// Get actor for port, if it has one:
 	actor = BLK_SKIP(port, STD_PORT_ACTOR);
@@ -408,13 +408,13 @@ xx*/	REBINT Wait_Device(REBREQ *req, REBCNT timeout)
 		return ((REBPAF)VAL_FUNC_CODE(actor))(DS_RETURN, port, action);
 
 	// actor must be an object:
-	if (!IS_OBJECT(actor)) Trap0(RE_INVALID_ACTOR);
+	if (!IS_OBJECT(actor)) Trap_DEAD_END(RE_INVALID_ACTOR);
 
 	// Dispatch object function:
 	n = Find_Action(actor, action);
 	actor = Obj_Value(actor, n);
 	if (!n || !actor || !ANY_FUNC(actor)) {
-		Trap1(RE_NO_PORT_ACTION, Get_Action_Word(action));
+		Trap1_DEAD_END(RE_NO_PORT_ACTION, Get_Action_Word(action));
 	}
 	Redo_Func(actor);
 	return R_RET;
@@ -425,7 +425,7 @@ xx*/	REBINT Wait_Device(REBREQ *req, REBCNT timeout)
 		actor = Obj_Value(scheme, STD_SCHEME_actor);
 		if (!actor) goto err;
 		if (IS_NATIVE(actor)) goto fun;
-		if (!IS_OBJECT(actor)) goto err; //Trap_Expect(value, STD_PORT_actor, REB_OBJECT);
+		if (!IS_OBJECT(actor)) goto err; //vTrap_Expect(value, STD_PORT_actor, REB_OBJECT);
 		n = Find_Action(actor, action);
 		if (n == 0) goto err;
 	}
@@ -474,7 +474,7 @@ xx*/	REBINT Wait_Device(REBREQ *req, REBCNT timeout)
 		|| !IS_FRAME(BLK_HEAD(port))
 		|| !IS_OBJECT(BLK_SKIP(port, STD_PORT_SPEC))
 	)
-		Trap0(RE_INVALID_PORT);
+		Trap(RE_INVALID_PORT);
 }
 
 /***********************************************************************
@@ -528,7 +528,7 @@ SCHEME_ACTIONS *Scheme_Actions;	// Initial Global (not threaded)
 	REBINT n;
 
 	for (n = 0; n < MAX_SCHEMES && Scheme_Actions[n].sym; n++);
-	ASSERT2(n < MAX_SCHEMES, RP_MAX_SCHEMES);
+	assert(n < MAX_SCHEMES);
 
 	Scheme_Actions[n].sym = sym;
 	Scheme_Actions[n].map = map;

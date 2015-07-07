@@ -82,7 +82,7 @@
 		else if (n == OF_TITLE) {
 			Set_String(D_RET, Copy_Series(VAL_SERIES(BLK_HEAD(VAL_TYPE_SPEC(BLK_SKIP(Lib_Context, type+1))))));
 		}
-		else Trap_Reflect(VAL_TYPE(value), arg);
+		else Trap_Reflect_DEAD_END(VAL_TYPE(value), arg);
 		break;
 
 	case A_MAKE:
@@ -91,16 +91,16 @@
 			act = Value_Dispatch[type];
 			if (act) return act(ds, action);
 			//return R_NONE;
-			Trap_Make(type, arg);
+			Trap_Make_DEAD_END(type, arg);
 		}
 		// if (IS_NONE(arg)) return R_NONE;
 		if (MT_Datatype(D_RET, arg, REB_DATATYPE))
 			break;
 
-		Trap_Make(REB_DATATYPE, arg);
+		Trap_Make_DEAD_END(REB_DATATYPE, arg);
 
 	default:
-		Trap_Action(REB_DATATYPE, action);
+		Trap_Action_DEAD_END(REB_DATATYPE, action);
 	}
 
 	return R_RET;

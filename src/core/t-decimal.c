@@ -187,7 +187,7 @@ REBOOL almost_equal(REBDEC a, REBDEC b, REBCNT max_diff) {
 /*
 ***********************************************************************/
 {
-	if (!FINITE(dval)) Trap0(RE_OVERFLOW);
+	if (!FINITE(dval)) Trap(RE_OVERFLOW);
 }
 
 
@@ -287,7 +287,7 @@ REBOOL almost_equal(REBDEC a, REBDEC b, REBCNT max_diff) {
 
 			case A_DIVIDE:
 			case A_REMAINDER:
-				if (d2 == 0.0) Trap0(RE_ZERO_DIVIDE);
+				if (d2 == 0.0) Trap_DEAD_END(RE_ZERO_DIVIDE);
 				if (action == A_DIVIDE) d1 /= d2;
 				else d1 = fmod(d1, d2);
 				goto setDec;
@@ -299,7 +299,7 @@ REBOOL almost_equal(REBDEC a, REBDEC b, REBCNT max_diff) {
 					goto setDec;
 				}
 				//if (d1 < 0 && d2 < 1 && d2 != -1)
-				//  Trap0(RE_POSITIVE);
+				//  Trap_DEAD_END(RE_POSITIVE);
 				d1 = pow(d1, d2);
 				goto setDec;
 
@@ -372,7 +372,7 @@ REBOOL almost_equal(REBDEC a, REBDEC b, REBCNT max_diff) {
 					if (type == REB_PERCENT) break;
 					goto setDec;
 				}
-				Trap_Make(type, val);
+				Trap_Make_DEAD_END(type, val);
 			}
 
 			case REB_BINARY:
@@ -387,7 +387,7 @@ REBOOL almost_equal(REBDEC a, REBDEC b, REBCNT max_diff) {
 				REBCNT len;
 				bp = Qualify_String(val, MAX_HEX_LEN, &len, FALSE);
 				if (Scan_Hex(bp, &VAL_INT64(D_RET), len, len) == 0)
-					Trap_Make(REB_DECIMAL, val);
+					Trap_Make_DEAD_END(REB_DECIMAL, val);
 				d1 = VAL_DECIMAL(D_RET);
 				break;
 			}
@@ -398,17 +398,17 @@ REBOOL almost_equal(REBDEC a, REBDEC b, REBCNT max_diff) {
 					arg = VAL_BLK_DATA(val);
 					if (IS_INTEGER(arg)) d1 = (REBDEC)VAL_INT64(arg);
 					else if (IS_DECIMAL(arg) || IS_PERCENT(val)) d1 = VAL_DECIMAL(arg);
-					else Trap_Make(REB_DECIMAL, arg);
+					else Trap_Make_DEAD_END(REB_DECIMAL, arg);
 
 					if (IS_INTEGER(++arg)) exp = (REBDEC)VAL_INT64(arg);
 					else if (IS_DECIMAL(arg) || IS_PERCENT(val)) exp = VAL_DECIMAL(arg);
-					else Trap_Make(REB_DECIMAL, arg);
+					else Trap_Make_DEAD_END(REB_DECIMAL, arg);
 					while (exp >= 1)            // funky. There must be a better way
 						exp--, d1 *= 10.0, Check_Overflow(d1);
 					while (exp <= -1)
 						exp++, d1 /= 10.0;
 				} else
-					Trap_Make(type, val);
+					Trap_Make_DEAD_END(type, val);
 			}
 
 			if (type == REB_PERCENT) d1 /= 100.0;
@@ -423,7 +423,7 @@ REBOOL almost_equal(REBDEC a, REBDEC b, REBCNT max_diff) {
 					SET_TYPE(D_RET, REB_MONEY);
 					return R_RET;
 				}
-				if (IS_TIME(arg)) Trap_Arg(arg);
+				if (IS_TIME(arg)) Trap_Arg_DEAD_END(arg);
 
 				d1 = Round_Dec(d1, num, Dec64(arg));
 				if (IS_INTEGER(arg)) {
@@ -459,16 +459,16 @@ REBOOL almost_equal(REBDEC a, REBDEC b, REBCNT max_diff) {
 			return R_RET;
 		}
 	}
-	Trap_Action(VAL_TYPE(val), action);
+	Trap_Action_DEAD_END(VAL_TYPE(val), action);
 
 setDec:
-	if (!FINITE(d1)) Trap0(RE_OVERFLOW);
+	if (!FINITE(d1)) Trap_DEAD_END(RE_OVERFLOW);
 #ifdef not_required
 	if (type == REB_PERCENT) {
 		// Keep percent in smaller range (not to use e notation).
 		if (d1 != 0) {
 			num = (REBINT)floor(log10(fabs(d1)));
-			if (num > 12 || num < -6) Trap0(RE_OVERFLOW); // use gcvt
+			if (num > 12 || num < -6) Trap_DEAD_END(RE_OVERFLOW); // use gcvt
 		}
 	}
 #endif
