@@ -48,7 +48,7 @@
 
 /*********************************************************************
 **
-*/	REBOOL Is_Wide(REBUNI *up, REBCNT len)
+*/	REBOOL Is_Wide(const REBUNI *up, REBCNT len)
 /*
 **		Returns TRUE if uni string needs 16 bits.
 **

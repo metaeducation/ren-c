@@ -83,7 +83,7 @@ static REBREQ *Req_SIO;
 
 /***********************************************************************
 **
-*/	static void Prin_OS_String(REBYTE *bp, REBINT len, REBOOL uni)
+*/	static void Prin_OS_String(const REBYTE *bp, REBCNT len, REBOOL uni)
 /*
 **		Print a string, but no line terminator or space.
 **
@@ -96,12 +96,12 @@ static REBREQ *Req_SIO;
 	REBYTE *buf = &buffer[0];
 	REBINT n;
 	REBCNT len2;
-	REBUNI *up = (REBUNI*)bp;
+	const REBUNI *up = r_cast(const REBUNI *, bp);
 
 	if (!bp) Panic(RP_NO_PRINT_PTR);
 
 	// Determine length if not provided:
-	if (len == UNKNOWN) len = uni ? wcslen(up) : strlen(bp);
+	if (len == UNKNOWN) len = uni ? Strlen_Uni(up) : strlen(CTXT(bp));
 
 	SET_FLAG(Req_SIO->flags, RRF_FLUSH);
 
@@ -110,11 +110,12 @@ static REBREQ *Req_SIO;
 	buf[0] = 0; // for debug tracing
 
 	while ((len2 = len) > 0) {
+		const void *vp = uni ? cast(const void *, up) : cast(const void *, bp);
 
 		Do_Signals();
 
 		// returns # of chars, size returns buf bytes output
-		n = Encode_UTF8(buf, BUF_SIZE-4, uni ? (void*)up : (void*)bp, &len2, uni, OS_CRLF);
+		n = Encode_UTF8(buf, BUF_SIZE - 4, vp, &len2, uni, OS_CRLF);
 		if (n == 0) break;
 
 		Req_SIO->length = len2; // byte size of buffer
@@ -213,17 +214,17 @@ static REBREQ *Req_SIO;
 
 /***********************************************************************
 **
-*/	void Debug_String(REBYTE *bp, REBINT len, REBOOL uni, REBINT lines)
+*/	void Debug_String(const REBYTE *bp, REBCNT len, REBOOL uni, REBINT lines)
 /*
 ***********************************************************************/
 {
-	REBUNI *up = (REBUNI*)bp;
+	const REBUNI *up = r_cast(const REBUNI *, bp);
 	REBUNI uc;
 
 	if (Trace_Limit > 0) {
 		if (Trace_Buffer->tail >= Trace_Limit)
 			Remove_Series(Trace_Buffer, 0, 2000);
-		if (len == UNKNOWN) len = uni ? wcslen(up) : strlen(bp);
+		if (len == UNKNOWN) len = uni ? Strlen_Uni(up) : strlen(CTXT(bp));
 		// !!! account for unicode!
 		for (; len > 0; len--) {
 			uc = uni ? *up++ : *bp++;

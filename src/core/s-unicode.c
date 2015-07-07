@@ -1039,7 +1039,7 @@ ConversionResult ConvertUTF8toUTF32 (
 
 /***********************************************************************
 **
-*/	REBCNT Encode_UTF8(REBYTE *dst, REBINT max, void *src, REBCNT *len, REBFLG uni, REBFLG ccr)
+*/	REBCNT Encode_UTF8(REBYTE *dst, REBINT max, const void *p, REBCNT *len, REBFLG uni, REBFLG ccr)
 /*
 **		Encode the unicode into UTF8 byte string.
 **
@@ -1055,13 +1055,13 @@ ConversionResult ConvertUTF8toUTF32 (
 	REBINT n;
 	REBYTE buf[8];
 	REBYTE *bs = dst; // save start
-	REBYTE *bp = (REBYTE*)src;
-	REBUNI *up = (REBUNI*)src;
+	const REBYTE *bp = uni ? NULL : cast(const REBYTE *, p);
+	const REBUNI *up = uni ? cast(const REBUNI *, p) : NULL;
 	REBCNT cnt;
 
 	if (len) cnt = *len;
 	else {
-		cnt = uni ? wcslen((REBUNI*)bp) : strlen((REBYTE*)bp);
+		cnt = uni ? Strlen_Uni(up) : strlen(CTXT(bp));
 	}
 
 	for (; max > 0 && cnt > 0; cnt--) {
@@ -1076,7 +1076,7 @@ ConversionResult ConvertUTF8toUTF32 (
 				c = LF;
 			}
 #endif
-			*dst++ = (REBYTE)c;
+			*dst++ = cast(REBYTE, c);
 			max--;
 		}
 		else {
@@ -1090,7 +1090,10 @@ ConversionResult ConvertUTF8toUTF32 (
 
 	if (len) *len = dst - bs;
 
-	return uni ? up - (REBUNI*)src : bp - (REBYTE*)src;
+	if (uni)
+		return up - cast(const REBUNI *, p);
+	else
+		return bp - cast(const REBYTE *, p);
 }
 
 
@@ -1200,4 +1203,43 @@ ConversionResult ConvertUTF8toUTF32 (
 //	}
 
 	return ser;
+}
+
+
+/***********************************************************************
+**
+*/	REBCNT Strlen_Uni(const REBUNI *up)
+/*
+**		Rebol's current choice is to use UCS-2 internally, such that
+**		a REBUNI is an unsigned 16-bit number.  This means that you
+**		cannot use wcslen() to determine a REBUNI* string size, as
+**		wchar_t is not guaranteed to be 2 bytes on every platform.
+**
+**		This is a simple UCS-2 implementation of string length.  It
+**		applies `memchr()` for a potential speedup from optimizations
+**		in the C runtime exploiting processor operations to do better
+**		than a `for` loop could accomplish.
+**
+***********************************************************************/
+{
+	REBCNT len;
+	const char *cp = r_cast(const char *, up); // "C"har vs. "U"nicode
+
+	do {
+		// A size_t -1 is a portable way of saying 'maximum size_t',
+		// since we have no known limit on the search length
+		cp = cast(const char *, memchr(cp, 0, cast(size_t, -1)));
+		len = cp - r_cast(const char *, up);
+
+		// If it's at an even position, we can check to see if the
+		// next byte is zero as well.  If so we've found a proper
+		// two byte terminating sequence.
+		if ((len % 2 == 0) && (*(++cp) == 0)) break;
+
+		// It's either an odd position or didn't match, keep going...
+		++cp;
+	} while (cp);
+
+	assert(len % 2 == 0);
+	return len / 2;
 }
