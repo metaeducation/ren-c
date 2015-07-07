@@ -705,7 +705,8 @@ extern const REBYTE Str_Banner[];
 	}
 
 	if (codi->action == CODI_ENCODE) {
-		u16 * data = codi->data = Alloc_Mem(codi->len * sizeof(u16));
+		u16 * data = ALLOC_ARRAY(u16, codi->len);
+		codi->data = r_cast(unsigned char *, data);
 		if (codi->w == 1) {
 			/* in ASCII */
 			REBCNT i = 0;

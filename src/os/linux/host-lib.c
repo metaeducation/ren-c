@@ -873,7 +873,7 @@ error:
 
 /***********************************************************************
 **
-*/	int OS_Create_Process(REBCHR *call, int argc, char* argv[], u32 flags, u64 *pid, int *exit_code, u32 input_type, void *input, u32 input_len, u32 output_type, void **output, u32 *output_len, u32 err_type, void **err, u32 *err_len)
+*/	int OS_Create_Process(REBCHR *call, int argc, const char* argv[], u32 flags, u64 *pid, int *exit_code, u32 input_type, void *input, u32 input_len, u32 output_type, void **output, u32 *output_len, u32 err_type, void **err, u32 *err_len)
 /*
  * flags:
  * 		1: wait, is implied when I/O redirection is enabled
@@ -1037,8 +1037,8 @@ error:
 
 		//printf("flag_shell in child: %hhu\n", flag_shell);
 		if (flag_shell) {
-			const char* sh = NULL;
-			const char ** argv_new = NULL;
+			char *sh = NULL;
+			char **argv_new = NULL;
 			sh = getenv("SHELL");
 			if (sh == NULL) {
 				int err = 2; /* shell does not exist */
@@ -1050,9 +1050,11 @@ error:
 			argv_new[1] = "-c";
 			memcpy(&argv_new[2], argv, argc * sizeof(argv[0]));
 			argv_new[argc + 2] = NULL;
-			execvp(sh, (char* const*)argv_new);
+			execvp(sh, argv_new);
 		} else {
-			execvp(argv[0], argv);
+			// const cast needed for standard C limitation:
+			//     http://stackoverflow.com/a/19505361/211160
+			execvp(argv[0], c_cast(char * const *, argv));
 		}
 child_error:
 		write(info_pipe[W], &errno, sizeof(errno));
@@ -1331,7 +1333,7 @@ stdin_pipe_err:
 
 static int Try_Browser(char *browser, REBCHR *url)
 {
-	char * const argv[] = {browser, url, NULL};
+	const char *argv[] = {browser, url, NULL};
 	return OS_Create_Process(browser, 2, argv, 0,
 							NULL, /* pid */
 							NULL, /* exit_code */

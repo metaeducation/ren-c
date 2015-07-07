@@ -701,10 +701,15 @@ chk_neg:
 		Trap_Arg(arg);
 	}
 
-	r = OS_CREATE_PROCESS(cmd, argc, argv, flags, &pid, &exit_code,
-						  input_type, os_input, input_len,
-						  output_type, &os_output, &output_len,
-						  err_type, &os_err, &err_len);
+	r = OS_CREATE_PROCESS(
+		// const cast is needed for standard C limitation:
+		//     http://stackoverflow.com/a/19505361/211160
+		cmd, argc, c_cast(const char**, argv),
+		flags, &pid, &exit_code,
+		input_type, os_input, input_len,
+		output_type, &os_output, &output_len,
+		err_type, &os_err, &err_len
+	);
 
 	if (output_type == STRING_TYPE) {
 		if (output != NULL

@@ -66,7 +66,7 @@ enum Crash_Msg_Nums {
 {
 	va_list args;
 	REBYTE buf[CRASH_BUF_SIZE];
-	REBYTE *msg;
+	const REBYTE *msg;
 	REBINT n = 0;
 
 	va_start(args, id);
