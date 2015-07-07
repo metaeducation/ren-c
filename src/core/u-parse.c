@@ -329,7 +329,7 @@ no_result:
 
 /***********************************************************************
 **
-*/	static To_Thru(REBPARSE *parse, REBCNT index, REBVAL *block, REBFLG is_thru)
+*/	static REBCNT To_Thru(REBPARSE *parse, REBCNT index, REBVAL *block, REBFLG is_thru)
 /*
 ***********************************************************************/
 {

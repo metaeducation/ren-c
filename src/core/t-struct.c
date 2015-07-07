@@ -58,7 +58,7 @@ static const REBINT type_to_sym [STRUCT_TYPE_MAX] = {
 	//STRUCT_TYPE_MAX
 };
 
-static get_scalar(REBSTU *stu,
+static REBOOL get_scalar(REBSTU *stu,
 				  struct Struct_Field *field,
 				  REBCNT n, /* element index, starting from 0 */
 				  REBVAL *val)
