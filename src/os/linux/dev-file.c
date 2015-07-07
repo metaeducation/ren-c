@@ -37,6 +37,19 @@
 **
 ***********************************************************************/
 
+// ftruncate is not a standard C function, but as we are using it then
+// we have to use a special define if we want standards enforcement.
+// By defining it as the first header file we include, we ensure another
+// inclusion of <unistd.h> won't be made without the definition first.
+//
+//     http://stackoverflow.com/a/26806921/211160
+#define _XOPEN_SOURCE 500
+
+// !!! See notes on why this is needed on #define HAS_POSIX_SIGNAL in
+// reb-config.h (similar reasons, and means this file cannot be
+// compiled as --std=c99 but rather --std=gnu99)
+#define _POSIX_C_SOURCE 199309L
+
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
@@ -56,6 +69,14 @@
 // NOTE: the code below assumes a file id will never by zero. This should
 // be safe. In posix, zero is stdin, which is handled by dev-stdio.c.
 
+// The BSD legacy names S_IREAD/S_IWRITE are not defined several places,
+// including if you compile as C99
+#ifndef S_IREAD
+#define S_IREAD S_IRUSR
+#endif
+#ifndef S_IWRITE
+#define S_IWRITE S_IWUSR
+#endif
 
 /***********************************************************************
 **
