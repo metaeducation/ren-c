@@ -677,7 +677,9 @@ static void ffi_to_rebol(REBRIN *rin,
 			SET_DECIMAL(rebol_ret, *(double*)ffi_rvalue);
 			break;
 		case FFI_TYPE_STRUCT:
-			Copy_Struct_Val(&RIN_RVALUE(rin), rebol_ret);
+			// !!! &RIN_RVALUE(rin) returns a REBVAL*, but this cast is needed
+			// as it is being treated as if it were a REBSTU*...is that right?
+			Copy_Struct_Val(r_cast(REBSTU *, &RIN_RVALUE(rin)), rebol_ret);
 			memcpy(SERIES_SKIP(VAL_STRUCT_DATA_BIN(rebol_ret), VAL_STRUCT_OFFSET(rebol_ret)),
 				   ffi_rvalue,
 				   VAL_STRUCT_LEN(rebol_ret));
