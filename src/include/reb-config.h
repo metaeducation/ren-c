@@ -240,7 +240,27 @@ These are now obsolete (as of A107) and should be removed:
 #endif
 
 #ifdef TO_LINUX
-#define HAS_POSIX_SIGNAL
+	#define HAS_POSIX_SIGNAL
+
+	// !!! The Atronix build introduced a differentiation between
+	// a Linux build and a POSIX build, and one difference is the
+	// usage of some signal functions that are not available if
+	// you compile with a strict --std=c99 switch:
+	//
+	//		http://stackoverflow.com/a/22913324/211160
+	//
+	// Yet it appears that defining _POSIX_C_SOURCE is good enough
+	// to get it working in --std=gnu99.  Because there are some
+	// other barriers to pure C99 for the moment in the additions
+	// from Saphirion (such as the use of alloca()), backing off the
+	// pure C99 and doing it this way for now.
+	//
+	// These files may not include reb-config.h as the first include,
+	// so be sure to say:
+	//
+	//     #define _POSIX_C_SOURCE 199309L
+	//
+	// ...at the top of the file.
 #endif
 
 //* Defaults ***********************************************************
