@@ -55,7 +55,7 @@ static REBREQ *Req_SIO;
 {
 	//OS_CALL_DEVICE(RDI_STDIO, RDC_INIT);
 	Req_SIO = OS_MAKE_DEVREQ(RDI_STDIO);
-	if (!Req_SIO) Crash(RP_IO_ERROR);
+	if (!Req_SIO) Panic(RP_IO_ERROR);
 
 	// The device is already open, so this call will just setup
 	// the request fields properly.
@@ -77,7 +77,7 @@ static REBREQ *Req_SIO;
 
 	OS_DO_DEVICE(Req_SIO, RDC_WRITE);
 
-	if (Req_SIO->error) Crash(RP_IO_ERROR);
+	if (Req_SIO->error) Panic(RP_IO_ERROR);
 }
 
 
@@ -98,7 +98,7 @@ static REBREQ *Req_SIO;
 	REBCNT len2;
 	REBUNI *up = (REBUNI*)bp;
 
-	if (!bp) Crash(RP_NO_PRINT_PTR);
+	if (!bp) Panic(RP_NO_PRINT_PTR);
 
 	// Determine length if not provided:
 	if (len == UNKNOWN) len = uni ? wcslen(up) : LEN_BYTES(bp);
@@ -123,7 +123,7 @@ static REBREQ *Req_SIO;
 		len -= n;
 
 		OS_DO_DEVICE(Req_SIO, RDC_WRITE);
-		if (Req_SIO->error) Crash(RP_IO_ERROR);
+		if (Req_SIO->error) Panic(RP_IO_ERROR);
 	}
 }
 
@@ -434,7 +434,7 @@ static REBREQ *Req_SIO;
 	REBYTE *bp;
 	REBCNT tail;
 
-	if (!buf) Crash(RP_NO_BUFFER);
+	if (!buf) Panic(RP_NO_BUFFER);
 
 	RESET_SERIES(buf);
 
@@ -518,7 +518,7 @@ static REBREQ *Req_SIO;
 	Req_SIO->length = 255;
 	Req_SIO->actual = 0;
 	res = OS_DO_DEVICE(Req_SIO, RDC_READ);
-	if (Req_SIO->error) Crash(RP_IO_ERROR);
+	if (Req_SIO->error) Panic_DEAD_END(RP_IO_ERROR);
 	//if (res > 0) Wait_Device(Req_SIO, 1000); // pending
 	//if (res < 0) return 0; // error
 

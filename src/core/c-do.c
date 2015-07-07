@@ -98,7 +98,7 @@ static REBVAL *Func_Word(REBINT dsf)
 **
 ***********************************************************************/
 {
-	if (SERIES_REST(DS_Series) >= STACK_LIMIT) Trap0(RE_STACK_OVERFLOW);
+	if (SERIES_REST(DS_Series) >= STACK_LIMIT) Trap(RE_STACK_OVERFLOW);
 	DS_Series->tail = DSP+1;
 	Extend_Series(DS_Series, amount);
 	DS_Base = BLK_HEAD(DS_Series);
@@ -455,8 +455,8 @@ void Trace_Arg(REBINT num, REBVAL *arg, REBVAL *path)
 	// Lookup the value of the variable:
 	if (IS_WORD(pvs.path)) {
 		pvs.value = Get_Var(pvs.path);
-		if (IS_UNSET(pvs.value)) Trap1(RE_NO_VALUE, pvs.path);
-	} else pvs.value = pvs.path; //Trap2(RE_INVALID_PATH, pvs.orig, pvs.path);
+		if (IS_UNSET(pvs.value)) Trap1_DEAD_END(RE_NO_VALUE, pvs.path);
+	} else pvs.value = pvs.path; //Trap2_DEAD_END(RE_INVALID_PATH, pvs.orig, pvs.path);
 
 	// Start evaluation of path:
 	if (Path_Dispatch[VAL_TYPE(pvs.value)]) {
@@ -464,11 +464,11 @@ void Trace_Arg(REBINT num, REBVAL *arg, REBVAL *path)
 		// Check for errors:
 		if (NOT_END(pvs.path+1) && !ANY_FUNC(pvs.value)) {
 			// Only function refinements should get by this line:
-			Trap2(RE_INVALID_PATH, pvs.orig, pvs.path);
+			Trap2_DEAD_END(RE_INVALID_PATH, pvs.orig, pvs.path);
 		}
 	}
 	else if (NOT_END(pvs.path+1) && !ANY_FUNC(pvs.value))
-		Trap2(RE_BAD_PATH_TYPE, pvs.orig, Of_Type(pvs.value));
+		Trap2_DEAD_END(RE_BAD_PATH_TYPE, pvs.orig, Of_Type(pvs.value));
 
 	// If SET then we can drop result storage created above.
 	if (val) {
@@ -549,7 +549,7 @@ x*/	static REBINT Do_Args_Light(REBVAL *func, REBVAL *path, REBSER *block, REBCN
 	REBVAL *val;
 
 	if ((dsp + 100) > (REBINT)SERIES_REST(DS_Series))
-		Trap0(RE_STACK_OVERFLOW); //Expand_Stack();
+		Trap_DEAD_END(RE_STACK_OVERFLOW); //Expand_Stack();
 
 	// If closure, get args from object context:
 	words = VAL_FUNC_WORDS(func);
@@ -568,7 +568,7 @@ x*/	static REBINT Do_Args_Light(REBVAL *func, REBVAL *path, REBSER *block, REBCN
 
 		if (index >= BLK_LEN(block)) {
 			if (!IS_REFINEMENT(args))
-				Trap2(RE_NO_ARG, Func_Word(dsf), args);
+				Trap2_DEAD_END(RE_NO_ARG, Func_Word(dsf), args);
 			break;
 		}
 
@@ -585,17 +585,17 @@ x*/	static REBINT Do_Args_Light(REBVAL *func, REBVAL *path, REBSER *block, REBCN
 			index++;
 			if (IS_NONE(val) || IS_FALSE(val)) SET_NONE(&DS_Base[ds]);
 			else if (IS_LOGIC(val) && VAL_LOGIC(val)) SET_TRUE(&DS_Base[ds]);
-			else Trap1(RE_BAD_REFINE, args);
+			else Trap1_DEAD_END(RE_BAD_REFINE, args);
 			break;
 		}
 
 		// If word words is typed, verify correct argument datatype:
 		if (!TYPE_CHECK(args, VAL_TYPE(DS_VALUE(ds))))
-			Trap3(RE_EXPECT_ARG, Func_Word(dsf), args, Of_Type(DS_VALUE(ds)));
+			Trap3_DEAD_END(RE_EXPECT_ARG, Func_Word(dsf), args, Of_Type(DS_VALUE(ds)));
 	}
 
 	if (path && NOT_END(path))
-		Trap2(RE_NO_REFINE, Func_Word(dsf), path);
+		Trap2_DEAD_END(RE_NO_REFINE, Func_Word(dsf), path);
 
 	return index;
 }
@@ -643,7 +643,7 @@ x*/	static REBINT Do_Args_Light(REBVAL *func, REBVAL *path, REBSER *block, REBCN
 	// If func is operator, first arg is already on stack:
 	if (IS_OP(func)) {
 		//if (!TYPE_CHECK(args, VAL_TYPE(DS_VALUE(DSP))))
-		//	Trap3(RE_EXPECT_ARG, Func_Word(dsf), args, Of_Type(DS_VALUE(ds)));
+		//	Trap3_DEAD_END(RE_EXPECT_ARG, Func_Word(dsf), args, Of_Type(DS_VALUE(ds)));
 		args++;	 	// skip evaluation, but continue with type check
 		ds--;		// shorten stack fill below
 	}
@@ -667,7 +667,7 @@ x*/	static REBINT Do_Args_Light(REBVAL *func, REBVAL *path, REBSER *block, REBCN
 		case REB_WORD:		// WORD - Evaluate next value
 			index = Do_Next(block, index, IS_OP(func));
 			// THROWN is handled after the switch.
-			if (index == END_FLAG) Trap2(RE_NO_ARG, Func_Word(dsf), args);
+			if (index == END_FLAG) Trap2_DEAD_END(RE_NO_ARG, Func_Word(dsf), args);
 			DS_Base[ds] = *DS_POP;
 			break;
 
@@ -715,7 +715,7 @@ more_path:
 				args = BLK_SKIP(words, 1);
 				for (; NOT_END(args); args++, ds++) {
 					if (!IS_WORD(path)) {
-						Trap1(RE_BAD_REFINE, path);
+						Trap1_DEAD_END(RE_BAD_REFINE, path);
 					}
 					if (IS_REFINEMENT(args) && VAL_WORD_CANON(args) == VAL_WORD_CANON(path)) {
 						SET_TRUE(DS_VALUE(ds)); // set refinement stack value true
@@ -724,15 +724,15 @@ more_path:
 					}
 				}
 				// Was refinement found? If not, error:
-				if (IS_END(args)) Trap2(RE_NO_REFINE, Func_Word(dsf), path);
+				if (IS_END(args)) Trap2_DEAD_END(RE_NO_REFINE, Func_Word(dsf), path);
 				continue;
 			}
-			else Trap1(RE_BAD_REFINE, path);
+			else Trap1_DEAD_END(RE_BAD_REFINE, path);
 			break;
 
 		case REB_SET_WORD:	// WORD: - reserved for special features
 		default:
-			Trap_Arg(args);
+			Trap_Arg_DEAD_END(args);
 		}
 
 		if (THROWN(DS_VALUE(ds))) {
@@ -742,12 +742,12 @@ more_path:
 
 		// If word is typed, verify correct argument datatype:
 		if (!TYPE_CHECK(args, VAL_TYPE(DS_VALUE(ds))))
-			Trap3(RE_EXPECT_ARG, Func_Word(dsf), args, Of_Type(DS_VALUE(ds)));
+			Trap3_DEAD_END(RE_EXPECT_ARG, Func_Word(dsf), args, Of_Type(DS_VALUE(ds)));
 	}
 
 	// Hack to process remaining path:
 	if (path && NOT_END(path)) goto more_path;
-	//	Trap2(RE_NO_REFINE, Func_Word(dsf), path);
+	//	Trap2_DEAD_END(RE_NO_REFINE, Func_Word(dsf), path);
 
 	return index;
 }
@@ -827,7 +827,7 @@ more_path:
 
 	//CHECK_MEMORY(1);
 	CHECK_STACK(&value);
-	if ((DSP + 20) > (REBINT)SERIES_REST(DS_Series)) Expand_Stack(STACK_MIN); //Trap0(RE_STACK_OVERFLOW);
+	if ((DSP + 20) > (REBINT)SERIES_REST(DS_Series)) Expand_Stack(STACK_MIN); //Trap_DEAD_END(RE_STACK_OVERFLOW);
 	if (--Eval_Count <= 0 || Eval_Signals) Do_Signals();
 
 	value = BLK_SKIP(block, index);
@@ -841,7 +841,7 @@ reval:
 
 	case ET_WORD:
 		value = Get_Var(word = value);
-		if (IS_UNSET(value)) Trap1(RE_NO_VALUE, word);
+		if (IS_UNSET(value)) Trap1_DEAD_END(RE_NO_VALUE, word);
 		if (VAL_TYPE(value) >= REB_NATIVE && VAL_TYPE(value) <= REB_FUNCTION) goto reval; // || IS_LIT_PATH(value)
 		DS_PUSH(value);
 		if (IS_LIT_WORD(value)) VAL_SET(DS_TOP, REB_WORD);
@@ -856,10 +856,10 @@ reval:
 
 	case ET_SET_WORD:
 		word = value;
-		//if (!VAL_WORD_FRAME(word)) Trap1(RE_NOT_DEFINED, word); (checked in set_var)
+		//if (!VAL_WORD_FRAME(word)) Trap1_DEAD_END(RE_NOT_DEFINED, word); (checked in set_var)
 		index = Do_Next(block, index+1, 0);
 		// THROWN is handled in Set_Var.
-		if (index == END_FLAG || VAL_TYPE(DS_TOP) <= REB_UNSET) Trap1(RE_NEED_VALUE, word);
+		if (index == END_FLAG || VAL_TYPE(DS_TOP) <= REB_UNSET) Trap1_DEAD_END(RE_NEED_VALUE, word);
 		Set_Var(word, DS_TOP);
 		//Set_Word(word, DS_TOP); // (value stays on stack)
 		//Dump_Frame(Main_Frame);
@@ -900,7 +900,7 @@ eval_func2:
 			value = DS_POP; // WARNING: value is volatile on TOS1 !
 			word = Get_Type_Word(VAL_TYPE(value));
 			index--;		// Backup block index to re-evaluate.
-			if (IS_OP(value)) Trap_Type(value); // not allowed
+			if (IS_OP(value)) Trap_Type_DEAD_END(value); // not allowed
 			goto eval_func0;
 		}
 		break;
@@ -909,7 +909,7 @@ eval_func2:
 		// An operator can be native or function, so its true evaluation
 		// datatype is stored in the extended flags part of the value.
 		if (!word) word = ROOT_NONAME;
-		if (DSP <= 0 || index == 0) Trap1(RE_NO_OP_ARG, word);
+		if (DSP <= 0 || index == 0) Trap1_DEAD_END(RE_NO_OP_ARG, word);
 		ftype = VAL_GET_EXT(value) - REB_NATIVE;
 		dsf = Push_Func(TRUE, block, index, VAL_WORD_SYM(word), value); // TOS has first arg
 		DS_PUSH(DS_VALUE(dsf)); // Copy prior to first argument
@@ -924,7 +924,7 @@ eval_func2:
 		if (ftype == REB_SET_PATH) {
 			index = Do_Next(block, index+1, 0);
 			// THROWN is handled in Do_Path.
-			if (index == END_FLAG || VAL_TYPE(DS_TOP) <= REB_UNSET) Trap1(RE_NEED_VALUE, word);
+			if (index == END_FLAG || VAL_TYPE(DS_TOP) <= REB_UNSET) Trap1_DEAD_END(RE_NEED_VALUE, word);
 			Do_Path(&word, DS_TOP);
 		} else {
 			// Can be a path or get-path:
@@ -933,7 +933,7 @@ eval_func2:
 			// Value returned only for functions that need evaluation (but not GET_PATH):
 			if (value && ANY_FUNC(value)) {
 				REBCNT offset = 0;
-				if (IS_OP(value)) Trap_Type(value); // (because prior value is wiped out above)
+				if (IS_OP(value)) Trap_Type_DEAD_END(value); // (because prior value is wiped out above)
 				// Can be object/func or func/refinements or object/func/refinement:
 				dsf = Push_Func(TRUE, block, index, VAL_WORD_SYM(word), value); // Do not unset TOS1 (it is the value)
 				value = DS_TOP;
@@ -974,12 +974,14 @@ eval_func2:
 		 return END_FLAG;
 
 	case ET_INVALID:
-		 Trap1(RE_NO_VALUE, value);
+		 Trap1_DEAD_END(RE_NO_VALUE, value);
 		 break;
 
 	default:
 		//Debug_Fmt("Bad eval: %d %s", VAL_TYPE(value), Get_Type_Name(value));
-		Crash(RP_BAD_EVALTYPE, VAL_TYPE(value));
+		assert(FALSE);
+		Panic_Core(RP_BAD_EVALTYPE, VAL_TYPE(value));
+		DEAD_END;
 		//return -index;
 	}
 
@@ -1004,14 +1006,11 @@ eval_func2:
 ***********************************************************************/
 {
 	REBVAL *tos = 0;
-#if (ALEVEL>1)
 	REBINT start = DSP;
-//	REBCNT gcd = GC_Disabled;
-#endif
 
 	CHECK_MEMORY(4); // Be sure we don't go far with a problem.
 
-	ASSERT1(block->info, RP_GC_OF_BLOCK);
+	assert(block->info);
 
 	while (index < BLK_LEN(block)) {
 		index = Do_Next(block, index, 0);
@@ -1021,12 +1020,12 @@ eval_func2:
 	// If block was empty:
 	if (!tos) {tos = DS_NEXT; SET_UNSET(tos);}
 
-	if (start != DSP || tos != &DS_Base[start+1]) Trap0(RE_MISSING_ARG);
+	if (start != DSP || tos != &DS_Base[start+1]) Trap_DEAD_END(RE_MISSING_ARG);
 
-//	ASSERT2(gcd == GC_Disabled, RP_GC_STUCK);
+//	assert(gcd == GC_Disabled, RP_GC_STUCK);
 
 	// Restore data stack and return value:
-//	ASSERT2((tos == 0 || (start == DSP && tos == &DS_Base[start+1])), RP_TOS_DRIFT);
+//	assert((tos == 0 || (start == DSP && tos == &DS_Base[start+1])), RP_TOS_DRIFT);
 //	if (!tos) {tos = DS_NEXT; SET_UNSET(tos);}
 	return tos;
 }
@@ -1053,7 +1052,7 @@ eval_func2:
 	// If series was empty:
 	if (!tos) {tos = DS_NEXT; SET_UNSET(tos);}
 
-	if (start != DSP || tos != &DS_Base[start+1]) Trap0(RE_MISSING_ARG);
+	if (start != DSP || tos != &DS_Base[start+1]) Trap_DEAD_END(RE_MISSING_ARG);
 
 	return tos;
 }
@@ -1119,7 +1118,7 @@ eval_func2:
 	} else {
 		ser = Make_Block(SERIES_TAIL(block) - index);
 		if (ser == NULL)
-			Crash(RE_NO_MEMORY);
+			Panic(RE_NO_MEMORY);
 		type = REB_BLOCK;
 		len = 0;
 	}
@@ -1163,7 +1162,7 @@ eval_func2:
 		len = VAL_INDEX(into) + SERIES_LEN(block) - index;
 	} else {
 		dest_ser = Make_Block(SERIES_LEN(block) - index);
-		if (dest_ser == NULL) Crash(RE_NO_MEMORY);
+		if (dest_ser == NULL) Panic(RE_NO_MEMORY);
 		type = REB_BLOCK;
 		len = 0;
 	}
@@ -1229,7 +1228,7 @@ eval_func2:
 		len = VAL_INDEX(into) + SERIES_LEN(block) - index;
 	} else {
 		ser = Make_Block(SERIES_LEN(block) - index);
-		if (ser == NULL) Crash(RE_NO_MEMORY);
+		if (ser == NULL) Panic(RE_NO_MEMORY);
 		type = REB_BLOCK;
 		len = 0;
 	}
@@ -1350,7 +1349,7 @@ eval_func2:
 		len = VAL_INDEX(into) + VAL_BLK_LEN(block);
 	} else {
 		ser = Make_Block(VAL_BLK_LEN(block));
-		if (ser == NULL) Crash(RE_NO_MEMORY);
+		if (ser == NULL) Panic(RE_NO_MEMORY);
 		type = REB_BLOCK;
 		len = 0;
 		needs_free = 1;
@@ -1548,7 +1547,7 @@ eval_func2:
 	REBVAL *value;
 	va_list args;
 
-	if (!ANY_FUNC(func)) Trap_Arg(func);
+	if (!ANY_FUNC(func)) Trap_Arg_DEAD_END(func);
 	if (!where) where = VAL_FUNC_BODY(func); // something/anything ?!!
 
 	va_start(args, func);
@@ -1581,7 +1580,7 @@ eval_func2:
 	}
 
 	value = FRM_VALUE(Sys_Context, inum);
-	if (!ANY_FUNC(value)) Trap1(RE_BAD_SYS_FUNC, value);
+	if (!ANY_FUNC(value)) Trap1_DEAD_END(RE_BAD_SYS_FUNC, value);
 	if (!DSF) blk = VAL_FUNC_BODY(value);
 
 	va_start(args, inum);
@@ -1931,7 +1930,7 @@ eval_func2:
 				if (VAL_TYPE(word) == VAL_TYPE(BLK_SKIP(wsrc, isrc))) break;
 				DS_PUSH_NONE;
 				continue;
-				//Trap_Arg(word);
+				//Trap_Arg_DEAD_END(word);
 
 			// At refinement, search for it in source, then continue with words.
 			case REB_REFINEMENT:
@@ -1945,12 +1944,12 @@ eval_func2:
 					}
 					DS_PUSH_NONE;
 					continue;
-					//if (isrc >= BLK_LEN(wsrc)) Trap_Arg(word);
+					//if (isrc >= BLK_LEN(wsrc)) Trap_Arg_DEAD_END(word);
 				}
 				break;
 
 			default:
-				ASSERT1(FALSE, RP_ASSERTS);
+				assert(FALSE);
 		}
 push_arg:
 		DS_PUSH(DSF_ARGS(DSF, isrc));
@@ -2061,11 +2060,11 @@ xx*/	REBVAL *Get_Path_Var(REBVAL *path)
 	REBSER *blk;
 	REBCNT i;
 
-	if (VAL_TAIL(path) < 2) Trap1(RE_INVALID_PATH, path);	// empty path
+	if (VAL_TAIL(path) < 2) Trap1_DEAD_END(RE_INVALID_PATH, path);	// empty path
 
 	blk = VAL_SERIES(path);
 	word = BLK_HEAD(blk);
-	if (!ANY_WORD(word)) Trap1(RE_INVALID_PATH, path);
+	if (!ANY_WORD(word)) Trap1_DEAD_END(RE_INVALID_PATH, path);
 
 	val = Get_Var(word);
 
@@ -2093,11 +2092,11 @@ x*/	REBVAL *Do_Path(REBVAL **ppath, REBSER *block, REBCNT *index)
 	REBINT act;
 	REBVAL *ds;
 
-	if (VAL_TAIL(path) == 0) Trap1(RE_INVALID_PATH, path);	// empty path
+	if (VAL_TAIL(path) == 0) Trap1_DEAD_END(RE_INVALID_PATH, path);	// empty path
 	path = *ppath = VAL_BLK_DATA(path);
-	if (!ANY_WORD(path)) Trap1(RE_INVALID_PATH, orig);
+	if (!ANY_WORD(path)) Trap1_DEAD_END(RE_INVALID_PATH, orig);
 	value = Get_Var(path);
-	if (IS_UNSET(value)) Trap1(RE_NO_VALUE, path);
+	if (IS_UNSET(value)) Trap1_DEAD_END(RE_NO_VALUE, path);
 	if (ANY_FUNC(value)) {
 		DS_PUSH(value);
 		value = DS_TOP;
@@ -2128,11 +2127,11 @@ x*/	REBVAL *Do_Path(REBVAL **ppath, REBSER *block, REBCNT *index)
 		// word/field: case
 		else if (IS_SET_PATH(orig) && IS_END(path+1)) {
 			if (!block) break; // evaluating singular path (e.g. in PARSE)
-			//if (!IS_END(path+1)) Trap1(RE_INVALID_PATH, orig);
+			//if (!IS_END(path+1)) Trap1_DEAD_END(RE_INVALID_PATH, orig);
 			selector = path;
 			act = A_PATH_SET;
 			*index = Do_Next(block, *index, 0);
-			if (IS_UNSET(DS_TOP)) Trap1(RE_NEED_VALUE, orig);
+			if (IS_UNSET(DS_TOP)) Trap1_DEAD_END(RE_NEED_VALUE, orig);
 			if (THROWN(DS_TOP)) {
 				value = DS_TOP; // stop, return !!! protected?
 				break;
@@ -2141,7 +2140,7 @@ x*/	REBVAL *Do_Path(REBVAL **ppath, REBSER *block, REBCNT *index)
 		}
 		// word/(expr) case
 		else if (IS_PAREN(path)) {
-			if (!block) Trap1(RE_NEED_VALUE, orig);  // !!! not correct error
+			if (!block) Trap1_DEAD_END(RE_NEED_VALUE, orig);  // !!! not correct error
 			selector = DO_BLK(path);
 		}
 		// The object/word and object/value default case:
@@ -2152,7 +2151,7 @@ x*/	REBVAL *Do_Path(REBVAL **ppath, REBSER *block, REBCNT *index)
 		if (ANY_BLOCK(value)) {
 			value = Pick_Block(value, selector);
 			if (!value) {
-				if (act == A_PATH_SET) Trap_Range(selector);
+				if (act == A_PATH_SET) Trap_Range_DEAD_END(selector);
 				SET_NONE(D_RET);
 				value = D_RET;
 			}
@@ -2178,7 +2177,7 @@ x*/	REBVAL *Do_Path(REBVAL **ppath, REBSER *block, REBCNT *index)
 		if (ANY_FUNC(value)) break;	// evaluate
 	}
 
-	//ASSERT(DSF == dsf);
+	//assert(DSF == dsf);
 	DSP = DSF;
 	DSF = VAL_BACK(DS_NEXT);
 
@@ -2220,11 +2219,11 @@ xx*/	REBVAL *Do_Path(REBVAL **path_val, REBVAL *val)
 
 	// Get first block value:
 	*path_val = path = VAL_BLK_DATA(orig);
-	if (!ANY_WORD(path)) Trap1(RE_INVALID_PATH, orig, path);
+	if (!ANY_WORD(path)) Trap1_DEAD_END(RE_INVALID_PATH, orig, path);
 
 	// Lookup the value of the variable:
 	value = Get_Var(path);
-	if (IS_UNSET(value)) Trap1(RE_NO_VALUE, path);
+	if (IS_UNSET(value)) Trap1_DEAD_END(RE_NO_VALUE, path);
 	*DS_TOP = *value;
 
 	// Foreach value in path:
@@ -2242,7 +2241,7 @@ xx*/	REBVAL *Do_Path(REBVAL **path_val, REBVAL *val)
 		// object/:field case:
 		if (IS_GET_WORD(path)) {
 			selector = Get_Var(path);
-			if (IS_UNSET(selector)) Trap1(RE_NO_VALUE, path);
+			if (IS_UNSET(selector)) Trap1_DEAD_END(RE_NO_VALUE, path);
 		}
 		// object/(expr) case:
 		else if (IS_PAREN(path)) {
@@ -2252,13 +2251,13 @@ xx*/	REBVAL *Do_Path(REBVAL **path_val, REBVAL *val)
 			selector = path;
 
 		func = Path_Dispatch[VAL_TYPE(value)];
-		if (!func) Trap1(RE_BAD_PATH, orig);
+		if (!func) Trap1_DEAD_END(RE_BAD_PATH, orig);
 
 		if (NOT_END(path+1)) {
 			// Call datatype value with the given selector.
 			// It may return an object to continue.
 			value = func(value, selector, 0); // can modify DS_TOP
-			if (!value) Trap1(RE_INVALID_PATH, orig, path);
+			if (!value) Trap1_DEAD_END(RE_INVALID_PATH, orig, path);
 		} else {
 			// This is the last field of the path. If val is
 			// given then the func sets the value of the field.

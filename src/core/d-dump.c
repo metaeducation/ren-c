@@ -192,9 +192,9 @@ xx*/  REBSER *Dump_Value(REBVAL *block, REBSER *series)
 	REB_MOLD mo = {0};
 	mo.digits = 17; // max digits
 
-	if (VAL_TYPE(block) >= REB_MAX) Crash(RP_DATATYPE+7, VAL_TYPE(block));
+	if (VAL_TYPE(block) >= REB_MAX) Panic_DEAD_END(RP_DATATYPE+7, VAL_TYPE(block));
 
-	ASSERT2(series, 9997);
+	assert(series);
 	mo.series = series;
 	Emit(&mo, "T: ", block);
 

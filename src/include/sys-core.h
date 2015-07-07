@@ -33,8 +33,6 @@
 
 // Internal configuration:
 #define REB_DEF					// kernel definitions and structs
-#define ASSERTIONS				// special run-time checks
-//#define DEBUGGING				// debug output and debugger assistance
 //#define SERIES_LABELS			// enable identifier labels for series
 //#define MUNGWALL				// memory allocation bounds checking
 #define STACK_MIN   4000		// data stack increment size
@@ -55,6 +53,7 @@
 #include <string.h>
 #include <setjmp.h>
 #include <math.h>
+#include <assert.h>
 
 // Special OS-specific definitions:
 #ifdef OS_DEFS
@@ -299,17 +298,6 @@ enum encoding_opts {
 #define FREE(m, s)  free(m)
 #define ALIGN(s, a) (((s) + (a)-1) & ~((a)-1))
 
-#define ALEVEL 2
-
-void Crash(REBINT id, ...);
-
-#define ASSERT(c,m) if (!(c)) Crash(m);		// (breakpoint in Crash() to see why)
-#if (ALEVEL>0)
-#define ASSERT1(c,m) if (!(c)) Crash(m);	// Not in beta releases
-#if (ALEVEL>1)
-#define ASSERT2(c,m) if (!(c)) Crash(m);	// Not in any releases
-#endif
-#endif
 #define MEM_CARE 5				// Lower number for more frequent checks
 
 
@@ -332,7 +320,157 @@ void Crash(REBINT id, ...);
 //#define DO_BLOCK(v) Do_Block(VAL_SERIES(v), VAL_INDEX(v))
 #define DO_BLK(v) Do_Blk(VAL_SERIES(v), VAL_INDEX(v))
 
-#define DEAD_END	return 0	// makes compiler happy (for never used return case)
+
+/***********************************************************************
+**
+**  ASSERTS, PANICS, and TRAPS
+**
+**		There are three failure calls for Rebol code; named uniquely
+**		for clarity to distinguish them from the generic "crash"
+**		(which would usually mean an exception violation).
+**
+**		Assertions are in debug builds only, and use the conventional
+**		standard C assert macro.  The code inside the assert will be
+**		removed if the flag NDEBUG is defined to indicate "NoDEBUGging".
+**		While negative logic is counter-intuitive (e.g. `#ifndef NDEBUG`
+**		vs. `#ifdef DEBUG`) it's the standard and is the least of evils:
+**
+**			http://stackoverflow.com/a/17241278/211160
+**
+**		(Assertions should mostly be used as a kind of "traffic cone"
+**		when working on new code or analyzing a bug you're trying to
+**		trigger in development.  It's preferable to update the design
+**		via static typing or otherwise as the code hardens.)
+**
+**		Panics are "blue screen of death" conditions from which there
+**		is no recovery.  They should be ideally identified by a
+**		unique "Rebol Panic" code in sys-panics.h, but RP_MISC can be
+**		used temporarily until it is named.  To help with debugging
+**		the specific location where a crash happened, a macro for
+**		Panic() with no parameters (common case) will also assert
+**		in a debug build.
+**
+**		Traps are recoverable conditions which tend to represent
+**		errors the user can intercept.  Each call to trap must be
+**		identified by a unique "Rebol Error" code and then zero-or-more
+**		parameters after that.  The parameters and the codes are
+**		specified errors.r, which also has a way of templating a
+**		parameterized object with arguments and a formatted message.
+**		See that file for examples.  There is also a RE_MISC code
+**		that takes no parameters that you can use for testing.
+**
+**		(Note that panic codes are also error codes; but they can
+**		be used before an error object's information is available
+**		in the early boot phase.)
+**
+**		If you call a Panic or a Trap in a function, that function
+**		will not return.  As this is done with C methods exit() and
+**		setjmp()/longjmp() vs. an exception model, it precludes the
+**		ability of the compiler to tell if all your code paths through
+**		a function return a value or not.  This is typically handled
+**		via the macro DEAD_END, but it's heavy to write:
+**
+**			if (condition) {Trap(...); DEAD_END;}
+**
+**		For convenience this is wrapped up as a single macro:
+**
+**			if (condition) Trap_DEAD_END(...);
+**
+**		!!! It's a bit unfortunate that Trap wrapper functions exist
+**		for something simple as Trap_Range to save on typing; because
+**		those have to be re-wrapped here to ensure that if those
+**		functions add more behavior then Trap_Range and
+**		Trap_Range_DEAD_END won't act differently.  Fewer wrappers
+**		would be needed if the error names were shorter, e.g.
+**		RE_RANGE instead of RE_OUT_OF_RANGE, as Trap1(RE_RANGE, ...)
+**		is not so difficult to type.
+**
+***********************************************************************/
+
+void Panic_Core(REBINT id, ...);
+
+#define DEAD_END \
+	do { \
+		assert(FALSE); \
+		return 0; \
+	} while (0)
+
+#define Panic(rp) \
+	do { \
+		assert(0 == (rp)); /* fail here in Debug build */ \
+		Panic_Core(rp); \
+	} while (0)
+
+#define Panic_DEAD_END(rp) \
+	do { \
+		assert(0 == (rp)); /* fail here in Debug build */ \
+		Panic_Core(rp); \
+		DEAD_END; \
+	} while (0)
+
+#define Trap3_DEAD_END(re,a1,a2,a3) \
+	do { \
+		Trap3((re), (a1), (a2), (a3)); \
+		DEAD_END; \
+	} while (0)
+
+#define Trap_DEAD_END(re) \
+	Trap3_DEAD_END((re), 0, 0, 0)
+
+#define Trap1_DEAD_END(re,a1) \
+	Trap3_DEAD_END((re), (a1), 0, 0)
+
+#define Trap2_DEAD_END(re,a1,a2) \
+	Trap3_DEAD_END((re), (a1), (a2), 0)
+
+#define Trap_Arg_DEAD_END(a) \
+	do { \
+		Trap_Arg(a); \
+		DEAD_END; \
+	} while (0)
+
+#define Trap_Type_DEAD_END(a) \
+	do { \
+		Trap_Type(a); \
+		DEAD_END; \
+	} while (0)
+
+#define Trap_Range_DEAD_END(a) \
+	do { \
+		Trap_Range(a); \
+		DEAD_END; \
+	} while (0)
+
+#define Trap_Make_DEAD_END(t,s) \
+	do { \
+		Trap_Make((t), (s)); \
+		DEAD_END; \
+	} while (0)
+
+#define Trap_Reflect_DEAD_END(t,a) \
+	do { \
+		Trap_Reflect((t), (a)); \
+		DEAD_END; \
+	} while (0)
+
+#define Trap_Action_DEAD_END(t,a) \
+	do { \
+		Trap_Action((t), (a)); \
+		DEAD_END; \
+	} while (0)
+
+#define Trap_Types_DEAD_END(re,t1,t2) \
+	do { \
+		Trap_Types((re), (t1), (t2)); \
+		DEAD_END; \
+	} while (0)
+
+#define Trap_Port_DEAD_END(re,p,c) \
+	do { \
+		Trap_Port((re), (p), (c)); \
+		DEAD_END; \
+	} while (0)
+
 
 #define	NO_RESULT	((REBCNT)(-1))
 #define	ALL_BITS	((REBCNT)(-1))
@@ -361,13 +499,12 @@ void Crash(REBINT id, ...);
 #endif
 
 // Save/Unsave Macros:
-#define	SAVE_SERIES(s)		Save_Series(s)
-#ifdef ASSERTIONS
-#define	UNSAVE_SERIES(s)	GC_Protect->tail--;\
-	ASSERT(((REBSER **)GC_Protect->data)[GC_Protect->tail] == s, RP_HOLD_SERIES_MALIGN)
-#else
-#define	UNSAVE_SERIES(s)	GC_Protect->tail--
-#endif
+#define SAVE_SERIES(s) Save_Series(s)
+#define UNSAVE_SERIES(s) \
+	do { \
+		GC_Protect->tail--; \
+		assert(((REBSER **)(GC_Protect->data))[GC_Protect->tail] == s); \
+	} while (0)
 
 #ifdef OS_STACK_GROWS_UP
 #define CHECK_STACK(v) if ((REBUPT)(v) >= Stack_Limit) Trap_Stack();

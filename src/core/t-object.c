@@ -81,7 +81,7 @@ static void Append_Obj(REBSER *obj, REBVAL *arg)
 		if (!Find_Word_Index(obj, VAL_WORD_SYM(arg), TRUE)) {
 			// bug fix, 'self is protected only in selfish frames
 			if ((VAL_WORD_CANON(arg) == SYM_SELF) && !IS_SELFLESS(obj))
-				Trap0(RE_SELF_PROTECTED);
+				Trap(RE_SELF_PROTECTED);
 			Expand_Frame(obj, 1, 1); // copy word table also
 			Append_Frame(obj, 0, VAL_WORD_SYM(arg));
 			// val is UNSET
@@ -117,7 +117,7 @@ static void Append_Obj(REBSER *obj, REBVAL *arg)
 				// release binding table
 				BLK_TERM(BUF_WORDS);
 				Collect_End(obj);
-				Trap0(RE_SELF_PROTECTED);
+				Trap(RE_SELF_PROTECTED);
 			}
 		} else {
 			// collect the word
@@ -147,7 +147,7 @@ static void Append_Obj(REBSER *obj, REBVAL *arg)
 			Collect_End(obj);
 			if (VAL_PROTECTED(FRM_WORD(obj, i)))
 				Trap1(RE_LOCKED_WORD, FRM_WORD(obj, i));
-			Trap0(RE_HIDDEN);
+			Trap(RE_HIDDEN);
 		}
 
 		if (IS_END(word + 1)) SET_NONE(val);
@@ -258,7 +258,7 @@ static REBSER *Trim_Object(REBSER *obj)
 		return PE_BAD_SELECT;
 
 	if (pvs->setval && IS_END(pvs->path+1) && VAL_PROTECTED(VAL_FRM_WORD(pvs->value, n)))
-		Trap1(RE_LOCKED_WORD, pvs->select);
+		Trap1_DEAD_END(RE_LOCKED_WORD, pvs->select);
 
 	pvs->value = VAL_OBJ_VALUES(pvs->value) + n;
 	return PE_SET;
@@ -318,7 +318,7 @@ static REBSER *Trim_Object(REBSER *obj)
 					// Does it include a spec?
 					if (IS_BLOCK(VAL_BLK(arg))) {
 						arg = VAL_BLK(arg);
-						if (!IS_BLOCK(arg+1)) Trap_Make(REB_TASK, value);
+						if (!IS_BLOCK(arg+1)) Trap_Make_DEAD_END(REB_TASK, value);
 						obj = Make_Module_Spec(arg);
 						VAL_MOD_BODY(value) = VAL_SERIES(arg+1);
 					} else {
@@ -351,7 +351,7 @@ static REBSER *Trim_Object(REBSER *obj)
 
 			//if (IS_NONE(arg)) {obj = Make_Frame(0); break;}
 
-			Trap_Make(type, arg);
+			Trap_Make_DEAD_END(type, arg);
 		}
 
 		// make parent-object ....
@@ -385,7 +385,7 @@ static REBSER *Trim_Object(REBSER *obj)
 				break; // returns obj
 			}
 		}
-		Trap_Make(VAL_TYPE(value), value);
+		Trap_Make_DEAD_END(VAL_TYPE(value), value);
 
 	case A_TO:
 		// special conversions to object! | error! | module!
@@ -398,18 +398,18 @@ static REBSER *Trim_Object(REBSER *obj)
 			}
 			else if (type == REB_OBJECT) {
 				if (IS_ERROR(arg)) {
-					if (VAL_ERR_NUM(arg) < 100) Trap_Arg(arg);
+					if (VAL_ERR_NUM(arg) < 100) Trap_Arg_DEAD_END(arg);
 					obj = VAL_ERR_OBJECT(arg);
 					break; // returns obj
 				}
 			}
 			else if (type == REB_MODULE) {
-				if (!IS_BLOCK(arg) || IS_EMPTY(arg)) Trap_Make(REB_MODULE, arg);
+				if (!IS_BLOCK(arg) || IS_EMPTY(arg)) Trap_Make_DEAD_END(REB_MODULE, arg);
 				val = VAL_BLK_DATA(arg); // module spec
-				if (!IS_OBJECT(val)) Trap_Arg(val);
+				if (!IS_OBJECT(val)) Trap_Arg_DEAD_END(val);
 				obj = VAL_OBJ_FRAME(val);
 				val++; // module object
-				if (!IS_OBJECT(val)) Trap_Arg(val);
+				if (!IS_OBJECT(val)) Trap_Arg_DEAD_END(val);
 				VAL_MOD_SPEC(val) = obj;
 				*value = *val;
 				VAL_SET(value, REB_MODULE);
@@ -418,7 +418,7 @@ static REBSER *Trim_Object(REBSER *obj)
 			}
 		}
 		else type = VAL_TYPE(value);
-		Trap_Make(type, arg);
+		Trap_Make_DEAD_END(type, arg);
 
 	case A_APPEND:
 		TRAP_PROTECT(VAL_SERIES(value));
@@ -427,20 +427,20 @@ static REBSER *Trim_Object(REBSER *obj)
 			return R_ARG1;
 		}
 		else
-			Trap_Action(VAL_TYPE(value), action); // !!! needs better error
+			Trap_Action_DEAD_END(VAL_TYPE(value), action); // !!! needs better error
 
 	case A_LENGTHQ:
 		if (IS_OBJECT(value)) {
 			DS_RET_INT(SERIES_TAIL(VAL_OBJ_FRAME(value))-1);
 			return R_RET;
 		}
-		Trap_Action(VAL_TYPE(value), action);
+		Trap_Action_DEAD_END(VAL_TYPE(value), action);
 
 	case A_COPY:
 		// Note: words are not copied and bindings not changed!
 	{
 		REBU64 types = 0;
-		if (D_REF(ARG_COPY_PART)) Trap0(RE_BAD_REFINES);
+		if (D_REF(ARG_COPY_PART)) Trap_DEAD_END(RE_BAD_REFINES);
 		if (D_REF(ARG_COPY_DEEP)) {
 			types |= CP_DEEP | (D_REF(ARG_COPY_TYPES) ? 0 : TS_STD_SERIES);
 		}
@@ -478,22 +478,22 @@ static REBSER *Trim_Object(REBSER *obj)
 		// Adjust for compatibility with PICK:
 		if (action == OF_VALUES) action = 2;
 		else if (action == OF_BODY) action = 3;
-		if (action < 1 || action > 3) Trap_Reflect(VAL_TYPE(value), arg);
+		if (action < 1 || action > 3) Trap_Reflect_DEAD_END(VAL_TYPE(value), arg);
 #ifdef obsolete
 		goto reflect;
 
 	case A_PICK:
 		action = Get_Num_Arg(arg); // integer, decimal, logic
-		if (action < 1 || action > 3) Trap_Arg(arg);
+		if (action < 1 || action > 3) Trap_Arg_DEAD_END(arg);
 		if (action < 3) action |= 4;  // add SELF to list
 reflect:
 #endif
-		if (THROWN(value)) Trap0(RE_THROW_USAGE);
+		if (THROWN(value)) Trap_DEAD_END(RE_THROW_USAGE);
 		Set_Block(value, Make_Object_Block(VAL_OBJ_FRAME(value), action));
 		break;
 
 	case A_TRIM:
-		if (Find_Refines(ds, ALL_TRIM_REFS)) Trap0(RE_BAD_REFINES); // none allowed
+		if (Find_Refines(ds, ALL_TRIM_REFS)) Trap_DEAD_END(RE_BAD_REFINES); // none allowed
 		type = VAL_TYPE(value);
 		obj = Trim_Object(VAL_OBJ_FRAME(value));
 		break;
@@ -503,10 +503,10 @@ reflect:
 			SET_LOGIC(DS_RETURN, SERIES_TAIL(VAL_OBJ_FRAME(value)) <= 1);
 			return R_RET;
 		}
-		Trap_Action(VAL_TYPE(value), action);
+		Trap_Action_DEAD_END(VAL_TYPE(value), action);
 
 	default:
-		Trap_Action(VAL_TYPE(value), action);
+		Trap_Action_DEAD_END(VAL_TYPE(value), action);
 	}
 
 	if (type) {
@@ -542,7 +542,7 @@ is_true:
 		for (val = pvs->value + 1; NOT_END(val); val++, word++) {
 			if (sym == VAL_BIND_SYM(word) || s == VAL_BIND_CANON(word)) {
 				if (VAL_GET_OPT(word, OPTS_HIDE)) break;
-				if (VAL_PROTECTED(word)) Trap1(RE_LOCKED_WORD, word);
+				if (VAL_PROTECTED(word)) Trap1_DEAD_END(RE_LOCKED_WORD, word);
 				pvs->value = val;
 				return PE_SET;
 			}
@@ -561,7 +561,7 @@ is_true:
 	switch (action) {
 	case A_MAKE:
 	case A_TO:
-		Trap_Make(REB_FRAME, D_ARG(2));
+		Trap_Make_DEAD_END(REB_FRAME, D_ARG(2));
 	}
 
 	return R_ARG1;

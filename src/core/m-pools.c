@@ -44,7 +44,7 @@
 
 //-- Special Debugging Options:
 //#define CHAFF					// Fill series data to crash old references
-//#define HIT_END				// Crash if block tail is past block terminator.
+//#define HIT_END				// Panic_DEAD_END if block tail is past block terminator.
 //#define WATCH_FREED			// Show # series freed each GC
 //#define MEM_STRESS			// Special torture mode enabled
 //#define INSPECT_SERIES
@@ -238,7 +238,10 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 #endif
 
 	seg = (REBSEG *) Make_Mem(mem_size);
-	if (!seg) Crash(RP_NO_MEMORY, mem_size);
+	if (!seg) {
+		assert(FALSE);
+		Panic_Core(RP_NO_MEMORY, mem_size);
+	}
 
 	CLEAR(seg, mem_size);  // needed to clear series nodes
 	seg->size = mem_size;
@@ -364,7 +367,7 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 #else
 		node = (REBNOD *) Make_Mem(length);
 #endif
-		if (!node) Trap0(RE_NO_MEMORY);
+		if (!node) Trap_DEAD_END(RE_NO_MEMORY);
 #ifdef MUNGWALL
 		memcpy((REBYTE *)node,MUNG_PATTERN1,MUNG_SIZE);
 		memcpy(((REBYTE *)node)+length+MUNG_SIZE,MUNG_PATTERN2,MUNG_SIZE);
@@ -402,15 +405,15 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 
 	CHECK_STACK(&series);
 
-	if (((REBU64)length * wide) > MAX_I32) Trap0(RE_NO_MEMORY);
+	if (((REBU64)length * wide) > MAX_I32) Trap_DEAD_END(RE_NO_MEMORY);
 
-	ASSERT(wide != 0, RP_BAD_SERIES);
+	assert(wide != 0);
 
 //	if (GC_TRIGGER) Recycle();
 
 	series = (REBSER *)Make_Node(SERIES_POOL);
 	length *= wide;
-	ASSERT(length != 0, RP_BAD_SERIES);
+	assert(length != 0);
 
 	pool_num = FIND_POOL(length);
 	if (pool_num < SYSTEM_POOL) {
@@ -440,7 +443,7 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 #endif
 		if (!node) {
 			Free_Node(SERIES_POOL, (REBNOD *)series);
-			Trap0(RE_NO_MEMORY);
+			Trap_DEAD_END(RE_NO_MEMORY);
 		}
 #ifdef MUNGWALL
 		memcpy((REBYTE *)node,MUNG_PATTERN1,MUNG_SIZE);
@@ -513,7 +516,7 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 	// Verify that size matches pool size:
 	if (pool_num < SERIES_POOL) {
 		/* size < wide when "wide" is not a multiple of element size */
-		ASSERT(Mem_Pools[pool_num].wide >= size, RP_FREE_NODE_SIZE);
+		assert(Mem_Pools[pool_num].wide >= size);
 	}
 	MUNG_CHECK(pool_num,node, size);
 
@@ -705,7 +708,7 @@ clear_header:
 
 	return count;
 crash:
-	Crash(RP_CORRUPT_MEMORY);
+	Panic_DEAD_END(RP_CORRUPT_MEMORY);
 	return 0; // for compiler only
 }
 

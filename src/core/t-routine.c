@@ -200,7 +200,7 @@
 		ffi_type **atypes
 	) {
 		// !!! TBD: Meaningful error
-		Crash(RP_MISC);
+		Panic_DEAD_END(RP_MISC);
 	}
 
 	ffi_status ffi_prep_cif_var(
@@ -212,7 +212,7 @@
 		ffi_type **atypes
 	) {
 		// !!! TBD: Meaningful error
-		Crash(RP_MISC);
+		Panic_DEAD_END(RP_MISC);
 	}
 
 	void ffi_call(
@@ -222,7 +222,7 @@
 		void **avalue
 	) {
 		// !!! TBD: Meaningful error
-		Crash(RP_MISC);
+		Panic(RP_MISC);
 	}
 
 	// The closure is a "black box" but client code takes the sizeof() to
@@ -234,7 +234,7 @@
 
 	void *ffi_closure_alloc(size_t size, void **code) {
 		// !!! TBD: Meaningful error
-		Crash(RP_MISC);
+		Panic_DEAD_END(RP_MISC);
 	}
 
 	ffi_status ffi_prep_closure_loc(
@@ -245,12 +245,12 @@
 		void *codeloc
 	) {
 		// !!! TBD: Meaningful error
-		Crash(RP_MISC);
+		Panic_DEAD_END(RP_MISC);
 	}
 
 	void ffi_closure_free (void *closure) {
 		// !!! TBD: Meaningful error
-		Crash(RP_MISC);
+		Panic(RP_MISC);
 	}
 #endif // HAVE_LIBFFI_AVAILABLE
 
@@ -341,7 +341,7 @@ static ffi_type* struct_to_ffi(REBVAL *out, REBSER *fields)
 		struct Struct_Field *field = (struct Struct_Field*)SERIES_SKIP(fields, i);
 		if (field->type == STRUCT_TYPE_REBVAL) {
 			/* don't see a point to pass a rebol value to external functions */
-			Trap_Arg(out);
+			Trap_Arg_DEAD_END(out);
 		} else if (field->type != STRUCT_TYPE_STRUCT) {
 			if (struct_type_to_ffi[field->type]) {
 				REBCNT n = 0;
@@ -488,7 +488,7 @@ static void *arg_to_ffi(REBVAL *rot, REBVAL *arg, REBCNT idx, REBINT *pop)
 	switch (args[idx]->type) {
 		case FFI_TYPE_UINT8:
 			if (!IS_INTEGER(arg)) {
-				Trap3(RE_EXPECT_ARG, DSF_WORD(DSF), BLK_SKIP(rebol_args, idx), arg);
+				Trap3_DEAD_END(RE_EXPECT_ARG, DSF_WORD(DSF), BLK_SKIP(rebol_args, idx), arg);
 			} else {
 #ifdef BIG_ENDIAN
 				u8 i = (u8) VAL_INT64(arg);
@@ -498,7 +498,7 @@ static void *arg_to_ffi(REBVAL *rot, REBVAL *arg, REBCNT idx, REBINT *pop)
 			}
 		case FFI_TYPE_SINT8:
 			if (!IS_INTEGER(arg)) {
-				Trap3(RE_EXPECT_ARG, DSF_WORD(DSF), BLK_SKIP(rebol_args, idx), arg);
+				Trap3_DEAD_END(RE_EXPECT_ARG, DSF_WORD(DSF), BLK_SKIP(rebol_args, idx), arg);
 			} else {
 #ifdef BIG_ENDIAN
 				i8 i = (i8) VAL_INT64(arg);
@@ -508,7 +508,7 @@ static void *arg_to_ffi(REBVAL *rot, REBVAL *arg, REBCNT idx, REBINT *pop)
 			}
 		case FFI_TYPE_UINT16:
 			if (!IS_INTEGER(arg)) {
-				Trap3(RE_EXPECT_ARG, DSF_WORD(DSF), BLK_SKIP(rebol_args, idx), arg);
+				Trap3_DEAD_END(RE_EXPECT_ARG, DSF_WORD(DSF), BLK_SKIP(rebol_args, idx), arg);
 			} else {
 #ifdef BIG_ENDIAN
 				u16 i = (u16) VAL_INT64(arg);
@@ -518,7 +518,7 @@ static void *arg_to_ffi(REBVAL *rot, REBVAL *arg, REBCNT idx, REBINT *pop)
 			}
 		case FFI_TYPE_SINT16:
 			if (!IS_INTEGER(arg)) {
-				Trap3(RE_EXPECT_ARG, DSF_WORD(DSF), BLK_SKIP(rebol_args, idx), arg);
+				Trap3_DEAD_END(RE_EXPECT_ARG, DSF_WORD(DSF), BLK_SKIP(rebol_args, idx), arg);
 			} else {
 #ifdef BIG_ENDIAN
 				i16 i = (i16) VAL_INT64(arg);
@@ -528,7 +528,7 @@ static void *arg_to_ffi(REBVAL *rot, REBVAL *arg, REBCNT idx, REBINT *pop)
 			}
 		case FFI_TYPE_UINT32:
 			if (!IS_INTEGER(arg)) {
-				Trap3(RE_EXPECT_ARG, DSF_WORD(DSF), BLK_SKIP(rebol_args, idx), arg);
+				Trap3_DEAD_END(RE_EXPECT_ARG, DSF_WORD(DSF), BLK_SKIP(rebol_args, idx), arg);
 			} else {
 #ifdef BIG_ENDIAN
 				u32 i = (u32) VAL_INT64(arg);
@@ -538,7 +538,7 @@ static void *arg_to_ffi(REBVAL *rot, REBVAL *arg, REBCNT idx, REBINT *pop)
 			}
 		case FFI_TYPE_SINT32:
 			if (!IS_INTEGER(arg)) {
-				Trap3(RE_EXPECT_ARG, DSF_WORD(DSF), BLK_SKIP(rebol_args, idx), arg);
+				Trap3_DEAD_END(RE_EXPECT_ARG, DSF_WORD(DSF), BLK_SKIP(rebol_args, idx), arg);
 			} else {
 #ifdef BIG_ENDIAN
 				i32 i = (i32) VAL_INT64(arg);
@@ -549,7 +549,7 @@ static void *arg_to_ffi(REBVAL *rot, REBVAL *arg, REBCNT idx, REBINT *pop)
 		case FFI_TYPE_UINT64:
 		case FFI_TYPE_SINT64:
 			if (!IS_INTEGER(arg)) {
-				Trap3(RE_EXPECT_ARG, DSF_WORD(DSF), BLK_SKIP(rebol_args, idx), arg);
+				Trap3_DEAD_END(RE_EXPECT_ARG, DSF_WORD(DSF), BLK_SKIP(rebol_args, idx), arg);
 			}
 			return &VAL_INT64(arg);
 		case FFI_TYPE_POINTER:
@@ -565,12 +565,12 @@ static void *arg_to_ffi(REBVAL *rot, REBVAL *arg, REBCNT idx, REBINT *pop)
 						return &VAL_INT64(DS_TOP);
 					}
 				default:
-					Trap3(RE_EXPECT_ARG, DSF_WORD(DSF), BLK_SKIP(rebol_args, idx), arg);
+					Trap3_DEAD_END(RE_EXPECT_ARG, DSF_WORD(DSF), BLK_SKIP(rebol_args, idx), arg);
 			}
 		case FFI_TYPE_FLOAT:
 			/* hackish, store the signle precision floating point number in a double precision variable */
 			if (!IS_DECIMAL(arg)) {
-				Trap3(RE_EXPECT_ARG, DSF_WORD(DSF), BLK_SKIP(rebol_args, idx), arg);
+				Trap3_DEAD_END(RE_EXPECT_ARG, DSF_WORD(DSF), BLK_SKIP(rebol_args, idx), arg);
 			} else {
 				float a = (float)VAL_DECIMAL(arg);
 				memcpy(&VAL_DECIMAL(arg), &a, sizeof(a));
@@ -578,7 +578,7 @@ static void *arg_to_ffi(REBVAL *rot, REBVAL *arg, REBCNT idx, REBINT *pop)
 			}
 		case FFI_TYPE_DOUBLE:
 			if (!IS_DECIMAL(arg)) {
-				Trap3(RE_EXPECT_ARG, DSF_WORD(DSF), BLK_SKIP(rebol_args, idx), arg);
+				Trap3_DEAD_END(RE_EXPECT_ARG, DSF_WORD(DSF), BLK_SKIP(rebol_args, idx), arg);
 			}
 			return &VAL_DECIMAL(arg);
 		case FFI_TYPE_STRUCT:
@@ -589,7 +589,7 @@ static void *arg_to_ffi(REBVAL *rot, REBVAL *arg, REBCNT idx, REBINT *pop)
 				if (IS_STRUCT(arg)) {
 					VAL_STRUCT_DATA_BIN(arg) = Copy_Series(VAL_STRUCT_DATA_BIN(arg));
 				} else {
-					Trap3(RE_EXPECT_ARG, DSF_WORD(DSF), BLK_SKIP(rebol_args, idx), arg);
+					Trap3_DEAD_END(RE_EXPECT_ARG, DSF_WORD(DSF), BLK_SKIP(rebol_args, idx), arg);
 				}
 			}
 			return SERIES_SKIP(VAL_STRUCT_DATA_BIN(arg), VAL_STRUCT_OFFSET(arg));
@@ -597,10 +597,10 @@ static void *arg_to_ffi(REBVAL *rot, REBVAL *arg, REBCNT idx, REBINT *pop)
 			if (!idx) {
 				return NULL;
 			} else {
-				Trap3(RE_EXPECT_ARG, DSF_WORD(DSF), BLK_SKIP(rebol_args, idx), arg);
+				Trap3_DEAD_END(RE_EXPECT_ARG, DSF_WORD(DSF), BLK_SKIP(rebol_args, idx), arg);
 			}
 		default:
-			Trap_Arg(arg);
+			Trap_Arg_DEAD_END(arg);
 	}
 	return NULL;
 }
@@ -707,7 +707,7 @@ static void ffi_to_rebol(REBRIN *rin,
 
 	if (VAL_ROUTINE_LIB(rot) != NULL //lib is NULL when routine is constructed from address directly
 		&& IS_CLOSED_LIB(VAL_ROUTINE_LIB(rot))) {
-		Trap0(RE_BAD_LIBRARY);
+		Trap(RE_BAD_LIBRARY);
 	}
 
 	if (ROUTINE_GET_FLAG(VAL_ROUTINE_INFO(rot), ROUTINE_VARARGS)) {
@@ -774,7 +774,7 @@ static void ffi_to_rebol(REBRIN *rin,
 		/* series data could have moved */
 		arg_types = (ffi_type**)SERIES_DATA(VAL_ROUTINE_FFI_ARG_TYPES(rot));
 
-		ASSERT2(j == SERIES_TAIL(VAL_ROUTINE_FFI_ARG_TYPES(rot)), RP_MISC);
+		assert(j == SERIES_TAIL(VAL_ROUTINE_FFI_ARG_TYPES(rot)));
 
 		if (FFI_OK != ffi_prep_cif_var((ffi_cif*)VAL_ROUTINE_CIF(rot),
 				VAL_ROUTINE_ABI(rot),
@@ -1021,41 +1021,41 @@ static void callback_dispatcher(ffi_cif *cif, void *ret, void **args, void *user
 		REBINT fn_idx = 0;
 		REBVAL *lib = NULL;
 		if (!IS_BLOCK(&blk[0]))
-			Trap_Types(RE_EXPECT_VAL, REB_BLOCK, VAL_TYPE(&blk[0]));
+			Trap_Types_DEAD_END(RE_EXPECT_VAL, REB_BLOCK, VAL_TYPE(&blk[0]));
 
 		fn_idx = Do_Next(VAL_SERIES(data), 1, 0);
 		lib = DS_POP; //Do_Next saves result on stack
 
 		if (IS_INTEGER(lib)) {
 			if (NOT_END(&blk[fn_idx])) {
-				Trap_Arg(&blk[fn_idx]);
+				Trap_Arg_DEAD_END(&blk[fn_idx]);
 			}
 			//treated as a pointer to the function
 			if (VAL_INT64(lib) == 0) {
-				Trap_Arg(lib);
+				Trap_Arg_DEAD_END(lib);
 			}
 			VAL_ROUTINE_FUNCPTR(out) = (void (*) (void))VAL_INT64(lib);
 		} else {
 			if (!IS_LIBRARY(lib))
-				Trap_Arg(lib);
+				Trap_Arg_DEAD_END(lib);
 
 			if (!IS_STRING(&blk[fn_idx]))
-				Trap_Arg(&blk[fn_idx]);
+				Trap_Arg_DEAD_END(&blk[fn_idx]);
 
 			if (NOT_END(&blk[fn_idx + 1])) {
-				Trap_Arg(&blk[fn_idx + 1]);
+				Trap_Arg_DEAD_END(&blk[fn_idx + 1]);
 			}
 
 			VAL_ROUTINE_LIB(out) = VAL_LIB_HANDLE(lib);
 			if (!VAL_ROUTINE_LIB(out)) {
-				Trap_Arg(lib);
+				Trap_Arg_DEAD_END(lib);
 				//RL_Print("lib is not open\n");
 				ret = FALSE;
 			}
 			TERM_SERIES(VAL_SERIES(&blk[fn_idx]));
 			func = OS_FIND_FUNCTION(LIB_FD(VAL_ROUTINE_LIB(out)), VAL_DATA(&blk[fn_idx]));
 			if (!func) {
-				Trap_Arg(&blk[fn_idx]);
+				Trap_Arg_DEAD_END(&blk[fn_idx]);
 				//printf("Couldn't find function: %s\n", VAL_DATA(&blk[2]));
 				ret = FALSE;
 			} else {
@@ -1066,14 +1066,14 @@ static void callback_dispatcher(ffi_cif *cif, void *ret, void **args, void *user
 		REBINT fn_idx = 0;
 		REBVAL *fun = NULL;
 		if (!IS_BLOCK(&blk[0]))
-			Trap_Arg(&blk[0]);
+			Trap_Arg_DEAD_END(&blk[0]);
 		fn_idx = Do_Next(VAL_SERIES(data), 1, 0);
 		fun = DS_POP; //Do_Next saves result on stack
 		if (!IS_FUNCTION(fun))
-			Trap_Arg(fun);
+			Trap_Arg_DEAD_END(fun);
 		VAL_CALLBACK_FUNC(out) = VAL_FUNC(fun);
 		if (NOT_END(&blk[fn_idx])) {
-			Trap_Arg(&blk[fn_idx]);
+			Trap_Arg_DEAD_END(&blk[fn_idx]);
 		}
 		//printf("RIN: %p, func: %p\n", VAL_ROUTINE_INFO(out), &blk[1]);
 	}
@@ -1089,7 +1089,7 @@ static void callback_dispatcher(ffi_cif *cif, void *ret, void **args, void *user
 					if (VAL_WORD_CANON(blk) == SYM_ELLIPSIS) {
 						REBVAL *v = NULL;
 						if (ROUTINE_GET_FLAG(VAL_ROUTINE_INFO(out), ROUTINE_VARARGS)) {
-							Trap_Arg(blk); /* duplicate ellipsis */
+							Trap_Arg_DEAD_END(blk); /* duplicate ellipsis */
 						}
 						ROUTINE_SET_FLAG(VAL_ROUTINE_INFO(out), ROUTINE_VARARGS);
 						//Change the argument list to be a block
@@ -1102,7 +1102,7 @@ static void callback_dispatcher(ffi_cif *cif, void *ret, void **args, void *user
 						REBVAL *v = NULL;
 						if (ROUTINE_GET_FLAG(VAL_ROUTINE_INFO(out), ROUTINE_VARARGS)) {
 							//... has to be the last argument
-							Trap_Arg(blk);
+							Trap_Arg_DEAD_END(blk);
 						}
 						v = Append_Value(VAL_ROUTINE_ARGS(out));
 						Init_Word(v, VAL_WORD_SYM(blk));
@@ -1119,7 +1119,7 @@ static void callback_dispatcher(ffi_cif *cif, void *ret, void **args, void *user
 					case SYM_ABI:
 						++ blk;
 						if (!IS_WORD(blk) || has_abi > 1) {
-							Trap_Arg(blk);
+							Trap_Arg_DEAD_END(blk);
 						}
 						switch (VAL_WORD_CANON(blk)) {
 							case SYM_DEFAULT:
@@ -1178,24 +1178,24 @@ static void callback_dispatcher(ffi_cif *cif, void *ret, void **args, void *user
 								break;
 #endif //X86_WIN64
 							default:
-								Trap_Arg(blk);
+								Trap_Arg_DEAD_END(blk);
 						}
 						has_abi ++;
 						break;
 					case SYM_RETURN:
 						if (has_return > 1) {
-							Trap_Arg(blk);
+							Trap_Arg_DEAD_END(blk);
 						}
 						has_return ++;
 						++ blk;
 						process_type_block(out, blk, 0);
 						break;
 					default:
-						Trap_Arg(blk);
+						Trap_Arg_DEAD_END(blk);
 				}
 				break;
 			default:
-				Trap_Arg(blk);
+				Trap_Arg_DEAD_END(blk);
 		}
 		++ blk;
 		if (IS_STRING(blk)) { /* notes, ignoring */
@@ -1263,9 +1263,9 @@ static void callback_dispatcher(ffi_cif *cif, void *ret, void **args, void *user
 			//RL_Print("%s, %d, Make routine action\n", __func__, __LINE__);
 		case A_TO:
 			if (IS_ROUTINE(val)) {
-				Trap_Types(RE_EXPECT_VAL, REB_ROUTINE, VAL_TYPE(arg));
+				Trap_Types_DEAD_END(RE_EXPECT_VAL, REB_ROUTINE, VAL_TYPE(arg));
 			} else if (!IS_BLOCK(arg) || !MT_Routine(ret, arg, REB_ROUTINE)) {
-				Trap_Types(RE_EXPECT_VAL, REB_BLOCK, VAL_TYPE(arg));
+				Trap_Types_DEAD_END(RE_EXPECT_VAL, REB_BLOCK, VAL_TYPE(arg));
 			}
 			break;
 		case A_REFLECT:
@@ -1280,12 +1280,12 @@ static void callback_dispatcher(ffi_cif *cif, void *ret, void **args, void *user
 						SET_INTEGER(ret, (REBUPT)VAL_ROUTINE_FUNCPTR(val));
 						break;
 					default:
-						Trap_Reflect(REB_STRUCT, arg);
+						Trap_Reflect_DEAD_END(REB_STRUCT, arg);
 				}
 			}
 			break;
 		default:
-			Trap_Action(REB_ROUTINE, action);
+			Trap_Action_DEAD_END(REB_ROUTINE, action);
 	}
 	return R_RET;
 }
@@ -1312,9 +1312,9 @@ static void callback_dispatcher(ffi_cif *cif, void *ret, void **args, void *user
 			//RL_Print("%s, %d, Make routine action\n", __func__, __LINE__);
 		case A_TO:
 			if (IS_ROUTINE(val)) {
-				Trap_Types(RE_EXPECT_VAL, REB_ROUTINE, VAL_TYPE(arg));
+				Trap_Types_DEAD_END(RE_EXPECT_VAL, REB_ROUTINE, VAL_TYPE(arg));
 			} else if (!IS_BLOCK(arg) || !MT_Routine(ret, arg, REB_CALLBACK)) {
-				Trap_Types(RE_EXPECT_VAL, REB_BLOCK, VAL_TYPE(arg));
+				Trap_Types_DEAD_END(RE_EXPECT_VAL, REB_BLOCK, VAL_TYPE(arg));
 			}
 			break;
 		case A_REFLECT:
@@ -1329,12 +1329,12 @@ static void callback_dispatcher(ffi_cif *cif, void *ret, void **args, void *user
 						SET_INTEGER(ret, (REBUPT)VAL_ROUTINE_DISPATCHER(val));
 						break;
 					default:
-						Trap_Reflect(REB_STRUCT, arg);
+						Trap_Reflect_DEAD_END(REB_STRUCT, arg);
 				}
 			}
 			break;
 		default:
-			Trap_Action(REB_CALLBACK, action);
+			Trap_Action_DEAD_END(REB_CALLBACK, action);
 	}
 	return R_RET;
 }

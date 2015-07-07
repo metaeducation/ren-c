@@ -52,7 +52,7 @@
 
 	sock = Use_Port_State(port, RDI_DNS, sizeof(*sock));
 	spec = OFV(port, STD_PORT_SPEC);
-	if (!IS_OBJECT(spec)) Trap0(RE_INVALID_PORT);
+	if (!IS_OBJECT(spec)) Trap_DEAD_END(RE_INVALID_PORT);
 
 	sock->timeout = 4000; // where does this go? !!!
 
@@ -60,7 +60,7 @@
 
 	case A_READ:
 		if (!IS_OPEN(sock)) {
-			if (OS_DO_DEVICE(sock, RDC_OPEN)) Trap_Port(RE_CANNOT_OPEN, port, sock->error);
+			if (OS_DO_DEVICE(sock, RDC_OPEN)) Trap_Port_DEAD_END(RE_CANNOT_OPEN, port, sock->error);
 			sync = TRUE;
 		}
 
@@ -73,10 +73,10 @@
 		else if (IS_STRING(arg)) {
 			sock->data = VAL_BIN(arg);
 		}
-		else Trap_Port(RE_INVALID_SPEC, port, -10);
+		else Trap_Port_DEAD_END(RE_INVALID_SPEC, port, -10);
 
 		result = OS_DO_DEVICE(sock, RDC_READ);
-		if (result < 0) Trap_Port(RE_READ_ERROR, port, sock->error);
+		if (result < 0) Trap_Port_DEAD_END(RE_READ_ERROR, port, sock->error);
 
 		// Wait for it...
 		if (sync && result == DR_PEND) {
@@ -93,14 +93,14 @@
 		break;
 
 	case A_PICK:  // FIRST - return result
-		if (!IS_OPEN(sock)) Trap_Port(RE_NOT_OPEN, port, -12);
+		if (!IS_OPEN(sock)) Trap_Port_DEAD_END(RE_NOT_OPEN, port, -12);
 		len = Get_Num_Arg(arg); // Position
 pick:
 		if (len == 1) {
 			if (!sock->net.host_info || !GET_FLAG(sock->flags, RRF_DONE)) return R_NONE;
 			if (sock->error) {
 				OS_DO_DEVICE(sock, RDC_CLOSE);
-				Trap_Port(RE_READ_ERROR, port, sock->error);
+				Trap_Port_DEAD_END(RE_READ_ERROR, port, sock->error);
 			}
 			if (GET_FLAG(sock->modes, RST_REVERSE)) {
 				Set_String(D_RET, Copy_Bytes(sock->data, LEN_BYTES(sock->data)));
@@ -108,11 +108,11 @@ pick:
 				Set_Tuple(D_RET, (REBYTE*)&sock->net.remote_ip, 4);
 			}
 			OS_DO_DEVICE(sock, RDC_CLOSE);
-		} else Trap_Range(arg);
+		} else Trap_Range_DEAD_END(arg);
 		break;
 
 	case A_OPEN:
-		if (OS_DO_DEVICE(sock, RDC_OPEN)) Trap_Port(RE_CANNOT_OPEN, port, -12);
+		if (OS_DO_DEVICE(sock, RDC_OPEN)) Trap_Port_DEAD_END(RE_CANNOT_OPEN, port, -12);
 		break;
 
 	case A_CLOSE:
@@ -127,7 +127,7 @@ pick:
 		return R_NONE;
 
 	default:
-		Trap_Action(REB_PORT, action);
+		Trap_Action_DEAD_END(REB_PORT, action);
 	}
 
 	return R_RET;

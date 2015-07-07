@@ -36,7 +36,7 @@
 /*
 ***********************************************************************/
 {
-	ASSERT(sizeof(REBCNT) == 4, RP_BAD_SIZE);
+	assert(sizeof(REBCNT) == 4);
 	out[0] = (REBYTE) in;
 	out[1] = (REBYTE)(in >> 8);
 	out[2] = (REBYTE)(in >> 16);
@@ -50,7 +50,7 @@
 /*
 ***********************************************************************/
 {
-	ASSERT(sizeof(REBCNT) == 4, RP_BAD_SIZE);
+	assert(sizeof(REBCNT) == 4);
 	return (REBCNT) in[0]          // & 0xFF
 		| (REBCNT)  in[1] <<  8    // & 0xFF00;
 		| (REBCNT)  in[2] << 16    // & 0xFF0000;
@@ -86,16 +86,16 @@
 
 	if (IS_INTEGER(val)) {
 		if (VAL_INT64(val) > (i64)MAX_I32 || VAL_INT64(val) < (i64)MIN_I32)
-			Trap_Range(val);
+			Trap_Range_DEAD_END(val);
 		n = VAL_INT32(val);
 	}
 	else if (IS_DECIMAL(val) || IS_PERCENT(val)) {
 		if (VAL_DECIMAL(val) > MAX_I32 || VAL_DECIMAL(val) < MIN_I32)
-			Trap_Range(val);
+			Trap_Range_DEAD_END(val);
 		n = (REBINT)VAL_DECIMAL(val);
 	}
 	else if (IS_LOGIC(val)) n = (VAL_LOGIC(val) ? 1 : 2);
-	else Trap_Arg(val);
+	else Trap_Arg_DEAD_END(val);
 
 	return n;
 }
@@ -109,7 +109,7 @@
 {
 	if (fabs(f) > (REBD32)(0x7FFF)) {
 		DS_PUSH_DECIMAL(f);
-		Trap_Range(DS_TOP);
+		Trap_Range_DEAD_END(DS_TOP);
 	}
 	return (REBINT)f;
 }
@@ -125,11 +125,11 @@
 
 	if (IS_DECIMAL(val)) {
 		if (VAL_DECIMAL(val) > MAX_I32 || VAL_DECIMAL(val) < MIN_I32)
-			Trap_Range(val);
+			Trap_Range_DEAD_END(val);
 		n = (REBINT)VAL_DECIMAL(val);
 	} else {
 		if (VAL_INT64(val) > (i64)MAX_I32 || VAL_INT64(val) < (i64)MIN_I32)
-			Trap_Range(val);
+			Trap_Range_DEAD_END(val);
 		n = VAL_INT32(val);
 	}
 
@@ -153,12 +153,12 @@
 
 	if (IS_DECIMAL(val)) {
 		if (VAL_DECIMAL(val) > MAX_I32 || VAL_DECIMAL(val) < MIN_I32)
-			Trap_Range(val);
+			Trap_Range_DEAD_END(val);
 
 		n = (REBINT)VAL_DECIMAL(val);
 	} else {
 		if (VAL_INT64(val) > (i64)MAX_I32 || VAL_INT64(val) < (i64)MIN_I32)
-			Trap_Range(val);
+			Trap_Range_DEAD_END(val);
 
 		n = VAL_INT32(val);
 	}
@@ -171,7 +171,7 @@
 	)
 		return n;
 
-	Trap_Range(val);
+	Trap_Range_DEAD_END(val);
 	return 0;
 }
 
@@ -185,7 +185,7 @@
 	if (IS_INTEGER(val)) return VAL_INT64(val);
 	if (IS_DECIMAL(val) || IS_PERCENT(val)) return (REBI64)VAL_DECIMAL(val);
 	if (IS_MONEY(val)) return deci_to_int(VAL_DECI(val));
-	Trap_Arg(val);
+	Trap_Arg_DEAD_END(val);
 	return 0;
 }
 
@@ -199,7 +199,7 @@
 	if (IS_DECIMAL(val) || IS_PERCENT(val)) return VAL_DECIMAL(val);
 	if (IS_INTEGER(val)) return (REBDEC)VAL_INT64(val);
 	if (IS_MONEY(val)) return deci_to_decimal(VAL_DECI(val));
-	Trap_Arg(val);
+	Trap_Arg_DEAD_END(val);
 	return 0;
 }
 
@@ -220,7 +220,7 @@
 
 	if (IS_DECIMAL(val)) {
 		if (VAL_DECIMAL(val) > MAX_I64 || VAL_DECIMAL(val) < MIN_I64)
-			Trap_Range(val);
+			Trap_Range_DEAD_END(val);
 		n = (REBI64)VAL_DECIMAL(val);
 	} else {
 		n = VAL_INT64(val);
@@ -234,7 +234,7 @@
 	)
 		return n;
 
-	Trap_Range(val);
+	Trap_Range_DEAD_END(val);
 	DEAD_END;
 }
 
@@ -245,7 +245,7 @@
 /*
 ***********************************************************************/
 {
-	if (VAL_INT64(val) > (i64)255 || VAL_INT64(val) < (i64)0) Trap_Range(val);
+	if (VAL_INT64(val) > (i64)255 || VAL_INT64(val) < (i64)0) Trap_Range_DEAD_END(val);
 	return VAL_INT32(val);
 }
 
@@ -290,7 +290,7 @@
 **
 ***********************************************************************/
 {
-	ASSERT(index < SERIES_TAIL(Lib_Context), RP_BAD_OBJ_INDEX);
+	assert(index < SERIES_TAIL(Lib_Context));
 	return FRM_VALUES(Lib_Context) + index + 1;
 }
 
@@ -340,7 +340,7 @@
 **
 ***********************************************************************/
 {
-	ASSERT1(index < SERIES_TAIL(obj), RP_BAD_OBJ_INDEX);
+	assert(index < SERIES_TAIL(obj));
 	return Get_Sym_Name(FRM_WORD_SYM(obj, index));
 }
 
@@ -353,7 +353,7 @@
 **
 ***********************************************************************/
 {
-	ASSERT1(index < SERIES_TAIL(obj), RP_BAD_OBJ_INDEX);
+	assert(index < SERIES_TAIL(obj));
 	return FRM_VALUES(obj) + index;
 }
 
@@ -367,8 +367,8 @@
 ***********************************************************************/
 {
 	REBSER *obj = VAL_OBJ_FRAME(objval);
-	ASSERT1(IS_FRAME(BLK_HEAD(obj)), RP_BAD_OBJ_FRAME);
-	ASSERT1(index < SERIES_TAIL(obj), RP_BAD_OBJ_INDEX);
+	assert(IS_FRAME(BLK_HEAD(obj)));
+	assert(index < SERIES_TAIL(obj));
 	return FRM_VALUES(obj) + index;
 }
 
@@ -417,7 +417,7 @@
 
 	obj = VAL_OBJ_VALUES(ROOT_SYSTEM) + i1;
 	if (!i2) return obj;
-	ASSERT1(IS_OBJECT(obj), RP_BAD_OBJ_INDEX);
+	assert(IS_OBJECT(obj));
 	return Get_Field(VAL_OBJ_FRAME(obj), i2);
 }
 
@@ -598,7 +598,7 @@
 	if (IS_INTEGER(arg)) return (VAL_INT64(arg) != 0);
 	if (IS_LOGIC(arg)) return (VAL_LOGIC(arg) != 0);
 	if (IS_DECIMAL(arg) || IS_PERCENT(arg)) return (VAL_DECIMAL(arg) != 0.0);
-	Trap_Arg(arg);
+	Trap_Arg_DEAD_END(arg);
 	DEAD_END;
 }
 
@@ -627,7 +627,7 @@
 	if (IS_INTEGER(eval) || IS_DECIMAL(eval)) {
 		len = Int32(eval);
 		if (IS_SCALAR(bval) && VAL_TYPE(bval) != REB_PORT)
-			Trap1(RE_INVALID_PART, bval);
+			Trap1_DEAD_END(RE_INVALID_PART, bval);
 	}
 	else if (
 		(
@@ -644,7 +644,7 @@
 	)
 		len = (REBINT)VAL_INDEX(eval) - (REBINT)VAL_INDEX(bval);
 	else
-		Trap1(RE_INVALID_PART, eval);
+		Trap1_DEAD_END(RE_INVALID_PART, eval);
 /* !!!!
 	if (IS_PORT(bval)) {
 		PORT_STATE_OBJ	*port;
@@ -696,7 +696,7 @@
 		if (is_ser && VAL_TYPE(sval) == VAL_TYPE(lval) && VAL_SERIES(sval) == VAL_SERIES(lval))
 			len = (REBINT)VAL_INDEX(lval) - (REBINT)VAL_INDEX(sval);
 		else
-			Trap1(RE_INVALID_PART, lval);
+			Trap1_DEAD_END(RE_INVALID_PART, lval);
 
 	}
 
@@ -766,7 +766,7 @@
 		else if (bval && VAL_TYPE(bval) == VAL_TYPE(lval) && VAL_SERIES(bval) == VAL_SERIES(lval))
 			val = bval;
 		else
-			Trap1(RE_INVALID_PART, lval);
+			Trap1_DEAD_END(RE_INVALID_PART, lval);
 
 		len = (REBINT)VAL_INDEX(lval) - (REBINT)VAL_INDEX(val);
 	}
@@ -848,7 +848,7 @@
 {
 	i64 r = n + m;
 	if (r < -maxi || r > maxi) {
-		if (type) Trap1(RE_TYPE_LIMIT, Get_Type(type));
+		if (type) Trap1_DEAD_END(RE_TYPE_LIMIT, Get_Type(type));
 		r = r > 0 ? maxi : -maxi;
 	}
 	return r;
@@ -862,7 +862,7 @@
 ***********************************************************************/
 {
 	i64 r = n * m;
-	if (r < -maxi || r > maxi) Trap1(RE_TYPE_LIMIT, Get_Type(type));
+	if (r < -maxi || r > maxi) Trap1_DEAD_END(RE_TYPE_LIMIT, Get_Type(type));
 	return (int)r;
 }
 

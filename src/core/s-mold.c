@@ -83,7 +83,7 @@ enum {
 	REBYTE ender = 0;
 	REBSER *series = mold->series;
 
-	ASSERT2(SERIES_WIDE(series) ==2, 9997);
+	assert(SERIES_WIDE(series) == 2);
 
 	va_start(args, fmt);
 
@@ -380,7 +380,7 @@ STOID Mold_String_Series(REBVAL *value, REB_MOLD *mold)
 
 	// Empty string:
 	if (idx >= VAL_TAIL(value)) {
-		Append_Bytes(mold->series, "\"\"");  //Trap0(RE_PAST_END);
+		Append_Bytes(mold->series, "\"\"");  //Trap_DEAD_END(RE_PAST_END);
 		return;
 	}
 
@@ -644,8 +644,10 @@ STOID Mold_Block(REBVAL *value, REB_MOLD *mold)
 	REBSER *series = mold->series;
 	REBFLG over = FALSE;
 
-	if (SERIES_WIDE(VAL_SERIES(value)) == 0)
-		Crash(RP_BAD_WIDTH, sizeof(REBVAL), 0, VAL_TYPE(value));
+	if (SERIES_WIDE(VAL_SERIES(value)) == 0) {
+		assert(FALSE);
+		Panic_Core(RP_BAD_WIDTH, sizeof(REBVAL), 0, VAL_TYPE(value));
+	}
 
 	// Optimize when no index needed:
 	if (VAL_INDEX(value) == 0 && !IS_MAP(value)) // && (VAL_TYPE(value) <= REB_LIT_PATH))
@@ -890,7 +892,7 @@ STOID Mold_Object(REBVAL *value, REB_MOLD *mold)
 	REBVAL *vals; // first value is context
 	REBCNT n;
 
-	ASSERT(VAL_OBJ_FRAME(value), RP_NO_OBJECT_FRAME);
+	assert(VAL_OBJ_FRAME(value));
 
 	wser = VAL_OBJ_WORDS(value);
 //	if (wser < 1000)
@@ -1020,8 +1022,8 @@ STOID Mold_Error(REBVAL *value, REB_MOLD *mold, REBFLG molded)
 
 	CHECK_STACK(&len);
 
-	ASSERT2(SERIES_WIDE(mold->series) == sizeof(REBUNI), RP_BAD_SIZE);
-	ASSERT2(ser, RP_NO_BUFFER);
+	assert(SERIES_WIDE(mold->series) == sizeof(REBUNI));
+	assert(ser);
 
 	// Special handling of string series: {
 	if (ANY_STR(value) && !IS_TAG(value)) {
@@ -1293,7 +1295,8 @@ STOID Mold_Error(REBVAL *value, REB_MOLD *mold, REBFLG molded)
 		break;
 
 	default:
-		Crash(RP_DATATYPE+5, VAL_TYPE(value));
+		assert(FALSE);
+		Panic_Core(RP_DATATYPE+5, VAL_TYPE(value));
 	}
 	return;
 
@@ -1395,7 +1398,7 @@ append:
 	REBSER *buf = BUF_MOLD;
 	REBINT len;
 
-	if (!buf) Crash(RP_NO_BUFFER);
+	if (!buf) Panic(RP_NO_BUFFER);
 
 	if (SERIES_REST(buf) > MAX_COMMON)
 		Shrink_Series(buf, MIN_COMMON);

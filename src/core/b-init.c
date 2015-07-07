@@ -95,15 +95,15 @@ extern const REBYTE Str_Banner[];
 	printf("%d %s\n", sizeof(REBALL), "all");
 #endif
 
-	ASSERT(VAL_TYPE(&val) == 123,  RP_REBVAL_ALIGNMENT);
+	if (VAL_TYPE(&val) != 123) Panic(RP_REBVAL_ALIGNMENT);
 	if (sizeof(void *) == 8) {
-		ASSERT(sizeof(REBVAL) == 32,   RP_REBVAL_ALIGNMENT);
-		ASSERT1(sizeof(REBGOB) == 84,  RP_BAD_SIZE);
+		if (sizeof(REBVAL) != 32) Panic(RP_REBVAL_ALIGNMENT);
+		if (sizeof(REBGOB) != 84) Panic(RP_BAD_SIZE);
 	} else {
-		ASSERT(sizeof(REBVAL) == 16,   RP_REBVAL_ALIGNMENT);
-		ASSERT1(sizeof(REBGOB) == 64,  RP_BAD_SIZE);
+		if (sizeof(REBVAL) != 16) Panic(RP_REBVAL_ALIGNMENT);
+		if (sizeof(REBGOB) != 64) Panic(RP_BAD_SIZE);
 	}
-	ASSERT1(sizeof(REBDAT) == 4,   RP_BAD_SIZE);
+	if (sizeof(REBDAT) != 4) Panic(RP_BAD_SIZE);
 }
 
 
@@ -173,7 +173,7 @@ extern const REBYTE Str_Banner[];
 
 		textlen = Bytes_To_REBCNT(Native_Specs);
 		text = Decompress(&spec, 0, -1, textlen, 0);
-		if (!text || (STR_LEN(text) != textlen)) Crash(RP_BOOT_DATA);
+		if (!text || (STR_LEN(text) != textlen)) Panic(RP_BOOT_DATA);
 		boot = Scan_Source(STR_HEAD(text), textlen);
 		//Dump_Block_Raw(boot, 0, 2);
 		Free_Series(text);
@@ -183,8 +183,10 @@ extern const REBYTE Str_Banner[];
 
 	Boot_Block = (BOOT_BLK *)VAL_BLK(BLK_HEAD(boot));
 
-	ASSERT(VAL_TAIL(&Boot_Block->types) == REB_MAX, RP_BAD_BOOT_TYPE_BLOCK);
-	ASSERT(VAL_WORD_SYM(VAL_BLK(&Boot_Block->types)) == SYM_END_TYPE, RP_BAD_END_TYPE_WORD);
+	if (VAL_TAIL(&Boot_Block->types) != REB_MAX)
+		Panic(RP_BAD_BOOT_TYPE_BLOCK);
+	if (VAL_WORD_SYM(VAL_BLK(&Boot_Block->types)) != SYM_END_TYPE)
+		Panic(RP_BAD_END_TYPE_WORD);
 
 	// Create low-level string pointers (used by RS_ constants):
 	{
@@ -200,9 +202,12 @@ extern const REBYTE Str_Banner[];
 		}
 	}
 
-	ASSERT(!CMP_BYTES("end!", Get_Sym_Name(SYM_END_TYPE)), RP_BAD_END_CANON_WORD);
-	ASSERT(!CMP_BYTES("true", Get_Sym_Name(SYM_TRUE)), RP_BAD_TRUE_CANON_WORD);
-	ASSERT(!CMP_BYTES("line", BOOT_STR(RS_SCAN,1)), RP_BAD_BOOT_STRING);
+	if (CMP_BYTES("end!", Get_Sym_Name(SYM_END_TYPE)) != 0)
+		Panic(RP_BAD_END_CANON_WORD);
+	if (CMP_BYTES("true", Get_Sym_Name(SYM_TRUE)) != 0)
+		Panic(RP_BAD_TRUE_CANON_WORD);
+	if (CMP_BYTES("line", BOOT_STR(RS_SCAN, 1)) != 0)
+		Panic(RP_BAD_BOOT_STRING);
 }
 
 
@@ -314,7 +319,7 @@ extern const REBYTE Str_Banner[];
 {
 	if ((Native_Limit == 0 && *Native_Functions) || (Native_Count < Native_Limit))
 		Make_Native(ds, VAL_SERIES(D_ARG(1)), *Native_Functions++, REB_NATIVE);
-	else Trap0(RE_MAX_NATIVES);
+	else Trap(RE_MAX_NATIVES);
 	Native_Count++;
 	return R_RET;
 }
@@ -327,7 +332,7 @@ extern const REBYTE Str_Banner[];
 ***********************************************************************/
 {
 	Action_Count++;
-	if (Action_Count >= A_MAX_ACTION) Crash(RP_ACTION_OVERFLOW);
+	if (Action_Count >= A_MAX_ACTION) Panic(RP_ACTION_OVERFLOW);
 	Make_Native(ds, VAL_SERIES(D_ARG(1)), (REBFUN)(REBUPT)Action_Count, REB_ACTION);
 	return R_RET;
 }
@@ -366,7 +371,7 @@ extern const REBYTE Str_Banner[];
 		val = Append_Frame(Lib_Context, word, 0);
 		// Find the related function:
 		func = Find_Word_Value(Lib_Context, VAL_WORD_SYM(word+1));
-		if (!func) Crash(9912);
+		if (!func) Panic(RP_MISC);
 		*val = *func;
 		VAL_SET(val, REB_OP);
 		VAL_SET_EXT(val, VAL_TYPE(func));
@@ -391,7 +396,8 @@ extern const REBYTE Str_Banner[];
 	// Construct the first native, which is the NATIVE function creator itself:
 	// native: native [spec [block!]]
 	word = VAL_BLK_SKIP(&Boot_Block->booters, 1);
-	ASSERT2(IS_SET_WORD(word) && VAL_WORD_SYM(word) == SYM_NATIVE, RE_NATIVE_BOOT);
+	if (!IS_SET_WORD(word) || VAL_WORD_SYM(word) != SYM_NATIVE)
+		Panic(RE_NATIVE_BOOT);
 	//val = BLK_SKIP(Sys_Context, SYS_CTX_NATIVE);
 	val = Append_Frame(Lib_Context, word, 0);
 	Make_Native(val, VAL_SERIES(word+2), Native_Functions[0], REB_NATIVE);
@@ -705,7 +711,7 @@ extern const REBYTE Str_Banner[];
 	}
 
 	if (codi->action == CODI_ENCODE) {
-		u16 * data = codi->data = Make_Mem(codi->len * sizeof(u16));
+		u16 * data = Make_Mem(codi->len * sizeof(u16));
 		if (codi->w == 1) {
 			/* in ASCII */
 			REBCNT i = 0;

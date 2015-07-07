@@ -124,7 +124,7 @@ static int sig_word_num(REBVAL *word)
 		case SYM_SIGXFSZ:
 			return SIGXFSZ;
 		default:
-			Trap1(RE_INVALID_SPEC, word);
+			Trap1_DEAD_END(RE_INVALID_SPEC, word);
 	}
 }
 
@@ -154,7 +154,7 @@ static int sig_word_num(REBVAL *word)
 			case A_OPEN:
 				val = Obj_Value(spec, STD_PORT_SPEC_SIGNAL_MASK);
 				if (!IS_BLOCK(val)) {
-					Trap1(RE_INVALID_SPEC, val);
+					Trap1_DEAD_END(RE_INVALID_SPEC, val);
 				}
 
 				sigemptyset(&req->signal.mask);
@@ -163,20 +163,20 @@ static int sig_word_num(REBVAL *word)
 						/* handle the special word "ALL" */
 						if (VAL_WORD_CANON(sig) == SYM_ALL) {
 							if (sigfillset(&req->signal.mask) < 0) {
-								Trap1(RE_INVALID_SPEC, sig); /* FIXME, better error */
+								Trap1_DEAD_END(RE_INVALID_SPEC, sig); /* FIXME, better error */
 							}
 							break;
 						}
 
 						if (sigaddset(&req->signal.mask, sig_word_num(sig)) < 0) {
-							Trap1(RE_INVALID_SPEC, sig);
+							Trap1_DEAD_END(RE_INVALID_SPEC, sig);
 						}
 					} else {
-						Trap1(RE_INVALID_SPEC, sig);
+						Trap1_DEAD_END(RE_INVALID_SPEC, sig);
 					}
 				}
 
-				if (OS_DO_DEVICE(req, RDC_OPEN)) Trap_Port(RE_CANNOT_OPEN, port, req->error);
+				if (OS_DO_DEVICE(req, RDC_OPEN)) Trap_Port_DEAD_END(RE_CANNOT_OPEN, port, req->error);
 				if (action == A_OPEN) {
 					return R_ARG1; //port
 				}
@@ -191,7 +191,7 @@ static int sig_word_num(REBVAL *word)
 				break;
 
 			default:
-				Trap_Port(RE_NOT_OPEN, port, -12);
+				Trap_Port_DEAD_END(RE_NOT_OPEN, port, -12);
 		}
 	}
 
@@ -217,7 +217,7 @@ static int sig_word_num(REBVAL *word)
 			ser = Make_Binary(len * sizeof(siginfo_t));
 			req->data = BIN_HEAD(ser);
 			result = OS_DO_DEVICE(req, RDC_READ);
-			if (result < 0) Trap_Port(RE_READ_ERROR, port, req->error);
+			if (result < 0) Trap_Port_DEAD_END(RE_READ_ERROR, port, req->error);
 
 			arg = OFV(port, STD_PORT_DATA);
 			if (!IS_BLOCK(arg)) {
@@ -242,10 +242,10 @@ static int sig_word_num(REBVAL *word)
 			return R_TRUE;
 
 		case A_OPEN:
-			Trap1(RE_ALREADY_OPEN, D_ARG(1));
+			Trap1_DEAD_END(RE_ALREADY_OPEN, D_ARG(1));
 
 		default:
-			Trap_Action(REB_PORT, action);
+			Trap_Action_DEAD_END(REB_PORT, action);
 	}
 
 	return R_RET;

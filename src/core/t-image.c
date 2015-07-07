@@ -411,7 +411,7 @@ INLINE REBCNT ARGB_To_BGR(REBCNT i)
 	REBSER *img;
 
 	if (w > 0xFFFF || h > 0xFFFF) {
-		if (error) Trap1(RE_SIZE_LIMIT, Get_Type(REB_IMAGE));
+		if (error) Trap1_DEAD_END(RE_SIZE_LIMIT, Get_Type(REB_IMAGE));
 		else return 0;
 	}
 
@@ -496,12 +496,12 @@ INLINE REBCNT ARGB_To_BGR(REBCNT i)
 		}
 	}
 	else if (IS_BLOCK(block)) {
-		if (w = Valid_Tuples(block)) Trap_Arg(block+w-1);
+		if (w = Valid_Tuples(block)) Trap_Arg_DEAD_END(block+w-1);
 		Tuples_To_RGBA(ip, size, VAL_BLK_DATA(block), VAL_LEN(block));
 	}
 	else if (!IS_END(block)) return 0;
 
-	//if (!IS_END(block)) Trap_Arg(block);
+	//if (!IS_END(block)) Trap_Arg_DEAD_END(block);
 
 	return val;
 }
@@ -547,7 +547,7 @@ INLINE REBCNT ARGB_To_BGR(REBCNT i)
 
 	// Validate that block arg is all tuple values:
 	if (IS_BLOCK(arg) && NZ(n = Valid_Tuples(arg))) {
-		Trap_Arg(VAL_BLK_SKIP(arg, n-1));
+		Trap_Arg_DEAD_END(VAL_BLK_SKIP(arg, n-1));
 	}
 
 	// Get the /dup refinement. It specifies fill size.
@@ -568,7 +568,7 @@ INLINE REBCNT ARGB_To_BGR(REBCNT i)
 				dup = dupy * w;
 			if (dupx == 0 || dupy == 0) return value;
 		} else
-			Trap_Type(count);
+			Trap_Type_DEAD_END(count);
 	}
 
 	// Get the /part refinement. Only allowed when arg is a series.
@@ -579,14 +579,14 @@ INLINE REBCNT ARGB_To_BGR(REBCNT i)
 			} else if (IS_BINARY(len)) {
 				part = (VAL_INDEX(len) - VAL_INDEX(arg)) / 4;
 			} else
-				Trap_Arg(len);
+				Trap_Arg_DEAD_END(len);
 			part = MAX(part, 0);
 		} else if (IS_IMAGE(arg)) {
 			if (IS_INTEGER(len)) {
 				part = VAL_INT32(len);
 				part = MAX(part, 0);
 			} else if (IS_IMAGE(len)) {
-				if (!VAL_IMAGE_WIDE(len)) Trap_Arg(len);
+				if (!VAL_IMAGE_WIDE(len)) Trap_Arg_DEAD_END(len);
 				partx = VAL_INDEX(len) - VAL_INDEX(arg);
 				party = partx / VAL_IMAGE_WIDE(len);
 				party = MAX(party, 1);
@@ -605,9 +605,9 @@ INLINE REBCNT ARGB_To_BGR(REBCNT i)
 					part = party * w;
 				if (partx == 0 || party == 0) return value;
 			} else
-				Trap_Type(len);
+				Trap_Type_DEAD_END(len);
 		} else
-			 Trap_Arg(arg); // /part not allowed
+			 Trap_Arg_DEAD_END(arg); // /part not allowed
 	} else {
 		if (IS_IMAGE(arg)) { // Use image for /part sizes
 			partx = VAL_IMAGE_WIDE(arg);
@@ -622,7 +622,7 @@ INLINE REBCNT ARGB_To_BGR(REBCNT i)
 		} else if (IS_BLOCK(arg)) {
 			part = VAL_LEN(arg);
 		} else if (! (IS_INTEGER(arg) || IS_TUPLE(arg)))
-			Trap_Type(arg);
+			Trap_Type_DEAD_END(arg);
 	}
 
 	// Expand image data if necessary:
@@ -642,7 +642,7 @@ INLINE REBCNT ARGB_To_BGR(REBCNT i)
 		ip += index * 4;
 		if (IS_INTEGER(arg)) { // Alpha channel
 			n = VAL_INT32(arg);
-			if ((n < 0) || (n > 255)) Trap_Range(arg);
+			if ((n < 0) || (n > 255)) Trap_Range_DEAD_END(arg);
 			if (IS_PAIR(count)) // rectangular fill
 				Fill_Alpha_Rect((REBCNT *)ip, (REBYTE)n, w, dupx, dupy);
 			else
@@ -665,7 +665,7 @@ INLINE REBCNT ARGB_To_BGR(REBCNT i)
 		ip += index * 4;
 		for (; dup > 0; dup--, ip += part * 4)
 			Tuples_To_RGBA(ip, part, VAL_BLK_DATA(arg), part);
-	} else Trap_Type(arg);
+	} else Trap_Type_DEAD_END(arg);
 
 	Reset_Height(value);
 
@@ -714,8 +714,8 @@ INLINE REBCNT ARGB_To_BGR(REBCNT i)
 
 	for (n = 0; n < 8; n++) // (zero based)
 		if (D_REF((REBINT)no_refs[n]))
-			Trap0(RE_BAD_REFINE);
-//			Trap2(RE_CANNOT_USE, FRM_WORDS(me, (REBINT)no_refs[n]), Get_Global(REB_IMAGE));
+			Trap_DEAD_END(RE_BAD_REFINE);
+//			Trap2_DEAD_END(RE_CANNOT_USE, FRM_WORDS(me, (REBINT)no_refs[n]), Get_Global(REB_IMAGE));
 
 	if (IS_TUPLE(arg)) {
 		only = (REBOOL)(VAL_TUPLE_LEN(arg) < 4);
@@ -723,14 +723,14 @@ INLINE REBCNT ARGB_To_BGR(REBCNT i)
 		p = Find_Color(ip, TO_PIXEL_TUPLE(arg), len, only);
 	} else if (IS_INTEGER(arg)) {
 		n = VAL_INT32(arg);
-		if (n < 0 || n > 255) Trap_Range(arg);
+		if (n < 0 || n > 255) Trap_Range_DEAD_END(arg);
 		p = Find_Alpha(ip, n, len);
 	} else if (IS_IMAGE(arg)) {
 		p = 0;
 	} else if (IS_BINARY(arg)) {
 		p = 0;
 	} else
-		Trap_Type(arg);
+		Trap_Type_DEAD_END(arg);
 
 	// Post process the search (failure or apply /match and /tail):
 	if (p) {
@@ -884,7 +884,7 @@ find_none:
 
 	// Check must be in this order (to avoid checking a non-series value);
 	if (action >= A_TAKE && action <= A_SORT && IS_PROTECT_SERIES(series))
-		Trap0(RE_PROTECTED);
+		Trap_DEAD_END(RE_PROTECTED);
 
 	// Dispatch action:
 	switch (action) {
@@ -904,7 +904,7 @@ find_none:
 			Xandor_Image(action, value, arg); // sets DS_RETURN
 			return R_RET;
 		}
-		else Trap_Action(VAL_TYPE(value), action);
+		else Trap_Action_DEAD_END(VAL_TYPE(value), action);
 #endif
 
 	case A_COMPLEMENT:
@@ -963,7 +963,7 @@ find_none:
 
 		if (diff == 0 || index < 0 || index >= tail) {
 			if (action == A_POKE)
-				Trap_Range(arg);
+				Trap_Range_DEAD_END(arg);
 			goto is_none;
 		}
 
@@ -985,7 +985,7 @@ find_none:
 			else if (IS_CHAR(arg))
 				n = VAL_CHAR(arg);
 			else
-				Trap_Arg(arg);
+				Trap_Arg_DEAD_END(arg);
 
 			*dp = (*dp & 0xffffff) | (n << 24);
 			DS_RET_VALUE(arg);
@@ -1011,10 +1011,10 @@ find_none:
 			if (IS_INTEGER(val)) {
 				len = VAL_INT32(val);
 			} else if (IS_IMAGE(val)) {
-				if (!VAL_IMAGE_WIDE(val)) Trap_Arg(val);
+				if (!VAL_IMAGE_WIDE(val)) Trap_Arg_DEAD_END(val);
 				len = VAL_INDEX(val) - VAL_INDEX(value); // may not be same, is ok
 			} else
-				Trap_Type(val);
+				Trap_Type_DEAD_END(val);
 		} else len = 1;
 		index = (REBINT)VAL_INDEX(value);
 		if (index < tail && len != 0) {
@@ -1039,13 +1039,13 @@ find_none:
 			//value = Make_Image(ROUND_TO_INT(GOB_W(VAL_GOB(arg))), ROUND_TO_INT(GOB_H(VAL_GOB(arg))));
 			//*D_RET = *value;
 			series = OS_GOB_TO_IMAGE(VAL_GOB(arg));
-			if (!series) Trap_Make(REB_IMAGE, arg);
+			if (!series) Trap_Make_DEAD_END(REB_IMAGE, arg);
 			SET_IMAGE(value, series);
 			break;
 		}
 		else if (IS_BINARY(arg)) {
 			diff = VAL_LEN(arg) / 4;
-			if (diff == 0) Trap_Make(REB_IMAGE, arg);
+			if (diff == 0) Trap_Make_DEAD_END(REB_IMAGE, arg);
 			if (diff < 100) w = diff;
 			else if (diff < 10000) w = 100;
 			else w = 500;
@@ -1056,7 +1056,7 @@ find_none:
 			Bin_To_RGBA(IMG_DATA(series), w*h, VAL_BIN_DATA(arg), VAL_LEN(arg)/4, 0);
 			break;
 		}
-		Trap_Type(arg);
+		Trap_Type_DEAD_END(arg);
 		break;
 
 	case A_MAKE:
@@ -1088,7 +1088,7 @@ find_none:
 		else if (IS_BLOCK(arg)) {
 			if (Create_Image(VAL_BLK_DATA(arg), value, 0)) break;
 		}
-		Trap_Type(arg);
+		Trap_Type_DEAD_END(arg);
 		break;
 
 	case A_COPY:  // copy series /part len
@@ -1098,7 +1098,7 @@ find_none:
 		}
 		arg = D_ARG(3); // can be image, integer, pair.
 		if (IS_IMAGE(arg)) {
-			if (VAL_SERIES(arg) != VAL_SERIES(value)) Trap_Arg(arg);
+			if (VAL_SERIES(arg) != VAL_SERIES(value)) Trap_Arg_DEAD_END(arg);
 			len = VAL_INDEX(arg) - VAL_INDEX(value);
 			arg = value;
 			goto makeCopy2;
@@ -1128,7 +1128,7 @@ find_none:
 //			VAL_IMAGE_TRANSP(D_RET) = VAL_IMAGE_TRANSP(value);
 			return R_RET;
 		}
-		Trap_Type(arg);
+		Trap_Type_DEAD_END(arg);
 
 makeCopy:
 		// Src image is arg.
@@ -1149,7 +1149,7 @@ makeCopy2:
 		break;
 
 	default:
-		Trap_Action(VAL_TYPE(value), action);
+		Trap_Action_DEAD_END(VAL_TYPE(value), action);
 	}
 
 	*DS_RETURN = *value;

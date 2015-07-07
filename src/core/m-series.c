@@ -80,7 +80,7 @@
 	}
 
 	// Range checks:
-	if (delta & 0x80000000) Trap0(RE_PAST_END); // 2GB max
+	if (delta & 0x80000000) Trap(RE_PAST_END); // 2GB max
 	if (index > series->tail) index = series->tail; // clip
 
 	// Width adjusted variables:
@@ -92,7 +92,7 @@
 	// Do we need to expand the current series allocation?
 	// WARNING: Do not use ">=" below or newser size may be the same!
 	if ((size + extra) > SERIES_SPACE(series)) {
-		if (IS_LOCK_SERIES(series)) Crash(RP_LOCKED_SERIES);
+		if (IS_LOCK_SERIES(series)) Panic(RP_LOCKED_SERIES);
 		//DISABLE_GC; // Don't let GC occur just for an expansion.
 
 		if (Reb_Opts->watch_expand) {
@@ -116,7 +116,7 @@
 		/* new_size = series->tail + delta + x with overflow checking */
 		if (REB_U32_ADD_OF(series->tail, delta, &new_size)
 			|| REB_U32_ADD_OF(new_size, x, &new_size)) {
-			Trap0(RE_PAST_END);
+			Trap(RE_PAST_END);
 		}
 
 		newser = Make_Series(new_size, wide, TRUE);
@@ -161,7 +161,7 @@
 
 	if ((SERIES_TAIL(series) + SERIES_BIAS(series)) * wide >= SERIES_TOTAL(series)) {
 		Dump_Series(series, "Overflow");
-		ASSERT(0, RP_OVER_SERIES);
+		assert(FALSE);
 	}
 
 	CHECK_MEMORY(3);
@@ -353,7 +353,7 @@
 			// Add bias to head:
 			REBCNT bias = SERIES_BIAS(series);
 			if (REB_U32_ADD_OF(bias, len, &bias)) {
-				Trap0(RE_OVERFLOW);
+				Trap(RE_OVERFLOW);
 			}
 			if (bias > 0xffff) { //bias is 16-bit, so a simple SERIES_ADD_BIAS could overflow it
 				REBYTE *data = series->data;
@@ -522,7 +522,7 @@
 **
 ***********************************************************************/
 {
-	if (!buf) Crash(RP_NO_BUFFER);
+	if (!buf) Panic_DEAD_END(RP_NO_BUFFER);
 
 	RESET_TAIL(buf);
 	if (SERIES_BIAS(buf)) Reset_Bias(buf);

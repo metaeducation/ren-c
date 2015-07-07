@@ -115,7 +115,7 @@
 	// Compute hash for value:
 	len = hser->tail;
 	hash = Hash_Value(key, len);
-	if (!hash) Trap_Type(key);
+	if (!hash) Trap_Type_DEAD_END(key);
 
 	// Determine skip and first index:
 	skip  = (len == 0) ? 0 : (hash & 0x0000FFFF) % len;
@@ -253,7 +253,7 @@
 					}
 				}
 			}
-			else Trap_Type(key);
+			else Trap_Type_DEAD_END(key);
 
 			if (!val) return 0;
 			Append_Val(series, key);
@@ -487,7 +487,7 @@
 
 	// Check must be in this order (to avoid checking a non-series value);
 	if (action >= A_TAKE && action <= A_SORT && IS_PROTECT_SERIES(series))
-		Trap0(RE_PROTECTED);
+		Trap_DEAD_END(RE_PROTECTED);
 
 	switch (action) {
 
@@ -500,7 +500,7 @@
 
 	case A_INSERT:
 	case A_APPEND:
-		if (!IS_BLOCK(arg)) Trap_Arg(val);
+		if (!IS_BLOCK(arg)) Trap_Arg_DEAD_END(val);
 		*D_RET = *val;
 		if (DS_REF(AN_DUP)) {
 			n = Int32(DS_ARG(AN_COUNT));
@@ -524,15 +524,15 @@
 		// make map! [word val word val]
 		if (IS_BLOCK(arg) || IS_PAREN(arg) || IS_MAP(arg)) {
 			if (MT_Map(D_RET, arg, 0)) return R_RET;
-			Trap_Arg(arg);
+			Trap_Arg_DEAD_END(arg);
 //		} else if (IS_NONE(arg)) {
 //			n = 3; // just a start
 		// make map! 10000
 		} else if (IS_NUMBER(arg)) {
-			if (action == A_TO) Trap_Arg(arg);
+			if (action == A_TO) Trap_Arg_DEAD_END(arg);
 			n = Int32s(arg, 0);
 		} else
-			Trap_Make(REB_MAP, Of_Type(arg));
+			Trap_Make_DEAD_END(REB_MAP, Of_Type(arg));
 		// positive only
 		series = Make_Map(n);
 		Set_Series(REB_MAP, D_RET, series);
@@ -540,7 +540,7 @@
 
 	case A_COPY:
 		if (MT_Map(D_RET, val, 0)) return R_RET;
-		Trap_Arg(val);
+		Trap_Arg_DEAD_END(val);
 
 	case A_CLEAR:
 		Clear_Series(series);
@@ -554,7 +554,7 @@
 		if (action == OF_VALUES) n = 1;
 		else if (action == OF_WORDS) n = -1;
 		else if (action == OF_BODY) n = 0;
-		else Trap_Reflect(REB_MAP, arg);
+		else Trap_Reflect_DEAD_END(REB_MAP, arg);
 		series = Map_To_Block(series, n);
 		Set_Block(D_RET, series);
 		break;
@@ -563,7 +563,7 @@
 		return (Length_Map(series) == 0) ? R_TRUE : R_FALSE;
 
 	default:
-		Trap_Action(REB_MAP, action);
+		Trap_Action_DEAD_END(REB_MAP, action);
 	}
 
 	return R_RET;

@@ -206,7 +206,7 @@ void Set_Vector_Row(REBSER *ser, REBVAL *blk)
 	REBVAL *val;
 
 	if (len <= 0) {
-		Trap_Arg(vect);
+		Trap_Arg_DEAD_END(vect);
 	}
 
 	ser = Make_Block(len);
@@ -243,7 +243,7 @@ void Set_Vector_Row(REBSER *ser, REBVAL *blk)
 	if (
 		(b1 >= VTSF08 && b2 < VTSF08)
 		|| (b2 >= VTSF08 && b1 < VTSF08)
-	) Trap0(RE_NOT_SAME_TYPE);
+	) Trap_DEAD_END(RE_NOT_SAME_TYPE);
 
 	for (n = 0; n < len; n++) {
 		i1 = get_vect(b1, d1, n + VAL_INDEX(v1));
@@ -540,7 +540,7 @@ void Set_Vector_Row(REBSER *ser, REBVAL *blk)
 
 	// Check must be in this order (to avoid checking a non-series value);
 	if (action >= A_TAKE && action <= A_SORT && IS_PROTECT_SERIES(vect))
-		Trap0(RE_PROTECTED);
+		Trap_DEAD_END(RE_PROTECTED);
 
 	switch (action) {
 
@@ -588,19 +588,19 @@ void Set_Vector_Row(REBSER *ser, REBVAL *blk)
 		break;
 
 	case A_RANDOM:
-		if (D_REF(2) || D_REF(4)) Trap0(RE_BAD_REFINES); // /seed /only
+		if (D_REF(2) || D_REF(4)) Trap_DEAD_END(RE_BAD_REFINES); // /seed /only
 		Shuffle_Vector(value, D_REF(3));
 		return R_ARG1;
 
 	default:
-		Trap_Action(VAL_TYPE(value), action);
+		Trap_Action_DEAD_END(VAL_TYPE(value), action);
 	}
 
 	*D_RET = *value;
 	return R_RET;
 
 bad_make:
-	Trap_Make(REB_VECTOR, arg);
+	Trap_Make_DEAD_END(REB_VECTOR, arg);
 	DEAD_END;
 }
 

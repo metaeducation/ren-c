@@ -219,7 +219,7 @@
 
 	// Reuse a global word list block because length of block cannot
 	// be known until all words are scanned. Then copy this block.
-	if (SERIES_TAIL(BUF_WORDS)) Crash(RP_WORD_LIST); // still in use
+	if (SERIES_TAIL(BUF_WORDS)) Panic(RP_WORD_LIST); // still in use
 
 	// Add the SELF word to slot zero.
 	if ((modes = (modes & BIND_NO_SELF)?0:SYM_SELF))
@@ -325,7 +325,7 @@
 		if (ANY_EVAL_BLOCK(value) && (modes & BIND_DEEP))
 			Collect_Words(VAL_BLK_DATA(value), modes);
 		// In this mode (foreach native), do not allow non-words:
-		//else if (modes & BIND_GET) Trap_Arg(value);
+		//else if (modes & BIND_GET) Trap_Arg_DEAD_END(value);
 	}
 	BLK_TERM(BUF_WORDS);
 }
@@ -402,7 +402,7 @@
 	REBINT *binds = WORDS_HEAD(Bind_Table); // GC safe to do here
 	CHECK_BIND_TABLE;
 
-	if (SERIES_TAIL(BUF_WORDS)) Crash(RP_WORD_LIST); // still in use
+	if (SERIES_TAIL(BUF_WORDS)) Panic_DEAD_END(RP_WORD_LIST); // still in use
 
 	if (prior)
 		Collect_Simple_Words(prior, BIND_ALL);
@@ -567,7 +567,7 @@
 	REBVAL *word  = BLK_HEAD(VAL_OBJ_WORDS(value));
 
 	for (; NOT_END(word); word++)
-		if (VAL_GET_OPT(word, OPTS_HIDE)) Trap0(RE_HIDDEN);
+		if (VAL_GET_OPT(word, OPTS_HIDE)) Trap(RE_HIDDEN);
 }
 
 
@@ -583,7 +583,7 @@
 	REBVAL *value;
 
 	value = Do_Sys_Func(SYS_CTX_MAKE_MODULE_P, spec, 0); // volatile
-	if (IS_NONE(value)) Trap1(RE_INVALID_SPEC, spec);
+	if (IS_NONE(value)) Trap1_DEAD_END(RE_INVALID_SPEC, spec);
 
 	return value;
 }
@@ -692,7 +692,7 @@
 
 	CHECK_BIND_TABLE;
 
-	if (IS_PROTECT_SERIES(target)) Trap0(RE_PROTECTED);
+	if (IS_PROTECT_SERIES(target)) Trap(RE_PROTECTED);
 
 	if (IS_INTEGER(only_words)) { // Must be: 0 < i <= tail
 		i = VAL_INT32(only_words); // never <= 0
@@ -817,7 +817,7 @@
 			// Is the word found in this frame?
 			if (NZ(n = binds[VAL_WORD_CANON(value)])) {
 				if (n == NO_RESULT) n = 0; // SELF word
-				ASSERT1(n < SERIES_TAIL(frame), RP_BIND_BOUNDS);
+				assert(n < SERIES_TAIL(frame));
 				// Word is in frame, bind it:
 				VAL_WORD_INDEX(value) = n;
 				VAL_WORD_FRAME(value) = frame;
@@ -1175,7 +1175,7 @@
 	REBSER *frame = VAL_WORD_FRAME(word);
 	REBINT dsf;
 
-	if (!frame) Trap1(RE_NOT_DEFINED, word);
+	if (!frame) Trap1_DEAD_END(RE_NOT_DEFINED, word);
 	if (index >= 0) return FRM_VALUES(frame)+index;
 
 	// A negative index indicates that the value is in a frame on
@@ -1184,7 +1184,7 @@
 	dsf = DSF;
 	while (frame != VAL_WORD_FRAME(DSF_WORD(dsf))) {
 		dsf = PRIOR_DSF(dsf);
-		if (dsf <= 0) Trap1(RE_NOT_DEFINED, word); // change error !!!
+		if (dsf <= 0) Trap1_DEAD_END(RE_NOT_DEFINED, word); // change error !!!
 	}
 //	if (Trace_Level) Dump_Stack_Frame(dsf);
 	return DSF_ARGS(dsf, -index);
@@ -1203,11 +1203,11 @@
 	REBSER *frame = VAL_WORD_FRAME(word);
 	REBINT dsf;
 
-	if (!frame) Trap1(RE_NOT_DEFINED, word);
+	if (!frame) Trap1_DEAD_END(RE_NOT_DEFINED, word);
 
 	if (index >= 0) {
 		if (VAL_PROTECTED(FRM_WORDS(frame) + index))
-			Trap1(RE_LOCKED_WORD, word);
+			Trap1_DEAD_END(RE_LOCKED_WORD, word);
 		return FRM_VALUES(frame) + index;
 	}
 
@@ -1217,7 +1217,7 @@
 	dsf = DSF;
 	while (frame != VAL_WORD_FRAME(DSF_WORD(dsf))) {
 		dsf = PRIOR_DSF(dsf);
-		if (dsf <= 0) Trap1(RE_NOT_DEFINED, word); // change error !!!
+		if (dsf <= 0) Trap1_DEAD_END(RE_NOT_DEFINED, word); // change error !!!
 	}
 //	if (Trace_Level) Dump_Stack_Frame(dsf);
 	return DSF_ARGS(dsf, -index);
@@ -1282,8 +1282,8 @@
 
 	if (!HAS_FRAME(word)) Trap1(RE_NOT_DEFINED, word);
 
-//	ASSERT(index, RP_BAD_SET_INDEX);
-	ASSERT(VAL_WORD_FRAME(word), RP_BAD_SET_CONTEXT);
+//	assert(index, RP_BAD_SET_INDEX);
+	assert(VAL_WORD_FRAME(word));
 //  Print("Set %s to %s [frame: %x idx: %d]", Get_Word_Name(word), Get_Type_Name(value), VAL_WORD_FRAME(word), VAL_WORD_INDEX(word));
 
 	if (index > 0) {
@@ -1293,7 +1293,7 @@
 		FRM_VALUES(frm)[index] = *value;
 		return;
 	}
-	if (index == 0) Trap0(RE_SELF_PROTECTED);
+	if (index == 0) Trap(RE_SELF_PROTECTED);
 
 	// Find relative value:
 	dsf = DSF;
@@ -1377,7 +1377,7 @@
 /*
 ***********************************************************************/
 {
-	ASSERT(frame, RP_BAD_SET_CONTEXT);
+	assert(frame);
 	CLEARS(value);
 	SET_OBJECT(value, frame);
 }

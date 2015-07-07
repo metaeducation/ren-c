@@ -90,7 +90,7 @@
 					return TRUE;
 				}
 			}
-			Trap_Arg(val);
+			Trap_Arg_DEAD_END(val);
 		}
 		return FALSE;
 
@@ -197,7 +197,8 @@
 		val = blk++;
 		if (IS_END(val)) val = NONE_VALUE;
 		else val = Get_Simple_Value(val);
-		if (!Set_Event_Var(evt, var, val)) Trap2(RE_BAD_FIELD_SET, var, Of_Type(val));
+		if (!Set_Event_Var(evt, var, val))
+			Trap2(RE_BAD_FIELD_SET, var, Of_Type(val));
 	}
 }
 
@@ -386,19 +387,19 @@ is_none:
 		if (IS_EVENT(value)) return R_ARG1;
 		else if (IS_DATATYPE(value)) {
 			if (IS_EVENT(arg)) return R_ARG2;
-			//Trap_Make(REB_EVENT, value);
+			//Trap_Make_DEAD_END(REB_EVENT, value);
 			VAL_SET(D_RET, REB_EVENT);
 			CLEARS(&(D_RET->data.event));
 		}
 		else
 is_arg_error:
-			Trap_Types(RE_EXPECT_VAL, REB_EVENT, VAL_TYPE(arg));
+			Trap_Types_DEAD_END(RE_EXPECT_VAL, REB_EVENT, VAL_TYPE(arg));
 
 		// Initialize GOB from block:
 		if (IS_BLOCK(arg)) Set_Event_Vars(D_RET, VAL_BLK_DATA(arg));
 		else goto is_arg_error;
 	}
-	else Trap_Action(REB_EVENT, action);
+	else Trap_Action_DEAD_END(REB_EVENT, action);
 
 	return R_RET;
 }
@@ -417,12 +418,12 @@ is_arg_error:
 //			case SYM_SHIFT:   index = EF_SHIFT; break;
 //			case SYM_CONTROL: index = EF_CONTROL; break;
 //			case SYM_DOUBLE_CLICK: index = EF_DCLICK; break;
-			default: Trap1(RE_INVALID_PATH, arg);
+			default: Trap1_DEAD_END(RE_INVALID_PATH, arg);
 			}
 			goto pick_it;
 		}
 		else if (!IS_INTEGER(arg))
-			Trap1(RE_INVALID_PATH, arg);
+			Trap1_DEAD_END(RE_INVALID_PATH, arg);
 		// fall thru
 
 
@@ -430,7 +431,7 @@ is_arg_error:
 		index = num = Get_Num_Arg(arg);
 		if (num > 0) index--;
 		if (num == 0 || index < 0 || index > EF_DCLICK) {
-			if (action == A_POKE) Trap_Range(arg);
+			if (action == A_POKE) Trap_Range_DEAD_END(arg);
 			goto is_none;
 		}
 pick_it:

@@ -109,7 +109,7 @@ static REBOL_STATE Top_State; // Boot var: holds error state during boot
 ***********************************************************************/
 {
 	if ((DSP + 100) > (REBINT)SERIES_REST(DS_Series))
-		Trap0(RE_STACK_OVERFLOW);
+		Trap(RE_STACK_OVERFLOW);
 }
 
 
@@ -122,7 +122,7 @@ static REBOL_STATE Top_State; // Boot var: holds error state during boot
 **
 ***********************************************************************/
 {
-	if (IS_NONE(TASK_THIS_ERROR)) Crash(RP_ERROR_CATCH);
+	if (IS_NONE(TASK_THIS_ERROR)) Panic(RP_ERROR_CATCH);
 	*value = *TASK_THIS_ERROR;
 //	Print("CE: %r", value);
 	SET_NONE(TASK_THIS_ERROR);
@@ -138,7 +138,7 @@ static REBOL_STATE Top_State; // Boot var: holds error state during boot
 **
 ***********************************************************************/
 {
-	if (!Saved_State) Crash(RP_NO_SAVED_STATE);
+	if (!Saved_State) Panic(RP_NO_SAVED_STATE);
 	SET_ERROR(TASK_THIS_ERROR, ERR_NUM(err), err);
 	if (Trace_Level) Trace_Error(TASK_THIS_ERROR);
 	LONG_JUMP(*Saved_State, 1);
@@ -154,7 +154,7 @@ static REBOL_STATE Top_State; // Boot var: holds error state during boot
 **
 ***********************************************************************/
 {
-	if (!Saved_State) Crash(RP_NO_SAVED_STATE);
+	if (!Saved_State) Panic(RP_NO_SAVED_STATE);
 	*TASK_THIS_ERROR = *val;
 	LONG_JUMP(*Saved_State, 1);
 }
@@ -212,7 +212,7 @@ static REBOL_STATE Top_State; // Boot var: holds error state during boot
 {
 	if (IS_INTEGER(TASK_THIS_ERROR)) return; // composing prior error.
 
-	if (!Saved_State) Crash(RP_NO_SAVED_STATE);
+	if (!Saved_State) Panic(RP_NO_SAVED_STATE);
 
 	*TASK_THIS_ERROR = *TASK_STACK_ERROR; // pre-allocated
 
@@ -421,7 +421,11 @@ static REBOL_STATE Top_State; // Boot var: holds error state during boot
 	REBSER *err;		// Error object
 	ERROR_OBJ *error;	// Error object values
 
-	if (PG_Boot_Phase < BOOT_ERRORS) Crash(RP_EARLY_ERROR, code); // Not far enough!
+	if (PG_Boot_Phase < BOOT_ERRORS) {
+		assert(FALSE);
+		Panic_Core(RP_EARLY_ERROR, code); // Not far enough!
+		DEAD_END;
+	}
 
 	// Make a copy of the error object template:
 	err = CLONE_OBJECT(VAL_OBJ_FRAME(ROOT_ERROBJ));
@@ -450,7 +454,7 @@ static REBOL_STATE Top_State; // Boot var: holds error state during boot
 
 /***********************************************************************
 **
-*/	void Trap0(REBCNT num)
+*/	void Trap(REBCNT num)
 /*
 ***********************************************************************/
 {
@@ -518,7 +522,7 @@ static REBOL_STATE Top_State; // Boot var: holds error state during boot
 **
 ***********************************************************************/
 {
-	Trap1(RE_OUT_OF_RANGE, arg);
+	Trap_Range(arg);
 }
 
 
@@ -618,7 +622,7 @@ static REBOL_STATE Top_State; // Boot var: holds error state during boot
 	REBVAL *spec = OFV(port, STD_PORT_SPEC);
 	REBVAL *val;
 
-	if (!IS_OBJECT(spec)) Trap0(RE_INVALID_PORT);
+	if (!IS_OBJECT(spec)) Trap(RE_INVALID_PORT);
 
 	val = Get_Object(spec, STD_PORT_SPEC_HEAD_REF); // most informative
 	if (IS_NONE(val)) val = Get_Object(spec, STD_PORT_SPEC_HEAD_TITLE);
@@ -644,7 +648,7 @@ static REBOL_STATE Top_State; // Boot var: holds error state during boot
 {
 	// It's UNSET, not an error:
 	if (!IS_ERROR(val))
-		Trap0(RE_NO_RETURN); //!!! change to special msg
+		Trap_DEAD_END(RE_NO_RETURN); //!!! change to special msg
 
 	// If it's a BREAK, check for /return value:
 	if (IS_BREAK(val)) {
@@ -696,7 +700,7 @@ static REBOL_STATE Top_State; // Boot var: holds error state during boot
 		DSP++; // Room for return value
 		Catch_Error(DS_TOP); // Stores error value here
 		Print_Value(DS_TOP, 0, FALSE);
-		Crash(RP_NO_CATCH);
+		Panic(RP_NO_CATCH);
 	}
 	SET_STATE(Top_State, Saved_State);
 }
@@ -792,7 +796,7 @@ error:
 			Init_Word(DS_TOP, sym);
 			policy = DS_TOP;
 		}
-		Trap1(errcode, policy);
+		Trap1_DEAD_END(errcode, policy);
 	}
 
 	return flags;

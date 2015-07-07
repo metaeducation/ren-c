@@ -2955,7 +2955,7 @@ strtod
 			/* to silence an erroneous warning about bc.nd0 */
 			/* possibly not being initialized. */
 	if (nd > strtod_diglim) {
-		/* ASSERT(strtod_diglim >= 18); 18 == one more than the */
+		/* assert(strtod_diglim >= 18); 18 == one more than the */
 		/* minimum number of decimal digits to distinguish double values */
 		/* in IEEE arithmetic. */
 		i = j = 18;

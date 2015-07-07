@@ -100,11 +100,11 @@
 
 	case A_MAKE:
 		if (IS_DATATYPE(value)) value = Make_Port(arg);
-		else Trap_Make(REB_PORT, value);
+		else Trap_Make_DEAD_END(REB_PORT, value);
 		break;
 
 	case A_TO:
-		if (!(IS_DATATYPE(value) && IS_OBJECT(arg))) Trap_Make(REB_PORT, arg);
+		if (!(IS_DATATYPE(value) && IS_OBJECT(arg))) Trap_Make_DEAD_END(REB_PORT, arg);
 		value = arg;
 		VAL_SET(value, REB_PORT);
 		break;

@@ -29,16 +29,15 @@
 
 #include "sys-core.h"
 
-#define	CRASH_BUF_SIZE 512	// space for crash print string
+#define	PANIC_BUF_SIZE 512	// space for crash print string
 
-extern const REBYTE * const Crash_Msgs[];
+extern const REBYTE * const Panic_Msgs[];
 
-enum Crash_Msg_Nums {
-	// Must align with Crash_Msgs[] array.
+enum Panic_Msg_Nums {
+	// Must align with Panic_Msgs[] array.
 	CM_ERROR,
 	CM_BOOT,
 	CM_INTERNAL,
-	CM_ASSERT,
 	CM_DATATYPE,
 	CM_DEBUG,
 	CM_CONTACT
@@ -48,7 +47,7 @@ enum Crash_Msg_Nums {
 /***********************************************************************
 **
 ** coverity[+kill]
-*/	void Crash(REBINT id, ...)
+*/	void Panic_Core(REBINT id, ...)
 /*
 **		Print a failure message and abort.
 **
@@ -65,8 +64,8 @@ enum Crash_Msg_Nums {
 ***********************************************************************/
 {
 	va_list args;
-	REBYTE buf[CRASH_BUF_SIZE];
-	REBYTE *msg;
+	REBYTE buf[PANIC_BUF_SIZE];
+	const REBYTE *msg;
 	REBINT n = 0;
 
 	va_start(args, id);
@@ -78,29 +77,28 @@ enum Crash_Msg_Nums {
 	}
 
 	// "REBOL PANIC #nnn:"
-	COPY_BYTES(buf, Crash_Msgs[CM_ERROR], CRASH_BUF_SIZE);
-	buf[CRASH_BUF_SIZE - 1] = '\0';
-	APPEND_BYTES(buf, " #", CRASH_BUF_SIZE);
+	COPY_BYTES(buf, Panic_Msgs[CM_ERROR], PANIC_BUF_SIZE);
+	buf[PANIC_BUF_SIZE - 1] = '\0';
+	APPEND_BYTES(buf, " #", PANIC_BUF_SIZE);
 	Form_Int(buf + LEN_BYTES(buf), id);
-	APPEND_BYTES(buf, ": ", CRASH_BUF_SIZE);
+	APPEND_BYTES(buf, ": ", PANIC_BUF_SIZE);
 
 	// "REBOL PANIC #nnn: put error message here"
 	// The first few error types only print general error message.
 	// Those errors > RP_STR_BASE have specific error messages (from boot.r).
 	if      (id < RP_BOOT_DATA) n = CM_DEBUG;
 	else if (id < RP_INTERNAL) n = CM_BOOT;
-	else if (id < RP_ASSERTS)  n = CM_INTERNAL;
-	else if (id < RP_DATATYPE) n = CM_ASSERT;
+	else if (id < RP_DATATYPE)  n = CM_INTERNAL;
 	else if (id < RP_STR_BASE) n = CM_DATATYPE;
 	else if (id > RP_STR_BASE + RS_MAX - RS_ERROR) n = CM_DEBUG;
 
 	// Use the above string or the boot string for the error (in boot.r):
-	msg = (REBYTE*)(n >= 0 ? Crash_Msgs[n] : BOOT_STR(RS_ERROR, id - RP_STR_BASE - 1));
-	Form_Var_Args(buf + LEN_BYTES(buf), CRASH_BUF_SIZE - 1 - LEN_BYTES(buf), msg, args);
+	msg = (REBYTE*)(n >= 0 ? Panic_Msgs[n] : BOOT_STR(RS_ERROR, id - RP_STR_BASE - 1));
+	Form_Var_Args(buf + LEN_BYTES(buf), PANIC_BUF_SIZE - 1 - LEN_BYTES(buf), msg, args);
 
 	va_end(args);
 
-	APPEND_BYTES(buf, Crash_Msgs[CM_CONTACT], CRASH_BUF_SIZE);
+	APPEND_BYTES(buf, Panic_Msgs[CM_CONTACT], PANIC_BUF_SIZE);
 
 	// Convert to OS-specific char-type:
 #ifdef disable_for_now //OS_WIDE_CHAR   /// win98 does not support it
@@ -108,7 +106,7 @@ enum Crash_Msg_Nums {
 		REBCHR s1[512];
 		REBCHR s2[2000];
 
-		n = TO_OS_STR(s1, Crash_Msgs[CM_ERROR], LEN_BYTES(Crash_Msgs[CM_ERROR]));
+		n = TO_OS_STR(s1, Panic_Msgs[CM_ERROR], LEN_BYTES(Panic_Msgs[CM_ERROR]));
 		if (n > 0) s1[n] = 0; // terminate
 		else OS_EXIT(200); // bad conversion
 
@@ -119,7 +117,7 @@ enum Crash_Msg_Nums {
 		OS_CRASH(s1, s2);
 	}
 #else
-	OS_CRASH(Crash_Msgs[CM_ERROR], buf);
+	OS_CRASH(Panic_Msgs[CM_ERROR], buf);
 #endif
 }
 
@@ -131,5 +129,5 @@ enum Crash_Msg_Nums {
 **
 ***********************************************************************/
 {
-	Crash(RP_NA);
+	Panic(RP_NA);
 }

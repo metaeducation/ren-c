@@ -91,7 +91,7 @@ static REBSER *Read_All_File(char *fname)
 		ser = To_Local_Path("output.txt", 10, FALSE, TRUE);
 
 	if (ser) {
-		if (!Echo_File((REBCHR*)(ser->data))) Trap1(RE_CANNOT_OPEN, val);
+		if (!Echo_File((REBCHR*)(ser->data))) Trap1_DEAD_END(RE_CANNOT_OPEN, val);
 	}
 
 	return R_RET;
@@ -288,7 +288,7 @@ static REBSER *Read_All_File(char *fname)
 	ser = VAL_SERIES(D_ARG(1));
 
 	ser = Read_All_File(STR_HEAD(ser));
-	if (!ser) Trap1(RE_CANNOT_OPEN, D_ARG(1));
+	if (!ser) Trap1_DEAD_END(RE_CANNOT_OPEN, D_ARG(1));
 
 	Set_Binary(D_RET, ser);
 
@@ -349,7 +349,7 @@ static REBSER *Read_All_File(char *fname)
 	case REB_TIME:
 		timeout = (REBINT) (VAL_TIME(val) / (SEC_SEC / 1000));
 chk_neg:
-		if (timeout < 0) Trap_Range(val);
+		if (timeout < 0) Trap_Range_DEAD_END(val);
 		break;
 
 	case REB_PORT:
@@ -363,7 +363,7 @@ chk_neg:
 		break;
 
 	default:
-		Trap_Arg(val);
+		Trap_Arg_DEAD_END(val);
 	}
 
 	// Prevent GC on temp port block:
@@ -403,7 +403,7 @@ chk_neg:
 	REBVAL *val = D_ARG(1);
 	REBSER *port = VAL_PORT(val);
 
-	if (SERIES_TAIL(port) < STD_PORT_MAX) Crash(9910);
+	if (SERIES_TAIL(port) < STD_PORT_MAX) Panic_DEAD_END(9910);
 
 	val = OFV(port, STD_PORT_ACTOR);
 	if (IS_NATIVE(val)) {
@@ -429,7 +429,7 @@ chk_neg:
 	REBSER *ser;
 
 	ser = Value_To_REBOL_Path(arg, 0);
-	if (!ser) Trap_Arg(arg);
+	if (!ser) Trap_Arg_DEAD_END(arg);
 	Set_Series(REB_FILE, D_RET, ser);
 
 	return R_RET;
@@ -446,7 +446,7 @@ chk_neg:
 	REBSER *ser;
 
 	ser = Value_To_Local_Path(arg, D_REF(2));
-	if (!ser) Trap_Arg(arg);
+	if (!ser) Trap_Arg_DEAD_END(arg);
 	Set_Series(REB_STRING, D_RET, ser);
 
 	return R_RET;
@@ -465,7 +465,7 @@ chk_neg:
 
 	len = OS_GET_CURRENT_DIR(&lpath);
 	ser = To_REBOL_Path(lpath, len, OS_WIDE, TRUE); // allocates extra for end /
-	ASSERT1(ser, RP_MISC); // should never happen
+	assert(ser); // should never be NULL
 	OS_FREE(lpath);
 	Set_Series(REB_FILE, D_RET, ser);
 
@@ -485,13 +485,13 @@ chk_neg:
 	REBVAL val;
 
 	ser = Value_To_OS_Path(arg, TRUE);
-	if (!ser) Trap_Arg(arg); // !!! ERROR MSG
+	if (!ser) Trap_Arg_DEAD_END(arg); // !!! ERROR MSG
 
 	Set_String(&val, ser); // may be unicode or utf-8
 	Check_Security(SYM_FILE, POL_EXEC, &val);
 
 	n = OS_SET_CURRENT_DIR((void*)ser->data);  // use len for bool
-	if (!n) Trap_Arg(arg); // !!! ERROR MSG
+	if (!n) Trap_Arg_DEAD_END(arg); // !!! ERROR MSG
 
 	return R_ARG1;
 }
@@ -519,7 +519,7 @@ chk_neg:
 	if (r == 0) {
 		return R_UNSET;
 	} else {
-		Trap1(RE_CALL_FAIL, Make_OS_Error(r));
+		Trap1_DEAD_END(RE_CALL_FAIL, Make_OS_Error(r));
 	}
 
 	return R_UNSET;
@@ -601,7 +601,7 @@ chk_neg:
 		} else if (IS_NONE(param)) {
 			input_type = NONE_TYPE;
 		} else {
-			Trap_Arg(param);
+			Trap_Arg_DEAD_END(param);
 		}
 	}
 
@@ -620,7 +620,7 @@ chk_neg:
 		} else if (IS_NONE(param)) {
 			output_type = NONE_TYPE;
 		} else {
-			Trap_Arg(param);
+			Trap_Arg_DEAD_END(param);
 		}
 	}
 
@@ -639,7 +639,7 @@ chk_neg:
 		} else if (IS_NONE(param)) {
 			err_type = NONE_TYPE;
 		} else {
-			Trap_Arg(param);
+			Trap_Arg_DEAD_END(param);
 		}
 	}
 
@@ -671,7 +671,7 @@ chk_neg:
 		REBSER * ser = NULL;
 		argc = VAL_LEN(arg);
 		if (argc <= 0) {
-			Trap0(RE_TOO_SHORT);
+			Trap_DEAD_END(RE_TOO_SHORT);
 		}
 		ser = Make_Series(argc + 1, sizeof(REBCHR*), FALSE);
 		argv = (REBCHR**)SERIES_DATA(ser);
@@ -683,7 +683,7 @@ chk_neg:
 				REBSER *path = Value_To_OS_Path(param, FALSE);
 				argv[i] = (REBCHR*) SERIES_DATA(path);
 			} else {
-				Trap_Arg(param);
+				Trap_Arg_DEAD_END(param);
 			}
 		}
 		argv[argc] = NULL;
@@ -698,7 +698,7 @@ chk_neg:
 		argv[argc] = NULL;
 		cmd = NULL;
 	} else {
-		Trap_Arg(arg);
+		Trap_Arg_DEAD_END(arg);
 	}
 
 	r = OS_CREATE_PROCESS(cmd, argc, argv, flags, &pid, &exit_code,
@@ -754,7 +754,7 @@ chk_neg:
 		SET_INTEGER(D_RET, flag_wait ? exit_code : pid);
 		return R_RET;
 	} else {
-		Trap1(RE_CALL_FAIL, Make_OS_Error(r));
+		Trap1_DEAD_END(RE_CALL_FAIL, Make_OS_Error(r));
 		return R_NONE;
 	}
 }
@@ -788,7 +788,7 @@ chk_neg:
 		}
 		Print("Launching: %s", STR_HEAD(cmd));
 		r = OS_CREATE_PROCESS(STR_HEAD(cmd), 0);
-		if (r < 0) Trap1(RE_CALL_FAIL, Make_OS_Error());
+		if (r < 0) Trap1_DEAD_END(RE_CALL_FAIL, Make_OS_Error());
 	}
 	return R_NONE;
 }
@@ -1077,13 +1077,13 @@ chk_neg:
 							case OS_ENA:
 								return R_NONE;
 							case OS_EPERM:
-								Trap0(RE_PERMISSION_DENIED);
+								Trap_DEAD_END(RE_PERMISSION_DENIED);
 								break;
 							case OS_EINVAL:
-								Trap_Arg(val);
+								Trap_Arg_DEAD_END(val);
 								break;
 							default:
-								Trap_Arg(val);
+								Trap_Arg_DEAD_END(val);
 								break;
 						}
 					} else {
@@ -1091,7 +1091,7 @@ chk_neg:
 						return R_RET;
 					}
 				} else {
-					Trap_Arg(val);
+					Trap_Arg_DEAD_END(val);
 				}
 			} else {
 				REBINT ret = OS_GET_UID();
@@ -1112,13 +1112,13 @@ chk_neg:
 							case OS_ENA:
 								return R_NONE;
 							case OS_EPERM:
-								Trap0(RE_PERMISSION_DENIED);
+								Trap_DEAD_END(RE_PERMISSION_DENIED);
 								break;
 							case OS_EINVAL:
-								Trap_Arg(val);
+								Trap_Arg_DEAD_END(val);
 								break;
 							default:
-								Trap_Arg(val);
+								Trap_Arg_DEAD_END(val);
 								break;
 						}
 					} else {
@@ -1126,7 +1126,7 @@ chk_neg:
 						return R_RET;
 					}
 				} else {
-					Trap_Arg(val);
+					Trap_Arg_DEAD_END(val);
 				}
 			} else {
 				REBINT ret = OS_GET_GID();
@@ -1147,13 +1147,13 @@ chk_neg:
 							case OS_ENA:
 								return R_NONE;
 							case OS_EPERM:
-								Trap0(RE_PERMISSION_DENIED);
+								Trap_DEAD_END(RE_PERMISSION_DENIED);
 								break;
 							case OS_EINVAL:
-								Trap_Arg(val);
+								Trap_Arg_DEAD_END(val);
 								break;
 							default:
-								Trap_Arg(val);
+								Trap_Arg_DEAD_END(val);
 								break;
 						}
 					} else {
@@ -1161,7 +1161,7 @@ chk_neg:
 						return R_RET;
 					}
 				} else {
-					Trap_Arg(val);
+					Trap_Arg_DEAD_END(val);
 				}
 			} else {
 				REBINT ret = OS_GET_EUID();
@@ -1182,13 +1182,13 @@ chk_neg:
 							case OS_ENA:
 								return R_NONE;
 							case OS_EPERM:
-								Trap0(RE_PERMISSION_DENIED);
+								Trap_DEAD_END(RE_PERMISSION_DENIED);
 								break;
 							case OS_EINVAL:
-								Trap_Arg(val);
+								Trap_Arg_DEAD_END(val);
 								break;
 							default:
-								Trap_Arg(val);
+								Trap_Arg_DEAD_END(val);
 								break;
 						}
 					} else {
@@ -1196,7 +1196,7 @@ chk_neg:
 						return R_RET;
 					}
 				} else {
-					Trap_Arg(val);
+					Trap_Arg_DEAD_END(val);
 				}
 			} else {
 				REBINT ret = OS_GET_EGID();
@@ -1219,20 +1219,20 @@ chk_neg:
 					REBVAL *sig = NULL;
 
 					if (VAL_LEN(val) != 2) {
-						Trap_Arg(val);
+						Trap_Arg_DEAD_END(val);
 					}
 					pid = VAL_BLK_SKIP(val, 0);
 					sig = VAL_BLK_SKIP(val, 1);
 					if (!IS_INTEGER(pid)) {
-						Trap_Arg(pid);
+						Trap_Arg_DEAD_END(pid);
 					}
 					if (!IS_INTEGER(sig)) {
-						Trap_Arg(sig);
+						Trap_Arg_DEAD_END(sig);
 					}
 					ret = OS_SEND_SIGNAL(VAL_INT32(pid), VAL_INT32(sig));
 					arg = sig;
 				} else {
-					Trap_Arg(val);
+					Trap_Arg_DEAD_END(val);
 				}
 
 				if (ret < 0) {
@@ -1240,16 +1240,16 @@ chk_neg:
 						case OS_ENA:
 							return R_NONE;
 						case OS_EPERM:
-							Trap0(RE_PERMISSION_DENIED);
+							Trap_DEAD_END(RE_PERMISSION_DENIED);
 							break;
 						case OS_EINVAL:
-							Trap_Arg(arg);
+							Trap_Arg_DEAD_END(arg);
 							break;
 						case OS_ESRCH:
-							Trap1(RE_PROCESS_NOT_FOUND, pid);
+							Trap1_DEAD_END(RE_PROCESS_NOT_FOUND, pid);
 							break;
 						default:
-							Trap_Arg(val);
+							Trap_Arg_DEAD_END(val);
 							break;
 					}
 				} else {
@@ -1267,6 +1267,6 @@ chk_neg:
 			}
 			break;
 		default:
-			Trap_Arg(field);
+			Trap_Arg_DEAD_END(field);
 	}
 }

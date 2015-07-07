@@ -279,7 +279,7 @@ x*/	REBSER *Copy_Block_Deep(REBSER *block, REBCNT index, REBINT len, REBCNT mode
 	if (into) {
 		type = VAL_TYPE(into);
 		series = VAL_SERIES(into);
-		if (IS_PROTECT_SERIES(series)) Trap0(RE_PROTECTED);
+		if (IS_PROTECT_SERIES(series)) Trap(RE_PROTECTED);
 		len = Insert_Series(series, VAL_INDEX(into), (REBYTE*)blk, len);
 	} else {
 		series = Make_Series(len + 1, sizeof(REBVAL), FALSE);

@@ -199,12 +199,12 @@
 		vp = VAL_TUPLE(value);
 		len = VAL_TUPLE_LEN(value);
 	} else if (!(IS_DATATYPE(value) && (action == A_MAKE || action == A_TO))) {
-		Trap_Arg(value);
+		Trap_Arg_DEAD_END(value);
 	}
 	arg = D_ARG(2);
 
 	if (IS_BINARY_ACT(action)) {
-		ASSERT2(vp != NULL, RP_MISC);
+		assert(vp);
 
 		if (IS_INTEGER(arg)) {
 			a = VAL_INT32(arg);
@@ -235,22 +235,22 @@
 				break;
 			case A_DIVIDE:
 				if (IS_DECIMAL(arg) || IS_PERCENT(arg)) {
-					if (dec == 0.0) Trap0(RE_ZERO_DIVIDE);
+					if (dec == 0.0) Trap_DEAD_END(RE_ZERO_DIVIDE);
 					v=(REBINT)Round_Dec(v/dec, 0, 1.0);
 				} else {
-					if (a == 0) Trap0(RE_ZERO_DIVIDE);
+					if (a == 0) Trap_DEAD_END(RE_ZERO_DIVIDE);
 					v /= a;
 				}
 				break;
 			case A_REMAINDER:
-				if (a == 0) Trap0(RE_ZERO_DIVIDE);
+				if (a == 0) Trap_DEAD_END(RE_ZERO_DIVIDE);
 				v %= a;
 				break;
 			case A_AND:	v &= a; break;
 			case A_OR:	v |= a; break;
 			case A_XOR:	v ^= a; break;
 			default:
-				Trap_Action(REB_TUPLE, action);
+				Trap_Action_DEAD_END(REB_TUPLE, action);
 			}
 
 			if (v > 255) v = 255;
@@ -267,7 +267,7 @@
 		goto ret_value;
 	}
 	if (action == A_RANDOM) {
-		if (D_REF(2)) Trap0(RE_BAD_REFINES); // seed
+		if (D_REF(2)) Trap_DEAD_END(RE_BAD_REFINES); // seed
 		for (;len > 0; len--, vp++) {
 			if (*vp)
 				*vp = (REBYTE)(Random_Int(D_REF(3)) % (1+*vp));
@@ -301,7 +301,7 @@
     case A_REVERSE:
 		if (D_REF(2)) {
 			len = Get_Num_Arg(D_ARG(3));
-			if (len < 0) Trap_Range(D_ARG(3));
+			if (len < 0) Trap_Range_DEAD_END(D_ARG(3));
 			len = MIN(len, VAL_TUPLE_LEN(value));
 		}
 		if (len > 0) {
@@ -318,14 +318,14 @@
 		a = Get_Num_Arg(arg);
 		if (a <= 0 || a > len) {
 			if (action == A_PICK) return R_NONE;
-			Trap_Range(arg);
+			Trap_Range_DEAD_END(arg);
 		}
 		if (action == A_PICK) {
 			DS_RET_INT(vp[a-1]);
 			return R_RET;
 		}
 		// Poke:
-		if (!IS_INTEGER(D_ARG(3))) Trap_Arg(D_ARG(3));
+		if (!IS_INTEGER(D_ARG(3))) Trap_Arg_DEAD_END(D_ARG(3));
 		v = VAL_INT32(D_ARG(3));
 		if (v < 0)
 			v = 0;
@@ -346,7 +346,7 @@
 			goto bad_arg;
 		}
 		if (ANY_BLOCK(arg)) {
-			if (!MT_Tuple(D_RET, VAL_BLK_DATA(arg), REB_TUPLE)) Trap_Make(REB_TUPLE, arg);
+			if (!MT_Tuple(D_RET, VAL_BLK_DATA(arg), REB_TUPLE)) Trap_Make_DEAD_END(REB_TUPLE, arg);
 			return R_RET;
 		}
 
@@ -379,10 +379,10 @@
 		goto ret_value;
 
 bad_arg:
-		Trap_Make(REB_TUPLE, arg);
+		Trap_Make_DEAD_END(REB_TUPLE, arg);
 	}
 
-	Trap_Action(REB_TUPLE, action);
+	Trap_Action_DEAD_END(REB_TUPLE, action);
 
 ret_value:
 	*DS_RETURN = *value;
