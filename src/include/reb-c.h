@@ -242,6 +242,40 @@ typedef void(*CFUNC)(void *);
 
 /***********************************************************************
 **
+**  TESTING IF A NUMBER IS FINITE
+**
+**		C89 and C++98 had no standard way of testing for if a number
+**		was finite or not.  Windows and POSIX came up with their
+**		own methods.  Finally it was standardized in C99 and C++11:
+**
+**			http://en.cppreference.com/w/cpp/numeric/math/isfinite
+**
+**		The name was changed to `isfinite()`.  And conforming C99
+**		and C++11 compilers can omit the old versions, so one cannot
+**		necessarily fall back on the old versions still being there.
+**		Yet the old versions don't have isfinite, so those have to
+**		be worked around here as well.
+**
+***********************************************************************/
+
+#if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L
+	// C99 or later
+	#define FINITE isfinite
+#elif defined(__cplusplus) && __cplusplus >= 199711L
+	// C++11 or later
+	#define FINITE isfinite
+#else
+	// Other fallbacks...
+	#ifdef TO_WIN32
+		#define FINITE _finite // The usual answer for Windows
+	#else
+		#define FINITE finite // The usual answer for POSIX
+	#endif
+#endif
+
+
+/***********************************************************************
+**
 **  UNICODE CHARACTER TYPE
 **
 **		REBUNI is a two-byte UCS-2 representation of a Unicode codepoint.

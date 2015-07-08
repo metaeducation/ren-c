@@ -95,7 +95,6 @@ These are now obsolete (as of A107) and should be removed:
 #define ATOI64					// supports it
 #define ITOA64					// supports it
 #define NO_TTY_ATTRIBUTES		// used in read-line.c
-#define FINITE _finite			// name used for it
 #define INLINE __inline			// name used for it
 
 #ifdef THREADED
@@ -141,7 +140,6 @@ These are now obsolete (as of A107) and should be removed:
 //#define AGG_FREETYPE            //use freetype2 library for fonts by default
 //#define AGG_FONTCONFIG            //use fontconfig library for fonts by default
 
-#define FINITE finite
 #define INLINE
 
 #ifndef TO_HAIKU
