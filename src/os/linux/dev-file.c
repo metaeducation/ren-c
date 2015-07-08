@@ -497,7 +497,7 @@ fail:
 **
 ***********************************************************************/
 {
-	if (!rename(file->file.path, file->data)) return DR_DONE;
+	if (!rename(file->file.path, s_cast(file->data))) return DR_DONE;
 	file->error = errno;
 	return DR_ERROR;
 }

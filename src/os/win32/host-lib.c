@@ -116,20 +116,20 @@ static void *Task_Ready;
 
 	if (spot) {
 		// Save rest of cmd line (such as end quote, -flags, etc.)
-		COPY_OS_STR(hold, spot+2, HOLD_SIZE);
+		OS_STRNCPY(hold, spot+2, HOLD_SIZE);
 
 		// Terminate at the arg location:
 		spot[0] = 0;
 
 		// Insert the arg:
-		JOIN_OS_STR(spot, arg, limit - strlen(cmd) - 1);
+		OS_STRNCAT(spot, arg, limit - strlen(cmd) - 1);
 
 		// Add back the rest of cmd:
-		JOIN_OS_STR(spot, hold, limit - strlen(cmd) - 1);
+		OS_STRNCAT(spot, hold, limit - strlen(cmd) - 1);
 	}
 	else {
-		JOIN_OS_STR(cmd, TEXT(" "), 1);
-		JOIN_OS_STR(cmd, arg, limit - strlen(cmd) - 1);
+		OS_STRNCAT(cmd, TEXT(" "), 1);
+		OS_STRNCAT(cmd, arg, limit - strlen(cmd) - 1);
 	}
 }
 
@@ -415,9 +415,9 @@ static void *Task_Ready;
 
 	len--; // termination
 
-	if (!ok) COPY_OS_STR(str, TEXT("unknown error"), len);
+	if (!ok) OS_STRNCPY(str, TEXT("unknown error"), len);
 	else {
-		COPY_OS_STR(str, lpMsgBuf, len);
+		OS_STRNCPY(str, lpMsgBuf, len);
 		LocalFree(lpMsgBuf);
 	}
 	return str;
@@ -460,7 +460,7 @@ static void *Task_Ready;
 	type = types[what];
 
 	len = GetLocaleInfo(0, type, 0, 0);
-	data = MAKE_OS_STR(len);
+	data = OS_ALLOC_ARRAY(REBCHR, len);
 	len = GetLocaleInfo(0, type, data, len);
 
 	return data;
@@ -469,7 +469,7 @@ static void *Task_Ready;
 
 /***********************************************************************
 **
-*/	REBINT OS_Get_Env(REBCHR *envname, REBCHR* envval, REBINT valsize)
+*/	REBINT OS_Get_Env(const REBCHR *envname, REBCHR* envval, REBINT valsize)
 /*
 **		Get a value from the environment.
 **		Returns size of retrieved value for success or zero if missing.
@@ -590,7 +590,7 @@ static void *Task_Ready;
 	int len;
 
 	len = GetCurrentDirectory(0, NULL); // length, incl terminator.
-	*path = MAKE_OS_STR(len);
+	*path = OS_ALLOC_ARRAY(REBCHR, len);
 	GetCurrentDirectory(len, *path);
 	len--; // less terminator
 
@@ -661,7 +661,7 @@ static void *Task_Ready;
 
 /***********************************************************************
 **
-*/	void *OS_Find_Function(void *dll, char *funcname)
+*/	void *OS_Find_Function(void *dll, const char *funcname)
 /*
 **		Get a DLL function address from its string name.
 **
@@ -945,7 +945,7 @@ static void *Task_Ready;
 		&pi							// Process information
 	);
 
-	OS_Free(cmd);
+	OS_FREE(cmd);
 
 	if (pid != NULL) *pid = pi.dwProcessId;
 
@@ -1019,7 +1019,7 @@ static void *Task_Ready;
 							/* done with input */
 							CloseHandle(hInputWrite);
 							hInputWrite = NULL;
-							OS_Free(oem_input);
+							OS_FREE(oem_input);
 							oem_input = NULL;
 							if (i < count - 1) {
 								memmove(&handles[i], &handles[i + 1], (count - i - 1) * sizeof(HANDLE));
@@ -1084,14 +1084,14 @@ static void *Task_Ready;
 			wchar_t *dest = NULL;
 			dest_len = MultiByteToWideChar(CP_OEMCP, 0, *output, *output_len, dest, 0);
 			if (dest_len <= 0) {
-				OS_Free(*output);
+				OS_FREE(*output);
 				*output = NULL;
 				*output_len = 0;
 			}
 			dest = OS_Make(*output_len * sizeof(wchar_t));
 			if (dest == NULL) goto cleanup;
 			MultiByteToWideChar(CP_OEMCP, 0, *output, *output_len, dest, dest_len);
-			OS_Free(*output);
+			OS_FREE(*output);
 			*output = dest;
 			*output_len = dest_len;
 		}
@@ -1102,14 +1102,14 @@ static void *Task_Ready;
 			wchar_t *dest = NULL;
 			dest_len = MultiByteToWideChar(CP_OEMCP, 0, *err, *err_len, dest, 0);
 			if (dest_len <= 0) {
-				OS_Free(*err);
+				OS_FREE(*err);
 				*err = NULL;
 				*err_len = 0;
 			}
 			dest = OS_Make(*err_len * sizeof(wchar_t));
 			if (dest == NULL) goto cleanup;
 			MultiByteToWideChar(CP_OEMCP, 0, *err, *err_len, dest, dest_len);
-			OS_Free(*err);
+			OS_FREE(*err);
 			*err = dest;
 			*err_len = dest_len;
 		}
@@ -1140,15 +1140,15 @@ kill:
 
 cleanup:
 	if (oem_input != NULL) {
-		OS_Free(oem_input);
+		OS_FREE(oem_input);
 	}
 
 	if (output != NULL && *output != NULL && *output_len == 0) {
-		OS_Free(*output);
+		OS_FREE(*output);
 	}
 
 	if (err != NULL && *err != NULL && *err_len == 0) {
-		OS_Free(*err);
+		OS_FREE(*err);
 	}
 
 	if (hInputWrite != NULL)
@@ -1215,7 +1215,7 @@ input_error:
 
 	if (!url) url = TEXT("");
 
-	path = MAKE_OS_STR(MAX_BRW_PATH+4);
+	path = OS_ALLOC_ARRAY(REBCHR, MAX_BRW_PATH+4);
 	len = MAX_BRW_PATH;
 
 	flag = RegQueryValueEx(key, TEXT(""), 0, &type, (LPBYTE)path, &len);
@@ -1355,7 +1355,7 @@ int CALLBACK ReqDirCallbackProc( HWND hWnd, UINT uMsg, LPARAM lParam, LPARAM lpD
 
 /***********************************************************************
 **
-*/	REBOOL As_OS_Str(REBSER *series, REBCHR **string)
+*/	REBOOL OS_Str_From_Series(REBSER *series, REBCHR **string)
 /*
 **	If necessary, convert a string series to Win32 wide-chars.
 **  (Handy for GOB/TEXT handling).

@@ -68,13 +68,13 @@
 
 /***********************************************************************
 **
-*/	REBYTE *Scan_Time(REBYTE *cp, REBCNT len, REBVAL *value)
+*/	const REBYTE *Scan_Time(const REBYTE *cp, REBCNT len, REBVAL *value)
 /*
 **		Scan string and convert to time.  Return zero if error.
 **
 ***********************************************************************/
 {
-	REBYTE  *sp;
+	const REBYTE  *sp;
 	REBYTE	merid = FALSE;
 	REBOOL	neg = FALSE;
 	REBINT	part1, part2, part3 = -1;
@@ -140,14 +140,14 @@
 ***********************************************************************/
 {
 	REB_TIMEF tf;
-	REBYTE *fmt;
+	const char *fmt;
 
 	Split_Time(VAL_TIME(value), &tf); // loses sign
 
 	if (tf.s == 0 && tf.n == 0) fmt = "I:2";
 	else fmt = "I:2:2";
 
-	if (VAL_TIME(value) < (REBI64)0) Append_Byte(mold->series, '-');
+	if (VAL_TIME(value) < cast(REBI64, 0)) Append_Codepoint(mold->series, '-');
 	Emit(mold, fmt, tf.h, tf.m, tf.s, 0);
 
 	if (tf.n > 0) Emit(mold, ".i", tf.n);

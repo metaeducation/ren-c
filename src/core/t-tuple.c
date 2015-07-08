@@ -188,8 +188,8 @@
 	REBVAL	*arg;
 	REBYTE	*vp;
 	REBYTE	*ap;
-	REBINT	len;
-	REBINT	alen;
+	REBCNT	len;
+	REBCNT	alen;
 	REBINT	v;
 	REBINT	a;
 	REBDEC	dec;
@@ -355,7 +355,7 @@
 		if (IS_ISSUE(arg)) {
 			REBUNI c;
 			ap = Get_Word_Name(arg);
-			len = strlen(ap);  // UTF-8 len
+			len = strlen(s_cast(ap));  // UTF-8 len
 			if (len & 1) goto bad_arg; // must have even # of chars
 			len /= 2;
 			if (len > MAX_TUPLE) goto bad_arg; // valid even for UTF-8

@@ -245,7 +245,7 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 		Set_Block(value, ser);
 	}
 	value = Append_Value(ser);
-	Set_Binary(value, Copy_Bytes(source, -1)); // UTF-8
+	Set_Binary(value, Copy_Unencoded(s_cast(source), -1)); // UTF-8
 	value = Append_Value(ser);
 	SET_HANDLE(value, call);
 
@@ -335,7 +335,7 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 	spec.tail = length;
 	text = Decompress(&spec, 0, -1, 10000000, 0);
 	if (!text) return FALSE;
-	Append_Byte(text, 0);
+	Append_Codepoint(text, 0);
 
 #ifdef DUMP_INIT_SCRIPT
 	f = _open("host-boot.r", _O_CREAT | _O_RDWR, _S_IREAD | _S_IWRITE );
@@ -405,7 +405,7 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 
 /***********************************************************************
 **
-*/	RL_API void RL_Print(REBYTE *fmt, ...)
+*/	RL_API void RL_Print(char *fmt, ...)
 /*
 **	Low level print of formatted data to the console.
 **
@@ -719,10 +719,8 @@ RL_API u32 *RL_Map_Words(REBSER *series)
 */
 {
 	REBCNT i = 1;
-	u32 *words;
 	REBVAL *val = BLK_HEAD(series);
-
-	words = OS_MAKE((series->tail+2) * sizeof(u32));
+	u32 *words = OS_ALLOC_ARRAY(u32, series->tail + 2);
 
 	for (; NOT_END(val); val++) {
 		if (ANY_WORD(val)) words[i++] = VAL_WORD_CANON(val);
@@ -754,8 +752,8 @@ RL_API REBYTE *RL_Word_String(u32 word)
 	// !!This code should use a function from c-words.c (but nothing perfect yet.)
 	if (word == 0 || word >= PG_Word_Table.series->tail) return 0;
 	s1 = VAL_SYM_NAME(BLK_SKIP(PG_Word_Table.series, word));
-	s2 = OS_MAKE(strlen(s1));
-	strcpy(s2, s1);
+	s2 = OS_ALLOC_ARRAY(REBYTE, strlen(s_cast(s1)));
+	strcpy(s_cast(s2), s_cast(s1));
 	return s2;
 }
 
@@ -906,7 +904,8 @@ RL_API u32 *RL_Words_Of_Object(REBSER *obj)
 	REBVAL *syms;
 
 	syms = FRM_WORD(obj, 1);
-	words = OS_MAKE(obj->tail * sizeof(u32)); // One less, because SELF not included.
+	// One less, because SELF not included.
+	words = OS_ALLOC_ARRAY(u32, obj->tail);
 	for (index = 0; index < (obj->tail-1); syms++, index++) {
 		words[index] = VAL_BIND_CANON(syms);
 	}

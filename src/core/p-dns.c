@@ -66,7 +66,7 @@
 
 		arg = Obj_Value(spec, STD_PORT_SPEC_NET_HOST);
 
-		if (IS_TUPLE(arg) && Scan_Tuple(VAL_BIN(arg), strlen(VAL_BIN(arg)), &tmp)) {
+		if (IS_TUPLE(arg) && Scan_Tuple(VAL_BIN(arg), strlen(s_cast(VAL_BIN(arg))), &tmp)) {
 			SET_FLAG(sock->modes, RST_REVERSE);
 			memcpy(&sock->net.remote_ip, VAL_TUPLE(&tmp), 4);
 		}
@@ -103,7 +103,9 @@ pick:
 				Trap_Port_DEAD_END(RE_READ_ERROR, port, sock->error);
 			}
 			if (GET_FLAG(sock->modes, RST_REVERSE)) {
-				Set_String(D_RET, Copy_Bytes(sock->data, strlen(sock->data)));
+				Set_String(D_RET, Copy_Unencoded(
+					s_cast(sock->data), strlen(s_cast(sock->data))
+				));
 			} else {
 				Set_Tuple(D_RET, (REBYTE*)&sock->net.remote_ip, 4);
 			}

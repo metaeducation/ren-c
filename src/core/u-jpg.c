@@ -2057,7 +2057,7 @@ typedef my_marker_reader * my_marker_ptr;
 /* As above, but read two bytes interpreted as an unsigned 16-bit integer.
  * V should be declared unsigned int or perhaps INT32.
  */
-#define jdar_INPUT_2BYTES(cinfo,V,action)  \
+#define jdar_INPUT_2b_cast(cinfo,V,action)  \
 	MAKESTMT( jdar_MAKE_BYTE_AVAIL(cinfo,action); \
 		  bytes_in_buffer--; \
 		  V = ((unsigned int) GETJOCTET(*next_input_byte++)) << 8; \
@@ -2149,11 +2149,11 @@ get_sof (j_decompress_ptr cinfo, boolean is_prog, boolean is_arith)
   cinfo->progressive_mode = is_prog;
   cinfo->arith_code = is_arith;
 
-  jdar_INPUT_2BYTES(cinfo, length, return FALSE);
+  jdar_INPUT_2b_cast(cinfo, length, return FALSE);
 
   jdar_INPUT_BYTE(cinfo, cinfo->data_precision, return FALSE);
-  jdar_INPUT_2BYTES(cinfo, cinfo->image_height, return FALSE);
-  jdar_INPUT_2BYTES(cinfo, cinfo->image_width, return FALSE);
+  jdar_INPUT_2b_cast(cinfo, cinfo->image_height, return FALSE);
+  jdar_INPUT_2b_cast(cinfo, cinfo->image_width, return FALSE);
   jdar_INPUT_BYTE(cinfo, cinfo->num_components, return FALSE);
 
   length -= 8;
@@ -2213,7 +2213,7 @@ get_sos (j_decompress_ptr cinfo)
   if (! cinfo->marker->saw_SOF)
     ERREXIT(cinfo, JERR_SOS_NO_SOF);
 
-  jdar_INPUT_2BYTES(cinfo, length, return FALSE);
+  jdar_INPUT_2b_cast(cinfo, length, return FALSE);
 
   jdar_INPUT_BYTE(cinfo, n, return FALSE); /* Number of components */
 
@@ -2281,7 +2281,7 @@ get_dac (j_decompress_ptr cinfo)
   int index, val;
   jdar_INPUT_VARS(cinfo);
 
-  jdar_INPUT_2BYTES(cinfo, length, return FALSE);
+  jdar_INPUT_2b_cast(cinfo, length, return FALSE);
   length -= 2;
 
   while (length > 0) {
@@ -2330,7 +2330,7 @@ get_dht (j_decompress_ptr cinfo)
   JHUFF_TBL **htblptr;
   jdar_INPUT_VARS(cinfo);
 
-  jdar_INPUT_2BYTES(cinfo, length, return FALSE);
+  jdar_INPUT_2b_cast(cinfo, length, return FALSE);
   length -= 2;
 
   while (length > 16) {
@@ -2399,7 +2399,7 @@ get_dqt (j_decompress_ptr cinfo)
   JQUANT_TBL *quant_ptr;
   jdar_INPUT_VARS(cinfo);
 
-  jdar_INPUT_2BYTES(cinfo, length, return FALSE);
+  jdar_INPUT_2b_cast(cinfo, length, return FALSE);
   length -= 2;
 
   while (length > 0) {
@@ -2418,7 +2418,7 @@ get_dqt (j_decompress_ptr cinfo)
 
     for (i = 0; i < DCTSIZE2; i++) {
       if (prec)
-	jdar_INPUT_2BYTES(cinfo, tmp, return FALSE);
+	jdar_INPUT_2b_cast(cinfo, tmp, return FALSE);
       else
 	jdar_INPUT_BYTE(cinfo, tmp, return FALSE);
       /* We convert the zigzag-order table to natural array order. */
@@ -2455,12 +2455,12 @@ get_dri (j_decompress_ptr cinfo)
   unsigned int tmp;
   jdar_INPUT_VARS(cinfo);
 
-  jdar_INPUT_2BYTES(cinfo, length, return FALSE);
+  jdar_INPUT_2b_cast(cinfo, length, return FALSE);
 
   if (length != 4)
     ERREXIT(cinfo, JERR_BAD_LENGTH);
 
-  jdar_INPUT_2BYTES(cinfo, tmp, return FALSE);
+  jdar_INPUT_2b_cast(cinfo, tmp, return FALSE);
 
   TRACEMS1(cinfo, 1, JTRC_DRI, tmp);
 
@@ -2599,7 +2599,7 @@ get_interesting_appn (j_decompress_ptr cinfo)
   unsigned int i, numtoread;
   jdar_INPUT_VARS(cinfo);
 
-  jdar_INPUT_2BYTES(cinfo, length, return FALSE);
+  jdar_INPUT_2b_cast(cinfo, length, return FALSE);
   length -= 2;
 
   /* get the interesting part of the marker data */
@@ -2651,7 +2651,7 @@ save_marker (j_decompress_ptr cinfo)
 
   if (cur_marker == NULL) {
     /* begin reading a marker */
-    jdar_INPUT_2BYTES(cinfo, length, return FALSE);
+	jdar_INPUT_2b_cast(cinfo, length, return FALSE);
     length -= 2;
     if (length >= 0) {		/* watch out for bogus length word */
       /* figure out how much we want to save */
@@ -2751,7 +2751,7 @@ skip_variable (j_decompress_ptr cinfo)
   INT32 length;
   jdar_INPUT_VARS(cinfo);
 
-  jdar_INPUT_2BYTES(cinfo, length, return FALSE);
+  jdar_INPUT_2b_cast(cinfo, length, return FALSE);
   length -= 2;
 
   TRACEMS2(cinfo, 1, JTRC_MISC_MARKER, cinfo->unread_marker, (int) length);
@@ -10779,7 +10779,7 @@ jinit_phuff_decoder (j_decompress_ptr cinfo)
 #ifndef CODI_DEFINED
 #include "reb-codec.h"
 extern long* Alloc_Mem(size_t size);
-extern void Register_Codec(char *name, codo dispatcher);
+extern void Register_Codec(const REBYTE *name, codo dispatcher);
 #endif
 
 /***********************************************************************
@@ -10799,15 +10799,15 @@ extern void Register_Codec(char *name, codo dispatcher);
 
 	if (codi->action == CODI_IDENTIFY) {
 		int w, h;
-		jpeg_info(codi->data, codi->len, &w, &h); // will throw errors
+		jpeg_info(s_cast(codi->data), codi->len, &w, &h); // will throw errors
 		return CODI_CHECK;
 	}
 
 	if (codi->action == CODI_DECODE) {
 		int w, h;
-		jpeg_info(codi->data, codi->len, &w, &h);
+		jpeg_info(s_cast(codi->data), codi->len, &w, &h);
 		codi->bits = (u32 *)Alloc_Mem(w * h * 4);
-		jpeg_load(codi->data, codi->len, (char *)codi->bits);
+		jpeg_load(r_cast(char *, codi->data), codi->len, r_cast(char *, codi->bits));
 		codi->w = w;
 		codi->h = h;
 		return CODI_IMAGE;
@@ -10824,5 +10824,5 @@ extern void Register_Codec(char *name, codo dispatcher);
 /*
 ***********************************************************************/
 {
-	Register_Codec("jpeg", Codec_JPEG_Image);
+	Register_Codec(cb_cast("jpeg"), Codec_JPEG_Image);
 }

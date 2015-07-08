@@ -175,7 +175,7 @@ static REBSER *make_string(REBVAL *arg, REBOOL make)
 	// MAKE/TO <type> #"A"
 	else if (IS_CHAR(arg)) {
 		ser = (VAL_CHAR(arg) > 0xff) ? Make_Unicode(2) : Make_Binary(2);
-		Append_Byte(ser, VAL_CHAR(arg));
+		Append_Codepoint(ser, VAL_CHAR(arg));
 	}
 	// MAKE/TO <type> <any-value>
 //	else if (IS_NONE(arg)) {
@@ -218,7 +218,7 @@ static REBSER *make_binary(REBVAL *arg, REBOOL make)
 
 	// MAKE/TO BINARY! BINARY!
 	case REB_BINARY:
-		ser = Copy_Bytes(VAL_BIN_DATA(arg), VAL_LEN(arg));
+		ser = Copy_Unencoded(s_cast(VAL_BIN_DATA(arg)), VAL_LEN(arg));
 		break;
 
 	// MAKE/TO BINARY! <any-string>
@@ -238,7 +238,7 @@ static REBSER *make_binary(REBVAL *arg, REBOOL make)
 
 	// MAKE/TO BINARY! <tuple!>
 	case REB_TUPLE:
-		ser = Copy_Bytes(VAL_TUPLE(arg), VAL_TUPLE_LEN(arg));
+		ser = Copy_Unencoded(s_cast(VAL_TUPLE(arg)), VAL_TUPLE_LEN(arg));
 		break;
 
 	// MAKE/TO BINARY! <char!>
@@ -249,7 +249,7 @@ static REBSER *make_binary(REBVAL *arg, REBOOL make)
 
 	// MAKE/TO BINARY! <bitset!>
 	case REB_BITSET:
-		ser = Copy_Bytes(VAL_BIN(arg), VAL_TAIL(arg));
+		ser = Copy_Unencoded(s_cast(VAL_BIN(arg)), VAL_TAIL(arg));
 		break;
 
 	// MAKE/TO BINARY! <image!>
@@ -418,7 +418,7 @@ static REBSER *make_binary(REBVAL *arg, REBOOL make)
 
 	n = SERIES_TAIL(ser);
 	if (n > 0) c = GET_ANY_CHAR(ser, n-1);
-	if (n == 0 || c != '/') Append_Byte(ser, '/');
+	if (n == 0 || c != '/') Append_Codepoint(ser, '/');
 
 	if (ANY_STR(pvs->select))
 		arg = VAL_SERIES(pvs->select);
@@ -771,7 +771,7 @@ x*/	void Modify_StringX(REBCNT action, REBVAL *string, REBVAL *arg)
 			if (VAL_INT64(arg) > 255 || VAL_INT64(arg) < 0)
 				Trap_Range_DEAD_END(arg);
 			arg_ser = Make_Binary(1);
-			Append_Byte(arg_ser, VAL_CHAR(arg)); // check for size!!!
+			Append_Codepoint(arg_ser, VAL_CHAR(arg)); // check for size!!!
 		}
 		else if (!ANY_BINSTR(arg)) Trap_Arg_DEAD_END(arg);
 	}
@@ -785,7 +785,7 @@ x*/	void Modify_StringX(REBCNT action, REBVAL *string, REBVAL *arg)
 	else if (IS_CHAR(arg)) {
 		// Optimize this case !!!
 		arg_ser = Make_Unicode(1);
-		Append_Byte(arg_ser, VAL_CHAR(arg));
+		Append_Codepoint(arg_ser, VAL_CHAR(arg));
 	}
 	else if (!ANY_STR(arg) || IS_TAG(arg)) {
 		arg_ser = Copy_Form_Value(arg, 0);

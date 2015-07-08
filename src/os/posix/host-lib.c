@@ -270,7 +270,7 @@ static void *Task_Ready;
 
 /***********************************************************************
 **
-*/	REBINT OS_Get_Env(REBCHR *envname, REBCHR* envval, REBINT valsize)
+*/	REBINT OS_Get_Env(const REBCHR *envname, REBCHR *envval, REBINT valsize)
 /*
 **		Get a value from the environment.
 **		Returns size of retrieved value for success or zero if missing.
@@ -282,7 +282,7 @@ static void *Task_Ready;
 	// Note: The Posix variant of this API is case-sensitive
 
 	REBINT len;
-	const REBCHR* value = getenv(envname);
+	const char *value = getenv(envname);
 	if (value == 0) return 0;
 
 	len = strlen(value);
@@ -292,7 +292,7 @@ static void *Task_Ready;
 		return len + 1;
 	}
 
-	COPY_OS_STR(envval, value, len);
+	strncpy(envval, value, len);
 	return len;
 }
 
@@ -330,7 +330,9 @@ static void *Task_Ready;
 		// really need to set an environment variable, here's a way
 		// that just leaks a string each time you call.
 
-		char* expr = MAKE_OS_STR(strlen(envname) + 1 + strlen(envval) + 1);
+		char *expr = OS_ALLOC_ARRAY(
+			char, strlen(envname) + 1 + strlen(envval) + 1
+		);
 
 		strcpy(expr, envname);
 		strcat(expr, "=");
@@ -356,7 +358,7 @@ static void *Task_Ready;
 	// http://julipedia.meroh.net/2004/10/portability-unsetenvfoo-vs-putenvfoo.html
 
 	// going to hope this case doesn't hold onto the string...
-	if (putenv((char*)envname) == -1)
+	if (putenv(envname) == -1)
 		return FALSE;
 #endif
 	return TRUE;
@@ -447,7 +449,7 @@ static void *Task_Ready;
 **
 ***********************************************************************/
 {
-	*path = MAKE_OS_STR(PATH_MAX);
+	*path = OS_ALLOC_ARRAY(char, PATH_MAX);
 	if (!getcwd(*path, PATH_MAX-1)) *path[0] = 0;
 	return strlen(*path); // Be sure to call free() after usage
 }
@@ -515,7 +517,7 @@ static void *Task_Ready;
 
 /***********************************************************************
 **
-*/	void *OS_Find_Function(void *dll, char *funcname)
+*/	void *OS_Find_Function(void *dll, const char *funcname)
 /*
 **		Get a DLL function address from its string name.
 **

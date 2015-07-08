@@ -554,7 +554,7 @@ chk_neg:
 	REBINT r;
 	REBCHR *cmd = NULL;
 	REBVAL *arg = D_ARG(1);
-	REBI64 pid = -1;
+	REBU64 pid = MAX_U64; // was -1, but is unsigned
 	u32 flags = 0;
 	int argc = 1;
 	REBCHR ** argv = NULL;
@@ -721,7 +721,7 @@ chk_neg:
 	} else if (output_type == BINARY_TYPE) {
 		if (output != NULL
 			&& output_len > 0) {
-			Append_Bytes_Len(VAL_SERIES(output), os_output, output_len);
+			Append_Unencoded_Core(VAL_SERIES(output), os_output, output_len);
 			OS_FREE(os_output);
 		}
 	}
@@ -736,7 +736,7 @@ chk_neg:
 	} else if (err_type == BINARY_TYPE) {
 		if (err != NULL
 			&& err_len > 0) {
-			Append_Bytes_Len(VAL_SERIES(err), os_err, err_len);
+			Append_Unencoded_Core(VAL_SERIES(err), os_err, err_len);
 			OS_FREE(os_err);
 		}
 	}
@@ -780,16 +780,16 @@ chk_neg:
 
 	if (ANY_STR(val)) {
 		cmd = Make_Binary(VAL_LEN(val) + VAL_LEN(script) + 4);
-		Append_Byte(cmd, '"');
-		Append_Bytes(cmd, VAL_BIN_DATA(val));
-		Append_Byte(cmd, '"');
+		Append_Codepoint(cmd, '"');
+		Append_Unencoded(cmd, s_cast(VAL_BIN_DATA(val)));
+		Append_Codepoint(cmd, '"');
 		if (!IS_NONE(script)) {
-			Append_Byte(cmd, ' ');
-			Append_Bytes(cmd, VAL_BIN_DATA(script)); // !!! convert file
+			Append_Codepoint(cmd, ' ');
+			Append_Unencoded(cmd, s_cast(VAL_BIN_DATA(script))); // !!! convert file
 		}
 		if (D_REF(2)) {
-			Append_Byte(cmd, ' ');
-			Append_Bytes(cmd, VAL_BIN_DATA(D_ARG(3)));
+			Append_Codepoint(cmd, ' ');
+			Append_Unencoded(cmd, s_cast(VAL_BIN_DATA(D_ARG(3))));
 		}
 		Print("Launching: %s", STR_HEAD(cmd));
 		r = OS_CREATE_PROCESS(STR_HEAD(cmd), 0);
@@ -815,7 +815,7 @@ chk_neg:
 	REBCHR *eq;
 	REBSER *blk;
 
-	while (n = strlen(str)) {
+	while (n = OS_STRLEN(str)) {
 		len++;
 		str += n + 1; // next
 	}
@@ -823,7 +823,7 @@ chk_neg:
 	blk = Make_Block(len*2);
 
 	str = start;
-	while (NZ(eq = strchr(str+1, '=')) && NZ(n = strlen(str))) {
+	while (NZ(eq = OS_STRCHR(str + 1, '=')) && NZ(n = OS_STRLEN(str))) {
 		Set_Series(REB_STRING, Append_Value(blk), Copy_OS_Str(str, eq-str));
 		Set_Series(REB_STRING, Append_Value(blk), Copy_OS_Str(eq+1, n-(eq-str)-1));
 		str += n + 1; // next
@@ -852,9 +852,9 @@ chk_neg:
 
 	for (value = VAL_BLK_DATA(blk); NOT_END(value); value++) {
 		Mold_Value(&mo, value, 0);
-		Append_Byte(mo.series, 0);
+		Append_Codepoint(mo.series, 0);
 	}
-	Append_Byte(mo.series, 0);
+	Append_Codepoint(mo.series, 0);
 
 	return Copy_Series(mo.series); // Unicode
 }
@@ -874,7 +874,7 @@ chk_neg:
 	REBSER *blk;
 	REBSER *dir;
 
-	while (n = strlen(str)) {
+	while (n = OS_STRLEN(str)) {
 		len++;
 		str += n + 1; // next
 	}
@@ -883,7 +883,7 @@ chk_neg:
 
 	// First is a dir path or full file path:
 	str = start;
-	n = strlen(str);
+	n = OS_STRLEN(str);
 
 	if (len == 1) {  // First is full file path
 		dir = To_REBOL_Path(str, n, OS_WIDE, 0);
@@ -894,7 +894,7 @@ chk_neg:
 		dir = To_REBOL_Path(str, n, -1, TRUE);
 		str += n + 1; // next
 		len = dir->tail;
-		while (n = strlen(str)) {
+		while (n = OS_STRLEN(str)) {
 			dir->tail = len;
 			Append_Uni_Uni(dir, str, n);
 			Set_Series(REB_FILE, Append_Value(blk), Copy_String(dir, 0, -1));
@@ -902,7 +902,7 @@ chk_neg:
 		}
 #else /* absolute pathes already */
 		str += n + 1;
-		while (n = strlen(str)) {
+		while (n = OS_STRLEN(str)) {
 			dir = To_REBOL_Path(str, n, OS_WIDE, FALSE);
 			Set_Series(REB_FILE, Append_Value(blk), Copy_String(dir, 0, -1));
 			str += n + 1; // next
@@ -924,7 +924,8 @@ chk_neg:
 	REBSER *ser;
 	REBINT n;
 
-	fr.files = OS_MAKE(MAX_FILE_REQ_BUF);
+	assert(MAX_FILE_REQ_BUF % sizeof(REBCHR) == 0);
+	fr.files = OS_ALLOC_ARRAY(REBCHR, MAX_FILE_REQ_BUF/sizeof(REBCHR));
 	fr.len = MAX_FILE_REQ_BUF/sizeof(REBCHR) - 2;
 	fr.files[0] = 0;
 
@@ -939,7 +940,7 @@ chk_neg:
 		n = ser->tail;
 		if (fr.dir[n-1] != OS_DIR_SEP) {
 			if (n+2 > fr.len) n = fr.len - 2;
-			COPY_OS_STR(fr.files, (REBCHR*)(ser->data), n);
+			OS_STRNCPY(fr.files, (REBCHR*)(ser->data), n);
 			fr.files[n] = 0;
 		}
 	}
@@ -958,7 +959,7 @@ chk_neg:
 			Set_Block(D_RET, ser);
 		}
 		else {
-			ser = To_REBOL_Path(fr.files, strlen(fr.files), OS_WIDE, 0);
+			ser = To_REBOL_Path(fr.files, OS_STRLEN(fr.files), OS_WIDE, 0);
 			Set_Series(REB_FILE, D_RET, ser);
 		}
 	} else
@@ -992,10 +993,10 @@ chk_neg:
 	if (lenplus < 0) return R_UNSET;
 
 	// Two copies...is there a better way?
-	buf = MAKE_OS_STR(lenplus);
+	buf = OS_ALLOC_ARRAY(REBCHR, lenplus);
 	OS_GET_ENV(cmd, buf, lenplus);
 	Set_String(D_RET, Copy_OS_Str(buf, lenplus - 1));
-	FREE_OS_STR(buf);
+	OS_FREE(buf);
 
 	return R_RET;
 }
@@ -1022,7 +1023,7 @@ chk_neg:
 		success = OS_SET_ENV(cmd, value);
 		if (success) {
 			// What function could reuse arg2 as-is?
-			Set_String(D_RET, Copy_OS_Str(value, strlen(value)));
+			Set_String(D_RET, Copy_OS_Str(value, OS_STRLEN(value)));
 			return R_RET;
 		}
 		return R_UNSET;

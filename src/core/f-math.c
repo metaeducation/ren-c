@@ -37,7 +37,7 @@
 
 /***********************************************************************
 **
-*/	REBYTE *Grab_Int(REBYTE *cp, REBINT *val)
+*/	const REBYTE *Grab_Int(const REBYTE *cp, REBINT *val)
 /*
 **		Grab an integer value from the string.
 **
@@ -70,7 +70,7 @@
 
 /***********************************************************************
 **
-*/	REBYTE *Grab_Int_Scale(REBYTE *cp, REBINT *val, REBCNT scale)
+*/	const REBYTE *Grab_Int_Scale(const REBYTE *cp, REBINT *val, REBCNT scale)
 /*
 **		Return integer scaled to the number of digits specified.
 **		Used for the decimal part of numbers (e.g. times).
@@ -100,7 +100,7 @@
 
 /***********************************************************************
 **
-*/	REBINT Form_Int_Len(REBYTE *buf, REBI64 val, REBINT maxl)
+*/	REBINT Form_Int_Len(char *buf, REBI64 val, REBINT maxl)
 /*
 **		Form an integer string into the given buffer. Result will
 **		not exceed maxl length, including terminator.
@@ -113,8 +113,8 @@
 **
 ***********************************************************************/
 {
-	REBYTE tmp[MAX_NUM_LEN];
-	REBYTE *tp = tmp;
+	char tmp[MAX_NUM_LEN];
+	char *tp = tmp;
 	REBI64 n;
 	REBI64 r;
 	REBINT len = 0;
@@ -182,20 +182,20 @@
 	REBYTE tmp[MAX_NUM_LEN];
 	REBINT n;
 
-	n = Form_Int_Len(tmp, val, max + 1);
+	n = Form_Int_Len(s_cast(tmp), val, max + 1);
 	if (n == 0) {
-		strcpy(buf, "??");
+		strcpy(s_cast(buf), "??");
 		return buf;  // too long
 	}
 
 	if (len >= 0) {
-		strcpy(buf, tmp);
+		strcpy(s_cast(buf), s_cast(tmp));
 		buf += n;
 		for (; n < len; n++) *buf++ = pad;
 	}
 	else { // len < 0
 		for (; n < -len; len++) *buf++ = pad;
-		strcpy(buf, tmp);
+		strcpy(s_cast(buf), s_cast(tmp));
 		buf += n;
 	}
 
@@ -213,7 +213,7 @@
 **
 ***********************************************************************/
 {
-	REBINT len = Form_Int_Len(buf, val, MAX_NUM_LEN);
+	REBINT len = Form_Int_Len(s_cast(buf), val, MAX_NUM_LEN);
 	return buf + len;
 }
 
@@ -227,8 +227,8 @@
 **
 ***********************************************************************/
 {
-	INT_TO_STR(val, buf);
-	return buf+strlen(buf);
+	INT_TO_STR(val, s_cast(buf));
+	return buf + strlen(s_cast(buf));
 }
 
 
@@ -238,8 +238,8 @@
 /*
 ***********************************************************************/
 {
-	INT_TO_STR(val, buf);
-	return strlen(buf);
+	INT_TO_STR(val, s_cast(buf));
+	return strlen(s_cast(buf));
 }
 
 
@@ -320,8 +320,8 @@ REBINT Emit_Decimal(REBYTE *cp, REBDEC d, REBFLG trim, REBYTE point, REBINT deci
 	// Add E part if needed:
 	if (e) {
 		*cp++ = 'e';
-		INT_TO_STR(e - 1, cp);
-		cp = strchr(cp, 0);
+		INT_TO_STR(e - 1, s_cast(cp));
+		cp = b_cast(strchr(s_cast(cp), 0));
 	}
 
  	if (trim == DEC_MOLD_PERCENT) *cp++ = '%';

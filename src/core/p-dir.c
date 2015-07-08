@@ -61,7 +61,7 @@
 	dir->data = (REBYTE*)(&file);
 
 	while ((result = OS_DO_DEVICE(dir, RDC_READ)) == 0 && !GET_FLAG(dir->flags, RRF_DONE)) {
-		len = strlen(file.file.path);
+		len = OS_STRLEN(file.file.path);
 		if (GET_FLAG(file.modes, RFM_DIR)) len++;
 		name = Copy_OS_Str(file.file.path, len);
 		if (GET_FLAG(file.modes, RFM_DIR))
@@ -70,7 +70,7 @@
 	}
 
 	if (result < 0 && dir->error != -RFE_OPEN_FAIL
-		&& (strchr(dir->file.path, '*') || strchr(dir->file.path, '?')))
+		&& (OS_STRCHR(dir->file.path, '*') || OS_STRCHR(dir->file.path, '?')))
 		result = 0;  // no matches found, but not an error
 
 	return result;

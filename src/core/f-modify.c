@@ -128,7 +128,7 @@
 	// If the src_val is not a string, then we need to create a string:
 	if (GET_FLAG(flags, AN_SERIES)) { // used to indicate a BINARY series
 		if (IS_INTEGER(src_val)) {
-			src_ser = Append_Byte(0, Int8u(src_val)); // creates a binary
+			src_ser = Append_Codepoint(0, Int8u(src_val)); // creates a binary
 		}
 		else if (IS_BLOCK(src_val)) {
 			src_ser = Join_Binary(src_val); // NOTE: it's the shared FORM buffer!
@@ -140,7 +140,7 @@
 		else if (!ANY_BINSTR(src_val)) Trap_Arg_DEAD_END(src_val);
 	}
 	else if (IS_CHAR(src_val)) {
-		src_ser = Append_Byte(0, VAL_CHAR(src_val)); // unicode ok too
+		src_ser = Append_Codepoint(0, VAL_CHAR(src_val)); // unicode ok too
 	}
 	else if (IS_BLOCK(src_val)) {
 		src_ser = Form_Tight_Block(src_val);

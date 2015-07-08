@@ -102,7 +102,7 @@ static REBVAL *Func_Word(REBINT dsf)
 	DS_Series->tail = DSP+1;
 	Extend_Series(DS_Series, amount);
 	DS_Base = BLK_HEAD(DS_Series);
-	Debug_Fmt(BOOT_STR(RS_STACK, 0), DSP, SERIES_REST(DS_Series));
+	Debug_Fmt(cs_cast(BOOT_STR(RS_STACK, 0)), DSP, SERIES_REST(DS_Series));
 }
 
 
@@ -220,22 +220,30 @@ void Trace_Line(REBSER *block, REBINT index, REBVAL *value)
 
 	CHECK_DEPTH(depth);
 
-	Debug_Fmt_(BOOT_STR(RS_TRACE,1), index+1, value);
+	Debug_Fmt_(cs_cast(BOOT_STR(RS_TRACE, 1)), index + 1, value);
 	if (IS_WORD(value) || IS_GET_WORD(value)) {
 		value = Get_Var(value);
 		if (VAL_TYPE(value) < REB_NATIVE)
-			Debug_Fmt_(BOOT_STR(RS_TRACE,2), value);
-		else if (VAL_TYPE(value) >= REB_NATIVE && VAL_TYPE(value) <= REB_FUNCTION)
-			Debug_Fmt_(BOOT_STR(RS_TRACE,3), Get_Type_Name(value), List_Func_Words(value));
-		else
-			Debug_Fmt_(BOOT_STR(RS_TRACE,4), Get_Type_Name(value));
+			Debug_Fmt_(cs_cast(BOOT_STR(RS_TRACE, 2)), value);
+		else if (
+			VAL_TYPE(value) >= REB_NATIVE && VAL_TYPE(value) <= REB_FUNCTION
+		) {
+			Debug_Fmt_(
+				cs_cast(BOOT_STR(RS_TRACE, 3)),
+				Get_Type_Name(value), List_Func_Words(value)
+			);
+		} else
+			Debug_Fmt_(cs_cast(BOOT_STR(RS_TRACE, 4)), Get_Type_Name(value));
 	}
 	/*if (ANY_WORD(value)) {
 		word = value;
 		if (IS_WORD(value)) value = Get_Var(word);
-		Debug_Fmt_(BOOT_STR(RS_TRACE,2), VAL_WORD_FRAME(word), VAL_WORD_INDEX(word), Get_Type_Name(value));
+		Debug_Fmt_(
+			cs_cast(BOOT_STR(RS_TRACE, 2)),
+			VAL_WORD_FRAME(word), VAL_WORD_INDEX(word), Get_Type_Name(value)
+		);
 	}
-	if (Trace_Stack) Debug_Fmt(BOOT_STR(RS_TRACE,3), DSP, DSF);
+	if (Trace_Stack) Debug_Fmt(cs_cast(BOOT_STR(RS_TRACE, 3)), DSP, DSF);
 	else
 	*/
 	Debug_Line();
@@ -245,8 +253,12 @@ void Trace_Func(REBVAL *word, REBVAL *value)
 {
 	int depth;
 	CHECK_DEPTH(depth);
-	Debug_Fmt_(BOOT_STR(RS_TRACE,5), Get_Word_Name(word), Get_Type_Name(value));
-	if (GET_FLAG(Trace_Flags, 1)) Debug_Values(DS_GET(DS_ARG_BASE+1), DS_ARGC, 20);
+	Debug_Fmt_(
+		cs_cast(BOOT_STR(RS_TRACE, 5)),
+		Get_Word_Name(word), Get_Type_Name(value)
+	);
+	if (GET_FLAG(Trace_Flags, 1))
+		Debug_Values(DS_GET(DS_ARG_BASE+1), DS_ARGC, 20);
 	else Debug_Line();
 }
 
@@ -254,7 +266,7 @@ void Trace_Return(REBVAL *word, REBVAL *value)
 {
 	int depth;
 	CHECK_DEPTH(depth);
-	Debug_Fmt_(BOOT_STR(RS_TRACE,6), Get_Word_Name(word));
+	Debug_Fmt_(cs_cast(BOOT_STR(RS_TRACE, 6)), Get_Word_Name(word));
 	Debug_Values(value, 1, 50);
 }
 
@@ -263,7 +275,7 @@ void Trace_Arg(REBINT num, REBVAL *arg, REBVAL *path)
 	int depth;
 	if (IS_REFINEMENT(arg) && (!path || IS_END(path))) return;
 	CHECK_DEPTH(depth);
-	Debug_Fmt(BOOT_STR(RS_TRACE,6), num+1, arg);
+	Debug_Fmt(cs_cast(BOOT_STR(RS_TRACE, 6)), num + 1, arg);
 }
 
 
@@ -275,7 +287,7 @@ void Trace_Arg(REBINT num, REBVAL *arg, REBVAL *path)
 {
 	int depth;
 	CHECK_DEPTH(depth);
-	Debug_Fmt(BOOT_STR(RS_TRACE,n), value);
+	Debug_Fmt(cs_cast(BOOT_STR(RS_TRACE, n)), value);
 }
 
 /***********************************************************************
@@ -290,7 +302,7 @@ void Trace_Arg(REBINT num, REBVAL *arg, REBVAL *path)
 	CHECK_DEPTH(depth);
 	memcpy(tracebuf, str, len);
 	tracebuf[len] = '\0';
-	Debug_Fmt(BOOT_STR(RS_TRACE,n), tracebuf);
+	Debug_Fmt(cs_cast(BOOT_STR(RS_TRACE, n)), tracebuf);
 }
 
 
@@ -302,7 +314,11 @@ void Trace_Arg(REBINT num, REBVAL *arg, REBVAL *path)
 {
 	int depth;
 	CHECK_DEPTH(depth);
-	Debug_Fmt(BOOT_STR(RS_TRACE, 10), &VAL_ERR_VALUES(value)->type, &VAL_ERR_VALUES(value)->id);
+	Debug_Fmt(
+		cs_cast(BOOT_STR(RS_TRACE, 10)),
+		&VAL_ERR_VALUES(value)->type,
+		&VAL_ERR_VALUES(value)->id
+	);
 }
 
 
@@ -1799,7 +1815,7 @@ eval_func2:
 	// Saved_State is safe.
 	Saved_State = Halt_State;
 
-	code = Scan_Source(text, strlen(text));
+	code = Scan_Source(text, strlen(s_cast(text)));
 	SAVE_SERIES(code);
 
 	// Bind into lib or user spaces?

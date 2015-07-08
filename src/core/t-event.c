@@ -315,7 +315,7 @@
 		if (VAL_EVENT_TYPE(value) != EVT_DROP_FILE) goto is_none;
 		if (!GET_FLAG(VAL_EVENT_FLAGS(value), EVF_COPIED)) {
 			void *str = VAL_EVENT_SER(value);
-			VAL_EVENT_SER(value) = Copy_Bytes(str, -1);
+			VAL_EVENT_SER(value) = Copy_Unencoded(str, -1);
 			SET_FLAG(VAL_EVENT_FLAGS(value), EVF_COPIED);
 			OS_FREE(str);
 		}
@@ -533,7 +533,7 @@ enum rebol_event_fields {
 	};
 
 	Pre_Mold(value, mold);
-	Append_Byte(mold->series, '[');
+	Append_Codepoint(mold->series, '[');
 	mold->indent++;
 
 	for (field = 0; fields[field]; field++) {
@@ -541,15 +541,15 @@ enum rebol_event_fields {
 		if (!IS_NONE(&val)) {
 			New_Indented_Line(mold);
 			Append_UTF8(mold->series, Get_Sym_Name(fields[field]), -1);
-			Append_Bytes(mold->series, ": ");
-			if (IS_WORD(&val)) Append_Byte(mold->series, '\'');
+			Append_Unencoded(mold->series, ": ");
+			if (IS_WORD(&val)) Append_Codepoint(mold->series, '\'');
 			Mold_Value(mold, &val, TRUE);
 		}
 	}
 
 	mold->indent--;
 	New_Indented_Line(mold);
-	Append_Byte(mold->series, ']');
+	Append_Codepoint(mold->series, ']');
 
 	End_Mold(mold);
 }

@@ -95,7 +95,7 @@ static dbgout(char *fmt, int d, char *s)
 static void close_stdio(void)
 {
 	if (Std_Buf) {
-		OS_Free(Std_Buf);
+		OS_FREE(Std_Buf);
 		Std_Buf = 0;
 		//FreeConsole();  // problem: causes a delay
 	}

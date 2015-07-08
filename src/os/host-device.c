@@ -358,7 +358,7 @@ static int Poll_Default(REBDEV *dev)
 		return 0;
 
 	size = dev->req_size ? dev->req_size : sizeof(REBREQ);
-	req = OS_Make(size);
+	req = r_cast(REBREQ *, OS_Alloc_Mem(size));
 	memset(req, NUL, sizeof(*req));
 	SET_FLAG(req->flags, RRF_ALLOC);
 	req->clen = size;

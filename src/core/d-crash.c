@@ -31,7 +31,7 @@
 
 #define	PANIC_BUF_SIZE 512	// space for crash print string
 
-extern const REBYTE * const Panic_Msgs[];
+extern const char * const Panic_Msgs[];
 
 enum Panic_Msg_Nums {
 	// Must align with Panic_Msgs[] array.
@@ -65,7 +65,7 @@ enum Panic_Msg_Nums {
 {
 	va_list args;
 	REBYTE buf[PANIC_BUF_SIZE];
-	const REBYTE *msg;
+	const char *msg;
 	REBINT n = 0;
 
 	va_start(args, id);
@@ -77,16 +77,16 @@ enum Panic_Msg_Nums {
 	}
 
 	// "REBOL PANIC #nnn:"
-	strncpy(TXT(buf), Panic_Msgs[CM_ERROR], PANIC_BUF_SIZE);
+	strncpy(s_cast(buf), Panic_Msgs[CM_ERROR], PANIC_BUF_SIZE);
 
-	strncat(TXT(buf), " #", PANIC_BUF_SIZE - 1 - strlen(TXT(buf)));
+	strncat(s_cast(buf), " #", PANIC_BUF_SIZE - 1 - strlen(s_cast(buf)));
 
 	// !!! Careful about buffer length for other things, then no mention
 	// of PANIC_BUF_SIZE in this Form_Int call?  :-/
 
-	Form_Int(buf + strlen(TXT(buf)), id);
+	Form_Int(buf + strlen(s_cast(buf)), id);
 
-	strncat(TXT(buf), ": ", PANIC_BUF_SIZE - 1 - strlen(TXT(buf)));
+	strncat(s_cast(buf), ": ", PANIC_BUF_SIZE - 1 - strlen(s_cast(buf)));
 
 	// "REBOL PANIC #nnn: put error message here"
 	// The first few error types only print general error message.
@@ -101,19 +101,19 @@ enum Panic_Msg_Nums {
 	if (n >= 0)
 		msg = Panic_Msgs[n];
 	else
-		msg = BOOT_STR(RS_ERROR, id - RP_STR_BASE - 1);
+		msg = cs_cast(BOOT_STR(RS_ERROR, id - RP_STR_BASE - 1));
 
 	Form_Var_Args(
-		buf + strlen(TXT(buf)),
-		PANIC_BUF_SIZE - 1 - strlen(TXT(buf)),
+		buf + strlen(s_cast(buf)),
+		PANIC_BUF_SIZE - 1 - strlen(s_cast(buf)),
 		msg,
 		args
 	);
 
 	strncat(
-		TXT(buf),
+		s_cast(buf),
 		Panic_Msgs[CM_CONTACT],
-		PANIC_BUF_SIZE - 1 - strlen(TXT(buf))
+		PANIC_BUF_SIZE - 1 - strlen(s_cast(buf))
 	);
 
 	// Convert to OS-specific char-type:
@@ -122,18 +122,18 @@ enum Panic_Msg_Nums {
 		REBCHR s1[512];
 		REBCHR s2[2000];
 
-		n = TO_OS_STR(s1, Panic_Msgs[CM_ERROR], strlen(Panic_Msgs[CM_ERROR]));
+		n = OS_STRNCPY(s1, Panic_Msgs[CM_ERROR], strlen(Panic_Msgs[CM_ERROR]));
 		if (n > 0) s1[n] = 0; // terminate
 		else OS_EXIT(200); // bad conversion
 
-		n = TO_OS_STR(s2, buf, strlen(buf));
+		n = OS_STRNCPY(s2, buf, strlen(buf));
 		if (n > 0) s2[n] = 0;
 		else OS_EXIT(200);
 
 		OS_CRASH(s1, s2);
 	}
 #else
-	OS_CRASH(CBYTES(Panic_Msgs[CM_ERROR]), buf);
+	OS_CRASH(cb_cast(Panic_Msgs[CM_ERROR]), buf);
 #endif
 }
 

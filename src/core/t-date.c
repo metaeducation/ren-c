@@ -103,7 +103,7 @@
 		|| VAL_DAY(value) == 0
 		|| VAL_DAY(value) > 31
 	) {
-		Append_Bytes(mold->series, "?date?");
+		Append_Unencoded(mold->series, "?date?");
 		return;
 	}
 
@@ -119,11 +119,11 @@
 	bp = Form_Int_Pad(bp, (REBINT)VAL_YEAR(value), 6, -4, '0');
 	*bp = 0;
 
-	Append_Bytes(mold->series, buf);
+	Append_Unencoded(mold->series, s_cast(buf));
 
 	if (VAL_TIME(value) != NO_TIME) {
 
-		Append_Byte(mold->series, '/');
+		Append_Codepoint(mold->series, '/');
 		Emit_Time(mold, value);
 
 		if (VAL_ZONE(value) != 0) {
@@ -142,7 +142,7 @@
 			bp = Form_Int_Pad(bp, (tz&3) * 15, 2, 2, '0');
 			*bp = 0;
 
-			Append_Bytes(mold->series, buf);
+			Append_Unencoded(mold->series, s_cast(buf));
 		}
 	}
 }
@@ -158,7 +158,7 @@
 ***********************************************************************/
 {
 	if (month != 1)
-		return (REBCNT)Month_Lengths[month];
+		return (REBCNT)Typical_Month_Lengths[month];
 
 	return (
 		((year % 4) == 0) &&		// divisible by four is a leap year
@@ -253,7 +253,7 @@
 
 /***********************************************************************
 **
-*/	void Normalize_Time(REBI64 *sp, REBINT *dp)
+*/	void Normalize_Time(REBI64 *sp, REBCNT *dp)
 /*
 **		Adjust *dp by number of days and set secs to less than a day.
 **
@@ -441,7 +441,10 @@
 
 	if (month < 1 || month > 12) return FALSE;
 
-	if (year > MAX_YEAR || day < 1 || day > (REBINT)(Month_Lengths[month-1])) return FALSE;
+	if (
+		year > MAX_YEAR || day < 1
+		|| day > cast(REBINT, Typical_Month_Lengths[month - 1])
+	) return FALSE;
 
 	// Check February for leap year or century:
 	if (month == 2 && day == 29) {
@@ -492,7 +495,7 @@
 	REBI64 secs;
 	REBINT tz;
 	REBDAT date;
-	REBINT day, month, year;
+	REBCNT day, month, year;
 	REBINT num;
 	REBVAL dat;
 	REB_TIMEF time;
@@ -696,7 +699,7 @@ setDate:
 	REBI64	secs;
 	REBINT  tz;
 	REBDAT	date;
-	REBINT	day, month, year;
+	REBCNT	day, month, year;
 	REBVAL	*val;
 	REBVAL	*arg = NULL;
 	REBINT	num;

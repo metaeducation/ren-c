@@ -110,7 +110,7 @@
 #endif
 		// Another copy???
 		//Set_String(ds, Copy_OS_Str((void *)(ser->data), result));
-		Set_Binary(ds, Copy_Bytes(req->data, req->actual));
+		Set_Binary(ds, Copy_Unencoded(s_cast(req->data), req->actual));
 		break;
 
 	case A_OPEN:

@@ -60,7 +60,7 @@
 	const REBUNI *up = uni ? cast(const REBUNI *, p) : NULL;
 
 	if (len == 0)
-		len = uni ? Strlen_Uni(up) : strlen(CTXT(bp));
+		len = uni ? Strlen_Uni(up) : strlen(cs_cast(bp));
 
 	n = 0;
 	dst = ((uni == -1) || (uni && Is_Wide(up, len)))
@@ -144,7 +144,7 @@
 	const REBUNI *up = uni ? cast(const REBUNI *, p) : NULL;
 
 	if (len == 0)
-		len = uni ? Strlen_Uni(up) : strlen(TXT(bp));
+		len = uni ? Strlen_Uni(up) : strlen(cs_cast(bp));
 
 	// Prescan for: /c/dir = c:/dir, /vol/dir = //vol/dir, //dir = ??
 	c = uni ? up[i] : bp[i];
@@ -192,7 +192,7 @@
 			);
 			dst->tail = abs(clen);
 #endif
-			Append_Byte(dst, OS_DIR_SEP);
+			Append_Codepoint(dst, OS_DIR_SEP);
 			OS_FREE(lpath);
 		}
 		out = UNI_HEAD(dst);

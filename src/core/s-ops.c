@@ -323,8 +323,8 @@ static REBYTE seed_str[SEED_LEN] = {
 			kp = BIN_SKIP(ser, i);
 			break;
 		case REB_INTEGER:
-			INT_TO_STR(VAL_INT64(val), dst);
-			klen = strlen(dst);
+			INT_TO_STR(VAL_INT64(val), s_cast(dst));
+			klen = strlen(s_cast(dst));
 			as_is = FALSE;
 			break;
 		}

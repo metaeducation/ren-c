@@ -118,7 +118,7 @@
 
 	len = strlen(cp); // wide chars
 	bin = OS_Make((len+1) * sizeof(REBCHR));
-	COPY_OS_STR(bin, cp, len);
+	OS_STRNCPY(bin, cp, len);
 
 	GlobalUnlock(data);
 

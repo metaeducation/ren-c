@@ -84,7 +84,7 @@
 
 	switch (action) {
 	case A_LENGTHQ:
-		diff = strlen(Get_Sym_Name(VAL_WORD_SYM(val)));
+		diff = strlen(s_cast(Get_Sym_Name(VAL_WORD_SYM(val))));
 		if (type != REB_WORD) diff++;
 		DS_Ret_Int(diff);
 		break;

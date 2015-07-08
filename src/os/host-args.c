@@ -41,9 +41,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "reb-config.h"
-#include "reb-c.h"
-#include "reb-args.h"
+#include "reb-host.h"
+#include "host-lib.h"
 
 #define ARG_BUF_SIZE 1024
 
@@ -109,7 +108,7 @@ const struct arg_chr arg_chars2[] = {
 	// Some shells will pass us the line terminator. Ignore it.
 	if (word[0] == '\r' || word[0] == '\n') return RO_IGNORE;
 
-	FROM_OS_STR(buf, word, 15);
+	strncpy(word, buf, 15);
 
 	for (i = 0; arg_words[i].flag; i++) {
 		n = strncmp(buf, arg_words[i].word, 15); // correct (bytes)
@@ -263,18 +262,18 @@ const struct arg_chr arg_chars2[] = {
 			else {
 				int len;
 				if (!args) {
-					args = MAKE_OS_STR(ARG_BUF_SIZE);
+					args = OS_ALLOC_ARRAY(REBCHR, ARG_BUF_SIZE);
 					args[0] = 0;
 				}
-				len = ARG_BUF_SIZE - strlen(args) - 2; // space remaining
-				JOIN_OS_STR(args, arg, len);
-				JOIN_OS_STR(args, TXT(" "), 1);
+				len = ARG_BUF_SIZE - OS_STRLEN(args) - 2; // space remaining
+				OS_STRNCAT(args, arg, len);
+				OS_STRNCAT(args, OS_STR_LIT(" "), 1);
 			}
 		}
 	}
 
 	if (args) {
-		args[strlen(args)-1] = 0; // remove trailing space
+		args[OS_STRLEN(args) - 1] = 0; // remove trailing space
 		Get_Ext_Arg(RO_ARGS, rargs, args);
 	}
 }

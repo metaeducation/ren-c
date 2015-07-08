@@ -326,14 +326,15 @@ static ffi_type* struct_to_ffi(REBVAL *out, REBSER *fields)
 	REBCNT i = 0, j = 0;
 	REBCNT n_basic_type = 0;
 
-	ffi_type *stype = OS_MAKE(sizeof(ffi_type));
+	ffi_type *stype = OS_ALLOC(ffi_type);
 	//printf("allocated stype at: %p\n", stype);
 	QUEUE_EXTRA_MEM(VAL_ROUTINE_INFO(out), stype);
 
 	stype->size = stype->alignment = 0;
 	stype->type = FFI_TYPE_STRUCT;
 
-	stype->elements = OS_MAKE(sizeof(ffi_type *) * (1 + n_struct_fields(fields))); /* one extra for NULL */
+	/* one extra for NULL */
+	stype->elements = OS_ALLOC_ARRAY(ffi_type *, 1 + n_struct_fields(fields));
 	//printf("allocated stype elements at: %p\n", stype->elements);
 	QUEUE_EXTRA_MEM(VAL_ROUTINE_INFO(out), stype->elements);
 
@@ -769,7 +770,7 @@ static void ffi_to_rebol(REBRIN *rin,
 			ffi_args[j - 1] = arg_to_ffi(rot, reb_arg, j, &pop);
 		}
 		if (VAL_ROUTINE_CIF(rot) == NULL) {
-			VAL_ROUTINE_CIF(rot) = OS_MAKE(sizeof(ffi_cif));
+			VAL_ROUTINE_CIF(rot) = OS_ALLOC(ffi_cif);
 			QUEUE_EXTRA_MEM(VAL_ROUTINE_INFO(rot), VAL_ROUTINE_CIF(rot));
 		}
 
@@ -1055,7 +1056,9 @@ static void callback_dispatcher(ffi_cif *cif, void *ret, void **args, void *user
 				ret = FALSE;
 			}
 			TERM_SERIES(VAL_SERIES(&blk[fn_idx]));
-			func = OS_FIND_FUNCTION(LIB_FD(VAL_ROUTINE_LIB(out)), VAL_DATA(&blk[fn_idx]));
+			func = OS_FIND_FUNCTION(
+				LIB_FD(VAL_ROUTINE_LIB(out)), s_cast(VAL_DATA(&blk[fn_idx]))
+			);
 			if (!func) {
 				Trap_Arg_DEAD_END(&blk[fn_idx]);
 				//printf("Couldn't find function: %s\n", VAL_DATA(&blk[2]));
@@ -1206,7 +1209,7 @@ static void callback_dispatcher(ffi_cif *cif, void *ret, void **args, void *user
 	}
 
 	if (!ROUTINE_GET_FLAG(VAL_ROUTINE_INFO(out), ROUTINE_VARARGS)) {
-		VAL_ROUTINE_CIF(out) = OS_MAKE(sizeof(ffi_cif));
+		VAL_ROUTINE_CIF(out) = OS_ALLOC(ffi_cif);
 		//printf("allocated cif at: %p\n", VAL_ROUTINE_CIF(out));
 		QUEUE_EXTRA_MEM(VAL_ROUTINE_INFO(out), VAL_ROUTINE_CIF(out));
 
