@@ -57,7 +57,7 @@
 	REBCNT i;
 
 	if (len == 0)
-		len = uni ? wcslen((REBUNI*)bp) : LEN_BYTES((REBYTE*)bp);
+		len = uni ? Strlen_Uni((REBUNI*)bp) : LEN_BYTES((REBYTE*)bp);
 
 	n = 0;
 	dst = ((uni == -1) || (uni && Is_Wide((REBUNI*)bp, len)))
@@ -137,7 +137,7 @@
 	REBCNT l = 0;
 
 	if (len == 0)
-		len = uni ? wcslen((REBUNI*)bp) : LEN_BYTES((REBYTE*)bp);
+		len = uni ? Strlen_Uni((REBUNI*)bp) : LEN_BYTES((REBYTE*)bp);
 
 	// Prescan for: /c/dir = c:/dir, /vol/dir = //vol/dir, //dir = ??
 	c = GET_CHAR_UNI(uni, bp, i);

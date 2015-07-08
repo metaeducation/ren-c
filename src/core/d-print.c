@@ -101,7 +101,7 @@ static REBREQ *Req_SIO;
 	if (!bp) Panic(RP_NO_PRINT_PTR);
 
 	// Determine length if not provided:
-	if (len == UNKNOWN) len = uni ? wcslen(up) : LEN_BYTES(bp);
+	if (len == UNKNOWN) len = uni ? Strlen_Uni(up) : LEN_BYTES(bp);
 
 	SET_FLAG(Req_SIO->flags, RRF_FLUSH);
 
@@ -223,7 +223,7 @@ static REBREQ *Req_SIO;
 	if (Trace_Limit > 0) {
 		if (Trace_Buffer->tail >= Trace_Limit)
 			Remove_Series(Trace_Buffer, 0, 2000);
-		if (len == UNKNOWN) len = uni ? wcslen(up) : LEN_BYTES(bp);
+		if (len == UNKNOWN) len = uni ? Strlen_Uni(up) : LEN_BYTES(bp);
 		// !!! account for unicode!
 		for (; len > 0; len--) {
 			uc = uni ? *up++ : *bp++;

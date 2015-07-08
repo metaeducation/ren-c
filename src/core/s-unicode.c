@@ -1061,7 +1061,7 @@ ConversionResult ConvertUTF8toUTF32 (
 
 	if (len) cnt = *len;
 	else {
-		cnt = uni ? wcslen((REBUNI*)bp) : LEN_BYTES((REBYTE*)bp);
+		cnt = uni ? Strlen_Uni((REBUNI*)bp) : LEN_BYTES((REBYTE*)bp);
 	}
 
 	for (; max > 0 && cnt > 0; cnt--) {
@@ -1201,3 +1201,42 @@ ConversionResult ConvertUTF8toUTF32 (
 
 	return ser;
 }
+
+/***********************************************************************
+**
+*/	REBCNT Strlen_Uni(const REBUNI *up)
+/*
+**		Rebol's current choice is to use UCS-2 internally, such that
+**		a REBUNI is an unsigned 16-bit number.  This means that you
+**		cannot use wcslen() to determine a REBUNI* string size, as
+**		wchar_t is not guaranteed to be 2 bytes on every platform.
+**
+**		This is a simple UCS-2 implementation of string length.  It
+**		applies `memchr()` for a potential speedup from optimizations
+**		in the C runtime exploiting processor operations to do better
+**		than a `for` loop could accomplish.
+**
+***********************************************************************/
+{
+	REBCNT len;
+	const char *cp = (const char *)up; // "C"har vs. "U"nicode
+
+	do {
+		// A size_t -1 is a portable way of saying 'maximum size_t',
+		// since we have no known limit on the search length
+		cp = (const char *)memchr(cp, 0, (size_t)(-1));
+		len = cp - (const char *)up;
+
+		// If it's at an even position, we can check to see if the
+		// next byte is zero as well.  If so we've found a proper
+		// two byte terminating sequence.
+		if ((len % 2 == 0) && (*(++cp) == 0)) break;
+
+		// It's either an odd position or didn't match, keep going...
+		++cp;
+	} while (cp);
+
+	assert(len % 2 == 0);
+	return len / 2;
+}
+

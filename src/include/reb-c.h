@@ -176,7 +176,6 @@ typedef float			REBD32;     // 32 bit decimal
 typedef double			REBDEC;     // 64 bit decimal
 
 typedef unsigned char	REBYTE;     // unsigned byte data
-typedef u16				REBUNI;     // unicode char
 
 // REBCHR - only to refer to OS char strings (not internal strings)
 #ifdef OS_WIDE_CHAR
@@ -184,8 +183,6 @@ typedef REBUNI          REBCHR;
 #else
 typedef REBYTE          REBCHR;
 #endif
-
-#define MAX_UNI ((1 << (8*sizeof(REBUNI))) - 1)
 
 #define MIN_D64 ((double)-9.2233720368547758e18)
 #define MAX_D64 ((double) 9.2233720368547758e18)
@@ -241,6 +238,38 @@ typedef void(__cdecl *CFUNC)(void *);
 typedef long (*FUNCPTR)();
 typedef void(*CFUNC)(void *);
 #endif
+
+
+/***********************************************************************
+**
+**  UNICODE CHARACTER TYPE
+**
+**		REBUNI is a two-byte UCS-2 representation of a Unicode codepoint.
+**		Some routines once errantly conflated wchar_t with REBUNI, but
+**		a wchar_t is not 2 bytes on all platforms (it's 4 on GCC in
+**		64-bit Linux, for instance).  Routines for handling UCS-2 must be
+**		custom coded or come from a library.  (For example: you can't use
+**		wcslen() so Strlen_Uni() is implemented inside of Rebol.)
+**
+**		Rebol is able to have its strings start out as UCS-1, with a
+**		single byte per character.  For that it uses REBYTEs.  But when
+**		you insert something requiring a higher codepoint, it goes
+**		to UCS-2 with REBUNI and will not go back (at time of writing).
+**
+**		!!! BEWARE that several lower level routines don't do this
+**		widening, so be sure that you check which are which.
+**
+**		Longer term, Rebol should seek to align with Red's Unicode
+**		strategy, which would go further to UCS-4:
+**
+**		http://www.red-lang.org/2012/09/plan-for-unicode-support.html
+** 
+***********************************************************************/
+
+typedef u16 REBUNI;
+
+#define MAX_UNI ((1 << (8 * sizeof(REBUNI))) - 1)
+
 
 /***********************************************************************
 **
