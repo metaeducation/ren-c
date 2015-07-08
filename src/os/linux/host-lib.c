@@ -368,12 +368,11 @@ void OS_Destroy_Graphics(void);
 
 /***********************************************************************
 **
-*/	void *OS_Make(size_t size)
+*/	void *OS_Alloc_Mem(size_t size)
 /*
 **		Allocate memory of given size.
-**
-**		This is necessary because some environments may use their
-**		own specific memory allocation (e.g. private heaps).
+**		To invoke, favor usage of the OS_ALLOC* macros.
+**		See remarks about the hostkit memory hooks in make-reb-lib.r
 **
 ***********************************************************************/
 {
@@ -383,9 +382,11 @@ void OS_Destroy_Graphics(void);
 
 /***********************************************************************
 **
-*/	void OS_Free(void *mem)
+*/	void OS_Free_Mem(void *mem)
 /*
-**		Free memory allocated in this OS environment. (See OS_Make)
+**		Free memory allocated in this OS environment.
+**		To invoke, favor usage of the OS_FREE macro.
+**		See remarks about the hostkit memory hooks in make-reb-lib.r
 **
 ***********************************************************************/
 {
@@ -434,10 +435,10 @@ static const void * backtrace_buf [1024];
 
 	// A title tells us we should alert the user:
 	if (title) {
-		fputs(title, stderr);
+		fputs(cs_cast(title), stderr);
 		fputs(":\n", stderr);
 	}
-	fputs(content, stderr);
+	fputs(cs_cast(content), stderr);
 	fputs("\n\n", stderr);
 #ifdef backtrace  // A GNU extension
 	fputs("Backtrace:\n", stderr);
@@ -457,14 +458,14 @@ static const void * backtrace_buf [1024];
 **
 ***********************************************************************/
 {
-	char *msg = NULL;
-	if (!errnum) errnum = errno;
-	msg = strerror_r(errnum, str, len);
-	if (msg != NULL && msg != (char*)str) {
-		strncpy(str, msg, len);
-		str[len - 1] = '\0'; /* to be safe */
-	}
-	return msg;
+	// The strerror_r function is not standard, and the strerror
+	// function is not historically thread-safe.  What some
+	// programs do is keep their own copy of the error code table.
+	// That's a potential option, but for now we'll just stub in
+	// with the standard offering.
+
+	strncpy(str, strerror(errnum), len);
+	return str;
 }
 
 
@@ -506,16 +507,16 @@ static const void * backtrace_buf [1024];
 			if (lang != NULL) { /* duplicate "_" */
 				goto error;
 			}
-			lang = OS_Make(i + 1);
+			lang = OS_ALLOC_ARRAY(char, i + 1);
 			if (lang == NULL) goto error;
-			COPY_OS_STR(lang, lang_env, i);
+			strncpy(lang, lang_env, i);
 			lang[i] = '\0';
 			j = i;
 		} else if (lang_env[i] == '.'){
 			if (i == j) goto error;
-			territory = OS_Make(i - j);
+			territory = OS_ALLOC_ARRAY(char, i - j);
 			if (territory == NULL) goto error;
-			COPY_OS_STR(territory, lang_env + j + 1, i - j - 1);
+			strncpy(territory, lang_env + j + 1, i - j - 1);
 			territory[i - j - 1] = '\0';
 			break;
 		}
@@ -524,12 +525,12 @@ static const void * backtrace_buf [1024];
 	if (lang == NULL || territory == NULL) goto error;
 
 	const char ** iso639_entry = iso639_find_entry_by_2_code(lang);
-	OS_Free(lang);
+	OS_FREE(lang);
 	lang = NULL;
 	if (iso639_entry == NULL) goto error;
 
 	const char ** iso3166_entry = iso3166_find_entry_by_2_code(territory);
-	OS_Free(territory);
+	OS_FREE(territory);
 	territory = NULL;
 
 	const REBCHR *ret[] = {
@@ -539,10 +540,10 @@ static const void * backtrace_buf [1024];
 
 error:
 	if (lang != NULL) {
-		OS_Free(lang);
+		OS_FREE(lang);
 	}
 	if (territory != NULL) {
-		OS_Free(territory);
+		OS_FREE(territory);
 	}
 	return NULL;
 }
@@ -550,7 +551,7 @@ error:
 
 /***********************************************************************
 **
-*/	REBINT OS_Get_Env(REBCHR *envname, REBCHR* envval, REBINT valsize)
+*/	REBINT OS_Get_Env(const REBCHR *envname, REBCHR* envval, REBINT valsize)
 /*
 **		Get a value from the environment.
 **		Returns size of retrieved value for success or zero if missing.
@@ -562,7 +563,7 @@ error:
 	// Note: The Posix variant of this API is case-sensitive
 
 	REBINT len;
-	const REBCHR* value = getenv(envname);
+	const char *value = getenv(envname);
 	if (value == 0) return 0;
 
 	len = strlen(value);
@@ -572,7 +573,7 @@ error:
 		return len + 1;
 	}
 
-	COPY_OS_STR(envval, value, len);
+	strncpy(envval, value, len);
 	return len;
 }
 
@@ -610,7 +611,9 @@ error:
 		// really need to set an environment variable, here's a way
 		// that just leaks a string each time you call.
 
-		char* expr = MAKE_OS_STR(strlen(envname) + 1 + strlen(envval) + 1);
+		char* expr = OS_ALLOC_ARRAY(
+			char, strlen(envname) + 1 + strlen(envval) + 1
+		);
 
 		strcpy(expr, envname);
 		strcat(expr, "=");
@@ -636,7 +639,7 @@ error:
 	// http://julipedia.meroh.net/2004/10/portability-unsetenvfoo-vs-putenvfoo.html
 
 	// going to hope this case doesn't hold onto the string...
-	if (putenv((char*)envname) == -1)
+	if (putenv(envname) == -1)
 		return FALSE;
 #endif
 	return TRUE;
@@ -656,7 +659,7 @@ error:
 	// compute total size:
 	for (n = 0; environ[n]; n++) len += 1 + strlen(environ[n]);
 
-	cp = str = OS_Make(len + 1); // +terminator
+	cp = str = OS_ALLOC_ARRAY(char, len + 1); // +terminator
 	*cp = 0;
 
 	// combine all strings into one:
@@ -727,7 +730,7 @@ error:
 **
 ***********************************************************************/
 {
-	*path = MAKE_OS_STR(PATH_MAX);
+	*path = OS_ALLOC_ARRAY(char, PATH_MAX);
 	if (!getcwd(*path, PATH_MAX-1)) *path[0] = 0;
 	return strlen(*path); // Be sure to call free() after usage
 }
@@ -803,7 +806,7 @@ error:
 
 /***********************************************************************
 **
-*/	void *OS_Find_Function(void *dll, char *funcname)
+*/	void *OS_Find_Function(void *dll, const char *funcname)
 /*
 **		Get a DLL function address from its string name.
 **
@@ -1045,7 +1048,7 @@ error:
 				write(info_pipe[W], &err, sizeof(err));
 				exit(EXIT_FAILURE);
 			}
-			argv_new = OS_Make((argc + 3) * sizeof(char*));
+			argv_new = OS_ALLOC_ARRAY(char *, argc + 3);
 			argv_new[0] = sh;
 			argv_new[1] = "-c";
 			memcpy(&argv_new[2], argv, argc * sizeof(argv[0]));
@@ -1102,7 +1105,7 @@ child_error:
 		if (stdout_pipe[R] > 0) {
 			//printf("stdout_pipe[R]: %d\n", stdout_pipe[R]);
 			output_size = BUF_SIZE_CHUNK;
-			*output = OS_Make(output_size);
+			*output = OS_ALLOC_ARRAY(char, output_size);
 			pfds[nfds++] = (struct pollfd){.fd = stdout_pipe[R], .events = POLLIN};
 			close(stdout_pipe[W]);
 			stdout_pipe[W] = -1;
@@ -1110,7 +1113,7 @@ child_error:
 		if (stderr_pipe[R] > 0) {
 			//printf("stderr_pipe[R]: %d\n", stderr_pipe[R]);
 			err_size = BUF_SIZE_CHUNK;
-			*err = OS_Make(err_size);
+			*err = OS_ALLOC_ARRAY(char, err_size);
 			pfds[nfds++] = (struct pollfd){.fd = stderr_pipe[R], .events = POLLIN};
 			close(stderr_pipe[W]);
 			stderr_pipe[W] = -1;
@@ -1119,7 +1122,7 @@ child_error:
 		if (info_pipe[R] > 0) {
 			pfds[nfds++] = (struct pollfd){.fd = info_pipe[R], .events = POLLIN};
 			info_size = 4;
-			info = OS_Make(info_size);
+			info = OS_ALLOC_ARRAY(char, info_size);
 			close(info_pipe[W]);
 			info_pipe[W] = -1;
 		}
@@ -1275,13 +1278,13 @@ error:
 	if (!ret) ret = -1;
 cleanup:
 	if (output != NULL && *output != NULL && *output_len <= 0) {
-		OS_Free(*output);
+		OS_FREE(*output);
 	}
 	if (err != NULL && *err != NULL && *err_len <= 0) {
-		OS_Free(*err);
+		OS_FREE(*err);
 	}
 	if (info != NULL) {
-		OS_Free(info);
+		OS_FREE(info);
 	}
 	if (info_pipe[R] > 0) {
 		close(info_pipe[R]);
@@ -1431,7 +1434,7 @@ static int Try_Browser(char *browser, REBCHR *url)
 
 /***********************************************************************
 **
-*/	REBOOL As_OS_Str(REBSER *series, REBCHR **string)
+*/	REBOOL OS_Str_From_Series(REBSER *series, REBCHR **string)
 /*
 **	If necessary, convert a string series to platform specific format.
 **  (Handy for GOB/TEXT handling).
@@ -1457,12 +1460,12 @@ static int Try_Browser(char *browser, REBCHR *url)
 
 	//empty string check
 	if (len == 0) { /* shortcut */
-		*string = (REBCHR*)OS_Make(1);
+		*string = OS_ALLOC_ARRAY(REBCHR, 1);
 		*string[0] = '\0';
 	} else {
 		//convert to UTF8
 		REBCNT utf8_len = Length_As_UTF8(str, len, TRUE, FALSE);
-		*string = (REBCHR*)OS_Make(utf8_len+1);
+		*string = OS_ALLOC_ARRAY(REBCHR, utf8_len + 1);
 		Encode_UTF8(*string, utf8_len, str, &len, TRUE, FALSE);
 		(*string)[utf8_len] = '\0';
 	}
@@ -1500,14 +1503,23 @@ static int Try_Browser(char *browser, REBCHR *url)
 		return NULL;
 	}
 
-	sec_headers = OS_Make(((size_t)file_header.e_shnum) * file_header.e_shentsize);
+#ifdef __LP64__
+	sec_headers = r_cast(Elf64_Shdr *,
+#else
+	sec_headers = r_cast(Elf32_Shdr *,
+#endif
+		OS_ALLOC_ARRAY(char,
+			cast(size_t, file_header.e_shnum) * file_header.e_shentsize
+		)
+	);
+
 	if (sec_headers == NULL) {
 		fclose(script);
 		return NULL;
 	}
 
 	if (fseek(script, file_header.e_shoff, SEEK_SET) < 0) {
-		OS_Free(sec_headers);
+		OS_FREE(sec_headers);
 		fclose(script);
 		return NULL;
 	}
@@ -1518,7 +1530,9 @@ static int Try_Browser(char *browser, REBCHR *url)
 		goto header_failed;
 	}
 
-	char *shstr = OS_Make(sec_headers[file_header.e_shstrndx].sh_size);
+	char *shstr = OS_ALLOC_ARRAY(char,
+		sec_headers[file_header.e_shstrndx].sh_size
+	);
 	if (shstr == NULL) {
 		ret = NULL;
 		goto header_failed;
@@ -1548,7 +1562,8 @@ static int Try_Browser(char *browser, REBCHR *url)
 		goto cleanup;
 	}
 
-	embedded_script = OS_Make(sec_headers[i].sh_size); /* will be free'ed by RL_Start */
+	/* will be free'ed by RL_Start */
+	embedded_script = OS_ALLOC_ARRAY(char, sec_headers[i].sh_size);
 	if (embedded_script == NULL) {
 		ret = NULL;
 		goto shstr_failed;
@@ -1568,12 +1583,12 @@ static int Try_Browser(char *browser, REBCHR *url)
 	goto cleanup;
 
 embedded_failed:
-	OS_Free(embedded_script);
+	OS_FREE(embedded_script);
 cleanup:
 shstr_failed:
-	OS_Free(shstr);
+	OS_FREE(shstr);
 header_failed:
-	OS_Free(sec_headers);
+	OS_FREE(sec_headers);
 	fclose(script);
-	return ret;
+	return b_cast(ret);
 }

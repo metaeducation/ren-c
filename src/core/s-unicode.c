@@ -1243,3 +1243,58 @@ ConversionResult ConvertUTF8toUTF32 (
 	assert(len % 2 == 0);
 	return len / 2;
 }
+
+
+#ifndef NDEBUG
+/***********************************************************************
+**
+*/	REBYTE *b_cast(char *s)
+/*
+**		Debug-only version of b_cast() that does type checking.
+**		If you get a complaint you probably meant to use cb_cast().
+**
+***********************************************************************/
+{
+	return r_cast(REBYTE *, s);
+}
+
+
+/***********************************************************************
+**
+*/	const REBYTE *cb_cast(const char *s)
+/*
+**		Debug-only version of cb_cast() that does type checking.
+**		If you get a complaint you probably meant to use b_cast().
+**
+***********************************************************************/
+{
+	return r_cast(const REBYTE *, s);
+}
+
+
+/***********************************************************************
+**
+*/	char *s_cast(REBYTE *s)
+/*
+**		Debug-only version of s_cast() that does type checking.
+**		If you get a complaint you probably meant to use cs_cast().
+**
+***********************************************************************/
+{
+	return r_cast(char*, s);
+}
+
+
+/***********************************************************************
+**
+*/	const char *cs_cast(const REBYTE *s)
+/*
+**		Debug-only version of cs_cast() that does type checking.
+**		If you get a complaint you probably meant to use s_cast().
+**
+***********************************************************************/
+{
+	return r_cast(const char *, s);
+}
+
+#endif

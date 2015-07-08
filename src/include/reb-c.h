@@ -511,75 +511,57 @@ typedef double REBDEC;
 **		So in the Rebol codebase, REBYTE was standardized to be an
 **		unsigned char, and used instead of the "less-reliable" `char`.
 **		It also tried to redefine macros as wrappers over functions
-**		like strlen() and strchr()...with the likes of:
+**		like strlen() and strchr(), which was a type-unsafe subset
+**		of <string.h> that looked like:
 **
 **			#define COPY_BYTES(t,f,l) strncpy((char*)t, (char*)f, l)
 **			#define LEN_BYTES(s) strlen((char*)s)
 **
-**		Besides the obvious burden of having to come up with names
-**		and wrappers for everything in <string.h> (and the abandonment
-**		of type safety with the casts, there were other problems with
-**		this.  Since most compilers circa 2015 interpret char as
-**		signed by default, if you turned on signedness-checking in C
-**		(or used C++ where it's always on), you'd not be able to write:
+**		Because when you enable -Wpointer-sign in C (or any time in
+**		C++) you have type incompatibilities and cannot write:
 **
 **			const REBYTE *data = "some text"; 
 **
-**		Given char's pervasiveness, having Rebol-based APIs pass memory
-**		buffers around using REBYTE* became a burden as well.  Ren/C++
-**		suffered heavily on this point.
+**		A better idea emerged to use the incompatibility as a feature.
+**		When data might be encoded in a form that a string function like
+**		strlen() wouldn't make sense on, it would use REBYTE...for instance
+**		UTF-8 encoded data.  But make it easy to switch:
 **
-**		Yet there are *some* benefits to using an unsigned type, and
-**		no decision has been reached on what the ultimate fate will
-**		be.  The UTF-8 code in particular depends on it, so a simple
-**		search-and-replace will not work.  Hence for now, a REBYTE* is
-**		still what's used and passed around in Rebol most of the time.
-**		(Unless it's a format string intended to be passed to a debug
-**		routine, or similar.)
+**			strlen(rebyte_ptr) => strlen(s_cast(rebyte_ptr))
+**			Utf8_Func(char_ptr) => Utf8_Func(b_cast(char_ptr))
 **
-**		Internally to Rebol historically, this was worked around with
-**		universal casting macros called TXT and BYTES to switch.
-**		This is a compromise devised by @HostileFork to expand
-**		the idea to CTXT and CBYTES when you need const versions
-**		... but that checks to make sure the cast is *necessary*
-**		in the C++ build and tells you it is superflous if not
-**		(or if the types are not actually REBYTE and char).
-** 
+**		These are "string cast" and "byte cast" (not to confuse s_cast
+**		C++'s static_cast...and you can't because it's single arity.)
+**
+**		In the release builds these are simply casts.  But the
+**		Debug build uses functions that specifically only let you go
+**		from char* to REBYTE* and back.  There are also const variants
+**		cb_cast() and cs_cast() which require both const ins and
+**		outs.
+**
+**		The previous name for macros serving this purpose was TXT and
+**		bytes, but they were specifically framed as casts because--
+**		like a cast--they show a point that should call attention.
+**		Noticing the points of conversion is a good place to ask if
+**		you can really be sure a REBYTE* can have its strlen() taken
+**		or not...
+**
 ***********************************************************************/
 
 typedef unsigned char REBYTE;
 
-#ifndef __cplusplus
-	// C build uses universal casts...so no error on BYTES(42157) etc.
-
-	#define BYTES(s)		r_cast(REBYTE *, (s))
-	#define CBYTES(s)		r_cast(const REBYTE *, (s))
-	#define TXT(s)			r_cast(char *,(s))
-	#define CTXT(s)			r_cast(const char *, (s))
+#ifdef NDEBUG
+	// Release build uses reinterpret casts
+	// So no error on b_cast(42157) etc.
+	#define b_cast(s)		r_cast(REBYTE *, (s))
+	#define cb_cast(s)		r_cast(const REBYTE *, (s))
+	#define s_cast(s)		r_cast(char *, (s))
+	#define cs_cast(s)		r_cast(const char *, (s))
 #else
-	// C++ build uses inline functions instead of a direct reinterpret_cast,
-	// in order to check you are *only* converting between char and REBYTE,
-	// and not clobbering some other type...
-
-	inline REBYTE *BYTES(char *s)
-		{ return reinterpret_cast<REBYTE *>(s); }
-
-	inline const REBYTE *CBYTES(const char *s)
-		{ return reinterpret_cast<const REBYTE *>(s); }
-
-	inline char *TXT(REBYTE *s)
-		{ return reinterpret_cast<char *>(s); }
-
-	inline const char *CTXT(const REBYTE *s)
-		{ return reinterpret_cast<const char *>(s); }
-
-	// Trigger errors in the C++ build if cast is superfluous.  For instance:
-	// if you already had a REBYTE* there's no need to do BYTES() on it.
-
-	void BYTES(REBYTE *s);
-	void CBYTES(const REBYTE *s);
-	void TXT(char *s);
-	void CTXT(const char *s);
+	REBYTE *b_cast(char *);
+	const REBYTE *cb_cast(const char *);
+	char *s_cast(REBYTE *);
+	const char *cs_cast(const REBYTE *);
 #endif
 
 
@@ -646,90 +628,6 @@ typedef unsigned char REBYTE;
 typedef u16 REBUNI;
 
 #define MAX_UNI ((1 << (8 * sizeof(REBUNI))) - 1)
-
-
-/***********************************************************************
-**
-**  VARIANT CHARACTER TYPE BASED ON OPERATING SYSTEM
-**
-**		This file mentioned its purpose to be the nailing down of sizes
-**		of a type, which was not done in C.  This makes the concept
-**		of defining a type which varies greatly to seem like a bad
-**		idea.  (And @HostileFork thinks it probably is...)
-**
-**		REBCHR is the idea of the size of a character that the OS uses.
-**		Currently the supported platforms either use wide characters
-**		(e.g. Windows with `typedef wchar_t WCHAR`) or just use ordinary
-**		`char` like Linux and OS/X do for UTF-8.
-**
-**		Windows actually does `typedef wchar_t WCHAR` and then its binary
-**		APIs depend on this size.  Hence any compiler for Windows must
-**		have a 2-byte definition for wchar_t, or your programs won't work.
-**		This means Windows programmers can confidently use routines like
-**		wcslen() on strings they are passed from the OS.
-**
-**		Linux and OS/X haven't gone this direction.  Their APIs still use
-**		plain chars, often passing-the-buck on who-and-where-and-how the
-**		bytes will be encoded or decoded.  There aren't guarantees about
-**		the wchar_t size.  It's often 4 bytes on 64-bit platforms:
-**
-** 			http://stackoverflow.com/questions/3877052/
-**
-**		This might make you wonder what the value of REBCHR is, and why
-**		one wouldn't quarantine platform-specificity out of the Rebol
-**		core.  Then require the hostkit to do all the translation so the
-**		main of Rebol never knew about the details.  You might also
-**		wonder about the use of such a prominent CHR name for something
-**		that is quite so slippery...
-**		
-**		The answer seems to be that mostly REBCHR is indeed in the hostkit
-**		as a way of letting the code look kind of similar, based on whether
-**		you are reading the Windows code or the POSIX code.  It becomes
-**		a little easier to copy between them or hold them side-by-side.
-**		Yet largely it looks like a mistake that needs to be excised.
-**
-**		In the meantime, the macros are renamed to be more conspicuous
-**		(e.g. LEN_OS_STR instead of LEN_STR to draw attention and avoid
-**		errant usage).  If not using a wide char, then REBCHR is defined
-**		as a char instead of a REBYTE.  This further assists in vetting
-**		possible accidents with usage in core code processing REBYTE*.
-** 
-***********************************************************************/
-
-#ifdef OS_WIDE_CHAR
-	typedef wchar_t REBCHR;
-
-	#define OS_WIDE TRUE
-	#define OS_TXT(s) (L##s)
-	#define COPY_OS_STR(t,f,l)		wcsncpy((t),(f),(l))
-	#define JOIN_OS_STR(d,s,l)		wcsncat((d),(s),(l))
-	#define FIND_OS_STR(d,s)		wcsstr((d),(s))
-	#define FIND_OS_CHR(d,s)		wcschr((d),(s))
-	#define LEN_OS_STR(s)			wcslen(s)
-	#define TO_OS_STR(s1,s2,l)		mbstowcs((s1),(s2),(l))
-	#define FROM_OS_STR(s1,s2,l)	wcstombs((s1),(s2),(l))
-#else
-	typedef char REBCHR;
-
-	#define OS_WIDE FALSE
-	#define OS_TXT(s) (s)
-	#define COPY_OS_STR(t,f,l)		strncpy((t),(f),(l))
-	#define JOIN_OS_STR(d,s,l)		strncat((d),(s),(l))
-	#define FIND_OS_STR(d,s)		strstr((d),(s))
-	#define FIND_OS_CHR(d,s)		strchr((d),(s))
-	#define LEN_OS_STR(s)			strlen(s)
-	#define TO_OS_STR(s1,s2,l)		strncpy((s1),(s2),(l))
-	#define FROM_OS_STR(s1,s2,l)	strncpy((s1),(s2),(l))
-#endif
-
-// !!! If it's making a STR, might the length add 1 implicitly?
-#define MAKE_OS_STR(n) \
-	r_cast(REBCHR *, malloc((n) * sizeof(REBCHR)))
-
-// !!! Necessity of these routines is already in question, but
-// leave as a wrapper for free for now.
-#define FREE_OS_STR(s) \
-	free(s)
 
 
 /***********************************************************************

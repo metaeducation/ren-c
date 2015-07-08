@@ -160,12 +160,11 @@ static void *Task_Ready;
 
 /***********************************************************************
 **
-*/	void *OS_Make(size_t size)
+*/	void *OS_Alloc_Mem(size_t size)
 /*
 **		Allocate memory of given size.
-**
-**		This is necessary because some environments may use their
-**		own specific memory allocation (e.g. private heaps).
+**		To invoke, favor usage of the OS_ALLOC* macros.
+**		See remarks about the hostkit memory hooks in make-reb-lib.r
 **
 ***********************************************************************/
 {
@@ -175,9 +174,11 @@ static void *Task_Ready;
 
 /***********************************************************************
 **
-*/	void OS_Free(void *mem)
+*/	void OS_Free_Mem(void *mem)
 /*
-**		Free memory allocated in this OS environment. (See OS_Make)
+**		Free memory allocated in this OS environment.
+**		To invoke, favor usage of the OS_FREE macro.
+**		See remarks about the hostkit memory hooks in make-reb-lib.r
 **
 ***********************************************************************/
 {

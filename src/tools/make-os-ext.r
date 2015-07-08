@@ -162,7 +162,6 @@ out: reduce [
 
 extern REBDEV *Devices[];
 
-REBOOL As_OS_Str(REBSER *series, REBCHR **string);
 }
 rlib
 {
