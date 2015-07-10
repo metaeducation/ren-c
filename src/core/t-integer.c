@@ -56,7 +56,8 @@
 	REBI64 arg;
 	REBINT n;
 
-	REBU64 p, a, b; // for overflow detection
+	REBI64 p;
+	REBU64 a, b; // for overflow detection
 	REBCNT a1, a0, b1, b0;
 	REBFLG sgn;
 	REBI64 anum;

@@ -1191,22 +1191,22 @@ child_error:
 					char **buffer = NULL;
 					u32 *offset;
 					size_t to_read = 0;
-					size_t *size = NULL;
+					size_t size;
 					if (pfds[i].fd == stdout_pipe[R]) {
 						buffer = (char**)output;
 						offset = output_len;
-						size = &output_size;
+						size = output_size;
 					} else if (pfds[i].fd == stderr_pipe[R]) {
 						buffer = (char**)err;
 						offset = err_len;
-						size = &err_size;
+						size = err_size;
 					} else { /* info pipe */
 						buffer = &info;
 						offset = &info_len;
-						size = &info_size;
+						size = info_size;
 					}
 					do {
-						to_read = *size - *offset;
+						to_read = size - *offset;
 						//printf("to read %d bytes\n", to_read);
 						nbytes = read(pfds[i].fd, *buffer + *offset, to_read);
 						if (nbytes < 0) {
@@ -1222,9 +1222,9 @@ child_error:
 						}
 						//printf("POLLIN: %d bytes\n", nbytes);
 						*offset += nbytes;
-						if (*offset >= *size) {
-							*size += BUF_SIZE_CHUNK;
-							*buffer = realloc(*buffer, *size * sizeof((*buffer)[0]));
+						if (*offset >= size) {
+							size += BUF_SIZE_CHUNK;
+							*buffer = realloc(*buffer, size * sizeof((*buffer)[0]));
 							if (*buffer == NULL) goto kill;
 						}
 					} while (nbytes == to_read);

@@ -82,7 +82,7 @@ static void Get_Local_IP(REBREQ *sock)
 	// Get the local IP address and port number.
 	// This code should be fast and never fail.
 	SOCKAI sa;
-	int len = sizeof(sa);
+	socklen_t len = sizeof(sa);
 
 	getsockname(sock->socket, (struct sockaddr *)&sa, &len);
 	sock->net.local_ip = sa.sin_addr.s_addr; //htonl(ip); NOTE: REBOL stays in network byte order
@@ -93,7 +93,7 @@ static REBOOL Nonblocking_Mode(SOCKET sock)
 {
 	// Set non-blocking mode. Return TRUE if no error.
 #ifdef FIONBIO
-	long mode = 1;
+    unsigned long mode = 1;
 	return !IOCTL(sock, FIONBIO, &mode);
 #else
 	int flags;
@@ -570,7 +570,7 @@ lserr:
 {
 	SOCKAI sa;
 	REBREQ *news;
-	int len = sizeof(sa);
+	socklen_t len = sizeof(sa);
 	int result;
 	extern void Attach_Request(REBREQ **prior, REBREQ *req);
 

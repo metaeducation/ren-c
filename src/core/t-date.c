@@ -253,7 +253,7 @@
 
 /***********************************************************************
 **
-*/	void Normalize_Time(REBI64 *sp, REBINT *dp)
+*/	void Normalize_Time(REBI64 *sp, REBCNT *dp)
 /*
 **		Adjust *dp by number of days and set secs to less than a day.
 **
@@ -493,7 +493,7 @@
 	REBI64 secs;
 	REBINT tz;
 	REBDAT date;
-	REBINT day, month, year;
+	REBCNT day, month, year;
 	REBINT num;
 	REBVAL dat;
 	REB_TIMEF time;
@@ -697,7 +697,7 @@ setDate:
 	REBI64	secs;
 	REBINT  tz;
 	REBDAT	date;
-	REBINT	day, month, year;
+	REBCNT	day, month, year;
 	REBVAL	*val;
 	REBVAL	*arg = NULL;
 	REBINT	num;

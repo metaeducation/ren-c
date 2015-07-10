@@ -46,7 +46,7 @@
 
 /***********************************************************************
 **
-*/	REBCNT Bytes_To_REBCNT(REBYTE * const in)
+*/	REBCNT Bytes_To_REBCNT(const REBYTE * const in)
 /*
 ***********************************************************************/
 {
@@ -334,7 +334,7 @@
 
 /***********************************************************************
 **
-*/  REBYTE *Get_Field_Name(REBSER *obj, REBCNT index)
+*/  const REBYTE *Get_Field_Name(REBSER *obj, REBCNT index)
 /*
 **      Get the name of a field of an object.
 **

@@ -187,9 +187,9 @@
 	REBVAL	*value;
 	REBVAL	*arg;
 	REBYTE	*vp;
-	REBYTE	*ap;
-	REBINT	len;
-	REBINT	alen;
+	const REBYTE *ap;
+	REBCNT len;
+	REBCNT alen;
 	REBINT	v;
 	REBINT	a;
 	REBDEC	dec;

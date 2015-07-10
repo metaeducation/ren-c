@@ -274,7 +274,7 @@ static struct digest {
 {
 	REBSER *ser;
 	REBCNT index;
-	REBINT len;
+	REBCNT len;
 
 	len = Partial1(D_ARG(1), D_ARG(3));
 
