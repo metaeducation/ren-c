@@ -719,7 +719,6 @@ pick:
 
 		case 's':
 			cp = va_arg(args, REBYTE *);
-			if ((REBUPT)cp < 100) cp = (REBYTE*)Bad_Ptr;
 			if (pad == 1) pad = LEN_BYTES(cp);
 			if (pad < 0) {
 				pad = -pad;
