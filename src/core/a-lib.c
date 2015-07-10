@@ -155,9 +155,7 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 	REBSER *ser;
 
 	if (bin) {
-		spec.data = bin;
-		spec.tail = len;
-		ser = Decompress(&spec, 0, -1, 10000000, 0);
+		ser = Decompress(bin, len, 10000000, 0);
 		if (!ser) return 1;
 
 		val = BLK_SKIP(Sys_Context, SYS_CTX_BOOT_HOST);
@@ -173,9 +171,7 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 		COPY_MEM(&ptype, script, sizeof(ptype));
 
 		if (ptype == 1) {/* COMPRESSed data */
-			spec.data = data;
-			spec.tail = script_len;
-			ser = Decompress(&spec, 0, -1, 10000000, 0);
+			ser = Decompress(data, script_len, 10000000, 0);
 		} else {
 			ser = Make_Binary(script_len);
 			if (ser == NULL) {
@@ -331,9 +327,7 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 #endif
 
 	//Cloak(TRUE, code, NAT_SPEC_SIZE, &key[0], 20, TRUE);
-	spec.data = bin;
-	spec.tail = length;
-	text = Decompress(&spec, 0, -1, 10000000, 0);
+	text = Decompress(bin, length, 10000000, 0);
 	if (!text) return FALSE;
 	Append_Byte(text, 0);
 

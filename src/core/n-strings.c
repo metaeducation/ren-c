@@ -296,13 +296,23 @@ static struct digest {
 {
 	REBVAL *arg = D_ARG(1);
 	REBINT limit = 0;
-	REBINT len;
+	REBCNT len;
+	REBOOL gzip = D_REF(4); // use gzip checksum
 
 	len = Partial1(D_ARG(1), D_ARG(3));
 
-	if (D_REF(5)) limit = Int32s(D_ARG(6), 1); // /limit size
+	// This truncation rule used to be in Decompress, which passed len
+	// in as an extra parameter.  This was the only call that used it.
+	if (len > BIN_LEN(VAL_SERIES(arg)))
+		len = BIN_LEN(VAL_SERIES(arg));
 
-	Set_Binary(D_RET, Decompress(VAL_SERIES(arg), VAL_INDEX(arg), len, limit, D_REF(4))); // /gzip
+	if (D_REF(5)) limit = Int32s(D_ARG(6), 1); // /limit size
+	if (limit < 0)
+		return R_NONE; // !!! Should negative limit be an error instead?
+
+	Set_Binary(D_RET, Decompress(
+		BIN_HEAD(VAL_SERIES(arg)) + VAL_INDEX(arg), len, limit, gzip
+	));
 
 	return R_RET;
 }

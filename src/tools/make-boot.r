@@ -192,36 +192,38 @@ emit-end: func [/easy] [
 	append out {^};^/}
 ]
 
-binary-to-c: either system/version/4 = 3 [
-	; Windows format:
-	func [comp-data /local out] [
-		out: make string! 4 * (length? comp-data)
-		forall comp-data [
-			out: insert out reduce [to-integer first comp-data ", "]
-			if zero? ((index? comp-data) // 10) [out: insert out "^/^-"]
+binary-to-c: func [comp-data /local out data comma-count] [
+	; To be "strict" C standard compatible, we do not use a character
+	; string literal for data encoded as C due to limits:
+	;
+	;	http://stackoverflow.com/questions/11488616/
+	;
+	; We use an array formatted as {0xYY, ...} with 8 bytes per line
+
+	out: make string! 6 * (length? comp-data)
+	while [not tail? comp-data] [
+		;-- !!! switch to use spaces when Rebol is converted
+		append out tab ;-- !!! rejoin [space space space space]
+
+		;-- grab in groups of 8
+		hexed: enbase/base (copy/part comp-data 8) 16
+		comp-data: skip comp-data 8
+		foreach [digit1 digit2] hexed [
+			append out rejoin [{0x} digit1 digit2 {,} space]
 		]
-;		remove/part out either (pick out -1) = #" " [-2][-4]
-		head out
-	]
-][
-	; Other formats (Linux, OpenBSD, etc.):
-	func [comp-data /local out data] [
-		out: make string! 4 * (length? comp-data)
-		forall comp-data [
-			data: copy/part comp-data 16
-			comp-data: skip comp-data 15
-			data: enbase/base data 16
-			forall data [
-				insert data "\x"
-				data: skip data 3
-			]
-			data: tail data
-			insert data {"^/}
-			append out {"}
-			append out head data
+
+		take/last out ;-- drop the last space
+		if tail? comp-data [
+			take/last out ;-- lose that last comma
 		]
-		head out
+		append out newline ;-- newline after each group, and at end
 	]
+
+	;-- Sanity check (should be one more byte in source than commas out)
+	parse out [(comma-count: 0) some [thru "," (++ comma-count)] to end]
+	assert [(comma-count + 1) = (length? head comp-data)]
+
+	out
 ]
 
 remove-tests: func [d] [
@@ -1092,23 +1094,16 @@ comp-data: compress data: to-binary data
 
 emit [
 {
-	// This array contains 4 bytes encoding a 32-bit little endian value,
-	// followed by data which is the DEFLATE-algorithm-compressed
-	// representation of the textual function specs for Rebol's native
-	// routines.  This textual representation is null-terminated.
-	// The leading value represents the expected length of
-	// the text after it is decompressed (this is redundant with
-	// information saved by DEFLATE, but having it twice provides a
-	// redundant sanity check on the compression and decompression)
+// Native_Specs contains data which is the DEFLATE-algorithm-compressed
+// representation of the textual function specs for Rebol's native
+// routines.  Though DEFLATE includes the compressed size in the payload,
+// NAT_UNCOMPRESSED_SIZE is also defined to be used as a sanity check
+// on the decompression process.
 }
+newline
 ]
 
-emit ["const REBYTE Native_Specs[" 4 + length? comp-data "] = {^/^-"]
-
-;-- Prefix with the length
-data-len-bin: to binary! length? data
-assert [parse data-len-bin [4 #{00} 4 skip]] ;-- See CC #2064
-emit binary-to-c reverse (skip data-len-bin 4)
+emit ["const REBYTE Native_Specs[NAT_COMPRESSED_SIZE] = {" newline]
 
 ;-- Convert UTF-8 binary to C-encoded string:
 emit binary-to-c comp-data
@@ -1144,7 +1139,8 @@ emit-head "Bootstrap Structure and Root Module" %boot.h
 emit [
 {
 #define MAX_NATS      } nat-count {
-#define NAT_SPEC_SIZE } length? comp-data {
+#define NAT_UNCOMPRESSED_SIZE } length? data {
+#define NAT_COMPRESSED_SIZE } length? comp-data {
 #define CHECK_TITLE   } checksum to binary! title {
 
 extern const REBYTE Native_Specs[];
