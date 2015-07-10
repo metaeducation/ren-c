@@ -762,7 +762,7 @@ crash:
 			if (!SERIES_FREED(series)) {
 				if (pool_id < 0 || FIND_POOL(SERIES_TOTAL(series)) == pool_id) {
 					Debug_Fmt(
-							  Str_Dump[0], //"%s Series %x %s: Wide: %2d Size: %6d - Bias: %d Tail: %d Rest: %d Flags: %x"
+							  Str_Dump, //"%s Series %x %s: Wide: %2d Size: %6d - Bias: %d Tail: %d Rest: %d Flags: %x"
 							  "Dump",
 							  series,
 							  (SERIES_LABEL(series) ? SERIES_LABEL(series) : "-"),

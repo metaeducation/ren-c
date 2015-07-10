@@ -46,7 +46,7 @@
 #include "reb-host.h"
 #include "host-lib.h"
 
-void Host_Crash(REBYTE *reason);
+void Host_Crash(const char *reason);
 
 // Temporary globals: (either move or remove?!)
 REBREQ Std_IO_Req;
@@ -69,7 +69,7 @@ static REBYTE *Get_Next_Line()
 		out = OS_Make(len + 2);
 		COPY_BYTES(out, inbuf, len+1);
 		out[len+1] = 0;
-		MOVE_MEM(inbuf, bp+1, 1+strlen(bp+1));
+		MOVE_MEM(inbuf, bp + 1, 1 + LEN_BYTES(bp + 1));
 		return out;
 	}
 
@@ -78,7 +78,7 @@ static REBYTE *Get_Next_Line()
 
 static int Fetch_Buf()
 {
-	REBCNT len = strlen(inbuf);
+	REBCNT len = LEN_BYTES(inbuf);
 
 	Std_IO_Req.data   = inbuf + len;
 	Std_IO_Req.length = inbuf_len - len - 1;
@@ -163,8 +163,8 @@ static int Fetch_Buf()
 	REBREQ req;
 	memcpy(&req, &Std_IO_Req, sizeof(req));
 
-	req.length = strlen(buf);
-	req.data = (REBYTE*)buf;
+	req.length = LEN_BYTES(buf);
+	req.data = buf;
 	req.actual = 0;
 
 	OS_Do_Device(&req, RDC_WRITE);

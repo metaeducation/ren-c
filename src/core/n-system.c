@@ -176,7 +176,7 @@
 	return R_RET;
 }
 
-REBYTE *evoke_help = "Evoke values:\n"
+const char *evoke_help = "Evoke values:\n"
 	"[stack-size n] crash-dump delect\n"
 	"watch-recycle watch-obj-copy crash\n"
 	"1: watch expand\n"
@@ -224,7 +224,7 @@ REBYTE *evoke_help = "Evoke values:\n"
 				Panic_DEAD_END(RP_MISC);
 				break;
 			default:
-				Out_Str(evoke_help, 1);
+				Out_Str(cb_cast(evoke_help), 1);
 			}
 		}
 		if (IS_INTEGER(arg)) {
@@ -243,7 +243,7 @@ REBYTE *evoke_help = "Evoke values:\n"
 				Check_Bind_Table();
 				break;
 			default:
-				Out_Str(evoke_help, 1);
+				Out_Str(cb_cast(evoke_help), 1);
 			}
 		}
 	}

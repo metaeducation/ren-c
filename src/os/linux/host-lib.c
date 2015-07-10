@@ -434,10 +434,10 @@ static const void * backtrace_buf [1024];
 
 	// A title tells us we should alert the user:
 	if (title) {
-		fputs(title, stderr);
+		fputs(cs_cast(title), stderr);
 		fputs(":\n", stderr);
 	}
-	fputs(content, stderr);
+	fputs(cs_cast(content), stderr);
 	fputs("\n\n", stderr);
 #ifdef backtrace  // A GNU extension
 	fputs("Backtrace:\n", stderr);
@@ -803,7 +803,7 @@ error:
 
 /***********************************************************************
 **
-*/	void *OS_Find_Function(void *dll, char *funcname)
+*/	void *OS_Find_Function(void *dll, const char *funcname)
 /*
 **		Get a DLL function address from its string name.
 **
@@ -873,7 +873,7 @@ error:
 
 /***********************************************************************
 **
-*/	int OS_Create_Process(REBCHR *call, int argc, char* argv[], u32 flags, u64 *pid, int *exit_code, u32 input_type, void *input, u32 input_len, u32 output_type, void **output, u32 *output_len, u32 err_type, void **err, u32 *err_len)
+*/	int OS_Create_Process(REBCHR *call, int argc, const char* argv[], u32 flags, u64 *pid, int *exit_code, u32 input_type, void *input, u32 input_len, u32 output_type, void **output, u32 *output_len, u32 err_type, void **err, u32 *err_len)
 /*
  * flags:
  * 		1: wait, is implied when I/O redirection is enabled
@@ -1050,9 +1050,9 @@ error:
 			argv_new[1] = "-c";
 			memcpy(&argv_new[2], argv, argc * sizeof(argv[0]));
 			argv_new[argc + 2] = NULL;
-			execvp(sh, (char* const*)argv_new);
+			execvp(sh, cast(char* const*, argv_new));
 		} else {
-			execvp(argv[0], argv);
+			execvp(argv[0], cast(char* const*, argv));
 		}
 child_error:
 		write(info_pipe[W], &errno, sizeof(errno));
@@ -1091,7 +1091,7 @@ child_error:
 
 		if (stdin_pipe[W] > 0) {
 			//printf("stdin_pipe[W]: %d\n", stdin_pipe[W]);
-			input_size = strlen((char*)input); /* the passed in input_len is in character, not in bytes */
+			input_size = strlen(input); /* the passed in input_len is in character, not in bytes */
 			input_len = 0;
 			pfds[nfds++] = (struct pollfd){.fd = stdin_pipe[W], .events = POLLOUT};
 			close(stdin_pipe[R]);
@@ -1331,7 +1331,7 @@ stdin_pipe_err:
 
 static int Try_Browser(char *browser, REBCHR *url)
 {
-	char * const argv[] = {browser, url, NULL};
+	char const *argv[] = {browser, url, NULL};
 	return OS_Create_Process(browser, 2, argv, 0,
 							NULL, /* pid */
 							NULL, /* exit_code */
@@ -1573,5 +1573,5 @@ shstr_failed:
 header_failed:
 	OS_Free(sec_headers);
 	fclose(script);
-	return ret;
+	return b_cast(ret);
 }

@@ -42,14 +42,14 @@ static void update(REBREQ *req, REBINT len, REBVAL *arg)
 
 	for (i = 0; i < len; i ++) {
 		REBSER *obj = Make_Frame(2);
-		REBVAL *val = Append_Frame(obj, NULL, Make_Word("signal-no", 0));
+		REBVAL *val = Append_Frame(obj, NULL, Make_Word(cb_cast("signal-no"), 0));
 		SET_INTEGER(val, sig[i].si_signo);
 
-		val = Append_Frame(obj, NULL, Make_Word("code", 0));
+		val = Append_Frame(obj, NULL, Make_Word(cb_cast("code"), 0));
 		SET_INTEGER(val, sig[i].si_code);
-		val = Append_Frame(obj, NULL, Make_Word("source-pid", 0));
+		val = Append_Frame(obj, NULL, Make_Word(cb_cast("source-pid"), 0));
 		SET_INTEGER(val, sig[i].si_pid);
-		val = Append_Frame(obj, NULL, Make_Word("source-uid", 0));
+		val = Append_Frame(obj, NULL, Make_Word(cb_cast("source-uid"), 0));
 		SET_INTEGER(val, sig[i].si_uid);
 
 		Set_Object(VAL_BLK_SKIP(arg, VAL_TAIL(arg) + i), obj);

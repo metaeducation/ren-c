@@ -480,7 +480,7 @@
 		object = Create_Frame(words, 0); // GC safe
 		if (parent) {
 			if (Reb_Opts->watch_obj_copy)
-				Debug_Fmt(BOOT_STR(RS_WATCH, 2), SERIES_TAIL(parent) - 1, FRM_WORD_SERIES(object));
+				Debug_Fmt(cs_cast(BOOT_STR(RS_WATCH, 2)), SERIES_TAIL(parent) - 1, FRM_WORD_SERIES(object));
 			// Copy parent values and deep copy blocks and strings:
 			COPY_VALUES(FRM_VALUES(parent)+1, FRM_VALUES(object)+1, SERIES_TAIL(parent) - 1);
 			Copy_Deep_Values(object, 1, SERIES_TAIL(object), TS_CLONE);

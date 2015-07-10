@@ -10779,7 +10779,7 @@ jinit_phuff_decoder (j_decompress_ptr cinfo)
 #ifndef CODI_DEFINED
 #include "reb-codec.h"
 extern long* Make_Mem(size_t size);
-extern void Register_Codec(char *name, codo dispatcher);
+extern void Register_Codec(const REBYTE *name, codo dispatcher);
 #endif
 
 /***********************************************************************
@@ -10799,15 +10799,15 @@ extern void Register_Codec(char *name, codo dispatcher);
 
 	if (codi->action == CODI_IDENTIFY) {
 		int w, h;
-		jpeg_info(codi->data, codi->len, &w, &h); // will throw errors
+		jpeg_info(s_cast(codi->data), codi->len, &w, &h); // will throw errors
 		return CODI_CHECK;
 	}
 
 	if (codi->action == CODI_DECODE) {
 		int w, h;
-		jpeg_info(codi->data, codi->len, &w, &h);
+		jpeg_info(s_cast(codi->data), codi->len, &w, &h);
 		codi->bits = (u32 *)Make_Mem(w * h * 4);
-		jpeg_load(codi->data, codi->len, (char *)codi->bits);
+		jpeg_load(s_cast(codi->data), codi->len, cast(char*, codi->bits));
 		codi->w = w;
 		codi->h = h;
 		return CODI_IMAGE;
@@ -10824,5 +10824,5 @@ extern void Register_Codec(char *name, codo dispatcher);
 /*
 ***********************************************************************/
 {
-	Register_Codec("jpeg", Codec_JPEG_Image);
+	Register_Codec(cb_cast("jpeg"), Codec_JPEG_Image);
 }

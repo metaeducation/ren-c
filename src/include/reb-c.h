@@ -37,6 +37,107 @@
 # define ATTRIBUTE_NO_SANITIZE_ADDRESS
 #endif
 
+
+/***********************************************************************
+**
+**	CASTING MACROS
+**
+**		The following code and explanation is taken from the article
+**		"Casts for the Masses (in C)":
+**
+**		http://blog.hostilefork.com/c-casts-for-the-masses/
+**
+***********************************************************************/
+
+#if !defined(__cplusplus)
+	/* These macros are easier-to-spot variants of the parentheses cast.
+	 * The 'm_cast' is when getting [M]utablity on a const is okay (RARELY!)
+	 * Plain 'cast' can do everything else (except remove volatile)
+	 * The 'c_cast' helper ensures you're ONLY adding [C]onst to a value
+	 */
+	#define m_cast(t,v)		((t)(v))
+	#define cast(t,v)		((t)(v))
+	#define c_cast(t,v)		((t)(v))
+	/*
+	 * Q: Why divide roles?  A: Frequently, input to cast is const but you
+	 * "just forget" to include const in the result type, gaining mutable
+	 * access.  Stray writes to that can cause even time-traveling bugs, with
+	 * effects *before* that write is made...due to "undefined behavior".
+	 */
+#elif __cplusplus < 201103L
+	/* Well-intentioned macros aside, C has no way to enforce that you can't
+	 * cast away a const without m_cast. C++98 builds can do that, at least:
+	 */
+	#define m_cast(t,v)		const_cast<t>(v)
+	#define cast(t,v)		((t)(v))
+	#define c_cast(t,v)		const_cast<t>(v)
+#else
+	/* __cplusplus >= 201103L has C++11's type_traits, where we get some
+	 * actual power.  cast becomes a reinterpret_cast for pointers and a
+	 * static_cast otherwise.  We ensure c_cast added a const and m_cast
+	 * removed one, and that neither affected volatility.
+	 */
+	#include <type_traits>
+	template<typename T, typename V>
+	T m_cast_helper(V v) {
+		static_assert(!std::is_const<T>::value,
+			"invalid m_cast() - requested a const type for output result");
+		static_assert(std::is_volatile<T>::value == std::is_volatile<V>::value,
+			"invalid m_cast() - input and output have mismatched volatility");
+		return const_cast<T>(v);
+	}
+	template<typename T, typename V,
+		typename std::enable_if<std::is_pointer<V>::value
+			|| std::is_pointer<T>::value>::type* = nullptr>
+				T cast_helper(V v) { return reinterpret_cast<T>(v); }
+	template<typename T, typename V,
+		typename std::enable_if<!std::is_pointer<V>::value
+			&& !std::is_pointer<T>::value>::type* = nullptr>
+				T cast_helper(V v) { return static_cast<T>(v); }
+	template<typename T, typename V>
+	T c_cast_helper(V v) {
+		static_assert(!std::is_const<T>::value,
+			"invalid c_cast() - did not request const type for output result");
+		static_assert(std::is_volatile<T>::value == std::is_volatile<V>::value,
+			"invalid c_cast() - input and output have mismatched volatility");
+		return const_cast<T>(v);
+	}
+	#define m_cast(t, v)	m_cast_helper<t>(v)
+	#define cast(t, v)		cast_helper<t>(v)
+	#define c_cast(t, v)	c_cast_helper<t>(v)
+#endif
+#if defined(NDEBUG) || !defined(REB_DEF)
+	/* These [S]tring and [B]inary casts are for "flips" between a 'char *'
+	 * and 'unsigned char *' (or 'const char *' and 'const unsigned char *').
+	 * Being single-arity with no type passed in, they are succinct to use:
+	 */
+	#define s_cast(b)		((char *)(b))
+	#define cs_cast(b)		((const char *)(b))
+	#define b_cast(s)		((unsigned char *)(s))
+	#define cb_cast(s)		((const unsigned char *)(s))
+	/*
+	 * In C++ (or C with '-Wpointer-sign') this is powerful.  'char *' can
+	 * be used with string functions like strlen().  Then 'unsigned char *'
+	 * can be saved for things you shouldn't _accidentally_ pass to functions
+	 * like strlen().  (One GREAT example: encoded UTF-8 byte strings.)
+	 */
+#else
+	/* We want to ensure the input type is what we thought we were flipping,
+	 * particularly not the already-flipped type.  Instead of type_traits, 4
+	 * functions check in both C and C++ (here only during Debug builds):
+	 * (Definitions are in n-strings.c w/prototypes built by make-headers.r)
+	 */
+	/*char *s_cast(unsigned char *b);
+		{ return cast(char *, b); } */
+	/*const char *cs_cast(const unsigned char *b);
+		{ return cast(const char *, b); } */
+	/*unsigned char *b_cast(char *s);
+		{ return cast(unsigned char *, s); } */
+	/*const unsigned char *cb_cast(const char *s);
+		{ return cast(const unsigned char *, s); } */
+#endif
+
+
 #ifndef FALSE
 #define FALSE 0
 #define TRUE (!0)
@@ -181,7 +282,7 @@ typedef unsigned char	REBYTE;     // unsigned byte data
 #ifdef OS_WIDE_CHAR
 typedef REBUNI          REBCHR;
 #else
-typedef REBYTE          REBCHR;
+typedef char			REBCHR;
 #endif
 
 #define MIN_D64 ((double)-9.2233720368547758e18)
@@ -211,15 +312,15 @@ enum {
 #define MAX_HEX_LEN     16
 
 #ifdef ITOA64           // Integer to ascii conversion
-#define INT_TO_STR(n,s) _i64toa(n, s, 10)
+#define INT_TO_STR(n,s) _i64toa(n, s_cast(s), 10)
 #else
 #define INT_TO_STR(n,s) Form_Int_Len(s, n, MAX_INT_LEN)
 #endif
 
 #ifdef ATOI64           // Ascii to integer conversion
-#define CHR_TO_INT(s)   _atoi64(s)
+#define CHR_TO_INT(s)   _atoi64(cs_cast(s))
 #else
-#define CHR_TO_INT(s)   strtoll(s, 0, 10)
+#define CHR_TO_INT(s)   strtoll(cs_cast(s), 0, 10)
 #endif
 
 #define LDIV            lldiv
@@ -336,12 +437,33 @@ typedef u16 REBUNI;
 #define MOVE_MEM(t,f,l) memmove((void*)(t), (void*)(f), l)
 
 // Byte string functions:
-#define COPY_BYTES(t,f,l)   strncpy((char*)t, (char*)f, l)
-// For APPEND_BYTES, l is the max-size allocated for t (dest)
-#define APPEND_BYTES(t,f,l) strncat((char*)t, (char*)f, MAX((l)-strlen(t)-1, 0))
-#define LEN_BYTES(s)        strlen((char*)s)
-#define CMP_BYTES(s,t)      strcmp((char*)s, (char*)t)
-#define BYTES(s) (REBYTE*)(s)
+// Use these when you semantically are talking about unsigned REBYTEs
+//
+// (e.g. if you want to count unencoded chars in 'char *' use strlen(), and
+// the reader will know that is a count of letters.  If you have something
+// like UTF-8 with more than one byte per character, use LEN_BYTES.)
+//
+// For APPEND_BYTES_LIMIT, m is the max-size allocated for d (dest)
+#ifdef NDEBUG
+	#define LEN_BYTES(s) \
+		strlen((char*)(s))
+	#define COPY_BYTES(d,s,n) \
+		strncpy((char*)(d), (char*)(s), (n))
+	#define COMPARE_BYTES(l,r) \
+		strcmp((char*)(l), (char*)(r))
+	#define APPEND_BYTES_LIMIT(d,s,m) \
+		strncat((char*)d, (char*)s, MAX((m) - strlen(d) - 1, 0))
+#else
+	// Debug build uses function stubs to ensure you pass in REBYTE *
+	#define LEN_BYTES(s) \
+		LEN_BYTES_(s)
+	#define COPY_BYTES(d,s,n) \
+		COPY_BYTES_((d), (s), (n))
+	#define COMPARE_BYTES(l,r) \
+		COMPARE_BYTES_((l), (r))
+	#define APPEND_BYTES_LIMIT(d,s,m) \
+		APPEND_BYTES_LIMIT_((d), (s), (m))
+#endif
 
 // OS has wide char string interfaces:
 #ifdef OS_WIDE_CHAR

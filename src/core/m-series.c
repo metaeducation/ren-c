@@ -203,7 +203,7 @@
 
 /***********************************************************************
 **
-*/	void Append_Series(REBSER *series, REBYTE *data, REBCNT len)
+*/	void Append_Series(REBSER *series, const REBYTE *data, REBCNT len)
 /*
 **		Append value(s) onto the tail of a series.  The len is
 **		the number of units (bytes, REBVALS, etc.) of the data,
@@ -224,7 +224,7 @@
 
 /***********************************************************************
 **
-*/	void Append_Mem_Extra(REBSER *series, REBYTE *data, REBCNT len, REBCNT extra)
+*/	void Append_Mem_Extra(REBSER *series, const REBYTE *data, REBCNT len, REBCNT extra)
 /*
 **		An optimized function for appending raw memory bytes to
 **		a byte-sized series. The series will be expanded if room

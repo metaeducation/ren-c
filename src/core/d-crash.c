@@ -31,7 +31,7 @@
 
 #define	PANIC_BUF_SIZE 512	// space for crash print string
 
-extern const REBYTE * const Panic_Msgs[];
+extern const char * const Panic_Msgs[];
 
 enum Panic_Msg_Nums {
 	// Must align with Panic_Msgs[] array.
@@ -64,8 +64,8 @@ enum Panic_Msg_Nums {
 ***********************************************************************/
 {
 	va_list args;
-	REBYTE buf[PANIC_BUF_SIZE];
-	const REBYTE *msg;
+	char buf[PANIC_BUF_SIZE];
+	const char *msg;
 	REBINT n = 0;
 
 	va_start(args, id);
@@ -77,11 +77,11 @@ enum Panic_Msg_Nums {
 	}
 
 	// "REBOL PANIC #nnn:"
-	COPY_BYTES(buf, Panic_Msgs[CM_ERROR], PANIC_BUF_SIZE);
+	strncpy(buf, Panic_Msgs[CM_ERROR], PANIC_BUF_SIZE);
 	buf[PANIC_BUF_SIZE - 1] = '\0';
-	APPEND_BYTES(buf, " #", PANIC_BUF_SIZE);
-	Form_Int(buf + LEN_BYTES(buf), id);
-	APPEND_BYTES(buf, ": ", PANIC_BUF_SIZE);
+	strncat(buf, " #", PANIC_BUF_SIZE);
+	Form_Int(b_cast(buf + strlen(buf)), id);
+	strncat(buf, ": ", PANIC_BUF_SIZE);
 
 	// "REBOL PANIC #nnn: put error message here"
 	// The first few error types only print general error message.
@@ -93,12 +93,12 @@ enum Panic_Msg_Nums {
 	else if (id > RP_STR_BASE + RS_MAX - RS_ERROR) n = CM_DEBUG;
 
 	// Use the above string or the boot string for the error (in boot.r):
-	msg = (REBYTE*)(n >= 0 ? Panic_Msgs[n] : BOOT_STR(RS_ERROR, id - RP_STR_BASE - 1));
-	Form_Var_Args(buf + LEN_BYTES(buf), PANIC_BUF_SIZE - 1 - LEN_BYTES(buf), msg, args);
+	msg = n >= 0 ? Panic_Msgs[n] : cs_cast(BOOT_STR(RS_ERROR, id - RP_STR_BASE - 1));
+	Form_Var_Args(b_cast(buf + strlen(buf)), PANIC_BUF_SIZE - 1 - strlen(buf), msg, args);
 
 	va_end(args);
 
-	APPEND_BYTES(buf, Panic_Msgs[CM_CONTACT], PANIC_BUF_SIZE);
+	strncat(buf, Panic_Msgs[CM_CONTACT], PANIC_BUF_SIZE);
 
 	// Convert to OS-specific char-type:
 #ifdef disable_for_now //OS_WIDE_CHAR   /// win98 does not support it
@@ -117,7 +117,7 @@ enum Panic_Msg_Nums {
 		OS_CRASH(s1, s2);
 	}
 #else
-	OS_CRASH(Panic_Msgs[CM_ERROR], buf);
+	OS_CRASH(cb_cast(Panic_Msgs[CM_ERROR]), cb_cast(buf));
 #endif
 }
 

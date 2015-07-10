@@ -40,7 +40,7 @@ static	REBCNT	Action_Marker;
 static	REBFUN  *Native_Functions;
 static	BOOT_BLK *Boot_Block;
 
-extern const REBYTE Str_Banner[];
+extern const char Str_Banner[];
 
 #ifdef WATCH_BOOT
 #define DOUT(s) puts(s)
@@ -114,7 +114,7 @@ extern const REBYTE Str_Banner[];
 ***********************************************************************/
 {
 	if (rargs->options & RO_VERS) {
-		Debug_Fmt((REBYTE*)Str_Banner, REBOL_VER, REBOL_REV, REBOL_UPD, REBOL_SYS, REBOL_VAR);
+		Debug_Fmt(Str_Banner, REBOL_VER, REBOL_REV, REBOL_UPD, REBOL_SYS, REBOL_VAR);
 		OS_EXIT(0);
 	}
 }
@@ -197,16 +197,16 @@ extern const REBYTE Str_Banner[];
 		*ROOT_STRINGS = Boot_Block->strings;
 		cp = VAL_BIN(ROOT_STRINGS);
 		for (i = 0; i < RS_MAX; i++) {
-			BOOT_STR(i,0) = cp;
+			PG_Boot_Strs[i] = cp;
 			while (*cp++);
 		}
 	}
 
-	if (CMP_BYTES("end!", Get_Sym_Name(SYM_END_TYPE)) != 0)
+	if (COMPARE_BYTES(cb_cast("end!"), Get_Sym_Name(SYM_END_TYPE)) != 0)
 		Panic(RP_BAD_END_CANON_WORD);
-	if (CMP_BYTES("true", Get_Sym_Name(SYM_TRUE)) != 0)
+	if (COMPARE_BYTES(cb_cast("true"), Get_Sym_Name(SYM_TRUE)) != 0)
 		Panic(RP_BAD_TRUE_CANON_WORD);
-	if (CMP_BYTES("line", BOOT_STR(RS_SCAN, 1)) != 0)
+	if (COMPARE_BYTES(cb_cast("line"), BOOT_STR(RS_SCAN, 1)) != 0)
 		Panic(RP_BAD_BOOT_STRING);
 }
 
@@ -516,7 +516,7 @@ extern const REBYTE Str_Banner[];
 
 /***********************************************************************
 **
-*/	void Set_Root_Series(REBVAL *value, REBSER *ser, REBYTE *label)
+*/	void Set_Root_Series(REBVAL *value, REBSER *ser, const char *label)
 /*
 **		Used to set block and string values in the ROOT context.
 **
@@ -814,7 +814,7 @@ extern const REBYTE Str_Banner[];
 
 /***********************************************************************
 **
-*/	void Register_Codec(REBYTE *name, codo dispatcher)
+*/	void Register_Codec(const REBYTE *name, codo dispatcher)
 /*
 **		Internal function for adding a codec.
 **
@@ -834,10 +834,10 @@ extern const REBYTE Str_Banner[];
 /*
 ***********************************************************************/
 {
-	Register_Codec((REBYTE*)"text", Codec_Text);
-	Register_Codec((REBYTE*)"utf-16le", Codec_UTF16LE);
-	Register_Codec((REBYTE*)"utf-16be", Codec_UTF16BE);
-	Register_Codec((REBYTE*)"markup", Codec_Markup);
+	Register_Codec(cb_cast("text"), Codec_Text);
+	Register_Codec(cb_cast("utf-16le"), Codec_UTF16LE);
+	Register_Codec(cb_cast("utf-16be"), Codec_UTF16BE);
+	Register_Codec(cb_cast("markup"), Codec_Markup);
 	Init_BMP_Codec();
 	Init_GIF_Codec();
 	Init_PNG_Codec();

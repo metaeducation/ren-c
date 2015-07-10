@@ -103,7 +103,7 @@
 		|| VAL_DAY(value) == 0
 		|| VAL_DAY(value) > 31
 	) {
-		Append_Bytes(mold->series, "?date?");
+		Append_Unencoded(mold->series, "?date?");
 		return;
 	}
 
@@ -119,7 +119,7 @@
 	bp = Form_Int_Pad(bp, (REBINT)VAL_YEAR(value), 6, -4, '0');
 	*bp = 0;
 
-	Append_Bytes(mold->series, buf);
+	Append_Unencoded(mold->series, s_cast(buf));
 
 	if (VAL_TIME(value) != NO_TIME) {
 
@@ -142,7 +142,7 @@
 			bp = Form_Int_Pad(bp, (tz&3) * 15, 2, 2, '0');
 			*bp = 0;
 
-			Append_Bytes(mold->series, buf);
+			Append_Unencoded(mold->series, s_cast(buf));
 		}
 	}
 }
@@ -158,7 +158,7 @@
 ***********************************************************************/
 {
 	if (month != 1)
-		return (REBCNT)Month_Lengths[month];
+		return Month_Max_Days[month];
 
 	return (
 		((year % 4) == 0) &&		// divisible by four is a leap year
@@ -441,7 +441,8 @@
 
 	if (month < 1 || month > 12) return FALSE;
 
-	if (year > MAX_YEAR || day < 1 || day > (REBINT)(Month_Lengths[month-1])) return FALSE;
+	if (year > MAX_YEAR || day < 1 || day > Month_Max_Days[month-1])
+		return FALSE;
 
 	// Check February for leap year or century:
 	if (month == 2 && day == 29) {

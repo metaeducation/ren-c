@@ -36,13 +36,13 @@
 
 /***********************************************************************
 **
-*/	void Dump_Series(REBSER *series, REBYTE *memo)
+*/	void Dump_Series(REBSER *series, const char *memo)
 /*
 ***********************************************************************/
 {
 	if (!series) return;
 	Debug_Fmt(
-		Str_Dump[0], //"%s Series %x %s: Wide: %2d Size: %6d - Bias: %d Tail: %d Rest: %d Flags: %x"
+		Str_Dump, //"%s Series %x %s: Wide: %2d Size: %6d - Bias: %d Tail: %d Rest: %d Flags: %x"
 		memo,
 		series,
 		(SERIES_LABEL(series) ? SERIES_LABEL(series) : "-"),
@@ -103,7 +103,7 @@
 		for (tp = str; *tp;) *cp++ = *tp++;
 
 		*cp = 0;
-		Debug_Str(buf);
+		Debug_Str(s_cast(buf));
 		if (cnt >= limit) break;
 		cp = buf;
 	}
@@ -122,7 +122,7 @@
 	REBYTE *cp;
 	REBCNT l, n;
 	REBCNT *bp = (REBCNT*)vp;
-	REBYTE *type;
+	const REBYTE *type;
 
 	cp = buf;
 	for (l = 0; l < count; l++) {
@@ -144,12 +144,12 @@
 		}
 		n = 0;
 		if (IS_WORD((REBVAL*)val) || IS_GET_WORD((REBVAL*)val) || IS_SET_WORD((REBVAL*)val)) {
-			char * name = Get_Word_Name((REBVAL*)val);
-			n = snprintf(cp, sizeof(buf) - (cp - buf), " (%s)", name);
+			const char * name = cs_cast(Get_Word_Name((REBVAL*)val));
+			n = snprintf(s_cast(cp), sizeof(buf) - (cp - buf), " (%s)", name);
 		}
 
 		*(cp + n) = 0;
-		Debug_Str(buf);
+		Debug_Str(s_cast(buf));
 		cp = buf;
 	}
 }
@@ -201,9 +201,9 @@ xx*/  REBSER *Dump_Value(REBVAL *block, REBSER *series)
 	Mold_Value(&mo, block, TRUE);
 
 	if (ANY_WORD(block)) {
-		if (!VAL_WORD_FRAME(block)) Append_Bytes(series, " - unbound");
-		else if (VAL_WORD_INDEX(block) < 0) Append_Bytes(series, " - relative");
-		else Append_Bytes(series, " - absolute");
+		if (!VAL_WORD_FRAME(block)) Append_Unencoded(series, " - unbound");
+		else if (VAL_WORD_INDEX(block) < 0) Append_Unencoded(series, " - relative");
+		else Append_Unencoded(series, " - absolute");
 	}
 	return series;
 }
@@ -240,7 +240,7 @@ xx*/  void Dump_Block(REBVAL *blk, REBINT len)
 	//Print("BLOCK: %x Tail: %d Size: %d", block, block->tail, block->rest);
 	// change to a make string!!!  no need to append to a series, this is a debug function
 	series = Make_Binary(100);
-	Append_Bytes(series, "[\n");
+	Append_Unencoded(series, "[\n");
 	while (NOT_END(blk) && len-- > 0) {
 		Append_Byte(series, '\t');
 		Dump_Value(blk, series);
@@ -352,7 +352,7 @@ xx*/	void Dump_Bind_Table()
 	};
 
 	DISABLE_GC;
-	for (n = 0; n < 14; n++) Debug_Fmt(BOOT_STR(RS_DUMP, n), nums[n]);
+	for (n = 0; n < 14; n++) Debug_Fmt(cs_cast(BOOT_STR(RS_DUMP, n)), nums[n]);
 	ENABLE_GC;
 }
 
@@ -373,7 +373,7 @@ xx*/	void Dump_Bind_Table()
 	}
 
 	m = dsp - dsf - DSF_SIZE;
-	Debug_Fmt(BOOT_STR(RS_STACK, 1), dsp, Get_Word_Name(DSF_WORD(dsf)), m, Get_Type_Name(DSF_FUNC(dsf)));
+	Debug_Fmt(cs_cast(BOOT_STR(RS_STACK, 1)), dsp, Get_Word_Name(DSF_WORD(dsf)), m, Get_Type_Name(DSF_FUNC(dsf)));
 
 	if (dsf > 0) {
 		if (ANY_FUNC(DSF_FUNC(dsf))) {

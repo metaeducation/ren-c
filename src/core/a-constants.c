@@ -32,65 +32,64 @@
 
 #include "sys-core.h"
 
-#define BP (REBYTE*)
+const char Str_Banner[] = "Rebol 3 %d.%d.%d.%d.%d";
 
-const REBYTE Str_Banner[] = "REBOL 3 %d.%d.%d.%d.%d";
+const char Str_Stack_Misaligned[] = "!! Stack misaligned: %d";
 
 const char Str_REBOL[] = "REBOL";
 
-const REBYTE * Str_Stack_Misaligned = {
-	BP("!! Stack misaligned: %d")
+const char * const Panic_Msgs[] = {
+	"REBOL System Error",
+	"boot failure",
+	"internal problem",
+	"invalid datatype %d",
+	"unspecific",
+	"\n\nProgram terminated abnormally."
+		"\nThis should never happen."
+		"\nPlease file a bug report with details."
 };
 
-const REBYTE * const Panic_Msgs[] = {
-	BP"REBOL System Error",
-	BP"boot failure",
-	BP"internal problem",
-	BP"invalid datatype %d",
-	BP"unspecific",
-	BP"\n\nProgram terminated abnormally.\nThis should never happen.\nPlease contact www.REBOL.com with details."
-};
+const char Str_Dump[] =
+	"%s Series %x \"%s\":"
+		" wide: %2d"
+		" size: %6d"
+		" bias: %d"
+		" tail: %d"
+		" rest: %d"
+		" flags: %x";
 
-const REBYTE * const Str_Dump[] = {
-	BP"%s Series %x \"%s\": wide: %2d size: %6d bias: %d tail: %d rest: %d flags: %x"
-};
+const char * Hex_Digits = "0123456789ABCDEF";
 
-const REBYTE * Hex_Digits = BP"0123456789ABCDEF";
-
-const REBYTE * const Bad_Ptr = BP"#[BAD-PTR]";
-
-const REBYTE * const Esc_Names[] = {
+const char * const Esc_Names[] = {
 	// Must match enum REBOL_Esc_Codes!
-	BP"line",
-	BP"tab",
-	BP"page",
-	BP"escape",
-	BP"esc",
-	BP"back",
-	BP"del",
-	BP"null"
+	"line",
+	"tab",
+	"page",
+	"escape",
+	"esc",
+	"back",
+	"del",
+	"null"
 };
 
 const REBYTE Esc_Codes[] = {
 	// Must match enum REBOL_Esc_Codes!
-	10,
-	9,
-	12,
-	27,
-	27,
-	8,
-	127,
-	0
+	10,		// line
+	9,		// tab
+	12,		// page
+	27,		// escape
+	27,		// esc
+	8,		// back
+	127,	// del
+	0		// null
 };
 
-const REBYTE Month_Lengths[12] = {
+// Zen Point on naming cues: was "Month_Lengths", but said 29 for Feb! --@HF
+const REBYTE Month_Max_Days[12] = {
 	31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31
 };
 
-const REBYTE * const Month_Names[12] = {
-	BP"January",	BP"February", BP"March",
-	BP"April",	BP"May",		 BP"June",
-	BP"July",	BP"August",	 BP"September",
-	BP"October",	BP"November", BP"December"
+const char * const Month_Names[12] = {
+	"January", "February", "March", "April", "May", "June", "July", "August",
+	"September", "October", "November", "December"
 };
-

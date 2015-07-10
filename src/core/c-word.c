@@ -170,7 +170,7 @@
 
 /***********************************************************************
 **
-*/	static REBCNT Make_Word_Name(REBYTE *str, REBCNT len)
+*/	static REBCNT Make_Word_Name(const REBYTE *str, REBCNT len)
 /*
 **		Allocates and copies the text string of the word.
 **
@@ -186,7 +186,7 @@
 
 /***********************************************************************
 **
-*/	REBCNT Make_Word(REBYTE *str, REBCNT len)
+*/	REBCNT Make_Word(const REBYTE *str, REBCNT len)
 /*
 **		Given a string and its length, compute its hash value,
 **		search for a match, and if not found, add it to the table.
@@ -331,29 +331,29 @@ make_sym:
 
 /***********************************************************************
 **
-*/	REBYTE *Get_Sym_Name(REBCNT num)
+*/	const REBYTE *Get_Sym_Name(REBCNT num)
 /*
 ***********************************************************************/
 {
-	if (num == 0 || num >= PG_Word_Table.series->tail) return (REBYTE*)"???";
+	if (num == 0 || num >= PG_Word_Table.series->tail) return cb_cast("???");
 	return VAL_SYM_NAME(BLK_SKIP(PG_Word_Table.series, num));
 }
 
 
 /***********************************************************************
 **
-*/	REBYTE *Get_Word_Name(REBVAL *value)
+*/	const REBYTE *Get_Word_Name(REBVAL *value)
 /*
 ***********************************************************************/
 {
 	if (value) return Get_Sym_Name(VAL_WORD_SYM(value));
-	return (REBYTE*)"(unnamed)";
+	return cb_cast("(unnamed)");
 }
 
 
 /***********************************************************************
 **
-*/	REBYTE *Get_Type_Name(REBVAL *value)
+*/	const REBYTE *Get_Type_Name(REBVAL *value)
 /*
 ***********************************************************************/
 {
@@ -375,7 +375,7 @@ make_sym:
 	REBYTE *tp = VAL_WORD_NAME(t);
 
 	// Use a more strict comparison than normal:
-	if (is_case) return CMP_BYTES(sp, tp);
+	if (is_case) return COMPARE_BYTES(sp, tp);
 
 	// They are the equivalent words:
 	if (VAL_WORD_CANON(s) == VAL_WORD_CANON(t)) return 0;

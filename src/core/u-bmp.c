@@ -603,5 +603,5 @@ error:
 /*
 ***********************************************************************/
 {
-	Register_Codec("bmp", Codec_BMP_Image);
+	Register_Codec(cb_cast("bmp"), Codec_BMP_Image);
 }

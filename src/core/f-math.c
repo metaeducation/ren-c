@@ -37,7 +37,7 @@
 
 /***********************************************************************
 **
-*/	REBYTE *Grab_Int(REBYTE *cp, REBINT *val)
+*/	const REBYTE *Grab_Int(const REBYTE *cp, REBINT *val)
 /*
 **		Grab an integer value from the string.
 **
@@ -70,7 +70,7 @@
 
 /***********************************************************************
 **
-*/	REBYTE *Grab_Int_Scale(REBYTE *cp, REBINT *val, REBCNT scale)
+*/	const REBYTE *Grab_Int_Scale(const REBYTE *cp, REBINT *val, REBCNT scale)
 /*
 **		Return integer scaled to the number of digits specified.
 **		Used for the decimal part of numbers (e.g. times).
@@ -184,18 +184,18 @@
 
 	n = Form_Int_Len(tmp, val, max + 1);
 	if (n == 0) {
-		strcpy(buf, "??");
+		strcpy(s_cast(buf), "??");
 		return buf;  // too long
 	}
 
 	if (len >= 0) {
-		strcpy(buf, tmp);
+		strcpy(s_cast(buf), s_cast(tmp));
 		buf += n;
 		for (; n < len; n++) *buf++ = pad;
 	}
 	else { // len < 0
 		for (; n < -len; len++) *buf++ = pad;
-		strcpy(buf, tmp);
+		strcpy(s_cast(buf), s_cast(tmp));
 		buf += n;
 	}
 
@@ -321,7 +321,7 @@ REBINT Emit_Decimal(REBYTE *cp, REBDEC d, REBFLG trim, REBYTE point, REBINT deci
 	if (e) {
 		*cp++ = 'e';
 		INT_TO_STR(e - 1, cp);
-		cp = strchr(cp, 0);
+		cp = b_cast(strchr(s_cast(cp), 0));
 	}
 
  	if (trim == DEC_MOLD_PERCENT) *cp++ = '%';

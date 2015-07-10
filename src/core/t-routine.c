@@ -1053,7 +1053,7 @@ static void callback_dispatcher(ffi_cif *cif, void *ret, void **args, void *user
 				ret = FALSE;
 			}
 			TERM_SERIES(VAL_SERIES(&blk[fn_idx]));
-			func = OS_FIND_FUNCTION(LIB_FD(VAL_ROUTINE_LIB(out)), VAL_DATA(&blk[fn_idx]));
+			func = OS_FIND_FUNCTION(LIB_FD(VAL_ROUTINE_LIB(out)), s_cast(VAL_DATA(&blk[fn_idx])));
 			if (!func) {
 				Trap_Arg_DEAD_END(&blk[fn_idx]);
 				//printf("Couldn't find function: %s\n", VAL_DATA(&blk[2]));

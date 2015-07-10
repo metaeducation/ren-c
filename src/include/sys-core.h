@@ -480,7 +480,7 @@ void Panic_Core(REBINT id, ...);
 #define	ALL_64		((REBU64)0xffffffffffffffffL)
 #endif
 
-#define BOOT_STR(c,i) PG_Boot_Strs[(c)+(i)]
+#define BOOT_STR(c,i) c_cast(const REBYTE *, PG_Boot_Strs[(c) + (i)])
 
 //-- Temporary Buffers
 //   These are reused for cases for appending, when length cannot be known.

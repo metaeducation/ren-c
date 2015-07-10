@@ -79,7 +79,7 @@
 {
 	REBSER *ser = VAL_SERIES(value);
 
-	if (BITS_NOT(ser)) Append_Bytes(mold->series, "[not bits ");
+	if (BITS_NOT(ser)) Append_Unencoded(mold->series, "[not bits ");
 	Mold_Binary(value, mold);
 	if (BITS_NOT(ser)) Append_Byte(mold->series, ']');
 }

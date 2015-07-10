@@ -405,7 +405,7 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 
 /***********************************************************************
 **
-*/	RL_API void RL_Print(REBYTE *fmt, ...)
+*/	RL_API void RL_Print(const REBYTE *fmt, ...)
 /*
 **	Low level print of formatted data to the console.
 **
@@ -423,14 +423,14 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 {
 	va_list args;
 	va_start(args, fmt);
-	Debug_Buf(fmt, args); // Limits line size
+	Debug_Buf(cs_cast(fmt), args); // Limits line size
 	va_end(args);
 }
 
 
 /***********************************************************************
 **
-*/	RL_API void RL_Print_TOS(REBCNT flags, REBYTE *marker)
+*/	RL_API void RL_Print_TOS(REBCNT flags, const REBYTE *marker)
 /*
 **	Print top REBOL stack value to the console. (pending changes)
 **
@@ -754,8 +754,8 @@ RL_API REBYTE *RL_Word_String(u32 word)
 	// !!This code should use a function from c-words.c (but nothing perfect yet.)
 	if (word == 0 || word >= PG_Word_Table.series->tail) return 0;
 	s1 = VAL_SYM_NAME(BLK_SKIP(PG_Word_Table.series, word));
-	s2 = OS_MAKE(strlen(s1));
-	strcpy(s2, s1);
+	s2 = OS_MAKE(LEN_BYTES(s1));
+	COPY_BYTES(s2, s1, LEN_BYTES(s1));
 	return s2;
 }
 

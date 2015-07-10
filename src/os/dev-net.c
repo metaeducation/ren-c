@@ -311,7 +311,7 @@ static REBOOL Nonblocking_Mode(SOCKET sock)
 	OS_Free(host);
 #else
 	// Use old-style blocking DNS (mainly for testing purposes):
-	host = gethostbyname(sock->data);
+	host = gethostbyname(s_cast(sock->data));
 	sock->net.host_info = 0; // no allocated data
 
 	if (host) {

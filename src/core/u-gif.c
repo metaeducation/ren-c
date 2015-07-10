@@ -344,5 +344,5 @@ void Chrom_Key_Alpha(REBVAL *v,REBCNT col,REBINT blitmode) {
 /*
 ***********************************************************************/
 {
-	Register_Codec("gif", Codec_GIF_Image);
+	Register_Codec(cb_cast("gif"), Codec_GIF_Image);
 }

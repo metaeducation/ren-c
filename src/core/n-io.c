@@ -716,7 +716,7 @@ chk_neg:
 	} else if (output_type == BINARY_TYPE) {
 		if (output != NULL
 			&& output_len > 0) {
-			Append_Bytes_Len(VAL_SERIES(output), os_output, output_len);
+			Append_Unencoded_Len(VAL_SERIES(output), os_output, output_len);
 			OS_FREE(os_output);
 		}
 	}
@@ -731,7 +731,7 @@ chk_neg:
 	} else if (err_type == BINARY_TYPE) {
 		if (err != NULL
 			&& err_len > 0) {
-			Append_Bytes_Len(VAL_SERIES(err), os_err, err_len);
+			Append_Unencoded_Len(VAL_SERIES(err), os_err, err_len);
 			OS_FREE(os_err);
 		}
 	}
@@ -776,15 +776,15 @@ chk_neg:
 	if (ANY_STR(val)) {
 		cmd = Make_Binary(VAL_LEN(val) + VAL_LEN(script) + 4);
 		Append_Byte(cmd, '"');
-		Append_Bytes(cmd, VAL_BIN_DATA(val));
+		Append_Unencoded(cmd, s_cast(VAL_BIN_DATA(val)));
 		Append_Byte(cmd, '"');
 		if (!IS_NONE(script)) {
 			Append_Byte(cmd, ' ');
-			Append_Bytes(cmd, VAL_BIN_DATA(script)); // !!! convert file
+			Append_Unencoded(cmd, s_cast(VAL_BIN_DATA(script))); // !!! convert file
 		}
 		if (D_REF(2)) {
 			Append_Byte(cmd, ' ');
-			Append_Bytes(cmd, VAL_BIN_DATA(D_ARG(3)));
+			Append_Unencoded(cmd, s_cast(VAL_BIN_DATA(D_ARG(3))));
 		}
 		Print("Launching: %s", STR_HEAD(cmd));
 		r = OS_CREATE_PROCESS(STR_HEAD(cmd), 0);

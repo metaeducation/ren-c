@@ -210,10 +210,9 @@
 		else if (IS_MONEY(val))
 			num = deci_to_int(VAL_DECI(val));
 		else if (IS_ISSUE(val)) {
-			REBYTE *bp;
+			const REBYTE *bp = Get_Word_Name(val);
 			REBCNT len;
-			bp = Get_Word_Name(val);
-			len = strlen(bp);
+			len = LEN_BYTES(bp);
 			n = MIN(MAX_HEX_LEN, len);
 			if (Scan_Hex(bp, &num, n, n) == 0) goto is_bad;
 		}

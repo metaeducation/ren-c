@@ -241,7 +241,7 @@ static int Get_File_Info(REBREQ *file)
 	} while (cp[0] == '.' && (cp[1] == 0 || (cp[1] == '.' && cp[2] == 0)));
 
 	file->modes = 0;
-	COPY_BYTES(file->file.path, cp, MAX_FILE_NAME);
+	strncpy(file->file.path, cp, MAX_FILE_NAME);
 
 #ifdef DT_DIR
 	// NOTE: not all posix filesystems support this (mainly

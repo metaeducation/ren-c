@@ -695,7 +695,7 @@ mark_obj:
 		return 0;
 	}
 
-	if (Reb_Opts->watch_recycle) Debug_Str(BOOT_STR(RS_WATCH, 0));
+	if (Reb_Opts->watch_recycle) Debug_Str(cs_cast(BOOT_STR(RS_WATCH, 0)));
 
 	GC_Disabled = 1;
 
@@ -777,7 +777,7 @@ mark_obj:
 	GC_Ballast = VAL_INT32(TASK_BALLAST);
 	GC_Disabled = 0;
 
-	if (Reb_Opts->watch_recycle) Debug_Fmt(BOOT_STR(RS_WATCH, 1), count);
+	if (Reb_Opts->watch_recycle) Debug_Fmt(cs_cast(BOOT_STR(RS_WATCH, 1)), count);
 	return count;
 }
 

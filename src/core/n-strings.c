@@ -750,3 +750,112 @@ static struct digest {
 	VAL_INDEX(arg) = bp - VAL_BIN_HEAD(arg);
 	return R_ARG1;
 }
+
+
+#ifndef NDEBUG
+/***********************************************************************
+**
+*/	REBYTE *b_cast(char *s)
+/*
+**		Debug-only version of b_cast() that does type checking.
+**		If you get a complaint you probably meant to use cb_cast().
+**
+***********************************************************************/
+{
+	return cast(REBYTE *, s);
+}
+
+
+/***********************************************************************
+**
+*/	const REBYTE *cb_cast(const char *s)
+/*
+**		Debug-only version of cb_cast() that does type checking.
+**		If you get a complaint you probably meant to use b_cast().
+**
+***********************************************************************/
+{
+	return cast(const REBYTE *, s);
+}
+
+
+/***********************************************************************
+**
+*/	char *s_cast(REBYTE *s)
+/*
+**		Debug-only version of s_cast() that does type checking.
+**		If you get a complaint you probably meant to use cs_cast().
+**
+***********************************************************************/
+{
+	return cast(char*, s);
+}
+
+
+/***********************************************************************
+**
+*/	const char *cs_cast(const REBYTE *s)
+/*
+**		Debug-only version of cs_cast() that does type checking.
+**		If you get a complaint you probably meant to use s_cast().
+**
+***********************************************************************/
+{
+	return cast(const char *, s);
+}
+
+
+/***********************************************************************
+**
+*/	REBYTE *COPY_BYTES_(REBYTE *dest, const REBYTE *src, size_t count)
+/*
+**		Debug-only REBYTE-checked substitute for COPY_BYTES macro
+**		If you meant characters, consider if you wanted strncpy()
+**
+***********************************************************************/
+{
+	return b_cast(strncpy(s_cast(dest), cs_cast(src), count));
+}
+
+
+/***********************************************************************
+**
+*/	size_t LEN_BYTES_(const REBYTE *str)
+/*
+**		Debug-only REBYTE-checked substitute for LEN_BYTES macro
+**		If you meant characters, consider if you wanted strlen()
+**
+***********************************************************************/
+{
+	return strlen(cs_cast(str));
+}
+
+
+/***********************************************************************
+**
+*/	int COMPARE_BYTES_(const REBYTE *lhs, const REBYTE *rhs)
+/*
+**		Debug-only REBYTE-checked function for COMPARE_BYTES macro
+**		If you meant characters, consider if you wanted strcmp()
+**
+***********************************************************************/
+{
+	return strcmp(cs_cast(lhs), cs_cast(rhs));
+}
+
+
+/***********************************************************************
+**
+*/	REBYTE *APPEND_BYTES_LIMIT_(REBYTE *dest, const REBYTE *src, size_t max)
+/*
+**		REBYTE-checked function for APPEND_BYTES_LIMIT macro in Debug
+**		If you meant characters, you'll have to use strncat()/strlen()
+**		(there's no single <string.h> entry point for this purpose)
+**
+***********************************************************************/
+{
+	return b_cast(strncat(
+		s_cast(dest), cs_cast(src), MAX(max - LEN_BYTES(dest) - 1, 0)
+	));
+}
+#endif
