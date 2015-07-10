@@ -53,7 +53,7 @@
 
 	// Word cannot already be used:
 	wrd = BLK_SKIP(PG_Word_Table.series, sym);
-	if (sym != VAL_SYM_CANON(wrd)) Trap1(RE_ALREADY_USED, alias);
+	if (sym != VAL_SYM_CANON(wrd)) Trap1_DEAD_END(RE_ALREADY_USED, alias);
 
 	// Change the new word's canon pointer to the word provided:
 	VAL_SYM_CANON(wrd) = VAL_WORD_CANON(word);
@@ -144,13 +144,13 @@ static int Check_Char_Range(REBVAL *val, REBINT limit)
 			} else if (IS_TYPESET(val)) {
 				if (TYPE_CHECK(val, VAL_TYPE(value))) return TRUE;
 			} else {
-				Trap1(RE_INVALID_TYPE, Of_Type(val));
+				Trap1_DEAD_END(RE_INVALID_TYPE, Of_Type(val));
 			}
 		}
 		return FALSE;
 	}
 
-	Trap_Arg(types);
+	Trap_Arg_DEAD_END(types);
 
 	return 0; // for compiler
 }
@@ -175,7 +175,7 @@ static int Check_Char_Range(REBVAL *val, REBINT limit)
 			ds = DS_POP; // volatile stack reference
 			if (IS_FALSE(ds)) {
 				Set_Block(ds, Copy_Block_Len(block, i, 3));
-				Trap1(RE_ASSERT_FAILED, ds);
+				Trap1_DEAD_END(RE_ASSERT_FAILED, ds);
 			}
 			if (THROWN(ds)) return R_TOS1;
 		}
@@ -194,15 +194,15 @@ static int Check_Char_Range(REBVAL *val, REBINT limit)
 				Do_Path(&val, 0);
 				val = DS_POP; // volatile stack reference
 			}
-			else Trap_Arg(value);
+			else Trap_Arg_DEAD_END(value);
 
 			type = value+1;
-			if (IS_END(type)) Trap0(RE_MISSING_ARG);
+			if (IS_END(type)) Trap_DEAD_END(RE_MISSING_ARG);
 			if (IS_BLOCK(type) || IS_WORD(type) || IS_TYPESET(type) || IS_DATATYPE(type)) {
 				if (!Is_Of_Type(val, type))
-					Trap1(RE_WRONG_TYPE, value);
+					Trap1_DEAD_END(RE_WRONG_TYPE, value);
 			}
-			else Trap_Arg(type);
+			else Trap_Arg_DEAD_END(type);
 		}
 	}
 
@@ -269,7 +269,7 @@ static int Check_Char_Range(REBVAL *val, REBINT limit)
 	else { // word
 		rel = (VAL_WORD_INDEX(arg) < 0);
 		frame = VAL_WORD_FRAME(arg);
-		if (!frame) Trap1(RE_NOT_DEFINED, arg);
+		if (!frame) Trap1_DEAD_END(RE_NOT_DEFINED, arg);
 	}
 
 	// Block or word to bind:
@@ -285,7 +285,7 @@ static int Check_Char_Range(REBVAL *val, REBINT limit)
 			if (flags & BIND_ALL)
 				Append_Frame(frame, arg, 0); // not in context, so add it.
 			else
-				Trap1(RE_NOT_IN_CONTEXT, arg);
+				Trap1_DEAD_END(RE_NOT_IN_CONTEXT, arg);
 		}
 		return R_ARG1;
 	}
@@ -395,12 +395,12 @@ static int Check_Char_Range(REBVAL *val, REBINT limit)
 			Init_Obj_Value(D_RET, VAL_WORD_FRAME(word));
 			return R_RET;
 		}
-		if (!D_REF(2) && !IS_SET(val)) Trap1(RE_NO_VALUE, word);
+		if (!D_REF(2) && !IS_SET(val)) Trap1_DEAD_END(RE_NO_VALUE, word);
 	}
 	else if (ANY_PATH(word)) {
 		val = Do_Path(&word, 0);
 		if (!val) val = DS_POP; // resides on stack
-		if (!D_REF(2) && !IS_SET(val)) Trap1(RE_NO_VALUE, word); //!!!! word is modified
+		if (!D_REF(2) && !IS_SET(val)) Trap1_DEAD_END(RE_NO_VALUE, word); //!!!! word is modified
 	}
 	else if (IS_OBJECT(word)) {
 		Assert_Public_Object(word);
@@ -445,7 +445,7 @@ static int Check_Char_Range(REBVAL *val, REBINT limit)
 			}
 			return R_NONE;
 		}
-		else Trap_Arg(word);
+		else Trap_Arg_DEAD_END(word);
 	}
 
 	frame = IS_ERROR(val) ? VAL_ERR_OBJECT(val) : VAL_OBJ_FRAME(val);
@@ -515,7 +515,7 @@ static int Check_Char_Range(REBVAL *val, REBINT limit)
 	REBOOL is_blk  = FALSE;
 
 	if (not_any && !IS_SET(val))
-		Trap1(RE_NEED_VALUE, word);
+		Trap1_DEAD_END(RE_NEED_VALUE, word);
 
 	if (ANY_WORD(word)) {
 		Set_Var(word, val);
@@ -539,9 +539,9 @@ static int Check_Char_Range(REBVAL *val, REBINT limit)
 		Assert_Public_Object(word);
 		// Check for protected or unset before setting anything.
 		for (tmp = val, word = VAL_OBJ_WORD(word, 1); NOT_END(word); word++) { // skip self
-			if (VAL_PROTECTED(word)) Trap1(RE_LOCKED_WORD, word);
+			if (VAL_PROTECTED(word)) Trap1_DEAD_END(RE_LOCKED_WORD, word);
 			if (not_any && is_blk && !IS_END(tmp) && IS_UNSET(tmp++)) // won't advance past end
-				Trap1(RE_NEED_VALUE, word);
+				Trap1_DEAD_END(RE_NEED_VALUE, word);
 		}
 		for (word = VAL_OBJ_VALUES(D_ARG(1)) + 1; NOT_END(word); word++) { // skip self
 			// WARNING: Unwinds that make it here are assigned. All unwinds
@@ -564,10 +564,10 @@ static int Check_Char_Range(REBVAL *val, REBINT limit)
 				case REB_WORD:
 				case REB_SET_WORD:
 				case REB_LIT_WORD:
-					if (!IS_SET(tmp)) Trap1(RE_NEED_VALUE, word);
+					if (!IS_SET(tmp)) Trap1_DEAD_END(RE_NEED_VALUE, word);
 					break;
 				case REB_GET_WORD:
-					if (!IS_SET(IS_WORD(tmp) ? Get_Var(tmp) : tmp)) Trap1(RE_NEED_VALUE, word);
+					if (!IS_SET(IS_WORD(tmp) ? Get_Var(tmp) : tmp)) Trap1_DEAD_END(RE_NEED_VALUE, word);
 				}
 			}
 		}
@@ -575,7 +575,7 @@ static int Check_Char_Range(REBVAL *val, REBINT limit)
 			if (IS_WORD(word) || IS_SET_WORD(word) || IS_LIT_WORD(word)) Set_Var(word, val);
 			else if (IS_GET_WORD(word))
 				Set_Var(word, IS_WORD(val) ? Get_Var(val) : val);
-			else Trap_Arg(word);
+			else Trap_Arg_DEAD_END(word);
 			if (is_blk) {
 				val++;
 				if (IS_END(val)) is_blk = FALSE, val = NONE_VALUE;
@@ -801,7 +801,7 @@ static int Do_Ordinal(REBVAL *ds, REBINT n)
 		tail = GOB_PANE(VAL_GOB(value)) ? GOB_TAIL(VAL_GOB(value)) : 0;
 	}
 	else
-		Trap_Arg(D_ARG(1)); // !! need better msg
+		Trap_Arg_DEAD_END(D_ARG(1)); // !! need better msg
 
 	*D_ARG(1) = *value;
 	index = VAL_INDEX(value); // same for VAL_GOB_INDEX
@@ -838,7 +838,7 @@ static int Do_Ordinal(REBVAL *ds, REBINT n)
 		VAL_DECIMAL(value) += 1.0;
 	}
 	else
-		Trap_Arg(D_ARG(1));
+		Trap_Arg_DEAD_END(D_ARG(1));
 
 	return R_RET;
 }
@@ -872,7 +872,7 @@ static int Do_Ordinal(REBVAL *ds, REBINT n)
 		VAL_DECIMAL(value) -= 1.0;
 	}
 	else
-		Trap_Arg(D_ARG(1));
+		Trap_Arg_DEAD_END(D_ARG(1));
 
 	return R_RET;
 }
@@ -919,9 +919,9 @@ static int Do_Ordinal(REBVAL *ds, REBINT n)
 	// Check substitution strings, and compute hash and size diff.
 	n = 0;
 	for (val = VAL_BLK(a2); NOT_END(val); val += 2) {
-		if (VAL_TYPE(a1) != VAL_TYPE(val)) Trap0(RE_NOT_SAME_TYPE); // !! would be good to show it
-		if (IS_END(val+1)) Trap0(RE_MISSING_ARG);
-		if (VAL_TYPE(a1) != VAL_TYPE(val+1)) Trap0(RE_NOT_SAME_TYPE); // !! would be good to show it
+		if (VAL_TYPE(a1) != VAL_TYPE(val)) Trap_DEAD_END(RE_NOT_SAME_TYPE); // !! would be good to show it
+		if (IS_END(val+1)) Trap_DEAD_END(RE_MISSING_ARG);
+		if (VAL_TYPE(a1) != VAL_TYPE(val+1)) Trap_DEAD_END(RE_NOT_SAME_TYPE); // !! would be good to show it
 		chr = GET_ANY_CHAR(VAL_SERIES(val), 0);
 		chash |= BIT_CHAR(chr);
 		n += 3 * (VAL_LEN(val+1) - VAL_LEN(val)); // assume it occurs three times

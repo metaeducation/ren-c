@@ -70,7 +70,7 @@ enum {
 	if (flags != SET_OP_UNIQUE) {
 		val2 = D_ARG(i++);
 		if (VAL_TYPE(val1) != VAL_TYPE(val2)) {
-			Trap_Types(RE_EXPECT_VAL, VAL_TYPE(val1), VAL_TYPE(val2));
+			Trap_Types_DEAD_END(RE_EXPECT_VAL, VAL_TYPE(val1), VAL_TYPE(val2));
 		}
 	}
 
@@ -210,7 +210,7 @@ enum {
 		return R_ARG1;
 
 	default:
-		Trap_Arg(val1);
+		Trap_Arg_DEAD_END(val1);
 	}
 
 	return R_RET;
@@ -237,8 +237,8 @@ enum {
 	val2 = D_ARG(2);
 
 	if (IS_DATE(val1) || IS_DATE(val2)) {
-		if (!IS_DATE(val1)) Trap_Arg(val1);
-		if (!IS_DATE(val2)) Trap_Arg(val2);
+		if (!IS_DATE(val1)) Trap_Arg_DEAD_END(val1);
+		if (!IS_DATE(val2)) Trap_Arg_DEAD_END(val2);
 		Subtract_Date(val1, val2, D_RET);
 		return R_RET;
 	}

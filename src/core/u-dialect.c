@@ -449,7 +449,7 @@ again:
 	REBINT n;
 	REBINT dsp = DSP; // Save stack position
 
-	CLEARS(&dia);
+	memset(&dia, NUL, sizeof(dia));
 
 	if (*index >= SERIES_TAIL(block)) return 0; // end of block
 
@@ -493,7 +493,7 @@ again:
 	REBINT err;
 	REBFLG all;
 
-	CLEARS(&dia);
+	memset(&dia, NUL, sizeof(dia));
 
 	dia.dialect = VAL_OBJ_FRAME(D_ARG(1));
 	dia.args = VAL_SERIES(D_ARG(2));
@@ -504,7 +504,7 @@ again:
 	if (dia.argi >= SERIES_TAIL(dia.args)) return R_NONE; // end of block
 
 	if (D_REF(4)) { // in
-		if (!IS_BLOCK(dia.contexts = D_ARG(5))) Trap_Arg(dia.contexts);
+		if (!IS_BLOCK(dia.contexts = D_ARG(5))) Trap_Arg_DEAD_END(dia.contexts);
 		dia.contexts = VAL_BLK_DATA(dia.contexts);
 	}
 
@@ -532,7 +532,7 @@ again:
 		if (dia.missed) Debug_Fmt(Dia_Fmt, Get_Field_Name(dia.dialect, dia.cmd), dia.out->tail, dia.missed, Total_Missed);
 	}
 
-	if (err < 0) Trap_Arg(D_ARG(2)); // !!! needs better error
+	if (err < 0) Trap_Arg_DEAD_END(D_ARG(2)); // !!! needs better error
 
 	return R_ARG2;
 }

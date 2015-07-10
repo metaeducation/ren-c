@@ -46,7 +46,7 @@
 #include "reb-host.h"
 #include "host-lib.h"
 
-void Host_Crash(REBYTE *reason);
+void Host_Crash(const char *reason);
 
 // Temporary globals: (either move or remove?!)
 REBREQ Std_IO_Req;
@@ -66,10 +66,10 @@ static REBYTE *Get_Next_Line()
 	if (*bp) {
 		if (*bp == CR && bp[1] == LF) bp++;
 		len = bp - inbuf;
-		out = OS_Make(len + 2);
-		COPY_BYTES(out, inbuf, len+1);
+		out = OS_ALLOC_ARRAY(REBYTE, len + 2);
+		strncpy(s_cast(out), s_cast(inbuf), len + 1);
 		out[len+1] = 0;
-		MOVE_MEM(inbuf, bp+1, 1+strlen(bp+1));
+		memmove(inbuf, bp + 1, 1 + strlen(s_cast(bp) + 1));
 		return out;
 	}
 
@@ -78,7 +78,7 @@ static REBYTE *Get_Next_Line()
 
 static int Fetch_Buf()
 {
-	REBCNT len = strlen(inbuf);
+	REBCNT len = strlen(s_cast(inbuf));
 
 	Std_IO_Req.data   = inbuf + len;
 	Std_IO_Req.length = inbuf_len - len - 1;
@@ -115,7 +115,7 @@ static int Fetch_Buf()
 **
 ***********************************************************************/
 {
-	CLEARS(&Std_IO_Req);
+	memset(&Std_IO_Req, NUL, sizeof(Std_IO_Req));
 	Std_IO_Req.clen = sizeof(Std_IO_Req);
 	Std_IO_Req.device = RDI_STDIO;
 
@@ -123,7 +123,7 @@ static int Fetch_Buf()
 
 	if (Std_IO_Req.error) Host_Crash("stdio open");
 
-	inbuf = OS_Make(inbuf_len);
+	inbuf = OS_ALLOC_ARRAY(REBYTE, inbuf_len);
 	inbuf[0] = 0;
 }
 
@@ -163,7 +163,7 @@ static int Fetch_Buf()
 	REBREQ req;
 	memcpy(&req, &Std_IO_Req, sizeof(req));
 
-	req.length = strlen(buf);
+	req.length = strlen(s_cast(buf));
 	req.data = (REBYTE*)buf;
 	req.actual = 0;
 

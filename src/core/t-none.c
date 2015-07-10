@@ -83,7 +83,7 @@
 		if (IS_NONE(val)) return R_NONE;
 	default:
 	trap_it:
-		Trap_Action(VAL_TYPE(val), action);
+		Trap_Action_DEAD_END(VAL_TYPE(val), action);
 	}
 
 	return R_RET;

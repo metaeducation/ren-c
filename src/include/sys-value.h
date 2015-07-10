@@ -65,6 +65,11 @@ typedef struct Reb_Series REBSER;
 #define VAL_SET(v,t)	((v)->flags.header = (t))		// set type, clear all flags
 // Note: b-init.c verifies that lower 8 bits of header = flags.type
 
+// !!! Questionable idea: does setting all bytes to zero of a type
+// and then poking in a type indicator make the "zero valued"
+// version of that type that you can compare against?  :-/
+#define VAL_SET_ZEROED(v,t) (memset((v), NUL, sizeof(REBVAL)), VAL_SET((v),(t)))
+
 // Clear type identifier:
 #define SET_END(v)			VAL_SET(v, 0)
 
@@ -372,7 +377,7 @@ typedef struct Reb_Tuple {
 #define RESET_TAIL(s) s->tail = 0
 
 // Clear all and clear to tail:
-#define CLEAR_SERIES(s) CLEAR(SERIES_DATA(s), SERIES_SPACE(s))
+#define CLEAR_SERIES(s) memset(SERIES_DATA(s), 0, SERIES_SPACE(s))
 #define ZERO_SERIES(s) memset(SERIES_DATA(s), 0, SERIES_USED(s))
 #define TERM_SERIES(s) memset(SERIES_SKIP(s, SERIES_TAIL(s)), 0, SERIES_WIDE(s))
 
@@ -427,7 +432,7 @@ enum {
 #define UNPROTECT_SERIES(s)  SERIES_CLR_FLAG(s, SER_PROT)
 #define IS_PROTECT_SERIES(s) SERIES_GET_FLAG(s, SER_PROT)
 
-#define TRAP_PROTECT(s) if (IS_PROTECT_SERIES(s)) Trap0(RE_PROTECTED)
+#define TRAP_PROTECT(s) if (IS_PROTECT_SERIES(s)) Trap_DEAD_END(RE_PROTECTED)
 
 #ifdef SERIES_LABELS
 #define LABEL_SERIES(s,l) s->label = (l)
@@ -544,7 +549,6 @@ typedef struct Reb_Series_Ref
 // Get a char, from either byte or unicode string:
 #define GET_ANY_CHAR(s,n)   (REBUNI)(BYTE_SIZE(s) ? BIN_HEAD(s)[n] : UNI_HEAD(s)[n])
 #define SET_ANY_CHAR(s,n,c) if BYTE_SIZE(s) BIN_HEAD(s)[n]=((REBYTE)c); else UNI_HEAD(s)[n]=((REBUNI)c)
-#define GET_CHAR_UNI(f,p,i) (uni ? ((REBUNI*)p)[i] : ((REBYTE*)bp)[i])
 
 #define VAL_ANY_CHAR(v) GET_ANY_CHAR(VAL_SERIES(v), VAL_INDEX(v))
 

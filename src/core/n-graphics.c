@@ -129,7 +129,7 @@
 	REBGOB *gob = VAL_GOB(D_ARG(1));
 	REBPAR xy;
 
-	if (!IS_GOB_TEXT(gob) && !IS_GOB_STRING(gob)) Trap_Arg(D_ARG(1)); //!!! better error
+	if (!IS_GOB_TEXT(gob) && !IS_GOB_STRING(gob)) Trap_Arg_DEAD_END(D_ARG(1)); //!!! better error
 
 	OS_SIZE_TEXT(gob, &xy);
 
@@ -154,7 +154,7 @@
 	REBINT element;
 	REBINT position;
 
-	if (!IS_GOB_TEXT(gob) && !IS_GOB_STRING(gob)) Trap_Arg(D_ARG(1)); //!!! better error
+	if (!IS_GOB_TEXT(gob) && !IS_GOB_STRING(gob)) Trap_Arg_DEAD_END(D_ARG(1)); //!!! better error
 
 	if (IS_INTEGER(arg1))
 		element = Int32(arg1);
@@ -166,8 +166,8 @@
 	else if (IS_STRING(arg2))
 		position = VAL_INDEX(arg2);
 
-	if (element < 0) Trap_Arg(arg1);
-	if (position < 0) Trap_Arg(arg2);
+	if (element < 0) Trap_Arg_DEAD_END(arg1);
+	if (position < 0) Trap_Arg_DEAD_END(arg2);
 
 	OS_CARET_TO_OFFSET(gob, &xy, element, position);
 
@@ -192,7 +192,7 @@
 	REBSER *ser;
 	REBVAL *val;
 
-	if (!IS_GOB_TEXT(gob) && !IS_GOB_STRING(gob)) Trap_Arg(D_ARG(1)); //!!! better error
+	if (!IS_GOB_TEXT(gob) && !IS_GOB_STRING(gob)) Trap_Arg_DEAD_END(D_ARG(1)); //!!! better error
 
 	OS_OFFSET_TO_CARET(gob, xy, &element, &position);
 
@@ -239,7 +239,7 @@
 
 	*D_RET = *image;
 	if (err = OS_DRAW_IMAGE(VAL_SERIES(image), ser = At_Head(D_ARG(2)))) {
-		Trap_Word(RE_DIALECT, SYM_DRAW, BLK_SKIP(ser, (-err)-1));
+		vTrap_Word(RE_DIALECT, SYM_DRAW, BLK_SKIP(ser, (-err)-1));
 	}
 #endif
 	return R_RET;
@@ -263,7 +263,7 @@
 
 	*D_RET = *image;
 	if (err = OS_EFFECT_IMAGE(VAL_SERIES(image), ser = At_Head(D_ARG(2)))) {
-		Trap_Word(RE_DIALECT, SYM_DRAW, BLK_SKIP(ser, (-err)-1));
+		vTrap_Word(RE_DIALECT, SYM_DRAW, BLK_SKIP(ser, (-err)-1));
 	}
 #endif
 	return R_RET;
@@ -296,5 +296,5 @@
 /*
 ***********************************************************************/
 {
-	Trap0(RE_BAD_MEDIA);
+	Trap(RE_BAD_MEDIA);
 }

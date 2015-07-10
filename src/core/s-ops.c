@@ -48,7 +48,7 @@
 
 /*********************************************************************
 **
-*/	REBOOL Is_Wide(REBUNI *up, REBCNT len)
+*/	REBOOL Is_Wide(const REBUNI *up, REBCNT len)
 /*
 **		Returns TRUE if uni string needs 16 bits.
 **
@@ -97,7 +97,7 @@
 	REBYTE *bp;
 	REBSER *src = VAL_SERIES(val);
 
-	if (index > tail) Trap0(RE_PAST_END);
+	if (index > tail) Trap_DEAD_END(RE_PAST_END);
 
 	Resize_Series(BUF_FORM, max_len+1);
 	bp = BIN_HEAD(BUF_FORM);
@@ -112,7 +112,7 @@
 	for (; index < tail; index++) {
 		c = GET_ANY_CHAR(src, index);
 		if (opts < 2 && c >= 0x80) {
-			if (opts == 0) Trap0(RE_INVALID_CHARS);
+			if (opts == 0) Trap_DEAD_END(RE_INVALID_CHARS);
 			len = Encode_UTF8_Char(bp, c);
 			max_len -= len;
 			bp += len;
@@ -123,19 +123,19 @@
 		}
 		else break;
 		if (max_len < 0)
-			Trap0(RE_TOO_LONG);
+			Trap_DEAD_END(RE_TOO_LONG);
 	}
 
 	// Rest better be just spaces:
 	for (; index < tail; index++) {
 		c = GET_ANY_CHAR(src, index);
-		if (!IS_SPACE(c)) Trap0(RE_INVALID_CHARS);
+		if (!IS_SPACE(c)) Trap_DEAD_END(RE_INVALID_CHARS);
 	}
 
 	*bp= 0;
 
 	len = bp - BIN_HEAD(BUF_FORM);
-	if (len == 0) Trap0(RE_TOO_SHORT);
+	if (len == 0) Trap_DEAD_END(RE_TOO_SHORT);
 
 	if (length) *length = len;
 
@@ -213,7 +213,7 @@
 		switch (action) {
 		case A_AND:
 			for (i = 0; i < mt; i++) *p2++ = *p0++ & *p1++;
-			CLEAR(p2, t2 - mt);
+			memset(p2, NUL, t2 - mt);
 			return series;
 		case A_OR:
 			for (i = 0; i < mt; i++) *p2++ = *p0++ | *p1++;
@@ -323,8 +323,8 @@ static REBYTE seed_str[SEED_LEN] = {
 			kp = BIN_SKIP(ser, i);
 			break;
 		case REB_INTEGER:
-			INT_TO_STR(VAL_INT64(val), dst);
-			klen = LEN_BYTES(dst);
+			INT_TO_STR(VAL_INT64(val), s_cast(dst));
+			klen = strlen(s_cast(dst));
 			as_is = FALSE;
 			break;
 		}
@@ -705,7 +705,7 @@ static REBYTE seed_str[SEED_LEN] = {
 
 	// String series:
 
-	if (IS_PROTECT_SERIES(VAL_SERIES(val))) Trap0(RE_PROTECTED);
+	if (IS_PROTECT_SERIES(VAL_SERIES(val))) Trap(RE_PROTECTED);
 
 	len = Partial(val, 0, part, 0);
 	n = VAL_INDEX(val);

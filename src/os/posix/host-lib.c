@@ -115,7 +115,7 @@ static void *Task_Ready;
 {
 	struct tm *time;
 
-	CLEARS(dat);
+	memset(dat, NUL, sizeof(*dat));
 
 	time = gmtime(stime);
 
@@ -155,12 +155,11 @@ static void *Task_Ready;
 
 /***********************************************************************
 **
-*/	void *OS_Make(size_t size)
+*/	void *OS_Alloc_Mem(size_t size)
 /*
 **		Allocate memory of given size.
-**
-**		This is necessary because some environments may use their
-**		own specific memory allocation (e.g. private heaps).
+**		To invoke, favor usage of the OS_ALLOC* macros.
+**		See remarks about the hostkit memory hooks in make-reb-lib.r
 **
 ***********************************************************************/
 {
@@ -170,9 +169,11 @@ static void *Task_Ready;
 
 /***********************************************************************
 **
-*/	void OS_Free(void *mem)
+*/	void OS_Free_Mem(void *mem)
 /*
-**		Free memory allocated in this OS environment. (See OS_Make)
+**		Free memory allocated in this OS environment.
+**		To invoke, favor usage of the OS_FREE macro.
+**		See remarks about the hostkit memory hooks in make-reb-lib.r
 **
 ***********************************************************************/
 {
@@ -269,7 +270,7 @@ static void *Task_Ready;
 
 /***********************************************************************
 **
-*/	REBINT OS_Get_Env(REBCHR *envname, REBCHR* envval, REBINT valsize)
+*/	REBINT OS_Get_Env(const REBCHR *envname, REBCHR *envval, REBINT valsize)
 /*
 **		Get a value from the environment.
 **		Returns size of retrieved value for success or zero if missing.
@@ -281,17 +282,17 @@ static void *Task_Ready;
 	// Note: The Posix variant of this API is case-sensitive
 
 	REBINT len;
-	const REBCHR* value = getenv(envname);
+	const char *value = getenv(envname);
 	if (value == 0) return 0;
 
-	len = LEN_STR(value);
+	len = strlen(value);
 	if (len == 0) return -1; // shouldn't have saved an empty env string
 
 	if (len + 1 > valsize) {
 		return len + 1;
 	}
 
-	COPY_STR(envval, value, len);
+	strncpy(envval, value, len);
 	return len;
 }
 
@@ -329,7 +330,9 @@ static void *Task_Ready;
 		// really need to set an environment variable, here's a way
 		// that just leaks a string each time you call.
 
-		char* expr = MAKE_STR(LEN_STR(envname) + 1 + LEN_STR(envval) + 1);
+		char *expr = OS_ALLOC_ARRAY(
+			char, strlen(envname) + 1 + strlen(envval) + 1
+		);
 
 		strcpy(expr, envname);
 		strcat(expr, "=");
@@ -355,7 +358,7 @@ static void *Task_Ready;
 	// http://julipedia.meroh.net/2004/10/portability-unsetenvfoo-vs-putenvfoo.html
 
 	// going to hope this case doesn't hold onto the string...
-	if (putenv((char*)envname) == -1)
+	if (putenv(envname) == -1)
 		return FALSE;
 #endif
 	return TRUE;
@@ -373,14 +376,14 @@ static void *Task_Ready;
 	char *str, *cp;
 
 	// compute total size:
-	for (n = 0; environ[n]; n++) len += 1 + LEN_STR(environ[n]);
+	for (n = 0; environ[n]; n++) len += 1 + strlen(environ[n]);
 
 	cp = str = OS_Make(len + 1); // +terminator
 	*cp = 0;
 
 	// combine all strings into one:
 	for (n = 0; environ[n]; n++) {
-		len = LEN_STR(environ[n]);
+		len = strlen(environ[n]);
 		strcat(cp, environ[n]);
 		cp += len;
 		*cp++ = 0;
@@ -446,9 +449,9 @@ static void *Task_Ready;
 **
 ***********************************************************************/
 {
-	*path = MAKE_STR(PATH_MAX);
+	*path = OS_ALLOC_ARRAY(char, PATH_MAX);
 	if (!getcwd(*path, PATH_MAX-1)) *path[0] = 0;
-	return LEN_STR(*path); // Be sure to call free() after usage
+	return strlen(*path); // Be sure to call free() after usage
 }
 
 
@@ -514,7 +517,7 @@ static void *Task_Ready;
 
 /***********************************************************************
 **
-*/	void *OS_Find_Function(void *dll, char *funcname)
+*/	void *OS_Find_Function(void *dll, const char *funcname)
 /*
 **		Get a DLL function address from its string name.
 **

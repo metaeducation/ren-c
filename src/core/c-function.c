@@ -152,7 +152,7 @@
 			break;
 		case REB_SET_WORD:
 		default:
-			Trap1(RE_BAD_FUNC_DEF, blk);
+			Trap1_DEAD_END(RE_BAD_FUNC_DEF, blk);
 		}
 	}
 
@@ -333,7 +333,7 @@
 	REBINT ret;
 
 	action = Value_Dispatch[type];
-	//ASSERT2(action != 0, RP_NO_ACTION);
+	//assert(action != 0, RP_NO_ACTION);
 	if (!action) Trap_Action(type, act);
 	ret = action(ds, act);
 	if (ret > 0) {
@@ -384,7 +384,7 @@
 
 	Eval_Natives++;
 
-	ASSERT1(type < REB_MAX, RP_BAD_TYPE_ACTION);
+	assert(type < REB_MAX);
 
 	// Handle special datatype test cases (eg. integer?)
 	if (VAL_FUNC_ACT(func) == 0) {

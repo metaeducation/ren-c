@@ -705,7 +705,7 @@ ConversionResult ConvertUTF8toUTF32 (
 
 /***********************************************************************
 **
-*/	REBINT What_UTF(REBYTE *bp, REBCNT len)
+*/	REBINT What_UTF(const REBYTE *bp, REBCNT len)
 /*
 **		Tell us what UTF encoding the string has. Negative for LE.
 **
@@ -736,7 +736,7 @@ ConversionResult ConvertUTF8toUTF32 (
 
 /***********************************************************************
 **
-*/	REBFLG Legal_UTF8_Char(REBYTE *str, REBCNT len)
+*/	REBFLG Legal_UTF8_Char(const REBYTE *str, REBCNT len)
 /*
 **		Returns TRUE if char is legal.
 **
@@ -768,7 +768,7 @@ ConversionResult ConvertUTF8toUTF32 (
 
 /***********************************************************************
 **
-*/	REBCNT Decode_UTF8_Char(REBYTE **str, REBINT *len)
+*/	REBCNT Decode_UTF8_Char(const REBYTE **str, REBCNT *len)
 /*
 **		Converts a single UTF8 code-point (to 32 bit).
 **		Errors are returned as zero. (So prescan source for null.)
@@ -777,7 +777,7 @@ ConversionResult ConvertUTF8toUTF32 (
 **
 ***********************************************************************/
 {
-	UTF8 *source = *str;
+	const UTF8 *source = *str;
 	UTF32 ch = 0;
 	int slen = trailingBytesForUTF8[*source];
 
@@ -817,7 +817,7 @@ ConversionResult ConvertUTF8toUTF32 (
 
 /***********************************************************************
 **
-*/	int Decode_UTF8(REBUNI *dst, REBYTE *src, REBINT len, REBFLG ccr)
+*/	int Decode_UTF8(REBUNI *dst, const REBYTE *src, REBCNT len, REBFLG ccr)
 /*
 **		Decode UTF8 byte string into a 16 bit preallocated array.
 **
@@ -853,7 +853,7 @@ ConversionResult ConvertUTF8toUTF32 (
 
 /***********************************************************************
 **
-*/	int Decode_UTF16(REBUNI *dst, REBYTE *src, REBINT len, REBFLG lee, REBFLG ccr)
+*/	int Decode_UTF16(REBUNI *dst, const REBYTE *src, REBINT len, REBFLG lee, REBFLG ccr)
 /*
 **		dst: the desination array, must always be large enough!
 **		src: source binary data
@@ -907,7 +907,7 @@ ConversionResult ConvertUTF8toUTF32 (
 
 /***********************************************************************
 **
-*/	int Decode_UTF32(REBUNI *dst, REBYTE *src, REBINT len, REBFLG lee, REBFLG ccr)
+*/	int Decode_UTF32(REBUNI *dst, const REBYTE *src, REBINT len, REBFLG lee, REBFLG ccr)
 /*
 ***********************************************************************/
 {
@@ -917,7 +917,7 @@ ConversionResult ConvertUTF8toUTF32 (
 
 /***********************************************************************
 **
-*/	REBSER *Decode_UTF_String(REBYTE *bp, REBCNT len, REBINT utf)
+*/	REBSER *Decode_UTF_String(const REBYTE *bp, REBCNT len, REBINT utf)
 /*
 **		Do all the details to decode a string.
 **		Input is a byte series. Len is len of input.
@@ -1039,7 +1039,7 @@ ConversionResult ConvertUTF8toUTF32 (
 
 /***********************************************************************
 **
-*/	REBCNT Encode_UTF8(REBYTE *dst, REBINT max, void *src, REBCNT *len, REBFLG uni, REBFLG ccr)
+*/	REBCNT Encode_UTF8(REBYTE *dst, REBINT max, const void *p, REBCNT *len, REBFLG uni, REBFLG ccr)
 /*
 **		Encode the unicode into UTF8 byte string.
 **
@@ -1055,13 +1055,13 @@ ConversionResult ConvertUTF8toUTF32 (
 	REBINT n;
 	REBYTE buf[8];
 	REBYTE *bs = dst; // save start
-	REBYTE *bp = (REBYTE*)src;
-	REBUNI *up = (REBUNI*)src;
+	const REBYTE *bp = uni ? NULL : cast(const REBYTE *, p);
+	const REBUNI *up = uni ? cast(const REBUNI *, p) : NULL;
 	REBCNT cnt;
 
 	if (len) cnt = *len;
 	else {
-		cnt = uni ? wcslen((REBUNI*)bp) : LEN_BYTES((REBYTE*)bp);
+		cnt = uni ? Strlen_Uni(up) : strlen(cs_cast(bp));
 	}
 
 	for (; max > 0 && cnt > 0; cnt--) {
@@ -1076,7 +1076,7 @@ ConversionResult ConvertUTF8toUTF32 (
 				c = LF;
 			}
 #endif
-			*dst++ = (REBYTE)c;
+			*dst++ = cast(REBYTE, c);
 			max--;
 		}
 		else {
@@ -1090,7 +1090,10 @@ ConversionResult ConvertUTF8toUTF32 (
 
 	if (len) *len = dst - bs;
 
-	return uni ? up - (REBUNI*)src : bp - (REBYTE*)src;
+	if (uni)
+		return up - cast(const REBUNI *, p);
+	else
+		return bp - cast(const REBYTE *, p);
 }
 
 
@@ -1158,7 +1161,7 @@ ConversionResult ConvertUTF8toUTF32 (
 			Encode_UTF8(cp, size, bp, &len, FALSE, ccr);
 		}
 		else if (GET_FLAG(opts, ENC_OPT_NO_COPY)) return 0;
-		else return Copy_Bytes(bp, len);
+		else return Copy_Unencoded(s_cast(bp), len);
 
 	} else {
 		REBUNI *up = VAL_UNI_DATA(arg);
@@ -1171,7 +1174,7 @@ ConversionResult ConvertUTF8toUTF32 (
 	SERIES_TAIL(ser) = len;
 	STR_TERM(ser);
 
-	return Copy_Bytes(BIN_HEAD(ser), len);
+	return Copy_Unencoded(s_cast(BIN_HEAD(ser)), len);
 }
 
 
@@ -1201,3 +1204,97 @@ ConversionResult ConvertUTF8toUTF32 (
 
 	return ser;
 }
+
+
+/***********************************************************************
+**
+*/	REBCNT Strlen_Uni(const REBUNI *up)
+/*
+**		Rebol's current choice is to use UCS-2 internally, such that
+**		a REBUNI is an unsigned 16-bit number.  This means that you
+**		cannot use wcslen() to determine a REBUNI* string size, as
+**		wchar_t is not guaranteed to be 2 bytes on every platform.
+**
+**		This is a simple UCS-2 implementation of string length.  It
+**		applies `memchr()` for a potential speedup from optimizations
+**		in the C runtime exploiting processor operations to do better
+**		than a `for` loop could accomplish.
+**
+***********************************************************************/
+{
+	REBCNT len;
+	const char *cp = r_cast(const char *, up); // "C"har vs. "U"nicode
+
+	do {
+		// A size_t -1 is a portable way of saying 'maximum size_t',
+		// since we have no known limit on the search length
+		cp = cast(const char *, memchr(cp, 0, cast(size_t, -1)));
+		len = cp - r_cast(const char *, up);
+
+		// If it's at an even position, we can check to see if the
+		// next byte is zero as well.  If so we've found a proper
+		// two byte terminating sequence.
+		if ((len % 2 == 0) && (*(++cp) == 0)) break;
+
+		// It's either an odd position or didn't match, keep going...
+		++cp;
+	} while (cp);
+
+	assert(len % 2 == 0);
+	return len / 2;
+}
+
+
+#ifndef NDEBUG
+/***********************************************************************
+**
+*/	REBYTE *b_cast(char *s)
+/*
+**		Debug-only version of b_cast() that does type checking.
+**		If you get a complaint you probably meant to use cb_cast().
+**
+***********************************************************************/
+{
+	return r_cast(REBYTE *, s);
+}
+
+
+/***********************************************************************
+**
+*/	const REBYTE *cb_cast(const char *s)
+/*
+**		Debug-only version of cb_cast() that does type checking.
+**		If you get a complaint you probably meant to use b_cast().
+**
+***********************************************************************/
+{
+	return r_cast(const REBYTE *, s);
+}
+
+
+/***********************************************************************
+**
+*/	char *s_cast(REBYTE *s)
+/*
+**		Debug-only version of s_cast() that does type checking.
+**		If you get a complaint you probably meant to use cs_cast().
+**
+***********************************************************************/
+{
+	return r_cast(char*, s);
+}
+
+
+/***********************************************************************
+**
+*/	const char *cs_cast(const REBYTE *s)
+/*
+**		Debug-only version of cs_cast() that does type checking.
+**		If you get a complaint you probably meant to use s_cast().
+**
+***********************************************************************/
+{
+	return r_cast(const char *, s);
+}
+
+#endif

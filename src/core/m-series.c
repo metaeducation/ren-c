@@ -80,7 +80,7 @@
 	}
 
 	// Range checks:
-	if (delta & 0x80000000) Trap0(RE_PAST_END); // 2GB max
+	if (delta & 0x80000000) Trap(RE_PAST_END); // 2GB max
 	if (index > series->tail) index = series->tail; // clip
 
 	// Width adjusted variables:
@@ -92,7 +92,7 @@
 	// Do we need to expand the current series allocation?
 	// WARNING: Do not use ">=" below or newser size may be the same!
 	if ((size + extra) > SERIES_SPACE(series)) {
-		if (IS_LOCK_SERIES(series)) Crash(RP_LOCKED_SERIES);
+		if (IS_LOCK_SERIES(series)) Panic(RP_LOCKED_SERIES);
 		//DISABLE_GC; // Don't let GC occur just for an expansion.
 
 		if (Reb_Opts->watch_expand) {
@@ -116,7 +116,7 @@
 		/* new_size = series->tail + delta + x with overflow checking */
 		if (REB_U32_ADD_OF(series->tail, delta, &new_size)
 			|| REB_U32_ADD_OF(new_size, x, &new_size)) {
-			Trap0(RE_PAST_END);
+			Trap(RE_PAST_END);
 		}
 
 		newser = Make_Series(new_size, wide, TRUE);
@@ -161,7 +161,7 @@
 
 	if ((SERIES_TAIL(series) + SERIES_BIAS(series)) * wide >= SERIES_TOTAL(series)) {
 		Dump_Series(series, "Overflow");
-		ASSERT(0, RP_OVER_SERIES);
+		assert(FALSE);
 	}
 
 	CHECK_MEMORY(3);
@@ -218,13 +218,13 @@
 
 	EXPAND_SERIES_TAIL(series, len);
 	memcpy(series->data + (wide * tail), data, wide * len);
-	CLEAR(series->data + (wide * series->tail), wide); // terminator
+	memset(series->data + (wide * series->tail), NUL, wide); // terminator
 }
 
 
 /***********************************************************************
 **
-*/	void Append_Mem_Extra(REBSER *series, REBYTE *data, REBCNT len, REBCNT extra)
+*/	void Append_Mem_Extra(REBSER *series, const REBYTE *data, REBCNT len, REBCNT extra)
 /*
 **		An optimized function for appending raw memory bytes to
 **		a byte-sized series. The series will be expanded if room
@@ -348,12 +348,12 @@
 			SERIES_SET_BIAS(series, 0);
 			SERIES_REST(series) += len;
 			series->data -= SERIES_WIDE(series) * len;
-			CLEAR(series->data, SERIES_WIDE(series)); // terminate
+			memset(series->data, NUL, SERIES_WIDE(series)); // terminate
 		} else {
 			// Add bias to head:
 			REBCNT bias = SERIES_BIAS(series);
 			if (REB_U32_ADD_OF(bias, len, &bias)) {
-				Trap0(RE_OVERFLOW);
+				Trap(RE_OVERFLOW);
 			}
 			if (bias > 0xffff) { //bias is 16-bit, so a simple SERIES_ADD_BIAS could overflow it
 				REBYTE *data = series->data;
@@ -385,7 +385,7 @@
 	// Clip if past end and optimize the remove operation:
 	if (len + index >= series->tail) {
 		series->tail = index;
-		CLEAR(series->data + start, SERIES_WIDE(series));
+		memset(series->data + start, NUL, SERIES_WIDE(series));
 		return;
 	}
 
@@ -409,7 +409,11 @@
 {
 	if (series->tail == 0) return;
 	series->tail--;
-	CLEAR(series->data + SERIES_WIDE(series) * series->tail, SERIES_WIDE(series));
+	memset(
+		series->data + SERIES_WIDE(series) * series->tail,
+		NUL,
+		SERIES_WIDE(series)
+	);
 }
 
 
@@ -444,7 +448,7 @@
 {
 	series->tail = 0;
 	if (SERIES_BIAS(series)) Reset_Bias(series);
-	CLEAR(series->data, SERIES_WIDE(series)); // re-terminate
+	memset(series->data, NUL, SERIES_WIDE(series)); // re-terminate
 }
 
 
@@ -459,7 +463,7 @@
 {
 	series->tail = 0;
 	if (SERIES_BIAS(series)) Reset_Bias(series);
-	CLEAR(series->data, SERIES_SPACE(series));
+	memset(series->data, NUL, SERIES_SPACE(series));
 }
 
 
@@ -476,7 +480,7 @@
 	if (SERIES_BIAS(series)) Reset_Bias(series);
 	EXPAND_SERIES_TAIL(series, size);
 	series->tail = 0;
-	CLEAR(series->data, SERIES_WIDE(series)); // re-terminate
+	memset(series->data, NUL, SERIES_WIDE(series)); // re-terminate
 }
 
 
@@ -488,7 +492,11 @@
 **
 ***********************************************************************/
 {
-	CLEAR(series->data + SERIES_WIDE(series) * series->tail, SERIES_WIDE(series));
+	memset(
+		series->data + SERIES_WIDE(series) * series->tail,
+		NUL,
+		SERIES_WIDE(series)
+	);
 }
 
 
@@ -522,7 +530,7 @@
 **
 ***********************************************************************/
 {
-	if (!buf) Crash(RP_NO_BUFFER);
+	if (!buf) Panic_DEAD_END(RP_NO_BUFFER);
 
 	RESET_TAIL(buf);
 	if (SERIES_BIAS(buf)) Reset_Bias(buf);

@@ -41,7 +41,7 @@ static REBSER *Read_All_File(char *fname)
 	REBREQ file;
 	REBSER *ser = 0;
 
-	CLEAR(&file, sizeof(file));
+	memset(&file, NUL, sizeof(file));
 
 	file.clen = sizeof(file);
 	file.device = RDI_FILE;
@@ -91,7 +91,7 @@ static REBSER *Read_All_File(char *fname)
 		ser = To_Local_Path("output.txt", 10, FALSE, TRUE);
 
 	if (ser) {
-		if (!Echo_File((REBCHR*)(ser->data))) Trap1(RE_CANNOT_OPEN, val);
+		if (!Echo_File((REBCHR*)(ser->data))) Trap1_DEAD_END(RE_CANNOT_OPEN, val);
 	}
 
 	return R_RET;
@@ -288,7 +288,7 @@ static REBSER *Read_All_File(char *fname)
 	ser = VAL_SERIES(D_ARG(1));
 
 	ser = Read_All_File(STR_HEAD(ser));
-	if (!ser) Trap1(RE_CANNOT_OPEN, D_ARG(1));
+	if (!ser) Trap1_DEAD_END(RE_CANNOT_OPEN, D_ARG(1));
 
 	Set_Binary(D_RET, ser);
 
@@ -349,7 +349,7 @@ static REBSER *Read_All_File(char *fname)
 	case REB_TIME:
 		timeout = (REBINT) (VAL_TIME(val) / (SEC_SEC / 1000));
 chk_neg:
-		if (timeout < 0) Trap_Range(val);
+		if (timeout < 0) Trap_Range_DEAD_END(val);
 		break;
 
 	case REB_PORT:
@@ -363,7 +363,7 @@ chk_neg:
 		break;
 
 	default:
-		Trap_Arg(val);
+		Trap_Arg_DEAD_END(val);
 	}
 
 	// Prevent GC on temp port block:
@@ -403,7 +403,7 @@ chk_neg:
 	REBVAL *val = D_ARG(1);
 	REBSER *port = VAL_PORT(val);
 
-	if (SERIES_TAIL(port) < STD_PORT_MAX) Crash(9910);
+	if (SERIES_TAIL(port) < STD_PORT_MAX) Panic_DEAD_END(9910);
 
 	val = OFV(port, STD_PORT_ACTOR);
 	if (IS_NATIVE(val)) {
@@ -429,7 +429,7 @@ chk_neg:
 	REBSER *ser;
 
 	ser = Value_To_REBOL_Path(arg, 0);
-	if (!ser) Trap_Arg(arg);
+	if (!ser) Trap_Arg_DEAD_END(arg);
 	Set_Series(REB_FILE, D_RET, ser);
 
 	return R_RET;
@@ -446,7 +446,7 @@ chk_neg:
 	REBSER *ser;
 
 	ser = Value_To_Local_Path(arg, D_REF(2));
-	if (!ser) Trap_Arg(arg);
+	if (!ser) Trap_Arg_DEAD_END(arg);
 	Set_Series(REB_STRING, D_RET, ser);
 
 	return R_RET;
@@ -465,7 +465,7 @@ chk_neg:
 
 	len = OS_GET_CURRENT_DIR(&lpath);
 	ser = To_REBOL_Path(lpath, len, OS_WIDE, TRUE); // allocates extra for end /
-	ASSERT1(ser, RP_MISC); // should never happen
+	assert(ser); // should never be NULL
 	OS_FREE(lpath);
 	Set_Series(REB_FILE, D_RET, ser);
 
@@ -485,13 +485,13 @@ chk_neg:
 	REBVAL val;
 
 	ser = Value_To_OS_Path(arg, TRUE);
-	if (!ser) Trap_Arg(arg); // !!! ERROR MSG
+	if (!ser) Trap_Arg_DEAD_END(arg); // !!! ERROR MSG
 
 	Set_String(&val, ser); // may be unicode or utf-8
 	Check_Security(SYM_FILE, POL_EXEC, &val);
 
 	n = OS_SET_CURRENT_DIR((void*)ser->data);  // use len for bool
-	if (!n) Trap_Arg(arg); // !!! ERROR MSG
+	if (!n) Trap_Arg_DEAD_END(arg); // !!! ERROR MSG
 
 	return R_ARG1;
 }
@@ -519,7 +519,7 @@ chk_neg:
 	if (r == 0) {
 		return R_UNSET;
 	} else {
-		Trap1(RE_CALL_FAIL, Make_OS_Error(r));
+		Trap1_DEAD_END(RE_CALL_FAIL, Make_OS_Error(r));
 	}
 
 	return R_UNSET;
@@ -554,7 +554,7 @@ chk_neg:
 	REBINT r;
 	REBCHR *cmd = NULL;
 	REBVAL *arg = D_ARG(1);
-	REBI64 pid = -1;
+	REBU64 pid = MAX_U64; // was -1, but is unsigned
 	u32 flags = 0;
 	int argc = 1;
 	REBCHR ** argv = NULL;
@@ -601,7 +601,7 @@ chk_neg:
 		} else if (IS_NONE(param)) {
 			input_type = NONE_TYPE;
 		} else {
-			Trap_Arg(param);
+			Trap_Arg_DEAD_END(param);
 		}
 	}
 
@@ -620,7 +620,7 @@ chk_neg:
 		} else if (IS_NONE(param)) {
 			output_type = NONE_TYPE;
 		} else {
-			Trap_Arg(param);
+			Trap_Arg_DEAD_END(param);
 		}
 	}
 
@@ -639,7 +639,7 @@ chk_neg:
 		} else if (IS_NONE(param)) {
 			err_type = NONE_TYPE;
 		} else {
-			Trap_Arg(param);
+			Trap_Arg_DEAD_END(param);
 		}
 	}
 
@@ -671,7 +671,7 @@ chk_neg:
 		REBSER * ser = NULL;
 		argc = VAL_LEN(arg);
 		if (argc <= 0) {
-			Trap0(RE_TOO_SHORT);
+			Trap_DEAD_END(RE_TOO_SHORT);
 		}
 		ser = Make_Series(argc + 1, sizeof(REBCHR*), FALSE);
 		argv = (REBCHR**)SERIES_DATA(ser);
@@ -683,7 +683,7 @@ chk_neg:
 				REBSER *path = Value_To_OS_Path(param, FALSE);
 				argv[i] = (REBCHR*) SERIES_DATA(path);
 			} else {
-				Trap_Arg(param);
+				Trap_Arg_DEAD_END(param);
 			}
 		}
 		argv[argc] = NULL;
@@ -698,13 +698,18 @@ chk_neg:
 		argv[argc] = NULL;
 		cmd = NULL;
 	} else {
-		Trap_Arg(arg);
+		Trap_Arg_DEAD_END(arg);
 	}
 
-	r = OS_CREATE_PROCESS(cmd, argc, argv, flags, &pid, &exit_code,
-						  input_type, os_input, input_len,
-						  output_type, &os_output, &output_len,
-						  err_type, &os_err, &err_len);
+	r = OS_CREATE_PROCESS(
+		// const cast is needed for standard C limitation:
+		//     http://stackoverflow.com/a/19505361/211160
+		cmd, argc, c_cast(const char**, argv),
+		flags, &pid, &exit_code,
+		input_type, os_input, input_len,
+		output_type, &os_output, &output_len,
+		err_type, &os_err, &err_len
+	);
 
 	if (output_type == STRING_TYPE) {
 		if (output != NULL
@@ -716,7 +721,7 @@ chk_neg:
 	} else if (output_type == BINARY_TYPE) {
 		if (output != NULL
 			&& output_len > 0) {
-			Append_Bytes_Len(VAL_SERIES(output), os_output, output_len);
+			Append_Unencoded_Core(VAL_SERIES(output), os_output, output_len);
 			OS_FREE(os_output);
 		}
 	}
@@ -731,7 +736,7 @@ chk_neg:
 	} else if (err_type == BINARY_TYPE) {
 		if (err != NULL
 			&& err_len > 0) {
-			Append_Bytes_Len(VAL_SERIES(err), os_err, err_len);
+			Append_Unencoded_Core(VAL_SERIES(err), os_err, err_len);
 			OS_FREE(os_err);
 		}
 	}
@@ -754,7 +759,7 @@ chk_neg:
 		SET_INTEGER(D_RET, flag_wait ? exit_code : pid);
 		return R_RET;
 	} else {
-		Trap1(RE_CALL_FAIL, Make_OS_Error(r));
+		Trap1_DEAD_END(RE_CALL_FAIL, Make_OS_Error(r));
 		return R_NONE;
 	}
 }
@@ -775,20 +780,20 @@ chk_neg:
 
 	if (ANY_STR(val)) {
 		cmd = Make_Binary(VAL_LEN(val) + VAL_LEN(script) + 4);
-		Append_Byte(cmd, '"');
-		Append_Bytes(cmd, VAL_BIN_DATA(val));
-		Append_Byte(cmd, '"');
+		Append_Codepoint(cmd, '"');
+		Append_Unencoded(cmd, s_cast(VAL_BIN_DATA(val)));
+		Append_Codepoint(cmd, '"');
 		if (!IS_NONE(script)) {
-			Append_Byte(cmd, ' ');
-			Append_Bytes(cmd, VAL_BIN_DATA(script)); // !!! convert file
+			Append_Codepoint(cmd, ' ');
+			Append_Unencoded(cmd, s_cast(VAL_BIN_DATA(script))); // !!! convert file
 		}
 		if (D_REF(2)) {
-			Append_Byte(cmd, ' ');
-			Append_Bytes(cmd, VAL_BIN_DATA(D_ARG(3)));
+			Append_Codepoint(cmd, ' ');
+			Append_Unencoded(cmd, s_cast(VAL_BIN_DATA(D_ARG(3))));
 		}
 		Print("Launching: %s", STR_HEAD(cmd));
 		r = OS_CREATE_PROCESS(STR_HEAD(cmd), 0);
-		if (r < 0) Trap1(RE_CALL_FAIL, Make_OS_Error());
+		if (r < 0) Trap1_DEAD_END(RE_CALL_FAIL, Make_OS_Error());
 	}
 	return R_NONE;
 }
@@ -810,7 +815,7 @@ chk_neg:
 	REBCHR *eq;
 	REBSER *blk;
 
-	while (n = LEN_STR(str)) {
+	while (n = OS_STRLEN(str)) {
 		len++;
 		str += n + 1; // next
 	}
@@ -818,7 +823,7 @@ chk_neg:
 	blk = Make_Block(len*2);
 
 	str = start;
-	while (NZ(eq = FIND_CHR(str+1, '=')) && NZ(n = LEN_STR(str))) {
+	while (NZ(eq = OS_STRCHR(str + 1, '=')) && NZ(n = OS_STRLEN(str))) {
 		Set_Series(REB_STRING, Append_Value(blk), Copy_OS_Str(str, eq-str));
 		Set_Series(REB_STRING, Append_Value(blk), Copy_OS_Str(eq+1, n-(eq-str)-1));
 		str += n + 1; // next
@@ -847,9 +852,9 @@ chk_neg:
 
 	for (value = VAL_BLK_DATA(blk); NOT_END(value); value++) {
 		Mold_Value(&mo, value, 0);
-		Append_Byte(mo.series, 0);
+		Append_Codepoint(mo.series, 0);
 	}
-	Append_Byte(mo.series, 0);
+	Append_Codepoint(mo.series, 0);
 
 	return Copy_Series(mo.series); // Unicode
 }
@@ -869,7 +874,7 @@ chk_neg:
 	REBSER *blk;
 	REBSER *dir;
 
-	while (n = LEN_STR(str)) {
+	while (n = OS_STRLEN(str)) {
 		len++;
 		str += n + 1; // next
 	}
@@ -878,7 +883,7 @@ chk_neg:
 
 	// First is a dir path or full file path:
 	str = start;
-	n = LEN_STR(str);
+	n = OS_STRLEN(str);
 
 	if (len == 1) {  // First is full file path
 		dir = To_REBOL_Path(str, n, OS_WIDE, 0);
@@ -889,7 +894,7 @@ chk_neg:
 		dir = To_REBOL_Path(str, n, -1, TRUE);
 		str += n + 1; // next
 		len = dir->tail;
-		while (n = LEN_STR(str)) {
+		while (n = OS_STRLEN(str)) {
 			dir->tail = len;
 			Append_Uni_Uni(dir, str, n);
 			Set_Series(REB_FILE, Append_Value(blk), Copy_String(dir, 0, -1));
@@ -897,7 +902,7 @@ chk_neg:
 		}
 #else /* absolute pathes already */
 		str += n + 1;
-		while (n = LEN_STR(str)) {
+		while (n = OS_STRLEN(str)) {
 			dir = To_REBOL_Path(str, n, OS_WIDE, FALSE);
 			Set_Series(REB_FILE, Append_Value(blk), Copy_String(dir, 0, -1));
 			str += n + 1; // next
@@ -919,7 +924,8 @@ chk_neg:
 	REBSER *ser;
 	REBINT n;
 
-	fr.files = OS_MAKE(MAX_FILE_REQ_BUF);
+	assert(MAX_FILE_REQ_BUF % sizeof(REBCHR) == 0);
+	fr.files = OS_ALLOC_ARRAY(REBCHR, MAX_FILE_REQ_BUF/sizeof(REBCHR));
 	fr.len = MAX_FILE_REQ_BUF/sizeof(REBCHR) - 2;
 	fr.files[0] = 0;
 
@@ -934,7 +940,7 @@ chk_neg:
 		n = ser->tail;
 		if (fr.dir[n-1] != OS_DIR_SEP) {
 			if (n+2 > fr.len) n = fr.len - 2;
-			COPY_STR(fr.files, (REBCHR*)(ser->data), n);
+			OS_STRNCPY(fr.files, (REBCHR*)(ser->data), n);
 			fr.files[n] = 0;
 		}
 	}
@@ -953,7 +959,7 @@ chk_neg:
 			Set_Block(D_RET, ser);
 		}
 		else {
-			ser = To_REBOL_Path(fr.files, LEN_STR(fr.files), OS_WIDE, 0);
+			ser = To_REBOL_Path(fr.files, OS_STRLEN(fr.files), OS_WIDE, 0);
 			Set_Series(REB_FILE, D_RET, ser);
 		}
 	} else
@@ -987,10 +993,10 @@ chk_neg:
 	if (lenplus < 0) return R_UNSET;
 
 	// Two copies...is there a better way?
-	buf = MAKE_STR(lenplus);
+	buf = OS_ALLOC_ARRAY(REBCHR, lenplus);
 	OS_GET_ENV(cmd, buf, lenplus);
 	Set_String(D_RET, Copy_OS_Str(buf, lenplus - 1));
-	FREE_MEM(buf);
+	OS_FREE(buf);
 
 	return R_RET;
 }
@@ -1017,7 +1023,7 @@ chk_neg:
 		success = OS_SET_ENV(cmd, value);
 		if (success) {
 			// What function could reuse arg2 as-is?
-			Set_String(D_RET, Copy_OS_Str(value, LEN_STR(value)));
+			Set_String(D_RET, Copy_OS_Str(value, OS_STRLEN(value)));
 			return R_RET;
 		}
 		return R_UNSET;
@@ -1077,13 +1083,13 @@ chk_neg:
 							case OS_ENA:
 								return R_NONE;
 							case OS_EPERM:
-								Trap0(RE_PERMISSION_DENIED);
+								Trap_DEAD_END(RE_PERMISSION_DENIED);
 								break;
 							case OS_EINVAL:
-								Trap_Arg(val);
+								Trap_Arg_DEAD_END(val);
 								break;
 							default:
-								Trap_Arg(val);
+								Trap_Arg_DEAD_END(val);
 								break;
 						}
 					} else {
@@ -1091,7 +1097,7 @@ chk_neg:
 						return R_RET;
 					}
 				} else {
-					Trap_Arg(val);
+					Trap_Arg_DEAD_END(val);
 				}
 			} else {
 				REBINT ret = OS_GET_UID();
@@ -1112,13 +1118,13 @@ chk_neg:
 							case OS_ENA:
 								return R_NONE;
 							case OS_EPERM:
-								Trap0(RE_PERMISSION_DENIED);
+								Trap_DEAD_END(RE_PERMISSION_DENIED);
 								break;
 							case OS_EINVAL:
-								Trap_Arg(val);
+								Trap_Arg_DEAD_END(val);
 								break;
 							default:
-								Trap_Arg(val);
+								Trap_Arg_DEAD_END(val);
 								break;
 						}
 					} else {
@@ -1126,7 +1132,7 @@ chk_neg:
 						return R_RET;
 					}
 				} else {
-					Trap_Arg(val);
+					Trap_Arg_DEAD_END(val);
 				}
 			} else {
 				REBINT ret = OS_GET_GID();
@@ -1147,13 +1153,13 @@ chk_neg:
 							case OS_ENA:
 								return R_NONE;
 							case OS_EPERM:
-								Trap0(RE_PERMISSION_DENIED);
+								Trap_DEAD_END(RE_PERMISSION_DENIED);
 								break;
 							case OS_EINVAL:
-								Trap_Arg(val);
+								Trap_Arg_DEAD_END(val);
 								break;
 							default:
-								Trap_Arg(val);
+								Trap_Arg_DEAD_END(val);
 								break;
 						}
 					} else {
@@ -1161,7 +1167,7 @@ chk_neg:
 						return R_RET;
 					}
 				} else {
-					Trap_Arg(val);
+					Trap_Arg_DEAD_END(val);
 				}
 			} else {
 				REBINT ret = OS_GET_EUID();
@@ -1182,13 +1188,13 @@ chk_neg:
 							case OS_ENA:
 								return R_NONE;
 							case OS_EPERM:
-								Trap0(RE_PERMISSION_DENIED);
+								Trap_DEAD_END(RE_PERMISSION_DENIED);
 								break;
 							case OS_EINVAL:
-								Trap_Arg(val);
+								Trap_Arg_DEAD_END(val);
 								break;
 							default:
-								Trap_Arg(val);
+								Trap_Arg_DEAD_END(val);
 								break;
 						}
 					} else {
@@ -1196,7 +1202,7 @@ chk_neg:
 						return R_RET;
 					}
 				} else {
-					Trap_Arg(val);
+					Trap_Arg_DEAD_END(val);
 				}
 			} else {
 				REBINT ret = OS_GET_EGID();
@@ -1219,20 +1225,20 @@ chk_neg:
 					REBVAL *sig = NULL;
 
 					if (VAL_LEN(val) != 2) {
-						Trap_Arg(val);
+						Trap_Arg_DEAD_END(val);
 					}
 					pid = VAL_BLK_SKIP(val, 0);
 					sig = VAL_BLK_SKIP(val, 1);
 					if (!IS_INTEGER(pid)) {
-						Trap_Arg(pid);
+						Trap_Arg_DEAD_END(pid);
 					}
 					if (!IS_INTEGER(sig)) {
-						Trap_Arg(sig);
+						Trap_Arg_DEAD_END(sig);
 					}
 					ret = OS_SEND_SIGNAL(VAL_INT32(pid), VAL_INT32(sig));
 					arg = sig;
 				} else {
-					Trap_Arg(val);
+					Trap_Arg_DEAD_END(val);
 				}
 
 				if (ret < 0) {
@@ -1240,16 +1246,16 @@ chk_neg:
 						case OS_ENA:
 							return R_NONE;
 						case OS_EPERM:
-							Trap0(RE_PERMISSION_DENIED);
+							Trap_DEAD_END(RE_PERMISSION_DENIED);
 							break;
 						case OS_EINVAL:
-							Trap_Arg(arg);
+							Trap_Arg_DEAD_END(arg);
 							break;
 						case OS_ESRCH:
-							Trap1(RE_PROCESS_NOT_FOUND, pid);
+							Trap1_DEAD_END(RE_PROCESS_NOT_FOUND, pid);
 							break;
 						default:
-							Trap_Arg(val);
+							Trap_Arg_DEAD_END(val);
 							break;
 					}
 				} else {
@@ -1267,6 +1273,6 @@ chk_neg:
 			}
 			break;
 		default:
-			Trap_Arg(field);
+			Trap_Arg_DEAD_END(field);
 	}
 }

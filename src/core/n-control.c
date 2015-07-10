@@ -56,7 +56,7 @@ enum {
 		if (VAL_PROTECTED(FRM_WORDS(frm)+index))
 			Trap1(RE_LOCKED_WORD, word);
 	}
-	else if (index == 0) Trap0(RE_SELF_PROTECTED);
+	else if (index == 0) Trap(RE_SELF_PROTECTED);
 }
 
 
@@ -227,7 +227,7 @@ enum {
 		}
 	}
 
-	if (GET_FLAG(flags, PROT_HIDE)) Trap0(RE_BAD_REFINES);
+	if (GET_FLAG(flags, PROT_HIDE)) Trap_DEAD_END(RE_BAD_REFINES);
 
 	Protect_Value(val, flags);
 
@@ -339,7 +339,7 @@ enum {
 		ds = DS_POP;  // volatile stack reference
 		if (IS_FALSE(ds)) index++;
 		else {
-			if (IS_UNSET(ds)) Trap0(RE_NO_RETURN);
+			if (IS_UNSET(ds)) Trap_DEAD_END(RE_NO_RETURN);
 			if (THROWN(ds)) return R_TOS1;
 			if (index >= SERIES_TAIL(block)) return R_TRUE;
 			index = Do_Next(block, index, 0);
@@ -563,7 +563,7 @@ got_err:
 		return R_ARG1;
 
 	case REB_SET_WORD:
-		Trap_Arg(value);
+		Trap_Arg_DEAD_END(value);
 
 	default:
 		return R_ARG1;
@@ -770,7 +770,7 @@ got_err:
 					// does not allow error! for its value1 argument". A better
 					// message would be more like "except handler does not
 					// allow error! for its value1 argument."
-					Trap3(RE_EXPECT_ARG, Of_Type(&handler), args, Of_Type(&error));
+					Trap3_DEAD_END(RE_EXPECT_ARG, Of_Type(&handler), args, Of_Type(&error));
 				}
 				Apply_Func(0, &handler, &error, 0);
 			}

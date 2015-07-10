@@ -40,7 +40,7 @@ static	REBCNT	Action_Marker;
 static	REBFUN  *Native_Functions;
 static	BOOT_BLK *Boot_Block;
 
-extern const REBYTE Str_Banner[];
+extern const char Str_Banner[];
 
 #ifdef WATCH_BOOT
 #define DOUT(s) puts(s)
@@ -95,15 +95,15 @@ extern const REBYTE Str_Banner[];
 	printf("%d %s\n", sizeof(REBALL), "all");
 #endif
 
-	ASSERT(VAL_TYPE(&val) == 123,  RP_REBVAL_ALIGNMENT);
+	if (VAL_TYPE(&val) != 123) Panic(RP_REBVAL_ALIGNMENT);
 	if (sizeof(void *) == 8) {
-		ASSERT(sizeof(REBVAL) == 32,   RP_REBVAL_ALIGNMENT);
-		ASSERT1(sizeof(REBGOB) == 84,  RP_BAD_SIZE);
+		if (sizeof(REBVAL) != 32) Panic(RP_REBVAL_ALIGNMENT);
+		if (sizeof(REBGOB) != 84) Panic(RP_BAD_SIZE);
 	} else {
-		ASSERT(sizeof(REBVAL) == 16,   RP_REBVAL_ALIGNMENT);
-		ASSERT1(sizeof(REBGOB) == 64,  RP_BAD_SIZE);
+		if (sizeof(REBVAL) != 16) Panic(RP_REBVAL_ALIGNMENT);
+		if (sizeof(REBGOB) != 64) Panic(RP_BAD_SIZE);
 	}
-	ASSERT1(sizeof(REBDAT) == 4,   RP_BAD_SIZE);
+	if (sizeof(REBDAT) != 4) Panic(RP_BAD_SIZE);
 }
 
 
@@ -114,7 +114,7 @@ extern const REBYTE Str_Banner[];
 ***********************************************************************/
 {
 	if (rargs->options & RO_VERS) {
-		Debug_Fmt((REBYTE*)Str_Banner, REBOL_VER, REBOL_REV, REBOL_UPD, REBOL_SYS, REBOL_VAR);
+		Debug_Fmt(Str_Banner, REBOL_VER, REBOL_REV, REBOL_UPD, REBOL_SYS, REBOL_VAR);
 		OS_EXIT(0);
 	}
 }
@@ -173,7 +173,7 @@ extern const REBYTE Str_Banner[];
 
 		textlen = Bytes_To_REBCNT(Native_Specs);
 		text = Decompress(&spec, 0, -1, textlen, 0);
-		if (!text || (STR_LEN(text) != textlen)) Crash(RP_BOOT_DATA);
+		if (!text || (STR_LEN(text) != textlen)) Panic(RP_BOOT_DATA);
 		boot = Scan_Source(STR_HEAD(text), textlen);
 		//Dump_Block_Raw(boot, 0, 2);
 		Free_Series(text);
@@ -183,26 +183,33 @@ extern const REBYTE Str_Banner[];
 
 	Boot_Block = (BOOT_BLK *)VAL_BLK(BLK_HEAD(boot));
 
-	ASSERT(VAL_TAIL(&Boot_Block->types) == REB_MAX, RP_BAD_BOOT_TYPE_BLOCK);
-	ASSERT(VAL_WORD_SYM(VAL_BLK(&Boot_Block->types)) == SYM_END_TYPE, RP_BAD_END_TYPE_WORD);
+	if (VAL_TAIL(&Boot_Block->types) != REB_MAX)
+		Panic(RP_BAD_BOOT_TYPE_BLOCK);
+	if (VAL_WORD_SYM(VAL_BLK(&Boot_Block->types)) != SYM_END_TYPE)
+		Panic(RP_BAD_END_TYPE_WORD);
 
 	// Create low-level string pointers (used by RS_ constants):
 	{
 		REBYTE *cp;
 		REBINT i;
 
-		PG_Boot_Strs = (REBYTE **)Make_Mem(RS_MAX * sizeof(REBYTE *));
+		PG_Boot_Strs = ALLOC_ARRAY(REBYTE *, RS_MAX);
+
 		*ROOT_STRINGS = Boot_Block->strings;
 		cp = VAL_BIN(ROOT_STRINGS);
+
 		for (i = 0; i < RS_MAX; i++) {
-			BOOT_STR(i,0) = cp;
+			PG_Boot_Strs[i] = cp;
 			while (*cp++);
 		}
 	}
 
-	ASSERT(!CMP_BYTES("end!", Get_Sym_Name(SYM_END_TYPE)), RP_BAD_END_CANON_WORD);
-	ASSERT(!CMP_BYTES("true", Get_Sym_Name(SYM_TRUE)), RP_BAD_TRUE_CANON_WORD);
-	ASSERT(!CMP_BYTES("line", BOOT_STR(RS_SCAN,1)), RP_BAD_BOOT_STRING);
+	if (strcmp("end!", s_cast(Get_Sym_Name(SYM_END_TYPE))) != 0)
+		Panic(RP_BAD_END_CANON_WORD);
+	if (strcmp("true", s_cast(Get_Sym_Name(SYM_TRUE))) != 0)
+		Panic(RP_BAD_TRUE_CANON_WORD);
+	if (strcmp("line", cs_cast(BOOT_STR(RS_SCAN, 1))) != 0)
+		Panic(RP_BAD_BOOT_STRING);
 }
 
 
@@ -248,9 +255,9 @@ extern const REBYTE Str_Banner[];
 	spec = VAL_SERIES(VAL_BLK(&Boot_Block->booters));
 
 	for (word++; NOT_END(word); word++, n++) {
-		COPY_BYTES(str, Get_Word_Name(word), 32);
+		strncpy(s_cast(str), s_cast(Get_Word_Name(word)), 32);
 		str[31] = '\0';
-		str[LEN_BYTES(str)-1] = '?';
+		str[strlen(s_cast(str)) - 1] = '?';
 		sym = Make_Word(str, 0);
 		//Print("sym: %s", Get_Sym_Name(sym));
 		value = Append_Frame(Lib_Context, 0, sym);
@@ -314,7 +321,7 @@ extern const REBYTE Str_Banner[];
 {
 	if ((Native_Limit == 0 && *Native_Functions) || (Native_Count < Native_Limit))
 		Make_Native(ds, VAL_SERIES(D_ARG(1)), *Native_Functions++, REB_NATIVE);
-	else Trap0(RE_MAX_NATIVES);
+	else Trap_DEAD_END(RE_MAX_NATIVES);
 	Native_Count++;
 	return R_RET;
 }
@@ -327,7 +334,7 @@ extern const REBYTE Str_Banner[];
 ***********************************************************************/
 {
 	Action_Count++;
-	if (Action_Count >= A_MAX_ACTION) Crash(RP_ACTION_OVERFLOW);
+	if (Action_Count >= A_MAX_ACTION) Panic_DEAD_END(RP_ACTION_OVERFLOW);
 	Make_Native(ds, VAL_SERIES(D_ARG(1)), (REBFUN)(REBUPT)Action_Count, REB_ACTION);
 	return R_RET;
 }
@@ -366,7 +373,7 @@ extern const REBYTE Str_Banner[];
 		val = Append_Frame(Lib_Context, word, 0);
 		// Find the related function:
 		func = Find_Word_Value(Lib_Context, VAL_WORD_SYM(word+1));
-		if (!func) Crash(9912);
+		if (!func) Panic(RP_MISC);
 		*val = *func;
 		VAL_SET(val, REB_OP);
 		VAL_SET_EXT(val, VAL_TYPE(func));
@@ -391,7 +398,8 @@ extern const REBYTE Str_Banner[];
 	// Construct the first native, which is the NATIVE function creator itself:
 	// native: native [spec [block!]]
 	word = VAL_BLK_SKIP(&Boot_Block->booters, 1);
-	ASSERT2(IS_SET_WORD(word) && VAL_WORD_SYM(word) == SYM_NATIVE, RE_NATIVE_BOOT);
+	if (!IS_SET_WORD(word) || VAL_WORD_SYM(word) != SYM_NATIVE)
+		Panic(RE_NATIVE_BOOT);
 	//val = BLK_SKIP(Sys_Context, SYS_CTX_NATIVE);
 	val = Append_Frame(Lib_Context, word, 0);
 	Make_Native(val, VAL_SERIES(word+2), Native_Functions[0], REB_NATIVE);
@@ -510,7 +518,7 @@ extern const REBYTE Str_Banner[];
 
 /***********************************************************************
 **
-*/	void Set_Root_Series(REBVAL *value, REBSER *ser, REBYTE *label)
+*/	void Set_Root_Series(REBVAL *value, REBSER *ser, const char *label)
 /*
 **		Used to set block and string values in the ROOT context.
 **
@@ -705,7 +713,8 @@ extern const REBYTE Str_Banner[];
 	}
 
 	if (codi->action == CODI_ENCODE) {
-		u16 * data = codi->data = Make_Mem(codi->len * sizeof(u16));
+		u16 * data = ALLOC_ARRAY(u16, codi->len);
+		codi->data = r_cast(unsigned char *, data);
 		if (codi->w == 1) {
 			/* in ASCII */
 			REBCNT i = 0;
@@ -808,7 +817,7 @@ extern const REBYTE Str_Banner[];
 
 /***********************************************************************
 **
-*/	void Register_Codec(REBYTE *name, codo dispatcher)
+*/	void Register_Codec(const REBYTE *name, codo dispatcher)
 /*
 **		Internal function for adding a codec.
 **
@@ -828,10 +837,10 @@ extern const REBYTE Str_Banner[];
 /*
 ***********************************************************************/
 {
-	Register_Codec((REBYTE*)"text", Codec_Text);
-	Register_Codec((REBYTE*)"utf-16le", Codec_UTF16LE);
-	Register_Codec((REBYTE*)"utf-16be", Codec_UTF16BE);
-	Register_Codec((REBYTE*)"markup", Codec_Markup);
+	Register_Codec(cb_cast("text"), Codec_Text);
+	Register_Codec(cb_cast("utf-16le"), Codec_UTF16LE);
+	Register_Codec(cb_cast("utf-16be"), Codec_UTF16BE);
+	Register_Codec(cb_cast("markup"), Codec_Markup);
 	Init_BMP_Codec();
 	Init_GIF_Codec();
 	Init_PNG_Codec();
@@ -844,7 +853,7 @@ static void Set_Option_String(REBCHR *str, REBCNT field)
 	REBVAL *val;
 	if (str) {
 		val = Get_System(SYS_OPTIONS, field);
-		Set_String(val, Copy_OS_Str(str, LEN_STR(str)));
+		Set_String(val, Copy_OS_Str(str, OS_STRLEN(str)));
 	}
 }
 
@@ -856,10 +865,10 @@ static REBCNT Set_Option_Word(REBCHR *str, REBCNT field)
 	REBCNT n = 0;
 
 	if (str) {
-		n = LEN_STR(str); // WC correct
+		n = OS_STRLEN(str); // WC correct
 		if (n > 38) return 0;
 		bp = &buf[0];
-		while ((*bp++ = (REBYTE)*str++)); // clips unicode
+		while ((*bp++ = cast(REBYTE, *str++))); // clips unicode
 		n = Make_Word(buf, n);
 		val = Get_System(SYS_OPTIONS, field);
 		Init_Word(val, n);
@@ -934,25 +943,25 @@ static REBCNT Set_Option_Word(REBCHR *str, REBCNT field)
 
 	if (NZ(data = OS_GET_LOCALE(0))) {
 		val = Get_System(SYS_LOCALE, LOCALE_LANGUAGE);
-		Set_String(val, Copy_OS_Str(data, LEN_STR(data)));
+		Set_String(val, Copy_OS_Str(data, OS_STRLEN(data)));
 		OS_FREE(data);
 	}
 
 	if (NZ(data = OS_GET_LOCALE(1))) {
 		val = Get_System(SYS_LOCALE, LOCALE_LANGUAGE_P);
-		Set_String(val, Copy_OS_Str(data, LEN_STR(data)));
+		Set_String(val, Copy_OS_Str(data, OS_STRLEN(data)));
 		OS_FREE(data);
 	}
 
 	if (NZ(data = OS_GET_LOCALE(2))) {
 		val = Get_System(SYS_LOCALE, LOCALE_LOCALE);
-		Set_String(val, Copy_OS_Str(data, LEN_STR(data)));
+		Set_String(val, Copy_OS_Str(data, OS_STRLEN(data)));
 		OS_FREE(data);
 	}
 
 	if (NZ(data = OS_GET_LOCALE(3))) {
 		val = Get_System(SYS_LOCALE, LOCALE_LOCALE_P);
-		Set_String(val, Copy_OS_Str(data, LEN_STR(data)));
+		Set_String(val, Copy_OS_Str(data, OS_STRLEN(data)));
 		OS_FREE(data);
 	}
 }
@@ -1018,8 +1027,8 @@ static REBCNT Set_Option_Word(REBCHR *str, REBCNT field)
 	PG_Boot_Level = BOOT_LEVEL_FULL;
 	PG_Mem_Usage = 0;
 	PG_Mem_Limit = 0;
-	PG_Reb_Stats = Make_Mem(sizeof(*PG_Reb_Stats));
-	Reb_Opts = Make_Mem(sizeof(*Reb_Opts));
+	PG_Reb_Stats = Alloc_Mem(sizeof(*PG_Reb_Stats));
+	Reb_Opts = Alloc_Mem(sizeof(*Reb_Opts));
 
 	// Thread locals:
 	Trace_Level = 0;

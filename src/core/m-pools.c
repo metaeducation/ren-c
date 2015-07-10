@@ -44,7 +44,7 @@
 
 //-- Special Debugging Options:
 //#define CHAFF					// Fill series data to crash old references
-//#define HIT_END				// Crash if block tail is past block terminator.
+//#define HIT_END				// Panic_DEAD_END if block tail is past block terminator.
 //#define WATCH_FREED			// Show # series freed each GC
 //#define MEM_STRESS			// Special torture mode enabled
 //#define INSPECT_SERIES
@@ -121,7 +121,7 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 
 /***********************************************************************
 **
-*/	void *Make_Mem(size_t size)
+*/	void *Alloc_Mem(size_t size)
 /*
 **		Main memory allocation wrapper function.
 **
@@ -134,7 +134,7 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 	if (PG_Mem_Limit != 0 && (PG_Mem_Usage > PG_Mem_Limit)) {
 		Check_Security(SYM_MEMORY, POL_EXEC, 0);
 	}
-	CLEAR(ptr, size);
+	memset(ptr, NUL, size);
 
 	return ptr;
 }
@@ -166,7 +166,7 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 	else if (scale < 0) unscale = -scale, scale = 1;
 
 	// Copy pool sizes to new pool structure:
-	Mem_Pools = Make_Mem(sizeof(REBPOL) * MAX_POOLS);
+	Mem_Pools = Alloc_Mem(sizeof(REBPOL) * MAX_POOLS);
 	for (n = 0; n < MAX_POOLS; n++) {
 		Mem_Pools[n].wide = Mem_Pool_Spec[n].wide;
 		Mem_Pools[n].units = (Mem_Pool_Spec[n].units * scale) / unscale;
@@ -174,7 +174,7 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 	}
 
 	// For pool lookup. Maps size to pool index. (See Find_Pool below)
-	PG_Pool_Map = Make_Mem((4 * MEM_BIG_SIZE) + 4); // extra
+	PG_Pool_Map = Alloc_Mem((4 * MEM_BIG_SIZE) + 4); // extra
 	n = 9;  // sizes 0 - 8 are pool 0
 	for (; n <= 16 * MEM_MIN_SIZE; n++) PG_Pool_Map[n] = MEM_TINY_POOL     + ((n-1) / MEM_MIN_SIZE);
 	for (; n <= 32 * MEM_MIN_SIZE; n++) PG_Pool_Map[n] = MEM_SMALL_POOLS-4 + ((n-1) / (MEM_MIN_SIZE * 4));
@@ -237,10 +237,13 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 	REBCNT	mem_size = pool->wide * units + sizeof(REBSEG);
 #endif
 
-	seg = (REBSEG *) Make_Mem(mem_size);
-	if (!seg) Crash(RP_NO_MEMORY, mem_size);
+	seg = (REBSEG *) Alloc_Mem(mem_size);
+	if (!seg) {
+		assert(FALSE);
+		Panic_Core(RP_NO_MEMORY, mem_size);
+	}
 
-	CLEAR(seg, mem_size);  // needed to clear series nodes
+	memset(seg, NUL, mem_size);  // needed to clear series nodes
 	seg->size = mem_size;
 	seg->next = pool->segs;
    	pool->segs = seg;
@@ -360,11 +363,11 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 		Debug_Fmt_Num("Alloc1:", length);
 #endif
 #ifdef MUNGWALL
-		node = (REBNOD *) Make_Mem(length+2*MUNG_SIZE);
+		node = (REBNOD *) Alloc_Mem(length+2*MUNG_SIZE);
 #else
-		node = (REBNOD *) Make_Mem(length);
+		node = (REBNOD *) Alloc_Mem(length);
 #endif
-		if (!node) Trap0(RE_NO_MEMORY);
+		if (!node) Trap_DEAD_END(RE_NO_MEMORY);
 #ifdef MUNGWALL
 		memcpy((REBYTE *)node,MUNG_PATTERN1,MUNG_SIZE);
 		memcpy(((REBYTE *)node)+length+MUNG_SIZE,MUNG_PATTERN2,MUNG_SIZE);
@@ -402,15 +405,15 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 
 	CHECK_STACK(&series);
 
-	if (((REBU64)length * wide) > MAX_I32) Trap0(RE_NO_MEMORY);
+	if (((REBU64)length * wide) > MAX_I32) Trap_DEAD_END(RE_NO_MEMORY);
 
-	ASSERT(wide != 0, RP_BAD_SERIES);
+	assert(wide != 0);
 
 //	if (GC_TRIGGER) Recycle();
 
 	series = (REBSER *)Make_Node(SERIES_POOL);
 	length *= wide;
-	ASSERT(length != 0, RP_BAD_SERIES);
+	assert(length != 0);
 
 	pool_num = FIND_POOL(length);
 	if (pool_num < SYSTEM_POOL) {
@@ -434,13 +437,13 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 			Debug_Num("Alloc2:", length);
 #endif
 #ifdef MUNGWALL
-		node = (REBNOD *) Make_Mem(length+2*MUNG_SIZE);
+		node = (REBNOD *) Alloc_Mem(length+2*MUNG_SIZE);
 #else
-		node = (REBNOD *) Make_Mem(length);
+		node = (REBNOD *) Alloc_Mem(length);
 #endif
 		if (!node) {
 			Free_Node(SERIES_POOL, (REBNOD *)series);
-			Trap0(RE_NO_MEMORY);
+			Trap_DEAD_END(RE_NO_MEMORY);
 		}
 #ifdef MUNGWALL
 		memcpy((REBYTE *)node,MUNG_PATTERN1,MUNG_SIZE);
@@ -513,7 +516,7 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 	// Verify that size matches pool size:
 	if (pool_num < SERIES_POOL) {
 		/* size < wide when "wide" is not a multiple of element size */
-		ASSERT(Mem_Pools[pool_num].wide >= size, RP_FREE_NODE_SIZE);
+		assert(Mem_Pools[pool_num].wide >= size);
 	}
 	MUNG_CHECK(pool_num,node, size);
 
@@ -659,7 +662,7 @@ clear_header:
 	REBSEG *seg;
 	REBSER *series;
 
-	//Debug_Str("<ChkMem>");
+	//Debug_Str(cb_cast("<ChkMem>"));
 	PG_Reb_Stats->Free_List_Checked++;
 
 	// Scan all series headers to check that series->size is correct:
@@ -705,7 +708,7 @@ clear_header:
 
 	return count;
 crash:
-	Crash(RP_CORRUPT_MEMORY);
+	Panic_DEAD_END(RP_CORRUPT_MEMORY);
 	return 0; // for compiler only
 }
 
@@ -759,7 +762,7 @@ crash:
 			if (!SERIES_FREED(series)) {
 				if (pool_id < 0 || FIND_POOL(SERIES_TOTAL(series)) == pool_id) {
 					Debug_Fmt(
-							  Str_Dump[0], //"%s Series %x %s: Wide: %2d Size: %6d - Bias: %d Tail: %d Rest: %d Flags: %x"
+							  Str_Dump, //"%s Series %x %s: Wide: %2d Size: %6d - Bias: %d Tail: %d Rest: %d Flags: %x"
 							  "Dump",
 							  series,
 							  (SERIES_LABEL(series) ? SERIES_LABEL(series) : "-"),

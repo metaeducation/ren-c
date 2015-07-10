@@ -170,7 +170,7 @@
 
 /***********************************************************************
 **
-*/	static REBCNT Make_Word_Name(REBYTE *str, REBCNT len)
+*/	static REBCNT Make_Word_Name(const REBYTE *str, REBCNT len)
 /*
 **		Allocates and copies the text string of the word.
 **
@@ -186,7 +186,7 @@
 
 /***********************************************************************
 **
-*/	REBCNT Make_Word(REBYTE *str, REBCNT len)
+*/	REBCNT Make_Word(const REBYTE *str, REBCNT len)
 /*
 **		Given a string and its length, compute its hash value,
 **		search for a match, and if not found, add it to the table.
@@ -206,13 +206,13 @@
 
 	//REBYTE *sss = Get_Sym_Name(1);	// (Debugging method)
 
-	if (len == 0) len = LEN_BYTES(str);
+	if (len == 0) len = strlen(cs_cast(str));
 
 	// If hash part of word table is too dense, expand it:
 	if (PG_Word_Table.series->tail > PG_Word_Table.hashes->tail/2)
 		Expand_Word_Table();
 
-	ASSERT((SERIES_TAIL(PG_Word_Table.series) == SERIES_TAIL(Bind_Table)), RP_BIND_TABLE_SIZE);
+	assert(SERIES_TAIL(PG_Word_Table.series) == SERIES_TAIL(Bind_Table));
 
 	// If word symbol part of word table is full, expand it:
 	if (SERIES_FULL(PG_Word_Table.series)) {
@@ -375,13 +375,13 @@ make_sym:
 	REBYTE *tp = VAL_WORD_NAME(t);
 
 	// Use a more strict comparison than normal:
-	if (is_case) return CMP_BYTES(sp, tp);
+	if (is_case) return strcmp(s_cast(sp), s_cast(tp));
 
 	// They are the equivalent words:
 	if (VAL_WORD_CANON(s) == VAL_WORD_CANON(t)) return 0;
 
 	// They must be differ by case:
-	return Compare_UTF8(sp, tp, LEN_BYTES(tp)) + 2;
+	return Compare_UTF8(sp, tp, strlen(s_cast(tp))) + 2;
 }
 
 

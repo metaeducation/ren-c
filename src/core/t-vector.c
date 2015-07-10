@@ -206,7 +206,7 @@ void Set_Vector_Row(REBSER *ser, REBVAL *blk)
 	REBVAL *val;
 
 	if (len <= 0) {
-		Trap_Arg(vect);
+		Trap_Arg_DEAD_END(vect);
 	}
 
 	ser = Make_Block(len);
@@ -243,7 +243,7 @@ void Set_Vector_Row(REBSER *ser, REBVAL *blk)
 	if (
 		(b1 >= VTSF08 && b2 < VTSF08)
 		|| (b2 >= VTSF08 && b1 < VTSF08)
-	) Trap0(RE_NOT_SAME_TYPE);
+	) Trap_DEAD_END(RE_NOT_SAME_TYPE);
 
 	for (n = 0; n < len; n++) {
 		i1 = get_vect(b1, d1, n + VAL_INDEX(v1));
@@ -321,7 +321,7 @@ void Set_Vector_Row(REBSER *ser, REBVAL *blk)
 	if (len > 0x7fffffff) return 0;
 	ser = Make_Series(len+1, bits/8, TRUE); // !!! can width help extend the len?
 	LABEL_SERIES(ser, "make vector");
-	CLEAR(ser->data, len*bits/8);
+	memset(ser->data, NUL, len*bits/8);
 	ser->tail = len;  // !!! another way to do it?
 
 	// Store info about the vector (could be moved to flags if necessary):
@@ -540,7 +540,7 @@ void Set_Vector_Row(REBSER *ser, REBVAL *blk)
 
 	// Check must be in this order (to avoid checking a non-series value);
 	if (action >= A_TAKE && action <= A_SORT && IS_PROTECT_SERIES(vect))
-		Trap0(RE_PROTECTED);
+		Trap_DEAD_END(RE_PROTECTED);
 
 	switch (action) {
 
@@ -588,19 +588,19 @@ void Set_Vector_Row(REBSER *ser, REBVAL *blk)
 		break;
 
 	case A_RANDOM:
-		if (D_REF(2) || D_REF(4)) Trap0(RE_BAD_REFINES); // /seed /only
+		if (D_REF(2) || D_REF(4)) Trap_DEAD_END(RE_BAD_REFINES); // /seed /only
 		Shuffle_Vector(value, D_REF(3));
 		return R_ARG1;
 
 	default:
-		Trap_Action(VAL_TYPE(value), action);
+		Trap_Action_DEAD_END(VAL_TYPE(value), action);
 	}
 
 	*D_RET = *value;
 	return R_RET;
 
 bad_make:
-	Trap_Make(REB_VECTOR, arg);
+	Trap_Make_DEAD_END(REB_VECTOR, arg);
 	DEAD_END;
 }
 
@@ -633,8 +633,8 @@ bad_make:
 	if (molded) {
 		REBCNT type = (bits >= VTSF08) ? REB_DECIMAL : REB_INTEGER;
 		Pre_Mold(value, mold);
-		if (!GET_MOPT(mold, MOPT_MOLD_ALL)) Append_Byte(mold->series, '[');
-		if (bits >= VTUI08 && bits <= VTUI64) Append_Bytes(mold->series, "unsigned ");
+		if (!GET_MOPT(mold, MOPT_MOLD_ALL)) Append_Codepoint(mold->series, '[');
+		if (bits >= VTUI08 && bits <= VTUI64) Append_Unencoded(mold->series, "unsigned ");
 		Emit(mold, "N I I [", type+1, bit_sizes[bits & 3], len);
 		if (len) New_Indented_Line(mold);
 	}
@@ -647,23 +647,23 @@ bad_make:
 		} else {
 			l = Emit_Decimal(buf, v.d, 0, '.', mold->digits);
 		}
-		Append_Bytes_Len(mold->series, buf, l);
+		Append_Unencoded_Core(mold->series, s_cast(buf), l);
 
 		if ((++c > 7) && (n+1 < vect->tail)) {
 			New_Indented_Line(mold);
 			c = 0;
 		}
 		else
-			Append_Byte(mold->series, ' ');
+			Append_Codepoint(mold->series, ' ');
 	}
 
 	if (len) mold->series->tail--; // remove final space
 
 	if (molded) {
 		if (len) New_Indented_Line(mold);
-		Append_Byte(mold->series, ']');
+		Append_Codepoint(mold->series, ']');
 		if (!GET_MOPT(mold, MOPT_MOLD_ALL)) {
-			Append_Byte(mold->series, ']');
+			Append_Codepoint(mold->series, ']');
 		}
 		else {
 			Post_Mold(value, mold);

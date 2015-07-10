@@ -257,7 +257,7 @@ static void close_stdio(void)
 		// Perform a processed read or a raw read?
 #ifndef HAS_SMART_CONSOLE
 		if (Term_IO)
-			total = Read_Line(Term_IO, req->data, len);
+			total = Read_Line(Term_IO, s_cast(req->data), len);
 		else
 #endif
 			total = read(Std_Inp, req->data, len); /* will be restarted in case of signal */
@@ -267,8 +267,8 @@ static void close_stdio(void)
 			return DR_ERROR;
 		}
 		if (interrupted) {
-			char noop[] = "does[]\n";
-			strncat(req->data, noop, len - strlen(req->data));
+			const char noop[] = "does[]\n";
+			strncat(s_cast(req->data), noop, len - strlen(s_cast(req->data)));
 			total += sizeof(noop);
 		}
 

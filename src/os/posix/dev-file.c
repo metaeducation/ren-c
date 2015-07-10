@@ -37,6 +37,19 @@
 **
 ***********************************************************************/
 
+// ftruncate is not a standard C function, but as we are using it then
+// we have to use a special define if we want standards enforcement.
+// By defining it as the first header file we include, we ensure another
+// inclusion of <unistd.h> won't be made without the definition first.
+//
+//     http://stackoverflow.com/a/26806921/211160
+#define _XOPEN_SOURCE 500
+
+// !!! See notes on why this is needed on #define HAS_POSIX_SIGNAL in
+// reb-config.h (similar reasons, and means this file cannot be
+// compiled as --std=c99 but rather --std=gnu99)
+#define _POSIX_C_SOURCE 199309L
+
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
@@ -228,7 +241,7 @@ static int Get_File_Info(REBREQ *file)
 	} while (cp[0] == '.' && (cp[1] == 0 || (cp[1] == '.' && cp[2] == 0)));
 
 	file->modes = 0;
-	COPY_BYTES(file->file.path, cp, MAX_FILE_NAME);
+	strncpy(file->file.path, cp, MAX_FILE_NAME);
 
 #ifdef DT_DIR
 	// NOTE: not all posix filesystems support this (mainly

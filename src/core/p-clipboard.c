@@ -60,10 +60,10 @@
 			if (GET_FLAG(req->flags, RRF_WIDE)) {
 				len /= sizeof(REBUNI); //correct length
 				// Copy the string (convert to latin-8 if it fits):
-				Set_Binary(arg, Copy_Wide_Str(req->data, len));
+				Set_Binary(arg, Copy_Wide_Str(r_cast(REBUNI *, req->data), len));
 			} else {
 				REBSER *ser = Make_Binary(len);
-				COPY_MEM(BIN_HEAD(ser), req->data, len);
+				memcpy(BIN_HEAD(ser), req->data, len);
 				SERIES_TAIL(ser) = len;
 				Set_Binary(arg, ser);
 			}
@@ -78,12 +78,13 @@
 	case A_READ:
 		// This device is opened on the READ:
 		if (!IS_OPEN(req)) {
-			if (OS_DO_DEVICE(req, RDC_OPEN)) Trap_Port(RE_CANNOT_OPEN, port, req->error);
+			if (OS_DO_DEVICE(req, RDC_OPEN))
+				Trap_Port_DEAD_END(RE_CANNOT_OPEN, port, req->error);
 		}
 		// Issue the read request:
 		CLR_FLAG(req->flags, RRF_WIDE); // allow byte or wide chars
 		result = OS_DO_DEVICE(req, RDC_READ);
-		if (result < 0) Trap_Port(RE_READ_ERROR, port, req->error);
+		if (result < 0) Trap_Port_DEAD_END(RE_READ_ERROR, port, req->error);
 		if (result > 0) return R_NONE; /* pending */
 
 		// Copy and set the string result:
@@ -93,10 +94,10 @@
 		if (GET_FLAG(req->flags, RRF_WIDE)) {
 			len /= sizeof(REBUNI); //correct length
 			// Copy the string (convert to latin-8 if it fits):
-			Set_Binary(arg, Copy_Wide_Str(req->data, len));
+			Set_Binary(arg, Copy_Wide_Str(r_cast(REBUNI *, req->data), len));
 		} else {
 			REBSER *ser = Make_Binary(len);
-			COPY_MEM(BIN_HEAD(ser), req->data, len);
+			memcpy(BIN_HEAD(ser), req->data, len);
 			SERIES_TAIL(ser) = len;
 			Set_Binary(arg, ser);
 		}
@@ -105,10 +106,10 @@
 		return R_RET;
 
 	case A_WRITE:
-		if (!IS_STRING(arg) && !IS_BINARY(arg)) Trap1(RE_INVALID_PORT_ARG, arg);
+		if (!IS_STRING(arg) && !IS_BINARY(arg)) Trap1_DEAD_END(RE_INVALID_PORT_ARG, arg);
 		// This device is opened on the WRITE:
 		if (!IS_OPEN(req)) {
-			if (OS_DO_DEVICE(req, RDC_OPEN)) Trap_Port(RE_CANNOT_OPEN, port, req->error);
+			if (OS_DO_DEVICE(req, RDC_OPEN)) Trap_Port_DEAD_END(RE_CANNOT_OPEN, port, req->error);
 		}
 
 		refs = Find_Refines(ds, ALL_WRITE_REFS);
@@ -122,7 +123,7 @@
 		if (SERIES_WIDE(VAL_SERIES(arg)) == 1) {
 #ifdef ARG_STRINGS_ALLOWED
 			if (Is_Not_ASCII(VAL_BIN_DATA(arg), len)) {
-				Set_String(arg, Copy_Bytes_To_Unicode(VAL_BIN_DATA(arg), len));
+				Set_String(arg, Copy_Unencoded_To_Unicode(VAL_BIN_DATA(arg), len));
 			} else
 				req->data = VAL_BIN_DATA(arg);
 #endif
@@ -153,12 +154,12 @@
 		result = OS_DO_DEVICE(req, RDC_WRITE);
 		SET_NONE(OFV(port, STD_PORT_DATA)); // GC can collect it
 
-		if (result < 0) Trap_Port(RE_WRITE_ERROR, port, req->error);
+		if (result < 0) Trap_Port_DEAD_END(RE_WRITE_ERROR, port, req->error);
 		//if (result == DR_DONE) SET_NONE(OFV(port, STD_PORT_DATA));
 		break;
 
 	case A_OPEN:
-		if (OS_DO_DEVICE(req, RDC_OPEN)) Trap_Port(RE_CANNOT_OPEN, port, req->error);
+		if (OS_DO_DEVICE(req, RDC_OPEN)) Trap_Port_DEAD_END(RE_CANNOT_OPEN, port, req->error);
 		break;
 
 	case A_CLOSE:
@@ -170,7 +171,7 @@
 		return R_FALSE;
 
 	default:
-		Trap_Action(REB_PORT, action);
+		Trap_Action_DEAD_END(REB_PORT, action);
 	}
 
 	return R_ARG1; // port

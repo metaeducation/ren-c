@@ -96,8 +96,8 @@ extern void Put_Str(char *buf);
 extern REBYTE *Get_Str();
 
 /* coverity[+kill] */
-void Host_Crash(REBYTE *reason) {
-	OS_Crash("REBOL Host Failure", reason);
+void Host_Crash(const char *reason) {
+	OS_Crash(cb_cast("REBOL Host Failure"), cb_cast(reason));
 }
 
 
@@ -260,8 +260,8 @@ int main(int argc, char **argv)
 			Put_Str(PROMPT_STR);
 			if ((line = Get_Str())) {
 				RL_Do_String(line, 0, 0);
-				RL_Print_TOS(0, RESULT_STR);
-				OS_Free(line);
+				RL_Print_TOS(0, b_cast(RESULT_STR));
+				OS_FREE(line);
 			}
 			else break; // EOS
 		}

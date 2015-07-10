@@ -59,7 +59,7 @@
 
 /***********************************************************************
 **
-*/	REBINT Compare_Bytes(REBYTE *b1, REBYTE *b2, REBCNT len, REBOOL uncase)
+*/	REBINT Compare_Bytes(const REBYTE *b1, const REBYTE *b2, REBCNT len, REBOOL uncase)
 /*
 **		Compare two byte-wide strings. Return lexical difference.
 **
@@ -85,7 +85,7 @@
 
 /***********************************************************************
 **
-*/	REBYTE *Match_Bytes(REBYTE *src, REBYTE *pat)
+*/	const const REBYTE *Match_Bytes(const REBYTE *src, const REBYTE *pat)
 /*
 **		Compare two binary strings. Return where the first differed.
 **		Case insensitive.
@@ -246,7 +246,7 @@
 
 /***********************************************************************
 **
-*/	REBINT Compare_UTF8(REBYTE *s1, REBYTE *s2, REBCNT l2)
+*/	REBINT Compare_UTF8(const REBYTE *s1, const REBYTE *s2, REBCNT l2)
 /*
 **		Compare two UTF8 strings.
 **
@@ -268,7 +268,7 @@
 ***********************************************************************/
 {
 	REBINT c1, c2;
-	REBCNT l1 = LEN_BYTES(s1);
+	REBCNT l1 = strlen(cs_cast(s1));
 	REBINT result = 0;
 
 	for (; l2 > 0; s1++, s2++, l2--) {

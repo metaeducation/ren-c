@@ -95,7 +95,7 @@ static REBOOL Same_Func(REBVAL *val, REBVAL *arg)
 		if (IS_DATATYPE(value)) {
 			n = VAL_DATATYPE(value);
 			if (Make_Function(n, value, arg)) break;
-			Trap_Make(n, arg);
+			Trap_Make_DEAD_END(n, arg);
 		}
 
 		// make :func []
@@ -155,11 +155,11 @@ of_type:
 			break;
 		default:
 		bad_arg:
-			Trap_Reflect(type, arg);
+			Trap_Reflect_DEAD_END(type, arg);
 		}
 		break;
 
-	default: Trap_Action(type, action);
+	default: Trap_Action_DEAD_END(type, action);
 	}
 
 	DS_RET_VALUE(value);

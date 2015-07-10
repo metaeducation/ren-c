@@ -91,7 +91,7 @@
 	CLR_FLAG(req->flags, RRF_WIDE);
 
 	req->data = data;
-	req->actual = LEN_STR(data);
+	req->actual = strlen(data);
 
 	return DR_DONE;
 }

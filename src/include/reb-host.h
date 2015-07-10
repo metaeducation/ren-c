@@ -29,6 +29,15 @@
 #include "reb-config.h"
 
 #include "reb-c.h"
+
+// See remarks about REBCHR's Core/Host dichotomy in make-reb-lib.r
+// (Needs to be as early as reb-c.h, while not being defined *in* it...)
+#ifdef OS_WIDE_CHAR
+	typedef wchar_t REBCHR;
+#else
+	typedef char REBCHR;
+#endif
+
 #include "reb-ext.h"		// includes reb-defs.h
 #include "reb-args.h"
 #include "reb-device.h"
