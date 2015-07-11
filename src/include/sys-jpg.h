@@ -1161,7 +1161,7 @@ struct jpeg_compress_struct {
    * Links to compression subobjects (methods and private variables of modules)
    */
   struct jpeg_comp_master * master;
-  struct jpeg_c_main_controller * main;
+  struct jpeg_c_main_controller * main_ptr;
   struct jpeg_c_prep_controller * prep;
   struct jpeg_c_coef_controller * coef;
   struct jpeg_marker_writer * marker;
@@ -1385,7 +1385,7 @@ struct jpeg_decompress_struct {
    * Links to decompression subobjects (methods, private variables of modules)
    */
   struct jpeg_decomp_master * master;
-  struct jpeg_d_main_controller * main;
+  struct jpeg_d_main_controller * main_ptr;
   struct jpeg_d_coef_controller * coef;
   struct jpeg_d_post_controller * post;
   struct jpeg_input_controller * inputctl;
