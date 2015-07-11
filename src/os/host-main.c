@@ -121,14 +121,16 @@ void Host_Crash(const char *reason) {
 **
 ***********************************************************************/
 
-#ifdef TO_WIN32
+// Using a main entry point for a console program (as opposed to WinMain)
+// so that we can connect to the console.  See the StackOverflow question
+// "Can one executable be both a console and a GUI application":
+//
+//     http://stackoverflow.com/questions/493536/
+//
 // int WINAPI WinMain(HINSTANCE inst, HINSTANCE prior, LPSTR cmd, int show)
-int main(int argc, char **argv)
-#else
-int main(int argc, char **argv)
-#endif
-{
 
+int main(int argc, char **argv_ansi)
+{
 	REBYTE vers[8];
 	REBYTE *line;
 	REBINT n;
@@ -136,9 +138,16 @@ int main(int argc, char **argv)
 	REBYTE *embedded_script = NULL;
 	REBI64 embedded_size = 0;
 
-#ifdef TO_WIN32  // In Win32 get args manually:
-	// Fetch the win32 unicoded program arguments:
-	argv = (char **)CommandLineToArgvW(GetCommandLineW(), &argc);
+	REBCHR **argv;
+
+#ifdef TO_WIN32
+	// Were we using WinMain we'd be getting our arguments in Unicode, but
+	// since we're using an ordinary main() we do not.  However, this call
+	// lets us slip out and pick up the arguments in Unicode form.
+	argv = CommandLineToArgvW(GetCommandLineW(), &argc);
+#else
+	// Assume no wide character support, and just take the ANSI C args
+	argv = argv_ansi;
 #endif
 
 	Host_Lib = &Host_Lib_Init;
@@ -149,7 +158,7 @@ int main(int argc, char **argv)
 	}
 
 	embedded_script = OS_Read_Embedded(&embedded_size);
-	Parse_Args(argc, (REBCHR **)argv, &Main_Args);
+	Parse_Args(argc, argv, &Main_Args);
 
 	vers[0] = 5; // len
 	RL_Version(&vers[0]);
@@ -205,7 +214,7 @@ int main(int argc, char **argv)
 		PROCESS_INFORMATION procinfo;
 		ZeroMemory(&startinfo, sizeof(startinfo));
 		startinfo.cb = sizeof(startinfo);
-		if (!CreateProcess(NULL, (LPTSTR)argv[0], NULL, NULL, FALSE, dwCreationFlags, NULL, NULL, &startinfo, &procinfo))
+		if (!CreateProcess(NULL, argv[0], NULL, NULL, FALSE, dwCreationFlags, NULL, NULL, &startinfo, &procinfo))
 			MessageBox(0, L"CreateProcess() failed :(", L"", 0);
 		exit(0);
 	}

@@ -63,6 +63,7 @@
 #include <time.h>
 #include <string.h>
 #include <errno.h>
+#include <assert.h>
 
 #ifndef timeval // for older systems
 #include <sys/time.h>
@@ -919,6 +920,11 @@ error:
 	u32 info_len = 0;
 	pid_t fpid = 0;
 
+	// We want to be able to compile with all warnings as errors, and
+	// we'd like to use -Wcast-qual if possible.  This is currently
+	// the only barrier in the codebase...so we tunnel under the cast.
+	char * const *argv_hack;
+
 	if (flags & FLAG_WAIT) flag_wait = TRUE;
 	if (flags & FLAG_CONSOLE) flag_console = TRUE;
 	if (flags & FLAG_SHELL) flag_shell = TRUE;
@@ -1046,14 +1052,17 @@ error:
 				write(info_pipe[W], &err, sizeof(err));
 				exit(EXIT_FAILURE);
 			}
-			argv_new = c_cast(const char**, OS_ALLOC_ARRAY(char*, argc + 3));
+			argv_new = c_cast(const char**, OS_ALLOC_ARRAY(const char*, argc + 3));
 			argv_new[0] = sh;
 			argv_new[1] = "-c";
 			memcpy(&argv_new[2], argv, argc * sizeof(argv[0]));
 			argv_new[argc + 2] = NULL;
-			execvp(sh, cast(char* const*, argv_new));
+
+			memcpy(&argv_hack, argv_new, sizeof(argv_hack));
+			execvp(sh, argv_hack);
 		} else {
-			execvp(argv[0], cast(char* const*, argv));
+			memcpy(&argv_hack, argv, sizeof(argv_hack));
+			execvp(argv[0], argv_hack);
 		}
 child_error:
 		write(info_pipe[W], &errno, sizeof(errno));
