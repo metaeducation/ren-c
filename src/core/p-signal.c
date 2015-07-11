@@ -35,7 +35,7 @@
 
 static void update(REBREQ *req, REBINT len, REBVAL *arg)
 {
-	const siginfo_t *sig = req->data;
+	const siginfo_t *sig = cast(siginfo_t *, req->data);
 	int i = 0;
 
 	Extend_Series(VAL_SERIES(arg), len);
