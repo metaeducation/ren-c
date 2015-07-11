@@ -40,7 +40,6 @@
 #include <process.h>
 
 #include "reb-host.h"
-#include "host-lib.h"
 
 // MSDN V6 missed this define:
 #ifndef INVALID_SET_FILE_POINTER

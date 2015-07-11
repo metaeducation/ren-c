@@ -53,7 +53,6 @@
 #include <string.h>
 
 #include "reb-host.h"
-#include "host-lib.h"
 
 
 /***********************************************************************

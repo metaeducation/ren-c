@@ -32,7 +32,6 @@
 #include  <X11/Xlib.h>
 
 #include "reb-host.h"
-#include "host-lib.h"
 
 #include "host-window.h"
 #include "host-compositor.h"

@@ -39,7 +39,6 @@
 #include <stdio.h>
 
 #include "reb-host.h"
-#include "host-lib.h"
 
 #define MAX_SERIAL_DEV_PATH 128
 

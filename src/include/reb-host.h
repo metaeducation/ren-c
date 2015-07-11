@@ -40,3 +40,5 @@
 
 #include "reb-gob.h"
 #include "reb-lib.h"
+
+#include "host-lib.h"

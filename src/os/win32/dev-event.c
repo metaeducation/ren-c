@@ -39,7 +39,6 @@
 
 #include <windows.h>
 #include "reb-host.h"
-#include "host-lib.h"
 
 #ifndef HWND_MESSAGE
 #define HWND_MESSAGE (HWND)-3

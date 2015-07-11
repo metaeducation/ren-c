@@ -44,7 +44,6 @@
 #include <stdio.h>
 #include <string.h>
 #include "reb-host.h"
-#include "host-lib.h"
 
 void Host_Crash(const char *reason);
 

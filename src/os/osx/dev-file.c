@@ -47,7 +47,6 @@
 #include <errno.h>
 
 #include "reb-host.h"
-#include "host-lib.h"
 
 #ifndef O_BINARY
 #define O_BINARY 0

@@ -49,7 +49,6 @@
 #include <string.h>
 
 #include "reb-host.h"
-#include "host-lib.h"
 #include "rebol-lib.h"
 
 

@@ -45,7 +45,6 @@
 #include <sys/signal.h>
 
 #include "reb-host.h"
-#include "host-lib.h"
 
 extern void Signal_Device(REBREQ *req, REBINT type);
 

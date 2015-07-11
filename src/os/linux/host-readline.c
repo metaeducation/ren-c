@@ -57,17 +57,7 @@
 #include <termios.h>
 #endif
 
-#define FALSE 0
-#define TRUE (0==0)
-
-enum {
-	BEL =   7,
-	BS  =   8,
-	LF  =  10,
-	CR  =  13,
-	ESC =  27,
-	DEL = 127,
-};
+#include "reb-host.h"
 
 // Configuration:
 #define TERM_BUF_LEN 4096	// chars allowed per line

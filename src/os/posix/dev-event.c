@@ -43,7 +43,6 @@
 #include <sys/time.h>
 
 #include "reb-host.h"
-#include "host-lib.h"
 
 void Done_Device(int handle, int error);
 

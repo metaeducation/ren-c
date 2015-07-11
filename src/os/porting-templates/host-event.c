@@ -41,7 +41,6 @@
 #include <math.h>	//for floor()
 
 #include "reb-host.h"
-#include "host-lib.h"
 
 #include "host-jni.h"
 

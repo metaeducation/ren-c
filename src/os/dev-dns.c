@@ -42,7 +42,6 @@
 #include <string.h>
 
 #include "reb-host.h"
-#include "host-lib.h"
 #include "sys-net.h"
 
 extern DEVICE_CMD Init_Net(REBREQ *); // Share same init

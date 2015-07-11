@@ -42,7 +42,6 @@
 #include <stdio.h>
 
 #include "reb-host.h"
-#include "host-lib.h"
 #include "sys-net.h"
 
 /***********************************************************************

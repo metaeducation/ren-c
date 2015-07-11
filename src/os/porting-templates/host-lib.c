@@ -64,7 +64,6 @@
 #endif
 
 #include "reb-host.h"
-#include "host-lib.h"
 
 #ifndef NO_DL_LIB
 #include <dlfcn.h>

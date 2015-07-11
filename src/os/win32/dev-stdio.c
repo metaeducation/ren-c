@@ -45,7 +45,6 @@
 #include <io.h>
 
 #include "reb-host.h"
-#include "host-lib.h"
 
 #define BUF_SIZE (16*1024)		// MS restrictions apply
 

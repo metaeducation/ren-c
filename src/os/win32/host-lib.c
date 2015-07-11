@@ -63,7 +63,6 @@
 #include <shlobj.h>
 
 #include "reb-host.h"
-#include "host-lib.h"
 
 #ifndef REB_CORE
 REBSER* Gob_To_Image(REBGOB *gob);

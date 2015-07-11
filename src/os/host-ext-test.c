@@ -44,7 +44,6 @@
 #include <string.h>
 
 #include "reb-host.h"
-#include "host-lib.h"
 
 RL_LIB *RL; // Link back to reb-lib from embedded extensions
 

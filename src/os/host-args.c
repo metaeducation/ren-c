@@ -41,9 +41,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "reb-config.h"
-#include "reb-c.h"
-#include "reb-args.h"
+#include "reb-host.h"
 
 #define ARG_BUF_SIZE 1024
 

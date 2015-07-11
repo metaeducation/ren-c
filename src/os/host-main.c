@@ -57,7 +57,6 @@
 #define OS_LIB_TABLE		// include the host-lib dispatch table
 
 #include "reb-host.h"		// standard host include files
-#include "host-lib.h"		// OS host library (dispatch table)
 
 #ifdef CUSTOM_STARTUP
 #include "host-init.h"
