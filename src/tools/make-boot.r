@@ -257,6 +257,10 @@ foreach :type-record boot-types [
 emit-end
 
 emit {
+
+// !!! Needs to be forward declared as extern, this is a .inc and not a .h
+extern const REBDOF Func_Dispatch[];
+
 /***********************************************************************
 **
 */	const REBDOF Func_Dispatch[] =
