@@ -55,15 +55,20 @@
 
 /***********************************************************************
 **
-*/	REBI64 Join_Time(REB_TIMEF *tf)
+*/	REBI64 Join_Time(REB_TIMEF *tf, REBFLG neg)
 /*
+**		!! A REB_TIMEF has lost the sign bit available on the REBI64
+**		used for times.  If you want to make it negative, you need
+**		pass in a flag here.  (Flag added to help document the
+**		issue, as previous code falsely tried to judge the sign
+**		of tf->h, which is always positive.)
+**
 ***********************************************************************/
 {
-	REBFLG neg = tf->h < 0;
 	REBI64 t;
 
-	t = tf->h * HR_SEC + tf->m * MIN_SEC + tf->s * SEC_SEC + tf->n;
-	return (neg ? -t : t);
+	t = (tf->h * HR_SEC) + (tf->m * MIN_SEC) + (tf->s * SEC_SEC) + tf->n;
+	return neg ? -t : t;
 }
 
 /***********************************************************************
@@ -350,7 +355,7 @@
 			return PE_BAD_SELECT;
 		}
 
-		VAL_TIME(pvs->value) = Join_Time(&tf);
+		VAL_TIME(pvs->value) = Join_Time(&tf, FALSE);
 		return PE_OK;
 	}
 }

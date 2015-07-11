@@ -532,7 +532,7 @@ static REBREQ *Req_SIO;
 
 /***********************************************************************
 **
-*/	REBYTE *Form_Hex_Pad(REBYTE *buf, REBU64 val, REBINT len)
+*/	REBYTE *Form_Hex_Pad(REBYTE *buf, REBI64 val, REBINT len)
 /*
 **		Form an integer hex string in the given buffer with a
 **		width padded out with zeros.
@@ -544,8 +544,10 @@ static REBREQ *Req_SIO;
 {
 	REBYTE buffer[MAX_HEX_LEN+4];
 	REBYTE *bp = buffer + MAX_HEX_LEN + 1;
-	REBU64 sgn;
+	REBI64 sgn;
 
+	// !!! val parameter was REBI64 at one point; changed to REBI64
+	// as this does signed comparisons (val < 0 was never true...)
 	sgn = (val < 0) ? -1 : 0;
 
 	len = MIN(len, MAX_HEX_LEN);

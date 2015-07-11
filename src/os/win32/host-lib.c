@@ -1002,8 +1002,12 @@ static void *Task_Ready;
 
 		while (count > 0) {
 			wait_result = WaitForMultipleObjects(count, handles, FALSE, INFINITE);
-			if (wait_result >= WAIT_OBJECT_0
-				&& wait_result < WAIT_OBJECT_0 + count) {
+            // If we test wait_result >= WAIT_OBJECT_0 it will tell us "always
+            // true" with -Wtype-limits, since WAIT_OBJECT_0 is 0.  Take that
+            // comparison out but add an assert in case you're on some abstracted
+            // Windows and need to know that it isn't 0 for that implementation.
+            assert(WAIT_OBJECT_0 == 0);
+            if (wait_result < WAIT_OBJECT_0 + count) {
 				int i = wait_result - WAIT_OBJECT_0;
 				DWORD input_pos = 0;
 				DWORD n = 0;

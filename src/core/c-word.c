@@ -155,7 +155,8 @@
 	hashes = (REBCNT *)PG_Word_Table.hashes->data;
 	size = PG_Word_Table.hashes->tail;
 	for (n = 1; n < PG_Word_Table.series->tail; n++, word++) {
-		hash = Hash_Word(VAL_SYM_NAME(word), -1);
+		const REBYTE *name = VAL_SYM_NAME(word);
+		hash = Hash_Word(name, LEN_BYTES(name));
 		skip  = (hash & 0x0000FFFF) % size;
 		if (skip == 0) skip = 1;
 		hash = (hash & 0x00FFFF00) % size;

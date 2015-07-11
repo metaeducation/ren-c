@@ -650,11 +650,11 @@
 			goto setDate;
 		case 9:
 			time.h = n;
-			secs = Join_Time(&time);
+			secs = Join_Time(&time, FALSE);
 			break;
 		case 10:
 			time.m = n;
-			secs = Join_Time(&time);
+			secs = Join_Time(&time, FALSE);
 			break;
 		case 11:
 			if (IS_INTEGER(val)) {
@@ -666,7 +666,7 @@
 				time.s = (REBINT)VAL_DECIMAL(val);
 				time.n = (REBINT)((VAL_DECIMAL(val) - time.s) * SEC_SEC);
 			}
-			secs = Join_Time(&time);
+			secs = Join_Time(&time, FALSE);
 			break;
 
 		default:

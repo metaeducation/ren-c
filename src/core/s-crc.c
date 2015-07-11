@@ -159,8 +159,6 @@ static REBCNT *CRC_Table;
 	REBINT m, n;
 	REBINT hash;
 
-	if (len < 0) len = LEN_BYTES(str);
-
 	hash = (REBINT)len + (REBINT)((REBYTE)LO_CASE(*str));
 
 	for (; len > 0; str++, len--) {
@@ -187,6 +185,7 @@ static REBCNT *CRC_Table;
 ***********************************************************************/
 {
 	REBCNT ret;
+	const REBYTE *name;
 
 	switch(VAL_TYPE(val)) {
 
@@ -244,7 +243,8 @@ static REBCNT *CRC_Table;
 		break;
 
 	case REB_DATATYPE:
-		ret = Hash_Word(Get_Sym_Name(VAL_DATATYPE(val)+1), -1);
+		name = Get_Sym_Name(VAL_DATATYPE(val) + 1);
+		ret = Hash_Word(name, LEN_BYTES(name));
 		break;
 
 	case REB_NONE:

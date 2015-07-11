@@ -190,7 +190,7 @@
 	const REBYTE *ap;
 	REBCNT len;
 	REBCNT alen;
-	REBINT	v;
+	REBCNT	v;
 	REBINT	a;
 	REBDEC	dec;
 
@@ -254,7 +254,6 @@
 			}
 
 			if (v > 255) v = 255;
-			else if (v < 0) v = 0;
 			*vp = (REBYTE) v;
 		}
 		goto ret_value;
@@ -301,7 +300,6 @@
     case A_REVERSE:
 		if (D_REF(2)) {
 			len = Get_Num_Arg(D_ARG(3));
-			if (len < 0) Trap_Range_DEAD_END(D_ARG(3));
 			len = MIN(len, VAL_TUPLE_LEN(value));
 		}
 		if (len > 0) {

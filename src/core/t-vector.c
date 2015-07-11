@@ -359,7 +359,7 @@ void Set_Vector_Row(REBSER *ser, REBVAL *blk)
 	REBINT sign = -1; // 0 = signed, 1 = unsigned
 	REBINT dims = 1;
 	REBINT bits = 32;
-	REBCNT size = 1;
+	REBINT size = 1;
 	REBSER *vect;
 	REBVAL *iblk = 0;
 
@@ -529,7 +529,7 @@ void Set_Vector_Row(REBSER *ser, REBVAL *blk)
 	REBVAL *value = D_ARG(1);
 	REBVAL *arg = D_ARG(2);
 	REBINT type;
-	REBCNT size;
+	REBINT size;
 	REBSER *vect;
 	REBSER *ser;
 
