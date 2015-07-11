@@ -352,8 +352,9 @@ static void Mark_Value(REBVAL *val, REBCNT depth);
 mark_obj:
 			if (!IS_MARK_SERIES(VAL_OBJ_FRAME(val))) {
 				Mark_Series(VAL_OBJ_FRAME(val), depth);
-				if (SERIES_TAIL(VAL_OBJ_FRAME(val)) >= 1)
-					; //Dump_Frame(VAL_OBJ_FRAME(val), 4);
+				if (SERIES_TAIL(VAL_OBJ_FRAME(val)) >= 1) {
+					//Dump_Frame(VAL_OBJ_FRAME(val), 4);
+				}
 			}
 			break;
 
