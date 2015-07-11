@@ -542,8 +542,15 @@ typedef struct Reb_Series_Ref
 #define VAL_UNI_DATA(v) UNI_SKIP(VAL_SERIES(v), VAL_INDEX(v))
 
 // Get a char, from either byte or unicode string:
-#define GET_ANY_CHAR(s,n)   (REBUNI)(BYTE_SIZE(s) ? BIN_HEAD(s)[n] : UNI_HEAD(s)[n])
-#define SET_ANY_CHAR(s,n,c) if BYTE_SIZE(s) BIN_HEAD(s)[n]=((REBYTE)c); else UNI_HEAD(s)[n]=((REBUNI)c)
+#define GET_ANY_CHAR(s,n) \
+	cast(REBUNI, BYTE_SIZE(s) ? BIN_HEAD(s)[n] : UNI_HEAD(s)[n])
+
+#define SET_ANY_CHAR(s,n,c) \
+	(BYTE_SIZE(s) \
+		? (BIN_HEAD(s)[n]=(cast(REBYTE, (c)))) \
+		: (UNI_HEAD(s)[n]=(cast(REBUNI, (c)))) \
+	)
+
 #define GET_CHAR_UNI(f,p,i) (uni ? ((REBUNI*)p)[i] : ((REBYTE*)bp)[i])
 
 #define VAL_ANY_CHAR(v) GET_ANY_CHAR(VAL_SERIES(v), VAL_INDEX(v))

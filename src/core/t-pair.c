@@ -155,7 +155,7 @@
 	else
 		return PE_BAD_SELECT;
 
-	if (NZ(val = pvs->setval)) {
+	if ((val = pvs->setval)) {
 		if (IS_INTEGER(val)) dec = (REBD32)VAL_INT64(val);
 		else if (IS_DECIMAL(val)) dec = (REBD32)VAL_DECIMAL(val);
 		else return PE_BAD_SET;

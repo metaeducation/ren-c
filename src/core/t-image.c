@@ -496,7 +496,7 @@ INLINE REBCNT ARGB_To_BGR(REBCNT i)
 		}
 	}
 	else if (IS_BLOCK(block)) {
-		if (w = Valid_Tuples(block)) Trap_Arg_DEAD_END(block+w-1);
+		if ((w = Valid_Tuples(block))) Trap_Arg_DEAD_END(block+w-1);
 		Tuples_To_RGBA(ip, size, VAL_BLK_DATA(block), VAL_LEN(block));
 	}
 	else if (!IS_END(block)) return 0;
@@ -546,7 +546,7 @@ INLINE REBCNT ARGB_To_BGR(REBCNT i)
 	if (D_REF(5)) only = 1;
 
 	// Validate that block arg is all tuple values:
-	if (IS_BLOCK(arg) && NZ(n = Valid_Tuples(arg))) {
+	if (IS_BLOCK(arg) && (n = Valid_Tuples(arg))) {
 		Trap_Arg_DEAD_END(VAL_BLK_SKIP(arg, n-1));
 	}
 

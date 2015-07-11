@@ -236,7 +236,7 @@
 	//Debug_Fmt("%s hash %d skip %d", str, hash, skip);
 
 	// Search hash table for word match:
-	while (NZ(h = hashes[hash])) {
+	while ((h = hashes[hash])) {
 		while ((n = Compare_UTF8(VAL_SYM_NAME(words+h), str, len)) >= 0) {
 			//if (Match_String("script", str, len))
 			//	Debug_Fmt("---- %s %d %d\n", VAL_SYM_NAME(&words[h]), n, h);

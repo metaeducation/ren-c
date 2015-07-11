@@ -815,7 +815,7 @@
 		if (ANY_WORD(value)) {
 			//Print("Word: %s", Get_Sym_Name(VAL_WORD_CANON(value)));
 			// Is the word found in this frame?
-			if (NZ(n = binds[VAL_WORD_CANON(value)])) {
+			if ((n = binds[VAL_WORD_CANON(value)])) {
 				if (n == NO_RESULT) n = 0; // SELF word
 				assert(n < SERIES_TAIL(frame));
 				// Word is in frame, bind it:
@@ -940,7 +940,7 @@
 	for (; NOT_END(value); value++) {
 		if (ANY_WORD(value)) {
 			// Is the word (canon sym) found in this frame?
-			if (NZ(n = WORDS_HEAD(Bind_Table)[VAL_WORD_CANON(value)])) {
+			if ((n = WORDS_HEAD(Bind_Table)[VAL_WORD_CANON(value)])) {
 				// Word is in frame, bind it:
 				VAL_WORD_INDEX(value) = n;
 				VAL_WORD_FRAME(value) = frame; // func body

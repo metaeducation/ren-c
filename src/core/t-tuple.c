@@ -122,7 +122,7 @@
 	if (len < 3) len = 3;
 	n = Get_Num_Arg(pvs->select);
 
-	if (NZ(val = pvs->setval)) {
+	if ((val = pvs->setval)) {
 		if (n <= 0 || n > MAX_TUPLE) return PE_BAD_SELECT;
 		if (IS_INTEGER(val) || IS_DECIMAL(val)) i = Int32(val);
 		else if (IS_NONE(val)) {

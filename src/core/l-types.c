@@ -991,7 +991,7 @@ end_date:
 	if (IS_END(val)) return FALSE;
 
 	// Dispatch maker:
-	if (NZ(func = Make_Dispatch[type])) {
+	if ((func = Make_Dispatch[type])) {
 		if (func(value, val, type)) return TRUE;
 	}
 

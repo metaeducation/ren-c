@@ -387,7 +387,7 @@
 	va_list args;
 
 	va_start(args, base);
-	while (NZ(n = va_arg(args, REBCNT))) {
+	while ((n = va_arg(args, REBCNT))) {
 		if (n >= SERIES_TAIL(base)) {
 			va_end(args);
 			return 0;

@@ -817,7 +817,7 @@ chk_neg:
 	REBCHR *eq;
 	REBSER *blk;
 
-	while (n = OS_STRLEN(str)) {
+	while ((n = OS_STRLEN(str))) {
 		len++;
 		str += n + 1; // next
 	}
@@ -825,7 +825,7 @@ chk_neg:
 	blk = Make_Block(len*2);
 
 	str = start;
-	while (NZ(eq = OS_STRCHR(str+1, '=')) && NZ(n = OS_STRLEN(str))) {
+	while ((eq = OS_STRCHR(str+1, '=')) && (n = OS_STRLEN(str))) {
 		Set_Series(REB_STRING, Append_Value(blk), Copy_OS_Str(str, eq-str));
 		Set_Series(REB_STRING, Append_Value(blk), Copy_OS_Str(eq+1, n-(eq-str)-1));
 		str += n + 1; // next
@@ -876,7 +876,7 @@ chk_neg:
 	REBSER *blk;
 	REBSER *dir;
 
-	while (n = OS_STRLEN(str)) {
+	while ((n = OS_STRLEN(str))) {
 		len++;
 		str += n + 1; // next
 	}
@@ -896,7 +896,7 @@ chk_neg:
 		dir = To_REBOL_Path(str, n, -1, TRUE);
 		str += n + 1; // next
 		len = dir->tail;
-		while (n = OS_STRLEN(str)) {
+        while ((n = OS_STRLEN(str))) {
 			dir->tail = len;
 			Append_Uni_Uni(dir, str, n);
 			Set_Series(REB_FILE, Append_Value(blk), Copy_String(dir, 0, -1));
@@ -904,7 +904,7 @@ chk_neg:
 		}
 #else /* absolute pathes already */
 		str += n + 1;
-		while (n = OS_STRLEN(str)) {
+		while ((n = OS_STRLEN(str))) {
 			dir = To_REBOL_Path(str, n, OS_WIDE, FALSE);
 			Set_Series(REB_FILE, Append_Value(blk), Copy_String(dir, 0, -1));
 			str += n + 1; // next

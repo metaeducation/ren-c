@@ -163,7 +163,7 @@ static REBCNT *CRC_Table;
 
 	for (; len > 0; str++, len--) {
 		n = *str;
-		if (n > 127 && NZ(m = Decode_UTF8_Char(&str, &len))) n = m; // mods str, len
+		if (n > 127 && (m = Decode_UTF8_Char(&str, &len))) n = m; // mods str, len
 		if (n < UNICODE_CASES) n = LO_CASE(n);
 		n = (REBYTE)((hash >> CRCSHIFTS) ^ (REBYTE)n); // drop upper 8 bits
 		hash = MASK_CRC(hash << 8) ^ (REBINT)CRC_Table[n];

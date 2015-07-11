@@ -161,7 +161,7 @@
 		return 0;
 	}
 
-	while (NZ(*buf++ = *tp--)) len++;
+	while ((*buf++ = *tp--)) len++;
 	return len;
 }
 

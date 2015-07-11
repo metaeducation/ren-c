@@ -169,7 +169,7 @@
 	if (IS_BINARY(val) || len == 0)
 		ser = VAL_SERIES(val);
 	else // Convert it if 16-bit or has latin-1 upper chars.
-		if (NZ(ser = Encode_UTF8_Value(val, len, ENCF_NO_COPY))) {
+		if ((ser = Encode_UTF8_Value(val, len, ENCF_NO_COPY))) {
 			idx = 0;
 			len = SERIES_TAIL(ser);
 		}

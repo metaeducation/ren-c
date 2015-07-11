@@ -96,7 +96,7 @@ static int find_word(REBVAL *val, REBVAL *word)
 	else
 		return PE_BAD_SELECT;
 
-	if (NZ(val = pvs->setval)) {
+	if ((val = pvs->setval)) {
 		if (IS_LOGIC(val)) i = VAL_LOGIC(val);
 		else if (IS_INTEGER(val)) i = Int32(val);
 		else return PE_BAD_SET;

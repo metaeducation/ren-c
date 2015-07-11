@@ -286,7 +286,7 @@
 
 	Eval_Natives++;
 
-	if (NZ(n = VAL_FUNC_CODE(func)(DS_RETURN))) {
+	if ((n = VAL_FUNC_CODE(func)(DS_RETURN))) {
 		ds = DS_RETURN;
 		switch (n) {
 		case R_RET: // for compiler opt

@@ -381,7 +381,7 @@ mark_obj:
 			// Special word used in word frame, stack, or errors:
 			if (VAL_GET_OPT(val, OPTS_UNWORD)) break;
 			// Mark its context, if it has one:
-			if (VAL_WORD_INDEX(val) > 0 && NZ(ser = VAL_WORD_FRAME(val))) {
+			if (VAL_WORD_INDEX(val) > 0 && (ser = VAL_WORD_FRAME(val))) {
 				//if (SERIES_TAIL(ser) > 100) Dump_Word_Value(val);
 				CHECK_MARK(ser, depth);
 			}
@@ -731,7 +731,7 @@ mark_obj:
 	// no partially valid datatypes (that are under construction).
 	for (n = 0; n < MAX_SAFE_SERIES; n++) {
 		REBSER *ser;
-		if (NZ(ser = GC_Infants[n])) {
+		if ((ser = GC_Infants[n])) {
 			//Dump_Series(ser, "Safe Series");
 			Mark_Series(ser, 0);
 		} else break;

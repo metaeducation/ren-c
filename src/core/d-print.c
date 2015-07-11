@@ -559,7 +559,7 @@ static REBREQ *Req_SIO;
 	}
 	for (; len > 0; len--) *bp-- = (sgn != 0) ? 'F' : '0';
 	bp++;
-	while (NZ(*buf++ = *bp++));
+	while ((*buf++ = *bp++));
 	return buf-1;
 }
 

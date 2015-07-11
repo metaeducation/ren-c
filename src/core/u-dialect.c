@@ -69,7 +69,7 @@ static char *Dia_Fmt = "DELECT - cmd: %s length: %d missed: %d total: %d";
 
 	if (dialect == VAL_WORD_FRAME(word)) n = VAL_WORD_INDEX(word);
 	else {
-		if (NZ(n = Find_Word_Index(dialect, VAL_WORD_SYM(word), FALSE))) {
+		if ((n = Find_Word_Index(dialect, VAL_WORD_SYM(word), FALSE))) {
 			VAL_WORD_FRAME(word) = dialect;
 			VAL_WORD_INDEX(word) = n;
 		}
@@ -214,7 +214,7 @@ again:
 					accept = 4;
 				}
 				// Is it a typeset?
-				else if (NZ(temp = Get_Var_No_Trap(fargs)) && IS_TYPESET(temp)) {
+				else if ((temp = Get_Var_No_Trap(fargs)) && IS_TYPESET(temp)) {
 					if (TYPE_CHECK(temp, VAL_TYPE(value))) accept = 1;
 				}
 				else if (!IS_WORD(value)) return 0; // do not search past a refinement
@@ -508,7 +508,7 @@ again:
 		dia.contexts = VAL_BLK_DATA(dia.contexts);
 	}
 
-	if (NZ(all = D_REF(6))) {
+	if ((all = D_REF(6))) {
 		SET_FLAG(dia.flags, RDIA_ALL);
 		Resize_Series(dia.out, VAL_LEN(D_ARG(2)));
 		while (TRUE) {

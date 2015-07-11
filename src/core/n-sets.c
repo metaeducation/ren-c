@@ -109,7 +109,7 @@ enum {
 			}
 
 			// Iterate over second series?
-			if (NZ(i = GET_FLAG(flags, SOP_BOTH))) {
+			if ((i = GET_FLAG(flags, SOP_BOTH))) {
 				val = val1;
 				val1 = val2;
 				val2 = val;
@@ -154,7 +154,7 @@ enum {
 			}
 
 			// Iterate over second series?
-			if (NZ(i = GET_FLAG(flags, SOP_BOTH))) {
+			if ((i = GET_FLAG(flags, SOP_BOTH))) {
 				val = val1;
 				val1 = val2;
 				val2 = val;

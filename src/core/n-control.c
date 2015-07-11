@@ -170,7 +170,7 @@ enum {
 	else if (ANY_PATH(word)) {
 		REBCNT index;
 		REBSER *obj;
-		if (NZ(obj = Resolve_Path(word, &index))) {
+		if ((obj = Resolve_Path(word, &index))) {
 			wrd = FRM_WORD(obj, index);
 			Protect_Word(wrd, flags);
 			if (GET_FLAG(flags, PROT_DEEP)) {

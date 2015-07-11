@@ -514,7 +514,7 @@ static void *Task_Ready;
 	wchar_t *str;
 
 	str = env;
-	while (n = wcslen(str)) {
+    while ((n = wcslen(str))) {
 		len += n + 1;
 		str = env + len; // next
 	}

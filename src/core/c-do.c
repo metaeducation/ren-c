@@ -1305,7 +1305,7 @@ eval_func2:
 		case REB_WORD:
 		case REB_SET_WORD:
 		case REB_GET_WORD:
-			if (NZ(val = Find_Word_Value(frame, VAL_WORD_SYM(values)))) {
+			if ((val = Find_Word_Value(frame, VAL_WORD_SYM(values)))) {
 				DS_PUSH(val);
 				break;
 			} // Unknown in context, fall below, use word as value.

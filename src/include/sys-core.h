@@ -316,8 +316,6 @@ enum encoding_opts {
 ***********************************************************************/
 
 // Generic defines:
-#define NZ(c) ((c) != 0)
-
 #define ALIGN(s, a) (((s) + (a)-1) & ~((a)-1))
 
 #define MEM_CARE 5				// Lower number for more frequent checks

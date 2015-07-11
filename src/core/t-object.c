@@ -111,7 +111,7 @@ static void Append_Obj(REBSER *obj, REBVAL *arg)
 			Trap_Arg(word);
 		}
 
-		if (NZ(i = binds[VAL_WORD_CANON(word)])) {
+		if ((i = binds[VAL_WORD_CANON(word)])) {
 			// bug fix, 'self is protected only in selfish frames:
 			if ((VAL_WORD_CANON(word) == SYM_SELF) && !IS_SELFLESS(obj)) {
 				// release binding table

@@ -281,7 +281,7 @@ static REBOL_STATE Top_State; // Boot var: holds error state during boot
 	cats = VAL_OBJ_FRAME(Get_System(SYS_CATALOG, CAT_ERRORS));
 
 	if (code >= 0 && n < SERIES_TAIL(cats) &&
-		NZ(cat = VAL_SERIES(BLK_SKIP(cats, n)))
+		(cat = VAL_SERIES(BLK_SKIP(cats, n)))
 	) {
 		Set_Word(&error->type, FRM_WORD_SYM(cats, n), cats, n);
 

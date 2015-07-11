@@ -125,7 +125,7 @@
 	// Scan hash table for match:
 	hashes = (REBCNT*)hser->data;
 	if (ANY_WORD(key)) {
-		while (NZ(n = hashes[hash])) {
+		while ((n = hashes[hash])) {
 			val = BLK_SKIP(series, (n-1) * wide);
 			if (
 				ANY_WORD(val) &&
@@ -137,7 +137,7 @@
 		}
 	}
 	else if (ANY_BINSTR(key)) {
-		while (NZ(n = hashes[hash])) {
+		while ((n = hashes[hash])) {
 			val = BLK_SKIP(series, (n-1) * wide);
 			if (
 				VAL_TYPE(val) == VAL_TYPE(key)
@@ -147,7 +147,7 @@
 			if (hash >= len) hash -= len;
 		}
 	} else {
-		while (NZ(n = hashes[hash])) {
+		while ((n = hashes[hash])) {
 			val = BLK_SKIP(series, (n-1) * wide);
 			if (VAL_TYPE(val) == VAL_TYPE(key) && 0 == Cmp_Value(key, val, !cased)) return hash;
 			hash += skip;

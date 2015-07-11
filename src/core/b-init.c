@@ -929,25 +929,25 @@ static REBCNT Set_Option_Word(REBCHR *str, REBCNT field)
 
 	Set_Option_Word(rargs->secure, OPTIONS_SECURE);
 
-	if (NZ(data = OS_GET_LOCALE(0))) {
+	if ((data = OS_GET_LOCALE(0))) {
 		val = Get_System(SYS_LOCALE, LOCALE_LANGUAGE);
 		Set_String(val, Copy_OS_Str(data, OS_STRLEN(data)));
 		OS_FREE(data);
 	}
 
-	if (NZ(data = OS_GET_LOCALE(1))) {
+	if ((data = OS_GET_LOCALE(1))) {
 		val = Get_System(SYS_LOCALE, LOCALE_LANGUAGE_P);
 		Set_String(val, Copy_OS_Str(data, OS_STRLEN(data)));
 		OS_FREE(data);
 	}
 
-	if (NZ(data = OS_GET_LOCALE(2))) {
+	if ((data = OS_GET_LOCALE(2))) {
 		val = Get_System(SYS_LOCALE, LOCALE_LOCALE);
 		Set_String(val, Copy_OS_Str(data, OS_STRLEN(data)));
 		OS_FREE(data);
 	}
 
-	if (NZ(data = OS_GET_LOCALE(3))) {
+	if ((data = OS_GET_LOCALE(3))) {
 		val = Get_System(SYS_LOCALE, LOCALE_LOCALE_P);
 		Set_String(val, Copy_OS_Str(data, OS_STRLEN(data)));
 		OS_FREE(data);

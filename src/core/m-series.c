@@ -368,7 +368,7 @@
 				SERIES_SET_BIAS(series, bias);
 				SERIES_REST(series) -= len;
 				series->data += SERIES_WIDE(series) * len;
-				if (NZ(start = SERIES_BIAS(series))) {
+				if ((start = SERIES_BIAS(series))) {
 					// If more than half biased:
 					if (start >= MAX_SERIES_BIAS || start > SERIES_REST(series))
 						Reset_Bias(series);
