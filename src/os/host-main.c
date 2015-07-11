@@ -260,7 +260,7 @@ int main(int argc, char **argv)
 			if ((line = Get_Str())) {
 				RL_Do_String(line, 0, 0);
 				RL_Print_TOS(0, cb_cast(RESULT_STR));
-				OS_Free(line);
+				OS_FREE(line);
 			}
 			else break; // EOS
 		}

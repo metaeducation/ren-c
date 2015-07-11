@@ -668,7 +668,7 @@ SHA_CTX *c;
 	/* clear stuff, sha1_block may be leaving some stuff on the stack
 	 * but I'm not worried :-) */
 	c->num=0;
-/*	memset((char *)&c,0,sizeof(c));*/
+/*	memset(&c,0,sizeof(c));*/
 	}
 
 int SHA1_CtxSize(void) {

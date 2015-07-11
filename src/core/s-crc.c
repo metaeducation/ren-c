@@ -320,7 +320,7 @@ static REBCNT *CRC_Table;
 /*
 ***********************************************************************/
 {
-	CRC_Table = Make_Mem(sizeof(REBCNT) * 256);
+	CRC_Table = ALLOC_ARRAY(REBCNT, 256);
 	Make_CRC_Table(PRZCRC);
 }
 
@@ -361,7 +361,7 @@ static void Make_CRC32_Table(void) {
 	u32 c;
 	int n,k;
 
-	crc32_table = Make_Mem(256 * sizeof(u32));
+	crc32_table = ALLOC_ARRAY(u32, 256);
 
 	for(n=0;n<256;n++) {
 		c=(u32)n;

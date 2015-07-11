@@ -915,15 +915,15 @@ static const REBUNI Char_Cases[] = {
 	int n;
 
 	// Init whitespace table:
-	White_Chars = Make_Mem(34);
+	White_Chars = ALLOC_ARRAY(REBYTE, 34);
 	memset(White_Chars, 1, 33); // All white chars: NL, CR, BS, etc...
 	White_Chars[' ']  = 3;	// space
 	White_Chars['\t'] = 3;	// space
 	White_Chars[0]    = 0;	// special
 
 	// Casing tables:
-	Upper_Cases = Make_Mem(UNICODE_CASES * sizeof(REBUNI));
-	Lower_Cases = Make_Mem(UNICODE_CASES * sizeof(REBUNI));
+	Upper_Cases = ALLOC_ARRAY(REBUNI, UNICODE_CASES);
+	Lower_Cases = ALLOC_ARRAY(REBUNI, UNICODE_CASES);
 
 	for (n = 0; n < UNICODE_CASES; n++) {
 		UP_CASE(n) = n;

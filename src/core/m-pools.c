@@ -121,7 +121,7 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 
 /***********************************************************************
 **
-*/	void *Make_Mem(size_t size)
+*/	void *Alloc_Mem(size_t size)
 /*
 **		Main memory allocation wrapper function.
 **
@@ -166,7 +166,7 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 	else if (scale < 0) unscale = -scale, scale = 1;
 
 	// Copy pool sizes to new pool structure:
-	Mem_Pools = Make_Mem(sizeof(REBPOL) * MAX_POOLS);
+	Mem_Pools = ALLOC_ARRAY(REBPOL, MAX_POOLS);
 	for (n = 0; n < MAX_POOLS; n++) {
 		Mem_Pools[n].wide = Mem_Pool_Spec[n].wide;
 		Mem_Pools[n].units = (Mem_Pool_Spec[n].units * scale) / unscale;
@@ -174,7 +174,7 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 	}
 
 	// For pool lookup. Maps size to pool index. (See Find_Pool below)
-	PG_Pool_Map = Make_Mem((4 * MEM_BIG_SIZE) + 4); // extra
+	PG_Pool_Map = ALLOC_ARRAY(REBYTE, (4 * MEM_BIG_SIZE) + 4); // extra
 	n = 9;  // sizes 0 - 8 are pool 0
 	for (; n <= 16 * MEM_MIN_SIZE; n++) PG_Pool_Map[n] = MEM_TINY_POOL     + ((n-1) / MEM_MIN_SIZE);
 	for (; n <= 32 * MEM_MIN_SIZE; n++) PG_Pool_Map[n] = MEM_SMALL_POOLS-4 + ((n-1) / (MEM_MIN_SIZE * 4));
@@ -237,7 +237,7 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 	REBCNT	mem_size = pool->wide * units + sizeof(REBSEG);
 #endif
 
-	seg = (REBSEG *) Make_Mem(mem_size);
+	seg = cast(REBSEG *, ALLOC_ARRAY(char, mem_size));
 	if (!seg) {
 		assert(FALSE);
 		Panic_Core(RP_NO_MEMORY, mem_size);
@@ -363,9 +363,9 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 		Debug_Fmt_Num("Alloc1:", length);
 #endif
 #ifdef MUNGWALL
-		node = (REBNOD *) Make_Mem(length+2*MUNG_SIZE);
+		node = cast(REBNOD *, ALLOC_ARRAY(char, length+2*MUNG_SIZE));
 #else
-		node = (REBNOD *) Make_Mem(length);
+		node = cast(REBNOD *, ALLOC_ARRAY(char, length));
 #endif
 		if (!node) Trap_DEAD_END(RE_NO_MEMORY);
 #ifdef MUNGWALL
@@ -377,7 +377,7 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 		Mem_Pools[SYSTEM_POOL].free++;
 	}
 #ifdef CHAFF
-	memset((REBYTE *)node, 0xff, length);
+	memset(node, 0xff, length);
 #endif
 	series->tail = 0;
 	SERIES_REST(series) = length / SERIES_WIDE(series);
@@ -437,9 +437,9 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 			Debug_Num("Alloc2:", length);
 #endif
 #ifdef MUNGWALL
-		node = (REBNOD *) Make_Mem(length+2*MUNG_SIZE);
+		node = cast(REBNOD *, ALLOC_ARRAY(char, length+2*MUNG_SIZE));
 #else
-		node = (REBNOD *) Make_Mem(length);
+		node = cast(REBNOD *, ALLOC_ARRAY(char, length));
 #endif
 		if (!node) {
 			Free_Node(SERIES_POOL, (REBNOD *)series);

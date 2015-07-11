@@ -765,7 +765,7 @@ static void emitchunk(unsigned char **cpp,char *type,char *data,int length) {
 		currentidat=currentidat->next;
 	}
 
-	codi->data = Make_Mem(imgsize);
+	codi->data = ALLOC_ARRAY(REBYTE, imgsize);
 	codi->len = imgsize;
 
 	cp=(unsigned char *)codi->data;
@@ -806,7 +806,7 @@ error:
 	if (!png_info(codi->data, codi->len, &w, &h )) trap_png();
 	codi->w = w;
 	codi->h = h;
-	codi->bits = Make_Mem(w * h * 4);
+	codi->bits = ALLOC_ARRAY(u32, w * h);
 	png_load(codi->data, codi->len, cast(char*, codi->bits), &alpha);
 
 	//if(alpha) VAL_IMAGE_TRANSP(Temp_Value)=VITT_ALPHA;

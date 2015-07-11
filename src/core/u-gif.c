@@ -87,7 +87,9 @@ void Chrom_Key_Alpha(REBVAL *v,REBCNT col,REBINT blitmode) {
 	short	*prefix;
 	REBYTE	first, *pixel_stack, *suffix, *top_stack;
 
-	suffix = Make_Mem(MAX_STACK_SIZE * (sizeof(REBYTE) + sizeof(REBYTE) + sizeof(short)));
+	suffix = ALLOC_ARRAY(REBYTE,
+		MAX_STACK_SIZE * (sizeof(REBYTE) + sizeof(REBYTE) + sizeof(short))
+	);
 	pixel_stack = suffix + MAX_STACK_SIZE;
 	prefix = (short *)(pixel_stack + MAX_STACK_SIZE);
 
@@ -191,7 +193,11 @@ void Chrom_Key_Alpha(REBVAL *v,REBCNT col,REBINT blitmode) {
 		}
 	}
 	*cpp = cp + count + 1;
-	Free_Mem(suffix, MAX_STACK_SIZE * (sizeof(REBYTE) + sizeof(REBYTE) + sizeof(short)));
+
+	FREE_ARRAY(REBYTE,
+		MAX_STACK_SIZE * (sizeof(REBYTE) + sizeof(REBYTE) + sizeof(short)),
+		suffix
+	);
 }
 
 
@@ -295,7 +301,7 @@ void Chrom_Key_Alpha(REBVAL *v,REBCNT col,REBINT blitmode) {
 			Append_Series(VAL_SERIES(Temp2_Value), (REBMEM *)Temp_Value, 1);
 		}
 */
-		dp = codi->bits = (u32 *)Make_Mem(w * h * 4);
+		dp = codi->bits = ALLOC_ARRAY(u32, w * h);
 		codi->w = w;
 		codi->h = h;
 

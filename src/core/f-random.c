@@ -139,11 +139,11 @@ static REBI64 ran_arr_cycle()
 	if (secure) {
 		REBYTE srcbuf[20], dstbuf[20];
 
-		memcpy(srcbuf, (REBYTE*)&tmp, sizeof(tmp));
+		memcpy(srcbuf, &tmp, sizeof(tmp));
 		memset(srcbuf + sizeof(tmp), *(REBYTE*)&tmp, 20 - sizeof(tmp));
 
 		SHA1(srcbuf, 20, dstbuf);
-		memcpy((REBYTE*)&tmp, dstbuf, sizeof(tmp));
+		memcpy(&tmp, dstbuf, sizeof(tmp));
 	}
 
 	return tmp;

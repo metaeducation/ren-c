@@ -919,7 +919,7 @@ chk_neg:
 	REBSER *ser;
 	REBINT n;
 
-	fr.files = OS_MAKE(MAX_FILE_REQ_BUF);
+	fr.files = OS_ALLOC_ARRAY(REBCHR, MAX_FILE_REQ_BUF);
 	fr.len = MAX_FILE_REQ_BUF/sizeof(REBCHR) - 2;
 	fr.files[0] = 0;
 
@@ -987,10 +987,10 @@ chk_neg:
 	if (lenplus < 0) return R_UNSET;
 
 	// Two copies...is there a better way?
-	buf = MAKE_STR(lenplus);
+	buf = ALLOC_ARRAY(REBCHR, lenplus);
 	OS_GET_ENV(cmd, buf, lenplus);
 	Set_String(D_RET, Copy_OS_Str(buf, lenplus - 1));
-	FREE_MEM(buf);
+	FREE_ARRAY(REBCHR, lenplus, buf);
 
 	return R_RET;
 }

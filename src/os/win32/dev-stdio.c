@@ -94,7 +94,7 @@ static dbgout(char *fmt, int d, char *s)
 static void close_stdio(void)
 {
 	if (Std_Buf) {
-		OS_Free(Std_Buf);
+		OS_FREE(Std_Buf);
 		Std_Buf = 0;
 		//FreeConsole();  // problem: causes a delay
 	}
@@ -150,7 +150,7 @@ BOOL Init_Console()
             SetConsoleMode(Std_Inp, CONSOLE_MODES);
         }
 
-		Std_Buf = OS_Make(BUF_SIZE * sizeof(REBCHR));
+		Std_Buf = OS_ALLOC_ARRAY(REBCHR, BUF_SIZE);
 
 		// Handle stdio CTRL-C interrupt:
 		SetConsoleCtrlHandler(Handle_Break, TRUE);

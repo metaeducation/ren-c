@@ -90,7 +90,7 @@
 	dst_idx *= SERIES_WIDE(dst_ser); // loop invariant
 	ilen  *= SERIES_WIDE(dst_ser); // loop invariant
 	for (; dups > 0; dups--) {
-		memcpy(dst_ser->data + dst_idx, (REBYTE *)src_val, ilen);
+		memcpy(dst_ser->data + dst_idx, src_val, ilen);
 		dst_idx += ilen;
 	}
 	BLK_TERM(dst_ser);

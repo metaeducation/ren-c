@@ -31,13 +31,13 @@
 // Codec image interface:
 //
 // If your codec routine returns CODI_IMAGE, it is expected that the
-// ->bits field contains a block of memory allocated with Make_Mem
+// ->bits field contains a block of memory allocated with Alloc_Mem
 // of size (->w * ->h * 4).  This will be freed by the
 // REBNATIVE(do_codec) in n-system.c
 //
 // If your codec routine returns CODI_BINARY, it is
 // expected that the ->data field contains a block of memory
-// allocated with Make_Mem of size ->len.  This will be freed by
+// allocated with Alloc_Mem of size ->len.  This will be freed by
 // the REBNATIVE(do_codec) in n-system.c
 //
 // If your codec routine returns CODI_TEXT, it is

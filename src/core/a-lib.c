@@ -168,7 +168,7 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 		void *data = script + sizeof(ptype);
 		script_len -= sizeof(ptype);
 
-		COPY_MEM(&ptype, script, sizeof(ptype));
+		memcpy(&ptype, script, sizeof(ptype));
 
 		if (ptype == 1) {/* COMPRESSed data */
 			ser = Decompress(data, script_len, 10000000, 0);
@@ -178,7 +178,7 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 				OS_FREE(script);
 				return 1;
 			}
-			COPY_MEM(BIN_HEAD(ser), data, script_len);
+			memcpy(BIN_HEAD(ser), data, script_len);
 		}
 		OS_FREE(script);
 
@@ -709,14 +709,14 @@ RL_API u32 *RL_Map_Words(REBSER *series)
 **		Word identifiers are persistent, and you can use them anytime.
 **		The block can include any kind of word, including set-words, lit-words, etc.
 **		If the input block contains non-words, they will be skipped.
-**		The array is allocated with OS_MAKE and you can OS_FREE it any time.
+**		The array is allocated with OS_ALLOC and you can OS_FREE it any time.
 */
 {
 	REBCNT i = 1;
 	u32 *words;
 	REBVAL *val = BLK_HEAD(series);
 
-	words = OS_MAKE((series->tail+2) * sizeof(u32));
+	words = OS_ALLOC_ARRAY(u32, series->tail + 2);
 
 	for (; NOT_END(val); val++) {
 		if (ANY_WORD(val)) words[i++] = VAL_WORD_CANON(val);
@@ -741,14 +741,14 @@ RL_API REBYTE *RL_Word_String(u32 word)
 **		The string is always UTF-8 encoded (chars > 127 are encoded.)
 **		In this API, word identifiers are always canonical. Therefore,
 **		the returned string may have different spelling/casing than expected.
-**		The string is allocated with OS_MAKE and you can OS_FREE it any time.
+**		The string is allocated with OS_ALLOC and you can OS_FREE it any time.
 */
 {
 	REBYTE *s1, *s2;
 	// !!This code should use a function from c-words.c (but nothing perfect yet.)
 	if (word == 0 || word >= PG_Word_Table.series->tail) return 0;
 	s1 = VAL_SYM_NAME(BLK_SKIP(PG_Word_Table.series, word));
-	s2 = OS_MAKE(LEN_BYTES(s1));
+	s2 = OS_ALLOC_ARRAY(REBYTE, LEN_BYTES(s1));
 	COPY_BYTES(s2, s1, LEN_BYTES(s1));
 	return s2;
 }
@@ -892,7 +892,7 @@ RL_API u32 *RL_Words_Of_Object(REBSER *obj)
 **		obj  - object pointer (e.g. from RXA_OBJECT)
 **	Notes:
 **		Returns a word array similar to MAP_WORDS().
-**		The array is allocated with OS_MAKE. You can OS_FREE it any time.
+**		The array is allocated with OS_ALLOC. You can OS_FREE it any time.
 */
 {
 	REBCNT index;
@@ -900,7 +900,8 @@ RL_API u32 *RL_Words_Of_Object(REBSER *obj)
 	REBVAL *syms;
 
 	syms = FRM_WORD(obj, 1);
-	words = OS_MAKE(obj->tail * sizeof(u32)); // One less, because SELF not included.
+	// One less, because SELF not included.
+	words = OS_ALLOC_ARRAY(u32, obj->tail);
 	for (index = 0; index < (obj->tail-1); syms++, index++) {
 		words[index] = VAL_BIND_CANON(syms);
 	}

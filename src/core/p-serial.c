@@ -73,8 +73,8 @@
 			if (! (IS_FILE(arg) || IS_STRING(arg) || IS_BINARY(arg))) {
 				Trap1_DEAD_END(RE_INVALID_PORT_ARG, arg);
 			}
-			req->serial.path = MAKE_STR(MAX_SERIAL_DEV_PATH);
 			TO_OS_STR(req->serial.path, (char *) VAL_DATA(arg), MAX_SERIAL_DEV_PATH);
+			req->serial.path = ALLOC_ARRAY(REBCHR, MAX_SERIAL_DEV_PATH);
 			arg = Obj_Value(spec, STD_PORT_SPEC_SERIAL_SPEED);
 			if (! IS_INTEGER(arg)) {
 				Trap1_DEAD_END(RE_INVALID_PORT_ARG, arg);

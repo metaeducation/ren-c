@@ -184,7 +184,7 @@ extern const char Str_Banner[];
 		REBYTE *cp;
 		REBINT i;
 
-		PG_Boot_Strs = (REBYTE **)Make_Mem(RS_MAX * sizeof(REBYTE *));
+		PG_Boot_Strs = ALLOC_ARRAY(REBYTE *, RS_MAX);
 		*ROOT_STRINGS = Boot_Block->strings;
 		cp = VAL_BIN(ROOT_STRINGS);
 		for (i = 0; i < RS_MAX; i++) {
@@ -702,7 +702,7 @@ extern const char Str_Banner[];
 	}
 
 	if (codi->action == CODI_ENCODE) {
-		u16 * data = Make_Mem(codi->len * sizeof(u16));
+		u16 * data = ALLOC_ARRAY(u16, codi->len);
 		if (codi->w == 1) {
 			/* in ASCII */
 			REBCNT i = 0;
@@ -1015,8 +1015,8 @@ static REBCNT Set_Option_Word(REBCHR *str, REBCNT field)
 	PG_Boot_Level = BOOT_LEVEL_FULL;
 	PG_Mem_Usage = 0;
 	PG_Mem_Limit = 0;
-	PG_Reb_Stats = Make_Mem(sizeof(*PG_Reb_Stats));
-	Reb_Opts = Make_Mem(sizeof(*Reb_Opts));
+	PG_Reb_Stats = ALLOC(REB_STATS);
+	Reb_Opts = ALLOC(REB_OPTS);
 
 	// Thread locals:
 	Trace_Level = 0;

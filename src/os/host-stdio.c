@@ -65,10 +65,10 @@ static REBYTE *Get_Next_Line()
 	if (*bp) {
 		if (*bp == CR && bp[1] == LF) bp++;
 		len = bp - inbuf;
-		out = OS_Make(len + 2);
+		out = OS_ALLOC_ARRAY(REBYTE, len + 2);
 		COPY_BYTES(out, inbuf, len+1);
 		out[len+1] = 0;
-		MOVE_MEM(inbuf, bp + 1, 1 + LEN_BYTES(bp + 1));
+		memmove(inbuf, bp + 1, 1 + LEN_BYTES(bp + 1));
 		return out;
 	}
 
@@ -122,7 +122,7 @@ static int Fetch_Buf()
 
 	if (Std_IO_Req.error) Host_Crash("stdio open");
 
-	inbuf = OS_Make(inbuf_len);
+	inbuf = OS_ALLOC_ARRAY(REBYTE, inbuf_len);
 	inbuf[0] = 0;
 }
 

@@ -158,7 +158,7 @@ static void *Task_Ready;
 
 /***********************************************************************
 **
-*/	void *OS_Make(size_t size)
+*/	void *OS_Alloc_Mem(size_t size)
 /*
 **		Allocate memory of given size.
 **
@@ -173,9 +173,9 @@ static void *Task_Ready;
 
 /***********************************************************************
 **
-*/	void OS_Free(void *mem)
+*/	void OS_Free_Mem(void *mem)
 /*
-**		Free memory allocated in this OS environment. (See OS_Make)
+**		Free memory allocated in this OS environment. (See OS_Alloc_Mem)
 **
 ***********************************************************************/
 {
@@ -335,7 +335,9 @@ static void *Task_Ready;
 		// really need to set an environment variable, here's a way
 		// that just leaks a string each time you call.
 
-		char* expr = MAKE_STR(LEN_STR(envname) + 1 + LEN_STR(envval) + 1);
+		char *expr = ALLOC_ARRAY(char,
+			strlen(envname) + 1 + strlen(envval) + 1
+		);
 
 		strcpy(expr, envname);
 		strcat(expr, "=");
@@ -381,7 +383,7 @@ static void *Task_Ready;
 	// compute total size:
 	for (n = 0; environ[n]; n++) len += 1 + LEN_STR(environ[n]);
 
-	cp = str = OS_Make(len + 1); // +terminator
+	cp = str = OS_ALLOC_ARRAY(char, len + 1); // +terminator
 	*cp = 0;
 
 	// combine all strings into one:
@@ -452,7 +454,7 @@ static void *Task_Ready;
 **
 ***********************************************************************/
 {
-	*path = MAKE_STR(PATH_MAX);
+	*path = OS_ALLOC_ARRAY(REBCHR, PATH_MAX);
 	if (!getcwd(*path, PATH_MAX-1)) *path[0] = 0;
 	return LEN_STR(*path); // Be sure to call free() after usage
 }
@@ -702,7 +704,7 @@ static int Try_Browser(char *browser, REBCHR *url)
 		*string = NULL;
 	} else {
 		//convert to UTF8
-		*string = (REBCHR*)OS_Make(len+1);
+		*string = OS_ALLOC_ARRAY(REBCHR, len + 1);
 		for (n = 0; n < len; n++)
 			*string[n] = (unsigned char)((wchar_t*)str)[n];
 	}

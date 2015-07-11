@@ -611,7 +611,7 @@ SCHEME_ACTIONS *Scheme_Actions;	// Initial Global (not threaded)
 **
 ***********************************************************************/
 {
-	Scheme_Actions = Make_Mem(sizeof(SCHEME_ACTIONS) * MAX_SCHEMES);
+	Scheme_Actions = ALLOC_ARRAY(SCHEME_ACTIONS, MAX_SCHEMES);
 
 	Init_Console_Scheme();
 	Init_File_Scheme();

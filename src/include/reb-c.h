@@ -408,6 +408,76 @@ typedef u16 REBUNI;
 
 /***********************************************************************
 **
+**	MEMORY ALLOCATION AND FREEING MACROS
+**
+**		Rebol's internal memory management is done based on a pooled
+**		model, which use Alloc_Mem and Free_Mem instead of calling
+**		malloc directly.  (See the comments on those routines for
+**		explanations of why this makes sense--even in an age of
+**		modern thread-safe allocators--due to Rebol's ability to
+**		exploit extra data in its pool block when a series grows.)
+**
+**		Since Free_Mem requires the caller to pass in the size of
+**		the memory being freed, it can be tricky.  These macros are
+**		are modeled after C++'s new/delete and new[]/delete[], and
+**		allocations take either a type or a type and a length.  The
+**		size calculation is done automatically, and the result is
+**		cast to the appropriate type.  The deallocations also take
+**		a type and do the calculations.
+**
+**		In a C++11 build, an extra check is done to ensure the type
+**		you pass in a FREE or FREE_ARRAY lines up with the type of
+**		pointer being passed in to be freed.
+**
+***********************************************************************/
+
+#define ALLOC(t) \
+	cast(t *, Alloc_Mem(sizeof(t)))
+
+#define ALLOC_ZEROFILL(t) \
+	cast(t *, memset(ALLOC(t), '\0', sizeof(t)))
+
+#define ALLOC_ARRAY(t,n) \
+	cast(t *, Alloc_Mem(sizeof(t) * (n)))
+
+#define ALLOC_ARRAY_ZEROFILL(t,n) \
+	cast(t *, memset(ALLOC_ARRAY(t, (n)), '\0', sizeof(t) * (n)))
+
+#if defined(__cplusplus) && __cplusplus >= 201103L
+	#include <type_traits>
+
+	#define FREE(t,p) \
+		do { \
+			static_assert( \
+				std::is_same<decltype(p), std::add_pointer<t>::type>::value, \
+				"mismatched FREE type" \
+			); \
+			Free_Mem(p, sizeof(t)); \
+		} while (0)
+
+	#define FREE_ARRAY(t,n,p)	\
+		do { \
+			static_assert( \
+				std::is_same<decltype(p), std::add_pointer<t>::type>::value, \
+				"mismatched FREE_ARRAY type" \
+			); \
+			Free_Mem(p, sizeof(t) * (n)); \
+		} while (0)
+#else
+	#define FREE(t,p) \
+		Free_Mem((p), sizeof(t))
+
+	#define FREE_ARRAY(t,n,p)	\
+		Free_Mem((p), sizeof(t) * (n))
+#endif
+
+// Memory clearing macros:
+#define CLEAR(m, s)     memset((void*)(m), 0, s);
+#define CLEARS(m)       memset((void*)(m), 0, sizeof(*m));
+
+
+/***********************************************************************
+**
 **  Useful Macros
 **
 ***********************************************************************/
@@ -426,15 +496,6 @@ typedef u16 REBUNI;
 #define MIN(a,b) (((a) < (b)) ? (a) : (b))
 #define MAX(a,b) (((a) > (b)) ? (a) : (b))
 #endif
-
-// Memory related functions:
-#define MAKE_MEM(n)     malloc(n)
-#define MAKE_NEW(s)     malloc(sizeof(s))
-#define FREE_MEM(m)     free(m)
-#define CLEAR(m, s)     memset((void*)(m), 0, s);
-#define CLEARS(m)       memset((void*)(m), 0, sizeof(*m));
-#define COPY_MEM(t,f,l) memcpy((void*)(t), (void*)(f), l)
-#define MOVE_MEM(t,f,l) memmove((void*)(t), (void*)(f), l)
 
 // Byte string functions:
 // Use these when you semantically are talking about unsigned REBYTEs

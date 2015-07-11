@@ -116,8 +116,8 @@
 	}
 
 	len = LEN_STR(cp); // wide chars
-	bin = OS_Make((len+1) * sizeof(REBCHR));
 	COPY_STR(bin, cp, len);
+	bin = OS_ALLOC_ARRAY(REBCHR, len + 1);
 
 	GlobalUnlock(data);
 
@@ -160,7 +160,7 @@
 		return DR_ERROR;
 	}
 
-	COPY_MEM(bin, req->data, len);
+	memcpy(bin, req->data, len);
 	bin[len] = 0;
 	GlobalUnlock(data);
 

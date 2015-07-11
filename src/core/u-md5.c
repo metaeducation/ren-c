@@ -385,7 +385,7 @@ void MD5_Final(unsigned char *md, MD5_CTX *c)
 	/* clear stuff, md5_block may be leaving some stuff on the stack
 	 * but I'm not worried :-) */
 	c->num=0;
-/*	memset((char *)&c,0,sizeof(c));*/
+/*	memset(&c,0,sizeof(c));*/
 }
 
 int MD5_CtxSize(void) {

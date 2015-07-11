@@ -93,8 +93,8 @@ static u32 *core_ext_words;
 		if (encapBuffer != NULL)
 		{
 			REBSER *encapData = (REBSER*)RL_Make_String(encapBufferLen, FALSE);
-			COPY_MEM((REBYTE *)RL_SERIES(encapData, RXI_SER_DATA), encapBuffer, encapBufferLen);
-			FREE_MEM(encapBuffer);
+			memcpy(RL_SERIES(encapData, RXI_SER_DATA), encapBuffer, encapBufferLen);
+			FREE(encapBuffer);
 			encapBuffer = NULL;
 
 			//hack! - will set the tail to data size
@@ -206,8 +206,8 @@ static u32 *core_ext_words;
 			}
 
 			//don't let the strings leak!
-			if (osTitle) OS_Free(title);
-			if (osPath) OS_Free(path);
+			if (osTitle) OS_FREE(title);
+			if (osPath) OS_FREE(path);
 
 			return RXR_VALUE;
 #endif
@@ -227,7 +227,7 @@ static u32 *core_ext_words;
 
 				if (RXA_TYPE(frm, 5) == RXT_NONE) {
 					//destroy context
-					OS_Free(ctx);
+					OS_FREE(ctx);
 					RXA_LOGIC(frm, 1) = TRUE;
 					RXA_TYPE(frm,1) = RXT_LOGIC;
 					return RXR_VALUE;
@@ -241,8 +241,7 @@ static u32 *core_ext_words;
 
 			} else if (RXA_TYPE(frm, 2) == RXT_BINARY) {
 				//key defined - setup new context
-				ctx = (RC4_CTX*)OS_Make(sizeof(*ctx));
-				memset(ctx, 0, sizeof(*ctx));
+				ctx = OS_ALLOC_ZEROFILL(RC4_CTX);
 
 				key = RXA_SERIES(frm, 2);
 
@@ -271,7 +270,7 @@ static u32 *core_ext_words;
 
 				if (RXA_TYPE(frm, 6) == RXT_NONE) {
 					//destroy context
-					OS_Free(ctx);
+					OS_FREE(ctx);
 					RXA_LOGIC(frm, 1) = TRUE;
 					RXA_TYPE(frm,1) = RXT_LOGIC;
 					return RXR_VALUE;
@@ -290,7 +289,7 @@ static u32 *core_ext_words;
 				if (len < pad_len)
 				{
 					//make new data input with zero-padding
-					pad_data = (REBYTE *)OS_Make(pad_len);
+					pad_data = OS_ALLOC_ARRAY(REBYTE, pad_len);
 					memset(pad_data, 0, pad_len);
 					memcpy(pad_data, dataBuffer, len);
 					dataBuffer = pad_data;
@@ -316,7 +315,7 @@ static u32 *core_ext_words;
 					);
 				}
 
-				if (pad_data) OS_Free(pad_data);
+				if (pad_data) OS_FREE(pad_data);
 
 				//hack! - will set the tail to buffersize
 				*((REBCNT*)(binaryOut+1)) = pad_len;
@@ -346,14 +345,13 @@ static u32 *core_ext_words;
 				}
 
 				//key defined - setup new context
-				ctx = (AES_CTX*)OS_Make(sizeof(*ctx));
-				memset(ctx, 0, sizeof(*ctx));
+				ctx = OS_ALLOC_ZEROFILL(AES_CTX);
 
 				key = RXA_SERIES(frm,2);
 				len = (RL_SERIES(key, RXI_SER_TAIL) - RXA_INDEX(frm,2)) << 3;
 
 				if (len != 128 && len != 256) {
-					OS_Free(ctx);
+					OS_FREE(ctx);
 					return RXR_NONE;
 				}
 

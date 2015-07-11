@@ -367,7 +367,7 @@ void OS_Destroy_Graphics(void);
 
 /***********************************************************************
 **
-*/	void *OS_Make(size_t size)
+*/	void *OS_Alloc_Mem(size_t size)
 /*
 **		Allocate memory of given size.
 **
@@ -382,9 +382,9 @@ void OS_Destroy_Graphics(void);
 
 /***********************************************************************
 **
-*/	void OS_Free(void *mem)
+*/	void OS_Free_Mem(void *mem)
 /*
-**		Free memory allocated in this OS environment. (See OS_Make)
+**		Free memory allocated in this OS environment. (See OS_Alloc_Mem)
 **
 ***********************************************************************/
 {
@@ -505,14 +505,14 @@ static const void * backtrace_buf [1024];
 			if (lang != NULL) { /* duplicate "_" */
 				goto error;
 			}
-			lang = OS_Make(i + 1);
+			lang = OS_ALLOC_ARRAY(char, i + 1);
 			if (lang == NULL) goto error;
 			COPY_STR(lang, lang_env, i);
 			lang[i] = '\0';
 			j = i;
 		} else if (lang_env[i] == '.'){
 			if (i == j) goto error;
-			territory = OS_Make(i - j);
+			territory = OS_ALLOC_ARRAY(char, i - j);
 			if (territory == NULL) goto error;
 			COPY_STR(territory, lang_env + j + 1, i - j - 1);
 			territory[i - j - 1] = '\0';
@@ -523,12 +523,12 @@ static const void * backtrace_buf [1024];
 	if (lang == NULL || territory == NULL) goto error;
 
 	const char ** iso639_entry = iso639_find_entry_by_2_code(lang);
-	OS_Free(lang);
+	OS_FREE(lang);
 	lang = NULL;
 	if (iso639_entry == NULL) goto error;
 
 	const char ** iso3166_entry = iso3166_find_entry_by_2_code(territory);
-	OS_Free(territory);
+	OS_FREE(territory);
 	territory = NULL;
 
 	const REBCHR *ret[] = {
@@ -538,10 +538,10 @@ static const void * backtrace_buf [1024];
 
 error:
 	if (lang != NULL) {
-		OS_Free(lang);
+		OS_FREE(lang);
 	}
 	if (territory != NULL) {
-		OS_Free(territory);
+		OS_FREE(territory);
 	}
 	return NULL;
 }
@@ -609,7 +609,9 @@ error:
 		// really need to set an environment variable, here's a way
 		// that just leaks a string each time you call.
 
-		char* expr = MAKE_STR(LEN_STR(envname) + 1 + LEN_STR(envval) + 1);
+		char *expr = OS_ALLOC_ARRAY(char,
+			strlen(envname) + 1 + strlen(envval) + 1
+		);
 
 		strcpy(expr, envname);
 		strcat(expr, "=");
@@ -655,7 +657,7 @@ error:
 	// compute total size:
 	for (n = 0; environ[n]; n++) len += 1 + LEN_STR(environ[n]);
 
-	cp = str = OS_Make(len + 1); // +terminator
+	cp = str = OS_ALLOC_ARRAY(char, len + 1); // +terminator
 	*cp = 0;
 
 	// combine all strings into one:
@@ -726,7 +728,7 @@ error:
 **
 ***********************************************************************/
 {
-	*path = MAKE_STR(PATH_MAX);
+	*path = OS_ALLOC_ARRAY(REBCHR, PATH_MAX);
 	if (!getcwd(*path, PATH_MAX-1)) *path[0] = 0;
 	return LEN_STR(*path); // Be sure to call free() after usage
 }
@@ -1044,7 +1046,7 @@ error:
 				write(info_pipe[W], &err, sizeof(err));
 				exit(EXIT_FAILURE);
 			}
-			argv_new = OS_Make((argc + 3) * sizeof(char*));
+			argv_new = c_cast(const char**, OS_ALLOC_ARRAY(char*, argc + 3));
 			argv_new[0] = sh;
 			argv_new[1] = "-c";
 			memcpy(&argv_new[2], argv, argc * sizeof(argv[0]));
@@ -1099,16 +1101,22 @@ child_error:
 		if (stdout_pipe[R] > 0) {
 			//printf("stdout_pipe[R]: %d\n", stdout_pipe[R]);
 			output_size = BUF_SIZE_CHUNK;
-			*output = OS_Make(output_size);
+
+			// !!! Uses realloc(), can't use OS_ALLOC_ARRAY
+			*output = cast(char*, malloc(output_size));
 			pfds[nfds++] = (struct pollfd){.fd = stdout_pipe[R], .events = POLLIN};
+
 			close(stdout_pipe[W]);
 			stdout_pipe[W] = -1;
 		}
 		if (stderr_pipe[R] > 0) {
 			//printf("stderr_pipe[R]: %d\n", stderr_pipe[R]);
 			err_size = BUF_SIZE_CHUNK;
-			*err = OS_Make(err_size);
+
+			// !!! Uses realloc(), can't use OS_ALLOC_ARRAY
+			*err = cast(char*, malloc(err_size));
 			pfds[nfds++] = (struct pollfd){.fd = stderr_pipe[R], .events = POLLIN};
+
 			close(stderr_pipe[W]);
 			stderr_pipe[W] = -1;
 		}
@@ -1116,7 +1124,8 @@ child_error:
 		if (info_pipe[R] > 0) {
 			pfds[nfds++] = (struct pollfd){.fd = info_pipe[R], .events = POLLIN};
 			info_size = 4;
-			info = OS_Make(info_size);
+			// !!! Uses realloc(), can't use OS_ALLOC_ARRAY
+			info = cast(char*, malloc(info_size));
 			close(info_pipe[W]);
 			info_pipe[W] = -1;
 		}
@@ -1223,7 +1232,9 @@ child_error:
 						*offset += nbytes;
 						if (*offset >= size) {
 							size += BUF_SIZE_CHUNK;
-							*buffer = realloc(*buffer, size * sizeof((*buffer)[0]));
+							*buffer = cast(char *,
+								realloc(*buffer, size * sizeof((*buffer)[0]))
+							);
 							if (*buffer == NULL) goto kill;
 						}
 					} while (nbytes == to_read);
@@ -1272,13 +1283,13 @@ error:
 	if (!ret) ret = -1;
 cleanup:
 	if (output != NULL && *output != NULL && *output_len <= 0) {
-		OS_Free(*output);
+		free(*output);
 	}
 	if (err != NULL && *err != NULL && *err_len <= 0) {
-		OS_Free(*err);
+		free(*err);
 	}
 	if (info != NULL) {
-		OS_Free(info);
+		free(info);
 	}
 	if (info_pipe[R] > 0) {
 		close(info_pipe[R]);
@@ -1454,12 +1465,12 @@ static int Try_Browser(char *browser, REBCHR *url)
 
 	//empty string check
 	if (len == 0) { /* shortcut */
-		*string = (REBCHR*)OS_Make(1);
+		*string = OS_ALLOC_ARRAY(REBCHR, 1);
 		*string[0] = '\0';
 	} else {
 		//convert to UTF8
 		REBCNT utf8_len = Length_As_UTF8(str, len, TRUE, FALSE);
-		*string = (REBCHR*)OS_Make(utf8_len+1);
+		*string = OS_ALLOC_ARRAY(REBCHR, utf8_len + 1);
 		Encode_UTF8(*string, utf8_len, str, &len, TRUE, FALSE);
 		(*string)[utf8_len] = '\0';
 	}
@@ -1487,6 +1498,7 @@ static int Try_Browser(char *browser, REBCHR *url)
 	int i = 0;
 	char *ret = NULL;
 	char *embedded_script = NULL;
+	size_t sec_size;
 
 	script = fopen("/proc/self/exe", "r");
 	if (script == NULL) return NULL;
@@ -1497,14 +1509,21 @@ static int Try_Browser(char *browser, REBCHR *url)
 		return NULL;
 	}
 
-	sec_headers = OS_Make(((size_t)file_header.e_shnum) * file_header.e_shentsize);
+	sec_size = cast(size_t, file_header.e_shnum) * file_header.e_shentsize;
+
+#ifdef __LP64__
+	sec_headers = cast(Elf64_Shdr*, OS_ALLOC_ARRAY(char, sec_size));
+#else
+	sec_headers = cast(Elf32_Shdr*, OS_ALLOC_ARRAY(char, sec_size));
+#endif
+
 	if (sec_headers == NULL) {
 		fclose(script);
 		return NULL;
 	}
 
 	if (fseek(script, file_header.e_shoff, SEEK_SET) < 0) {
-		OS_Free(sec_headers);
+		OS_FREE(sec_headers);
 		fclose(script);
 		return NULL;
 	}
@@ -1515,7 +1534,9 @@ static int Try_Browser(char *browser, REBCHR *url)
 		goto header_failed;
 	}
 
-	char *shstr = OS_Make(sec_headers[file_header.e_shstrndx].sh_size);
+	char *shstr = OS_ALLOC_ARRAY(char,
+		sec_headers[file_header.e_shstrndx].sh_size
+	);
 	if (shstr == NULL) {
 		ret = NULL;
 		goto header_failed;
@@ -1545,7 +1566,8 @@ static int Try_Browser(char *browser, REBCHR *url)
 		goto cleanup;
 	}
 
-	embedded_script = OS_Make(sec_headers[i].sh_size); /* will be free'ed by RL_Start */
+	/* will be free'ed by RL_Start */
+	embedded_script = OS_ALLOC_ARRAY(char, sec_headers[i].sh_size);
 	if (embedded_script == NULL) {
 		ret = NULL;
 		goto shstr_failed;
@@ -1565,12 +1587,12 @@ static int Try_Browser(char *browser, REBCHR *url)
 	goto cleanup;
 
 embedded_failed:
-	OS_Free(embedded_script);
+	OS_FREE(embedded_script);
 cleanup:
 shstr_failed:
-	OS_Free(shstr);
+	OS_FREE(shstr);
 header_failed:
-	OS_Free(sec_headers);
+	OS_FREE(sec_headers);
 	fclose(script);
 	return b_cast(ret);
 }

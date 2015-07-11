@@ -63,7 +63,7 @@
 				Set_Binary(arg, Copy_Wide_Str(req->data, len));
 			} else {
 				REBSER *ser = Make_Binary(len);
-				COPY_MEM(BIN_HEAD(ser), req->data, len);
+				memcpy(BIN_HEAD(ser), req->data, len);
 				SERIES_TAIL(ser) = len;
 				Set_Binary(arg, ser);
 			}
@@ -97,7 +97,7 @@
 			Set_Binary(arg, Copy_Wide_Str(req->data, len));
 		} else {
 			REBSER *ser = Make_Binary(len);
-			COPY_MEM(BIN_HEAD(ser), req->data, len);
+			memcpy(BIN_HEAD(ser), req->data, len);
 			SERIES_TAIL(ser) = len;
 			Set_Binary(arg, ser);
 		}

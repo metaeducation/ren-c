@@ -200,7 +200,7 @@ static struct digest {
 				if (D_REF(ARG_CHECKSUM_KEY)) {
 					REBYTE tmpdigest[20];		// Size must be max of all digest[].len;
 					REBYTE ipad[64],opad[64];	// Size must be max of all digest[].hmacblock;
-					void *ctx = Make_Mem(digests[i].ctxsize());
+					char *ctx = ALLOC_ARRAY(char, digests[i].ctxsize());
 					REBVAL *key = D_ARG(ARG_CHECKSUM_KEY_VALUE);
 					REBYTE *keycp = VAL_BIN_DATA(key);
 					int keylen = VAL_LEN(key);
@@ -231,7 +231,7 @@ static struct digest {
 					digests[i].update(ctx,tmpdigest,digests[i].len);
 					digests[i].final(BIN_HEAD(digest),ctx);
 
-					Free_Mem(ctx, digests[i].ctxsize());
+					FREE_ARRAY(char, digests[i].ctxsize(), ctx);
 
 				} else {
 					digests[i].digest(data, len, BIN_HEAD(digest));
@@ -274,7 +274,7 @@ static struct digest {
 {
 	REBSER *ser;
 	REBCNT index;
-	REBCNT len;
+	REBINT len;
 
 	len = Partial1(D_ARG(1), D_ARG(3));
 
@@ -868,4 +868,3 @@ static struct digest {
 		s_cast(dest), cs_cast(src), MAX(max - LEN_BYTES(dest) - 1, 0)
 	));
 }
-#endif

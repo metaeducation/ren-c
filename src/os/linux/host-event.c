@@ -823,7 +823,7 @@ void Dispatch_Event(XEvent *ev)
 			if (gob != NULL){
 				host_window_t *hw = GOB_HWIN(gob);
 				if (hw != NULL) {
-					OS_Free(hw);
+					OS_FREE(hw);
 				}
 				CLR_GOB_STATES(gob, GOBS_OPEN, GOBS_ACTIVE);
 				Free_Window(gob);
@@ -855,7 +855,7 @@ void Dispatch_Event(XEvent *ev)
 			break;
 		case SelectionClear:
 			if (global_x_info->selection.data != NULL) {
-				OS_Free(global_x_info->selection.data);
+				OS_FREE(global_x_info->selection.data);
 				global_x_info->selection.data = NULL;
 				global_x_info->selection.data_length = 0;
 			}

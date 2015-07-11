@@ -261,7 +261,7 @@ const struct arg_chr arg_chars2[] = {
 			else {
 				int len;
 				if (!args) {
-					args = MAKE_STR(ARG_BUF_SIZE);
+					args = OS_ALLOC_ARRAY(REBCHR, ARG_BUF_SIZE);
 					args[0] = 0;
 				}
 				len = ARG_BUF_SIZE - LEN_STR(args) - 2; // space remaining

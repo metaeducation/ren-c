@@ -74,7 +74,6 @@ enum {
 #define MAX_HISTORY  300	// number of lines stored
 
 // Macros: (does not use reb-c.h)
-#define MAKE_STR(l) (char*)malloc(l)
 #define WRITE_CHAR(s)    write(1, s, 1)
 #define WRITE_CHARS(s,l) write(1, s, l)
 #define WRITE_STR(s)     write(1, s, strlen(s))
@@ -110,44 +109,8 @@ static struct termios Term_Attrs;	// Initial settings, restored on exit
 **
 ***********************************************************************/
 {
-	STD_TERM *term;
-#ifndef NO_TTY_ATTRIBUTES
-	struct termios attrs;
-
-	if (Term_Init || tcgetattr(0, &Term_Attrs)) return FALSE;
-
-	attrs = Term_Attrs;
-
-	// Local modes:
-	attrs.c_lflag &= ~(ECHO | ICANON); // raw input
-
-	// Input modes:
-	attrs.c_iflag &= ~(ICRNL | INLCR); // leave CR an LF as is
-
-	// Output modes:
-	attrs.c_oflag |= ONLCR; // On output, emit CRLF
-
-	// Special modes:
-	attrs.c_cc[VMIN] = 1;	// min num of bytes for READ to return
-	attrs.c_cc[VTIME] = 0;	// how long to wait for input
-
-	tcsetattr(0, TCSADRAIN, &attrs);
-#endif
-
-	// Setup variables:
-	Line_History = (char**)malloc((MAX_HISTORY+2) * sizeof(char*));
-	Line_History[0] = "";
-	Line_Count = 1;
-
-	term = malloc(sizeof(*term));
-	memset(term, 0, sizeof(*term));
-	term->buffer = MAKE_STR(TERM_BUF_LEN);
-	term->buffer[0] = 0;
-	term->residue = MAKE_STR(TERM_BUF_LEN);
-	term->residue[0] = 0;
-
-	Term_Init = TRUE;
-
+	STD_TERM term;
+	/* initialize terminal */
 	return term;
 }
 
@@ -167,11 +130,11 @@ static struct termios Term_Attrs;	// Initial settings, restored on exit
 #ifndef NO_TTY_ATTRIBUTES
 		tcsetattr(0, TCSADRAIN, &Term_Attrs);
 #endif
-		free(term->residue);
-		free(term->buffer);
-		free(term);
-		for (n = 1; n < Line_Count; n++) free(Line_History[n]);
-		free(Line_History);
+		OS_FREE(term->residue);
+		OS_FREE(term->buffer);
+		OS_FREE(term);
+		for (n = 1; n < Line_Count; n++) OS_FREE(Line_History[n]);
+		OS_FREE(Line_History);
 	}
 
 	Term_Init = FALSE;
@@ -204,12 +167,12 @@ static struct termios Term_Attrs;	// Initial settings, restored on exit
 ***********************************************************************/
 {
 	term->buffer[term->end] = 0;
-	term->out = MAKE_STR(term->end + 1);
+	term->out = OS_ALLOC_ARRAY(REBCHR, term->end + 1);
 	strcpy(term->out, term->buffer);
 
 	// If max history, drop older lines (but not [0] empty line):
 	if (Line_Count >= MAX_HISTORY) {
-		free(Line_History[1]);
+		OS_FREE(Line_History[1]);
 		memmove(Line_History+1, Line_History+2, (MAX_HISTORY-2)*sizeof(char*));
 		Line_Count = MAX_HISTORY-1;
 	}

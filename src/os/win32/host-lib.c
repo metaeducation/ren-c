@@ -311,7 +311,7 @@ static void *Task_Ready;
 
 /***********************************************************************
 **
-*/	void *OS_Make(size_t size)
+*/	void *OS_Alloc_Mem(size_t size)
 /*
 **		Allocate memory of given size.
 **
@@ -326,9 +326,9 @@ static void *Task_Ready;
 
 /***********************************************************************
 **
-*/	void OS_Free(void *mem)
+*/	void OS_Free_Mem(void *mem)
 /*
-**		Free memory allocated in this OS environment. (See OS_Make)
+**		Free memory allocated in this OS environment. (See OS_Alloc_Mem)
 **
 ***********************************************************************/
 {
@@ -458,7 +458,7 @@ static void *Task_Ready;
 	type = types[what];
 
 	len = GetLocaleInfo(0, type, 0, 0);
-	data = MAKE_STR(len);
+	data = OS_ALLOC_ARRAY(REBCHR, len);
 	len = GetLocaleInfo(0, type, data, len);
 
 	return data;
@@ -519,8 +519,8 @@ static void *Task_Ready;
 	}
 	len++;
 
-	str = OS_Make(len * sizeof(REBCHR));
-	MOVE_MEM(str, env, len * sizeof(REBCHR));
+	str = OS_ALLOC_ARRAY(REBCHR, len);
+	memmove(str, env, len * sizeof(REBCHR));
 
 	FreeEnvironmentStrings(env);
 
@@ -588,7 +588,7 @@ static void *Task_Ready;
 	int len;
 
 	len = GetCurrentDirectory(0, NULL); // length, incl terminator.
-	*path = MAKE_STR(len);
+	*path = OS_ALLOC_ARRAY(REBCHR, len);
 	GetCurrentDirectory(len, *path);
 	len--; // less terminator
 
@@ -922,7 +922,7 @@ static void *Task_Ready;
 		if (flag_shell) {
 			REBCHR *sh = _T("cmd.exe /C ");
 			size_t len = _tcslen(sh) + _tcslen(call) + 1;
-			cmd = OS_Make(sizeof(REBCHR) * len);
+			cmd = OS_ALLOC_ARRAY(REBCHR, len);
 			_sntprintf(cmd, len, _T("%s%s"), sh, call);
 		} else {
 			cmd = _tcsdup(call); /* CreateProcess might write to this memory, so duplicate it to be safe */
@@ -943,7 +943,7 @@ static void *Task_Ready;
 		&pi							// Process information
 	);
 
-	OS_Free(cmd);
+	OS_FREE(cmd);
 
 	if (pid != NULL) *pid = pi.dwProcessId;
 
@@ -972,7 +972,7 @@ static void *Task_Ready;
 				/* convert input encoding from UNICODE to OEM */
 				dest_len = WideCharToMultiByte(CP_OEMCP, 0, input, input_len, oem_input, dest_len, NULL, NULL);
 				if (dest_len > 0) {
-					oem_input = OS_Make(dest_len);
+					oem_input = OS_ALLOC_ARRAY(REBCHR, dest_len);
 					if (oem_input != NULL) {
 						WideCharToMultiByte(CP_OEMCP, 0, input, input_len, oem_input, dest_len, NULL, NULL);
 						input_len = dest_len;
@@ -987,13 +987,13 @@ static void *Task_Ready;
 		if (hOutputRead != NULL) {
 			output_size = BUF_SIZE_CHUNK;
 			*output_len = 0;
-			*output = OS_Make(output_size);
+			*output = OS_ALLOC_ARRAY(char, output_size);
 			handles[count ++] = hOutputRead;
 		}
 		if (hErrorRead != NULL) {
 			err_size = BUF_SIZE_CHUNK;
 			*err_len = 0;
-			*err = OS_Make(err_size);
+			*err = OS_ALLOC_ARRAY(char, err_size);
 			handles[count++] = hErrorRead;
 		}
 
@@ -1017,7 +1017,7 @@ static void *Task_Ready;
 							/* done with input */
 							CloseHandle(hInputWrite);
 							hInputWrite = NULL;
-							OS_Free(oem_input);
+							OS_FREE(oem_input);
 							oem_input = NULL;
 							if (i < count - 1) {
 								memmove(&handles[i], &handles[i + 1], (count - i - 1) * sizeof(HANDLE));
@@ -1082,14 +1082,14 @@ static void *Task_Ready;
 			wchar_t *dest = NULL;
 			dest_len = MultiByteToWideChar(CP_OEMCP, 0, *output, *output_len, dest, 0);
 			if (dest_len <= 0) {
-				OS_Free(*output);
+				OS_FREE(*output);
 				*output = NULL;
 				*output_len = 0;
 			}
-			dest = OS_Make(*output_len * sizeof(wchar_t));
+			dest = OS_ALLOC_ARRAY(wchar_t, *output_len);
 			if (dest == NULL) goto cleanup;
 			MultiByteToWideChar(CP_OEMCP, 0, *output, *output_len, dest, dest_len);
-			OS_Free(*output);
+			OS_FREE(*output);
 			*output = dest;
 			*output_len = dest_len;
 		}
@@ -1100,14 +1100,14 @@ static void *Task_Ready;
 			wchar_t *dest = NULL;
 			dest_len = MultiByteToWideChar(CP_OEMCP, 0, *err, *err_len, dest, 0);
 			if (dest_len <= 0) {
-				OS_Free(*err);
+				OS_FREE(*err);
 				*err = NULL;
 				*err_len = 0;
 			}
-			dest = OS_Make(*err_len * sizeof(wchar_t));
+			dest = OS_ALLOC_ARRAY(wchar_t, *err_len);
 			if (dest == NULL) goto cleanup;
 			MultiByteToWideChar(CP_OEMCP, 0, *err, *err_len, dest, dest_len);
-			OS_Free(*err);
+			OS_FREE(*err);
 			*err = dest;
 			*err_len = dest_len;
 		}
@@ -1138,15 +1138,15 @@ kill:
 
 cleanup:
 	if (oem_input != NULL) {
-		OS_Free(oem_input);
+		OS_FREE(oem_input);
 	}
 
 	if (output != NULL && *output != NULL && *output_len == 0) {
-		OS_Free(*output);
+		OS_FREE(*output);
 	}
 
 	if (err != NULL && *err != NULL && *err_len == 0) {
-		OS_Free(*err);
+		OS_FREE(*err);
 	}
 
 	if (hInputWrite != NULL)
@@ -1213,13 +1213,13 @@ input_error:
 
 	if (!url) url = TEXT("");
 
-	path = MAKE_STR(MAX_BRW_PATH+4);
+	path = OS_ALLOC_ARRAY(REBCHR, MAX_BRW_PATH+4);
 	len = MAX_BRW_PATH;
 
 	flag = RegQueryValueEx(key, TEXT(""), 0, &type, (LPBYTE)path, &len);
 	RegCloseKey(key);
 	if (flag != ERROR_SUCCESS) {
-		FREE_MEM(path);
+		OS_FREE(path);
 		return 0;
 	}
 	//if (ExpandEnvironmentStrings(&str[0], result, len))
@@ -1236,7 +1236,7 @@ input_error:
 							INHERIT_TYPE, NULL, NULL, /* output_type, void **output, u32 *output_len, */
 							INHERIT_TYPE, NULL, NULL); /* u32 err_type, void **err, u32 *err_len */
 
-	FREE_MEM(path);
+	OS_FREE(path);
 	return len;
 }
 
@@ -1374,7 +1374,7 @@ int CALLBACK ReqDirCallbackProc( HWND hWnd, UINT uMsg, LPARAM lParam, LPARAM lpD
 	if ((len = RL_Get_String(series, 0, &str)) < 0) {
 		// Latin1 byte string - convert to wide chars
         len = -len;
-		wstr = OS_Make((len+1) * sizeof(wchar_t));
+		wstr = OS_ALLOC_ARRAY(wchar_t, len + 1);
 		for (n = 0; n < len; n++)
 			wstr[n] = (wchar_t)((unsigned char*)str)[n];
 		wstr[len] = 0;
@@ -1427,7 +1427,7 @@ int CALLBACK ReqDirCallbackProc( HWND hWnd, UINT uMsg, LPARAM lParam, LPARAM lpD
 		return NULL;
 	}
 
-	embedded_script = OS_Make(*script_size);
+	embedded_script = OS_ALLOC_ARRAY(REBYTE, *script_size);
 
 	if (embedded_script == NULL) {
 		return NULL;

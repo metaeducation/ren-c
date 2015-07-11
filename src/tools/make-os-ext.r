@@ -283,6 +283,58 @@ newline newline (rebol-lib-macros)
 extern REBOL_HOST_LIB *Host_Lib;
 
 #endif //REB_DEF
+
+
+/***********************************************************************
+**
+**	"OS" MEMORY ALLOCATION AND FREEING MACROS
+**
+**		!!!
+**		!!! **WARNING!**  DO NOT EDIT THIS! (until you've checked...)
+**		!!! BE SURE YOU ARE EDITING MAKE-OS-EXT.R AND NOT HOST-LIB.H
+**		!!!
+**
+**		These parallel Rebol's ALLOC/ALLOC_ARRAY/FREE macros.
+**		Main difference is that there is only one FREE, as the
+**		hostkit API is not required to remember the size on free.
+**
+**		It is not strictly necessary to use these to allocate memory
+**		from the hostkit allocator instead of malloc().  The only
+**		time you are *required* to use the hostkit allocator is if
+**		you are exchanging memory with Rebol Core and have to
+**		agree about how to free it.  (So if Rebol allocates
+**		something the Host may have to free, or vice-versa.)
+**
+**		However, in embedded programming it is thought that perhaps
+**		malloc would not be available (or not the best choice) on
+**		small systems.  So getting in the habit of using the
+**		habit of using the host allocator isn't a bad thing, and
+**		these macros make it convenient and type safe.
+**
+**		In the Ren/C codebase where the goal is to be able to
+**		build with both ANSI C89 *and* C++ (all the way up to the
+**		latest standard, C++14 or C++17 etc.) then these macros
+**		are much better than doing the casting of malloc manually.
+**
+**		!!!
+**		!!! **WARNING!**  DO NOT EDIT THIS! (until you've checked...)
+**		!!! BE SURE YOU ARE EDITING MAKE-OS-EXT.R AND NOT HOST-LIB.H
+**		!!!
+**
+***********************************************************************/
+
+// !!! SEE **WARNING** BEFORE EDITING
+#define OS_ALLOC(t) \
+	cast(t *, OS_ALLOC_MEM(sizeof(t)))
+#define OS_ALLOC_ZEROFILL(t) \
+	cast(t *, memset(OS_ALLOC(t), '\0', sizeof(t)))
+#define OS_ALLOC_ARRAY(t,n) \
+	cast(t *, OS_ALLOC_MEM(sizeof(t) * (n)))
+#define OS_ALLOC_ARRAY_ZEROFILL(t,n) \
+	cast(t *, memset(OS_ALLOC_ARRAY(t, (n)), '\0', sizeof(t) * (n)))
+#define OS_FREE(p) \
+	OS_FREE_MEM(p)
+
 }
 ]
 
