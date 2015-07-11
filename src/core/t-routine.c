@@ -704,7 +704,7 @@ static void ffi_to_rebol(REBRIN *rin,
 	REBINT pop = 1; /* for tmp */
 	REBVAL *tmp = NULL;
 	REBVAL *varargs = NULL;
-	REBINT n_fixed = 0; /* nunmber of fixed arguments */
+	REBCNT n_fixed = 0; /* number of fixed arguments */
 
 	if (VAL_ROUTINE_LIB(rot) != NULL //lib is NULL when routine is constructed from address directly
 		&& IS_CLOSED_LIB(VAL_ROUTINE_LIB(rot))) {
@@ -735,7 +735,7 @@ static void ffi_to_rebol(REBRIN *rin,
 	}
 
 	if (ROUTINE_GET_FLAG(VAL_ROUTINE_INFO(rot), ROUTINE_VARARGS)) {
-		REBINT j = 1;
+		REBCNT j = 1;
 		ffi_type **arg_types = NULL;
 		/* reset SERIES_TAIL */
 		SERIES_TAIL(VAL_ROUTINE_FFI_ARG_TYPES(rot)) = n_fixed + 1;
@@ -857,7 +857,7 @@ static void process_type_block(REBVAL *out, REBVAL *blk, REBCNT n)
 static void callback_dispatcher(ffi_cif *cif, void *ret, void **args, void *user_data)
 {
 	REBRIN *rin = (REBRIN*)user_data;
-	REBINT i = 0;
+	REBCNT i = 0;
 	REBVAL *blk = NULL;
 	REBSER *ser = NULL;
 	REBVAL *elem = NULL;

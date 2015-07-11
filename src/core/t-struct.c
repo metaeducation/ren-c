@@ -383,7 +383,7 @@ static REBOOL assign_scalar(REBSTU *stu,
 				} else {// set only one element
 					if (!IS_INTEGER(elem)
 						|| VAL_INT32(elem) <= 0
-						|| VAL_INT32(elem) > field->dimension) {
+						|| VAL_INT32(elem) > cast(REBINT, field->dimension)) {
 						return FALSE;
 					}
 					return assign_scalar(stu, field, VAL_INT32(elem) - 1, val);
@@ -461,7 +461,7 @@ static void set_ext_storage (REBVAL *out, REBINT raw_size, REBUPT raw_addr)
 {
 	REBSER *ser = NULL;
 
-	if (raw_size >= 0 && raw_size != VAL_STRUCT_LEN(out)) {
+	if (raw_size >= 0 && raw_size != cast(REBINT, VAL_STRUCT_LEN(out))) {
 		Trap(RE_INVALID_DATA);
 	}
 
@@ -881,7 +881,7 @@ static void init_fields(REBVAL *ret, REBVAL *spec)
 	for (blk = VAL_BLK_DATA(spec); NOT_END(blk); blk += 2) {
 		struct Struct_Field *fld = NULL;
 		REBSER *fields = VAL_STRUCT_FIELDS(ret);
-		int i = 0;
+		unsigned int i = 0;
 		REBVAL *word = blk;
 		REBVAL *fld_val = blk + 1;
 
