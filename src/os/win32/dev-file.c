@@ -38,6 +38,7 @@
 #include <stdio.h>
 #include <windows.h>
 #include <process.h>
+#include <assert.h>
 
 #include "reb-host.h"
 
@@ -132,7 +133,7 @@ static BOOL Seek_File_64(REBREQ *file)
 {
 	WIN32_FIND_DATA info;
 	HANDLE h= (HANDLE)(dir->handle);
-	REBCHR *cp = 0;
+	wchar_t *cp = 0;
 
 	if (!h) {
 
@@ -167,7 +168,7 @@ static BOOL Seek_File_64(REBREQ *file)
 
 	file->modes = 0;
 	if (info.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) SET_FLAG(file->modes, RFM_DIR);
-	COPY_STR(file->file.path, info.cFileName, MAX_FILE_NAME);
+	wcsncpy(file->file.path, info.cFileName, MAX_FILE_NAME);
 	file->file.size = ((i64)info.nFileSizeHigh << 32) + info.nFileSizeLow;
 
 	return DR_DONE;
@@ -430,7 +431,8 @@ fail:
 **
 ***********************************************************************/
 {
-	if (MoveFile((REBCHR*)(file->file.path), (REBCHR*)(file->data))) return DR_DONE;
+	if (MoveFile(cast(wchar_t*, file->file.path), cast(wchar_t*, file->data)))
+		return DR_DONE;
 	file->error = GetLastError();
 	return DR_ERROR;
 }

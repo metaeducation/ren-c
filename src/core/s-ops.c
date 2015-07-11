@@ -749,7 +749,7 @@ static REBYTE seed_str[SEED_LEN] = {
 	REBCNT idx = VAL_INDEX(val);
 	REBCNT start = idx;
 	REBSER *out;
-	REBCHR c;
+	REBUNI c;
 
 	BLK_RESET(ser);
 
@@ -761,7 +761,8 @@ static REBYTE seed_str[SEED_LEN] = {
 			SET_STRING(val, out);
 			VAL_SET_LINE(val);
 			idx++;
-			if (c == CR && GET_ANY_CHAR(str, idx) == LF) idx++;
+			if (c == CR && GET_ANY_CHAR(str, idx) == LF)
+				idx++;
 			start = idx;
 		}
 		else idx++;

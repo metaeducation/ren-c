@@ -217,8 +217,7 @@ These are now obsolete (as of A107) and should be removed:
 #endif
 
 #ifdef TO_OBSD					// OpenBSD
-#define COPY_STR(d,s,m) strlcpy(d,s,m)
-#define JOIN_STR(d,s,m) strlcat(d,s,m)
+// See OS_STRNCAT and OS_STRNCPY definitions (OpenBSD defines them differently)
 #endif
 
 #ifdef TO_AMIGA					// Target for OS4

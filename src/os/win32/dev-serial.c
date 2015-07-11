@@ -120,14 +120,14 @@ static REBINT Set_Serial_Settings(HANDLE h, REBREQ *req)
 	COMMTIMEOUTS timeouts = {0}; //add in timeouts? Currently unused
 
 	// req->serial.path should be prefixed with "\\.\" to allow for higher com port numbers
-	REBCHR fullpath [MAX_SERIAL_DEV_PATH]=TXT("\\\\.\\");
+	wchar_t fullpath[MAX_SERIAL_DEV_PATH] = L"\\\\.\\";
 
 	if (!req->serial.path) {
 		req->error = -RFE_BAD_PATH;
 		return DR_ERROR;
 	}
 
-	JOIN_STR(fullpath,req->serial.path,MAX_SERIAL_DEV_PATH);
+	wcsncat(fullpath,req->serial.path, MAX_SERIAL_DEV_PATH);
 
 	h = CreateFile(fullpath, GENERIC_READ|GENERIC_WRITE, 0, NULL,OPEN_EXISTING, 0, NULL );
 	if (h == INVALID_HANDLE_VALUE) {

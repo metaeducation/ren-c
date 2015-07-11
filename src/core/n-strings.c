@@ -868,3 +868,121 @@ static struct digest {
 		s_cast(dest), cs_cast(src), MAX(max - LEN_BYTES(dest) - 1, 0)
 	));
 }
+
+
+/***********************************************************************
+**
+*/	REBCHR *OS_STRNCPY_(REBCHR *dest, const REBCHR *src, size_t count)
+/*
+**		Debug-only REBCHR-checked substitute for OS_STRNCPY macro
+**
+***********************************************************************/
+{
+#ifdef OS_WIDE_CHAR
+	return cast(REBCHR*,
+		wcsncpy(cast(wchar_t*, dest), cast(const wchar_t*, src), count)
+	);
+#else
+	#ifdef TO_OBSD
+		return cast(REBCHR*,
+			strlcpy(cast(char*, dest), cast(const char*, src), count)
+		);
+	#else
+		return cast(REBCHR*,
+			strncpy(cast(char*, dest), cast(const char*, src), count)
+		);
+	#endif
+#endif
+}
+
+
+/***********************************************************************
+**
+*/	REBCHR *OS_STRNCAT_(REBCHR *dest, const REBCHR *src, size_t max)
+/*
+**		Debug-only REBCHR-checked function for OS_STRNCAT macro
+**
+***********************************************************************/
+{
+#ifdef OS_WIDE_CHAR
+	return cast(REBCHR*,
+		wcsncat(cast(wchar_t*, dest), cast(const wchar_t*, src), max)
+	);
+#else
+	#ifdef TO_OBSD
+		return cast(REBCHR*,
+			strlcat(cast(char*, dest), cast(char*, src), max)
+		);
+	#else
+		return cast(REBCHR*,
+			strncat(cast(char*, dest), cast(char*, src), max)
+		);
+	#endif
+#endif
+}
+
+
+/***********************************************************************
+**
+*/	int OS_STRNCMP_(const REBCHR *lhs, const REBCHR *rhs, size_t max)
+/*
+**		Debug-only REBCHR-checked substitute for OS_STRNCMP macro
+**
+***********************************************************************/
+{
+#ifdef OS_WIDE_CHAR
+	return wcsncmp(cast(const wchar_t*, lhs), cast(const wchar_t*, rhs), max);
+#else
+	return strncmp(cast(const char*, lhs), cast (const char*, rhs), max);
+#endif
+}
+
+
+/***********************************************************************
+**
+*/	size_t OS_STRLEN_(const REBCHR *str)
+/*
+**		Debug-only REBCHR-checked substitute for OS_STRLEN macro
+**
+***********************************************************************/
+{
+#ifdef OS_WIDE_CHAR
+	return wcslen(cast(const wchar_t*, str));
+#else
+	return strlen(cast(const char*, str));
+#endif
+}
+
+
+/***********************************************************************
+**
+*/	REBCHR *OS_STRCHR_(const REBCHR *str, REBCNT ch)
+/*
+**		Debug-only REBCHR-checked function for OS_STRCHR macro
+**
+***********************************************************************/
+{
+#ifdef OS_WIDE_CHAR
+	return cast(REBCHR*, wcschr(cast(const wchar_t*, str), ch));
+#else
+	// We have to m_cast because C++ actually has a separate overload of
+	// strchr which will return a const pointer if the in pointer was const
+	return cast(REBCHR*, m_cast(char*, strchr(cast(const char*, str), ch)));
+#endif
+}
+
+
+/***********************************************************************
+**
+*/	REBCHR OS_MAKE_CH_(REBCNT ch)
+/*
+**		Debug-only REBCHR-checked function for OS_MAKE_CH macro
+**
+***********************************************************************/
+{
+	REBCHR result;
+	result.num = ch;
+	return result;
+}
+
+#endif

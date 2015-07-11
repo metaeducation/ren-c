@@ -174,7 +174,9 @@
 #ifdef TO_WIN32
 			Append_Uni_Uni(dst, lpath, l);
 #else
-			REBINT clen = Decode_UTF8(UNI_HEAD(dst), b_cast(lpath), l, FALSE);
+			REBINT clen = Decode_UTF8(
+				UNI_HEAD(dst), cast(const REBYTE*, lpath), l, FALSE
+			);
 			dst->tail = abs(clen);
 			//Append_Unencoded(dst, lpath);
 #endif

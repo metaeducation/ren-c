@@ -56,7 +56,7 @@
 static HANDLE Std_Out = 0;
 static HANDLE Std_Inp = 0;
 static HANDLE Std_Echo = 0;
-static REBCHR *Std_Buf = 0;		// for input and output
+static wchar_t *Std_Buf = 0;		// for input and output
 
 static BOOL Redir_Out = 0;
 static BOOL Redir_Inp = 0;
@@ -112,7 +112,7 @@ void Console_Output(BOOL state)
 
 HWND Get_Console_Window()
 {
-	void *h = LoadLibraryW(TEXT("kernel32.dll"));
+	void *h = LoadLibraryW(L"kernel32.dll");
 	HWND result = (HWND)(HWND (WINAPI *)())GetProcAddress(h, "GetConsoleWindow")();
 	FreeLibrary(h);
 	return result;
@@ -122,7 +122,7 @@ BOOL Init_Console()
 {
     if (!Std_Out && Con_Out){
 
-        REBCHR *title = TEXT("REBOL 3");
+		wchar_t *title = L"REBOL 3";
         HANDLE win;
 
         if (!AllocConsole()) {
@@ -150,7 +150,7 @@ BOOL Init_Console()
             SetConsoleMode(Std_Inp, CONSOLE_MODES);
         }
 
-		Std_Buf = OS_ALLOC_ARRAY(REBCHR, BUF_SIZE);
+		Std_Buf = OS_ALLOC_ARRAY(wchar_t, BUF_SIZE);
 
 		// Handle stdio CTRL-C interrupt:
 		SetConsoleCtrlHandler(Handle_Break, TRUE);

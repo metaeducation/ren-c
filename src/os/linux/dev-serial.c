@@ -203,8 +203,8 @@ static REBINT Set_Serial_Settings(int ttyfd, REBREQ *req)
 **
 ***********************************************************************/
 {
-	REBCHR *path;
-	REBCHR devpath[MAX_SERIAL_PATH];
+	char *path;
+	char devpath[MAX_SERIAL_PATH];
 	REBINT h;
 
 	if (!(path = req->serial.path)) {

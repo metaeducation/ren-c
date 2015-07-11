@@ -59,7 +59,7 @@
 	if (!(ser = Value_To_OS_Path(path, TRUE)))
 		Trap1(RE_BAD_FILE_PATH, path);
 
-	file->file.path = (REBCHR*)(ser->data);
+	file->file.path = cast(REBCHR*, ser->data);
 
 	SET_FLAG(file->modes, RFM_NAME_MEM);
 

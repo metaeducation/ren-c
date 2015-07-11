@@ -140,9 +140,9 @@ static struct termios Term_Attrs;	// Initial settings, restored on exit
 	Line_Count = 1;
 
 	term = OS_ALLOC_ARRAY_ZEROFILL(STD_TERM);
-	term->buffer = OS_ALLOC_ARRAY(REBCHR, TERM_BUF_LEN);
+	term->buffer = OS_ALLOC_ARRAY(char, TERM_BUF_LEN);
 	term->buffer[0] = 0;
-	term->residue = OS_ALLOC_ARRAY(REBCHR, TERM_BUF_LEN);
+	term->residue = OS_ALLOC_ARRAY(char, TERM_BUF_LEN);
 	term->residue[0] = 0;
 
 	Term_Init = TRUE;

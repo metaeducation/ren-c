@@ -83,8 +83,8 @@
 ***********************************************************************/
 {
 	HANDLE data;
-	REBUNI *cp;
-	REBUNI *bin;
+    wchar_t *cp;
+    wchar_t *bin;
 	REBINT len;
 
 	req->actual = 0;
@@ -115,9 +115,9 @@
 		return DR_ERROR;
 	}
 
-	len = LEN_STR(cp); // wide chars
-	COPY_STR(bin, cp, len);
-	bin = OS_ALLOC_ARRAY(REBCHR, len + 1);
+	len = wcslen(cp);
+	bin = OS_ALLOC_ARRAY(wchar_t, len + 1);
+	wcsncpy(bin, cp, len);
 
 	GlobalUnlock(data);
 
@@ -125,7 +125,7 @@
 
 	SET_FLAG(req->flags, RRF_WIDE);
 	req->data = (REBYTE *)bin;
-	req->actual = len * sizeof(REBCHR);
+	req->actual = len * sizeof(wchar_t);
 	Signal_Device(req, EVT_READ);
 	return DR_DONE;
 }

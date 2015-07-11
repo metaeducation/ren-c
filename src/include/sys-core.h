@@ -71,6 +71,29 @@
 
 // Local includes:
 #include "reb-c.h"
+
+// Must be defined at the end of reb-c.h, but not *in* reb-c.h so that
+// files including sys-core.h and reb-host.h can have differing
+// definitions of REBCHR.  (We want it opaque to the core, but the
+// host to have it compatible with the native character type w/o casting)
+#ifdef OS_WIDE_CHAR
+	#ifdef NDEBUG
+		typedef REBUNI REBCHR;
+	#else
+		typedef struct tagREBCHR {
+			REBUNI num;
+		} REBCHR;
+	#endif
+#else
+	#ifdef NDEBUG
+		typedef REBYTE REBCHR;
+	#else
+		typedef struct tagREBCHR {
+			REBYTE num;
+		} REBCHR;
+	#endif
+#endif
+
 #include "reb-defs.h"
 #include "reb-args.h"
 #include "tmp-bootdefs.h"

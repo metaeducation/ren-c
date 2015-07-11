@@ -508,14 +508,14 @@ static const void * backtrace_buf [1024];
 			}
 			lang = OS_ALLOC_ARRAY(char, i + 1);
 			if (lang == NULL) goto error;
-			COPY_STR(lang, lang_env, i);
+			strncpy(lang, lang_env, i);
 			lang[i] = '\0';
 			j = i;
 		} else if (lang_env[i] == '.'){
 			if (i == j) goto error;
 			territory = OS_ALLOC_ARRAY(char, i - j);
 			if (territory == NULL) goto error;
-			COPY_STR(territory, lang_env + j + 1, i - j - 1);
+			strncpy(territory, lang_env + j + 1, i - j - 1);
 			territory[i - j - 1] = '\0';
 			break;
 		}
@@ -532,7 +532,7 @@ static const void * backtrace_buf [1024];
 	OS_FREE(territory);
 	territory = NULL;
 
-	const REBCHR *ret[] = {
+	const char *ret[] = {
 		iso639_entry[3], iso639_entry[3], iso3166_entry[1], iso3166_entry[1]
 	};
 	return strdup(ret[what]);
@@ -562,17 +562,17 @@ error:
 	// Note: The Posix variant of this API is case-sensitive
 
 	REBINT len;
-	const REBCHR* value = getenv(envname);
+	const char* value = getenv(envname);
 	if (value == 0) return 0;
 
-	len = LEN_STR(value);
+	len = strlen(value);
 	if (len == 0) return -1; // shouldn't have saved an empty env string
 
 	if (len + 1 > valsize) {
 		return len + 1;
 	}
 
-	COPY_STR(envval, value, len);
+	strncpy(envval, value, len);
 	return len;
 }
 
@@ -656,14 +656,14 @@ error:
 	char *str, *cp;
 
 	// compute total size:
-	for (n = 0; environ[n]; n++) len += 1 + LEN_STR(environ[n]);
+	for (n = 0; environ[n]; n++) len += 1 + strlen(environ[n]);
 
 	cp = str = OS_ALLOC_ARRAY(char, len + 1); // +terminator
 	*cp = 0;
 
 	// combine all strings into one:
 	for (n = 0; environ[n]; n++) {
-		len = LEN_STR(environ[n]);
+		len = strlen(environ[n]);
 		strcat(cp, environ[n]);
 		cp += len;
 		*cp++ = 0;
@@ -729,9 +729,9 @@ error:
 **
 ***********************************************************************/
 {
-	*path = OS_ALLOC_ARRAY(REBCHR, PATH_MAX);
+	*path = OS_ALLOC_ARRAY(char, PATH_MAX);
 	if (!getcwd(*path, PATH_MAX-1)) *path[0] = 0;
-	return LEN_STR(*path); // Be sure to call free() after usage
+	return strlen(*path);
 }
 
 

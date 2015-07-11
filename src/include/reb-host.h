@@ -29,6 +29,17 @@
 #include "reb-config.h"
 
 #include "reb-c.h"
+
+// Must be defined at the end of reb-c.h, but not *in* reb-c.h so that
+// files including sys-core.h and reb-host.h can have differing
+// definitions of REBCHR.  (We want it opaque to the core, but the
+// host to have it compatible with the native character type w/o casting)
+#ifdef OS_WIDE_CHAR
+    typedef wchar_t REBCHR;
+#else
+	typedef char REBCHR;
+#endif
+
 #include "reb-ext.h"		// includes reb-defs.h
 #include "reb-args.h"
 #include "reb-device.h"

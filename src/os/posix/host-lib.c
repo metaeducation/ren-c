@@ -280,17 +280,17 @@ static void *Task_Ready;
 	// Note: The Posix variant of this API is case-sensitive
 
 	REBINT len;
-	const REBCHR* value = getenv(envname);
+	const char *value = getenv(envname);
 	if (value == 0) return 0;
 
-	len = LEN_STR(value);
+	len = strlen(value);
 	if (len == 0) return -1; // shouldn't have saved an empty env string
 
 	if (len + 1 > valsize) {
 		return len + 1;
 	}
 
-	COPY_STR(envval, value, len);
+	strncpy(envval, value, len);
 	return len;
 }
 
@@ -374,14 +374,14 @@ static void *Task_Ready;
 	char *str, *cp;
 
 	// compute total size:
-	for (n = 0; environ[n]; n++) len += 1 + LEN_STR(environ[n]);
+	for (n = 0; environ[n]; n++) len += 1 + strlen(environ[n]);
 
 	cp = str = OS_ALLOC_ARRAY(char, len + 1); // +terminator
 	*cp = 0;
 
 	// combine all strings into one:
 	for (n = 0; environ[n]; n++) {
-		len = LEN_STR(environ[n]);
+		len = strlen(environ[n]);
 		strcat(cp, environ[n]);
 		cp += len;
 		*cp++ = 0;
@@ -449,7 +449,7 @@ static void *Task_Ready;
 {
 	*path = OS_ALLOC_ARRAY(char, PATH_MAX);
 	if (!getcwd(*path, PATH_MAX-1)) *path[0] = 0;
-	return LEN_STR(*path); // Be sure to call free() after usage
+	return strlen(*path);
 }
 
 

@@ -91,7 +91,8 @@ static REBSER *Read_All_File(char *fname)
 		ser = To_Local_Path("output.txt", 10, FALSE, TRUE);
 
 	if (ser) {
-		if (!Echo_File((REBCHR*)(ser->data))) Trap1_DEAD_END(RE_CANNOT_OPEN, val);
+		if (!Echo_File(cast(REBCHR*, ser->data)))
+			Trap1_DEAD_END(RE_CANNOT_OPEN, val);
 	}
 
 	return R_RET;
@@ -663,7 +664,7 @@ chk_neg:
 		cmd = Val_Str_To_OS(arg);
 		argc = 1;
 		ser = Make_Series(argc + 1, sizeof(REBCHR*), FALSE);
-		argv = (REBCHR**)SERIES_DATA(ser);
+		argv = cast(REBCHR**, SERIES_DATA(ser));
 		argv[0] = cmd;
 		argv[argc] = NULL;
 	} else if (IS_BLOCK(arg)) {
@@ -674,14 +675,14 @@ chk_neg:
 			Trap_DEAD_END(RE_TOO_SHORT);
 		}
 		ser = Make_Series(argc + 1, sizeof(REBCHR*), FALSE);
-		argv = (REBCHR**)SERIES_DATA(ser);
+		argv = cast(REBCHR**, SERIES_DATA(ser));
 		for (i = 0; i < argc; i ++) {
 			REBVAL *param = VAL_BLK_SKIP(arg, i);
 			if (IS_STRING(param)) {
 				argv[i] = Val_Str_To_OS(param);
 			} else if (IS_FILE(param)) {
 				REBSER *path = Value_To_OS_Path(param, FALSE);
-				argv[i] = (REBCHR*) SERIES_DATA(path);
+				argv[i] = cast(REBCHR*, SERIES_DATA(path));
 			} else {
 				Trap_Arg_DEAD_END(param);
 			}
@@ -693,8 +694,8 @@ chk_neg:
 		REBSER *path = Value_To_OS_Path(arg, FALSE);
 		argc = 1;
 		ser = Make_Series(argc + 1, sizeof(REBCHR*), FALSE);
-		argv = (REBCHR**)SERIES_DATA(ser);
-		argv[0] = (REBCHR*) SERIES_DATA(path);
+		argv = cast(REBCHR**, SERIES_DATA(ser));
+		argv[0] = cast(REBCHR*, SERIES_DATA(path));
 		argv[argc] = NULL;
 		cmd = NULL;
 	} else {
@@ -813,7 +814,7 @@ chk_neg:
 	REBCHR *eq;
 	REBSER *blk;
 
-	while (n = LEN_STR(str)) {
+	while (n = OS_STRLEN(str)) {
 		len++;
 		str += n + 1; // next
 	}
@@ -821,7 +822,7 @@ chk_neg:
 	blk = Make_Block(len*2);
 
 	str = start;
-	while (NZ(eq = FIND_CHR(str+1, '=')) && NZ(n = LEN_STR(str))) {
+	while (NZ(eq = OS_STRCHR(str+1, '=')) && NZ(n = OS_STRLEN(str))) {
 		Set_Series(REB_STRING, Append_Value(blk), Copy_OS_Str(str, eq-str));
 		Set_Series(REB_STRING, Append_Value(blk), Copy_OS_Str(eq+1, n-(eq-str)-1));
 		str += n + 1; // next
@@ -872,7 +873,7 @@ chk_neg:
 	REBSER *blk;
 	REBSER *dir;
 
-	while (n = LEN_STR(str)) {
+	while (n = OS_STRLEN(str)) {
 		len++;
 		str += n + 1; // next
 	}
@@ -881,7 +882,7 @@ chk_neg:
 
 	// First is a dir path or full file path:
 	str = start;
-	n = LEN_STR(str);
+	n = OS_STRLEN(str);
 
 	if (len == 1) {  // First is full file path
 		dir = To_REBOL_Path(str, n, OS_WIDE, 0);
@@ -892,7 +893,7 @@ chk_neg:
 		dir = To_REBOL_Path(str, n, -1, TRUE);
 		str += n + 1; // next
 		len = dir->tail;
-		while (n = LEN_STR(str)) {
+		while (n = OS_STRLEN(str)) {
 			dir->tail = len;
 			Append_Uni_Uni(dir, str, n);
 			Set_Series(REB_FILE, Append_Value(blk), Copy_String(dir, 0, -1));
@@ -900,7 +901,7 @@ chk_neg:
 		}
 #else /* absolute pathes already */
 		str += n + 1;
-		while (n = LEN_STR(str)) {
+		while (n = OS_STRLEN(str)) {
 			dir = To_REBOL_Path(str, n, OS_WIDE, FALSE);
 			Set_Series(REB_FILE, Append_Value(blk), Copy_String(dir, 0, -1));
 			str += n + 1; // next
@@ -924,7 +925,7 @@ chk_neg:
 
 	fr.files = OS_ALLOC_ARRAY(REBCHR, MAX_FILE_REQ_BUF);
 	fr.len = MAX_FILE_REQ_BUF/sizeof(REBCHR) - 2;
-	fr.files[0] = 0;
+	fr.files[0] = OS_MAKE_CH('\0');
 
 	DISABLE_GC;
 
@@ -933,18 +934,18 @@ chk_neg:
 
 	if (D_REF(ARG_REQUEST_FILE_FILE)) {
 		ser = Value_To_OS_Path(D_ARG(ARG_REQUEST_FILE_NAME), TRUE);
-		fr.dir = (REBCHR*)(ser->data);
+		fr.dir = cast(REBCHR*, ser->data);
 		n = ser->tail;
-		if (fr.dir[n-1] != OS_DIR_SEP) {
+		if (OS_CH_VALUE(fr.dir[n-1]) != OS_DIR_SEP) {
 			if (n+2 > fr.len) n = fr.len - 2;
-			COPY_STR(fr.files, (REBCHR*)(ser->data), n);
-			fr.files[n] = 0;
+			OS_STRNCPY(cast(REBCHR*, fr.files), cast(REBCHR*, ser->data), n);
+			fr.files[n] = OS_MAKE_CH('\0');
 		}
 	}
 
 	if (D_REF(ARG_REQUEST_FILE_FILTER)) {
 		ser = Block_To_String_List(D_ARG(ARG_REQUEST_FILE_LIST));
-		fr.filter = (REBCHR*)(ser->data);
+		fr.filter = cast(REBCHR*, ser->data);
 	}
 
 	if (D_REF(ARG_REQUEST_FILE_TITLE))
@@ -956,7 +957,7 @@ chk_neg:
 			Set_Block(D_RET, ser);
 		}
 		else {
-			ser = To_REBOL_Path(fr.files, LEN_STR(fr.files), OS_WIDE, 0);
+			ser = To_REBOL_Path(fr.files, OS_STRLEN(fr.files), OS_WIDE, 0);
 			Set_Series(REB_FILE, D_RET, ser);
 		}
 	} else
@@ -985,7 +986,7 @@ chk_neg:
 	if (ANY_WORD(arg)) Set_String(arg, Copy_Form_Value(arg, 0));
 	cmd = Val_Str_To_OS(arg);
 
-	lenplus = OS_GET_ENV(cmd, (REBCHR*)0, 0);
+	lenplus = OS_GET_ENV(cmd, NULL, 0);
 	if (lenplus == 0) return R_NONE;
 	if (lenplus < 0) return R_UNSET;
 
@@ -1020,7 +1021,7 @@ chk_neg:
 		success = OS_SET_ENV(cmd, value);
 		if (success) {
 			// What function could reuse arg2 as-is?
-			Set_String(D_RET, Copy_OS_Str(value, LEN_STR(value)));
+			Set_String(D_RET, Copy_OS_Str(value, OS_STRLEN(value)));
 			return R_RET;
 		}
 		return R_UNSET;

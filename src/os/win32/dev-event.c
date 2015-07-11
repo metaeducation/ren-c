@@ -92,7 +92,7 @@ extern HINSTANCE App_Instance;	// From Main module.
 
 	// Register event object class:
 	wc.cbSize        = sizeof(wc);
-	wc.lpszClassName = TEXT("REBOL-Events");
+	wc.lpszClassName = L"REBOL-Events";
 	wc.hInstance     = App_Instance;
 	wc.lpfnWndProc   = REBOL_Event_Proc;
 	if (!RegisterClassEx(&wc)) return DR_ERROR;

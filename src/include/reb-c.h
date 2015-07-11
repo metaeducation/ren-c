@@ -278,13 +278,6 @@ typedef double			REBDEC;     // 64 bit decimal
 
 typedef unsigned char	REBYTE;     // unsigned byte data
 
-// REBCHR - only to refer to OS char strings (not internal strings)
-#ifdef OS_WIDE_CHAR
-typedef REBUNI          REBCHR;
-#else
-typedef char			REBCHR;
-#endif
-
 #define MIN_D64 ((double)-9.2233720368547758e18)
 #define MAX_D64 ((double) 9.2233720368547758e18)
 
@@ -525,32 +518,6 @@ typedef u16 REBUNI;
 	#define APPEND_BYTES_LIMIT(d,s,m) \
 		APPEND_BYTES_LIMIT_((d), (s), (m))
 #endif
-
-// OS has wide char string interfaces:
-#ifdef OS_WIDE_CHAR
-#define OS_WIDE TRUE
-#define TXT(s) (L##s)
-#define COPY_STR(t,f,l) wcsncpy(t, f, l)
-#define JOIN_STR(d,s,l) wcsncat(d,s,l)
-#define FIND_STR(d,s)   wcsstr(d,s)
-#define FIND_CHR(d,s)   wcschr(d,s)
-#define LEN_STR(s)      wcslen(s)
-#define TO_OS_STR(s1,s2,l)   mbstowcs(s1,s2,l)
-#define FROM_OS_STR(s1,s2,l) wcstombs(s1,s2,l)
-#else
-// OS has UTF-8 byte string interfaces:
-#define OS_WIDE FALSE
-#define TXT(s) (s)
-#define COPY_STR(t,f,l) strncpy(t, f, l)
-#define JOIN_STR(d,s,l) strncat(d,s,l)
-#define FIND_STR(d,s)   strstr(d,s)
-#define FIND_CHR(d,s)   strchr(d,s)
-#define LEN_STR(s)      strlen(s)
-#define TO_OS_STR(s1,s2,l)   strncpy(s1,s2,l)
-#define FROM_OS_STR(s1,s2,l) strncpy(s1,s2,l)
-#endif
-
-#define MAKE_STR(n) (REBCHR*)(malloc((n) * sizeof(REBCHR)))  // OS chars!
 
 #define ROUND_TO_INT(d) (REBINT)(floor((MAX(MIN_I32, MIN(MAX_I32, d))) + 0.5))
 

@@ -106,11 +106,11 @@ enum Panic_Msg_Nums {
 		REBCHR s1[512];
 		REBCHR s2[2000];
 
-		n = TO_OS_STR(s1, Panic_Msgs[CM_ERROR], LEN_BYTES(Panic_Msgs[CM_ERROR]));
+		n = OS_STRNCPY(s1, Panic_Msgs[CM_ERROR], LEN_BYTES(Panic_Msgs[CM_ERROR]));
 		if (n > 0) s1[n] = 0; // terminate
 		else OS_EXIT(200); // bad conversion
 
-		n = TO_OS_STR(s2, buf, LEN_BYTES(buf));
+		n = OS_STRNCPY(s2, buf, LEN_BYTES(buf));
 		if (n > 0) s2[n] = 0;
 		else OS_EXIT(200);
 

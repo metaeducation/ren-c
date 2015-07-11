@@ -73,8 +73,14 @@
 			if (! (IS_FILE(arg) || IS_STRING(arg) || IS_BINARY(arg))) {
 				Trap1_DEAD_END(RE_INVALID_PORT_ARG, arg);
 			}
-			TO_OS_STR(req->serial.path, (char *) VAL_DATA(arg), MAX_SERIAL_DEV_PATH);
 			req->serial.path = ALLOC_ARRAY(REBCHR, MAX_SERIAL_DEV_PATH);
+			OS_STRNCPY(
+				req->serial.path,
+				// !!! This is assuming VAL_DATA contains native chars.
+				// Should it? (2 bytes on windows, 1 byte on linux/mac)
+				cast(REBCHR*, VAL_DATA(arg)),
+				MAX_SERIAL_DEV_PATH
+			);
 			arg = Obj_Value(spec, STD_PORT_SPEC_SERIAL_SPEED);
 			if (! IS_INTEGER(arg)) {
 				Trap1_DEAD_END(RE_INVALID_PORT_ARG, arg);

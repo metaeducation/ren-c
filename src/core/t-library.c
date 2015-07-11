@@ -73,7 +73,7 @@
 				void *lib = NULL;
 				REBCNT error = 0;
 				REBSER *path = Value_To_OS_Path(arg, FALSE);
-				lib = OS_OPEN_LIBRARY((REBCHR*)SERIES_DATA(path), &error);
+				lib = OS_OPEN_LIBRARY(cast(REBCHR*, SERIES_DATA(path)), &error);
 				if (!lib) {
 					Trap_Make_DEAD_END(REB_LIBRARY, arg);
 				}

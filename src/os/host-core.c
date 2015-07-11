@@ -196,7 +196,7 @@ static u32 *core_ext_words;
 
 			if (OS_Request_Dir(title , &stringBuffer, path)){
 				//hack! - will set the tail to string length
-				*((REBCNT*)(string+1)) = LEN_STR(stringBuffer);
+				*((REBCNT*)(string+1)) = OS_STRLEN(stringBuffer);
 
 				RXA_TYPE(frm, 1) = RXT_STRING;
 				RXA_SERIES(frm,1) = string;

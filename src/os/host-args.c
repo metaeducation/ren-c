@@ -49,23 +49,23 @@ extern int OS_Get_Current_Dir(REBCHR **lp);
 
 // REBOL Option --Words:
 
-const struct {const char *word; const int flag;} arg_words[] = {
+const struct {const REBCHR *word; const int flag;} arg_words[] = {
 	// Keep in Alpha order!
-	{"args",		RO_ARGS | RO_EXT},
-	{"boot",		RO_BOOT | RO_EXT},
-	{"cgi",			RO_CGI | RO_QUIET},
-	{"debug",		RO_DEBUG | RO_EXT},
-	{"do",			RO_DO | RO_EXT},
-	{"halt",		RO_HALT},
-	{"help",		RO_HELP},
-	{"import",		RO_IMPORT | RO_EXT},
-	{"quiet",		RO_QUIET},
-	{"script",		RO_SCRIPT | RO_EXT},
-	{"secure",		RO_SECURE | RO_EXT},
-	{"trace",		RO_TRACE},
-	{"verbose",		RO_VERBOSE},
-	{"version",		RO_VERSION | RO_EXT},
-	{"",			0},
+	{OS_STR_LIT("args"),		RO_ARGS | RO_EXT},
+	{OS_STR_LIT("boot"),		RO_BOOT | RO_EXT},
+	{OS_STR_LIT("cgi"),			RO_CGI | RO_QUIET},
+	{OS_STR_LIT("debug"),		RO_DEBUG | RO_EXT},
+	{OS_STR_LIT("do"),			RO_DO | RO_EXT},
+	{OS_STR_LIT("halt"),		RO_HALT},
+	{OS_STR_LIT("help"),		RO_HELP},
+	{OS_STR_LIT("import"),		RO_IMPORT | RO_EXT},
+	{OS_STR_LIT("quiet"),		RO_QUIET},
+	{OS_STR_LIT("script"),		RO_SCRIPT | RO_EXT},
+	{OS_STR_LIT("secure"),		RO_SECURE | RO_EXT},
+	{OS_STR_LIT("trace"),		RO_TRACE},
+	{OS_STR_LIT("verbose"),		RO_VERBOSE},
+	{OS_STR_LIT("version"),		RO_VERSION | RO_EXT},
+	{OS_STR_LIT(""),			0},
 };
 
 // REBOL Option -Characters (in alpha sorted order):
@@ -102,15 +102,15 @@ const struct arg_chr arg_chars2[] = {
 {
 	int n;
 	int i;
-	char buf[16];
+	REBCHR buf[16];
 
 	// Some shells will pass us the line terminator. Ignore it.
 	if (word[0] == '\r' || word[0] == '\n') return RO_IGNORE;
 
-	FROM_OS_STR(buf, word, 15);
+	OS_STRNCPY(buf, word, 15);
 
 	for (i = 0; arg_words[i].flag; i++) {
-		n = strncmp(buf, arg_words[i].word, 15); // correct (bytes)
+		n = OS_STRNCMP(buf, arg_words[i].word, 15);
 		if (n < 0) break;
 		if (n == 0) return arg_words[i].flag;
 	}
@@ -264,15 +264,15 @@ const struct arg_chr arg_chars2[] = {
 					args = OS_ALLOC_ARRAY(REBCHR, ARG_BUF_SIZE);
 					args[0] = 0;
 				}
-				len = ARG_BUF_SIZE - LEN_STR(args) - 2; // space remaining
-				JOIN_STR(args, arg, len);
-				JOIN_STR(args, TXT(" "), 1);
+				len = ARG_BUF_SIZE - OS_STRLEN(args) - 2; // space remaining
+				OS_STRNCAT(args, arg, len);
+				OS_STRNCAT(args, OS_STR_LIT(" "), 1);
 			}
 		}
 	}
 
 	if (args) {
-		args[LEN_STR(args)-1] = 0; // remove trailing space
+		args[OS_STRLEN(args) - 1] = 0; // remove trailing space
 		Get_Ext_Arg(RO_ARGS, rargs, args);
 	}
 }

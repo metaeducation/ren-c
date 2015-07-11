@@ -335,6 +335,131 @@ extern REBOL_HOST_LIB *Host_Lib;
 #define OS_FREE(p) \
 	OS_FREE_MEM(p)
 
+
+/***********************************************************************
+**
+**	"OS" STRING FUNCTION ABSTRACTIONS
+**
+**		!!!
+**		!!! **WARNING!**  DO NOT EDIT THIS! (until you've checked...)
+**		!!! BE SURE YOU ARE EDITING MAKE-OS-EXT.R AND NOT HOST-LIB.H
+**		!!!
+**
+**		Rebol's string values are currently represented internally as
+**		a series of either 8-bit REBYTEs (if codepoints are all <= 255) or
+**		a series of 16-bit REBUNIs otherwise.  This is unrelated to
+**		the issue of what the native character width is on the
+**		platform which Rebol runs.  Windows has standardized on 16-bit
+**		wide characters, and the wchar_t type is required to be 2 bytes
+**		on windows platforms.
+**
+**		(There is no guarantee of the size of wchar_t on Linux, and
+**		the C standard itself does not require a guarantee on other
+**		platforms either.)
+**
+**		Yet at *some* point, Rebol must communicate with the OS in its
+**		native format.  The API interfaces for asking to read from a file
+**		or even to print a message out on the screen have different
+**		encodings on each platform.  In order to speak of these strings,
+**		Rebol introduced a variable-sized character type called a REBCHR.
+**
+**		!!!
+**		!!! **WARNING!**  DO NOT EDIT THIS! (until you've checked...)
+**		!!! BE SURE YOU ARE EDITING MAKE-OS-EXT.R AND NOT HOST-LIB.H
+**		!!!
+**
+**		REBCHR creates some complexity, because while code running on
+**		the host knows what size it is...Rebol's codebase has to treat
+**		it as a black box.  However, it did not quite treat it so--and
+**		has a number of places where the strings were inspected and
+**		handled.  These inspections generally relied upon wrappers of
+**		strncpy, strncat, strchr and strlen.  But most of the code
+**		that used REBCHR at all was sketchy-at-best.
+**
+**		@HostileFork feels that Rebol's model for extension probably
+**		needs another answer (or a more coherent version of the current
+**		answer) vs. having the core itself getting too hands-on with
+**		brokering native format strings.  And the reach of REBCHR should
+**		be reigned in as much as possible, with host code using its
+**		own type (char, wchar_t).
+**
+**		So in order to limit the scope of REBCHR, and ensure that type
+**		checking in the core is as rigorous as possible when dealing
+**		with it (effectively letting the wide char developers test
+**		their impacts on the non-wide char builds, and vice versa), the
+**		REBCHR type is "opaque" inside the core (see sys-core.h).  It
+**		is so opaque as to be a struct containing the native char type
+**		in Debug builds.
+**
+**		By contrast, REBCHR is "transparent" to the host (see reb-host.h)
+**		The expectation is that the host not use REBCHR or the wrappers
+**		like OS_STRLEN...instead using char/strlen or wchar_t/wcslen.
+**		However--the wrappers are still exported to the host, because
+**		there are some pieces of code that are written outside the core
+**		but are designed to be reused across hosts, so that code has to
+**		be as agnostic about the character size as the core does.
+**
+**		!!!
+**		!!! **WARNING!**  DO NOT EDIT THIS! (until you've checked...)
+**		!!! BE SURE YOU ARE EDITING MAKE-OS-EXT.R AND NOT HOST-LIB.H
+**		!!!
+**
+***********************************************************************/
+
+#ifdef OS_WIDE_CHAR
+// !!! SEE **WARNING** BEFORE EDITING
+	#define OS_WIDE TRUE
+	#define OS_STR_LIT(s) (L##s)
+#else
+// !!! SEE **WARNING** BEFORE EDITING
+	#define OS_WIDE FALSE
+	#define OS_STR_LIT(s) (s)
+#endif
+
+#if defined(NDEBUG) || !defined(REB_DEF)
+// !!! SEE **WARNING** BEFORE EDITING
+	#define OS_MAKE_CH(c) (c)
+	#define OS_CH_VALUE(c) (c)
+	#define OS_CH_EQUAL(os_ch, ch)		((os_ch) == (ch))
+
+	#ifdef OS_WIDE_CHAR
+	// !!! SEE **WARNING** BEFORE EDITING
+		#define OS_STRNCPY(d,s,m)		wcsncpy((d), (s), (m))
+		#define OS_STRNCAT(d,s,m)		wcsncat((d), (s), (m))
+		#define OS_STRNCMP(l,r,m)		wcsncmp((l), (r), (m))
+		#define OS_STRCHR(d,s)			wcschr((d), (s))
+		#define OS_STRLEN(s)			wcslen(s)
+	#else
+		#ifdef TO_OBSD
+	// !!! SEE **WARNING** BEFORE EDITING
+			#define OS_STRNCPY(d,s,m) \
+				strlcpy(cast(char*, (d)), cast(const char*, (s)), (m))
+			#define OS_STRNCAT(d,s,m) \
+				strlcat(cast(char*, (d)), cast(const char*, (s)), (m))
+		#else
+	// !!! SEE **WARNING** BEFORE EDITING
+			#define OS_STRNCPY(d,s,m) \
+				strncpy(cast(char*, (d)), cast(const char*, (s)), (m))
+			#define OS_STRNCAT(d,s,m) \
+				strncat(cast(char*, (d)), cast(const char*, (s)), (m))
+		#endif
+		#define OS_STRNCMP(l,r,m) \
+			strncmp(cast(const char*, (l)), cast(const char*, (r)), (m))
+		#define OS_STRCHR(d,s)			strchr(cast(const char*, (d)), (s))
+		#define OS_STRLEN(s)			strlen(cast(const char*, (s)))
+	#endif
+#else
+// !!! SEE **WARNING** BEFORE EDITING
+	// Debug build only; fully opaque type and functions for certainty
+	#define OS_CH_VALUE(c)				((c).num)
+	#define OS_CH_EQUAL(os_ch, ch)		((os_ch).num == ch)
+	#define OS_MAKE_CH(c)				OS_MAKE_CH_(c)
+	#define OS_STRNCPY(d,s,m)			OS_STRNCPY_((d), (s), (m))
+	#define OS_STRNCAT(d,s,m)			OS_STRNCAT_((d), (s), (m))
+	#define OS_STRNCMP(l,r,m)			OS_STRNCMP_((l), (r), (m))
+	#define OS_STRCHR(d,s)				OS_STRCHR_((d), (s))
+	#define OS_STRLEN(s)				OS_STRLEN_(s)
+#endif
 }
 ]
 

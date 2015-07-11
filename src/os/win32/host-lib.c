@@ -57,7 +57,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <tchar.h>
 #include <windows.h>
 #include <process.h>
 #include <shlobj.h>
@@ -94,7 +93,7 @@ static void *Task_Ready;
 
 /***********************************************************************
 **
-*/	static void Insert_Command_Arg(REBCHR *cmd, REBCHR *arg, REBINT limit)
+*/	static void Insert_Command_Arg(REBCHR *cmd, const REBCHR *arg, REBCNT limit)
 /*
 **		Insert an argument into a command line at the %1 position,
 **		or at the end if there is no %1. (An INSERT action.)
@@ -105,30 +104,30 @@ static void *Task_Ready;
 ***********************************************************************/
 {
 	#define HOLD_SIZE 2000
-	REBCHR *spot;
-	REBCHR hold[HOLD_SIZE+4];
+	wchar_t *spot;
+	wchar_t hold[HOLD_SIZE + 4];
 
-	if ((REBINT)LEN_STR(cmd) >= limit) return; // invalid case, ignore it.
+	if (wcslen(cmd) >= limit) return; // invalid case, ignore it.
 
 	// Find %1:
-	spot = FIND_STR(cmd, TEXT("%1"));
+	spot = wcsstr(cmd, L"%1");
 
 	if (spot) {
 		// Save rest of cmd line (such as end quote, -flags, etc.)
-		COPY_STR(hold, spot+2, HOLD_SIZE);
+		wcsncpy(hold, spot+2, HOLD_SIZE);
 
 		// Terminate at the arg location:
 		spot[0] = 0;
 
 		// Insert the arg:
-		JOIN_STR(spot, arg, limit - LEN_STR(cmd) - 1);
+		wcsncat(spot, arg, limit - wcslen(cmd) - 1);
 
 		// Add back the rest of cmd:
-		JOIN_STR(spot, hold, limit - LEN_STR(cmd) - 1);
+		wcsncat(spot, hold, limit - wcslen(cmd) - 1);
 	}
 	else {
-		JOIN_STR(cmd, TEXT(" "), 1);
-		JOIN_STR(cmd, arg, limit - LEN_STR(cmd) - 1);
+		wcsncat(cmd, L" ", 1);
+		wcsncat(cmd, arg, limit - wcslen(cmd) - 1);
 	}
 }
 
@@ -378,8 +377,8 @@ static void *Task_Ready;
 	if (title) {
 	//	OS_Put_Str(title);
 	//	OS_Put_Str(":\n");
-		// Use ASCII only (in case we are on non-unicode win32):
-		MessageBoxA(NULL, content, title, MB_ICONHAND);
+        // Use ASCII only
+        MessageBoxA(NULL, cs_cast(content), cs_cast(title), MB_ICONHAND);
 	}
 	//	OS_Put_Str(content);
 	exit(100);
@@ -400,6 +399,8 @@ static void *Task_Ready;
 
 	if (!errnum) errnum = GetLastError();
 
+    // !!! Why does this allocate a buffer when FormatMessage takes a
+    // buffer and a size...exactly the interface we're implementing?
 	ok = FormatMessage(
 			FORMAT_MESSAGE_ALLOCATE_BUFFER |
 			FORMAT_MESSAGE_FROM_SYSTEM |
@@ -407,15 +408,15 @@ static void *Task_Ready;
 			NULL,
 			errnum,
 			MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), // Default language
-			(LPTSTR) &lpMsgBuf,
+            cast(wchar_t*, &lpMsgBuf), // see FORMAT_MESSAGE_ALLOCATE_BUFFER
 			0,
 			NULL);
 
 	len--; // termination
 
-	if (!ok) COPY_STR(str, TEXT("unknown error"), len);
+	if (!ok) wcsncpy(str, L"unknown error", len);
 	else {
-		COPY_STR(str, lpMsgBuf, len);
+		wcsncpy(str, lpMsgBuf, len);
 		LocalFree(lpMsgBuf);
 	}
 	return str;
@@ -447,7 +448,7 @@ static void *Task_Ready;
 {
 	LCTYPE type;
 	int len;
-	REBCHR *data;
+	wchar_t *data;
 	LCTYPE types[] = {
 		LOCALE_SENGLANGUAGE,
 		LOCALE_SNATIVELANGNAME,
@@ -458,7 +459,7 @@ static void *Task_Ready;
 	type = types[what];
 
 	len = GetLocaleInfo(0, type, 0, 0);
-	data = OS_ALLOC_ARRAY(REBCHR, len);
+	data = OS_ALLOC_ARRAY(wchar_t, len);
 	len = GetLocaleInfo(0, type, data, len);
 
 	return data;
@@ -508,19 +509,19 @@ static void *Task_Ready;
 /*
 ***********************************************************************/
 {
-	REBCHR *env = GetEnvironmentStrings();
+	wchar_t *env = GetEnvironmentStrings();
 	REBCNT n, len = 0;
-	REBCHR *str;
+	wchar_t *str;
 
 	str = env;
-	while (n = LEN_STR(str)) {
+	while (n = wcslen(str)) {
 		len += n + 1;
 		str = env + len; // next
 	}
 	len++;
 
-	str = OS_ALLOC_ARRAY(REBCHR, len);
-	memmove(str, env, len * sizeof(REBCHR));
+	str = OS_ALLOC_ARRAY(wchar_t, len);
+	memmove(str, env, len * sizeof(wchar_t));
 
 	FreeEnvironmentStrings(env);
 
@@ -588,11 +589,11 @@ static void *Task_Ready;
 	int len;
 
 	len = GetCurrentDirectory(0, NULL); // length, incl terminator.
-	*path = OS_ALLOC_ARRAY(REBCHR, len);
+	*path = OS_ALLOC_ARRAY(wchar_t, len);
 	GetCurrentDirectory(len, *path);
 	len--; // less terminator
 
-	return len; // Be sure to call free() after usage
+	return len;
 }
 
 
@@ -689,7 +690,7 @@ static void *Task_Ready;
 {
 	REBINT thread;
 
-	Task_Ready = CreateEvent(NULL, TRUE, FALSE, TEXT("REBOL_Task_Launch"));
+	Task_Ready = CreateEvent(NULL, TRUE, FALSE, L"REBOL_Task_Launch");
 	if (!Task_Ready) return -1;
 
 	thread = _beginthread(init, stack_size, arg);
@@ -754,7 +755,7 @@ static void *Task_Ready;
 	HANDLE hOutputRead = 0, hOutputWrite = 0;
 	HANDLE hInputWrite = 0, hInputRead = 0;
 	HANDLE hErrorWrite = 0, hErrorRead = 0;
-	REBCHR *cmd = NULL;
+	wchar_t *cmd = NULL;
 	char *oem_input = NULL;
 
 	SECURITY_ATTRIBUTES sa;
@@ -920,12 +921,14 @@ static void *Task_Ready;
 		goto cleanup; /* NOT IMPLEMENTED*/
 	} else {
 		if (flag_shell) {
-			REBCHR *sh = _T("cmd.exe /C ");
-			size_t len = _tcslen(sh) + _tcslen(call) + 1;
-			cmd = OS_ALLOC_ARRAY(REBCHR, len);
-			_sntprintf(cmd, len, _T("%s%s"), sh, call);
+			wchar_t *sh = L"cmd.exe /C ";
+            size_t len = wcslen(sh) + wcslen(call) + 1;
+			cmd = OS_ALLOC_ARRAY(wchar_t, len);
+            swprintf(cmd, len, L"%s%s", sh, call);
 		} else {
-			cmd = _tcsdup(call); /* CreateProcess might write to this memory, so duplicate it to be safe */
+			// CreateProcess might write to this memory
+			// Duplicate it to be safe
+			cmd = _wcsdup(call);
 		}
 	}
 
@@ -972,7 +975,7 @@ static void *Task_Ready;
 				/* convert input encoding from UNICODE to OEM */
 				dest_len = WideCharToMultiByte(CP_OEMCP, 0, input, input_len, oem_input, dest_len, NULL, NULL);
 				if (dest_len > 0) {
-					oem_input = OS_ALLOC_ARRAY(REBCHR, dest_len);
+					oem_input = OS_ALLOC_ARRAY(wchar_t, dest_len);
 					if (oem_input != NULL) {
 						WideCharToMultiByte(CP_OEMCP, 0, input, input_len, oem_input, dest_len, NULL, NULL);
 						input_len = dest_len;
@@ -1195,7 +1198,7 @@ input_error:
 
 /***********************************************************************
 **
-*/	int OS_Browse(REBCHR *url, int reserved)
+*/	int OS_Browse(const REBCHR *url, int reserved)
 /*
 ***********************************************************************/
 {
@@ -1204,19 +1207,19 @@ input_error:
 	long len;
 	long type;
 	HKEY key;
-	REBCHR *path;
+	wchar_t *path;
 	HWND hWnd = GetFocus();
 	int exit_code = 0;
 
-	if (RegOpenKeyEx(HKEY_CLASSES_ROOT, TEXT("http\\shell\\open\\command"), 0, KEY_READ, &key) != ERROR_SUCCESS)
+	if (RegOpenKeyEx(HKEY_CLASSES_ROOT, L"http\\shell\\open\\command", 0, KEY_READ, &key) != ERROR_SUCCESS)
 		return 0;
 
-	if (!url) url = TEXT("");
+	if (!url) url = L"";
 
-	path = OS_ALLOC_ARRAY(REBCHR, MAX_BRW_PATH+4);
+	path = OS_ALLOC_ARRAY(wchar_t, MAX_BRW_PATH+4);
 	len = MAX_BRW_PATH;
 
-	flag = RegQueryValueEx(key, TEXT(""), 0, &type, (LPBYTE)path, &len);
+	flag = RegQueryValueEx(key, L"", 0, &type, cast(LPBYTE, path), &len);
 	RegCloseKey(key);
 	if (flag != ERROR_SUCCESS) {
 		OS_FREE(path);
@@ -1250,7 +1253,7 @@ input_error:
 	OPENFILENAME ofn = {0};
 	BOOL ret;
 	//int err;
-	REBCHR *filters = TEXT("All files\0*.*\0REBOL scripts\0*.r\0Text files\0*.txt\0"	);
+    wchar_t *filters = L"All files\0*.*\0REBOL scripts\0*.r\0Text files\0*.txt\0";
 
 	ofn.lStructSize = sizeof(ofn);
 
@@ -1313,7 +1316,7 @@ int CALLBACK ReqDirCallbackProc( HWND hWnd, UINT uMsg, LPARAM lParam, LPARAM lpD
 ***********************************************************************/
 {
 	BROWSEINFO bi;
-	REBCHR buffer[MAX_PATH];
+	wchar_t buffer[MAX_PATH];
 	LPCITEMIDLIST pFolder;
 	ZeroMemory(buffer, MAX_PATH);
 	ZeroMemory(&bi, sizeof(bi));
@@ -1329,7 +1332,7 @@ int CALLBACK ReqDirCallbackProc( HWND hWnd, UINT uMsg, LPARAM lParam, LPARAM lpD
 	osDialogOpen = FALSE;
 	if (pFolder == NULL) return FALSE;
 	if (!SHGetPathFromIDList(pFolder, buffer) ) return FALSE;
-	wcscpy(*folder, (REBCHR*)buffer);
+	wcscpy(*folder, buffer);
 	return TRUE;
 }
 
@@ -1379,7 +1382,7 @@ int CALLBACK ReqDirCallbackProc( HWND hWnd, UINT uMsg, LPARAM lParam, LPARAM lpD
 			wstr[n] = (wchar_t)((unsigned char*)str)[n];
 		wstr[len] = 0;
 		//note: following string needs be deallocated in the code that uses this function
-		*string = (REBCHR*)wstr;
+		*string = wstr;
 		return TRUE;
 	}
 	*string = (len == 0) ? NULL : str; //empty string check
