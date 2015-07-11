@@ -164,11 +164,18 @@
 /*
 **		Base-64 binary encoder table.
 **
+**		NOTE: Entered one-character-at-a-time in array initialization
+**		format to avoid the length of 65 which would be needed if
+**		a string literal were used.  This helps memory tools trap
+**		errant accesses to Enbase64[64] if there's an algorithm bug.
+**
 ***********************************************************************/
 {
-	"ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-	"abcdefghijklmnopqrstuvwxyz"
-	"0123456789+/"
+	'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
+	'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
+	'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm',
+	'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
+	'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '+', '/'
 };
 
 
