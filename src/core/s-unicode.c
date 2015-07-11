@@ -779,15 +779,17 @@ ConversionResult ConvertUTF8toUTF32 (
 {
 	const UTF8 *source = *str;
 	UTF32 ch = 0;
-	int slen = trailingBytesForUTF8[*source];
+	REBCNT slen = trailingBytesForUTF8[*source];
 
 	// Check that we have enough valid source bytes:
 	if (len) {
-		if (slen+1 > *len) return 0;
+		if (slen + 1 > *len) return 0;
 	}
-	else {
-		for (; slen >= 0; slen--)
+	else if (slen != 0) {
+		do {
 			if (source[slen] < 0x80) return 0;
+		} while (--slen != 0);
+
 		slen = trailingBytesForUTF8[*source];
 	}
 

@@ -162,7 +162,7 @@ static struct digest {
 {
 	REBVAL *arg = D_ARG(ARG_CHECKSUM_DATA);
 	REBINT sum;
-	REBINT i;
+	REBCNT i;
 	REBINT j;
 	REBSER *digest;
 	REBINT sym = SYM_SHA1;
@@ -274,7 +274,7 @@ static struct digest {
 {
 	REBSER *ser;
 	REBCNT index;
-	REBINT len;
+	REBCNT len;
 
 	len = Partial1(D_ARG(1), D_ARG(3));
 

@@ -494,7 +494,8 @@ static const void * backtrace_buf [1024];
 	if (what > 3 || what < 0) {
 		return NULL;
 	}
-	int i = 0, j = 0;
+	unsigned int i = 0;
+	unsigned int j = 0;
 	char *lang = NULL;
 	char *territory = NULL;
 	const char *lang_env = getenv("LANG"); /* something like: lang_territory.codeset */
@@ -1073,7 +1074,7 @@ child_error:
 		nfds_t nfds = 0;
 		struct pollfd pfds[4];
 		pid_t xpid;
-		int i;
+		unsigned int i;
 		ssize_t nbytes;
 		off_t input_size = 0;
 		off_t output_size = 0;
@@ -1207,7 +1208,7 @@ child_error:
 					//printf("POLLIN: %d [%d/%d]\n", pfds[i].fd, i, nfds);
 					char **buffer = NULL;
 					u32 *offset;
-					size_t to_read = 0;
+					ssize_t to_read = 0;
 					size_t size;
 					if (pfds[i].fd == stdout_pipe[R]) {
 						buffer = (char**)output;
@@ -1503,7 +1504,7 @@ static int Try_Browser(char *browser, REBCHR *url)
 #define PAYLOAD_NAME ".EmbEddEdREbol"
 
 	FILE *script = NULL;
-	REBI64 nbytes = 0;
+	size_t nbytes = 0;
 	int i = 0;
 	char *ret = NULL;
 	char *embedded_script = NULL;

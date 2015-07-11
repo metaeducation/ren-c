@@ -755,7 +755,10 @@ chk_neg:
 	}
 
 	if (r == 0) {
-		SET_INTEGER(D_RET, flag_wait ? exit_code : pid);
+		if (flag_wait)
+			SET_INTEGER(D_RET, exit_code);
+		else
+			SET_INTEGER(D_RET, pid);
 		return R_RET;
 	} else {
 		Trap1_DEAD_END(RE_CALL_FAIL, Make_OS_Error(r));

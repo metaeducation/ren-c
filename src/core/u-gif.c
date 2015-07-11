@@ -281,14 +281,15 @@ void Chrom_Key_Alpha(REBVAL *v,REBCNT col,REBINT blitmode) {
 		// if(w * h * 4 > VAL_STR_LEN(img))
 		//			h = 4 * VAL_STR_LEN(img) / w;
 
-		// Inititialize colormap.
-		colors = !local_colormap ? global_colors : 1 << ((cp[8] & 0x07)+1);
-		if (!local_colormap) {
-			colormap = global_colormap;
-		}
-		else {
+		// Initialize colormap.
+		if (local_colormap) {
+			colors = 1 << ((cp[8] & 0x07) + 1);
 			colormap = cp + 9;
 			cp += 3 * colors;
+		}
+		else {
+			colors = global_colors;
+			colormap = global_colormap;
 		}
 		cp += 9;
 

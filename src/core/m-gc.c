@@ -155,7 +155,7 @@ static void Mark_Value(REBVAL *val, REBCNT depth);
 ***********************************************************************/
 {
 	if (field->type == STRUCT_TYPE_STRUCT) {
-		int len = 0;
+		unsigned int len = 0;
 		REBSER *series = NULL;
 
 		CHECK_MARK(field->fields, depth);
@@ -187,7 +187,7 @@ static void Mark_Value(REBVAL *val, REBCNT depth);
 /*
 ***********************************************************************/
 {
-	int len = 0;
+	unsigned int len = 0;
 	REBSER *series = NULL;
 	CHECK_MARK(stu->spec, depth);
 	CHECK_MARK(stu->fields, depth);

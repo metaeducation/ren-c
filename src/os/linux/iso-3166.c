@@ -3,7 +3,7 @@
 
 const char ** iso3166_find_entry_by_2_code(const char* code)
 {
-	int i = 0;
+	unsigned int i = 0;
 	if (code == NULL || strlen(code) != 2) {
 		return NULL;
 	}

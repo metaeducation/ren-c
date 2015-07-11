@@ -162,7 +162,7 @@ static REBI64 ran_arr_cycle()
 	m = secure ? MAX_U64 - (MAX_U64 - s + 1) % s : MM - MM % s - 1; /* rejection limit */
 	do u = Random_Int(secure); while (u > m); /* get a random below the limit */
 	u = u % s + 1;
-	return (r > 0) ? u : - (REBI64)u;
+	return (r > 0) ? cast(REBI64, u) : -cast(REBI64, u);
 }
 
 /***********************************************************************

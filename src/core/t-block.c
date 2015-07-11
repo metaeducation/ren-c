@@ -200,10 +200,10 @@ static void No_Nones(REBVAL *arg) {
 	REBCNT index = VAL_INDEX(block);
 	REBCNT tail  = VAL_TAIL(block);
 	REBFLG only  = DS_REF(AN_ONLY);
-	REBINT rlen;  // length to be removed
-	REBINT ilen  = 1;  // length to be inserted
+	REBCNT rlen;  // length to be removed
+	REBCNT ilen  = 1;  // length to be inserted
 	REBINT cnt   = 1;  // DUP count
-	REBINT size;
+	REBCNT size;
 	REBFLG is_blk = FALSE; // arg is a block not a value
 
 	// Length of target (may modify index): (arg can be anything)
@@ -560,7 +560,7 @@ static struct {
 	}
 	else if (IS_WORD(pvs->select)) {
 		n = Find_Word(VAL_SERIES(pvs->value), VAL_INDEX(pvs->value), VAL_WORD_CANON(pvs->select));
-		if (n != NOT_FOUND) n++;
+		if (cast(REBCNT, n) != NOT_FOUND) n++;
 	}
 	else {
 		// other values:

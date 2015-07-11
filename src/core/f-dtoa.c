@@ -556,7 +556,8 @@ Balloc
 	int x;
 	Bigint *rv;
 #ifndef Omit_Private_Memory
-	unsigned int len;
+	size_t len; // !!! Ren/C: (unsigned int => size_t) for -Wsign-compare
+	// !!! REVIEW: isn't size_t unsigned?  Why did that fix it?
 #endif
 
 	ACQUIRE_DTOA_LOCK(0);
@@ -3567,9 +3568,9 @@ strtod
 
  static char *
 #ifdef KR_headers
-rv_alloc(i) int i;
+rv_alloc(i) size_t i; // !!! Ren/C: (int => size_t) for -Wsign-compare
 #else
-rv_alloc(int i)
+rv_alloc(size_t i) // !!! Ren/C: (int => size_t) for -Wsign-compare
 #endif
 {
 	int j, k, *r;

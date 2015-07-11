@@ -144,7 +144,11 @@ REBOOL reb_i64_mul_overflow(i64 x, i64 y, i64 *prod)
 		return FALSE;
 	}
 
-	*prod = sgn? -(i64)p : p;
+	if (sgn)
+		*prod = -cast(i64, p);
+	else
+		*prod = p;
+
 	return FALSE;
 }
 

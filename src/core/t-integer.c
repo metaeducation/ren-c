@@ -54,7 +54,7 @@
 	REBVAL *val2 = D_ARG(2);
 	REBI64 num;
 	REBI64 arg;
-	REBINT n;
+	REBCNT n;
 
 	REBI64 p;
 	REBU64 a, b; // for overflow detection

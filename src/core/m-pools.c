@@ -159,7 +159,7 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 **
 ***********************************************************************/
 {
-	REBINT n;
+	REBCNT n;
 	REBINT unscale = 1;
 
 	if (scale == 0) scale = 1;
@@ -744,9 +744,9 @@ crash:
 
 /***********************************************************************
 **
-*/	void Dump_Series_In_Pool(int pool_id)
+*/	void Dump_Series_In_Pool(REBCNT pool_id)
 /*
-**		Dump all series in the pool @pool_id, -1 for all pools
+**		Dump all series in pool @pool_id, UNKNOWN (-1) for all pools
 **
 ***********************************************************************/
 {
@@ -760,7 +760,10 @@ crash:
 		for (count = Mem_Pools[SERIES_POOL].units; count > 0; count--) {
 			SKIP_WALL(series);
 			if (!SERIES_FREED(series)) {
-				if (pool_id < 0 || FIND_POOL(SERIES_TOTAL(series)) == pool_id) {
+				if (
+					pool_id == UNKNOWN
+					|| FIND_POOL(SERIES_TOTAL(series)) == pool_id
+				) {
 					Debug_Fmt(
 							  Str_Dump, //"%s Series %x %s: Wide: %2d Size: %6d - Bias: %d Tail: %d Rest: %d Flags: %x"
 							  "Dump",

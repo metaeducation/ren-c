@@ -139,21 +139,30 @@ enum {
 }
 
 #define Int_Abs(x) ((x) < 0) ? -(x) : (x)
-#define Int_Trunc num = (num > 0) ? n - r : -(REBI64)(n - r)
-#define Int_Floor	{\
-    					if (num > 0) num = n - r;\
-						else if ((m = n + s) <= (REBU64)1 << 63) num = -(REBI64)m;\
-						else Trap_DEAD_END(RE_OVERFLOW);\
-					}
-#define Int_Ceil	{\
-						if (num < 0) num = -(REBI64)(n - r);\
-	        			else if ((m = n + s) < (REBU64)1 << 63) num = m;\
-	        			else Trap_DEAD_END(RE_OVERFLOW);\
-					}
-#define Int_Away	if ((m = n + s) >= (REBU64)1 << 63)\
-						if (num < 0 && m == (REBU64) 1 << 63) num = m;\
-		    			else Trap_DEAD_END(RE_OVERFLOW);\
-					else num = (num > 0) ? m : -(REBI64)m
+
+#define Int_Trunc { \
+	num = (num > 0) ? cast(REBI64, n - r) : -cast(REBI64, n - r); \
+}
+
+#define Int_Floor { \
+	if (num > 0) num = n - r; \
+	else if ((m = n + s) <= cast(REBU64, 1) << 63) num = -cast(REBI64, m); \
+	else Trap(RE_OVERFLOW); \
+}
+
+#define Int_Ceil { \
+	if (num < 0) num = -cast(REBI64, n - r); \
+	else if ((m = n + s) < cast(REBU64, 1) << 63) num = m; \
+	else Trap(RE_OVERFLOW); \
+}
+
+#define Int_Away { \
+	if ((m = n + s) >= cast(REBU64, 1) << 63) \
+		if (num < 0 && m == cast(REBU64, 1) << 63) num = m; \
+		else Trap(RE_OVERFLOW); \
+	else num = (num > 0) ? cast(REBI64, m) : -cast(REBI64, m); \
+}
+
 
 /***********************************************************************
 **

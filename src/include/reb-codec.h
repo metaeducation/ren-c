@@ -49,7 +49,7 @@ typedef struct reb_codec_image {
 	int action;
 	int w;
 	int h;
-	int len;
+	unsigned int len;
 	int alpha;
 	unsigned char *data;
 	union {

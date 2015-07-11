@@ -103,7 +103,9 @@
 
 	*var = *start;
 
-	if (ei >= (REBINT)VAL_TAIL(start)) ei = (REBINT)VAL_TAIL(start);
+	if (ei >= cast(REBINT, VAL_TAIL(start)))
+		ei = cast(REBINT, VAL_TAIL(start));
+
 	if (ei < 0) ei = 0;
 
 	for (; (ii > 0) ? si <= ei : si >= ei; si += ii) {
@@ -207,8 +209,8 @@
 	bodi = VAL_INDEX(D_ARG(mode+2));
 
 	// Starting location when past end with negative skip:
-	if (inc < 0 && VAL_INDEX(var) >= (REBINT)VAL_TAIL(var)) {
-		VAL_INDEX(var) = (REBINT)VAL_TAIL(var) + inc;
+	if (inc < 0 && VAL_INDEX(var) >= VAL_TAIL(var)) {
+		VAL_INDEX(var) = VAL_TAIL(var) + inc;
 	}
 
 	// NOTE: This math only works for index in positive ranges!
@@ -216,11 +218,11 @@
 	if (ANY_SERIES(var)) {
 		while (TRUE) {
 			dat = VAL_SERIES(var);
-			idx = (REBINT)VAL_INDEX(var);
+			idx = VAL_INDEX(var);
 			if (idx < 0) break;
-			if (idx >= (REBINT)SERIES_TAIL(dat)) {
+			if (idx >= cast(REBINT, SERIES_TAIL(dat))) {
 				if (inc >= 0) break;
-				idx = (REBINT)SERIES_TAIL(dat) + inc; // negative
+				idx = SERIES_TAIL(dat) + inc; // negative
 				if (idx < 0) break;
 				VAL_INDEX(var) = idx;
 			}
@@ -309,7 +311,7 @@
 	else {
 		series = VAL_SERIES(value);
 		index  = VAL_INDEX(value);
-		if (index >= (REBINT)SERIES_TAIL(series)) {
+		if (index >= cast(REBINT, SERIES_TAIL(series))) {
 			if (mode == 1) {
 				SET_INTEGER(D_RET, 0);
 			}
@@ -494,8 +496,11 @@ skip_hidden: ;
 	}
 	else if (ANY_SERIES(start)) {
 		// Check that start and end are same type and series:
-		//if (ANY_SERIES(end) && VAL_SERIES(start) != VAL_SERIES(end)) Trap_Arg_DEAD_END(end);
-		Loop_Series(var, body, start, ANY_SERIES(end) ? VAL_INDEX(end) : (Int32s(end, 1) - 1), Int32(incr));
+		//if (ANY_SERIES(end) && VAL_SERIES(start) != VAL_SERIES(end)) Trap_Arg(end);
+		if (ANY_SERIES(end))
+			Loop_Series(var, body, start, VAL_INDEX(end), Int32(incr));
+		else
+			Loop_Series(var, body, start, Int32s(end, 1) - 1, Int32(incr));
 	}
 	else
 		Loop_Number(var, body, start, end, incr);

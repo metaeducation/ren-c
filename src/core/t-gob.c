@@ -150,7 +150,7 @@ const REBCNT Gob_Flag_Words[] = {
 ***********************************************************************/
 {
 	REBGOB *par;
-	REBINT i;
+	REBCNT i;
 
 	par = GOB_PARENT(gob);
 	if (par && GOB_PANE(par) && (i = Find_Gob(par, gob)) != NOT_FOUND) {

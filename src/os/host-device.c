@@ -350,7 +350,7 @@ static int Poll_Default(REBDEV *dev)
 {
 	REBDEV *dev;
 	REBREQ *req;
-	int size;
+	unsigned int size;
 
 	// Validate device:
 	if (device >= RDI_MAX || !(dev = Devices[device]))

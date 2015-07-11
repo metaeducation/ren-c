@@ -163,7 +163,7 @@
 		//Dump_Series(series, "hash");
 	}
 
-	return (mode > 0) ? -1 : hash;
+	return (mode > 0) ? NOT_FOUND : hash;
 }
 
 

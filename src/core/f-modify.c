@@ -64,7 +64,10 @@
 			VAL_INDEX(src_val) = 0;
 		}
 		// Length of insertion:
-		ilen = (action != A_CHANGE && GET_FLAG(flags, AN_PART)) ? dst_len : VAL_LEN(src_val);
+		if (action != A_CHANGE && GET_FLAG(flags, AN_PART))
+			ilen = dst_len;
+		else
+			ilen = VAL_LEN(src_val);
 	}
 
 	// Total to insert:

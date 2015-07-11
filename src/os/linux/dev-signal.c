@@ -110,7 +110,7 @@ error:
 ***********************************************************************/
 {
 	struct timespec timeout = {0, 0};
-	int i = 0;
+	unsigned int i = 0;
 
 	errno = 0;
 

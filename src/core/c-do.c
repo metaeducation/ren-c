@@ -1443,7 +1443,8 @@ eval_func2:
 		// Copy block contents to stack:
 		n = VAL_BLK_LEN(args);
 		if (len < n) n = len;
-		if (start + n + 100 > SERIES_REST(DS_Series)) Expand_Stack(STACK_MIN);
+		if (start + n + 100 > cast(REBINT, SERIES_REST(DS_Series)))
+			Expand_Stack(STACK_MIN);
 		memcpy(&DS_Base[start], BLK_SKIP(block, index), n * sizeof(REBVAL));
 		DSP = start + n - 1;
 	}

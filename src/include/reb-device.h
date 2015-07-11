@@ -149,7 +149,7 @@ struct rebol_device {
 	u32 max_command;		// keep commands in bounds
 	REBREQ *pending;		// pending requests
 	u32 flags;				// state: open, signal
-	i32 req_size;			// size of request struct
+	u32 req_size;			// size of request struct
 };
 
 // Inializer (keep ordered same as above)
@@ -171,7 +171,7 @@ struct rebol_devreq {
 
 	// Command info:
 	i32  command;			// command code
-	u32  error;				// error code
+	i32  error;				// error code
 	u32  modes;				// special modes, types or attributes
 	u16  flags;				// request flags
 	u16  state;				// device process flags

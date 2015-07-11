@@ -86,7 +86,7 @@ static REBREQ *Req_SIO;
 
 /***********************************************************************
 **
-*/	static void Prin_OS_String(const REBYTE *bp, REBINT len, REBOOL uni)
+*/	static void Prin_OS_String(const REBYTE *bp, REBCNT len, REBOOL uni)
 /*
 **		Print a string, but no line terminator or space.
 **
@@ -216,7 +216,7 @@ static REBREQ *Req_SIO;
 
 /***********************************************************************
 **
-*/	void Debug_String(const REBYTE *bp, REBINT len, REBOOL uni, REBINT lines)
+*/	void Debug_String(const REBYTE *bp, REBCNT len, REBOOL uni, REBINT lines)
 /*
 ***********************************************************************/
 {
@@ -557,7 +557,7 @@ static REBREQ *Req_SIO;
 		val >>= 4;
 		len--;
 	}
-	for (; len > 0; len--) *bp-- = (REBYTE)(sgn ? 'F' : '0');
+	for (; len > 0; len--) *bp-- = (sgn != 0) ? 'F' : '0';
 	bp++;
 	while (NZ(*buf++ = *bp++));
 	return buf-1;
