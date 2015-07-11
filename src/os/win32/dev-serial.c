@@ -68,10 +68,11 @@ const int speeds[] = {
 ***********************************************************************/
 static REBINT Set_Serial_Settings(HANDLE h, REBREQ *req)
 {
-	DCB dcbSerialParams = {0};
+    DCB dcbSerialParams;
 	REBINT n;
 	int speed = req->serial.baud;
 
+    memset(&dcbSerialParams, '\0', sizeof(dcbSerialParams));
 	dcbSerialParams.DCBlength = sizeof(dcbSerialParams);
 	if (GetCommState(h, &dcbSerialParams) == 0) return 1;
 
@@ -117,7 +118,9 @@ static REBINT Set_Serial_Settings(HANDLE h, REBREQ *req)
 ***********************************************************************/
 {
 	HANDLE h;
-	COMMTIMEOUTS timeouts = {0}; //add in timeouts? Currently unused
+    COMMTIMEOUTS timeouts; //add in timeouts? Currently unused
+
+    memset(&timeouts, '\0', sizeof(timeouts));
 
 	// req->serial.path should be prefixed with "\\.\" to allow for higher com port numbers
 	wchar_t fullpath[MAX_SERIAL_DEV_PATH] = L"\\\\.\\";

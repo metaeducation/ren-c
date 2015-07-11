@@ -872,7 +872,8 @@ RL_API int RL_Set_Value(REBSER *series, u32 index, RXIARG val, int type)
 **		type - datatype of value
 */
 {
-	REBVAL value = {0};
+	REBVAL value;
+	CLEARS(&value);
 	RXI_To_Value(&value, val, type);
 	if (index >= series->tail) {
 		Append_Val(series, &value);
@@ -941,7 +942,8 @@ RL_API int RL_Set_Field(REBSER *obj, u32 word, RXIARG val, int type)
 **		type - datatype of value
 */
 {
-	REBVAL value = {0};
+	REBVAL value;
+	CLEARS(&value);
 	if (!(word = Find_Word_Index(obj, word, FALSE))) return 0;
 	if (VAL_PROTECTED(FRM_WORDS(obj)+word)) return 0; //	Trap1_DEAD_END(RE_LOCKED_WORD, word);
 	RXI_To_Value(FRM_VALUES(obj)+word, val, type);

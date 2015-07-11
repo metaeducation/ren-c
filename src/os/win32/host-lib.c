@@ -1250,11 +1250,12 @@ input_error:
 /*
 ***********************************************************************/
 {
-	OPENFILENAME ofn = {0};
+    OPENFILENAME ofn;
 	BOOL ret;
 	//int err;
     wchar_t *filters = L"All files\0*.*\0REBOL scripts\0*.r\0Text files\0*.txt\0";
 
+    memset(&ofn, '\0', sizeof(ofn));
 	ofn.lStructSize = sizeof(ofn);
 
 	// ofn.hwndOwner = WIN_WIN(win); // Must find a way to set this

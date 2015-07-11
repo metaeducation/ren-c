@@ -95,8 +95,9 @@ static struct termios *Get_Serial_Settings(int ttyfd)
 static REBINT Set_Serial_Settings(int ttyfd, REBREQ *req)
 {
 	REBINT n;
-	struct termios attr = {};
+	struct termios attr;
 	REBINT speed = req->serial.baud;
+	CLEARS(&attr);
 #ifdef DEBUG_SERIAL
 	printf("setting attributes: speed %d\n", speed);
 #endif

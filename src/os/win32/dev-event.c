@@ -88,7 +88,9 @@ extern HINSTANCE App_Instance;	// From Main module.
 ***********************************************************************/
 {
 	REBDEV *dev = (REBDEV*)dr; // just to keep compiler happy
-	WNDCLASSEX wc = {0};
+    WNDCLASSEX wc;
+
+    memset(&wc, '\0', sizeof(wc));
 
 	// Register event object class:
 	wc.cbSize        = sizeof(wc);
