@@ -88,10 +88,11 @@
 **		/any -- allow * and ? wildcards
 **
 **	Patterns:
-**		abc/ is true
-**		abc/*.r is true
-**		abc/?.r is true
 **		abc - ask the file system
+**		abc/ is true
+**		abc/?.r is true
+**		abc/(star).r is true
+**			(Note: don't put actual star, as "/" "*" ends this comment)
 **
 ***********************************************************************/
 {
