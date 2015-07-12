@@ -243,7 +243,8 @@
 **
 ***********************************************************************/
 {
-	REBDAT year1 = {0};
+	REBDAT year1;
+	CLEARS(&year1);
 	year1.date.day = 1;
 	year1.date.month = 1;
 
