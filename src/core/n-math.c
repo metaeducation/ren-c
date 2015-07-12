@@ -536,8 +536,9 @@ compare:
 ***********************************************************************/
 {
 	REBVAL *val = &DS_Base[++DSP];
-	CLEARS(val);
-	VAL_SET(val, VAL_TYPE(D_ARG(1)));
+
+	VAL_SET_ZEROED(val, VAL_TYPE(D_ARG(1)));
+
 	if (Compare_Values(D_ARG(1), D_ARG(2), -1)) return R_FALSE;
 	return R_TRUE;
 }
@@ -549,8 +550,9 @@ compare:
 ***********************************************************************/
 {
 	REBVAL *val = &DS_Base[++DSP];
-	CLEARS(val);
-	VAL_SET(val, VAL_TYPE(D_ARG(1)));
+
+	VAL_SET_ZEROED(val, VAL_TYPE(D_ARG(1)));
+
 	if (Compare_Values(D_ARG(1), D_ARG(2), -2)) return R_TRUE;
 	return R_FALSE;
 }
@@ -565,8 +567,9 @@ compare:
 
 	if (type >= REB_INTEGER && type <= REB_TIME) {
 		REBVAL *val = &DS_Base[++DSP];
-		CLEARS(val);
-		VAL_SET(val, type);
+		
+		VAL_SET_ZEROED(val, type);
+
 		if (Compare_Values(D_ARG(1), D_ARG(2), 1)) return R_TRUE;
 	}
 	return R_FALSE;

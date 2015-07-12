@@ -65,6 +65,11 @@ typedef struct Reb_Series REBSER;
 #define VAL_SET(v,t)	((v)->flags.header = (t))		// set type, clear all flags
 // Note: b-init.c verifies that lower 8 bits of header = flags.type
 
+// !!! Questionable idea: does setting all bytes to zero of a type
+// and then poking in a type indicator make the "zero valued"
+// version of that type that you can compare against?  :-/
+#define VAL_SET_ZEROED(v,t) (CLEAR((v), sizeof(REBVAL)), VAL_SET((v),(t)))
+
 // Clear type identifier:
 #define SET_END(v)			VAL_SET(v, 0)
 
