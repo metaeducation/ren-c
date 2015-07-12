@@ -1063,6 +1063,62 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 }
 
 
+/***********************************************************************
+**
+*/	RL_API REBCNT RL_Length_As_UTF8(void *src, REBCNT len, REBOOL uni, REBOOL ccr)
+/*
+**		Calculate the UTF8 length of an array of unicode codepoints
+**
+**	Returns:
+**		How long the UTF8 encoded string would be
+**
+**	Arguments:
+**		src - array of bytes or wide characters
+**		len - length of src in codepoints (not including terminator)
+**		uni - true if src is in wide character format
+**		ccr - convert linefeeds into linefeed + carraige-return
+**
+**		!!! Host code is not supposed to call any Rebol routines except
+**		for those in the RL_Api.  This exposes Rebol's internal UTF8
+**		length routine, as it was being used by host code.  It should
+**		be reviewed along with the rest of the RL_Api.
+**
+***********************************************************************/
+{
+	return Length_As_UTF8(cast(REBUNI*, src), len, uni, ccr);
+}
+
+
+/***********************************************************************
+**
+*/	RL_API REBCNT RL_Encode_UTF8(REBYTE *dst, REBINT max, void *src, REBCNT *len, REBFLG uni, REBFLG ccr)
+/*
+**		Encode the unicode into UTF8 byte string.
+**
+**	Returns:
+**		Number of source chars used.
+**
+**	Arguments:
+**		dst - destination for encoded UTF8 bytes
+**		max - maximum size of the result in bytes
+**		src - source array of bytes or wide characters
+**		len - input is source length, updated to reflect dst bytes used
+**		uni - true if src is in wide character format
+**		ccr - convert linefeed + carriage-return into just linefeed
+**
+**	Notes:
+**		Does not add a terminator.
+**
+**		!!! Host code is not supposed to call any Rebol routines except
+**		for those in the RL_Api.  This exposes Rebol's internal UTF8
+**		length routine, as it was being used by the Linux host code by
+**		Atronix.  Should be reviewed along with the rest of the RL_Api.
+**
+***********************************************************************/
+{
+	return Encode_UTF8(dst, max, src, len, uni, ccr);
+}
+
 
 #include "reb-lib-lib.h"
 

@@ -1467,15 +1467,17 @@ static int Try_Browser(char *browser, REBCHR *url)
 **
 ***********************************************************************/
 {
-	int len, n;
+	int n;
 	void *str;
-	wchar_t *wstr;
+	REBCNT len;
 
-	if ((len = RL_Get_String(series, 0, &str)) < 0) {
+	if ((n = RL_Get_String(series, 0, &str)) < 0) {
 		// Latin1 byte string - use as is
 		*string = str;
 		return FALSE;
 	}
+
+	len = n;
 
 	//empty string check
 	if (len == 0) { /* shortcut */
@@ -1483,9 +1485,9 @@ static int Try_Browser(char *browser, REBCHR *url)
 		*string[0] = '\0';
 	} else {
 		//convert to UTF8
-		REBCNT utf8_len = Length_As_UTF8(str, len, TRUE, FALSE);
-		*string = OS_ALLOC_ARRAY(REBCHR, utf8_len + 1);
-		Encode_UTF8(*string, utf8_len, str, &len, TRUE, FALSE);
+		REBCNT utf8_len = RL_Length_As_UTF8(str, len, TRUE, FALSE);
+		*string = OS_ALLOC_ARRAY(char, utf8_len + 1);
+		RL_Encode_UTF8(b_cast(*string), utf8_len, str, &len, TRUE, FALSE);
 		(*string)[utf8_len] = '\0';
 	}
 	return TRUE;
