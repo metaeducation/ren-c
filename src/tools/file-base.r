@@ -60,7 +60,6 @@ core: [
 	m-series.c
 	n-control.c
 	n-data.c
-	n-graphics.c
 	n-io.c
 	n-loop.c
 	n-math.c

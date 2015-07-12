@@ -188,62 +188,6 @@
 }
 
 
-#ifdef obsolete
-/***********************************************************************
-**
-x*/	REBSER *Copy_Block_Deep(REBSER *block, REBCNT index, REBINT len, REBCNT mode)
-/*
-**		A useful function for copying a block and its contents.
-**
-**		index - used to indicate the start of the copy.
-**		length - can be zero, which means use the series length - index,
-**			or it can be any length, which if its less than the length
-**			of the series will clip it, or if it's longer will allocate
-**			extra space for it.
-**		mode - indicates what to copy, how deep to copy.
-**
-***********************************************************************/
-{
-	REBSER *series;
-	REBVAL *val;
-	REBINT maxlen = (REBINT)SERIES_TAIL(block) - index;
-
-	CHECK_STACK(&series);
-
-	if (mode & COPY_OBJECT) mode |= COPY_STRINGS;
-
-	//DISABLE_GC; // Copy deep may trigger recycle
-
-	if (maxlen < 0) maxlen = 0;
-	if (len == 0 || len > maxlen) len = maxlen; // (clip size)
-
-	series = (mode & COPY_SAME) ? block : Copy_Values(BLK_SKIP(block, index), len);
-
-	val = BLK_HEAD(series);
-	if (mode & COPY_SAME) {
-		val += index;
-		mode &= ~COPY_SAME;
-	}
-
-	for (; len > 0; len--, val++) {
-		if (
-			((mode & COPY_DEEP) && (ANY_BLOCK(val) || IS_OBJECT(val) || IS_PORT(val)))
-			||
-			((mode & COPY_OBJECT) && ANY_BLOCK(val))
-		) {
-			VAL_SERIES(val) = Copy_Block_Deep(VAL_SERIES(val), 0, 0, mode);
-		}
-		if ((mode & COPY_STRINGS) && ANY_BINSTR(val)) {
-			VAL_SERIES(val) = Copy_Series(VAL_SERIES(val));
-		}
-	}
-	//ENABLE_GC;
-
-	return series;
-}
-#endif
-
-
 /***********************************************************************
 **
 */	REBSER *Copy_Expand_Block(REBSER *block, REBCNT extra)
@@ -318,19 +262,6 @@ x*/	REBSER *Copy_Block_Deep(REBSER *block, REBCNT index, REBINT len, REBCNT mode
 	return value;
 }
 
-#ifdef ndef
-/***********************************************************************
-**
-*/	void Append_Block(REBSER *block, REBSER *added)
-/*
-**		Append a block to the tail of a block.
-**		Expand it if necessary. Update the termination and tail.
-**
-***********************************************************************/
-{
-	Insert_Series(block, block->tail, (void*)BLK_HEAD(added), added->tail);
-}
-#endif
 
 /***********************************************************************
 **
@@ -381,23 +312,6 @@ x*/	REBSER *Copy_Block_Deep(REBSER *block, REBCNT index, REBINT len, REBCNT mode
 	return -1;
 }
 
-#ifdef ndef
-/***********************************************************************
-**
-*/	REBSER *Copy_Side_Series(REBSER *ser)
-/*
-**		Copy a hash or list side series
-**
-***********************************************************************/
-{
-	REBSER *ret;
-
-	ret = Make_Series(ser->tail, SERIES_WIDE(ser), FALSE);
-	ret->tail = ser->tail;
-	memcpy(ret->data, ser->data, ret->tail * SERIES_WIDE(ret));
-	return ret;
-}
-#endif
 
 /***********************************************************************
 **

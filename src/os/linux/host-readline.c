@@ -465,6 +465,10 @@ static struct termios Term_Attrs;	// Initial settings, restored on exit
 				End_Line(term);
 				break;
 
+			case 'J':	// erase to end of screen
+				Clear_Line(term);
+				break;
+
 			default:
 				WRITE_STR("[ESC]");
 				cp--;

@@ -222,7 +222,7 @@ extern const REBYTE Lex_Map[256];
 **
 ***********************************************************************/
 {
-    while (cp != ep && *cp != chr) cp++;
-    if (*cp == chr) return cp;
-    return 0;
+	while (cp != ep && *cp != chr) cp++;
+	if (*cp == chr) return cp;
+	return 0;
 }

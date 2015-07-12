@@ -259,54 +259,6 @@ cp_same:
 	}
 }
 
-#ifdef not_used
-/***********************************************************************
-**
-x*/	REBCNT Insert_Value(REBSER *series, REBCNT index, REBVAL *item, REBCNT type, REBFLG only)
-/*
-**		A general method to insert a value into a block, string,
-**		or binary.
-**
-**		Returns: index past the insert.
-**
-***********************************************************************/
-{
-	REBCNT len = 1;
-
-	if (type >= REB_BLOCK) {
-		if (only || !ANY_BLOCK(item))
-			Insert_Series(series, index, (void*)item, len);
-		else {
-			len = VAL_LEN(item);
-			Insert_Series(series, index, (void*)VAL_BLK_DATA(item), len);
-		}
-	}
-	else if (type == REB_BINARY) {
-		if (IS_BINARY(item)) {
-			len = VAL_LEN(item);
-			Insert_String(series, index, VAL_SERIES(item), VAL_INDEX(item), len, 0);
-		}
-		else if (IS_INTEGER(item)) {
-			Insert_Char(series, index, (0xff & VAL_INT32(item)));
-		}
-		else if (IS_CHAR(item)) {
-			Insert_Char(series, index, (0xff & VAL_CHAR(item)));
-		}
-	}
-	else { // other strings
-		if (ANY_STR(item)) {
-			len = VAL_LEN(item);
-			Insert_String(series, index, VAL_SERIES(item), VAL_INDEX(item), len, 0);
-		}
-		else if (IS_CHAR(item)) {
-			Insert_Char(series, index, VAL_CHAR(item));
-		}
-	}
-
-	return index + len;
-}
-#endif
-
 
 /***********************************************************************
 **

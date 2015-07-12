@@ -768,41 +768,6 @@ chk_neg:
 	(void)input; // suppress unused warning but keep variable
 }
 
-#ifdef not_used
-/***********************************************************************
-**
-*/	REBNATIVE(launch)
-/*
-***********************************************************************/
-{
-	REBVAL *val = Get_System(SYS_OPTIONS, OPTIONS_BOOT);
-	REBVAL *script = D_ARG(1);
-	REBSER *cmd;
-	REBINT r;
-
-	Check_Security(SYM_CALL, POL_EXEC, script);
-
-	if (ANY_STR(val)) {
-		cmd = Make_Binary(VAL_LEN(val) + VAL_LEN(script) + 4);
-		Append_Byte(cmd, '"');
-		Append_Unencoded(cmd, s_cast(VAL_BIN_DATA(val)));
-		Append_Byte(cmd, '"');
-		if (!IS_NONE(script)) {
-			Append_Byte(cmd, ' ');
-			Append_Unencoded(cmd, s_cast(VAL_BIN_DATA(script))); // !!! convert file
-		}
-		if (D_REF(2)) {
-			Append_Byte(cmd, ' ');
-			Append_Unencoded(cmd, s_cast(VAL_BIN_DATA(D_ARG(3))));
-		}
-		Print("Launching: %s", STR_HEAD(cmd));
-		r = OS_CREATE_PROCESS(STR_HEAD(cmd), 0);
-		if (r < 0) Trap1_DEAD_END(RE_CALL_FAIL, Make_OS_Error());
-	}
-	return R_NONE;
-}
-#endif
-
 
 /***********************************************************************
 **

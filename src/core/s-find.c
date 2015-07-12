@@ -470,56 +470,6 @@
 }
 
 
-#ifdef old
-/***********************************************************************
-**
-x*/	REBCNT Match_2_String(REBSER *series, REBCNT index, REBYTE *str, REBCNT len, REBINT uncase)
-/*
-**		(Evaluate if there is another function to use. ???!!!)
-**
-**		Used for: PARSE function
-**
-***********************************************************************/
-{
-	REBYTE *ser = STR_SKIP(series, index);
-	REBCNT tail = series->tail;
-
-	if (uncase) {
-		for (;len > 0 && index < tail; index++, len--) {
-			if (*ser++ != *str++) return 0;
-		}
-	} else {
-		for (;len > 0 && index < tail; index++, len--) {
-			if (LO_CASE(*ser++) != LO_CASE(*str++)) return 0;
-		}
-	}
-	if (len == 0) return index;
-	return 0;
-}
-
-/***********************************************************************
-**
-x*/	REBYTE *Match_Str_Part(REBYTE *str, REBYTE *pat, REBCNT len)
-/*
-**		If the string matches the pattern for the given length
-**		return the char string just past the match (in str).
-**		Else, return 0.  A case insensitive compare is made.
-**
-***********************************************************************/
-{
-	REBYTE *pp = pat;
-	REBYTE *cp = str;
-
-	for (;len > 0 && *pp && *cp; pp++, cp++, len--) {
-		if (UP_CASE(*pp) != UP_CASE(*cp)) return 0;
-	}
-
-	if (len == 0) return cp;
-	return 0;
-}
-#endif
-
-
 /***********************************************************************
 **
 */	REBCNT Count_Lines(REBYTE *bp, REBCNT len)

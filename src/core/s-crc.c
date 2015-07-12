@@ -398,7 +398,7 @@ REBCNT Update_CRC32(u32 crc, REBYTE *buf, int len) {
 
 
 
-#ifdef ndef
+#ifdef USE_ARCHIVED_CRC_CODE
 Header File
 // CRCdemo.h
 
@@ -900,4 +900,4 @@ cleanup_crc32(void)
 	crc32cleanup_be();
 }
 
-#endif
+#endif // USE_ARCHIVED_CRC_CODE

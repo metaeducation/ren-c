@@ -505,31 +505,6 @@ static REBREQ *Req_SIO;
 }
 
 
-#ifdef unused
-/***********************************************************************
-**
-*/	REBYTE *Input_Str(void)
-/*
-**		Very simple string input, limited to 255 chars.
-**
-***********************************************************************/
-{
-	static REBYTE buffer[256];
-	REBINT res;
-
-	Req_SIO->data = buffer;
-	Req_SIO->length = 255;
-	Req_SIO->actual = 0;
-	res = OS_DO_DEVICE(Req_SIO, RDC_READ);
-	if (Req_SIO->error) Panic_DEAD_END(RP_IO_ERROR);
-	//if (res > 0) Wait_Device(Req_SIO, 1000); // pending
-	//if (res < 0) return 0; // error
-
-	return buffer;
-}
-#endif
-
-
 /***********************************************************************
 **
 */	REBYTE *Form_Hex_Pad(REBYTE *buf, REBI64 val, REBINT len)
@@ -813,65 +788,6 @@ mold_value:
 	Prin_Value(value, limit, mold);
 	Print_OS_Line();
 }
-
-
-#ifdef unused
-/***********************************************************************
-**
-*/	static void Prin_Mold_Block(REBVAL *block, REBCNT limit)
-/*
-**		Can limit output to a given size. Set limit to 0 for full size.
-**
-***********************************************************************/
-{
-	REBCNT  n;
-
-//	Reset_Mold_Buffer();
-	old_Block_Series(block, BUF_MOLD, 0, 0);
-
-	// Note: do not need to protect BUF_MOLD
-	if (limit != 0 && STR_LEN(BUF_MOLD) > limit) {
-		SERIES_TAIL(BUF_MOLD) = limit;
-		Append_Unencoded(BUF_MOLD, "...");
-	}
-
-	for (n = 0; n < SERIES_TAIL(BUF_MOLD);) {
-		n = Encode_Uni_UTF8(BUF_MOLD, n, BUF_PRINT);
-		Prin_OS_String(STR_HEAD(BUF_PRINT), SERIES_TAIL(BUF_PRINT));
-	}
-}
-
-
-/***********************************************************************
-**
-*/  void Print_Mold_Block(REBVAL *block, REBCNT limit)
-/*
-**		Print a block contents for user viewing.
-**		Can limit output to a given size. Set limit to 0 for full size.
-**
-***********************************************************************/
-{
-	Prin_Mold_Block(block, limit);
-	Out_Line();
-}
-
-/***********************************************************************
-**
-*/	REBYTE *Form_Args(REBYTE *cp, REBCNT limit, REBYTE *fmt, ...)
-/*
-**		Format a string into a string buffer up to a maximum length.
-**		Used mostly for debugging output.
-**
-***********************************************************************/
-{
-	va_list args;
-
-	va_start(args, fmt);
-	cp = Form_Var_Args(cp, limit, fmt, args);
-	va_end(args);
-	return cp;
-}
-#endif
 
 
 /***********************************************************************

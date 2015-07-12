@@ -29,20 +29,6 @@
 
 #include "sys-core.h"
 
-#ifdef not_used
-/***********************************************************************
-**
-**	REBFLG MT_Word(REBVAL *out, REBVAL *data, REBCNT type)
-**
-***********************************************************************/
-{
-	if (!IS_WORD(data)) return FALSE;
-	*out = *data;
-	VAL_SET(out, type);
-	return TRUE;
-}
-#endif
-
 
 /***********************************************************************
 **

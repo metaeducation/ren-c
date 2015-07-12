@@ -439,27 +439,6 @@ STOID Mold_String_Series(REBVAL *value, REB_MOLD *mold)
 	*dp = 0;
 }
 
-#ifdef not_used
-STOID Mold_Issue(REBVAL *value, REB_MOLD *mold)
-{
-	REBUNI *dp;
-	REBCNT n;
-	REBUNI c;
-	REBSER *ser = VAL_SERIES(value);
-
-	dp = Prep_Uni_Series(mold, VAL_LEN(value)+1); // '#' extra
-
-	*dp++ = '#';
-
-	for (n = VAL_INDEX(value); n < VAL_TAIL(value); n++) {
-		c = GET_ANY_CHAR(ser, n);
-		if (IS_LEX_DELIMIT(c)) c = '?';
-		*dp++ = c;
-	}
-
-	*dp = 0;
-}
-#endif
 
 /*
 	http://www.blooberry.com/indexdot/html/topics/urlencoding.htm
@@ -770,21 +749,6 @@ STOID Form_Block_Series(REBSER *blk, REBCNT index, REB_MOLD *mold, REBSER *frame
 ************************************************************************
 ***********************************************************************/
 
-#ifdef removed
-STOID Mold_Logic(REB_MOLD *mold, REBVAL *value)
-{
-	REBYTE buf[20];
-	Pre_Mold(value, mold);
-
-	INT_TO_STR(VAL_LOGIC(value), buf);
-	Append_Unencoded(mold->series, buf);
-	Append_Byte(mold->series, ' ');
-
-	old_Block_Series(mold, BLK_HEAD(VAL_LOGIC_WORDS(value)), 0);
-
-	End_Mold(mold);
-}
-#endif
 
 STOID Mold_Typeset(REBVAL *value, REB_MOLD *mold, REBFLG molded)
 {

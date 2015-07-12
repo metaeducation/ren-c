@@ -403,20 +403,3 @@ static DEVICE_CMD_FUNC Dev_Cmds[RDC_MAX] =
 
 DEFINE_DEV(Dev_StdIO, "Standard IO", 1, Dev_Cmds, RDC_MAX, 0);
 
-
-
-//*** Old fragments ***************************************************
-
-#if OLD_CONSOLE_FILE_IO
-	int cfh;	// C file handle
-	FILE *file;
-
-	cfh = _open_osfhandle((long)Std_Out, _O_TEXT);
-	file = _fdopen(cfh, "w");
-	*stdout = *file;
-	setvbuf(stdout, NULL, _IONBF, 0);
-
-	cfh = _open_osfhandle((long)Std_Inp, _O_TEXT);
-	file = _fdopen(cfh, "r");
-	*stdin = *file;
-#endif

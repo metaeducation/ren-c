@@ -328,7 +328,7 @@
 	}
 }
 
-#ifdef ndef
+#ifdef NEED_ARGB_TO_BGR
 INLINE REBCNT ARGB_To_BGR(REBCNT i)
 {
 	return
@@ -797,50 +797,6 @@ find_none:
 	}
 }
 
-#ifdef removed_feature
-/***********************************************************************
-**
-*/  static REBVAL* Xandor_Image(REBCNT action, REBVAL *value, REBVAL *arg)
-/*
-***********************************************************************/
-{
-	REBCNT i;
-	REBCNT *p3;
-	REBCNT *p2 = (REBCNT*) VAL_IMAGE_BITS(value);
-	REBCNT *p1 = (REBCNT*) VAL_IMAGE_BITS(arg);
-	REBCNT tw, ow, aw;
-	REBCNT th, oh, ah;
-	REBCNT j;
-
-	ow = VAL_IMAGE_WIDE(value);
-	oh = VAL_IMAGE_HIGH(value);
-	aw = VAL_IMAGE_WIDE(arg);
-	ah = VAL_IMAGE_HIGH(arg);
-	tw = MAX(ow, aw);
-	th = MAX(oh, ah);
-
-	*DS_RETURN = *Make_Image(tw, th);
-	p3 = (REBCNT*) VAL_IMAGE_HEAD(DS_RETURN);
-	CLEAR_IMAGE(p3, tw, th);
-
-	for (i = 0; i < th; i++) {
-		for (j = 0; j < tw; j++) {
-			if (j < ow && i < oh && j < aw && i < ah)
-				*(p3 + (i*tw) +j) = (REBCNT) (action == A_AND) ?
-					*(p2 + (i*ow) + j) & *(p1 + (i*aw) + j) :
-						(action == A_OR) ?
-							*(p2 + (i*ow) + j) | *(p1 + (i*aw) + j) :
-							*(p2 + (i*ow) + j) ^ *(p1 + (i*aw) + j) ;
-			else {
-				if (j < ow && i < oh) *(p3 + (i*tw) + j) = *(p2 + (i*ow) + j);
-				if (j < aw && i < ah) *(p3 + (i*tw) + j) = *(p1 + (i*aw) + j);
-			}
-		}
-	}
-
-	return DS_RETURN;
-}
-#endif
 
 /***********************************************************************
 **
@@ -895,17 +851,6 @@ find_none:
 	case A_TAILQ: DECIDE(index >= tail);
 	case A_NEXT: if (index < tail) VAL_INDEX(value)++; break;
 	case A_BACK: if (index > 0) VAL_INDEX(value)--; break;
-
-#ifdef removed_feature
-	case A_AND:
-	case A_OR:
-	case A_XOR:
-		if (IS_IMAGE(value) && IS_IMAGE(arg)) {
-			Xandor_Image(action, value, arg); // sets DS_RETURN
-			return R_RET;
-		}
-		else Trap_Action_DEAD_END(VAL_TYPE(value), action);
-#endif
 
 	case A_COMPLEMENT:
 		series = Complement_Image(value);

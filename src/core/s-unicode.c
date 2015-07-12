@@ -245,7 +245,7 @@ static const UTF8 firstByteMark[7] = { 0x00, 0x00, 0xC0, 0xE0, 0xF0, 0xF8, 0xFC 
 
 /* --------------------------------------------------------------------- */
 
-#ifdef unused
+#ifdef USE_ARCHIVED_UTF8_SOURCE
 
 ConversionResult ConvertUTF32toUTF16 (
 	const UTF32** sourceStart, const UTF32* sourceEnd,
@@ -430,7 +430,7 @@ ConversionResult ConvertUTF16toUTF8 (
 	*targetStart = target;
 	return result;
 }
-#endif //unused
+#endif // USE_ARCHIVED_UTF8_SOURCE
 
 /* --------------------------------------------------------------------- */
 
@@ -486,7 +486,7 @@ Boolean isLegalUTF8Sequence(const UTF8 *source, const UTF8 *sourceEnd) {
 }
 
 /* --------------------------------------------------------------------- */
-#ifdef unused
+#ifdef USE_ARCHIVED_UTF16_CODE
 ConversionResult ConvertUTF8toUTF16 (
 	const UTF8** sourceStart, const UTF8* sourceEnd,
 	UTF16** targetStart, UTF16* targetEnd, ConversionFlags flags) {

@@ -568,7 +568,7 @@ is_true:
 }
 
 
-#ifdef later
+#ifdef GET_OBJ_MODS_FINISHED
 /***********************************************************************
 **
 **	Get_Obj_Mods -- return a block of modified words from an object

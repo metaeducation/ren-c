@@ -156,16 +156,6 @@ typedef deci REBDCI;
 #define VAL_DECI(v)		((v)->data.deci)
 #define	SET_MONEY(v,n) VAL_SET(v, REB_MONEY), VAL_DECI(v) = (n)
 
-#ifdef not_used
-typedef struct Reb_Decimal {
-	REBDEC number;
-	REBYTE denom[4];
-} REBMNY;
-#define VAL_MONEY(v)	((v)->data.money)
-#define	VAL_MONEY_DENOM(v)	//((v)->data.money.denom)
-#define VAL_MONEY_AMOUNT(v)	((v)->data.money.amount)
-#endif
-
 
 /***********************************************************************
 **

@@ -634,26 +634,3 @@ x*/	int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result)
 
 	return R_RET;
 }
-
-
-
-#ifdef notused
-/***********************************************************************
-**
-xx*/	REBVAL *Prior_Func_Frame(void)
-/*
-***********************************************************************/
-{
-	REBCNT dsf = DSF;
-	REBVAL *val;
-
-	for (dsf = DSF; dsf > 0; dsf = PRIOR_DSF(dsf)) {
-		val = DSF_BACK(dsf);
-		if (IS_BLOCK(val) && VAL_SERIES(val))
-			return val;
-	}
-
-	return 0;
-}
-#endif
-

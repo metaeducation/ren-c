@@ -29,41 +29,6 @@
 
 #include "sys-core.h"
 
-#ifdef REMOVED
-// Removed because it causes more trouble than the benefits it provides.
-/***********************************************************************
-**
-*/	REBNATIVE(alias)
-/*
-***********************************************************************/
-{
-	REBVAL *word  = D_ARG(1); // word to alias
-	REBVAL *alias = D_ARG(2); // new string (word does not work due to RESOLVE)
-	REBCNT sym;
-	REBVAL *wrd;
-
-	// Make new word or use existing word:
-//	if (IS_STRING(alias)) {
-		REBYTE *bp;
-		bp = Qualify_String(alias, 255, &sym, TRUE); // sym = len
-		sym = Scan_Word(bp, sym);
-//	}
-//	else
-//		sym = VAL_WORD_SYM(alias);
-
-	// Word cannot already be used:
-	wrd = BLK_SKIP(PG_Word_Table.series, sym);
-	if (sym != VAL_SYM_CANON(wrd)) Trap1_DEAD_END(RE_ALREADY_USED, alias);
-
-	// Change the new word's canon pointer to the word provided:
-	VAL_SYM_CANON(wrd) = VAL_WORD_CANON(word);
-	VAL_SYM_ALIAS(wrd) = 0;
-
-	// Return new word with prior word's same bindings:
-	VAL_WORD_SYM(word) = sym;
-	return R_ARG1;
-}
-#endif
 
 static int Check_Char_Range(REBVAL *val, REBINT limit)
 {
@@ -894,66 +859,6 @@ static int Do_Ordinal(REBVAL *ds, REBINT n)
 #endif
 	return R_ARG1;
 }
-
-
-#ifdef not_fast_enough
-/***********************************************************************
-**
-**/	REBNATIVE(replace_all)
-/*
-***********************************************************************/
-{
-#define BIT_CHAR(c) (((REBU64)1) << (c % 64))
-	REBVAL *a1   = D_ARG(1);
-	REBVAL *a2   = D_ARG(2);
-	REBSER *ser  = VAL_SERIES(a1);
-	REBCNT tail  = ser->tail;
-	REBVAL *pats = VAL_BLK(a2);
-	REBCNT tail2 = VAL_TAIL(a2);
-	REBSER *outs;
-	REBUNI chr;
-	REBU64 chash = 0;
-	REBCNT i, n;
-	REBVAL *val;
-
-	// Check substitution strings, and compute hash and size diff.
-	n = 0;
-	for (val = VAL_BLK(a2); NOT_END(val); val += 2) {
-		if (VAL_TYPE(a1) != VAL_TYPE(val)) Trap_DEAD_END(RE_NOT_SAME_TYPE); // !! would be good to show it
-		if (IS_END(val+1)) Trap_DEAD_END(RE_MISSING_ARG);
-		if (VAL_TYPE(a1) != VAL_TYPE(val+1)) Trap_DEAD_END(RE_NOT_SAME_TYPE); // !! would be good to show it
-		chr = GET_ANY_CHAR(VAL_SERIES(val), 0);
-		chash |= BIT_CHAR(chr);
-		n += 3 * (VAL_LEN(val+1) - VAL_LEN(val)); // assume it occurs three times
-	}
-
-	outs = Make_Unicode(VAL_LEN(a1) + n);
-
-	for (i = VAL_INDEX(a1); i < tail; i++) {
-		chr = GET_ANY_CHAR(ser, i);
-		val = 0; // default for check below
-		if (BIT_CHAR(chr) & chash) {
-			for (val = VAL_BLK(a2); NOT_END(val); val += 2) {
-				if (NOT_FOUND != Find_Str_Str(ser, 0, i, tail, 0, VAL_SERIES(val), 0, VAL_TAIL(val), AM_FIND_MATCH)) {
-					Insert_String(outs, SERIES_TAIL(outs), VAL_SERIES(val+1), 0, VAL_TAIL(val+1), 0);
-					i += VAL_TAIL(val) - 1;
-					break;
-				}
-			}
-			if (IS_END(val)) val = 0; // for test below
-		}
-		// If not found, just copy the character:
-		if (!val) {
-			n = SERIES_TAIL(outs);
-			EXPAND_SERIES_TAIL(outs, 1);
-			*UNI_SKIP(outs, n) = chr;
-		}
-	}
-	UNI_TERM(outs); // Because we don't do it for single chars.
-	Set_String(D_RET, outs);
-	return R_RET;
-}
-#endif
 
 
 /***********************************************************************

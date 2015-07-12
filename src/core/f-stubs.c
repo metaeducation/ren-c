@@ -603,75 +603,6 @@
 }
 
 
-
-#ifdef ndef
-/***********************************************************************
-**
-*/	 REBCNT Get_Part_Length(REBVAL *bval, REBVAL *eval)
-/*
-**		Determine the length of a /PART value.
-**		If /PART value is an integer just use it.
-**		If it is a series and it is the same series as the first,
-**		use the difference between the two indices.
-**
-**		If the length ends up negative, back up the index as much
-**		as possible. If backed up over the head, adjust the length.
-**
-**		Note: This one does not handle list datatypes.
-**
-***********************************************************************/
-{
-	REBINT	len;
-	REBCNT	tail;
-
-	if (IS_INTEGER(eval) || IS_DECIMAL(eval)) {
-		len = Int32(eval);
-		if (IS_SCALAR(bval) && VAL_TYPE(bval) != REB_PORT)
-			Trap1_DEAD_END(RE_INVALID_PART, bval);
-	}
-	else if (
-		(
-			// IF normal series and self referencing:
-			VAL_TYPE(eval) >= REB_STRING &&
-			VAL_TYPE(eval) <= REB_BLOCK &&
-			VAL_TYPE(bval) == VAL_TYPE(eval) &&
-			VAL_SERIES(bval) == VAL_SERIES(eval)
-		) || (
-			// OR IF it is a port:
-			IS_PORT(bval) && IS_PORT(eval) &&
-			VAL_OBJ_FRAME(bval) == VAL_OBJ_FRAME(eval)
-		)
-	)
-		len = (REBINT)VAL_INDEX(eval) - (REBINT)VAL_INDEX(bval);
-	else
-		Trap1_DEAD_END(RE_INVALID_PART, eval);
-/* !!!!
-	if (IS_PORT(bval)) {
-		PORT_STATE_OBJ	*port;
-
-		port = VAL_PORT(&VAL_PSP(bval)->state);
-		if (PORT_FLAG(port) & PF_DIRECT)
-			tail = 0x7fffffff;
-		else
-			tail = PORT_TAIL(VAL_PORT(&VAL_PSP(bval)->state));
-	}
-	else
-*/		tail = VAL_TAIL(bval);
-
-	if (len < 0) {
-		len = -len;
-		if (len > (REBINT)VAL_INDEX(bval))
-			len = (REBINT)VAL_INDEX(bval);
-		VAL_INDEX(bval) -= (REBCNT)len;
-	}
-	else if (!IS_INTEGER(eval) && (len + VAL_INDEX(bval)) > tail)
-		len = (REBINT)(tail - VAL_INDEX(bval));
-
-	return (REBCNT)len;
-}
-#endif
-
-
 /***********************************************************************
 **
 */	 REBINT Partial1(REBVAL *sval, REBVAL *lval)
@@ -787,25 +718,6 @@
 	return len;
 }
 
-
-#ifdef ndef
-/***********************************************************************
-**
-*/	void Define_File_Global(REBYTE *name, REBYTE *content)
-/*
-**		Util function used in startup.
-**
-***********************************************************************/
-{
-	REBCNT sym = Make_Word(name, 0);
-	REBSER *str = Make_CStr(content);
-	REBVAL *value;
-
-	value = Append_Frame(Main_Context, 0, sym);
-	SET_STR_TYPE(REB_FILE, value, str);
-}
-
-#endif
 
 /***********************************************************************
 **

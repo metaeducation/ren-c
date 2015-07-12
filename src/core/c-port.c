@@ -244,45 +244,6 @@
 	return FALSE; // timeout
 }
 
-#ifdef NDEF
-/***********************************************************************
-**
-xx*/	REBINT Wait_Device(REBREQ *req, REBCNT timeout)
-/*
-**		Utility function for waiting on specific device.
-**		(Near the main WAIT code above to keep in-sync.)
-**		This still lets any GUI events continue.
-**		Returns 0 when event occurs, else -1 for error.
-**
-***********************************************************************/
-{
-	REBI64 base = OS_DELTA_TIME(0);
-	REBCNT time;
-	REBCNT dt = DT;
-
-	while (dt) {
-		// Process any waiting events:
-		Awake_System(0);
-		if (!GET_FLAG(req->flags, RRF_PENDING)) return TRUE;
-
-		// Figure out how long that (and OS_WAIT) took:
-		time = (REBCNT)OS_DELTA_TIME(base);
-
-		Use above method!
-
-		// Did we use all our time?
-		if (timeout == ALL_BITS) dt = DT;	// infinite time
-		else if (time >= timeout) dt = 0;	// done
-		else if (dt > timeout - time) // residual time
-			dt = timeout - time;
-
-		// Wait for events or time to expire:
-		OS_WAIT(dt);
-	}
-
-	return FALSE; // timeout
-}
-#endif
 
 /***********************************************************************
 **
@@ -317,44 +278,6 @@ xx*/	REBINT Wait_Device(REBREQ *req, REBCNT timeout)
 	//clear waked list
 	RESET_SERIES(VAL_SERIES(waked));
 }
-
-
-#ifdef not_used
-/***********************************************************************
-**
-*/	REBVAL *Form_Write(REBVAL *arg, REBYTE *newline)
-/*
-**		Converts REBOL values to strings to use as data in WRITE.
-**		Will also add newlines for conversions of blocks of lines.
-**
-***********************************************************************/
-{
-	REBSER *series;
-	REBVAL *val;
-	REBCNT n = 0;
-	//REB_MOLD mo = {0 --- more here needed};
-
-	if (IS_BLOCK(arg)) {
-
-		if (newline) n = LEN_BYTES(newline);
-
-		mo.series = series = Make_Binary(VAL_BLK_LEN(arg) * 10);
-
-		for (val = VAL_BLK_DATA(arg); NOT_END(val); val++) {
-			Mold_Value(&mo, val, 0);
-			if (newline) Append_Series(series, newline, n);
-		}
-
-		Set_String(arg, series);
-	}
-
-	if (!ANY_STRING(arg)) {
-		Set_String(arg, Copy_Form_Value(arg, 0));
-	}
-
-	return arg;
-}
-#endif
 
 
 /***********************************************************************

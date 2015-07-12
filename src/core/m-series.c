@@ -295,34 +295,6 @@
 }
 
 
-#ifdef NOT_USED
-/***********************************************************************
-**
-*/	REBINT Clone_Series(REBVAL *dst, REBVAL *src)
-/*
-**		Properly deep copy all types of series.
-**		Return TRUE if BLOCK type.
-**
-***********************************************************************/
-{
-	Check_Stack();
-	if (VAL_TYPE(src) < REB_BLOCK) {
-		if (VAL_SERIES_WIDTH(src) == 4)
-			VAL_SERIES(dst) = Make_Quad(VAL_BIN(src), VAL_TAIL(src));
-		else
-			VAL_SERIES(dst) = Copy_String(VAL_SERIES(src));
-		return FALSE;
-	} else {
-
-		VAL_SERIES(dst) = Clone_Block(VAL_SERIES(src));
-		if (IS_HASH(dst) || IS_LIST(dst))
-			VAL_SERIES_SIDE(dst) = Copy_Side_Series(VAL_SERIES_SIDE(dst));
-		return TRUE;
-	}
-}
-#endif
-
-
 /***********************************************************************
 **
 */	void Remove_Series(REBSER *series, REBCNT index, REBINT len)
