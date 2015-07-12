@@ -1011,7 +1011,7 @@
         return -TOKEN_WORD;
     }
 
-#if ndef	// unreachable code
+#ifdef ndef	// unreachable code
     /* avoid '123 :123 from scanning as a word.... */
     if (IS_LEX_WORD(cp[1]) && !HAS_LEX_FLAGS(flags, LEX_WORD_FLAGS))
         return TOKEN_LIT;

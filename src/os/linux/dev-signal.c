@@ -59,7 +59,7 @@ extern void Signal_Device(REBREQ *req, REBINT type);
 	sigset_t mask;
 	sigset_t overlap;
 
-#if CHECK_MASK_OVERLAP //doesn't work yet
+#ifdef CHECK_MASK_OVERLAP //doesn't work yet
 	if (sigprocmask(SIG_BLOCK, NULL, &mask) < 0) {
 		goto error;
 	}
