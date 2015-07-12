@@ -819,7 +819,12 @@ failed:
 	return PE_BAD_SELECT;
 }
 
-REBINT Cmp_Struct(REBVAL *s, REBVAL *t)
+
+/***********************************************************************
+**
+*/	REBINT Cmp_Struct(REBVAL *s, REBVAL *t)
+/*
+***********************************************************************/
 {
 	REBINT n = VAL_STRUCT_FIELDS(s) - VAL_STRUCT_FIELDS(t);
 	if (n != 0) {
@@ -828,6 +833,7 @@ REBINT Cmp_Struct(REBVAL *s, REBVAL *t)
 	n = VAL_STRUCT_DATA(s) - VAL_STRUCT_DATA(t);
 	return n;
 }
+
 
 /***********************************************************************
 **
@@ -855,7 +861,11 @@ REBINT Cmp_Struct(REBVAL *s, REBVAL *t)
 	return -1;
 }
 
-void Copy_Struct(REBSTU *src, REBSTU *dst)
+/***********************************************************************
+**
+*/	void Copy_Struct(REBSTU *src, REBSTU *dst)
+/*
+***********************************************************************/
 {
 	/* Read only fields */
 	dst->spec = src->spec;
@@ -867,7 +877,11 @@ void Copy_Struct(REBSTU *src, REBSTU *dst)
 	STRUCT_DATA_BIN(dst) = Copy_Series(STRUCT_DATA_BIN(src));
 }
 
-void Copy_Struct_Val(REBVAL *src, REBVAL *dst)
+/***********************************************************************
+**
+*/	void Copy_Struct_Val(REBVAL *src, REBVAL *dst)
+/*
+***********************************************************************/
 {
 	SET_TYPE(dst, REB_STRUCT);
 	Copy_Struct(&VAL_STRUCT(src), &VAL_STRUCT(dst));
