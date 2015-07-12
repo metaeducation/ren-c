@@ -267,7 +267,7 @@ static void close_stdio(void)
 		}
 		if (interrupted) {
 			char noop[] = "does[]\n";
-			APPEND_BYTES_LIMIT(req->data, noop, len);
+			APPEND_BYTES_LIMIT(req->data, cb_cast(noop), len);
 			total += sizeof(noop);
 		}
 

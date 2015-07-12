@@ -498,7 +498,7 @@ typedef u16 REBUNI;
 // like UTF-8 with more than one byte per character, use LEN_BYTES.)
 //
 // For APPEND_BYTES_LIMIT, m is the max-size allocated for d (dest)
-#ifdef NDEBUG
+#if defined(NDEBUG) || !defined(REB_DEF)
 	#define LEN_BYTES(s) \
 		strlen((char*)(s))
 	#define COPY_BYTES(d,s,n) \
@@ -506,9 +506,10 @@ typedef u16 REBUNI;
 	#define COMPARE_BYTES(l,r) \
 		strcmp((char*)(l), (char*)(r))
 	#define APPEND_BYTES_LIMIT(d,s,m) \
-		strncat((char*)d, (char*)s, MAX((m) - strlen(d) - 1, 0))
+		strncat((char*)d, (char*)s, MAX((m) - strlen((char*)d) - 1, 0))
 #else
 	// Debug build uses function stubs to ensure you pass in REBYTE *
+	// (But only if building in Rebol Core, host doesn't get the exports)
 	#define LEN_BYTES(s) \
 		LEN_BYTES_(s)
 	#define COPY_BYTES(d,s,n) \
