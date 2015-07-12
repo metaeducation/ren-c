@@ -198,7 +198,7 @@ static REBOOL get_scalar(REBSTU *stu,
 			SET_TYPE(val, REB_BLOCK);
 			VAL_SERIES(val) = Struct_To_Block(&VAL_STRUCT(nested));
 
-			DS_POP;
+			DS_DROP;
 		} else {
 			REBINT sym = type_to_sym[field->type];
 			Init_Word(val, sym);
@@ -754,7 +754,7 @@ static REBOOL parse_field_type(struct Struct_Field *field, REBVAL *spec, REBVAL 
 
 			++ field_idx;
 
-			DS_POP; /* pop up the inner struct*/
+			DS_DROP; /* pop up the inner struct*/
 		}
 
 		VAL_STRUCT_LEN(out) = (REBCNT)offset;

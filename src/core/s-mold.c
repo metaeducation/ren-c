@@ -1234,7 +1234,7 @@ STOID Mold_Error(REBVAL *value, REB_MOLD *mold, REBFLG molded)
 		DS_PUSH_NONE;
 		*DS_TOP = *(REBVAL*)SERIES_DATA(VAL_LIB_SPEC(value));
 		Mold_File(DS_TOP, mold);
-		DS_POP;
+		DS_DROP;
 
 		End_Mold(mold);
 		break;

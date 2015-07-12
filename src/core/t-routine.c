@@ -840,7 +840,7 @@ static void process_type_block(REBVAL *out, REBVAL *blk, REBCNT n)
 				Trap_Arg(blk);
 			}
 
-			DS_POP;
+			DS_DROP;
 		} else {
 			if (VAL_LEN(blk) != 1) {
 				Trap_Arg(blk);
@@ -951,7 +951,7 @@ static void callback_dispatcher(ffi_cif *cif, void *ret, void **args, void *user
 			Trap_Arg(elem);
 	}
 
-	DS_POP;
+	DS_DROP;
 }
 
 /***********************************************************************
