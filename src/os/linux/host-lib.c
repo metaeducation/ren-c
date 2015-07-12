@@ -931,6 +931,10 @@ error:
 	if (flags & FLAG_SHELL) flag_shell = TRUE;
 	if (flags & FLAG_INFO) flag_info = TRUE;
 
+	// suppress unused warnings but keep flags for future use
+	(void)flag_info;
+	(void)flag_console;
+
 	if (input_type == STRING_TYPE
 		|| input_type == BINARY_TYPE) {
 		if (pipe2(stdin_pipe, O_CLOEXEC | O_NONBLOCK) < 0) {

@@ -1250,12 +1250,10 @@ static void callback_dispatcher(ffi_cif *cif, void *ret, void **args, void *user
 {
 	REBVAL *val;
 	REBVAL *arg;
-	REBSTU *strut;
 	REBVAL *ret;
 
 	arg = D_ARG(2);
 	val = D_ARG(1);
-	strut = 0;
 
 	ret = DS_RETURN;
 	// unary actions
@@ -1299,12 +1297,10 @@ static void callback_dispatcher(ffi_cif *cif, void *ret, void **args, void *user
 {
 	REBVAL *val;
 	REBVAL *arg;
-	REBSTU *strut;
 	REBVAL *ret;
 
 	arg = D_ARG(2);
 	val = D_ARG(1);
-	strut = 0;
 
 	ret = DS_RETURN;
 	// unary actions

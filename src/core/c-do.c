@@ -2281,7 +2281,6 @@ xx*/	REBVAL *Do_Path(REBVAL **path_val, REBVAL *val)
 /*
 ***********************************************************************/
 {
-	REBINT result = 0;
 	//REBVAL *val;
 	REBOL_STATE state;
 	REBVAL *val;
@@ -2317,9 +2316,11 @@ xx*/	REBVAL *Do_Path(REBVAL **path_val, REBVAL *val)
 		// Saved_State is safe.
 		Saved_State = Halt_State;
 
+		// SYS_CTX_START runs 'start' in sys-start.r
 		val = Do_Sys_Func(SYS_CTX_START, 0); // what if script contains a HALT?
 
-		if (IS_INTEGER(val)) result = VAL_INT32(val);
+		// Convention is that if start completes successfully, it returns unset
+		assert(IS_UNSET(val));
 		//if (Try_Block_Halt(VAL_SERIES(ROOT_SCRIPT), 0)) {
 
 		//DS_Base[state.dsp+1] = *val;
@@ -2330,5 +2331,5 @@ xx*/	REBVAL *Do_Path(REBVAL **path_val, REBVAL *val)
 	// Cleanup stack and memory:
 	DS_RESET;
 	Recycle();
-	return 0; //result;
+	return 0;
 }

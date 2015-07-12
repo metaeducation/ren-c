@@ -950,12 +950,10 @@ static void init_fields(REBVAL *ret, REBVAL *spec)
 {
 	REBVAL *val;
 	REBVAL *arg;
-	REBSTU *strut;
 	REBVAL *ret;
 
 	arg = D_ARG(2);
 	val = D_ARG(1);
-	strut = 0;
 
 	ret = DS_RETURN;
 	// unary actions

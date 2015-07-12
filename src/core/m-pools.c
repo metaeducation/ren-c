@@ -657,7 +657,6 @@ clear_header:
 {
 	REBCNT pool_num;
 	REBNOD *node;
-	REBNOD *pnode;
 	REBCNT count = 0;
 	REBSEG *seg;
 	REBSER *series;
@@ -696,7 +695,6 @@ clear_header:
 				if ((REBUPT)node > (REBUPT)seg && (REBUPT)node < (REBUPT)seg + (REBUPT)seg->size) break;
 			}
 			if (!seg) goto crash;
-			pnode = node; // for debugger
 		}
 		// The number of free nodes must agree with header:
 		if (

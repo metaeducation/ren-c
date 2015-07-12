@@ -467,7 +467,6 @@ void Set_Vector_Row(REBSER *ser, REBVAL *blk)
 {
 	REBSER *vect;
 	REBINT n;
-	REBINT dims;
 	REBINT bits;
 	REBYTE *vp;
 	REBI64 i;
@@ -481,7 +480,6 @@ void Set_Vector_Row(REBSER *ser, REBVAL *blk)
 	vect = VAL_SERIES(pvs->value);
 	vp   = vect->data;
 	bits = VECT_TYPE(vect);
-	dims = vect->size >> 8;
 
 	if (pvs->setval == 0) {
 

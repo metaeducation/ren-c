@@ -764,6 +764,8 @@ static void *Task_Ready;
 	unsigned char flag_console = FALSE;
 	unsigned char flag_shell = FALSE;
 	unsigned char flag_info = FALSE;
+    (void)flag_info; // Suppress -Wunused-but-set-variable
+    (void)flag_console; // Suppress -Wunused-but-set-variable
 
 	if (flags & FLAG_WAIT) flag_wait = TRUE;
 	if (flags & FLAG_CONSOLE) flag_console = TRUE;

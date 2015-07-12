@@ -764,6 +764,8 @@ chk_neg:
 		Trap1_DEAD_END(RE_CALL_FAIL, Make_OS_Error(r));
 		return R_NONE;
 	}
+
+	(void)input; // suppress unused warning but keep variable
 }
 
 #ifdef not_used
