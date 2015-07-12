@@ -301,6 +301,21 @@
 
 /***********************************************************************
 **
+*/  const REBYTE *Skip_To_Byte(const REBYTE *cp, const REBYTE *ep, REBYTE b)
+/*
+**		Skip to the specified byte but not past the provided end
+**		pointer of the byte string.  Return NULL if byte is not found.
+**
+***********************************************************************/
+{
+	while (cp != ep && *cp != b) cp++;
+	if (*cp == b) return cp;
+	return NULL;
+}
+
+
+/***********************************************************************
+**
 */  static REBINT Scan_Char(const REBYTE **bp)
 /*
 **      Scan a char, handling ^A, ^/, ^(null), ^(1234)
@@ -868,7 +883,7 @@
             if (HAS_LEX_FLAG(flags, LEX_SPECIAL_AT)) return TOKEN_EMAIL;
             if (HAS_LEX_FLAG(flags, LEX_SPECIAL_DOLLAR)) return TOKEN_MONEY;
             if (HAS_LEX_FLAG(flags, LEX_SPECIAL_COLON)) {
-	            cp = Skip_To_Char(cp, scan_state->end, ':');
+				cp = Skip_To_Byte(cp, scan_state->end, ':');
 				if (cp && (cp+1) != scan_state->end) return TOKEN_TIME;  /* 12:34 */
 			    cp = scan_state->begin;
 				if (cp[1] == ':') {		// +: -:
@@ -961,14 +976,14 @@
 		}
 		if (HAS_LEX_FLAG(flags, LEX_SPECIAL_COLON)) return TOKEN_TIME;  /* 12:34 */
 		if (HAS_LEX_FLAG(flags, LEX_SPECIAL_PERIOD)) {  /* 1.2 1.2.3 1,200.3 1.200,3 1.E-2 */
-			if (Skip_To_Char(cp, scan_state->end, 'x')) return TOKEN_PAIR;
-			cp = Skip_To_Char(cp, scan_state->end, '.');
+			if (Skip_To_Byte(cp, scan_state->end, 'x')) return TOKEN_PAIR;
+			cp = Skip_To_Byte(cp, scan_state->end, '.');
 			if (!(HAS_LEX_FLAG(flags, LEX_SPECIAL_COMMA)) &&        /* no comma in bytes */
-				Skip_To_Char(cp+1, scan_state->end, '.')) return TOKEN_TUPLE;
+				Skip_To_Byte(cp+1, scan_state->end, '.')) return TOKEN_TUPLE;
 			return TOKEN_DECIMAL;
 		}
 		if (HAS_LEX_FLAG(flags, LEX_SPECIAL_COMMA)) {
-			if (Skip_To_Char(cp, scan_state->end, 'x')) return TOKEN_PAIR;
+			if (Skip_To_Byte(cp, scan_state->end, 'x')) return TOKEN_PAIR;
 			return TOKEN_DECIMAL;  /* 1,23 */
 		}
 		if (HAS_LEX_FLAG(flags, LEX_SPECIAL_POUND)) {   /* -#123 2#1010        */
@@ -983,7 +998,7 @@
 			if (*cp == '-') return TOKEN_DATE;      /* 1-2-97 1-jan-97 */
 			if (*cp == 'x' || *cp == 'X') return TOKEN_PAIR; // 320x200
 			if (*cp == 'E' || *cp == 'e') {
-				if (Skip_To_Char(cp, scan_state->end, 'x')) return TOKEN_PAIR;
+				if (Skip_To_Byte(cp, scan_state->end, 'x')) return TOKEN_PAIR;
 				return TOKEN_DECIMAL; /* 123E4 */
 			}
 			if (*cp == '%') return TOKEN_PERCENT;
@@ -1006,7 +1021,7 @@
 scanword:
     if (HAS_LEX_FLAG(flags, LEX_SPECIAL_COLON)) {    /* word:  url:words */
         if (type != TOKEN_WORD) return type; //-TOKEN_WORD;  /* only valid with WORD (not set or lit) */
-        cp = Skip_To_Char(cp, scan_state->end, ':'); /* always returns a pointer (always a ':') */
+		cp = Skip_To_Byte(cp, scan_state->end, ':'); /* always returns a pointer (always a ':') */
         if (cp[1] != '/' && Lex_Map[(REBYTE)cp[1]] < LEX_SPECIAL) { /* a valid delimited word SET? */
             if (HAS_LEX_FLAGS(flags, ~LEX_FLAG(LEX_SPECIAL_COLON) & LEX_WORD_FLAGS)) return -TOKEN_WORD;
             return TOKEN_SET;
@@ -1024,12 +1039,12 @@ scanword:
     if (HAS_LEX_FLAGS(flags, LEX_WORD_FLAGS)) return -type;   /* has chars not allowed in word (eg % \ ) */
 	if (HAS_LEX_FLAG(flags, LEX_SPECIAL_LESSER)) {
 		// Allow word<tag> and word</tag> but not word< word<= word<> etc.
-        cp = Skip_To_Char(cp, scan_state->end, '<');
+		cp = Skip_To_Byte(cp, scan_state->end, '<');
 		if (cp[1] == '<' || cp[1] == '>' || cp[1] == '=' ||
 			IS_LEX_SPACE(cp[1]) || (cp[1] != '/' && IS_LEX_DELIMIT(cp[1])))
 			return -type;
 		/*bogus: if (HAS_LEX_FLAG(flags, LEX_SPECIAL_GREATER) &&
-			Skip_To_Char(scan_state->begin, cp, '>')) return -TOKEN_WORD; */
+			Skip_To_Byte(scan_state->begin, cp, '>')) return -TOKEN_WORD; */
 		scan_state->end = cp;
 	} else if (HAS_LEX_FLAG(flags, LEX_SPECIAL_GREATER)) return -type;
     return type;

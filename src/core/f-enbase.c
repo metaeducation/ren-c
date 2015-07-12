@@ -327,7 +327,7 @@ err:
 					flip = 0;
 				}
 				else if (flip == 2) {
-					if (!Skip_To_Char(cp, cp + len, '=')) goto err;
+					if (!Skip_To_Byte(cp, cp + len, '=')) goto err;
 					cp++;
 					*bp++ = (REBYTE)(accum >> 4);
 					flip = 0;

@@ -753,7 +753,7 @@ end_date:
 	cp = Decode_Binary(value, cp, len, base, '}');
 	if (!cp) return 0;
 
-	cp = Skip_To_Char(cp, cp + len, '}');
+	cp = Skip_To_Byte(cp, cp + len, '}');
 	if (!cp) return 0; // series will be gc'd
 
 	return cp;

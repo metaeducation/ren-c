@@ -212,17 +212,3 @@ enum {
 **  Externally Accessed Variables
 */
 extern const REBYTE Lex_Map[256];
-
-/***********************************************************************
-**
-*/  static INLINE const REBYTE *Skip_To_Char(const REBYTE *cp, const REBYTE *ep, REBYTE chr)
-/*
-**		Skip to the specified character but not past the end
-**		of the string.  Return zero if the char is not found.
-**
-***********************************************************************/
-{
-	while (cp != ep && *cp != chr) cp++;
-	if (*cp == chr) return cp;
-	return 0;
-}
