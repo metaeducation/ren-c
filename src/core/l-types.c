@@ -90,7 +90,7 @@ typedef REBFLG (*MAKE_FUNC)(REBVAL *, REBVAL *, REBCNT);
 	REBYTE lex;
 
 	if (uni) {
-	    REBUNI *up = (REBUNI*)bp;
+		const REBUNI *up = cast(const REBUNI*, bp);
 		c1 = up[0];
 		c2 = up[1];
 	} else {
@@ -164,7 +164,10 @@ typedef REBFLG (*MAKE_FUNC)(REBVAL *, REBVAL *, REBCNT);
 
 	for (n = 0; n < len; n++) {
 
-		c = (REBUNI)(uni ? ((REBUNI*)src)[n] : ((REBYTE*)src)[n]);
+		if (uni)
+			c = cast(const REBUNI*, src)[n];
+		else
+			c = cast(const REBYTE*, src)[n];
 
 		if (c > 255) goto bad_hex;
 
@@ -250,7 +253,7 @@ bad_hex:	Trap_DEAD_END(RE_INVALID_CHARS);
 	REBYTE buf[MAX_NUM_LEN+4];
 	REBYTE *ep = buf;
 	REBOOL dig = FALSE;   /* flag that a digit was present */
-	char *se;
+	const char *se;
 
 	if (len > MAX_NUM_LEN) return 0;
 
@@ -280,7 +283,10 @@ bad_hex:	Trap_DEAD_END(RE_INVALID_CHARS);
 	if ((REBCNT)(cp-bp) != len) return 0;
 
 	VAL_SET(value, REB_DECIMAL);
-	VAL_DECIMAL(value) = STRTOD((char *)buf, &se); // need check for NaN, and INF !!!
+
+	// !!! need check for NaN, and INF
+	VAL_DECIMAL(value) = STRTOD(s_cast(buf), &se);
+
 	if (fabs(VAL_DECIMAL(value)) == HUGE_VAL) Trap_DEAD_END(RE_OVERFLOW);
 	return cp;
 }

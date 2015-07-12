@@ -263,7 +263,7 @@
 
 /***********************************************************************
 **
-*/	REBINT Cmp_Time(REBVAL *v1, REBVAL *v2)
+*/	REBINT Cmp_Time(const REBVAL *v1, const REBVAL *v2)
 /*
 **	Given two times, compare them.
 **

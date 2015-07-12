@@ -1889,9 +1889,9 @@ gethex( CONST char **sp, U *rvp, int rounding, int sign)
 			e1 = -e1;
 		e += e1;
 	  }
-	*sp = (char*)s;
+	*sp = (const char*)s; // Ren/C: fix cast away of const
 	if (!havedig)
-		*sp = (char*)s0 - 1;
+		*sp = (const char*)s0 - 1; // Ren/C: fix cast away of const
 	if (zret)
 		goto retz1;
 	if (big) {
@@ -2492,9 +2492,9 @@ retlow1:
  double
 strtod
 #ifdef KR_headers
-	(s00, se) CONST char *s00; char **se;
+	(s00, se) CONST char *s00; const char **se; // Ren/C: fix cast away of const
 #else
-	(const char *s00, char **se)
+	(const char *s00, const char **se) // Ren/C: fix cast away of const
 #endif
 {
 	int bb2, bb5, bbe, bd2, bd5, bbbits, bs2, c, e, e1;
@@ -3558,7 +3558,7 @@ strtod
 #endif
  ret:
 	if (se)
-		*se = (char *)s;
+		*se = (const char *)s; // Ren/C: fix cast away of const
 	return sign ? -dval(&rv) : dval(&rv);
 	}
 

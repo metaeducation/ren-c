@@ -79,14 +79,14 @@
 
 /***********************************************************************
 **
-*/	REBINT Cmp_Tuple(REBVAL *t1, REBVAL *t2)
+*/	REBINT Cmp_Tuple(const REBVAL *t1, const REBVAL *t2)
 /*
 **	Given two tuples, compare them.
 **
 ***********************************************************************/
 {
 	REBCNT	len;
-	REBYTE	*vp1, *vp2;
+	const REBYTE *vp1, *vp2;
 	REBINT	n;
 
 	len = MAX(VAL_TUPLE_LEN(t1), VAL_TUPLE_LEN(t2));

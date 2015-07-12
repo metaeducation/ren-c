@@ -32,7 +32,7 @@
 
 /***********************************************************************
 **
-*/	REBINT Compare_Binary_Vals(REBVAL *v1, REBVAL *v2)
+*/	REBINT Compare_Binary_Vals(const REBVAL *v1, const REBVAL *v2)
 /*
 **		Compare two binary values.
 **
@@ -209,7 +209,7 @@
 
 /***********************************************************************
 **
-*/	REBINT Compare_String_Vals(REBVAL *v1, REBVAL *v2, REBOOL uncase)
+*/	REBINT Compare_String_Vals(const REBVAL *v1, const REBVAL *v2, REBOOL uncase)
 /*
 **		Compare two string values. Either can be byte or unicode wide.
 **

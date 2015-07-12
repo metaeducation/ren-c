@@ -297,7 +297,7 @@
 
 /***********************************************************************
 **
-*/  REBVAL *Of_Type(REBVAL *value)
+*/  REBVAL *Of_Type(const REBVAL *value)
 /*
 **      Returns the datatype value for the given value.
 **		The datatypes are all at the head of the context.
@@ -564,7 +564,7 @@
 
 /***********************************************************************
 **
-*/	REBCNT Val_Series_Len(REBVAL *value)
+*/	REBCNT Val_Series_Len(const REBVAL *value)
 /*
 **		Get length of series, but avoid negative values.
 **
@@ -577,7 +577,7 @@
 
 /***********************************************************************
 **
-*/	REBCNT Val_Byte_Len(REBVAL *value)
+*/	REBCNT Val_Byte_Len(const REBVAL *value)
 /*
 **		Get length of series in bytes.
 **

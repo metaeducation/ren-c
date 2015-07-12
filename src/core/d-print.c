@@ -99,7 +99,7 @@ static REBREQ *Req_SIO;
 	REBYTE *buf = &buffer[0];
 	REBINT n;
 	REBCNT len2;
-	REBUNI *up = (REBUNI*)bp;
+	const REBUNI *up = cast(const REBUNI*, bp);
 
 	if (!bp) Panic(RP_NO_PRINT_PTR);
 
@@ -117,7 +117,14 @@ static REBREQ *Req_SIO;
 		Do_Signals();
 
 		// returns # of chars, size returns buf bytes output
-		n = Encode_UTF8(buf, BUF_SIZE-4, uni ? (void*)up : (void*)bp, &len2, uni, OS_CRLF);
+		n = Encode_UTF8(
+			buf,
+			BUF_SIZE-4,
+			uni ? cast(const void *, up) : cast(const void *, bp),
+			&len2,
+			uni,
+			OS_CRLF
+		);
 		if (n == 0) break;
 
 		Req_SIO->length = len2; // byte size of buffer

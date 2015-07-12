@@ -1108,7 +1108,7 @@ scanword:
 			break;
         case 'R':
 		case 'r':
-			if (Match_Bytes(cp, (REBYTE *)&Str_REBOL[0])) {
+			if (Match_Bytes(cp, cb_cast(Str_REBOL))) {
 				rp = cp;
                 cp += 5;
 				break;

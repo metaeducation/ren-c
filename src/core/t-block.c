@@ -373,9 +373,17 @@ static struct {
 	// !!!! BE SURE that 64 bit large difference comparisons work
 
 	if (sort_flags.reverse)
-		return Cmp_Value((REBVAL*)v2+sort_flags.offset, (REBVAL*)v1+sort_flags.offset, sort_flags.cased);
+		return Cmp_Value(
+			cast(const REBVAL*, v2) + sort_flags.offset,
+			cast(const REBVAL*, v1) + sort_flags.offset,
+			sort_flags.cased
+		);
 	else
-		return Cmp_Value((REBVAL*)v1+sort_flags.offset, (REBVAL*)v2+sort_flags.offset, sort_flags.cased);
+		return Cmp_Value(
+			cast(const REBVAL*, v1) + sort_flags.offset,
+			cast(const REBVAL*, v2) + sort_flags.offset,
+			sort_flags.cased
+		);
 
 /*
 	REBI64 n = VAL_INT64((REBVAL*)v1) - VAL_INT64((REBVAL*)v2);
@@ -405,12 +413,16 @@ static struct {
 	}
 
 	args = BLK_SKIP(VAL_FUNC_ARGS(sort_flags.compare), 1);
-	if (NOT_END(args) && !TYPE_CHECK(args, VAL_TYPE((REBVAL*)v1))){
-		Trap3_DEAD_END(RE_EXPECT_ARG, Of_Type(sort_flags.compare), args, Of_Type((REBVAL*)v1));
+	if (NOT_END(args) && !TYPE_CHECK(args, VAL_TYPE(cast(const REBVAL*, v1)))) {
+		Trap3_DEAD_END(RE_EXPECT_ARG,
+			Of_Type(sort_flags.compare), args, Of_Type(cast(const REBVAL*, v1))
+		);
 	}
 	++ args;
-	if (NOT_END(args) && !TYPE_CHECK(args, VAL_TYPE((REBVAL*)v2))) {
-		Trap3_DEAD_END(RE_EXPECT_ARG, Of_Type(sort_flags.compare), args, Of_Type((REBVAL*)v2));
+	if (NOT_END(args) && !TYPE_CHECK(args, VAL_TYPE(cast(const REBVAL*, v2)))) {
+		Trap3_DEAD_END(RE_EXPECT_ARG,
+			Of_Type(sort_flags.compare), args, Of_Type(cast(const REBVAL*, v2))
+		);
 	}
 
 	val = Apply_Func(0, sort_flags.compare, v1, v2, 0);

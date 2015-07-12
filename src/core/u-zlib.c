@@ -1450,7 +1450,8 @@ int ZEXPORT deflateSetDictionary (strm, dictionary, dictLength)
     avail = strm->avail_in;
     next = strm->next_in;
     strm->avail_in = dictLength;
-    strm->next_in = (z_const Bytef *)dictionary;
+	// Ren/C change: stop discarding of const
+	strm->next_in = (const z_const Bytef *)dictionary;
     fill_window(s);
     while (s->lookahead >= MIN_MATCH) {
         str = s->strstart;

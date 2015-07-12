@@ -914,11 +914,11 @@ static struct digest {
 #else
 	#ifdef TO_OBSD
 		return cast(REBCHR*,
-			strlcat(cast(char*, dest), cast(char*, src), max)
+			strlcat(cast(char*, dest), cast(const char*, src), max)
 		);
 	#else
 		return cast(REBCHR*,
-			strncat(cast(char*, dest), cast(char*, src), max)
+			strncat(cast(char*, dest), cast(const char*, src), max)
 		);
 	#endif
 #endif

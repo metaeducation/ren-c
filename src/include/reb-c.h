@@ -64,7 +64,7 @@
 	 * access.  Stray writes to that can cause even time-traveling bugs, with
 	 * effects *before* that write is made...due to "undefined behavior".
 	 */
-#elif __cplusplus < 201103L
+#elif defined(__cplusplus) /* <= gcc -Wundef */ && (__cplusplus < 201103L)
 	/* Well-intentioned macros aside, C has no way to enforce that you can't
 	 * cast away a const without m_cast. C++98 builds can do that, at least:
 	 */
@@ -515,13 +515,13 @@ typedef u16 REBUNI;
 // For APPEND_BYTES_LIMIT, m is the max-size allocated for d (dest)
 #if defined(NDEBUG) || !defined(REB_DEF)
 	#define LEN_BYTES(s) \
-		strlen((char*)(s))
+		strlen((const char*)(s))
 	#define COPY_BYTES(d,s,n) \
-		strncpy((char*)(d), (char*)(s), (n))
+		strncpy((char*)(d), (const char*)(s), (n))
 	#define COMPARE_BYTES(l,r) \
-		strcmp((char*)(l), (char*)(r))
+		strcmp((const char*)(l), (const char*)(r))
 	#define APPEND_BYTES_LIMIT(d,s,m) \
-		strncat((char*)d, (char*)s, MAX((m) - strlen((char*)d) - 1, 0))
+		strncat((char*)d, (const char*)s, MAX((m) - strlen((char*)d) - 1, 0))
 #else
 	// Debug build uses function stubs to ensure you pass in REBYTE *
 	// (But only if building in Rebol Core, host doesn't get the exports)

@@ -301,7 +301,8 @@ static REBSER *make_binary(REBVAL *arg, REBOOL make)
 /*
 ***********************************************************************/
 {
-	return ((int)*(REBYTE*)v1) - ((int)*(REBYTE*)v2);
+	return cast(int, *cast(const REBYTE *, v1))
+		- cast(int, *cast(const REBYTE *, v2));
 }
 
 
@@ -311,7 +312,8 @@ static REBSER *make_binary(REBVAL *arg, REBOOL make)
 /*
 ***********************************************************************/
 {
-	return ((int)*(REBYTE*)v2) - ((int)*(REBYTE*)v1);
+	return cast(int, *cast(const REBYTE *, v2))
+		- cast(int, *cast(const REBYTE *, v1));
 }
 
 

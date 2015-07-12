@@ -148,7 +148,7 @@ is_true:
 
 /***********************************************************************
 **
-*/	REBINT Cmp_Block(REBVAL *sval, REBVAL *tval, REBFLG is_case)
+*/	REBINT Cmp_Block(const REBVAL *sval, const REBVAL *tval, REBFLG is_case)
 /*
 **		Compare two blocks and return the difference of the first
 **		non-matching value.
@@ -177,7 +177,7 @@ is_true:
 
 /***********************************************************************
 **
-*/	REBINT Cmp_Value(REBVAL *s, REBVAL *t, REBFLG is_case)
+*/	REBINT Cmp_Value(const REBVAL *s, const REBVAL *t, REBFLG is_case)
 /*
 **		Compare two values and return the difference.
 **

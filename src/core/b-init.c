@@ -37,7 +37,7 @@ static	REBCNT	Native_Count;
 static	REBCNT	Native_Limit;
 static	REBCNT	Action_Count;
 static	REBCNT	Action_Marker;
-static	REBFUN  *Native_Functions;
+static const REBFUN *Native_Functions;
 static	BOOT_BLK *Boot_Block;
 
 
@@ -288,7 +288,7 @@ static	BOOT_BLK *Boot_Block;
 
 /***********************************************************************
 **
-*/	void Use_Natives(REBFUN *funcs, REBCNT limit)
+*/	void Use_Natives(const REBFUN *funcs, REBCNT limit)
 /*
 **		Setup to use NATIVE function. If limit == 0, then the
 **		native function table will be zero terminated (N_native).
@@ -381,7 +381,7 @@ static	BOOT_BLK *Boot_Block;
 	REBVAL *val;
 
 	Action_Count = 0;
-	Use_Natives((REBFUN *)Native_Funcs, MAX_NATS);
+	Use_Natives(Native_Funcs, MAX_NATS);
 
 	// Construct the first native, which is the NATIVE function creator itself:
 	// native: native [spec [block!]]

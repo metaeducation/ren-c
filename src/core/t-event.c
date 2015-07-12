@@ -49,7 +49,7 @@
 
 /***********************************************************************
 **
-*/	REBINT Cmp_Event(REBVAL *t1, REBVAL *t2)
+*/	REBINT Cmp_Event(const REBVAL *t1, const REBVAL *t2)
 /*
 **	Given two events, compare them.
 **

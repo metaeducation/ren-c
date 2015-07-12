@@ -649,5 +649,5 @@ static u32 *core_ext_words;
 **
 ***********************************************************************/
 {
-	RL = RL_Extend((REBYTE *)(&RX_core[0]), &RXD_Core);
+	RL = RL_Extend(RX_core, &RXD_Core);
 }

@@ -213,7 +213,7 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 
 /***********************************************************************
 **
-*/	RL_API void *RL_Extend(REBYTE *source, RXICAL call)
+*/	RL_API void *RL_Extend(const REBYTE *source, RXICAL call)
 /*
 **	Appends embedded extension to system/catalog/boot-exts.
 **
@@ -1095,7 +1095,7 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 
 /***********************************************************************
 **
-*/	RL_API REBCNT RL_Encode_UTF8(REBYTE *dst, REBINT max, void *src, REBCNT *len, REBFLG uni, REBFLG ccr)
+*/	RL_API REBCNT RL_Encode_UTF8(REBYTE *dst, REBINT max, const void *src, REBCNT *len, REBFLG uni, REBFLG ccr)
 /*
 **		Encode the unicode into UTF8 byte string.
 **

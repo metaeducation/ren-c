@@ -54,6 +54,9 @@
 #ifndef ZCONF_H
 #define ZCONF_H
 
+// Ren/C - Yes, we want Zlib to be const compliant!
+#define ZLIB_CONST
+
 /*
  * If you *really* need a unique prefix for all types and library functions,
  * compile with -DZ_PREFIX. The "standard" zlib should be compiled without it.

@@ -26,4 +26,5 @@
 ***********************************************************************/
 
 char *dtoa(double dd, int mode, int ndigits, int *decpt, int *sign, char **rve);
-double STRTOD(const char *s00, char **se);
+// Ren/C: fix cast away of const (on **se)
+double STRTOD(const char *s00, const char **se);

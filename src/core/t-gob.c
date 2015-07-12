@@ -80,7 +80,7 @@ const REBCNT Gob_Flag_Words[] = {
 
 /***********************************************************************
 **
-*/  REBINT Cmp_Gob(REBVAL *g1, REBVAL *g2)
+*/  REBINT Cmp_Gob(const REBVAL *g1, const REBVAL *g2)
 /*
 ***********************************************************************/
 {

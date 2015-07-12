@@ -82,7 +82,7 @@
 
 /***********************************************************************
 **
-*/	REBINT Cmp_Pair(REBVAL *t1, REBVAL *t2)
+*/	REBINT Cmp_Pair(const REBVAL *t1, const REBVAL *t2)
 /*
 **	Given two pairs, compare them.
 **

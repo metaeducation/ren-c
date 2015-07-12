@@ -225,7 +225,7 @@ void Set_Vector_Row(REBSER *ser, REBVAL *blk)
 
 /***********************************************************************
 **
-*/	REBINT Compare_Vector(REBVAL *v1, REBVAL *v2)
+*/	REBINT Compare_Vector(const REBVAL *v1, const REBVAL *v2)
 /*
 ***********************************************************************/
 {

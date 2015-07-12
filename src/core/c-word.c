@@ -364,7 +364,7 @@ make_sym:
 
 /***********************************************************************
 **
-*/	REBINT Compare_Word(REBVAL *s, REBVAL *t, REBFLG is_case)
+*/	REBINT Compare_Word(const REBVAL *s, const REBVAL *t, REBFLG is_case)
 /*
 **		Compare the names of two words and return the difference.
 **		Note that words are kept UTF8 encoded.

@@ -1041,7 +1041,7 @@ ConversionResult ConvertUTF8toUTF32 (
 
 /***********************************************************************
 **
-*/	REBCNT Encode_UTF8(REBYTE *dst, REBINT max, void *src, REBCNT *len, REBFLG uni, REBFLG ccr)
+*/	REBCNT Encode_UTF8(REBYTE *dst, REBINT max, const void *src, REBCNT *len, REBFLG uni, REBFLG ccr)
 /*
 **		Encode the unicode into UTF8 byte string.
 **
@@ -1057,14 +1057,12 @@ ConversionResult ConvertUTF8toUTF32 (
 	REBINT n;
 	REBYTE buf[8];
 	REBYTE *bs = dst; // save start
-	REBYTE *bp = (REBYTE*)src;
-	REBUNI *up = (REBUNI*)src;
+	const REBYTE *bp = cast(const REBYTE*, src);
+	const REBUNI *up = cast(const REBUNI*, src);
 	REBCNT cnt;
 
 	if (len) cnt = *len;
-	else {
-		cnt = uni ? Strlen_Uni((REBUNI*)bp) : LEN_BYTES((REBYTE*)bp);
-	}
+	else cnt = uni ? Strlen_Uni(up) : LEN_BYTES(bp);
 
 	for (; max > 0 && cnt > 0; cnt--) {
 		c = uni ? *up++ : *bp++;
@@ -1092,7 +1090,7 @@ ConversionResult ConvertUTF8toUTF32 (
 
 	if (len) *len = dst - bs;
 
-	return uni ? up - (REBUNI*)src : bp - (REBYTE*)src;
+	return uni ? up - cast(const REBUNI*, src) : bp - cast(const REBYTE*, src);
 }
 
 
