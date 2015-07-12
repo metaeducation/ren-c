@@ -415,6 +415,12 @@ void Panic_Core(REBINT id, ...);
 		return 0; \
 	} while (0)
 
+#define DEAD_END_VOID \
+	do { \
+		assert(FALSE); \
+		return; \
+	} while (0)
+
 #define Panic(rp) \
 	do { \
 		assert(0 == (rp)); /* fail here in Debug build */ \

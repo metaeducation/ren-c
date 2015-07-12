@@ -153,17 +153,17 @@
 	REBDEC e;
 	REBDEC i;
 
-	if (IS_INTEGER(start)) s = (REBDEC)VAL_INT64(start);
+	if (IS_INTEGER(start)) s = cast(REBDEC, VAL_INT64(start));
 	else if (IS_DECIMAL(start) || IS_PERCENT(start)) s = VAL_DECIMAL(start);
-	else Trap_Arg(start);
+	else { Trap_Arg(start); DEAD_END_VOID; }
 
-	if (IS_INTEGER(end)) e = (REBDEC)VAL_INT64(end);
+	if (IS_INTEGER(end)) e = cast(REBDEC, VAL_INT64(end));
 	else if (IS_DECIMAL(end) || IS_PERCENT(end)) e = VAL_DECIMAL(end);
-	else Trap_Arg(end);
+	else { Trap_Arg(end); DEAD_END_VOID; }
 
-	if (IS_INTEGER(incr)) i = (REBDEC)VAL_INT64(incr);
+	if (IS_INTEGER(incr)) i = cast(REBDEC, VAL_INT64(incr));
 	else if (IS_DECIMAL(incr) || IS_PERCENT(incr)) i = VAL_DECIMAL(incr);
-	else Trap_Arg(incr);
+	else { Trap_Arg(incr); DEAD_END_VOID; }
 
 	VAL_SET(var, REB_DECIMAL);
 

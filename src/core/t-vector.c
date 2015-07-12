@@ -504,11 +504,25 @@ void Set_Vector_Row(REBSER *ser, REBVAL *blk)
 
 	if (IS_INTEGER(pvs->setval)) {
 		i = VAL_INT64(pvs->setval);
-		if (bits > VTUI64) f = (REBDEC)(i);
+		if (bits > VTUI64) f = cast(REBDEC, i);
+		else {
+			// !!! REVIEW: f was not set in this case; compiler caught the
+			// unused parameter.  So fill with distinctive garbage to make it
+			// easier to search for if it ever is.
+			f = -646.699;
+		}
 	}
 	else if (IS_DECIMAL(pvs->setval)) {
 		f = VAL_DECIMAL(pvs->setval);
-		if (bits <= VTUI64) i = (REBINT)(f);
+		if (bits <= VTUI64) i = cast(REBINT, f);
+		else {
+			// !!! REVIEW: i was not set in this case; compiler caught the
+			// unused parameter.  So fill with distinctive garbage to make it
+			// easier to search for if it ever is.
+			i = -646699;
+
+			return PE_BAD_SET;
+		}
 	}
 	else return PE_BAD_SET;
 
