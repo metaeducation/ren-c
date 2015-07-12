@@ -30,6 +30,11 @@
 #include "sys-core.h"
 
 
+// !!! Should there be a qsort header so we don't redefine it here?
+typedef int cmp_t(const void *, const void *);
+extern void reb_qsort(void *a, size_t n, size_t es, cmp_t *cmp);
+
+
 /***********************************************************************
 **
 */	REBINT CT_Block(REBVAL *a, REBVAL *b, REBINT mode)
@@ -473,9 +478,9 @@ static struct {
 	if (skip > 1) len /= skip, size *= skip;
 
 	if (sort_flags.compare)
-		reb_qsort((void *)VAL_BLK_DATA(block), len, size, Compare_Call);
+		reb_qsort(VAL_BLK_DATA(block), len, size, Compare_Call);
 	else
-		reb_qsort((void *)VAL_BLK_DATA(block), len, size, Compare_Val);
+		reb_qsort(VAL_BLK_DATA(block), len, size, Compare_Val);
 
 }
 

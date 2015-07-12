@@ -32,6 +32,12 @@
 #include "sys-deci-funcs.h"
 #include "sys-int-funcs.h"
 
+
+// !!! Should there be a qsort header so we don't redefine it here?
+typedef int cmp_t(const void *, const void *);
+extern void reb_qsort(void *a, size_t n, size_t es, cmp_t *cmp);
+
+
 /***********************************************************************
 **
 */	REBINT CT_String(REBVAL *a, REBVAL *b, REBINT mode)
@@ -336,7 +342,7 @@ static REBSER *make_binary(REBVAL *arg, REBOOL make)
 	sfunc = rev ? Compare_Chr_Rev : Compare_Chr;
 
 	//!!uni - needs to compare wide chars too
-	reb_qsort((void *)VAL_DATA(string), len, size * SERIES_WIDE(VAL_SERIES(string)), sfunc);
+	reb_qsort(VAL_DATA(string), len, size * SERIES_WIDE(VAL_SERIES(string)), sfunc);
 }
 
 
