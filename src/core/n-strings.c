@@ -40,7 +40,9 @@
 
 #ifndef SHA_DEFINED
 #ifdef HAS_SHA1
-REBYTE *SHA1(REBYTE *, REBCNT, REBYTE *);
+// make-headers.r outputs a prototype already, because it is used by cloak
+// (triggers warning -Wredundant-decls)
+// REBYTE *SHA1(REBYTE *, REBCNT, REBYTE *);
 void SHA1_Init(void *c);
 void SHA1_Update(void *c, REBYTE *data, REBCNT len);
 void SHA1_Final(REBYTE *md, void *c);

@@ -35,8 +35,6 @@
 #define IS_DECIMAL_TYPE(t) ((t) > STRUCT_TYPE_INTEGER && (t) < STRUCT_TYPE_DECIMAL)
 #define IS_NUMERIC_TYPE(t) (IS_INTEGER_TYPE(t) || IS_DECIMAL_TYPE(t))
 
-REBFLG MT_Struct(REBVAL *out, REBVAL *data, REBCNT type);
-
 static const REBINT type_to_sym [STRUCT_TYPE_MAX] = {
 	SYM_UINT8,
 	SYM_INT8,

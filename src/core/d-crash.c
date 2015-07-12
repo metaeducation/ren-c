@@ -31,8 +31,6 @@
 
 #define	PANIC_BUF_SIZE 512	// space for crash print string
 
-extern const char * const Panic_Msgs[];
-
 enum Panic_Msg_Nums {
 	// Must align with Panic_Msgs[] array.
 	CM_ERROR,

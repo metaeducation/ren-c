@@ -81,10 +81,6 @@
 #include "sys-core.h"
 #include "reb-evtypes.h"
 
-#ifdef REB_API
-extern REBOL_HOST_LIB *Host_Lib;
-#endif
-
 //-- For Serious Debugging:
 #ifdef WATCH_GC_VALUE
 REBSER *Watcher = 0;

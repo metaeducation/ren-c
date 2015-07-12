@@ -61,8 +61,6 @@ static REBOOL Redir_Inp = 0;
 
 #define PUTE(s)		if (Std_Echo) fputs(s, Std_Echo)
 
-extern REBDEV *Devices[];
-
 #ifndef HAS_SMART_CONSOLE	// console line-editing and recall needed
 void *Init_Terminal();
 void Quit_Terminal(void*);

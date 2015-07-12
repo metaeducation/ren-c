@@ -45,8 +45,6 @@
 
 #define ARG_BUF_SIZE 1024
 
-extern int OS_Get_Current_Dir(REBCHR **lp);
-
 // REBOL Option --Words:
 
 const struct {const REBCHR *word; const int flag;} arg_words[] = {

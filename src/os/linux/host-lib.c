@@ -652,11 +652,11 @@ error:
 /*
 ***********************************************************************/
 {
-	extern char **environ;
 	int n, len = 0;
 	char *str, *cp;
 
 	// compute total size:
+	// Note: 'environ' is an extern of a global found in <unistd.h>
 	for (n = 0; environ[n]; n++) len += 1 + strlen(environ[n]);
 
 	cp = str = OS_ALLOC_ARRAY(char, len + 1); // +terminator

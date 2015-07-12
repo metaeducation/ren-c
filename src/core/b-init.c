@@ -40,7 +40,6 @@ static	REBCNT	Action_Marker;
 static	REBFUN  *Native_Functions;
 static	BOOT_BLK *Boot_Block;
 
-extern const char Str_Banner[];
 
 #ifdef WATCH_BOOT
 #define DOUT(s) puts(s)
