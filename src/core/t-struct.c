@@ -152,6 +152,7 @@ static REBOOL get_scalar(REBSTU *stu,
 }
 
 
+#ifdef NEED_SET_STRUCT_VARS
 /***********************************************************************
 **
 */	static void Set_Struct_Vars(REBSTU *strut, REBVAL *blk)
@@ -159,6 +160,7 @@ static REBOOL get_scalar(REBSTU *stu,
 ***********************************************************************/
 {
 }
+#endif
 
 
 /***********************************************************************
