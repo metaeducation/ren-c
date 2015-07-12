@@ -480,8 +480,8 @@ typedef u16 REBUNI;
 #endif
 
 // Memory clearing macros:
-#define CLEAR(m, s)     memset((void*)(m), 0, s);
-#define CLEARS(m)       memset((void*)(m), 0, sizeof(*m));
+#define CLEAR(m, s)     memset((void*)(m), 0, s)
+#define CLEARS(m)       memset((void*)(m), 0, sizeof(*m))
 
 
 /***********************************************************************
