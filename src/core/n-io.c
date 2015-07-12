@@ -129,11 +129,11 @@ static REBSER *Read_All_File(char *fname)
 ***********************************************************************/
 {
 	REBVAL *val = D_ARG(1);
-	REB_MOLD mo = {0};
 
+	REB_MOLD mo;
+	CLEARS(&mo);
 	if (D_REF(3)) SET_FLAG(mo.opts, MOPT_MOLD_ALL);
 	if (D_REF(4)) SET_FLAG(mo.opts, MOPT_INDENT);
-
 	Reset_Mold(&mo);
 
 	if (D_REF(2) && IS_BLOCK(val)) SET_FLAG(mo.opts, MOPT_ONLY);
@@ -814,9 +814,10 @@ chk_neg:
 **
 ***********************************************************************/
 {
-	REB_MOLD mo = {0};
 	REBVAL *value;
 
+	REB_MOLD mo;
+	CLEARS(&mo);
 	Reset_Mold(&mo);
 
 	for (value = VAL_BLK_DATA(blk); NOT_END(value); value++) {
@@ -889,10 +890,11 @@ chk_neg:
 /*
 ***********************************************************************/
 {
-	REBRFR fr = {0};
 	REBSER *ser;
 	REBINT n;
 
+	REBRFR fr;
+	CLEARS(&fr);
 	fr.files = OS_ALLOC_ARRAY(REBCHR, MAX_FILE_REQ_BUF);
 	fr.len = MAX_FILE_REQ_BUF/sizeof(REBCHR) - 2;
 	fr.files[0] = OS_MAKE_CH('\0');

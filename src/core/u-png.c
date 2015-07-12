@@ -565,7 +565,9 @@ void png_load(unsigned char *buffer, int nbytes, char *output, REBOOL *alpha) {
 	int length,ret,adam7pass;
 	int awidth,aheight,r,comp_awidth;
 	char type[4];
-	z_stream zstream={0};
+//	z_stream zstream={0}; // Ren/C: changed for -Wmissing-field-initializers
+	z_stream zstream;
+	memset(&zstream, '\0', sizeof(zstream));
 
 	img_output=(unsigned int *)output;
 	buffer+=33;
@@ -713,9 +715,11 @@ static void emitchunk(unsigned char **cpp,char *type,char *data,int length) {
 	struct idatnode *firstidat,*currentidat;
 	unsigned char *linebuf,*cp;
 	int x,y,imgsize,ret;
-	z_stream zstream={0};
 	REBCNT *dp,cv;
 	REBOOL hasalpha;
+//	z_stream zstream={0}; // Ren/C: changed for -Wmissing-field-initializers
+	z_stream zstream;
+	memset(&zstream, '\0', sizeof(zstream));
 
 	hasalpha = codi->alpha;
 

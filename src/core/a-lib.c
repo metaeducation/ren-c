@@ -151,8 +151,10 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 ***********************************************************************/
 {
 	REBVAL *val;
-	REBSER spec = {0};
 	REBSER *ser;
+
+	REBSER spec;
+	CLEARS(&spec);
 
 	if (bin) {
 		ser = Decompress(bin, len, 10000000, 0);
@@ -319,12 +321,14 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 **
 ***********************************************************************/
 {
-	REBSER spec = {0};
 	REBSER *text;
 	REBVAL *val;
 #ifdef DUMP_INIT_SCRIPT
 	int f;
 #endif
+
+	REBSER spec;
+	CLEARS(&spec);
 
 	//Cloak(TRUE, code, NAT_SPEC_SIZE, &key[0], 20, TRUE);
 	text = Decompress(bin, length, 10000000, 0);

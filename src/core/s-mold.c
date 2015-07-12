@@ -370,13 +370,15 @@ STOID Mold_String_Series(REBVAL *value, REB_MOLD *mold)
 	REBCNT len = VAL_LEN(value);
 	REBSER *ser = VAL_SERIES(value);
 	REBCNT idx = VAL_INDEX(value);
-	REB_STRF sf = {0};
 	REBYTE *bp;
 	REBUNI *up;
 	REBUNI *dp;
 	REBOOL uni = !BYTE_SIZE(ser);
 	REBCNT n;
 	REBUNI c;
+
+	REB_STRF sf;
+	CLEARS(&sf);
 
 	// Empty string:
 	if (idx >= VAL_TAIL(value)) {
@@ -1278,10 +1280,11 @@ append:
 **
 ***********************************************************************/
 {
-	REB_MOLD mo = {0};
-
+	REB_MOLD mo;
+	CLEARS(&mo);
 	mo.opts = opts;
 	Reset_Mold(&mo);
+
 	Mold_Value(&mo, value, 0);
 	return Copy_String(mo.series, 0, -1);
 }
@@ -1295,10 +1298,11 @@ append:
 **
 ***********************************************************************/
 {
-	REB_MOLD mo = {0};
-
+	REB_MOLD mo;
+	CLEARS(&mo);
 	mo.opts = opts;
 	Reset_Mold(&mo);
+
 	Mold_Value(&mo, value, TRUE);
 	return Copy_String(mo.series, 0, -1);
 }
@@ -1315,7 +1319,8 @@ append:
 {
 	REBINT start = DSP + 1;
 	REBINT n;
-	REB_MOLD mo = {0};
+
+	REB_MOLD mo;
 
 	while (index < BLK_LEN(block)) {
 		index = Do_Next(block, index, 0);
@@ -1326,6 +1331,7 @@ append:
 		}
 	}
 
+	CLEARS(&mo);
 	Reset_Mold(&mo);
 
 	for (n = start; n <= DSP; n++)
@@ -1343,10 +1349,12 @@ append:
 /*
 ***********************************************************************/
 {
-	REB_MOLD mo = {0};
 	REBVAL *val;
 
+	REB_MOLD mo;
+	CLEARS(&mo);
 	Reset_Mold(&mo);
+
 	for (val = VAL_BLK_DATA(blk); NOT_END(val); val++)
 		Mold_Value(&mo, val, 0);
 	return Copy_String(mo.series, 0, -1);
@@ -1393,8 +1401,8 @@ append:
 **
 ***********************************************************************/
 {
-	REB_MOLD mo = {0};
-
+	REB_MOLD mo;
+	CLEARS(&mo);
 	Reset_Mold(&mo);
 
 	Mold_Value(&mo, value, mold);

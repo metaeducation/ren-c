@@ -148,7 +148,8 @@ static int longaligned(void) {
 	struct {
 		unsigned short a;
 		unsigned int b;
-	} a={0};
+	} a;
+	memset(&a, '\0', sizeof(a));
 	memcpy(&a, filldata, 6);
 	if (a.b != 0x01010101) return TRUE;
 	return FALSE;

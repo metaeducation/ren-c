@@ -90,7 +90,7 @@ static struct digest {
 	{MD5, MD5_Init, MD5_Update, MD5_Final, MD5_CtxSize, SYM_MD5, 16, 64},
 #endif
 
-	{0}
+	{NULL, NULL, NULL, NULL, NULL, SYM_NOT_USED, 0, 0}
 
 };
 

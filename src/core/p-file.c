@@ -228,7 +228,8 @@ REBINT Mode_Syms[] = {
 		// Form the values of the block
 		// !! Could be made more efficient if we broke the FORM
 		// into 32K chunks for writing.
-		REB_MOLD mo = {0};
+		REB_MOLD mo;
+		CLEARS(&mo);
 		Reset_Mold(&mo);
 		if (args & AM_WRITE_LINES) {
 			mo.opts = 1 << MOPT_LINES;

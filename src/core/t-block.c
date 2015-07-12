@@ -356,12 +356,13 @@ done:
 }
 
 // WARNING! Not re-entrant. !!!  Must find a way to push it on stack?
+// Fields initialized to zero due to global scope
 static struct {
 	REBFLG cased;
 	REBFLG reverse;
 	REBCNT offset;
 	REBVAL *compare;
-} sort_flags = {0};
+} sort_flags;
 
 /***********************************************************************
 **

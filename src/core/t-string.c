@@ -413,7 +413,6 @@ static REBSER *make_binary(REBVAL *arg, REBOOL make)
 ***********************************************************************/
 {
 	REBSER *ser;
-	REB_MOLD mo = {0};
 	REBCNT n;
 	REBUNI c;
 	REBSER *arg;
@@ -429,6 +428,8 @@ static REBSER *make_binary(REBVAL *arg, REBOOL make)
 	if (ANY_STR(pvs->select))
 		arg = VAL_SERIES(pvs->select);
 	else {
+		REB_MOLD mo;
+		CLEARS(&mo);
 		Reset_Mold(&mo);
 		Mold_Value(&mo, pvs->select, 0);
 		arg = mo.series;
