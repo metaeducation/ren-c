@@ -319,18 +319,33 @@ enum {
 #define LDIV            lldiv
 #define LDIV_T          lldiv_t
 
+
 /***********************************************************************
 **
-**  Address and Function Pointers
+**  C FUNCTION TYPE (__cdecl)
+**
+**		Note that you *CANNOT* cast something like a `void *` to
+**		(or from) a function pointer.  Pointers to functions are not
+**		guaranteed to be the same size as to data, in either C or C++.
+**		A compiler might count the number of functions in your program,
+**		find less than 255, and use bytes for function pointers:
+**
+**			http://stackoverflow.com/questions/3941793/
+**
+**		So if you want something to hold either a function pointer or
+**		a data pointer, you have to implement that as a union...and
+**		know what you're doing when writing and reading it.
+**
+**		For info on the difference between __stdcall and __cdecl:
+**
+**			http://stackoverflow.com/questions/3404372/
 **
 ***********************************************************************/
 
 #ifdef TO_WIN32
-typedef long (__stdcall *FUNCPTR)();
-typedef void(__cdecl *CFUNC)(void *);
+	typedef void (__cdecl CFUNC)(void);
 #else
-typedef long (*FUNCPTR)();
-typedef void(*CFUNC)(void *);
+	typedef void (CFUNC)(void);
 #endif
 
 

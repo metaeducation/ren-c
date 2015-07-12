@@ -806,24 +806,33 @@ error:
 
 /***********************************************************************
 **
-*/	void *OS_Find_Function(void *dll, const char *funcname)
+*/	CFUNC *OS_Find_Function(void *dll, const char *funcname)
 /*
 **		Get a DLL function address from its string name.
 **
 ***********************************************************************/
 {
 #ifndef NO_DL_LIB
-	void *fp = dlsym(dll, funcname);
+	// !!! See notes about data pointers vs. function pointers in the
+	// definition of CFUNC.  This is trying to stay on the right side
+	// of the specification, but OS APIs often are not standard C.  So
+	// this implementation is not guaranteed to work, just to suppress
+	// compiler warnings.  See:
+	//
+	//		http://stackoverflow.com/a/1096349/211160
+
+	CFUNC *fp;
+	*cast(void**, &fp) = dlsym(dll, funcname);
 	return fp;
 #else
-	return 0;
+	return NULL;
 #endif
 }
 
 
 /***********************************************************************
 **
-*/	REBINT OS_Create_Thread(CFUNC init, void *arg, REBCNT stack_size)
+*/	REBINT OS_Create_Thread(THREADFUNC *init, void *arg, REBCNT stack_size)
 /*
 **		Creates a new thread for a REBOL task datatype.
 **
@@ -876,7 +885,7 @@ error:
 
 /***********************************************************************
 **
-*/	int OS_Create_Process(REBCHR *call, int argc, const char* argv[], u32 flags, u64 *pid, int *exit_code, u32 input_type, void *input, u32 input_len, u32 output_type, void **output, u32 *output_len, u32 err_type, void **err, u32 *err_len)
+*/	int OS_Create_Process(REBCHR *call, int argc, const char* argv[], u32 flags, u64 *pid, int *exit_code, u32 input_type, char *input, u32 input_len, u32 output_type, char **output, u32 *output_len, u32 err_type, char **err, u32 *err_len)
 /*
  * flags:
  * 		1: wait, is implied when I/O redirection is enabled

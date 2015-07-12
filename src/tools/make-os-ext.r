@@ -171,6 +171,17 @@ newline
 {#define HOST_LIB_SIZE} space cnt newline
 
 {
+
+// Function signature typically used to provide the callback for
+// starting a thread, e.g. with beginthread()
+
+// !!! SEE **WARNING** BEFORE EDITING
+#ifdef WIN32
+	typedef void (__cdecl THREADFUNC)(void *);
+#else
+	typedef void (THREADFUNC)(void *);
+#endif
+
 extern REBDEV *Devices[];
 
 /***********************************************************************

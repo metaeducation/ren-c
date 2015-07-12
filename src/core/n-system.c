@@ -438,7 +438,7 @@ err:
 
 	// Nasty alias, but it must be done:
 	// !!! add a check to validate the handle as a codec!!!!
-	result = ((codo) (VAL_HANDLE(D_ARG(1))))(&codi);
+	result = cast(codo, VAL_HANDLE_CODE(D_ARG(1)))(&codi);
 
 	if (codi.error != 0) {
 		if (result == CODI_CHECK) return R_FALSE;

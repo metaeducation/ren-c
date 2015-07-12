@@ -562,9 +562,9 @@ chk_neg:
 	REBVAL *input = NULL;
 	REBVAL *output = NULL;
 	REBVAL *err = NULL;
-	void *os_input = NULL;
-	void *os_output = NULL;
-	void *os_err = NULL;
+	char *os_input = NULL;
+	char *os_output = NULL;
+	char *os_err = NULL;
 	int input_type = INHERIT_TYPE;
 	int output_type = INHERIT_TYPE;
 	int err_type = INHERIT_TYPE;
@@ -588,16 +588,16 @@ chk_neg:
 		input = param;
 		if (IS_STRING(param)) {
 			input_type = STRING_TYPE;
-			os_input = Val_Str_To_OS(param);
+			os_input = cast(char*, Val_Str_To_OS(param));
 			input_len = VAL_LEN(param);
 		} else if (IS_BINARY(param)) {
 			input_type = BINARY_TYPE;
-			os_input = VAL_BIN_DATA(param);
+			os_input = s_cast(VAL_BIN_DATA(param));
 			input_len = VAL_LEN(param);
 		} else if (IS_FILE(param)) {
 			REBSER *path = Value_To_OS_Path(param, FALSE);
 			input_type = FILE_TYPE;
-			os_input = SERIES_DATA(path);
+			os_input = s_cast(SERIES_DATA(path));
 			input_len = SERIES_TAIL(path);
 		} else if (IS_NONE(param)) {
 			input_type = NONE_TYPE;
@@ -616,7 +616,7 @@ chk_neg:
 		} else if (IS_FILE(param)) {
 			REBSER *path = Value_To_OS_Path(param, FALSE);
 			output_type = FILE_TYPE;
-			os_output = SERIES_DATA(path);
+			os_output = s_cast(SERIES_DATA(path));
 			output_len = SERIES_TAIL(path);
 		} else if (IS_NONE(param)) {
 			output_type = NONE_TYPE;
@@ -635,7 +635,7 @@ chk_neg:
 		} else if (IS_FILE(param)) {
 			REBSER *path = Value_To_OS_Path(param, FALSE);
 			err_type = FILE_TYPE;
-			os_err = SERIES_DATA(path);
+			os_err = s_cast(SERIES_DATA(path));
 			err_len = SERIES_TAIL(path);
 		} else if (IS_NONE(param)) {
 			err_type = NONE_TYPE;

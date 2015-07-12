@@ -61,10 +61,11 @@
 
 /***********************************************************************
 **
-*/	static void Launch_Task(REBVAL *task)
+*/	static void Launch_Task(void *task_rebval)
 /*
 ***********************************************************************/
 {
+	REBVAL *task = cast(REBVAL*, task_rebval);
 	REBSER *body;
 
 	Debug_Str("Begin Task");
@@ -84,5 +85,5 @@
 /*
 ***********************************************************************/
 {
-	OS_CREATE_THREAD((void*)Launch_Task, task, 50000);
+	OS_CREATE_THREAD(Launch_Task, task, 50000);
 }

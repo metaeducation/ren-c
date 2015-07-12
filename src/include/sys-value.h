@@ -967,17 +967,38 @@ typedef REBINT (*REBPEF)(REBPVS *pvs); // Path evaluator function
 
 typedef REBINT (*REBCTF)(REBVAL *a, REBVAL *b, REBINT s);
 
+
 /***********************************************************************
 **
 **	HANDLE
 **
+**	Type for holding an arbitrary code or data pointer inside
+**	of a Rebol data value.  What kind of function or data is not
+**	known to the garbage collector, so it ignores it.
+**
+**	!!! Review usages of this type where they occur
+**
 ***********************************************************************/
 
 typedef struct Reb_Handle {
-	ANYFUNC	code;
+	union {
+		CFUNC *code;
+		void *data;
+	} thing;
 } REBHAN;
 
-#define VAL_HANDLE(v)		((v)->data.handle.code)
+#define VAL_HANDLE_CODE(v) \
+	((v)->data.handle.thing.code)
+
+#define VAL_HANDLE_DATA(v) \
+	((v)->data.handle.thing.data)
+
+#define SET_HANDLE_CODE(v,c) \
+	VAL_SET(v, REB_HANDLE), VAL_HANDLE_CODE(v) = (c)
+
+#define SET_HANDLE_DATA(v,d) \
+	VAL_SET(v, REB_HANDLE), VAL_HANDLE_DATA(v) = (d)
+
 
 /***********************************************************************
 **
@@ -1054,12 +1075,12 @@ struct Reb_Routine_Info {
 	union {
 		struct {
 			REBLHL	*lib;
-			void (*funcptr) (void);
+			CFUNC *funcptr;
 		} rot;
 		struct {
 			void *closure;
 			REBFCN func;
-			void (*dispatcher) (void);
+			CFUNC *dispatcher;
 		} cb;
 	} info;
 	void	*cif;

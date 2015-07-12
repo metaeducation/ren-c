@@ -309,6 +309,9 @@ cp_same:
 **		(because it's in the OS size format), we can used it
 **		like that.
 **
+**		!!! The series is created but just let up to the garbage
+**		collector to free.  This is a "leaky" approach.
+**
 ***********************************************************************/
 {
 #ifdef OS_WIDE_CHAR

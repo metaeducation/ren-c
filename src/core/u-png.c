@@ -77,6 +77,8 @@ static unsigned int transparent_red,transparent_green,transparent_blue;
 static unsigned int transparent_gray;
 static void (*process_row)(unsigned char *p,int width,int r,int hoff,int hskip);
 
+typedef void (*ROW_PROCESSOR)(unsigned char *, int, int, int, int);
+
 static void process_row_0_1(unsigned char *p,int width,int r,int hoff,int hskip);
 static void process_row_0_2(unsigned char *p,int width,int r,int hoff,int hskip);
 static void process_row_0_4(unsigned char *p,int width,int r,int hoff,int hskip);
@@ -93,15 +95,33 @@ static void process_row_4_16(unsigned char *p,int width,int r,int hoff,int hskip
 static void process_row_6_8(unsigned char *p,int width,int r,int hoff,int hskip);
 static void process_row_6_16(unsigned char *p,int width,int r,int hoff,int hskip);
 
-static void *process_row0[]={(void *)process_row_0_1,(void *)process_row_0_2,(void *)process_row_0_4,
- (void *)process_row_0_8,(void *)process_row_0_16};
-static void *process_row2[]={0,0,0,(void *)process_row_2_8,(void *)process_row_2_16};
-static void *process_row3[]={(void *)process_row_3_1,(void *)process_row_3_2,(void *)process_row_3_4,
- (void *)process_row_3_8};
-static void *process_row4[]={0,0,0,(void *)process_row_4_8,(void *)process_row_4_16};
-static void *process_row6[]={0,0,0,(void *)process_row_6_8,(void *)process_row_6_16};
+static ROW_PROCESSOR process_row0[] = {
+	process_row_0_1, process_row_0_2, process_row_0_4,
+	process_row_0_8, process_row_0_16
+};
+static ROW_PROCESSOR process_row2[] = {
+	NULL, NULL, NULL, process_row_2_8, process_row_2_16
+};
+static ROW_PROCESSOR process_row3[] = {
+	process_row_3_1, process_row_3_2, process_row_3_4,
+	process_row_3_8, NULL
+};
+static ROW_PROCESSOR process_row4[] = {
+	NULL, NULL, NULL, process_row_4_8, process_row_4_16
+};
+static ROW_PROCESSOR process_row6[] = {
+	NULL, NULL, NULL, process_row_6_8, process_row_6_16
+};
+static ROW_PROCESSOR *process_row_lookup[]={
+	process_row0,
+	NULL,
+	process_row2,
+	process_row3,
+	process_row4,
+	NULL,
+	process_row6
+};
 
-static void **process_row_lookup[]={process_row0,0,process_row2,process_row3,process_row4,0,process_row6};
 
 jmp_buf png_state;
 

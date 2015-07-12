@@ -527,24 +527,24 @@ static void *Task_Ready;
 
 /***********************************************************************
 **
-*/	void *OS_Find_Function(void *dll, char *funcname)
+*/	CFUNC *OS_Find_Function(void *dll, char *funcname)
 /*
 **		Get a DLL function address from its string name.
 **
 ***********************************************************************/
 {
-#ifndef NO_DL_LIB
-	void *fp = dlsym(dll, funcname);
-	return fp;
-#else
-	return 0;
-#endif
+	// your code here
+
+	if (/* found function pointer */)
+		return /* function pointer */;
+
+	return NULL;
 }
 
 
 /***********************************************************************
 **
-*/	REBINT OS_Create_Thread(CFUNC init, void *arg, REBCNT stack_size)
+*/	REBINT OS_Create_Thread(THREADFUNC *init, void *arg, REBCNT stack_size)
 /*
 **		Creates a new thread for a REBOL task datatype.
 **

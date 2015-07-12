@@ -243,7 +243,7 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 	value = Append_Value(ser);
 	Set_Binary(value, Copy_Bytes(source, -1)); // UTF-8
 	value = Append_Value(ser);
-	SET_HANDLE(value, call);
+	SET_HANDLE_CODE(value, cast(CFUNC*, call));
 
 	return Extension_Lib();
 }

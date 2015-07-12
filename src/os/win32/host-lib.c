@@ -660,13 +660,23 @@ static void *Task_Ready;
 
 /***********************************************************************
 **
-*/	void *OS_Find_Function(void *dll, const char *funcname)
+*/	CFUNC *OS_Find_Function(void *dll, const char *funcname)
 /*
 **		Get a DLL function address from its string name.
 **
 ***********************************************************************/
 {
-	void *fp = GetProcAddress((HMODULE)dll, funcname);
+	// !!! See notes about data pointers vs. function pointers in the
+	// definition of CFUNC.  This is trying to stay on the right side
+	// of the specification, but OS APIs often are not standard C.  So
+	// this implementation is not guaranteed to work, just to suppress
+	// compiler warnings.  See:
+	//
+	//		http://stackoverflow.com/a/1096349/211160
+
+	CFUNC *fp;
+	*cast(void**, &fp) = GetProcAddress((HMODULE)dll, funcname);
+
 	//DWORD err = GetLastError();
 
 	return fp;
@@ -675,7 +685,7 @@ static void *Task_Ready;
 
 /***********************************************************************
 **
-*/	REBINT OS_Create_Thread(CFUNC init, void *arg, REBCNT stack_size)
+*/	REBINT OS_Create_Thread(THREADFUNC *init, void *arg, REBCNT stack_size)
 /*
 **		Creates a new thread for a REBOL task datatype.
 **
@@ -728,7 +738,7 @@ static void *Task_Ready;
 
 /***********************************************************************
 **
-*/	int OS_Create_Process(REBCHR *call, int argc, char* argv[], u32 flags, u64 *pid, int *exit_code, u32 input_type, void *input, u32 input_len, u32 output_type, void **output, u32 *output_len, u32 err_type, void **err, u32 *err_len)
+*/	int OS_Create_Process(REBCHR *call, int argc, char* argv[], u32 flags, u64 *pid, int *exit_code, u32 input_type, char *input, u32 input_len, u32 output_type, char **output, u32 *output_len, u32 err_type, char **err, u32 *err_len)
 /*
 **		Return -1 on error.
 **		For right now, set flags to 1 for /wait.

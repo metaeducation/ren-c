@@ -799,7 +799,7 @@ static void ffi_to_rebol(REBRIN *rin,
 	prep_rvalue(VAL_ROUTINE_INFO(rot), ret);
 	rvalue = arg_to_ffi(rot, ret, 0, &pop);
 	ffi_call(VAL_ROUTINE_CIF(rot),
-			 (void (*) (void))VAL_ROUTINE_FUNCPTR(rot),
+			 VAL_ROUTINE_FUNCPTR(rot),
 			 rvalue,
 			 ffi_args);
 	ffi_to_rebol(VAL_ROUTINE_INFO(rot), ((ffi_type**)SERIES_DATA(VAL_ROUTINE_FFI_ARG_TYPES(rot)))[0], rvalue, ret);
@@ -982,7 +982,7 @@ static void callback_dispatcher(ffi_cif *cif, void *ret, void **args, void *user
 	REBCNT eval_idx = 0; /* for spec block evaluation */
 	REBSER *extra_mem = NULL;
 	REBFLG ret = TRUE;
-	void (*func) (void) = NULL;
+	CFUNC *func = NULL;
 	REBCNT n = 1; /* arguments start with the index 1 (return type has a index of 0) */
 	REBCNT has_return = 0;
 	REBCNT has_abi = 0;
@@ -1040,7 +1040,7 @@ static void callback_dispatcher(ffi_cif *cif, void *ret, void **args, void *user
 			if (VAL_INT64(lib) == 0) {
 				Trap_Arg_DEAD_END(lib);
 			}
-			VAL_ROUTINE_FUNCPTR(out) = (void (*) (void))VAL_INT64(lib);
+			VAL_ROUTINE_FUNCPTR(out) = cast(CFUNC*, VAL_INT64(lib));
 		} else {
 			if (!IS_LIBRARY(lib))
 				Trap_Arg_DEAD_END(lib);
@@ -1232,11 +1232,31 @@ static void callback_dispatcher(ffi_cif *cif, void *ret, void **args, void *user
 			//printf("No memory\n");
 			ret = FALSE;
 		} else {
-			if (FFI_OK != ffi_prep_closure_loc(VAL_ROUTINE_CLOSURE(out),
-											   VAL_ROUTINE_CIF(out),
-											   callback_dispatcher,
-											   VAL_ROUTINE_INFO(out),
-											   VAL_ROUTINE_DISPATCHER(out))) {
+			// !!! Technically you can't cast function pointers to void*
+			//
+			//     http://stackoverflow.com/questions/3941793/
+			//
+			// On non-embedded systems the odds are they're the same size.
+			// But there's no way to get *just* this warning disabled (it's
+			// part of --pedantic).  So to keep the other warnings but
+			// quiet the compiler on this one, we use pass a union big
+			// enough to hold either a function pointer or a void pointer.
+			union funcptr_and_dataptr {
+				CFUNC *func;
+				void *data;
+			} dispatcher_hack;
+
+			dispatcher_hack.func = VAL_ROUTINE_DISPATCHER(out);
+
+			ffi_status status =	ffi_prep_closure_loc(
+				VAL_ROUTINE_CLOSURE(out),
+				VAL_ROUTINE_CIF(out),
+				callback_dispatcher,
+				VAL_ROUTINE_INFO(out),
+				&dispatcher_hack
+			);
+
+			if (status != FFI_OK) {
 				//RL_Print("Couldn't prep closure\n");
 				ret = FALSE;
 			}
@@ -1281,7 +1301,7 @@ static void callback_dispatcher(ffi_cif *cif, void *ret, void **args, void *user
 						Unbind_Block(VAL_BLK(val), TRUE);
 						break;
 					case SYM_ADDR:
-						SET_INTEGER(ret, (REBUPT)VAL_ROUTINE_FUNCPTR(val));
+						SET_INTEGER(ret, cast(REBUPT, VAL_ROUTINE_FUNCPTR(val)));
 						break;
 					default:
 						Trap_Reflect_DEAD_END(REB_STRUCT, arg);

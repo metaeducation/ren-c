@@ -815,7 +815,7 @@ extern const char Str_Banner[];
 	REBCNT sym = Make_Word(name, 0);
 
 	value = Append_Frame(VAL_OBJ_FRAME(value), 0, sym);
-	SET_HANDLE(value, dispatcher);
+	SET_HANDLE_CODE(value, cast(CFUNC*, dispatcher));
 }
 
 

@@ -89,7 +89,7 @@ x*/	RXIARG Value_To_RXI(REBVAL *val)
 		arg.index = VAL_INDEX(val);
 		break;
 	case RXE_PTR:
-		arg.addr = VAL_HANDLE(val);
+		arg.addr = VAL_HANDLE_DATA(val);
 		break;
 	case RXE_32:
 		arg.int32a = VAL_I32(val);
@@ -132,7 +132,7 @@ x*/	void RXI_To_Value(REBVAL *val, RXIARG arg, REBCNT type)
 		VAL_INDEX(val) = arg.index;
 		break;
 	case RXE_PTR:
-		VAL_HANDLE(val) = arg.addr;
+		VAL_HANDLE_DATA(val) = arg.addr;
 		break;
 	case RXE_32:
 		VAL_I32(val) = arg.int32a;
@@ -278,6 +278,9 @@ x*/	int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result)
 }
 
 
+typedef REBYTE *(INFO_FUNC)(REBINT opts, void *lib);
+
+
 /***********************************************************************
 **
 */	REBNATIVE(load_extension)
@@ -307,11 +310,11 @@ x*/	int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result)
 	void *dll;
 	REBCNT error;
 	REBYTE *code;
-	REBYTE *(*info)(REBINT opts, void *lib);
+	CFUNC *info; // INFO_FUNC
 	REBSER *obj;
 	REBVAL *val = D_ARG(1);
 	REBEXT *ext;
-	RXICAL call;
+	CFUNC *call; // RXICAL
 	REBSER *src;
 	int Remove_after_first_run;
 	//Check_Security(SYM_EXTENSION, POL_EXEC, val);
@@ -334,7 +337,7 @@ x*/	int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result)
 		}
 
 		// Obtain info string as UTF8:
-		if (!(code = info(0, Extension_Lib()))) {
+		if (!(code = cast(INFO_FUNC*, info)(0, Extension_Lib()))) {
 			OS_CLOSE_LIBRARY(dll);
 			Trap1_DEAD_END(RE_EXTENSION_INIT, val);
 		}
@@ -346,13 +349,13 @@ x*/	int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result)
 	else {
 		// Hosted extension:
 		src = VAL_SERIES(val);
-		call = (RXICAL)VAL_HANDLE(D_ARG(3));
+		call = VAL_HANDLE_CODE(D_ARG(3));
 		dll = 0;
 	}
 
 	ext = &Ext_List[Ext_Next];
 	CLEARS(ext);
-	ext->call = call;
+	ext->call = cast(RXICAL, call);
 	ext->dll = dll;
 	ext->index = Ext_Next++;
 
