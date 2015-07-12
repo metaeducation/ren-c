@@ -5,6 +5,9 @@ The code uses Bigint implementation Copyright (c) 2007, Cameron Rich
 
 #include "dh.h"
 
+// !!! Ren/C: added to deal with -Wimplicit-function-declaration
+void get_random_NZ(int num_rand_bytes, uint8_t *rand_data);
+
 void DH_generate_key(DH_CTX *dh_ctx)
 {
     BI_CTX *bi_ctx = bi_initialize();

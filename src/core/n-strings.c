@@ -30,6 +30,7 @@
 #include "sys-core.h"
 #include "sys-deci-funcs.h"
 
+#include "sys-zlib.h"
 
 /***********************************************************************
 **
@@ -186,7 +187,7 @@ static struct digest {
 
 		if (sym == SYM_ADLER32) {
 			if (D_REF(ARG_CHECKSUM_SECURE) || D_REF(ARG_CHECKSUM_KEY)) Trap_DEAD_END(RE_BAD_REFINES);
-			DS_RET_INT(z_adler32(data, len));
+			DS_RET_INT(z_adler32(0L, data, len));
 			return R_RET;
 		}
 

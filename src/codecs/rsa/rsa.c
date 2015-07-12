@@ -49,6 +49,8 @@
     #include <wincrypt.h>
 #else
     #include <fcntl.h>
+	// !!! Ren/C: added to deal with -Wimplicit-function-declaration
+	#include <unistd.h>
 #endif
 
 
