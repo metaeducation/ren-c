@@ -333,7 +333,12 @@ foreach :type-record boot-types [
 		word? typeclass
 		not find types-used typeclass
 	][
-		emit-line/up1/decl "extern REBFLG MT_" typeclass "(REBVAL *, REBVAL *, REBCNT);"
+		; using -Wredundant-decls it seems these prototypes are already
+		; taken care of by make-headers.r, no need to re-emit
+		comment [
+			emit-line/up1/decl
+				"extern REBFLG MT_" typeclass "(REBVAL *, REBVAL *, REBCNT);"
+		]
 		append types-used typeclass
 	]
 ]
@@ -378,7 +383,12 @@ foreach :type-record boot-types [
 		word? typeclass
 		not find types-used typeclass
 	][
-		emit-line/up1/decl "extern REBINT CT_" typeclass "(REBVAL *, REBVAL *, REBINT);"
+		; using -Wredundant-decls it seems these prototypes are already
+		; taken care of by make-headers.r, no need to re-emit
+		comment [
+			emit-line/up1/decl
+				"extern REBINT CT_" typeclass "(REBVAL *, REBVAL *, REBINT);"
+		]
 		append types-used typeclass
 	]
 ]
