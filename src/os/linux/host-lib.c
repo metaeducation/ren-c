@@ -50,7 +50,12 @@
 **     Do not even modify the argument names.
 */
 
-#define _GNU_SOURCE             /* See feature_test_macros(7) */
+#ifndef __cplusplus
+	// See feature_test_macros(7)
+	// This definition is redundant under C++
+	#define _GNU_SOURCE
+#endif
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <poll.h>
