@@ -90,4 +90,5 @@ enum {
 	CODI_ERR_BIT_LEN,		// Bit length is not supported
 	CODI_ERR_BAD_TABLE,		// Image tables are wrong
 	CODI_ERR_BAD_DATA,		// Generic
+	CODI_ERR_MAX
 };

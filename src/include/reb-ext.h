@@ -130,6 +130,7 @@ enum rxi_return {
 	RXR_ERROR,
 	RXR_BAD_ARGS,
 	RXR_NO_COMMAND,
+	RXR_MAX
 };
 
 // Used with RXI_SERIES_INFO:
@@ -139,6 +140,7 @@ enum {
 	RXI_SER_SIZE,	// size of series (in units)
 	RXI_SER_WIDE,	// width of series (in bytes)
 	RXI_SER_LEFT,	// units free in series (past tail)
+	RXI_MAX
 };
 
 // Error Codes (returned in result value from some API functions):
@@ -166,4 +168,5 @@ enum {
 	RXC_ASYNC,		// async callback
 	RXC_QUEUED,		// pending in event queue
 	RXC_DONE,		// call completed, structs can be freed
+	RXC_MAX
 };

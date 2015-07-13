@@ -73,5 +73,7 @@ enum reb_panics {
 
 //	Unspecified (just count them)
 	RP_MISC,
+
+	RP_MAX
 };
 

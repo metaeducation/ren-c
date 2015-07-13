@@ -49,6 +49,7 @@ enum {
 	RDIA_NO_CMD,		// do not store command in block
 	RDIA_LIT_CMD,		// 'command
 	RDIA_ALL,			// all commands, do not reset output
+	RDIA_MAX
 };
 
 static REBINT Delect_Debug = 0;

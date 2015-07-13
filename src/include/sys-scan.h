@@ -206,6 +206,7 @@ enum {
 	SCAN_NEXT,	// load/next feature
 	SCAN_ONLY,  // only single value (no blocks)
 	SCAN_RELAX,	// no error throw
+	SCAN_MAX
 };
 
 /*

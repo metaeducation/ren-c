@@ -34,7 +34,7 @@
 enum Parse_Flags {
 	PF_ALL = 1,
 	PF_CASE = 2,
-	PF_CASED = 4, // was set as initial option
+	PF_CASED = 4 // was set as initial option
 };
 
 typedef struct reb_parse {
@@ -57,6 +57,7 @@ enum parse_flags {
 	PF_CHANGE,
 	PF_RETURN,
 	PF_WHILE,
+	PF_MAX
 };
 
 #define MAX_PARSE_DEPTH 512

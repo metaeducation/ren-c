@@ -62,7 +62,7 @@ REBYTE *URL_Escapes;
 enum {
 	ESC_URL = 1,
 	ESC_FILE = 2,
-	ESC_EMAIL = 4,
+	ESC_EMAIL = 4
 };
 
 /***********************************************************************

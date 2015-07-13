@@ -60,12 +60,14 @@ enum GOB_FLAGS {		// GOB attribute and option flags
 	GOBF_MAXIMIZE,		// Window is maximized
 	GOBF_RESTORE,		// Window is restored
 	GOBF_FULLSCREEN,	// Window is fullscreen
+	GOBF_MAX
 };
 
 enum GOB_STATE {		// GOB state flags
 	GOBS_OPEN = 0,		// Window is open
 	GOBS_ACTIVE,		// Window is active
 	GOBS_NEW,			// Gob is new to pane (old-offset, old-size wrong)
+	GOBS_MAX
 };
 
 enum GOB_TYPES {		// Types of content
@@ -86,7 +88,8 @@ enum GOB_DTYPES {		// Userdata types
 	GOBD_STRING,
 	GOBD_BINARY,
 	GOBD_RESV,			// unicode
-	GOBD_INTEGER
+	GOBD_INTEGER,
+	GOBD_MAX
 };
 
 #pragma pack(4)

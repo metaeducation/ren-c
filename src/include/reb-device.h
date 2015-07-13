@@ -90,6 +90,7 @@ enum {
 	// Options:
 	RDO_MUST_INIT = 16,	// Do not allow auto init (manual init required)
 	RDO_AUTO_POLL,	// Poll device, even if no requests (e.g. interrupts)
+	RDO_MAX
 };
 
 // REBOL Request Flags (bitnums):
@@ -102,6 +103,7 @@ enum {
 	RRF_ALLOC,		// Request is allocated, not a temp on stack
 	RRF_WIDE,		// Wide char IO
 	RRF_ACTIVE,		// Port is active, even no new events yet
+	RRF_MAX
 };
 
 // REBOL Device Errors:
@@ -110,10 +112,12 @@ enum {
 	RDE_NO_DEVICE,	// command did not provide device
 	RDE_NO_COMMAND,	// command past end
 	RDE_NO_INIT,	// device has not been inited
+	RDE_MAX
 };
 
 enum {
 	RDM_NULL,		// Null device
+	RDM_MAX
 };
 
 // Serial Parity

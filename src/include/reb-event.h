@@ -52,6 +52,7 @@ enum {
 	EVF_DOUBLE,		// double click detected
 	EVF_CONTROL,
 	EVF_SHIFT,
+	EVF_MAX
 };
 
 
@@ -63,6 +64,7 @@ enum {
 	EVM_OBJECT,		// event holds object frame pointer
 	EVM_GUI,		// GUI event uses system/view/event/port
 	EVM_CALLBACK,	// Callback event uses system/ports/callback port
+	EVM_MAX
 };
 
 // Special messages

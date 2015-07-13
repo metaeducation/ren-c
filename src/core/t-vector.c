@@ -50,7 +50,7 @@ enum {
 	VTSF08,		// not used
 	VTSF16,		// not used
 	VTSF32,
-	VTSF64,
+	VTSF64
 };
 
 #define VECT_TYPE(s) ((s)->extra.size & 0xff)

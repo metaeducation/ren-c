@@ -172,7 +172,7 @@ enum {
 	COPY_ALL,			// both deep, strings (3)
 //	COPY_IGNORE = 4,	// ignore tail position (used for stack args)
 	COPY_OBJECT = 8,	// copy an object
-	COPY_SAME = 16,
+	COPY_SAME = 16
 };
 
 #define CP_DEEP TYPESET(63)
@@ -196,14 +196,14 @@ enum {
 	BIND_GET = 8,		// Lookup :word and use its word value
 	BIND_NO_DUP = 16,	// Do not allow dups during word collection (for specs)
 	BIND_FUNC = 32,		// Recurse into functions.
-	BIND_NO_SELF = 64,	// Do not bind SELF (in closures)
+	BIND_NO_SELF = 64	// Do not bind SELF (in closures)
 };
 
 // Modes for Rebind_Block:
 enum {
 	REBIND_TYPE = 1,	// Change frame type when rebinding
 	REBIND_FUNC	= 2,	// Rebind function and closure bodies
-	REBIND_TABLE = 4,	// Use bind table when rebinding
+	REBIND_TABLE = 4	// Use bind table when rebinding
 };
 
 // Mold and form options:
@@ -219,6 +219,7 @@ enum REB_Mold_Opts {
 	MOPT_EMAIL,
 	MOPT_ONLY,			// Mold/only - no outer block []
 	MOPT_LINES,			// add a linefeed between each value
+	MOPT_MAX
 };
 
 #define GET_MOPT(v, f) GET_FLAG(v->opts, f)
@@ -239,6 +240,7 @@ enum Reb_Reflectors {
 	OF_VALUES,
 	OF_TYPES,
 	OF_TITLE,
+	OF_MAX
 };
 
 // Load option flags:
@@ -247,7 +249,8 @@ enum {
 	LOAD_HEADER,		// Converts header to object, checks values
 	LOAD_NEXT,			// Load next value
 	LOAD_NORMAL,		// Convert header, load script
-	LOAD_REQUIRE		// Header is required, else error
+	LOAD_REQUIRE,		// Header is required, else error
+	LOAD_MAX
 };
 
 // General constants:
@@ -274,6 +277,7 @@ enum rebol_signals {
 	SIG_RECYCLE,
 	SIG_ESCAPE,
 	SIG_EVENT_PORT,
+	SIG_MAX
 };
 
 // Security flags:
@@ -282,6 +286,7 @@ enum {
 	SEC_ASK,
 	SEC_THROW,
 	SEC_QUIT,
+	SEC_MAX
 };
 
 // Security policy byte offsets:
@@ -289,6 +294,7 @@ enum {
 	POL_READ,
 	POL_WRITE,
 	POL_EXEC,
+	POL_MAX
 };
 
 // Encoding options:
@@ -300,6 +306,7 @@ enum encoding_opts {
 	ENC_OPT_BOM,		// byte order marker
 	ENC_OPT_CRLF,		// CR line termination
 	ENC_OPT_NO_COPY,	// do not copy if ASCII
+	ENC_OPT_MAX
 };
 
 #define ENCF_NO_COPY (1<<ENC_OPT_NO_COPY)

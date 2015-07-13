@@ -81,6 +81,7 @@ enum {
 	OPTS_UNWORD,	// Not a normal word
 	OPTS_TEMP,		// Temporary flag - variety of uses
 	OPTS_HIDE,		// Hide the word
+	OPTS_MAX
 };
 
 #define VAL_OPTS(v)			((v)->flags.flags.opts)
@@ -401,7 +402,7 @@ enum {
 	SER_FREE = 1<<4,	// mark series as removed
 	SER_BARE = 1<<5,	// Series has no links to GC-able values
 	SER_PROT = 1<<6,	// Series is protected from modification
-	SER_MON  = 1<<7,	// Monitoring
+	SER_MON  = 1<<7		// Monitoring
 };
 
 #define SERIES_SET_FLAG(s, f) (SERIES_FLAGS(s) |= ((f) << 8))
@@ -1034,7 +1035,7 @@ typedef struct Reb_Library {
 enum {
 	LIB_MARK = 1,		// library was found during GC mark scan.
 	LIB_USED = 1 << 1,
-	LIB_CLOSED = 1 << 2,
+	LIB_CLOSED = 1 << 2
 };
 
 #define LIB_SET_FLAG(s, f) (LIB_FLAGS(s) |= (f))
@@ -1105,7 +1106,7 @@ enum {
 	ROUTINE_MARK = 1,		// routine was found during GC mark scan.
 	ROUTINE_USED = 1 << 1,
 	ROUTINE_CALLBACK = 1 << 2, //this is a callback
-	ROUTINE_VARARGS = 1 << 3, //this is a function with varargs
+	ROUTINE_VARARGS = 1 << 3 //this is a function with varargs
 };
 
 /* argument is REBFCN */
