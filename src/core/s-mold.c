@@ -1430,10 +1430,10 @@ append:
 	// Create quoted char escape table:
 	Char_Escapes = cp = ALLOC_ARRAY_ZEROFILL(REBYTE, MAX_ESC_CHAR + 1);
 	for (c = '@'; c <= '_'; c++) *cp++ = c;
-	Char_Escapes[TAB] = '-';
-	Char_Escapes[LF]  = '/';
-	Char_Escapes['"'] = '"';
-	Char_Escapes['^'] = '^';
+	Char_Escapes[cast(REBYTE, TAB)] = '-';
+	Char_Escapes[cast(REBYTE, LF)] = '/';
+	Char_Escapes[cast(REBYTE, '"')] = '"';
+	Char_Escapes[cast(REBYTE, '^')] = '^';
 
 	URL_Escapes = cp = ALLOC_ARRAY_ZEROFILL(REBYTE, MAX_URL_CHAR + 1);
 	//for (c = 0; c <= MAX_URL_CHAR; c++) if (IS_LEX_DELIMIT(c)) cp[c] = ESC_URL;
