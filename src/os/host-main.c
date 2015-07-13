@@ -64,9 +64,6 @@
 
 /**********************************************************************/
 
-#define PROMPT_STR ">> "
-#define RESULT_STR "== "
-
 REBARGS Main_Args;
 
 #ifdef TO_WIN32
@@ -91,7 +88,7 @@ extern void Init_Ext_Test(void);	// see: host-ext-test.c
 
 // Host bare-bones stdio functs:
 extern void Open_StdIO(void);
-extern void Put_Str(char *buf);
+extern void Put_Str(REBYTE *buf);
 extern REBYTE *Get_Str();
 
 /* coverity[+kill] */
@@ -139,6 +136,10 @@ int main(int argc, char **argv_ansi)
 	REBI64 embedded_size = 0;
 
 	REBCHR **argv;
+
+	// As defined, Put_Str takes non-const data
+	REBYTE prompt_str[] = ">> ";
+	REBYTE result_str[] = "== ";
 
 #ifdef TO_WIN32
 	// Were we using WinMain we'd be getting our arguments in Unicode, but
@@ -265,10 +266,10 @@ int main(int argc, char **argv_ansi)
 	){
 		n = 0;  // reset error code (but should be able to set it below too!)
 		while (TRUE) {
-			Put_Str(PROMPT_STR);
+			Put_Str(prompt_str);
 			if ((line = Get_Str())) {
 				RL_Do_String(line, 0, 0);
-				RL_Print_TOS(0, cb_cast(RESULT_STR));
+				RL_Print_TOS(0, result_str);
 				OS_FREE(line);
 			}
 			else break; // EOS

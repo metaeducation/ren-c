@@ -67,7 +67,7 @@ void Quit_Terminal(void*);
 int  Read_Line(void*, char*, int);
 #endif
 
-void Put_Str(char *buf);
+void Put_Str(REBYTE *buf);
 
 void *Term_IO;
 
@@ -82,7 +82,7 @@ static int interrupted = 0;
 static const void * backtrace_buf [1024];
 static void Handle_Signal(int sig)
 {
-	char *buf = strdup("[escape]");
+	REBYTE *buf = b_cast(strdup("[escape]"));
 	Put_Str(buf);
 	free(buf);
 	RL_Escape(0); /* This will cause the next evalution escaped */

@@ -69,7 +69,7 @@ void Quit_Terminal(void*);
 int  Read_Line(void*, char*, int);
 #endif
 
-void Put_Str(char *buf);
+void Put_Str(REBYTE *buf);
 
 void *Term_IO;
 
@@ -81,9 +81,8 @@ void *Term_IO;
 
 static void Handle_Signal(int sig)
 {
-	char *buf = strdup("[escape]");
+	REBYTE buf[] = "[escape]";
 	Put_Str(buf);
-	free(buf);
 	RL_Escape(0);
 }
 

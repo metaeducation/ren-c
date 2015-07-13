@@ -156,6 +156,12 @@ static int Fetch_Buf()
 **		If buf is larger than StdIO Device allows, error out.
 **		OS dependent line termination must be done prior to call.
 **
+**		!!! A request should ideally have a way to enforce that it is not
+**		going to modify the data.  We currently require the caller to
+**		pass us data that could be written to, but "promise not to"
+**		since it is a RDC_WRITE operation.  To stay on the right side
+**		of the compiler, use a strdup()/free() instead of an m_cast.
+**
 ***********************************************************************/
 {
 	/* This function could be called by signal handler and inside of Fetch_Buf */
