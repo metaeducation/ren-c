@@ -1126,7 +1126,11 @@ child_error:
 			//printf("stdin_pipe[W]: %d\n", stdin_pipe[W]);
 			input_size = strlen(input); /* the passed in input_len is in character, not in bytes */
 			input_len = 0;
-			pfds[nfds++] = (struct pollfd){.fd = stdin_pipe[W], .events = POLLOUT};
+
+			pfds[nfds].fd = stdin_pipe[W];
+			pfds[nfds].events = POLLOUT;
+			nfds++;
+
 			close(stdin_pipe[R]);
 			stdin_pipe[R] = -1;
 		}
@@ -1136,7 +1140,10 @@ child_error:
 
 			// !!! Uses realloc(), can't use OS_ALLOC_ARRAY
 			*output = cast(char*, malloc(output_size));
-			pfds[nfds++] = (struct pollfd){.fd = stdout_pipe[R], .events = POLLIN};
+
+			pfds[nfds].fd = stdout_pipe[R];
+			pfds[nfds].events = POLLIN;
+			nfds++;
 
 			close(stdout_pipe[W]);
 			stdout_pipe[W] = -1;
@@ -1147,14 +1154,20 @@ child_error:
 
 			// !!! Uses realloc(), can't use OS_ALLOC_ARRAY
 			*err = cast(char*, malloc(err_size));
-			pfds[nfds++] = (struct pollfd){.fd = stderr_pipe[R], .events = POLLIN};
+
+			pfds[nfds].fd = stderr_pipe[R];
+			pfds[nfds].events = POLLIN;
+			nfds++;
 
 			close(stderr_pipe[W]);
 			stderr_pipe[W] = -1;
 		}
 
 		if (info_pipe[R] > 0) {
-			pfds[nfds++] = (struct pollfd){.fd = info_pipe[R], .events = POLLIN};
+			pfds[nfds].fd = info_pipe[R];
+			pfds[nfds].events = POLLIN;
+			nfds++;
+
 			info_size = 4;
 			// !!! Uses realloc(), can't use OS_ALLOC_ARRAY
 			info = cast(char*, malloc(info_size));
