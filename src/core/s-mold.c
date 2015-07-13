@@ -618,7 +618,7 @@ static void Mold_Block_Series(REB_MOLD *mold, REBSER *series, REBCNT index, cons
 
 static void Mold_Block(REBVAL *value, REB_MOLD *mold)
 {
-	char *sep;
+	const char *sep;
 	REBOOL all = GET_MOPT(mold, MOPT_MOLD_ALL);
 	REBSER *series = mold->series;
 	REBFLG over = FALSE;

@@ -281,7 +281,7 @@ static REBOOL Nonblocking_Mode(SOCKET sock)
 
 #ifdef HAS_ASYNC_DNS
 	// Check if we are polling for completion:
-	if (host = cast(HOSTENT*, sock->special.net.host_info)) {
+    if ((host = cast(HOSTENT*, sock->special.net.host_info))) {
 		// The windows main event handler will change this when it gets WM_DNS event:
 		if (!GET_FLAG(sock->flags, RRF_DONE)) return DR_PEND; // still waiting
 		CLR_FLAG(sock->flags, RRF_DONE);
@@ -299,8 +299,8 @@ static REBOOL Nonblocking_Mode(SOCKET sock)
 	}
 
 	// Else, make the lookup request:
-	host = OS_ALLOC_ARRAY(char, MAXGETHOSTSTRUCT); // be sure to free it
-	handle = WSAAsyncGetHostByName(Event_Handle, WM_DNS, sock->common.data, (char*)host, MAXGETHOSTSTRUCT);
+	host = cast(HOSTENT*, OS_ALLOC_ARRAY(char, MAXGETHOSTSTRUCT));
+    handle = WSAAsyncGetHostByName(Event_Handle, WM_DNS, s_cast(sock->common.data), cast(char*, host), MAXGETHOSTSTRUCT);
 	if (handle != 0) {
 		sock->special.net.host_info = host;
 		sock->length = sock->requestee.socket; // save TCP socket temporarily
@@ -452,7 +452,7 @@ static REBOOL Nonblocking_Mode(SOCKET sock)
 		Set_Addr(&remote_addr, sock->special.net.remote_ip, sock->special.net.remote_port);
 		result = sendto(
 			sock->requestee.socket,
-			sock->common.data, len,
+            s_cast(sock->common.data), len,
 			0, // Flags
 			cast(struct sockaddr*, &remote_addr), addr_len
 		);
@@ -473,7 +473,7 @@ static REBOOL Nonblocking_Mode(SOCKET sock)
 	else {
 		result = recvfrom(
 			sock->requestee.socket,
-			sock->common.data, len,
+            s_cast(sock->common.data), len,
 			0, // Flags
 			cast(struct sockaddr*, &remote_addr), &addr_len
 		);

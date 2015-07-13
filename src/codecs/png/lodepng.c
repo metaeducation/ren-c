@@ -6085,7 +6085,8 @@ void load_file(std::vector<unsigned char>& buffer, const std::string& filename)
 void save_file(const std::vector<unsigned char>& buffer, const std::string& filename)
 {
   std::ofstream file(filename.c_str(), std::ios::out|std::ios::binary);
-  file.write(buffer.empty() ? 0 : (char*)&buffer[0], std::streamsize(buffer.size()));
+  // !!! Ren/C: Modified to use a 'const char*' buffer
+  file.write(buffer.empty() ? 0 : (const char*)&buffer[0], std::streamsize(buffer.size()));
 }
 #endif //LODEPNG_COMPILE_DISK
 

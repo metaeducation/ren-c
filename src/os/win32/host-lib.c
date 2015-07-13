@@ -565,7 +565,7 @@ static void *Task_Ready;
 	LARGE_INTEGER time;
 
 	if (!QueryPerformanceCounter(&time))
-		OS_Crash("Missing resource", "High performance timer");
+        OS_Crash(cb_cast("Missing resource"), cb_cast("High performance timer"));
 
 	if (base == 0) return time.QuadPart; // counter (may not be time)
 
@@ -738,7 +738,7 @@ static void *Task_Ready;
 
 /***********************************************************************
 **
-*/	int OS_Create_Process(REBCHR *call, int argc, char* argv[], u32 flags, u64 *pid, int *exit_code, u32 input_type, char *input, u32 input_len, u32 output_type, char **output, u32 *output_len, u32 err_type, char **err, u32 *err_len)
+*/	int OS_Create_Process(const REBCHR *call, int argc, const REBCHR* argv[], u32 flags, u64 *pid, int *exit_code, u32 input_type, char *input, u32 input_len, u32 output_type, char **output, u32 *output_len, u32 err_type, char **err, u32 *err_len)
 /*
 **		Return -1 on error.
 **		For right now, set flags to 1 for /wait.
@@ -1415,7 +1415,7 @@ int CALLBACK ReqDirCallbackProc( HWND hWnd, UINT uMsg, LPARAM lParam, LPARAM lpD
 {
 #define PAYLOAD_NAME L"EMBEDDEDREBOL"
 
-	char *embedded_script = NULL;
+    REBYTE *embedded_script = NULL;
 	HMODULE h_mod= 0;
 	HRSRC h_res = 0;
 	HGLOBAL h_res_mem = NULL;

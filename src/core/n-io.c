@@ -491,7 +491,7 @@ chk_neg:
 	Set_String(&val, ser); // may be unicode or utf-8
 	Check_Security(SYM_FILE, POL_EXEC, &val);
 
-	n = OS_SET_CURRENT_DIR((void*)ser->data);  // use len for bool
+	n = OS_SET_CURRENT_DIR(cast(REBCHR*, ser->data));  // use len for bool
 	if (!n) Trap_Arg_DEAD_END(arg); // !!! ERROR MSG
 
 	return R_ARG1;
@@ -558,7 +558,7 @@ chk_neg:
 	REBU64 pid = MAX_U64; // Was REBI64 of -1, but OS_CREATE_PROCESS wants u64
 	u32 flags = 0;
 	int argc = 1;
-	REBCHR ** argv = NULL;
+	const REBCHR ** argv = NULL;
 	REBVAL *input = NULL;
 	REBVAL *output = NULL;
 	REBVAL *err = NULL;
@@ -664,7 +664,7 @@ chk_neg:
 		cmd = Val_Str_To_OS(arg);
 		argc = 1;
 		ser = Make_Series(argc + 1, sizeof(REBCHR*), FALSE);
-		argv = cast(REBCHR**, SERIES_DATA(ser));
+		argv = cast(const REBCHR**, SERIES_DATA(ser));
 		argv[0] = cmd;
 		argv[argc] = NULL;
 	} else if (IS_BLOCK(arg)) {
@@ -675,7 +675,7 @@ chk_neg:
 			Trap_DEAD_END(RE_TOO_SHORT);
 		}
 		ser = Make_Series(argc + 1, sizeof(REBCHR*), FALSE);
-		argv = cast(REBCHR**, SERIES_DATA(ser));
+		argv = cast(const REBCHR**, SERIES_DATA(ser));
 		for (i = 0; i < argc; i ++) {
 			REBVAL *param = VAL_BLK_SKIP(arg, i);
 			if (IS_STRING(param)) {
@@ -694,7 +694,7 @@ chk_neg:
 		REBSER *path = Value_To_OS_Path(arg, FALSE);
 		argc = 1;
 		ser = Make_Series(argc + 1, sizeof(REBCHR*), FALSE);
-		argv = cast(REBCHR**, SERIES_DATA(ser));
+		argv = cast(const REBCHR**, SERIES_DATA(ser));
 		argv[0] = cast(REBCHR*, SERIES_DATA(path));
 		argv[argc] = NULL;
 		cmd = NULL;
@@ -703,7 +703,7 @@ chk_neg:
 	}
 
 	r = OS_CREATE_PROCESS(
-		cmd, argc, c_cast(const char **, argv),
+		cmd, argc, argv,
 		flags, &pid, &exit_code,
 		input_type, os_input, input_len,
 		output_type, &os_output, &output_len,

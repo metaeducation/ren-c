@@ -128,7 +128,7 @@ x*/	void RXI_To_Value(REBVAL *val, RXIARG arg, REBCNT type)
 		VAL_INT64(val) = arg.int64;
 		break;
 	case RXX_SER:
-		VAL_SERIES(val) = arg.sri.series;
+		VAL_SERIES(val) = cast(REBSER*, arg.sri.series);
 		VAL_INDEX(val) = arg.sri.index;
 		break;
 	case RXX_PTR:
@@ -147,7 +147,7 @@ x*/	void RXI_To_Value(REBVAL *val, RXIARG arg, REBCNT type)
 		VAL_WORD_INDEX(val) = 0;
 		break;
 	case RXX_IMAGE:
-		VAL_SERIES(val) = arg.iwh.image;
+		VAL_SERIES(val) = cast(REBSER*, arg.iwh.image);
 		VAL_IMAGE_WIDE(val) = arg.iwh.width;
 		VAL_IMAGE_HIGH(val) = arg.iwh.height;
 		break;
@@ -517,9 +517,9 @@ typedef REBYTE *(INFO_FUNC)(REBINT opts, void *lib);
 	RXIFRM frm;	// args stored here
 	REBCNT n;
 	REBEXT *ext;
-	REBCEC *ctx;
+	REBCEC *ctx = cast(REBCEC*, context);
 
-	if ((ctx = context)) ctx->block = cmds;
+	if (ctx) ctx->block = cmds;
 	blk = BLK_HEAD(cmds);
 
 	while (NOT_END(blk)) {
@@ -588,7 +588,7 @@ typedef REBYTE *(INFO_FUNC)(REBINT opts, void *lib);
 		func  = BLK_HEAD(VAL_FUNC_BODY(func));
 		n = (REBCNT)VAL_INT64(func + 1);
 		ext = &Ext_List[VAL_I32(VAL_OBJ_VALUE(func, 1))]; // Handler
-		n = ext->call(n, &frm, context);
+		n = ext->call(n, &frm, ctx);
 		val = DS_RETURN;
 		switch (n) {
 		case RXR_VALUE:

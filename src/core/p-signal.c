@@ -145,7 +145,7 @@ static int sig_word_num(REBVAL *word)
 
 	Validate_Port(port, action);
 
-	req = Use_Port_State(port, RDI_SIGNAL, sizeof(REBREQ));
+	req = cast(REBREQ*, Use_Port_State(port, RDI_SIGNAL, sizeof(REBREQ)));
 	spec = OFV(port, STD_PORT_SPEC);
 
 	if (!IS_OPEN(req)) {

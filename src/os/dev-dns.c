@@ -97,7 +97,7 @@ extern HWND Event_Handle;
 **
 ***********************************************************************/
 {
-	void *host;
+    char *host;
 #ifdef HAS_ASYNC_DNS
 	HANDLE handle;
 #else
@@ -108,9 +108,9 @@ extern HWND Event_Handle;
 
 #ifdef HAS_ASYNC_DNS
 	if (!GET_FLAG(sock->modes, RST_REVERSE)) // hostname lookup
-		handle = WSAAsyncGetHostByName(Event_Handle, WM_DNS, sock->common.data, host, MAXGETHOSTSTRUCT);
+        handle = WSAAsyncGetHostByName(Event_Handle, WM_DNS, s_cast(sock->common.data), host, MAXGETHOSTSTRUCT);
 	else
-		handle = WSAAsyncGetHostByAddr(Event_Handle, WM_DNS, (char*)&(sock->special.net.remote_ip), 4, AF_INET, host, MAXGETHOSTSTRUCT);
+        handle = WSAAsyncGetHostByAddr(Event_Handle, WM_DNS, s_cast(&sock->special.net.remote_ip), 4, AF_INET, host, MAXGETHOSTSTRUCT);
 
 	if (handle != 0) {
 		sock->special.net.host_info = host;

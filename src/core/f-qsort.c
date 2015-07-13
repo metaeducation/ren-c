@@ -92,7 +92,7 @@ swapfunc(char *a, char *b, int n, int swaptype)
 		*(long *)(a) = *(long *)(b);		\
 		*(long *)(b) = t;			\
 	} else						\
-		swapfunc(a, b, es, swaptype)
+		swapfunc((char*)a, (char*)b, es, swaptype)
 
 #define vecswap(a, b, n) 	if ((n) > 0) swapfunc(a, b, n, swaptype)
 
@@ -144,7 +144,7 @@ loop:	SWAPINIT(a, es);
 	}
 	pm = (char *)a + (n / 2) * es;
 	if (n > 7) {
-		pl = a;
+		pl = (char *)a;
 		pn = (char *)a + (n - 1) * es;
 		if (n > 40) {
 			d = (n / 8) * es;
@@ -193,7 +193,7 @@ loop:	SWAPINIT(a, es);
 
 	pn = (char *)a + n * es;
 	r = min(pa - (char *)a, pb - pa);
-	vecswap(a, pb - r, r);
+	vecswap((char*)a, (char *)(pb - r), r);
 	// !!! Ren/C: pn - pd - es => (long)(pn - pd - ps) for -Wsign-compare
 	r = min(pd - pc, (long)(pn - pd - es));
 	vecswap(pb, pn - r, r);

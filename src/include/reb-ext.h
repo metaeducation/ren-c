@@ -110,8 +110,6 @@ typedef int (*RXICAL)(int cmd, RXIFRM *args, REBCEC *ctx);
 #define RXA_MODULE(f,n)	(RXA_ARG(f,n).addr)
 #define RXA_HANDLE(f,n)	(RXA_ARG(f,n).addr)
 #define RXA_IMAGE(f,n)	(RXA_ARG(f,n).iwh.image)
-#define RXA_IMAGE_BITS(f,n) \
-	cast(REBYTE *, RL_SERIES((RXA_ARG(f,n).iwh.image), RXI_SER_DATA))
 #define RXA_IMAGE_WIDTH(f,n)  (RXA_ARG(f,n).iwh.width)
 #define RXA_IMAGE_HEIGHT(f,n) (RXA_ARG(f,n).iwh.height)
 #define RXA_COLOR_TUPLE(f,n)  (TO_RGBA_COLOR(RXA_TUPLE(f,n)[1], RXA_TUPLE(f,n)[2], RXA_TUPLE(f,n)[3], RXA_TUPLE(f,n)[0] > 3 ? RXA_TUPLE(f,n)[4] : 0xff)) //always RGBA order

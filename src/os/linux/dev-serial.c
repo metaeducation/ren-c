@@ -228,7 +228,7 @@ static REBINT Set_Serial_Settings(int ttyfd, REBREQ *req)
 
 	//Getting prior atttributes:
 	req->special.serial.prior_attr = Get_Serial_Settings(h);
-	if (tcgetattr(h, req->special.serial.prior_attr)) {
+	if (tcgetattr(h, cast(struct termios*, req->special.serial.prior_attr))) {
 		close(h);
 		return DR_ERROR;
 	}
@@ -252,7 +252,11 @@ static REBINT Set_Serial_Settings(int ttyfd, REBREQ *req)
 {
 	if (req->requestee.id) {
 		// !!! should we free req->special.serial.prior_attr termios struct?
-		tcsetattr(req->requestee.id, TCSANOW, req->special.serial.prior_attr);
+		tcsetattr(
+			req->requestee.id,
+			TCSANOW,
+			cast(struct termios*, req->special.serial.prior_attr)
+		);
 		close(req->requestee.id);
 		req->requestee.id = 0;
 	}

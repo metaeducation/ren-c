@@ -50,7 +50,7 @@
 	arg = D_ARG(2);
 	*D_RET = *D_ARG(1);
 
-	sock = Use_Port_State(port, RDI_DNS, sizeof(*sock));
+	sock = cast(REBREQ*, Use_Port_State(port, RDI_DNS, sizeof(*sock)));
 	spec = OFV(port, STD_PORT_SPEC);
 	if (!IS_OBJECT(spec)) Trap_DEAD_END(RE_INVALID_PORT);
 

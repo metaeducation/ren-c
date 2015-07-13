@@ -61,7 +61,7 @@
 
 	//if (!IS_FILE(path)) Trap1_DEAD_END(RE_INVALID_SPEC, path);
 
-	req = Use_Port_State(port, RDI_SERIAL, sizeof(*req));
+	req = cast(REBREQ*, Use_Port_State(port, RDI_SERIAL, sizeof(*req)));
 
 	// Actions for an unopened serial port:
 	if (!IS_OPEN(req)) {

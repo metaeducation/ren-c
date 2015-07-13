@@ -107,7 +107,7 @@
 		return DR_ERROR;
 	}
 
-	cp = GlobalLock(data);
+    cp = cast(wchar_t*, GlobalLock(data));
 	if (!cp) {
 		GlobalUnlock(data);
 		CloseClipboard();
@@ -154,7 +154,7 @@
 	}
 
 	// Lock and copy the string:
-	bin = GlobalLock(data);
+    bin = cast(REBYTE*, GlobalLock(data));
 	if (bin == NULL) {
 		req->error = 10;
 		return DR_ERROR;

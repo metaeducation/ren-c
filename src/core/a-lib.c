@@ -106,7 +106,7 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 	int marker;
 	REBUPT bounds;
 
-	Host_Lib = lib;
+	Host_Lib = cast(REBOL_HOST_LIB *, lib);
 
 	if (Host_Lib->size < HOST_LIB_SIZE) return 1;
 	if (((HOST_LIB_VER << 16) + HOST_LIB_SUM) != Host_Lib->ver_sum) return 2;
@@ -167,7 +167,7 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 	if (script && script_len > 4) {
 		/* a 4-byte long payload type at the beginning */
 		i32 ptype = 0;
-		void *data = script + sizeof(ptype);
+		REBYTE *data = script + sizeof(ptype);
 		script_len -= sizeof(ptype);
 
 		memcpy(&ptype, script, sizeof(ptype));

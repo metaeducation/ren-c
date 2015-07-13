@@ -315,7 +315,7 @@ static REBYTE seed_str[SEED_LEN] = {
 
 		switch (VAL_TYPE(val)) {
 		case REB_BINARY:
-			kp = (void*)VAL_BIN_DATA(val);
+			kp = VAL_BIN_DATA(val);
 			klen = VAL_LEN(val);
 			break;
 		case REB_STRING:

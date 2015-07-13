@@ -55,7 +55,7 @@
 	arg = D_ARG(2);
 	*D_RET = *D_ARG(1);
 
-	req = Use_Port_State(port, RDI_STDIO, sizeof(REBREQ));
+	req = cast(REBREQ*, Use_Port_State(port, RDI_STDIO, sizeof(REBREQ)));
 
 	switch (action) {
 

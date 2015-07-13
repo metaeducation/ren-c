@@ -92,7 +92,7 @@ enum Transport_Types {
 	SET_NONE(OFV(port, STD_PORT_STATE)); // just to be sure.
 
 	// Copy over the new sock data:
-	sock = Use_Port_State(port, RDI_NET, sizeof(*sock));
+	sock = cast(REBREQ*, Use_Port_State(port, RDI_NET, sizeof(*sock)));
 	*sock = *nsock;
 	sock->clen = sizeof(*sock);
 	sock->port = port;
@@ -120,7 +120,7 @@ enum Transport_Types {
 	arg = D_ARG(2);
 	refs = 0;
 
-	sock = Use_Port_State(port, RDI_NET, sizeof(*sock));
+	sock = cast(REBREQ*, Use_Port_State(port, RDI_NET, sizeof(*sock)));
 	if (proto == TRANSPORT_UDP) {
 		SET_FLAG(sock->modes, RST_UDP);
 	}

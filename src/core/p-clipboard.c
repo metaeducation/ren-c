@@ -47,7 +47,7 @@
 
 	arg = D_ARG(2);
 
-	req = Use_Port_State(port, RDI_CLIPBOARD, sizeof(REBREQ));
+	req = cast(REBREQ*, Use_Port_State(port, RDI_CLIPBOARD, sizeof(REBREQ)));
 
 	switch (action) {
 	case A_UPDATE:

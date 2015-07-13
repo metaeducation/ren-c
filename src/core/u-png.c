@@ -595,7 +595,7 @@ void png_load(unsigned char *buffer, int nbytes, char *output, REBOOL *alpha) {
 	if(ret!=Z_OK)
 		trap_png();
 	if(png_ihdr.interlace_method) {
-		imgbuffer=malloc(rowlength*((png_ihdr.height+1)/2+1));
+		imgbuffer=(unsigned char*)malloc(rowlength*((png_ihdr.height+1)/2+1));
 		for(adam7pass=0;adam7pass<7;adam7pass++) {
 			awidth=(((int)png_ihdr.width)-adam7hoff[adam7pass]+adam7hskip[adam7pass]-1)/adam7hskip[adam7pass];
 			aheight=(((int)png_ihdr.height)-adam7voff[adam7pass]+adam7vskip[adam7pass]-1)/adam7vskip[adam7pass];
@@ -625,7 +625,7 @@ void png_load(unsigned char *buffer, int nbytes, char *output, REBOOL *alpha) {
 			 adam7hskip[adam7pass],adam7voff[adam7pass],adam7vskip[adam7pass]);
 		}
 	} else {
-		imgbuffer=malloc(rowlength*(png_ihdr.height+1));
+		imgbuffer=(unsigned char*)malloc(rowlength*(png_ihdr.height+1));
 		comp_awidth=1+(png_ihdr.width*bitsperpixel+7)/8;
 		memset(imgbuffer,0,rowlength);
 		for(r=1;r<=(int)png_ihdr.height;r++) {
@@ -677,7 +677,7 @@ struct ihdrchunk {
 };
 
 
-static void emitchunk(unsigned char **cpp,char *type,char *data,int length) {
+static void emitchunk(unsigned char **cpp,const char *type,const char *data,int length) {
 	REBCNT tmplen;
 	unsigned char *cp=*cpp,*crcp;
 
@@ -733,8 +733,8 @@ static void emitchunk(unsigned char **cpp,char *type,char *data,int length) {
 	ihdr.filter_method=0;
 	ihdr.interlace_method=0;
 
-	linebuf=malloc(hasalpha?(4*w+1):(3*w+1));
-	firstidat=currentidat=malloc(sizeof(struct idatnode));
+	linebuf=(unsigned char*)malloc(hasalpha?(4*w+1):(3*w+1));
+	firstidat=currentidat=(struct idatnode*)malloc(sizeof(struct idatnode));
 
 	if(!firstidat) {
 		free(linebuf);
@@ -773,7 +773,7 @@ static void emitchunk(unsigned char **cpp,char *type,char *data,int length) {
 
 		 refill:
 			currentidat->length=IDATLENGTH;
-			currentidat->next=malloc(sizeof(struct idatnode));
+			currentidat->next=(struct idatnode*)malloc(sizeof(struct idatnode));
 			currentidat=currentidat->next;
 			currentidat->next=0;
 			zstream.next_out=currentidat->data;

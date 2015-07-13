@@ -494,7 +494,7 @@ err:
 		break;
 
 	case CODI_BLOCK:
-		Set_Block(D_RET, codi.extra.other);
+		Set_Block(D_RET, cast(REBSER*, codi.extra.other));
 		break;
 
 	default:

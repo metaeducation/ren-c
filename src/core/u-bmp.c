@@ -83,7 +83,7 @@ typedef struct tagBITMAPCOREHEADER
 typedef BITMAPCOREHEADER*      PBITMAPCOREHEADER;
 typedef BITMAPCOREHEADER *LPBITMAPCOREHEADER;
 
-char *mapBITMAPCOREHEADER = "lssss";
+const char *mapBITMAPCOREHEADER = "lssss";
 
 typedef struct tagBITMAPINFOHEADER
 {
@@ -100,7 +100,7 @@ typedef struct tagBITMAPINFOHEADER
     DWORD   biClrImportant;
 } BITMAPINFOHEADER;
 
-char *mapBITMAPINFOHEADER = "lllssllllll";
+const char *mapBITMAPINFOHEADER = "lllssllllll";
 
 typedef BITMAPINFOHEADER*      PBITMAPINFOHEADER;
 typedef BITMAPINFOHEADER *LPBITMAPINFOHEADER;
@@ -137,7 +137,7 @@ typedef struct tagBITMAPFILEHEADER
 typedef BITMAPFILEHEADER*      PBITMAPFILEHEADER;
 typedef BITMAPFILEHEADER *LPBITMAPFILEHEADER;
 
-char *mapBITMAPFILEHEADER = "bblssl";
+const char *mapBITMAPFILEHEADER = "bblssl";
 
 typedef RGBQUAD *RGBQUADPTR;
 
@@ -155,9 +155,9 @@ static int longaligned(void) {
 	return FALSE;
 }
 
-void Map_Bytes(void *dstp, REBYTE **srcp, char *map) {
+void Map_Bytes(void *dstp, REBYTE **srcp, const char *map) {
 	REBYTE *src = *srcp;
-	REBYTE *dst = dstp;
+	REBYTE *dst = cast(REBYTE*, dstp);
 	char c;
 #ifdef ENDIAN_LITTLE
 	while ((c = *map++) != 0) {
@@ -212,8 +212,8 @@ void Map_Bytes(void *dstp, REBYTE **srcp, char *map) {
 	*srcp = src;
 }
 
-void Unmap_Bytes(void *srcp, REBYTE **dstp, char *map) {
-	REBYTE *src = srcp;
+void Unmap_Bytes(void *srcp, REBYTE **dstp, const char *map) {
+	REBYTE *src = cast(REBYTE*, srcp);
 	REBYTE *dst = *dstp;
 	char c;
 #ifdef ENDIAN_LITTLE

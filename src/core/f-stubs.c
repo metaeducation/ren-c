@@ -741,8 +741,8 @@
 {
 	long t, *a, *b;
 
-	a = m1;
-	b = m2;
+	a = cast(long*, m1);
+	b = cast(long*, m2);
 	len /= sizeof(long);
 	while (len--) {
 		t = *b;

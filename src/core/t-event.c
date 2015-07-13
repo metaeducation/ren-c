@@ -315,7 +315,7 @@
 		if (VAL_EVENT_TYPE(value) != EVT_DROP_FILE) goto is_none;
 		if (!GET_FLAG(VAL_EVENT_FLAGS(value), EVF_COPIED)) {
 			void *str = VAL_EVENT_SER(value);
-			VAL_EVENT_SER(value) = Copy_Bytes(str, -1);
+			VAL_EVENT_SER(value) = Copy_Bytes(cast(REBYTE*, str), -1);
 			SET_FLAG(VAL_EVENT_FLAGS(value), EVF_COPIED);
 			OS_FREE(str);
 		}

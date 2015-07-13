@@ -132,7 +132,14 @@ static u32 *core_ext_words;
 			state.info_png.color.bitdepth = 8;
 
 			//encode
-			error = lodepng_encode(&buffer, &buffersize, RXA_IMAGE_BITS(frm,1), w, h, &state);
+			error = lodepng_encode(
+				&buffer, &buffersize,
+				cast(REBYTE *, RL_SERIES(
+					cast(REBSER*, RXA_ARG(frm,1).iwh.image), RXI_SER_DATA)
+				),
+				w, h,
+				&state
+			);
 
 			//cleanup
 			lodepng_state_cleanup(&state);
@@ -218,7 +225,8 @@ static u32 *core_ext_words;
 		case CMD_CORE_RC4:
 		{
 			RC4_CTX *ctx;
-			REBSER *data, key;
+			REBSER *data;
+			REBSER *key;
 			REBYTE *dataBuffer;
 
 			if (RXA_TYPE(frm, 4) == RXT_HANDLE) {
@@ -234,8 +242,9 @@ static u32 *core_ext_words;
 				}
 
 				//get data
-				data = RXA_SERIES(frm,5);
-				dataBuffer = (REBYTE *)RL_SERIES(data, RXI_SER_DATA) + RXA_INDEX(frm,5);
+				data = cast(REBSER*, RXA_SERIES(frm,5));
+				dataBuffer = cast(REBYTE *, RL_SERIES(data, RXI_SER_DATA))
+					+ RXA_INDEX(frm,5);
 
 				RC4_crypt(ctx, dataBuffer, dataBuffer, RL_SERIES(data, RXI_SER_TAIL) - RXA_INDEX(frm,5));
 
@@ -243,9 +252,13 @@ static u32 *core_ext_words;
 				//key defined - setup new context
 				ctx = OS_ALLOC_ZEROFILL(RC4_CTX);
 
-				key = RXA_SERIES(frm, 2);
+				key = cast(REBSER*, RXA_SERIES(frm, 2));
 
-				RC4_setup(ctx, (REBYTE *)RL_SERIES(key, RXI_SER_DATA) + RXA_INDEX(frm, 2), RL_SERIES(key, RXI_SER_TAIL) - RXA_INDEX(frm, 2));
+				RC4_setup(ctx,
+					cast(REBYTE *, RL_SERIES(key, RXI_SER_DATA))
+						+ RXA_INDEX(frm, 2),
+					RL_SERIES(key, RXI_SER_TAIL) - RXA_INDEX(frm, 2)
+				);
 
 				RXA_TYPE(frm, 1) = RXT_HANDLE;
 				RXA_HANDLE(frm,1) = ctx;
@@ -257,7 +270,8 @@ static u32 *core_ext_words;
 		case CMD_CORE_AES:
 		{
 			AES_CTX *ctx;
-			REBSER *data, key;
+			REBSER *data;
+			REBSER *key;
 			REBYTE *dataBuffer, *pad_data = NULL;
 			REBINT len, pad_len;
 
@@ -277,7 +291,7 @@ static u32 *core_ext_words;
 				}
 
 				//get data
-				data = RXA_SERIES(frm, 6);
+				data = cast(REBSER*, RXA_SERIES(frm, 6));
 				dataBuffer = (REBYTE *)RL_SERIES(data, RXI_SER_DATA) + RXA_INDEX(frm, 6);
 				len = RL_SERIES(data, RXI_SER_TAIL) - RXA_INDEX(frm, 6);
 
@@ -332,7 +346,7 @@ static u32 *core_ext_words;
 
 				if (RXA_TYPE(frm, 3) == RXT_BINARY)
 				{
-					data = RXA_SERIES(frm, 3);
+					data = cast(REBSER*, RXA_SERIES(frm, 3));
 					dataBuffer = (REBYTE *)RL_SERIES(data, RXI_SER_DATA) + RXA_INDEX(frm, 3);
 
 					if ((RL_SERIES(data, RXI_SER_TAIL) - RXA_INDEX(frm, 3)) < AES_IV_SIZE) return RXR_NONE;
@@ -347,7 +361,7 @@ static u32 *core_ext_words;
 				//key defined - setup new context
 				ctx = OS_ALLOC_ZEROFILL(AES_CTX);
 
-				key = RXA_SERIES(frm,2);
+				key = cast(REBSER*, RXA_SERIES(frm, 2));
 				len = (RL_SERIES(key, RXI_SER_TAIL) - RXA_INDEX(frm,2)) << 3;
 
 				if (len != 128 && len != 256) {
@@ -377,9 +391,9 @@ static u32 *core_ext_words;
 			RXIARG val;
             u32 *words,*w;
 			REBCNT type;
-			REBSER *data = RXA_SERIES(frm, 1);
+			REBSER *data = cast(REBSER*, RXA_SERIES(frm, 1));
 			REBYTE *dataBuffer = (REBYTE *)RL_SERIES(data, RXI_SER_DATA) + RXA_INDEX(frm,1);
-			REBSER *obj = RXA_OBJECT(frm, 2);
+			REBSER *obj = cast(REBSER*, RXA_OBJECT(frm, 2));
 			REBYTE *objData = NULL, *n = NULL, *e = NULL, *d = NULL, *p = NULL, *q = NULL, *dp = NULL, *dq = NULL, *qinv = NULL;
 			REBINT data_len = RL_SERIES(data, RXI_SER_TAIL) - RXA_INDEX(frm,1), objData_len = 0, n_len = 0, e_len = 0, d_len = 0, p_len = 0, q_len = 0, dp_len = 0, dq_len = 0, qinv_len = 0;
 			REBSER *binary;
@@ -401,12 +415,12 @@ static u32 *core_ext_words;
             while ((type = RL_GET_FIELD(obj, w[0], &val)))
             {
 				if (type == RXT_BINARY){
-					objData =
-						cast(REBYTE *, RL_SERIES(val.sri.series, RXI_SER_DATA))
-						+ val.sri.index;
+					objData = cast(REBYTE *, RL_SERIES(
+						cast(REBSER*, val.sri.series), RXI_SER_DATA)
+					) + val.sri.index;
 
 					objData_len =
-						RL_SERIES(val.sri.series, RXI_SER_TAIL)
+						RL_SERIES(cast(REBSER*, val.sri.series), RXI_SER_TAIL)
 						- val.sri.index;
 
 					switch(RL_FIND_WORD(core_ext_words,w[0]))
@@ -502,7 +516,7 @@ static u32 *core_ext_words;
 			DH_CTX dh_ctx;
 			RXIARG val, priv_key, pub_key;
 			REBCNT type;
-			REBSER *obj = RXA_OBJECT(frm, 1);
+			REBSER *obj = cast(REBSER*, RXA_OBJECT(frm, 1));
 			u32 *words = RL_WORDS_OF_OBJECT(obj);
 			REBYTE *objData;
 
@@ -512,24 +526,24 @@ static u32 *core_ext_words;
             {
 				if (type == RXT_BINARY)
 				{
-					objData =
-						cast(REBYTE *, RL_SERIES(val.sri.series, RXI_SER_DATA))
-						+ val.sri.index;
+					objData = cast(REBYTE*, RL_SERIES(
+						cast(REBSER*, val.sri.series), RXI_SER_DATA
+					)) + val.sri.index;
 
 					switch(RL_FIND_WORD(core_ext_words,words[0]))
 					{
 						case W_CORE_P:
 							dh_ctx.p = objData;
-							dh_ctx.len =
-								RL_SERIES(val.sri.series, RXI_SER_TAIL)
-								- val.sri.index;
+							dh_ctx.len = RL_SERIES(
+								cast(REBSER*, val.sri.series), RXI_SER_TAIL
+							) - val.sri.index;
 							break;
 
 						case W_CORE_G:
 							dh_ctx.g = objData;
-							dh_ctx.glen =
-								RL_SERIES(val.sri.series, RXI_SER_TAIL)
-								- val.sri.index;
+							dh_ctx.glen = RL_SERIES(
+								cast(REBSER*, val.sri.series), RXI_SER_TAIL
+							) - val.sri.index;
 							break;
 					}
 				}
@@ -543,18 +557,19 @@ static u32 *core_ext_words;
 				cast(REBSER*, RL_Make_String(dh_ctx.len, FALSE));
 			priv_key.sri.index = 0;
 
-			dh_ctx.x =
-				cast(REBYTE *, RL_SERIES(priv_key.sri.series, RXI_SER_DATA));
+			dh_ctx.x = cast(REBYTE*, RL_SERIES(
+				cast(REBSER*, priv_key.sri.series), RXI_SER_DATA)
+			);
 			memset(dh_ctx.x, 0, dh_ctx.len);
 			//hack! - will set the tail to key size
 			*cast(REBCNT*, cast(void**, priv_key.sri.series) + 1) = dh_ctx.len;
 
-			pub_key.sri.series =
-				cast(REBSER*, RL_Make_String(dh_ctx.len, FALSE));
+			pub_key.sri.series = cast(REBSER*, RL_Make_String(dh_ctx.len, FALSE));
 			pub_key.sri.index = 0;
 
-			dh_ctx.gx =
-				cast(REBYTE *, RL_SERIES(pub_key.sri.series, RXI_SER_DATA));
+			dh_ctx.gx = cast(REBYTE*, RL_SERIES(
+				cast(REBSER*, pub_key.sri.series), RXI_SER_DATA)
+			);
 			memset(dh_ctx.gx, 0, dh_ctx.len);
 			//hack! - will set the tail to key size
 			*cast(REBCNT*, cast(void**, pub_key.sri.series) + 1) = dh_ctx.len;
@@ -574,8 +589,8 @@ static u32 *core_ext_words;
 			DH_CTX dh_ctx;
 			RXIARG val;
 			REBCNT type;
-			REBSER *obj = RXA_OBJECT(frm, 1);
-			REBSER *pub_key = RXA_SERIES(frm, 2);
+			REBSER *obj = cast(REBSER*, RXA_OBJECT(frm, 1));
+			REBSER *pub_key = cast(REBSER*, RXA_SERIES(frm, 2));
 			u32 *words = RL_WORDS_OF_OBJECT(obj);
 			REBYTE *objData;
 			REBSER *binary;
@@ -587,17 +602,17 @@ static u32 *core_ext_words;
             {
 				if (type == RXT_BINARY)
 				{
-					objData =
-						cast(REBYTE *, RL_SERIES(val.sri.series, RXI_SER_DATA))
-						+ val.sri.index;
+					objData = cast(REBYTE *, RL_SERIES(
+						cast(REBSER*, val.sri.series), RXI_SER_DATA)
+					) + val.sri.index;
 
 					switch(RL_FIND_WORD(core_ext_words,words[0]))
 					{
 						case W_CORE_P:
 							dh_ctx.p = objData;
-							dh_ctx.len =
-								RL_SERIES(val.sri.series, RXI_SER_TAIL)
-								- val.sri.index;
+							dh_ctx.len = RL_SERIES(
+								cast(REBSER*, val.sri.series), RXI_SER_TAIL
+							) - val.sri.index;
 							break;
 						case W_CORE_PRIV_KEY:
 							dh_ctx.x = objData;
@@ -631,7 +646,7 @@ static u32 *core_ext_words;
 		}
 
         case CMD_CORE_INIT_WORDS:
-            core_ext_words = RL_MAP_WORDS(RXA_SERIES(frm,1));
+			core_ext_words = RL_MAP_WORDS(cast(REBSER*, RXA_SERIES(frm, 1)));
             break;
 
         default:
@@ -649,5 +664,5 @@ static u32 *core_ext_words;
 **
 ***********************************************************************/
 {
-	RL = RL_Extend(RX_core, &RXD_Core);
+	RL = cast(RL_LIB*, RL_Extend(RX_core, &RXD_Core));
 }

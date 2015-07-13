@@ -145,7 +145,7 @@
 ***********************************************************************/
 {
 	REB_TIMEF tf;
-	char *fmt;
+	const char *fmt;
 
 	Split_Time(VAL_TIME(value), &tf); // loses sign
 

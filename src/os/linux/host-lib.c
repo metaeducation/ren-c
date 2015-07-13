@@ -893,7 +893,7 @@ error:
 
 /***********************************************************************
 **
-*/	int OS_Create_Process(REBCHR *call, int argc, const char* argv[], u32 flags, u64 *pid, int *exit_code, u32 input_type, char *input, u32 input_len, u32 output_type, char **output, u32 *output_len, u32 err_type, char **err, u32 *err_len)
+*/	int OS_Create_Process(const REBCHR *call, int argc, const REBCHR* argv[], u32 flags, u64 *pid, int *exit_code, u32 input_type, char *input, u32 input_len, u32 output_type, char **output, u32 *output_len, u32 err_type, char **err, u32 *err_len)
 /*
  * flags:
  * 		1: wait, is implied when I/O redirection is enabled
@@ -1384,10 +1384,10 @@ stdin_pipe_err:
 	return waitpid(pid, status, flags == 0? WNOHANG : 0);
 }
 
-static int Try_Browser(char *browser, REBCHR *url)
+static int Try_Browser(const char *browser, const REBCHR *url)
 {
 	// Must be compile-time const for '= {...}' style init (-Wc99-extensions)
-	char const *argv[3];
+	const char *argv[3];
 
 	argv[0] = browser;
 	argv[1] = url;
@@ -1510,7 +1510,7 @@ static int Try_Browser(char *browser, REBCHR *url)
 
 	if ((n = RL_Get_String(series, 0, &str)) < 0) {
 		// Latin1 byte string - use as is
-		*string = str;
+		*string = cast(char*, str);
 		return FALSE;
 	}
 

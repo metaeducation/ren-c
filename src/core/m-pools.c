@@ -66,7 +66,10 @@
 //#define GC_TRIGGER (GC_Active && (GC_Ballast <= 0 || (GC_Pending && !GC_Disabled)))
 
 #ifdef POOL_MAP
-#define FIND_POOL(n) (((!always_malloc) && (n <= 4 * MEM_BIG_SIZE)) ? (REBCNT)(PG_Pool_Map[n]) : SYSTEM_POOL)
+#define FIND_POOL(n) \
+	((!always_malloc && (n <= 4 * MEM_BIG_SIZE)) \
+		? cast(REBCNT, PG_Pool_Map[n]) \
+		: cast(REBCNT, SYSTEM_POOL))
 #else
 #define FIND_POOL(n) (always_malloc? SYSTEM_POOL : Find_Pool(n);)
 #endif
@@ -269,7 +272,7 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 #else
 	for (next = (REBYTE *)(seg + 1); units > 0; units--, next += pool->wide) {
 		*node = (REBNOD) next;
-		node  = *node;
+		node  = cast(void**, *node);
 	}
 #endif
 	*node = 0;
@@ -299,7 +302,7 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 
 	ASAN_UNPOISON_MEMORY_REGION(node, pool->wide);
 
-	pool->first = *node;
+	pool->first = cast(void**, *node);
 	if (node == pool->last) {
 		pool->last = NULL;
 	}
@@ -355,7 +358,7 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 	length *= SERIES_WIDE(series);
 	pool_num = FIND_POOL(length);
 	if (pool_num < SYSTEM_POOL) {
-		node = Make_Node(pool_num);
+		node = cast(void**, Make_Node(pool_num));
 		length = Mem_Pools[pool_num].wide;
 	} else {
 		length = ALIGN(length, 2048);
@@ -417,7 +420,7 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 
 	pool_num = FIND_POOL(length);
 	if (pool_num < SYSTEM_POOL) {
-		node = Make_Node(pool_num);
+		node = cast(void**, Make_Node(pool_num));
 		length = Mem_Pools[pool_num].wide;
 		memset(node, 0, length);
 	} else {
@@ -688,7 +691,7 @@ clear_header:
 	for (pool_num = 0; pool_num < SYSTEM_POOL; pool_num++) {
 		count = 0;
 		// Check each free node in the memory pool:
-		for (node = Mem_Pools[pool_num].first; node; node = *node) {
+		for (node = cast(void **, Mem_Pools[pool_num].first); node; node = cast(void**, *node)) {
 			count++;
 			// The node better belong to one of the pool's segments:
 			for (seg = Mem_Pools[pool_num].segs; seg; seg = seg->next) {
