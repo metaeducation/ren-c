@@ -32,8 +32,6 @@
 #include "sys-scan.h"
 #include <float.h>
 
-#define STOID static void
-
 #define	MAX_QUOTED_STR	50	// max length of "string" before going to { }
 
 //typedef REBSER *(*MOLD_FUNC)(REBVAL *, REBSER *, REBCNT);
@@ -288,7 +286,7 @@ typedef struct REB_Str_Flags {
 } REB_STRF;
 
 
-STOID Sniff_String(REBSER *ser, REBCNT idx, REB_STRF *sf)
+static void Sniff_String(REBSER *ser, REBCNT idx, REB_STRF *sf)
 {
 	// Scan to find out what special chars the string contains?
 	REBYTE *bp = STR_HEAD(ser);
@@ -344,7 +342,7 @@ static REBUNI *Emit_Uni_Char(REBUNI *up, REBUNI chr, REBOOL parened)
 	return up;
 }
 
-STOID Mold_Uni_Char(REBSER *dst, REBUNI chr, REBOOL molded, REBOOL parened)
+static void Mold_Uni_Char(REBSER *dst, REBUNI chr, REBOOL molded, REBOOL parened)
 {
 	REBCNT tail = SERIES_TAIL(dst);
 	REBUNI *up;
@@ -365,7 +363,7 @@ STOID Mold_Uni_Char(REBSER *dst, REBUNI chr, REBOOL molded, REBOOL parened)
 	UNI_TERM(dst);
 }
 
-STOID Mold_String_Series(REBVAL *value, REB_MOLD *mold)
+static void Mold_String_Series(REBVAL *value, REB_MOLD *mold)
 {
 	REBCNT len = VAL_LEN(value);
 	REBSER *ser = VAL_SERIES(value);
@@ -450,7 +448,7 @@ STOID Mold_String_Series(REBVAL *value, REB_MOLD *mold)
 	unencoded within a URL.
 */
 
-STOID Mold_Url(REBVAL *value, REB_MOLD *mold)
+static void Mold_Url(REBVAL *value, REB_MOLD *mold)
 {
 	REBUNI *dp;
 	REBCNT n;
@@ -475,7 +473,7 @@ STOID Mold_Url(REBVAL *value, REB_MOLD *mold)
 	*dp = 0;
 }
 
-STOID Mold_File(REBVAL *value, REB_MOLD *mold)
+static void Mold_File(REBVAL *value, REB_MOLD *mold)
 {
 	REBUNI *dp;
 	REBCNT n;
@@ -504,7 +502,7 @@ STOID Mold_File(REBVAL *value, REB_MOLD *mold)
 	*dp = 0;
 }
 
-STOID Mold_Tag(REBVAL *value, REB_MOLD *mold)
+static void Mold_Tag(REBVAL *value, REB_MOLD *mold)
 {
 	Append_Byte(mold->series, '<');
 	Insert_String(mold->series, AT_TAIL, VAL_SERIES(value), VAL_INDEX(value), VAL_LEN(value), 0);
@@ -539,7 +537,7 @@ STOID Mold_Tag(REBVAL *value, REB_MOLD *mold)
 	Emit(mold, "#{E}", out);
 }
 
-STOID Mold_All_String(REBVAL *value, REB_MOLD *mold)
+static void Mold_All_String(REBVAL *value, REB_MOLD *mold)
 {
 	// The string that is molded for /all option:
 	REBVAL val;
@@ -566,7 +564,7 @@ STOID Mold_All_String(REBVAL *value, REB_MOLD *mold)
 ************************************************************************
 ***********************************************************************/
 
-STOID Mold_Block_Series(REB_MOLD *mold, REBSER *series, REBCNT index, const char *sep)
+static void Mold_Block_Series(REB_MOLD *mold, REBSER *series, REBCNT index, const char *sep)
 {
 	REBSER *out = mold->series;
 	REBOOL line_flag = FALSE; // newline was part of block
@@ -618,7 +616,7 @@ STOID Mold_Block_Series(REB_MOLD *mold, REBSER *series, REBCNT index, const char
 	Remove_Last(MOLD_LOOP);
 }
 
-STOID Mold_Block(REBVAL *value, REB_MOLD *mold)
+static void Mold_Block(REBVAL *value, REB_MOLD *mold)
 {
 	char *sep;
 	REBOOL all = GET_MOPT(mold, MOPT_MOLD_ALL);
@@ -689,7 +687,7 @@ STOID Mold_Block(REBVAL *value, REB_MOLD *mold)
 	}
 }
 
-STOID Mold_Simple_Block(REB_MOLD *mold, REBVAL *block, REBCNT len)
+static void Mold_Simple_Block(REB_MOLD *mold, REBVAL *block, REBCNT len)
 {
 	// Simple molder for error locations. Series must be valid.
 	// Max length in chars must be provided.
@@ -709,7 +707,7 @@ STOID Mold_Simple_Block(REB_MOLD *mold, REBVAL *block, REBCNT len)
 	}
 }
 
-STOID Form_Block_Series(REBSER *blk, REBCNT index, REB_MOLD *mold, REBSER *frame)
+static void Form_Block_Series(REBSER *blk, REBCNT index, REB_MOLD *mold, REBSER *frame)
 {
 	// Form a series (part_mold means mold non-string values):
 	REBINT n;
@@ -752,7 +750,7 @@ STOID Form_Block_Series(REBSER *blk, REBCNT index, REB_MOLD *mold, REBSER *frame
 ***********************************************************************/
 
 
-STOID Mold_Typeset(REBVAL *value, REB_MOLD *mold, REBFLG molded)
+static void Mold_Typeset(REBVAL *value, REB_MOLD *mold, REBFLG molded)
 {
 	REBINT n;
 
@@ -776,7 +774,7 @@ STOID Mold_Typeset(REBVAL *value, REB_MOLD *mold, REBFLG molded)
 	}
 }
 
-STOID Mold_Function(REBVAL *value, REB_MOLD *mold)
+static void Mold_Function(REBVAL *value, REB_MOLD *mold)
 {
 	Pre_Mold(value, mold);
 
@@ -791,7 +789,7 @@ STOID Mold_Function(REBVAL *value, REB_MOLD *mold)
 	End_Mold(mold);
 }
 
-STOID Mold_Map(REBVAL *value, REB_MOLD *mold, REBFLG molded)
+static void Mold_Map(REBVAL *value, REB_MOLD *mold, REBFLG molded)
 {
 	REBSER *mapser = VAL_SERIES(value);
 	REBVAL *val;
@@ -828,7 +826,7 @@ STOID Mold_Map(REBVAL *value, REB_MOLD *mold, REBFLG molded)
 	Remove_Last(MOLD_LOOP);
 }
 
-STOID Form_Object(REBVAL *value, REB_MOLD *mold)
+static void Form_Object(REBVAL *value, REB_MOLD *mold)
 {
 	REBSER *wser = VAL_OBJ_WORDS(value);
 	REBVAL *words = BLK_HEAD(wser);
@@ -851,7 +849,7 @@ STOID Form_Object(REBVAL *value, REB_MOLD *mold)
 	Remove_Last(MOLD_LOOP);
 }
 
-STOID Mold_Object(REBVAL *value, REB_MOLD *mold)
+static void Mold_Object(REBVAL *value, REB_MOLD *mold)
 {
 	REBSER *wser;
 	REBVAL *words;
@@ -900,7 +898,7 @@ STOID Mold_Object(REBVAL *value, REB_MOLD *mold)
 	Remove_Last(MOLD_LOOP);
 }
 
-STOID Mold_Error(REBVAL *value, REB_MOLD *mold, REBFLG molded)
+static void Mold_Error(REBVAL *value, REB_MOLD *mold, REBFLG molded)
 {
 	ERROR_OBJ *err;
 	REBVAL *msg;  // Error message block
