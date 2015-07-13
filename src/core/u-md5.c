@@ -169,9 +169,9 @@ void MD5_Init(MD5_CTX *c) {
 	c->num=0;
 }
 
-void MD5_Update(MD5_CTX *c, register unsigned char *data, MD5_LONG len)
+void MD5_Update(MD5_CTX *c, unsigned char *data, MD5_LONG len)
 {
-	register ULONG *p;
+	ULONG *p;
 	int sw,sc;
 	ULONG l;
 
@@ -263,9 +263,9 @@ void MD5_Update(MD5_CTX *c, register unsigned char *data, MD5_LONG len)
 	}
 }
 
-static void md5_block(MD5_CTX *c, register ULONG *X)
+static void md5_block(MD5_CTX *c, ULONG *X)
 {
-	register ULONG A,B,C,D;
+	ULONG A,B,C,D;
 
 	A=c->A;
 	B=c->B;
@@ -349,9 +349,9 @@ static void md5_block(MD5_CTX *c, register ULONG *X)
 
 void MD5_Final(unsigned char *md, MD5_CTX *c)
 {
-	register int i,j;
-	register ULONG l;
-	register ULONG *p;
+	int i,j;
+	ULONG l;
+	ULONG *p;
 	static unsigned char end[4]={0x80,0x00,0x00,0x00};
 	unsigned char *cp=end;
 

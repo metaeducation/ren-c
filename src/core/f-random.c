@@ -64,7 +64,7 @@ void ran_array(aa,n)	/* put n new random numbers in aa */
 	int n;				/* array length (must be at least KK) */
 #endif
 {
-	register int i,j;
+	int i,j;
 	for (j=0;j<KK;j++) aa[j]=ran_x[j];
 	for (;j<n;j++) aa[j]=mod_diff(aa[j-KK],aa[j-LL]);
 	for (i=0;i<LL;i++,j++) ran_x[i]=mod_diff(aa[j-KK],aa[j-LL]);
@@ -88,9 +88,9 @@ static REBI64 *ran_arr_ptr=&ran_arr_dummy;	/* the next random number, or -1 */
 /*
 ***********************************************************************/
 {
-	register int t,j;
+	int t,j;
 	REBI64 x[KK+KK-1];					/* the preparation buffer */
-	register REBI64 ss=(seed+2)&(MM-2);
+	REBI64 ss=(seed+2)&(MM-2);
 	for (j=0;j<KK;j++) {
 		x[j]=ss;						/* bootstrap the buffer */
 		ss<<=1; if (ss>=MM) ss-=MM-2;	/* cyclic shift 61 bits */
