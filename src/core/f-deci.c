@@ -32,8 +32,14 @@
 **
 **    Exponent is 8-bit, unbiased.
 **
-**    Functions may be inlined (especially the ones marked by INLINE).
 **    64-bit and/or double arithmetic used where they bring advantage.
+**
+**	  !!! Inlining was once hinted here, and it may be possible to use
+**	  the hint to speed up this code.  But for the moment, inlining
+**	  decisions are being left up to the compiler due to it not being
+**    a standard feature in C89 and numerous quirks in both C and C++
+**    regarding how inline works.  A broader review of inline for
+**	  the whole codebase is required at some later date. --@HF
 **
 ***********************************************************************/
 
@@ -69,14 +75,14 @@ static const REBCNT min_int64_t_as_deci[] = {0u, 0x80000000u, 0u};
 	0 means a = b;
 	1 means a > b;
 */
-INLINE REBINT m_cmp (REBINT n, const REBCNT a[], const REBCNT b[]) {
+REBINT m_cmp (REBINT n, const REBCNT a[], const REBCNT b[]) {
 	REBINT i;
 	for (i = n - 1; i >= 0; i--)
 		if (a[i] != b[i]) return a[i] < b[i] ? -1 : 1;
 	return 0;
 }
 
-INLINE REBFLG m_is_zero (REBINT n, const REBCNT a[]) {
+REBFLG m_is_zero (REBINT n, const REBCNT a[]) {
 	REBINT i;
 	for (i = 0; (i < n) && (a[i] == 0); i++);
 	return i == n;
@@ -122,7 +128,7 @@ static const REBCNT P26_1[] = {3825205247u, 3704098002u, 5421010u};
 	Computes max decimal shift left for nonzero significand a with length 3;
 	using double arithmetic;
 */
-INLINE REBINT max_shift_left (const REBCNT a[]) {
+REBINT max_shift_left (const REBCNT a[]) {
     REBINT i;
 	i = (REBINT)(log10((a[2] * two_to_32 + a[1]) * two_to_32 + a[0]) + 0.5);
     return m_cmp (3, P[i], a) <= 0 ? 25 - i : 26 - i;
@@ -163,7 +169,7 @@ static const REBCNT Q[][6] = {
     to fit length 3;
 	using double arithmetic;
 */
-INLINE REBINT min_shift_right (const REBCNT a[6]) {
+REBINT min_shift_right (const REBCNT a[6]) {
     REBINT i;
     if (m_cmp (6, a, P26) < 0) return 0;
     i = (REBINT) (log10 (
@@ -195,7 +201,7 @@ deci deci_abs (deci a) {
 	a must be "large enough" to contain the sum;
 	using 64-bit arithmetic;
 */
-INLINE void m_add_1 (REBCNT *a, const REBCNT b) {
+void m_add_1 (REBCNT *a, const REBCNT b) {
 	REBU64 c = (REBU64) b;
 	while (c) {
 		c += (REBU64) *a;
@@ -208,7 +214,7 @@ INLINE void m_add_1 (REBCNT *a, const REBCNT b) {
 	Subtracts unsigned 32-bit value b from significand a;
 	using 64-bit arithmetic;
 */
-INLINE void m_subtract_1 (REBCNT *a, const REBCNT b) {
+void m_subtract_1 (REBCNT *a, const REBCNT b) {
 	REBI64 c = - (REBI64) b;
 	while (c) {
 		c += 0xffffffffu + (REBI64)*a + 1;
@@ -221,7 +227,7 @@ INLINE void m_subtract_1 (REBCNT *a, const REBCNT b) {
 	Adds significand b to significand a yielding sum s;
 	using 64-bit arithmetic;
 */
-INLINE void m_add (REBINT n, REBCNT s[], const REBCNT a[], const REBCNT b[]) {
+void m_add (REBINT n, REBCNT s[], const REBCNT a[], const REBCNT b[]) {
 	REBU64 c = (REBU64) 0;
 	REBINT i;
 	for (i = 0; i < n; i++) {
@@ -237,7 +243,7 @@ INLINE void m_add (REBINT n, REBCNT s[], const REBCNT a[], const REBCNT b[]) {
 	returns carry flag to signal whether the result is negative;
 	using 64-bit arithmetic;
 */
-INLINE REBINT m_subtract (REBINT n, REBCNT d[], const REBCNT a[], const REBCNT b[]) {
+REBINT m_subtract (REBINT n, REBCNT d[], const REBCNT a[], const REBCNT b[]) {
 	REBU64 c = (REBU64) 1;
 	REBINT i;
 	for (i = 0; i < n; i++) {
@@ -252,7 +258,7 @@ INLINE REBINT m_subtract (REBINT n, REBCNT d[], const REBCNT a[], const REBCNT b
 	Negates significand a;
 	using 64-bit arithmetic;
 */
-INLINE void m_negate (REBINT n, REBCNT a[]) {
+void m_negate (REBINT n, REBCNT a[]) {
 	REBU64 c = (REBU64) 1;
 	REBINT i;
 	for (i = 0; i < n; i++) {
@@ -267,7 +273,7 @@ INLINE void m_negate (REBINT n, REBCNT a[]) {
 	p and a may be the same;
 	using 64-bit arithmetic;
 */
-INLINE void m_multiply_1 (REBINT n, REBCNT p[], const REBCNT a[], REBCNT b) {
+void m_multiply_1 (REBINT n, REBCNT p[], const REBCNT a[], REBCNT b) {
 	REBINT j;
 	REBU64 f = b, g = (REBU64) 0;
 	for (j = 0; j < n; j++) {
@@ -283,7 +289,7 @@ INLINE void m_multiply_1 (REBINT n, REBCNT p[], const REBCNT a[], REBCNT b) {
 	a must be longer than the complete result;
 	n is the initial length of a;
 */
-INLINE void dsl (REBINT n, REBCNT a[], REBINT shift) {
+void dsl (REBINT n, REBCNT a[], REBINT shift) {
 	REBINT shift1;
 	for (; shift > 0; shift -= shift1) {
 		shift1 = 9 <= shift ? 9 : shift;
@@ -296,7 +302,7 @@ INLINE void dsl (REBINT n, REBCNT a[], REBINT shift) {
 	Multiplies significand a by significand b yielding the product p;
 	using 64-bit arithmetic;
 */
-INLINE void m_multiply (REBCNT p[/* n + m */], REBINT n, const REBCNT a[], REBINT m, const REBCNT b[]) {
+void m_multiply (REBCNT p[/* n + m */], REBINT n, const REBCNT a[], REBINT m, const REBCNT b[]) {
 	REBINT i, j;
 	REBU64 f, g;
 	memset (p, 0, (n + m) * sizeof (REBCNT));
@@ -318,7 +324,7 @@ INLINE void m_multiply (REBCNT p[/* n + m */], REBINT n, const REBCNT a[], REBIN
 	b must be nonzero!
 	using 64-bit arithmetic;
 */
-INLINE REBCNT m_divide_1 (REBINT n, REBCNT q[], const REBCNT a[], REBCNT b) {
+REBCNT m_divide_1 (REBINT n, REBCNT q[], const REBCNT a[], REBCNT b) {
 	REBINT i;
 	REBU64 f = 0, g = b;
 	for (i = n - 1; i >= 0; i--) {
@@ -337,7 +343,7 @@ INLINE REBCNT m_divide_1 (REBINT n, REBCNT q[], const REBCNT a[], REBCNT b) {
 	2 - exactly half of the least significant unit truncated
 	3 - more than half of the least significant unit truncated
 */
-INLINE void dsr (REBINT n, REBCNT a[], REBINT shift, REBINT *t_flag) {
+void dsr (REBINT n, REBCNT a[], REBINT shift, REBINT *t_flag) {
 	REBCNT remainder, divisor;
 	REBINT shift1;
 	for (; shift > 0; shift -= shift1) {
@@ -355,7 +361,7 @@ INLINE void dsr (REBINT n, REBCNT a[], REBINT shift, REBINT *t_flag) {
 	ea and eb are exponents;
 	ta and tb are truncate flags like above;
 */
-INLINE void make_comparable (REBCNT a[4], REBINT *ea, REBINT *ta, REBCNT b[4], REBINT *eb, REBINT *tb) {
+void make_comparable (REBCNT a[4], REBINT *ea, REBINT *ta, REBCNT b[4], REBINT *eb, REBINT *tb) {
 	REBCNT *c;
 	REBINT *p;
 	REBINT shift, shift1;
@@ -611,7 +617,7 @@ deci decimal_to_deci (REBDEC a) {
 	ta is a truncate flag as described above;
 	*f is supposed to be in range [-128; 127];
 */
-INLINE void m_ldexp (REBCNT a[4], REBINT *f, REBINT e, REBINT ta) {
+void m_ldexp (REBCNT a[4], REBINT *f, REBINT e, REBINT ta) {
 	/* take care of zero significand */
 	if (m_is_zero (3, a)) {
 		*f = 0;
@@ -988,7 +994,7 @@ deci deci_multiply (const deci a, const deci b) {
 #define MAX_N 7
 #define MAX_M 3
 
-INLINE void m_divide (
+void m_divide (
 	REBCNT q[/* n - m + 1 */],
 	REBCNT r[/* m */],
 	const REBINT n,
@@ -1127,7 +1133,7 @@ deci deci_divide (deci a, deci b) {
 
 #define MAX_NB 7
 
-INLINE REBINT m_to_string (REBYTE *s, REBINT n, const REBCNT a[]) {
+REBINT m_to_string (REBYTE *s, REBINT n, const REBCNT a[]) {
     REBCNT r, b[MAX_NB];
 	REBYTE v[10 * MAX_NB + 1], *vmax, *k;
 

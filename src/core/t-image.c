@@ -329,7 +329,7 @@
 }
 
 #ifdef NEED_ARGB_TO_BGR
-INLINE REBCNT ARGB_To_BGR(REBCNT i)
+REBCNT ARGB_To_BGR(REBCNT i)
 {
 	return
 		((i & 0x00ff0000) >> 16) | // red

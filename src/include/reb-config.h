@@ -95,7 +95,6 @@ These are now obsolete (as of A107) and should be removed:
 #define ATOI64					// supports it
 #define ITOA64					// supports it
 #define NO_TTY_ATTRIBUTES		// used in read-line.c
-#define INLINE __inline			// name used for it
 
 #ifdef THREADED
 #ifndef __MINGW32__
@@ -131,8 +130,6 @@ These are now obsolete (as of A107) and should be removed:
 // !!! No AGG definitions in Ren/C core
 //#define AGG_FREETYPE            //use freetype2 library for fonts by default
 //#define AGG_FONTCONFIG            //use fontconfig library for fonts by default
-
-#define INLINE
 
 #ifndef TO_HAIKU
 // Unsupported by gcc 2.95.3-haiku-121101

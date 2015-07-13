@@ -185,7 +185,7 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 #ifndef POOL_MAP
 /***********************************************************************
 **
-*/	static INLINE REBCNT Find_Pool(REBCNT size)
+*/	static REBCNT Find_Pool(REBCNT size)
 /*
 **		Given a size, tell us what pool it belongs to.
 **
