@@ -298,7 +298,7 @@ void Unmap_Bytes(void *srcp, REBYTE **dstp, char *map) {
 		codi->error = CODI_ERR_SIGNATURE;
 		return;
 	}
-	if (codi->action == CODI_IDENTIFY) return; // no error means success
+	if (codi->action == CODI_ACT_IDENTIFY) return; // no error means success
 
 	tp = cp;
 	Map_Bytes(&bmih, &cp, mapBITMAPINFOHEADER);
@@ -578,17 +578,17 @@ error:
 {
 	codi->error = 0;
 
-	if (codi->action == CODI_IDENTIFY) {
+	if (codi->action == CODI_ACT_IDENTIFY) {
 		Decode_BMP_Image(codi);
 		return CODI_CHECK; // error code is inverted result
 	}
 
-	if (codi->action == CODI_DECODE) {
+	if (codi->action == CODI_ACT_DECODE) {
 		Decode_BMP_Image(codi);
 		return CODI_IMAGE;
 	}
 
-	if (codi->action == CODI_ENCODE) {
+	if (codi->action == CODI_ACT_ENCODE) {
 		Encode_BMP_Image(codi);
 		return CODI_BINARY;
 	}

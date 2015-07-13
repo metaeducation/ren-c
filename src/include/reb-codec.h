@@ -70,13 +70,15 @@ enum {
 	CODI_IMAGE,
 	CODI_SOUND,
 	CODI_BLOCK,
+	CODI_MAX
 };
 
 // Codec commands:
 enum {
-	CODI_IDENTIFY,
-	CODI_DECODE,
-	CODI_ENCODE,
+	CODI_ACT_IDENTIFY,
+	CODI_ACT_DECODE,
+	CODI_ACT_ENCODE,
+	CODI_ACT_MAX
 };
 
 // Codec errors:

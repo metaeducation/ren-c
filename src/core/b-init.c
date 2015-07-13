@@ -655,15 +655,15 @@ static	BOOT_BLK *Boot_Block;
 {
 	codi->error = 0;
 
-	if (codi->action == CODI_IDENTIFY) {
+	if (codi->action == CODI_ACT_IDENTIFY) {
 		return CODI_CHECK; // error code is inverted result
 	}
 
-	if (codi->action == CODI_DECODE) {
+	if (codi->action == CODI_ACT_DECODE) {
 		return CODI_TEXT;
 	}
 
-	if (codi->action == CODI_ENCODE) {
+	if (codi->action == CODI_ACT_ENCODE) {
 		return CODI_BINARY;
 	}
 
@@ -680,11 +680,11 @@ static	BOOT_BLK *Boot_Block;
 {
 	codi->error = 0;
 
-	if (codi->action == CODI_IDENTIFY) {
+	if (codi->action == CODI_ACT_IDENTIFY) {
 		return CODI_CHECK; // error code is inverted result
 	}
 
-	if (codi->action == CODI_DECODE) {
+	if (codi->action == CODI_ACT_DECODE) {
 		REBSER *ser = Make_Unicode(codi->len);
 		REBINT size = Decode_UTF16(UNI_HEAD(ser), codi->data, codi->len, le, FALSE);
 		SERIES_TAIL(ser) = size;
@@ -700,7 +700,7 @@ static	BOOT_BLK *Boot_Block;
 		return CODI_TEXT;
 	}
 
-	if (codi->action == CODI_ENCODE) {
+	if (codi->action == CODI_ACT_ENCODE) {
 		u16 * data = ALLOC_ARRAY(u16, codi->len);
 		if (codi->w == 1) {
 			/* in ASCII */
@@ -788,11 +788,11 @@ static	BOOT_BLK *Boot_Block;
 {
 	codi->error = 0;
 
-	if (codi->action == CODI_IDENTIFY) {
+	if (codi->action == CODI_ACT_IDENTIFY) {
 		return CODI_CHECK; // error code is inverted result
 	}
 
-	if (codi->action == CODI_DECODE) {
+	if (codi->action == CODI_ACT_DECODE) {
 		codi->extra.other = Load_Markup(codi->data, codi->len);
 		return CODI_BLOCK;
 	}

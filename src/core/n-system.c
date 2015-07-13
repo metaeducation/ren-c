@@ -402,14 +402,14 @@ err:
 
 	CLEAR(&codi, sizeof(codi));
 
-	codi.action = CODI_DECODE;
+	codi.action = CODI_ACT_DECODE;
 
 	val = D_ARG(3);
 
 	switch (VAL_WORD_SYM(D_ARG(2))) {
 
 	case SYM_IDENTIFY:
-		codi.action = CODI_IDENTIFY;
+		codi.action = CODI_ACT_IDENTIFY;
 	case SYM_DECODE:
 		if (!IS_BINARY(val)) Trap1_DEAD_END(RE_INVALID_ARG, val);
 		codi.data = VAL_BIN_DATA(D_ARG(3));
@@ -417,7 +417,7 @@ err:
 		break;
 
 	case SYM_ENCODE:
-		codi.action = CODI_ENCODE;
+		codi.action = CODI_ACT_ENCODE;
 		if (IS_IMAGE(val)) {
 			codi.extra.bits = VAL_IMAGE_BITS(val);
 			codi.w = VAL_IMAGE_WIDE(val);

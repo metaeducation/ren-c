@@ -10793,17 +10793,17 @@ extern void Register_Codec(const REBYTE *name, codo dispatcher);
 	// Handle JPEG error throw:
 	if (setjmp(jpeg_state)) {
 		codi->error = CODI_ERR_BAD_DATA; // generic
-		if (codi->action == CODI_IDENTIFY) return CODI_CHECK;
+		if (codi->action == CODI_ACT_IDENTIFY) return CODI_CHECK;
 		return CODI_ERROR;
 	}
 
-	if (codi->action == CODI_IDENTIFY) {
+	if (codi->action == CODI_ACT_IDENTIFY) {
 		int w, h;
 		jpeg_info(s_cast(codi->data), codi->len, &w, &h); // will throw errors
 		return CODI_CHECK;
 	}
 
-	if (codi->action == CODI_DECODE) {
+	if (codi->action == CODI_ACT_DECODE) {
 		int w, h;
 		jpeg_info(s_cast(codi->data), codi->len, &w, &h);
 		codi->extra.bits = ALLOC_ARRAY(u32, w * h);

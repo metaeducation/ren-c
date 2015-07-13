@@ -848,21 +848,21 @@ error:
 	// Handle JPEG error throw:
 	if (setjmp(png_state)) {
 		codi->error = CODI_ERR_BAD_DATA; // generic
-		if (codi->action == CODI_IDENTIFY) return CODI_CHECK;
+		if (codi->action == CODI_ACT_IDENTIFY) return CODI_CHECK;
 		return CODI_ERROR;
 	}
 
-	if (codi->action == CODI_IDENTIFY) {
+	if (codi->action == CODI_ACT_IDENTIFY) {
 		if (!png_info(codi->data, codi->len, 0, 0)) codi->error = CODI_ERR_SIGNATURE;
 		return CODI_CHECK; // error code is inverted result
 	}
 
-	if (codi->action == CODI_DECODE) {
+	if (codi->action == CODI_ACT_DECODE) {
 		Decode_PNG_Image(codi);
 		return CODI_IMAGE;
 	}
 
-	if (codi->action == CODI_ENCODE) {
+	if (codi->action == CODI_ACT_ENCODE) {
 		Encode_PNG_Image(codi);
 		return CODI_BINARY;
 	}

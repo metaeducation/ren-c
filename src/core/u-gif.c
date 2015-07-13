@@ -229,7 +229,7 @@ void Chrom_Key_Alpha(REBVAL *v,REBCNT col,REBINT blitmode) {
 		codi->error = CODI_ERR_SIGNATURE;
 		return;
 	}
-	if (codi->action == CODI_IDENTIFY) return; // no error means success
+	if (codi->action == CODI_ACT_IDENTIFY) return; // no error means success
 
 	global_colors = 0;
 	global_colormap = (unsigned char *) NULL;
@@ -330,12 +330,12 @@ void Chrom_Key_Alpha(REBVAL *v,REBCNT col,REBINT blitmode) {
 {
 	codi->error = 0;
 
-	if (codi->action == CODI_IDENTIFY) {
+	if (codi->action == CODI_ACT_IDENTIFY) {
 		Decode_GIF_Image(codi);
 		return CODI_CHECK; // error code is inverted result
 	}
 
-	if (codi->action == CODI_DECODE) {
+	if (codi->action == CODI_ACT_DECODE) {
 		Decode_GIF_Image(codi);
 		return CODI_IMAGE;
 	}
