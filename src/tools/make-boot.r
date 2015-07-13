@@ -21,6 +21,8 @@ REBOL [
 
 print "--- Make Boot : System Embedded Script ---"
 
+do %common.r
+
 do %form-header.r
 
 ; Set platform TARGET
@@ -190,40 +192,6 @@ emit-head: func [title [string!] file [file!]] [
 emit-end: func [/easy] [
 	if not easy [remove find/last out #","]
 	append out {^};^/}
-]
-
-binary-to-c: func [comp-data /local out data comma-count] [
-	; To be "strict" C standard compatible, we do not use a character
-	; string literal for data encoded as C due to limits:
-	;
-	;	http://stackoverflow.com/questions/11488616/
-	;
-	; We use an array formatted as {0xYY, ...} with 8 bytes per line
-
-	out: make string! 6 * (length? comp-data)
-	while [not tail? comp-data] [
-		;-- !!! switch to use spaces when Rebol is converted
-		append out tab ;-- !!! rejoin [space space space space]
-
-		;-- grab in groups of 8
-		hexed: enbase/base (copy/part comp-data 8) 16
-		comp-data: skip comp-data 8
-		foreach [digit1 digit2] hexed [
-			append out rejoin [{0x} digit1 digit2 {,} space]
-		]
-
-		take/last out ;-- drop the last space
-		if tail? comp-data [
-			take/last out ;-- lose that last comma
-		]
-		append out newline ;-- newline after each group, and at end
-	]
-
-	;-- Sanity check (should be one more byte in source than commas out)
-	parse out [(comma-count: 0) some [thru "," (++ comma-count)] to end]
-	assert [(comma-count + 1) = (length? head comp-data)]
-
-	out
 ]
 
 remove-tests: func [d] [

@@ -19,43 +19,10 @@ REBOL [
 
 print "--- Make Host Boot Extension ---"
 
+do %common.r
+
 secure none
 do %form-header.r
-
-;-- Conversion to C strings, depending on compiler ---------------------------
-
-to-cstr: either system/version/4 = 3 [
-	; Windows format:
-	func [str /local out] [
-		out: make string! 4 * (length? str)
-		out: insert out tab
-		forall str [
-			out: insert out reduce [to-integer first str ", "]
-			if zero? ((index? str) // 10) [out: insert out "^/^-"]
-		]
-		;remove/part out either (pick out -1) = #" " [-2][-4]
-		head out
-	]
-][
-	; Other formats (Linux, OpenBSD, etc.):
-	func [str /local out data] [
-		out: make string! 4 * (length? str)
-		forall str [
-			data: copy/part str 16
-			str: skip str 15
-			data: enbase/base data 16
-			forall data [
-				insert data "\x"
-				data: skip data 3
-			]
-			data: tail data
-			insert data {"^/}
-			append out {"}
-			append out head data
-		]
-		head out
-	]
-]
 
 ;-- Collect Sources ----------------------------------------------------------
 
@@ -151,7 +118,7 @@ emit-file: func [
 	emit "#ifdef INCLUDE_EXT_DATA^/"
 	data: append trim/head mold/only/flat source newline
 	append data to-char 0 ; null terminator may be required
-	emit ["const unsigned char RX_" name "[] = {^/" to-cstr data "^/};^/^/"]
+	emit ["const unsigned char RX_" name "[] = {^/" binary-to-c data "};^/^/"]
 	emit "#endif^/"
 
 	write rejoin [%../include/ file %.h] out
