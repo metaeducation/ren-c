@@ -94,7 +94,7 @@ static	BOOT_BLK *Boot_Block;
 	printf("%d %s\n", sizeof(REBALL), "all");
 #endif
 
-	if (VAL_TYPE(&val) != 123) Panic(RP_REBVAL_ALIGNMENT);
+	if (cast(REBCNT, VAL_TYPE(&val)) != 123) Panic(RP_REBVAL_ALIGNMENT);
 	if (sizeof(void *) == 8) {
 		if (sizeof(REBVAL) != 32) Panic(RP_REBVAL_ALIGNMENT);
 		if (sizeof(REBGOB) != 84) Panic(RP_BAD_SIZE);

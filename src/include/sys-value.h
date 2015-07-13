@@ -40,6 +40,7 @@
 
 #pragma pack(4)
 
+// Note: b-init.c verifies that lower 8 bits of header = flags.type
 typedef struct Reb_Header {
 #ifdef ENDIAN_LITTLE
 	unsigned type:8;	// datatype
@@ -60,10 +61,12 @@ typedef struct Reb_Series REBSER;
 
 // Value type identifier (generally, should be handled as integer):
 
-#define VAL_TYPE(v)		((v)->flags.flags.type)			// get only type, not flags
-#define SET_TYPE(v,t)	((v)->flags.flags.type = (t))	// set only type, not flags
-#define VAL_SET(v,t)	((v)->flags.header = (t))		// set type, clear all flags
-// Note: b-init.c verifies that lower 8 bits of header = flags.type
+// get and set only the type (not flags)
+#define VAL_TYPE(v)		((enum REBOL_Types)(v)->flags.flags.type)
+#define SET_TYPE(v,t)	((v)->flags.flags.type = (t))
+
+// set type, clear all flags
+#define VAL_SET(v,t)	((v)->flags.header = (t))
 
 // !!! Questionable idea: does setting all bytes to zero of a type
 // and then poking in a type indicator make the "zero valued"
