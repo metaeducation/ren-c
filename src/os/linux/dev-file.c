@@ -85,25 +85,32 @@
 
 #ifndef DT_DIR
 // dirent.d_type is a BSD extension, actually not part of POSIX
-// reformatted from: http://ports.haiku-files.org/wiki/CommonProblems
+// this comes from: http://ports.haiku-files.org/wiki/CommonProblems
+// modified for reformatting and to not use a variable-length-array
 static int Is_Dir(const char *path, const char *name)
 {
-	int len1 = strlen(path);
-	int len2 = strlen(name);
+	int len_path = strlen(path);
+	int len_name = strlen(name);
 	struct stat st;
 
-	char pathname[len1 + 1 + len2 + 1 + 13];
+	// !!! No clue why + 13 is needed, and not sure I want to know.
+	// It was in the original code, not second-guessing ATM.  --@HF
+	char *pathname = OS_ALLOC_ARRAY(char, len_path + 1 + len_name + 1 + 13);
+
 	strcpy(pathname, path);
 
 	/* Avoid UNC-path "//name" on Cygwin.  */
-	if (len1 > 0 && pathname[len1 - 1] != '/')
+	if (len_path > 0 && pathname[len_path - 1] != '/')
 		strcat(pathname, "/");
 
 	strcat(pathname, name);
 
-	if (stat(pathname, &st))
+	if (stat(pathname, &st)) {
+		OS_FREE(pathname);
 		return 0;
+	}
 
+	OS_FREE(pathname);
 	return S_ISDIR(st.st_mode);
 }
 #endif
