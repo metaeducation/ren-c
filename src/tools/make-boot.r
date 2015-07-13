@@ -651,7 +651,7 @@ foreach type rxt-types [
 		word? type
 		rec: find ext-types type
 	][
-		emit-line "RXE_" rec/3 rec/1
+		emit-line "RXX_" rec/3 rec/1
 	][
 		emit-line "" 0 n
 	]

@@ -147,6 +147,7 @@ enum {
 	RXE_NO_WORD,	// the word cannot be found (e.g. in an object)
 	RXE_NOT_FUNC,	// the value is not a function (for callback)
 	RXE_BAD_ARGS,	// function arguments to not match
+	RXE_MAX
 };
 
 #define SET_EXT_ERROR(v,n) ((v)->i2.int32a = (n))

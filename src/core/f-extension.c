@@ -36,15 +36,15 @@
 
 // Extension evaluation categories:
 enum {
-    RXE_NULL,	// unset
-	RXE_PTR,	// any pointer
-    RXE_32,		// logic
-    RXE_64,		// integer, decimal, etc.
-    RXE_SYM,	// word
-    RXE_SER,	// string
-	RXE_IMAGE,	// image
-	RXE_DATE,	// from upper section
-	RXE_MAX
+	RXX_NULL,	// unset
+	RXX_PTR,	// any pointer
+	RXX_32,		// logic
+	RXX_64,		// integer, decimal, etc.
+	RXX_SYM,	// word
+	RXX_SER,	// string
+	RXX_IMAGE,	// image
+	RXX_DATE,	// from upper section
+	RXX_MAX
 };
 
 //(*call)(int cmd, RXIFRM *args);
@@ -81,34 +81,34 @@ x*/	RXIARG Value_To_RXI(REBVAL *val)
 	RXIARG arg;
 
 	switch (RXT_Eval_Class[Reb_To_RXT[VAL_TYPE(val)]]) {
-	case RXE_64:
+	case RXX_64:
 		arg.int64 = VAL_INT64(val);
 		break;
-	case RXE_SER:
+	case RXX_SER:
 		arg.sri.series = VAL_SERIES(val);
 		arg.sri.index = VAL_INDEX(val);
 		break;
-	case RXE_PTR:
+	case RXX_PTR:
 		arg.addr = VAL_HANDLE_DATA(val);
 		break;
-	case RXE_32:
+	case RXX_32:
 		arg.i2.int32a = VAL_I32(val);
 		arg.i2.int32b = 0;
 		break;
-	case RXE_DATE:
+	case RXX_DATE:
 		arg.i2.int32a = VAL_ALL_BITS(val)[2];
 		arg.i2.int32b = 0;
 		break;
-	case RXE_SYM:
+	case RXX_SYM:
 		arg.i2.int32a = VAL_WORD_CANON(val);
 		arg.i2.int32b = 0;
 		break;
-	case RXE_IMAGE:
+	case RXX_IMAGE:
 		arg.iwh.image = VAL_SERIES(val);
 		arg.iwh.width = VAL_IMAGE_WIDE(val);
 		arg.iwh.height = VAL_IMAGE_HIGH(val);
 		break;
-	case RXE_NULL:
+	case RXX_NULL:
 	default:
 		arg.int64 = 0;
 		break;
@@ -124,34 +124,34 @@ x*/	void RXI_To_Value(REBVAL *val, RXIARG arg, REBCNT type)
 {
 	VAL_SET(val, RXT_To_Reb[type]);
 	switch (RXT_Eval_Class[type]) {
-	case RXE_64:
+	case RXX_64:
 		VAL_INT64(val) = arg.int64;
 		break;
-	case RXE_SER:
+	case RXX_SER:
 		VAL_SERIES(val) = arg.sri.series;
 		VAL_INDEX(val) = arg.sri.index;
 		break;
-	case RXE_PTR:
+	case RXX_PTR:
 		VAL_HANDLE_DATA(val) = arg.addr;
 		break;
-	case RXE_32:
+	case RXX_32:
 		VAL_I32(val) = arg.i2.int32a;
 		break;
-	case RXE_DATE:
+	case RXX_DATE:
 		VAL_TIME(val) = NO_TIME;
 		VAL_ALL_BITS(val)[2] = arg.i2.int32a;
 		break;
-	case RXE_SYM:
+	case RXX_SYM:
 		VAL_WORD_SYM(val) = arg.i2.int32a;
 		VAL_WORD_FRAME(val) = 0;
 		VAL_WORD_INDEX(val) = 0;
 		break;
-	case RXE_IMAGE:
+	case RXX_IMAGE:
 		VAL_SERIES(val) = arg.iwh.image;
 		VAL_IMAGE_WIDE(val) = arg.iwh.width;
 		VAL_IMAGE_HIGH(val) = arg.iwh.height;
 		break;
-	case RXE_NULL:
+	case RXX_NULL:
 		VAL_INT64(val) = 0;
 		break;
 	default:
