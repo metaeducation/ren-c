@@ -315,11 +315,11 @@ void AES_cbc_encrypt(AES_CTX *ctx, const uint8_t *msg, uint8_t *out, int length)
 void AES_cbc_decrypt(AES_CTX *ctx, const uint8_t *msg, uint8_t *out, int length)
 {
     int i;
-    uint32_t tin[4], xor[4], tout[4], data[4], iv[4];
+	uint32_t tin[4], xxor[4], tout[4], data[4], iv[4];
 
     memcpy(iv, ctx->iv, AES_IV_SIZE);
     for (i = 0; i < 4; i++)
-        xor[i] = ntohl(iv[i]);
+		xxor[i] = ntohl(iv[i]);
 
     for (length -= 16; length >= 0; length -= 16)
     {
@@ -338,8 +338,8 @@ void AES_cbc_decrypt(AES_CTX *ctx, const uint8_t *msg, uint8_t *out, int length)
 
         for (i = 0; i < 4; i++)
         {
-            tout[i] = data[i]^xor[i];
-            xor[i] = tin[i];
+			tout[i] = data[i]^xxor[i];
+			xxor[i] = tin[i];
             out_32[i] = htonl(tout[i]);
         }
 
@@ -348,7 +348,7 @@ void AES_cbc_decrypt(AES_CTX *ctx, const uint8_t *msg, uint8_t *out, int length)
     }
 
     for (i = 0; i < 4; i++)
-        iv[i] = htonl(xor[i]);
+		iv[i] = htonl(xxor[i]);
     memcpy(ctx->iv, iv, AES_IV_SIZE);
 }
 
