@@ -975,7 +975,7 @@ ConversionResult ConvertUTF8toUTF32 (
 
 /***********************************************************************
 **
-*/	REBCNT Length_As_UTF8(REBUNI *src, REBCNT len, REBOOL uni, REBOOL ccr)
+*/	REBCNT Length_As_UTF8(const void *p, REBCNT len, REBOOL uni, REBOOL ccr)
 /*
 **		Returns how long the UTF8 encoded string would be.
 **
@@ -983,10 +983,11 @@ ConversionResult ConvertUTF8toUTF32 (
 {
 	REBCNT size = 0;
 	REBCNT c;
-	REBYTE *bp = (REBYTE*)src;
+	const REBYTE *bp = uni ? NULL : cast(const REBYTE *, p);
+	const REBUNI *up = uni ? cast(const REBUNI *, p) : NULL;
 
 	for (; len > 0; len--) {
-		c = uni ? *src++ : *bp++;
+		c = uni ? *up++ : *bp++;
 		if (c < (UTF32)0x80) {
 #ifdef TO_WIN32
 			if (ccr && c == LF) size++; // because we will add a CR to it

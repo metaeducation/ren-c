@@ -832,7 +832,7 @@ chk_neg:
 
 /***********************************************************************
 **
-*/	static REBSER *File_List_To_Block(REBCHR *str)
+*/	static REBSER *File_List_To_Block(const REBCHR *str)
 /*
 **		Convert file directory and file name list to block.
 **
@@ -840,7 +840,7 @@ chk_neg:
 {
 	REBCNT n;
 	REBCNT len = 0;
-	REBCHR *start = str;
+	const REBCHR *start = str;
 	REBSER *blk;
 	REBSER *dir;
 
@@ -861,12 +861,13 @@ chk_neg:
 	}
 	else {  // First is dir path for the rest of the files
 #ifdef TO_WIN32 /* directory followed by files */
+		assert(sizeof(wchar_t) == sizeof(REBCHR));
 		dir = To_REBOL_Path(str, n, -1, TRUE);
 		str += n + 1; // next
 		len = dir->tail;
         while ((n = OS_STRLEN(str))) {
 			dir->tail = len;
-			Append_Uni_Uni(dir, str, n);
+			Append_Uni_Uni(dir, cast(const REBUNI*, str), n);
 			Set_Series(REB_FILE, Append_Value(blk), Copy_String(dir, 0, -1));
 			str += n + 1; // next
 		}

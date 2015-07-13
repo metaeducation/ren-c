@@ -548,7 +548,8 @@ typedef struct Reb_Series_Ref
 		: (UNI_HEAD(s)[n]=(cast(REBUNI, (c)))) \
 	)
 
-#define GET_CHAR_UNI(f,p,i) (uni ? ((REBUNI*)p)[i] : ((REBYTE*)bp)[i])
+#define GET_CHAR_UNI(f,p,i) \
+	(uni ? cast(const REBUNI*, p)[i] : cast(const REBYTE*, bp)[i])
 
 #define VAL_ANY_CHAR(v) GET_ANY_CHAR(VAL_SERIES(v), VAL_INDEX(v))
 

@@ -209,7 +209,7 @@
 
 /***********************************************************************
 **
-*/	void Insert_String(REBSER *dst, REBCNT idx, REBSER *src, REBCNT pos, REBCNT len, REBFLG no_expand)
+*/	void Insert_String(REBSER *dst, REBCNT idx, const REBSER *src, REBCNT pos, REBCNT len, REBFLG no_expand)
 /*
 **		Insert a non-encoded string into a series at given index.
 **		Source and/or destination can be 1 or 2 bytes wide.
@@ -322,12 +322,12 @@ cp_same:
 		n = Decode_UTF8(UNI_HEAD(up), VAL_BIN_DATA(val), n, FALSE);
 		SERIES_TAIL(up) = abs(n);
 		UNI_TERM(up);
-		return UNI_HEAD(up);
+		return cast(REBCHR*, UNI_HEAD(up));
 	}
 	else {
 		// Already wide, we can use it as-is:
 		// !Assumes the OS uses same wide format!
-		return VAL_UNI_DATA(val);
+		return cast(REBCHR*, VAL_UNI_DATA(val));
 	}
 #else
 	if (VAL_STR_IS_ASCII(val)) {
@@ -434,7 +434,7 @@ cp_same:
 
 /***********************************************************************
 **
-*/	void Append_Uni_Bytes(REBSER *dst, REBUNI *src, REBCNT len)
+*/	void Append_Uni_Bytes(REBSER *dst, const REBUNI *src, REBCNT len)
 /*
 **		Append a unicode string to a byte string. OPTIMZED.
 **
@@ -456,7 +456,7 @@ cp_same:
 
 /***********************************************************************
 **
-*/	void Append_Uni_Uni(REBSER *dst, REBUNI *src, REBCNT len)
+*/	void Append_Uni_Uni(REBSER *dst, const REBUNI *src, REBCNT len)
 /*
 **		Append a unicode string to a unicode string. OPTIMZED.
 **
@@ -478,7 +478,7 @@ cp_same:
 
 /***********************************************************************
 **
-*/	void Append_String(REBSER *dst, REBSER *src, REBCNT i, REBCNT len)
+*/	void Append_String(REBSER *dst, const REBSER *src, REBCNT i, REBCNT len)
 /*
 **		Append a byte or unicode string to a unicode string.
 **

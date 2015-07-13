@@ -147,7 +147,7 @@ typedef REBFLG (*MAKE_FUNC)(REBVAL *, REBVAL *, REBCNT);
 
 /***********************************************************************
 **
-*/	REBCNT Scan_Hex_Value(const void *src, REBCNT len, REBOOL uni)
+*/	REBCNT Scan_Hex_Value(const void *p, REBCNT len, REBOOL uni)
 /*
 **		Given a string, scan it as hex. Chars can be 8 or 16 bit.
 **		Result is 32 bits max.
@@ -159,15 +159,13 @@ typedef REBFLG (*MAKE_FUNC)(REBVAL *, REBVAL *, REBCNT);
 	REBCNT n;
 	REBYTE lex;
 	REBCNT num = 0;
+	const REBYTE *bp = uni ? NULL : cast(const REBYTE *, p);
+	const REBUNI *up = uni ? cast(const REBUNI *, p) : NULL;
 
 	if (len > 8) goto bad_hex;
 
 	for (n = 0; n < len; n++) {
-
-		if (uni)
-			c = cast(const REBUNI*, src)[n];
-		else
-			c = cast(const REBYTE*, src)[n];
+		c = uni ? up[n] : cast(REBUNI, bp[n]);
 
 		if (c > 255) goto bad_hex;
 

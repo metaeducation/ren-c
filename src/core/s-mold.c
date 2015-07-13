@@ -399,7 +399,7 @@ static void Mold_String_Series(REBVAL *value, REB_MOLD *mold)
 		*dp++ = '"';
 
 		for (n = idx; n < VAL_TAIL(value); n++) {
-			c = uni ? up[n] : (REBUNI)(bp[n]);
+			c = uni ? up[n] : cast(REBUNI, bp[n]);
 			dp = Emit_Uni_Char(dp, c, (REBOOL)GET_MOPT(mold, MOPT_ANSI_ONLY)); // parened
 		}
 
@@ -417,7 +417,7 @@ static void Mold_String_Series(REBVAL *value, REB_MOLD *mold)
 
 	for (n = idx; n < VAL_TAIL(value); n++) {
 
-		c = uni ? up[n] : (REBUNI)(bp[n]);
+		c = uni ? up[n] : cast(REBUNI, bp[n]);
 		switch (c) {
 		case '{':
 		case '}':

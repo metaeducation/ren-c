@@ -86,7 +86,7 @@ static REBREQ *Req_SIO;
 
 /***********************************************************************
 **
-*/	static void Prin_OS_String(const REBYTE *bp, REBCNT len, REBOOL uni)
+*/	static void Prin_OS_String(const void *p, REBCNT len, REBOOL uni)
 /*
 **		Print a string, but no line terminator or space.
 **
@@ -99,9 +99,10 @@ static REBREQ *Req_SIO;
 	REBYTE *buf = &buffer[0];
 	REBINT n;
 	REBCNT len2;
-	const REBUNI *up = cast(const REBUNI*, bp);
+	const REBYTE *bp = uni ? NULL : cast(const REBYTE *, p);
+	const REBUNI *up = uni ? cast(const REBUNI *, p) : NULL;
 
-	if (!bp) Panic(RP_NO_PRINT_PTR);
+	if (!p) Panic(RP_NO_PRINT_PTR);
 
 	// Determine length if not provided:
 	if (len == UNKNOWN) len = uni ? Strlen_Uni(up) : LEN_BYTES(bp);
@@ -223,12 +224,13 @@ static REBREQ *Req_SIO;
 
 /***********************************************************************
 **
-*/	void Debug_String(const REBYTE *bp, REBCNT len, REBOOL uni, REBINT lines)
+*/	void Debug_String(const void *p, REBCNT len, REBOOL uni, REBINT lines)
 /*
 ***********************************************************************/
 {
-	const REBUNI *up = cast(const REBUNI *, bp);
 	REBUNI uc;
+	const REBYTE *bp = uni ? NULL : cast(const REBYTE *, p);
+	const REBUNI *up = uni ? cast(const REBUNI *, p) : NULL;
 
 	if (Trace_Limit > 0) {
 		if (Trace_Buffer->tail >= Trace_Limit)

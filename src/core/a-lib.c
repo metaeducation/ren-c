@@ -1069,7 +1069,7 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 
 /***********************************************************************
 **
-*/	RL_API REBCNT RL_Length_As_UTF8(void *src, REBCNT len, REBOOL uni, REBOOL ccr)
+*/	RL_API REBCNT RL_Length_As_UTF8(const void *p, REBCNT len, REBOOL uni, REBOOL ccr)
 /*
 **		Calculate the UTF8 length of an array of unicode codepoints
 **
@@ -1077,7 +1077,7 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 **		How long the UTF8 encoded string would be
 **
 **	Arguments:
-**		src - array of bytes or wide characters
+**		p - pointer to array of bytes or wide characters
 **		len - length of src in codepoints (not including terminator)
 **		uni - true if src is in wide character format
 **		ccr - convert linefeeds into linefeed + carraige-return
@@ -1089,7 +1089,7 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 **
 ***********************************************************************/
 {
-	return Length_As_UTF8(cast(REBUNI*, src), len, uni, ccr);
+	return Length_As_UTF8(p, len, uni, ccr);
 }
 
 

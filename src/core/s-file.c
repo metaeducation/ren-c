@@ -34,7 +34,7 @@
 
 /***********************************************************************
 **
-*/	REBSER *To_REBOL_Path(void *bp, REBCNT len, REBINT uni, REBFLG dir)
+*/	REBSER *To_REBOL_Path(const void *p, REBCNT len, REBINT uni, REBFLG dir)
 /*
 **		Convert local filename to a REBOL filename.
 **
@@ -56,16 +56,18 @@
 	REBSER *dst;
 	REBCNT n;
 	REBCNT i;
+	const REBYTE *bp = uni ? NULL : cast(const REBYTE *, p);
+	const REBUNI *up = uni ? cast(const REBUNI *, p) : NULL;
 
 	if (len == 0)
-		len = uni ? Strlen_Uni((REBUNI*)bp) : LEN_BYTES((REBYTE*)bp);
+		len = uni ? Strlen_Uni(up) : LEN_BYTES(bp);
 
 	n = 0;
-	dst = ((uni == -1) || (uni && Is_Wide((REBUNI*)bp, len)))
+	dst = ((uni == -1) || (uni && Is_Wide(up, len)))
 		? Make_Unicode(len+FN_PAD) : Make_Binary(len+FN_PAD);
 
 	for (i = 0; i < len;) {
-		c = uni ? ((REBUNI*)bp)[i] : ((REBYTE*)bp)[i];
+		c = uni ? up[i] : bp[i];
 		i++;
 #ifdef TO_WIN32
 		if (c == ':') {
@@ -73,7 +75,7 @@
 			if (colon || slash) return 0; // no prior : or / allowed
 			colon = 1;
 			if (i < len) {
-				c = uni ? ((REBUNI*)bp)[i] : ((REBYTE*)bp)[i];
+				c = uni ? up[i] : bp[i];
 				if (c == '\\' || c == '/') i++; // skip / in foo:/file
 			}
 			c = '/'; // replace : with a /
@@ -95,7 +97,7 @@
 
 #ifdef TO_WIN32
 	// Change C:/ to /C/ (and C:X to /C/X):
-	if (colon) Insert_Char(dst, 0, (REBCNT)'/');
+	if (colon) Insert_Char(dst, 0, '/');
 #endif
 
 	return dst;
@@ -117,7 +119,7 @@
 
 /***********************************************************************
 **
-*/	REBSER *To_Local_Path(void *bp, REBCNT len, REBOOL uni, REBFLG full)
+*/	REBSER *To_Local_Path(const void *p, REBCNT len, REBOOL uni, REBFLG full)
 /*
 **		Convert REBOL filename to a local filename.
 **
@@ -138,9 +140,11 @@
 	REBUNI *out;
 	REBCHR *lpath;
 	REBCNT l = 0;
+	const REBYTE *bp = uni ? NULL : cast(const REBYTE *, p);
+	const REBUNI *up = uni ? cast(const REBUNI *, p) : NULL;
 
 	if (len == 0)
-		len = uni ? Strlen_Uni((REBUNI*)bp) : LEN_BYTES((REBYTE*)bp);
+		len = uni ? Strlen_Uni(up) : LEN_BYTES(bp);
 
 	// Prescan for: /c/dir = c:/dir, /vol/dir = //vol/dir, //dir = ??
 	c = GET_CHAR_UNI(uni, bp, i);
@@ -175,7 +179,8 @@
 		dst = Make_Unicode(l + len + FN_PAD); // may be longer (if lpath is encoded)
 		if (full) {
 #ifdef TO_WIN32
-			Append_Uni_Uni(dst, lpath, l);
+			assert(sizeof(REBCHR) == sizeof(REBUNI));
+			Append_Uni_Uni(dst, cast(const REBUNI*, lpath), l);
 #else
 			REBINT clen = Decode_UTF8(
 				UNI_HEAD(dst), cast(const REBYTE*, lpath), l, FALSE
