@@ -401,10 +401,11 @@ static REBOOL assign_scalar(REBSTU *stu,
 /* parse struct attribute */
 static void parse_attr (REBVAL *blk, REBINT *raw_size, REBUPT *raw_addr)
 {
+	REBVAL *attr = VAL_BLK_DATA(blk);
+
 	*raw_size = -1;
 	*raw_addr = 0;
 
-	REBVAL *attr = VAL_BLK_DATA(blk);
 	while (NOT_END(attr)) {
 		if (IS_SET_WORD(attr)) {
 			switch (VAL_WORD_CANON(attr)) {

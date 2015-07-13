@@ -689,8 +689,7 @@ static	BOOT_BLK *Boot_Block;
 		REBINT size = Decode_UTF16(UNI_HEAD(ser), codi->data, codi->len, le, FALSE);
 		SERIES_TAIL(ser) = size;
 		if (size < 0) { //ASCII
-			size = -size;
-			REBSER *dst = Make_Binary(size);
+			REBSER *dst = Make_Binary((size = -size));
 			Append_Uni_Bytes(dst, UNI_HEAD(ser), size);
 			ser = dst;
 		}

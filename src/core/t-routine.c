@@ -1246,9 +1246,11 @@ static void callback_dispatcher(ffi_cif *cif, void *ret, void **args, void *user
 				void *data;
 			} dispatcher_hack;
 
+			ffi_status status;
+
 			dispatcher_hack.func = VAL_ROUTINE_DISPATCHER(out);
 
-			ffi_status status =	ffi_prep_closure_loc(
+			status = ffi_prep_closure_loc(
 				VAL_ROUTINE_CLOSURE(out),
 				VAL_ROUTINE_CIF(out),
 				callback_dispatcher,

@@ -494,14 +494,17 @@ static const void * backtrace_buf [1024];
 	// Must be compile-time const for '= {...}' style init (-Wc99-extensions)
 	const char *ret[4];
 
-	if (what > 3 || what < 0) {
-		return NULL;
-	}
 	unsigned int i = 0;
 	unsigned int j = 0;
 	char *lang = NULL;
 	char *territory = NULL;
 	const char *lang_env = getenv("LANG"); /* something like: lang_territory.codeset */
+	const char ** iso639_entry;
+	const char ** iso3166_entry;
+
+	if (what > 3 || what < 0) {
+		return NULL;
+	}
 	if (lang_env == NULL){
 		return NULL;
 	}
@@ -527,12 +530,12 @@ static const void * backtrace_buf [1024];
 
 	if (lang == NULL || territory == NULL) goto error;
 
-	const char ** iso639_entry = iso639_find_entry_by_2_code(lang);
+	iso639_entry = iso639_find_entry_by_2_code(lang);
 	OS_FREE(lang);
 	lang = NULL;
 	if (iso639_entry == NULL) goto error;
 
-	const char ** iso3166_entry = iso3166_find_entry_by_2_code(territory);
+	iso3166_entry = iso3166_find_entry_by_2_code(territory);
 	OS_FREE(territory);
 	territory = NULL;
 
@@ -1098,6 +1101,7 @@ child_error:
 		off_t output_size = 0;
 		off_t err_size = 0;
 		int exited = 0;
+		int valid_nfds;
 
 		/* initialize outputs */
 		if (output_type != NONE_TYPE
@@ -1158,7 +1162,7 @@ child_error:
 			info_pipe[W] = -1;
 		}
 
-		int valid_nfds = nfds;
+		valid_nfds = nfds;
 		while (valid_nfds > 0) {
 			xpid = waitpid(fpid, &status, WNOHANG);
 			if (xpid == -1) {
@@ -1535,6 +1539,7 @@ static int Try_Browser(char *browser, REBCHR *url)
 	char *ret = NULL;
 	char *embedded_script = NULL;
 	size_t sec_size;
+	char *shstr;
 
 	script = fopen("/proc/self/exe", "r");
 	if (script == NULL) return NULL;
@@ -1570,9 +1575,7 @@ static int Try_Browser(char *browser, REBCHR *url)
 		goto header_failed;
 	}
 
-	char *shstr = OS_ALLOC_ARRAY(char,
-		sec_headers[file_header.e_shstrndx].sh_size
-	);
+	shstr = OS_ALLOC_ARRAY(char, sec_headers[file_header.e_shstrndx].sh_size);
 	if (shstr == NULL) {
 		ret = NULL;
 		goto header_failed;
