@@ -151,6 +151,7 @@ make-arg-enums: func [word] [
 	emit ["enum act_" word "_arg {"]
 	emit [tab "ARG_" uword "_0,"]
 	foreach w args [emit [tab "ARG_" uword "_" w ","]]
+	emit [tab "ARG_" uword "_MAX"]
 	emit "};^/"
 
 	; Argument bitmask:
@@ -160,6 +161,7 @@ make-arg-enums: func [word] [
 		emit [tab "AM_" uword "_" w " = 1 << " n ","]
 		n: n + 1
 	]
+	emit [tab "AM_" uword "_MAX"]
 	emit "};^/"
 
 	repend output ["#define ALL_" uword "_REFS ("]

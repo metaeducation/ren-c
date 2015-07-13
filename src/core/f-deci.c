@@ -408,7 +408,20 @@ INLINE void make_comparable (REBCNT a[4], REBINT *ea, REBINT *ta, REBCNT b[4], R
 
 REBFLG deci_is_equal (deci a, deci b) {
 	REBINT ea = a.e, eb = b.e, ta, tb;
-	REBCNT sa[] = {a.m0, a.m1, a.m2, 0}, sb[] = {b.m0, b.m1, b.m2, 0};
+
+	// Must be compile-time const for '= {...}' style init (-Wc99-extensions)
+	REBCNT sa[4];
+	REBCNT sb[4];
+
+	sa[0] = a.m0;
+	sa[1] = a.m1;
+	sa[2] = a.m2;
+	sa[3] = 0;
+
+	sb[0] = b.m0;
+	sb[1] = b.m1;
+	sb[2] = b.m2;
+	sb[3] = 0;
 
 	make_comparable (sa, &ea, &ta, sb, &eb, &tb);
 
@@ -421,7 +434,20 @@ REBFLG deci_is_equal (deci a, deci b) {
 
 REBFLG deci_is_lesser_or_equal (deci a, deci b) {
 	REBINT ea = a.e, eb = b.e, ta, tb;
-	REBCNT sa[] = {a.m0, a.m1, a.m2, 0}, sb[] = {b.m0, b.m1, b.m2, 0};
+
+	// Must be compile-time const for '= {...}' style init (-Wc99-extensions)
+	REBCNT sa[4];
+	REBCNT sb[4];
+
+	sa[0] = a.m0;
+	sa[1] = a.m1;
+	sa[2] = a.m2;
+	sa[3] = 0;
+
+	sb[0] = b.m0;
+	sb[1] = b.m1;
+	sb[2] = b.m2;
+	sb[3] = 0;
 
 	if (a.s && !b.s) return 1;
 	if (!a.s && b.s) return m_is_zero (3, sa) && m_is_zero (3, sb);
@@ -438,7 +464,20 @@ deci deci_add (deci a, deci b) {
 	deci c;
 	REBCNT sc[4];
 	REBINT ea = a.e, eb = b.e, ta, tb, tc, test;
-	REBCNT sa[] = {a.m0, a.m1, a.m2, 0}, sb[] = {b.m0, b.m1, b.m2, 0};
+
+	// Must be compile-time const for '= {...}' style init (-Wc99-extensions)
+	REBCNT sa[4];
+	REBCNT sb[4];
+
+	sa[0] = a.m0;
+	sa[1] = a.m1;
+	sa[2] = a.m2;
+	sa[3] = 0;
+
+	sb[0] = b.m0;
+	sb[1] = b.m1;
+	sb[2] = b.m2;
+	sb[3] = 0;
 
 	make_comparable (sa, &ea, &ta, sb, &eb, &tb);
 
@@ -500,9 +539,16 @@ deci int_to_deci (REBI64 a) {
 
 /* using 64-bit arithmetic */
 REBI64 deci_to_int (const deci a) {
-	REBCNT sa[] = {a.m0, a.m1, a.m2, 0};
 	REBINT ta;
 	REBI64 result;
+
+	// Must be compile-time const for '= {...}' style init (-Wc99-extensions)
+	REBCNT sa[4];
+
+	sa[0] = a.m0;
+	sa[1] = a.m1;
+	sa[2] = a.m2;
+	sa[3] = 0;
 
 	/* handle zero and small numbers */
 	if (m_is_zero (3, sa) || (a.e < -26)) return (REBI64) 0;
@@ -604,8 +650,15 @@ INLINE void m_ldexp (REBCNT a[4], REBINT *f, REBINT e, REBINT ta) {
 
 /* Calculates a * (10 ** e); returns zero when underflow occurs */
 deci deci_ldexp (deci a, REBINT e) {
-	REBCNT sa[] = {a.m0, a.m1, a.m2, 0};
 	REBINT f = a.e;
+
+	// Must be compile-time const for '= {...}' style init (-Wc99-extensions)
+	REBCNT sa[4];
+
+	sa[0] = a.m0;
+	sa[1] = a.m1;
+	sa[2] = a.m2;
+	sa[3] = 0;
 
 	m_ldexp (sa, &f, e, 0);
 	a.m0 = sa[0];
@@ -888,8 +941,20 @@ deci deci_half_floor (deci a, deci b) {
 
 deci deci_multiply (const deci a, const deci b) {
 	deci c;
-	REBCNT sa[] = {a.m0, a.m1, a.m2}, sb[] = {b.m0, b.m1, b.m2}, sc[7];
+	REBCNT sc[7];
 	REBINT shift, tc = 0, e, f = 0;
+
+	// Must be compile-time const for '= {...}' style init (-Wc99-extensions)
+	REBCNT sa[3];
+	REBCNT sb[3];
+
+	sa[0] = a.m0;
+	sa[1] = a.m1;
+	sa[2] = a.m2;
+
+	sb[0] = b.m0;
+	sb[1] = b.m1;
+	sb[2] = b.m2;
 
 	/* compute the sign */
 	c.s = (!a.s && b.s) || (a.s && !b.s);
@@ -988,10 +1053,25 @@ INLINE void m_divide (
 deci deci_divide (deci a, deci b) {
 	REBINT e = a.e - b.e, f = 0;
 	deci c;
-	REBCNT q[] = {0, 0, 0, 0, 0, 0}, r[4];
-	REBCNT sa[] = {a.m0, a.m1, a.m2, 0, 0, 0}, sb[] = {b.m0, b.m1, b.m2, 0};
 	double a_dbl, b_dbl, l10;
 	REBINT shift, na, nb, tc;
+	REBCNT q[] = {0, 0, 0, 0, 0, 0}, r[4];
+
+	// Must be compile-time const for '= {...}' style init (-Wc99-extensions)
+	REBCNT sa[6];
+	REBCNT sb[4];
+
+	sa[0] = a.m0;
+	sa[1] = a.m1;
+	sa[2] = a.m2;
+	sa[3] = 0;
+	sa[4] = 0;
+	sa[5] = 0;
+
+	sb[0] = b.m0;
+	sb[1] = b.m1;
+	sb[2] = b.m2;
+	sb[3] = 0;
 
 	if (deci_is_zero (b)) Trap_DECI_END(RE_ZERO_DIVIDE);
 
@@ -1077,8 +1157,14 @@ INLINE REBINT m_to_string (REBYTE *s, REBINT n, const REBCNT a[]) {
 
 REBINT deci_to_string(REBYTE *string, const deci a, const REBYTE symbol, const REBYTE point) {
 	REBYTE *s = string;
-	REBCNT sa[] = {a.m0, a.m1, a.m2};
 	REBINT j, e;
+
+	// Must be compile-time const for '= {...}' style init (-Wc99-extensions)
+	REBCNT sa[3];
+
+	sa[0] = a.m0;
+	sa[1] = a.m1;
+	sa[2] = a.m2;
 
 	/* sign */
 	if (a.s) *s++ = '-';
@@ -1132,11 +1218,22 @@ REBINT deci_to_string(REBYTE *string, const deci a, const REBYTE symbol, const R
 }
 
 deci deci_mod (deci a, deci b) {
-	REBCNT sa[] = {a.m0, a.m1, a.m2};
-	REBCNT sb[] = {b.m0, b.m1, b.m2,0}; /* the additional place is for dsl */
 	REBCNT sc[] = {10u, 0, 0};
 	REBCNT p[6]; /* for multiplication results */
 	REBINT e, nb;
+
+	// Must be compile-time const for '= {...}' style init (-Wc99-extensions)
+	REBCNT sa[3];
+	REBCNT sb[4];
+
+	sa[0] = a.m0;
+	sa[1] = a.m1;
+	sa[2] = a.m2;
+
+	sb[0] = b.m0;
+	sb[1] = b.m1;
+	sb[2] = b.m2;
+	sb[3] = 0; /* the additional place is for dsl */
 
 	if (deci_is_zero (b)) Trap_DECI_END(RE_ZERO_DIVIDE);
 	if (deci_is_zero (a)) return deci_zero;

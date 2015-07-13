@@ -491,6 +491,9 @@ static const void * backtrace_buf [1024];
 **
 ***********************************************************************/
 {
+	// Must be compile-time const for '= {...}' style init (-Wc99-extensions)
+	const char *ret[4];
+
 	if (what > 3 || what < 0) {
 		return NULL;
 	}
@@ -533,9 +536,11 @@ static const void * backtrace_buf [1024];
 	OS_FREE(territory);
 	territory = NULL;
 
-	const char *ret[] = {
-		iso639_entry[3], iso639_entry[3], iso3166_entry[1], iso3166_entry[1]
-	};
+	ret[0] = iso639_entry[3];
+	ret[1] = iso639_entry[3];
+	ret[2] = iso3166_entry[1];
+	ret[3] = iso3166_entry[1];
+
 	return strdup(ret[what]);
 
 error:
@@ -1364,7 +1369,13 @@ stdin_pipe_err:
 
 static int Try_Browser(char *browser, REBCHR *url)
 {
-	char const *argv[] = {browser, url, NULL};
+	// Must be compile-time const for '= {...}' style init (-Wc99-extensions)
+	char const *argv[3];
+
+	argv[0] = browser;
+	argv[1] = url;
+	argv[2] = NULL;
+
 	return OS_Create_Process(browser, 2, argv, 0,
 							NULL, /* pid */
 							NULL, /* exit_code */

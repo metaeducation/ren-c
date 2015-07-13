@@ -162,22 +162,24 @@
 ***********************************************************************/
 {
 	REBINT n;
-	REBINT nums [] = {
-		0,
-		0,
-		(REBINT)Eval_Cycles,
-		Eval_Count,
-		Eval_Dose,
-		Eval_Signals,
-		Eval_Sigmask,
-		DSP,
-		DSF,
-		0,
-		GC_Ballast,
-		GC_Disabled,
-		SERIES_TAIL(GC_Protect),
-		GC_Last_Infant,
-	};
+
+	// Must be compile-time const for '= {...}' style init (-Wc99-extensions)
+	REBINT nums[14];
+
+	nums[0] = 0;
+	nums[1] = 0,
+	nums[2] = cast(REBINT, Eval_Cycles);
+	nums[3] = Eval_Count;
+	nums[4] = Eval_Dose;
+	nums[5]	= Eval_Signals;
+	nums[6] = Eval_Sigmask;
+	nums[7] = DSP;
+	nums[8] = DSF;
+	nums[9] = 0;
+	nums[10] = GC_Ballast;
+	nums[11] = GC_Disabled;
+	nums[12] = SERIES_TAIL(GC_Protect);
+	nums[13] = GC_Last_Infant;
 
 	DISABLE_GC;
 	for (n = 0; n < 14; n++) Debug_Fmt(cs_cast(BOOT_STR(RS_DUMP, n)), nums[n]);
