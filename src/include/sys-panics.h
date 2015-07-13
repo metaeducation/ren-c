@@ -55,8 +55,9 @@ enum reb_panics {
 //  Datatype Errors (300 + N --indicates location)
 	RP_DATATYPE = 1300,
 
-//  Documented Errors (keep in-sync with error strings in boot.r!)
+//  Documented Errors (keep in-sync with error strings in strings.r!)
 	RP_STR_BASE = 1400,
+	RP_MISC,				// Unspecified (just count them)
 	RP_NO_MEMORY,			// not enough memory: %d bytes
 	RP_BAD_WIDTH,			// invalid series width: %d %d %d
 	RP_ERROR_CATCH,			// error already caught
@@ -70,9 +71,7 @@ enum reb_panics {
 	RP_NO_SAVED_STATE,		// saved state frame is missing
 	RP_MAX_EVENTS,			// event queue overflow
 	RP_NA,					// not available
-
-//	Unspecified (just count them)
-	RP_MISC,
+	RP_UNEXPECTED_CASE,		// no case in switch statement
 
 	RP_MAX
 };
