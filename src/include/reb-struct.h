@@ -58,8 +58,12 @@ struct Struct_Field {
 	REBCNT offset;
 	REBCNT dimension; /* for arrays */
 	REBCNT size; /* size of element, in bytes */
-	REBOOL array:1;
-	REBOOL done:1; /* field is initialized?, used by GC to decide if the value needs to be marked */
+
+	/* Note: C89 bitfields may be 'int', 'unsigned int', or 'signed int' */
+	unsigned int array:1;
+	/* field is initialized? */
+	/* (used by GC to decide if the value needs to be marked) */
+	unsigned int done:1;
 };
 
 /* this is hackish to work around the size limit of REBSTU
