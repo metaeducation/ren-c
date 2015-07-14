@@ -29,7 +29,6 @@ void MD5_Init(MD5_CTX *c);
 void MD5_Update(MD5_CTX *c, unsigned char *data, MD5_LONG len);
 void MD5_Final(unsigned char *md, MD5_CTX *c);
 int MD5_CtxSize(void);
-REBYTE *MD5(REBYTE *d, REBCNT n, REBYTE *md);
 
 #ifdef __cplusplus
 }
@@ -400,7 +399,11 @@ int MD5_CtxSize(void) {
 	return sizeof(MD5_CTX);
 }
 
-unsigned char *MD5(unsigned char *d, MD5_LONG n, unsigned char *md)
+/***********************************************************************
+**
+*/	REBYTE *MD5(REBYTE *d, REBCNT n, REBYTE *md)
+/*
+***********************************************************************/
 {
 	MD5_CTX c;
 	static unsigned char m[MD5_DIGEST_LENGTH];

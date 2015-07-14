@@ -57,8 +57,6 @@
 	#endif
 
 #if !defined(MD5_DEFINED) && defined(HAS_MD5)
-	REBYTE *MD5(REBYTE *, REBCNT, REBYTE *);
-
 	#ifdef __cplusplus
 	extern "C" {
 	#endif
