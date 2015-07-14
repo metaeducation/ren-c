@@ -91,6 +91,8 @@ static struct termios Term_Attrs;	// Initial settings, restored on exit
 #endif
 
 
+extern STD_TERM *Init_Terminal(void);
+
 /***********************************************************************
 **
 */	STD_TERM *Init_Terminal(void)
@@ -141,6 +143,8 @@ static struct termios Term_Attrs;	// Initial settings, restored on exit
 	return term;
 }
 
+
+extern void Quit_Terminal(STD_TERM *term);
 
 /***********************************************************************
 **
@@ -569,6 +573,8 @@ static struct termios Term_Attrs;	// Initial settings, restored on exit
 	return len;
 }
 
+
+extern int Read_Line(STD_TERM *term, char *result, int limit);
 
 /***********************************************************************
 **

@@ -40,6 +40,8 @@
 
 #include "reb-host.h"
 
+extern void Signal_Device(REBREQ *req, REBINT type);
+
 #define MAX_SERIAL_DEV_PATH 128
 
 const int speeds[] = {

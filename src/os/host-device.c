@@ -199,6 +199,8 @@ static int Poll_Default(REBDEV *dev)
 }
 
 
+extern void Done_Device(REBUPT handle, int error);
+
 /***********************************************************************
 **
 */	void Done_Device(REBUPT handle, int error)

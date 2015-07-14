@@ -44,7 +44,7 @@
 
 #include "reb-host.h"
 
-void Done_Device(int handle, int error);
+extern void Done_Device(REBUPT handle, int error);
 
 /***********************************************************************
 **

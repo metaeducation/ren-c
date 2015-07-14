@@ -100,9 +100,11 @@ static struct termios Term_Attrs;	// Initial settings, restored on exit
 #endif
 
 
+extern STD_TERM *Init_Terminal(void)
+
 /***********************************************************************
 **
-*/	STD_TERM *Init_Terminal(void)
+*/	extern STD_TERM *Init_Terminal(void)
 /*
 **		Change the terminal modes to those required for proper
 **		REBOL console handling. Return TRUE on success.
@@ -150,6 +152,8 @@ static struct termios Term_Attrs;	// Initial settings, restored on exit
 	return term;
 }
 
+
+extern void Quit_Terminal(STD_TERM *term);
 
 /***********************************************************************
 **
@@ -574,6 +578,8 @@ static struct termios Term_Attrs;	// Initial settings, restored on exit
 	return len;
 }
 
+
+extern int Read_Line(STD_TERM *term, char *result, int limit);
 
 /***********************************************************************
 **

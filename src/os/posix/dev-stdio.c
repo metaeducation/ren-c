@@ -64,9 +64,9 @@ static REBOOL Redir_Inp = 0;
 extern REBDEV *Devices[];
 
 #ifndef HAS_SMART_CONSOLE	// console line-editing and recall needed
-void *Init_Terminal();
-void Quit_Terminal(void*);
-int  Read_Line(void*, char*, int);
+extern void *Init_Terminal();
+extern void Quit_Terminal(void*);
+extern int Read_Line(void*, char*, int);
 #endif
 
 void Put_Str(REBYTE *buf);

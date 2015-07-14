@@ -44,7 +44,7 @@
 #define HWND_MESSAGE (HWND)-3
 #endif
 
-void Done_Device(int handle, int error);
+extern void Done_Device(REBUPT handle, int error);
 
 // Move or remove globals? !?
 HWND Event_Handle = 0;			// Used for async DNS

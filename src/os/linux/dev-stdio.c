@@ -62,14 +62,23 @@ static REBOOL Redir_Inp = 0;
 #define PUTE(s)		if (Std_Echo) fputs(s, Std_Echo)
 
 #ifndef HAS_SMART_CONSOLE	// console line-editing and recall needed
-void *Init_Terminal();
-void Quit_Terminal(void*);
-int  Read_Line(void*, char*, int);
+typedef struct term_data {
+	char *buffer;
+	char *residue;
+	char *out;
+	int pos;
+	int end;
+	int hist;
+} STD_TERM;
+
+extern STD_TERM *Init_Terminal();
+extern void Quit_Terminal(STD_TERM*);
+extern int Read_Line(STD_TERM*, char*, int);
 #endif
 
 void Put_Str(REBYTE *buf);
 
-void *Term_IO;
+STD_TERM *Term_IO;
 
 static int interrupted = 0;
 

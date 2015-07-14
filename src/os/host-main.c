@@ -67,6 +67,7 @@ REBARGS Main_Args;
 
 #ifdef TO_WIN32
 HINSTANCE App_Instance = 0;
+extern void Console_Output(BOOL state);
 #endif
 
 /* for memory allocation trouble shooting */

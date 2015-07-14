@@ -55,8 +55,9 @@
 #ifdef TO_WIN32
 extern void Console_Window(BOOL show);
 extern void Console_Output(BOOL state);
-extern REBOOL OS_Request_Dir(REBCHR *title, REBCHR **folder, REBCHR *path);
 #endif
+
+extern void Init_Core_Ext(void);
 
 // Encapping is not a feature supported by Ren/C
 //REBYTE *encapBuffer = NULL;

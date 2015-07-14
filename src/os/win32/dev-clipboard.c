@@ -53,6 +53,8 @@
 #include "reb-host.h"
 #include "sys-net.h"
 
+extern void Signal_Device(REBREQ *req, REBINT type);
+
 
 /***********************************************************************
 **
