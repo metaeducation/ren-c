@@ -413,7 +413,7 @@
 
 /***********************************************************************
 **
-*/  const REBYTE *Scan_Quote(const REBYTE *src, SCAN_STATE *scan_state)
+*/  static const REBYTE *Scan_Quote(const REBYTE *src, SCAN_STATE *scan_state)
 /*
 **      Scan a quoted string, handling all the escape characters.
 **
@@ -1132,8 +1132,9 @@ scanword:
 	}
 }
 
-
-extern REBSER *Scan_Full_Block(SCAN_STATE *scan_state, REBYTE mode_char);
+// !!! Only called once (inside of Scan_Block), should it be folded	in
+// so this forward declaration is not necessary?
+static REBSER *Scan_Full_Block(SCAN_STATE *scan_state, REBYTE mode_char);
 
 /***********************************************************************
 **
@@ -1500,7 +1501,7 @@ exit_block:
 
 /***********************************************************************
 **
-*/  REBSER *Scan_Full_Block(SCAN_STATE *scan_state, REBYTE mode_char)
+*/  static REBSER *Scan_Full_Block(SCAN_STATE *scan_state, REBYTE mode_char)
 /*
 **		Simple variation of scan_block to avoid problem with
 **		construct of aggregate values.
@@ -1518,7 +1519,7 @@ exit_block:
 
 /***********************************************************************
 **
-*/	REBSER *Scan_Code(SCAN_STATE *scan_state, REBYTE mode_char)
+*/	static REBSER *Scan_Code(SCAN_STATE *scan_state, REBYTE mode_char)
 /*
 **		Scan source code, given a scan state. Allows scan of source
 **		code a section at a time (used for LOAD/next).

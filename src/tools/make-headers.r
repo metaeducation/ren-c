@@ -40,11 +40,15 @@ append rlib newline
 
 append-spec: func [spec] [
 	;?? spec
+	assert [spec]
 	if all [
-		spec
 		not find spec "static"
-		not find spec "scan_state"
-		not find spec "REBNATIVE"
+		not find spec "REBNATIVE("
+
+		; The REBTYPE macro actually is expanded in the tmp-funcs
+		; Should we allow macro expansion or do the REBTYPE another way?
+		(comment [not find spec "REBTYPE("] true)
+
 		find spec #"("
 	][
 		spec: trim spec
@@ -81,6 +85,7 @@ func-header: [
 			]
 			do make error! "C++ no-arg prototype used instead of C style"
 		]
+
 		append-spec spec
 	)
 	newline

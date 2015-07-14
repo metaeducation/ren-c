@@ -914,9 +914,10 @@ typedef void (*ANYFUNC)(void *);
 typedef void (*TRYFUNC)(void *);
 typedef int  (*CMD_FUNC)(REBCNT n, REBSER *args);
 
+// NOTE: make-headers.r will skip specs with the "REBNATIVE(" in them
+// REBTYPE macros are used and expanded in tmp-funcs.h
 #define REBNATIVE(n) int N_##n(REBVAL *ds)
 #define REBTYPE(n)   int T_##n(REBVAL *ds, REBCNT action)
-#define REBPACT(n)   int P_##n(REBVAL *ds)
 
 typedef struct Reb_Routine_Info REBRIN;
 
