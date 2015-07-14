@@ -37,6 +37,7 @@
 #define	LOG2	0.6931471805599453
 #define	EPS		2.718281828459045235360287471
 
+extern const double pi1;
 const double pi1 = 3.14159265358979323846;
 const double pi2 = 2.0 * 3.14159265358979323846;
 
