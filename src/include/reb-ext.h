@@ -51,20 +51,20 @@ typedef union rxi_arg_val {
 	struct {
 		i32 int32a;
 		i32 int32b;
-	};
+	} i2;
 	struct {
 		REBD32 dec32a;
 		REBD32 dec32b;
-	};
+	} d2;
 	struct {
 		void *series;
 		u32 index;
-	};
+	} sri;
 	struct {
 		void *image;
 		int width:16;
 		int height:16;
-	};
+	} iwh;
 } RXIARG;
 
 // For direct access to arg array:
@@ -91,28 +91,29 @@ typedef int (*RXICAL)(int cmd, RXIFRM *args, REBCEC *ctx);
 #define RXA_ARG(f,n)	((f)->args[n])
 #define RXA_COUNT(f)	(RXA_ARG(f,0).bytes[0]) // number of args
 #define RXA_TYPE(f,n)	(RXA_ARG(f,0).bytes[n]) // types (of first 7 args)
-#define RXA_REF(f,n)	(RXA_ARG(f,n).int32a)
+#define RXA_REF(f,n)	(RXA_ARG(f,n).i2.int32a)
 
 #define RXA_INT64(f,n)	(RXA_ARG(f,n).int64)
 #define RXA_INT32(f,n)	(i32)(RXA_ARG(f,n).int64)
 #define RXA_DEC64(f,n)	(RXA_ARG(f,n).dec64)
-#define RXA_LOGIC(f,n)	(RXA_ARG(f,n).int32a)
-#define RXA_CHAR(f,n)	(RXA_ARG(f,n).int32a)
+#define RXA_LOGIC(f,n)	(RXA_ARG(f,n).i2.int32a)
+#define RXA_CHAR(f,n)	(RXA_ARG(f,n).i2.int32a)
 #define RXA_TIME(f,n)	(RXA_ARG(f,n).int64)
-#define RXA_DATE(f,n)	(RXA_ARG(f,n).int32a)
-#define RXA_WORD(f,n)	(RXA_ARG(f,n).int32a)
+#define RXA_DATE(f,n)	(RXA_ARG(f,n).i2.int32a)
+#define RXA_WORD(f,n)	(RXA_ARG(f,n).i2.int32a)
 #define RXA_LOG_PAIR(f,n)	{LOG_COORD_X(RXA_ARG(f,n).pair.x), LOG_COORD_Y(RXA_ARG(f,n).pair.y)}
 #define RXA_PAIR(f,n)	(RXA_ARG(f,n).pair)
 #define RXA_TUPLE(f,n)	(RXA_ARG(f,n).bytes)
-#define RXA_SERIES(f,n)	(RXA_ARG(f,n).series)
-#define RXA_INDEX(f,n)	(RXA_ARG(f,n).index)
+#define RXA_SERIES(f,n)	(RXA_ARG(f,n).sri.series)
+#define RXA_INDEX(f,n)	(RXA_ARG(f,n).sri.index)
 #define RXA_OBJECT(f,n)	(RXA_ARG(f,n).addr)
 #define RXA_MODULE(f,n)	(RXA_ARG(f,n).addr)
 #define RXA_HANDLE(f,n)	(RXA_ARG(f,n).addr)
-#define RXA_IMAGE(f,n)	(RXA_ARG(f,n).image)
-#define RXA_IMAGE_BITS(f,n)	  ((REBYTE *)RL_SERIES((RXA_ARG(f,n).image), RXI_SER_DATA))
-#define RXA_IMAGE_WIDTH(f,n)  (RXA_ARG(f,n).width)
-#define RXA_IMAGE_HEIGHT(f,n) (RXA_ARG(f,n).height)
+#define RXA_IMAGE(f,n)	(RXA_ARG(f,n).iwh.image)
+#define RXA_IMAGE_BITS(f,n) \
+	cast(REBYTE *, RL_SERIES((RXA_ARG(f,n).iwh.image), RXI_SER_DATA))
+#define RXA_IMAGE_WIDTH(f,n)  (RXA_ARG(f,n).iwh.width)
+#define RXA_IMAGE_HEIGHT(f,n) (RXA_ARG(f,n).iwh.height)
 #define RXA_COLOR_TUPLE(f,n)  (TO_RGBA_COLOR(RXA_TUPLE(f,n)[1], RXA_TUPLE(f,n)[2], RXA_TUPLE(f,n)[3], RXA_TUPLE(f,n)[0] > 3 ? RXA_TUPLE(f,n)[4] : 0xff)) //always RGBA order
 
 #define RXI_LOG_PAIR(v)	{LOG_COORD_X(v.pair.x) , LOG_COORD_Y(v.pair.y)}
@@ -148,8 +149,8 @@ enum {
 	RXE_BAD_ARGS,	// function arguments to not match
 };
 
-#define SET_EXT_ERROR(v,n) ((v)->int32a = (n))
-#define GET_EXT_ERROR(v)   ((v)->int32a)
+#define SET_EXT_ERROR(v,n) ((v)->i2.int32a = (n))
+#define GET_EXT_ERROR(v)   ((v)->i2.int32a)
 
 typedef struct rxi_callback_info {
 	u32 flags;

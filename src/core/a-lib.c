@@ -1056,7 +1056,7 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 	CLEARS(&evt);
 	evt.type = EVT_CALLBACK;
 	evt.model = EVM_CALLBACK;
-	evt.ser = (void*)cbi;
+	evt.eventee.ser = cbi;
 	SET_FLAG(cbi->flags, RXC_QUEUED);
 
 	return RL_Event(&evt);	// (returns 0 if queue is full, ignored)

@@ -53,7 +53,7 @@ enum {
 	VTSF64,
 };
 
-#define VECT_TYPE(s) ((s)->size & 0xff)
+#define VECT_TYPE(s) ((s)->extra.size & 0xff)
 
 static REBCNT bit_sizes[4] = {8, 16, 32, 64};
 
@@ -331,7 +331,7 @@ void Set_Vector_Row(REBSER *ser, REBVAL *blk)
 	case 32: bits = 2; break;
 	case 64: bits = 3; break;
 	}
-	ser->size = (dims << 8) | (type << 3) | (sign << 2) | bits;
+	ser->extra.size = (dims << 8) | (type << 3) | (sign << 2) | bits;
 
 	return ser;
 }
@@ -581,7 +581,7 @@ void Set_Vector_Row(REBSER *ser, REBVAL *blk)
 
 	case A_COPY:
 		ser = Copy_Series(vect);
-		ser->size = vect->size; // attributes
+		ser->extra.size = vect->extra.size; // attributes
 		SET_VECTOR(value, ser);
 		break;
 

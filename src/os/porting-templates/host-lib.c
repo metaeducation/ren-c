@@ -487,7 +487,7 @@ static void *Task_Ready;
 **
 ***********************************************************************/
 {
-	Convert_Date((time_t *)&(file->file.time.l), dat, 0);
+	Convert_Date(cast(time_t *, &file->special.file.time.l), dat, 0);
 }
 
 

@@ -701,7 +701,7 @@ static void emitchunk(unsigned char **cpp,char *type,char *data,int length) {
 **
 */	void Encode_PNG_Image(REBCDI *codi)
 /*
-**		Input:  Image bits (codi->bits, w, h)
+**		Input:  Image bits (codi->extra.bits, w, h)
 **		Output: PNG encoded image (codi->data, len)
 **		Error:  Code in codi->error
 **
@@ -741,7 +741,7 @@ static void emitchunk(unsigned char **cpp,char *type,char *data,int length) {
 	deflateInit(&zstream, Z_DEFAULT_COMPRESSION);
 	zstream.next_out=currentidat->data;
 	zstream.avail_out=IDATLENGTH;
-	dp=codi->bits;
+	dp=codi->extra.bits;
 	for(y=0;y<h;y++) {
 		cp=linebuf;
 		*cp++=0;
@@ -815,7 +815,7 @@ error:
 */	void Decode_PNG_Image(REBCDI *codi)
 /*
 **		Input:  PNG encoded image (codi->data, len)
-**		Output: Image bits (codi->bits, w, h)
+**		Output: Image bits (codi->extra.bits, w, h)
 **		Error:  Code in codi->error
 **
 ***********************************************************************/
@@ -826,8 +826,8 @@ error:
 	if (!png_info(codi->data, codi->len, &w, &h )) trap_png();
 	codi->w = w;
 	codi->h = h;
-	codi->bits = ALLOC_ARRAY(u32, w * h);
-	png_load(codi->data, codi->len, cast(char*, codi->bits), &alpha);
+	codi->extra.bits = ALLOC_ARRAY(u32, w * h);
+	png_load(codi->data, codi->len, cast(char*, codi->extra.bits), &alpha);
 
 	//if(alpha) VAL_IMAGE_TRANSP(Temp_Value)=VITT_ALPHA;
 }

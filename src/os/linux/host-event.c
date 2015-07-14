@@ -123,7 +123,7 @@ static void Add_Event_XY(REBGOB *gob, REBINT id, REBINT xy, REBINT flags)
 	evt.flags = (u8) (flags | (1<<EVF_HAS_XY));
 	evt.model = EVM_GUI;
 	evt.data  = xy;
-	evt.ser = (void*)gob;
+	evt.eventee.ser = gob;
 
 	RL_Event(&evt);	// returns 0 if queue is full
 }
@@ -137,7 +137,7 @@ static void Update_Event_XY(REBGOB *gob, REBINT id, REBINT xy, REBINT flags)
 	evt.flags = (u8) (flags | (1<<EVF_HAS_XY));
 	evt.model = EVM_GUI;
 	evt.data  = xy;
-	evt.ser = (void*)gob;
+	evt.eventee.ser = gob;
 
 	RL_Update_Event(&evt);
 }
@@ -151,7 +151,7 @@ static void Add_Event_Key(REBGOB *gob, REBINT id, REBINT key, REBINT flags)
 	evt.flags = flags;
 	evt.model = EVM_GUI;
 	evt.data  = key;
-	evt.ser = (void*)gob;
+	evt.eventee.ser = gob;
 
 	RL_Event(&evt);	// returns 0 if queue is full
 }

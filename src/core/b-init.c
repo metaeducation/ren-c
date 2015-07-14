@@ -709,15 +709,15 @@ extern const char Str_Banner[];
 			for (i = 0; i < codi->len; i ++) {
 #ifdef ENDIAN_LITTLE
 				if (le) {
-					data[i] = ((char*)(codi->other))[i];
+					data[i] = cast(char*, codi->extra.other)[i];
 				} else {
-					data[i] = ((char*)(codi->other))[i] << 8;
+					data[i] = cast(char*, codi->extra.other)[i] << 8;
 				}
 #elif defined (ENDIAN_BIG)
 				if (le) {
-					data[i] = ((char*)(codi->other))[i] << 8;
+					data[i] = cast(char*, codi->extra.other)[i] << 8;
 				} else {
-					data[i] = ((char*)(codi->other))[i];
+					data[i] = cast(char*, codi->extra.other)[i];
 				}
 #else
 #error "Unsupported CPU endian"
@@ -727,11 +727,11 @@ extern const char Str_Banner[];
 			/* already in UTF16 */
 #ifdef ENDIAN_LITTLE
 			if (le) {
-				memcpy(data, codi->other, codi->len * sizeof(u16));
+				memcpy(data, codi->extra.other, codi->len * sizeof(u16));
 			} else {
 				REBCNT i = 0;
 				for (i = 0; i < codi->len; i ++) {
-					REBUNI uni = ((REBUNI*)(codi->other))[i];
+					REBUNI uni = cast(REBUNI*, codi->extra.other)[i];
 					data[i] = ((uni & 0xff) << 8) | ((uni & 0xff00) >> 8);
 				}
 			}
@@ -794,7 +794,7 @@ extern const char Str_Banner[];
 	}
 
 	if (codi->action == CODI_DECODE) {
-		codi->other = (void*)Load_Markup(codi->data, codi->len);
+		codi->extra.other = Load_Markup(codi->data, codi->len);
 		return CODI_BLOCK;
 	}
 

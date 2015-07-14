@@ -74,7 +74,7 @@
 		ser = VAL_SERIES(arg);
 		RESET_SERIES(ser);
 
-		req->data = BIN_HEAD(ser);
+		req->common.data = BIN_HEAD(ser);
 		req->length = SERIES_AVAIL(ser);
 
 #ifdef nono
@@ -85,7 +85,7 @@
 
 		// Don't make buffer too large:  Bug #174   ?????
 		if (req->length > 1024) req->length = 1024;  //???
-		req->data = STR_TAIL(ser); // write at tail  //???
+		req->common.data = STR_TAIL(ser); // write at tail  //???
 		if (SERIES_TAIL(ser) == 0) req->actual = 0;  //???
 #endif
 
@@ -110,7 +110,7 @@
 #endif
 		// Another copy???
 		//Set_String(ds, Copy_OS_Str((void *)(ser->data), result));
-		Set_Binary(ds, Copy_Bytes(req->data, req->actual));
+		Set_Binary(ds, Copy_Bytes(req->common.data, req->actual));
 		break;
 
 	case A_OPEN:

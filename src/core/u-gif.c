@@ -206,7 +206,7 @@ void Chrom_Key_Alpha(REBVAL *v,REBCNT col,REBINT blitmode) {
 */	void Decode_GIF_Image(REBCDI *codi)
 /*
 **		Input:  GIF encoded image (codi->data, len)
-**		Output: Image bits (codi->bits, w, h)
+**		Output: Image bits (codi->extra.bits, w, h)
 **		Error:  Code in codi->error
 **		Return: Success as TRUE or FALSE
 **
@@ -302,7 +302,7 @@ void Chrom_Key_Alpha(REBVAL *v,REBCNT col,REBINT blitmode) {
 			Append_Series(VAL_SERIES(Temp2_Value), (REBMEM *)Temp_Value, 1);
 		}
 */
-		dp = codi->bits = ALLOC_ARRAY(u32, w * h);
+		dp = codi->extra.bits = ALLOC_ARRAY(u32, w * h);
 		codi->w = w;
 		codi->h = h;
 

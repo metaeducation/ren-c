@@ -10806,8 +10806,8 @@ extern void Register_Codec(const REBYTE *name, codo dispatcher);
 	if (codi->action == CODI_DECODE) {
 		int w, h;
 		jpeg_info(s_cast(codi->data), codi->len, &w, &h);
-		codi->bits = ALLOC_ARRAY(u32, w * h);
-		jpeg_load(s_cast(codi->data), codi->len, cast(char*, codi->bits));
+		codi->extra.bits = ALLOC_ARRAY(u32, w * h);
+		jpeg_load(s_cast(codi->data), codi->len, cast(char*, codi->extra.bits));
 		codi->w = w;
 		codi->h = h;
 		return CODI_IMAGE;

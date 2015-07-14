@@ -31,7 +31,7 @@
 
 #define MAX_BITSET 0x7fffffff
 
-#define BITS_NOT(s) ((s)->size)
+#define BITS_NOT(s) ((s)->extra.size)
 
 /***********************************************************************
 **

@@ -98,7 +98,7 @@ static REBINT Set_Serial_Settings(int ttyfd, REBREQ *req)
 {
 	REBINT n;
 	struct termios attr;
-	REBINT speed = req->serial.baud;
+	REBINT speed = req->special.serial.baud;
 	CLEARS(&attr);
 #ifdef DEBUG_SERIAL
 	printf("setting attributes: speed %d\n", speed);
@@ -120,7 +120,7 @@ static REBINT Set_Serial_Settings(int ttyfd, REBREQ *req)
 
 	attr.c_cflag &= ~CSIZE; /* clear data size bits */
 
-	switch (req->serial.data_bits) {
+	switch (req->special.serial.data_bits) {
 		case 5:
 			attr.c_cflag |= CS5;
 			break;
@@ -135,7 +135,7 @@ static REBINT Set_Serial_Settings(int ttyfd, REBREQ *req)
 			attr.c_cflag |= CS8;
 	}
 
-	switch (req->serial.parity) {
+	switch (req->special.serial.parity) {
 		case SERIAL_PARITY_ODD:
 			attr.c_cflag |= PARENB;
 			attr.c_cflag |= PARODD;
@@ -150,7 +150,7 @@ static REBINT Set_Serial_Settings(int ttyfd, REBREQ *req)
 			break;
 	}
 
-	switch (req->serial.stop_bits) {
+	switch (req->special.serial.stop_bits) {
 		case 2:
 			attr.c_cflag |= CSTOPB;
 			break;
@@ -161,7 +161,7 @@ static REBINT Set_Serial_Settings(int ttyfd, REBREQ *req)
 	}
 
 #ifdef CNEW_RTSCTS
-	switch (req->serial.parity) {
+	switch (req->special.serial.parity) {
 		case SERIAL_FLOW_CONTROL_HARDWARE:
 			attr.c_cflag |= CNEW_RTSCTS;
 			break;
@@ -210,7 +210,7 @@ static REBINT Set_Serial_Settings(int ttyfd, REBREQ *req)
 	char devpath[MAX_SERIAL_PATH];
 	REBINT h;
 
-	if (!(path = req->serial.path)) {
+	if (!(path = req->special.serial.path)) {
 		req->error = -RFE_BAD_PATH;
 		return DR_ERROR;
 	}
@@ -227,8 +227,8 @@ static REBINT Set_Serial_Settings(int ttyfd, REBREQ *req)
 	}
 
 	//Getting prior atttributes:
-	req->serial.prior_attr = Get_Serial_Settings(h);
-	if (tcgetattr(h, req->serial.prior_attr)) {
+	req->special.serial.prior_attr = Get_Serial_Settings(h);
+	if (tcgetattr(h, req->special.serial.prior_attr)) {
 		close(h);
 		return DR_ERROR;
 	}
@@ -239,7 +239,7 @@ static REBINT Set_Serial_Settings(int ttyfd, REBREQ *req)
 		return DR_ERROR;
 	}
 
-	req->id = h;
+	req->requestee.id = h;
 	return DR_DONE;
 }
 
@@ -250,11 +250,11 @@ static REBINT Set_Serial_Settings(int ttyfd, REBREQ *req)
 /*
 ***********************************************************************/
 {
-	if (req->id) {
-		//Warning: should free req->serial.prior_attr termios struct?
-		tcsetattr(req->id, TCSANOW, req->serial.prior_attr);
-		close(req->id);
-		req->id = 0;
+	if (req->requestee.id) {
+		// !!! should we free req->special.serial.prior_attr termios struct?
+		tcsetattr(req->requestee.id, TCSANOW, req->special.serial.prior_attr);
+		close(req->requestee.id);
+		req->requestee.id = 0;
 	}
 	return DR_DONE;
 }
@@ -267,12 +267,12 @@ static REBINT Set_Serial_Settings(int ttyfd, REBREQ *req)
 ***********************************************************************/
 {
 	ssize_t result = 0;
-	if (!req->id) {
+	if (!req->requestee.id) {
 		req->error = -RFE_NO_HANDLE;
 		return DR_ERROR;
 	}
 
-	result = read(req->id, req->data, req->length);
+	result = read(req->requestee.id, req->common.data, req->length);
 #ifdef DEBUG_SERIAL
 	printf("read %d ret: %d\n", req->length, result);
 #endif
@@ -299,14 +299,14 @@ static REBINT Set_Serial_Settings(int ttyfd, REBREQ *req)
 {
 	REBINT result = 0, len = 0;
 	len = req->length - req->actual;
-	if (!req->id) {
+	if (!req->requestee.id) {
 		req->error = -RFE_NO_HANDLE;
 		return DR_ERROR;
 	}
 
 	if (len <= 0) return DR_DONE;
 
-	result = write(req->id, req->data, len);
+	result = write(req->requestee.id, req->common.data, len);
 #ifdef DEBUG_SERIAL
 	printf("write %d ret: %d\n", len, result);
 #endif
@@ -319,7 +319,7 @@ static REBINT Set_Serial_Settings(int ttyfd, REBREQ *req)
 		return DR_ERROR;
 	}
 	req->actual += result;
-	req->data += result;
+	req->common.data += result;
 	if (req->actual >= req->length) {
 		Signal_Device(req, EVT_WROTE);
 		return DR_DONE;
@@ -339,8 +339,8 @@ static REBINT Set_Serial_Settings(int ttyfd, REBREQ *req)
 #ifdef QUERY_IMPLEMENTED
 	struct pollfd pfd;
 
-	if (req->id) {
-		pfd.fd = req->id;
+	if (req->requestee.id) {
+		pfd.fd = req->requestee.id;
 		pfd.events = POLLIN;
 		n = poll(&pfd, 1, 0);
 	}

@@ -58,19 +58,21 @@ static BOOL Seek_File_64(REBREQ *file)
 {
 	// Performs seek and updates index value. TRUE on scuccess.
 	// On error, returns FALSE and sets file->error field.
-	HANDLE h = (HANDLE)file->handle;
+    HANDLE h = file->requestee.handle;
 	DWORD result;
 	DWORD highint;
 
-	if (file->file.index == -1) {
+	if (file->special.file.index == -1) {
 		// Append:
 		highint = 0;
 		result = SetFilePointer(h, 0, &highint, FILE_END);
 	}
 	else {
 		// Line below updates indexh if it is affected:
-		highint = (long)(file->file.index >> 32);
-		result = SetFilePointer(h, (long)(file->file.index), &highint, FILE_BEGIN);
+		highint = cast(long, file->special.file.index >> 32);
+		result = SetFilePointer(
+			h, cast(long, file->special.file.index), &highint, FILE_BEGIN
+		);
 	}
 
 	if (result == INVALID_SET_FILE_POINTER && GetLastError() != NO_ERROR) {
@@ -78,7 +80,7 @@ static BOOL Seek_File_64(REBREQ *file)
 		return 0;
 	}
 
-	file->file.index = ((i64)highint << 32) + result;
+	file->special.file.index = (cast(i64, highint) << 32) + result;
 
 	return 1;
 }
@@ -97,53 +99,53 @@ static BOOL Seek_File_64(REBREQ *file)
 **		The dir arg provides information about the directory to read.
 **		The file arg is used to return specific file information.
 **
-**		To begin, this function is called with a dir->handle that
-**		is set to zero and a dir->file.path string for the directory.
+**		To begin, this function is called with a dir->requestee.handle that
+**		is set to zero and a dir->special.file.path string for the directory.
 **
 **		The directory is opened and a handle is stored in the dir
 **		structure for use on subsequent calls. If an error occurred,
 **		dir->error is set to the error code and -1 is returned.
 **		The dir->size field can be set to the number of files in the
-**		dir, if it is known. The dir->file.index field can be used by this
+**		dir, if it is known. The dir->special.file.index field can be used by this
 **		function to store information between calls.
 **
 **		If the open succeeded, then information about the first file
 **		is stored in the file argument and the function returns 0.
 **		On an error, the dir->error is set, the dir is closed,
-**		dir->handle is nulled, and -1 is returned.
+**		dir->requestee.handle is nulled, and -1 is returned.
 **
 **		The caller loops until all files have been obtained. This
 **		action should be uninterrupted. (The caller should not perform
 **		additional OS or IO operations between calls.)
 **
-**		When no more files are found, the dir is closed, dir->handle
+**		When no more files are found, the dir is closed, dir->requestee.handle
 **		is nulled, and 1 is returned. No file info is returned.
 **		(That is, this function is called one extra time. This helps
 **		for OSes that may deallocate file strings on dir close.)
 **
-**		Note that the dir->file.path can contain wildcards * and ?. The
+**		Note that the dir->special.file.path can contain wildcards * and ?. The
 **		processing of these can be done in the OS (if supported) or
 **		by a separate filter operation during the read.
 **
-**		Store file date info in file->file.index or other fields?
+**		Store file date info in file->special.file.index or other fields?
 **		Store permissions? Ownership? Groups? Or, require that
 **		to be part of a separate request?
 **
 ***********************************************************************/
 {
 	WIN32_FIND_DATA info;
-	HANDLE h= (HANDLE)(dir->handle);
+    HANDLE h= dir->requestee.handle;
 	wchar_t *cp = 0;
 
 	if (!h) {
 
 		// Read first file entry:
-		h = FindFirstFile(dir->file.path, &info);
+		h = FindFirstFile(dir->special.file.path, &info);
 		if (h == INVALID_HANDLE_VALUE) {
 			dir->error = -RFE_OPEN_FAIL;
 			return DR_ERROR;
 		}
-		dir->handle = h;
+		dir->requestee.handle = h;
 		CLR_FLAG(dir->flags, RRF_DONE);
 		cp = info.cFileName;
 
@@ -156,7 +158,7 @@ static BOOL Seek_File_64(REBREQ *file)
 		if (!FindNextFile(h, &info)) {
 			dir->error = GetLastError();
 			FindClose(h);
-			dir->handle = 0;
+			dir->requestee.handle = 0;
 			if (dir->error != ERROR_NO_MORE_FILES) return DR_ERROR;
 			dir->error = 0;
 			SET_FLAG(dir->flags, RRF_DONE); // no more files
@@ -168,8 +170,9 @@ static BOOL Seek_File_64(REBREQ *file)
 
 	file->modes = 0;
 	if (info.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) SET_FLAG(file->modes, RFM_DIR);
-	wcsncpy(file->file.path, info.cFileName, MAX_FILE_NAME);
-	file->file.size = ((i64)info.nFileSizeHigh << 32) + info.nFileSizeLow;
+	wcsncpy(file->special.file.path, info.cFileName, MAX_FILE_NAME);
+	file->special.file.size =
+		(cast(i64, info.nFileSizeHigh) << 32) + info.nFileSizeLow;
 
 	return DR_DONE;
 }
@@ -229,7 +232,7 @@ static BOOL Seek_File_64(REBREQ *file)
 	}
 
 	// Open the file (yes, this is how windows does it, the nutty kids):
-	h = CreateFile(file->file.path, access, FILE_SHARE_READ|FILE_SHARE_WRITE, 0, create, attrib, 0);
+	h = CreateFile(file->special.file.path, access, FILE_SHARE_READ|FILE_SHARE_WRITE, 0, create, attrib, 0);
 	if (h == INVALID_HANDLE_VALUE) {
 		file->error = -RFE_OPEN_FAIL;
 		goto fail;
@@ -247,12 +250,13 @@ static BOOL Seek_File_64(REBREQ *file)
 
 	// Fetch file size (if fails, then size is assumed zero):
 	if (GetFileInformationByHandle(h, &info)) {
-		file->file.size = ((i64)(info.nFileSizeHigh) << 32) + info.nFileSizeLow;
-		file->file.time.l = info.ftLastWriteTime.dwLowDateTime;
-		file->file.time.h = info.ftLastWriteTime.dwHighDateTime;
+		file->special.file.size =
+			(cast(i64, info.nFileSizeHigh) << 32) + info.nFileSizeLow;
+		file->special.file.time.l = info.ftLastWriteTime.dwLowDateTime;
+		file->special.file.time.h = info.ftLastWriteTime.dwHighDateTime;
 	}
 
-	file->handle = (void *)h;
+    file->requestee.handle = h;
 
 	return DR_DONE;
 
@@ -269,9 +273,9 @@ fail:
 **
 ***********************************************************************/
 {
-	if (file->handle) {
-		CloseHandle((HANDLE)(file->handle));
-		file->handle = 0;
+    if (file->requestee.handle) {
+        CloseHandle(file->requestee.handle);
+        file->requestee.handle = 0;
 	}
 	return DR_DONE;
 }
@@ -284,10 +288,10 @@ fail:
 ***********************************************************************/
 {
 	if (GET_FLAG(file->modes, RFM_DIR)) {
-		return Read_Directory(file, (REBREQ*)file->data);
+		return Read_Directory(file, cast(REBREQ*, file->common.data));
 	}
 
-	if (!file->handle) {
+    if (!file->requestee.handle) {
 		file->error = -RFE_NO_HANDLE;
 		return DR_ERROR;
 	}
@@ -297,11 +301,19 @@ fail:
 		if (!Seek_File_64(file)) return DR_ERROR;
 	}
 
-	if (!ReadFile(file->handle, file->data, file->length, (LPDWORD)&file->actual, 0)) {
+	assert(sizeof(DWORD) == sizeof(file->actual));
+
+	if (!ReadFile(
+        file->requestee.handle,
+		file->common.data,
+		file->length,
+		cast(DWORD*, &file->actual),
+		0
+	)) {
 		file->error = -RFE_BAD_READ;
 		return DR_ERROR;
 	} else {
-		file->file.index += file->actual;
+		file->special.file.index += file->actual;
 	}
 
 	return DR_DONE;
@@ -319,25 +331,25 @@ fail:
 	DWORD result;
 	DWORD size_high, size_low;
 
-	if (!file->handle) {
+    if (!file->requestee.handle) {
 		file->error = -RFE_NO_HANDLE;
 		return DR_ERROR;
 	}
 
 	if (GET_FLAG(file->modes, RFM_APPEND)) {
 		CLR_FLAG(file->modes, RFM_APPEND);
-		SetFilePointer(file->handle, 0, 0, FILE_END);
+        SetFilePointer(file->requestee.handle, 0, 0, FILE_END);
 	}
 
 	if (file->modes & ((1 << RFM_SEEK) | (1 << RFM_RESEEK) | (1 << RFM_TRUNCATE))) {
 		CLR_FLAG(file->modes, RFM_RESEEK);
 		if (!Seek_File_64(file)) return DR_ERROR;
 		if (GET_FLAG(file->modes, RFM_TRUNCATE))
-			SetEndOfFile(file->handle);
+            SetEndOfFile(file->requestee.handle);
 	}
 
 	if (file->length != 0) {
-		if (!WriteFile(file->handle, file->data, file->length, (LPDWORD)&file->actual, 0)) {
+        if (!WriteFile(file->requestee.handle, file->common.data, file->length, (LPDWORD)&file->actual, 0)) {
 			result = GetLastError();
 			if (result == ERROR_HANDLE_DISK_FULL) file->error = -RFE_DISK_FULL;
 			else file->error = -RFE_BAD_WRITE;
@@ -345,14 +357,15 @@ fail:
 		}
 	}
 
-	size_low = GetFileSize(file->handle, &size_high);
+    size_low = GetFileSize(file->requestee.handle, &size_high);
 	if (size_low == 0xffffffff) {
 		result = GetLastError();
 		file->error = -RFE_BAD_WRITE;
 		return DR_ERROR;
 	}
 
-	file->file.size = ((i64)size_high << 32) + (i64)size_low;
+	file->special.file.size =
+		(cast(i64, size_high) << 32) + cast(i64, size_low);
 
 	return DR_DONE;
 }
@@ -371,16 +384,17 @@ fail:
 {
 	WIN32_FILE_ATTRIBUTE_DATA info;
 
-	if (!GetFileAttributesEx(file->file.path, GetFileExInfoStandard, &info)) {
+	if (!GetFileAttributesEx(file->special.file.path, GetFileExInfoStandard, &info)) {
 		file->error = GetLastError();
 		return DR_ERROR;
 	}
 
 	if (info.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) SET_FLAG(file->modes, RFM_DIR);
 	else CLR_FLAG(file->modes, RFM_DIR);
-	file->file.size = ((i64)info.nFileSizeHigh << 32) + (i64)info.nFileSizeLow;
-	file->file.time.l = info.ftLastWriteTime.dwLowDateTime;
-	file->file.time.h = info.ftLastWriteTime.dwHighDateTime;
+	file->special.file.size =
+		(cast(i64, info.nFileSizeHigh) << 32) + cast(i64, info.nFileSizeLow);
+	file->special.file.time.l = info.ftLastWriteTime.dwLowDateTime;
+	file->special.file.time.h = info.ftLastWriteTime.dwHighDateTime;
 	return DR_DONE;
 }
 
@@ -392,7 +406,7 @@ fail:
 ***********************************************************************/
 {
 	if (GET_FLAG(file->modes, RFM_DIR)) {
-		if (CreateDirectory(file->file.path, 0)) return DR_DONE;
+		if (CreateDirectory(file->special.file.path, 0)) return DR_DONE;
 		file->error = GetLastError();
 		return DR_ERROR;
 	} else
@@ -405,7 +419,7 @@ fail:
 */	DEVICE_CMD Delete_File(REBREQ *file)
 /*
 **		Delete a file or directory. Return TRUE if it was done.
-**		The file->file.path provides the directory path and name.
+**		The file->special.file.path provides the directory path and name.
 **		For errors, return FALSE and set file->error to error code.
 **
 **		Note: Dirs must be empty to succeed
@@ -413,9 +427,9 @@ fail:
 ***********************************************************************/
 {
 	if (GET_FLAG(file->modes, RFM_DIR)) {
-		if (RemoveDirectory(file->file.path)) return DR_DONE;
+		if (RemoveDirectory(file->special.file.path)) return DR_DONE;
 	} else
-		if (DeleteFile(file->file.path)) return DR_DONE;
+		if (DeleteFile(file->special.file.path)) return DR_DONE;
 
 	file->error = GetLastError();
 	return DR_ERROR;
@@ -431,7 +445,7 @@ fail:
 **
 ***********************************************************************/
 {
-	if (MoveFile(cast(wchar_t*, file->file.path), cast(wchar_t*, file->data)))
+	if (MoveFile(cast(wchar_t*, file->special.file.path), cast(wchar_t*, file->common.data)))
 		return DR_DONE;
 	file->error = GetLastError();
 	return DR_ERROR;

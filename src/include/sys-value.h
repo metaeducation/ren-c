@@ -272,8 +272,9 @@ typedef struct Reb_Tuple {
 #define	VAL_EVENT_MODEL(v)	((v)->data.event.model)
 #define	VAL_EVENT_DATA(v)	((v)->data.event.data)
 #define	VAL_EVENT_TIME(v)	((v)->data.event.time)
-#define	VAL_EVENT_REQ(v)	((v)->data.event.req)
-#define	VAL_EVENT_SER(v)	((v)->data.event.ser)
+#define	VAL_EVENT_REQ(v)	((v)->data.event.eventee.req)
+#define	VAL_EVENT_SER(v) \
+	(*cast(REBSER **, &(v)->data.event.eventee.ser))
 
 #define IS_EVENT_MODEL(v,f)	(VAL_EVENT_MODEL(v) == (f))
 
@@ -313,7 +314,7 @@ typedef struct Reb_Tuple {
 {
 	REBYTE	*data;		// series data head
 #ifdef SERIES_LABELS
-	REBYTE  *label;		// identify the series
+	const REBYTE  *label;		// identify the series
 #endif
 	REBCNT	tail;		// one past end of useful data
 	REBCNT	rest;		// total number of units from bias to end
@@ -329,7 +330,7 @@ typedef struct Reb_Tuple {
 			REBCNT high:16;
 		} area;
 		REBUPT all; /* for copying, must have the same size as the union */
-	};
+	} extra;
 };
 
 #define SERIES_TAIL(s)	 ((s)->tail)
@@ -572,9 +573,9 @@ typedef struct Reb_Series_Ref
 #define QUAD_TAIL(s)	(((REBYTE *)((s)->data))+((s)->tail * 4))
 #define	QUAD_LEN(s)		(SERIES_TAIL(s))
 
-#define	IMG_SIZE(s)		((s)->size)
-#define	IMG_WIDE(s)		((s)->area.wide)
-#define	IMG_HIGH(s)		((s)->area.high)
+#define	IMG_SIZE(s)		((s)->extra.size)
+#define	IMG_WIDE(s)		((s)->extra.area.wide)
+#define	IMG_HIGH(s)		((s)->extra.area.high)
 #define IMG_DATA(s)		((REBYTE *)((s)->data))
 
 #define VAL_IMAGE_HEAD(v)	QUAD_HEAD(VAL_SERIES(v))

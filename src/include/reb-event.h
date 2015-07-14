@@ -38,7 +38,9 @@ typedef struct rebol_event {
 	union {
 		REBREQ *req;	// request (for device events)
 		void *ser;		// port or object
-	};
+	} eventee;				// !!! REVIEW: Not always "sender"?  The name is
+							// "bad" (?) but at least unique, making it easy
+							// to change.  See also rebol_devreq->requestee
 } REBEVT;
 #pragma pack()
 

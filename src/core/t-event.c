@@ -112,7 +112,7 @@
 	case SYM_GOB:
 		if (IS_GOB(val)) {
 			VAL_EVENT_MODEL(value) = EVM_GUI;
-			VAL_EVENT_SER(value) = VAL_GOB(val);
+			VAL_EVENT_SER(value) = cast(REBSER*, VAL_GOB(val));
 			break;
 		}
 		return FALSE;
@@ -254,7 +254,7 @@
 	case SYM_GOB:
 		if (IS_EVENT_MODEL(value, EVM_GUI)) {
 			if (VAL_EVENT_SER(value)) {
-				SET_GOB(val, VAL_EVENT_SER(value));
+				SET_GOB(val, cast(REBGOB*, VAL_EVENT_SER(value)));
 				break;
 			}
 		}

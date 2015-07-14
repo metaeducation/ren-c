@@ -53,10 +53,18 @@ enum Transport_Types {
 	obj = CLONE_OBJECT(VAL_OBJ_FRAME(info));
 
 	SET_OBJECT(ret, obj);
-	Set_Tuple(OFV(obj, STD_NET_INFO_LOCAL_IP), (REBYTE*)&sock->net.local_ip, 4);
-	Set_Tuple(OFV(obj, STD_NET_INFO_REMOTE_IP), (REBYTE*)&sock->net.remote_ip, 4);
-	SET_INTEGER(OFV(obj, STD_NET_INFO_LOCAL_PORT), sock->net.local_port);
-	SET_INTEGER(OFV(obj, STD_NET_INFO_REMOTE_PORT), sock->net.remote_port);
+	Set_Tuple(
+		OFV(obj, STD_NET_INFO_LOCAL_IP),
+		cast(REBYTE*, &sock->special.net.local_ip),
+		4
+	);
+	Set_Tuple(
+		OFV(obj, STD_NET_INFO_REMOTE_IP),
+		cast(REBYTE*, &sock->special.net.remote_ip),
+		4
+	);
+	SET_INTEGER(OFV(obj, STD_NET_INFO_LOCAL_PORT), sock->special.net.local_port);
+	SET_INTEGER(OFV(obj, STD_NET_INFO_REMOTE_PORT), sock->special.net.remote_port);
 }
 
 
@@ -71,13 +79,13 @@ enum Transport_Types {
 	REBREQ *nsock;
 
 	// Get temp sock struct created by the device:
-	nsock = sock->sock;
+	nsock = sock->common.sock;
 	if (!nsock) return;  // false alarm
-	sock->sock = nsock->next;
-	nsock->data = 0;
+	sock->common.sock = nsock->next;
+	nsock->common.data = 0;
 	nsock->next = 0;
 
-	// Create a new port using ACCEPT request passed by sock->sock:
+	// Create a new port using ACCEPT request passed by sock->common.sock:
 	port = Copy_Block(port, 0);
 	SET_PORT(DS_RETURN, port);	// Also for GC protect
 	SET_NONE(OFV(port, STD_PORT_DATA)); // just to be sure.
@@ -140,8 +148,8 @@ enum Transport_Types {
 
 			// Lookup host name (an extra TCP device step):
 			if (IS_STRING(arg)) {
-				sock->data = VAL_BIN(arg);
-				sock->net.remote_port = IS_INTEGER(val) ? VAL_INT32(val) : 80;
+				sock->common.data = VAL_BIN(arg);
+				sock->special.net.remote_port = IS_INTEGER(val) ? VAL_INT32(val) : 80;
 				result = OS_DO_DEVICE(sock, RDC_LOOKUP);  // sets remote_ip field
 				if (result < 0) Trap_Port_DEAD_END(RE_NO_CONNECT, port, sock->error);
 				return R_RET;
@@ -149,16 +157,16 @@ enum Transport_Types {
 
 			// Host IP specified:
 			else if (IS_TUPLE(arg)) {
-				sock->net.remote_port = IS_INTEGER(val) ? VAL_INT32(val) : 80;
-				memcpy(&sock->net.remote_ip, VAL_TUPLE(arg), 4);
+				sock->special.net.remote_port = IS_INTEGER(val) ? VAL_INT32(val) : 80;
+				memcpy(&sock->special.net.remote_ip, VAL_TUPLE(arg), 4);
 				break;
 			}
 
 			// No host, must be a LISTEN socket:
 			else if (IS_NONE(arg)) {
 				SET_FLAG(sock->modes, RST_LISTEN);
-				sock->data = 0; // where ACCEPT requests are queued
-				sock->net.local_port = IS_INTEGER(val) ? VAL_INT32(val) : 8000;
+				sock->common.data = 0; // where ACCEPT requests are queued
+				sock->special.net.local_port = IS_INTEGER(val) ? VAL_INT32(val) : 8000;
 				break;
 			}
 			else Trap_Port_DEAD_END(RE_INVALID_SPEC, port, -10);
@@ -209,7 +217,7 @@ enum Transport_Types {
 		sock->length = SERIES_AVAIL(ser); // space available
 		if (sock->length < NET_BUF_SIZE/2) Extend_Series(ser, NET_BUF_SIZE);
 		sock->length = SERIES_AVAIL(ser);
-		sock->data = STR_TAIL(ser); // write at tail
+		sock->common.data = STR_TAIL(ser); // write at tail
 		//if (SERIES_TAIL(ser) == 0)
 		sock->actual = 0;  // Actual for THIS read, not for total.
 
@@ -238,7 +246,7 @@ enum Transport_Types {
 		// Setup the write:
 		*OFV(port, STD_PORT_DATA) = *spec;	// keep it GC safe
 		sock->length = len;
-		sock->data = VAL_BIN_DATA(spec);
+		sock->common.data = VAL_BIN_DATA(spec);
 		sock->actual = 0;
 
 		//Print("(write length %d)", len);
@@ -250,7 +258,7 @@ enum Transport_Types {
 	case A_PICK:
 		// FIRST server-port returns new port connection.
 		len = Get_Num_Arg(arg); // Position
-		if (len == 1 && GET_FLAG(sock->modes, RST_LISTEN) && sock->data)
+		if (len == 1 && GET_FLAG(sock->modes, RST_LISTEN) && sock->common.data)
 			Accept_New_Port(ds, port, sock); // sets D_RET
 		else
 			Trap_Range_DEAD_END(arg);

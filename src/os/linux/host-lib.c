@@ -758,12 +758,12 @@ error:
 **
 ***********************************************************************/
 {
-	if (sizeof(time_t) > sizeof(file->file.time.l)) {
-		REBI64 t = file->file.time.l;
-		t |= ((REBI64)file->file.time.h) << 32;
-		Convert_Date((time_t*)&t, dat, 0);
+	if (sizeof(time_t) > sizeof(file->special.file.time.l)) {
+		REBI64 t = file->special.file.time.l;
+		t |= cast(REBI64, file->special.file.time.h) << 32;
+		Convert_Date(cast(time_t*, &t), dat, 0);
 	} else {
-		Convert_Date((time_t *)&(file->file.time.l), dat, 0);
+		Convert_Date(cast(time_t *, &file->special.file.time.l), dat, 0);
 	}
 }
 

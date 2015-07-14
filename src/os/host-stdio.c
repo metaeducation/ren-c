@@ -79,7 +79,7 @@ static int Fetch_Buf()
 {
 	REBCNT len = LEN_BYTES(inbuf);
 
-	Std_IO_Req.data   = inbuf + len;
+	Std_IO_Req.common.data = inbuf + len;
 	Std_IO_Req.length = inbuf_len - len - 1;
 	Std_IO_Req.actual = 0;
 
@@ -97,7 +97,7 @@ static int Fetch_Buf()
 
 	// Null terminate buffer:
 	len = Std_IO_Req.actual;
-	Std_IO_Req.data[len] = 0;
+	Std_IO_Req.common.data[len] = 0;
 	return len > 0;
 }
 
@@ -163,7 +163,7 @@ static int Fetch_Buf()
 	memcpy(&req, &Std_IO_Req, sizeof(req));
 
 	req.length = LEN_BYTES(buf);
-	req.data = buf;
+	req.common.data = buf;
 	req.actual = 0;
 
 	OS_Do_Device(&req, RDC_WRITE);

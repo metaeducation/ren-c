@@ -70,7 +70,7 @@ static REBINT Set_Serial_Settings(HANDLE h, REBREQ *req)
 {
     DCB dcbSerialParams;
 	REBINT n;
-	int speed = req->serial.baud;
+	int speed = req->special.serial.baud;
 
     memset(&dcbSerialParams, '\0', sizeof(dcbSerialParams));
 	dcbSerialParams.DCBlength = sizeof(dcbSerialParams);
@@ -85,9 +85,9 @@ static REBINT Set_Serial_Settings(HANDLE h, REBREQ *req)
 	}
 	if (speeds[n] == 0) dcbSerialParams.BaudRate = CBR_115200; // invalid, use default
 
-	dcbSerialParams.ByteSize = req->serial.data_bits;
-	dcbSerialParams.StopBits = req->serial.stop_bits == 1? ONESTOPBIT : TWOSTOPBITS;
-	switch (req->serial.parity) {
+	dcbSerialParams.ByteSize = req->special.serial.data_bits;
+	dcbSerialParams.StopBits = req->special.serial.stop_bits == 1? ONESTOPBIT : TWOSTOPBITS;
+	switch (req->special.serial.parity) {
 		case SERIAL_PARITY_ODD:
 			dcbSerialParams.Parity = ODDPARITY;
 			break;
@@ -122,15 +122,15 @@ static REBINT Set_Serial_Settings(HANDLE h, REBREQ *req)
 
     memset(&timeouts, '\0', sizeof(timeouts));
 
-	// req->serial.path should be prefixed with "\\.\" to allow for higher com port numbers
+	// req->special.serial.path should be prefixed with "\\.\" to allow for higher com port numbers
 	wchar_t fullpath[MAX_SERIAL_DEV_PATH] = L"\\\\.\\";
 
-	if (!req->serial.path) {
+	if (!req->special.serial.path) {
 		req->error = -RFE_BAD_PATH;
 		return DR_ERROR;
 	}
 
-	wcsncat(fullpath,req->serial.path, MAX_SERIAL_DEV_PATH);
+	wcsncat(fullpath, req->special.serial.path, MAX_SERIAL_DEV_PATH);
 
 	h = CreateFile(fullpath, GENERIC_READ|GENERIC_WRITE, 0, NULL,OPEN_EXISTING, 0, NULL );
 	if (h == INVALID_HANDLE_VALUE) {
@@ -157,7 +157,7 @@ static REBINT Set_Serial_Settings(HANDLE h, REBREQ *req)
 		return DR_ERROR;
 	}
 
-	req->handle = h;
+	req->requestee.handle = h;
 	return DR_DONE;
 }
 
@@ -168,10 +168,10 @@ static REBINT Set_Serial_Settings(HANDLE h, REBREQ *req)
 /*
 ***********************************************************************/
 {
-	if (req->handle) {
-		//Warning: should free req->serial.prior_attr termios struct?
-		CloseHandle(req->handle);
-		req->handle = 0;
+	if (req->requestee.handle) {
+		// !!! Should we free req->special.serial.prior_attr termios struct?
+		CloseHandle(req->requestee.handle);
+		req->requestee.handle = 0;
 	}
 	return DR_DONE;
 }
@@ -184,13 +184,13 @@ static REBINT Set_Serial_Settings(HANDLE h, REBREQ *req)
 ***********************************************************************/
 {
 	REBINT result = 0;
-	if (!req->handle) {
+	if (!req->requestee.handle) {
 		req->error = -RFE_NO_HANDLE;
 		return DR_ERROR;
 	}
 
 	//RL_Print("reading %d bytes\n", req->length);
-	if (!ReadFile(req->handle, req->data, req->length, &result, 0) || result < 0) {
+	if (!ReadFile(req->requestee.handle, req->common.data, req->length, &result, 0) || result < 0) {
 		req->error = -RFE_BAD_READ;
 		Signal_Device(req, EVT_ERROR);
 		return DR_ERROR;
@@ -220,14 +220,16 @@ static REBINT Set_Serial_Settings(HANDLE h, REBREQ *req)
 {
 	REBINT result = 0, len = 0;
 	len = req->length - req->actual;
-	if (!req->handle) {
+	if (!req->requestee.handle) {
 		req->error = -RFE_NO_HANDLE;
 		return DR_ERROR;
 	}
 
 	if (len <= 0) return DR_DONE;
 
-	if (!WriteFile(req->handle, req->data, len, &result, NULL)){
+	if (!WriteFile(
+		req->requestee.handle, req->common.data, len, &result, NULL
+	)) {
 		req->error = -RFE_BAD_WRITE;
 		return DR_ERROR;
 	}
@@ -242,7 +244,7 @@ static REBINT Set_Serial_Settings(HANDLE h, REBREQ *req)
 		return DR_ERROR;
 	}
 	req->actual += result;
-	req->data += result;
+	req->common.data += result;
 	if (req->actual >= req->length) {
 		Signal_Device(req, EVT_WROTE);
 		return DR_DONE;
@@ -262,8 +264,8 @@ static REBINT Set_Serial_Settings(HANDLE h, REBREQ *req)
 #ifdef QUERY_IMPLEMENTED
 	struct pollfd pfd;
 
-	if (req->handle) {
-		pfd.fd = req->handle;
+	if (req->requestee.handle) {
+		pfd.fd = req->requestee.handle;
 		pfd.events = POLLIN;
 		n = poll(&pfd, 1, 0);
 	}

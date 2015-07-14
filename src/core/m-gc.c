@@ -448,9 +448,8 @@ mark_obj:
 		case REB_MAP:
 			ser = VAL_SERIES(val);
 			CHECK_MARK(ser, depth);
-			if (ser->series) {
-				MARK_SERIES(ser->series);
-			}
+			if (ser->extra.series)
+				MARK_SERIES(ser->extra.series);
 			break;
 
 		case REB_CALLBACK:

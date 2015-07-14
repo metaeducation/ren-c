@@ -625,7 +625,7 @@ static void *Task_Ready;
 	if (TIME_ZONE_ID_DAYLIGHT == GetTimeZoneInformation(&tzone))
 		tzone.Bias += tzone.DaylightBias;
 
-	FileTimeToSystemTime((FILETIME *)(&(file->file.time)), &stime);
+	FileTimeToSystemTime(cast(FILETIME *, &file->special.file.time), &stime);
 	Convert_Date(&stime, dat, -tzone.Bias);
 }
 

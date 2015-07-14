@@ -35,7 +35,7 @@
 
 static void update(REBREQ *req, REBINT len, REBVAL *arg)
 {
-	const siginfo_t *sig = cast(siginfo_t *, req->data);
+	const siginfo_t *sig = cast(siginfo_t *, req->common.data);
 	int i = 0;
 
 	Extend_Series(VAL_SERIES(arg), len);
@@ -157,18 +157,18 @@ static int sig_word_num(REBVAL *word)
 					Trap1_DEAD_END(RE_INVALID_SPEC, val);
 				}
 
-				sigemptyset(&req->signal.mask);
+				sigemptyset(&req->special.signal.mask);
 				for(sig = VAL_BLK_SKIP(val, 0); NOT_END(sig); sig ++) {
 					if (IS_WORD(sig)) {
 						/* handle the special word "ALL" */
 						if (VAL_WORD_CANON(sig) == SYM_ALL) {
-							if (sigfillset(&req->signal.mask) < 0) {
+							if (sigfillset(&req->special.signal.mask) < 0) {
 								Trap1_DEAD_END(RE_INVALID_SPEC, sig); /* FIXME, better error */
 							}
 							break;
 						}
 
-						if (sigaddset(&req->signal.mask, sig_word_num(sig)) < 0) {
+						if (sigaddset(&req->special.signal.mask, sig_word_num(sig)) < 0) {
 							Trap1_DEAD_END(RE_INVALID_SPEC, sig);
 						}
 					} else {
@@ -215,7 +215,7 @@ static int sig_word_num(REBVAL *word)
 
 			len = req->length = 8;
 			ser = Make_Binary(len * sizeof(siginfo_t));
-			req->data = BIN_HEAD(ser);
+			req->common.data = BIN_HEAD(ser);
 			result = OS_DO_DEVICE(req, RDC_READ);
 			if (result < 0) Trap_Port_DEAD_END(RE_READ_ERROR, port, req->error);
 

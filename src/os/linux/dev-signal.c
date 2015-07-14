@@ -63,7 +63,7 @@ extern void Signal_Device(REBREQ *req, REBINT type);
 	if (sigprocmask(SIG_BLOCK, NULL, &mask) < 0) {
 		goto error;
 	}
-	if (sigandset(&overlap, &mask, &req->signal.mask) < 0) {
+	if (sigandset(&overlap, &mask, &req->special.signal.mask) < 0) {
 		goto error;
 	}
 	if (!sigisemptyset(&overlap)) {
@@ -72,7 +72,7 @@ extern void Signal_Device(REBREQ *req, REBINT type);
 	}
 #endif
 
-	if (sigprocmask(SIG_BLOCK, &req->signal.mask, NULL) < 0) {
+	if (sigprocmask(SIG_BLOCK, &req->special.signal.mask, NULL) < 0) {
 		goto error;
 	}
 
@@ -93,7 +93,7 @@ error:
 ***********************************************************************/
 {
 	//RL_Print("Close_Signal\n");
-	if (sigprocmask(SIG_UNBLOCK, &req->signal.mask, NULL) < 0) {
+	if (sigprocmask(SIG_UNBLOCK, &req->special.signal.mask, NULL) < 0) {
 		goto error;
 	}
 	SET_CLOSED(req);
@@ -115,7 +115,13 @@ error:
 	errno = 0;
 
 	for (i = 0; i < req->length; i ++) {
-		if (sigtimedwait(&req->signal.mask, &((siginfo_t*)req->data)[i], &timeout) < 0) {
+		int result = sigtimedwait(
+			&req->special.signal.mask,
+			&(cast(siginfo_t*, req->common.data)[i]),
+			&timeout
+		);
+
+		if (result < 0) {
 			if (errno != EAGAIN && i == 0) {
 				Signal_Device(req, EVT_ERROR);
 				return DR_ERROR;

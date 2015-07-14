@@ -401,8 +401,13 @@ static u32 *core_ext_words;
             while ((type = RL_GET_FIELD(obj, w[0], &val)))
             {
 				if (type == RXT_BINARY){
-					objData = (REBYTE *)RL_SERIES(val.series, RXI_SER_DATA) + val.index;
-					objData_len = RL_SERIES(val.series, RXI_SER_TAIL) - val.index;
+					objData =
+						cast(REBYTE *, RL_SERIES(val.sri.series, RXI_SER_DATA))
+						+ val.sri.index;
+
+					objData_len =
+						RL_SERIES(val.sri.series, RXI_SER_TAIL)
+						- val.sri.index;
 
 					switch(RL_FIND_WORD(core_ext_words,w[0]))
 					{
@@ -507,17 +512,24 @@ static u32 *core_ext_words;
             {
 				if (type == RXT_BINARY)
 				{
-					objData = (REBYTE *)RL_SERIES(val.series, RXI_SER_DATA) + val.index;
+					objData =
+						cast(REBYTE *, RL_SERIES(val.sri.series, RXI_SER_DATA))
+						+ val.sri.index;
 
 					switch(RL_FIND_WORD(core_ext_words,words[0]))
 					{
 						case W_CORE_P:
 							dh_ctx.p = objData;
-							dh_ctx.len = RL_SERIES(val.series, RXI_SER_TAIL) - val.index;
+							dh_ctx.len =
+								RL_SERIES(val.sri.series, RXI_SER_TAIL)
+								- val.sri.index;
 							break;
+
 						case W_CORE_G:
 							dh_ctx.g = objData;
-							dh_ctx.glen = RL_SERIES(val.series, RXI_SER_TAIL) - val.index;
+							dh_ctx.glen =
+								RL_SERIES(val.sri.series, RXI_SER_TAIL)
+								- val.sri.index;
 							break;
 					}
 				}
@@ -527,19 +539,25 @@ static u32 *core_ext_words;
 			if (!dh_ctx.p || !dh_ctx.g) break;
 
 			//allocate new binary! blocks for priv/pub keys
-			priv_key.series = (REBSER*)RL_Make_String(dh_ctx.len, FALSE);
-			priv_key.index = 0;
-			dh_ctx.x = (REBYTE *)RL_SERIES(priv_key.series, RXI_SER_DATA);
+			priv_key.sri.series =
+				cast(REBSER*, RL_Make_String(dh_ctx.len, FALSE));
+			priv_key.sri.index = 0;
+
+			dh_ctx.x =
+				cast(REBYTE *, RL_SERIES(priv_key.sri.series, RXI_SER_DATA));
 			memset(dh_ctx.x, 0, dh_ctx.len);
 			//hack! - will set the tail to key size
-			*((REBCNT*)(((void**)priv_key.series)+1)) = dh_ctx.len;
+			*cast(REBCNT*, cast(void**, priv_key.sri.series) + 1) = dh_ctx.len;
 
-			pub_key.series = (REBSER*)RL_Make_String(dh_ctx.len, FALSE);
-			pub_key.index = 0;
-			dh_ctx.gx = (REBYTE *)RL_SERIES(pub_key.series, RXI_SER_DATA);
+			pub_key.sri.series =
+				cast(REBSER*, RL_Make_String(dh_ctx.len, FALSE));
+			pub_key.sri.index = 0;
+
+			dh_ctx.gx =
+				cast(REBYTE *, RL_SERIES(pub_key.sri.series, RXI_SER_DATA));
 			memset(dh_ctx.gx, 0, dh_ctx.len);
 			//hack! - will set the tail to key size
-			*((REBCNT*)(((void**)pub_key.series)+1)) = dh_ctx.len;
+			*cast(REBCNT*, cast(void**, pub_key.sri.series) + 1) = dh_ctx.len;
 
 			//generate keys
 			DH_generate_key(&dh_ctx);
@@ -569,13 +587,17 @@ static u32 *core_ext_words;
             {
 				if (type == RXT_BINARY)
 				{
-					objData = (REBYTE *)RL_SERIES(val.series, RXI_SER_DATA) + val.index;
+					objData =
+						cast(REBYTE *, RL_SERIES(val.sri.series, RXI_SER_DATA))
+						+ val.sri.index;
 
 					switch(RL_FIND_WORD(core_ext_words,words[0]))
 					{
 						case W_CORE_P:
 							dh_ctx.p = objData;
-							dh_ctx.len = RL_SERIES(val.series, RXI_SER_TAIL) - val.index;
+							dh_ctx.len =
+								RL_SERIES(val.sri.series, RXI_SER_TAIL)
+								- val.sri.index;
 							break;
 						case W_CORE_PRIV_KEY:
 							dh_ctx.x = objData;

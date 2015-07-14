@@ -152,7 +152,7 @@ static void close_stdio(void)
 		else
 #endif
 			Term_IO = 0;
-		//printf("%x\r\n", req->handle);
+		//printf("%x\r\n", req->requestee.handle);
 	}
 	else
 		SET_FLAG(dev->flags, SF_DEV_NULL);
@@ -201,7 +201,7 @@ static void close_stdio(void)
 
 	if (Std_Out >= 0) {
 
-		total = write(Std_Out, req->data, req->length);
+		total = write(Std_Out, req->common.data, req->length);
 
 		if (total < 0) {
 			req->error = errno;
@@ -216,7 +216,7 @@ static void close_stdio(void)
 	}
 
 	if (Std_Echo) {
-		fwrite(req->data, req->length, 1, Std_Echo);
+		fwrite(req->common.data, req->length, 1, Std_Echo);
 		//fflush(Std_Echo); //slow!
 	}
 
@@ -240,7 +240,7 @@ static void close_stdio(void)
 	int len = req->length;
 
 	if (GET_FLAG(req->modes, RDM_NULL)) {
-		req->data[0] = 0;
+		req->common.data[0] = 0;
 		return DR_DONE;
 	}
 
@@ -251,10 +251,10 @@ static void close_stdio(void)
 		// Perform a processed read or a raw read?
 #ifndef HAS_SMART_CONSOLE
 		if (Term_IO)
-			total = Read_Line(Term_IO, req->data, len);
+			total = Read_Line(Term_IO, req->common.data, len);
 		else
 #endif
-			total = read(Std_Inp, req->data, len);
+			total = read(Std_Inp, req->common.data, len);
 
 		if (total < 0) {
 			req->error = errno;
@@ -281,8 +281,8 @@ static void close_stdio(void)
 		Std_Echo = 0;
 	}
 
-	if (req->file.path) {
-		Std_Echo = fopen(req->file.path, "w");  // null on error
+	if (req->special.file.path) {
+		Std_Echo = fopen(req->special.file.path, "w");  // null on error
 		if (!Std_Echo) {
 			req->error = errno;
 			return DR_ERROR;

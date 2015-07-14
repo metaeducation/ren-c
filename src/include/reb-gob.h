@@ -105,9 +105,7 @@ struct rebol_gob {		// size: 64 bytes!
 	REBYTE dtype;		// pointer data type
 	REBYTE resv;		// reserved
 
-	union {
-		REBGOB *owner;	// temp field - reused for different things
-	};
+	REBGOB *owner;		// !!! was a singular item in a union
 
 	REBSER *content;	// content value (block, string, color)
 	REBSER *data;		// user defined data

@@ -85,28 +85,28 @@ x*/	RXIARG Value_To_RXI(REBVAL *val)
 		arg.int64 = VAL_INT64(val);
 		break;
 	case RXE_SER:
-		arg.series = VAL_SERIES(val);
-		arg.index = VAL_INDEX(val);
+		arg.sri.series = VAL_SERIES(val);
+		arg.sri.index = VAL_INDEX(val);
 		break;
 	case RXE_PTR:
 		arg.addr = VAL_HANDLE_DATA(val);
 		break;
 	case RXE_32:
-		arg.int32a = VAL_I32(val);
-		arg.int32b = 0;
+		arg.i2.int32a = VAL_I32(val);
+		arg.i2.int32b = 0;
 		break;
 	case RXE_DATE:
-		arg.int32a = VAL_ALL_BITS(val)[2];
-		arg.int32b = 0;
+		arg.i2.int32a = VAL_ALL_BITS(val)[2];
+		arg.i2.int32b = 0;
 		break;
 	case RXE_SYM:
-		arg.int32a = VAL_WORD_CANON(val);
-		arg.int32b = 0;
+		arg.i2.int32a = VAL_WORD_CANON(val);
+		arg.i2.int32b = 0;
 		break;
 	case RXE_IMAGE:
-		arg.series = VAL_SERIES(val);
-		arg.width = VAL_IMAGE_WIDE(val);
-		arg.height = VAL_IMAGE_HIGH(val);
+		arg.iwh.image = VAL_SERIES(val);
+		arg.iwh.width = VAL_IMAGE_WIDE(val);
+		arg.iwh.height = VAL_IMAGE_HIGH(val);
 		break;
 	case RXE_NULL:
 	default:
@@ -128,28 +128,28 @@ x*/	void RXI_To_Value(REBVAL *val, RXIARG arg, REBCNT type)
 		VAL_INT64(val) = arg.int64;
 		break;
 	case RXE_SER:
-		VAL_SERIES(val) = arg.series;
-		VAL_INDEX(val) = arg.index;
+		VAL_SERIES(val) = arg.sri.series;
+		VAL_INDEX(val) = arg.sri.index;
 		break;
 	case RXE_PTR:
 		VAL_HANDLE_DATA(val) = arg.addr;
 		break;
 	case RXE_32:
-		VAL_I32(val) = arg.int32a;
+		VAL_I32(val) = arg.i2.int32a;
 		break;
 	case RXE_DATE:
 		VAL_TIME(val) = NO_TIME;
-		VAL_ALL_BITS(val)[2] = arg.int32a;
+		VAL_ALL_BITS(val)[2] = arg.i2.int32a;
 		break;
 	case RXE_SYM:
-		VAL_WORD_SYM(val) = arg.int32a;
+		VAL_WORD_SYM(val) = arg.i2.int32a;
 		VAL_WORD_FRAME(val) = 0;
 		VAL_WORD_INDEX(val) = 0;
 		break;
 	case RXE_IMAGE:
-		VAL_SERIES(val) = arg.series;
-		VAL_IMAGE_WIDE(val) = arg.width;
-		VAL_IMAGE_HIGH(val) = arg.height;
+		VAL_SERIES(val) = arg.iwh.image;
+		VAL_IMAGE_WIDE(val) = arg.iwh.width;
+		VAL_IMAGE_HIGH(val) = arg.iwh.height;
 		break;
 	case RXE_NULL:
 		VAL_INT64(val) = 0;
@@ -221,7 +221,7 @@ x*/	int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result)
 		RXI_To_Value(DS_TOP, args[n], RXI_TYPE(args, n));
 		// Check type for word at the given offset:
 		if (!TYPE_CHECK(BLK_SKIP(obj, n), VAL_TYPE(DS_TOP))) {
-			result->int32b = n;
+			result->i2.int32b = n;
 			SET_EXT_ERROR(result, RXE_BAD_ARGS);
 			DSP = dsp;
 			return 0;
@@ -232,7 +232,7 @@ x*/	int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result)
 		DS_SKIP;
 		SET_NONE(DS_TOP);
 		if (!TYPE_CHECK(BLK_SKIP(obj, n), VAL_TYPE(DS_TOP))) {
-			result->int32b = n;
+			result->i2.int32b = n;
 			SET_EXT_ERROR(result, RXE_BAD_ARGS);
 			DSP = dsp;
 			return 0;
@@ -263,8 +263,10 @@ x*/	int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result)
 	REBVAL *event = D_ARG(1);
 	REBCNT n;
 
-	// Sanity check:
-	if (VAL_EVENT_TYPE(event) != EVT_CALLBACK || !(cbi = VAL_EVENT_SER(event)))
+	// Sanity checks:
+	if (VAL_EVENT_TYPE(event) != EVT_CALLBACK)
+		return R_NONE;
+	if (!(cbi = cast(RXICBI*, VAL_EVENT_SER(event))))
 		return R_NONE;
 
 	n = Do_Callback(cbi->obj, cbi->word, cbi->args, &(cbi->result));

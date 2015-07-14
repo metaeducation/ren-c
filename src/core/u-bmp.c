@@ -274,7 +274,7 @@ void Unmap_Bytes(void *srcp, REBYTE **dstp, char *map) {
 */	static void Decode_BMP_Image(REBCDI *codi)
 /*
 **		Input:  BMP encoded image (codi->data, len)
-**		Output: Image bits (codi->bits, w, h)
+**		Output: Image bits (codi->extra.bits, w, h)
 **		Error:  Code in codi->error
 **		Return: Success as TRUE or FALSE
 **
@@ -348,9 +348,9 @@ void Unmap_Bytes(void *srcp, REBYTE **dstp, char *map) {
 
 	codi->w = w;
 	codi->h = h;
-	codi->bits = ALLOC_ARRAY(u32, w * h);
+	codi->extra.bits = ALLOC_ARRAY(u32, w * h);
 
-	dp = (REBCNT *) codi->bits;
+	dp = cast(REBCNT *, codi->extra.bits);
 	dp += w * h - w;
 
 	for (y = 0; y<h; y++) {
@@ -508,7 +508,7 @@ error:
 **
 */	static void Encode_BMP_Image(REBCDI *codi)
 /*
-**		Input:  Image bits (codi->bits, w, h)
+**		Input:  Image bits (codi->extra.bits, w, h)
 **		Output: BMP encoded image (codi->data, len)
 **		Error:  Code in codi->error
 **		Return: Success as TRUE or FALSE
@@ -550,7 +550,7 @@ error:
 	bmih.biClrImportant = 0;
 	Unmap_Bytes(&bmih, &cp, mapBITMAPINFOHEADER);
 
-	dp = (REBCNT *) codi->bits;
+	dp = cast(REBCNT *, codi->extra.bits);
 	dp += w * h - w;
 
 	for (y = 0; y<h; y++) {

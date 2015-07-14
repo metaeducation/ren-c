@@ -55,20 +55,22 @@
 		// This is normally called by the WAKE-UP function.
 		arg = OFV(port, STD_PORT_DATA);
 		if (req->command == RDC_READ) {
-			if (req->data == NULL) return R_NONE; /* this could be executed twice: once for an event READ, once for the CLOSE following the READ */
+			// this could be executed twice:
+			// once for an event READ, once for the CLOSE following the READ
+			if (!req->common.data) return R_NONE;
 			len = req->actual;
 			if (GET_FLAG(req->flags, RRF_WIDE)) {
 				len /= sizeof(REBUNI); //correct length
 				// Copy the string (convert to latin-8 if it fits):
-				Set_Binary(arg, Copy_Wide_Str(req->data, len));
+				Set_Binary(arg, Copy_Wide_Str(req->common.data, len));
 			} else {
 				REBSER *ser = Make_Binary(len);
-				memcpy(BIN_HEAD(ser), req->data, len);
+				memcpy(BIN_HEAD(ser), req->common.data, len);
 				SERIES_TAIL(ser) = len;
 				Set_Binary(arg, ser);
 			}
-			OS_FREE(req->data); // release the copy buffer
-			req->data = 0;
+			OS_FREE(req->common.data); // release the copy buffer
+			req->common.data = 0;
 		}
 		else if (req->command == RDC_WRITE) {
 			SET_NONE(arg);  // Write is done.
@@ -94,10 +96,10 @@
 		if (GET_FLAG(req->flags, RRF_WIDE)) {
 			len /= sizeof(REBUNI); //correct length
 			// Copy the string (convert to latin-8 if it fits):
-			Set_Binary(arg, Copy_Wide_Str(req->data, len));
+			Set_Binary(arg, Copy_Wide_Str(req->common.data, len));
 		} else {
 			REBSER *ser = Make_Binary(len);
-			memcpy(BIN_HEAD(ser), req->data, len);
+			memcpy(BIN_HEAD(ser), req->common.data, len);
 			SERIES_TAIL(ser) = len;
 			Set_Binary(arg, ser);
 		}
@@ -125,7 +127,7 @@
 			if (Is_Not_ASCII(VAL_BIN_DATA(arg), len)) {
 				Set_String(arg, Copy_Bytes_To_Unicode(VAL_BIN_DATA(arg), len));
 			} else
-				req->data = VAL_BIN_DATA(arg);
+				req->common.data = VAL_BIN_DATA(arg);
 #endif
 
 			// Temp conversion:!!!
@@ -134,13 +136,13 @@
 			SERIES_TAIL(ser) = len = abs(len);
 			UNI_TERM(ser);
 			Set_String(arg, ser);
-			req->data = (REBYTE*) UNI_HEAD(ser);
+			req->common.data = cast(REBYTE*, UNI_HEAD(ser));
 			SET_FLAG(req->flags, RRF_WIDE);
 		}
 		else
 		// If unicode (may be from above conversion), handle it:
 		if (SERIES_WIDE(VAL_SERIES(arg)) == sizeof(REBUNI)) {
-			req->data = (REBYTE *)VAL_UNI_DATA(arg);
+			req->common.data = cast(REBYTE *, VAL_UNI_DATA(arg));
 			SET_FLAG(req->flags, RRF_WIDE);
 		}
 

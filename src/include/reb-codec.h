@@ -55,7 +55,7 @@ typedef struct reb_codec_image {
 	union {
 		u32 *bits;
 		void *other;
-	};
+	} extra;
 	int error;
 } REBCDI;
 

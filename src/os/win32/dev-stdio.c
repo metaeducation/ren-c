@@ -271,7 +271,7 @@ void Console_Window(BOOL show)
 	if (Std_Out && Con_Out) {
 
 		if (Redir_Out) { // Always UTF-8
-			ok = WriteFile(Std_Out, req->data, req->length, &total, 0);
+			ok = WriteFile(Std_Out, req->common.data, req->length, &total, 0);
 		}
 		else {
 			// Convert UTF-8 buffer to Win32 wide-char format for console.
@@ -279,7 +279,7 @@ void Console_Window(BOOL show)
 			// however, if our buffer overflows, it's an error. There's no
 			// efficient way at this level to split-up the input data,
 			// because its UTF-8 with variable char sizes.
-			len = MultiByteToWideChar(CP_UTF8, 0, req->data, req->length, Std_Buf, BUF_SIZE);
+			len = MultiByteToWideChar(CP_UTF8, 0, req->common.data, req->length, Std_Buf, BUF_SIZE);
 			if (len > 0) // no error
 				ok = WriteConsoleW(Std_Out, Std_Buf, len, &total, 0);
 		}
@@ -297,7 +297,7 @@ void Console_Window(BOOL show)
 	}
 
 	if (Std_Echo) {	// always UTF-8
-		WriteFile(Std_Echo, req->data, req->length, &total, 0);
+		WriteFile(Std_Echo, req->common.data, req->length, &total, 0);
 		//FlushFileBuffers(Std_Echo);
 	}
 
@@ -322,7 +322,7 @@ void Console_Window(BOOL show)
 	BOOL ok;
 
 	if (GET_FLAG(req->modes, RDM_NULL)) {
-		req->data[0] = 0;
+		req->common.data[0] = 0;
 		return DR_DONE;
 	}
 
@@ -332,12 +332,12 @@ void Console_Window(BOOL show)
 
 		if (Redir_Inp) { // always UTF-8
 			len = MIN(req->length, BUF_SIZE);
-			ok = ReadFile(Std_Inp, req->data, len, &total, 0);
+			ok = ReadFile(Std_Inp, req->common.data, len, &total, 0);
 		}
 		else {
 			ok = ReadConsoleW(Std_Inp, Std_Buf, BUF_SIZE-1, &total, 0);
 			if (ok) {
-				total = WideCharToMultiByte(CP_UTF8, 0, Std_Buf, total, req->data, req->length, 0, 0);
+				total = WideCharToMultiByte(CP_UTF8, 0, Std_Buf, total, req->common.data, req->length, 0, 0);
 				if (!total) ok = FALSE;
 			}
 		}
@@ -367,8 +367,8 @@ void Console_Window(BOOL show)
 		Std_Echo = 0;
 	}
 
-	if (req->file.path) {
-		Std_Echo = CreateFile(req->file.path, GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE, 0, CREATE_ALWAYS, 0, 0);
+	if (req->special.file.path) {
+		Std_Echo = CreateFile(req->special.file.path, GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE, 0, CREATE_ALWAYS, 0, 0);
 		if (Std_Echo == INVALID_HANDLE_VALUE) {
 			Std_Echo = 0;
 			req->error = GetLastError();

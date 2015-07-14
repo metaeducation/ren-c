@@ -419,14 +419,14 @@ err:
 	case SYM_ENCODE:
 		codi.action = CODI_ENCODE;
 		if (IS_IMAGE(val)) {
-			codi.bits = VAL_IMAGE_BITS(val);
+			codi.extra.bits = VAL_IMAGE_BITS(val);
 			codi.w = VAL_IMAGE_WIDE(val);
 			codi.h = VAL_IMAGE_HIGH(val);
 			codi.alpha = Image_Has_Alpha(val, 0);
 		} else if (IS_STRING(val)) {
 			codi.w = VAL_SERIES_WIDTH(val);
 			codi.len = VAL_LEN(val);
-			codi.other = VAL_BIN_DATA(val);
+			codi.extra.other = VAL_BIN_DATA(val);
 		}
 		else
 			Trap1_DEAD_END(RE_INVALID_ARG, val);
@@ -470,7 +470,11 @@ err:
 		ser->tail = codi.len;
 
 		// optimize for pass-thru decoders, which leave codi.data NULL
-		memcpy(BIN_HEAD(ser), codi.data == NULL? codi.other : codi.data, codi.len);
+		memcpy(
+			BIN_HEAD(ser),
+			codi.data ? codi.data : codi.extra.other,
+			codi.len
+		);
 		Set_Binary(D_RET, ser);
 
 		//don't free the text binary input buffer during decode (it's the 3rd arg value in fact)
@@ -482,15 +486,15 @@ err:
 
 	case CODI_IMAGE: //used on decode
 		ser = Make_Image(codi.w, codi.h, TRUE); // Puts it into RETURN stack position
-		memcpy(IMG_DATA(ser), codi.bits, codi.w * codi.h * 4);
+		memcpy(IMG_DATA(ser), codi.extra.bits, codi.w * codi.h * 4);
 		SET_IMAGE(D_RET, ser);
 
 		// See notice in reb-codec.h on reb_codec_image
-		FREE_ARRAY(u32, codi.w * codi.h, codi.bits);
+		FREE_ARRAY(u32, codi.w * codi.h, codi.extra.bits);
 		break;
 
 	case CODI_BLOCK:
-		Set_Block(D_RET, codi.other);
+		Set_Block(D_RET, codi.extra.other);
 		break;
 
 	default:

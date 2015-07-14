@@ -124,7 +124,7 @@
 	CloseClipboard();
 
 	SET_FLAG(req->flags, RRF_WIDE);
-	req->data = (REBYTE *)bin;
+	req->common.data = cast(REBYTE *, bin);
 	req->actual = len * sizeof(wchar_t);
 	Signal_Device(req, EVT_READ);
 	return DR_DONE;
@@ -160,7 +160,7 @@
 		return DR_ERROR;
 	}
 
-	memcpy(bin, req->data, len);
+	memcpy(bin, req->common.data, len);
 	bin[len] = 0;
 	GlobalUnlock(data);
 

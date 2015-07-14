@@ -45,7 +45,7 @@ static REBSER *Read_All_File(char *fname)
 
 	file.clen = sizeof(file);
 	file.device = RDI_FILE;
-	file.file.path = fname;
+	file.special.file.path = fname;
 
 	SET_FLAG(file.modes, RFM_READ);
 
@@ -53,10 +53,10 @@ static REBSER *Read_All_File(char *fname)
 
 	if (file.error) return 0;
 
-	ser = Make_Binary((REBCNT)(file.file.size));
+	ser = Make_Binary(cast(REBCNT, file.special.file.size));
 
 	file.data = BIN_DATA(ser);
-	file.length = (REBCNT)(file.file.size);
+	file.length = cast(REBCNT, file.special.file.size);
 
 	OS_DO_DEVICE(&file, RDC_READ);
 

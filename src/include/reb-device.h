@@ -167,7 +167,9 @@ struct rebol_devreq {
 		void *handle;		// OS object
 		int socket;			// OS identifier
 		int id;
-	};
+	} requestee;			// !!! REVIEW: Not always "receiver"?  The name is
+							// "bad" (?) but at least unique, making it easy
+							// to change.  See also rebol_event->eventee
 
 	// Command info:
 	i32  command;			// command code
@@ -182,11 +184,11 @@ struct rebol_devreq {
 	union {
 		REBYTE *data;		// data to transfer
 		REBREQ *sock;		// temp link to related socket
-	};
+	} common;
 	u32  length;			// length to transfer
 	u32  actual;			// length actually transferred
 
-	// Special fields for common IO uses:
+	// Special fields:
 	union {
 #ifdef HAS_POSIX_SIGNAL
 		struct {
@@ -216,7 +218,7 @@ struct rebol_devreq {
 			u8	flow_control;		// hardware or software
 
 		} serial;
-	};
+	} special;
 };
 #pragma pack()
 

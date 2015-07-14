@@ -59,7 +59,7 @@
 	if (!(ser = Value_To_OS_Path(path, TRUE)))
 		Trap1(RE_BAD_FILE_PATH, path);
 
-	file->file.path = cast(REBCHR*, ser->data);
+	file->special.file.path = cast(REBCHR*, ser->data);
 
 	SET_FLAG(file->modes, RFM_NAME_MEM);
 
@@ -74,8 +74,8 @@
 ***********************************************************************/
 {
 	if (GET_FLAG(file->modes, RFM_NAME_MEM)) {
-		//NOTE: file->file.path will get GC'd
-		file->file.path = 0;
+		//NOTE: file->special.file.path will get GC'd
+		file->special.file.path = 0;
 		CLR_FLAG(file->modes, RFM_NAME_MEM);
 	}
 	SET_CLOSED(file);
@@ -115,10 +115,10 @@
 
 	SET_OBJECT(ret, obj);
 	Init_Word(OFV(obj, STD_FILE_INFO_TYPE), GET_FLAG(file->modes, RFM_DIR) ? SYM_DIR : SYM_FILE);
-	SET_INTEGER(OFV(obj, STD_FILE_INFO_SIZE), file->file.size);
+	SET_INTEGER(OFV(obj, STD_FILE_INFO_SIZE), file->special.file.size);
 	Set_File_Date(file, OFV(obj, STD_FILE_INFO_DATE));
 
-	ser = To_REBOL_Path(file->file.path, 0, OS_WIDE, 0);
+	ser = To_REBOL_Path(file->special.file.path, 0, OS_WIDE, 0);
 
 	Set_Series(REB_FILE, OFV(obj, STD_FILE_INFO_NAME), ser);
 }
@@ -196,7 +196,7 @@ REBINT Mode_Syms[] = {
 	Set_Series(REB_BINARY, ds, ser); //??? what if already set?
 
 	// Do the read, check for errors:
-	file->data = BIN_HEAD(ser);
+	file->common.data = BIN_HEAD(ser);
 	file->length = len;
 	if (OS_DO_DEVICE(file, RDC_READ) < 0)
 		Trap_Port(RE_READ_ERROR, port, file->error);
@@ -241,11 +241,11 @@ REBINT Mode_Syms[] = {
 	// Auto convert string to UTF-8
 	if (IS_STRING(data)) {
 		ser = Encode_UTF8_Value(data, len, ENCF_OS_CRLF);
-		file->data = ser? BIN_HEAD(ser) : VAL_BIN_DATA(data); // No encoding may be needed
+		file->common.data = ser? BIN_HEAD(ser) : VAL_BIN_DATA(data); // No encoding may be needed
 		len = SERIES_TAIL(ser);
 	}
 	else {
-		file->data = VAL_BIN_DATA(data);
+		file->common.data = VAL_BIN_DATA(data);
 	}
 	file->length = len;
 	OS_DO_DEVICE(file, RDC_WRITE);
@@ -270,7 +270,7 @@ REBINT Mode_Syms[] = {
 	int what_if_it_changed;
 
 	// Compute and bound bytes remaining:
-	len = file->file.size - file->file.index; // already read
+	len = file->special.file.size - file->special.file.index; // already read
 	if (len < 0) return 0;
 	len &= MAX_READ_MASK; // limit the size
 
@@ -296,9 +296,9 @@ REBINT Mode_Syms[] = {
 
 	cnt = Int64s(arg, 0);
 
-	if (cnt > file->file.size) cnt = file->file.size;
+	if (cnt > file->special.file.size) cnt = file->special.file.size;
 
-	file->file.index = cnt;
+	file->special.file.index = cnt;
 
 	SET_FLAG(file->modes, RFM_RESEEK); // force a seek
 }
@@ -366,7 +366,7 @@ REBINT Mode_Syms[] = {
 	case A_APPEND:
 		if (!(IS_BINARY(D_ARG(2)) || IS_STRING(D_ARG(2)) || IS_BLOCK(D_ARG(2))))
 			Trap1_DEAD_END(RE_INVALID_ARG, D_ARG(2));
-		file->file.index = file->file.size;
+		file->special.file.index = file->special.file.size;
 		SET_FLAG(file->modes, RFM_RESEEK);
 
 	case A_WRITE:
@@ -388,7 +388,7 @@ REBINT Mode_Syms[] = {
 
 		// Setup for /append or /seek:
 		if (args & AM_WRITE_APPEND) {
-			file->file.index = -1; // append
+			file->special.file.index = -1; // append
 			SET_FLAG(file->modes, RFM_RESEEK);
 		}
 		if (args & AM_WRITE_SEEK) Set_Seek(file, D_ARG(ARG_WRITE_INDEX));
@@ -451,7 +451,7 @@ REBINT Mode_Syms[] = {
 			// Convert file name to OS format:
 			if (!(target = Value_To_OS_Path(D_ARG(2), TRUE)))
 				Trap1_DEAD_END(RE_BAD_FILE_PATH, D_ARG(2));
-			file->data = BIN_DATA(target);
+			file->common.data = BIN_DATA(target);
 			OS_DO_DEVICE(file, RDC_RENAME);
 			Free_Series(target);
 			if (file->error) Trap1_DEAD_END(RE_NO_RENAME, path);
@@ -486,41 +486,41 @@ REBINT Mode_Syms[] = {
 		break;
 
 	case A_INDEXQ:
-		SET_INTEGER(D_RET, file->file.index + 1);
+		SET_INTEGER(D_RET, file->special.file.index + 1);
 		break;
 
 	case A_LENGTHQ:
-		SET_INTEGER(D_RET, file->file.size - file->file.index); // !clip at zero
+		SET_INTEGER(D_RET, file->special.file.size - file->special.file.index); // !clip at zero
 		break;
 
 	case A_HEAD:
-		file->file.index = 0;
+		file->special.file.index = 0;
 		goto seeked;
 
     case A_TAIL:
-		file->file.index = file->file.size;
+		file->special.file.index = file->special.file.size;
 		goto seeked;
 
 	case A_NEXT:
-		file->file.index++;
+		file->special.file.index++;
 		goto seeked;
 
 	case A_BACK:
-		if (file->file.index > 0) file->file.index--;
+		if (file->special.file.index > 0) file->special.file.index--;
 		goto seeked;
 
 	case A_SKIP:
-		file->file.index += Get_Num_Arg(D_ARG(2));
+		file->special.file.index += Get_Num_Arg(D_ARG(2));
 		goto seeked;
 
     case A_HEADQ:
-		DECIDE(file->file.index == 0);
+		DECIDE(file->special.file.index == 0);
 
     case A_TAILQ:
-		DECIDE(file->file.index >= file->file.size);
+		DECIDE(file->special.file.index >= file->special.file.size);
 
     case A_PASTQ:
-		DECIDE(file->file.index > file->file.size);
+		DECIDE(file->special.file.index > file->special.file.size);
 
 	case A_CLEAR:
 		// !! check for write enabled?

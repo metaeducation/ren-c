@@ -74,7 +74,7 @@ static REBREQ *Req_SIO;
 	// !!! Don't put const literal directly into mutable Req_SIO->data
 	static REBYTE newline[] = "\n";
 
-	Req_SIO->data = newline;
+	Req_SIO->common.data = newline;
 	Req_SIO->length = 1;
 	Req_SIO->actual = 0;
 
@@ -109,7 +109,7 @@ static REBREQ *Req_SIO;
 	SET_FLAG(Req_SIO->flags, RRF_FLUSH);
 
 	Req_SIO->actual = 0;
-	Req_SIO->data = buf;
+	Req_SIO->common.data = buf;
 	buf[0] = 0; // for debug tracing
 
 	while ((len2 = len) > 0) {
@@ -500,7 +500,7 @@ static REBREQ *Req_SIO;
 /*
 ***********************************************************************/
 {
-	Req_SIO->file.path = file;
+	Req_SIO->special.file.path = file;
 	return (DR_ERROR != OS_DO_DEVICE(Req_SIO, RDC_CREATE));
 }
 

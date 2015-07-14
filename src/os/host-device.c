@@ -218,7 +218,7 @@ static int Poll_Default(REBDEV *dev)
 		prior = &dev->pending;
 		// Scan the pending requests, mark the one we got:
 		for (req = *prior; req; req = *prior) {
-			if ((REBUPT)(req->handle) == handle) {
+			if (cast(REBUPT, req->requestee.handle) == handle) {
 				req->error = error; // zero when no error
 				SET_FLAG(req->flags, RRF_DONE);
 				return;
@@ -243,7 +243,7 @@ static int Poll_Default(REBDEV *dev)
 
 	evt.type = (REBYTE)type;
 	evt.model = EVM_DEVICE;
-	evt.req  = req;
+	evt.eventee.req = req;
 	if (type == EVT_ERROR) evt.data = req->error;
 
 	RL_Event(&evt);	// (returns 0 if queue is full, ignored)

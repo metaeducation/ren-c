@@ -112,15 +112,15 @@ static REBOOL Seek_File_64(REBREQ *file)
 {
 	// Performs seek and updates index value. TRUE on success.
 	// On error, returns FALSE and sets file->error field.
-	int h = file->id;
+	int h = file->requestee.id;
 	i64 result;
 
-	if (file->file.index == -1) {
+	if (file->special.file.index == -1) {
 		// Append:
 		result = lseek(h, 0, SEEK_END);
 	}
 	else {
-		result = lseek(h, file->file.index, SEEK_SET);
+		result = lseek(h, file->special.file.index, SEEK_SET);
 	}
 
 	if (result < 0) {
@@ -128,7 +128,7 @@ static REBOOL Seek_File_64(REBREQ *file)
 		return 0;
 	}
 
-	file->file.index = result;
+	file->special.file.index = result;
 
 	return 1;
 }
@@ -137,20 +137,20 @@ static int Get_File_Info(REBREQ *file)
 {
 	struct stat info;
 
-	if (stat(file->file.path, &info)) {
+	if (stat(file->special.file.path, &info)) {
 		file->error = errno;
 		return DR_ERROR;
 	}
 
 	if (S_ISDIR(info.st_mode)) {
 		SET_FLAG(file->modes, RFM_DIR);
-		file->file.size = 0; // in order to be consistent on all systems
+		file->special.file.size = 0; // in order to be consistent on all systems
 	}
 	else {
 		CLR_FLAG(file->modes, RFM_DIR);
-		file->file.size = info.st_size;
+		file->special.file.size = info.st_size;
 	}
-	file->file.time.l = (long)(info.st_mtime);
+	file->special.file.time.l = cast(long, info.st_mtime);
 
 	return DR_DONE;
 }
@@ -169,35 +169,35 @@ static int Get_File_Info(REBREQ *file)
 **		The dir arg provides information about the directory to read.
 **		The file arg is used to return specific file information.
 **
-**		To begin, this function is called with a dir->handle that
-**		is set to zero and a dir->file.path string for the directory.
+**		To begin, this function is called with a dir->requestee.handle that
+**		is set to zero and a dir->special.file.path string for the directory.
 **
 **		The directory is opened and a handle is stored in the dir
 **		structure for use on subsequent calls. If an error occurred,
 **		dir->error is set to the error code and -1 is returned.
 **		The dir->size field can be set to the number of files in the
-**		dir, if it is known. The dir->file.index field can be used by this
+**		dir, if it is known. The dir->special.file.index field can be used by this
 **		function to store information between calls.
 **
 **		If the open succeeded, then information about the first file
 **		is stored in the file argument and the function returns 0.
 **		On an error, the dir->error is set, the dir is closed,
-**		dir->handle is nulled, and -1 is returned.
+**		dir->requestee.handle is nulled, and -1 is returned.
 **
 **		The caller loops until all files have been obtained. This
 **		action should be uninterrupted. (The caller should not perform
 **		additional OS or IO operations between calls.)
 **
-**		When no more files are found, the dir is closed, dir->handle
+**		When no more files are found, the dir is closed, dir->requestee.handle
 **		is nulled, and 1 is returned. No file info is returned.
 **		(That is, this function is called one extra time. This helps
 **		for OSes that may deallocate file strings on dir close.)
 **
-**		Note that the dir->file.path can contain wildcards * and ?. The
+**		Note that the dir->special.file.path can contain wildcards * and ?. The
 **		processing of these can be done in the OS (if supported) or
 **		by a separate filter operation during the read.
 **
-**		Store file date info in file->file.index or other fields?
+**		Store file date info in file->special.file.index or other fields?
 **		Store permissions? Ownership? Groups? Or, require that
 **		to be part of a separate request?
 **
@@ -211,17 +211,17 @@ static int Get_File_Info(REBREQ *file)
 
 	// Remove * from tail, if present. (Allowed because the
 	// path was copied into to-local-path first).
-	n = strlen(cp = dir->file.path);
+	n = strlen(cp = dir->special.file.path);
 	if (n > 0 && cp[n-1] == '*') cp[n-1] = 0;
 
 	// If no dir handle, open the dir:
-	if (!(h = dir->handle)) {
-		h = opendir(dir->file.path);
+	if (!(h = dir->requestee.handle)) {
+		h = opendir(dir->special.file.path);
 		if (!h) {
 			dir->error = errno;
 			return DR_ERROR;
 		}
-		dir->handle = h;
+		dir->requestee.handle = h;
 		CLR_FLAG(dir->flags, RRF_DONE);
 	}
 
@@ -231,7 +231,7 @@ static int Get_File_Info(REBREQ *file)
 		if (!(d = readdir(h))) {
 			//dir->error = errno;
 			closedir(h);
-			dir->handle = 0;
+			dir->requestee.handle = 0;
 			//if (dir->error) return DR_ERROR;
 			SET_FLAG(dir->flags, RRF_DONE); // no more files
 			return DR_DONE;
@@ -240,7 +240,7 @@ static int Get_File_Info(REBREQ *file)
 	} while (cp[0] == '.' && (cp[1] == 0 || (cp[1] == '.' && cp[2] == 0)));
 
 	file->modes = 0;
-	strncpy(file->file.path, cp, MAX_FILE_NAME);
+	strncpy(file->special.file.path, cp, MAX_FILE_NAME);
 
 #ifdef DT_DIR
 	// NOTE: not all posix filesystems support this (mainly
@@ -250,7 +250,7 @@ static int Get_File_Info(REBREQ *file)
 	// file system call for determining directories.
 	if (d->d_type == DT_DIR) SET_FLAG(file->modes, RFM_DIR);
 #else
-	if (Is_Dir(dir->file.path, file->file.path)) SET_FLAG(file->modes, RFM_DIR);
+	if (Is_Dir(dir->special.file.path, file->special.file.path)) SET_FLAG(file->modes, RFM_DIR);
 #endif
 
 	// Line below DOES NOT WORK -- because we need full path.
@@ -283,7 +283,7 @@ static int Get_File_Info(REBREQ *file)
 	struct stat info;
 
 	// Posix file names should be compatible with REBOL file paths:
-	if (!(path = file->file.path)) {
+	if (!(path = file->special.file.path)) {
 		file->error = -RFE_BAD_PATH;
 		return DR_ERROR;
 	}
@@ -329,11 +329,11 @@ static int Get_File_Info(REBREQ *file)
 
 	// Fetch file size (if fails, then size is assumed zero):
 	if (fstat(h, &info) == 0) {
-		file->file.size = info.st_size;
-		file->file.time.l = (long)(info.st_mtime);
+		file->special.file.size = info.st_size;
+		file->special.file.time.l = cast(long, info.st_mtime);
 	}
 
-	file->id = h;
+	file->requestee.id = h;
 
 	return DR_DONE;
 
@@ -350,9 +350,9 @@ fail:
 **
 ***********************************************************************/
 {
-	if (file->id) {
-		close(file->id);
-		file->id = 0;
+	if (file->requestee.id) {
+		close(file->requestee.id);
+		file->requestee.id = 0;
 	}
 	return DR_DONE;
 }
@@ -365,10 +365,10 @@ fail:
 ***********************************************************************/
 {
 	if (GET_FLAG(file->modes, RFM_DIR)) {
-		return Read_Directory(file, (REBREQ*)file->data);
+		return Read_Directory(file, cast(REBREQ*, file->common.data));
 	}
 
-	if (!file->id) {
+	if (!file->requestee.id) {
 		file->error = -RFE_NO_HANDLE;
 		return DR_ERROR;
 	}
@@ -378,13 +378,13 @@ fail:
 		if (!Seek_File_64(file)) return DR_ERROR;
 	}
 
-	// printf("read %d len %d\n", file->id, file->length);
-	file->actual = read(file->id, file->data, file->length);
+	// printf("read %d len %d\n", file->requestee.id, file->length);
+	file->actual = read(file->requestee.id, file->common.data, file->length);
 	if (file->actual < 0) {
 		file->error = -RFE_BAD_READ;
 		return DR_ERROR;
 	} else {
-		file->file.index += file->actual;
+		file->special.file.index += file->actual;
 	}
 
 	return DR_DONE;
@@ -399,26 +399,26 @@ fail:
 **
 ***********************************************************************/
 {
-	if (!file->id) {
+	if (!file->requestee.id) {
 		file->error = -RFE_NO_HANDLE;
 		return DR_ERROR;
 	}
 
 	if (GET_FLAG(file->modes, RFM_APPEND)) {
 		CLR_FLAG(file->modes, RFM_APPEND);
-		lseek(file->id, 0, SEEK_END);
+		lseek(file->requestee.id, 0, SEEK_END);
 	}
 
 	if (file->modes & ((1 << RFM_SEEK) | (1 << RFM_RESEEK) | (1 << RFM_TRUNCATE))) {
 		CLR_FLAG(file->modes, RFM_RESEEK);
 		if (!Seek_File_64(file)) return DR_ERROR;
 		if (GET_FLAG(file->modes, RFM_TRUNCATE))
-			if (ftruncate(file->id, file->file.index)) return DR_ERROR;
+			if (ftruncate(file->requestee.id, file->special.file.index)) return DR_ERROR;
 	}
 
 	if (file->length == 0) return DR_DONE;
 
-	file->actual = write(file->id, file->data, file->length);
+	file->actual = write(file->requestee.id, file->common.data, file->length);
 	if (file->actual < 0) {
 		if (errno == ENOSPC) file->error = -RFE_DISK_FULL;
 		else file->error = -RFE_BAD_WRITE;
@@ -451,7 +451,7 @@ fail:
 ***********************************************************************/
 {
 	if (GET_FLAG(file->modes, RFM_DIR)) {
-		if (!mkdir(file->file.path, 0777)) return DR_DONE;
+		if (!mkdir(file->special.file.path, 0777)) return DR_DONE;
 		file->error = errno;
 		return DR_ERROR;
 	} else
@@ -464,7 +464,7 @@ fail:
 */	DEVICE_CMD Delete_File(REBREQ *file)
 /*
 **		Delete a file or directory. Return TRUE if it was done.
-**		The file->file.path provides the directory path and name.
+**		The file->special.file.path provides the directory path and name.
 **		For errors, return FALSE and set file->error to error code.
 **
 **		Note: Dirs must be empty to succeed
@@ -472,9 +472,9 @@ fail:
 ***********************************************************************/
 {
 	if (GET_FLAG(file->modes, RFM_DIR)) {
-		if (!rmdir(file->file.path)) return DR_DONE;
+		if (!rmdir(file->special.file.path)) return DR_DONE;
 	} else
-		if (!remove(file->file.path)) return DR_DONE;
+		if (!remove(file->special.file.path)) return DR_DONE;
 
 	file->error = errno;
 	return DR_ERROR;
@@ -492,7 +492,7 @@ fail:
 **
 ***********************************************************************/
 {
-	if (!rename(file->file.path, file->data)) return DR_DONE;
+	if (!rename(file->special.file.path, file->common.data)) return DR_DONE;
 	file->error = errno;
 	return DR_ERROR;
 }

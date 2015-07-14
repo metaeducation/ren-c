@@ -89,7 +89,7 @@
 	//make sure "bytes mode" is set
 	CLR_FLAG(req->flags, RRF_WIDE);
 
-	req->data = data;
+	req->common.data = data;
 	req->actual = OS_STRLEN(data);
 
 	return DR_DONE;

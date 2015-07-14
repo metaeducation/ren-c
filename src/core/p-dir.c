@@ -54,24 +54,29 @@
 
 	// Temporary filename storage:
 	fname = BUF_OS_STR;
-	file.file.path = cast(REBCHR*, Reset_Buffer(fname, MAX_FILE_NAME));
+	file.special.file.path = cast(REBCHR*, Reset_Buffer(fname, MAX_FILE_NAME));
 
 	SET_FLAG(dir->modes, RFM_DIR);
 
-	dir->data = (REBYTE*)(&file);
+	dir->common.data = cast(REBYTE*, &file);
 
 	while ((result = OS_DO_DEVICE(dir, RDC_READ)) == 0 && !GET_FLAG(dir->flags, RRF_DONE)) {
-		len = OS_STRLEN(file.file.path);
+		len = OS_STRLEN(file.special.file.path);
 		if (GET_FLAG(file.modes, RFM_DIR)) len++;
-		name = Copy_OS_Str(file.file.path, len);
+		name = Copy_OS_Str(file.special.file.path, len);
 		if (GET_FLAG(file.modes, RFM_DIR))
 			SET_ANY_CHAR(name, name->tail-1, '/');
 		Set_Series(REB_FILE, Append_Value(files), name);
 	}
 
 	if (result < 0 && dir->error != -RFE_OPEN_FAIL
-		&& (OS_STRCHR(dir->file.path, '*') || OS_STRCHR(dir->file.path, '?')))
+		&& (
+			OS_STRCHR(dir->special.file.path, '*')
+			|| OS_STRCHR(dir->special.file.path, '?')
+		)
+	) {
 		result = 0;  // no matches found, but not an error
+	}
 
 	return result;
 }
@@ -115,7 +120,7 @@
 
 		CLEARS(&file);
 		ser = Value_To_OS_Path(path, TRUE);
-		file.file.path = cast(REBCHR*, ser->data);
+		file.special.file.path = cast(REBCHR*, ser->data);
 		file.device = RDI_FILE;
 		len = OS_DO_DEVICE(&file, RDC_QUERY);
 		FREE_SERIES(ser);
@@ -167,51 +172,51 @@
 	// We depend on To_Local_Path giving us 2 extra chars for / and *
 	ser = Value_To_OS_Path(path, TRUE);
 	len = ser->tail;
-	dir->file.path = cast(REBCHR*, ser->data);
+	dir->special.file.path = cast(REBCHR*, ser->data);
 
 	Secure_Port(SYM_FILE, dir, path, ser);
 
-	if (len == 1 && OS_CH_EQUAL(dir->file.path[0], '.')) {
+	if (len == 1 && OS_CH_EQUAL(dir->special.file.path[0], '.')) {
 		if (wild > 0) {
-			dir->file.path[0] = OS_MAKE_CH('*');
-			dir->file.path[1] = OS_MAKE_CH('\0');
+			dir->special.file.path[0] = OS_MAKE_CH('*');
+			dir->special.file.path[1] = OS_MAKE_CH('\0');
 		}
 	}
 	else if (
 		len == 2
-		&& OS_CH_EQUAL(dir->file.path[0], '.')
-		&& OS_CH_EQUAL(dir->file.path[1], '.')
+		&& OS_CH_EQUAL(dir->special.file.path[0], '.')
+		&& OS_CH_EQUAL(dir->special.file.path[1], '.')
 	) {
 		// Insert * if needed:
 		if (wild > 0) {
-			dir->file.path[len++] = OS_MAKE_CH('/');
-			dir->file.path[len++] = OS_MAKE_CH('*');
-			dir->file.path[len] = OS_MAKE_CH('\0');
+			dir->special.file.path[len++] = OS_MAKE_CH('/');
+			dir->special.file.path[len++] = OS_MAKE_CH('*');
+			dir->special.file.path[len] = OS_MAKE_CH('\0');
 		}
 	}
 	else if (
-		OS_CH_EQUAL(dir->file.path[len-1], '/')
-		|| OS_CH_EQUAL(dir->file.path[len-1], '\\')
+		OS_CH_EQUAL(dir->special.file.path[len-1], '/')
+		|| OS_CH_EQUAL(dir->special.file.path[len-1], '\\')
 	) {
 		if (policy & REMOVE_TAIL_SLASH) {
-			dir->file.path[len-1] = OS_MAKE_CH('\0');
+			dir->special.file.path[len-1] = OS_MAKE_CH('\0');
 		}
 		else {
 			// Insert * if needed:
 			if (wild > 0) {
-				dir->file.path[len++] = OS_MAKE_CH('*');
-				dir->file.path[len] = OS_MAKE_CH('\0');
+				dir->special.file.path[len++] = OS_MAKE_CH('*');
+				dir->special.file.path[len] = OS_MAKE_CH('\0');
 			}
 		}
 	} else {
 		// Path did not end with /, so we better be wild:
 		if (wild == 0) {
-			///OS_FREE(dir->file.path);
+			///OS_FREE(dir->special.file.path);
 			Trap1(RE_BAD_FILE_PATH, path);
 		}
 		else if (wild < 0) {
-			dir->file.path[len++] = OS_MAKE_CH(OS_DIR_SEP);
-			dir->file.path[len] = OS_MAKE_CH('\0');
+			dir->special.file.path[len++] = OS_MAKE_CH(OS_DIR_SEP);
+			dir->special.file.path[len] = OS_MAKE_CH('\0');
 		}
 	}
 }
@@ -296,7 +301,7 @@ create:
 			Init_Dir_Path(&dir, path, 0, POL_WRITE | REMOVE_TAIL_SLASH); // Sets RFM_DIR too
 			// Convert file name to OS format:
 			if (!(target = Value_To_OS_Path(D_ARG(2), TRUE))) Trap1_DEAD_END(RE_BAD_FILE_PATH, D_ARG(2));
-			dir.data = BIN_DATA(target);
+			dir.common.data = BIN_DATA(target);
 			OS_DO_DEVICE(&dir, RDC_RENAME);
 			Free_Series(target);
 			if (dir.error) Trap1_DEAD_END(RE_NO_RENAME, path);

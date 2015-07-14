@@ -73,9 +73,9 @@
 			if (! (IS_FILE(arg) || IS_STRING(arg) || IS_BINARY(arg))) {
 				Trap1_DEAD_END(RE_INVALID_PORT_ARG, arg);
 			}
-			req->serial.path = ALLOC_ARRAY(REBCHR, MAX_SERIAL_DEV_PATH);
+			req->special.serial.path = ALLOC_ARRAY(REBCHR, MAX_SERIAL_DEV_PATH);
 			OS_STRNCPY(
-				req->serial.path,
+				req->special.serial.path,
 				// !!! This is assuming VAL_DATA contains native chars.
 				// Should it? (2 bytes on windows, 1 byte on linux/mac)
 				cast(REBCHR*, VAL_DATA(arg)),
@@ -85,7 +85,7 @@
 			if (! IS_INTEGER(arg)) {
 				Trap1_DEAD_END(RE_INVALID_PORT_ARG, arg);
 			}
-			req->serial.baud = VAL_INT32(arg);
+			req->special.serial.baud = VAL_INT32(arg);
 			//Secure_Port(SYM_SERIAL, ???, path, ser);
 			arg = Obj_Value(spec, STD_PORT_SPEC_SERIAL_DATA_SIZE);
 			if (!IS_INTEGER(arg)
@@ -93,7 +93,7 @@
 				|| VAL_INT64(arg) > 8) {
 				Trap1_DEAD_END(RE_INVALID_PORT_ARG, arg);
 			}
-			req->serial.data_bits = VAL_INT32(arg);
+			req->special.serial.data_bits = VAL_INT32(arg);
 
 			arg = Obj_Value(spec, STD_PORT_SPEC_SERIAL_STOP_BITS);
 			if (!IS_INTEGER(arg)
@@ -101,21 +101,21 @@
 				|| VAL_INT64(arg) > 2) {
 				Trap1_DEAD_END(RE_INVALID_PORT_ARG, arg);
 			}
-			req->serial.stop_bits = VAL_INT32(arg);
+			req->special.serial.stop_bits = VAL_INT32(arg);
 
 			arg = Obj_Value(spec, STD_PORT_SPEC_SERIAL_PARITY);
 			if (IS_NONE(arg)) {
-				req->serial.parity = SERIAL_PARITY_NONE;
+				req->special.serial.parity = SERIAL_PARITY_NONE;
 			} else {
 				if (!IS_WORD(arg)) {
 					Trap1_DEAD_END(RE_INVALID_PORT_ARG, arg);
 				}
 				switch (VAL_WORD_CANON(arg)) {
 					case SYM_ODD:
-						req->serial.parity = SERIAL_PARITY_ODD;
+						req->special.serial.parity = SERIAL_PARITY_ODD;
 						break;
 					case SYM_EVEN:
-						req->serial.parity = SERIAL_PARITY_EVEN;
+						req->special.serial.parity = SERIAL_PARITY_EVEN;
 						break;
 					default:
 						Trap1_DEAD_END(RE_INVALID_PORT_ARG, arg);
@@ -124,17 +124,17 @@
 
 			arg = Obj_Value(spec, STD_PORT_SPEC_SERIAL_FLOW_CONTROL);
 			if (IS_NONE(arg)) {
-				req->serial.flow_control = SERIAL_FLOW_CONTROL_NONE;
+				req->special.serial.flow_control = SERIAL_FLOW_CONTROL_NONE;
 			} else {
 				if (!IS_WORD(arg)) {
 					Trap1_DEAD_END(RE_INVALID_PORT_ARG, arg);
 				}
 				switch (VAL_WORD_CANON(arg)) {
 					case SYM_HARDWARE:
-						req->serial.flow_control = SERIAL_FLOW_CONTROL_HARDWARE;
+						req->special.serial.flow_control = SERIAL_FLOW_CONTROL_HARDWARE;
 						break;
 					case SYM_SOFTWARE:
-						req->serial.flow_control = SERIAL_FLOW_CONTROL_SOFTWARE;
+						req->special.serial.flow_control = SERIAL_FLOW_CONTROL_SOFTWARE;
 						break;
 					default:
 						Trap1_DEAD_END(RE_INVALID_PORT_ARG, arg);
@@ -171,7 +171,7 @@
 		req->length = SERIES_AVAIL(ser); // space available
 		if (req->length < 32000/2) Extend_Series(ser, 32000);
 		req->length = SERIES_AVAIL(ser);
-		req->data = STR_TAIL(ser); // write at tail
+		req->common.data = STR_TAIL(ser); // write at tail
 		//if (SERIES_TAIL(ser) == 0)
 		req->actual = 0;  // Actual for THIS read, not for total.
 #ifdef DEBUG_SERIAL
@@ -182,7 +182,7 @@
 #ifdef DEBUG_SERIAL
 		for (len = 0; len < req->actual; len++) {
 			if (len % 16 == 0) printf("\n");
-			printf("%02x ", req->data[len]);
+			printf("%02x ", req->common.data[len]);
 		}
 		printf("\n");
 #endif
@@ -203,7 +203,7 @@
 		// Setup the write:
 		*OFV(port, STD_PORT_DATA) = *spec;	// keep it GC safe
 		req->length = len;
-		req->data = VAL_BIN_DATA(spec);
+		req->common.data = VAL_BIN_DATA(spec);
 		req->actual = 0;
 
 		//Print("(write length %d)", len);
