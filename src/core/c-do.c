@@ -338,7 +338,7 @@ void Trace_Arg(REBINT num, REBVAL *arg, REBVAL *path)
 
 	// Save WORD for function and fake frame for relative arg lookup:
 	tos++;
-	Init_Word(tos, word ? word : SYM__APPLY_);
+	Init_Word(tos, word ? word : cast(REBCNT, SYM__APPLY_));
 	if (func) {
 		VAL_WORD_FRAME(tos) = VAL_FUNC_ARGS(func);
 		// Save FUNC value for safety (spec, args, code):
