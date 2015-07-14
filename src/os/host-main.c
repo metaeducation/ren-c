@@ -54,9 +54,8 @@
 #include <windows.h>
 #endif
 
-#define OS_LIB_TABLE		// include the host-lib dispatch table
-
 #include "reb-host.h"		// standard host include files
+#include "host-table.inc"
 
 #ifdef CUSTOM_STARTUP
 #include "host-init.h"

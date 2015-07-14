@@ -186,7 +186,7 @@ extern REBDEV *Devices[];
 
 /***********************************************************************
 **
-**	HOST LIB TABLE INITIALIZATION
+**	HOST LIB TABLE DEFINITION
 **
 **		!!!
 **		!!! **WARNING!**  DO NOT EDIT THIS! (until you've checked...)
@@ -229,55 +229,15 @@ extern REBDEV *Devices[];
 (host-lib-struct) newline
 
 {
+extern REBOL_HOST_LIB *Host_Lib;
+
+
 //** Included by HOST *********************************************
 
 #ifndef REB_DEF
 }
 
 newline (host-lib-externs) newline
-
-{
-#ifdef OS_LIB_TABLE
-
-/***********************************************************************
-**
-**	HOST LIB TABLE INITIALIZATION
-**
-**		When Rebol is compiled with certain settings, the host-lib.h
-**		file acts more like a .inc file, declaring a table instance.
-**		Multiple inclusions under this mode will generate duplicate
-**		Host_Lib symbols, so beware!  There's likely a better place
-**		to put this or a better way to do it, but it's how it was
-**		when Rebol was open-sourced and has not been changed yet.
-**
-**		!!!
-**		!!! **WARNING!**  DO NOT EDIT THIS! (until you've checked...)
-**		!!! BE SURE YOU ARE EDITING MAKE-OS-EXT.R AND NOT HOST-LIB.H
-**		!!!
-**
-***********************************************************************/
-
-REBOL_HOST_LIB *Host_Lib;
-}
-
-newline
-
-"REBOL_HOST_LIB Host_Lib_Init = {"
-
-{
-	HOST_LIB_SIZE,
-	(HOST_LIB_VER << 16) + HOST_LIB_SUM,
-	(REBDEV**)&Devices,
-}
-
-(host-lib-instance)
-
-"^};" newline
-
-newline
-
-{#endif //OS_LIB_TABLE
-}
 
 newline (host-lib-macros) newline
 
@@ -291,8 +251,6 @@ newline (host-lib-macros) newline
 newline newline (rebol-lib-macros)
 
 {
-extern REBOL_HOST_LIB *Host_Lib;
-
 #endif //REB_DEF
 
 
@@ -477,5 +435,53 @@ extern REBOL_HOST_LIB *Host_Lib;
 ;print out ;halt
 ;print ['checksum checksum/tcp checksum-source]
 write %../../include/host-lib.h out
+
+
+out: rejoin [
+form-header/gen "Host Table Definition" %host-table.inc %make-os-ext.r
+
+{
+/***********************************************************************
+**
+**	HOST LIB TABLE DEFINITION
+**
+**		This is the actual definition of the host table.  In order for
+**		the assignments to work, you must have included host-lib.h with
+**		REB_DEF undefined, to get the prototypes for the host kit
+**		functions.  (You'll get this automatically if you are doing
+**		#include "reb-host.h).
+**
+**		There can be only one instance of this table linked into your
+**		program, or you will get multiple defintitions of the Host_Lib
+**		table.  You may wish to make a .c file that only includes
+**		this, in order to easily call out which object file has the
+**		singular definition of Host_Lib that you need.
+**
+**		!!!
+**		!!! **WARNING!**  DO NOT EDIT THIS! (until you've checked...)
+**		!!! BE SURE YOU ARE EDITING MAKE-OS-EXT.R AND NOT HOST-LIB.H
+**		!!!
+**
+***********************************************************************/
+
+}
+
+newline
+
+"REBOL_HOST_LIB Host_Lib_Init = {"
+
+{
+	HOST_LIB_SIZE,
+	(HOST_LIB_VER << 16) + HOST_LIB_SUM,
+	(REBDEV**)&Devices,
+}
+
+(host-lib-instance)
+
+"^};" newline
+]
+
+write %../../include/host-table.inc out
+
 ;ask "Done"
 print "   "

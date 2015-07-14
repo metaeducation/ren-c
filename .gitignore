@@ -16,6 +16,7 @@ src/include/ext-types.h
 src/include/host-ext-*
 src/include/host-init.h
 src/include/host-lib.h
+src/include/host-table.inc
 src/include/reb-dialect.h
 src/include/reb-evtypes.h
 src/include/reb-lib-lib.h
