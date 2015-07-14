@@ -70,7 +70,19 @@ func-header: [
 	;-- Scan for function header box:
 	"^/**" to newline
 	"^/*/" any [#" " | #"^-"]
-	copy spec to newline (append-spec spec)
+	copy spec to newline (
+		if find spec "()" [
+			print [
+				spec
+				newline
+				{C-Style void arguments should be foo(void) and not foo()}
+				newline
+				http://stackoverflow.com/questions/693788/c-void-arguments
+			]
+			do make error! "C++ no-arg prototype used instead of C style"
+		]
+		append-spec spec
+	)
 	newline
 	[
 		"/*" ; must be in func header section, not file banner

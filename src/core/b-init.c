@@ -50,7 +50,7 @@ static	BOOT_BLK *Boot_Block;
 
 /***********************************************************************
 **
-*/	static void Assert_Basics()
+*/	static void Assert_Basics(void)
 /*
 ***********************************************************************/
 {
@@ -431,7 +431,7 @@ static	BOOT_BLK *Boot_Block;
 
 /***********************************************************************
 **
-*/	void Init_UType_Proto()
+*/	void Init_UType_Proto(void)
 /*
 **		Create prototype func object for UTypes.
 **
@@ -557,7 +557,7 @@ static	BOOT_BLK *Boot_Block;
 
 /***********************************************************************
 **
-*/	static void Init_System_Object()
+*/	static void Init_System_Object(void)
 /*
 **		The system object is defined in boot.r.
 **
@@ -624,7 +624,7 @@ static	BOOT_BLK *Boot_Block;
 
 /***********************************************************************
 **
-*/	static void Init_Contexts_Object()
+*/	static void Init_Contexts_Object(void)
 /*
 ***********************************************************************/
 {
@@ -819,7 +819,7 @@ static	BOOT_BLK *Boot_Block;
 
 /***********************************************************************
 **
-*/	static void Init_Codecs()
+*/	static void Init_Codecs(void)
 /*
 ***********************************************************************/
 {
