@@ -529,9 +529,15 @@ BCinfo { int dp0, dp1, dplen, dsign, e0, inexact, nd, nd0, rounding, scale, uflc
 #define Kmax 7
 
 #ifdef __cplusplus
-extern "C" double strtod(const char *s00, const char **se);
-extern "C" char *dtoa(double d, int mode, int ndigits,
+extern "C" {
+#endif
+
+double strtod(const char *s00, const char **se);
+char *dtoa(double d, int mode, int ndigits,
 			int *decpt, int *sign, char **rve);
+
+#ifdef __cplusplus
+}
 #endif
 
  struct

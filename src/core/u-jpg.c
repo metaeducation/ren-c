@@ -10774,13 +10774,29 @@ jinit_phuff_decoder (j_decompress_ptr cinfo)
 **
 ** REBOL Interface (keep it minimal)
 **
+** The JPEG codec does not include sys-core.h, so it doesn't pick up
+** the prototype of Init_JPEG_Codec which is generated from make-headers.r
+** (made b/c its definition appears in a starred comment box).  It's
+** the only codec that does this.  Should no codecs include sys-core?
+**
 ***********************************************************************/
 
-#ifndef CODI_DEFINED
-#include "reb-codec.h"
-extern void *Alloc_Mem(size_t size);
-extern void Register_Codec(const REBYTE *name, codo dispatcher);
+#ifdef __cplusplus
+extern "C" {
 #endif
+
+#ifndef CODI_DEFINED
+	#include "reb-codec.h"
+	void *Alloc_Mem(size_t size);
+	void Register_Codec(const REBYTE *name, codo dispatcher);
+#endif
+
+extern void Init_JPEG_Codec(void);
+
+#ifdef __cplusplus
+}
+#endif
+
 
 /***********************************************************************
 **

@@ -237,17 +237,21 @@ form-header/gen "REBOL Host and Extension API" %reb-lib.r %make-reb-lib.r
 // method. This is concrete, not abstract. The macro below uses struct
 // sizes to inform the developer that something is wrong.
 #if defined(__LP64__) || defined(__LLP64__)
+
 #ifdef HAS_POSIX_SIGNAL
-#define CHECK_STRUCT_ALIGN (sizeof(REBREQ) == 196 && sizeof(REBEVT) == 16)
+	#define CHECK_STRUCT_ALIGN (sizeof(REBREQ) == 196 && sizeof(REBEVT) == 16)
 #else
-#define CHECK_STRUCT_ALIGN (sizeof(REBREQ) == 100 && sizeof(REBEVT) == 16)
+	#define CHECK_STRUCT_ALIGN (sizeof(REBREQ) == 100 && sizeof(REBEVT) == 16)
 #endif //HAS_POSIX_SIGNAL
-#else
+
+#else // !defined(__LP64__) && !defined(__LLP64__)
+
 #ifdef HAS_POSIX_SIGNAL
-#define CHECK_STRUCT_ALIGN (sizeof(REBREQ) == 180 && sizeof(REBEVT) == 12)
+	#define CHECK_STRUCT_ALIGN (sizeof(REBREQ) == 180 && sizeof(REBEVT) == 12)
 #else
-#define CHECK_STRUCT_ALIGN (sizeof(REBREQ) == 80 && sizeof(REBEVT) == 12)
+	#define CHECK_STRUCT_ALIGN (sizeof(REBREQ) == 80 && sizeof(REBEVT) == 12)
 #endif //HAS_POSIX_SIGNAL
+
 #endif
 
 // Function entry points for reb-lib (used for MACROS below):}
@@ -255,13 +259,13 @@ rlib
 {
 // Extension entry point functions:
 #ifdef TO_WIN32
-#ifdef __cplusplus
-#define RXIEXT extern "C" __declspec(dllexport)
+	#define RXIEXT __declspec(dllexport)
 #else
-#define RXIEXT __declspec(dllexport)
+	#define RXIEXT extern
 #endif
-#else
-#define RXIEXT extern
+
+#ifdef __cplusplus
+extern "C" ^{
 #endif
 
 RXIEXT const char *RX_Init(int opts, RL_LIB *lib);
@@ -284,7 +288,12 @@ mlib
 }
 xlib
 {
+#endif // REB_EXT
+
+#ifdef __cplusplus
+^}
 #endif
+
 }
 ]
 

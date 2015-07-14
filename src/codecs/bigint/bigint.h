@@ -34,6 +34,10 @@
 #include "bigint_config.h"
 #include "bigint_impl.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 BI_CTX *bi_initialize(void);
 void bi_terminate(BI_CTX *ctx);
 void bi_permanent(bigint *bi);
@@ -95,6 +99,10 @@ bigint *bi_crt(BI_CTX *ctx, bigint *bi,
         bigint *dP, bigint *dQ,
         bigint *p, bigint *q,
         bigint *qInv);
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif

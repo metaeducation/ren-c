@@ -118,6 +118,12 @@ process: func [file] [
 
 emit-header "Function Prototypes" %funcs.h
 
+emit {
+#ifdef __cplusplus
+extern "C" ^{
+#endif
+}
+
 files: sort read %./
 
 ;do
@@ -134,6 +140,12 @@ foreach file files [
 		not find/match file "os-"
 	][process file]
 ]
+
+emit {
+#ifdef __cplusplus
+^}
+#endif
+}
 
 write %../include/tmp-funcs.h output
 

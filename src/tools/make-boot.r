@@ -569,6 +569,13 @@ write inc/ext-types.h out ; part of Host-Kit distro
 
 emit-head "Extension Type Equates" %tmp-exttypes.h
 emit {
+
+#ifdef __cplusplus
+extern "C" ^{
+#endif
+
+extern const REBYTE Reb_To_RXT[REB_MAX];
+
 /***********************************************************************
 **
 */	const REBYTE Reb_To_RXT[REB_MAX] =
@@ -638,6 +645,11 @@ foreach type next rxt-types [
 remove back tail out
 emit ")^/"
 
+emit {
+#ifdef __cplusplus
+^}
+#endif
+}
 write inc/tmp-exttypes.h out
 
 

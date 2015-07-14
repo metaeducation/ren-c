@@ -21,11 +21,19 @@ typedef struct MD5state_st {
 	int num;
 } MD5_CTX;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void MD5_Init(MD5_CTX *c);
 void MD5_Update(MD5_CTX *c, unsigned char *data, MD5_LONG len);
 void MD5_Final(unsigned char *md, MD5_CTX *c);
 int MD5_CtxSize(void);
-unsigned char *MD5(unsigned char *d, MD5_LONG n, unsigned char *md);
+REBYTE *MD5(REBYTE *d, REBCNT n, REBYTE *md);
+
+#ifdef __cplusplus
+}
+#endif
 
 #define ULONG	MD5_LONG
 #define UCHAR	unsigned char

@@ -38,35 +38,58 @@
 **
 ***********************************************************************/
 
-#ifndef SHA_DEFINED
-#ifdef HAS_SHA1
-// make-headers.r outputs a prototype already, because it is used by cloak
-// (triggers warning -Wredundant-decls)
-// REBYTE *SHA1(REBYTE *, REBCNT, REBYTE *);
-void SHA1_Init(void *c);
-void SHA1_Update(void *c, REBYTE *data, REBCNT len);
-void SHA1_Final(REBYTE *md, void *c);
-int  SHA1_CtxSize(void);
-#endif
-#endif
+#if !defined(SHA_DEFINED) && defined(HAS_SHA1)
+	// make-headers.r outputs a prototype already, because it is used by cloak
+	// (triggers warning -Wredundant-decls)
+	// REBYTE *SHA1(REBYTE *, REBCNT, REBYTE *);
+	#ifdef __cplusplus
+	extern "C" {
+	#endif
 
-#ifndef MD5_DEFINED
-#ifdef HAS_MD5
-REBYTE *MD5(REBYTE *, REBCNT, REBYTE *);
-void MD5_Init(void *c);
-void MD5_Update(void *c, REBYTE *data, REBCNT len);
-void MD5_Final(REBYTE *md, void *c);
-int  MD5_CtxSize(void);
-#endif
+	void SHA1_Init(void *c);
+	void SHA1_Update(void *c, REBYTE *data, REBCNT len);
+	void SHA1_Final(REBYTE *md, void *c);
+	int  SHA1_CtxSize(void);
+
+	#ifdef __cplusplus
+	}
+	#endif
+	#endif
+
+#if !defined(MD5_DEFINED) && defined(HAS_MD5)
+	REBYTE *MD5(REBYTE *, REBCNT, REBYTE *);
+
+	#ifdef __cplusplus
+	extern "C" {
+	#endif
+
+	void MD5_Init(void *c);
+	void MD5_Update(void *c, REBYTE *data, REBCNT len);
+	void MD5_Final(REBYTE *md, void *c);
+	int  MD5_CtxSize(void);
+
+	#ifdef __cplusplus
+	}
+	#endif
 #endif
 
 #ifdef HAS_MD4
-REBYTE *MD4(REBYTE *, REBCNT, REBYTE *);
-void MD4_Init(void *c);
-void MD4_Update(void *c, REBYTE *data, REBCNT len);
-void MD4_Final(REBYTE *md, void *c);
-int  MD4_CtxSize(void);
+	REBYTE *MD4(REBYTE *, REBCNT, REBYTE *);
+
+	#ifdef __cplusplus
+	extern "C" {
+	#endif
+
+	void MD4_Init(void *c);
+	void MD4_Update(void *c, REBYTE *data, REBCNT len);
+	void MD4_Final(REBYTE *md, void *c);
+	int  MD4_CtxSize(void);
+
+	#ifdef __cplusplus
+	}
+	#endif
 #endif
+
 
 // Table of has functions and parameters:
 static struct digest {
