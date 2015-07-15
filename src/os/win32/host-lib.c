@@ -311,33 +311,6 @@ static void *Task_Ready;
 
 /***********************************************************************
 **
-*/	void *OS_Alloc_Mem(size_t size)
-/*
-**		Allocate memory of given size.
-**
-**		This is necessary because some environments may use their
-**		own specific memory allocation (e.g. private heaps).
-**
-***********************************************************************/
-{
-	return malloc(size);
-}
-
-
-/***********************************************************************
-**
-*/	void OS_Free_Mem(void *mem)
-/*
-**		Free memory allocated in this OS environment. (See OS_Alloc_Mem)
-**
-***********************************************************************/
-{
-	free(mem);
-}
-
-
-/***********************************************************************
-**
 */	void OS_Exit(int code)
 /*
 **		Called in cases where REBOL needs to quit immediately

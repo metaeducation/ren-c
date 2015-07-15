@@ -22,16 +22,38 @@ print ["--- Make OS Ext Lib --- Version:" lib-version]
 
 ; Set platform TARGET
 do %systems.r
-target: config-system/os-dir
+
+unless os: config-system [
+	do make error! "No OS configured in make-os-ext.r"
+]
+
+set [os-plat os-name os-base build-flags] os
 
 do %form-header.r
 
-change-dir append %../os/ target
+fb: make object! load %file-base.r
 
-files: [
-	%host-lib.c
-	%../host-device.c
+change-dir %../os/
+
+; Collect OS-specific host files:
+unless os-specific-objs: select fb to word! join "os-" os-base [
+	do make error! rejoin [
+		"make-os-ext.r requires os-specific obj list in file-base.r"
+		space "none was provided for os-" os-base
+	]
 ]
+
+; We want a list of files to search for the host-lib.h export function
+; prototypes (called out with fancy /******* headers).  Those files are
+; any preceded by a + sign in either the os or "os-specific" lists in
+; file-base.r, so get those and ignore the rest.
+
+files: copy []
+
+rule: ['+ set scannable [word! | path!] (append files to-file scannable) | skip]
+
+parse fb/os [some rule]
+parse os-specific-objs [some rule]
 
 ; If it is graphics enabled:
 ; (Ren/C is a core build independent of graphics, so it never will be)
@@ -434,7 +456,7 @@ newline newline (rebol-lib-macros)
 
 ;print out ;halt
 ;print ['checksum checksum/tcp checksum-source]
-write %../../include/host-lib.h out
+write %../include/host-lib.h out
 
 
 out: rejoin [
@@ -481,7 +503,7 @@ newline
 "^};" newline
 ]
 
-write %../../include/host-table.inc out
+write %../include/host-table.inc out
 
 ;ask "Done"
 print "   "

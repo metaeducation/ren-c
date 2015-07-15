@@ -65,16 +65,23 @@
 #define O_BINARY 0
 #endif
 
-// The BSD legacy names S_IREAD/S_IWRITE are not defined on e.g. Android.
+
+// The BSD legacy names S_IREAD/S_IWRITE are not defined several places.
+// That includes building on Android, or if you compile as C99.
+
 #ifndef S_IREAD
-#define S_IREAD S_IRUSR
-#endif
-#ifndef S_IWRITE
-#define S_IWRITE S_IWUSR
+	#define S_IREAD S_IRUSR
 #endif
 
-// NOTE: the code below assumes a file id will never by zero. This should
-// be safe. In posix, zero is stdin, which is handled by dev-stdio.c.
+#ifndef S_IWRITE
+	#define S_IWRITE S_IWUSR
+#endif
+
+// NOTE: the code below assumes a file id will never be zero.  In POSIX,
+// 0 represents standard input...which is handled by dev-stdio.c.
+// Though 0 for stdin is a POSIX standard, many C compilers define
+// STDIN_FILENO, STDOUT_FILENO, STDOUT_FILENO.	These may be set to
+// different values in unusual circumstances, such as emscripten builds.
 
 
 /***********************************************************************
@@ -86,24 +93,32 @@
 #ifndef DT_DIR
 // dirent.d_type is a BSD extension, actually not part of POSIX
 // reformatted from: http://ports.haiku-files.org/wiki/CommonProblems
+// this comes from: http://ports.haiku-files.org/wiki/CommonProblems
+// modified for reformatting and to not use a variable-length-array
 static int Is_Dir(const char *path, const char *name)
 {
-	int len1 = strlen(path);
-	int len2 = strlen(name);
+	int len_path = strlen(path);
+	int len_name = strlen(name);
 	struct stat st;
 
-	char pathname[len1 + 1 + len2 + 1 + 13];
+	// !!! No clue why + 13 is needed, and not sure I want to know.
+	// It was in the original code, not second-guessing ATM.  --@HF
+	char *pathname = OS_ALLOC_ARRAY(char, len_path + 1 + len_name + 1 + 13);
+
 	strcpy(pathname, path);
 
 	/* Avoid UNC-path "//name" on Cygwin.  */
-	if (len1 > 0 && pathname[len1 - 1] != '/')
+	if (len_path > 0 && pathname[len_path - 1] != '/')
 		strcat(pathname, "/");
 
 	strcat(pathname, name);
 
-	if (stat(pathname, &st))
+	if (stat(pathname, &st)) {
+		OS_FREE(pathname);
 		return 0;
+	}
 
+	OS_FREE(pathname);
 	return S_ISDIR(st.st_mode);
 }
 #endif
@@ -215,7 +230,7 @@ static int Get_File_Info(REBREQ *file)
 	if (n > 0 && cp[n-1] == '*') cp[n-1] = 0;
 
 	// If no dir handle, open the dir:
-	if (!(h = dir->requestee.handle)) {
+	if (!(h = cast(DIR*, dir->requestee.handle))) {
 		h = opendir(dir->special.file.path);
 		if (!h) {
 			dir->error = errno;
@@ -243,14 +258,21 @@ static int Get_File_Info(REBREQ *file)
 	strncpy(file->special.file.path, cp, MAX_FILE_NAME);
 
 #ifdef DT_DIR
-	// NOTE: not all posix filesystems support this (mainly
-	// the Linux and BSD support it.) If this fails to build, a
-	// different mechanism must be used. However, this is the
-	// most efficient, because it does not require a separate
-	// file system call for determining directories.
+	// NOTE: not all POSIX filesystems support the d_type extension (mainly
+	// Linux and BSD support it, and OS/X Darwin is BSD-derived so it has it)
+	//
+	// If you're building on an alternative platform and it complains, you'll
+	// need another method for telling if something is a directory.  The
+	// Is_Dir() workaround was enabled for HaikuOS and may work for your
+	// platform as well.
+
 	if (d->d_type == DT_DIR) SET_FLAG(file->modes, RFM_DIR);
 #else
-	if (Is_Dir(dir->special.file.path, file->special.file.path)) SET_FLAG(file->modes, RFM_DIR);
+	// Less efficient method of testing if something is a directory
+	// (because it requires making an additional file system call)
+
+	if (Is_Dir(dir->special.file.path, file->special.file.path))
+		SET_FLAG(file->modes, RFM_DIR);
 #endif
 
 	// Line below DOES NOT WORK -- because we need full path.
@@ -364,6 +386,7 @@ fail:
 /*
 ***********************************************************************/
 {
+	ssize_t bytes = 0;
 	if (GET_FLAG(file->modes, RFM_DIR)) {
 		return Read_Directory(file, cast(REBREQ*, file->common.data));
 	}
@@ -379,11 +402,13 @@ fail:
 	}
 
 	// printf("read %d len %d\n", file->requestee.id, file->length);
-	file->actual = read(file->requestee.id, file->common.data, file->length);
-	if (file->actual < 0) {
+
+	bytes = read(file->requestee.id, file->common.data, file->length);
+	if (bytes < 0) {
 		file->error = -RFE_BAD_READ;
 		return DR_ERROR;
 	} else {
+		file->actual = bytes;
 		file->special.file.index += file->actual;
 	}
 
@@ -399,6 +424,7 @@ fail:
 **
 ***********************************************************************/
 {
+	ssize_t bytes = 0;
 	if (!file->requestee.id) {
 		file->error = -RFE_NO_HANDLE;
 		return DR_ERROR;
@@ -418,8 +444,8 @@ fail:
 
 	if (file->length == 0) return DR_DONE;
 
-	file->actual = write(file->requestee.id, file->common.data, file->length);
-	if (file->actual < 0) {
+	file->actual = bytes = write(file->requestee.id, file->common.data, file->length);
+	if (bytes < 0) {
 		if (errno == ENOSPC) file->error = -RFE_DISK_FULL;
 		else file->error = -RFE_BAD_WRITE;
 		return DR_ERROR;
@@ -492,7 +518,8 @@ fail:
 **
 ***********************************************************************/
 {
-	if (!rename(file->special.file.path, file->common.data)) return DR_DONE;
+	if (!rename(file->special.file.path, s_cast(file->common.data)))
+		return DR_DONE;
 	file->error = errno;
 	return DR_ERROR;
 }

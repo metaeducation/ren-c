@@ -45,8 +45,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-
-#include "reb-host.h"
+#include <unistd.h> //for read and write
 
 //#define TEST_MODE  // teset as stand-alone program
 
@@ -57,6 +56,8 @@
 #else
 #include <termios.h>
 #endif
+
+#include "reb-host.h"
 
 // Configuration:
 #define TERM_BUF_LEN 4096	// chars allowed per line
@@ -94,7 +95,7 @@ extern STD_TERM *Init_Terminal(void);
 
 /***********************************************************************
 **
-*/	extern STD_TERM *Init_Terminal(void)
+*/	STD_TERM *Init_Terminal(void)
 /*
 **		Change the terminal modes to those required for proper
 **		REBOL console handling. Return TRUE on success.
@@ -466,6 +467,10 @@ extern void Quit_Terminal(STD_TERM *term);
 				break;
 			case 'F':	// end
 				End_Line(term);
+				break;
+
+			case 'J':	// erase to end of screen
+				Clear_Line(term);
 				break;
 
 			default:

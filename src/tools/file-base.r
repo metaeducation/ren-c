@@ -153,10 +153,18 @@ made: [
 	make-reb-lib.r		include/reb-lib.h
 ]
 
+;
+; NOTE: In the following file lists, a (+) preceding a file is indicative that
+; it is to be searched for comment blocks around the function prototypes
+; that indicate the function is to be gathered to be put into the host-lib.h
+; exports.  (This is similar to what make-headers.r does when it runs over
+; the Rebol Core sources, except for the host.)
+;
+
 os: [
 	host-main.c
 	host-args.c
-	host-device.c
+	+ host-device.c
 	host-stdio.c
 	host-core.c
 	dev-net.c
@@ -164,12 +172,14 @@ os: [
 ]
 
 os-win32: [
-	host-lib.c
-	dev-stdio.c
-	dev-file.c
-	dev-event.c
-	dev-clipboard.c
-	dev-serial.c
+	+ generic/host-memory.c
+
+	+ win32/host-lib.c
+	win32/dev-stdio.c
+	win32/dev-file.c
+	win32/dev-event.c
+	win32/dev-clipboard.c
+	win32/dev-serial.c
 ]
 
 ; Ren/C is core sources with no graphics.  See Atronix R3/View repository.
@@ -183,19 +193,50 @@ os-win32: [
 ;]
 
 os-posix: [
-	host-lib.c
-	host-readline.c
-	dev-stdio.c
-	dev-event.c
-	dev-file.c
+	+ generic/host-memory.c
+	+ generic/host-locale.c
+	generic/iso-639.c
+	generic/iso-3166.c
+	+ generic/host-gob.c
+
+	+ stub/host-encap.c
+
+	posix/host-readline.c
+	posix/dev-stdio.c
+	posix/dev-event.c
+	posix/dev-file.c
+
+	+ posix/host-browse.c
+	+ posix/host-config.c
+	+ posix/host-error.c
+	+ posix/host-library.c
+	+ posix/host-process.c
+	+ posix/host-thread.c
+	+ posix/host-time.c
 ]
 
 os-osx: [
-	host-lib.c
-	host-readline.c
-	dev-stdio.c
-	dev-event.c
-	dev-file.c
+	+ generic/host-memory.c
+	+ generic/host-locale.c
+	generic/iso-639.c
+	generic/iso-3166.c
+	+ generic/host-gob.c
+
+	+ stub/host-encap.c
+
+	; OSX uses the POSIX file I/O for now
+	posix/host-readline.c
+	posix/dev-stdio.c
+	posix/dev-event.c
+	posix/dev-file.c
+
+	+ posix/host-browse.c
+	+ posix/host-config.c
+	+ posix/host-error.c
+	+ posix/host-library.c
+	+ posix/host-process.c
+	+ posix/host-thread.c
+	+ posix/host-time.c
 ]
 
 ; The Rebol open source build did not differentiate between linux and simply
@@ -203,18 +244,40 @@ os-osx: [
 ; make-make.r requires an `os-(os-base)` entry here for each named target.
 ;
 os-linux: [
-	host-lib.c
-	host-readline.c
-	dev-stdio.c
-	dev-file.c
-	dev-serial.c
-	dev-signal.c
-	iso-639.c
-	iso-3166.c
+	+ generic/host-memory.c
+	+ generic/host-locale.c
+	generic/iso-639.c
+	generic/iso-3166.c
+	+ generic/host-gob.c
+
+	; Linux uses the POSIX file I/O for now
+	posix/host-readline.c
+	posix/dev-stdio.c
+	posix/dev-file.c
+
+	; It also uses POSIX for most host functions
+	+ posix/host-config.c
+	+ posix/host-error.c
+	+ posix/host-library.c
+	+ posix/host-process.c
+	+ posix/host-thread.c
+	+ posix/host-time.c
+
+	; Linux has some kind of MIME-based opening vs. posix /usr/bin/open
+	+ linux/host-browse.c
 
 	; Atronix dev-event.c for linux depends on X11, and core builds should
 	; not be using X11 as a dependency (probably)
-	../posix/dev-event.c
+	posix/dev-event.c
+
+	; Linux has support for ELF format encapping
+	+ linux/host-encap.c
+
+	; There is a Linux serial device
+	linux/dev-serial.c
+
+	; Linux supports siginfo_t-style signals
+	linux/dev-signal.c
 ]
 
 boot-files: [
@@ -280,4 +343,3 @@ tools: [
 	make-host-ext.r
 	form-header.r
 ]
-

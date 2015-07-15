@@ -19,9 +19,6 @@ REBOL [
 	]
 ]
 
-file-files:  %file-base.r
-file-system: %systems.r
-
 path-host:   %../os/
 path-make:   %../../make/
 path-incl:   %../../src/include/
@@ -283,7 +280,12 @@ unless os-specific-objs: select fb to word! join "os-" os-base [
 	]
 ]
 
-os-specific-dir: dirize to file! join %os/ os-base
+; The + sign is used to tell the make-os-ext.r script to scan a host kit file
+; for headers (the way make-headers.r does).  But we don't care about that
+; here in make-make.r... so remove any + signs we find before processing.
+
+remove-each item fb/os [item = '+]
+remove-each item os-specific-objs [item = '+]
 
 outdir: path-make
 make-dir outdir
@@ -419,9 +421,11 @@ b-boot.c: $(SRC)/boot/boot.r
 	$(REBOL) -sqw $(SRC)/tools/make-boot.r
 }
 emit newline
+
 emit-file-deps fb/core
+
 emit-file-deps/dir fb/os %os/
-emit-file-deps/dir os-specific-objs os-specific-dir
+emit-file-deps/dir os-specific-objs %os/
 
 ;print copy/part output 300 halt
 print ["Created:" outdir/makefile]

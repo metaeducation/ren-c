@@ -61,17 +61,26 @@ static REBOOL Redir_Inp = 0;
 
 #define PUTE(s)		if (Std_Echo) fputs(s, Std_Echo)
 
-extern REBDEV *Devices[];
-
 #ifndef HAS_SMART_CONSOLE	// console line-editing and recall needed
-extern void *Init_Terminal();
-extern void Quit_Terminal(void*);
-extern int Read_Line(void*, char*, int);
+typedef struct term_data {
+	char *buffer;
+	char *residue;
+	char *out;
+	int pos;
+	int end;
+	int hist;
+} STD_TERM;
+
+extern STD_TERM *Init_Terminal();
+extern void Quit_Terminal(STD_TERM*);
+extern int Read_Line(STD_TERM*, char*, int);
 #endif
 
 void Put_Str(REBYTE *buf);
 
-void *Term_IO;
+STD_TERM *Term_IO;
+
+static int interrupted = 0;
 
 /*
 #define	PUTS(s)		fputs(s, stdout)
@@ -79,11 +88,13 @@ void *Term_IO;
 #define FLUSH()		fflush(stdout)
 */
 
+static const void * backtrace_buf [1024];
 static void Handle_Signal(int sig)
 {
 	REBYTE buf[] = "[escape]";
 	Put_Str(buf);
-	RL_Escape(0);
+	RL_Escape(0); /* This will cause the next evalution escaped */
+	interrupted = 1;
 }
 
 static void Init_Signals(void)
@@ -173,7 +184,7 @@ static void close_stdio(void)
 
 	close_stdio();
 
-	CLR_FLAG(req->flags, RRF_OPEN);
+	CLR_FLAG(dev->flags, RRF_OPEN);
 
 	return DR_DONE;
 }
@@ -247,17 +258,23 @@ static void close_stdio(void)
 
 	if (Std_Inp >= 0) {
 
+		interrupted = 0;
 		// Perform a processed read or a raw read?
 #ifndef HAS_SMART_CONSOLE
 		if (Term_IO)
-			total = Read_Line(Term_IO, req->common.data, len);
+			total = Read_Line(Term_IO, s_cast(req->common.data), len);
 		else
 #endif
-			total = read(Std_Inp, req->common.data, len);
+			total = read(Std_Inp, req->common.data, len); /* will be restarted in case of signal */
 
 		if (total < 0) {
 			req->error = errno;
 			return DR_ERROR;
+		}
+		if (interrupted) {
+			char noop[] = "does[]\n";
+			APPEND_BYTES_LIMIT(req->common.data, cb_cast(noop), len);
+			total += sizeof(noop);
 		}
 
 		req->actual = total;
