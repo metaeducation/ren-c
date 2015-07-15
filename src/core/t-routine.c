@@ -150,11 +150,11 @@
 	ffi_type ffi_type_double = { 0, 0, FFI_TYPE_DOUBLE, NULL };
 	ffi_type ffi_type_pointer = { 0, 0, FFI_TYPE_POINTER, NULL };
 
-	typedef enum {
-		FFI_OK = 0,
-		FFI_BAD_TYPEDEF,
-		FFI_BAD_ABI
-	} ffi_status;
+	// Switched from an enum to allow Panic_DEAD_END w/o complaint
+	typedef int ffi_status;
+	const int FFI_OK = 0;
+	const int FFI_BAD_TYPEDEF = 1;
+	const int FFI_BAD_ABI = 2;
 
 	typedef enum ffi_abi
 	{
@@ -783,7 +783,7 @@ static void ffi_to_rebol(REBRIN *rin,
 		assert(j == SERIES_TAIL(VAL_ROUTINE_FFI_ARG_TYPES(rot)));
 
 		if (FFI_OK != ffi_prep_cif_var((ffi_cif*)VAL_ROUTINE_CIF(rot),
-				VAL_ROUTINE_ABI(rot),
+				cast(ffi_abi, VAL_ROUTINE_ABI(rot)),
 				n_fixed, /* number of fixed arguments */
 				j - 1, /* number of all arguments */
 				arg_types[0], /* return type */
@@ -798,7 +798,7 @@ static void ffi_to_rebol(REBRIN *rin,
 	}
 	prep_rvalue(VAL_ROUTINE_INFO(rot), ret);
 	rvalue = arg_to_ffi(rot, ret, 0, &pop);
-	ffi_call(VAL_ROUTINE_CIF(rot),
+	ffi_call(cast(ffi_cif*, VAL_ROUTINE_CIF(rot)),
 			 VAL_ROUTINE_FUNCPTR(rot),
 			 rvalue,
 			 ffi_args);
@@ -993,7 +993,7 @@ static void callback_dispatcher(ffi_cif *cif, void *ret, void **args, void *user
 
 	SET_TYPE(out, type);
 
-	VAL_ROUTINE_INFO(out) = Make_Node(RIN_POOL);
+	VAL_ROUTINE_INFO(out) = cast(REBRIN*, Make_Node(RIN_POOL));
 	memset(VAL_ROUTINE_INFO(out), 0, sizeof(REBRIN));
 	USE_ROUTINE(VAL_ROUTINE_INFO(out));
 
@@ -1033,14 +1033,18 @@ static void callback_dispatcher(ffi_cif *cif, void *ret, void **args, void *user
 		lib = DS_POP; //Do_Next saves result on stack
 
 		if (IS_INTEGER(lib)) {
-			if (NOT_END(&blk[fn_idx])) {
+			if (NOT_END(&blk[fn_idx]))
 				Trap_Arg_DEAD_END(&blk[fn_idx]);
-			}
+
 			//treated as a pointer to the function
-			if (VAL_INT64(lib) == 0) {
+			if (VAL_INT64(lib) == 0)
 				Trap_Arg_DEAD_END(lib);
-			}
-			VAL_ROUTINE_FUNCPTR(out) = cast(CFUNC*, VAL_INT64(lib));
+
+			// Cannot cast directly to a function pointer from a 64-bit value
+			// on 32-bit systems; first cast to int that holds Unsigned PoinTer
+			VAL_ROUTINE_FUNCPTR(out) = cast(CFUNC*,
+				cast(REBUPT, VAL_INT64(lib))
+			);
 		} else {
 			if (!IS_LIBRARY(lib))
 				Trap_Arg_DEAD_END(lib);
@@ -1217,7 +1221,7 @@ static void callback_dispatcher(ffi_cif *cif, void *ret, void **args, void *user
 		/* series data could have moved */
 		args = (ffi_type**)SERIES_DATA(VAL_ROUTINE_FFI_ARG_TYPES(out));
 		if (FFI_OK != ffi_prep_cif((ffi_cif*)VAL_ROUTINE_CIF(out),
-				VAL_ROUTINE_ABI(out),
+				cast(ffi_abi, VAL_ROUTINE_ABI(out)),
 				SERIES_TAIL(VAL_ROUTINE_FFI_ARG_TYPES(out)) - 1,
 				args[0],
 				&args[1])) {
@@ -1251,8 +1255,8 @@ static void callback_dispatcher(ffi_cif *cif, void *ret, void **args, void *user
 			dispatcher_hack.func = VAL_ROUTINE_DISPATCHER(out);
 
 			status = ffi_prep_closure_loc(
-				VAL_ROUTINE_CLOSURE(out),
-				VAL_ROUTINE_CIF(out),
+				cast(ffi_closure*, VAL_ROUTINE_CLOSURE(out)),
+				cast(ffi_cif*, VAL_ROUTINE_CIF(out)),
 				callback_dispatcher,
 				VAL_ROUTINE_INFO(out),
 				&dispatcher_hack

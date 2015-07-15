@@ -95,7 +95,7 @@ static REBOOL get_scalar(REBSTU *stu,
 			SET_DECIMAL(val, *(double*)data);
 			break;
 		case STRUCT_TYPE_POINTER:
-			SET_INTEGER(val, (u64)*(void**)data);
+			SET_INTEGER(val, cast(REBUPT, *cast(void**, data)));
 			break;
 		case STRUCT_TYPE_STRUCT:
 			{
@@ -331,7 +331,7 @@ static REBOOL assign_scalar(REBSTU *stu,
 			*(u64*)data = (u64)i;
 			break;
 		case STRUCT_TYPE_POINTER:
-			*(void**)data = (void*)i;
+			*cast(void**, data) = cast(void*, cast(REBUPT, i));
 			break;
 		case STRUCT_TYPE_FLOAT:
 			*(float*)data = (float)d;
@@ -693,7 +693,7 @@ static REBOOL parse_field_type(struct Struct_Field *field, REBVAL *spec, REBVAL 
 
 				if (field->array) {
 					if (IS_INTEGER(init)) { /* interpreted as a C pointer */
-						void *ptr = (void *)VAL_INT64(init);
+						void *ptr = cast(void *, cast(REBUPT, VAL_INT64(init)));
 
 						/* assuming it's an valid pointer and holding enough space */
 						memcpy(SERIES_SKIP(VAL_STRUCT_DATA_BIN(out), (REBCNT)offset), ptr, field->size * field->dimension);
@@ -935,7 +935,9 @@ static void init_fields(REBVAL *ret, REBVAL *spec)
 							}
 						}
 					} else if (IS_INTEGER(fld_val)) {
-						void *ptr = (void *)VAL_INT64(fld_val);
+						void *ptr = cast(void *,
+							cast(REBUPT, VAL_INT64(fld_val))
+						);
 
 						/* assuming it's an valid pointer and holding enough space */
 						memcpy(SERIES_SKIP(VAL_STRUCT_DATA_BIN(ret), fld->offset), ptr, fld->size * fld->dimension);
