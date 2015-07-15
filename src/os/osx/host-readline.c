@@ -56,17 +56,7 @@
 #include <termios.h>
 #endif
 
-#define FALSE 0
-#define TRUE (0==0)
-
-enum {
-	BEL =   7,
-	BS  =   8,
-	LF  =  10,
-	CR  =  13,
-	ESC =  27,
-	DEL = 127,
-};
+#include "reb-host.h"
 
 // Configuration:
 #define TERM_BUF_LEN 4096	// chars allowed per line
@@ -141,7 +131,7 @@ extern STD_TERM *Init_Terminal(void);
 	strcpy(Line_History[0], "");
 	Line_Count = 1;
 
-	term = OS_ALLOC_ARRAY_ZEROFILL(STD_TERM);
+	term = OS_ALLOC_ZEROFILL(STD_TERM);
 	term->buffer = OS_ALLOC_ARRAY(char, TERM_BUF_LEN);
 	term->buffer[0] = 0;
 	term->residue = OS_ALLOC_ARRAY(char, TERM_BUF_LEN);

@@ -190,6 +190,14 @@ os-posix: [
 	dev-file.c
 ]
 
+os-osx: [
+	host-lib.c
+	host-readline.c
+	dev-stdio.c
+	dev-event.c
+	dev-file.c
+]
+
 ; The Rebol open source build did not differentiate between linux and simply
 ; posix builds.  However Atronix R3/View uses a different `os-base` name.
 ; make-make.r requires an `os-(os-base)` entry here for each named target.

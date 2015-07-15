@@ -46,6 +46,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "reb-host.h"
+
 //#define TEST_MODE  // teset as stand-alone program
 
 #ifdef NO_TTY_ATTRIBUTES
@@ -55,18 +57,6 @@
 #else
 #include <termios.h>
 #endif
-
-#define FALSE 0
-#define TRUE (0==0)
-
-enum {
-	BEL =   7,
-	BS  =   8,
-	LF  =  10,
-	CR  =  13,
-	ESC =  27,
-	DEL = 127,
-};
 
 // Configuration:
 #define TERM_BUF_LEN 4096	// chars allowed per line
@@ -100,7 +90,7 @@ static struct termios Term_Attrs;	// Initial settings, restored on exit
 #endif
 
 
-extern STD_TERM *Init_Terminal(void)
+extern STD_TERM *Init_Terminal(void);
 
 /***********************************************************************
 **
@@ -137,7 +127,7 @@ extern STD_TERM *Init_Terminal(void)
 
 	// Setup variables:
 	Line_History = OS_ALLOC_ARRAY(char*, MAX_HISTORY + 2);
-	Line_History[0] = OS_ALLOC_ARRAY(char, "");
+	Line_History[0] = OS_ALLOC_ARRAY(char, strlen(""));
 	strcpy(Line_History[0], "");
 	Line_Count = 1;
 
