@@ -52,11 +52,17 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <poll.h>
+#include <fcntl.h>              /* Obtain O_* constant definitions */
 #include <unistd.h>
 #include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 #include <sys/wait.h>
 #include <time.h>
 #include <string.h>
+#include <errno.h>
+#include <assert.h>
 
 #ifndef timeval // for older systems
 #include <sys/time.h>
@@ -136,6 +142,190 @@ static void *Task_Ready;
 **	OS Library Functions
 **
 ***********************************************************************/
+
+/* Keep in sync with n-io.c */
+#define OS_ENA	 -1
+#define OS_EINVAL -2
+#define OS_EPERM -3
+#define OS_ESRCH -4
+
+/***********************************************************************
+**
+*/	REBINT OS_Get_PID()
+/*
+**		Return the current process ID
+**
+***********************************************************************/
+{
+	return getpid();
+}
+
+/***********************************************************************
+**
+*/	REBINT OS_Get_UID()
+/*
+**		Return the real user ID
+**
+***********************************************************************/
+{
+	return getuid();
+}
+
+/***********************************************************************
+**
+*/	REBINT OS_Set_UID(REBINT uid)
+/*
+**		Set the user ID, see setuid manual for its semantics
+**
+***********************************************************************/
+{
+	if (setuid(uid) < 0) {
+		switch (errno) {
+			case EINVAL:
+				return OS_EINVAL;
+			case EPERM:
+				return OS_EPERM;
+			default:
+				return -errno;
+		}
+	} else {
+		return 0;
+	}
+}
+
+/***********************************************************************
+**
+*/	REBINT OS_Get_GID()
+/*
+**		Return the real group ID
+**
+***********************************************************************/
+{
+	return getgid();
+}
+
+/***********************************************************************
+**
+*/	REBINT OS_Set_GID(REBINT gid)
+/*
+**		Set the group ID, see setgid manual for its semantics
+**
+***********************************************************************/
+{
+	if (setgid(gid) < 0) {
+		switch (errno) {
+			case EINVAL:
+				return OS_EINVAL;
+			case EPERM:
+				return OS_EPERM;
+			default:
+				return -errno;
+		}
+	} else {
+		return 0;
+	}
+}
+
+/***********************************************************************
+**
+*/	REBINT OS_Get_EUID()
+/*
+**		Return the effective user ID
+**
+***********************************************************************/
+{
+	return geteuid();
+}
+
+/***********************************************************************
+**
+*/	REBINT OS_Set_EUID(REBINT uid)
+/*
+**		Set the effective user ID
+**
+***********************************************************************/
+{
+	if (seteuid(uid) < 0) {
+		switch (errno) {
+			case EINVAL:
+				return OS_EINVAL;
+			case EPERM:
+				return OS_EPERM;
+			default:
+				return -errno;
+		}
+	} else {
+		return 0;
+	}
+}
+
+/***********************************************************************
+**
+*/	REBINT OS_Get_EGID()
+/*
+**		Return the effective group ID
+**
+***********************************************************************/
+{
+	return getegid();
+}
+
+/***********************************************************************
+**
+*/	REBINT OS_Set_EGID(REBINT gid)
+/*
+**		Set the effective group ID
+**
+***********************************************************************/
+{
+	if (setegid(gid) < 0) {
+		switch (errno) {
+			case EINVAL:
+				return OS_EINVAL;
+			case EPERM:
+				return OS_EPERM;
+			default:
+				return -errno;
+		}
+	} else {
+		return 0;
+	}
+}
+
+/***********************************************************************
+**
+*/	REBINT OS_Send_Signal(REBINT pid, REBINT signal)
+/*
+**		Send signal to a process
+**
+***********************************************************************/
+{
+	if (kill(pid, signal) < 0) {
+		switch (errno) {
+			case EINVAL:
+				return OS_EINVAL;
+			case EPERM:
+				return OS_EPERM;
+			case ESRCH:
+				return OS_ESRCH;
+			default:
+				return -errno;
+		}
+	} else {
+		return 0;
+	}
+}
+
+/***********************************************************************
+**
+*/	REBINT OS_Kill(REBINT pid)
+/*
+**		Try to kill the process
+**
+***********************************************************************/
+{
+	return OS_Send_Signal(pid, SIGTERM);
+}
 
 /***********************************************************************
 **
@@ -602,13 +792,32 @@ static void *Task_Ready;
 
 /***********************************************************************
 **
-*/	int OS_Create_Process(REBCHR *call, u32 flags)
+*/	int OS_Create_Process(const REBCHR *call, int argc, const REBCHR* argv[], u32 flags, u64 *pid, int *exit_code, u32 input_type, char *input, u32 input_len, u32 output_type, char **output, u32 *output_len, u32 err_type, char **err, u32 *err_len)
 /*
 **		Return -1 on error, otherwise the process return code.
 **
 ***********************************************************************/
 {
+	// Not implemented in the form Atronix uses from core
+	// Most parameters are dummy parameters
+
 	return system(call); // returns -1 on system call error
+}
+
+/***********************************************************************
+**
+*/	int OS_Reap_Process(int pid, int *status, int flags)
+/*
+ * pid:
+ * 		> 0, a signle process
+ * 		-1, any child process
+ * flags:
+ * 		0: return immediately
+ *
+**		Return -1 on error
+***********************************************************************/
+{
+	return waitpid(pid, status, flags == 0? WNOHANG : 0);
 }
 
 static int Try_Browser(char *browser, REBCHR *url)
@@ -717,4 +926,13 @@ static int Try_Browser(char *browser, REBCHR *url)
 			*string[n] = cast(unsigned char, cast(wchar_t*, str)[n]);
 	}
 	return TRUE;
+}
+
+/***********************************************************************
+**
+*/	REBYTE * OS_Read_Embedded (REBI64 *script_size)
+/*
+***********************************************************************/
+{
+	return NULL;
 }
