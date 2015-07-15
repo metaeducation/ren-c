@@ -114,14 +114,6 @@ These are now obsolete (as of A107) and should be removed:
 #define HAS_LL_CONSTS
 #endif
 
-// Disable various warnings
-#pragma warning(disable : 4201)		// nameless unions
-#pragma warning(disable : 4100)		// unreferenced formal parameter
-#pragma warning(disable : 4127)		// conditional expression is constant
-#pragma warning(disable : 4244)		// float conversion - temporary
-//#pragma warning(disable : 4057)
-//#pragma warning(disable : 4701)
-
 // !!! No AGG definitions in Ren/C core
 //#define AGG_WIN32_FONTS //use WIN32 api for font handling
 #else
