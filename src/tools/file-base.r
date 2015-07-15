@@ -188,7 +188,6 @@ os-posix: [
 	dev-stdio.c
 	dev-event.c
 	dev-file.c
-	dev-serial.c
 ]
 
 ; The Rebol open source build did not differentiate between linux and simply

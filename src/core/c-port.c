@@ -543,10 +543,15 @@ SCHEME_ACTIONS *Scheme_Actions;	// Initial Global (not threaded)
 	Init_TCP_Scheme();
 	Init_UDP_Scheme();
 	Init_DNS_Scheme();
+
 #ifndef MIN_OS
 	Init_Clipboard_Scheme();
 #endif
+
+#if defined(TO_LINUX) || defined(TO_WIN32)
 	Init_Serial_Scheme();
+#endif
+
 #ifdef HAS_POSIX_SIGNAL
 	Init_Signal_Scheme();
 #endif

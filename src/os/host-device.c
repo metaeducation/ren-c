@@ -69,10 +69,17 @@ extern REBDEV Dev_File;
 extern REBDEV Dev_Event;
 extern REBDEV Dev_Net;
 extern REBDEV Dev_DNS;
+
 #ifndef MIN_OS
 extern REBDEV Dev_Clipboard;
 #endif
+
+// There should be a better decoupling of these devices so the core
+// does not need to know about them...
+#if defined(TO_WIN32) || defined(TO_LINUX)
 extern REBDEV Dev_Serial;
+#endif
+
 #ifdef HAS_POSIX_SIGNAL
 extern REBDEV Dev_Signal;
 #endif
@@ -91,7 +98,13 @@ REBDEV *Devices[RDI_LIMIT] =
 #else
 	0,
 #endif
+
+#if defined(TO_WIN32) || defined(TO_LINUX)
 	&Dev_Serial,
+#else
+	NULL,
+#endif
+
 #ifdef HAS_POSIX_SIGNAL
 	&Dev_Signal,
 #endif
