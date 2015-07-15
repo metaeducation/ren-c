@@ -122,7 +122,7 @@ BOOL Init_Console()
 {
     if (!Std_Out && Con_Out){
 
-		wchar_t *title = L"REBOL 3";
+        const wchar_t *title = L"REBOL 3";
         HWND win;
 
         if (!AllocConsole()) {
@@ -279,7 +279,7 @@ void Console_Window(BOOL show)
 			// however, if our buffer overflows, it's an error. There's no
 			// efficient way at this level to split-up the input data,
 			// because its UTF-8 with variable char sizes.
-			len = MultiByteToWideChar(CP_UTF8, 0, req->common.data, req->length, Std_Buf, BUF_SIZE);
+            len = MultiByteToWideChar(CP_UTF8, 0, s_cast(req->common.data), req->length, Std_Buf, BUF_SIZE);
 			if (len > 0) // no error
 				ok = WriteConsoleW(Std_Out, Std_Buf, len, &total, 0);
 		}
@@ -337,7 +337,7 @@ void Console_Window(BOOL show)
 		else {
 			ok = ReadConsoleW(Std_Inp, Std_Buf, BUF_SIZE-1, &total, 0);
 			if (ok) {
-				total = WideCharToMultiByte(CP_UTF8, 0, Std_Buf, total, req->common.data, req->length, 0, 0);
+                total = WideCharToMultiByte(CP_UTF8, 0, Std_Buf, total, s_cast(req->common.data), req->length, 0, 0);
 				if (!total) ok = FALSE;
 			}
 		}

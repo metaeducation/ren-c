@@ -60,6 +60,7 @@
 #include <windows.h>
 #include <process.h>
 #include <shlobj.h>
+#include <assert.h>
 
 #include "reb-host.h"
 
@@ -394,7 +395,7 @@ static void *Task_Ready;
 **
 ***********************************************************************/
 {
-	LPVOID lpMsgBuf;
+    wchar_t *lpMsgBuf;
 	int ok;
 
 	if (!errnum) errnum = GetLastError();
@@ -831,7 +832,7 @@ static void *Task_Ready;
 			si.hStdInput = hInputRead;
 			break;
 		case FILE_TYPE:
-			hInputRead = CreateFile(input,
+            hInputRead = CreateFile(cast(wchar_t*, input), // REVIEW! (and all wchar_t*/char*)
 				GENERIC_READ, /* desired mode*/
 				0, /* shared mode*/
 				&sa, /* security attributes */
@@ -932,7 +933,7 @@ static void *Task_Ready;
 		goto cleanup; /* NOT IMPLEMENTED*/
 	} else {
 		if (flag_shell) {
-			wchar_t *sh = L"cmd.exe /C ";
+            const wchar_t *sh = L"cmd.exe /C ";
             size_t len = wcslen(sh) + wcslen(call) + 1;
 			cmd = OS_ALLOC_ARRAY(wchar_t, len);
             swprintf(cmd, len, L"%s%s", sh, call);
@@ -984,11 +985,12 @@ static void *Task_Ready;
 			if (input_type == STRING_TYPE) {
 				DWORD dest_len = 0;
 				/* convert input encoding from UNICODE to OEM */
-				dest_len = WideCharToMultiByte(CP_OEMCP, 0, input, input_len, oem_input, dest_len, NULL, NULL);
+                // REVIEW: Is cast to wchar_t here legal?
+                dest_len = WideCharToMultiByte(CP_OEMCP, 0, cast(wchar_t*, input), input_len, oem_input, dest_len, NULL, NULL);
 				if (dest_len > 0) {
-					oem_input = OS_ALLOC_ARRAY(wchar_t, dest_len);
+                    oem_input = OS_ALLOC_ARRAY(char, dest_len);
 					if (oem_input != NULL) {
-						WideCharToMultiByte(CP_OEMCP, 0, input, input_len, oem_input, dest_len, NULL, NULL);
+                        WideCharToMultiByte(CP_OEMCP, 0, cast(wchar_t*, input), input_len, oem_input, dest_len, NULL, NULL);
 						input_len = dest_len;
 						input = oem_input;
 						handles[count ++] = hInputWrite;
@@ -1053,7 +1055,7 @@ static void *Task_Ready;
 						*output_len += n;
 						if (*output_len >= output_size) {
 							output_size += BUF_SIZE_CHUNK;
-							*output = realloc(*output, output_size);
+                            *output = cast(char*, realloc(*output, output_size));
 							if (*output == NULL) goto kill;
 						}
 					}
@@ -1067,7 +1069,7 @@ static void *Task_Ready;
 						*err_len += n;
 						if (*err_len >= err_size) {
 							err_size += BUF_SIZE_CHUNK;
-							*err = realloc(*err, err_size);
+                            *err = cast(char*, realloc(*err, err_size));
 							if (*err == NULL) goto kill;
 						}
 					}
@@ -1106,11 +1108,11 @@ static void *Task_Ready;
 				*output = NULL;
 				*output_len = 0;
 			}
-			dest = OS_ALLOC_ARRAY(wchar_t, *output_len);
+            dest = cast(wchar_t*, OS_ALLOC_ARRAY(char, *output_len));
 			if (dest == NULL) goto cleanup;
 			MultiByteToWideChar(CP_OEMCP, 0, *output, *output_len, dest, dest_len);
 			OS_FREE(*output);
-			*output = dest;
+            *output = cast(char*, dest);
 			*output_len = dest_len;
 		}
 
@@ -1124,11 +1126,11 @@ static void *Task_Ready;
 				*err = NULL;
 				*err_len = 0;
 			}
-			dest = OS_ALLOC_ARRAY(wchar_t, *err_len);
+            dest = cast(wchar_t*, OS_ALLOC_ARRAY(char, *err_len));
 			if (dest == NULL) goto cleanup;
 			MultiByteToWideChar(CP_OEMCP, 0, *err, *err_len, dest, dest_len);
 			OS_FREE(*err);
-			*err = dest;
+            *err = cast(char*, dest);
 			*err_len = dest_len;
 		}
 	} else if (result) {
@@ -1250,8 +1252,8 @@ input_error:
 
 	//len = OS_Create_Process(path, 0);
 
-	char * const argv[] = {path, NULL};
-	len = OS_Create_Process(path, 1, argv, 0,
+    REBCHR * const argv[] = {path, NULL};
+    len = OS_Create_Process(path, 1, c_cast(const REBCHR**, argv), 0,
 							NULL, /* pid */
 							&exit_code,
 							INHERIT_TYPE, NULL, 0, /* input_type, void *input, u32 input_len, */
@@ -1272,7 +1274,7 @@ input_error:
     OPENFILENAME ofn;
 	BOOL ret;
 	//int err;
-    wchar_t *filters = L"All files\0*.*\0REBOL scripts\0*.r\0Text files\0*.txt\0";
+    const wchar_t *filters = L"All files\0*.*\0REBOL scripts\0*.r\0Text files\0*.txt\0";
 
     memset(&ofn, '\0', sizeof(ofn));
 	ofn.lStructSize = sizeof(ofn);
@@ -1405,7 +1407,7 @@ int CALLBACK ReqDirCallbackProc( HWND hWnd, UINT uMsg, LPARAM lParam, LPARAM lpD
 		*string = wstr;
 		return TRUE;
 	}
-	*string = (len == 0) ? NULL : str; //empty string check
+    *string = (len == 0) ? NULL : cast(wchar_t*, str); //empty string check
 	return FALSE;
 }
 
