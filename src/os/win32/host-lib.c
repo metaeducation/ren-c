@@ -674,12 +674,11 @@ static void *Task_Ready;
 	//
 	//		http://stackoverflow.com/a/1096349/211160
 
-	CFUNC *fp;
-	*cast(void**, &fp) = GetProcAddress((HMODULE)dll, funcname);
+    FARPROC fp = GetProcAddress((HMODULE)dll, funcname);
 
 	//DWORD err = GetLastError();
 
-	return fp;
+    return cast(CFUNC*, fp);
 }
 
 
@@ -1090,7 +1089,9 @@ static void *Task_Ready;
 
 		WaitForSingleObject(pi.hProcess, INFINITE); // check result??
 		if (exit_code != NULL) {
-			GetExitCodeProcess(pi.hProcess, (PDWORD)exit_code);
+            DWORD temp;
+            GetExitCodeProcess(pi.hProcess, &temp);
+            *exit_code = temp;
 		}
 		CloseHandle(pi.hThread);
 		CloseHandle(pi.hProcess);
@@ -1146,7 +1147,9 @@ kill:
 	if (TerminateProcess(pi.hProcess, 0)) {
 		WaitForSingleObject(pi.hProcess, INFINITE);
 		if (exit_code != NULL) {
-			GetExitCodeProcess(pi.hProcess, (PDWORD)exit_code);
+            DWORD temp;
+            GetExitCodeProcess(pi.hProcess, &temp);
+            *exit_code = temp;
 		}
 	} else if (ret == 0) {
 		ret = GetLastError();
@@ -1219,9 +1222,9 @@ input_error:
 ***********************************************************************/
 {
 	#define MAX_BRW_PATH 2044
-	long flag;
-	long len;
-	long type;
+    DWORD flag;
+    DWORD len;
+    DWORD type;
 	HKEY key;
 	wchar_t *path;
 	HWND hWnd = GetFocus();

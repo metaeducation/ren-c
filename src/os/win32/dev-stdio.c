@@ -112,7 +112,7 @@ void Console_Output(BOOL state)
 
 HWND Get_Console_Window()
 {
-	void *h = LoadLibraryW(L"kernel32.dll");
+    HMODULE h = LoadLibraryW(L"kernel32.dll");
 	HWND result = (HWND)(HWND (WINAPI *)())GetProcAddress(h, "GetConsoleWindow")();
 	FreeLibrary(h);
 	return result;
@@ -123,7 +123,7 @@ BOOL Init_Console()
     if (!Std_Out && Con_Out){
 
 		wchar_t *title = L"REBOL 3";
-        HANDLE win;
+        HWND win;
 
         if (!AllocConsole()) {
             return FALSE;
@@ -257,8 +257,8 @@ void Console_Window(BOOL show)
 **
 ***********************************************************************/
 {
-	long len;
-	long total = 0;
+    DWORD len;
+    DWORD total = 0;
 	BOOL ok = FALSE;
 
 	if (GET_FLAG(req->modes, RDM_NULL)) {
@@ -317,8 +317,8 @@ void Console_Window(BOOL show)
 **
 ***********************************************************************/
 {
-	long total = 0;
-	int len;
+    DWORD total = 0;
+    DWORD len;
 	BOOL ok;
 
 	if (GET_FLAG(req->modes, RDM_NULL)) {

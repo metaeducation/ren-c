@@ -186,14 +186,14 @@ static REBINT Set_Serial_Settings(HANDLE h, REBREQ *req)
 /*
 ***********************************************************************/
 {
-	REBINT result = 0;
+    DWORD result = 0;
 	if (!req->requestee.handle) {
 		req->error = -RFE_NO_HANDLE;
 		return DR_ERROR;
 	}
 
 	//RL_Print("reading %d bytes\n", req->length);
-	if (!ReadFile(req->requestee.handle, req->common.data, req->length, &result, 0) || result < 0) {
+    if (!ReadFile(req->requestee.handle, req->common.data, req->length, &result, 0)) {
 		req->error = -RFE_BAD_READ;
 		Signal_Device(req, EVT_ERROR);
 		return DR_ERROR;
@@ -221,8 +221,8 @@ static REBINT Set_Serial_Settings(HANDLE h, REBREQ *req)
 /*
 ***********************************************************************/
 {
-	REBINT result = 0, len = 0;
-	len = req->length - req->actual;
+    DWORD result = 0;
+    DWORD len = req->length - req->actual;
 	if (!req->requestee.handle) {
 		req->error = -RFE_NO_HANDLE;
 		return DR_ERROR;
@@ -232,20 +232,16 @@ static REBINT Set_Serial_Settings(HANDLE h, REBREQ *req)
 
 	if (!WriteFile(
 		req->requestee.handle, req->common.data, len, &result, NULL
-	)) {
-		req->error = -RFE_BAD_WRITE;
-		return DR_ERROR;
-	}
+    )) {
+        req->error = -RFE_BAD_WRITE;
+        Signal_Device(req, EVT_ERROR);
+        return DR_ERROR;
+    }
 
 #ifdef DEBUG_SERIAL
 	printf("write %d ret: %d\n", req->length, req->actual);
 #endif
 
-	if (result < 0) {
-		req->error = -RFE_BAD_WRITE;
-		Signal_Device(req, EVT_ERROR);
-		return DR_ERROR;
-	}
 	req->actual += result;
 	req->common.data += result;
 	if (req->actual >= req->length) {
