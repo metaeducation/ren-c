@@ -439,7 +439,7 @@
 				goto child_error;
 			}
 			close(fd);
-		} else { /* inherit stderr from the parent */
+		} else {/* inherit stderr from the parent */
 		}
 
 		close(info_pipe[R]);
@@ -761,7 +761,9 @@ stdout_pipe_err:
 		close(stdin_pipe[W]);
 	}
 stdin_pipe_err:
-	printf("ret: %d\n", ret);
+	// We will get to this point on success, as well as error (so ret may
+	// be 0.  This is the return value of the host kit function to Rebol, not
+	// the process exit code (that is written into the pointer arg 'exit_code')
 	return ret;
 }
 
