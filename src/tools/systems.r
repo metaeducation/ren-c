@@ -33,9 +33,9 @@ systems: [
 	[0.3.01 "win32"			win32	[+O2 UNI W32 CON S4M EXE DIR -LM]]
 	[0.3.02 "win32_x64"		win32	[+O2 UNI W32 WIN S4M EXE DIR -LM]]
 
-	[0.4.02 "linux"         linux   [+O2 LDL ST1 -LM]] ; libc 2.3
-	[0.4.03 "linux"         linux   [+O2 HID LDL ST1 -LM]] ; libc 2.5
-	[0.4.04 "linux"         linux   [+O2 HID LDL ST1 M32 -LM]] ; libc 2.11
+	[0.4.02 "linux_x86"     linux   [+O2 LDL ST1 -LM]] ; libc 2.3
+	[0.4.03 "linux_x86"     linux   [+O2 HID LDL ST1 -LM]] ; libc 2.5
+	[0.4.04 "linux_x86"     linux   [+O2 HID LDL ST1 M32 -LM]] ; libc 2.11
 	[0.4.10 "linux_ppc"     linux   [+O1 HID LDL ST1 -LM]]
 	[0.4.20 "linux_arm"     linux   [+O2 HID LDL ST1 -LM]] ; bionic (Android)
 	[0.4.21 "linux_arm"     linux   [+O2 HID LDL ST1 -LM PIE]]
