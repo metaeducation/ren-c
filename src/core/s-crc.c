@@ -105,7 +105,8 @@ static REBCNT *CRC_Table;
 {
 	REBINT i;
 
-	FOREACH (i, 256) CRC_Table[i] = Generate_CRC((REBYTE) i, poly, 0);
+	for (i = 0; i < 256; i++)
+		CRC_Table[i] = Generate_CRC(cast(REBYTE, i), poly, 0);
 }
 
 

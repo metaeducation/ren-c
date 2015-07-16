@@ -327,12 +327,6 @@ enum encoding_opts {
 
 #define MEM_CARE 5				// Lower number for more frequent checks
 
-
-#define LOOP(n) for (; n > 0; n--)
-#define	FOREACH(n, limit) for (n = 0; n < limit; n++)
-#define	FOR_BLK(b, v, t) for (v = VAL_BLK_DATA(b), t = VAL_BLK_TAIL(b); v != t; v++)
-#define	FOR_SER(b, v, i, s) for (; v = BLK_SKIP(b, i), i < SERIES_TAIL(b); i += skip)
-
 #define UP_CASE(c) Upper_Cases[c]
 #define LO_CASE(c) Lower_Cases[c]
 #define IS_WHITE(c) ((c) <= 32 && (White_Chars[c]&1) != 0)

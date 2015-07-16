@@ -101,7 +101,7 @@ enum {
 			// Iterate over first series:
 			ser = VAL_SERIES(val1);
 			i = VAL_INDEX(val1);
-			FOR_SER(ser, val, i, skip) {
+			for (; val = BLK_SKIP(ser, i), i < SERIES_TAIL(ser); i += skip) {
 				if (GET_FLAG(flags, SOP_CHECK)) {
 					h = Find_Key(VAL_SERIES(val2), hser, val, skip, cased, 1) >= 0;
 					if (GET_FLAG(flags, SOP_INVERT)) h = !h;
@@ -143,7 +143,7 @@ enum {
 			// Iterate over first series:
 			ser = VAL_SERIES(val1);
 			i = VAL_INDEX(val1);
-			FOR_SER(ser, val, i, skip) {
+			for (; val = BLK_SKIP(ser, i), i < SERIES_TAIL(ser); i += skip) {
 				uc = GET_ANY_CHAR(ser, i);
 				if (GET_FLAG(flags, SOP_CHECK)) {
 					h = Find_Str_Char(VAL_SERIES(val2), 0, VAL_INDEX(val2), VAL_TAIL(val2), skip, uc, cased) != NOT_FOUND;

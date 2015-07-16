@@ -808,7 +808,7 @@ crash:
 	REBCNT  tused = 0;
 	REBCNT  n;
 
-	FOREACH(n, SYSTEM_POOL) {
+	for (n = 0; n < SYSTEM_POOL; n++) {
 		size = segs = 0;
 
 		for (seg = Mem_Pools[n].segs; seg; seg = seg->next, segs++)
