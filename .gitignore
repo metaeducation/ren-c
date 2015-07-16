@@ -1,3 +1,36 @@
+## .gitignore strategy
+#
+# Only keep ren-c project specific file exclusions in .gitignore
+#
+# For files created by... 
+#
+#   * Editors (for eg. Vim, Eclipse, etc) 
+#   * Machines (Windows, Linux, OSX, etc)
+#   * or any artifacts of your development environment
+#
+# then please keep these exclusions in a global .gitignore file which
+# should not be commited into the ren-c repo.
+#
+# For more info please see "Create a global .gitignore" at:
+#
+#     https://help.github.com/articles/ignoring-files/
+#
+# Our recommended advice is to use a .gitignore_global file described
+# in link.
+#           
+# Here is an example .gitignore_global used on OS X (Mac):
+#     
+#      ## Mac stuff
+#      .DS_Store
+#  
+#      ## Vim stuff
+#      *.un~
+#      *.swp
+#
+# This is kept in the users home directory:  ~/.gitignore_global
+#
+
+
 #################
 ## REBOL R3
 #################
@@ -186,6 +219,3 @@ pip-log.txt
 
 #Mr Developer
 .mr.developer.cfg
-
-# Mac crap
-.DS_Store
