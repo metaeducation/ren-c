@@ -81,7 +81,7 @@ HFLAGS= -c -D$(TO_OS) -DREB_CORE $(HOST_FLAGS) $I
 CLIB=
 
 # REBOL is needed to build various include files:
-REBOL_TOOL= r3-make
+REBOL_TOOL= r3-make$(BIN_SUFFIX)
 REBOL=	$(CD)$(REBOL_TOOL) -qs
 
 # For running tests, ship, build, etc.
@@ -309,8 +309,12 @@ macro+: func [
 	n: join newline name
 	value: form value
 	unless parse makefile-head [
-		thru n any space ["=" | "?="] to newline  ; over simplified
-		insert #" " insert value to end
+		any [
+			thru n opt [
+				any space ["=" | "?="] to newline
+				insert #" " insert value to end
+			]
+		]
 	][
 		print ajoin ["Cannot find " name "= definition"]
 	]
