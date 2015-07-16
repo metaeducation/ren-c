@@ -194,7 +194,7 @@ static int Try_Browser(const char *browser, const REBCHR *url)
 
 /***********************************************************************
 **
-*/	int OS_Browse(REBCHR *url, int reserved)
+*/	int OS_Browse(const REBCHR *url, int reserved)
 /*
 ***********************************************************************/
 {
