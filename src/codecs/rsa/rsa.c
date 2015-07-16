@@ -40,7 +40,7 @@
 #if defined(TO_OSXI) || defined(TO_OSX)
 	#include <sys/malloc.h>
 #else
-	#include <malloc.h>
+	#include <stdlib.h>
 #endif
 
 #include "rsa.h"
