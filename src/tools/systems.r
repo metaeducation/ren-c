@@ -31,7 +31,7 @@ systems: [
 	[0.2.40 "osx_x64"       osx     [+O1 NPS PIC NCM HID STX -LM]]
 
 	[0.3.01 "win32"			win32	[+O2 UNI W32 CON S4M EXE DIR -LM]]
-	; platform 0.3.03 is reserved for win32-x64
+	[0.3.02 "win32_x64"		win32	[+O2 UNI W32 WIN S4M EXE DIR -LM]]
 
 	[0.4.02 "linux"         linux   [+O2 LDL ST1 -LM]] ; libc 2.3
 	[0.4.03 "linux"         linux   [+O2 HID LDL ST1 -LM]] ; libc 2.5
