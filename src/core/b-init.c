@@ -1015,6 +1015,7 @@ static REBCNT Set_Option_Word(REBCHR *str, REBCNT field)
 	PG_Mem_Limit = 0;
 	PG_Reb_Stats = ALLOC(REB_STATS);
 	Reb_Opts = ALLOC(REB_OPTS);
+	Halt_State = NULL;
 
 	// Thread locals:
 	Trace_Level = 0;
