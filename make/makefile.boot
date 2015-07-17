@@ -44,7 +44,7 @@
 # presence of language changes.  So you *should* even be able to use an old
 # executable from the pre-open-source Rebol3 downloads on rebol.com:
 #
-#	http://www.rebol.com/r3/downloads.html
+#
 #
 # (At least, in theory.  If you notice bootstrap with an old interpreter is
 # broken on your system, please report it!  Few are testing old binaries.)
@@ -80,37 +80,62 @@ REBOL= $(CD)$(REBOL_TOOL) -qs
 
 ### Build targets:
 top: $(REBOL_TOOL)$(BIN_SUFFIX)
-	$(MAKE) -f makefile.boot make OS_ID=$(OS_ID)
+	$(MAKE) -f makefile.boot makefile OS_ID=$(OS_ID)
 	$(MAKE) prep
 	$(MAKE) clean
 	$(MAKE) r3
 
 all: $(REBOL_TOOL)$(BIN_SUFFIX)
-	$(MAKE) -f makefile make OS_ID=$(OS_ID)
+	$(MAKE) -f makefile.boot makefile OS_ID=$(OS_ID)
 	$(MAKE) all
 
-make: $(REBOL_TOOL)$(BIN_SUFFIX)
+# 'make make' was the historical way of telling Rebol to make a makefile,
+# but that is a bit confusing and 'make makefile' is clearer.  In the interim,
+# we use 'make makefile' in documentation but keep 'make make' for people who
+# were used to it...possibly deprecating it in time.
+make, makefile: $(REBOL_TOOL)$(BIN_SUFFIX)
 	$(REBOL) $T/make-make.r $(OS_ID)
 
 $(REBOL_TOOL)$(BIN_SUFFIX):
 	@echo
 	@echo "*** ERROR: Missing $(REBOL_TOOL) to build various tmp files."
 	@echo "*** Download Rebol 3 and copy it here as $(REBOL_TOOL), then"
-	@echo "*** make prep. Or, make prep on some other machine and copy"
-	@echo "*** the src/include files here. See comments in %makefile.boot"
-	@echo "*** for further information."
+	@echo "*** make prep.  Or, make prep on some other machine and copy"
+	@echo "*** the src/include files here.  You can download executable"
+	@echo "*** images of Rebol for several platforms from:"
+	@echo "***"
+	@echo "***     http://rebolsource.net
+	@echo "***"
+	@echo "*** The bootstrap process is kept simple so it should be able"
+	@echo "*** to run even on old Rebol builds prior to open-sourcing:"
+	@echo "***"
+	@echo "***     http://www.rebol.com/r3/downloads.html"
+	@echo "***"
+	@echo "*** Visit chat for support: http://rebolsource.net/go/chat-faq"
 	@echo
-# REVIEW: is false the best way to return an error code?
+# !!! Is false the best way to return an error code?
 	false
 
 %:: $(REBOL_TOOL)$(BIN_SUFFIX)
 	@echo
-	@echo "*** The %makefile.boot bootstrapping makefile only handles 'make',"
-	@echo "*** 'make make', or 'make make OS_ID=##.##.##' (where the #"
-	@echo "*** values come from system identification numbers in the"
-	@echo "*** %src/tools/systems.r file).  Please use one of those commands"
-	@echo "*** to configure generation of a %makefile before trying another"
-	@echo "*** make target."
+	@echo "*** The %makefile.boot bootstrapping makefile only handles an"
+	@echo "*** automatic build with these options:"
+	@echo "***"
+	@echo "***     make -f makefile.boot"
+	@echo "***     make -f makefile.boot OS_ID=##.##.##"
+	@echo "***"
+	@echo "*** The first will assume you want to build the same OS_ID as"
+	@echo "*** what your r3-make is.  The second lets you override what"
+	@echo "*** OS to build for from system identification numbers in the"
+	@echo "*** systems table (see %src/tools/systems.r)"
+	@echo "***"
+	@echo "*** If you want to prepare the platform-specific makefile without"
+	@echo "*** *actually* building, then choose 'makefile' as your target:"
+	@echo "***"
+	@echo "***     make -f makefile.boot makefile"
+	@echo "***     make -f makefile.boot makefile OS_ID=##.##.##"
+	@echo "***"
+	@echo "*** Visit chat for support: http://rebolsource.net/go/chat-faq"
 	@echo
-# REVIEW: is false the best way to return an error code?
+# !!! Is false the best way to return an error code?
 	false

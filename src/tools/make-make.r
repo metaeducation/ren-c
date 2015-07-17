@@ -114,7 +114,11 @@ top:
 update:
 	-cd $(UP)/; cvs -q update src
 
-make:
+# 'make make' was the historical way of telling Rebol to make a makefile,
+# but that is a bit confusing and 'make makefile' is clearer.  In the interim,
+# we use 'make makefile' in documentation but keep 'make make' for people who
+# were used to it...possibly deprecating it in time.
+make, makefile:
 	$(REBOL) $T/make-make.r $(OS_ID)
 
 clean:
