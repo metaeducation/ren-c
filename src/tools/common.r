@@ -59,3 +59,81 @@ binary-to-c: func [
 
 	out
 ]
+
+;
+; Rebol needs to bootstrap using old versions prior to having definitionally
+; scoped returns implemented.  Hence don't assume passing a body with
+; RETURN in it will return from the *caller*.  It will just wind up returning
+; from *this loop wrapper* (in older Rebols) when the call is finished!
+;
+foreach-record-NO-RETURN: func [
+	{Iterate a table with a header by creating an object for each row}
+	'record [word!] {Word to set each time to the row made into an object}
+	table [block!] {Table of values with header block as first element}
+	body [block!] {Block to evaluate each time}
+	/local headings result spec
+] [
+	unless [block? first table] [
+		do make error! {Table of records does not start with a header block}
+	]
+	headings: map-each word first table [
+		unless [word? word] [
+			do make error! rejoin [{Heading} space word space {is not a word}]
+		]
+		to-set-word word
+	]
+
+	table: next table
+
+	set/any quote result: while [not empty? table] [
+		if (length? headings) > (length? table) [
+			do make error! {Element count isn't even multiple of header count}
+		]
+
+		spec: collect [
+			foreach column-name headings [
+				keep column-name
+				keep compose/only [quote (table/1)]
+				table: next table
+			]
+		]
+
+		set record make object!	spec
+
+		do body
+	]
+
+	:result
+]
+
+find-record-unique: func [
+	{Get a record in a table as an object, error if duplicate, none if absent}
+	;; return: [object! none!]
+	table [block!] {Table of values with header block as first element}
+	key [word!] {Object key to search for a match on}
+	value {Value that the looked up key must be uniquely equal to}
+	/local rec result
+] [
+	unless find first table key [
+		do make error! rejoin [
+			key space {not found in table headers} space first table
+		]
+	]
+
+	result: none
+	foreach-record-NO-RETURN rec table [
+		unless value = select rec key [continue]
+
+		if result [
+			do make error! rejoin [
+				{More than one table record matches} space key {=} value
+			]
+		]
+
+		result: rec
+
+		; RETURN won't work.  We could break, but walk whole table to verify
+		; that it is well-formed.  (Here, correctness is more important.)
+	]
+	result
+]
