@@ -26,7 +26,7 @@
 **      Various configuration defines (from reb-config.h):
 **
 **      HAS_LL_CONSTS - compiler allows 1234LL constants
-**      ODD_INT_64 - old MSVC typedef for 64 bit int
+**      WEIRD_INT_64 - old MSVC typedef for 64 bit int
 **      OS_WIDE_CHAR - the OS uses wide chars (not UTF-8)
 **
 ***********************************************************************/
@@ -210,7 +210,7 @@ typedef unsigned long	u32;
 #define I32_C(c) c
 #define U32_C(c) c ## U
 
-#ifdef ODD_INT_64       // Windows VC6 nonstandard typing for 64 bits
+#ifdef WEIRD_INT_64       // Windows VC6 nonstandard typing for 64 bits
 typedef _int64          i64;
 typedef unsigned _int64 u64;
 #define I64_C(c) c ## I64

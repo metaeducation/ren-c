@@ -25,7 +25,7 @@
 
 //#include <windows.h>
 
-#define ODD_INT_64
+#define WEIRD_INT_64
 
 #include "reb-c.h"
 #include "reb-plugin.h"

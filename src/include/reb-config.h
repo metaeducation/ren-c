@@ -108,7 +108,7 @@ These are now obsolete (as of A107) and should be removed:
 
 // Use non-standard int64 declarations:
 #if (defined(_MSC_VER) && (_MSC_VER <= 1200))
-#define ODD_INT_64
+#define WEIRD_INT_64
 #else
 #define HAS_LL_CONSTS
 #endif
