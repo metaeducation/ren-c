@@ -69,6 +69,7 @@ compile-flags: [
 	PAK: "-fpack-struct"          ; pack structures
 	ARC: "-arch i386"             ; x86 32 bit architecture (OSX)
 	M32: "-m32"                   ; use 32-bit memory model
+	DBG: "-g3"					  ; enable debug info
 ]
 
 linker-flags: [

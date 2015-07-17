@@ -38,7 +38,7 @@ makefile-head:
 
 # To generate this file for a different platform, check systems.r file
 # and provide an OS_ID (from the systems table). Linux 2.5 for example:
-#    make make OS_ID=0.4.3
+#    make make OS_ID=0.4.3 BUILD=["release" "debug"]
 
 # To cross compile using a different toolchain and include files:
 #    $TOOLS - should point to bin where gcc is found
@@ -70,6 +70,7 @@ I= -I$(INCL) -I$S/include/ -I$S/codecs/
 
 TO_OS?=
 OS_ID?=
+BUILD?=release
 BIN_SUFFIX=
 RAPI_FLAGS=
 HOST_FLAGS=	-DREB_EXE
@@ -93,12 +94,13 @@ R3=	$(CD)r3$(BIN_SUFFIX) -qs
 ### Build targets:
 top:
 	$(MAKE) r3$(BIN_SUFFIX)
+	$(MAKE) strip-r3
 
 update:
 	-cd $(UP)/; cvs -q update src
 
 make:
-	$(REBOL) $T/make-make.r $(OS_ID)
+	$(REBOL) $T/make-make.r $(OS_ID) $(BUILD)
 
 clean:
 	@-rm -rf libr3.so objs/
@@ -107,8 +109,11 @@ all:
 	$(MAKE) clean
 	$(MAKE) prep
 	$(MAKE) r3$(BIN_SUFFIX)
+	$(MAKE) strip-r3
 	$(MAKE) lib
+	$(MAKE) strip-lib
 	$(MAKE) host$(BIN_SUFFIX)
+	$(MAKE) strip-host
 
 prep:
 	$(REBOL) $T/make-headers.r
@@ -174,6 +179,8 @@ makefile-link: {
 # Directly linked r3 executable:
 r3$(BIN_SUFFIX):	tmps objs $(OBJS) $(HOST)
 	$(CC) -o r3$(BIN_SUFFIX) $(OBJS) $(HOST) $(CLIB)
+
+strip-r3: r3$(BIN_SUFFIX)
 	$(STRIP) r3$(BIN_SUFFIX)
 	-$(NM) -a r3$(BIN_SUFFIX)
 	$(LS) r3$(BIN_SUFFIX)
@@ -184,11 +191,14 @@ objs:
 
 makefile-so: {
 lib:	libr3.so
+strip-lib: strip-libr3
 
 # PUBLIC: Shared library:
 # NOTE: Did not use "-Wl,-soname,libr3.so" because won't find .so in local dir.
 libr3.so:	$(OBJS)
 	$(CC) -o libr3.so -shared $(OBJS) $(CLIB)
+
+strip-libr3: libr3.so
 	$(STRIP) libr3.so
 	-$(NM) -D libr3.so
 	-$(NM) -a libr3.so | grep "Do_"
@@ -197,18 +207,23 @@ libr3.so:	$(OBJS)
 # PUBLIC: Host using the shared lib:
 host$(BIN_SUFFIX):	$(HOST)
 	$(CC) -o host$(BIN_SUFFIX) $(HOST) libr3.so $(CLIB)
+	echo "export LD_LIBRARY_PATH=.:$LD_LIBRARY_PATH"
+
+strip-host: host$(BIN_SUFFIX)
 	$(STRIP) host$(BIN_SUFFIX)
 	$(LS) host$(BIN_SUFFIX)
-	echo "export LD_LIBRARY_PATH=.:$LD_LIBRARY_PATH"
 }
 
 makefile-dyn: {
 lib:	libr3.dylib
+strip-lib: strip-libr3
 
 # Private static library (to be used below for OSX):
 libr3.dylib:	$(OBJS)
 	ld -r -o r3.o $(OBJS)
 	$(CC) -dynamiclib -o libr3.dylib r3.o $(CLIB)
+
+strip-libr3: libr3.dylib
 	$(STRIP) -x libr3.dylib
 	-$(NM) -D libr3.dylib
 	-$(NM) -a libr3.dylib | grep "Do_"
@@ -217,15 +232,19 @@ libr3.dylib:	$(OBJS)
 # PUBLIC: Host using the shared lib:
 host$(BIN_SUFFIX):	$(HOST)
 	$(CC) -o host$(BIN_SUFFIX) $(HOST) libr3.dylib $(CLIB)
+	echo "export LD_LIBRARY_PATH=.:$LD_LIBRARY_PATH"
+
+strip-host: host$(BIN_SUFFIX)
 	$(STRIP) host$(BIN_SUFFIX)
 	$(LS) host$(BIN_SUFFIX)
-	echo "export LD_LIBRARY_PATH=.:$LD_LIBRARY_PATH"
 }
 
 not-used: {
 # PUBLIC: Static library (to distrirbute) -- does not work!
 libr3.lib:	r3.o
 	ld -static -r -o libr3.lib r3.o
+
+strip-libr3: r3.o
 	$(STRIP) libr3.lib
 	-$(NM) -a libr3.lib | grep "Do_"
 	$(LS) libr3.lib
@@ -236,7 +255,11 @@ libr3.lib:	r3.o
 ;******************************************************************************
 
 opts: system/options/args
-if block? opts [opts: first opts]
+build: "release"
+if block? opts [
+	if 1 < length? opts [build: second opts]
+	opts: first opts
+]
 if opts = ">" [opts: "0.3.1"] ; bogus editor
 
 do %systems.r
@@ -263,6 +286,14 @@ either opts [
 ]
 
 set [os-plat os-name os-base build-flags] os
+if build = "debug" [
+	forall build-flags [;remove optimization
+		if find to string! first build-flags "+O" [
+			remove build-flags
+		]
+	]
+	append build-flags [DBG]
+]
 compile-flags: context compile-flags
 linker-flags:  context linker-flags
 other-flags:   context other-flags

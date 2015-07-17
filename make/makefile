@@ -7,7 +7,7 @@
 
 # To generate this file for a different platform, check systems.r file
 # and provide an OS_ID (from the systems table). Linux 2.5 for example:
-#    make make OS_ID=0.4.3
+#    make make OS_ID=0.4.3 BUILD=["release" "debug"]
 
 # To cross compile using a different toolchain and include files:
 #    $TOOLS - should point to bin where gcc is found
@@ -39,6 +39,7 @@ I= -I$(INCL) -I$S/include/
 
 TO_OS?= TO_LINUX
 OS_ID?= 0.4.4
+BUILD?=release
 BIN_SUFFIX=
 RAPI_FLAGS=  -O2 -fvisibility=hidden -m32
 HOST_FLAGS=	-DREB_EXE  -O2 -fvisibility=hidden -m32 -D_FILE_OFFSET_BITS=64
@@ -59,12 +60,13 @@ R3=	$(CD)r3$(BIN_SUFFIX) -qs
 ### Build targets:
 top:
 	$(MAKE) r3$(BIN_SUFFIX)
+	$(MAKE) strip-r3
 
 update:
 	-cd $(UP)/; cvs -q update src
 
 make:
-	$(REBOL) $T/make-make.r $(OS_ID)
+	$(REBOL) $T/make-make.r $(OS_ID) $(BUILD)
 
 clean:
 	@-rm -rf libr3.so objs/
@@ -73,8 +75,11 @@ all:
 	$(MAKE) clean
 	$(MAKE) prep
 	$(MAKE) r3$(BIN_SUFFIX)
+	$(MAKE) strip-r3
 	$(MAKE) lib
+	$(MAKE) strip-lib
 	$(MAKE) host$(BIN_SUFFIX)
+	$(MAKE) strip-host
 
 prep:
 	$(REBOL) $T/make-headers.r
@@ -160,6 +165,8 @@ HOST =	objs/host-main.o objs/host-args.o objs/host-device.o objs/host-stdio.o \
 # Directly linked r3 executable:
 r3$(BIN_SUFFIX):	tmps objs $(OBJS) $(HOST)
 	$(CC) -o r3$(BIN_SUFFIX) $(OBJS) $(HOST) $(CLIB)
+
+strip-r3: r3$(BIN_SUFFIX)
 	$(STRIP) r3$(BIN_SUFFIX)
 	-$(NM) -a r3$(BIN_SUFFIX)
 	$(LS) r3$(BIN_SUFFIX)
@@ -168,11 +175,14 @@ objs:
 	mkdir -p objs
 
 lib:	libr3.so
+strip-lib: strip-libr3
 
 # PUBLIC: Shared library:
 # NOTE: Did not use "-Wl,-soname,libr3.so" because won't find .so in local dir.
 libr3.so:	$(OBJS)
 	$(CC) -o libr3.so -shared $(OBJS) $(CLIB)
+
+strip-libr3: libr3.so
 	$(STRIP) libr3.so
 	-$(NM) -D libr3.so
 	-$(NM) -a libr3.so | grep "Do_"
@@ -181,9 +191,11 @@ libr3.so:	$(OBJS)
 # PUBLIC: Host using the shared lib:
 host$(BIN_SUFFIX):	$(HOST)
 	$(CC) -o host$(BIN_SUFFIX) $(HOST) libr3.so $(CLIB)
+	echo "export LD_LIBRARY_PATH=.:$LD_LIBRARY_PATH"
+
+strip-host: host$(BIN_SUFFIX)
 	$(STRIP) host$(BIN_SUFFIX)
 	$(LS) host$(BIN_SUFFIX)
-	echo "export LD_LIBRARY_PATH=.:$LD_LIBRARY_PATH"
 
 ### File build targets:
 b-boot.c: $(SRC)/boot/boot.r
