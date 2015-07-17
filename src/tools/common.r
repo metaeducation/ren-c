@@ -23,27 +23,31 @@ REBOL [
 ;-- !!! switch to use spaces when code is transitioned
 code-tab: (comment [rejoin [space space space space]] tab)
 
-binary-to-c: func [comp-data /local out data comma-count] [
-	; To be "strict" C standard compatible, we do not use a character
-	; string literal for data encoded as C due to limits:
-	;
-	;	http://stackoverflow.com/questions/11488616/
-	;
-	; We use an array formatted as {0xYY, ...} with 8 bytes per line
+; http://stackoverflow.com/questions/11488616/
+binary-to-c: func [
+	{Converts a binary to a string of C source that represents an initializer
+	for a character array.  To be "strict" C standard compatible, we do not
+	use a string literal due to length limits (509 characters in C89, and
+	4095 characters in C99).  Instead we produce an array formatted as
+	'{0xYY, ...}' with 8 bytes per line}
 
-	out: make string! 6 * (length? comp-data)
-	while [not tail? comp-data] [
+	data [binary!]
+	; !!! Add variable name to produce entire 'const char *name = {...};' ?
+	 /local out str comma-count
+] [
+	out: make string! 6 * (length? data)
+	while [not tail? data] [
 		append out code-tab 
 
-		;-- grab in groups of 8
-		hexed: enbase/base (copy/part comp-data 8) 16
-		comp-data: skip comp-data 8
+		;-- grab hexes in groups of 8 bytes
+		hexed: enbase/base (copy/part data 8) 16
+		data: skip data 8
 		foreach [digit1 digit2] hexed [
 			append out rejoin [{0x} digit1 digit2 {,} space]
 		]
 
 		take/last out ;-- drop the last space
-		if tail? comp-data [
+		if tail? data [
 			take/last out ;-- lose that last comma
 		]
 		append out newline ;-- newline after each group, and at end
@@ -51,7 +55,7 @@ binary-to-c: func [comp-data /local out data comma-count] [
 
 	;-- Sanity check (should be one more byte in source than commas out)
 	parse out [(comma-count: 0) some [thru "," (++ comma-count)] to end]
-	assert [(comma-count + 1) = (length? head comp-data)]
+	assert [(comma-count + 1) = (length? head data)]
 
 	out
 ]
