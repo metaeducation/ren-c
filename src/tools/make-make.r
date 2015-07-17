@@ -111,7 +111,7 @@ prep:
 	$(REBOL) $T/make-headers.r
 	$(REBOL) $T/make-boot.r $(OS_ID)
 	$(REBOL) $T/make-host-init.r
-	$(REBOL) $T/make-os-ext.r # !!! "ok, but not always" said old comment (?)
+	$(REBOL) $T/make-os-ext.r
 	$(REBOL) $T/core-ext.r
 	$(REBOL) $T/make-host-ext.r
 	$(REBOL) $T/make-reb-lib.r
