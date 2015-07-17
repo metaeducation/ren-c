@@ -522,7 +522,7 @@ static REBOL_STATE Top_State; // Boot var: holds error state during boot
 **
 ***********************************************************************/
 {
-	Trap_Range(arg);
+	Trap1(RE_OUT_OF_RANGE, arg);
 }
 
 
