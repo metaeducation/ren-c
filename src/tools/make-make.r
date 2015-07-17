@@ -47,7 +47,7 @@ makefile-head:
 #    make TOOLS=~/amiga/amiga/bin/ppc-amigaos- INCL=/SDK/newlib/include
 
 # For the build toolchain:
-CC=	$(TOOLS)gcc
+CC?= $(TOOLS)gcc
 NM=	$(TOOLS)nm
 STRIP=	$(TOOLS)strip
 
