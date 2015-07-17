@@ -80,17 +80,17 @@ REBOL= $(CD)$(REBOL_TOOL) -qs
 
 ### Build targets:
 top: $(REBOL_TOOL)$(BIN_SUFFIX)
-	$(MAKE) -f makefile.boot make
+	$(MAKE) -f makefile.boot make OS_ID=$(OS_ID)
 	$(MAKE) prep
 	$(MAKE) clean
 	$(MAKE) r3
 
 all: $(REBOL_TOOL)$(BIN_SUFFIX)
-	$(MAKE) -f makefile.boot make
+	$(MAKE) -f makefile make OS_ID=$(OS_ID)
 	$(MAKE) all
 
 make: $(REBOL_TOOL)$(BIN_SUFFIX)
-	$(REBOL) $T/make-make.r
+	$(REBOL) $T/make-make.r $(OS_ID)
 
 $(REBOL_TOOL)$(BIN_SUFFIX):
 	@echo

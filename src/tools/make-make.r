@@ -115,7 +115,7 @@ update:
 	-cd $(UP)/; cvs -q update src
 
 make:
-	$(REBOL) $T/make-make.r
+	$(REBOL) $T/make-make.r $(OS_ID)
 
 clean:
 	@-rm -rf r3$(BIN_SUFFIX) libr3.so objs/
