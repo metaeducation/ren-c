@@ -65,7 +65,7 @@
 
 REBARGS Main_Args;
 
-#ifdef TO_WIN32
+#ifdef TO_WINDOWS
 HINSTANCE App_Instance = 0;
 extern void Console_Output(BOOL state);
 #endif
@@ -141,7 +141,7 @@ int main(int argc, char **argv_ansi)
 	REBYTE prompt_str[] = ">> ";
 	REBYTE result_str[] = "== ";
 
-#ifdef TO_WIN32
+#ifdef TO_WINDOWS
 	// Were we using WinMain we'd be getting our arguments in Unicode, but
 	// since we're using an ordinary main() we do not.  However, this call
 	// lets us slip out and pick up the arguments in Unicode form.
@@ -187,7 +187,7 @@ int main(int argc, char **argv_ansi)
 	Init_Ext_Test();
 #endif
 
-#ifdef TO_WIN32
+#ifdef TO_WINDOWS
 	// no console, we must be the child process
 	if (GetStdHandle(STD_OUTPUT_HANDLE) == 0)
 	{
@@ -220,7 +220,7 @@ int main(int argc, char **argv_ansi)
 		exit(0);
 	}
 #endif //REB_CORE
-#endif //TO_WIN32
+#endif //TO_WINDOWS
 
 	// Common code for console & GUI version
 #ifndef REB_CORE
@@ -228,13 +228,13 @@ int main(int argc, char **argv_ansi)
 	OS_Init_Graphics();
 #endif // REB_CORE
 
-#ifdef TO_WIN32
+#ifdef TO_WINDOWS
 #ifdef ENCAP
 	Console_Output(FALSE);
 #else
 	if (Main_Args.script) Console_Output(FALSE);
 #endif // ENCAP
-#endif // TO_WIN32
+#endif // TO_WINDOWS
 
 	// Call sys/start function. If a compressed script is provided, it will be
 	// decompressed, stored in system/options/boot-host, loaded, and evaluated.
@@ -246,12 +246,12 @@ int main(int argc, char **argv_ansi)
 	n = RL_Start(0, 0, embedded_script, (REBINT)embedded_size, 0);
 #endif
 
-#ifdef TO_WIN32
+#ifdef TO_WINDOWS
 #ifdef ENCAP
 	Console_Output(TRUE);
 #else
 	if (Main_Args.script) Console_Output(TRUE);
-#endif // TO_WIN32
+#endif // TO_WINDOWS
 #endif // ENCAP
 
 #ifndef ENCAP

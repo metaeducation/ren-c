@@ -69,7 +69,7 @@
 	for (i = 0; i < len;) {
 		c = uni ? up[i] : bp[i];
 		i++;
-#ifdef TO_WIN32
+#ifdef TO_WINDOWS
 		if (c == ':') {
 			// Handle the vol:dir/file format:
 			if (colon || slash) return 0; // no prior : or / allowed
@@ -95,7 +95,7 @@
 	SERIES_TAIL(dst) = n;
 	TERM_SERIES(dst);
 
-#ifdef TO_WIN32
+#ifdef TO_WINDOWS
 	// Change C:/ to /C/ (and C:X to /C/X):
 	if (colon) Insert_Char(dst, 0, '/');
 #endif
@@ -151,7 +151,7 @@
 	if (c == '/') {			// %/
 		dst = Make_Unicode(len+FN_PAD);
 		out = UNI_HEAD(dst);
-#ifdef TO_WIN32
+#ifdef TO_WINDOWS
 		i++;
 		if (i < len) {
 			c = GET_CHAR_UNI(uni, bp, i);
@@ -178,7 +178,7 @@
 		if (full) l = OS_GET_CURRENT_DIR(&lpath);
 		dst = Make_Unicode(l + len + FN_PAD); // may be longer (if lpath is encoded)
 		if (full) {
-#ifdef TO_WIN32
+#ifdef TO_WINDOWS
 			assert(sizeof(REBCHR) == sizeof(REBUNI));
 			Append_Uni_Uni(dst, cast(const REBUNI*, lpath), l);
 #else
@@ -266,7 +266,7 @@
 ***********************************************************************/
 {
 	REBSER *ser; // will be unicode size
-#ifndef TO_WIN32
+#ifndef TO_WINDOWS
 	REBSER *bin;
 	REBCNT n;
 #endif
@@ -275,7 +275,7 @@
 
 	ser = To_Local_Path(VAL_DATA(val), VAL_LEN(val), (REBOOL)!VAL_BYTE_SIZE(val), full);
 
-#ifndef TO_WIN32
+#ifndef TO_WINDOWS
 	// Posix needs UTF8 conversion:
 	n = Length_As_UTF8(UNI_HEAD(ser), SERIES_TAIL(ser), TRUE, OS_CRLF);
 	bin = Make_Binary(n + FN_PAD);

@@ -860,7 +860,7 @@ chk_neg:
 		Set_Series(REB_FILE, Append_Value(blk), dir);
 	}
 	else {  // First is dir path for the rest of the files
-#ifdef TO_WIN32 /* directory followed by files */
+#ifdef TO_WINDOWS /* directory followed by files */
 		assert(sizeof(wchar_t) == sizeof(REBCHR));
 		dir = To_REBOL_Path(str, n, -1, TRUE);
 		str += n + 1; // next

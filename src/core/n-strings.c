@@ -907,7 +907,7 @@ static struct digest {
 		wcsncpy(cast(wchar_t*, dest), cast(const wchar_t*, src), count)
 	);
 #else
-	#ifdef TO_OBSD
+	#ifdef TO_OPENBSD
 		return cast(REBCHR*,
 			strlcpy(cast(char*, dest), cast(const char*, src), count)
 		);
@@ -933,7 +933,7 @@ static struct digest {
 		wcsncat(cast(wchar_t*, dest), cast(const wchar_t*, src), max)
 	);
 #else
-	#ifdef TO_OBSD
+	#ifdef TO_OPENBSD
 		return cast(REBCHR*,
 			strlcat(cast(char*, dest), cast(const char*, src), max)
 		);

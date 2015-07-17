@@ -171,26 +171,16 @@ os: [
 	dev-dns.c
 ]
 
-os-win32: [
+os-windows: [
 	+ generic/host-memory.c
 
-	+ win32/host-lib.c
-	win32/dev-stdio.c
-	win32/dev-file.c
-	win32/dev-event.c
-	win32/dev-clipboard.c
-	win32/dev-serial.c
+	+ windows/host-lib.c
+	windows/dev-stdio.c
+	windows/dev-file.c
+	windows/dev-event.c
+	windows/dev-clipboard.c
+	windows/dev-serial.c
 ]
-
-; Ren/C is core sources with no graphics.  See Atronix R3/View repository.
-;
-;os-win32g: [
-;	host-graphics.c
-;	host-event.c
-;	host-window.c
-;	host-draw.c
-;	host-text.c
-;]
 
 os-posix: [
 	+ generic/host-memory.c

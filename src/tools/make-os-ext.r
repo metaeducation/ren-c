@@ -20,26 +20,22 @@ version: load %../boot/version.r
 lib-version: version/3
 print ["--- Make OS Ext Lib --- Version:" lib-version]
 
-; Set platform TARGET
+do %common.r
 do %systems.r
 
-unless os: config-system [
-	do make error! "No OS configured in make-os-ext.r"
-]
-
-set [os-plat os-name os-base build-flags] os
+config: config-system/guess system/options/args
 
 do %form-header.r
 
-fb: make object! load %file-base.r
+file-base: make object! load %file-base.r
 
 change-dir %../os/
 
 ; Collect OS-specific host files:
-unless os-specific-objs: select fb to word! join "os-" os-base [
+unless os-specific-objs: select file-base to word! join "os-" config/os-base [
 	do make error! rejoin [
 		"make-os-ext.r requires os-specific obj list in file-base.r"
-		space "none was provided for os-" os-base
+		space "none was provided for os-" config/os-base
 	]
 ]
 
@@ -52,19 +48,8 @@ files: copy []
 
 rule: ['+ set scannable [word! | path!] (append files to-file scannable) | skip]
 
-parse fb/os [some rule]
+parse file-base/os [some rule]
 parse os-specific-objs [some rule]
-
-; If it is graphics enabled:
-; (Ren/C is a core build independent of graphics, so it never will be)
-comment [
-	if all [
-		not find any [system/options/args []] "no-gfx"
-		find [3 4] system/version/4
-	][
-		append files [%host-window.c %host-graphics.c]
-	]
-]
 
 cnt: 0
 
@@ -421,7 +406,7 @@ newline newline (rebol-lib-macros)
 		#define OS_STRCHR(d,s)			wcschr((d), (s))
 		#define OS_STRLEN(s)			wcslen(s)
 	#else
-		#ifdef TO_OBSD
+		#ifdef TO_OPENBSD
 	// !!! SEE **WARNING** BEFORE EDITING
 			#define OS_STRNCPY(d,s,m) \
 				strlcpy(cast(char*, (d)), cast(const char*, (s)), (m))

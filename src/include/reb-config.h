@@ -23,17 +23,38 @@
 **  Module:  reb-config.h
 **  Author:  Carl Sassenrath
 **  Notes:
-**      This is the first file included.
+**		This is the first file included.  It is included by both
+**		reb-host.h and sys-core.h, and all Rebol code can include
+**		one (and only one) of those...based on whether the file is
+**		part of the core or in the "host".
+**
+**		Many of the flags controlling the build (such as
+**		the TO_<target> definitions) come from -DTO_<target> in the
+**		compiler command-line.  These command lines are generally
+**		produced automatically, based on the build that is picked
+**		from %systems.r.
+**
+**		However, some flags require the preprocessor's help to
+**		decide if they are relevant, for instance if they involve
+**		detecting features of the compiler while it's running.
+**		Or they may adjust a feature so narrowly that putting it
+**		into the system configuration would seem unnecessary.
+**
+**		Over time, this file should be balanced and adjusted with
+**		%systems.r in order to make the most convenient and clear
+**		build process.  If there is difficulty in making a build
+**		work on a system, use that as an opportunity to reflect
+**		how to make this better.
 **
 ***********************************************************************/
 
-// The TO_<target> define comes from -DTO_<target> in gcc cmd line
 
 /** Primary Configuration **********************************************
 
 The primary target system is defined by:
 
-	TO_target		- for example TO_WIN32 or TO_LINUX
+	TO_(os-base)	- for example TO_WINDOWS or TO_LINUX
+	TO_(os-name)	- for example TO_WINDOWS_X86 or TO_LINUX_X64
 
 The default config builds an R3 HOST executable program.
 
@@ -57,188 +78,98 @@ Special internal defines used by RT, not Host-Kit developers:
 
 	REB_DEF			- special includes, symbols, and tables
 
-These are now obsolete (as of A107) and should be removed:
-
-	REB_LIB
-	CORE_ONLY
-	REBOL_ONLY
-	FULL_DEFS
-	AS_LIB
-
 */
 
 //* Common *************************************************************
 
-#define THREADED				// enable threads
+// !!! Threading support is largely unimplemented, but this switch was
+// to enable threads.
+#define THREADED
+#define THREAD
 
-#ifdef REB_EXE					// standalone exe from RT
-#define RL_API
+
+#ifdef REB_EXE
+	// standalone exe from RT
+	#define RL_API
 #else
-#ifdef REB_API					// r3lib dll from RT
-#define RL_API API_EXPORT
+	#ifdef REB_API
+		// r3lib dll from RT
+		#define RL_API API_EXPORT
+	#else
+		// for host exe (not used for extension dlls)
+		#define RL_API API_IMPORT
+	#endif
+#endif
+
+
+
+//* MS Windows ********************************************************
+
+#ifdef TO_WINDOWS_X86
+#endif
+
+#ifdef TO_WINDOWS_X64
+#endif
+
+#ifdef TO_WINDOWS
+	#define OS_DIR_SEP '\\'			// file path separator (Thanks Bill.)
+	#define OS_CRLF TRUE			// uses CRLF as line terminator
+
+	#if (defined(_MSC_VER) && (_MSC_VER <= 1200))
+		#define WEIRD_INT_64		// non-standard MSVC int64 declarations
+	#else
+		#define HAS_LL_CONSTS
+	#endif
+
+	#define OS_WIDE_CHAR			// wchar_t used strings passed to OS API
+
+	// ASCII strings to Integer
+	#define ATOI					// supports it
+	#define ATOI64					// supports it
+	#define ITOA64					// supports it
+
+	#define HAS_ASYNC_DNS			// supports it
+
+	#define NO_TTY_ATTRIBUTES		// used in read-line.c
+
+	#ifdef THREADED
+		#ifndef __MINGW32__
+			#undef THREAD
+			#define THREAD __declspec(thread)
+		#endif
+	#endif
+
+	// Used when we build REBOL as a DLL:
+	#define API_EXPORT __declspec(dllexport)
+	#define API_IMPORT __declspec(dllimport)
+
+	#define WIN32_LEAN_AND_MEAN		// trim down the Win32 headers
 #else
-#define RL_API API_IMPORT		// for host exe (not used for extension dlls)
-#endif
-#endif
+	#define OS_DIR_SEP '/'			// rest of the world uses it
+	#define OS_CRLF FALSE			// just LF in strings
 
-//* MS Windows 32 ******************************************************
-
-#ifdef TO_WIN32					// Win32/Intel
-
-#define	WIN32_LEAN_AND_MEAN		// trim down the Win32 headers
-#define ENDIAN_LITTLE			// uses little endian byte order
-#define OS_WIDE_CHAR			// OS uses WIDE_CHAR API
-#define OS_CRLF TRUE			// uses CRLF as line terminator
-#define OS_DIR_SEP '\\'			// file path separator (Thanks Bill.)
-#define HAS_ASYNC_DNS			// supports it
-#define ATOI					// supports it
-#define ATOI64					// supports it
-#define ITOA64					// supports it
-#define NO_TTY_ATTRIBUTES		// used in read-line.c
-
-#ifdef THREADED
-#ifndef __MINGW32__
-#define THREAD __declspec(thread)
-#endif
+	#define API_IMPORT
+	// Note: Unsupported by gcc 2.95.3-haiku-121101
+	// (We #undef it in the Haiku section)
+	#define API_EXPORT __attribute__((visibility("default")))
 #endif
 
-// Used when we build REBOL as a DLL:
-#define API_EXPORT __declspec(dllexport)
-#define API_IMPORT __declspec(dllimport)
 
-// Use non-standard int64 declarations:
-#if (defined(_MSC_VER) && (_MSC_VER <= 1200))
-#define WEIRD_INT_64
-#else
-#define HAS_LL_CONSTS
+//* Linux ********************************************************
+
+#ifdef TO_LINUX_X86
 #endif
 
-// !!! No AGG definitions in Ren/C core
-//#define AGG_WIN32_FONTS //use WIN32 api for font handling
-#else
-
-//* Non Windows ********************************************************
-
-// !!! Historical Rebol implementation controlled the presence of a clipboard
-// device with this flag.  Atronix build has clipboard support under Linux
-// (not POSIX)... but depends on X11 to get it (Win32 only needs Win32 API).
-// Atronix build had removed this flag to get the clipboard.  Really this
-// should be done in a more modular way so that the core does not have a
-// static table for this (!)
-#define MIN_OS
-
-// !!! No AGG definitions in Ren/C core
-//#define AGG_FREETYPE            //use freetype2 library for fonts by default
-//#define AGG_FONTCONFIG            //use fontconfig library for fonts by default
-
-#ifndef TO_HAIKU
-// Unsupported by gcc 2.95.3-haiku-121101
-#define API_EXPORT __attribute__((visibility("default")))
-#else
-#define API_EXPORT
-#define DEF_UINT
+#ifdef TO_LINUX_X64
 #endif
 
-#define API_IMPORT
+#ifdef TO_LINUX_PPC
 #endif
 
-#ifdef TO_LINUX_X86				// Linux/Intel X86
-#define TO_LINUX
-#define ENDIAN_LITTLE
-#define HAS_LL_CONSTS
-#endif
-
-#ifdef TO_LINUX_X64				// Linux/AMD64
-#define TO_LINUX
-#define ENDIAN_LITTLE
-#define HAS_LL_CONSTS
-#ifndef __LP64__
-#define __LP64__
-#endif
-#endif
-
-#ifdef TO_LINUX_PPC				// Linux/PPC
-#define TO_LINUX
-#define ENDIAN_BIG
-#define HAS_LL_CONSTS
-#endif
-
-#ifdef TO_LINUX_ARM				// Linux/ARM
-#define TO_LINUX
-#define ENDIAN_LITTLE
-#define HAS_LL_CONSTS
+#ifdef TO_LINUX_ARM
 #endif
 
 #ifdef TO_LINUX_MIPS
-#define TO_LINUX
-#define ENDIAN_LITTLE
-#define HAS_LL_CONSTS
-#endif
-
-#ifdef TO_HAIKU					// same as Linux/Intel seems to work
-#define ENDIAN_LITTLE
-#define HAS_LL_CONSTS
-#endif
-
-#ifdef TO_OSXI					// OSX/Intel
-#define ENDIAN_LITTLE
-#define HAS_LL_CONSTS
-// !!! Don't mention graphics in Ren/C core
-//#undef NO_GRAPHICS
-#endif
-
-#ifdef TO_OSX					// OSX/PPC
-#define ENDIAN_BIG
-#define HAS_LL_CONSTS
-#define OLD_COMPILER
-// !!! Don't mention graphics in Ren/C core
-//#undef NO_GRAPHICS
-#endif
-
-#ifdef TO_OSX_X64				// OSX/AMD64
-	#define ENDIAN_LITTLE
-	#define HAS_LL_CONSTS
-	#ifndef __LP64__
-		#define __LP64__
-	#endif
-#endif
-
-#ifdef TO_FREEBSD
-#define ENDIAN_LITTLE
-#define HAS_LL_CONSTS
-#endif
-
-#ifdef TO_FREEBSD_X64			// FreeBSD/AMD64
-	#define ENDIAN_LITTLE
-	#define HAS_LL_CONSTS
-	#ifndef __LP64__
-		#define __LP64__
-	#endif
-#endif
-
-#ifdef TO_OPENBSD
-#define ENDIAN_LITTLE
-#define HAS_LL_CONSTS
-#endif
-
-#ifdef TO_OBSD					// OpenBSD
-// See OS_STRNCAT and OS_STRNCPY definitions (OpenBSD defines them differently)
-#endif
-
-#ifdef TO_AMIGA					// Target for OS4
-#define ENDIAN_BIG
-#define HAS_BOOL
-#define HAS_LL_CONSTS
-#define HAS_SMART_CONSOLE
-#define NO_DL_LIB
-#endif
-
-#ifdef TO_ANDROID_ARM				// Android/ARM
-#undef MIN_OS
-// !!! Don't mention graphics in Ren/C core
-//#undef NO_GRAPHICS
-#define ENDIAN_LITTLE
-#define HAS_LL_CONSTS
 #endif
 
 #ifdef TO_LINUX
@@ -265,16 +196,61 @@ These are now obsolete (as of A107) and should be removed:
 	// ...at the top of the file.
 #endif
 
-//* Defaults ***********************************************************
 
-#ifndef THREAD
-#define THREAD
+//* Mac OS/X ********************************************************
+
+#ifdef TO_OSX_PPC
 #endif
 
-#ifndef OS_DIR_SEP
-#define OS_DIR_SEP '/'			// rest of the world uses it
+#ifdef TO_OSX_X86
 #endif
 
-#ifndef OS_CRLF
-#define OS_CRLF FALSE
+#ifdef TO_OSX_X64
+#endif
+
+
+//* Android *****************************************************
+
+#ifdef TO_ANDROID_ARM
+#endif
+
+
+//* BSD ********************************************************
+
+#ifdef TO_FREEBSD_X86
+#endif
+
+#ifdef TO_FREEBSD_X64
+#endif
+
+#ifdef TO_OPENBSD
+#endif
+
+
+//* HaikuOS ********************************************************
+
+#ifdef TO_HAIKU
+	#undef API_EXPORT
+	#define API_EXPORT
+
+	#define DEF_UINT
+#endif
+
+
+//* Amiga ********************************************************
+
+// Note: The Amiga target is kept for its historical significance.
+// Rebol required Amiga OS4 to be able to run, and the only
+// machines that could run it had third-party add-on boards with
+// PowerPC processors.  Hence stock machines like the Amiga4000
+// which had a Motorola 68040 cannot built Rebol.
+//
+// To date, there has been no success reported in building Rebol
+// for an Amiga emulator.  The last known successful build on
+// Amiga hardware is dated 5-Mar-2011
+
+#ifdef TO_AMIGA
+	#define HAS_BOOL
+	#define HAS_SMART_CONSOLE
+	#define NO_DL_LIB
 #endif

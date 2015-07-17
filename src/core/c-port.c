@@ -544,11 +544,11 @@ SCHEME_ACTIONS *Scheme_Actions;	// Initial Global (not threaded)
 	Init_UDP_Scheme();
 	Init_DNS_Scheme();
 
-#ifndef MIN_OS
+#ifdef TO_WINDOWS
 	Init_Clipboard_Scheme();
 #endif
 
-#if defined(TO_LINUX) || defined(TO_WIN32)
+#if defined(TO_LINUX) || defined(TO_WINDOWS)
 	Init_Serial_Scheme();
 #endif
 

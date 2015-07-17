@@ -258,7 +258,7 @@ form-header/gen "REBOL Host and Extension API" %reb-lib.r %make-reb-lib.r
 rlib
 {
 // Extension entry point functions:
-#ifdef TO_WIN32
+#ifdef TO_WINDOWS
 	#define RXIEXT __declspec(dllexport)
 #else
 	#define RXIEXT extern

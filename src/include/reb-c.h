@@ -342,7 +342,7 @@ enum {
 **
 ***********************************************************************/
 
-#ifdef TO_WIN32
+#ifdef TO_WINDOWS
 	typedef void (__cdecl CFUNC)(void);
 #else
 	typedef void (CFUNC)(void);
@@ -375,7 +375,7 @@ enum {
 	#define FINITE isfinite
 #else
 	// Other fallbacks...
-	#ifdef TO_WIN32
+	#ifdef TO_WINDOWS
 		#define FINITE _finite // The usual answer for Windows
 	#else
 		#define FINITE finite // The usual answer for POSIX

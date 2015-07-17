@@ -33,7 +33,7 @@
 **
 ***********************************************************************/
 
-#ifdef TO_WIN32
+#ifdef TO_WINDOWS
 #include <windows.h>
 #endif
 
@@ -52,7 +52,7 @@
 #include "host-ext-core.h"
 
 //***** Externs *****
-#ifdef TO_WIN32
+#ifdef TO_WINDOWS
 extern void Console_Window(BOOL show);
 extern void Console_Output(BOOL state);
 #endif
@@ -79,13 +79,13 @@ static u32 *core_ext_words;
 	ENCAP and GUI commands are not supported by Ren/C
 
     case CMD_CORE_SHOW_CONSOLE:
-#ifdef TO_WIN32
+#ifdef TO_WINDOWS
         Console_Window(TRUE);
 #endif
         break;
 
     case CMD_CORE_HIDE_CONSOLE:
-#ifdef TO_WIN32
+#ifdef TO_WINDOWS
         Console_Window(FALSE);
 #endif
         break;
@@ -172,14 +172,14 @@ static u32 *core_ext_words;
 	No GUI in Ren/C or Rebol Core
 
     case CMD_CORE_CONSOLE_OUTPUT:
-#ifdef TO_WIN32
+#ifdef TO_WINDOWS
         Console_Output(RXA_LOGIC(frm, 1));
 #endif
         break;
 
 	case CMD_CORE_REQ_DIR:
 		{
-#ifdef TO_WIN32
+#ifdef TO_WINDOWS
 			REBCHR *title;
 			REBSER *string;
 			REBCHR *stringBuffer;

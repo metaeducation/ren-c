@@ -25,31 +25,8 @@ do %common.r
 
 do %form-header.r
 
-; Set platform TARGET
 do %systems.r
-target: config-system/define ; default
-
-; Include graphics for these systems:
-graphics-targets: [
-	TO_WIN32
-]
-has-graphics: false ;not not find graphics-targets target
-
-opts: system/options/args
-
-if all [block? opts opts/1 = ">"] [opts: none] ; cw editor
-
-if block? opts [
-	if find opts "no-gfx" [
-		has-graphics: false
-		opts: next opts
-	]
-	if not tail? opts [
-		opts: load first opts
-		unless tuple? opts [print "Invalid version arg." wait 2 quit]
-		target: config-system/platform opts
-	]
-]
+config: config-system/guess system/options/args
 
 write-if: func [file data] [
 	if data <> attempt [read file][
@@ -66,13 +43,8 @@ inc: %../include/
 src: %../core/
 
 version: load %version.r
-either tuple? opts [
-	version/4: opts/2
-	version/5: opts/3
-][
-	version/4: system/version/4
-	version/5: system/version/5
-]
+version/4: config/id/2
+version/5: config/id/3
 
 ;-- Title string put into boot.h file checksum:
 Title:
@@ -1017,8 +989,6 @@ emit {
 externs: make string! 2000
 boot-booters: load %booters.r
 boot-natives: load %natives.r
-
-if has-graphics [append boot-natives load %graphics.r]
 
 nats: append copy boot-booters boot-natives
 

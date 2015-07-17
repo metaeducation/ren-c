@@ -37,14 +37,14 @@
 #include <time.h>
 #include <stdlib.h>
 
-#if defined(TO_OSXI) || defined(TO_OSX)
+#if defined(TO_OSX_X86) || defined(TO_OSX_PPC)
 	#include <sys/malloc.h>
 #else
 	#include <stdlib.h>
 #endif
 
 #include "rsa.h"
-#ifdef TO_WIN32
+#ifdef TO_WINDOWS
     #include <windows.h>
     #include <wincrypt.h>
 #else
@@ -54,7 +54,7 @@
 #endif
 
 
-#ifdef TO_WIN32
+#ifdef TO_WINDOWS
 static HCRYPTPROV gCryptProv;
 #else
 static int rng_fd = -1;
@@ -65,7 +65,7 @@ static int rng_fd = -1;
  */
 void get_random(int num_rand_bytes, uint8_t *rand_data)
 {
-#ifdef TO_WIN32
+#ifdef TO_WINDOWS
     /* use Microsoft Crypto Libraries */
     CryptGenRandom(gCryptProv, num_rand_bytes, rand_data);
 #else
