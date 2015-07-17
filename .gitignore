@@ -35,16 +35,15 @@
 ## REBOL R3
 #################
 
-make/r3.dll
-make/r3-core.exe
-make/r3-core-host.exe
-make/r3-view.exe
-make/r3-view-host.exe
+make/makefile
 make/r3*
 make/objs/
+
 src/boot/boot-code.r
 src/boot/host-init.r
+
 src/core/b-boot.c
+
 src/include/ext-types.h
 src/include/host-ext-*
 src/include/host-init.h
@@ -56,6 +55,7 @@ src/include/reb-lib-lib.h
 src/include/reb-lib.h
 src/include/reb-types.h
 src/include/tmp-*
+
 src/tools/reb-lib-doc.txt
 src/reb-lib-doc.txt
 
