@@ -81,8 +81,11 @@ HFLAGS= -c -D$(TO_OS) -DREB_CORE $(HOST_FLAGS) $I
 CLIB=
 
 # REBOL is needed to build various include files:
-REBOL_TOOL= r3-make$(BIN_SUFFIX)
-REBOL=	$(CD)$(REBOL_TOOL) -qs
+# (We don't put a suffix on REBOL_TOOL because we'd like you to be able
+# to run make-make and change platforms in the same directory, but a
+# suffix is added when checking for the file's presence)
+REBOL_TOOL= r3-make
+REBOL= $(CD)$(REBOL_TOOL) -qs
 
 # For running tests, ship, build, etc.
 R3=	$(CD)r3$(BIN_SUFFIX) -qs
@@ -125,7 +128,7 @@ tmps: $S/include/tmp-bootdefs.h
 $S/include/tmp-bootdefs.h: $(REBOL_TOOL)
 	$(MAKE) prep
 
-$(REBOL_TOOL):
+$(REBOL_TOOL)$(BIN_SUFFIX):
 	@echo
 	@echo "*** ERROR: Missing $(REBOL_TOOL) to build various tmp files."
 	@echo "*** Download Rebol 3 and copy it here as $(REBOL_TOOL), then"
