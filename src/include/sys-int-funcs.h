@@ -126,8 +126,11 @@ REBOOL reb_u32_mul_overflow(u32 x, u32 y, u32 *prod);
 #ifdef __LP64__
 #define	REB_I64_MUL_OF(x, y, prod) \
 	__builtin_smull_overflow((x), (y), cast(long*, prod))
+#elif !defined(__clang__) //__builtin_smulll_overflow doesn't work on 32-bit systems yet, causing undefined reference to __mulodi4
+#define	REB_I64_MUL_OF(x, y, prod) __builtin_smulll_overflow((x), (y), cast(long long*, prod))
 #else // presumably __LLP64__ or __LP32__
-#define	REB_I64_MUL_OF(x, y, prod) __builtin_smulll_overflow((x), (y), (prod))
+REBOOL reb_i64_mul_overflow(i64 x, i64 y, i64 *prod);
+#define	REB_I64_MUL_OF(x, y, prod) reb_i64_mul_overflow((x), (y), cast(long long*, prod))
 #endif //__LP64__
 #else
 REBOOL reb_i64_mul_overflow(i64 x, i64 y, i64 *prod);
