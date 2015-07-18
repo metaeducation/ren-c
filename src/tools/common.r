@@ -73,11 +73,11 @@ foreach-record-NO-RETURN: func [
 	body [block!] {Block to evaluate each time}
 	/local headings result spec
 ] [
-	unless [block? first table] [
+	unless block? first table [
 		do make error! {Table of records does not start with a header block}
 	]
 	headings: map-each word first table [
-		unless [word? word] [
+		unless word? word [
 			do make error! rejoin [{Heading} space word space {is not a word}]
 		]
 		to-set-word word
