@@ -36,15 +36,19 @@ a poorer option than moving to an improved Rebol3 as an interim step.)*
 
 ## Building
 
-It's often as simple as [downloading an interpreter](http://rebolsource.net),
-renaming it to `r3-make` or `r3-make.exe`, and putting it in the `%make/`
-subdirectory.  Then run:
+First get the sources--either from cloning the repository with git, or
+[Downloading a ZIP](https://github.com/metaeducation/ren-c/archive/master.zip).
+Next you need to [get an interpreter](http://rebolsource.net), rename it
+to `r3-make` or `r3-make.exe`, and put it in the `%make/` subdirectory.
+
+Then run:
 
 	 make -f makefile.boot
 
 The platform to target will be assumed to be the same as the build type of
 the `r3-make` you use.  If your needs are more complex *(such as doing a
-cross-compilation)*, see the comments in the bootstrap makefile:
+cross-compilation, or if the `system/version` in your r3-make doesn't match
+the target you want)*, refer to the bootstrap makefile:
 
 [%src/make/makefile.boot](https://github.com/metaeducation/ren-c/blob/master/make/makefile.boot)
 
@@ -116,18 +120,19 @@ As of 16-Jul-2015, Ren/C has been verified as reaching the goal of building
 across the standards-compliant spectrum of C or C++ without warnings on
 these desktop platforms:
 
-* Linux 32-bit, libcc 2.11 (`make make OS_ID=0.3.04`)
-* Linux 64-bit (`make make OS_ID=0.4.40`)
-* Windows 32-bit (`make make OS_ID=0.3.01`)
-* Windows 64-bit (`make make OS_ID=0.3.02`)
-* OS/X 32-bit (`make make OS_ID=0.2.05`)
-* OS/X 64-bit (`make make OS_ID=0.2.40`)
+* Linux 32-bit, libcc 2.11 (`OS_ID=0.3.04`)
+* Linux 64-bit (`OS_ID=0.4.40`)
+* Windows 32-bit (`OS_ID=0.3.01`)
+* Windows 64-bit (`OS_ID=0.3.02`)
+* OS/X 32-bit (`OS_ID=0.2.05`)
+* OS/X 64-bit (`OS_ID=0.2.40`)
 
 It has additionally been built for:
 
-* ARM Linux on Raspberry Pi (`make make OS_ID=0.4.21`)
-* OS/X PowerPC (`make make OS_ID=0.2.04`)
-* HaikuOS (`make make OS_ID=0.5.75`)
+* ARM Linux on Raspberry Pi (`OS_ID=0.4.21`)
+* OS/X PowerPC (`OS_ID=0.2.04`)
+* HaikuOS (`OS_ID=0.5.75`)
+* SyllableOS Desktop(`OS_ID=0.14.01`)
 
 Here are the warnings enabled (manually in the makefile, at the moment):
 

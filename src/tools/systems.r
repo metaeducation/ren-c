@@ -88,9 +88,13 @@ systems: [
 	0.9.04		openbsd			posix
 			[LEN LLC +O1 C++ ST1 -LM]
 	;-------------------------------------------------------------------------
-	0.13.01	  android-arm   android
+	0.13.01		android-arm		android
 			[LEN LLC HID F64 LDL LLOG -LM CST]
 	;-------------------------------------------------------------------------
+	0.14.01		syllable-dtp	posix
+			[LEN LLC +O2 HID LDL ST1 -LM LC25]
+	0.14.02		syllable-svr	linux
+			[M32 LEN LLC +O2 HID LDL ST1 -LM LC211]
 ]
 
 compiler-flags: context [

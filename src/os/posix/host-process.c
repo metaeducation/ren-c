@@ -52,6 +52,27 @@
 
 #include "reb-host.h"
 
+// "O_CLOEXEC (Since Linux 2.6.23) Enable the close-on-exec flag for the
+// new file	descriptor. Specifying this	flag permits a program to avoid
+// additional fcntl(2) F_SETFD operations to set the FD_CLOEXEC	flag.
+// Additionally, use of	this flag is essential in some multithreaded
+// programs since using a separate fcntl(2)	F_SETFD	operation to set the
+// FD_CLOEXEC flag does not suffice to avoid race conditions where one
+// thread opens a file descriptor at the same time as another thread
+// does a fork(2) plus execve(2)."
+//
+// This flag is POSIX 2008, hence relatively new ("for some definition
+// of new").  It is not defined in Syllable OS and may not be in some
+// other distributions that are older.  It seems multithreading may
+// not have a workaround with F_SETFD FD_CLOEXEC, but a single-threaded
+// program can achieve equivalent behavior with those calls.
+//
+// !!! TBD: add FD_SETFD alternative implementation instead of just
+// setting to zero.
+
+#ifndef O_CLOEXEC
+	#define O_CLOEXEC 0
+#endif
 
 
 /***********************************************************************
