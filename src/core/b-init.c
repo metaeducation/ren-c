@@ -1008,6 +1008,10 @@ static REBCNT Set_Option_Word(REBCHR *str, REBCNT field)
 	REBSER *ser;
 	DOUT("Main init");
 
+#ifndef NDEBUG
+	PG_Always_Malloc = FALSE;
+#endif
+
 	// Globals
 	PG_Boot_Phase = BOOT_START;
 	PG_Boot_Level = BOOT_LEVEL_FULL;

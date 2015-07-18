@@ -60,6 +60,11 @@ PVAR REB_OPTS *Reb_Opts;
 
 PVAR jmp_buf *Halt_State;	// Pointer to saved CPU state for HALT/QUIT handlers
 
+/* for memory allocation trouble shooting */
+#ifndef NDEBUG
+    PVAR REBOOL PG_Always_Malloc;
+#endif
+
 // This signal word should be thread-local, but it will not work
 // when implemented that way. Needs research!!!!
 PVAR REBCNT	Eval_Signals;	// Signal flags

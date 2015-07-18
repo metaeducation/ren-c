@@ -66,15 +66,24 @@
 //#define GC_TRIGGER (GC_Active && (GC_Ballast <= 0 || (GC_Pending && !GC_Disabled)))
 
 #ifdef POOL_MAP
-#define FIND_POOL(n) \
-	((!always_malloc && (n <= 4 * MEM_BIG_SIZE)) \
-		? cast(REBCNT, PG_Pool_Map[n]) \
-		: cast(REBCNT, SYSTEM_POOL))
+	#ifdef NDEBUG
+		#define FIND_POOL(n) \
+			((n <= 4 * MEM_BIG_SIZE) \
+				? cast(REBCNT, PG_Pool_Map[n]) \
+				: cast(REBCNT, SYSTEM_POOL))
+	#else
+		#define FIND_POOL(n) \
+			((!PG_Always_Malloc && (n <= 4 * MEM_BIG_SIZE)) \
+				? cast(REBCNT, PG_Pool_Map[n]) \
+				: cast(REBCNT, SYSTEM_POOL))
+	#endif
 #else
-#define FIND_POOL(n) (always_malloc? SYSTEM_POOL : Find_Pool(n);)
+	#ifdef NDEBUG
+		#define FIND_POOL(n) Find_Pool(n)
+	#else
+		#define FIND_POOL(n) (PG_Always_Malloc ? SYSTEM_POOL : Find_Pool(n))
+	#endif
 #endif
-
-extern unsigned char always_malloc;
 
 /***********************************************************************
 **
@@ -426,15 +435,24 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 	} else {
 		if (powerof2) {
 				REBCNT len=1;
-				if (!always_malloc) {
+			#ifdef NDEBUG
+				len = 2048
+			#else
+				if (!PG_Always_Malloc)
 					len = 2048;
-				}
+			#endif
+
 				// !!! WHO added this and why??? Just use a left shift and mask!
 				while(len<length)
 					len*=2;
 				length=len;
-			} else if (!always_malloc) {
+			} else {
+			#ifdef NDEBUG
 				length = ALIGN(length, 2048);
+			#else
+				if (!PG_Always_Malloc)
+					length = ALIGN(length, 2048);
+			#endif
 			}
 #ifdef DEBUGGING
 			Debug_Num("Alloc2:", length);

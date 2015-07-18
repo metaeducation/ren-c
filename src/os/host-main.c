@@ -70,9 +70,6 @@ HINSTANCE App_Instance = 0;
 extern void Console_Output(BOOL state);
 #endif
 
-/* for memory allocation trouble shooting */
-unsigned int always_malloc = 0;
-
 #ifndef REB_CORE
 extern void Init_Windows(void);
 extern void OS_Init_Graphics(void);
@@ -131,7 +128,6 @@ int main(int argc, char **argv_ansi)
 	REBYTE vers[8];
 	REBYTE *line;
 	REBINT n;
-	const char *env_always_malloc = NULL;
 	REBYTE *embedded_script = NULL;
 	REBI64 embedded_size = 0;
 
@@ -152,11 +148,6 @@ int main(int argc, char **argv_ansi)
 #endif
 
 	Host_Lib = &Host_Lib_Init;
-
-	env_always_malloc = getenv("R3_ALWAYS_MALLOC");
-	if (env_always_malloc != NULL) {
-		always_malloc = atoi(env_always_malloc);
-	}
 
 	embedded_script = OS_Read_Embedded(&embedded_size);
 	Parse_Args(argc, argv, &Main_Args);

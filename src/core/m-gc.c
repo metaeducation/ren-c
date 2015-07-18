@@ -834,6 +834,13 @@ mark_obj:
 **
 ***********************************************************************/
 {
+#ifndef NDEBUG
+	const char *env_always_malloc = NULL;
+	env_always_malloc = getenv("R3_ALWAYS_MALLOC");
+	if (env_always_malloc != NULL)
+		PG_Always_Malloc = (atoi(env_always_malloc) != 0);
+#endif
+
 	GC_Active = 0;			// TRUE when recycle is enabled (set by RECYCLE func)
 	GC_Disabled = 0;		// GC disabled counter for critical sections.
 	GC_Ballast = MEM_BALLAST;
