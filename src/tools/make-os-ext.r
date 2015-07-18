@@ -189,6 +189,10 @@ newline
 	typedef void (THREADFUNC)(void *);
 #endif
 
+#ifdef __cplusplus
+extern "C" ^{
+#endif
+
 extern REBDEV *Devices[];
 
 /***********************************************************************
@@ -435,6 +439,10 @@ newline newline (rebol-lib-macros)
 	#define OS_STRNCMP(l,r,m)			OS_STRNCMP_((l), (r), (m))
 	#define OS_STRCHR(d,s)				OS_STRCHR_((d), (s))
 	#define OS_STRLEN(s)				OS_STRLEN_(s)
+#endif
+
+#ifdef __cplusplus
+^}
 #endif
 }
 ]

@@ -610,7 +610,12 @@ extern const REBACT Value_Dispatch[];
 **
 ***********************************************************************/
 
-#define PVAR extern
-#define TVAR extern THREAD
+#ifdef __cplusplus
+	#define PVAR extern "C"
+	#define TVAR extern "C" THREAD
+#else
+	#define PVAR extern
+	#define TVAR extern THREAD
+#endif
 
 #include "sys-globals.h"

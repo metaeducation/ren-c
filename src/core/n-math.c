@@ -289,10 +289,13 @@ enum {SINE, COSINE, TANGENT};
 
 /***********************************************************************
 **
-*/	REBINT Compare_Values(REBVAL *a, REBVAL *b, REBINT strictness)
+*/	REBINT Compare_Modify_Values(REBVAL *a, REBVAL *b, REBINT strictness)
 /*
-**		Compare 2 values depending on level of strictness.
-**		NOTE: MODIFIES a and b args.
+**		Compare 2 values depending on level of strictness.  It leans
+**		upon the per-type comparison functions (that have a more typical
+**		interface of returning [1, 0, -1] and taking a CASE parameter)
+**		but adds a layer of being able to check for specific types
+**		of equality...which those comparison functions do not discern.
 **
 **		Strictness:
 **			0 - coersed equality
@@ -302,6 +305,11 @@ enum {SINE, COSINE, TANGENT};
 **
 **		   -1 - greater or equal
 **		   -2 - greater
+**
+**		!!! This routine (may) modify the value cells for 'a' and 'b' in
+**		order to coerce them for easier comparison.  Most usages are
+**		in native code that can overwrite its argument values without
+**		that being a problem, so it doesn't matter.
 **
 ***********************************************************************/
 {
@@ -323,8 +331,6 @@ enum {SINE, COSINE, TANGENT};
 				SET_MONEY(a, int_to_deci(VAL_INT64(a)));
 				goto compare;
 			}
-			else if (tb == REB_INTEGER) // special negative?, zero?, ...
-				goto compare;
 			break;
 
 		case REB_DECIMAL:
@@ -392,7 +398,7 @@ compare:
 /*
 ***********************************************************************/
 {
-	if (Compare_Values(D_ARG(1), D_ARG(2), 0)) return R_TRUE;
+	if (Compare_Modify_Values(D_ARG(1), D_ARG(2), 0)) return R_TRUE;
 	return R_FALSE;
 }
 
@@ -402,7 +408,7 @@ compare:
 /*
 ***********************************************************************/
 {
-	if (Compare_Values(D_ARG(1), D_ARG(2), 0)) return R_FALSE;
+	if (Compare_Modify_Values(D_ARG(1), D_ARG(2), 0)) return R_FALSE;
 	return R_TRUE;
 }
 
@@ -412,7 +418,7 @@ compare:
 /*
 ***********************************************************************/
 {
-	if (Compare_Values(D_ARG(1), D_ARG(2), 1)) return R_TRUE;
+	if (Compare_Modify_Values(D_ARG(1), D_ARG(2), 1)) return R_TRUE;
 	return R_FALSE;
 }
 
@@ -422,7 +428,7 @@ compare:
 /*
 ***********************************************************************/
 {
-	if (Compare_Values(D_ARG(1), D_ARG(2), 1)) return R_FALSE;
+	if (Compare_Modify_Values(D_ARG(1), D_ARG(2), 1)) return R_FALSE;
 	return R_TRUE;
 }
 
@@ -432,7 +438,7 @@ compare:
 /*
 ***********************************************************************/
 {
-	if (Compare_Values(D_ARG(1), D_ARG(2), 2)) return R_TRUE;
+	if (Compare_Modify_Values(D_ARG(1), D_ARG(2), 2)) return R_TRUE;
 	return R_FALSE;
 }
 
@@ -442,7 +448,7 @@ compare:
 /*
 ***********************************************************************/
 {
-	if (Compare_Values(D_ARG(1), D_ARG(2), 2)) return R_FALSE;
+	if (Compare_Modify_Values(D_ARG(1), D_ARG(2), 2)) return R_FALSE;
 	return R_TRUE;
 }
 
@@ -452,7 +458,7 @@ compare:
 /*
 ***********************************************************************/
 {
-	if (Compare_Values(D_ARG(1), D_ARG(2), 3)) return R_TRUE;
+	if (Compare_Modify_Values(D_ARG(1), D_ARG(2), 3)) return R_TRUE;
 	return R_FALSE;
 }
 
@@ -462,7 +468,7 @@ compare:
 /*
 ***********************************************************************/
 {
-	if (Compare_Values(D_ARG(1), D_ARG(2), -1)) return R_FALSE;
+	if (Compare_Modify_Values(D_ARG(1), D_ARG(2), -1)) return R_FALSE;
 	return R_TRUE;
 }
 
@@ -472,7 +478,7 @@ compare:
 /*
 ***********************************************************************/
 {
-	if (Compare_Values(D_ARG(1), D_ARG(2), -2)) return R_FALSE;
+	if (Compare_Modify_Values(D_ARG(1), D_ARG(2), -2)) return R_FALSE;
 	return R_TRUE;
 }
 
@@ -482,7 +488,7 @@ compare:
 /*
 ***********************************************************************/
 {
-	if (Compare_Values(D_ARG(1), D_ARG(2), -2)) return R_TRUE;
+	if (Compare_Modify_Values(D_ARG(1), D_ARG(2), -2)) return R_TRUE;
 	return R_FALSE;
 }
 
@@ -492,7 +498,7 @@ compare:
 /*
 ***********************************************************************/
 {
-	if (Compare_Values(D_ARG(1), D_ARG(2), -1)) return R_TRUE;
+	if (Compare_Modify_Values(D_ARG(1), D_ARG(2), -1)) return R_TRUE;
 	return R_FALSE;
 }
 
@@ -509,7 +515,7 @@ compare:
 
 	a = *D_ARG(1);
 	b = *D_ARG(2);
-	if (Compare_Values(&a, &b, -1)) return R_ARG1;
+	if (Compare_Modify_Values(&a, &b, -1)) return R_ARG1;
 	return R_ARG2;
 }
 
@@ -526,7 +532,7 @@ compare:
 
 	a = *D_ARG(1);
 	b = *D_ARG(2);
-	if (Compare_Values(&a, &b, -1)) return R_ARG2;
+	if (Compare_Modify_Values(&a, &b, -1)) return R_ARG2;
 	return R_ARG1;
 }
 
@@ -540,7 +546,7 @@ compare:
 
 	VAL_SET_ZEROED(val, VAL_TYPE(D_ARG(1)));
 
-	if (Compare_Values(D_ARG(1), D_ARG(2), -1)) return R_FALSE;
+	if (Compare_Modify_Values(D_ARG(1), D_ARG(2), -1)) return R_FALSE;
 	return R_TRUE;
 }
 
@@ -554,7 +560,7 @@ compare:
 
 	VAL_SET_ZEROED(val, VAL_TYPE(D_ARG(1)));
 
-	if (Compare_Values(D_ARG(1), D_ARG(2), -2)) return R_TRUE;
+	if (Compare_Modify_Values(D_ARG(1), D_ARG(2), -2)) return R_TRUE;
 	return R_FALSE;
 }
 
@@ -571,7 +577,7 @@ compare:
 		
 		VAL_SET_ZEROED(val, type);
 
-		if (Compare_Values(D_ARG(1), D_ARG(2), 1)) return R_TRUE;
+		if (Compare_Modify_Values(D_ARG(1), D_ARG(2), 1)) return R_TRUE;
 	}
 	return R_FALSE;
 }

@@ -63,7 +63,8 @@ static REBOOL Equal_Object(REBVAL *val, REBVAL *arg)
 	// Compare each entry:
 	for (n = 1; n < (REBINT)(f1->tail); n++) {
 		if (Cmp_Value(BLK_SKIP(w1, n), BLK_SKIP(w2, n), FALSE)) return FALSE;
-		// Use Compare_Values();
+		// !!! A comment here said "Use Compare_Modify_Values();"...but it
+		// doesn't... it calls Cmp_Value (?)
 		if (Cmp_Value(BLK_SKIP(f1, n), BLK_SKIP(f2, n), FALSE)) return FALSE;
 	}
 
