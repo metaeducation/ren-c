@@ -737,11 +737,11 @@ static	BOOT_BLK *Boot_Block;
 			if (le) {
 				REBCNT i = 0;
 				for (i = 0; i < codi->len; i ++) {
-					REBUNI uni = ((REBUNI*)(codi->other))[i];
+					REBUNI uni = cast(REBUNI*, codi->extra.other)[i];
 					data[i] = ((uni & 0xff) << 8) | ((uni & 0xff00) >> 8);
 				}
 			} else {
-				memcpy(data, codi->other, codi->len * sizeof(u16));
+				memcpy(data, codi->extra.other, codi->len * sizeof(u16));
 			}
 #else
 #error "Unsupported CPU endian"
