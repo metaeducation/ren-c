@@ -62,10 +62,6 @@ makefile-head:
 #	http://rebolsource.net/go/chat-faq
 #
 
-# .FORCE is a file assumed to not exist, and is an idiom in makefiles to
-# say "Always generate the target".
-.FORCE:
-
 # For the build toolchain:
 CC=	$(TOOLS)gcc
 NM=	$(TOOLS)nm
@@ -122,7 +118,19 @@ top:
 update:
 	-cd $(UP)/; cvs -q update src
 
-make: $(REBOL_TOOL) .FORCE
+# Uses "phony target" %make that should never be the name of a file in
+# this directory, hence, it will always regenerate if the make target
+# is requested.  Note: Cannot call it %makefile without winding up
+# running make-make.r four extra times:
+#
+#     http://stackoverflow.com/questions/31490689/
+#
+# Consider being able to continue to type `make make` instead of having
+# to re-run the line including `makefile.boot` to be a special
+# undocumented feature, as people are used to it...but it might go away
+# someday.  Maybe.
+
+make: $(REBOL_TOOL)
 	$(REBOL) $T/make-make.r $(OS_ID)
 
 clean:
@@ -135,7 +143,7 @@ all:
 	$(MAKE) lib
 	$(MAKE) host$(BIN_SUFFIX)
 
-prep:
+prep: $(REBOL_TOOL)
 	$(REBOL) $T/make-headers.r
 	$(REBOL) $T/make-boot.r $(OS_ID)
 	$(REBOL) $T/make-host-init.r
@@ -154,13 +162,7 @@ $S/include/tmp-bootdefs.h: $(REBOL_TOOL)
 	$(MAKE) prep
 
 $(REBOL_TOOL):
-	@echo
-	@echo "*** ERROR: Missing $(REBOL_TOOL) to build various tmp files."
-	@echo "*** Download Rebol 3 and copy it here as $(REBOL_TOOL), then"
-	@echo "*** make prep. Or, make prep on some other machine and copy"
-	@echo "*** the src/include files here. See README for details."
-	@echo
-	false
+	$(MAKE) -f makefile.boot $(REBOL_TOOL)
 
 ### Post build actions
 purge:

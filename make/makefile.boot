@@ -61,10 +61,6 @@
 #	http://rebolsource.net/go/chat-faq
 #
 
-# .FORCE is a file assumed to not exist, and is an idiom in makefiles to
-# say "Always generate the target".
-.FORCE:
-
 # UP - some systems do not use ../
 UP= ..
 # CD - some systems do not use ./
@@ -87,13 +83,26 @@ R3_TARGET= r3$(BIN_SUFFIX)
 R3= $(CD)$(R3_TARGET) -qs
 
 ### Build targets:
-top: make
+top: makefile
 	$(MAKE) prep
 	$(MAKE) clean
 	$(MAKE) $(R3_TARGET)
 
-make: $(REBOL_TOOL) .FORCE
+# .FORCE is a file assumed to not exist, and is an idiom in makefiles to have
+# a null "phony target" you can use as a dependency for a target representing
+# a real file to say "always generate the real target, even if it already
+# exists.  (We named our target 'makefile', so we need this to overwrite it)
+.FORCE:
+
+makefile: $(REBOL_TOOL) .FORCE
 	$(REBOL) $T/make-make.r $(OS_ID)
+
+# Synonym for `make -f makefile.boot makefile` which can also be used in the
+# generated makefile (without causing repeated regenerations)
+#
+#	http://stackoverflow.com/questions/31490689/
+#
+make: makefile
 
 $(REBOL_TOOL):
 	@echo
@@ -135,8 +144,8 @@ $(REBOL_TOOL):
 #	@echo "*** If you want to prepare the platform-specific makefile without"
 #	@echo "*** *actually* building, then choose 'makefile' as your target:"
 #	@echo "***"
-#	@echo "***     make -f makefile.boot make"
-#	@echo "***     make -f makefile.boot make OS_ID=##.##.##"
+#	@echo "***     make -f makefile.boot makefile"
+#	@echo "***     make -f makefile.boot makefile OS_ID=##.##.##"
 #	@echo "***"
 #	@echo "*** Visit chat for support: http://rebolsource.net/go/chat-faq"
 #	@echo
