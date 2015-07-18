@@ -67,7 +67,7 @@ makefile-head:
 .FORCE:
 
 # For the build toolchain:
-CC?= $(TOOLS)gcc
+CC=	$(TOOLS)gcc
 NM=	$(TOOLS)nm
 STRIP=	$(TOOLS)strip
 

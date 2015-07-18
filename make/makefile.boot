@@ -44,7 +44,7 @@
 # presence of language changes.  So you *should* even be able to use an old
 # executable from the pre-open-source Rebol3 downloads on rebol.com:
 #
-#
+#	http://www.rebol.com/r3/downloads.html
 #
 # (At least, in theory.  If you notice bootstrap with an old interpreter is
 # broken on your system, please report it!  Few are testing old binaries.)
@@ -115,27 +115,30 @@ $(REBOL_TOOL):
 # !!! Is false the best way to return an error code?
 	false
 
-%:: $(REBOL_TOOL)$(BIN_SUFFIX)
-	@echo
-	@echo
-	@echo "*** The %makefile.boot bootstrapping makefile only handles an"
-	@echo "*** automatic build with these options:"
-	@echo "***"
-	@echo "***     make -f makefile.boot"
-	@echo "***     make -f makefile.boot OS_ID=##.##.##"
-	@echo "***"
-	@echo "*** The first will assume you want to build the same OS_ID as"
-	@echo "*** what your r3-make is.  The second lets you override what"
-	@echo "*** OS to build for from system identification numbers in the"
-	@echo "*** systems table (see %src/tools/systems.r)"
-	@echo "***"
-	@echo "*** If you want to prepare the platform-specific makefile without"
-	@echo "*** *actually* building, then choose 'makefile' as your target:"
-	@echo "***"
-	@echo "***     make -f makefile.boot make"
-	@echo "***     make -f makefile.boot make OS_ID=##.##.##"
-	@echo "***"
-	@echo "*** Visit chat for support: http://rebolsource.net/go/chat-faq"
-	@echo
+# !!! This is supposed to be a catch-all rule.  Not working.  If it did work,
+# this is what it should say (more or less)
+
+#%:: $(REBOL_TOOL)$(BIN_SUFFIX)
+#	@echo
+#	@echo
+#	@echo "*** The %makefile.boot bootstrapping makefile only handles an"
+#	@echo "*** automatic build with these options:"
+#	@echo "***"
+#	@echo "***     make -f makefile.boot"
+#	@echo "***     make -f makefile.boot OS_ID=##.##.##"
+#	@echo "***"
+#	@echo "*** The first will assume you want to build the same OS_ID as"
+#	@echo "*** what your r3-make is.  The second lets you override what"
+#	@echo "*** OS to build for from system identification numbers in the"
+#	@echo "*** systems table (see %src/tools/systems.r)"
+#	@echo "***"
+#	@echo "*** If you want to prepare the platform-specific makefile without"
+#	@echo "*** *actually* building, then choose 'makefile' as your target:"
+#	@echo "***"
+#	@echo "***     make -f makefile.boot make"
+#	@echo "***     make -f makefile.boot make OS_ID=##.##.##"
+#	@echo "***"
+#	@echo "*** Visit chat for support: http://rebolsource.net/go/chat-faq"
+#	@echo
 # !!! Is false the best way to return an error code?
-	false
+#	false
