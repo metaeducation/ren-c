@@ -62,6 +62,10 @@ makefile-head:
 #	http://rebolsource.net/go/chat-faq
 #
 
+# .FORCE is a file assumed to not exist, and is an idiom in makefiles to
+# say "Always generate the target".
+.FORCE:
+
 # For the build toolchain:
 CC=	$(TOOLS)gcc
 NM=	$(TOOLS)nm
@@ -81,13 +85,19 @@ T= $(UP)/src/tools
 S= ../src
 R= $S/core
 
+# http://stackoverflow.com/a/12099167/211160
+ifeq ($(OS),Windows_NT)
+	BIN_SUFFIX = .exe
+else
+	BIN_SUFFIX =
+endif
+
 INCL ?= .
 I= -I$(INCL) -I$S/include/ -I$S/codecs/
 
 TO_OS_BASE?=
 TO_OS_NAME?=
 OS_ID?=
-BIN_SUFFIX=
 RAPI_FLAGS=
 HOST_FLAGS=	-DREB_EXE
 RLIB_FLAGS=
@@ -98,36 +108,30 @@ HFLAGS= -c -D$(TO_OS_BASE) -D$(TO_OS_NAME) -DREB_CORE $(HOST_FLAGS) $I
 CLIB=
 
 # REBOL is needed to build various include files:
-# (We don't put a suffix on REBOL_TOOL because we'd like you to be able
-# to run make-make and change platforms in the same directory, but a
-# suffix is added when checking for the file's presence)
-REBOL_TOOL= r3-make
+REBOL_TOOL= r3-make$(BIN_SUFFIX)
 REBOL= $(CD)$(REBOL_TOOL) -qs
 
 # For running tests, ship, build, etc.
-R3=	$(CD)r3$(BIN_SUFFIX) -qs
+R3_TARGET= r3$(BIN_SUFFIX)
+R3= $(CD)$(R3_TARGET) -qs
 
 ### Build targets:
 top:
-	$(MAKE) r3$(BIN_SUFFIX)
+	$(MAKE) $(R3_TARGET)
 
 update:
 	-cd $(UP)/; cvs -q update src
 
-# 'make make' was the historical way of telling Rebol to make a makefile,
-# but that is a bit confusing and 'make makefile' is clearer.  In the interim,
-# we use 'make makefile' in documentation but keep 'make make' for people who
-# were used to it...possibly deprecating it in time.
-make, makefile:
+make: $(REBOL_TOOL) .FORCE
 	$(REBOL) $T/make-make.r $(OS_ID)
 
 clean:
-	@-rm -rf r3$(BIN_SUFFIX) libr3.so objs/
+	@-rm -rf $(R3_TARGET) libr3.so objs/
 
 all:
 	$(MAKE) clean
 	$(MAKE) prep
-	$(MAKE) r3$(BIN_SUFFIX)
+	$(MAKE) $(R3_TARGET)
 	$(MAKE) lib
 	$(MAKE) host$(BIN_SUFFIX)
 
@@ -149,7 +153,7 @@ tmps: $S/include/tmp-bootdefs.h
 $S/include/tmp-bootdefs.h: $(REBOL_TOOL)
 	$(MAKE) prep
 
-$(REBOL_TOOL)$(BIN_SUFFIX):
+$(REBOL_TOOL):
 	@echo
 	@echo "*** ERROR: Missing $(REBOL_TOOL) to build various tmp files."
 	@echo "*** Download Rebol 3 and copy it here as $(REBOL_TOOL), then"
@@ -166,11 +170,11 @@ purge:
 	$(MAKE) host$(BIN_SUFFIX)
 
 test:
-	$(CP) r3$(BIN_SUFFIX) $(UP)/src/tests/
+	$(CP) $(R3_TARGET) $(UP)/src/tests/
 	$(R3) $S/tests/test.r
 
 install:
-	sudo cp r3$(BIN_SUFFIX) /usr/local/bin
+	sudo cp $(R3_TARGET) /usr/local/bin
 
 ship:
 	$(R3) $S/tools/upload.r
@@ -182,9 +186,9 @@ cln:
 	rm libr3.* r3.o
 
 check:
-	$(STRIP) -s -o r3.s r3$(BIN_SUFFIX)
-	$(STRIP) -x -o r3.x r3$(BIN_SUFFIX)
-	$(STRIP) -X -o r3.X r3$(BIN_SUFFIX)
+	$(STRIP) -s -o r3.s $(R3_TARGET)
+	$(STRIP) -x -o r3.x $(R3_TARGET)
+	$(STRIP) -X -o r3.X $(R3_TARGET)
 	$(LS) r3*
 
 }
@@ -193,11 +197,11 @@ check:
 
 makefile-link: {
 # Directly linked r3 executable:
-r3: tmps objs $(OBJS) $(HOST)
-	$(CC) -o r3$(BIN_SUFFIX) $(OBJS) $(HOST) $(CLIB)
-	$(STRIP) r3$(BIN_SUFFIX)
-	-$(NM) -a r3$(BIN_SUFFIX)
-	$(LS) r3$(BIN_SUFFIX)
+$(R3_TARGET): tmps objs $(OBJS) $(HOST)
+	$(CC) -o $(R3_TARGET) $(OBJS) $(HOST) $(CLIB)
+	$(STRIP) $(R3_TARGET)
+	-$(NM) -a $(R3_TARGET)
+	$(LS) $(R3_TARGET)
 
 objs:
 	mkdir -p objs
@@ -410,7 +414,6 @@ unless flag? -SP [ ; Use standard paths:
 	macro+ UP ".."
 	macro+ CD "./"
 ]
-if flag? EXE [macro+ BIN_SUFFIX %.exe]
 macro++ CLIB linker-flags
 macro++ RAPI_FLAGS compiler-flags
 macro++ HOST_FLAGS make compiler-flags [PIC: NCM: none]

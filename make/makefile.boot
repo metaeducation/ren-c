@@ -61,6 +61,10 @@
 #	http://rebolsource.net/go/chat-faq
 #
 
+# .FORCE is a file assumed to not exist, and is an idiom in makefiles to
+# say "Always generate the target".
+.FORCE:
+
 # UP - some systems do not use ../
 UP= ..
 # CD - some systems do not use ./
@@ -75,28 +79,23 @@ else
 	BIN_SUFFIX =
 endif
 
-REBOL_TOOL= r3-make
+REBOL_TOOL= r3-make$(BIN_SUFFIX)
 REBOL= $(CD)$(REBOL_TOOL) -qs
 
+# For running tests, ship, build, etc.
+R3_TARGET= r3$(BIN_SUFFIX)
+R3= $(CD)$(R3_TARGET) -qs
+
 ### Build targets:
-top: $(REBOL_TOOL)$(BIN_SUFFIX)
-	$(MAKE) -f makefile.boot makefile OS_ID=$(OS_ID)
+top: make
 	$(MAKE) prep
 	$(MAKE) clean
-	$(MAKE) r3
+	$(MAKE) $(R3_TARGET)
 
-all: $(REBOL_TOOL)$(BIN_SUFFIX)
-	$(MAKE) -f makefile.boot makefile OS_ID=$(OS_ID)
-	$(MAKE) all
-
-# 'make make' was the historical way of telling Rebol to make a makefile,
-# but that is a bit confusing and 'make makefile' is clearer.  In the interim,
-# we use 'make makefile' in documentation but keep 'make make' for people who
-# were used to it...possibly deprecating it in time.
-make, makefile: $(REBOL_TOOL)$(BIN_SUFFIX)
+make: $(REBOL_TOOL) .FORCE
 	$(REBOL) $T/make-make.r $(OS_ID)
 
-$(REBOL_TOOL)$(BIN_SUFFIX):
+$(REBOL_TOOL):
 	@echo
 	@echo "*** ERROR: Missing $(REBOL_TOOL) to build various tmp files."
 	@echo "*** Download Rebol 3 and copy it here as $(REBOL_TOOL), then"
@@ -104,7 +103,7 @@ $(REBOL_TOOL)$(BIN_SUFFIX):
 	@echo "*** the src/include files here.  You can download executable"
 	@echo "*** images of Rebol for several platforms from:"
 	@echo "***"
-	@echo "***     http://rebolsource.net
+	@echo "***     http://rebolsource.net"
 	@echo "***"
 	@echo "*** The bootstrap process is kept simple so it should be able"
 	@echo "*** to run even on old Rebol builds prior to open-sourcing:"
@@ -117,6 +116,7 @@ $(REBOL_TOOL)$(BIN_SUFFIX):
 	false
 
 %:: $(REBOL_TOOL)$(BIN_SUFFIX)
+	@echo
 	@echo
 	@echo "*** The %makefile.boot bootstrapping makefile only handles an"
 	@echo "*** automatic build with these options:"
@@ -132,8 +132,8 @@ $(REBOL_TOOL)$(BIN_SUFFIX):
 	@echo "*** If you want to prepare the platform-specific makefile without"
 	@echo "*** *actually* building, then choose 'makefile' as your target:"
 	@echo "***"
-	@echo "***     make -f makefile.boot makefile"
-	@echo "***     make -f makefile.boot makefile OS_ID=##.##.##"
+	@echo "***     make -f makefile.boot make"
+	@echo "***     make -f makefile.boot make OS_ID=##.##.##"
 	@echo "***"
 	@echo "*** Visit chat for support: http://rebolsource.net/go/chat-faq"
 	@echo
