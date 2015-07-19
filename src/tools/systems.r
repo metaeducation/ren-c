@@ -52,28 +52,28 @@ systems: [
 	0.3.02		windows-x64		windows
 			[LLP64 LEN LL? +O2 UNI W32 WIN S4M EXE DIR -LM]
 	;-------------------------------------------------------------------------
-	0.4.02		linux-x86	    linux
+	0.4.02		linux-x86		linux
 			[LEN LLC +O2 LDL ST1 -LM LC23]
 
-	0.4.03		linux-x86	    linux
+	0.4.03		linux-x86		linux
 			[LEN LLC +O2 HID LDL ST1 -LM LC25]
 
-	0.4.04		linux-x86	    linux
+	0.4.04		linux-x86		linux
 			[M32 LEN LLC +O2 HID LDL ST1 -LM LC211]
 
-	0.4.10		linux-ppc	    linux
+	0.4.10		linux-ppc		linux
 			[BEN LLC +O1 HID LDL ST1 -LM]
 
 	0.4.20		linux-arm		linux
 			[LEN LLC +O2 HID LDL ST1 -LM LCB]
 
-	0.4.21		linux-arm	    linux
+	0.4.21		linux-arm		linux
 			[LEN LLC +O2 HID LDL ST1 -LM PIE]
 
 	0.4.30		linux-mips		linux
 			[LEN LLC +O2 HID LDL ST1 -LM LCM]
 
-	0.4.40		linux-x64	    linux
+	0.4.40		linux-x64		linux
 			[LP64 LEN LLC +O2 HID LDL ST1 -LM]
 	;-------------------------------------------------------------------------
 	0.5.75		haiku			posix
