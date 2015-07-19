@@ -908,7 +908,11 @@ static void *Task_Ready;
 		if (flag_shell) {
             const wchar_t *sh = L"cmd.exe /C ";
             size_t len = wcslen(sh) + wcslen(call) + 1;
-			cmd = OS_ALLOC_ARRAY(wchar_t, len);
+
+			// other branch uses _wcsdup and free(), so we can't use
+			// OS_ALLOC_ARRAY here (doesn't matter, not returning it to Rebol)
+			cmd = cast(wchar_t*, malloc(len * sizeof(wchar_t)));
+
             swprintf(cmd, len, L"%s%s", sh, call);
 		} else {
 			// CreateProcess might write to this memory
@@ -931,7 +935,7 @@ static void *Task_Ready;
 		&pi							// Process information
 	);
 
-	OS_FREE(cmd);
+	free(cmd);
 
 	if (pid != NULL) *pid = pi.dwProcessId;
 
@@ -958,9 +962,11 @@ static void *Task_Ready;
 			if (input_type == STRING_TYPE) {
 				DWORD dest_len = 0;
 				/* convert input encoding from UNICODE to OEM */
-                // REVIEW: Is cast to wchar_t here legal?
+                // !!! Is cast to wchar_t here legal?
                 dest_len = WideCharToMultiByte(CP_OEMCP, 0, cast(wchar_t*, input), input_len, oem_input, dest_len, NULL, NULL);
 				if (dest_len > 0) {
+					// Not returning memory to Rebol, but we don't realloc or
+					// free, so it's all right to use OS_ALLOC_ARRAY anyway
                     oem_input = OS_ALLOC_ARRAY(char, dest_len);
 					if (oem_input != NULL) {
                         WideCharToMultiByte(CP_OEMCP, 0, cast(wchar_t*, input), input_len, oem_input, dest_len, NULL, NULL);
@@ -976,13 +982,19 @@ static void *Task_Ready;
 		if (hOutputRead != NULL) {
 			output_size = BUF_SIZE_CHUNK;
 			*output_len = 0;
-			*output = OS_ALLOC_ARRAY(char, output_size);
+
+			// Might realloc(), can't use OS_ALLOC_ARRAY.  (This memory is not
+			// passed back to Rebol, so it doesn't matter.)
+			*output = cast(char*, malloc(output_size));
 			handles[count ++] = hOutputRead;
 		}
 		if (hErrorRead != NULL) {
 			err_size = BUF_SIZE_CHUNK;
 			*err_len = 0;
-			*err = OS_ALLOC_ARRAY(char, err_size);
+
+			// Might realloc(), can't use OS_ALLOC_ARRAY.  (This memory is not
+			// passed back to Rebol, so it doesn't matter.)
+			*err = cast(char*, malloc(err_size));
 			handles[count++] = hErrorRead;
 		}
 
@@ -1081,10 +1093,12 @@ static void *Task_Ready;
 				*output = NULL;
 				*output_len = 0;
 			}
-            dest = cast(wchar_t*, OS_ALLOC_ARRAY(char, *output_len));
+			// We've already established that output is a malloc()'d pointer,
+			// not one we got back from OS_ALLOC_ARRAY()
+			dest = cast(wchar_t*, malloc(*output_len * sizeof(wchar_t)));
 			if (dest == NULL) goto cleanup;
 			MultiByteToWideChar(CP_OEMCP, 0, *output, *output_len, dest, dest_len);
-			OS_FREE(*output);
+			free(*output);
             *output = cast(char*, dest);
 			*output_len = dest_len;
 		}
@@ -1099,10 +1113,12 @@ static void *Task_Ready;
 				*err = NULL;
 				*err_len = 0;
 			}
-            dest = cast(wchar_t*, OS_ALLOC_ARRAY(char, *err_len));
+			// We've already established that output is a malloc()'d pointer,
+			// not one we got back from OS_ALLOC_ARRAY()
+			dest = cast(wchar_t*, malloc(*err_len * sizeof(wchar_t)));
 			if (dest == NULL) goto cleanup;
 			MultiByteToWideChar(CP_OEMCP, 0, *err, *err_len, dest, dest_len);
-			OS_FREE(*err);
+			free(*err);
             *err = cast(char*, dest);
 			*err_len = dest_len;
 		}
@@ -1135,15 +1151,17 @@ kill:
 
 cleanup:
 	if (oem_input != NULL) {
+		// Since we didn't need realloc() for oem_input, we used the
+		// OS_ALLOC_ARRAY allocator.
 		OS_FREE(oem_input);
 	}
 
 	if (output != NULL && *output != NULL && *output_len == 0) {
-		OS_FREE(*output);
+		free(*output);
 	}
 
 	if (err != NULL && *err != NULL && *err_len == 0) {
-		OS_FREE(*err);
+		free(*err);
 	}
 
 	if (hInputWrite != NULL)
