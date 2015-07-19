@@ -389,11 +389,11 @@ newline newline (rebol-lib-macros)
 #ifdef OS_WIDE_CHAR
 // !!! SEE **WARNING** BEFORE EDITING
 	#define OS_WIDE TRUE
-	#define OS_STR_LIT(s) (L##s)
+	#define OS_STR_LIT(s) cast(const REBCHR*, L##s)
 #else
 // !!! SEE **WARNING** BEFORE EDITING
 	#define OS_WIDE FALSE
-	#define OS_STR_LIT(s) (s)
+	#define OS_STR_LIT(s) cast(const REBCHR*, s)
 #endif
 
 #if defined(NDEBUG) || !defined(REB_DEF)
