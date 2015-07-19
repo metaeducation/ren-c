@@ -246,7 +246,7 @@ static	BOOT_BLK *Boot_Block;
 		COPY_BYTES(str, Get_Word_Name(word), 32);
 		str[31] = '\0';
 		str[LEN_BYTES(str)-1] = '?';
-		sym = Make_Word(str, 0);
+		sym = Make_Word(str, LEN_BYTES(str));
 		//Print("sym: %s", Get_Sym_Name(sym));
 		value = Append_Frame(Lib_Context, 0, sym);
 		VAL_INT64(BLK_LAST(spec)) = n;  // special datatype id location
@@ -810,7 +810,7 @@ static	BOOT_BLK *Boot_Block;
 ***********************************************************************/
 {
 	REBVAL *value = Get_System(SYS_CODECS, 0);
-	REBCNT sym = Make_Word(name, 0);
+	REBCNT sym = Make_Word(name, LEN_BYTES(name));
 
 	value = Append_Frame(VAL_OBJ_FRAME(value), 0, sym);
 	SET_HANDLE_CODE(value, cast(CFUNC*, dispatcher));

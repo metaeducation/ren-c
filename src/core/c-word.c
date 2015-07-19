@@ -191,7 +191,6 @@
 /*
 **		Given a string and its length, compute its hash value,
 **		search for a match, and if not found, add it to the table.
-**		Length of zero indicates you provided a zero terminated string.
 **		Return the table index for the word (whether found or new).
 **
 ***********************************************************************/
@@ -207,7 +206,12 @@
 
 	//REBYTE *sss = Get_Sym_Name(1);	// (Debugging method)
 
-	if (len == 0) len = LEN_BYTES(str);
+	// Prior convention was to assume zero termination if length was zero,
+	// but that creates problems.  Caller should use LEN_BYTES for that.
+
+	assert(len != 0);
+
+	// !!! ...but should the zero length word be a valid word?
 
 	// If hash part of word table is too dense, expand it:
 	if (PG_Word_Table.series->tail > PG_Word_Table.hashes->tail/2)

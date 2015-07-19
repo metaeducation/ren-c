@@ -37,19 +37,31 @@ static void update(REBREQ *req, REBINT len, REBVAL *arg)
 {
 	const siginfo_t *sig = cast(siginfo_t *, req->common.data);
 	int i = 0;
+	const REBYTE signal_no[] = "signal-no";
+	const REBYTE code[] = "code";
+	const REBYTE source_pid[] = "source-pid";
+	const REBYTE source_uid[] = "source-uid";
 
 	Extend_Series(VAL_SERIES(arg), len);
 
 	for (i = 0; i < len; i ++) {
 		REBSER *obj = Make_Frame(2);
-		REBVAL *val = Append_Frame(obj, NULL, Make_Word(cb_cast("signal-no"), 0));
+		REBVAL *val = Append_Frame(
+			obj, NULL, Make_Word(signal_no, LEN_BYTES(signal_no))
+		);
 		SET_INTEGER(val, sig[i].si_signo);
 
-		val = Append_Frame(obj, NULL, Make_Word(cb_cast("code"), 0));
+		val = Append_Frame(
+			obj, NULL, Make_Word(code, LEN_BYTES(code))
+		);
 		SET_INTEGER(val, sig[i].si_code);
-		val = Append_Frame(obj, NULL, Make_Word(cb_cast("source-pid"), 0));
+		val = Append_Frame(
+			obj, NULL, Make_Word(source_pid, LEN_BYTES(source_pid))
+		);
 		SET_INTEGER(val, sig[i].si_pid);
-		val = Append_Frame(obj, NULL, Make_Word(cb_cast("source-uid"), 0));
+		val = Append_Frame(
+			obj, NULL, Make_Word(source_uid, LEN_BYTES(source_uid))
+		);
 		SET_INTEGER(val, sig[i].si_uid);
 
 		Set_Object(VAL_BLK_SKIP(arg, VAL_TAIL(arg) + i), obj);
