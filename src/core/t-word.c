@@ -69,12 +69,6 @@
 	REBCNT sym;
 
 	switch (action) {
-	case A_LENGTHQ:
-		diff = LEN_BYTES(Get_Sym_Name(VAL_WORD_SYM(val)));
-		if (type != REB_WORD) diff++;
-		DS_Ret_Int(diff);
-		break;
-
 	case A_MAKE:
 	case A_TO:
 		// TO word! ...
