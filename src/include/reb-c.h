@@ -490,12 +490,12 @@ typedef u16 REBUNI;
 **
 ***********************************************************************/
 
-#define FLAGIT(f)           (1<<(f))
-#define GET_FLAG(v,f)       (((v) & (1<<(f))) != 0)
-#define GET_FLAGS(v,f,g)    (((v) & ((1<<(f)) | (1<<(g)))) != 0)
-#define SET_FLAG(v,f)       ((v) |= (1<<(f)))
-#define CLR_FLAG(v,f)       ((v) &= ~(1<<(f)))
-#define CLR_FLAGS(v,f,g)    ((v) &= ~((1<<(f)) | (1<<(g))))
+#define FLAGIT(f)           (1u << (f))
+#define GET_FLAG(v,f)       (((v) & (1u << (f))) != 0)
+#define GET_FLAGS(v,f,g)    (((v) & ((1u << (f)) | (1u << (g)))) != 0)
+#define SET_FLAG(v,f)       ((v) |= (1u << (f)))
+#define CLR_FLAG(v,f)       ((v) &= ~(1u << (f)))
+#define CLR_FLAGS(v,f,g)    ((v) &= ~((1u << (f)) | (1u << (g))))
 
 #ifdef min
 #define MIN(a,b) min(a,b)
