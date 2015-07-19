@@ -50,7 +50,7 @@ systems: [
 			[LEN LL? +O2 UNI W32 CON S4M EXE DIR -LM]
 
 	0.3.02		windows-x64		windows
-			[LLP64 LEN LL? +O2 UNI W32 WIN S4M EXE DIR -LM]
+			[LLP64 LEN LL? +O2 UNI W32 CON S4M EXE DIR -LM]
 	;-------------------------------------------------------------------------
 	0.4.02		linux-x86		linux
 			[LEN LLC +O2 LDL ST1 -LM LC23]
@@ -134,7 +134,6 @@ linker-flags: context [
 	LLOG: "-llog"					; on Android, link with liblog.so
 
 	W32: "-lwsock32 -lcomdlg32"
-	WIN: "-mwindows"				; build as Windows GUI binary
 	CON: "-mconsole"				; build as Windows Console binary
 	S4M: "-Wl,--stack=4194300"
 	-LM: "-lm"						; Math library (Haiku has it in libroot)
