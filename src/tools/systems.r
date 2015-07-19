@@ -119,12 +119,9 @@ compiler-flags: context [
 	HID: "-fvisibility=hidden"		; all syms are hidden
 	F64: "-D_FILE_OFFSET_BITS=64"	; allow larger files
 	NPS: "-Wno-pointer-sign"		; OSX fix
-	NSP: "-fno-stack-protector"		; avoid insert of functions names
 	PIC: "-fPIC"					; position independent (used for libs)
 	PIE: "-fPIE"					; position independent (executables)
-	DYN: "-dynamic"					; optimize for dll??
 	NCM: "-fno-common"				; lib cannot have common vars
-	PAK: "-fpack-struct"			; pack structures
 ]
 
 linker-flags: context [
@@ -132,8 +129,6 @@ linker-flags: context [
 	ARC: "-arch i386"				; x86 32 bit architecture (OSX)
 
 	NSO: ""							; no shared libs
-	MAP: "-Wl,-M"					; output a map
-	STA: "--strip-all"
 	C++: "-lstdc++"					; link with stdc++
 	LDL: "-ldl"						; link with dynamic lib lib
 	LLOG: "-llog"					; on Android, link with liblog.so
