@@ -65,10 +65,10 @@ systems: [
 			[BEN LLC +O1 HID LDL ST1 -LM]
 
 	0.4.20		linux-arm		linux
-			[LEN LLC +O2 HID LDL ST1 -LM LCB]
+			[LEN LLC +O2 HID LDL ST1 -LM]
 
 	0.4.21		linux-arm		linux
-			[LEN LLC +O2 HID LDL ST1 -LM PIE]
+			[LEN LLC +O2 HID LDL ST1 -LM PIE LCB]
 
 	0.4.30		linux-mips		linux
 			[LEN LLC +O2 HID LDL ST1 -LM LCM]
