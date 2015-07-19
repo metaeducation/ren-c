@@ -31,7 +31,7 @@ typedef struct {		// State variables to save
 	jmp_buf *last_jmp_buf;
 	REBINT	dsp;
 	REBINT	dsf;
-	REBINT	hold_tail;	// Tail for GC_Protect
+    REBCNT	hold_tail;	// Tail for GC_Protect
 	REBSER	*error;
 	jmp_buf cpu_state;
 } REBOL_STATE;
