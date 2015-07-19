@@ -71,7 +71,7 @@ systems: [
 			[LEN LLC +O2 HID LDL ST1 -LM PIE LCB]
 
 	0.4.30		linux-mips		linux
-			[LEN LLC +O2 HID LDL ST1 -LM LCM]
+			[LEN LLC +O2 HID LDL ST1 -LM]
 
 	0.4.40		linux-x64		linux
 			[LP64 LEN LLC +O2 HID LDL ST1 -LM]
@@ -143,7 +143,6 @@ linker-flags: context [
 	LC25: ""						; libc 2.5
 	LC211: ""						; libc 2.11
 	LCB: ""							; bionic (Android)
-	LCM: ""							; MIPS has glibc without C++
 ]
 
 other-flags: context [
