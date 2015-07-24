@@ -334,3 +334,12 @@ tools: [
 	make-host-ext.r
 	form-header.r
 ]
+
+;FFI source files common to all targets
+ffi-files: [
+	%src/prep_cif.c
+	%src/types.c
+	%src/raw_api.c
+	%src/java_raw_api.c
+	%src/closures.c
+]

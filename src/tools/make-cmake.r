@@ -1,6 +1,6 @@
 REBOL [
 	System: "REBOL [R3] Language Interpreter and Run-time Environment"
-	Title: "Make the R3 Core Makefile"
+	Title: "Make cmake files for R3"
 	Rights: {
 		Copyright 2012 REBOL Technologies
 		REBOL is a trademark of REBOL Technologies
@@ -33,11 +33,11 @@ makefile-head:
 # This automatically produced file was created !date
 
 cmake_minimum_required (VERSION 2.6)
-project (Rebol3 C)
+project (Rebol3 C ASM)
 set (TOP_SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../src")
-include_directories(${TOP_SRC_DIR}/include ${TOP_SRC_DIR}/codecs)
 set (CORE_DIR "${TOP_SRC_DIR}/core")
 set (OS_DIR "${TOP_SRC_DIR}/os")
+set (FFI_DIR "${TOP_SRC_DIR}/libffi")
 set (TOOLS_DIR "${TOP_SRC_DIR}/tools")
 }
 
@@ -76,6 +76,9 @@ if none? compiler-spec [
 ]
 
 compiler-obj: make object! compiler-spec
+if found? find words-of compiler-obj 'FFI [
+	compiler-obj/FFI: make object! compiler-obj/FFI
+]
 print ["Compiler:" compiler-name mold compiler-obj]
 
 ; Words are cleaner-looking in the table, and hyphens look better (and are
@@ -112,14 +115,14 @@ output: make string! 10000
 ;** Functions
 ;******************************************************************************
 
-flag?: func ['cat 'word] [found? find compiler-obj/(cat) word]
+flag?: func [flags 'word] [found? find flags word]
 
-macro: func ['cat obj [object!] /local out] [
+macro: func [flags obj [object!] /local out] [
 	out: make string! 10
 	foreach n words-of obj [
 		all [
 			obj/:n
-			flag? (cat) (n)
+			flag? flags (n)
 			repend out [space obj/:n]
 		]
 	]
@@ -146,18 +149,76 @@ emit-src-files: func [
 	emit [")" newline]
 ]
 
+process-tools: func [
+	tools [block!]
+	/local generated-files tool files args file arg
+][
+	generated-files: copy []
+	foreach [tool files args] tools [
+		if not empty? files [
+			emit [ {add_custom_command(OUTPUT} newline]
+			foreach file files [
+				append generated-files file
+				emit [tab to string! file newline]
+			]
+
+			emit [tab "COMMAND ${REBOL} ${TOOLS_DIR}/" tool ".r"]
+			foreach arg args [
+				emit [" " arg]
+			]
+
+			emit [newline]
+			emit [")" newline]
+		]
+	]
+	generated-files
+]
+
 ;******************************************************************************
 ;** Build
 ;******************************************************************************
 
 replace makefile-head "!date" now
 
-if flag? OTHFLAGS +SC [remove find os-specific-objs 'host-readline.c]
+if flag? compiler-obj/OTHFLAGS +SC [remove find os-specific-objs 'host-readline.c]
 
 emit makefile-head
 
 ;print ["config:" mold config]
 emit [ "set (REBOL ^"${CMAKE_CURRENT_SOURCE_DIR}/r3-make${CMAKE_EXECUTABLE_SUFFIX}^")^/" ]
+
+;*** FFI
+emit [ "#FFI" newline]
+emit [ "set(FFI_SOURCE " newline]
+foreach s join file-base/ffi-files compiler-obj/FFI/SOURCE [
+	emit [ tab "${FFI_DIR}/" s newline]
+]
+emit [")" newline newline]
+
+emit ["set (FFI_TARGET " mold lowercase compiler-obj/FFI/PREDEFINES/(to set-word! 'TARGET) ")" newline]
+
+ffi-tools: compose/deep [
+	make-libffi [
+		"${FFI_DIR}/include/fficonfig.h"
+		"${FFI_DIR}/include/ffi.h"
+		"${FFI_DIR}/include/ffitarget.h"
+	] [(config/id) (compiler-name)]
+]
+
+generated-ffi-files: process-tools ffi-tools
+emit-src-files/abs "generated_ffi" generated-ffi-files
+
+emit [ "add_library(ffi OBJECT ${FFI_SOURCE} ${GENERATED_FFI_SOURCE})" newline]
+emit [ "target_compile_definitions(ffi PUBLIC HAVE_CONFIG_H)" newline]
+unless empty? compiler-obj/FFI/CFLAGS [
+	emit [ "set_target_properties(ffi PROPERTIES COMPILE_FLAGS " macro compiler-obj/FFI/CFLAGS compiler-flags ")" newline]
+]
+emit [ "target_include_directories(ffi PUBLIC" newline]
+foreach i compiler-obj/FFI/INCLUDES [
+	emit [ tab "${FFI_DIR}/" i newline]
+]
+emit [ ")" newline]
+;********************************************************************************
 
 core-tools: compose/deep [
 	make-headers [
@@ -203,31 +264,6 @@ os-tools: [
 	make-host-init [
 	] [ ]
 ]
-
-process-tools: func [
-	tools [block!]
-	/local generated-files tool files args file arg
-][
-	generated-files: copy []
-	foreach [tool files args] tools [
-		if not empty? files [
-			emit [ {add_custom_command(OUTPUT} newline]
-			foreach file files [
-				append generated-files file
-				emit [tab to string! file newline]
-			]
-
-			emit [tab "COMMAND ${REBOL} ${TOOLS_DIR}/" tool ".r"]
-			foreach arg args [
-				emit [" " arg]
-			]
-
-			emit [newline]
-			emit [")" newline]
-		]
-	]
-	generated-files
-]
 emit ["#CORE" newline]
 emit-src-files "core" file-base/core
 generated-core-files: process-tools core-tools
@@ -252,30 +288,34 @@ endif()
 emit ["add_library(r3_core OBJECT ${CORE_SOURCE} ${GENERATED_CORE_SOURCE})" newline]
 emit ["add_library(r3_os OBJECT ${OS_SOURCE} ${GENERATED_OS_SOURCE})" newline]
 emit ["add_dependencies(r3_os r3_core)" newline]
-emit ["add_executable(r3 $<TARGET_OBJECTS:r3_core> $<TARGET_OBJECTS:r3_os>)" newline]
+emit ["add_executable(r3 $<TARGET_OBJECTS:r3_core> $<TARGET_OBJECTS:r3_os> $<TARGET_OBJECTS:ffi>)" newline]
 emit ["SET_TARGET_PROPERTIES(r3 PROPERTIES LINKER_LANGUAGE C)" newline]
-emit ["set(COMMON_MACROS " to-base-def space to-name-def macro PREDEFINES compiler-flags ")" newline]
+emit ["set(COMMON_MACROS " to-base-def space to-name-def macro compiler-obj/PREDEFINES compiler-flags ")" newline]
 
-unless empty? macro OPTFLAGS compiler-flags [
+unless empty? macro compiler-obj/OPTFLAGS compiler-flags [
 	emit [
 		"if(NOT CMAKE_BUILD_TYPE EQUAL DEBUG)" newline
-			tab "set(CMAKE_C_FLAGS ^"${CMAKE_C_FLAGS}" macro OPTFLAGS compiler-flags "^")" newline
+			tab "set(CMAKE_C_FLAGS ^"${CMAKE_C_FLAGS}" macro compiler-obj/OPTFLAGS compiler-flags "^")" newline
 		"endif()"
 		newline
 	]
 ]
 
-emit ["target_compile_definitions(r3_core PUBLIC REB_API ${COMMON_MACROS})" newline]
+emit ["target_include_directories(r3_core PUBLIC ${TOP_SRC_DIR}/include ${TOP_SRC_DIR}/codecs ${TOP_SRC_DIR}/libffi/include)" newline]
+emit ["target_include_directories(r3_os PUBLIC ${TOP_SRC_DIR}/include ${TOP_SRC_DIR}/codecs)" newline]
+emit ["target_compile_definitions(r3_core PUBLIC REB_API HAVE_LIBFFI_AVAILABLE ${COMMON_MACROS})" newline]
 emit ["target_compile_definitions(r3_os PUBLIC REB_CORE REB_EXE ${COMMON_MACROS})" newline]
-emit ["set(CMAKE_C_FLAGS ^"${CMAKE_C_FLAGS}" macro CFLAGS compiler-flags "^")" newline]
-emit ["set(CMAKE_EXE_LINKER_FLAGS ^"${CMAKE_EXE_LINKER_FLAGS}" macro LDFLAGS linker-flags "^")" newline]
-emit ["target_link_libraries(r3" macro LIBS linker-flags ")" newline]
+emit ["set(CMAKE_C_FLAGS ^"${CMAKE_C_FLAGS}" macro compiler-obj/CFLAGS compiler-flags "^")" newline]
+emit ["set(CMAKE_EXE_LINKER_FLAGS ^"${CMAKE_EXE_LINKER_FLAGS}" macro compiler-obj/LDFLAGS linker-flags "^")" newline]
+emit ["target_link_libraries(r3" macro compiler-obj/LIBS linker-flags 
+		macro compiler-obj/FFI/LIBS linker-flags
+		")" newline]
 
 write path-make/%CMakeLists.txt output
 
 ;;;clean-generated.cmake
 clean-generated: copy {set(generated }
-foreach file join generated-core-files generated-os-files [
+foreach file join generated-core-files join generated-os-files generated-ffi-files [
 	append clean-generated join to string! file newline
 ]
 append clean-generated 

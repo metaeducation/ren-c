@@ -144,6 +144,13 @@ systems: [
 					LIBS: [LDL ST1 -LM LC23]
 					LDFLAGS: []
 					OTHFLAGS: []
+					FFI: [
+						PREDEFINES: []
+						CFLAGS: []
+						OPTFLAGS: [+O2]
+						LIBS: [LDL ST1 -LM LC23]
+						LDFLAGS: []
+					]
 				]
 			]
 
@@ -156,6 +163,36 @@ systems: [
 					LIBS: [LDL ST1 -LM LC25]
 					LDFLAGS: []
 					OTHFLAGS: []
+					FFI: [
+						PREDEFINES: [
+							EH_FRAME_FLAGS: "aw"
+							HAVE_ALLOCA_H: 1
+							HAVE_AS_ASCII_PSEUDO_OP: 1
+							HAVE_AS_STRING_PSEUDO_OP: 1
+							HAVE_AS_X86_PCREL: 1
+							HAVE_DLFCN_H: 1
+							HAVE_HIDDEN_VISIBILITY_ATTRIBUTE: 0
+							HAVE_INTTYPES_H: 1
+							HAVE_LONG_DOUBLE: 1
+							HAVE_MEMCPY: 1
+							HAVE_MEMORY_H: 1
+							HAVE_MMAP: 1
+							HAVE_STDINT_H: 1
+							HAVE_STDLIB_H: 1
+							HAVE_STRINGS_H: 1
+							HAVE_STRING_H: 1
+							HAVE_SYS_MMAN_H: 1
+							HAVE_SYS_STAT_H: 1
+							HAVE_SYS_TYPES_H: 1
+							HAVE_UNISTD_H: 1
+							STDC_HEADERS: 1
+							TARGET: "X86"
+						]
+						CFLAGS: []
+						OPTFLAGS: [+O2]
+						LIBS: [LDL ST1 -LM LC23]
+						LDFLAGS: []
+					]
 				]
 			]
 
@@ -168,6 +205,65 @@ systems: [
 					LIBS: [LDL ST1 -LM LC211]
 					LDFLAGS: []
 					OTHFLAGS: []
+					FFI: [
+						PREDEFINES: []
+						CFLAGS: []
+						OPTFLAGS: [+O2]
+						LIBS: [LDL ST1 -LM LC23]
+						LDFLAGS: []
+					]
+					FFI: [
+						INCLUDES: [%src %include]
+						PREDEFINES: [
+							EH_FRAME_FLAGS: "a"
+							HAVE_ALLOCA: 1
+							HAVE_ALLOCA_H: 1
+							HAVE_AS_ASCII_PSEUDO_OP: 1
+							HAVE_AS_CFI_PSEUDO_OP: 1
+							HAVE_AS_STRING_PSEUDO_OP: 1
+							HAVE_AS_X86_PCREL: 1
+							HAVE_DLFCN_H: 1
+							HAVE_HIDDEN_VISIBILITY_ATTRIBUTE: 1
+							HAVE_INTTYPES_H: 1
+							HAVE_LONG_DOUBLE: 1
+							HAVE_MEMCPY: 1
+							HAVE_MEMORY_H: 1
+							HAVE_MKOSTEMP: 1
+							HAVE_MMAP: 1
+							HAVE_MMAP_ANON: 1
+							HAVE_MMAP_DEV_ZERO: 1
+							HAVE_MMAP_FILE: 1
+							HAVE_RO_EH_FRAME: 1
+							HAVE_STDINT_H: 1
+							HAVE_STDLIB_H: 1
+							HAVE_STRINGS_H: 1
+							HAVE_STRING_H: 1
+							HAVE_SYS_MMAN_H: 1
+							HAVE_SYS_STAT_H: 1
+							HAVE_SYS_TYPES_H: 1
+							HAVE_UNISTD_H: 1
+							PACKAGE: "libffi"
+							PACKAGE_VERSION: "3.2.1"
+							SIZEOF_DOUBLE: 8
+							SIZEOF_LONG_DOUBLE: 12
+							SIZEOF_SIZE_T: 4
+							STDC_HEADERS: 1
+							VERSION: "3.2.1"
+							TARGET: "X86"
+						]
+						CFLAGS: [
+							M32
+						]
+						OPTFLAGS: [+O3 OFP +SA +FM +EX]
+						LIBS: []
+						LDFLAGS: []
+						TARGET-DIRECTORY: "x86"
+						SOURCE: [
+							%src/x86/ffi.c
+							%src/x86/sysv.S
+							%src/x86/win32.S
+						]
+					]
 				]
 			]
 
@@ -234,6 +330,47 @@ systems: [
 					LIBS: [LDL ST1 -LM]
 					LDFLAGS: []
 					OTHFLAGS: []
+					FFI: [
+						INCLUDES: [%src %include]
+						PREDEFINES: [
+							HAVE_CONFIG_H: 1
+							EH_FRAME_FLAGS: "aw"
+							HAVE_ALLOCA_H: 1
+							HAVE_AS_ASCII_PSEUDO_OP: 1
+							HAVE_AS_STRING_PSEUDO_OP: 1
+							HAVE_AS_X86_PCREL: 1
+							HAVE_DLFCN_H: 1
+							HAVE_INTTYPES_H: 1
+							HAVE_LONG_DOUBLE: 1
+							HAVE_MEMCPY: 1
+							HAVE_MEMORY_H: 1
+							HAVE_MMAP: 1
+							HAVE_STDINT_H: 1
+							HAVE_STDLIB_H: 1
+							HAVE_STRINGS_H: 1
+							HAVE_STRING_H: 1
+							HAVE_SYS_MMAN_H: 1
+							HAVE_SYS_STAT_H: 1
+							HAVE_SYS_TYPES_H: 1
+							HAVE_UNISTD_H: 1
+							STDC_HEADERS: 1
+							TARGET: "X86_64"
+						]
+
+						CFLAGS: [
+							CORE2
+						]
+						OPTFLAGS: [+O3 OFP +SA +FM +EX]
+						LIBS: []
+						LDFLAGS: []
+						TARGET-DIRECTORY: "x86"
+						SOURCE: [
+							%src/x86/ffi64.c
+							%src/x86/unix64.S
+							%src/x86/ffi.c
+							%src/x86/sysv.S
+						]
+					]
 				]
 			]
 
@@ -330,6 +467,7 @@ systems: [
 compiler-flags: context [
 	M32: "-m32"						; use 32-bit memory model
 	ARC: "-arch i386"				; x86 32 bit architecture (OSX)
+	CORE2: "-march=core2"			;
 
 	LP64: "__LP64__"				; 64-bit, and 'void *' is sizeof(long)
 	LLP64: "__LLP64__"				; 64-bit, and 'void *' is sizeof(long long)
@@ -343,6 +481,7 @@ compiler-flags: context [
 	+OS: "-Os"						; size optimize
 	+O1: "-O1"						; optimize for minimal size
 	+O2: "-O2"						; optimize for maximum speed
+	+O3: "-O3"						; optimize for maximum speed
 	*O2: "/O2"						; optimize for maximum speed
 
 	UNI: "UNICODE"					; win32 wants it
@@ -353,6 +492,10 @@ compiler-flags: context [
 	PIC: "-fPIC"					; position independent (used for libs)
 	PIE: "-fPIE"					; position independent (executables)
 	NCM: "-fno-common"				; lib cannot have common vars
+	OFP: "-fomit-frame-pointer"		;
+	+SA: "-fstrict-aliasing"
+	+FM: "-ffast-math"
+	+EX: "-fexceptions"
 ]
 
 linker-flags: context [
