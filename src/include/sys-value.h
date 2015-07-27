@@ -966,24 +966,70 @@ typedef struct Reb_Object {
 
 /***********************************************************************
 **
-**	ERRORS - Error values
+**	ERRORS - Error values (see %boot/errors.r)
+**
+**	Errors do double-duty as a type, because they are also used for
+**	an internal pseudo-type to implement THROW/CATCH/BREAK/etc.  The
+**	rationale for not making a separate THROW! type is that there
+**	are only 64 bits for typesets.  Hence if an internal type can
+**	be finessed another way it is.  (It also confuses the users less
+**	by not seeing an internal type "leak" into their consciousness.)
+**
+**	The way it is decided if an error is a real ERROR! or a "THROW!" is
+**	based on the value of 'num'.  Low numbers indicate that the payload
+**	is a Rebol Value being thrown, and higher numbers indicate that
+**	the payload is an error object frame.
+**
+**	For an actual THROW instruction, there is an optional piece of
+**	information, which is the symbol with which the throw was "named".
+**	A RETURN instruction uses its optional piece of information to
+**	hold the identifying series of the stack it wishes to unwind to
+**	and actually return from (for definitionally-scoped RETURN).
 **
 ***********************************************************************/
 
+union Reb_Error_Data {
+	REBSER *frame;      // error object frame if user-facing ERROR!
+	REBINT status;      // Exit status if QUIT
+};
+
+union Reb_Error_Extra {
+	REBCNT sym;			// if a RE_THROW with /NAME, then symbol, else 0
+	REBSER *unwind;     // identify function series to RETURN from
+};
+
 typedef struct Reb_Error {
-	union Reo {
-		REBSER	*object;
-		REBVAL	*value;		// RETURN value (also BREAK, THROW)
-	} reo;
-	REBCNT	num;			// (Determines value used below.)
-	REBCNT  sym;			// THROW symbol
+	// Possibly nothing in this slot (e.g. for CONTINUE)
+	// Note: all user exposed errors can act like ANY-OBJECT!, hence the
+	// 'frame' field must be at the same offest as Reb_Object's 'frame'.
+	union Reb_Error_Data data;
+
+	 // dictates meaning of fields above (and below)
+	REBCNT num;
+
+	// (nothing in this slot if not THROW or RETURN)
+	union Reb_Error_Extra extra;
 } REBERR;
 
 // Value Accessors:
 #define	VAL_ERR_NUM(v)		((v)->data.error.num)
-#define VAL_ERR_OBJECT(v)	((v)->data.error.reo.object)
-#define VAL_ERR_VALUE(v)	((v)->data.error.reo.value)
-#define VAL_ERR_SYM(v)		((v)->data.error.sym)
+#define VAL_ERR_OBJECT(v)	((v)->data.error.data.frame)
+#define VAL_ERR_STATUS(v)   ((v)->data.error.data.status)
+#define VAL_ERR_SYM(v)		((v)->data.error.extra.sym)
+#define VAL_ERR_UNWIND(v)   ((v)->data.error.extra.unwind)
+
+// A throw-style may need an associated value (such as how a RETURN needs to
+// have a value to be returned).  Yet an ERROR! being a value cannot hold the
+// full spectrum of values inside it and still be an error.  Error arguments
+// are handled specially as a task-local variable, and only *one* can be in
+// effect at a time.  These macros abstract and ensure that condition.
+#ifdef NDEBUG
+	#define ADD_THROWN_ARG(v,a)		(*TASK_ERROR_ARG = *(a))
+	#define TAKE_THROWN_ARG(a, v)	(*(a) = *TASK_ERROR_ARG)
+#else
+	#define ADD_THROWN_ARG(v,a)		Add_Thrown_Arg_Debug(v, a)
+	#define TAKE_THROWN_ARG(a,v)	Take_Thrown_Arg_Debug(a, v)
+#endif
 
 #define	IS_THROW(v)			(VAL_ERR_NUM(v) < RE_THROW_MAX)
 #define	IS_BREAK(v)			(VAL_ERR_NUM(v) == RE_BREAK)
@@ -991,15 +1037,12 @@ typedef struct Reb_Error {
 #define	IS_CONTINUE(v)		(VAL_ERR_NUM(v) == RE_CONTINUE)
 #define THROWN(v)			(IS_ERROR(v) && IS_THROW(v))
 
-#define	SET_ERROR(v,n,a)	VAL_SET(v, REB_ERROR), VAL_ERR_NUM(v)=n, VAL_ERR_OBJECT(v)=a, VAL_ERR_SYM(v)=0
-#define	SET_THROW(v,n,a)	VAL_SET(v, REB_ERROR), VAL_ERR_NUM(v)=n, VAL_ERR_VALUE(v)=a, VAL_ERR_SYM(v)=0
-
-#define VAL_ERR_VALUES(v)	((ERROR_OBJ *)(FRM_VALUES(VAL_ERR_OBJECT(v))))
+#define VAL_ERR_VALUES(v)	cast(ERROR_OBJ*, FRM_VALUES(VAL_ERR_OBJECT(v)))
 #define	VAL_ERR_ARG1(v)		(&VAL_ERR_VALUES(v)->arg1)
 #define	VAL_ERR_ARG2(v)		(&VAL_ERR_VALUES(v)->arg2)
 
 // Error Object (frame) Accessors:
-#define ERR_VALUES(frame)	((ERROR_OBJ *)FRM_VALUES(frame))
+#define ERR_VALUES(frame)	cast(ERROR_OBJ*, FRM_VALUES(frame))
 #define	ERR_NUM(frame)		VAL_INT32(&ERR_VALUES(frame)->code)
 
 

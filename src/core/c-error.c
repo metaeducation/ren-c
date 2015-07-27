@@ -37,7 +37,7 @@
 		Other important state information such as location of error
 		and function context are also saved at this point.
 
-		Throw_Error is called to throw the error back to a prior catch.
+		Throw is called to throw the error back to a prior catch.
 		A catch is defined using a set of C-macros. During the throw
 		the error object is stored in a global: This_Error (because we
 		cannot be sure that the longjmp value is able to hold a pointer
@@ -93,11 +93,22 @@
 
 */
 
+// A NOTE ABOUT "CLOBBERING" WARNINGS
+//
+// With compiler warnings on, it can tell us that values are set
+// before the setjmp and then changed before a potential longjmp.
+// Were we to try and use index in the catch body, it would be
+// undefined.  In this case we don't use it, but for technical
+// reasons GCC can't judge this case:
+//
+//     http://stackoverflow.com/q/7721854/211160
+//
+// Because of this longjmp/setjmp "clobbering", it's a useful warning to
+// have enabled in.  One option for suppressing it would be to mark
+// a parameter as 'volatile', but that is implementation-defined.
+// It is simpler to use a new variable.
 
 #include "sys-core.h"
-
-// Globals or Threaded???
-static REBOL_STATE Top_State; // Boot var: holds error state during boot
 
 
 /***********************************************************************
@@ -113,92 +124,219 @@ static REBOL_STATE Top_State; // Boot var: holds error state during boot
 
 /***********************************************************************
 **
-*/	void Catch_Error(REBVAL *value)
+*/	void Push_Catch_Helper(REBOL_STATE *s)
 /*
-**		Gets the current error and stores it as a value.
-**		Normally the value is on the stack and is returned.
+**		Used by both CATCH and CATCH_ANY, whose differentiation comes
+**		from how they react to the catch vs. from the initial push.
 **
 ***********************************************************************/
 {
-	if (IS_NONE(TASK_THIS_ERROR)) Panic(RP_ERROR_CATCH);
-	*value = *TASK_THIS_ERROR;
-//	Print("CE: %r", value);
-	SET_NONE(TASK_THIS_ERROR);
-	//!!! Reset or ENABLE_GC;
+	assert(Saved_State || ((DSP == 0) && (DSF == 0)));
+
+	s->dsp = DSP;
+	s->dsf = DSF;
+
+	s->hold_tail = GC_Protect->tail;
+	s->gc_disable = GC_Disabled;
+
+	s->last_state = Saved_State;
+	Saved_State = s;
+
+	// !!! garbage collector should probably walk Saved_State stack to
+	// keep the error values alive from GC, so use a "safe" trash.
+	SET_TRASH_SAFE(&s->error);
 }
 
 
 /***********************************************************************
 **
-*/	void Throw_Error(REBSER *err)
+*/	void Drop_Catch_Helper(REBOL_STATE *s, REBOOL caught)
 /*
-**		Throw the C stack.
+**		Pops a CATCH state from the list without changing the actual
+**		state of the data stack or data stack frame.
 **
 ***********************************************************************/
 {
-	if (!Saved_State) Panic(RP_NO_SAVED_STATE);
-	SET_ERROR(TASK_THIS_ERROR, ERR_NUM(err), err);
-	if (Trace_Level) Trace_Error(TASK_THIS_ERROR);
-	LONG_JUMP(*Saved_State, 1);
+	// leave DSP as-is
+	// leave DSF as-is
+
+	// !!! Should anything be done with GC_Protect->tail, s->hold_tail ?
+
+	assert(GC_Disabled == s->gc_disable);
+
+	assert(caught ? !IS_TRASH(&s->error) : IS_TRASH(&s->error));
+
+	Saved_State = s->last_state;
 }
 
 
 /***********************************************************************
 **
-*/	void Throw_Break(REBVAL *val)
+*/	REBOOL Catch_Any_Error_Helper(REBOL_STATE *state)
 /*
-**		Throw a break or return style error (for special cases
-**		where we do not want to unwind the stack).
+**		This is the core handler which is used by Catch_Error_Helper
+**		as well.  It is necessary for the /QUIT refinement of CATCH,
+**		as well as clients like Ren/C++ which need to be told when all
+**		errors happen in order to do C++ stack unwinding.  (If automatic
+**		re-throwing were used there, Ren/C++ would have no way to
+**		insinuate itself as a step in the process when calling Rebol
+**		from within a C++ routine invoked by Rebol.  Ponder that.)
 **
 ***********************************************************************/
 {
-	if (!Saved_State) Panic(RP_NO_SAVED_STATE);
-	*TASK_THIS_ERROR = *val;
-	LONG_JUMP(*Saved_State, 1);
+	// You're only supposed to throw an error.
+	assert(IS_ERROR(&state->error));
+
+	// !!! Reset or ENABLE_GC; ?
+
+	// Restore elements from initial state, like stack position and frame
+	while (DSF != state->dsf) {
+		REBINT dsf = DSF;
+		DSF = PRIOR_DSF(DSF);
+
+		// !!! Do stuff needed for each call stack frame getting blown away
+		// (in StableStack, we must release the stable frame pointer itself)
+		/* something done with dsf... */
+	}
+
+	DSP = state->dsp;
+	GC_Protect->tail = state->hold_tail;
+	GC_Disabled = state->gc_disable;
+
+	// Pop state structure (this alone won't restore DSP/DSF/etc)
+	Drop_Catch_Helper(state, TRUE);
+
+	// Halts should only be caught by the *topmost* level of
+	// execution (generally the interpreter console loop).  There is
+	// likely no good reason for a user-exposed ability to CATCH/HALT
+
+	if ((VAL_ERR_NUM(&state->error) == RE_HALT) && Saved_State)
+		Throw(&state->error, NULL);
+
+	return TRUE;
 }
 
 
 /***********************************************************************
 **
-*/	void Throw_Return_Series(REBCNT type, REBSER *series)
+*/	REBOOL Catch_Error_Helper(REBOL_STATE *state)
 /*
-**		Throws a series value using error temp values.
+**		Pushes a TRY state.  Kept as separate operation because if a
+**      CATCH never happens, you must remember to DROP_CATCH.  (If the
+**      catch does happen, this is done for you automatically.)
 **
 ***********************************************************************/
 {
-	REBVAL *val;
-	REBVAL *err;
-	REBSER *blk = VAL_SERIES(TASK_ERR_TEMPS);
+	// If the state has no parent, then it is the topmost level.  It
+	// *must* use Catch_Any_Error and be able to handle anything.
 
-	RESET_SERIES(blk);
-	val = Alloc_Tail_Blk(blk);
-	Set_Series(type, val, series);
-	err = Alloc_Tail_Blk(blk);
-	SET_THROW(err, RE_RETURN, val);
-	VAL_ERR_SYM(err) = SYM_RETURN; // indicates it is "virtual" (parse return)
-	Throw_Break(err);
+	assert(state->last_state);
+
+	// This is a simple wrapper over Catch_Any_Error, and might even
+	// be better done in the macro.
+
+	Catch_Any_Error_Helper(state);
+
+	// If you want to catch a QUIT, you must be a construct that uses
+	// Catch_Any_Error.  Using Catch_Error_Helper will just rethrow.
+
+	if (VAL_ERR_NUM(&state->error) == RE_QUIT)
+		Throw(&state->error, NULL);
+
+	return TRUE;
 }
 
 
 /***********************************************************************
 **
-*/	void Throw_Return_Value(REBVAL *value)
+*/	void Add_Thrown_Arg_Debug(REBVAL *err, const REBVAL *arg)
 /*
-**		Throws a series value using error temp values.
+***********************************************************************/
+{
+	assert(IS_ERROR(err) && THROWN(err));
+
+	// See notes about assertion in Take_Thrown_Arg_Debug.  TBD.
+
+	/* assert(IS_TRASH(TASK_THROWN_ARG)); */
+
+	*TASK_THROWN_ARG = *arg;
+}
+
+
+/***********************************************************************
+**
+*/	void Take_Thrown_Arg_Debug(REBVAL *out, const REBVAL *err)
+/*
+**		WARNING: 'out' can be the same pointer as 'err'
 **
 ***********************************************************************/
 {
-	REBVAL *val;
-	REBVAL *err;
-	REBSER *blk = VAL_SERIES(TASK_ERR_TEMPS);
+	assert(IS_ERROR(err) && THROWN(err));
 
-	RESET_SERIES(blk);
-	val = Alloc_Tail_Blk(blk);
-	*val = *value;
-	err = Alloc_Tail_Blk(blk);
-	SET_THROW(err, RE_RETURN, val);
-	VAL_ERR_SYM(err) = SYM_RETURN; // indicates it is "virtual" (parse return)
-	Throw_Break(err);
+	// This assertion is a nice idea, but practically speaking we don't
+	// currently have a moment when an error is caught with PUSH_CATCH
+	// to set it to trash...only if it has its value processed as a
+	// function return or loop break, etc.  One way of fixing it would
+	// be to make PUSH_CATCH take 3 arguments instead of 2, and store
+	// the error argument in the Rebol_State if it gets thrown...but
+	// that looks a bit ugly.  Think more on this.
+
+	/* assert(!IS_TRASH(TASK_THROWN_ARG)); */
+
+	*out = *TASK_THROWN_ARG;
+
+	// The THROWN_ARG lives under the root set, and must be a value
+	// that won't trip up the GC.
+	SET_TRASH_SAFE(TASK_THROWN_ARG);
+}
+
+
+/***********************************************************************
+**
+*/	void Throw(const REBVAL *err, const REBVAL *arg_add)
+/*
+**		Throw to the enclosing PUSH_CATCH or PUSH_CATCH_ANY.  Although
+**		the item type being thrown is a value of type "ERROR!", not
+**		all such values represent failures.  The same mechanism is
+**		used to do non-local jumps, so the THROWN() categories of
+**		error can represent e.g. RETURN or BREAK or CONTINUE.
+**
+***********************************************************************/
+{
+	if (!Saved_State) {
+		// Print out the error before crashing
+		Print_Value(err, 0, FALSE);
+		Panic(RP_NO_SAVED_STATE); // or RP_NO_CATCH ?
+	}
+
+	if (Trace_Level) {
+		if (THROWN(err)) {
+			// !!! Write some kind of error tracer for errors that do not
+			// have frames, so you can trace quits/etc.
+		} else
+			Debug_Fmt(
+				cs_cast(BOOT_STR(RS_TRACE, 10)),
+				&VAL_ERR_VALUES(err)->type,
+				&VAL_ERR_VALUES(err)->id
+			);
+	}
+
+	// Error may live in a local variable whose stack is going away,
+	// on the stack, or other unstable location.  Copy before the jump.
+
+	Saved_State->error = *err;
+
+	// Passing an argument will "add" it to the error, if it is a
+	// THROWN-class error like a RETURN that has an associated value.
+	// This will assert if you try to add an argument to an error
+	// that you are passing on which already had an argument added.
+
+	if (arg_add) {
+		assert(THROWN(err));
+		ADD_THROWN_ARG(&Saved_State->error, arg_add);
+	}
+
+	LONG_JUMP(Saved_State->cpu_state, 1);
 }
 
 
@@ -215,9 +353,43 @@ static REBOL_STATE Top_State; // Boot var: holds error state during boot
 {
 	if (!Saved_State) Panic(RP_NO_SAVED_STATE);
 
-	*TASK_THIS_ERROR = *TASK_STACK_ERROR; // pre-allocated
+	Saved_State->error = *TASK_STACK_ERROR; // pre-allocated
 
-	LONG_JUMP(*Saved_State, 1);
+	LONG_JUMP(Saved_State->cpu_state, 1);
+}
+
+
+/***********************************************************************
+**
+*/	void Quit(int status)
+/*
+**		A QUIT is thrown and can't be caught by a normal CATCH, you
+**		have to use a PUSH_CATCH_ANY
+**
+***********************************************************************/
+{
+	REBVAL err;
+	VAL_SET(&err, REB_ERROR);
+	VAL_ERR_NUM(&err) = RE_QUIT;
+	VAL_ERR_STATUS(&err) = status;
+	Throw(&err, NULL);
+}
+
+
+/***********************************************************************
+**
+*/	void Halt(void)
+/*
+**		Halts are designed to go all the way up to the top level of
+**		the CATCH stack.  They cannot be intercepted by any
+**		intermediate stack levels.
+**
+***********************************************************************/
+{
+	REBVAL err;
+	VAL_SET(&err, REB_ERROR);
+	VAL_ERR_NUM(&err) = RE_HALT;
+	Throw(&err, NULL);
 }
 
 
@@ -349,6 +521,8 @@ static REBOL_STATE Top_State; // Boot var: holds error state during boot
 	ERROR_OBJ *error;	// Error object values
 	REBINT code = 0;
 
+	VAL_SET(value, REB_ERROR);
+
 	// Create a new error object from another object, including any non-standard fields:
 	if (IS_ERROR(arg) || IS_OBJECT(arg)) {
 		err = Merge_Frames(VAL_OBJ_FRAME(ROOT_ERROBJ),
@@ -358,7 +532,8 @@ static REBOL_STATE Top_State; // Boot var: holds error state during boot
 			if (!Find_Error_Info(error, &code)) code = RE_INVALID_ERROR;
 			SET_INTEGER(&error->code, code);
 //		}
-		SET_ERROR(value, VAL_INT32(&error->code), err);
+		VAL_ERR_NUM(value) = VAL_INT32(&error->code);
+		VAL_ERR_OBJECT(value) = err;
 		return;
 	}
 
@@ -366,7 +541,8 @@ static REBOL_STATE Top_State; // Boot var: holds error state during boot
 	err = CLONE_OBJECT(VAL_OBJ_FRAME(ROOT_ERROBJ));
 	error = ERR_VALUES(err);
 	SET_NONE(&error->id);
-	SET_ERROR(value, 0, err);
+	VAL_SET(value, REB_ERROR);
+	VAL_ERR_OBJECT(value) = err;
 
 	// If block arg, evaluate object values (checking done later):
 	// If user set error code, use it to setup type and id fields.
@@ -459,8 +635,14 @@ static REBOL_STATE Top_State; // Boot var: holds error state during boot
 /*
 ***********************************************************************/
 {
+	REBVAL error;
+
 	assert(num >= RE_THROW_MAX);
-	Throw_Error(Make_Error(num, 0, 0, 0));
+
+	VAL_SET(&error, REB_ERROR);
+	VAL_ERR_NUM(&error) = num;
+	VAL_ERR_OBJECT(&error) = Make_Error(num, 0, 0, 0);
+	Throw(&error, NULL);
 }
 
 
@@ -470,8 +652,14 @@ static REBOL_STATE Top_State; // Boot var: holds error state during boot
 /*
 ***********************************************************************/
 {
+	REBVAL error;
+
 	assert(num >= RE_THROW_MAX);
-	Throw_Error(Make_Error(num, arg1, 0, 0));
+
+	VAL_SET(&error, REB_ERROR);
+	VAL_ERR_NUM(&error) = num;
+	VAL_ERR_OBJECT(&error) = Make_Error(num, arg1, 0, 0);
+	Throw(&error, NULL);
 }
 
 
@@ -481,8 +669,14 @@ static REBOL_STATE Top_State; // Boot var: holds error state during boot
 /*
 ***********************************************************************/
 {
+	REBVAL error;
+
 	assert(num >= RE_THROW_MAX);
-	Throw_Error(Make_Error(num, arg1, arg2, 0));
+
+	VAL_SET(&error, REB_ERROR);
+	VAL_ERR_NUM(&error) = num;
+	VAL_ERR_OBJECT(&error) = Make_Error(num, arg1, arg2, 0);
+	Throw(&error, NULL);
 }
 
 
@@ -492,8 +686,14 @@ static REBOL_STATE Top_State; // Boot var: holds error state during boot
 /*
 ***********************************************************************/
 {
+	REBVAL error;
+
 	assert(num >= RE_THROW_MAX);
-	Throw_Error(Make_Error(num, arg1, arg2, arg3));
+
+	VAL_SET(&error, REB_ERROR);
+	VAL_ERR_NUM(&error) = num;
+	VAL_ERR_OBJECT(&error) = Make_Error(num, arg1, arg2, arg3);
+	Throw(&error, NULL);
 }
 
 
@@ -643,8 +843,7 @@ static REBOL_STATE Top_State; // Boot var: holds error state during boot
 /*
 **		Process a loop exceptions. Pass in the TOS value, returns:
 **
-**			 2 - if break/return, change val to that set by break
-**			 1 - if break
+**			 1 - break (or break/return, which changes val)
 **			-1 - if continue, change val to unset
 **			 0 - if not break or continue
 **			else: error if not an ERROR value
@@ -657,13 +856,8 @@ static REBOL_STATE Top_State; // Boot var: holds error state during boot
 
 	// If it's a BREAK, check for /return value:
 	if (IS_BREAK(val)) {
-		if (VAL_ERR_VALUE(val)) {
-			*val = *VAL_ERR_VALUE(val);
-			return 2;
-		} else {
-			SET_UNSET(val);
-			return 1;
-		}
+		TAKE_THROWN_ARG(val, val);
+		return 1;
 	}
 
 	if (IS_CONTINUE(val)) {
@@ -690,24 +884,11 @@ static REBOL_STATE Top_State; // Boot var: holds error state during boot
 	errs = Construct_Object(0, VAL_BLK(errors), 0);
 	Set_Object(Get_System(SYS_CATALOG, CAT_ERRORS), errs);
 
-	Set_Root_Series(TASK_ERR_TEMPS, Make_Block(3), "task errors");
-
 	// Create objects for all error types:
 	for (val = BLK_SKIP(errs, 1); NOT_END(val); val++) {
 		errs = Construct_Object(0, VAL_BLK(val), 0);
 		SET_OBJECT(val, errs);
 	}
-
-	// Catch top level errors, to provide decent output:
-	PUSH_STATE(Top_State, Saved_State);
-	if (SET_JUMP(Top_State)) {
-		POP_STATE(Top_State, Saved_State);
-		DSP++; // Room for return value
-		Catch_Error(DS_TOP); // Stores error value here
-		Print_Value(DS_TOP, 0, FALSE);
-		Panic(RP_NO_CATCH);
-	}
-	SET_STATE(Top_State, Saved_State);
 }
 
 

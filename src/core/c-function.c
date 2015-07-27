@@ -417,12 +417,7 @@
 	ds = DS_OUT;
 
 	if (IS_ERROR(result) && IS_RETURN(result)) {
-		// Value below is kept safe from GC because no-allocation is
-		// done between point of SET_THROW and here.
-		if (VAL_ERR_VALUE(result))
-			*ds = *VAL_ERR_VALUE(result);
-		else
-			SET_UNSET(ds);
+		TAKE_THROWN_ARG(ds, result);
 	}
 	else *ds = *result; // Set return value (atomic)
 }
@@ -461,12 +456,7 @@
 	ds = DS_OUT;
 
 	if (IS_ERROR(result) && IS_RETURN(result)) {
-		// Value below is kept safe from GC because no-allocation is
-		// done between point of SET_THROW and here.
-		if (VAL_ERR_VALUE(result))
-			*ds = *VAL_ERR_VALUE(result);
-		else
-			SET_UNSET(ds);
+		TAKE_THROWN_ARG(ds, result);
 	}
 	else *ds = *result; // Set return value (atomic)
 }

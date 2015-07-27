@@ -548,6 +548,10 @@ static	BOOT_BLK *Boot_Block;
 	// Initialize a few fields:
 	SET_INTEGER(TASK_BALLAST, MEM_BALLAST);
 	SET_INTEGER(TASK_MAX_BALLAST, MEM_BALLAST);
+
+	// The THROWN_ARG lives under the root set, and must be a value
+	// that won't trip up the GC.
+	SET_TRASH_SAFE(TASK_THROWN_ARG);
 }
 
 
@@ -1011,6 +1015,9 @@ static REBCNT Set_Option_Word(REBCHR *str, REBCNT field)
 ***********************************************************************/
 {
 	REBSER *ser;
+	const REBVAL *error;
+	REBOL_STATE state;
+
 	DOUT("Main init");
 
 #ifndef NDEBUG
@@ -1024,7 +1031,7 @@ static REBCNT Set_Option_Word(REBCHR *str, REBCNT field)
 	PG_Mem_Limit = 0;
 	PG_Reb_Stats = ALLOC(REB_STATS);
 	Reb_Opts = ALLOC(REB_OPTS);
-	Halt_State = NULL;
+	Saved_State = NULL;
 
 	// Thread locals:
 	Trace_Level = 0;
@@ -1090,12 +1097,43 @@ static REBCNT Set_Option_Word(REBCHR *str, REBCNT field)
 	Init_Errors(&Boot_Block->errors); // Needs system/standard/error object
 	PG_Boot_Phase = BOOT_ERRORS;
 
-	Init_Year();
-
 	// Special pre-made error:
 	assert(RE_STACK_OVERFLOW >= RE_THROW_MAX);
 	ser = Make_Error(RE_STACK_OVERFLOW, 0, 0, 0);
-	SET_ERROR(TASK_STACK_ERROR, RE_STACK_OVERFLOW, ser);
+	VAL_SET(TASK_STACK_ERROR, REB_ERROR);
+	VAL_ERR_NUM(TASK_STACK_ERROR) = RE_STACK_OVERFLOW;
+	VAL_ERR_OBJECT(TASK_STACK_ERROR) = ser;
+
+	// With error trapping enabled, set up to catch them if they happen.
+	PUSH_CATCH_ANY(&error, &state);
+
+// The first time through the following code 'error' will be NULL, but...
+// Throw() can longjmp here, so 'error' won't be NULL *if* that happens!
+
+	if (error) {
+		// You shouldn't be able to cancel or quit during Init_Core() startup.
+		// The only way you should be able to stop Init_Core() is by raising
+		// an error, at which point the system will Panic out.
+		// !!! TBD: Enforce not being *able* to trigger QUIT or HALT
+		assert(
+			VAL_ERR_NUM(error) != RE_HALT && VAL_ERR_NUM(error) != RE_QUIT
+		);
+
+		// For the moment in release builds, let a QUIT slide (we shouldn't)
+		if (VAL_ERR_NUM(error) == RE_QUIT) {
+			int status = VAL_ERR_STATUS(error);
+			Shutdown_Core();
+			OS_EXIT(status);
+			DEAD_END_VOID;
+		}
+
+		// If an error was raised during startup, print it and crash.
+		Print_Value(error, 1024, FALSE);
+		Panic(RP_EARLY_ERROR);
+		DEAD_END_VOID;
+	}
+
+	Init_Year();
 
 	// Initialize mezzanine functions:
 	DOUT("Level 5");
@@ -1111,7 +1149,39 @@ static REBCNT Set_Option_Word(REBCHR *str, REBCNT field)
 	SET_NONE(ROOT_BOOT);
 	Boot_Block = NULL;
 	PG_Boot_Phase = BOOT_MEZZ;
-	DS_RESET;
+
+	Do_Sys_Func(SYS_CTX_FINISH_INIT_CORE, 0);
+
+	// Success of the 'finish-init-core' Rebol code is signified by returning
+	// a NONE! (all other return results indicate an error state)
+
+	if (!IS_NONE(DS_TOP)) {
+		Debug_Fmt("** 'finish-init-core' returned non-none!: %r", DS_TOP);
+		Panic(RP_EARLY_ERROR);
+	}
+
+	// Drop the top of stack (result of Do_Sys_Func)
+	DS_DROP;
+	assert((DSP == 0) && (DSF == 0));
+
+	DROP_CATCH_SAME_STACKLEVEL_AS_PUSH(&state);
+
+	Recycle(); // necessary?
 
 	DOUT("Boot done");
+}
+
+
+/***********************************************************************
+**
+*/	void Shutdown_Core(void)
+/*
+**		!!! Merging soon to a Git branch near you:
+**		!!!    The ability to do clean shutdown, zero leaks.
+**
+***********************************************************************/
+{
+	assert((DSP == 0) && (DSF == 0));
+	assert(Saved_State == NULL);
+	// assert(IS_TRASH(TASK_THROWN_ARG));
 }

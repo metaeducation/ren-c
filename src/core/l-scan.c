@@ -639,7 +639,8 @@
 		return;
 	}
 
-	Throw_Error(frame); // ENABLE_GC implied
+	Throw(&error, NULL); // ENABLE_GC implied
+	DEAD_END_VOID;
 }
 
 
