@@ -1032,9 +1032,6 @@ typedef struct Reb_Error {
 #endif
 
 #define	IS_THROW(v)			(VAL_ERR_NUM(v) < RE_THROW_MAX)
-#define	IS_BREAK(v)			(VAL_ERR_NUM(v) == RE_BREAK)
-#define	IS_RETURN(v)		(VAL_ERR_NUM(v) == RE_RETURN)
-#define	IS_CONTINUE(v)		(VAL_ERR_NUM(v) == RE_CONTINUE)
 #define THROWN(v)			(IS_ERROR(v) && IS_THROW(v))
 
 #define VAL_ERR_VALUES(v)	cast(ERROR_OBJ*, FRM_VALUES(VAL_ERR_OBJECT(v)))

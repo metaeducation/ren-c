@@ -416,7 +416,7 @@
 	result = Do_Blk(VAL_FUNC_BODY(func), 0);
 	ds = DS_OUT;
 
-	if (IS_ERROR(result) && IS_RETURN(result)) {
+	if (IS_ERROR(result) && VAL_ERR_NUM(result) == RE_RETURN) {
 		TAKE_THROWN_ARG(ds, result);
 	}
 	else *ds = *result; // Set return value (atomic)
@@ -455,7 +455,7 @@
 	result = Do_Blk(body, 0); // GC-OK - also, result returned on DS stack
 	ds = DS_OUT;
 
-	if (IS_ERROR(result) && IS_RETURN(result)) {
+	if (IS_ERROR(result) && VAL_ERR_NUM(result) == RE_RETURN) {
 		TAKE_THROWN_ARG(ds, result);
 	}
 	else *ds = *result; // Set return value (atomic)

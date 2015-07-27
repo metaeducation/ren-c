@@ -221,9 +221,12 @@
 **
 */	REBOOL Catch_Error_Helper(REBOL_STATE *state)
 /*
-**		Pushes a TRY state.  Kept as separate operation because if a
-**      CATCH never happens, you must remember to DROP_CATCH.  (If the
-**      catch does happen, this is done for you automatically.)
+**		This is the handler which is used with PUSH_CATCH as opposed
+**		to PUSH_CATCH_ANY.  The only difference is that it will
+**		automatically re-throw an RE_QUIT error without offering
+**		an opportunity to process it.  You can only use this form
+**		if there's already a PUSH_CATCH_ANY on the stack which
+**		can ultimately handle QUITs and HALTs.
 **
 ***********************************************************************/
 {
@@ -251,23 +254,9 @@
 **
 */	void Add_Thrown_Arg_Debug(REBVAL *err, const REBVAL *arg)
 /*
-***********************************************************************/
-{
-	assert(IS_ERROR(err) && THROWN(err));
-
-	// See notes about assertion in Take_Thrown_Arg_Debug.  TBD.
-
-	/* assert(IS_TRASH(TASK_THROWN_ARG)); */
-
-	*TASK_THROWN_ARG = *arg;
-}
-
-
-/***********************************************************************
-**
-*/	void Take_Thrown_Arg_Debug(REBVAL *out, const REBVAL *err)
-/*
-**		WARNING: 'out' can be the same pointer as 'err'
+**		Sets a task-local value to be associated with the error.
+**		At the moment, there is no information put into the
+**		actual error itself to reflect this.
 **
 ***********************************************************************/
 {
@@ -280,6 +269,28 @@
 	// be to make PUSH_CATCH take 3 arguments instead of 2, and store
 	// the error argument in the Rebol_State if it gets thrown...but
 	// that looks a bit ugly.  Think more on this.
+
+	/* assert(IS_TRASH(TASK_THROWN_ARG)); */
+
+	*TASK_THROWN_ARG = *arg;
+}
+
+
+/***********************************************************************
+**
+*/	void Take_Thrown_Arg_Debug(REBVAL *out, const REBVAL *err)
+/*
+**		Gets the task-local value associated with the error, and
+**		sets the task's value to be Trash.  At the moment, there is
+**		no linkage between the error and the value.
+**
+**		WARNING: 'out' can be the same pointer as 'err'
+**
+***********************************************************************/
+{
+	assert(IS_ERROR(err) && THROWN(err));
+
+	// See notes about assertion in Add_Thrown_Arg_Debug.  TBD.
 
 	/* assert(!IS_TRASH(TASK_THROWN_ARG)); */
 
@@ -855,12 +866,12 @@
 		Trap_DEAD_END(RE_NO_RETURN); //!!! change to special msg
 
 	// If it's a BREAK, check for /return value:
-	if (IS_BREAK(val)) {
+	if (VAL_ERR_NUM(val) == RE_BREAK) {
 		TAKE_THROWN_ARG(val, val);
 		return 1;
 	}
 
-	if (IS_CONTINUE(val)) {
+	if (VAL_ERR_NUM(val) == RE_CONTINUE) {
 		SET_UNSET(val);
 		return -1;
 	}

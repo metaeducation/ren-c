@@ -1304,11 +1304,18 @@ bad_end:
 // Throw() can longjmp here, so 'error' won't be NULL *if* that happens!
 
 		if (error) {
-			// We use a special kind of BREAK and RETURN to be caught by
-			// PARSE so we differentiate between:
+			// We use a special kind of RETURN to be caught by PARSE so we
+			// differentiate between:
 			//
 			//	   foo: func [] [parse "1020" [(return true)]
 			//	   bar: func [] [parse "0304" [return false]]
+			//
+			// !!! I added a RE_PARSE_BREAK as a review point, as it seemed
+			// like there was a function Throw_Break which corresponded to
+			// a special Throw_Return used by PARSE.  In the end, BREAK and
+			// ACCEPT (what's the difference?) seem to work another way.
+			// Leaving RE_PARSE_BREAK until all is understood.  --HF
+
 			if (
 				(VAL_ERR_NUM(error) == RE_PARSE_BREAK)
 				|| (VAL_ERR_NUM(error) == RE_PARSE_RETURN)
