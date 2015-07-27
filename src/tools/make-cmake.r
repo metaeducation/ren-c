@@ -294,7 +294,7 @@ emit ["set(COMMON_MACROS " to-base-def space to-name-def macro compiler-obj/PRED
 
 unless empty? macro compiler-obj/OPTFLAGS compiler-flags [
 	emit [
-		"if(NOT CMAKE_BUILD_TYPE EQUAL DEBUG)" newline
+		{if(NOT CMAKE_BUILD_TYPE MATCHES "[Dd][Ee][Bb][Uu][Gg]")} newline
 			tab "set(CMAKE_C_FLAGS ^"${CMAKE_C_FLAGS}" macro compiler-obj/OPTFLAGS compiler-flags "^")" newline
 		"endif()"
 		newline
