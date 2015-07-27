@@ -305,6 +305,9 @@ emit ["target_include_directories(r3_core PUBLIC ${TOP_SRC_DIR}/include ${TOP_SR
 emit ["target_include_directories(r3_os PUBLIC ${TOP_SRC_DIR}/include ${TOP_SRC_DIR}/codecs)" newline]
 emit ["target_compile_definitions(r3_core PUBLIC REB_API HAVE_LIBFFI_AVAILABLE ${COMMON_MACROS})" newline]
 emit ["target_compile_definitions(r3_os PUBLIC REB_CORE REB_EXE ${COMMON_MACROS})" newline]
+if found? find words-of compiler-obj 'DBGFLAGS [
+	emit [ {set(CMAKE_C_FLAGS_DEBUG} macro compiler-obj/DBGFLAGS compiler-flags {)} newline]
+]
 emit ["set(CMAKE_C_FLAGS ^"${CMAKE_C_FLAGS}" macro compiler-obj/CFLAGS compiler-flags "^")" newline]
 emit ["set(CMAKE_EXE_LINKER_FLAGS ^"${CMAKE_EXE_LINKER_FLAGS}" macro compiler-obj/LDFLAGS linker-flags "^")" newline]
 emit ["target_link_libraries(r3" macro compiler-obj/LIBS linker-flags 
