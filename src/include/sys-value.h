@@ -326,6 +326,13 @@ typedef struct Reb_Tuple {
 #define	VAL_EVENT_DATA(v)	((v)->data.event.data)
 #define	VAL_EVENT_TIME(v)	((v)->data.event.time)
 #define	VAL_EVENT_REQ(v)	((v)->data.event.eventee.req)
+
+// !!! Because 'eventee.ser' is exported to clients who may not have the full
+// definitions of Rebol's internal types like REBSER available, it is defined
+// as a 'void*'.  This "dereference a cast of an address as a double-pointer"
+// trick allows us to use VAL_EVENT_SER on the left hand of an assignment,
+// but means that 'v' cannot be const to use this on the right hand side.
+// An m_cast will have to be used in those cases (or split up this macro)
 #define	VAL_EVENT_SER(v) \
 	(*cast(REBSER **, &(v)->data.event.eventee.ser))
 

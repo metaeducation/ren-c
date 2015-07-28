@@ -156,12 +156,10 @@
 **
 ***********************************************************************/
 {
-	REBCNT len;
-	REBYTE *tp;
+	REBCNT len = VAL_TUPLE_LEN(value);
+	const REBYTE *tp = cast(const REBYTE *, VAL_TUPLE(value));
 	REBYTE *start = out;
 
-	len = VAL_TUPLE_LEN(value);
-	tp = (REBYTE *)VAL_TUPLE(value);
 	for (; len > 0; len--, tp++) {
 		out = Form_Int(out, *tp);
 		*out++ = '.';
