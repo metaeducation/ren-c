@@ -1042,6 +1042,14 @@ typedef struct Reb_Error {
 #define ERR_VALUES(frame)	cast(ERROR_OBJ*, FRM_VALUES(frame))
 #define	ERR_NUM(frame)		VAL_INT32(&ERR_VALUES(frame)->code)
 
+#ifdef NDEBUG
+	#define ASSERT_ERROR(e) \
+		cast(void, 0)
+#else
+	#define ASSERT_ERROR(e) \
+		Assert_Error_Debug(e)
+#endif
+
 
 /***********************************************************************
 **

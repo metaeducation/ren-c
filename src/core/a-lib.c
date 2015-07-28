@@ -207,10 +207,6 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 		// Save error for EXPLAIN and return it
 		*Get_System(SYS_STATE, STATE_LAST_ERROR) = *error;
 
-		// Error codes of zero should not be possible, and if we returned
-		// zero that would mean success.
-		assert(VAL_ERR_NUM(error) != 0);
-
 		Print_Value(error, 1024, FALSE);
 
 		// !!! Whether or not the Rebol interpreter just throws and quits
@@ -223,7 +219,8 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 		// that option!
 
 		// For RE_HALT and all other errors we return the error
-		// number.  Error numbers can be unstable.
+		// number.  Error numbers are not set in stone (currently), but
+		// are never zero...which is why we can use 0 for success.
 		return VAL_ERR_NUM(error);
 	}
 

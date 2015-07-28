@@ -314,6 +314,8 @@
 **
 ***********************************************************************/
 {
+	ASSERT_ERROR(err);
+
 	if (!Saved_State) {
 		// Print out the error before crashing
 		Print_Value(err, 0, FALSE);
@@ -1035,3 +1037,20 @@ error:
 	flags = Security_Policy(sym, value);
 	Trap_Security(flags[policy], sym, value);
 }
+
+
+#if !defined(NDEBUG)
+
+/***********************************************************************
+**
+*/	void Assert_Error_Debug(const REBVAL *err)
+/*
+**		Debug-only implementation of ASSERT_ERROR
+**
+***********************************************************************/
+{
+	assert(VAL_ERR_NUM(err) != 0);
+	if (!THROWN(err)) ASSERT_FRAME(VAL_ERR_OBJECT(err));
+}
+
+#endif
