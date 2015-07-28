@@ -139,8 +139,6 @@
 #define DS_ARGC			(DSP-DS_ARG_BASE)
 
 #define DS_OUT		(&DS_Base[DSF])
-// Helpers:
-#define DS_RELOAD(d)	(d = DS_OUT)
 
 enum {
 	R_OUT = 0,

@@ -569,8 +569,6 @@ again:
 	else
 		err = Do_Dia(&dia);
 
-	DS_RELOAD(ds);
-
 	VAL_INDEX(D_ARG(2)) = MIN(dia.argi, SERIES_TAIL(dia.args));
 
 	if (Delect_Debug > 0) {

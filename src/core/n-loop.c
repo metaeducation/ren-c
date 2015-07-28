@@ -24,7 +24,6 @@
 **  Section: natives
 **  Author:  Carl Sassenrath
 **  Notes:
-**    Warning: Do not cache pointer to stack ARGS (stack may expand).
 **
 ***********************************************************************/
 
@@ -483,9 +482,6 @@ skip_hidden: ;
 	Set_Block(D_ARG(5), body);	 // keep GC safe
 
 	SET_NONE(DS_NEXT); // in case nothing below happens
-
-	// NOTE: during loop, stack may expand, so references to stack
-	// values must not be absolute.
 
 	if (IS_INTEGER(start) && IS_INTEGER(end) && IS_INTEGER(incr)) {
 		Loop_Integer(var, body, VAL_INT64(start),

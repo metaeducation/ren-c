@@ -24,7 +24,6 @@
 **  Section: natives
 **  Author:  Carl Sassenrath
 **  Notes:
-**    GC WARNING: Do not cache pointer to stack ARGS (stack may expand).
 **
 ***********************************************************************/
 

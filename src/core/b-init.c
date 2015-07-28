@@ -1066,7 +1066,8 @@ static REBCNT Set_Option_Word(REBCHR *str, REBCNT field)
 	Init_CRC();				// For word hashing
 	Set_Random(0);
 	Init_Words(FALSE);		// Symbol table
-	Init_Data_Stack(STACK_MIN*4);
+	// !!! Temporary for StableStack... simulate stable with LARGE value
+	Init_Data_Stack(128000 /* STACK_MIN*4 */);
 	Init_Scanner();
 	Init_Mold(MIN_COMMON);	// Output buffer
 	Init_Frame();			// Frames
@@ -1154,6 +1155,8 @@ static REBCNT Set_Option_Word(REBCHR *str, REBCNT field)
 	SET_NONE(ROOT_BOOT);
 	Boot_Block = NULL;
 	PG_Boot_Phase = BOOT_MEZZ;
+
+	assert((DSP == 0) && (DSF == 0));
 
 	Do_Sys_Func(SYS_CTX_FINISH_INIT_CORE, 0);
 

@@ -115,7 +115,7 @@
 
 	if (IS_BLOCK(value)) Reduce_Block(VAL_SERIES(value), VAL_INDEX(value), 0);
 	Print_Value(DS_TOP, 0, 0);
-	return R_UNSET; // reloads ds
+	return R_UNSET;
 }
 
 
@@ -252,7 +252,6 @@
 	if (IS_BLOCK(val)) {
 		Reduce_Block(VAL_SERIES(val), VAL_INDEX(val), 0); // [stack-move]
 		ports = VAL_SERIES(DS_TOP); // volatile after
-		DS_RELOAD(ds);
 		for (val = BLK_HEAD(ports); NOT_END(val); val++) { // find timeout
 			if (Pending_Port(val)) n++;
 			if (IS_INTEGER(val) || IS_DECIMAL(val)) break;
@@ -302,7 +301,6 @@ chk_neg:
 		return R_NONE;
 	}
 	if (!ports) return R_NONE;
-	DS_RELOAD(ds);
 
 	// Determine what port(s) waked us:
 	Sieve_Ports(ports);

@@ -168,9 +168,6 @@
 **      If word is not NULL, use the word sym and bind the word value,
 **      otherwise use sym.
 **
-**      WARNING: Invalidates pointers to values within the frame
-**      because the frame block may get expanded. (Use indexes.)
-**
 ***********************************************************************/
 {
 	REBSER *words = FRM_WORD_SERIES(frame);

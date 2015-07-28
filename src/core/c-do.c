@@ -90,6 +90,9 @@ void Do_Rebcode(REBVAL *v) {;}
 **
 ***********************************************************************/
 {
+	// !!! Temporary for StableStack simulation... we never expand
+	Panic(RP_MISC);
+
 	if (SERIES_REST(DS_Series) >= STACK_LIMIT) Trap(RE_STACK_OVERFLOW);
 	DS_Series->tail = DSP+1;
 	Extend_Series(DS_Series, amount);
@@ -583,12 +586,6 @@ void Trace_Arg(REBINT num, REBVAL *arg, REBVAL *path)
 	// Go thru the word list args:
 	ds = dsp;
 	for (; NOT_END(args); args++, ds++) {
-
-		// Until StableStack, any stack expansion could change the function
-		// pointer out from under us.  Since we pushed to the stack, we have
-		// to refresh it...
-		func = DSF_FUNC(dsf);
-
 		//if (Trace_Flags) Trace_Arg(ds - dsp, args, path);
 
 		// Process each formal argument:
@@ -838,10 +835,10 @@ return_index:
 	func_already_pushed:
 		assert(IS_UNSET(DSF_OUT(dsf)) && dsf > DSF && !THROWN(DS_TOP));
 		index = Do_Args(dsf, 0, block, index+1);
-		value = DSF_FUNC(dsf); // refresh, since stack could expand in Do_Args
 
 	// The function frame is completely filled with arguments and ready
 	func_ready_to_call:
+		value = DSF_FUNC(dsf);
 		assert(ANY_FUNC(value) && IS_UNSET(DSF_OUT(dsf)) && dsf > DSF);
 
 		if (THROWN(DS_TOP)) {
@@ -1007,6 +1004,7 @@ return_index:
 		}
 	}
 
+	assert(DSP == dsp_orig + 1);
 	return index;
 }
 
@@ -1463,7 +1461,6 @@ return_index:
 
 	// Evaluate the function:
 	SET_DSF(dsf);
-	func = DSF_FUNC(dsf); //stack could be expanded
 	Func_Dispatch[ftype](func);
 	DSP = dsf;
 	SET_DSF(PRIOR_DSF(dsf));
