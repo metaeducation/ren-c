@@ -188,6 +188,8 @@ typedef struct Reb_Type {
 #define	SET_NONE(v)		VAL_SET(v, REB_NONE)
 #define NONE_VALUE		ROOT_NONE_VAL
 
+#define EMPTY_SERIES	VAL_SERIES(ROOT_EMPTY_BLOCK)
+
 #define VAL_INT32(v)	(REBINT)((v)->data.integer)
 #define VAL_INT64(v)	((v)->data.integer)
 #define VAL_UNT64(v)	((v)->data.unteger)

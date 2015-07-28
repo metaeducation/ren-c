@@ -494,10 +494,15 @@ static	BOOT_BLK *Boot_Block;
 
 	// Set the UNSET_VAL to UNSET!, so we have a sample UNSET! value
 	// to pass as an arg if we need an UNSET but don't want to pay for making
-	// a new one.  (There is also a NONE_VALUE for this purpose for NONE!s)
+	// a new one.  (There is also a NONE_VALUE for this purpose for NONE!s,
+	// and an empty block as well.)
 	SET_UNSET(ROOT_UNSET_VAL);
 	assert(IS_NONE(NONE_VALUE));
 	assert(IS_UNSET(UNSET_VALUE));
+	VAL_SET(ROOT_EMPTY_BLOCK, REB_BLOCK);
+	Set_Block(ROOT_EMPTY_BLOCK, Make_Block(0));
+	SERIES_SET_FLAG(VAL_SERIES(ROOT_EMPTY_BLOCK), SER_PROT);
+	SERIES_SET_FLAG(VAL_SERIES(ROOT_EMPTY_BLOCK), SER_LOCK);
 
 	// Initialize a few fields:
 	Set_Block(ROOT_ROOT, frame);
