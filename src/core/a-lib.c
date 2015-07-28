@@ -349,7 +349,6 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 ***********************************************************************/
 {
 	REBSER *code;
-	REBSER *resolve;
 	REBCNT len;
 	REBVAL vali;
 
@@ -425,11 +424,11 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 		Bind_Block(Lib_Context, BLK_HEAD(code), BIND_SET);
 		Bind_Block(Lib_Context, BLK_HEAD(code), BIND_DEEP);
 	} else {
-		resolve = VAL_OBJ_FRAME(Get_System(SYS_CONTEXTS, CTX_USER));
-		len = resolve->tail;
-		Bind_Block(resolve, BLK_HEAD(code), BIND_ALL | BIND_DEEP);
+		REBSER *user = VAL_OBJ_FRAME(Get_System(SYS_CONTEXTS, CTX_USER));
+		len = user->tail;
+		Bind_Block(user, BLK_HEAD(code), BIND_ALL | BIND_DEEP);
 		SET_INTEGER(&vali, len);
-		Resolve_Context(resolve, Lib_Context, &vali, FALSE, 0);
+		Resolve_Context(user, Lib_Context, &vali, FALSE, 0);
 	}
 
 	Do_Blk(code, 0);
