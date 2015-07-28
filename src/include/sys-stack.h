@@ -114,10 +114,16 @@
 #define DS_POP			(&DS_Base[DSP--])
 #define DS_TOP			(&DS_Base[DSP])
 #define DS_NEXT			(&DS_Base[DSP+1])
-#define DS_SKIP			(DSP++)
 #define DS_DROP			(DSP--)
 #define DS_GET(d)		(&DS_Base[d])
 #define DS_PUSH(v)		(DS_Base[++DSP]=*(v))		// atomic
+
+#define DS_PUSH_TRASH_SAFE \
+	(++DSP, SET_TRASH_SAFE(DS_TOP))
+
+#define DS_PUSH_TRASH \
+	(++DSP, SET_TRASH(DS_TOP))
+
 #define DS_PUSH_UNSET	SET_UNSET(&DS_Base[++DSP])	// atomic
 #define DS_PUSH_NONE	SET_NONE(&DS_Base[++DSP])	// atomic
 #define DS_PUSH_TRUE	VAL_SET(&DS_Base[++DSP], REB_LOGIC), \

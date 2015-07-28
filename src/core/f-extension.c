@@ -210,7 +210,7 @@ x*/	int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result)
 	dsf = PRIOR_DSF(DSF);
 
 	// Create stack frame (use prior stack frame for location info):
-	DS_PUSH_UNSET; // OUT slot for function eval result
+	DS_PUSH_TRASH_SAFE; // OUT slot for function eval result
 	Init_Word_Unbound(&label, REB_WORD, name);
 	dsf = Push_Func(
 		VAL_SERIES(DSF_POSITION(dsf)), VAL_INDEX(DSF_POSITION(dsf)), &label, val
@@ -222,7 +222,7 @@ x*/	int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result)
 	// Push args. Too short or too long arg frames are handled W/O error.
 	// Note that refinements args can be set to anything.
 	for (n = 1; n <= len && n <= RXI_COUNT(args); n++) {
-		DS_SKIP;
+		DS_PUSH_TRASH;
 		RXI_To_Value(DS_TOP, args[n], RXI_TYPE(args, n));
 		// Check type for word at the given offset:
 		if (!TYPE_CHECK(BLK_SKIP(obj, n), VAL_TYPE(DS_TOP))) {
@@ -234,8 +234,7 @@ x*/	int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result)
 	}
 	// Fill with NONE if necessary:
 	for (; n <= len; n++) {
-		DS_SKIP;
-		SET_NONE(DS_TOP);
+		DS_PUSH_NONE;
 		if (!TYPE_CHECK(BLK_SKIP(obj, n), VAL_TYPE(DS_TOP))) {
 			result->i2.int32b = n;
 			SET_EXT_ERROR(result, RXE_BAD_ARGS);

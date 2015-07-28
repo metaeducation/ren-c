@@ -296,12 +296,11 @@ void Trace_Arg(REBINT num, REBVAL *arg, REBVAL *path)
 #endif
 
 	// Save prior DSF;
-	DS_SKIP;
-	SET_INTEGER(DS_TOP, DSF);
+	DS_PUSH_INTEGER(DSF);
 	assert(DSF == PRIOR_DSF(dsf));
 
 	// Save current evaluation position
-	DS_SKIP;
+	DS_PUSH_TRASH;
 	assert(block); // Don't accept NULL series
 	VAL_SET(DS_TOP, REB_BLOCK);
 	VAL_SERIES(DS_TOP) = block;
@@ -310,26 +309,25 @@ void Trace_Arg(REBINT num, REBVAL *arg, REBVAL *path)
 
 	// Save symbol describing the function (if we called this as the result of
 	// a word or path lookup)
-	DS_SKIP;
 	if (!label) {
 		// !!! When a function was not invoked through looking up a word to
 		// (or a word in a path) to use as a label, there were three different
 		// alternate labels used.  One was SYM__APPLY_, another was
 		// ROOT_NONAME, and another was to be the type of the function being
 		// executed.  None are fantastic, but we do the type for now.
-		label = Get_Type_Word(VAL_TYPE(func));
-	} else
+		DS_PUSH(Get_Type_Word(VAL_TYPE(func)));
+	}
+	else {
 		assert(IS_WORD(label));
-
-	*DS_TOP = *label;
+		DS_PUSH(label);
+	}
 	// !!! Not sure why this is needed; seems the label word should be unbound
 	// if anything...
 	VAL_WORD_FRAME(DS_TOP) = VAL_FUNC_ARGS(func);
 	assert(IS_WORD(DSF_LABEL(dsf)));
 
 	// Save FUNC value for safety (spec, args, code):
-	DS_SKIP;
-	*DS_TOP = *func;
+	DS_PUSH(func);
 	assert(ANY_FUNC(DSF_FUNC(dsf)));
 
 	assert(dsf == DSP - DSF_SIZE);
@@ -577,7 +575,7 @@ void Trace_Arg(REBINT num, REBVAL *arg, REBVAL *path)
 	// to keep one value at TOS the whole time.
 	// !!! If it looks inefficient to be DS_DROP'ing before a Do_Next to
 	// keep the invariant, that's temporary...StableStack fixes it.
-	DS_SKIP;
+	DS_PUSH_TRASH;
 
 	// The caller will be testing the top slot, and we might not write to
 	// it (e.g. what if all params are quoted?) so we have to put something
@@ -791,7 +789,7 @@ return_index:
 	switch (EVAL_TYPE(value)) {
 
 	case ET_WORD:
-		DS_SKIP;
+		DS_PUSH_TRASH;
 		GET_VAR_INTO(DS_TOP, value);
 		if (IS_UNSET(DS_TOP)) Trap1_DEAD_END(RE_NO_VALUE, value);
 		if (ANY_FUNC(DS_TOP)) {
@@ -821,14 +819,14 @@ return_index:
 		break;
 
 	case ET_FUNCTION:
-		DS_SKIP;
+		DS_PUSH_TRASH;
 
 	// Value must be the function, and space for the return slot (DSF_OUT)
 	// needs to already be accounted for
 	func_needs_push:
 		assert(ANY_FUNC(value) && (DSP == dsp_orig + 1));
 		dsf = Push_Func(block, index, label, value);
-		SET_UNSET(DSF_OUT(dsf));
+		SET_TRASH_SAFE(DSF_OUT(dsf)); // catch functions that don't write out
 
 	// 'dsf' holds index of new call frame, not yet set during arg evaluation
 	// (because the arguments want to be computed in the caller's environment)
@@ -840,7 +838,7 @@ return_index:
 	// The function frame is completely filled with arguments and ready
 	func_ready_to_call:
 		value = DSF_FUNC(dsf);
-		assert(ANY_FUNC(value) && IS_UNSET(DSF_OUT(dsf)) && dsf > DSF);
+		assert(ANY_FUNC(value) && IS_TRASH(DSF_OUT(dsf)) && dsf > DSF);
 
 		if (THROWN(DS_TOP)) {
 			// If the result of the Do_Args was something like a RETURN or
@@ -870,6 +868,10 @@ return_index:
 
 		if (Trace_Flags) Trace_Return(label, DS_TOP);
 
+		// Function execution should have written *some* actual output value
+		// over the trash that we put in the return slot before the call.
+		assert(!IS_TRASH(DS_TOP));
+
 		// The return value is a FUNC that needs to be re-evaluated.
 		if (VAL_GET_OPT(DS_TOP, OPTS_REVAL) && ANY_FUNC(DS_TOP)) {
 			value = DS_TOP;
@@ -893,7 +895,7 @@ return_index:
 		// TOS has first arg, we will re-use that slot for the OUT value
 		dsf = Push_Func(block, index, label, value);
 		DS_PUSH(DSF_OUT(dsf)); // Copy prior to first argument
-		SET_UNSET(DSF_OUT(dsf)); // initialize to unset before function call
+		SET_TRASH_SAFE(DSF_OUT(dsf)); // catch functions that don't write out
 		goto func_already_pushed;
 
 	case ET_PATH:  // PATH, SET_PATH
@@ -935,7 +937,7 @@ return_index:
 				// the stack.  With the function value saved, we default the
 				// function output to UNSET!
 				value = DSF_FUNC(dsf);
-				SET_UNSET(DSF_OUT(dsf));
+				SET_TRASH_SAFE(DSF_OUT(dsf));
 
 				goto func_ready_to_call;
 			} else
@@ -956,7 +958,7 @@ return_index:
 		break;
 
 	case ET_GET_WORD:
-		DS_SKIP;
+		DS_PUSH_TRASH;
 		GET_VAR_INTO(DS_TOP, value);
 		index++;
 		break;
@@ -1401,7 +1403,7 @@ return_index:
 	if (index > SERIES_TAIL(block)) index = SERIES_TAIL(block);
 
 	// Push function frame:
-	DS_PUSH_UNSET; // OUT slot for function eval result
+	DS_PUSH_TRASH_SAFE; // OUT slot for function eval result
 	dsf = Push_Func(block, index, NULL, func);
 	func = DSF_FUNC(dsf); // for safety
 
@@ -1490,7 +1492,7 @@ return_index:
 	REBSER *wblk; // where block (where we were called)
 	REBCNT widx; // where index (position in above block)
 
-	DS_PUSH_UNSET; // OUT slot for function eval result
+	DS_PUSH_TRASH_SAFE; // OUT slot for function eval result
 
 	// For debugging purposes, DO wants to know what our execution
 	// block and position are.  We have to make something up, because

@@ -182,7 +182,7 @@ static const char *Dia_Fmt = "DELECT - cmd: %s length: %d missed: %d total: %d";
 
 	case REB_PAREN:
 		value = DO_BLK(value);
-		DS_SKIP; // do not overwrite TOS
+		DSP++; // do not overwrite TOS
 		break;
 	}
 
