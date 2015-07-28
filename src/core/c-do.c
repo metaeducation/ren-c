@@ -302,6 +302,7 @@ void Trace_Arg(REBINT num, REBVAL *arg, REBVAL *path)
 
 	// Save current evaluation position
 	DS_SKIP;
+	assert(block); // Don't accept NULL series
 	VAL_SET(DS_TOP, REB_BLOCK);
 	VAL_SERIES(DS_TOP) = block;
 	VAL_INDEX(DS_TOP) = index;
@@ -1469,15 +1470,13 @@ return_index:
 
 /***********************************************************************
 **
-*/	void Apply_Function(REBSER *wblk, REBCNT widx, REBVAL *func, va_list *args)
+*/	void Apply_Function(REBVAL *func, va_list *args)
 /*
 **		(va_list by pointer: http://stackoverflow.com/a/3369762/211160)
 **
 **		Applies function from args provided by C call. Zero terminated.
 **		Result returned on TOS
 **
-**		wblk - where block (where we were called)
-**		widx - where index (position in above block)
 **		func - function to call
 **		args - list of function args (null terminated)
 **
@@ -1488,7 +1487,35 @@ return_index:
 	REBCNT ds;
 	REBVAL *arg;
 
+	REBSER *wblk; // where block (where we were called)
+	REBCNT widx; // where index (position in above block)
+
 	DS_PUSH_UNSET; // OUT slot for function eval result
+
+	// For debugging purposes, DO wants to know what our execution
+	// block and position are.  We have to make something up, because
+	// this call is originating from C code (not Rebol code).
+	if (DSF != 0) {
+		// Some function is on the stack, so fabricate our execution
+		// position by copying the block and position it was at.
+
+		wblk = VAL_SERIES(DSF_POSITION(DSF));
+		widx = VAL_INDEX(DSF_POSITION(DSF));
+	}
+	else if (IS_FUNCTION(func) || IS_CLOSURE(func)) {
+		// Stack is empty, so offer up the body of the function itself
+		// (if it has a body!)
+		wblk = VAL_FUNC_BODY(func);
+		widx = 0;
+	}
+	else {
+		// We got nothin'.  Give back the specially marked "top level"
+		// empty block just to provide something in the slot
+		// !!! Could use more sophisticated backtracing here, and in general
+		wblk = EMPTY_SERIES;
+		widx = 0;
+	}
+
 	dsf = Push_Func(wblk, widx, NULL, func);
 	func = DSF_FUNC(dsf); // for safety
 	words = VAL_FUNC_WORDS(func);
@@ -1526,10 +1553,9 @@ return_index:
 	va_list args;
 
 	if (!ANY_FUNC(func)) Trap_Arg(func);
-	if (!where) where = VAL_FUNC_BODY(func); // something/anything ?!!
 
 	va_start(args, func);
-	Apply_Function(where, 0, func, &args);
+	Apply_Function(func, &args);
 	va_end(args);
 }
 
@@ -1544,23 +1570,13 @@ return_index:
 **
 ***********************************************************************/
 {
-	REBVAL *value;
 	va_list args;
-	REBSER *blk = 0;
-	REBCNT idx = 0;
+	REBVAL *value = FRM_VALUE(Sys_Context, inum);
 
-	if (DSF) {
-		value = DSF_POSITION(DSF);
-		blk = VAL_SERIES(value);
-		idx = VAL_INDEX(value);
-	}
-
-	value = FRM_VALUE(Sys_Context, inum);
 	if (!ANY_FUNC(value)) Trap1(RE_BAD_SYS_FUNC, value);
-	if (!DSF) blk = VAL_FUNC_BODY(value);
 
 	va_start(args, inum);
-	Apply_Function(blk, idx, value, &args);
+	Apply_Function(value, &args);
 	va_end(args);
 }
 
