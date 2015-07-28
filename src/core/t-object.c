@@ -296,7 +296,7 @@ static REBSER *Trim_Object(REBSER *obj)
 				// make object! [init]
 				if (type == REB_OBJECT) {
 					obj = Make_Object(0, VAL_BLK_DATA(arg));
-					SET_OBJECT(ds, obj); // GC save
+					SET_OBJECT(D_OUT, obj); // GC save
 					arg = Do_Bind_Block(obj, arg); // GC-OK
 					if (THROWN(arg)) {
 						*D_OUT = *arg;
@@ -371,7 +371,7 @@ static REBSER *Trim_Object(REBSER *obj)
 			if (IS_BLOCK(arg)) {
 				obj = Make_Object(src_obj, VAL_BLK_DATA(arg));
 				Rebind_Frame(src_obj, obj);
-				SET_OBJECT(ds, obj);
+				SET_OBJECT(D_OUT, obj);
 				arg = Do_Bind_Block(obj, arg); // GC-OK
 				if (THROWN(arg)) {
 					*D_OUT = *arg;

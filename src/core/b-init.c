@@ -307,7 +307,7 @@ static	BOOT_BLK *Boot_Block;
 ***********************************************************************/
 {
 	if ((Native_Limit == 0 && *Native_Functions) || (Native_Count < Native_Limit))
-		Make_Native(ds, VAL_SERIES(D_ARG(1)), *Native_Functions++, REB_NATIVE);
+		Make_Native(D_OUT, VAL_SERIES(D_ARG(1)), *Native_Functions++, REB_NATIVE);
 	else Trap(RE_MAX_NATIVES);
 	Native_Count++;
 	return R_OUT;
@@ -322,7 +322,12 @@ static	BOOT_BLK *Boot_Block;
 {
 	Action_Count++;
 	if (Action_Count >= A_MAX_ACTION) Panic(RP_ACTION_OVERFLOW);
-	Make_Native(ds, VAL_SERIES(D_ARG(1)), (REBFUN)(REBUPT)Action_Count, REB_ACTION);
+	Make_Native(
+		D_OUT,
+		VAL_SERIES(D_ARG(1)),
+		cast(REBFUN, cast(REBUPT, Action_Count)),
+		REB_ACTION
+	);
 	return R_OUT;
 }
 
@@ -338,8 +343,8 @@ static	BOOT_BLK *Boot_Block;
 {
 	REBVAL *spec = D_ARG(1);
 
-	SET_OBJECT(ds, Make_Object(0, VAL_BLK(spec)));
-	Bind_Block(VAL_OBJ_FRAME(ds), VAL_BLK(spec), BIND_ONLY); // not deep
+	SET_OBJECT(D_OUT, Make_Object(0, VAL_BLK(spec)));
+	Bind_Block(VAL_OBJ_FRAME(D_OUT), VAL_BLK(spec), BIND_ONLY); // not deep
 	Do_Blk(VAL_SERIES(spec), 0); // result ignored
 	return R_OUT;
 }

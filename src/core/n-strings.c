@@ -652,7 +652,7 @@ static struct digest {
 /*
 ***********************************************************************/
 {
-	Change_Case(ds, D_ARG(1), D_ARG(3), FALSE);
+	Change_Case(D_OUT, D_ARG(1), D_ARG(3), FALSE);
 	return R_OUT;
 }
 
@@ -663,7 +663,7 @@ static struct digest {
 /*
 ***********************************************************************/
 {
-	Change_Case(ds, D_ARG(1), D_ARG(3), TRUE);
+	Change_Case(D_OUT, D_ARG(1), D_ARG(3), TRUE);
 	return R_OUT;
 }
 

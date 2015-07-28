@@ -928,7 +928,7 @@ static int Do_Ordinal(REBVAL *ds, REBINT n)
 
 /***********************************************************************
 **
-*/	static void Return_Gob_Pair(REBVAL *ds, REBGOB *gob, REBD32 x, REBD32 y)
+*/	static void Return_Gob_Pair(REBVAL *out, REBGOB *gob, REBD32 x, REBD32 y)
 /*
 ***********************************************************************/
 {
@@ -936,7 +936,7 @@ static int Do_Ordinal(REBVAL *ds, REBINT n)
 	REBVAL *val;
 
 	blk = Make_Block(2);
-	Set_Series(REB_BLOCK, ds, blk);
+	Set_Series(REB_BLOCK, out, blk);
 	val = Alloc_Tail_Blk(blk);
 	SET_GOB(val, gob);
 	val = Alloc_Tail_Blk(blk);
@@ -974,7 +974,7 @@ static int Do_Ordinal(REBVAL *ds, REBINT n)
 		yo = xy.y;
 	}
 
-	Return_Gob_Pair(ds, gob, xo, yo);
+	Return_Gob_Pair(D_OUT, gob, xo, yo);
 
 	return R_OUT;
 }

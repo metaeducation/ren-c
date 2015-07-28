@@ -70,7 +70,7 @@ enum Transport_Types {
 
 /***********************************************************************
 **
-*/	static void Accept_New_Port(REBVAL *ds, REBSER *port, REBREQ *sock)
+*/	static void Accept_New_Port(REBVAL *out, REBSER *port, REBREQ *sock)
 /*
 **		Clone a listening port as a new accept port.
 **
@@ -87,7 +87,7 @@ enum Transport_Types {
 
 	// Create a new port using ACCEPT request passed by sock->common.sock:
 	port = Copy_Block(port, 0);
-	SET_PORT(DS_OUT, port);	// Also for GC protect
+	SET_PORT(out, port);	// Also for GC protect
 	SET_NONE(OFV(port, STD_PORT_DATA)); // just to be sure.
 	SET_NONE(OFV(port, STD_PORT_STATE)); // just to be sure.
 
@@ -259,7 +259,7 @@ enum Transport_Types {
 		// FIRST server-port returns new port connection.
 		len = Get_Num_Arg(arg); // Position
 		if (len == 1 && GET_FLAG(sock->modes, RST_LISTEN) && sock->common.data)
-			Accept_New_Port(ds, port, sock); // sets D_OUT
+			Accept_New_Port(D_OUT, port, sock); // sets D_OUT
 		else
 			Trap_Range_DEAD_END(arg);
 		break;

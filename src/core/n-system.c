@@ -108,20 +108,20 @@
 	REBVAL *stats;
 
 	if (D_REF(3)) {
-		VAL_TIME(ds) = OS_DELTA_TIME(PG_Boot_Time, 0) * 1000;
-		VAL_SET(ds, REB_TIME);
+		VAL_TIME(D_OUT) = OS_DELTA_TIME(PG_Boot_Time, 0) * 1000;
+		VAL_SET(D_OUT, REB_TIME);
 		return R_OUT;
 	}
 
 	if (D_REF(4)) {
 		n = Eval_Cycles + Eval_Dose - Eval_Count;
-		SET_INTEGER(ds, n);
+		SET_INTEGER(D_OUT, n);
 		return R_OUT;
 	}
 
 	if (D_REF(2)) {
 		stats = Get_System(SYS_STANDARD, STD_STATS);
-		*ds = *stats;
+		*D_OUT = *stats;
 		if (IS_OBJECT(stats)) {
 			stats = Get_Object(stats, 1);
 

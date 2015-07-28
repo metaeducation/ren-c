@@ -280,7 +280,7 @@ x*/	int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result)
 
 	if (!n) Trap_Num(RE_INVALID_ARG, GET_EXT_ERROR(&cbi->result));
 
-	RXI_To_Value(ds, cbi->result, n);
+	RXI_To_Value(DS_OUT, cbi->result, n);
 	return R_OUT;
 }
 
