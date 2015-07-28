@@ -53,25 +53,6 @@
 
 /***********************************************************************
 **
-*/	static REBVAL *As_Port(REBVAL *value)
-/*
-**		Make the port object if necessary.
-**
-***********************************************************************/
-{
-	REBVAL *ds;
-
-	if (IS_PORT(value)) return value;
-
-	ds = DS_OUT;
-	Make_Port(D_ARG(1), value);
-
-	return D_ARG(1);
-}
-
-
-/***********************************************************************
-**
 */	REBTYPE(Port)
 /*
 ***********************************************************************/
@@ -88,7 +69,10 @@
 	case A_CREATE:
 	case A_DELETE:
 	case A_RENAME:
-		value = As_Port(value);
+		if (!IS_PORT(value)) {
+			Make_Port(D_ARG(1), value);
+			value = D_ARG(1);
+		}
 	case A_UPDATE:
 	default:
 		return Do_Port_Action(VAL_PORT(value), action); // Result on stack
