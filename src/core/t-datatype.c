@@ -89,7 +89,7 @@
 	case A_TO:
 		if (type != REB_DATATYPE) {
 			act = Value_Dispatch[type];
-			if (act) return act(ds, action);
+			if (act) return act(call_, action);
 			//return R_NONE;
 			Trap_Make_DEAD_END(type, arg);
 		}

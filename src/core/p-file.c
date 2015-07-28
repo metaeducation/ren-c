@@ -306,7 +306,7 @@ REBINT Mode_Syms[] = {
 
 /***********************************************************************
 **
-*/	static int File_Actor(REBVAL *ds, REBSER *port, REBCNT action)
+*/	static REB_R File_Actor(struct Reb_Call *call_, REBSER *port, REBCNT action)
 /*
 **		Internal port handler for files.
 **
@@ -340,7 +340,7 @@ REBINT Mode_Syms[] = {
 	switch (action) {
 
 	case A_READ:
-		args = Find_Refines(ds, ALL_READ_REFS);
+		args = Find_Refines(call_, ALL_READ_REFS);
 
 		// Handle the READ %file shortcut case:
 		if (!IS_OPEN(file)) {
@@ -372,7 +372,7 @@ REBINT Mode_Syms[] = {
 		SET_FLAG(file->modes, RFM_RESEEK);
 
 	case A_WRITE:
-		args = Find_Refines(ds, ALL_WRITE_REFS);
+		args = Find_Refines(call_, ALL_WRITE_REFS);
 		spec = D_ARG(2); // data (binary, string, or block)
 
 		// Handle the READ %file shortcut case:
@@ -413,7 +413,7 @@ REBINT Mode_Syms[] = {
 		break;
 
 	case A_OPEN:
-		args = Find_Refines(ds, ALL_OPEN_REFS);
+		args = Find_Refines(call_, ALL_OPEN_REFS);
 		// Default file modes if not specified:
 		if (!(args & (AM_OPEN_READ | AM_OPEN_WRITE))) args |= (AM_OPEN_READ | AM_OPEN_WRITE);
 		Setup_File(file, args, path);

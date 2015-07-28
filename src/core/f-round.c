@@ -45,7 +45,7 @@ enum {
 
 /***********************************************************************
 **
-*/  REBCNT Get_Round_Flags(REBVAL *ds)
+*/  REBCNT Get_Round_Flags(struct Reb_Call *call_)
 /*
 **		1 n [number! money! time!] "The value to round"
 **		2 /to "Return the nearest multiple of the scale parameter"

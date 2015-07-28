@@ -133,6 +133,7 @@ static int Check_Char_Range(REBVAL *val, REBINT limit)
 		REBSER *block = VAL_SERIES(value);
 		REBCNT index = VAL_INDEX(value);
 		REBCNT i;
+		REBVAL *ds;
 
 		ds = 0;
 		while (index < SERIES_TAIL(block)) {
@@ -613,13 +614,13 @@ static int Check_Char_Range(REBVAL *val, REBINT limit)
 
 //** SERIES ************************************************************
 
-static int Do_Ordinal(REBVAL *ds, REBINT n)
+static int Do_Ordinal(struct Reb_Call *call_, REBINT n)
 {
 	// Is only valid when returned from ACTION function itself.
 	REBACT action = Value_Dispatch[VAL_TYPE(D_ARG(1))];
 	DS_PUSH_INTEGER(n);
 	//DSF_FUNC(ds) // needs to be set to PICK action!
-	return action(ds, A_PICK);  // returns R_OUT and other cases
+	return action(call_, A_PICK);  // returns R_OUT and other cases
 }
 
 /***********************************************************************
@@ -628,7 +629,7 @@ static int Do_Ordinal(REBVAL *ds, REBINT n)
 /*
 ***********************************************************************/
 {
-	return Do_Ordinal(ds, 1);
+	return Do_Ordinal(call_, 1);
 }
 
 
@@ -638,7 +639,7 @@ static int Do_Ordinal(REBVAL *ds, REBINT n)
 /*
 ***********************************************************************/
 {
-	return Do_Ordinal(ds, 2);
+	return Do_Ordinal(call_, 2);
 }
 
 
@@ -648,7 +649,7 @@ static int Do_Ordinal(REBVAL *ds, REBINT n)
 /*
 ***********************************************************************/
 {
-	return Do_Ordinal(ds, 3);
+	return Do_Ordinal(call_, 3);
 }
 
 
@@ -658,7 +659,7 @@ static int Do_Ordinal(REBVAL *ds, REBINT n)
 /*
 ***********************************************************************/
 {
-	return Do_Ordinal(ds, 4);
+	return Do_Ordinal(call_, 4);
 }
 
 
@@ -668,7 +669,7 @@ static int Do_Ordinal(REBVAL *ds, REBINT n)
 /*
 ***********************************************************************/
 {
-	return Do_Ordinal(ds, 5);
+	return Do_Ordinal(call_, 5);
 }
 
 
@@ -678,7 +679,7 @@ static int Do_Ordinal(REBVAL *ds, REBINT n)
 /*
 ***********************************************************************/
 {
-	return Do_Ordinal(ds, 6);
+	return Do_Ordinal(call_, 6);
 }
 
 
@@ -688,7 +689,7 @@ static int Do_Ordinal(REBVAL *ds, REBINT n)
 /*
 ***********************************************************************/
 {
-	return Do_Ordinal(ds, 7);
+	return Do_Ordinal(call_, 7);
 }
 
 
@@ -698,7 +699,7 @@ static int Do_Ordinal(REBVAL *ds, REBINT n)
 /*
 ***********************************************************************/
 {
-	return Do_Ordinal(ds, 8);
+	return Do_Ordinal(call_, 8);
 }
 
 
@@ -708,7 +709,7 @@ static int Do_Ordinal(REBVAL *ds, REBINT n)
 /*
 ***********************************************************************/
 {
-	return Do_Ordinal(ds, 9);
+	return Do_Ordinal(call_, 9);
 }
 
 
@@ -718,7 +719,7 @@ static int Do_Ordinal(REBVAL *ds, REBINT n)
 /*
 ***********************************************************************/
 {
-	return Do_Ordinal(ds, 10);
+	return Do_Ordinal(call_, 10);
 }
 
 
@@ -744,7 +745,7 @@ static int Do_Ordinal(REBVAL *ds, REBINT n)
 	}
 	else t = 0; // let the action throw the error
 	DS_PUSH_INTEGER(t);
-	return action(ds, A_PICK);
+	return action(call_, A_PICK);
 }
 
 
@@ -772,7 +773,7 @@ static int Do_Ordinal(REBVAL *ds, REBINT n)
 	*D_ARG(1) = *value;
 	index = VAL_INDEX(value); // same for VAL_GOB_INDEX
 	if (index < tail) VAL_INDEX(value) = index + 1;
-	return Do_Ordinal(ds, 1);
+	return Do_Ordinal(call_, 1);
 }
 
 

@@ -166,7 +166,7 @@ enum {
 
 /***********************************************************************
 **
-*/	static int Protect(REBVAL *ds, REBCNT flags)
+*/	static int Protect(struct Reb_Call *call_, REBCNT flags)
 /*
 **		1: value
 **		2: /deep  - recursive
@@ -254,6 +254,7 @@ enum {
 {
 	REBSER *block = VAL_SERIES(D_ARG(1));
 	REBCNT index = VAL_INDEX(D_ARG(1));
+	REBVAL *ds;
 
 	ds = 0;
 	while (index < SERIES_TAIL(block)) {
@@ -275,6 +276,7 @@ enum {
 {
 	REBSER *block = VAL_SERIES(D_ARG(1));
 	REBCNT index = VAL_INDEX(D_ARG(1));
+	REBVAL *ds;
 
 	while (index < SERIES_TAIL(block)) {
 		index = Do_Next(block, index, 0); // stack volatile
@@ -349,6 +351,7 @@ enum {
 	REBSER *block = VAL_SERIES(D_ARG(1));
 	REBCNT index = VAL_INDEX(D_ARG(1));
 	REBFLG all_flag = D_REF(2);
+	REBVAL *ds;
 
 	while (index < SERIES_TAIL(block)) {
 		//DSP = top; // reset stack  -- not needed?
@@ -646,7 +649,7 @@ got_err:
 /*
 ***********************************************************************/
 {
-	return Protect(ds, 1); // PROT_SET
+	return Protect(call_, 1); // PROT_SET
 }
 
 
@@ -657,7 +660,7 @@ got_err:
 ***********************************************************************/
 {
 	SET_NONE(D_ARG(5)); // necessary, bogus, but no harm to stack
-	return Protect(ds, 0);
+	return Protect(call_, 0);
 }
 
 

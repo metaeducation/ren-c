@@ -158,7 +158,7 @@
 
 /***********************************************************************
 **
-*/	static int Dir_Actor(REBVAL *ds, REBSER *port, REBCNT action)
+*/	static REB_R Dir_Actor(struct Reb_Call *call_, REBSER *port, REBCNT action)
 /*
 **		Internal port handler for file directories.
 **
@@ -199,7 +199,7 @@
 
 	case A_READ:
 		//Trap_Security(flags[POL_READ], POL_READ, path);
-		args = Find_Refines(ds, ALL_READ_REFS);
+		args = Find_Refines(call_, ALL_READ_REFS);
 		if (!IS_BLOCK(state)) {		// !!! ignores /SKIP and /PART, for now
 			Init_Dir_Path(&dir, path, 1, POL_READ);
 			Set_Block(state, Make_Block(7)); // initial guess
@@ -257,7 +257,7 @@ create:
 		// !! If open fails, what if user does a READ w/o checking for error?
 		if (IS_BLOCK(state)) Trap1_DEAD_END(RE_ALREADY_OPEN, path); // already open
 		//Trap_Security(flags[POL_READ], POL_READ, path);
-		args = Find_Refines(ds, ALL_OPEN_REFS);
+		args = Find_Refines(call_, ALL_OPEN_REFS);
 		if (args & AM_OPEN_NEW) goto create;
 		//if (args & ~AM_OPEN_READ) Trap1_DEAD_END(RE_INVALID_SPEC, path);
 		Set_Block(state, Make_Block(7));

@@ -175,7 +175,7 @@
 
 /***********************************************************************
 **
-*/	static int Loop_All(REBVAL *ds, REBINT mode)
+*/	static int Loop_All(struct Reb_Call *call_, REBINT mode)
 /*
 **		0: forall
 **		1: forskip
@@ -189,6 +189,7 @@
 	REBINT idx;
 	REBINT inc = 1;
 	REBCNT type;
+	REBVAL *ds;
 
 	var = GET_MUTABLE_VAR(D_ARG(1));
 	if (IS_NONE(var)) return R_NONE;
@@ -249,7 +250,7 @@
 
 /***********************************************************************
 **
-*/	static int Loop_Each(REBVAL *ds, REBINT mode)
+*/	static int Loop_Each(struct Reb_Call *call_, REBINT mode)
 /*
 **		Supports these natives (modes):
 **			0: foreach
@@ -273,6 +274,7 @@
 	REBINT err;
 	REBCNT i;
 	REBCNT j;
+	REBVAL *ds;
 
 	assert(mode >= 0 && mode < 3);
 
@@ -508,7 +510,7 @@ skip_hidden: ;
 /*
 ***********************************************************************/
 {
-	return Loop_All(ds, 0);
+	return Loop_All(call_, 0);
 }
 
 
@@ -518,7 +520,7 @@ skip_hidden: ;
 /*
 ***********************************************************************/
 {
-	return Loop_All(ds, 1);
+	return Loop_All(call_, 1);
 }
 
 
@@ -552,7 +554,7 @@ skip_hidden: ;
 **
 ***********************************************************************/
 {
-	return Loop_Each(ds, 0);
+	return Loop_Each(call_, 0);
 }
 
 
@@ -566,7 +568,7 @@ skip_hidden: ;
 **
 ***********************************************************************/
 {
-	return Loop_Each(ds, 1);
+	return Loop_Each(call_, 1);
 }
 
 
@@ -580,7 +582,7 @@ skip_hidden: ;
 **
 ***********************************************************************/
 {
-	return Loop_Each(ds, 2);
+	return Loop_Each(call_, 2);
 }
 
 
@@ -593,6 +595,7 @@ skip_hidden: ;
 	REBI64 count = Int64(D_ARG(1));
 	REBSER *block = VAL_SERIES(D_ARG(2));
 	REBCNT index  = VAL_INDEX(D_ARG(2));
+	REBVAL *ds;
 
 	ds = 0;
 	for (; count > 0; count--) {
@@ -652,6 +655,7 @@ skip_hidden: ;
 {
 	REBSER *b1 = VAL_SERIES(D_ARG(1));
 	REBCNT i1  = VAL_INDEX(D_ARG(1));
+	REBVAL *ds;
 
 	do {
 utop:
@@ -676,6 +680,7 @@ utop:
 	REBCNT i1  = VAL_INDEX(D_ARG(1));
 	REBSER *b2 = VAL_SERIES(D_ARG(2));
 	REBCNT i2  = VAL_INDEX(D_ARG(2));
+	REBVAL *ds;
 
 	SET_NONE(D_OUT);
 

@@ -142,7 +142,7 @@ static int sig_word_num(REBVAL *word)
 
 /***********************************************************************
 **
-*/	static int Signal_Actor(REBVAL *ds, REBSER *port, REBCNT action)
+*/	static REB_R Signal_Actor(struct Reb_Call *call_, REBSER *port, REBCNT action)
 /*
 ***********************************************************************/
 {

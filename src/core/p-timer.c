@@ -43,7 +43,7 @@
 
 /***********************************************************************
 **
-*/	static int Event_Actor(REBVAL *ds, REBSER *port, REBCNT action)
+*/	static REB_R Event_Actor(struct Reb_Call *call_, REBSER *port, REBCNT action)
 /*
 ***********************************************************************/
 {

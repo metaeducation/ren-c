@@ -140,7 +140,7 @@ REBREQ *req;		//!!! move this global
 
 /***********************************************************************
 **
-*/	static int Event_Actor(REBVAL *ds, REBSER *port, REBCNT action)
+*/	static REB_R Event_Actor(struct Reb_Call *call_, REBSER *port, REBCNT action)
 /*
 **		Internal port handler for events.
 **
@@ -148,7 +148,7 @@ REBREQ *req;		//!!! move this global
 {
 	REBVAL *spec;
 	REBVAL *state;
-	REBCNT result;
+	REB_R result;
 	REBVAL *arg;
 	REBVAL save_port;
 
@@ -183,7 +183,7 @@ REBREQ *req;		//!!! move this global
 act_blk:
 		save_port = *D_ARG(1); // save for return
 		*D_ARG(1) = *state;
-		result = T_Block(ds, action);
+		result = T_Block(call_, action);
 		SET_SIGNAL(SIG_EVENT_PORT);
 		if (action == A_INSERT || action == A_APPEND || action == A_REMOVE) {
 			*D_OUT = save_port;

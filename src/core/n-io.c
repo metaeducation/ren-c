@@ -332,7 +332,7 @@ chk_neg:
 
 	val = OFV(port, STD_PORT_ACTOR);
 	if (IS_NATIVE(val)) {
-		Do_Port_Action(port, A_UPDATE); // uses current stack frame
+		Do_Port_Action(call_, port, A_UPDATE); // uses current stack frame
 	}
 
 	val = OFV(port, STD_PORT_AWAKE);

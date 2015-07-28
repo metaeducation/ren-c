@@ -33,7 +33,7 @@
 
 /***********************************************************************
 **
-*/	static int DNS_Actor(REBVAL *ds, REBSER *port, REBCNT action)
+*/	static REB_R DNS_Actor(struct Reb_Call *call_, REBSER *port, REBCNT action)
 /*
 ***********************************************************************/
 {

@@ -134,8 +134,8 @@
 						VAL_DECIMAL(&DS_Base[DSP]) = n // not atomic
 
 // Reference from ds that points to current return value:
-#define D_OUT			(ds)
-#define D_ARG(n)		(ds+(DSF_SIZE+n))
+#define D_OUT			DSF_OUT(call_->dsf)
+#define D_ARG(n)		DSF_ARG(call_->dsf, (n))
 #define D_REF(n)		(!IS_NONE(D_ARG(n)))
 
 // Reference from current DSF index:
@@ -145,16 +145,3 @@
 #define DS_ARGC			(DSP-DS_ARG_BASE)
 
 #define DS_OUT		(&DS_Base[DSF])
-
-enum {
-	R_OUT = 0,
-	R_TOS,
-	R_TOS1,
-	R_NONE,
-	R_UNSET,
-	R_TRUE,
-	R_FALSE,
-	R_ARG1,
-	R_ARG2,
-	R_ARG3
-};

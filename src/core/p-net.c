@@ -101,7 +101,7 @@ enum Transport_Types {
 
 /***********************************************************************
 **
-*/	static int Transport_Actor(REBVAL *ds, REBSER *port, REBCNT action, enum Transport_Types proto)
+*/	static REB_R Transport_Actor(struct Reb_Call *call_, REBSER *port, REBCNT action, enum Transport_Types proto)
 /*
 ***********************************************************************/
 {
@@ -203,7 +203,7 @@ enum Transport_Types {
 	case A_READ:
 		// Read data into a buffer, expanding the buffer if needed.
 		// If no length is given, program must stop it at some point.
-		refs = Find_Refines(ds, ALL_READ_REFS);
+		refs = Find_Refines(call_, ALL_READ_REFS);
 		if (!GET_FLAG(sock->modes, RST_UDP)
 			&& !GET_FLAG(sock->state, RSM_CONNECT))
 			Trap_Port_DEAD_END(RE_NOT_CONNECTED, port, -15);
@@ -230,7 +230,7 @@ enum Transport_Types {
 		// Write the entire argument string to the network.
 		// The lower level write code continues until done.
 
-		refs = Find_Refines(ds, ALL_WRITE_REFS);
+		refs = Find_Refines(call_, ALL_WRITE_REFS);
 		if (!GET_FLAG(sock->modes, RST_UDP)
 			&& !GET_FLAG(sock->state, RSM_CONNECT))
 			Trap_Port_DEAD_END(RE_NOT_CONNECTED, port, -15);
@@ -313,20 +313,20 @@ enum Transport_Types {
 
 /***********************************************************************
 **
-*/	static int TCP_Actor(REBVAL *ds, REBSER *port, REBCNT action)
+*/	static REB_R TCP_Actor(struct Reb_Call *call_, REBSER *port, REBCNT action)
 /*
 ***********************************************************************/
 {
-	return Transport_Actor(ds, port, action, TRANSPORT_TCP);
+	return Transport_Actor(call_, port, action, TRANSPORT_TCP);
 }
 
 /***********************************************************************
 **
-*/	static int UDP_Actor(REBVAL *ds, REBSER *port, REBCNT action)
+*/	static REB_R UDP_Actor(struct Reb_Call *call_, REBSER *port, REBCNT action)
 /*
 ***********************************************************************/
 {
-	return Transport_Actor(ds, port, action, TRANSPORT_UDP);
+	return Transport_Actor(call_, port, action, TRANSPORT_UDP);
 }
 
 /***********************************************************************

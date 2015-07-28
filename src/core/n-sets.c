@@ -45,7 +45,7 @@ enum {
 
 /***********************************************************************
 **
-*/	static REBINT Do_Set_Operation(REBVAL *ds, REBCNT flags)
+*/	static REBINT Do_Set_Operation(struct Reb_Call *call_, REBCNT flags)
 /*
 **		Do set operations on a series.
 **
@@ -244,7 +244,7 @@ enum {
 		return R_OUT;
 	}
 
-	return Do_Set_Operation(ds, SET_OP_DIFFERENCE);
+	return Do_Set_Operation(call_, SET_OP_DIFFERENCE);
 }
 
 
@@ -254,7 +254,7 @@ enum {
 /*
 ***********************************************************************/
 {
-	return Do_Set_Operation(ds, SET_OP_EXCLUDE);
+	return Do_Set_Operation(call_, SET_OP_EXCLUDE);
 }
 
 
@@ -264,7 +264,7 @@ enum {
 /*
 ***********************************************************************/
 {
-	return Do_Set_Operation(ds, SET_OP_INTERSECT);
+	return Do_Set_Operation(call_, SET_OP_INTERSECT);
 }
 
 
@@ -274,7 +274,7 @@ enum {
 /*
 ***********************************************************************/
 {
-	return Do_Set_Operation(ds, SET_OP_UNION);
+	return Do_Set_Operation(call_, SET_OP_UNION);
 }
 
 
@@ -284,7 +284,7 @@ enum {
 /*
 ***********************************************************************/
 {
-	return Do_Set_Operation(ds, SET_OP_UNIQUE);
+	return Do_Set_Operation(call_, SET_OP_UNIQUE);
 }
 
 

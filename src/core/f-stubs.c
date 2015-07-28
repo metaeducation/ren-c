@@ -252,7 +252,7 @@
 
 /***********************************************************************
 **
-*/	REBCNT Find_Refines(const REBVAL *ds, REBCNT mask)
+*/	REBCNT Find_Refines(struct Reb_Call *call_, REBCNT mask)
 /*
 **		Scans the stack for function refinements that have been
 **		specified in the mask (each as a bit) and are being used.

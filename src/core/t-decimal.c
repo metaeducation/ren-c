@@ -243,7 +243,7 @@ REBOOL almost_equal(REBDEC a, REBDEC b, REBCNT max_diff) {
 			*D_OUT = *D_ARG(2);
 			*D_ARG(2) = *D_ARG(1);
 			*D_ARG(1) = *D_OUT;
-			return Value_Dispatch[VAL_TYPE(D_ARG(1))](ds, action);
+			return Value_Dispatch[VAL_TYPE(D_ARG(1))](call_, action);
 		}
 
 		// If the type of the second arg is something we can handle:
@@ -262,7 +262,7 @@ REBOOL almost_equal(REBDEC a, REBDEC b, REBCNT max_diff) {
 			} else if (type == REB_MONEY) {
 				VAL_DECI(val) = decimal_to_deci(VAL_DECIMAL(val));
 				VAL_SET(val, REB_MONEY);
-				return T_Money(ds, action);
+				return T_Money(call_, action);
 			} else if (type == REB_CHAR) {
 				d2 = (REBDEC)VAL_CHAR(arg);
 				type = REB_DECIMAL;
@@ -416,7 +416,7 @@ REBOOL almost_equal(REBDEC a, REBDEC b, REBCNT max_diff) {
 
 		case A_ROUND:
 			arg = D_ARG(3);
-			num = Get_Round_Flags(ds);
+			num = Get_Round_Flags(call_);
 			if (D_REF(2)) { // to
 				if (IS_MONEY(arg)) {
 					VAL_DECI(D_OUT) = Round_Deci(decimal_to_deci(d1), num, VAL_DECI(arg));

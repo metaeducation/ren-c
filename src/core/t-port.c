@@ -75,11 +75,10 @@
 		}
 	case A_UPDATE:
 	default:
-		return Do_Port_Action(VAL_PORT(value), action); // Result on stack
+		return Do_Port_Action(call_, VAL_PORT(value), action); // Result on stack
 
 	case A_REFLECT:
-		return T_Object(ds, action);
-		break;
+		return T_Object(call_, action);
 
 	case A_MAKE:
 		if (IS_DATATYPE(value)) Make_Port(value, arg);

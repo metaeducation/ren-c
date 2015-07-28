@@ -1077,18 +1077,57 @@ typedef struct Reb_Gob {
 **
 **	FUNCTIONS - Natives, actions, operators, and user functions
 **
+**	NOTE: make-headers.r will skip specs with the "REBNATIVE(" in them
+**	REBTYPE macros are used and expanded in tmp-funcs.h
+**
 ***********************************************************************/
 
-typedef int  (*REBFUN)(REBVAL *ds);				// Native function
-typedef int  (*REBACT)(REBVAL *ds, REBCNT a);	// Action function
-typedef int  (*REBPAF)(REBVAL *ds, REBSER *p, REBCNT a); // Port action func
+// !!! Initially Rebol would cache an address of the stack frame base as a
+// pointer, and pass it as a parameter to natives.  This has the clear
+// disadvantage of not being robust with respect to the stack expanding
+// or contracting.  While simply using the global (or maybe per-thread)
+// DSF would be an option, allowing natives to be run against a parameter
+// suggests a potential future where multiple stacks for multiple Rebol
+// engines could exist on the same thread.  That doesn't work today--but
+// this placeholder passing in a copy of the dsf as an integer helps
+// solve the stack expansion crash and also holds the door open for that.
 
-typedef int  (*CMD_FUNC)(REBCNT n, REBSER *args);
+struct Reb_Call {
+	REBINT dsf;
+};
 
-// NOTE: make-headers.r will skip specs with the "REBNATIVE(" in them
-// REBTYPE macros are used and expanded in tmp-funcs.h
-#define REBNATIVE(n) int N_##n(REBVAL *ds)
-#define REBTYPE(n)   int T_##n(REBVAL *ds, REBCNT action)
+// enums in C have no guaranteed size, yet Rebol wants to use known size
+// types in its interfaces.  Hence REB_R is a REBCNT from reb-c.h (and not
+// this enumerated type containing its legal values).
+enum {
+	R_OUT = 0,
+	R_TOS,
+	R_TOS1,
+	R_NONE,
+	R_UNSET,
+	R_TRUE,
+	R_FALSE,
+	R_ARG1,
+	R_ARG2,
+	R_ARG3
+};
+typedef REBCNT REB_R;
+
+// NATIVE! function
+typedef REB_R (*REBFUN)(struct Reb_Call *call_);
+#define REBNATIVE(n) \
+	REB_R N_##n(struct Reb_Call *call_)
+
+// ACTION! function (one per each DATATYPE!)
+typedef REB_R (*REBACT)(struct Reb_Call *call_, REBCNT a);
+#define REBTYPE(n) \
+	REB_R T_##n(struct Reb_Call *call_, REBCNT action)
+
+// PORT!-action function
+typedef REB_R (*REBPAF)(struct Reb_Call *call_, REBSER *p, REBCNT a);
+
+// COMMAND! function
+typedef REB_R (*CMD_FUNC)(REBCNT n, REBSER *args);
 
 typedef struct Reb_Routine_Info REBRIN;
 

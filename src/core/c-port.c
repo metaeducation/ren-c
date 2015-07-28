@@ -298,7 +298,7 @@
 
 /***********************************************************************
 **
-*/	int Do_Port_Action(REBSER *port, REBCNT action)
+*/	int Do_Port_Action(struct Reb_Call *call_, REBSER *port, REBCNT action)
 /*
 **		Call a PORT actor (action) value. Search PORT actor
 **		first. If not found, search the PORT scheme actor.
@@ -331,7 +331,7 @@
 
 	// If actor is a native function:
 	if (IS_NATIVE(actor))
-		return cast(REBPAF, VAL_FUNC_CODE(actor))(DS_OUT, port, action);
+		return cast(REBPAF, VAL_FUNC_CODE(actor))(call_, port, action);
 
 	// actor must be an object:
 	if (!IS_OBJECT(actor)) Trap_DEAD_END(RE_INVALID_ACTOR);

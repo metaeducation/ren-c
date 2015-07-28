@@ -79,7 +79,7 @@
 				*D_OUT = *val2;  // Use as temp workspace
 				*val2 = *val;
 				*val = *D_OUT;
-				return Value_Dispatch[VAL_TYPE(val)](ds, action);
+				return Value_Dispatch[VAL_TYPE(val)](call_, action);
 
 			// Only type valid to subtract from, divide into, is decimal/money:
 			case A_SUBTRACT:
@@ -89,20 +89,20 @@
 			case A_POWER:
 				if (IS_DECIMAL(val2) | IS_PERCENT(val2)) {
 					SET_DECIMAL(val, (REBDEC)num); // convert main arg
-					return T_Decimal(ds, action);
+					return T_Decimal(call_, action);
 				}
 				if (IS_MONEY(val2)) {
 					VAL_DECI(val) = int_to_deci(VAL_INT64(val));
 					VAL_SET(val, REB_MONEY);
-					return T_Money(ds, action);
+					return T_Money(call_, action);
 				}
 				if (n > 0) {
 					if (IS_TIME(val2)) {
 						VAL_TIME(val) = SEC_TIME(VAL_INT64(val));
 						SET_TYPE(val, REB_TIME);
-						return T_Time(ds, action);
+						return T_Time(call_, action);
 					}
-					if (IS_DATE(val2)) return T_Date(ds, action);
+					if (IS_DATE(val2)) return T_Date(call_, action);
 				}
 			}
 			Trap_Math_Args(REB_INTEGER, action);
@@ -138,7 +138,7 @@
 	case A_POWER:
 		SET_DECIMAL(val, (REBDEC)num);
 		SET_DECIMAL(val2, (REBDEC)arg);
-		return T_Decimal(ds, action);
+		return T_Decimal(call_, action);
 
 	case A_REMAINDER:
 		if (arg == 0) Trap_DEAD_END(RE_ZERO_DIVIDE);
@@ -166,7 +166,7 @@
 
 	case A_ROUND:
 		val2 = D_ARG(3);
-		n = Get_Round_Flags(ds);
+		n = Get_Round_Flags(call_);
 		if (D_REF(2)) { // to
 			if (IS_MONEY(val2)) {
 				VAL_DECI(D_OUT) = Round_Deci(int_to_deci(num), n, VAL_DECI(val2));

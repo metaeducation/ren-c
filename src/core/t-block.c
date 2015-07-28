@@ -631,7 +631,7 @@ static struct {
 
 	// Support for port: OPEN [scheme: ...], READ [ ], etc.
 	if (action >= PORT_ACTIONS && IS_BLOCK(value))
-		return T_Port(ds, action);
+		return T_Port(call_, action);
 
 	// Most common series actions:  !!! speed this up!
 	len = Do_Series_Action(action, value, arg);
@@ -740,7 +740,7 @@ zero_blk:
 
 	case A_FIND:
 	case A_SELECT:
-		args = Find_Refines(ds, ALL_FIND_REFS);
+		args = Find_Refines(call_, ALL_FIND_REFS);
 //		if (ANY_BLOCK(arg) || args) {
 			len = ANY_BLOCK(arg) ? VAL_BLK_LEN(arg) : 1;
 			if (args & AM_FIND_PART) tail = Partial1(value, D_ARG(ARG_FIND_LENGTH));
@@ -820,7 +820,7 @@ zero_blk:
 	//-- Special actions:
 
 	case A_TRIM:
-		args = Find_Refines(ds, ALL_TRIM_REFS);
+		args = Find_Refines(call_, ALL_TRIM_REFS);
 		if (args & ~(AM_TRIM_HEAD|AM_TRIM_TAIL)) Trap_DEAD_END(RE_BAD_REFINES);
 		Trim_Block(ser, index, args);
 		break;

@@ -495,7 +495,7 @@ reflect:
 		break;
 
 	case A_TRIM:
-		if (Find_Refines(ds, ALL_TRIM_REFS)) Trap_DEAD_END(RE_BAD_REFINES); // none allowed
+		if (Find_Refines(call_, ALL_TRIM_REFS)) Trap_DEAD_END(RE_BAD_REFINES); // none allowed
 		type = VAL_TYPE(value);
 		obj = Trim_Object(VAL_OBJ_FRAME(value));
 		break;

@@ -177,7 +177,7 @@
 			else if (IS_DECIMAL(arg) || IS_PERCENT(arg)) VAL_DECI(arg) = decimal_to_deci(VAL_DECIMAL(arg));
 			else if (!IS_MONEY(arg)) Trap_Arg_DEAD_END(arg);
 		}
-		VAL_DECI(D_OUT) = Round_Deci(VAL_DECI(val), Get_Round_Flags(ds), VAL_DECI(arg));
+		VAL_DECI(D_OUT) = Round_Deci(VAL_DECI(val), Get_Round_Flags(call_), VAL_DECI(arg));
 		if (D_REF(2)) {
 			if (IS_DECIMAL(arg) || IS_PERCENT(arg)) {
 				VAL_DECIMAL(D_OUT) = deci_to_decimal(VAL_DECI(D_OUT));

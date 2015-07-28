@@ -41,7 +41,7 @@
 
 /***********************************************************************
 **
-*/	static int Console_Actor(REBVAL *ds, REBSER *port, REBCNT action)
+*/	static REB_R Console_Actor(struct Reb_Call *call_, REBSER *port, REBCNT action)
 /*
 ***********************************************************************/
 {

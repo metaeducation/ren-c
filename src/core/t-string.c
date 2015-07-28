@@ -464,7 +464,7 @@ static REBSER *make_binary(REBVAL *arg, REBOOL make)
 	REBCNT	ret;
 
 	if ((IS_FILE(value) || IS_URL(value)) && action >= PORT_ACTIONS) {
-		return T_Port(ds, action);
+		return T_Port(call_, action);
 	}
 
 	len = Do_Series_Action(action, value, arg);
@@ -504,7 +504,7 @@ static REBSER *make_binary(REBVAL *arg, REBOOL make)
 	case A_FIND:
 		ret = ALL_FIND_REFS;
 find:
-		args = Find_Refines(ds, ret);
+		args = Find_Refines(call_, ret);
 
 		if (IS_BINARY(value)) {
 			args |= AM_FIND_CASE;
@@ -673,7 +673,7 @@ zero_str:
 
 	case A_TRIM:
 		// Check for valid arg combinations:
-		args = Find_Refines(ds, ALL_TRIM_REFS);
+		args = Find_Refines(call_, ALL_TRIM_REFS);
 		if (
 			((args & (AM_TRIM_ALL | AM_TRIM_WITH)) &&
 			(args & (AM_TRIM_HEAD | AM_TRIM_TAIL | AM_TRIM_LINES | AM_TRIM_AUTO))) ||
