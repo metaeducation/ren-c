@@ -259,19 +259,15 @@ REBINT Mode_Syms[] = {
 
 /***********************************************************************
 **
-*/	static REBCNT Set_Length(const REBVAL *ds, const REBREQ *file, const REBCNT arg)
+*/	static REBCNT Set_Length(const REBREQ *file, REBI64 limit)
 /*
-**		Computes the length of data based on the argument number
-**		provided for the ARG_*_PART stack value (which, when there,
-**		is always followed by the size).
-**
 **		Note: converts 64bit number to 32bit. The requested size
-**		can never be greater than 4GB.
+**		can never be greater than 4GB.  If limit isn't negative it
+**		constrains the size of the requested read.
 **
 ***********************************************************************/
 {
-	REBI64 len;  // maximum size
-	REBI64 cnt;
+	REBI64 len;
 	int what_if_it_changed;
 
 	// Compute and bound bytes remaining:
@@ -280,12 +276,11 @@ REBINT Mode_Syms[] = {
 	len &= MAX_READ_MASK; // limit the size
 
 	// Return requested length:
-	if (!D_REF(arg)) return (REBCNT)len;
+	if (limit < 0) return (REBCNT)len;
 
 	// Limit size of requested read:
-	cnt = VAL_INT64(D_ARG(arg+1));
-	if (cnt > len) return (REBCNT)len;
-	return (REBCNT)cnt;
+	if (limit > len) return cast(REBCNT, len);
+	return cast(REBCNT, limit);
 }
 
 
@@ -357,7 +352,9 @@ REBINT Mode_Syms[] = {
 		}
 
 		if (args & AM_READ_SEEK) Set_Seek(file, D_ARG(ARG_READ_INDEX));
-		len = Set_Length(ds, file, ARG_READ_PART);
+		len = Set_Length(
+			file, D_REF(ARG_READ_PART) ? VAL_INT64(D_ARG(ARG_READ_LENGTH)) : -1
+		);
 		Read_File_Port(port, file, path, args, len);
 
 		if (opened) {
@@ -425,7 +422,7 @@ REBINT Mode_Syms[] = {
 
 	case A_COPY:
 		if (!IS_OPEN(file)) Trap1_DEAD_END(RE_NOT_OPEN, path); //!!!! wrong msg
-		len = Set_Length(ds, file, 2);
+		len = Set_Length(file, D_REF(2) ? VAL_INT64(D_ARG(3)) : -1);
 		Read_File_Port(port, file, path, args, len);
 		break;
 
