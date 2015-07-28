@@ -98,26 +98,24 @@
 
 /***********************************************************************
 **
-*/	REBINT Min_Max_Pair(REBVAL *ds, REBFLG maxed)
+*/	void Min_Max_Pair(REBVAL *out, const REBVAL *a, const REBVAL *b, REBFLG maxed)
 /*
 ***********************************************************************/
 {
 	REBXYF aa;
 	REBXYF bb;
 	REBXYF *cc;
-	REBVAL *a = D_ARG(1);
-	REBVAL *b = D_ARG(2);
-	REBVAL *c = D_OUT;
 
 	if (IS_PAIR(a)) aa = VAL_PAIR(a);
 	else if (IS_INTEGER(a)) aa.x = aa.y = (REBD32)VAL_INT64(a);
-	else Trap_Arg_DEAD_END(a);
+	else Trap_Arg(a);
 
 	if (IS_PAIR(b)) bb = VAL_PAIR(b);
 	else if (IS_INTEGER(b)) bb.x = bb.y = (REBD32)VAL_INT64(b);
-	else Trap_Arg_DEAD_END(b);
+	else Trap_Arg(b);
 
-	cc = &VAL_PAIR(c);
+	SET_TYPE(out, REB_PAIR);
+	cc = &VAL_PAIR(out);
 	if (maxed) {
 		cc->x = MAX(aa.x, bb.x);
 		cc->y = MAX(aa.y, bb.y);
@@ -126,9 +124,6 @@
 		cc->x = MIN(aa.x, bb.x);
 		cc->y = MIN(aa.y, bb.y);
 	}
-	SET_TYPE(c, REB_PAIR);
-
-	return R_OUT;
 }
 
 

@@ -509,8 +509,10 @@ compare:
 {
 	REBVAL a, b;
 
-	if (IS_PAIR(D_ARG(1)) || IS_PAIR(D_ARG(2)))
-		return Min_Max_Pair(ds, 1);
+	if (IS_PAIR(D_ARG(1)) || IS_PAIR(D_ARG(2))) {
+		Min_Max_Pair(D_OUT, D_ARG(1), D_ARG(2), 1);
+		return R_OUT;
+	}
 
 	a = *D_ARG(1);
 	b = *D_ARG(2);
@@ -526,8 +528,10 @@ compare:
 {
 	REBVAL a, b;
 
-	if (IS_PAIR(D_ARG(1)) || IS_PAIR(D_ARG(2)))
-		return Min_Max_Pair(ds, 0);
+	if (IS_PAIR(D_ARG(1)) || IS_PAIR(D_ARG(2))) {
+		Min_Max_Pair(D_OUT, D_ARG(1), D_ARG(2), 0);
+		return R_OUT;
+	}
 
 	a = *D_ARG(1);
 	b = *D_ARG(2);
