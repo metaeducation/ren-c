@@ -1072,11 +1072,8 @@ typedef struct Reb_Gob {
 
 typedef int  (*REBFUN)(REBVAL *ds);				// Native function
 typedef int  (*REBACT)(REBVAL *ds, REBCNT a);	// Action function
-typedef void (*REBDOF)(REBVAL *ds);				// DO evaltype dispatch function
 typedef int  (*REBPAF)(REBVAL *ds, REBSER *p, REBCNT a); // Port action func
 
-typedef void (*ANYFUNC)(void *);
-typedef void (*TRYFUNC)(void *);
 typedef int  (*CMD_FUNC)(REBCNT n, REBSER *args);
 
 // NOTE: make-headers.r will skip specs with the "REBNATIVE(" in them
