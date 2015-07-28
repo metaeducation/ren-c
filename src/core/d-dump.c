@@ -210,14 +210,14 @@
 			args = BLK_HEAD(VAL_FUNC_ARGS(DSF_FUNC(dsf)));
 			m = SERIES_TAIL(VAL_FUNC_ARGS(DSF_FUNC(dsf)));
 			for (n = 1; n < m; n++)
-				Debug_Fmt("\t%s: %72r", Get_Word_Name(args+n), DSF_ARGS(dsf, n));
+				Debug_Fmt("\t%s: %72r", Get_Word_Name(args+n), DSF_ARG(dsf, n));
 		}
 		//Debug_Fmt(Str_Stack[2], PRIOR_DSF(dsf));
 		if (PRIOR_DSF(dsf) > 0) Dump_Stack(PRIOR_DSF(dsf), dsf-1);
 	}
 
 	//for (n = 1; n <= 2; n++) {
-	//	Debug_Fmt("  ARG%d: %s %r", n, Get_Type_Name(DSF_ARGS(dsf, n)), DSF_ARGS(dsf, n));
+	//	Debug_Fmt("  ARG%d: %s %r", n, Get_Type_Name(DSF_ARG(dsf, n)), DSF_ARG(dsf, n));
 	//}
 }
 

@@ -1189,11 +1189,11 @@
 				if (context == VAL_FUNC_WORDS(DSF_FUNC(dsf))) {
 					assert(!IS_CLOSURE(DSF_FUNC(dsf)));
 
-					if (!writable) return DSF_ARGS(dsf, -index);
+					if (!writable) return DSF_ARG(dsf, -index);
 
 					{
 						// ^-- new scope: don't usually stack-alloc `value`
-						REBVAL *value = DSF_ARGS(dsf, -index);
+						REBVAL *value = DSF_ARG(dsf, -index);
 						if (VAL_PROTECTED(value)) {
 							if (trap) {
 								Trap1(RE_LOCKED_WORD, word);
@@ -1266,7 +1266,7 @@
 			while (dsf) {
 				if (context == VAL_FUNC_WORDS(DSF_FUNC(dsf))) {
 					assert(!IS_CLOSURE(DSF_FUNC(dsf)));
-					*out = *DSF_ARGS(dsf, -index);
+					*out = *DSF_ARG(dsf, -index);
 					return;
 				}
 				dsf = PRIOR_DSF(dsf);
@@ -1327,7 +1327,7 @@
 		dsf = PRIOR_DSF(dsf);
 		if (dsf <= 0) Trap1(RE_NOT_DEFINED, word); // change error !!!
 	}
-	*DSF_ARGS(dsf, -index) = *value;
+	*DSF_ARG(dsf, -index) = *value;
 }
 
 

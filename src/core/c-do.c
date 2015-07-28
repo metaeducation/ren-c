@@ -1792,7 +1792,7 @@ return_index:
 				assert(FALSE);
 		}
 push_arg:
-		DS_PUSH(DSF_ARGS(DSF, isrc));
+		DS_PUSH(DSF_ARG(DSF, isrc));
 		//Debug_Fmt("Arg %d -> %d", isrc, inew);
 	}
 

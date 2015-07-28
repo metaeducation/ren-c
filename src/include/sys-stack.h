@@ -87,7 +87,7 @@
 #define DSF_LABEL(d)	(&DS_Base[(d)+3])	// func word backtrace
 #define DSF_FUNC(d)		(&DS_Base[(d)+4])	// function value saved
 #define DSF_RETURN(d)	coming@soon			// return func linked to this call
-#define DSF_ARGS(d,n)	(&DS_Base[(d)+DSF_SIZE+(n)])
+#define DSF_ARG(d,n)	(&DS_Base[(d)+DSF_SIZE+(n)])
 
 
 #ifdef STRESS
@@ -134,7 +134,7 @@
 
 // Reference from current DSF index:
 #define DS_ARG_BASE		(DSF+DSF_SIZE)
-#define DS_ARG(n)		DSF_ARGS(DSF, n)
+#define DS_ARG(n)		DSF_ARG(DSF, n)
 #define DS_REF(n)		(!IS_NONE(DS_ARG(n)))
 #define DS_ARGC			(DSP-DS_ARG_BASE)
 
