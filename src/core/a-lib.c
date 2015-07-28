@@ -503,7 +503,9 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 	_close(f);
 #endif
 
+	SAVE_SERIES(text);
 	rxt = RL_Do_String(text->data, flags, result);
+	UNSAVE_SERIES(text);
 
 	Free_Series(text);
 	return rxt;
