@@ -331,16 +331,10 @@ enum {
 // The first time through the following code 'error' will be NULL, but...
 // Throw() can longjmp here, so 'error' won't be NULL *if* that happens!
 
-	if (error) {
-		*D_OUT = *error;
-		return R_OUT;
-	}
+	if (error) return R_NONE;
 
 	Do_Blk(VAL_SERIES(D_ARG(1)), VAL_INDEX(D_ARG(1)));
 	DSP++; // TOS semantics instead of TOS1!
-
-	if (IS_ERROR(DS_TOP) && !IS_THROW(DS_TOP))
-		SET_NONE(DS_TOP); // ignore error
 
 	DROP_CATCH_SAME_STACKLEVEL_AS_PUSH(&state);
 
