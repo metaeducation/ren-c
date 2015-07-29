@@ -357,7 +357,7 @@ enum {
 **
 ***********************************************************************/
 {
-	REBVAL *value = D_REF(1) ? D_ARG(2) : NONE_VALUE;
+	REBVAL *value = D_REF(1) ? D_ARG(2) : UNSET_VALUE;
 
 	VAL_SET(D_OUT, REB_ERROR);
 	VAL_ERR_NUM(D_OUT) = RE_BREAK;
