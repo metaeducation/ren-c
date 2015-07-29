@@ -17,6 +17,7 @@ REBOL [
 Throw: [
 	code: 0
 	type: "throw error"
+	null:				{invalid error code zero}
 	break:              {no loop to break}
 	parse-break:		{parse BREAK not in PARSE (impossible!)}
 	return:             {return or exit not in function}
