@@ -523,6 +523,10 @@ void Trace_Arg(REBINT num, REBVAL *arg, REBVAL *path)
 **
 ***********************************************************************/
 {
+#if !defined(NDEBUG)
+	REBINT dsp_orig;
+#endif
+
 	REBVAL *value;
 	REBVAL *args;
 	REBSER *words;
@@ -560,6 +564,17 @@ void Trace_Arg(REBINT num, REBVAL *arg, REBVAL *path)
 	DSP += ds;
 	for (; ds > 0; ds--) SET_NONE(tos++);
 
+#if !defined(NDEBUG)
+	dsp_orig = DSP;
+#endif
+
+	// Protocol is to return the last evaluated value on TOS, which may
+	// be a THROWN attempt at evaluating an arg.  So our invariant is
+	// to keep one value at TOS the whole time.
+	// !!! If it looks inefficient to be DS_DROP'ing before a Do_Next to
+	// keep the invariant, that's temporary...StableStack fixes it.
+	DS_PUSH_UNSET;
+
 	// Go thru the word list args:
 	ds = dsp;
 	for (; NOT_END(args); args++, ds++) {
@@ -575,19 +590,21 @@ void Trace_Arg(REBINT num, REBVAL *arg, REBVAL *path)
 		switch (VAL_TYPE(args)) {
 
 		case REB_WORD:		// WORD - Evaluate next value
+			DS_DROP;
 			index = Do_Next(block, index, IS_OP(func));
-			// THROWN is handled after the switch.
+			if (THROWN(DS_TOP)) goto return_index;
 			if (index == END_FLAG) Trap2_DEAD_END(RE_NO_ARG, DSF_LABEL(dsf), args);
-			DS_Base[ds] = *DS_POP;
+			DS_Base[ds] = *DS_TOP;
 			break;
 
 		case REB_LIT_WORD:	// 'WORD - Just get next value
 			if (index < BLK_LEN(block)) {
 				value = BLK_SKIP(block, index);
 				if (IS_PAREN(value) || IS_GET_WORD(value) || IS_GET_PATH(value)) {
+					DS_DROP;
 					index = Do_Next(block, index, IS_OP(func));
-					// THROWN is handled after the switch.
-					DS_Base[ds] = *DS_POP;
+					if (THROWN(DS_TOP)) goto return_index;
+					DS_Base[ds] = *DS_TOP;
 				}
 				else {
 					index++;
@@ -640,11 +657,6 @@ more_path:
 			Trap_Arg_DEAD_END(args);
 		}
 
-		if (THROWN(DS_VALUE(ds))) {
-			*DS_TOP = *DS_VALUE(ds); /* for Do_Next detection */
-			return index;
-		}
-
 		// If word is typed, verify correct argument datatype:
 		if (!TYPE_CHECK(args, VAL_TYPE(DS_VALUE(ds))))
 			Trap3_DEAD_END(RE_EXPECT_ARG, DSF_LABEL(dsf), args, Of_Type(DS_VALUE(ds)));
@@ -654,6 +666,8 @@ more_path:
 	if (path && NOT_END(path)) goto more_path;
 	//	Trap2_DEAD_END(RE_NO_REFINE, DSF_LABEL(dsf), path);
 
+return_index:
+	assert(DSP == dsp_orig + 1);
 	return index;
 }
 
@@ -825,14 +839,30 @@ more_path:
 	func_ready_to_call:
 		assert(ANY_FUNC(value) && IS_UNSET(DSF_OUT(dsf)) && dsf > DSF);
 
-		if (Trace_Flags) Trace_Func(label, value);
+		if (THROWN(DS_TOP)) {
+			// If the result of the Do_Args was something like a RETURN or
+			// a BREAK, then nevermind the function we were going to call.
+			// Just bubble up that special "ERROR" value to the caller.
+			*DSF_OUT(dsf) = *DS_POP;
+		}
+		else {
+			// If the last value Do_Args evaluated wasn't thrown, we don't
+			// need to pay attention to it here.
+			DS_DROP;
 
-		// Set the DSF to our constructed 'dsf' during the function dispatch
-		SET_DSF(dsf);
-		Func_Dispatch[VAL_TYPE(value) - REB_NATIVE](value);
-		SET_DSF(PRIOR_DSF(dsf));
+			// The arguments were successfully acquired, so we set the
+			// the DSF to our constructed 'dsf' during the Push_Func...then
+			// call the function...then put the DSF back to the call level
+			// of whoever called us.
 
-		// Drop stack back to where the DSF_OUT is now the Top of Stack
+			SET_DSF(dsf);
+			if (Trace_Flags) Trace_Func(label, value);
+			Func_Dispatch[VAL_TYPE(value) - REB_NATIVE](value);
+
+			SET_DSF(PRIOR_DSF(dsf));
+		}
+
+		// Drop stack back to where the DSF_OUT(dsf) is now the Top of Stack
 		DSP = dsf;
 
 		if (Trace_Flags) Trace_Return(label, DS_TOP);
