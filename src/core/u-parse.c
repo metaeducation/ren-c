@@ -1324,7 +1324,14 @@ bad_end:
 				return R_OUT;
 			}
 
-			// Re-throw all other errors.
+			// If a THROWN style error, evaluate to that so that it can
+			// bubble up the stack.
+			if (THROWN(error)) {
+				*D_OUT = *error;
+				return R_OUT;
+			}
+
+			// Trap all other errors that aren't implicitly thrown...
 			Throw(error, NULL);
 			DEAD_END;
 		}
