@@ -145,16 +145,11 @@ static void Mark_Series_Only_Debug(REBSER *ser);
 **
 ***********************************************************************/
 {
+	assert(!IS_EXT_SERIES(series));
 	assert(IS_BLOCK_SERIES(series));
 
 	assert(!SERIES_GET_FLAG(series, SER_MARK));
 	SERIES_SET_FLAG(series, SER_MARK);
-
-	// "External" series are not marked or managed by the GC.
-	// !!! Should the REBSER be GC'd, but just their data pointers left
-	// alone and not freed?  What's the real goal? --@HF
-	if (IS_EXT_SERIES(series))
-		return;
 
 	// Add series to the end of the mark stack series and update terminator
 	if (SERIES_FULL(GC_Mark_Stack)) Extend_Series(GC_Mark_Stack, 8);

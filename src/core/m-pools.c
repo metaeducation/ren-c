@@ -604,9 +604,14 @@ clear_header:
 		if (Prior_Expand[n] == series) Prior_Expand[n] = 0;
 	}
 
-	if (!IS_EXT_SERIES(series)) {
+	if (!IS_EXT_SERIES(series))
 		Free_Series_Data(series, TRUE);
+	else {
+		// External series have their REBSER GC'd when Rebol doesn't need it,
+		// but the data pointer itself is not one that Rebol allocated
+		// !!! Should the external owner be told about the GC/free event?
 	}
+
 	series->info = 0; // includes width
 	//series->data = BAD_MEM_PTR;
 	//series->tail = 0xBAD2BAD2;
