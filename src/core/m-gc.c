@@ -130,7 +130,7 @@ static void Mark_Value_Deep_Core(REBVAL *val);
 
 static void Mark_Block_Deep_Core(REBSER *series);
 
-static void Mark_Series_Shallow_Debug(REBSER *ser);
+static void Mark_Series_Only_Debug(REBSER *ser);
 
 /***********************************************************************
 **
@@ -150,14 +150,9 @@ static void Mark_Series_Shallow_Debug(REBSER *ser);
 	assert(!SERIES_GET_FLAG(series, SER_MARK));
 	SERIES_SET_FLAG(series, SER_MARK);
 
-	// We assume "bare" series contain only "atoms" (like WORD! and INTEGER!)
-	// and have no series which would need to be marked.
-
-	// !!! Add debug build assert that verifies the series is really "bare".
-	if (IS_BARE_SERIES(series))
-		return;
-
-	// !!! "External" series are also not marked or managed by the GC.  (?)
+	// "External" series are not marked or managed by the GC.
+	// !!! Should the REBSER be GC'd, but just their data pointers left
+	// alone and not freed?  What's the real goal? --@HF
 	if (IS_EXT_SERIES(series))
 		return;
 
@@ -204,23 +199,30 @@ static void Process_Mark_Stack(void);
 	} while (0)
 
 #ifdef NDEBUG
-	#define MARK_SERIES_SHALLOW(s) SERIES_SET_FLAG((s), SER_MARK)
+	#define MARK_SERIES_ONLY(s) SERIES_SET_FLAG((s), SER_MARK)
 #else
-	#define MARK_SERIES_SHALLOW(s) Mark_Series_Shallow_Debug(s)
+	#define MARK_SERIES_ONLY(s) Mark_Series_Only_Debug(s)
 #endif
+
+// "Unword" blocks contain REBWRS-style words, which have type information
+// instead of a binding.  They shouldn't have any other types in them so we
+// don't need to mark deep...BUT doesn't hurt to check in debug builds!
+#define MARK_UNWORDS_BLOCK(s) \
+	do { \
+		ASSERT_UNWORDS_BLOCK(s); \
+		MARK_SERIES_ONLY(s); \
+	} while (0)
 
 
 #if !defined(NDEBUG)
 /***********************************************************************
 **
-*/	static void Mark_Series_Shallow_Debug(REBSER *ser)
+*/	static void Mark_Series_Only_Debug(REBSER *ser)
 /*
 **		Hook point for marking and tracing a single series mark.
 **
 ***********************************************************************/
 {
-	if (IS_BLOCK_SERIES(ser)) ASSERT_BLK(ser);
-
 	SERIES_SET_FLAG(ser, SER_MARK);
 }
 #endif
@@ -313,13 +315,12 @@ static void Process_Mark_Stack(void);
 	// The spec is the only ANY-BLOCK! in the struct
 	PUSH_MARK_BLOCK_DEEP(stu->spec);
 
-	MARK_SERIES_SHALLOW(stu->fields);
-	MARK_SERIES_SHALLOW(STRUCT_DATA_BIN(stu));
+	MARK_SERIES_ONLY(stu->fields);
+	MARK_SERIES_ONLY(STRUCT_DATA_BIN(stu));
 
-	assert(IS_BARE_SERIES(stu->data));
 	assert(!IS_EXT_SERIES(stu->data));
 	assert(SERIES_TAIL(stu->data) == 1);
-	MARK_SERIES_SHALLOW(stu->data);
+	MARK_SERIES_ONLY(stu->data);
 
 	series = stu->fields;
 	for (len = 0; len < series->tail; len++) {
@@ -341,9 +342,9 @@ static void Process_Mark_Stack(void);
 	PUSH_MARK_BLOCK_DEEP(ROUTINE_SPEC(rot));
 	ROUTINE_SET_FLAG(ROUTINE_INFO(rot), ROUTINE_MARK);
 
-	PUSH_MARK_BLOCK_DEEP(ROUTINE_FFI_ARG_TYPES(rot));
+	MARK_SERIES_ONLY(ROUTINE_FFI_ARG_TYPES(rot));
 	PUSH_MARK_BLOCK_DEEP(ROUTINE_FFI_ARG_STRUCTS(rot));
-	MARK_SERIES_SHALLOW(ROUTINE_EXTRA_MEM(rot));
+	MARK_SERIES_ONLY(ROUTINE_EXTRA_MEM(rot));
 
 	if (IS_CALLBACK_ROUTINE(ROUTINE_INFO(rot))) {
 		if (FUNC_BODY(&CALLBACK_FUNC(rot))) {
@@ -480,9 +481,10 @@ static void Process_Mark_Stack(void);
 		case REB_FRAME:
 			// Mark special word list. Contains no pointers because
 			// these are special word bindings (to typesets if used).
-			MARK_SERIES_SHALLOW(VAL_FRM_WORDS(val));
+			MARK_UNWORDS_BLOCK(VAL_FRM_WORDS(val));
 			if (VAL_FRM_SPEC(val))
 				PUSH_MARK_BLOCK_DEEP(VAL_FRM_SPEC(val));
+			// !!! See code below for ANY-WORD! which also deals with FRAME!
 			break;
 
 		case REB_PORT:
@@ -510,7 +512,7 @@ static void Process_Mark_Stack(void);
 		case REB_ACTION:
 		case REB_OP:
 			PUSH_MARK_BLOCK_DEEP(VAL_FUNC_SPEC(val));
-			MARK_SERIES_SHALLOW(VAL_FUNC_ARGS(val));
+			MARK_UNWORDS_BLOCK(VAL_FUNC_ARGS(val));
 			break;
 
 		case REB_WORD:	// (and also used for function STACK backtrace frame)
@@ -529,7 +531,21 @@ static void Process_Mark_Stack(void);
 				// bound words should keep their contexts from being GC'd...
 				// even stack-relative contexts for functions.
 
-				PUSH_MARK_BLOCK_DEEP(ser);
+				REBVAL *first;
+				assert(SERIES_LEN(ser) > 0);
+				first = BLK_HEAD(ser);
+
+				if (IS_FRAME(first)) {
+					// It's referring to an OBJECT!-style FRAME, where the
+					// first element is a FRAME! containing the word keys
+					// and the rest of the elements are the data values
+					PUSH_MARK_BLOCK_DEEP(ser);
+				}
+				else {
+					// It's referring to a FUNCTION!'s identifying series,
+					// which should just be a list of UNWORDs.
+					MARK_UNWORDS_BLOCK(ser);
+				}
 			}
 			else {
 			#ifndef NDEBUG
@@ -565,16 +581,16 @@ static void Process_Mark_Stack(void);
 		case REB_BITSET:
 			ser = VAL_SERIES(val);
 			assert(SERIES_WIDE(ser) <= sizeof(REBUNI));
-			MARK_SERIES_SHALLOW(ser);
+			MARK_SERIES_ONLY(ser);
 			break;
 
 		case REB_IMAGE:
 			//SERIES_SET_FLAG(VAL_SERIES_SIDE(val), SER_MARK); //????
-			MARK_SERIES_SHALLOW(VAL_SERIES(val));
+			MARK_SERIES_ONLY(VAL_SERIES(val));
 			break;
 
 		case REB_VECTOR:
-			MARK_SERIES_SHALLOW(VAL_SERIES(val));
+			MARK_SERIES_ONLY(VAL_SERIES(val));
 			break;
 
 		case REB_BLOCK:
@@ -584,13 +600,7 @@ static void Process_Mark_Stack(void);
 		case REB_GET_PATH:
 		case REB_LIT_PATH:
 			ser = VAL_SERIES(val);
-			assert(ser);
-			if (IS_BARE_SERIES(ser)) {
-				MARK_SERIES_SHALLOW(ser);
-				break;
-			}
-
-			assert(SERIES_WIDE(ser) == sizeof(REBVAL));
+			assert(IS_BLOCK_SERIES(ser) && SERIES_WIDE(ser) == sizeof(REBVAL));
 			assert(IS_END(BLK_SKIP(ser, SERIES_TAIL(ser))) || ser == DS_Series);
 
 			PUSH_MARK_BLOCK_DEEP(ser);
@@ -600,7 +610,7 @@ static void Process_Mark_Stack(void);
 			ser = VAL_SERIES(val);
 			PUSH_MARK_BLOCK_DEEP(ser);
 			if (ser->extra.series)
-				MARK_SERIES_SHALLOW(ser->extra.series);
+				MARK_SERIES_ONLY(ser->extra.series);
 			break;
 
 		case REB_CALLBACK:
@@ -1059,15 +1069,15 @@ static void Process_Mark_Stack(void);
 	Prior_Expand[0] = (REBSER*)1;
 
 	// Temporary series protected from GC. Holds series pointers.
-	GC_Protect = Make_Series(15, sizeof(REBSER *), FALSE);
+	GC_Protect = Make_Series(15, sizeof(REBSER *), MKS_NONE);
 	KEEP_SERIES(GC_Protect, "gc protected");
 
 	// The marking queue used in lieu of recursion to ensure that deeply
 	// nested structures don't cause the C stack to overflow.
-	GC_Mark_Stack = Make_Series(100, sizeof(REBSER *), FALSE);
+	GC_Mark_Stack = Make_Series(100, sizeof(REBSER *), MKS_NONE);
 	TERM_SERIES(GC_Mark_Stack);
 	KEEP_SERIES(GC_Mark_Stack, "gc mark queue");
 
-	GC_Series = Make_Series(60, sizeof(REBSER *), FALSE);
+	GC_Series = Make_Series(60, sizeof(REBSER *), MKS_NONE);
 	KEEP_SERIES(GC_Series, "gc guarded");
 }

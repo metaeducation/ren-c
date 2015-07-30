@@ -39,7 +39,7 @@
 **
 ***********************************************************************/
 {
-	REBSER *series = Make_Series(length + 1, sizeof(REBVAL), FALSE);
+	REBSER *series = Make_Series(length + 1, sizeof(REBVAL), MKS_BLOCK);
 	SET_END(BLK_HEAD(series));
 	PG_Reb_Stats->Blocks++;
 	return series;
@@ -60,7 +60,7 @@
 	if (index > len) return Make_Block(0);
 
 	len -= index;
-	series = Make_Series(len + 1, sizeof(REBVAL), FALSE);
+	series = Make_Series(len + 1, sizeof(REBVAL), MKS_BLOCK);
 	COPY_BLK_PART(series, BLK_SKIP(block, index), len);
 
 	PG_Reb_Stats->Blocks++;
@@ -82,7 +82,7 @@
 	if (index > SERIES_TAIL(block)) return Make_Block(0);
 	if (index + len > SERIES_TAIL(block)) len = SERIES_TAIL(block) - index;
 
-	series = Make_Series(len + 1, sizeof(REBVAL), FALSE);
+	series = Make_Series(len + 1, sizeof(REBVAL), MKS_BLOCK);
 	COPY_BLK_PART(series, BLK_SKIP(block, index), len);
 
 	PG_Reb_Stats->Blocks++;
@@ -101,7 +101,7 @@
 {
 	REBSER *series;
 
-	series = Make_Series(length + 1, sizeof(REBVAL), FALSE);
+	series = Make_Series(length + 1, sizeof(REBVAL), MKS_BLOCK);
 	COPY_BLK_PART(series, blk, length);
 
 	PG_Reb_Stats->Blocks++;
@@ -197,7 +197,7 @@
 ***********************************************************************/
 {
 	REBCNT len = SERIES_TAIL(block);
-	REBSER *series = Make_Series(len + extra + 1, sizeof(REBVAL), FALSE);
+	REBSER *series = Make_Series(len + extra + 1, sizeof(REBVAL), MKS_BLOCK);
 	COPY_BLK_PART(series, BLK_HEAD(block), len);
 	PG_Reb_Stats->Blocks++;
 	return series;
@@ -270,7 +270,7 @@
 			len = VAL_INDEX(into);
 		}
 	} else {
-		series = Make_Series(len + 1, sizeof(REBVAL), FALSE);
+		series = Make_Series(len + 1, sizeof(REBVAL), MKS_BLOCK);
 		COPY_BLK_PART(series, blk, len);
 		len = 0;
 		type = REB_BLOCK;

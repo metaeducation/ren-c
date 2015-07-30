@@ -121,7 +121,14 @@
 			Trap(RE_PAST_END);
 		}
 
-		newser = Make_Series(new_size, wide, TRUE);
+		newser = Make_Series(
+			new_size,
+			wide,
+			IS_BLOCK_SERIES(series)
+				? (MKS_BLOCK | MKS_POWER_OF_2)
+				: MKS_POWER_OF_2
+		);
+
 		// If necessary, add series to the recently expanded list:
 		if (Prior_Expand[n] != series) {
 			n = (REBUPT)(Prior_Expand[0]) + 1;
@@ -260,7 +267,11 @@
 ***********************************************************************/
 {
 	REBCNT len = source->tail + 1;
-	REBSER *series = Make_Series(len, SERIES_WIDE(source), FALSE);
+	REBSER *series = Make_Series(
+		len,
+		SERIES_WIDE(source),
+		IS_BLOCK_SERIES(source) ? MKS_BLOCK : MKS_NONE
+	);
 
 	memcpy(series->data, source->data, len * SERIES_WIDE(source));
 	series->tail = source->tail;
@@ -276,7 +287,11 @@
 **
 ***********************************************************************/
 {
-	REBSER *series = Make_Series(length+1, SERIES_WIDE(source), FALSE);
+	REBSER *series = Make_Series(
+		length + 1,
+		SERIES_WIDE(source),
+		IS_BLOCK_SERIES(source) ? MKS_BLOCK : MKS_NONE
+	);
 
 	memcpy(series->data, source->data + index * SERIES_WIDE(source), (length+1) * SERIES_WIDE(source));
 	series->tail = length;
@@ -520,7 +535,11 @@
 	len = BYTE_SIZE(buf) ? ((REBYTE *)end) - BIN_HEAD(buf)
 		: ((REBUNI *)end) - UNI_HEAD(buf);
 
-	ser = Make_Series(len+1, SERIES_WIDE(buf), FALSE);
+	ser = Make_Series(
+		len + 1,
+		SERIES_WIDE(buf),
+		IS_BLOCK_SERIES(buf) ? MKS_BLOCK : MKS_NONE
+	);
 
 	memcpy(ser->data, buf->data, SERIES_WIDE(buf) * len);
 	ser->tail = len;
