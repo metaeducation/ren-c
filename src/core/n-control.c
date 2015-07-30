@@ -710,10 +710,10 @@ got_err:
 **
 */	REBNATIVE(return)
 /*
-**		Returns a value from the current function. The error value
-**		is built in the RETURN slot, with the arg being kept in
-**		the ARG1 slot on the stack.  As long as DSP is greater, both
-**		values are safe from GC.
+**		Returns a value from the current function. This is done by
+**		returning a special "error!" which indicates a return, and
+**		putting the returned value into an associated task-local
+**		variable (only one of these is in effect at a time).
 **
 ***********************************************************************/
 {
