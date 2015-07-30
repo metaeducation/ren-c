@@ -458,14 +458,14 @@ typedef struct Reb_Tuple {
 
 // Series Flags:
 enum {
-	SER_MARK = 1,		// Series was found during GC mark scan.
-	SER_KEEP = 1<<1,	// Series is permanent, do not GC it.
-	SER_LOCK = 1<<2,	// Series is locked, do not expand it
-	SER_EXT  = 1<<3,	// Series data is external (library), do not GC it.
-	SER_FREE = 1<<4,	// mark series as removed
-	SER_BARE = 1<<5,	// Series has no links to GC-able values
-	SER_PROT = 1<<6,	// Series is protected from modification
-	SER_MON  = 1<<7		// Monitoring
+	SER_MARK	= 1 << 0,	// was found during GC mark scan.
+	SER_KEEP	= 1 << 1,	// don't garbage collect even if unreferenced
+	SER_LOCK	= 1 << 2,	// size is locked (do not expand it)
+	SER_EXT		= 1 << 3,	// .data pointer is external, don't free() on GC
+	SER_FREE	= 1 << 4,	// rest of REBSER is uninitialized, can be reused
+	SER_BLOCK	= 1 << 5,	// is sizeof(REBVAL) wide and has valid values
+	SER_PROT	= 1 << 6,	// protected from modification
+	SER_MON		= 1 << 7	// !!! Monitoring (?)
 };
 
 #define SERIES_SET_FLAG(s, f) (SERIES_FLAGS(s) |= ((f) << 8))
@@ -478,8 +478,7 @@ enum {
 #define IS_EXT_SERIES(s)  SERIES_GET_FLAG(s, SER_EXT)
 #define LOCK_SERIES(s)    SERIES_SET_FLAG(s, SER_LOCK)
 #define IS_LOCK_SERIES(s) SERIES_GET_FLAG(s, SER_LOCK)
-#define BARE_SERIES(s)    SERIES_SET_FLAG(s, SER_BARE)
-#define IS_BARE_SERIES(s) SERIES_GET_FLAG(s, SER_BARE)
+#define IS_BLOCK_SERIES(s) SERIES_GET_FLAG((s), SER_BLOCK)
 #define PROTECT_SERIES(s) SERIES_SET_FLAG(s, SER_PROT)
 #define UNPROTECT_SERIES(s)  SERIES_CLR_FLAG(s, SER_PROT)
 #define IS_PROTECT_SERIES(s) SERIES_GET_FLAG(s, SER_PROT)
@@ -521,7 +520,6 @@ enum {
 #endif
 
 //#define LABEL_SERIES(s,l) s->label = (l)
-#define IS_BLOCK_SERIES(s) (SERIES_WIDE(s) == sizeof(REBVAL))
 
 // !!! Remove if not used after port:
 //#define	SERIES_SIDE(s)	 ((s)->link.side)
@@ -748,8 +746,10 @@ typedef struct Reb_Series_Ref
 
 #ifdef NDEBUG
 	#define ASSERT_BLK(s) cast(void, 0)
+	#define ASSERT_UNWORDS_BLOCK(s) cast(void, 0)
 #else
-	#define ASSERT_BLK(s) Assert_Blk_Core(s)
+	#define ASSERT_BLK(s) Assert_Blk_Core(s, FALSE)
+	#define ASSERT_UNWORDS_BLOCK(s) Assert_Blk_Core(s, TRUE)
 #endif
 
 

@@ -279,7 +279,7 @@ static REBCNT *CRC_Table;
 	n = Get_Hash_Prime(len * 2); // best when 2X # of keys
 	if (!n) Trap_Num(RE_SIZE_LIMIT, len);
 
-	ser = Make_Series(n + 1, sizeof(REBCNT), FALSE);
+	ser = Make_Series(n + 1, sizeof(REBCNT), MKS_NONE);
 	LABEL_SERIES(ser, "make hash array");
 	Clear_Series(ser);
 	ser->tail = n;

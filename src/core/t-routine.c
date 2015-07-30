@@ -728,9 +728,17 @@ static void ffi_to_rebol(REBRIN *rin,
 		if ((VAL_LEN(varargs) - n_fixed) % 2) {
 			Trap_Arg(varargs);
 		}
-		ser = Make_Series(n_fixed + (VAL_LEN(varargs) - n_fixed) / 2, sizeof(void *), FALSE);
+		ser = Make_Series(
+			n_fixed + (VAL_LEN(varargs) - n_fixed) / 2,
+			sizeof(void *),
+			MKS_NONE
+		);
 	} else if ((SERIES_TAIL(VAL_ROUTINE_FFI_ARG_TYPES(rot))) > 1) {
-		ser = Make_Series(SERIES_TAIL(VAL_ROUTINE_FFI_ARG_TYPES(rot)) - 1, sizeof(void *), FALSE);
+		ser = Make_Series(
+			SERIES_TAIL(VAL_ROUTINE_FFI_ARG_TYPES(rot)) - 1,
+			sizeof(void *),
+			MKS_NONE
+		);
 	}
 
 	/* save ser on stack such that it won't be GC'ed */
@@ -1009,7 +1017,8 @@ static void callback_dispatcher(ffi_cif *cif, void *ret, void **args, void *user
 #define N_ARGS 8
 
 	VAL_ROUTINE_SPEC(out) = Copy_Series(VAL_SERIES(data));
-	VAL_ROUTINE_FFI_ARG_TYPES(out) = Make_Series(N_ARGS, sizeof(ffi_type*), FALSE);
+	VAL_ROUTINE_FFI_ARG_TYPES(out) =
+		Make_Series(N_ARGS, sizeof(ffi_type*), MKS_NONE);
 	VAL_ROUTINE_ARGS(out) = Make_Block(N_ARGS);
 
 	// first word should be 'self', but ignored here.
@@ -1024,7 +1033,7 @@ static void callback_dispatcher(ffi_cif *cif, void *ret, void **args, void *user
 	VAL_ROUTINE_ABI(out) = FFI_DEFAULT_ABI;
 	VAL_ROUTINE_LIB(out) = NULL;
 
-	extra_mem = Make_Series(N_ARGS, sizeof(void*), FALSE);
+	extra_mem = Make_Series(N_ARGS, sizeof(void*), MKS_NONE);
 	VAL_ROUTINE_EXTRA_MEM(out) = extra_mem;
 
 	args = (ffi_type**)SERIES_DATA(VAL_ROUTINE_FFI_ARG_TYPES(out));

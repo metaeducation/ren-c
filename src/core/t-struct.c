@@ -102,7 +102,9 @@ static REBOOL get_scalar(const REBSTU *stu,
 				SET_TYPE(val, REB_STRUCT);
 				VAL_STRUCT_FIELDS(val) = field->fields;
 				VAL_STRUCT_SPEC(val) = field->spec;
-				VAL_STRUCT_DATA(val) = Make_Series(1, sizeof(struct Struct_Data), FALSE);
+				VAL_STRUCT_DATA(val) = Make_Series(
+					1, sizeof(struct Struct_Data), MKS_NONE
+				);
 				VAL_STRUCT_DATA_BIN(val) = STRUCT_DATA_BIN(stu);
 				VAL_STRUCT_OFFSET(val) = data - SERIES_DATA(VAL_STRUCT_DATA_BIN(val));
 				VAL_STRUCT_LEN(val) = field->size;
@@ -599,14 +601,10 @@ static REBOOL parse_field_type(struct Struct_Field *field, REBVAL *spec, REBVAL 
 	//RL_Print("%s\n", __func__);
 	REBINT max_fields = 16;
 
-	// If either of these conditions were true, then Rebol would
-	// interpret these series as being series of REBVAL.
+	VAL_STRUCT_FIELDS(out) = Make_Series(
+		max_fields, sizeof(struct Struct_Field), MKS_NONE
+	);
 
-	assert(sizeof(struct Struct_Field) != sizeof(REBVAL));
-	assert(sizeof(struct Struct_Data) != sizeof(REBVAL));
-
-	VAL_STRUCT_FIELDS(out) = Make_Series(max_fields, sizeof(struct Struct_Field), FALSE);
-	BARE_SERIES(VAL_STRUCT_FIELDS(out));
 	if (IS_BLOCK(data)) {
 		//Reduce_Block_No_Set(VAL_SERIES(data), 0, NULL);
 		//data = DS_POP;
@@ -621,12 +619,12 @@ static REBOOL parse_field_type(struct Struct_Field *field, REBVAL *spec, REBVAL 
 		REBCNT alignment = 0;
 
 		VAL_STRUCT_SPEC(out) = Copy_Series(VAL_SERIES(data));
-		VAL_STRUCT_DATA(out) = Make_Series(1, sizeof(struct Struct_Data), FALSE);
+		VAL_STRUCT_DATA(out) = Make_Series(
+			1, sizeof(struct Struct_Data), MKS_NONE
+		);
 		EXPAND_SERIES_TAIL(VAL_STRUCT_DATA(out), 1);
-		BARE_SERIES(VAL_STRUCT_DATA(out));
 
-		VAL_STRUCT_DATA_BIN(out) = Make_Series(max_fields << 2, 1, FALSE);
-		BARE_SERIES(VAL_STRUCT_DATA_BIN(out));
+		VAL_STRUCT_DATA_BIN(out) = Make_Series(max_fields << 2, 1, MKS_NONE);
 		VAL_STRUCT_OFFSET(out) = 0;
 
 		/* set type early such that GC will handle it correctly, i.e, not collect series in the struct */
@@ -876,7 +874,6 @@ failed:
 
 	/* writable field */
 	dst->data = Copy_Series(src->data);
-	BARE_SERIES(dst->data);
 	STRUCT_DATA_BIN(dst) = Copy_Series(STRUCT_DATA_BIN(src));
 }
 

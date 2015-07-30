@@ -165,6 +165,13 @@ enum Boot_Levels {
 	BOOT_LEVEL_FULL
 };
 
+// Modes allowed by Make_Series function:
+enum {
+	MKS_NONE		= 0,		// data is opaque (not delved into by the GC)
+	MKS_BLOCK		= 1 << 0,	// Contains REBVALs (seen by GC and Debug)
+	MKS_POWER_OF_2	= 1 << 1	// Round size up to a power of 2
+};
+
 // Modes allowed by Copy_Block function:
 enum {
 	COPY_SHALLOW = 0,

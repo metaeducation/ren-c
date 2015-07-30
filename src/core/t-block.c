@@ -894,7 +894,7 @@ is_none:
 #ifndef NDEBUG
 /***********************************************************************
 **
-*/	void Assert_Blk_Core(const REBSER *series)
+*/	void Assert_Blk_Core(const REBSER *series, REBOOL unwords)
 /*
 ***********************************************************************/
 {
@@ -914,6 +914,9 @@ is_none:
 			// Premature end
 			Panic_Series(series);
 		}
+
+		if (unwords && (!ANY_WORD(value) || !VAL_GET_OPT(value, OPTS_UNWORD)))
+			Panic_Series(series);
 	}
 
 	if (!IS_END(BLK_SKIP(series, SERIES_TAIL(series)))) {

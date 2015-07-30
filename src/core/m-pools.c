@@ -417,7 +417,7 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 
 /***********************************************************************
 **
-*/	REBSER *Make_Series(REBCNT length, REBCNT wide, REBOOL powerof2)
+*/	REBSER *Make_Series(REBCNT length, REBCNT wide, REBCNT flags)
 /*
 **		Make a series of a given length and width (unit size).
 **		Small series will be allocated from a REBOL pool.
@@ -449,7 +449,7 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 		length = Mem_Pools[pool_num].wide;
 		memset(node, 0, length);
 	} else {
-		if (powerof2) {
+		if (flags & MKS_POWER_OF_2) {
 				REBCNT len=1;
 			#ifdef NDEBUG
                 len = 2048;
@@ -499,6 +499,16 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 	SERIES_REST(series) = length / wide; //FIXME: This is based on the assumption that length is multiple of wide
 	series->data = (REBYTE *)node;
 	series->info = wide; // also clears flags
+	if (flags & MKS_BLOCK) {
+		assert(wide == sizeof(REBVAL));
+		SERIES_SET_FLAG(series, SER_BLOCK);
+	}
+	else {
+		// Temporary sanity check of old invariant of IS_BLOCK_SERIES() until
+		// we are sure code is working.
+		assert(wide != sizeof(REBVAL));
+	}
+
 	LABEL_SERIES(series, "make");
 
 	if ((GC_Ballast -= length) <= 0) SET_SIGNAL(SIG_RECYCLE);

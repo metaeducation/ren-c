@@ -114,7 +114,8 @@
 	pnum = Get_Hash_Prime(ser->tail+1);
 	if (!pnum) Trap_Num(RE_SIZE_LIMIT, ser->tail+1);
 
-	nser = Make_Series(pnum+1, SERIES_WIDE(ser), TRUE);
+	assert(!IS_BLOCK_SERIES(ser));
+	nser = Make_Series(pnum + 1, SERIES_WIDE(ser), MKS_POWER_OF_2);
 	LABEL_SERIES(nser, "hash series");
 
 	oser = *ser;
@@ -423,7 +424,7 @@ make_sym:
 	if (!only) {
 		// Create the hash for locating words quickly:
 		// Note that the TAIL is never changed for this series.
-		PG_Word_Table.hashes = Make_Series(n+1, sizeof(REBCNT), FALSE);
+		PG_Word_Table.hashes = Make_Series(n + 1, sizeof(REBCNT), MKS_NONE);
 		KEEP_SERIES(PG_Word_Table.hashes, "word hashes"); // pointer array
 		Clear_Series(PG_Word_Table.hashes);
 		PG_Word_Table.hashes->tail = n;
@@ -432,7 +433,6 @@ make_sym:
 		PG_Word_Table.series = Make_Block(WORD_TABLE_SIZE);
 		SET_NONE(BLK_HEAD(PG_Word_Table.series)); // Put a NONE at head.
 		KEEP_SERIES(PG_Word_Table.series, "word table"); // words are never GC'd
-		BARE_SERIES(PG_Word_Table.series); // don't bother to GC scan it
 		PG_Word_Table.series->tail = 1;  // prevent the zero case
 
 		// A normal char array to hold symbol names:
@@ -441,7 +441,9 @@ make_sym:
 	}
 
 	// The bind table. Used to cache context indexes for given symbols.
-	Bind_Table = Make_Series(SERIES_REST(PG_Word_Table.series), 4, FALSE);
+	Bind_Table = Make_Series(
+		SERIES_REST(PG_Word_Table.series), sizeof(REBCNT), MKS_NONE
+	);
 	KEEP_SERIES(Bind_Table, "bind table"); // numeric table
 	CLEAR_SERIES(Bind_Table);
 	Bind_Table->tail = PG_Word_Table.series->tail;

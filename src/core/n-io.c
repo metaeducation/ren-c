@@ -589,7 +589,7 @@ chk_neg:
 		REBSER * ser = NULL;
 		cmd = Val_Str_To_OS(arg);
 		argc = 1;
-		ser = Make_Series(argc + 1, sizeof(REBCHR*), FALSE);
+		ser = Make_Series(argc + 1, sizeof(REBCHR*), MKS_NONE);
 		argv = cast(const REBCHR**, SERIES_DATA(ser));
 		argv[0] = cmd;
 		argv[argc] = NULL;
@@ -600,7 +600,7 @@ chk_neg:
 		if (argc <= 0) {
 			Trap_DEAD_END(RE_TOO_SHORT);
 		}
-		ser = Make_Series(argc + 1, sizeof(REBCHR*), FALSE);
+		ser = Make_Series(argc + 1, sizeof(REBCHR*), MKS_NONE);
 		argv = cast(const REBCHR**, SERIES_DATA(ser));
 		for (i = 0; i < argc; i ++) {
 			REBVAL *param = VAL_BLK_SKIP(arg, i);
@@ -619,7 +619,7 @@ chk_neg:
 		REBSER * ser = NULL;
 		REBSER *path = Value_To_OS_Path(arg, FALSE);
 		argc = 1;
-		ser = Make_Series(argc + 1, sizeof(REBCHR*), FALSE);
+		ser = Make_Series(argc + 1, sizeof(REBCHR*), MKS_NONE);
 		argv = cast(const REBCHR**, SERIES_DATA(ser));
 		argv[0] = cast(REBCHR*, SERIES_DATA(path));
 		argv[argc] = NULL;

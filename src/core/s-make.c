@@ -40,7 +40,7 @@
 **
 ***********************************************************************/
 {
-	REBSER *series = Make_Series(length + 1, sizeof(REBYTE), FALSE);
+	REBSER *series = Make_Series(length + 1, sizeof(REBYTE), MKS_NONE);
 	LABEL_SERIES(series, "make binary");
 	BIN_DATA(series)[length] = 0;
 	return series;
@@ -56,7 +56,7 @@
 **
 ***********************************************************************/
 {
-	REBSER *series = Make_Series(length + 1, sizeof(REBUNI), FALSE);
+	REBSER *series = Make_Series(length + 1, sizeof(REBUNI), MKS_NONE);
 	LABEL_SERIES(series, "make unicode");
 	UNI_HEAD(series)[length] = 0;
 	return series;
@@ -286,7 +286,7 @@ cp_same:
 		if (n < length) wide = sizeof(REBUNI);
 	}
 
-	dst = Make_Series(length + 1, wide, FALSE);
+	dst = Make_Series(length + 1, wide, MKS_NONE);
 	Insert_String(dst, 0, src, index, length, TRUE);
 	SERIES_TAIL(dst) = length;
 	TERM_SERIES(dst);

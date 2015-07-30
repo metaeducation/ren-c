@@ -120,7 +120,6 @@
 
 	//DISABLE_GC;
 	words = Make_Block(len + 1); // size + room for SELF
-	BARE_SERIES(words);
 	frame = Make_Block(len + 1);
 	//ENABLE_GC;
 	// Note: cannot use Append_Frame for first word.
@@ -151,7 +150,6 @@
 	// Expand or copy WORDS block:
 	if (copy) {
 		FRM_WORD_SERIES(frame) = Copy_Expand_Block(words, delta);
-		BARE_SERIES(FRM_WORD_SERIES(frame));
 	} else {
 		Extend_Series(words, delta);
 		BLK_TERM(words);
@@ -251,7 +249,6 @@
 
 	prior = Copy_Series(BUF_WORDS);
 	RESET_TAIL(BUF_WORDS);  // allow reuse
-	BARE_SERIES(prior); // No GC ever needed for word list
 
 	CHECK_BIND_TABLE;
 

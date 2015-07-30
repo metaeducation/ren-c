@@ -415,7 +415,7 @@ REBCNT ARGB_To_BGR(REBCNT i)
 		else return 0;
 	}
 
-	img = Make_Series(w * h + 1, sizeof(u32), FALSE);
+	img = Make_Series(w * h + 1, sizeof(u32), MKS_NONE);
 	LABEL_SERIES(img, "make image");
 	img->tail = w * h;
 	RESET_IMAGE(img->data, img->tail); //length in 'pixels'

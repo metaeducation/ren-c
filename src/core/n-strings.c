@@ -218,7 +218,7 @@ static struct digest {
 
 			if (digests[i].index == sym) {
 
-				digest = Make_Series(digests[i].len, 1, FALSE);
+				digest = Make_Series(digests[i].len, sizeof(char), MKS_NONE);
 				LABEL_SERIES(digest, "checksum digest");
 
 				if (D_REF(ARG_CHECKSUM_KEY)) {

@@ -809,7 +809,7 @@
 
 	len = VAL_LEN(value);
 	wide = SERIES_WIDE(src);
-	ser = Make_Series(len, wide, FALSE);
+	ser = Make_Series(len, wide, IS_BLOCK_SERIES(src) ? MKS_BLOCK : MKS_NONE);
 
 	memcpy(ser->data, src->data + (VAL_INDEX(value) * wide), len * wide);
 	ser->tail = len;
