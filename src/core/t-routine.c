@@ -874,16 +874,10 @@ static void callback_dispatcher(ffi_cif *cif, void *ret, void **args, void *user
 {
 	REBRIN *rin = (REBRIN*)user_data;
 	REBCNT i = 0;
-	REBVAL *blk = NULL;
-	REBSER *ser = NULL;
-	REBVAL *elem = NULL;
+	REBSER *ser;
+	REBVAL *elem;
 
-	DS_PUSH_NONE;
-	blk = DS_TOP;
-	SET_TYPE(blk, REB_BLOCK);
-	VAL_SERIES(blk) = ser = Make_Block(1 + cif->nargs);
-	VAL_INDEX(blk) = 0;
-
+	ser = Make_Block(1 + cif->nargs);
 	elem = Alloc_Tail_Blk(ser);
 	SET_TYPE(elem, REB_FUNCTION);
 	VAL_FUNC(elem) = RIN_FUNC(rin);
@@ -930,7 +924,9 @@ static void callback_dispatcher(ffi_cif *cif, void *ret, void **args, void *user
 				Trap(RE_MISC);
 		}
 	}
-	elem = Do_Blk(ser, 0);
+
+	Do_Blk(ser, 0);
+	elem = DS_TOP;
 	switch (cif->rtype->type) {
 		case FFI_TYPE_VOID:
 			break;
@@ -968,7 +964,7 @@ static void callback_dispatcher(ffi_cif *cif, void *ret, void **args, void *user
 			Trap_Arg(elem);
 	}
 
-	DS_DROP;
+	DS_DROP; // Drop result of Do_Next (elem)
 }
 
 /***********************************************************************
@@ -1050,7 +1046,7 @@ static void callback_dispatcher(ffi_cif *cif, void *ret, void **args, void *user
 			Trap_Types_DEAD_END(RE_EXPECT_VAL, REB_BLOCK, VAL_TYPE(&blk[0]));
 
 		fn_idx = Do_Next(VAL_SERIES(data), 1, 0);
-		lib = DS_POP; //Do_Next saves result on stack
+		lib = DS_TOP; // Do_Next leaves result on stack
 
 		if (IS_INTEGER(lib)) {
 			if (NOT_END(&blk[fn_idx]))
@@ -1092,13 +1088,15 @@ static void callback_dispatcher(ffi_cif *cif, void *ret, void **args, void *user
 				VAL_ROUTINE_FUNCPTR(out) = func;
 			}
 		}
+
+		DS_DROP; // Drop result of Do_Next (lib)
 	} else if (type == REB_CALLBACK) {
 		REBINT fn_idx = 0;
 		REBVAL *fun = NULL;
 		if (!IS_BLOCK(&blk[0]))
 			Trap_Arg_DEAD_END(&blk[0]);
 		fn_idx = Do_Next(VAL_SERIES(data), 1, 0);
-		fun = DS_POP; //Do_Next saves result on stack
+		fun = DS_TOP; // Do_Next leaves result on stack
 		if (!IS_FUNCTION(fun))
 			Trap_Arg_DEAD_END(fun);
 		VAL_CALLBACK_FUNC(out) = VAL_FUNC(fun);
@@ -1106,6 +1104,7 @@ static void callback_dispatcher(ffi_cif *cif, void *ret, void **args, void *user
 			Trap_Arg_DEAD_END(&blk[fn_idx]);
 		}
 		//printf("RIN: %p, func: %p\n", VAL_ROUTINE_INFO(out), &blk[1]);
+		DS_DROP; // Drop result of Do_Next (fun)
 	}
 
 	blk = VAL_BLK_DATA(&blk[0]);

@@ -561,7 +561,9 @@
 	// If user set error code, use it to setup type and id fields.
 	if (IS_BLOCK(arg)) {
 		DISABLE_GC;
-		Do_Bind_Block(err, arg); // GC-OK (disabled)
+		Bind_Block(err, VAL_BLK_DATA(arg), BIND_DEEP);
+		DO_BLK(arg); // GC-OK (disabled)
+		DS_DROP;
 		ENABLE_GC;
 		if (IS_INTEGER(&error->code) && VAL_INT64(&error->code)) {
 			Set_Error_Type(error);

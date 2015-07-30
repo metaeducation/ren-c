@@ -195,6 +195,7 @@ x*/	int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result)
 	REBCNT n;
 	REBCNT dsp = DSP; // to restore stack on errors
 	REBVAL label;
+	REBRXT type;
 
 	// Find word in object, verify it is a function.
 	if (!(val = Find_Word_Value(obj, name))) {
@@ -247,11 +248,15 @@ x*/	int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result)
 	SET_DSF(dsf);
 	Func_Dispatch[VAL_TYPE(val) - REB_NATIVE](val);
 	SET_DSF(PRIOR_DSF(dsf));
-	DSP = dsf-1;
+	DSP = dsf;
 
-	// Return resulting value from TOS1 (volatile location):
-	*result = Value_To_RXI(DS_VALUE(dsf));
-	return Reb_To_RXT[VAL_TYPE(DS_VALUE(dsf))];
+	// Return resulting value from TOS
+	*result = Value_To_RXI(DS_TOP);
+	type = Reb_To_RXT[VAL_TYPE(DS_TOP)];
+
+	DS_DROP;
+
+	return type;
 }
 
 
@@ -522,6 +527,7 @@ typedef REBYTE *(INFO_FUNC)(REBINT opts, void *lib);
 	REBCNT n;
 	REBEXT *ext;
 	REBCEC *ctx = cast(REBCEC*, context);
+	REBVAL save;
 
 	if (ctx) ctx->block = cmds;
 	blk = BLK_HEAD(cmds);
@@ -577,12 +583,14 @@ typedef REBYTE *(INFO_FUNC)(REBINT opts, void *lib);
 						if (Do_Path(&path, 0)) {
 							// !!! comment said "found a function"
 						} else {
-							val = DS_TOP; // volatile value!
+							val = DS_TOP;
 						}
 					}
 				}
 				else if (IS_PAREN(val)) {
-					val = Do_Blk(VAL_SERIES(val), 0); // volatile value!
+					Do_Blk(VAL_SERIES(val), 0);
+					DS_POP_INTO(&save);
+					val = &save;
 				}
 				// all others fall through
 			}

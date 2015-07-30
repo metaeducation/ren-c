@@ -429,7 +429,6 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 	}
 
 	Do_Blk(code, 0);
-	DSP++; // shift to use TOS semantics (not TOS1)
 
 	UNSAVE_SERIES(code);
 

@@ -137,6 +137,8 @@ static	BOOT_BLK *Boot_Block;
 	if (rebind > 0) Bind_Block(Lib_Context, BLK_HEAD(block), BIND_DEEP);
 	if (rebind > 1) Bind_Block(Sys_Context, BLK_HEAD(block), BIND_DEEP);
 	Do_Blk(block, 0);
+
+	DS_DROP; // !!! Should result just be ignored?
 }
 
 
@@ -345,7 +347,10 @@ static	BOOT_BLK *Boot_Block;
 
 	SET_OBJECT(D_OUT, Make_Object(0, VAL_BLK(spec)));
 	Bind_Block(VAL_OBJ_FRAME(D_OUT), VAL_BLK(spec), BIND_ONLY); // not deep
-	Do_Blk(VAL_SERIES(spec), 0); // result ignored
+
+	Do_Blk(VAL_SERIES(spec), 0);
+	DS_DROP; // !!! Should result just be ignored?
+
 	return R_OUT;
 }
 
@@ -592,6 +597,8 @@ static	BOOT_BLK *Boot_Block;
 
 	// Evaluate the block (will eval FRAMEs within):
 	Do_Blk(VAL_SERIES(&Boot_Block->sysobj), 0);
+
+	DS_DROP; // !!! Should result just be ignored?
 
 	// Create a global value for it:
 	value = Append_Frame(Lib_Context, 0, SYM_SYSTEM);
@@ -1072,7 +1079,7 @@ static REBCNT Set_Option_Word(REBCHR *str, REBCNT field)
 	Set_Random(0);
 	Init_Words(FALSE);		// Symbol table
 	// !!! Temporary for StableStack... simulate stable with LARGE value
-	Init_Data_Stack(128000 /* STACK_MIN*4 */);
+	Init_Data_Stack(STACK_BOUNDS / sizeof(void*) /* STACK_MIN*4 */);
 	Init_Scanner();
 	Init_Mold(MIN_COMMON);	// Output buffer
 	Init_Frame();			// Frames

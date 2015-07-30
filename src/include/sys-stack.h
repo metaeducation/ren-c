@@ -111,9 +111,14 @@
 #define DS_VALUE(d)		(&DS_Base[d])
 
 // Stack pointer based actions:
-#define DS_POP			(&DS_Base[DSP--])
 #define DS_TOP			(&DS_Base[DSP])
-#define DS_NEXT			(&DS_Base[DSP+1])
+
+#define DS_POP_INTO(v) \
+	do { \
+		*(v) = *DS_TOP; \
+		DS_DROP; \
+	} while (0)
+
 #define DS_DROP			(DSP--)
 #define DS_GET(d)		(&DS_Base[d])
 #define DS_PUSH(v)		(DS_Base[++DSP]=*(v))		// atomic

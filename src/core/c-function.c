@@ -299,9 +299,6 @@
 	case R_TOS:
 		*out = *DS_TOP;
 		break;
-	case R_TOS1:
-		*out = *DS_NEXT;
-		break;
 	case R_NONE:
 		SET_NONE(out);
 		break;
@@ -370,9 +367,6 @@
 	case R_TOS:
 		*out = *DS_TOP;
 		break;
-	case R_TOS1:
-		*out = *DS_NEXT;
-		break;
 	case R_NONE:
 		SET_NONE(out);
 		break;
@@ -410,18 +404,17 @@
 	const REBYTE *this_function_name = Get_Word_Name(DSF_LABEL(DSF));
 #endif
 
-	REBVAL *result;
 	REBVAL *out = DSF_OUT(DSF);
 
 	Eval_Functions++;
 
-	//Dump_Block(VAL_FUNC_BODY(func));
-	result = Do_Blk(VAL_FUNC_BODY(func), 0);
+	Do_Blk(VAL_FUNC_BODY(func), 0);
 
-	if (IS_ERROR(result) && VAL_ERR_NUM(result) == RE_RETURN) {
-		TAKE_THROWN_ARG(out, result);
+	if (IS_ERROR(DS_TOP) && VAL_ERR_NUM(DS_TOP) == RE_RETURN) {
+		TAKE_THROWN_ARG(out, DS_TOP);
+		DS_DROP;
 	}
-	else *out = *result; // Set return value (atomic)
+	else DS_POP_INTO(out);
 }
 
 
@@ -440,7 +433,6 @@
 
 	REBSER *body;
 	REBSER *frame;
-	REBVAL *result;
 	REBVAL *out = DSF_OUT(DSF);
 
 	Eval_Functions++;
@@ -457,13 +449,13 @@
 	Rebind_Block(VAL_FUNC_ARGS(func), frame, BLK_HEAD(body), REBIND_TYPE);
 
 	SAVE_SERIES(body);
-	result = Do_Blk(body, 0);
+	Do_Blk(body, 0);
 	UNSAVE_SERIES(body);
 
-	if (IS_ERROR(result) && VAL_ERR_NUM(result) == RE_RETURN) {
-		TAKE_THROWN_ARG(out, result);
+	if (IS_ERROR(DS_TOP) && VAL_ERR_NUM(DS_TOP) == RE_RETURN) {
+		TAKE_THROWN_ARG(out, DS_TOP);
 	}
-	else *out = *result; // Set return value (atomic)
+	else DS_POP_INTO(out);
 }
 
 /***********************************************************************

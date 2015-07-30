@@ -111,7 +111,7 @@ static REBREQ *Req_SIO;
 
 	Req_SIO->actual = 0;
 	Req_SIO->common.data = buf;
-	buf[0] = 0; // for debug tracing
+	buffer[0] = 0; // for debug tracing
 
 	while ((len2 = len) > 0) {
 

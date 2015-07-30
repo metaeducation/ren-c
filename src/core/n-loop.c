@@ -89,11 +89,10 @@
 
 /***********************************************************************
 **
-*/	static void Loop_Series(REBVAL *var, REBSER* body, REBVAL *start, REBINT ei, REBINT ii)
+*/	static void Loop_Series(REBVAL *out, REBVAL *var, REBSER* body, REBVAL *start, REBINT ei, REBINT ii)
 /*
 ***********************************************************************/
 {
-	REBVAL *result;
 	REBINT si = VAL_INDEX(start);
 	REBCNT type = VAL_TYPE(start);
 
@@ -104,10 +103,15 @@
 
 	if (ei < 0) ei = 0;
 
+	SET_NONE(out); // Default result to NONE if the loop does not run
+
 	for (; (ii > 0) ? si <= ei : si >= ei; si += ii) {
 		VAL_INDEX(var) = si;
-		result = Do_Blk(body, 0);
-		if (THROWN(result) && Check_Error(result) >= 0) break;
+		Do_Blk(body, 0);
+		DS_POP_INTO(out);
+
+		if (THROWN(out) && Check_Error(out) >= 0) break;
+
 		if (VAL_TYPE(var) != type) Trap1(RE_INVALID_TYPE, var);
 		si = VAL_INDEX(var);
 	}
@@ -116,18 +120,21 @@
 
 /***********************************************************************
 **
-*/	static void Loop_Integer(REBVAL *var, REBSER* body, REBI64 start, REBI64 end, REBI64 incr)
+*/	static void Loop_Integer(REBVAL *out, REBVAL *var, REBSER* body, REBI64 start, REBI64 end, REBI64 incr)
 /*
 ***********************************************************************/
 {
-	REBVAL *result;
-
 	VAL_SET(var, REB_INTEGER);
+
+	SET_NONE(out); // Default result to NONE if the loop does not run
 
 	while ((incr > 0) ? start <= end : start >= end) {
 		VAL_INT64(var) = start;
-		result = Do_Blk(body, 0);
-		if (THROWN(result) && Check_Error(result) >= 0) break;
+		Do_Blk(body, 0);
+		DS_POP_INTO(out);
+
+		if (THROWN(out) && Check_Error(out) >= 0) break;
+
 		if (!IS_INTEGER(var)) Trap_Type(var);
 		start = VAL_INT64(var);
 
@@ -140,11 +147,10 @@
 
 /***********************************************************************
 **
-*/	static void Loop_Number(REBVAL *var, REBSER* body, REBVAL *start, REBVAL *end, REBVAL *incr)
+*/	static void Loop_Number(REBVAL *out, REBVAL *var, REBSER* body, REBVAL *start, REBVAL *end, REBVAL *incr)
 /*
 ***********************************************************************/
 {
-	REBVAL *result;
 	REBDEC s;
 	REBDEC e;
 	REBDEC i;
@@ -163,10 +169,15 @@
 
 	VAL_SET(var, REB_DECIMAL);
 
+	SET_NONE(out); // Default result to NONE if the loop does not run
+
 	for (; (i > 0.0) ? s <= e : s >= e; s += i) {
 		VAL_DECIMAL(var) = s;
-		result = Do_Blk(body, 0);
-		if (THROWN(result) && Check_Error(result) >= 0) break;
+
+		Do_Blk(body, 0);
+		DS_POP_INTO(out);
+		if (THROWN(out) && Check_Error(out) >= 0) break;
+
 		if (!IS_DECIMAL(var)) Trap_Type(var);
 		s = VAL_DECIMAL(var);
 	}
@@ -224,15 +235,14 @@
 				VAL_INDEX(var) = idx;
 			}
 
-			ds = Do_Blk(body, bodi); // (may move stack)
+			Do_Blk(body, bodi);
+			DS_POP_INTO(D_OUT);
 
-			if (THROWN(ds)) {	// Break, throw, continue, error.
-				if (Check_Error(ds) >= 0) {
-					*DS_OUT = *DS_NEXT;
+			if (THROWN(D_OUT)) {	// Break, throw, continue, error.
+				if (Check_Error(D_OUT) >= 0) {
 					break;
 				}
 			}
-			*DS_OUT = *ds;
 
 			if (VAL_TYPE(var) != type) Trap_Arg_DEAD_END(var);
 
@@ -250,7 +260,7 @@
 
 /***********************************************************************
 **
-*/	static int Loop_Each(struct Reb_Call *call_, REBINT mode)
+*/	static REB_R Loop_Each(struct Reb_Call *call_, REBINT mode)
 /*
 **		Supports these natives (modes):
 **			0: foreach
@@ -285,13 +295,12 @@
 	SET_OBJECT(D_ARG(1), frame); // keep GC safe
 	Set_Block(D_ARG(3), body);	 // keep GC safe
 
-	SET_NONE(D_OUT);
-	SET_NONE(DS_NEXT);
+	SET_NONE(D_OUT); // Default result to NONE if the loop does not run
 
 	// If it's MAP, create result block:
 	if (mode == 2) {
 		out = Make_Block(VAL_LEN(value));
-		Set_Block(D_OUT, out);
+		SAVE_SERIES(out);
 	}
 
 	// Get series info:
@@ -312,6 +321,9 @@
 		if (index >= cast(REBINT, SERIES_TAIL(series))) {
 			if (mode == 1) {
 				SET_INTEGER(D_OUT, 0);
+			} else if (mode == 2) {
+				Set_Block(D_OUT, out);
+				UNSAVE_SERIES(out);
 			}
 			return R_OUT;
 		}
@@ -415,15 +427,17 @@
 		}
 		if (index == rindex) index++; //the word block has only set-words: foreach [a:] [1 2 3][]
 
-		ds = Do_Blk(body, 0);
 
-		if (THROWN(ds)) {
-			if ((err = Check_Error(ds)) >= 0) {
+		Do_Blk(body, 0);
+		DS_POP_INTO(D_OUT);
+
+		if (THROWN(D_OUT)) {
+			if ((err = Check_Error(D_OUT)) >= 0) {
 				index = rindex;
 				break;
 			}
 			// else CONTINUE:
-			if (mode == 1) SET_FALSE(ds); // keep the value (for mode == 1)
+			if (mode == 1) SET_FALSE(D_OUT); // keep the value (for mode == 1)
 		} else {
 			err = 0; // prevent later test against uninitialized value
 		}
@@ -433,7 +447,7 @@
 
 			// If FALSE return, copy values to the write location:
 			if (mode == 1) {  // remove-each
-				if (IS_CONDITIONAL_FALSE(ds)) {
+				if (IS_CONDITIONAL_FALSE(D_OUT)) {
 					REBCNT wide = SERIES_WIDE(series);
 					// memory areas may overlap, so use memmove and not memcpy!
 					memmove(series->data + (windex * wide), series->data + (rindex * wide), (index - rindex) * wide);
@@ -442,7 +456,7 @@
 				}
 			}
 			else
-				if (!IS_UNSET(ds)) Append_Value(out, ds); // (mode == 2)
+				if (!IS_UNSET(D_OUT)) Append_Value(out, D_OUT); // (mode == 2)
 		}
 skip_hidden: ;
 	}
@@ -451,14 +465,22 @@ skip_hidden: ;
 	if (mode == 1) {
 		// Remove hole (updates tail):
 		if (windex < index) Remove_Series(series, windex, index - windex);
-		SET_INTEGER(DS_OUT, index - windex);
+		SET_INTEGER(D_OUT, index - windex);
+
 		return R_OUT;
 	}
 
-	// If MAP and not BREAK/RETURN:
-	if (mode == 2 && err != 2) return R_OUT;
+	// If MAP...
+	if (mode == 2) {
+		UNSAVE_SERIES(out);
+		if (err != 2) {
+			// ...and not BREAK/RETURN:
+			Set_Block(D_OUT, out);
+			return R_OUT;
+		}
+	}
 
-	return R_TOS1;
+	return R_OUT;
 }
 
 
@@ -483,24 +505,22 @@ skip_hidden: ;
 	SET_OBJECT(D_ARG(1), frame); // keep GC safe
 	Set_Block(D_ARG(5), body);	 // keep GC safe
 
-	SET_NONE(DS_NEXT); // in case nothing below happens
-
 	if (IS_INTEGER(start) && IS_INTEGER(end) && IS_INTEGER(incr)) {
-		Loop_Integer(var, body, VAL_INT64(start),
+		Loop_Integer(D_OUT, var, body, VAL_INT64(start),
 			IS_DECIMAL(end) ? (REBI64)VAL_DECIMAL(end) : VAL_INT64(end), VAL_INT64(incr));
 	}
 	else if (ANY_SERIES(start)) {
 		// Check that start and end are same type and series:
 		//if (ANY_SERIES(end) && VAL_SERIES(start) != VAL_SERIES(end)) Trap_Arg(end);
 		if (ANY_SERIES(end))
-			Loop_Series(var, body, start, VAL_INDEX(end), Int32(incr));
+			Loop_Series(D_OUT, var, body, start, VAL_INDEX(end), Int32(incr));
 		else
-			Loop_Series(var, body, start, Int32s(end, 1) - 1, Int32(incr));
+			Loop_Series(D_OUT, var, body, start, Int32s(end, 1) - 1, Int32(incr));
 	}
 	else
-		Loop_Number(var, body, start, end, incr);
+		Loop_Number(D_OUT, var, body, start, end, incr);
 
-	return R_TOS1;
+	return R_OUT;
 }
 
 
@@ -530,16 +550,14 @@ skip_hidden: ;
 /*
 ***********************************************************************/
 {
-	REBVAL *result;
+	do {
+		DO_BLK(DS_ARG(1));
+		if (THROWN(DS_TOP) && Check_Error(DS_TOP) >= 0)
+			return R_TOS;
+		DS_DROP;
+	} while (TRUE);
 
-	SET_NONE(DS_NEXT);
-
-	while (1) {
-		result = DO_BLK(DS_ARG(1));
-		if (THROWN(result) && Check_Error(result) >= 0) break;
-	}
-
-	return R_TOS1;
+	DEAD_END;
 }
 
 
@@ -597,15 +615,16 @@ skip_hidden: ;
 	REBCNT index  = VAL_INDEX(D_ARG(2));
 	REBVAL *ds;
 
-	ds = 0;
+	DS_PUSH_NONE; // Default result to NONE if the loop does not run
+
 	for (; count > 0; count--) {
-		ds = Do_Blk(block, index);
-		if (THROWN(ds)) {
-			if (Check_Error(ds) >= 0) break;
+		DS_DROP;
+		Do_Blk(block, index);
+		if (THROWN(DS_TOP)) {
+			if (Check_Error(DS_TOP) >= 0) break;
 		}
 	}
-	if (ds) return R_TOS1;
-	return R_NONE;
+	return R_TOS;
 }
 
 
@@ -634,16 +653,16 @@ skip_hidden: ;
 	SET_OBJECT(D_ARG(1), frame); // keep GC safe
 	Set_Block(D_ARG(3), body);	 // keep GC safe
 
-	SET_NONE(DS_NEXT); // in case nothing below happens
-
 	if (ANY_SERIES(count)) {
-		Loop_Series(var, body, count, VAL_TAIL(count)-1, 1);
+		Loop_Series(D_OUT, var, body, count, VAL_TAIL(count) - 1, 1);
+		return R_OUT;
 	}
 	else if (IS_INTEGER(count)) {
-		Loop_Integer(var, body, 1, VAL_INT64(count), 1);
+		Loop_Integer(D_OUT, var, body, 1, VAL_INT64(count), 1);
+		return R_OUT;
 	}
 
-	return R_TOS1;
+	return R_NONE;
 }
 
 
@@ -659,14 +678,15 @@ skip_hidden: ;
 
 	do {
 utop:
-		ds = Do_Blk(b1, i1);
-		if (IS_UNSET(ds)) Trap_DEAD_END(RE_NO_RETURN);
-		if (THROWN(ds)) {
-			if (Check_Error(ds) >= 0) break;
+		Do_Blk(b1, i1);
+		DS_POP_INTO(D_OUT);
+		if (IS_UNSET(D_OUT)) Trap_DEAD_END(RE_NO_RETURN);
+		if (THROWN(D_OUT)) {
+			if (Check_Error(D_OUT) >= 0) break;
 			goto utop;
 		}
-	} while (IS_CONDITIONAL_FALSE(ds)); // Break, return errors fall out.
-	return R_TOS1;
+	} while (IS_CONDITIONAL_FALSE(D_OUT)); // Break, return errors fall out.
+	return R_OUT;
 }
 
 
@@ -685,16 +705,30 @@ utop:
 	SET_NONE(D_OUT);
 
 	do {
-		ds = Do_Blk(b1, i1);
-		if (IS_UNSET(ds) || IS_ERROR(ds)) {	// Unset, break, throw, error.
-			if (Check_Error(ds) >= 0) return R_TOS1;
+		Do_Blk(b1, i1);
+		if (IS_UNSET(DS_TOP) || IS_ERROR(DS_TOP)) {
+			// Unset, break, throw, error.
+			if (Check_Error(DS_TOP) >= 0) {
+				// Check_Error modifies its argument such that TOS will be
+				// UNSET! (or the arg to BREAK/WITH) if a BREAK happened.
+				// (It will also complain if DS_TOP was an UNSET!.)
+				return R_TOS;
+			}
+			// CONTINUE will pass through here...
 		}
-		if (IS_CONDITIONAL_FALSE(ds)) return R_OUT;
-		ds = Do_Blk(b2, i2);
-		*DS_OUT = *ds;	// save here (to avoid GC during error handling)
-		if (THROWN(ds)) {	// Break, throw, continue, error.
-			if (Check_Error(ds) >= 0) return R_TOS1;
-			*DS_OUT = *ds; // Check_Error modified it
+
+		if (IS_CONDITIONAL_FALSE(DS_TOP)) return R_OUT;
+
+		// Not interested in the value of the condition loop once we've
+		// decided to run the body...
+		DS_DROP;
+
+		Do_Blk(b2, i2);
+		DS_POP_INTO(D_OUT);
+		if (THROWN(D_OUT)) {
+			// Break, throw, continue, error.
+			// !!! Check_Error may modify its argument
+			if (Check_Error(D_OUT) >= 0) return R_OUT;
 		}
 	} while (TRUE);
 }

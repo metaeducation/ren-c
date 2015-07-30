@@ -1102,7 +1102,6 @@ struct Reb_Call {
 enum {
 	R_OUT = 0,
 	R_TOS,
-	R_TOS1,
 	R_NONE,
 	R_UNSET,
 	R_TRUE,

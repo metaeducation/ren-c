@@ -187,6 +187,7 @@ void Print_Parse_Index(REBCNT type, REBVAL *rules, REBSER *series, REBCNT index)
 	REBSER *ser;
 	REBCNT flags = parse->flags | AM_FIND_MATCH | AM_FIND_TAIL;
 	int rewrite_needed;
+	REBVAL save;
 
 	if (Trace_Level) {
 		Trace_Value(7, item);
@@ -245,7 +246,9 @@ void Print_Parse_Index(REBCNT type, REBVAL *rules, REBSER *series, REBCNT index)
 
 	// Do an expression:
 	case REB_PAREN:
-		item = Do_Block_Value_Throw(item); // might GC
+		Do_Block_Value_Throw(item); // might GC
+		DS_POP_INTO(&save);
+		item = &save;
 		// old: if (IS_ERROR(item)) Throw_Error(VAL_ERR_OBJECT(item));
         index = MIN(index, series->tail); // may affect tail
 		break;
@@ -270,6 +273,7 @@ void Print_Parse_Index(REBCNT type, REBVAL *rules, REBSER *series, REBCNT index)
 	// !!! THIS CODE NEEDS CLEANUP AND REWRITE BASED ON OTHER CHANGES
 	REBSER *series = parse->series;
 	REBVAL *blk = BLK_SKIP(series, index);
+	REBVAL save;
 
 	if (Trace_Level) {
 		Trace_Value(7, item);
@@ -311,7 +315,9 @@ void Print_Parse_Index(REBCNT type, REBVAL *rules, REBSER *series, REBCNT index)
 
 	// Do an expression:
 	case REB_PAREN:
-		item = Do_Block_Value_Throw(item); // might GC
+		Do_Block_Value_Throw(item); // might GC
+		DS_POP_INTO(&save);
+		item = &save;
 		// old: if (IS_ERROR(item)) Throw_Error(VAL_ERR_OBJECT(item));
         index = MIN(index, series->tail); // may affect tail
 		break;
@@ -342,6 +348,7 @@ no_result:
 	REBCNT cmd;
 	REBCNT i;
 	REBCNT len;
+	REBVAL save;
 
 	for (; index <= series->tail; index++) {
 
@@ -363,7 +370,9 @@ no_result:
 						item = ++blk; // next item is the quoted value
 						if (IS_END(item)) goto bad_target;
 						if (IS_PAREN(item)) {
-							item = Do_Block_Value_Throw(item); // might GC
+							Do_Block_Value_Throw(item); // might GC
+							DS_POP_INTO(&save);
+							item = &save;
 						}
 
 					}
@@ -459,11 +468,17 @@ next:		// Check for | (required if not end)
 	return NOT_FOUND;
 
 found:
-	if (IS_PAREN(blk+1)) Do_Block_Value_Throw(blk+1);
+	if (IS_PAREN(blk + 1)) {
+		Do_Block_Value_Throw(blk + 1);
+		DS_DROP; // !!! Ignore result?
+	}
 	return index;
 
 found1:
-	if (IS_PAREN(blk+1)) Do_Block_Value_Throw(blk+1);
+	if (IS_PAREN(blk + 1)) {
+		Do_Block_Value_Throw(blk + 1);
+		DS_DROP; // !!! Ignore result?
+	}
 	return index + (is_thru ? 1 : 0);
 
 bad_target:
@@ -573,6 +588,7 @@ bad_target:
 	REBVAL *item = *rule;
 	REBCNT n;
 	REBPARSE newparse;
+	REBVAL save; // REVIEW: Could this just reuse value?
 
 	// First, check for end of input:
 	if (index >= parse->series->tail) {
@@ -583,8 +599,8 @@ bad_target:
 	// Evaluate next N input values:
 	index = Do_Next(parse->series, index, FALSE);
 
-	// Value is on top of stack (volatile!):
-	value = *DS_POP;
+	// Value is on top of stack:
+	DS_POP_INTO(&value);
 	if (THROWN(&value)) Throw(&value, NULL);
 
 	// Get variable or command:
@@ -600,7 +616,9 @@ bad_target:
 			(*rule)++;
 			if (IS_END(item)) Trap1_DEAD_END(RE_PARSE_END, item-2);
 			if (IS_PAREN(item)) {
-				item = Do_Block_Value_Throw(item); // might GC
+				Do_Block_Value_Throw(item); // might GC
+				DS_POP_INTO(&save);
+				item = &save;
 			}
 		}
 		else if (n == SYM_INTO) {
@@ -663,6 +681,7 @@ bad_target:
 	REBFLG flags;
 	REBCNT cmd;
 	REBVAL *rule_head = rules;
+	REBVAL save;
 
 	CHECK_C_STACK_OVERFLOW(&flags);
 	//if (depth > MAX_PARSE_DEPTH) vTrap_Word(RE_LIMIT_HIT, SYM_PARSE, 0);
@@ -768,9 +787,9 @@ bad_target:
 							VAL_SET(&err, REB_ERROR);
 							VAL_ERR_NUM(&err) = RE_PARSE_RETURN;
 
-							item = Do_Block_Value_Throw(rules);
+							Do_Block_Value_Throw(rules);
 
-							Throw(&err, item);
+							Throw(&err, DS_TOP); // no need to balance stack
 							DEAD_END;
 						}
 						SET_FLAG(flags, PF_RETURN);
@@ -793,7 +812,9 @@ bad_target:
 						item = rules++;
 						if (IS_END(item)) goto bad_end;
 						if (!IS_PAREN(item)) Trap1_DEAD_END(RE_PARSE_RULE, item);
-						item = Do_Block_Value_Throw(item); // might GC
+						Do_Block_Value_Throw(item); // might GC
+						DS_POP_INTO(&save);
+						item = &save;
 						if (IS_CONDITIONAL_TRUE(item)) continue;
 						else {
 							index = NOT_FOUND;
@@ -860,6 +881,7 @@ bad_target:
 
 		if (IS_PAREN(item)) {
 			Do_Block_Value_Throw(item); // might GC
+			DS_DROP; // !!! Ignore result?
 			if (index > series->tail) index = series->tail;
 			continue;
 		}
@@ -922,7 +944,9 @@ bad_target:
 					if (IS_END(rules)) goto bad_end;
 					rulen = 1;
 					if (IS_PAREN(rules)) {
-						item = Do_Block_Value_Throw(rules); // might GC
+						Do_Block_Value_Throw(rules); // might GC
+						DS_POP_INTO(&save);
+						item = &save;
 					}
 					else item = rules;
 					i = (0 == Cmp_Value(BLK_SKIP(series, index), item, parse->flags & AM_FIND_CASE)) ? index+1 : NOT_FOUND;

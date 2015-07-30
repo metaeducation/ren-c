@@ -256,15 +256,19 @@ enum {
 	REBCNT index = VAL_INDEX(D_ARG(1));
 	REBVAL *ds;
 
-	ds = 0;
+	// Default result for 'all []'
+	DS_PUSH_TRUE;
+
 	while (index < SERIES_TAIL(block)) {
-		index = Do_Next(block, index, 0); // stack volatile
-		ds = DS_POP;  // volatile stack reference
-		if (IS_CONDITIONAL_FALSE(ds)) return R_NONE;
-		if (THROWN(ds)) break;
+		DS_DROP;
+		index = Do_Next(block, index, 0);
+		if (IS_CONDITIONAL_FALSE(DS_TOP)) {
+			DS_DROP;
+			return R_NONE;
+		}
+		if (THROWN(DS_TOP)) break;
 	}
-	if (ds == 0) return R_TRUE;
-	return R_TOS1;
+	return R_TOS;
 }
 
 
@@ -279,9 +283,9 @@ enum {
 	REBVAL *ds;
 
 	while (index < SERIES_TAIL(block)) {
-		index = Do_Next(block, index, 0); // stack volatile
-		ds = DS_POP;  // volatile stack reference
-		if (!IS_CONDITIONAL_FALSE(ds) && !IS_UNSET(ds)) return R_TOS1;
+		index = Do_Next(block, index, 0);
+		if (!IS_CONDITIONAL_FALSE(DS_TOP) && !IS_UNSET(DS_TOP)) return R_TOS;
+		DS_DROP;
 	}
 	return R_NONE;
 }
@@ -293,7 +297,7 @@ enum {
 /*
 ***********************************************************************/
 {
-	Apply_Block(D_ARG(1), D_ARG(2), !D_REF(3)); // stack volatile
+	Apply_Block(D_ARG(1), D_ARG(2), !D_REF(3));
 	return R_TOS;
 }
 
@@ -315,7 +319,6 @@ enum {
 	if (error) return R_NONE;
 
 	Do_Blk(VAL_SERIES(D_ARG(1)), VAL_INDEX(D_ARG(1)));
-	DSP++; // TOS semantics instead of TOS1!
 
 	DROP_CATCH_SAME_STACKLEVEL_AS_PUSH(&state);
 
@@ -354,22 +357,22 @@ enum {
 	REBVAL *ds;
 
 	while (index < SERIES_TAIL(block)) {
-		//DSP = top; // reset stack  -- not needed?
 		index = Do_Next(block, index, 0);
-		ds = DS_POP;  // volatile stack reference
-		if (IS_CONDITIONAL_FALSE(ds)) index++;
+		DS_POP_INTO(D_OUT);
+		if (IS_CONDITIONAL_FALSE(D_OUT)) index++;
 		else {
-			if (IS_UNSET(ds)) Trap_DEAD_END(RE_NO_RETURN);
-			if (THROWN(ds)) return R_TOS1;
+			if (IS_UNSET(D_OUT)) Trap_DEAD_END(RE_NO_RETURN);
+			if (THROWN(D_OUT)) return R_OUT;
 			if (index >= SERIES_TAIL(block)) return R_TRUE;
 			index = Do_Next(block, index, 0);
-			ds = DS_POP;  // volatile stack reference
-			if (IS_BLOCK(ds)) {
-				ds = DO_BLK(ds);
-				if (IS_UNSET(ds) && !all_flag) return R_TRUE;
+			DS_POP_INTO(D_OUT);
+			if (IS_BLOCK(D_OUT)) {
+				DO_BLK(D_OUT);
+				DS_POP_INTO(D_OUT);
+				if (IS_UNSET(D_OUT) && !all_flag) return R_TRUE;
 			}
-			if (THROWN(ds) || !all_flag || index >= SERIES_TAIL(block))
-				return R_TOS1;
+			if (THROWN(D_OUT) || !all_flag || index >= SERIES_TAIL(block))
+				return R_OUT;
 		}
 	}
 	return R_NONE;
@@ -421,7 +424,6 @@ enum {
 
 	// Evaluate the block:
 	Do_Blk(VAL_SERIES(D_ARG(1)), VAL_INDEX(D_ARG(1)));
-	DSP++; // Use TOS semantics, not TOS1
 
 	DROP_CATCH_SAME_STACKLEVEL_AS_PUSH(&state);
 
@@ -536,8 +538,9 @@ got_err:
 			Set_Var(D_ARG(5), value); // "continuation" of block
 			return R_TOS;
 		}
-		else DO_BLK(value);
-		return R_TOS1;
+
+		DO_BLK(value);
+		return R_TOS;
 
     case REB_NATIVE:
 	case REB_ACTION:
@@ -607,7 +610,7 @@ got_err:
 
 	if (IS_BLOCK(D_ARG(argnum)) && !D_REF(4) /* not using /ONLY */) {
 		DO_BLK(D_ARG(argnum));
-		return R_TOS1;
+		return R_TOS;
 	} else {
 		return argnum == 2 ? R_ARG2 : R_ARG3;
 	}
@@ -637,7 +640,7 @@ got_err:
 	if (IS_CONDITIONAL_FALSE(D_ARG(1))) return R_NONE;
 	if (IS_BLOCK(D_ARG(2)) && !D_REF(3) /* not using /ONLY */) {
 		DO_BLK(D_ARG(2));
-		return R_TOS1;
+		return R_TOS;
 	}
 	return R_ARG2;
 }
@@ -722,7 +725,6 @@ got_err:
 ***********************************************************************/
 {
 	REBVAL *blk = VAL_BLK_DATA(D_ARG(2));
-	REBVAL *result;
 	REBOOL all = D_REF(5);
 	REBOOL found = FALSE;
 
@@ -734,15 +736,16 @@ got_err:
 			if (IS_END(blk)) break;
 			found = TRUE;
 			// Evaluate the case block
-			result = DO_BLK(blk);
-			if (!all) return R_TOS1;
-			if (THROWN(result) && Check_Error(result) >= 0) break;
+			DO_BLK(blk);
+			DS_POP_INTO(D_OUT);
+			if (!all) return R_OUT;
+			if (THROWN(D_OUT) && Check_Error(D_OUT) >= 0) break;
 		}
 	}
 
-	if (!found && IS_BLOCK(result = D_ARG(4))) {
-		DO_BLK(result);
-		return R_TOS1;
+	if (!found && IS_BLOCK(D_ARG(4))) {
+		DO_BLK(D_ARG(4));
+		return R_TOS;
 	}
 
 	return R_NONE;
@@ -775,7 +778,6 @@ got_err:
 			if (IS_BLOCK(D_ARG(3))) {
 				// forget the result of the try.
 				Do_Blk(VAL_SERIES(D_ARG(3)), VAL_INDEX(D_ARG(3)));
-				DSP++; // TOS semantics, not TOS1!
 				return R_TOS;
 			}
 			else if (ANY_FUNC(D_ARG(3))) {
@@ -806,7 +808,6 @@ got_err:
 	}
 
 	Do_Blk(VAL_SERIES(D_ARG(1)), VAL_INDEX(D_ARG(1)));
-	DSP++; // TOS semantics, not TOS1!
 
 	DROP_CATCH_SAME_STACKLEVEL_AS_PUSH(&state);
 
@@ -823,7 +824,7 @@ got_err:
 	if (IS_CONDITIONAL_TRUE(D_ARG(1))) return R_NONE;
 	if (IS_BLOCK(D_ARG(2)) && !D_REF(3) /* not using /ONLY */) {
 		DO_BLK(D_ARG(2));
-		return R_TOS1;
+		return R_TOS;
 	}
 	return R_ARG2;
 }

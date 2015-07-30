@@ -181,8 +181,8 @@ static const char *Dia_Fmt = "DELECT - cmd: %s length: %d missed: %d total: %d";
 		break;
 
 	case REB_PAREN:
-		value = DO_BLK(value);
-		DSP++; // do not overwrite TOS
+		DO_BLK(value);
+		value = DS_TOP;
 		break;
 	}
 

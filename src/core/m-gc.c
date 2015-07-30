@@ -967,7 +967,6 @@ static void Propagate_All_GC_Marks(void);
 	// be a problem if code is building a new value at the tail,
 	// but has not yet updated the TAIL marker.
 	DS_TERMINATE; // Update data stack tail
-//	SET_END(DS_NEXT);
 	VAL_BLK_TERM(TASK_BUF_EMIT);
 	VAL_BLK_TERM(TASK_BUF_WORDS);
 //!!!	SET_END(BLK_TAIL(Save_Value_List));

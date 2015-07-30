@@ -75,6 +75,9 @@
 	OS_TASK_READY(0);
 	Do_Blk(body, 0);
 
+	// !!! Should result be ignored?
+	DS_DROP;
+
 	Debug_Str("End Task");
 }
 

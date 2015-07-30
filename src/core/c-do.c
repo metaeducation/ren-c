@@ -348,6 +348,7 @@ void Trace_Arg(REBINT num, REBVAL *arg, REBVAL *path)
 {
 	REBVAL *path;
 	REBPEF func;
+	REBVAL temp;
 
 	// Path must have dispatcher, else return:
 	func = Path_Dispatch[VAL_TYPE(pvs->value)];
@@ -365,7 +366,9 @@ void Trace_Arg(REBINT num, REBVAL *arg, REBVAL *path)
 	// object/(expr) case:
 	else if (IS_PAREN(path)) {
 		// ?? GC protect stuff !!!!!! stack could expand!
-		pvs->select = Do_Blk(VAL_SERIES(path), 0);
+		Do_Blk(VAL_SERIES(path), 0);
+		DS_POP_INTO(&temp);
+		pvs->select = &temp;
 	}
 	else // object/word and object/value case:
 		pvs->select = path;
@@ -562,7 +565,7 @@ void Trace_Arg(REBINT num, REBVAL *arg, REBVAL *path)
 	}
 
 	// Fill stack variables with default values:
-	tos = DS_NEXT;
+	tos = DS_TOP + 1;
 	DSP += ds;
 	for (; ds > 0; ds--) SET_NONE(tos++);
 
@@ -844,7 +847,7 @@ return_index:
 			// If the result of the Do_Args was something like a RETURN or
 			// a BREAK, then nevermind the function we were going to call.
 			// Just bubble up that special "ERROR" value to the caller.
-			*DSF_OUT(dsf) = *DS_POP;
+			DS_POP_INTO(DSF_OUT(dsf));
 		}
 		else {
 			// If the last value Do_Args evaluated wasn't thrown, we don't
@@ -947,7 +950,6 @@ return_index:
 
 	case ET_PAREN:
 		DO_BLK(value);
-		DSP++; // keep it on top
 		index++;
 		break;
 
@@ -1014,73 +1016,64 @@ return_index:
 
 /***********************************************************************
 **
-*/	REBVAL *Do_Blk(REBSER *block, REBCNT index)
+*/	void Do_Blk(REBSER *block, REBCNT index)
 /*
 **		Evaluate a block from the index position specified.
-**		Return the result (a pointer to TOS+1).
+**		Result is on TOS.
 **
 ***********************************************************************/
 {
-	REBVAL *tos = 0;
+#if !defined(NDEBUG)
 	REBINT start = DSP;
+#endif
 
 	CHECK_MEMORY(4); // Be sure we don't go far with a problem.
 
-	assert(block->info);
+	// Default return value for a DO of an empty block is an UNSET!
+	DS_PUSH_UNSET;
+
+	// CC#2229 - respond to Halt() in code like 'forever []'
+	if (--Eval_Count <= 0 || Eval_Signals) Do_Signals();
 
 	while (index < BLK_LEN(block)) {
+		DS_DROP;
 		index = Do_Next(block, index, 0);
-		tos = DS_POP;
-		if (THROWN(tos)) break;
-	}
-	// If block was empty:
-	if (!tos) {
-		// CC#2229 - respond to Halt() in code like 'forever []'
-		if (--Eval_Count <= 0 || Eval_Signals) Do_Signals();
-
-		tos = DS_NEXT; SET_UNSET(tos);
+		if (THROWN(DS_TOP)) break;
 	}
 
-	if (start != DSP || tos != &DS_Base[start+1]) Trap_DEAD_END(RE_MISSING_ARG);
-
-//	assert(gcd == GC_Disabled, RP_GC_STUCK);
-
-	// Restore data stack and return value:
-//	assert((tos == 0 || (start == DSP && tos == &DS_Base[start+1])), RP_TOS_DRIFT);
-//	if (!tos) {tos = DS_NEXT; SET_UNSET(tos);}
-	return tos;
+	assert(DSP == start + 1);
 }
 
 
 /***********************************************************************
 **
-*/	REBVAL *Do_Block_Value_Throw(REBVAL *block)
+*/	void Do_Block_Value_Throw(REBVAL *block)
 /*
 **		A common form of Do_Blk(). Takes block value. Handles throw.
+**		Result is on TOS.
 **
 ***********************************************************************/
 {
+#if !defined(NDEBUG)
+	REBINT start = DSP;
+#endif
+
 	REBSER *series = VAL_SERIES(block);
 	REBCNT index = VAL_INDEX(block);
-	REBVAL *tos = 0;
-	REBINT start = DSP;
+
+	// Default return value for a DO of an empty block is an UNSET!
+	DS_PUSH_UNSET;
+
+	// CC#2229 - respond to Halt() in code like 'forever []'
+	if (--Eval_Count <= 0 || Eval_Signals) Do_Signals();
 
 	while (index < BLK_LEN(series)) {
+		DS_DROP;
 		index = Do_Next(series, index, 0);
-		tos = DS_POP;
-		if (THROWN(tos)) Throw(tos, NULL);
-	}
-	// If series was empty:
-	if (!tos) {
-		// CC#2229 - respond to Halt() in code like 'forever []'
-		if (--Eval_Count <= 0 || Eval_Signals) Do_Signals();
-
-		tos = DS_NEXT; SET_UNSET(tos);
+		if (THROWN(DS_TOP)) Throw(DS_TOP, NULL);
 	}
 
-	if (start != DSP || tos != &DS_Base[start+1]) Trap_DEAD_END(RE_MISSING_ARG);
-
-	return tos;
+	assert(DSP == start + 1);
 }
 
 
@@ -1118,7 +1111,8 @@ return_index:
 	while (index < BLK_LEN(block)) {
 		index = Do_Next(block, index, 0);
 		if (THROWN(DS_TOP)) return;
-		Append_Value(ser, DS_POP);
+		Append_Value(ser, DS_TOP);
+		DS_DROP;
 	}
 }
 
@@ -1187,7 +1181,8 @@ return_index:
 			}
 			v = val;
 			Do_Path(&v, 0); // pushes val on stack
-			Append_Value(dest_ser, DS_POP);
+			Append_Value(dest_ser, DS_TOP);
+			DS_DROP;
 		}
 		else Append_Value(dest_ser, val);
 		// No need to check for unwinds (THROWN) here, because unwinds should
@@ -1231,7 +1226,8 @@ return_index:
 		} else
 			index = Do_Next(block, index, 0);
 		if (THROWN(DS_TOP)) return;
-		Append_Value(ser, DS_POP);
+		Append_Value(ser, DS_TOP);
+		DS_DROP;
 	}
 
 }
@@ -1346,25 +1342,33 @@ return_index:
 
 	for (value = VAL_BLK_DATA(block); NOT_END(value); value++) {
 		if (IS_PAREN(value)) {
-			// Eval the paren, and leave result on the stack:
-			REBVAL *paren = DO_BLK(value);
-			if (THROWN(paren)) {
+			// Eval the paren (result will be on stack)
+			DO_BLK(value);
+
+			if (THROWN(DS_TOP)) {
 				if (needs_free) Free_Series(ser);
-				DSP ++;
 				return;
 			}
 
 			// If result is a block, and not /only, insert its contents:
-			if (IS_BLOCK(paren) && !only) {
-				// Append series:
-				Append_Series(ser, (REBYTE *)VAL_BLK_DATA(paren), VAL_BLK_LEN(paren));
+			if (IS_BLOCK(DS_TOP) && !only) {
+				Append_Series(
+					ser,
+					cast(REBYTE*, VAL_BLK_DATA(DS_TOP)),
+					VAL_BLK_LEN(DS_TOP)
+				);
 			}
-			else if (!IS_UNSET(paren)) Append_Value(ser, paren); //don't append result if unset is returned
+			else if (!IS_UNSET(DS_TOP)) { // Only append result if not unset
+				Append_Value(ser, DS_TOP);
+			}
+
+			DS_DROP;
 		}
 		else if (deep) {
 			if (IS_BLOCK(value)) {
 				Compose_Block(value, TRUE, only, 0);
-				Append_Value(ser, DS_POP);
+				Append_Value(ser, DS_TOP);
+				DS_DROP;
 			}
 			else {
 				REBVAL tmp = *value;
@@ -1566,9 +1570,7 @@ return_index:
 **
 */	void Do_Sys_Func(REBCNT inum, ...)
 /*
-**		Evaluates a SYS function and TOS1 contains
-**		the result (VOLATILE). Uses current stack frame location
-**		as the next location (e.g. for error output).
+**		Evaluates a SYS function and TOS contains the result.
 **
 ***********************************************************************/
 {
@@ -1685,20 +1687,6 @@ return_index:
 		}
 	}
 	DS_DROP; // temp
-}
-
-
-/***********************************************************************
-**
-*/	REBVAL *Do_Bind_Block(REBSER *frame, REBVAL *block)
-/*
-**		Bind deep and evaluate a block value in a given context.
-**		Result is left on top of data stack (may be an error).
-**
-***********************************************************************/
-{
-	Bind_Block(frame, VAL_BLK_DATA(block), BIND_DEEP);
-	return DO_BLK(block);
 }
 
 

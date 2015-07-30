@@ -135,15 +135,15 @@ static int Check_Char_Range(REBVAL *val, REBINT limit)
 		REBCNT i;
 		REBVAL *ds;
 
-		ds = 0;
 		while (index < SERIES_TAIL(block)) {
-			index = Do_Next(block, i = index, 0); // stack volatile
-			ds = DS_POP; // volatile stack reference
-			if (IS_CONDITIONAL_FALSE(ds)) {
-				Set_Block(ds, Copy_Block_Len(block, i, 3));
-				Trap1_DEAD_END(RE_ASSERT_FAILED, ds);
+			index = Do_Next(block, i = index, 0);
+			if (IS_CONDITIONAL_FALSE(DS_TOP)) {
+				// !!! Only copies 3 values (and flaky), see CC#2231
+				Set_Block(D_OUT, Copy_Block_Len(block, i, 3));
+				Trap1_DEAD_END(RE_ASSERT_FAILED, D_OUT);
 			}
-			if (THROWN(ds)) return R_TOS1;
+			if (THROWN(DS_TOP)) return R_TOS;
+			DS_DROP;
 		}
 	}
 	else {
@@ -158,7 +158,7 @@ static int Check_Char_Range(REBVAL *val, REBINT limit)
 			else if (IS_PATH(value)) {
 				REBVAL *refinements = value;
 				Do_Path(&refinements, 0);
-				*D_OUT = *DS_POP;
+				DS_POP_INTO(D_OUT);
 				val = D_OUT;
 			}
 			else Trap_Arg_DEAD_END(value);
@@ -367,9 +367,11 @@ static int Check_Char_Range(REBVAL *val, REBINT limit)
 	else if (ANY_PATH(word)) {
 		REBVAL *refinements = word;
 		REBVAL *val = Do_Path(&refinements, 0);
-		if (!val) val = DS_POP; // resides on stack
+		if (!val) { // resides on stack
+			DS_POP_INTO(D_OUT);
+			val = D_OUT;
+		}
 		if (!D_REF(2) && !IS_SET(val)) Trap1_DEAD_END(RE_NO_VALUE, word);
-		*D_OUT = *val;
 	}
 	else if (IS_OBJECT(word)) {
 		Assert_Public_Object(word);

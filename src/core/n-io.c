@@ -250,8 +250,8 @@
 	SET_NONE(D_OUT);
 
 	if (IS_BLOCK(val)) {
-		Reduce_Block(VAL_SERIES(val), VAL_INDEX(val), 0); // [stack-move]
-		ports = VAL_SERIES(DS_TOP); // volatile after
+		Reduce_Block(VAL_SERIES(val), VAL_INDEX(val), 0);
+		ports = VAL_SERIES(DS_TOP);
 		for (val = BLK_HEAD(ports); NOT_END(val); val++) { // find timeout
 			if (Pending_Port(val)) n++;
 			if (IS_INTEGER(val) || IS_DECIMAL(val)) break;

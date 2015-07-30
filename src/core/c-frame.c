@@ -576,10 +576,10 @@
 **
 ***********************************************************************/
 {
-	Do_Sys_Func(SYS_CTX_MAKE_MODULE_P, spec, 0); // volatile
+	Do_Sys_Func(SYS_CTX_MAKE_MODULE_P, spec, 0);
 	if (IS_NONE(DS_TOP)) Trap1(RE_INVALID_SPEC, spec);
 
-	*out = *DS_POP;
+	DS_POP_INTO(out);
 }
 
 
