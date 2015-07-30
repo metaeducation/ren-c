@@ -1415,10 +1415,13 @@
 
 	for (n = 0; n < tail; n++, value++, word++) {
 		if (n == 0) {
-			assert(
-				VAL_WORD_SYM(word) == SYM_SELF
-				|| VAL_WORD_SYM(word) == SYM_NOT_USED
-			);
+			if (
+				VAL_WORD_SYM(word) != SYM_SELF
+				&& VAL_WORD_SYM(word) != SYM_NOT_USED
+			) {
+				Debug_Fmt("** First slot in frame is not SELF or null symbol");
+				Panic_Series(frame);
+			}
 		}
 
 		if (IS_END(word) || IS_END(value)) {
