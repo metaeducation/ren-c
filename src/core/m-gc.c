@@ -192,7 +192,7 @@ static void Propagate_All_GC_Marks(void);
 #define MARK_BLOCK_DEEP(s) \
 	do { \
 		assert(!in_mark); \
-        QUEUE_MARK_BLOCK_DEEP(s); \
+		QUEUE_MARK_BLOCK_DEEP(s); \
 		Propagate_All_GC_Marks(); \
 	} while (0)
 
@@ -302,7 +302,7 @@ static void Propagate_All_GC_Marks(void);
 		QUEUE_MARK_BLOCK_DEEP(field->spec);
 
 		for (len = 0; len < field_fields->tail; len++) {
-            Queue_Mark_Field_Deep(
+			Queue_Mark_Field_Deep(
 				stu, cast(struct Struct_Field*, SERIES_SKIP(field_fields, len))
 			);
 		}
@@ -413,7 +413,7 @@ static void Propagate_All_GC_Marks(void);
 		}
 
 		if (ROUTINE_RVALUE(rot).spec)
-            Queue_Mark_Struct_Deep(&ROUTINE_RVALUE(rot));
+			Queue_Mark_Struct_Deep(&ROUTINE_RVALUE(rot));
 	}
 }
 
@@ -663,7 +663,7 @@ static void Propagate_All_GC_Marks(void);
 		case REB_ROUTINE:
 			QUEUE_MARK_BLOCK_DEEP(VAL_ROUTINE_SPEC(val));
 			QUEUE_MARK_BLOCK_DEEP(VAL_ROUTINE_ARGS(val));
-            Queue_Mark_Routine_Deep(&VAL_ROUTINE(val));
+			Queue_Mark_Routine_Deep(&VAL_ROUTINE(val));
 			break;
 
 		case REB_LIBRARY:
@@ -727,7 +727,7 @@ static void Propagate_All_GC_Marks(void);
 					continue;
 			}
 		}
-        Queue_Mark_Value_Deep(val);
+		Queue_Mark_Value_Deep(val);
 	}
 
 	assert(
@@ -1001,8 +1001,8 @@ static void Propagate_All_GC_Marks(void);
 	}
 
 	// Mark all root series:
-    MARK_BLOCK_DEEP(VAL_SERIES(ROOT_ROOT));
-    MARK_BLOCK_DEEP(Task_Series);
+	MARK_BLOCK_DEEP(VAL_SERIES(ROOT_ROOT));
+	MARK_BLOCK_DEEP(Task_Series);
 
 	// Mark all devices:
 	Mark_Devices_Deep();
@@ -1137,7 +1137,7 @@ static void Propagate_All_GC_Marks(void);
 	// nested structures don't cause the C stack to overflow.
 	GC_Mark_Stack = Make_Series(100, sizeof(REBSER *), MKS_NONE);
 	TERM_SERIES(GC_Mark_Stack);
-    KEEP_SERIES(GC_Mark_Stack, "gc mark stack");
+	KEEP_SERIES(GC_Mark_Stack, "gc mark stack");
 
 	GC_Series = Make_Series(60, sizeof(REBSER *), MKS_NONE);
 	KEEP_SERIES(GC_Series, "gc guarded");
