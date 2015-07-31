@@ -466,5 +466,5 @@
 {
 	//RL_Print("%s, %d\n", __func__, __LINE__);
 	REBSER *args = Copy_Values(BLK_SKIP(DS_Series, DS_ARG_BASE + 1), SERIES_TAIL(VAL_FUNC_ARGS(routine)) - 1);
-	Call_Routine(routine, args, DS_OUT);
+	Call_Routine(routine, args, DSF_OUT(DSF));
 }

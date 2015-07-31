@@ -467,7 +467,7 @@ static REBSER *make_binary(REBVAL *arg, REBOOL make)
 		return T_Port(call_, action);
 	}
 
-	len = Do_Series_Action(action, value, arg);
+	len = Do_Series_Action(call_, action, value, arg);
 	if (len >= 0) return len;
 
 	// Common setup code for all actions:
@@ -561,10 +561,10 @@ find:
 		if (action == A_PICK) {
 pick_it:
 			if (IS_BINARY(value)) {
-				SET_INTEGER(DS_OUT, *VAL_BIN_SKIP(value, index));
+				SET_INTEGER(D_OUT, *VAL_BIN_SKIP(value, index));
 			}
 			else
-				str_to_char(DS_OUT, value, index);
+				str_to_char(D_OUT, value, index);
 			return R_OUT;
 		}
 		else {

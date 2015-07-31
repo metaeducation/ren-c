@@ -1097,7 +1097,7 @@ makeCopy2:
 		Trap_Action_DEAD_END(VAL_TYPE(value), action);
 	}
 
-	*DS_OUT = *value;
+	*D_OUT = *value;
 	return R_OUT;
 
 is_false:

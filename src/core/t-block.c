@@ -634,7 +634,7 @@ static struct {
 		return T_Port(call_, action);
 
 	// Most common series actions:  !!! speed this up!
-	len = Do_Series_Action(action, value, arg);
+	len = Do_Series_Action(call_, action, value, arg);
 	if (len >= 0) return len; // return code
 
 	// Special case (to avoid fetch of index and tail below):

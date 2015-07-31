@@ -186,18 +186,17 @@ REBINT Mode_Syms[] = {
 
 /***********************************************************************
 **
-*/	static void Read_File_Port(REBSER *port, REBREQ *file, REBVAL *path, REBCNT args, REBCNT len)
+*/	static void Read_File_Port(REBVAL *out, REBSER *port, REBREQ *file, REBVAL *path, REBCNT args, REBCNT len)
 /*
 **		Read from a file port.
 **
 ***********************************************************************/
 {
 	REBSER *ser;
-	REBVAL *ds = DS_OUT;
 
 	// Allocate read result buffer:
 	ser = Make_Binary(len);
-	Set_Series(REB_BINARY, ds, ser); //??? what if already set?
+	Set_Series(REB_BINARY, out, ser); //??? what if already set?
 
 	// Do the read, check for errors:
 	file->common.data = BIN_HEAD(ser);
@@ -214,8 +213,8 @@ REBINT Mode_Syms[] = {
 		if (nser == NULL) {
 			Trap(RE_BAD_DECODE);
 		}
-		Set_String(ds, nser);
-		if (args & AM_READ_LINES) Set_Block(ds, Split_Lines(ds));
+		Set_String(out, nser);
+		if (args & AM_READ_LINES) Set_Block(out, Split_Lines(out));
 	}
 }
 
@@ -355,7 +354,7 @@ REBINT Mode_Syms[] = {
 		len = Set_Length(
 			file, D_REF(ARG_READ_PART) ? VAL_INT64(D_ARG(ARG_READ_LENGTH)) : -1
 		);
-		Read_File_Port(port, file, path, args, len);
+		Read_File_Port(D_OUT, port, file, path, args, len);
 
 		if (opened) {
 			OS_DO_DEVICE(file, RDC_CLOSE);
@@ -423,7 +422,7 @@ REBINT Mode_Syms[] = {
 	case A_COPY:
 		if (!IS_OPEN(file)) Trap1_DEAD_END(RE_NOT_OPEN, path); //!!!! wrong msg
 		len = Set_Length(file, D_REF(2) ? VAL_INT64(D_ARG(3)) : -1);
-		Read_File_Port(port, file, path, args, len);
+		Read_File_Port(D_OUT, port, file, path, args, len);
 		break;
 
 	case A_OPENQ:

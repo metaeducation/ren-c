@@ -550,7 +550,8 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 **
 ***********************************************************************/
 {
-	Do_Commands(blk, context);
+	REBVAL out;
+	Do_Commands(&out, blk, context);
 }
 
 

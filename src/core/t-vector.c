@@ -546,7 +546,7 @@ void Set_Vector_Row(REBSER *ser, REBVAL *blk)
 	REBSER *vect;
 	REBSER *ser;
 
-	type = Do_Series_Action(action, value, arg);
+	type = Do_Series_Action(call_, action, value, arg);
 	if (type >= 0) return type;
 
 	vect = VAL_SERIES(value); // not valid for MAKE or TO

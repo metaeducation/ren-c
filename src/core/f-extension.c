@@ -284,7 +284,7 @@ x*/	int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result)
 
 	if (!n) Trap_Num(RE_INVALID_ARG, GET_EXT_ERROR(&cbi->result));
 
-	RXI_To_Value(DS_OUT, cbi->result, n);
+	RXI_To_Value(D_OUT, cbi->result, n);
 	return R_OUT;
 }
 
@@ -468,7 +468,7 @@ typedef REBYTE *(INFO_FUNC)(REBINT opts, void *lib);
 
 	// Call the command:
 	n = ext->call(cmd, &frm, 0);
-	val = DS_OUT;
+	val = DSF_OUT(DSF);
 	switch (n) {
 	case RXR_VALUE:
 		RXI_To_Value(val, frm.args[1], RXA_TYPE(&frm, 1));
@@ -505,7 +505,7 @@ typedef REBYTE *(INFO_FUNC)(REBINT opts, void *lib);
 
 /***********************************************************************
 **
-*/	void Do_Commands(REBSER *cmds, void *context)
+*/	void Do_Commands(REBVAL *out, REBSER *cmds, void *context)
 /*
 **		Evaluate a block of commands as efficiently as possible.
 **		The arguments to each command must already be reduced or
@@ -610,7 +610,7 @@ typedef REBYTE *(INFO_FUNC)(REBINT opts, void *lib);
 		n = (REBCNT)VAL_INT64(func + 1);
 		ext = &Ext_List[VAL_I32(VAL_OBJ_VALUE(func, 1))]; // Handler
 		n = ext->call(n, &frm, ctx);
-		val = DS_OUT;
+		val = out;
 		switch (n) {
 		case RXR_VALUE:
 			RXI_To_Value(val, frm.args[1], RXA_TYPE(&frm, 1));
@@ -656,7 +656,7 @@ typedef REBYTE *(INFO_FUNC)(REBINT opts, void *lib);
 	ctx.envr = 0;
 	ctx.block = VAL_SERIES(D_ARG(1));
 	ctx.index = 0;
-	Do_Commands(ctx.block, &ctx);
+	Do_Commands(D_OUT, ctx.block, &ctx);
 
 	return R_OUT;
 }

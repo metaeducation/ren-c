@@ -33,7 +33,7 @@
 
 /***********************************************************************
 **
-*/	REBINT Do_Series_Action(REBCNT action, REBVAL *value, REBVAL *arg)
+*/	REBINT Do_Series_Action(struct Reb_Call *call_, REBCNT action, REBVAL *value, REBVAL *arg)
 /*
 **		Common series functions.
 **
@@ -104,11 +104,11 @@
 		break;
 */
 	case A_INDEXQ:
-		SET_INTEGER(DS_OUT, cast(REBI64, index) + 1);
+		SET_INTEGER(D_OUT, cast(REBI64, index) + 1);
 		return R_OUT;
 
 	case A_LENGTHQ:
-		SET_INTEGER(DS_OUT, tail > index ? tail - index : 0);
+		SET_INTEGER(D_OUT, tail > index ? tail - index : 0);
 		return R_OUT;
 
 	case A_REMOVE:
@@ -135,7 +135,7 @@
 		return -1;
 	}
 
-	*DS_OUT = *value;
+	*D_OUT = *value;
 	return R_OUT;
 
 is_false:

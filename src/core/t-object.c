@@ -508,7 +508,7 @@ reflect:
 
 	case A_TAILQ:
 		if (IS_OBJECT(value)) {
-			SET_LOGIC(DS_OUT, SERIES_TAIL(VAL_OBJ_FRAME(value)) <= 1);
+			SET_LOGIC(D_OUT, SERIES_TAIL(VAL_OBJ_FRAME(value)) <= 1);
 			return R_OUT;
 		}
 		Trap_Action_DEAD_END(VAL_TYPE(value), action);

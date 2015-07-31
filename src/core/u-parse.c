@@ -1312,10 +1312,10 @@ bad_end:
 		REBSER *ser;
 		if (!ANY_BINSTR(val)) Trap_Types_DEAD_END(RE_EXPECT_VAL, REB_STRING, VAL_TYPE(val));
 		ser = Parse_String(VAL_SERIES(val), VAL_INDEX(val), arg, opts);
-		Set_Block(DS_OUT, ser);
+		Set_Block(D_OUT, ser);
 	}
 	else if (IS_SAME_WORD(arg, SYM_TEXT)) {
-		Set_Block(DS_OUT, Parse_Lines(VAL_SERIES(val)));
+		Set_Block(D_OUT, Parse_Lines(VAL_SERIES(val)));
 	}
 	else {
 		REBCNT n;

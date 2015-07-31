@@ -382,6 +382,6 @@ bad_arg:
 	Trap_Action_DEAD_END(REB_TUPLE, action);
 
 ret_value:
-	*DS_OUT = *value;
+	*D_OUT = *value;
 	return R_OUT;
 }

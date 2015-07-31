@@ -232,8 +232,8 @@
 			if (memchr(bp, '.', len)
 			   	|| memchr(bp, 'e', len)
 			   	|| memchr(bp, 'E', len)) {
-				if (Scan_Decimal(bp, len, DS_OUT, TRUE)) {
-					double v = VAL_DECIMAL(DS_OUT);
+				if (Scan_Decimal(bp, len, D_OUT, TRUE)) {
+					double v = VAL_DECIMAL(D_OUT);
 					if (v < MAX_D64 && v >= MIN_D64) {
 						num = (REBI64)v;
 					} else {
@@ -242,7 +242,7 @@
 					break;
 				}
 			}
-			if (Scan_Integer(bp, len, DS_OUT))
+			if (Scan_Integer(bp, len, D_OUT))
 				return R_OUT;
 			goto is_bad;
 		}
@@ -264,7 +264,7 @@
 		Trap_Action_DEAD_END(REB_INTEGER, action);
 	}
 
-	SET_INTEGER(DS_OUT, num);
+	SET_INTEGER(D_OUT, num);
 	return R_OUT;
 
 is_bad:

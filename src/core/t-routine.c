@@ -1304,7 +1304,7 @@ static void callback_dispatcher(ffi_cif *cif, void *ret, void **args, void *user
 	arg = D_ARG(2);
 	val = D_ARG(1);
 
-	ret = DS_OUT;
+	ret = D_OUT;
 	// unary actions
 	switch(action) {
 		case A_MAKE:
@@ -1351,7 +1351,7 @@ static void callback_dispatcher(ffi_cif *cif, void *ret, void **args, void *user
 	arg = D_ARG(2);
 	val = D_ARG(1);
 
-	ret = DS_OUT;
+	ret = D_OUT;
 	// unary actions
 	switch(action) {
 		case A_MAKE:

@@ -445,7 +445,8 @@ chk_neg:
 	if (r == 0) {
 		return R_UNSET;
 	} else {
-		Trap1_DEAD_END(RE_CALL_FAIL, Make_OS_Error(r));
+		Make_OS_Error(D_OUT, r);
+		Trap1_DEAD_END(RE_CALL_FAIL, D_OUT);
 	}
 
 	return R_UNSET;
@@ -686,8 +687,8 @@ chk_neg:
 			SET_INTEGER(D_OUT, pid);
 		return R_OUT;
 	} else {
-		Trap1_DEAD_END(RE_CALL_FAIL, Make_OS_Error(r));
-		return R_NONE;
+		Make_OS_Error(D_OUT, r);
+		Trap1_DEAD_END(RE_CALL_FAIL, D_OUT);
 	}
 
 	(void)input; // suppress unused warning but keep variable

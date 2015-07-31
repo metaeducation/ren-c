@@ -833,9 +833,9 @@ fixDate:
 	date = Normalize_Date(day, month, year, tz);
 
 setDate:
-	VAL_SET(DS_OUT, REB_DATE);
-	VAL_DATE(DS_OUT) = date;
-	VAL_TIME(DS_OUT) = secs;
+	VAL_SET(D_OUT, REB_DATE);
+	VAL_DATE(D_OUT) = date;
+	VAL_TIME(D_OUT) = secs;
 	return R_OUT;
 
 ret_int:
@@ -843,7 +843,7 @@ ret_int:
 	return R_OUT;
 
 ret_val:
-	*DS_OUT = *val;
+	*D_OUT = *val;
 	return R_OUT;
 
 is_false:

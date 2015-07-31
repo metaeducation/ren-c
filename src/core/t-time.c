@@ -401,8 +401,8 @@
 			case A_DIVIDE:
 				if (secs2 == 0) Trap_DEAD_END(RE_ZERO_DIVIDE);
 				//secs /= secs2;
-				VAL_SET(DS_OUT, REB_DECIMAL);
-				VAL_DECIMAL(DS_OUT) = (REBDEC)secs / (REBDEC)secs2;
+				VAL_SET(D_OUT, REB_DECIMAL);
+				VAL_DECIMAL(D_OUT) = (REBDEC)secs / (REBDEC)secs2;
 				return R_OUT;
 
 			case A_REMAINDER:

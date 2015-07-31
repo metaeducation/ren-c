@@ -793,7 +793,7 @@ is_none:
 		// Allow NONE as argument:
 //		else if (!IS_NONE(arg))
 //			goto is_arg_error;
-		SET_GOB(DS_OUT, ngob);
+		SET_GOB(D_OUT, ngob);
 		break;
 
 	case A_PICK:
@@ -817,7 +817,7 @@ is_none:
 		//GOB_PARENT(ngob) = 0;
 		//*GOB_SKIP(gob, index) = VAL_GOB(arg);
 		if (action == A_POKE) {
-			*DS_OUT = *arg;
+			*D_OUT = *arg;
 			return R_OUT;
 		}
 		index++;

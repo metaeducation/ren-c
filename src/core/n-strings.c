@@ -129,7 +129,7 @@ static struct digest {
 	str = Form_Reduce(VAL_SERIES(D_ARG(1)), VAL_INDEX(D_ARG(1)));
 	if (!str) return R_TOS;
 
-	Set_String(DS_OUT, str); // not D_OUT (stack modified)
+	Set_String(D_OUT, str); // not D_OUT (stack modified)
 
 	return R_OUT;
 }
@@ -272,7 +272,7 @@ static struct digest {
 				}
 
 				SERIES_TAIL(digest) = digests[i].len;
-				Set_Series(REB_BINARY, DS_OUT, digest);
+				Set_Series(REB_BINARY, D_OUT, digest);
 
 				return 0;
 			}

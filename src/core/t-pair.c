@@ -310,7 +310,7 @@
 ///					Trap_Arg_DEAD_END(arg);
 ///				goto setPair;
 ///			}
-			SET_DECIMAL(DS_OUT, n == 0 ? x1 : y1);
+			SET_DECIMAL(D_OUT, n == 0 ? x1 : y1);
 			return R_OUT;
 
 		case A_MAKE:
@@ -320,7 +320,7 @@
 			x1 = y1 = 0;
 //			if (IS_NONE(val)) goto setPair;
 			if (IS_PAIR(val)) {
-				*DS_OUT = *val;
+				*D_OUT = *val;
 				return R_OUT;
 			}
 			if (IS_STRING(val)) {
@@ -328,7 +328,7 @@
 				REBCNT len;
 				// -1234567890x-1234567890
 				bp = Qualify_String(val, VAL_LEN(val), &len, FALSE);
-				if (Scan_Pair(bp, len, DS_OUT)) return R_OUT;
+				if (Scan_Pair(bp, len, D_OUT)) return R_OUT;
 			}
 			if (IS_INTEGER(val)) {
 				x1 = y1 = (REBD32)VAL_INT64(val);
@@ -348,9 +348,9 @@
 	Trap_Action_DEAD_END(REB_PAIR, action);
 
 setPair:
-	VAL_SET(DS_OUT, REB_PAIR);
-	VAL_PAIR_X(DS_OUT) = x1;
-	VAL_PAIR_Y(DS_OUT) = y1;
+	VAL_SET(D_OUT, REB_PAIR);
+	VAL_PAIR_X(D_OUT) = x1;
+	VAL_PAIR_Y(D_OUT) = y1;
 	return R_OUT;
 
 //is_false:

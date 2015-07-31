@@ -778,15 +778,14 @@
 
 /***********************************************************************
 **
-*/	REBVAL *Make_OS_Error(int errnum)
+*/	void Make_OS_Error(REBVAL *out, int errnum)
 /*
 ***********************************************************************/
 {
 	REBCHR str[100];
 
 	OS_FORM_ERROR(errnum, str, 100);
-	Set_String(DS_OUT, Copy_OS_Str(str, OS_STRLEN(str)));
-	return DS_OUT;
+	Set_String(out, Copy_OS_Str(str, OS_STRLEN(str)));
 }
 
 
