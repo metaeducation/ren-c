@@ -126,30 +126,37 @@ REBVAL *N_watch(REBFRM *frame, REBVAL **inter_block)
 		// Print("Mark: %s %x", TYPE_NAME(val), val);
 #endif
 
-static void Mark_Value_Deep_Core(REBVAL *val);
+static void Queue_Mark_Value_Deep(REBVAL *val);
 
-static void Mark_Block_Deep_Core(REBSER *series);
+static void Push_Block_Marked_Deep(REBSER *series);
 
 static void Mark_Series_Only_Debug(REBSER *ser);
 
 /***********************************************************************
 **
-*/	static void Push_Mark_Block_Deep_Core(REBSER *series)
+*/	static void Push_Block_Marked_Deep(REBSER *series)
 /*
-**		Push the series into the deferred stack to be processed later
-**		with Process_Mark_Stack().  We go ahead and set this series mark
-**		because it's now "spoken for".  (Even though we haven't marked
-**		its actual dependencies yet, we want to prevent it from being
-**		wastefully stacked multiple times by another reference that
-**		would still see it as "unmarked".)
+**		Note: Call MARK_BLOCK_DEEP or QUEUE_MARK_BLOCK_DEEP instead!
+**
+**		Submits the block into the deferred stack to be processed later
+**		with Propagate_All_GC_Marks().  We have already set this series
+**		mark as it's now "spoken for".  (Though we haven't marked its
+**		dependencies yet, we want to prevent it from being wastefully
+**		submitted multiple times by another reference that would still
+**		see it as "unmarked".)
+**
+**		The data structure used for this processing is a stack and not
+**		a queue (for performance reasons).  But when you use 'queue'
+**		as a verb it has more leeway than as the CS noun, and can just
+**		mean "put into a list for later processing", hence macro names.
 **
 ***********************************************************************/
 {
 	assert(!IS_EXT_SERIES(series));
 	assert(IS_BLOCK_SERIES(series));
 
-	assert(!SERIES_GET_FLAG(series, SER_MARK));
-	SERIES_SET_FLAG(series, SER_MARK);
+    // set by calling macro (helps catch direct calls of this function)
+	assert(SERIES_GET_FLAG(series, SER_MARK));
 
 	// Add series to the end of the mark stack series and update terminator
 	if (SERIES_FULL(GC_Mark_Stack)) Extend_Series(GC_Mark_Stack, 8);
@@ -157,7 +164,7 @@ static void Mark_Series_Only_Debug(REBSER *ser);
 	cast(REBSER **, GC_Mark_Stack->data)[GC_Mark_Stack->tail] = NULL;
 }
 
-static void Process_Mark_Stack(void);
+static void Propagate_All_GC_Marks(void);
 
 #ifndef NDEBUG
 	static REBOOL in_mark = FALSE;
@@ -166,32 +173,32 @@ static void Process_Mark_Stack(void);
 // NOTE: The following macros uses S parameter multiple times, hence if S has
 // side effects this will run that side-effect multiply.
 
-// Non-Queued form for marking series.  Used for marking a *root set item*,
-// don't recurse from within Mark_Value/Mark_Gob/Mark_Block_Deep/etc.
-
-#define MARK_SERIES_DEEP(s) \
-	do { \
-		assert(!in_mark); \
-		if (!SERIES_GET_FLAG((s), SER_MARK)) { \
-			SERIES_SET_FLAG((s), SER_MARK); \
-			if (IS_BLOCK_SERIES(s)) { \
-				Mark_Block_Deep_Core(s); \
-				Process_Mark_Stack(); \
-			} \
-		} \
-	} while (0)
-
-
 // Deferred form for marking series that prevents potentially overflowing the
 // C execution stack.
 
-#define PUSH_MARK_BLOCK_DEEP(s) \
+#define QUEUE_MARK_BLOCK_DEEP(s) \
+    do { \
+        assert(IS_BLOCK_SERIES(s)); \
+        if (!SERIES_GET_FLAG((s), SER_MARK)) { \
+            SERIES_SET_FLAG((s), SER_MARK); \
+            Push_Block_Marked_Deep(s); \
+        } \
+    } while (0)
+
+
+// Non-Queued form for marking blocks.  Used for marking a *root set item*,
+// don't recurse from within Mark_Value/Mark_Gob/Mark_Block_Deep/etc.
+
+#define MARK_BLOCK_DEEP(s) \
 	do { \
-		assert(IS_BLOCK_SERIES(s)); \
-		if (!SERIES_GET_FLAG((s), SER_MARK)) { \
-			Push_Mark_Block_Deep_Core(s); \
-		} \
+		assert(!in_mark); \
+        QUEUE_MARK_BLOCK_DEEP(s); \
+		Propagate_All_GC_Marks(); \
 	} while (0)
+
+
+// Non-Deep form of mark, to be used on non-BLOCK! series or a block series
+// for which deep marking is not necessary (such as an UNWORDS block)
 
 #ifdef NDEBUG
 	#define MARK_SERIES_ONLY(s) SERIES_SET_FLAG((s), SER_MARK)
@@ -199,14 +206,22 @@ static void Process_Mark_Stack(void);
 	#define MARK_SERIES_ONLY(s) Mark_Series_Only_Debug(s)
 #endif
 
+
 // "Unword" blocks contain REBWRS-style words, which have type information
 // instead of a binding.  They shouldn't have any other types in them so we
 // don't need to mark deep...BUT doesn't hurt to check in debug builds!
+
 #define MARK_UNWORDS_BLOCK(s) \
 	do { \
 		ASSERT_UNWORDS_BLOCK(s); \
 		MARK_SERIES_ONLY(s); \
 	} while (0)
+
+
+// Assertion for making sure that all the deferred marks have been propagated
+
+#define ASSERT_NO_GC_MARKS_PENDING() \
+	assert(SERIES_TAIL(GC_Mark_Stack) == 0)
 
 
 #if !defined(NDEBUG)
@@ -225,8 +240,16 @@ static void Process_Mark_Stack(void);
 
 /***********************************************************************
 **
-*/	static void Mark_Gob(REBGOB *gob)
+*/	static void Queue_Mark_Gob_Deep(REBGOB *gob)
 /*
+**		'Queue' refers to the fact that after calling this routine,
+**		one will have to call Propagate_All_GC_Marks() to have the
+**		deep transitive closure be guaranteed fully marked.
+**
+**		Note: only referenced blocks are queued, the GOB structure
+**		itself is processed via recursion.  Deeply nested GOBs could
+**		in theory overflow the C stack.
+**
 ***********************************************************************/
 {
 	REBGOB **pane;
@@ -240,38 +263,46 @@ static void Process_Mark_Stack(void);
 		SERIES_SET_FLAG(GOB_PANE(gob), SER_MARK);
 		pane = GOB_HEAD(gob);
 		for (i = 0; i < GOB_TAIL(gob); i++, pane++)
-			Mark_Gob(*pane);
+			Queue_Mark_Gob_Deep(*pane);
 	}
 
-	if (GOB_PARENT(gob)) Mark_Gob(GOB_PARENT(gob));
+	if (GOB_PARENT(gob)) Queue_Mark_Gob_Deep(GOB_PARENT(gob));
 
 	if (GOB_CONTENT(gob)) {
 		if (GOB_TYPE(gob) >= GOBT_IMAGE && GOB_TYPE(gob) <= GOBT_STRING)
 			SERIES_SET_FLAG(GOB_CONTENT(gob), SER_MARK);
 		else if (GOB_TYPE(gob) >= GOBT_DRAW && GOB_TYPE(gob) <= GOBT_EFFECT)
-			PUSH_MARK_BLOCK_DEEP(GOB_CONTENT(gob));
+			QUEUE_MARK_BLOCK_DEEP(GOB_CONTENT(gob));
 	}
 
 	if (GOB_DATA(gob) && GOB_DTYPE(gob) && GOB_DTYPE(gob) != GOBD_INTEGER)
-		PUSH_MARK_BLOCK_DEEP(GOB_DATA(gob));
+		QUEUE_MARK_BLOCK_DEEP(GOB_DATA(gob));
 }
 
 
 /***********************************************************************
 **
-*/	static void Mark_Struct_Field(REBSTU *stu, struct Struct_Field *field)
+*/	static void Queue_Mark_Field_Deep(REBSTU *stu, struct Struct_Field *field)
 /*
+**		'Queue' refers to the fact that after calling this routine,
+**		one will have to call Propagate_All_GC_Marks() to have the
+**		deep transitive closure be guaranteed fully marked.
+**
+**		Note: only referenced blocks are queued, fields that are structs
+**		will be processed via recursion.  Deeply nested structs could
+**		in theory overflow the C stack.
+**
 ***********************************************************************/
 {
 	if (field->type == STRUCT_TYPE_STRUCT) {
 		unsigned int len = 0;
 		REBSER *field_fields = field->fields;
 
-		PUSH_MARK_BLOCK_DEEP(field_fields);
-		PUSH_MARK_BLOCK_DEEP(field->spec);
+		QUEUE_MARK_BLOCK_DEEP(field_fields);
+		QUEUE_MARK_BLOCK_DEEP(field->spec);
 
 		for (len = 0; len < field_fields->tail; len++) {
-			Mark_Struct_Field(
+            Queue_Mark_Field_Deep(
 				stu, cast(struct Struct_Field*, SERIES_SKIP(field_fields, len))
 			);
 		}
@@ -289,7 +320,7 @@ static void Process_Mark_Stack(void);
 			);
 
 			if (field->done)
-				Mark_Value_Deep_Core(data);
+				Queue_Mark_Value_Deep(data);
 		}
 	}
 	else {
@@ -300,15 +331,23 @@ static void Process_Mark_Stack(void);
 
 /***********************************************************************
 **
-*/	static void Mark_Struct(REBSTU *stu)
+*/	static void Queue_Mark_Struct_Deep(REBSTU *stu)
 /*
+**		'Queue' refers to the fact that after calling this routine,
+**		one will have to call Propagate_All_GC_Marks() to have the
+**		deep transitive closure be guaranteed fully marked.
+**
+**		Note: only referenced blocks are queued, the actual struct
+**		itself is processed via recursion.  Deeply nested structs could
+**		in theory overflow the C stack.
+**
 ***********************************************************************/
 {
 	unsigned int len = 0;
 	REBSER *series = NULL;
 
 	// The spec is the only ANY-BLOCK! in the struct
-	PUSH_MARK_BLOCK_DEEP(stu->spec);
+	QUEUE_MARK_BLOCK_DEEP(stu->spec);
 
 	MARK_SERIES_ONLY(stu->fields);
 	MARK_SERIES_ONLY(STRUCT_DATA_BIN(stu));
@@ -323,28 +362,36 @@ static void Process_Mark_Stack(void);
 			SERIES_SKIP(series, len)
 		);
 
-		Mark_Struct_Field(stu, field);
+		Queue_Mark_Field_Deep(stu, field);
 	}
 }
 
 
 /***********************************************************************
 **
-*/	static void Mark_Routine(REBROT *rot)
+*/	static void Queue_Mark_Routine_Deep(REBROT *rot)
 /*
+**		'Queue' refers to the fact that after calling this routine,
+**		one will have to call Propagate_All_GC_Marks() to have the
+**		deep transitive closure completely marked.
+**
+**		Note: only referenced blocks are queued, the routine's RValue
+**		is processed via recursion.  Deeply nested RValue structs could
+**		in theory overflow the C stack.
+**
 ***********************************************************************/
 {
-	PUSH_MARK_BLOCK_DEEP(ROUTINE_SPEC(rot));
+	QUEUE_MARK_BLOCK_DEEP(ROUTINE_SPEC(rot));
 	ROUTINE_SET_FLAG(ROUTINE_INFO(rot), ROUTINE_MARK);
 
 	MARK_SERIES_ONLY(ROUTINE_FFI_ARG_TYPES(rot));
-	PUSH_MARK_BLOCK_DEEP(ROUTINE_FFI_ARG_STRUCTS(rot));
+	QUEUE_MARK_BLOCK_DEEP(ROUTINE_FFI_ARG_STRUCTS(rot));
 	MARK_SERIES_ONLY(ROUTINE_EXTRA_MEM(rot));
 
 	if (IS_CALLBACK_ROUTINE(ROUTINE_INFO(rot))) {
 		if (FUNC_BODY(&CALLBACK_FUNC(rot))) {
-			PUSH_MARK_BLOCK_DEEP(FUNC_BODY(&CALLBACK_FUNC(rot)));
-			PUSH_MARK_BLOCK_DEEP(FUNC_SPEC(&CALLBACK_FUNC(rot)));
+			QUEUE_MARK_BLOCK_DEEP(FUNC_BODY(&CALLBACK_FUNC(rot)));
+			QUEUE_MARK_BLOCK_DEEP(FUNC_SPEC(&CALLBACK_FUNC(rot)));
 			SERIES_SET_FLAG(FUNC_ARGS(&CALLBACK_FUNC(rot)), SER_MARK);
 		}
 		else {
@@ -353,10 +400,10 @@ static void Process_Mark_Stack(void);
 	} else {
 		if (ROUTINE_GET_FLAG(ROUTINE_INFO(rot), ROUTINE_VARARGS)) {
 			if (ROUTINE_FIXED_ARGS(rot))
-				PUSH_MARK_BLOCK_DEEP(ROUTINE_FIXED_ARGS(rot));
+				QUEUE_MARK_BLOCK_DEEP(ROUTINE_FIXED_ARGS(rot));
 
 			if (ROUTINE_ALL_ARGS(rot))
-				PUSH_MARK_BLOCK_DEEP(ROUTINE_ALL_ARGS(rot));
+				QUEUE_MARK_BLOCK_DEEP(ROUTINE_ALL_ARGS(rot));
 		}
 
 		if (ROUTINE_LIB(rot))
@@ -366,15 +413,19 @@ static void Process_Mark_Stack(void);
 		}
 
 		if (ROUTINE_RVALUE(rot).spec)
-			Mark_Struct(&ROUTINE_RVALUE(rot));
+            Queue_Mark_Struct_Deep(&ROUTINE_RVALUE(rot));
 	}
 }
 
 
 /***********************************************************************
 **
-*/	static void Mark_Event(REBVAL *value)
+*/	static void Queue_Mark_Event_Deep(REBVAL *value)
 /*
+**		'Queue' refers to the fact that after calling this routine,
+**		one will have to call Propagate_All_GC_Marks() to have the
+**		deep transitive closure completely marked.
+**
 ***********************************************************************/
 {
 	REBREQ *req;
@@ -388,7 +439,7 @@ static void Process_Mark_Stack(void);
 		)
 	) {
 		// Comment says void* ->ser field of the REBEVT is a "port or object"
-		PUSH_MARK_BLOCK_DEEP(cast(REBSER*, VAL_EVENT_SER(value)));
+		QUEUE_MARK_BLOCK_DEEP(cast(REBSER*, VAL_EVENT_SER(value)));
 	}
 
 	if (IS_EVENT_MODEL(value, EVM_DEVICE)) {
@@ -401,7 +452,7 @@ static void Process_Mark_Stack(void);
 		while (req) {
 			// Comment says void* ->port is "link back to REBOL port object"
 			if (req->port)
-				PUSH_MARK_BLOCK_DEEP(cast(REBSER*, req->port));
+				QUEUE_MARK_BLOCK_DEEP(cast(REBSER*, req->port));
 			req = req->next;
 		}
 	}
@@ -410,12 +461,12 @@ static void Process_Mark_Stack(void);
 
 /***********************************************************************
 **
-*/ static void Mark_Devices(void)
+*/ static void Mark_Devices_Deep(void)
 /*
 **		Mark all devices. Search for pending requests.
 **
-**		This should be called at the top level, and not from inside a
-**		Process_Mark_Stack().
+**		This should be called at the top level, and as it is not
+**		'Queued' it guarantees that the marks have been propagated.
 **
 ***********************************************************************/
 {
@@ -430,14 +481,14 @@ static void Process_Mark_Stack(void);
 
 		for (req = dev->pending; req; req = req->next)
 			if (req->port)
-				MARK_SERIES_DEEP(cast(REBSER*, req->port));
+				MARK_BLOCK_DEEP(cast(REBSER*, req->port));
 	}
 }
 
 
 /***********************************************************************
 **
-*/	static void Mark_Value_Deep_Core(REBVAL *val)
+*/	static void Queue_Mark_Value_Deep(REBVAL *val)
 /*
 ***********************************************************************/
 {
@@ -452,7 +503,7 @@ static void Process_Mark_Stack(void);
 		case REB_DATATYPE:
 			// Type spec is allowed to be NULL.  See %typespec.r file
 			if (VAL_TYPE_SPEC(val))
-				PUSH_MARK_BLOCK_DEEP(VAL_TYPE_SPEC(val));
+				QUEUE_MARK_BLOCK_DEEP(VAL_TYPE_SPEC(val));
 			break;
 
 		case REB_ERROR:
@@ -467,7 +518,7 @@ static void Process_Mark_Stack(void);
 
 				// Panic(RP_THROW_IN_GC);
 			} else
-				PUSH_MARK_BLOCK_DEEP(VAL_ERR_OBJECT(val));
+				QUEUE_MARK_BLOCK_DEEP(VAL_ERR_OBJECT(val));
 			break;
 
 		case REB_TASK: // not yet implemented
@@ -478,7 +529,7 @@ static void Process_Mark_Stack(void);
 			// these are special word bindings (to typesets if used).
 			MARK_UNWORDS_BLOCK(VAL_FRM_WORDS(val));
 			if (VAL_FRM_SPEC(val))
-				PUSH_MARK_BLOCK_DEEP(VAL_FRM_SPEC(val));
+				QUEUE_MARK_BLOCK_DEEP(VAL_FRM_SPEC(val));
 			// !!! See code below for ANY-WORD! which also deals with FRAME!
 			break;
 
@@ -487,26 +538,26 @@ static void Process_Mark_Stack(void);
 			// Objects currently only have a FRAME, but that protects the
 			// keys wordlist via the FRAME! value in the first slot (which
 			// will be visited along with mapped values via this deep mark)
-			PUSH_MARK_BLOCK_DEEP(VAL_OBJ_FRAME(val));
+			QUEUE_MARK_BLOCK_DEEP(VAL_OBJ_FRAME(val));
 			break;
 
 		case REB_MODULE:
 			// A module is an object with an optional body (they currently
 			// do not use the body)
-			PUSH_MARK_BLOCK_DEEP(VAL_OBJ_FRAME(val));
+			QUEUE_MARK_BLOCK_DEEP(VAL_OBJ_FRAME(val));
 			if (VAL_MOD_BODY(val))
-				PUSH_MARK_BLOCK_DEEP(VAL_MOD_BODY(val));
+				QUEUE_MARK_BLOCK_DEEP(VAL_MOD_BODY(val));
 			break;
 
 		case REB_FUNCTION:
 		case REB_COMMAND:
 		case REB_CLOSURE:
 		case REB_REBCODE:
-			PUSH_MARK_BLOCK_DEEP(VAL_FUNC_BODY(val));
+			QUEUE_MARK_BLOCK_DEEP(VAL_FUNC_BODY(val));
 		case REB_NATIVE:
 		case REB_ACTION:
 		case REB_OP:
-			PUSH_MARK_BLOCK_DEEP(VAL_FUNC_SPEC(val));
+			QUEUE_MARK_BLOCK_DEEP(VAL_FUNC_SPEC(val));
 			MARK_UNWORDS_BLOCK(VAL_FUNC_ARGS(val));
 			break;
 
@@ -534,7 +585,7 @@ static void Process_Mark_Stack(void);
 					// It's referring to an OBJECT!-style FRAME, where the
 					// first element is a FRAME! containing the word keys
 					// and the rest of the elements are the data values
-					PUSH_MARK_BLOCK_DEEP(ser);
+					QUEUE_MARK_BLOCK_DEEP(ser);
 				}
 				else {
 					// It's referring to a FUNCTION!'s identifying series,
@@ -598,44 +649,45 @@ static void Process_Mark_Stack(void);
 			assert(IS_BLOCK_SERIES(ser) && SERIES_WIDE(ser) == sizeof(REBVAL));
 			assert(IS_END(BLK_SKIP(ser, SERIES_TAIL(ser))) || ser == DS_Series);
 
-			PUSH_MARK_BLOCK_DEEP(ser);
+			QUEUE_MARK_BLOCK_DEEP(ser);
 			break;
 
 		case REB_MAP:
 			ser = VAL_SERIES(val);
-			PUSH_MARK_BLOCK_DEEP(ser);
+			QUEUE_MARK_BLOCK_DEEP(ser);
 			if (ser->extra.series)
 				MARK_SERIES_ONLY(ser->extra.series);
 			break;
 
 		case REB_CALLBACK:
 		case REB_ROUTINE:
-			PUSH_MARK_BLOCK_DEEP(VAL_ROUTINE_SPEC(val));
-			PUSH_MARK_BLOCK_DEEP(VAL_ROUTINE_ARGS(val));
-			Mark_Routine(&VAL_ROUTINE(val));
+			QUEUE_MARK_BLOCK_DEEP(VAL_ROUTINE_SPEC(val));
+			QUEUE_MARK_BLOCK_DEEP(VAL_ROUTINE_ARGS(val));
+            Queue_Mark_Routine_Deep(&VAL_ROUTINE(val));
 			break;
 
 		case REB_LIBRARY:
 			MARK_LIB(VAL_LIB_HANDLE(val));
-			PUSH_MARK_BLOCK_DEEP(VAL_LIB_SPEC(val));
+			QUEUE_MARK_BLOCK_DEEP(VAL_LIB_SPEC(val));
 			break;
 
 		case REB_STRUCT:
-			Mark_Struct(&VAL_STRUCT(val));
+			Queue_Mark_Struct_Deep(&VAL_STRUCT(val));
 			break;
 
 		case REB_GOB:
-			Mark_Gob(VAL_GOB(val));
+			Queue_Mark_Gob_Deep(VAL_GOB(val));
 			break;
 
 		case REB_EVENT:
-			Mark_Event(val);
+			Queue_Mark_Event_Deep(val);
 			break;
 
 		default:
 			Panic_Core(RP_DATATYPE+1, VAL_TYPE(val));
 	}
 }
+
 
 /***********************************************************************
 **
@@ -675,7 +727,7 @@ static void Process_Mark_Stack(void);
 					continue;
 			}
 		}
-		Mark_Value_Deep_Core(val);
+        Queue_Mark_Value_Deep(val);
 	}
 
 	assert(
@@ -764,6 +816,7 @@ static void Process_Mark_Stack(void);
 	return count;
 }
 
+
 /***********************************************************************
 **
 */	ATTRIBUTE_NO_SANITIZE_ADDRESS static REBCNT Sweep_Libs(void)
@@ -799,6 +852,7 @@ static void Process_Mark_Stack(void);
 
 	return count;
 }
+
 
 /***********************************************************************
 **
@@ -839,7 +893,7 @@ static void Process_Mark_Stack(void);
 
 /***********************************************************************
 **
-*/	static void Process_Mark_Stack(void)
+*/	static void Propagate_All_GC_Marks(void)
 /*
 **		The Mark Stack is a series containing series pointers.  They
 **		have already had their SER_MARK set to prevent being added
@@ -851,6 +905,7 @@ static void Process_Mark_Stack(void);
 **
 ***********************************************************************/
 {
+	assert(!in_mark);
 	while (GC_Mark_Stack->tail != 0) {
 		// Data pointer may change in response to an expansion during
 		// Mark_Block_Deep_Core(), so must be refreshed on each loop.
@@ -865,7 +920,6 @@ static void Process_Mark_Stack(void);
 	}
 }
 
-#include <stdio.h>
 
 /***********************************************************************
 **
@@ -880,6 +934,8 @@ static void Process_Mark_Stack(void);
 	REBCNT count;
 
 	//Debug_Num("GC", GC_Disabled);
+
+	ASSERT_NO_GC_MARKS_PENDING();
 
 	// If disabled, exit now but set the pending flag.
 	if (GC_Disabled || !GC_Active) {
@@ -909,14 +965,20 @@ static void Process_Mark_Stack(void);
 	// Mark series stack (temp-saved series):
 	sp = (REBSER **)GC_Protect->data;
 	for (n = SERIES_TAIL(GC_Protect); n > 0; n--) {
-		MARK_SERIES_DEEP(*sp);
+        if (IS_BLOCK_SERIES(*sp))
+            MARK_BLOCK_DEEP(*sp);
+        else
+            MARK_SERIES_ONLY(*sp);
 		sp++; // can't increment inside macro arg, evaluated multiple times
 	}
 
 	// Mark all special series:
 	sp = (REBSER **)GC_Series->data;
 	for (n = SERIES_TAIL(GC_Series); n > 0; n--) {
-		MARK_SERIES_DEEP(*sp);
+        if (IS_BLOCK_SERIES(*sp))
+            MARK_BLOCK_DEEP(*sp);
+        else
+            MARK_SERIES_ONLY(*sp);
 		sp++; // can't increment inside macro arg, evaluated multiple times
 	}
 
@@ -931,16 +993,19 @@ static void Process_Mark_Stack(void);
 		REBSER *ser;
 		if ((ser = GC_Infants[n])) {
 			//Dump_Series(ser, "Safe Series");
-			MARK_SERIES_DEEP(ser);
+            if (IS_BLOCK_SERIES(ser))
+				MARK_BLOCK_DEEP(ser);
+            else
+                MARK_SERIES_ONLY(ser);
 		} else break;
 	}
 
 	// Mark all root series:
-	MARK_SERIES_DEEP(VAL_SERIES(ROOT_ROOT));
-	MARK_SERIES_DEEP(Task_Series);
+    MARK_BLOCK_DEEP(VAL_SERIES(ROOT_ROOT));
+    MARK_BLOCK_DEEP(Task_Series);
 
 	// Mark all devices:
-	Mark_Devices();
+	Mark_Devices_Deep();
 
 	count = Sweep_Routines(); // this needs to run before Sweep_Series(), because Routine has series with pointers, which can't be simply discarded by Sweep_Series
 
@@ -977,9 +1042,11 @@ static void Process_Mark_Stack(void);
 	GC_Disabled = 0;
 
 	if (Reb_Opts->watch_recycle) Debug_Fmt(cs_cast(BOOT_STR(RS_WATCH, 1)), count);
+
+	ASSERT_NO_GC_MARKS_PENDING();
+
 	return count;
 }
-
 
 
 /***********************************************************************
@@ -992,7 +1059,6 @@ static void Process_Mark_Stack(void);
 	((REBSER **)GC_Protect->data)[GC_Protect->tail++] = series;
 }
 
-#include <stdio.h>
 
 /***********************************************************************
 **
@@ -1071,7 +1137,7 @@ static void Process_Mark_Stack(void);
 	// nested structures don't cause the C stack to overflow.
 	GC_Mark_Stack = Make_Series(100, sizeof(REBSER *), MKS_NONE);
 	TERM_SERIES(GC_Mark_Stack);
-	KEEP_SERIES(GC_Mark_Stack, "gc mark queue");
+    KEEP_SERIES(GC_Mark_Stack, "gc mark stack");
 
 	GC_Series = Make_Series(60, sizeof(REBSER *), MKS_NONE);
 	KEEP_SERIES(GC_Series, "gc guarded");
