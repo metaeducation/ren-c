@@ -527,7 +527,7 @@ static void Process_Mark_Stack(void);
 				// even stack-relative contexts for functions.
 
 				REBVAL *first;
-				assert(SERIES_LEN(ser) > 0);
+				assert(SERIES_TAIL(ser) > 0);
 				first = BLK_HEAD(ser);
 
 				if (IS_FRAME(first)) {
