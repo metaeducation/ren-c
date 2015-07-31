@@ -479,7 +479,7 @@ static REBOOL rebol_type_to_ffi(REBVAL *out, REBVAL *elem, REBCNT idx)
  * stack, so DS_POP is needed after the function call is done.
  * The number to pop is returned by pop
  * */
-static void *arg_to_ffi(REBVAL *rot, REBVAL *arg, REBCNT idx, REBINT *pop)
+static void *arg_to_ffi(const REBVAL *rot, REBVAL *arg, REBCNT idx, REBINT *pop)
 {
 	ffi_type **args = (ffi_type**)SERIES_DATA(VAL_ROUTINE_FFI_ARG_TYPES(rot));
 	REBSER *rebol_args = NULL;
@@ -701,7 +701,7 @@ static void ffi_to_rebol(REBRIN *rin,
 
 /***********************************************************************
 **
-*/	void Call_Routine(REBVAL *rot, REBSER *args, REBVAL *ret)
+*/	void Call_Routine(const REBVAL *rot, REBSER *args, REBVAL *ret)
 /*
 ***********************************************************************/
 {
@@ -778,7 +778,12 @@ static void ffi_to_rebol(REBRIN *rin,
 				v = Alloc_Tail_Blk(VAL_ROUTINE_ALL_ARGS(rot));
 				Init_Unword(v, REB_WORD, SYM_ELLIPSIS, 0); //FIXME, be clear
 				EXPAND_SERIES_TAIL(VAL_ROUTINE_FFI_ARG_TYPES(rot), 1);
-				process_type_block(rot, reb_type, j);
+
+				// !!! REVIEW: Mutability cast needed here because the
+				// routine is modified.  (REBDOF functions should almost
+				// certainly not be modifying the function they dispatch)
+
+				process_type_block(m_cast(REBVAL*, rot), reb_type, j);
 				i ++;
 			}
 			ffi_args[j - 1] = arg_to_ffi(rot, reb_arg, j, &pop);

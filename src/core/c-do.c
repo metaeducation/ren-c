@@ -57,7 +57,7 @@ void T_Series(REBCNT n) {;}		// image
 void T_List(REBCNT n) {;}		// list
 */
 
-void Do_Rebcode(REBVAL *v) {;}
+void Do_Rebcode(const REBVAL *v) {;}
 
 #include "tmp-evaltypes.h"
 
@@ -70,7 +70,7 @@ void Do_Rebcode(REBVAL *v) {;}
 
 /***********************************************************************
 **
-*/	void Do_Op(REBVAL *func)
+*/	void Do_Op(const REBVAL *func)
 /*
 **		A trampoline.
 **

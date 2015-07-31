@@ -683,7 +683,7 @@ typedef struct rebol_time_fields {
 
 
 // DO evaltype dispatch function
-typedef void (*REBDOF)(REBVAL *ds);
+typedef void (*REBDOF)(const REBVAL *ds);
 
 
 /***********************************************************************

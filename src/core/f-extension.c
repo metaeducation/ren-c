@@ -433,7 +433,7 @@ typedef REBYTE *(INFO_FUNC)(REBINT opts, void *lib);
 
 /***********************************************************************
 **
-*/	void Do_Command(REBVAL *value)
+*/	void Do_Command(const REBVAL *value)
 /*
 **	Evaluates the arguments for a command function and creates
 **	a resulting stack frame (struct or object) for command processing.
