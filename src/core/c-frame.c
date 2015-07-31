@@ -576,10 +576,8 @@
 **
 ***********************************************************************/
 {
-	Do_Sys_Func(SYS_CTX_MAKE_MODULE_P, spec, 0);
-	if (IS_NONE(DS_TOP)) Trap1(RE_INVALID_SPEC, spec);
-
-	DS_POP_INTO(out);
+	Do_Sys_Func(out, SYS_CTX_MAKE_MODULE_P, spec, 0);
+	if (IS_NONE(out)) Trap1(RE_INVALID_SPEC, spec);
 }
 
 
@@ -1146,8 +1144,6 @@
 	REBSER *context = VAL_WORD_FRAME(word);
 
 	if (context) {
-		REBINT dsf;
-
 		REBINT index = VAL_WORD_INDEX(word);
 
 		// POSITIVE INDEX: The word is bound directly to a value inside
@@ -1181,8 +1177,11 @@
 		// multiple invocations are on the stack, most recent wins)
 
 		if (index < 0) {
-			dsf = DSF; // may be zero (in theory) so loop checks that first
-			while (dsf != 0) {
+			REBINT dsf = DSF;
+
+			// Get_Var could theoretically be called with no evaluation on
+			// the stack, so check for no DSF first...
+			while (dsf != DSF_NONE) {
 				if (context == VAL_FUNC_WORDS(DSF_FUNC(dsf))) {
 					assert(!IS_CLOSURE(DSF_FUNC(dsf)));
 
@@ -1249,8 +1248,6 @@
 	REBSER *context = VAL_WORD_FRAME(word);
 
 	if (context) {
-		REBINT dsf;
-
 		REBINT index = VAL_WORD_INDEX(word);
 
 		if (index > 0) {
@@ -1259,8 +1256,8 @@
 		}
 
 		if (index < 0) {
-			dsf = DSF;
-			while (dsf) {
+			REBINT dsf = DSF;
+			while (dsf != DSF_NONE) {
 				if (context == VAL_FUNC_WORDS(DSF_FUNC(dsf))) {
 					assert(!IS_CLOSURE(DSF_FUNC(dsf)));
 					*out = *DSF_ARG(dsf, -index);
@@ -1322,7 +1319,7 @@
 	dsf = DSF;
 	while (VAL_WORD_FRAME(word) != VAL_WORD_FRAME(DSF_LABEL(dsf))) {
 		dsf = PRIOR_DSF(dsf);
-		if (dsf <= 0) Trap1(RE_NOT_DEFINED, word); // change error !!!
+		if (dsf == DSF_NONE) Trap1(RE_NOT_DEFINED, word); // change error !!!
 	}
 	*DSF_ARG(dsf, -index) = *value;
 }

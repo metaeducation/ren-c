@@ -107,8 +107,7 @@
 
 	for (; (ii > 0) ? si <= ei : si >= ei; si += ii) {
 		VAL_INDEX(var) = si;
-		Do_Blk(body, 0);
-		DS_POP_INTO(out);
+		Do_Blk(out, body, 0);
 
 		if (THROWN(out) && Check_Error(out) >= 0) break;
 
@@ -130,8 +129,7 @@
 
 	while ((incr > 0) ? start <= end : start >= end) {
 		VAL_INT64(var) = start;
-		Do_Blk(body, 0);
-		DS_POP_INTO(out);
+		Do_Blk(out, body, 0);
 
 		if (THROWN(out) && Check_Error(out) >= 0) break;
 
@@ -174,8 +172,7 @@
 	for (; (i > 0.0) ? s <= e : s >= e; s += i) {
 		VAL_DECIMAL(var) = s;
 
-		Do_Blk(body, 0);
-		DS_POP_INTO(out);
+		Do_Blk(out, body, 0);
 		if (THROWN(out) && Check_Error(out) >= 0) break;
 
 		if (!IS_DECIMAL(var)) Trap_Type(var);
@@ -235,8 +232,7 @@
 				VAL_INDEX(var) = idx;
 			}
 
-			Do_Blk(body, bodi);
-			DS_POP_INTO(D_OUT);
+			Do_Blk(D_OUT, body, bodi);
 
 			if (THROWN(D_OUT)) {	// Break, throw, continue, error.
 				if (Check_Error(D_OUT) >= 0) {
@@ -428,8 +424,7 @@
 		if (index == rindex) index++; //the word block has only set-words: foreach [a:] [1 2 3][]
 
 
-		Do_Blk(body, 0);
-		DS_POP_INTO(D_OUT);
+		Do_Blk(D_OUT, body, 0);
 
 		if (THROWN(D_OUT)) {
 			if ((err = Check_Error(D_OUT)) >= 0) {
@@ -551,10 +546,9 @@ skip_hidden: ;
 ***********************************************************************/
 {
 	do {
-		DO_BLK(DS_ARG(1));
-		if (THROWN(DS_TOP) && Check_Error(DS_TOP) >= 0)
-			return R_TOS;
-		DS_DROP;
+		DO_BLK(D_OUT, DS_ARG(1));
+		if (THROWN(D_OUT) && Check_Error(D_OUT) >= 0)
+			return R_OUT;
 	} while (TRUE);
 
 	DEAD_END;
@@ -615,16 +609,15 @@ skip_hidden: ;
 	REBCNT index  = VAL_INDEX(D_ARG(2));
 	REBVAL *ds;
 
-	DS_PUSH_NONE; // Default result to NONE if the loop does not run
+	SET_NONE(D_OUT); // Default result to NONE if the loop does not run
 
 	for (; count > 0; count--) {
-		DS_DROP;
-		Do_Blk(block, index);
-		if (THROWN(DS_TOP)) {
-			if (Check_Error(DS_TOP) >= 0) break;
+		Do_Blk(D_OUT, block, index);
+		if (THROWN(D_OUT)) {
+			if (Check_Error(D_OUT) >= 0) break;
 		}
 	}
-	return R_TOS;
+	return R_OUT;
 }
 
 
@@ -674,12 +667,10 @@ skip_hidden: ;
 {
 	REBSER *b1 = VAL_SERIES(D_ARG(1));
 	REBCNT i1  = VAL_INDEX(D_ARG(1));
-	REBVAL *ds;
 
 	do {
 utop:
-		Do_Blk(b1, i1);
-		DS_POP_INTO(D_OUT);
+		Do_Blk(D_OUT, b1, i1);
 		if (IS_UNSET(D_OUT)) Trap_DEAD_END(RE_NO_RETURN);
 		if (THROWN(D_OUT)) {
 			if (Check_Error(D_OUT) >= 0) break;
@@ -700,31 +691,36 @@ utop:
 	REBCNT i1  = VAL_INDEX(D_ARG(1));
 	REBSER *b2 = VAL_SERIES(D_ARG(2));
 	REBCNT i2  = VAL_INDEX(D_ARG(2));
-	REBVAL *ds;
 
+	// We need to keep the condition and body safe from GC, so we can't
+	// use a D_ARG slot for evaluating the condition (can't overwrite
+	// D_OUT because that's the last loop's value we might return)
+	REBVAL temp;
+
+	// If the loop body never runs (and condition doesn't error or throw),
+	// we want to return a NONE!
 	SET_NONE(D_OUT);
 
 	do {
-		Do_Blk(b1, i1);
-		if (IS_UNSET(DS_TOP) || IS_ERROR(DS_TOP)) {
+		Do_Blk(&temp, b1, i1);
+		if (IS_UNSET(&temp) || IS_ERROR(&temp)) {
 			// Unset, break, throw, error.
-			if (Check_Error(DS_TOP) >= 0) {
+			if (Check_Error(&temp) >= 0) {
 				// Check_Error modifies its argument such that TOS will be
 				// UNSET! (or the arg to BREAK/WITH) if a BREAK happened.
 				// (It will also complain if DS_TOP was an UNSET!.)
-				return R_TOS;
+				*D_OUT = temp;
+				return R_OUT;
 			}
 			// CONTINUE will pass through here...
 		}
 
-		if (IS_CONDITIONAL_FALSE(DS_TOP)) return R_OUT;
+		if (IS_CONDITIONAL_FALSE(&temp)) return R_OUT;
 
 		// Not interested in the value of the condition loop once we've
 		// decided to run the body...
-		DS_DROP;
 
-		Do_Blk(b2, i2);
-		DS_POP_INTO(D_OUT);
+		Do_Blk(D_OUT, b2, i2);
 		if (THROWN(D_OUT)) {
 			// Break, throw, continue, error.
 			// !!! Check_Error may modify its argument

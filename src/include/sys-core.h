@@ -347,7 +347,7 @@ enum encoding_opts {
 #define	DECIDE(cond) if (cond) goto is_true; else goto is_false
 #define REM2(a, b) ((b)!=-1 ? (a) % (b) : 0)
 //#define DO_BLOCK(v) Do_Block(VAL_SERIES(v), VAL_INDEX(v))
-#define DO_BLK(v) Do_Blk(VAL_SERIES(v), VAL_INDEX(v))
+#define DO_BLK(o,v) Do_Blk((o), VAL_SERIES(v), VAL_INDEX(v))
 
 
 /***********************************************************************

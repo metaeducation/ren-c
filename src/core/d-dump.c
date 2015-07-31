@@ -197,7 +197,7 @@
 	REBINT m;
 	REBVAL *args;
 
-	if (dsf == 0) {
+	if (dsf == -1) {
 		dsf = DSF;
 		dsp = DSP;
 	}
@@ -213,7 +213,7 @@
 				Debug_Fmt("\t%s: %72r", Get_Word_Name(args+n), DSF_ARG(dsf, n));
 		}
 		//Debug_Fmt(Str_Stack[2], PRIOR_DSF(dsf));
-		if (PRIOR_DSF(dsf) > 0) Dump_Stack(PRIOR_DSF(dsf), dsf-1);
+		if (PRIOR_DSF(dsf) != DSF_NONE) Dump_Stack(PRIOR_DSF(dsf), dsf);
 	}
 
 	//for (n = 1; n <= 2; n++) {

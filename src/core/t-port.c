@@ -69,10 +69,16 @@
 	case A_CREATE:
 	case A_DELETE:
 	case A_RENAME:
+		// !!! We are going to "re-apply" the call frame with routines that
+		// are going to read the D_ARG(1) slot *implicitly* regardless of
+		// what value points to.  And dodgily, we must also make sure the
+		// output is set.  Review.
 		if (!IS_PORT(value)) {
-			Make_Port(D_ARG(1), value);
+			Make_Port(D_OUT, value);
+			*D_ARG(1) = *D_OUT;
 			value = D_ARG(1);
-		}
+		} else
+			*D_OUT = *value;
 	case A_UPDATE:
 	default:
 		return Do_Port_Action(call_, VAL_PORT(value), action); // Result on stack

@@ -485,6 +485,41 @@ static void Propagate_All_GC_Marks(void);
 
 /***********************************************************************
 **
+*/ static void Mark_Call_Frames_Deep(void)
+/*
+**		Mark all function call frames.  At the moment, this is mostly
+**		taken care of by the marking of the data stack itself...since
+**		the call frames put their values on the data stack.  The one
+**		exception is the return value, which only *indirectly*
+**		implicates a value (which may or may not live on the data
+**		stack) by storing a pointer into a handle.  We must extract
+**		that REBVAL* in order for the garbage collector to see it,
+**		as the handle would be opaque to it otherwise.
+**
+**		Note that prior to a function invocation, the output value
+**		slot is written with "safe" TRASH.  This helps the evaluator
+**		catch cases of when a function dispatch doesn't consciously
+**		write any value into the output in debug builds.  The GC is
+**		willing to overlook this safe trash, however, and it will just
+**		be an UNSET! in the release build.
+**
+**		This should be called at the top level, and not from inside a
+**		Propagate_All_GC_Marks().  All marks will be propagated.
+**
+***********************************************************************/
+{
+	REBINT dsf = DSF;
+	while (dsf != -1) {
+		Queue_Mark_Value_Deep(DSF_OUT(dsf));
+		Propagate_All_GC_Marks();
+
+		dsf = PRIOR_DSF(dsf);
+	}
+}
+
+
+/***********************************************************************
+**
 */	static void Queue_Mark_Value_Deep(REBVAL *val)
 /*
 ***********************************************************************/
@@ -1015,6 +1050,9 @@ static void Propagate_All_GC_Marks(void);
 
 	// Mark all devices:
 	Mark_Devices_Deep();
+
+	// Mark function call frames:
+	Mark_Call_Frames_Deep();
 
 	count = Sweep_Routines(); // this needs to run before Sweep_Series(), because Routine has series with pointers, which can't be simply discarded by Sweep_Series
 

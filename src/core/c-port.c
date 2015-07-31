@@ -42,10 +42,8 @@
 **
 ***********************************************************************/
 {
-	Do_Sys_Func(SYS_CTX_MAKE_PORT_P, spec, 0);
-	if (IS_NONE(DS_TOP)) Trap1(RE_INVALID_SPEC, spec);
-
-	DS_POP_INTO(out);
+	Do_Sys_Func(out, SYS_CTX_MAKE_PORT_P, spec, 0);
+	if (IS_NONE(out)) Trap1(RE_INVALID_SPEC, spec);
 }
 
 
@@ -152,6 +150,7 @@
 	REBVAL tmp;
 	REBVAL ref_only;
 	REBINT result;
+	REBVAL out;
 
 	// Get the system port object:
 	port = Get_System(SYS_PORTS, PORTS_SYSTEM);
@@ -179,12 +178,10 @@
 	if (only) SET_TRUE(&ref_only);
 	else SET_NONE(&ref_only);
 	// Call the system awake function:
-	Apply_Func(0, awake, port, &tmp, &ref_only, 0); // ds is return value
+	Apply_Func(&out, 0, awake, port, &tmp, &ref_only, 0);
 
 	// Awake function returns 1 for end of WAIT:
-	result = (IS_LOGIC(DS_TOP) && VAL_LOGIC(DS_TOP)) ? 1 : 0;
-
-	DS_DROP;
+	result = (IS_LOGIC(&out) && VAL_LOGIC(&out)) ? 1 : 0;
 
 	return result;
 }

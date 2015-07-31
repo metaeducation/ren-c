@@ -563,19 +563,16 @@ static REBOOL parse_field_type(struct Struct_Field *field, REBVAL *spec, REBVAL 
 	++ val;
 
 	if (IS_BLOCK(val)) {// make struct! [a: [int32 [2]] [0 0]]
-		REBVAL *ret;
+		REBVAL ret;
 
-		Do_Blk(VAL_SERIES(val), 0);
-		ret = DS_TOP;
+		Do_Blk(&ret, VAL_SERIES(val), 0);
 
-		if (!IS_INTEGER(ret)) {
+		if (!IS_INTEGER(&ret)) {
 			Trap_Types_DEAD_END(RE_EXPECT_VAL, REB_INTEGER, VAL_TYPE(val));
 		}
-		field->dimension = (REBCNT)VAL_INT64(ret);
+		field->dimension = cast(REBCNT, VAL_INT64(&ret));
 		field->array = TRUE;
 		++ val;
-
-		DS_DROP; // drop the result of the Do_Blk (ret)
 	} else {
 		field->dimension = 1; /* scalar */
 		field->array = FALSE;
@@ -689,12 +686,14 @@ static REBOOL parse_field_type(struct Struct_Field *field, REBVAL *spec, REBVAL 
 					init = DS_TOP; // Reduce_Block saves result on stack
 					++ blk;
 				} else {
+					REBVAL out;
 					eval_idx = blk - VAL_BLK_DATA(data);
 
-					eval_idx = Do_Next(VAL_SERIES(data), eval_idx, 0);
+					eval_idx = Do_Next(&out, VAL_SERIES(data), eval_idx, 0);
+					DS_PUSH(&out); // Save result on stack to match Reduce
 
 					blk = VAL_BLK_SKIP(data, eval_idx);
-					init = DS_TOP; // Do_Next saves result on stack
+					init = DS_TOP;
 				}
 
 				if (field->array) {

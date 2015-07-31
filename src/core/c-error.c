@@ -131,7 +131,7 @@
 **
 ***********************************************************************/
 {
-	assert(Saved_State || ((DSP == 0) && (DSF == 0)));
+	assert(Saved_State || ((DSP == -1) && (DSF == DSF_NONE)));
 
 	s->dsp = DSP;
 	s->dsf = DSF;
@@ -192,7 +192,7 @@
 	// Restore elements from initial state, like stack position and frame
 	while (DSF != state->dsf) {
 		REBINT dsf = DSF;
-		DSF = PRIOR_DSF(DSF);
+		SET_DSF(PRIOR_DSF(DSF));
 
 		// !!! Do stuff needed for each call stack frame getting blown away
 		// (in StableStack, we must release the stable frame pointer itself)
@@ -412,10 +412,10 @@
 /*
 ***********************************************************************/
 {
-	REBCNT dsf = DSF;
+	REBINT dsf = DSF;
 	REBCNT count = 0;
 
-	for (dsf = DSF; dsf > 0; dsf = PRIOR_DSF(dsf)) {
+	for (dsf = DSF; dsf != DSF_NONE; dsf = PRIOR_DSF(dsf)) {
 		count++;
 	}
 
@@ -436,7 +436,7 @@
 	REBINT dsf;
 	REBVAL *val;
 
-	for (dsf = DSF; dsf > 0; dsf = PRIOR_DSF(dsf)) {
+	for (dsf = DSF; dsf != DSF_NONE; dsf = PRIOR_DSF(dsf)) {
 		if (start-- <= 0) {
 			val = Alloc_Tail_Blk(blk);
 			Init_Word_Unbound(val, REB_WORD, VAL_WORD_SYM(DSF_LABEL(dsf)));
@@ -560,10 +560,10 @@
 	// If block arg, evaluate object values (checking done later):
 	// If user set error code, use it to setup type and id fields.
 	if (IS_BLOCK(arg)) {
+		REBVAL ignored; // !!! Is the DO_BLK result meaningful?
 		DISABLE_GC;
 		Bind_Block(err, VAL_BLK_DATA(arg), BIND_DEEP);
-		DO_BLK(arg); // GC-OK (disabled)
-		DS_DROP;
+		DO_BLK(&ignored, arg); // GC-OK (disabled)
 		ENABLE_GC;
 		if (IS_INTEGER(&error->code) && VAL_INT64(&error->code)) {
 			Set_Error_Type(error);
@@ -633,7 +633,7 @@
 	if (arg3) error->arg3 = *arg3;
 
 	// Set backtrace and location information:
-	if (DSF > 0) {
+	if (DSF != DSF_NONE) {
 		// Where (what function) is the error:
 		Set_Block(&error->where, Make_Backtrace(0));
 		// Nearby location of the error (in block being evaluated):

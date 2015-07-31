@@ -38,9 +38,8 @@
 	DS_Series = Make_Block(size);
 	Set_Root_Series(TASK_STACK, DS_Series, "data stack"); // uses special GC
 	DS_Base = BLK_HEAD(DS_Series);
-	DSP = 0;
-	SET_DSF(0);
-	SET_NONE(DS_TOP); // avoids it being set to END (GC problem)
+	DSP = -1;
+	SET_DSF(DSF_NONE);
 }
 
 
@@ -63,9 +62,9 @@
 **
 ***********************************************************************/
 {
-	assert((DS_Index >= 0) && (DS_Frame_Index >= 0));
+	assert((DS_Index >= -1) && (DS_Frame_Index >= -1));
 	assert(DS_Index >= DS_Frame_Index);
-	if (DS_Frame_Index != 0) {
+	if (DS_Frame_Index != -1) {
 		assert(PRIOR_DSF(DS_Frame_Index) < DS_Frame_Index);
 		assert(ANY_FUNC(DSF_FUNC(DS_Frame_Index)));
 		assert(ANY_BLOCK(DSF_POSITION(DS_Frame_Index)));

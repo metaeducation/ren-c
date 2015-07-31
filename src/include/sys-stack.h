@@ -79,15 +79,20 @@
 // !!! Vis a vis, concordantly...DSF_RETURN is reserved for the definitionally
 // scoped return function built for the specific call the frame represents.
 
-#define DSF_SIZE		4					// from DSF to ARGS-1
-#define DSF_OUT(d)		(&DS_Base[d])		// where to write return value
+#define DSF_SIZE		5					// from DSF to ARGS-1
+
+// where to write return value (via a handle indirection for now)
+#define DSF_OUT(d) \
+	cast(REBVAL*, VAL_HANDLE_DATA(&DS_Base[(d) + 1]))
+
 #define PRIOR_DSF(d) \
-	VAL_INT32(&DS_Base[(d)+1])
-#define DSF_POSITION(d) (&DS_Base[(d)+2])	// block and index of execution
-#define DSF_LABEL(d)	(&DS_Base[(d)+3])	// func word backtrace
-#define DSF_FUNC(d)		(&DS_Base[(d)+4])	// function value saved
+	VAL_INT32(&DS_Base[(d) + 2])
+
+#define DSF_POSITION(d) (&DS_Base[(d) + 3])	// block and index of execution
+#define DSF_LABEL(d)	(&DS_Base[(d) + 4])	// func word backtrace
+#define DSF_FUNC(d)		(&DS_Base[(d) + 5])	// function value saved
 #define DSF_RETURN(d)	coming@soon			// return func linked to this call
-#define DSF_ARG(d,n)	(&DS_Base[(d)+DSF_SIZE+(n)])
+#define DSF_ARG(d,n)	(&DS_Base[(d) + DSF_SIZE + (n)])
 
 
 #ifdef STRESS
@@ -98,11 +103,14 @@
 		(DS_Frame_Index = (ds), cast(void, DSF_Stress()))
 #else
 	// Normal builds just use DS_Frame_Index directly
-	#define DSF DS_Frame_Index
+	#define DSF (DS_Frame_Index + 0) // avoid assignment to DSF via + 0
 	#define SET_DSF(ds) \
 		(DS_Frame_Index = (ds))
 #endif
 
+// !!! Ultimately the DSF will be done some other way, but for now this is
+// how to indicate there is no stack frame.
+#define DSF_NONE MIN_I32
 
 // Special stack controls (used by init and GC):
 #define DS_TERMINATE	(SERIES_TAIL(DS_Series) = DSP+1);
@@ -113,13 +121,17 @@
 // Stack pointer based actions:
 #define DS_TOP			(&DS_Base[DSP])
 
+#define DS_DROP \
+	(SET_END(DS_TOP), --DSP, cast(void, 0))
+
 #define DS_POP_INTO(v) \
 	do { \
+		assert(!IS_END(DS_TOP)); \
+		assert(!IS_TRASH(DS_TOP) || VAL_TRASH_SAFE(DS_TOP)); \
 		*(v) = *DS_TOP; \
 		DS_DROP; \
 	} while (0)
 
-#define DS_DROP			(DSP--)
 #define DS_GET(d)		(&DS_Base[d])
 #define DS_PUSH(v)		(DS_Base[++DSP]=*(v))		// atomic
 

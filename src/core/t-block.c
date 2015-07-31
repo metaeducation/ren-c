@@ -401,6 +401,7 @@ static struct {
 ***********************************************************************/
 {
 	REBVAL *args = NULL;
+	REBVAL out;
 
 	REBINT result = -1;
 
@@ -425,22 +426,20 @@ static struct {
 		);
 	}
 
-	Apply_Func(0, sort_flags.compare, v1, v2, 0);
+	Apply_Func(&out, 0, sort_flags.compare, v1, v2, 0);
 
-	if (IS_LOGIC(DS_TOP)) {
-		if (VAL_LOGIC(DS_TOP)) result = 1;
+	if (IS_LOGIC(&out)) {
+		if (VAL_LOGIC(&out)) result = 1;
 	}
-	else if (IS_INTEGER(DS_TOP)) {
-		if (VAL_INT64(DS_TOP) > 0) result = 1;
-		if (VAL_INT64(DS_TOP) == 0) result = 0;
+	else if (IS_INTEGER(&out)) {
+		if (VAL_INT64(&out) > 0) result = 1;
+		if (VAL_INT64(&out) == 0) result = 0;
 	}
-	else if (IS_DECIMAL(DS_TOP)) {
-		if (VAL_DECIMAL(DS_TOP) > 0) result = 1;
-		if (VAL_DECIMAL(DS_TOP) == 0) result = 0;
+	else if (IS_DECIMAL(&out)) {
+		if (VAL_DECIMAL(&out) > 0) result = 1;
+		if (VAL_DECIMAL(&out) == 0) result = 0;
 	}
-	else if (IS_CONDITIONAL_TRUE(DS_TOP)) result = 1;
-
-	DS_DROP;
+	else if (IS_CONDITIONAL_TRUE(&out)) result = 1;
 
 	return result;
 }

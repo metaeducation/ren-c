@@ -1327,7 +1327,9 @@ append:
 	REB_MOLD mo;
 
 	while (index < BLK_LEN(block)) {
-		index = Do_Next(block, index, 0);
+		REBVAL out;
+		index = Do_Next(&out, block, index, 0);
+		DS_PUSH(&out);
 		if (THROWN(DS_TOP)) {
 			*DS_VALUE(start) = *DS_TOP;
 			DSP = start;

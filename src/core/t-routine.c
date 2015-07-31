@@ -846,22 +846,20 @@ static void process_type_block(REBVAL *out, REBVAL *blk, REBCNT n)
 {
 	if (IS_BLOCK(blk)) {
 		REBVAL *t = VAL_BLK_DATA(blk);
-		if (IS_WORD(t)
-			&& VAL_WORD_CANON(t) == SYM_STRUCT_TYPE) {
+		if (IS_WORD(t) && VAL_WORD_CANON(t) == SYM_STRUCT_TYPE) {
 			/* followed by struct definition */
+			REBVAL tmp;
+
 			++ t;
 			if (!IS_BLOCK(t) || VAL_LEN(blk) != 2) {
 				Trap_Arg(blk);
 			}
-			DS_PUSH_NONE;
-			if (!MT_Struct(DS_TOP, t, REB_STRUCT)) {
+			if (!MT_Struct(&tmp, t, REB_STRUCT)) {
 				Trap_Arg(blk);
 			}
-			if (!rebol_type_to_ffi(out, DS_TOP, n)) {
+			if (!rebol_type_to_ffi(out, &tmp, n)) {
 				Trap_Arg(blk);
 			}
-
-			DS_DROP;
 		} else {
 			if (VAL_LEN(blk) != 1) {
 				Trap_Arg(blk);
@@ -930,7 +928,8 @@ static void callback_dispatcher(ffi_cif *cif, void *ret, void **args, void *user
 		}
 	}
 
-	Do_Blk(ser, 0);
+	DS_PUSH_TRASH;
+	Do_Blk(DS_TOP, ser, 0);
 	elem = DS_TOP;
 	switch (cif->rtype->type) {
 		case FFI_TYPE_VOID:
@@ -1046,29 +1045,29 @@ static void callback_dispatcher(ffi_cif *cif, void *ret, void **args, void *user
 	blk = VAL_BLK_DATA(data);
 	if (type == REB_ROUTINE) {
 		REBINT fn_idx = 0;
-		REBVAL *lib = NULL;
+		REBVAL lib;
+
 		if (!IS_BLOCK(&blk[0]))
 			Trap_Types_DEAD_END(RE_EXPECT_VAL, REB_BLOCK, VAL_TYPE(&blk[0]));
 
-		fn_idx = Do_Next(VAL_SERIES(data), 1, 0);
-		lib = DS_TOP; // Do_Next leaves result on stack
+		fn_idx = Do_Next(&lib, VAL_SERIES(data), 1, 0);
 
-		if (IS_INTEGER(lib)) {
+		if (IS_INTEGER(&lib)) {
 			if (NOT_END(&blk[fn_idx]))
 				Trap_Arg_DEAD_END(&blk[fn_idx]);
 
 			//treated as a pointer to the function
-			if (VAL_INT64(lib) == 0)
-				Trap_Arg_DEAD_END(lib);
+			if (VAL_INT64(&lib) == 0)
+				Trap_Arg_DEAD_END(&lib);
 
 			// Cannot cast directly to a function pointer from a 64-bit value
 			// on 32-bit systems; first cast to int that holds Unsigned PoinTer
 			VAL_ROUTINE_FUNCPTR(out) = cast(CFUNC*,
-				cast(REBUPT, VAL_INT64(lib))
+				cast(REBUPT, VAL_INT64(&lib))
 			);
 		} else {
-			if (!IS_LIBRARY(lib))
-				Trap_Arg_DEAD_END(lib);
+			if (!IS_LIBRARY(&lib))
+				Trap_Arg_DEAD_END(&lib);
 
 			if (!IS_STRING(&blk[fn_idx]))
 				Trap_Arg_DEAD_END(&blk[fn_idx]);
@@ -1077,9 +1076,9 @@ static void callback_dispatcher(ffi_cif *cif, void *ret, void **args, void *user
 				Trap_Arg_DEAD_END(&blk[fn_idx + 1]);
 			}
 
-			VAL_ROUTINE_LIB(out) = VAL_LIB_HANDLE(lib);
+			VAL_ROUTINE_LIB(out) = VAL_LIB_HANDLE(&lib);
 			if (!VAL_ROUTINE_LIB(out)) {
-				Trap_Arg_DEAD_END(lib);
+				Trap_Arg_DEAD_END(&lib);
 				//RL_Print("lib is not open\n");
 				ret = FALSE;
 			}
@@ -1093,23 +1092,20 @@ static void callback_dispatcher(ffi_cif *cif, void *ret, void **args, void *user
 				VAL_ROUTINE_FUNCPTR(out) = func;
 			}
 		}
-
-		DS_DROP; // Drop result of Do_Next (lib)
 	} else if (type == REB_CALLBACK) {
 		REBINT fn_idx = 0;
-		REBVAL *fun = NULL;
+		REBVAL fun;
+
 		if (!IS_BLOCK(&blk[0]))
 			Trap_Arg_DEAD_END(&blk[0]);
-		fn_idx = Do_Next(VAL_SERIES(data), 1, 0);
-		fun = DS_TOP; // Do_Next leaves result on stack
-		if (!IS_FUNCTION(fun))
-			Trap_Arg_DEAD_END(fun);
-		VAL_CALLBACK_FUNC(out) = VAL_FUNC(fun);
+		fn_idx = Do_Next(&fun, VAL_SERIES(data), 1, 0);
+		if (!IS_FUNCTION(&fun))
+			Trap_Arg_DEAD_END(&fun);
+		VAL_CALLBACK_FUNC(out) = VAL_FUNC(&fun);
 		if (NOT_END(&blk[fn_idx])) {
 			Trap_Arg_DEAD_END(&blk[fn_idx]);
 		}
 		//printf("RIN: %p, func: %p\n", VAL_ROUTINE_INFO(out), &blk[1]);
-		DS_DROP; // Drop result of Do_Next (fun)
 	}
 
 	blk = VAL_BLK_DATA(&blk[0]);

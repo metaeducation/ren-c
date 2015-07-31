@@ -254,14 +254,15 @@ enum {
 {
 	REBSER *block = VAL_SERIES(D_ARG(1));
 	REBCNT index = VAL_INDEX(D_ARG(1));
-	REBVAL *ds;
 
 	// Default result for 'all []'
 	DS_PUSH_TRUE;
 
 	while (index < SERIES_TAIL(block)) {
+		REBVAL out;
 		DS_DROP;
-		index = Do_Next(block, index, 0);
+		index = Do_Next(&out, block, index, 0);
+		DS_PUSH(&out);
 		if (IS_CONDITIONAL_FALSE(DS_TOP)) {
 			DS_DROP;
 			return R_NONE;
@@ -280,10 +281,11 @@ enum {
 {
 	REBSER *block = VAL_SERIES(D_ARG(1));
 	REBCNT index = VAL_INDEX(D_ARG(1));
-	REBVAL *ds;
 
 	while (index < SERIES_TAIL(block)) {
-		index = Do_Next(block, index, 0);
+		REBVAL out;
+		index = Do_Next(&out, block, index, 0);
+		DS_PUSH(&out);
 		if (!IS_CONDITIONAL_FALSE(DS_TOP) && !IS_UNSET(DS_TOP)) return R_TOS;
 		DS_DROP;
 	}
@@ -318,11 +320,11 @@ enum {
 
 	if (error) return R_NONE;
 
-	Do_Blk(VAL_SERIES(D_ARG(1)), VAL_INDEX(D_ARG(1)));
+	Do_Blk(D_OUT, VAL_SERIES(D_ARG(1)), VAL_INDEX(D_ARG(1)));
 
 	DROP_CATCH_SAME_STACKLEVEL_AS_PUSH(&state);
 
-	return R_TOS;
+	return R_OUT;
 }
 
 
@@ -354,21 +356,17 @@ enum {
 	REBSER *block = VAL_SERIES(D_ARG(1));
 	REBCNT index = VAL_INDEX(D_ARG(1));
 	REBFLG all_flag = D_REF(2);
-	REBVAL *ds;
 
 	while (index < SERIES_TAIL(block)) {
-		index = Do_Next(block, index, 0);
-		DS_POP_INTO(D_OUT);
+		index = Do_Next(D_OUT, block, index, 0);
 		if (IS_CONDITIONAL_FALSE(D_OUT)) index++;
 		else {
 			if (IS_UNSET(D_OUT)) Trap_DEAD_END(RE_NO_RETURN);
 			if (THROWN(D_OUT)) return R_OUT;
 			if (index >= SERIES_TAIL(block)) return R_TRUE;
-			index = Do_Next(block, index, 0);
-			DS_POP_INTO(D_OUT);
+			index = Do_Next(D_OUT, block, index, 0);
 			if (IS_BLOCK(D_OUT)) {
-				DO_BLK(D_OUT);
-				DS_POP_INTO(D_OUT);
+				DO_BLK(D_OUT, D_OUT);
 				if (IS_UNSET(D_OUT) && !all_flag) return R_TRUE;
 			}
 			if (THROWN(D_OUT) || !all_flag || index >= SERIES_TAIL(block))
@@ -423,17 +421,17 @@ enum {
 	}
 
 	// Evaluate the block:
-	Do_Blk(VAL_SERIES(D_ARG(1)), VAL_INDEX(D_ARG(1)));
+	Do_Blk(D_OUT, VAL_SERIES(D_ARG(1)), VAL_INDEX(D_ARG(1)));
 
 	DROP_CATCH_SAME_STACKLEVEL_AS_PUSH(&state);
 
 	// If it is a throw, process it:
-	if (IS_ERROR(DS_TOP) && VAL_ERR_NUM(DS_TOP) == RE_THROW) {
+	if (IS_ERROR(D_OUT) && VAL_ERR_NUM(D_OUT) == RE_THROW) {
 
 		// If a named throw, then check it:
 		if (D_REF(2)) { // /name
 
-			sym = VAL_ERR_SYM(DS_TOP);
+			sym = VAL_ERR_SYM(D_OUT);
 			val = D_ARG(3); // name symbol
 
 			// If name is the same word:
@@ -448,11 +446,11 @@ enum {
 			}
 		} else {
 got_err:
-			TAKE_THROWN_ARG(DS_TOP, DS_TOP);
+			TAKE_THROWN_ARG(D_OUT, D_OUT);
 		}
 	}
 
-	return R_TOS;
+	return R_OUT;
 }
 
 
@@ -523,13 +521,17 @@ got_err:
 ***********************************************************************/
 {
 	REBVAL *value = D_ARG(1);
+	REBVAL out;
 
 	switch (VAL_TYPE(value)) {
 
 	case REB_BLOCK:
 	case REB_PAREN:
 		if (D_REF(4)) { // next
-			VAL_INDEX(value) = Do_Next(VAL_SERIES(value), VAL_INDEX(value), 0);
+			VAL_INDEX(value) = Do_Next(
+				&out, VAL_SERIES(value), VAL_INDEX(value), 0
+			);
+			DS_PUSH(&out);
 			if (VAL_INDEX(value) == END_FLAG) {
 				VAL_INDEX(value) = VAL_TAIL(value);
 				Set_Var(D_ARG(5), value);
@@ -539,8 +541,8 @@ got_err:
 			return R_TOS;
 		}
 
-		DO_BLK(value);
-		return R_TOS;
+		DO_BLK(D_OUT, value);
+		return R_OUT;
 
     case REB_NATIVE:
 	case REB_ACTION:
@@ -583,8 +585,8 @@ got_err:
 	case REB_URL:
 	case REB_FILE:
 		// DO native and system/intrinsic/do must use same arg list:
-		Do_Sys_Func(SYS_CTX_DO_P, value, D_ARG(2), D_ARG(3), D_ARG(4), D_ARG(5), NULL);
-		return R_TOS;
+		Do_Sys_Func(D_OUT, SYS_CTX_DO_P, value, D_ARG(2), D_ARG(3), D_ARG(4), D_ARG(5), NULL);
+		return R_OUT;
 
 	case REB_TASK:
 		Do_Task(value);
@@ -609,8 +611,8 @@ got_err:
 	REBCNT argnum = IS_CONDITIONAL_FALSE(D_ARG(1)) ? 3 : 2;
 
 	if (IS_BLOCK(D_ARG(argnum)) && !D_REF(4) /* not using /ONLY */) {
-		DO_BLK(D_ARG(argnum));
-		return R_TOS;
+		DO_BLK(D_OUT, D_ARG(argnum));
+		return R_OUT;
 	} else {
 		return argnum == 2 ? R_ARG2 : R_ARG3;
 	}
@@ -639,8 +641,8 @@ got_err:
 {
 	if (IS_CONDITIONAL_FALSE(D_ARG(1))) return R_NONE;
 	if (IS_BLOCK(D_ARG(2)) && !D_REF(3) /* not using /ONLY */) {
-		DO_BLK(D_ARG(2));
-		return R_TOS;
+		DO_BLK(D_OUT, D_ARG(2));
+		return R_OUT;
 	}
 	return R_ARG2;
 }
@@ -736,16 +738,15 @@ got_err:
 			if (IS_END(blk)) break;
 			found = TRUE;
 			// Evaluate the case block
-			DO_BLK(blk);
-			DS_POP_INTO(D_OUT);
+			DO_BLK(D_OUT, blk);
 			if (!all) return R_OUT;
 			if (THROWN(D_OUT) && Check_Error(D_OUT) >= 0) break;
 		}
 	}
 
 	if (!found && IS_BLOCK(D_ARG(4))) {
-		DO_BLK(D_ARG(4));
-		return R_TOS;
+		DO_BLK(D_OUT, D_ARG(4));
+		return R_OUT;
 	}
 
 	return R_NONE;
@@ -777,8 +778,8 @@ got_err:
 		if (except) {
 			if (IS_BLOCK(D_ARG(3))) {
 				// forget the result of the try.
-				Do_Blk(VAL_SERIES(D_ARG(3)), VAL_INDEX(D_ARG(3)));
-				return R_TOS;
+				Do_Blk(D_OUT, VAL_SERIES(D_ARG(3)), VAL_INDEX(D_ARG(3)));
+				return R_OUT;
 			}
 			else if (ANY_FUNC(D_ARG(3))) {
 				// !!! REVIEW: What about zero arity functions or functions of
@@ -794,8 +795,8 @@ got_err:
 					// allow error! for its value1 argument."
 					Trap3_DEAD_END(RE_EXPECT_ARG, Of_Type(&handler), args, Of_Type(error));
 				}
-				Apply_Func(NULL, &handler, error, NULL);
-				return R_TOS;
+				Apply_Func(D_OUT, NULL, &handler, error, NULL);
+				return R_OUT;
 			}
 			else
 				Panic(RP_MISC); // should not be possible (type-checking)
@@ -807,11 +808,11 @@ got_err:
 		return R_OUT;
 	}
 
-	Do_Blk(VAL_SERIES(D_ARG(1)), VAL_INDEX(D_ARG(1)));
+	Do_Blk(D_OUT,VAL_SERIES(D_ARG(1)), VAL_INDEX(D_ARG(1)));
 
 	DROP_CATCH_SAME_STACKLEVEL_AS_PUSH(&state);
 
-	return R_TOS;
+	return R_OUT;
 }
 
 
@@ -823,8 +824,8 @@ got_err:
 {
 	if (IS_CONDITIONAL_TRUE(D_ARG(1))) return R_NONE;
 	if (IS_BLOCK(D_ARG(2)) && !D_REF(3) /* not using /ONLY */) {
-		DO_BLK(D_ARG(2));
-		return R_TOS;
+		DO_BLK(D_OUT, D_ARG(2));
+		return R_OUT;
 	}
 	return R_ARG2;
 }

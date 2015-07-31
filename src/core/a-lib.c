@@ -158,6 +158,7 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 	REBVAL start_result;
 
 	int result;
+	REBVAL out;
 
 	if (bin) {
 		ser = Decompress(bin, len, 10000000, 0);
@@ -224,7 +225,7 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 		return VAL_ERR_NUM(error);
 	}
 
-	Do_Sys_Func(SYS_CTX_FINISH_RL_START, 0);
+	Do_Sys_Func(&out, SYS_CTX_FINISH_RL_START, 0);
 
 	DROP_CATCH_SAME_STACKLEVEL_AS_PUSH(&state);
 
@@ -232,17 +233,14 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 	// convention (as for FINISH_INIT_CORE) that any non-none! result from
 	// FINISH_RL_START indicates something went wrong.
 
-	if (IS_NONE(DS_TOP))
+	if (IS_NONE(&out))
 		result = 0;
 	else {
 		assert(FALSE); // should not happen (raise an error instead)
 		Debug_Fmt("** finish-rl-start returned non-NONE!:");
-		Debug_Fmt("%r", DS_TOP);
+		Debug_Fmt("%r", &out);
 		result = RE_MISC;
 	}
-
-	// Drop the result of the Do_Sys_Func call
-	DS_DROP;
 
 	return result;
 }
@@ -350,11 +348,12 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 	REBVAL vali;
 
 	REBVAL temp;
+	REBVAL out;
 
 	REBOL_STATE state;
 	const REBVAL *error;
 
-	assert(DSP == 0);
+	assert(DSP == -1);
 
 	PUSH_CATCH_ANY(&error, &state);
 
@@ -428,36 +427,32 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 		Resolve_Context(user, Lib_Context, &vali, FALSE, 0);
 	}
 
-	Do_Blk(code, 0);
+	Do_Blk(&out, code, 0);
 
 	UNSAVE_SERIES(code);
 
-	if (THROWN(DS_TOP)) {
-		assert(IS_ERROR(DS_TOP));
-		Throw(DS_TOP, NULL);
+	if (THROWN(&out)) {
+		assert(IS_ERROR(&out));
+		Throw(&out, NULL);
 		DEAD_END;
 	}
 
 	DROP_CATCH_SAME_STACKLEVEL_AS_PUSH(&state);
 
 	if (result) {
-		// Grab the result off the top of the stack and convert it to RXT
-		// and RXI if that was requested.
+		// Convert Do_Blk output to RXT and RXI if that was requested.
 
-		REBRXT type = Reb_To_RXT[VAL_TYPE(DS_TOP)];
-		*result = Value_To_RXI(DS_TOP);
-
-		// Protocol was we do not leave TOS value if result requested
-		// Overwrite with trash to ensure TOS1 semantics not used
-		SET_TRASH(DS_TOP);
-		DS_DROP;
+		REBRXT type = Reb_To_RXT[VAL_TYPE(&out)];
+		*result = Value_To_RXI(&out);
 
 		return type;
 	}
 
-	// Value is just left on top of stack if no result parameter.  :-/
+	// Value is pushed on top of stack if no result parameter.  :-/
 	// (The RL API was written with ideas like "print the top of stack"
 	// while not exposing ways to analyze it unless converted to RXT/RXI)
+
+	DS_PUSH(&out);
 
 	return 0;
 }
@@ -603,7 +598,7 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 **
 ***********************************************************************/
 {
-	if (DSP != 1)
+	if (DSP != 0)
 		Debug_Fmt(Str_Stack_Misaligned, DSP);
 
 	// We shouldn't get any THROWN() errors exposed to the user
