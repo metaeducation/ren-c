@@ -119,9 +119,9 @@
 **
 ***********************************************************************/
 {
-	assert((DS_Index >= -1) && (DS_Frame_Index >= -1));
-	assert(DS_Index >= DS_Frame_Index);
-	if (DS_Frame_Index != -1) {
+	assert(DS_Index >= -1);
+	if (DS_Frame_Index != DSF_NONE) {
+		assert(DS_Frame_Index >= -1 && DS_Index >= DS_Frame_Index);
 		assert(PRIOR_DSF(DS_Frame_Index) < DS_Frame_Index);
 		assert(ANY_FUNC(DSF_FUNC(DS_Frame_Index)));
 		assert(ANY_BLOCK(DSF_WHERE(DS_Frame_Index)));
