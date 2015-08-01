@@ -296,9 +296,6 @@
 	switch (ret) {
 	case R_OUT: // for compiler opt
 		break;
-	case R_TOS:
-		*out = *DS_TOP;
-		break;
 	case R_NONE:
 		SET_NONE(out);
 		break;
@@ -363,9 +360,6 @@
 
 	switch (ret) {
 	case R_OUT: // for compiler opt
-		break;
-	case R_TOS:
-		*out = *DS_TOP;
 		break;
 	case R_NONE:
 		SET_NONE(out);

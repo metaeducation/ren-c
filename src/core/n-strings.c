@@ -126,8 +126,15 @@ static struct digest {
 {
 	REBSER *str;
 
+	// !!! This uses stack pushing/popping protocol and doesn't need
+	// to.  It's only called once; should probably be inlined here.
+	// (Assuming AJOIN should exist, which it probably shouldn't.)
+
 	str = Form_Reduce(VAL_SERIES(D_ARG(1)), VAL_INDEX(D_ARG(1)));
-	if (!str) return R_TOS;
+	if (!str) {
+		DS_POP_INTO(D_OUT);
+		return R_OUT;
+	}
 
 	Set_String(D_OUT, str); // not D_OUT (stack modified)
 

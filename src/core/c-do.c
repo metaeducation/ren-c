@@ -476,7 +476,7 @@ void Trace_Arg(REBINT num, REBVAL *arg, REBVAL *path)
 
 /***********************************************************************
 **
-*/	void Pick_Path(REBVAL *value, REBVAL *selector, REBVAL *val)
+*/	void Pick_Path(REBVAL *out, REBVAL *value, REBVAL *selector, REBVAL *val)
 /*
 **		Lightweight version of Do_Path used for A_PICK actions.
 **		Result on TOS.
@@ -490,8 +490,7 @@ void Trace_Arg(REBINT num, REBVAL *arg, REBVAL *path)
 	pvs.path = 0;
 	pvs.select = selector;
 	pvs.setval = val;
-	DS_PUSH_NONE;
-	pvs.store = DS_TOP;		// Temp space for constructed results
+	pvs.store = out;		// Temp space for constructed results
 
 	// Path must have dispatcher, else return:
 	func = Path_Dispatch[VAL_TYPE(value)];

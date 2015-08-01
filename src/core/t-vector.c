@@ -558,11 +558,12 @@ void Set_Vector_Row(REBSER *ser, REBVAL *blk)
 	switch (action) {
 
 	case A_PICK:
-		Pick_Path(value, arg, 0);
-		return R_TOS;
+		Pick_Path(D_OUT, value, arg, NULL);
+		return R_OUT;
 
 	case A_POKE:
-		Pick_Path(value, arg, D_ARG(3));
+		// Third argument to pick path is the
+		Pick_Path(D_OUT, value, arg, D_ARG(3));
 		return R_ARG3;
 
 	case A_MAKE:

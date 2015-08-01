@@ -773,11 +773,11 @@ setDate:
 
 		case A_PICK:
 			assert(DS_ARGC > 1);
-			Pick_Path(val, arg, 0);
-			return R_TOS;
+			Pick_Path(D_OUT, val, arg, 0);
+			return R_OUT;
 
 ///		case A_POKE:
-///			Pick_Path(val, arg, D_ARG(3));
+///			Pick_Path(D_OUT, val, arg, D_ARG(3));
 ///			return R_ARG3;
 
 		case A_MAKE:

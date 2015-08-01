@@ -256,20 +256,17 @@ enum {
 	REBCNT index = VAL_INDEX(D_ARG(1));
 
 	// Default result for 'all []'
-	DS_PUSH_TRUE;
+	SET_TRUE(D_OUT);
 
 	while (index < SERIES_TAIL(block)) {
-		REBVAL out;
-		DS_DROP;
-		index = Do_Next(&out, block, index, 0);
-		DS_PUSH(&out);
-		if (IS_CONDITIONAL_FALSE(DS_TOP)) {
-			DS_DROP;
+		index = Do_Next(D_OUT, block, index, 0);
+		if (IS_CONDITIONAL_FALSE(D_OUT)) {
+			SET_TRASH_SAFE(D_OUT);
 			return R_NONE;
 		}
-		if (THROWN(DS_TOP)) break;
+		if (THROWN(D_OUT)) break;
 	}
-	return R_TOS;
+	return R_OUT;
 }
 
 
@@ -283,12 +280,10 @@ enum {
 	REBCNT index = VAL_INDEX(D_ARG(1));
 
 	while (index < SERIES_TAIL(block)) {
-		REBVAL out;
-		index = Do_Next(&out, block, index, 0);
-		DS_PUSH(&out);
-		if (!IS_CONDITIONAL_FALSE(DS_TOP) && !IS_UNSET(DS_TOP)) return R_TOS;
-		DS_DROP;
+		index = Do_Next(D_OUT, block, index, 0);
+		if (!IS_CONDITIONAL_FALSE(D_OUT) && !IS_UNSET(D_OUT)) return R_OUT;
 	}
+	SET_TRASH_SAFE(D_OUT);
 	return R_NONE;
 }
 
@@ -300,7 +295,8 @@ enum {
 ***********************************************************************/
 {
 	Apply_Block(D_ARG(1), D_ARG(2), !D_REF(3));
-	return R_TOS;
+	DS_POP_INTO(D_OUT);
+	return R_OUT;
 }
 
 
@@ -497,7 +493,8 @@ got_err:
 
 	if (!IS_BLOCK(value)) return R_ARG1;
 	Compose_Block(value, D_REF(2), D_REF(3), D_REF(4) ? D_ARG(5) : 0);
-	return R_TOS;
+	DS_POP_INTO(D_OUT);
+	return R_OUT;
 }
 
 
@@ -529,16 +526,16 @@ got_err:
 	case REB_PAREN:
 		if (D_REF(4)) { // next
 			VAL_INDEX(value) = Do_Next(
-				&out, VAL_SERIES(value), VAL_INDEX(value), 0
+				D_OUT, VAL_SERIES(value), VAL_INDEX(value), 0
 			);
-			DS_PUSH(&out);
 			if (VAL_INDEX(value) == END_FLAG) {
 				VAL_INDEX(value) = VAL_TAIL(value);
 				Set_Var(D_ARG(5), value);
+				SET_TRASH_SAFE(D_OUT);
 				return R_UNSET;
 			}
 			Set_Var(D_ARG(5), value); // "continuation" of block
-			return R_TOS;
+			return R_OUT;
 		}
 
 		DO_BLK(D_OUT, value);
@@ -686,7 +683,9 @@ got_err:
 			Reduce_Only(ser, index, D_ARG(4), val);
 		else
 			Reduce_Block(ser, index, val);
-		return R_TOS;
+
+		DS_POP_INTO(D_OUT);
+		return R_OUT;
 	}
 
 	return R_ARG1;

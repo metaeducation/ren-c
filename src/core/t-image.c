@@ -872,11 +872,11 @@ find_none:
 		return R_OUT;
 
 	case A_PICK:
-		Pick_Path(value, arg, 0);
-		return R_TOS;
+		Pick_Path(D_OUT, value, arg, 0);
+		return R_OUT;
 
 	case A_POKE:
-		Pick_Path(value, arg, D_ARG(3));
+		Pick_Path(D_OUT, value, arg, D_ARG(3));
 		return R_ARG3;
 
 	case A_SKIP:
