@@ -128,7 +128,7 @@ void Print_Parse_Index(REBCNT type, REBVAL *rules, REBSER *series, REBCNT index)
 		if (!VAL_CMD(item)) item = GET_MUTABLE_VAR(item);
 	}
 	else if (IS_PATH(item)) {
-		REBVAL *path = item;
+		const REBVAL *path = item;
 		if (Do_Path(&path, 0)) return item; // found a function
 		item = DS_TOP;
 	}
@@ -144,7 +144,7 @@ void Print_Parse_Index(REBCNT type, REBVAL *rules, REBSER *series, REBCNT index)
 **
 ***********************************************************************/
 {
-	REBVAL *path = item;
+	const REBVAL *path = item;
 	REBVAL tmp;
 
 	if (IS_PATH(item)) {

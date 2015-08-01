@@ -1169,7 +1169,7 @@ typedef struct Reb_Path_Value {
 	REBVAL *path;	// modified
 	REBVAL *store;  // modified (holds constructed values)
 	REBVAL *setval;	// static
-	REBVAL *orig;	// static
+	const REBVAL *orig;	// static
 } REBPVS;
 
 enum Path_Eval_Result {

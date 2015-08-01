@@ -212,7 +212,7 @@ void Trace_Line(REBSER *block, REBINT index, const REBVAL *value)
 	Debug_Line();
 }
 
-void Trace_Func(REBVAL *word, REBVAL *value)
+void Trace_Func(const REBVAL *word, const REBVAL *value)
 {
 	int depth;
 	CHECK_DEPTH(depth);
@@ -221,7 +221,7 @@ void Trace_Func(REBVAL *word, REBVAL *value)
 	else Debug_Line();
 }
 
-void Trace_Return(REBVAL *word, REBVAL *value)
+void Trace_Return(const REBVAL *word, const REBVAL *value)
 {
 	int depth;
 	CHECK_DEPTH(depth);
@@ -229,7 +229,7 @@ void Trace_Return(REBVAL *word, REBVAL *value)
 	Debug_Values(value, 1, 50);
 }
 
-void Trace_Arg(REBINT num, REBVAL *arg, REBVAL *path)
+void Trace_Arg(REBINT num, const REBVAL *arg, const REBVAL *path)
 {
 	int depth;
 	if (IS_REFINEMENT(arg) && (!path || IS_END(path))) return;
@@ -240,7 +240,7 @@ void Trace_Arg(REBINT num, REBVAL *arg, REBVAL *path)
 
 /***********************************************************************
 **
-*/	void Trace_Value(REBINT n, REBVAL *value)
+*/	void Trace_Value(REBINT n, const REBVAL *value)
 /*
 ***********************************************************************/
 {
@@ -251,7 +251,7 @@ void Trace_Arg(REBINT num, REBVAL *arg, REBVAL *path)
 
 /***********************************************************************
 **
-*/	void Trace_String(REBINT n, REBYTE *str, REBINT limit)
+*/	void Trace_String(REBINT n, const REBYTE *str, REBINT limit)
 /*
 ***********************************************************************/
 {
@@ -267,7 +267,7 @@ void Trace_Arg(REBINT num, REBVAL *arg, REBVAL *path)
 
 /***********************************************************************
 **
-*/	void Trace_Error(REBVAL *value)
+*/	void Trace_Error(const REBVAL *value)
 /*
 ***********************************************************************/
 {
@@ -414,7 +414,7 @@ void Trace_Arg(REBINT num, REBVAL *arg, REBVAL *path)
 
 /***********************************************************************
 **
-*/	REBVAL *Do_Path(REBVAL **path_val, REBVAL *val)
+*/	REBVAL *Do_Path(const REBVAL **path_val, REBVAL *val)
 /*
 **		Evaluate a path value. Path_val is updated so
 **		result can be used for function refinements.
@@ -518,7 +518,7 @@ void Trace_Arg(REBINT num, REBVAL *arg, REBVAL *path)
 
 /***********************************************************************
 **
-*/	static REBINT Do_Args(REBVAL *out, REBINT dsf, REBVAL *path, REBSER *block, REBCNT index)
+*/	static REBINT Do_Args(REBVAL *out, REBINT dsf, const REBVAL *path, REBSER *block, REBCNT index)
 /*
 **		Evaluate code block according to the function arg spec.
 **		Args are pushed onto the data stack in the same order
@@ -750,7 +750,7 @@ return_index:
 	// Functions don't have "names", though they can be assigned to words.
 	// If a function invokes via word lookup (vs. a literal FUNCTION! value),
 	// 'label' will be that WORD!, and NULL otherwise.
-	REBVAL *label = NULL;
+	const REBVAL *label = NULL;
 
 	// Most of what this routine does can be done with value pointers and
 	// the data stack.  Some operations need a unit of additional storage.
@@ -1124,6 +1124,7 @@ return_index:
 {
 	REBINT start = DSP + 1;
 	REBVAL *val;
+	const REBVAL *v;
 	REBSER *ser = 0;
 	REBCNT idx = 0;
 
@@ -1155,7 +1156,6 @@ return_index:
 
 	for (val = BLK_SKIP(block, index); NOT_END(val); val++) {
 		if (IS_WORD(val)) {
-			const REBVAL *v;
 			// Check for keyword:
 			if (ser && NOT_FOUND != Find_Word(ser, idx, VAL_WORD_CANON(val))) {
 				Append_Value(dest_ser, val);
@@ -1165,7 +1165,7 @@ return_index:
 			Append_Value(dest_ser, v);
 		}
 		else if (IS_PATH(val)) {
-			REBVAL *v;
+			const REBVAL *v;
 			if (ser) {
 				// Check for keyword/path:
 				v = VAL_BLK_DATA(val);
@@ -1252,7 +1252,7 @@ return_index:
 			if (VAL_TYPE(v) == type) DS_PUSH(v);
 		}
 		else if (IS_PATH(val)) {
-			REBVAL *v = val;
+			const REBVAL *v = val;
 			if (!Do_Path(&v, 0)) { // pushes val on stack
 				if (VAL_TYPE(DS_TOP) != type) DS_DROP;
 			}
@@ -1831,7 +1831,7 @@ push_arg:
 	else if (IS_PATH(val) || IS_GET_PATH(val)) {
 		// !!! Temporary: make a copy to pass mutable value to Do_Path
 		REBVAL path = *val;
-		REBVAL *v = &path;
+		const REBVAL *v = &path;
 		DS_PUSH_NONE;
 		Do_Path(&v, 0);
 		val = DS_TOP;

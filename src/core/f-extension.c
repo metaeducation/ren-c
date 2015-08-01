@@ -581,7 +581,7 @@ typedef REBYTE *(INFO_FUNC)(REBINT opts, void *lib);
 					if (IS_WORD(args)) val = GET_MUTABLE_VAR(val);
 				}
 				else if (IS_PATH(val)) {
-					REBVAL *path = val;
+					const REBVAL *path = val;
 					if (IS_WORD(args)) {
 						if (Do_Path(&path, 0)) {
 							// !!! comment said "found a function"

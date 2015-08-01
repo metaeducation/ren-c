@@ -209,7 +209,7 @@ enum {
 					val2 = m_cast(REBVAL*, GET_VAR(val));
 				}
 				else if (IS_PATH(val)) {
-					REBVAL *path = val;
+					const REBVAL *path = val;
 					if (Do_Path(&path, 0)) {
 						val2 = val; // !!! comment said "found a function"
 					} else {

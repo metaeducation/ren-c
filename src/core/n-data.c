@@ -155,7 +155,7 @@ static int Check_Char_Range(REBVAL *val, REBINT limit)
 				val = GET_VAR(value);
 			}
 			else if (IS_PATH(value)) {
-				REBVAL *refinements = value;
+				const REBVAL *refinements = value;
 				Do_Path(&refinements, 0);
 				DS_POP_INTO(D_OUT);
 				val = D_OUT;
@@ -364,7 +364,7 @@ static int Check_Char_Range(REBVAL *val, REBINT limit)
 		*D_OUT = *val;
 	}
 	else if (ANY_PATH(word)) {
-		REBVAL *refinements = word;
+		const REBVAL *refinements = word;
 		REBVAL *val = Do_Path(&refinements, 0);
 		if (!val) { // resides on stack
 			DS_POP_INTO(D_OUT);
@@ -476,7 +476,7 @@ static int Check_Char_Range(REBVAL *val, REBINT limit)
 **
 ***********************************************************************/
 {
-	REBVAL *word   = D_ARG(1);
+	const REBVAL *word = D_ARG(1);
 	REBVAL *val    = D_ARG(2);
 	REBVAL *tmp    = NULL;
 	REBOOL not_any = !D_REF(3);
@@ -504,18 +504,19 @@ static int Check_Char_Range(REBVAL *val, REBINT limit)
 
 	// Is target an object?
 	if (IS_OBJECT(word)) {
+		REBVAL *obj_word;
 		Assert_Public_Object(word);
 		// Check for protected or unset before setting anything.
-		for (tmp = val, word = VAL_OBJ_WORD(word, 1); NOT_END(word); word++) { // skip self
-			if (VAL_PROTECTED(word)) Trap1_DEAD_END(RE_LOCKED_WORD, word);
+		for (tmp = val, obj_word = VAL_OBJ_WORD(word, 1); NOT_END(obj_word); obj_word++) { // skip self
+			if (VAL_PROTECTED(obj_word)) Trap1_DEAD_END(RE_LOCKED_WORD, obj_word);
 			if (not_any && is_blk && !IS_END(tmp) && IS_UNSET(tmp++)) // won't advance past end
-				Trap1_DEAD_END(RE_NEED_VALUE, word);
+				Trap1_DEAD_END(RE_NEED_VALUE, obj_word);
 		}
-		for (word = VAL_OBJ_VALUES(D_ARG(1)) + 1; NOT_END(word); word++) { // skip self
+		for (obj_word = VAL_OBJ_VALUES(D_ARG(1)) + 1; NOT_END(obj_word); obj_word++) { // skip self
 			// WARNING: Unwinds that make it here are assigned. All unwinds
 			// should be screened earlier (as is done in e.g. REDUCE, or for
 			// function arguments) so they don't even get into this function.
-			*word = *val;
+			*obj_word = *val;
 			if (is_blk) {
 				val++;
 				if (IS_END(val)) {

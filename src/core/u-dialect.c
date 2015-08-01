@@ -73,7 +73,8 @@ static const char *Dia_Fmt = "DELECT - cmd: %s length: %d missed: %d total: %d";
 			val = GET_MUTABLE_VAR(where);
 		}
 		else if (IS_PATH(where)) {
-			Do_Path(&where, 0);
+			const REBVAL *where_const = where;
+			Do_Path(&where_const, 0);
 			val = DS_TOP; // only safe for short time!
 		}
 		else
@@ -169,10 +170,12 @@ static const char *Dia_Fmt = "DELECT - cmd: %s length: %d missed: %d total: %d";
 		}
 		break;
 
-	case REB_PATH:
-		if (Do_Path(&value, 0)) return 0;
+	case REB_PATH: {
+		const REBVAL *value_const;
+		if (Do_Path(&value_const, 0)) return 0;
 		value = DS_TOP;
 		break;
+	}
 
 	case REB_LIT_WORD:
 		DS_PUSH(value);
