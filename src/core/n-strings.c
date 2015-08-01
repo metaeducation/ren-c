@@ -136,6 +136,8 @@ static struct digest {
 		return R_OUT;
 	}
 
+	DS_DROP;
+
 	Set_String(D_OUT, str); // not D_OUT (stack modified)
 
 	return R_OUT;
