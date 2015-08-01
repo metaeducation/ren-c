@@ -535,19 +535,20 @@ compare:
 	return R_ARG1;
 }
 
+
 /***********************************************************************
 **
 */	REBNATIVE(negativeq)
 /*
 ***********************************************************************/
 {
-	REBVAL *val = &DS_Base[++DSP];
+	REBVAL zero;
+	VAL_SET_ZEROED(&zero, VAL_TYPE(D_ARG(1)));
 
-	VAL_SET_ZEROED(val, VAL_TYPE(D_ARG(1)));
-
-	if (Compare_Modify_Values(D_ARG(1), D_ARG(2), -1)) return R_FALSE;
+	if (Compare_Modify_Values(D_ARG(1), &zero, -1)) return R_FALSE;
 	return R_TRUE;
 }
+
 
 /***********************************************************************
 **
@@ -555,13 +556,14 @@ compare:
 /*
 ***********************************************************************/
 {
-	REBVAL *val = &DS_Base[++DSP];
+	REBVAL zero;
+	VAL_SET_ZEROED(&zero, VAL_TYPE(D_ARG(1)));
 
-	VAL_SET_ZEROED(val, VAL_TYPE(D_ARG(1)));
+	if (Compare_Modify_Values(D_ARG(1), &zero, -2)) return R_TRUE;
 
-	if (Compare_Modify_Values(D_ARG(1), D_ARG(2), -2)) return R_TRUE;
 	return R_FALSE;
 }
+
 
 /***********************************************************************
 **
@@ -572,11 +574,10 @@ compare:
 	REBCNT type = VAL_TYPE(D_ARG(1));
 
 	if (type >= REB_INTEGER && type <= REB_TIME) {
-		REBVAL *val = &DS_Base[++DSP];
-		
-		VAL_SET_ZEROED(val, type);
+		REBVAL zero;
+		VAL_SET_ZEROED(&zero, type);
 
-		if (Compare_Modify_Values(D_ARG(1), D_ARG(2), 1)) return R_TRUE;
+		if (Compare_Modify_Values(D_ARG(1), &zero, 1)) return R_TRUE;
 	}
 	return R_FALSE;
 }
