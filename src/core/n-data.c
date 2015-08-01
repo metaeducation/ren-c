@@ -620,9 +620,13 @@ static int Do_Ordinal(struct Reb_Call *call_, REBINT n)
 {
 	// Is only valid when returned from ACTION function itself.
 	REBACT action = Value_Dispatch[VAL_TYPE(D_ARG(1))];
+	REB_R ret;
+
 	DS_PUSH_INTEGER(n);
-	//DSF_FUNC(ds) // needs to be set to PICK action!
-	return action(call_, A_PICK);  // returns R_OUT and other cases
+	ret = action(call_, A_PICK);  // returns R_OUT and other cases
+	DS_DROP;
+
+	return ret;
 }
 
 /***********************************************************************
@@ -734,6 +738,7 @@ static int Do_Ordinal(struct Reb_Call *call_, REBINT n)
 	REBVAL *val = D_ARG(1);
 	REBACT action;
 	REBCNT t;
+	REB_R ret;
 
 	action = Value_Dispatch[VAL_TYPE(val)];
 	if (ANY_SERIES(val)) {
@@ -746,8 +751,12 @@ static int Do_Ordinal(struct Reb_Call *call_, REBINT n)
 		VAL_GOB_INDEX(val) = 0;
 	}
 	else t = 0; // let the action throw the error
+
 	DS_PUSH_INTEGER(t);
-	return action(call_, A_PICK);
+	ret = action(call_, A_PICK);
+	DS_DROP;
+
+	return ret;
 }
 
 
