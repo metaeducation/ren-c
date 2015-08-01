@@ -129,6 +129,8 @@
 	if (len <= 4) Trap_DEAD_END(RE_PAST_END); // !!! better msg needed
 	size = Bytes_To_REBCNT(data + len - sizeof(REBCNT));
 
+	// NOTE: You can hit this if you 'make prep' without doing a full rebuild
+	// (If you 'make clean' and build again and this goes away, it was that)
 	if (limit && size > limit) Trap_Num(RE_SIZE_LIMIT, size);
 
 	output = Make_Binary(size);
