@@ -742,6 +742,7 @@ return_index:
 {
 #if !defined(NDEBUG)
 	REBINT dsp_orig = DSP;
+	REBINT dsp_precall;
 #endif
 
 	REBVAL *value;
@@ -852,6 +853,10 @@ return_index:
 			// need to pay attention to it here.
 			SET_TRASH_SAFE(out);
 
+		#if !defined(NDEBUG)
+			dsp_precall = DSP;
+		#endif
+
 			// The arguments were successfully acquired, so we set the
 			// the DSF to our constructed 'dsf' during the Push_Func...then
 			// call the function...then put the DSF back to the call level
@@ -860,6 +865,14 @@ return_index:
 			SET_DSF(dsf);
 			if (Trace_Flags) Trace_Func(label, value);
 			Func_Dispatch[VAL_TYPE(value) - REB_NATIVE](value);
+
+		#if !defined(NDEBUG)
+			assert(DSP >= dsp_precall);
+			if (DSP > dsp_precall) {
+				PROBE_MSG(DSF_WHERE(dsf), "UNBALANCED STACK TRAP!!!");
+				Panic(RP_MISC);
+			}
+		#endif
 
 			SET_DSF(PRIOR_DSF(dsf));
 		}
@@ -1007,6 +1020,7 @@ return_index:
 	}
 
 	assert(DSP == dsp_orig);
+	assert(!IS_TRASH(out));
 	return index;
 }
 
