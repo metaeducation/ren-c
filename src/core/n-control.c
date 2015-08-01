@@ -482,17 +482,32 @@ got_err:
 */	REBNATIVE(compose)
 /*
 **		{Evaluates a block of expressions, only evaluating parens, and returns a block.}
-**		value "Block to compose"
-**		/deep "Compose nested blocks"
-**		/only "Inserts a block value as a block"
+**		1: value "Block to compose"
+**		2: /deep "Compose nested blocks"
+**		3: /only "Inserts a block value as a block"
+**		4: /into "Output results into a block with no intermediate storage"
+**		5: target
+**
+**		!!! Should 'compose quote (a (1 + 2) b)' give back '(a 3 b)' ?
+**		!!! What about 'compose quote a/(1 + 2)/b' ?
 **
 ***********************************************************************/
 {
 	REBVAL *value = D_ARG(1);
+	REBOOL into = D_REF(4);
 
+	Stack_Depth();
+
+	// Only composes BLOCK!, all other arguments evaluate to themselves
 	if (!IS_BLOCK(value)) return R_ARG1;
-	Compose_Block(value, D_REF(2), D_REF(3), D_REF(4) ? D_ARG(5) : 0);
-	DS_POP_INTO(D_OUT);
+
+	// Compose expects out to contain the target if /INTO
+	if (into) *D_OUT = *D_ARG(5);
+
+	Compose_Block(D_OUT, value, D_REF(2), D_REF(3), into);
+
+	Stack_Depth();
+
 	return R_OUT;
 }
 
@@ -674,16 +689,20 @@ got_err:
 	if (IS_BLOCK(D_ARG(1))) {
 		REBSER *ser = VAL_SERIES(D_ARG(1));
 		REBCNT index = VAL_INDEX(D_ARG(1));
-		REBVAL *val = D_REF(5) ? D_ARG(6) : 0;
+		REBOOL into = D_REF(5);
+
+		if (into)
+			*D_OUT = *D_ARG(6);
 
 		if (D_REF(2))
-			Reduce_Block_No_Set(ser, index, val);
+			Reduce_Block_No_Set(D_OUT, ser, index, into);
 		else if (D_REF(3))
-			Reduce_Only(ser, index, D_ARG(4), val);
+			Reduce_Only(D_OUT, ser, index, D_ARG(4), into);
 		else
-			Reduce_Block(ser, index, val);
+			Reduce_Block(D_OUT, ser, index, into);
 
-		DS_POP_INTO(D_OUT);
+		Stack_Depth();
+
 		return R_OUT;
 	}
 

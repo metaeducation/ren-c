@@ -1074,80 +1074,46 @@ return_index:
 
 /***********************************************************************
 **
-*/	void Reduce_Block(REBSER *block, REBCNT index, REBVAL *into)
+*/	void Reduce_Block(REBVAL *out, REBSER *block, REBCNT index, REBOOL into)
 /*
 **		Reduce block from the index position specified in the value.
 **		Collect all values from stack and make them a block.
 **
 ***********************************************************************/
 {
-	REBCNT len = 0;
-	REBSER *ser = NULL;
-	REBVAL blk;
-	enum REBOL_Types type;
-
-	if (into != NULL) {
-		ser = VAL_SERIES(into);
-		type = VAL_TYPE(into);
-		len = VAL_INDEX(into) + SERIES_LEN(block) - index;
-	} else {
-		ser = Make_Block(SERIES_TAIL(block) - index);
-		if (ser == NULL)
-			Panic(RE_NO_MEMORY);
-		type = REB_BLOCK;
-		len = 0;
-	}
-
-	VAL_SET(&blk, type);
-	VAL_SERIES(&blk) = ser;
-	VAL_INDEX(&blk) = len;
-	DS_PUSH(&blk); //push here avoid the blk being GC'ed later
+	REBINT dsp_orig = DSP;
 
 	while (index < BLK_LEN(block)) {
-		REBVAL out;
-		index = Do_Next(&out, block, index, 0);
-		DS_PUSH(&out);
-		if (THROWN(DS_TOP)) return;
-		Append_Value(ser, DS_TOP);
-		DS_DROP;
+		REBVAL reduced;
+		index = Do_Next(&reduced, block, index, FALSE);
+		if (THROWN(&reduced)) {
+			*out = reduced;
+			DSP = dsp_orig;
+			goto finished;
+		}
+		DS_PUSH(&reduced);
 	}
+
+	Pop_Stack_Values(out, dsp_orig, into);
+
+finished:
+	assert(DSP == dsp_orig);
 }
 
 
 /***********************************************************************
 **
-*/	void Reduce_Only(REBSER *block, REBCNT index, REBVAL *words, REBVAL *into)
+*/	void Reduce_Only(REBVAL *out, REBSER *block, REBCNT index, REBVAL *words, REBOOL into)
 /*
 **		Reduce only words and paths not found in word list.
 **
 ***********************************************************************/
 {
-	REBINT start = DSP + 1;
+	REBINT dsp_orig = DSP;
 	REBVAL *val;
 	const REBVAL *v;
 	REBSER *ser = 0;
 	REBCNT idx = 0;
-
-	REBCNT len = 0;
-	REBSER *dest_ser = NULL;
-	REBVAL blk;
-	enum REBOL_Types type;
-
-	if (into != NULL) {
-		dest_ser = VAL_SERIES(into);
-		type = VAL_TYPE(into);
-		len = VAL_INDEX(into) + SERIES_LEN(block) - index;
-	} else {
-		dest_ser = Make_Block(SERIES_LEN(block) - index);
-		if (dest_ser == NULL) Panic(RE_NO_MEMORY);
-		type = REB_BLOCK;
-		len = 0;
-	}
-
-	VAL_SET(&blk, type);
-	VAL_SERIES(&blk) = dest_ser;
-	VAL_INDEX(&blk) = len;
-	DS_PUSH(&blk); //push here avoid the blk being GC'ed later
 
 	if (IS_BLOCK(words)) {
 		ser = VAL_SERIES(words);
@@ -1158,78 +1124,72 @@ return_index:
 		if (IS_WORD(val)) {
 			// Check for keyword:
 			if (ser && NOT_FOUND != Find_Word(ser, idx, VAL_WORD_CANON(val))) {
-				Append_Value(dest_ser, val);
+				DS_PUSH(val);
 				continue;
 			}
 			v = GET_VAR(val);
-			Append_Value(dest_ser, v);
+			DS_PUSH(v);
 		}
 		else if (IS_PATH(val)) {
 			const REBVAL *v;
+
 			if (ser) {
 				// Check for keyword/path:
 				v = VAL_BLK_DATA(val);
 				if (IS_WORD(v)) {
 					if (NOT_FOUND != Find_Word(ser, idx, VAL_WORD_CANON(v))) {
-						Append_Value(dest_ser, val);
+						DS_PUSH(val);
 						continue;
 					}
 				}
 			}
+
 			v = val;
-			Do_Path(&v, 0); // pushes val on stack
-			Append_Value(dest_ser, DS_TOP);
-			DS_DROP;
+
+			// pushes val on stack
+			Do_Path(&v, NULL);
 		}
-		else Append_Value(dest_ser, val);
+		else DS_PUSH(val);
 		// No need to check for unwinds (THROWN) here, because unwinds should
 		// never be accessible via words or paths.
 	}
+
+	Pop_Stack_Values(out, dsp_orig, into);
+
+	assert(DSP == dsp_orig);
 }
 
 
 /***********************************************************************
 **
-*/	void Reduce_Block_No_Set(REBSER *block, REBCNT index, REBVAL *into)
+*/	void Reduce_Block_No_Set(REBVAL *out, REBSER *block, REBCNT index, REBOOL into)
 /*
 ***********************************************************************/
 {
-	REBCNT len = 0;
-	REBSER *ser = NULL;
-	REBVAL blk;
-	REBVAL *val = NULL;
-	enum REBOL_Types type;
-
-	if (into != NULL) {
-		ser = VAL_SERIES(into);
-		type = VAL_TYPE(into);
-		len = VAL_INDEX(into) + SERIES_LEN(block) - index;
-	} else {
-		ser = Make_Block(SERIES_LEN(block) - index);
-		if (ser == NULL) Panic(RE_NO_MEMORY);
-		type = REB_BLOCK;
-		len = 0;
-	}
-
-	VAL_SET(&blk, type);
-	VAL_SERIES(&blk) = ser;
-	VAL_INDEX(&blk) = len;
-	DS_PUSH(&blk); //push here avoid the blk being GC'ed later
+	REBINT dsp_orig = DSP;
 
 	while (index < BLK_LEN(block)) {
-		REBVAL out;
-		if (IS_SET_WORD(val = BLK_SKIP(block, index))) {
-			DS_PUSH(val);
+		REBVAL *value = BLK_SKIP(block, index);
+		if (IS_SET_WORD(value)) {
+			DS_PUSH(value);
 			index++;
-		} else {
-			index = Do_Next(&out, block, index, 0);
-			DS_PUSH(&out);
 		}
-		if (THROWN(DS_TOP)) return;
-		Append_Value(ser, DS_TOP);
-		DS_DROP;
+		else {
+			REBVAL reduced;
+			index = Do_Next(&reduced, block, index, FALSE);
+			if (THROWN(&reduced)) {
+				*out = reduced;
+				DSP = dsp_orig;
+				goto finished;
+			}
+			DS_PUSH(&reduced);
+		}
 	}
 
+	Pop_Stack_Values(out, dsp_orig, into);
+
+finished:
+	assert(DSP == dsp_orig);
 }
 
 
@@ -1302,87 +1262,77 @@ return_index:
 
 /***********************************************************************
 **
-*/	void Compose_Block(REBVAL *block, REBFLG deep, REBFLG only, REBVAL *into)
+*/	void Compose_Block(REBVAL *out, REBVAL *block, REBFLG deep, REBFLG only, REBOOL into)
 /*
 **		Compose a block from a block of un-evaluated values and
-**		paren blocks that are evaluated. Stack holds temp values,
-**		which also protects them from GC along the way.
+**		paren blocks that are evaluated.  Performs evaluations, so
+**		if 'into' is provided, then its series must be protected from
+**		garbage collection.
 **
 **			deep - recurse into sub-blocks
 **			only - parens that return blocks are kept as blocks
 **
-**		Returns result as a block on top of stack.
+**		Writes result value at address pointed to by out.
 **
 ***********************************************************************/
 {
 	REBVAL *value;
-	REBINT start = DSP + 1;
-	REBCNT len = 0;
-	REBINT needs_free = 0;
-	REBSER *ser = NULL;
-	REBVAL blk;
-	enum REBOL_Types type;
-
-	if (into != NULL) {
-		ser = VAL_SERIES(into);
-		type = VAL_TYPE(into);
-		len = VAL_INDEX(into) + VAL_BLK_LEN(block);
-	} else {
-		ser = Make_Block(VAL_BLK_LEN(block));
-		if (ser == NULL) Panic(RE_NO_MEMORY);
-		type = REB_BLOCK;
-		len = 0;
-		needs_free = 1;
-	}
-
-	VAL_SET(&blk, type);
-	VAL_SERIES(&blk) = ser;
-	VAL_INDEX(&blk) = len;
-	DS_PUSH(&blk); //push here avoid the blk being GC'ed later
+	REBINT dsp_orig = DSP;
 
 	for (value = VAL_BLK_DATA(block); NOT_END(value); value++) {
 		if (IS_PAREN(value)) {
-			// Eval the paren (result will be on stack)
-			DS_PUSH_TRASH;
-			DO_BLK(DS_TOP, value);
+			REBVAL evaluated;
+			DO_BLK(&evaluated, value);
 
-			if (THROWN(DS_TOP)) {
-				if (needs_free) Free_Series(ser);
-				return;
+			if (THROWN(&evaluated)) {
+				// throw, return, break, continue...
+				*out = evaluated;
+				DSP = dsp_orig;
+				goto finished;
 			}
 
-			// If result is a block, and not /only, insert its contents:
-			if (IS_BLOCK(DS_TOP) && !only) {
-				Append_Series(
-					ser,
-					cast(REBYTE*, VAL_BLK_DATA(DS_TOP)),
-					VAL_BLK_LEN(DS_TOP)
+			if (IS_BLOCK(&evaluated) && !only) {
+				// compose [blocks ([a b c]) merge] => [blocks a b c merge]
+				Push_Stack_Values(
+					cast(REBVAL*, VAL_BLK_DATA(&evaluated)),
+					VAL_BLK_LEN(&evaluated)
 				);
 			}
-			else if (!IS_UNSET(DS_TOP)) { // Only append result if not unset
-				Append_Value(ser, DS_TOP);
+			else if (!IS_UNSET(&evaluated)) {
+				// compose [(1 + 2) inserts as-is] => [3 inserts as-is]
+				// compose/only [([a b c]) unmerged] => [[a b c] unmerged]
+				DS_PUSH(&evaluated);
 			}
-
-			DS_DROP;
+			else {
+				// compose [(print "Unsets *vanish*!")] => []
+			}
 		}
 		else if (deep) {
 			if (IS_BLOCK(value)) {
-				Compose_Block(value, TRUE, only, 0);
-				Append_Value(ser, DS_TOP);
-				DS_DROP;
+				// compose/deep [does [(1 + 2)] nested] => [does [3] nested]
+				REBVAL composed;
+				Compose_Block(&composed, value, TRUE, only, into);
+				DS_PUSH(&composed);
 			}
 			else {
-				REBVAL tmp = *value;
-				if (ANY_BLOCK(value)) // Include PATHS
-					VAL_SERIES(&tmp) = Copy_Block(VAL_SERIES(value), 0);
-				Append_Value(ser, &tmp);
+				DS_PUSH(value);
+				if (ANY_BLOCK(value)) {
+					// compose [copy/(orig) (copy)] => [copy/(orig) (copy)]
+					// !!! path and second paren are copies, first paren isn't
+					VAL_SERIES(DS_TOP) = Copy_Block(VAL_SERIES(value), 0);
+				}
 			}
 		}
 		else {
-			Append_Value(ser, value);
+			// compose [[(1 + 2)] (reverse "wollahs")] => [[(1 + 2)] "shallow"]
+			DS_PUSH(value);
 		}
 	}
 
+	Pop_Stack_Values(out, dsp_orig, into);
+
+finished:
+	assert(DSP == dsp_orig);
 }
 
 
@@ -1694,20 +1644,6 @@ return_balanced:
 		}
 	}
 	DS_DROP; // temp
-}
-
-
-/***********************************************************************
-**
-*/	void Reduce_Bind_Block(REBSER *frame, REBVAL *block, REBCNT binding)
-/*
-**		Bind deep and reduce a block value in a given context.
-**		Result is left on top of data stack (may be an error).
-**
-***********************************************************************/
-{
-	Bind_Block(frame, VAL_BLK_DATA(block), binding);
-	Reduce_Block(VAL_SERIES(block), VAL_INDEX(block), 0);
 }
 
 

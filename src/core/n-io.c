@@ -113,8 +113,12 @@
 {
 	REBVAL *value = D_ARG(1);
 
-	if (IS_BLOCK(value)) Reduce_Block(VAL_SERIES(value), VAL_INDEX(value), 0);
-	Print_Value(DS_TOP, 0, 0);
+	if (IS_BLOCK(value))
+		Reduce_Block(value, VAL_SERIES(value), VAL_INDEX(value), FALSE);
+
+	// value is safe from GC due to being in arg slot
+	Print_Value(value, 0, 0);
+
 	return R_UNSET;
 }
 
@@ -127,9 +131,13 @@
 {
 	REBVAL *value = D_ARG(1);
 
-	if (IS_BLOCK(value)) Reduce_Block(VAL_SERIES(value), VAL_INDEX(value), 0);
-	Prin_Value(DS_TOP, 0, 0);
-	return R_UNSET; // reloads ds
+	if (IS_BLOCK(value))
+		Reduce_Block(value, VAL_SERIES(value), VAL_INDEX(value), FALSE);
+
+	// value is safe from GC due to being in arg slot
+	Prin_Value(value, 0, 0);
+
+	return R_UNSET;
 }
 
 
@@ -250,8 +258,9 @@
 	SET_NONE(D_OUT);
 
 	if (IS_BLOCK(val)) {
-		Reduce_Block(VAL_SERIES(val), VAL_INDEX(val), 0);
-		ports = VAL_SERIES(DS_TOP);
+		REBVAL unsafe; // temporary not safe from GC
+		Reduce_Block(&unsafe, VAL_SERIES(val), VAL_INDEX(val), FALSE);
+		ports = VAL_SERIES(&unsafe);
 		for (val = BLK_HEAD(ports); NOT_END(val); val++) { // find timeout
 			if (Pending_Port(val)) n++;
 			if (IS_INTEGER(val) || IS_DECIMAL(val)) break;

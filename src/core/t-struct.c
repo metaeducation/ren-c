@@ -681,19 +681,18 @@ static REBOOL parse_field_type(struct Struct_Field *field, REBVAL *spec, REBVAL 
 			EXPAND_SERIES_TAIL(VAL_STRUCT_DATA_BIN(out), step);
 
 			if (expect_init) {
+				DS_PUSH_TRASH; // slot for result of reduce or do (GC safe)
+				init = DS_TOP;
+
 				if (IS_BLOCK(blk)) {
-					Reduce_Block(VAL_SERIES(blk), 0, NULL);
-					init = DS_TOP; // Reduce_Block saves result on stack
+					Reduce_Block(init, VAL_SERIES(blk), 0, FALSE);
 					++ blk;
 				} else {
-					REBVAL out;
-					eval_idx = blk - VAL_BLK_DATA(data);
-
-					eval_idx = Do_Next(&out, VAL_SERIES(data), eval_idx, 0);
-					DS_PUSH(&out); // Save result on stack to match Reduce
+					eval_idx = Do_Next(
+						init, VAL_SERIES(data), blk - VAL_BLK_DATA(data), 0
+					);
 
 					blk = VAL_BLK_SKIP(data, eval_idx);
-					init = DS_TOP;
 				}
 
 				if (field->array) {

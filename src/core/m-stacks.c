@@ -43,6 +43,63 @@
 }
 
 
+/***********************************************************************
+**
+*/	void Push_Stack_Values(const REBVAL *values, REBINT length)
+/*
+**		Pushes sequential values from a series onto the stack all
+**		in one go.  All of this needs review in terms of whether
+**		things like COMPOSE should be using arbitrary stack pushes
+** 		in the first place or if it should not pile up the stack
+**		like this.
+**
+**		!!! Notably simple implementation, just hammering out the
+**		client interfaces that made sequential stack memory assumptions.
+**
+***********************************************************************/
+{
+	DS_TERMINATE; // !!! Unnecessary when DS_Series goes legit...
+	Insert_Series(
+		DS_Series, SERIES_TAIL(DS_Series), cast(const REBYTE*, values), length
+	);
+	DSP += length;
+}
+
+
+/***********************************************************************
+**
+*/	void Pop_Stack_Values(REBVAL *out, REBINT dsp_start, REBOOL into)
+/*
+**		Pop_Stack_Values computed values from the stack into the series
+**		specified by "into", or if into is NULL then store it as a
+**		block on top of the stack.  (Also checks to see if into
+**		is protected, and will trigger a trap if that is the case.)
+**
+**		Protocol for /INTO is to set the position to the tail.
+**
+***********************************************************************/
+{
+	REBSER *series;
+	REBCNT len = DSP - dsp_start;
+	REBVAL *values = BLK_SKIP(DS_Series, dsp_start + 1);
+
+	if (into) {
+		assert(ANY_BLOCK(out));
+		series = VAL_SERIES(out);
+		if (IS_PROTECT_SERIES(series)) Trap(RE_PROTECTED);
+		VAL_INDEX(out) = Insert_Series(
+			series, VAL_INDEX(out), cast(REBYTE*, values), len
+		);
+	}
+	else {
+		series = Copy_Values(values, len);
+		Set_Block(out, series);
+	}
+
+	DSP = dsp_start;
+}
+
+
 #ifdef STRESS
 
 /***********************************************************************

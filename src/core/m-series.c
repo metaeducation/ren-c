@@ -193,7 +193,7 @@
 
 /***********************************************************************
 **
-*/	REBCNT Insert_Series(REBSER *series, REBCNT index, REBYTE *data, REBCNT len)
+*/	REBCNT Insert_Series(REBSER *series, REBCNT index, const REBYTE *data, REBCNT len)
 /*
 **		Insert a series of values (bytes, longs, reb-vals) into the
 **		series at the given index.  Expand it if necessary.  Does
