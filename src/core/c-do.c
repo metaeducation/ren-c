@@ -1697,6 +1697,7 @@ return_balanced:
 	REBCNT inew;		// index position in target frame
 	REBVAL *word;
 	REBVAL *word2;
+	REBINT dsp_orig = DSP;
 
 	//!!! NEEDS to check stack for overflow
 	//!!! Should check datatypes for new arg passing!
@@ -1751,6 +1752,10 @@ push_arg:
 	VAL_WORD_FRAME(DSF_LABEL(DSF)) = VAL_FUNC_ARGS(func_val);
 	*DSF_FUNC(DSF) = *func_val;
 	Func_Dispatch[VAL_TYPE(func_val)-REB_NATIVE](func_val);
+
+	// !!! Temporary; there's a better rewrite of this functionality
+	// This is just needed for stack balancing for now.
+	DSP = dsp_orig;
 }
 
 
