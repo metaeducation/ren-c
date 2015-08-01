@@ -1388,7 +1388,7 @@ return_index:
 
 /***********************************************************************
 **
-*/	void Apply_Block(REBVAL *func, REBVAL *args, REBFLG reduce)
+*/	void Apply_Block(REBVAL *out, const REBVAL *func, REBVAL *args, REBFLG reduce)
 /*
 **		Result is on top of stack.
 **
@@ -1404,13 +1404,12 @@ return_index:
 	REBINT n;
 	REBINT start;
 	REBVAL *val;
-	REBVAL out;
 
 	if (index > SERIES_TAIL(block)) index = SERIES_TAIL(block);
 
 	// Push function frame:
-	SET_TRASH_SAFE(&out);
-	dsf = Push_Func(&out, block, index, NULL, func);
+	SET_TRASH_SAFE(out);
+	dsf = Push_Func(out, block, index, NULL, func);
 	func = DSF_FUNC(dsf); // for safety
 
 	// Determine total number of args:
@@ -1423,9 +1422,12 @@ return_index:
 		// Reduce block contents to stack:
 		n = 0;
 		while (index < BLK_LEN(block)) {
-			index = Do_Next(&out, block, index, 0);
-			DS_PUSH(&out);
-			if (THROWN(DS_TOP)) return;
+			DS_PUSH_TRASH;
+			index = Do_Next(DS_TOP, block, index, 0);
+			if (THROWN(DS_TOP)) {
+				*out = *DS_TOP;
+				goto return_balanced;
+			}
 			n++;
 		}
 		if (n > len) DSP = start + len;
@@ -1470,13 +1472,13 @@ return_index:
 	}
 
 	// Evaluate the function:
+	SET_TRASH_SAFE(out);
 	SET_DSF(dsf);
 	Func_Dispatch[ftype](func);
-	DSP = dsf;
 	SET_DSF(PRIOR_DSF(dsf));
 
-	// !!! Still pushing result for the moment...one step at a time.
-	DS_PUSH(&out);
+return_balanced:
+	DSP = dsf; // put data stack back where it was when we were called
 }
 
 

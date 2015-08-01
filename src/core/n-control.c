@@ -294,8 +294,7 @@ enum {
 /*
 ***********************************************************************/
 {
-	Apply_Block(D_ARG(1), D_ARG(2), !D_REF(3));
-	DS_POP_INTO(D_OUT);
+	Apply_Block(D_OUT, D_ARG(1), D_ARG(2), !D_REF(3));
 	return R_OUT;
 }
 
