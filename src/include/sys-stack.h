@@ -88,7 +88,7 @@
 #define PRIOR_DSF(d) \
 	VAL_INT32(&DS_Base[(d) + 2])
 
-#define DSF_POSITION(d) (&DS_Base[(d) + 3])	// block and index of execution
+#define DSF_WHERE(d)	(&DS_Base[(d) + 3])	// block and index of execution
 #define DSF_LABEL(d)	(&DS_Base[(d) + 4])	// func word backtrace
 #define DSF_FUNC(d)		(&DS_Base[(d) + 5])	// function value saved
 #define DSF_RETURN(d)	coming@soon			// return func linked to this call

@@ -67,8 +67,8 @@
 	if (DS_Frame_Index != -1) {
 		assert(PRIOR_DSF(DS_Frame_Index) < DS_Frame_Index);
 		assert(ANY_FUNC(DSF_FUNC(DS_Frame_Index)));
-		assert(ANY_BLOCK(DSF_POSITION(DS_Frame_Index)));
-		ASSERT_BLK(VAL_SERIES(DSF_POSITION(DS_Frame_Index)));
+		assert(ANY_BLOCK(DSF_WHERE(DS_Frame_Index)));
+		ASSERT_BLK(VAL_SERIES(DSF_WHERE(DS_Frame_Index)));
 	}
 
 	return &DS_Frame_Index;

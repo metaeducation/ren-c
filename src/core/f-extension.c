@@ -216,8 +216,8 @@ x*/	int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result)
 	Init_Word_Unbound(&label, REB_WORD, name);
 	dsf = Push_Func(
 		&out,
-		VAL_SERIES(DSF_POSITION(dsf)),
-		VAL_INDEX(DSF_POSITION(dsf)),
+		VAL_SERIES(DSF_WHERE(dsf)),
+		VAL_INDEX(DSF_WHERE(dsf)),
 		&label,
 		val
 	);

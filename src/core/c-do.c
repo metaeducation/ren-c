@@ -310,7 +310,7 @@ void Trace_Arg(REBINT num, REBVAL *arg, REBVAL *path)
 	VAL_SET(DS_TOP, REB_BLOCK);
 	VAL_SERIES(DS_TOP) = block;
 	VAL_INDEX(DS_TOP) = index;
-	assert(IS_BLOCK(DSF_POSITION(dsf)));
+	assert(IS_BLOCK(DSF_WHERE(dsf)));
 
 	// Save symbol describing the function (if we called this as the result of
 	// a word or path lookup)
@@ -1510,8 +1510,8 @@ return_index:
 		// Some function is on the stack, so fabricate our execution
 		// position by copying the block and position it was at.
 
-		wblk = VAL_SERIES(DSF_POSITION(DSF));
-		widx = VAL_INDEX(DSF_POSITION(DSF));
+		wblk = VAL_SERIES(DSF_WHERE(DSF));
+		widx = VAL_INDEX(DSF_WHERE(DSF));
 	}
 	else if (IS_FUNCTION(func) || IS_CLOSURE(func)) {
 		// Stack is empty, so offer up the body of the function itself

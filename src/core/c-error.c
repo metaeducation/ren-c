@@ -637,7 +637,7 @@
 		// Where (what function) is the error:
 		Set_Block(&error->where, Make_Backtrace(0));
 		// Nearby location of the error (in block being evaluated):
-		error->nearest = *DSF_POSITION(DSF);
+		error->nearest = *DSF_WHERE(DSF);
 	}
 
 	return err;
