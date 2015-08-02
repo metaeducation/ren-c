@@ -139,6 +139,17 @@
 #define TRUE (!0)
 #endif
 
+// Creating a VOID value conveniently is useful for a few reasons.  One is
+// that it can serve as a NO-OP and suppress a compiler warning you might
+// get if you try to use just ';' to do it.  Another is that there is a
+// difference between C and C++ in parenthesized expressions, where
+// '(foo(), bar())' will return the result of bar in C++ but not in C.
+// So such a macro could be written as '(foo(), bar(), VOID)' to avoid
+// leaking the result.
+
+#define VOID cast(void, 0)
+
+
 /***********************************************************************
 **
 **  C-Code Types
