@@ -1298,7 +1298,7 @@
 	REBINT dsf;
 	REBSER *frm;
 
-	if (THROWN(value)) return;
+	assert(!THROWN(value));
 
 	if (!HAS_FRAME(word)) Trap1(RE_NOT_DEFINED, word);
 

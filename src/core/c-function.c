@@ -402,10 +402,9 @@
 
 	Eval_Functions++;
 
-	Do_Blk(out, VAL_FUNC_BODY(func), 0);
-
-	if (IS_ERROR(out) && VAL_ERR_NUM(out) == RE_RETURN) {
-		TAKE_THROWN_ARG(out, out);
+	if (!DO_BLOCK(out, VAL_FUNC_BODY(func), 0)) {
+		if (VAL_ERR_NUM(out) == RE_RETURN)
+			TAKE_THROWN_ARG(out, out);
 	}
 }
 
@@ -441,12 +440,11 @@
 	Rebind_Block(VAL_FUNC_ARGS(func), frame, BLK_HEAD(body), REBIND_TYPE);
 
 	SAVE_SERIES(body);
-	Do_Blk(out, body, 0);
-	UNSAVE_SERIES(body);
-
-	if (IS_ERROR(out) && VAL_ERR_NUM(out) == RE_RETURN) {
-		TAKE_THROWN_ARG(out, out);
+	if (!DO_BLOCK(out, body, 0)) {
+		if (VAL_ERR_NUM(out) == RE_RETURN)
+			TAKE_THROWN_ARG(out, out);
 	}
+	UNSAVE_SERIES(body);
 }
 
 /***********************************************************************

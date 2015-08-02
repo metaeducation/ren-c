@@ -371,7 +371,7 @@ void Trace_Arg(REBINT num, const REBVAL *arg, const REBVAL *path)
 	// object/(expr) case:
 	else if (IS_PAREN(path)) {
 		// ?? GC protect stuff !!!!!! stack could expand!
-		Do_Blk(&temp, VAL_SERIES(path), 0);
+		DO_BLOCK(&temp, VAL_SERIES(path), 0);
 		pvs->select = &temp;
 	}
 	else // object/word and object/value case:
@@ -592,8 +592,8 @@ void Trace_Arg(REBINT num, const REBVAL *arg, const REBVAL *path)
 		switch (VAL_TYPE(args)) {
 
 		case REB_WORD:		// WORD - Evaluate next value
-			index = Do_Next(out, block, index, IS_OP(func));
-			if (THROWN(out)) goto return_index;
+			index = Do_Core(out, TRUE, block, index, IS_OP(func));
+			if (index == THROWN_FLAG) goto return_index;
 			if (index == END_FLAG) Trap2_DEAD_END(RE_NO_ARG, DSF_LABEL(dsf), args);
 			DS_Base[ds] = *out;
 			break;
@@ -602,8 +602,13 @@ void Trace_Arg(REBINT num, const REBVAL *arg, const REBVAL *path)
 			if (index < BLK_LEN(block)) {
 				value = BLK_SKIP(block, index);
 				if (IS_PAREN(value) || IS_GET_WORD(value) || IS_GET_PATH(value)) {
-					index = Do_Next(out, block, index, IS_OP(func));
-					if (THROWN(out)) goto return_index;
+					index = Do_Core(out, TRUE, block, index, IS_OP(func));
+					if (index == THROWN_FLAG) goto return_index;
+					if (index == END_FLAG) {
+						// end of block "trick" quotes as an UNSET! (still
+						// type checked to see if the parameter accepts it)
+						assert(IS_UNSET(out));
+					}
 					DS_Base[ds] = *out;
 				}
 				else {
@@ -727,7 +732,7 @@ return_index:
 
 /***********************************************************************
 **
-*/	REBCNT Do_Next(REBVAL *out, REBSER *block, REBCNT index, REBFLG op)
+*/	REBCNT Do_Core(REBVAL *out, REBOOL next, REBSER *block, REBCNT index, REBFLG op)
 /*
 **		Evaluate the code block until we have:
 **			1. An irreducible value (return next index)
@@ -743,6 +748,9 @@ return_index:
 #if !defined(NDEBUG)
 	REBINT dsp_orig = DSP;
 	REBINT dsp_precall;
+
+	static int count_static = 0;
+	int count;
 #endif
 
 	REBVAL *value;
@@ -751,12 +759,17 @@ return_index:
 	// Functions don't have "names", though they can be assigned to words.
 	// If a function invokes via word lookup (vs. a literal FUNCTION! value),
 	// 'label' will be that WORD!, and NULL otherwise.
-	const REBVAL *label = NULL;
+	const REBVAL *label;
 
 	// Most of what this routine does can be done with value pointers and
 	// the data stack.  Some operations need a unit of additional storage.
 	// This is a one-REBVAL-sized cell for saving that data.
 	REBVAL save;
+
+do_value:
+	assert(index != END_FLAG && index != THROWN_FLAG);
+	SET_TRASH_SAFE(out);
+	label = NULL;
 
 #ifndef NDEBUG
 	// This counter is helpful for tracking a specific invocation.
@@ -764,18 +777,18 @@ return_index:
 	// and read the count...then put that here and recompile with
 	// a breakpoint set.  (The 'count_static' value is captured into a
 	// local 'count' so	you still get the right count after recursion.)
-
-	static int count_static = 0;
-	int count = ++count_static;
-	if (count == 0 /* don't commit your change! */) {
+	count = ++count_static;
+	if (count ==
+		// *** DON'T COMMIT THIS v-- KEEP IT AT ZERO! ***
+								  0
+		// *** DON'T COMMIT THIS --^ KEEP IT AT ZERO! ***
+	) {
 		VAL_SET(&save, REB_BLOCK);
 		VAL_SERIES(&save) = block;
 		VAL_INDEX(&save) = index;
-		PROBE_MSG(&save, "Do_Next count trap");
+		PROBE_MSG(&save, "Do_Core() count trap");
 	}
 #endif
-
-	SET_TRASH_SAFE(out);
 
 	//CHECK_MEMORY(1);
 	CHECK_C_STACK_OVERFLOW(&value);
@@ -812,10 +825,13 @@ return_index:
 		break;
 
 	case ET_SET_WORD:
-		index = Do_Next(out, block, index+1, 0);
-		// THROWN is handled in Set_Var.
-		if (index == END_FLAG || VAL_TYPE(out) <= REB_UNSET)
+		index = Do_Core(out, TRUE, block, index + 1, FALSE);
+
+		if (index == END_FLAG || VAL_TYPE(out) == REB_UNSET)
 			Trap1_DEAD_END(RE_NEED_VALUE, value);
+
+		if (index == THROWN_FLAG) goto return_index;
+
 		Set_Var(value, out);
 		break;
 
@@ -843,42 +859,48 @@ return_index:
 		value = DSF_FUNC(dsf);
 		assert(ANY_FUNC(value));
 
-		if (THROWN(out)) {
-			// If the result of the Do_Args was something like a RETURN or
-			// a BREAK, then nevermind the function we were going to call.
-			// Just bubble up that special "ERROR" value to the caller.
+		// if THROW, RETURN, BREAK, CONTINUE during Do_Args
+		if (index == THROWN_FLAG) {
+			// Free the pushed function call frame
+			DSP = dsf;
+			goto return_index;
 		}
-		else {
-			// If the last value Do_Args evaluated wasn't thrown, we don't
-			// need to pay attention to it here.
-			SET_TRASH_SAFE(out);
 
-		#if !defined(NDEBUG)
-			dsp_precall = DSP;
-		#endif
+		// If the last value Do_Args evaluated wasn't thrown, we don't
+		// need to pay attention to it here.
 
-			// The arguments were successfully acquired, so we set the
-			// the DSF to our constructed 'dsf' during the Push_Func...then
-			// call the function...then put the DSF back to the call level
-			// of whoever called us.
+		SET_TRASH_SAFE(out);
 
-			SET_DSF(dsf);
-			if (Trace_Flags) Trace_Func(label, value);
-			Func_Dispatch[VAL_TYPE(value) - REB_NATIVE](value);
+	#if !defined(NDEBUG)
+		dsp_precall = DSP;
+	#endif
 
-		#if !defined(NDEBUG)
-			assert(DSP >= dsp_precall);
-			if (DSP > dsp_precall) {
-				PROBE_MSG(DSF_WHERE(dsf), "UNBALANCED STACK TRAP!!!");
-				Panic(RP_MISC);
-			}
-		#endif
+		// The arguments were successfully acquired, so we set the
+		// the DSF to our constructed 'dsf' during the Push_Func...then
+		// call the function...then put the DSF back to the call level
+		// of whoever called us.
 
-			SET_DSF(PRIOR_DSF(dsf));
+		SET_DSF(dsf);
+		if (Trace_Flags) Trace_Func(label, value);
+		Func_Dispatch[VAL_TYPE(value) - REB_NATIVE](value);
+
+	#if !defined(NDEBUG)
+		assert(DSP >= dsp_precall);
+		if (DSP > dsp_precall) {
+			PROBE_MSG(DSF_WHERE(dsf), "UNBALANCED STACK TRAP!!!");
+			Panic(RP_MISC);
 		}
+	#endif
+
+		SET_DSF(PRIOR_DSF(dsf));
 
 		// Drop stack back to where the DSF_OUT(dsf) is now the Top of Stack
 		DSP = dsf;
+
+		if (THROWN(out)) {
+			index = THROWN_FLAG;
+			goto return_index;
+		}
 
 		// Function execution should have written *some* actual output value
 		// over the trash that we put in the return slot before the call.
@@ -916,7 +938,7 @@ return_index:
 		//index++; // now done below with +1
 
 		if (IS_SET_PATH(value)) {
-			index = Do_Next(out, block, index + 1, 0);
+			index = Do_Core(out, TRUE, block, index + 1, FALSE);
 			// THROWN is handled in Do_Path.
 			if (index == END_FLAG || VAL_TYPE(out) <= REB_UNSET)
 				Trap1_DEAD_END(RE_NEED_VALUE, label);
@@ -958,7 +980,10 @@ return_index:
 		break;
 
 	case ET_PAREN:
-		DO_BLK(out, value);
+		if (!DO_BLOCK(out, VAL_SERIES(value), 0)) {
+			index = THROWN_FLAG;
+			goto return_index;
+		}
 		index++;
 		break;
 
@@ -1019,70 +1044,18 @@ return_index:
 		}
 	}
 
+	// Should not have a THROWN value if we got here
+	assert(index != THROWN_FLAG && !THROWN(out));
+
+	// Continue evaluating rest of block if not just a DO/NEXT
+	if (index < BLK_LEN(block) && !next) goto do_value;
+
+return_index:
 	assert(DSP == dsp_orig);
 	assert(!IS_TRASH(out));
+	assert((index == THROWN_FLAG) == THROWN(out));
+	assert(index != END_FLAG || index >= BLK_LEN(block));
 	return index;
-}
-
-
-/***********************************************************************
-**
-*/	void Do_Blk(REBVAL *out, REBSER *block, REBCNT index)
-/*
-**		Evaluate a block from the index position specified.
-**		Result is on TOS.
-**
-***********************************************************************/
-{
-#if !defined(NDEBUG)
-	REBINT start = DSP;
-#endif
-
-	CHECK_MEMORY(4); // Be sure we don't go far with a problem.
-
-	// Default return value for a DO of an empty block is an UNSET!
-	SET_UNSET(out);
-
-	// CC#2229 - respond to Halt() in code like 'forever []'
-	if (--Eval_Count <= 0 || Eval_Signals) Do_Signals();
-
-	while (index < BLK_LEN(block)) {
-		index = Do_Next(out, block, index, 0);
-		if (THROWN(out)) break;
-	}
-
-	assert(DSP == start);
-}
-
-
-/***********************************************************************
-**
-*/	void Do_Block_Value_Throw(REBVAL *out, REBVAL *block)
-/*
-**		A common form of Do_Blk(). Takes block value. Handles throw.
-**		Result is on TOS.
-**
-***********************************************************************/
-{
-#if !defined(NDEBUG)
-	REBINT start = DSP;
-#endif
-
-	REBSER *series = VAL_SERIES(block);
-	REBCNT index = VAL_INDEX(block);
-
-	// Default return value for a DO of an empty block is an UNSET!
-	SET_UNSET(out);
-
-	// CC#2229 - respond to Halt() in code like 'forever []'
-	if (--Eval_Count <= 0 || Eval_Signals) Do_Signals();
-
-	while (index < BLK_LEN(series)) {
-		index = Do_Next(out, series, index, 0);
-		if (THROWN(out)) Throw(out, NULL);
-	}
-
-	assert(DSP == start);
 }
 
 
@@ -1099,8 +1072,8 @@ return_index:
 
 	while (index < BLK_LEN(block)) {
 		REBVAL reduced;
-		index = Do_Next(&reduced, block, index, FALSE);
-		if (THROWN(&reduced)) {
+		index = DO_NEXT(&reduced, block, index);
+		if (index == THROWN_FLAG) {
 			*out = reduced;
 			DSP = dsp_orig;
 			goto finished;
@@ -1190,8 +1163,8 @@ finished:
 		}
 		else {
 			REBVAL reduced;
-			index = Do_Next(&reduced, block, index, FALSE);
-			if (THROWN(&reduced)) {
+			index = DO_NEXT(&reduced, block, index);
+			if (index == THROWN_FLAG) {
 				*out = reduced;
 				DSP = dsp_orig;
 				goto finished;
@@ -1296,9 +1269,8 @@ finished:
 	for (value = VAL_BLK_DATA(block); NOT_END(value); value++) {
 		if (IS_PAREN(value)) {
 			REBVAL evaluated;
-			DO_BLK(&evaluated, value);
 
-			if (THROWN(&evaluated)) {
+			if (!DO_BLOCK(&evaluated, VAL_SERIES(value), 0)) {
 				// throw, return, break, continue...
 				*out = evaluated;
 				DSP = dsp_orig;
@@ -1387,8 +1359,8 @@ finished:
 		n = 0;
 		while (index < BLK_LEN(block)) {
 			DS_PUSH_TRASH;
-			index = Do_Next(DS_TOP, block, index, 0);
-			if (THROWN(DS_TOP)) {
+			index = DO_NEXT(DS_TOP, block, index);
+			if (index == THROWN_FLAG) {
 				*out = *DS_TOP;
 				goto return_balanced;
 			}

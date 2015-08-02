@@ -563,7 +563,7 @@
 		REBVAL ignored; // !!! Is the DO_BLK result meaningful?
 		DISABLE_GC;
 		Bind_Block(err, VAL_BLK_DATA(arg), BIND_DEEP);
-		DO_BLK(&ignored, arg); // GC-OK (disabled)
+		DO_BLOCK(&ignored, VAL_SERIES(arg), 0); // GC-OK (disabled)
 		ENABLE_GC;
 		if (IS_INTEGER(&error->code) && VAL_INT64(&error->code)) {
 			Set_Error_Type(error);

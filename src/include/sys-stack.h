@@ -73,7 +73,7 @@
 // "dropped" back to the point where the call was made, it is what is on
 // the top of the stack.  But in StableStack, this can be a pointer to any
 // address, as function calls can be told to write their output anywhere.
-// (and the REBVAL* parameter to the replacement for Do_Next is called "out"
+// (and the REBVAL* parameter to the replacement for Do_Core() is called "out"
 // so it makes sense in that way, too.)
 //
 // !!! Vis a vis, concordantly...DSF_RETURN is reserved for the definitionally

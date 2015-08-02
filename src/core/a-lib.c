@@ -427,15 +427,13 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 		Resolve_Context(user, Lib_Context, &vali, FALSE, 0);
 	}
 
-	Do_Blk(&out, code, 0);
-
-	UNSAVE_SERIES(code);
-
-	if (THROWN(&out)) {
-		assert(IS_ERROR(&out));
+	if (!DO_BLOCK(&out, code, 0)) {
+		UNSAVE_SERIES(code);
 		Throw(&out, NULL);
 		DEAD_END;
 	}
+
+	UNSAVE_SERIES(code);
 
 	DROP_CATCH_SAME_STACKLEVEL_AS_PUSH(&state);
 

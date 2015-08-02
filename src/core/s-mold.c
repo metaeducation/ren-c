@@ -1328,13 +1328,13 @@ append:
 
 	while (index < BLK_LEN(block)) {
 		REBVAL out;
-		index = Do_Next(&out, block, index, 0);
-		DS_PUSH(&out);
-		if (THROWN(DS_TOP)) {
-			*DS_VALUE(start) = *DS_TOP;
+		index = DO_NEXT(&out, block, index);
+		if (index == THROWN_FLAG) {
+			*DS_VALUE(start) = out;
 			DSP = start;
 			return NULL;
 		}
+		DS_PUSH(&out);
 	}
 
 	CLEARS(&mo);

@@ -138,7 +138,8 @@ static	BOOT_BLK *Boot_Block;
 	if (rebind < 0) Bind_Block(Sys_Context, BLK_HEAD(block), 0);
 	if (rebind > 0) Bind_Block(Lib_Context, BLK_HEAD(block), BIND_DEEP);
 	if (rebind > 1) Bind_Block(Sys_Context, BLK_HEAD(block), BIND_DEEP);
-	Do_Blk(&ignored, block, 0);
+
+	DO_BLOCK(&ignored, block, 0);
 }
 
 
@@ -349,7 +350,7 @@ static	BOOT_BLK *Boot_Block;
 	SET_OBJECT(D_OUT, Make_Object(0, VAL_BLK(spec)));
 	Bind_Block(VAL_OBJ_FRAME(D_OUT), VAL_BLK(spec), BIND_ONLY); // not deep
 
-	Do_Blk(&ignored, VAL_SERIES(spec), 0);
+	DO_BLOCK(&ignored, VAL_SERIES(spec), 0);
 
 	return R_OUT;
 }
@@ -597,7 +598,7 @@ static	BOOT_BLK *Boot_Block;
 	Bind_Block(frame, value, BIND_ONLY);  // No need to go deeper
 
 	// Evaluate the block (will eval FRAMEs within):
-	Do_Blk(&ignored, VAL_SERIES(&Boot_Block->sysobj), 0);
+	DO_BLOCK(&ignored, VAL_SERIES(&Boot_Block->sysobj), 0);
 
 	// Create a global value for it:
 	value = Append_Frame(Lib_Context, 0, SYM_SYSTEM);

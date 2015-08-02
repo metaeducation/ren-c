@@ -185,7 +185,7 @@ static const char *Dia_Fmt = "DELECT - cmd: %s length: %d missed: %d total: %d";
 
 	case REB_PAREN:
 		DS_PUSH_TRASH;
-		DO_BLK(DS_TOP, value);
+		DO_BLOCK(DS_TOP, VAL_SERIES(value), 0);
 		value = DS_TOP;
 		break;
 	}

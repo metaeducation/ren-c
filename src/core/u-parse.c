@@ -246,7 +246,10 @@ void Print_Parse_Index(REBCNT type, REBVAL *rules, REBSER *series, REBCNT index)
 
 	// Do an expression:
 	case REB_PAREN:
-		Do_Block_Value_Throw(&save, item); // might GC
+		// might GC
+		if (!DO_BLOCK(&save, VAL_SERIES(item), 0))
+			Throw(&save, NULL);
+
 		item = &save;
 		// old: if (IS_ERROR(item)) Throw_Error(VAL_ERR_OBJECT(item));
         index = MIN(index, series->tail); // may affect tail
@@ -314,7 +317,9 @@ void Print_Parse_Index(REBCNT type, REBVAL *rules, REBSER *series, REBCNT index)
 
 	// Do an expression:
 	case REB_PAREN:
-		Do_Block_Value_Throw(&save, item); // might GC
+		// might GC
+		if (!DO_BLOCK(&save, VAL_SERIES(item), 0))
+			Throw(&save, NULL);
 		item = &save;
 		// old: if (IS_ERROR(item)) Throw_Error(VAL_ERR_OBJECT(item));
         index = MIN(index, series->tail); // may affect tail
@@ -368,7 +373,9 @@ no_result:
 						item = ++blk; // next item is the quoted value
 						if (IS_END(item)) goto bad_target;
 						if (IS_PAREN(item)) {
-							Do_Block_Value_Throw(&save, item); // might GC
+							// might GC
+							if (!DO_BLOCK(&save, VAL_SERIES(item), 0))
+								Throw(&save, NULL);
 							item = &save;
 						}
 
@@ -467,14 +474,16 @@ next:		// Check for | (required if not end)
 found:
 	if (IS_PAREN(blk + 1)) {
 		REBVAL ignored; // !!! Ignore result?
-		Do_Block_Value_Throw(&ignored, blk + 1);
+		if (!DO_BLOCK(&ignored, VAL_SERIES(blk + 1), 0))
+			Throw(&ignored, NULL);
 	}
 	return index;
 
 found1:
 	if (IS_PAREN(blk + 1)) {
 		REBVAL ignored;	// !!! Ignore result?
-		Do_Block_Value_Throw(&ignored, blk + 1);
+		if (!DO_BLOCK(&ignored, VAL_SERIES(blk + 1), 0))
+			Throw(&ignored, NULL);
 	}
 	return index + (is_thru ? 1 : 0);
 
@@ -595,7 +604,7 @@ bad_target:
 	}
 
 	// Evaluate next N input values:
-	index = Do_Next(&out, parse->series, index, FALSE);
+	index = DO_NEXT(&out, parse->series, index);
 	DS_PUSH(&out);
 
 	// Value is on top of stack:
@@ -615,7 +624,9 @@ bad_target:
 			(*rule)++;
 			if (IS_END(item)) Trap1_DEAD_END(RE_PARSE_END, item-2);
 			if (IS_PAREN(item)) {
-				Do_Block_Value_Throw(&save, item); // might GC
+				// might GC
+				if (!DO_BLOCK(&save, VAL_SERIES(item), 0))
+					Throw(&save, NULL);
 				item = &save;
 			}
 		}
@@ -786,7 +797,11 @@ bad_target:
 							VAL_SET(&err, REB_ERROR);
 							VAL_ERR_NUM(&err) = RE_PARSE_RETURN;
 
-							Do_Block_Value_Throw(&arg, rules);
+							// If the paren evaluation result gives non-PARSE
+							// RETURN (or THROW, BREAK, CONTINUE) then that
+							// trumps the parse return we are trying to do
+							if (!DO_BLOCK(&arg, VAL_SERIES(rules), 0))
+								Throw(&arg, NULL);
 
 							Throw(&err, &arg);
 							DEAD_END;
@@ -811,7 +826,11 @@ bad_target:
 						item = rules++;
 						if (IS_END(item)) goto bad_end;
 						if (!IS_PAREN(item)) Trap1_DEAD_END(RE_PARSE_RULE, item);
-						Do_Block_Value_Throw(&save, item); // might GC
+
+						// might GC
+						if (!DO_BLOCK(&save, VAL_SERIES(item), 0))
+							Throw(&save, NULL);
+
 						item = &save;
 						if (IS_CONDITIONAL_TRUE(item)) continue;
 						else {
@@ -879,7 +898,11 @@ bad_target:
 
 		if (IS_PAREN(item)) {
 			REBVAL ignored; // !!! Ignore result?
-			Do_Block_Value_Throw(&ignored, item); // might GC
+
+			// might GC
+			if (!DO_BLOCK(&ignored, VAL_SERIES(item), 0))
+				Throw(&ignored, NULL);
+
 			if (index > series->tail) index = series->tail;
 			continue;
 		}
@@ -942,7 +965,9 @@ bad_target:
 					if (IS_END(rules)) goto bad_end;
 					rulen = 1;
 					if (IS_PAREN(rules)) {
-						Do_Block_Value_Throw(&save, rules); // might GC
+						// might GC
+						if (!DO_BLOCK(&save, VAL_SERIES(rules), 0))
+							Throw(&save, NULL);
 						item = &save;
 					}
 					else item = rules;

@@ -135,7 +135,8 @@ static int Check_Char_Range(REBVAL *val, REBINT limit)
 		REBCNT i;
 
 		while (index < SERIES_TAIL(block)) {
-			index = Do_Next(D_OUT, block, i = index, 0);
+			i = index;
+			index = DO_NEXT(D_OUT, block, index);
 			if (IS_CONDITIONAL_FALSE(D_OUT)) {
 				// !!! Only copies 3 values (and flaky), see CC#2231
 				Set_Block(D_OUT, Copy_Block_Len(block, i, 3));

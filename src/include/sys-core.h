@@ -346,8 +346,40 @@ enum encoding_opts {
 
 #define	DECIDE(cond) if (cond) goto is_true; else goto is_false
 #define REM2(a, b) ((b)!=-1 ? (a) % (b) : 0)
-//#define DO_BLOCK(v) Do_Block(VAL_SERIES(v), VAL_INDEX(v))
-#define DO_BLK(o,v) Do_Blk((o), VAL_SERIES(v), VAL_INDEX(v))
+
+
+/***********************************************************************
+**
+**	DO OPERATIONS
+**
+**		Simple macro wrappers for Do_Core.  DO_NEXT can return:
+**
+**			END_FLAG if end of series prohibited a full evaluation
+**			THROWN_FLAG if the output is THROWN()
+**			...or the next index position for attempting evaluation
+**
+**		DO_BLOCK runs from a given index to the tail of the block,
+**		either to completion or to throw, return, break, continue, etc.
+**		If it returns TRUE, then the output contains a THROWN() value.
+**		Otherwise it's the last value evaluated in the block.
+**
+**		Note that testing for "failure" with 'if (!DO_BLOCK(...))'
+**		won't let you catch "errors".  Those will Trap() and you will
+**		get no result at all.  A false result just means evaluation
+**		hit a "throw-style" construct.
+**
+**		(RETURN would be an example, since there is not a SET_JUMP
+**		at every function call to process a LONG_JUMP.  Hence the
+**		REBVAL containing the RETURN instruction just bubbles up the
+**		C call stack normally.)
+**
+***********************************************************************/
+
+#define DO_NEXT(o,s,i) \
+	Do_Core((o), TRUE, (s), (i), FALSE)
+
+#define DO_BLOCK(o,s,i) \
+	(THROWN_FLAG != Do_Core((o), FALSE, (s), (i), FALSE))
 
 
 /***********************************************************************

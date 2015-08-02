@@ -259,12 +259,12 @@ enum {
 	SET_TRUE(D_OUT);
 
 	while (index < SERIES_TAIL(block)) {
-		index = Do_Next(D_OUT, block, index, 0);
+		index = DO_NEXT(D_OUT, block, index);
 		if (IS_CONDITIONAL_FALSE(D_OUT)) {
 			SET_TRASH_SAFE(D_OUT);
 			return R_NONE;
 		}
-		if (THROWN(D_OUT)) break;
+		if (index == THROWN_FLAG) break;
 	}
 	return R_OUT;
 }
@@ -280,10 +280,13 @@ enum {
 	REBCNT index = VAL_INDEX(D_ARG(1));
 
 	while (index < SERIES_TAIL(block)) {
-		index = Do_Next(D_OUT, block, index, 0);
+		index = DO_NEXT(D_OUT, block, index);
+
+		// Don't have to check for THROWN_FLAG or THROWN as this returns
+		// any value that isn't FALSE! or UNSET!
 		if (!IS_CONDITIONAL_FALSE(D_OUT) && !IS_UNSET(D_OUT)) return R_OUT;
 	}
-	SET_TRASH_SAFE(D_OUT);
+
 	return R_NONE;
 }
 
@@ -315,7 +318,7 @@ enum {
 
 	if (error) return R_NONE;
 
-	Do_Blk(D_OUT, VAL_SERIES(D_ARG(1)), VAL_INDEX(D_ARG(1)));
+	DO_BLOCK(D_OUT, VAL_SERIES(D_ARG(1)), VAL_INDEX(D_ARG(1)));
 
 	DROP_CATCH_SAME_STACKLEVEL_AS_PUSH(&state);
 
@@ -353,15 +356,15 @@ enum {
 	REBFLG all_flag = D_REF(2);
 
 	while (index < SERIES_TAIL(block)) {
-		index = Do_Next(D_OUT, block, index, 0);
+		index = DO_NEXT(D_OUT, block, index);
 		if (IS_CONDITIONAL_FALSE(D_OUT)) index++;
 		else {
 			if (IS_UNSET(D_OUT)) Trap_DEAD_END(RE_NO_RETURN);
-			if (THROWN(D_OUT)) return R_OUT;
+			if (index == THROWN_FLAG) return R_OUT;
 			if (index >= SERIES_TAIL(block)) return R_TRUE;
-			index = Do_Next(D_OUT, block, index, 0);
+			index = DO_NEXT(D_OUT, block, index);
 			if (IS_BLOCK(D_OUT)) {
-				DO_BLK(D_OUT, D_OUT);
+				DO_BLOCK(D_OUT, VAL_SERIES(D_OUT), 0);
 				if (IS_UNSET(D_OUT) && !all_flag) return R_TRUE;
 			}
 			if (THROWN(D_OUT) || !all_flag || index >= SERIES_TAIL(block))
@@ -415,35 +418,35 @@ enum {
 		return R_OUT;
 	}
 
-	// Evaluate the block:
-	Do_Blk(D_OUT, VAL_SERIES(D_ARG(1)), VAL_INDEX(D_ARG(1)));
+	if (!DO_BLOCK(D_OUT, VAL_SERIES(D_ARG(1)), VAL_INDEX(D_ARG(1)))) {
+		// If it is a throw, process it:
+		if (VAL_ERR_NUM(D_OUT) == RE_THROW) {
 
-	DROP_CATCH_SAME_STACKLEVEL_AS_PUSH(&state);
+			// If a named throw, then check it:
+			if (D_REF(2)) { // /name
 
-	// If it is a throw, process it:
-	if (IS_ERROR(D_OUT) && VAL_ERR_NUM(D_OUT) == RE_THROW) {
+				sym = VAL_ERR_SYM(D_OUT);
+				val = D_ARG(3); // name symbol
 
-		// If a named throw, then check it:
-		if (D_REF(2)) { // /name
-
-			sym = VAL_ERR_SYM(D_OUT);
-			val = D_ARG(3); // name symbol
-
-			// If name is the same word:
-			if (IS_WORD(val) && sym == VAL_WORD_CANON(val)) goto got_err;
-
-			// If it is a block of words:
-			else if (IS_BLOCK(val)) {
-				for (val = VAL_BLK_DATA(val); NOT_END(val); val++) {
-					if (IS_WORD(val) && sym == VAL_WORD_CANON(val))
-						goto got_err;
+				if (IS_WORD(val) && sym == VAL_WORD_CANON(val)) {
+					// name is the same word
+					TAKE_THROWN_ARG(D_OUT, D_OUT);
 				}
+				else if (IS_BLOCK(val)) {
+					// it is a block of words so test all of them
+					for (val = VAL_BLK_DATA(val); NOT_END(val); val++) {
+						if (IS_WORD(val) && sym == VAL_WORD_CANON(val))
+							TAKE_THROWN_ARG(D_OUT, D_OUT);
+					}
+				}
+			} else {
+				// Throw is not named, don't check it
+				TAKE_THROWN_ARG(D_OUT, D_OUT);
 			}
-		} else {
-got_err:
-			TAKE_THROWN_ARG(D_OUT, D_OUT);
 		}
 	}
+
+	DROP_CATCH_SAME_STACKLEVEL_AS_PUSH(&state);
 
 	return R_OUT;
 }
@@ -539,8 +542,8 @@ got_err:
 	case REB_BLOCK:
 	case REB_PAREN:
 		if (D_REF(4)) { // next
-			VAL_INDEX(value) = Do_Next(
-				D_OUT, VAL_SERIES(value), VAL_INDEX(value), 0
+			VAL_INDEX(value) = DO_NEXT(
+				D_OUT, VAL_SERIES(value), VAL_INDEX(value)
 			);
 			if (VAL_INDEX(value) == END_FLAG) {
 				VAL_INDEX(value) = VAL_TAIL(value);
@@ -552,7 +555,7 @@ got_err:
 			return R_OUT;
 		}
 
-		DO_BLK(D_OUT, value);
+		DO_BLOCK(D_OUT, VAL_SERIES(value), 0);
 		return R_OUT;
 
     case REB_NATIVE:
@@ -622,7 +625,7 @@ got_err:
 	REBCNT argnum = IS_CONDITIONAL_FALSE(D_ARG(1)) ? 3 : 2;
 
 	if (IS_BLOCK(D_ARG(argnum)) && !D_REF(4) /* not using /ONLY */) {
-		DO_BLK(D_OUT, D_ARG(argnum));
+		DO_BLOCK(D_OUT, VAL_SERIES(D_ARG(argnum)), 0);
 		return R_OUT;
 	} else {
 		return argnum == 2 ? R_ARG2 : R_ARG3;
@@ -652,7 +655,7 @@ got_err:
 {
 	if (IS_CONDITIONAL_FALSE(D_ARG(1))) return R_NONE;
 	if (IS_BLOCK(D_ARG(2)) && !D_REF(3) /* not using /ONLY */) {
-		DO_BLK(D_OUT, D_ARG(2));
+		DO_BLOCK(D_OUT, VAL_SERIES(D_ARG(2)), 0);
 		return R_OUT;
 	}
 	return R_ARG2;
@@ -755,14 +758,16 @@ got_err:
 			if (IS_END(blk)) break;
 			found = TRUE;
 			// Evaluate the case block
-			DO_BLK(D_OUT, blk);
+			if (!DO_BLOCK(D_OUT, VAL_SERIES(blk), 0)) {
+				if (Check_Error(D_OUT) >= 0) break;
+			}
+
 			if (!all) return R_OUT;
-			if (THROWN(D_OUT) && Check_Error(D_OUT) >= 0) break;
 		}
 	}
 
 	if (!found && IS_BLOCK(D_ARG(4))) {
-		DO_BLK(D_OUT, D_ARG(4));
+		DO_BLOCK(D_OUT, VAL_SERIES(D_ARG(4)), 0);
 		return R_OUT;
 	}
 
@@ -795,7 +800,7 @@ got_err:
 		if (except) {
 			if (IS_BLOCK(D_ARG(3))) {
 				// forget the result of the try.
-				Do_Blk(D_OUT, VAL_SERIES(D_ARG(3)), VAL_INDEX(D_ARG(3)));
+				DO_BLOCK(D_OUT, VAL_SERIES(D_ARG(3)), VAL_INDEX(D_ARG(3)));
 				return R_OUT;
 			}
 			else if (ANY_FUNC(D_ARG(3))) {
@@ -825,7 +830,7 @@ got_err:
 		return R_OUT;
 	}
 
-	Do_Blk(D_OUT,VAL_SERIES(D_ARG(1)), VAL_INDEX(D_ARG(1)));
+	DO_BLOCK(D_OUT, VAL_SERIES(D_ARG(1)), VAL_INDEX(D_ARG(1)));
 
 	DROP_CATCH_SAME_STACKLEVEL_AS_PUSH(&state);
 
@@ -841,7 +846,7 @@ got_err:
 {
 	if (IS_CONDITIONAL_TRUE(D_ARG(1))) return R_NONE;
 	if (IS_BLOCK(D_ARG(2)) && !D_REF(3) /* not using /ONLY */) {
-		DO_BLK(D_OUT, D_ARG(2));
+		DO_BLOCK(D_OUT, VAL_SERIES(D_ARG(2)), 0);
 		return R_OUT;
 	}
 	return R_ARG2;

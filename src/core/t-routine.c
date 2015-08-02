@@ -929,7 +929,7 @@ static void callback_dispatcher(ffi_cif *cif, void *ret, void **args, void *user
 	}
 
 	DS_PUSH_TRASH;
-	Do_Blk(DS_TOP, ser, 0);
+	DO_BLOCK(DS_TOP, ser, 0);
 	elem = DS_TOP;
 	switch (cif->rtype->type) {
 		case FFI_TYPE_VOID:
@@ -968,7 +968,7 @@ static void callback_dispatcher(ffi_cif *cif, void *ret, void **args, void *user
 			Trap_Arg(elem);
 	}
 
-	DS_DROP; // Drop result of Do_Next (elem)
+	DS_DROP; // Drop result of DO (elem)
 }
 
 /***********************************************************************
@@ -1050,7 +1050,7 @@ static void callback_dispatcher(ffi_cif *cif, void *ret, void **args, void *user
 		if (!IS_BLOCK(&blk[0]))
 			Trap_Types_DEAD_END(RE_EXPECT_VAL, REB_BLOCK, VAL_TYPE(&blk[0]));
 
-		fn_idx = Do_Next(&lib, VAL_SERIES(data), 1, 0);
+		fn_idx = DO_NEXT(&lib, VAL_SERIES(data), 1);
 
 		if (IS_INTEGER(&lib)) {
 			if (NOT_END(&blk[fn_idx]))
@@ -1098,7 +1098,7 @@ static void callback_dispatcher(ffi_cif *cif, void *ret, void **args, void *user
 
 		if (!IS_BLOCK(&blk[0]))
 			Trap_Arg_DEAD_END(&blk[0]);
-		fn_idx = Do_Next(&fun, VAL_SERIES(data), 1, 0);
+		fn_idx = DO_NEXT(&fun, VAL_SERIES(data), 1);
 		if (!IS_FUNCTION(&fun))
 			Trap_Arg_DEAD_END(&fun);
 		VAL_CALLBACK_FUNC(out) = VAL_FUNC(&fun);
