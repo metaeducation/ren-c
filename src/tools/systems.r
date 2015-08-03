@@ -143,12 +143,40 @@ systems: [
 					]
 				]
 				MSVC [
-					PREDEFINES: [LEN LL? UNI]
+					PREDEFINES: [LEN LL? UNI FFI-BUILDING]
 					CFLAGS: []
 					OPTFLAGS: [*O2]
 					LIBS: [W32 CDLG]
 					LDFLAGS: [S4M_MSVC CON_MSVC]
 					OTHFLAGS: [EXE DIR]
+					FFI: [
+						INCLUDES: [%src %include]
+						PREDEFINES: [
+							HAVE_CALLOCA: 1
+							HAVE_MEMCPY: 1
+							HAVE_MEMORY_H: 1
+							HAVE_STDINT_H: 1
+							HAVE_STDLIB_H: 1
+							HAVE_STRING_H: 1
+							HAVE_SYS_STAT_H: 1
+							HAVE_SYS_TYPES_H: 1
+							PACKAGE: "libffi"
+							PACKAGE_NAME: "libffi"
+							STACK_DIRECTION: -1
+							STDC_HEADERS: 1
+							FFI_BULIDING: 1
+							TARGET: "X86_WIN32"
+						]
+						CFLAGS: [
+						]
+						OPTFLAGS: []
+						LIBS: []
+						LDFLAGS: []
+						TARGET-DIRECTORY: "x86"
+						SOURCE: [
+							%src/x86/ffi.c
+						]
+					]
 				]
 			]
 
@@ -214,12 +242,45 @@ systems: [
 					]
 				]
 				MSVC [
-					PREDEFINES: [LLP64 LEN LL? UNI]
+					PREDEFINES: [LLP64 LEN LL? UNI FFI-BUILDING]
 					CFLAGS: []
 					OPTFLAGS: [*O2]
 					LIBS: [W32 CDLG]
 					LDFLAGS: [S4M_MSVC CON_MSVC]
 					OTHFLAGS: [EXE DIR]
+					FFI: [
+						INCLUDES: [%src %include]
+						PREDEFINES: [
+							HAVE_CALLOCA: 1
+							HAVE_MEMCPY: 1
+							HAVE_MEMORY_H: 1
+							HAVE_STDINT_H: 1
+							HAVE_STDLIB_H: 1
+							HAVE_STRING_H: 1
+							HAVE_SYS_STAT_H: 1
+							HAVE_SYS_TYPES_H: 1
+							PACKAGE: "libffi"
+							PACKAGE_NAME: "libffi"
+							PACKAGE_VERSION: "3.1.1"
+							SIZEOF_DOUBLE: 8
+							SIZEOF_LONG_DOUBLE: 16
+							SIZEOF_SIZE_T: 8
+							STACK_DIRECTION: -1
+							STDC_HEADERS: 1
+							FFI_BULIDING: 1
+							VERSION: "3.1.1"
+							TARGET: "X86_WIN64"
+						]
+						CFLAGS: [
+						]
+						OPTFLAGS: []
+						LIBS: []
+						LDFLAGS: []
+						TARGET-DIRECTORY: "x86"
+						SOURCE: [
+							%src/x86/ffi.c
+						]
+					]
 				]
 			]
 	;-------------------------------------------------------------------------
@@ -577,6 +638,7 @@ compiler-flags: context [
 
 	BEN: "ENDIAN_BIG"				; big endian byte order
 	LEN: "ENDIAN_LITTLE"			; little endian byte order
+	FFI-BUILDING: "FFI_BUILDING"	; disable __decl(), because it's being staticaly linked
 
 	LLC: "HAS_LL_CONSTS"			; supports e.g. 0xffffffffffffffffLL
 	LL?: ""							; might have LL consts, reb-config.h checks

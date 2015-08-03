@@ -214,6 +214,21 @@ if build-FFI? [
 	]
 
 	generated-ffi-files: process-tools ffi-tools
+	if compiler-name = 'MSVC [
+		emit [ "enable_language(ASM_MASM)^/"]
+		either compiler-obj/FFI/PREDEFINES/TARGET = "X86_WIN64" [
+			processer-bits: "64"
+		][
+			processer-bits: "32"
+		]
+		asm-file: rejoin ["win" processer-bits "_plain.asm"]
+		emit [ {add_custom_command(OUTPUT
+	$^{CMAKE_CURRENT_BINARY_DIR^}/} asm-file {
+	COMMAND cl.exe /EP /P /I . /I ${FFI_DIR}/x86 /I $^{FFI_DIR^}/include $^{FFI_DIR^}/src/x86/win} processer-bits {.S /Fi} asm-file {)} newline]
+		emit [ {set_source_files_properties($^{CMAKE_CURRENT_BINARY_DIR^}/} asm-file { PROPERTIES COMPILE_FLAGS "/Cx /c /coff"
+	GENERATED true)} newline]
+		append generated-ffi-files join "${CMAKE_CURRENT_BINARY_DIR}/" asm-file
+	]
 	emit-src-files/abs "generated_ffi" generated-ffi-files
 
 	emit [ "add_library(ffi OBJECT ${FFI_SOURCE} ${GENERATED_FFI_SOURCE})" newline]
