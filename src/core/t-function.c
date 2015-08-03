@@ -33,7 +33,7 @@ static REBOOL Same_Func(REBVAL *val, REBVAL *arg)
 {
 	if (VAL_TYPE(val) == VAL_TYPE(arg) &&
 		VAL_FUNC_SPEC(val) == VAL_FUNC_SPEC(arg) &&
-		VAL_FUNC_ARGS(val) == VAL_FUNC_ARGS(arg) &&
+		VAL_FUNC_WORDS(val) == VAL_FUNC_WORDS(arg) &&
 		VAL_FUNC_CODE(val) == VAL_FUNC_CODE(arg)) return TRUE;
 	return FALSE;
 }
@@ -151,7 +151,7 @@ of_type:
 			Unbind_Block(VAL_BLK(value), NULL, TRUE);
 			break;
 		case OF_TYPES:
-			Set_Block(value, As_Typesets(VAL_FUNC_ARGS(value)));
+			Set_Block(value, As_Typesets(VAL_FUNC_WORDS(value)));
 			break;
 		case OF_TITLE:
 			arg = BLK_HEAD(VAL_FUNC_SPEC(value));

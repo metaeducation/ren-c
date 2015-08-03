@@ -957,8 +957,8 @@
 **      To indicate the relative nature of the index, it is set to
 **		a negative offset.
 **
-**		words: VAL_FUNC_ARGS(func)
-**		frame: VAL_FUNC_ARGS(func)
+**		words: VAL_FUNC_WORDS(func)
+**		frame: VAL_FUNC_WORDS(func)
 **		block: block to bind
 **
 ***********************************************************************/

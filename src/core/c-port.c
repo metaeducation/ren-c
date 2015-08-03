@@ -507,7 +507,7 @@ SCHEME_ACTIONS *Scheme_Actions;	// Initial Global (not threaded)
 		// unwords to the user.  For safety, a single global actor spec could
 		// be made at startup.
 		VAL_FUNC_SPEC(actor) = ser;
-		VAL_FUNC_ARGS(actor) = ser;
+		VAL_FUNC_WORDS(actor) = ser;
 		VAL_FUNC_CODE(actor) = (REBFUN)(Scheme_Actions[n].fun);
 		VAL_SET(actor, REB_NATIVE);
 		return R_TRUE;

@@ -809,7 +809,7 @@ enum {
 				// more args via refinements but can still act as an
 				// arity one function without those refinements?
 
-				REBVAL *args = BLK_SKIP(VAL_FUNC_ARGS(&handler), 1);
+				REBVAL *args = BLK_SKIP(VAL_FUNC_WORDS(&handler), 1);
 				if (NOT_END(args) && !TYPE_CHECK(args, VAL_TYPE(error))) {
 					// TODO: This results in an error message such as "action!
 					// does not allow error! for its value1 argument". A better

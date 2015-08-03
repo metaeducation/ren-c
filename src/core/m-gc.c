@@ -590,7 +590,7 @@ static void Propagate_All_GC_Marks(void);
 		case REB_ACTION:
 		case REB_OP:
 			QUEUE_MARK_BLOCK_DEEP(VAL_FUNC_SPEC(val));
-			MARK_UNWORDS_BLOCK(VAL_FUNC_ARGS(val));
+			MARK_UNWORDS_BLOCK(VAL_FUNC_WORDS(val));
 			break;
 
 		case REB_WORD:	// (and also used for function STACK backtrace frame)

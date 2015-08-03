@@ -1163,8 +1163,7 @@ typedef struct Reb_Function {
 #define VAL_FUNC(v)			  ((v)->data.func)
 #define VAL_FUNC_SPEC(v)	  ((v)->data.func.spec)	// a series
 #define VAL_FUNC_SPEC_BLK(v)  BLK_HEAD((v)->data.func.spec)
-#define VAL_FUNC_ARGS(v)	  ((v)->data.func.args)
-#define VAL_FUNC_WORDS(v)     VAL_FUNC_ARGS(v)
+#define VAL_FUNC_WORDS(v)     ((v)->data.func.args)
 #define VAL_FUNC_CODE(v)	  ((v)->data.func.func.code)
 #define VAL_FUNC_BODY(v)	  ((v)->data.func.func.body)
 #define VAL_FUNC_ACT(v)       ((v)->data.func.func.act)
@@ -1368,7 +1367,7 @@ enum {
 #define VAL_ROUTINE(v)          	VAL_FUNC(v)
 #define VAL_ROUTINE_SPEC(v) 		VAL_FUNC_SPEC(v)
 #define VAL_ROUTINE_INFO(v) 		VAL_FUNC_INFO(v)
-#define VAL_ROUTINE_ARGS(v) 		VAL_FUNC_ARGS(v)
+#define VAL_ROUTINE_ARGS(v) 		VAL_FUNC_WORDS(v)
 #define VAL_ROUTINE_FUNCPTR(v)  	(VAL_ROUTINE_INFO(v)->info.rot.funcptr)
 #define VAL_ROUTINE_LIB(v)  		(VAL_ROUTINE_INFO(v)->info.rot.lib)
 #define VAL_ROUTINE_ABI(v)  		(VAL_ROUTINE_INFO(v)->abi)

@@ -413,7 +413,7 @@ static struct {
 		v2 = tmp;
 	}
 
-	args = BLK_SKIP(VAL_FUNC_ARGS(sort_flags.compare), 1);
+	args = BLK_SKIP(VAL_FUNC_WORDS(sort_flags.compare), 1);
 	if (NOT_END(args) && !TYPE_CHECK(args, VAL_TYPE(cast(const REBVAL*, v1)))) {
 		Trap3_DEAD_END(RE_EXPECT_ARG,
 			Of_Type(sort_flags.compare), args, Of_Type(cast(const REBVAL*, v1))

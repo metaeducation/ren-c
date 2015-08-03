@@ -398,7 +398,7 @@ typedef REBYTE *(INFO_FUNC)(REBINT opts, void *lib);
 **
 ***********************************************************************/
 {
-	REBVAL *args = BLK_HEAD(VAL_FUNC_ARGS(value));
+	REBVAL *args = BLK_HEAD(VAL_FUNC_WORDS(value));
 	REBCNT n;
 	REBVAL *val = VAL_BLK_SKIP(def, 1);
 	REBEXT *ext;
@@ -461,7 +461,7 @@ typedef REBYTE *(INFO_FUNC)(REBINT opts, void *lib);
 	ext = &Ext_List[VAL_I32(VAL_OBJ_VALUE(val, 1))]; // Handler
 
 	// Copy args to command frame (array of args):
-	RXA_COUNT(&frm) = argc = SERIES_TAIL(VAL_FUNC_ARGS(value))-1; // not self
+	RXA_COUNT(&frm) = argc = SERIES_TAIL(VAL_FUNC_WORDS(value))-1; // not self
 	if (argc > 7) Trap(RE_BAD_COMMAND);
 	val = DS_ARG(1);
 	for (n = 1; n <= argc; n++, val++) {
@@ -561,7 +561,7 @@ typedef REBYTE *(INFO_FUNC)(REBINT opts, void *lib);
 
 		// get command arguments and body
 		words = VAL_FUNC_WORDS(func);
-		RXA_COUNT(&frm) = SERIES_TAIL(VAL_FUNC_ARGS(func))-1; // not self
+		RXA_COUNT(&frm) = SERIES_TAIL(VAL_FUNC_WORDS(func))-1; // not self
 
 		// collect each argument (arg list already validated on MAKE)
 		n = 0;

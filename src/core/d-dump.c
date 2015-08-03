@@ -207,8 +207,8 @@
 
 	if (dsf > 0) {
 		if (ANY_FUNC(DSF_FUNC(dsf))) {
-			args = BLK_HEAD(VAL_FUNC_ARGS(DSF_FUNC(dsf)));
-			m = SERIES_TAIL(VAL_FUNC_ARGS(DSF_FUNC(dsf)));
+			args = BLK_HEAD(VAL_FUNC_WORDS(DSF_FUNC(dsf)));
+			m = SERIES_TAIL(VAL_FUNC_WORDS(DSF_FUNC(dsf)));
 			for (n = 1; n < m; n++)
 				Debug_Fmt("\t%s: %72r", Get_Word_Name(args+n), DSF_ARG(dsf, n));
 		}

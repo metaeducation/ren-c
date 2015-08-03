@@ -168,7 +168,7 @@
 {
 	//Print("Make_Native: %s spec %d", Get_Sym_Name(type+1), SERIES_TAIL(spec));
 	VAL_FUNC_SPEC(value) = spec;
-	VAL_FUNC_ARGS(value) = Check_Func_Spec(spec);
+	VAL_FUNC_WORDS(value) = Check_Func_Spec(spec);
 	VAL_FUNC_CODE(value) = func;
 	VAL_SET(value, type);
 }
@@ -193,7 +193,7 @@
 	body = VAL_BLK_SKIP(def, 1);
 
 	VAL_FUNC_SPEC(value) = VAL_SERIES(spec);
-	VAL_FUNC_ARGS(value) = Check_Func_Spec(VAL_SERIES(spec));
+	VAL_FUNC_WORDS(value) = Check_Func_Spec(VAL_SERIES(spec));
 
 	if (type != REB_COMMAND) {
 		if (len != 2 || !IS_BLOCK(body)) return FALSE;
@@ -205,7 +205,7 @@
 	VAL_SET(value, type);
 
 	if (type == REB_FUNCTION || type == REB_CLOSURE)
-		Bind_Relative(VAL_FUNC_ARGS(value), VAL_FUNC_ARGS(value), VAL_FUNC_BODY(value));
+		Bind_Relative(VAL_FUNC_WORDS(value), VAL_FUNC_WORDS(value), VAL_FUNC_BODY(value));
 
 	return TRUE;
 }
@@ -223,16 +223,16 @@
 	if (!args || ((spec = VAL_BLK(args)) && IS_END(spec))) {
 		body = 0;
 		if (IS_FUNCTION(value) || IS_CLOSURE(value))
-			VAL_FUNC_ARGS(value) = Copy_Block(VAL_FUNC_ARGS(value), 0);
+			VAL_FUNC_WORDS(value) = Copy_Block(VAL_FUNC_WORDS(value), 0);
 	} else {
 		body = VAL_BLK_SKIP(args, 1);
 		// Spec given, must be block or *
 		if (IS_BLOCK(spec)) {
 			VAL_FUNC_SPEC(value) = VAL_SERIES(spec);
-			VAL_FUNC_ARGS(value) = Check_Func_Spec(VAL_SERIES(spec));
+			VAL_FUNC_WORDS(value) = Check_Func_Spec(VAL_SERIES(spec));
 		} else {
 			if (!IS_STAR(spec)) return FALSE;
-			VAL_FUNC_ARGS(value) = Copy_Block(VAL_FUNC_ARGS(value), 0);
+			VAL_FUNC_WORDS(value) = Copy_Block(VAL_FUNC_WORDS(value), 0);
 		}
 	}
 
@@ -248,7 +248,7 @@
 
 	// Rebind function words:
 	if (IS_FUNCTION(value) || IS_CLOSURE(value))
-		Bind_Relative(VAL_FUNC_ARGS(value), VAL_FUNC_ARGS(value), VAL_FUNC_BODY(value));
+		Bind_Relative(VAL_FUNC_WORDS(value), VAL_FUNC_WORDS(value), VAL_FUNC_BODY(value));
 
 	return TRUE;
 }
@@ -260,14 +260,14 @@
 /*
 ***********************************************************************/
 {
-	REBSER *src_frame = VAL_FUNC_ARGS(func);
+	REBSER *src_frame = VAL_FUNC_WORDS(func);
 
 	VAL_FUNC_SPEC(value) = VAL_FUNC_SPEC(func);
 	VAL_FUNC_BODY(value) = Clone_Block(VAL_FUNC_BODY(func));
-	VAL_FUNC_ARGS(value) = Copy_Block(src_frame, 0);
+	VAL_FUNC_WORDS(value) = Copy_Block(src_frame, 0);
 	// VAL_FUNC_BODY(value) = Clone_Block(VAL_FUNC_BODY(func));
 	VAL_FUNC_BODY(value) = Copy_Block_Values(VAL_FUNC_BODY(func), 0, SERIES_TAIL(VAL_FUNC_BODY(func)), TS_CLONE);
-	Rebind_Block(src_frame, VAL_FUNC_ARGS(value), BLK_HEAD(VAL_FUNC_BODY(value)), 0);
+	Rebind_Block(src_frame, VAL_FUNC_WORDS(value), BLK_HEAD(VAL_FUNC_BODY(value)), 0);
 }
 
 
@@ -433,11 +433,11 @@
 	body = Clone_Block(VAL_FUNC_BODY(func));
 
 	// Copy stack frame args as the closure object (one extra at head)
-	frame = Copy_Values(BLK_SKIP(DS_Series, DS_ARG_BASE), SERIES_TAIL(VAL_FUNC_ARGS(func)));
-	SET_FRAME(BLK_HEAD(frame), 0, VAL_FUNC_ARGS(func));
+	frame = Copy_Values(BLK_SKIP(DS_Series, DS_ARG_BASE), SERIES_TAIL(VAL_FUNC_WORDS(func)));
+	SET_FRAME(BLK_HEAD(frame), 0, VAL_FUNC_WORDS(func));
 
 	// Rebind the body to the new context (deeply):
-	Rebind_Block(VAL_FUNC_ARGS(func), frame, BLK_HEAD(body), REBIND_TYPE);
+	Rebind_Block(VAL_FUNC_WORDS(func), frame, BLK_HEAD(body), REBIND_TYPE);
 
 	SAVE_SERIES(body);
 	if (!DO_BLOCK(out, body, 0)) {
@@ -454,6 +454,6 @@
  */
 {
 	//RL_Print("%s, %d\n", __func__, __LINE__);
-	REBSER *args = Copy_Values(BLK_SKIP(DS_Series, DS_ARG_BASE + 1), SERIES_TAIL(VAL_FUNC_ARGS(routine)) - 1);
+	REBSER *args = Copy_Values(BLK_SKIP(DS_Series, DS_ARG_BASE + 1), SERIES_TAIL(VAL_FUNC_WORDS(routine)) - 1);
 	Call_Routine(routine, args, DSF_OUT(DSF));
 }

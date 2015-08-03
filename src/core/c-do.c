@@ -307,7 +307,7 @@ void Trace_Arg(REBINT num, const REBVAL *arg, const REBVAL *path)
 	}
 	// !!! Not sure why this is needed; seems the label word should be unbound
 	// if anything...
-	VAL_WORD_FRAME(DS_TOP) = VAL_FUNC_ARGS(func);
+	VAL_WORD_FRAME(DS_TOP) = VAL_FUNC_WORDS(func);
 	assert(IS_WORD(DSF_LABEL(dsf)));
 
 	// Save FUNC value for safety (spec, args, code):
@@ -531,7 +531,7 @@ void Trace_Arg(REBINT num, const REBVAL *arg, const REBVAL *path)
 	words = VAL_FUNC_WORDS(func);
 	args = BLK_SKIP(words, 1);
 	ds = SERIES_TAIL(words)-1;	// length of stack fill below
-	//Debug_Fmt("Args: %z", VAL_FUNC_ARGS(func));
+	//Debug_Fmt("Args: %z", VAL_FUNC_WORDS(func));
 
 	// If func is operator, first arg is already on stack:
 	if (IS_OP(func)) {
@@ -1610,7 +1610,7 @@ return_balanced:
 	REBINT n;
 
 	// Caller must: Prep_Func + Args above
-	VAL_WORD_FRAME(DSF_LABEL(DSF)) = VAL_FUNC_ARGS(func_val);
+	VAL_WORD_FRAME(DSF_LABEL(DSF)) = VAL_FUNC_WORDS(func_val);
 	n = DS_ARGC - (SERIES_TAIL(VAL_FUNC_WORDS(func_val)) - 1);
 	for (; n > 0; n--) DS_PUSH_NONE;
 	Func_Dispatch[VAL_TYPE(func_val)-REB_NATIVE](func_val);
