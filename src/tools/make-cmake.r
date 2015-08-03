@@ -185,7 +185,11 @@ if flag? compiler-obj/OTHFLAGS +SC [remove find os-specific-objs 'host-readline.
 emit makefile-head
 
 ;print ["config:" mold config]
-emit [ "set (REBOL ^"${CMAKE_CURRENT_SOURCE_DIR}/r3-make${CMAKE_EXECUTABLE_SUFFIX}^")^/" ]
+emit [ "if(CMAKE_HOST_WIN32)" newline]
+emit [ "set (REBOL ^"${CMAKE_CURRENT_SOURCE_DIR}/r3-make.exe^")^/" ]
+emit [ "else()" newline]
+emit [ "set (REBOL ^"${CMAKE_CURRENT_SOURCE_DIR}/r3-make^")^/" ]
+emit [ "endif()" newline]
 
 ;*** FFI
 emit [ "#FFI" newline]
