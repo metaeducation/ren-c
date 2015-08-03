@@ -752,7 +752,7 @@ enum {
 
 	// Find value in case block...
 	for (; NOT_END(blk); blk++) {
-		if (!IS_BLOCK(blk) && 0 == Cmp_Value(DS_ARG(1), blk, FALSE)) { // avoid stack move
+		if (!IS_BLOCK(blk) && 0 == Cmp_Value(D_ARG(1), blk, FALSE)) { // avoid stack move
 			// Skip forward to block...
 			for (; !IS_BLOCK(blk) && NOT_END(blk); blk++);
 			if (IS_END(blk)) break;

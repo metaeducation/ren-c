@@ -243,7 +243,7 @@
 	else Trap_Arg_DEAD_END(var);
 
 	// !!!!! ???? allowed to write VAR????
-	*var = *DS_ARG(1);
+	*var = *D_ARG(1);
 
 	return R_OUT;
 }
@@ -538,7 +538,7 @@ skip_hidden: ;
 ***********************************************************************/
 {
 	do {
-		if (!DO_BLOCK(D_OUT, VAL_SERIES(DS_ARG(1)), 0)) {
+		if (!DO_BLOCK(D_OUT, VAL_SERIES(D_ARG(1)), 0)) {
 			if (Check_Error(D_OUT) >= 0) return R_OUT;
 		}
 	} while (TRUE);

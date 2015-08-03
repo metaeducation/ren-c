@@ -811,7 +811,7 @@ is_none:
 	case A_CHANGE:
 		if (!IS_GOB(arg)) goto is_arg_error;
 		if (!GOB_PANE(gob) || index >= tail) Trap_DEAD_END(RE_PAST_END);
-		if (action == A_CHANGE && (DS_REF(AN_PART) || DS_REF(AN_ONLY) || DS_REF(AN_DUP))) Trap_DEAD_END(RE_NOT_DONE);
+		if (action == A_CHANGE && (D_REF(AN_PART) || D_REF(AN_ONLY) || D_REF(AN_DUP))) Trap_DEAD_END(RE_NOT_DONE);
 		Insert_Gobs(gob, arg, index, 1, 0);
 		//ngob = *GOB_SKIP(gob, index);
 		//GOB_PARENT(ngob) = 0;
@@ -826,7 +826,7 @@ is_none:
 	case A_APPEND:
 		index = tail;
 	case A_INSERT:
-		if (DS_REF(AN_PART) || DS_REF(AN_ONLY) || DS_REF(AN_DUP)) Trap_DEAD_END(RE_NOT_DONE);
+		if (D_REF(AN_PART) || D_REF(AN_ONLY) || D_REF(AN_DUP)) Trap_DEAD_END(RE_NOT_DONE);
 		if (IS_GOB(arg)) len = 1;
 		else if (IS_BLOCK(arg)) {
 			len = VAL_BLK_LEN(arg);

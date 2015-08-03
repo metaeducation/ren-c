@@ -463,7 +463,7 @@ typedef REBYTE *(INFO_FUNC)(REBINT opts, void *lib);
 	// Copy args to command frame (array of args):
 	RXA_COUNT(&frm) = argc = SERIES_TAIL(VAL_FUNC_WORDS(value))-1; // not self
 	if (argc > 7) Trap(RE_BAD_COMMAND);
-	val = DS_ARG(1);
+	val = DSF_ARG(DSF, 1);
 	for (n = 1; n <= argc; n++, val++) {
 		RXA_TYPE(&frm, n) = Reb_To_RXT[VAL_TYPE(val)];
 		frm.args[n] = Value_To_RXI(val);

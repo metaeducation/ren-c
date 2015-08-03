@@ -228,6 +228,4 @@
 
 // Reference from current DSF index:
 #define DS_ARG_BASE		(DSF+DSF_SIZE)
-#define DS_ARG(n)		DSF_ARG(DSF, n)
-#define DS_REF(n)		(!IS_NONE(DS_ARG(n)))
 #define DS_ARGC			(DSP-DS_ARG_BASE)

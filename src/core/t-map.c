@@ -505,8 +505,8 @@
 	case A_APPEND:
 		if (!IS_BLOCK(arg)) Trap_Arg_DEAD_END(val);
 		*D_OUT = *val;
-		if (DS_REF(AN_DUP)) {
-			n = Int32(DS_ARG(AN_COUNT));
+		if (D_REF(AN_DUP)) {
+			n = Int32(D_ARG(AN_COUNT));
 			if (n <= 0) break;
 		}
 		Append_Map(series, arg, Partial1(arg, D_ARG(AN_LENGTH)));

@@ -182,7 +182,7 @@ static void No_Nones(REBVAL *arg) {
 
 /***********************************************************************
 **
-*/	void Modify_Blockx(REBCNT action, REBVAL *block, REBVAL *arg)
+*/	void Modify_Blockx(struct Reb_Call *call_, REBCNT action, REBVAL *block, REBVAL *arg)
 /*
 **		Actions: INSERT, APPEND, CHANGE
 **
@@ -204,7 +204,7 @@ static void No_Nones(REBVAL *arg) {
 	REBSER *series = VAL_SERIES(block);
 	REBCNT index = VAL_INDEX(block);
 	REBCNT tail  = VAL_TAIL(block);
-	REBFLG only  = DS_REF(AN_ONLY);
+	REBFLG only  = D_REF(AN_ONLY);
 	REBCNT rlen;  // length to be removed
 	REBCNT ilen  = 1;  // length to be inserted
 	REBINT cnt   = 1;  // DUP count
@@ -212,7 +212,7 @@ static void No_Nones(REBVAL *arg) {
 	REBFLG is_blk = FALSE; // arg is a block not a value
 
 	// Length of target (may modify index): (arg can be anything)
-	rlen = Partial1((action == A_CHANGE) ? block : arg, DS_ARG(AN_LENGTH));
+	rlen = Partial1((action == A_CHANGE) ? block : arg, D_ARG(AN_LENGTH));
 
 	index = VAL_INDEX(block);
 	if (action == A_APPEND || index > tail) index = tail;
@@ -226,12 +226,12 @@ static void No_Nones(REBVAL *arg) {
 			VAL_INDEX(arg) = 0;
 		}
 		// Length of insertion:
-		ilen = (action != A_CHANGE && DS_REF(AN_PART)) ? rlen : VAL_LEN(arg);
+		ilen = (action != A_CHANGE && D_REF(AN_PART)) ? rlen : VAL_LEN(arg);
 	}
 
 	// Get /DUP count:
-	if (DS_REF(AN_DUP)) {
-		cnt = Int32(DS_ARG(AN_COUNT));
+	if (D_REF(AN_DUP)) {
+		cnt = Int32(D_ARG(AN_COUNT));
 		if (cnt <= 0) return; // no changes
 	}
 
@@ -244,7 +244,7 @@ static void No_Nones(REBVAL *arg) {
 	} else {
 		if (size > rlen)
 			Expand_Series(series, index, size-rlen);
-		else if (size < rlen && DS_REF(AN_PART))
+		else if (size < rlen && D_REF(AN_PART))
 			Remove_Series(series, index, rlen-size);
 		else if (size + index > tail) {
 			EXPAND_SERIES_TAIL(series, size - (tail - index));
@@ -770,12 +770,12 @@ zero_blk:
 	case A_INSERT:
 	case A_CHANGE:
 		// Length of target (may modify index): (arg can be anything)
-		len = Partial1((action == A_CHANGE) ? value : arg, DS_ARG(AN_LENGTH));
+		len = Partial1((action == A_CHANGE) ? value : arg, D_ARG(AN_LENGTH));
 		index = VAL_INDEX(value);
 		args = 0;
-		if (DS_REF(AN_ONLY)) SET_FLAG(args, AN_ONLY);
-		if (DS_REF(AN_PART)) SET_FLAG(args, AN_PART);
-		index = Modify_Block(action, ser, index, arg, args, len, DS_REF(AN_DUP) ? Int32(DS_ARG(AN_COUNT)) : 1);
+		if (D_REF(AN_ONLY)) SET_FLAG(args, AN_ONLY);
+		if (D_REF(AN_PART)) SET_FLAG(args, AN_PART);
+		index = Modify_Block(action, ser, index, arg, args, len, D_REF(AN_DUP) ? Int32(D_ARG(AN_COUNT)) : 1);
 		VAL_INDEX(value) = index;
 		break;
 

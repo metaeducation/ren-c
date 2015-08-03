@@ -114,7 +114,7 @@
 	case A_REMOVE:
 		// /PART length
 		TRAP_PROTECT(VAL_SERIES(value));
-		len = DS_REF(2) ? Partial(value, 0, DS_ARG(3), 0) : 1;
+		len = D_REF(2) ? Partial(value, 0, D_ARG(3), 0) : 1;
 		index = (REBINT)VAL_INDEX(value);
 		if (index < tail && len != 0)
 			Remove_Series(VAL_SERIES(value), VAL_INDEX(value), len);

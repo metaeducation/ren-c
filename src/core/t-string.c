@@ -488,12 +488,12 @@ static REBSER *make_binary(REBVAL *arg, REBOOL make)
 	case A_CHANGE:
 		//Modify_String(action, value, arg);
 		// Length of target (may modify index): (arg can be anything)
-		len = Partial1((action == A_CHANGE) ? value : arg, DS_ARG(AN_LENGTH));
+		len = Partial1((action == A_CHANGE) ? value : arg, D_ARG(AN_LENGTH));
 		index = VAL_INDEX(value);
 		args = 0;
 		if (IS_BINARY(value)) SET_FLAG(args, AN_SERIES); // special purpose
-		if (DS_REF(AN_PART)) SET_FLAG(args, AN_PART);
-		index = Modify_String(action, VAL_SERIES(value), index, arg, args, len, DS_REF(AN_DUP) ? Int32(DS_ARG(AN_COUNT)) : 1);
+		if (D_REF(AN_PART)) SET_FLAG(args, AN_PART);
+		index = Modify_String(action, VAL_SERIES(value), index, arg, args, len, D_REF(AN_DUP) ? Int32(D_ARG(AN_COUNT)) : 1);
 		VAL_INDEX(value) = index;
 		break;
 
