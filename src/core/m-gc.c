@@ -126,7 +126,7 @@ REBVAL *N_watch(REBFRM *frame, REBVAL **inter_block)
 		// Print("Mark: %s %x", TYPE_NAME(val), val);
 #endif
 
-static void Queue_Mark_Value_Deep(REBVAL *val);
+static void Queue_Mark_Value_Deep(const REBVAL *val);
 
 static void Push_Block_Marked_Deep(REBSER *series);
 
@@ -282,7 +282,7 @@ static void Propagate_All_GC_Marks(void);
 
 /***********************************************************************
 **
-*/	static void Queue_Mark_Field_Deep(REBSTU *stu, struct Struct_Field *field)
+*/	static void Queue_Mark_Field_Deep(const REBSTU *stu, struct Struct_Field *field)
 /*
 **		'Queue' refers to the fact that after calling this routine,
 **		one will have to call Propagate_All_GC_Marks() to have the
@@ -331,7 +331,7 @@ static void Propagate_All_GC_Marks(void);
 
 /***********************************************************************
 **
-*/	static void Queue_Mark_Struct_Deep(REBSTU *stu)
+*/	static void Queue_Mark_Struct_Deep(const REBSTU *stu)
 /*
 **		'Queue' refers to the fact that after calling this routine,
 **		one will have to call Propagate_All_GC_Marks() to have the
@@ -369,7 +369,7 @@ static void Propagate_All_GC_Marks(void);
 
 /***********************************************************************
 **
-*/	static void Queue_Mark_Routine_Deep(REBROT *rot)
+*/	static void Queue_Mark_Routine_Deep(const REBROT *rot)
 /*
 **		'Queue' refers to the fact that after calling this routine,
 **		one will have to call Propagate_All_GC_Marks() to have the
@@ -417,7 +417,7 @@ static void Propagate_All_GC_Marks(void);
 
 /***********************************************************************
 **
-*/	static void Queue_Mark_Event_Deep(REBVAL *value)
+*/	static void Queue_Mark_Event_Deep(const REBVAL *value)
 /*
 **		'Queue' refers to the fact that after calling this routine,
 **		one will have to call Propagate_All_GC_Marks() to have the
@@ -436,7 +436,9 @@ static void Propagate_All_GC_Marks(void);
 		)
 	) {
 		// Comment says void* ->ser field of the REBEVT is a "port or object"
-		QUEUE_MARK_BLOCK_DEEP(cast(REBSER*, VAL_EVENT_SER(value)));
+		QUEUE_MARK_BLOCK_DEEP(
+			cast(REBSER*, VAL_EVENT_SER(m_cast(REBVAL*, value)))
+		);
 	}
 
 	if (IS_EVENT_MODEL(value, EVM_DEVICE)) {
@@ -520,7 +522,7 @@ static void Propagate_All_GC_Marks(void);
 
 /***********************************************************************
 **
-*/	static void Queue_Mark_Value_Deep(REBVAL *val)
+*/	static void Queue_Mark_Value_Deep(const REBVAL *val)
 /*
 ***********************************************************************/
 {
