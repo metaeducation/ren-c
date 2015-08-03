@@ -225,7 +225,7 @@ if build-FFI? [
 		emit [ {add_custom_command(OUTPUT
 	$^{CMAKE_CURRENT_BINARY_DIR^}/} asm-file {
 	COMMAND cl.exe /EP /P /I . /I ${FFI_DIR}/x86 /I $^{FFI_DIR^}/include $^{FFI_DIR^}/src/x86/win} processer-bits {.S /Fi} asm-file {)} newline]
-		emit [ {set_source_files_properties($^{CMAKE_CURRENT_BINARY_DIR^}/} asm-file { PROPERTIES COMPILE_FLAGS "/Cx /c /coff"
+		emit [ {set_source_files_properties($^{CMAKE_CURRENT_BINARY_DIR^}/} asm-file { PROPERTIES COMPILE_FLAGS "/Cx /c /coff /safeseh "
 	GENERATED true)} newline]
 		append generated-ffi-files join "${CMAKE_CURRENT_BINARY_DIR}/" asm-file
 	]
