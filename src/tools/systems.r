@@ -98,6 +98,49 @@ systems: [
 					LIBS: [W32 CDLG]
 					LDFLAGS: [S4M CON]
 					OTHFLAGS: [EXE DIR]
+					FFI: [
+						INCLUDES: [%src %include]
+						PREDEFINES: [
+							EH_FRAME_FLAGS: "aw"
+							HAVE_ALLOCA: 1
+							HAVE_AS_ASCII_PSEUDO_OP: 1
+							HAVE_AS_CFI_PSEUDO_OP: 1
+							HAVE_AS_STRING_PSEUDO_OP: 1
+							HAVE_AS_X86_PCREL: 1
+							HAVE_INTTYPES_H: 1
+							HAVE_LONG_DOUBLE: 1
+							HAVE_MEMCPY: 1
+							HAVE_MEMORY_H: 1
+							HAVE_STDINT_H: 1
+							HAVE_STDLIB_H: 1
+							HAVE_STRINGS_H: 1
+							HAVE_STRING_H: 1
+							HAVE_SYS_STAT_H: 1
+							HAVE_SYS_TYPES_H: 1
+							HAVE_UNISTD_H: 1
+							PACKAGE: "libffi"
+							PACKAGE_NAME: "libffi"
+							PACKAGE_VERSION: "3.2.1"
+							SIZEOF_DOUBLE: 8
+							SIZEOF_LONG_DOUBLE: 12
+							SIZEOF_SIZE_T: 4
+							STDC_HEADERS: 1
+							SYMBOL_UNDERSCORE: 1
+							VERSION: "3.2.1"
+							TARGET: "X86_WIN32"
+						]
+						CFLAGS: [
+							M32
+						]
+						OPTFLAGS: [+O3 OFP +SA +FM +EX]
+						LIBS: []
+						LDFLAGS: []
+						TARGET-DIRECTORY: "x86"
+						SOURCE: [
+							%src/x86/ffi.c
+							%src/x86/win32.S
+						]
+					]
 				]
 				MSVC [
 					PREDEFINES: [LEN LL? UNI]
@@ -131,6 +174,44 @@ systems: [
 					LIBS: [W32 CON -LM CDLG]
 					LDFLAGS: [S4M]
 					OTHFLAGS: [EXE DIR]
+					FFI: [
+						INCLUDES: [%src %include]
+						PREDEFINES: [
+							EH_FRAME_FLAGS: "aw"
+							HAVE_ALLOCA: 1
+							HAVE_AS_CFI_PSEUDO_OP: 1
+							HAVE_INTTYPES_H: 1
+							HAVE_LONG_DOUBLE: 1
+							HAVE_MEMCPY: 1
+							HAVE_MEMORY_H: 1
+							HAVE_STDINT_H: 1
+							HAVE_STDLIB_H: 1
+							HAVE_STRINGS_H: 1
+							HAVE_STRING_H: 1
+							HAVE_SYS_STAT_H: 1
+							HAVE_SYS_TYPES_H: 1
+							HAVE_UNISTD_H: 1
+							PACKAGE: "libffi"
+							PACKAGE_NAME: "libffi"
+							PACKAGE_VERSION: "3.1.1"
+							SIZEOF_DOUBLE: 8
+							SIZEOF_LONG_DOUBLE: 16
+							SIZEOF_SIZE_T: 8
+							STDC_HEADERS: 1
+							VERSION: "3.1.1"
+							TARGET: "X86_WIN64"
+						]
+						CFLAGS: [
+						]
+						OPTFLAGS: [+O3 OFP +SA +FM +EX]
+						LIBS: []
+						LDFLAGS: []
+						TARGET-DIRECTORY: "x86"
+						SOURCE: [
+							%src/x86/ffi.c
+							%src/x86/win64.S
+						]
+					]
 				]
 				MSVC [
 					PREDEFINES: [LLP64 LEN LL? UNI]
