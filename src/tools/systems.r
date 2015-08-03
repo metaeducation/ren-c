@@ -91,7 +91,7 @@ systems: [
 	0.3.01		windows-x86		windows
 			[
 				GCC [
-					PREDEFINES: [LEN LL? UNI]
+					PREDEFINES: [LEN LL? UNI WIN32]
 					CFLAGS: []
 					OPTFLAGS: []
 					DBGFLAGS: [+g3]
@@ -143,7 +143,7 @@ systems: [
 					]
 				]
 				MSVC [
-					PREDEFINES: [LEN LL? UNI FFI-BUILDING]
+					PREDEFINES: [LEN LL? UNI WIN32 FFI-BUILDING]
 					CFLAGS: []
 					OPTFLAGS: [*O2]
 					LIBS: [W32 CDLG]
@@ -183,7 +183,7 @@ systems: [
 	0.3.02		windows-alpha		windows
 			[
 				GCC [
-					PREDEFINES: [LEN LLC]
+					PREDEFINES: [LEN LLC WIN32]
 					CFLAGS: []
 					OPTFLAGS: [+O2]
 					DBGFLAGS: [+g3]
@@ -195,7 +195,7 @@ systems: [
 	0.3.40		windows-x64		windows
 			[
 				GCC [
-					PREDEFINES: [LLP64 LEN LL? UNI]
+					PREDEFINES: [LLP64 LEN LL? UNI WIN32]
 					CFLAGS: []
 					OPTFLAGS: [+O2]
 					DBGFLAGS: [+g3]
@@ -639,6 +639,7 @@ compiler-flags: context [
 	BEN: "ENDIAN_BIG"				; big endian byte order
 	LEN: "ENDIAN_LITTLE"			; little endian byte order
 	FFI-BUILDING: "FFI_BUILDING"	; disable __decl(), because it's being staticaly linked
+	WIN32: "WIN32"					; aes.c, u-m5d.c wants it
 
 	LLC: "HAS_LL_CONSTS"			; supports e.g. 0xffffffffffffffffLL
 	LL?: ""							; might have LL consts, reb-config.h checks
