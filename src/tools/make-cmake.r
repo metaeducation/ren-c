@@ -76,8 +76,10 @@ if none? compiler-spec [
 ]
 
 compiler-obj: make object! compiler-spec
+build-FFI?: no
 if found? find words-of compiler-obj 'FFI [
 	compiler-obj/FFI: make object! compiler-obj/FFI
+	build-FFI?: yes
 ]
 print ["Compiler:" compiler-name mold compiler-obj]
 
@@ -191,37 +193,40 @@ emit [ "else()" newline]
 emit [ "set (REBOL ^"${CMAKE_CURRENT_SOURCE_DIR}/r3-make^")^/" ]
 emit [ "endif()" newline]
 
+generated-ffi-files: copy []
 ;*** FFI
-emit [ "#FFI" newline]
-emit [ "set(FFI_SOURCE " newline]
-foreach s join file-base/ffi-files compiler-obj/FFI/SOURCE [
-	emit [ tab "${FFI_DIR}/" s newline]
-]
-emit [")" newline newline]
+if build-FFI? [
+	emit [ "#FFI" newline]
+	emit [ "set(FFI_SOURCE " newline]
+	foreach s join file-base/ffi-files compiler-obj/FFI/SOURCE [
+		emit [ tab "${FFI_DIR}/" s newline]
+	]
+	emit [")" newline newline]
 
-emit ["set (FFI_TARGET " mold lowercase compiler-obj/FFI/PREDEFINES/(to set-word! 'TARGET) ")" newline]
+	emit ["set (FFI_TARGET " mold lowercase compiler-obj/FFI/PREDEFINES/(to set-word! 'TARGET) ")" newline]
 
-ffi-tools: compose/deep [
-	make-libffi [
-		"${FFI_DIR}/include/fficonfig.h"
-		"${FFI_DIR}/include/ffi.h"
-		"${FFI_DIR}/include/ffitarget.h"
-	] [(config/id) (compiler-name)]
-]
+	ffi-tools: compose/deep [
+		make-libffi [
+			"${FFI_DIR}/include/fficonfig.h"
+			"${FFI_DIR}/include/ffi.h"
+			"${FFI_DIR}/include/ffitarget.h"
+		] [(config/id) (compiler-name)]
+	]
 
-generated-ffi-files: process-tools ffi-tools
-emit-src-files/abs "generated_ffi" generated-ffi-files
+	generated-ffi-files: process-tools ffi-tools
+	emit-src-files/abs "generated_ffi" generated-ffi-files
 
-emit [ "add_library(ffi OBJECT ${FFI_SOURCE} ${GENERATED_FFI_SOURCE})" newline]
-emit [ "target_compile_definitions(ffi PUBLIC HAVE_CONFIG_H)" newline]
-unless empty? compiler-obj/FFI/CFLAGS [
-	emit [ "set_target_properties(ffi PROPERTIES COMPILE_FLAGS " macro compiler-obj/FFI/CFLAGS compiler-flags ")" newline]
+	emit [ "add_library(ffi OBJECT ${FFI_SOURCE} ${GENERATED_FFI_SOURCE})" newline]
+	emit [ "target_compile_definitions(ffi PUBLIC HAVE_CONFIG_H)" newline]
+	unless empty? compiler-obj/FFI/CFLAGS [
+		emit [ "set_target_properties(ffi PROPERTIES COMPILE_FLAGS " macro compiler-obj/FFI/CFLAGS compiler-flags ")" newline]
+	]
+	emit [ "target_include_directories(ffi PUBLIC" newline]
+	foreach i compiler-obj/FFI/INCLUDES [
+		emit [ tab "${FFI_DIR}/" i newline]
+	]
+	emit [ ")" newline]
 ]
-emit [ "target_include_directories(ffi PUBLIC" newline]
-foreach i compiler-obj/FFI/INCLUDES [
-	emit [ tab "${FFI_DIR}/" i newline]
-]
-emit [ ")" newline]
 ;********************************************************************************
 
 core-tools: compose/deep [
@@ -292,7 +297,11 @@ endif()
 emit ["add_library(r3_core OBJECT ${CORE_SOURCE} ${GENERATED_CORE_SOURCE})" newline]
 emit ["add_library(r3_os OBJECT ${OS_SOURCE} ${GENERATED_OS_SOURCE})" newline]
 emit ["add_dependencies(r3_os r3_core)" newline]
-emit ["add_executable(r3 $<TARGET_OBJECTS:r3_core> $<TARGET_OBJECTS:r3_os> $<TARGET_OBJECTS:ffi>)" newline]
+either build-FFI? [
+	emit ["add_executable(r3 $<TARGET_OBJECTS:r3_core> $<TARGET_OBJECTS:r3_os> $<TARGET_OBJECTS:ffi>)" newline]
+][
+	emit ["add_executable(r3 $<TARGET_OBJECTS:r3_core> $<TARGET_OBJECTS:r3_os>)" newline]
+]
 emit ["SET_TARGET_PROPERTIES(r3 PROPERTIES LINKER_LANGUAGE C)" newline]
 emit ["set(COMMON_MACROS " to-base-def space to-name-def macro compiler-obj/PREDEFINES compiler-flags ")" newline]
 
@@ -305,9 +314,17 @@ unless empty? macro compiler-obj/OPTFLAGS compiler-flags [
 	]
 ]
 
-emit ["target_include_directories(r3_core PUBLIC ${TOP_SRC_DIR}/include ${TOP_SRC_DIR}/codecs ${TOP_SRC_DIR}/libffi/include)" newline]
+either build-FFI? [
+	emit ["target_include_directories(r3_core PUBLIC ${TOP_SRC_DIR}/include ${TOP_SRC_DIR}/codecs ${TOP_SRC_DIR}/libffi/include)" newline]
+][
+	emit ["target_include_directories(r3_core PUBLIC ${TOP_SRC_DIR}/include ${TOP_SRC_DIR}/codecs)" newline]
+]
 emit ["target_include_directories(r3_os PUBLIC ${TOP_SRC_DIR}/include ${TOP_SRC_DIR}/codecs)" newline]
-emit ["target_compile_definitions(r3_core PUBLIC REB_API HAVE_LIBFFI_AVAILABLE ${COMMON_MACROS})" newline]
+either build-FFI? [
+	emit ["target_compile_definitions(r3_core PUBLIC REB_API HAVE_LIBFFI_AVAILABLE ${COMMON_MACROS})" newline]
+][
+	emit ["target_compile_definitions(r3_core PUBLIC REB_API ${COMMON_MACROS})" newline]
+]
 emit ["target_compile_definitions(r3_os PUBLIC REB_CORE REB_EXE ${COMMON_MACROS})" newline]
 if found? find words-of compiler-obj 'DBGFLAGS [
 	emit [ {set(CMAKE_C_FLAGS_DEBUG} macro compiler-obj/DBGFLAGS compiler-flags {)} newline]
@@ -315,7 +332,7 @@ if found? find words-of compiler-obj 'DBGFLAGS [
 emit ["set(CMAKE_C_FLAGS ^"${CMAKE_C_FLAGS}" macro compiler-obj/CFLAGS compiler-flags "^")" newline]
 emit ["set(CMAKE_EXE_LINKER_FLAGS ^"${CMAKE_EXE_LINKER_FLAGS}" macro compiler-obj/LDFLAGS linker-flags "^")" newline]
 emit ["target_link_libraries(r3" macro compiler-obj/LIBS linker-flags 
-		macro compiler-obj/FFI/LIBS linker-flags
+		either build-FFI? [ macro compiler-obj/FFI/LIBS linker-flags ][""]
 		")" newline]
 
 write path-make/%CMakeLists.txt output
