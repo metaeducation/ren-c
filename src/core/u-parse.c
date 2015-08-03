@@ -595,7 +595,6 @@ bad_target:
 	REBCNT n;
 	REBPARSE newparse;
 	REBVAL save; // REVIEW: Could this just reuse value?
-	REBVAL out;
 
 	// First, check for end of input:
 	if (index >= parse->series->tail) {
@@ -604,11 +603,9 @@ bad_target:
 	}
 
 	// Evaluate next N input values:
-	index = DO_NEXT(&out, parse->series, index);
-	DS_PUSH(&out);
+	index = DO_NEXT(&value, parse->series, index);
 
 	// Value is on top of stack:
-	DS_POP_INTO(&value);
 	if (THROWN(&value)) Throw(&value, NULL);
 
 	// Get variable or command:
