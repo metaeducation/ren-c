@@ -1185,6 +1185,8 @@ static REBCNT Set_Option_Word(REBCHR *str, REBCNT field)
 
 	DROP_CATCH_SAME_STACKLEVEL_AS_PUSH(&state);
 
+	PG_Boot_Phase = BOOT_DONE;
+
 	Recycle(); // necessary?
 
 	DOUT("Boot done");

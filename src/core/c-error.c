@@ -305,6 +305,17 @@
 {
 	ASSERT_ERROR(err);
 
+#if !defined(NDEBUG)
+	// If we throw the error we'll lose the stack, and if it's an early
+	// error we always want to see it (do not use ATTEMPT or TRY on
+	// purpose in Init_Core()...)
+	if (PG_Boot_Phase < BOOT_DONE) {
+		Debug_Fmt("** Error raised during Init_Core(), should not happen!");
+		Debug_Fmt("%v", err);
+		assert(FALSE);
+	}
+#endif
+
 	if (!Saved_State) {
 		// Print out the error before crashing
 		Print_Value(err, 0, FALSE);
