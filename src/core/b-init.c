@@ -1079,8 +1079,7 @@ static REBCNT Set_Option_Word(REBCHR *str, REBCNT field)
 	Init_CRC();				// For word hashing
 	Set_Random(0);
 	Init_Words(FALSE);		// Symbol table
-	// !!! Temporary for StableStack... simulate stable with LARGE value
-	Init_Data_Stack(STACK_BOUNDS / sizeof(void*) /* STACK_MIN*4 */);
+	Init_Data_Stack(STACK_MIN * 4);
 	Init_Scanner();
 	Init_Mold(MIN_COMMON);	// Output buffer
 	Init_Frame();			// Frames
@@ -1169,7 +1168,7 @@ static REBCNT Set_Option_Word(REBCHR *str, REBCNT field)
 	Boot_Block = NULL;
 	PG_Boot_Phase = BOOT_MEZZ;
 
-	assert((DSP == -1) && (DSF == DSF_NONE));
+	assert(DSP == -1 && !DSF);
 
 	Do_Sys_Func(&out, SYS_CTX_FINISH_INIT_CORE, 0);
 
@@ -1181,7 +1180,7 @@ static REBCNT Set_Option_Word(REBCHR *str, REBCNT field)
 		Panic(RP_EARLY_ERROR);
 	}
 
-	assert((DSP == -1) && (DSF == DSF_NONE));
+	assert(DSP == -1 && !DSF);
 
 	DROP_CATCH_SAME_STACKLEVEL_AS_PUSH(&state);
 
@@ -1202,7 +1201,7 @@ static REBCNT Set_Option_Word(REBCHR *str, REBCNT field)
 **
 ***********************************************************************/
 {
-	assert((DSP == -1) && (DSF == DSF_NONE));
+	assert(DSP == -1 && !CS_Top && !CS_Running);
 	assert(Saved_State == NULL);
 	// assert(IS_TRASH(TASK_THROWN_ARG));
 }

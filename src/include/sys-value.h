@@ -1083,19 +1083,7 @@ typedef struct Reb_Gob {
 **
 ***********************************************************************/
 
-// !!! Initially Rebol would cache an address of the stack frame base as a
-// pointer, and pass it as a parameter to natives.  This has the clear
-// disadvantage of not being robust with respect to the stack expanding
-// or contracting.  While simply using the global (or maybe per-thread)
-// DSF would be an option, allowing natives to be run against a parameter
-// suggests a potential future where multiple stacks for multiple Rebol
-// engines could exist on the same thread.  That doesn't work today--but
-// this placeholder passing in a copy of the dsf as an integer helps
-// solve the stack expansion crash and also holds the door open for that.
-
-struct Reb_Call {
-	REBINT dsf;
-};
+struct Reb_Call;
 
 // enums in C have no guaranteed size, yet Rebol wants to use known size
 // types in its interfaces.  Hence REB_R is a REBCNT from reb-c.h (and not
@@ -1164,11 +1152,23 @@ typedef struct Reb_Function {
 #define VAL_FUNC_SPEC(v)	  ((v)->data.func.spec)	// a series
 #define VAL_FUNC_SPEC_BLK(v)  BLK_HEAD((v)->data.func.spec)
 #define VAL_FUNC_WORDS(v)     ((v)->data.func.args)
+
+#define VAL_FUNC_NUM_WORDS(v) \
+	(SERIES_TAIL(VAL_FUNC_WORDS(v)) - 1)
+
+#define VAL_FUNC_PARAM(v,p) \
+	BLK_SKIP(VAL_FUNC_WORDS(v), FIRST_PARAM_INDEX + (p) - 1)
+
+#define VAL_FUNC_NUM_PARAMS(v) \
+	(SERIES_TAIL(VAL_FUNC_WORDS(v)) - FIRST_PARAM_INDEX - 1)
+
+#define VAL_FUNC_RETURN_WORD(v) \
+	coming@soon
+
 #define VAL_FUNC_CODE(v)	  ((v)->data.func.func.code)
 #define VAL_FUNC_BODY(v)	  ((v)->data.func.func.body)
 #define VAL_FUNC_ACT(v)       ((v)->data.func.func.act)
 #define VAL_FUNC_INFO(v)      ((v)->data.func.func.info)
-#define VAL_FUNC_ARGC(v)	  SERIES_TAIL((v)->data.func.args)
 
 typedef struct Reb_Path_Value {
 	REBVAL *value;	// modified

@@ -510,12 +510,22 @@ static void Propagate_All_GC_Marks(void);
 **
 ***********************************************************************/
 {
-	REBINT dsf = DSF;
-	while (dsf != -1) {
-		Queue_Mark_Value_Deep(DSF_OUT(dsf));
+	struct Reb_Call *call = CS_Top;
+
+	while (call) {
+		REBCNT index;
+
+		Queue_Mark_Value_Deep(DSF_OUT(call));
+		Queue_Mark_Value_Deep(DSF_FUNC(call));
+		Queue_Mark_Value_Deep(DSF_WHERE(call));
+		Queue_Mark_Value_Deep(DSF_LABEL(call));
+
+		for (index = 1; index <= call->num_vars; index++)
+			Queue_Mark_Value_Deep(DSF_VAR(call, index));
+
 		Propagate_All_GC_Marks();
 
-		dsf = PRIOR_DSF(dsf);
+		call = PRIOR_DSF(call);
 	}
 }
 

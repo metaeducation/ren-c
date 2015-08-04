@@ -87,23 +87,23 @@ void Do_Rebcode(const REBVAL *v) {;}
 ***********************************************************************/
 {
 	REBINT depth = 0;
-	REBINT dsf;
+	struct Reb_Call *call;
 
-	for (dsf = DSF; dsf > 0; dsf = PRIOR_DSF(dsf), depth++);
+	for (call = DSF; call != NULL; call = PRIOR_DSF(call), depth++);
 	return depth;
 }
 
 
 /***********************************************************************
 **
-*/	REBVAL *Stack_Frame(REBCNT n)
+*/	struct Reb_Call *Stack_Frame(REBCNT n)
 /*
 ***********************************************************************/
 {
-	REBINT dsf = DSF;
+	struct Reb_Call *call = DSF;
 
-	for (dsf = DSF; dsf != DSF_NONE; dsf = PRIOR_DSF(dsf)) {
-		if (n-- <= 0) return DS_AT(dsf);
+	for (call = DSF; call != NULL; call = PRIOR_DSF(call)) {
+		if (n-- <= 0) return call;
 	}
 
 	return NULL;
@@ -196,7 +196,8 @@ void Trace_Func(const REBVAL *word, const REBVAL *value)
 	int depth;
 	CHECK_DEPTH(depth);
 	Debug_Fmt_(cs_cast(BOOT_STR(RS_TRACE,5)), Get_Word_Name(word), Get_Type_Name(value));
-	if (GET_FLAG(Trace_Flags, 1)) Debug_Values(DS_AT(DS_ARG_BASE+1), DS_ARGC, 20);
+	if (GET_FLAG(Trace_Flags, 1))
+		Debug_Values(DSF_ARG(DSF, 1), DSF_NUM_ARGS(DSF), 20);
 	else Debug_Line();
 }
 
@@ -253,72 +254,6 @@ void Trace_Arg(REBINT num, const REBVAL *arg, const REBVAL *path)
 	int depth;
 	CHECK_DEPTH(depth);
 	Debug_Fmt(cs_cast(BOOT_STR(RS_TRACE, 10)), &VAL_ERR_VALUES(value)->type, &VAL_ERR_VALUES(value)->id);
-}
-
-
-/***********************************************************************
-**
-*/	REBINT Push_Func(REBVAL *out, REBSER *block, REBCNT index, const REBVAL *label, const REBVAL *func)
-/*
-**		Push on stack a function call frame as defined in stack.h.
-**		Assumes that stack slot for return value has already been pushed.
-**		Block value must not be NULL (otherwise will cause GC fault).
-**
-***********************************************************************/
-{
-#if !defined(NDEBUG)
-	REBINT dsf = DSP;
-#endif
-
-	// Temporary solution while still using the data stack for call frames:
-	// do an indirection so the 'out' pointer is held in a handle value.
-	// This way the REBVAL target can live somewhere other than the data
-	// stack.  This needs special GC treatment--see Mark_Call_Frames_Deep()
-
-	DS_PUSH_TRASH;
-	VAL_SET(DS_TOP, REB_HANDLE);
-	VAL_HANDLE_DATA(DS_TOP) = out;
-
-	// Save prior DSF;
-	DS_PUSH_INTEGER(DSF);
-	assert(DSF == PRIOR_DSF(dsf));
-
-	// Save current evaluation position
-	DS_PUSH_TRASH;
-	assert(block); // Don't accept NULL series
-	VAL_SET(DS_TOP, REB_BLOCK);
-	VAL_SERIES(DS_TOP) = block;
-	VAL_INDEX(DS_TOP) = index;
-	assert(IS_BLOCK(DSF_WHERE(dsf)));
-
-	// Save symbol describing the function (if we called this as the result of
-	// a word or path lookup)
-	if (!label) {
-		// !!! When a function was not invoked through looking up a word to
-		// (or a word in a path) to use as a label, there were three different
-		// alternate labels used.  One was SYM__APPLY_, another was
-		// ROOT_NONAME, and another was to be the type of the function being
-		// executed.  None are fantastic, but we do the type for now.
-		DS_PUSH(Get_Type_Word(VAL_TYPE(func)));
-	}
-	else {
-		assert(IS_WORD(label));
-		DS_PUSH(label);
-	}
-	// !!! Not sure why this is needed; seems the label word should be unbound
-	// if anything...
-	VAL_WORD_FRAME(DS_TOP) = VAL_FUNC_WORDS(func);
-	assert(IS_WORD(DSF_LABEL(dsf)));
-
-	// Save FUNC value for safety (spec, args, code):
-	DS_PUSH(func);
-	assert(ANY_FUNC(DSF_FUNC(dsf)));
-
-	assert(dsf == DSP - DSF_SIZE);
-
-	// frame starts at the return value slot the caller pushed (which will
-	// become the value on top of stack when the function call is popped)
-	return DSP - DSF_SIZE;
 }
 
 
@@ -497,7 +432,7 @@ void Trace_Arg(REBINT num, const REBVAL *arg, const REBVAL *path)
 
 /***********************************************************************
 **
-*/	static REBINT Do_Args(REBVAL *out, REBINT dsf, const REBVAL *path, REBSER *block, REBCNT index)
+*/	static REBINT Do_Args(struct Reb_Call *call, const REBVAL *path, REBSER *block, REBCNT index)
 /*
 **		Evaluate code block according to the function arg spec.
 **		Args are pushed onto the data stack in the same order
@@ -511,112 +446,97 @@ void Trace_Arg(REBINT num, const REBVAL *arg, const REBVAL *path)
 ***********************************************************************/
 {
 #if !defined(NDEBUG)
-	REBINT dsp_after_args;
+	REBINT dsp_orig = DSP;
 #endif
+
+	REBVAL * const out = DSF_OUT(call);
+	const REBVAL *func = DSF_FUNC(call);
+	REBSER *words = VAL_FUNC_WORDS(func);
+	REBVAL *param = VAL_FUNC_PARAM(func, 1);
+	REBVAL *arg = DSF_ARG(call, 1);
 
 	REBVAL *value;
-	REBVAL *args;
-	REBSER *words;
-	REBINT ds = 0;			// stack argument position
-	REBINT dsp = DSP + 1;	// stack base
-	REBVAL *func;
 
-	// We can only assign this *after* the stack expansion (may move it)
-	func = DSF_FUNC(dsf);
-
-	// Note we must compensate for first arg already pushed if it is an OP
-	assert(dsf == DSP - DSF_SIZE - (IS_OP(func) ? 1 : 0));
-
-	// Get list of words:
-	words = VAL_FUNC_WORDS(func);
-	args = BLK_SKIP(words, 1);
-	ds = SERIES_TAIL(words)-1;	// length of stack fill below
-	//Debug_Fmt("Args: %z", VAL_FUNC_WORDS(func));
-
-	// If func is operator, first arg is already on stack:
+	// If func is operator, first arg is already written in
 	if (IS_OP(func)) {
-		//if (!TYPE_CHECK(args, VAL_TYPE(DS_AT(DSP))))
-		//	Trap3_DEAD_END(RE_EXPECT_ARG, DSF_LABEL(dsf), args, Of_Type(DS_AT(ds)));
-		args++;	 	// skip evaluation, but continue with type check
-		ds--;		// shorten stack fill below
+		if (!TYPE_CHECK(param, VAL_TYPE(arg)))
+			Trap3_DEAD_END(RE_EXPECT_ARG, DSF_LABEL(call), param, Of_Type(arg));
+
+		param++;
+		arg++;
 	}
 
-	// Fill stack variables with default values:
-	for (; ds > 0; ds--) DS_PUSH_NONE;
+	// Go thru the word list params:
+	for (; NOT_END(param); param++, arg++) {
 
-#if !defined(NDEBUG)
-	dsp_after_args = DSP;
-#endif
-
-	// Go thru the word list args:
-	ds = dsp;
-	for (; NOT_END(args); args++, ds++) {
-		//if (Trace_Flags) Trace_Arg(ds - dsp, args, path);
-
-		// Process each formal argument:
-		switch (VAL_TYPE(args)) {
+		// Process each parameter:
+		switch (VAL_TYPE(param)) {
 
 		case REB_WORD:		// WORD - Evaluate next value
-			index = Do_Core(out, TRUE, block, index, IS_OP(func));
-			if (index == THROWN_FLAG) goto return_index;
-			if (index == END_FLAG) Trap2_DEAD_END(RE_NO_ARG, DSF_LABEL(dsf), args);
-			*DS_AT(ds) = *out;
+			index = Do_Core(arg, TRUE, block, index, IS_OP(func));
+			if (index == THROWN_FLAG) {
+				*out = *arg;
+				goto return_index;
+			}
+			if (index == END_FLAG) Trap2(RE_NO_ARG, DSF_LABEL(call), param);
 			break;
 
 		case REB_LIT_WORD:	// 'WORD - Just get next value
 			if (index < BLK_LEN(block)) {
 				value = BLK_SKIP(block, index);
 				if (IS_PAREN(value) || IS_GET_WORD(value) || IS_GET_PATH(value)) {
-					index = Do_Core(out, TRUE, block, index, IS_OP(func));
-					if (index == THROWN_FLAG) goto return_index;
+					index = Do_Core(arg, TRUE, block, index, IS_OP(func));
+					if (index == THROWN_FLAG) {
+						*out = *arg;
+						goto return_index;
+					}
 					if (index == END_FLAG) {
 						// end of block "trick" quotes as an UNSET! (still
 						// type checked to see if the parameter accepts it)
-						assert(IS_UNSET(out));
+						assert(IS_UNSET(arg));
 					}
-					*DS_AT(ds) = *out;
 				}
 				else {
 					index++;
-					*DS_AT(ds) = *value;
+					*arg = *value;
 				}
 			} else
-				SET_UNSET(DS_AT(ds)); // allowed to be none
+				SET_UNSET(arg); // allowed to be none
 			break;
 
 		case REB_GET_WORD:	// :WORD - Get value
 			if (index < BLK_LEN(block)) {
-				*DS_AT(ds) = *BLK_SKIP(block, index);
+				*arg = *BLK_SKIP(block, index);
 				index++;
 			} else
-				SET_UNSET(DS_AT(ds)); // allowed to be none
+				SET_UNSET(arg); // allowed to be none
 			break;
 
 		case REB_REFINEMENT: // /WORD - Function refinement
 			if (!path || IS_END(path)) return index;
 			if (IS_WORD(path)) {
 				// Optimize, if the refinement is the next arg:
-				if (SAME_SYM(path, args)) {
-					SET_TRUE(DS_AT(ds)); // set refinement stack value true
+				if (SAME_SYM(path, param)) {
+					SET_TRUE(arg); // set refinement stack value true
 					path++;				// remove processed refinement
 					continue;
 				}
 				// Refinement out of sequence, resequence arg order:
 more_path:
-				ds = dsp;
-				args = BLK_SKIP(words, 1);
-				for (; NOT_END(args); args++, ds++) {
+				param = VAL_FUNC_PARAM(func, 1);
+				arg = DSF_ARG(call, 1);
+				for (; NOT_END(param); param++, arg++) {
 					if (!IS_WORD(path)) {
 						Trap1_DEAD_END(RE_BAD_REFINE, path);
 					}
-					if (IS_REFINEMENT(args) && VAL_WORD_CANON(args) == VAL_WORD_CANON(path)) {
-						SET_TRUE(DS_AT(ds)); // set refinement stack value true
+					if (IS_REFINEMENT(param) && VAL_WORD_CANON(param) == VAL_WORD_CANON(path)) {
+						SET_TRUE(arg); // set refinement stack value true
 						path++;				// remove processed refinement
 						break;
 					}
 				}
 				// Was refinement found? If not, error:
-				if (IS_END(args)) Trap2_DEAD_END(RE_NO_REFINE, DSF_LABEL(dsf), path);
+				if (IS_END(param)) Trap2_DEAD_END(RE_NO_REFINE, DSF_LABEL(call), path);
 				continue;
 			}
 			else Trap1_DEAD_END(RE_BAD_REFINE, path);
@@ -624,12 +544,12 @@ more_path:
 
 		case REB_SET_WORD:	// WORD: - reserved for special features
 		default:
-			Trap_Arg_DEAD_END(args);
+			Trap_Arg_DEAD_END(param);
 		}
 
 		// If word is typed, verify correct argument datatype:
-		if (!TYPE_CHECK(args, VAL_TYPE(DS_AT(ds))))
-			Trap3_DEAD_END(RE_EXPECT_ARG, DSF_LABEL(dsf), args, Of_Type(DS_AT(ds)));
+		if (!TYPE_CHECK(param, VAL_TYPE(arg)))
+			Trap3_DEAD_END(RE_EXPECT_ARG, DSF_LABEL(call), param, Of_Type(arg));
 	}
 
 	// Hack to process remaining path:
@@ -637,7 +557,7 @@ more_path:
 	//	Trap2_DEAD_END(RE_NO_REFINE, DSF_LABEL(dsf), path);
 
 return_index:
-	assert(DSP == dsp_after_args);
+	assert(DSP == dsp_orig);
 	return index;
 }
 
@@ -697,7 +617,7 @@ return_index:
 
 /***********************************************************************
 **
-*/	REBCNT Do_Core(REBVAL *out, REBOOL next, REBSER *block, REBCNT index, REBFLG op)
+*/	REBCNT Do_Core(REBVAL * const out, REBOOL next, REBSER *block, REBCNT index, REBFLG op)
 /*
 **		Evaluate the code block until we have:
 **			1. An irreducible value (return next index)
@@ -718,8 +638,8 @@ return_index:
 	int count;
 #endif
 
-	REBVAL *value;
-	REBINT dsf;
+	const REBVAL *value;
+	struct Reb_Call *call;
 
 	// Functions don't have "names", though they can be assigned to words.
 	// If a function invokes via word lookup (vs. a literal FUNCTION! value),
@@ -730,6 +650,8 @@ return_index:
 	// the data stack.  Some operations need a unit of additional storage.
 	// This is a one-REBVAL-sized cell for saving that data.
 	REBVAL save;
+
+	struct Reb_Call *dsf_precall;
 
 do_value:
 	assert(index != END_FLAG && index != THROWN_FLAG);
@@ -777,7 +699,9 @@ do_value:
 
 			// We will reuse the TOS for the OUT of the call frame
 			label = value;
+
 			value = out;
+
 			if (Trace_Flags) Trace_Line(block, index, value);
 			goto func_needs_push;
 		}
@@ -807,27 +731,26 @@ do_value:
 	func_needs_push:
 		assert(ANY_FUNC(value));
 		assert(DSP == dsp_orig);
-		dsf = Push_Func(out, block, index, label, value);
+		call = Make_Call(out, block, index, label, value);
 		SET_TRASH_SAFE(out); // catch functions that don't write out
 
-	// 'dsf' holds index of new call frame, not yet set during arg evaluation
+	// 'call' holds index of new call frame, not yet set during arg evaluation
 	// (because the arguments want to be computed in the caller's environment)
 	// value can be invalid at this point, but must be retrievable w/DSF_FUNC
 	func_already_pushed:
 		assert(IS_TRASH(out));
-		assert(DSF == -1 || dsf > DSF);
-		index = Do_Args(out, dsf, 0, block, index+1);
+		index = Do_Args(call, 0, block, index+1);
 
 	// The function frame is completely filled with arguments and ready
 	func_ready_to_call:
-		assert(DSF == -1 || dsf > DSF);
-		value = DSF_FUNC(dsf);
+		// value may have started pointing to the out slot, so if we are
+		// to reference the function we need the copy from the call frame
+		value = DSF_FUNC(call);
 		assert(ANY_FUNC(value));
 
 		// if THROW, RETURN, BREAK, CONTINUE during Do_Args
 		if (index == THROWN_FLAG) {
-			// Free the pushed function call frame
-			DS_DROP_TO(dsf);
+			Free_Call(call);
 			goto return_index;
 		}
 
@@ -841,26 +764,32 @@ do_value:
 	#endif
 
 		// The arguments were successfully acquired, so we set the
-		// the DSF to our constructed 'dsf' during the Push_Func...then
+		// the DSF to our constructed 'dsf' during the Make_Call...then
 		// call the function...then put the DSF back to the call level
 		// of whoever called us.
+		//
+		// We need to save what the DSF was prior to our execution, and
+		// cannot simply use our frame's prior...because our frame's
+		// prior call frame may be a *pending* frame that we do not want
+		// to put in effect yet.  (This may be finessed by a better
+		// data structure than a singly linked list at some point.)
 
-		SET_DSF(dsf);
+		dsf_precall = DSF;
+
+		SET_DSF(call);
 		if (Trace_Flags) Trace_Func(label, value);
 		Func_Dispatch[VAL_TYPE(value) - REB_NATIVE](value);
 
 	#if !defined(NDEBUG)
 		assert(DSP >= dsp_precall);
 		if (DSP > dsp_precall) {
-			PROBE_MSG(DSF_WHERE(dsf), "UNBALANCED STACK TRAP!!!");
+			PROBE_MSG(DSF_WHERE(call), "UNBALANCED STACK TRAP!!!");
 			Panic(RP_MISC);
 		}
 	#endif
 
-		SET_DSF(PRIOR_DSF(dsf));
-
-		// Drop stack back to where the DSF_OUT(dsf) is now the Top of Stack
-		DS_DROP_TO(dsf);
+		SET_DSF(dsf_precall);
+		Free_Call(call);
 
 		if (THROWN(out)) {
 			index = THROWN_FLAG;
@@ -875,10 +804,9 @@ do_value:
 
 		// The return value is a FUNC that needs to be re-evaluated.
 		if (VAL_GET_OPT(out, OPTS_REVAL) && ANY_FUNC(out)) {
+			if (IS_OP(out)) Trap_Type_DEAD_END(value); // not allowed
+
 			value = out;
-
-			if (IS_OP(value)) Trap_Type_DEAD_END(value); // not allowed
-
 			label = NULL;
 			index--; // Backup block index to re-evaluate.
 
@@ -893,8 +821,8 @@ do_value:
 	handle_op:
 		assert(index != 0);
 		// TOS has first arg, we will re-use that slot for the OUT value
-		dsf = Push_Func(out, block, index, label, value);
-		DS_PUSH(out); // Copy prior to first argument
+		call = Make_Call(out, block, index, label, value);
+		*DSF_ARG(call, 1) = *out; // Copy prior to first argument
 		SET_TRASH_SAFE(out); // catch functions that don't write out
 		goto func_already_pushed;
 
@@ -929,14 +857,9 @@ do_value:
 
 				if (IS_OP(value)) Trap_Type_DEAD_END(value);
 
-				dsf = Push_Func(out, block, index, label, value);
+				call = Make_Call(out, block, index, label, value);
 
-				index = Do_Args(out, dsf, label + 1, block, index + 1);
-
-				// We now refresh the function value because Do may have moved
-				// the stack.  With the function value saved, we default the
-				// function output to UNSET!
-				value = DSF_FUNC(dsf);
+				index = Do_Args(call, label + 1, block, index + 1);
 
 				goto func_ready_to_call;
 			} else
@@ -997,12 +920,16 @@ do_value:
 			goto handle_op;
 		}
 
-		// WORD! values may look up to an OP!
-		if (IS_WORD(value) && VAL_WORD_FRAME(value)) {
+		// WORD! values may look up to an OP! - don't consider SELF (zero
+		// index) to be a candidate for resolving to an op, however.
+		if (
+			IS_WORD(value)
+			&& VAL_WORD_FRAME(value)
+			&& VAL_WORD_INDEX(value) != 0
+		) {
 			label = value;
-			GET_VAR_INTO(&save, value);
-			if (IS_OP(&save)) {
-				value = &save;
+			value = GET_VAR(value);
+			if (IS_OP(value)) {
 				if (Trace_Flags) Trace_Line(block, index, value);
 				goto handle_op;
 			}
@@ -1291,159 +1218,236 @@ finished:
 
 /***********************************************************************
 **
-*/	void Apply_Block(REBVAL *out, const REBVAL *func, REBVAL *args, REBFLG reduce)
+*/	void Apply_Block(REBVAL *out, const REBVAL *func, REBSER *block, REBCNT index, REBFLG reduce)
 /*
-**		Result is on top of stack.
+**		Use a block at a certain index as the source of parameters to
+**		a function invocation.  If 'reduce' then the block will be
+**		evaluated in steps via DO_NEXT and the results passed as
+**		the arguments, otherwise it will be taken as literal values.
+**
+**		Refinements are passed according to their positions relative
+**		to the order in which they were defined in the spec.  (Brittle,
+**		but that's how it's been done.)  Any conditionally true
+**		value in a refinement position means the refinement will be
+**		passed as TRUE, while conditional falsehood means NONE.
+**		Arguments to an unused refinement will still be evaluated if
+**		'reduce' is set, will be passed as NONE.
+**
+**		The block will be effectively padded with NONE to the number
+**		of arguments if it is shorter than the total needed.  If
+**		there are more values in the block than arguments, that
+**		will be an error.
 **
 ***********************************************************************/
 {
-	REBINT ftype = VAL_TYPE(func) - REB_NATIVE; // function type
-	REBSER *block = VAL_SERIES(args);
-	REBCNT index = VAL_INDEX(args);
-	REBINT dsf;
+#if !defined(NDEBUG)
+	REBINT dsp_orig = DSP;
+#endif
 
-	REBSER *words;
-	REBINT len;
-	REBINT n;
-	REBVAL *val;
+	struct Reb_Call *call;
+	REBVAL *arg;
+	REBVAL *param;
+	REBOOL ignoring = FALSE;
+	REBOOL too_many = FALSE;
+
+	SET_TRASH_SAFE(out);
+
+	// !!! Should OP! be supported here, but just act like a normal function?
+	// Historically that is how it has worked:
+	//
+	//     >> apply :+ [1 2]
+	//     3
+	//
+	// Whether that's confusing or sensible depends.
 
 	if (index > SERIES_TAIL(block)) index = SERIES_TAIL(block);
 
-	// Push function frame:
-	SET_TRASH_SAFE(out);
-	dsf = Push_Func(out, block, index, NULL, func);
-	func = DSF_FUNC(dsf); // for safety
-
-	// Determine total number of args:
-	words = VAL_FUNC_WORDS(func);
-	len = words ? SERIES_TAIL(words)-1 : 0;
+	// Now push function frame
+	call = Make_Call(out, block, index, NULL, func);
 
 	// Gather arguments:
-	if (reduce) {
-		// Reduce block contents to stack:
-		n = 0;
-		while (index < BLK_LEN(block)) {
-			DS_PUSH_TRASH;
-			index = DO_NEXT(DS_TOP, block, index);
-			if (index == THROWN_FLAG) {
-				*out = *DS_TOP;
-				goto return_balanced;
-			}
-			n++;
+
+	arg = DSF_ARG(call, 1);
+	param = VAL_FUNC_PARAM(func, 1);
+
+	while (index < BLK_LEN(block)) {
+		if (!too_many && IS_END(param)) {
+			too_many = TRUE;
+			if (!reduce) break;
+
+			// Semantically speaking, 'apply x y' behaves "as if" you had
+			// written 'apply/only x reduce y'.  This means that even if a
+			// block contains too many values for the function being called,
+			// we can't report that before finishing the reduce.  (e.g.
+			// 'apply does [] [1 2 return 3 4]' should return before there
+			// is an opportunity to report the too-many-args error)
 		}
-	}
-	else {
-		// Copy block contents to stack:
-		n = VAL_BLK_LEN(args);
-		if (len < n) n = len;
-		Push_Stack_Values(BLK_SKIP(block, index), n);
-	}
 
-	// Pad out missing args:
-	for (; n < len; n++) DS_PUSH_NONE;
-
-	// Validate arguments:
-	if (words) {
-		val = DSF_ARG(dsf, 1);
-		for (args = BLK_SKIP(words, FIRST_PARAM_INDEX); NOT_END(args);) {
-			// If arg is refinement, determine its state:
-			if (IS_REFINEMENT(args)) {
-				if (IS_CONDITIONAL_FALSE(val)) {
-					SET_NONE(val);  // ++ ok for none
-					while (TRUE) {
-						val++;
-						args++;
-						if (IS_END(args) || IS_REFINEMENT(args)) break;
-						SET_NONE(val);
-					}
-					continue;
-				}
-				SET_TRUE(val);
-			}
-			// If arg is typed, verify correct argument datatype:
-			if (!TYPE_CHECK(args, VAL_TYPE(val)))
-				Trap3(RE_EXPECT_ARG, DSF_LABEL(dsf), args, Of_Type(val));
-			args++;
-			val++;
+		// Reduce (or just copy) block content to call frame:
+		if (reduce) {
+			index = DO_NEXT(out, block, index);
+			if (index == THROWN_FLAG) goto return_balanced;
+			if (too_many) continue;
+			*arg = *out;
+		} else {
+			assert(!too_many);
+			*arg = *BLK_SKIP(block, index);
+			index++;
 		}
+
+		// If arg is refinement, determine its state:
+		if (IS_REFINEMENT(param)) {
+			if (IS_CONDITIONAL_TRUE(arg)) {
+				// !!! Review this in light of the idea of refinements
+				// holding the value of their words
+				SET_TRUE(arg);
+				ignoring = FALSE;
+			} else {
+				SET_NONE(arg);
+				ignoring = TRUE;
+			}
+		}
+		else {
+			if (ignoring)
+				SET_NONE(arg);
+			else {
+				// If arg is typed, verify correct argument datatype:
+				if (!TYPE_CHECK(param, VAL_TYPE(arg)))
+					Trap3(RE_EXPECT_ARG, DSF_LABEL(call), param, Of_Type(arg));
+			}
+		}
+
+		arg++;
+		param++;
 	}
 
-	// Evaluate the function:
-	SET_TRASH_SAFE(out);
-	SET_DSF(dsf);
-	Func_Dispatch[ftype](func);
-	SET_DSF(PRIOR_DSF(dsf));
+	if (too_many) {
+		// With the effective reduction of the block (if it was necessary)
+		// now we can report an error about the size.  "Content too long"
+		// is probably not the right error; needs a more specific one.
+		Trap(RE_TOO_LONG);
+	}
+
+	// Evaluate the function
+
+	SET_DSF(call);
+	Func_Dispatch[VAL_TYPE(func) - REB_NATIVE](func);
+	SET_DSF(PRIOR_DSF(call));
 
 return_balanced:
-	DS_DROP_TO(dsf); // put data stack back where it was when we were called
+	Free_Call(call);
+	assert(DSP == dsp_orig);
 }
 
 
 /***********************************************************************
 **
-*/	void Apply_Function(REBVAL *out, const REBVAL *func, va_list *args)
+*/	void Apply_Function(REBVAL *out, const REBVAL *func, va_list *values)
 /*
 **		(va_list by pointer: http://stackoverflow.com/a/3369762/211160)
 **
 **		Applies function from args provided by C call. Zero terminated.
-**		Result returned on TOS
+**		Does not type check in release build; assumes the system is
+**		calling correctly (Debug build does check)
 **
+**		out	- result value (may be THROWN())
 **		func - function to call
-**		args - list of function args (null terminated)
+**		values - values to pass as function args (null terminated)
+**
+**		!!! OPs are allowed, treated as normal functions.  Good idea?
 **
 ***********************************************************************/
 {
-	REBINT dsf;
-	REBSER *words;
-	REBCNT ds;
+	struct Reb_Call *call;
+	REBVAL *param;
 	REBVAL *arg;
+	REBVAL *value;
 
-	REBSER *wblk; // where block (where we were called)
-	REBCNT widx; // where index (position in above block)
+	REBOOL ignoring = FALSE;
 
-	// For debugging purposes, DO wants to know what our execution
+	REBSER *where_block;
+	REBCNT where_index;
+
+	// For debug backtracing, DO wants to know what our execution
 	// block and position are.  We have to make something up, because
 	// this call is originating from C code (not Rebol code).
-	if (DSF != DSF_NONE) {
+
+	if (DSF) {
 		// Some function is on the stack, so fabricate our execution
 		// position by copying the block and position it was at.
 
-		wblk = VAL_SERIES(DSF_WHERE(DSF));
-		widx = VAL_INDEX(DSF_WHERE(DSF));
+		where_block = VAL_SERIES(DSF_WHERE(DSF));
+		where_index = VAL_INDEX(DSF_WHERE(DSF));
 	}
 	else if (IS_FUNCTION(func) || IS_CLOSURE(func)) {
 		// Stack is empty, so offer up the body of the function itself
 		// (if it has a body!)
-		wblk = VAL_FUNC_BODY(func);
-		widx = 0;
+
+		where_block = VAL_FUNC_BODY(func);
+		where_index = 0;
 	}
 	else {
 		// We got nothin'.  Give back the specially marked "top level"
 		// empty block just to provide something in the slot
-		// !!! Could use more sophisticated backtracing here, and in general
-		wblk = EMPTY_SERIES;
-		widx = 0;
+		// !!! Could use more sophisticated backtracing in general
+
+		where_block = EMPTY_SERIES;
+		where_index = 0;
 	}
 
 	SET_TRASH_SAFE(out);
-	dsf = Push_Func(out, wblk, widx, NULL, func);
-	func = DSF_FUNC(dsf); // for safety
-	words = VAL_FUNC_WORDS(func);
-	ds = SERIES_TAIL(words)-1;	// length of stack fill below
 
-	// Gather arguments from C stack:
-	for (; ds > 0; ds--) {
-		arg = va_arg(*args, REBVAL*); // get value
-		if (arg) DS_PUSH(arg);  // push it; no type check
-		else break;
+	call = Make_Call(out, where_block, where_index, NULL, func);
+
+	param = VAL_FUNC_PARAM(func, 1);
+	arg = DSF_ARG(call, 1);
+
+	for (; NOT_END(param); param++, arg++) {
+		const REBVAL *value = va_arg(*values, REBVAL*);
+
+		if (!value) break;
+
+		if (THROWN(value)) {
+			*out = *value;
+			goto return_balanced;
+		}
+
+		*arg = *value;
+
+	#ifndef NDEBUG
+		// !!! Should this be in the release build or "just trust it"?
+		// original code had no checking whatsoever.
+
+		if (IS_REFINEMENT(param)) {
+			if (IS_LOGIC(arg) && VAL_LOGIC(arg))
+				ignoring = FALSE;
+			else if (IS_NONE(arg))
+				ignoring = TRUE;
+			else {
+				// !!! Old code did not force to TRUE or NONE.  But functions
+				// expect a refinement to be TRUE or NONE.  Should we test for
+				// IS_CONDITIONAL_TRUE and give the appropriate value, giving
+				// C-invocations the same leeway as APPLY?
+				assert(FALSE);
+			}
+		}
+		else if (ignoring)
+			assert(IS_NONE(arg)); // !!! again, old code did not force this
+		else {
+			// If arg is typed, verify correct argument datatype:
+			if (!TYPE_CHECK(param, VAL_TYPE(arg)))
+				Trap3(RE_EXPECT_ARG, DSF_LABEL(call), param, Of_Type(arg));
+		}
+	#endif
 	}
-	for (; ds > 0; ds--) DS_PUSH_NONE; // unused slots
 
 	// Evaluate the function:
-	SET_DSF(dsf);
+	SET_DSF(call);
 	Func_Dispatch[VAL_TYPE(func) - REB_NATIVE](func);
-	SET_DSF(PRIOR_DSF(dsf));
-	DS_DROP_TO(dsf);
+	SET_DSF(PRIOR_DSF(call));
+
+return_balanced:
+	Free_Call(call);
 }
 
 
@@ -1592,34 +1596,6 @@ return_balanced:
 
 /***********************************************************************
 **
-*/	void Call_Func(REBVAL *func_val)
-/*
-**		Calls a REBOL function from C code.
-**
-**	Setup:
-**		Before calling this, the caller must setup the stack and
-**		provide the function arguments on the stack. Any missing
-**		args will be set to NONE.
-**
-**	Return:
-**		On return, the stack remains as-is. The caller must reset
-**		the DSP and DSF values.
-**
-***********************************************************************/
-{
-	REBINT n;
-
-	// Caller must: Prep_Func + Args above
-	VAL_WORD_FRAME(DSF_LABEL(DSF)) = VAL_FUNC_WORDS(func_val);
-	n = DS_ARGC - (SERIES_TAIL(VAL_FUNC_WORDS(func_val)) - 1);
-	for (; n > 0; n--) DS_PUSH_NONE;
-	Func_Dispatch[VAL_TYPE(func_val)-REB_NATIVE](func_val);
-	// Caller must: pop stack back
-}
-
-
-/***********************************************************************
-**
 */	void Redo_Func(REBVAL *func_val)
 /*
 **		Trampoline a function, restacking arguments as needed.
@@ -1638,7 +1614,8 @@ return_balanced:
 	REBVAL *word2;
 	REBINT dsp_orig = DSP;
 
-	REBINT dsf;
+	struct Reb_Call *call;
+	REBVAL *arg;
 
 	wsrc = VAL_FUNC_WORDS(DSF_FUNC(DSF));
 	wnew = VAL_FUNC_WORDS(func_val);
@@ -1647,7 +1624,7 @@ return_balanced:
 	// label, or place to write the output.  We are substituting new code
 	// and perhaps adjusting the arguments in our re-doing call.
 
-	dsf = Push_Func(
+	call = Make_Call(
 		DSF_OUT(DSF),
 		VAL_SERIES(DSF_WHERE(DSF)),
 		VAL_INDEX(DSF_WHERE(DSF)),
@@ -1656,7 +1633,8 @@ return_balanced:
 	);
 
 	// Foreach arg of the target, copy to source until refinement.
-	for (isrc = inew = FIRST_PARAM_INDEX; inew < BLK_LEN(wnew); inew++, isrc++) {
+	arg = DSF_ARG(call, 1);
+	for (isrc = inew = FIRST_PARAM_INDEX; inew < BLK_LEN(wnew); inew++, isrc++, arg++) {
 		word = BLK_SKIP(wnew, inew);
 		if (isrc > BLK_LEN(wsrc)) isrc = BLK_LEN(wsrc);
 
@@ -1667,13 +1645,13 @@ return_balanced:
 			case REB_LIT_WORD:
 			case REB_GET_WORD:
 				if (VAL_TYPE(word) == VAL_TYPE(BLK_SKIP(wsrc, isrc))) {
-					DS_PUSH(DSF_ARG(DSF, isrc));
+					*arg = *DSF_ARG(DSF, isrc);
 					// !!! Should check datatypes for new arg passing!
 				}
 				else {
 					// !!! Why does this allow the bounced-to function to have
 					// a different type, push a none, and not 'Trap_Arg(word);'
-					DS_PUSH_NONE;
+					SET_NONE(arg);
 				}
 				break;
 
@@ -1685,7 +1663,7 @@ return_balanced:
 					IS_REFINEMENT(word2)
 					&& VAL_WORD_CANON(word2) == VAL_WORD_CANON(word)
 				) {
-					DS_PUSH(DSF_ARG(DSF, isrc));
+					*arg = *DSF_ARG(DSF, isrc);
 				}
 				else {
 					// No, we need to search for it:
@@ -1695,13 +1673,13 @@ return_balanced:
 							IS_REFINEMENT(word2)
 							&& VAL_WORD_CANON(word2) == VAL_WORD_CANON(word)
 						) {
-							DS_PUSH(DSF_ARG(DSF, isrc));
+							*arg = *DSF_ARG(DSF, isrc);
 							break;
 						}
 					}
 					// !!! The function didn't have the refinement so skip
 					// it.  But what will happen now with the arguments?
-					DS_PUSH_NONE;
+					SET_NONE(arg);
 					//if (isrc >= BLK_LEN(wsrc)) Trap_Arg(word);
 				}
 				break;
@@ -1714,12 +1692,12 @@ return_balanced:
 	// !!! Temporary; there's a better factoring where we don't have this
 	// dispatch duplicated coming...
 
-	SET_DSF(dsf);
+	SET_DSF(call);
 
 	Func_Dispatch[VAL_TYPE(func_val)-REB_NATIVE](func_val);
-	SET_DSF(PRIOR_DSF(dsf));
+	SET_DSF(PRIOR_DSF(call));
 
-	DS_DROP_TO(dsp_orig);
+	Free_Call(call);
 }
 
 

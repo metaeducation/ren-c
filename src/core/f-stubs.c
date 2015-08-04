@@ -261,10 +261,11 @@
 {
 	REBINT n;
 	REBCNT result = 0;
-	REBINT len = DS_ARGC;
 
-	for (n = 0; n < len; n++) {
-		if ((mask & (1 << n) && D_REF(n+1)))
+	REBINT max = DSF_NUM_ARGS(call_);
+
+	for (n = 0; n < max; n++) {
+		if ((mask & (1 << n) && D_REF(n + 1)))
 			result |= 1 << n;
 	}
 	return result;

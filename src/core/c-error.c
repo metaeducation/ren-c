@@ -120,7 +120,7 @@
 **
 ***********************************************************************/
 {
-	assert(Saved_State || ((DSP == -1) && (DSF == DSF_NONE)));
+	assert(Saved_State || (DSP == -1 && !DSF));
 
 	s->dsp = DSP;
 	s->dsf = DSF;
@@ -173,22 +173,24 @@
 **
 ***********************************************************************/
 {
+	struct Reb_Call *call = CS_Top;
+
 	// You're only supposed to throw an error.
 	assert(IS_ERROR(&state->error));
 
 	// !!! Reset or ENABLE_GC; ?
 
-	// Restore elements from initial state, like stack position and frame
-	while (DSF != state->dsf) {
-		REBINT dsf = DSF;
-		SET_DSF(PRIOR_DSF(DSF));
-
-		// !!! Do stuff needed for each call stack frame getting blown away
-		// (in StableStack, we must release the stable frame pointer itself)
-		/* something done with dsf... */
+	// Restore Rebol call stack frame at time of Push_Catch
+	while (call != state->dsf) {
+		struct Reb_Call *prior = call->prior;
+		Free_Call(call);
+		call = prior;
 	}
+	SET_DSF(state->dsf);
 
+	// Restore Rebol data stack pointer at time of Push_Catch
 	DS_DROP_TO(state->dsp);
+
 	GC_Protect->tail = state->hold_tail;
 	GC_Disabled = state->gc_disable;
 
@@ -412,10 +414,10 @@
 /*
 ***********************************************************************/
 {
-	REBINT dsf = DSF;
+	struct Reb_Call *call = DSF;
 	REBCNT count = 0;
 
-	for (dsf = DSF; dsf != DSF_NONE; dsf = PRIOR_DSF(dsf)) {
+	for (call = DSF; call != NULL; call = PRIOR_DSF(call)) {
 		count++;
 	}
 
@@ -433,13 +435,13 @@
 {
 	REBCNT depth = Stack_Depth();
 	REBSER *blk = Make_Block(depth-start);
-	REBINT dsf;
+	struct Reb_Call *call;
 	REBVAL *val;
 
-	for (dsf = DSF; dsf != DSF_NONE; dsf = PRIOR_DSF(dsf)) {
+	for (call = DSF; call != NULL; call = PRIOR_DSF(call)) {
 		if (start-- <= 0) {
 			val = Alloc_Tail_Blk(blk);
-			Init_Word_Unbound(val, REB_WORD, VAL_WORD_SYM(DSF_LABEL(dsf)));
+			Init_Word_Unbound(val, REB_WORD, VAL_WORD_SYM(DSF_LABEL(call)));
 		}
 	}
 
@@ -633,7 +635,7 @@
 	if (arg3) error->arg3 = *arg3;
 
 	// Set backtrace and location information:
-	if (DSF != DSF_NONE) {
+	if (DSF) {
 		// Where (what function) is the error:
 		Set_Block(&error->where, Make_Backtrace(0));
 		// Nearby location of the error (in block being evaluated):

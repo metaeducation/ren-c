@@ -174,7 +174,7 @@
 	nums[5]	= Eval_Signals;
 	nums[6] = Eval_Sigmask;
 	nums[7] = DSP;
-	nums[8] = DSF;
+	nums[8] = Stack_Depth(); // DSF
 	nums[9] = 0;
 	nums[10] = GC_Ballast;
 	nums[11] = GC_Disabled;
@@ -189,7 +189,7 @@
 
 /***********************************************************************
 **
-*/  void Dump_Stack(REBINT dsf, REBINT dsp)
+*/  void Dump_Stack(struct Reb_Call *call, REBINT dsp)
 /*
 ***********************************************************************/
 {
@@ -197,23 +197,29 @@
 	REBINT m;
 	REBVAL *args;
 
-	if (dsf == -1) {
-		dsf = DSF;
+	if (!call) {
+		call = DSF;
 		dsp = DSP;
 	}
 
-	m = dsp - dsf - DSF_SIZE;
-	Debug_Fmt(cs_cast(BOOT_STR(RS_STACK, 1)), dsp, Get_Word_Name(DSF_LABEL(dsf)), m, Get_Type_Name(DSF_FUNC(dsf)));
+	m = 0; // !!! dsp - dsf - DSF_SIZE
+	Debug_Fmt(
+		cs_cast(BOOT_STR(RS_STACK, 1)),
+		dsp,
+		Get_Word_Name(DSF_LABEL(call)),
+		m,
+		Get_Type_Name(DSF_FUNC(call))
+	);
 
-	if (dsf > 0) {
-		if (ANY_FUNC(DSF_FUNC(dsf))) {
-			args = BLK_HEAD(VAL_FUNC_WORDS(DSF_FUNC(dsf)));
-			m = SERIES_TAIL(VAL_FUNC_WORDS(DSF_FUNC(dsf)));
+	if (call) {
+		if (ANY_FUNC(DSF_FUNC(call))) {
+			args = BLK_HEAD(VAL_FUNC_WORDS(DSF_FUNC(call)));
+			m = SERIES_TAIL(VAL_FUNC_WORDS(DSF_FUNC(call)));
 			for (n = 1; n < m; n++)
-				Debug_Fmt("\t%s: %72r", Get_Word_Name(args+n), DSF_ARG(dsf, n));
+				Debug_Fmt("\t%s: %72r", Get_Word_Name(args+n), DSF_ARG(call, n));
 		}
 		//Debug_Fmt(Str_Stack[2], PRIOR_DSF(dsf));
-		if (PRIOR_DSF(dsf) != DSF_NONE) Dump_Stack(PRIOR_DSF(dsf), dsf);
+		if (PRIOR_DSF(call)) Dump_Stack(PRIOR_DSF(call), dsp);
 	}
 
 	//for (n = 1; n <= 2; n++) {

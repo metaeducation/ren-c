@@ -281,17 +281,12 @@
 	const REBYTE *this_native_name = Get_Word_Name(DSF_LABEL(DSF));
 #endif
 
-	struct Reb_Call call;
 	REBVAL *out = DSF_OUT(DSF);
 	REB_R ret;
 
 	Eval_Natives++;
 
-	call.dsf = DSF;
-
-	ret = VAL_FUNC_CODE(func)(&call);
-
-	assert(DSF == call.dsf);
+	ret = VAL_FUNC_CODE(func)(DSF);
 
 	switch (ret) {
 	case R_OUT: // for compiler opt
@@ -333,7 +328,6 @@
 	const REBYTE *this_action_name = Get_Word_Name(DSF_LABEL(DSF));
 #endif
 
-	struct Reb_Call call;
 	REBVAL *out = DSF_OUT(DSF);
 	REBCNT type = VAL_TYPE(DSF_ARG(DSF, 1));
 	REBACT action;
@@ -350,13 +344,9 @@
 		return;
 	}
 
-	call.dsf = DSF;
-
 	action = Value_Dispatch[type];
 	if (!action) Trap_Action(type, VAL_FUNC_ACT(func));
-	ret = action(&call, VAL_FUNC_ACT(func));
-
-	assert(DSF == call.dsf);
+	ret = action(DSF, VAL_FUNC_ACT(func));
 
 	switch (ret) {
 	case R_OUT: // for compiler opt
@@ -425,16 +415,38 @@
 	REBSER *body;
 	REBSER *frame;
 	REBVAL *out = DSF_OUT(DSF);
+	REBVAL *value;
+	REBCNT word_index;
 
 	Eval_Functions++;
 	//DISABLE_GC;
 
-	// Clone the body of the function to allow rebinding to it:
+	// Clone the body of the closure to allow us to rebind words inside
+	// of it so that they point specifically to the instances for this
+	// invocation.  (Costly, but that is the mechanics of words.)
 	body = Clone_Block(VAL_FUNC_BODY(func));
 
-	// Copy stack frame args as the closure object (one extra at head)
-	frame = Copy_Values(BLK_SKIP(DS_Series, DS_ARG_BASE), SERIES_TAIL(VAL_FUNC_WORDS(func)));
-	SET_FRAME(BLK_HEAD(frame), 0, VAL_FUNC_WORDS(func));
+	// Copy stack frame variables as the closure object.  The +1 is for
+	// SELF, as the REB_END is already accounted for by Make_Blk.
+
+	frame = Make_Block(DSF->num_vars + 1);
+	value = BLK_HEAD(frame);
+
+	assert(DSF->num_vars == VAL_FUNC_NUM_WORDS(func));
+
+	SET_FRAME(value, NULL, VAL_FUNC_WORDS(func));
+	value++;
+
+	for (word_index = 1; word_index <= DSF->num_vars; word_index++)
+		*value++ = *DSF_VAR(DSF, word_index);
+
+	frame->tail = word_index;
+	TERM_SERIES(frame);
+	ASSERT_FRAME(frame);
+
+	// !!! For *today*, no option for function/closure to have a SELF
+	// referring to their function or closure values.
+	assert(VAL_WORD_SYM(BLK_HEAD(VAL_FUNC_WORDS(func))) == SYM_NOT_USED);
 
 	// Rebind the body to the new context (deeply):
 	Rebind_Block(VAL_FUNC_WORDS(func), frame, BLK_HEAD(body), REBIND_TYPE);
@@ -454,6 +466,8 @@
  */
 {
 	//RL_Print("%s, %d\n", __func__, __LINE__);
-	REBSER *args = Copy_Values(BLK_SKIP(DS_Series, DS_ARG_BASE + 1), SERIES_TAIL(VAL_FUNC_WORDS(routine)) - 1);
+	REBSER *args = Copy_Values(
+		DSF_ARG(DSF, 1), SERIES_TAIL(VAL_FUNC_WORDS(routine)) - 1
+	);
 	Call_Routine(routine, args, DSF_OUT(DSF));
 }

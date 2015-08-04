@@ -297,24 +297,25 @@ const char *evoke_help = "Evoke values:\n"
 ***********************************************************************/
 {
 	REBINT index = VAL_INT32(D_ARG(1));
-	REBVAL *sp;
+	struct Reb_Call *call;
 	REBCNT len;
 
 	Check_Security(SYM_DEBUG, POL_READ, 0);
 
-	sp = Stack_Frame(index);
-	if (!sp) return R_NONE;
+	call = Stack_Frame(index);
+	if (!call) return R_NONE;
 
-	if (D_REF(2)) *D_OUT = sp[1];		// block
+	if (D_REF(2)) *D_OUT = *DSF_WHERE(call);
 	else if (D_REF(3)) {
-		Init_Word_Unbound(D_OUT, REB_WORD, VAL_WORD_SYM(sp+2));	// word
+		Init_Word_Unbound(D_OUT, REB_WORD, VAL_WORD_SYM(DSF_LABEL(call)));
 	}
-	else if (D_REF(4)) *D_OUT = sp[3];	// func
-	else if (D_REF(5)) {		// args
+	else if (D_REF(4)) *D_OUT = *DSF_FUNC(call);
+	else if (D_REF(5)) {
 		len = 0;
-		if (ANY_FUNC(sp+3)) len = VAL_FUNC_ARGC(sp+3)-1;
-		sp += 4;
-		Set_Block(D_OUT, Copy_Values(sp, len));
+		if (ANY_FUNC(DSF_FUNC(call))) len = (
+			VAL_FUNC_NUM_PARAMS(DSF_FUNC(call)) - 1
+		);
+		Set_Block(D_OUT, Copy_Values(DSF_ARG(call, 1), len));
 	}
 	else if (D_REF(6)) {		// size
 		SET_INTEGER(D_OUT, DSP+1);

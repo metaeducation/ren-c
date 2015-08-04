@@ -617,15 +617,38 @@ static int Check_Char_Range(REBVAL *val, REBINT limit)
 
 //** SERIES ************************************************************
 
+// !!! The hack of Do_Ordinal() when function arguments lived on
+// the data stack was to push an integer extra argument onto
+// a single arity native.  This is completely incompatible with
+// refinements and just a bad idea in general.  To try and
+// minimize the churn of the initial call frame checkin, we just
+// make another here for now.
+
 static int Do_Ordinal(struct Reb_Call *call_, REBINT n)
 {
 	// Is only valid when returned from ACTION function itself.
 	REBACT action = Value_Dispatch[VAL_TYPE(D_ARG(1))];
 	REB_R ret;
 
-	DS_PUSH_INTEGER(n);
-	ret = action(call_, A_PICK);  // returns R_OUT and other cases
-	DS_DROP;
+	struct Reb_Call *restacked = cast(struct Reb_Call*, ALLOC_ARRAY(REBYTE*,
+		sizeof(struct Reb_Call) + sizeof(REBVAL) * 2
+	));
+
+	// !!! This is all hacky, and doing a bit copy of the call stack
+	// frame is hacky.  We disrupt the linked list with the copy so
+	// we have to put the pointer back.  :-/
+	*restacked = *call_;
+	assert(DSF_NUM_ARGS(call_) == 1);
+	restacked->num_vars = 2;
+	restacked->prior = call_;
+	CS_Top = restacked;
+
+	// We are turning 'first x' into 'pick x 1'.
+	SET_INTEGER(DSF_ARG(restacked, 2), n);
+
+	ret = action(restacked, A_PICK);  // returns R_OUT and other cases
+
+	Free_Call(restacked);
 
 	return ret;
 }
@@ -741,6 +764,19 @@ static int Do_Ordinal(struct Reb_Call *call_, REBINT n)
 	REBCNT t;
 	REB_R ret;
 
+	struct Reb_Call *restacked = cast(struct Reb_Call*, ALLOC_ARRAY(REBYTE*,
+		sizeof(struct Reb_Call) + sizeof(REBVAL) * 2
+	));
+
+	// !!! This is all hacky, and doing a bit copy of the call stack
+	// frame is hacky.  We disrupt the linked list with the copy so
+	// we have to put the pointer back.  :-/
+	*restacked = *call_;
+	assert(DSF_NUM_ARGS(call_) == 1);
+	restacked->num_vars = 2;
+	restacked->prior = call_;
+	CS_Top = restacked;
+
 	action = Value_Dispatch[VAL_TYPE(val)];
 	if (ANY_SERIES(val)) {
 		t = VAL_TAIL(val);
@@ -753,9 +789,12 @@ static int Do_Ordinal(struct Reb_Call *call_, REBINT n)
 	}
 	else t = 0; // let the action throw the error
 
-	DS_PUSH_INTEGER(t);
-	ret = action(call_, A_PICK);
-	DS_DROP;
+	// We are turning 'last x' into 'pick x t'.
+	SET_INTEGER(DSF_ARG(restacked, 2), t);
+
+	ret = action(restacked, A_PICK);
+
+	Free_Call(restacked);
 
 	return ret;
 }

@@ -295,9 +295,19 @@ enum {
 **
 */	REBNATIVE(apply)
 /*
+**		1: func
+**		2: block
+**		3: /only
+**
 ***********************************************************************/
 {
-	Apply_Block(D_OUT, D_ARG(1), D_ARG(2), !D_REF(3));
+	REBVAL * func = D_ARG(1);
+	REBVAL * block = D_ARG(2);
+	REBOOL reduce = !D_REF(3);
+
+	Apply_Block(
+		D_OUT, func, VAL_SERIES(block), VAL_INDEX(block), reduce
+	);
 	return R_OUT;
 }
 

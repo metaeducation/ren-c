@@ -79,7 +79,7 @@ typedef struct Rebol_State {
 	struct Rebol_State *last_state;
 
 	REBINT dsp;
-	REBINT dsf;
+	struct Reb_Call *dsf;
 	REBCNT hold_tail;	// Tail for GC_Protect
 	REBVAL error;
 	REBINT gc_disable;      // Count of GC_Disables at time of Push

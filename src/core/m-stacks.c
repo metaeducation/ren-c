@@ -37,7 +37,8 @@
 {
 	DS_Series = Make_Block(size);
 	Set_Root_Series(TASK_STACK, DS_Series, "data stack"); // uses special GC
-	SET_DSF(DSF_NONE);
+	CS_Running = NULL;
+	CS_Top = NULL;
 }
 
 
@@ -112,11 +113,105 @@
 }
 
 
+/***********************************************************************
+**
+*/	struct Reb_Call *Make_Call(REBVAL *out, REBSER *block, REBCNT index, const REBVAL *label, const REBVAL *func)
+/*
+**		Create a function call frame as defined in stack.h.
+**
+**		We do not push the frame at the same time we create it,
+**		because we need to fulfill its arguments in the caller's
+**		frame before we actually invoke the function.
+**
+***********************************************************************/
+{
+	REBCNT num_vars = VAL_FUNC_NUM_WORDS(func);
+
+	// Variable-sized allocation (would ideally use chunking)
+	struct Reb_Call *call = cast(struct Reb_Call*, ALLOC_ARRAY(REBYTE*,
+		sizeof(struct Reb_Call) + sizeof(REBVAL) * num_vars
+	));
+
+	// Even though we can't push this stack frame to the CSP yet, it
+	// still needs to be considered for GC and freeing in case of a
+	// trap.  In a recursive DO we can get many pending frames before
+	// we come back to actually putting the topmost one in effect.
+	// !!! Better design for call frame stack coming.
+	call->prior = CS_Top;
+	CS_Top = call;
+
+#if !defined(NDEBUG)
+	call->pending = TRUE;
+#endif
+
+	call->out = out;
+
+	assert(ANY_FUNC(func));
+	call->func = *func;
+
+	assert(block); // Don't accept NULL series
+	VAL_SET(&call->where, REB_BLOCK);
+	VAL_SERIES(&call->where) = block;
+	VAL_INDEX(&call->where) = index;
+
+	// Save symbol describing the function (if we called this as the result of
+	// a word or path lookup)
+	if (!label) {
+		// !!! When a function was not invoked through looking up a word to
+		// (or a word in a path) to use as a label, there were three different
+		// alternate labels used.  One was SYM__APPLY_, another was
+		// ROOT_NONAME, and another was to be the type of the function being
+		// executed.  None are fantastic, but we do the type for now.
+		call->label = *Get_Type_Word(VAL_TYPE(func));
+	}
+	else {
+		assert(IS_WORD(label));
+		call->label = *label;
+	}
+	// !!! Not sure why this is needed; seems the label word should be unbound
+	// if anything...
+	VAL_WORD_FRAME(&call->label) = VAL_FUNC_WORDS(func);
+
+	// Fill call frame's args with default of NONE!.  Have to do this in
+	// advance because refinement filling often skips around; if you have
+	// 'foo: func [/bar a /baz b] [...]' and you call foo/baz, it will jump
+	// ahead to process positions 3 and 4, then determine there are no more
+	// refinements, and not revisit slots 1 and 2.
+	//
+	// It's also necessary because the slots must be GC-safe values, in case
+	// there is a Recycle() during argument fulfillment.
+
+	call->num_vars = num_vars;
+	{
+		REBCNT var_index;
+		for (var_index = 0; var_index < num_vars; var_index++)
+			SET_NONE(&call->vars[var_index]);
+	}
+
+	return call;
+}
+
+
+/***********************************************************************
+**
+*/	void Free_Call(struct Reb_Call* call)
+/*
+***********************************************************************/
+{
+	assert(call == CS_Top);
+	CS_Top = call->prior;
+
+	// See notes on why there is a -1 here, to allow for safe compilation
+	// in C++ where vars cannot be a zero size array
+	Free_Mem(call, sizeof(struct Reb_Call) + sizeof(REBVAL) * call->num_vars);
+}
+
+
 #ifdef STRESS
 
 /***********************************************************************
 **
-*/	REBINT* DSF_Stress(void)
+*/	struct Reb_Call *DSF_Stress(void)
 /*
 **		If there is an issue in testing where the function call frame
 **		is found to contain bad information at some point, this
@@ -124,23 +219,20 @@
 **		DSF is a macro which is changed to call this function (and
 **		then dereference the returned pointer to get an LValue).
 **
-**		More checks are possible, but the call stack model will be
-**		changing to not use the data stack (to an implementation with
-**		stable value pointers for the argumetns), so this is a
-**		placeholder until that implementation is committed.
+**		!!! This was used when the call stack frames were on the
+**		data stack and could get intermingled; less relevant now.
 **
 ***********************************************************************/
 {
 	assert(DSP >= -1);
-	if (DS_Frame_Index != DSF_NONE) {
-		assert(DS_Frame_Index >= -1 && DSP >= DS_Frame_Index);
-		assert(PRIOR_DSF(DS_Frame_Index) < DS_Frame_Index);
-		assert(ANY_FUNC(DSF_FUNC(DS_Frame_Index)));
-		assert(ANY_BLOCK(DSF_WHERE(DS_Frame_Index)));
-		ASSERT_BLK(VAL_SERIES(DSF_WHERE(DS_Frame_Index)));
+	if (CS_Running) {
+		REBCNT index;
+		assert(ANY_FUNC(DSF_FUNC(CS_Running)));
+		assert(ANY_BLOCK(DSF_WHERE(CS_Running)));
+		ASSERT_BLK(VAL_SERIES(DSF_WHERE(CS_Running)));
 	}
 
-	return &DS_Frame_Index;
+	return CS_Running;
 }
 
 #endif

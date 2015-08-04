@@ -54,17 +54,26 @@
 **		as a common buffer for values that are being gathered to be
 **		inserted into another series.  It's better to go through this
 **		buffer step because it means the precise size of the new
-**		insertions ahead of time.  If a new series is to be created,
-**		it will not waste space or time on expansions.  If a series
+**		insertions are known ahead of time.  If a series is created,
+**		it will not waste space or time on expansion, and if a series
 **		is to be inserted into as a target, the proper size gap for
-**		the insertion can be opened up exactly once without any
-**		need for repeatedly shuffling on individual insertions.
+**		the insertion can be opened up exactly once (without any
+**		need for repeatedly shuffling on individual insertions).
 **
 **		Beyond that purpose, the data stack can also be used as a
 **		place to store a value to protect it from the garbage
 **		collector.  The stack must be balanced in the case of success
 **		when a native or action runs, but if a Trap() is called then
 **		the stack will be automatically balanced.
+**
+**		The data stack specifically needs contiguous memory for its
+**		applications.  That is more important than having stability
+**		of pointers to any data on the stack.  Hence if any push or
+**		pops can happen, there is no guarantee that the pointers will
+**		remain consistent...as the memory buffer may need to be
+**		reallocated (and hence relocated).  The index positions will
+**		remain consistent, however: and using DSP and DS_AT it is
+**		possible to work with stack items by index.
 **
 ***********************************************************************/
 
@@ -168,64 +177,100 @@
 #endif
 
 
-// "Data Stack Frame" indexes into Rebol's data stack at the location where
-// the block of information about a function call begins.  It starts with the
-// location where the return value is written, and has other properties (like
-// the REBVAL of the function being called itself) up to the values that are
-// computed arguments to the function.
+/***********************************************************************
+**
+**	REBOL CALL STACK (CS)
+**
+**		The requirements for the call stack are different from the data
+**		stack, due to a need for pointer stability.  Being an ordinary
+**		series, the data stack will relocate its memory on expansion.
+**		This creates problems for natives and actions where pointers to
+**		parameters are saved to variables from D_ARG(N) macros.  These
+**		would need a refresh after every potential expanding operation.
+**
+**		Having a separate data structure offers other opportunities,
+**		such as hybridizing with CLOSURE! argument objects such that
+**		they would not need to be copied from the data stack.  It also
+**		allows freeing the information tracked by calls from the rule
+**		of being strictly a sequence of REBVALs.
+**
+***********************************************************************/
 
-// !!! Note that terminology-wise, the slot in the frame that used to be
-// called DSF_RETURN is now called DSF_OUT.  It is the first element in
-// the frame in the data-stack implementation, because when the stack is
-// "dropped" back to the point where the call was made, it is what is on
-// the top of the stack.  But in StableStack, this can be a pointer to any
-// address, as function calls can be told to write their output anywhere.
-// (and the REBVAL* parameter to the replacement for Do_Core() is called "out"
-// so it makes sense in that way, too.)
-//
-// !!! Vis a vis, concordantly...DSF_RETURN is reserved for the definitionally
-// scoped return function built for the specific call the frame represents.
+struct Reb_Call {
+	struct Reb_Call *prior;
 
-
-#define DSF_SIZE		5					// from DSF to ARGS-1
-
-// where to write return value (via a handle indirection for now)
-#define DSF_OUT(d) \
-	cast(REBVAL*, VAL_HANDLE_DATA(DS_AT((d) + 1)))
-
-#define PRIOR_DSF(d) \
-	VAL_INT32(DS_AT((d) + 2))
-
-#define DSF_WHERE(d)	DS_AT((d) + 3)	// block and index of execution
-#define DSF_LABEL(d)	DS_AT((d) + 4)	// func word backtrace
-#define DSF_FUNC(d)		DS_AT((d) + 5)	// function value saved
-#define DSF_RETURN(d)	coming@soon			// return func linked to this call
-#define DSF_ARG(d,n)	DS_AT((d) + DSF_SIZE + FIRST_PARAM_INDEX + (n) - 1)
-
-
-#ifdef STRESS
-	// In a "stress checked" debug mode, every time the DSF is accessed we
-	// can verify that it is well-formed.
-	#define DSF (*DSF_Stress())
-	#define SET_DSF(ds) \
-		(DS_Frame_Index = (ds), cast(void, DSF_Stress()))
-#else
-	// Normal builds just use DS_Frame_Index directly
-	#define DSF (DS_Frame_Index + 0) // avoid assignment to DSF via + 0
-	#define SET_DSF(ds) \
-		(DS_Frame_Index = (ds))
+	// In the Debug build, we make sure SET_DSF has happened on a call frame.
+	// This way "pending" frames that haven't had their arguments fulfilled
+	// can be checked to be sure no one tries to Get_Var out of them yet.
+#if !defined(NDEBUG)
+	REBOOL pending;
 #endif
 
-// !!! Ultimately the DSF will be done some other way, but for now this is
-// how to indicate there is no stack frame.
-#define DSF_NONE MIN_I32
+	REBCNT num_vars;	// !!! Redundant with VAL_FUNC_NUM_WORDS()?
 
+	REBVAL *out;		// where to write the function's output
+
+	REBVAL func;			// copy (important!!) of function for call
+
+	REBVAL where;			// block and index of execution
+	REBVAL label;			// func word backtrace
+
+	REBVAL return_func;		// dynamic scoped return (coming soon!)
+
+	// these are "variables"...SELF, RETURN, args, locals
+	REBVAL vars[1];		// (array exceeds struct, but cannot be [0] in C++)
+};
+
+// !!! DSF is to be renamed (C)all (S)tack (P)ointer, but being left as DSF
+// in the initial commit to try and cut back on the disruption seen in
+// one commit, as there are already a lot of changes.
+//
+// Is the pointer to the topmost Rebol call frame, currently a naive singly
+// linked list implementation, to be enhanced with a chunking method that
+// does not require an Alloc_Mem call on each create.
+
+#define DSF (CS_Running + 0) // avoid assignment to DSF via + 0
+
+#ifdef NDEBUG
+	#define SET_DSF(c) \
+		(CS_Running = (c), VOID)
+#else
+	// In a "stress checked" debug mode, every time the DSF is accessed we
+	// can verify that it is well-formed.
+	#ifdef STRESS
+		#define DSF (DSF_Stress())
+	#endif
+
+	#define SET_DSF(c) \
+		( \
+			CS_Running = (c), \
+			(c) ? cast(void, (c)->pending = FALSE) : VOID \
+		)
+#endif
+
+#define DSF_OUT(c)		((c)->out)
+#define PRIOR_DSF(c)	((c)->prior)
+#define DSF_WHERE(c)	c_cast(const REBVAL*, &(c)->where)
+#define DSF_LABEL(c)	c_cast(const REBVAL*, &(c)->label)
+#define DSF_FUNC(c)		c_cast(const REBVAL*, &(c)->func)
+#define DSF_RETURN(c)	coming@soon
+
+// VARS includes (*will* include) RETURN dispatching value, locals...
+#define DSF_VAR(c,n)	(&(c)->vars[(n) - 1])
+#define DSF_NUM_VARS(c)	((c)->num_vars)
+
+// ARGS is the parameters and refinements
+#define DSF_ARG(c,n)	DSF_VAR((c), (n) - 1 + FIRST_PARAM_INDEX)
+#define DSF_NUM_ARGS(c)	(DSF_NUM_VARS(c) - (FIRST_PARAM_INDEX - 1))
+
+// !!! The function spec numbers words according to their position.  0 is
+// SELF, 1 is the return, 2 is the first argument.  This layout is in flux
+// as the workings of locals are rethought...their most sensible location
+// would be before the arguments as well.
 
 // Reference from ds that points to current return value:
-#define D_OUT			DSF_OUT(call_->dsf)
-#define D_ARG(n)		DSF_ARG(call_->dsf, (n))
+#define D_OUT			DSF_OUT(call_)
+#define D_ARG(n)		DSF_ARG(call_, (n))
 #define D_REF(n)		(!IS_NONE(D_ARG(n)))
 
-// Reference from current DSF index:
-#define DS_ARG_BASE		(DSF+DSF_SIZE)
-#define DS_ARGC			(DSP-DS_ARG_BASE)
+#define DS_ARGC			DSF_NUM_ARGS(call_)

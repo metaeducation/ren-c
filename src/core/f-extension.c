@@ -180,7 +180,7 @@ x*/	void RXI_To_Block(RXIFRM *frm, REBVAL *out) {
 
 /***********************************************************************
 **
-x*/	int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result)
+x*/	REBRXT Do_Callback(REBSER *obj, u32 name, RXIARG *rxis, RXIARG *result)
 /*
 **		Given an object and a word id, call a REBOL function.
 **		The arguments are converted from extension format directly
@@ -190,7 +190,7 @@ x*/	int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result)
 ***********************************************************************/
 {
 	REBVAL *val;
-	REBINT dsf;
+	struct Reb_Call *call;
 	REBCNT len;
 	REBCNT n;
 	REBINT dsp_orig = DSP; // to restore stack on errors
@@ -208,57 +208,50 @@ x*/	int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result)
 		return 0;
 	}
 
-	// Get block and index from prior function stack frame:
-	dsf = PRIOR_DSF(DSF);
-
 	// Create stack frame (use prior stack frame for location info):
 	SET_TRASH_SAFE(&out); // OUT slot for function eval result
 	Init_Word_Unbound(&label, REB_WORD, name);
-	dsf = Push_Func(
+	call = Make_Call(
 		&out,
-		VAL_SERIES(DSF_WHERE(dsf)),
-		VAL_INDEX(DSF_WHERE(dsf)),
+		VAL_SERIES(DSF_WHERE(PRIOR_DSF(DSF))),
+		VAL_INDEX(DSF_WHERE(PRIOR_DSF(DSF))),
 		&label,
 		val
 	);
-	val = DSF_FUNC(dsf);        // for safety from GC
 	obj = VAL_FUNC_WORDS(val);  // func words
 	len = SERIES_TAIL(obj)-1;	// number of args (may include locals)
 
 	// Push args. Too short or too long arg frames are handled W/O error.
 	// Note that refinements args can be set to anything.
-	for (n = 1; n <= len && n <= RXI_COUNT(args); n++) {
-		DS_PUSH_TRASH;
-		RXI_To_Value(DS_TOP, args[n], RXI_TYPE(args, n));
+	for (n = 1; n <= len; n++) {
+		REBVAL *arg = DSF_ARG(call, n);
+
+		if (n <= RXI_COUNT(rxis))
+			RXI_To_Value(arg, rxis[n], RXI_TYPE(rxis, n));
+		else
+			SET_NONE(arg);
+
 		// Check type for word at the given offset:
-		if (!TYPE_CHECK(BLK_SKIP(obj, n), VAL_TYPE(DS_TOP))) {
+		if (!TYPE_CHECK(BLK_SKIP(obj, n), VAL_TYPE(arg))) {
 			result->i2.int32b = n;
 			SET_EXT_ERROR(result, RXE_BAD_ARGS);
-			DS_DROP_TO(dsp_orig);
-			return 0;
-		}
-	}
-	// Fill with NONE if necessary:
-	for (; n <= len; n++) {
-		DS_PUSH_NONE;
-		if (!TYPE_CHECK(BLK_SKIP(obj, n), VAL_TYPE(DS_TOP))) {
-			result->i2.int32b = n;
-			SET_EXT_ERROR(result, RXE_BAD_ARGS);
-			DS_DROP_TO(dsp_orig);
-			return 0;
+			type = 0;
+			goto return_balanced;
 		}
 	}
 
 	// Evaluate the function:
-	SET_DSF(dsf);
+	SET_DSF(call);
 	Func_Dispatch[VAL_TYPE(val) - REB_NATIVE](val);
-	SET_DSF(PRIOR_DSF(dsf));
-	DS_DROP_TO(dsf);
+	SET_DSF(PRIOR_DSF(call));
 
 	// Return resulting value from output
 	*result = Value_To_RXI(&out);
 	type = Reb_To_RXT[VAL_TYPE(&out)];
 
+return_balanced:
+	Free_Call(call);
+	assert(DSP == dsp_orig);
 	return type;
 }
 

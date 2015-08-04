@@ -1177,19 +1177,20 @@
 		// multiple invocations are on the stack, most recent wins)
 
 		if (index < 0) {
-			REBINT dsf = DSF;
+			struct Reb_Call *call = DSF;
 
 			// Get_Var could theoretically be called with no evaluation on
 			// the stack, so check for no DSF first...
-			while (dsf != DSF_NONE) {
-				if (context == VAL_FUNC_WORDS(DSF_FUNC(dsf))) {
-					assert(!IS_CLOSURE(DSF_FUNC(dsf)));
+			while (call) {
+				if (context == VAL_FUNC_WORDS(DSF_FUNC(call))) {
+					assert(!IS_CLOSURE(DSF_FUNC(call)));
+					assert(!call->pending);
 
-					if (!writable) return DSF_ARG(dsf, -index);
+					if (!writable) return DSF_ARG(call, -index);
 
 					{
 						// ^-- new scope: don't usually stack-alloc `value`
-						REBVAL *value = DSF_ARG(dsf, -index);
+						REBVAL *value = DSF_ARG(call, -index);
 						if (VAL_PROTECTED(value)) {
 							if (trap) {
 								Trap1(RE_LOCKED_WORD, word);
@@ -1197,11 +1198,12 @@
 							}
 							return NULL;
 						}
+						assert(!IS_TRASH(value));
 						return value;
 					}
 				}
 
-				dsf = PRIOR_DSF(dsf);
+				call = PRIOR_DSF(call);
 			}
 
 			if (trap) {
@@ -1256,14 +1258,16 @@
 		}
 
 		if (index < 0) {
-			REBINT dsf = DSF;
-			while (dsf != DSF_NONE) {
-				if (context == VAL_FUNC_WORDS(DSF_FUNC(dsf))) {
-					assert(!IS_CLOSURE(DSF_FUNC(dsf)));
-					*out = *DSF_ARG(dsf, -index);
+			struct Reb_Call *call = DSF;
+			while (call) {
+				if (context == VAL_FUNC_WORDS(DSF_FUNC(call))) {
+					assert(!IS_CLOSURE(DSF_FUNC(call)));
+					assert(!call->pending);
+					*out = *DSF_ARG(call, -index);
+					assert(!IS_TRASH(out));
 					return;
 				}
-				dsf = PRIOR_DSF(dsf);
+				call = PRIOR_DSF(call);
 			}
 
 			Trap1(RE_NO_RELATIVE, word);
@@ -1295,7 +1299,7 @@
 ***********************************************************************/
 {
 	REBINT index = VAL_WORD_INDEX(word);
-	REBINT dsf;
+	struct Reb_Call *call;
 	REBSER *frm;
 
 	assert(!THROWN(value));
@@ -1316,12 +1320,12 @@
 	if (index == 0) Trap(RE_SELF_PROTECTED);
 
 	// Find relative value:
-	dsf = DSF;
-	while (VAL_WORD_FRAME(word) != VAL_WORD_FRAME(DSF_LABEL(dsf))) {
-		dsf = PRIOR_DSF(dsf);
-		if (dsf == DSF_NONE) Trap1(RE_NOT_DEFINED, word); // change error !!!
+	call = DSF;
+	while (VAL_WORD_FRAME(word) != VAL_WORD_FRAME(DSF_LABEL(call))) {
+		call = PRIOR_DSF(call);
+		if (!call) Trap1(RE_NOT_DEFINED, word); // change error !!!
 	}
-	*DSF_ARG(dsf, -index) = *value;
+	*DSF_ARG(call, -index) = *value;
 }
 
 
