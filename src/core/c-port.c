@@ -212,7 +212,8 @@
 	while (wt) {
 		if (GET_SIGNAL(SIG_ESCAPE)) {
 			CLR_SIGNAL(SIG_ESCAPE);
-			Halt_Code(RE_HALT, 0); // Throws!
+			Halt();
+			DEAD_END;
 		}
 
 		// Process any waiting events:

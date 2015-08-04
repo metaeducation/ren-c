@@ -105,7 +105,6 @@
 
 
 // Special stack controls (used by init and GC):
-#define DS_RESET		(DSP=DSF=0)
 #define DS_TERMINATE	(SERIES_TAIL(DS_Series) = DSP+1);
 
 // Access value at given stack location:

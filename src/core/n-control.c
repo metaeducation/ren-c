@@ -303,9 +303,22 @@ enum {
 /*
 ***********************************************************************/
 {
-	Try_Block(VAL_SERIES(D_ARG(1)), VAL_INDEX(D_ARG(1)));
-	if (IS_ERROR(DS_NEXT) && !IS_THROW(DS_NEXT)) return R_NONE;
-	return R_TOS1;
+	REBOL_STATE state;
+	const REBVAL *error;
+
+	PUSH_CATCH(&error, &state);
+
+// The first time through the following code 'error' will be NULL, but...
+// Throw() can longjmp here, so 'error' won't be NULL *if* that happens!
+
+	if (error) return R_NONE;
+
+	Do_Blk(VAL_SERIES(D_ARG(1)), VAL_INDEX(D_ARG(1)));
+	DSP++; // TOS semantics instead of TOS1!
+
+	DROP_CATCH_SAME_STACKLEVEL_AS_PUSH(&state);
+
+	return R_TOS;
 }
 
 
@@ -313,12 +326,17 @@ enum {
 **
 */	REBNATIVE(break)
 /*
+**		1: /return
+**		2: value
+**
 ***********************************************************************/
 {
-	REBVAL *value = 0;
+	REBVAL *value = D_REF(1) ? D_ARG(2) : UNSET_VALUE;
 
-	if (D_REF(1)) value = D_ARG(2);  // /return
-	SET_THROW(ds, RE_BREAK, value);
+	VAL_SET(D_OUT, REB_ERROR);
+	VAL_ERR_NUM(D_OUT) = RE_BREAK;
+	ADD_THROWN_ARG(D_OUT, value);
+
 	return R_OUT;
 }
 
@@ -363,35 +381,55 @@ enum {
 ***********************************************************************/
 {
 	REBVAL *val;
-	REBVAL *ret;
 	REBCNT sym;
+	REBOOL catch_quit = D_REF(4); // Should we catch QUIT too?
 
-	if (D_REF(4)) {	//QUIT
-		if (Try_Block_Halt(VAL_SERIES(D_ARG(1)), VAL_INDEX(D_ARG(1)))) {
-			// We are here because of a QUIT/HALT condition.
-			ret = DS_NEXT;
-			if (VAL_ERR_NUM(ret) == RE_QUIT)
-				ret = VAL_ERR_VALUE(ret);
-			else if (VAL_ERR_NUM(ret) == RE_HALT)
-				Halt_Code(RE_HALT, 0);
-			else
-				Panic(RP_NO_CATCH);
-			*DS_OUT = *ret;
+	REBOL_STATE state;
+	const REBVAL *error;
+
+	PUSH_CATCH_ANY(&error, &state);
+
+// The first time through the following code 'error' will be NULL, but...
+// Throw() can longjmp here, so 'error' won't be NULL *if* that happens!
+
+	if (error) {
+		// We don't ever want to catch HALT from inside a native; re-throw
+		if (VAL_ERR_NUM(error) == RE_HALT) {
+			Throw(error, NULL);
+			DEAD_END;
+		}
+
+		if (VAL_ERR_NUM(error) == RE_QUIT) {
+			// If they didn't want to catch quits then re-throw
+			if (!catch_quit) {
+				Throw(error, NULL);
+				DEAD_END;
+			}
+
+			// Otherwise, extract the exit status.
+			// !!! How does CATCH/QUIT know it caught a QUIT?
+			assert(IS_TRASH(TASK_THROWN_ARG));
+			SET_INTEGER(D_OUT, VAL_ERR_STATUS(error));
 			return R_OUT;
 		}
-		return R_TOS1;
+
+		*D_OUT = *error;
+		return R_OUT;
 	}
 
 	// Evaluate the block:
-	ret = DO_BLK(D_ARG(1));
+	Do_Blk(VAL_SERIES(D_ARG(1)), VAL_INDEX(D_ARG(1)));
+	DSP++; // Use TOS semantics, not TOS1
+
+	DROP_CATCH_SAME_STACKLEVEL_AS_PUSH(&state);
 
 	// If it is a throw, process it:
-	if (IS_ERROR(ret) && VAL_ERR_NUM(ret) == RE_THROW) {
+	if (IS_ERROR(DS_TOP) && VAL_ERR_NUM(DS_TOP) == RE_THROW) {
 
 		// If a named throw, then check it:
 		if (D_REF(2)) { // /name
 
-			sym = VAL_ERR_SYM(ret);
+			sym = VAL_ERR_SYM(DS_TOP);
 			val = D_ARG(3); // name symbol
 
 			// If name is the same word:
@@ -400,17 +438,17 @@ enum {
 			// If it is a block of words:
 			else if (IS_BLOCK(val)) {
 				for (val = VAL_BLK_DATA(val); NOT_END(val); val++) {
-					if (IS_WORD(val) && sym == VAL_WORD_CANON(val)) goto got_err;
+					if (IS_WORD(val) && sym == VAL_WORD_CANON(val))
+						goto got_err;
 				}
 			}
 		} else {
 got_err:
-			*ds = *(VAL_ERR_VALUE(ret));
-			return R_OUT;
+			TAKE_THROWN_ARG(DS_TOP, DS_TOP);
 		}
 	}
 
-	return R_TOS1;
+	return R_TOS;
 }
 
 
@@ -420,9 +458,14 @@ got_err:
 /*
 ***********************************************************************/
 {
-	SET_THROW(ds, RE_THROW, D_ARG(1));
+	VAL_SET(D_OUT, REB_ERROR);
+	VAL_ERR_NUM(D_OUT) = RE_THROW;
 	if (D_REF(2)) // /name
-		VAL_ERR_SYM(ds) = VAL_WORD_SYM(D_ARG(3));
+		VAL_ERR_SYM(D_OUT) = VAL_WORD_SYM(D_ARG(3));
+	else
+		VAL_ERR_SYM(D_OUT) = SYM_NOT_USED;
+	ADD_THROWN_ARG(D_OUT, D_ARG(1));
+
 	return R_OUT;
 }
 
@@ -462,7 +505,9 @@ got_err:
 /*
 ***********************************************************************/
 {
-	SET_THROW(ds, RE_CONTINUE, NONE_VALUE);
+	VAL_SET(D_OUT, REB_ERROR);
+	VAL_ERR_NUM(D_OUT) = RE_CONTINUE;
+
 	return R_OUT;
 }
 
@@ -520,8 +565,13 @@ got_err:
 		return R_OUT;
 
 	case REB_ERROR:
-		if (IS_THROW(value)) return R_ARG1;
-		Throw_Error(VAL_ERR_OBJECT(value));
+		if (IS_THROW(value)) {
+			// @HostileFork wants to know if this happens.  It shouldn't
+			// (but there was code here that seemed to think it could)
+			assert(FALSE);
+			return R_ARG1;
+		}
+		Throw(value, NULL);
 
 	case REB_BINARY:
 	case REB_STRING:
@@ -568,7 +618,10 @@ got_err:
 /*
 ***********************************************************************/
 {
-	SET_THROW(ds, RE_RETURN, 0);
+	VAL_SET(D_OUT, REB_ERROR);
+	VAL_ERR_NUM(D_OUT) = RE_RETURN;
+	ADD_THROWN_ARG(D_OUT, UNSET_VALUE);
+
 	return R_OUT;
 }
 
@@ -637,16 +690,19 @@ got_err:
 **
 */	REBNATIVE(return)
 /*
-**		Returns a value from the current function. The error value
-**		is built in the RETURN slot, with the arg being kept in
-**		the ARG1 slot on the stack.  As long as DSP is greater, both
-**		values are safe from GC.
+**		Returns a value from the current function. This is done by
+**		returning a special "error!" which indicates a return, and
+**		putting the returned value into an associated task-local
+**		variable (only one of these is in effect at a time).
 **
 ***********************************************************************/
 {
 	REBVAL *arg = D_ARG(1);
 
-	SET_THROW(ds, RE_RETURN, arg);
+	VAL_SET(D_OUT, REB_ERROR);
+	VAL_ERR_NUM(D_OUT) = RE_RETURN;
+	ADD_THROWN_ARG(D_OUT, arg);
+
 	return R_OUT;
 }
 
@@ -695,33 +751,64 @@ got_err:
 **
 */	REBNATIVE(try)
 /*
+**		1: block
+**		2: /except
+**		3: code
+**
 ***********************************************************************/
 {
 	REBFLG except = D_REF(2);
 	REBVAL handler = *D_ARG(3); // TRY exception will trim the stack
 
-	if (Try_Block(VAL_SERIES(D_ARG(1)), VAL_INDEX(D_ARG(1)))) {
+	REBOL_STATE state;
+	const REBVAL *error;
+
+	PUSH_CATCH(&error, &state);
+
+// The first time through the following code 'error' will be NULL, but...
+// Throw() can longjmp here, so 'error' won't be NULL *if* that happens!
+
+	if (error) {
 		if (except) {
-			if (IS_BLOCK(&handler)) {
-				DO_BLK(&handler);
+			if (IS_BLOCK(D_ARG(3))) {
+				// forget the result of the try.
+				Do_Blk(VAL_SERIES(D_ARG(3)), VAL_INDEX(D_ARG(3)));
+				DSP++; // TOS semantics, not TOS1!
+				return R_TOS;
 			}
-			else { // do func[err] error
-				REBVAL error = *DS_NEXT; // will get overwritten
+			else if (ANY_FUNC(D_ARG(3))) {
+				// !!! REVIEW: What about zero arity functions or functions of
+				// arity greater than 1?  What about a function that has
+				// more args via refinements but can still act as an
+				// arity one function without those refinements?
+
 				REBVAL *args = BLK_SKIP(VAL_FUNC_ARGS(&handler), 1);
-				if (NOT_END(args) && !TYPE_CHECK(args, VAL_TYPE(&error))) {
+				if (NOT_END(args) && !TYPE_CHECK(args, VAL_TYPE(error))) {
 					// TODO: This results in an error message such as "action!
 					// does not allow error! for its value1 argument". A better
 					// message would be more like "except handler does not
 					// allow error! for its value1 argument."
-					Trap3_DEAD_END(RE_EXPECT_ARG, Of_Type(&handler), args, Of_Type(&error));
+					Trap3_DEAD_END(RE_EXPECT_ARG, Of_Type(&handler), args, Of_Type(error));
 				}
-				Apply_Func(0, &handler, &error, 0);
+				Apply_Func(NULL, &handler, error, NULL);
 				return R_TOS;
 			}
+			else
+				Panic(RP_MISC); // should not be possible (type-checking)
+
+			DEAD_END;
 		}
+
+		*D_OUT = *error;
+		return R_OUT;
 	}
 
-	return R_TOS1;
+	Do_Blk(VAL_SERIES(D_ARG(1)), VAL_INDEX(D_ARG(1)));
+	DSP++; // TOS semantics, not TOS1!
+
+	DROP_CATCH_SAME_STACKLEVEL_AS_PUSH(&state);
+
+	return R_TOS;
 }
 
 

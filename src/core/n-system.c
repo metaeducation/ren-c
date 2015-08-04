@@ -37,7 +37,7 @@
 /*
 ***********************************************************************/
 {
-	Halt_Code(RE_HALT, 0);
+	Halt();
 	DEAD_END;
 }
 
@@ -48,22 +48,16 @@
 /*
 **		1: /return
 **		2: value
-**		3: /now
 **
 ***********************************************************************/
 {
-	REBVAL *val = D_ARG(2);
-
-	if (D_REF(3)) {
-		REBINT n = 0;
-		if (D_REF(1)) {
-			assert(IS_INTEGER(val));
-			n = Int32(val);
-		}
-		OS_EXIT(n);
+	if (D_REF(1)) {
+		assert(IS_INTEGER(D_ARG(2)));
+		Quit(Int32(D_ARG(2)));
 	}
+	else
+		Quit(0);
 
-	Halt_Code(RE_QUIT, val); // NONE if /return not set
 	DEAD_END;
 }
 

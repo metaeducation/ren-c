@@ -585,7 +585,7 @@ bad_target:
 
 	// Value is on top of stack (volatile!):
 	value = *DS_POP;
-	if (THROWN(&value)) Throw_Break(&value);
+	if (THROWN(&value)) Throw(&value, NULL);
 
 	// Get variable or command:
 	if (IS_WORD(item)) {
@@ -751,10 +751,27 @@ bad_target:
 						SET_FLAG(flags, PF_CHANGE);
 						continue;
 
+					// There are two RETURNs: one is a matching form, so with
+					// 'parse data [return "abc"]' you are not asking to
+					// return the literal string "abc" independent of input.
+					// it will only return if "abc" matches.  This works for
+					// a rule reference as well, such as 'return rule'.
+					//
+					// The second option is if you put the value in parens,
+					// in which case it will just return whatever that value
+					// happens to be, e.g. 'parse data [return ("abc")]'
+
 					case SYM_RETURN:
 						if (IS_PAREN(rules)) {
-							item = Do_Block_Value_Throw(rules); // might GC
-							Throw_Return_Value(item);
+							REBVAL err;
+
+							VAL_SET(&err, REB_ERROR);
+							VAL_ERR_NUM(&err) = RE_PARSE_RETURN;
+
+							item = Do_Block_Value_Throw(rules);
+
+							Throw(&err, item);
+							DEAD_END;
 						}
 						SET_FLAG(flags, PF_RETURN);
 						continue;
@@ -1036,10 +1053,22 @@ post:
 					}
 				}
 				if (GET_FLAG(flags, PF_RETURN)) {
-					REBSER *ser = (IS_BLOCK_INPUT(parse))
-						? Copy_Block_Len(series, begin, count)
-						: Copy_String(series, begin, count); // condenses
-					Throw_Return_Series(parse->type, ser);
+					// See notes on PARSE's return in handling of SYM_RETURN
+					REBVAL err;
+					REBVAL arg;
+
+					VAL_SET(&err, REB_ERROR);
+					VAL_ERR_NUM(&err) = RE_PARSE_RETURN;
+
+					VAL_SET(&arg, parse->type);
+					VAL_SERIES(&arg) =
+						IS_BLOCK_INPUT(parse)
+							? Copy_Block_Len(series, begin, count)
+							: Copy_String(series, begin, count); // condenses
+					VAL_INDEX(&arg) = 0;
+
+					Throw(&err, &arg);
+					DEAD_END;
 				}
 				if (GET_FLAG(flags, PF_REMOVE)) {
 					if (count) Remove_Series(series, begin, count);
@@ -1267,28 +1296,52 @@ bad_end:
 	else {
 		REBCNT n;
 		REBOL_STATE state;
-		// Let user RETURN and THROW out of the PARSE. All other errors should relay.
-		PUSH_STATE(state, Saved_State);
-		if (SET_JUMP(state)) {
-			POP_STATE(state, Saved_State);
-			Catch_Error(arg = DS_OUT); // Stores error value here
-			if (VAL_ERR_NUM(arg) == RE_BREAK) {
-				if (!VAL_ERR_VALUE(arg)) return R_NONE;
-				*DS_OUT = *VAL_ERR_VALUE(arg);
+		const REBVAL *error;
+
+		PUSH_CATCH(&error, &state);
+
+// The first time through the following code 'error' will be NULL, but...
+// Throw() can longjmp here, so 'error' won't be NULL *if* that happens!
+
+		if (error) {
+			// We use a special kind of RETURN to be caught by PARSE so we
+			// differentiate between:
+			//
+			//	   foo: func [] [parse "1020" [(return true)]
+			//	   bar: func [] [parse "0304" [return false]]
+			//
+			// !!! I added a RE_PARSE_BREAK as a review point, as it seemed
+			// like there was a function Throw_Break which corresponded to
+			// a special Throw_Return used by PARSE.  In the end, BREAK and
+			// ACCEPT (what's the difference?) seem to work another way.
+			// Leaving RE_PARSE_BREAK until all is understood.  --HF
+
+			if (
+				(VAL_ERR_NUM(error) == RE_PARSE_BREAK)
+				|| (VAL_ERR_NUM(error) == RE_PARSE_RETURN)
+			) {
+				TAKE_THROWN_ARG(D_OUT, error);
 				return R_OUT;
 			}
-			if (VAL_ERR_NUM(arg) == RE_RETURN && VAL_ERR_SYM(arg) == SYM_RETURN) {
-				*DS_OUT = *VAL_ERR_VALUE(arg);
+
+			// If a THROWN style error, evaluate to that so that it can
+			// bubble up the stack.
+			if (THROWN(error)) {
+				*D_OUT = *error;
 				return R_OUT;
 			}
-			// How to handle RETURN, BREAK, etc. ???? does not work !!!!
-			if (THROWN(DS_OUT)) return R_OUT; //Throw_Break(DS_OUT);
-			Throw_Error(VAL_ERR_OBJECT(DS_OUT));
+
+			// Trap all other errors that aren't implicitly thrown...
+			Throw(error, NULL);
+			DEAD_END;
 		}
-		SET_STATE(state, Saved_State);
-		n = Parse_Series(val, VAL_BLK_DATA(arg), (opts & PF_CASE) ? AM_FIND_CASE : 0, 0);
-		SET_LOGIC(DS_OUT, n >= VAL_TAIL(val) && n != NOT_FOUND);
-		POP_STATE(state, Saved_State);
+
+		// opts is volatile across a setjmp/longjmp, so we re-read D_REF(4)
+		// for the casing instead of using opts
+
+		n = Parse_Series(val, VAL_BLK_DATA(arg), D_REF(4) ? AM_FIND_CASE : 0, 0);
+		SET_LOGIC(D_OUT, n >= VAL_TAIL(val) && n != NOT_FOUND);
+		DROP_CATCH_SAME_STACKLEVEL_AS_PUSH(&state);
 	}
 
 	return R_OUT;

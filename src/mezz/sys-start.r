@@ -91,8 +91,12 @@ finish-rl-start: func [
 
 	;-- Set up option/paths for /path, /boot, /home, and script path (for SECURE):
 	path: dirize any [path home]
-	home: dirize home
-	;if slash <> first boot [boot: clean-path boot] ;;;;; HAVE C CODE DO IT PROPERLY !!!!
+
+	;-- !!! this was commented out, and said "HAVE C CODE DO IT PROPERLY !!!!"
+	comment [
+		if slash <> first boot [boot: clean-path boot]
+	]
+
 	home: file: first split-path boot
 	if file? script [ ; Get the path (needed for SECURE setup)
 		script-path: split-path script

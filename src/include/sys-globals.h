@@ -58,8 +58,6 @@ PVAR REBI64 PG_Boot_Time;	// Counter when boot started
 PVAR REBINT Current_Year;
 PVAR REB_OPTS *Reb_Opts;
 
-PVAR jmp_buf *Halt_State;	// Pointer to saved CPU state for HALT/QUIT handlers
-
 /* for memory allocation trouble shooting */
 #ifndef NDEBUG
     PVAR REBOOL PG_Always_Malloc;
@@ -82,7 +80,7 @@ TVAR REBSER *Task_Series;	// Series that holds Task_Context
 
 //-- Memory and GC:
 TVAR REBPOL *Mem_Pools;		// Memory pool array
-TVAR REBCNT	GC_Disabled;	// GC disabled counter for critical sections.
+TVAR REBINT GC_Disabled;	// GC disabled counter for critical sections.
 TVAR REBINT	GC_Ballast;		// Bytes allocated to force automatic GC
 TVAR REBOOL	GC_Active;		// TRUE when recycle is enabled (set by RECYCLE func)
 TVAR REBSER	*GC_Protect;	// A stack of protected series (removed by pop)
@@ -101,7 +99,7 @@ TVAR REBVAL	*DS_Base;		// Data stack base
 TVAR REBINT	DS_Index;		// Data stack "pointer" (index into DS_Base)
 TVAR REBINT	DS_Frame_Index;	// Data stack frame (also index into DS_Base)
 
-TVAR jmp_buf *Saved_State;	// Pointer to saved CPU state for error handlers.
+TVAR REBOL_STATE *Saved_State; // Saved state for Catch (CPU state, etc.)
 
 //-- Evaluation variables:
 TVAR REBI64	Eval_Cycles;	// Total evaluation counter (upward)

@@ -152,8 +152,12 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 	REBVAL *val;
 	REBSER *ser;
 
-	REBSER spec;
-	CLEARS(&spec);
+	REBOL_STATE state;
+	const REBVAL *error;
+
+	REBVAL start_result;
+
+	int result;
 
 	if (bin) {
 		ser = Decompress(bin, len, 10000000, 0);
@@ -187,7 +191,60 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 		Set_Binary(val, ser);
 	}
 
-	return Init_Mezz(0);
+	PUSH_CATCH_ANY(&error, &state);
+
+// The first time through the following code 'error' will be NULL, but...
+// Throw() can longjmp here, so 'error' won't be NULL *if* that happens!
+
+	if (error) {
+		if (VAL_ERR_NUM(error) == RE_QUIT) {
+			int status = VAL_ERR_STATUS(error);
+			Shutdown_Core();
+			OS_EXIT(status);
+			DEAD_END;
+		}
+
+		// Save error for EXPLAIN and return it
+		*Get_System(SYS_STATE, STATE_LAST_ERROR) = *error;
+
+		Print_Value(error, 1024, FALSE);
+
+		// !!! Whether or not the Rebol interpreter just throws and quits
+		// in an error case with a bad error code or breaks you into the
+		// console to debug the environment should be controlled by
+		// a command line option.  Defaulting to returning an error code
+		// seems better, because kicking into an interactive session can
+		// cause logging systems to hang.  For now we throw instead of
+		// just quietly returning a code if the script fails, but add
+		// that option!
+
+		// For RE_HALT and all other errors we return the error
+		// number.  Error numbers are not set in stone (currently), but
+		// are never zero...which is why we can use 0 for success.
+		return VAL_ERR_NUM(error);
+	}
+
+	Do_Sys_Func(SYS_CTX_FINISH_RL_START, 0);
+
+	DROP_CATCH_SAME_STACKLEVEL_AS_PUSH(&state);
+
+	// The convention in the API was to return 0 for success.  We use the
+	// convention (as for FINISH_INIT_CORE) that any non-none! result from
+	// FINISH_RL_START indicates something went wrong.
+
+	if (IS_NONE(DS_TOP))
+		result = 0;
+	else {
+		assert(FALSE); // should not happen (raise an error instead)
+		Debug_Fmt("** finish-rl-start returned non-NONE!:");
+		Debug_Fmt("%r", DS_TOP);
+		result = RE_MISC;
+	}
+
+	// Drop the result of the Do_Sys_Func call
+	DS_DROP;
+
+	return result;
 }
 
 
@@ -206,7 +263,7 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 **
 ***********************************************************************/
 {
-	DS_RESET;
+	Panic(RP_NA);
 }
 
 
@@ -288,14 +345,121 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 **
 ***********************************************************************/
 {
-	REBVAL *val;
+	REBSER *code;
+	REBCNT len;
+	REBVAL vali;
 
-	val = Do_String(text, 0);
+	REBVAL temp;
+
+	REBOL_STATE state;
+	const REBVAL *error;
+
+	assert(DSP == 0);
+
+	PUSH_CATCH_ANY(&error, &state);
+
+// The first time through the following code 'error' will be NULL, but...
+// Throw() can longjmp here, so 'error' won't be NULL *if* that happens!
+
+	if (error) {
+		if (VAL_ERR_NUM(error) == RE_QUIT) {
+			int status = VAL_ERR_STATUS(error);
+			Shutdown_Core();
+			OS_EXIT(status);
+			DEAD_END;
+		}
+
+		// !!! Through this interface we have no way to distinguish an error
+		// returned as a value from one that was thrown.  Yet by contract
+		// we must return some sort of value--we try and patch over this
+		// by printing out the error and returning an UNSET!.  RenC has
+		// a stronger answer of offering the actual error catching interface
+		// to clients directly.
+
+		DS_PUSH_UNSET;
+
+		// !!! If the user halted during a Do_String what should we return?
+		// For now, assume the halt printed a message and don't do it again.
+		// Otherwise, we should print the FORMed error
+		if (VAL_ERR_NUM(error) != RE_HALT) {
+			// !!! statics are not safe for multithreading.
+			static REBOOL why_alert = TRUE;
+
+			Out_Value(error, 640, FALSE, 0);
+
+			// Save error for WHY?
+			*Get_System(SYS_STATE, STATE_LAST_ERROR) = *error;
+
+			// Tell them about why on the first error only
+			if (why_alert) {
+				Out_Str(
+					cb_cast("** Note: use WHY? for more error information"), 2
+				);
+				why_alert = FALSE;
+			}
+		}
+
+		if (result) {
+			REBRXT type = Reb_To_RXT[VAL_TYPE(DS_TOP)];
+			*result = Value_To_RXI(DS_TOP);
+
+			SET_TRASH(DS_TOP);
+			DS_DROP;
+
+			return type;
+		}
+
+		return -VAL_ERR_NUM(error);
+	}
+
+	code = Scan_Source(text, LEN_BYTES(text));
+	SAVE_SERIES(code);
+
+	// Bind into lib or user spaces?
+	if (flags) {
+		// Top words will be added to lib:
+		Bind_Block(Lib_Context, BLK_HEAD(code), BIND_SET);
+		Bind_Block(Lib_Context, BLK_HEAD(code), BIND_DEEP);
+	} else {
+		REBSER *user = VAL_OBJ_FRAME(Get_System(SYS_CONTEXTS, CTX_USER));
+		len = user->tail;
+		Bind_Block(user, BLK_HEAD(code), BIND_ALL | BIND_DEEP);
+		SET_INTEGER(&vali, len);
+		Resolve_Context(user, Lib_Context, &vali, FALSE, 0);
+	}
+
+	Do_Blk(code, 0);
+	DSP++; // shift to use TOS semantics (not TOS1)
+
+	UNSAVE_SERIES(code);
+
+	if (THROWN(DS_TOP)) {
+		assert(IS_ERROR(DS_TOP));
+		Throw(DS_TOP, NULL);
+		DEAD_END;
+	}
+
+	DROP_CATCH_SAME_STACKLEVEL_AS_PUSH(&state);
 
 	if (result) {
-		*result = Value_To_RXI(val);
-		return Reb_To_RXT[VAL_TYPE(val)];
+		// Grab the result off the top of the stack and convert it to RXT
+		// and RXI if that was requested.
+
+		REBRXT type = Reb_To_RXT[VAL_TYPE(DS_TOP)];
+		*result = Value_To_RXI(DS_TOP);
+
+		// Protocol was we do not leave TOS value if result requested
+		// Overwrite with trash to ensure TOS1 semantics not used
+		SET_TRASH(DS_TOP);
+		DS_DROP;
+
+		return type;
 	}
+
+	// Value is just left on top of stack if no result parameter.  :-/
+	// (The RL API was written with ideas like "print the top of stack"
+	// while not exposing ways to analyze it unless converted to RXT/RXI)
+
 	return 0;
 }
 
@@ -336,7 +500,9 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 	_close(f);
 #endif
 
+	SAVE_SERIES(text);
 	rxt = RL_Do_String(text->data, flags, result);
+	UNSAVE_SERIES(text);
 
 	Free_Series(text);
 	return rxt;
@@ -418,7 +584,7 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 **
 */	RL_API void RL_Print_TOS(REBCNT flags, const REBYTE *marker)
 /*
-**	Print top REBOL stack value to the console. (pending changes)
+**	Print top REBOL stack value to the console and drop it.
 **
 **	Returns:
 **		Nothing
@@ -431,52 +597,24 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 **		The REBOL data stack is an abstract structure that can
 **		change between releases. This function allows the host
 **		to print the result of processed functions.
-**		Note that what is printed is actually TOS+1.
 **		Marker is usually "==" to show output.
 **		The system/options/result-types determine which values
 **		are automatically printed.
 **
 ***********************************************************************/
 {
-	REBINT dsp = DSP;
-	REBVAL *top = DS_VALUE(dsp+1);
-	REBOL_STATE state;
-	REBVAL *types;
+	if (DSP != 1)
+		Debug_Fmt(Str_Stack_Misaligned, DSP);
 
-	if (dsp != 0) Debug_Fmt(Str_Stack_Misaligned, dsp);
+	// We shouldn't get any THROWN() errors exposed to the user
+	assert(!IS_ERROR(DS_TOP) || !THROWN(DS_TOP));
 
-	PUSH_STATE(state, Saved_State);
-	if (SET_JUMP(state)) {
-		POP_STATE(state, Saved_State);
-		Catch_Error(DS_NEXT); // Stores error value here
-		Out_Value(DS_NEXT, 0, FALSE, 0); // error
-		DSP = 0;
-		return;
-	}
-	SET_STATE(state, Saved_State);
-
-	if (!IS_UNSET(top)) {
-		if (!IS_ERROR(top)) {
-			types = Get_System(SYS_OPTIONS, OPTIONS_RESULT_TYPES);
-			if (IS_TYPESET(types) && TYPE_CHECK(types, VAL_TYPE(top))) {
-				if (marker) Out_Str(marker, 0);
-				Out_Value(top, 500, TRUE, 1); // limit, molded
-			}
-//			else {
-//				Out_Str(Get_Type_Name(top), 1);
-//			}
-		} else {
-			if (VAL_ERR_NUM(top) != RE_HALT) {
-				Out_Value(top, 640, FALSE, 0); // error FORMed
-//				if (VAL_ERR_NUM(top) > RE_THROW_MAX) {
-//					Out_Str("** Note: use WHY? for more about this error", 1);
-//				}
-			}
-		}
+	if (!IS_UNSET(DS_TOP)) {
+		if (marker) Out_Str(marker, 0);
+		Out_Value(DS_TOP, 500, TRUE, 1); // limit, molded
 	}
 
-	POP_STATE(state, Saved_State);
-	DSP = 0;
+	DS_DROP;
 }
 
 

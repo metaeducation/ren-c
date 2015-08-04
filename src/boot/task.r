@@ -19,9 +19,8 @@ self
 stack			; data stack
 ballast			; current memory ballast (used for GC)
 max-ballast		; ballast reset value
-this-error		; current error
-this-value		; for holding an error argument during throw back
-stack-error		; special stack error object
+thrown-arg		; for holding an error argument during throw back
+stack-error		; special stack overlow error object
 this-context	; current context
 buf-emit		; temporary emit output block
 buf-words		; temporary word cache
@@ -30,5 +29,4 @@ buf-print		; temporary print output - used by raw print
 buf-form		; temporary form buffer - used by raw print
 buf-mold		; temporary mold buffer - used by mold
 mold-loop		; mold loop detection
-err-temps		; error temporaries
 

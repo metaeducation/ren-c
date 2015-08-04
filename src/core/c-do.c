@@ -523,6 +523,10 @@ void Trace_Arg(REBINT num, REBVAL *arg, REBVAL *path)
 **
 ***********************************************************************/
 {
+#if !defined(NDEBUG)
+	REBINT dsp_orig;
+#endif
+
 	REBVAL *value;
 	REBVAL *args;
 	REBSER *words;
@@ -560,6 +564,17 @@ void Trace_Arg(REBINT num, REBVAL *arg, REBVAL *path)
 	DSP += ds;
 	for (; ds > 0; ds--) SET_NONE(tos++);
 
+#if !defined(NDEBUG)
+	dsp_orig = DSP;
+#endif
+
+	// Protocol is to return the last evaluated value on TOS, which may
+	// be a THROWN attempt at evaluating an arg.  So our invariant is
+	// to keep one value at TOS the whole time.
+	// !!! If it looks inefficient to be DS_DROP'ing before a Do_Next to
+	// keep the invariant, that's temporary...StableStack fixes it.
+	DS_PUSH_UNSET;
+
 	// Go thru the word list args:
 	ds = dsp;
 	for (; NOT_END(args); args++, ds++) {
@@ -575,19 +590,21 @@ void Trace_Arg(REBINT num, REBVAL *arg, REBVAL *path)
 		switch (VAL_TYPE(args)) {
 
 		case REB_WORD:		// WORD - Evaluate next value
+			DS_DROP;
 			index = Do_Next(block, index, IS_OP(func));
-			// THROWN is handled after the switch.
+			if (THROWN(DS_TOP)) goto return_index;
 			if (index == END_FLAG) Trap2_DEAD_END(RE_NO_ARG, DSF_LABEL(dsf), args);
-			DS_Base[ds] = *DS_POP;
+			DS_Base[ds] = *DS_TOP;
 			break;
 
 		case REB_LIT_WORD:	// 'WORD - Just get next value
 			if (index < BLK_LEN(block)) {
 				value = BLK_SKIP(block, index);
 				if (IS_PAREN(value) || IS_GET_WORD(value) || IS_GET_PATH(value)) {
+					DS_DROP;
 					index = Do_Next(block, index, IS_OP(func));
-					// THROWN is handled after the switch.
-					DS_Base[ds] = *DS_POP;
+					if (THROWN(DS_TOP)) goto return_index;
+					DS_Base[ds] = *DS_TOP;
 				}
 				else {
 					index++;
@@ -640,11 +657,6 @@ more_path:
 			Trap_Arg_DEAD_END(args);
 		}
 
-		if (THROWN(DS_VALUE(ds))) {
-			*DS_TOP = *DS_VALUE(ds); /* for Do_Next detection */
-			return index;
-		}
-
 		// If word is typed, verify correct argument datatype:
 		if (!TYPE_CHECK(args, VAL_TYPE(DS_VALUE(ds))))
 			Trap3_DEAD_END(RE_EXPECT_ARG, DSF_LABEL(dsf), args, Of_Type(DS_VALUE(ds)));
@@ -654,6 +666,8 @@ more_path:
 	if (path && NOT_END(path)) goto more_path;
 	//	Trap2_DEAD_END(RE_NO_REFINE, DSF_LABEL(dsf), path);
 
+return_index:
+	assert(DSP == dsp_orig + 1);
 	return index;
 }
 
@@ -703,7 +717,8 @@ more_path:
 	if (GET_FLAG(sigs, SIG_ESCAPE) && PG_Boot_Phase >= BOOT_MEZZ) {
 		CLR_SIGNAL(SIG_ESCAPE);
 		Eval_Sigmask = mask;
-		Halt_Code(RE_HALT, 0); // Throws!
+		Halt();
+		DEAD_END_VOID;
 	}
 
 	Eval_Sigmask = mask;
@@ -824,14 +839,30 @@ more_path:
 	func_ready_to_call:
 		assert(ANY_FUNC(value) && IS_UNSET(DSF_OUT(dsf)) && dsf > DSF);
 
-		if (Trace_Flags) Trace_Func(label, value);
+		if (THROWN(DS_TOP)) {
+			// If the result of the Do_Args was something like a RETURN or
+			// a BREAK, then nevermind the function we were going to call.
+			// Just bubble up that special "ERROR" value to the caller.
+			*DSF_OUT(dsf) = *DS_POP;
+		}
+		else {
+			// If the last value Do_Args evaluated wasn't thrown, we don't
+			// need to pay attention to it here.
+			DS_DROP;
 
-		// Set the DSF to our constructed 'dsf' during the function dispatch
-		SET_DSF(dsf);
-		Func_Dispatch[VAL_TYPE(value) - REB_NATIVE](value);
-		SET_DSF(PRIOR_DSF(dsf));
+			// The arguments were successfully acquired, so we set the
+			// the DSF to our constructed 'dsf' during the Push_Func...then
+			// call the function...then put the DSF back to the call level
+			// of whoever called us.
 
-		// Drop stack back to where the DSF_OUT is now the Top of Stack
+			SET_DSF(dsf);
+			if (Trace_Flags) Trace_Func(label, value);
+			Func_Dispatch[VAL_TYPE(value) - REB_NATIVE](value);
+
+			SET_DSF(PRIOR_DSF(dsf));
+		}
+
+		// Drop stack back to where the DSF_OUT(dsf) is now the Top of Stack
 		DSP = dsf;
 
 		if (Trace_Flags) Trace_Return(label, DS_TOP);
@@ -1031,7 +1062,7 @@ more_path:
 	while (index < BLK_LEN(series)) {
 		index = Do_Next(series, index, 0);
 		tos = DS_POP;
-		if (THROWN(tos)) Throw_Break(tos);
+		if (THROWN(tos)) Throw(tos, NULL);
 	}
 	// If series was empty:
 	if (!tos) {
@@ -1044,50 +1075,6 @@ more_path:
 	if (start != DSP || tos != &DS_Base[start+1]) Trap_DEAD_END(RE_MISSING_ARG);
 
 	return tos;
-}
-
-
-/***********************************************************************
-**
-*/	REBFLG Try_Block(REBSER *block, REBCNT index)
-/*
-**		Evaluate a block from the index position specified in the value.
-**		TOS+1 holds the result.
-**
-***********************************************************************/
-{
-	REBOL_STATE state;
-	REBVAL *tos;
-	jmp_buf *Last_Halt_State = Halt_State;
-
-	PUSH_STATE(state, Saved_State);
-	if (SET_JUMP(state)) {
-		/* Halt_State might become invalid, restore the one above */
-		Halt_State = Last_Halt_State;
-		POP_STATE(state, Saved_State);
-		Catch_Error(DS_NEXT); // Stores error value here
-		return TRUE;
-	}
-	SET_STATE(state, Saved_State);
-
-	tos = 0;
-	while (index < BLK_LEN(block)) {
-		index = Do_Next(block, index, 0);
-		tos = DS_POP;
-		if (THROWN(tos)) break;
-	}
-	if (!tos) {
-		// CC#2229 - respond to Halt() in code like 'forever []'
-		if (--Eval_Count <= 0 || Eval_Signals) Do_Signals();
-
-		tos = DS_NEXT; SET_UNSET(tos);
-	}
-
-	// Restore data stack and return value at TOS+1:
-	DS_Base[state.dsp+1] = *tos;
-	POP_STATE(state, Saved_State);
-
-	return FALSE;
 }
 
 
@@ -1711,149 +1698,6 @@ more_path:
 
 /***********************************************************************
 **
-*/	REBOOL Try_Block_Halt(REBSER *block, REBCNT index)
-/*
-**		Evaluate a block from the index position specified in the value,
-**		with a handler for quit conditions (QUIT, HALT) set up.
-**
-***********************************************************************/
-{
-	REBOL_STATE state;
-	REBVAL *val;
-	jmp_buf *Last_Saved_State = Saved_State;
-//	static D = 0;
-//	int depth = D++;
-
-//	Debug_Fmt("Set Halt %d", depth);
-
-	PUSH_STATE(state, Halt_State);
-	if (SET_JUMP(state)) {
-//		Debug_Fmt("Throw Halt %d", depth);
-		/* Saved_State might become invalid, restore the one above */
-		Saved_State = Last_Saved_State;
-		POP_STATE(state, Halt_State);
-		Catch_Error(DS_NEXT); // Stores error value here
-		return TRUE;
-	}
-	SET_STATE(state, Halt_State);
-
-	SAVE_SERIES(block);
-	val = Do_Blk(block, index);
-	UNSAVE_SERIES(block);
-
-	DS_Base[state.dsp+1] = *val;
-	POP_STATE(state, Halt_State);
-
-//	Debug_Fmt("Ret Halt %d", depth);
-
-	return FALSE;
-}
-
-
-/***********************************************************************
-**
-*/	REBVAL *Do_String(const REBYTE *text, REBCNT flags)
-/*
-**		Do a string. Convert it to code, then evaluate it with
-**		the ability to catch errors and also alow HALT if needed.
-**
-***********************************************************************/
-{
-	REBOL_STATE state;
-	REBSER *code;
-	REBVAL *val;
-	REBSER *rc;
-	REBCNT len;
-	REBVAL vali;
-
-	PUSH_STATE(state, Halt_State);
-	if (SET_JUMP(state)) {
-		POP_STATE(state, Halt_State);
-		Saved_State = Halt_State;
-		Catch_Error(DS_NEXT); // Stores error value here
-		val = Get_System(SYS_STATE, STATE_LAST_ERROR); // Save it for EXPLAIN
-		*val = *DS_NEXT;
-		if (VAL_ERR_NUM(val) == RE_QUIT) {
-			OS_EXIT(VAL_INT32(VAL_ERR_VALUE(DS_NEXT))); // console quit
-		}
-
-		// !!! Current weak API can't distinguish between returning an error
-		// value and evaluating to an error.  So print the error if we catch
-		// one.  (Don't worry--this function is going away.)
-		Out_Value(DS_NEXT, 640, FALSE, 0); // error FORMed
-		SET_UNSET(DS_NEXT);
-		return UNSET_VALUE;
-	}
-	SET_STATE(state, Halt_State);
-	// Use this handler for both, halt conditions (QUIT, HALT) and error
-	// conditions. As this is a top-level handler, simply overwriting
-	// Saved_State is safe.
-	Saved_State = Halt_State;
-
-	code = Scan_Source(text, LEN_BYTES(text));
-	SAVE_SERIES(code);
-
-	// Bind into lib or user spaces?
-	if (flags) {
-		// Top words will be added to lib:
-		Bind_Block(Lib_Context, BLK_HEAD(code), BIND_SET);
-		Bind_Block(Lib_Context, BLK_HEAD(code), BIND_DEEP);
-	}
-	else {
-		rc = VAL_OBJ_FRAME(Get_System(SYS_CONTEXTS, CTX_USER));
-		len = rc->tail;
-		Bind_Block(rc, BLK_HEAD(code), BIND_ALL | BIND_DEEP);
-		SET_INTEGER(&vali, len);
-		Resolve_Context(rc, Lib_Context, &vali, FALSE, 0);
-	}
-
-	Do_Blk(code, 0);
-	UNSAVE_SERIES(code);
-
-	POP_STATE(state, Halt_State);
-	Saved_State = Halt_State;
-
-	return DS_NEXT; // result is volatile
-}
-
-
-/***********************************************************************
-**
-*/	void Halt_Code(REBINT kind, REBVAL *arg)
-/*
-**		Halts execution by throwing back to the above Do_String.
-**		Kind is RE_HALT or RE_QUIT
-**		Arg is the optional return value.
-**
-**		Future versions may not reset the stack, but leave it as is
-**		to allow for examination and a RESUME operation.
-**
-***********************************************************************/
-{
-	REBVAL *err = TASK_THIS_ERROR;
-
-	if (!Halt_State) return;
-
-	if (arg) {
-		if (IS_NONE(arg)) {
-			SET_INTEGER(TASK_THIS_VALUE, 0);
-		} else
-			*TASK_THIS_VALUE = *arg;	// save the value
-	} else {
-		SET_NONE(TASK_THIS_VALUE);
-	}
-
-	VAL_SET(err, REB_ERROR);
-	VAL_ERR_NUM(err) = kind;
-	VAL_ERR_VALUE(err) = TASK_THIS_VALUE;
-	VAL_ERR_SYM(err) = 0;
-
-	LONG_JUMP(*Halt_State, 1);
-}
-
-
-/***********************************************************************
-**
 */	void Call_Func(REBVAL *func_val)
 /*
 **		Calls a REBOL function from C code.
@@ -2015,76 +1859,4 @@ push_arg:
 	}
 
 	return 0; // never happens
-}
-
-
-/***********************************************************************
-**
-*/	REBINT Init_Mezz(REBINT reserved)
-/*
-***********************************************************************/
-{
-	//REBVAL *val;
-	REBOL_STATE state;
-	REBVAL *val;
-	int MERGE_WITH_Do_String;
-//	static D = 0;
-//	int depth = D++;
-
-	//Debug_Fmt("Set Halt");
-
-	if (PG_Boot_Level >= BOOT_LEVEL_MODS) {
-
-		PUSH_STATE(state, Halt_State);
-		if (SET_JUMP(state)) {
-			//Debug_Fmt("Throw Halt");
-			POP_STATE(state, Halt_State);
-			Saved_State = Halt_State;
-			Catch_Error(val = DS_NEXT); // Stores error value here
-			if (IS_ERROR(val)) { // (what else could it be?)
-				val = Get_System(SYS_STATE, STATE_LAST_ERROR); // Save it for EXPLAIN
-				*val = *DS_NEXT;
-				if (VAL_ERR_NUM(val) == RE_QUIT) {
-					//Debug_Fmt("Quit(init)");
-					OS_EXIT(VAL_INT32(VAL_ERR_VALUE(val))); // console quit
-				}
-				if (VAL_ERR_NUM(val) >= RE_THROW_MAX)
-					Print_Value(val, 1000, FALSE);
-			}
-			return -1;
-		}
-		SET_STATE(state, Halt_State);
-		// Use this handler for both, halt conditions (QUIT, HALT) and error
-		// conditions. As this is a top-level handler, simply overwriting
-		// Saved_State is safe.
-		Saved_State = Halt_State;
-
-		// !!! Startup is split into two functions--both called here in a
-		// temporary commit, but separately in RL_Start() and Init_Core() in
-		// a forthcoming modification.  These are in sys-start.r, and the
-		// convention is that NONE! indicates success.
-
-		Do_Sys_Func(SYS_CTX_FINISH_INIT_CORE, NULL);
-		if (!IS_NONE(DS_TOP)) {
-			Debug_Fmt("** 'finish-init-core' returned non-none!: %r", DS_TOP);
-			Panic(RP_EARLY_ERROR);
-		}
-		DS_DROP;
-
-		Do_Sys_Func(SYS_CTX_FINISH_RL_START, NULL);
-		if (!IS_NONE(DS_TOP)) {
-			Debug_Fmt("** 'finish-rl-start' returned non-none!: %r", DS_TOP);
-			Panic(RP_EARLY_ERROR);
-		}
-		DS_DROP;
-
-		//DS_Base[state.dsp+1] = *val;
-		POP_STATE(state, Halt_State);
-		Saved_State = Halt_State;
-	}
-
-	// Cleanup stack and memory:
-	DS_RESET;
-	Recycle();
-	return 0;
 }
