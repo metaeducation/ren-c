@@ -497,7 +497,7 @@ again:
 {
 	REBDIA dia;
 	REBINT n;
-	REBINT dsp = DSP; // Save stack position
+	REBINT dsp_orig = DSP; // Save stack position
 
 	CLEARS(&dia);
 
@@ -516,7 +516,7 @@ again:
 	//Print("DSP: %d Dinp: %r - %m", DSP, BLK_SKIP(block, *index), block);
 	n = Do_Dia(&dia);
 	//Print("DSP: %d Dout: CMD: %d %m", DSP, dia.cmd, *out);
-	DSP = dsp; // pop any temp values used above
+	DS_DROP_TO(dsp_orig); // pop any temp values used above
 
 	if (Delect_Debug > 0) {
 		Total_Missed += dia.missed;

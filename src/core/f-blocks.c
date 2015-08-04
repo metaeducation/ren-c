@@ -277,7 +277,7 @@
 		PG_Reb_Stats->Blocks++;
 	}
 
-	DSP = start;
+	DS_DROP_TO(start);
 	blk = DS_TOP;
 	VAL_SET(blk, type);
 	VAL_SERIES(blk) = series;

@@ -862,7 +862,7 @@ do_value:
 		// if THROW, RETURN, BREAK, CONTINUE during Do_Args
 		if (index == THROWN_FLAG) {
 			// Free the pushed function call frame
-			DSP = dsf;
+			DS_DROP_TO(dsf);
 			goto return_index;
 		}
 
@@ -895,7 +895,7 @@ do_value:
 		SET_DSF(PRIOR_DSF(dsf));
 
 		// Drop stack back to where the DSF_OUT(dsf) is now the Top of Stack
-		DSP = dsf;
+		DS_DROP_TO(dsf);
 
 		if (THROWN(out)) {
 			index = THROWN_FLAG;
@@ -1075,7 +1075,7 @@ return_index:
 		index = DO_NEXT(&reduced, block, index);
 		if (index == THROWN_FLAG) {
 			*out = reduced;
-			DSP = dsp_orig;
+			DS_DROP_TO(dsp_orig);
 			goto finished;
 		}
 		DS_PUSH(&reduced);
@@ -1166,7 +1166,7 @@ finished:
 			index = DO_NEXT(&reduced, block, index);
 			if (index == THROWN_FLAG) {
 				*out = reduced;
-				DSP = dsp_orig;
+				DS_DROP_TO(dsp_orig);
 				goto finished;
 			}
 			DS_PUSH(&reduced);
@@ -1273,7 +1273,7 @@ finished:
 			if (!DO_BLOCK(&evaluated, VAL_SERIES(value), 0)) {
 				// throw, return, break, continue...
 				*out = evaluated;
-				DSP = dsp_orig;
+				DS_DROP_TO(dsp_orig);
 				goto finished;
 			}
 
@@ -1414,7 +1414,7 @@ finished:
 	SET_DSF(PRIOR_DSF(dsf));
 
 return_balanced:
-	DSP = dsf; // put data stack back where it was when we were called
+	DS_DROP_TO(dsf); // put data stack back where it was when we were called
 }
 
 
@@ -1486,7 +1486,7 @@ return_balanced:
 	SET_DSF(dsf);
 	Func_Dispatch[VAL_TYPE(func) - REB_NATIVE](func);
 	SET_DSF(PRIOR_DSF(dsf));
-	DSP = dsf;
+	DS_DROP_TO(dsf);
 }
 
 
@@ -1741,7 +1741,7 @@ push_arg:
 
 	// !!! Temporary; there's a better rewrite of this functionality
 	// This is just needed for stack balancing for now.
-	DSP = dsp_orig;
+	DS_DROP_TO(dsp_orig);
 }
 
 

@@ -199,7 +199,7 @@
 		/* something done with dsf... */
 	}
 
-	DSP = state->dsp;
+	DS_DROP_TO(state->dsp);
 	GC_Protect->tail = state->hold_tail;
 	GC_Disabled = state->gc_disable;
 

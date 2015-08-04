@@ -96,7 +96,7 @@
 		Set_Block(out, series);
 	}
 
-	DSP = dsp_start;
+	DS_DROP_TO(dsp_start);
 }
 
 

@@ -64,6 +64,8 @@
 		(((p) >= &DS_Base[0]) && ((p <= &DS_Base[DS_Index])))
 #endif
 
+// !!! Temporary, next commit improves this
+#define DS_DROP_TO(d) (DSP = (d))
 
 // "Data Stack Frame" indexes into Rebol's data stack at the location where
 // the block of information about a function call begins.  It starts with the

@@ -1323,17 +1323,14 @@ append:
 {
 	REBINT start = DSP + 1;
 	REBINT n;
+	REBSER *result = NULL;
 
 	REB_MOLD mo;
 
 	while (index < BLK_LEN(block)) {
 		REBVAL out;
 		index = DO_NEXT(&out, block, index);
-		if (index == THROWN_FLAG) {
-			DSP = start;
-			*DS_AT(start) = out;
-			return NULL;
-		}
+		if (index == THROWN_FLAG) goto return_balanced;
 		DS_PUSH(&out);
 	}
 
@@ -1343,9 +1340,11 @@ append:
 	for (n = start; n <= DSP; n++)
 		Mold_Value(&mo, DS_AT(n), 0);
 
-	DSP = start;
+	result = Copy_String(mo.series, 0, -1);
 
-	return Copy_String(mo.series, 0, -1);
+return_balanced:
+	DS_DROP_TO(start);
+	return result;
 }
 
 

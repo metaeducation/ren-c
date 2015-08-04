@@ -190,10 +190,10 @@ x*/	int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result)
 ***********************************************************************/
 {
 	REBVAL *val;
-	REBCNT dsf;
+	REBINT dsf;
 	REBCNT len;
 	REBCNT n;
-	REBCNT dsp = DSP; // to restore stack on errors
+	REBINT dsp_orig = DSP; // to restore stack on errors
 	REBVAL label;
 	REBRXT type;
 	REBVAL out;
@@ -234,7 +234,7 @@ x*/	int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result)
 		if (!TYPE_CHECK(BLK_SKIP(obj, n), VAL_TYPE(DS_TOP))) {
 			result->i2.int32b = n;
 			SET_EXT_ERROR(result, RXE_BAD_ARGS);
-			DSP = dsp;
+			DS_DROP_TO(dsp_orig);
 			return 0;
 		}
 	}
@@ -244,7 +244,7 @@ x*/	int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result)
 		if (!TYPE_CHECK(BLK_SKIP(obj, n), VAL_TYPE(DS_TOP))) {
 			result->i2.int32b = n;
 			SET_EXT_ERROR(result, RXE_BAD_ARGS);
-			DSP = dsp;
+			DS_DROP_TO(dsp_orig);
 			return 0;
 		}
 	}
@@ -253,7 +253,7 @@ x*/	int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result)
 	SET_DSF(dsf);
 	Func_Dispatch[VAL_TYPE(val) - REB_NATIVE](val);
 	SET_DSF(PRIOR_DSF(dsf));
-	DSP = dsf;
+	DS_DROP_TO(dsf);
 
 	// Return resulting value from output
 	*result = Value_To_RXI(&out);
