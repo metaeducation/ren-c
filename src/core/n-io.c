@@ -337,7 +337,7 @@ chk_neg:
 
 	val = OFV(port, STD_PORT_AWAKE);
 	if (ANY_FUNC(val)) {
-		Apply_Func(D_OUT, NULL, val, D_ARG(2), 0);
+		Apply_Func(D_OUT, val, D_ARG(2), 0);
 		if (!(IS_LOGIC(D_OUT) && VAL_LOGIC(D_OUT))) awakened = FALSE;
 		SET_TRASH_SAFE(D_OUT);
 	}

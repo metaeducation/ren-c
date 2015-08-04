@@ -793,7 +793,7 @@ got_err:
 					// allow error! for its value1 argument."
 					Trap3_DEAD_END(RE_EXPECT_ARG, Of_Type(&handler), args, Of_Type(error));
 				}
-				Apply_Func(D_OUT, NULL, &handler, error, NULL);
+				Apply_Func(D_OUT, &handler, error, NULL);
 				return R_OUT;
 			}
 			else

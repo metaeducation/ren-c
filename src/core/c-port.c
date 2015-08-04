@@ -178,7 +178,7 @@
 	if (only) SET_TRUE(&ref_only);
 	else SET_NONE(&ref_only);
 	// Call the system awake function:
-	Apply_Func(&out, 0, awake, port, &tmp, &ref_only, 0);
+	Apply_Func(&out, awake, port, &tmp, &ref_only, 0);
 
 	// Awake function returns 1 for end of WAIT:
 	result = (IS_LOGIC(&out) && VAL_LOGIC(&out)) ? 1 : 0;

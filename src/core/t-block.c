@@ -426,7 +426,7 @@ static struct {
 		);
 	}
 
-	Apply_Func(&out, 0, sort_flags.compare, v1, v2, 0);
+	Apply_Func(&out, sort_flags.compare, v1, v2, 0);
 
 	if (IS_LOGIC(&out)) {
 		if (VAL_LOGIC(&out)) result = 1;

@@ -1556,7 +1556,7 @@ return_balanced:
 
 /***********************************************************************
 **
-*/	void Apply_Func(REBVAL *out, REBSER *where, REBVAL *func, ...)
+*/	void Apply_Func(REBVAL *out, REBVAL *func, ...)
 /*
 **		Applies function from args provided by C call. Zero terminated.
 **		Return value is on TOS
