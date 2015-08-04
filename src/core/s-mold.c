@@ -1330,8 +1330,8 @@ append:
 		REBVAL out;
 		index = DO_NEXT(&out, block, index);
 		if (index == THROWN_FLAG) {
-			*DS_VALUE(start) = out;
 			DSP = start;
+			*DS_AT(start) = out;
 			return NULL;
 		}
 		DS_PUSH(&out);
@@ -1341,7 +1341,7 @@ append:
 	Reset_Mold(&mo);
 
 	for (n = start; n <= DSP; n++)
-		Mold_Value(&mo, &DS_Base[n], 0);
+		Mold_Value(&mo, DS_AT(n), 0);
 
 	DSP = start;
 

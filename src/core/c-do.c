@@ -124,7 +124,7 @@ void Do_Rebcode(const REBVAL *v) {;}
 	REBINT dsf = DSF;
 
 	for (dsf = DSF; dsf != DSF_NONE; dsf = PRIOR_DSF(dsf)) {
-		if (n-- <= 0) return DS_VALUE(dsf);
+		if (n-- <= 0) return DS_AT(dsf);
 	}
 
 	return NULL;
@@ -217,7 +217,7 @@ void Trace_Func(const REBVAL *word, const REBVAL *value)
 	int depth;
 	CHECK_DEPTH(depth);
 	Debug_Fmt_(cs_cast(BOOT_STR(RS_TRACE,5)), Get_Word_Name(word), Get_Type_Name(value));
-	if (GET_FLAG(Trace_Flags, 1)) Debug_Values(DS_GET(DS_ARG_BASE+1), DS_ARGC, 20);
+	if (GET_FLAG(Trace_Flags, 1)) Debug_Values(DS_AT(DS_ARG_BASE+1), DS_ARGC, 20);
 	else Debug_Line();
 }
 
@@ -595,7 +595,7 @@ void Trace_Arg(REBINT num, const REBVAL *arg, const REBVAL *path)
 			index = Do_Core(out, TRUE, block, index, IS_OP(func));
 			if (index == THROWN_FLAG) goto return_index;
 			if (index == END_FLAG) Trap2_DEAD_END(RE_NO_ARG, DSF_LABEL(dsf), args);
-			DS_Base[ds] = *out;
+			*DS_AT(ds) = *out;
 			break;
 
 		case REB_LIT_WORD:	// 'WORD - Just get next value
@@ -609,22 +609,22 @@ void Trace_Arg(REBINT num, const REBVAL *arg, const REBVAL *path)
 						// type checked to see if the parameter accepts it)
 						assert(IS_UNSET(out));
 					}
-					DS_Base[ds] = *out;
+					*DS_AT(ds) = *out;
 				}
 				else {
 					index++;
-					DS_Base[ds] = *value;
+					*DS_AT(ds) = *value;
 				}
 			} else
-				SET_UNSET(&DS_Base[ds]); // allowed to be none
+				SET_UNSET(DS_AT(ds)); // allowed to be none
 			break;
 
 		case REB_GET_WORD:	// :WORD - Get value
 			if (index < BLK_LEN(block)) {
-				DS_Base[ds] = *BLK_SKIP(block, index);
+				*DS_AT(ds) = *BLK_SKIP(block, index);
 				index++;
 			} else
-				SET_UNSET(&DS_Base[ds]); // allowed to be none
+				SET_UNSET(DS_AT(ds)); // allowed to be none
 			break;
 
 		case REB_REFINEMENT: // /WORD - Function refinement
@@ -632,7 +632,7 @@ void Trace_Arg(REBINT num, const REBVAL *arg, const REBVAL *path)
 			if (IS_WORD(path)) {
 				// Optimize, if the refinement is the next arg:
 				if (SAME_SYM(path, args)) {
-					SET_TRUE(DS_VALUE(ds)); // set refinement stack value true
+					SET_TRUE(DS_AT(ds)); // set refinement stack value true
 					path++;				// remove processed refinement
 					continue;
 				}
@@ -645,7 +645,7 @@ more_path:
 						Trap1_DEAD_END(RE_BAD_REFINE, path);
 					}
 					if (IS_REFINEMENT(args) && VAL_WORD_CANON(args) == VAL_WORD_CANON(path)) {
-						SET_TRUE(DS_VALUE(ds)); // set refinement stack value true
+						SET_TRUE(DS_AT(ds)); // set refinement stack value true
 						path++;				// remove processed refinement
 						break;
 					}
@@ -663,8 +663,8 @@ more_path:
 		}
 
 		// If word is typed, verify correct argument datatype:
-		if (!TYPE_CHECK(args, VAL_TYPE(DS_VALUE(ds))))
-			Trap3_DEAD_END(RE_EXPECT_ARG, DSF_LABEL(dsf), args, Of_Type(DS_VALUE(ds)));
+		if (!TYPE_CHECK(args, VAL_TYPE(DS_AT(ds))))
+			Trap3_DEAD_END(RE_EXPECT_ARG, DSF_LABEL(dsf), args, Of_Type(DS_AT(ds)));
 	}
 
 	// Hack to process remaining path:

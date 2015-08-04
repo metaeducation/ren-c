@@ -54,6 +54,10 @@
 // is very volatile.  Any pushes can expand the stack, which means any
 // pointers may go invalid.  As an interim step, it can be helpful to be
 // assured that a pointer is not into the data stack.  For assertions only.
+// Access value at given stack location
+#define DS_AT(d) \
+	BLK_SKIP(DS_Series, (d))
+
 
 #if !defined(NDEBUG)
 	#define IN_DATA_STACK(p) \
@@ -115,9 +119,6 @@
 // Special stack controls (used by init and GC):
 #define DS_TERMINATE	(SERIES_TAIL(DS_Series) = DSP+1);
 
-// Access value at given stack location:
-#define DS_VALUE(d)		(&DS_Base[d])
-
 // Stack pointer based actions:
 #define DS_TOP			(&DS_Base[DSP])
 
@@ -132,7 +133,6 @@
 		DS_DROP; \
 	} while (0)
 
-#define DS_GET(d)		(&DS_Base[d])
 #define DS_PUSH(v)		(DS_Base[++DSP]=*(v))		// atomic
 
 #define DS_PUSH_TRASH_SAFE \
