@@ -1559,7 +1559,6 @@ exit_block:
 {
     SCAN_STATE scan_state;
 
-	Check_Stack();
 	if (!len) len = LEN_BYTES(src);
     Init_Scan_State(&scan_state, src, len);
 	return Scan_Code(&scan_state, 0);

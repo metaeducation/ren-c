@@ -95,8 +95,6 @@ TVAR REBUPT Stack_Limit;	// Limit address for CPU stack.
 
 //-- Evaluation stack:
 TVAR REBSER	*DS_Series;
-TVAR REBVAL	*DS_Base;		// Data stack base
-TVAR REBINT	DS_Index;		// Data stack "pointer" (index into DS_Base)
 TVAR REBINT	DS_Frame_Index;	// Data stack frame (also index into DS_Base)
 
 TVAR REBOL_STATE *Saved_State; // Saved state for Catch (CPU state, etc.)

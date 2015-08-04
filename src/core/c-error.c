@@ -113,17 +113,6 @@
 
 /***********************************************************************
 **
-*/	void Check_Stack(void)
-/*
-***********************************************************************/
-{
-	if ((DSP + 100) > (REBINT)SERIES_REST(DS_Series))
-		Trap(RE_STACK_OVERFLOW);
-}
-
-
-/***********************************************************************
-**
 */	void Push_Catch_Helper(REBOL_STATE *s)
 /*
 **		Used by both CATCH and CATCH_ANY, whose differentiation comes

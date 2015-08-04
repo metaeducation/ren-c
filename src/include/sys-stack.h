@@ -45,27 +45,128 @@
 **
 ***********************************************************************/
 
-// Data Stack Pointer isn't a "C pointer", but indexes into Rebol's data stack
 
-#define DSP DS_Index
+/***********************************************************************
+**
+**	REBOL DATA STACK (DS)
+**
+**		The data stack is mostly for REDUCE and COMPOSE, which use it
+**		as a common buffer for values that are being gathered to be
+**		inserted into another series.  It's better to go through this
+**		buffer step because it means the precise size of the new
+**		insertions ahead of time.  If a new series is to be created,
+**		it will not waste space or time on expansions.  If a series
+**		is to be inserted into as a target, the proper size gap for
+**		the insertion can be opened up exactly once without any
+**		need for repeatedly shuffling on individual insertions.
+**
+**		Beyond that purpose, the data stack can also be used as a
+**		place to store a value to protect it from the garbage
+**		collector.  The stack must be balanced in the case of success
+**		when a native or action runs, but if a Trap() is called then
+**		the stack will be automatically balanced.
+**
+***********************************************************************/
 
+// (D)ata (S)tack "(P)ointer" is an integer index into Rebol's data stack
+#define DSP \
+	cast(REBINT, SERIES_TAIL(DS_Series) - 1)
 
-// Prior to StableStack, a pointer to a REBVAL that lives in the data stack
-// is very volatile.  Any pushes can expand the stack, which means any
-// pointers may go invalid.  As an interim step, it can be helpful to be
-// assured that a pointer is not into the data stack.  For assertions only.
 // Access value at given stack location
 #define DS_AT(d) \
 	BLK_SKIP(DS_Series, (d))
 
+// Most recently pushed item, crashes Debug build if stack is empty, but is
+// still an expression-like macro
+#ifdef NDEBUG
+	#define DS_TOP \
+		BLK_LAST(DS_Series)
+#else
+	#define DS_TOP \
+		( \
+			SERIES_TAIL(DS_Series) == 0 \
+				? *cast(REBVAL**, NULL) \
+				: BLK_LAST(DS_Series) \
+		)
+#endif
 
 #if !defined(NDEBUG)
 	#define IN_DATA_STACK(p) \
-		(((p) >= &DS_Base[0]) && ((p <= &DS_Base[DS_Index])))
+		(SERIES_TAIL(DS_Series) != 0 && (p) >= DS_AT(0) && (p) <= DS_TOP)
 #endif
 
-// !!! Temporary, next commit improves this
-#define DS_DROP_TO(d) (DSP = (d))
+// PUSHING: Note the DS_PUSH macros inherit the property of SET_XXX that
+// they use their parameters multiple times.  Don't use with the result of
+// a function call because that function could be called multiple times.
+//
+// If you push "unsafe" trash to the stack, it has the benefit of costing
+// nothing extra in a release build for setting the value (as it is just
+// left uninitialized).  But you must make sure that a GC can't run before
+// you have put a valid value into the slot you pushed.
+//
+// Unsafe trash partially inlines Alloc_Tail_Blk, so it only pays for the
+// function call in cases where expansion is necessary (rare case, as the
+// data stack is preallocated and increments in chunks).
+//
+// !!! Currently we Panic instead of expanding, which will be changed once
+// call frames have their own stack.
+
+#define DS_PUSH_TRASH \
+	( \
+		SERIES_FITS(DS_Series, 1) \
+			? cast(void, ++DS_Series->tail) \
+			: ( \
+				SERIES_REST(DS_Series) >= STACK_LIMIT \
+					? Trap(RE_STACK_OVERFLOW) \
+					: cast(void, cast(REBUPT, Alloc_Tail_Blk(DS_Series))) \
+			), \
+		SET_TRASH(DS_TOP) \
+	)
+
+#define DS_PUSH_TRASH_SAFE \
+	(DS_PUSH_TRASH, SET_TRASH_SAFE(DS_TOP), VOID)
+
+#define DS_PUSH(v) \
+	(DS_PUSH_TRASH, *DS_TOP = *(v), VOID)
+
+#define DS_PUSH_UNSET \
+	(DS_PUSH_TRASH, SET_UNSET(DS_TOP), VOID)
+
+#define DS_PUSH_NONE \
+	(DS_PUSH_TRASH, SET_NONE(DS_TOP), VOID)
+
+#define DS_PUSH_TRUE \
+	(DS_PUSH_TRASH, SET_TRUE(DS_TOP), VOID)
+
+#define DS_PUSH_INTEGER(n) \
+	(DS_PUSH_TRASH, SET_INTEGER(DS_TOP, (n)), VOID)
+
+#define DS_PUSH_DECIMAL(n) \
+	(DS_PUSH_TRASH, SET_DECIMAL(DS_TOP, (n)), VOID)
+
+// POPPING AND "DROPPING"
+
+#define DS_DROP \
+	(--DS_Series->tail, BLK_TERM(DS_Series), VOID)
+
+#define DS_POP_INTO(v) \
+	do { \
+		assert(!IS_TRASH(DS_TOP) || VAL_TRASH_SAFE(DS_TOP)); \
+		*(v) = *DS_TOP; \
+		DS_DROP; \
+	} while (0)
+
+#ifdef NDEBUG
+	#define DS_DROP_TO(dsp) \
+		(DS_Series->tail = (dsp) + 1, VOID)
+#else
+	#define DS_DROP_TO(dsp) \
+		do { \
+			assert(DSP >= (dsp)); \
+			while (DSP != (dsp)) {DS_DROP;} \
+		} while (0)
+#endif
+
 
 // "Data Stack Frame" indexes into Rebol's data stack at the location where
 // the block of information about a function call begins.  It starts with the
@@ -85,20 +186,21 @@
 // !!! Vis a vis, concordantly...DSF_RETURN is reserved for the definitionally
 // scoped return function built for the specific call the frame represents.
 
+
 #define DSF_SIZE		5					// from DSF to ARGS-1
 
 // where to write return value (via a handle indirection for now)
 #define DSF_OUT(d) \
-	cast(REBVAL*, VAL_HANDLE_DATA(&DS_Base[(d) + 1]))
+	cast(REBVAL*, VAL_HANDLE_DATA(DS_AT((d) + 1)))
 
 #define PRIOR_DSF(d) \
-	VAL_INT32(&DS_Base[(d) + 2])
+	VAL_INT32(DS_AT((d) + 2))
 
-#define DSF_WHERE(d)	(&DS_Base[(d) + 3])	// block and index of execution
-#define DSF_LABEL(d)	(&DS_Base[(d) + 4])	// func word backtrace
-#define DSF_FUNC(d)		(&DS_Base[(d) + 5])	// function value saved
+#define DSF_WHERE(d)	DS_AT((d) + 3)	// block and index of execution
+#define DSF_LABEL(d)	DS_AT((d) + 4)	// func word backtrace
+#define DSF_FUNC(d)		DS_AT((d) + 5)	// function value saved
 #define DSF_RETURN(d)	coming@soon			// return func linked to this call
-#define DSF_ARG(d,n)	(&DS_Base[(d) + DSF_SIZE + (n)])
+#define DSF_ARG(d,n)	DS_AT((d) + DSF_SIZE + FIRST_PARAM_INDEX + (n) - 1)
 
 
 #ifdef STRESS
@@ -118,39 +220,6 @@
 // how to indicate there is no stack frame.
 #define DSF_NONE MIN_I32
 
-// Special stack controls (used by init and GC):
-#define DS_TERMINATE	(SERIES_TAIL(DS_Series) = DSP+1);
-
-// Stack pointer based actions:
-#define DS_TOP			(&DS_Base[DSP])
-
-#define DS_DROP \
-	(SET_END(DS_TOP), --DSP, cast(void, 0))
-
-#define DS_POP_INTO(v) \
-	do { \
-		assert(!IS_END(DS_TOP)); \
-		assert(!IS_TRASH(DS_TOP) || VAL_TRASH_SAFE(DS_TOP)); \
-		*(v) = *DS_TOP; \
-		DS_DROP; \
-	} while (0)
-
-#define DS_PUSH(v)		(DS_Base[++DSP]=*(v))		// atomic
-
-#define DS_PUSH_TRASH_SAFE \
-	(++DSP, SET_TRASH_SAFE(DS_TOP))
-
-#define DS_PUSH_TRASH \
-	(++DSP, SET_TRASH(DS_TOP))
-
-#define DS_PUSH_UNSET	SET_UNSET(&DS_Base[++DSP])	// atomic
-#define DS_PUSH_NONE	SET_NONE(&DS_Base[++DSP])	// atomic
-#define DS_PUSH_TRUE	VAL_SET(&DS_Base[++DSP], REB_LOGIC), \
-						VAL_LOGIC(&DS_Base[DSP]) = TRUE // not atomic
-#define DS_PUSH_INTEGER(n)	VAL_SET(&DS_Base[++DSP], REB_INTEGER), \
-						VAL_INT64(&DS_Base[DSP]) = n // not atomic
-#define DS_PUSH_DECIMAL(n)	VAL_SET(&DS_Base[++DSP], REB_DECIMAL), \
-						VAL_DECIMAL(&DS_Base[DSP]) = n // not atomic
 
 // Reference from ds that points to current return value:
 #define D_OUT			DSF_OUT(call_->dsf)

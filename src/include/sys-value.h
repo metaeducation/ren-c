@@ -142,7 +142,7 @@ typedef struct Reb_Type {
 ***********************************************************************/
 
 #ifdef NDEBUG
-	#define SET_TRASH(v)
+	#define SET_TRASH(v) VOID
 
 	#define SET_TRASH_SAFE(v) SET_UNSET(v)
 #else
@@ -1151,6 +1151,13 @@ typedef struct Reb_Function {
 #define FUNC_ACT(v)       ((v)->func.act)
 #define FUNC_INFO(v)      ((v)->func.info)
 #define FUNC_ARGC(v)	  SERIES_TAIL((v)->args)
+
+// !!! In the original formulation, the first parameter in the VAL_FUNC_WORDS
+// started at 1.  The zero slot was left empty, in order for the function's
+// word frames to line up to object frames where the zero slot is SELF.
+// The pending implementation of definitionally scoped return bumps this
+// number to 2, so we establish it as a named constant anticipating that.
+#define FIRST_PARAM_INDEX 1
 
 /* argument is of type REBVAL* */
 #define VAL_FUNC(v)			  ((v)->data.func)

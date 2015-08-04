@@ -82,27 +82,6 @@ void Do_Rebcode(const REBVAL *v) {;}
 
 /***********************************************************************
 **
-*/	void Expand_Stack(REBCNT amount)
-/*
-**		Expand the datastack. Invalidates any references to stack
-**		values, so code should generally use stack index integers,
-**		not pointers into the stack.
-**
-***********************************************************************/
-{
-	// !!! Temporary for StableStack simulation... we never expand
-	Panic(RP_MISC);
-
-	if (SERIES_REST(DS_Series) >= STACK_LIMIT) Trap(RE_STACK_OVERFLOW);
-	DS_Series->tail = DSP+1;
-	Extend_Series(DS_Series, amount);
-	DS_Base = BLK_HEAD(DS_Series);
-	Debug_Fmt(cs_cast(BOOT_STR(RS_STACK, 0)), DSP, SERIES_REST(DS_Series));
-}
-
-
-/***********************************************************************
-**
 */  REBINT Eval_Depth(void)
 /*
 ***********************************************************************/
@@ -524,7 +503,7 @@ void Trace_Arg(REBINT num, const REBVAL *arg, const REBVAL *path)
 **		Args are pushed onto the data stack in the same order
 **		as the function frame.
 **
-**			func_offset:  offset of the function or path value, relative to DS_Base
+**			dsf: index of function call frame
 **			path:  refinements or object/function path
 **			block: current evaluation block
 **			index: current evaluation index
@@ -532,7 +511,7 @@ void Trace_Arg(REBINT num, const REBVAL *arg, const REBVAL *path)
 ***********************************************************************/
 {
 #if !defined(NDEBUG)
-	REBINT dsp_orig;
+	REBINT dsp_after_args;
 #endif
 
 	REBVAL *value;
@@ -540,13 +519,7 @@ void Trace_Arg(REBINT num, const REBVAL *arg, const REBVAL *path)
 	REBSER *words;
 	REBINT ds = 0;			// stack argument position
 	REBINT dsp = DSP + 1;	// stack base
-	REBVAL *tos;
 	REBVAL *func;
-
-
-	if ((dsp + 100) > (REBINT)SERIES_REST(DS_Series)) {
-		Expand_Stack(STACK_MIN);
-	}
 
 	// We can only assign this *after* the stack expansion (may move it)
 	func = DSF_FUNC(dsf);
@@ -562,26 +535,18 @@ void Trace_Arg(REBINT num, const REBVAL *arg, const REBVAL *path)
 
 	// If func is operator, first arg is already on stack:
 	if (IS_OP(func)) {
-		//if (!TYPE_CHECK(args, VAL_TYPE(DS_VALUE(DSP))))
-		//	Trap3_DEAD_END(RE_EXPECT_ARG, DSF_LABEL(dsf), args, Of_Type(DS_VALUE(ds)));
+		//if (!TYPE_CHECK(args, VAL_TYPE(DS_AT(DSP))))
+		//	Trap3_DEAD_END(RE_EXPECT_ARG, DSF_LABEL(dsf), args, Of_Type(DS_AT(ds)));
 		args++;	 	// skip evaluation, but continue with type check
 		ds--;		// shorten stack fill below
 	}
 
 	// Fill stack variables with default values:
-	tos = DS_TOP + 1;
-	DSP += ds;
-	for (; ds > 0; ds--) SET_NONE(tos++);
+	for (; ds > 0; ds--) DS_PUSH_NONE;
 
 #if !defined(NDEBUG)
-	dsp_orig = DSP;
+	dsp_after_args = DSP;
 #endif
-
-
-	// The caller will be testing the top slot, and we might not write to
-	// it (e.g. what if all params are quoted?) so we have to put something
-	// that is *not* THROWN() there.
-	SET_TRASH_SAFE(DS_TOP);
 
 	// Go thru the word list args:
 	ds = dsp;
@@ -672,7 +637,7 @@ more_path:
 	//	Trap2_DEAD_END(RE_NO_REFINE, DSF_LABEL(dsf), path);
 
 return_index:
-	assert(DSP == dsp_orig);
+	assert(DSP == dsp_after_args);
 	return index;
 }
 
@@ -792,7 +757,7 @@ do_value:
 
 	//CHECK_MEMORY(1);
 	CHECK_C_STACK_OVERFLOW(&value);
-	if ((DSP + 20) > (REBINT)SERIES_REST(DS_Series)) Expand_Stack(STACK_MIN); //Trap_DEAD_END(RE_STACK_OVERFLOW);
+
 	if (--Eval_Count <= 0 || Eval_Signals) Do_Signals();
 
 	value = BLK_SKIP(block, index);
@@ -1044,6 +1009,9 @@ do_value:
 		}
 	}
 
+	// Should not have accumulated any net data stack during the evaluation
+	assert(DSP == dsp_orig);
+
 	// Should not have a THROWN value if we got here
 	assert(index != THROWN_FLAG && !THROWN(out));
 
@@ -1207,7 +1175,6 @@ finished:
 		else if (VAL_TYPE(val) == type) DS_PUSH(val);
 		// !!! check stack size
 	}
-	SET_END(&DS_Base[++DSP]); // in case caller needs it
 
 	//block = Copy_Values(DS_Base + start, DSP - start + 1);
 	//DSP = start;
@@ -1333,12 +1300,11 @@ finished:
 	REBINT ftype = VAL_TYPE(func) - REB_NATIVE; // function type
 	REBSER *block = VAL_SERIES(args);
 	REBCNT index = VAL_INDEX(args);
-	REBCNT dsf;
+	REBINT dsf;
 
 	REBSER *words;
 	REBINT len;
 	REBINT n;
-	REBINT start;
 	REBVAL *val;
 
 	if (index > SERIES_TAIL(block)) index = SERIES_TAIL(block);
@@ -1351,7 +1317,6 @@ finished:
 	// Determine total number of args:
 	words = VAL_FUNC_WORDS(func);
 	len = words ? SERIES_TAIL(words)-1 : 0;
-	start = DSP+1;
 
 	// Gather arguments:
 	if (reduce) {
@@ -1366,16 +1331,12 @@ finished:
 			}
 			n++;
 		}
-		if (n > len) DSP = start + len;
 	}
 	else {
 		// Copy block contents to stack:
 		n = VAL_BLK_LEN(args);
 		if (len < n) n = len;
-		if (start + n + 100 > cast(REBINT, SERIES_REST(DS_Series)))
-			Expand_Stack(STACK_MIN);
-		memcpy(&DS_Base[start], BLK_SKIP(block, index), n * sizeof(REBVAL));
-		DSP = start + n - 1;
+		Push_Stack_Values(BLK_SKIP(block, index), n);
 	}
 
 	// Pad out missing args:
@@ -1383,8 +1344,8 @@ finished:
 
 	// Validate arguments:
 	if (words) {
-		val = DS_Base + start;
-		for (args = BLK_SKIP(words, 1); NOT_END(args);) {
+		val = DSF_ARG(dsf, 1);
+		for (args = BLK_SKIP(words, FIRST_PARAM_INDEX); NOT_END(args);) {
 			// If arg is refinement, determine its state:
 			if (IS_REFINEMENT(args)) {
 				if (IS_CONDITIONAL_FALSE(val)) {
@@ -1432,7 +1393,7 @@ return_balanced:
 **
 ***********************************************************************/
 {
-	REBCNT dsf;
+	REBINT dsf;
 	REBSER *words;
 	REBCNT ds;
 	REBVAL *arg;
@@ -1469,10 +1430,6 @@ return_balanced:
 	func = DSF_FUNC(dsf); // for safety
 	words = VAL_FUNC_WORDS(func);
 	ds = SERIES_TAIL(words)-1;	// length of stack fill below
-	if (DSP + ds + 100 > SERIES_REST(DS_Series)) {//unlikely
-		Expand_Stack(STACK_MIN);
-		func = DSF_FUNC(dsf); //reevaluate func
-	}
 
 	// Gather arguments from C stack:
 	for (; ds > 0; ds--) {
@@ -1671,10 +1628,6 @@ return_balanced:
 **		The source for arguments is the existing stack frame,
 **		or a prior stack frame. (Prep_Func + Args)
 **
-**	Return:
-**		On return, the stack remains as-is. The caller must reset
-**		the DSP and DSF values.
-**
 ***********************************************************************/
 {
 	REBSER *wsrc;		// words of source func
@@ -1685,62 +1638,87 @@ return_balanced:
 	REBVAL *word2;
 	REBINT dsp_orig = DSP;
 
-	//!!! NEEDS to check stack for overflow
-	//!!! Should check datatypes for new arg passing!
+	REBINT dsf;
 
 	wsrc = VAL_FUNC_WORDS(DSF_FUNC(DSF));
 	wnew = VAL_FUNC_WORDS(func_val);
 
+	// As part of the "Redo" we are not adding a new function location,
+	// label, or place to write the output.  We are substituting new code
+	// and perhaps adjusting the arguments in our re-doing call.
+
+	dsf = Push_Func(
+		DSF_OUT(DSF),
+		VAL_SERIES(DSF_WHERE(DSF)),
+		VAL_INDEX(DSF_WHERE(DSF)),
+		DSF_LABEL(DSF),
+		func_val
+	);
+
 	// Foreach arg of the target, copy to source until refinement.
-	for (isrc = inew = 1; inew < BLK_LEN(wnew); inew++, isrc++) {
+	for (isrc = inew = FIRST_PARAM_INDEX; inew < BLK_LEN(wnew); inew++, isrc++) {
 		word = BLK_SKIP(wnew, inew);
 		if (isrc > BLK_LEN(wsrc)) isrc = BLK_LEN(wsrc);
 
 		switch (VAL_TYPE(word)) {
+			case REB_SET_WORD: // !!! for definitional return...
+				assert(FALSE); // !!! (but not yet)
 			case REB_WORD:
 			case REB_LIT_WORD:
 			case REB_GET_WORD:
-				if (VAL_TYPE(word) == VAL_TYPE(BLK_SKIP(wsrc, isrc))) break;
-				DS_PUSH_NONE;
-				continue;
-				//Trap_Arg_DEAD_END(word);
+				if (VAL_TYPE(word) == VAL_TYPE(BLK_SKIP(wsrc, isrc))) {
+					DS_PUSH(DSF_ARG(DSF, isrc));
+					// !!! Should check datatypes for new arg passing!
+				}
+				else {
+					// !!! Why does this allow the bounced-to function to have
+					// a different type, push a none, and not 'Trap_Arg(word);'
+					DS_PUSH_NONE;
+				}
+				break;
 
 			// At refinement, search for it in source, then continue with words.
 			case REB_REFINEMENT:
 				// Are we aligned on the refinement already? (a common case)
 				word2 = BLK_SKIP(wsrc, isrc);
-				if (!(IS_REFINEMENT(word2) && VAL_BIND_CANON(word2) == VAL_BIND_CANON(word))) {
+				if (
+					IS_REFINEMENT(word2)
+					&& VAL_WORD_CANON(word2) == VAL_WORD_CANON(word)
+				) {
+					DS_PUSH(DSF_ARG(DSF, isrc));
+				}
+				else {
 					// No, we need to search for it:
-					for (isrc = 1; isrc < BLK_LEN(wsrc); isrc++) {
+					for (isrc = FIRST_PARAM_INDEX; isrc < BLK_LEN(wsrc); isrc++) {
 						word2 = BLK_SKIP(wsrc, isrc);
-						if (IS_REFINEMENT(word2) && VAL_BIND_CANON(word2) == VAL_BIND_CANON(word)) goto push_arg;
+						if (
+							IS_REFINEMENT(word2)
+							&& VAL_WORD_CANON(word2) == VAL_WORD_CANON(word)
+						) {
+							DS_PUSH(DSF_ARG(DSF, isrc));
+							break;
+						}
 					}
+					// !!! The function didn't have the refinement so skip
+					// it.  But what will happen now with the arguments?
 					DS_PUSH_NONE;
-					continue;
-					//if (isrc >= BLK_LEN(wsrc)) Trap_Arg_DEAD_END(word);
+					//if (isrc >= BLK_LEN(wsrc)) Trap_Arg(word);
 				}
 				break;
 
 			default:
-				assert(FALSE);
+				Panic(RP_MISC);
 		}
-push_arg:
-		DS_PUSH(DSF_ARG(DSF, isrc));
-		//Debug_Fmt("Arg %d -> %d", isrc, inew);
 	}
 
-	// Copy values to prior location:
-	inew--;
-	// memory areas may overlap, so use memmove and not memcpy!
-	memmove(DS_ARG(1), DS_TOP-(inew-1), inew * sizeof(REBVAL));
-	DSP = DS_ARG_BASE + inew; // new TOS
-	//Dump_Block(DS_ARG(1), inew);
-	VAL_WORD_FRAME(DSF_LABEL(DSF)) = VAL_FUNC_ARGS(func_val);
-	*DSF_FUNC(DSF) = *func_val;
-	Func_Dispatch[VAL_TYPE(func_val)-REB_NATIVE](func_val);
+	// !!! Temporary; there's a better factoring where we don't have this
+	// dispatch duplicated coming...
 
-	// !!! Temporary; there's a better rewrite of this functionality
-	// This is just needed for stack balancing for now.
+	SET_DSF(dsf);
+
+	Func_Dispatch[VAL_TYPE(func_val)-REB_NATIVE](func_val);
+	SET_DSF(PRIOR_DSF(dsf));
+
 	DS_DROP_TO(dsp_orig);
 }
 

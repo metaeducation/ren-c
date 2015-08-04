@@ -37,8 +37,6 @@
 {
 	DS_Series = Make_Block(size);
 	Set_Root_Series(TASK_STACK, DS_Series, "data stack"); // uses special GC
-	DS_Base = BLK_HEAD(DS_Series);
-	DSP = -1;
 	SET_DSF(DSF_NONE);
 }
 
@@ -58,11 +56,9 @@
 **
 ***********************************************************************/
 {
-	DS_TERMINATE; // !!! Unnecessary when DS_Series goes legit...
 	Insert_Series(
 		DS_Series, SERIES_TAIL(DS_Series), cast(const REBYTE*, values), length
 	);
-	DSP += length;
 }
 
 
@@ -100,6 +96,22 @@
 }
 
 
+/***********************************************************************
+**
+*/	void Expand_Stack(REBCNT amount)
+/*
+**		Expand the datastack. Invalidates any references to stack
+**		values, so code should generally use stack index integers,
+**		not pointers into the stack.
+**
+***********************************************************************/
+{
+	if (SERIES_REST(DS_Series) >= STACK_LIMIT) Trap(RE_STACK_OVERFLOW);
+	Extend_Series(DS_Series, amount);
+	Debug_Fmt(cs_cast(BOOT_STR(RS_STACK, 0)), DSP, SERIES_REST(DS_Series));
+}
+
+
 #ifdef STRESS
 
 /***********************************************************************
@@ -119,9 +131,9 @@
 **
 ***********************************************************************/
 {
-	assert(DS_Index >= -1);
+	assert(DSP >= -1);
 	if (DS_Frame_Index != DSF_NONE) {
-		assert(DS_Frame_Index >= -1 && DS_Index >= DS_Frame_Index);
+		assert(DS_Frame_Index >= -1 && DSP >= DS_Frame_Index);
 		assert(PRIOR_DSF(DS_Frame_Index) < DS_Frame_Index);
 		assert(ANY_FUNC(DSF_FUNC(DS_Frame_Index)));
 		assert(ANY_BLOCK(DSF_WHERE(DS_Frame_Index)));

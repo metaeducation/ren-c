@@ -1001,7 +1001,6 @@ static void Propagate_All_GC_Marks(void);
 	// WARNING: These terminate existing open blocks. This could
 	// be a problem if code is building a new value at the tail,
 	// but has not yet updated the TAIL marker.
-	DS_TERMINATE; // Update data stack tail
 	VAL_BLK_TERM(TASK_BUF_EMIT);
 	VAL_BLK_TERM(TASK_BUF_WORDS);
 //!!!	SET_END(BLK_TAIL(Save_Value_List));
@@ -1066,9 +1065,6 @@ static void Propagate_All_GC_Marks(void);
 	PG_Reb_Stats->Recycle_Series = Mem_Pools[SERIES_POOL].free - PG_Reb_Stats->Recycle_Series;
 	PG_Reb_Stats->Recycle_Series_Total += PG_Reb_Stats->Recycle_Series;
 	PG_Reb_Stats->Recycle_Prior_Eval = Eval_Cycles;
-
-	// Reset stack to prevent invalid MOLD access:
-	RESET_TAIL(DS_Series);
 
 	if (GC_Ballast <= VAL_INT32(TASK_BALLAST) / 2
 		&& VAL_INT64(TASK_BALLAST) < MAX_I32) {

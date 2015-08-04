@@ -819,7 +819,17 @@ static void ffi_to_rebol(REBRIN *rin,
 			 rvalue,
 			 ffi_args);
 	ffi_to_rebol(VAL_ROUTINE_INFO(rot), ((ffi_type**)SERIES_DATA(VAL_ROUTINE_FFI_ARG_TYPES(rot)))[0], rvalue, ret);
-	DSP -= pop;
+
+	// !!! Using a 'pop' count instead of saving the stack position and
+	// then using DS_DROP_TO offers the advantage of not covering up
+	// any bugs where stack elements are added inadvertently (as the
+	// Do_Core will catch the stack imbalance).  But it may be overkill.
+	// Consider saving the DSP and using DS_DROP_TO.
+
+	while (pop > 0) {
+		DS_DROP;
+		pop--;
+	}
 }
 
 /***********************************************************************
