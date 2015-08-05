@@ -624,8 +624,11 @@ static void Mold_Block(const REBVAL *value, REB_MOLD *mold)
 	REBFLG over = FALSE;
 
 	if (SERIES_WIDE(VAL_SERIES(value)) == 0) {
-		assert(FALSE);
-		Panic_Core(RP_BAD_WIDTH, sizeof(REBVAL), 0, VAL_TYPE(value));
+	#if !defined(NDEBUG)
+		Debug_Fmt("** Mold_Block() zero series wide, t=%d", VAL_TYPE(value));
+	#endif
+
+		Panic_Series(VAL_SERIES(value));
 	}
 
 	// Optimize when no index needed:
