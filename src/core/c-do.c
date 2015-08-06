@@ -653,7 +653,7 @@ return_index:
 
 	struct Reb_Call *dsf_precall;
 
-do_value:
+do_at_index:
 	assert(index != END_FLAG && index != THROWN_FLAG);
 	SET_TRASH_SAFE(out);
 	label = NULL;
@@ -692,6 +692,8 @@ do_value:
 
 	case ET_WORD:
 		GET_VAR_INTO(out, value);
+
+	do_fetched_word:
 		if (IS_UNSET(out)) Trap1_DEAD_END(RE_NO_VALUE, value);
 		if (ANY_FUNC(out)) {
 			// OP! is only handled by the code at the tail of this routine
@@ -909,6 +911,14 @@ do_value:
 		//return -index;
 	}
 
+	if (index >= BLK_LEN(block)) goto return_index;
+
+	// Should not have accumulated any net data stack during the evaluation
+	assert(DSP == dsp_orig);
+
+	// Should not have a THROWN value if we got here
+	assert(index != THROWN_FLAG && !THROWN(out));
+
 	// If normal eval (not higher precedence of infix op), check for op:
 	if (!op) {
 		value = BLK_SKIP(block, index);
@@ -920,30 +930,27 @@ do_value:
 			goto handle_op;
 		}
 
-		// WORD! values may look up to an OP! - don't consider SELF (zero
-		// index) to be a candidate for resolving to an op, however.
-		if (
-			IS_WORD(value)
-			&& VAL_WORD_FRAME(value)
-			&& VAL_WORD_INDEX(value) != 0
-		) {
-			label = value;
-			value = GET_VAR(value);
-			if (IS_OP(value)) {
+		// WORD! values may look up to an OP!
+		if (IS_WORD(value)) {
+			GET_VAR_INTO(&save, value);
+			if (IS_OP(&save)) {
+				label = value;
+				value = &save;
 				if (Trace_Flags) Trace_Line(block, index, value);
 				goto handle_op;
+			}
+
+			// It may not have been an OP!, but we just paid for a variable
+			// lookup.  If not just asking for a DO/NEXT, use the work!
+			if (!next) {
+				*out = save;
+				goto do_fetched_word;
 			}
 		}
 	}
 
-	// Should not have accumulated any net data stack during the evaluation
-	assert(DSP == dsp_orig);
-
-	// Should not have a THROWN value if we got here
-	assert(index != THROWN_FLAG && !THROWN(out));
-
 	// Continue evaluating rest of block if not just a DO/NEXT
-	if (index < BLK_LEN(block) && !next) goto do_value;
+	if (!next) goto do_at_index;
 
 return_index:
 	assert(DSP == dsp_orig);
