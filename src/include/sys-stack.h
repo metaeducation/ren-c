@@ -177,7 +177,7 @@
 
 #ifdef NDEBUG
 	#define DS_DROP_TO(dsp) \
-		(DS_Series->tail = (dsp) + 1, VOID)
+		(DS_Series->tail = (dsp) + 1, BLK_TERM(DS_Series), VOID)
 #else
 	#define DS_DROP_TO(dsp) \
 		do { \
