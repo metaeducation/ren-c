@@ -31,14 +31,45 @@
 
 /***********************************************************************
 **
-*/	void Init_Data_Stack(REBCNT size)
+*/	void Init_Stacks(REBCNT size)
 /*
 ***********************************************************************/
 {
+	// We always keep one call stack chunk frame around for the first
+	// call frame push.  The first frame allocated out of it is
+	// saved as CS_Root.
+
+	struct Reb_Chunk *chunk = ALLOC(struct Reb_Chunk);
+#if !defined(NDEBUG)
+	memset(chunk, 0xBD, sizeof(struct Reb_Chunk));
+#endif
+	chunk->next = NULL;
+	CS_Root = cast(struct Reb_Call*, &chunk->payload);
+
+	CS_Top = NULL;
+	CS_Running = NULL;
+
 	DS_Series = Make_Block(size);
 	Set_Root_Series(TASK_STACK, DS_Series, "data stack"); // uses special GC
-	CS_Running = NULL;
-	CS_Top = NULL;
+}
+
+
+/***********************************************************************
+**
+*/	void Shutdown_Stacks(void)
+/*
+***********************************************************************/
+{
+	struct Reb_Chunk* chunk = cast(struct Reb_Chunk*,
+		cast(REBYTE*, CS_Root) - sizeof(struct Reb_Chunk*)
+	);
+
+	assert(DSP == -1);
+
+	assert(!CS_Running);
+	assert(!CS_Top);
+
+	FREE(struct Reb_Chunk, chunk);
 }
 
 
@@ -117,26 +148,76 @@
 **
 */	struct Reb_Call *Make_Call(REBVAL *out, REBSER *block, REBCNT index, const REBVAL *label, const REBVAL *func)
 /*
-**		Create a function call frame as defined in stack.h.
+**		Create a function call frame.  This doesn't necessarily call
+**		Alloc_Mem, because call frames are allocated sequentially
+**		inside of "memory chunks" in their ordering on the stack.
+**		Allocation is only required if we need to step into a new
+**		chunk (and even then only if we aren't stepping into a chunk
+**		that we are reusing from a prior expansion).
 **
-**		We do not push the frame at the same time we create it,
-**		because we need to fulfill its arguments in the caller's
+**		We do not set the frame as "Running" at the same time we create
+**		it, because we need to fulfill its arguments in the caller's
 **		frame before we actually invoke the function.
 **
 ***********************************************************************/
 {
 	REBCNT num_vars = VAL_FUNC_NUM_WORDS(func);
 
-	// Variable-sized allocation (would ideally use chunking)
-	struct Reb_Call *call = cast(struct Reb_Call*, ALLOC_ARRAY(REBYTE*,
-		sizeof(struct Reb_Call) + sizeof(REBVAL) * num_vars
-	));
+	REBCNT size = (
+		sizeof(struct Reb_Call)
+		+ sizeof(REBVAL) * (num_vars > 0 ? num_vars - 1 : 0)
+	);
+
+	struct Reb_Call *call;
+
+	// Establish invariant where 'call' points to a location big enough to
+	// hold the new frame (with frame's size accounted for in chunk_size)
+
+	if (!CS_Top) {
+		// If not big enough, a new chunk wouldn't be big enough, either!
+		assert(size <= CS_CHUNK_PAYLOAD);
+
+		// Claim the root frame
+		call = CS_Root;
+		call->chunk_left = CS_CHUNK_PAYLOAD - size;
+	}
+	else if (CS_Top->chunk_left >= cast(REBINT, size)) { // Chunk has space
+
+		// Advance past the topmost frame (whose size depends on num_vars)
+		call = cast(struct Reb_Call*,
+			cast(REBYTE*, CS_Top) + DSF_SIZE(CS_Top)
+		);
+
+		// top's chunk_left accounted for previous frame, account for ours
+		call->chunk_left = CS_Top->chunk_left - size;
+	}
+	else { // Not enough space
+
+		struct Reb_Chunk *chunk = DSF_CHUNK(CS_Top);
+
+		if (chunk->next) {
+			// Previously allocated chunk exists already to grow into
+			call = cast(struct Reb_Call*, &chunk->payload);
+			assert(!chunk->next->next);
+		}
+		else {
+			// No previously allocated chunk...we have to allocate it
+			chunk->next = ALLOC(struct Reb_Chunk);
+			chunk->next->next = NULL;
+		}
+
+		call = cast(struct Reb_Call*, &chunk->next->payload);
+		call->chunk_left = CS_CHUNK_PAYLOAD - size;
+	}
+
+	assert(call->chunk_left >= 0);
 
 	// Even though we can't push this stack frame to the CSP yet, it
 	// still needs to be considered for GC and freeing in case of a
 	// trap.  In a recursive DO we can get many pending frames before
 	// we come back to actually putting the topmost one in effect.
 	// !!! Better design for call frame stack coming.
+
 	call->prior = CS_Top;
 	CS_Top = call;
 
@@ -188,6 +269,8 @@
 			SET_NONE(&call->vars[var_index]);
 	}
 
+	assert(size == DSF_SIZE(call));
+
 	return call;
 }
 
@@ -196,14 +279,40 @@
 **
 */	void Free_Call(struct Reb_Call* call)
 /*
+**		Free a call frame.  This only occasionally requires an actual
+**		call to Free_Mem(), due to allocating call frames sequentially
+**		in chunks of memory.
+**
 ***********************************************************************/
 {
 	assert(call == CS_Top);
+
+	// Drop to the prior top call stack frame
 	CS_Top = call->prior;
 
-	// See notes on why there is a -1 here, to allow for safe compilation
-	// in C++ where vars cannot be a zero size array
-	Free_Mem(call, sizeof(struct Reb_Call) + sizeof(REBVAL) * call->num_vars);
+	if (cast(REBCNT, call->chunk_left) == CS_CHUNK_PAYLOAD - DSF_SIZE(call)) {
+		// This call frame sits at the head of a chunk.
+
+		struct Reb_Chunk *chunk = cast(struct Reb_Chunk *,
+			cast(REBYTE*, call) - sizeof(struct Reb_Chunk*)
+		);
+		assert(DSF_CHUNK(call) == chunk);
+
+		// When we've completely emptied a chunk, we check to see if the
+		// chunk after it is still live.  If so, we free it.  But we
+		// want to keep *this* just-emptied chunk alive for overflows if we
+		// rapidly get another push, to avoid Make_Mem()/Free_Mem() costs.
+
+		if (chunk->next) {
+			FREE(struct Reb_Chunk, chunk->next);
+			chunk->next = NULL;
+		}
+	}
+
+	// In debug builds we poison the memory for the frame
+#if !defined(NDEBUG)
+	memset(call, 0xBD, DSF_SIZE(call));
+#endif
 }
 
 

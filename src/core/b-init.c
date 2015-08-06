@@ -1001,7 +1001,7 @@ static REBCNT Set_Option_Word(REBCHR *str, REBCNT field)
 
 	Init_Raw_Print();
 	Init_Words(TRUE);
-	Init_Data_Stack(STACK_MIN/4);
+	Init_Stacks(STACK_MIN/4);
 	Init_Scanner();
 	Init_Mold(MIN_COMMON/4);
 	Init_Frame();
@@ -1079,7 +1079,7 @@ static REBCNT Set_Option_Word(REBCHR *str, REBCNT field)
 	Init_CRC();				// For word hashing
 	Set_Random(0);
 	Init_Words(FALSE);		// Symbol table
-	Init_Data_Stack(STACK_MIN * 4);
+	Init_Stacks(STACK_MIN * 4);
 	Init_Scanner();
 	Init_Mold(MIN_COMMON);	// Output buffer
 	Init_Frame();			// Frames
@@ -1201,7 +1201,7 @@ static REBCNT Set_Option_Word(REBCHR *str, REBCNT field)
 **
 ***********************************************************************/
 {
-	assert(DSP == -1 && !CS_Top && !CS_Running);
+	Shutdown_Stacks();
 	assert(Saved_State == NULL);
 	// assert(IS_TRASH(TASK_THROWN_ARG));
 }

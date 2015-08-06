@@ -21,59 +21,76 @@
 **
 **  Summary: REBOL Stack Definitions
 **  Module:  sys-stack.h
-**  Author:  Carl Sassenrath
 **  Notes:
 **
-**	DSP: index to the top of stack (active value)
-**	DSF: index to the base of stack frame (return value)
+**	This contains the implementations of two important stacks in
+**	the evaluator: the Data Stack and the Call Stack
 **
-**	Stack frame format:
+**	DATA STACK (CS_*):
 **
-**		   +---------------+
-**	DSF->0:| Return Value  | normally becomes TOS after func return
-**		   +---------------+
-**		 1:|  Prior Frame  | old DSF, block, and block index
-**		   +---------------+
-**		 2:|   Func Word   | for backtrace info
-**		   +---------------+
-**		 3:|   Func Value  | in case value is moved or modified
-**		   +---------------+
-**		 4:|     Arg 1     | args begin here
-**		   +---------------+
-**		   |     Arg 2     |
-**		   +---------------+
+**	The data stack is mostly for REDUCE and COMPOSE, which use it
+**	as a common buffer for values that are being gathered to be
+**	inserted into another series.  It's better to go through this
+**	buffer step because it means the precise size of the new
+**	insertions are known ahead of time.  If a series is created,
+**	it will not waste space or time on expansion, and if a series
+**	is to be inserted into as a target, the proper size gap for
+**	the insertion can be opened up exactly once (without any
+**	need for repeatedly shuffling on individual insertions).
+**
+**	Beyond that purpose, the data stack can also be used as a
+**	place to store a value to protect it from the garbage
+**	collector.  The stack must be balanced in the case of success
+**	when a native or action runs, but if a Trap() is called then
+**	the stack will be automatically balanced.
+**
+**	The data stack specifically needs contiguous memory for its
+**	applications.  That is more important than having stability
+**	of pointers to any data on the stack.  Hence if any push or
+**	pops can happen, there is no guarantee that the pointers will
+**	remain consistent...as the memory buffer may need to be
+**	reallocated (and hence relocated).  The index positions will
+**	remain consistent, however: and using DSP and DS_AT it is
+**	possible to work with stack items by index.
+**
+**	CALL STACK (CS_*):
+**
+**	The requirements for the call stack are different from the data
+**	stack, due to a need for pointer stability.  Being an ordinary
+**	series, the data stack will relocate its memory on expansion.
+**	This creates problems for natives and actions where pointers to
+**	parameters are saved to variables from D_ARG(N) macros.  These
+**	would need a refresh after every potential expanding operation.
+**
+**	Having a separate data structure offers other opportunities,
+**	such as hybridizing with CLOSURE! argument objects such that
+**	they would not need to be copied from the data stack.  It also
+**	allows freeing the information tracked by calls from the rule
+**	of being strictly a sequence of REBVALs.
 **
 ***********************************************************************/
 
 
 /***********************************************************************
 **
-**	REBOL DATA STACK (DS)
+**	At the moment, the data stack is *mostly* implemented as a typical
+**	series.  Pushing unfilled slots on the stack (via PUSH_TRASH_UNSAFE)
+**	partially inlines Alloc_Tail_Blk, so it only pays for the function
+**	call in cases where expansion is necessary.
 **
-**		The data stack is mostly for REDUCE and COMPOSE, which use it
-**		as a common buffer for values that are being gathered to be
-**		inserted into another series.  It's better to go through this
-**		buffer step because it means the precise size of the new
-**		insertions are known ahead of time.  If a series is created,
-**		it will not waste space or time on expansion, and if a series
-**		is to be inserted into as a target, the proper size gap for
-**		the insertion can be opened up exactly once (without any
-**		need for repeatedly shuffling on individual insertions).
+**	When Rebol was first open-sourced, there were other deviations from
+**	being a normal series.  It was not terminated with a REB_END, so
+**	you would be required to call a special DS_TERMINATE() routine to
+**	put the terminator in place before using the data stack with a
+**	routine that expected termination.  It also had to be expanded
+**	manually, so a DS_PUSH was not guaranteed to trigger a potential
+**	growth of the stack--if expansion hadn't been anticipated with a
+**	large enough space for that push, it would corrupt memory.
 **
-**		Beyond that purpose, the data stack can also be used as a
-**		place to store a value to protect it from the garbage
-**		collector.  The stack must be balanced in the case of success
-**		when a native or action runs, but if a Trap() is called then
-**		the stack will be automatically balanced.
-**
-**		The data stack specifically needs contiguous memory for its
-**		applications.  That is more important than having stability
-**		of pointers to any data on the stack.  Hence if any push or
-**		pops can happen, there is no guarantee that the pointers will
-**		remain consistent...as the memory buffer may need to be
-**		reallocated (and hence relocated).  The index positions will
-**		remain consistent, however: and using DSP and DS_AT it is
-**		possible to work with stack items by index.
+**	Overall, optimizing the stack structure should be easier now that
+**	it has a more dedicated purpose.  So those tricks are not being
+**	used for the moment.  Future profiling can try those and other
+**	approaches when a stable and complete system has been achieved.
 **
 ***********************************************************************/
 
@@ -112,13 +129,6 @@
 // nothing extra in a release build for setting the value (as it is just
 // left uninitialized).  But you must make sure that a GC can't run before
 // you have put a valid value into the slot you pushed.
-//
-// Unsafe trash partially inlines Alloc_Tail_Blk, so it only pays for the
-// function call in cases where expansion is necessary (rare case, as the
-// data stack is preallocated and increments in chunks).
-//
-// !!! Currently we Panic instead of expanding, which will be changed once
-// call frames have their own stack.
 
 #define DS_PUSH_TRASH \
 	( \
@@ -179,24 +189,41 @@
 
 /***********************************************************************
 **
-**	REBOL CALL STACK (CS)
+**	The call stack uses a custom "chunked" allocator to avoid the
+**	overhead of calling Make_Mem on each push and Free_Mem on
+**	each pop.  It keeps one spare chunk allocated, and only frees
+**	a chunk when a full chunk prior to it has the last element
+**	popped out of it.  In memory the situation looks like this:
 **
-**		The requirements for the call stack are different from the data
-**		stack, due to a need for pointer stability.  Being an ordinary
-**		series, the data stack will relocate its memory on expansion.
-**		This creates problems for natives and actions where pointers to
-**		parameters are saved to variables from D_ARG(N) macros.  These
-**		would need a refresh after every potential expanding operation.
+**		[chunk->next
+**			(->chunk_left call->prior ...data [arg1][arg2][arg3]...)
+**			(->chunk_left call->prior ...data [arg1]...)
+**			(->chunk_left call->prior ...data [arg1][arg2]...)
+**			...chunk remaining space...
+**		]
 **
-**		Having a separate data structure offers other opportunities,
-**		such as hybridizing with CLOSURE! argument objects such that
-**		they would not need to be copied from the data stack.  It also
-**		allows freeing the information tracked by calls from the rule
-**		of being strictly a sequence of REBVALs.
+**	Each [chunk] contains (calls).  The calls are singly linked
+**	backwards to form the call frame stack, while the chunks are
+**	singly linked forward.  Since the chunk size is a known
+**	constant, it's possible to quickly deduce the chunk a call
+**	lives in from its pointer and the remaining size in the chunk.
 **
 ***********************************************************************/
 
+struct Reb_Chunk;
+
+#define CS_CHUNK_PAYLOAD (2048 - sizeof(struct Reb_Chunk*))
+
+struct Reb_Chunk {
+	struct Reb_Chunk *next;
+	REBYTE payload[CS_CHUNK_PAYLOAD];
+};
+
 struct Reb_Call {
+	// How many bytes are left in the memory chunk this call frame lives in
+	// (its own size has already been subtracted from the amount)
+	REBINT chunk_left;
+
 	struct Reb_Call *prior;
 
 	// In the Debug build, we make sure SET_DSF has happened on a call frame.
@@ -221,13 +248,27 @@ struct Reb_Call {
 	REBVAL vars[1];		// (array exceeds struct, but cannot be [0] in C++)
 };
 
+#define DSF_NUM_VARS(c)	((c)->num_vars)
+
+// Size must compensate -1 for the already-accounted-for length one array
+#define DSF_SIZE(c) \
+	( \
+		sizeof(struct Reb_Call) \
+		+ sizeof(REBVAL) * (DSF_NUM_VARS(c) > 0 ? DSF_NUM_VARS(c) - 1 : 0) \
+	)
+
+#define DSF_CHUNK(c) \
+	cast(struct Reb_Chunk*, \
+		cast(REBYTE*, (c)) \
+		+ DSF_SIZE(c) \
+		+ (c)->chunk_left \
+		- sizeof(struct Reb_Chunk) \
+	)
+
+
 // !!! DSF is to be renamed (C)all (S)tack (P)ointer, but being left as DSF
 // in the initial commit to try and cut back on the disruption seen in
 // one commit, as there are already a lot of changes.
-//
-// Is the pointer to the topmost Rebol call frame, currently a naive singly
-// linked list implementation, to be enhanced with a chunking method that
-// does not require an Alloc_Mem call on each create.
 
 #define DSF (CS_Running + 0) // avoid assignment to DSF via + 0
 
@@ -257,16 +298,16 @@ struct Reb_Call {
 
 // VARS includes (*will* include) RETURN dispatching value, locals...
 #define DSF_VAR(c,n)	(&(c)->vars[(n) - 1])
-#define DSF_NUM_VARS(c)	((c)->num_vars)
 
 // ARGS is the parameters and refinements
 #define DSF_ARG(c,n)	DSF_VAR((c), (n) - 1 + FIRST_PARAM_INDEX)
 #define DSF_NUM_ARGS(c)	(DSF_NUM_VARS(c) - (FIRST_PARAM_INDEX - 1))
 
-// !!! The function spec numbers words according to their position.  0 is
-// SELF, 1 is the return, 2 is the first argument.  This layout is in flux
-// as the workings of locals are rethought...their most sensible location
-// would be before the arguments as well.
+// !!! The function spec numbers words according to their position.  With
+// definitional return, 0 is SELF, 1 is the RETURN, 2 is the first argument.
+// (without, 1 is the first argument).  This layout is in flux as the
+// workings of locals are rethought...their most sensible location would
+// probably be between the RETURN and the arguments.
 
 // Reference from ds that points to current return value:
 #define D_OUT			DSF_OUT(call_)
