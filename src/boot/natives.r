@@ -693,63 +693,6 @@ change-dir: native [
 	path [file!]
 ]
 
-;-- Series Natives
-
-first: native [
-	{Returns the first value of a series.}
-	value
-]
-
-second: native [
-	{Returns the second value of a series.}
-	value
-]
-
-third: native [
-	{Returns the third value of a series.}
-	value
-]
-
-fourth: native [
-	{Returns the fourth value of a series.}
-	value
-]
-
-fifth: native [
-	{Returns the fifth value of a series.}
-	value
-]
-
-sixth: native [
-	{Returns the sixth value of a series.}
-	value
-]
-
-seventh: native [
-	{Returns the seventh value of a series.}
-	value
-]
-
-eighth: native [
-	{Returns the eighth value of a series.}
-	value
-]
-
-ninth: native [
-	{Returns the ninth value of a series.}
-	value
-]
-
-tenth: native [
-	{Returns the tenth value of a series.}
-	value
-]
-
-last: native [
-	{Returns the last value of a series.}
-	value [series! tuple! gob!]
-]
-
 ;-- Math Natives - nat_math.c
 
 cosine: native [
@@ -835,11 +778,6 @@ shift: native [
 --: native [
 	{Decrement an integer or series index. Return its prior value.}
 	'word [word!] "Integer or series variable"
-]
-
-first+: native [
-	{Return the FIRST of a series then increment the series index.}
-	'word [word!] "Word must refer to a series"
 ]
 
 stack: native [

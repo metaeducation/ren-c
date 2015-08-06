@@ -16,6 +16,122 @@ REBOL [
 	}
 ]
 
+
+; !!! These used to be series natives that leveraged their implementation
+; as a hacked-up re-dispatch to A_PICK.  The method that used was not viable
+; when the call stack got its own data structure.  Given that dispatch was
+; not itself free, the idea of needing to write such helpers as natives
+; "for performance" suggests a faster substitution "macro" construct may
+; be required.  Until then, they are mezzanine.
+
+first: func [
+	{Returns the first value of a series.}
+	value
+] [
+	pick value 1
+]
+
+first+: func [
+	{Return the FIRST of a series then increment the series index.}
+	'word [word!] "Word must refer to a series"
+] [
+	also (pick get word 1) (++ :word)
+]
+
+second: func [
+	{Returns the second value of a series.}
+	value
+] [
+	pick value 2
+]
+
+third: func [
+	{Returns the third value of a series.}
+	value
+] [
+	pick value 3
+]
+
+fourth: func [
+	{Returns the fourth value of a series.}
+	value
+] [
+	pick value 4
+]
+
+fifth: func [
+	{Returns the fifth value of a series.}
+	value
+] [
+	pick value 5
+]
+
+sixth: func [
+	{Returns the sixth value of a series.}
+	value
+] [
+	pick value 6
+]
+
+seventh: func [
+	{Returns the seventh value of a series.}
+	value
+] [
+	pick value 7
+]
+
+eighth: func [
+	{Returns the eighth value of a series.}
+	value
+] [
+	pick value 8
+]
+
+ninth: func [
+	{Returns the ninth value of a series.}
+	value
+] [
+	pick value 9
+]
+
+tenth: func [
+	{Returns the tenth value of a series.}
+	value
+] [
+	pick value 10
+]
+
+last: func [
+	{Returns the last value of a series.}
+	value [series! tuple! gob!]
+	/local len
+] [
+	case [
+		series? value [pick back tail value 1]
+		tuple? value [pick value length? value]
+		gob? value [
+			; The C code effectively used 'pick value t' with:
+			;
+			; t = GOB_PANE(VAL_GOB(val)) ? GOB_TAIL(VAL_GOB(val)) : 0;
+			; VAL_GOB_INDEX(val) = 0;
+			;
+			; Try getting same result with what series does.  :-/
+
+			pick back tail value 1
+		]
+		true [
+			; C code said "let the action throw the error", but by virtue
+			; of type checking this case should not happen.
+			pick value 0
+		]
+	]
+]
+
+;
+; !!! End of functions that used to be natives, now mezzanine
+;
+
+
 repend: func [
 	"Appends a reduced value to a series and returns the series head."
 	series [series! port! map! gob! object! bitset!] {Series at point to insert (modified)}
