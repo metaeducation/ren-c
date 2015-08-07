@@ -339,7 +339,7 @@ void Trace_Arg(REBINT num, const REBVAL *arg, const REBVAL *path)
 		// If TOS was not used, then copy final value back to it:
 		if (pvs.value != pvs.store) *pvs.store = *pvs.value;
 		// Return 0 if not function or is :path/word...
-		if (!ANY_FUNC(pvs.value) || IS_GET_PATH(pvs.orig)) return 0;
+		if (!ANY_FUNC(pvs.value)) return 0;
 		*path_val = pvs.path; // return new path (for func refinements)
 		return pvs.value; // only used for functions
 	}
@@ -819,45 +819,59 @@ do_at_index:
 		goto func_already_pushed;
 
 	case REB_PATH:
-	case REB_GET_PATH:
-	case REB_SET_PATH:
 		label = value;
 
-		if (IS_SET_PATH(value)) {
-			index = Do_Core(out, TRUE, block, index + 1, FALSE);
-			// THROWN is handled in Do_Path.
-			if (index == END_FLAG || VAL_TYPE(out) <= REB_UNSET)
-				Trap1_DEAD_END(RE_NEED_VALUE, label);
-			Do_Path(&label, out);
-		}
-		else { // Can be a path or get-path:
+		// returns in word the path item, DS_TOP has value
+		value = Do_Path(&label, 0);
+		DS_POP_INTO(out);
 
-			// returns in word the path item, DS_TOP has value
-			value = Do_Path(&label, 0);
-			DS_POP_INTO(out);
+		// Value returned only for functions that need evaluation
+		if (value && ANY_FUNC(value)) {
+			// object/func or func/refinements or object/func/refinement:
 
-			// Value returned only for functions that need evaluation (but not GET_PATH):
-			if (value && ANY_FUNC(value)) {
-				// object/func or func/refinements or object/func/refinement:
+			if (label && !IS_WORD(label))
+				Trap1(RE_BAD_REFINE, label); // CC#2226
 
-				if (label && !IS_WORD(label))
-					Trap1(RE_BAD_REFINE, label); // CC#2226
+			// Cannot handle an OP! because prior value is wiped out above
+			// (Theoretically we could save it if we are DO-ing a chain of
+			// values, and make it work.  But then, a loop of DO/NEXT
+			// may not behave the same as DO-ing the whole block.  Bad.)
 
-				// Cannot handle an OP! because prior value is wiped out above
-				// (Theoretically we could save it if we are DO-ing a chain of
-				// values, and make it work.  But then, a loop of DO/NEXT
-				// may not behave the same as DO-ing the whole block.  Bad.)
+			if (IS_OP(value)) Trap_Type_DEAD_END(value);
 
-				if (IS_OP(value)) Trap_Type_DEAD_END(value);
+			call = Make_Call(out, block, index, label, value);
 
-				call = Make_Call(out, block, index, label, value);
+			index = Do_Args(call, label + 1, block, index + 1);
 
-				index = Do_Args(call, label + 1, block, index + 1);
+			goto func_ready_to_call;
+		} else
+			index++;
+		break;
 
-				goto func_ready_to_call;
-			} else
-				index++;
-		}
+	case REB_GET_PATH:
+		label = value;
+
+		// returns in word the path item, DS_TOP has value
+		value = Do_Path(&label, 0);
+
+		// !!! Historically this just ignores a result indicating this is a
+		// function with refinements, e.g. ':append/only'.  However that
+		// ignoring seems unwise.  It should presumably create a modified
+		// function in that case which acts as if it has the refinement.
+		if (label && !IS_END(label + 1) && ANY_FUNC(DS_TOP))
+			Trap(RE_TOO_LONG);
+
+		DS_POP_INTO(out);
+		index++;
+		break;
+
+	case REB_SET_PATH:
+		label = value;
+		index = Do_Core(out, TRUE, block, index + 1, FALSE);
+		// THROWN is handled in Do_Path.
+		if (index == END_FLAG || VAL_TYPE(out) <= REB_UNSET)
+			Trap1_DEAD_END(RE_NEED_VALUE, label);
+		Do_Path(&label, out);
 		break;
 
 	case REB_PAREN:
