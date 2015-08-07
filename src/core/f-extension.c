@@ -58,7 +58,6 @@ typedef struct reb_ext {
 
 #include "tmp-exttypes.h"
 
-extern const REBDOF Func_Dispatch[];
 
 // !!!! The list below should not be hardcoded, but until someone
 // needs a lot of extensions, it will do fine.
@@ -193,9 +192,7 @@ x*/	REBRXT Do_Callback(REBSER *obj, u32 name, RXIARG *rxis, RXIARG *result)
 	struct Reb_Call *call;
 	REBCNT len;
 	REBCNT n;
-	REBINT dsp_orig = DSP; // to restore stack on errors
 	REBVAL label;
-	REBRXT type;
 	REBVAL out;
 
 	// Find word in object, verify it is a function.
@@ -235,24 +232,17 @@ x*/	REBRXT Do_Callback(REBSER *obj, u32 name, RXIARG *rxis, RXIARG *result)
 		if (!TYPE_CHECK(BLK_SKIP(obj, n), VAL_TYPE(arg))) {
 			result->i2.int32b = n;
 			SET_EXT_ERROR(result, RXE_BAD_ARGS);
-			type = 0;
-			goto return_balanced;
+			Free_Call(call);
+			return 0;
 		}
 	}
 
 	// Evaluate the function:
-	SET_DSF(call);
-	Func_Dispatch[VAL_TYPE(val) - REB_NATIVE](val);
-	SET_DSF(PRIOR_DSF(call));
+	Dispatch_Call(call);
 
 	// Return resulting value from output
 	*result = Value_To_RXI(&out);
-	type = Reb_To_RXT[VAL_TYPE(&out)];
-
-return_balanced:
-	Free_Call(call);
-	assert(DSP == dsp_orig);
-	return type;
+	return Reb_To_RXT[VAL_TYPE(&out)];
 }
 
 

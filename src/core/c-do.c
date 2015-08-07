@@ -617,6 +617,77 @@ return_index:
 
 /***********************************************************************
 **
+*/	void Dispatch_Call(struct Reb_Call *call)
+/*
+**		Expects call frame to be ready with all arguments fulfilled.
+**
+***********************************************************************/
+{
+#if !defined(NDEBUG)
+	REBINT dsp_precall = DSP;
+#endif
+
+	const REBVAL * const func = DSF_FUNC(call);
+	REBOL_Types func_type = VAL_TYPE(func);
+	REBVAL *out = DSF_OUT(call);
+
+	// We need to save what the DSF was prior to our execution, and
+	// cannot simply use our frame's prior...because our frame's
+	// prior call frame may be a *pending* frame that we do not want
+	// to put in effect when we are finished.
+	//
+	struct Reb_Call *dsf_precall = DSF;
+	SET_DSF(call);
+
+	SET_TRASH_SAFE(out);
+
+	if (Trace_Flags) Trace_Func(DSF_LABEL(call), func);
+
+	if (func_type == REB_OP)
+		func_type = cast(REBOL_Types, VAL_GET_EXT(func));
+
+	switch (func_type) {
+	case REB_NATIVE:
+		Do_Native(func);
+		break;
+	case REB_ACTION:
+		Do_Action(func);
+		break;
+	case REB_REBCODE:
+		Do_Rebcode(func);
+		break;
+	case REB_COMMAND:
+		Do_Command(func);
+		break;
+	case REB_CLOSURE:
+		Do_Closure(func);
+		break;
+	case REB_FUNCTION:
+		Do_Function(func);
+		break;
+	default:
+		assert(FALSE);
+	}
+
+	// Function execution should have written *some* actual output value
+	// over the trash that we put in the return slot before the call.
+	assert(!IS_TRASH(out));
+
+#if !defined(NDEBUG)
+	assert(DSP >= dsp_precall);
+	if (DSP > dsp_precall) {
+		PROBE_MSG(DSF_WHERE(call), "UNBALANCED STACK TRAP!!!");
+		Panic(RP_MISC);
+	}
+#endif
+
+	SET_DSF(dsf_precall);
+	Free_Call(call);
+}
+
+
+/***********************************************************************
+**
 */	REBCNT Do_Core(REBVAL * const out, REBOOL next, REBSER *block, REBCNT index, REBFLG op)
 /*
 **		Evaluate the code block until we have:
@@ -632,7 +703,6 @@ return_index:
 {
 #if !defined(NDEBUG)
 	REBINT dsp_orig = DSP;
-	REBINT dsp_precall;
 
 	static int count_static = 0;
 	int count;
@@ -650,8 +720,6 @@ return_index:
 	// the data stack.  Some operations need a unit of additional storage.
 	// This is a one-REBVAL-sized cell for saving that data.
 	REBVAL save;
-
-	struct Reb_Call *dsf_precall;
 
 do_at_index:
 	assert(index != END_FLAG && index != THROWN_FLAG);
@@ -683,7 +751,6 @@ do_at_index:
 	if (--Eval_Count <= 0 || Eval_Signals) Do_Signals();
 
 	value = BLK_SKIP(block, index);
-	//if (Trace_Flags) Trace_Eval(block, index);
 
 	if (Trace_Flags) Trace_Line(block, index, value);
 
@@ -756,51 +823,13 @@ do_at_index:
 			goto return_index;
 		}
 
-		// If the last value Do_Args evaluated wasn't thrown, we don't
-		// need to pay attention to it here.
-
-		SET_TRASH_SAFE(out);
-
-	#if !defined(NDEBUG)
-		dsp_precall = DSP;
-	#endif
-
-		// The arguments were successfully acquired, so we set the
-		// the DSF to our constructed 'dsf' during the Make_Call...then
-		// call the function...then put the DSF back to the call level
-		// of whoever called us.
-		//
-		// We need to save what the DSF was prior to our execution, and
-		// cannot simply use our frame's prior...because our frame's
-		// prior call frame may be a *pending* frame that we do not want
-		// to put in effect yet.  (This may be finessed by a better
-		// data structure than a singly linked list at some point.)
-
-		dsf_precall = DSF;
-
-		SET_DSF(call);
-		if (Trace_Flags) Trace_Func(label, value);
-		Func_Dispatch[VAL_TYPE(value) - REB_NATIVE](value);
-
-	#if !defined(NDEBUG)
-		assert(DSP >= dsp_precall);
-		if (DSP > dsp_precall) {
-			PROBE_MSG(DSF_WHERE(call), "UNBALANCED STACK TRAP!!!");
-			Panic(RP_MISC);
-		}
-	#endif
-
-		SET_DSF(dsf_precall);
-		Free_Call(call);
+		// Execute the function with all arguments ready
+		Dispatch_Call(call);
 
 		if (THROWN(out)) {
 			index = THROWN_FLAG;
 			goto return_index;
 		}
-
-		// Function execution should have written *some* actual output value
-		// over the trash that we put in the return slot before the call.
-		assert(!IS_TRASH(out));
 
 		if (Trace_Flags) Trace_Return(label, out);
 
@@ -1247,10 +1276,6 @@ finished:
 **
 ***********************************************************************/
 {
-#if !defined(NDEBUG)
-	REBINT dsp_orig = DSP;
-#endif
-
 	struct Reb_Call *call;
 	REBVAL *arg;
 	REBVAL *param;
@@ -1293,7 +1318,10 @@ finished:
 		// Reduce (or just copy) block content to call frame:
 		if (reduce) {
 			index = DO_NEXT(out, block, index);
-			if (index == THROWN_FLAG) goto return_balanced;
+			if (index == THROWN_FLAG) {
+				Free_Call(call);
+				return;
+			}
 			if (too_many) continue;
 			*arg = *out;
 		} else {
@@ -1335,15 +1363,7 @@ finished:
 		Trap(RE_TOO_LONG);
 	}
 
-	// Evaluate the function
-
-	SET_DSF(call);
-	Func_Dispatch[VAL_TYPE(func) - REB_NATIVE](func);
-	SET_DSF(PRIOR_DSF(call));
-
-return_balanced:
-	Free_Call(call);
-	assert(DSP == dsp_orig);
+	Dispatch_Call(call);
 }
 
 
@@ -1416,7 +1436,8 @@ return_balanced:
 
 		if (THROWN(value)) {
 			*out = *value;
-			goto return_balanced;
+			Free_Call(call);
+			return;
 		}
 
 		*arg = *value;
@@ -1448,13 +1469,7 @@ return_balanced:
 	#endif
 	}
 
-	// Evaluate the function:
-	SET_DSF(call);
-	Func_Dispatch[VAL_TYPE(func) - REB_NATIVE](func);
-	SET_DSF(PRIOR_DSF(call));
-
-return_balanced:
-	Free_Call(call);
+	Dispatch_Call(call);
 }
 
 
@@ -1696,15 +1711,7 @@ return_balanced:
 		}
 	}
 
-	// !!! Temporary; there's a better factoring where we don't have this
-	// dispatch duplicated coming...
-
-	SET_DSF(call);
-
-	Func_Dispatch[VAL_TYPE(func_val)-REB_NATIVE](func_val);
-	SET_DSF(PRIOR_DSF(call));
-
-	Free_Call(call);
+	Dispatch_Call(call);
 }
 
 
