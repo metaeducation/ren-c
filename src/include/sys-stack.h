@@ -143,30 +143,30 @@
 	)
 
 #define DS_PUSH_TRASH_SAFE \
-	(DS_PUSH_TRASH, SET_TRASH_SAFE(DS_TOP), VOID)
+	(DS_PUSH_TRASH, SET_TRASH_SAFE(DS_TOP), NOOP)
 
 #define DS_PUSH(v) \
-	(DS_PUSH_TRASH, *DS_TOP = *(v), VOID)
+	(DS_PUSH_TRASH, *DS_TOP = *(v), NOOP)
 
 #define DS_PUSH_UNSET \
-	(DS_PUSH_TRASH, SET_UNSET(DS_TOP), VOID)
+	(DS_PUSH_TRASH, SET_UNSET(DS_TOP), NOOP)
 
 #define DS_PUSH_NONE \
-	(DS_PUSH_TRASH, SET_NONE(DS_TOP), VOID)
+	(DS_PUSH_TRASH, SET_NONE(DS_TOP), NOOP)
 
 #define DS_PUSH_TRUE \
-	(DS_PUSH_TRASH, SET_TRUE(DS_TOP), VOID)
+	(DS_PUSH_TRASH, SET_TRUE(DS_TOP), NOOP)
 
 #define DS_PUSH_INTEGER(n) \
-	(DS_PUSH_TRASH, SET_INTEGER(DS_TOP, (n)), VOID)
+	(DS_PUSH_TRASH, SET_INTEGER(DS_TOP, (n)), NOOP)
 
 #define DS_PUSH_DECIMAL(n) \
-	(DS_PUSH_TRASH, SET_DECIMAL(DS_TOP, (n)), VOID)
+	(DS_PUSH_TRASH, SET_DECIMAL(DS_TOP, (n)), NOOP)
 
 // POPPING AND "DROPPING"
 
 #define DS_DROP \
-	(--DS_Series->tail, BLK_TERM(DS_Series), VOID)
+	(--DS_Series->tail, BLK_TERM(DS_Series), NOOP)
 
 #define DS_POP_INTO(v) \
 	do { \
@@ -177,7 +177,7 @@
 
 #ifdef NDEBUG
 	#define DS_DROP_TO(dsp) \
-		(DS_Series->tail = (dsp) + 1, BLK_TERM(DS_Series), VOID)
+		(DS_Series->tail = (dsp) + 1, BLK_TERM(DS_Series), NOOP)
 #else
 	#define DS_DROP_TO(dsp) \
 		do { \
@@ -274,7 +274,7 @@ struct Reb_Call {
 
 #ifdef NDEBUG
 	#define SET_DSF(c) \
-		(CS_Running = (c), VOID)
+		(CS_Running = (c), NOOP)
 #else
 	// In a "stress checked" debug mode, every time the DSF is accessed we
 	// can verify that it is well-formed.
@@ -285,7 +285,7 @@ struct Reb_Call {
 	#define SET_DSF(c) \
 		( \
 			CS_Running = (c), \
-			(c) ? cast(void, (c)->pending = FALSE) : VOID \
+			(c) ? cast(void, (c)->pending = FALSE) : NOOP \
 		)
 #endif
 

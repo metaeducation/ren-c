@@ -142,7 +142,7 @@ typedef struct Reb_Type {
 ***********************************************************************/
 
 #ifdef NDEBUG
-	#define SET_TRASH(v) VOID
+	#define SET_TRASH(v) NOOP
 
 	#define SET_TRASH_SAFE(v) SET_UNSET(v)
 #else
