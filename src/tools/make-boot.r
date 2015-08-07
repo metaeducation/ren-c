@@ -177,46 +177,10 @@ remove-tests: func [d] [
 ;----------------------------------------------------------------------------
 
 boot-types: load %types.r
-type-record: [type evalclass typeclass moldtype formtype haspath maker typesets]
+
 
 emit-head "Evaluation Maps" %evaltypes.h
-emit {
-/***********************************************************************
-**
-*/	const REBINT Eval_Type_Map[REB_MAX] =
-/*
-**		Specifies the evaluation method used for each datatype.
-**
-***********************************************************************/
-^{
-}
 
-foreach :type-record boot-types [
-	emit-line "ET_" evalclass type
-]
-emit-end
-
-emit {
-
-// !!! Needs to be forward declared as extern, this is a .inc and not a .h
-extern const REBDOF Func_Dispatch[];
-
-/***********************************************************************
-**
-*/	const REBDOF Func_Dispatch[] =
-/*
-**		The function evaluation dispatchers.
-**
-***********************************************************************/
-^{
-}
-
-foreach :type-record boot-types [
-	if find [function operator] evalclass [
-		emit-line/var "Do_" type none
-	]
-]
-emit-end
 
 emit {
 /***********************************************************************
@@ -229,8 +193,8 @@ emit {
 ^{
 }
 
-foreach :type-record boot-types [
-	emit-line/var "T_" typeclass type
+foreach-record-NO-RETURN type boot-types [
+	emit-line/var "T_" type/class type/name
 ]
 emit-end
 
@@ -245,11 +209,11 @@ emit {
 ^{
 }
 
-foreach :type-record boot-types [
-	emit-line/var "PD_" switch/default haspath [
-		* [typeclass]
+foreach-record-NO-RETURN type boot-types [
+	emit-line/var "PD_" switch/default type/path [
+		* [type/class]
 		- [0]
-	][haspath] type
+	][type/path] type/name
 ]
 emit-end
 
@@ -267,19 +231,19 @@ emit newline
 
 types-used: []
 
-foreach :type-record boot-types [
+foreach-record-NO-RETURN type boot-types [
 	if all [
-		maker = '*
-		word? typeclass
-		not find types-used typeclass
+		type/make = '*
+		word? type/class
+		not find types-used type/class
 	][
 		; using -Wredundant-decls it seems these prototypes are already
 		; taken care of by make-headers.r, no need to re-emit
 		comment [
 			emit-line/up1/decl
-				"extern REBFLG MT_" typeclass "(REBVAL *, REBVAL *, REBCNT);"
+				"extern REBFLG MT_" type/class "(REBVAL *, REBVAL *, REBCNT);"
 		]
-		append types-used typeclass
+		append types-used type/class
 	]
 ]
 
@@ -295,11 +259,11 @@ emit {
 ^{
 }
 
-foreach :type-record boot-types [
- 	either maker = '* [
-		emit-line/var "MT_" typeclass type
+foreach-record-NO-RETURN type boot-types [
+	either type/make = '* [
+		emit-line/var "MT_" type/class type/name
 	][
-		emit-line "" "0"  type
+		emit-line "" "0" type/name
 	]
 ]
 
@@ -318,18 +282,18 @@ emit newline
 
 types-used: []
 
-foreach :type-record boot-types [
+foreach-record-NO-RETURN type boot-types [
 	if all [
-		word? typeclass
-		not find types-used typeclass
+		word? type/class
+		not find types-used type/class
 	][
 		; using -Wredundant-decls it seems these prototypes are already
 		; taken care of by make-headers.r, no need to re-emit
 		comment [
 			emit-line/up1/decl
-				"extern REBINT CT_" typeclass "(REBVAL *, REBVAL *, REBINT);"
+				"extern REBINT CT_" type/class "(REBVAL *, REBVAL *, REBINT);"
 		]
-		append types-used typeclass
+		append types-used type/class
 	]
 ]
 
@@ -344,8 +308,8 @@ emit {
 ^{
 }
 
-foreach :type-record boot-types [
-	emit-line/var "CT_" typeclass type
+foreach-record-NO-RETURN type boot-types [
+	emit-line/var "CT_" type/class type/name
 ]
 emit-end
 
@@ -371,16 +335,16 @@ write inc/tmp-comptypes.h out
 ;^{
 ;}
 ;
-;foreach :type-record boot-types [
+;foreach-record-NO-RETURN type boot-types [
 ;	f: "Mold_"
-;	switch/default moldtype [
-;		* [t: typeclass]
-;		+ [t: type]
+;	switch/default type/mold [
+;		* [t: type/class]
+;		+ [t: type/name]
 ;		- [t: 0]
-;	][t: uppercase/part form moldtype 1]
-;	emit [tab "case " uppercase join "REB_" type ":" tab "\\" t]
+;	][t: uppercase/part form type/mold 1]
+;	emit [tab "case " uppercase join "REB_" type/name ":" tab "\\" t]
 ;	emit newline
-;	;emit-line/var f t type
+;	;emit-line/var f t type/name
 ;]
 ;emit-end
 ;
@@ -394,18 +358,18 @@ write inc/tmp-comptypes.h out
 ;***********************************************************************/
 ;^{
 ;}
-;foreach :type-record boot-types [
+;foreach-record-NO-RETURN type boot-types [
 ;	f: "Mold_"
-;	switch/default formtype [
-;		*  [t: typeclass]
-;		f* [t: typeclass f: "Form_"]
-;		+  [t: type]
-;		f+ [t: type f: "Form_"]
+;	switch/default type/form [
+;		*  [t: type/class]
+;		f* [t: type/class f: "Form_"]
+;		+  [t: type/name]
+;		f+ [t: type/name f: "Form_"]
 ;		-  [t: 0]
-;	][t: uppercase/part form moldtype 1]
-;	emit [tab "case " uppercase join "REB_" type ":" tab "\\" t]
+;	][t: uppercase/part form type/mold 1]
+;	emit [tab "case " uppercase join "REB_" type/name ":" tab "\\" t]
 ;	emit newline
-;	;emit-line/var f t type
+;	;emit-line/var f t type/name
 ;]
 ;emit-end
 ;
@@ -434,9 +398,9 @@ emit [
 
 datatypes: []
 n: 0
-foreach :type-record boot-types [
-	append datatypes type
-	emit-line "REB_" type n
+foreach-record-NO-RETURN type boot-types [
+	append datatypes type/name
+	emit-line "REB_" type/name n
 	n: n + 1
 ]
 emit {    REB_MAX
@@ -452,9 +416,9 @@ emit {
 }
 
 new-types: []
-foreach :type-record boot-types [
-	append new-types to-word join type "!"
-	str: uppercase form type
+foreach-record-NO-RETURN type boot-types [
+	append new-types to-word join type/name "!"
+	str: uppercase form type/name
 	replace/all str #"-" #"_"
 	def: join {#define IS_} [str "(v)"]
 	len: 31 - length? def
@@ -472,14 +436,13 @@ emit {
 
 typeset-sets: []
 
-foreach :type-record boot-types [
-	typesets: compose [(typesets)]
-	foreach ts typesets [
+foreach-record-NO-RETURN type boot-types [
+	foreach ts compose [(type/typesets)] [
 		spot: any [
 			select typeset-sets ts
 			first back insert tail typeset-sets reduce [ts copy []]
 		]
-		append spot type
+		append spot type/name
 	]
 ]
 remove/part typeset-sets 2 ; the - markers
@@ -556,11 +519,11 @@ extern const REBRXT Reb_To_RXT[REB_MAX];
 ^{
 }
 
-foreach :type-record boot-types [
-	either find ext-types type [
-		emit-line "RXT_" type type
+foreach-record-NO-RETURN type boot-types [
+	either find ext-types type/name [
+		emit-line "RXT_" type/name type/name
 	][
-		emit-line "" 0 type
+		emit-line "" 0 type/name
 	]
 ]
 emit-end
@@ -690,8 +653,8 @@ emit {
 }
 
 n: 1
-foreach :type-record boot-types [
-	emit-line "SYM_" join type "_type" n
+foreach-record-NO-RETURN type boot-types [
+	emit-line "SYM_" join type/name "_type" n
 	n: n + 1
 ]
 

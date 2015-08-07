@@ -32,52 +32,10 @@
 ***********************************************************************/
 
 #include "sys-core.h"
-#include <stdio.h>
-
-enum Eval_Types {
-	ET_INVALID,		// not valid to evaluate
-	ET_WORD,
-	ET_SELF,		// returns itself
-	ET_FUNCTION,
-	ET_OPERATOR,
-	ET_PAREN,
-	ET_SET_WORD,
-	ET_LIT_WORD,
-	ET_GET_WORD,
-	ET_PATH,
-	ET_LIT_PATH,
-	ET_END			// end of block
-};
-
-/*
-void T_Error(REBCNT n) {;}
-
-// Deferred:
-void T_Series(REBCNT n) {;}		// image
-void T_List(REBCNT n) {;}		// list
-*/
 
 void Do_Rebcode(const REBVAL *v) {;}
 
 #include "tmp-evaltypes.h"
-
-#define EVAL_TYPE(val) (Eval_Type_Map[VAL_TYPE(val)])
-
-#define PUSH_ERROR(v, a)
-#define PUSH_FUNC(v, w, s)
-#define PUSH_BLOCK(b)
-
-
-/***********************************************************************
-**
-*/	void Do_Op(const REBVAL *func)
-/*
-**		A trampoline.
-**
-***********************************************************************/
-{
-	Func_Dispatch[VAL_GET_EXT(func) - REB_NATIVE](func);
-}
 
 
 /***********************************************************************
@@ -754,10 +712,13 @@ do_at_index:
 
 	if (Trace_Flags) Trace_Line(block, index, value);
 
-	//getchar();
-	switch (EVAL_TYPE(value)) {
+	switch (VAL_TYPE(value)) {
 
-	case ET_WORD:
+	case REB_END:
+		SET_UNSET(out);
+		return END_FLAG;
+
+	case REB_WORD:
 		GET_VAR_INTO(out, value);
 
 	do_fetched_word:
@@ -777,12 +738,7 @@ do_at_index:
 		index++;
 		break;
 
-	case ET_SELF:
-		*out = *value;
-		index++;
-		break;
-
-	case ET_SET_WORD:
+	case REB_SET_WORD:
 		index = Do_Core(out, TRUE, block, index + 1, FALSE);
 
 		if (index == END_FLAG || VAL_TYPE(out) == REB_UNSET)
@@ -793,7 +749,12 @@ do_at_index:
 		Set_Var(value, out);
 		break;
 
-	case ET_FUNCTION:
+	case REB_NATIVE:
+	case REB_ACTION:
+	case REB_REBCODE:
+	case REB_COMMAND:
+	case REB_CLOSURE:
+	case REB_FUNCTION:
 
 	// Value must be the function, and space for the return slot (DSF_OUT)
 	// needs to already be accounted for
@@ -845,7 +806,7 @@ do_at_index:
 		}
 		break;
 
-	case ET_OPERATOR:
+	case REB_OP:
 		// Can't actually run an OP! arg unless it's after an evaluation
 		Trap1_DEAD_END(RE_NO_OP_ARG, label);
 
@@ -857,9 +818,10 @@ do_at_index:
 		SET_TRASH_SAFE(out); // catch functions that don't write out
 		goto func_already_pushed;
 
-	case ET_PATH:  // PATH, SET_PATH
-		label = value; // a path
-		//index++; // now done below with +1
+	case REB_PATH:
+	case REB_GET_PATH:
+	case REB_SET_PATH:
+		label = value;
 
 		if (IS_SET_PATH(value)) {
 			index = Do_Core(out, TRUE, block, index + 1, FALSE);
@@ -898,7 +860,7 @@ do_at_index:
 		}
 		break;
 
-	case ET_PAREN:
+	case REB_PAREN:
 		if (!DO_BLOCK(out, VAL_SERIES(value), 0)) {
 			index = THROWN_FLAG;
 			goto return_index;
@@ -906,38 +868,35 @@ do_at_index:
 		index++;
 		break;
 
-	case ET_LIT_WORD:
+	case REB_LIT_WORD:
 		*out = *value;
 		VAL_SET(out, REB_WORD);
 		index++;
 		break;
 
-	case ET_GET_WORD:
+	case REB_GET_WORD:
 		GET_VAR_INTO(out, value);
 		index++;
 		break;
 
-	case ET_LIT_PATH:
+	case REB_LIT_PATH:
 		// !!! Aliases a REBSER under two value types, likely bad, see CC#2233
 		*out = *value;
 		VAL_SET(out, REB_PATH);
 		index++;
 		break;
 
-	case ET_END:
-		SET_UNSET(out);
-		return END_FLAG;
-
-	case ET_INVALID:
-		Trap1(RE_NO_VALUE, value);
+	case REB_FRAME:
+		// !!! Frame should be hidden from user visibility
+		Panic_Core(RP_BAD_EVALTYPE, VAL_TYPE(value));
 		DEAD_END;
 
 	default:
-		//Debug_Fmt("Bad eval: %d %s", VAL_TYPE(value), Get_Type_Name(value));
-		assert(FALSE);
-		Panic_Core(RP_BAD_EVALTYPE, VAL_TYPE(value));
-		DEAD_END;
-		//return -index;
+		// Most things just evaluate to themselves
+		assert(!IS_TRASH(value));
+		*out = *value;
+		index++;
+		break;
 	}
 
 	if (index >= BLK_LEN(block)) goto return_index;
