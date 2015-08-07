@@ -111,7 +111,7 @@
 	#define DS_TOP \
 		( \
 			SERIES_TAIL(DS_Series) == 0 \
-				? *cast(REBVAL**, NULL) \
+				? *cast(REBVAL**, 0 /* should be NULL => nullptr */) \
 				: BLK_LAST(DS_Series) \
 		)
 #endif
