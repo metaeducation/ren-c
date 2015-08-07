@@ -628,7 +628,7 @@ return_index:
 #endif
 
 	const REBVAL * const func = DSF_FUNC(call);
-	REBOL_Types func_type = VAL_TYPE(func);
+	enum REBOL_Types func_type = VAL_TYPE(func);
 	REBVAL *out = DSF_OUT(call);
 
 	// We need to save what the DSF was prior to our execution, and
@@ -644,7 +644,7 @@ return_index:
 	if (Trace_Flags) Trace_Func(DSF_LABEL(call), func);
 
 	if (func_type == REB_OP)
-		func_type = cast(REBOL_Types, VAL_GET_EXT(func));
+		func_type = cast(enum REBOL_Types, VAL_GET_EXT(func));
 
 	switch (func_type) {
 	case REB_NATIVE:
