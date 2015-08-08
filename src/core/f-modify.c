@@ -32,7 +32,7 @@
 
 /***********************************************************************
 **
-*/	REBCNT Modify_Block(REBCNT action, REBSER *dst_ser, REBCNT dst_idx, REBVAL *src_val, REBCNT flags, REBINT dst_len, REBINT dups)
+*/	REBCNT Modify_Block(REBCNT action, REBSER *dst_ser, REBCNT dst_idx, const REBVAL *src_val, REBCNT flags, REBINT dst_len, REBINT dups)
 /*
 **		action: INSERT, APPEND, CHANGE
 **
@@ -57,17 +57,23 @@
 
 	// Check /PART, compute LEN:
 	if (!GET_FLAG(flags, AN_ONLY) && ANY_BLOCK(src_val)) {
+		REBSER *series;
+
 		is_blk = TRUE; // src_val is a block
+
 		// Are we modifying ourselves? If so, copy src_val block first:
-		if (dst_ser == VAL_SERIES(src_val)) {
-			VAL_SERIES(src_val) = Copy_Block(VAL_SERIES(src_val), VAL_INDEX(src_val));
-			VAL_INDEX(src_val) = 0;
-		}
+		if (dst_ser == VAL_SERIES(src_val))
+			series = Copy_Block(VAL_SERIES(src_val), VAL_INDEX(src_val));
+		else
+			series = VAL_SERIES(src_val);
+
 		// Length of insertion:
 		if (action != A_CHANGE && GET_FLAG(flags, AN_PART))
 			ilen = dst_len;
 		else
-			ilen = VAL_LEN(src_val);
+			ilen = SERIES_TAIL(series);
+
+		src_val = BLK_HEAD(series);
 	}
 
 	// Total to insert:
@@ -88,8 +94,6 @@
 
 	tail = (action == A_APPEND) ? 0 : size + dst_idx;
 
-	if (is_blk) src_val = VAL_BLK_DATA(src_val);
-
 	dst_idx *= SERIES_WIDE(dst_ser); // loop invariant
 	ilen  *= SERIES_WIDE(dst_ser); // loop invariant
 	for (; dups > 0; dups--) {
@@ -104,7 +108,7 @@
 
 /***********************************************************************
 **
-*/	REBCNT Modify_String(REBCNT action, REBSER *dst_ser, REBCNT dst_idx, REBVAL *src_val, REBCNT flags, REBINT dst_len, REBINT dups)
+*/	REBCNT Modify_String(REBCNT action, REBSER *dst_ser, REBCNT dst_idx, const REBVAL *src_val, REBCNT flags, REBINT dst_len, REBINT dups)
 /*
 **		action: INSERT, APPEND, CHANGE
 **

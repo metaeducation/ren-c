@@ -1281,7 +1281,7 @@ append:
 
 /***********************************************************************
 **
-*/  REBSER *Copy_Form_Value(REBVAL *value, REBCNT opts)
+*/  REBSER *Copy_Form_Value(const REBVAL *value, REBCNT opts)
 /*
 **		Form a value based on the mold opts provided.
 **
@@ -1353,7 +1353,7 @@ return_balanced:
 
 /***********************************************************************
 **
-*/  REBSER *Form_Tight_Block(REBVAL *blk)
+*/  REBSER *Form_Tight_Block(const REBVAL *blk)
 /*
 ***********************************************************************/
 {

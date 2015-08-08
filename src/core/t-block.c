@@ -82,7 +82,7 @@ static void No_Nones(REBVAL *arg) {
 
 /***********************************************************************
 **
-*/	REBCNT Find_Block(REBSER *series, REBCNT index, REBCNT end, REBVAL *target, REBCNT len, REBCNT flags, REBINT skip)
+*/	REBCNT Find_Block(REBSER *series, REBCNT index, REBCNT end, const REBVAL *target, REBCNT len, REBCNT flags, REBINT skip)
 /*
 **		Flags are set according to: ALL_FIND_REFS
 **

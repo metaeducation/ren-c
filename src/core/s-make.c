@@ -571,7 +571,7 @@ cp_same:
 
 /***********************************************************************
 **
-*/  REBSER *Join_Binary(REBVAL *blk)
+*/  REBSER *Join_Binary(const REBVAL *blk)
 /*
 **		Join a binary from component values for use in standard
 **		actions like make, insert, or append.
