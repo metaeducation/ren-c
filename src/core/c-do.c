@@ -308,11 +308,7 @@ void Trace_Arg(REBINT num, const REBVAL *arg, const REBVAL *path)
 	// Not currently robust for reusing passed in path or value as the output
 	assert(out != *path_val && out != val);
 
-	if (val && THROWN(val)) {
-		// If unwind/throw value is not coming from TOS, push it.
-		if (val != DS_TOP) DS_PUSH(val);
-		return 0;
-	}
+	assert(!val || !THROWN(val));
 
 	pvs.setval = val;		// Set to this new value
 	pvs.store = out;		// Space for constructed results
@@ -757,9 +753,8 @@ do_at_index:
 	case REB_SET_WORD:
 		index = Do_Core(out, TRUE, block, index + 1, FALSE);
 
-		if (index == END_FLAG || VAL_TYPE(out) == REB_UNSET)
-			Trap1_DEAD_END(RE_NEED_VALUE, value);
-
+		assert(index != END_FLAG || IS_UNSET(out)); // unset if END_FLAG
+		if (IS_UNSET(out)) Trap1_DEAD_END(RE_NEED_VALUE, value);
 		if (index == THROWN_FLAG) goto return_index;
 
 		Set_Var(value, out);
@@ -880,11 +875,13 @@ do_at_index:
 		break;
 
 	case REB_SET_PATH:
-		label = value;
 		index = Do_Core(out, TRUE, block, index + 1, FALSE);
-		// THROWN is handled in Do_Path.
-		if (index == END_FLAG || VAL_TYPE(out) <= REB_UNSET)
-			Trap1_DEAD_END(RE_NEED_VALUE, label);
+
+		assert(index != END_FLAG || IS_UNSET(out)); // unset if END_FLAG
+		if (IS_UNSET(out)) Trap1_DEAD_END(RE_NEED_VALUE, label);
+		if (index == THROWN_FLAG) goto return_index;
+
+		label = value;
 		Do_Path(&save, &label, out);
 		// !!! No guarantee that result of a set-path eval would put the
 		// set value in out atm, so can't reverse this yet so that the
