@@ -566,10 +566,10 @@ typedef REBYTE *(INFO_FUNC)(REBINT opts, void *lib);
 				else if (IS_PATH(val)) {
 					const REBVAL *path = val;
 					if (IS_WORD(args)) {
-						if (Do_Path(&path, 0)) {
+						if (Do_Path(&save, &path, 0)) {
 							// !!! comment said "found a function"
 						} else {
-							val = DS_TOP;
+							val = &save;
 						}
 					}
 				}

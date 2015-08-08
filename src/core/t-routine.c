@@ -889,6 +889,7 @@ static void callback_dispatcher(ffi_cif *cif, void *ret, void **args, void *user
 	REBCNT i = 0;
 	REBSER *ser;
 	REBVAL *elem;
+	REBVAL safe;
 
 	ser = Make_Block(1 + cif->nargs);
 	elem = Alloc_Tail_Blk(ser);
@@ -938,9 +939,8 @@ static void callback_dispatcher(ffi_cif *cif, void *ret, void **args, void *user
 		}
 	}
 
-	DS_PUSH_TRASH;
-	DO_BLOCK(DS_TOP, ser, 0);
-	elem = DS_TOP;
+	DO_BLOCK(&safe, ser, 0);
+	elem = &safe;
 	switch (cif->rtype->type) {
 		case FFI_TYPE_VOID:
 			break;
@@ -977,8 +977,6 @@ static void callback_dispatcher(ffi_cif *cif, void *ret, void **args, void *user
 		default:
 			Trap_Arg(elem);
 	}
-
-	DS_DROP; // Drop result of DO (elem)
 }
 
 /***********************************************************************

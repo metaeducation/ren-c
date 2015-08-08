@@ -157,8 +157,7 @@ static int Check_Char_Range(REBVAL *val, REBINT limit)
 			}
 			else if (IS_PATH(value)) {
 				const REBVAL *refinements = value;
-				Do_Path(&refinements, 0);
-				DS_POP_INTO(D_OUT);
+				Do_Path(D_OUT, &refinements, 0);
 				val = D_OUT;
 			}
 			else Trap_Arg_DEAD_END(value);
@@ -366,9 +365,8 @@ static int Check_Char_Range(REBVAL *val, REBINT limit)
 	}
 	else if (ANY_PATH(word)) {
 		const REBVAL *refinements = word;
-		REBVAL *val = Do_Path(&refinements, 0);
-		if (!val) { // resides on stack
-			DS_POP_INTO(D_OUT);
+		REBVAL *val = Do_Path(D_OUT, &refinements, 0);
+		if (!val) {
 			val = D_OUT;
 		}
 		if (!D_REF(2) && !IS_SET(val)) Trap1_DEAD_END(RE_NO_VALUE, word);
@@ -399,8 +397,10 @@ static int Check_Char_Range(REBVAL *val, REBINT limit)
 			const REBVAL *v;
 			REBCNT i;
 			for (i = VAL_INDEX(val); i < VAL_TAIL(val); i++) {
+				REBVAL safe;
 				v = VAL_BLK_SKIP(val, i);
-				v = Get_Simple_Value(v);
+				Get_Simple_Value_Into(&safe, v);
+				v = &safe;
 				if (IS_OBJECT(v)) {
 					frame = VAL_OBJ_FRAME(v);
 					index = Find_Word_Index(frame, VAL_WORD_SYM(word), FALSE);
@@ -492,7 +492,9 @@ static int Check_Char_Range(REBVAL *val, REBINT limit)
 	}
 
 	if (ANY_PATH(word)) {
-		Do_Path(&word, val);
+		REBVAL dummy;
+		Do_Path(&dummy, &word, val);
+		// !!! ignores results?
 		return R_ARG2;
 	}
 

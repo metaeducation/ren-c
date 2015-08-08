@@ -193,10 +193,15 @@
 	const REBVAL *val;
 
 	while (NOT_END(blk)) {
+		REBVAL safe;
 		var = blk++;
 		val = blk++;
-		if (IS_END(val)) val = NONE_VALUE;
-		else val = Get_Simple_Value(val);
+		if (IS_END(val))
+			val = NONE_VALUE;
+		else {
+			Get_Simple_Value_Into(&safe, val);
+			val = &safe;
+		}
 		if (!Set_Event_Var(evt, var, val))
 			Trap2(RE_BAD_FIELD_SET, var, Of_Type(val));
 	}

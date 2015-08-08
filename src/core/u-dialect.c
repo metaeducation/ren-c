@@ -67,6 +67,7 @@ static const char *Dia_Fmt = "DELECT - cmd: %s length: %d missed: %d total: %d";
 ***********************************************************************/
 {
 	REBVAL *val;
+	REBVAL safe;
 
 	for (; NOT_END(where); where++) {
 		if (IS_WORD(where)) {
@@ -74,8 +75,8 @@ static const char *Dia_Fmt = "DELECT - cmd: %s length: %d missed: %d total: %d";
 		}
 		else if (IS_PATH(where)) {
 			const REBVAL *where_const = where;
-			Do_Path(&where_const, 0);
-			val = DS_TOP; // only safe for short time!
+			Do_Path(&safe, &where_const, 0);
+			val = &safe;
 		}
 		else
 			val = where;
@@ -153,6 +154,7 @@ static const char *Dia_Fmt = "DELECT - cmd: %s length: %d missed: %d total: %d";
 ***********************************************************************/
 {
 	REBVAL *value = BLK_SKIP(dia->args, dia->argi);
+	REBVAL safe;
 
 	switch (VAL_TYPE(value)) {
 
@@ -172,7 +174,8 @@ static const char *Dia_Fmt = "DELECT - cmd: %s length: %d missed: %d total: %d";
 
 	case REB_PATH: {
 		const REBVAL *value_const;
-		if (Do_Path(&value_const, 0)) return 0;
+		if (Do_Path(&safe, &value_const, 0)) return 0;
+		DS_PUSH(&safe);
 		value = DS_TOP;
 		break;
 	}
@@ -184,8 +187,8 @@ static const char *Dia_Fmt = "DELECT - cmd: %s length: %d missed: %d total: %d";
 		break;
 
 	case REB_PAREN:
-		DS_PUSH_TRASH;
-		DO_BLOCK(DS_TOP, VAL_SERIES(value), 0);
+		DO_BLOCK(&safe, VAL_SERIES(value), 0);
+		DS_PUSH(&safe);
 		value = DS_TOP;
 		break;
 	}

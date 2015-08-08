@@ -685,8 +685,8 @@ static REBOOL parse_field_type(struct Struct_Field *field, REBVAL *spec, REBVAL 
 			EXPAND_SERIES_TAIL(VAL_STRUCT_DATA_BIN(out), step);
 
 			if (expect_init) {
-				DS_PUSH_TRASH; // slot for result of reduce or do (GC safe)
-				init = DS_TOP;
+				REBVAL safe; // result of reduce or do (GC saved during eval)
+				init = &safe;
 
 				if (IS_BLOCK(blk)) {
 					Reduce_Block(init, VAL_SERIES(blk), 0, FALSE);
@@ -728,8 +728,6 @@ static REBOOL parse_field_type(struct Struct_Field *field, REBVAL *spec, REBVAL 
 						goto failed;
 					}
 				}
-
-				DS_DROP; // Drop result of Reduce or Do (init)
 			} else if (raw_addr == 0) {
 				if (field->type == STRUCT_TYPE_STRUCT) {
 					REBCNT n = 0;

@@ -286,7 +286,7 @@ void Trace_Arg(REBINT num, const REBVAL *arg, const REBVAL *path)
 
 /***********************************************************************
 **
-*/	REBVAL *Do_Path(const REBVAL **path_val, REBVAL *val)
+*/	REBVAL *Do_Path(REBVAL *out, const REBVAL **path_val, REBVAL *val)
 /*
 **		Evaluate a path value. Path_val is updated so
 **		result can be used for function refinements.
@@ -298,6 +298,16 @@ void Trace_Arg(REBINT num, const REBVAL *arg, const REBVAL *path)
 {
 	REBPVS pvs;
 
+	// None of the values passed in can live on the data stack, because
+	// they might be relocated during the path evaluation process.
+	//
+	assert(!IN_DATA_STACK(out));
+	assert(!IN_DATA_STACK(*path_val));
+	assert(!val || !IN_DATA_STACK(val));
+
+	// Not currently robust for reusing passed in path or value as the output
+	assert(out != *path_val && out != val);
+
 	if (val && THROWN(val)) {
 		// If unwind/throw value is not coming from TOS, push it.
 		if (val != DS_TOP) DS_PUSH(val);
@@ -305,8 +315,7 @@ void Trace_Arg(REBINT num, const REBVAL *arg, const REBVAL *path)
 	}
 
 	pvs.setval = val;		// Set to this new value
-	DS_PUSH_NONE;
-	pvs.store = DS_TOP;		// Temp space for constructed results
+	pvs.store = out;		// Space for constructed results
 
 	// Get first block value:
 	pvs.orig = *path_val;
@@ -330,13 +339,11 @@ void Trace_Arg(REBINT num, const REBVAL *arg, const REBVAL *path)
 	else if (NOT_END(pvs.path+1) && !ANY_FUNC(pvs.value))
 		Trap2_DEAD_END(RE_BAD_PATH_TYPE, pvs.orig, Of_Type(pvs.value));
 
-	// If SET then we can drop result storage created above.
+	// If SET then we don't return anything
 	if (val) {
-		DS_DROP; // on SET, we do not care about returned value
 		return 0;
 	} else {
-		//if (ANY_FUNC(pvs.value) && IS_GET_PATH(pvs.orig)) Debug_Fmt("FUNC %r %r", pvs.orig, pvs.path);
-		// If TOS was not used, then copy final value back to it:
+		// If storage was not used, then copy final value back to it:
 		if (pvs.value != pvs.store) *pvs.store = *pvs.value;
 		// Return 0 if not function or is :path/word...
 		if (!ANY_FUNC(pvs.value)) return 0;
@@ -679,6 +686,15 @@ return_index:
 	// This is a one-REBVAL-sized cell for saving that data.
 	REBVAL save;
 
+	// Though we can protect the value written into the target pointer 'out'
+	// from GC during the course of evaluation, we can't protect the
+	// underlying value from relocation.  Technically this would be a problem
+	// for any series which might be modified while this call is running, but
+	// most notably it applies to the data stack--where output used to always
+	// be returned.
+	//
+	assert(!IN_DATA_STACK(out));
+
 do_at_index:
 	assert(index != END_FLAG && index != THROWN_FLAG);
 	SET_TRASH_SAFE(out);
@@ -822,8 +838,7 @@ do_at_index:
 		label = value;
 
 		// returns in word the path item, DS_TOP has value
-		value = Do_Path(&label, 0);
-		DS_POP_INTO(out);
+		value = Do_Path(out, &label, 0);
 
 		// Value returned only for functions that need evaluation
 		if (value && ANY_FUNC(value)) {
@@ -852,16 +867,15 @@ do_at_index:
 		label = value;
 
 		// returns in word the path item, DS_TOP has value
-		value = Do_Path(&label, 0);
+		value = Do_Path(out, &label, 0);
 
 		// !!! Historically this just ignores a result indicating this is a
 		// function with refinements, e.g. ':append/only'.  However that
 		// ignoring seems unwise.  It should presumably create a modified
 		// function in that case which acts as if it has the refinement.
-		if (label && !IS_END(label + 1) && ANY_FUNC(DS_TOP))
+		if (label && !IS_END(label + 1) && ANY_FUNC(out))
 			Trap(RE_TOO_LONG);
 
-		DS_POP_INTO(out);
 		index++;
 		break;
 
@@ -871,7 +885,10 @@ do_at_index:
 		// THROWN is handled in Do_Path.
 		if (index == END_FLAG || VAL_TYPE(out) <= REB_UNSET)
 			Trap1_DEAD_END(RE_NEED_VALUE, label);
-		Do_Path(&label, out);
+		Do_Path(&save, &label, out);
+		// !!! No guarantee that result of a set-path eval would put the
+		// set value in out atm, so can't reverse this yet so that the
+		// first Do is into 'save' and the second into 'out'.  (Review)
 		break;
 
 	case REB_PAREN:
@@ -1038,7 +1055,8 @@ finished:
 			v = val;
 
 			// pushes val on stack
-			Do_Path(&v, NULL);
+			DS_PUSH_TRASH_SAFE;
+			Do_Path(DS_TOP, &v, NULL);
 		}
 		else DS_PUSH(val);
 		// No need to check for unwinds (THROWN) here, because unwinds should
@@ -1104,8 +1122,10 @@ finished:
 		}
 		else if (IS_PATH(val)) {
 			const REBVAL *v = val;
-			if (!Do_Path(&v, 0)) { // pushes val on stack
-				if (VAL_TYPE(DS_TOP) != type) DS_DROP;
+			REBVAL safe;
+
+			if (!Do_Path(&safe, &v, 0)) {
+				if (VAL_TYPE(&safe) != type) DS_DROP;
 			}
 		}
 		else if (VAL_TYPE(val) == type) DS_PUSH(val);
@@ -1690,26 +1710,24 @@ finished:
 
 /***********************************************************************
 **
-*/	const REBVAL *Get_Simple_Value(const REBVAL *val)
+*/	void Get_Simple_Value_Into(REBVAL *out, const REBVAL *val)
 /*
 **		Does easy lookup, else just returns the value as is.
 **
-**      !!! What's with leaving path! values on the stack?!?  :-/
-**
 ***********************************************************************/
 {
-	if (IS_WORD(val) || IS_GET_WORD(val))
-		val = GET_VAR(val);
+	if (IS_WORD(val) || IS_GET_WORD(val)) {
+		GET_VAR_INTO(out, val);
+	}
 	else if (IS_PATH(val) || IS_GET_PATH(val)) {
 		// !!! Temporary: make a copy to pass mutable value to Do_Path
 		REBVAL path = *val;
 		const REBVAL *v = &path;
-		DS_PUSH_NONE;
-		Do_Path(&v, 0);
-		val = DS_TOP;
+		Do_Path(out, &v, 0);
 	}
-
-	return val;
+	else {
+		*out = *val;
+	}
 }
 
 

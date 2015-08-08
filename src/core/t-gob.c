@@ -599,13 +599,14 @@ is_none:
 	const REBVAL *val;
 
 	while (NOT_END(blk)) {
+		REBVAL safe;
 		var = blk++;
 		val = blk++;
 		if (!IS_SET_WORD(var))
 			Trap2(RE_EXPECT_VAL, Get_Type(REB_SET_WORD), Of_Type(var));
 		if (IS_END(val) || IS_UNSET(val) || IS_SET_WORD(val))
 			Trap1(RE_NEED_VALUE, var);
-		val = Get_Simple_Value(val);
+		Get_Simple_Value_Into(&safe, val);
 		if (!Set_GOB_Var(gob, var, val))
 			Trap2(RE_BAD_FIELD_SET, var, Of_Type(val));
 	}

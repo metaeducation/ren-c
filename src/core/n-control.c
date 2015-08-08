@@ -201,6 +201,7 @@ enum {
 		}
 		if (D_REF(4)) { // /values
 			REBVAL *val2;
+			REBVAL safe;
 			for (val = VAL_BLK_DATA(val); NOT_END(val); val++) {
 				if (IS_WORD(val)) {
 					// !!! Temporary and ugly cast; since we *are* PROTECT
@@ -210,10 +211,10 @@ enum {
 				}
 				else if (IS_PATH(val)) {
 					const REBVAL *path = val;
-					if (Do_Path(&path, 0)) {
+					if (Do_Path(&safe, &path, 0)) {
 						val2 = val; // !!! comment said "found a function"
 					} else {
-						val2 = DS_TOP; // !!! unstable on top of stack
+						val2 = &safe;
 					}
 				}
 				else
