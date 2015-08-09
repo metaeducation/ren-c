@@ -102,19 +102,9 @@
 #define DS_AT(d) \
 	BLK_SKIP(DS_Series, (d))
 
-// Most recently pushed item, crashes Debug build if stack is empty, but is
-// still an expression-like macro
-#ifdef NDEBUG
-	#define DS_TOP \
-		BLK_LAST(DS_Series)
-#else
-	#define DS_TOP \
-		( \
-			SERIES_TAIL(DS_Series) == 0 \
-				? *cast(REBVAL**, 0 /* should be NULL => nullptr */) \
-				: BLK_LAST(DS_Series) \
-		)
-#endif
+// Most recently pushed item
+#define DS_TOP \
+	BLK_LAST(DS_Series)
 
 #if !defined(NDEBUG)
 	#define IN_DATA_STACK(p) \
