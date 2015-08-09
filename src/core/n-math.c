@@ -52,18 +52,16 @@ enum {SINE, COSINE, TANGENT};
 
 /***********************************************************************
 **
-*/	static REBDEC Trig_Value(REBVAL *ds, REBCNT which)
+*/	static REBDEC Trig_Value(const REBVAL *value, REBOOL degrees, REBCNT which)
 /*
 **	Convert integer arg, if present, to decimal and convert to radians
 **	if necessary.  Clip ranges for correct REBOL behavior.
 **
 ***********************************************************************/
 {
-	REBDEC	dval;
+	REBDEC dval = AS_DECIMAL(value);
 
-	dval = AS_DECIMAL(D_ARG(1));
-
-	if (!D_REF(2)) {
+	if (degrees) {
         /* get dval between -360.0 and 360.0 */
         dval = fmod (dval, 360.0);
 
@@ -85,22 +83,20 @@ enum {SINE, COSINE, TANGENT};
 
 /***********************************************************************
 **
-*/	static void Arc_Trans(REBVAL *ds, REBCNT kind)
+*/	static void Arc_Trans(REBVAL *out, const REBVAL *value, REBOOL degrees, REBCNT kind)
 /*
 ***********************************************************************/
 {
-	REBDEC	dval;
-
-	dval = AS_DECIMAL(D_ARG(1));
+	REBDEC dval = AS_DECIMAL(value);
 	if (kind != TANGENT && (dval < -1 || dval > 1)) Trap(RE_OVERFLOW);
 
 	if (kind == SINE) dval = asin(dval);
 	else if (kind == COSINE) dval = acos(dval);
 	else dval = atan(dval);
 
-	if (!D_REF(2)) dval = dval * 180.0 / pi1; // to degrees
+	if (degrees) dval = dval * 180.0 / pi1; // to degrees
 
-	SET_DECIMAL(D_OUT, dval);
+	SET_DECIMAL(out, dval);
 }
 
 
@@ -110,7 +106,7 @@ enum {SINE, COSINE, TANGENT};
 /*
 ***********************************************************************/
 {
-	REBDEC dval = cos(Trig_Value(ds, COSINE));
+	REBDEC dval = cos(Trig_Value(D_ARG(1), !D_REF(2), COSINE));
 	if (fabs(dval) < DBL_EPSILON) dval = 0.0;
 	SET_DECIMAL(D_OUT, dval);
 	return R_OUT;
@@ -123,7 +119,7 @@ enum {SINE, COSINE, TANGENT};
 /*
 ***********************************************************************/
 {
-	REBDEC dval = sin(Trig_Value(ds, SINE));
+	REBDEC dval = sin(Trig_Value(D_ARG(1), !D_REF(2), SINE));
 	if (fabs(dval) < DBL_EPSILON) dval = 0.0;
 	SET_DECIMAL(D_OUT, dval);
 	return R_OUT;
@@ -136,7 +132,7 @@ enum {SINE, COSINE, TANGENT};
 /*
 ***********************************************************************/
 {
-	REBDEC dval = Trig_Value(ds, TANGENT);
+	REBDEC dval = Trig_Value(D_ARG(1), !D_REF(2), TANGENT);
 	if (Eq_Decimal(fabs(dval), pi1 / 2.0)) Trap_DEAD_END(RE_OVERFLOW);
 	SET_DECIMAL(D_OUT, tan(dval));
 	return R_OUT;
@@ -149,7 +145,7 @@ enum {SINE, COSINE, TANGENT};
 /*
 ***********************************************************************/
 {
-	Arc_Trans(ds, COSINE);
+	Arc_Trans(D_OUT, D_ARG(1), !D_REF(2), COSINE);
 	return R_OUT;
 }
 
@@ -160,7 +156,7 @@ enum {SINE, COSINE, TANGENT};
 /*
 ***********************************************************************/
 {
-	Arc_Trans(ds, SINE);
+	Arc_Trans(D_OUT, D_ARG(1), !D_REF(2), SINE);
 	return R_OUT;
 }
 
@@ -171,7 +167,7 @@ enum {SINE, COSINE, TANGENT};
 /*
 ***********************************************************************/
 {
-	Arc_Trans(ds, TANGENT);
+	Arc_Trans(D_OUT, D_ARG(1), !D_REF(2), TANGENT);
 	return R_OUT;
 }
 
@@ -509,8 +505,10 @@ compare:
 {
 	REBVAL a, b;
 
-	if (IS_PAIR(D_ARG(1)) || IS_PAIR(D_ARG(2)))
-		return Min_Max_Pair(ds, 1);
+	if (IS_PAIR(D_ARG(1)) || IS_PAIR(D_ARG(2))) {
+		Min_Max_Pair(D_OUT, D_ARG(1), D_ARG(2), 1);
+		return R_OUT;
+	}
 
 	a = *D_ARG(1);
 	b = *D_ARG(2);
@@ -526,8 +524,10 @@ compare:
 {
 	REBVAL a, b;
 
-	if (IS_PAIR(D_ARG(1)) || IS_PAIR(D_ARG(2)))
-		return Min_Max_Pair(ds, 0);
+	if (IS_PAIR(D_ARG(1)) || IS_PAIR(D_ARG(2))) {
+		Min_Max_Pair(D_OUT, D_ARG(1), D_ARG(2), 0);
+		return R_OUT;
+	}
 
 	a = *D_ARG(1);
 	b = *D_ARG(2);
@@ -535,19 +535,20 @@ compare:
 	return R_ARG1;
 }
 
+
 /***********************************************************************
 **
 */	REBNATIVE(negativeq)
 /*
 ***********************************************************************/
 {
-	REBVAL *val = &DS_Base[++DSP];
+	REBVAL zero;
+	VAL_SET_ZEROED(&zero, VAL_TYPE(D_ARG(1)));
 
-	VAL_SET_ZEROED(val, VAL_TYPE(D_ARG(1)));
-
-	if (Compare_Modify_Values(D_ARG(1), D_ARG(2), -1)) return R_FALSE;
+	if (Compare_Modify_Values(D_ARG(1), &zero, -1)) return R_FALSE;
 	return R_TRUE;
 }
+
 
 /***********************************************************************
 **
@@ -555,13 +556,14 @@ compare:
 /*
 ***********************************************************************/
 {
-	REBVAL *val = &DS_Base[++DSP];
+	REBVAL zero;
+	VAL_SET_ZEROED(&zero, VAL_TYPE(D_ARG(1)));
 
-	VAL_SET_ZEROED(val, VAL_TYPE(D_ARG(1)));
+	if (Compare_Modify_Values(D_ARG(1), &zero, -2)) return R_TRUE;
 
-	if (Compare_Modify_Values(D_ARG(1), D_ARG(2), -2)) return R_TRUE;
 	return R_FALSE;
 }
+
 
 /***********************************************************************
 **
@@ -572,11 +574,10 @@ compare:
 	REBCNT type = VAL_TYPE(D_ARG(1));
 
 	if (type >= REB_INTEGER && type <= REB_TIME) {
-		REBVAL *val = &DS_Base[++DSP];
-		
-		VAL_SET_ZEROED(val, type);
+		REBVAL zero;
+		VAL_SET_ZEROED(&zero, type);
 
-		if (Compare_Modify_Values(D_ARG(1), D_ARG(2), 1)) return R_TRUE;
+		if (Compare_Modify_Values(D_ARG(1), &zero, 1)) return R_TRUE;
 	}
 	return R_FALSE;
 }

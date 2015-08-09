@@ -954,7 +954,6 @@ crash:
 	segs = tot = blks = strs = unis = nons = odds = fre = 0;
 	seg_size = str_size = uni_size = blk_size = odd_size = fre_size = 0;
 	tot_size = 0;
-	DS_TERMINATE;
 
 	for (seg = Mem_Pools[SERIES_POOL].segs; seg; seg = seg->next) {
 

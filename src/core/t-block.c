@@ -82,7 +82,7 @@ static void No_Nones(REBVAL *arg) {
 
 /***********************************************************************
 **
-*/	REBCNT Find_Block(REBSER *series, REBCNT index, REBCNT end, REBVAL *target, REBCNT len, REBCNT flags, REBINT skip)
+*/	REBCNT Find_Block(REBSER *series, REBCNT index, REBCNT end, const REBVAL *target, REBCNT len, REBCNT flags, REBINT skip)
 /*
 **		Flags are set according to: ALL_FIND_REFS
 **
@@ -182,7 +182,7 @@ static void No_Nones(REBVAL *arg) {
 
 /***********************************************************************
 **
-*/	void Modify_Blockx(REBCNT action, REBVAL *block, REBVAL *arg)
+*/	void Modify_Blockx(struct Reb_Call *call_, REBCNT action, REBVAL *block, REBVAL *arg)
 /*
 **		Actions: INSERT, APPEND, CHANGE
 **
@@ -204,7 +204,7 @@ static void No_Nones(REBVAL *arg) {
 	REBSER *series = VAL_SERIES(block);
 	REBCNT index = VAL_INDEX(block);
 	REBCNT tail  = VAL_TAIL(block);
-	REBFLG only  = DS_REF(AN_ONLY);
+	REBFLG only  = D_REF(AN_ONLY);
 	REBCNT rlen;  // length to be removed
 	REBCNT ilen  = 1;  // length to be inserted
 	REBINT cnt   = 1;  // DUP count
@@ -212,7 +212,7 @@ static void No_Nones(REBVAL *arg) {
 	REBFLG is_blk = FALSE; // arg is a block not a value
 
 	// Length of target (may modify index): (arg can be anything)
-	rlen = Partial1((action == A_CHANGE) ? block : arg, DS_ARG(AN_LENGTH));
+	rlen = Partial1((action == A_CHANGE) ? block : arg, D_ARG(AN_LENGTH));
 
 	index = VAL_INDEX(block);
 	if (action == A_APPEND || index > tail) index = tail;
@@ -226,12 +226,12 @@ static void No_Nones(REBVAL *arg) {
 			VAL_INDEX(arg) = 0;
 		}
 		// Length of insertion:
-		ilen = (action != A_CHANGE && DS_REF(AN_PART)) ? rlen : VAL_LEN(arg);
+		ilen = (action != A_CHANGE && D_REF(AN_PART)) ? rlen : VAL_LEN(arg);
 	}
 
 	// Get /DUP count:
-	if (DS_REF(AN_DUP)) {
-		cnt = Int32(DS_ARG(AN_COUNT));
+	if (D_REF(AN_DUP)) {
+		cnt = Int32(D_ARG(AN_COUNT));
 		if (cnt <= 0) return; // no changes
 	}
 
@@ -244,7 +244,7 @@ static void No_Nones(REBVAL *arg) {
 	} else {
 		if (size > rlen)
 			Expand_Series(series, index, size-rlen);
-		else if (size < rlen && DS_REF(AN_PART))
+		else if (size < rlen && D_REF(AN_PART))
 			Remove_Series(series, index, rlen-size);
 		else if (size + index > tail) {
 			EXPAND_SERIES_TAIL(series, size - (tail - index));
@@ -401,6 +401,7 @@ static struct {
 ***********************************************************************/
 {
 	REBVAL *args = NULL;
+	REBVAL out;
 
 	REBINT result = -1;
 
@@ -412,7 +413,7 @@ static struct {
 		v2 = tmp;
 	}
 
-	args = BLK_SKIP(VAL_FUNC_ARGS(sort_flags.compare), 1);
+	args = BLK_SKIP(VAL_FUNC_WORDS(sort_flags.compare), 1);
 	if (NOT_END(args) && !TYPE_CHECK(args, VAL_TYPE(cast(const REBVAL*, v1)))) {
 		Trap3_DEAD_END(RE_EXPECT_ARG,
 			Of_Type(sort_flags.compare), args, Of_Type(cast(const REBVAL*, v1))
@@ -425,22 +426,20 @@ static struct {
 		);
 	}
 
-	Apply_Func(0, sort_flags.compare, v1, v2, 0);
+	Apply_Func(&out, sort_flags.compare, v1, v2, 0);
 
-	if (IS_LOGIC(DS_TOP)) {
-		if (VAL_LOGIC(DS_TOP)) result = 1;
+	if (IS_LOGIC(&out)) {
+		if (VAL_LOGIC(&out)) result = 1;
 	}
-	else if (IS_INTEGER(DS_TOP)) {
-		if (VAL_INT64(DS_TOP) > 0) result = 1;
-		if (VAL_INT64(DS_TOP) == 0) result = 0;
+	else if (IS_INTEGER(&out)) {
+		if (VAL_INT64(&out) > 0) result = 1;
+		if (VAL_INT64(&out) == 0) result = 0;
 	}
-	else if (IS_DECIMAL(DS_TOP)) {
-		if (VAL_DECIMAL(DS_TOP) > 0) result = 1;
-		if (VAL_DECIMAL(DS_TOP) == 0) result = 0;
+	else if (IS_DECIMAL(&out)) {
+		if (VAL_DECIMAL(&out) > 0) result = 1;
+		if (VAL_DECIMAL(&out) == 0) result = 0;
 	}
-	else if (IS_CONDITIONAL_TRUE(DS_TOP)) result = 1;
-
-	DS_DROP;
+	else if (IS_CONDITIONAL_TRUE(&out)) result = 1;
 
 	return result;
 }
@@ -631,10 +630,10 @@ static struct {
 
 	// Support for port: OPEN [scheme: ...], READ [ ], etc.
 	if (action >= PORT_ACTIONS && IS_BLOCK(value))
-		return T_Port(ds, action);
+		return T_Port(call_, action);
 
 	// Most common series actions:  !!! speed this up!
-	len = Do_Series_Action(action, value, arg);
+	len = Do_Series_Action(call_, action, value, arg);
 	if (len >= 0) return len; // return code
 
 	// Special case (to avoid fetch of index and tail below):
@@ -740,7 +739,7 @@ zero_blk:
 
 	case A_FIND:
 	case A_SELECT:
-		args = Find_Refines(ds, ALL_FIND_REFS);
+		args = Find_Refines(call_, ALL_FIND_REFS);
 //		if (ANY_BLOCK(arg) || args) {
 			len = ANY_BLOCK(arg) ? VAL_BLK_LEN(arg) : 1;
 			if (args & AM_FIND_PART) tail = Partial1(value, D_ARG(ARG_FIND_LENGTH));
@@ -771,12 +770,12 @@ zero_blk:
 	case A_INSERT:
 	case A_CHANGE:
 		// Length of target (may modify index): (arg can be anything)
-		len = Partial1((action == A_CHANGE) ? value : arg, DS_ARG(AN_LENGTH));
+		len = Partial1((action == A_CHANGE) ? value : arg, D_ARG(AN_LENGTH));
 		index = VAL_INDEX(value);
 		args = 0;
-		if (DS_REF(AN_ONLY)) SET_FLAG(args, AN_ONLY);
-		if (DS_REF(AN_PART)) SET_FLAG(args, AN_PART);
-		index = Modify_Block(action, ser, index, arg, args, len, DS_REF(AN_DUP) ? Int32(DS_ARG(AN_COUNT)) : 1);
+		if (D_REF(AN_ONLY)) SET_FLAG(args, AN_ONLY);
+		if (D_REF(AN_PART)) SET_FLAG(args, AN_PART);
+		index = Modify_Block(action, ser, index, arg, args, len, D_REF(AN_DUP) ? Int32(D_ARG(AN_COUNT)) : 1);
 		VAL_INDEX(value) = index;
 		break;
 
@@ -820,7 +819,7 @@ zero_blk:
 	//-- Special actions:
 
 	case A_TRIM:
-		args = Find_Refines(ds, ALL_TRIM_REFS);
+		args = Find_Refines(call_, ALL_TRIM_REFS);
 		if (args & ~(AM_TRIM_HEAD|AM_TRIM_TAIL)) Trap_DEAD_END(RE_BAD_REFINES);
 		Trim_Block(ser, index, args);
 		break;

@@ -21,136 +21,287 @@
 **
 **  Summary: REBOL Stack Definitions
 **  Module:  sys-stack.h
-**  Author:  Carl Sassenrath
 **  Notes:
 **
-**	DSP: index to the top of stack (active value)
-**	DSF: index to the base of stack frame (return value)
+**	This contains the implementations of two important stacks in
+**	the evaluator: the Data Stack and the Call Stack
 **
-**	Stack frame format:
+**	DATA STACK (CS_*):
 **
-**		   +---------------+
-**	DSF->0:| Return Value  | normally becomes TOS after func return
-**		   +---------------+
-**		 1:|  Prior Frame  | old DSF, block, and block index
-**		   +---------------+
-**		 2:|   Func Word   | for backtrace info
-**		   +---------------+
-**		 3:|   Func Value  | in case value is moved or modified
-**		   +---------------+
-**		 4:|     Arg 1     | args begin here
-**		   +---------------+
-**		   |     Arg 2     |
-**		   +---------------+
+**	The data stack is mostly for REDUCE and COMPOSE, which use it
+**	as a common buffer for values that are being gathered to be
+**	inserted into another series.  It's better to go through this
+**	buffer step because it means the precise size of the new
+**	insertions are known ahead of time.  If a series is created,
+**	it will not waste space or time on expansion, and if a series
+**	is to be inserted into as a target, the proper size gap for
+**	the insertion can be opened up exactly once (without any
+**	need for repeatedly shuffling on individual insertions).
+**
+**	Beyond that purpose, the data stack can also be used as a
+**	place to store a value to protect it from the garbage
+**	collector.  The stack must be balanced in the case of success
+**	when a native or action runs, but if a Trap() is called then
+**	the stack will be automatically balanced.
+**
+**	The data stack specifically needs contiguous memory for its
+**	applications.  That is more important than having stability
+**	of pointers to any data on the stack.  Hence if any push or
+**	pops can happen, there is no guarantee that the pointers will
+**	remain consistent...as the memory buffer may need to be
+**	reallocated (and hence relocated).  The index positions will
+**	remain consistent, however: and using DSP and DS_AT it is
+**	possible to work with stack items by index.
+**
+**	CALL STACK (CS_*):
+**
+**	The requirements for the call stack are different from the data
+**	stack, due to a need for pointer stability.  Being an ordinary
+**	series, the data stack will relocate its memory on expansion.
+**	This creates problems for natives and actions where pointers to
+**	parameters are saved to variables from D_ARG(N) macros.  These
+**	would need a refresh after every potential expanding operation.
+**
+**	Having a separate data structure offers other opportunities,
+**	such as hybridizing with CLOSURE! argument objects such that
+**	they would not need to be copied from the data stack.  It also
+**	allows freeing the information tracked by calls from the rule
+**	of being strictly a sequence of REBVALs.
 **
 ***********************************************************************/
 
-// Data Stack Pointer isn't a "C pointer", but indexes into Rebol's data stack
 
-#define DSP DS_Index
+/***********************************************************************
+**
+**	At the moment, the data stack is *mostly* implemented as a typical
+**	series.  Pushing unfilled slots on the stack (via PUSH_TRASH_UNSAFE)
+**	partially inlines Alloc_Tail_Blk, so it only pays for the function
+**	call in cases where expansion is necessary.
+**
+**	When Rebol was first open-sourced, there were other deviations from
+**	being a normal series.  It was not terminated with a REB_END, so
+**	you would be required to call a special DS_TERMINATE() routine to
+**	put the terminator in place before using the data stack with a
+**	routine that expected termination.  It also had to be expanded
+**	manually, so a DS_PUSH was not guaranteed to trigger a potential
+**	growth of the stack--if expansion hadn't been anticipated with a
+**	large enough space for that push, it would corrupt memory.
+**
+**	Overall, optimizing the stack structure should be easier now that
+**	it has a more dedicated purpose.  So those tricks are not being
+**	used for the moment.  Future profiling can try those and other
+**	approaches when a stable and complete system has been achieved.
+**
+***********************************************************************/
 
+// (D)ata (S)tack "(P)ointer" is an integer index into Rebol's data stack
+#define DSP \
+	cast(REBINT, SERIES_TAIL(DS_Series) - 1)
 
-// Prior to StableStack, a pointer to a REBVAL that lives in the data stack
-// is very volatile.  Any pushes can expand the stack, which means any
-// pointers may go invalid.  As an interim step, it can be helpful to be
-// assured that a pointer is not into the data stack.  For assertions only.
+// Access value at given stack location
+#define DS_AT(d) \
+	BLK_SKIP(DS_Series, (d))
+
+// Most recently pushed item
+#define DS_TOP \
+	BLK_LAST(DS_Series)
 
 #if !defined(NDEBUG)
 	#define IN_DATA_STACK(p) \
-		(((p) >= &DS_Base[0]) && ((p <= &DS_Base[DS_Index])))
+		(SERIES_TAIL(DS_Series) != 0 && (p) >= DS_AT(0) && (p) <= DS_TOP)
+#endif
+
+// PUSHING: Note the DS_PUSH macros inherit the property of SET_XXX that
+// they use their parameters multiple times.  Don't use with the result of
+// a function call because that function could be called multiple times.
+//
+// If you push "unsafe" trash to the stack, it has the benefit of costing
+// nothing extra in a release build for setting the value (as it is just
+// left uninitialized).  But you must make sure that a GC can't run before
+// you have put a valid value into the slot you pushed.
+
+#define DS_PUSH_TRASH \
+	( \
+		SERIES_FITS(DS_Series, 1) \
+			? cast(void, ++DS_Series->tail) \
+			: ( \
+				SERIES_REST(DS_Series) >= STACK_LIMIT \
+					? Trap(RE_STACK_OVERFLOW) \
+					: cast(void, cast(REBUPT, Alloc_Tail_Blk(DS_Series))) \
+			), \
+		SET_TRASH(DS_TOP) \
+	)
+
+#define DS_PUSH_TRASH_SAFE \
+	(DS_PUSH_TRASH, SET_TRASH_SAFE(DS_TOP), NOOP)
+
+#define DS_PUSH(v) \
+	(DS_PUSH_TRASH, *DS_TOP = *(v), NOOP)
+
+#define DS_PUSH_UNSET \
+	(DS_PUSH_TRASH, SET_UNSET(DS_TOP), NOOP)
+
+#define DS_PUSH_NONE \
+	(DS_PUSH_TRASH, SET_NONE(DS_TOP), NOOP)
+
+#define DS_PUSH_TRUE \
+	(DS_PUSH_TRASH, SET_TRUE(DS_TOP), NOOP)
+
+#define DS_PUSH_INTEGER(n) \
+	(DS_PUSH_TRASH, SET_INTEGER(DS_TOP, (n)), NOOP)
+
+#define DS_PUSH_DECIMAL(n) \
+	(DS_PUSH_TRASH, SET_DECIMAL(DS_TOP, (n)), NOOP)
+
+// POPPING AND "DROPPING"
+
+#define DS_DROP \
+	(--DS_Series->tail, BLK_TERM(DS_Series), NOOP)
+
+#define DS_POP_INTO(v) \
+	do { \
+		assert(!IS_TRASH(DS_TOP) || VAL_TRASH_SAFE(DS_TOP)); \
+		*(v) = *DS_TOP; \
+		DS_DROP; \
+	} while (0)
+
+#ifdef NDEBUG
+	#define DS_DROP_TO(dsp) \
+		(DS_Series->tail = (dsp) + 1, BLK_TERM(DS_Series), NOOP)
+#else
+	#define DS_DROP_TO(dsp) \
+		do { \
+			assert(DSP >= (dsp)); \
+			while (DSP != (dsp)) {DS_DROP;} \
+		} while (0)
 #endif
 
 
-// "Data Stack Frame" indexes into Rebol's data stack at the location where
-// the block of information about a function call begins.  It starts with the
-// location where the return value is written, and has other properties (like
-// the REBVAL of the function being called itself) up to the values that are
-// computed arguments to the function.
+/***********************************************************************
+**
+**	The call stack uses a custom "chunked" allocator to avoid the
+**	overhead of calling Make_Mem on each push and Free_Mem on
+**	each pop.  It keeps one spare chunk allocated, and only frees
+**	a chunk when a full chunk prior to it has the last element
+**	popped out of it.  In memory the situation looks like this:
+**
+**		[chunk->next
+**			(->chunk_left call->prior ...data [arg1][arg2][arg3]...)
+**			(->chunk_left call->prior ...data [arg1]...)
+**			(->chunk_left call->prior ...data [arg1][arg2]...)
+**			...chunk remaining space...
+**		]
+**
+**	Each [chunk] contains (calls).  The calls are singly linked
+**	backwards to form the call frame stack, while the chunks are
+**	singly linked forward.  Since the chunk size is a known
+**	constant, it's possible to quickly deduce the chunk a call
+**	lives in from its pointer and the remaining size in the chunk.
+**
+***********************************************************************/
 
-// !!! Note that terminology-wise, the slot in the frame that used to be
-// called DSF_RETURN is now called DSF_OUT.  It is the first element in
-// the frame in the data-stack implementation, because when the stack is
-// "dropped" back to the point where the call was made, it is what is on
-// the top of the stack.  But in StableStack, this can be a pointer to any
-// address, as function calls can be told to write their output anywhere.
-// (and the REBVAL* parameter to the replacement for Do_Next is called "out"
-// so it makes sense in that way, too.)
-//
-// !!! Vis a vis, concordantly...DSF_RETURN is reserved for the definitionally
-// scoped return function built for the specific call the frame represents.
+struct Reb_Chunk;
 
-#define DSF_SIZE		4					// from DSF to ARGS-1
-#define DSF_OUT(d)		(&DS_Base[d])		// where to write return value
-#define PRIOR_DSF(d) \
-	VAL_INT32(&DS_Base[(d)+1])
-#define DSF_POSITION(d) (&DS_Base[(d)+2])	// block and index of execution
-#define DSF_LABEL(d)	(&DS_Base[(d)+3])	// func word backtrace
-#define DSF_FUNC(d)		(&DS_Base[(d)+4])	// function value saved
-#define DSF_RETURN(d)	coming@soon			// return func linked to this call
-#define DSF_ARGS(d,n)	(&DS_Base[(d)+DSF_SIZE+(n)])
+#define CS_CHUNK_PAYLOAD (2048 - sizeof(struct Reb_Chunk*))
+
+struct Reb_Chunk {
+	struct Reb_Chunk *next;
+	REBYTE payload[CS_CHUNK_PAYLOAD];
+};
+
+struct Reb_Call {
+	// How many bytes are left in the memory chunk this call frame lives in
+	// (its own size has already been subtracted from the amount)
+	REBINT chunk_left;
+
+	struct Reb_Call *prior;
+
+	// In the Debug build, we make sure SET_DSF has happened on a call frame.
+	// This way "pending" frames that haven't had their arguments fulfilled
+	// can be checked to be sure no one tries to Get_Var out of them yet.
+#if !defined(NDEBUG)
+	REBOOL pending;
+#endif
+
+	REBCNT num_vars;	// !!! Redundant with VAL_FUNC_NUM_WORDS()?
+
+	REBVAL *out;		// where to write the function's output
+
+	REBVAL func;			// copy (important!!) of function for call
+
+	REBVAL where;			// block and index of execution
+	REBVAL label;			// func word backtrace
+
+	REBVAL return_func;		// dynamic scoped return (coming soon!)
+
+	// these are "variables"...SELF, RETURN, args, locals
+	REBVAL vars[1];		// (array exceeds struct, but cannot be [0] in C++)
+};
+
+#define DSF_NUM_VARS(c)	((c)->num_vars)
+
+// Size must compensate -1 for the already-accounted-for length one array
+#define DSF_SIZE(c) \
+	( \
+		sizeof(struct Reb_Call) \
+		+ sizeof(REBVAL) * (DSF_NUM_VARS(c) > 0 ? DSF_NUM_VARS(c) - 1 : 0) \
+	)
+
+#define DSF_CHUNK(c) \
+	cast(struct Reb_Chunk*, \
+		cast(REBYTE*, (c)) \
+		+ DSF_SIZE(c) \
+		+ (c)->chunk_left \
+		- sizeof(struct Reb_Chunk) \
+	)
 
 
-#ifdef STRESS
+// !!! DSF is to be renamed (C)all (S)tack (P)ointer, but being left as DSF
+// in the initial commit to try and cut back on the disruption seen in
+// one commit, as there are already a lot of changes.
+
+#define DSF (CS_Running + 0) // avoid assignment to DSF via + 0
+
+#ifdef NDEBUG
+	#define SET_DSF(c) \
+		(CS_Running = (c), NOOP)
+#else
 	// In a "stress checked" debug mode, every time the DSF is accessed we
 	// can verify that it is well-formed.
-	#define DSF (*DSF_Stress())
-	#define SET_DSF(ds) \
-		(DS_Frame_Index = (ds), cast(void, DSF_Stress()))
-#else
-	// Normal builds just use DS_Frame_Index directly
-	#define DSF DS_Frame_Index
-	#define SET_DSF(ds) \
-		(DS_Frame_Index = (ds))
+	#ifdef STRESS
+		#define DSF (DSF_Stress())
+	#endif
+
+	#define SET_DSF(c) \
+		( \
+			CS_Running = (c), \
+			(c) ? cast(void, (c)->pending = FALSE) : NOOP \
+		)
 #endif
 
+#define DSF_OUT(c)		((c)->out)
+#define PRIOR_DSF(c)	((c)->prior)
+#define DSF_WHERE(c)	c_cast(const REBVAL*, &(c)->where)
+#define DSF_LABEL(c)	c_cast(const REBVAL*, &(c)->label)
+#define DSF_FUNC(c)		c_cast(const REBVAL*, &(c)->func)
+#define DSF_RETURN(c)	coming@soon
 
-// Special stack controls (used by init and GC):
-#define DS_TERMINATE	(SERIES_TAIL(DS_Series) = DSP+1);
+// VARS includes (*will* include) RETURN dispatching value, locals...
+#define DSF_VAR(c,n)	(&(c)->vars[(n) - 1])
 
-// Access value at given stack location:
-#define DS_VALUE(d)		(&DS_Base[d])
+// ARGS is the parameters and refinements
+#define DSF_ARG(c,n)	DSF_VAR((c), (n) - 1 + FIRST_PARAM_INDEX)
+#define DSF_NUM_ARGS(c)	(DSF_NUM_VARS(c) - (FIRST_PARAM_INDEX - 1))
 
-// Stack pointer based actions:
-#define DS_POP			(&DS_Base[DSP--])
-#define DS_TOP			(&DS_Base[DSP])
-#define DS_NEXT			(&DS_Base[DSP+1])
-#define DS_SKIP			(DSP++)
-#define DS_DROP			(DSP--)
-#define DS_GET(d)		(&DS_Base[d])
-#define DS_PUSH(v)		(DS_Base[++DSP]=*(v))		// atomic
-#define DS_PUSH_UNSET	SET_UNSET(&DS_Base[++DSP])	// atomic
-#define DS_PUSH_NONE	SET_NONE(&DS_Base[++DSP])	// atomic
-#define DS_PUSH_TRUE	VAL_SET(&DS_Base[++DSP], REB_LOGIC), \
-						VAL_LOGIC(&DS_Base[DSP]) = TRUE // not atomic
-#define DS_PUSH_INTEGER(n)	VAL_SET(&DS_Base[++DSP], REB_INTEGER), \
-						VAL_INT64(&DS_Base[DSP]) = n // not atomic
-#define DS_PUSH_DECIMAL(n)	VAL_SET(&DS_Base[++DSP], REB_DECIMAL), \
-						VAL_DECIMAL(&DS_Base[DSP]) = n // not atomic
+// !!! The function spec numbers words according to their position.  With
+// definitional return, 0 is SELF, 1 is the RETURN, 2 is the first argument.
+// (without, 1 is the first argument).  This layout is in flux as the
+// workings of locals are rethought...their most sensible location would
+// probably be between the RETURN and the arguments.
 
 // Reference from ds that points to current return value:
-#define D_OUT			(ds)
-#define D_ARG(n)		(ds+(DSF_SIZE+n))
+#define D_OUT			DSF_OUT(call_)
+#define D_ARG(n)		DSF_ARG(call_, (n))
 #define D_REF(n)		(!IS_NONE(D_ARG(n)))
 
-// Reference from current DSF index:
-#define DS_ARG_BASE		(DSF+DSF_SIZE)
-#define DS_ARG(n)		DSF_ARGS(DSF, n)
-#define DS_REF(n)		(!IS_NONE(DS_ARG(n)))
-#define DS_ARGC			(DSP-DS_ARG_BASE)
-
-#define DS_OUT		(&DS_Base[DSF])
-// Helpers:
-#define DS_RELOAD(d)	(d = DS_OUT)
-
-enum {
-	R_OUT = 0,
-	R_TOS,
-	R_TOS1,
-	R_NONE,
-	R_UNSET,
-	R_TRUE,
-	R_FALSE,
-	R_ARG1,
-	R_ARG2,
-	R_ARG3
-};
+#define DS_ARGC			DSF_NUM_ARGS(call_)

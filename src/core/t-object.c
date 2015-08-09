@@ -296,12 +296,12 @@ static REBSER *Trim_Object(REBSER *obj)
 				// make object! [init]
 				if (type == REB_OBJECT) {
 					obj = Make_Object(0, VAL_BLK_DATA(arg));
-					SET_OBJECT(ds, obj); // GC save
-					arg = Do_Bind_Block(obj, arg); // GC-OK
-					if (THROWN(arg)) {
-						*D_OUT = *arg;
-						return R_OUT;
-					}
+					SET_OBJECT(D_OUT, obj); // GC save
+					Bind_Block(obj, VAL_BLK_DATA(arg), BIND_DEEP);
+
+					// GC-OK
+					if (!DO_BLOCK(D_OUT, VAL_SERIES(arg), 0)) return R_OUT;
+
 					break; // returns obj
 				}
 
@@ -311,6 +311,7 @@ static REBSER *Trim_Object(REBSER *obj)
 				//	VAL_MOD_BODY(value) = VAL_SERIES(arg);
 				//	VAL_SET(value, REB_MODULE); // GC protected
 				//	DO_BLK(arg);
+				//	DS_DROP;
 					break; // returns value
 				}
 
@@ -371,12 +372,12 @@ static REBSER *Trim_Object(REBSER *obj)
 			if (IS_BLOCK(arg)) {
 				obj = Make_Object(src_obj, VAL_BLK_DATA(arg));
 				Rebind_Frame(src_obj, obj);
-				SET_OBJECT(ds, obj);
-				arg = Do_Bind_Block(obj, arg); // GC-OK
-				if (THROWN(arg)) {
-					*D_OUT = *arg;
-					return R_OUT;
-				}
+				SET_OBJECT(D_OUT, obj);
+				Bind_Block(obj, VAL_BLK_DATA(arg), BIND_DEEP);
+
+				// GC-OK
+				if (!DO_BLOCK(D_OUT, VAL_SERIES(arg), 0)) return R_OUT;
+
 				break; // returns obj
 			}
 
@@ -495,14 +496,14 @@ reflect:
 		break;
 
 	case A_TRIM:
-		if (Find_Refines(ds, ALL_TRIM_REFS)) Trap_DEAD_END(RE_BAD_REFINES); // none allowed
+		if (Find_Refines(call_, ALL_TRIM_REFS)) Trap_DEAD_END(RE_BAD_REFINES); // none allowed
 		type = VAL_TYPE(value);
 		obj = Trim_Object(VAL_OBJ_FRAME(value));
 		break;
 
 	case A_TAILQ:
 		if (IS_OBJECT(value)) {
-			SET_LOGIC(DS_OUT, SERIES_TAIL(VAL_OBJ_FRAME(value)) <= 1);
+			SET_LOGIC(D_OUT, SERIES_TAIL(VAL_OBJ_FRAME(value)) <= 1);
 			return R_OUT;
 		}
 		Trap_Action_DEAD_END(VAL_TYPE(value), action);

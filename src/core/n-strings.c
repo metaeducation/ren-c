@@ -126,10 +126,19 @@ static struct digest {
 {
 	REBSER *str;
 
-	str = Form_Reduce(VAL_SERIES(D_ARG(1)), VAL_INDEX(D_ARG(1)));
-	if (!str) return R_TOS;
+	// !!! This uses stack pushing/popping protocol and doesn't need
+	// to.  It's only called once; should probably be inlined here.
+	// (Assuming AJOIN should exist, which it probably shouldn't.)
 
-	Set_String(DS_OUT, str); // not D_OUT (stack modified)
+	str = Form_Reduce(VAL_SERIES(D_ARG(1)), VAL_INDEX(D_ARG(1)));
+	if (!str) {
+		DS_POP_INTO(D_OUT);
+		return R_OUT;
+	}
+
+	DS_DROP;
+
+	Set_String(D_OUT, str); // not D_OUT (stack modified)
 
 	return R_OUT;
 }
@@ -272,7 +281,7 @@ static struct digest {
 				}
 
 				SERIES_TAIL(digest) = digests[i].len;
-				Set_Series(REB_BINARY, DS_OUT, digest);
+				Set_Series(REB_BINARY, D_OUT, digest);
 
 				return 0;
 			}
@@ -652,7 +661,7 @@ static struct digest {
 /*
 ***********************************************************************/
 {
-	Change_Case(ds, D_ARG(1), D_ARG(3), FALSE);
+	Change_Case(D_OUT, D_ARG(1), D_ARG(3), FALSE);
 	return R_OUT;
 }
 
@@ -663,7 +672,7 @@ static struct digest {
 /*
 ***********************************************************************/
 {
-	Change_Case(ds, D_ARG(1), D_ARG(3), TRUE);
+	Change_Case(D_OUT, D_ARG(1), D_ARG(3), TRUE);
 	return R_OUT;
 }
 

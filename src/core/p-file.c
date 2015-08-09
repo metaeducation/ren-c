@@ -186,18 +186,17 @@ REBINT Mode_Syms[] = {
 
 /***********************************************************************
 **
-*/	static void Read_File_Port(REBSER *port, REBREQ *file, REBVAL *path, REBCNT args, REBCNT len)
+*/	static void Read_File_Port(REBVAL *out, REBSER *port, REBREQ *file, REBVAL *path, REBCNT args, REBCNT len)
 /*
 **		Read from a file port.
 **
 ***********************************************************************/
 {
 	REBSER *ser;
-	REBVAL *ds = DS_OUT;
 
 	// Allocate read result buffer:
 	ser = Make_Binary(len);
-	Set_Series(REB_BINARY, ds, ser); //??? what if already set?
+	Set_Series(REB_BINARY, out, ser); //??? what if already set?
 
 	// Do the read, check for errors:
 	file->common.data = BIN_HEAD(ser);
@@ -214,8 +213,8 @@ REBINT Mode_Syms[] = {
 		if (nser == NULL) {
 			Trap(RE_BAD_DECODE);
 		}
-		Set_String(ds, nser);
-		if (args & AM_READ_LINES) Set_Block(ds, Split_Lines(ds));
+		Set_String(out, nser);
+		if (args & AM_READ_LINES) Set_Block(out, Split_Lines(out));
 	}
 }
 
@@ -259,19 +258,15 @@ REBINT Mode_Syms[] = {
 
 /***********************************************************************
 **
-*/	static REBCNT Set_Length(const REBVAL *ds, const REBREQ *file, const REBCNT arg)
+*/	static REBCNT Set_Length(const REBREQ *file, REBI64 limit)
 /*
-**		Computes the length of data based on the argument number
-**		provided for the ARG_*_PART stack value (which, when there,
-**		is always followed by the size).
-**
 **		Note: converts 64bit number to 32bit. The requested size
-**		can never be greater than 4GB.
+**		can never be greater than 4GB.  If limit isn't negative it
+**		constrains the size of the requested read.
 **
 ***********************************************************************/
 {
-	REBI64 len;  // maximum size
-	REBI64 cnt;
+	REBI64 len;
 	int what_if_it_changed;
 
 	// Compute and bound bytes remaining:
@@ -280,12 +275,11 @@ REBINT Mode_Syms[] = {
 	len &= MAX_READ_MASK; // limit the size
 
 	// Return requested length:
-	if (!D_REF(arg)) return (REBCNT)len;
+	if (limit < 0) return (REBCNT)len;
 
 	// Limit size of requested read:
-	cnt = VAL_INT64(D_ARG(arg+1));
-	if (cnt > len) return (REBCNT)len;
-	return (REBCNT)cnt;
+	if (limit > len) return cast(REBCNT, len);
+	return cast(REBCNT, limit);
 }
 
 
@@ -311,7 +305,7 @@ REBINT Mode_Syms[] = {
 
 /***********************************************************************
 **
-*/	static int File_Actor(REBVAL *ds, REBSER *port, REBCNT action)
+*/	static REB_R File_Actor(struct Reb_Call *call_, REBSER *port, REBCNT action)
 /*
 **		Internal port handler for files.
 **
@@ -345,7 +339,7 @@ REBINT Mode_Syms[] = {
 	switch (action) {
 
 	case A_READ:
-		args = Find_Refines(ds, ALL_READ_REFS);
+		args = Find_Refines(call_, ALL_READ_REFS);
 
 		// Handle the READ %file shortcut case:
 		if (!IS_OPEN(file)) {
@@ -357,8 +351,10 @@ REBINT Mode_Syms[] = {
 		}
 
 		if (args & AM_READ_SEEK) Set_Seek(file, D_ARG(ARG_READ_INDEX));
-		len = Set_Length(ds, file, ARG_READ_PART);
-		Read_File_Port(port, file, path, args, len);
+		len = Set_Length(
+			file, D_REF(ARG_READ_PART) ? VAL_INT64(D_ARG(ARG_READ_LENGTH)) : -1
+		);
+		Read_File_Port(D_OUT, port, file, path, args, len);
 
 		if (opened) {
 			OS_DO_DEVICE(file, RDC_CLOSE);
@@ -375,7 +371,7 @@ REBINT Mode_Syms[] = {
 		SET_FLAG(file->modes, RFM_RESEEK);
 
 	case A_WRITE:
-		args = Find_Refines(ds, ALL_WRITE_REFS);
+		args = Find_Refines(call_, ALL_WRITE_REFS);
 		spec = D_ARG(2); // data (binary, string, or block)
 
 		// Handle the READ %file shortcut case:
@@ -416,7 +412,7 @@ REBINT Mode_Syms[] = {
 		break;
 
 	case A_OPEN:
-		args = Find_Refines(ds, ALL_OPEN_REFS);
+		args = Find_Refines(call_, ALL_OPEN_REFS);
 		// Default file modes if not specified:
 		if (!(args & (AM_OPEN_READ | AM_OPEN_WRITE))) args |= (AM_OPEN_READ | AM_OPEN_WRITE);
 		Setup_File(file, args, path);
@@ -425,8 +421,8 @@ REBINT Mode_Syms[] = {
 
 	case A_COPY:
 		if (!IS_OPEN(file)) Trap1_DEAD_END(RE_NOT_OPEN, path); //!!!! wrong msg
-		len = Set_Length(ds, file, 2);
-		Read_File_Port(port, file, path, args, len);
+		len = Set_Length(file, D_REF(2) ? VAL_INT64(D_ARG(3)) : -1);
+		Read_File_Port(D_OUT, port, file, path, args, len);
 		break;
 
 	case A_OPENQ:

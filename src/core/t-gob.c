@@ -599,13 +599,14 @@ is_none:
 	const REBVAL *val;
 
 	while (NOT_END(blk)) {
+		REBVAL safe;
 		var = blk++;
 		val = blk++;
 		if (!IS_SET_WORD(var))
 			Trap2(RE_EXPECT_VAL, Get_Type(REB_SET_WORD), Of_Type(var));
 		if (IS_END(val) || IS_UNSET(val) || IS_SET_WORD(val))
 			Trap1(RE_NEED_VALUE, var);
-		val = Get_Simple_Value(val);
+		Get_Simple_Value_Into(&safe, val);
 		if (!Set_GOB_Var(gob, var, val))
 			Trap2(RE_BAD_FIELD_SET, var, Of_Type(val));
 	}
@@ -793,7 +794,7 @@ is_none:
 		// Allow NONE as argument:
 //		else if (!IS_NONE(arg))
 //			goto is_arg_error;
-		SET_GOB(DS_OUT, ngob);
+		SET_GOB(D_OUT, ngob);
 		break;
 
 	case A_PICK:
@@ -811,13 +812,13 @@ is_none:
 	case A_CHANGE:
 		if (!IS_GOB(arg)) goto is_arg_error;
 		if (!GOB_PANE(gob) || index >= tail) Trap_DEAD_END(RE_PAST_END);
-		if (action == A_CHANGE && (DS_REF(AN_PART) || DS_REF(AN_ONLY) || DS_REF(AN_DUP))) Trap_DEAD_END(RE_NOT_DONE);
+		if (action == A_CHANGE && (D_REF(AN_PART) || D_REF(AN_ONLY) || D_REF(AN_DUP))) Trap_DEAD_END(RE_NOT_DONE);
 		Insert_Gobs(gob, arg, index, 1, 0);
 		//ngob = *GOB_SKIP(gob, index);
 		//GOB_PARENT(ngob) = 0;
 		//*GOB_SKIP(gob, index) = VAL_GOB(arg);
 		if (action == A_POKE) {
-			*DS_OUT = *arg;
+			*D_OUT = *arg;
 			return R_OUT;
 		}
 		index++;
@@ -826,7 +827,7 @@ is_none:
 	case A_APPEND:
 		index = tail;
 	case A_INSERT:
-		if (DS_REF(AN_PART) || DS_REF(AN_ONLY) || DS_REF(AN_DUP)) Trap_DEAD_END(RE_NOT_DONE);
+		if (D_REF(AN_PART) || D_REF(AN_ONLY) || D_REF(AN_DUP)) Trap_DEAD_END(RE_NOT_DONE);
 		if (IS_GOB(arg)) len = 1;
 		else if (IS_BLOCK(arg)) {
 			len = VAL_BLK_LEN(arg);

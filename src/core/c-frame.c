@@ -168,9 +168,6 @@
 **      If word is not NULL, use the word sym and bind the word value,
 **      otherwise use sym.
 **
-**      WARNING: Invalidates pointers to values within the frame
-**      because the frame block may get expanded. (Use indexes.)
-**
 ***********************************************************************/
 {
 	REBSER *words = FRM_WORD_SERIES(frame);
@@ -559,7 +556,7 @@
 
 /***********************************************************************
 **
-*/	void Assert_Public_Object(REBVAL *value)
+*/	void Assert_Public_Object(const REBVAL *value)
 /*
 ***********************************************************************/
 {
@@ -579,10 +576,8 @@
 **
 ***********************************************************************/
 {
-	Do_Sys_Func(SYS_CTX_MAKE_MODULE_P, spec, 0); // volatile
-	if (IS_NONE(DS_TOP)) Trap1(RE_INVALID_SPEC, spec);
-
-	*out = *DS_POP;
+	Do_Sys_Func(out, SYS_CTX_MAKE_MODULE_P, spec, 0);
+	if (IS_NONE(out)) Trap1(RE_INVALID_SPEC, spec);
 }
 
 
@@ -962,8 +957,8 @@
 **      To indicate the relative nature of the index, it is set to
 **		a negative offset.
 **
-**		words: VAL_FUNC_ARGS(func)
-**		frame: VAL_FUNC_ARGS(func)
+**		words: VAL_FUNC_WORDS(func)
+**		frame: VAL_FUNC_WORDS(func)
 **		block: block to bind
 **
 ***********************************************************************/
@@ -1149,8 +1144,6 @@
 	REBSER *context = VAL_WORD_FRAME(word);
 
 	if (context) {
-		REBINT dsf;
-
 		REBINT index = VAL_WORD_INDEX(word);
 
 		// POSITIVE INDEX: The word is bound directly to a value inside
@@ -1184,16 +1177,20 @@
 		// multiple invocations are on the stack, most recent wins)
 
 		if (index < 0) {
-			dsf = DSF; // may be zero (in theory) so loop checks that first
-			while (dsf != 0) {
-				if (context == VAL_FUNC_WORDS(DSF_FUNC(dsf))) {
-					assert(!IS_CLOSURE(DSF_FUNC(dsf)));
+			struct Reb_Call *call = DSF;
 
-					if (!writable) return DSF_ARGS(dsf, -index);
+			// Get_Var could theoretically be called with no evaluation on
+			// the stack, so check for no DSF first...
+			while (call) {
+				if (context == VAL_FUNC_WORDS(DSF_FUNC(call))) {
+					assert(!IS_CLOSURE(DSF_FUNC(call)));
+					assert(!call->pending);
+
+					if (!writable) return DSF_ARG(call, -index);
 
 					{
 						// ^-- new scope: don't usually stack-alloc `value`
-						REBVAL *value = DSF_ARGS(dsf, -index);
+						REBVAL *value = DSF_ARG(call, -index);
 						if (VAL_PROTECTED(value)) {
 							if (trap) {
 								Trap1(RE_LOCKED_WORD, word);
@@ -1201,11 +1198,12 @@
 							}
 							return NULL;
 						}
+						assert(!IS_TRASH(value));
 						return value;
 					}
 				}
 
-				dsf = PRIOR_DSF(dsf);
+				call = PRIOR_DSF(call);
 			}
 
 			if (trap) {
@@ -1252,8 +1250,6 @@
 	REBSER *context = VAL_WORD_FRAME(word);
 
 	if (context) {
-		REBINT dsf;
-
 		REBINT index = VAL_WORD_INDEX(word);
 
 		if (index > 0) {
@@ -1262,14 +1258,16 @@
 		}
 
 		if (index < 0) {
-			dsf = DSF;
-			while (dsf) {
-				if (context == VAL_FUNC_WORDS(DSF_FUNC(dsf))) {
-					assert(!IS_CLOSURE(DSF_FUNC(dsf)));
-					*out = *DSF_ARGS(dsf, -index);
+			struct Reb_Call *call = DSF;
+			while (call) {
+				if (context == VAL_FUNC_WORDS(DSF_FUNC(call))) {
+					assert(!IS_CLOSURE(DSF_FUNC(call)));
+					assert(!call->pending);
+					*out = *DSF_ARG(call, -index);
+					assert(!IS_TRASH(out));
 					return;
 				}
-				dsf = PRIOR_DSF(dsf);
+				call = PRIOR_DSF(call);
 			}
 
 			Trap1(RE_NO_RELATIVE, word);
@@ -1301,10 +1299,10 @@
 ***********************************************************************/
 {
 	REBINT index = VAL_WORD_INDEX(word);
-	REBINT dsf;
+	struct Reb_Call *call;
 	REBSER *frm;
 
-	if (THROWN(value)) return;
+	assert(!THROWN(value));
 
 	if (!HAS_FRAME(word)) Trap1(RE_NOT_DEFINED, word);
 
@@ -1322,12 +1320,12 @@
 	if (index == 0) Trap(RE_SELF_PROTECTED);
 
 	// Find relative value:
-	dsf = DSF;
-	while (VAL_WORD_FRAME(word) != VAL_WORD_FRAME(DSF_LABEL(dsf))) {
-		dsf = PRIOR_DSF(dsf);
-		if (dsf <= 0) Trap1(RE_NOT_DEFINED, word); // change error !!!
+	call = DSF;
+	while (VAL_WORD_FRAME(word) != VAL_WORD_FRAME(DSF_LABEL(call))) {
+		call = PRIOR_DSF(call);
+		if (!call) Trap1(RE_NOT_DEFINED, word); // change error !!!
 	}
-	*DSF_ARGS(dsf, -index) = *value;
+	*DSF_ARG(call, -index) = *value;
 }
 
 
@@ -1418,10 +1416,13 @@
 
 	for (n = 0; n < tail; n++, value++, word++) {
 		if (n == 0) {
-			assert(
-				VAL_WORD_SYM(word) == SYM_SELF
-				|| VAL_WORD_SYM(word) == SYM_NOT_USED
-			);
+			if (
+				VAL_WORD_SYM(word) != SYM_SELF
+				&& VAL_WORD_SYM(word) != SYM_NOT_USED
+			) {
+				Debug_Fmt("** First slot in frame is not SELF or null symbol");
+				Panic_Series(frame);
+			}
 		}
 
 		if (IS_END(word) || IS_END(value)) {

@@ -156,12 +156,10 @@
 **
 ***********************************************************************/
 {
-	REBCNT len;
-	REBYTE *tp;
+	REBCNT len = VAL_TUPLE_LEN(value);
+	const REBYTE *tp = cast(const REBYTE *, VAL_TUPLE(value));
 	REBYTE *start = out;
 
-	len = VAL_TUPLE_LEN(value);
-	tp = (REBYTE *)VAL_TUPLE(value);
 	for (; len > 0; len--, tp++) {
 		out = Form_Int(out, *tp);
 		*out++ = '.';
@@ -290,11 +288,11 @@
 		return R_OUT;
 
 	case A_PICK:
-		Pick_Path(value, arg, 0);
-		return R_TOS;
+		Pick_Path(D_OUT, value, arg, 0);
+		return R_OUT;
 
 ///	case A_POKE:
-///		Pick_Path(value, arg, D_ARG(3));
+///		Pick_Path(D_OUT, value, arg, D_ARG(3));
 ///		return R_ARG3;
 
     case A_REVERSE:
@@ -384,6 +382,6 @@ bad_arg:
 	Trap_Action_DEAD_END(REB_TUPLE, action);
 
 ret_value:
-	*DS_OUT = *value;
+	*D_OUT = *value;
 	return R_OUT;
 }

@@ -624,8 +624,11 @@ static void Mold_Block(const REBVAL *value, REB_MOLD *mold)
 	REBFLG over = FALSE;
 
 	if (SERIES_WIDE(VAL_SERIES(value)) == 0) {
-		assert(FALSE);
-		Panic_Core(RP_BAD_WIDTH, sizeof(REBVAL), 0, VAL_TYPE(value));
+	#if !defined(NDEBUG)
+		Debug_Fmt("** Mold_Block() zero series wide, t=%d", VAL_TYPE(value));
+	#endif
+
+		Panic_Series(VAL_SERIES(value));
 	}
 
 	// Optimize when no index needed:
@@ -1278,7 +1281,7 @@ append:
 
 /***********************************************************************
 **
-*/  REBSER *Copy_Form_Value(REBVAL *value, REBCNT opts)
+*/  REBSER *Copy_Form_Value(const REBVAL *value, REBCNT opts)
 /*
 **		Form a value based on the mold opts provided.
 **
@@ -1323,33 +1326,34 @@ append:
 {
 	REBINT start = DSP + 1;
 	REBINT n;
+	REBSER *result = NULL;
 
 	REB_MOLD mo;
 
 	while (index < BLK_LEN(block)) {
-		index = Do_Next(block, index, 0);
-		if (THROWN(DS_TOP)) {
-			*DS_VALUE(start) = *DS_TOP;
-			DSP = start;
-			return NULL;
-		}
+		REBVAL out;
+		index = DO_NEXT(&out, block, index);
+		if (index == THROWN_FLAG) goto return_balanced;
+		DS_PUSH(&out);
 	}
 
 	CLEARS(&mo);
 	Reset_Mold(&mo);
 
 	for (n = start; n <= DSP; n++)
-		Mold_Value(&mo, &DS_Base[n], 0);
+		Mold_Value(&mo, DS_AT(n), 0);
 
-	DSP = start;
+	result = Copy_String(mo.series, 0, -1);
 
-	return Copy_String(mo.series, 0, -1);
+return_balanced:
+	DS_DROP_TO(start);
+	return result;
 }
 
 
 /***********************************************************************
 **
-*/  REBSER *Form_Tight_Block(REBVAL *blk)
+*/  REBSER *Form_Tight_Block(const REBVAL *blk)
 /*
 ***********************************************************************/
 {

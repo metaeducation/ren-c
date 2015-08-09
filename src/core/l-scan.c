@@ -1559,7 +1559,6 @@ exit_block:
 {
     SCAN_STATE scan_state;
 
-	Check_Stack();
 	if (!len) len = LEN_BYTES(src);
     Init_Scan_State(&scan_state, src, len);
 	return Scan_Code(&scan_state, 0);
@@ -1623,7 +1622,6 @@ exit_block:
 	if (D_REF(4)) SET_FLAG(scan_state.opts, SCAN_RELAX);
 
 	blk = Scan_Code(&scan_state, 0);
-	DS_RELOAD(ds); // in case stack moved
 	Set_Block(D_OUT, blk);
 
 	VAL_INDEX(D_ARG(1)) = scan_state.end - VAL_BIN(D_ARG(1));

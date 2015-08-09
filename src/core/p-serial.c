@@ -35,7 +35,7 @@
 
 /***********************************************************************
 **
-*/	static int Serial_Actor(REBVAL *ds, REBSER *port, REBCNT action)
+*/	static REB_R Serial_Actor(struct Reb_Call *call_, REBSER *port, REBCNT action)
 /*
 ***********************************************************************/
 {
@@ -160,7 +160,7 @@
 	switch (action) {
 
 	case A_READ:
-		refs = Find_Refines(ds, ALL_READ_REFS);
+		refs = Find_Refines(call_, ALL_READ_REFS);
 
 		// Setup the read buffer (allocate a buffer if needed):
 		arg = OFV(port, STD_PORT_DATA);
@@ -190,7 +190,7 @@
 		return R_OUT;
 
 	case A_WRITE:
-		refs = Find_Refines(ds, ALL_WRITE_REFS);
+		refs = Find_Refines(call_, ALL_WRITE_REFS);
 
 		// Determine length. Clip /PART to size of string if needed.
 		spec = D_ARG(2);

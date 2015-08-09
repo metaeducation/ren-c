@@ -14,92 +14,93 @@ REBOL [
 		This table generates a variety of C defines and intialization tables.
 		During build, when this file is processed, this section is changed to
 		hold just the datatype words - the initial entries the word table.
+
+		name		- name of datatype (generates words)
+		class		- how type actions are dispatched (T_type)
+		mold		- mold format: - self, + type, * typeclass
+		form		- form format: above, and f* for special form functions
+		path		- it supports various path forms (* for same as typeclass)
+		make		- It can be made with #[datatype] method
+		typesets	- what typesets the type belongs to
 	}
 ]
 
-;	Fields:
-;		Datatype  - name of datatype (generates words)
-;		Evaluator - how it is evaluated (by DO)
-;		Typeclass - how type actions are dispatched (T_type)
-;		Mold      - mold format: - self, + type, * typeclass
-;		Form      - form format: above, and f* for special form functions
-;		Path      - it supports various path forms (* for same as typeclass)
-;		Make      - It can be made with #[datatype] method
 
-;   Datatype    Evaluator   Typeclass   Mold     Form    Path   Make Typesets
-;------------------------------------------------------------------------------
-	end         end         0           -        -       -      -   -
-	unset       self        none        -        -       -      *   -
+[name		class		mold	form	path	make	typesets]
 
-	;Scalars
-	none        self        none        +        +       -      *   -
-	logic       self        logic       *        *       -      *   -
-	integer     self        integer     *        *       -      -   [number scalar]
-	decimal     self        decimal     *        *       -      *   [number scalar]
-	percent     self        decimal     *        *       -      *   [number scalar]
-	money       self        money       *        *       -      -   scalar
-	char        self        char        *        f*      -      -   scalar
-	pair        self        pair        *        *       *      *   scalar
-	tuple       self        tuple       *        *       *      *   scalar
-	time        self        time        *        *       *      *   scalar
-	date        self        date        *        *       *      *   -
+end         0           -		-       -		-		-
+unset       none        -		-       -		*		-
 
-	;Series
-	binary      self        string      +        +       *      *   [series]
-	string      self        string      +        f*      *      *   [series string]
-	file        self        string      +        f*      file   *   [series string]
-	email       self        string      +        f*      *      *   [series string]
-	url         self        string      +        f*      file   *   [series string]
-	tag         self        string      +        +       *      *   [series string]
+;-- Scalars
 
-	bitset      self        bitset      *        *       *      *   -
-	image       self        image       +        +       *      *   series
-	vector      self        vector      -        -       *      *   series
+none        none        +		+       -		*		-
+logic       logic       *		*       -		*		-
+integer     integer     *		*       -		-		[number scalar]
+decimal     decimal     *		*       -		*		[number scalar]
+percent     decimal     *		*       -		*		[number scalar]
+money       money       *		*       -		-		scalar
+char        char        *		f*      -		-		scalar
+pair        pair        *		*       *		*		scalar
+tuple       tuple       *		*       *		*		scalar
+time        time        *		*       *		*		scalar
+date        date        *		*       *		*		-
 
-	block       self        block       *        f*      *      *   [series block]
-	paren       paren       block       *        f*      *      *   [series block]
+;-- Series
 
-	path        path        block       *        *       *      *   [series block path]
-	set-path    path        block       *        *       *      *   [series block path]
-	get-path    path        block       *        *       *      *   [series block path]
-	lit-path    lit-path    block       *        *       *      *   [series block path]
+binary      string      +		+       *		*		[series]
+string      string      +		f*      *		*		[series string]
+file        string      +		f*      file	*		[series string]
+email       string      +		f*      *		*		[series string]
+url         string      +		f*      file	*		[series string]
+tag         string      +		+       *		*		[series string]
 
-	map         self        map         +        f*      *      *   -
+bitset      bitset      *		*       *		*		-
+image       image       +		+       *		*		series
+vector      vector      -		-       *		*		series
 
-	datatype    self        datatype    +        f*      -      *   -
-	typeset     self        typeset     +        f*      -      *   -
+block       block       *		f*      *		*		[series block]
+paren       block       *		f*      *		*		[series block]
 
-	; Order dependent: next few words
-	;symbol      invalid     word       *        *       -      -   word
-	word        word        word        +        *       -      -   word
-	set-word    set-word    word        +        *       -      -   word
-	get-word    get-word    word        +        *       -      -   word
-	lit-word    lit-word    word        +        *       -      -   word
-	refinement  self        word        +        *       -      -   word
-	issue       self        word        +        *       -      -   word
+path        block       *		*       *		*		[series block path]
+set-path    block       *		*       *		*		[series block path]
+get-path    block       *		*       *		*		[series block path]
+lit-path    block       *		*       *		*		[series block path]
 
-	native      function    function    *        -       -      *   function
-	action      function    function    *        -       -      *   function
-	routine     function    routine     *        -       -      *   function
-	rebcode     function    0           -        -       -      *   function
-	command     function    function    -        -       -      *   function
-;	macro       function    0           -        -       -      -   function
-	op          operator    function    -        -       -      *   function
-	closure     function    function    *        -       -      *   function
-	function    function    function    *        -       -      *   function
+map         map         +		f*      *		*		-
 
-	frame       invalid     frame       -        -       *      -   -
-	object      self        object      *        f*      *      *   object
-	module      self        object      *        f*      *      *   object
-	error       self        object      +        f+      *      *   object
-	task        self        object      +        +       *      *   object
-	port        self        port        object   object  object -	object
+datatype    datatype    +		f*      -		*		-
+typeset     typeset     +		f*      -		*		-
 
-	gob         self        gob         *        *       *      *   -
-	event       self        event       *        *       *      *   -
-	callback    self        callback    -        -       -      -   -
-	handle      self        0           -        -       -      -   -
-	struct      self        struct      *        *       *      *   -
-	library     self     	library     -        -       -      -   -
-	utype       self        utype       -        -       -      -   -
+;-- Order dependent: next few words
+
+word        word        +        *       -      -		word
+set-word    word        +        *       -      -		word
+get-word    word        +        *       -      -		word
+lit-word    word        +        *       -      -		word
+refinement  word        +        *       -      -		word
+issue       word        +        *       -      -		word
+
+native      function    *        -       -      *		function
+action      function    *        -       -      *		function
+routine     routine     *        -       -      *		function
+rebcode     0           -        -       -      *		function
+command     function    -        -       -      *		function
+op          function    -        -       -      *		function
+closure     function    *        -       -      *		function
+function    function    *        -       -      *		function
+
+frame       frame       -        -       *      -		-
+object      object      *        f*      *      *		object
+module      object      *        f*      *      *		object
+error       object      +        f+      *      *		object
+task        object      +        +       *      *		object
+port        port        object   object  object -		object
+
+gob         gob         *        *       *      *		-
+event       event       *        *       *      *		-
+callback    callback    -        -       -      -		-
+handle      0           -        -       -      -		-
+struct      struct      *        *       *      *		-
+library     library     -        -       -      -		-
+utype       utype       -        -       -      -		-
 

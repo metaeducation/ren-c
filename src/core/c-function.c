@@ -168,7 +168,7 @@
 {
 	//Print("Make_Native: %s spec %d", Get_Sym_Name(type+1), SERIES_TAIL(spec));
 	VAL_FUNC_SPEC(value) = spec;
-	VAL_FUNC_ARGS(value) = Check_Func_Spec(spec);
+	VAL_FUNC_WORDS(value) = Check_Func_Spec(spec);
 	VAL_FUNC_CODE(value) = func;
 	VAL_SET(value, type);
 }
@@ -193,7 +193,7 @@
 	body = VAL_BLK_SKIP(def, 1);
 
 	VAL_FUNC_SPEC(value) = VAL_SERIES(spec);
-	VAL_FUNC_ARGS(value) = Check_Func_Spec(VAL_SERIES(spec));
+	VAL_FUNC_WORDS(value) = Check_Func_Spec(VAL_SERIES(spec));
 
 	if (type != REB_COMMAND) {
 		if (len != 2 || !IS_BLOCK(body)) return FALSE;
@@ -205,7 +205,7 @@
 	VAL_SET(value, type);
 
 	if (type == REB_FUNCTION || type == REB_CLOSURE)
-		Bind_Relative(VAL_FUNC_ARGS(value), VAL_FUNC_ARGS(value), VAL_FUNC_BODY(value));
+		Bind_Relative(VAL_FUNC_WORDS(value), VAL_FUNC_WORDS(value), VAL_FUNC_BODY(value));
 
 	return TRUE;
 }
@@ -223,16 +223,16 @@
 	if (!args || ((spec = VAL_BLK(args)) && IS_END(spec))) {
 		body = 0;
 		if (IS_FUNCTION(value) || IS_CLOSURE(value))
-			VAL_FUNC_ARGS(value) = Copy_Block(VAL_FUNC_ARGS(value), 0);
+			VAL_FUNC_WORDS(value) = Copy_Block(VAL_FUNC_WORDS(value), 0);
 	} else {
 		body = VAL_BLK_SKIP(args, 1);
 		// Spec given, must be block or *
 		if (IS_BLOCK(spec)) {
 			VAL_FUNC_SPEC(value) = VAL_SERIES(spec);
-			VAL_FUNC_ARGS(value) = Check_Func_Spec(VAL_SERIES(spec));
+			VAL_FUNC_WORDS(value) = Check_Func_Spec(VAL_SERIES(spec));
 		} else {
 			if (!IS_STAR(spec)) return FALSE;
-			VAL_FUNC_ARGS(value) = Copy_Block(VAL_FUNC_ARGS(value), 0);
+			VAL_FUNC_WORDS(value) = Copy_Block(VAL_FUNC_WORDS(value), 0);
 		}
 	}
 
@@ -248,7 +248,7 @@
 
 	// Rebind function words:
 	if (IS_FUNCTION(value) || IS_CLOSURE(value))
-		Bind_Relative(VAL_FUNC_ARGS(value), VAL_FUNC_ARGS(value), VAL_FUNC_BODY(value));
+		Bind_Relative(VAL_FUNC_WORDS(value), VAL_FUNC_WORDS(value), VAL_FUNC_BODY(value));
 
 	return TRUE;
 }
@@ -260,127 +260,78 @@
 /*
 ***********************************************************************/
 {
-	REBSER *src_frame = VAL_FUNC_ARGS(func);
+	REBSER *src_frame = VAL_FUNC_WORDS(func);
 
 	VAL_FUNC_SPEC(value) = VAL_FUNC_SPEC(func);
 	VAL_FUNC_BODY(value) = Clone_Block(VAL_FUNC_BODY(func));
-	VAL_FUNC_ARGS(value) = Copy_Block(src_frame, 0);
+	VAL_FUNC_WORDS(value) = Copy_Block(src_frame, 0);
 	// VAL_FUNC_BODY(value) = Clone_Block(VAL_FUNC_BODY(func));
 	VAL_FUNC_BODY(value) = Copy_Block_Values(VAL_FUNC_BODY(func), 0, SERIES_TAIL(VAL_FUNC_BODY(func)), TS_CLONE);
-	Rebind_Block(src_frame, VAL_FUNC_ARGS(value), BLK_HEAD(VAL_FUNC_BODY(value)), 0);
+	Rebind_Block(src_frame, VAL_FUNC_WORDS(value), BLK_HEAD(VAL_FUNC_BODY(value)), 0);
 }
 
 
 /***********************************************************************
 **
-*/	void Do_Native(REBVAL *func)
+*/	void Do_Native(const REBVAL *func)
 /*
 ***********************************************************************/
 {
-	REBVAL *ds;
-	REBINT n;
-
 #if !defined(NDEBUG)
-	const REBYTE *fname = Get_Word_Name(DSF_LABEL(DSF));
+	const REBYTE *this_native_name = Get_Word_Name(DSF_LABEL(DSF));
 #endif
+
+	REBVAL *out = DSF_OUT(DSF);
+	REB_R ret;
 
 	Eval_Natives++;
 
-	if ((n = VAL_FUNC_CODE(func)(DS_OUT))) {
-		ds = DS_OUT;
-		switch (n) {
-		case R_OUT: // for compiler opt
-			break;
-		case R_TOS:
-			*ds = *DS_TOP;
-			break;
-		case R_TOS1:
-			*ds = *DS_NEXT;
-			break;
-		case R_NONE:
-			SET_NONE(ds);
-			break;
-		case R_UNSET:
-			SET_UNSET(ds);
-			break;
-		case R_TRUE:
-			SET_TRUE(ds);
-			break;
-		case R_FALSE:
-			SET_FALSE(ds);
-			break;
-		case R_ARG1:
-			*ds = *D_ARG(1);
-			break;
-		case R_ARG2:
-			*ds = *D_ARG(2);
-			break;
-		case R_ARG3:
-			*ds = *D_ARG(3);
-			break;
-		}
+	ret = VAL_FUNC_CODE(func)(DSF);
+
+	switch (ret) {
+	case R_OUT: // for compiler opt
+		break;
+	case R_NONE:
+		SET_NONE(out);
+		break;
+	case R_UNSET:
+		SET_UNSET(out);
+		break;
+	case R_TRUE:
+		SET_TRUE(out);
+		break;
+	case R_FALSE:
+		SET_FALSE(out);
+		break;
+	case R_ARG1:
+		*out = *DSF_ARG(DSF, 1);
+		break;
+	case R_ARG2:
+		*out = *DSF_ARG(DSF, 2);
+		break;
+	case R_ARG3:
+		*out = *DSF_ARG(DSF, 3);
+		break;
+	default:
+		assert(FALSE);
 	}
 }
 
 
 /***********************************************************************
 **
-*/	void Do_Act(REBVAL *ds, REBCNT type, REBCNT act)
+*/	void Do_Action(const REBVAL *func)
 /*
 ***********************************************************************/
 {
+#if !defined(NDEBUG)
+	const REBYTE *this_action_name = Get_Word_Name(DSF_LABEL(DSF));
+#endif
+
+	REBVAL *out = DSF_OUT(DSF);
+	REBCNT type = VAL_TYPE(DSF_ARG(DSF, 1));
 	REBACT action;
-	REBINT ret;
-
-	action = Value_Dispatch[type];
-	//assert(action != 0, RP_NO_ACTION);
-	if (!action) Trap_Action(type, act);
-	ret = action(ds, act);
-	if (ret > 0) {
-		ds = DS_OUT;
-		switch (ret) {
-		case R_OUT: // for compiler opt
-			break;
-		case R_TOS:
-			*ds = *DS_TOP;
-			break;
-		case R_TOS1:
-			*ds = *DS_NEXT;
-			break;
-		case R_NONE:
-			SET_NONE(ds);
-			break;
-		case R_UNSET:
-			SET_UNSET(ds);
-			break;
-		case R_TRUE:
-			SET_TRUE(ds);
-			break;
-		case R_FALSE:
-			SET_FALSE(ds);
-			break;
-		case R_ARG1:
-			*ds = *D_ARG(1);
-			break;
-		case R_ARG2:
-			*ds = *D_ARG(2);
-			break;
-		case R_ARG3:
-			*ds = *D_ARG(3);
-			break;
-		}
-	}
-}
-
-
-/***********************************************************************
-**
-*/	void Do_Action(REBVAL *func)
-/*
-***********************************************************************/
-{
-	REBVAL *ds = DS_OUT;
-	REBCNT type = VAL_TYPE(D_ARG(1));
+	REB_R ret;
 
 	Eval_Natives++;
 
@@ -388,86 +339,135 @@
 
 	// Handle special datatype test cases (eg. integer?)
 	if (VAL_FUNC_ACT(func) == 0) {
-		VAL_SET(D_OUT, REB_LOGIC);
-		VAL_LOGIC(D_OUT) = (type == VAL_INT64(BLK_LAST(VAL_FUNC_SPEC(func))));
+		VAL_SET(out, REB_LOGIC);
+		VAL_LOGIC(out) = (type == VAL_INT64(BLK_LAST(VAL_FUNC_SPEC(func))));
 		return;
 	}
 
-	Do_Act(D_OUT, type, VAL_FUNC_ACT(func));
+	action = Value_Dispatch[type];
+	if (!action) Trap_Action(type, VAL_FUNC_ACT(func));
+	ret = action(DSF, VAL_FUNC_ACT(func));
+
+	switch (ret) {
+	case R_OUT: // for compiler opt
+		break;
+	case R_NONE:
+		SET_NONE(out);
+		break;
+	case R_UNSET:
+		SET_UNSET(out);
+		break;
+	case R_TRUE:
+		SET_TRUE(out);
+		break;
+	case R_FALSE:
+		SET_FALSE(out);
+		break;
+	case R_ARG1:
+		*out = *DSF_ARG(DSF, 1);
+		break;
+	case R_ARG2:
+		*out = *DSF_ARG(DSF, 2);
+		break;
+	case R_ARG3:
+		*out = *DSF_ARG(DSF, 3);
+		break;
+	default:
+		assert(FALSE);
+	}
 }
 
 
 /***********************************************************************
 **
-*/	void Do_Function(REBVAL *func)
+*/	void Do_Function(const REBVAL *func)
 /*
 ***********************************************************************/
 {
-	REBVAL *result;
-	REBVAL *ds;
-
 #if !defined(NDEBUG)
-	const REBYTE *name = Get_Word_Name(DSF_LABEL(DSF));
+	const REBYTE *this_function_name = Get_Word_Name(DSF_LABEL(DSF));
 #endif
+
+	REBVAL *out = DSF_OUT(DSF);
 
 	Eval_Functions++;
 
-	//Dump_Block(VAL_FUNC_BODY(func));
-	result = Do_Blk(VAL_FUNC_BODY(func), 0);
-	ds = DS_OUT;
-
-	if (IS_ERROR(result) && VAL_ERR_NUM(result) == RE_RETURN) {
-		TAKE_THROWN_ARG(ds, result);
+	if (!DO_BLOCK(out, VAL_FUNC_BODY(func), 0)) {
+		if (VAL_ERR_NUM(out) == RE_RETURN)
+			TAKE_THROWN_ARG(out, out);
 	}
-	else *ds = *result; // Set return value (atomic)
 }
 
 
 /***********************************************************************
 **
-*/	void Do_Closure(REBVAL *func)
+*/	void Do_Closure(const REBVAL *func)
 /*
 **		Do a closure by cloning its body and rebinding it to
 **		a new frame of words/values.
 **
 ***********************************************************************/
 {
+#if !defined(NDEBUG)
+	const REBYTE *this_closure_name = Get_Word_Name(DSF_LABEL(DSF));
+#endif
+
 	REBSER *body;
 	REBSER *frame;
-	REBVAL *result;
-	REBVAL *ds;
+	REBVAL *out = DSF_OUT(DSF);
+	REBVAL *value;
+	REBCNT word_index;
 
 	Eval_Functions++;
 	//DISABLE_GC;
 
-	// Clone the body of the function to allow rebinding to it:
+	// Clone the body of the closure to allow us to rebind words inside
+	// of it so that they point specifically to the instances for this
+	// invocation.  (Costly, but that is the mechanics of words.)
 	body = Clone_Block(VAL_FUNC_BODY(func));
 
-	// Copy stack frame args as the closure object (one extra at head)
-	frame = Copy_Values(BLK_SKIP(DS_Series, DS_ARG_BASE), SERIES_TAIL(VAL_FUNC_ARGS(func)));
-	SET_FRAME(BLK_HEAD(frame), 0, VAL_FUNC_ARGS(func));
+	// Copy stack frame variables as the closure object.  The +1 is for
+	// SELF, as the REB_END is already accounted for by Make_Blk.
+
+	frame = Make_Block(DSF->num_vars + 1);
+	value = BLK_HEAD(frame);
+
+	assert(DSF->num_vars == VAL_FUNC_NUM_WORDS(func));
+
+	SET_FRAME(value, NULL, VAL_FUNC_WORDS(func));
+	value++;
+
+	for (word_index = 1; word_index <= DSF->num_vars; word_index++)
+		*value++ = *DSF_VAR(DSF, word_index);
+
+	frame->tail = word_index;
+	TERM_SERIES(frame);
+	ASSERT_FRAME(frame);
+
+	// !!! For *today*, no option for function/closure to have a SELF
+	// referring to their function or closure values.
+	assert(VAL_WORD_SYM(BLK_HEAD(VAL_FUNC_WORDS(func))) == SYM_NOT_USED);
 
 	// Rebind the body to the new context (deeply):
-	Rebind_Block(VAL_FUNC_ARGS(func), frame, BLK_HEAD(body), REBIND_TYPE);
+	Rebind_Block(VAL_FUNC_WORDS(func), frame, BLK_HEAD(body), REBIND_TYPE);
 
-	ds = DS_OUT;
-	SET_OBJECT(ds, body); // keep it GC safe
-	result = Do_Blk(body, 0); // GC-OK - also, result returned on DS stack
-	ds = DS_OUT;
-
-	if (IS_ERROR(result) && VAL_ERR_NUM(result) == RE_RETURN) {
-		TAKE_THROWN_ARG(ds, result);
+	SAVE_SERIES(body);
+	if (!DO_BLOCK(out, body, 0)) {
+		if (VAL_ERR_NUM(out) == RE_RETURN)
+			TAKE_THROWN_ARG(out, out);
 	}
-	else *ds = *result; // Set return value (atomic)
+	UNSAVE_SERIES(body);
 }
 
 /***********************************************************************
 **
-*/	void Do_Routine(REBVAL *routine)
+*/	void Do_Routine(const REBVAL *routine)
 /*
  */
 {
 	//RL_Print("%s, %d\n", __func__, __LINE__);
-	REBSER *args = Copy_Values(BLK_SKIP(DS_Series, DS_ARG_BASE + 1), SERIES_TAIL(VAL_FUNC_ARGS(routine)) - 1);
-	Call_Routine(routine, args, DS_OUT);
+	REBSER *args = Copy_Values(
+		DSF_ARG(DSF, 1), SERIES_TAIL(VAL_FUNC_WORDS(routine)) - 1
+	);
+	Call_Routine(routine, args, DSF_OUT(DSF));
 }

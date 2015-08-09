@@ -464,10 +464,10 @@ static REBSER *make_binary(REBVAL *arg, REBOOL make)
 	REBCNT	ret;
 
 	if ((IS_FILE(value) || IS_URL(value)) && action >= PORT_ACTIONS) {
-		return T_Port(ds, action);
+		return T_Port(call_, action);
 	}
 
-	len = Do_Series_Action(action, value, arg);
+	len = Do_Series_Action(call_, action, value, arg);
 	if (len >= 0) return len;
 
 	// Common setup code for all actions:
@@ -488,12 +488,12 @@ static REBSER *make_binary(REBVAL *arg, REBOOL make)
 	case A_CHANGE:
 		//Modify_String(action, value, arg);
 		// Length of target (may modify index): (arg can be anything)
-		len = Partial1((action == A_CHANGE) ? value : arg, DS_ARG(AN_LENGTH));
+		len = Partial1((action == A_CHANGE) ? value : arg, D_ARG(AN_LENGTH));
 		index = VAL_INDEX(value);
 		args = 0;
 		if (IS_BINARY(value)) SET_FLAG(args, AN_SERIES); // special purpose
-		if (DS_REF(AN_PART)) SET_FLAG(args, AN_PART);
-		index = Modify_String(action, VAL_SERIES(value), index, arg, args, len, DS_REF(AN_DUP) ? Int32(DS_ARG(AN_COUNT)) : 1);
+		if (D_REF(AN_PART)) SET_FLAG(args, AN_PART);
+		index = Modify_String(action, VAL_SERIES(value), index, arg, args, len, D_REF(AN_DUP) ? Int32(D_ARG(AN_COUNT)) : 1);
 		VAL_INDEX(value) = index;
 		break;
 
@@ -504,7 +504,7 @@ static REBSER *make_binary(REBVAL *arg, REBOOL make)
 	case A_FIND:
 		ret = ALL_FIND_REFS;
 find:
-		args = Find_Refines(ds, ret);
+		args = Find_Refines(call_, ret);
 
 		if (IS_BINARY(value)) {
 			args |= AM_FIND_CASE;
@@ -561,10 +561,10 @@ find:
 		if (action == A_PICK) {
 pick_it:
 			if (IS_BINARY(value)) {
-				SET_INTEGER(DS_OUT, *VAL_BIN_SKIP(value, index));
+				SET_INTEGER(D_OUT, *VAL_BIN_SKIP(value, index));
 			}
 			else
-				str_to_char(DS_OUT, value, index);
+				str_to_char(D_OUT, value, index);
 			return R_OUT;
 		}
 		else {
@@ -673,7 +673,7 @@ zero_str:
 
 	case A_TRIM:
 		// Check for valid arg combinations:
-		args = Find_Refines(ds, ALL_TRIM_REFS);
+		args = Find_Refines(call_, ALL_TRIM_REFS);
 		if (
 			((args & (AM_TRIM_ALL | AM_TRIM_WITH)) &&
 			(args & (AM_TRIM_HEAD | AM_TRIM_TAIL | AM_TRIM_LINES | AM_TRIM_AUTO))) ||

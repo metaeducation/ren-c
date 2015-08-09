@@ -58,7 +58,6 @@ typedef struct reb_ext {
 
 #include "tmp-exttypes.h"
 
-extern const REBDOF Func_Dispatch[];
 
 // !!!! The list below should not be hardcoded, but until someone
 // needs a lot of extensions, it will do fine.
@@ -180,7 +179,7 @@ x*/	void RXI_To_Block(RXIFRM *frm, REBVAL *out) {
 
 /***********************************************************************
 **
-x*/	int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result)
+x*/	REBRXT Do_Callback(REBSER *obj, u32 name, RXIARG *rxis, RXIARG *result)
 /*
 **		Given an object and a word id, call a REBOL function.
 **		The arguments are converted from extension format directly
@@ -190,11 +189,11 @@ x*/	int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result)
 ***********************************************************************/
 {
 	REBVAL *val;
-	REBCNT dsf;
+	struct Reb_Call *call;
 	REBCNT len;
 	REBCNT n;
-	REBCNT dsp = DSP; // to restore stack on errors
 	REBVAL label;
+	REBVAL out;
 
 	// Find word in object, verify it is a function.
 	if (!(val = Find_Word_Value(obj, name))) {
@@ -206,53 +205,44 @@ x*/	int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result)
 		return 0;
 	}
 
-	// Get block and index from prior function stack frame:
-	dsf = PRIOR_DSF(DSF);
-
 	// Create stack frame (use prior stack frame for location info):
-	DS_PUSH_UNSET; // OUT slot for function eval result
+	SET_TRASH_SAFE(&out); // OUT slot for function eval result
 	Init_Word_Unbound(&label, REB_WORD, name);
-	dsf = Push_Func(
-		VAL_SERIES(DSF_POSITION(dsf)), VAL_INDEX(DSF_POSITION(dsf)), &label, val
+	call = Make_Call(
+		&out,
+		VAL_SERIES(DSF_WHERE(PRIOR_DSF(DSF))),
+		VAL_INDEX(DSF_WHERE(PRIOR_DSF(DSF))),
+		&label,
+		val
 	);
-	val = DSF_FUNC(dsf);        // for safety from GC
 	obj = VAL_FUNC_WORDS(val);  // func words
 	len = SERIES_TAIL(obj)-1;	// number of args (may include locals)
 
 	// Push args. Too short or too long arg frames are handled W/O error.
 	// Note that refinements args can be set to anything.
-	for (n = 1; n <= len && n <= RXI_COUNT(args); n++) {
-		DS_SKIP;
-		RXI_To_Value(DS_TOP, args[n], RXI_TYPE(args, n));
+	for (n = 1; n <= len; n++) {
+		REBVAL *arg = DSF_ARG(call, n);
+
+		if (n <= RXI_COUNT(rxis))
+			RXI_To_Value(arg, rxis[n], RXI_TYPE(rxis, n));
+		else
+			SET_NONE(arg);
+
 		// Check type for word at the given offset:
-		if (!TYPE_CHECK(BLK_SKIP(obj, n), VAL_TYPE(DS_TOP))) {
+		if (!TYPE_CHECK(BLK_SKIP(obj, n), VAL_TYPE(arg))) {
 			result->i2.int32b = n;
 			SET_EXT_ERROR(result, RXE_BAD_ARGS);
-			DSP = dsp;
-			return 0;
-		}
-	}
-	// Fill with NONE if necessary:
-	for (; n <= len; n++) {
-		DS_SKIP;
-		SET_NONE(DS_TOP);
-		if (!TYPE_CHECK(BLK_SKIP(obj, n), VAL_TYPE(DS_TOP))) {
-			result->i2.int32b = n;
-			SET_EXT_ERROR(result, RXE_BAD_ARGS);
-			DSP = dsp;
+			Free_Call(call);
 			return 0;
 		}
 	}
 
 	// Evaluate the function:
-	SET_DSF(dsf);
-	Func_Dispatch[VAL_TYPE(val) - REB_NATIVE](val);
-	SET_DSF(PRIOR_DSF(dsf));
-	DSP = dsf-1;
+	Dispatch_Call(call);
 
-	// Return resulting value from TOS1 (volatile location):
-	*result = Value_To_RXI(DS_VALUE(dsf));
-	return Reb_To_RXT[VAL_TYPE(DS_VALUE(dsf))];
+	// Return resulting value from output
+	*result = Value_To_RXI(&out);
+	return Reb_To_RXT[VAL_TYPE(&out)];
 }
 
 
@@ -280,7 +270,7 @@ x*/	int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result)
 
 	if (!n) Trap_Num(RE_INVALID_ARG, GET_EXT_ERROR(&cbi->result));
 
-	RXI_To_Value(ds, cbi->result, n);
+	RXI_To_Value(D_OUT, cbi->result, n);
 	return R_OUT;
 }
 
@@ -391,7 +381,7 @@ typedef REBYTE *(INFO_FUNC)(REBINT opts, void *lib);
 **
 ***********************************************************************/
 {
-	REBVAL *args = BLK_HEAD(VAL_FUNC_ARGS(value));
+	REBVAL *args = BLK_HEAD(VAL_FUNC_WORDS(value));
 	REBCNT n;
 	REBVAL *val = VAL_BLK_SKIP(def, 1);
 	REBEXT *ext;
@@ -429,7 +419,7 @@ typedef REBYTE *(INFO_FUNC)(REBINT opts, void *lib);
 
 /***********************************************************************
 **
-*/	void Do_Command(REBVAL *value)
+*/	void Do_Command(const REBVAL *value)
 /*
 **	Evaluates the arguments for a command function and creates
 **	a resulting stack frame (struct or object) for command processing.
@@ -454,9 +444,9 @@ typedef REBYTE *(INFO_FUNC)(REBINT opts, void *lib);
 	ext = &Ext_List[VAL_I32(VAL_OBJ_VALUE(val, 1))]; // Handler
 
 	// Copy args to command frame (array of args):
-	RXA_COUNT(&frm) = argc = SERIES_TAIL(VAL_FUNC_ARGS(value))-1; // not self
+	RXA_COUNT(&frm) = argc = SERIES_TAIL(VAL_FUNC_WORDS(value))-1; // not self
 	if (argc > 7) Trap(RE_BAD_COMMAND);
-	val = DS_ARG(1);
+	val = DSF_ARG(DSF, 1);
 	for (n = 1; n <= argc; n++, val++) {
 		RXA_TYPE(&frm, n) = Reb_To_RXT[VAL_TYPE(val)];
 		frm.args[n] = Value_To_RXI(val);
@@ -464,7 +454,7 @@ typedef REBYTE *(INFO_FUNC)(REBINT opts, void *lib);
 
 	// Call the command:
 	n = ext->call(cmd, &frm, 0);
-	val = DS_OUT;
+	val = DSF_OUT(DSF);
 	switch (n) {
 	case RXR_VALUE:
 		RXI_To_Value(val, frm.args[1], RXA_TYPE(&frm, 1));
@@ -501,7 +491,7 @@ typedef REBYTE *(INFO_FUNC)(REBINT opts, void *lib);
 
 /***********************************************************************
 **
-*/	void Do_Commands(REBSER *cmds, void *context)
+*/	void Do_Commands(REBVAL *out, REBSER *cmds, void *context)
 /*
 **		Evaluate a block of commands as efficiently as possible.
 **		The arguments to each command must already be reduced or
@@ -523,6 +513,7 @@ typedef REBYTE *(INFO_FUNC)(REBINT opts, void *lib);
 	REBCNT n;
 	REBEXT *ext;
 	REBCEC *ctx = cast(REBCEC*, context);
+	REBVAL save;
 
 	if (ctx) ctx->block = cmds;
 	blk = BLK_HEAD(cmds);
@@ -553,7 +544,7 @@ typedef REBYTE *(INFO_FUNC)(REBINT opts, void *lib);
 
 		// get command arguments and body
 		words = VAL_FUNC_WORDS(func);
-		RXA_COUNT(&frm) = SERIES_TAIL(VAL_FUNC_ARGS(func))-1; // not self
+		RXA_COUNT(&frm) = SERIES_TAIL(VAL_FUNC_WORDS(func))-1; // not self
 
 		// collect each argument (arg list already validated on MAKE)
 		n = 0;
@@ -573,17 +564,20 @@ typedef REBYTE *(INFO_FUNC)(REBINT opts, void *lib);
 					if (IS_WORD(args)) val = GET_MUTABLE_VAR(val);
 				}
 				else if (IS_PATH(val)) {
-					REBVAL *path = val;
+					const REBVAL *path = val;
 					if (IS_WORD(args)) {
-						if (Do_Path(&path, 0)) {
+						if (Do_Path(&save, &path, 0)) {
 							// !!! comment said "found a function"
 						} else {
-							val = DS_TOP; // volatile value!
+							val = &save;
 						}
 					}
 				}
 				else if (IS_PAREN(val)) {
-					val = Do_Blk(VAL_SERIES(val), 0); // volatile value!
+					if (!DO_BLOCK(&save, VAL_SERIES(val), 0)) {
+						// !!! handle THROW, RETURN, BREAK...?
+					}
+					val = &save;
 				}
 				// all others fall through
 			}
@@ -603,7 +597,7 @@ typedef REBYTE *(INFO_FUNC)(REBINT opts, void *lib);
 		n = (REBCNT)VAL_INT64(func + 1);
 		ext = &Ext_List[VAL_I32(VAL_OBJ_VALUE(func, 1))]; // Handler
 		n = ext->call(n, &frm, ctx);
-		val = DS_OUT;
+		val = out;
 		switch (n) {
 		case RXR_VALUE:
 			RXI_To_Value(val, frm.args[1], RXA_TYPE(&frm, 1));
@@ -649,7 +643,7 @@ typedef REBYTE *(INFO_FUNC)(REBINT opts, void *lib);
 	ctx.envr = 0;
 	ctx.block = VAL_SERIES(D_ARG(1));
 	ctx.index = 0;
-	Do_Commands(ctx.block, &ctx);
+	Do_Commands(D_OUT, ctx.block, &ctx);
 
 	return R_OUT;
 }

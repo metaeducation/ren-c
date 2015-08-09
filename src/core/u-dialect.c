@@ -67,14 +67,16 @@ static const char *Dia_Fmt = "DELECT - cmd: %s length: %d missed: %d total: %d";
 ***********************************************************************/
 {
 	REBVAL *val;
+	REBVAL safe;
 
 	for (; NOT_END(where); where++) {
 		if (IS_WORD(where)) {
 			val = GET_MUTABLE_VAR(where);
 		}
 		else if (IS_PATH(where)) {
-			Do_Path(&where, 0);
-			val = DS_TOP; // only safe for short time!
+			const REBVAL *where_const = where;
+			Do_Path(&safe, &where_const, 0);
+			val = &safe;
 		}
 		else
 			val = where;
@@ -152,6 +154,7 @@ static const char *Dia_Fmt = "DELECT - cmd: %s length: %d missed: %d total: %d";
 ***********************************************************************/
 {
 	REBVAL *value = BLK_SKIP(dia->args, dia->argi);
+	REBVAL safe;
 
 	switch (VAL_TYPE(value)) {
 
@@ -169,10 +172,13 @@ static const char *Dia_Fmt = "DELECT - cmd: %s length: %d missed: %d total: %d";
 		}
 		break;
 
-	case REB_PATH:
-		if (Do_Path(&value, 0)) return 0;
+	case REB_PATH: {
+		const REBVAL *value_const;
+		if (Do_Path(&safe, &value_const, 0)) return 0;
+		DS_PUSH(&safe);
 		value = DS_TOP;
 		break;
+	}
 
 	case REB_LIT_WORD:
 		DS_PUSH(value);
@@ -181,8 +187,9 @@ static const char *Dia_Fmt = "DELECT - cmd: %s length: %d missed: %d total: %d";
 		break;
 
 	case REB_PAREN:
-		value = DO_BLK(value);
-		DS_SKIP; // do not overwrite TOS
+		DO_BLOCK(&safe, VAL_SERIES(value), 0);
+		DS_PUSH(&safe);
+		value = DS_TOP;
 		break;
 	}
 
@@ -493,7 +500,7 @@ again:
 {
 	REBDIA dia;
 	REBINT n;
-	REBINT dsp = DSP; // Save stack position
+	REBINT dsp_orig = DSP; // Save stack position
 
 	CLEARS(&dia);
 
@@ -512,7 +519,7 @@ again:
 	//Print("DSP: %d Dinp: %r - %m", DSP, BLK_SKIP(block, *index), block);
 	n = Do_Dia(&dia);
 	//Print("DSP: %d Dout: CMD: %d %m", DSP, dia.cmd, *out);
-	DSP = dsp; // pop any temp values used above
+	DS_DROP_TO(dsp_orig); // pop any temp values used above
 
 	if (Delect_Debug > 0) {
 		Total_Missed += dia.missed;
@@ -568,8 +575,6 @@ again:
 	}
 	else
 		err = Do_Dia(&dia);
-
-	DS_RELOAD(ds);
 
 	VAL_INDEX(D_ARG(2)) = MIN(dia.argi, SERIES_TAIL(dia.args));
 

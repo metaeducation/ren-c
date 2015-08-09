@@ -773,11 +773,11 @@ setDate:
 
 		case A_PICK:
 			assert(DS_ARGC > 1);
-			Pick_Path(val, arg, 0);
-			return R_TOS;
+			Pick_Path(D_OUT, val, arg, 0);
+			return R_OUT;
 
 ///		case A_POKE:
-///			Pick_Path(val, arg, D_ARG(3));
+///			Pick_Path(D_OUT, val, arg, D_ARG(3));
 ///			return R_ARG3;
 
 		case A_MAKE:
@@ -833,9 +833,9 @@ fixDate:
 	date = Normalize_Date(day, month, year, tz);
 
 setDate:
-	VAL_SET(DS_OUT, REB_DATE);
-	VAL_DATE(DS_OUT) = date;
-	VAL_TIME(DS_OUT) = secs;
+	VAL_SET(D_OUT, REB_DATE);
+	VAL_DATE(D_OUT) = date;
+	VAL_TIME(D_OUT) = secs;
 	return R_OUT;
 
 ret_int:
@@ -843,7 +843,7 @@ ret_int:
 	return R_OUT;
 
 ret_val:
-	*DS_OUT = *val;
+	*D_OUT = *val;
 	return R_OUT;
 
 is_false:

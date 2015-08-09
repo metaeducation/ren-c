@@ -41,7 +41,7 @@
 
 /***********************************************************************
 **
-*/	static int Console_Actor(REBVAL *ds, REBSER *port, REBCNT action)
+*/	static REB_R Console_Actor(struct Reb_Call *call_, REBSER *port, REBCNT action)
 /*
 ***********************************************************************/
 {
@@ -108,9 +108,9 @@
 			result++;
 		}
 #endif
-		// Another copy???
-		//Set_String(ds, Copy_OS_Str((void *)(ser->data), result));
-		Set_Binary(ds, Copy_Bytes(req->common.data, req->actual));
+		// !!! Among many confusions in this file, it said "Another copy???"
+		//Set_String(D_OUT, Copy_OS_Str(ser->data, result));
+		Set_Binary(D_OUT, Copy_Bytes(req->common.data, req->actual));
 		break;
 
 	case A_OPEN:

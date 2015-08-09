@@ -401,8 +401,8 @@
 			case A_DIVIDE:
 				if (secs2 == 0) Trap_DEAD_END(RE_ZERO_DIVIDE);
 				//secs /= secs2;
-				VAL_SET(DS_OUT, REB_DECIMAL);
-				VAL_DECIMAL(DS_OUT) = (REBDEC)secs / (REBDEC)secs2;
+				VAL_SET(D_OUT, REB_DECIMAL);
+				VAL_DECIMAL(D_OUT) = (REBDEC)secs / (REBDEC)secs2;
 				return R_OUT;
 
 			case A_REMAINDER:
@@ -473,7 +473,7 @@
 			*D_ARG(3) = *val; // (temporary location for swap)
 			*D_ARG(1) = *arg;
 			*D_ARG(2) = *D_ARG(3);
-			return T_Date(ds, action);
+			return T_Date(call_, action);
 		}
 		Trap_Math_Args(REB_TIME, action);
 	}
@@ -499,10 +499,15 @@
 			if (D_REF(2)) {
 				arg = D_ARG(3);
 				if (IS_TIME(arg)) {
-					secs = Round_Int(secs, Get_Round_Flags(ds), VAL_TIME(arg));
+					secs = Round_Int(secs, Get_Round_Flags(call_), VAL_TIME(arg));
 				}
 				else if (IS_DECIMAL(arg)) {
-					VAL_DECIMAL(arg) = Round_Dec((REBDEC)secs, Get_Round_Flags(ds), Dec64(arg) * SEC_SEC) / SEC_SEC;
+					VAL_DECIMAL(arg) = Round_Dec(
+						cast(REBDEC, secs),
+						Get_Round_Flags(call_),
+						Dec64(arg) * SEC_SEC
+					);
+					VAL_DECIMAL(arg) /= SEC_SEC;
 					VAL_SET(arg, REB_DECIMAL);
 					return R_ARG3;
 				}
@@ -514,7 +519,7 @@
 				else Trap_Arg_DEAD_END(arg);
 			}
 			else {
-				secs = Round_Int(secs, Get_Round_Flags(ds) | 1, SEC_SEC);
+				secs = Round_Int(secs, Get_Round_Flags(call_) | 1, SEC_SEC);
 			}
 			goto fixTime;
 
@@ -529,11 +534,11 @@
 		case A_PICK:
 			assert(arg);
 
-			Pick_Path(val, arg, 0);
-			return R_TOS;
+			Pick_Path(D_OUT, val, arg, 0);
+			return R_OUT;
 
 ///		case A_POKE:
-///			Pick_Path(val, arg, D_ARG(3));
+///			Pick_Path(D_OUT, val, arg, D_ARG(3));
 ///			return R_ARG3;
 
 		case A_MAKE:

@@ -132,11 +132,14 @@ static	BOOT_BLK *Boot_Block;
 **
 ***********************************************************************/
 {
+	REBVAL ignored; // !!! Should result just be ignored?
+
 	Bind_Block(rebind > 1 ? Sys_Context : Lib_Context, BLK_HEAD(block), BIND_SET);
 	if (rebind < 0) Bind_Block(Sys_Context, BLK_HEAD(block), 0);
 	if (rebind > 0) Bind_Block(Lib_Context, BLK_HEAD(block), BIND_DEEP);
 	if (rebind > 1) Bind_Block(Sys_Context, BLK_HEAD(block), BIND_DEEP);
-	Do_Blk(block, 0);
+
+	DO_BLOCK(&ignored, block, 0);
 }
 
 
@@ -307,7 +310,7 @@ static	BOOT_BLK *Boot_Block;
 ***********************************************************************/
 {
 	if ((Native_Limit == 0 && *Native_Functions) || (Native_Count < Native_Limit))
-		Make_Native(ds, VAL_SERIES(D_ARG(1)), *Native_Functions++, REB_NATIVE);
+		Make_Native(D_OUT, VAL_SERIES(D_ARG(1)), *Native_Functions++, REB_NATIVE);
 	else Trap(RE_MAX_NATIVES);
 	Native_Count++;
 	return R_OUT;
@@ -322,7 +325,12 @@ static	BOOT_BLK *Boot_Block;
 {
 	Action_Count++;
 	if (Action_Count >= A_MAX_ACTION) Panic(RP_ACTION_OVERFLOW);
-	Make_Native(ds, VAL_SERIES(D_ARG(1)), (REBFUN)(REBUPT)Action_Count, REB_ACTION);
+	Make_Native(
+		D_OUT,
+		VAL_SERIES(D_ARG(1)),
+		cast(REBFUN, cast(REBUPT, Action_Count)),
+		REB_ACTION
+	);
 	return R_OUT;
 }
 
@@ -337,10 +345,13 @@ static	BOOT_BLK *Boot_Block;
 ***********************************************************************/
 {
 	REBVAL *spec = D_ARG(1);
+	REBVAL ignored; // !!! Should result just be ignored?
 
-	SET_OBJECT(ds, Make_Object(0, VAL_BLK(spec)));
-	Bind_Block(VAL_OBJ_FRAME(ds), VAL_BLK(spec), BIND_ONLY); // not deep
-	Do_Blk(VAL_SERIES(spec), 0); // result ignored
+	SET_OBJECT(D_OUT, Make_Object(0, VAL_BLK(spec)));
+	Bind_Block(VAL_OBJ_FRAME(D_OUT), VAL_BLK(spec), BIND_ONLY); // not deep
+
+	DO_BLOCK(&ignored, VAL_SERIES(spec), 0);
+
 	return R_OUT;
 }
 
@@ -489,10 +500,15 @@ static	BOOT_BLK *Boot_Block;
 
 	// Set the UNSET_VAL to UNSET!, so we have a sample UNSET! value
 	// to pass as an arg if we need an UNSET but don't want to pay for making
-	// a new one.  (There is also a NONE_VALUE for this purpose for NONE!s)
+	// a new one.  (There is also a NONE_VALUE for this purpose for NONE!s,
+	// and an empty block as well.)
 	SET_UNSET(ROOT_UNSET_VAL);
 	assert(IS_NONE(NONE_VALUE));
 	assert(IS_UNSET(UNSET_VALUE));
+	VAL_SET(ROOT_EMPTY_BLOCK, REB_BLOCK);
+	Set_Block(ROOT_EMPTY_BLOCK, Make_Block(0));
+	SERIES_SET_FLAG(VAL_SERIES(ROOT_EMPTY_BLOCK), SER_PROT);
+	SERIES_SET_FLAG(VAL_SERIES(ROOT_EMPTY_BLOCK), SER_LOCK);
 
 	// Initialize a few fields:
 	Set_Block(ROOT_ROOT, frame);
@@ -566,6 +582,7 @@ static	BOOT_BLK *Boot_Block;
 	REBSER *frame;
 	REBVAL *value;
 	REBCNT n;
+	REBVAL ignored; // !!! Should result just be ignored?
 
 	// Evaluate the system object and create the global SYSTEM word.
 	// We do not BIND_ALL here to keep the internal system words out
@@ -581,7 +598,7 @@ static	BOOT_BLK *Boot_Block;
 	Bind_Block(frame, value, BIND_ONLY);  // No need to go deeper
 
 	// Evaluate the block (will eval FRAMEs within):
-	Do_Blk(VAL_SERIES(&Boot_Block->sysobj), 0);
+	DO_BLOCK(&ignored, VAL_SERIES(&Boot_Block->sysobj), 0);
 
 	// Create a global value for it:
 	value = Append_Frame(Lib_Context, 0, SYM_SYSTEM);
@@ -984,7 +1001,7 @@ static REBCNT Set_Option_Word(REBCHR *str, REBCNT field)
 
 	Init_Raw_Print();
 	Init_Words(TRUE);
-	Init_Data_Stack(STACK_MIN/4);
+	Init_Stacks(STACK_MIN/4);
 	Init_Scanner();
 	Init_Mold(MIN_COMMON/4);
 	Init_Frame();
@@ -1017,6 +1034,7 @@ static REBCNT Set_Option_Word(REBCHR *str, REBCNT field)
 	REBSER *ser;
 	const REBVAL *error;
 	REBOL_STATE state;
+	REBVAL out;
 
 	DOUT("Main init");
 
@@ -1061,7 +1079,7 @@ static REBCNT Set_Option_Word(REBCHR *str, REBCNT field)
 	Init_CRC();				// For word hashing
 	Set_Random(0);
 	Init_Words(FALSE);		// Symbol table
-	Init_Data_Stack(STACK_MIN*4);
+	Init_Stacks(STACK_MIN * 4);
 	Init_Scanner();
 	Init_Mold(MIN_COMMON);	// Output buffer
 	Init_Frame();			// Frames
@@ -1150,21 +1168,23 @@ static REBCNT Set_Option_Word(REBCHR *str, REBCNT field)
 	Boot_Block = NULL;
 	PG_Boot_Phase = BOOT_MEZZ;
 
-	Do_Sys_Func(SYS_CTX_FINISH_INIT_CORE, 0);
+	assert(DSP == -1 && !DSF);
+
+	Do_Sys_Func(&out, SYS_CTX_FINISH_INIT_CORE, 0);
 
 	// Success of the 'finish-init-core' Rebol code is signified by returning
 	// a NONE! (all other return results indicate an error state)
 
-	if (!IS_NONE(DS_TOP)) {
-		Debug_Fmt("** 'finish-init-core' returned non-none!: %r", DS_TOP);
+	if (!IS_NONE(&out)) {
+		Debug_Fmt("** 'finish-init-core' returned non-none!: %r", &out);
 		Panic(RP_EARLY_ERROR);
 	}
 
-	// Drop the top of stack (result of Do_Sys_Func)
-	DS_DROP;
-	assert((DSP == 0) && (DSF == 0));
+	assert(DSP == -1 && !DSF);
 
 	DROP_CATCH_SAME_STACKLEVEL_AS_PUSH(&state);
+
+	PG_Boot_Phase = BOOT_DONE;
 
 	Recycle(); // necessary?
 
@@ -1181,7 +1201,7 @@ static REBCNT Set_Option_Word(REBCHR *str, REBCNT field)
 **
 ***********************************************************************/
 {
-	assert((DSP == 0) && (DSF == 0));
+	Shutdown_Stacks();
 	assert(Saved_State == NULL);
 	// assert(IS_TRASH(TASK_THROWN_ARG));
 }

@@ -142,7 +142,7 @@ typedef struct Reb_Type {
 ***********************************************************************/
 
 #ifdef NDEBUG
-	#define SET_TRASH(v)
+	#define SET_TRASH(v) NOOP
 
 	#define SET_TRASH_SAFE(v) SET_UNSET(v)
 #else
@@ -187,6 +187,8 @@ typedef struct Reb_Type {
 
 #define	SET_NONE(v)		VAL_SET(v, REB_NONE)
 #define NONE_VALUE		ROOT_NONE_VAL
+
+#define EMPTY_SERIES	VAL_SERIES(ROOT_EMPTY_BLOCK)
 
 #define VAL_INT32(v)	(REBINT)((v)->data.integer)
 #define VAL_INT64(v)	((v)->data.integer)
@@ -326,6 +328,13 @@ typedef struct Reb_Tuple {
 #define	VAL_EVENT_DATA(v)	((v)->data.event.data)
 #define	VAL_EVENT_TIME(v)	((v)->data.event.time)
 #define	VAL_EVENT_REQ(v)	((v)->data.event.eventee.req)
+
+// !!! Because 'eventee.ser' is exported to clients who may not have the full
+// definitions of Rebol's internal types like REBSER available, it is defined
+// as a 'void*'.  This "dereference a cast of an address as a double-pointer"
+// trick allows us to use VAL_EVENT_SER on the left hand of an assignment,
+// but means that 'v' cannot be const to use this on the right hand side.
+// An m_cast will have to be used in those cases (or split up this macro)
 #define	VAL_EVENT_SER(v) \
 	(*cast(REBSER **, &(v)->data.event.eventee.ser))
 
@@ -406,6 +415,7 @@ typedef struct Reb_Tuple {
 #define	SERIES_SKIP(s,i) (SERIES_DATA(s) + (SERIES_WIDE(s) * i))
 
 #define END_FLAG 0x80000000  // Indicates end of block as an index (from DO_NEXT)
+#define THROWN_FLAG (END_FLAG - 1) // Indicates throw as an index
 
 #ifdef SERIES_LABELS
 #define SERIES_LABEL(s)  ((s)->label)
@@ -1059,21 +1069,43 @@ typedef struct Reb_Gob {
 **
 **	FUNCTIONS - Natives, actions, operators, and user functions
 **
+**	NOTE: make-headers.r will skip specs with the "REBNATIVE(" in them
+**	REBTYPE macros are used and expanded in tmp-funcs.h
+**
 ***********************************************************************/
 
-typedef int  (*REBFUN)(REBVAL *ds);				// Native function
-typedef int  (*REBACT)(REBVAL *ds, REBCNT a);	// Action function
-typedef void (*REBDOF)(REBVAL *ds);				// DO evaltype dispatch function
-typedef int  (*REBPAF)(REBVAL *ds, REBSER *p, REBCNT a); // Port action func
+struct Reb_Call;
 
-typedef void (*ANYFUNC)(void *);
-typedef void (*TRYFUNC)(void *);
-typedef int  (*CMD_FUNC)(REBCNT n, REBSER *args);
+// enums in C have no guaranteed size, yet Rebol wants to use known size
+// types in its interfaces.  Hence REB_R is a REBCNT from reb-c.h (and not
+// this enumerated type containing its legal values).
+enum {
+	R_OUT = 0,
+	R_NONE,
+	R_UNSET,
+	R_TRUE,
+	R_FALSE,
+	R_ARG1,
+	R_ARG2,
+	R_ARG3
+};
+typedef REBCNT REB_R;
 
-// NOTE: make-headers.r will skip specs with the "REBNATIVE(" in them
-// REBTYPE macros are used and expanded in tmp-funcs.h
-#define REBNATIVE(n) int N_##n(REBVAL *ds)
-#define REBTYPE(n)   int T_##n(REBVAL *ds, REBCNT action)
+// NATIVE! function
+typedef REB_R (*REBFUN)(struct Reb_Call *call_);
+#define REBNATIVE(n) \
+	REB_R N_##n(struct Reb_Call *call_)
+
+// ACTION! function (one per each DATATYPE!)
+typedef REB_R (*REBACT)(struct Reb_Call *call_, REBCNT a);
+#define REBTYPE(n) \
+	REB_R T_##n(struct Reb_Call *call_, REBCNT action)
+
+// PORT!-action function
+typedef REB_R (*REBPAF)(struct Reb_Call *call_, REBSER *p, REBCNT a);
+
+// COMMAND! function
+typedef REB_R (*CMD_FUNC)(REBCNT n, REBSER *args);
 
 typedef struct Reb_Routine_Info REBRIN;
 
@@ -1099,17 +1131,35 @@ typedef struct Reb_Function {
 #define FUNC_INFO(v)      ((v)->func.info)
 #define FUNC_ARGC(v)	  SERIES_TAIL((v)->args)
 
+// !!! In the original formulation, the first parameter in the VAL_FUNC_WORDS
+// started at 1.  The zero slot was left empty, in order for the function's
+// word frames to line up to object frames where the zero slot is SELF.
+// The pending implementation of definitionally scoped return bumps this
+// number to 2, so we establish it as a named constant anticipating that.
+#define FIRST_PARAM_INDEX 1
+
 /* argument is of type REBVAL* */
 #define VAL_FUNC(v)			  ((v)->data.func)
 #define VAL_FUNC_SPEC(v)	  ((v)->data.func.spec)	// a series
 #define VAL_FUNC_SPEC_BLK(v)  BLK_HEAD((v)->data.func.spec)
-#define VAL_FUNC_ARGS(v)	  ((v)->data.func.args)
-#define VAL_FUNC_WORDS(v)     VAL_FUNC_ARGS(v)
+#define VAL_FUNC_WORDS(v)     ((v)->data.func.args)
+
+#define VAL_FUNC_NUM_WORDS(v) \
+	(SERIES_TAIL(VAL_FUNC_WORDS(v)) - 1)
+
+#define VAL_FUNC_PARAM(v,p) \
+	BLK_SKIP(VAL_FUNC_WORDS(v), FIRST_PARAM_INDEX + (p) - 1)
+
+#define VAL_FUNC_NUM_PARAMS(v) \
+	(SERIES_TAIL(VAL_FUNC_WORDS(v)) - FIRST_PARAM_INDEX - 1)
+
+#define VAL_FUNC_RETURN_WORD(v) \
+	coming@soon
+
 #define VAL_FUNC_CODE(v)	  ((v)->data.func.func.code)
 #define VAL_FUNC_BODY(v)	  ((v)->data.func.func.body)
 #define VAL_FUNC_ACT(v)       ((v)->data.func.func.act)
 #define VAL_FUNC_INFO(v)      ((v)->data.func.func.info)
-#define VAL_FUNC_ARGC(v)	  SERIES_TAIL((v)->data.func.args)
 
 typedef struct Reb_Path_Value {
 	REBVAL *value;	// modified
@@ -1117,7 +1167,7 @@ typedef struct Reb_Path_Value {
 	REBVAL *path;	// modified
 	REBVAL *store;  // modified (holds constructed values)
 	REBVAL *setval;	// static
-	REBVAL *orig;	// static
+	const REBVAL *orig;	// static
 } REBPVS;
 
 enum Path_Eval_Result {
@@ -1308,7 +1358,7 @@ enum {
 #define VAL_ROUTINE(v)          	VAL_FUNC(v)
 #define VAL_ROUTINE_SPEC(v) 		VAL_FUNC_SPEC(v)
 #define VAL_ROUTINE_INFO(v) 		VAL_FUNC_INFO(v)
-#define VAL_ROUTINE_ARGS(v) 		VAL_FUNC_ARGS(v)
+#define VAL_ROUTINE_ARGS(v) 		VAL_FUNC_WORDS(v)
 #define VAL_ROUTINE_FUNCPTR(v)  	(VAL_ROUTINE_INFO(v)->info.rot.funcptr)
 #define VAL_ROUTINE_LIB(v)  		(VAL_ROUTINE_INFO(v)->info.rot.lib)
 #define VAL_ROUTINE_ABI(v)  		(VAL_ROUTINE_INFO(v)->abi)

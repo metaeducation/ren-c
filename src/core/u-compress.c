@@ -90,9 +90,10 @@
 	// dest, dest-len, src, src-len, level
 	err = z_compress2(BIN_HEAD(output), &size, BIN_HEAD(input) + index, len, Z_DEFAULT_COMPRESSION);
 	if (err) {
+		REBVAL arg;
 		if (err == Z_MEM_ERROR) Trap_DEAD_END(RE_NO_MEMORY);
-		SET_INTEGER(DS_OUT, err);
-		Trap1_DEAD_END(RE_BAD_PRESS, DS_OUT); //!!!provide error string descriptions
+		SET_INTEGER(&arg, err);
+		Trap1_DEAD_END(RE_BAD_PRESS, &arg); //!!!provide error string descriptions
 	}
 	SET_STR_END(output, size);
 	SERIES_TAIL(output) = size;
@@ -128,6 +129,8 @@
 	if (len <= 4) Trap_DEAD_END(RE_PAST_END); // !!! better msg needed
 	size = Bytes_To_REBCNT(data + len - sizeof(REBCNT));
 
+	// NOTE: You can hit this if you 'make prep' without doing a full rebuild
+	// (If you 'make clean' and build again and this goes away, it was that)
 	if (limit && size > limit) Trap_Num(RE_SIZE_LIMIT, size);
 
 	output = Make_Binary(size);
@@ -135,10 +138,11 @@
 	//DISABLE_GC;
 	err = z_uncompress(BIN_HEAD(output), &size, data, len);
 	if (err) {
+		REBVAL arg;
 		if (PG_Boot_Phase < 2) return 0;
 		if (err == Z_MEM_ERROR) Trap_DEAD_END(RE_NO_MEMORY);
-		SET_INTEGER(DS_OUT, err);
-		Trap1_DEAD_END(RE_BAD_PRESS, DS_OUT); //!!!provide error string descriptions
+		SET_INTEGER(&arg, err);
+		Trap1_DEAD_END(RE_BAD_PRESS, &arg); //!!!provide error string descriptions
 	}
 	SET_STR_END(output, size);
 	SERIES_TAIL(output) = size;

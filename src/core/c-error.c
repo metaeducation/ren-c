@@ -113,17 +113,6 @@
 
 /***********************************************************************
 **
-*/	void Check_Stack(void)
-/*
-***********************************************************************/
-{
-	if ((DSP + 100) > (REBINT)SERIES_REST(DS_Series))
-		Trap(RE_STACK_OVERFLOW);
-}
-
-
-/***********************************************************************
-**
 */	void Push_Catch_Helper(REBOL_STATE *s)
 /*
 **		Used by both CATCH and CATCH_ANY, whose differentiation comes
@@ -131,7 +120,7 @@
 **
 ***********************************************************************/
 {
-	assert(Saved_State || ((DSP == 0) && (DSF == 0)));
+	assert(Saved_State || (DSP == -1 && !DSF));
 
 	s->dsp = DSP;
 	s->dsf = DSF;
@@ -184,22 +173,24 @@
 **
 ***********************************************************************/
 {
+	struct Reb_Call *call = CS_Top;
+
 	// You're only supposed to throw an error.
 	assert(IS_ERROR(&state->error));
 
 	// !!! Reset or ENABLE_GC; ?
 
-	// Restore elements from initial state, like stack position and frame
-	while (DSF != state->dsf) {
-		REBINT dsf = DSF;
-		DSF = PRIOR_DSF(DSF);
-
-		// !!! Do stuff needed for each call stack frame getting blown away
-		// (in StableStack, we must release the stable frame pointer itself)
-		/* something done with dsf... */
+	// Restore Rebol call stack frame at time of Push_Catch
+	while (call != state->dsf) {
+		struct Reb_Call *prior = call->prior;
+		Free_Call(call);
+		call = prior;
 	}
+	SET_DSF(state->dsf);
 
-	DSP = state->dsp;
+	// Restore Rebol data stack pointer at time of Push_Catch
+	DS_DROP_TO(state->dsp);
+
 	GC_Protect->tail = state->hold_tail;
 	GC_Disabled = state->gc_disable;
 
@@ -316,6 +307,17 @@
 {
 	ASSERT_ERROR(err);
 
+#if !defined(NDEBUG)
+	// If we throw the error we'll lose the stack, and if it's an early
+	// error we always want to see it (do not use ATTEMPT or TRY on
+	// purpose in Init_Core()...)
+	if (PG_Boot_Phase < BOOT_DONE) {
+		Debug_Fmt("** Error raised during Init_Core(), should not happen!");
+		Debug_Fmt("%v", err);
+		assert(FALSE);
+	}
+#endif
+
 	if (!Saved_State) {
 		// Print out the error before crashing
 		Print_Value(err, 0, FALSE);
@@ -412,10 +414,10 @@
 /*
 ***********************************************************************/
 {
-	REBCNT dsf = DSF;
+	struct Reb_Call *call = DSF;
 	REBCNT count = 0;
 
-	for (dsf = DSF; dsf > 0; dsf = PRIOR_DSF(dsf)) {
+	for (call = DSF; call != NULL; call = PRIOR_DSF(call)) {
 		count++;
 	}
 
@@ -433,13 +435,13 @@
 {
 	REBCNT depth = Stack_Depth();
 	REBSER *blk = Make_Block(depth-start);
-	REBINT dsf;
+	struct Reb_Call *call;
 	REBVAL *val;
 
-	for (dsf = DSF; dsf > 0; dsf = PRIOR_DSF(dsf)) {
+	for (call = DSF; call != NULL; call = PRIOR_DSF(call)) {
 		if (start-- <= 0) {
 			val = Alloc_Tail_Blk(blk);
-			Init_Word_Unbound(val, REB_WORD, VAL_WORD_SYM(DSF_LABEL(dsf)));
+			Init_Word_Unbound(val, REB_WORD, VAL_WORD_SYM(DSF_LABEL(call)));
 		}
 	}
 
@@ -560,8 +562,10 @@
 	// If block arg, evaluate object values (checking done later):
 	// If user set error code, use it to setup type and id fields.
 	if (IS_BLOCK(arg)) {
+		REBVAL ignored; // !!! Is the DO_BLK result meaningful?
 		DISABLE_GC;
-		Do_Bind_Block(err, arg); // GC-OK (disabled)
+		Bind_Block(err, VAL_BLK_DATA(arg), BIND_DEEP);
+		DO_BLOCK(&ignored, VAL_SERIES(arg), 0); // GC-OK (disabled)
 		ENABLE_GC;
 		if (IS_INTEGER(&error->code) && VAL_INT64(&error->code)) {
 			Set_Error_Type(error);
@@ -631,11 +635,11 @@
 	if (arg3) error->arg3 = *arg3;
 
 	// Set backtrace and location information:
-	if (DSF > 0) {
+	if (DSF) {
 		// Where (what function) is the error:
 		Set_Block(&error->where, Make_Backtrace(0));
 		// Nearby location of the error (in block being evaluated):
-		error->nearest = *DSF_POSITION(DSF);
+		error->nearest = *DSF_WHERE(DSF);
 	}
 
 	return err;

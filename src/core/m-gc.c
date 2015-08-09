@@ -126,7 +126,7 @@ REBVAL *N_watch(REBFRM *frame, REBVAL **inter_block)
 		// Print("Mark: %s %x", TYPE_NAME(val), val);
 #endif
 
-static void Queue_Mark_Value_Deep(REBVAL *val);
+static void Queue_Mark_Value_Deep(const REBVAL *val);
 
 static void Push_Block_Marked_Deep(REBSER *series);
 
@@ -282,7 +282,7 @@ static void Propagate_All_GC_Marks(void);
 
 /***********************************************************************
 **
-*/	static void Queue_Mark_Field_Deep(REBSTU *stu, struct Struct_Field *field)
+*/	static void Queue_Mark_Field_Deep(const REBSTU *stu, struct Struct_Field *field)
 /*
 **		'Queue' refers to the fact that after calling this routine,
 **		one will have to call Propagate_All_GC_Marks() to have the
@@ -331,7 +331,7 @@ static void Propagate_All_GC_Marks(void);
 
 /***********************************************************************
 **
-*/	static void Queue_Mark_Struct_Deep(REBSTU *stu)
+*/	static void Queue_Mark_Struct_Deep(const REBSTU *stu)
 /*
 **		'Queue' refers to the fact that after calling this routine,
 **		one will have to call Propagate_All_GC_Marks() to have the
@@ -369,7 +369,7 @@ static void Propagate_All_GC_Marks(void);
 
 /***********************************************************************
 **
-*/	static void Queue_Mark_Routine_Deep(REBROT *rot)
+*/	static void Queue_Mark_Routine_Deep(const REBROT *rot)
 /*
 **		'Queue' refers to the fact that after calling this routine,
 **		one will have to call Propagate_All_GC_Marks() to have the
@@ -417,7 +417,7 @@ static void Propagate_All_GC_Marks(void);
 
 /***********************************************************************
 **
-*/	static void Queue_Mark_Event_Deep(REBVAL *value)
+*/	static void Queue_Mark_Event_Deep(const REBVAL *value)
 /*
 **		'Queue' refers to the fact that after calling this routine,
 **		one will have to call Propagate_All_GC_Marks() to have the
@@ -436,7 +436,9 @@ static void Propagate_All_GC_Marks(void);
 		)
 	) {
 		// Comment says void* ->ser field of the REBEVT is a "port or object"
-		QUEUE_MARK_BLOCK_DEEP(cast(REBSER*, VAL_EVENT_SER(value)));
+		QUEUE_MARK_BLOCK_DEEP(
+			cast(REBSER*, VAL_EVENT_SER(m_cast(REBVAL*, value)))
+		);
 	}
 
 	if (IS_EVENT_MODEL(value, EVM_DEVICE)) {
@@ -485,7 +487,52 @@ static void Propagate_All_GC_Marks(void);
 
 /***********************************************************************
 **
-*/	static void Queue_Mark_Value_Deep(REBVAL *val)
+*/ static void Mark_Call_Frames_Deep(void)
+/*
+**		Mark all function call frames.  At the moment, this is mostly
+**		taken care of by the marking of the data stack itself...since
+**		the call frames put their values on the data stack.  The one
+**		exception is the return value, which only *indirectly*
+**		implicates a value (which may or may not live on the data
+**		stack) by storing a pointer into a handle.  We must extract
+**		that REBVAL* in order for the garbage collector to see it,
+**		as the handle would be opaque to it otherwise.
+**
+**		Note that prior to a function invocation, the output value
+**		slot is written with "safe" TRASH.  This helps the evaluator
+**		catch cases of when a function dispatch doesn't consciously
+**		write any value into the output in debug builds.  The GC is
+**		willing to overlook this safe trash, however, and it will just
+**		be an UNSET! in the release build.
+**
+**		This should be called at the top level, and not from inside a
+**		Propagate_All_GC_Marks().  All marks will be propagated.
+**
+***********************************************************************/
+{
+	struct Reb_Call *call = CS_Top;
+
+	while (call) {
+		REBCNT index;
+
+		Queue_Mark_Value_Deep(DSF_OUT(call));
+		Queue_Mark_Value_Deep(DSF_FUNC(call));
+		Queue_Mark_Value_Deep(DSF_WHERE(call));
+		Queue_Mark_Value_Deep(DSF_LABEL(call));
+
+		for (index = 1; index <= call->num_vars; index++)
+			Queue_Mark_Value_Deep(DSF_VAR(call, index));
+
+		Propagate_All_GC_Marks();
+
+		call = PRIOR_DSF(call);
+	}
+}
+
+
+/***********************************************************************
+**
+*/	static void Queue_Mark_Value_Deep(const REBVAL *val)
 /*
 ***********************************************************************/
 {
@@ -555,7 +602,7 @@ static void Propagate_All_GC_Marks(void);
 		case REB_ACTION:
 		case REB_OP:
 			QUEUE_MARK_BLOCK_DEEP(VAL_FUNC_SPEC(val));
-			MARK_UNWORDS_BLOCK(VAL_FUNC_ARGS(val));
+			MARK_UNWORDS_BLOCK(VAL_FUNC_WORDS(val));
 			break;
 
 		case REB_WORD:	// (and also used for function STACK backtrace frame)
@@ -954,8 +1001,6 @@ static void Propagate_All_GC_Marks(void);
 	// WARNING: These terminate existing open blocks. This could
 	// be a problem if code is building a new value at the tail,
 	// but has not yet updated the TAIL marker.
-	DS_TERMINATE; // Update data stack tail
-//	SET_END(DS_NEXT);
 	VAL_BLK_TERM(TASK_BUF_EMIT);
 	VAL_BLK_TERM(TASK_BUF_WORDS);
 //!!!	SET_END(BLK_TAIL(Save_Value_List));
@@ -1005,6 +1050,9 @@ static void Propagate_All_GC_Marks(void);
 	// Mark all devices:
 	Mark_Devices_Deep();
 
+	// Mark function call frames:
+	Mark_Call_Frames_Deep();
+
 	count = Sweep_Routines(); // this needs to run before Sweep_Series(), because Routine has series with pointers, which can't be simply discarded by Sweep_Series
 
 	count += Sweep_Series();
@@ -1017,9 +1065,6 @@ static void Propagate_All_GC_Marks(void);
 	PG_Reb_Stats->Recycle_Series = Mem_Pools[SERIES_POOL].free - PG_Reb_Stats->Recycle_Series;
 	PG_Reb_Stats->Recycle_Series_Total += PG_Reb_Stats->Recycle_Series;
 	PG_Reb_Stats->Recycle_Prior_Eval = Eval_Cycles;
-
-	// Reset stack to prevent invalid MOLD access:
-	RESET_TAIL(DS_Series);
 
 	if (GC_Ballast <= VAL_INT32(TASK_BALLAST) / 2
 		&& VAL_INT64(TASK_BALLAST) < MAX_I32) {

@@ -98,26 +98,24 @@
 
 /***********************************************************************
 **
-*/	REBINT Min_Max_Pair(REBVAL *ds, REBFLG maxed)
+*/	void Min_Max_Pair(REBVAL *out, const REBVAL *a, const REBVAL *b, REBFLG maxed)
 /*
 ***********************************************************************/
 {
 	REBXYF aa;
 	REBXYF bb;
 	REBXYF *cc;
-	REBVAL *a = D_ARG(1);
-	REBVAL *b = D_ARG(2);
-	REBVAL *c = D_OUT;
 
 	if (IS_PAIR(a)) aa = VAL_PAIR(a);
 	else if (IS_INTEGER(a)) aa.x = aa.y = (REBD32)VAL_INT64(a);
-	else Trap_Arg_DEAD_END(a);
+	else Trap_Arg(a);
 
 	if (IS_PAIR(b)) bb = VAL_PAIR(b);
 	else if (IS_INTEGER(b)) bb.x = bb.y = (REBD32)VAL_INT64(b);
-	else Trap_Arg_DEAD_END(b);
+	else Trap_Arg(b);
 
-	cc = &VAL_PAIR(c);
+	SET_TYPE(out, REB_PAIR);
+	cc = &VAL_PAIR(out);
 	if (maxed) {
 		cc->x = MAX(aa.x, bb.x);
 		cc->y = MAX(aa.y, bb.y);
@@ -126,9 +124,6 @@
 		cc->x = MIN(aa.x, bb.x);
 		cc->y = MIN(aa.y, bb.y);
 	}
-	SET_TYPE(c, REB_PAIR);
-
-	return R_OUT;
 }
 
 
@@ -265,7 +260,7 @@
 		case A_ROUND:
 			{
 				REBDEC d64;
-				n = Get_Round_Flags(ds);
+				n = Get_Round_Flags(call_);
 				if (D_REF(2))
 					d64 = Dec64(D_ARG(3));
 				else {
@@ -315,7 +310,7 @@
 ///					Trap_Arg_DEAD_END(arg);
 ///				goto setPair;
 ///			}
-			SET_DECIMAL(DS_OUT, n == 0 ? x1 : y1);
+			SET_DECIMAL(D_OUT, n == 0 ? x1 : y1);
 			return R_OUT;
 
 		case A_MAKE:
@@ -325,7 +320,7 @@
 			x1 = y1 = 0;
 //			if (IS_NONE(val)) goto setPair;
 			if (IS_PAIR(val)) {
-				*DS_OUT = *val;
+				*D_OUT = *val;
 				return R_OUT;
 			}
 			if (IS_STRING(val)) {
@@ -333,7 +328,7 @@
 				REBCNT len;
 				// -1234567890x-1234567890
 				bp = Qualify_String(val, VAL_LEN(val), &len, FALSE);
-				if (Scan_Pair(bp, len, DS_OUT)) return R_OUT;
+				if (Scan_Pair(bp, len, D_OUT)) return R_OUT;
 			}
 			if (IS_INTEGER(val)) {
 				x1 = y1 = (REBD32)VAL_INT64(val);
@@ -353,9 +348,9 @@
 	Trap_Action_DEAD_END(REB_PAIR, action);
 
 setPair:
-	VAL_SET(DS_OUT, REB_PAIR);
-	VAL_PAIR_X(DS_OUT) = x1;
-	VAL_PAIR_Y(DS_OUT) = y1;
+	VAL_SET(D_OUT, REB_PAIR);
+	VAL_PAIR_X(D_OUT) = x1;
+	VAL_PAIR_Y(D_OUT) = y1;
 	return R_OUT;
 
 //is_false:

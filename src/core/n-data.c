@@ -134,16 +134,17 @@ static int Check_Char_Range(REBVAL *val, REBINT limit)
 		REBCNT index = VAL_INDEX(value);
 		REBCNT i;
 
-		ds = 0;
 		while (index < SERIES_TAIL(block)) {
-			index = Do_Next(block, i = index, 0); // stack volatile
-			ds = DS_POP; // volatile stack reference
-			if (IS_CONDITIONAL_FALSE(ds)) {
-				Set_Block(ds, Copy_Block_Len(block, i, 3));
-				Trap1_DEAD_END(RE_ASSERT_FAILED, ds);
+			i = index;
+			index = DO_NEXT(D_OUT, block, index);
+			if (IS_CONDITIONAL_FALSE(D_OUT)) {
+				// !!! Only copies 3 values (and flaky), see CC#2231
+				Set_Block(D_OUT, Copy_Block_Len(block, i, 3));
+				Trap1_DEAD_END(RE_ASSERT_FAILED, D_OUT);
 			}
-			if (THROWN(ds)) return R_TOS1;
+			if (THROWN(D_OUT)) return R_OUT;
 		}
+		SET_TRASH_SAFE(D_OUT);
 	}
 	else {
 		// /types [var1 integer!  var2 [integer! decimal!]]
@@ -155,9 +156,8 @@ static int Check_Char_Range(REBVAL *val, REBINT limit)
 				val = GET_VAR(value);
 			}
 			else if (IS_PATH(value)) {
-				REBVAL *refinements = value;
-				Do_Path(&refinements, 0);
-				*D_OUT = *DS_POP;
+				const REBVAL *refinements = value;
+				Do_Path(D_OUT, &refinements, 0);
 				val = D_OUT;
 			}
 			else Trap_Arg_DEAD_END(value);
@@ -364,11 +364,12 @@ static int Check_Char_Range(REBVAL *val, REBINT limit)
 		*D_OUT = *val;
 	}
 	else if (ANY_PATH(word)) {
-		REBVAL *refinements = word;
-		REBVAL *val = Do_Path(&refinements, 0);
-		if (!val) val = DS_POP; // resides on stack
+		const REBVAL *refinements = word;
+		REBVAL *val = Do_Path(D_OUT, &refinements, 0);
+		if (!val) {
+			val = D_OUT;
+		}
 		if (!D_REF(2) && !IS_SET(val)) Trap1_DEAD_END(RE_NO_VALUE, word);
-		*D_OUT = *val;
 	}
 	else if (IS_OBJECT(word)) {
 		Assert_Public_Object(word);
@@ -396,8 +397,10 @@ static int Check_Char_Range(REBVAL *val, REBINT limit)
 			const REBVAL *v;
 			REBCNT i;
 			for (i = VAL_INDEX(val); i < VAL_TAIL(val); i++) {
+				REBVAL safe;
 				v = VAL_BLK_SKIP(val, i);
-				v = Get_Simple_Value(v);
+				Get_Simple_Value_Into(&safe, v);
+				v = &safe;
 				if (IS_OBJECT(v)) {
 					frame = VAL_OBJ_FRAME(v);
 					index = Find_Word_Index(frame, VAL_WORD_SYM(word), FALSE);
@@ -474,7 +477,7 @@ static int Check_Char_Range(REBVAL *val, REBINT limit)
 **
 ***********************************************************************/
 {
-	REBVAL *word   = D_ARG(1);
+	const REBVAL *word = D_ARG(1);
 	REBVAL *val    = D_ARG(2);
 	REBVAL *tmp    = NULL;
 	REBOOL not_any = !D_REF(3);
@@ -489,7 +492,9 @@ static int Check_Char_Range(REBVAL *val, REBINT limit)
 	}
 
 	if (ANY_PATH(word)) {
-		Do_Path(&word, val);
+		REBVAL dummy;
+		Do_Path(&dummy, &word, val);
+		// !!! ignores results?
 		return R_ARG2;
 	}
 
@@ -502,18 +507,19 @@ static int Check_Char_Range(REBVAL *val, REBINT limit)
 
 	// Is target an object?
 	if (IS_OBJECT(word)) {
+		REBVAL *obj_word;
 		Assert_Public_Object(word);
 		// Check for protected or unset before setting anything.
-		for (tmp = val, word = VAL_OBJ_WORD(word, 1); NOT_END(word); word++) { // skip self
-			if (VAL_PROTECTED(word)) Trap1_DEAD_END(RE_LOCKED_WORD, word);
+		for (tmp = val, obj_word = VAL_OBJ_WORD(word, 1); NOT_END(obj_word); obj_word++) { // skip self
+			if (VAL_PROTECTED(obj_word)) Trap1_DEAD_END(RE_LOCKED_WORD, obj_word);
 			if (not_any && is_blk && !IS_END(tmp) && IS_UNSET(tmp++)) // won't advance past end
-				Trap1_DEAD_END(RE_NEED_VALUE, word);
+				Trap1_DEAD_END(RE_NEED_VALUE, obj_word);
 		}
-		for (word = VAL_OBJ_VALUES(D_ARG(1)) + 1; NOT_END(word); word++) { // skip self
+		for (obj_word = VAL_OBJ_VALUES(D_ARG(1)) + 1; NOT_END(obj_word); obj_word++) { // skip self
 			// WARNING: Unwinds that make it here are assigned. All unwinds
 			// should be screened earlier (as is done in e.g. REDUCE, or for
 			// function arguments) so they don't even get into this function.
-			*word = *val;
+			*obj_word = *val;
 			if (is_blk) {
 				val++;
 				if (IS_END(val)) {
@@ -612,168 +618,6 @@ static int Check_Char_Range(REBVAL *val, REBINT limit)
 
 
 //** SERIES ************************************************************
-
-static int Do_Ordinal(REBVAL *ds, REBINT n)
-{
-	// Is only valid when returned from ACTION function itself.
-	REBACT action = Value_Dispatch[VAL_TYPE(D_ARG(1))];
-	DS_PUSH_INTEGER(n);
-	//DSF_FUNC(ds) // needs to be set to PICK action!
-	return action(ds, A_PICK);  // returns R_OUT and other cases
-}
-
-/***********************************************************************
-**
-*/	REBNATIVE(first)
-/*
-***********************************************************************/
-{
-	return Do_Ordinal(ds, 1);
-}
-
-
-/***********************************************************************
-**
-*/	REBNATIVE(second)
-/*
-***********************************************************************/
-{
-	return Do_Ordinal(ds, 2);
-}
-
-
-/***********************************************************************
-**
-*/	REBNATIVE(third)
-/*
-***********************************************************************/
-{
-	return Do_Ordinal(ds, 3);
-}
-
-
-/***********************************************************************
-**
-*/	REBNATIVE(fourth)
-/*
-***********************************************************************/
-{
-	return Do_Ordinal(ds, 4);
-}
-
-
-/***********************************************************************
-**
-*/	REBNATIVE(fifth)
-/*
-***********************************************************************/
-{
-	return Do_Ordinal(ds, 5);
-}
-
-
-/***********************************************************************
-**
-*/	REBNATIVE(sixth)
-/*
-***********************************************************************/
-{
-	return Do_Ordinal(ds, 6);
-}
-
-
-/***********************************************************************
-**
-*/	REBNATIVE(seventh)
-/*
-***********************************************************************/
-{
-	return Do_Ordinal(ds, 7);
-}
-
-
-/***********************************************************************
-**
-*/	REBNATIVE(eighth)
-/*
-***********************************************************************/
-{
-	return Do_Ordinal(ds, 8);
-}
-
-
-/***********************************************************************
-**
-*/	REBNATIVE(ninth)
-/*
-***********************************************************************/
-{
-	return Do_Ordinal(ds, 9);
-}
-
-
-/***********************************************************************
-**
-*/	REBNATIVE(tenth)
-/*
-***********************************************************************/
-{
-	return Do_Ordinal(ds, 10);
-}
-
-
-/***********************************************************************
-**
-*/	REBNATIVE(last)
-/*
-***********************************************************************/
-{
-	REBVAL *val = D_ARG(1);
-	REBACT action;
-	REBCNT t;
-
-	action = Value_Dispatch[VAL_TYPE(val)];
-	if (ANY_SERIES(val)) {
-		t = VAL_TAIL(val);
-		VAL_INDEX(val) = 0;
-	}
-	else if (IS_TUPLE(val)) t = VAL_TUPLE_LEN(val);
-	else if (IS_GOB(val)) {
-		t = GOB_PANE(VAL_GOB(val)) ? GOB_TAIL(VAL_GOB(val)) : 0;
-		VAL_GOB_INDEX(val) = 0;
-	}
-	else t = 0; // let the action throw the error
-	DS_PUSH_INTEGER(t);
-	return action(ds, A_PICK);
-}
-
-
-/***********************************************************************
-**
-*/	REBNATIVE(first_add)
-/*
-***********************************************************************/
-{
-	REBVAL *value;
-	REBCNT index;
-	REBCNT tail;
-
-	value = GET_MUTABLE_VAR(D_ARG(1));
-
-	if (ANY_SERIES(value)) {
-		tail = VAL_TAIL(value);
-	}
-	else if (IS_GOB(value)) {
-		tail = GOB_PANE(VAL_GOB(value)) ? GOB_TAIL(VAL_GOB(value)) : 0;
-	}
-	else
-		Trap_Arg_DEAD_END(D_ARG(1)); // !! need better msg
-
-	*D_ARG(1) = *value;
-	index = VAL_INDEX(value); // same for VAL_GOB_INDEX
-	if (index < tail) VAL_INDEX(value) = index + 1;
-	return Do_Ordinal(ds, 1);
-}
 
 
 /***********************************************************************
@@ -928,7 +772,7 @@ static int Do_Ordinal(REBVAL *ds, REBINT n)
 
 /***********************************************************************
 **
-*/	static void Return_Gob_Pair(REBVAL *ds, REBGOB *gob, REBD32 x, REBD32 y)
+*/	static void Return_Gob_Pair(REBVAL *out, REBGOB *gob, REBD32 x, REBD32 y)
 /*
 ***********************************************************************/
 {
@@ -936,7 +780,7 @@ static int Do_Ordinal(REBVAL *ds, REBINT n)
 	REBVAL *val;
 
 	blk = Make_Block(2);
-	Set_Series(REB_BLOCK, ds, blk);
+	Set_Series(REB_BLOCK, out, blk);
 	val = Alloc_Tail_Blk(blk);
 	SET_GOB(val, gob);
 	val = Alloc_Tail_Blk(blk);
@@ -974,7 +818,7 @@ static int Do_Ordinal(REBVAL *ds, REBINT n)
 		yo = xy.y;
 	}
 
-	Return_Gob_Pair(ds, gob, xo, yo);
+	Return_Gob_Pair(D_OUT, gob, xo, yo);
 
 	return R_OUT;
 }

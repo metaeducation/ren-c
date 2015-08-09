@@ -479,7 +479,7 @@ static REBOOL rebol_type_to_ffi(REBVAL *out, REBVAL *elem, REBCNT idx)
  * stack, so DS_POP is needed after the function call is done.
  * The number to pop is returned by pop
  * */
-static void *arg_to_ffi(REBVAL *rot, REBVAL *arg, REBCNT idx, REBINT *pop)
+static void *arg_to_ffi(const REBVAL *rot, REBVAL *arg, REBCNT idx, REBINT *pop)
 {
 	ffi_type **args = (ffi_type**)SERIES_DATA(VAL_ROUTINE_FFI_ARG_TYPES(rot));
 	REBSER *rebol_args = NULL;
@@ -701,7 +701,7 @@ static void ffi_to_rebol(REBRIN *rin,
 
 /***********************************************************************
 **
-*/	void Call_Routine(REBVAL *rot, REBSER *args, REBVAL *ret)
+*/	void Call_Routine(const REBVAL *rot, REBSER *args, REBVAL *ret)
 /*
 ***********************************************************************/
 {
@@ -778,7 +778,12 @@ static void ffi_to_rebol(REBRIN *rin,
 				v = Alloc_Tail_Blk(VAL_ROUTINE_ALL_ARGS(rot));
 				Init_Unword(v, REB_WORD, SYM_ELLIPSIS, 0); //FIXME, be clear
 				EXPAND_SERIES_TAIL(VAL_ROUTINE_FFI_ARG_TYPES(rot), 1);
-				process_type_block(rot, reb_type, j);
+
+				// !!! REVIEW: Mutability cast needed here because the
+				// routine is modified.  (REBDOF functions should almost
+				// certainly not be modifying the function they dispatch)
+
+				process_type_block(m_cast(REBVAL*, rot), reb_type, j);
 				i ++;
 			}
 			ffi_args[j - 1] = arg_to_ffi(rot, reb_arg, j, &pop);
@@ -814,7 +819,17 @@ static void ffi_to_rebol(REBRIN *rin,
 			 rvalue,
 			 ffi_args);
 	ffi_to_rebol(VAL_ROUTINE_INFO(rot), ((ffi_type**)SERIES_DATA(VAL_ROUTINE_FFI_ARG_TYPES(rot)))[0], rvalue, ret);
-	DSP -= pop;
+
+	// !!! Using a 'pop' count instead of saving the stack position and
+	// then using DS_DROP_TO offers the advantage of not covering up
+	// any bugs where stack elements are added inadvertently (as the
+	// Do_Core will catch the stack imbalance).  But it may be overkill.
+	// Consider saving the DSP and using DS_DROP_TO.
+
+	while (pop > 0) {
+		DS_DROP;
+		pop--;
+	}
 }
 
 /***********************************************************************
@@ -841,22 +856,20 @@ static void process_type_block(REBVAL *out, REBVAL *blk, REBCNT n)
 {
 	if (IS_BLOCK(blk)) {
 		REBVAL *t = VAL_BLK_DATA(blk);
-		if (IS_WORD(t)
-			&& VAL_WORD_CANON(t) == SYM_STRUCT_TYPE) {
+		if (IS_WORD(t) && VAL_WORD_CANON(t) == SYM_STRUCT_TYPE) {
 			/* followed by struct definition */
+			REBVAL tmp;
+
 			++ t;
 			if (!IS_BLOCK(t) || VAL_LEN(blk) != 2) {
 				Trap_Arg(blk);
 			}
-			DS_PUSH_NONE;
-			if (!MT_Struct(DS_TOP, t, REB_STRUCT)) {
+			if (!MT_Struct(&tmp, t, REB_STRUCT)) {
 				Trap_Arg(blk);
 			}
-			if (!rebol_type_to_ffi(out, DS_TOP, n)) {
+			if (!rebol_type_to_ffi(out, &tmp, n)) {
 				Trap_Arg(blk);
 			}
-
-			DS_DROP;
 		} else {
 			if (VAL_LEN(blk) != 1) {
 				Trap_Arg(blk);
@@ -874,16 +887,11 @@ static void callback_dispatcher(ffi_cif *cif, void *ret, void **args, void *user
 {
 	REBRIN *rin = (REBRIN*)user_data;
 	REBCNT i = 0;
-	REBVAL *blk = NULL;
-	REBSER *ser = NULL;
-	REBVAL *elem = NULL;
+	REBSER *ser;
+	REBVAL *elem;
+	REBVAL safe;
 
-	DS_PUSH_NONE;
-	blk = DS_TOP;
-	SET_TYPE(blk, REB_BLOCK);
-	VAL_SERIES(blk) = ser = Make_Block(1 + cif->nargs);
-	VAL_INDEX(blk) = 0;
-
+	ser = Make_Block(1 + cif->nargs);
 	elem = Alloc_Tail_Blk(ser);
 	SET_TYPE(elem, REB_FUNCTION);
 	VAL_FUNC(elem) = RIN_FUNC(rin);
@@ -930,7 +938,9 @@ static void callback_dispatcher(ffi_cif *cif, void *ret, void **args, void *user
 				Trap(RE_MISC);
 		}
 	}
-	elem = Do_Blk(ser, 0);
+
+	DO_BLOCK(&safe, ser, 0);
+	elem = &safe;
 	switch (cif->rtype->type) {
 		case FFI_TYPE_VOID:
 			break;
@@ -967,8 +977,6 @@ static void callback_dispatcher(ffi_cif *cif, void *ret, void **args, void *user
 		default:
 			Trap_Arg(elem);
 	}
-
-	DS_DROP;
 }
 
 /***********************************************************************
@@ -1045,29 +1053,29 @@ static void callback_dispatcher(ffi_cif *cif, void *ret, void **args, void *user
 	blk = VAL_BLK_DATA(data);
 	if (type == REB_ROUTINE) {
 		REBINT fn_idx = 0;
-		REBVAL *lib = NULL;
+		REBVAL lib;
+
 		if (!IS_BLOCK(&blk[0]))
 			Trap_Types_DEAD_END(RE_EXPECT_VAL, REB_BLOCK, VAL_TYPE(&blk[0]));
 
-		fn_idx = Do_Next(VAL_SERIES(data), 1, 0);
-		lib = DS_POP; //Do_Next saves result on stack
+		fn_idx = DO_NEXT(&lib, VAL_SERIES(data), 1);
 
-		if (IS_INTEGER(lib)) {
+		if (IS_INTEGER(&lib)) {
 			if (NOT_END(&blk[fn_idx]))
 				Trap_Arg_DEAD_END(&blk[fn_idx]);
 
 			//treated as a pointer to the function
-			if (VAL_INT64(lib) == 0)
-				Trap_Arg_DEAD_END(lib);
+			if (VAL_INT64(&lib) == 0)
+				Trap_Arg_DEAD_END(&lib);
 
 			// Cannot cast directly to a function pointer from a 64-bit value
 			// on 32-bit systems; first cast to int that holds Unsigned PoinTer
 			VAL_ROUTINE_FUNCPTR(out) = cast(CFUNC*,
-				cast(REBUPT, VAL_INT64(lib))
+				cast(REBUPT, VAL_INT64(&lib))
 			);
 		} else {
-			if (!IS_LIBRARY(lib))
-				Trap_Arg_DEAD_END(lib);
+			if (!IS_LIBRARY(&lib))
+				Trap_Arg_DEAD_END(&lib);
 
 			if (!IS_STRING(&blk[fn_idx]))
 				Trap_Arg_DEAD_END(&blk[fn_idx]);
@@ -1076,9 +1084,9 @@ static void callback_dispatcher(ffi_cif *cif, void *ret, void **args, void *user
 				Trap_Arg_DEAD_END(&blk[fn_idx + 1]);
 			}
 
-			VAL_ROUTINE_LIB(out) = VAL_LIB_HANDLE(lib);
+			VAL_ROUTINE_LIB(out) = VAL_LIB_HANDLE(&lib);
 			if (!VAL_ROUTINE_LIB(out)) {
-				Trap_Arg_DEAD_END(lib);
+				Trap_Arg_DEAD_END(&lib);
 				//RL_Print("lib is not open\n");
 				ret = FALSE;
 			}
@@ -1094,14 +1102,14 @@ static void callback_dispatcher(ffi_cif *cif, void *ret, void **args, void *user
 		}
 	} else if (type == REB_CALLBACK) {
 		REBINT fn_idx = 0;
-		REBVAL *fun = NULL;
+		REBVAL fun;
+
 		if (!IS_BLOCK(&blk[0]))
 			Trap_Arg_DEAD_END(&blk[0]);
-		fn_idx = Do_Next(VAL_SERIES(data), 1, 0);
-		fun = DS_POP; //Do_Next saves result on stack
-		if (!IS_FUNCTION(fun))
-			Trap_Arg_DEAD_END(fun);
-		VAL_CALLBACK_FUNC(out) = VAL_FUNC(fun);
+		fn_idx = DO_NEXT(&fun, VAL_SERIES(data), 1);
+		if (!IS_FUNCTION(&fun))
+			Trap_Arg_DEAD_END(&fun);
+		VAL_CALLBACK_FUNC(out) = VAL_FUNC(&fun);
 		if (NOT_END(&blk[fn_idx])) {
 			Trap_Arg_DEAD_END(&blk[fn_idx]);
 		}
@@ -1305,7 +1313,7 @@ static void callback_dispatcher(ffi_cif *cif, void *ret, void **args, void *user
 	arg = D_ARG(2);
 	val = D_ARG(1);
 
-	ret = DS_OUT;
+	ret = D_OUT;
 	// unary actions
 	switch(action) {
 		case A_MAKE:
@@ -1352,7 +1360,7 @@ static void callback_dispatcher(ffi_cif *cif, void *ret, void **args, void *user
 	arg = D_ARG(2);
 	val = D_ARG(1);
 
-	ret = DS_OUT;
+	ret = D_OUT;
 	// unary actions
 	switch(action) {
 		case A_MAKE:

@@ -168,7 +168,7 @@ bad_make:
 	}
 
 	if ((chr >> 16) != 0 && (chr >> 16) != 0xffff) Trap1_DEAD_END(RE_TYPE_LIMIT, Get_Type(REB_CHAR));
-	SET_CHAR(DS_OUT, chr);
+	SET_CHAR(D_OUT, chr);
 	return R_OUT;
 
 is_false:

@@ -24,7 +24,6 @@
 **  Section: natives
 **  Author:  Carl Sassenrath
 **  Notes:
-**    Warning: Do not cache pointer to stack ARGS (stack may expand).
 **
 ***********************************************************************/
 
@@ -167,7 +166,7 @@ enum {
 
 /***********************************************************************
 **
-*/	static int Protect(REBVAL *ds, REBCNT flags)
+*/	static int Protect(struct Reb_Call *call_, REBCNT flags)
 /*
 **		1: value
 **		2: /deep  - recursive
@@ -202,6 +201,7 @@ enum {
 		}
 		if (D_REF(4)) { // /values
 			REBVAL *val2;
+			REBVAL safe;
 			for (val = VAL_BLK_DATA(val); NOT_END(val); val++) {
 				if (IS_WORD(val)) {
 					// !!! Temporary and ugly cast; since we *are* PROTECT
@@ -210,11 +210,11 @@ enum {
 					val2 = m_cast(REBVAL*, GET_VAR(val));
 				}
 				else if (IS_PATH(val)) {
-					REBVAL *path = val;
-					if (Do_Path(&path, 0)) {
+					const REBVAL *path = val;
+					if (Do_Path(&safe, &path, 0)) {
 						val2 = val; // !!! comment said "found a function"
 					} else {
-						val2 = DS_TOP; // !!! unstable on top of stack
+						val2 = &safe;
 					}
 				}
 				else
@@ -256,15 +256,18 @@ enum {
 	REBSER *block = VAL_SERIES(D_ARG(1));
 	REBCNT index = VAL_INDEX(D_ARG(1));
 
-	ds = 0;
+	// Default result for 'all []'
+	SET_TRUE(D_OUT);
+
 	while (index < SERIES_TAIL(block)) {
-		index = Do_Next(block, index, 0); // stack volatile
-		ds = DS_POP;  // volatile stack reference
-		if (IS_CONDITIONAL_FALSE(ds)) return R_NONE;
-		if (THROWN(ds)) break;
+		index = DO_NEXT(D_OUT, block, index);
+		if (IS_CONDITIONAL_FALSE(D_OUT)) {
+			SET_TRASH_SAFE(D_OUT);
+			return R_NONE;
+		}
+		if (index == THROWN_FLAG) break;
 	}
-	if (ds == 0) return R_TRUE;
-	return R_TOS1;
+	return R_OUT;
 }
 
 
@@ -278,10 +281,13 @@ enum {
 	REBCNT index = VAL_INDEX(D_ARG(1));
 
 	while (index < SERIES_TAIL(block)) {
-		index = Do_Next(block, index, 0); // stack volatile
-		ds = DS_POP;  // volatile stack reference
-		if (!IS_CONDITIONAL_FALSE(ds) && !IS_UNSET(ds)) return R_TOS1;
+		index = DO_NEXT(D_OUT, block, index);
+
+		// Don't have to check for THROWN_FLAG or THROWN as this returns
+		// any value that isn't FALSE! or UNSET!
+		if (!IS_CONDITIONAL_FALSE(D_OUT) && !IS_UNSET(D_OUT)) return R_OUT;
 	}
+
 	return R_NONE;
 }
 
@@ -290,10 +296,20 @@ enum {
 **
 */	REBNATIVE(apply)
 /*
+**		1: func
+**		2: block
+**		3: /only
+**
 ***********************************************************************/
 {
-	Apply_Block(D_ARG(1), D_ARG(2), !D_REF(3)); // stack volatile
-	return R_TOS;
+	REBVAL * func = D_ARG(1);
+	REBVAL * block = D_ARG(2);
+	REBOOL reduce = !D_REF(3);
+
+	Apply_Block(
+		D_OUT, func, VAL_SERIES(block), VAL_INDEX(block), reduce
+	);
+	return R_OUT;
 }
 
 
@@ -313,12 +329,11 @@ enum {
 
 	if (error) return R_NONE;
 
-	Do_Blk(VAL_SERIES(D_ARG(1)), VAL_INDEX(D_ARG(1)));
-	DSP++; // TOS semantics instead of TOS1!
+	DO_BLOCK(D_OUT, VAL_SERIES(D_ARG(1)), VAL_INDEX(D_ARG(1)));
 
 	DROP_CATCH_SAME_STACKLEVEL_AS_PUSH(&state);
 
-	return R_TOS;
+	return R_OUT;
 }
 
 
@@ -352,22 +367,19 @@ enum {
 	REBFLG all_flag = D_REF(2);
 
 	while (index < SERIES_TAIL(block)) {
-		//DSP = top; // reset stack  -- not needed?
-		index = Do_Next(block, index, 0);
-		ds = DS_POP;  // volatile stack reference
-		if (IS_CONDITIONAL_FALSE(ds)) index++;
+		index = DO_NEXT(D_OUT, block, index);
+		if (IS_CONDITIONAL_FALSE(D_OUT)) index++;
 		else {
-			if (IS_UNSET(ds)) Trap_DEAD_END(RE_NO_RETURN);
-			if (THROWN(ds)) return R_TOS1;
+			if (IS_UNSET(D_OUT)) Trap_DEAD_END(RE_NO_RETURN);
+			if (index == THROWN_FLAG) return R_OUT;
 			if (index >= SERIES_TAIL(block)) return R_TRUE;
-			index = Do_Next(block, index, 0);
-			ds = DS_POP;  // volatile stack reference
-			if (IS_BLOCK(ds)) {
-				ds = DO_BLK(ds);
-				if (IS_UNSET(ds) && !all_flag) return R_TRUE;
+			index = DO_NEXT(D_OUT, block, index);
+			if (IS_BLOCK(D_OUT)) {
+				DO_BLOCK(D_OUT, VAL_SERIES(D_OUT), 0);
+				if (IS_UNSET(D_OUT) && !all_flag) return R_TRUE;
 			}
-			if (THROWN(ds) || !all_flag || index >= SERIES_TAIL(block))
-				return R_TOS1;
+			if (THROWN(D_OUT) || !all_flag || index >= SERIES_TAIL(block))
+				return R_OUT;
 		}
 	}
 	return R_NONE;
@@ -417,38 +429,37 @@ enum {
 		return R_OUT;
 	}
 
-	// Evaluate the block:
-	Do_Blk(VAL_SERIES(D_ARG(1)), VAL_INDEX(D_ARG(1)));
-	DSP++; // Use TOS semantics, not TOS1
+	if (!DO_BLOCK(D_OUT, VAL_SERIES(D_ARG(1)), VAL_INDEX(D_ARG(1)))) {
+		// If it is a throw, process it:
+		if (VAL_ERR_NUM(D_OUT) == RE_THROW) {
 
-	DROP_CATCH_SAME_STACKLEVEL_AS_PUSH(&state);
+			// If a named throw, then check it:
+			if (D_REF(2)) { // /name
 
-	// If it is a throw, process it:
-	if (IS_ERROR(DS_TOP) && VAL_ERR_NUM(DS_TOP) == RE_THROW) {
+				sym = VAL_ERR_SYM(D_OUT);
+				val = D_ARG(3); // name symbol
 
-		// If a named throw, then check it:
-		if (D_REF(2)) { // /name
-
-			sym = VAL_ERR_SYM(DS_TOP);
-			val = D_ARG(3); // name symbol
-
-			// If name is the same word:
-			if (IS_WORD(val) && sym == VAL_WORD_CANON(val)) goto got_err;
-
-			// If it is a block of words:
-			else if (IS_BLOCK(val)) {
-				for (val = VAL_BLK_DATA(val); NOT_END(val); val++) {
-					if (IS_WORD(val) && sym == VAL_WORD_CANON(val))
-						goto got_err;
+				if (IS_WORD(val) && sym == VAL_WORD_CANON(val)) {
+					// name is the same word
+					TAKE_THROWN_ARG(D_OUT, D_OUT);
 				}
+				else if (IS_BLOCK(val)) {
+					// it is a block of words so test all of them
+					for (val = VAL_BLK_DATA(val); NOT_END(val); val++) {
+						if (IS_WORD(val) && sym == VAL_WORD_CANON(val))
+							TAKE_THROWN_ARG(D_OUT, D_OUT);
+					}
+				}
+			} else {
+				// Throw is not named, don't check it
+				TAKE_THROWN_ARG(D_OUT, D_OUT);
 			}
-		} else {
-got_err:
-			TAKE_THROWN_ARG(DS_TOP, DS_TOP);
 		}
 	}
 
-	return R_TOS;
+	DROP_CATCH_SAME_STACKLEVEL_AS_PUSH(&state);
+
+	return R_OUT;
 }
 
 
@@ -485,17 +496,33 @@ got_err:
 */	REBNATIVE(compose)
 /*
 **		{Evaluates a block of expressions, only evaluating parens, and returns a block.}
-**		value "Block to compose"
-**		/deep "Compose nested blocks"
-**		/only "Inserts a block value as a block"
+**		1: value "Block to compose"
+**		2: /deep "Compose nested blocks"
+**		3: /only "Inserts a block value as a block"
+**		4: /into "Output results into a block with no intermediate storage"
+**		5: target
+**
+**		!!! Should 'compose quote (a (1 + 2) b)' give back '(a 3 b)' ?
+**		!!! What about 'compose quote a/(1 + 2)/b' ?
 **
 ***********************************************************************/
 {
 	REBVAL *value = D_ARG(1);
+	REBOOL into = D_REF(4);
 
+	Stack_Depth();
+
+	// Only composes BLOCK!, all other arguments evaluate to themselves
 	if (!IS_BLOCK(value)) return R_ARG1;
-	Compose_Block(value, D_REF(2), D_REF(3), D_REF(4) ? D_ARG(5) : 0);
-	return R_TOS;
+
+	// Compose expects out to contain the target if /INTO
+	if (into) *D_OUT = *D_ARG(5);
+
+	Compose_Block(D_OUT, value, D_REF(2), D_REF(3), into);
+
+	Stack_Depth();
+
+	return R_OUT;
 }
 
 
@@ -519,23 +546,28 @@ got_err:
 ***********************************************************************/
 {
 	REBVAL *value = D_ARG(1);
+	REBVAL out;
 
 	switch (VAL_TYPE(value)) {
 
 	case REB_BLOCK:
 	case REB_PAREN:
 		if (D_REF(4)) { // next
-			VAL_INDEX(value) = Do_Next(VAL_SERIES(value), VAL_INDEX(value), 0);
+			VAL_INDEX(value) = DO_NEXT(
+				D_OUT, VAL_SERIES(value), VAL_INDEX(value)
+			);
 			if (VAL_INDEX(value) == END_FLAG) {
 				VAL_INDEX(value) = VAL_TAIL(value);
 				Set_Var(D_ARG(5), value);
+				SET_TRASH_SAFE(D_OUT);
 				return R_UNSET;
 			}
 			Set_Var(D_ARG(5), value); // "continuation" of block
-			return R_TOS;
+			return R_OUT;
 		}
-		else DO_BLK(value);
-		return R_TOS1;
+
+		DO_BLOCK(D_OUT, VAL_SERIES(value), 0);
+		return R_OUT;
 
     case REB_NATIVE:
 	case REB_ACTION:
@@ -578,8 +610,8 @@ got_err:
 	case REB_URL:
 	case REB_FILE:
 		// DO native and system/intrinsic/do must use same arg list:
-		Do_Sys_Func(SYS_CTX_DO_P, value, D_ARG(2), D_ARG(3), D_ARG(4), D_ARG(5), NULL);
-		return R_TOS;
+		Do_Sys_Func(D_OUT, SYS_CTX_DO_P, value, D_ARG(2), D_ARG(3), D_ARG(4), D_ARG(5), NULL);
+		return R_OUT;
 
 	case REB_TASK:
 		Do_Task(value);
@@ -604,8 +636,8 @@ got_err:
 	REBCNT argnum = IS_CONDITIONAL_FALSE(D_ARG(1)) ? 3 : 2;
 
 	if (IS_BLOCK(D_ARG(argnum)) && !D_REF(4) /* not using /ONLY */) {
-		DO_BLK(D_ARG(argnum));
-		return R_TOS1;
+		DO_BLOCK(D_OUT, VAL_SERIES(D_ARG(argnum)), 0);
+		return R_OUT;
 	} else {
 		return argnum == 2 ? R_ARG2 : R_ARG3;
 	}
@@ -634,8 +666,8 @@ got_err:
 {
 	if (IS_CONDITIONAL_FALSE(D_ARG(1))) return R_NONE;
 	if (IS_BLOCK(D_ARG(2)) && !D_REF(3) /* not using /ONLY */) {
-		DO_BLK(D_ARG(2));
-		return R_TOS1;
+		DO_BLOCK(D_OUT, VAL_SERIES(D_ARG(2)), 0);
+		return R_OUT;
 	}
 	return R_ARG2;
 }
@@ -647,7 +679,7 @@ got_err:
 /*
 ***********************************************************************/
 {
-	return Protect(ds, 1); // PROT_SET
+	return Protect(call_, 1); // PROT_SET
 }
 
 
@@ -658,7 +690,7 @@ got_err:
 ***********************************************************************/
 {
 	SET_NONE(D_ARG(5)); // necessary, bogus, but no harm to stack
-	return Protect(ds, 0);
+	return Protect(call_, 0);
 }
 
 
@@ -671,15 +703,21 @@ got_err:
 	if (IS_BLOCK(D_ARG(1))) {
 		REBSER *ser = VAL_SERIES(D_ARG(1));
 		REBCNT index = VAL_INDEX(D_ARG(1));
-		REBVAL *val = D_REF(5) ? D_ARG(6) : 0;
+		REBOOL into = D_REF(5);
+
+		if (into)
+			*D_OUT = *D_ARG(6);
 
 		if (D_REF(2))
-			Reduce_Block_No_Set(ser, index, val);
+			Reduce_Block_No_Set(D_OUT, ser, index, into);
 		else if (D_REF(3))
-			Reduce_Only(ser, index, D_ARG(4), val);
+			Reduce_Only(D_OUT, ser, index, D_ARG(4), into);
 		else
-			Reduce_Block(ser, index, val);
-		return R_TOS;
+			Reduce_Block(D_OUT, ser, index, into);
+
+		Stack_Depth();
+
+		return R_OUT;
 	}
 
 	return R_ARG1;
@@ -720,27 +758,28 @@ got_err:
 ***********************************************************************/
 {
 	REBVAL *blk = VAL_BLK_DATA(D_ARG(2));
-	REBVAL *result;
 	REBOOL all = D_REF(5);
 	REBOOL found = FALSE;
 
 	// Find value in case block...
 	for (; NOT_END(blk); blk++) {
-		if (!IS_BLOCK(blk) && 0 == Cmp_Value(DS_ARG(1), blk, FALSE)) { // avoid stack move
+		if (!IS_BLOCK(blk) && 0 == Cmp_Value(D_ARG(1), blk, FALSE)) { // avoid stack move
 			// Skip forward to block...
 			for (; !IS_BLOCK(blk) && NOT_END(blk); blk++);
 			if (IS_END(blk)) break;
 			found = TRUE;
 			// Evaluate the case block
-			result = DO_BLK(blk);
-			if (!all) return R_TOS1;
-			if (THROWN(result) && Check_Error(result) >= 0) break;
+			if (!DO_BLOCK(D_OUT, VAL_SERIES(blk), 0)) {
+				if (Check_Error(D_OUT) >= 0) break;
+			}
+
+			if (!all) return R_OUT;
 		}
 	}
 
-	if (!found && IS_BLOCK(result = D_ARG(4))) {
-		DO_BLK(result);
-		return R_TOS1;
+	if (!found && IS_BLOCK(D_ARG(4))) {
+		DO_BLOCK(D_OUT, VAL_SERIES(D_ARG(4)), 0);
+		return R_OUT;
 	}
 
 	return R_NONE;
@@ -772,9 +811,8 @@ got_err:
 		if (except) {
 			if (IS_BLOCK(D_ARG(3))) {
 				// forget the result of the try.
-				Do_Blk(VAL_SERIES(D_ARG(3)), VAL_INDEX(D_ARG(3)));
-				DSP++; // TOS semantics, not TOS1!
-				return R_TOS;
+				DO_BLOCK(D_OUT, VAL_SERIES(D_ARG(3)), VAL_INDEX(D_ARG(3)));
+				return R_OUT;
 			}
 			else if (ANY_FUNC(D_ARG(3))) {
 				// !!! REVIEW: What about zero arity functions or functions of
@@ -782,7 +820,7 @@ got_err:
 				// more args via refinements but can still act as an
 				// arity one function without those refinements?
 
-				REBVAL *args = BLK_SKIP(VAL_FUNC_ARGS(&handler), 1);
+				REBVAL *args = BLK_SKIP(VAL_FUNC_WORDS(&handler), 1);
 				if (NOT_END(args) && !TYPE_CHECK(args, VAL_TYPE(error))) {
 					// TODO: This results in an error message such as "action!
 					// does not allow error! for its value1 argument". A better
@@ -790,8 +828,8 @@ got_err:
 					// allow error! for its value1 argument."
 					Trap3_DEAD_END(RE_EXPECT_ARG, Of_Type(&handler), args, Of_Type(error));
 				}
-				Apply_Func(NULL, &handler, error, NULL);
-				return R_TOS;
+				Apply_Func(D_OUT, &handler, error, NULL);
+				return R_OUT;
 			}
 			else
 				Panic(RP_MISC); // should not be possible (type-checking)
@@ -803,12 +841,11 @@ got_err:
 		return R_OUT;
 	}
 
-	Do_Blk(VAL_SERIES(D_ARG(1)), VAL_INDEX(D_ARG(1)));
-	DSP++; // TOS semantics, not TOS1!
+	DO_BLOCK(D_OUT, VAL_SERIES(D_ARG(1)), VAL_INDEX(D_ARG(1)));
 
 	DROP_CATCH_SAME_STACKLEVEL_AS_PUSH(&state);
 
-	return R_TOS;
+	return R_OUT;
 }
 
 
@@ -820,8 +857,8 @@ got_err:
 {
 	if (IS_CONDITIONAL_TRUE(D_ARG(1))) return R_NONE;
 	if (IS_BLOCK(D_ARG(2)) && !D_REF(3) /* not using /ONLY */) {
-		DO_BLK(D_ARG(2));
-		return R_TOS1;
+		DO_BLOCK(D_OUT, VAL_SERIES(D_ARG(2)), 0);
+		return R_OUT;
 	}
 	return R_ARG2;
 }

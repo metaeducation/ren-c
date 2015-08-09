@@ -220,7 +220,7 @@
 	// Currently it can be any-block!, any-string!, or binary!
 
 	REBSER *series;
-	REBVAL *blk = DS_Base + start;
+	REBVAL *blk = DS_AT(start);
 	REBCNT len = DSP - start + 1;
 	REBCNT type;
 
@@ -277,7 +277,7 @@
 		PG_Reb_Stats->Blocks++;
 	}
 
-	DSP = start;
+	DS_DROP_TO(start);
 	blk = DS_TOP;
 	VAL_SET(blk, type);
 	VAL_SERIES(blk) = series;

@@ -252,7 +252,7 @@
 
 /***********************************************************************
 **
-*/	REBCNT Find_Refines(const REBVAL *ds, REBCNT mask)
+*/	REBCNT Find_Refines(struct Reb_Call *call_, REBCNT mask)
 /*
 **		Scans the stack for function refinements that have been
 **		specified in the mask (each as a bit) and are being used.
@@ -261,10 +261,11 @@
 {
 	REBINT n;
 	REBCNT result = 0;
-	REBINT len = DS_ARGC;
 
-	for (n = 0; n < len; n++) {
-		if ((mask & (1 << n) && D_REF(n+1)))
+	REBINT max = DSF_NUM_ARGS(call_);
+
+	for (n = 0; n < max; n++) {
+		if ((mask & (1 << n) && D_REF(n + 1)))
 			result |= 1 << n;
 	}
 	return result;
@@ -778,15 +779,14 @@
 
 /***********************************************************************
 **
-*/	REBVAL *Make_OS_Error(int errnum)
+*/	void Make_OS_Error(REBVAL *out, int errnum)
 /*
 ***********************************************************************/
 {
 	REBCHR str[100];
 
 	OS_FORM_ERROR(errnum, str, 100);
-	Set_String(DS_OUT, Copy_OS_Str(str, OS_STRLEN(str)));
-	return DS_OUT;
+	Set_String(out, Copy_OS_Str(str, OS_STRLEN(str)));
 }
 
 

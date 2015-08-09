@@ -70,7 +70,7 @@ enum Transport_Types {
 
 /***********************************************************************
 **
-*/	static void Accept_New_Port(REBVAL *ds, REBSER *port, REBREQ *sock)
+*/	static void Accept_New_Port(REBVAL *out, REBSER *port, REBREQ *sock)
 /*
 **		Clone a listening port as a new accept port.
 **
@@ -87,7 +87,7 @@ enum Transport_Types {
 
 	// Create a new port using ACCEPT request passed by sock->common.sock:
 	port = Copy_Block(port, 0);
-	SET_PORT(DS_OUT, port);	// Also for GC protect
+	SET_PORT(out, port);	// Also for GC protect
 	SET_NONE(OFV(port, STD_PORT_DATA)); // just to be sure.
 	SET_NONE(OFV(port, STD_PORT_STATE)); // just to be sure.
 
@@ -101,7 +101,7 @@ enum Transport_Types {
 
 /***********************************************************************
 **
-*/	static int Transport_Actor(REBVAL *ds, REBSER *port, REBCNT action, enum Transport_Types proto)
+*/	static REB_R Transport_Actor(struct Reb_Call *call_, REBSER *port, REBCNT action, enum Transport_Types proto)
 /*
 ***********************************************************************/
 {
@@ -203,7 +203,7 @@ enum Transport_Types {
 	case A_READ:
 		// Read data into a buffer, expanding the buffer if needed.
 		// If no length is given, program must stop it at some point.
-		refs = Find_Refines(ds, ALL_READ_REFS);
+		refs = Find_Refines(call_, ALL_READ_REFS);
 		if (!GET_FLAG(sock->modes, RST_UDP)
 			&& !GET_FLAG(sock->state, RSM_CONNECT))
 			Trap_Port_DEAD_END(RE_NOT_CONNECTED, port, -15);
@@ -230,7 +230,7 @@ enum Transport_Types {
 		// Write the entire argument string to the network.
 		// The lower level write code continues until done.
 
-		refs = Find_Refines(ds, ALL_WRITE_REFS);
+		refs = Find_Refines(call_, ALL_WRITE_REFS);
 		if (!GET_FLAG(sock->modes, RST_UDP)
 			&& !GET_FLAG(sock->state, RSM_CONNECT))
 			Trap_Port_DEAD_END(RE_NOT_CONNECTED, port, -15);
@@ -259,7 +259,7 @@ enum Transport_Types {
 		// FIRST server-port returns new port connection.
 		len = Get_Num_Arg(arg); // Position
 		if (len == 1 && GET_FLAG(sock->modes, RST_LISTEN) && sock->common.data)
-			Accept_New_Port(ds, port, sock); // sets D_OUT
+			Accept_New_Port(D_OUT, port, sock); // sets D_OUT
 		else
 			Trap_Range_DEAD_END(arg);
 		break;
@@ -313,20 +313,20 @@ enum Transport_Types {
 
 /***********************************************************************
 **
-*/	static int TCP_Actor(REBVAL *ds, REBSER *port, REBCNT action)
+*/	static REB_R TCP_Actor(struct Reb_Call *call_, REBSER *port, REBCNT action)
 /*
 ***********************************************************************/
 {
-	return Transport_Actor(ds, port, action, TRANSPORT_TCP);
+	return Transport_Actor(call_, port, action, TRANSPORT_TCP);
 }
 
 /***********************************************************************
 **
-*/	static int UDP_Actor(REBVAL *ds, REBSER *port, REBCNT action)
+*/	static REB_R UDP_Actor(struct Reb_Call *call_, REBSER *port, REBCNT action)
 /*
 ***********************************************************************/
 {
-	return Transport_Actor(ds, port, action, TRANSPORT_UDP);
+	return Transport_Actor(call_, port, action, TRANSPORT_UDP);
 }
 
 /***********************************************************************

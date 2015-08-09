@@ -53,25 +53,6 @@
 
 /***********************************************************************
 **
-*/	static REBVAL *As_Port(REBVAL *value)
-/*
-**		Make the port object if necessary.
-**
-***********************************************************************/
-{
-	REBVAL *ds;
-
-	if (IS_PORT(value)) return value;
-
-	ds = DS_OUT;
-	Make_Port(D_ARG(1), value);
-
-	return D_ARG(1);
-}
-
-
-/***********************************************************************
-**
 */	REBTYPE(Port)
 /*
 ***********************************************************************/
@@ -88,14 +69,22 @@
 	case A_CREATE:
 	case A_DELETE:
 	case A_RENAME:
-		value = As_Port(value);
+		// !!! We are going to "re-apply" the call frame with routines that
+		// are going to read the D_ARG(1) slot *implicitly* regardless of
+		// what value points to.  And dodgily, we must also make sure the
+		// output is set.  Review.
+		if (!IS_PORT(value)) {
+			Make_Port(D_OUT, value);
+			*D_ARG(1) = *D_OUT;
+			value = D_ARG(1);
+		} else
+			*D_OUT = *value;
 	case A_UPDATE:
 	default:
-		return Do_Port_Action(VAL_PORT(value), action); // Result on stack
+		return Do_Port_Action(call_, VAL_PORT(value), action); // Result on stack
 
 	case A_REFLECT:
-		return T_Object(ds, action);
-		break;
+		return T_Object(call_, action);
 
 	case A_MAKE:
 		if (IS_DATATYPE(value)) Make_Port(value, arg);

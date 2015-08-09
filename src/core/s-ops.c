@@ -683,7 +683,7 @@ static REBYTE seed_str[SEED_LEN] = {
 
 /***********************************************************************
 **
-*/  void Change_Case(REBVAL *ds, REBVAL *val, REBVAL *part, REBOOL upper)
+*/  void Change_Case(REBVAL *out, REBVAL *val, REBVAL *part, REBOOL upper)
 /*
 **      Common code for string case handling.
 **
@@ -692,14 +692,14 @@ static REBYTE seed_str[SEED_LEN] = {
 	REBCNT len;
 	REBCNT n;
 
-	*D_OUT = *val;
+	*out = *val;
 
 	if (IS_CHAR(val)) {
 		REBUNI c = VAL_CHAR(val);
 		if (c < UNICODE_CASES) {
 			c = upper ? UP_CASE(c) : LO_CASE(c);
 		}
-		VAL_CHAR(D_OUT) = c;
+		VAL_CHAR(out) = c;
 		return;
 	}
 

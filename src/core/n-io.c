@@ -113,9 +113,13 @@
 {
 	REBVAL *value = D_ARG(1);
 
-	if (IS_BLOCK(value)) Reduce_Block(VAL_SERIES(value), VAL_INDEX(value), 0);
-	Print_Value(DS_TOP, 0, 0);
-	return R_UNSET; // reloads ds
+	if (IS_BLOCK(value))
+		Reduce_Block(value, VAL_SERIES(value), VAL_INDEX(value), FALSE);
+
+	// value is safe from GC due to being in arg slot
+	Print_Value(value, 0, 0);
+
+	return R_UNSET;
 }
 
 
@@ -127,9 +131,13 @@
 {
 	REBVAL *value = D_ARG(1);
 
-	if (IS_BLOCK(value)) Reduce_Block(VAL_SERIES(value), VAL_INDEX(value), 0);
-	Prin_Value(DS_TOP, 0, 0);
-	return R_UNSET; // reloads ds
+	if (IS_BLOCK(value))
+		Reduce_Block(value, VAL_SERIES(value), VAL_INDEX(value), FALSE);
+
+	// value is safe from GC due to being in arg slot
+	Prin_Value(value, 0, 0);
+
+	return R_UNSET;
 }
 
 
@@ -250,9 +258,9 @@
 	SET_NONE(D_OUT);
 
 	if (IS_BLOCK(val)) {
-		Reduce_Block(VAL_SERIES(val), VAL_INDEX(val), 0); // [stack-move]
-		ports = VAL_SERIES(DS_TOP); // volatile after
-		DS_RELOAD(ds);
+		REBVAL unsafe; // temporary not safe from GC
+		Reduce_Block(&unsafe, VAL_SERIES(val), VAL_INDEX(val), FALSE);
+		ports = VAL_SERIES(&unsafe);
 		for (val = BLK_HEAD(ports); NOT_END(val); val++) { // find timeout
 			if (Pending_Port(val)) n++;
 			if (IS_INTEGER(val) || IS_DECIMAL(val)) break;
@@ -302,7 +310,6 @@ chk_neg:
 		return R_NONE;
 	}
 	if (!ports) return R_NONE;
-	DS_RELOAD(ds);
 
 	// Determine what port(s) waked us:
 	Sieve_Ports(ports);
@@ -334,14 +341,14 @@ chk_neg:
 
 	val = OFV(port, STD_PORT_ACTOR);
 	if (IS_NATIVE(val)) {
-		Do_Port_Action(port, A_UPDATE); // uses current stack frame
+		Do_Port_Action(call_, port, A_UPDATE); // uses current stack frame
 	}
 
 	val = OFV(port, STD_PORT_AWAKE);
 	if (ANY_FUNC(val)) {
-		Apply_Func(0, val, D_ARG(2), 0);
-		if (!(IS_LOGIC(DS_TOP) && VAL_LOGIC(DS_TOP))) awakened = FALSE;
-		DS_DROP;
+		Apply_Func(D_OUT, val, D_ARG(2), 0);
+		if (!(IS_LOGIC(D_OUT) && VAL_LOGIC(D_OUT))) awakened = FALSE;
+		SET_TRASH_SAFE(D_OUT);
 	}
 	return awakened ? R_TRUE : R_FALSE;
 }
@@ -447,7 +454,8 @@ chk_neg:
 	if (r == 0) {
 		return R_UNSET;
 	} else {
-		Trap1_DEAD_END(RE_CALL_FAIL, Make_OS_Error(r));
+		Make_OS_Error(D_OUT, r);
+		Trap1_DEAD_END(RE_CALL_FAIL, D_OUT);
 	}
 
 	return R_UNSET;
@@ -688,8 +696,8 @@ chk_neg:
 			SET_INTEGER(D_OUT, pid);
 		return R_OUT;
 	} else {
-		Trap1_DEAD_END(RE_CALL_FAIL, Make_OS_Error(r));
-		return R_NONE;
+		Make_OS_Error(D_OUT, r);
+		Trap1_DEAD_END(RE_CALL_FAIL, D_OUT);
 	}
 
 	(void)input; // suppress unused warning but keep variable

@@ -67,13 +67,14 @@
 {
 	REBVAL *task = cast(REBVAL*, task_rebval);
 	REBSER *body;
+	REBVAL ignored; // !!! Should result be ignored?
 
 	Debug_Str("Begin Task");
 
 	Init_Task();
 	body = Clone_Block(VAL_MOD_BODY(task));
 	OS_TASK_READY(0);
-	Do_Blk(body, 0);
+	DO_BLOCK(&ignored, body, 0);
 
 	Debug_Str("End Task");
 }

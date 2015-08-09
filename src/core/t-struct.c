@@ -563,13 +563,18 @@ static REBOOL parse_field_type(struct Struct_Field *field, REBVAL *spec, REBVAL 
 	++ val;
 
 	if (IS_BLOCK(val)) {// make struct! [a: [int32 [2]] [0 0]]
+		REBVAL ret;
 
-		REBVAL *ret = Do_Blk(VAL_SERIES(val), 0);
+		if (!DO_BLOCK(&ret, VAL_SERIES(val), 0)) {
+			// !!! Does not check for thrown cases...what should this
+			// do in case of THROW, BREAK, RETURN?  Currently it would
+			// say it expected an integer and not allow the throw.
+		}
 
-		if (!IS_INTEGER(ret)) {
+		if (!IS_INTEGER(&ret)) {
 			Trap_Types_DEAD_END(RE_EXPECT_VAL, REB_INTEGER, VAL_TYPE(val));
 		}
-		field->dimension = (REBCNT)VAL_INT64(ret);
+		field->dimension = cast(REBCNT, VAL_INT64(&ret));
 		field->array = TRUE;
 		++ val;
 	} else {
@@ -680,17 +685,18 @@ static REBOOL parse_field_type(struct Struct_Field *field, REBVAL *spec, REBVAL 
 			EXPAND_SERIES_TAIL(VAL_STRUCT_DATA_BIN(out), step);
 
 			if (expect_init) {
+				REBVAL safe; // result of reduce or do (GC saved during eval)
+				init = &safe;
+
 				if (IS_BLOCK(blk)) {
-					Reduce_Block(VAL_SERIES(blk), 0, NULL); //result is on stack
-					init = DS_POP;
+					Reduce_Block(init, VAL_SERIES(blk), 0, FALSE);
 					++ blk;
 				} else {
-					eval_idx = blk - VAL_BLK_DATA(data);
-
-					eval_idx = Do_Next(VAL_SERIES(data), eval_idx, 0);
+					eval_idx = DO_NEXT(
+						init, VAL_SERIES(data), blk - VAL_BLK_DATA(data)
+					);
 
 					blk = VAL_BLK_SKIP(data, eval_idx);
-					init = DS_POP; //Do_Next saves result on stack
 				}
 
 				if (field->array) {
@@ -973,7 +979,7 @@ static void init_fields(REBVAL *ret, REBVAL *spec)
 	arg = D_ARG(2);
 	val = D_ARG(1);
 
-	ret = DS_OUT;
+	ret = D_OUT;
 	// unary actions
 	switch(action) {
 		case A_MAKE:

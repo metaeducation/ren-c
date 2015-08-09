@@ -95,9 +95,9 @@ TVAR REBUPT Stack_Limit;	// Limit address for CPU stack.
 
 //-- Evaluation stack:
 TVAR REBSER	*DS_Series;
-TVAR REBVAL	*DS_Base;		// Data stack base
-TVAR REBINT	DS_Index;		// Data stack "pointer" (index into DS_Base)
-TVAR REBINT	DS_Frame_Index;	// Data stack frame (also index into DS_Base)
+TVAR struct Reb_Call *CS_Running;	// Call frame if *running* function
+TVAR struct Reb_Call *CS_Top;	// Last call frame pushed, may be "pending"
+TVAR struct Reb_Call *CS_Root;	// Root call frame (head of first chunk)
 
 TVAR REBOL_STATE *Saved_State; // Saved state for Catch (CPU state, etc.)
 

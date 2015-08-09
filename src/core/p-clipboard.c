@@ -32,7 +32,7 @@
 
 /***********************************************************************
 **
-*/	static int Clipboard_Actor(REBVAL *ds, REBSER *port, REBCNT action)
+*/	static REB_R Clipboard_Actor(struct Reb_Call *call_, REBSER *port, REBCNT action)
 /*
 ***********************************************************************/
 {
@@ -114,7 +114,7 @@
 			if (OS_DO_DEVICE(req, RDC_OPEN)) Trap_Port_DEAD_END(RE_CANNOT_OPEN, port, req->error);
 		}
 
-		refs = Find_Refines(ds, ALL_WRITE_REFS);
+		refs = Find_Refines(call_, ALL_WRITE_REFS);
 
 		// Handle /part refinement:
 		len = VAL_LEN(arg);

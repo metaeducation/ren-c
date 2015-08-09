@@ -111,7 +111,7 @@ static REBREQ *Req_SIO;
 
 	Req_SIO->actual = 0;
 	Req_SIO->common.data = buf;
-	buf[0] = 0; // for debug tracing
+	buffer[0] = 0; // for debug tracing
 
 	while ((len2 = len) > 0) {
 
@@ -412,7 +412,7 @@ static REBREQ *Req_SIO;
 
 /***********************************************************************
 **
-*/  void Debug_Value(REBVAL *value, REBCNT limit, REBOOL mold)
+*/  void Debug_Value(const REBVAL *value, REBCNT limit, REBOOL mold)
 /*
 ***********************************************************************/
 {
@@ -422,7 +422,7 @@ static REBREQ *Req_SIO;
 
 /***********************************************************************
 **
-*/  void Debug_Values(REBVAL *value, REBCNT count, REBCNT limit)
+*/  void Debug_Values(const REBVAL *value, REBCNT count, REBCNT limit)
 /*
 ***********************************************************************/
 {
