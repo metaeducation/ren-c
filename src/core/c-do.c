@@ -839,8 +839,23 @@ do_at_index:
 		if (value && ANY_FUNC(value)) {
 			// object/func or func/refinements or object/func/refinement:
 
-			if (label && !IS_WORD(label))
+			assert(label);
+
+			// You can get an actual function value as a label if you use it
+			// literally with a refinement.  Tricky to make it, but possible:
+			//
+			// do reduce [
+			//     to-path reduce [:append 'only] [a] [b]
+			// ]
+			//
+			// Hence legal, but we don't pass that into Make_Call.
+
+			if (!IS_WORD(label) && !ANY_FUNC(label))
 				Trap1(RE_BAD_REFINE, label); // CC#2226
+
+			// We should only get a label that is the function if said label
+			// is the function value itself.
+			assert(!ANY_FUNC(label) || value == label);
 
 			// Cannot handle an OP! because prior value is wiped out above
 			// (Theoretically we could save it if we are DO-ing a chain of
@@ -849,7 +864,9 @@ do_at_index:
 
 			if (IS_OP(value)) Trap_Type_DEAD_END(value);
 
-			call = Make_Call(out, block, index, label, value);
+			call = Make_Call(
+				out, block, index, ANY_FUNC(label) ? NULL : label, value
+			);
 
 			index = Do_Args(call, label + 1, block, index + 1);
 
