@@ -262,7 +262,7 @@
 
 static ffi_type * struct_type_to_ffi [STRUCT_TYPE_MAX];
 
-static void process_type_block(REBVAL *out, REBVAL *blk, REBCNT n);
+static void process_type_block(const REBVAL *out, REBVAL *blk, REBCNT n);
 
 static void init_type_map()
 {
@@ -320,7 +320,7 @@ static REBCNT n_struct_fields (REBSER *fields)
 	return n_fields;
 }
 
-static ffi_type* struct_to_ffi(REBVAL *out, REBSER *fields)
+static ffi_type* struct_to_ffi(const REBVAL *out, REBSER *fields)
 {
 	ffi_type *args = (ffi_type*) SERIES_DATA(VAL_ROUTINE_FFI_ARG_TYPES(out));
 	REBCNT i = 0, j = 0;
@@ -371,7 +371,7 @@ static ffi_type* struct_to_ffi(REBVAL *out, REBSER *fields)
 
 /* convert the type of "elem", and store it in "out" with index of "idx"
  */
-static REBOOL rebol_type_to_ffi(REBVAL *out, REBVAL *elem, REBCNT idx)
+static REBOOL rebol_type_to_ffi(const REBVAL *out, const REBVAL *elem, REBCNT idx)
 {
 	ffi_type **args = (ffi_type**) SERIES_DATA(VAL_ROUTINE_FFI_ARG_TYPES(out));
 	REBVAL *rebol_args = NULL;
@@ -784,7 +784,7 @@ static void ffi_to_rebol(REBRIN *rin,
 				// routine is modified.  (REBDOF functions should almost
 				// certainly not be modifying the function they dispatch)
 
-				process_type_block(m_cast(REBVAL*, rot), reb_type, j);
+				process_type_block(rot, reb_type, j);
 				i ++;
 			}
 			ffi_args[j - 1] = arg_to_ffi(rot, reb_arg, j, &pop);
@@ -853,7 +853,7 @@ static void ffi_to_rebol(REBRIN *rin,
 	Free_Node(RIN_POOL, (REBNOD*)rin);
 }
 
-static void process_type_block(REBVAL *out, REBVAL *blk, REBCNT n)
+static void process_type_block(const REBVAL *out, REBVAL *blk, REBCNT n)
 {
 	if (IS_BLOCK(blk)) {
 		REBVAL *t = VAL_BLK_DATA(blk);
