@@ -890,8 +890,12 @@ static void callback_dispatcher(ffi_cif *cif, void *ret, void **args, void *user
 	REBSER *ser;
 	REBVAL *elem;
 	REBVAL safe;
+	REBVAL tmp;
 
 	ser = Make_Block(1 + cif->nargs);
+	Set_Block(&tmp, ser);
+	DS_PUSH(&tmp); //save it to the stack to avoid being GC'ed.
+
 	elem = Alloc_Tail_Blk(ser);
 	SET_TYPE(elem, REB_FUNCTION);
 	VAL_FUNC(elem) = RIN_FUNC(rin);
@@ -977,6 +981,8 @@ static void callback_dispatcher(ffi_cif *cif, void *ret, void **args, void *user
 		default:
 			Trap_Arg(elem);
 	}
+
+	DS_DROP;
 }
 
 /***********************************************************************
