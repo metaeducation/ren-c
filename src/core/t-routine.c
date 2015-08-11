@@ -633,6 +633,7 @@ static void prep_rvalue(REBRIN *rin,
 			SET_TYPE(val, REB_STRUCT);
 			break;
 		case FFI_TYPE_VOID:
+			SET_UNSET(val);
 			break;
 		default:
 			Trap_Arg(val);

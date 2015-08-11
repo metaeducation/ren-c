@@ -87,6 +87,7 @@
 		case A_CLOSE:
 			OS_CLOSE_LIBRARY(VAL_LIB_FD(val));
 			CLOSE_LIB(VAL_LIB_HANDLE(val));
+			SET_UNSET(ret);
 			break;
 		default:
 			Trap_Action_DEAD_END(REB_LIBRARY, action);
