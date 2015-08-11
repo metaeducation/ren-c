@@ -1258,35 +1258,19 @@ static void callback_dispatcher(ffi_cif *cif, void *ret, void **args, void *user
 	}
 
 	if (type == REB_CALLBACK) {
-		VAL_ROUTINE_CLOSURE(out) = ffi_closure_alloc(sizeof(ffi_closure), (void**)&VAL_ROUTINE_DISPATCHER(out));
+		VAL_ROUTINE_CLOSURE(out) = ffi_closure_alloc(sizeof(ffi_closure), &VAL_ROUTINE_DISPATCHER(out));
 		if (VAL_ROUTINE_CLOSURE(out) == NULL) {
 			//printf("No memory\n");
 			ret = FALSE;
 		} else {
-			// !!! Technically you can't cast function pointers to void*
-			//
-			//     http://stackoverflow.com/questions/3941793/
-			//
-			// On non-embedded systems the odds are they're the same size.
-			// But there's no way to get *just* this warning disabled (it's
-			// part of --pedantic).  So to keep the other warnings but
-			// quiet the compiler on this one, we use pass a union big
-			// enough to hold either a function pointer or a void pointer.
-			union funcptr_and_dataptr {
-				CFUNC *func;
-				void *data;
-			} dispatcher_hack;
-
 			ffi_status status;
-
-			dispatcher_hack.func = VAL_ROUTINE_DISPATCHER(out);
 
 			status = ffi_prep_closure_loc(
 				cast(ffi_closure*, VAL_ROUTINE_CLOSURE(out)),
 				cast(ffi_cif*, VAL_ROUTINE_CIF(out)),
 				callback_dispatcher,
 				VAL_ROUTINE_INFO(out),
-				&dispatcher_hack
+				VAL_ROUTINE_DISPATCHER(out)
 			);
 
 			if (status != FFI_OK) {
