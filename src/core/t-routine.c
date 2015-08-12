@@ -474,12 +474,12 @@ static REBOOL rebol_type_to_ffi(const REBVAL *out, const REBVAL *elem, REBCNT id
  * arg referes to return value when idx = 0
  * function args start from idx = 1
  *
+ * @ptrs is an array with a length of number of arguments of @rot
+ *
  * For FFI_TYPE_POINTER, a temperary pointer could be needed
- * (whose address is returned). The pointer is stored in rebol
- * stack, so DS_POP is needed after the function call is done.
- * The number to pop is returned by pop
+ * (whose address is returned). ptrs[idx] is the temperary pointer.
  * */
-static void *arg_to_ffi(const REBVAL *rot, REBVAL *arg, REBCNT idx, REBINT *pop)
+static void *arg_to_ffi(const REBVAL *rot, REBVAL *arg, REBCNT idx, void **ptrs)
 {
 	ffi_type **args = (ffi_type**)SERIES_DATA(VAL_ROUTINE_FFI_ARG_TYPES(rot));
 	REBSER *rebol_args = NULL;
@@ -563,11 +563,8 @@ static void *arg_to_ffi(const REBVAL *rot, REBVAL *arg, REBCNT idx, REBINT *pop)
 				case REB_STRING:
 				case REB_BINARY:
 				case REB_VECTOR:
-					{
-						DS_PUSH_INTEGER((REBUPT)VAL_DATA(arg));
-						(*pop) ++;
-						return &VAL_INT64(DS_TOP);
-					}
+					ptrs[idx] = VAL_DATA(arg);
+					return &ptrs[idx];
 				default:
 					Trap3_DEAD_END(RE_EXPECT_ARG, DSF_LABEL(DSF), BLK_SKIP(rebol_args, idx), arg);
 			}
@@ -710,10 +707,10 @@ static void ffi_to_rebol(REBRIN *rin,
 	void *rvalue = NULL;
 	REBSER *ser = NULL;
 	void ** ffi_args = NULL;
-	REBINT pop = 1; /* for tmp */
-	REBVAL *tmp = NULL;
+	REBINT pop = 0;
 	REBVAL *varargs = NULL;
 	REBCNT n_fixed = 0; /* number of fixed arguments */
+	REBSER *ffi_args_ptrs = NULL; /* a temprary series to hold pointer parameters */
 
 	if (VAL_ROUTINE_LIB(rot) != NULL //lib is NULL when routine is constructed from address directly
 		&& IS_CLOSED_LIB(VAL_ROUTINE_LIB(rot))) {
@@ -742,14 +739,11 @@ static void ffi_to_rebol(REBRIN *rin,
 		);
 	}
 
-	/* save ser on stack such that it won't be GC'ed */
-	if (ser != NULL) {
-		DS_PUSH_NONE;
-		tmp = DS_TOP;
-		SET_TYPE(tmp, REB_BLOCK);
-		VAL_SERIES(tmp) = ser;
-		ffi_args = (void **) SERIES_DATA(ser);
-	}
+	SAVE_SERIES(ser); //protect from GC
+	ffi_args = (void **) SERIES_DATA(ser);
+
+	ffi_args_ptrs = Make_Series(SERIES_TOTAL(ser) - 1, sizeof(void *), MKS_NONE); // must be big enough
+	SAVE_SERIES(ffi_args_ptrs);
 
 	if (ROUTINE_GET_FLAG(VAL_ROUTINE_INFO(rot), ROUTINE_VARARGS)) {
 		REBCNT j = 1;
@@ -780,14 +774,10 @@ static void ffi_to_rebol(REBRIN *rin,
 				Init_Typed_Word(v, REB_WORD, SYM_ELLIPSIS, 0); //FIXME, be clear
 				EXPAND_SERIES_TAIL(VAL_ROUTINE_FFI_ARG_TYPES(rot), 1);
 
-				// !!! REVIEW: Mutability cast needed here because the
-				// routine is modified.  (REBDOF functions should almost
-				// certainly not be modifying the function they dispatch)
-
 				process_type_block(rot, reb_type, j);
 				i ++;
 			}
-			ffi_args[j - 1] = arg_to_ffi(rot, reb_arg, j, &pop);
+			ffi_args[j - 1] = arg_to_ffi(rot, reb_arg, j, cast(void **, SERIES_DATA(ffi_args_ptrs)));
 		}
 		if (VAL_ROUTINE_CIF(rot) == NULL) {
 			VAL_ROUTINE_CIF(rot) = OS_ALLOC(ffi_cif);
@@ -810,27 +800,20 @@ static void ffi_to_rebol(REBRIN *rin,
 		}
 	} else {
 		for (i = 1; i < SERIES_TAIL(VAL_ROUTINE_FFI_ARG_TYPES(rot)); i ++) {
-			ffi_args[i - 1] = arg_to_ffi(rot, BLK_SKIP(args, i - 1), i, &pop);
+			ffi_args[i - 1] = arg_to_ffi(rot, BLK_SKIP(args, i - 1), i, cast(void **, SERIES_DATA(ffi_args_ptrs)));
 		}
 	}
 	prep_rvalue(VAL_ROUTINE_INFO(rot), ret);
-	rvalue = arg_to_ffi(rot, ret, 0, &pop);
+	rvalue = arg_to_ffi(rot, ret, 0, cast(void **, SERIES_DATA(ffi_args_ptrs)));
 	ffi_call(cast(ffi_cif*, VAL_ROUTINE_CIF(rot)),
 			 VAL_ROUTINE_FUNCPTR(rot),
 			 rvalue,
 			 ffi_args);
+
+	UNSAVE_SERIES(ffi_args_ptrs);
+	UNSAVE_SERIES(ser);
+
 	ffi_to_rebol(VAL_ROUTINE_INFO(rot), ((ffi_type**)SERIES_DATA(VAL_ROUTINE_FFI_ARG_TYPES(rot)))[0], rvalue, ret);
-
-	// !!! Using a 'pop' count instead of saving the stack position and
-	// then using DS_DROP_TO offers the advantage of not covering up
-	// any bugs where stack elements are added inadvertently (as the
-	// Do_Core will catch the stack imbalance).  But it may be overkill.
-	// Consider saving the DSP and using DS_DROP_TO.
-
-	while (pop > 0) {
-		DS_DROP;
-		pop--;
-	}
 }
 
 /***********************************************************************
