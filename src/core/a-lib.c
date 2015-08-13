@@ -923,8 +923,8 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 	// !!This code should use a function from c-words.c (but nothing perfect yet.)
 	if (word == 0 || word >= PG_Word_Table.series->tail) return 0;
 	s1 = VAL_SYM_NAME(BLK_SKIP(PG_Word_Table.series, word));
-	s2 = OS_ALLOC_ARRAY(REBYTE, LEN_BYTES(s1));
-	COPY_BYTES(s2, s1, LEN_BYTES(s1));
+	s2 = OS_ALLOC_ARRAY(REBYTE, LEN_BYTES(s1) + 1);
+	COPY_BYTES(s2, s1, LEN_BYTES(s1) + 1);
 	return s2;
 }
 
