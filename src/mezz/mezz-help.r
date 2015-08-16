@@ -332,11 +332,10 @@ usage: func [
 
 	Standard options:
 
-		--args data      Explicit arguments to script (quoted)
 		--do expr        Evaluate expression (quoted)
 		--help (-?)      Display this usage information
-		--script file    Explicit script filename
 		--version tuple  Script must be this version or greater
+		--               End of options
 
 	Special options:
 

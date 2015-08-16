@@ -110,7 +110,6 @@ finish-rl-start: func [
 	;-- Convert command line arg strings as needed:
 	script-args: args ; save for below
 	foreach [opt act] [
-		args    [if args [parse args ""]]
 		do-arg  block!
 		debug   block!
 		secure  word!

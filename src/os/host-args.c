@@ -43,13 +43,10 @@
 
 #include "reb-host.h"
 
-#define ARG_BUF_SIZE 1024
-
 // REBOL Option --Words:
 
 const struct {const REBCHR *word; const int flag;} arg_words[] = {
 	// Keep in Alpha order!
-	{OS_STR_LIT("args"),		RO_ARGS | RO_EXT},
 	{OS_STR_LIT("boot"),		RO_BOOT | RO_EXT},
 	{OS_STR_LIT("cgi"),			RO_CGI | RO_QUIET},
 	{OS_STR_LIT("debug"),		RO_DEBUG | RO_EXT},
@@ -58,7 +55,6 @@ const struct {const REBCHR *word; const int flag;} arg_words[] = {
 	{OS_STR_LIT("help"),		RO_HELP},
 	{OS_STR_LIT("import"),		RO_IMPORT | RO_EXT},
 	{OS_STR_LIT("quiet"),		RO_QUIET},
-	{OS_STR_LIT("script"),		RO_SCRIPT | RO_EXT},
 	{OS_STR_LIT("secure"),		RO_SECURE | RO_EXT},
 	{OS_STR_LIT("trace"),		RO_TRACE},
 	{OS_STR_LIT("verbose"),		RO_VERBOSE},
@@ -145,22 +141,12 @@ const struct arg_chr arg_chars2[] = {
 **
 ***********************************************************************/
 {
-	if (arg && arg[1] == (REBCHR)'-') return flag;
-
 	flag &= ~RO_EXT;
 
 	switch (flag) {
 
 	case RO_VERSION:
 		rargs->version = arg;
-		break;
-
-	case RO_SCRIPT:
-		rargs->script = arg;
-		break;
-
-	case RO_ARGS:
-		rargs->args = arg;
 		break;
 
 	case RO_DO:
@@ -198,7 +184,6 @@ const struct arg_chr arg_chars2[] = {
 ***********************************************************************/
 {
 	REBCHR *arg;
-	REBCHR *args = 0; // holds trailing args
 	int flag;
 	int i;
 
@@ -215,26 +200,29 @@ const struct arg_chr arg_chars2[] = {
 		if (arg == 0) continue; // shell bug
 		if (*arg == '-') {
 			if (arg[1] == '-') {
+				if (arg[2] == 0) {
+					// -- (end of options)
+					++i;
+					break;
+				}
 				// --option words
 				flag = find_option_word(arg+2);
+				if (!flag) goto error;
 				if (flag & RO_EXT) {
-					flag = Get_Ext_Arg(flag, rargs, (i+1 >= argc) ? 0 : argv[i+1]);
-					if ((flag & RO_EXT) == 0) i++; // used it
-					else flag &= ~RO_EXT;
+					if (++i < argc) flag = Get_Ext_Arg(flag, rargs, argv[i]);
+					else goto error;
 				}
-				if (!flag) flag = RO_HELP;
 				rargs->options |= flag;
 			}
 			else {
 				// -x option chars
 				while (*++arg) {
 					flag = find_option_char(*arg, arg_chars);
+					if (!flag) goto error;
 					if (flag & RO_EXT) {
-						flag = Get_Ext_Arg(flag, rargs, (i+1 >= argc) ? 0 : argv[i+1]);
-						if ((flag & RO_EXT) == 0) i++; // used it
-						else flag &= ~RO_EXT;
+						if (++i < argc) flag = Get_Ext_Arg(flag, rargs, argv[i]);
+						else goto error;
 					}
-					if (!flag) flag = RO_HELP;
 					rargs->options |= flag;
 				}
 			}
@@ -243,37 +231,43 @@ const struct arg_chr arg_chars2[] = {
 			// +x option chars
 			while (*++arg) {
 				flag = find_option_char(*arg, arg_chars2);
+				if (!flag) goto error;
 				if (flag & RO_EXT) {
-					flag = Get_Ext_Arg(flag, rargs, (i+1 >= argc) ? 0 : argv[i+1]);
-					if ((flag & RO_EXT) == 0) i++; // used it
-					else flag &= ~RO_EXT;
+					if (++i < argc) flag = Get_Ext_Arg(flag, rargs, argv[i]);
+					else goto error;
 				}
-				if (!flag) flag = RO_HELP;
 				rargs->options |= flag;
 			}
 		}
-		else {
-			// script filename
-			if (!rargs->script)
-				rargs->script = arg;
-			else {
-				int len;
-				if (!args) {
-					args = OS_ALLOC_ARRAY(REBCHR, ARG_BUF_SIZE);
-					args[0] = 0;
-				}
-				len = ARG_BUF_SIZE - OS_STRLEN(args) - 2; // space remaining
-				OS_STRNCAT(args, arg, len);
-				OS_STRNCAT(args, OS_STR_LIT(" "), 1);
-			}
-		}
+		else break;
 	}
 
-	if (args) {
-		args[OS_STRLEN(args) - 1] = 0; // remove trailing space
-		Get_Ext_Arg(RO_ARGS, rargs, args);
+	// script filename
+	if (i < argc) rargs->script = argv[i++];
+
+	// the rest are script args
+	if (i < argc) {
+		// rargs->args must be a null-terminated array of pointers
+		// but CommandLineToArgvW() may return a non-terminated array
+		rargs->args = OS_ALLOC_ARRAY(REBCHR*, argc - i + 1);
+		memcpy(rargs->args, &argv[i], (argc - i) * sizeof(REBCHR*));
+		rargs->args[argc - i] = NULL;
 	}
+
+	// empty script name for only setting args
+	if (rargs->script && rargs->script[0] == 0)
+		rargs->script = NULL;
+
+	return;
+
+error:
+	// disregard command line options
+	// leave exe_path and home_dir set
+	rargs->options = RO_HELP;
+	rargs->version = NULL;
+	rargs->do_arg = NULL;
+	rargs->debug = NULL;
+	rargs->secure = NULL;
+	rargs->import = NULL;
+	rargs->boot = NULL;
 }
-
-
-

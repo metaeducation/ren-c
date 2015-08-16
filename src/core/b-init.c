@@ -976,7 +976,19 @@ static REBCNT Set_Option_Word(REBCHR *str, REBCNT field)
 	if (n >= SYM_BASE && n <= SYM_MODS)
 		PG_Boot_Level = n - SYM_BASE; // 0 - 3
 
-	Set_Option_String(rargs->args, OPTIONS_ARGS);
+	if (rargs->args) {
+		n = 0;
+		while (rargs->args[n++]);
+		// n == number_of_args + 1
+		val = Get_System(SYS_OPTIONS, OPTIONS_ARGS);
+		ser = Make_Block(n);
+		Set_Series(REB_BLOCK, val, ser);
+		SERIES_TAIL(ser) = n - 1;
+		for (n = 0; (data = rargs->args[n]); ++n)
+			Set_String(BLK_SKIP(ser, n), Copy_OS_Str(data, OS_STRLEN(data)));
+		BLK_TERM(ser);
+	}
+
 	Set_Option_String(rargs->debug, OPTIONS_DEBUG);
 	Set_Option_String(rargs->version, OPTIONS_VERSION);
 	Set_Option_String(rargs->import, OPTIONS_IMPORT);

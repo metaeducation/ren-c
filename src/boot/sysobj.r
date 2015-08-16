@@ -38,7 +38,7 @@ catalog: context [
 	; Official list of system/options/flags that can appear.
 	; Must match host reb-args.h enum!
 	boot-flags: [
-		script args do import version debug secure
+		do import version debug secure
 		help vers quiet verbose
 		secure-min secure-max trace halt cgi boot-level no-window
 	]

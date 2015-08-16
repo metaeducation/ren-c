@@ -31,7 +31,7 @@
 typedef struct rebol_args {
 	REBCNT options;
 	REBCHR *script;
-	REBCHR *args;
+	REBCHR **args;
 	REBCHR *do_arg;
 	REBCHR *version;
 	REBCHR *debug;
@@ -47,8 +47,6 @@ typedef struct rebol_args {
 enum arg_opts {
 	ROF_EXT,
 
-	ROF_SCRIPT,
-	ROF_ARGS,
 	ROF_DO,
 	ROF_IMPORT,
 	ROF_VERSION,
@@ -75,13 +73,11 @@ enum arg_opts {
 #define RO_HELP        (1<<ROF_HELP)
 #define RO_IMPORT      (1<<ROF_IMPORT)
 #define RO_CGI         (1<<ROF_CGI)
-#define RO_ARGS        (1<<ROF_ARGS)
 #define RO_DO          (1<<ROF_DO)
 #define RO_DEBUG       (1<<ROF_DEBUG)
 #define RO_SECURE_MIN  (1<<ROF_SECURE_MIN)
 #define RO_SECURE_MAX  (1<<ROF_SECURE_MAX)
 #define RO_QUIET       (1<<ROF_QUIET)
-#define RO_SCRIPT      (1<<ROF_SCRIPT)
 #define RO_SECURE      (1<<ROF_SECURE)
 #define RO_TRACE       (1<<ROF_TRACE)
 #define RO_VERSION     (1<<ROF_VERSION)
