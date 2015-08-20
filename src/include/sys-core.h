@@ -168,7 +168,8 @@ enum Boot_Levels {
 enum {
 	MKS_NONE		= 0,		// data is opaque (not delved into by the GC)
 	MKS_BLOCK		= 1 << 0,	// Contains REBVALs (seen by GC and Debug)
-	MKS_POWER_OF_2	= 1 << 1	// Round size up to a power of 2
+	MKS_POWER_OF_2	= 1 << 1,	// Round size up to a power of 2
+	MKS_EXTERNAL	= 1 << 2	// Uses external pointer--don't alloc data
 };
 
 // Modes allowed by Copy_Block function:

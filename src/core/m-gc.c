@@ -152,7 +152,7 @@ static void Mark_Series_Only_Debug(REBSER *ser);
 **
 ***********************************************************************/
 {
-	assert(!IS_EXT_SERIES(series));
+	assert(!SERIES_GET_FLAG(series, SER_EXTERNAL));
 	assert(IS_BLOCK_SERIES(series));
 
     // set by calling macro (helps catch direct calls of this function)
@@ -352,7 +352,7 @@ static void Propagate_All_GC_Marks(void);
 	MARK_SERIES_ONLY(stu->fields);
 	MARK_SERIES_ONLY(STRUCT_DATA_BIN(stu));
 
-	assert(!IS_EXT_SERIES(stu->data));
+	assert(!SERIES_GET_FLAG(stu->data, SER_EXTERNAL));
 	assert(SERIES_TAIL(stu->data) == 1);
 	MARK_SERIES_ONLY(stu->data);
 

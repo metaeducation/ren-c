@@ -459,16 +459,20 @@ static void parse_attr (REBVAL *blk, REBINT *raw_size, REBUPT *raw_addr)
 /* set storage memory to external addr: raw_addr */
 static void set_ext_storage (REBVAL *out, REBINT raw_size, REBUPT raw_addr)
 {
+	REBSER *data_ser = VAL_STRUCT_DATA_BIN(out);
 	REBSER *ser = NULL;
 
 	if (raw_size >= 0 && raw_size != cast(REBINT, VAL_STRUCT_LEN(out))) {
 		Trap(RE_INVALID_DATA);
 	}
 
-	ser = (REBSER *)Make_Node(SERIES_POOL);
-	Prop_Series(ser, VAL_STRUCT_DATA_BIN(out));
+	ser = Make_Series(
+		SERIES_LEN(data_ser), // counts terminator, though a "LEN" shouldn't!
+		SERIES_WIDE(data_ser),
+		IS_BLOCK_SERIES(data_ser) ? (MKS_BLOCK | MKS_EXTERNAL) : MKS_EXTERNAL
+	);
+
 	ser->data = (REBYTE*)raw_addr;
-	EXT_SERIES(ser);
 
 	VAL_STRUCT_DATA_BIN(out) = ser;
 }

@@ -529,14 +529,14 @@ typedef struct Reb_Tuple {
 
 // Series Flags:
 enum {
-	SER_MARK	= 1 << 0,	// was found during GC mark scan.
-	SER_KEEP	= 1 << 1,	// don't garbage collect even if unreferenced
-	SER_LOCK	= 1 << 2,	// size is locked (do not expand it)
-	SER_EXT		= 1 << 3,	// .data pointer is external, don't free() on GC
-	SER_FLAG_4	= 1 << 4,	// UNUSED: was SER_FREE, but free if wide = 0
-	SER_BLOCK	= 1 << 5,	// is sizeof(REBVAL) wide and has valid values
-	SER_PROT	= 1 << 6,	// protected from modification
-	SER_MON		= 1 << 7	// !!! Monitoring (?)
+	SER_MARK		= 1 << 0,	// was found during GC mark scan.
+	SER_KEEP		= 1 << 1,	// don't garbage collect even if unreferenced
+	SER_LOCK		= 1 << 2,	// size is locked (do not expand it)
+	SER_EXTERNAL	= 1 << 3,	// ->data is external, don't free() on GC
+	SER_FLAG_4		= 1 << 4,	// UNUSED: was SER_FREE, but free if wide = 0
+	SER_BLOCK		= 1 << 5,	// is sizeof(REBVAL) wide and has valid values
+	SER_PROT		= 1 << 6,	// protected from modification
+	SER_MON			= 1 << 7	// !!! Monitoring (?)
 };
 
 #define SERIES_SET_FLAG(s, f) cast(void, (SERIES_FLAGS(s) |= ((f) << 8)))
@@ -545,8 +545,6 @@ enum {
 
 #define	IS_FREEABLE(s)    !SERIES_GET_FLAG(s, SER_MARK|SER_KEEP)
 #define KEEP_SERIES(s,l)  do {SERIES_SET_FLAG(s, SER_KEEP); LABEL_SERIES(s,l);} while(0)
-#define EXT_SERIES(s)     SERIES_SET_FLAG(s, SER_EXT)
-#define IS_EXT_SERIES(s)  SERIES_GET_FLAG(s, SER_EXT)
 #define LOCK_SERIES(s)    SERIES_SET_FLAG(s, SER_LOCK)
 #define IS_LOCK_SERIES(s) SERIES_GET_FLAG(s, SER_LOCK)
 #define IS_BLOCK_SERIES(s) SERIES_GET_FLAG((s), SER_BLOCK)
