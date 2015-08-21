@@ -138,7 +138,7 @@
 **
 ***********************************************************************/
 {
-	if (SERIES_REST(DS_Series) >= STACK_LIMIT) Trap(RE_STACK_OVERFLOW);
+	if (SERIES_REST(DS_Series) >= STACK_LIMIT) Trap_Stack_Overflow();
 	Extend_Series(DS_Series, amount);
 	Debug_Fmt(cs_cast(BOOT_STR(RS_STACK, 0)), DSP, SERIES_REST(DS_Series));
 }

@@ -126,7 +126,7 @@
 			? cast(void, ++DS_Series->tail) \
 			: ( \
 				SERIES_REST(DS_Series) >= STACK_LIMIT \
-					? Trap(RE_STACK_OVERFLOW) \
+					? Trap_Stack_Overflow() \
 					: cast(void, cast(REBUPT, Alloc_Tail_Blk(DS_Series))) \
 			), \
 		SET_TRASH(DS_TOP) \
