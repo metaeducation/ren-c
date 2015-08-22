@@ -307,7 +307,7 @@ static REBSER *Trim_Object(REBSER *obj)
 		// make object! | error! | module! | task!
 		if (IS_DATATYPE(value)) {
 
-			type = VAL_DATATYPE(value); // target type
+			type = VAL_TYPE_KIND(value); // target type
 
 			if (IS_BLOCK(arg)) {
 
@@ -415,7 +415,7 @@ static REBSER *Trim_Object(REBSER *obj)
 	case A_TO:
 		// special conversions to object! | error! | module!
 		if (IS_DATATYPE(value)) {
-			type = VAL_DATATYPE(value);
+			type = VAL_TYPE_KIND(value);
 			if (type == REB_ERROR) {
 				// arg is block/string, returns value
 				if (!Make_Error_Object(value, arg)) {
@@ -476,7 +476,7 @@ static REBSER *Trim_Object(REBSER *obj)
 		}
 		if D_REF(ARG_COPY_TYPES) {
 			arg = D_ARG(ARG_COPY_KINDS);
-			if (IS_DATATYPE(arg)) types |= TYPESET(VAL_DATATYPE(arg));
+			if (IS_DATATYPE(arg)) types |= TYPESET(VAL_TYPE_KIND(arg));
 			else types |= VAL_TYPESET(arg);
 		}
 		VAL_OBJ_FRAME(value) = obj = Copy_Block(VAL_OBJ_FRAME(value), 0);

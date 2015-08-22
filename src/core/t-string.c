@@ -461,7 +461,7 @@ static REBSER *make_binary(REBVAL *arg, REBOOL make)
 	REBINT	tail;
 	REBINT	len;
 	REBSER  *ser;
-	REBCNT  type;
+	enum Reb_Kind type;
 	REBCNT	args;
 	REBCNT	ret;
 
@@ -644,7 +644,7 @@ zero_str:
 	case A_TO:
 		// Determine the datatype to create:
 		type = VAL_TYPE(value);
-		if (type == REB_DATATYPE) type = VAL_DATATYPE(value);
+		if (type == REB_DATATYPE) type = VAL_TYPE_KIND(value);
 
 		if (IS_NONE(arg)) Trap_Make_DEAD_END(type, arg);
 

@@ -37,7 +37,7 @@ enum Parse_Flags {
 
 typedef struct reb_parse {
 	REBSER *series;
-	REBCNT type;
+	enum Reb_Kind type;
 	REBCNT flags;
 	REBINT result;
 	REBVAL *out;
@@ -70,7 +70,7 @@ enum parse_flags {
 
 static REBCNT Parse_Rules_Loop(REBPARSE *parse, REBCNT index, const REBVAL *rules, REBCNT depth);
 
-void Print_Parse_Index(REBCNT type, const REBVAL *rules, REBSER *series, REBCNT index)
+void Print_Parse_Index(enum Reb_Kind type, const REBVAL *rules, REBSER *series, REBCNT index)
 {
 	REBVAL val;
 	Set_Series(type, &val, series);
@@ -182,7 +182,7 @@ void Print_Parse_Index(REBCNT type, const REBVAL *rules, REBSER *series, REBCNT 
 		break;
 /*
 	case REB_DATATYPE:	// Currently: integer!
-		if (VAL_DATATYPE(item) == REB_INTEGER) {
+		if (VAL_TYPE_KIND(item) == REB_INTEGER) {
 			REBCNT begin = index;
 			while (IS_LEX_NUMBER(*str)) str++, index++;
 			if (begin == index) index = NOT_FOUND;
@@ -250,7 +250,7 @@ void Print_Parse_Index(REBCNT type, const REBVAL *rules, REBSER *series, REBCNT 
 	// Look for specific datattype:
 	case REB_DATATYPE:
 		index++;
-		if (VAL_TYPE(blk) == (REBYTE)VAL_DATATYPE(item)) break;
+		if (VAL_TYPE(blk) == VAL_TYPE_KIND(item)) break;
 		goto no_result;
 
 	// Look for a set of datatypes:

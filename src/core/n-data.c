@@ -94,7 +94,7 @@ static int Check_Char_Range(REBVAL *val, REBINT limit)
 	val = IS_WORD(types) ? GET_VAR(types) : types;
 
 	if (IS_DATATYPE(val)) {
-		return (VAL_DATATYPE(val) == (REBINT)VAL_TYPE(value));
+		return (VAL_TYPE_KIND(val) == VAL_TYPE(value));
 	}
 
 	if (IS_TYPESET(val)) {
@@ -105,7 +105,7 @@ static int Check_Char_Range(REBVAL *val, REBINT limit)
 		for (types = VAL_BLK_DATA(val); NOT_END(types); types++) {
 			val = IS_WORD(types) ? GET_VAR(types) : types;
 			if (IS_DATATYPE(val)) {
-				if (VAL_DATATYPE(val) == (REBINT)VAL_TYPE(value)) return TRUE;
+				if (VAL_TYPE_KIND(val) == VAL_TYPE(value)) return TRUE;
 			} else if (IS_TYPESET(val)) {
 				if (TYPE_CHECK(val, VAL_TYPE(value))) return TRUE;
 			} else {

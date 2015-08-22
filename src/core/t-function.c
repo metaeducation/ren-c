@@ -93,7 +93,7 @@ static REBOOL Same_Func(REBVAL *val, REBVAL *arg)
 	case A_TO:
 		// make function! [[args] [body]]
 		if (IS_DATATYPE(value)) {
-			n = VAL_DATATYPE(value);
+			n = VAL_TYPE_KIND(value);
 			if (Make_Function(n, value, arg)) break;
 			Trap_Make_DEAD_END(n, arg);
 		}

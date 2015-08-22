@@ -66,7 +66,7 @@
 	case A_MAKE:
 	case A_TO:
 		if (IS_DATATYPE(val))
-			return VAL_DATATYPE(val) == REB_NONE ? R_NONE : R_UNSET;
+			return VAL_TYPE_KIND(val) == REB_NONE ? R_NONE : R_UNSET;
 		else
 			return IS_NONE(val) ? R_NONE : R_UNSET;
 

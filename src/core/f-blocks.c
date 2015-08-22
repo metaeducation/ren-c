@@ -222,7 +222,7 @@
 	REBSER *series;
 	REBVAL *blk = DS_AT(start);
 	REBCNT len = DSP - start + 1;
-	REBCNT type;
+	enum Reb_Kind type;
 
 	if (into) {
 		type = VAL_TYPE(into);

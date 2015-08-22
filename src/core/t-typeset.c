@@ -120,7 +120,7 @@
 		}
 		if (!val) val = block;
 		if (IS_DATATYPE(val)) {
-			TYPE_SET(value, VAL_DATATYPE(val));
+			TYPE_SET(value, VAL_TYPE_KIND(val));
 		} else if (IS_TYPESET(val)) {
 			VAL_TYPESET(value) |= VAL_TYPESET(val);
 		} else {
@@ -220,7 +220,7 @@
 
 	case A_FIND:
 		if (IS_DATATYPE(arg)) {
-			DECIDE(TYPE_CHECK(val, VAL_DATATYPE(arg)));
+			DECIDE(TYPE_CHECK(val, VAL_TYPE_KIND(arg)));
 		}
 		Trap_Arg_DEAD_END(arg);
 
@@ -242,7 +242,7 @@
 	case A_AND:
 	case A_OR:
 	case A_XOR:
-		if (IS_DATATYPE(arg)) VAL_TYPESET(arg) = TYPESET(VAL_DATATYPE(arg));
+		if (IS_DATATYPE(arg)) VAL_TYPESET(arg) = TYPESET(VAL_TYPE_KIND(arg));
 		else if (!IS_TYPESET(arg)) Trap_Arg_DEAD_END(arg);
 
 		if (action == A_OR) VAL_TYPESET(val) |= VAL_TYPESET(arg);

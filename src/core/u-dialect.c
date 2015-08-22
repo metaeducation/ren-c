@@ -271,7 +271,7 @@ again:
 		}
 		// It's been reduced and is an actual datatype or typeset:
 		else if (IS_DATATYPE(fargs)) {
-			type = VAL_DATATYPE(fargs);
+			type = VAL_TYPE_KIND(fargs);
 		}
 		else if (IS_TYPESET(fargs)) {
 			if (TYPE_CHECK(fargs, VAL_TYPE(value))) accept = 1;

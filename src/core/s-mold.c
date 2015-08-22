@@ -1147,9 +1147,9 @@ static void Mold_Error(const REBVAL *value, REB_MOLD *mold, REBFLG molded)
 
 	case REB_DATATYPE:
 		if (!molded)
-			Emit(mold, "N", VAL_DATATYPE(value) + 1);
+			Emit(mold, "N", VAL_TYPE_KIND(value) + 1);
 		else
-			Emit(mold, "+DN", SYM_DATATYPE_TYPE, VAL_DATATYPE(value) + 1);
+			Emit(mold, "+DN", SYM_DATATYPE_TYPE, VAL_TYPE_KIND(value) + 1);
 		break;
 
 	case REB_TYPESET:

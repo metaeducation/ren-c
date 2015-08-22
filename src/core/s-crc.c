@@ -247,7 +247,7 @@ static REBCNT *CRC_Table;
 		break;
 
 	case REB_DATATYPE:
-		name = Get_Sym_Name(VAL_DATATYPE(val) + 1);
+		name = Get_Sym_Name(VAL_TYPE_KIND(val) + 1);
 		ret = Hash_Word(name, LEN_BYTES(name));
 		break;
 

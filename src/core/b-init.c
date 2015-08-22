@@ -248,9 +248,10 @@ static	BOOT_BLK *Boot_Block;
 	REBINT n;
 
 	for (n = 0; NOT_END(word); word++, n++) {
+		assert(n < REB_MAX);
 		value = Append_Frame(Lib_Context, word, 0);
 		VAL_SET(value, REB_DATATYPE);
-		VAL_DATATYPE(value) = n;
+		VAL_TYPE_KIND(value) = cast(enum Reb_Kind, n);
 		VAL_TYPE_SPEC(value) = VAL_SERIES(BLK_SKIP(specs, n));
 	}
 }

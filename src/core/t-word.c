@@ -72,7 +72,7 @@
 	case A_MAKE:
 	case A_TO:
 		// TO word! ...
-		if (type == REB_DATATYPE) type = (REBCNT)VAL_DATATYPE(val);
+		if (type == REB_DATATYPE) type = VAL_TYPE_KIND(val);
 		if (ANY_WORD(arg)) {
 			VAL_SET(arg, type);
 			return R_ARG2;
@@ -94,7 +94,7 @@
 				if (!sym) Trap1_DEAD_END(RE_BAD_CHAR, arg);
 			}
 			else if (IS_DATATYPE(arg)) {
-				sym = VAL_DATATYPE(arg)+1;
+				sym = VAL_TYPE_KIND(arg) + 1;
 			}
 			else if (IS_LOGIC(arg)) {
 				sym = VAL_LOGIC(arg) ? SYM_TRUE : SYM_FALSE;

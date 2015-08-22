@@ -264,7 +264,7 @@ chkDecimal:
 		return Compare_Vector(s, t);
 
 	case REB_DATATYPE:
-		return VAL_DATATYPE(s) - VAL_DATATYPE(t);
+		return VAL_TYPE_KIND(s) - VAL_TYPE_KIND(t);
 
 	case REB_WORD:
 	case REB_SET_WORD:

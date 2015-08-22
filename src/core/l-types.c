@@ -792,7 +792,7 @@ end_date:
 
 /***********************************************************************
 **
-*/	static void Append_Markup(REBSER *series, REBCNT type, const REBYTE *bp, REBINT len)
+*/	static void Append_Markup(REBSER *series, enum Reb_Kind type, const REBYTE *bp, REBINT len)
 /*
 **		Add a new string or tag to a markup block, advancing the tail.
 **

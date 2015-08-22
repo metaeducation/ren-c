@@ -156,12 +156,12 @@ static void No_Nones(REBVAL *arg) {
 			value = BLK_SKIP(series, index);
 			// Used if's so we can trace it...
 			if (IS_DATATYPE(target)) {
-				if ((REBINT)VAL_TYPE(value) == VAL_DATATYPE(target)) return index;
-				if (IS_DATATYPE(value) && VAL_DATATYPE(value) == VAL_DATATYPE(target)) return index;
+				if (VAL_TYPE(value) == VAL_TYPE_KIND(target)) return index;
+				if (IS_DATATYPE(value) && VAL_TYPE_KIND(value) == VAL_TYPE_KIND(target)) return index;
 			}
 			if (IS_TYPESET(target)) {
 				if (TYPE_CHECK(target, VAL_TYPE(value))) return index;
-				if (IS_DATATYPE(value) && TYPE_CHECK(target, VAL_DATATYPE(value))) return index;
+				if (IS_DATATYPE(value) && TYPE_CHECK(target, VAL_TYPE_KIND(value))) return index;
 				if (IS_TYPESET(value) && EQUAL_TYPESET(value, target)) return index;
 			}
 			if (flags & AM_FIND_MATCH) break;
@@ -281,13 +281,13 @@ static void No_Nones(REBVAL *arg) {
 **
 ***********************************************************************/
 {
-	REBCNT type;
+	enum Reb_Kind type;
 	REBCNT len;
 	REBSER *ser;
 
 	// make block! ...
 	if (IS_DATATYPE(value))
-		type = VAL_DATATYPE(value);
+		type = VAL_TYPE_KIND(value);
 	else  // make [...] ....
 		type = VAL_TYPE(value);
 
@@ -813,7 +813,7 @@ zero_blk:
 		}
 		if D_REF(ARG_COPY_TYPES) {
 			arg = D_ARG(ARG_COPY_KINDS);
-			if (IS_DATATYPE(arg)) types |= TYPESET(VAL_DATATYPE(arg));
+			if (IS_DATATYPE(arg)) types |= TYPESET(VAL_TYPE_KIND(arg));
 			else types |= VAL_TYPESET(arg);
 		}
 		len = Partial1(value, D_ARG(ARG_COPY_LIMIT));

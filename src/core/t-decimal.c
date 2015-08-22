@@ -327,7 +327,7 @@ REBOOL almost_equal(REBDEC a, REBDEC b, REBCNT max_diff) {
 		case A_MAKE:
 		case A_TO:
 			// MAKE decimal! 2  and  MAKE 1.0 2  formats:
-			if (IS_DATATYPE(val)) type = VAL_DATATYPE(val);
+			if (IS_DATATYPE(val)) type = VAL_TYPE_KIND(val);
 			else type = VAL_TYPE(val);
 
 			val = D_ARG(2);

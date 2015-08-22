@@ -36,7 +36,7 @@
 /*
 ***********************************************************************/
 {
-	if (mode >= 0) return (VAL_DATATYPE(a) == VAL_DATATYPE(b));
+	if (mode >= 0) return (VAL_TYPE_KIND(a) == VAL_TYPE_KIND(b));
 	return -1;
 }
 
@@ -51,7 +51,7 @@
 	type = VAL_WORD_CANON(data);
 	if (type > REB_MAX) return FALSE;
 	VAL_SET(out, REB_DATATYPE);
-	VAL_DATATYPE(out) = type-1;
+	VAL_TYPE_KIND(out) = cast(enum Reb_Kind, type - 1);
 	VAL_TYPE_SPEC(out) = 0;
 	return TRUE;
 }
@@ -66,7 +66,7 @@
 	REBVAL *value = D_ARG(1);
 	REBVAL *arg = D_ARG(2);
 	REBACT act;
-	REBINT type = VAL_DATATYPE(value);
+	REBINT type = VAL_TYPE_KIND(value);
 	REBSER *obj;
 	REBINT n;
 

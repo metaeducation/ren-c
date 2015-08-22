@@ -66,7 +66,7 @@ typedef struct Reb_Series REBSER;
 // Value type identifier (generally, should be handled as integer):
 
 // get and set only the type (not flags)
-#define VAL_TYPE(v)		((enum REBOL_Types)(v)->flags.bitfields.type)
+#define VAL_TYPE(v)		cast(enum Reb_Kind, (v)->flags.bitfields.type)
 #define SET_TYPE(v,t)	((v)->flags.bitfields.type = (t))
 
 // set type, clear all flags
@@ -146,22 +146,25 @@ enum {
 **
 **	DATATYPE - Datatype or pseudo-datatype
 **
+**	!!! Consider rename to TYPE! once legacy TYPE? calls have been
+**	converted to TYPE-OF.  Also consider a model where there are
+**	user types, and hence TYPE? may be able to return more than just
+**	one out of a set of 64 things.
+**
 ***********************************************************************/
 
 struct Reb_Datatype {
-	REBINT	type;	// base type
+	enum Reb_Kind kind;
 	REBSER  *spec;
 //	REBINT	min_type;
 //	REBINT	max_type;
 };
 
-#define	VAL_DATATYPE(v)		((v)->data.datatype.type)
+#define	VAL_TYPE_KIND(v)		((v)->data.datatype.kind)
 #define	VAL_TYPE_SPEC(v)	((v)->data.datatype.spec)
 
 //#define	VAL_MIN_TYPE(v)	((v)->data.datatype.min_type)
 //#define	VAL_MAX_TYPE(v)	((v)->data.datatype.max_type)
-#define	IS_OF_DATATYPE(v,t) (IS_DATATYPE(v) && (VAL_DATATYPE(v) == (t)))
-#define	NO_TYPE (0)
 
 
 /***********************************************************************
