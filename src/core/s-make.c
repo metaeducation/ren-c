@@ -272,7 +272,7 @@ cp_same:
 ***********************************************************************/
 {
 	REBUNI *up;
-	REBINT wide = 1;
+	REBYTE wide = 1;
 	REBSER *dst;
 	REBINT n;
 

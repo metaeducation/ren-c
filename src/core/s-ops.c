@@ -362,13 +362,13 @@ static REBYTE seed_str[SEED_LEN] = {
 **
 ***********************************************************************/
 {
-	REBOOL wide = !BYTE_SIZE(src);
+	REBOOL is_uni = !BYTE_SIZE(src);
 	REBCNT tail;
 	REBUNI c;
 
 	for (tail = SERIES_TAIL(src); tail > 0; tail--) {
-		c = wide ? *UNI_SKIP(src, tail-1) : (REBUNI)*BIN_SKIP(src, tail-1);
-		if (c != (REBUNI)chr) break;
+		c = is_uni ? *UNI_SKIP(src, tail - 1) : *BIN_SKIP(src, tail - 1);
+		if (c != chr) break;
 	}
 	SERIES_TAIL(src) = tail;
 	TERM_SERIES(src);

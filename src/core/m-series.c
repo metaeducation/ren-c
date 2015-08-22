@@ -77,7 +77,7 @@
 ***********************************************************************/
 {
 	REBCNT tail = series->tail;
-	REBCNT wide = SERIES_WIDE(series);
+	REBYTE wide = SERIES_WIDE(series);
 
 	EXPAND_SERIES_TAIL(series, len);
 	memcpy(series->data + (wide * tail), data, wide * len);

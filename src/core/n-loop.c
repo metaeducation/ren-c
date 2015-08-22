@@ -441,7 +441,7 @@
 			// If FALSE return, copy values to the write location:
 			if (mode == 1) {  // remove-each
 				if (IS_CONDITIONAL_FALSE(D_OUT)) {
-					REBCNT wide = SERIES_WIDE(series);
+					REBYTE wide = SERIES_WIDE(series);
 					// memory areas may overlap, so use memmove and not memcpy!
 					memmove(series->data + (windex * wide), series->data + (rindex * wide), (index - rindex) * wide);
 					windex += index - rindex;

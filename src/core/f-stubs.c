@@ -803,7 +803,7 @@
 	REBCNT len;
 	REBSER *ser;
 	REBSER *src = VAL_SERIES(value);
-	REBCNT wide;
+	REBYTE wide;
 
 	if (VAL_INDEX(value) == 0) return src;
 
