@@ -599,6 +599,8 @@ return_index:
 {
 #if !defined(NDEBUG)
 	REBINT dsp_precall = DSP;
+
+	const REBYTE *label_str = Get_Word_Name(DSF_LABEL(call));
 #endif
 
 	const REBVAL * const func = DSF_FUNC(call);

@@ -330,10 +330,6 @@
 /*
 ***********************************************************************/
 {
-#if !defined(NDEBUG)
-	const REBYTE *this_native_name = Get_Word_Name(DSF_LABEL(DSF));
-#endif
-
 	REBVAL *out = DSF_OUT(DSF);
 	REB_R ret;
 
@@ -377,10 +373,6 @@
 /*
 ***********************************************************************/
 {
-#if !defined(NDEBUG)
-	const REBYTE *this_action_name = Get_Word_Name(DSF_LABEL(DSF));
-#endif
-
 	REBVAL *out = DSF_OUT(DSF);
 	REBCNT type = VAL_TYPE(DSF_ARG(DSF, 1));
 	REBACT action;
@@ -437,10 +429,6 @@
 /*
 ***********************************************************************/
 {
-#if !defined(NDEBUG)
-	const REBYTE *this_function_name = Get_Word_Name(DSF_LABEL(DSF));
-#endif
-
 	REBVAL *out = DSF_OUT(DSF);
 
 	Eval_Functions++;
@@ -466,10 +454,6 @@
 **
 ***********************************************************************/
 {
-#if !defined(NDEBUG)
-	const REBYTE *this_closure_name = Get_Word_Name(DSF_LABEL(DSF));
-#endif
-
 	REBSER *body;
 	REBSER *frame;
 	REBVAL *out = DSF_OUT(DSF);
