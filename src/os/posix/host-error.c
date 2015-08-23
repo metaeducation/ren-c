@@ -112,6 +112,41 @@ static const void * backtrace_buf [1024];
 **
 ***********************************************************************/
 {
-	strerror_r(errnum, str, len);
+	// strerror() is not thread-safe, and there are two different protocols
+	// for strerror_r(), depending on whether you are using an "XSI"
+	// compliant implementation or GNU's implementation.  The convoluted
+	// test below is the actual test recommended to decide which version
+	// of strerror_r() you have.
+
+#if (_POSIX_C_SOURCE >= 200112L || _XOPEN_SOURCE >= 600) && !defined(_GNU_SOURCE)
+	// "The XSI-compliant strerror_r() function returns 0 on success.
+	// On error, a (positive) error number is returned (since glibc 2.13),
+	// or -1 is returned and errno is set to indicate the error (glibc
+	// versions before 2.13)."
+
+	int result = strerror_r(errnum, str, len);
+
+	// Alert us to any problems in a debug build
+	assert(result == 0);
+
+	if (result == 0) {
+		// success...
+	}
+	else if (result == EINVAL) {
+		strncpy(str, "EINVAL: bad error num passed to strerror_r()", len);
+	}
+	else if (result == ERANGE) {
+		strncpy(str, "ERANGE: insufficient size in buffer for error", len);
+	}
+	else {
+		strncpy(str, "Unknown error while getting strerror_r() message", len);
+	}
+#else
+	// May return an immutable string instead of filling the buffer
+	char *maybe_str = strerror_r(errnum, str, len);
+	if (maybe_str != str)
+		strncpy(str, maybe_str, len);
+#endif
+
 	return str;
 }
