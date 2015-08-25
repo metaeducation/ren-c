@@ -287,7 +287,12 @@ static	BOOT_BLK *Boot_Block;
 		//Print("sym: %s", Get_Sym_Name(sym));
 		value = Append_Frame(Lib_Context, 0, sym);
 		VAL_INT64(BLK_LAST(spec)) = n;  // special datatype id location
-		Make_Native(value, Copy_Block(spec, 0), (REBFUN)A_TYPE, REB_ACTION);
+		Make_Native(
+			value,
+			Copy_List_Shallow(spec),
+			cast(REBFUN, A_TYPE),
+			REB_ACTION
+		);
 	}
 
 	value = Append_Frame(Lib_Context, 0, SYM_DATATYPES);

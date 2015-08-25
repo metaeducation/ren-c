@@ -588,7 +588,7 @@ static void *arg_to_ffi(const REBVAL *rot, REBVAL *arg, REBCNT idx, void **ptrs)
 				Copy_Struct(&VAL_ROUTINE_RVALUE(rot), &VAL_STRUCT(arg));
 			} else {
 				if (IS_STRUCT(arg)) {
-					VAL_STRUCT_DATA_BIN(arg) = Copy_Series(VAL_STRUCT_DATA_BIN(arg));
+					VAL_STRUCT_DATA_BIN(arg) = Copy_Array(VAL_STRUCT_DATA_BIN(arg));
 				} else {
 					Trap3_DEAD_END(RE_EXPECT_ARG, DSF_LABEL(DSF), BLK_SKIP(rebol_args, idx), arg);
 				}
@@ -755,7 +755,7 @@ static void ffi_to_rebol(REBRIN *rin,
 		/* reset SERIES_TAIL */
 		SERIES_TAIL(VAL_ROUTINE_FFI_ARG_TYPES(rot)) = n_fixed + 1;
 
-		VAL_ROUTINE_ALL_ARGS(rot) = Copy_Series(VAL_ROUTINE_FIXED_ARGS(rot));
+		VAL_ROUTINE_ALL_ARGS(rot) = Copy_Array(VAL_ROUTINE_FIXED_ARGS(rot));
 
 		for (i = 1, j = 1; i < SERIES_TAIL(VAL_SERIES(varargs)) + 1; i ++, j ++) {
 			REBVAL *reb_arg = VAL_BLK_SKIP(varargs, i - 1);
@@ -1033,7 +1033,7 @@ static void callback_dispatcher(ffi_cif *cif, void *ret, void **args, void *user
 
 #define N_ARGS 8
 
-	VAL_ROUTINE_SPEC(out) = Copy_Series(VAL_SERIES(data));
+	VAL_ROUTINE_SPEC(out) = Copy_List_Shallow(VAL_SERIES(data));
 	VAL_ROUTINE_FFI_ARG_TYPES(out) =
 		Make_Series(N_ARGS, sizeof(ffi_type*), MKS_NONE);
 	VAL_ROUTINE_ARGS(out) = Make_Block(N_ARGS);
@@ -1150,7 +1150,7 @@ static void callback_dispatcher(ffi_cif *cif, void *ret, void **args, void *user
 						}
 						ROUTINE_SET_FLAG(VAL_ROUTINE_INFO(out), ROUTINE_VARARGS);
 						//Change the argument list to be a block
-						VAL_ROUTINE_FIXED_ARGS(out) = Copy_Series(VAL_ROUTINE_ARGS(out));
+						VAL_ROUTINE_FIXED_ARGS(out) = Copy_Array(VAL_ROUTINE_ARGS(out));
 						Remove_Series(VAL_ROUTINE_ARGS(out), 1, SERIES_TAIL(VAL_ROUTINE_ARGS(out)));
 						v = Alloc_Tail_Blk(VAL_ROUTINE_ARGS(out));
 						Val_Init_Word_Typed(v, REB_WORD, SYM_VARARGS, TYPESET(REB_BLOCK));
@@ -1333,7 +1333,9 @@ static void callback_dispatcher(ffi_cif *cif, void *ret, void **args, void *user
 				REBINT n = VAL_WORD_CANON(arg); // zero on error
 				switch (n) {
 					case SYM_SPEC:
-						Val_Init_Block(ret, Clone_Block(VAL_ROUTINE_SPEC(val)));
+						Val_Init_Block(
+							ret, Copy_List_Deep_Managed(VAL_ROUTINE_SPEC(val))
+						);
 						Unbind_Values_Deep(VAL_BLK_HEAD(val));
 						break;
 					case SYM_ADDR:
@@ -1380,7 +1382,9 @@ static void callback_dispatcher(ffi_cif *cif, void *ret, void **args, void *user
 				REBINT n = VAL_WORD_CANON(arg); // zero on error
 				switch (n) {
 					case SYM_SPEC:
-						Val_Init_Block(ret, Clone_Block(VAL_ROUTINE_SPEC(val)));
+						Val_Init_Block(
+							ret, Copy_List_Deep_Managed(VAL_ROUTINE_SPEC(val))
+						);
 						Unbind_Values_Deep(VAL_BLK_HEAD(val));
 						break;
 					case SYM_ADDR:

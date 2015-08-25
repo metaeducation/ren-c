@@ -124,7 +124,7 @@ enum {
 		if (hret)
 			Free_Series(hret);
 
-		Val_Init_Block(D_OUT, Copy_Series(retser));
+		Val_Init_Block(D_OUT, Copy_List_Shallow(retser));
 		RESET_TAIL(retser); // required - allow reuse
 
 		break;

@@ -443,7 +443,9 @@
 /*
 ***********************************************************************/
 {
-	return CLONE_OBJECT(VAL_OBJ_FRAME(Get_System(SYS_STANDARD, index)));
+	return Copy_List_Shallow(
+		VAL_OBJ_FRAME(Get_System(SYS_STANDARD, index))
+	);
 }
 
 

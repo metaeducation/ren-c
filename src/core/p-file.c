@@ -111,7 +111,7 @@
 
 	if (!info || !IS_OBJECT(info)) Trap_Port(RE_INVALID_SPEC, port, -10);
 
-	obj = CLONE_OBJECT(VAL_OBJ_FRAME(info));
+	obj = Copy_List_Shallow(VAL_OBJ_FRAME(info));
 
 	Val_Init_Object(ret, obj);
 	Val_Init_Word_Unbound(

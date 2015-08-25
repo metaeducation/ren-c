@@ -386,7 +386,9 @@ static REBSER *Trim_Object(REBSER *obj)
 
 			// make parent none | []
 			if (IS_NONE(arg) || (IS_BLOCK(arg) && IS_EMPTY(arg))) {
-				obj = Copy_Block_Values(src_obj, 0, SERIES_TAIL(src_obj), TS_CLONE);
+				obj = Copy_List_Core_Managed(
+					src_obj, 0, SERIES_TAIL(src_obj), TRUE, TS_CLONE
+				);
 				Rebind_Frame(src_obj, obj);
 				break;	// returns obj
 			}
@@ -472,15 +474,22 @@ static REBSER *Trim_Object(REBSER *obj)
 		REBU64 types = 0;
 		if (D_REF(ARG_COPY_PART)) Trap_DEAD_END(RE_BAD_REFINES);
 		if (D_REF(ARG_COPY_DEEP)) {
-			types |= CP_DEEP | (D_REF(ARG_COPY_TYPES) ? 0 : TS_STD_SERIES);
+			types |= D_REF(ARG_COPY_TYPES) ? 0 : TS_STD_SERIES;
 		}
-		if D_REF(ARG_COPY_TYPES) {
+		if (D_REF(ARG_COPY_TYPES)) {
 			arg = D_ARG(ARG_COPY_KINDS);
 			if (IS_DATATYPE(arg)) types |= TYPESET(VAL_TYPE_KIND(arg));
 			else types |= VAL_TYPESET(arg);
 		}
-		VAL_OBJ_FRAME(value) = obj = Copy_Block(VAL_OBJ_FRAME(value), 0);
-		if (types != 0) Copy_Deep_Values(obj, 1, SERIES_TAIL(obj), types);
+		VAL_OBJ_FRAME(value) = obj = Copy_List_Shallow(VAL_OBJ_FRAME(value));
+		if (types != 0) {
+			Clonify_Values_Len_Managed(
+				BLK_SKIP(obj, 1),
+				SERIES_TAIL(obj) - 1,
+				D_REF(ARG_COPY_DEEP),
+				types
+			);
+		}
 		break; // returns value
 	}
 	case A_SELECT:

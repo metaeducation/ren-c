@@ -362,7 +362,8 @@ typedef REBYTE *(INFO_FUNC)(REBINT opts, void *lib);
 
 	// Extension return: dll, info, filename
 	obj = VAL_OBJ_FRAME(Get_System(SYS_STANDARD, STD_EXTENSION));
-	obj = CLONE_OBJECT(obj);
+	obj = Copy_List_Shallow(obj);
+
 	Val_Init_Object(D_OUT, obj);
 
 	// Set extension fields needed:
@@ -405,7 +406,7 @@ typedef REBYTE *(INFO_FUNC)(REBINT opts, void *lib);
 	) Trap1(RE_BAD_EXTENSION, def);
 
 	// make command! [[arg-spec] handle cmd-index]
-	VAL_FUNC_BODY(value) = Copy_Block_Len(VAL_SERIES(def), 1, 2);
+	VAL_FUNC_BODY(value) = Copy_List_At_Max_Shallow(VAL_SERIES(def), 1, 2);
 
 	// Check for valid command arg datatypes:
 	args++; // skip self

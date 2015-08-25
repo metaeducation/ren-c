@@ -651,6 +651,19 @@ struct Reb_Position
 	Val_Init_Block_Index((v), (s), 0)
 
 
+#define Copy_List_Shallow(block) \
+	Copy_List_At_Shallow((block), 0)
+
+#define Copy_List_Deep_Managed(block) \
+	Copy_List_At_Deep_Managed((block), 0)
+
+#define Copy_List_At_Shallow(block,index) \
+	Copy_List_At_Extra_Shallow((block), (index), 0)
+
+#define Copy_List_Extra_Shallow(block,extra) \
+	Copy_List_At_Extra_Shallow((block), 0, extra)
+
+
 /***********************************************************************
 **
 **	STRINGS -- All string related values
@@ -1033,7 +1046,6 @@ struct Reb_Object {
 #define VAL_OBJ_WORDS(v)	FRM_WORD_SERIES((v)->data.object.frame)
 #define VAL_OBJ_WORD(v,n)	BLK_SKIP(VAL_OBJ_WORDS(v), (n))
 //#define VAL_OBJ_SPEC(v)		((v)->data.object.spec)
-#define	CLONE_OBJECT(c)		Copy_Series(c)
 
 #ifdef NDEBUG
 	#define ASSERT_FRAME(f) cast(void, 0)

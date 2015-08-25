@@ -104,7 +104,7 @@
 	}
 
 	if (!IS_BINARY(data)) return FALSE;
-	Val_Init_Bitset(out, Copy_Series_Value(data));
+	Val_Init_Bitset(out, Copy_Array_At_Position(data));
 	BITS_NOT(VAL_SERIES(out)) = 0;
 	return TRUE;
 }
@@ -540,7 +540,7 @@ found:
 
 	case A_COMPLEMENT:
 	case A_NEGATE:
-		ser = Copy_Series(VAL_SERIES(value));
+		ser = Copy_Array(VAL_SERIES(value));
 		BITS_NOT(ser) = !BITS_NOT(VAL_SERIES(value));
 		Val_Init_Bitset(value, ser);
 		break;
@@ -584,7 +584,7 @@ set_bits:
 		Val_Init_Series_Index(
 			D_OUT,
 			REB_BITSET,
-			Copy_Series_Value(value),
+			Copy_Array_At_Position(value),
 			VAL_INDEX(value)
 		);
 		return R_OUT;

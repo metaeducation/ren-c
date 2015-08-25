@@ -240,7 +240,7 @@ static void No_Nones(REBVAL *arg) {
 		is_blk = TRUE; // arg is a block
 		// Are we modifying ourselves? If so, copy arg block first:
 		if (series == VAL_SERIES(arg))  {
-			VAL_SERIES(arg) = Copy_Block(VAL_SERIES(arg), VAL_INDEX(arg));
+			VAL_SERIES(arg) = Copy_List_At_Shallow(VAL_SERIES(arg), VAL_INDEX(arg));
 			VAL_INDEX(arg) = 0;
 		}
 		// Length of insertion:
@@ -314,7 +314,7 @@ static void No_Nones(REBVAL *arg) {
 		len = VAL_BLK_LEN(arg);
 		if (len > 0 && type >= REB_PATH && type <= REB_LIT_PATH)
 			No_Nones(arg);
-		ser = Copy_Values(VAL_BLK_DATA(arg), len);
+		ser = Copy_Values_Len_Shallow(VAL_BLK_DATA(arg), len);
 		goto done;
 	}
 
@@ -366,7 +366,7 @@ static void No_Nones(REBVAL *arg) {
 		Trap_Arg(arg);
 	}
 
-	ser = Copy_Values(arg, 1);
+	ser = Copy_Values_Len_Shallow(arg, 1);
 
 done:
 	Val_Init_Series(value, type, ser);
@@ -773,7 +773,7 @@ zero_blk:
 
 		// if no /part, just return value, else return block:
 		if (!D_REF(2)) *D_OUT = BLK_HEAD(ser)[index];
-		else Val_Init_Block(D_OUT, Copy_Block_Len(ser, index, len));
+		else Val_Init_Block(D_OUT, Copy_List_At_Max_Shallow(ser, index, len));
 		Remove_Series(ser, index, len);
 		return R_OUT;
 
@@ -834,17 +834,10 @@ zero_blk:
 	//-- Creation:
 
 	case A_COPY: // /PART len /DEEP /TYPES kinds
-#if 0
-		args = D_REF(ARG_COPY_DEEP) ? COPY_ALL : 0;
-		len = Partial1(value, D_ARG(ARG_COPY_LIMIT));
-		index = (REBINT)VAL_INDEX(value);
-//		VAL_SERIES(value) = (len > 0) ? Copy_Block_Deep(ser, index, len, args) : Make_Block(0);
-		VAL_INDEX(value) = 0;
-#else
 	{
 		REBU64 types = 0;
 		if (D_REF(ARG_COPY_DEEP)) {
-			types |= CP_DEEP | (D_REF(ARG_COPY_TYPES) ? 0 : TS_STD_SERIES);
+			types |= D_REF(ARG_COPY_TYPES) ? 0 : TS_STD_SERIES;
 		}
 		if D_REF(ARG_COPY_TYPES) {
 			arg = D_ARG(ARG_COPY_KINDS);
@@ -852,10 +845,15 @@ zero_blk:
 			else types |= VAL_TYPESET(arg);
 		}
 		len = Partial1(value, D_ARG(ARG_COPY_LIMIT));
-		VAL_SERIES(value) = Copy_Block_Values(ser, VAL_INDEX(value), VAL_INDEX(value)+len, types);
+		VAL_SERIES(value) = Copy_List_Core_Managed(
+			ser,
+			VAL_INDEX(value),
+			VAL_INDEX(value) + len,
+			D_REF(ARG_COPY_DEEP),
+			types
+		);
 		VAL_INDEX(value) = 0;
 	}
-#endif
 		break;
 
 	//-- Special actions:

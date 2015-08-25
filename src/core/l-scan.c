@@ -1501,8 +1501,9 @@ exit_block:
 	#endif
 
 	len = emitbuf->tail;
-	block = Copy_Values(BLK_SKIP(emitbuf, begin), len - begin);
+	block = Copy_Values_Len_Shallow(BLK_SKIP(emitbuf, begin), len - begin);
 	LABEL_SERIES(block, "scan block");
+
 	emitbuf->tail = begin;
 //!!!!	if (value) VAL_OPTS(BLK_TAIL(block)) = VAL_OPTS(value); // save NEWLINE marker
 

@@ -1169,10 +1169,6 @@ finished:
 		else if (VAL_TYPE(val) == type) DS_PUSH(val);
 		// !!! check stack size
 	}
-
-	//block = Copy_Values(DS_Base + start, DSP - start + 1);
-	//DSP = start;
-	//return block;
 }
 
 
@@ -1265,7 +1261,7 @@ finished:
 				if (ANY_BLOCK(value)) {
 					// compose [copy/(orig) (copy)] => [copy/(orig) (copy)]
 					// !!! path and second paren are copies, first paren isn't
-					VAL_SERIES(DS_TOP) = Copy_Block(VAL_SERIES(value), 0);
+					VAL_SERIES(DS_TOP) = Copy_List_Shallow(VAL_SERIES(value));
 				}
 			}
 		}

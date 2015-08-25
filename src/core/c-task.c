@@ -72,7 +72,7 @@
 	Debug_Str("Begin Task");
 
 	Init_Task();
-	body = Clone_Block(VAL_MOD_BODY(task));
+	body = Copy_List_Deep_Managed(VAL_MOD_BODY(task));
 	OS_TASK_READY(0);
 
 	if (Do_Block_Throws(&ignored, body, 0)) {

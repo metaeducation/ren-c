@@ -142,7 +142,7 @@ static int Check_Char_Range(REBVAL *val, REBINT limit)
 
 			if (IS_CONDITIONAL_FALSE(D_OUT)) {
 				// !!! Only copies 3 values (and flaky), see CC#2231
-				Val_Init_Block(D_OUT, Copy_Block_Len(block, i, 3));
+				Val_Init_Block(D_OUT, Copy_List_At_Max_Shallow(block, i, 3));
 				Trap1_DEAD_END(RE_ASSERT_FAILED, D_OUT);
 			}
 		}
@@ -259,8 +259,9 @@ static int Check_Char_Range(REBVAL *val, REBINT limit)
 	}
 
 	// Copy block if necessary (/copy):
-	blk = D_REF(3) ? Clone_Block_Value(arg) : VAL_SERIES(arg);
-//	if (D_REF(3)) blk = Copy_Block_Deep(blk, VAL_INDEX(arg), VAL_TAIL(arg), COPY_DEEP);
+	blk = D_REF(3)
+		? Copy_List_At_Deep_Managed(VAL_SERIES(arg), VAL_INDEX(arg))
+		: VAL_SERIES(arg);
 
 	Val_Init_Block_Index(D_OUT, blk, D_REF(3) ? 0 : VAL_INDEX(arg));
 
@@ -372,7 +373,7 @@ static int Check_Char_Range(REBVAL *val, REBINT limit)
 	}
 	else if (IS_OBJECT(word)) {
 		Assert_Public_Object(word);
-		Val_Init_Block(D_OUT, Copy_Block(VAL_OBJ_FRAME(word), 1));
+		Val_Init_Block(D_OUT, Copy_List_At_Shallow(VAL_OBJ_FRAME(word), 1));
 	}
 	else *D_OUT = *word; // all other values
 
