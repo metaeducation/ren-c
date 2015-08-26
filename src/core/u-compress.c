@@ -103,7 +103,7 @@
 	if (SERIES_AVAIL(output) > 1024) {
 		// Is there wasted space?  Trim it down if too big.
 		// !!! Revisit this based on mem alloc alg.
-		REBSER *smaller = Copy_Series(output);
+		REBSER *smaller = Copy_Array(output);
 		Free_Series(output);
 		output = smaller;
 	}

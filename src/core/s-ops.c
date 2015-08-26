@@ -775,5 +775,5 @@ static REBYTE seed_str[SEED_LEN] = {
 		VAL_SET_OPT(val, OPT_VALUE_LINE);
 	}
 
-	return Copy_Block(ser, 0);
+	return Copy_List_Shallow(ser);
 }

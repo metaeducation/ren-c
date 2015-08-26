@@ -763,7 +763,7 @@ chk_neg:
 	}
 	Append_Codepoint_Raw(mo.series, 0);
 
-	return Copy_Series(mo.series); // Unicode
+	return Copy_Array(mo.series); // Unicode
 }
 
 

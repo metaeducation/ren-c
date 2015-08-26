@@ -599,7 +599,7 @@ void Set_Vector_Row(REBSER *ser, REBVAL *blk)
 		return R_OUT;
 
 	case A_COPY:
-		ser = Copy_Series(vect);
+		ser = Copy_Array(vect);
 		ser->extra.size = vect->extra.size; // attributes
 		Val_Init_Vector(value, ser);
 		break;

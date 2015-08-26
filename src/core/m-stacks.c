@@ -120,7 +120,7 @@
 		);
 	}
 	else {
-		series = Copy_Values(values, len);
+		series = Copy_Values_Len_Shallow(values, len);
 		Val_Init_Block(out, series);
 	}
 

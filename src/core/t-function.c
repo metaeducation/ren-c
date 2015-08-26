@@ -58,7 +58,7 @@ static REBOOL Same_Func(REBVAL *val, REBVAL *arg)
 {
 	REBVAL *val;
 
-	types = Copy_Block(types, 1);
+	types = Copy_List_At_Shallow(types, 1);
 	for (val = BLK_HEAD(types); NOT_END(val); val++) {
 		SET_TYPE(val, REB_TYPESET);
 	}
@@ -123,14 +123,14 @@ static REBOOL Same_Func(REBVAL *val, REBVAL *arg)
 			switch (type) {
 			case REB_FUNCTION:
 				Val_Init_Block(
-					D_OUT, Clone_Block(VAL_FUNC_BODY(value))
+					D_OUT, Copy_List_Deep_Managed(VAL_FUNC_BODY(value))
 				);
 				// See CC#2221 for why function body copies don't unbind locals
 				return R_OUT;
 
 			case REB_CLOSURE:
 				Val_Init_Block(
-					D_OUT, Clone_Block(VAL_FUNC_BODY(value))
+					D_OUT, Copy_List_Deep_Managed(VAL_FUNC_BODY(value))
 				);
 				// See CC#2221 for why closure body copies have locals unbound
 				Unbind_Values_Core(
@@ -146,7 +146,9 @@ static REBOOL Same_Func(REBVAL *val, REBVAL *arg)
 			}
 			break;
 		case OF_SPEC:
-			Val_Init_Block(value, Clone_Block(VAL_FUNC_SPEC(value)));
+			Val_Init_Block(
+				value, Copy_List_Deep_Managed(VAL_FUNC_SPEC(value))
+			);
 			Unbind_Values_Deep(VAL_BLK_HEAD(value));
 			break;
 		case OF_TYPES:
@@ -156,7 +158,7 @@ static REBOOL Same_Func(REBVAL *val, REBVAL *arg)
 			arg = BLK_HEAD(VAL_FUNC_SPEC(value));
 			for (; NOT_END(arg) && !IS_STRING(arg) && !IS_WORD(arg); arg++);
 			if (!IS_STRING(arg)) return R_NONE;
-			Val_Init_String(value, Copy_Series(VAL_SERIES(arg)));
+			Val_Init_String(value, Copy_Array(VAL_SERIES(arg)));
 			break;
 		default:
 		bad_arg:

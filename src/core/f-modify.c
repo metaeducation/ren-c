@@ -64,7 +64,7 @@
 
 		// Are we modifying ourselves? If so, copy src_val block first:
 		if (dst_ser == VAL_SERIES(src_val)) {
-			REBSER *series = Copy_Block(
+			REBSER *series = Copy_List_At_Shallow(
 				VAL_SERIES(src_val), VAL_INDEX(src_val)
 			);
 			src_val = BLK_HEAD(series);
@@ -183,7 +183,7 @@
 	// (Note: It may be possible to optimize special cases like append !!)
 	if (dst_ser == src_ser) {
 		assert(!needs_free);
-		src_ser = Copy_Series_Part(src_ser, src_idx, src_len);
+		src_ser = Copy_Array_At_Len(src_ser, src_idx, src_len);
 		needs_free = TRUE;
 		src_idx = 0;
 	}

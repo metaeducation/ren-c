@@ -32,14 +32,15 @@
 
 /***********************************************************************
 **
-*/	REBSER *Make_Block(REBCNT length)
+*/	REBSER *Make_Block(REBCNT capacity)
 /*
-**		Make a block series. Add 1 extra for the terminator.
-**		Set TAIL to zero and set terminator.
+**		Make a series that is the right size to store REBVALs (and
+**		marked for the garbage collector to look into recursively).
+**		Terminator included implicitly. Sets TAIL to zero.
 **
 ***********************************************************************/
 {
-	REBSER *series = Make_Series(length + 1, sizeof(REBVAL), MKS_BLOCK);
+	REBSER *series = Make_Series(capacity + 1, sizeof(REBVAL), MKS_BLOCK);
 	SET_END(BLK_HEAD(series));
 
 	return series;
@@ -48,21 +49,23 @@
 
 /***********************************************************************
 **
-*/	REBSER *Copy_Block(REBSER *block, REBCNT index)
+*/	REBSER *Copy_List_At_Extra_Shallow(REBSER *list, REBCNT index, REBCNT extra)
 /*
-**		Shallow copy a block from the given index thru the tail.
+**		Shallow copy a list from the given index thru the tail.
+**		Additional capacity beyond what is required can be added
+**		by giving an `extra` count of how many value cells one needs.
 **
 ***********************************************************************/
 {
-	REBCNT len = SERIES_TAIL(block);
+	REBCNT len = SERIES_TAIL(list);
 	REBSER *series;
 
-	if (index > len) return Make_Block(0);
+	if (index > len) return Make_Block(extra);
 
 	len -= index;
-	series = Make_Series(len + 1, sizeof(REBVAL), MKS_BLOCK);
+	series = Make_Series(len + extra + 1, sizeof(REBVAL), MKS_BLOCK);
 
-	memcpy(series->data, BLK_SKIP(block, index), len * sizeof(REBVAL));
+	memcpy(series->data, BLK_SKIP(list, index), len * sizeof(REBVAL));
 	SERIES_TAIL(series) = len;
 	BLK_TERM(series);
 
@@ -72,21 +75,22 @@
 
 /***********************************************************************
 **
-*/	REBSER *Copy_Block_Len(REBSER *block, REBCNT index, REBCNT len)
+*/	REBSER *Copy_List_At_Max_Shallow(REBSER *list, REBCNT index, REBCNT max)
 /*
-**		Shallow copy a block from the given index for given length.
+**		Shallow copy a list from the given index for given maximum
+**		length (clipping if it exceeds the list length)
 **
 ***********************************************************************/
 {
 	REBSER *series;
 
-	if (index > SERIES_TAIL(block)) return Make_Block(0);
-	if (index + len > SERIES_TAIL(block)) len = SERIES_TAIL(block) - index;
+	if (index > SERIES_TAIL(list)) return Make_Block(0);
+	if (index + max > SERIES_TAIL(list)) max = SERIES_TAIL(list) - index;
 
-	series = Make_Series(len + 1, sizeof(REBVAL), MKS_BLOCK);
+	series = Make_Series(max + 1, sizeof(REBVAL), MKS_BLOCK);
 
-	memcpy(series->data, BLK_SKIP(block, index), len * sizeof(REBVAL));
-	SERIES_TAIL(series) = len;
+	memcpy(series->data, BLK_SKIP(list, index), max * sizeof(REBVAL));
+	SERIES_TAIL(series) = max;
 	BLK_TERM(series);
 
 	return series;
@@ -95,9 +99,10 @@
 
 /***********************************************************************
 **
-*/	REBSER *Copy_Values(REBVAL values[], REBCNT len)
+*/	REBSER *Copy_Values_Len_Shallow(REBVAL value[], REBCNT len)
 /*
-**		Shallow copy a block from current value for length values.
+**		Shallow copy the first 'len' values of `value[]` into a new
+**		series created to hold exactly that many entries.
 **
 ***********************************************************************/
 {
@@ -105,7 +110,7 @@
 
 	series = Make_Series(len + 1, sizeof(REBVAL), MKS_BLOCK);
 
-	memcpy(series->data, values, len * sizeof(REBVAL));
+	memcpy(series->data, &value[0], len * sizeof(REBVAL));
 	SERIES_TAIL(series) = len;
 	BLK_TERM(series);
 
@@ -115,37 +120,88 @@
 
 /***********************************************************************
 **
-*/	void Copy_Deep_Values(REBSER *block, REBCNT index, REBCNT tail, REBU64 types)
+*/	void Clonify_Values_Len_Managed(REBVAL value[], REBCNT len, REBOOL deep, REBU64 types)
 /*
-**		Copy the contents of values specified by types. If the
-**		DEEP flag is set, recurse into sub-blocks and objects.
+**		Update the first `len` elements of value[] to clone the series
+**		embedded in them *if* they are in the given set of types (and
+**		if "cloning" makes sense for them, e.g. they are not simple
+**		scalars).  If the `deep` flag is set, recurse into subseries
+**		and objects when that type is matched for clonifying.
+**
 **
 ***********************************************************************/
 {
-	REBVAL *val;
+	REBCNT index;
 
-	for (; index < tail; index++) {
+	for (index = 0; index < len; index++, value++) {
 
-		val = BLK_SKIP(block, index);
-
-		if ((types & TYPESET(VAL_TYPE(val)) & TS_SERIES_OBJ) != 0) {
+		if (types & TYPESET(VAL_TYPE(value)) & TS_SERIES_OBJ) {
 			// Replace just the series field of the value
 			// Note that this should work for objects too (the frame).
-			VAL_SERIES(val) = Copy_Series(VAL_SERIES(val));
-			if ((types & TYPESET(VAL_TYPE(val)) & TS_LISTS_OBJ) != 0) {
-				// If we need to copy recursively (deep):
-				if ((types & CP_DEEP) != 0)
-					Copy_Deep_Values(VAL_SERIES(val), 0, VAL_TAIL(val), types);
+			if (IS_BLOCK_SERIES(VAL_SERIES(value)))
+				VAL_SERIES(value) = Copy_List_Shallow(VAL_SERIES(value));
+			else
+				VAL_SERIES(value) = Copy_Array(VAL_SERIES(value));
+
+			if (!deep) continue;
+
+			if (types & TYPESET(VAL_TYPE(value)) & TS_LISTS_OBJ) {
+				Clonify_Values_Len_Managed(
+					 BLK_HEAD(VAL_SERIES(value)),
+					 VAL_TAIL(value),
+					 deep,
+					 types
+				);
 			}
-		} else if (types & TYPESET(VAL_TYPE(val)) & TS_FUNCLOS)
-			Clone_Function(val, val);
+		}
+		else if (types & TYPESET(VAL_TYPE(value)) & TS_FUNCLOS) {
+			// Here we reuse the spec of the function when we copy it, but
+			// create a new identifying word series.  We also need to make
+			// a new body and rebind it to that series.  The reason we have
+			// to copy the function is because it can persistently modify
+			// its body (in the current design) so a copy would need to
+			// capture that state.  Also, the word series is used to identify
+			// function instances distinctly so two calls on the stack won't
+			// be seen as recursions of the same function, sharing each others
+			// "stack relative locals".
+
+			// !!! Closures can probably be left as-is, since they always
+			// copy their bodies and cannot accumulate state in their
+			// archetype.  This would have to be tested further.
+			//
+			// if (IS_CLOSURE(value)) continue;
+
+			REBSER *src_words = VAL_FUNC_WORDS(value);
+
+			VAL_FUNC_WORDS(value) = Copy_List_Shallow(src_words);
+			VAL_FUNC_BODY(value) = Copy_List_Core_Managed(
+				VAL_FUNC_BODY(value),
+				0,
+				SERIES_TAIL(VAL_FUNC_BODY(value)),
+				TRUE, // deep
+				TS_CLONE
+			);
+
+			// Remap references in the body from src_words to our new copied
+			// word list we saved in VAL_FUNC_WORDS(value)
+			Rebind_Block(
+				src_words,
+				VAL_FUNC_WORDS(value),
+				BLK_HEAD(VAL_FUNC_BODY(value)),
+				0
+			);
+		}
+		else {
+			// The value is not on our radar as needing to be processed,
+			// so leave it as-is.
+		}
 	}
 }
 
 
 /***********************************************************************
 **
-*/	REBSER *Copy_Block_Values(REBSER *block, REBCNT index, REBCNT tail, REBU64 types)
+*/	REBSER *Copy_List_Core_Managed(REBSER *block, REBCNT index, REBCNT tail, REBOOL deep, REBU64 types)
 /*
 **		Copy a block, copy specified values, deeply if indicated.
 **
@@ -153,59 +209,47 @@
 {
 	REBSER *series;
 
+	assert(IS_BLOCK_SERIES(block));
+
 	if (index > tail) index = tail;
-	if (index > SERIES_TAIL(block)) return Make_Block(0);
 
-	series = Copy_Values(BLK_SKIP(block, index), tail - index);
+	if (index > SERIES_TAIL(block)) {
+		series = Make_Block(0);
+	}
+	else {
+		series = Copy_Values_Len_Shallow(BLK_SKIP(block, index), tail - index);
 
-	if (types != 0) Copy_Deep_Values(series, 0, SERIES_TAIL(series), types);
-
-	return series;
-}
-
-
-/***********************************************************************
-**
-*/	REBSER *Clone_Block(REBSER *block)
-/*
-**		Deep copy block, including all series (strings and blocks),
-**		but not images, bitsets, maps, etc.
-**
-***********************************************************************/
-{
-	return Copy_Block_Values(block, 0, SERIES_TAIL(block), TS_CODE);
-}
-
-
-/***********************************************************************
-**
-*/	REBSER *Clone_Block_Value(REBVAL *code)
-/*
-**		Same as above, but uses a value.
-**
-***********************************************************************/
-{
-	// Note: TAIL will be clipped to correct size if INDEX is not zero.
-	return Copy_Block_Values(VAL_SERIES(code), VAL_INDEX(code), VAL_TAIL(code), TS_CODE);
-}
-
-
-/***********************************************************************
-**
-*/	REBSER *Copy_Expand_Block(REBSER *block, REBCNT extra)
-/*
-**		Create an expanded copy of the block, but with same tail.
-**
-***********************************************************************/
-{
-	REBCNT len = SERIES_TAIL(block);
-	REBSER *series = Make_Series(len + extra + 1, sizeof(REBVAL), MKS_BLOCK);
-
-	memcpy(series->data, BLK_HEAD(block), len * sizeof(REBVAL));
-	SERIES_TAIL(series) = len;
-	BLK_TERM(series);
+		if (types != 0)
+			Clonify_Values_Len_Managed(
+				BLK_HEAD(series), SERIES_TAIL(series), deep, types
+			);
+	}
 
 	return series;
+}
+
+
+/***********************************************************************
+**
+*/	REBSER *Copy_List_At_Deep_Managed(REBSER *list, REBCNT index)
+/*
+**		Deep copy lists, including all series (strings, blocks, parens
+**		objects), but not images, bitsets, maps, etc (~TS_NOT_COPIED)
+**
+**
+**		Note: If this were declared as a macro it would use the
+**		`list` parameter more than once, and have to be in all-caps
+**		to warn against usage with arguments that have side-effects.
+**
+***********************************************************************/
+{
+	return Copy_List_Core_Managed(
+		list,
+		index,
+		SERIES_TAIL(list),
+		TRUE, // deep
+		TS_SERIES & ~TS_NOT_COPIED
+	);
 }
 
 

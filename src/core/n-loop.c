@@ -78,7 +78,9 @@
 	SET_END(word);
 	SET_END(vals);
 
-	body = Clone_Block_Value(body_blk);
+	body = Copy_List_At_Deep_Managed(
+		VAL_SERIES(body_blk), VAL_INDEX(body_blk)
+	);
 	Bind_Values_Deep(BLK_HEAD(body), frame);
 
 	*fram = frame;

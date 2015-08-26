@@ -82,9 +82,9 @@
 		else if (n == OF_TITLE) {
 			Val_Init_String(
 				D_OUT,
-				Copy_Series(VAL_SERIES(
-					BLK_HEAD(VAL_TYPE_SPEC(BLK_SKIP(Lib_Context, type + 1)))
-				))
+				Copy_List_Shallow(VAL_SERIES(BLK_HEAD(
+					VAL_TYPE_SPEC(BLK_SKIP(Lib_Context, type + 1))
+				)))
 			);
 		}
 		else Trap_Reflect_DEAD_END(VAL_TYPE(value), arg);

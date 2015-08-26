@@ -149,7 +149,7 @@
 
 	// Expand or copy WORDS block:
 	if (copy) {
-		FRM_WORD_SERIES(frame) = Copy_Expand_Block(words, delta);
+		FRM_WORD_SERIES(frame) = Copy_List_Extra_Shallow(words, delta);
 	} else {
 		Extend_Series(words, delta);
 		BLK_TERM(words);
@@ -244,7 +244,7 @@
 		return FRM_WORD_SERIES(prior);
 	}
 
-	prior = Copy_Series(BUF_WORDS);
+	prior = Copy_List_Shallow(BUF_WORDS);
 	RESET_TAIL(BUF_WORDS);  // allow reuse
 
 	CHECK_BIND_TABLE;
@@ -407,7 +407,9 @@
 	for (value = BLK_HEAD(BUF_WORDS); NOT_END(value); value++)
 		binds[VAL_WORD_CANON(value)] = 0;
 
-	series = Copy_Series_Part(BUF_WORDS, start, SERIES_TAIL(BUF_WORDS) - start);
+	series = Copy_List_At_Max_Shallow(
+		BUF_WORDS, start, SERIES_TAIL(BUF_WORDS) - start
+	);
 	RESET_TAIL(BUF_WORDS);  // allow reuse
 
 	CHECK_BIND_TABLE;
@@ -467,25 +469,34 @@
 	PG_Reb_Stats->Objects++;
 
 	if (!value || IS_END(value)) {
-		object = parent
-			? Copy_Block_Values(parent, 0, SERIES_TAIL(parent), TS_CLONE)
-			: Make_Frame(0, TRUE);
-	} else {
+		if (parent) {
+			object = Copy_List_Core_Managed(
+				parent, 0, SERIES_TAIL(parent), TRUE, TS_CLONE
+			);
+		}
+		else {
+			object = Make_Frame(0, TRUE);
+		}
+	}
+	else {
 		words = Collect_Frame(parent, &value[0], BIND_ONLY); // GC safe
 		object = Create_Frame(words, 0); // GC safe
 		if (parent) {
 			if (Reb_Opts->watch_obj_copy)
 				Debug_Fmt(cs_cast(BOOT_STR(RS_WATCH, 2)), SERIES_TAIL(parent) - 1, FRM_WORD_SERIES(object));
 
-			// Copy parent values:
+			// Bitwise copy parent values (will have bits fixed by Clonify)
 			memcpy(
 				FRM_VALUES(object) + 1,
 				FRM_VALUES(parent) + 1,
 				(SERIES_TAIL(parent) - 1) * sizeof(REBVAL)
 			);
 
-			// Deep copy blocks and strings:
-			Copy_Deep_Values(object, 1, SERIES_TAIL(object), TS_CLONE);
+			// For values we copied that were blocks and strings, replace
+			// their series components with deep copies of themselves:
+			Clonify_Values_Len_Managed(
+				BLK_SKIP(object, 1), SERIES_TAIL(object) - 1, TRUE, TS_CLONE
+			);
 		}
 	}
 
@@ -610,7 +621,7 @@
 	if (spec && IS_BLOCK(spec))
 		frame = Construct_Object(obj, VAL_BLK_DATA(spec), FALSE);
 	else
-		frame = CLONE_OBJECT(obj);
+		frame = Copy_List_Shallow(obj);
 
 	return frame;
 }
@@ -645,7 +656,7 @@
 	);
 
 	// Allocate child (now that we know the correct size):
-	wrds = Copy_Series(BUF_WORDS);
+	wrds = Copy_List_Shallow(BUF_WORDS);
 	child = Make_Block(SERIES_TAIL(wrds));
 	value = Alloc_Tail_Blk(child);
 	VAL_SET(value, REB_FRAME);
@@ -673,7 +684,9 @@
 	BLK_TERM(child);
 
 	// Deep copy the child
-	Copy_Deep_Values(child, 1, SERIES_TAIL(child), TS_CLONE);
+	Clonify_Values_Len_Managed(
+		BLK_SKIP(child, 1), SERIES_TAIL(child) - 1, TRUE, TS_CLONE
+	);
 
 	// Rebind the child
 	Rebind_Block(parent1, child, BLK_SKIP(child, 1), REBIND_FUNC);

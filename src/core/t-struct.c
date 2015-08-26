@@ -623,7 +623,7 @@ static REBOOL parse_field_type(struct Struct_Field *field, REBVAL *spec, REBVAL 
 		REBUPT raw_addr = 0;
 		REBCNT alignment = 0;
 
-		VAL_STRUCT_SPEC(out) = Copy_Series(VAL_SERIES(data));
+		VAL_STRUCT_SPEC(out) = Copy_List_Shallow(VAL_SERIES(data));
 		VAL_STRUCT_DATA(out) = Make_Series(
 			1, sizeof(struct Struct_Data), MKS_NONE
 		);
@@ -883,8 +883,8 @@ failed:
 	dst->fields = src->fields;
 
 	/* writable field */
-	dst->data = Copy_Series(src->data);
-	STRUCT_DATA_BIN(dst) = Copy_Series(STRUCT_DATA_BIN(src));
+	dst->data = Copy_Array(src->data);
+	STRUCT_DATA_BIN(dst) = Copy_Array(STRUCT_DATA_BIN(src));
 }
 
 /***********************************************************************
@@ -1035,10 +1035,12 @@ static void init_fields(REBVAL *ret, REBVAL *spec)
 				REBINT n = VAL_WORD_CANON(arg); // zero on error
 				switch (n) {
 					case SYM_VALUES:
-						Val_Init_Binary(ret, Copy_Series_Part(VAL_STRUCT_DATA_BIN(val), VAL_STRUCT_OFFSET(val), VAL_STRUCT_LEN(val)));
+						Val_Init_Binary(ret, Copy_Array_At_Len(VAL_STRUCT_DATA_BIN(val), VAL_STRUCT_OFFSET(val), VAL_STRUCT_LEN(val)));
 						break;
 					case SYM_SPEC:
-						Val_Init_Block(ret, Clone_Block(VAL_STRUCT_SPEC(val)));
+						Val_Init_Block(
+							ret, Copy_List_Deep_Managed(VAL_STRUCT_SPEC(val))
+						);
 						Unbind_Values_Deep(VAL_BLK_HEAD(val));
 						break;
 					case SYM_ADDR:

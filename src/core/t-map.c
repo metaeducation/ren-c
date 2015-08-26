@@ -228,11 +228,9 @@
 			else if (ANY_BINSTR(key)) {
 				for (n = 0; n < series->tail; n += 2, v += 2) {
 					if (VAL_TYPE(key) == VAL_TYPE(v) && 0 == Compare_String_Vals(key, v, (REBOOL)!IS_BINARY(v))) {
-						if (val) {
+						if (val)
 							*++v = *val;
-//							VAL_SERIES(v) = Copy_Series_Value(val);
-//							VAL_INDEX(v) = 0;
-						}
+
 						return n/2+1;
 					}
 				}
@@ -257,7 +255,7 @@
 
 			if (!val) return 0;
 			Append_Value(series, key);
-			Append_Value(series, val); // no Copy_Series_Value(val) on strings
+			Append_Value(series, val); // does not copy value, e.g. if string
 			return series->tail/2;
 		}
 
@@ -288,7 +286,7 @@
 
 	// Create new entry:
 	Append_Value(series, key);
-	Append_Value(series, val);  // no Copy_Series_Value(val) on strings
+	Append_Value(series, val);  // does not copy value, e.g. if string
 
 	return (hashes[hash] = series->tail/2);
 }

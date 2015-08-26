@@ -208,10 +208,20 @@
 			if (result < 0) Trap_Port_DEAD_END(RE_CANNOT_OPEN, port, dir.error);
 			*D_OUT = *state;
 			SET_NONE(state);
-		} else {
-			len = VAL_BLK_LEN(state);
-			// !!? Why does this need to copy the block??
-			Val_Init_Block(D_OUT, Copy_Block_Values(VAL_SERIES(state), 0, len, TS_STRING));
+		}
+		else {
+			// !!! This copies the strings in the block, shallowly.  What is
+			// the purpose of doing this?  Why copy at all?
+			Val_Init_Block(
+				D_OUT,
+				Copy_List_Core_Managed(
+					VAL_SERIES(state),
+					0,
+					VAL_BLK_LEN(state),
+					FALSE, // !deep
+					TS_STRING
+				)
+			);
 		}
 		break;
 

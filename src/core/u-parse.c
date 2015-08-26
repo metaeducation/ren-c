@@ -1136,7 +1136,7 @@ post:
 						&temp,
 						parse->type,
 						IS_BLOCK_INPUT(parse)
-							? Copy_Block_Len(series, begin, count)
+							? Copy_List_At_Max_Shallow(series, begin, count)
 							: Copy_String(series, begin, count) // condenses;
 					);
 					Set_Var(word, &temp);
@@ -1170,7 +1170,7 @@ post:
 						parse->out,
 						parse->type,
 						IS_BLOCK_INPUT(parse)
-							? Copy_Block_Len(series, begin, count)
+							? Copy_List_At_Max_Shallow(series, begin, count)
 							: Copy_String(series, begin, count) // condenses
 					);
 

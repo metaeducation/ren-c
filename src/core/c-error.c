@@ -494,7 +494,7 @@
 	}
 
 	// Make a copy of the error object template:
-	err = CLONE_OBJECT(VAL_OBJ_FRAME(ROOT_ERROBJ));
+	err = Copy_List_Shallow(VAL_OBJ_FRAME(ROOT_ERROBJ));
 	error = ERR_VALUES(err);
 	SET_NONE(&error->id);
 
@@ -538,7 +538,7 @@
 	// If string arg, setup other fields
 	else if (IS_STRING(arg)) {
 		SET_INTEGER(&error->code, RE_USER); // user error
-		Val_Init_String(&error->arg1, Copy_Series_Value(arg));
+		Val_Init_String(&error->arg1, Copy_Array_At_Position(arg));
 		Set_Error_Type(error);
 	}
 	else
@@ -570,7 +570,7 @@
 	}
 
 	// Make a copy of the error object template:
-	err = CLONE_OBJECT(VAL_OBJ_FRAME(ROOT_ERROBJ));
+	err = Copy_List_Shallow(VAL_OBJ_FRAME(ROOT_ERROBJ));
 	error = ERR_VALUES(err);
 
 	// Set error number:
