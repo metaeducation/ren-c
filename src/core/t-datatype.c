@@ -87,7 +87,8 @@
 				)))
 			);
 		}
-		else Trap_Reflect_DEAD_END(VAL_TYPE(value), arg);
+		else
+			raise Error_Cannot_Reflect(VAL_TYPE(value), arg);
 		break;
 
 	case A_MAKE:
@@ -96,16 +97,16 @@
 			act = Value_Dispatch[type];
 			if (act) return act(call_, action);
 			//return R_NONE;
-			Trap_Make_DEAD_END(type, arg);
+			raise Error_Bad_Make(type, arg);
 		}
 		// if (IS_NONE(arg)) return R_NONE;
 		if (MT_Datatype(D_OUT, arg, REB_DATATYPE))
 			break;
 
-		Trap_Make_DEAD_END(REB_DATATYPE, arg);
+		raise Error_Bad_Make(REB_DATATYPE, arg);
 
 	default:
-		Trap_Action_DEAD_END(REB_DATATYPE, action);
+		raise Error_Illegal_Action(REB_DATATYPE, action);
 	}
 
 	return R_OUT;

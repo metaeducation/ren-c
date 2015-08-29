@@ -117,6 +117,10 @@ TVAR struct Reb_Call *CS_Root;	// Root call frame (head of first chunk)
 
 TVAR REBOL_STATE *Saved_State; // Saved state for Catch (CPU state, etc.)
 
+TVAR enum Reb_Fail_Prep TG_Fail_Prep;
+TVAR const char *TG_Fail_C_File;
+TVAR int TG_Fail_C_Line;
+
 //-- Evaluation variables:
 TVAR REBI64	Eval_Cycles;	// Total evaluation counter (upward)
 TVAR REBI64	Eval_Limit;		// Evaluation limit (set by secure)

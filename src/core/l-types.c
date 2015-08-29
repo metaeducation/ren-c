@@ -170,16 +170,16 @@ typedef REBFLG (*MAKE_FUNC)(REBVAL *, REBVAL *, REBCNT);
 		if (c > 255) goto bad_hex;
 
 		lex = Lex_Map[c];
-		if (lex > LEX_WORD) {
-			c = lex & LEX_VALUE;
-			if (!c && lex < LEX_NUMBER) goto bad_hex;
-			num = (num << 4) + c;
-		}
-		else {
-bad_hex:	Trap_DEAD_END(RE_INVALID_CHARS);
-		}
+		if (lex <= LEX_WORD) goto bad_hex;
+
+		c = lex & LEX_VALUE;
+		if (!c && lex < LEX_NUMBER) goto bad_hex;
+		num = (num << 4) + c;
 	}
 	return num;
+
+bad_hex:
+	raise Error_0(RE_INVALID_CHARS);
 }
 
 
@@ -285,7 +285,7 @@ bad_hex:	Trap_DEAD_END(RE_INVALID_CHARS);
 	// !!! need check for NaN, and INF
 	VAL_DECIMAL(value) = STRTOD(s_cast(buf), &se);
 
-	if (fabs(VAL_DECIMAL(value)) == HUGE_VAL) Trap_DEAD_END(RE_OVERFLOW);
+	if (fabs(VAL_DECIMAL(value)) == HUGE_VAL) raise Error_0(RE_OVERFLOW);
 	return cp;
 }
 
@@ -400,7 +400,7 @@ bad_hex:	Trap_DEAD_END(RE_INVALID_CHARS);
 	if ((REBCNT)(cp-bp) != len) return 0;
 	VAL_SET(value, REB_MONEY);
 	VAL_MONEY_AMOUNT(value) = atof((char*)(&buf[0]));
-	if (fabs(VAL_MONEY_AMOUNT(value)) == HUGE_VAL) Trap_DEAD_END(RE_OVERFLOW);
+	if (fabs(VAL_MONEY_AMOUNT(value)) == HUGE_VAL) raise Error_0(RE_OVERFLOW);
 	return cp;
 #endif
 }

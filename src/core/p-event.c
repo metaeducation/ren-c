@@ -88,7 +88,7 @@ REBREQ *req;		//!!! move this global
 	// Append to tail if room:
 	if (SERIES_FULL(VAL_SERIES(state))) {
 		if (VAL_TAIL(state) > EVENTS_LIMIT) {
-			Panic_DEAD_END(RP_MAX_EVENTS);
+			panic Error_0(RE_MAX_EVENTS);
 		} else {
 			Extend_Series(VAL_SERIES(state), EVENTS_CHUNK);
 			//RL_Print("event queue increased to :%d\n", SERIES_REST(VAL_SERIES(state)));
@@ -162,7 +162,7 @@ REBREQ *req;		//!!! move this global
 	// Validate and fetch relevant PORT fields:
 	state = BLK_SKIP(port, STD_PORT_STATE);
 	spec  = BLK_SKIP(port, STD_PORT_SPEC);
-	if (!IS_OBJECT(spec)) Trap1_DEAD_END(RE_INVALID_SPEC, spec);
+	if (!IS_OBJECT(spec)) raise Error_1(RE_INVALID_SPEC, spec);
 
 	// Get or setup internal state data:
 	if (!IS_BLOCK(state)) Val_Init_Block(state, Make_Array(EVENTS_CHUNK - 1));
@@ -174,13 +174,13 @@ REBREQ *req;		//!!! move this global
 
 	// Normal block actions done on events:
 	case A_POKE:
-		if (!IS_EVENT(D_ARG(3))) Trap_Arg_DEAD_END(D_ARG(3));
+		if (!IS_EVENT(D_ARG(3))) raise Error_Invalid_Arg(D_ARG(3));
 		goto act_blk;
 	case A_INSERT:
 	case A_APPEND:
 	//case A_PATH:		// not allowed: port/foo is port object field access
 	//case A_PATH_SET:	// not allowed: above
-		if (!IS_EVENT(arg)) Trap_Arg_DEAD_END(arg);
+		if (!IS_EVENT(arg)) raise Error_Invalid_Arg(arg);
 	case A_PICK:
 act_blk:
 		save_port = *D_ARG(1); // save for return
@@ -224,7 +224,7 @@ act_blk:
 	case A_FIND: // add it
 
 	default:
-		Trap_Action_DEAD_END(REB_PORT, action);
+		raise Error_Illegal_Action(REB_PORT, action);
 	}
 
 	return R_OUT;

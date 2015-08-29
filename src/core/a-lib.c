@@ -216,7 +216,7 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 	PUSH_UNHALTABLE_TRAP(&error, &state);
 
 // The first time through the following code 'error' will be NULL, but...
-// Trap()s can longjmp here, so 'error' won't be NULL *if* that happens!
+// `raise Error` can longjmp here, so 'error' won't be NULL *if* that happens!
 
 	if (error) {
 		// Save error for EXPLAIN and return it
@@ -256,8 +256,7 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 			DEAD_END;
 		}
 
-		Trap_Thrown(&out);
-		DEAD_END;
+		raise Error_No_Catch_For_Throw(&out);
 	}
 
 	DROP_TRAP_SAME_STACKLEVEL_AS_PUSH(&state);
@@ -294,7 +293,7 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 **
 ***********************************************************************/
 {
-	Panic(RP_NA);
+	panic Error_0(RE_NA);
 }
 
 
@@ -391,7 +390,7 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 	PUSH_UNHALTABLE_TRAP(&error, &state);
 
 // The first time through the following code 'error' will be NULL, but...
-// Trap()s can longjmp here, so 'error' won't be NULL *if* that happens!
+// `raise Error` can longjmp here, so 'error' won't be NULL *if* that happens!
 
 	if (error) {
 		// !!! Through this interface we have no way to distinguish an error
@@ -472,8 +471,7 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 			DEAD_END;
 		}
 
-		Trap_Thrown(&out);
-		DEAD_END;
+		raise Error_No_Catch_For_Throw(&out);
 	}
 
 	UNSAVE_SERIES(code);

@@ -213,9 +213,9 @@
 		} else {
 			// Add bias to head:
 			REBCNT bias = SERIES_BIAS(series);
-			if (REB_U32_ADD_OF(bias, len, &bias)) {
-				Trap(RE_OVERFLOW);
-			}
+			if (REB_U32_ADD_OF(bias, len, &bias))
+				raise Error_0(RE_OVERFLOW);
+
 			if (bias > 0xffff) { //bias is 16-bit, so a simple SERIES_ADD_BIAS could overflow it
 				REBYTE *data = series->data;
 
@@ -363,7 +363,7 @@
 **
 ***********************************************************************/
 {
-	if (!buf) Panic_DEAD_END(RP_NO_BUFFER);
+	if (!buf) panic Error_0(RE_NO_BUFFER);
 
 	RESET_TAIL(buf);
 	if (SERIES_BIAS(buf)) Reset_Bias(buf);

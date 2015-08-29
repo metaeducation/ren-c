@@ -87,12 +87,13 @@
 		return T_Object(call_, action);
 
 	case A_MAKE:
-		if (IS_DATATYPE(value)) Make_Port(value, arg);
-		else Trap_Make_DEAD_END(REB_PORT, value);
+		if (!IS_DATATYPE(value)) raise Error_Bad_Make(REB_PORT, value);
+		Make_Port(value, arg);
 		break;
 
 	case A_TO:
-		if (!(IS_DATATYPE(value) && IS_OBJECT(arg))) Trap_Make_DEAD_END(REB_PORT, arg);
+		if (!(IS_DATATYPE(value) && IS_OBJECT(arg)))
+			raise Error_Bad_Make(REB_PORT, arg);
 		value = arg;
 		VAL_SET(value, REB_PORT);
 		break;

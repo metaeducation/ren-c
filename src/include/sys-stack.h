@@ -41,8 +41,9 @@
 **	Beyond that purpose, the data stack can also be used as a
 **	place to store a value to protect it from the garbage
 **	collector.  The stack must be balanced in the case of success
-**	when a native or action runs, but if a Trap() is called then
-**	the stack will be automatically balanced.
+**	when a native or action runs.  But if `raise` is used to trigger
+**	an error, then the stack will be automatically balanced in
+**	the trap handling.
 **
 **	The data stack specifically needs contiguous memory for its
 **	applications.  That is more important than having stability

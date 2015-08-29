@@ -194,9 +194,8 @@
 	if (IS_TUPLE(value)) {
 		vp = VAL_TUPLE(value);
 		len = VAL_TUPLE_LEN(value);
-	} else if (!(IS_DATATYPE(value) && (action == A_MAKE || action == A_TO))) {
-		Trap_Arg_DEAD_END(value);
-	}
+	} else if (!(IS_DATATYPE(value) && (action == A_MAKE || action == A_TO)))
+		raise Error_Invalid_Arg(value);
 
 	if (IS_BINARY_ACT(action)) {
 		assert(vp);
@@ -213,7 +212,9 @@
 			alen = VAL_TUPLE_LEN(arg);
 			if (len < alen)
 				len = VAL_TUPLE_LEN(value) = alen;
-		} else Trap_Math_Args(REB_TUPLE, action);
+		}
+		else
+			raise Error_Math_Args(REB_TUPLE, action);
 
 		for (;len > 0; len--, vp++) {
 			REBINT v = *vp;
@@ -230,22 +231,22 @@
 				break;
 			case A_DIVIDE:
 				if (IS_DECIMAL(arg) || IS_PERCENT(arg)) {
-					if (dec == 0.0) Trap_DEAD_END(RE_ZERO_DIVIDE);
+					if (dec == 0.0) raise Error_0(RE_ZERO_DIVIDE);
 					v=(REBINT)Round_Dec(v/dec, 0, 1.0);
 				} else {
-					if (a == 0) Trap_DEAD_END(RE_ZERO_DIVIDE);
+					if (a == 0) raise Error_0(RE_ZERO_DIVIDE);
 					v /= a;
 				}
 				break;
 			case A_REMAINDER:
-				if (a == 0) Trap_DEAD_END(RE_ZERO_DIVIDE);
+				if (a == 0) raise Error_0(RE_ZERO_DIVIDE);
 				v %= a;
 				break;
 			case A_AND:	v &= a; break;
 			case A_OR:	v |= a; break;
 			case A_XOR:	v ^= a; break;
 			default:
-				Trap_Action_DEAD_END(REB_TUPLE, action);
+				raise Error_Illegal_Action(REB_TUPLE, action);
 			}
 
 			if (v > 255) v = 255;
@@ -262,7 +263,7 @@
 		goto ret_value;
 	}
 	if (action == A_RANDOM) {
-		if (D_REF(2)) Trap_DEAD_END(RE_BAD_REFINES); // seed
+		if (D_REF(2)) raise Error_0(RE_BAD_REFINES); // seed
 		for (;len > 0; len--, vp++) {
 			if (*vp)
 				*vp = (REBYTE)(Random_Int(D_REF(3)) % (1+*vp));
@@ -313,14 +314,14 @@
 		a = Get_Num_Arg(arg);
 		if (a <= 0 || a > len) {
 			if (action == A_PICK) return R_NONE;
-			Trap_Range_DEAD_END(arg);
+			raise Error_Out_Of_Range(arg);
 		}
 		if (action == A_PICK) {
 			SET_INTEGER(D_OUT, vp[a-1]);
 			return R_OUT;
 		}
 		// Poke:
-		if (!IS_INTEGER(D_ARG(3))) Trap_Arg_DEAD_END(D_ARG(3));
+		if (!IS_INTEGER(D_ARG(3))) raise Error_Invalid_Arg(D_ARG(3));
 		v = VAL_INT32(D_ARG(3));
 		if (v < 0)
 			v = 0;
@@ -341,7 +342,8 @@
 			goto bad_arg;
 		}
 		if (ANY_BLOCK(arg)) {
-			if (!MT_Tuple(D_OUT, VAL_BLK_DATA(arg), REB_TUPLE)) Trap_Make_DEAD_END(REB_TUPLE, arg);
+			if (!MT_Tuple(D_OUT, VAL_BLK_DATA(arg), REB_TUPLE))
+				raise Error_Bad_Make(REB_TUPLE, arg);
 			return R_OUT;
 		}
 
@@ -374,10 +376,10 @@
 		goto ret_value;
 
 bad_arg:
-		Trap_Make_DEAD_END(REB_TUPLE, arg);
+		raise Error_Bad_Make(REB_TUPLE, arg);
 	}
 
-	Trap_Action_DEAD_END(REB_TUPLE, action);
+	raise Error_Illegal_Action(REB_TUPLE, action);
 
 ret_value:
 	*D_OUT = *value;

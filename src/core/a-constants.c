@@ -38,15 +38,16 @@ const char Str_Stack_Misaligned[] = "!! Stack misaligned: %d";
 
 const char Str_REBOL[] = "REBOL";
 
-const char * const Panic_Msgs[] = {
-	"REBOL System Error",
-	"boot failure",
-	"internal problem",
-	"invalid datatype %d",
-	"unspecific",
-	"\n\nProgram terminated abnormally."
-		"\nThis should never happen."
-		"\nPlease file a bug report with details."
+
+const char Str_Panic_Title[] = "Rebol Internal Error";
+
+const char Str_Panic_Directions[] = {
+	"If you need to file a bug in the issue tracker, please give thorough\n"
+	"details on how to reproduce the problem:\n"
+	"\n"
+	"    http://github.com/rebol/rebol-issues/issues\n"
+	"\n"
+	"Include the following information in the report:\n\n"
 };
 
 const char Str_Dump[] =

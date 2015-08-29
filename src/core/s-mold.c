@@ -380,7 +380,8 @@ static void Mold_String_Series(const REBVAL *value, REB_MOLD *mold)
 
 	// Empty string:
 	if (idx >= VAL_TAIL(value)) {
-		Append_Unencoded(mold->series, "\"\"");  //Trap_DEAD_END(RE_PAST_END);
+		// !!! Comment said `raise Error_0(RE_PAST_END);`
+		Append_Unencoded(mold->series, "\"\"");
 		return;
 	}
 
@@ -913,15 +914,10 @@ static void Mold_Error(const REBVAL *value, REB_MOLD *mold, REBFLG molded)
 	// Protect against recursion. !!!!
 
 	if (molded) {
-		if (VAL_OBJ_FRAME(value) && VAL_ERR_NUM(value) >= RE_NOTE && VAL_ERR_OBJECT(value))
-			Mold_Object(value, mold);
-		else {
-			// Happens if throw or return is molded.
-			// make error! 0-3
-			Pre_Mold(value, mold);
-			Append_Int(mold->series, VAL_ERR_NUM(value));
-			End_Mold(mold);
-		}
+		if (VAL_ERR_NUM(value) > RE_SPECIAL_MAX) raise Error_0(RE_MISC);
+
+		ASSERT_FRAME(VAL_OBJ_FRAME(value));
+		Mold_Object(value, mold);
 		return;
 	}
 
@@ -1270,8 +1266,7 @@ static void Mold_Error(const REBVAL *value, REB_MOLD *mold, REBFLG molded)
 		break;
 
 	default:
-		assert(FALSE);
-		Panic_Core(RP_DATATYPE+5, VAL_TYPE(value));
+		panic Error_Invalid_Datatype(VAL_TYPE(value));
 	}
 	return;
 
@@ -1380,7 +1375,7 @@ return_balanced:
 	REBSER *buf = BUF_MOLD;
 	REBINT len;
 
-	if (!buf) Panic(RP_NO_BUFFER);
+	if (!buf) panic Error_0(RE_NO_BUFFER);
 
 	if (SERIES_REST(buf) > MAX_COMMON)
 		Remake_Series(buf, MIN_COMMON, SERIES_WIDE(buf), MKS_NONE);

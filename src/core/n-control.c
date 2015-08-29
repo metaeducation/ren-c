@@ -227,7 +227,7 @@ enum {
 		}
 	}
 
-	if (GET_FLAG(flags, PROT_HIDE)) Trap_DEAD_END(RE_BAD_REFINES);
+	if (GET_FLAG(flags, PROT_HIDE)) raise Error_0(RE_BAD_REFINES);
 
 	Protect_Value(val, flags);
 
@@ -263,7 +263,7 @@ enum {
 		index = Do_Next_May_Throw(D_OUT, block, index);
 		if (index == THROWN_FLAG) break;
 		// !!! UNSET! should be an error, CC#564 (Is there a better error?)
-		/* if (IS_UNSET(D_OUT)) { Trap(RE_NO_RETURN); } */
+		/* if (IS_UNSET(D_OUT)) raise Error_0(RE_NO_RETURN); */
 		if (IS_CONDITIONAL_FALSE(D_OUT)) {
 			SET_TRASH_SAFE(D_OUT);
 			return R_NONE;
@@ -287,7 +287,7 @@ enum {
 		if (index == THROWN_FLAG) return R_OUT;
 
 		// !!! UNSET! should be an error, CC#564 (Is there a better error?)
-		/* if (IS_UNSET(D_OUT)) { Trap(RE_NO_RETURN); } */
+		/* if (IS_UNSET(D_OUT)) raise Error_0(RE_NO_RETURN); */
 
 		if (!IS_CONDITIONAL_FALSE(D_OUT) && !IS_UNSET(D_OUT)) return R_OUT;
 	}
@@ -329,7 +329,7 @@ enum {
 	PUSH_TRAP(&error, &state);
 
 // The first time through the following code 'error' will be NULL, but...
-// Trap()s can longjmp here, so 'error' won't be NULL *if* that happens!
+// `raise Error` can longjmp here, so 'error' won't be NULL *if* that happens!
 
 	if (error) return R_NONE;
 
@@ -405,9 +405,9 @@ enum {
 			return R_OUT;
 		}
 
-		if (index == END_FLAG) Trap(RE_PAST_END);
+		if (index == END_FLAG) raise Error_0(RE_PAST_END);
 
-		if (IS_UNSET(condition_result)) Trap(RE_NO_RETURN);
+		if (IS_UNSET(condition_result)) raise Error_0(RE_NO_RETURN);
 
 		// We DO the next expression, rather than just assume it is a
 		// literal block.  That allows you to write things like:
@@ -456,7 +456,7 @@ enum {
 			}
 
 			// case [first [a b c]] => **error**
-			Trap(RE_PAST_END);
+			raise Error_0(RE_PAST_END);
 		}
 
 		if (IS_CONDITIONAL_TRUE(condition_result)) {
@@ -533,7 +533,7 @@ enum {
 	REBVAL * const handler = D_ARG(7);
 
 	// /ANY would override /NAME, so point out the potential confusion
-	if (any && named) Trap(RE_BAD_REFINES);
+	if (any && named) raise Error_0(RE_BAD_REFINES);
 
 	if (Do_Block_Throws(D_OUT, VAL_SERIES(block), VAL_INDEX(block))) {
 		if (
@@ -557,7 +557,8 @@ enum {
 				REBVAL *candidate = VAL_BLK_DATA(name_list);
 				for (; NOT_END(candidate); candidate++) {
 					// !!! Should we test a typeset for illegal name types?
-					if (IS_BLOCK(candidate)) Trap1(RE_INVALID_ARG, name_list);
+					if (IS_BLOCK(candidate))
+						raise Error_1(RE_INVALID_ARG, name_list);
 
 					*temp1 = *candidate;
 					*temp2 = *D_OUT;
@@ -613,22 +614,22 @@ was_caught:
 
 			REBVAL *param = BLK_SKIP(VAL_FUNC_WORDS(handler), 1);
 			if (NOT_END(param) && !TYPE_CHECK(param, VAL_TYPE(thrown_arg))) {
-				Trap3_DEAD_END(
+				raise Error_3(
 					RE_EXPECT_ARG,
-					Of_Type(handler),
+					Type_Of(handler),
 					param,
-					Of_Type(thrown_arg)
+					Type_Of(thrown_arg)
 				);
 			}
 
 			if (NOT_END(param)) ++param;
 
 			if (NOT_END(param) && !TYPE_CHECK(param, VAL_TYPE(thrown_name))) {
-				Trap3_DEAD_END(
+				raise Error_3(
 					RE_EXPECT_ARG,
-					Of_Type(handler),
+					Type_Of(handler),
 					param,
-					Of_Type(thrown_name)
+					Type_Of(thrown_name)
 				);
 			}
 
@@ -636,8 +637,7 @@ was_caught:
 
 			if (NOT_END(param) && !IS_REFINEMENT(param)) {
 				// We go lower in arity, but don't make up arg values
-				Trap1(RE_NEED_VALUE, param);
-				DEAD_END;
+				raise Error_1(RE_NEED_VALUE, param);
 			}
 
 			// !!! As written, Apply_Func will ignore extra arguments.
@@ -816,8 +816,7 @@ was_caught:
 		return R_OUT;
 
 	case REB_ERROR:
-		Do_Error(value);
-		DEAD_END;
+		raise Error_Is(value);
 
 	case REB_BINARY:
 	case REB_STRING:
@@ -845,7 +844,7 @@ was_caught:
 
 	case REB_SET_WORD:
 	case REB_SET_PATH:
-		Trap_Arg_DEAD_END(value);
+		raise Error_Invalid_Arg(value);
 
 	default:
 		return R_ARG1;
@@ -1051,7 +1050,7 @@ was_caught:
 	PUSH_TRAP(&error, &state);
 
 // The first time through the following code 'error' will be NULL, but...
-// Trap()s can longjmp here, so 'error' won't be NULL *if* that happens!
+// `raise Error` can longjmp here, so 'error' won't be NULL *if* that happens!
 
 	if (error) {
 		if (with) {
@@ -1072,16 +1071,14 @@ was_caught:
 
 				if (NOT_END(param) && !TYPE_CHECK(param, VAL_TYPE(error))) {
 					// If handler takes an arg, it must take ERROR!
-					Trap1(RE_TRAP_WITH_EXPECTS, param);
-					DEAD_END;
+					raise Error_1(RE_TRAP_WITH_EXPECTS, param);
 				}
 
 				if (NOT_END(param)) param++;
 
 				if (NOT_END(param) && !IS_REFINEMENT(param)) {
 					// We go lower in arity, but don't make up arg values
-					Trap1(RE_NEED_VALUE, param);
-					DEAD_END;
+					raise Error_1(RE_NEED_VALUE, param);
 				}
 
 				// !!! As written, Apply_Func will ignore extra arguments.
@@ -1091,10 +1088,8 @@ was_caught:
 				Apply_Func(D_OUT, handler, error, NULL);
 				return R_OUT;
 			}
-			else
-				Panic(RP_MISC); // should not be possible (type-checking)
 
-			DEAD_END;
+			panic Error_0(RE_MISC); // should not be possible (type-checking)
 		}
 
 		*D_OUT = *error;

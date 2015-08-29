@@ -70,9 +70,8 @@ enum {
 	// Check for second series argument:
 	if (flags != SET_OP_UNIQUE) {
 		val2 = D_ARG(i++);
-		if (VAL_TYPE(val1) != VAL_TYPE(val2)) {
-			Trap_Types_DEAD_END(RE_EXPECT_VAL, VAL_TYPE(val1), VAL_TYPE(val2));
-		}
+		if (VAL_TYPE(val1) != VAL_TYPE(val2))
+			raise Error_Unexpected_Type(VAL_TYPE(val1), VAL_TYPE(val2));
 	}
 
 	// Refinements /case and /skip N
@@ -217,7 +216,7 @@ enum {
 		return R_ARG1;
 
 	default:
-		Trap_Arg_DEAD_END(val1);
+		raise Error_Invalid_Arg(val1);
 	}
 
 	return R_OUT;
@@ -244,8 +243,8 @@ enum {
 	val2 = D_ARG(2);
 
 	if (IS_DATE(val1) || IS_DATE(val2)) {
-		if (!IS_DATE(val1)) Trap_Arg_DEAD_END(val1);
-		if (!IS_DATE(val2)) Trap_Arg_DEAD_END(val2);
+		if (!IS_DATE(val1)) raise Error_Invalid_Arg(val1);
+		if (!IS_DATE(val2)) raise Error_Invalid_Arg(val2);
 		Subtract_Date(val1, val2, D_OUT);
 		return R_OUT;
 	}

@@ -83,7 +83,7 @@
 		if (IS_NONE(val)) return R_NONE;
 	default:
 	trap_it:
-		Trap_Action_DEAD_END(VAL_TYPE(val), action);
+		raise Error_Illegal_Action(VAL_TYPE(val), action);
 	}
 
 	return R_OUT;

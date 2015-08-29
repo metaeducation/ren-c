@@ -62,6 +62,21 @@
 // setjmp and longjmp on signal masks. Instead, two new functions, sigsetjmp
 // and siglongjmp, are defined by POSIX.1. These two functions should always
 // be used when branching from a signal handler."
+//
+// Note: longjmp is able to pass a value (though only an integer on 64-bit
+// platforms, and not enough to pass a pointer).  This can be used to
+// dictate the value setjmp returns in the longjmp case, though the code
+// does not currently use that feature.
+//
+// Also note: with compiler warnings on, it can tell us when values are set
+// before the setjmp and then changed before a potential longjmp:
+//
+//     http://stackoverflow.com/q/7721854/211160
+//
+// Because of this longjmp/setjmp "clobbering", it's a useful warning to
+// have enabled in.  One option for suppressing it would be to mark
+// a parameter as 'volatile', but that is implementation-defined.
+// It is best to use a new variable if you encounter such a warning.
 
 #ifdef HAS_POSIX_SIGNAL
 	#define SET_JUMP(s) sigsetjmp((s), 1)
@@ -73,7 +88,7 @@
 
 
 // Structure holding the information about the last point in the stack that
-// wanted to set up an opportunity to "catch" a Do_Error()
+// wanted to set up an opportunity to intercept a `raise Error_XXX()`
 
 typedef struct Rebol_State {
 	struct Rebol_State *last_state;
@@ -97,8 +112,8 @@ typedef struct Rebol_State {
 
 
 // PUSH_TRAP is a construct which is used to catch errors that have been
-// triggered by either the Do_Error() function directly, or the helper
-// routines with names like TrapXXX().  (In Rebol user code, the trapping
+// triggered by the Raise_Core() function--usually invoked via the argument
+// to the `raise` pseudo-"keyword".  (In Rebol user code, the trapping
 // function is manually triggered with a DO of an ERROR! type.)  To call
 // the push, you need a REBOL_STATE value to be passed which it will
 // write into--which is a black box that clients shouldn't inspect.
@@ -130,7 +145,7 @@ typedef struct Rebol_State {
 		} else { \
 			/* this runs if before the DROP_TRAP a longjmp() happens */ \
 			if (Trapped_Helper_Halted(s)) \
-				Do_Error(&(s)->error); /* proxy the halt up the stack */ \
+				Raise_Core(&(s)->error); /* proxy the halt up the stack */ \
 			else \
 				*(e) = cast(const REBVAL*, &(s)->error); \
 		} \

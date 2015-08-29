@@ -44,12 +44,11 @@
 {
 	if (!Do_Sys_Func(out, SYS_CTX_MAKE_PORT_P, spec, 0)) {
 		// Gave back an unhandled RETURN, BREAK, CONTINUE, etc...
-		Trap_Thrown(out);
-		DEAD_END_VOID;
+		raise Error_No_Catch_For_Throw(out);
 	}
 
 	// !!! Shouldn't this be testing for !IS_PORT( ) ?
-	if (IS_NONE(out)) Trap1(RE_INVALID_SPEC, spec);
+	if (IS_NONE(out)) raise Error_1(RE_INVALID_SPEC, spec);
 }
 
 
@@ -215,8 +214,7 @@
 	while (wt) {
 		if (GET_SIGNAL(SIG_ESCAPE)) {
 			CLR_SIGNAL(SIG_ESCAPE);
-			Halt();
-			DEAD_END;
+			raise Error_Is(TASK_HALT_ERROR);
 		}
 
 		// Process any waiting events:
@@ -324,8 +322,9 @@
 		!IS_FRAME(BLK_HEAD(port)) ||
 		// Must have a spec object:
 		!IS_OBJECT(BLK_SKIP(port, STD_PORT_SPEC))
-	)
-		Trap_DEAD_END(RE_INVALID_PORT);
+	) {
+		raise Error_0(RE_INVALID_PORT);
+	}
 
 	// Get actor for port, if it has one:
 	actor = BLK_SKIP(port, STD_PORT_ACTOR);
@@ -337,14 +336,14 @@
 		return cast(REBPAF, VAL_FUNC_CODE(actor))(call_, port, action);
 
 	// actor must be an object:
-	if (!IS_OBJECT(actor)) Trap_DEAD_END(RE_INVALID_ACTOR);
+	if (!IS_OBJECT(actor)) raise Error_0(RE_INVALID_ACTOR);
 
 	// Dispatch object function:
 	n = Find_Action(actor, action);
 	actor = Obj_Value(actor, n);
-	if (!n || !actor || !ANY_FUNC(actor)) {
-		Trap1_DEAD_END(RE_NO_PORT_ACTION, Get_Action_Word(action));
-	}
+	if (!n || !actor || !ANY_FUNC(actor))
+		raise Error_1(RE_NO_PORT_ACTION, Get_Action_Word(action));
+
 	Redo_Func(actor);
 	return R_OUT;
 
@@ -402,8 +401,9 @@
 		|| SERIES_WIDE(port) != sizeof(REBVAL)
 		|| !IS_FRAME(BLK_HEAD(port))
 		|| !IS_OBJECT(BLK_SKIP(port, STD_PORT_SPEC))
-	)
-		Trap(RE_INVALID_PORT);
+	) {
+		raise Error_0(RE_INVALID_PORT);
+	}
 }
 
 /***********************************************************************

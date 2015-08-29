@@ -55,7 +55,7 @@ static REBREQ *Req_SIO;
 {
 	//OS_CALL_DEVICE(RDI_STDIO, RDC_INIT);
 	Req_SIO = OS_MAKE_DEVREQ(RDI_STDIO);
-	if (!Req_SIO) Panic(RP_IO_ERROR);
+	if (!Req_SIO) panic Error_0(RE_IO_ERROR);
 
 	// The device is already open, so this call will just setup
 	// the request fields properly.
@@ -80,7 +80,7 @@ static REBREQ *Req_SIO;
 
 	OS_DO_DEVICE(Req_SIO, RDC_WRITE);
 
-	if (Req_SIO->error) Panic(RP_IO_ERROR);
+	if (Req_SIO->error) panic Error_0(RE_IO_ERROR);
 }
 
 
@@ -102,7 +102,7 @@ static REBREQ *Req_SIO;
 	const REBYTE *bp = uni ? NULL : cast(const REBYTE *, p);
 	const REBUNI *up = uni ? cast(const REBUNI *, p) : NULL;
 
-	if (!p) Panic(RP_NO_PRINT_PTR);
+	if (!p) panic Error_0(RE_NO_PRINT_PTR);
 
 	// Determine length if not provided:
 	if (len == UNKNOWN) len = uni ? Strlen_Uni(up) : LEN_BYTES(bp);
@@ -134,7 +134,7 @@ static REBREQ *Req_SIO;
 		len -= n;
 
 		OS_DO_DEVICE(Req_SIO, RDC_WRITE);
-		if (Req_SIO->error) Panic(RP_IO_ERROR);
+		if (Req_SIO->error) panic Error_0(RE_IO_ERROR);
 	}
 }
 
@@ -492,7 +492,7 @@ static REBREQ *Req_SIO;
 	REBYTE *bp;
 	REBCNT tail;
 
-	if (!buf) Panic(RP_NO_BUFFER);
+	if (!buf) panic Error_0(RE_NO_BUFFER);
 
 	REBINT disabled = GC_Disabled;
 	GC_Disabled = 1;
@@ -500,7 +500,7 @@ static REBREQ *Req_SIO;
 	RESET_SERIES(buf);
 
 	// Limits output to size of buffer, will not expand it:
-	bp = Form_Var_Args(STR_HEAD(buf), SERIES_REST(buf)-1, fmt, args);
+	bp = Form_Args_Core(STR_HEAD(buf), SERIES_REST(buf) - 1, fmt, args);
 	tail = bp - STR_HEAD(buf);
 
 	for (n = 0; n < tail; n += len) {
@@ -721,7 +721,7 @@ static REBREQ *Req_SIO;
 
 /***********************************************************************
 **
-*/	REBYTE *Form_Var_Args(REBYTE *bp, REBCNT max, const char *fmt, va_list *args)
+*/	REBYTE *Form_Args_Core(REBYTE *bp, REBCNT max, const char *fmt, va_list *args)
 /*
 **		(va_list by pointer: http://stackoverflow.com/a/3369762/211160)
 **
@@ -848,6 +848,23 @@ mold_value:
 	}
 	*bp = 0;
 	return bp;
+}
+
+
+/***********************************************************************
+**
+*/	REBYTE *Form_Args(REBYTE *bp, REBCNT max, const char *fmt, ...)
+/*
+***********************************************************************/
+{
+	REBYTE *result;
+	va_list args;
+
+	va_start(args, fmt);
+	result = Form_Args_Core(bp, max, fmt, &args);
+	va_end(args);
+
+	return result;
 }
 
 

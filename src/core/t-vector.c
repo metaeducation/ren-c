@@ -177,7 +177,7 @@ void Set_Vector_Row(REBSER *ser, REBVAL *blk)
 				f = VAL_DECIMAL(val);
 				if (bits <= VTUI64) i = (REBINT)(f);
 			}
-			else Trap_Arg(val);
+			else raise Error_Invalid_Arg(val);
 			//if (n >= ser->tail) Expand_Vector(ser);
 			set_vect(bits, ser->data, n++, i, f);
 		}
@@ -206,9 +206,8 @@ void Set_Vector_Row(REBSER *ser, REBVAL *blk)
 	REBCNT n;
 	REBVAL *val;
 
-	if (len <= 0) {
-		Trap_Arg_DEAD_END(vect);
-	}
+	if (len <= 0)
+		raise Error_Invalid_Arg(vect);
 
 	ser = Make_Array(len);
 	val = BLK_HEAD(ser);
@@ -241,10 +240,8 @@ void Set_Vector_Row(REBSER *ser, REBVAL *blk)
 	REBCNT b1 = VECT_TYPE(VAL_SERIES(v1));
 	REBCNT b2 = VECT_TYPE(VAL_SERIES(v2));
 
-	if (
-		(b1 >= VTSF08 && b2 < VTSF08)
-		|| (b2 >= VTSF08 && b1 < VTSF08)
-	) Trap_DEAD_END(RE_NOT_SAME_TYPE);
+	if ((b1 >= VTSF08 && b2 < VTSF08) || (b2 >= VTSF08 && b1 < VTSF08))
+		raise Error_0(RE_NOT_SAME_TYPE);
 
 	for (n = 0; n < len; n++) {
 		i1 = get_vect(b1, d1, n + VAL_INDEX(v1));
@@ -558,7 +555,7 @@ void Set_Vector_Row(REBSER *ser, REBVAL *blk)
 
 	// Check must be in this order (to avoid checking a non-series value);
 	if (action >= A_TAKE && action <= A_SORT && IS_PROTECT_SERIES(vect))
-		Trap_DEAD_END(RE_PROTECTED);
+		raise Error_0(RE_PROTECTED);
 
 	switch (action) {
 
@@ -607,20 +604,19 @@ void Set_Vector_Row(REBSER *ser, REBVAL *blk)
 		break;
 
 	case A_RANDOM:
-		if (D_REF(2) || D_REF(4)) Trap_DEAD_END(RE_BAD_REFINES); // /seed /only
+		if (D_REF(2) || D_REF(4)) raise Error_0(RE_BAD_REFINES); // /seed /only
 		Shuffle_Vector(value, D_REF(3));
 		return R_ARG1;
 
 	default:
-		Trap_Action_DEAD_END(VAL_TYPE(value), action);
+		raise Error_Illegal_Action(VAL_TYPE(value), action);
 	}
 
 	*D_OUT = *value;
 	return R_OUT;
 
 bad_make:
-	Trap_Make_DEAD_END(REB_VECTOR, arg);
-	DEAD_END;
+	raise Error_Bad_Make(REB_VECTOR, arg);
 }
 
 

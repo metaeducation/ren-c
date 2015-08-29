@@ -158,7 +158,7 @@ static REBI64 ran_arr_cycle()
 	REBU64 s, m, u;
 	if (r == 0) return 0;
 	s = (r < 0) ? -r : r;
-	if (!secure && s > MM) Trap_DEAD_END(RE_OVERFLOW);
+	if (!secure && s > MM) raise Error_0(RE_OVERFLOW);
 	m = secure ? MAX_U64 - (MAX_U64 - s + 1) % s : MM - MM % s - 1; /* rejection limit */
 	do u = Random_Int(secure); while (u > m); /* get a random below the limit */
 	u = u % s + 1;

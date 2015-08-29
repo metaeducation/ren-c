@@ -57,10 +57,10 @@
 			//RL_Print("%s, %d, Make library action\n", __func__, __LINE__);
 		case A_TO:
 			if (!IS_DATATYPE(val)) {
-				Trap_Types_DEAD_END(RE_EXPECT_VAL, REB_LIBRARY, VAL_TYPE(val));
+				raise Error_Unexpected_Type(REB_LIBRARY, VAL_TYPE(val));
 			}
 			if (!IS_FILE(arg)) {
-				Trap_Types_DEAD_END(RE_EXPECT_VAL, REB_FILE, VAL_TYPE(arg));
+				raise Error_Unexpected_Type(REB_FILE, VAL_TYPE(arg));
 			} else {
 				REBCNT len = VAL_LEN(arg);
 				void *lib = NULL;
@@ -68,9 +68,8 @@
 				REBSER *path = Value_To_OS_Path(arg, FALSE);
 				lib = OS_OPEN_LIBRARY(cast(REBCHR*, SERIES_DATA(path)), &error);
 				Free_Series(path);
-				if (!lib) {
-					Trap_Make_DEAD_END(REB_LIBRARY, arg);
-				}
+				if (!lib)
+					raise Error_Bad_Make(REB_LIBRARY, arg);
 
 				VAL_LIB_SPEC(D_OUT) = Make_Array(1);
 				MANAGE_SERIES(VAL_LIB_SPEC(D_OUT));
@@ -89,7 +88,7 @@
 			SET_UNSET(D_OUT);
 			break;
 		default:
-			Trap_Action_DEAD_END(REB_LIBRARY, action);
+			raise Error_Illegal_Action(REB_LIBRARY, action);
 	}
 	return R_OUT;
 }

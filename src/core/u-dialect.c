@@ -190,8 +190,7 @@ static const char *Dia_Fmt = "DELECT - cmd: %s length: %d missed: %d total: %d";
 		if (Do_Block_Throws(&safe, VAL_SERIES(value), 0)) {
 			// !!! Does not check for thrown cases...what should this
 			// do in case of THROW, BREAK, QUIT?
-			Trap_Thrown(&safe);
-			DEAD_END;
+			raise Error_No_Catch_For_Throw(&safe);
 		}
 		DS_PUSH(&safe);
 		value = DS_TOP;
@@ -562,7 +561,8 @@ again:
 	if (dia.argi >= SERIES_TAIL(dia.args)) return R_NONE; // end of block
 
 	if (D_REF(4)) { // in
-		if (!IS_BLOCK(dia.contexts = D_ARG(5))) Trap_Arg_DEAD_END(dia.contexts);
+		if (!IS_BLOCK(dia.contexts = D_ARG(5)))
+			raise Error_Invalid_Arg(dia.contexts);
 		dia.contexts = VAL_BLK_DATA(dia.contexts);
 	}
 
@@ -588,7 +588,7 @@ again:
 		if (dia.missed) Debug_Fmt(Dia_Fmt, Get_Field_Name(dia.dialect, dia.cmd), dia.out->tail, dia.missed, Total_Missed);
 	}
 
-	if (err < 0) Trap_Arg_DEAD_END(D_ARG(2)); // !!! needs better error
+	if (err < 0) raise Error_Invalid_Arg(D_ARG(2)); // !!! needs better error
 
 	return R_ARG2;
 }
