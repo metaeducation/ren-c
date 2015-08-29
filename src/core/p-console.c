@@ -114,8 +114,6 @@
 		break;
 
 	case A_OPEN:
-		// ?? why???
-		//if (OS_DO_DEVICE(req, RDC_OPEN)) Trap_Port_DEAD_END(RE_CANNOT_OPEN, port);
 		SET_OPEN(req);
 		break;
 

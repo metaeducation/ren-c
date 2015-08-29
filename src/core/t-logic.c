@@ -106,15 +106,6 @@
 		) goto is_false;
 		goto is_true;
 
-#ifdef removed
-	case A_CHANGE:
-		if (IS_NONE(arg)) val1 = 0;
-		else if (IS_INTEGER(arg)) val1 = Int32(arg);
-		else if (IS_LOGIC(arg)) val1 = TRUE;
-		else Trap_Arg_DEAD_END(arg);
-		break;
-#endif
-
 	default:
 		Trap_Action_DEAD_END(REB_LOGIC, action);
 	}

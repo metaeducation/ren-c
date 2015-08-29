@@ -445,8 +445,6 @@
 		}
 
 		if (mode > 0) {
-			//if (ANY_OBJECT(value)) Trap_Types_DEAD_END(words, REB_BLOCK, VAL_TYPE(value)); //check not needed
-
 			// If FALSE return, copy values to the write location:
 			if (mode == 1) {  // remove-each
 				if (IS_CONDITIONAL_FALSE(D_OUT)) {
@@ -514,8 +512,6 @@ skip_hidden: ;
 			IS_DECIMAL(end) ? (REBI64)VAL_DECIMAL(end) : VAL_INT64(end), VAL_INT64(incr));
 	}
 	else if (ANY_SERIES(start)) {
-		// Check that start and end are same type and series:
-		//if (ANY_SERIES(end) && VAL_SERIES(start) != VAL_SERIES(end)) Trap_Arg(end);
 		if (ANY_SERIES(end))
 			Loop_Series(D_OUT, var, body, start, VAL_INDEX(end), Int32(incr));
 		else

@@ -536,7 +536,6 @@ more_path:
 
 	// Hack to process remaining path:
 	if (path && NOT_END(path)) goto more_path;
-	//	Trap2_DEAD_END(RE_NO_REFINE, DSF_LABEL(dsf), path);
 
 return_index:
 	assert(DSP == dsp_orig);

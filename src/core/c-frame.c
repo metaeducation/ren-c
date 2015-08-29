@@ -1372,7 +1372,6 @@
 
 	if (!HAS_FRAME(word)) Trap1(RE_NOT_DEFINED, word);
 
-//	assert(index, RP_BAD_SET_INDEX);
 	assert(VAL_WORD_FRAME(word));
 //  Print("Set %s to %s [frame: %x idx: %d]", Get_Word_Name(word), Get_Type_Name(value), VAL_WORD_FRAME(word), VAL_WORD_INDEX(word));
 

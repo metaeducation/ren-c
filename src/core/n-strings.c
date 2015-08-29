@@ -663,20 +663,6 @@ static struct digest {
 	REBYTE buffer[MAX_TUPLE*2+4];  // largest value possible
 	REBYTE *buf;
 
-#ifdef removed
-	if (IS_INTEGER(arg)) len = MAX_HEX_LEN;
-	else if (IS_TUPLE(arg)) {
-		len = VAL_TUPLE_LEN(arg);
-		if (len < 3) len = 3;
-		len *= 2;
-	}
-	else Trap_Arg_DEAD_END(arg);
-
-	else if (IS_DECIMAL(arg)) len = MAX_HEX_LEN;
-	else if (IS_MONEY(arg)) len = 24;
-	else if (IS_CHAR(arg)) len = (VAL_CHAR(arg) > 0x7f) ? 4 : 2;
-#endif
-
 	buf = &buffer[0];
 
 	len = -1;
@@ -700,23 +686,6 @@ static struct digest {
 	}
 	else Trap_Arg_DEAD_END(arg);
 
-#ifdef removed
-	else if (IS_CHAR(arg)) {
-		REBSER *ser = Make_Binary(6);
-		ser->tail = xEncode_UTF8_Char(BIN_HEAD(ser), VAL_CHAR(arg));
-		for (len = 0; len < (signed)(ser->tail); len++)
-			buf = Form_Hex2(buf, *BIN_SKIP(ser, len));
-		len = ser->tail * 2;
-		//Form_Hex_Pad(buf, VAL_CHAR(arg), len);
-	}
-	else if (IS_MONEY(arg)) {
-		REBYTE tmp[12];
-		deci_to_binary(&tmp[0], VAL_MONEY_AMOUNT(arg));
-		for (len = 0; len < 12; len++)
-			buf = Form_Hex2(buf, tmp[len]);
-		len = 24;
-	}
-#endif
 
 //	SERIES_TAIL(series) = len;
 //	Val_Init_Series(D_OUT, REB_ISSUE, series);

@@ -520,15 +520,6 @@ static REBSER *Trim_Object(REBSER *obj)
 		if (action == OF_VALUES) action = 2;
 		else if (action == OF_BODY) action = 3;
 		if (action < 1 || action > 3) Trap_Reflect_DEAD_END(VAL_TYPE(value), arg);
-#ifdef obsolete
-		goto reflect;
-
-	case A_PICK:
-		action = Get_Num_Arg(arg); // integer, decimal, logic
-		if (action < 1 || action > 3) Trap_Arg_DEAD_END(arg);
-		if (action < 3) action |= 4;  // add SELF to list
-reflect:
-#endif
 		Val_Init_Block(value, Make_Object_Block(VAL_OBJ_FRAME(value), action));
 		break;
 

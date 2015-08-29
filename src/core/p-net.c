@@ -293,7 +293,6 @@ enum Transport_Types {
 		result = OS_DO_DEVICE(sock, RDC_CONNECT);
 		if (result < 0) Trap_Port_DEAD_END(RE_NO_CONNECT, port, sock->error);
 		break;
-		//Trap_Port_DEAD_END(RE_ALREADY_OPEN, port);
 
 	case A_DELETE: // Temporary to TEST error handler!
 		{
