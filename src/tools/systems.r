@@ -89,7 +89,7 @@ systems: [
 			[LEN LLC +O1 ST1 -LM]
 	;-------------------------------------------------------------------------
 	0.13.01		android-arm		android
-			[LEN LLC HID F64 LDL LLOG -LM CST]
+			[LEN LLC HID F64 LDL LLOG -LM]
 	;-------------------------------------------------------------------------
 	0.14.01		syllable-dtp	posix
 			[LEN LLC +O2 HID LDL ST1 -LM LC25]
