@@ -152,7 +152,7 @@
 						break; // exempt, just ignore it
 					}
 				}
-				Trap1_DEAD_END(RE_BAD_FUNC_DEF, blk);
+				raise Error_1(RE_BAD_FUNC_DEF, blk);
 			}
 
 			// Turn block into typeset for parameter at current index
@@ -181,19 +181,19 @@
 			// present they are only allowed at the head of the spec block,
 			// to try and keep things in at least a slightly canon format.
 			// This may or may not be relaxed in the future.
-			if (n != 0) Trap1_DEAD_END(RE_BAD_FUNC_DEF, blk);
+			if (n != 0) raise Error_1(RE_BAD_FUNC_DEF, blk);
 
 			if (0 == Compare_String_Vals(blk, ROOT_INFIX_TAG, TRUE))
 				SET_FLAG(*exts, EXT_FUNC_INFIX);
 			else if (0 == Compare_String_Vals(blk, ROOT_TRANSPARENT_TAG, TRUE))
 				SET_FLAG(*exts, EXT_FUNC_TRANSPARENT);
 			else
-				Trap1_DEAD_END(RE_BAD_FUNC_DEF, blk);
+				raise Error_1(RE_BAD_FUNC_DEF, blk);
 			break;
 
 		case REB_SET_WORD:
 		default:
-			Trap1_DEAD_END(RE_BAD_FUNC_DEF, blk);
+			raise Error_1(RE_BAD_FUNC_DEF, blk);
 		}
 	}
 
@@ -378,7 +378,7 @@
 	}
 
 	action = Value_Dispatch[type];
-	if (!action) Trap_Action(type, VAL_FUNC_ACT(func));
+	if (!action) raise Error_Illegal_Action(type, VAL_FUNC_ACT(func));
 	ret = action(DSF, VAL_FUNC_ACT(func));
 
 	switch (ret) {

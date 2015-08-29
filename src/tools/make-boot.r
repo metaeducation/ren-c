@@ -621,6 +621,7 @@ emit {
 }
 
 boot-strings: load %strings.r
+boot-errors: load %errors.r ;-- used also to make %tmp-errnums.r below
 
 code: ""
 n: 0
@@ -630,6 +631,34 @@ foreach str boot-strings [
 	][
 		n: n + 1
 		append code str
+		append code null
+	]
+]
+
+; Some errors occur before we have the boot process is far enough along to
+; have the error messages loaded in as Rebol strings in the boot block's
+; CAT_ERRORS structure.  Adding their strings to %errors.r and keeping them
+; in sync with a "pre-boot" copy in %strings.r was a manual process.  This
+; makes format strings from the STRING! or BLOCK! in %errors.r automatically.
+;
+foreach [cat msgs] boot-errors [
+	unless cat = quote Boot: [continue]
+
+	emit-line/define "#define RS_" 'ERROR n
+	foreach [word val] skip msgs 4 [
+		n: n + 1
+		case [
+			string? val [append code val]
+			block? val [
+				; %strings.r strings use printf-like convention, %d tells
+				; FORM to treat the vararg REBVAL* as an integer.
+				;
+				append code rejoin map-each item val [
+					either get-word? item [{ %v }] [item]
+				]
+			]
+			true [do make error! {Non-STRING! non-BLOCK! as %errors.r value}]
+		]
 		append code null
 	]
 ]
@@ -852,7 +881,6 @@ emit {
 ^{
 }
 
-boot-errors: load %errors.r
 err-list: make block! 200
 errs: false
 
@@ -875,12 +903,15 @@ foreach [cat msgs] boot-errors [
 	emit-line "RE_" join to word! cat "_max" none ;R3
 	emit newline
 ]
-if errs [wait 3 quit]
+
+if errs [do make error! "Invalid errors.r input"]
+
 emit-end
 
 emit {
-#define RE_NOTE RE_NO_LOAD
+#define RE_BOOT_FIRST RE_MISC // update if no longer first
 #define RE_USER RE_MESSAGE
+#define RE_MAX RE_USER_MAX // update if another category added
 }
 
 write inc/tmp-errnums.h out

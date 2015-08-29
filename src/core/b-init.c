@@ -96,15 +96,15 @@ static	BOOT_BLK *Boot_Block;
 	printf("%d %s\n", sizeof(dummy->all), "all");
 #endif
 
-	if (cast(REBCNT, VAL_TYPE(&val)) != 123) Panic(RP_REBVAL_ALIGNMENT);
+	if (cast(REBCNT, VAL_TYPE(&val)) != 123) panic Error_0(RE_REBVAL_ALIGNMENT);
 	if (sizeof(void *) == 8) {
-		if (sizeof(REBVAL) != 32) Panic(RP_REBVAL_ALIGNMENT);
-		if (sizeof(REBGOB) != 84) Panic(RP_BAD_SIZE);
+		if (sizeof(REBVAL) != 32) panic Error_0(RE_REBVAL_ALIGNMENT);
+		if (sizeof(REBGOB) != 84) panic Error_0(RE_BAD_SIZE);
 	} else {
-		if (sizeof(REBVAL) != 16) Panic(RP_REBVAL_ALIGNMENT);
-		if (sizeof(REBGOB) != 64) Panic(RP_BAD_SIZE);
+		if (sizeof(REBVAL) != 16) panic Error_0(RE_REBVAL_ALIGNMENT);
+		if (sizeof(REBGOB) != 64) panic Error_0(RE_BAD_SIZE);
 	}
-	if (sizeof(REBDAT) != 4) Panic(RP_BAD_SIZE);
+	if (sizeof(REBDAT) != 4) panic Error_0(RE_BAD_SIZE);
 
 	// !!! C standard doesn't support 'offsetof(struct S, s_member.submember)'
 	// so we're stuck using addition here.
@@ -116,7 +116,7 @@ static	BOOT_BLK *Boot_Block;
 	) {
 		// When errors are exposed to the user then they must have a frame
 		// and act like objects (they're dispatched through REBTYPE(Object))
-		Panic(RP_MISC);
+		panic Error_0(RE_MISC);
 	}
 
 	if (
@@ -126,7 +126,7 @@ static	BOOT_BLK *Boot_Block;
 	) {
 		// Currently the typeset checking code is generic to run on both
 		// an EXT_WORD_TYPED WORD! and a TYPESET!.
-		Panic(RP_MISC);
+		panic Error_0(RE_MISC);
 	}
 }
 
@@ -170,10 +170,10 @@ static	BOOT_BLK *Boot_Block;
 	if (rebind > 1) Bind_Values_Deep(BLK_HEAD(block), Sys_Context);
 
 	if (Do_Block_Throws(&result, block, 0))
-		Panic(RP_EARLY_ERROR);
+		panic Error_0(RE_MISC);
 
 	if (!IS_UNSET(&result))
-		Panic(RP_EARLY_ERROR);
+		panic Error_0(RE_MISC);
 }
 
 
@@ -200,7 +200,7 @@ static	BOOT_BLK *Boot_Block;
 	);
 
 	if (!text || (STR_LEN(text) != NAT_UNCOMPRESSED_SIZE))
-		Panic(RP_BOOT_DATA);
+		panic Error_0(RE_BOOT_DATA);
 
 	boot = Scan_Source(STR_HEAD(text), NAT_UNCOMPRESSED_SIZE);
 	Free_Series(text);
@@ -210,9 +210,9 @@ static	BOOT_BLK *Boot_Block;
 	Boot_Block = cast(BOOT_BLK *, VAL_BLK_HEAD(BLK_HEAD(boot)));
 
 	if (VAL_TAIL(&Boot_Block->types) != REB_MAX)
-		Panic(RP_BAD_BOOT_TYPE_BLOCK);
+		panic Error_0(RE_BAD_BOOT_TYPE_BLOCK);
 	if (VAL_WORD_SYM(VAL_BLK_HEAD(&Boot_Block->types)) != SYM_END_TYPE)
-		Panic(RP_BAD_END_TYPE_WORD);
+		panic Error_0(RE_BAD_END_TYPE_WORD);
 
 	// Create low-level string pointers (used by RS_ constants):
 	{
@@ -229,11 +229,11 @@ static	BOOT_BLK *Boot_Block;
 	}
 
 	if (COMPARE_BYTES(cb_cast("end!"), Get_Sym_Name(SYM_END_TYPE)) != 0)
-		Panic(RP_BAD_END_CANON_WORD);
+		panic Error_0(RE_BAD_END_CANON_WORD);
 	if (COMPARE_BYTES(cb_cast("true"), Get_Sym_Name(SYM_TRUE)) != 0)
-		Panic(RP_BAD_TRUE_CANON_WORD);
+		panic Error_0(RE_BAD_TRUE_CANON_WORD);
 	if (COMPARE_BYTES(cb_cast("line"), BOOT_STR(RS_SCAN, 1)) != 0)
-		Panic(RP_BAD_BOOT_STRING);
+		panic Error_0(RE_BAD_BOOT_STRING);
 }
 
 
@@ -351,7 +351,8 @@ static	BOOT_BLK *Boot_Block;
 {
 	if ((Native_Limit == 0 && *Native_Functions) || (Native_Count < Native_Limit))
 		Make_Native(D_OUT, VAL_SERIES(D_ARG(1)), *Native_Functions++, REB_NATIVE);
-	else Trap(RE_MAX_NATIVES);
+	else
+		raise Error_0(RE_MAX_NATIVES);
 	Native_Count++;
 	return R_OUT;
 }
@@ -364,7 +365,7 @@ static	BOOT_BLK *Boot_Block;
 ***********************************************************************/
 {
 	Action_Count++;
-	if (Action_Count >= A_MAX_ACTION) Panic(RP_ACTION_OVERFLOW);
+	if (Action_Count >= A_MAX_ACTION) panic Error_0(RE_ACTION_OVERFLOW);
 	Make_Native(
 		D_OUT,
 		VAL_SERIES(D_ARG(1)),
@@ -439,7 +440,7 @@ static	BOOT_BLK *Boot_Block;
 	// native: native [spec [block!]]
 	word = VAL_BLK_SKIP(&Boot_Block->booters, 1);
 	if (!IS_SET_WORD(word) || VAL_WORD_SYM(word) != SYM_NATIVE)
-		Panic(RE_NATIVE_BOOT);
+		panic Error_0(RE_NATIVE_BOOT);
 	//val = BLK_SKIP(Sys_Context, SYS_CTX_NATIVE);
 	val = Append_Frame(Lib_Context, word, 0);
 	Make_Native(val, VAL_SERIES(word+2), Native_Functions[0], REB_NATIVE);
@@ -658,11 +659,11 @@ static	BOOT_BLK *Boot_Block;
 
 	// Evaluate the block (will eval FRAMEs within):
 	if (Do_Block_Throws(&result, VAL_SERIES(&Boot_Block->sysobj), 0))
-		Panic(RP_EARLY_ERROR);
+		panic Error_0(RE_MISC);
 
 	// Expects UNSET! by convention
 	if (!IS_UNSET(&result))
-		Panic(RP_EARLY_ERROR);
+		panic Error_0(RE_MISC);
 
 	// Create a global value for it:
 	value = Append_Frame(Lib_Context, 0, SYM_SYSTEM);
@@ -1225,7 +1226,7 @@ static REBCNT Set_Option_Word(REBCHR *str, REBCNT field)
 	PUSH_UNHALTABLE_TRAP(&error, &state);
 
 // The first time through the following code 'error' will be NULL, but...
-// Trap()s can longjmp here, so 'error' won't be NULL *if* that happens!
+// `raise Error` can longjmp here, so 'error' won't be NULL *if* that happens!
 
 	if (error) {
 		// You shouldn't be able to halt during Init_Core() startup.
@@ -1236,8 +1237,7 @@ static REBCNT Set_Option_Word(REBCHR *str, REBCNT field)
 
 		// If an error was raised during startup, print it and crash.
 		Print_Value(error, 1024, FALSE);
-		Panic(RP_EARLY_ERROR);
-		DEAD_END_VOID;
+		panic Error_0(RE_MISC);
 	}
 
 	Init_Year();
@@ -1278,10 +1278,10 @@ static REBCNT Set_Option_Word(REBCHR *str, REBCNT field)
 
 			Shutdown_Core();
 			OS_EXIT(status);
-			DEAD_END_VOID;
+			DEAD_END;
 		}
 
-		Panic(RP_EARLY_ERROR);
+		panic Error_0(RE_MISC);
 	}
 
 	// Success of the 'finish-init-core' Rebol code is signified by returning
@@ -1289,7 +1289,7 @@ static REBCNT Set_Option_Word(REBCHR *str, REBCNT field)
 
 	if (!IS_UNSET(&out)) {
 		Debug_Fmt("** 'finish-init-core' returned non-none!: %r", &out);
-		Panic(RP_EARLY_ERROR);
+		panic Error_0(RE_MISC);
 	}
 
 	assert(DSP == -1 && !DSF);

@@ -14,19 +14,60 @@ REBOL [
 	}
 ]
 
-Throw: [
+Special: [
 	code: 0
-	type: "non-error"
+	type: "special"		; Not really "errors"
 	null:				{invalid error code zero}
 	halt:               [{halted by user or script}]
+
+	; !!! Temporary: PARSE uses simulated error Trap to get out of arbitrary
+	; stacks when a paren! is THROWN() out of (e.g. parse {} [(return 0)]).
+	; This isn't sensible compared to just having a way to use ordinary
+	; C logic to return out of the stack.  There is overhead to cleaning up
+	; after the longjmp and cost to set up and drop a setjmp state on every
+	; parse (even those which will not need to use this hack).
+	;
+	parse-longjmp-hack:	{RE_PARSE_LONGJMP_HACK not in PARSE (impossible!)}
 ]
 
-Note: [
+Boot: [
+	; These are errors that can happen prior to the point where the error
+	; catalog (e.g. the blocks in this file) have been loaded as Rebol data.
+	; Their strings need to be accessible another way, so %make-boot.r takes
+	; the string data and duplicates it as C literals usable by Panic_Core()
+	;
+	; Note: Because these are flattened into printf-style format strings
+	; instead of using the ordinary error-building mechanism, argument
+	; ordering is not honored.  It's also probably a bad idea to use
+	; sophisticated REBVALs as arguments, because it may be too early
+	; in the boot process for them to be molded properly.
+	;
 	code: 100
-	type: "note"
-	no-load:            [{cannot load: } :arg1]
-	exited:             [{exit occurred}]
-	deprecated:         {deprecated function not allowed}
+	type: "boot"
+	misc:				{RE_MISC error (if actually happens, add to %errors.r)}
+	no-prep:			{raise or panic "keyword" missing from error trigger}
+	no-memory:			[{not enough memory:} :arg1 {bytes}]
+	stack-overflow:		{data stack overflow}
+	io-error:			{problem with IO}
+	max-words:			{too many words}
+	word-list:			{word list (cache) already in use}
+	locked-series:		{locked series expansion}
+	no-saved-state:		{saved state frame is missing}
+	max-events:			{event queue overflow}
+	na:					{not available}
+	unexpected-case		{no case in switch statement}
+	boot-data:			{no boot.r text found}
+	rebval-alignment	{not aligned perfectly in memory}
+	bad-size:			{expected size did not match}
+	no-buffer:			{buffer not yet allocated}
+	bad-boot-string:	{boot strings area is invalid}
+	bad-boot-type-block: {boot block is wrong size}
+	bad-end-type-word:	{the end word is not correct}
+	action-overflow:	{more actions than we should have}
+	native-boot:		{bad boot.r native ordering}
+	bad-end-canon-word:	{END was not found}
+	bad-true-canon-word:	{TRUE was not found}
+	invalid-datatype:	[{invalid datatype #} :arg1]
 ]
 
 Syntax: [
@@ -118,6 +159,7 @@ Script: [
 	parse-command:      [{PARSE - command cannot be used as variable:} :arg1]
 	parse-series:       [{PARSE - input must be a series:} :arg1]
 
+	not-ffi-build:		{This Rebol build wasn't linked with libffi features}
 	bad-library:		{bad library (already closed?)}
 
 ;   bad-prompt:         [{Error executing prompt block}]
@@ -161,7 +203,6 @@ Access: [
 	write-error:        [{write failed:} :arg1 {reason:} :arg2]
 	read-error:         [{read failed:} :arg1 {reason:} :arg2]
 	read-only:          [{read-only - write not allowed:} :arg1]
-	no-buffer:          [{port has no data buffer:} :arg1]
 	timeout:            [{port action timed out:} :arg1]
 
 	no-create:          [{cannot create:} :arg1]
@@ -212,32 +253,15 @@ Command: [
 	command-fail:		["Command failed"]
 ]
 
-resv700: [
-	code: 700
-	type: "reserved"
-	; !!! Temporary: PARSE uses simulated error Trap to get out of arbitrary
-	; stacks when a paren! is THROWN() out of (e.g. parse {} [(return 0)]).
-	; This isn't sensible compared to just having a way to use ordinary
-	; C logic to return out of the stack.  There is overhead to cleaning up
-	; after the longjmp and cost to set up and drop a setjmp state on every
-	; parse (even those which will not need to use this hack).
-	parse-longjmp-hack:	{RE_PARSE_LONGJMP_HACK not in PARSE (impossible!)}
-]
+; 700-799 unused
 
-User: [
-	code: 800
-	type: "user error"
-	message: [:arg1]
-]
+; 800-899 unused
 
 Internal: [
 	code: 900
 	type: "internal error"
-	misc:				[{miscellaneous error (add specific case to errors.r)}]
 	bad-path:           [{bad path:} arg1]
 	not-here:           [arg1 {not supported on your system}]
-	no-memory:          {not enough memory}
-	stack-overflow:     {stack overflow}
 	globals-full:       {no more global variable space}
 	max-natives:        {too many natives}
 	bad-series:         {invalid series}
@@ -246,4 +270,15 @@ Internal: [
 	feature-na:         {feature not available}
 	not-done:           {reserved for future use (or not yet implemented)}
 	invalid-error:      {error object or fields were not valid}
+	bad-evaltype:		{invalid datatype for evaluation}
+	corrupt-memory:		{Check_Memory() found a problem}
+	hash-overflow:		{Hash ran out of space}
+	no-print-ptr:		{print is missing string pointer}
 ]
+
+User: [
+	code: 1000
+	type: "user error"
+	message: [:arg1]
+]
+

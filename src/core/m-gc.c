@@ -559,7 +559,7 @@ static void Propagate_All_GC_Marks(void);
 		// !!! It's not clear if this should crash or not.
 		// Aggressive Recycle() forces this to happen, review.
 
-		// Panic(RP_THROW_IN_GC);
+		// panic Error_0(RE_THROW_IN_GC);
 	}
 
 	switch (VAL_TYPE(val)) {
@@ -739,7 +739,7 @@ static void Propagate_All_GC_Marks(void);
 			Queue_Mark_Event_Deep(val);
 			break;
 
-		default:
+		default: {
 		#if !defined(NDEBUG)
 			// We allow *safe* trash values to be on the stack at the time
 			// of a garbage collection.  These will be UNSET! in the debug
@@ -752,8 +752,8 @@ static void Propagate_All_GC_Marks(void);
 			}
 		#endif
 
-			assert(FALSE);
-			Panic_Core(RP_DATATYPE+1, VAL_TYPE(val));
+			panic Error_Invalid_Datatype(VAL_TYPE(val));
+		}
 	}
 }
 

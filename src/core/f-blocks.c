@@ -299,7 +299,7 @@
 	if (into) {
 		series = VAL_SERIES(into);
 
-		if (IS_PROTECT_SERIES(series)) Trap(RE_PROTECTED);
+		if (IS_PROTECT_SERIES(series)) raise Error_0(RE_PROTECTED);
 
 		if (ANY_BLOCK(into)) {
 			// When the target is an any-block, we can do an ordinary

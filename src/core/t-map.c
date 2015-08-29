@@ -115,7 +115,7 @@
 	// Compute hash for value:
 	len = hser->tail;
 	hash = Hash_Value(key, len);
-	if (!hash) Trap_Type_DEAD_END(key);
+	if (!hash) raise Error_Has_Bad_Type(key);
 
 	// Determine skip and first index:
 	skip  = (len == 0) ? 0 : (hash & 0x0000FFFF) % len;
@@ -251,7 +251,8 @@
 					}
 				}
 			}
-			else Trap_Type_DEAD_END(key);
+			else
+				raise Error_Has_Bad_Type(key);
 
 			if (!val) return 0;
 			Append_Value(series, key);
@@ -492,7 +493,7 @@
 	// Check must be in this order (to avoid checking a non-series value);
 	if (action >= A_TAKE && action <= A_SORT) {
 		if(IS_PROTECT_SERIES(series))
-			Trap_DEAD_END(RE_PROTECTED);
+			raise Error_0(RE_PROTECTED);
 	}
 
 	switch (action) {
@@ -506,7 +507,7 @@
 
 	case A_INSERT:
 	case A_APPEND:
-		if (!IS_BLOCK(arg)) Trap_Arg_DEAD_END(val);
+		if (!IS_BLOCK(arg)) raise Error_Invalid_Arg(val);
 		*D_OUT = *val;
 		if (D_REF(AN_DUP)) {
 			n = Int32(D_ARG(AN_COUNT));
@@ -530,15 +531,17 @@
 		// make map! [word val word val]
 		if (IS_BLOCK(arg) || IS_PAREN(arg) || IS_MAP(arg)) {
 			if (MT_Map(D_OUT, arg, 0)) return R_OUT;
-			Trap_Arg_DEAD_END(arg);
+			raise Error_Invalid_Arg(arg);
 //		} else if (IS_NONE(arg)) {
 //			n = 3; // just a start
 		// make map! 10000
 		} else if (IS_NUMBER(arg)) {
-			if (action == A_TO) Trap_Arg_DEAD_END(arg);
+			if (action == A_TO) raise Error_Invalid_Arg(arg);
 			n = Int32s(arg, 0);
-		} else
-			Trap_Make_DEAD_END(REB_MAP, Of_Type(arg));
+		}
+		else
+			raise Error_Bad_Make(REB_MAP, Type_Of(arg));
+
 		// positive only
 		series = Make_Map(n);
 		Val_Init_Map(D_OUT, series);
@@ -546,7 +549,7 @@
 
 	case A_COPY:
 		if (MT_Map(D_OUT, val, 0)) return R_OUT;
-		Trap_Arg_DEAD_END(val);
+		raise Error_Invalid_Arg(val);
 
 	case A_CLEAR:
 		Clear_Series(series);
@@ -557,10 +560,14 @@
 	case A_REFLECT:
 		action = What_Reflector(arg); // zero on error
 		// Adjust for compatibility with PICK:
-		if (action == OF_VALUES) n = 1;
-		else if (action == OF_WORDS) n = -1;
-		else if (action == OF_BODY) n = 0;
-		else Trap_Reflect_DEAD_END(REB_MAP, arg);
+		if (action == OF_VALUES)
+			n = 1;
+		else if (action == OF_WORDS)
+			n = -1;
+		else if (action == OF_BODY)
+			n = 0;
+		else
+			raise Error_Cannot_Reflect(REB_MAP, arg);
 		series = Map_To_Block(series, n);
 		Val_Init_Block(D_OUT, series);
 		break;
@@ -569,7 +576,7 @@
 		return (Length_Map(series) == 0) ? R_TRUE : R_FALSE;
 
 	default:
-		Trap_Action_DEAD_END(REB_MAP, action);
+		raise Error_Illegal_Action(REB_MAP, action);
 	}
 
 	return R_OUT;

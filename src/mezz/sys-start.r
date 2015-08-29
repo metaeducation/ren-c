@@ -67,8 +67,7 @@ finish-init-core: func [
 	;
 	comment [if :lib/secure [protect-system-object]]
 
-	; returning anything but UNSET! from init is considered an error, and
-	; the value is raised as an alert when Panic()-ing
+	; returning anything but UNSET! would cause a "panic" error (quits)
 	;
 	exit
 
@@ -235,8 +234,7 @@ finish-rl-start: func [
 
 	finish-rl-start: 'done
 
-	; returning anything but UNSET! from init is considered an error, and
-	; the value is raised as an alert when Panic()-ing
+	; returning anything but UNSET! would cause a "panic" error (quits)
 	;
 	exit
 ] system/options

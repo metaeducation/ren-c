@@ -601,7 +601,8 @@ cp_same:
 		switch (VAL_TYPE(val)) {
 
 		case REB_INTEGER:
-			if (VAL_INT64(val) > (i64)255 || VAL_INT64(val) < 0) Trap_Range_DEAD_END(val);
+			if (VAL_INT64(val) > cast(i64, 255) || VAL_INT64(val) < 0)
+				raise Error_Out_Of_Range(val);
 			EXPAND_SERIES_TAIL(series, 1);
 			*BIN_SKIP(series, tail) = (REBYTE)VAL_INT32(val);
 			break;
@@ -632,7 +633,7 @@ cp_same:
 			break;
 
 		default:
-			Trap_Arg_DEAD_END(val);
+			raise Error_Invalid_Arg(val);
 		}
 
 		tail = series->tail;

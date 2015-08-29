@@ -106,13 +106,19 @@
 	REBXYF bb;
 	REBXYF *cc;
 
-	if (IS_PAIR(a)) aa = VAL_PAIR(a);
-	else if (IS_INTEGER(a)) aa.x = aa.y = (REBD32)VAL_INT64(a);
-	else Trap_Arg(a);
+	if (IS_PAIR(a))
+		aa = VAL_PAIR(a);
+	else if (IS_INTEGER(a))
+		aa.x = aa.y = (REBD32)VAL_INT64(a);
+	else
+		raise Error_Invalid_Arg(a);
 
-	if (IS_PAIR(b)) bb = VAL_PAIR(b);
-	else if (IS_INTEGER(b)) bb.x = bb.y = (REBD32)VAL_INT64(b);
-	else Trap_Arg(b);
+	if (IS_PAIR(b))
+		bb = VAL_PAIR(b);
+	else if (IS_INTEGER(b))
+		bb.x = bb.y = (REBD32)VAL_INT64(b);
+	else
+		raise Error_Invalid_Arg(b);
 
 	SET_TYPE(out, REB_PAIR);
 	cc = &VAL_PAIR(out);
@@ -196,8 +202,7 @@
 		else if (n == REB_DECIMAL || n == REB_PERCENT) {
 			x2 = y2 = (REBD32)VAL_DECIMAL(arg);
 		}
-		else
-			Trap_Math_Args(REB_PAIR, action);
+		else raise Error_Math_Args(REB_PAIR, action);
 
 		switch (action) {
 
@@ -218,7 +223,7 @@
 
 		case A_DIVIDE:
 		case A_REMAINDER:
-			if (x2 == 0 || y2 == 0) Trap_DEAD_END(RE_ZERO_DIVIDE);
+			if (x2 == 0 || y2 == 0) raise Error_0(RE_ZERO_DIVIDE);
 			if (action == A_DIVIDE) {
 				x1 /= x2;
 				y1 /= y2;
@@ -229,7 +234,8 @@
 			}
 			goto setPair;
 		}
-		Trap_Math_Args(REB_PAIR, action);
+
+		raise Error_Math_Args(REB_PAIR, action);
 	}
 	// Unary actions:
 	else {
@@ -279,7 +285,7 @@
 			goto setPair;
 
 		case A_RANDOM:
-			if (D_REF(2)) Trap_DEAD_END(RE_BAD_REFINES); // seed
+			if (D_REF(2)) raise Error_0(RE_BAD_REFINES); // seed
 			x1 = (REBD32)Random_Range((REBINT)x1, (REBOOL)D_REF(3));
 			y1 = (REBD32)Random_Range((REBINT)y1, (REBOOL)D_REF(3));
 			goto setPair;
@@ -287,13 +293,16 @@
 		case A_PICK:
 			assert(DS_ARGC > 1);
 			if (IS_WORD(arg)) {
-				if (VAL_WORD_CANON(arg) == SYM_X) n = 0;
-				else if (VAL_WORD_CANON(arg) == SYM_Y) n = 1;
-				else Trap_Arg_DEAD_END(arg);
+				if (VAL_WORD_CANON(arg) == SYM_X)
+					n = 0;
+				else if (VAL_WORD_CANON(arg) == SYM_Y)
+					n = 1;
+				else
+					raise Error_Invalid_Arg(arg);
 			}
 			else {
 				n = Get_Num_Arg(arg);
-				if (n < 1 || n > 2) Trap_Range_DEAD_END(arg);
+				if (n < 1 || n > 2) raise Error_Out_Of_Range(arg);
 				n--;
 			}
 ///		case A_POKE:
@@ -307,7 +316,7 @@
 ///					if (index == 0) x1 = (REBINT)VAL_DECIMAL(arg);
 ///					else y1 = (REBINT)VAL_DECIMAL(arg);
 ///				} else
-///					Trap_Arg_DEAD_END(arg);
+///					raise Error_Invalid_Arg(arg);
 ///				goto setPair;
 ///			}
 			SET_DECIMAL(D_OUT, n == 0 ? x1 : y1);
@@ -342,10 +351,12 @@
 				if (MT_Pair(D_OUT, val, REB_PAIR))
 					return R_OUT;
 			}
-			Trap_Make_DEAD_END(REB_PAIR, val);
+
+			raise Error_Bad_Make(REB_PAIR, val);
 		}
 	}
-	Trap_Action_DEAD_END(REB_PAIR, action);
+
+	raise Error_Illegal_Action(REB_PAIR, action);
 
 setPair:
 	VAL_SET(D_OUT, REB_PAIR);

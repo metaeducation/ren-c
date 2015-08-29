@@ -160,7 +160,8 @@
 			src_ser->tail = Encode_UTF8_Char(BIN_HEAD(src_ser), VAL_CHAR(src_val));
 			needs_free = TRUE;
 		}
-		else if (!ANY_BINSTR(src_val)) Trap_Arg_DEAD_END(src_val);
+		else if (!ANY_BINSTR(src_val))
+			raise Error_Invalid_Arg(src_val);
 	}
 	else if (IS_CHAR(src_val)) {
 		src_ser = Make_Series_Codepoint(VAL_CHAR(src_val));

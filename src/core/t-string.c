@@ -167,7 +167,7 @@ static REBSER *make_string(REBVAL *arg, REBOOL make)
 			len -= 3;
 			break;
 		default:
-			Trap_DEAD_END(RE_BAD_DECODE);
+			raise Error_0(RE_BAD_DECODE);
 		}
 		ser = Decode_UTF_String(bp, len, 8); // UTF-8
 	}
@@ -338,7 +338,7 @@ static REBSER *make_binary(REBVAL *arg, REBOOL make)
 	if (!IS_NONE(skipv)) {
 		skip = Get_Num_Arg(skipv);
 		if (skip <= 0 || len % skip != 0 || skip > len)
-			Trap_Arg(skipv);
+			raise Error_Invalid_Arg(skipv);
 	}
 
 	// Use fast quicksort library function:
@@ -388,7 +388,7 @@ static REBSER *make_binary(REBVAL *arg, REBOOL make)
 		c = Int32(val);
 		if (c > MAX_CHAR || c < 0) return PE_BAD_SET;
 		if (IS_BINARY(data)) { // special case for binary
-			if (c > 0xff) Trap_Range_DEAD_END(val);
+			if (c > 0xff) raise Error_Out_Of_Range(val);
 			BIN_HEAD(ser)[n] = (REBYTE)c;
 			return PE_OK;
 		}
@@ -480,7 +480,7 @@ static REBSER *make_binary(REBVAL *arg, REBOOL make)
 
 	// Check must be in this order (to avoid checking a non-series value);
 	if (action >= A_TAKE && action <= A_SORT && IS_PROTECT_SERIES(VAL_SERIES(value)))
-		Trap_DEAD_END(RE_PROTECTED);
+		raise Error_0(RE_PROTECTED);
 
 	switch (action) {
 
@@ -511,9 +511,13 @@ find:
 
 		if (IS_BINARY(value)) {
 			args |= AM_FIND_CASE;
-			if (!IS_BINARY(arg) && !IS_INTEGER(arg) && !IS_BITSET(arg)) Trap_DEAD_END(RE_NOT_SAME_TYPE);
+
+			if (!IS_BINARY(arg) && !IS_INTEGER(arg) && !IS_BITSET(arg))
+				raise Error_0(RE_NOT_SAME_TYPE);
+
 			if (IS_INTEGER(arg)) {
-				if (VAL_INT64(arg) < 0 || VAL_INT64(arg) > 255) Trap_Range_DEAD_END(arg);
+				if (VAL_INT64(arg) < 0 || VAL_INT64(arg) > 255)
+					raise Error_Out_Of_Range(arg);
 				len = 1;
 			}
 		}
@@ -559,7 +563,7 @@ find:
 			|| REB_I32_ADD_OF(index, len, &index)
 			|| index < 0 || index >= tail) {
 			if (action == A_PICK) goto is_none;
-			Trap_Range_DEAD_END(arg);
+			raise Error_Out_Of_Range(arg);
 		}
 		if (action == A_PICK) {
 pick_it:
@@ -577,11 +581,12 @@ pick_it:
 				c = VAL_CHAR(arg);
 			else if (IS_INTEGER(arg) && VAL_UNT64(arg) <= MAX_CHAR)
 				c = VAL_INT32(arg);
-			else Trap_Arg_DEAD_END(arg);
+			else
+				raise Error_Invalid_Arg(arg);
 
 			ser = VAL_SERIES(value);
 			if (IS_BINARY(value)) {
-				if (c > 0xff) Trap_Range_DEAD_END(arg);
+				if (c > 0xff) raise Error_Out_Of_Range(arg);
 				BIN_HEAD(ser)[index] = (REBYTE)c;
 			}
 			else {
@@ -647,28 +652,28 @@ zero_str:
 		type = VAL_TYPE(value);
 		if (type == REB_DATATYPE) type = VAL_TYPE_KIND(value);
 
-		if (IS_NONE(arg)) Trap_Make_DEAD_END(type, arg);
+		if (IS_NONE(arg)) raise Error_Bad_Make(type, arg);
 
 		ser = (type != REB_BINARY)
 			? make_string(arg, (REBOOL)(action == A_MAKE))
 			: make_binary(arg, (REBOOL)(action == A_MAKE));
 
 		if (ser) goto str_exit;
-		Trap_Arg_DEAD_END(arg);
+		raise Error_Invalid_Arg(arg);
 
 	//-- Bitwise:
 
 	case A_AND:
 	case A_OR:
 	case A_XOR:
-		if (!IS_BINARY(arg)) Trap_Arg_DEAD_END(arg);
+		if (!IS_BINARY(arg)) raise Error_Invalid_Arg(arg);
 		VAL_LIMIT_SERIES(value);
 		VAL_LIMIT_SERIES(arg);
 		ser = Xandor_Binary(action, value, arg);
 		goto ser_exit;
 
 	case A_COMPLEMENT:
-		if (!IS_BINARY(value)) Trap_Arg_DEAD_END(value);
+		if (!IS_BINARY(value)) raise Error_Invalid_Arg(value);
 		ser = Complement_Binary(value);
 		goto ser_exit;
 
@@ -682,18 +687,22 @@ zero_str:
 			(args & (AM_TRIM_HEAD | AM_TRIM_TAIL | AM_TRIM_LINES | AM_TRIM_AUTO))) ||
 			((args & AM_TRIM_AUTO) &&
 			(args & (AM_TRIM_HEAD | AM_TRIM_TAIL | AM_TRIM_LINES | AM_TRIM_ALL | AM_TRIM_WITH)))
-		)
-			Trap_DEAD_END(RE_BAD_REFINES);
+		) {
+			raise Error_0(RE_BAD_REFINES);
+		}
 
 		Trim_String(VAL_SERIES(value), VAL_INDEX(value), VAL_LEN(value), args, D_ARG(ARG_TRIM_STR));
 		break;
 
 	case A_SWAP:
-		if (VAL_TYPE(value) != VAL_TYPE(arg)) Trap_DEAD_END(RE_NOT_SAME_TYPE);
-		if (IS_PROTECT_SERIES(VAL_SERIES(arg))) Trap_DEAD_END(RE_PROTECTED);
+		if (VAL_TYPE(value) != VAL_TYPE(arg))
+			raise Error_0(RE_NOT_SAME_TYPE);
+
+		if (IS_PROTECT_SERIES(VAL_SERIES(arg)))
+			raise Error_0(RE_PROTECTED);
+
 		if (index < tail && VAL_INDEX(arg) < VAL_TAIL(arg))
 			swap_chars(value, arg);
-		// Trap_Range_DEAD_END(arg);  // ignore range error
 		break;
 
 	case A_REVERSE:
@@ -727,7 +736,7 @@ zero_str:
 		break;
 
 	default:
-		Trap_Action_DEAD_END(VAL_TYPE(value), action);
+		raise Error_Illegal_Action(VAL_TYPE(value), action);
 	}
 
 	*D_OUT = *value;

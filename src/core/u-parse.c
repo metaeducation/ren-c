@@ -211,8 +211,7 @@ void Print_Parse_Index(enum Reb_Kind type, const REBVAL *rules, REBSER *series, 
 		// might GC
 		if (Do_Block_Throws(&save, VAL_SERIES(item), 0)) {
 			*parse->out = save;
-			Trap(RE_PARSE_LONGJMP_HACK); // !!! should return gracefully!
-			DEAD_END;
+			raise Error_0(RE_PARSE_LONGJMP_HACK); // !!! should return gracefully!
 		}
 
 		item = &save;
@@ -220,7 +219,7 @@ void Print_Parse_Index(enum Reb_Kind type, const REBVAL *rules, REBSER *series, 
 		break;
 
 	default:
-		Trap1_DEAD_END(RE_PARSE_RULE, item);
+		raise Error_1(RE_PARSE_RULE, item);
 	}
 
 	return index;
@@ -284,8 +283,7 @@ void Print_Parse_Index(enum Reb_Kind type, const REBVAL *rules, REBSER *series, 
 		// might GC
 		if (Do_Block_Throws(&save, VAL_SERIES(item), 0)) {
 			*parse->out = save;
-			Trap(RE_PARSE_LONGJMP_HACK); // !!! should return gracefully!
-			DEAD_END;
+			raise Error_0(RE_PARSE_LONGJMP_HACK); // !!! should return gracefully!
 		}
 		item = &save;
 		// old: if (IS_ERROR(item)) Throw_Error(VAL_ERR_OBJECT(item));
@@ -343,8 +341,7 @@ no_result:
 							// might GC
 							if (Do_Block_Throws(&save, VAL_SERIES(item), 0)) {
 								*parse->out = save;
-								Trap(RE_PARSE_LONGJMP_HACK);
-								DEAD_END;
+								raise Error_0(RE_PARSE_LONGJMP_HACK);
 							}
 							item = &save;
 						}
@@ -446,8 +443,7 @@ found:
 		REBVAL evaluated;
 		if (Do_Block_Throws(&evaluated, VAL_SERIES(blk + 1), 0)) {
 			*parse->out = evaluated;
-			Trap(RE_PARSE_LONGJMP_HACK); // !!! should return gracefully!
-			DEAD_END;
+			raise Error_0(RE_PARSE_LONGJMP_HACK); // !!! should return gracefully!
 		}
 		// !!! ignore evaluated if it's not THROWN?
 	}
@@ -458,16 +454,14 @@ found1:
 		REBVAL evaluated;
 		if (Do_Block_Throws(&evaluated, VAL_SERIES(blk + 1), 0)) {
 			*parse->out = save;
-			Trap(RE_PARSE_LONGJMP_HACK); // !!! should return gracefully!
-			DEAD_END;
+			raise Error_0(RE_PARSE_LONGJMP_HACK); // !!! should return gracefully!
 		}
 		// !!! ignore evaluated if it's not THROWN?
 	}
 	return index + (is_thru ? 1 : 0);
 
 bad_target:
-	Trap1_DEAD_END(RE_PARSE_RULE, item);
-	return 0;
+	raise Error_1(RE_PARSE_RULE, item);
 }
 
 
@@ -587,8 +581,7 @@ bad_target:
 	if (index == THROWN_FLAG) {
 		// Value is a THROW, RETURN, BREAK, etc...we have to stop processing
 		*parse->out = value;
-		Trap(RE_PARSE_LONGJMP_HACK); // !!! should return gracefully!
-		DEAD_END;
+		raise Error_0(RE_PARSE_LONGJMP_HACK); // !!! should return gracefully!
 	}
 
 	// Get variable or command:
@@ -602,13 +595,12 @@ bad_target:
 		if (n == SYM_QUOTE) {
 			item = item + 1;
 			(*rule)++;
-			if (IS_END(item)) Trap1_DEAD_END(RE_PARSE_END, item-2);
+			if (IS_END(item)) raise Error_1(RE_PARSE_END, item - 2);
 			if (IS_PAREN(item)) {
 				// might GC
 				if (Do_Block_Throws(&save, VAL_SERIES(item), 0)) {
 					*parse->out = save;
-					Trap(RE_PARSE_LONGJMP_HACK);
-					DEAD_END;
+					raise Error_0(RE_PARSE_LONGJMP_HACK);
 				}
 				item = &save;
 			}
@@ -618,9 +610,9 @@ bad_target:
 
 			item = item + 1;
 			(*rule)++;
-			if (IS_END(item)) Trap1_DEAD_END(RE_PARSE_END, item-2);
+			if (IS_END(item)) raise Error_1(RE_PARSE_END, item - 2);
 			item = Get_Parse_Value(&save, item); // sub-rules
-			if (!IS_BLOCK(item)) Trap1_DEAD_END(RE_PARSE_RULE, item-2);
+			if (!IS_BLOCK(item)) raise Error_1(RE_PARSE_RULE, item - 2);
 			if (!ANY_BINSTR(&value) && !ANY_BLOCK(&value)) return NOT_FOUND;
 
 			sub_parse.series = VAL_SERIES(&value);
@@ -640,7 +632,7 @@ bad_target:
 			return NOT_FOUND;
 		}
 		else if (n > 0)
-			Trap1_DEAD_END(RE_PARSE_RULE, item);
+			raise Error_1(RE_PARSE_RULE, item);
 		else
 			item = Get_Parse_Value(&save, item); // variable
 	}
@@ -648,7 +640,7 @@ bad_target:
 		item = Get_Parse_Value(&save, item); // variable
 	}
 	else if (IS_SET_WORD(item) || IS_GET_WORD(item) || IS_SET_PATH(item) || IS_GET_PATH(item))
-		Trap1_DEAD_END(RE_PARSE_RULE, item);
+		raise Error_1(RE_PARSE_RULE, item);
 
 	if (IS_NONE(item)) {
 		return (VAL_TYPE(&value) > REB_NONE) ? NOT_FOUND : index;
@@ -693,7 +685,7 @@ bad_target:
 	REBVAL save;
 
 	CHECK_C_STACK_OVERFLOW(&flags);
-	//if (depth > MAX_PARSE_DEPTH) vTrap_Word(RE_LIMIT_HIT, SYM_PARSE, 0);
+	//if (depth > MAX_PARSE_DEPTH) /* raise error? */
 	flags = 0;
 	word = 0;
 	mincount = maxcount = 1;
@@ -722,7 +714,10 @@ bad_target:
 			// Is it a command word?
 			if ((cmd = VAL_CMD(item))) {
 
-				if (!IS_WORD(item)) Trap1_DEAD_END(RE_PARSE_COMMAND, item); // SET or GET not allowed
+				if (!IS_WORD(item)) {
+					// SET or GET not allowed
+					raise Error_1(RE_PARSE_COMMAND, item);
+				}
 
 				if (cmd <= SYM_BREAK) { // optimization
 
@@ -749,8 +744,9 @@ bad_target:
 					case SYM_SET:
 						SET_FLAG(flags, PF_SET_OR_COPY);
 						item = rules++;
-						if (!(IS_WORD(item) || IS_SET_WORD(item))) Trap1_DEAD_END(RE_PARSE_VARIABLE, item);
-						if (VAL_CMD(item)) Trap1_DEAD_END(RE_PARSE_COMMAND, item);
+						if (!(IS_WORD(item) || IS_SET_WORD(item)))
+							raise Error_1(RE_PARSE_VARIABLE, item);
+						if (VAL_CMD(item)) raise Error_1(RE_PARSE_COMMAND, item);
 						word = item;
 						continue;
 
@@ -802,8 +798,7 @@ bad_target:
 
 							// Implicitly returns whatever's in parse->out
 							// !!! Should return gracefully...!
-							Trap(RE_PARSE_LONGJMP_HACK);
-							DEAD_END;
+							raise Error_0(RE_PARSE_LONGJMP_HACK);
 						}
 						SET_FLAG(flags, PF_RETURN);
 						continue;
@@ -824,13 +819,12 @@ bad_target:
 					case SYM_IF:
 						item = rules++;
 						if (IS_END(item)) goto bad_end;
-						if (!IS_PAREN(item)) Trap1_DEAD_END(RE_PARSE_RULE, item);
+						if (!IS_PAREN(item)) raise Error_1(RE_PARSE_RULE, item);
 
 						// might GC
 						if (Do_Block_Throws(&save, VAL_SERIES(item), 0)) {
 							*parse->out = save;
-							Trap(RE_PARSE_LONGJMP_HACK);
-							DEAD_END;
+							raise Error_0(RE_PARSE_LONGJMP_HACK);
 						}
 
 						item = &save;
@@ -841,7 +835,7 @@ bad_target:
 						}
 
 					case SYM_LIMIT:
-						Trap_DEAD_END(RE_NOT_DONE);
+						raise Error_0(RE_NOT_DONE);
 						//val = Get_Parse_Value(&save, rules++);
 					//	if (IS_INTEGER(val)) limit = index + Int32(val);
 					//	else if (ANY_SERIES(val)) limit = VAL_INDEX(val);
@@ -872,10 +866,8 @@ bad_target:
 				if (IS_GET_WORD(item)) {
 					// !!! Should mutability be enforced?
 					item = GET_MUTABLE_VAR(item);
-					// CureCode #1263 change
-					//if (parse->type != VAL_TYPE(item) || VAL_SERIES(item) != series)
-					//	Trap1_DEAD_END(RE_PARSE_SERIES, rules-1);
-					if (!ANY_SERIES(item)) Trap1_DEAD_END(RE_PARSE_SERIES, rules-1);
+					if (!ANY_SERIES(item)) // #1263
+						raise Error_1(RE_PARSE_SERIES, rules - 1);
 					index = Set_Parse_Series(parse, item);
 					series = parse->series;
 					continue;
@@ -919,7 +911,7 @@ bad_target:
 					item = &save;
 					// CureCode #1263 change
 					//		if (parse->type != VAL_TYPE(item) || VAL_SERIES(item) != parse->series)
-					if (!ANY_SERIES(item)) Trap1_DEAD_END(RE_PARSE_SERIES, path);
+					if (!ANY_SERIES(item)) raise Error_1(RE_PARSE_SERIES, path);
 					index = Set_Parse_Series(parse, item);
 					item = NULL;
 				}
@@ -935,8 +927,7 @@ bad_target:
 			// might GC
 			if (Do_Block_Throws(&evaluated, VAL_SERIES(item), 0)) {
 				*parse->out = evaluated;
-				Trap(RE_PARSE_LONGJMP_HACK); // !!! should return gracefully!
-				DEAD_END;
+				raise Error_0(RE_PARSE_LONGJMP_HACK); // !!! should return gracefully!
 			}
 			// ignore evaluated if it's not THROWN?
 
@@ -949,11 +940,11 @@ bad_target:
 			SET_FLAG(flags, PF_WHILE);
 			mincount = maxcount = Int32s(item, 0);
 			item = Get_Parse_Value(&save, rules++);
-			if (IS_END(item)) Trap1_DEAD_END(RE_PARSE_END, rules-2);
+			if (IS_END(item)) raise Error_1(RE_PARSE_END, rules - 2);
 			if (IS_INTEGER(item)) {
 				maxcount = Int32s(item, 0);
 				item = Get_Parse_Value(&save, rules++);
-				if (IS_END(item)) Trap1_DEAD_END(RE_PARSE_END, rules-2);
+				if (IS_END(item)) raise Error_1(RE_PARSE_END, rules - 2);
 			}
 		}
 		// else fall through on other values and words
@@ -1005,8 +996,7 @@ bad_target:
 						// might GC
 						if (Do_Block_Throws(&save, VAL_SERIES(rules), 0)) {
 							*parse->out = save;
-							Trap(RE_PARSE_LONGJMP_HACK);
-							DEAD_END;
+							raise Error_0(RE_PARSE_LONGJMP_HACK);
 						}
 						item = &save;
 					}
@@ -1175,8 +1165,7 @@ post:
 							: Copy_String(series, begin, count) // condenses
 					);
 
-					Trap(RE_PARSE_LONGJMP_HACK);
-					DEAD_END;
+					raise Error_0(RE_PARSE_LONGJMP_HACK);
 				}
 				if (GET_FLAG(flags, PF_REMOVE)) {
 					if (count) Remove_Series(series, begin, count);
@@ -1195,7 +1184,7 @@ post:
 					}
 					// CHECK FOR QUOTE!!
 					item = Get_Parse_Value(&save, item); // new value
-					if (IS_UNSET(item)) Trap1_DEAD_END(RE_NO_VALUE, rules-1);
+					if (IS_UNSET(item)) raise Error_1(RE_NO_VALUE, rules - 1);
 					if (IS_END(item)) goto bad_end;
 					if (IS_BLOCK_INPUT(parse)) {
 						index = Modify_Array(GET_FLAG(flags, PF_CHANGE) ? A_CHANGE : A_INSERT,
@@ -1230,9 +1219,9 @@ post:
 	return index;
 
 bad_rule:
-	Trap1_DEAD_END(RE_PARSE_RULE, rules-1);
+	raise Error_1(RE_PARSE_RULE, rules - 1);
 bad_end:
-	Trap1_DEAD_END(RE_PARSE_END, rules-1);
+	raise Error_1(RE_PARSE_END, rules - 1);
 	return 0;
 }
 
@@ -1272,7 +1261,7 @@ bad_end:
 	PUSH_TRAP(&error, &state);
 
 // The first time through the following code 'error' will be NULL, but...
-// Trap()s can longjmp here, so 'error' won't be NULL *if* that happens!
+// `raise Error` can longjmp here, so 'error' won't be NULL *if* that happens!
 
 	if (error) {
 		// !!! Rather than return normally up the C call stack when it
@@ -1302,8 +1291,8 @@ bad_end:
 			return R_OUT;
 		}
 
-		// All other errors we don't interfere with, and just re-trap
-		Do_Error(error);
+		// All other errors we don't interfere with, and just raise again
+		raise Error_Is(error);
 	}
 
 	index = Parse_Rules_Loop(&parse, VAL_INDEX(input), VAL_BLK_DATA(rules), 0);

@@ -71,9 +71,12 @@
 	REBVAL *arg = DS_ARGC > 1 ? D_ARG(2) : NULL;
 
 	if (IS_BINARY_ACT(action)) {
-		if (IS_LOGIC(arg)) val2 = VAL_LOGIC(arg);
-		else if (IS_NONE(arg)) val2 = FALSE;
-		else Trap_Types_DEAD_END(RE_EXPECT_VAL, REB_LOGIC, VAL_TYPE(arg));
+		if (IS_LOGIC(arg))
+			val2 = VAL_LOGIC(arg);
+		else if (IS_NONE(arg))
+			val2 = FALSE;
+		else
+			raise Error_Unexpected_Type(REB_LOGIC, VAL_TYPE(arg));
 	}
 
 	switch (action) {
@@ -107,7 +110,7 @@
 		goto is_true;
 
 	default:
-		Trap_Action_DEAD_END(REB_LOGIC, action);
+		raise Error_Illegal_Action(REB_LOGIC, action);
 	}
 
 	// Keep other fields AS IS!

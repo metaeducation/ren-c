@@ -51,7 +51,7 @@
 
 	if (ser) {
 		if (!Echo_File(cast(REBCHR*, ser->data)))
-			Trap1_DEAD_END(RE_CANNOT_OPEN, val);
+			raise Error_1(RE_CANNOT_OPEN, val);
 	}
 
 	return R_OUT;
@@ -283,7 +283,7 @@
 	case REB_TIME:
 		timeout = (REBINT) (VAL_TIME(val) / (SEC_SEC / 1000));
 chk_neg:
-		if (timeout < 0) Trap_Range_DEAD_END(val);
+		if (timeout < 0) raise Error_Out_Of_Range(val);
 		break;
 
 	case REB_PORT:
@@ -297,7 +297,7 @@ chk_neg:
 		break;
 
 	default:
-		Trap_Arg_DEAD_END(val);
+		raise Error_Invalid_Arg(val);
 	}
 
 	// Prevent GC on temp port block:
@@ -337,7 +337,7 @@ chk_neg:
 	REBSER *port = VAL_PORT(val);
 	REBOOL awakened = TRUE; // start by assuming success
 
-	if (SERIES_TAIL(port) < STD_PORT_MAX) Panic_DEAD_END(9910);
+	if (SERIES_TAIL(port) < STD_PORT_MAX) panic Error_0(RE_MISC);
 
 	val = OFV(port, STD_PORT_ACTOR);
 	if (IS_NATIVE(val)) {
@@ -364,7 +364,7 @@ chk_neg:
 	REBSER *ser;
 
 	ser = Value_To_REBOL_Path(arg, 0);
-	if (!ser) Trap_Arg_DEAD_END(arg);
+	if (!ser) raise Error_Invalid_Arg(arg);
 	Val_Init_File(D_OUT, ser);
 
 	return R_OUT;
@@ -381,7 +381,7 @@ chk_neg:
 	REBSER *ser;
 
 	ser = Value_To_Local_Path(arg, D_REF(2));
-	if (!ser) Trap_Arg_DEAD_END(arg);
+	if (!ser) raise Error_Invalid_Arg(arg);
 	Val_Init_String(D_OUT, ser);
 
 	return R_OUT;
@@ -420,13 +420,13 @@ chk_neg:
 	REBVAL val;
 
 	ser = Value_To_OS_Path(arg, TRUE);
-	if (!ser) Trap_Arg_DEAD_END(arg); // !!! ERROR MSG
+	if (!ser) raise Error_Invalid_Arg(arg); // !!! ERROR MSG
 
 	Val_Init_String(&val, ser); // may be unicode or utf-8
 	Check_Security(SYM_FILE, POL_EXEC, &val);
 
 	n = OS_SET_CURRENT_DIR(cast(REBCHR*, ser->data));  // use len for bool
-	if (!n) Trap_Arg_DEAD_END(arg); // !!! ERROR MSG
+	if (!n) raise Error_Invalid_Arg(arg); // !!! ERROR MSG
 
 	return R_ARG1;
 }
@@ -456,7 +456,7 @@ chk_neg:
 		return R_UNSET;
 	} else {
 		Make_OS_Error(D_OUT, r);
-		Trap1_DEAD_END(RE_CALL_FAIL, D_OUT);
+		raise Error_1(RE_CALL_FAIL, D_OUT);
 	}
 
 	return R_UNSET;
@@ -583,9 +583,8 @@ chk_neg:
 		else if (IS_NONE(param)) {
 			input_type = NONE_TYPE;
 		}
-		else {
-			Trap_Arg_DEAD_END(param);
-		}
+		else
+			raise Error_Invalid_Arg(param);
 	}
 
 	// Note that os_output is actually treated as an *input* parameter in the
@@ -614,9 +613,8 @@ chk_neg:
 		else if (IS_NONE(param)) {
 			output_type = NONE_TYPE;
 		}
-		else {
-			Trap_Arg_DEAD_END(param);
-		}
+		else
+			raise Error_Invalid_Arg(param);
 	}
 
 	(void)input; // suppress unused warning but keep variable
@@ -642,9 +640,8 @@ chk_neg:
 		else if (IS_NONE(param)) {
 			err_type = NONE_TYPE;
 		}
-		else {
-			Trap_Arg_DEAD_END(param);
-		}
+		else
+			raise Error_Invalid_Arg(param);
 	}
 
 	/* I/O redirection implies /wait */
@@ -692,9 +689,9 @@ chk_neg:
 
 		cmd = NULL;
 		argc = VAL_LEN(arg);
-		if (argc <= 0) {
-			Trap_DEAD_END(RE_TOO_SHORT);
-		}
+
+		if (argc <= 0) raise Error_0(RE_TOO_SHORT);
+
 		argv_ser = Make_Series(argc + 1, sizeof(REBCHR*), MKS_NONE);
 		argv_saved_sers = Make_Series(argc, sizeof(REBSER*), MKS_NONE);
 		argv = cast(const REBCHR**, SERIES_DATA(argv_ser));
@@ -714,9 +711,8 @@ chk_neg:
 				SAVE_SERIES(path);
 				cast(REBSER**, SERIES_DATA(argv_saved_sers))[i] = path;
 			}
-			else {
-				Trap_Arg_DEAD_END(param);
-			}
+			else
+				raise Error_Invalid_Arg(param);
 		}
 		argv[argc] = NULL;
 	}
@@ -738,9 +734,8 @@ chk_neg:
 
 		argv[argc] = NULL;
 	}
-	else {
-		Trap_Arg_DEAD_END(arg);
-	}
+	else
+		raise Error_Invalid_Arg(arg);
 
 	r = OS_CREATE_PROCESS(
 		cmd, argc, argv,
@@ -824,7 +819,7 @@ chk_neg:
 
 	if (r != 0) {
 		Make_OS_Error(D_OUT, r);
-		Trap1_DEAD_END(RE_CALL_FAIL, D_OUT);
+		raise Error_1(RE_CALL_FAIL, D_OUT);
 	}
 
 	// We may have waited even if they didn't ask us to explicitly, but
@@ -1135,24 +1130,25 @@ chk_neg:
 						switch (ret) {
 							case OS_ENA:
 								return R_NONE;
+
 							case OS_EPERM:
-								Trap_DEAD_END(RE_PERMISSION_DENIED);
-								break;
+								raise Error_0(RE_PERMISSION_DENIED);
+
 							case OS_EINVAL:
-								Trap_Arg_DEAD_END(val);
-								break;
+								raise Error_Invalid_Arg(val);
+
 							default:
-								Trap_Arg_DEAD_END(val);
-								break;
+								raise Error_Invalid_Arg(val);
 						}
 					} else {
 						SET_INTEGER(D_OUT, ret);
 						return R_OUT;
 					}
-				} else {
-					Trap_Arg_DEAD_END(val);
 				}
-			} else {
+				else
+					raise Error_Invalid_Arg(val);
+			}
+			else {
 				REBINT ret = OS_GET_UID();
 				if (ret < 0) {
 					return R_NONE;
@@ -1170,24 +1166,25 @@ chk_neg:
 						switch (ret) {
 							case OS_ENA:
 								return R_NONE;
+
 							case OS_EPERM:
-								Trap_DEAD_END(RE_PERMISSION_DENIED);
-								break;
+								raise Error_0(RE_PERMISSION_DENIED);
+
 							case OS_EINVAL:
-								Trap_Arg_DEAD_END(val);
-								break;
+								raise Error_Invalid_Arg(val);
+
 							default:
-								Trap_Arg_DEAD_END(val);
-								break;
+								raise Error_Invalid_Arg(val);
 						}
 					} else {
 						SET_INTEGER(D_OUT, ret);
 						return R_OUT;
 					}
-				} else {
-					Trap_Arg_DEAD_END(val);
 				}
-			} else {
+				else
+					raise Error_Invalid_Arg(val);
+			}
+			else {
 				REBINT ret = OS_GET_GID();
 				if (ret < 0) {
 					return R_NONE;
@@ -1205,24 +1202,25 @@ chk_neg:
 						switch (ret) {
 							case OS_ENA:
 								return R_NONE;
+
 							case OS_EPERM:
-								Trap_DEAD_END(RE_PERMISSION_DENIED);
-								break;
+								raise Error_0(RE_PERMISSION_DENIED);
+
 							case OS_EINVAL:
-								Trap_Arg_DEAD_END(val);
-								break;
+								raise Error_Invalid_Arg(val);
+
 							default:
-								Trap_Arg_DEAD_END(val);
-								break;
+								raise Error_Invalid_Arg(val);
 						}
 					} else {
 						SET_INTEGER(D_OUT, ret);
 						return R_OUT;
 					}
-				} else {
-					Trap_Arg_DEAD_END(val);
 				}
-			} else {
+				else
+					raise Error_Invalid_Arg(val);
+			}
+			else {
 				REBINT ret = OS_GET_EUID();
 				if (ret < 0) {
 					return R_NONE;
@@ -1240,24 +1238,25 @@ chk_neg:
 						switch (ret) {
 							case OS_ENA:
 								return R_NONE;
+
 							case OS_EPERM:
-								Trap_DEAD_END(RE_PERMISSION_DENIED);
-								break;
+								raise Error_0(RE_PERMISSION_DENIED);
+
 							case OS_EINVAL:
-								Trap_Arg_DEAD_END(val);
-								break;
+								raise Error_Invalid_Arg(val);
+
 							default:
-								Trap_Arg_DEAD_END(val);
-								break;
+								raise Error_Invalid_Arg(val);
 						}
 					} else {
 						SET_INTEGER(D_OUT, ret);
 						return R_OUT;
 					}
-				} else {
-					Trap_Arg_DEAD_END(val);
 				}
-			} else {
+				else
+					raise Error_Invalid_Arg(val);
+			}
+			else {
 				REBINT ret = OS_GET_EGID();
 				if (ret < 0) {
 					return R_NONE;
@@ -1277,39 +1276,36 @@ chk_neg:
 				} else if (IS_BLOCK(val)) {
 					REBVAL *sig = NULL;
 
-					if (VAL_LEN(val) != 2) {
-						Trap_Arg_DEAD_END(val);
-					}
+					if (VAL_LEN(val) != 2) raise Error_Invalid_Arg(val);
+
 					pid = VAL_BLK_SKIP(val, 0);
+					if (!IS_INTEGER(pid)) raise Error_Invalid_Arg(pid);
+
 					sig = VAL_BLK_SKIP(val, 1);
-					if (!IS_INTEGER(pid)) {
-						Trap_Arg_DEAD_END(pid);
-					}
-					if (!IS_INTEGER(sig)) {
-						Trap_Arg_DEAD_END(sig);
-					}
+					if (!IS_INTEGER(sig)) raise Error_Invalid_Arg(sig);
+
 					ret = OS_SEND_SIGNAL(VAL_INT32(pid), VAL_INT32(sig));
 					arg = sig;
-				} else {
-					Trap_Arg_DEAD_END(val);
 				}
+				else
+					raise Error_Invalid_Arg(val);
 
 				if (ret < 0) {
 					switch (ret) {
 						case OS_ENA:
 							return R_NONE;
+
 						case OS_EPERM:
-							Trap_DEAD_END(RE_PERMISSION_DENIED);
-							break;
+							raise Error_0(RE_PERMISSION_DENIED);
+
 						case OS_EINVAL:
-							Trap_Arg_DEAD_END(arg);
-							break;
+							raise Error_Invalid_Arg(arg);
+
 						case OS_ESRCH:
-							Trap1_DEAD_END(RE_PROCESS_NOT_FOUND, pid);
-							break;
+							raise Error_1(RE_PROCESS_NOT_FOUND, pid);
+
 						default:
-							Trap_Arg_DEAD_END(val);
-							break;
+							raise Error_Invalid_Arg(val);
 					}
 				} else {
 					SET_INTEGER(D_OUT, ret);
@@ -1326,6 +1322,6 @@ chk_neg:
 			}
 			break;
 		default:
-			Trap_Arg_DEAD_END(field);
+			raise Error_Invalid_Arg(field);
 	}
 }

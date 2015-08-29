@@ -108,7 +108,11 @@
 ***********************************************************************/
 {
 	REBINT pnum = Get_Hash_Prime(ser->tail + 1);
-	if (!pnum) Trap_Num(RE_SIZE_LIMIT, ser->tail+1);
+	if (!pnum) {
+		REBVAL temp;
+		SET_INTEGER(&temp, ser->tail + 1);
+		raise Error_1(RE_SIZE_LIMIT, &temp);
+	}
 
 	assert(!Is_Array_Series(ser));
 	Remake_Series(ser, pnum + 1, SERIES_WIDE(ser), MKS_POWER_OF_2);

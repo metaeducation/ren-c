@@ -634,8 +634,7 @@
 		return;
 	}
 
-	Do_Error(&error);
-	DEAD_END_VOID;
+	raise Error_Is(&error);
 }
 
 
@@ -1424,7 +1423,7 @@ static REBSER *Scan_Full_Block(SCAN_STATE *scan_state, REBYTE mode_char);
 			//Bind_Global_Block(BLK_HEAD(block));
 			if (!Construct_Value(value, block)) {
 				if (IS_END(value)) Val_Init_Block(value, block);
-				Trap1_DEAD_END(RE_MALCONSTRUCT, value);
+				raise Error_1(RE_MALCONSTRUCT, value);
 			}
 			emitbuf->tail--; // Unprotect
 			break;

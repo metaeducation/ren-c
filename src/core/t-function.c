@@ -95,7 +95,7 @@ static REBOOL Same_Func(REBVAL *val, REBVAL *arg)
 		if (IS_DATATYPE(value)) {
 			n = VAL_TYPE_KIND(value);
 			if (Make_Function(n, value, arg)) break;
-			Trap_Make_DEAD_END(n, arg);
+			raise Error_Bad_Make(n, arg);
 		}
 
 		// make :func []
@@ -162,11 +162,12 @@ static REBOOL Same_Func(REBVAL *val, REBVAL *arg)
 			break;
 		default:
 		bad_arg:
-			Trap_Reflect_DEAD_END(type, arg);
+			raise Error_Cannot_Reflect(type, arg);
 		}
 		break;
 
-	default: Trap_Action_DEAD_END(type, action);
+	default:
+		raise Error_Illegal_Action(type, action);
 	}
 
 	*D_OUT = *value;

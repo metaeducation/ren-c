@@ -215,7 +215,7 @@
 
 	// Reuse a global word list block because length of block cannot
 	// be known until all words are scanned. Then copy this block.
-	if (SERIES_TAIL(BUF_WORDS)) Panic(RP_WORD_LIST); // still in use
+	if (SERIES_TAIL(BUF_WORDS)) panic Error_0(RE_WORD_LIST); // still in use
 
 	// Add the SELF word to slot zero.
 	if ((modes = (modes & BIND_NO_SELF)?0:SYM_SELF))
@@ -312,7 +312,7 @@
 					for (word = BLK_HEAD(BUF_WORDS); NOT_END(word); word++)
 						binds[VAL_WORD_CANON(word)] = 0;
 					RESET_TAIL(BUF_WORDS);  // allow reuse
-					Trap1(RE_DUP_VARS, value);
+					raise Error_1(RE_DUP_VARS, value);
 				}
 			}
 			continue;
@@ -321,7 +321,7 @@
 		if (ANY_EVAL_BLOCK(value) && (modes & BIND_DEEP))
 			Collect_Frame_Inner_Loop(binds, VAL_BLK_DATA(value), modes);
 		// In this mode (foreach native), do not allow non-words:
-		//else if (modes & BIND_GET) Trap_Arg_DEAD_END(value);
+		//else if (modes & BIND_GET) raise Error_Invalid_Arg(value);
 	}
 	BLK_TERM(BUF_WORDS);
 }
@@ -397,7 +397,7 @@
 	REBINT *binds = WORDS_HEAD(Bind_Table); // GC safe to do here
 	CHECK_BIND_TABLE;
 
-	if (SERIES_TAIL(BUF_WORDS)) Panic_DEAD_END(RP_WORD_LIST); // still in use
+	if (SERIES_TAIL(BUF_WORDS)) panic Error_0(RE_WORD_LIST); // still in use
 
 	if (prior_value)
 		Collect_Words_Inner_Loop(binds, &prior_value[0], BIND_ALL);
@@ -598,7 +598,7 @@
 	REBVAL *word  = BLK_HEAD(VAL_OBJ_WORDS(value));
 
 	for (; NOT_END(word); word++)
-		if (VAL_GET_EXT(word, EXT_WORD_HIDE)) Trap(RE_HIDDEN);
+		if (VAL_GET_EXT(word, EXT_WORD_HIDE)) raise Error_0(RE_HIDDEN);
 }
 
 
@@ -613,12 +613,11 @@
 {
 	if (!Do_Sys_Func(out, SYS_CTX_MAKE_MODULE_P, spec, 0)) {
 		// Gave back an unhandled RETURN, BREAK, CONTINUE, etc...
-		Trap_Thrown(out);
-		DEAD_END_VOID;
+		raise Error_No_Catch_For_Throw(out);
 	}
 
 	// !!! Shouldn't this be testing for !IS_MODULE(out)?
-	if (IS_NONE(out)) Trap1(RE_INVALID_SPEC, spec);
+	if (IS_NONE(out)) raise Error_1(RE_INVALID_SPEC, spec);
 }
 
 
@@ -734,7 +733,7 @@
 
 	CHECK_BIND_TABLE;
 
-	if (IS_PROTECT_SERIES(target)) Trap(RE_PROTECTED);
+	if (IS_PROTECT_SERIES(target)) raise Error_0(RE_PROTECTED);
 
 	if (IS_INTEGER(only_words)) { // Must be: 0 < i <= tail
 		i = VAL_INT32(only_words); // never <= 0
@@ -1060,7 +1059,7 @@
 	REBINT index;
 
 	index = Find_Arg_Index(frame, VAL_WORD_SYM(word));
-	if (!index) Trap1(RE_NOT_IN_CONTEXT, word);
+	if (!index) raise Error_1(RE_NOT_IN_CONTEXT, word);
 	VAL_WORD_FRAME(word) = frame;
 	VAL_WORD_INDEX(word) = -index;
 }
@@ -1211,10 +1210,7 @@
 				writable &&
 				VAL_GET_EXT(FRM_WORDS(context) + index, EXT_WORD_LOCK)
 			) {
-				if (trap) {
-					Trap1(RE_LOCKED_WORD, word);
-					DEAD_END;
-				}
+				if (trap) raise Error_1(RE_LOCKED_WORD, word);
 				return NULL;
 			}
 
@@ -1252,10 +1248,7 @@
 							EXT_WORD_LOCK
 						)
 					) {
-						if (trap) {
-							Trap1(RE_LOCKED_WORD, word);
-							DEAD_END;
-						}
+						if (trap) raise Error_1(RE_LOCKED_WORD, word);
 						return NULL;
 					}
 
@@ -1267,10 +1260,7 @@
 				call = PRIOR_DSF(call);
 			}
 
-			if (trap) {
-				Trap1(RE_NO_RELATIVE, word);
-				DEAD_END;
-			}
+			if (trap) raise Error_1(RE_NO_RELATIVE, word);
 			return NULL;
 		}
 
@@ -1280,17 +1270,11 @@
 		// pointer to.  Use GET_VAR_INTO instead for that.
 
 		assert(!IS_SELFLESS(context));
-		if (trap) {
-			Trap(RE_SELF_PROTECTED);
-			DEAD_END;
-		}
+		if (trap) raise Error_0(RE_SELF_PROTECTED);
 		return NULL; // is this a case where we should *always* trap?
 	}
 
-	if (trap) {
-		Trap1(RE_NOT_DEFINED, word);
-		DEAD_END;
-	}
+	if (trap) raise Error_1(RE_NOT_DEFINED, word);
 	return NULL;
 }
 
@@ -1336,8 +1320,7 @@
 				call = PRIOR_DSF(call);
 			}
 
-			Trap1(RE_NO_RELATIVE, word);
-			DEAD_END_VOID;
+			raise Error_1(RE_NO_RELATIVE, word);
 		}
 
 		// Key difference between Get_Var_Into and Get_Var...fabricating
@@ -1351,8 +1334,7 @@
 		return;
 	}
 
-	Trap1(RE_NOT_DEFINED, word);
-	DEAD_END_VOID;
+	raise Error_1(RE_NOT_DEFINED, word);
 }
 
 
@@ -1370,7 +1352,7 @@
 
 	assert(!THROWN(value));
 
-	if (!HAS_FRAME(word)) Trap1(RE_NOT_DEFINED, word);
+	if (!HAS_FRAME(word)) raise Error_1(RE_NOT_DEFINED, word);
 
 	assert(VAL_WORD_FRAME(word));
 //  Print("Set %s to %s [frame: %x idx: %d]", Get_Word_Name(word), Get_Type_Name(value), VAL_WORD_FRAME(word), VAL_WORD_INDEX(word));
@@ -1378,17 +1360,17 @@
 	if (index > 0) {
 		frm = VAL_WORD_FRAME(word);
 		if (VAL_GET_EXT(FRM_WORDS(frm) + index, EXT_WORD_LOCK))
-			Trap1(RE_LOCKED_WORD, word);
+			raise Error_1(RE_LOCKED_WORD, word);
 		FRM_VALUES(frm)[index] = *value;
 		return;
 	}
-	if (index == 0) Trap(RE_SELF_PROTECTED);
+	if (index == 0) raise Error_0(RE_SELF_PROTECTED);
 
 	// Find relative value:
 	call = DSF;
 	while (VAL_WORD_FRAME(word) != VAL_WORD_FRAME(DSF_LABEL(call))) {
 		call = PRIOR_DSF(call);
-		if (!call) Trap1(RE_NOT_DEFINED, word); // change error !!!
+		if (!call) raise Error_1(RE_NOT_DEFINED, word); // change error !!!
 	}
 	*DSF_ARG(call, -index) = *value;
 }

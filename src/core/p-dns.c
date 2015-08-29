@@ -47,12 +47,12 @@
 
 	Validate_Port(port, action);
 
-	arg = D_ARG(2);
+	arg = DS_ARGC > 1 ? D_ARG(2) : NULL;
 	*D_OUT = *D_ARG(1);
 
 	sock = cast(REBREQ*, Use_Port_State(port, RDI_DNS, sizeof(*sock)));
 	spec = OFV(port, STD_PORT_SPEC);
-	if (!IS_OBJECT(spec)) Trap_DEAD_END(RE_INVALID_PORT);
+	if (!IS_OBJECT(spec)) raise Error_0(RE_INVALID_PORT);
 
 	sock->timeout = 4000; // where does this go? !!!
 
@@ -60,7 +60,8 @@
 
 	case A_READ:
 		if (!IS_OPEN(sock)) {
-			if (OS_DO_DEVICE(sock, RDC_OPEN)) Trap_Port_DEAD_END(RE_CANNOT_OPEN, port, sock->error);
+			if (OS_DO_DEVICE(sock, RDC_OPEN))
+				raise Error_On_Port(RE_CANNOT_OPEN, port, sock->error);
 			sync = TRUE;
 		}
 
@@ -73,10 +74,12 @@
 		else if (IS_STRING(arg)) {
 			sock->common.data = VAL_BIN(arg);
 		}
-		else Trap_Port_DEAD_END(RE_INVALID_SPEC, port, -10);
+		else
+			raise Error_On_Port(RE_INVALID_SPEC, port, -10);
 
 		result = OS_DO_DEVICE(sock, RDC_READ);
-		if (result < 0) Trap_Port_DEAD_END(RE_READ_ERROR, port, sock->error);
+		if (result < 0)
+			raise Error_On_Port(RE_READ_ERROR, port, sock->error);
 
 		// Wait for it...
 		if (sync && result == DR_PEND) {
@@ -93,14 +96,16 @@
 		break;
 
 	case A_PICK:  // FIRST - return result
-		if (!IS_OPEN(sock)) Trap_Port_DEAD_END(RE_NOT_OPEN, port, -12);
+		if (!IS_OPEN(sock))
+			raise Error_On_Port(RE_NOT_OPEN, port, -12);
+
 		len = Get_Num_Arg(arg); // Position
 pick:
 		if (len == 1) {
 			if (!sock->special.net.host_info || !GET_FLAG(sock->flags, RRF_DONE)) return R_NONE;
 			if (sock->error) {
 				OS_DO_DEVICE(sock, RDC_CLOSE);
-				Trap_Port_DEAD_END(RE_READ_ERROR, port, sock->error);
+				raise Error_On_Port(RE_READ_ERROR, port, sock->error);
 			}
 			if (GET_FLAG(sock->modes, RST_REVERSE)) {
 				Val_Init_String(D_OUT, Copy_Bytes(sock->common.data, LEN_BYTES(sock->common.data)));
@@ -108,11 +113,14 @@ pick:
 				Set_Tuple(D_OUT, cast(REBYTE*, &sock->special.net.remote_ip), 4);
 			}
 			OS_DO_DEVICE(sock, RDC_CLOSE);
-		} else Trap_Range_DEAD_END(arg);
+		}
+		else
+			raise Error_Out_Of_Range(arg);
 		break;
 
 	case A_OPEN:
-		if (OS_DO_DEVICE(sock, RDC_OPEN)) Trap_Port_DEAD_END(RE_CANNOT_OPEN, port, -12);
+		if (OS_DO_DEVICE(sock, RDC_OPEN))
+			raise Error_On_Port(RE_CANNOT_OPEN, port, -12);
 		break;
 
 	case A_CLOSE:
@@ -127,7 +135,7 @@ pick:
 		return R_NONE;
 
 	default:
-		Trap_Action_DEAD_END(REB_PORT, action);
+		raise Error_Illegal_Action(REB_PORT, action);
 	}
 
 	return R_OUT;
