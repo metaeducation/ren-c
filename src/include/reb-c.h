@@ -31,12 +31,6 @@
 **
 ***********************************************************************/
 
-#if defined(__clang__) || defined (__GNUC__)
-# define ATTRIBUTE_NO_SANITIZE_ADDRESS __attribute__((no_sanitize_address))
-#else
-# define ATTRIBUTE_NO_SANITIZE_ADDRESS
-#endif
-
 
 /***********************************************************************
 **
@@ -494,6 +488,36 @@ typedef u16 REBUNI;
 // Memory clearing macros:
 #define CLEAR(m, s)     memset((void*)(m), 0, s)
 #define CLEARS(m)       memset((void*)(m), 0, sizeof(*m))
+
+
+/***********************************************************************
+**
+**	ATTRIBUTES
+**
+**		The __attribute__ feature is non-standard and only available
+**		in some compilers.  Individual attributes themselves are
+**		also available on a case-by-case basis.
+**
+**		Note: Placing the attribute after the prototype seems to lead
+**		to complaints, and technically there is a suggestion you may
+**		only define attributes on prototypes--not definitions:
+**
+**			http://stackoverflow.com/q/23917031/211160
+**
+**		Putting the attribute *before* the prototype seems to allow
+**		it on both the prototype and definition in gcc, however.
+**
+***********************************************************************/
+
+#if (defined(__clang__) || defined (__GNUC__))
+	#define ATTRIBUTE_NO_SANITIZE_ADDRESS __attribute__((no_sanitize_address))
+	#define ATTRIBUTE_NO_RETURN __attribute__ ((noreturn))
+	#define DEAD_END __builtin_unreachable()
+#else
+	#define ATTRIBUTE_NO_SANITIZE_ADDRESS
+	#define ATTRIBUTE_NO_RETURN
+	#define DEAD_END
+#endif
 
 
 /***********************************************************************

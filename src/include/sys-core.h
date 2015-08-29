@@ -474,12 +474,6 @@ enum encoding_opts {
 
 void Panic_Core(REBINT id, ...);
 
-#define DEAD_END \
-	do { \
-		assert(FALSE); \
-		return 0; \
-	} while (0)
-
 #define DEAD_END_VOID \
 	do { \
 		assert(FALSE); \
