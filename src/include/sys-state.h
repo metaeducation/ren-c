@@ -62,6 +62,21 @@
 // setjmp and longjmp on signal masks. Instead, two new functions, sigsetjmp
 // and siglongjmp, are defined by POSIX.1. These two functions should always
 // be used when branching from a signal handler."
+//
+// Note: longjmp is able to pass a value (though only an integer on 64-bit
+// platforms, and not enough to pass a pointer).  This can be used to
+// dictate the value setjmp returns in the longjmp case, though the code
+// does not currently use that feature.
+//
+// Also note: with compiler warnings on, it can tell us when values are set
+// before the setjmp and then changed before a potential longjmp:
+//
+//     http://stackoverflow.com/q/7721854/211160
+//
+// Because of this longjmp/setjmp "clobbering", it's a useful warning to
+// have enabled in.  One option for suppressing it would be to mark
+// a parameter as 'volatile', but that is implementation-defined.
+// It is best to use a new variable if you encounter such a warning.
 
 #ifdef HAS_POSIX_SIGNAL
 	#define SET_JUMP(s) sigsetjmp((s), 1)
