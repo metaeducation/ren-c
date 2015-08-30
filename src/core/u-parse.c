@@ -312,6 +312,7 @@ no_result:
 ***********************************************************************/
 {
 	REBSER *series = parse->series;
+	REBSER *ser;
 	REBCNT type = parse->type;
 	REBVAL *blk;
 	const REBVAL *item;
@@ -407,6 +408,21 @@ no_result:
 					ch2 = VAL_CHAR(item);
 					if (!HAS_CASE(parse)) ch2 = UP_CASE(ch2);
 					if (ch1 == ch2) goto found1;
+				}
+				else if (IS_TAG(item)) {
+					ch2 = '<';
+					if (ch1 == ch2) {
+						// adapted from function Parse_To :-)
+						ser = Copy_Form_Value(item, 0);
+						i = Find_Str_Str(series, 0, index, series->tail, 1, ser, 0, ser->tail,  AM_FIND_MATCH | parse->flags);
+						if (i != NOT_FOUND) {
+							if (is_thru) i += ser->tail;
+							index = i;
+							Free_Series(ser);
+							goto found;
+						}
+						Free_Series(ser);
+					}
 				}
 				else if (ANY_STR(item)) {
 					ch2 = VAL_ANY_CHAR(item);
