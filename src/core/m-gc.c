@@ -1046,16 +1046,6 @@ static void Propagate_All_GC_Marks(void);
 		sp++; // can't increment inside macro arg, evaluated multiple times
 	}
 
-	// Mark all special series:
-	sp = (REBSER **)GC_Series->data;
-	for (n = SERIES_TAIL(GC_Series); n > 0; n--) {
-        if (Is_Array_Series(*sp))
-            MARK_BLOCK_DEEP(*sp);
-        else
-            MARK_SERIES_ONLY(*sp);
-		sp++; // can't increment inside macro arg, evaluated multiple times
-	}
-
 	// Mark all root series:
 	MARK_BLOCK_DEEP(VAL_SERIES(ROOT_ROOT));
 	MARK_BLOCK_DEEP(Task_Series);
@@ -1131,42 +1121,6 @@ static void Propagate_All_GC_Marks(void);
 
 /***********************************************************************
 **
-*/	void Guard_Series(REBSER *series)
-/*
-**		A list of protected series, managed by specific removal.
-**
-***********************************************************************/
-{
-	LABEL_SERIES(series, "guarded");
-	if (SERIES_FULL(GC_Series)) Extend_Series(GC_Series, 8);
-	((REBSER **)GC_Series->data)[GC_Series->tail++] = series;
-}
-
-
-/***********************************************************************
-**
-*/	void Loose_Series(REBSER *series)
-/*
-**		Remove a series from the protected list.
-**
-***********************************************************************/
-{
-	REBSER **sp;
-	REBCNT n;
-
-	LABEL_SERIES(series, "unguarded");
-	sp = (REBSER **)GC_Series->data;
-	for (n = 0; n < SERIES_TAIL(GC_Series); n++) {
-		if (sp[n] == series) {
-			Remove_Series(GC_Series, n, 1);
-			break;
-		}
-	}
-}
-
-
-/***********************************************************************
-**
 */	void Init_GC(void)
 /*
 **		Initialize garbage collector.
@@ -1189,7 +1143,4 @@ static void Propagate_All_GC_Marks(void);
 	GC_Mark_Stack = Make_Series(100, sizeof(REBSER *), MKS_NONE);
 	TERM_SERIES(GC_Mark_Stack);
 	KEEP_SERIES(GC_Mark_Stack, "gc mark stack");
-
-	GC_Series = Make_Series(60, sizeof(REBSER *), MKS_NONE);
-	KEEP_SERIES(GC_Series, "gc guarded");
 }

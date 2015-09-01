@@ -89,7 +89,6 @@ TVAR REBINT	GC_Ballast;		// Bytes allocated to force automatic GC
 TVAR REBOOL	GC_Active;		// TRUE when recycle is enabled (set by RECYCLE func)
 TVAR REBSER	*GC_Protect;	// A stack of protected series (removed by pop)
 PVAR REBSER	*GC_Mark_Stack; // Series pending to mark their reachables as live
-TVAR REBSER	*GC_Series;		// An array of protected series (removed by address)
 TVAR REBFLG GC_Stay_Dirty;  // Do not free memory, fill it with 0xBB
 TVAR REBSER **Prior_Expand;	// Track prior series expansions (acceleration)
 
