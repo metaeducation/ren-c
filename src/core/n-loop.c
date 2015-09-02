@@ -696,37 +696,41 @@ utop:
 /*
 ***********************************************************************/
 {
-	REBSER *b1 = VAL_SERIES(D_ARG(1));
-	REBCNT i1  = VAL_INDEX(D_ARG(1));
-	REBSER *b2 = VAL_SERIES(D_ARG(2));
-	REBCNT i2  = VAL_INDEX(D_ARG(2));
+	REBSER *cond_series = VAL_SERIES(D_ARG(1));
+	REBCNT cond_index = VAL_INDEX(D_ARG(1));
+	REBSER *body_series = VAL_SERIES(D_ARG(2));
+	REBCNT body_index = VAL_INDEX(D_ARG(2));
 
 	// We need to keep the condition and body safe from GC, so we can't
 	// use a D_ARG slot for evaluating the condition (can't overwrite
 	// D_OUT because that's the last loop's value we might return)
-	REBVAL temp;
+	REBVAL cond_out;
 
 	// If the loop body never runs (and condition doesn't error or throw),
 	// we want to return a NONE!
 	SET_NONE(D_OUT);
 
 	do {
-		if (Do_Block_Throws(&temp, b1, i1) || IS_UNSET(&temp)) {
-			if (Process_Loop_Throw(&temp) >= 0) {
-				// Process_Loop_Throw modifies its argument so temp will be
-				// UNSET! (or the arg to BREAK/WITH) if a BREAK happened.
-				*D_OUT = temp;
-				return R_OUT;
-			}
-			// CONTINUE will pass through here...
+		if (Do_Block_Throws(&cond_out, cond_series, cond_index)) {
+			// A while loop should only look for breaks and continues in its
+			// body, not in its condition.  So `while [break] []` is a
+			// request to break the enclosing loop (or error if there is
+			// nothing to catch that break).  Hence we bubble up the throw.
+			*D_OUT = cond_out;
+			return R_OUT;
 		}
 
-		if (IS_CONDITIONAL_FALSE(&temp)) return R_OUT;
+		if (IS_CONDITIONAL_FALSE(&cond_out)) {
+			// When the condition evaluates to a LOGIC! false or a NONE!,
+			// WHILE returns whatever the last value was that the body
+			// evaluated to (or none if no body evaluations yet).
+			return R_OUT;
+		}
 
-		// Not interested in the value of the condition loop once we've
-		// decided to run the body...
+		if (IS_UNSET(&cond_out))
+			Trap_DEAD_END(RE_NO_RETURN);
 
-		if (Do_Block_Throws(D_OUT, b2, i2)) {
+		if (Do_Block_Throws(D_OUT, body_series, body_index)) {
 			// !!! Process_Loop_Throw may modify its argument
 			if (Process_Loop_Throw(D_OUT) >= 0) return R_OUT;
 		}
