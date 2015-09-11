@@ -171,7 +171,7 @@ do-request: func [
 	info/headers: info/response-line: info/response-parsed: port/data:
 	info/size: info/date: info/name: none
 	write port/state/connection
-	make-http-request spec/method to file! any [spec/path %/]
+	make-http-request spec/method any [spec/path %/]
 	spec/headers spec/content
 ]
 parse-write-dialect: func [port block /local spec] [
