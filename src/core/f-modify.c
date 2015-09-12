@@ -137,8 +137,15 @@
 	REBCNT tail  = SERIES_TAIL(dst_ser);
 	REBINT size;		// total to insert
 	REBOOL needs_free;
+	REBINT limit;
 
-	if (dups < 0) return (action == A_APPEND) ? 0 : dst_idx;
+	// For INSERT/PART and APPEND/PART
+	if (action != A_CHANGE && GET_FLAG(flags, AN_PART))
+		limit = dst_len; // should be non-negative
+	else
+		limit = -1;
+
+	if (limit == 0 || dups < 0) return (action == A_APPEND) ? 0 : dst_idx;
 	if (action == A_APPEND || dst_idx > tail) dst_idx = tail;
 
 	// If the src_val is not a string, then we need to create a string:
@@ -146,10 +153,12 @@
 		if (IS_INTEGER(src_val)) {
 			src_ser = Make_Series_Codepoint(Int8u(src_val));
 			needs_free = TRUE;
+			limit = -1;
 		}
 		else if (IS_BLOCK(src_val)) {
-			src_ser = Join_Binary(src_val); // NOTE: it's the shared FORM buffer!
+			src_ser = Join_Binary(src_val, limit); // NOTE: it's the shared FORM buffer!
 			needs_free = FALSE;
+			limit = -1;
 		}
 		else if (IS_CHAR(src_val)) {
 			// "UTF-8 was originally specified to allow codepoints with up to
@@ -159,8 +168,16 @@
 			src_ser = Make_Binary(6);
 			src_ser->tail = Encode_UTF8_Char(BIN_HEAD(src_ser), VAL_CHAR(src_val));
 			needs_free = TRUE;
+			limit = -1;
 		}
-		else if (!ANY_BINSTR(src_val))
+		else if (ANY_STR(src_val)) {
+			src_len = VAL_LEN(src_val);
+			if (limit >= 0 && src_len > limit) src_len = limit;
+			src_ser = Make_UTF8_From_Any_String(src_val, src_len, 0);
+			needs_free = TRUE;
+			limit = -1;
+		}
+		else if (!IS_BINARY(src_val))
 			raise Error_Invalid_Arg(src_val);
 	}
 	else if (IS_CHAR(src_val)) {
@@ -187,8 +204,7 @@
 		needs_free = FALSE;
 	}
 
-	// For INSERT or APPEND with /PART use the dst_len not src_len:
-	if (action != A_CHANGE && GET_FLAG(flags, AN_PART)) src_len = dst_len;
+	if (limit >= 0) src_len = limit;
 
 	// If Source == Destination we need to prevent possible conflicts.
 	// Clone the argument just to be safe.

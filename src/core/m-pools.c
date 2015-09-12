@@ -1195,8 +1195,6 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 	REBUNI *up;
 	REBCNT n;
 
-	series->data = NULL;
-
 #if !defined(NDEBUG)
 	// We may be resizing a partially constructed series, or otherwise
 	// not want to preserve the previous contents
@@ -1205,6 +1203,8 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 #endif
 
 	assert(SERIES_WIDE(series) == 1);
+
+	series->data = NULL;
 
 	if (!Series_Data_Alloc(
 		series, tail_old + 1, cast(REBYTE, sizeof(REBUNI)), MKS_NONE

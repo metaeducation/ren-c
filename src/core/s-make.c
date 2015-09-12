@@ -222,7 +222,7 @@ cp_same:
 			idx += n;
 			pos += n;
 			len -= n;
-			Widen_String(dst, FALSE);
+			Widen_String(dst, TRUE);
 			goto cp_same;
 		}
 		bp[n] = (REBYTE)up[n];
@@ -579,10 +579,12 @@ cp_same:
 
 /***********************************************************************
 **
-*/  REBSER *Join_Binary(const REBVAL *blk)
+*/  REBSER *Join_Binary(const REBVAL *blk, REBINT limit)
 /*
 **		Join a binary from component values for use in standard
 **		actions like make, insert, or append.
+**		limit: maximum number of values to process
+**		limit < 0 means no limit
 **
 **		WARNING: returns BUF_FORM, not a copy!
 **
@@ -594,9 +596,11 @@ cp_same:
 	REBCNT len;
 	void *bp;
 
+	if (limit < 0) limit = VAL_LEN(blk);
+
 	RESET_TAIL(series);
 
-	for (val = VAL_BLK_DATA(blk); NOT_END(val); val++) {
+	for (val = VAL_BLK_DATA(blk); limit > 0; val++, limit--) {
 		switch (VAL_TYPE(val)) {
 
 		case REB_INTEGER:
