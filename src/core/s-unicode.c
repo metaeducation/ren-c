@@ -1159,11 +1159,12 @@ ConversionResult ConvertUTF8toUTF32 (
 	}
 	else {
 		REBOOL uni = !VAL_BYTE_SIZE(value);
-		REBCNT size = Length_As_UTF8(VAL_BIN_DATA(value), len, uni, ccr);
+		const void *data = uni ?
+			cast(const void*, VAL_UNI_DATA(value)) :
+			cast(const void*, VAL_BIN_DATA(value));
+		REBCNT size = Length_As_UTF8(data, len, uni, ccr);
 		series = Make_Binary(size + (GET_FLAG(opts, ENC_OPT_BOM) ? 3 : 0));
-		Encode_UTF8(
-			BIN_HEAD(series), size, VAL_BIN_DATA(value), &len, uni, ccr
-		);
+		Encode_UTF8(BIN_HEAD(series), size, data, &len, uni, ccr);
 	}
 
 	SERIES_TAIL(series) = len;
