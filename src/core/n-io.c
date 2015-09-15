@@ -467,14 +467,13 @@ chk_neg:
 **
 */	REBNATIVE(call)
 /*
- *
-	/wait "Wait for command to terminate before returning"
-    /console "Runs command with I/O redirected to console"
-    /shell "Forces command to be run from shell"
-	/info "Return process information object"
-    /input in [string! file! none] "Redirects stdin to in"
-    /output out [string! file! none] "Redirects stdout to out"
-    /error err [string! file! none] "Redirects stderr to err"
+**	/wait "Wait for command to terminate before returning"
+**	/console "Runs command with I/O redirected to console"
+**	/shell "Forces command to be run from shell"
+**	/info "Return process information object"
+**	/input in [string! file! none] "Redirects stdin to in"
+**	/output out [string! file! none] "Redirects stdout to out"
+**	/error err [string! file! none] "Redirects stderr to err"
 ***********************************************************************/
 {
 #define INHERIT_TYPE 0
@@ -1113,9 +1112,9 @@ chk_neg:
 **
 */	REBNATIVE(access_os)
 /*
- *  access-os word value
- * /set
- */
+**	access-os word
+**	/set value
+***********************************************************************/
 {
 #define OS_ENA	 -1
 #define OS_EINVAL -2
