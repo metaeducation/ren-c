@@ -200,7 +200,7 @@
 	for (n = 0; n < REB_MAX; n++) {
 		if (TYPE_CHECK(tset, n)) {
 			value = Alloc_Tail_Array(block);
-			Set_Datatype(value, n);
+			Val_Init_Datatype(value, n);
 		}
 	}
 	return block;

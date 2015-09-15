@@ -56,7 +56,30 @@ op?: func [
 
 ; It would be nicer to use type!/type? instead of datatype!/datatype?  :-/
 ; The compatibility layer may have to struggle with that change down the line
-type?: :type-of
+;
+; The previous /WORD refinement was common because things like SWITCH
+; statements wanted to operate on the word for the datatype, since in
+; unevaluated contexts INTEGER! would be a WORD! and not a DATATYPE!.  With
+; change to allow lax equality comparisons to see a datatype and its word
+; as being equal, this is not as necessary.  Cases that truly need it can
+; use TO-WORD TYPE-OF.
+;
+type?: function [
+	"Returns the datatype of a value <r3-legacy>."
+	value [any-type!]
+	/word "No longer in TYPE-OF, as WORD! and DATATYPE! can be EQUAL?"
+][
+	either word [
+		; Right now TO-WORD is still returning PAREN! for a PAREN! type,
+		; so the EITHER isn't necessary.  But it's a talking point about
+		; TYPE?/WORD's compatibility story if TO-WORD changed.
+		;
+		either word: to-word type-of :value = 'group! [paren!] [word]
+	][
+		type-of :value
+	]
+]
+
 
 ; See also prot-http.r, which has an actor with a LENGTH? "method".  Given
 ; how actors work, it cannot be overriden here.

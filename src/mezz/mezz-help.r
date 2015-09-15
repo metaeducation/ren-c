@@ -51,7 +51,10 @@ dump-obj: function [
 	wild: all [string? pat  find pat "*"]
 
 	for-each [word val] obj [
-		type: type-of/word :val
+		; !!! to-word necessary as long as OPTIONS_DATATYPE_WORD_STRICT exists
+		; (and for this use maybe it would be needed anyway, review to check)
+		type: to-word type-of :val
+
 		str: either any [any-function? :type object? :type] [
 			reform [word mold spec-of :val words-of :val]
 		][

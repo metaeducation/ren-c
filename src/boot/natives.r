@@ -581,7 +581,6 @@ to-hex: native [
 type-of: native [
 	{Returns the datatype of a value.}
 	value [any-type!]
-	/word {Returns the datatype as a word}
 ]
 
 unset: native [

@@ -143,7 +143,8 @@ script?: func [
 	{Checks file, url, or string for a valid script header.}
 	source [file! url! binary! string!]
 ][
-	switch type-of/word source [
+	; !!! to word! necessary as long as OPTIONS_DATATYPE_WORD_STRICT exists
+	switch to word! type-of source [
 		file! url! [source: read source]
 		string! [source: to binary! source] ; Remove this line if FIND-SCRIPT changed to accept string!
 	]

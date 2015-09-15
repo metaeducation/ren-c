@@ -123,7 +123,8 @@ list-dir: func [
 		fail ["No directory listing protocol registered for" save-dir]
 	]
 
-	switch type-of/word :path [
+	; !!! to-word necessary as long as OPTIONS_DATATYPE_WORD_STRICT exists
+	switch to-word type-of :path [
 		unset! [] ; Stay here
 		file! [change-dir path]
 		string! [change-dir to-rebol-file path]

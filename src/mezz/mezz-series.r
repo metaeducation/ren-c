@@ -386,7 +386,9 @@ format: function [
 	val: 0
 	for-each rule rules [
 		if word? :rule [rule: get rule]
-		val: val + switch/default type-of/word :rule [
+
+		; !!! to-word necessary as long as OPTIONS_DATATYPE_WORD_STRICT exists
+		val: val + switch/default to-word type-of :rule [
 			integer! [abs rule]
 			string! [length rule]
 			char!    [1]
@@ -399,7 +401,9 @@ format: function [
 	; Process each rule:
 	for-each rule rules [
 		if word? :rule [rule: get rule]
-		switch type-of/word :rule [
+
+		; !!! to-word necessary as long as OPTIONS_DATATYPE_WORD_STRICT exists
+		switch to-word type-of :rule [
 			integer! [
 				pad: rule
 				val: form first+ values
