@@ -707,37 +707,37 @@ change-dir: native [
 
 cosine: native [
 	{Returns the trigonometric cosine.}
-	value [number!] {In degrees by default}
-	/radians {Value is specified in radians}
+	angle [number!] {In degrees by default}
+	/radians {Angle is specified in radians}
 ]
 
 sine: native [
 	{Returns the trigonometric sine.}
-	value [number!] {In degrees by default}
-	/radians {Value is specified in radians}
+	angle [number!] {In degrees by default}
+	/radians {Angle is specified in radians}
 ]
 
 tangent: native [
 	{Returns the trigonometric tangent.}
-	value [number!] {In degrees by default}
-	/radians {Value is specified in radians}
+	angle [number!] {In degrees by default}
+	/radians {Angle is specified in radians}
 ]
 
 arccosine: native [
 	{Returns the trigonometric arccosine (in degrees by default).}
-	value [number!]
+	cosine [number!]
 	/radians {Returns result in radians}
 ]
 
 arcsine: native [
 	{Returns the trigonometric arcsine (in degrees by default).}
-	value [number!]
+	sine [number!]
 	/radians {Returns result in radians}
 ]
 
 arctangent: native [
 	{Returns the trigonometric arctangent (in degrees by default).}
-	value [number!]
+	tangent [number!]
 	/radians {Returns result in radians}
 ]
 

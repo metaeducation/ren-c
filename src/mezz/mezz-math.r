@@ -11,6 +11,53 @@ REBOL [
 	}
 ]
 
+; Shorthands for radian forms of trig functions, first introduced by Red.
+; http://www.red-lang.org/2014/08/043-floating-point-support.html
+
+cos: func [
+	{Returns the trigonometric cosine.}
+	angle [number!] {Angle in radians (use COSINE for degrees).}
+][
+	cosine/radians angle
+]
+
+sin: func [
+	{Returns the trigonometric sine.}
+	angle [number!] {Angle in radians (use SINE for degrees).}
+][
+	sine/radians angle
+]
+
+; !!! Note: Name is contentious with the color "tan" (in CSS and elsewhere)
+tan: func [
+	{Returns the trigonometric tangent.}
+	angle [number!] {Angle in radians (use TANGENT for degrees).}
+][
+	tangent/radians angle
+]
+
+acos: func [
+	{Calculate trigonometric arccosine (radians, use ARCCOSINE for degrees).}
+	cosine [number!]
+][
+	arccosine/radians cosine
+]
+
+asin: func [
+	{Calculate trigonometric arcsine (radians, use ARCSINE for degrees).}
+	sine [number!]
+][
+	arcsine/radians sine
+]
+
+atan: func [
+	{Calculate trigonometric arctangent (radians, use ARCTANGENT for degrees).}
+	tangent [number!]
+][
+	arctangent/radians tangent
+]
+
+
 mod: func [
 	"Compute a nonnegative remainder of A divided by B."
 	; In fact the function tries to find the remainder,

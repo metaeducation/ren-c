@@ -45,7 +45,10 @@ violet:		72.0.90
 brick:		178.34.34
 pink: 		255.164.200
 gold:		255.205.40
-tan:		222.184.135
+
+; `tan` is contentious with the radian-oriented shorthand for tangent
+;tan:		222.184.135
+
 beige:		255.228.196
 ivory:		255.255.240
 linen:		250.240.230
