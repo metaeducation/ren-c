@@ -207,10 +207,10 @@ if build-FFI? [
 
 	ffi-tools: compose/deep [
 		make-libffi [
-			"${FFI_DIR}/include/fficonfig.h"
-			"${FFI_DIR}/include/ffi.h"
-			"${FFI_DIR}/include/ffitarget.h"
-		] [(config/id) (compiler-name)]
+			"${CMAKE_CURRENT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/libffi/include/fficonfig.h"
+			"${CMAKE_CURRENT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/libffi/include/ffi.h"
+			"${CMAKE_CURRENT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/libffi/include/ffitarget.h"
+		] ["${CMAKE_CURRENT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/libffi" (config/id) (compiler-name)]
 	]
 
 	generated-ffi-files: process-tools ffi-tools
@@ -237,6 +237,7 @@ if build-FFI? [
 		emit [ "set_target_properties(ffi PROPERTIES COMPILE_FLAGS " macro compiler-obj/FFI/CFLAGS compiler-flags ")" newline]
 	]
 	emit [ "target_include_directories(ffi PUBLIC" newline]
+	emit [ tab "${CMAKE_CURRENT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/libffi/include" newline]
 	foreach i compiler-obj/FFI/INCLUDES [
 		emit [ tab "${FFI_DIR}/" i newline]
 	]
@@ -330,7 +331,7 @@ unless empty? macro compiler-obj/OPTFLAGS compiler-flags [
 ]
 
 either build-FFI? [
-	emit ["target_include_directories(r3_core PUBLIC ${TOP_SRC_DIR}/include ${TOP_SRC_DIR}/codecs ${TOP_SRC_DIR}/libffi/include)" newline]
+	emit ["target_include_directories(r3_core PUBLIC ${TOP_SRC_DIR}/include ${TOP_SRC_DIR}/codecs ${CMAKE_CURRENT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/libffi/include)" newline]
 ][
 	emit ["target_include_directories(r3_core PUBLIC ${TOP_SRC_DIR}/include ${TOP_SRC_DIR}/codecs)" newline]
 ]

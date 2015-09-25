@@ -26,13 +26,20 @@ do %systems.r
 
 opts: system/options/args
 
-; format: make-cmake.r os-id compiler
+; format: make-cmake.r outdir os-id compiler
+out-dir: to file! take opts
 os-id: opts
 if block? opts [
 	os-id: first opts
 ]
+;print ["os-id:" mold os-id]
+;print ["opts:" mold opts]
 
-config: config-system/guess system/options/args
+unless #"/" = first out-dir [
+	out-dir: join system/options/path out-dir
+]
+
+config: config-system/guess os-id
 
 print ["Option set for building:" config/id config/os-name]
 
@@ -79,7 +86,11 @@ emit [
 }
 ]
 
-write libffi/include/fficonfig.h output
+include-dir: join out-dir %/include/
+unless exists? include-dir [
+	mkdir/deep include-dir
+]
+write join include-dir %fficonfig.h output
 
 lines: copy []
 foreach line read/lines libffi/include/ffi.h.in [
@@ -94,6 +105,6 @@ foreach line read/lines libffi/include/ffi.h.in [
 	append lines line
 ]
 
-write/lines libffi/include/ffi.h lines
+write/lines join include-dir %ffi.h lines
 
-write libffi/include/ffitarget.h read libffi/src/(compiler-obj/FFI/TARGET-DIRECTORY)/ffitarget.h
+write join include-dir %ffitarget.h read libffi/src/(compiler-obj/FFI/TARGET-DIRECTORY)/ffitarget.h
