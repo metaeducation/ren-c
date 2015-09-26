@@ -32,108 +32,323 @@ REBOL [
 systems: [
 	;-------------------------------------------------------------------------
 	[id			os-name			os-base
-			build-flags]
+			compilers]
 	;-------------------------------------------------------------------------
 	0.1.03		amiga			posix
-			[BEN LLC HID NPS +SC CMT COP -SP -LM]
+			[
+				GCC [
+						PREDEFINES: [BEN LLC]
+						CFLAGS: [HID NPS]
+						OPTFLAGS: []
+						LIBS: [-LM]
+						LDFLAGS: []
+						OTHFLAGS: [+SC CMT COP -SP]
+				]
+			]
+
 	;-------------------------------------------------------------------------
 	0.2.04		osx-ppc			osx
-			[BEN LLC +OS NCM -LM NSO]
+			[
+				GCC [
+						PREDEFINES: [BEN LLC]
+						CFLAGS: [NCM]
+						OPTFLAGS: [+OS]
+						LIBS: [-LM]
+						LDFLAGS: [NSO]
+						OTHFLAGS: []
+				]
+			]
 
 	0.2.05		osx-x86			osx
-			[ARC LEN LLC +O1 NPS PIC NCM HID STX -LM]
+			[
+				GCC [
+						PREDEFINES: [LEN LLC]
+						CFLAGS: [ARC NPS PIC NCM HID]
+						OPTFLAGS: [+O1]
+						LIBS: [-LM]
+						LDFLAGS: []
+						OTHFLAGS: [STX]
+				]
+			]
 
 	0.2.40		osx-x64			osx
-			[LP64 LEN LLC +O1 NPS PIC NCM HID STX -LM]
+			[
+				GCC [
+						PREDEFINES: [LP64 LEN LLC]
+						CFLAGS: [NPS PIC NCM HID]
+						OPTFLAGS: [+O1]
+						LIBS: [-LM]
+						LDFLAGS: []
+						OTHFLAGS: [STX]
+				]
+			]
+
 	;-------------------------------------------------------------------------
 	0.3.01		windows-x86		windows
-			[LEN LL? +O2 UNI W32 CON S4M EXE DIR -LM]
+			[
+				GCC [
+					PREDEFINES: [LEN LL? UNI]
+					CFLAGS: []
+					OPTFLAGS: []
+					LIBS: [W32 CDLG]
+					LDFLAGS: [S4M CON]
+					OTHFLAGS: [EXE DIR]
+				]
+				MSVC [
+					PREDEFINES: [LEN LL? UNI]
+					CFLAGS: []
+					OPTFLAGS: [*O2]
+					LIBS: [W32 CDLG]
+					LDFLAGS: [S4M_MSVC CON_MSVC]
+					OTHFLAGS: [EXE DIR]
+				]
+			]
 
+	0.3.02		windows-alpha		windows
+			[
+				GCC [
+					PREDEFINES: [LEN LLC]
+					CFLAGS: []
+					OPTFLAGS: [+O2]
+					LIBS: [LDL ST1 -LM]
+					LDFLAGS: []
+					OTHFLAGS: []
+				]
+			]
 	0.3.40		windows-x64		windows
-			[LLP64 LEN LL? +O2 UNI W32 CON S4M EXE DIR -LM]
+			[
+				GCC [
+					PREDEFINES: [LLP64 LEN LL? UNI]
+					CFLAGS: []
+					OPTFLAGS: [+O2]
+					LIBS: [W32 CON -LM CDLG]
+					LDFLAGS: [S4M]
+					OTHFLAGS: [EXE DIR]
+				]
+				MSVC [
+					PREDEFINES: [LLP64 LEN LL? UNI]
+					CFLAGS: []
+					OPTFLAGS: [*O2]
+					LIBS: [W32 CDLG]
+					LDFLAGS: [S4M_MSVC CON_MSVC]
+					OTHFLAGS: [EXE DIR]
+				]
+			]
 	;-------------------------------------------------------------------------
 	0.4.02		linux-x86		linux
-			[LEN LLC +O2 LDL ST1 -LM LC23]
+			[
+				GCC [
+					PREDEFINES: [LEN LLC]
+					CFLAGS: []
+					OPTFLAGS: [+O2]
+					LIBS: [LDL ST1 -LM LC23]
+					LDFLAGS: []
+					OTHFLAGS: []
+				]
+			]
 
 	0.4.03		linux-x86		linux
-			[LEN LLC +O2 HID LDL ST1 -LM LC25]
+			[
+				GCC [
+					PREDEFINES: [LEN LLC]
+					CFLAGS: []
+					OPTFLAGS: [+O2]
+					LIBS: [LDL ST1 -LM LC25]
+					LDFLAGS: []
+					OTHFLAGS: []
+				]
+			]
 
 	0.4.04		linux-x86		linux
-			[M32 LEN LLC +O2 HID LDL ST1 -LM LC211]
+			[
+				GCC [
+					PREDEFINES: [LEN LLC]
+					CFLAGS: [M32 HID]
+					OPTFLAGS: [+O2]
+					LIBS: [LDL ST1 -LM LC211]
+					LDFLAGS: []
+					OTHFLAGS: []
+				]
+			]
 
 	0.4.10		linux-ppc		linux
-			[BEN LLC +O1 HID LDL ST1 -LM]
+			[
+				GCC [
+					PREDEFINES: [BEN LLC]
+					CFLAGS: []
+					OPTFLAGS: [+O1]
+					LIBS: [LDL ST1 -LM]
+					LDFLAGS: []
+					OTHFLAGS: []
+				]
+			]
 
 	0.4.11		linux-ppc64		linux
 			[LP64 BEN LLC +O1 HID LDL ST1 -LM]
 
 	0.4.20		linux-arm		linux
-			[LEN LLC +O2 HID LDL ST1 -LM]
+			[
+				GCC [
+					PREDEFINES: [LEN LLC]
+					CFLAGS: [HID]
+					OPTFLAGS: [+O2]
+					LIBS: [LDL ST1 -LM]
+					LDFLAGS: []
+					OTHFLAGS: []
+				]
+			]
 
 	0.4.21		linux-arm		linux
-			[LEN LLC +O2 HID LDL ST1 -LM PIE LCB]
+			[
+				GCC [
+					PREDEFINES: [LEN LLC]
+					CFLAGS: [HID PIE]
+					OPTFLAGS: [+O2]
+					LIBS: [LDL ST1 -LM LCB]
+					LDFLAGS: []
+					OTHFLAGS: []
+				]
+			]
 
 	0.4.30		linux-mips		linux
-			[LEN LLC +O2 HID LDL ST1 -LM]
+			[
+				GCC [
+					PREDEFINES: [LEN LLC]
+					CFLAGS: [HID]
+					OPTFLAGS: [+O2]
+					LIBS: [LDL ST1 -LM]
+					LDFLAGS: []
+					OTHFLAGS: []
+				]
+			]
 
 	0.4.31		linux-mips32be	linux
 			[BEN LLC +O2 HID LDL ST1 -LM]
 
 	0.4.40		linux-x64		linux
-			[LP64 LEN LLC +O2 HID LDL ST1 -LM]
+			[
+				GCC [
+					PREDEFINES: [LP64 LEN LLC]
+					CFLAGS: [HID]
+					OPTFLAGS: [+O2]
+					LIBS: [LDL ST1 -LM]
+					LDFLAGS: []
+					OTHFLAGS: []
+				]
+			]
 
-	0.4.60		linux-axp		linux
-			[LP64 LEN LLC +O2 HID LDL ST1 -LM]
-
-	0.4.61		linux-ia64		linux
-			[LP64 LEN LLC +O2 HID LDL ST1 -LM]
 	;-------------------------------------------------------------------------
 	0.5.75		haiku			posix
-			[LEN LLC +O2 ST1 NWK]
+			[
+				GCC [
+					PREDEFINES: [LEN LLC]
+					CFLAGS: []
+					OPTFLAGS: [+O2]
+					LIBS: [ST1 NWK]
+					LDFLAGS: []
+					OTHFLAGS: []
+				]
+			]
+
 	;-------------------------------------------------------------------------
 	0.7.02		freebsd-x86		posix
-			[LEN LLC +O1 ST1 -LM]
+			[
+				GCC [
+					PREDEFINES: [LEN LLC]
+					CFLAGS: []
+					OPTFLAGS: [+O1]
+					LIBS: [C++ ST1 -LM]
+					LDFLAGS: []
+					OTHFLAGS: []
+				]
+			]
 
 	0.7.40		freebsd-x64		posix
-			[LP64 LEN LLC +O1 ST1 -LM]
+			[
+				GCC [
+					PREDEFINES: [LP64 LEN LLC]
+					CFLAGS: []
+					OPTFLAGS: [+O1]
+					LIBS: [ST1 -LM]
+					LDFLAGS: []
+					OTHFLAGS: []
+				]
+			]
+
 	;-------------------------------------------------------------------------
 	0.9.04		openbsd			posix
-			[LEN LLC +O1 ST1 -LM]
+			[
+				GCC [
+					PREDEFINES: [LEN LLC]
+					CFLAGS: []
+					OPTFLAGS: [+O1]
+					LIBS: [C++ ST1 -LM]
+					LDFLAGS: []
+					OTHFLAGS: []
+				]
+			]
 
-	0.9.40		openbsd			posix
-			[LP64 LEN LLC +O1 ST1 -LM]
 	;-------------------------------------------------------------------------
 	0.13.01		android-arm		android
-			[LEN LLC HID F64 LDL LLOG -LM CST]
+			[
+				GCC [
+					PREDEFINES: [LEN LLC]
+					CFLAGS: [HID F64]
+					OPTFLAGS: []
+					LIBS: [LDL LLOG -LM CST]
+					LDFLAGS: []
+					OTHFLAGS: []
+				]
+			]
+
 	;-------------------------------------------------------------------------
 	0.14.01		syllable-dtp	posix
-			[LEN LLC +O2 HID LDL ST1 -LM LC25]
+			[
+				GCC [
+					PREDEFINES: [LEN LLC]
+					CFLAGS: [HID]
+					OPTFLAGS: [+O2]
+					LIBS: [LDL ST1 -LM LC25]
+					LDFLAGS: []
+					OTHFLAGS: []
+				]
+			]
 
 	0.14.02		syllable-svr	linux
-			[M32 LEN LLC +O2 HID LDL ST1 -LM LC211]
+			[
+				GCC [
+					PREDEFINES: [LEN LLC]
+					CFLAGS: [M32 HID]
+					OPTFLAGS: [+O2]
+					LIBS: [LDL ST1 -LM LC211]
+					LDFLAGS: []
+					OTHFLAGS: []
+				]
+			]
 ]
 
 compiler-flags: context [
 	M32: "-m32"						; use 32-bit memory model
 	ARC: "-arch i386"				; x86 32 bit architecture (OSX)
 
-	LP64: "-D__LP64__"				; 64-bit, and 'void *' is sizeof(long)
-	LLP64: "-D__LLP64__"			; 64-bit, and 'void *' is sizeof(long long)
+	LP64: "__LP64__"				; 64-bit, and 'void *' is sizeof(long)
+	LLP64: "__LLP64__"				; 64-bit, and 'void *' is sizeof(long long)
 
-	BEN: "-DENDIAN_BIG"				; big endian byte order
-	LEN: "-DENDIAN_LITTLE"			; little endian byte order
+	BEN: "ENDIAN_BIG"				; big endian byte order
+	LEN: "ENDIAN_LITTLE"			; little endian byte order
 
-	LLC: "-DHAS_LL_CONSTS"			; supports e.g. 0xffffffffffffffffLL
+	LLC: "HAS_LL_CONSTS"			; supports e.g. 0xffffffffffffffffLL
 	LL?: ""							; might have LL consts, reb-config.h checks
 
 	+OS: "-Os"						; size optimize
 	+O1: "-O1"						; optimize for minimal size
 	+O2: "-O2"						; optimize for maximum speed
+	*O2: "/O2"						; optimize for maximum speed
 
-	UNI: "-DUNICODE"				; win32 wants it
-	CST: "-DCUSTOM_STARTUP"			; include custom startup script at boot
+	UNI: "UNICODE"					; win32 wants it
+	CST: "CUSTOM_STARTUP"			; include custom startup script at boot
 	HID: "-fvisibility=hidden"		; all syms are hidden
-	F64: "-D_FILE_OFFSET_BITS=64"	; allow larger files
+	F64: "_FILE_OFFSET_BITS=64"		; allow larger files
 	NPS: "-Wno-pointer-sign"		; OSX fix
 	PIC: "-fPIC"					; position independent (used for libs)
 	PIE: "-fPIE"					; position independent (executables)
@@ -145,14 +360,18 @@ linker-flags: context [
 	ARC: "-arch i386"				; x86 32 bit architecture (OSX)
 
 	NSO: ""							; no shared libs
-	LDL: "-ldl"						; link with dynamic lib lib
-	LLOG: "-llog"					; on Android, link with liblog.so
+	C++: "stdc++"					; link with stdc++
+	LDL: "dl"						; link with dynamic lib lib
+	LLOG: "log"					; on Android, link with liblog.so
 
-	W32: "-lwsock32 -lcomdlg32"
+	W32: "wsock32"
+	CDLG: "comdlg32"
 	CON: "-mconsole"				; build as Windows Console binary
+	CON_MSVC: "/SUBSYSTEM:CONSOLE"
 	S4M: "-Wl,--stack=4194300"
-	-LM: "-lm"						; Math library (Haiku has it in libroot)
-	NWK: "-lnetwork"				; Needed by HaikuOS
+	S4M_MSVC: "/STACK:4194300"
+	-LM: "m"						; Math library (Haiku has it in libroot)
+	NWK: "network"				; Needed by HaikuOS
 
 	LC23: ""						; libc 2.3
 	LC25: ""						; libc 2.5
@@ -173,6 +392,7 @@ other-flags: context [
 ]
 
 ; A little bit of sanity-checking on the systems table
+comment [
 use [rec unknown-flags] [
 	; !!! See notes about NO-RETURN in the loop wrapper definition.
 	for-each-record-NO-RETURN rec systems [
@@ -191,6 +411,7 @@ use [rec unknown-flags] [
 		]
 		assert [empty? unknown-flags]
 	]
+]
 ]
 
 config-system: func [
