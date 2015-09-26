@@ -84,6 +84,55 @@ systems: [
 						LIBS: [-LM]
 						LDFLAGS: []
 						OTHFLAGS: [STX]
+						FFI: [
+							INCLUDES: [%src %include]
+							PREDEFINES: [
+								EH_FRAME_FLAGS: "aw"
+								FFI_MMAP_EXEC_WRIT: 1
+								HAVE_ALLOCA: 1
+								HAVE_ALLOCA_H: 1
+								HAVE_AS_CFI_PSEUDO_OP: 1
+								HAVE_DLFCN_H: 1
+								HAVE_INTTYPES_H: 1
+								HAVE_LONG_DOUBLE: 1
+								HAVE_MEMCPY: 1
+								HAVE_MEMORY_H: 1
+								HAVE_MMAP: 1
+								HAVE_MMAP_ANON: 1
+								HAVE_MMAP_FILE: 1
+								HAVE_STDINT_H: 1
+								HAVE_STDLIB_H: 1
+								HAVE_STRINGS_H: 1
+								HAVE_STRING_H: 1
+								HAVE_SYS_MMAN_H: 1
+								HAVE_SYS_STAT_H: 1
+								HAVE_SYS_TYPES_H: 1
+								HAVE_UNISTD_H: 1
+								PACKAGE: "libffi"
+								PACKAGE_NAME: "libffi"
+								PACKAGE_STRING: "libffi"
+								PACKAGE_VERSION: "3.1.1"
+								SIZEOF_DOUBLE: 8
+								SIZEOF_LONG_DOUBLE: 16
+								SIZEOF_SIZE_T: 8
+								STDC_HEADERS: 1
+								SYMBOL_UNDERSCORE: 1
+								VERSION: "3.1.1"
+								TARGET: "X86_DARWIN"
+							]
+							CFLAGS: [
+							]
+							OPTFLAGS: [+O3]
+							LIBS: []
+							LDFLAGS: []
+							TARGET-DIRECTORY: "x86"
+							SOURCE: [
+								%src/x86/ffi.c
+								%src/x86/ffi64.c
+								%src/x86/darwin64.S
+								%src/x86/darwin.S
+							]
+						]
 				]
 			]
 
