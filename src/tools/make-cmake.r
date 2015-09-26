@@ -62,7 +62,7 @@ config: config-system/guess system/options/args
 
 print ["Option set for building:" config/id config/os-name]
 
-either all [block? opts 1 < length? opts][
+either all [block? opts 1 < length opts][
 	compiler-name: to-word second opts
 ][
 	compiler-name: first fourth find systems config/id
