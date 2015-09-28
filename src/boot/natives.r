@@ -331,15 +331,26 @@ unless: native [
 	/only "Return block arg instead of evaluating it."
 ]
 
-until: native [
-	{Evaluates a block until it is TRUE. }
+loop-until: native [
+	{Evaluates a block until the result is TRUE?, and returns that result.}
 	block [block!]
 ]
 
+loop-while: native [
+	{Evaluates a block as long as it's not FALSE?. Returns last TRUE? result.}
+	block [block!]
+]
+
+until: native [
+	{Until a condition block evaluates to TRUE?, evaluates a body block.}
+	condition [block!]
+	body [block!]
+]
+
 while: native [
-	{While a condition block is TRUE, evaluates another block.}
-	cond-block [block!]
-	body-block [block!]
+	{While a condition block evaluates to TRUE?, evaluates a body block.}
+	condition [block!]
+	body [block!]
 ]
 
 ;-- Data Natives - nat_data.c

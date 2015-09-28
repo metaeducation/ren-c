@@ -813,24 +813,151 @@ skip_hidden: ;
 
 /***********************************************************************
 **
-*/	REBNATIVE(until)
+*/	REBNATIVE(loop_until)
 /*
 ***********************************************************************/
 {
-	REBSER *b1 = VAL_SERIES(D_ARG(1));
-	REBCNT i1  = VAL_INDEX(D_ARG(1));
+	REBSER *series = VAL_SERIES(D_ARG(1));
+	REBCNT index = VAL_INDEX(D_ARG(1));
 
-	do {
-utop:
-		if (Do_Block_Throws(D_OUT, b1, i1)) {
+	while (TRUE) {
+		if (Do_Block_Throws(D_OUT, series, index)) {
 			if (Loop_Throw_Should_Return(D_OUT)) return R_OUT;
-			goto utop;
+
+			// we get here if a CONTINUE happened
+			continue;
 		}
 
 		if (IS_UNSET(D_OUT)) raise Error_0(RE_NO_RETURN);
 
-	} while (IS_CONDITIONAL_FALSE(D_OUT)); // Break, return errors fall out.
-	return R_OUT;
+		if (IS_CONDITIONAL_TRUE(D_OUT)) return R_OUT;
+	}
+
+	DEAD_END;
+}
+
+
+/***********************************************************************
+**
+*/	REBNATIVE(loop_while)
+/*
+***********************************************************************/
+{
+	REBSER *series = VAL_SERIES(D_ARG(1));
+	REBCNT index = VAL_INDEX(D_ARG(1));
+
+	// Needs an extra cell of memory when compared to LOOP-UNTIL, which
+	// is evaluated into so that we don't overwrite a previous
+	// evaluation with the FALSE? that breaks the loop.  This slightly
+	// asymmetric behavior means LOOP-WHILE's return result can be
+	// more useful (the last TRUE? value before the break) as opposed
+	// to the always-NONE-or-FALSE which it would be otherwise.
+	REBVAL temp;
+
+	// If the body evaluates false on the first run, we will return NONE
+	SET_NONE(D_OUT);
+
+	while (TRUE) {
+		if (Do_Block_Throws(&temp, series, index)) {
+			if (Loop_Throw_Should_Return(&temp)) {
+				*D_OUT = temp;
+				return R_OUT;
+			}
+
+			// we get here if a CONTINUE happened
+			continue;
+		}
+
+		// Note: `temp` is GC-unsafe
+
+		if (IS_UNSET(&temp)) raise Error_0(RE_NO_RETURN);
+
+		if (IS_CONDITIONAL_FALSE(&temp)) return R_OUT;
+
+		// Since `temp` was TRUE?, it's a candidate for being a return value.
+		// (Moving it to the output slot in the call frame protects it from
+		// GC during the next Do_Block.)
+		*D_OUT = temp;
+	}
+
+	DEAD_END;
+}
+
+
+//
+// Shared routine for implementing arity-2 WHILE and UNTIL constructs
+// Requires an extra value of storage for the condition result, in order
+// to be able to not overwrite the last value the body evaluated to
+// (which is used as the return result, vs. the condition result).
+//
+static REB_R While_Or_Until_Core(
+	REBVAL *out, // must be GC safe
+	REBVAL *cond, // must be GC safe
+	REBVAL *body, // must be GC safe
+	REBOOL until
+) {
+	REBSER *cond_series = VAL_SERIES(cond);
+	REBCNT cond_index = VAL_INDEX(cond);
+	REBSER *body_series = VAL_SERIES(body);
+	REBCNT body_index = VAL_INDEX(body);
+
+	// We need to keep the condition and body safe from GC, so we can't
+	// use a D_ARG slot for evaluating the condition (can't overwrite
+	// D_OUT because that's the last loop's value we might return)
+	REBVAL cond_out;
+
+	// If the loop body never runs (and condition doesn't error or throw),
+	// we want to return a NONE!
+	SET_NONE(out);
+
+	while (TRUE) {
+		if (Do_Block_Throws(&cond_out, cond_series, cond_index)) {
+			// WHILE & UNTIL should only look for breaks and continues in the
+			// body, not in the condition.  So `while [break] []` is a
+			// request to break the enclosing loop (or error if there is
+			// nothing to catch that break).  Hence we bubble up all throws.
+			*out = cond_out;
+			return R_OUT;
+		}
+
+		// Note: `cond_out` is GC unsafe
+
+		if (
+			until
+				? IS_CONDITIONAL_TRUE(&cond_out)
+				: IS_CONDITIONAL_FALSE(&cond_out)
+		) {
+			// When the condition evaluates to "falsey" (NONE, FALSE),
+			// WHILE returns whatever the last value was that the body
+			// evaluated to (or none if no body evaluations yet).  UNTIL
+			// does the same when it evaluates to a "truthy" thing.
+			return R_OUT;
+		}
+
+		if (IS_UNSET(&cond_out))
+			raise Error_0(RE_NO_RETURN);
+
+		if (Do_Block_Throws(out, body_series, body_index)) {
+			// A thrown value during a loop may indicate CONTINUE, BREAK,
+			// BREAK/WITH...or it may just be a THROW of something not loop
+			// related at all.  Loop_Throw_Should_Return processes those.
+			// It may modify `out` and signal a return condition, or just
+			// instruct us to return and pass on the throw
+			if (Loop_Throw_Should_Return(out)) return R_OUT;
+
+			// we get here if a CONTINUE happened
+		}
+	}
+}
+
+
+/***********************************************************************
+**
+*/	REBNATIVE(until)
+/*
+***********************************************************************/
+{
+	return While_Or_Until_Core(D_OUT, D_ARG(1), D_ARG(2), TRUE);
 }
 
 
@@ -840,43 +967,5 @@ utop:
 /*
 ***********************************************************************/
 {
-	REBSER *cond_series = VAL_SERIES(D_ARG(1));
-	REBCNT cond_index = VAL_INDEX(D_ARG(1));
-	REBSER *body_series = VAL_SERIES(D_ARG(2));
-	REBCNT body_index = VAL_INDEX(D_ARG(2));
-
-	// We need to keep the condition and body safe from GC, so we can't
-	// use a D_ARG slot for evaluating the condition (can't overwrite
-	// D_OUT because that's the last loop's value we might return)
-	REBVAL cond_out;
-
-	// If the loop body never runs (and condition doesn't error or throw),
-	// we want to return a NONE!
-	SET_NONE(D_OUT);
-
-	do {
-		if (Do_Block_Throws(&cond_out, cond_series, cond_index)) {
-			// A while loop should only look for breaks and continues in its
-			// body, not in its condition.  So `while [break] []` is a
-			// request to break the enclosing loop (or error if there is
-			// nothing to catch that break).  Hence we bubble up the throw.
-			*D_OUT = cond_out;
-			return R_OUT;
-		}
-
-		if (IS_CONDITIONAL_FALSE(&cond_out)) {
-			// When the condition evaluates to a LOGIC! false or a NONE!,
-			// WHILE returns whatever the last value was that the body
-			// evaluated to (or none if no body evaluations yet).
-			return R_OUT;
-		}
-
-		if (IS_UNSET(&cond_out))
-			raise Error_0(RE_NO_RETURN);
-
-		if (Do_Block_Throws(D_OUT, body_series, body_index)) {
-			// !!! Process_Loop_Throw may modify its argument
-			if (Loop_Throw_Should_Return(D_OUT)) return R_OUT;
-		}
-	} while (TRUE);
+	return While_Or_Until_Core(D_OUT, D_ARG(1), D_ARG(2), FALSE);
 }
