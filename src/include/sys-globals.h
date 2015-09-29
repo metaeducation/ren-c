@@ -60,7 +60,6 @@ PVAR REB_OPTS *Reb_Opts;
 
 #ifndef NDEBUG
 	PVAR REBOOL PG_Always_Malloc;	// For memory-related troubleshooting
-	PVAR REBOOL PG_Legacy;			// Need to check for old operation modes
 #endif
 
 // A REB_END value, which comes in handy if you ever need the address of
@@ -89,23 +88,15 @@ TVAR REBINT	GC_Ballast;		// Bytes allocated to force automatic GC
 TVAR REBOOL	GC_Active;		// TRUE when recycle is enabled (set by RECYCLE func)
 TVAR REBSER	*GC_Protect;	// A stack of protected series (removed by pop)
 PVAR REBSER	*GC_Mark_Stack; // Series pending to mark their reachables as live
-TVAR REBSER	*GC_Series;		// An array of protected series (removed by address)
 TVAR REBFLG GC_Stay_Dirty;  // Do not free memory, fill it with 0xBB
 TVAR REBSER **Prior_Expand;	// Track prior series expansions (acceleration)
 
-#if !defined(NDEBUG)
-	// In the debug build, the REBSERs can be linked as a doubly linked
-	// list so that we can keep track of the series that are manually
-	// memory managed.  That is to say: all the series that have been
-	// allocated with Make_Series() but have not been handed to the
-	// garbage collector via MANAGE_SERIES().
-	//
-	// These manually-managed series must either be freed with Free_Series()
-	// or handed over to the GC at certain synchronized points, else they
-	// would represent a memory leak in the release build.
+TVAR REBMRK GC_Mark_Hook;	// Mark hook (set by Ren/C host to mark values)
 
-	TVAR REBSER *GC_Manuals;	// Manually memory managed (not by GC)
-#endif
+// These manually-managed series must either be freed with Free_Series()
+// or handed over to the GC at certain synchronized points, else they
+// would represent a memory leak in the release build.
+TVAR REBSER *GC_Manuals;	// Manually memory managed (not by GC)
 
 TVAR REBUPT Stack_Limit;	// Limit address for CPU stack.
 
@@ -116,6 +107,10 @@ TVAR struct Reb_Call *CS_Top;	// Last call frame pushed, may be "pending"
 TVAR struct Reb_Call *CS_Root;	// Root call frame (head of first chunk)
 
 TVAR REBOL_STATE *Saved_State; // Saved state for Catch (CPU state, etc.)
+
+TVAR enum Reb_Fail_Prep TG_Fail_Prep;
+TVAR const char *TG_Fail_C_File;
+TVAR int TG_Fail_C_Line;
 
 //-- Evaluation variables:
 TVAR REBI64	Eval_Cycles;	// Total evaluation counter (upward)
@@ -135,3 +130,5 @@ TVAR REBI64 Eval_Functions;
 
 //-- Other per thread globals:
 TVAR REBSER *Bind_Table;	// Used to quickly bind words to contexts
+
+TVAR REBVAL Callback_Error; //Error produced by callback!, note it's not callback://

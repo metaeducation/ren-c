@@ -50,8 +50,11 @@ dump-obj: function [
 	out: copy []
 	wild: all [string? pat  find pat "*"]
 
-	foreach [word val] obj [
-		type: type-of/word :val
+	for-each [word val] obj [
+		; !!! to-word necessary as long as OPTIONS_DATATYPE_WORD_STRICT exists
+		; (and for this use maybe it would be needed anyway, review to check)
+		type: to-word type-of :val
+
 		str: either any [any-function? :type object? :type] [
 			reform [word mold spec-of :val words-of :val]
 		][
@@ -180,7 +183,7 @@ dump-obj: function [
 	][
 		item: form :word
 		either any-function? get :word [
-			foreach [a b] [ ; need a better method !
+			for-each [a b] [ ; need a better method !
 				"!" "-ex"
 				"?" "-q"
 				"*" "-mul"
@@ -282,7 +285,7 @@ dump-obj: function [
 	print-args: func [label list /extra /local str] [
 		if empty? list [exit]
 		print label
-		foreach arg list [
+		for-each arg list [
 			str: ajoin [tab arg/1]
 			if all [extra word? arg/1] [insert str tab]
 			if arg/2 [append append str " -- " arg/2]
@@ -389,7 +392,7 @@ what: func [
 
 	ctx: any [select system/modules :name lib]
 
-	foreach [word val] ctx [
+	for-each [word val] ctx [
 		if any-function? :val [
 			arg: either args [
 				arg: words-of :val
@@ -404,7 +407,7 @@ what: func [
 	]
 
 	vals: make string! size
-	foreach [word arg] sort/skip list 2 [
+	for-each [word arg] sort/skip list 2 [
 		append/dup clear vals #" " size
 		print [head change vals word any [arg ""]]
 	]
@@ -424,11 +427,7 @@ say-browser: does [
 upgrade: function [
 	"Check for newer versions (update REBOL)."
 ][
-	print "Fetching upgrade check ..."
-	if error? err: trap [do http://www.atronixengineering.com/r3/upgrade.r none][
-		either err/id = 'protocol [print "Cannot upgrade from web."][do err]
-	]
-	exit
+	fail "Automatic upgrade checking is currently not supported."
 ]
 
 why?: func [

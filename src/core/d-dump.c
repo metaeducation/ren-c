@@ -211,8 +211,8 @@
 
 	if (call) {
 		if (ANY_FUNC(DSF_FUNC(call))) {
-			args = BLK_HEAD(VAL_FUNC_WORDS(DSF_FUNC(call)));
-			m = SERIES_TAIL(VAL_FUNC_WORDS(DSF_FUNC(call)));
+			args = BLK_HEAD(VAL_FUNC_PARAMLIST(DSF_FUNC(call)));
+			m = SERIES_TAIL(VAL_FUNC_PARAMLIST(DSF_FUNC(call)));
 			for (n = 1; n < m; n++)
 				Debug_Fmt("\t%s: %72r", Get_Word_Name(args+n), DSF_ARG(call, n));
 		}

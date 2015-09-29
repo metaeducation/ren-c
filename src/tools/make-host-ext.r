@@ -33,7 +33,7 @@ collect-files: func [
 ][
 	source: make block! 1000
 
-	foreach file files [
+	for-each file files [
 		data: load/all file
 		remove-each [a b] data [issue? a] ; commented sections
 		unless block? header: find data 'rebol [
@@ -103,14 +103,14 @@ emit-file: func [
 		insert exports exported-words
 	]
 
-	foreach word words [emit [tab "CMD_" prefix #"_" replace/all form-name word "'" "_LIT"  ",^/"]]
+	for-each word words [emit [tab "CMD_" prefix #"_" replace/all form-name word "'" "_LIT"  ",^/"]]
 	emit [tab "CMD_MAX" newline]
 	emit "};^/^/"
 
 	if src: select source to-set-word 'words [
 		emit ["enum " name "_words {^/"]
 		emit [tab "W_" prefix "_0,^/"]
-		foreach word src [emit [tab "W_" prefix #"_" form-name word ",^/"]]
+		for-each word src [emit [tab "W_" prefix #"_" form-name word ",^/"]]
 		emit [tab "W_MAX" newline]
 		emit "};^/^/"
 	]

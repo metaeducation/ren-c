@@ -52,7 +52,7 @@
 **
 ***********************************************************************/
 {
-	/* 00 EOF */    LEX_DELIMIT|LEX_DELIMIT_END_FILE,
+	/* 00 EOF */    LEX_DELIMIT|LEX_DELIMIT_END,
 	/* 01     */    LEX_DEFAULT,
 	/* 02     */    LEX_DEFAULT,
 	/* 03     */    LEX_DEFAULT,
@@ -88,12 +88,12 @@
 
 	/* 20     */    LEX_DELIMIT|LEX_DELIMIT_SPACE,
 	/* 21 !   */    LEX_WORD,
-	/* 22 "   */    LEX_DELIMIT|LEX_DELIMIT_QUOTE,
+	/* 22 "   */    LEX_DELIMIT|LEX_DELIMIT_DOUBLE_QUOTE,
 	/* 23 #   */    LEX_SPECIAL|LEX_SPECIAL_POUND,
 	/* 24 $   */    LEX_SPECIAL|LEX_SPECIAL_DOLLAR,
 	/* 25 %   */    LEX_SPECIAL|LEX_SPECIAL_PERCENT,
 	/* 26 &   */    LEX_WORD,
-	/* 27 '   */    LEX_SPECIAL|LEX_SPECIAL_TICK,
+	/* 27 '   */    LEX_SPECIAL|LEX_SPECIAL_APOSTROPHE,
 	/* 28 (   */    LEX_DELIMIT|LEX_DELIMIT_LEFT_PAREN,
 	/* 29 )   */    LEX_DELIMIT|LEX_DELIMIT_RIGHT_PAREN,
 	/* 2A *   */    LEX_WORD,
@@ -256,7 +256,8 @@
 	 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90,123,124,125,126,127,
 
 	128,129,130,131,132,133,134,135,136,137,138,139,140,141,142,143,
-	144,145,146,147,148,149,150,151,152,153,138,155,156,141,142,159, /* some up/low cases mod 16 (not mod 32) */
+	// some up/low cases mod 16 (not mod 32)
+	144,145,146,147,148,149,150,151,152,153,138,155,156,141,142,159,
 	160,161,162,163,164,165,166,167,168,169,170,171,172,173,174,175,
 	176,177,178,179,180,181,182,183,184,185,186,187,188,189,190,191,
 
@@ -287,7 +288,8 @@
 	112,113,114,115,116,117,118,119,120,121,122,123,124,125,126,127,
 
 	128,129,130,131,132,133,134,135,136,137,154,139,140,157,158,143,
-	144,145,146,147,148,149,150,151,152,153,154,155,156,157,158,255, /* some up/low cases mod 16 (not mod 32) */
+	// some up/low cases mod 16 (not mod 32)
+	144,145,146,147,148,149,150,151,152,153,154,155,156,157,158,255,
 	160,161,162,163,164,165,166,167,168,169,170,171,172,173,174,175,
 	176,177,178,179,180,181,182,183,184,185,186,187,188,189,190,191,
 
@@ -339,7 +341,7 @@
 	if (c >= 0x80) {
 		n = Decode_UTF8_Char(bp, 0); // zero on error
 		(*bp)++; // skip char
-		return n;
+		return n == 0 ? -1 : n;
 	}
 
 	(*bp)++;
@@ -350,7 +352,7 @@
 	c = **bp;
 	(*bp)++;
 
-    switch (c) {
+	switch (c) {
 
 	case 0:
 		n = 0;
@@ -364,7 +366,7 @@
 		n = c;
 		break;
 
-    case '-':
+	case '-':
 		n = TAB;
 		break;
 
@@ -400,12 +402,12 @@
 		}
 		return -1;
 
-    default:
+	default:
 		n = UP_CASE(c);
 		if (n >= '@' && n <= '_') n -= '@';
 		else if (n == '~') n = 0x7f; // special for DEL
 		else n = c;  // includes: ^{ ^} ^"
-    }
+	}
 
 	return n;
 }
@@ -413,21 +415,18 @@
 
 /***********************************************************************
 **
-*/  static const REBYTE *Scan_Quote(const REBYTE *src, SCAN_STATE *scan_state)
+*/  static const REBYTE *Scan_Quote(REBSER *buf, const REBYTE *src, SCAN_STATE *scan_state)
 /*
 **      Scan a quoted string, handling all the escape characters.
 **
-**		The result will be put into the temporary MOLD_BUF unistring.
+**		The result will be put into the temporary unistring mold buffer.
 **
 ***********************************************************************/
 {
-    REBINT nest = 0;
+	REBINT nest = 0;
 	REBUNI term;
 	REBINT chr;
 	REBCNT lines = 0;
-	REBSER *buf = BUF_MOLD;
-
-	RESET_TAIL(buf);
 
 	term = (*src++ == '{') ? '}' : '"';	// pick termination
 
@@ -435,7 +434,7 @@
 
 		chr = *src;
 
-        switch (chr) {
+		switch (chr) {
 
 		case 0:
 			return 0; // Scan_state shows error location.
@@ -444,7 +443,7 @@
 			chr = Scan_Char(&src);
 			if (chr == -1) return 0;
 			src--;
-            break;
+			break;
 
 		case '{':
 			if (term != '"') nest++;
@@ -457,7 +456,7 @@
 		case CR:
 			if (src[1] == LF) src++;
 			// fall thru
-        case LF:
+		case LF:
 			if (term == '"') return 0;
 			lines++;
 			chr = LF;
@@ -472,12 +471,13 @@
 
 		src++;
 
-		if (SERIES_LEN(buf) >= SERIES_REST(buf)) Extend_Series(buf, 1);
+		if (SERIES_LEN(buf) + 1 >= SERIES_REST(buf)) // include term.
+			Extend_Series(buf, 1);
 
 		*UNI_SKIP(buf, buf->tail) = chr;
 
 		buf->tail ++;
-    }
+	}
 
 	src++; // Skip ending quote or brace.
 
@@ -497,7 +497,7 @@
 **
 **		Returns continuation point or zero for error.
 **
-**		Put result into the MOLD_BUF as uni-chars.
+**		Put result into the temporary mold buffer as uni-chars.
 **
 ***********************************************************************/
 {
@@ -550,7 +550,7 @@
 		*UNI_SKIP(buf, buf->tail) = c; // not affected by Extend_Series
 
 		if (++(buf->tail) >= SERIES_REST(buf)) Extend_Series(buf, 1);
-    }
+	}
 
 	if (*src && *src == term) src++;
 
@@ -580,19 +580,18 @@
 		cp++;
 	}
 	if (*cp) return cp+1;
-    return 0;
+	return 0;
 }
 
 
 /***********************************************************************
 **
-*/	static void Scan_Error(REBCNT errnum, SCAN_STATE *ss, REBCNT tkn, const REBYTE *arg, REBCNT size, REBVAL *relax)
+*/	static void Make_Error_Bad_Scan(REBVAL *out, REBCNT errnum, SCAN_STATE *ss, REBCNT tkn, const REBYTE *arg, REBCNT size)
 /*
 **		Scanner error handler
 **
 ***********************************************************************/
 {
-	REBVAL error;
 	ERROR_OBJ *err_obj;
 	REBSER *frame;
 	const REBYTE *name;
@@ -611,9 +610,12 @@
 		name = cb_cast("boot");
 
 	cp = ss->head_line;
-    while (IS_LEX_SPACE(*cp)) cp++;	// skip indentation
+	while (IS_LEX_SPACE(*cp)) cp++;	// skip indentation
 	bp = cp;
-	while (NOT_NEWLINE(*cp)) cp++, len++;
+	while (!ANY_CR_LF_END(*cp)) {
+		cp++;
+		len++;
+	}
 
 	ser = Make_Binary(len + 16);
 	Append_Unencoded(ser, "(line ");
@@ -627,204 +629,328 @@
 	Val_Init_String(&err_obj->arg1, Copy_Bytes(name, -1));
 	Val_Init_String(&err_obj->arg2, Copy_Bytes(arg, size));
 
-	Val_Init_Error(&error, frame);
+	Val_Init_Error(out, frame);
+}
 
-	if (relax) {
-		*relax = error;
-		return;
+
+/***********************************************************************
+**
+*/  static REBCNT Prescan_Token(SCAN_STATE *scan_state)
+/*
+**		This function updates `scan_state->begin` to skip past leading
+**		whitespace.  If the first character it finds after that is a
+**		LEX_DELIMITER (`"`, `[`, `)`, `{`, etc. or a space/newline)
+**		then it will advance the end position to just past that one
+**		character.  For all other leading characters, it will advance
+**		the end pointer up to the first delimiter class byte (but not
+**		include it.)
+**
+**		If the first character is not a delimiter, then this routine
+**		also gathers a quick "fingerprint" of the special characters
+**		that appeared after it, but before a delimiter was found.
+**		This comes from unioning LEX_SPECIAL_XXX flags of the bytes
+**		that are seen (plus LEX_SPECIAL_WORD if any legal word bytes
+**		were found in that range.)
+**
+**		So if the input were "$#foobar[@" this would come back with
+**		the flags LEX_SPECIAL_POUND and LEX_SPECIAL_WORD set.  Since
+**		it is the first character, the `$` would not be counted to
+**		add LEX_SPECIAL_DOLLAR.  And LEX_SPECIAL_AT would not be set
+**		even though there is an `@` character, because it occurs
+**		after the `[` which is LEX_DELIMITER class.
+**
+**		Note: The reason the first character's lexical class is not
+**		considered is because it's important to know it exactly, so
+**		the caller will use GET_LEX_CLASS(scan_state->begin[0]).
+**		Fingerprinting just helps accelerate further categorization.
+**
+***********************************************************************/
+{
+	const REBYTE *cp = scan_state->begin;
+	REBCNT flags = 0;
+
+	// Skip whitespace (if any) and update the scan_state
+	while (IS_LEX_SPACE(*cp)) cp++;
+	scan_state->begin = cp;
+
+	while (TRUE) {
+		switch (GET_LEX_CLASS(*cp)) {
+
+		case LEX_CLASS_DELIMIT:
+			if (cp == scan_state->begin) {
+				// Include the delimiter if it is the only character we
+				// are returning in the range (leave it out otherwise)
+				scan_state->end = cp + 1;
+
+				// Note: We'd liked to have excluded LEX_DELIMIT_END, but
+				// would require a GET_LEX_VALUE() call to know to do so.
+				// Locate_Token() does a `switch` on that already, so it
+				// can subtract this addition back out itself.
+			}
+			else
+				scan_state->end = cp;
+			return flags;
+
+		case LEX_CLASS_SPECIAL:
+			if (cp != scan_state->begin) {
+				// As long as it isn't the first character, we union a flag
+				// in the result mask to signal this special char's presence
+				SET_LEX_FLAG(flags, GET_LEX_VALUE(*cp));
+			}
+			cp++;
+			break;
+
+		case LEX_CLASS_WORD:
+			// !!! Comment said "flags word char (for nums)"...meaning?
+			SET_LEX_FLAG(flags, LEX_SPECIAL_WORD);
+			while (IS_LEX_WORD_OR_NUMBER(*cp)) cp++;
+			break;
+
+		case LEX_CLASS_NUMBER:
+			while (IS_LEX_NUMBER(*cp)) cp++;
+			break;
+		}
 	}
-
-	Do_Error(&error);
-	DEAD_END_VOID;
 }
 
 
 /***********************************************************************
 **
-*/  static REBCNT Prescan(SCAN_STATE *scan_state)
+*/  static REBINT Locate_Token(SCAN_STATE *scan_state)
 /*
-**		The general idea of this function is to break up a string
-**      into tokens, with sensitivity to common token frequencies.
-**      That is, find DELIMITERS, simple WORDS, and simple NUMBERS
-**      rapidly.  For everything else, find the substring and note
-**      the special characters that it contains.  All scans start
-**      by skipping whitespace and are concluded by a delimiter.
-**      A delimiter is returned only when nothing was found before
-**      it (i.e. not part of other lexical tokens).
+**		Find the beginning and end character pointers for the next
+**		TOKEN_ in the scanner state.  The TOKEN_ type returned will
+**		correspond directly to a Rebol datatype if it isn't an
+**		ANY-ARRAY! (e.g. TOKEN_INTEGER for INTEGER! or TOKEN_STRING
+**		for STRING!).  When a block or paren delimiter was found it
+**		will indicate that (e.g. TOKEN_BLOCK_BEGIN or TOKEN_PAREN_END).
+**		Hence the routine will have to be called multiple times during
+**		the array's content scan.
 **
-**      Returns a word with bit flags indicating special chars
-**      that were found during the scan (other than the first
-**      char, which is not part of the flags).
-**      Both the beginning and ending positions are updated.
+**		!!! This should be modified to explain how paths work, once
+**		I can understand how paths work. :-/  --HF
+**
+**		The scan_state will be updated so that `scan_state->begin`
+**		has been moved past any leading whitespace that was pending in
+**		the buffer.  `scan_state->end` will hold the conclusion at
+**		a delimiter.  TOKEN_END is returned if end of input is reached
+**		(signaled by a null byte).
+**
+**		Newlines that should be internal to a non-ANY-ARRAY! type are
+**		included in the scanned range between the `begin` and `end`.
+**		But newlines that are found outside of a string are returned
+**		as TOKEN_NEWLINE.  (These are used to set the OPTS_VALUE_LINE
+**		formatting bit on the values.)
+**
+**		Determining the end point of token types that need escaping
+**		requires processing (for instance `{a^}b}` can't see the first
+**		close brace as ending the string).  To avoid double processing,
+**		the routine decodes the string's content into BUF_MOLD for any
+**		quoted form to be used by the caller.  This is overwritten in
+**		successive calls, and is only done for quoted forms (e.g. %"foo"
+**		will have data in BUF_MOLD but %foo will not.)
+**
+**		!!! This is a somewhat weird separation of responsibilities,
+**		that seems to arise from a desire to make "Scan_XXX" functions
+**		independent of the "Locate_Token" function.  But if the work of
+**		locating the value means you have to basically do what you'd
+**		do to read it into a REBVAL anyway, why split it up?  --HF
+**
+**		Error handling is limited for most types, as an additional
+**		phase is needed to load their data into a REBOL value.  Yet if
+**		a "cheap" error is incidentally found during this routine
+**		without extra cost to compute, it is indicated by returning a
+**		negative value for the malformed type.
+**
+**		!!! What real value is this optimization of the negative type,
+**		as opposed to just raising the error here?  Is it required to
+**		support a resumable scanner on partially written source, such
+**		as in a syntax highlighter?  Is the "relaxed" mode of handling
+**		errors already sufficient to achieve the goal?  --HF
+**
+**		Examples with scan_state's (B)egin (E)nd and return value:
+**
+**			   foo: baz bar => TOKEN_SET
+**			   B   E
+**
+**			[quick brown fox] => TOKEN_BLOCK_BEGIN
+**			B
+**			 E
+**
+**			"brown fox]" => TOKEN_WORD
+**			 B    E
+**
+**			  $10AE.20 sent => -TOKEN_MONEY (negative, malformed)
+**			  B       E
+**
+**			  {line1\nline2}  => TOKEN_STRING (content in BUF_MOLD)
+**			  B             E
+**
+**			\n{line2} => TOKEN_NEWLINE (newline is external)
+**			BB
+**			  E
+**
+**			%"a ^"b^" c" d => TOKEN_FILE (content in BUF_MOLD)
+**			B           E
+**
+**			%a-b.c d => TOKEN_FILE (content *not* in BUF_MOLD)
+**			B     E
+**
+**			\0 => TOKEN_END
+**			BB
+**			EE
+**
+**		Note: The reason that the code is able to use byte scanning
+**		over UTF-8 encoded source is because all the characters
+**		that dictate the tokenization are ASCII (< 128).
 **
 ***********************************************************************/
 {
-	const REBYTE *cp = scan_state->begin; /* char scan pointer */
-    REBCNT flags = 0;               /* lexical flags */
+	REBCNT flags = Prescan_Token(scan_state);
 
-    while (IS_LEX_SPACE(*cp)) cp++; /* skip white space */
-    scan_state->begin = cp;         /* start of lexical symbol */
+	const REBYTE *cp = scan_state->begin;
 
-    while (1) {
-        switch (GET_LEX_CLASS(*cp)) {
+	REBINT type;
 
-        case LEX_CLASS_DELIMIT:
-            if (cp == scan_state->begin) cp++;  /* returning delimiter */
-            scan_state->end = cp;
-            return flags;
+	switch (GET_LEX_CLASS(*cp)) {
 
-        case LEX_CLASS_SPECIAL:     /* Flag all but first special char: */
-            if (cp != scan_state->begin) SET_LEX_FLAG(flags, GET_LEX_VALUE(*cp));
-            cp++;
-            break;
+	case LEX_CLASS_DELIMIT:
+		switch (GET_LEX_VALUE(*cp)) {
+		case LEX_DELIMIT_SPACE:
+			// We should not get whitespace as Prescan_Token skips it all
+			assert(FALSE);
+			DEAD_END;
 
-        case LEX_CLASS_WORD:
-            SET_LEX_FLAG(flags, LEX_SPECIAL_WORD);  /* flags word char (for nums) */
-            while (IS_LEX_AT_LEAST_WORD(*cp)) cp++; /* word or number */
-            break;
-
-        case LEX_CLASS_NUMBER:
-            while (IS_LEX_AT_LEAST_NUMBER(*cp)) cp++;
-            break;
-        }
-    }
-}
-
-
-/***********************************************************************
-**
-*/  static REBINT Scan_Token(SCAN_STATE *scan_state)
-/*
-**		Scan the next lexical object and determine its datatype.
-**		Skip all leading whitespace and conclude on a delimiter.
-**
-**      Returns the value type (VT) identifying the token.
-**		Negative value types indicate an error in that type.
-**      Both the beginning and ending positions are updated.
-**
-**      Note: this function does not need to find errors in types
-**      that are to be scanned and converted.  It only needs to
-**      recognize that the value should be of that type. For words
-**      however, since no further scanning is done, they must be
-**      checked for errors here.  Same is true for delimiters.
-**
-***********************************************************************/
-{
-    REBCNT flags;
-	const REBYTE *cp;
-    REBINT type;
-
-    flags = Prescan(scan_state);
-    cp = scan_state->begin;
-
-    switch (GET_LEX_CLASS(*cp)) {
-
-    case LEX_CLASS_DELIMIT:
-        switch (GET_LEX_VALUE(*cp)) {
-        case LEX_DELIMIT_SPACE:         /* white space (pre-processed above) */
-        case LEX_DELIMIT_SEMICOLON:     /* ; begin comment */
-            while (NOT_NEWLINE(*cp)) cp++;
-            if (!*cp) cp--;             /* avoid passing EOF  */
+		case LEX_DELIMIT_SEMICOLON:     /* ; begin comment */
+			while (!ANY_CR_LF_END(*cp)) cp++;
+			if (!*cp) cp--;             /* avoid passing EOF  */
 			if (*cp == LF) goto line_feed;
-            /* fall thru  */
-        case LEX_DELIMIT_RETURN:        /* CR */
-            if (cp[1] == LF) cp++;
-            /* fall thru */
-        case LEX_DELIMIT_LINEFEED:      /* LF */
+			/* fall thru  */
+		case LEX_DELIMIT_RETURN:
+			if (cp[1] == LF) cp++;
+			/* fall thru */
+		case LEX_DELIMIT_LINEFEED:
 		line_feed:
-            scan_state->line_count++;
-            scan_state->end = cp+1;
-            return TOKEN_LINE;
+			scan_state->line_count++;
+			scan_state->end = cp + 1;
+			return TOKEN_NEWLINE;
 
-        case LEX_DELIMIT_LEFT_BRACKET:  /* [ begin block */
-            return TOKEN_BLOCK;
 
-        case LEX_DELIMIT_RIGHT_BRACKET: /* ] end block */
-            return TOKEN_BLOCK_END;
+		// [BRACKETS]
 
-        case LEX_DELIMIT_LEFT_PAREN:    /* ( begin paren */
-            return TOKEN_PAREN;
+		case LEX_DELIMIT_LEFT_BRACKET:
+			return TOKEN_BLOCK_BEGIN;
 
-        case LEX_DELIMIT_RIGHT_PAREN:   /* ) end paren */
-            return TOKEN_PAREN_END;
+		case LEX_DELIMIT_RIGHT_BRACKET:
+			return TOKEN_BLOCK_END;
 
-        case LEX_DELIMIT_QUOTE:         /* " quote */
-            cp = Scan_Quote(cp, scan_state); // stores result string in BUF_MOLD
-            goto check_str;
 
-        case LEX_DELIMIT_LEFT_BRACE:    /* { begin quote */
-            cp = Scan_Quote(cp, scan_state);  // stores result string in BUF_MOLD
-        check_str:
-            if (cp) {
-                scan_state->end = cp;
-                return TOKEN_STRING;
-            } else {        /* try to recover at next new line... */
-                for (cp = (scan_state->begin)+1; NOT_NEWLINE(*cp); cp++);
-                scan_state->end = cp;
-                return -TOKEN_STRING;
-            }
+		// (PARENS)
 
-        case LEX_DELIMIT_RIGHT_BRACE:   /* } end quote  !!! handle better (missing) */
-            return -TOKEN_STRING;
+		case LEX_DELIMIT_LEFT_PAREN:
+			return TOKEN_PAREN_BEGIN;
 
-        case LEX_DELIMIT_SLASH:         /* probably / or / *   */
-            while (*cp && *cp == '/') cp++;
-            if (IS_LEX_AT_LEAST_WORD(*cp) || *cp=='+' || *cp=='-' || *cp=='.') {
+		case LEX_DELIMIT_RIGHT_PAREN:
+			return TOKEN_PAREN_END;
+
+
+		// "QUOTES" and {BRACES}
+
+		case LEX_DELIMIT_DOUBLE_QUOTE:
+			RESET_TAIL(BUF_MOLD);
+			cp = Scan_Quote(BUF_MOLD, cp, scan_state);
+			goto check_str;
+
+		case LEX_DELIMIT_LEFT_BRACE:
+			RESET_TAIL(BUF_MOLD);
+			cp = Scan_Quote(BUF_MOLD, cp, scan_state);
+		check_str:
+			if (cp) {
+				scan_state->end = cp;
+				return TOKEN_STRING;
+			}
+			// try to recover at next new line...
+			cp = scan_state->begin + 1;
+			while (!ANY_CR_LF_END(*cp)) cp++;
+			scan_state->end = cp;
+			return -TOKEN_STRING;
+
+		case LEX_DELIMIT_RIGHT_BRACE:
+			// !!! handle better (missing)
+			return -TOKEN_STRING;
+
+
+		// /SLASH
+
+		case LEX_DELIMIT_SLASH:
+			while (*cp && *cp == '/') cp++;
+			if (
+				IS_LEX_WORD_OR_NUMBER(*cp)
+				|| *cp == '+'
+				|| *cp == '-'
+				|| *cp == '.'
+			) {
 				// ///refine not allowed
-            	if (scan_state->begin + 1 != cp) {
-            		scan_state->end = cp;
-            		return -TOKEN_REFINE;
-            	}
+				if (scan_state->begin + 1 != cp) {
+					scan_state->end = cp;
+					return -TOKEN_REFINE;
+				}
 				scan_state->begin = cp;
-				flags = Prescan(scan_state);
+				flags = Prescan_Token(scan_state);
 				scan_state->begin--;
 				type = TOKEN_REFINE;
 				// Fast easy case:
-		        if (ONLY_LEX_FLAG(flags, LEX_SPECIAL_WORD)) return type;
+				if (ONLY_LEX_FLAG(flags, LEX_SPECIAL_WORD)) return type;
 				goto scanword;
-            }
+			}
 			if (cp[0] == '<' || cp[0] == '>') {
-	            scan_state->end = cp+1;
+				scan_state->end = cp + 1;
 				return -TOKEN_REFINE;
 			}
-            scan_state->end = cp;
-            return TOKEN_WORD;
+			scan_state->end = cp;
+			return TOKEN_WORD;
 
-        case LEX_DELIMIT_END_FILE:      /* end of file */
-            scan_state->end--;
-            return TOKEN_EOF;
+		case LEX_DELIMIT_END:
+			// Prescan_Token() spans the terminator as if it were a byte
+			// to process, so we collapse end to begin to signal no data
+			scan_state->end--;
+			assert(scan_state->end == scan_state->begin);
+			return TOKEN_END;
 
-        case LEX_DELIMIT_UTF8_ERROR:
-        default:
-            return -TOKEN_WORD;			/* just in case */
-        }
+		case LEX_DELIMIT_UTF8_ERROR:
+		default:
+			return -TOKEN_WORD;			/* just in case */
+		}
 
-    case LEX_CLASS_SPECIAL:
-        if (HAS_LEX_FLAG(flags, LEX_SPECIAL_AT) && *cp != '<') return TOKEN_EMAIL;
-    next_ls:
-        switch (GET_LEX_VALUE(*cp)) {
+	case LEX_CLASS_SPECIAL:
+		if (HAS_LEX_FLAG(flags, LEX_SPECIAL_AT) && *cp != '<')
+			return TOKEN_EMAIL;
+	next_ls:
+		switch (GET_LEX_VALUE(*cp)) {
 
-        case LEX_SPECIAL_AT:
-            return -TOKEN_EMAIL;
+		case LEX_SPECIAL_AT:
+			return -TOKEN_EMAIL;
 
-        case LEX_SPECIAL_PERCENT:       /* %filename */
-            cp = scan_state->end;
-            if (*cp == '"') {
-				cp = Scan_Quote(cp, scan_state);  // stores result string in BUF_MOLD
+		case LEX_SPECIAL_PERCENT:       /* %filename */
+			cp = scan_state->end;
+			if (*cp == '"') {
+				RESET_TAIL(BUF_MOLD);
+				cp = Scan_Quote(BUF_MOLD, cp, scan_state);
 				if (!cp) return -TOKEN_FILE;
 				scan_state->end = cp;
 				return TOKEN_FILE;
-            }
-            while (*cp == '/') {        /* deal with path delimiter */
-                cp++;
-                while (IS_LEX_AT_LEAST_SPECIAL(*cp)) cp++;
-            }
-            scan_state->end = cp;
-            return TOKEN_FILE;
+			}
+			while (*cp == '/') {        /* deal with path delimiter */
+				cp++;
+				while (IS_LEX_NOT_DELIMIT(*cp)) cp++;
+			}
+			scan_state->end = cp;
+			return TOKEN_FILE;
 
-        case LEX_SPECIAL_COLON:         /* :word :12 (time) */
-            if (IS_LEX_NUMBER(cp[1])) return TOKEN_TIME;
-            if (ONLY_LEX_FLAG(flags, LEX_SPECIAL_WORD)) return TOKEN_GET;   /* common case */
+		case LEX_SPECIAL_COLON:         /* :word :12 (time) */
+			if (IS_LEX_NUMBER(cp[1])) return TOKEN_TIME;
+			if (ONLY_LEX_FLAG(flags, LEX_SPECIAL_WORD))
+				return TOKEN_GET; /* common case */
 			if (cp[1] == '\'') return -TOKEN_WORD;
 			// Various special cases of < << <> >> > >= <=
 			if (cp[1] == '<' || cp[1] == '>') {
@@ -834,17 +960,19 @@
 				scan_state->end = cp+1;
 				return TOKEN_GET;
 			}
-            type = TOKEN_GET;
-            cp++;                       /* skip ':' */
-            goto scanword;
+			type = TOKEN_GET;
+			cp++;                       /* skip ':' */
+			goto scanword;
 
-        case LEX_SPECIAL_TICK:
+		case LEX_SPECIAL_APOSTROPHE:
 			if (IS_LEX_NUMBER(cp[1])) return -TOKEN_LIT;		// no '2nd
 			if (cp[1] == ':') return -TOKEN_LIT;				// no ':X
-            if (ONLY_LEX_FLAG(flags, LEX_SPECIAL_WORD)) return TOKEN_LIT;   /* common case */
+			if (ONLY_LEX_FLAG(flags, LEX_SPECIAL_WORD))
+				return TOKEN_LIT; /* common case */
 			if (!IS_LEX_WORD(cp[1])) {
 				// Various special cases of < << <> >> > >= <=
-				if ((cp[1] == '-' || cp[1] == '+') && IS_LEX_NUMBER(cp[2])) return -TOKEN_WORD;
+				if ((cp[1] == '-' || cp[1] == '+') && IS_LEX_NUMBER(cp[2]))
+					return -TOKEN_WORD;
 				if (cp[1] == '<' || cp[1] == '>') {
 					cp++;
 					if (cp[1] == '<' || cp[1] == '>' || cp[1] == '=') cp++;
@@ -854,25 +982,26 @@
 				}
 			}
 			if (cp[1] == '\'') return -TOKEN_WORD;
-            type = TOKEN_LIT;
-            goto scanword;
+			type = TOKEN_LIT;
+			goto scanword;
 
-        case LEX_SPECIAL_COMMA:         /* ,123 */
-        case LEX_SPECIAL_PERIOD:        /* .123 .123.456.789 */
-            SET_LEX_FLAG(flags, (GET_LEX_VALUE(*cp)));
-            if (IS_LEX_NUMBER(cp[1])) goto num;
+		case LEX_SPECIAL_COMMA:         /* ,123 */
+		case LEX_SPECIAL_PERIOD:        /* .123 .123.456.789 */
+			SET_LEX_FLAG(flags, (GET_LEX_VALUE(*cp)));
+			if (IS_LEX_NUMBER(cp[1])) goto num;
 			if (GET_LEX_VALUE(*cp) != LEX_SPECIAL_PERIOD) return -TOKEN_WORD;
 			type = TOKEN_WORD;
 			goto scanword;
 
 		case LEX_SPECIAL_GREATER:
-			if (IS_LEX_DELIMIT(cp[1])) return TOKEN_WORD;	// RAMBO 3903
+			if (IS_LEX_DELIMIT(cp[1])) return TOKEN_WORD;
 			if (cp[1] == '>') {
 				if (IS_LEX_DELIMIT(cp[2])) return TOKEN_WORD;
 				return -TOKEN_WORD;
 			}
 		case LEX_SPECIAL_LESSER:
-			if (IS_LEX_ANY_SPACE(cp[1]) || cp[1] == ']' || cp[1] == 0) return TOKEN_WORD;	// CES.9121 Was LEX_DELIMIT - changed for </tag>
+			if (IS_LEX_ANY_SPACE(cp[1]) || cp[1] == ']' || cp[1] == 0)
+				return TOKEN_WORD;	// changed for </tag>
 			if ((cp[0] == '<' && cp[1] == '<') || cp[1] == '=' || cp[1] == '>') {
 				if (IS_LEX_DELIMIT(cp[2])) return TOKEN_WORD;
 				return -TOKEN_WORD;
@@ -880,44 +1009,39 @@
 			if (GET_LEX_VALUE(*cp) == LEX_SPECIAL_GREATER) return -TOKEN_WORD;
 			cp = Skip_Tag(cp);
 			if (!cp) return -TOKEN_TAG;
-            scan_state->end = cp;
+			scan_state->end = cp;
 			return TOKEN_TAG;
 
-        case LEX_SPECIAL_PLUS:          /* +123 +123.45 +$123 */
-        case LEX_SPECIAL_MINUS:         /* -123 -123.45 -$123 */
-            if (HAS_LEX_FLAG(flags, LEX_SPECIAL_AT)) return TOKEN_EMAIL;
-            if (HAS_LEX_FLAG(flags, LEX_SPECIAL_DOLLAR)) return TOKEN_MONEY;
-            if (HAS_LEX_FLAG(flags, LEX_SPECIAL_COLON)) {
+		case LEX_SPECIAL_PLUS:          /* +123 +123.45 +$123 */
+		case LEX_SPECIAL_MINUS:         /* -123 -123.45 -$123 */
+			if (HAS_LEX_FLAG(flags, LEX_SPECIAL_AT)) return TOKEN_EMAIL;
+			if (HAS_LEX_FLAG(flags, LEX_SPECIAL_DOLLAR)) return TOKEN_MONEY;
+			if (HAS_LEX_FLAG(flags, LEX_SPECIAL_COLON)) {
 				cp = Skip_To_Byte(cp, scan_state->end, ':');
-				if (cp && (cp+1) != scan_state->end) return TOKEN_TIME;  /* 12:34 */
-			    cp = scan_state->begin;
+				if (cp && (cp+1) != scan_state->end)
+					return TOKEN_TIME; // 12:34
+				cp = scan_state->begin;
 				if (cp[1] == ':') {		// +: -:
-                    type = TOKEN_WORD;
-                    goto scanword;
+					type = TOKEN_WORD;
+					goto scanword;
 				}
 			}
-            cp++;
-            if (IS_LEX_AT_LEAST_NUMBER(*cp)) goto num;
-            if (IS_LEX_SPECIAL(*cp)) {
-                if ((GET_LEX_VALUE(*cp)) >= LEX_SPECIAL_PERIOD) goto next_ls;
-/*              if (*cp == '#') goto hex; */
-                if (*cp == '+' || *cp == '-') {
-                    type = TOKEN_WORD;
-                    goto scanword;
-                }
-                return -TOKEN_WORD;
-            }
-            type = TOKEN_WORD;
-            goto scanword;
+			cp++;
+			if (IS_LEX_NUMBER(*cp)) goto num;
+			if (IS_LEX_SPECIAL(*cp)) {
+				if ((GET_LEX_VALUE(*cp)) >= LEX_SPECIAL_PERIOD) goto next_ls;
+				if (*cp == '+' || *cp == '-') {
+					type = TOKEN_WORD;
+					goto scanword;
+				}
+				return -TOKEN_WORD;
+			}
+			type = TOKEN_WORD;
+			goto scanword;
 
-        case LEX_SPECIAL_POUND:
-        pound:
-            cp++;
-/*        hex:
-          if (HAS_LEX_FLAGS(flags, ~(LEX_FLAG(LEX_SPECIAL_POUND) | LEX_FLAG(LEX_SPECIAL_PERIOD)
-                        | LEX_FLAG(LEX_SPECIAL_TICK) | LEX_FLAG(LEX_SPECIAL_WORD)))) return -TOKEN_INTEGER;
-*/
-/*        if (HAS_LEX_FLAG(flags, LEX_SPECIAL_PERIOD)) return TOKEN_BYTES; */
+		case LEX_SPECIAL_POUND:
+		pound:
+			cp++;
 			if (*cp == '[') {
 				scan_state->end = ++cp;
 				return TOKEN_CONSTRUCT;
@@ -928,78 +1052,114 @@
 				if (type >= 0 && *cp == '"') {
 					scan_state->end = cp+1;
 					return TOKEN_CHAR;
-				} else {        /* try to recover at next new line... */
-					for (cp = (scan_state->begin)+1; NOT_NEWLINE(*cp); cp++);
-					scan_state->end = cp;
-					return -TOKEN_CHAR;
 				}
+				// try to recover at next new line...
+				cp = scan_state->begin + 1;
+				while (!ANY_CR_LF_END(*cp)) cp++;
+				scan_state->end = cp;
+				return -TOKEN_CHAR;
 			}
 			if (*cp == '{') { /* BINARY #{12343132023902902302938290382} */
 				scan_state->end = scan_state->begin;  /* save start */
 				scan_state->begin = cp;
-	            cp = Scan_Quote(cp, scan_state);  // stores result string in BUF_MOLD !!??
+				RESET_TAIL(BUF_MOLD);
+				cp = Scan_Quote(BUF_MOLD, cp, scan_state);
 				scan_state->begin = scan_state->end;  /* restore start */
 				if (cp) {
 					scan_state->end = cp;
 					return TOKEN_BINARY;
-				} else {        /* try to recover at next new line... */
-					for (cp = (scan_state->begin)+1; NOT_NEWLINE(*cp); cp++);
-					scan_state->end = cp;
-					return -TOKEN_BINARY;
 				}
+				// try to recover at next new line...
+				cp = (scan_state->begin) + 1;
+				while (!ANY_CR_LF_END(*cp)) cp++;
+				scan_state->end = cp;
+				return -TOKEN_BINARY;
 			}
 			if (cp-1 == scan_state->begin) return TOKEN_ISSUE;
 			else return -TOKEN_INTEGER;
 
-        case LEX_SPECIAL_DOLLAR:
-            if (HAS_LEX_FLAG(flags, LEX_SPECIAL_AT)) return TOKEN_EMAIL;
-            return TOKEN_MONEY;
+		case LEX_SPECIAL_DOLLAR:
+			if (HAS_LEX_FLAG(flags, LEX_SPECIAL_AT)) return TOKEN_EMAIL;
+			return TOKEN_MONEY;
 
-        default:
-            return -TOKEN_WORD;
-        }
+		default:
+			return -TOKEN_WORD;
+		}
 
-    case LEX_CLASS_WORD:
-        if (ONLY_LEX_FLAG(flags, LEX_SPECIAL_WORD)) return TOKEN_WORD;
-        type = TOKEN_WORD;
-        goto scanword;
+	case LEX_CLASS_WORD:
+		if (ONLY_LEX_FLAG(flags, LEX_SPECIAL_WORD)) return TOKEN_WORD;
+		type = TOKEN_WORD;
+		goto scanword;
 
-    case LEX_CLASS_NUMBER:      /* order of tests is important */
-    num:
+	case LEX_CLASS_NUMBER:      /* order of tests is important */
+	num:
 		if (!flags) return TOKEN_INTEGER;       /* simple integer */
 		if (HAS_LEX_FLAG(flags, LEX_SPECIAL_AT)) return TOKEN_EMAIL;
 		if (HAS_LEX_FLAG(flags, LEX_SPECIAL_POUND)) {
 			if (cp == scan_state->begin) { // no +2 +16 +64 allowed
 				if (
-					   (cp[0] == '6' && cp[1] == '4' && cp[2] == '#' && cp[3] == '{')
-					|| (cp[0] == '1' && cp[1] == '6' && cp[2] == '#' && cp[3] == '{') // rare
-				) {cp += 2; goto pound;}
-				if (cp[0] == '2' && cp[1] == '#' && cp[2] == '{')
-					{cp++; goto pound;} // very rare
+					(
+						cp[0] == '6'
+						&& cp[1] == '4'
+						&& cp[2] == '#'
+						&& cp[3] == '{'
+					) || (
+						cp[0] == '1'
+						&& cp[1] == '6'
+						&& cp[2] == '#'
+						&& cp[3] == '{'
+					) // rare
+				) {
+					cp += 2;
+					goto pound;
+				}
+				if (cp[0] == '2' && cp[1] == '#' && cp[2] == '{') {
+					// very rare
+					cp++;
+					goto pound;
+				}
 			}
 			return -TOKEN_INTEGER;
 		}
-		if (HAS_LEX_FLAG(flags, LEX_SPECIAL_COLON)) return TOKEN_TIME;  /* 12:34 */
-		if (HAS_LEX_FLAG(flags, LEX_SPECIAL_PERIOD)) {  /* 1.2 1.2.3 1,200.3 1.200,3 1.E-2 */
+		if (HAS_LEX_FLAG(flags, LEX_SPECIAL_COLON))
+			return TOKEN_TIME; // 12:34
+		if (HAS_LEX_FLAG(flags, LEX_SPECIAL_PERIOD)) {
+			// 1.2 1.2.3 1,200.3 1.200,3 1.E-2
 			if (Skip_To_Byte(cp, scan_state->end, 'x')) return TOKEN_PAIR;
 			cp = Skip_To_Byte(cp, scan_state->end, '.');
-			if (!(HAS_LEX_FLAG(flags, LEX_SPECIAL_COMMA)) &&        /* no comma in bytes */
-				Skip_To_Byte(cp+1, scan_state->end, '.')) return TOKEN_TUPLE;
+			if (
+				!HAS_LEX_FLAG(flags, LEX_SPECIAL_COMMA) // no comma in bytes
+				&& Skip_To_Byte(cp+1, scan_state->end, '.')
+			) {
+				return TOKEN_TUPLE;
+			}
 			return TOKEN_DECIMAL;
 		}
 		if (HAS_LEX_FLAG(flags, LEX_SPECIAL_COMMA)) {
 			if (Skip_To_Byte(cp, scan_state->end, 'x')) return TOKEN_PAIR;
 			return TOKEN_DECIMAL;  /* 1,23 */
 		}
-		if (HAS_LEX_FLAG(flags, LEX_SPECIAL_POUND)) {   /* -#123 2#1010        */
-			if (HAS_LEX_FLAGS(flags, ~(LEX_FLAG(LEX_SPECIAL_POUND) | LEX_FLAG(LEX_SPECIAL_PERIOD) | LEX_FLAG(LEX_SPECIAL_TICK)))) return -TOKEN_INTEGER;
+		if (HAS_LEX_FLAG(flags, LEX_SPECIAL_POUND)) { // -#123 2#1010
+			if (
+				HAS_LEX_FLAGS(
+					flags,
+					~(
+						LEX_FLAG(LEX_SPECIAL_POUND)
+						| LEX_FLAG(LEX_SPECIAL_PERIOD)
+						| LEX_FLAG(LEX_SPECIAL_APOSTROPHE)
+					)
+				)
+			) {
+				return -TOKEN_INTEGER;
+			}
 			if (HAS_LEX_FLAG(flags, LEX_SPECIAL_PERIOD)) return TOKEN_TUPLE;
 			return TOKEN_INTEGER;
 		}
 		/* Note: cannot detect dates of the form 1/2/1998 because they
 		** may appear within a path, where they are not actually dates!
 		** Special parsing is required at the next level up. */
-		for (;cp != scan_state->end; cp++) {    /* what do we hit first? 1-AUG-97 or 123E-4 */
+		for (;cp != scan_state->end; cp++) {
+			// what do we hit first? 1-AUG-97 or 123E-4
 			if (*cp == '-') return TOKEN_DATE;      /* 1-2-97 1-jan-97 */
 			if (*cp == 'x' || *cp == 'X') return TOKEN_PAIR; // 320x200
 			if (*cp == 'E' || *cp == 'e') {
@@ -1009,50 +1169,58 @@
 			if (*cp == '%') return TOKEN_PERCENT;
 		}
 		/*cp = scan_state->begin;*/
-		if (HAS_LEX_FLAG(flags, LEX_SPECIAL_TICK)) return TOKEN_INTEGER; /* 1'200 */
+		if (HAS_LEX_FLAG(flags, LEX_SPECIAL_APOSTROPHE))
+			return TOKEN_INTEGER; // 1'200
 		return -TOKEN_INTEGER;
 
-    default:
-        return -TOKEN_WORD;
-    }
+	default:
+		return -TOKEN_WORD;
+	}
 
-#ifdef ndef	// unreachable code
-    /* avoid '123 :123 from scanning as a word.... */
-    if (IS_LEX_WORD(cp[1]) && !HAS_LEX_FLAGS(flags, LEX_WORD_FLAGS))
-        return TOKEN_LIT;
-    return -TOKEN_WORD;
-#endif
+	DEAD_END;
 
 scanword:
-    if (HAS_LEX_FLAG(flags, LEX_SPECIAL_COLON)) {    /* word:  url:words */
-        if (type != TOKEN_WORD) return type; //-TOKEN_WORD;  /* only valid with WORD (not set or lit) */
-		cp = Skip_To_Byte(cp, scan_state->end, ':'); /* always returns a pointer (always a ':') */
-        if (cp[1] != '/' && Lex_Map[(REBYTE)cp[1]] < LEX_SPECIAL) { /* a valid delimited word SET? */
-            if (HAS_LEX_FLAGS(flags, ~LEX_FLAG(LEX_SPECIAL_COLON) & LEX_WORD_FLAGS)) return -TOKEN_WORD;
-            return TOKEN_SET;
-        }
-        cp = scan_state->end;   /* then, must be a URL */
-        while (*cp == '/') {    /* deal with path delimiter */
-            cp++;
-            while (IS_LEX_AT_LEAST_SPECIAL(*cp) || *cp == '/') cp++;
-        }
-        scan_state->end = cp;
-        return TOKEN_URL;
-    }
-    if (HAS_LEX_FLAG(flags, LEX_SPECIAL_AT)) return TOKEN_EMAIL;
-    if (HAS_LEX_FLAG(flags, LEX_SPECIAL_DOLLAR)) return TOKEN_MONEY;
-    if (HAS_LEX_FLAGS(flags, LEX_WORD_FLAGS)) return -type;   /* has chars not allowed in word (eg % \ ) */
+	if (HAS_LEX_FLAG(flags, LEX_SPECIAL_COLON)) { // word:  url:words
+		if (type != TOKEN_WORD) {
+			// only valid with WORD (not set or lit)
+			return type;
+		}
+		// This Skip_To_Byte always returns a pointer (always a ':')
+		cp = Skip_To_Byte(cp, scan_state->end, ':');
+		if (cp[1] != '/' && Lex_Map[(REBYTE)cp[1]] < LEX_SPECIAL) {
+			// a valid delimited word SET?
+			if (
+				HAS_LEX_FLAGS(
+					flags, ~LEX_FLAG(LEX_SPECIAL_COLON) & LEX_WORD_FLAGS
+				)
+			) {
+				return -TOKEN_WORD;
+			}
+			return TOKEN_SET;
+		}
+		cp = scan_state->end;   /* then, must be a URL */
+		while (*cp == '/') {    /* deal with path delimiter */
+			cp++;
+			while (IS_LEX_NOT_DELIMIT(*cp) || *cp == '/') cp++;
+		}
+		scan_state->end = cp;
+		return TOKEN_URL;
+	}
+	if (HAS_LEX_FLAG(flags, LEX_SPECIAL_AT)) return TOKEN_EMAIL;
+	if (HAS_LEX_FLAG(flags, LEX_SPECIAL_DOLLAR)) return TOKEN_MONEY;
+	if (HAS_LEX_FLAGS(flags, LEX_WORD_FLAGS)) {
+		// has chars not allowed in word (eg % \ )
+		return -type;
+	}
 	if (HAS_LEX_FLAG(flags, LEX_SPECIAL_LESSER)) {
 		// Allow word<tag> and word</tag> but not word< word<= word<> etc.
 		cp = Skip_To_Byte(cp, scan_state->end, '<');
 		if (cp[1] == '<' || cp[1] == '>' || cp[1] == '=' ||
 			IS_LEX_SPACE(cp[1]) || (cp[1] != '/' && IS_LEX_DELIMIT(cp[1])))
 			return -type;
-		/*bogus: if (HAS_LEX_FLAG(flags, LEX_SPECIAL_GREATER) &&
-			Skip_To_Byte(scan_state->begin, cp, '>')) return -TOKEN_WORD; */
 		scan_state->end = cp;
 	} else if (HAS_LEX_FLAG(flags, LEX_SPECIAL_GREATER)) return -type;
-    return type;
+	return type;
 }
 
 
@@ -1065,9 +1233,15 @@ scanword:
 **
 ***********************************************************************/
 {
-    scan_state->head_line = scan_state->begin = scan_state->end = cp;
-    scan_state->limit = cp + limit;
-    scan_state->line_count = 1;
+	// Not all scans finish successfully, and if they're stopped by an error
+	// may leave lingering data in the emit buffer.  This cleans it upon
+	// every new scan initialization.
+	// !!! Is it too slow to have all scans be in a TRAP that does this?
+	BLK_RESET(BUF_EMIT);
+
+	scan_state->head_line = scan_state->begin = scan_state->end = cp;
+	scan_state->limit = cp + limit;
+	scan_state->line_count = 1;
 	scan_state->opts = 0;
 	scan_state->errors = 0;
 }
@@ -1101,44 +1275,43 @@ scanword:
 	REBCNT count = scan_state->line_count;
 
 	while (TRUE) {
-        while (IS_LEX_SPACE(*cp)) cp++; /* skip white space */
+		while (IS_LEX_SPACE(*cp)) cp++; /* skip white space */
 		switch (*cp) {
 		case '[':
-            if (rp) {
-                scan_state->begin = ++cp; //(bp ? bp : cp);
+			if (rp) {
+				scan_state->begin = ++cp; //(bp ? bp : cp);
 				scan_state->line_count = count;
-                return (bp ? -1 : 1);
-            }
+				return (bp ? -1 : 1);
+			}
 			bp = cp++;
 			break;
-        case 'R':
+		case 'R':
 		case 'r':
 			if (Match_Bytes(cp, cb_cast(Str_REBOL))) {
 				rp = cp;
-                cp += 5;
+				cp += 5;
 				break;
-            }
-            cp++;
+			}
+			cp++;
 			bp = 0;	/* prior '[' was a red herring */
 			/* fall thru... */
-        case ';':
-            goto skipline;
-        case 0:
+		case ';':
+			goto skipline;
+		case 0:
 			return 0;
-        default:	/* everything else... */
-			if NOT_NEWLINE(*cp) rp = bp = 0;
+		default:	/* everything else... */
+			if (!ANY_CR_LF_END(*cp)) rp = bp = 0;
 		skipline:
-			while NOT_NEWLINE(*cp) cp++;
+			while (!ANY_CR_LF_END(*cp)) cp++;
 			if (*cp == CR && cp[1] == LF) cp++;
 			if (*cp) cp++;
 			count++;
-            break;
+			break;
 		}
 	}
 }
 
-// !!! Only called once (inside of Scan_Block), should it be folded	in
-// so this forward declaration is not necessary?
+
 static REBSER *Scan_Full_Block(SCAN_STATE *scan_state, REBYTE mode_char);
 
 /***********************************************************************
@@ -1150,8 +1323,8 @@ static REBSER *Scan_Full_Block(SCAN_STATE *scan_state, REBYTE mode_char);
 **
 ***********************************************************************/
 {
-    REBINT token;
-    REBCNT len;
+	REBINT token;
+	REBCNT len;
 	const REBYTE *bp;
 	const REBYTE *ep;
 	REBVAL *value = 0;
@@ -1167,16 +1340,16 @@ static REBSER *Scan_Full_Block(SCAN_STATE *scan_state, REBYTE mode_char);
 	// just_once for load/next see Load_Script for more info.
 	REBOOL just_once = GET_FLAG(scan_state->opts, SCAN_NEXT);
 
-	CHECK_C_STACK_OVERFLOW(&token);
+	if (C_STACK_OVERFLOWING(&token)) Trap_Stack_Overflow();
 
 	if (just_once)
 		CLR_FLAG(scan_state->opts, SCAN_NEXT); // no deeper
 
-    while (
+	while (
 #ifdef COMP_LINES
 		linenum=scan_state->line_count,
 #endif
-		((token = Scan_Token(scan_state)) != TOKEN_EOF)
+		((token = Locate_Token(scan_state)) != TOKEN_END)
 	) {
 
 		bp = scan_state->begin;
@@ -1185,7 +1358,7 @@ static REBSER *Scan_Full_Block(SCAN_STATE *scan_state, REBYTE mode_char);
 
 		if (token < 0) {	// Check for error tokens
 			token = -token;
-			ACCEPT_TOKEN(scan_state);
+			scan_state->begin = scan_state->end; // skip malformed token
 			goto syntax_error;
 		}
 
@@ -1195,21 +1368,30 @@ static REBSER *Scan_Full_Block(SCAN_STATE *scan_state, REBYTE mode_char);
 
 		value = BLK_TAIL(emitbuf);
 		SET_END(value);
-		// Line opt was set here. Moved to end in 3.0.
 
-        // If in a path, handle start of path /word or word//word cases:
-        if (mode_char == '/' && *bp == '/') {
+		// If in a path, handle start of path /word or word//word cases:
+		if (mode_char == '/' && *bp == '/') {
 			SET_NONE(value);
 			emitbuf->tail++;
 			scan_state->begin = bp + 1;
 			continue;
-        }
+		}
 
-        // Check for new path: /word or word/word:
-        if ((token == TOKEN_PATH || ((token == TOKEN_WORD || token == TOKEN_LIT ||
-				token == TOKEN_GET) && *ep == '/'))
-					&& mode_char != '/') {
-			//line = VAL_GET_OPT(value, OPT_VALUE_LINE);
+		// Check for new path: /word or word/word:
+		if (
+			(
+				token == TOKEN_PATH
+				|| (
+					(
+						token == TOKEN_WORD
+						|| token == TOKEN_LIT
+						|| token == TOKEN_GET
+					)
+					&& *ep == '/'
+				)
+			)
+			&& mode_char != '/'
+		) {
 			block = Scan_Block(scan_state, '/');  // (could realloc emitbuf)
 			value = BLK_TAIL(emitbuf);
 			if (token == TOKEN_LIT) {
@@ -1229,23 +1411,21 @@ static REBSER *Scan_Full_Block(SCAN_STATE *scan_state, REBYTE mode_char);
 					scan_state->begin = ++(scan_state->end);
 				} else token = REB_PATH;
 			}
-//			if (IS_SET_WORD(BLK_SKIP(block, block->tail - 1)
 			VAL_SET(value, token);
 			VAL_SERIES(value) = block;
 			VAL_INDEX(value) = 0;
-			//if (line) line = FALSE, VAL_SET_OPT(value, OPT_VALUE_LINE);
 			token = TOKEN_PATH;
-        } else {
-            ACCEPT_TOKEN(scan_state);
-        }
+		} else {
+			scan_state->begin = scan_state->end; // accept token
+		}
 
 		// Process each lexical token appropriately:
 		switch (token) {  // (idea is that compiler selects computed branch)
 
-		case TOKEN_LINE:
-			#ifdef TEST_SCAN
+		case TOKEN_NEWLINE:
+#ifdef TEST_SCAN
 			Wait_User("next...");
-			#endif
+#endif
 			line = TRUE;
 			scan_state->head_line = ep;
 			continue;
@@ -1265,30 +1445,38 @@ static REBSER *Scan_Full_Block(SCAN_STATE *scan_state, REBYTE mode_char);
 			}
 		case TOKEN_WORD:
 			if (len == 0) {bp--; goto syntax_error;}
-			Val_Init_Word_Unbound(value, REB_WORD + (token - TOKEN_WORD), SYM_NOT_USED);
-			if (!(VAL_WORD_SYM(value) = Make_Word(bp, len))) goto syntax_error;
+			Val_Init_Word_Unbound(
+				value, REB_WORD + (token - TOKEN_WORD), Make_Word(bp, len)
+			);
 			break;
 
 		case TOKEN_REFINE:
-			Val_Init_Word_Unbound(value, REB_REFINEMENT, SYM_NOT_USED);
-			if (!(VAL_WORD_SYM(value) = Make_Word(bp+1, len-1))) goto syntax_error;
+			Val_Init_Word_Unbound(
+				value, REB_REFINEMENT, Make_Word(bp + 1, len - 1)
+			);
 			break;
 
 		case TOKEN_ISSUE:
 			if (len == 1) {
-				if (bp[1] == '(') {token = TOKEN_CONSTRUCT; goto syntax_error;}
+				if (bp[1] == '(') {
+					token = TOKEN_CONSTRUCT;
+					goto syntax_error;
+				}
 				SET_NONE(value);  // A single # means NONE
 			}
 			else {
-				Val_Init_Word_Unbound(value, REB_ISSUE, SYM_NOT_USED);
-				if (!(VAL_WORD_SYM(value) = Scan_Issue(bp+1, len-1))) goto syntax_error;
+				REBCNT sym = Scan_Issue(bp + 1, len - 1);
+				if (sym == SYM_0)
+					goto syntax_error;
+				Val_Init_Word_Unbound(value, REB_ISSUE, sym);
 			}
 			break;
 
-		case TOKEN_BLOCK:
-		case TOKEN_PAREN:
-			//line = VAL_GET_OPT(value, OPT_VALUE_LINE);
-			block = Scan_Block(scan_state, (REBYTE)((token == TOKEN_BLOCK) ? ']' : ')'));
+		case TOKEN_BLOCK_BEGIN:
+		case TOKEN_PAREN_BEGIN:
+			block = Scan_Block(
+				scan_state, (token == TOKEN_BLOCK_BEGIN) ? ']' : ')'
+			);
 			// (above line could have realloced emitbuf)
 			ep = scan_state->end;
 			value = BLK_TAIL(emitbuf);
@@ -1299,11 +1487,10 @@ static REBSER *Scan_Full_Block(SCAN_STATE *scan_state, REBYTE mode_char);
 			}
 			Val_Init_Series_Index(
 				value,
-				(token == TOKEN_BLOCK) ? REB_BLOCK : REB_PAREN,
+				(token == TOKEN_BLOCK_BEGIN) ? REB_BLOCK : REB_PAREN,
 				block,
 				0
 			);
-			//if (line) line = FALSE, VAL_SET_OPT(value, OPT_VALUE_LINE);
 			break;
 
 		case TOKEN_PATH:
@@ -1320,23 +1507,24 @@ static REBSER *Scan_Full_Block(SCAN_STATE *scan_state, REBYTE mode_char);
 			else goto exit_block;
 
 		case TOKEN_INTEGER:		// or start of DATE
-            if (*ep != '/' || mode_char == '/') {
+			if (*ep != '/' || mode_char == '/') {
 				if (0 == Scan_Integer(bp, len, value))
 					goto syntax_error;
 			}
 			else {				// A / and not in block
 				token = TOKEN_DATE;
-				while (*ep == '/' || IS_LEX_AT_LEAST_SPECIAL(*ep)) ep++;
+				while (*ep == '/' || IS_LEX_NOT_DELIMIT(*ep)) ep++;
 				scan_state->begin = ep;
 				len = (REBCNT)(ep - bp);
 				if (ep != Scan_Date(bp, len, value)) goto syntax_error;
-            }
+			}
 			break;
 
 		case TOKEN_DECIMAL:
 		case TOKEN_PERCENT:
 			// Do not allow 1.2/abc:
-			if (*ep == '/' || !Scan_Decimal(bp, len, value, 0)) goto syntax_error;
+			if (*ep == '/' || !Scan_Decimal(bp, len, value, 0))
+				goto syntax_error;
 			if (bp[len-1] == '%') {
 				VAL_SET(value, REB_PERCENT);
 				VAL_DECIMAL(value) /= 100.0;
@@ -1361,11 +1549,14 @@ static REBSER *Scan_Full_Block(SCAN_STATE *scan_state, REBYTE mode_char);
 		case TOKEN_DATE:
 			while (*ep == '/' && mode_char != '/') {  // Is it a date/time?
 				ep++;
-				while (IS_LEX_AT_LEAST_SPECIAL(*ep)) ep++;
+				while (IS_LEX_NOT_DELIMIT(*ep)) ep++;
 				len = (REBCNT)(ep - bp);
-				if (len > 50) break; // prevent inf-loop - should never be longer than this
+				if (len > 50) {
+					// prevent infinite loop, should never be longer than this
+					break;
+				}
 				scan_state->begin = ep;  // End point extended to cover time
-            }
+			}
 			if (ep != Scan_Date(bp, len, value)) goto syntax_error;
 			break;
 
@@ -1419,19 +1610,18 @@ static REBSER *Scan_Full_Block(SCAN_STATE *scan_state, REBYTE mode_char);
 			block = Scan_Full_Block(scan_state, ']');
 			value = BLK_TAIL(emitbuf);
 			emitbuf->tail++; // Protect the block from GC
-//			if (!Construct_Simple(value, block)) {
 			Bind_Values_All_Deep(BLK_HEAD(block), Lib_Context);
-			//Bind_Global_Block(BLK_HEAD(block));
 			if (!Construct_Value(value, block)) {
 				if (IS_END(value)) Val_Init_Block(value, block);
-				Trap1_DEAD_END(RE_MALCONSTRUCT, value);
+				raise Error_1(RE_MALCONSTRUCT, value);
 			}
 			emitbuf->tail--; // Unprotect
 			break;
 
-		case TOKEN_EOF: continue;
+		case TOKEN_END:
+			continue;
 
-		default: ;
+		default:
 			SET_NONE(value);
 		}
 
@@ -1440,12 +1630,12 @@ static REBSER *Scan_Full_Block(SCAN_STATE *scan_state, REBYTE mode_char);
 			VAL_SET_OPT(value, OPT_VALUE_LINE);
 		}
 
-		#ifdef TEST_SCAN
+#ifdef TEST_SCAN
 		Print((REBYTE*)"%s - %s", Token_Names[token], Use_Buf(bp,ep));
 		if (VAL_TYPE(value) >= REB_STRING && VAL_TYPE(value) <= REB_URL)
 			Print_Str(VAL_BIN(value));
 		//Wait_User(0);
-		#endif
+#endif
 
 #ifdef COMP_LINES
 		VAL_LINE(value)=linenum;
@@ -1453,11 +1643,23 @@ static REBSER *Scan_Full_Block(SCAN_STATE *scan_state, REBYTE mode_char);
 #endif
 		if (VAL_TYPE(value)) emitbuf->tail++;
 		else {
+			REBVAL error;
 		syntax_error:
-			value = BLK_TAIL(emitbuf);
-			Scan_Error(RE_INVALID, scan_state, (REBCNT)token, bp, (REBCNT)(ep-bp), GET_FLAG(scan_state->opts, SCAN_RELAX) ? value : 0);
-			emitbuf->tail++;
-			goto exit_block;
+			Make_Error_Bad_Scan(
+				&error,
+				RE_INVALID,
+				scan_state,
+				cast(REBCNT, token),
+				bp,
+				cast(REBCNT, ep - bp)
+			);
+			if (GET_FLAG(scan_state->opts, SCAN_RELAX)) {
+				*BLK_TAIL(emitbuf) = error;
+				emitbuf->tail++;
+				goto exit_block;
+			}
+			raise Error_Is(&error);
+
 		missing_error:
 			scan_state->line_count = start;	// where block started
 			scan_state->head_line = start_line;
@@ -1465,10 +1667,20 @@ static REBSER *Scan_Full_Block(SCAN_STATE *scan_state, REBYTE mode_char);
 				REBYTE tmp_buf[4];	// Temporary error string
 				tmp_buf[0] = mode_char;
 				tmp_buf[1] = 0;
-				value = BLK_TAIL(emitbuf);
-				Scan_Error(RE_MISSING, scan_state, (REBCNT)token, tmp_buf, 1, GET_FLAG(scan_state->opts, SCAN_RELAX) ? value : 0);
-				emitbuf->tail++;
-				goto exit_block;
+				Make_Error_Bad_Scan(
+					&error,
+					RE_MISSING,
+					scan_state,
+					cast(REBCNT, token),
+					tmp_buf,
+					1
+				);
+				if (GET_FLAG(scan_state->opts, SCAN_RELAX)) {
+					*BLK_TAIL(emitbuf) = error;
+					emitbuf->tail++;
+					goto exit_block;
+				}
+				raise Error_Is(&error);
 			}
 		}
 
@@ -1486,23 +1698,24 @@ static REBSER *Scan_Full_Block(SCAN_STATE *scan_state, REBYTE mode_char);
 		}
 
 		// Added for load/next
-	    if (GET_FLAG(scan_state->opts, SCAN_ONLY) || just_once) goto exit_block;
+		if (GET_FLAG(scan_state->opts, SCAN_ONLY) || just_once)
+			goto exit_block;
 	}
 
-    if (mode_char == ']' || mode_char == ')') goto missing_error;
+	if (mode_char == ']' || mode_char == ')') goto missing_error;
 
 exit_block:
 	if (line && value) VAL_SET_OPT(value, OPT_VALUE_LINE);
-	#ifdef TEST_SCAN
-	Print((REBYTE*)"block of %d values ", emitbuf->tail - begin); //Wait_User("...");
-	#endif
+
+#ifdef TEST_SCAN
+	Print((REBYTE*)"block of %d values ", emitbuf->tail - begin);
+#endif
 
 	len = emitbuf->tail;
 	block = Copy_Values_Len_Shallow(BLK_SKIP(emitbuf, begin), len - begin);
 	LABEL_SERIES(block, "scan block");
 
 	emitbuf->tail = begin;
-//!!!!	if (value) VAL_OPTS(BLK_TAIL(block)) = VAL_OPTS(value); // save NEWLINE marker
 
 	// All scanned code is expected to be managed by the GC (because walking
 	// the tree after constructing it to add the "manage GC" bit would be
@@ -1532,38 +1745,15 @@ exit_block:
 
 /***********************************************************************
 **
-*/	static REBSER *Scan_Code(SCAN_STATE *scan_state, REBYTE mode_char)
-/*
-**		Scan source code, given a scan state. Allows scan of source
-**		code a section at a time (used for LOAD/next).
-**
-**		Note: Renamed this from Scan_Trap (a bad name, no trap used)
-**
-***********************************************************************/
-{
-//	REBSER *ser;
-
-	BLK_RESET(BUF_EMIT); // Prevents growth (when errors are thrown)
-	return Scan_Block(scan_state, mode_char);
-//	Val_Init_Block(Temp_Scan_Value, ser);
-//	return Temp_Scan_Value;
-}
-
-
-/***********************************************************************
-**
 */	REBSER *Scan_Source(const REBYTE *src, REBCNT len)
 /*
 **		Scan source code. Scan state initialized. No header required.
-**		If len = 0, then use the C string terminated length.
 **
 ***********************************************************************/
 {
-    SCAN_STATE scan_state;
-
-	if (!len) len = LEN_BYTES(src);
-    Init_Scan_State(&scan_state, src, len);
-	return Scan_Code(&scan_state, 0);
+	SCAN_STATE scan_state;
+	Init_Scan_State(&scan_state, src, len);
+	return Scan_Block(&scan_state, 0);
 }
 
 
@@ -1575,12 +1765,12 @@ exit_block:
 **
 ***********************************************************************/
 {
-    SCAN_STATE scan_state;
+	SCAN_STATE scan_state;
 	const REBYTE *cp;
 	REBINT result;
 
 	// Must be UTF8 byte-stream:
-    Init_Scan_State(&scan_state, src, len);
+	Init_Scan_State(&scan_state, src, len);
 	result = Scan_Head(&scan_state);
 	if (!result) return -1;
 
@@ -1608,26 +1798,52 @@ exit_block:
 
 /***********************************************************************
 **
+*/	void Shutdown_Scanner(void)
+/*
+***********************************************************************/
+{
+	// Note: Emit and UTF8 buffers freed by task root set
+}
+
+
+/***********************************************************************
+**
 */	REBNATIVE(transcode)
 /*
 **		Allows BINARY! input only!
 **
 ***********************************************************************/
 {
-	REBSER *blk;
-    SCAN_STATE scan_state;
+	REBVAL * const input = D_ARG(1);
+	const REBOOL next = D_REF(2);
+	const REBOOL only = D_REF(3);
+	const REBOOL relax = D_REF(4);
 
-    Init_Scan_State(&scan_state, VAL_BIN_DATA(D_ARG(1)), VAL_LEN(D_ARG(1)));
+	SCAN_STATE scan_state;
 
-	if (D_REF(2)) SET_FLAG(scan_state.opts, SCAN_NEXT);
-	if (D_REF(3)) SET_FLAG(scan_state.opts, SCAN_ONLY);
-	if (D_REF(4)) SET_FLAG(scan_state.opts, SCAN_RELAX);
+	assert(IS_BINARY(input));
 
-	blk = Scan_Code(&scan_state, 0);
-	Val_Init_Block(D_OUT, blk);
+	Init_Scan_State(&scan_state, VAL_BIN_DATA(input), VAL_LEN(input));
 
-	VAL_INDEX(D_ARG(1)) = scan_state.end - VAL_BIN(D_ARG(1));
-	Append_Value(blk, D_ARG(1));
+	if (next) SET_FLAG(scan_state.opts, SCAN_NEXT);
+	if (only) SET_FLAG(scan_state.opts, SCAN_ONLY);
+	if (relax) SET_FLAG(scan_state.opts, SCAN_RELAX);
+
+	// The scanner always returns an "array" series.  So set the result
+	// to a BLOCK! of the results.
+	//
+	// If the source data bytes are "1" then it will be the block [1]
+	// if the source data is "[1]" then it will be the block [[1]]
+
+	Val_Init_Block(D_OUT, Scan_Block(&scan_state, 0));
+
+	// Add a value to the tail of the result, representing the input
+	// with position advanced past the content consumed by the scan.
+	// (Returning a length 2 block is how TRANSCODE does a "multiple
+	// return value, but #1916 discusses a possible "revamp" of this.)
+
+	VAL_INDEX(input) = scan_state.end - VAL_BIN(input);
+	Append_Value(VAL_SERIES(D_OUT), input);
 
 	return R_OUT;
 }
@@ -1643,11 +1859,11 @@ exit_block:
 **
 ***********************************************************************/
 {
-    SCAN_STATE scan_state;
+	SCAN_STATE scan_state;
 
 	Init_Scan_State(&scan_state, cp, len);
 
-	if (TOKEN_WORD == Scan_Token(&scan_state)) return Make_Word(cp, len);
+	if (TOKEN_WORD == Locate_Token(&scan_state)) return Make_Word(cp, len);
 
 	return 0;
 }
@@ -1665,35 +1881,37 @@ exit_block:
 	REBCNT l = len;
 	REBCNT c;
 
-	if (len == 0) return 0;
-    while (IS_LEX_SPACE(*cp)) cp++; /* skip white space */
+	if (len == 0) return SYM_0; // will trigger error
+
+	while (IS_LEX_SPACE(*cp)) cp++; /* skip white space */
 
 	bp = cp;
 
-    while (l > 0) {
-        switch (GET_LEX_CLASS(*bp)) {
+	while (l > 0) {
+		switch (GET_LEX_CLASS(*bp)) {
 
-        case LEX_CLASS_DELIMIT:
-            return 0;
+		case LEX_CLASS_DELIMIT:
+			return SYM_0; // will trigger error
 
-        case LEX_CLASS_SPECIAL:     /* Flag all but first special char: */
+		case LEX_CLASS_SPECIAL:     /* Flag all but first special char: */
 			c = GET_LEX_VALUE(*bp);
-			if (!(LEX_SPECIAL_TICK    == c
+			if (!(LEX_SPECIAL_APOSTROPHE == c
 				|| LEX_SPECIAL_COMMA  == c
 				|| LEX_SPECIAL_PERIOD == c
 				|| LEX_SPECIAL_PLUS   == c
 				|| LEX_SPECIAL_MINUS  == c
 				|| LEX_SPECIAL_TILDE  == c
-			))
-			return 0;
-
-        case LEX_CLASS_WORD:
-        case LEX_CLASS_NUMBER:
-            bp++;
+			)) {
+				return SYM_0; // will trigger error
+			}
+			// fallthrough
+		case LEX_CLASS_WORD:
+		case LEX_CLASS_NUMBER:
+			bp++;
 			l--;
-            break;
-        }
-    }
+			break;
+		}
+	}
 
 	return Make_Word(cp, len);
 }

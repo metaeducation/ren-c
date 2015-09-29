@@ -380,7 +380,8 @@ static void Mold_String_Series(const REBVAL *value, REB_MOLD *mold)
 
 	// Empty string:
 	if (idx >= VAL_TAIL(value)) {
-		Append_Unencoded(mold->series, "\"\"");  //Trap_DEAD_END(RE_PAST_END);
+		// !!! Comment said `raise Error_0(RE_PAST_END);`
+		Append_Unencoded(mold->series, "\"\"");
 		return;
 	}
 
@@ -833,8 +834,8 @@ static void Mold_Map(const REBVAL *value, REB_MOLD *mold, REBFLG molded)
 
 static void Form_Object(const REBVAL *value, REB_MOLD *mold)
 {
-	REBSER *wser = VAL_OBJ_WORDS(value);
-	REBVAL *words = BLK_HEAD(wser);
+	REBSER *keylist = VAL_OBJ_KEYLIST(value);
+	REBVAL *keys = BLK_HEAD(keylist);
 	REBVAL *vals  = VAL_OBJ_VALUES(value); // first value is context
 	REBCNT n;
 
@@ -846,9 +847,9 @@ static void Form_Object(const REBVAL *value, REB_MOLD *mold)
 	Append_Value(MOLD_LOOP, value);
 
 	// Mold all words and their values:
-	for (n = 1; n < SERIES_TAIL(wser); n++) {
-		if (!VAL_GET_EXT(words + n, EXT_WORD_HIDE))
-			Emit(mold, "N: V\n", VAL_WORD_SYM(words+n), vals+n);
+	for (n = 1; n < SERIES_TAIL(keylist); n++) {
+		if (!VAL_GET_EXT(keys + n, EXT_WORD_HIDE))
+			Emit(mold, "N: V\n", VAL_TYPESET_SYM(keys + n), vals + n);
 	}
 	Remove_Last(mold->series);
 	Remove_Last(MOLD_LOOP);
@@ -856,19 +857,12 @@ static void Form_Object(const REBVAL *value, REB_MOLD *mold)
 
 static void Mold_Object(const REBVAL *value, REB_MOLD *mold)
 {
-	REBSER *wser;
-	REBVAL *words;
-	REBVAL *vals; // first value is context
+	REBSER *keylist = VAL_OBJ_KEYLIST(value);
+	REBVAL *keys = BLK_HEAD(keylist);
+	REBVAL *vals = VAL_OBJ_VALUES(value); // first value is context
 	REBCNT n;
 
 	assert(VAL_OBJ_FRAME(value));
-
-	wser = VAL_OBJ_WORDS(value);
-//	if (wser < 1000)
-//		Dump_Block_Raw(VAL_OBJ_FRAME(value), 0, 1);
-	words = BLK_HEAD(wser);
-
-	vals  = VAL_OBJ_VALUES(value); // first value is context
 
 	Pre_Mold(value, mold);
 
@@ -882,13 +876,15 @@ static void Mold_Object(const REBVAL *value, REB_MOLD *mold)
 	Append_Value(MOLD_LOOP, value);
 
 	mold->indent++;
-	for (n = 1; n < SERIES_TAIL(wser); n++) {
+	for (n = 1; n < SERIES_TAIL(keylist); n++) {
 		if (
-			!VAL_GET_EXT(words + n, EXT_WORD_HIDE) &&
+			!VAL_GET_EXT(keys + n, EXT_WORD_HIDE) &&
 			((VAL_TYPE(vals+n) > REB_NONE) || !GET_MOPT(mold, MOPT_NO_NONE))
 		){
 			New_Indented_Line(mold);
-			Append_UTF8(mold->series, Get_Sym_Name(VAL_WORD_SYM(words+n)), -1);
+			Append_UTF8(
+				mold->series, Get_Sym_Name(VAL_TYPESET_SYM(keys + n)), -1
+			);
 			//Print("Slot: %s", Get_Sym_Name(VAL_WORD_SYM(words+n)));
 			Append_Unencoded(mold->series, ": ");
 			if (IS_WORD(vals+n) && !GET_MOPT(mold, MOPT_MOLD_ALL))
@@ -913,15 +909,8 @@ static void Mold_Error(const REBVAL *value, REB_MOLD *mold, REBFLG molded)
 	// Protect against recursion. !!!!
 
 	if (molded) {
-		if (VAL_OBJ_FRAME(value) && VAL_ERR_NUM(value) >= RE_NOTE && VAL_ERR_OBJECT(value))
-			Mold_Object(value, mold);
-		else {
-			// Happens if throw or return is molded.
-			// make error! 0-3
-			Pre_Mold(value, mold);
-			Append_Int(mold->series, VAL_ERR_NUM(value));
-			End_Mold(mold);
-		}
+		ASSERT_FRAME(VAL_OBJ_FRAME(value));
+		Mold_Object(value, mold);
 		return;
 	}
 
@@ -934,36 +923,30 @@ static void Mold_Error(const REBVAL *value, REB_MOLD *mold, REBFLG molded)
 	// Append: error message ARG1, ARG2, etc.
 	msg = Find_Error_Info(err, 0);
 	if (msg) {
-		if (!IS_BLOCK(msg)) Mold_Value(mold, msg, 0);
-		else {
-			//start = DSP + 1;
-			//Reduce_In_Frame(frame, VAL_BLK_DATA(msg));
-			//SERIES_TAIL(DS_Series) = DSP + 1;
-			//Form_Block_Series(DS_Series, start, mold, 0);
+		if (IS_BLOCK(msg))
 			Form_Block_Series(VAL_SERIES(msg), 0, mold, frame);
-		}
+		else
+			Mold_Value(mold, msg, 0);
 	} else
 		Append_Boot_Str(mold->series, RS_ERRS+1);
-
-	Append_Codepoint_Raw(mold->series, '\n');
 
 	// Form: ** Where: function
 	value = &err->where;
 	if (VAL_TYPE(value) > REB_NONE) {
+		Append_Codepoint_Raw(mold->series, '\n');
 		Append_Boot_Str(mold->series, RS_ERRS+2);
 		Mold_Value(mold, value, 0);
-		Append_Codepoint_Raw(mold->series, '\n');
 	}
 
 	// Form: ** Near: location
 	value = &err->nearest;
 	if (VAL_TYPE(value) > REB_NONE) {
+		Append_Codepoint_Raw(mold->series, '\n');
 		Append_Boot_Str(mold->series, RS_ERRS+3);
 		if (IS_STRING(value)) // special case: source file line number
 			Append_String(mold->series, VAL_SERIES(value), 0, VAL_TAIL(value));
 		else if (IS_BLOCK(value))
 			Mold_Simple_Block(mold, VAL_BLK_DATA(value), 60);
-		Append_Codepoint_Raw(mold->series, '\n');
 	}
 }
 
@@ -988,7 +971,7 @@ static void Mold_Error(const REBVAL *value, REB_MOLD *mold, REBFLG molded)
 	REBINT len;
 	REBSER *ser = mold->series;
 
-	CHECK_C_STACK_OVERFLOW(&len);
+	if (C_STACK_OVERFLOWING(&len)) Trap_Stack_Overflow();
 
 	assert(SERIES_WIDE(mold->series) == sizeof(REBUNI));
 	assert(ser);
@@ -1149,9 +1132,9 @@ static void Mold_Error(const REBVAL *value, REB_MOLD *mold, REBFLG molded)
 
 	case REB_DATATYPE:
 		if (!molded)
-			Emit(mold, "N", VAL_TYPE_KIND(value) + 1);
+			Emit(mold, "N", VAL_TYPE_SYM(value));
 		else
-			Emit(mold, "+DN", SYM_DATATYPE_TYPE, VAL_TYPE_KIND(value) + 1);
+			Emit(mold, "+DN", SYM_DATATYPE_TYPE, VAL_TYPE_SYM(value));
 		break;
 
 	case REB_TYPESET:
@@ -1258,7 +1241,6 @@ static void Mold_Error(const REBVAL *value, REB_MOLD *mold, REBFLG molded)
 	case REB_REBCODE:
 	case REB_FRAME:
 	case REB_HANDLE:
-	case REB_UTYPE:
 		// Value has no printable form, so just print its name.
 		if (!molded) Emit(mold, "?T?", value);
 		else Emit(mold, "+T", value);
@@ -1270,8 +1252,7 @@ static void Mold_Error(const REBVAL *value, REB_MOLD *mold, REBFLG molded)
 		break;
 
 	default:
-		assert(FALSE);
-		Panic_Core(RP_DATATYPE+5, VAL_TYPE(value));
+		panic Error_Invalid_Datatype(VAL_TYPE(value));
 	}
 	return;
 
@@ -1380,7 +1361,7 @@ return_balanced:
 	REBSER *buf = BUF_MOLD;
 	REBINT len;
 
-	if (!buf) Panic(RP_NO_BUFFER);
+	if (!buf) panic Error_0(RE_NO_BUFFER);
 
 	if (SERIES_REST(buf) > MAX_COMMON)
 		Remake_Series(buf, MIN_COMMON, SERIES_WIDE(buf), MKS_NONE);
@@ -1459,4 +1440,15 @@ return_balanced:
 	for (c = 0; c <= ' '; c++) cp[c] = ESC_URL | ESC_FILE;
 	dc = cb_cast(";%\"()[]{}<>");
 	for (c = LEN_BYTES(dc); c > 0; c--) URL_Escapes[*dc++] = ESC_URL | ESC_FILE;
+}
+
+
+/***********************************************************************
+**
+*/  void Shutdown_Mold(void)
+/*
+***********************************************************************/
+{
+	FREE_ARRAY(REBYTE, MAX_ESC_CHAR + 1, Char_Escapes);
+	FREE_ARRAY(REBYTE, MAX_URL_CHAR + 1, URL_Escapes);
 }

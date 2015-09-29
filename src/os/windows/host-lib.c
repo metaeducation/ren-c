@@ -906,14 +906,15 @@ static void *Task_Ready;
 		goto cleanup; /* NOT IMPLEMENTED*/
 	} else {
 		if (flag_shell) {
-            const wchar_t *sh = L"cmd.exe /C ";
-            size_t len = wcslen(sh) + wcslen(call) + 1;
+			const wchar_t *sh = L"cmd.exe /C ";
+			size_t len = wcslen(sh) + wcslen(call) + 1;
 
 			// other branch uses _wcsdup and free(), so we can't use
 			// OS_ALLOC_ARRAY here (doesn't matter, not returning it to Rebol)
 			cmd = cast(wchar_t*, malloc(len * sizeof(wchar_t)));
-
-            swprintf(cmd, len, L"%s%s", sh, call);
+			cmd[0] = L'\0';
+			wcscat(cmd, sh);
+			wcscat(cmd, call);
 		} else {
 			// CreateProcess might write to this memory
 			// Duplicate it to be safe

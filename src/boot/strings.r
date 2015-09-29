@@ -22,9 +22,9 @@ REBOL [
 
 scan: ; Used by scanner. Keep in sync with Value_Types in scan.h file!
 	"end-of-script"
-	"line"
-	"end-of-block"
-	"end-of-paren"
+	"newline"
+	"block-end"
+	"paren-end"
 	"word"
 	"word-set"
 	"word-get"
@@ -38,8 +38,8 @@ scan: ; Used by scanner. Keep in sync with Value_Types in scan.h file!
 	"time"
 	"date"
 	"char"
-	"block"
-	"paren"
+	"block-begin"
+	"paren-begin"
 	"string"
 	"binary"
 	"pair"
@@ -106,25 +106,6 @@ dump:
 
 ;stats:
 ;	"Stats: bad series value: %d in: %x offset: %d size: %d"
-
-; These correspond to the documented codes in sys-panics.h
-; !!! Should that file be generated for less chance of error?
-error:
-	"miscellaneous panic (add specific case to sys-panics.h and strings.r)"
-	"out of memory (req %d bytes)"
-	"invalid series width %d got %d type %d"
-	"error already caught"
-	"stack overflow"
-	"I/O error"
-	"too many words"
-	"word list buffer in use"
-	"locked series"
-	"error recycled"
-	"top level error not caught"
-	"error state underflow"
-	"event queue overflow (WAIT recursion?)"
-	"not available (NA)"
-	"no case in switch statement"
 
 errs:
 	" error: "

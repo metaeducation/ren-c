@@ -9,6 +9,10 @@ notifications:
 
 language: c
 
+compiler:
+    - gcc
+    - g++
+
 env:
     matrix:
         # Linux x86, release
@@ -33,6 +37,7 @@ addons:
             # For building 32b binaries on a 64b host (not necessary when we
             # build for 64b):
             - gcc-multilib
+            - g++-multilib
 
             # For running the 32b bootstrap rebol ("r3-make") on a 64b host:
             - libc6:i386
@@ -42,6 +47,8 @@ addons:
             - binutils-mingw-w64-x86-64
             - gcc-mingw-w64-i686
             - gcc-mingw-w64-x86-64
+            - g++-mingw-w64-i686
+            - g++-mingw-w64-x86-64
             - mingw-w64
 
 

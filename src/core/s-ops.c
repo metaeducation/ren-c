@@ -33,16 +33,17 @@
 
 /*********************************************************************
 **
-*/	REBOOL Is_Not_ASCII(REBYTE *bp, REBCNT len)
+*/	REBOOL All_Bytes_ASCII(REBYTE *bp, REBCNT len)
 /*
-**		Returns TRUE if byte string uses upper code page.
+**		Returns TRUE if byte string does not use upper code page
+**		(e.g. no 128-255 characters)
 **
 ***********************************************************************/
 {
 	for (; len > 0; len--, bp++)
-		if (*bp >= 0x80) return TRUE;
+		if (*bp >= 0x80) return FALSE;
 
-	return FALSE;
+	return TRUE;
 }
 
 
@@ -97,7 +98,7 @@
 	REBYTE *bp;
 	REBSER *src = VAL_SERIES(val);
 
-	if (index > tail) Trap_DEAD_END(RE_PAST_END);
+	if (index > tail) raise Error_0(RE_PAST_END);
 
 	Resize_Series(BUF_FORM, max_len+1);
 	bp = BIN_HEAD(BUF_FORM);
@@ -112,7 +113,7 @@
 	for (; index < tail; index++) {
 		c = GET_ANY_CHAR(src, index);
 		if (opts < 2 && c >= 0x80) {
-			if (opts == 0) Trap_DEAD_END(RE_INVALID_CHARS);
+			if (opts == 0) raise Error_0(RE_INVALID_CHARS);
 			len = Encode_UTF8_Char(bp, c);
 			max_len -= len;
 			bp += len;
@@ -123,19 +124,19 @@
 		}
 		else break;
 		if (max_len < 0)
-			Trap_DEAD_END(RE_TOO_LONG);
+			raise Error_0(RE_TOO_LONG);
 	}
 
 	// Rest better be just spaces:
 	for (; index < tail; index++) {
 		c = GET_ANY_CHAR(src, index);
-		if (!IS_SPACE(c)) Trap_DEAD_END(RE_INVALID_CHARS);
+		if (!IS_SPACE(c)) raise Error_0(RE_INVALID_CHARS);
 	}
 
 	*bp= 0;
 
 	len = bp - BIN_HEAD(BUF_FORM);
-	if (len == 0) Trap_DEAD_END(RE_TOO_SHORT);
+	if (len == 0) raise Error_0(RE_TOO_SHORT);
 
 	if (length) *length = len;
 
@@ -145,39 +146,57 @@
 
 /*********************************************************************
 **
-*/	REBSER *Prep_Bin_Str(REBVAL *val, REBCNT *index, REBCNT *length)
+*/	REBSER *Temp_Bin_Str_Managed(REBVAL *val, REBCNT *index, REBCNT *length)
 /*
 **	Determines if UTF8 conversion is needed for a series before it
 **	is used with a byte-oriented function.
 **
-**	If conversion is needed, a temp series is returned with the UTF8.
-**	Otherwise, the source series is returned as-is.
+**	If conversion is needed, a UTF8 series will be created.  Otherwise,
+**	the source series is returned as-is.
 **
-**	The UTF8 flags that val is converted to UTF8 during qualification.
+**	Note: This routine should only be used to generate a value used
+**	for temporary purposes, because it has a "surprising variance"
+**	regarding its input.  If the value's series can be reused, it is--
+**	and this depends on an implementation detail of internal encoding
+**	that the user should not be aware of (they need not know if the
+**	internal representation of an ASCII string uses 1, 2, or however
+**	many bytes).  But copying vs. non-copying means the resulting
+**	data might or might not have previous values available to step
+**	back into from the originating series!
 **
-**	Do not recursively use it (because of internal buffer).
+**	!!! Should performance dictate it, the callsites could be
+**	adapted to know whether this produced a new series or not, and
+**	instead of managing a created result they could be responsible
+**	for freeing it if so.
 **
 ***********************************************************************/
 {
-	REBCNT idx  = VAL_INDEX(val);
-	REBCNT len;
-	REBSER *ser = 0;
+	REBCNT len = (length && *length) ? *length : VAL_LEN(val);
+	REBSER *series;
 
-	len = (length && *length) ? *length : VAL_LEN(val);
+	assert(IS_BINARY(val) || ANY_STR(val));
 
-	// Is it binary? If so, then no conversion needed.
-	if (IS_BINARY(val) || len == 0)
-		ser = VAL_SERIES(val);
-	else // Convert it if 16-bit or has latin-1 upper chars.
-		if ((ser = Encode_UTF8_Value(val, len, ENCF_NO_COPY))) {
-			idx = 0;
-			len = SERIES_TAIL(ser);
-		}
-		else ser = VAL_SERIES(val);
+	if (len == 0 || IS_BINARY(val) || VAL_STR_IS_ASCII(val)) {
+		// If it's zero length, BINARY!, or an ANY-STRING! whose bytes are
+		// all values less than 128, we reuse the series.
 
-	if (index) *index = idx;
-	if (length) *length = len;
-	return ser;
+		series = VAL_SERIES(val);
+		ASSERT_SERIES_MANAGED(series);
+
+		if (index) *index = VAL_INDEX(val);
+		if (length) *length = len;
+	}
+	else {
+		// UTF-8 conversion is required, and we manage the result.
+
+		series = Make_UTF8_From_Any_String(val, len, ENCF_OS_CRLF);
+		MANAGE_SERIES(series);
+
+		if (index) *index = 0;
+		if (length) *length = SERIES_TAIL(series);
+	}
+
+	return series;
 }
 
 
@@ -319,7 +338,7 @@ static REBYTE seed_str[SEED_LEN] = {
 			klen = VAL_LEN(val);
 			break;
 		case REB_STRING:
-			ser = Prep_Bin_Str(val, &i, &klen); // result may be a SHARED BUFFER!
+			ser = Temp_Bin_Str_Managed(val, &i, &klen);
 			kp = BIN_SKIP(ser, i);
 			break;
 		case REB_INTEGER:
@@ -705,7 +724,7 @@ static REBYTE seed_str[SEED_LEN] = {
 
 	// String series:
 
-	if (IS_PROTECT_SERIES(VAL_SERIES(val))) Trap(RE_PROTECTED);
+	if (IS_PROTECT_SERIES(VAL_SERIES(val))) raise Error_0(RE_PROTECTED);
 
 	len = Partial(val, 0, part, 0);
 	n = VAL_INDEX(val);

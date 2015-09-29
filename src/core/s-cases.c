@@ -938,3 +938,14 @@ static const REBUNI Char_Cases[] = {
 	}
 }
 
+
+/***********************************************************************
+**
+*/	void Shutdown_Char_Cases(void)
+/*
+***********************************************************************/
+{
+	FREE_ARRAY(REBUNI, UNICODE_CASES, Upper_Cases);
+	FREE_ARRAY(REBUNI, UNICODE_CASES, Lower_Cases);
+	FREE_ARRAY(REBYTE, 34, White_Chars);
+}

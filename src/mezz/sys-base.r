@@ -26,16 +26,15 @@ REBOL [
 native: none ; for boot only
 action: none ; for boot only
 
-do*: func [
+do*: function [
 	{SYS: Called by system for DO on datatypes that require special handling.}
-	value [file! url! string! binary!]
+	value [file! url! string! binary! tag!]
 	/args "If value is a script, this will set its system/script/args"
 	arg   "Args passed to a script (normally a string)"
 	/next "Do next expression only, return it, update block variable"
 	var [word!] "Variable updated with new block position"
-	/local data file spec dir hdr scr mod?
 ][
-	; This code is only called for urls, files, and strings.
+	; This code is only called for urls, files, strings, and tags.
 	; DO of functions, blocks, paths, and other do-able types is done in the
 	; native, and this code is not called.
 	; Note that DO of file path evaluates in the directory of the target file.
@@ -45,14 +44,57 @@ do*: func [
 	;       directories or media.
 	;       Currently, load of URL has no special block forms.
 
+	; !!! DEMONSTRATION OF CONCEPT... this translates a tag into a URL!, but
+	; it should be using a more "official" URL instead of on individuals
+	; websites.  There should also be some kind of local caching facility.
+	;
+	if tag? value [
+		if value = <r3-legacy> [
+			; Special compatibility tag... Rebol2 and R3-Alpha will ignore the
+			; DO of a <tag>, so this is a no-op in them.
+			;
+			return r3-legacy* ;-- defined in %mezz-legacy.r
+		]
+
+		; Convert value into a URL!
+		value: switch/default value [
+			; Special proposals
+			<proposals> [https://raw.githubusercontent.com/hostilefork/rebol-proposals/master/all-proposals.reb]
+
+			; Encodings and data formats
+			<json> [http://reb4.me/r3/json.reb]
+			<xml> [http://reb4.me/r3/altxml.reb]
+
+			; Web services
+			<amazon-s3> [http://reb4.me/r3/s3.reb]
+			<twitter> [https://raw.githubusercontent.com/gchiu/rebolbot/master/twitter.r3]
+			<trello> [http://codeconscious.com/rebol-scripts/trello.r]
+
+			; Dialects
+			<rebmu> [https://raw.githubusercontent.com/hostilefork/rebmu/master/rebmu.reb]
+		][
+			fail [
+				{Module} value {not in "rebol.org index" (hardcoded for now)}
+			]
+		]
+	]
+
+	original-path: what-dir
+
+	; If a file is being mentioned as a DO location and the "current path"
+	; is a URL!, then adjust the value to be a URL! based from that path.
+	if all [url? original-path  file? value] [
+		 value: join original-path value
+	]
+
 	; Load the data, first so it will error before change-dir
 	data: load/header/type value 'unbound ; unbound so DO-NEEDS runs before INTERN
 	; Get the header and advance 'data to the code position
 	hdr: first+ data  ; object or none
 	; data is a block! here, with the header object in the first position back
-	mod?: 'module = select hdr 'type
+	is-module: 'module = select hdr 'type
 
-	either all [string? value  not mod?] [
+	either all [string? value  not is-module] [
 		; Return result without script overhead
 		do-needs hdr  ; Load the script requirements
 		if empty? data [if var [set var data]  exit] ; Shortcut return empty
@@ -60,10 +102,20 @@ do*: func [
 		catch/quit either var [[do/next data var]] [data]
 	][ ; Otherwise we are in script mode
 
-		; Do file in directory if necessary
-		dir: none ; in case of /local hack
-		if all [file? value  file: find/last/tail value slash] [
-			dir: what-dir ; save the current directory for later restoration
+		; When we run a script, the "current" directory is changed to the
+		; directory of that script.  This way, relative path lookups to
+		; find dependent files will look relative to the script.
+		;
+		; We want this behavior for both FILE! and for URL!, which means
+		; that the "current" path may become a URL!.  This can be processed
+		; with change-dir commands, but it will be protocol dependent as
+		; to whether a directory listing would be possible (HTTP does not
+		; define a standard for that)
+		;
+		if all [
+			any [file? value  url? value]
+			file: find/last/tail value slash
+		][
 			change-dir copy/part value file
 		]
 
@@ -79,14 +131,14 @@ do*: func [
 
 		; Print out the script info
 		boot-print [
-			pick ["Module:" "Script:"] mod?  mold select hdr 'title
+			(either is-module "Module:" "Script:")  mold select hdr 'title
 			"Version:" select hdr 'version
 			"Date:" select hdr 'date
 		]
 
-		also
+		also (
 			; Eval the block or make the module, returned
-			either mod? [ ; Import the module and set the var
+			either is-module [ ; Import the module and set the var
 				spec: reduce [hdr data do-needs/no-user hdr]
 				also import catch/quit [make module! spec]
 					if var [set var tail data]
@@ -95,12 +147,16 @@ do*: func [
 				intern data   ; Bind the user script
 				catch/quit either var [[do/next data var]] [data]
 			]
+		)(
 			; Restore system/script and the dir
-			all [system/script: :scr  dir  change-dir dir]
+			system/script: :scr
+			if original-path [change-dir original-path]
+		)
 	]
 ]
 
 make-module*: func [
+	<transparent>
 	"SYS: Called by system on MAKE of MODULE! datatype."
 	spec [block!] "As [spec-block body-block opt-mixins-object]"
 	/local body obj mixins hidden w
@@ -201,7 +257,7 @@ export: func [
 	"Low level export of values (e.g. functions) to lib."
 	words [block!] "Block of words (already defined in local context)"
 ][
-	foreach word words [repend lib [word get word]]
+	for-each word words [repend lib [word get word]]
 ]
 
 assert-utf8: function [

@@ -30,26 +30,38 @@
 #include "sys-core.h"
 
 
-/***********************************************************************
-**
-*/	const REBU64 Typesets[] =
-/*
-**		Order of symbols is important- used below for Make_Typeset().
-**
-************************************************************************/
-{
-	1, 0, // First (0th) typeset is not valid
-	SYM_ANY_TYPEX,     ((REBU64)1<<REB_MAX)-2, // do not include END!
-	SYM_ANY_WORDX,     TS_WORD,
-	SYM_ANY_PATHX,     TS_PATH,
-	SYM_ANY_FUNCTIONX, TS_FUNCTION,
-	SYM_NUMBERX,       TS_NUMBER,
-	SYM_SCALARX,       TS_SCALAR,
-	SYM_SERIESX,       TS_SERIES,
-	SYM_ANY_STRINGX,   TS_STRING,
-	SYM_ANY_OBJECTX,   TS_OBJECT,
-	SYM_ANY_ARRAYX,    TS_ARRAY,
-	0, 0
+
+//
+// symbol-to-typeset-bits mapping table
+//
+// NOTE: Order of symbols is important, because this is used to build a
+// list of typeset word symbols ordered relative to their symbol #,
+// which lays out the legal unbound WORD! values you can use during
+// a MAKE TYPESET! (bound words will be looked up as variables to see
+// if they contain a DATATYPE! or a typeset, but general reduction is
+// not performed on the block passed in.)
+//
+// !!! Is it necessary for MAKE TYPESET! to allow unbound words at all,
+// or should the typesets be required to be in bound variables?  Should
+// clients be asked to pass in only datatypes and typesets, hence doing
+// their own reduce before trying to make a typeset out of a block?
+//
+const struct {
+	REBCNT sym;
+	REBU64 bits;
+} Typesets[] = {
+	{SYM_ANY_TYPEX, (cast(REBU64, 1) << REB_MAX) - 2}, // do not include END!
+	{SYM_ANY_WORDX, TS_WORD},
+	{SYM_ANY_PATHX, TS_PATH},
+	{SYM_ANY_FUNCTIONX, TS_FUNCTION},
+	{SYM_ANY_NUMBERX, TS_NUMBER},
+	{SYM_ANY_SCALARX, TS_SCALAR},
+	{SYM_ANY_SERIESX, TS_SERIES},
+	{SYM_ANY_STRINGX, TS_STRING},
+	{SYM_ANY_OBJECTX, TS_OBJECT},
+	{SYM_ANY_ARRAYX, TS_ARRAY},
+
+	{SYM_0, 0}
 };
 
 
@@ -79,13 +91,43 @@
 
 	Set_Root_Series(ROOT_TYPESETS, Make_Array(40), "typeset presets");
 
-	for (n = 0; Typesets[n]; n += 2) {
+	for (n = 0; Typesets[n].sym != SYM_0; n++) {
 		value = Alloc_Tail_Array(VAL_SERIES(ROOT_TYPESETS));
 		VAL_SET(value, REB_TYPESET);
-		VAL_TYPESET(value) = Typesets[n+1];
-		if (Typesets[n] > 1)
-			*Append_Frame(Lib_Context, 0, (REBCNT)(Typesets[n])) = *value;
+		VAL_TYPESET_BITS(value) = Typesets[n].bits;
+
+		*Append_Frame(Lib_Context, NULL, Typesets[n].sym) = *value;
 	}
+}
+
+
+/***********************************************************************
+**
+*/	void Val_Init_Typeset(REBVAL *value, REBU64 bits, REBCNT sym)
+/*
+**		Note: sym is optional, and can be SYM_0
+**
+***********************************************************************/
+{
+	VAL_SET(value, REB_TYPESET);
+	VAL_TYPESET_SYM(value) = sym;
+	VAL_TYPESET_BITS(value) = bits;
+}
+
+
+/***********************************************************************
+**
+*/	REBCNT *Val_Typeset_Sym_Ptr_Debug(const REBVAL *typeset)
+/*
+**		!!! Needed temporarily due to reorganization (though it should
+**		be checked via C++ build's static typing eventually...)
+**
+***********************************************************************/
+{
+	assert(IS_TYPESET(typeset));
+	// loses constness, but that's not the particular concern needed
+	// to be caught in the wake of the UNWORD => TYPESET change...
+	return cast(REBCNT*, &typeset->data.typeset.sym);
 }
 
 
@@ -102,7 +144,7 @@
 	REBCNT sym;
 	REBSER *types = VAL_SERIES(ROOT_TYPESETS);
 
-	VAL_TYPESET(value) = 0;
+	VAL_TYPESET_BITS(value) = 0;
 
 	for (; NOT_END(block); block++) {
 		val = NULL;
@@ -111,21 +153,21 @@
 			sym = VAL_WORD_SYM(block);
 			if (VAL_WORD_FRAME(block)) { // Get word value
 				val = GET_VAR(block);
-			} else if (sym < REB_MAX) { // Accept datatype word
-				TYPE_SET(value, VAL_WORD_SYM(block)-1);
+			} else if (IS_KIND_SYM(sym)) { // Accept datatype word
+				TYPE_SET(value, KIND_FROM_SYM(sym));
 				continue;
 			} // Special typeset symbols:
 			else if (sym >= SYM_ANY_TYPEX && sym < SYM_DATATYPES)
-				val = BLK_SKIP(types, sym - SYM_ANY_TYPEX + 1);
+				val = BLK_SKIP(types, sym - SYM_ANY_TYPEX);
 		}
 		if (!val) val = block;
 		if (IS_DATATYPE(val)) {
 			TYPE_SET(value, VAL_TYPE_KIND(val));
 		} else if (IS_TYPESET(val)) {
-			VAL_TYPESET(value) |= VAL_TYPESET(val);
+			VAL_TYPESET_BITS(value) |= VAL_TYPESET_BITS(val);
 		} else {
 			if (load) return FALSE;
-			Trap_Arg_DEAD_END(block);
+			raise Error_Invalid_Arg(block);
 		}
 	}
 
@@ -200,7 +242,7 @@
 	for (n = 0; n < REB_MAX; n++) {
 		if (TYPE_CHECK(tset, n)) {
 			value = Alloc_Tail_Array(block);
-			Set_Datatype(value, n);
+			Val_Init_Datatype(value, n);
 		}
 	}
 	return block;
@@ -222,7 +264,7 @@
 		if (IS_DATATYPE(arg)) {
 			DECIDE(TYPE_CHECK(val, VAL_TYPE_KIND(arg)));
 		}
-		Trap_Arg_DEAD_END(arg);
+		raise Error_Invalid_Arg(arg);
 
 	case A_MAKE:
 	case A_TO:
@@ -233,29 +275,29 @@
 		}
 	//	if (IS_NONE(arg)) {
 	//		VAL_SET(arg, REB_TYPESET);
-	//		VAL_TYPESET(arg) = 0L;
+	//		VAL_TYPESET_BITS(arg) = 0L;
 	//		return R_ARG2;
 	//	}
 		if (IS_TYPESET(arg)) return R_ARG2;
-		Trap_Make_DEAD_END(REB_TYPESET, arg);
+		raise Error_Bad_Make(REB_TYPESET, arg);
 
 	case A_AND:
 	case A_OR:
 	case A_XOR:
-		if (IS_DATATYPE(arg)) VAL_TYPESET(arg) = TYPESET(VAL_TYPE_KIND(arg));
-		else if (!IS_TYPESET(arg)) Trap_Arg_DEAD_END(arg);
+		if (IS_DATATYPE(arg)) VAL_TYPESET_BITS(arg) = FLAGIT_64(VAL_TYPE_KIND(arg));
+		else if (!IS_TYPESET(arg)) raise Error_Invalid_Arg(arg);
 
-		if (action == A_OR) VAL_TYPESET(val) |= VAL_TYPESET(arg);
-		else if (action == A_AND) VAL_TYPESET(val) &= VAL_TYPESET(arg);
-		else VAL_TYPESET(val) ^= VAL_TYPESET(arg);
+		if (action == A_OR) VAL_TYPESET_BITS(val) |= VAL_TYPESET_BITS(arg);
+		else if (action == A_AND) VAL_TYPESET_BITS(val) &= VAL_TYPESET_BITS(arg);
+		else VAL_TYPESET_BITS(val) ^= VAL_TYPESET_BITS(arg);
 		return R_ARG1;
 
 	case A_COMPLEMENT:
-		VAL_TYPESET(val) = ~VAL_TYPESET(val);
+		VAL_TYPESET_BITS(val) = ~VAL_TYPESET_BITS(val);
 		return R_ARG1;
 
 	default:
-		Trap_Action_DEAD_END(REB_TYPESET, action);
+		raise Error_Illegal_Action(REB_TYPESET, action);
 	}
 
 is_true:

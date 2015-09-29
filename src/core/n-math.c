@@ -88,7 +88,7 @@ enum {SINE, COSINE, TANGENT};
 ***********************************************************************/
 {
 	REBDEC dval = AS_DECIMAL(value);
-	if (kind != TANGENT && (dval < -1 || dval > 1)) Trap(RE_OVERFLOW);
+	if (kind != TANGENT && (dval < -1 || dval > 1)) raise Error_0(RE_OVERFLOW);
 
 	if (kind == SINE) dval = asin(dval);
 	else if (kind == COSINE) dval = acos(dval);
@@ -133,7 +133,7 @@ enum {SINE, COSINE, TANGENT};
 ***********************************************************************/
 {
 	REBDEC dval = Trig_Value(D_ARG(1), !D_REF(2), TANGENT);
-	if (Eq_Decimal(fabs(dval), pi1 / 2.0)) Trap_DEAD_END(RE_OVERFLOW);
+	if (Eq_Decimal(fabs(dval), pi1 / 2.0)) raise Error_0(RE_OVERFLOW);
 	SET_DECIMAL(D_OUT, tan(dval));
 	return R_OUT;
 }
@@ -195,7 +195,7 @@ enum {SINE, COSINE, TANGENT};
 ***********************************************************************/
 {
 	REBDEC dval = AS_DECIMAL(D_ARG(1));
-	if (dval <= 0) Trap_DEAD_END(RE_POSITIVE);
+	if (dval <= 0) raise Error_0(RE_POSITIVE);
 	SET_DECIMAL(D_OUT, log10(dval));
 	return R_OUT;
 }
@@ -208,7 +208,7 @@ enum {SINE, COSINE, TANGENT};
 ***********************************************************************/
 {
 	REBDEC dval = AS_DECIMAL(D_ARG(1));
-	if (dval <= 0) Trap_DEAD_END(RE_POSITIVE);
+	if (dval <= 0) raise Error_0(RE_POSITIVE);
 	SET_DECIMAL(D_OUT, log(dval) / LOG2);
 	return R_OUT;
 }
@@ -221,7 +221,7 @@ enum {SINE, COSINE, TANGENT};
 ***********************************************************************/
 {
 	REBDEC dval = AS_DECIMAL(D_ARG(1));
-	if (dval <= 0) Trap_DEAD_END(RE_POSITIVE);
+	if (dval <= 0) raise Error_0(RE_POSITIVE);
 	SET_DECIMAL(D_OUT, log(dval));
 	return R_OUT;
 }
@@ -234,7 +234,7 @@ enum {SINE, COSINE, TANGENT};
 ***********************************************************************/
 {
 	REBDEC dval = AS_DECIMAL(D_ARG(1));
-	if (dval < 0) Trap_DEAD_END(RE_POSITIVE);
+	if (dval < 0) raise Error_0(RE_POSITIVE);
 	SET_DECIMAL(D_OUT, sqrt(dval));
 	return R_OUT;
 }
@@ -265,15 +265,18 @@ enum {SINE, COSINE, TANGENT};
 	} else {
 		if (b >= 64) {
 			if (D_REF(3)) VAL_INT64(a) = 0;
-			else if (VAL_INT64(a)) Trap_DEAD_END(RE_OVERFLOW);
+			else if (VAL_INT64(a)) raise Error_0(RE_OVERFLOW);
 		} else
 			if (D_REF(3)) VAL_UNT64(a) <<= b;
 			else {
 				c = (REBU64)MIN_I64 >> b;
 				d = VAL_INT64(a) < 0 ? -VAL_UNT64(a) : VAL_UNT64(a);
-				if (c <= d)
-					if ((c < d) || (VAL_INT64(a) >= 0)) Trap_DEAD_END(RE_OVERFLOW);
-					else VAL_INT64(a) = MIN_I64;
+				if (c <= d) {
+					if ((c < d) || (VAL_INT64(a) >= 0))
+						raise Error_0(RE_OVERFLOW);
+
+					VAL_INT64(a) = MIN_I64;
+				}
 				else
 					VAL_INT64(a) <<= b;
 			}
@@ -284,7 +287,7 @@ enum {SINE, COSINE, TANGENT};
 
 /***********************************************************************
 **
-*/	REBINT Compare_Modify_Values(REBVAL *a, REBVAL *b, REBINT strictness)
+*/	REBOOL Compare_Modify_Values(REBVAL *a, REBVAL *b, REBINT strictness)
 /*
 **		Compare 2 values depending on level of strictness.  It leans
 **		upon the per-type comparison functions (that have a more typical
@@ -353,6 +356,32 @@ enum {SINE, COSINE, TANGENT};
 			}
 			break;
 
+		case REB_DATATYPE:
+			if (ANY_WORD(b)) {
+				// Let DATATYPE! compare as a word: `(type-of 3) = 'integer!`
+				REBCNT sym = VAL_TYPE_SYM(a); // save before modify
+
+			#if !defined(NDEBUG)
+				if (LEGACY(OPTIONS_DATATYPE_WORD_STRICT)) break;
+			#endif
+
+			#if !defined(NDEBUG)
+				if (
+					LEGACY(OPTIONS_GROUP_NOT_PAREN)
+					&& VAL_WORD_SYM(b) == SYM_GROUPX
+					&& VAL_TYPE_KIND(a) == REB_PAREN
+				) {
+					// If comparing PAREN! datatype to GROUP! word, mutate
+					// the fake word made from datatype to have group symbol
+					sym = SYM_GROUPX;
+				}
+			#endif
+
+				Val_Init_Word_Unbound(a, REB_WORD, sym);
+				goto compare;
+			}
+			break;
+
 		case REB_WORD:
 		case REB_SET_WORD:
 		case REB_GET_WORD:
@@ -360,6 +389,30 @@ enum {SINE, COSINE, TANGENT};
 		case REB_REFINEMENT:
 		case REB_ISSUE:
 			if (ANY_WORD(b)) goto compare;
+
+			if (IS_DATATYPE(b)) {
+				// Let DATATYPE! compare as a word: `(type-of 3) = 'integer!`
+				REBCNT sym = VAL_TYPE_SYM(b); // save before modify
+
+			#if !defined(NDEBUG)
+				if (LEGACY(OPTIONS_DATATYPE_WORD_STRICT)) break;
+			#endif
+
+			#if !defined(NDEBUG)
+				if (
+					LEGACY(OPTIONS_GROUP_NOT_PAREN)
+					&& VAL_WORD_SYM(a) == SYM_GROUPX
+					&& VAL_TYPE_KIND(b) == REB_PAREN
+				) {
+					// If comparing PAREN! datatype to GROUP! word, mutate
+					// the fake word made from datatype to have group symbol
+					sym = SYM_GROUPX;
+				}
+			#endif
+
+				Val_Init_Word_Unbound(b, REB_WORD, sym);
+				goto compare;
+			}
 			break;
 
 		case REB_STRING:
@@ -373,15 +426,15 @@ enum {SINE, COSINE, TANGENT};
 
 		if (strictness == 0 || strictness == 1) return FALSE;
 		//if (strictness >= 2)
-		Trap2_DEAD_END(RE_INVALID_COMPARE, Of_Type(a), Of_Type(b));
+		raise Error_2(RE_INVALID_COMPARE, Type_Of(a), Type_Of(b));
 	}
 
 compare:
 	// At this point, both args are of the same datatype.
 	if (!(code = Compare_Types[VAL_TYPE(a)])) return FALSE;
 	result = code(a, b, strictness);
-	if (result < 0) Trap2_DEAD_END(RE_INVALID_COMPARE, Of_Type(a), Of_Type(b));
-	return result;
+	if (result < 0) raise Error_2(RE_INVALID_COMPARE, Type_Of(a), Type_Of(b));
+	return result ? TRUE : FALSE;
 }
 
 

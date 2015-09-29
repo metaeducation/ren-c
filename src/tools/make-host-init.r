@@ -19,6 +19,8 @@ REBOL [
 	}
 ]
 
+do %common.r
+
 print "--- Make Host Init Code ---"
 ;print ["REBOL version:" system/version]
 
@@ -152,7 +154,7 @@ load-files: func [
 			system/product: (to lit-word! system/options/args/1)
 		]
 	]
-	foreach file file-list [
+	for-each file file-list [
 		print ["loading:" file]
 		file: load/header file
 		header: file/1

@@ -38,7 +38,7 @@ probe: func [
 		]
 		block? :name [
 			out: make string! 50
-			foreach word name [
+			for-each word name [
 				either any [
 					word? :word
 					path? :word

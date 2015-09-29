@@ -117,6 +117,8 @@ options: context [  ; Options supplied to REBOL during startup
 	path:           ; Where script was started or the startup dir
 		none
 
+	current-path:	; Current URL! or FILE! path to use for relative lookups
+
 	flags:          ; Boot flag bits (see system/catalog/boot-flags)
 	script:         ; Filename of script to evaluate
 	args:           ; Command line arguments passed to script
@@ -137,10 +139,17 @@ options: context [  ; Options supplied to REBOL during startup
 	file-types: []
 	result-types: none
 
-	; Legacy Behaviors Options (enabled if R3_LEGACY=1 set in OS environment)
+	; Legacy Behaviors Options (paid attention to only by debug builds)
 
 	exit-functions-only: false
 	broken-case-semantics: false
+	do-runs-functions: false
+	do-raises-errors: false
+	datatype-word-strict: false
+	group-not-paren: false ;; bias the default to PAREN! vs GROUP! (for now...)
+	refinements-true: false
+	no-switch-evals: false
+	no-switch-fallthrough: false
 ]
 
 script: context [

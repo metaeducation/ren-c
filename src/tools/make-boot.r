@@ -97,7 +97,7 @@ build: context [features: [help-strings]]
 
 up-word: func [w] [
 	w: uppercase form w
-	foreach [f t] [
+	for-each [f t] [
 		#"-" #"_"
 	][replace/all w f t]
 	w
@@ -109,7 +109,7 @@ emit: func [data] [repend out data]
 
 to-c-name: func [word] [
 	word: form word
-	foreach [f t] [
+	for-each [f t] [
 		"..." "ellipsis"
 		#"-" #"_"
 		#"." #"_"
@@ -193,7 +193,7 @@ emit {
 ^{
 }
 
-foreach-record-NO-RETURN type boot-types [
+for-each-record-NO-RETURN type boot-types [
 	emit-line/var "T_" type/class type/name
 ]
 emit-end
@@ -209,7 +209,7 @@ emit {
 ^{
 }
 
-foreach-record-NO-RETURN type boot-types [
+for-each-record-NO-RETURN type boot-types [
 	emit-line/var "PD_" switch/default type/path [
 		* [type/class]
 		- [0]
@@ -231,7 +231,7 @@ emit newline
 
 types-used: []
 
-foreach-record-NO-RETURN type boot-types [
+for-each-record-NO-RETURN type boot-types [
 	if all [
 		type/make = '*
 		word? type/class
@@ -259,7 +259,7 @@ emit {
 ^{
 }
 
-foreach-record-NO-RETURN type boot-types [
+for-each-record-NO-RETURN type boot-types [
 	either type/make = '* [
 		emit-line/var "MT_" type/class type/name
 	][
@@ -282,7 +282,7 @@ emit newline
 
 types-used: []
 
-foreach-record-NO-RETURN type boot-types [
+for-each-record-NO-RETURN type boot-types [
 	if all [
 		word? type/class
 		not find types-used type/class
@@ -308,7 +308,7 @@ emit {
 ^{
 }
 
-foreach-record-NO-RETURN type boot-types [
+for-each-record-NO-RETURN type boot-types [
 	emit-line/var "CT_" type/class type/name
 ]
 emit-end
@@ -335,7 +335,7 @@ write inc/tmp-comptypes.h out
 ;^{
 ;}
 ;
-;foreach-record-NO-RETURN type boot-types [
+;for-each-record-NO-RETURN type boot-types [
 ;	f: "Mold_"
 ;	switch/default type/mold [
 ;		* [t: type/class]
@@ -358,7 +358,7 @@ write inc/tmp-comptypes.h out
 ;***********************************************************************/
 ;^{
 ;}
-;foreach-record-NO-RETURN type boot-types [
+;for-each-record-NO-RETURN type boot-types [
 ;	f: "Mold_"
 ;	switch/default type/form [
 ;		*  [t: type/class]
@@ -398,7 +398,7 @@ emit [
 
 datatypes: []
 n: 0
-foreach-record-NO-RETURN type boot-types [
+for-each-record-NO-RETURN type boot-types [
 	append datatypes type/name
 	emit-line "REB_" type/name n
 	n: n + 1
@@ -416,7 +416,7 @@ emit {
 }
 
 new-types: []
-foreach-record-NO-RETURN type boot-types [
+for-each-record-NO-RETURN type boot-types [
 	append new-types to-word join type/name "!"
 	str: uppercase form type/name
 	replace/all str #"-" #"_"
@@ -436,8 +436,8 @@ emit {
 
 typeset-sets: []
 
-foreach-record-NO-RETURN type boot-types [
-	foreach ts compose [(type/typesets)] [
+for-each-record-NO-RETURN type boot-types [
+	for-each ts compose [(type/typesets)] [
 		spot: any [
 			select typeset-sets ts
 			first back insert tail typeset-sets reduce [ts copy []]
@@ -447,9 +447,9 @@ foreach-record-NO-RETURN type boot-types [
 ]
 remove/part typeset-sets 2 ; the - markers
 
-foreach [ts types] typeset-sets [
+for-each [ts types] typeset-sets [
 	emit ["#define TS_" up-word ts " ("]
-	foreach t types [
+	for-each t types [
 		emit ["((REBU64)1<<REB_" up-word t ")|"]
 	]
 	append remove back tail out ")^/"
@@ -469,7 +469,7 @@ rxt-record: [type offset size]
 ; Generate type table with necessary gaps
 rxt-types: []
 n: 0
-foreach :rxt-record ext-types [
+for-each :rxt-record ext-types [
 	if integer? offset [
 		insert/dup tail rxt-types 0 offset - n
 		n: offset
@@ -488,7 +488,7 @@ enum REBOL_Ext_Types
 }
 ]
 n: 0
-foreach :rxt-record ext-types [
+for-each :rxt-record ext-types [
 	either integer? offset [
 		emit-line "RXT_" rejoin [type " = " offset] n
 	][
@@ -519,7 +519,7 @@ extern const REBRXT Reb_To_RXT[REB_MAX];
 ^{
 }
 
-foreach-record-NO-RETURN type boot-types [
+for-each-record-NO-RETURN type boot-types [
 	either find ext-types type/name [
 		emit-line "RXT_" type/name type/name
 	][
@@ -538,7 +538,7 @@ emit {
 }
 
 n: 0
-foreach type rxt-types [
+for-each type rxt-types [
 	either word? type [emit-line "REB_" type n][
 		emit-line "" 0 n
 	]
@@ -556,7 +556,7 @@ emit {
 }
 
 n: 0
-foreach type rxt-types [
+for-each type rxt-types [
 	either all [
 		word? type
 		rec: find ext-types type
@@ -571,7 +571,7 @@ emit-end
 
 emit {
 #define RXT_ALLOWED_TYPES (}
-foreach type next rxt-types [
+for-each type next rxt-types [
 	if word? type [
 		emit replace join "((u64)" uppercase rejoin ["1<<REB_" type ") \^/"] #"-" #"_"
 		emit "|"
@@ -621,15 +621,44 @@ emit {
 }
 
 boot-strings: load %strings.r
+boot-errors: load %errors.r ;-- used also to make %tmp-errnums.r below
 
 code: ""
 n: 0
-foreach str boot-strings [
+for-each str boot-strings [
 	either set-word? :str [
 		emit-line/define "#define RS_" to word! str n ;R3
 	][
 		n: n + 1
 		append code str
+		append code null
+	]
+]
+
+; Some errors occur before we have the boot process is far enough along to
+; have the error messages loaded in as Rebol strings in the boot block's
+; CAT_ERRORS structure.  Adding their strings to %errors.r and keeping them
+; in sync with a "pre-boot" copy in %strings.r was a manual process.  This
+; makes format strings from the STRING! or BLOCK! in %errors.r automatically.
+;
+for-each [cat msgs] boot-errors [
+	unless cat = quote Internal: [continue]
+
+	emit-line/define "#define RS_" 'ERROR n
+	for-each [word val] skip msgs 4 [
+		n: n + 1
+		case [
+			string? val [append code val]
+			block? val [
+				; %strings.r strings use printf-like convention, %d tells
+				; FORM to treat the vararg REBVAL* as an integer.
+				;
+				append code rejoin map-each item val [
+					either get-word? item [{ %v }] [item]
+				]
+			]
+			true [fail {Non-STRING! non-BLOCK! as %errors.r value}]
+		]
 		append code null
 	]
 ]
@@ -649,11 +678,11 @@ emit {
 **
 ***********************************************************************/
 ^{
-	SYM_NOT_USED = 0,
+	SYM_0 = 0,
 }
 
 n: 1
-foreach-record-NO-RETURN type boot-types [
+for-each-record-NO-RETURN type boot-types [
 	emit-line "SYM_" join type/name "_type" n
 	n: n + 1
 ]
@@ -662,7 +691,7 @@ boot-words: load %words.r
 
 replace boot-words '*port-modes* load %modes.r
 
-foreach word boot-words [
+for-each word boot-words [
 	emit-line "SYM_" word reform [n "-" word]
 	n: n + 1
 ]
@@ -684,7 +713,7 @@ emit {
 boot-actions: load %actions.r
 n: 1
 emit-line "A_" "type = 0" "Handled by interpreter"
-foreach word boot-actions [
+for-each word boot-actions [
 	if set-word? :word [
 		emit-line "A_" to word! :word n ;R3
 		n: n + 1
@@ -732,14 +761,14 @@ make-obj-defs: func [obj prefix depth /local f] [
 	uppercase prefix
 	emit ["enum " prefix "object {" newline]
 	emit-line prefix "SELF = 0" none
-	foreach field words-of obj [ ;R3
+	for-each field words-of obj [ ;R3
 		emit-line prefix field none
 	]
 	emit [tab uppercase join prefix "MAX^/"]
 	emit "};^/^/"
 
 	if depth > 1 [
-		foreach field words-of obj [ ;R3
+		for-each field words-of obj [ ;R3
 			f: join prefix [field #"_"]
 			replace/all f "-" "_"
 			all [
@@ -797,7 +826,7 @@ emit-head "Event Types" %reb-evtypes.h
 emit newline
 
 emit ["enum event_types {" newline]
-foreach field ob/view/event-types [
+for-each field ob/view/event-types [
 	emit-line "EVT_" field none
 ]
 emit [tab "EVT_MAX^/"]
@@ -805,7 +834,7 @@ emit "};^/^/"
 
 emit ["enum event_keys {" newline]
 emit-line "EVK_" "NONE" none
-foreach field ob/view/event-keys [
+for-each field ob/view/event-keys [
 	emit-line "EVK_" field none
 ]
 emit [tab "EVK_MAX^/"]
@@ -835,7 +864,7 @@ emit {
 }
 ; Generate ERROR object and append it to bootdefs.h:
 emit-line/code "REBVAL " 'self ";" ;R3
-foreach word words-of ob/standard/error [ ;R3
+for-each word words-of ob/standard/error [ ;R3
 	if word = 'near [word: 'nearest] ; prevents C problem
 	emit-line/code "REBVAL " word ";"
 ]
@@ -852,14 +881,13 @@ emit {
 ^{
 }
 
-boot-errors: load %errors.r
 err-list: make block! 200
 errs: false
 
-foreach [cat msgs] boot-errors [
+for-each [cat msgs] boot-errors [
 	code: second msgs
 	new1: true
-	foreach [word val] skip msgs 4 [
+	for-each [word val] skip msgs 4 [
 		err: uppercase form to word! word ;R3
 		replace/all err "-" "_"
 		if find err-list err [print ["DUPLICATE Error Constant:" err] errs: true]
@@ -875,12 +903,15 @@ foreach [cat msgs] boot-errors [
 	emit-line "RE_" join to word! cat "_max" none ;R3
 	emit newline
 ]
-if errs [wait 3 quit]
+
+if errs [fail "Invalid errors.r input"]
+
 emit-end
 
 emit {
-#define RE_NOTE RE_NO_LOAD
+#define RE_INTERNAL_FIRST RE_MISC // update if no longer first
 #define RE_USER RE_MESSAGE
+#define RE_MAX RE_USER_MAX // update if another category added
 }
 
 write inc/tmp-errnums.h out
@@ -895,7 +926,7 @@ emit {
 enum port_modes ^{
 }
 
-foreach word data [
+for-each word data [
 	emit-enum word
 ]
 emit-end
@@ -913,9 +944,9 @@ mezz-files: load %../mezz/boot-files.r ; base lib, sys, mezz
 
 ;append boot-mezz+ none ?? why was this needed?
 
-foreach section [boot-base boot-sys boot-mezz] [
+for-each section [boot-base boot-sys boot-mezz] [
 	set section make block! 200
-	foreach file first mezz-files [
+	for-each file first mezz-files [
 		append get section load join %../mezz/ file
 	]
 	remove-tests get section
@@ -927,7 +958,7 @@ foreach section [boot-base boot-sys boot-mezz] [
 ]
 
 boot-protocols: make block! 20
-foreach file first mezz-files [
+for-each file first mezz-files [
 	m: load/all join %../mezz/ file ; not REBOL word
 	append/only append/only boot-protocols m/2 skip m 2
 ]
@@ -970,7 +1001,7 @@ n: boot-sys
 
 nat-count: 0
 
-foreach val nats [
+for-each val nats [
 	if set-word? val [
 		emit-line/decl "REBNATIVE(" to word! val ");" ;R3
 		nat-count: nat-count + 1
@@ -981,7 +1012,7 @@ print [nat-count "natives"]
 
 emit [newline {const REBFUN Native_Funcs[} nat-count {] = ^{
 }]
-foreach val nats [
+for-each val nats [
 	if set-word? val [
 		emit-line/code "N_" to word! val "," ;R3
 	]
@@ -994,7 +1025,7 @@ emit newline
 ;where: find boot/script 'tests
 ;if where [
 ;	remove where
-;	foreach file sort load %../tests/ [
+;	for-each file sort load %../tests/ [
 ;		test: load join %../tests/ file
 ;		if test/1 <> 'skip-test [
 ;			where: insert where test
@@ -1005,7 +1036,7 @@ emit newline
 ;-- Build typespecs block (in same order as datatypes table):
 boot-typespecs: make block! 100
 specs: load %typespec.r
-foreach type datatypes [
+for-each type datatypes [
 	append/only boot-typespecs select specs type
 ]
 
@@ -1081,7 +1112,7 @@ typedef struct REBOL_Boot_Block ^{
 }
 ]
 
-foreach word sections [
+for-each word sections [
 	word: form word
 	remove/part word 5 ; boot_
 	emit-line/code "REBVAL " word ";"
@@ -1099,13 +1130,13 @@ typedef struct REBOL_Root_Context ^{
 }
 ]
 
-foreach word boot-root [
+for-each word boot-root [
 	emit-line/code "REBVAL " word ";"
 ]
 emit ["} ROOT_CTX;" lf lf]
 
 n: 0
-foreach word boot-root [
+for-each word boot-root [
 	emit-line/define "#define ROOT_" word join "(&Root_Context->" [lowercase replace/all form word #"-" #"_" ")"]
 	n: n + 1
 ]
@@ -1122,13 +1153,13 @@ typedef struct REBOL_Task_Context ^{
 }
 ]
 
-foreach word boot-task [
+for-each word boot-task [
 	emit-line/code "REBVAL " word ";"
 ]
 emit ["} TASK_CTX;" lf lf]
 
 n: 0
-foreach word boot-task [
+for-each word boot-task [
 	emit-line/define "#define TASK_" word join "(&Task_Context->" [lowercase replace/all form word #"-" #"_" ")"]
 	n: n + 1
 ]

@@ -214,11 +214,11 @@ load-boot-exts: function [
 
 	ext-objs: []
 
-	foreach [spec caller] boot-exts [
+	for-each [spec caller] boot-exts [
 		append ext-objs load-extension/dispatch spec caller
 	]
 
-	foreach ext ext-objs [
+	for-each ext ext-objs [
 		case/all [
 			word? set [hdr: code:] load-header/only/required ext/lib-boot [
 				cause-error 'syntax hdr ext  ; word returned is error code
@@ -365,7 +365,7 @@ do-needs: function [
 			case [
 				needs > system/version [cause-error 'syntax 'needs reduce ['core needs]]
 				3 >= length needs  none  ; no platform id
-				(needs and 0.0.0.255.255) != (system/version and 0.0.0.255.255) [
+				(needs and* 0.0.0.255.255) != (system/version and* 0.0.0.255.255) [
 					cause-error 'syntax 'needs reduce ['core needs] ; must match
 				]
 			]
@@ -649,7 +649,7 @@ import: function [
 		word? module [
 			; Module (as word!) is not loaded already, so let's try to find it.
 			file: append to file! module system/options/default-suffix
-			foreach path system/options/module-paths [
+			for-each path system/options/module-paths [
 				if set [name: mod:] apply :load-module [
 					path/:file version ver check sum no-share no-lib /import /as module
 				] [break]
@@ -744,6 +744,6 @@ test: [
 		[1 2 3] = probe xload/header %test-emb.r
 	]
 ]
-foreach t test [print either do t ['ok] [join "FAILED:" mold t] print ""]
+for-each t test [print either do t ['ok] [join "FAILED:" mold t] print ""]
 halt
 ]

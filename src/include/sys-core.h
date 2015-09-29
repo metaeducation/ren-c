@@ -171,7 +171,8 @@ enum {
 	MKS_POWER_OF_2	= 1 << 1,	// Round size up to a power of 2
 	MKS_EXTERNAL	= 1 << 2,	// Uses external pointer--don't alloc data
 	MKS_PRESERVE	= 1 << 3,	// "Remake" only (save what data possible)
-	MKS_LOCK		= 1 << 4	// series is unexpandable
+	MKS_LOCK		= 1 << 4,	// series is unexpandable
+	MKS_GC_MANUALS	= 1 << 5	// used in implementation of series itself
 };
 
 // Modes allowed by Copy_Block function:
@@ -185,13 +186,32 @@ enum {
 	COPY_SAME = 16
 };
 
-#define TS_NOT_COPIED (TYPESET(REB_IMAGE) | TYPESET(REB_VECTOR) | TYPESET(REB_TASK) | TYPESET(REB_PORT))
+#define TS_NOT_COPIED (FLAGIT_64(REB_IMAGE) | FLAGIT_64(REB_VECTOR) | FLAGIT_64(REB_TASK) | FLAGIT_64(REB_PORT))
 #define TS_STD_SERIES (TS_SERIES & ~TS_NOT_COPIED)
 #define TS_SERIES_OBJ ((TS_SERIES | TS_OBJECT) & ~TS_NOT_COPIED)
 #define TS_ARRAYS_OBJ ((TS_ARRAY | TS_OBJECT) & ~TS_NOT_COPIED)
 
-#define TS_FUNCLOS (TYPESET(REB_FUNCTION) | TYPESET(REB_CLOSURE))
+#define TS_FUNCLOS (FLAGIT_64(REB_FUNCTION) | FLAGIT_64(REB_CLOSURE))
 #define TS_CLONE ((TS_SERIES | TS_FUNCLOS) & ~TS_NOT_COPIED)
+
+// These are the types which have no need to be seen by the GC.  Note that
+// this list may change--for instance if garbage collection is added for
+// symbols, then word types and typesets would have to be checked too.  Some
+// are counterintuitive, for instance DATATYPE! contains a SPEC that is a
+// series and thus has to be checked...
+
+#define TS_NO_GC \
+	(FLAGIT_64(REB_END) | FLAGIT_64(REB_UNSET) | FLAGIT_64(REB_NONE) \
+	| FLAGIT_64(REB_LOGIC) | FLAGIT_64(REB_INTEGER) | FLAGIT_64(REB_DECIMAL) \
+	| FLAGIT_64(REB_PERCENT) | FLAGIT_64(REB_MONEY) | FLAGIT_64(REB_CHAR) \
+	| FLAGIT_64(REB_PAIR) | FLAGIT_64(REB_TUPLE) | FLAGIT_64(REB_TIME) \
+	| FLAGIT_64(REB_DATE) | FLAGIT_64(REB_TYPESET) | TS_WORD \
+	| FLAGIT_64(REB_HANDLE))
+
+#define TS_GC (~TS_NO_GC)
+
+// Garbage collection marker function (GC Hook)
+typedef void (*REBMRK)(void);
 
 // Modes allowed by Bind related functions:
 enum {
@@ -305,19 +325,18 @@ enum {
 
 // Encoding options:
 enum encoding_opts {
-	ENC_OPT_BIG,		// big endian (not little)
-	ENC_OPT_UTF8,		// UTF-8
-	ENC_OPT_UTF16,		// UTF-16
-	ENC_OPT_UTF32,		// UTF-32
-	ENC_OPT_BOM,		// byte order marker
-	ENC_OPT_CRLF,		// CR line termination
-	ENC_OPT_NO_COPY,	// do not copy if ASCII
-	ENC_OPT_MAX
+	OPT_ENC_BIG,		// big endian (not little)
+	OPT_ENC_UTF8,		// UTF-8
+	OPT_ENC_UTF16,		// UTF-16
+	OPT_ENC_UTF32,		// UTF-32
+	OPT_ENC_BOM,		// byte order marker
+	OPT_ENC_CRLF,		// CR line termination
+	OPT_ENC_UNISRC,		// source is UCS2
+	OPT_ENC_MAX
 };
 
-#define ENCF_NO_COPY (1<<ENC_OPT_NO_COPY)
 #if OS_CRLF
-#define ENCF_OS_CRLF (1<<ENC_OPT_CRLF)
+#define ENCF_OS_CRLF (1<<OPT_ENC_CRLF)
 #else
 #define ENCF_OS_CRLF 0
 #endif
@@ -363,7 +382,8 @@ enum encoding_opts {
 **		The THROWN_FLAG means your value does not represent a directly
 **		usable value, so you MUST check for it.  It signifies getting
 **		back a THROWN()--see notes in sys-value.h about what that
-**		means.  At minimum you need to Trap_Thrown() on it.  If you
+**		means.  If you don't know how to handle it, then at least
+**		you need to `raise Error_No_Catch_For_Throw()` on it.  If you *do*
 **		handle it, be aware it's a throw label with OPT_VALUE_THROWN
 **		set in its header, and shouldn't leak to the rest of the system.
 **
@@ -374,7 +394,7 @@ enum encoding_opts {
 **		with a different mechanism using longjmp().  So if an actual
 **		error happened during the DO then there wouldn't even *BE* a
 **		return value...because the function call would never return!
-**		See PUSH_TRAP() and Do_Error() for more information.
+**		See PUSH_TRAP() and Error() for more information.
 **
 **	Do_Block_Throws
 **
@@ -408,11 +428,7 @@ enum encoding_opts {
 
 /***********************************************************************
 **
-**  ASSERTS, PANICS, and TRAPS
-**
-**		There are three failure calls for Rebol code; named uniquely
-**		for clarity to distinguish them from the generic "crash"
-**		(which would usually mean an exception violation).
+**  ASSERTIONS
 **
 **		Assertions are in debug builds only, and use the conventional
 **		standard C assert macro.  The code inside the assert will be
@@ -422,172 +438,190 @@ enum encoding_opts {
 **
 **			http://stackoverflow.com/a/17241278/211160
 **
-**		(Assertions should mostly be used as a kind of "traffic cone"
-**		when working on new code or analyzing a bug you're trying to
-**		trigger in development.  It's preferable to update the design
-**		via static typing or otherwise as the code hardens.)
-**
-**		Panics are "blue screen of death" conditions from which there
-**		is no recovery.  They should be ideally identified by a
-**		unique "Rebol Panic" code in sys-panics.h, but RP_MISC can be
-**		used temporarily until it is named.  To help with debugging
-**		the specific location where a crash happened, a macro for
-**		Panic() with no parameters (common case) will also assert
-**		in a debug build.
-**
-**		Traps are recoverable conditions which tend to represent
-**		errors the user can intercept.  Each call to trap must be
-**		identified by a unique "Rebol Error" code and then zero-or-more
-**		parameters after that.  The parameters and the codes are
-**		specified errors.r, which also has a way of templating a
-**		parameterized object with arguments and a formatted message.
-**		See that file for examples.  There is also a RE_MISC code
-**		that takes no parameters that you can use for testing.
-**
-**		(Note that panic codes are also error codes; but they can
-**		be used before an error object's information is available
-**		in the early boot phase.)
-**
-**		If you call a Panic or a Trap in a function, that function
-**		will not return.  As this is done with C methods exit() and
-**		setjmp()/longjmp() vs. an exception model, it precludes the
-**		ability of the compiler to tell if all your code paths through
-**		a function return a value or not.  This is typically handled
-**		via the macro DEAD_END, but it's heavy to write:
-**
-**			if (condition) {Trap(...); DEAD_END;}
-**
-**		For convenience this is wrapped up as a single macro:
-**
-**			if (condition) Trap_DEAD_END(...);
-**
-**		!!! It's a bit unfortunate that Trap wrapper functions exist
-**		for something simple as Trap_Range to save on typing; because
-**		those have to be re-wrapped here to ensure that if those
-**		functions add more behavior then Trap_Range and
-**		Trap_Range_DEAD_END won't act differently.  Fewer wrappers
-**		would be needed if the error names were shorter, e.g.
-**		RE_RANGE instead of RE_OUT_OF_RANGE, as Trap1(RE_RANGE, ...)
-**		is not so difficult to type.
+**		Assertions should mostly be used as a kind of "traffic cone"
+**		when working on new code (or analyzing a bug you're trying to
+**		trigger in development).  It's preferable to update the design
+**		via static typing or otherwise as the code hardens.
 **
 ***********************************************************************/
 
-void Panic_Core(REBINT id, ...);
+// Included via #include <assert.h> at top of file
 
-#define DEAD_END \
-	do { \
-		assert(FALSE); \
-		return 0; \
-	} while (0)
 
-#define DEAD_END_VOID \
-	do { \
-		assert(FALSE); \
-		return; \
-	} while (0)
+/***********************************************************************
+**
+**	ERROR HANDLING
+**
+**		Rebol uses a C89-compatible trick to implement two "keywords"
+**		for triggering errors, called `raise` and `panic`.  They look
+**		like you are passing some kind of object to a reserved word:
+**
+**			if (Foo_Type(foo) == BAD_FOO) {
+**				raise Error_Bad_Foo_Operation(...);
+**
+**				// this line will never be reached, because it
+**				// longjmp'd up the stack where execution continues
+**			}
+**
+**			if (Foo_Type(foo_critical) == BAD_FOO) {
+**				panic Error_Bad_Foo_Operation(...);
+**
+**				// this line will never be reached, because it had
+*				// a "panic" and exited the process with a message
+**			}
+**
+**		In actuality, the Error_XXX() function is doing the work of
+**		either ending the process or longjmp'ing.  But `raise` and
+**		`panic` do some tricks to set the stage for which will happen,
+**		with a little syntax cleverness to catch compile time problems.
+**
+**		It's possible to pass a Rebol ERROR! object by using the
+**		form `panic Error_Is(err_value_ptr);`  But there are also macros
+**		which allow you to create and parameterize a new error, such
+**		as `raise Error_2(RE_SOME_ERR_NUM, arg1, arg2);`.  These
+**		macros have an additional benefit in that they can be used
+**		with panic even before the system has gotten to a boot state
+**		far enough that error objects can even be created.
+**
+**		Errors are defined in %errors.r.  These definitions contain a
+**		formatted message template, showing how the arguments will
+**		be displayed when the error is printed.
+**
+***********************************************************************/
 
-#define Panic(rp) \
-	do { \
-		assert(0 == (rp)); /* fail here in Debug build */ \
-		Panic_Core(rp); \
-	} while (0)
+// The same Error_XXX(...) functions are able to be handled as either a
+// panic or a raise "argument".  That's because the `panic` and `raise`
+// "keywords" are actually tricks that store global or thread-local
+// state variables that influence the error function behavior.  A
+// variable of this enum type enforms the Error whether it is to act as
+// a panic (via `Panic_Core()`) or a raise (via `Raise_Core()`)
+//
+enum Reb_Fail_Prep {
+	FAIL_UNPREPARED,
+	FAIL_PREP_PANIC,
+	FAIL_PREP_RAISE
+};
 
-#if !defined(NDEBUG)
-	// "Series Panics" will (hopefully) trigger an alert under memory tools
-	// like address sanitizer and valgrind that indicate the call stack at the
-	// moment of allocation of a series.  Then you should have TWO stacks: the
-	// one at the call of the Panic, and one where that series was alloc'd.
+// The ternary ?: operator is used to implement `panic` and `raise`, and
+// the preparing for the handling is done in the condition by a _PREP_
+// macro.  Error triggering is done by the "argument", which winds up in
+// the false branch position.
+//
+// The release build always triggers the error for both panic and raise.
+// Debug builds trigger an assert at the callsite in the case of panics.
+//
+#ifdef NDEBUG
+	// Do assignment, but stay a C89 "expression" and evaluate to FALSE
+	#define RAISE_PREP_ALWAYS_FALSE(file,line) \
+		((TG_Fail_Prep = FAIL_PREP_RAISE) != FAIL_PREP_RAISE)
 
-	#define Panic_Series(s) \
-		do { \
-			Debug_Fmt("Panic_Series() in %s at line %d", __FILE__, __LINE__); \
-			if (*(s)->guard == 1020) /* should make valgrind or asan alert */ \
-				Panic(RP_MISC);	 \
-			Panic(RP_MISC); /* just in case it didn't crash */ \
-		} while (0);
-
-	#define Panic_Series_DEAD_END(s) \
-		do { \
-			Panic_Series(s); \
-			DEAD_END; \
-		} while (0);
+	// Do assignment, but stay a C89 "expression" and evaluate to FALSE
+	#define IF_PANIC_PREP_SHOULD_ASSERT(file,line) \
+		((TG_Fail_Prep = FAIL_PREP_PANIC) != FAIL_PREP_PANIC)
 #else
-	// Release builds do not pay for the `guard` trick, so they just crash.
+	// We want to do our assignments without short circuiting, and yet
+	// still return FALSE.  The "1 +" keeps a line number of 0 from
+	// stopping the chain before it can do the TG_Fail_Prep assignment.
+	#define RAISE_PREP_ALWAYS_FALSE(file,line) \
+		((TG_Fail_C_File = (file)) && (1 + (TG_Fail_C_Line = (line))) \
+		&& ((TG_Fail_Prep = FAIL_PREP_RAISE) != FAIL_PREP_RAISE))
 
-	#define Panic_Series(s) Panic(RP_MISC)
+	// Same as above except this time we want to return TRUE at the end
+	// in order to make the debug build trigger an assert at the panic
+	#define IF_PANIC_PREP_SHOULD_ASSERT(file,line) \
+		((TG_Fail_C_File = (file)) && (1 + (TG_Fail_C_Line = (line))) \
+		&& ((TG_Fail_Prep = FAIL_PREP_RAISE) == FAIL_PREP_RAISE))
 
-	#define Panic_Series_DEAD_END(s) Panic_DEAD_END(RP_MISC)
+#endif
+
+// The `panic` and `raise` macros are styled to end in a dangling `:` for
+// the ternary operator (where the "argument" will be evaluated).  The
+// argument must be NORETURN and thus must be void, which is also checked
+// by the ternary operator (as both arguments must match).
+
+#define panic \
+	IF_PANIC_PREP_SHOULD_ASSERT(__FILE__, __LINE__) ? assert(FALSE) :
+
+#define raise \
+	RAISE_PREP_ALWAYS_FALSE(__FILE__, __LINE__) ? assert(FALSE) :
+
+// If you have an already formed ERROR! REBVAL* itself, with any arguments
+// already fulfilled, you can use this macro:
+//
+//		raise Error_Is(err);
+//		panic Error_Is(err);
+//
+// Originally this was just called Error().  However, Ren/C++ has a class
+// called Error, and there's no way to rename a macro "out of the way"
+// for that collision in its implementation.
+//
+#define Error_Is(err) \
+	((TG_Fail_Prep == FAIL_PREP_RAISE) \
+		? Raise_Core(err) \
+		: Panic_Core( \
+			TG_Fail_Prep == FAIL_PREP_PANIC \
+				? VAL_ERR_NUM(err) \
+				: cast(REBCNT, RE_NO_PREP), \
+			err, \
+			TG_Fail_C_File, \
+			TG_Fail_C_Line, \
+			NULL))
+
+// The `Error_Null()` variadic function lets you trigger an error (when used
+// with raise or panic) where you specify an error ID# and its arguments as
+// REBVAL*.  Unfortunately, variadic macros in ANSI-C are a bit clunky and
+// can't check types or tell when the caller stopped supplying arguments.
+// While naming it with _Null helps hint you need to supply a NULL, these
+// numbered macro forms take care of it for you.  (Also: in debug builds
+// ensures at compile time that you actually passed in REBVAL pointers.)
+//
+#ifdef NDEBUG
+	#define Error_0(num) \
+		Error_Null((num), NULL)
+
+	#define Error_1(num,arg1) \
+		Error_Null((num), (arg1), NULL)
+
+	#define Error_2(num,arg1,arg2) \
+		Error_Null((num), (arg1), (arg2), NULL)
+
+	#define Error_3(num,arg1,arg2,arg3) \
+		Error_Null((num), (arg1), (arg2), (arg3), NULL)
+#else
+	#define Error_0(num) \
+		Error_0_Debug(num)
+
+	#define Error_1(num,arg1) \
+		Error_1_Debug((num), (arg1))
+
+	#define Error_2(num,arg1,arg2) \
+		Error_2_Debug((num), (arg1), (arg2))
+
+	#define Error_3(num,arg1,arg2,arg3) \
+		Error_3_Debug((num), (arg1), (arg2), (arg3))
 #endif
 
 
-#define Panic_DEAD_END(rp) \
-	do { \
-		Panic(rp); \
-		DEAD_END; \
-	} while (0)
+/***********************************************************************
+**
+**	PANIC_SERIES
+**
+**		"Series Panics" will (hopefully) trigger an alert under memory
+**		tools like address sanitizer and valgrind that indicate the
+**		call stack at the moment of allocation of a series.  Then you
+**		should have TWO stacks: the one at the call of the Panic, and
+**		one where that series was alloc'd.
+**
+***********************************************************************/
 
-#define Trap3_DEAD_END(re,a1,a2,a3) \
-	do { \
-		Trap3((re), (a1), (a2), (a3)); \
-		DEAD_END; \
-	} while (0)
+#if !defined(NDEBUG)
+	#define Panic_Series(s) \
+		Panic_Series_Debug((s), __FILE__, __LINE__);
+#else
+	// Release builds do not pay for the `guard` trick, so they just crash.
 
-#define Trap_DEAD_END(re) \
-	Trap3_DEAD_END((re), 0, 0, 0)
-
-#define Trap1_DEAD_END(re,a1) \
-	Trap3_DEAD_END((re), (a1), 0, 0)
-
-#define Trap2_DEAD_END(re,a1,a2) \
-	Trap3_DEAD_END((re), (a1), (a2), 0)
-
-#define Trap_Arg_DEAD_END(a) \
-	do { \
-		Trap_Arg(a); \
-		DEAD_END; \
-	} while (0)
-
-#define Trap_Type_DEAD_END(a) \
-	do { \
-		Trap_Type(a); \
-		DEAD_END; \
-	} while (0)
-
-#define Trap_Range_DEAD_END(a) \
-	do { \
-		Trap_Range(a); \
-		DEAD_END; \
-	} while (0)
-
-#define Trap_Make_DEAD_END(t,s) \
-	do { \
-		Trap_Make((t), (s)); \
-		DEAD_END; \
-	} while (0)
-
-#define Trap_Reflect_DEAD_END(t,a) \
-	do { \
-		Trap_Reflect((t), (a)); \
-		DEAD_END; \
-	} while (0)
-
-#define Trap_Action_DEAD_END(t,a) \
-	do { \
-		Trap_Action((t), (a)); \
-		DEAD_END; \
-	} while (0)
-
-#define Trap_Types_DEAD_END(re,t1,t2) \
-	do { \
-		Trap_Types((re), (t1), (t2)); \
-		DEAD_END; \
-	} while (0)
-
-#define Trap_Port_DEAD_END(re,p,c) \
-	do { \
-		Trap_Port((re), (p), (c)); \
-		DEAD_END; \
-	} while (0)
+	#define Panic_Series(s) panic Error_0(RE_MISC)
+#endif
 
 
 /***********************************************************************
@@ -618,46 +652,53 @@ void Panic_Core(REBINT id, ...);
 **
 ***********************************************************************/
 
+#define MANAGE_SERIES(series) \
+	Manage_Series(series)
+
+#define ENSURE_SERIES_MANAGED(series) \
+	(SERIES_GET_FLAG((series), SER_MANAGED) \
+		? NOOP \
+		: MANAGE_SERIES(series))
+
+// Debug build includes testing that the managed state of the frame and
+// its word series is the same for the "ensure" case.  It also adds a
+// few assert macros.
+//
 #ifdef NDEBUG
-	#define MANAGE_SERIES(series) \
-		SERIES_SET_FLAG((series), SER_MANAGED)
-
-	#define ENSURE_SERIES_MANAGED(series) \
-		MANAGE_SERIES(series)
-
 	#define MANAGE_FRAME(frame) \
-		(SERIES_SET_FLAG((frame), SER_MANAGED), \
-		SERIES_SET_FLAG(FRM_WORD_SERIES(frame), SER_MANAGED))
+		(MANAGE_SERIES(frame), MANAGE_SERIES(FRM_KEYLIST(frame)))
 
 	#define ENSURE_FRAME_MANAGED(frame) \
-		MANAGE_FRAME(frame)
+		(SERIES_GET_FLAG((frame), SER_MANAGED) \
+			? NOOP \
+			: MANAGE_FRAME(frame))
 
 	#define MANUALS_LEAK_CHECK(manuals,label_str) \
 		NOOP
 
-	#define ASSERT_VALUE_MANAGED(value) \
+	#define ASSERT_SERIES_MANAGED(series) \
 		NOOP
 
+	#define ASSERT_VALUE_MANAGED(value) \
+		NOOP
 #else
-	#define MANAGE_SERIES(series) \
-		Manage_Series_Debug(series)
-
-	#define ENSURE_SERIES_MANAGED(series) \
-		(SERIES_GET_FLAG((series), SER_MANAGED) \
-			? NOOP \
-			: MANAGE_SERIES(series))
-
 	#define MANAGE_FRAME(frame) \
 		Manage_Frame_Debug(frame)
 
 	#define ENSURE_FRAME_MANAGED(frame) \
 		((SERIES_GET_FLAG((frame), SER_MANAGED) \
-		&& SERIES_GET_FLAG(FRM_WORD_SERIES(frame), SER_MANAGED)) \
+		&& SERIES_GET_FLAG(FRM_KEYLIST(frame), SER_MANAGED)) \
 			? NOOP \
 			: MANAGE_FRAME(frame))
 
 	#define MANUALS_LEAK_CHECK(manuals,label_str) \
 		Manuals_Leak_Check_Debug((manuals), (label_str))
+
+	#define ASSERT_SERIES_MANAGED(series) \
+		do { \
+			if (!SERIES_GET_FLAG((series), SER_MANAGED)) \
+				Panic_Series(series); \
+		} while (0)
 
 	#define ASSERT_VALUE_MANAGED(value) \
 		Assert_Value_Managed_Debug(value)
@@ -703,7 +744,7 @@ void Panic_Core(REBINT id, ...);
 //-- Temporary Buffers
 //   These are reused for cases for appending, when length cannot be known.
 #define BUF_EMIT  VAL_SERIES(TASK_BUF_EMIT)
-#define BUF_WORDS VAL_SERIES(TASK_BUF_WORDS)
+#define BUF_COLLECT VAL_SERIES(TASK_BUF_COLLECT)
 #define BUF_PRINT VAL_SERIES(TASK_BUF_PRINT)
 #define BUF_FORM  VAL_SERIES(TASK_BUF_FORM)
 #define BUF_MOLD  VAL_SERIES(TASK_BUF_MOLD)
@@ -731,7 +772,7 @@ void Panic_Core(REBINT id, ...);
 // calls in the interpreter to recurse, there's no *portable* way to
 // catch a stack overflow in the C code of the interpreter itself.
 //
-// Hence, Rebol uses a non-portable and non-standard heuristic.  It looks
+// Hence, by default Rebol will use a non-standard heuristic.  It looks
 // at the compiled addresses of local (stack-allocated) variables in a
 // function, and decides from their relative pointers if memory is growing
 // "up" or "down".  It then extrapolates that C function call frames will
@@ -744,21 +785,26 @@ void Panic_Core(REBINT id, ...);
 //     http://stackoverflow.com/a/1677482/211160
 //
 // Additionally, it puts the burden on every recursive or deeply nested
-// routine to sprinkle calls to the CHECK_C_STACK_OVERFLOW macro somewhere
+// routine to sprinkle calls to the C_STACK_OVERFLOWING macro somewhere
 // in it.  The ideal answer is to make Rebol itself corral an interpreted
 // script such that it can't cause the C code to stack overflow.  Lacking
 // that ideal this technique could break, so build configurations should
 // be able to turn it off if needed.
 //
-// In the meantime, CHECK_C_STACK_OVERFLOW is a macro which takes the
+// In the meantime, C_STACK_OVERFLOWING is a macro which takes the
 // address of some variable local to the currently executed function.
+// Note that because the limit is noticed before the C stack has *actually*
+// overflowed, you still have a bit of stack room to do the cleanup and
+// raise an error trap.  (You need to take care of any unmanaged series
+// allocations, etc).  So cleaning up that state should be doable without
+// making deep function calls.
 
 #ifdef OS_STACK_GROWS_UP
-	#define CHECK_C_STACK_OVERFLOW(local_var) \
-		if (cast(REBUPT, local_var) >= Stack_Limit) Trap_Stack_Overflow();
+	#define C_STACK_OVERFLOWING(address_of_local_var) \
+		(cast(REBUPT, address_of_local_var) >= Stack_Limit)
 #else
-	#define CHECK_C_STACK_OVERFLOW(local_var) \
-		if (cast(REBUPT, local_var) <= Stack_Limit) Trap_Stack_Overflow();
+	#define C_STACK_OVERFLOWING(address_of_local_var) \
+		(cast(REBUPT, address_of_local_var) <= Stack_Limit)
 #endif
 
 #define STACK_BOUNDS (4*1024*1000) // note: need a better way to set it !!
@@ -821,26 +867,25 @@ void Panic_Core(REBINT id, ...);
 **
 **	Legacy Modes Checking
 **
-**		Ren/C wants to try out new things that will (or likely will) make
-**		it into the official release.  But it also wants transitioning
-**		feasible from Rebol2 and Rebol3-alpha, and without paying
+**		Ren/C wants to try out new things that will likely be included
+**		it the official Rebol3 release.  But it also wants transitioning
+**		to be feasible from Rebol2 and R3-Alpha, without paying that
 **		much to check for "old" modes if they're not being used.  So
 **		system/options contains flags used for enabling specific
 **		features relied upon by old code.
 **
 **		In order to keep these easements from adding to the measured
-**		performance cost in the system, they are only supported in
-**		debug builds.  Also, none of them are checked by default...
-**		you must have run the executable with an environment variable
-**		set as R3_LEGACY=1, which sets PG_Legacy so the check is done.
+**		performance cost in the system (and to keep them from being
+**		used for anything besides porting), they are only supported in
+**		debug builds.
 **
 ***********************************************************************/
 
-#ifdef NDEBUG
-	#define LEGACY(option) FALSE
-#else
-	#define LEGACY(option) \
-		(PG_Legacy && IS_CONDITIONAL_TRUE(Get_System(SYS_OPTIONS, (option))))
+#if !defined(NDEBUG)
+	#define LEGACY(option) ( \
+		(PG_Boot_Phase >= BOOT_ERRORS) \
+		&& IS_CONDITIONAL_TRUE(Get_System(SYS_OPTIONS, (option))) \
+	)
 #endif
 
 

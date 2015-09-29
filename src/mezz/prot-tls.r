@@ -46,13 +46,6 @@ make-tls-error: func [
 	]
 ]
 
-tls-error: func [
-	"Throw an error for the TLS protocol"
-	message [string! block!]
-] [
-	do make-tls-error message
-]
-
 cipher-suites: make object! [
 	TLS_RSA_WITH_RC4_128_MD5:				#{00 04}
 	TLS_RSA_WITH_RC4_128_SHA:				#{00 05}
@@ -113,24 +106,24 @@ parse-asn: func [
 	while [d: data/1] [
 		switch mode [
 			type [
-				constructed?: not zero? (d and 32)
+				constructed?: not zero? (d and* 32)
 				class: pick class-types 1 + shift d -6
 
 				switch class [
 					universal [
-						tag: pick universal-tags 1 + (d and 31)
+						tag: pick universal-tags 1 + (d and* 31)
 					]
 					context-specific [
 						tag: class
-						val: d and 31
+						val: d and* 31
 					]
 				]
 				mode: 'size
 			]
 
 			size [
-				size: d and 127
-				unless zero? (d and 128) [
+				size: d and* 127
+				unless zero? (d and* 128) [
 					; long form
 					ln: size
 					size: to integer! copy/part next data size
@@ -235,14 +228,14 @@ update-proto-state: func [
 	either any [
 		none? ctx/protocol-state
 		all [
-			next-state: apply :get-next-proto-state [ctx write-state]
+			next-state: get-next-proto-state/:write-state ctx
 			find next-state new-state
 		]
 	] [
 		debug ["new-state:" new-state]
 		ctx/protocol-state: new-state
 	] [
-		do make error! "invalid protocol state"
+		fail "invalid protocol state"
 	]
 ]
 
@@ -548,7 +541,7 @@ parse-protocol: func [
 	/local proto
 ] [
 	unless proto: select protocol-types data/1 [
-		do make error! "unknown/invalid protocol type"
+		fail "unknown/invalid protocol type"
 	]
 	return context [
 		type: proto
@@ -686,7 +679,10 @@ parse-messages: func [
 								ctx/hash-size: 20
 							]
 						] cipher-suites [
-							do make error! rejoin ["Current version of TLS scheme doesn't support ciphersuite: " mold ctx/cipher-suite]
+							fail [
+								"This TLS scheme doesn't support ciphersuite:"
+								(mold ctx/cipher-suite)
+							]
 						]
 
 						ctx/server-random: msg-obj/server-random
@@ -749,7 +745,7 @@ parse-messages: func [
 								msg-obj
 							]
 						] [
-							do make error! "Server-key-exchange message has been sent illegally."
+							fail "Server-key-exchange message sent illegally."
 						]
 					]
 					server-hello-done [
@@ -771,7 +767,7 @@ parse-messages: func [
 						ctx/seq-num-r: 0
 						msg-content: copy/part at data 5 len
 						either msg-content <> prf ctx/master-secret either ctx/server? ["client finished"] ["server finished"] rejoin [checksum/method ctx/handshake-messages 'md5 checksum/method ctx/handshake-messages 'sha1] 12 [
-							do make error! "Bad 'finished' MAC"
+							fail "Bad 'finished' MAC"
 						] [
 							debug "FINISHED MAC verify: OK"
 						]
@@ -796,7 +792,7 @@ parse-messages: func [
 							copy/part data len + 4
 						] ctx/hash-method decode 'text ctx/server-mac-key
 					[
-						do make error! "Bad handshake record MAC"
+						fail "Bad handshake record MAC"
 					]
 					4 + ctx/hash-size
 				] [
@@ -826,7 +822,7 @@ parse-messages: func [
 				msg-obj/content			; content
 			] ctx/hash-method decode 'text ctx/server-mac-key
 			[
-				do make error! "Bad application record MAC"
+				fail "Bad application record MAC"
 			]
 		]
 	]
@@ -842,14 +838,16 @@ parse-response: func [
 ] [
 	proto: parse-protocol msg
 	either empty? messages: parse-messages ctx proto [
-		do make error! "unknown/invalid protocol message"
+		fail "unknown/invalid protocol message"
 	] [
 		proto/messages: messages
 	]
 
 	debug ["processed protocol type:" proto/type "messages:" length proto/messages]
 
-	unless tail? skip msg proto/size + 5 [do make error! "invalid length of response fragment"]
+	unless tail? skip msg proto/size + 5 [
+		fail "invalid length of response fragment"
+	]
 
 	return proto
 ]
@@ -884,7 +882,7 @@ prf: func [
 		a: checksum/method/key a 'sha1 decode 'text s-2 ; A(n)
 		append p-sha1 checksum/method/key rejoin [a seed] 'sha1 decode 'text s-2
 	]
-	return ((copy/part p-md5 output-length) xor copy/part p-sha1 output-length)
+	return ((copy/part p-md5 output-length) xor- copy/part p-sha1 output-length)
 ]
 
 make-key-block: func [
@@ -928,7 +926,7 @@ do-commands: func [
 	write ctx/connection ctx/msg
 
 	unless no-wait [
-		unless port? wait [ctx/connection 30] [do make error! "port timeout"]
+		unless port? wait [ctx/connection 30] [fail "port timeout"]
 	]
 	ctx/resp
 ]
@@ -1056,10 +1054,10 @@ tls-awake: function [event [event!]] [
 			debug ["Read" length port/data "bytes proto-state:" tls-port/state/protocol-state]
 			complete?: tls-read-data tls-port/state port/data
 			application?: false
-			foreach proto tls-port/state/resp [
+			for-each proto tls-port/state/resp [
 				switch proto/type [
 					application [
-						foreach msg proto/messages [
+						for-each msg proto/messages [
 							if msg/type = 'app-data [
 								unless tls-port/data [tls-port/data: clear tls-port/state/port-data]
 								append tls-port/data msg/content
@@ -1069,7 +1067,7 @@ tls-awake: function [event [event!]] [
 						]
 					]
 					alert [
-						foreach msg proto/messages [
+						for-each msg proto/messages [
 							if msg/description = "Close notify" [
 								do-commands tls-port/state [close-notify]
 								insert system/ports/system make event! [type: 'read port: tls-port]
@@ -1093,7 +1091,7 @@ tls-awake: function [event [event!]] [
 		]
 	] [
 		close port
-		do make error! rejoin ["Unexpected TLS event: " event/type]
+		fail ["Unexpected TLS event:" (event/type)]
 	]
 	false
 ]
@@ -1125,7 +1123,9 @@ sys/make-scheme [
 		open: func [port [port!] /local conn] [
 			if port/state [return port]
 
-			if none? port/spec/host [tls-error "Missing host address"]
+			unless port/spec/host [
+				fail make-tls-error "Missing host address"
+			]
 
 			port/state: context [
 				data-buffer: make binary! 32000
@@ -1193,13 +1193,46 @@ sys/make-scheme [
 		open?: func [port [port!]] [
 			found? all [port/state open? port/state/connection]
 		]
-		close: func [port [port!]] [
-			if port/state [
-				close port/state/connection
-				debug "TLS/TCP port closed"
-				port/state/connection/awake: none
-				port/state: none
+		close: func [port [port!] /local ctx] [
+			unless port/state [return port]
+
+			close port/state/connection
+
+			; The symmetric ciphers used by TLS are able to encrypt chunks of
+			; data one at a time.  It keeps the progressive state of the
+			; encryption process in the -stream variables, which under the
+			; hood are memory-allocated items stored as a HANDLE!.  The
+			; memory they represent will not be automatically freed by
+			; garbage collection.
+			;
+			; Calling the encryption functions with NONE! as the data to
+			; input will assume you are done, and will free the handle.
+			;
+			; !!! Is there a good reason for not doing this with an ordinary
+			; OBJECT! containing a BINARY! ?
+			;
+			switch port/state/crypt-method [
+				rc4 [
+					if port/state/encrypt-stream [
+						rc4/stream port/state/encrypt-stream none
+					]
+					if port/state/decrypt-stream [
+						rc4/stream port/state/decrypt-stream none
+					]
+				]
+				aes [
+					if port/state/encrypt-stream [
+						aes/stream port/state/encrypt-stream none
+					]
+					if port/state/decrypt-stream [
+						aes/stream port/state/decrypt-stream none
+					]
+				]
 			]
+
+			debug "TLS/TCP port closed"
+			port/state/connection/awake: none
+			port/state: none
 			port
 		]
 		copy: func [port [port!]] [

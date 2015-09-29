@@ -49,7 +49,7 @@ REBOL_HOST_LIB *Host_Lib;
 #endif
 
 extern const REBRXT Reb_To_RXT[REB_MAX];
-extern RXIARG Value_To_RXI(REBVAL *val); // f-extension.c
+extern RXIARG Value_To_RXI(const REBVAL *val); // f-extension.c
 extern void RXI_To_Value(REBVAL *val, RXIARG arg, REBCNT type); // f-extension.c
 extern void RXI_To_Block(RXIFRM *frm, REBVAL *out); // f-extension.c
 extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
@@ -122,25 +122,6 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 #endif
 
 	Init_Core(rargs);
-
-#if !defined(NDEBUG)
-	env_legacy = getenv("R3_LEGACY");
-	if (env_legacy != NULL && atoi(env_legacy) != 0) {
-		Debug_Str(
-			"**\n"
-			"** R3_LEGACY is TRUE in environment variable!\n"
-			"** system/options relating to historical behaviors are heeded:\n"
-			"**\n"
-			"** system/options: [\n"
-			"**     (...)\n"
-			"**     exit-functions-only: false\n"
-			"**     broken-case-semantics: false\n"
-			"** ]\n"
-			"**\n"
-		);
-		PG_Legacy = TRUE;
-	}
-#endif
 
 	GC_Active = TRUE; // Turn on GC
 	if (rargs->options & RO_TRACE) {
@@ -216,7 +197,7 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 	PUSH_UNHALTABLE_TRAP(&error, &state);
 
 // The first time through the following code 'error' will be NULL, but...
-// Trap()s can longjmp here, so 'error' won't be NULL *if* that happens!
+// `raise Error` can longjmp here, so 'error' won't be NULL *if* that happens!
 
 	if (error) {
 		// Save error for EXPLAIN and return it
@@ -239,10 +220,10 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 		return VAL_ERR_NUM(error);
 	}
 
-	if (!Do_Sys_Func(&out, SYS_CTX_FINISH_RL_START, 0)) {
+	if (Do_Sys_Func_Throws(&out, SYS_CTX_FINISH_RL_START, 0)) {
 		if (
 			IS_WORD(&out) &&
-			(VAL_WORD_SYM(&out) == SYM_QUIT || VAL_WORD_SYM(error) == SYM_EXIT)
+			(VAL_WORD_SYM(&out) == SYM_QUIT || VAL_WORD_SYM(&out) == SYM_EXIT)
 		) {
 			int status;
 
@@ -256,8 +237,7 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 			DEAD_END;
 		}
 
-		Trap_Thrown(&out);
-		DEAD_END;
+		raise Error_No_Catch_For_Throw(&out);
 	}
 
 	DROP_TRAP_SAME_STACKLEVEL_AS_PUSH(&state);
@@ -281,20 +261,34 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 
 /***********************************************************************
 **
-*/	RL_API void RL_Reset(void)
+*/	RL_API void RL_Shutdown(REBOOL clean)
 /*
-**	Reset REBOL (not implemented)
+**	Shut down a Rebol interpreter (that was initialized via RL_Init).
 **
 **	Returns:
 **		nothing
 **	Arguments:
-**		none
-**	Notes:
-**		Intended to reset the REBOL interpreter.
+**		clean - whether you want Rebol to release all of its memory
+**		accrued since initialization.  If you pass false, then it will
+**		only do the minimum needed for data integrity (assuming you
+**		are planning to exit the process, and hence the OS will
+**		automatically reclaim all memory/handles/etc.)
 **
 ***********************************************************************/
 {
-	Panic(RP_NA);
+	// At time of writing, nothing Shutdown_Core() does pertains to
+	// committing unfinished data to disk.  So really there is
+	// nothing to do in the case of an "unclean" shutdown...yet.
+
+#ifdef NDEBUG
+	// Only do the work above this line in an unclean shutdown
+	if (!clean) return;
+#else
+	// Run a clean shutdown anyway in debug builds--even if the
+	// caller didn't need it--to see if it triggers any alerts.
+#endif
+
+	Shutdown_Core();
 }
 
 
@@ -362,77 +356,58 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 
 /***********************************************************************
 **
-*/	RL_API int RL_Do_String(const REBYTE *text, REBCNT flags, RXIARG *result)
+*/	RL_API int RL_Do_String(int *exit_status, const REBYTE *text, REBCNT flags, RXIARG *result)
 /*
 **	Load a string and evaluate the resulting block.
 **
 **	Returns:
-**		The datatype of the result.
+**		The datatype of the result if a positive number (or 0 if the
+**		type has no representation in the "RXT" API).  An error code
+**		if it's a negative number.  Two negative numbers are reserved
+**		for non-error conditions: -1 for halting (e.g. Escape), and
+**		-2 is reserved for exiting with exit_status set.
+**
 **	Arguments:
 **		text - A null terminated UTF-8 (or ASCII) string to transcode
 **			into a block and evaluate.
 **		flags - set to zero for now
-**		result - value returned from evaluation.
+**		result - value returned from evaluation, if NULL then result
+**			will be returned on the top of the stack
+**
+**	Notes:
+**		This API was from before Rebol's open sourcing and had little
+**		vetting and few clients.  The one client it did have was the
+**		"sample" console code (which wound up being the "only"
+**		console code for quite some time).
 **
 ***********************************************************************/
 {
 	REBSER *code;
-	REBCNT len;
-	REBVAL vali;
-
-	REBVAL temp;
 	REBVAL out;
 
 	REBOL_STATE state;
 	const REBVAL *error;
 
+	// assumes it can only be run at the topmost level where
+	// the data stack is completely empty.
 	assert(DSP == -1);
 
 	PUSH_UNHALTABLE_TRAP(&error, &state);
 
 // The first time through the following code 'error' will be NULL, but...
-// Trap()s can longjmp here, so 'error' won't be NULL *if* that happens!
+// `raise Error` can longjmp here, so 'error' won't be NULL *if* that happens!
 
 	if (error) {
-		// !!! Through this interface we have no way to distinguish an error
-		// returned as a value from one that was thrown.  Yet by contract
-		// we must return some sort of value--we try and patch over this
-		// by printing out the error and returning an UNSET!.  RenC has
-		// a stronger answer of offering the actual error catching interface
-		// to clients directly.
+		if (VAL_ERR_NUM(error) == RE_HALT)
+			return -1; // !!! Revisit hardcoded #
 
-		DS_PUSH_UNSET;
+		// Save error for WHY?
+		*Get_System(SYS_STATE, STATE_LAST_ERROR) = *error;
 
-		// !!! If the user halted during a Do_String what should we return?
-		// For now, assume the halt printed a message and don't do it again.
-		// Otherwise, we should print the FORMed error
-		if (VAL_ERR_NUM(error) != RE_HALT) {
-			// !!! statics are not safe for multithreading.
-			static REBOOL why_alert = TRUE;
-
-			Out_Value(error, 640, FALSE, 0);
-
-			// Save error for WHY?
-			*Get_System(SYS_STATE, STATE_LAST_ERROR) = *error;
-
-			// Tell them about why on the first error only
-			if (why_alert) {
-				Out_Str(
-					cb_cast("** Note: use WHY? for more error information"), 2
-				);
-				why_alert = FALSE;
-			}
-		}
-
-		if (result) {
-			REBRXT type = Reb_To_RXT[VAL_TYPE(DS_TOP)];
-			*result = Value_To_RXI(DS_TOP);
-
-			SET_TRASH(DS_TOP);
-			DS_DROP;
-
-			return type;
-		}
+		if (result)
+			*result = Value_To_RXI(error);
+		else
+			DS_PUSH(error);
 
 		return -VAL_ERR_NUM(error);
 	}
@@ -446,6 +421,8 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 		Bind_Values_Set_Forward_Shallow(BLK_HEAD(code), Lib_Context);
 		Bind_Values_Deep(BLK_HEAD(code), Lib_Context);
 	} else {
+		REBCNT len;
+		REBVAL vali;
 		REBSER *user = VAL_OBJ_FRAME(Get_System(SYS_CONTEXTS, CTX_USER));
 		len = user->tail;
 		Bind_Values_All_Deep(BLK_HEAD(code), user);
@@ -460,48 +437,32 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 			IS_WORD(&out) &&
 			(VAL_WORD_SYM(&out) == SYM_QUIT || VAL_WORD_SYM(&out) == SYM_EXIT)
 		) {
-			int status;
-
 			TAKE_THROWN_ARG(&out, &out);
-			status = Exit_Status_From_Value(&out);
-
 			DROP_TRAP_SAME_STACKLEVEL_AS_PUSH(&state);
 
-			Shutdown_Core();
-			OS_EXIT(status);
-			DEAD_END;
+			*exit_status = Exit_Status_From_Value(&out);
+			return -2; // Revisit hardcoded #
 		}
 
-		Trap_Thrown(&out);
-		DEAD_END;
+		raise Error_No_Catch_For_Throw(&out);
 	}
 
 	UNSAVE_SERIES(code);
 
 	DROP_TRAP_SAME_STACKLEVEL_AS_PUSH(&state);
 
-	if (result) {
-		// Convert Do_Blk output to RXT and RXI if that was requested.
-
-		REBRXT type = Reb_To_RXT[VAL_TYPE(&out)];
+	if (result)
 		*result = Value_To_RXI(&out);
+	else
+		DS_PUSH(&out);
 
-		return type;
-	}
-
-	// Value is pushed on top of stack if no result parameter.  :-/
-	// (The RL API was written with ideas like "print the top of stack"
-	// while not exposing ways to analyze it unless converted to RXT/RXI)
-
-	DS_PUSH(&out);
-
-	return 0;
+	return Reb_To_RXT[VAL_TYPE(&out)];
 }
 
 
 /***********************************************************************
 **
-*/	RL_API int RL_Do_Binary(const REBYTE *bin, REBINT length, REBCNT flags, REBCNT key, RXIARG *result)
+*/	RL_API int RL_Do_Binary(int *exit_status, const REBYTE *bin, REBINT length, REBCNT flags, REBCNT key, RXIARG *result)
 /*
 **	Evaluate an encoded binary script such as compressed text.
 **
@@ -523,7 +484,7 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 #ifdef DUMP_INIT_SCRIPT
 	int f;
 #endif
-	REBRXT rxt;
+	int do_result;
 
 	text = Decompress(bin, length, 10000000, 0);
 	if (!text) return FALSE;
@@ -536,11 +497,11 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 #endif
 
 	SAVE_SERIES(text);
-	rxt = RL_Do_String(text->data, flags, result);
+	do_result = RL_Do_String(exit_status, text->data, flags, result);
 	UNSAVE_SERIES(text);
 
 	Free_Series(text);
-	return rxt;
+	return do_result;
 }
 
 
@@ -618,14 +579,14 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 
 /***********************************************************************
 **
-*/	RL_API void RL_Print_TOS(REBCNT flags, const REBYTE *marker)
+*/	RL_API void RL_Print_TOS(REBOOL mold, const REBYTE *marker)
 /*
-**	Print top REBOL stack value to the console and drop it.
+**	Print top REBOL stack value to the console.
 **
 **	Returns:
 **		Nothing
 **	Arguments:
-**		flags - special flags (set to zero at this time).
+**		mold - should value be MOLDed instead of FORMed.
 **		marker - placed at beginning of line to indicate output.
 **	Notes:
 **		This function is used for the main console evaluation
@@ -642,14 +603,29 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 	if (DSP != 0)
 		Debug_Fmt(Str_Stack_Misaligned, DSP);
 
-	// We shouldn't get any THROWN() errors exposed to the user
-	assert(!IS_ERROR(DS_TOP) || !THROWN(DS_TOP));
+	// We shouldn't get any THROWN() values exposed to the client
+	assert(!THROWN(DS_TOP));
 
 	if (!IS_UNSET(DS_TOP)) {
 		if (marker) Out_Str(marker, 0);
-		Out_Value(DS_TOP, 500, TRUE, 1); // limit, molded
+		Out_Value(DS_TOP, 500, mold, 1); // limit print length
 	}
+}
 
+
+/***********************************************************************
+**
+*/	RL_API void RL_Drop_TOS(void)
+/*
+**	Drop top REBOL stack value.
+**
+**	Returns:
+**		Nothing
+**	Arguments:
+**		Nothing
+**
+***********************************************************************/
+{
 	DS_DROP;
 }
 
@@ -837,7 +813,15 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 **
 ***********************************************************************/
 {
-	(flags == 1) ? SERIES_SET_FLAG(series, SER_KEEP) : SERIES_CLR_FLAG(series, SER_KEEP);
+	// !!! With series flags in short supply, this undesirable routine
+	// was removed along with SER_KEEP.  (Note that it is not possible
+	// to simply flip off the SER_MANAGED bit, because there is more
+	// involved in tracking the managed state than just that bit.)
+	//
+	// For the purpose intended by this routine, use the GC_Mark_Hook (or
+	// its hopeful improved successors.)
+
+	panic Error_0(RE_MISC);
 }
 
 
@@ -1132,17 +1116,17 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 ***********************************************************************/
 {
 	REBCNT index;
-	u32 *words;
-	REBVAL *syms;
+	u32 *syms;
+	REBVAL *keys;
 
-	syms = FRM_WORD(obj, 1);
+	keys = FRM_KEY(obj, 1);
 	// One less, because SELF not included.
-	words = OS_ALLOC_ARRAY(u32, obj->tail);
-	for (index = 0; index < (obj->tail-1); syms++, index++) {
-		words[index] = VAL_BIND_CANON(syms);
+	syms = OS_ALLOC_ARRAY(u32, obj->tail);
+	for (index = 0; index < (obj->tail - 1); keys++, index++) {
+		syms[index] = VAL_TYPESET_CANON(keys);
 	}
-	words[index] = 0;
-	return words;
+	syms[index] = 0;
+	return syms;
 }
 
 
@@ -1188,7 +1172,7 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 	REBVAL value;
 	CLEARS(&value);
 	if (!(word = Find_Word_Index(obj, word, FALSE))) return 0;
-	if (VAL_GET_EXT(FRM_WORDS(obj) + word, EXT_WORD_LOCK)) return 0;
+	if (VAL_GET_EXT(FRM_KEYS(obj) + word, EXT_WORD_LOCK)) return 0;
 	RXI_To_Value(FRM_VALUES(obj)+word, val, type);
 	return type;
 }
@@ -1260,7 +1244,11 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 **
 ***********************************************************************/
 {
-	return Length_As_UTF8(p, len, uni, ccr);
+	return Length_As_UTF8(
+		p,
+		len,
+		(uni ? FLAGIT(OPT_ENC_UNISRC) : 0) | (ccr ? FLAGIT(OPT_ENC_CRLF) : 0)
+	);
 }
 
 
@@ -1271,13 +1259,13 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 **		Encode the unicode into UTF8 byte string.
 **
 **	Returns:
-**		Number of source chars used.
+**		Number of dst bytes used.
 **
 **	Arguments:
 **		dst - destination for encoded UTF8 bytes
 **		max - maximum size of the result in bytes
 **		src - source array of bytes or wide characters
-**		len - input is source length, updated to reflect dst bytes used
+**		len - input is source length, updated to reflect src chars used
 **		uni - true if src is in wide character format
 **		ccr - convert linefeed + carriage-return into just linefeed
 **
@@ -1291,7 +1279,13 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 **
 ***********************************************************************/
 {
-	return Encode_UTF8(dst, max, src, len, uni, ccr);
+	return Encode_UTF8(
+		dst,
+		max,
+		src,
+		len,
+		(uni ? FLAGIT(OPT_ENC_UNISRC) : 0) | (ccr ? FLAGIT(OPT_ENC_CRLF) : 0)
+	);
 }
 
 

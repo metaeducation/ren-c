@@ -66,7 +66,7 @@
 	REBVAL *value = D_ARG(1);
 	REBVAL *arg = D_ARG(2);
 	REBACT act;
-	REBINT type = VAL_TYPE_KIND(value);
+	enum Reb_Kind kind = VAL_TYPE_KIND(value);
 	REBSER *obj;
 	REBINT n;
 
@@ -75,37 +75,54 @@
 	case A_REFLECT:
 		n = What_Reflector(arg); // zero on error
 		if (n == OF_SPEC) {
-			obj = Make_Std_Object(STD_TYPE_SPEC);
-			Set_Object_Values(obj, BLK_HEAD(VAL_TYPE_SPEC(BLK_SKIP(Lib_Context, type+1))));
+			obj = Make_Std_Object_Managed(STD_TYPE_SPEC);
+			Set_Object_Values(
+				obj,
+				BLK_HEAD(
+					VAL_TYPE_SPEC(BLK_SKIP(Lib_Context, SYM_FROM_KIND(kind)))
+				)
+			);
 			Val_Init_Object(D_OUT, obj);
 		}
 		else if (n == OF_TITLE) {
 			Val_Init_String(
 				D_OUT,
 				Copy_Array_Shallow(VAL_SERIES(BLK_HEAD(
-					VAL_TYPE_SPEC(BLK_SKIP(Lib_Context, type + 1))
+					VAL_TYPE_SPEC(BLK_SKIP(Lib_Context, SYM_FROM_KIND(kind)))
 				)))
 			);
 		}
-		else Trap_Reflect_DEAD_END(VAL_TYPE(value), arg);
+		else
+			raise Error_Cannot_Reflect(VAL_TYPE(value), arg);
 		break;
 
 	case A_MAKE:
 	case A_TO:
-		if (type != REB_DATATYPE) {
-			act = Value_Dispatch[type];
+		if (kind != REB_DATATYPE) {
+			act = Value_Dispatch[kind];
 			if (act) return act(call_, action);
 			//return R_NONE;
-			Trap_Make_DEAD_END(type, arg);
+			raise Error_Bad_Make(kind, arg);
 		}
+
+		#if !defined(NDEBUG)
+			if (
+				LEGACY(OPTIONS_GROUP_NOT_PAREN)
+				&& IS_WORD(arg)
+				&& VAL_WORD_SYM(arg) == SYM_GROUPX
+			) {
+				VAL_WORD_SYM(arg) = SYM_FROM_KIND(REB_PAREN);
+			}
+		#endif
+
 		// if (IS_NONE(arg)) return R_NONE;
 		if (MT_Datatype(D_OUT, arg, REB_DATATYPE))
 			break;
 
-		Trap_Make_DEAD_END(REB_DATATYPE, arg);
+		raise Error_Bad_Make(REB_DATATYPE, arg);
 
 	default:
-		Trap_Action_DEAD_END(REB_DATATYPE, action);
+		raise Error_Illegal_Action(REB_DATATYPE, action);
 	}
 
 	return R_OUT;

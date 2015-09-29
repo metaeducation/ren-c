@@ -129,7 +129,7 @@
 	case A_ODDQ:
 	case A_EVENQ:
 	case A_ABSOLUTE:
-		Trap_Action_DEAD_END(VAL_TYPE(value), action);
+		raise Error_Illegal_Action(VAL_TYPE(value), action);
 
 	default:
 		return -1;
@@ -159,7 +159,7 @@ is_true:
 	REBVAL	*t = VAL_BLK_DATA(tval);
 	REBINT	diff;
 
-	CHECK_C_STACK_OVERFLOW(&s);
+	if (C_STACK_OVERFLOWING(&s)) Trap_Stack_Overflow();
 
 	if ((VAL_SERIES(sval)==VAL_SERIES(tval))&&
 	 (VAL_INDEX(sval)==VAL_INDEX(tval)))

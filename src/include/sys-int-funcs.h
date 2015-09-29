@@ -46,7 +46,8 @@
 #endif
 
 #ifdef __GNUC__
-#define GCC_VERSION_AT_LEAST(m, n) (__GNUC__ >= (m) && __GNUC_MINOR__ >= (n))
+#define GCC_VERSION_AT_LEAST(m, n) \
+	(__GNUC__ > (m) || (__GNUC__ == (m) && __GNUC_MINOR__ >= (n)))
 #else
 #define GCC_VERSION_AT_LEAST(m, n) 0
 #endif

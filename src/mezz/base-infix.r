@@ -59,11 +59,16 @@ set (pick [<=] 1) binary-to-infix :lesser-or-equal?
 set (pick [>] 1) binary-to-infix :greater?
 set (pick [>=] 1) binary-to-infix :greater-or-equal?
 
+and: binary-to-infix :and?
+or: binary-to-infix :or?
+xor: binary-to-infix :xor?
+
+and*: binary-to-infix :and~
+or+: binary-to-infix :or~
+xor-: binary-to-infix :xor~
+
+; !!! C-isms that are unlikely to be kept
 &: binary-to-infix :and~
 |: binary-to-infix :or~
-
-and: binary-to-infix :and~
-or: binary-to-infix :or~
-xor: binary-to-infix :xor~
 
 unset 'binary-to-infix

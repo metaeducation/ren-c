@@ -30,9 +30,9 @@ secure: function/with [
 
 	if policy = 'help [
 		print "You can set policies for:"
-		foreach [target pol] pol-obj [print ["  " target]]
+		for-each [target pol] pol-obj [print ["  " target]]
 		print "These can be set to:"
-		foreach [t d] [
+		for-each [t d] [
 			allow "no security"
 			ask   "ask user for permission"
 			throw "throw as an error"
@@ -48,13 +48,13 @@ secure: function/with [
 
 	if policy = 'query [
 		out: make block! 2 * length pol-obj
-		foreach [target pol] pol-obj [
+		for-each [target pol] pol-obj [
 			case [
 				; file 0.0.0 (policies)
 				tuple? pol [repend out [target word-policy pol]]
 				; file [allow read quit write]
 				block? pol [
-					foreach [item pol] pol [
+					for-each [item pol] pol [
 						if binary? item [item: to-string item] ; utf-8 decode
 						if string? item [item: to-rebol-file item]
 						repend out [item word-policy pol]
@@ -75,13 +75,13 @@ secure: function/with [
 	; Bulk-set all policies:
 	if word? policy [
 		n: make-policy 'all policy
-		foreach word words-of pol-obj [set word n]
+		for-each word words-of pol-obj [set word n]
 		set-policies pol-obj
 		exit
 	]
 
 	; Set each policy target separately:
-	foreach [target pol] policy [
+	for-each [target pol] policy [
 		assert/type [target [word! file! url!] pol [block! word! integer!]]
 		set-policy target make-policy target pol pol-obj
 	]
@@ -104,7 +104,7 @@ secure: function/with [
 	][
 		; Special cases: [eval 100000]
 		if find [eval memory] target [
-			assert-policy number? pol target pol
+			assert-policy any-number? pol target pol
 			limit-usage target pol ; pol is a number here
 			return 3.3.3 ; always quit
 		]
@@ -117,12 +117,12 @@ secure: function/with [
 		; Detailed case: [file [allow read throw write]]
 		flags: 0.0.0
 		assert-policy block? pol target pol
-		foreach [act perm] pol [
+		for-each [act perm] pol [
 			n: find acts act
 			assert-policy n target act
 			m: select [read 1.0.0 write 0.1.0 execute 0.0.1] perm
 			assert-policy m target perm
-			flags: (index-of n) - 1 * m or flags
+			flags: (index-of n) - 1 * m or+ flags
 		]
 		flags
 	]
@@ -164,7 +164,7 @@ secure: function/with [
 		]
 		blk: make block! 4
 		n: 1
-		foreach act [read write execute] [
+		for-each act [read write execute] [
 			repend blk [pick acts 1 + pol/:n act]
 			++ n
 		]

@@ -68,7 +68,8 @@ static REBFLG find_in_uni(REBUNI *up, REBINT len, REBUNI c)
 		wlen = 1;
 		*up++ = Int32s(with, 0);
 	}
-	else if (ANY_BINSTR(with)) {
+	else {
+		assert(ANY_BINSTR(with));
 		n = VAL_LEN(with);
 		if (n >= MAX_WITH) n = MAX_WITH-1;
 		wlen = n;
@@ -79,6 +80,7 @@ static REBFLG find_in_uni(REBUNI *up, REBINT len, REBUNI c)
 			n = 0;
 		}
 	}
+
 	for (; n > 0; n--) *up++ = (REBUNI)*bp++;
 
 	// Remove all occurances of chars found in WITH string:

@@ -70,7 +70,7 @@ char *RX_Spec =
 
 	"a: b: c: none\n"
 	"xtest: does [\n"
-		"foreach blk [\n"
+		"for-each blk [\n"
 			"[xarg0]\n"
 			"[xarg1 111]\n"
 			"[xarg1 1.1]\n"

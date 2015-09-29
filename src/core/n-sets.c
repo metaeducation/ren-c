@@ -70,9 +70,8 @@ enum {
 	// Check for second series argument:
 	if (flags != SET_OP_UNIQUE) {
 		val2 = D_ARG(i++);
-		if (VAL_TYPE(val1) != VAL_TYPE(val2)) {
-			Trap_Types_DEAD_END(RE_EXPECT_VAL, VAL_TYPE(val1), VAL_TYPE(val2));
-		}
+		if (VAL_TYPE(val1) != VAL_TYPE(val2))
+			raise Error_Unexpected_Type(VAL_TYPE(val1), VAL_TYPE(val2));
 	}
 
 	// Refinements /case and /skip N
@@ -149,7 +148,7 @@ enum {
 			// Iterate over first series:
 			ser = VAL_SERIES(val1);
 			i = VAL_INDEX(val1);
-			for (; val = BLK_SKIP(ser, i), i < SERIES_TAIL(ser); i += skip) {
+			for (; i < SERIES_TAIL(ser); i += skip) {
 				uc = GET_ANY_CHAR(ser, i);
 				if (GET_FLAG(flags, SOP_CHECK)) {
 					h = Find_Str_Char(VAL_SERIES(val2), 0, VAL_INDEX(val2), VAL_TAIL(val2), skip, uc, cased) != NOT_FOUND;
@@ -202,22 +201,22 @@ enum {
 		case SET_OP_UNIQUE:
 			break;
 		case SET_OP_UNION:
-			VAL_TYPESET(val1) |= VAL_TYPESET(val2);
+			VAL_TYPESET_BITS(val1) |= VAL_TYPESET_BITS(val2);
 			break;
 		case SET_OP_INTERSECT:
-			VAL_TYPESET(val1) &= VAL_TYPESET(val2);
+			VAL_TYPESET_BITS(val1) &= VAL_TYPESET_BITS(val2);
 			break;
 		case SET_OP_DIFFERENCE:
-			VAL_TYPESET(val1) ^= VAL_TYPESET(val2);
+			VAL_TYPESET_BITS(val1) ^= VAL_TYPESET_BITS(val2);
 			break;
 		case SET_OP_EXCLUDE:
-			VAL_TYPESET(val1) &= ~VAL_TYPESET(val2);
+			VAL_TYPESET_BITS(val1) &= ~VAL_TYPESET_BITS(val2);
 			break;
 		}
 		return R_ARG1;
 
 	default:
-		Trap_Arg_DEAD_END(val1);
+		raise Error_Invalid_Arg(val1);
 	}
 
 	return R_OUT;
@@ -230,8 +229,8 @@ enum {
 /*
 **	Set functions use this arg pattern:
 **
-**		set1 [ series! bitset! date! ] "first set"
-**		set2 [ series! bitset! date! ] "second set"
+**		set1 [ any-series! bitset! date! ] "first set"
+**		set2 [ any-series! bitset! date! ] "second set"
 **		/case "case sensitive"
 **		/skip "treat the series as records of fixed size"
 **		size [integer!]
@@ -244,8 +243,8 @@ enum {
 	val2 = D_ARG(2);
 
 	if (IS_DATE(val1) || IS_DATE(val2)) {
-		if (!IS_DATE(val1)) Trap_Arg_DEAD_END(val1);
-		if (!IS_DATE(val2)) Trap_Arg_DEAD_END(val2);
+		if (!IS_DATE(val1)) raise Error_Invalid_Arg(val1);
+		if (!IS_DATE(val2)) raise Error_Invalid_Arg(val2);
 		Subtract_Date(val1, val2, D_OUT);
 		return R_OUT;
 	}

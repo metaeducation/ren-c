@@ -86,16 +86,18 @@
 
 	if (IS_INTEGER(val)) {
 		if (VAL_INT64(val) > (i64)MAX_I32 || VAL_INT64(val) < (i64)MIN_I32)
-			Trap_Range_DEAD_END(val);
+			raise Error_Out_Of_Range(val);
 		n = VAL_INT32(val);
 	}
 	else if (IS_DECIMAL(val) || IS_PERCENT(val)) {
 		if (VAL_DECIMAL(val) > MAX_I32 || VAL_DECIMAL(val) < MIN_I32)
-			Trap_Range_DEAD_END(val);
+			raise Error_Out_Of_Range(val);
 		n = (REBINT)VAL_DECIMAL(val);
 	}
-	else if (IS_LOGIC(val)) n = (VAL_LOGIC(val) ? 1 : 2);
-	else Trap_Arg_DEAD_END(val);
+	else if (IS_LOGIC(val))
+		n = (VAL_LOGIC(val) ? 1 : 2);
+	else
+		raise Error_Invalid_Arg(val);
 
 	return n;
 }
@@ -109,7 +111,7 @@
 {
 	if (fabs(f) > (REBD32)(0x7FFF)) {
 		DS_PUSH_DECIMAL(f);
-		Trap_Range_DEAD_END(DS_TOP);
+		raise Error_Out_Of_Range(DS_TOP);
 	}
 	return (REBINT)f;
 }
@@ -125,11 +127,11 @@
 
 	if (IS_DECIMAL(val)) {
 		if (VAL_DECIMAL(val) > MAX_I32 || VAL_DECIMAL(val) < MIN_I32)
-			Trap_Range_DEAD_END(val);
+			raise Error_Out_Of_Range(val);
 		n = (REBINT)VAL_DECIMAL(val);
 	} else {
 		if (VAL_INT64(val) > (i64)MAX_I32 || VAL_INT64(val) < (i64)MIN_I32)
-			Trap_Range_DEAD_END(val);
+			raise Error_Out_Of_Range(val);
 		n = VAL_INT32(val);
 	}
 
@@ -153,12 +155,12 @@
 
 	if (IS_DECIMAL(val)) {
 		if (VAL_DECIMAL(val) > MAX_I32 || VAL_DECIMAL(val) < MIN_I32)
-			Trap_Range_DEAD_END(val);
+			raise Error_Out_Of_Range(val);
 
 		n = (REBINT)VAL_DECIMAL(val);
 	} else {
 		if (VAL_INT64(val) > (i64)MAX_I32 || VAL_INT64(val) < (i64)MIN_I32)
-			Trap_Range_DEAD_END(val);
+			raise Error_Out_Of_Range(val);
 
 		n = VAL_INT32(val);
 	}
@@ -171,8 +173,7 @@
 	)
 		return n;
 
-	Trap_Range_DEAD_END(val);
-	return 0;
+	raise Error_Out_Of_Range(val);
 }
 
 
@@ -182,11 +183,14 @@
 /*
 ***********************************************************************/
 {
-	if (IS_INTEGER(val)) return VAL_INT64(val);
-	if (IS_DECIMAL(val) || IS_PERCENT(val)) return (REBI64)VAL_DECIMAL(val);
-	if (IS_MONEY(val)) return deci_to_int(VAL_MONEY_AMOUNT(val));
-	Trap_Arg_DEAD_END(val);
-	return 0;
+	if (IS_INTEGER(val))
+		return VAL_INT64(val);
+	if (IS_DECIMAL(val) || IS_PERCENT(val))
+		return cast(REBI64, VAL_DECIMAL(val));
+	if (IS_MONEY(val))
+		return deci_to_int(VAL_MONEY_AMOUNT(val));
+
+	raise Error_Invalid_Arg(val);
 }
 
 
@@ -196,11 +200,14 @@
 /*
 ***********************************************************************/
 {
-	if (IS_DECIMAL(val) || IS_PERCENT(val)) return VAL_DECIMAL(val);
-	if (IS_INTEGER(val)) return (REBDEC)VAL_INT64(val);
-	if (IS_MONEY(val)) return deci_to_decimal(VAL_MONEY_AMOUNT(val));
-	Trap_Arg_DEAD_END(val);
-	return 0;
+	if (IS_DECIMAL(val) || IS_PERCENT(val))
+		return VAL_DECIMAL(val);
+	if (IS_INTEGER(val))
+		return cast(REBDEC, VAL_INT64(val));
+	if (IS_MONEY(val))
+		return deci_to_decimal(VAL_MONEY_AMOUNT(val));
+
+	raise Error_Invalid_Arg(val);
 }
 
 
@@ -220,7 +227,7 @@
 
 	if (IS_DECIMAL(val)) {
 		if (VAL_DECIMAL(val) > MAX_I64 || VAL_DECIMAL(val) < MIN_I64)
-			Trap_Range_DEAD_END(val);
+			raise Error_Out_Of_Range(val);
 		n = (REBI64)VAL_DECIMAL(val);
 	} else {
 		n = VAL_INT64(val);
@@ -234,8 +241,7 @@
 	)
 		return n;
 
-	Trap_Range_DEAD_END(val);
-	DEAD_END;
+	raise Error_Out_Of_Range(val);
 }
 
 
@@ -245,7 +251,9 @@
 /*
 ***********************************************************************/
 {
-	if (VAL_INT64(val) > (i64)255 || VAL_INT64(val) < (i64)0) Trap_Range_DEAD_END(val);
+	if (VAL_INT64(val) > cast(i64, 255) || VAL_INT64(val) < cast(i64, 0))
+		raise Error_Out_Of_Range(val);
+
 	return VAL_INT32(val);
 }
 
@@ -274,7 +282,7 @@
 
 /***********************************************************************
 **
-*/	void Set_Datatype(REBVAL *value, REBINT n)
+*/	void Val_Init_Datatype(REBVAL *value, REBINT n)
 /*
 ***********************************************************************/
 {
@@ -298,7 +306,7 @@
 
 /***********************************************************************
 **
-*/  REBVAL *Of_Type(const REBVAL *value)
+*/  REBVAL *Type_Of(const REBVAL *value)
 /*
 **      Returns the datatype value for the given value.
 **		The datatypes are all at the head of the context.
@@ -317,19 +325,7 @@
 **
 ***********************************************************************/
 {
-	return FRM_WORD_SYM(Lib_Context, type + 1);
-}
-
-
-/***********************************************************************
-**
-*/  REBVAL *Get_Type_Word(REBCNT type)
-/*
-**      Returns the datatype word for the given type number.
-**
-***********************************************************************/
-{
-	return FRM_WORD(Lib_Context, type + 1);
+	return FRM_KEY_SYM(Lib_Context, type + 1);
 }
 
 
@@ -342,7 +338,7 @@
 ***********************************************************************/
 {
 	assert(index < SERIES_TAIL(obj));
-	return Get_Sym_Name(FRM_WORD_SYM(obj, index));
+	return Get_Sym_Name(FRM_KEY_SYM(obj, index));
 }
 
 
@@ -439,13 +435,18 @@
 
 /***********************************************************************
 **
-*/  REBSER *Make_Std_Object(REBCNT index)
+*/  REBSER *Make_Std_Object_Managed(REBCNT index)
 /*
 ***********************************************************************/
 {
-	return Copy_Array_Shallow(
+	REBSER *result = Copy_Array_Shallow(
 		VAL_OBJ_FRAME(Get_System(SYS_STANDARD, index))
 	);
+	// The system object is accessible by the user, and all of its
+	// content is managed already.  We copy the frame shallowly,
+	// but the word series inside it is managed.
+	MANAGE_SERIES(result);
+	return result;
 }
 
 
@@ -540,12 +541,16 @@
 /*
 ***********************************************************************/
 {
-	if (IS_NONE(arg)) return 0;
-	if (IS_INTEGER(arg)) return (VAL_INT64(arg) != 0);
-	if (IS_LOGIC(arg)) return (VAL_LOGIC(arg) != 0);
-	if (IS_DECIMAL(arg) || IS_PERCENT(arg)) return (VAL_DECIMAL(arg) != 0.0);
-	Trap_Arg_DEAD_END(arg);
-	DEAD_END;
+	if (IS_NONE(arg))
+		return 0;
+	if (IS_INTEGER(arg))
+		return VAL_INT64(arg) != 0;
+	if (IS_LOGIC(arg))
+		return VAL_LOGIC(arg) != 0;
+	if (IS_DECIMAL(arg) || IS_PERCENT(arg))
+		return VAL_DECIMAL(arg) != 0.0;
+
+	raise Error_Invalid_Arg(arg);
 }
 
 
@@ -573,8 +578,7 @@
 		if (is_ser && VAL_TYPE(sval) == VAL_TYPE(lval) && VAL_SERIES(sval) == VAL_SERIES(lval))
 			len = (REBINT)VAL_INDEX(lval) - (REBINT)VAL_INDEX(sval);
 		else
-			Trap1_DEAD_END(RE_INVALID_PART, lval);
-
+			raise Error_1(RE_INVALID_PART, lval);
 	}
 
 	if (is_ser) {
@@ -643,7 +647,7 @@
 		else if (bval && VAL_TYPE(bval) == VAL_TYPE(lval) && VAL_SERIES(bval) == VAL_SERIES(lval))
 			val = bval;
 		else
-			Trap1_DEAD_END(RE_INVALID_PART, lval);
+			raise Error_1(RE_INVALID_PART, lval);
 
 		len = (REBINT)VAL_INDEX(lval) - (REBINT)VAL_INDEX(val);
 	}
@@ -706,7 +710,7 @@
 {
 	i64 r = n + m;
 	if (r < -maxi || r > maxi) {
-		if (type) Trap1_DEAD_END(RE_TYPE_LIMIT, Get_Type(type));
+		if (type) raise Error_1(RE_TYPE_LIMIT, Get_Type(type));
 		r = r > 0 ? maxi : -maxi;
 	}
 	return r;
@@ -720,7 +724,7 @@
 ***********************************************************************/
 {
 	i64 r = n * m;
-	if (r < -maxi || r > maxi) Trap1_DEAD_END(RE_TYPE_LIMIT, Get_Type(type));
+	if (r < -maxi || r > maxi) raise Error_1(RE_TYPE_LIMIT, Get_Type(type));
 	return (int)r;
 }
 

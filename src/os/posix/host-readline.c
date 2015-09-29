@@ -184,7 +184,7 @@ extern void Quit_Terminal(STD_TERM *term);
 		OS_FREE(term->residue);
 		OS_FREE(term->buffer);
 		OS_FREE(term);
-		for (n = 1; n < Line_Count; n++) OS_FREE(Line_History[n]);
+		for (n = 0; n < Line_Count; n++) OS_FREE(Line_History[n]);
 		OS_FREE(Line_History);
 	}
 

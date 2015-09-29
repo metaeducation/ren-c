@@ -247,7 +247,7 @@ static REBCNT *CRC_Table;
 		break;
 
 	case REB_DATATYPE:
-		name = Get_Sym_Name(VAL_TYPE_KIND(val) + 1);
+		name = Get_Sym_Name(VAL_TYPE_SYM(val));
 		ret = Hash_Word(name, LEN_BYTES(name));
 		break;
 
@@ -277,7 +277,11 @@ static REBCNT *CRC_Table;
 	REBSER *ser;
 
 	n = Get_Hash_Prime(len * 2); // best when 2X # of keys
-	if (!n) Trap_Num(RE_SIZE_LIMIT, len);
+	if (!n) {
+		REBVAL temp;
+		SET_INTEGER(&temp, len);
+		raise Error_1(RE_SIZE_LIMIT, &temp);
+	}
 
 	ser = Make_Series(n + 1, sizeof(REBCNT), MKS_NONE);
 	LABEL_SERIES(ser, "make hash array");
@@ -331,17 +335,6 @@ static REBCNT *CRC_Table;
 	}
 
 	return hser;
-}
-
-
-/***********************************************************************
-**
-*/	void Init_CRC(void)
-/*
-***********************************************************************/
-{
-	CRC_Table = ALLOC_ARRAY(REBCNT, 256);
-	Make_CRC_Table(PRZCRC);
 }
 
 
@@ -416,6 +409,28 @@ REBCNT Update_CRC32(u32 crc, REBYTE *buf, int len) {
 	return Update_CRC32(U32_C(0x00000000), buf, len);
 }
 
+
+/***********************************************************************
+**
+*/	void Init_CRC(void)
+/*
+***********************************************************************/
+{
+	CRC_Table = ALLOC_ARRAY(REBCNT, 256);
+	Make_CRC_Table(PRZCRC);
+}
+
+
+/***********************************************************************
+**
+*/	void Shutdown_CRC(void)
+/*
+***********************************************************************/
+{
+	if (crc32_table) FREE_ARRAY(u32, 256, crc32_table);
+
+	FREE_ARRAY(REBCNT, 256, CRC_Table);
+}
 
 
 #ifdef USE_ARCHIVED_CRC_CODE

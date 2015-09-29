@@ -115,7 +115,7 @@
 	// Compute hash for value:
 	len = hser->tail;
 	hash = Hash_Value(key, len);
-	if (!hash) Trap_Type_DEAD_END(key);
+	if (!hash) raise Error_Has_Bad_Type(key);
 
 	// Determine skip and first index:
 	skip  = (len == 0) ? 0 : (hash & 0x0000FFFF) % len;
@@ -129,8 +129,8 @@
 			val = BLK_SKIP(series, (n-1) * wide);
 			if (
 				ANY_WORD(val) &&
-				(VAL_WORD_SYM(key) == VAL_BIND_SYM(val) ||
-				(!cased && VAL_WORD_CANON(key) == VAL_BIND_CANON(val)))
+				(VAL_WORD_SYM(key) == VAL_WORD_SYM(val) ||
+				(!cased && VAL_WORD_CANON(key) == VAL_WORD_CANON(val)))
 			) return hash;
 			hash += skip;
 			if (hash >= len) hash -= len;
@@ -219,7 +219,10 @@
 			v = BLK_HEAD(series);
 			if (ANY_WORD(key)) {
 				for (n = 0; n < series->tail; n += 2, v += 2) {
-					if (ANY_WORD(v) && SAME_SYM(key, v)) {
+					if (
+						ANY_WORD(v)
+						&& SAME_SYM(VAL_WORD_SYM(key), VAL_WORD_SYM(v))
+					) {
 						if (val) *++v = *val;
 						return n/2+1;
 					}
@@ -251,7 +254,8 @@
 					}
 				}
 			}
-			else Trap_Type_DEAD_END(key);
+			else
+				raise Error_Has_Bad_Type(key);
 
 			if (!val) return 0;
 			Append_Value(series, key);
@@ -440,7 +444,7 @@
 	REBVAL *val;
 	REBCNT cnt = 0;
 	REBSER *frame;
-	REBVAL *word;
+	REBVAL *key;
 	REBVAL *mval;
 
 	// Count number of set entries:
@@ -451,25 +455,27 @@
 	// See Make_Frame() - cannot use it directly because no Collect_Words
 	frame = Make_Frame(cnt, TRUE);
 
-	word = FRM_WORD(frame, 1);
+	key = FRM_KEY(frame, 1);
 	val  = FRM_VALUE(frame, 1);
 	for (mval = BLK_HEAD(mapser); NOT_END(mval) && NOT_END(mval+1); mval += 2) {
 		if (ANY_WORD(mval) && !IS_NONE(mval+1)) {
-			Val_Init_Word_Typed(
-				word,
-				REB_SET_WORD,
-				VAL_WORD_SYM(mval),
+			// !!! Used to leave SET_WORD typed values here... but why?
+			// (Objects did not make use of the set-word vs. other distinctions
+			// that function specs did.)
+			Val_Init_Typeset(
+				key,
 				// all types except END or UNSET
-				~((TYPESET(REB_END) | TYPESET(REB_UNSET)))
+				~((FLAGIT_64(REB_END) | FLAGIT_64(REB_UNSET))),
+				VAL_WORD_SYM(mval)
 			);
-			word++;
+			key++;
 			*val++ = mval[1];
 		}
 	}
 
-	SET_END(word);
+	SET_END(key);
 	SET_END(val);
-	FRM_WORD_SERIES(frame)->tail = frame->tail = cnt + 1;
+	FRM_KEYLIST(frame)->tail = frame->tail = cnt + 1;
 
 	return frame;
 }
@@ -492,7 +498,7 @@
 	// Check must be in this order (to avoid checking a non-series value);
 	if (action >= A_TAKE && action <= A_SORT) {
 		if(IS_PROTECT_SERIES(series))
-			Trap_DEAD_END(RE_PROTECTED);
+			raise Error_0(RE_PROTECTED);
 	}
 
 	switch (action) {
@@ -506,7 +512,7 @@
 
 	case A_INSERT:
 	case A_APPEND:
-		if (!IS_BLOCK(arg)) Trap_Arg_DEAD_END(val);
+		if (!IS_BLOCK(arg)) raise Error_Invalid_Arg(val);
 		*D_OUT = *val;
 		if (D_REF(AN_DUP)) {
 			n = Int32(D_ARG(AN_COUNT));
@@ -530,15 +536,17 @@
 		// make map! [word val word val]
 		if (IS_BLOCK(arg) || IS_PAREN(arg) || IS_MAP(arg)) {
 			if (MT_Map(D_OUT, arg, 0)) return R_OUT;
-			Trap_Arg_DEAD_END(arg);
+			raise Error_Invalid_Arg(arg);
 //		} else if (IS_NONE(arg)) {
 //			n = 3; // just a start
 		// make map! 10000
 		} else if (IS_NUMBER(arg)) {
-			if (action == A_TO) Trap_Arg_DEAD_END(arg);
+			if (action == A_TO) raise Error_Invalid_Arg(arg);
 			n = Int32s(arg, 0);
-		} else
-			Trap_Make_DEAD_END(REB_MAP, Of_Type(arg));
+		}
+		else
+			raise Error_Bad_Make(REB_MAP, Type_Of(arg));
+
 		// positive only
 		series = Make_Map(n);
 		Val_Init_Map(D_OUT, series);
@@ -546,7 +554,7 @@
 
 	case A_COPY:
 		if (MT_Map(D_OUT, val, 0)) return R_OUT;
-		Trap_Arg_DEAD_END(val);
+		raise Error_Invalid_Arg(val);
 
 	case A_CLEAR:
 		Clear_Series(series);
@@ -557,10 +565,14 @@
 	case A_REFLECT:
 		action = What_Reflector(arg); // zero on error
 		// Adjust for compatibility with PICK:
-		if (action == OF_VALUES) n = 1;
-		else if (action == OF_WORDS) n = -1;
-		else if (action == OF_BODY) n = 0;
-		else Trap_Reflect_DEAD_END(REB_MAP, arg);
+		if (action == OF_VALUES)
+			n = 1;
+		else if (action == OF_WORDS)
+			n = -1;
+		else if (action == OF_BODY)
+			n = 0;
+		else
+			raise Error_Cannot_Reflect(REB_MAP, arg);
 		series = Map_To_Block(series, n);
 		Val_Init_Block(D_OUT, series);
 		break;
@@ -569,7 +581,7 @@
 		return (Length_Map(series) == 0) ? R_TRUE : R_FALSE;
 
 	default:
-		Trap_Action_DEAD_END(REB_MAP, action);
+		raise Error_Illegal_Action(REB_MAP, action);
 	}
 
 	return R_OUT;

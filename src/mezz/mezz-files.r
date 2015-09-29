@@ -79,7 +79,7 @@ input: function [
 
 ask: func [
 	"Ask the user for input."
-	question [series!] "Prompt to user"
+	question [any-series!] "Prompt to user"
 	/hide "mask input with *"
 ][
 	prin question
@@ -88,7 +88,7 @@ ask: func [
 
 confirm: func [
 	"Confirms a user choice."
-	question [series!] "Prompt to user"
+	question [any-series!] "Prompt to user"
 	/with choices [string! block!]
 	/local response
 ][
@@ -118,7 +118,13 @@ list-dir: func [
 	/local files save-dir info
 ][
 	save-dir: what-dir
-	switch type-of/word :path [
+
+	unless file? save-dir [
+		fail ["No directory listing protocol registered for" save-dir]
+	]
+
+	; !!! to-word necessary as long as OPTIONS_DATATYPE_WORD_STRICT exists
+	switch to-word type-of :path [
 		unset! [] ; Stay here
 		file! [change-dir path]
 		string! [change-dir to-rebol-file path]
@@ -129,7 +135,7 @@ list-dir: func [
 	unless indent [indent: ""]
 	files: attempt [read %./]
 	if not files [print ["Not found:" :path] change-dir save-dir exit]
-	foreach file files [
+	for-each file files [
 		if any [
 			all [f dir? file]
 			all [d not dir? file]
@@ -162,6 +168,7 @@ undirize: func [
 ]
 
 in-dir: func [
+	<transparent>
 	"Evaluate a block while in a directory."
 	dir [file!] "Directory to change to (changed back after)"
 	block [block!] "Block to evaluate"

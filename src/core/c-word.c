@@ -108,7 +108,11 @@
 ***********************************************************************/
 {
 	REBINT pnum = Get_Hash_Prime(ser->tail + 1);
-	if (!pnum) Trap_Num(RE_SIZE_LIMIT, ser->tail+1);
+	if (!pnum) {
+		REBVAL temp;
+		SET_INTEGER(&temp, ser->tail + 1);
+		raise Error_1(RE_SIZE_LIMIT, &temp);
+	}
 
 	assert(!Is_Array_Series(ser));
 	Remake_Series(ser, pnum + 1, SERIES_WIDE(ser), MKS_POWER_OF_2);
@@ -263,6 +267,7 @@ make_sym:
 	PG_Word_Table.series->tail++;
 	Bind_Table->tail++;
 
+	assert(n != SYM_0);
 	return n;
 }
 
@@ -289,6 +294,7 @@ make_sym:
 ***********************************************************************/
 {
 	VAL_SET(value, type);
+	assert(sym != SYM_0);
 	VAL_WORD_SYM(value) = sym;
 	assert(frame);
 	VAL_WORD_FRAME(value) = frame;
@@ -307,6 +313,7 @@ make_sym:
 {
 	VAL_SET(value, type);
 	VAL_WORD_FRAME(value) = NULL;
+	assert(sym != SYM_0);
 	VAL_WORD_SYM(value) = sym;
 #ifndef NDEBUG
 	VAL_WORD_INDEX(value) = WORD_INDEX_UNBOUND;
@@ -317,29 +324,17 @@ make_sym:
 
 /***********************************************************************
 **
-*/	void Val_Init_Word_Typed(REBVAL *value, REBCNT type, REBCNT sym, REBU64 typeset)
+*/	REBCNT *Val_Word_Sym_Ptr_Debug(const REBVAL *word)
 /*
-**		When a special flag is set on a REB_WORD--or a value of
-**		ANY-WORD! type--it becomes an internal value holding a
-**		64-bit typeset (rather than a pointer and a binding index).
-**
-**		These 'typed' words are found in the identifying function
-**		argument series or the words of an object.  For functions,
-**		typeset bits hold the legal Rebol types those elements can
-**		hold.  They are currently unused in objects.
-**
-**		NOTE: These should not be leaked out to the user as ordinary
-**		words.  When a user reflects the `words-of` list, any series
-**		with typed words in them must be copied and mutated back to
-**		ordinary words.
+**		!!! Needed temporarily due to reorganization (though it should
+**		be checked via C++ build's static typing eventually...)
 **
 ***********************************************************************/
 {
-	VAL_SET(value, type);
-	VAL_SET_EXT(value, EXT_WORD_TYPED);
-	VAL_BIND_SYM(value) = sym;
-	VAL_BIND_TYPESET(value) = typeset;
-	assert(ANY_WORD(value));
+	assert(ANY_WORD(word));
+	// loses constness, but that's not the particular concern needed
+	// to be caught in the wake of the UNWORD => TYPESET change...
+	return cast(REBCNT*, &word->data.word.sym);
 }
 
 
@@ -413,26 +408,27 @@ make_sym:
 		// Create the hash for locating words quickly:
 		// Note that the TAIL is never changed for this series.
 		PG_Word_Table.hashes = Make_Series(n + 1, sizeof(REBCNT), MKS_NONE);
-		KEEP_SERIES(PG_Word_Table.hashes, "word hashes"); // pointer array
+		LABEL_SERIES(PG_Word_Table.hashes, "word hashes"); // pointer array
 		Clear_Series(PG_Word_Table.hashes);
 		PG_Word_Table.hashes->tail = n;
 
 		// The word (symbol) table itself:
 		PG_Word_Table.series = Make_Array(WORD_TABLE_SIZE);
+		Clear_Series(PG_Word_Table.series);
 		SET_NONE(BLK_HEAD(PG_Word_Table.series)); // Put a NONE at head.
-		KEEP_SERIES(PG_Word_Table.series, "word table"); // words are never GC'd
+		LABEL_SERIES(PG_Word_Table.series, "word table"); // words are never GC'd
 		PG_Word_Table.series->tail = 1;  // prevent the zero case
 
 		// A normal char array to hold symbol names:
 		PG_Word_Names = Make_Binary(6 * WORD_TABLE_SIZE); // average word size
-		KEEP_SERIES(PG_Word_Names, "word names");
+		LABEL_SERIES(PG_Word_Names, "word names");
 	}
 
 	// The bind table. Used to cache context indexes for given symbols.
 	Bind_Table = Make_Series(
 		SERIES_REST(PG_Word_Table.series), sizeof(REBCNT), MKS_NONE
 	);
-	KEEP_SERIES(Bind_Table, "bind table"); // numeric table
+	LABEL_SERIES(Bind_Table, "bind table"); // numeric table
 	CLEAR_SERIES(Bind_Table);
 	Bind_Table->tail = PG_Word_Table.series->tail;
 }

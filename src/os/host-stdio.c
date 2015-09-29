@@ -54,7 +54,7 @@ static REBCNT inbuf_len = 32*1024;
 
 static REBYTE *Get_Next_Line()
 {
-	REBYTE *bp = inbuf;
+	REBYTE *bp;
 	REBYTE *out;
 	REBCNT len;
 
@@ -129,6 +129,18 @@ static int Fetch_Buf()
 
 /***********************************************************************
 **
+*/	void Close_StdIO(void)
+/*
+**		Complement to Open_StdIO()
+**
+***********************************************************************/
+{
+	OS_FREE(inbuf);
+}
+
+
+/***********************************************************************
+**
 */	REBYTE *Get_Str()
 /*
 **		Get input of a null terminated UTF-8 string.
@@ -150,17 +162,11 @@ static int Fetch_Buf()
 
 /***********************************************************************
 **
-*/	void Put_Str(REBYTE *buf)
+*/	void Put_Str(const REBYTE *buf)
 /*
 **		Outputs a null terminated UTF-8 string.
 **		If buf is larger than StdIO Device allows, error out.
 **		OS dependent line termination must be done prior to call.
-**
-**		!!! A request should ideally have a way to enforce that it is not
-**		going to modify the data.  We currently require the caller to
-**		pass us data that could be written to, but "promise not to"
-**		since it is a RDC_WRITE operation.  To stay on the right side
-**		of the compiler, use a strdup()/free() instead of an m_cast.
 **
 ***********************************************************************/
 {
@@ -168,8 +174,13 @@ static int Fetch_Buf()
 	REBREQ req;
 	memcpy(&req, &Std_IO_Req, sizeof(req));
 
+	// !!! A request should ideally have a way to enforce that it is not
+	// going to modify the data.  For now we "trust it" and use m_cast.
+	// Undefined behavior will result should a RDC_WRITE request make
+	// modifications to the data pointed to.
+	//
+	req.common.data = m_cast(REBYTE*, buf);
 	req.length = LEN_BYTES(buf);
-	req.common.data = buf;
 	req.actual = 0;
 
 	OS_Do_Device(&req, RDC_WRITE);

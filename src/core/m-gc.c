@@ -122,11 +122,14 @@ REBVAL *N_watch(struct Reb_Frame *frame, REBVAL **inter_block)
 		// Print("Mark: %s %x", TYPE_NAME(val), val);
 #endif
 
-static void Queue_Mark_Value_Deep(const REBVAL *val);
+// was static, but exported for Ren/C
+/* static void Queue_Mark_Value_Deep(const REBVAL *val);*/
 
 static void Push_Block_Marked_Deep(REBSER *series);
 
+#ifndef NDEBUG
 static void Mark_Series_Only_Debug(REBSER *ser);
+#endif
 
 /***********************************************************************
 **
@@ -148,11 +151,8 @@ static void Mark_Series_Only_Debug(REBSER *ser);
 **
 ***********************************************************************/
 {
-	if (
-		!SERIES_GET_FLAG(series, SER_MANAGED)
-		&& !SERIES_GET_FLAG(series, SER_KEEP)
-	) {
-		Debug_Fmt("Link to non-MANAGED non-KEEP item reached by GC");
+	if (!SERIES_GET_FLAG(series, SER_MANAGED)) {
+		Debug_Fmt("Link to non-MANAGED item reached by GC");
 		Panic_Series(series);
 	}
 
@@ -211,17 +211,6 @@ static void Propagate_All_GC_Marks(void);
 #endif
 
 
-// Typed word blocks contain REBWRS-style words, which have type information
-// instead of a binding.  They shouldn't have any other types in them so we
-// don't need to mark deep...BUT doesn't hurt to check in debug builds!
-
-#define MARK_TYPED_WORDS_BLOCK(s) \
-	do { \
-		ASSERT_TYPED_WORDS_ARRAY(s); \
-		MARK_SERIES_ONLY(s); \
-	} while (0)
-
-
 // Assertion for making sure that all the deferred marks have been propagated
 
 #define ASSERT_NO_GC_MARKS_PENDING() \
@@ -237,11 +226,8 @@ static void Propagate_All_GC_Marks(void);
 **
 ***********************************************************************/
 {
-	if (
-		!SERIES_GET_FLAG(series, SER_MANAGED)
-		&& !SERIES_GET_FLAG(series, SER_KEEP)
-	) {
-		Debug_Fmt("Link to non-MANAGED non-KEEP item reached by GC");
+	if (!SERIES_GET_FLAG(series, SER_MANAGED)) {
+		Debug_Fmt("Link to non-MANAGED item reached by GC");
 		Panic_Series(series);
 	}
 
@@ -412,10 +398,10 @@ static void Propagate_All_GC_Marks(void);
 	} else {
 		if (ROUTINE_GET_FLAG(ROUTINE_INFO(rot), ROUTINE_VARARGS)) {
 			if (ROUTINE_FIXED_ARGS(rot))
-				MARK_TYPED_WORDS_BLOCK(ROUTINE_FIXED_ARGS(rot));
+				QUEUE_MARK_BLOCK_DEEP(ROUTINE_FIXED_ARGS(rot));
 
 			if (ROUTINE_ALL_ARGS(rot))
-				MARK_TYPED_WORDS_BLOCK(ROUTINE_ALL_ARGS(rot));
+				QUEUE_MARK_BLOCK_DEEP(ROUTINE_ALL_ARGS(rot));
 		}
 
 		if (ROUTINE_LIB(rot))
@@ -501,14 +487,13 @@ static void Propagate_All_GC_Marks(void);
 **
 */ static void Mark_Call_Frames_Deep(void)
 /*
-**		Mark all function call frames.  At the moment, this is mostly
-**		taken care of by the marking of the data stack itself...since
-**		the call frames put their values on the data stack.  The one
-**		exception is the return value, which only *indirectly*
-**		implicates a value (which may or may not live on the data
-**		stack) by storing a pointer into a handle.  We must extract
-**		that REBVAL* in order for the garbage collector to see it,
-**		as the handle would be opaque to it otherwise.
+**		Mark all function call frames.  In addition to containing the
+**		arguments that are referred to by pointer during a function
+**		invocation (acquired via D_ARG(N) calls), it is able to point
+**		to an arbitrary stable memory location for D_OUT.  This may
+**		be giving awareness to the GC of a variable on the C stack
+**		(for example).  This also keeps the function value itself
+**		live, as well as the "label" word and "where" block value.
 **
 **		Note that prior to a function invocation, the output value
 **		slot is written with "safe" TRASH.  This helps the evaluator
@@ -544,8 +529,11 @@ static void Propagate_All_GC_Marks(void);
 
 /***********************************************************************
 **
-*/	static void Queue_Mark_Value_Deep(const REBVAL *val)
+*/	void Queue_Mark_Value_Deep(const REBVAL *val)
 /*
+**		This routine is not marked `static` because it is needed by
+**		Ren/C++ in order to implement its GC_Mark_Hook.
+**
 ***********************************************************************/
 {
 	REBSER *ser = NULL;
@@ -559,12 +547,22 @@ static void Propagate_All_GC_Marks(void);
 		// !!! It's not clear if this should crash or not.
 		// Aggressive Recycle() forces this to happen, review.
 
-		// Panic(RP_THROW_IN_GC);
+		// panic Error_0(RE_THROW_IN_GC);
 	}
 
 	switch (VAL_TYPE(val)) {
 		case REB_UNSET:
+			break;
+
 		case REB_TYPESET:
+			// As long as typeset is encoded as 64 bits, there's no issue
+			// of having to keep alive "user types" or other things...but
+			// that might be needed in the future.
+			//
+			// The symbol stored for object/frame typesets is effectively
+			// unbound, and hence has no frame to be preserved.
+			break;
+
 		case REB_HANDLE:
 			break;
 
@@ -582,9 +580,23 @@ static void Propagate_All_GC_Marks(void);
 			break;
 
 		case REB_FRAME:
-			// Mark special word list. Contains no pointers because
-			// these are special word bindings (to typesets if used).
-			MARK_TYPED_WORDS_BLOCK(VAL_FRM_WORDS(val));
+			// Mark special word list.
+			//
+			// At the moment this list contains no values which would
+			// require being seen by the GC...however skipping over the
+			// values is a limited optimization.  (For instance: symbols
+			// may become GC'd and need to see the symbol references inside
+			// the values, or typesets might contain dynamically allocated
+			// arrays of user types).
+			//
+			// !!! A more global optimization would be if there was a flag
+			// that was maintained about whether there might be any GC'able
+			// values in an array.  It could start out saying there may
+			// be...but then if it did a visit and didn't see any mark it
+			// as not needing GC.  Then modifications dirty that bit.
+			//
+			QUEUE_MARK_BLOCK_DEEP(VAL_FRM_KEYLIST(val));
+
 			if (VAL_FRM_SPEC(val))
 				QUEUE_MARK_BLOCK_DEEP(VAL_FRM_SPEC(val));
 			// !!! See code below for ANY-WORD! which also deals with FRAME!
@@ -614,7 +626,7 @@ static void Propagate_All_GC_Marks(void);
 		case REB_NATIVE:
 		case REB_ACTION:
 			QUEUE_MARK_BLOCK_DEEP(VAL_FUNC_SPEC(val));
-			MARK_TYPED_WORDS_BLOCK(VAL_FUNC_WORDS(val));
+			QUEUE_MARK_BLOCK_DEEP(VAL_FUNC_PARAMLIST(val));
 			break;
 
 		case REB_WORD:	// (and also used for function STACK backtrace frame)
@@ -623,9 +635,6 @@ static void Propagate_All_GC_Marks(void);
 		case REB_LIT_WORD:
 		case REB_REFINEMENT:
 		case REB_ISSUE:
-			// Special word used in word frame, stack, or errors:
-			if (VAL_GET_EXT(val, EXT_WORD_TYPED)) break;
-
 			ser = VAL_WORD_FRAME(val);
 			if (ser) {
 				// Word is bound, so mark its context (which may be a FRAME!
@@ -633,21 +642,7 @@ static void Propagate_All_GC_Marks(void);
 				// bound words should keep their contexts from being GC'd...
 				// even stack-relative contexts for functions.
 
-				REBVAL *first;
-				assert(SERIES_TAIL(ser) > 0);
-				first = BLK_HEAD(ser);
-
-				if (IS_FRAME(first)) {
-					// It's referring to an OBJECT!-style FRAME, where the
-					// first element is a FRAME! containing the word keys
-					// and the rest of the elements are the data values
-					QUEUE_MARK_BLOCK_DEEP(ser);
-				}
-				else {
-					// It's referring to a FUNCTION!'s identifying series,
-					// which should just be a list of 'typed' words.
-					MARK_TYPED_WORDS_BLOCK(ser);
-				}
+				QUEUE_MARK_BLOCK_DEEP(ser);
 			}
 			else {
 			#ifndef NDEBUG
@@ -739,7 +734,7 @@ static void Propagate_All_GC_Marks(void);
 			Queue_Mark_Event_Deep(val);
 			break;
 
-		default:
+		default: {
 		#if !defined(NDEBUG)
 			// We allow *safe* trash values to be on the stack at the time
 			// of a garbage collection.  These will be UNSET! in the debug
@@ -752,8 +747,8 @@ static void Propagate_All_GC_Marks(void);
 			}
 		#endif
 
-			assert(FALSE);
-			Panic_Core(RP_DATATYPE+1, VAL_TYPE(val));
+			panic Error_Invalid_Datatype(VAL_TYPE(val));
+		}
 	}
 }
 
@@ -792,7 +787,7 @@ static void Propagate_All_GC_Marks(void);
 				// not worth having the variance of behavior, but since
 				// it's there for now... allow it for just those two.
 
-				if(!VAL_FRM_WORDS(val))
+				if(!VAL_FRM_KEYLIST(val))
 					continue;
 			}
 		}
@@ -809,49 +804,51 @@ static void Propagate_All_GC_Marks(void);
 
 /***********************************************************************
 **
-*/	ATTRIBUTE_NO_SANITIZE_ADDRESS static REBCNT Sweep_Series(void)
+*/	ATTRIBUTE_NO_SANITIZE_ADDRESS static REBCNT Sweep_Series(REBOOL shutdown)
 /*
-**		Free all unmarked series.
-**
 **		Scans all series in all segments that are part of the
-**		SERIES_POOL. Free series that have not been marked.
+**		SERIES_POOL.  If a series had its lifetime management
+**		delegated to the garbage collector with MANAGE_SERIES(),
+**		then if it didn't get "marked" as live during the marking
+**		phase then free it.
+**
+**		The current exception is that any GC-managed series that has
+**		been marked with the SER_KEEP flag will not be freed--unless
+**		this sweep call is during shutdown.  During shutdown, those
+**		kept series will be freed as well.
+**
+**		!!! Review the idea of SER_KEEP, as it is a lot like
+**		Guard_Series (which was deleted).  Although SER_KEEP offers a
+**		less inefficient way to flag a series as protected from the
+**		garbage collector, it can be put on and left for an arbitrary
+**		amount of time...making it seem contentious with the idea of
+**		delegating it to the garbage collector in the first place.
 **
 ***********************************************************************/
 {
-	REBSEG	*seg;
-	REBSER	*series;
-	REBCNT  n;
-	REBCNT	count = 0;
+	REBSEG *seg;
+	REBCNT count = 0;
 
 	for (seg = Mem_Pools[SERIES_POOL].segs; seg; seg = seg->next) {
-		series = (REBSER *) (seg + 1);
-		for (n = Mem_Pools[SERIES_POOL].units; n > 0; n--) {
-			// Only consider series that have been handed to GC for
-			// memory management to be candidates for freeing
-			if (SERIES_GET_FLAG(series, SER_MANAGED)) {
-				if (!SERIES_FREED(series)) {
-					if (!SERIES_GET_FLAG(series, SER_MARK | SER_KEEP)) {
-						GC_Kill_Series(series);
-						count++;
-					} else
-						SERIES_CLR_FLAG(series, SER_MARK);
-				}
-			}
-			else {
-			#ifdef NDEBUG
-				SERIES_CLR_FLAG(series, SER_MARK);
-			#else
-				// We should have only been willing to mark a non-managed
-				// series if it had SER_KEEP status (we will free it at
-				// shutdown time)
-				if (SERIES_GET_FLAG(series, SER_MARK)) {
-					assert(SERIES_GET_FLAG(series, SER_KEEP));
-					SERIES_CLR_FLAG(series, SER_MARK);
-				}
-			#endif
-			}
+		REBSER *series = cast(REBSER *, seg + 1);
+		REBCNT n;
+		for (n = Mem_Pools[SERIES_POOL].units; n > 0; n--, series++) {
+			// See notes on Make_Node() about how the first allocation of a
+			// unit zero-fills *most* of it.  But after that it's up to the
+			// caller of Free_Node() to zero out whatever bits it uses to
+			// indicate "freeness".  We check the zeroness of the `wide`.
+			if (SERIES_FREED(series))
+				continue;
 
-			series++;
+			if (SERIES_GET_FLAG(series, SER_MANAGED)) {
+				if (shutdown || !SERIES_GET_FLAG(series, SER_MARK)) {
+					GC_Kill_Series(series);
+					count++;
+				} else
+					SERIES_CLR_FLAG(series, SER_MARK);
+			}
+			else
+				assert(!SERIES_GET_FLAG(series, SER_MARK));
 		}
 	}
 
@@ -998,14 +995,13 @@ static void Propagate_All_GC_Marks(void);
 
 /***********************************************************************
 **
-*/	REBCNT Recycle(void)
+*/	REBCNT Recycle_Core(REBOOL shutdown)
 /*
 **		Recycle memory no longer needed.
 **
 ***********************************************************************/
 {
 	REBINT n;
-	REBSER **sp;
 	REBCNT count;
 
 	//Debug_Num("GC", GC_Disabled);
@@ -1032,42 +1028,59 @@ static void Propagate_All_GC_Marks(void);
 	// be a problem if code is building a new value at the tail,
 	// but has not yet updated the TAIL marker.
 	VAL_BLK_TERM(TASK_BUF_EMIT);
-	VAL_BLK_TERM(TASK_BUF_WORDS);
-//!!!	SET_END(BLK_TAIL(Save_Value_List));
+	VAL_BLK_TERM(TASK_BUF_COLLECT);
 
-	// Mark series stack (temp-saved series):
-	sp = (REBSER **)GC_Protect->data;
-	for (n = SERIES_TAIL(GC_Protect); n > 0; n--) {
-        if (Is_Array_Series(*sp))
-            MARK_BLOCK_DEEP(*sp);
-        else
-            MARK_SERIES_ONLY(*sp);
-		sp++; // can't increment inside macro arg, evaluated multiple times
+	// MARKING PHASE: the "root set" from which we determine the liveness
+	// (or deadness) of a series.  If we are shutting down, we are freeing
+	// *all* of the series that are managed by the garbage collector, so
+	// we don't mark anything as live.
+
+	if (!shutdown) {
+		REBSER **sp;
+
+		// Mark series stack (temp-saved series):
+		sp = cast(REBSER**, GC_Protect->data);
+		for (n = SERIES_TAIL(GC_Protect); n > 0; n--) {
+			if (Is_Array_Series(*sp))
+				MARK_BLOCK_DEEP(*sp);
+			else
+				MARK_SERIES_ONLY(*sp);
+			sp++; // can't increment inside macro arg (eval'd multiple times)
+		}
+
+		// Mark all root series:
+		MARK_BLOCK_DEEP(VAL_SERIES(ROOT_ROOT));
+		MARK_BLOCK_DEEP(Task_Series);
+
+		// Mark potential error object from callback!
+		Queue_Mark_Value_Deep(&Callback_Error);
+		Propagate_All_GC_Marks();
+
+		// !!! This hook point is an interim measure for letting a host
+		// mark REBVALs that it is holding onto which are not contained in
+		// series.  It is motivated by Ren/C++, which wraps REBVALs in
+		// `ren::Value` class instances, and is able to enumerate the
+		// "live" classes (they "die" when the destructor runs).
+		//
+		if (GC_Mark_Hook) {
+			(*GC_Mark_Hook)();
+			Propagate_All_GC_Marks();
+		}
+
+		// Mark all devices:
+		Mark_Devices_Deep();
+
+		// Mark function call frames:
+		Mark_Call_Frames_Deep();
 	}
 
-	// Mark all special series:
-	sp = (REBSER **)GC_Series->data;
-	for (n = SERIES_TAIL(GC_Series); n > 0; n--) {
-        if (Is_Array_Series(*sp))
-            MARK_BLOCK_DEEP(*sp);
-        else
-            MARK_SERIES_ONLY(*sp);
-		sp++; // can't increment inside macro arg, evaluated multiple times
-	}
+	// SWEEPING PHASE
 
-	// Mark all root series:
-	MARK_BLOCK_DEEP(VAL_SERIES(ROOT_ROOT));
-	MARK_BLOCK_DEEP(Task_Series);
+	// this needs to run before Sweep_Series(), because Routine has series
+	// with pointers, which can't be simply discarded by Sweep_Series
+	count = Sweep_Routines();
 
-	// Mark all devices:
-	Mark_Devices_Deep();
-
-	// Mark function call frames:
-	Mark_Call_Frames_Deep();
-
-	count = Sweep_Routines(); // this needs to run before Sweep_Series(), because Routine has series with pointers, which can't be simply discarded by Sweep_Series
-
-	count += Sweep_Series();
+	count += Sweep_Series(shutdown);
 	count += Sweep_Gobs();
 	count += Sweep_Libs();
 
@@ -1106,6 +1119,19 @@ static void Propagate_All_GC_Marks(void);
 
 /***********************************************************************
 **
+*/	REBCNT Recycle(void)
+/*
+**		Recycle memory no longer needed.
+**
+***********************************************************************/
+{
+	// Default to not passing the `shutdown` flag.
+	return Recycle_Core(FALSE);
+}
+
+
+/***********************************************************************
+**
 */	void Save_Series(REBSER *series)
 /*
 ***********************************************************************/
@@ -1117,46 +1143,10 @@ static void Propagate_All_GC_Marks(void);
 	// be useful.  That would be for cases where you are building a
 	// series up from constituent values but might want to abort and
 	// manually free it.  For the moment, we don't have that feature.
-	assert(SERIES_GET_FLAG(series, SER_MANAGED));
+	ASSERT_SERIES_MANAGED(series);
 
 	if (SERIES_FULL(GC_Protect)) Extend_Series(GC_Protect, 8);
 	((REBSER **)GC_Protect->data)[GC_Protect->tail++] = series;
-}
-
-
-/***********************************************************************
-**
-*/	void Guard_Series(REBSER *series)
-/*
-**		A list of protected series, managed by specific removal.
-**
-***********************************************************************/
-{
-	LABEL_SERIES(series, "guarded");
-	if (SERIES_FULL(GC_Series)) Extend_Series(GC_Series, 8);
-	((REBSER **)GC_Series->data)[GC_Series->tail++] = series;
-}
-
-
-/***********************************************************************
-**
-*/	void Loose_Series(REBSER *series)
-/*
-**		Remove a series from the protected list.
-**
-***********************************************************************/
-{
-	REBSER **sp;
-	REBCNT n;
-
-	LABEL_SERIES(series, "unguarded");
-	sp = (REBSER **)GC_Series->data;
-	for (n = 0; n < SERIES_TAIL(GC_Series); n++) {
-		if (sp[n] == series) {
-			Remove_Series(GC_Series, n, 1);
-			break;
-		}
-	}
 }
 
 
@@ -1172,19 +1162,24 @@ static void Propagate_All_GC_Marks(void);
 	GC_Disabled = 0;		// GC disabled counter for critical sections.
 	GC_Ballast = MEM_BALLAST;
 
-	Prior_Expand = ALLOC_ARRAY(REBSER*, MAX_EXPAND_LIST);
-	Prior_Expand[0] = (REBSER*)1;
-
 	// Temporary series protected from GC. Holds series pointers.
 	GC_Protect = Make_Series(15, sizeof(REBSER *), MKS_NONE);
-	KEEP_SERIES(GC_Protect, "gc protected");
+	LABEL_SERIES(GC_Protect, "gc protected");
 
 	// The marking queue used in lieu of recursion to ensure that deeply
 	// nested structures don't cause the C stack to overflow.
 	GC_Mark_Stack = Make_Series(100, sizeof(REBSER *), MKS_NONE);
 	TERM_SERIES(GC_Mark_Stack);
-	KEEP_SERIES(GC_Mark_Stack, "gc mark stack");
+	LABEL_SERIES(GC_Mark_Stack, "gc mark stack");
+}
 
-	GC_Series = Make_Series(60, sizeof(REBSER *), MKS_NONE);
-	KEEP_SERIES(GC_Series, "gc guarded");
+
+/***********************************************************************
+**
+*/	void Shutdown_GC(void)
+/*
+***********************************************************************/
+{
+	Free_Series(GC_Protect);
+	Free_Series(GC_Mark_Stack);
 }

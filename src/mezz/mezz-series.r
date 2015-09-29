@@ -11,17 +11,17 @@ REBOL [
 	}
 ]
 
-empty?: make :tail? [
-	[
-		{Returns TRUE if empty or NONE, or for series if index is at or beyond its tail.}
-		series [series! object! gob! port! bitset! map! none!]
-	]
+empty?: func [
+	{Returns TRUE if empty or NONE, or for series if index is at or beyond its tail.}
+	series [any-series! object! gob! port! bitset! map! none!]
+][
+	tail? series
 ]
 
 offset-of: func [
 	"Returns the offset between two series positions."
-	series1 [series!]
-	series2 [series!]
+	series1 [any-series!]
+	series2 [any-series!]
 ][
 	subtract index-of series2 index-of series1
 ]
@@ -35,7 +35,7 @@ found?: func [
 
 last?: single?: func [
 	"Returns TRUE if the series length is 1."
-	series [series! port! map! tuple! bitset! object! gob! any-word!]
+	series [any-series! port! map! tuple! bitset! object! gob! any-word!]
 ][
 	1 = length series
 ]
@@ -56,7 +56,7 @@ rejoin: func [
 	;/with "separator"
 ][
 	if empty? block: reduce block [return block]
-	append either series? first block [copy first block][
+	append either any-series? first block [copy first block][
 		form first block
 	] next block
 ]
@@ -68,7 +68,7 @@ remold: func [
 	/all  {Mold in serialized format}
 	/flat {No indentation}
 ][
-	apply :mold [reduce :value only all flat]
+	mold/:only/:all/:flat reduce :value
 ]
 
 charset: func [
@@ -108,7 +108,7 @@ array: func [
 		block? rest [
 			loop size [block: insert/only block array/initial rest :value]
 		]
-		series? :value [
+		any-series? :value [
 			loop size [block: insert/only block copy/deep value]
 		]
 		any-function? :value [ ; So value can be a thunk :)
@@ -123,7 +123,7 @@ array: func [
 
 replace: func [
 	"Replaces a search value with the replace value within the target series."
-	target  [series!] "Series to replace within (modified)"
+	target  [any-series!] "Series to replace within (modified)"
 	search  "Value to be replaced (converted if necessary)"
 	replace "Value to replace with (called each time if a function)"
 	/all "Replace all occurrences"  ;!!! Note ALL is redefined in here!
@@ -197,7 +197,7 @@ reword: func [
 		all [
 			map? values      ; Must be a map to use series keys with no dups
 			empty? char-end  ; If we have char-end, it gets appended to the keys
-			foreach [w v] values [
+			for-each [w v] values [
 				; Key types must match wtype and no unset values allowed
 				if any [unset? :v wtype <> type-of :w] [break/return false]
 				true
@@ -227,7 +227,7 @@ reword: func [
 			]
 		]
 		'else [  ; /only doesn't apply, just assign raw values
-			foreach [w v] values [  ; foreach can be used on all values types
+			for-each [w v] values [  ; for-each can be used on all values types
 				if any [set-word? :w lit-word? :w] [w: to word! :w]
 				lib/case [
 					wtype = type-of :w none
@@ -244,7 +244,7 @@ reword: func [
 	]
 	; Construct the reword rule
 	word: make block! 2 * length vals
-	foreach w vals [word: reduce/into [w '|] word]
+	for-each w vals [word: reduce/into [w '|] word]
 	word: head remove back word
 	; Convert keyword if the type doesn't match
 	cword: pick [(w: to wtype w)] wtype <> type-of source
@@ -282,7 +282,7 @@ reword: func [
 
 move: func [
 	"Move a value or span of values in a series."
-	source [series!] "Source series (modified)"
+	source [any-series!] "Source series (modified)"
 	offset [integer!] "Offset to move by, or index to move to"
 	/part "Move part of a series"
 	limit [integer!] "The length of the part to move"
@@ -304,14 +304,14 @@ move: func [
 
 extract: func [
 	"Extracts a value from a series at regular intervals."
-	series [series!]
+	series [any-series!]
 	width [integer!] "Size of each entry (the skip)"
 	/index "Extract from an offset position"
-	pos "The position(s)" [number! logic! block!]
+	pos "The position(s)" [any-number! logic! block!]
 	/default "Use a default value instead of none"
 	value "The value to use (will be called each time if a function)"
 	/into "Insert into a buffer instead (returns position after insert)"
-	output [series!] "The buffer series (modified)"
+	output [any-series!] "The buffer series (modified)"
 	/local len val
 ][  ; Default value is "" for any-string! output
 	if zero? width [return any [output make series 0]]  ; To avoid an infinite loop
@@ -322,7 +322,7 @@ extract: func [
 	]
 	unless index [pos: 1]
 	either block? pos [
-		unless parse pos [some [number! | logic!]] [cause-error 'Script 'invalid-arg reduce [pos]]
+		unless parse pos [some [any-number! | logic!]] [cause-error 'Script 'invalid-arg reduce [pos]]
 		unless output [output: make series len * length pos]
 		if all [not default any-string? output] [value: copy ""]
 		forskip series width [forall pos [
@@ -342,7 +342,7 @@ extract: func [
 
 alter: func [
 	"Append value if not found, else remove it; returns true if added."
-	series [series! port! bitset!] {(modified)}
+	series [any-series! port! bitset!] {(modified)}
 	value
 	/case "Case-sensitive comparison"
 ][
@@ -362,10 +362,20 @@ collect: func [
 	"Evaluates a block, storing values via KEEP function, and returns block of collected values."
 	body [block!] "Block to evaluate"
 	/into "Insert into a buffer instead (returns position after insert)"
-	output [series!] "The buffer series (modified)"
+	output [any-series!] "The buffer series (modified)"
 ][
 	unless output [output: make block! 16]
-	do func [keep] body func [value [any-type!] /only] [
+	eval func [<transparent> keep] body func [value [any-type!] /only] [
+		; In the default operation, this could now be written as:
+		;
+		;     output: insert/:only :value
+		;
+		; However, even though the system/options/refinements-true operation
+		; is captured at function definition time to work how the function
+		; expected, this is creating new functions *dynamically*.  As long as
+		; the option exists, we must use APPLY in case the compatibility
+		; mode is on and ONLY is #[true] (instead of the WORD! ONLY)
+		;
 		output: apply :insert [output :value none none only]
 		:value
 	]
@@ -384,9 +394,11 @@ format: function [
 
 	; Compute size of output (for better mem usage):
 	val: 0
-	foreach rule rules [
+	for-each rule rules [
 		if word? :rule [rule: get rule]
-		val: val + switch/default type-of/word :rule [
+
+		; !!! to-word necessary as long as OPTIONS_DATATYPE_WORD_STRICT exists
+		val: val + switch/default to-word type-of :rule [
 			integer! [abs rule]
 			string! [length rule]
 			char!    [1]
@@ -397,9 +409,11 @@ format: function [
 	insert/dup out p val
 
 	; Process each rule:
-	foreach rule rules [
+	for-each rule rules [
 		if word? :rule [rule: get rule]
-		switch type-of/word :rule [
+
+		; !!! to-word necessary as long as OPTIONS_DATATYPE_WORD_STRICT exists
+		switch to-word type-of :rule [
 			integer! [
 				pad: rule
 				val: form first+ values
@@ -432,7 +446,7 @@ printf: func [
 
 split: func [
 	"Split a series into pieces; fixed or variable size, fixed number, or at delimiters"
-	series	[series!] "The series to split"
+	series	[any-series!] "The series to split"
 	dlm		[block! integer! char! bitset! any-string!] "Split size, delimiter(s), or rule(s)."
 	/into	"If dlm is an integer, split into n pieces, rather than pieces of length n."
 	/local size piece-size count mk1 mk2 res fill-val add-fill-val
@@ -514,14 +528,15 @@ split: func [
 ]
 
 find-all: function [
-    "Find all occurrences of a value within a series (allows modification)."
-    'series [word!] "Variable for block, string, or other series"
-    value
-    body [block!] "Evaluated for each occurrence"
+	<transparent>
+	"Find all occurrences of a value within a series (allows modification)."
+	'series [word!] "Variable for block, string, or other series"
+	value
+	body [block!] "Evaluated for each occurrence"
 ][
-    assert [series? orig: get series]
-    while [any [set series find get series :value (set series orig false)]] [
-        do body
-        ++ (series)
-    ]
+	assert [any-series? orig: get series]
+	while [any [set series find get series :value (set series orig false)]] [
+		do body
+		++ (series)
+	]
 ]

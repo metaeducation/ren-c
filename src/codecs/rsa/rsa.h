@@ -35,6 +35,19 @@
 extern "C" {
 #endif
 
+#ifdef TO_WINDOWS
+	#include <windows.h>
+	#include <wincrypt.h>
+
+	extern HCRYPTPROV gCryptProv; // encryption provider handle
+#else
+	#include <fcntl.h>
+	#include <unistd.h>
+
+	extern int rng_fd; // file descriptor for random number generator
+#endif
+
+
 /*
  * RSA Options
  */

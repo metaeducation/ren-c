@@ -196,12 +196,12 @@
 	}
 	else if (IS_INTEGER(val)) {
 		if (VAL_INT64(val) < -MAX_SECONDS || VAL_INT64(val) > MAX_SECONDS)
-			Trap_Range_DEAD_END(val);
+			raise Error_Out_Of_Range(val);
 		secs = VAL_INT64(val) * SEC_SEC;
 	}
 	else if (IS_DECIMAL(val)) {
 		if (VAL_DECIMAL(val) < (REBDEC)(-MAX_SECONDS) || VAL_DECIMAL(val) > (REBDEC)MAX_SECONDS)
-			Trap_Range_DEAD_END(val);
+			raise Error_Out_Of_Range(val);
 		secs = DEC_TO_SECS(VAL_DECIMAL(val));
 	}
 	else if (ANY_BLOCK(val) && VAL_BLK_LEN(val) <= 3) {
@@ -344,7 +344,7 @@
 		case 2:
 			if (IS_DECIMAL(val)) {
 				f = VAL_DECIMAL(val);
-				if (f < 0.0) Trap_Range_DEAD_END(val);
+				if (f < 0.0) raise Error_Out_Of_Range(val);
 				tf.s = (REBINT)f;
 				tf.n = (REBINT)((f - tf.s) * SEC_SEC);
 			}
@@ -401,14 +401,14 @@
 				goto fixTime;
 
 			case A_DIVIDE:
-				if (secs2 == 0) Trap_DEAD_END(RE_ZERO_DIVIDE);
+				if (secs2 == 0) raise Error_0(RE_ZERO_DIVIDE);
 				//secs /= secs2;
 				VAL_SET(D_OUT, REB_DECIMAL);
 				VAL_DECIMAL(D_OUT) = (REBDEC)secs / (REBDEC)secs2;
 				return R_OUT;
 
 			case A_REMAINDER:
-				if (secs2 == 0) Trap_DEAD_END(RE_ZERO_DIVIDE);
+				if (secs2 == 0) raise Error_0(RE_ZERO_DIVIDE);
 				secs %= secs2;
 				goto setTime;
 			}
@@ -429,17 +429,17 @@
 			case A_MULTIPLY:
 				secs *= num;
 				if (secs < -MAX_TIME || secs > MAX_TIME)
-					Trap1_DEAD_END(RE_TYPE_LIMIT, Get_Type(REB_TIME));
+					raise Error_1(RE_TYPE_LIMIT, Get_Type(REB_TIME));
 				goto setTime;
 
 			case A_DIVIDE:
-				if (num == 0) Trap_DEAD_END(RE_ZERO_DIVIDE);
+				if (num == 0) raise Error_0(RE_ZERO_DIVIDE);
 				secs /= num;
 				SET_INTEGER(D_OUT, secs);
 				goto setTime;
 
 			case A_REMAINDER:
-				if (num == 0) Trap_DEAD_END(RE_ZERO_DIVIDE);
+				if (num == 0) raise Error_0(RE_ZERO_DIVIDE);
 				secs %= num;
 				goto setTime;
 			}
@@ -461,7 +461,7 @@
 				goto setTime;
 
 			case A_DIVIDE:
-				if (dec == 0.0) Trap_DEAD_END(RE_ZERO_DIVIDE);
+				if (dec == 0.0) raise Error_0(RE_ZERO_DIVIDE);
 				secs = (REBI64)(secs / dec);
 				goto setTime;
 
@@ -477,7 +477,7 @@
 			*D_ARG(2) = *D_ARG(3);
 			return T_Date(call_, action);
 		}
-		Trap_Math_Args(REB_TIME, action);
+		raise Error_Math_Args(REB_TIME, action);
 	}
 	else {
 		// unary actions
@@ -518,7 +518,7 @@
 					VAL_SET(arg, REB_INTEGER);
 					return R_ARG3;
 				}
-				else Trap_Arg_DEAD_END(arg);
+				else raise Error_Invalid_Arg(arg);
 			}
 			else {
 				secs = Round_Int(secs, Get_Round_Flags(call_) | 1, SEC_SEC);
@@ -548,11 +548,11 @@
 			assert(arg);
 
 			secs = Make_Time(arg);
-			if (secs == NO_TIME) Trap_Make_DEAD_END(REB_TIME, arg);
+			if (secs == NO_TIME) raise Error_Bad_Make(REB_TIME, arg);
 			goto setTime;
 		}
 	}
-	Trap_Action_DEAD_END(REB_TIME, action);
+	raise Error_Illegal_Action(REB_TIME, action);
 
 fixTime:
 setTime:

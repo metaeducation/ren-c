@@ -55,11 +55,23 @@ static REBREQ *Req_SIO;
 {
 	//OS_CALL_DEVICE(RDI_STDIO, RDC_INIT);
 	Req_SIO = OS_MAKE_DEVREQ(RDI_STDIO);
-	if (!Req_SIO) Panic(RP_IO_ERROR);
+	if (!Req_SIO) panic Error_0(RE_IO_ERROR);
 
 	// The device is already open, so this call will just setup
 	// the request fields properly.
 	OS_DO_DEVICE(Req_SIO, RDC_OPEN);
+}
+
+
+/***********************************************************************
+**
+*/	void Shutdown_StdIO(void)
+/*
+***********************************************************************/
+{
+	// !!! There is no OS_FREE_DEVREQ.  Should there be?  Should this
+	// include an OS_ABORT_DEVICE?
+	OS_FREE(Req_SIO);
 }
 
 
@@ -80,7 +92,7 @@ static REBREQ *Req_SIO;
 
 	OS_DO_DEVICE(Req_SIO, RDC_WRITE);
 
-	if (Req_SIO->error) Panic(RP_IO_ERROR);
+	if (Req_SIO->error) panic Error_0(RE_IO_ERROR);
 }
 
 
@@ -97,12 +109,14 @@ static REBREQ *Req_SIO;
 	#define BUF_SIZE 1024
 	REBYTE buffer[BUF_SIZE]; // on stack
 	REBYTE *buf = &buffer[0];
-	REBINT n;
 	REBCNT len2;
 	const REBYTE *bp = uni ? NULL : cast(const REBYTE *, p);
 	const REBUNI *up = uni ? cast(const REBUNI *, p) : NULL;
+	REBFLG encopts = ENCF_OS_CRLF;
 
-	if (!p) Panic(RP_NO_PRINT_PTR);
+	if (uni) SET_FLAG(encopts, OPT_ENC_UNISRC);
+
+	if (!p) panic Error_0(RE_NO_PRINT_PTR);
 
 	// Determine length if not provided:
 	if (len == UNKNOWN) len = uni ? Strlen_Uni(up) : LEN_BYTES(bp);
@@ -117,24 +131,19 @@ static REBREQ *Req_SIO;
 
 		Do_Signals();
 
-		// returns # of chars, size returns buf bytes output
-		n = Encode_UTF8(
+		Req_SIO->length = Encode_UTF8(
 			buf,
-			BUF_SIZE-4,
+			BUF_SIZE - 4,
 			uni ? cast(const void *, up) : cast(const void *, bp),
 			&len2,
-			uni,
-			OS_CRLF
+			encopts
 		);
-		if (n == 0) break;
 
-		Req_SIO->length = len2; // byte size of buffer
-
-		if (uni) up += n; else bp += n;
-		len -= n;
+		if (uni) up += len2; else bp += len2;
+		len -= len2;
 
 		OS_DO_DEVICE(Req_SIO, RDC_WRITE);
-		if (Req_SIO->error) Panic(RP_IO_ERROR);
+		if (Req_SIO->error) panic Error_0(RE_IO_ERROR);
 	}
 }
 
@@ -181,7 +190,7 @@ static REBREQ *Req_SIO;
 		if (Trace_Limit == 0) {
 			Trace_Limit = 100000;
 			Trace_Buffer = Make_Binary(Trace_Limit);
-			KEEP_SERIES(Trace_Buffer, "trace-buffer"); // !!! use better way
+			LABEL_SERIES(Trace_Buffer, "trace-buffer");
 		}
 	}
 	else {
@@ -287,17 +296,19 @@ static REBREQ *Req_SIO;
 **
 ***********************************************************************/
 {
+	const REBFLG encopts = FLAGIT(OPT_ENC_UNISRC) | ENCF_OS_CRLF;
 	REBCNT ul;
 	REBCNT bl;
 	REBYTE buf[1024];
 	REBUNI *up = UNI_HEAD(ser);
-	REBINT size = Length_As_UTF8(up, SERIES_TAIL(ser), TRUE, OS_CRLF);
+	REBCNT size = SERIES_LEN(ser);
 
 	REBINT disabled = GC_Disabled;
 	GC_Disabled = 1;
 
 	while (size > 0) {
-		ul = Encode_UTF8(buf, MIN(size, 1020), up, &bl, TRUE, OS_CRLF);
+		ul = size;
+		bl = Encode_UTF8(buf, 1020, up, &ul, encopts);
 		Debug_String(buf, bl, 0, 0);
 		size -= ul;
 		up += ul;
@@ -491,16 +502,16 @@ static REBREQ *Req_SIO;
 	REBCNT n;
 	REBYTE *bp;
 	REBCNT tail;
-
-	if (!buf) Panic(RP_NO_BUFFER);
-
 	REBINT disabled = GC_Disabled;
+
+	if (!buf) panic Error_0(RE_NO_BUFFER);
+
 	GC_Disabled = 1;
 
 	RESET_SERIES(buf);
 
 	// Limits output to size of buffer, will not expand it:
-	bp = Form_Var_Args(STR_HEAD(buf), SERIES_REST(buf)-1, fmt, args);
+	bp = Form_Args_Core(STR_HEAD(buf), SERIES_REST(buf) - 1, fmt, args);
 	tail = bp - STR_HEAD(buf);
 
 	for (n = 0; n < tail; n += len) {
@@ -721,7 +732,7 @@ static REBREQ *Req_SIO;
 
 /***********************************************************************
 **
-*/	REBYTE *Form_Var_Args(REBYTE *bp, REBCNT max, const char *fmt, va_list *args)
+*/	REBYTE *Form_Args_Core(REBYTE *bp, REBCNT max, const char *fmt, va_list *args)
 /*
 **		(va_list by pointer: http://stackoverflow.com/a/3369762/211160)
 **
@@ -739,6 +750,7 @@ static REBREQ *Req_SIO;
 	REBVAL value;
 	REBYTE padding;
 	REBINT l;
+	REBCNT ul;
 
 	max--; // adjust for the fact that it adds a NULL at the end.
 
@@ -802,11 +814,12 @@ mold_value:
 			// Form the REBOL value into a reused buffer:
 			ser = Mold_Print_Value(vp, 0, desc != 'v');
 
-			l = Length_As_UTF8(UNI_HEAD(ser), SERIES_TAIL(ser), TRUE, OS_CRLF);
+			l = max - len - 1;
 			if (pad != 1 && l > pad) l = pad;
-			if (l+len >= max) l = max-len-1;
 
-			Encode_UTF8(bp, l, UNI_HEAD(ser), 0, TRUE, OS_CRLF);
+			ul = SERIES_LEN(ser);
+			l = Encode_UTF8(bp, l, UNI_HEAD(ser), &ul, FLAGIT(OPT_ENC_UNISRC));
+			len += l;
 
 			// Filter out CTRL chars:
 			for (; l > 0; l--, bp++) if (*bp < ' ') *bp = ' ';
@@ -848,6 +861,23 @@ mold_value:
 	}
 	*bp = 0;
 	return bp;
+}
+
+
+/***********************************************************************
+**
+*/	REBYTE *Form_Args(REBYTE *bp, REBCNT max, const char *fmt, ...)
+/*
+***********************************************************************/
+{
+	REBYTE *result;
+	va_list args;
+
+	va_start(args, fmt);
+	result = Form_Args_Core(bp, max, fmt, &args);
+	va_end(args);
+
+	return result;
 }
 
 

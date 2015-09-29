@@ -17,8 +17,8 @@ mod: func [
 	; that is "almost non-negative"
 	; Example: 0.15 - 0.05 - 0.1 // 0.1 is negative,
 	; but it is "almost" zero, i.e. "almost non-negative"
-	a [number! money! time!]
-	b [number! money! time!] "Must be nonzero."
+	a [any-number! money! time!]
+	b [any-number! money! time!] "Must be nonzero."
 	/local r
 ] [
 	; Compute the smallest non-negative remainder
@@ -32,12 +32,12 @@ mod: func [
 
 modulo: func [
 	{Wrapper for MOD that handles errors like REMAINDER. Negligible values (compared to A and B) are rounded to zero.}
-	a [number! money! time!]
-	b [number! money! time!] "Absolute value will be used"
+	a [any-number! money! time!]
+	b [any-number! money! time!] "Absolute value will be used"
 	/local r
 ] [
 	; Coerce B to a type compatible with A
-	any [number? a  b: make a b]
+	any [any-number? a  b: make a b]
 	; Get the "accurate" MOD value
 	r: mod a abs b
 	; If the MOD result is "near zero", w.r.t. A and B,
@@ -48,7 +48,7 @@ modulo: func [
 
 sign-of: func [
 	"Returns sign of number as 1, 0, or -1 (to use as multiplier)."
-	number [number! money! time!]
+	number [any-number! money! time!]
 ][
 	case [
 		positive? number [1]
@@ -59,7 +59,7 @@ sign-of: func [
 
 minimum-of: func [
 	{Finds the smallest value in a series}
-	series [series!] {Series to search}
+	series [any-series!] {Series to search}
 	/skip {Treat the series as records of fixed size}
 	size [integer!]
 	/local spot
@@ -75,7 +75,7 @@ minimum-of: func [
 
 maximum-of: func [
 	{Finds the largest value in a series}
-	series [series!] {Series to search}
+	series [any-series!] {Series to search}
 	/skip {Treat the series as records of fixed size}
 	size [integer!]
 	/local spot
@@ -167,7 +167,7 @@ math: function/with [
 
 	; WARNING: uses recursion for parens.
 	primary: [
-		set prim-val [number! | word!]
+		set prim-val [any-number! | word!]
 		| set prim-val paren! (prim-val: translate to-block :prim-val)
 	]
 ]

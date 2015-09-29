@@ -64,6 +64,9 @@ systems: [
 	0.4.10		linux-ppc		linux
 			[BEN LLC +O1 HID LDL ST1 -LM]
 
+	0.4.11		linux-ppc64		linux
+			[LP64 BEN LLC +O1 HID LDL ST1 -LM]
+
 	0.4.20		linux-arm		linux
 			[LEN LLC +O2 HID LDL ST1 -LM]
 
@@ -73,7 +76,16 @@ systems: [
 	0.4.30		linux-mips		linux
 			[LEN LLC +O2 HID LDL ST1 -LM]
 
+	0.4.31		linux-mips32be	linux
+			[BEN LLC +O2 HID LDL ST1 -LM]
+
 	0.4.40		linux-x64		linux
+			[LP64 LEN LLC +O2 HID LDL ST1 -LM]
+
+	0.4.60		linux-axp		linux
+			[LP64 LEN LLC +O2 HID LDL ST1 -LM]
+
+	0.4.61		linux-ia64		linux
 			[LP64 LEN LLC +O2 HID LDL ST1 -LM]
 	;-------------------------------------------------------------------------
 	0.5.75		haiku			posix
@@ -87,6 +99,9 @@ systems: [
 	;-------------------------------------------------------------------------
 	0.9.04		openbsd			posix
 			[LEN LLC +O1 ST1 -LM]
+
+	0.9.40		openbsd			posix
+			[LP64 LEN LLC +O1 ST1 -LM]
 	;-------------------------------------------------------------------------
 	0.13.01		android-arm		android
 			[LEN LLC HID F64 LDL LLOG -LM CST]
@@ -160,13 +175,13 @@ other-flags: context [
 ; A little bit of sanity-checking on the systems table
 use [rec unknown-flags] [
 	; !!! See notes about NO-RETURN in the loop wrapper definition.
-	foreach-record-NO-RETURN rec systems [
+	for-each-record-NO-RETURN rec systems [
 		assert [tuple? rec/id]
 		assert [(to-string rec/os-name) == (lowercase to-string rec/os-name)]
 		assert [(to-string rec/os-base) == (lowercase to-string rec/os-base)]
 		assert [not find (to-string rec/os-base) charset [#"-" #"_"]]
 		assert [block? rec/build-flags]
-		foreach flag rec/build-flags [assert [word? flag]]
+		for-each flag rec/build-flags [assert [word? flag]]
 
 		; Exclude should mutate (CC#2222), but this works either way
 		unknown-flags: exclude (unknown_flags: copy rec/build-flags) compose [
@@ -188,7 +203,7 @@ config-system: func [
 ][
 	; Don't override a literal version tuple with a guess
 	if all [guess version] [
-		do make error! "config-system called with both /version and /guess"
+		fail "config-system called with both /version and /guess"
 	]
 
 	id: any [
@@ -202,7 +217,7 @@ config-system: func [
 			probe hint
 			hint: load hint
 			unless tuple? hint [
-				do make error! rejoin [
+				fail [
 					"Expected platform id (tuple like 0.3.1), not:" hint
 				]
 			]
@@ -214,8 +229,8 @@ config-system: func [
 	]
 
 	unless result: find-record-unique systems 'id id [
-		do make error! rejoin [
-			{No table entry for} space version space {found in systems.r}
+		fail [
+			{No table entry for} version {found in systems.r}
 		]
 	]
 

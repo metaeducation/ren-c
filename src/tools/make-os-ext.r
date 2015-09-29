@@ -33,7 +33,7 @@ change-dir %../os/
 
 ; Collect OS-specific host files:
 unless os-specific-objs: select file-base to word! join "os-" config/os-base [
-	do make error! rejoin [
+	fail rejoin [
 		"make-os-ext.r requires os-specific obj list in file-base.r"
 		space "none was provided for os-" config/os-base
 	]
@@ -153,7 +153,7 @@ typedef struct REBOL_Host_Lib ^{
 	REBDEV **devices;
 }
 
-foreach file files [
+for-each file files [
 	print ["scanning" file]
 	if all [
 		%.c = suffix? file
@@ -404,11 +404,20 @@ newline newline (rebol-lib-macros)
 
 	#ifdef OS_WIDE_CHAR
 	// !!! SEE **WARNING** BEFORE EDITING
-		#define OS_STRNCPY(d,s,m)		wcsncpy((d), (s), (m))
-		#define OS_STRNCAT(d,s,m)		wcsncat((d), (s), (m))
-		#define OS_STRNCMP(l,r,m)		wcsncmp((l), (r), (m))
-		#define OS_STRCHR(d,s)			wcschr((d), (s))
-		#define OS_STRLEN(s)			wcslen(s)
+		#define OS_STRNCPY(d,s,m) \
+			wcsncpy(cast(wchar_t*, (d)), cast(const wchar_t*, (s)), (m))
+		#define OS_STRNCAT(d,s,m) \
+			wcsncat(cast(wchar_t*, (d)), cast(const wchar_t*, (s)), (m))
+		#define OS_STRNCMP(l,r,m) \
+			wcsncmp(cast(wchar_t*, (l)), cast(const wchar_t*, (r)), (m))
+		// We have to m_cast because C++ actually has a separate overload of
+		// wcschr which will return a const pointer if the in pointer was
+		// const.
+		#define OS_STRCHR(d,s) \
+			cast(REBCHR*, \
+				m_cast(wchar_t*, wcschr(cast(const wchar_t*, (d)), (s))) \
+			)
+		#define OS_STRLEN(s)			wcslen(cast(const wchar_t*, (s)))
 	#else
 		#ifdef TO_OPENBSD
 	// !!! SEE **WARNING** BEFORE EDITING
@@ -425,7 +434,11 @@ newline newline (rebol-lib-macros)
 		#endif
 		#define OS_STRNCMP(l,r,m) \
 			strncmp(cast(const char*, (l)), cast(const char*, (r)), (m))
-		#define OS_STRCHR(d,s)			strchr(cast(const char*, (d)), (s))
+		// We have to m_cast because C++ actually has a separate overload of
+		// strchr which will return a const pointer if the in pointer was
+		// const.
+		#define OS_STRCHR(d,s) \
+			cast(REBCHR*, m_cast(char*, strchr(cast(const char*, (d)), (s))))
 		#define OS_STRLEN(s)			strlen(cast(const char*, (s)))
 	#endif
 #else

@@ -64,12 +64,12 @@
 		cast(REBYTE*, CS_Root) - sizeof(struct Reb_Chunk*)
 	);
 
-	assert(DSP == -1);
-
 	assert(!CS_Running);
 	assert(!CS_Top);
 
 	FREE(struct Reb_Chunk, chunk);
+
+	assert(DSP == -1);
 }
 
 
@@ -114,7 +114,7 @@
 	if (into) {
 		assert(ANY_BLOCK(out));
 		series = VAL_SERIES(out);
-		if (IS_PROTECT_SERIES(series)) Trap(RE_PROTECTED);
+		if (IS_PROTECT_SERIES(series)) raise Error_0(RE_PROTECTED);
 		VAL_INDEX(out) = Insert_Series(
 			series, VAL_INDEX(out), cast(REBYTE*, values), len
 		);
@@ -161,7 +161,7 @@
 **
 ***********************************************************************/
 {
-	REBCNT num_vars = VAL_FUNC_NUM_WORDS(func);
+	REBCNT num_vars = VAL_FUNC_NUM_PARAMS(func);
 
 	REBCNT size = (
 		sizeof(struct Reb_Call)
@@ -197,7 +197,6 @@
 
 		if (chunk->next) {
 			// Previously allocated chunk exists already to grow into
-			call = cast(struct Reb_Call*, &chunk->payload);
 			assert(!chunk->next->next);
 		}
 		else {
@@ -239,15 +238,17 @@
 		// alternate labels used.  One was SYM__APPLY_, another was
 		// ROOT_NONAME, and another was to be the type of the function being
 		// executed.  None are fantastic, but we do the type for now.
-		call->label = *Get_Type_Word(VAL_TYPE(func));
+		Val_Init_Word_Unbound(
+			&call->label, REB_WORD, SYM_FROM_KIND(VAL_TYPE(func))
+		);
 	}
 	else {
-		assert(IS_WORD(label));
 		call->label = *label;
 	}
 	// !!! Not sure why this is needed; seems the label word should be unbound
 	// if anything...
-	VAL_WORD_FRAME(&call->label) = VAL_FUNC_WORDS(func);
+	VAL_WORD_FRAME(&call->label) = VAL_FUNC_PARAMLIST(func);
+	assert(IS_WORD(DSF_LABEL(call)));
 
 	// Fill call frame's args with default of NONE!.  Have to do this in
 	// advance because refinement filling often skips around; if you have

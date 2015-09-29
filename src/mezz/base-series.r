@@ -103,11 +103,11 @@ tenth: func [
 
 last: func [
 	{Returns the last value of a series.}
-	value [series! tuple! gob!]
+	value [any-series! tuple! gob!]
 	/local len
 ] [
 	case [
-		series? value [pick back tail value 1]
+		any-series? value [pick back tail value 1]
 		tuple? value [pick value length value]
 		gob? value [
 			; The C code effectively used 'pick value t' with:
@@ -134,13 +134,13 @@ last: func [
 
 repend: func [
 	"Appends a reduced value to a series and returns the series head."
-	series [series! port! map! gob! object! bitset!] {Series at point to insert (modified)}
+	series [any-series! port! map! gob! object! bitset!] {Series at point to insert (modified)}
 	value {The value to insert}
 	/part {Limits to a given length or position}
-	limit [number! series! pair!]
+	limit [any-number! any-series! pair!]
 	/only {Inserts a series as a series}
 	/dup {Duplicates the insert a specified number of times}
-	count [number! pair!]
+	count [any-number! pair!]
 ][
 	apply :append [series reduce :value part limit only dup count]
 ]
@@ -150,7 +150,7 @@ join: func [
 	value "Base value"
 	rest "Value or block of values"
 ][
-	value: either series? :value [copy value] [form :value]
+	value: either any-series? :value [copy value] [form :value]
 	repend value :rest
 ]
 

@@ -24,6 +24,7 @@ launch: func [
 ]
 
 wrap: func [
+	<transparent>
 	"Evaluates a block, wrapping all set-words as locals."
 	body [block!] "Block to evaluate"
 ][

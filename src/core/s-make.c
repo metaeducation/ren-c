@@ -42,7 +42,14 @@
 {
 	REBSER *series = Make_Series(length + 1, sizeof(REBYTE), MKS_NONE);
 	LABEL_SERIES(series, "make binary");
+
+	// !!! Clients seem to have different expectations of if `length` is
+	// total capacity (and the binary should be empty) or actually is
+	// specifically being preallocated at a fixed length.  Until this
+	// is straightened out, terminate for both possibilities.
+
 	BIN_DATA(series)[length] = 0;
+	TERM_SERIES(series);
 	return series;
 }
 
@@ -58,7 +65,14 @@
 {
 	REBSER *series = Make_Series(length + 1, sizeof(REBUNI), MKS_NONE);
 	LABEL_SERIES(series, "make unicode");
+
+	// !!! Clients seem to have different expectations of if `length` is
+	// total capacity (and the binary should be empty) or actually is
+	// specifically being preallocated at a fixed length.  Until this
+	// is straightened out, terminate for both possibilities.
+
 	UNI_HEAD(series)[length] = 0;
+	TERM_SERIES(series);
 	return series;
 }
 
@@ -222,7 +236,7 @@ cp_same:
 			idx += n;
 			pos += n;
 			len -= n;
-			Widen_String(dst, FALSE);
+			Widen_String(dst, TRUE);
 			goto cp_same;
 		}
 		bp[n] = (REBYTE)up[n];
@@ -321,10 +335,9 @@ cp_same:
 	}
 	else {
 		REBCNT n = VAL_LEN(val);
-		REBSER *ser = Prep_Bin_Str(val, 0, &n);
 
 		// !!! "Leaks" in the sense that the GC has to take care of this
-		MANAGE_SERIES(ser);
+		REBSER *ser = Temp_Bin_Str_Managed(val, 0, &n);
 
 		if (out) *out = ser;
 
@@ -580,10 +593,12 @@ cp_same:
 
 /***********************************************************************
 **
-*/  REBSER *Join_Binary(const REBVAL *blk)
+*/  REBSER *Join_Binary(const REBVAL *blk, REBINT limit)
 /*
 **		Join a binary from component values for use in standard
 **		actions like make, insert, or append.
+**		limit: maximum number of values to process
+**		limit < 0 means no limit
 **
 **		WARNING: returns BUF_FORM, not a copy!
 **
@@ -593,15 +608,19 @@ cp_same:
 	REBVAL *val;
 	REBCNT tail = 0;
 	REBCNT len;
+	REBCNT bl;
 	void *bp;
+
+	if (limit < 0) limit = VAL_LEN(blk);
 
 	RESET_TAIL(series);
 
-	for (val = VAL_BLK_DATA(blk); NOT_END(val); val++) {
+	for (val = VAL_BLK_DATA(blk); limit > 0; val++, limit--) {
 		switch (VAL_TYPE(val)) {
 
 		case REB_INTEGER:
-			if (VAL_INT64(val) > (i64)255 || VAL_INT64(val) < 0) Trap_Range_DEAD_END(val);
+			if (VAL_INT64(val) > cast(i64, 255) || VAL_INT64(val) < 0)
+				raise Error_Out_Of_Range(val);
 			EXPAND_SERIES_TAIL(series, 1);
 			*BIN_SKIP(series, tail) = (REBYTE)VAL_INT32(val);
 			break;
@@ -619,10 +638,17 @@ cp_same:
 		case REB_TAG:
 			len = VAL_LEN(val);
 			bp = VAL_BYTE_SIZE(val) ? VAL_BIN_DATA(val) : (REBYTE*)VAL_UNI_DATA(val);
-			len = Length_As_UTF8(bp, len, (REBOOL)!VAL_BYTE_SIZE(val), 0);
-			EXPAND_SERIES_TAIL(series, len);
-			Encode_UTF8(BIN_SKIP(series, tail), len, bp, &len, !VAL_BYTE_SIZE(val), 0);
-			series->tail = tail + len;
+			bl = Length_As_UTF8(
+				bp, len, VAL_BYTE_SIZE(val) ? 0 : FLAGIT(OPT_ENC_UNISRC)
+			);
+			EXPAND_SERIES_TAIL(series, bl);
+			series->tail = tail + Encode_UTF8(
+				BIN_SKIP(series, tail),
+				bl,
+				bp,
+				&len,
+				VAL_BYTE_SIZE(val) ? 0 : FLAGIT(OPT_ENC_UNISRC)
+			);
 			break;
 
 		case REB_CHAR:
@@ -632,7 +658,7 @@ cp_same:
 			break;
 
 		default:
-			Trap_Arg_DEAD_END(val);
+			raise Error_Invalid_Arg(val);
 		}
 
 		tail = series->tail;

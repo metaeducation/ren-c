@@ -144,7 +144,7 @@
 		// marked managed (because they *might* delve another level deep)
 		ASSERT_VALUE_MANAGED(value);
 
-		if (types & TYPESET(VAL_TYPE(value)) & TS_SERIES_OBJ) {
+		if (types & FLAGIT_64(VAL_TYPE(value)) & TS_SERIES_OBJ) {
 			// Replace just the series field of the value
 			// Note that this should work for objects too (the frame).
 			if (Is_Array_Series(VAL_SERIES(value)))
@@ -156,7 +156,7 @@
 
 			if (!deep) continue;
 
-			if (types & TYPESET(VAL_TYPE(value)) & TS_ARRAYS_OBJ) {
+			if (types & FLAGIT_64(VAL_TYPE(value)) & TS_ARRAYS_OBJ) {
 				Clonify_Values_Len_Managed(
 					 BLK_HEAD(VAL_SERIES(value)),
 					 VAL_TAIL(value),
@@ -165,7 +165,7 @@
 				);
 			}
 		}
-		else if (types & TYPESET(VAL_TYPE(value)) & TS_FUNCLOS) {
+		else if (types & FLAGIT_64(VAL_TYPE(value)) & TS_FUNCLOS) {
 			// Here we reuse the spec of the function when we copy it, but
 			// create a new identifying word series.  We also need to make
 			// a new body and rebind it to that series.  The reason we have
@@ -182,10 +182,10 @@
 			//
 			// if (IS_CLOSURE(value)) continue;
 
-			REBSER *src_words = VAL_FUNC_WORDS(value);
+			REBSER *src_words = VAL_FUNC_PARAMLIST(value);
 
-			VAL_FUNC_WORDS(value) = Copy_Array_Shallow(src_words);
-			MANAGE_SERIES(VAL_FUNC_WORDS(value));
+			VAL_FUNC_PARAMLIST(value) = Copy_Array_Shallow(src_words);
+			MANAGE_SERIES(VAL_FUNC_PARAMLIST(value));
 
 			VAL_FUNC_BODY(value) = Copy_Array_Core_Managed(
 				VAL_FUNC_BODY(value),
@@ -196,10 +196,10 @@
 			);
 
 			// Remap references in the body from src_words to our new copied
-			// word list we saved in VAL_FUNC_WORDS(value)
+			// word list we saved in VAL_FUNC_PARAMLIST(value)
 			Rebind_Block(
 				src_words,
-				VAL_FUNC_WORDS(value),
+				VAL_FUNC_PARAMLIST(value),
 				BLK_HEAD(VAL_FUNC_BODY(value)),
 				0
 			);
@@ -235,9 +235,6 @@
 	}
 	else {
 		series = Copy_Values_Len_Shallow(BLK_SKIP(block, index), tail - index);
-
-		// Hand to the GC to manage *before* the recursion, in case it fails
-		// from being too deep.  This way the GC cleans it up during trap.
 		MANAGE_SERIES(series);
 
 		if (types != 0)
@@ -299,7 +296,7 @@
 	if (into) {
 		series = VAL_SERIES(into);
 
-		if (IS_PROTECT_SERIES(series)) Trap(RE_PROTECTED);
+		if (IS_PROTECT_SERIES(series)) raise Error_0(RE_PROTECTED);
 
 		if (ANY_BLOCK(into)) {
 			// When the target is an any-block, we can do an ordinary

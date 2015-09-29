@@ -106,30 +106,30 @@
 					if (IS_DATE(val2)) return T_Date(call_, action);
 				}
 			}
-			Trap_Math_Args(REB_INTEGER, action);
+			raise Error_Math_Args(REB_INTEGER, action);
 		}
 	}
 
 	switch (action) {
 
 	case A_ADD:
-		if (REB_I64_ADD_OF(num, arg, &anum)) Trap_DEAD_END(RE_OVERFLOW);
+		if (REB_I64_ADD_OF(num, arg, &anum)) raise Error_0(RE_OVERFLOW);
 		num = anum;
 		break;
 
 	case A_SUBTRACT:
-		if (REB_I64_SUB_OF(num, arg, &anum)) Trap_DEAD_END(RE_OVERFLOW);
+		if (REB_I64_SUB_OF(num, arg, &anum)) raise Error_0(RE_OVERFLOW);
 		num = anum;
 		break;
 
 	case A_MULTIPLY:
-		if (REB_I64_MUL_OF(num, arg, &p)) Trap_DEAD_END(RE_OVERFLOW);
+		if (REB_I64_MUL_OF(num, arg, &p)) raise Error_0(RE_OVERFLOW);
 		num = p;
 		break;
 
 	case A_DIVIDE:
-		if (arg == 0) Trap_DEAD_END(RE_ZERO_DIVIDE);
-		if (num == MIN_I64 && arg == -1) Trap_DEAD_END(RE_OVERFLOW);
+		if (arg == 0) raise Error_0(RE_ZERO_DIVIDE);
+		if (num == MIN_I64 && arg == -1) raise Error_0(RE_OVERFLOW);
 		if (num % arg == 0) {
 			num = num / arg;
 			break;
@@ -142,7 +142,7 @@
 		return T_Decimal(call_, action);
 
 	case A_REMAINDER:
-		if (arg == 0) Trap_DEAD_END(RE_ZERO_DIVIDE);
+		if (arg == 0) raise Error_0(RE_ZERO_DIVIDE);
 		num = REM2(num, arg);
 		break;
 
@@ -151,14 +151,14 @@
 	case A_XOR: num ^= arg; break;
 
 	case A_NEGATE:
-		if (num == MIN_I64) Trap_DEAD_END(RE_OVERFLOW);
+		if (num == MIN_I64) raise Error_0(RE_OVERFLOW);
 		num = -num;
 		break;
 
 	case A_COMPLEMENT: num = ~num; break;
 
 	case A_ABSOLUTE:
-		if (num == MIN_I64) Trap_DEAD_END(RE_OVERFLOW);
+		if (num == MIN_I64) raise Error_0(RE_OVERFLOW);
 		if (num < 0) num = -num;
 		break;
 
@@ -181,7 +181,7 @@
 				SET_TYPE(D_OUT, VAL_TYPE(val2));
 				return R_OUT;
 			}
-			if (IS_TIME(val2)) Trap_Arg_DEAD_END(val2);
+			if (IS_TIME(val2)) raise Error_Invalid_Arg(val2);
 			arg = VAL_INT64(val2);
 		}
 		else arg = 0L;
@@ -206,7 +206,7 @@
 		val = D_ARG(2);
 		if (IS_DECIMAL(val) || IS_PERCENT(val)) {
 			if (VAL_DECIMAL(val) < MIN_D64 || VAL_DECIMAL(val) >= MAX_D64)
-				Trap_DEAD_END(RE_OVERFLOW);
+				raise Error_0(RE_OVERFLOW);
 			num = (REBI64)VAL_DECIMAL(val);
 		}
 		else if (IS_INTEGER(val))
@@ -239,9 +239,9 @@
 					double v = VAL_DECIMAL(D_OUT);
 					if (v < MAX_D64 && v >= MIN_D64) {
 						num = (REBI64)v;
-					} else {
-						Trap_DEAD_END(RE_OVERFLOW);
 					}
+					else
+						raise Error_0(RE_OVERFLOW);
 					break;
 				}
 			}
@@ -264,14 +264,14 @@
 		break;
 
 	default:
-		Trap_Action_DEAD_END(REB_INTEGER, action);
+		raise Error_Illegal_Action(REB_INTEGER, action);
 	}
 
 	SET_INTEGER(D_OUT, num);
 	return R_OUT;
 
 is_bad:
-	Trap_Make_DEAD_END(REB_INTEGER, val);
+	raise Error_Bad_Make(REB_INTEGER, val);
 
 is_false:
 	return R_FALSE;

@@ -24,7 +24,7 @@ stack-error		; special stack overlow error object
 halt-error		; special halt error object
 this-context	; current context
 buf-emit		; temporary emit output block
-buf-words		; temporary word cache
+buf-collect		; temporary cache for collecting object keys or words
 buf-utf8		; UTF8 reused buffer
 buf-print		; temporary print output - used by raw print
 buf-form		; temporary form buffer - used by raw print

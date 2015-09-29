@@ -30,6 +30,55 @@
 #include "sys-core.h"
 #include "sys-int-funcs.h" //REB_I64_ADD_OF
 
+typedef enum {
+	LOOP_FOR_EACH,
+	LOOP_REMOVE_EACH,
+	LOOP_MAP_EACH,
+	LOOP_EVERY
+} LOOP_MODE;
+
+
+/***********************************************************************
+**
+*/	REBOOL Loop_Throw_Should_Return(REBVAL *val)
+/*
+**		Process values thrown during loop, and tell the loop whether
+**		to take that processed value and return it up the stack.
+**		If not, then the throw was a continue...and the code
+**		should just keep going.
+**
+**		Note: This modifies the input value.  If it returns FALSE
+**		then the value is guaranteed to not be THROWN(), but it
+**		may-or-may-not be THROWN() if TRUE is returned.
+**
+***********************************************************************/
+{
+	assert(THROWN(val));
+
+	// Using words for BREAK and CONTINUE to parallel old VAL_ERR_SYM()
+	// code.  So if the throw wasn't a word it can't be either of those,
+	// hence the loop doesn't handle it and needs to bubble up the THROWN()
+	if (!IS_WORD(val))
+		return TRUE;
+
+	// If it's a CONTINUE then wipe out the THROWN() value with UNSET,
+	// and tell the loop it doesn't have to return.
+	if (VAL_WORD_SYM(val) == SYM_CONTINUE) {
+		SET_UNSET(val);
+		return FALSE;
+	}
+
+	// If it's a BREAK, get the /WITH value (UNSET! if no /WITH) and
+	// say it should be returned.
+	if (VAL_WORD_SYM(val) == SYM_BREAK) {
+		TAKE_THROWN_ARG(val, val);
+		return TRUE;
+	}
+
+	// Else: Let all other THROWN() values bubble up.
+	return TRUE;
+}
+
 
 /***********************************************************************
 **
@@ -51,13 +100,13 @@
 
 	// Hand-make a FRAME (done for for speed):
 	len = IS_BLOCK(spec) ? VAL_LEN(spec) : 1;
-	if (len == 0) Trap_Arg_DEAD_END(spec);
+	if (len == 0) raise Error_Invalid_Arg(spec);
 	frame = Make_Frame(len, FALSE);
 	SERIES_TAIL(frame) = len+1;
-	SERIES_TAIL(FRM_WORD_SERIES(frame)) = len+1;
+	SERIES_TAIL(FRM_KEYLIST(frame)) = len + 1;
 
 	// Setup for loop:
-	word = FRM_WORD(frame, 1); // skip SELF
+	word = FRM_KEY(frame, 1); // skip SELF
 	vals = BLK_SKIP(frame, 1);
 	if (IS_BLOCK(spec)) spec = VAL_BLK_DATA(spec);
 
@@ -65,11 +114,11 @@
 	while (len-- > 0) {
 		if (!IS_WORD(spec) && !IS_SET_WORD(spec)) {
 			// Prevent inconsistent GC state:
-			Free_Series(FRM_WORD_SERIES(frame));
+			Free_Series(FRM_KEYLIST(frame));
 			Free_Series(frame);
-			Trap_Arg_DEAD_END(spec);
+			raise Error_Invalid_Arg(spec);
 		}
-		Val_Init_Word_Typed(word, VAL_TYPE(spec), VAL_WORD_SYM(spec), ALL_64);
+		Val_Init_Typeset(word, ALL_64, VAL_WORD_SYM(spec));
 		word++;
 		SET_NONE(vals);
 		vals++;
@@ -111,10 +160,10 @@
 		VAL_INDEX(var) = si;
 
 		if (Do_Block_Throws(out, body, 0)) {
-			if (Process_Loop_Throw(out) >= 0) break;
+			if (Loop_Throw_Should_Return(out)) break;
 		}
 
-		if (VAL_TYPE(var) != type) Trap1(RE_INVALID_TYPE, var);
+		if (VAL_TYPE(var) != type) raise Error_1(RE_INVALID_TYPE, var);
 		si = VAL_INDEX(var);
 	}
 }
@@ -134,15 +183,14 @@
 		VAL_INT64(var) = start;
 
 		if (Do_Block_Throws(out, body, 0)) {
-			if (Process_Loop_Throw(out) >= 0) break;
+			if (Loop_Throw_Should_Return(out)) break;
 		}
 
-		if (!IS_INTEGER(var)) Trap_Type(var);
+		if (!IS_INTEGER(var)) raise Error_Has_Bad_Type(var);
 		start = VAL_INT64(var);
 
-		if (REB_I64_ADD_OF(start, incr, &start)) {
-			Trap(RE_OVERFLOW);
-		}
+		if (REB_I64_ADD_OF(start, incr, &start))
+			raise Error_0(RE_OVERFLOW);
 	}
 }
 
@@ -157,17 +205,26 @@
 	REBDEC e;
 	REBDEC i;
 
-	if (IS_INTEGER(start)) s = cast(REBDEC, VAL_INT64(start));
-	else if (IS_DECIMAL(start) || IS_PERCENT(start)) s = VAL_DECIMAL(start);
-	else { Trap_Arg(start); DEAD_END_VOID; }
+	if (IS_INTEGER(start))
+		s = cast(REBDEC, VAL_INT64(start));
+	else if (IS_DECIMAL(start) || IS_PERCENT(start))
+		s = VAL_DECIMAL(start);
+	else
+		raise Error_Invalid_Arg(start);
 
-	if (IS_INTEGER(end)) e = cast(REBDEC, VAL_INT64(end));
-	else if (IS_DECIMAL(end) || IS_PERCENT(end)) e = VAL_DECIMAL(end);
-	else { Trap_Arg(end); DEAD_END_VOID; }
+	if (IS_INTEGER(end))
+		e = cast(REBDEC, VAL_INT64(end));
+	else if (IS_DECIMAL(end) || IS_PERCENT(end))
+		e = VAL_DECIMAL(end);
+	else
+		raise Error_Invalid_Arg(end);
 
-	if (IS_INTEGER(incr)) i = cast(REBDEC, VAL_INT64(incr));
-	else if (IS_DECIMAL(incr) || IS_PERCENT(incr)) i = VAL_DECIMAL(incr);
-	else { Trap_Arg(incr); DEAD_END_VOID; }
+	if (IS_INTEGER(incr))
+		i = cast(REBDEC, VAL_INT64(incr));
+	else if (IS_DECIMAL(incr) || IS_PERCENT(incr))
+		i = VAL_DECIMAL(incr);
+	else
+		raise Error_Invalid_Arg(incr);
 
 	VAL_SET(var, REB_DECIMAL);
 
@@ -177,10 +234,10 @@
 		VAL_DECIMAL(var) = s;
 
 		if (Do_Block_Throws(out, body, 0)) {
-			if (Process_Loop_Throw(out) >= 0) break;
+			if (Loop_Throw_Should_Return(out)) break;
 		}
 
-		if (!IS_DECIMAL(var)) Trap_Type(var);
+		if (!IS_DECIMAL(var)) raise Error_Has_Bad_Type(var);
 		s = VAL_DECIMAL(var);
 	}
 }
@@ -238,17 +295,19 @@
 			}
 
 			if (Do_Block_Throws(D_OUT, body, bodi)) {
-				if (Process_Loop_Throw(D_OUT) >= 0) {
+				if (Loop_Throw_Should_Return(D_OUT)) {
+					// return value is set, but we still need to assign var
 					break;
 				}
 			}
 
-			if (VAL_TYPE(var) != type) Trap_Arg_DEAD_END(var);
+			if (VAL_TYPE(var) != type) raise Error_Invalid_Arg(var);
 
 			VAL_INDEX(var) += inc;
 		}
 	}
-	else Trap_Arg_DEAD_END(var);
+	else
+		raise Error_Invalid_Arg(var);
 
 	// !!!!! ???? allowed to write VAR????
 	*var = *D_ARG(1);
@@ -259,36 +318,37 @@
 
 /***********************************************************************
 **
-*/	static REB_R Loop_Each(struct Reb_Call *call_, REBINT mode)
+*/	static REB_R Loop_Each(struct Reb_Call *call_, LOOP_MODE mode)
 /*
-**		Supports these natives (modes):
-**			0: foreach
-**			1: remove-each
-**			2: map
+**		Common implementation code of FOR-EACH, REMOVE-EACH, MAP-EACH,
+**		and EVERY.
 **
 ***********************************************************************/
 {
 	REBSER *body;
 	REBVAL *vars;
-	REBVAL *words;
+	REBVAL *keys;
 	REBSER *frame;
-	REBVAL *value;
+
+	// `data` is the series/object/map/etc. being iterated over
+	// Note: `data_is_object` flag is optimized out, but hints static analyzer
+	REBVAL *data = D_ARG(2);
 	REBSER *series;
-	REBSER *out;	// output block (for MAP, mode = 2)
+	const REBOOL data_is_object = ANY_OBJECT(data);
+
+	REBSER *out;	// output block (needed for MAP-EACH)
 
 	REBINT index;	// !!!! should these be REBCNT?
 	REBINT tail;
 	REBINT windex;	// write
 	REBINT rindex;	// read
-	REBINT err;
+	REBOOL break_with = FALSE;
+	REBOOL every_true = TRUE;
 	REBCNT i;
 	REBCNT j;
 	REBVAL *ds;
 
-	assert(mode >= 0 && mode < 3);
-
-	value = D_ARG(2); // series
-	if (IS_NONE(value)) return R_NONE;
+	if (IS_NONE(data)) return R_NONE;
 
 	body = Init_Loop(D_ARG(1), D_ARG(3), &frame); // vars, body
 	Val_Init_Object(D_ARG(1), frame); // keep GC safe
@@ -296,40 +356,40 @@
 
 	SET_NONE(D_OUT); // Default result to NONE if the loop does not run
 
-	// If it's MAP, create result block:
-	if (mode == 2) {
+	if (mode == LOOP_MAP_EACH) {
 		// Must be managed *and* saved...because we are accumulating results
 		// into it, and those results must be protected from GC
 
 		// !!! This means we cannot Free_Series in case of a BREAK, we
-		// have to leave it to the GC.  Should there be a variant which
-		// lets a series be a GC root for a temporary time even if it is
-		// not SER_KEEP?
+		// have to leave it to the GC.  Is there a safe and efficient way
+		// to allow inserting the managed values into a single-deep
+		// unmanaged series if we *promise* not to go deeper?
 
-		out = Make_Array(VAL_LEN(value));
+		out = Make_Array(VAL_LEN(data));
 		MANAGE_SERIES(out);
 		SAVE_SERIES(out);
 	}
 
 	// Get series info:
-	if (ANY_OBJECT(value)) {
-		series = VAL_OBJ_FRAME(value);
-		out = FRM_WORD_SERIES(series); // words (the out local reused)
+	if (data_is_object) {
+		series = VAL_OBJ_FRAME(data);
+		out = FRM_KEYLIST(series); // words (the out local reused)
 		index = 1;
-		//if (frame->tail > 3) Trap_Arg_DEAD_END(FRM_WORD(frame, 3));
+		//if (frame->tail > 3) raise Error_Invalid_Arg(FRM_KEY(frame, 3));
 	}
-	else if (IS_MAP(value)) {
-		series = VAL_SERIES(value);
+	else if (IS_MAP(data)) {
+		series = VAL_SERIES(data);
 		index = 0;
-		//if (frame->tail > 3) Trap_Arg_DEAD_END(FRM_WORD(frame, 3));
+		//if (frame->tail > 3) raise Error_Invalid_Arg(FRM_KEY(frame, 3));
 	}
 	else {
-		series = VAL_SERIES(value);
-		index  = VAL_INDEX(value);
+		series = VAL_SERIES(data);
+		index  = VAL_INDEX(data);
 		if (index >= cast(REBINT, SERIES_TAIL(series))) {
-			if (mode == 1) {
+			if (mode == LOOP_REMOVE_EACH) {
 				SET_INTEGER(D_OUT, 0);
-			} else if (mode == 2) {
+			}
+			else if (mode == LOOP_MAP_EACH) {
 				UNSAVE_SERIES(out);
 				Val_Init_Block(D_OUT, out);
 			}
@@ -339,7 +399,7 @@
 
 	windex = index;
 
-	// Iterate over each value in the series block:
+	// Iterate over each value in the data series block:
 	while (index < (tail = SERIES_TAIL(series))) {
 
 		rindex = index;  // remember starting spot
@@ -349,28 +409,32 @@
 		for (i = 1; i < frame->tail; i++) {
 
 			vars = FRM_VALUE(frame, i);
-			words = FRM_WORD(frame, i);
+			keys = FRM_KEY(frame, i);
 
-			// var spec is WORD
-			if (IS_WORD(words)) {
+			if (TRUE) { // was IS_WORD but no longer applicable...
 
 				if (index < tail) {
 
-					if (ANY_BLOCK(value)) {
+					if (ANY_BLOCK(data)) {
 						*vars = *BLK_SKIP(series, index);
 					}
-
-					else if (ANY_OBJECT(value)) {
+					else if (data_is_object) {
 						if (!VAL_GET_EXT(BLK_SKIP(out, index), EXT_WORD_HIDE)) {
 							// Alternate between word and value parts of object:
 							if (j == 0) {
-								Val_Init_Word(vars, REB_WORD, VAL_WORD_SYM(BLK_SKIP(out, index)), series, index);
+								Val_Init_Word(vars, REB_WORD, VAL_TYPESET_SYM(BLK_SKIP(out, index)), series, index);
 								if (NOT_END(vars+1)) index--; // reset index for the value part
 							}
 							else if (j == 1)
 								*vars = *BLK_SKIP(series, index);
-							else
-								Trap_Arg_DEAD_END(words);
+							else {
+								// !!! Review this error (and this routine...)
+								REBVAL key_name;
+								Val_Init_Word_Unbound(
+									&key_name, REB_WORD, VAL_TYPESET_SYM(keys)
+								);
+								raise Error_Invalid_Arg(&key_name);
+							}
 							j++;
 						}
 						else {
@@ -379,12 +443,10 @@
 							goto skip_hidden;
 						}
 					}
-
-					else if (IS_VECTOR(value)) {
+					else if (IS_VECTOR(data)) {
 						Set_Vector_Value(vars, series, index);
 					}
-
-					else if (IS_MAP(value)) {
+					else if (IS_MAP(data)) {
 						REBVAL *val = BLK_SKIP(series, index | 1);
 						if (!IS_NONE(val)) {
 							if (j == 0) {
@@ -393,8 +455,14 @@
 							}
 							else if (j == 1)
 								*vars = *BLK_SKIP(series, index);
-							else
-								Trap_Arg_DEAD_END(words);
+							else {
+								// !!! Review this error (and this routine...)
+								REBVAL key_name;
+								Val_Init_Word_Unbound(
+									&key_name, REB_WORD, VAL_TYPESET_SYM(keys)
+								);
+								raise Error_Invalid_Arg(&key_name);
+							}
 							j++;
 						}
 						else {
@@ -402,12 +470,11 @@
 							goto skip_hidden;
 						}
 					}
-
 					else { // A string or binary
-						if (IS_BINARY(value)) {
+						if (IS_BINARY(data)) {
 							SET_INTEGER(vars, (REBI64)(BIN_HEAD(series)[index]));
 						}
-						else if (IS_IMAGE(value)) {
+						else if (IS_IMAGE(data)) {
 							Set_Tuple_Pixel(BIN_SKIP(series, index), vars);
 						}
 						else {
@@ -419,72 +486,137 @@
 				}
 				else SET_NONE(vars);
 			}
-
-			// var spec is SET_WORD:
-			else if (IS_SET_WORD(words)) {
-				if (ANY_OBJECT(value) || IS_MAP(value))
-					*vars = *value;
+			else if (FALSE) { // !!! was IS_SET_WORD(keys), what was that for?
+				if (ANY_OBJECT(data) || IS_MAP(data))
+					*vars = *data;
 				else
 					Val_Init_Block_Index(vars, series, index);
 
 				//if (index < tail) index++; // do not increment block.
 			}
-			else Trap_Arg_DEAD_END(words);
 		}
-		if (index == rindex) index++; //the word block has only set-words: foreach [a:] [1 2 3][]
+
+		if (index == rindex) {
+			// the word block has only set-words: for-each [a:] [1 2 3][]
+			index++;
+		}
 
 		if (Do_Block_Throws(D_OUT, body, 0)) {
-			if ((err = Process_Loop_Throw(D_OUT)) >= 0) {
+			if (IS_WORD(D_OUT) && VAL_WORD_SYM(D_OUT) == SYM_CONTINUE) {
+				if (mode == LOOP_REMOVE_EACH) {
+					// signal the post-body-execution processing that we
+					// *do not* want to remove the element on a CONTINUE
+					SET_FALSE(D_OUT);
+				}
+				else {
+					// CONTINUE otherwise acts "as if" the loop body execution
+					// returned an UNSET!
+					SET_UNSET(D_OUT);
+				}
+			}
+			else if (IS_WORD(D_OUT) && VAL_WORD_SYM(D_OUT) == SYM_BREAK) {
+				// If it's a BREAK, get the /WITH value (UNSET! if no /WITH)
+				// Though technically this doesn't really tell us if a
+				// BREAK/WITH happened, as you can BREAK/WITH an UNSET!
+				TAKE_THROWN_ARG(D_OUT, D_OUT);
+				if (!IS_UNSET(D_OUT))
+					break_with = TRUE;
 				index = rindex;
 				break;
 			}
-			// else CONTINUE:
-			if (mode == 1) SET_FALSE(D_OUT); // keep the value (for mode == 1)
-		} else {
-			err = 0; // prevent later test against uninitialized value
+			else {
+				// Any other kind of throw, with a WORD! name or otherwise...
+				index = rindex;
+				break;
+			}
 		}
 
-		if (mode > 0) {
-			//if (ANY_OBJECT(value)) Trap_Types_DEAD_END(words, REB_BLOCK, VAL_TYPE(value)); //check not needed
+		switch (mode) {
+		case LOOP_FOR_EACH:
+			// no action needed after body is run
+			break;
+		case LOOP_REMOVE_EACH:
+			// If FALSE return, copy values to the write location
+			// !!! Should UNSET! also act as conditional false here?  Error?
+			if (IS_CONDITIONAL_FALSE(D_OUT)) {
+				REBYTE wide = SERIES_WIDE(series);
+				// memory areas may overlap, so use memmove and not memcpy!
 
-			// If FALSE return, copy values to the write location:
-			if (mode == 1) {  // remove-each
-				if (IS_CONDITIONAL_FALSE(D_OUT)) {
-					REBYTE wide = SERIES_WIDE(series);
-					// memory areas may overlap, so use memmove and not memcpy!
-					memmove(series->data + (windex * wide), series->data + (rindex * wide), (index - rindex) * wide);
-					windex += index - rindex;
-					// old: while (rindex < index) *BLK_SKIP(series, windex++) = *BLK_SKIP(series, rindex++);
-				}
+				// !!! This seems a slow way to do it, but there's probably
+				// not a lot that can be done as the series is expected to
+				// be in a good state for the next iteration of the body. :-/
+				memmove(
+					series->data + (windex * wide),
+					series->data + (rindex * wide),
+					(index - rindex) * wide
+				);
+				windex += index - rindex;
 			}
-			else
-				if (!IS_UNSET(D_OUT)) Append_Value(out, D_OUT); // (mode == 2)
+			break;
+		case LOOP_MAP_EACH:
+			// anything that's not an UNSET! will be added to the result
+			if (!IS_UNSET(D_OUT)) Append_Value(out, D_OUT);
+			break;
+		case LOOP_EVERY:
+			if (every_true) {
+				// !!! This currently treats UNSET! as true, which ALL
+				// effectively does right now.  That's likely a bad idea.
+				// When ALL changes, so should this.
+				//
+				every_true = IS_CONDITIONAL_TRUE(D_OUT);
+			}
+			break;
+		default:
+			assert(FALSE);
 		}
 skip_hidden: ;
 	}
 
-	// Finish up:
-	if (mode == 1) {
+	switch (mode) {
+	case LOOP_FOR_EACH:
+		// Nothing to do but return last result (will be UNSET! if an
+		// ordinary BREAK was used, the /WITH if a BREAK/WITH was used,
+		// and an UNSET! if the last loop iteration did a CONTINUE.)
+		return R_OUT;
+
+	case LOOP_REMOVE_EACH:
 		// Remove hole (updates tail):
 		if (windex < index) Remove_Series(series, windex, index - windex);
 		SET_INTEGER(D_OUT, index - windex);
 
 		return R_OUT;
-	}
 
-	// If MAP...
-	if (mode == 2) {
+	case LOOP_MAP_EACH:
 		UNSAVE_SERIES(out);
-		if (err != 2) {
-			// ...and not BREAK/RETURN:
-			Val_Init_Block(D_OUT, out);
+		if (break_with) {
+			// If BREAK is given a /WITH parameter that is not an UNSET!, it
+			// is assumed that you want to override the accumulated mapped
+			// data so far and return the /WITH value. (which will be in
+			// D_OUT when the loop above is `break`-ed)
+
+			// !!! Would be nice if we could Free_Series(out), but it is owned
+			// by GC (we had to make it that way to use SAVE_SERIES on it)
 			return R_OUT;
 		}
-		// Would be nice if we could Free_Series(out), but it is owned by GC
-		// (we had to make it that way to use SAVE_SERIES on it)
+
+		// If you BREAK/WITH an UNSET! (or just use a BREAK that has no
+		// /WITH, which is indistinguishable in the thrown value) then it
+		// returns the accumulated results so far up to the break.
+
+		Val_Init_Block(D_OUT, out);
+		return R_OUT;
+
+	case LOOP_EVERY:
+		// Result is the cumulative TRUE? state of all the input (with any
+		// unsets taken out of the consideration).  The last TRUE? input
+		// if all valid and NONE! otherwise.  (Like ALL.)  If the loop
+		// never runs, `every_true` will be TRUE *but* D_OUT will be NONE!
+		if (!every_true)
+			SET_NONE(D_OUT);
+		return R_OUT;
 	}
 
-	return R_OUT;
+	DEAD_END;
 }
 
 
@@ -514,8 +646,6 @@ skip_hidden: ;
 			IS_DECIMAL(end) ? (REBI64)VAL_DECIMAL(end) : VAL_INT64(end), VAL_INT64(incr));
 	}
 	else if (ANY_SERIES(start)) {
-		// Check that start and end are same type and series:
-		//if (ANY_SERIES(end) && VAL_SERIES(start) != VAL_SERIES(end)) Trap_Arg(end);
 		if (ANY_SERIES(end))
 			Loop_Series(D_OUT, var, body, start, VAL_INDEX(end), Int32(incr));
 		else
@@ -556,7 +686,7 @@ skip_hidden: ;
 {
 	do {
 		if (Do_Block_Throws(D_OUT, VAL_SERIES(D_ARG(1)), 0)) {
-			if (Process_Loop_Throw(D_OUT) >= 0) return R_OUT;
+			if (Loop_Throw_Should_Return(D_OUT)) return R_OUT;
 		}
 	} while (TRUE);
 
@@ -566,16 +696,16 @@ skip_hidden: ;
 
 /***********************************************************************
 **
-*/	REBNATIVE(foreach)
+*/	REBNATIVE(for_each)
 /*
 **		{Evaluates a block for each value(s) in a series.}
 **		'word [get-word! word! block!] {Word or block of words}
-**		data [series!] {The series to traverse}
+**		data [any-series!] {The series to traverse}
 **		body [block!] {Block to evaluate each time}
 **
 ***********************************************************************/
 {
-	return Loop_Each(call_, 0);
+	return Loop_Each(call_, LOOP_FOR_EACH);
 }
 
 
@@ -584,12 +714,12 @@ skip_hidden: ;
 */	REBNATIVE(remove_each)
 /*
 **		'word [get-word! word! block!] {Word or block of words}
-**		data [series!] {The series to traverse}
+**		data [any-series!] {The series to traverse}
 **		body [block!] {Block to evaluate each time}
 **
 ***********************************************************************/
 {
-	return Loop_Each(call_, 1);
+	return Loop_Each(call_, LOOP_REMOVE_EACH);
 }
 
 
@@ -598,12 +728,26 @@ skip_hidden: ;
 */	REBNATIVE(map_each)
 /*
 **		'word [get-word! word! block!] {Word or block of words}
-**		data [series!] {The series to traverse}
+**		data [any-series!] {The series to traverse}
 **		body [block!] {Block to evaluate each time}
 **
 ***********************************************************************/
 {
-	return Loop_Each(call_, 2);
+	return Loop_Each(call_, LOOP_MAP_EACH);
+}
+
+
+/***********************************************************************
+**
+*/	REBNATIVE(every)
+/*
+**		'word [get-word! word! block!] {Word or block of words}
+**		data [any-series!] {The series to traverse}
+**		body [block!] {Block to evaluate each time}
+**
+***********************************************************************/
+{
+	return Loop_Each(call_, LOOP_EVERY);
 }
 
 
@@ -622,7 +766,7 @@ skip_hidden: ;
 
 	for (; count > 0; count--) {
 		if (Do_Block_Throws(D_OUT, block, index)) {
-			if (Process_Loop_Throw(D_OUT) >= 0) break;
+			if (Loop_Throw_Should_Return(D_OUT)) return R_OUT;
 		}
 	}
 	return R_OUT;
@@ -679,11 +823,11 @@ skip_hidden: ;
 	do {
 utop:
 		if (Do_Block_Throws(D_OUT, b1, i1)) {
-			if (Process_Loop_Throw(D_OUT) >= 0) break;
+			if (Loop_Throw_Should_Return(D_OUT)) return R_OUT;
 			goto utop;
 		}
 
-		if (IS_UNSET(D_OUT)) Trap_DEAD_END(RE_NO_RETURN);
+		if (IS_UNSET(D_OUT)) raise Error_0(RE_NO_RETURN);
 
 	} while (IS_CONDITIONAL_FALSE(D_OUT)); // Break, return errors fall out.
 	return R_OUT;
@@ -696,39 +840,43 @@ utop:
 /*
 ***********************************************************************/
 {
-	REBSER *b1 = VAL_SERIES(D_ARG(1));
-	REBCNT i1  = VAL_INDEX(D_ARG(1));
-	REBSER *b2 = VAL_SERIES(D_ARG(2));
-	REBCNT i2  = VAL_INDEX(D_ARG(2));
+	REBSER *cond_series = VAL_SERIES(D_ARG(1));
+	REBCNT cond_index = VAL_INDEX(D_ARG(1));
+	REBSER *body_series = VAL_SERIES(D_ARG(2));
+	REBCNT body_index = VAL_INDEX(D_ARG(2));
 
 	// We need to keep the condition and body safe from GC, so we can't
 	// use a D_ARG slot for evaluating the condition (can't overwrite
 	// D_OUT because that's the last loop's value we might return)
-	REBVAL temp;
+	REBVAL cond_out;
 
 	// If the loop body never runs (and condition doesn't error or throw),
 	// we want to return a NONE!
 	SET_NONE(D_OUT);
 
 	do {
-		if (Do_Block_Throws(&temp, b1, i1) || IS_UNSET(&temp)) {
-			if (Process_Loop_Throw(&temp) >= 0) {
-				// Process_Loop_Throw modifies its argument so temp will be
-				// UNSET! (or the arg to BREAK/WITH) if a BREAK happened.
-				*D_OUT = temp;
-				return R_OUT;
-			}
-			// CONTINUE will pass through here...
+		if (Do_Block_Throws(&cond_out, cond_series, cond_index)) {
+			// A while loop should only look for breaks and continues in its
+			// body, not in its condition.  So `while [break] []` is a
+			// request to break the enclosing loop (or error if there is
+			// nothing to catch that break).  Hence we bubble up the throw.
+			*D_OUT = cond_out;
+			return R_OUT;
 		}
 
-		if (IS_CONDITIONAL_FALSE(&temp)) return R_OUT;
+		if (IS_CONDITIONAL_FALSE(&cond_out)) {
+			// When the condition evaluates to a LOGIC! false or a NONE!,
+			// WHILE returns whatever the last value was that the body
+			// evaluated to (or none if no body evaluations yet).
+			return R_OUT;
+		}
 
-		// Not interested in the value of the condition loop once we've
-		// decided to run the body...
+		if (IS_UNSET(&cond_out))
+			raise Error_0(RE_NO_RETURN);
 
-		if (Do_Block_Throws(D_OUT, b2, i2)) {
+		if (Do_Block_Throws(D_OUT, body_series, body_index)) {
 			// !!! Process_Loop_Throw may modify its argument
-			if (Process_Loop_Throw(D_OUT) >= 0) return R_OUT;
+			if (Loop_Throw_Should_Return(D_OUT)) return R_OUT;
 		}
 	} while (TRUE);
 }

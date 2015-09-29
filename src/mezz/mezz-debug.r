@@ -12,6 +12,7 @@ REBOL [
 ]
 
 dt: delta-time: function [
+	<transparent>
 	{Delta-time - returns the time it takes to evaluate the block.}
 	block [block!]
 ][
@@ -21,6 +22,7 @@ dt: delta-time: function [
 ]
 
 dp: delta-profile: func [
+	<transparent>
 	{Delta-profile of running a specific block.}
 	block [block!]
 	/local start end
@@ -28,7 +30,7 @@ dp: delta-profile: func [
 	start: values-of stats/profile
 	do block
 	end: values-of stats/profile
-	foreach num start [
+	for-each num start [
 		change end end/1 - num
 		end: next end
 	]
@@ -43,7 +45,7 @@ speed?: function [
 	/times "Show time for each test"
 ][
 	result: copy []
-	foreach block [
+	for-each block [
 		[
 			loop 100'000 [
 				; measure more than just loop func

@@ -13,6 +13,8 @@ REBOL [
 	Needs: 2.100.100
 ]
 
+do %common.r
+
 print "------ Building headers"
 
 r3: system/version > 2.100.0
@@ -83,7 +85,7 @@ func-header: [
 				newline
 				http://stackoverflow.com/questions/693788/c-void-arguments
 			]
-			do make error! "C++ no-arg prototype used instead of C style"
+			fail "C++ no-arg prototype used instead of C style"
 		]
 
 		append-spec spec
@@ -133,7 +135,7 @@ files: sort read %./
 	wait 5
 ]
 
-foreach file files [
+for-each file files [
 	if all [
 		%.c = suffix? file
 		not find/match file "host-"
@@ -165,7 +167,7 @@ make-arg-enums: func [word] [
 	args: copy []
 	refs: copy []
 	; Gather arg words:
-	foreach w first def [
+	for-each w first def [
 		if any-word? w [
 			append args uw: uppercase replace/all form to word! w #"-" #"_" ; R3
 			if refinement? w [append refs uw  w: to word! w] ; R3
@@ -179,14 +181,14 @@ make-arg-enums: func [word] [
 	; Argument numbers:
 	emit ["enum act_" word "_arg {"]
 	emit [tab "ARG_" uword "_0,"]
-	foreach w args [emit [tab "ARG_" uword "_" w ","]]
+	for-each w args [emit [tab "ARG_" uword "_" w ","]]
 	emit [tab "ARG_" uword "_MAX"]
 	emit "};^/"
 
 	; Argument bitmask:
 	n: 0
 	emit ["enum act_" word "_mask {"]
-	foreach w args [
+	for-each w args [
 		emit [tab "AM_" uword "_" w " = 1 << " n ","]
 		n: n + 1
 	]
@@ -194,7 +196,7 @@ make-arg-enums: func [word] [
 	emit "};^/"
 
 	repend output ["#define ALL_" uword "_REFS ("]
-	foreach w refs [
+	for-each w refs [
 		repend output ["AM_" uword "_" w "|"]
 	]
 	remove back tail output
@@ -205,7 +207,7 @@ make-arg-enums: func [word] [
 
 acts: load %../boot/actions.r
 
-foreach word [
+for-each word [
 	copy
 	find
 	select
@@ -218,7 +220,7 @@ foreach word [
 
 acts: load %../boot/natives.r
 
-foreach word [
+for-each word [
 	checksum
 	request-file
 ] [make-arg-enums word]

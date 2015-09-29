@@ -25,9 +25,7 @@ REBOL [
 ;-- can still work in older as well as newer Rebols.  Thus the detection
 ;-- has to be a bit "dynamic"
 
-unless value? 'length [length: :length?]
-unless value? 'index-of [index-of: :index?]
-unless value? 'offset-of [offset-of: :offset?]
+do %r2r3-future.r
 
 
 ;-- !!! switch to use spaces when code is transitioned
@@ -52,7 +50,7 @@ binary-to-c: func [
 		;-- grab hexes in groups of 8 bytes
 		hexed: enbase/base (copy/part data 8) 16
 		data: skip data 8
-		foreach [digit1 digit2] hexed [
+		for-each [digit1 digit2] hexed [
 			append out rejoin [{0x} digit1 digit2 {,} space]
 		]
 
@@ -76,7 +74,7 @@ binary-to-c: func [
 ; RETURN in it will return from the *caller*.  It will just wind up returning
 ; from *this loop wrapper* (in older Rebols) when the call is finished!
 ;
-foreach-record-NO-RETURN: func [
+for-each-record-NO-RETURN: func [
 	{Iterate a table with a header by creating an object for each row}
 	'record [word!] {Word to set each time to the row made into an object}
 	table [block!] {Table of values with header block as first element}
@@ -84,11 +82,11 @@ foreach-record-NO-RETURN: func [
 	/local headings result spec
 ] [
 	unless block? first table [
-		do make error! {Table of records does not start with a header block}
+		fail {Table of records does not start with a header block}
 	]
 	headings: map-each word first table [
 		unless word? word [
-			do make error! rejoin [{Heading} space word space {is not a word}]
+			fail [{Heading} word {is not a word}]
 		]
 		to-set-word word
 	]
@@ -97,11 +95,11 @@ foreach-record-NO-RETURN: func [
 
 	set/any quote result: while [not empty? table] [
 		if (length headings) > (length table) [
-			do make error! {Element count isn't even multiple of header count}
+			fail {Element count isn't even multiple of header count}
 		]
 
 		spec: collect [
-			foreach column-name headings [
+			for-each column-name headings [
 				keep column-name
 				keep compose/only [quote (table/1)]
 				table: next table
@@ -125,19 +123,15 @@ find-record-unique: func [
 	/local rec result
 ] [
 	unless find first table key [
-		do make error! rejoin [
-			key space {not found in table headers} space first table
-		]
+		fail [key {not found in table headers:} (first table)]
 	]
 
 	result: none
-	foreach-record-NO-RETURN rec table [
+	for-each-record-NO-RETURN rec table [
 		unless value = select rec key [continue]
 
 		if result [
-			do make error! rejoin [
-				{More than one table record matches} space key {=} value
-			]
+			fail [{More than one table record matches} key {=} value]
 		]
 
 		result: rec

@@ -60,20 +60,32 @@
 **
 ***********************************************************************/
 {
-	REBSER *block;
-	REBSER *words = VAL_FUNC_WORDS(func);
+	REBSER *series = VAL_FUNC_PARAMLIST(func);
+	REBVAL *typeset = BLK_SKIP(series, 1);
+
+	REBSER *block = Make_Array(SERIES_TAIL(series));
+
 	REBCNT n;
-	REBVAL *value;
-	REBVAL *word;
+	for (n = 1; n < SERIES_TAIL(series); typeset++, n++) {
+		enum Reb_Kind kind;
+		if (VAL_GET_EXT(typeset, EXT_TYPESET_REFINEMENT))
+			kind = REB_REFINEMENT;
+		else if (VAL_GET_EXT(typeset, EXT_TYPESET_QUOTE)) {
+			if (VAL_GET_EXT(typeset, EXT_TYPESET_EVALUATE))
+				kind = REB_LIT_WORD;
+			else
+				kind = REB_GET_WORD;
+		}
+		else {
+			// Currently there's no meaning for non-quoted non-evaluating
+			// things (only 3 param types for foo:, 'foo, :foo)
+			assert(VAL_GET_EXT(typeset, EXT_TYPESET_EVALUATE));
+			kind = REB_WORD;
+		}
 
-	block = Make_Array(SERIES_TAIL(words));
-	word = BLK_SKIP(words, 1);
-
-	for (n = 1; n < SERIES_TAIL(words); word++, n++) {
-		value = Alloc_Tail_Array(block);
-		VAL_SET(value, VAL_TYPE(word));
-		VAL_WORD_SYM(value) = VAL_BIND_SYM(word);
-		UNBIND_WORD(value);
+		Val_Init_Word_Unbound(
+			Alloc_Tail_Array(block), kind, VAL_TYPESET_SYM(typeset)
+		);
 	}
 
 	return block;
@@ -82,27 +94,28 @@
 
 /***********************************************************************
 **
-*/	REBSER *List_Func_Types(REBVAL *func)
+*/	REBSER *List_Func_Typesets(REBVAL *func)
 /*
-**		Return a block of function arg types.
+**		Return a block of function arg typesets.
 **		Note: skips 0th entry.
 **
 ***********************************************************************/
 {
-	REBSER *block;
-	REBSER *words = VAL_FUNC_WORDS(func);
+	REBSER *series = VAL_FUNC_PARAMLIST(func);
+	REBVAL *typeset = BLK_SKIP(series, 1);
+
+	REBSER *block = Make_Array(SERIES_TAIL(series));
+
 	REBCNT n;
-	REBVAL *value;
-	REBVAL *word;
+	for (n = 1; n < SERIES_TAIL(series); typeset++, n++) {
+		REBVAL *value = Alloc_Tail_Array(block);
+		*value = *typeset;
 
-	block = Make_Array(SERIES_TAIL(words));
-	word = BLK_SKIP(words, 1);
+		// !!! It's already a typeset, but this will clear out the header
+		// bits.  This may not be desirable over the long run (what if
+		// a typeset wishes to encode hiddenness, protectedness, etc?)
 
-	for (n = 1; n < SERIES_TAIL(words); word++, n++) {
-		value = Alloc_Tail_Array(block);
-		VAL_SET(value, VAL_TYPE(word));
-		VAL_WORD_SYM(value) = VAL_BIND_SYM(word);
-		UNBIND_WORD(value);
+		VAL_SET(value, REB_TYPESET);
 	}
 
 	return block;
@@ -111,7 +124,7 @@
 
 /***********************************************************************
 **
-*/	REBSER *Check_Func_Spec(REBSER *block, REBYTE *exts)
+*/	REBSER *Check_Func_Spec(REBSER *spec, REBYTE *exts)
 /*
 **		Check function spec of the form:
 **
@@ -121,59 +134,120 @@
 **
 ***********************************************************************/
 {
-	REBVAL *blk;
-	REBSER *words;
-	REBINT n = 0;
-	REBVAL *value;
+	REBVAL *item;
+	REBSER *keylist;
+	REBVAL *typeset;
 
 	*exts = 0;
 
-	blk = BLK_HEAD(block);
-	words = Collect_Frame(NULL, blk, BIND_ALL | BIND_NO_DUP | BIND_NO_SELF);
-	MANAGE_SERIES(words);
+	keylist = Collect_Frame(
+		NULL, BLK_HEAD(spec), BIND_ALL | BIND_NO_DUP | BIND_NO_SELF
+	);
+
+	// First position is "self", but not used...
+	typeset = BLK_HEAD(keylist);
 
 	// !!! needs more checks
-	for (; NOT_END(blk); blk++) {
-		switch (VAL_TYPE(blk)) {
+	for (item = BLK_HEAD(spec); NOT_END(item); item++) {
+		switch (VAL_TYPE(item)) {
 		case REB_BLOCK:
-			if (n == 0) {
+			if (typeset == BLK_HEAD(keylist)) {
 				// !!! Rebol2 had the ability to put a block in the first
 				// slot before any parameters, in which you could put words.
-				// This is deprecated in favor of the use of tags.  For
-				// @rgchris's sake we will allow the one element [catch]
-				// block, during Rebol2 => Rebol3 migration.
+				// This is deprecated in favor of the use of tags.  We permit
+				// [catch] and [throw] during Rebol2 => Rebol3 migration.
 
-				if (VAL_BLK_LEN(blk) == 1) {
-					REBVAL *attribute = VAL_BLK_DATA(blk);
-					if (
-						IS_WORD(attribute)
-						&& VAL_WORD_SYM(attribute) == SYM_CATCH
-					) {
-						break; // exempt, just ignore it
+				REBVAL *attribute = VAL_BLK_DATA(item);
+				for (; NOT_END(attribute); attribute++) {
+					if (IS_WORD(attribute)) {
+						if (VAL_WORD_SYM(attribute) == SYM_CATCH)
+							continue; // ignore it;
+						if (VAL_WORD_SYM(attribute) == SYM_THROW) {
+							// Basically a synonym for <transparent>
+							SET_FLAG(*exts, EXT_FUNC_TRANSPARENT);
+							continue;
+						}
+						// no other words supported, fall through to error
 					}
+					raise Error_1(RE_BAD_FUNC_DEF, item);
 				}
-				Trap1_DEAD_END(RE_BAD_FUNC_DEF, blk);
+				break; // leading block handled if we get here, no more to do
 			}
 
 			// Turn block into typeset for parameter at current index
-			Make_Typeset(VAL_BLK_HEAD(blk), BLK_SKIP(words, n), 0);
+			// Note: Make_Typeset leaves VAL_TYPESET_SYM as-is
+			Make_Typeset(VAL_BLK_HEAD(item), typeset, 0);
 			break;
 
 		case REB_STRING:
-		case REB_INTEGER:	// special case used by datatype test actions
+			// !!! Documentation strings are ignored, but should there be
+			// some canon form be enforced?  Right now you can write many
+			// forms that may not be desirable to have in the wild:
+			//
+			//		func [foo [type!] {doc string :-)}]
+			//		func [foo {doc string :-/} [type!]]
+			//		func [foo {doc string1 :-/} {doc string2 :-(} [type!]]
+			//
+			// It's currently HELP that has to sort out the variant forms
+			// but there's nothing stopping them.
+			break;
+
+		case REB_INTEGER:
+			// special case used by datatype testing actions, e.g. STRING?
 			break;
 
 		case REB_WORD:
+			typeset++;
+			assert(
+				IS_TYPESET(typeset)
+				&& VAL_TYPESET_SYM(typeset) == VAL_WORD_SYM(item)
+			);
+			VAL_SET_EXT(typeset, EXT_TYPESET_EVALUATE);
+			break;
+
 		case REB_GET_WORD:
+			typeset++;
+			assert(
+				IS_TYPESET(typeset)
+				&& VAL_TYPESET_SYM(typeset) == VAL_WORD_SYM(item)
+			);
+			VAL_SET_EXT(typeset, EXT_TYPESET_QUOTE);
+			break;
+
 		case REB_LIT_WORD:
-			n++;
+			typeset++;
+			assert(
+				IS_TYPESET(typeset)
+				&& VAL_TYPESET_SYM(typeset) == VAL_WORD_SYM(item)
+			);
+			VAL_SET_EXT(typeset, EXT_TYPESET_QUOTE);
+			// will actually only evaluate get-word!, get-path!, and paren!
+			VAL_SET_EXT(typeset, EXT_TYPESET_EVALUATE);
 			break;
 
 		case REB_REFINEMENT:
-			// Refinement only allows logic! and none! for its datatype:
-			n++;
-			value = BLK_SKIP(words, n);
-			VAL_TYPESET(value) = (TYPESET(REB_LOGIC) | TYPESET(REB_NONE));
+			typeset++;
+			assert(
+				IS_TYPESET(typeset)
+				&& VAL_TYPESET_SYM(typeset) == VAL_WORD_SYM(item)
+			);
+			VAL_SET_EXT(typeset, EXT_TYPESET_REFINEMENT);
+
+		#if !defined(NDEBUG)
+			// Because Mezzanine functions are written to depend on the idea
+			// that when they get a refinement it will be a WORD! and not a
+			// LOGIC!, we have to capture the desire to get LOGIC! vs WORD!
+			// at function creation time...not dispatch time.  We encode the
+			// bit in the refinement's typeset that it accepts.
+			if (LEGACY(OPTIONS_REFINEMENTS_TRUE)) {
+				VAL_TYPESET_BITS(typeset) =
+					(FLAGIT_64(REB_LOGIC) | FLAGIT_64(REB_NONE));
+				break;
+			}
+		#endif
+			// Refinements can nominally be only WORD! or NONE!
+			VAL_TYPESET_BITS(typeset) =
+				(FLAGIT_64(REB_WORD) | FLAGIT_64(REB_NONE));
 			break;
 
 		case REB_TAG:
@@ -181,23 +255,25 @@
 			// present they are only allowed at the head of the spec block,
 			// to try and keep things in at least a slightly canon format.
 			// This may or may not be relaxed in the future.
-			if (n != 0) Trap1_DEAD_END(RE_BAD_FUNC_DEF, blk);
+			if (typeset != BLK_HEAD(keylist))
+				raise Error_1(RE_BAD_FUNC_DEF, item);
 
-			if (0 == Compare_String_Vals(blk, ROOT_INFIX_TAG, TRUE))
+			if (0 == Compare_String_Vals(item, ROOT_INFIX_TAG, TRUE))
 				SET_FLAG(*exts, EXT_FUNC_INFIX);
-			else if (0 == Compare_String_Vals(blk, ROOT_TRANSPARENT_TAG, TRUE))
+			else if (0 == Compare_String_Vals(item, ROOT_TRANSPARENT_TAG, TRUE))
 				SET_FLAG(*exts, EXT_FUNC_TRANSPARENT);
 			else
-				Trap1_DEAD_END(RE_BAD_FUNC_DEF, blk);
+				raise Error_1(RE_BAD_FUNC_DEF, item);
 			break;
 
 		case REB_SET_WORD:
 		default:
-			Trap1_DEAD_END(RE_BAD_FUNC_DEF, blk);
+			raise Error_1(RE_BAD_FUNC_DEF, item);
 		}
 	}
 
-	return words;
+	MANAGE_SERIES(keylist);
+	return keylist;
 }
 
 
@@ -211,7 +287,7 @@
 	//Print("Make_Native: %s spec %d", Get_Sym_Name(type+1), SERIES_TAIL(spec));
 	ENSURE_SERIES_MANAGED(spec);
 	VAL_FUNC_SPEC(value) = spec;
-	VAL_FUNC_WORDS(value) = Check_Func_Spec(spec, &exts);
+	VAL_FUNC_PARAMLIST(value) = Check_Func_Spec(spec, &exts);
 
 	// We don't expect special flags on natives like <transparent>, <infix>
 	assert(exts == 0);
@@ -223,7 +299,7 @@
 
 /***********************************************************************
 **
-*/	REBFLG Make_Function(REBCNT type, REBVAL *value, REBVAL *def)
+*/	REBFLG Make_Function(REBVAL *out, REBCNT type, REBVAL *def)
 /*
 ***********************************************************************/
 {
@@ -240,21 +316,23 @@
 
 	body = VAL_BLK_SKIP(def, 1);
 
-	VAL_FUNC_SPEC(value) = VAL_SERIES(spec);
-	VAL_FUNC_WORDS(value) = Check_Func_Spec(VAL_SERIES(spec), &exts);
+	VAL_FUNC_SPEC(out) = VAL_SERIES(spec);
+	VAL_FUNC_PARAMLIST(out) = Check_Func_Spec(VAL_SERIES(spec), &exts);
 
 	if (type != REB_COMMAND) {
 		if (len != 2 || !IS_BLOCK(body)) return FALSE;
-		VAL_FUNC_BODY(value) = VAL_SERIES(body);
+		VAL_FUNC_BODY(out) = VAL_SERIES(body);
 	}
 	else
-		Make_Command(value, def);
+		Make_Command(out, def);
 
-	VAL_SET(value, type); // clears exts and opts in header...
-	VAL_EXTS_DATA(value) = exts; // ...so we set this after that point
+	VAL_SET(out, type); // clears exts and opts in header...
+	VAL_EXTS_DATA(out) = exts; // ...so we set this after that point
 
 	if (type == REB_FUNCTION || type == REB_CLOSURE)
-		Bind_Relative(VAL_FUNC_WORDS(value), VAL_FUNC_WORDS(value), VAL_FUNC_BODY(value));
+		Bind_Relative(
+			VAL_FUNC_PARAMLIST(out), VAL_FUNC_PARAMLIST(out), VAL_FUNC_BODY(out)
+		);
 
 	return TRUE;
 }
@@ -262,53 +340,42 @@
 
 /***********************************************************************
 **
-*/	REBFLG Copy_Function(REBVAL *value, REBVAL *args)
+*/	void Copy_Function(REBVAL *out, const REBVAL *src)
 /*
 ***********************************************************************/
 {
-	REBVAL *spec;
-	REBVAL *body;
+	if (IS_FUNCTION(src) || IS_CLOSURE(src)) {
+		// !!! A closure's "archetype" never operates on its body directly,
+		// and there is currently no way to get a reference to a closure
+		// "instance" (an ANY-FUNCTION value with the copied body in it).
+		// Making a copy of the body here is likely superfluous right now.
 
-	if (!args || ((spec = VAL_BLK_HEAD(args)) && IS_END(spec))) {
-		body = 0;
-		if (IS_FUNCTION(value) || IS_CLOSURE(value)) {
-			VAL_FUNC_WORDS(value) = Copy_Array_Shallow(VAL_FUNC_WORDS(value));
-			MANAGE_SERIES(VAL_FUNC_WORDS(value));
-		}
-	} else {
-		body = VAL_BLK_SKIP(args, 1);
-		// Spec given, must be block or *
-		if (IS_BLOCK(spec)) {
-			REBYTE exts;
-			VAL_FUNC_SPEC(value) = VAL_SERIES(spec);
-			VAL_FUNC_WORDS(value) = Check_Func_Spec(VAL_SERIES(spec), &exts);
+		// Need to pick up the infix flag and any other settings.
+		out->flags = src->flags;
 
-			// !!! This feature seems to be tied to old make function
-			// tricks that should likely be deleted instead of moved forward
-			// with the new EXTS options...
-			assert(exts == 0);
-		} else {
-			if (!IS_STAR(spec)) return FALSE;
-			VAL_FUNC_WORDS(value) = Copy_Array_Shallow(VAL_FUNC_WORDS(value));
-			MANAGE_SERIES(VAL_FUNC_WORDS(value));
-		}
+		// We can reuse the spec series.  A more nuanced form of function
+		// copying might let you change the spec as part of the process and
+		// keep the body (or vice versa), but would need to check to make
+		// sure they were compatible with the substitution.
+		VAL_FUNC_SPEC(out) = VAL_SERIES(src);
+
+		// Copy the identifying word series, so that the function has a
+		// unique identity on the stack from the one it is copying.
+		VAL_FUNC_PARAMLIST(out) = Copy_Array_Shallow(VAL_FUNC_PARAMLIST(src));
+		MANAGE_SERIES(VAL_FUNC_PARAMLIST(out));
+
+		// Copy the body and rebind its word references to the locals.
+		VAL_FUNC_BODY(out) = Copy_Array_Deep_Managed(VAL_FUNC_BODY(src));
+		Bind_Relative(
+			VAL_FUNC_PARAMLIST(out), VAL_FUNC_PARAMLIST(out), VAL_FUNC_BODY(out)
+		);
 	}
-
-	if (body && !IS_END(body)) {
-		if (!IS_FUNCTION(value) && !IS_CLOSURE(value)) return FALSE;
-		// Body must be block:
-		if (!IS_BLOCK(body)) return FALSE;
-		VAL_FUNC_BODY(value) = VAL_SERIES(body);
+	else {
+		// Natives, actions, etc. do not have bodies that can accumulate
+		// state, and hence the only meaning of "copying" a function is just
+		// copying its value bits verbatim.
+		*out = *src;
 	}
-	// No body, use prototype:
-	else if (IS_FUNCTION(value) || IS_CLOSURE(value))
-		VAL_FUNC_BODY(value) = Copy_Array_Deep_Managed(VAL_FUNC_BODY(value));
-
-	// Rebind function words:
-	if (IS_FUNCTION(value) || IS_CLOSURE(value))
-		Bind_Relative(VAL_FUNC_WORDS(value), VAL_FUNC_WORDS(value), VAL_FUNC_BODY(value));
-
-	return TRUE;
 }
 
 
@@ -378,7 +445,7 @@
 	}
 
 	action = Value_Dispatch[type];
-	if (!action) Trap_Action(type, VAL_FUNC_ACT(func));
+	if (!action) raise Error_Illegal_Action(type, VAL_FUNC_ACT(func));
 	ret = action(DSF, VAL_FUNC_ACT(func));
 
 	switch (ret) {
@@ -456,9 +523,9 @@
 	frame = Make_Array(DSF->num_vars + 1);
 	value = BLK_HEAD(frame);
 
-	assert(DSF->num_vars == VAL_FUNC_NUM_WORDS(func));
+	assert(DSF->num_vars == VAL_FUNC_NUM_PARAMS(func));
 
-	SET_FRAME(value, NULL, VAL_FUNC_WORDS(func));
+	SET_FRAME(value, NULL, VAL_FUNC_PARAMLIST(func));
 	value++;
 
 	for (word_index = 1; word_index <= DSF->num_vars; word_index++)
@@ -469,21 +536,21 @@
 
 	// We do not Manage_Frame, because we are reusing a word series here
 	// that has already been managed...only manage the outer series
-	assert(SERIES_GET_FLAG(FRM_WORD_SERIES(frame), SER_MANAGED));
+	ASSERT_SERIES_MANAGED(FRM_KEYLIST(frame));
 	MANAGE_SERIES(frame);
 
 	ASSERT_FRAME(frame);
 
 	// !!! For *today*, no option for function/closure to have a SELF
 	// referring to their function or closure values.
-	assert(VAL_WORD_SYM(BLK_HEAD(VAL_FUNC_WORDS(func))) == SYM_NOT_USED);
+	assert(VAL_TYPESET_SYM(BLK_HEAD(VAL_FUNC_PARAMLIST(func))) == SYM_0);
 
 	// Clone the body of the closure to allow us to rebind words inside
 	// of it so that they point specifically to the instances for this
 	// invocation.  (Costly, but that is the mechanics of words.)
 	//
 	body = Copy_Array_Deep_Managed(VAL_FUNC_BODY(func));
-	Rebind_Block(VAL_FUNC_WORDS(func), frame, BLK_HEAD(body), REBIND_TYPE);
+	Rebind_Block(VAL_FUNC_PARAMLIST(func), frame, BLK_HEAD(body), REBIND_TYPE);
 
 	// Protect the body from garbage collection during the course of the
 	// execution.  (We could also protect it by stowing it in the call
@@ -519,6 +586,8 @@
 		DSF_NUM_ARGS(DSF)
 	);
 	assert(VAL_FUNC_NUM_PARAMS(routine) == DSF_NUM_ARGS(DSF));
+
 	Call_Routine(routine, args, DSF_OUT(DSF));
+
 	Free_Series(args);
 }

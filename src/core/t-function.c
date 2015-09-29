@@ -33,7 +33,7 @@ static REBOOL Same_Func(REBVAL *val, REBVAL *arg)
 {
 	if (VAL_TYPE(val) == VAL_TYPE(arg) &&
 		VAL_FUNC_SPEC(val) == VAL_FUNC_SPEC(arg) &&
-		VAL_FUNC_WORDS(val) == VAL_FUNC_WORDS(arg) &&
+		VAL_FUNC_PARAMLIST(val) == VAL_FUNC_PARAMLIST(arg) &&
 		VAL_FUNC_CODE(val) == VAL_FUNC_CODE(arg)) return TRUE;
 	return FALSE;
 }
@@ -72,7 +72,7 @@ static REBOOL Same_Func(REBVAL *val, REBVAL *arg)
 /*
 ***********************************************************************/
 {
-	return Make_Function(type, out, data);
+	return Make_Function(out, type, data);
 }
 
 
@@ -83,44 +83,36 @@ static REBOOL Same_Func(REBVAL *val, REBVAL *arg)
 ***********************************************************************/
 {
 	REBVAL *value = D_ARG(1);
-	REBVAL *arg = D_ARG(2);
-	REBCNT type = VAL_TYPE(value);
-	REBCNT n;
+	REBVAL *arg = DS_ARGC > 1 ? D_ARG(2) : NULL;
 
 	switch (action) {
-
-	case A_MAKE:
 	case A_TO:
-		// make function! [[args] [body]]
-		if (IS_DATATYPE(value)) {
-			n = VAL_TYPE_KIND(value);
-			if (Make_Function(n, value, arg)) break;
-			Trap_Make_DEAD_END(n, arg);
-		}
-
-		// make :func []
-		// make :func [[args]]
-		// make :func [* [body]]
-		if (ANY_FUNC(value)) {
-			if (!IS_BLOCK(arg)) goto bad_arg;
-			if (!ANY_FUNC(value)) goto bad_arg;
-			if (!Copy_Function(value, arg)) goto bad_arg;
-			break;
-		}
-		if (!IS_NONE(arg)) goto bad_arg;
-		// fall thru...
-	case A_COPY:
-		Copy_Function(value, 0);
+		// `to function! foo` is meaningless (and should not be given meaning,
+		// because `to function! [print "DOES exists for this, for instance"]`
 		break;
 
+	case A_MAKE:
+		if (!IS_DATATYPE(value)) raise Error_Invalid_Arg(value);
+
+		// Make_Function checks for an `[[args] [body]]`-style make argument
+		if (!Make_Function(D_OUT, VAL_TYPE_KIND(value), arg))
+			raise Error_Bad_Make(VAL_TYPE_KIND(value), arg);
+		return R_OUT;
+
+	case A_COPY:
+		// Functions can modify their bodies while running, effectively
+		// accruing state which you may want to snapshot as a copy.
+		Copy_Function(D_OUT, value);
+		return R_OUT;
+
 	case A_REFLECT:
-		n = What_Reflector(arg); // zero on error
-		switch (n) {
+		switch (What_Reflector(arg)) {
 		case OF_WORDS:
-			Val_Init_Block(value, List_Func_Words(value));
-			break;
+			Val_Init_Block(D_OUT, List_Func_Words(value));
+			return R_OUT;
+
 		case OF_BODY:
-			switch (type) {
+			switch (VAL_TYPE(value)) {
 			case REB_FUNCTION:
 				Val_Init_Block(
 					D_OUT, Copy_Array_Deep_Managed(VAL_FUNC_BODY(value))
@@ -134,41 +126,41 @@ static REBOOL Same_Func(REBVAL *val, REBVAL *arg)
 				);
 				// See CC#2221 for why closure body copies have locals unbound
 				Unbind_Values_Core(
-					VAL_BLK_HEAD(D_OUT), VAL_FUNC_WORDS(value), TRUE
+					VAL_BLK_HEAD(D_OUT), VAL_FUNC_PARAMLIST(value), TRUE
 				);
 				return R_OUT;
 
 			case REB_NATIVE:
 			case REB_COMMAND:
 			case REB_ACTION:
-				SET_NONE(value);
-				break;
+				return R_NONE;
 			}
 			break;
+
 		case OF_SPEC:
 			Val_Init_Block(
-				value, Copy_Array_Deep_Managed(VAL_FUNC_SPEC(value))
+				D_OUT, Copy_Array_Deep_Managed(VAL_FUNC_SPEC(value))
 			);
 			Unbind_Values_Deep(VAL_BLK_HEAD(value));
-			break;
+			return R_OUT;
+
 		case OF_TYPES:
-			Val_Init_Block(value, As_Typesets(VAL_FUNC_WORDS(value)));
-			break;
+			Val_Init_Block(D_OUT, As_Typesets(VAL_FUNC_PARAMLIST(value)));
+			return R_OUT;
+
 		case OF_TITLE:
 			arg = BLK_HEAD(VAL_FUNC_SPEC(value));
-			for (; NOT_END(arg) && !IS_STRING(arg) && !IS_WORD(arg); arg++);
+			while (NOT_END(arg) && !IS_STRING(arg) && !IS_WORD(arg))
+				arg++;
 			if (!IS_STRING(arg)) return R_NONE;
-			Val_Init_String(value, Copy_Sequence(VAL_SERIES(arg)));
-			break;
+			Val_Init_String(D_OUT, Copy_Sequence(VAL_SERIES(arg)));
+			return R_OUT;
+
 		default:
-		bad_arg:
-			Trap_Reflect_DEAD_END(type, arg);
+			raise Error_Cannot_Reflect(VAL_TYPE(value), arg);
 		}
 		break;
-
-	default: Trap_Action_DEAD_END(type, action);
 	}
 
-	*D_OUT = *value;
-	return R_OUT;
+	raise Error_Illegal_Action(VAL_TYPE(value), action);
 }

@@ -85,6 +85,7 @@ typedef struct Reb_Series REBSER;
 enum {
 	OPT_VALUE_LINE = 0,	// Line break occurs before this value
 	OPT_VALUE_THROWN,	// Value is /NAME of a THROW (arg via THROWN_ARG)
+	OPT_VALUE_REEVALUATE, // Reevaluate result value
 	OPT_VALUE_MAX
 };
 
@@ -164,6 +165,15 @@ struct Reb_Datatype {
 #define	VAL_TYPE_KIND(v)		((v)->data.datatype.kind)
 #define	VAL_TYPE_SPEC(v)	((v)->data.datatype.spec)
 
+// %words.r is arranged so that symbols for types are at the start
+// Although REB_END is 0, the 0 REBCNT used for symbol IDs is reserved
+// for "no symbol"...so the END! word actually is symbol 1.
+//
+#define IS_KIND_SYM(s)		((s) < REB_MAX + 1)
+#define KIND_FROM_SYM(s)	cast(enum Reb_Kind, (s) - 1)
+#define SYM_FROM_KIND(k)	cast(REBCNT, (k) + 1)
+#define VAL_TYPE_SYM(v)		SYM_FROM_KIND((v)->data.datatype.kind)
+
 //#define	VAL_MIN_TYPE(v)	((v)->data.datatype.min_type)
 //#define	VAL_MAX_TYPE(v)	((v)->data.datatype.max_type)
 
@@ -228,6 +238,7 @@ struct Reb_Datatype {
 #define	SET_NONE(v)		VAL_SET(v, REB_NONE)
 #define NONE_VALUE		ROOT_NONE_VAL
 
+#define EMPTY_BLOCK		ROOT_EMPTY_BLOCK
 #define EMPTY_SERIES	VAL_SERIES(ROOT_EMPTY_BLOCK)
 
 #define VAL_INT32(v)	(REBINT)((v)->data.integer)
@@ -465,23 +476,17 @@ typedef struct Reb_Tuple {
 #if !defined(NDEBUG)
 	REBINT *guard; // intentionally alloc'd and freed for use by Panic_Series
 #endif
-
-// These links are used to make a list in the debug build to track the series
-// which have not been handed over to MANAGE_SERIES(), and thus can represent
-// a leak in the release build.  (See GC_Manuals declaration for details.)
-#if !defined(NDEBUG)
-	struct Reb_Series *next;
-	struct Reb_Series *prev;
-#endif
 };
 
 #define SERIES_TAIL(s)	 ((s)->tail)
 #define SERIES_REST(s)	 ((s)->rest)
-#define	SERIES_LEN(s)    ((s)->tail + 1) // Includes terminator
 #define	SERIES_FLAGS(s)	 ((s)->info)
 #define	SERIES_WIDE(s)	 (((s)->info) & 0xff)
 #define SERIES_DATA(s)   ((s)->data)
 #define	SERIES_SKIP(s,i) (SERIES_DATA(s) + (SERIES_WIDE(s) * i))
+
+// !!! Ultimately this should replace SERIES_TAIL
+#define SERIES_LEN(s)	 SERIES_TAIL(s)
 
 // These flags are returned from Do_Next_Core and Do_Next_May_Throw, in
 // order to keep from needing another returned value in addition to the
@@ -506,7 +511,7 @@ typedef struct Reb_Tuple {
 // Size in bytes of series (not including bias area):
 #define	SERIES_SPACE(s) (SERIES_REST(s) * (REBCNT)SERIES_WIDE(s))
 // Size in bytes being used, including terminator:
-#define SERIES_USED(s) (SERIES_LEN(s) * SERIES_WIDE(s))
+#define SERIES_USED(s) ((SERIES_LEN(s) + 1) * SERIES_WIDE(s))
 
 // Optimized expand when at tail (but, does not reterminate)
 #define EXPAND_SERIES_TAIL(s,l) if (SERIES_FITS(s, l)) s->tail += l; else Expand_Series(s, AT_TAIL, l)
@@ -520,8 +525,8 @@ typedef struct Reb_Tuple {
 #define TERM_SERIES(s) memset(SERIES_SKIP(s, SERIES_TAIL(s)), 0, SERIES_WIDE(s))
 
 // Returns space that a series has available (less terminator):
-#define SERIES_FULL(s) (SERIES_LEN(s) >= SERIES_REST(s))
-#define SERIES_AVAIL(s) (SERIES_REST(s) - SERIES_LEN(s))
+#define SERIES_FULL(s) (SERIES_LEN(s) + 1 >= SERIES_REST(s))
+#define SERIES_AVAIL(s) (SERIES_REST(s) - (SERIES_LEN(s) + 1))
 #define SERIES_FITS(s,n) ((SERIES_TAIL(s) + (REBCNT)(n) + 1) < SERIES_REST(s))
 
 // Flag used for extending series at tail:
@@ -530,7 +535,8 @@ typedef struct Reb_Tuple {
 // Is it a byte-sized series? (this works because no other odd size allowed)
 #define BYTE_SIZE(s) (((s)->info) & 1)
 #define VAL_BYTE_SIZE(v) (BYTE_SIZE(VAL_SERIES(v)))
-#define VAL_STR_IS_ASCII(v) (VAL_BYTE_SIZE(v) && !Is_Not_ASCII(VAL_BIN_DATA(v), VAL_LEN(v)))
+#define VAL_STR_IS_ASCII(v) \
+	(VAL_BYTE_SIZE(v) && All_Bytes_ASCII(VAL_BIN_DATA(v), VAL_LEN(v)))
 
 // Bias is empty space in front of head:
 #define	SERIES_BIAS(s)	   (REBCNT)((SERIES_FLAGS(s) >> 16) & 0xffff)
@@ -542,7 +548,7 @@ typedef struct Reb_Tuple {
 // Series Flags:
 enum {
 	SER_MARK		= 1 << 0,	// was found during GC mark scan.
-	SER_KEEP		= 1 << 1,	// don't garbage collect even if unreferenced
+	SER_FRAME		= 1 << 1,	// object frame (unsets legal, has key series)
 	SER_LOCK		= 1 << 2,	// size is locked (do not expand it)
 	SER_EXTERNAL	= 1 << 3,	// ->data is external, don't free() on GC
 	SER_MANAGED		= 1 << 4,	// series is managed by garbage collection
@@ -555,7 +561,6 @@ enum {
 #define SERIES_CLR_FLAG(s, f) cast(void, (SERIES_FLAGS(s) &= ~((f) << 8)))
 #define SERIES_GET_FLAG(s, f) (0 != (SERIES_FLAGS(s) & ((f) << 8)))
 
-#define KEEP_SERIES(s,l)  do {SERIES_SET_FLAG(s, SER_KEEP); LABEL_SERIES(s,l);} while(0)
 #define LOCK_SERIES(s)    SERIES_SET_FLAG(s, SER_LOCK)
 #define IS_LOCK_SERIES(s) SERIES_GET_FLAG(s, SER_LOCK)
 #define Is_Array_Series(s) SERIES_GET_FLAG((s), SER_ARRAY)
@@ -563,7 +568,7 @@ enum {
 #define UNPROTECT_SERIES(s)  SERIES_CLR_FLAG(s, SER_PROT)
 #define IS_PROTECT_SERIES(s) SERIES_GET_FLAG(s, SER_PROT)
 
-#define TRAP_PROTECT(s) if (IS_PROTECT_SERIES(s)) Trap_DEAD_END(RE_PROTECTED)
+#define TRAP_PROTECT(s) if (IS_PROTECT_SERIES(s)) raise Error_0(RE_PROTECTED)
 
 #ifdef SERIES_LABELS
 #define LABEL_SERIES(s,l) s->label = (l)
@@ -871,10 +876,8 @@ struct Reb_Position
 
 #ifdef NDEBUG
 	#define ASSERT_ARRAY(s) cast(void, 0)
-	#define ASSERT_TYPED_WORDS_ARRAY(s) cast(void, 0)
 #else
-	#define ASSERT_ARRAY(s) Assert_Array_Core(s, FALSE)
-	#define ASSERT_TYPED_WORDS_ARRAY(s) Assert_Array_Core(s, TRUE)
+	#define ASSERT_ARRAY(s) Assert_Array_Core(s)
 #endif
 
 
@@ -901,8 +904,6 @@ struct Reb_Symbol {
 // Return the CANON value for a word value:
 #define WORD_TO_CANON(w) (VAL_SYM_CANON(BLK_SKIP(PG_Word_Table.series, VAL_WORD_SYM(w))))
 
-#define IS_STAR(v) (IS_WORD(v) && VAL_WORD_CANON(v) == SYM__P)
-
 
 /***********************************************************************
 **
@@ -910,36 +911,25 @@ struct Reb_Symbol {
 **
 ***********************************************************************/
 
-// Word option flags:
-enum {
-	EXT_WORD_LOCK = 0,	// Lock word from modification
-	EXT_WORD_TYPED,		// Word holds a typeset instead of binding
-	EXT_WORD_HIDE,		// Hide the word
-	EXT_WORD_MAX
-};
-
-union Reb_Word_Extra {
-	// ...when EXT_WORD_TYPED
-	REBU64 typebits;
-
-	// ...when not EXT_WORD_TYPED
-	struct {
-		REBSER *frame;	// Frame (or VAL_FUNC_WORDS) where word is defined
-		REBINT index;	// Index of word in frame (if it's not NULL)
-	} binding;
-};
-
 struct Reb_Word {
-	REBCNT sym;			// Index of the word's symbol (and pad for 64 bits)
-
-	union Reb_Word_Extra extra;
+	REBSER *frame;	// Frame (or VAL_FUNC_PARAMLIST) where word is defined
+	REBINT index;	// Index of word in frame (if it's not NULL)
+	REBCNT sym;		// Index of the word's symbol
 };
 
 #define IS_SAME_WORD(v, n)		(IS_WORD(v) && VAL_WORD_CANON(v) == n)
 
-#define VAL_WORD_SYM(v)			((v)->data.word.sym)
-#define VAL_WORD_INDEX(v)		((v)->data.word.extra.binding.index)
-#define VAL_WORD_FRAME(v)		((v)->data.word.extra.binding.frame)
+#ifdef NDEBUG
+	#define VAL_WORD_SYM(v) ((v)->data.word.sym)
+#else
+	// !!! Due to large reorganizations, it may be that VAL_WORD_SYM and
+	// VAL_TYPESET_SYM calls were swapped.  In the aftermath of reorganization
+	// this check is prudent (until further notice...)
+	#define VAL_WORD_SYM(v) (*Val_Word_Sym_Ptr_Debug(v))
+#endif
+
+#define VAL_WORD_INDEX(v)		((v)->data.word.index)
+#define VAL_WORD_FRAME(v)		((v)->data.word.frame)
 #define HAS_FRAME(v)			VAL_WORD_FRAME(v)
 
 #ifdef NDEBUG
@@ -955,15 +945,16 @@ struct Reb_Word {
 #define	VAL_WORD_NAME(v)		VAL_SYM_NAME(BLK_SKIP(PG_Word_Table.series, VAL_WORD_SYM(v)))
 #define	VAL_WORD_NAME_STR(v)	STR_HEAD(VAL_WORD_NAME(v))
 
-// When words are used in frame word lists, fields get a different meaning:
-#define VAL_BIND_SYM(v)			((v)->data.word.sym)
-#define VAL_BIND_CANON(v)		VAL_SYM_CANON(BLK_SKIP(PG_Word_Table.series, VAL_BIND_SYM(v))) //((v)->data.wordspec.index)
-#define VAL_BIND_TYPESET(v)		((v)->data.word.extra.typebits)
 #define VAL_WORD_FRAME_WORDS(v) VAL_WORD_FRAME(v)->words
 #define VAL_WORD_FRAME_VALUES(v) VAL_WORD_FRAME(v)->values
 
 // Is it the same symbol? Quick check, then canon check:
-#define SAME_SYM(a,b) (VAL_WORD_SYM(a)==VAL_BIND_SYM(b)||VAL_WORD_CANON(a)==VAL_BIND_CANON(b))
+#define SAME_SYM(s1,s2) \
+	((s1) == (s2) \
+	|| ( \
+		VAL_SYM_CANON(BLK_SKIP(PG_Word_Table.series, (s1))) \
+		== VAL_SYM_CANON(BLK_SKIP(PG_Word_Table.series, (s2))) \
+	))
 
 /***********************************************************************
 **
@@ -975,13 +966,13 @@ struct Reb_Word {
 ***********************************************************************/
 
 struct Reb_Frame {
-	REBSER	*words;
+	REBSER	*keylist;
 	REBSER	*spec;
 //	REBSER	*parent;
 };
 
 // Value to frame fields:
-#define	VAL_FRM_WORDS(v)	((v)->data.frame.words)
+#define	VAL_FRM_KEYLIST(v)	((v)->data.frame.keylist)
 #define	VAL_FRM_SPEC(v)		((v)->data.frame.spec)
 //#define	VAL_FRM_PARENT(v)	((v)->data.frame.parent)
 
@@ -990,24 +981,25 @@ struct Reb_Frame {
 #define WORDS_LAST(w)		(((REBINT *)(w)->data)+(w)->tail-1) // (tail never zero)
 
 // Frame series to frame components:
-#define FRM_WORD_SERIES(c)	VAL_FRM_WORDS(BLK_HEAD(c))
-#define FRM_WORDS(c)		BLK_HEAD(FRM_WORD_SERIES(c))
+#define FRM_KEYLIST(c)	VAL_FRM_KEYLIST(BLK_HEAD(c))
+#define FRM_KEYS(c)		BLK_HEAD(FRM_KEYLIST(c))
 #define FRM_VALUES(c)		BLK_HEAD(c)
 #define FRM_VALUE(c,n)		BLK_SKIP(c,(n))
-#define FRM_WORD(c,n)		BLK_SKIP(FRM_WORD_SERIES(c),(n))
-#define FRM_WORD_SYM(c,n)	VAL_BIND_SYM(FRM_WORD(c,n))
 
-#define VAL_FRM_WORD(v,n)	BLK_SKIP(FRM_WORD_SERIES(VAL_OBJ_FRAME(v)),(n))
+#define FRM_KEY(c,n)		BLK_SKIP(FRM_KEYLIST(c),(n))
+#define FRM_KEY_SYM(c,n)	VAL_TYPESET_SYM(FRM_KEY(c,n))
+
+#define VAL_FRM_KEY(v,n)	BLK_SKIP(FRM_KEYLIST(VAL_OBJ_FRAME(v)),(n))
 
 // Object field (series, index):
 #define OFV(s,n)			BLK_SKIP(s,n)
 
 #define SET_FRAME(v, s, w) \
 	VAL_FRM_SPEC(v) = (s); \
-	VAL_FRM_WORDS(v) = (w); \
+	VAL_FRM_KEYLIST(v) = (w); \
 	VAL_SET(v, REB_FRAME)
 
-#define IS_SELFLESS(f) (VAL_BIND_SYM(FRM_WORDS(f)) == SYM_NOT_USED)
+#define IS_SELFLESS(f) (VAL_TYPESET_SYM(FRM_KEYS(f)) == SYM_0)
 
 
 // Gives back a const pointer to var itself, raises error on failure
@@ -1055,8 +1047,8 @@ struct Reb_Object {
 #define VAL_OBJ_FRAME(v)	((v)->data.object.frame)
 #define VAL_OBJ_VALUES(v)	FRM_VALUES((v)->data.object.frame)
 #define VAL_OBJ_VALUE(v,n)	FRM_VALUE((v)->data.object.frame, n)
-#define VAL_OBJ_WORDS(v)	FRM_WORD_SERIES((v)->data.object.frame)
-#define VAL_OBJ_WORD(v,n)	BLK_SKIP(VAL_OBJ_WORDS(v), (n))
+#define VAL_OBJ_KEYLIST(v)	FRM_KEYLIST((v)->data.object.frame)
+#define VAL_OBJ_KEY(v,n)	BLK_SKIP(VAL_OBJ_KEYLIST(v), (n))
 //#define VAL_OBJ_SPEC(v)		((v)->data.object.spec)
 
 #ifdef NDEBUG
@@ -1177,7 +1169,6 @@ enum {
 	EXT_FUNC_INFIX = 0,		// called with "infix" protocol
 	EXT_FUNC_TRANSPARENT,	// no Definitionally Scoped return, ignores non-DS
 	EXT_FUNC_RETURN,		// function is a definitionally scoped return
-	EXT_FUNC_REDO,			// Reevaluate result value
 	EXT_FUNC_MAX
 };
 
@@ -1249,16 +1240,13 @@ struct Reb_Function {
 #define VAL_FUNC(v)			  ((v)->data.func)
 #define VAL_FUNC_SPEC(v)	  ((v)->data.func.spec)	// a series
 #define VAL_FUNC_SPEC_BLK(v)  BLK_HEAD((v)->data.func.spec)
-#define VAL_FUNC_WORDS(v)     ((v)->data.func.args)
-
-#define VAL_FUNC_NUM_WORDS(v) \
-	(SERIES_TAIL(VAL_FUNC_WORDS(v)) - 1)
+#define VAL_FUNC_PARAMLIST(v)     ((v)->data.func.args)
 
 #define VAL_FUNC_PARAM(v,p) \
-	BLK_SKIP(VAL_FUNC_WORDS(v), FIRST_PARAM_INDEX + (p) - 1)
+	BLK_SKIP(VAL_FUNC_PARAMLIST(v), FIRST_PARAM_INDEX + (p) - 1)
 
 #define VAL_FUNC_NUM_PARAMS(v) \
-	(SERIES_TAIL(VAL_FUNC_WORDS(v)) - FIRST_PARAM_INDEX)
+	(SERIES_TAIL(VAL_FUNC_PARAMLIST(v)) - FIRST_PARAM_INDEX)
 
 #define VAL_FUNC_RETURN_WORD(v) \
 	coming@soon
@@ -1319,10 +1307,10 @@ struct Reb_Handle {
 	((v)->data.handle.thing.data)
 
 #define SET_HANDLE_CODE(v,c) \
-	VAL_SET(v, REB_HANDLE), VAL_HANDLE_CODE(v) = (c)
+	(VAL_SET((v), REB_HANDLE), VAL_HANDLE_CODE(v) = (c))
 
 #define SET_HANDLE_DATA(v,d) \
-	VAL_SET(v, REB_HANDLE), VAL_HANDLE_DATA(v) = (d)
+	(VAL_SET((v), REB_HANDLE), VAL_HANDLE_DATA(v) = (d))
 
 
 /***********************************************************************
@@ -1465,7 +1453,7 @@ enum {
 #define VAL_ROUTINE(v)          	VAL_FUNC(v)
 #define VAL_ROUTINE_SPEC(v) 		VAL_FUNC_SPEC(v)
 #define VAL_ROUTINE_INFO(v) 		VAL_FUNC_INFO(v)
-#define VAL_ROUTINE_ARGS(v) 		VAL_FUNC_WORDS(v)
+#define VAL_ROUTINE_ARGS(v) 		VAL_FUNC_PARAMLIST(v)
 #define VAL_ROUTINE_FUNCPTR(v)  	(VAL_ROUTINE_INFO(v)->info.rot.funcptr)
 #define VAL_ROUTINE_LIB(v)  		(VAL_ROUTINE_INFO(v)->info.rot.lib)
 #define VAL_ROUTINE_ABI(v)  		(VAL_ROUTINE_INFO(v)->abi)
@@ -1486,34 +1474,66 @@ enum {
 **
 **	TYPESET - Collection of up to 64 types
 **
+**	Though available to the user to manipulate directly as a TYPESET!,
+**	REBVALs of this type have another use in describing the fields of
+**	objects or parameters of function frames.  When used for that
+**	purpose, they not only list the legal types...but also hold a
+**	symbol for naming the field or parameter.
+**
+**	!!! At present, a TYPESET! created with MAKE TYPESET! cannot set
+**	the internal symbol.  Nor can it set the extended flags, though
+**	that might someday be allowed with a syntax like:
+**
+**		make typeset! [<hide> <quoted> string! integer!]
+**
 ***********************************************************************/
+
+// Option flags used with VAL_GET_EXT().  These describe properties of
+// a value slot when it's constrained to the types in the typeset
+enum {
+	EXT_TYPESET_QUOTE = 0,	// Quoted (REDUCE paren/get-word|path if EVALUATE)
+	EXT_TYPESET_EVALUATE,	// DO/NEXT performed at callsite when setting
+	EXT_TYPESET_REFINEMENT,	// Value indicates an optional switch
+	EXT_WORD_LOCK,	// Can't be changed (set with PROTECT)
+	EXT_WORD_HIDE,		// Can't be reflected (set with PROTECT/HIDE)
+	EXT_TYPESET_MAX
+};
 
 struct Reb_Typeset {
-	REBCNT pad;			// Pad for U64 alignment (and common with Reb_Word)
-	REBU64 typebits;	// Bitset with one bit for each DATATYPE!
+	REBCNT sym;			// Symbol (if a key of object or function param)
+
+	// Note: `sym` is first so that the value's 32-bit Reb_Flags header plus
+	// the 32-bit REBCNT will pad `bits` to a REBU64 alignment boundary
+
+	REBU64 bits;		// One bit for each DATATYPE! (use with FLAGIT_64)
 };
 
-#define VAL_TYPESET(v)  ((v)->data.typeset.typebits)
-#define TYPE_CHECK(v,n) ((VAL_TYPESET(v) & ((REBU64)1 << (n))) != (REBU64)0)
-#define TYPE_SET(v,n)   (VAL_TYPESET(v) |= ((REBU64)1 << (n)))
-#define EQUAL_TYPESET(v,w) (VAL_TYPESET(v) == VAL_TYPESET(w))
-#define TYPESET(n) ((REBU64)1 << (n))
+// Operations when typeset is done with a bitset (currently all typesets)
 
+#define VAL_TYPESET_BITS(v) ((v)->data.typeset.bits)
 
-/***********************************************************************
-**
-**	UTYPE - User defined types
-**
-***********************************************************************/
+#define TYPE_CHECK(v,n) \
+	((VAL_TYPESET_BITS(v) & FLAGIT_64(n)) != 0)
 
-struct Reb_Utype {
-	REBSER	*func;	// func object
-	REBSER	*data;	// data object
-};
+#define TYPE_SET(v,n) \
+	((VAL_TYPESET_BITS(v) |= FLAGIT_64(n)), NOOP)
 
-#define VAL_UTYPE_FUNC(v)	((v)->data.utype.func)
-#define VAL_UTYPE_DATA(v)	((v)->data.utype.data)
+#define EQUAL_TYPESET(v,w) \
+	(VAL_TYPESET_BITS(v) == VAL_TYPESET_BITS(w))
 
+// Symbol is SYM_0 unless typeset in object keylist or func paramlist
+
+#ifdef NDEBUG
+	#define VAL_TYPESET_SYM(v) ((v)->data.typeset.sym)
+#else
+	// !!! Due to large reorganizations, it may be that VAL_WORD_SYM and
+	// VAL_TYPESET_SYM calls were swapped.  In the aftermath of reorganization
+	// this check is prudent (until further notice...)
+	#define VAL_TYPESET_SYM(v) (*Val_Typeset_Sym_Ptr_Debug(v))
+#endif
+
+#define VAL_TYPESET_CANON(v) \
+	VAL_SYM_CANON(BLK_SKIP(PG_Word_Table.series, VAL_TYPESET_SYM(v)))
 
 
 /***********************************************************************
@@ -1598,7 +1618,6 @@ union Reb_Value_Data {
 	struct Reb_Library library;
 	struct Reb_Struct structure; // It's STRUCT!, but 'struct' is a C keyword
 	struct Reb_Gob gob;
-	struct Reb_Utype utype;
 	struct Reb_Money money;
 	struct Reb_Handle handle;
 	struct Reb_All all;
@@ -1609,8 +1628,8 @@ union Reb_Value_Data {
 
 struct Reb_Value
 {
-	union Reb_Value_Data data;
 	union Reb_Value_Flags flags;
+	union Reb_Value_Data data;
 };
 
 #define ANY_SERIES(v)		(VAL_TYPE(v) >= REB_BINARY && VAL_TYPE(v) <= REB_LIT_PATH)

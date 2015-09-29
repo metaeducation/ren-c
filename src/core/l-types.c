@@ -170,16 +170,16 @@ typedef REBFLG (*MAKE_FUNC)(REBVAL *, REBVAL *, REBCNT);
 		if (c > 255) goto bad_hex;
 
 		lex = Lex_Map[c];
-		if (lex > LEX_WORD) {
-			c = lex & LEX_VALUE;
-			if (!c && lex < LEX_NUMBER) goto bad_hex;
-			num = (num << 4) + c;
-		}
-		else {
-bad_hex:	Trap_DEAD_END(RE_INVALID_CHARS);
-		}
+		if (lex <= LEX_WORD) goto bad_hex;
+
+		c = lex & LEX_VALUE;
+		if (!c && lex < LEX_NUMBER) goto bad_hex;
+		num = (num << 4) + c;
 	}
 	return num;
+
+bad_hex:
+	raise Error_0(RE_INVALID_CHARS);
 }
 
 
@@ -285,7 +285,7 @@ bad_hex:	Trap_DEAD_END(RE_INVALID_CHARS);
 	// !!! need check for NaN, and INF
 	VAL_DECIMAL(value) = STRTOD(s_cast(buf), &se);
 
-	if (fabs(VAL_DECIMAL(value)) == HUGE_VAL) Trap_DEAD_END(RE_OVERFLOW);
+	if (fabs(VAL_DECIMAL(value)) == HUGE_VAL) raise Error_0(RE_OVERFLOW);
 	return cp;
 }
 
@@ -312,7 +312,7 @@ bad_hex:	Trap_DEAD_END(RE_INVALID_CHARS);
 	}
 
 	if (len > MAX_NUM_LEN) return 0; // prevent buffer overflow
-	len = 0;
+
 	bp = buf;
 
 	// Strip leading signs:
@@ -400,7 +400,7 @@ bad_hex:	Trap_DEAD_END(RE_INVALID_CHARS);
 	if ((REBCNT)(cp-bp) != len) return 0;
 	VAL_SET(value, REB_MONEY);
 	VAL_MONEY_AMOUNT(value) = atof((char*)(&buf[0]));
-	if (fabs(VAL_MONEY_AMOUNT(value)) == HUGE_VAL) Trap_DEAD_END(RE_OVERFLOW);
+	if (fabs(VAL_MONEY_AMOUNT(value)) == HUGE_VAL) raise Error_0(RE_OVERFLOW);
 	return cp;
 #endif
 }
@@ -417,7 +417,7 @@ bad_hex:	Trap_DEAD_END(RE_INVALID_CHARS);
 	const REBYTE *ep;
 	const REBYTE *end = cp + len;
 	REBINT num;
-	REBINT day = 0;
+	REBINT day;
 	REBINT month;
 	REBINT year;
 	REBINT tz = 0;
@@ -439,9 +439,24 @@ bad_hex:	Trap_DEAD_END(RE_INVALID_CHARS);
 	ep = Grab_Int(cp, &num);
 	if (num < 0) return 0;
 	size = (REBCNT)(ep - cp);
-	if (size >= 4) year = num;
-	else if (size) day = num;
-	else return 0;
+	if (size >= 4) {
+		// year is set in this branch (we know because day is 0)
+		// Ex: 2009/04/20/19:00:00+0:00
+		year = num;
+		day = 0;
+	}
+	else if (size) {
+		// year is not set in this branch (we know because day ISN'T 0)
+		// Ex: 12-Dec-2012
+		day = num;
+		if (day == 0) return NULL;
+
+		// !!! Clang static analyzer doesn't know from test of `day` below
+		// how it connects with year being set or not.  Suppress warning.
+		year = MIN_I32; // !!! Garbage, should not be read.
+	}
+	else return NULL;
+
 	cp = ep;
 
 	// Determine field separator:
@@ -471,8 +486,14 @@ bad_hex:	Trap_DEAD_END(RE_INVALID_CHARS);
 	if (*cp == '-' || num < 0) return 0;
 	size = (REBCNT)(ep - cp);
 	if (!size) return 0;
-	if (!day) day = num;
-	else {	// it is a year
+
+	if (day == 0) {
+		// year already set, but day hasn't been
+		day = num;
+	}
+	else {
+		// day has been set, but year hasn't been
+
 		// Allow shorthand form (e.g. /96) ranging +49,-51 years
 		//		(so in year 2050 a 0 -> 2000 not 2100)
 		if (size >= 3) year = num;
@@ -556,41 +577,6 @@ end_date:
 	if (cp)
 		Val_Init_File(value, Copy_String(BUF_MOLD, 0, -1));
 	return cp;
-
-#ifdef ndef
-	extern REBYTE *Scan_Quote(REBYTE *src, SCAN_STATE *scan_state);
-
-	if (*cp == '%') cp++, len--;
-	if (len == 0) return 0;
-	if (*cp == '"') {
-		cp = Scan_Quote(cp, 0);
-		if (cp) {
-			int need_changes;
-			Val_Init_String(value, Copy_String(BUF_MOLD, 0, -1));
-			VAL_SET(value, REB_FILE);
-		}
-		return cp;
-	}
-
-	VAL_SERIES(value) = Make_Binary(len);
-	VAL_INDEX(value) = 0;
-
-	str = VAL_BIN(value);
-	for (; len > 0; len--) {
-		if (*cp == '%' && len > 2 && Scan_Hex2(cp+1, &n, FALSE)) {
-			*str++ = n;
-			cp += 3;
-			len -= 2;
-		}
-		else if (*cp == '\\') cp++, *str++ = '/';
-		else if (strchr(":;()[]\"", *cp)) return 0;  // chars not allowed in files !!!
-		else *str++ = *cp++;
-	}
-	*str = 0;
-	VAL_TAIL(value) = (REBCNT)(str - VAL_BIN(value));
-	VAL_SET(value, REB_FILE);
-	return cp;
-#endif
 }
 
 
@@ -685,12 +671,10 @@ end_date:
 **
 ***********************************************************************/
 {
-	const REBYTE *ep, *xp;
 	REBYTE buf[MAX_NUM_LEN+4];
+	const REBYTE *ep = Scan_Dec_Buf(cp, MAX_NUM_LEN, &buf[0]);
+	const REBYTE *xp;
 
-	ep = cp;
-	//ep = Grab_Int(ep, &n);
-	ep = Scan_Dec_Buf(cp, MAX_NUM_LEN, &buf[0]);
 	if (!ep) return 0;
 	VAL_PAIR_X(value) = (float)atof((char*)(&buf[0])); //n;
 	if (*ep != 'x' && *ep != 'X') return 0;
@@ -966,11 +950,16 @@ end_date:
 
 	while (1) {
 		// Scan valid word:
-		if (GET_LEX_CLASS(*cp) == LEX_CLASS_WORD) {
+		if (IS_LEX_WORD(*cp)) {
 			start = cp;
 			while (
-				IS_LEX_AT_LEAST_WORD(*cp) || *cp == '.' || *cp == '-' || *cp == '_'
-			) cp++; // word char or number
+				IS_LEX_WORD_OR_NUMBER(*cp)
+				|| *cp == '.'
+				|| *cp == '-'
+				|| *cp == '_'
+			) {
+				cp++;
+			}
 		}
 		else break;
 
@@ -1012,14 +1001,20 @@ end_date:
 		while (IS_LEX_SPACE(*cp)) cp++;
 		start = cp;
 		len = 0;
-		while (NOT_NEWLINE(*cp)) len++, cp++;
+		while (!ANY_CR_LF_END(*cp)) {
+			len++;
+			cp++;
+		}
 		// Is it continued on next line?
 		while (*cp) {
 			if (*cp == CR) cp++;
 			if (*cp == LF) cp++;
 			if (IS_LEX_SPACE(*cp)) {
 				while (IS_LEX_SPACE(*cp)) cp++;
-				while (NOT_NEWLINE(*cp)) len++, cp++;
+				while (!ANY_CR_LF_END(*cp)) {
+					len++;
+					cp++;
+				}
 			}
 			else break;
 		}
@@ -1030,13 +1025,14 @@ end_date:
 		str = STR_HEAD(ser);
 		cp = start;
 		// Code below *MUST* mirror that above:
-		while (NOT_NEWLINE(*cp)) *str++ = *cp++;
+		while (!ANY_CR_LF_END(*cp)) *str++ = *cp++;
 		while (*cp) {
 			if (*cp == CR) cp++;
 			if (*cp == LF) cp++;
 			if (IS_LEX_SPACE(*cp)) {
 				while (IS_LEX_SPACE(*cp)) cp++;
-				while (NOT_NEWLINE(*cp)) *str++ = *cp++;
+				while (!ANY_CR_LF_END(*cp))
+					*str++ = *cp++;
 			}
 			else break;
 		}

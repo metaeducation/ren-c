@@ -77,7 +77,7 @@ disable-user-includes: func [
 
 	; If we inline a header, it should happen once and only once for each
 	unless empty? headers [
-		throw make error! rejoin [{Not all headers inlined by make-zlib:} space mold headers]  
+		fail [{Not all headers inlined by make-zlib:} (mold headers)]
 	]
 ]
 
@@ -133,6 +133,7 @@ make-warning-lines: func [name [file!] title [string!]] [
 	]
 ]
 
+do %common.r
 
 ;;
 ;; Generate %sys-zlib.h Aggregate Header File
@@ -140,7 +141,7 @@ make-warning-lines: func [name [file!] title [string!]] [
 
 header-lines: copy []
 
-foreach h-file [
+for-each h-file [
 	%zconf.h
 	%zutil.h
 	%zlib.h
@@ -181,7 +182,7 @@ append source-lines [
 	{#undef DO8 /* REBOL: see make-zlib.r */}
 ]
 
-foreach c-file [
+for-each c-file [
 	%adler32.c
 
 	%deflate.c

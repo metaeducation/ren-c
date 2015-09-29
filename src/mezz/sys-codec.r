@@ -57,7 +57,7 @@ encoding?: function [
 	"Returns the media codec name for given binary data. (identify)"
 	data [binary!]
 ][
-	foreach [name codec] system/codecs [
+	for-each [name codec] system/codecs [
 		if do-codec codec/entry 'identify data [
 			return name
 		]

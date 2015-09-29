@@ -25,7 +25,7 @@ func: make function! [[
 	make function! reduce [spec body]
 ]]
 
-function: funct: func [
+function: func [
 	{Defines a function with all set-words as locals.}
 	spec [block!] {Help string (opt) followed by arg words (and opt type and string)}
 	body [block!] {The body block of the function}
@@ -64,14 +64,18 @@ does: func [
 ]
 
 use: func [
+	<transparent>
 	{Defines words local to a block.}
 	vars [block! word!] {Local word(s) to the block}
 	body [block!] {Block to evaluate}
-][ ; !!Needs the R3 equivalent of the [throw] function attribute in the created closure!
-	apply make closure! reduce [to block! vars copy/deep body] []
+][
+	apply make closure! reduce [
+		compose [<transparent> /local (vars)] copy/deep body
+	] []
 ]
 
 object: func [
+	<transparent>
 	{Defines a unique object.}
 	blk [block!] {Object words and values (modified)}
 ][
@@ -79,6 +83,7 @@ object: func [
 ]
 
 module: func [
+	<transparent>
 	"Creates a new module."
 	spec [block!] "The header block of the module (modified)"
 	body [block!] "The body block of the module (modified)"
@@ -103,7 +108,7 @@ cause-error: func [
 		]
 	]
 	; Build and throw the error:
-	do make error! [
+	fail make error! [
 		type: err-type
 		id:   err-id
 		arg1: first args

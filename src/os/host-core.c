@@ -38,6 +38,7 @@
 #endif
 
 #include <stdlib.h> //for free()
+#include <assert.h>
 
 #include "reb-host.h"
 
@@ -439,6 +440,8 @@ static u32 *core_ext_words;
 				w++;
 			}
 
+			OS_FREE(words);
+
 			if (!n || !e) return RXR_NONE;
 
 			if (RXA_WORD(frm, 4)) // private refinement
@@ -467,12 +470,14 @@ static u32 *core_ext_words;
 				binary_len = RSA_decrypt(rsa_ctx, dataBuffer, binaryBuffer, RXA_WORD(frm, 4), padding);
 
 				if (binary_len == -1) {
-					free(data_bi);
+					bi_free(rsa_ctx->bi_ctx, data_bi);
+					RSA_free(rsa_ctx);
 					return RXR_NONE;
 				}
 			} else {
 				if (-1 == RSA_encrypt(rsa_ctx, dataBuffer, data_len, binaryBuffer, RXA_WORD(frm, 4), padding)) {
-					free(data_bi);
+					bi_free(rsa_ctx->bi_ctx, data_bi);
+					RSA_free(rsa_ctx);
 					return RXR_NONE;
 				}
 			}
@@ -484,7 +489,8 @@ static u32 *core_ext_words;
 			RXA_TYPE(frm,1) = RXT_BINARY;
 			RXA_SERIES(frm,1) = binary;
 			RXA_INDEX(frm,1) = 0;
-			free(data_bi);
+			bi_free(rsa_ctx->bi_ctx, data_bi);
+			RSA_free(rsa_ctx);
 			return RXR_VALUE;
 		}
 
@@ -641,5 +647,44 @@ static u32 *core_ext_words;
 **
 ***********************************************************************/
 {
+// Initialize random number services (used by https protocol)
+#ifdef TO_WINDOWS
+	if (!CryptAcquireContextW(
+		&gCryptProv, 0, 0, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT | CRYPT_SILENT
+	)) {
+		// !!! There is no good way to return failure here as the
+		// routine is designed, and it appears that in some cases
+		// a zero initialization worked in the past.  Assert in the
+		// debug build but continue silently otherwise.
+		assert(FALSE);
+		gCryptProv = 0;
+	}
+#else
+	rng_fd = open("/dev/urandom", O_RDONLY);
+	if (rng_fd == -1) {
+		// We don't crash the release client now, but we will later
+		// if they try to generate random numbers
+		assert(FALSE);
+	}
+#endif
+
 	RL = cast(RL_LIB*, RL_Extend(RX_core, &RXD_Core));
+}
+
+
+/***********************************************************************
+**
+*/	void Shutdown_Core_Ext(void)
+/*
+***********************************************************************/
+{
+#ifdef TO_WINDOWS
+	if (gCryptProv != 0)
+		CryptReleaseContext(gCryptProv, 0);
+#else
+	if (rng_fd != -1)
+		close(rng_fd);
+#endif
+
+	if (core_ext_words) OS_FREE(core_ext_words);
 }

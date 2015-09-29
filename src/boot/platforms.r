@@ -40,9 +40,13 @@ REBOL [
 	3 libc6-2-5-x86
 	4 libc6-2-11-x86
 	10 libc6-ppc
+	11 libc6-ppc64
 	20 libc6-arm
 	30 libc6-mips
+	31 libc6-mips32be
 	40 libc-x64
+	60 dec-alpha
+	61 libc-ia64
 ]
 
 5 Haiku [
@@ -72,6 +76,7 @@ REBOL [
 	3 m68k
 	4 elf-x86
 	5 sparc
+	40 elf-x64
 ]
 
 10 Sun [

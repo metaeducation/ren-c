@@ -29,112 +29,128 @@
 
 #include "sys-core.h"
 
-#define	PANIC_BUF_SIZE 512	// space for crash print string
-
-enum Panic_Msg_Nums {
-	// Must align with Panic_Msgs[] array.
-	CM_ERROR,
-	CM_BOOT,
-	CM_INTERNAL,
-	CM_DATATYPE,
-	CM_DEBUG,
-	CM_CONTACT
-};
+// Size of crash buffers
+#define	PANIC_TITLE_SIZE 80
+#define	PANIC_MESSAGE_SIZE 512
 
 
 /***********************************************************************
 **
-** coverity[+kill]
-*/	void Panic_Core(REBINT id, ...)
+*/	ATTRIBUTE_NO_RETURN void Panic_Core(REBCNT id, const REBVAL *maybe_error, const char *c_file, int c_line, va_list *args)
 /*
-**		Print a failure message and abort.
+**		(va_list by pointer: http://stackoverflow.com/a/3369762/211160)
 **
-**		LATIN1 ONLY!! (For now)
-**
-**		The error is identified by id number, which can reference an
-**		error message string in the boot strings block.
-**
-**		Note that lower level error messages should not attempt to
-**		use the %r (mold value) format (uses higher level functions).
-**
-**		See panics.h for list of crash errors.
+**		Print a failure message and abort.  The code adapts to several
+**		different load stages of the system, and uses simpler ways to
+**		report the error when the boot has not progressed enough to
+**		use the more advanced modes.  This allows the same interface
+**		to be used for `panic Error_XXX(...)` and `raise Error_XXX(...)`.
 **
 ***********************************************************************/
 {
-	va_list args;
-	char buf[PANIC_BUF_SIZE];
-	const char *msg;
-	REBINT n = 0;
+	char title[PANIC_TITLE_SIZE];
+	char message[PANIC_MESSAGE_SIZE];
 
-	va_start(args, id);
+	title[0] = '\0';
+	message[0] = '\0';
 
-	// We are crashing so something is internally wrong...a legitimate
-	// time to be disabling the garbage collector.
-	//
-	// !!! But should we be doing FORMing etc. to make a message from
-	// varargs or just spitting out the crash in a less risky way?  Is
-	// Panic overdesigned for its purpose?
+	// We are crashing, so a legitimate time to be disabling the garbage
+	// collector.  (It won't be turned back on.)
 	GC_Disabled++;
 
-	if (Reb_Opts->crash_dump) {
+	if (Reb_Opts && Reb_Opts->crash_dump) {
 		Dump_Info();
 		Dump_Stack(0, 0);
 	}
 
-	// "REBOL PANIC #nnn:"
-	strncpy(buf, Panic_Msgs[CM_ERROR], PANIC_BUF_SIZE);
-	buf[PANIC_BUF_SIZE - 1] = '\0';
-	strncat(buf, " #", PANIC_BUF_SIZE);
-	Form_Int(b_cast(buf + strlen(buf)), id);
-	strncat(buf, ": ", PANIC_BUF_SIZE);
+	strncat(title, "PANIC #", PANIC_TITLE_SIZE - 1);
+	Form_Int(b_cast(title + strlen(title)), id); // !!! no bounding...
 
-	// "REBOL PANIC #nnn: put error message here"
-	// The first few error types only print general error message.
-	// Those errors > RP_STR_BASE have specific error messages (from boot.r).
-	if      (id < RP_BOOT_DATA) n = CM_DEBUG;
-	else if (id < RP_INTERNAL) n = CM_BOOT;
-	else if (id < RP_DATATYPE)  n = CM_INTERNAL;
-	else if (id < RP_STR_BASE) n = CM_DATATYPE;
-	else if (id > RP_STR_BASE + RS_MAX - RS_ERROR) n = CM_DEBUG;
+	strncat(message, Str_Panic_Directions, PANIC_MESSAGE_SIZE - 1);
 
-	// Use the above string or the boot string for the error (in boot.r):
-	msg = n >= 0 ? Panic_Msgs[n] : cs_cast(BOOT_STR(RS_ERROR, id - RP_STR_BASE - 1));
-	Form_Var_Args(
-		b_cast(buf + strlen(buf)), PANIC_BUF_SIZE - 1 - strlen(buf), msg, &args
+#if !defined(NDEBUG)
+	// In debug builds, we have the file and line number to report
+	Form_Args(
+		b_cast(message + strlen(message)),
+		PANIC_MESSAGE_SIZE - 1 - strlen(message),
+		"C Source File %s, Line %d\n",
+		c_file,
+		c_line,
+		NULL
 	);
-
-	va_end(args);
-
-	strncat(buf, Panic_Msgs[CM_CONTACT], PANIC_BUF_SIZE - 1);
-
-	// Convert to OS-specific char-type:
-#ifdef disable_for_now //OS_WIDE_CHAR   /// win98 does not support it
-	{
-		REBCHR s1[512];
-		REBCHR s2[2000];
-
-		n = OS_STRNCPY(s1, Panic_Msgs[CM_ERROR], LEN_BYTES(Panic_Msgs[CM_ERROR]));
-		if (n > 0) s1[n] = 0; // terminate
-		else OS_EXIT(200); // bad conversion
-
-		n = OS_STRNCPY(s2, buf, LEN_BYTES(buf));
-		if (n > 0) s2[n] = 0;
-		else OS_EXIT(200);
-
-		OS_CRASH(s1, s2);
-	}
-#else
-	OS_CRASH(cb_cast(Panic_Msgs[CM_ERROR]), cb_cast(buf));
 #endif
+
+	if (PG_Boot_Phase < BOOT_LOADED) {
+		strncat(message, title, PANIC_MESSAGE_SIZE - 1);
+		strncat(
+			message,
+			"\n** Boot Error: (string table not decompressed yet)",
+			PANIC_MESSAGE_SIZE - 1
+		);
+	}
+	else if (PG_Boot_Phase < BOOT_ERRORS && id < RE_INTERNAL_MAX) {
+		// We are panic'ing on one of the errors that can occur during
+		// boot (e.g. before Make_Error() be assured to run).  So we use
+		// the C string constant that was formed by %make-boot.r and
+		// compressed in the boot block.
+		//
+		// Note: These strings currently do not allow arguments.
+
+		const char *format =
+			cs_cast(BOOT_STR(RS_ERROR, id - RE_INTERNAL_FIRST));
+		assert(args && !maybe_error);
+		strncat(message, "\n** Boot Error: ", PANIC_MESSAGE_SIZE - 1);
+		Form_Args_Core(
+			b_cast(message + strlen(message)),
+			PANIC_MESSAGE_SIZE - 1 - strlen(message),
+			format,
+			args
+		);
+	}
+	else if (PG_Boot_Phase < BOOT_ERRORS && id >= RE_INTERNAL_MAX) {
+		strncat(message, title, PANIC_MESSAGE_SIZE - 1);
+		strncat(
+			message,
+			"\n** Boot Error: (error object table not initialized yet)",
+			PANIC_MESSAGE_SIZE - 1
+		);
+	}
+	else {
+		// The system should be theoretically able to make and mold errors.
+		//
+		// !!! If you're trying to panic *during* error molding this
+		// is obviously not going to not work.  All errors pertaining to
+		// molding errors should audited to be in the Boot: category.
+
+		REBVAL error;
+
+		if (maybe_error) {
+			assert(!args);
+			error = *maybe_error;
+		}
+		else {
+			// We aren't explicitly passed a Rebol ERROR! object, but we
+			// consider it "safe" to make one since we're past BOOT_ERRORS
+
+			Val_Init_Error(&error, Make_Error_Core(id, c_file, c_line, args));
+		}
+
+		Form_Args(
+			b_cast(message + strlen(message)),
+			PANIC_MESSAGE_SIZE - 1 - strlen(message),
+			"%v",
+			&error,
+			NULL
+		);
+	}
+
+	OS_CRASH(cb_cast(Str_Panic_Title), cb_cast(message));
+
+	// Note that since we crash, we never return so that the caller can run
+	// a va_end on the passed-in args.  This is illegal in the general case:
+	//
+	//    http://stackoverflow.com/a/587139/211160
+
+	DEAD_END;
 }
 
-/***********************************************************************
-**
-*/	void NA(void)
-/*
-**		Feature not available.
-**
-***********************************************************************/
-{
-	Panic(RP_NA);
-}

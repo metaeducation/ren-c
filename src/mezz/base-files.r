@@ -112,11 +112,11 @@ make-dir: func [
 
 	; Create directories forward:
 	created: copy []
-	foreach dir dirs [
+	for-each dir dirs [
 		path: either empty? path [dir][path/:dir]
 		append path slash
 		if error? trap [make-dir path] [
-			foreach dir created [attempt [delete dir]]
+			for-each dir created [attempt [delete dir]]
 			cause-error 'access 'cannot-open path
 		]
 		insert created path
@@ -134,7 +134,7 @@ delete-dir: func [
 		dir: dirize dir
 		attempt [files: load dir]
 	] [
-		foreach file files [delete-dir dir/:file]
+		for-each file files [delete-dir dir/:file]
 	]
 	attempt [delete dir]
 ]
@@ -143,7 +143,8 @@ script?: func [
 	{Checks file, url, or string for a valid script header.}
 	source [file! url! binary! string!]
 ][
-	switch type-of/word source [
+	; !!! to word! necessary as long as OPTIONS_DATATYPE_WORD_STRICT exists
+	switch to word! type-of source [
 		file! url! [source: read source]
 		string! [source: to binary! source] ; Remove this line if FIND-SCRIPT changed to accept string!
 	]

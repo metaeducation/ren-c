@@ -65,7 +65,7 @@
 
 //-- Special Debugging Options:
 //#define CHAFF					// Fill series data to crash old references
-//#define HIT_END				// Panic_DEAD_END if block tail is past block terminator.
+//#define HIT_END				// Panic if block tail is past block terminator.
 //#define WATCH_FREED			// Show # series freed each GC
 //#define MEM_STRESS			// Special torture mode enabled
 //#define INSPECT_SERIES
@@ -119,18 +119,17 @@
 
 	// While conceptually a simpler interface than malloc(), the
 	// current implementations on all C platforms just pass through to
-	// malloc and free.  NOTE: use of calloc is temporary for the
-	// pooling commit, as it covers up bugs.  Those are addressed in
-	// a separate patch.
+	// malloc and free.
 
 #ifdef NDEBUG
 	return calloc(size, 1);
 #else
 	{
-		// In debug builds we cache the size at the head of the
-		// allocation so we can check it.
+		// In debug builds we cache the size at the head of the allocation
+		// so we can check it.  This also allows us to catch cases when
+		// free() is paired with Alloc_Mem() instead of using Free_Mem()
 
-		void *ptr = calloc(size + sizeof(size_t), 1);
+		void *ptr = malloc(size + sizeof(size_t));
 		*cast(size_t *, ptr) = size;
 		return cast(char *, ptr) + sizeof(size_t);
 	}
@@ -278,17 +277,95 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 	// Copy pool sizes to new pool structure:
 	Mem_Pools = ALLOC_ARRAY(REBPOL, MAX_POOLS);
 	for (n = 0; n < MAX_POOLS; n++) {
+		Mem_Pools[n].segs = NULL;
+		Mem_Pools[n].first = NULL;
+		Mem_Pools[n].last = NULL;
 		Mem_Pools[n].wide = Mem_Pool_Spec[n].wide;
 		Mem_Pools[n].units = (Mem_Pool_Spec[n].units * scale) / unscale;
 		if (Mem_Pools[n].units < 2) Mem_Pools[n].units = 2;
+		Mem_Pools[n].free = 0;
+		Mem_Pools[n].has = 0;
 	}
 
 	// For pool lookup. Maps size to pool index. (See Find_Pool below)
-	PG_Pool_Map = ALLOC_ARRAY(REBYTE, (4 * MEM_BIG_SIZE) + 4); // extra
-	n = 9;  // sizes 0 - 8 are pool 0
+	PG_Pool_Map = ALLOC_ARRAY(REBYTE, (4 * MEM_BIG_SIZE) + 1);
+
+	// sizes 0 - 8 are pool 0
+	for (n = 0; n <= 8; n++) PG_Pool_Map[n] = 0;
 	for (; n <= 16 * MEM_MIN_SIZE; n++) PG_Pool_Map[n] = MEM_TINY_POOL     + ((n-1) / MEM_MIN_SIZE);
 	for (; n <= 32 * MEM_MIN_SIZE; n++) PG_Pool_Map[n] = MEM_SMALL_POOLS-4 + ((n-1) / (MEM_MIN_SIZE * 4));
 	for (; n <=  4 * MEM_BIG_SIZE; n++) PG_Pool_Map[n] = MEM_MID_POOLS     + ((n-1) / MEM_BIG_SIZE);
+
+	// !!! Revisit where series init/shutdown goes when the code is more
+	// organized to have some of the logic not in the pools file
+
+	PG_Reb_Stats = ALLOC(REB_STATS);
+
+	// Manually allocated series that GC is not responsible for (unless a
+	// trap occurs). Holds series pointers.
+	GC_Manuals = Make_Series(15, sizeof(REBSER *), MKS_NONE | MKS_GC_MANUALS);
+	LABEL_SERIES(GC_Manuals, "gc manuals");
+
+	Prior_Expand = ALLOC_ARRAY(REBSER*, MAX_EXPAND_LIST);
+	CLEAR(Prior_Expand, sizeof(REBSER*) * MAX_EXPAND_LIST);
+	Prior_Expand[0] = (REBSER*)1;
+}
+
+
+/***********************************************************************
+**
+*/	void Shutdown_Pools(void)
+/*
+**		Release all segments in all pools, and the pools themselves.
+**
+***********************************************************************/
+{
+	REBCNT n;
+
+	// Can't use Free_Series() because GC_Manuals couldn't be put in
+	// the manuals list...
+	GC_Kill_Series(GC_Manuals);
+
+	for (n = 0; n < MAX_POOLS; n++) {
+		REBPOL *pool = &Mem_Pools[n];
+		REBSEG *seg = pool->segs;
+		REBCNT units = pool->units;
+		REBCNT mem_size = pool->wide * units + sizeof(REBSEG);
+
+		while (seg) {
+			REBSEG *next = seg->next;
+			FREE_ARRAY(char, mem_size, cast(char*, seg));
+			seg = next;
+		}
+	}
+
+	FREE_ARRAY(REBPOL, MAX_POOLS, Mem_Pools);
+
+	FREE_ARRAY(REBYTE, (4 * MEM_BIG_SIZE) + 1, PG_Pool_Map);
+
+	// !!! Revisit location (just has to be after all series are freed)
+	FREE_ARRAY(REBSER*, MAX_EXPAND_LIST, Prior_Expand);
+	FREE(REB_STATS, PG_Reb_Stats);
+
+	// Rebol's Alloc_Mem() does not save the size of an allocation, so
+	// callers of the Alloc_Free() routine must say how big the memory block
+	// they are freeing is.  This information is used to decide when to GC,
+	// as well as to be able to set boundaries on mem usage without "ulimit".
+	// The tracked number of total memory used should balance to 0 here.
+	//
+	if (PG_Mem_Usage != 0) {
+		/* assert(FALSE); */
+
+		// This tells you about the leaked allocations, but if you want to
+		// actually get a list of where they came from you need to use
+		// Valgrind or Leak Sanitizer (or similar).  This assert should
+		// thus have some kind of switch to disable it when using with
+		// one of those tools, to allow for a normal exit to read the report.
+		//
+		// !!! Ideally we would print the number here, but Rebol's
+		// print mechanisms (e.g. Debug_Fmt) use memory...and we don't
+		// want to link in `printf`.  Is there a more basic printer?
+	}
 }
 
 
@@ -344,12 +421,16 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 	REBCNT	mem_size = pool->wide * units + sizeof(REBSEG);
 
 	seg = cast(REBSEG *, ALLOC_ARRAY(char, mem_size));
-	if (!seg) {
-		assert(FALSE);
-		Panic_Core(RP_NO_MEMORY, mem_size);
-	}
 
-	CLEAR(seg, mem_size);  // needed to clear series nodes
+	if (!seg) panic Error_No_Memory(mem_size);
+
+	// !!! See notes above whether a more limited contract between the node
+	// types and the pools could prevent needing to zero all the units.
+	// Also note that (for instance) there is no guarantee that memsetting
+	// a pointer variable to zero will make that into a NULL pointer.
+	//
+	CLEAR(seg, mem_size);
+
 	seg->size = mem_size;
 	seg->next = pool->segs;
    	pool->segs = seg;
@@ -366,6 +447,25 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 
 	for (next = (REBYTE *)(seg + 1); units > 0; units--, next += pool->wide) {
 		*node = (REBNOD) next;
+
+		// !!! Were a more limited contract established between the node
+		// type and the pools, this is where it would write the signal
+		// into the unit that it is in a free state.  As it stands, we
+		// do not know what bit the type will use...just that it uses
+		// zero (of something that isn't the first pointer sized thing,
+		// that we just assigned).  If it were looking for zero in
+		// the second pointer sized thing, we might put this line here:
+		//
+		//     *(node + 1) = cast(REBNOD, 0);
+		//
+		// For now we just clear the remaining bits...but we do it all
+		// in one call with the CLEAR() above vs. repeated calls on
+		// each individual unit.  Note each unit only receives a zero
+		// filling once in its lifetime; if it is freed and then reused
+		// it will not be zero filled again (depending on the client to
+		// have done whatever zeroing they needed to indicate the free
+		// state prior to free).
+
 		node  = cast(void**, *node);
 	}
 
@@ -382,8 +482,42 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 **
 */	void *Make_Node(REBCNT pool_id)
 /*
-**		Allocate a node from a pool.  The node will NOT be cleared.
-**		If the pool has run out of nodes, it will be refilled.
+**		Allocate a node from a pool.  If the pool has run out of
+**		nodes, it will be refilled.
+**
+**		Note that the node you get back will not be zero-filled
+**		in the general case.  BUT *at least one bit of the node
+**		will be zero*, and that one bit will *not be in the first
+**		pointer-sized object of your node*.  This results from the
+**		way that the pools and the node types must cooperate in
+**		order to indicate that a node is in a free state when all
+**		the nodes of a certain type--freed or not--are being
+**		enumerated (e.g. by the garbage collector).
+**
+**		Here's how:
+**
+**		When a pool segment is allocated, it will initialize all
+**		the units (which will become REBSERs, REBGOBs, etc.) to
+**		zero bytes, *except* for the first pointer-sized thing in
+**		each unit.  That is used whenever a unit is in the freed
+**		state to indicate the next free unit.  Because the unit
+**		has the rest of the bits zero, it can pick the zeroness
+**		any one of those bits to signify a free state.  However,
+**		when it frees the node then it must set the bit it chose
+**		back to zero before freeing.  Except for changes to the
+**		first pointer-size slot, a reused unit being handed out
+**		via Make_Node will have all the same bits it had when it
+**		was freed.
+**
+**		!!! Should a stricter contract be established between the
+**		pool and the node type about what location will be used
+**		to indicate the free state?  For instance, there's already
+**		a prescriptiveness that the first pointer-sized thing can't
+**		be used to indicate anything in the free state...why not
+**		push that to two and say that freed things always have the
+**		second pointer-sized thing be 0?  That would prevent the
+**		need for a full zero-fill, at the cost of dictating the
+**		layout of the node type's struct a little more.
 **
 ***********************************************************************/
 {
@@ -409,7 +543,11 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 **
 */	void Free_Node(REBCNT pool_id, REBNOD *node)
 /*
-**		Free a node, returning it to its pool.
+**		Free a node, returning it to its pool.  If the nodelist for
+**		this pool_id is going to be enumerated, then some bit of
+**		the data must be set to 0 prior to freeing in order to
+**		distinguish the allocated from free state.  (See notes on
+**		Make_Node.)
 **
 ***********************************************************************/
 {
@@ -436,8 +574,8 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 /*
 **		Allocates element array for an already allocated REBSER header
 **		structure.  Resets the bias and tail to zero, and sets the new
-**		width.  Flags like SER_PROTECT or SER_KEEP are left as they
-**		were, and other fields in the series structure are untouched.
+**		width.  Flags like SER_PROTECT are left as they were, and other
+**		fields in the series structure are untouched.
 **
 **		This routine can thus be used for an initial construction
 **		or an operation like expansion.  Currently not exported
@@ -499,7 +637,7 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 	memset(series->data, 0xff, size);
 #endif
 
-	// Keep the series flags like SER_KEEP, but use new width and set bias 0.
+	// Keep the series flags like SER_PROTECT, but use new width and bias to 0
 
 	series->info = ((series->info >> 8) << 8) | wide;
 	SERIES_SET_BIAS(series, 0);
@@ -590,14 +728,15 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 {
 	REBSER *series;
 
-	CHECK_C_STACK_OVERFLOW(&series);
+	if (C_STACK_OVERFLOWING(&series)) Trap_Stack_Overflow();
 
 	// PRESERVE flag only makes sense for Remake_Series, where there is
 	// previous data to be kept.
 	assert(!(flags & MKS_PRESERVE));
 	assert(wide != 0 && length != 0);
 
-	if ((cast(REBU64, length) * wide) > MAX_I32) Trap(RE_NO_MEMORY);
+	if (cast(REBU64, length) * wide > MAX_I32)
+		raise Error_No_Memory(cast(REBU64, length) * wide);
 
 	PG_Reb_Stats->Series_Made++;
 	PG_Reb_Stats->Series_Memory += length * wide;
@@ -634,27 +773,26 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 
 		if (!Series_Data_Alloc(series, length, wide, flags)) {
 			Free_Node(SERIES_POOL, cast(REBNOD*, series));
-			Trap(RE_NO_MEMORY);
+			raise Error_No_Memory(length * wide);
 		}
 	}
 
 	series->extra.size = 0;
 
-#if !defined(NDEBUG)
-	// All series start out in the debug tracking list of series that
-	// must be freed (if not handed to Manage_Series for the GC to take
-	// care of.)  We tack the new series on the head of the doubly-linked
-	// track list.
+	// All series start out in the list of series that must be freed (if not
+	// handed to Manage_Series for the GC to take care of.)  The only way
+	// the series will be cleaned up automatically is if a trap happens
 
-	if (GC_Manuals) {
-		series->next = GC_Manuals;
-		GC_Manuals->prev = series;
+	// !!! Should there be a MKS_MANAGED to start a series out in the
+	// managed state, for efficiency?
+
+	if (!(flags & MKS_GC_MANUALS)) {
+		// We can only add to the GC_Manuals series if the series itself
+		// is not GC_Manuals...
+
+		if (SERIES_FULL(GC_Manuals)) Extend_Series(GC_Manuals, 8);
+		cast(REBSER**, GC_Manuals->data)[GC_Manuals->tail++] = series;
 	}
-	else
-		series->next = NULL;
-	series->prev = NULL;
-	GC_Manuals = series;
-#endif
 
 	CHECK_MEMORY(2);
 
@@ -784,7 +922,7 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 	}
 
 	// Range checks:
-	if (delta & 0x80000000) Trap(RE_PAST_END); // 2GB max
+	if (delta & 0x80000000) raise Error_0(RE_PAST_END); // 2GB max
 	if (index > series->tail) index = series->tail; // clip
 
 	// Width adjusted variables:
@@ -803,7 +941,7 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 		if ((SERIES_TAIL(series) + SERIES_BIAS(series)) * wide >= SERIES_TOTAL(series)) {
 			Dump_Series(series, "Overflow");
 			assert(FALSE);
-			Panic(RP_MISC); // shouldn't be possible, but code here panic'd
+			panic Error_0(RE_MISC); // shouldn't be possible, but code here panic'd
 		}
 
 		return;
@@ -811,7 +949,7 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 
 	// We need to expand the current series allocation.
 
-	if (SERIES_GET_FLAG(series, SER_LOCK)) Panic(RP_LOCKED_SERIES);
+	if (SERIES_GET_FLAG(series, SER_LOCK)) panic Error_0(RE_LOCKED_SERIES);
 
 #ifndef NDEBUG
 	if (Reb_Opts->watch_expand) {
@@ -853,8 +991,7 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 		wide,
 		any_block ? (MKS_ARRAY | MKS_POWER_OF_2) : MKS_POWER_OF_2
 	)) {
-		Trap(RE_NO_MEMORY);
-		DEAD_END_VOID;
+		raise Error_No_Memory((series->tail + delta + x) * wide);
 	}
 
 	assert(SERIES_BIAS(series) == 0); // should be reset
@@ -922,8 +1059,7 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 	)) {
 		// Put series back how it was (there may be extant references)
 		series->data = data_old;
-		Trap(RE_NO_MEMORY);
-		DEAD_END_VOID;
+		raise Error_No_Memory((units + 1) * wide);
 	}
 
 	if (flags & MKS_PRESERVE) {
@@ -1005,24 +1141,41 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 **
 ***********************************************************************/
 {
+	REBSER ** const last_ptr
+		= &cast(REBSER**, GC_Manuals->data)[GC_Manuals->tail - 1];
+
+#if !defined(NDEBUG)
+	// If a series has already been freed, we'll find out about that
+	// below indirectly, so better in the debug build to get a clearer
+	// error that won't be conflated with a possible tracking problem
+	if (SERIES_FREED(series)) {
+		Debug_Fmt("Trying to Free_Series() on an already freed series");
+		Panic_Series(series);
+	}
+
 	// We can only free a series that is not under management by the
 	// garbage collector
-#if !defined(NDEBUG)
 	if (SERIES_GET_FLAG(series, SER_MANAGED)) {
 		Debug_Fmt("Trying to Free_Series() on a series managed by GC.");
 		Panic_Series(series);
 	}
-
-	if (series->next)
-		series->next->prev = series->prev;
-
-	if (series->prev)
-		series->prev->next = series->next;
-	else {
-		assert(series == GC_Manuals);
-		GC_Manuals = series->next;
-	}
 #endif
+
+	// Note: Code repeated in Manage_Series()
+	assert(GC_Manuals->tail >= 1);
+	if (*last_ptr != series) {
+		// If the series is not the last manually added series, then
+		// find where it is, then move the last manually added series
+		// to that position to preserve it when we chop off the tail
+		// (instead of keeping the series we want to free).
+		REBSER **current_ptr = last_ptr - 1;
+		while (*current_ptr != series) {
+			assert(current_ptr > cast(REBSER**, GC_Manuals->data));
+			--current_ptr;
+		}
+		*current_ptr = *last_ptr;
+	}
+	GC_Manuals->tail--; // !!! Should it ever shrink or save memory?
 
 	// With bookkeeping done, use the same routine the GC uses to free
 	GC_Kill_Series(series);
@@ -1050,8 +1203,6 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 	REBUNI *up;
 	REBCNT n;
 
-	series->data = NULL;
-
 #if !defined(NDEBUG)
 	// We may be resizing a partially constructed series, or otherwise
 	// not want to preserve the previous contents
@@ -1061,13 +1212,14 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 
 	assert(SERIES_WIDE(series) == 1);
 
+	series->data = NULL;
+
 	if (!Series_Data_Alloc(
 		series, tail_old + 1, cast(REBYTE, sizeof(REBUNI)), MKS_NONE
 	)) {
 		// Put series back how it was (there may be extant references)
 		series->data = data_old;
-		Trap(RE_NO_MEMORY);
-		DEAD_END_VOID;
+		raise Error_No_Memory((tail_old + 1) * sizeof(REBUNI));
 	}
 
 	bp = data_old;
@@ -1088,11 +1240,9 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 }
 
 
-#if !defined(NDEBUG)
-
 /***********************************************************************
 **
-*/	void Manage_Series_Debug(REBSER *series)
+*/	void Manage_Series(REBSER *series)
 /*
 **		When a series is first created, it is in a state of being
 **		manually memory managed.  Thus, you can call Free_Series on
@@ -1106,25 +1256,33 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 **		containing that series.  When these copies are made, it's
 **		no longer safe to assume it's okay to free the original.
 **
-**		Though marking a series as managed is just setting a bit in
-**		the release build (and hence, cheap+fast), we do some more
-**		work to ensure coherence in the debug build.
-**
 ***********************************************************************/
 {
+	REBSER ** const last_ptr
+		= &cast(REBSER**, GC_Manuals->data)[GC_Manuals->tail - 1];
+
 	assert(!SERIES_GET_FLAG(series, SER_MANAGED));
 	SERIES_SET_FLAG(series, SER_MANAGED);
 
-#if !defined(NDEBUG)
-	if (series->prev == NULL)
-		GC_Manuals = series->next;
-	else
-		series->prev->next = series->next;
-	if (series->next)
-		series->next->prev = series->prev;
-#endif
+	// Note: Code repeated in Free_Series()
+	assert(GC_Manuals->tail >= 1);
+	if (*last_ptr != series) {
+		// If the series is not the last manually added series, then
+		// find where it is, then move the last manually added series
+		// to that position to preserve it when we chop off the tail
+		// (instead of keeping the series we want to free).
+		REBSER **current_ptr = last_ptr - 1;
+		while (*current_ptr != series) {
+			assert(current_ptr > cast(REBSER**, GC_Manuals->data));
+			--current_ptr;
+		}
+		*current_ptr = *last_ptr;
+	}
+	GC_Manuals->tail--; // !!! Should it ever shrink or save memory?
 }
 
+
+#if !defined(NDEBUG)
 
 /***********************************************************************
 **
@@ -1138,25 +1296,21 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 {
 	if (
 		SERIES_GET_FLAG(frame, SER_MANAGED)
-		!= SERIES_GET_FLAG(FRM_WORD_SERIES(frame), SER_MANAGED)
+		!= SERIES_GET_FLAG(FRM_KEYLIST(frame), SER_MANAGED)
 	) {
-		if (!SERIES_GET_FLAG(frame, SER_MANAGED)) {
-			Debug_Fmt("Frame word series is managed but frame is not!");
-			Panic_Series(frame);
-		}
-
-		Debug_Fmt("Frame is managed but frame word series is not!");
-		Panic_Series(FRM_WORD_SERIES(frame));
+		// Only one of these will trip...
+		ASSERT_SERIES_MANAGED(frame);
+		ASSERT_SERIES_MANAGED(FRM_KEYLIST(frame));
 	}
 
-	MANAGE_SERIES(FRM_WORD_SERIES(frame));
+	MANAGE_SERIES(FRM_KEYLIST(frame));
 	MANAGE_SERIES(frame);
 }
 
 
 /***********************************************************************
 **
-*/	void Manuals_Leak_Check_Debug(REBSER *manuals, const char *label_str)
+*/	void Manuals_Leak_Check_Debug(REBCNT manuals_tail, const char *label_str)
 /*
 **		Routine for checking that the pointer passed in is the
 **		same as the head of the series that the GC is not tracking,
@@ -1165,20 +1319,25 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 **
 ***********************************************************************/
 {
-	if (GC_Manuals != manuals) {
-		REBINT count = 0;
-		REBSER *temp = manuals;
-		while (temp != GC_Manuals) {
-			temp = temp->prev;
-			if (!temp) {
-				Debug_Fmt("Bad tracking chain in REBSER leak check.");
-				Panic_Series(GC_Manuals);
-			}
-			count++;
-		}
-		Debug_Fmt("%d leaked REBSERs during %s", count, label_str);
+	if (SERIES_TAIL(GC_Manuals) > manuals_tail) {
+		REBSER* most_recent =
+			cast(REBSER**, GC_Manuals->data)[GC_Manuals->tail - 1];
+
+		Debug_Fmt(
+			"%d leaked REBSERs during %s",
+			SERIES_TAIL(GC_Manuals) - manuals_tail,
+			label_str
+		);
 		Debug_Fmt("Panic_Series() on most recent (for valgrind, ASAN)");
-		Panic_Series(GC_Manuals);
+		Panic_Series(most_recent);
+	}
+	else if (SERIES_TAIL(GC_Manuals) < manuals_tail) {
+		Debug_Fmt("Manual series freed from outside of checkpoint.");
+
+		// Note: Should this ever actually happen, this panic won't do
+		// that much good in helping debug it.  You'll probably need to
+		// add additional checking in the Manage_Series and Free_Series
+		// routines that checks against the caller's manuals_tail.
 	}
 }
 
@@ -1196,21 +1355,12 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 {
 	if (ANY_OBJECT(value)) {
 		REBSER *frame = VAL_OBJ_FRAME(value);
-		if (!SERIES_GET_FLAG(frame, SER_MANAGED)) {
-			Debug_Fmt("ASSERT_VALUE_MANAGED() failing on object frame");
-			Panic_Series(frame);
-		}
-		if (!SERIES_GET_FLAG(FRM_WORD_SERIES(frame), SER_MANAGED)) {
-			Debug_Fmt("ASSERT_VALUE_MANAGED() failing on object frame words");
-			Panic_Series(FRM_WORD_SERIES(frame));
-		}
+		ASSERT_SERIES_MANAGED(frame);
+		ASSERT_SERIES_MANAGED(FRM_KEYLIST(frame));
+
 	}
-	else if (ANY_SERIES(value)) {
-		if (!SERIES_GET_FLAG(VAL_SERIES(value), SER_MANAGED)) {
-			Debug_Fmt("ASSERT_VALUE_MANAGED() failing on series");
-			Panic_Series(VAL_SERIES(value));
-		}
-	}
+	else if (ANY_SERIES(value))
+		ASSERT_SERIES_MANAGED(VAL_SERIES(value));
 }
 
 #endif
@@ -1318,8 +1468,7 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 
 	return count;
 crash:
-	Panic_DEAD_END(RP_CORRUPT_MEMORY);
-	return 0; // for compiler only
+	panic Error_0(RE_CORRUPT_MEMORY);
 }
 
 
@@ -1480,7 +1629,6 @@ crash:
 
 #ifdef SERIES_LABELS
 			kind = "----";
-			if (SERIES_GET_FLAG(series, SER_KEEP)) kind = "KEEP";
 			//if (Find_Root(series)) kind = "ROOT";
 			if (!SERIES_FREED(series) && series->label) {
 				Debug_Fmt_("%08x: %16s %s ", series, series->label, kind);

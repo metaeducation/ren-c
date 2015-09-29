@@ -70,7 +70,6 @@ typeset		["set of datatypes" opt-object]
 unicode		["string of unicoded characters" string]
 unset		["no value returned or set" internal]
 url			["uniform resource locator or identifier" string]
-utype		["user defined datatype" object]
 vector		["high performance arrays (single datatype)" vector]
 word		["word (symbol or variable)" word]
 

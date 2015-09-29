@@ -279,7 +279,7 @@ append plat-id config/id/3
 
 ; Collect OS-specific host files:
 unless os-specific-objs: select file-base to word! join "os-" config/os-base [
-	do make error! rejoin [
+	fail rejoin [
 		"make-make.r requires os-specific obj list in file-base.r" newline
 		"none was provided for os-" config/os-base
 	]
@@ -327,7 +327,7 @@ macro+: func [
 
 macro++: func ['name obj [object!] /local out] [
 	out: make string! 10
-	foreach n words-of obj [
+	for-each n words-of obj [
 		all [
 			obj/:n
 			flag? (n)
@@ -361,7 +361,7 @@ emit-obj-files: func [
 	/local cnt
 ][
 	cnt: 1
-	foreach file files [
+	for-each file files [
 		file: to-obj file
 		emit [%objs/ file " "]
 		if cnt // 4 = 0 [emit "\^/^-"]
@@ -378,7 +378,7 @@ emit-file-deps: func [
 	/dir path  ; from path
 	/local obj
 ][
-	foreach src files [
+	for-each src files [
 		obj: to-obj src
 		src: rejoin pick [["$R/" src]["$S/" path src]] not dir
 		emit [

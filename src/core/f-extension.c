@@ -73,7 +73,7 @@ REBCNT Ext_Next = 0;
 
 /***********************************************************************
 **
-x*/	RXIARG Value_To_RXI(REBVAL *val)
+x*/	RXIARG Value_To_RXI(const REBVAL *val)
 /*
 ***********************************************************************/
 {
@@ -215,7 +215,7 @@ x*/	REBRXT Do_Callback(REBSER *obj, u32 name, RXIARG *rxis, RXIARG *result)
 		&label,
 		val
 	);
-	obj = VAL_FUNC_WORDS(val);  // func words
+	obj = VAL_FUNC_PARAMLIST(val);  // func words
 	len = SERIES_TAIL(obj)-1;	// number of args (may include locals)
 
 	// Push args. Too short or too long arg frames are handled W/O error.
@@ -238,10 +238,9 @@ x*/	REBRXT Do_Callback(REBSER *obj, u32 name, RXIARG *rxis, RXIARG *result)
 	}
 
 	// Evaluate the function:
-	if (!Dispatch_Call(call)) {
+	if (Dispatch_Call_Throws(call)) {
 		// !!! Needs better handling for THROWN() to safely "bubble up"
-		Trap_Thrown(DSF_OUT(call));
-		DEAD_END;
+		raise Error_No_Catch_For_Throw(DSF_OUT(call));
 	}
 
 	// Return resulting value from output
@@ -272,7 +271,11 @@ x*/	REBRXT Do_Callback(REBSER *obj, u32 name, RXIARG *rxis, RXIARG *result)
 
 	SET_FLAG(cbi->flags, RXC_DONE);
 
-	if (!n) Trap_Num(RE_INVALID_ARG, GET_EXT_ERROR(&cbi->result));
+	if (!n) {
+		REBVAL temp;
+		SET_INTEGER(&temp, GET_EXT_ERROR(&cbi->result));
+		raise Error_1(RE_INVALID_ARG, &temp);
+	}
 
 	RXI_To_Value(D_OUT, cbi->result, n);
 	return R_OUT;
@@ -322,26 +325,26 @@ typedef REBYTE *(INFO_FUNC)(REBINT opts, void *lib);
 
 	if (!D_REF(2)) { // No /dispatch, use the DLL file:
 
-		if (!IS_FILE(val)) Trap_Arg_DEAD_END(val);
+		if (!IS_FILE(val)) raise Error_Invalid_Arg(val);
 
 		// !!! By passing NULL we don't get backing series to protect!
 		name = Val_Str_To_OS_Managed(NULL, val);
 
 		// Try to load the DLL file:
 		if (!(dll = OS_OPEN_LIBRARY(name, &error))) {
-			Trap1_DEAD_END(RE_NO_EXTENSION, val);
+			raise Error_1(RE_NO_EXTENSION, val);
 		}
 
 		// Call its info() function for header and code body:
 		if (!(info = OS_FIND_FUNCTION(dll, cs_cast(BOOT_STR(RS_EXTENSION, 0))))){
 			OS_CLOSE_LIBRARY(dll);
-			Trap1_DEAD_END(RE_BAD_EXTENSION, val);
+			raise Error_1(RE_BAD_EXTENSION, val);
 		}
 
 		// Obtain info string as UTF8:
 		if (!(code = cast(INFO_FUNC*, info)(0, Extension_Lib()))) {
 			OS_CLOSE_LIBRARY(dll);
-			Trap1_DEAD_END(RE_EXTENSION_INIT, val);
+			raise Error_1(RE_EXTENSION_INIT, val);
 		}
 
 		// Import the string into REBOL-land:
@@ -390,7 +393,7 @@ typedef REBYTE *(INFO_FUNC)(REBINT opts, void *lib);
 **
 ***********************************************************************/
 {
-	REBVAL *args = BLK_HEAD(VAL_FUNC_WORDS(value));
+	REBVAL *args = BLK_HEAD(VAL_FUNC_PARAMLIST(value));
 	REBCNT n;
 	REBVAL *val = VAL_BLK_SKIP(def, 1);
 	REBEXT *ext;
@@ -401,13 +404,17 @@ typedef REBYTE *(INFO_FUNC)(REBINT opts, void *lib);
 		|| !IS_HANDLE(VAL_OBJ_VALUE(val, 1))
 		|| !IS_INTEGER(val+1)
 		|| VAL_INT64(val+1) > 0xffff
-	) Trap1(RE_BAD_FUNC_DEF, def);
+	) {
+		raise Error_1(RE_BAD_FUNC_DEF, def);
+	}
 
 	val = VAL_OBJ_VALUE(val, 1);
 	if (
 		!(ext = &Ext_List[VAL_I32(val)])
 		|| !(ext->call)
-	) Trap1(RE_BAD_EXTENSION, def);
+	) {
+		raise Error_1(RE_BAD_EXTENSION, def);
+	}
 
 	// make command! [[arg-spec] handle cmd-index]
 	VAL_FUNC_BODY(value) = Copy_Array_At_Max_Shallow(VAL_SERIES(def), 1, 2);
@@ -419,8 +426,8 @@ typedef REBYTE *(INFO_FUNC)(REBINT opts, void *lib);
 	for (; NOT_END(args); args++, n++) {
 		// If the typeset contains args that are not valid:
 		// (3 is the default when no args given, for not END and UNSET)
-		if (3 != ~VAL_TYPESET(args) && (VAL_TYPESET(args) & ~RXT_ALLOWED_TYPES))
-			Trap1(RE_BAD_FUNC_ARG, args);
+		if (3 != ~VAL_TYPESET_BITS(args) && (VAL_TYPESET_BITS(args) & ~RXT_ALLOWED_TYPES))
+			raise Error_1(RE_BAD_FUNC_ARG, args);
 	}
 
 	VAL_SET(value, REB_COMMAND);
@@ -441,21 +448,18 @@ typedef REBYTE *(INFO_FUNC)(REBINT opts, void *lib);
 **
 ***********************************************************************/
 {
+	// All of these were checked above on definition:
 	REBVAL *val = BLK_HEAD(VAL_FUNC_BODY(value));
-	REBEXT *ext;
-	REBCNT cmd;
-	REBCNT argc;
+	REBEXT *ext = &Ext_List[VAL_I32(VAL_OBJ_VALUE(val, 1))]; // Handler
+	REBCNT cmd = cast(REBCNT, Int32(val + 1));
+	REBCNT argc = SERIES_TAIL(VAL_FUNC_PARAMLIST(value)) - 1; // not self
+
 	REBCNT n;
 	RXIFRM frm;	// args stored here
 
-	// All of these were checked above on definition:
-	val = BLK_HEAD(VAL_FUNC_BODY(value));
-	cmd = (int)VAL_INT64(val+1);
-	ext = &Ext_List[VAL_I32(VAL_OBJ_VALUE(val, 1))]; // Handler
-
 	// Copy args to command frame (array of args):
-	RXA_COUNT(&frm) = argc = SERIES_TAIL(VAL_FUNC_WORDS(value))-1; // not self
-	if (argc > 7) Trap(RE_BAD_COMMAND);
+	RXA_COUNT(&frm) = argc;
+	if (argc > 7) raise Error_0(RE_BAD_COMMAND);
 	val = DSF_ARG(DSF, 1);
 	for (n = 1; n <= argc; n++, val++) {
 		RXA_TYPE(&frm, n) = Reb_To_RXT[VAL_TYPE(val)];
@@ -484,15 +488,16 @@ typedef REBYTE *(INFO_FUNC)(REBINT opts, void *lib);
 	case RXR_FALSE:
 		SET_FALSE(val);
 		break;
+
 	case RXR_BAD_ARGS:
-		Trap(RE_BAD_CMD_ARGS);
-		break;
+		raise Error_0(RE_BAD_CMD_ARGS);
+
 	case RXR_NO_COMMAND:
-		Trap(RE_NO_CMD);
-		break;
+		raise Error_0(RE_NO_CMD);
+
 	case RXR_ERROR:
-		Trap(RE_COMMAND_FAIL);
-		break;
+		raise Error_0(RE_COMMAND_FAIL);
+
 	default:
 		SET_UNSET(val);
 	}
@@ -544,8 +549,13 @@ typedef REBYTE *(INFO_FUNC)(REBINT opts, void *lib);
 			else func = GET_VAR(blk); // fallback
 		} else func = blk;
 
-		if (!IS_COMMAND(func))
-			Trap2(RE_EXPECT_VAL, Get_Type_Word(REB_COMMAND), blk);
+		if (!IS_COMMAND(func)) {
+			REBVAL commandx_word;
+			Val_Init_Word_Unbound(
+				&commandx_word, REB_WORD, SYM_FROM_KIND(REB_COMMAND)
+			);
+			raise Error_2(RE_EXPECT_VAL, &commandx_word, blk);
+		}
 
 		// Advance to next value
 		blk++;
@@ -553,8 +563,8 @@ typedef REBYTE *(INFO_FUNC)(REBINT opts, void *lib);
 		index++;
 
 		// get command arguments and body
-		words = VAL_FUNC_WORDS(func);
-		RXA_COUNT(&frm) = SERIES_TAIL(VAL_FUNC_WORDS(func))-1; // not self
+		words = VAL_FUNC_PARAMLIST(func);
+		RXA_COUNT(&frm) = SERIES_TAIL(VAL_FUNC_PARAMLIST(func)) - 1; // no self
 
 		// collect each argument (arg list already validated on MAKE)
 		n = 0;
@@ -563,7 +573,7 @@ typedef REBYTE *(INFO_FUNC)(REBINT opts, void *lib);
 			//Debug_Type(args);
 			val = blk++;
 			index++;
-			if (IS_END(val)) Trap2(RE_NO_ARG, cmd_word, args);
+			if (IS_END(val)) raise Error_No_Arg(cmd_word, args);
 			//Debug_Type(val);
 
 			// actual arg is a word, lookup?
@@ -585,8 +595,7 @@ typedef REBYTE *(INFO_FUNC)(REBINT opts, void *lib);
 				}
 				else if (IS_PAREN(val)) {
 					if (Do_Block_Throws(&save, VAL_SERIES(val), 0)) {
-						Trap_Thrown(&save); // !!! Better answer?
-						DEAD_END_VOID;
+						raise Error_No_Catch_For_Throw(&save); // !!! Better answer?
 					}
 					val = &save;
 				}
@@ -594,8 +603,13 @@ typedef REBYTE *(INFO_FUNC)(REBINT opts, void *lib);
 			}
 
 			// check datatype
-			if (!TYPE_CHECK(args, VAL_TYPE(val)))
-				Trap3(RE_EXPECT_ARG, cmd_word, args, Of_Type(val));
+			if (!TYPE_CHECK(args, VAL_TYPE(val))) {
+				REBVAL arg_word;
+				Val_Init_Word_Unbound(
+					&arg_word, REB_WORD, VAL_TYPESET_SYM(args)
+				);
+				raise Error_3(RE_EXPECT_ARG, cmd_word, &arg_word, Type_Of(val));
+			}
 
 			// put arg into command frame
 			n++;
@@ -628,9 +642,10 @@ typedef REBYTE *(INFO_FUNC)(REBINT opts, void *lib);
 		case RXR_FALSE:
 			SET_FALSE(val);
 			break;
+
 		case RXR_ERROR:
-			Trap(RE_COMMAND_FAIL);
-			break;
+			raise Error_0(RE_COMMAND_FAIL);
+
 		default:
 			SET_UNSET(val);
 		}

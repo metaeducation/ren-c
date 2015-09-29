@@ -64,7 +64,7 @@ extern void reb_qsort(void *a, size_t n, size_t es, cmp_t *cmp);
 static void No_Nones(REBVAL *arg) {
 	arg = VAL_BLK_DATA(arg);
 	for (; NOT_END(arg); arg++) {
-		if (IS_NONE(arg)) Trap_Arg(arg);
+		if (IS_NONE(arg)) raise Error_Invalid_Arg(arg);
 	}
 }
 
@@ -234,7 +234,7 @@ static void No_Nones(REBVAL *arg) {
 
 	if (IS_STRING(arg)) {
 		REBCNT index, len = 0;
-		VAL_SERIES(arg) = Prep_Bin_Str(arg, &index, &len); // (keeps safe)
+		VAL_SERIES(arg) = Temp_Bin_Str_Managed(arg, &index, &len);
 		ser = Scan_Source(VAL_BIN(arg), VAL_LEN(arg));
 		goto done;
 	}
@@ -277,7 +277,7 @@ static void No_Nones(REBVAL *arg) {
 			Val_Init_Series(value, type, Make_Array(len));
 			return;
 		}
-		Trap_Arg(arg);
+		raise Error_Invalid_Arg(arg);
 	}
 
 	ser = Copy_Values_Len_Shallow(arg, 1);
@@ -345,20 +345,27 @@ static struct {
 		v2 = tmp;
 	}
 
-	args = BLK_SKIP(VAL_FUNC_WORDS(sort_flags.compare), 1);
+	args = BLK_SKIP(VAL_FUNC_PARAMLIST(sort_flags.compare), 1);
 	if (NOT_END(args) && !TYPE_CHECK(args, VAL_TYPE(cast(const REBVAL*, v1)))) {
-		Trap3_DEAD_END(RE_EXPECT_ARG,
-			Of_Type(sort_flags.compare), args, Of_Type(cast(const REBVAL*, v1))
+		raise Error_3(
+			RE_EXPECT_ARG,
+			Type_Of(sort_flags.compare),
+			args,
+			Type_Of(cast(const REBVAL*, v1))
 		);
 	}
 	++ args;
 	if (NOT_END(args) && !TYPE_CHECK(args, VAL_TYPE(cast(const REBVAL*, v2)))) {
-		Trap3_DEAD_END(RE_EXPECT_ARG,
-			Of_Type(sort_flags.compare), args, Of_Type(cast(const REBVAL*, v2))
+		raise Error_3(
+			RE_EXPECT_ARG,
+			Type_Of(sort_flags.compare),
+			args,
+			Type_Of(cast(const REBVAL*, v2))
 		);
 	}
 
-	Apply_Func(&out, sort_flags.compare, v1, v2, 0);
+	if (Apply_Func_Throws(&out, sort_flags.compare, v1, v2, 0))
+		raise Error_No_Catch_For_Throw(&out);
 
 	if (IS_LOGIC(&out)) {
 		if (VAL_LOGIC(&out)) result = 1;
@@ -381,14 +388,14 @@ static struct {
 **
 */	static void Sort_Block(REBVAL *block, REBFLG ccase, REBVAL *skipv, REBVAL *compv, REBVAL *part, REBFLG all, REBFLG rev)
 /*
-**		series [series!]
+**		series [any-series!]
 **		/case {Case sensitive sort}
 **		/skip {Treat the series as records of fixed size}
 **		size [integer!] {Size of each record}
 **		/compare  {Comparator offset, block or function}
 **		comparator [integer! block! function!]
 **		/part {Sort only part of a series}
-**		limit [number! series!] {Length of series to sort}
+**		limit [any-number! any-series!] {Length of series to sort}
 **		/all {Compare all fields}
 **		/reverse {Reverse sort order}
 **
@@ -415,7 +422,7 @@ static struct {
 	if (!IS_NONE(skipv)) {
 		skip = Get_Num_Arg(skipv);
 		if (skip <= 0 || len % skip != 0 || skip > len)
-			Trap_Range(skipv);
+			raise Error_Out_Of_Range(skipv);
 	}
 
 	// Use fast quicksort library function:
@@ -607,7 +614,7 @@ static struct {
 
 	// Check must be in this order (to avoid checking a non-series value);
 	if (action >= A_TAKE && action <= A_SORT && IS_PROTECT_SERIES(ser))
-		Trap_DEAD_END(RE_PROTECTED);
+		raise Error_0(RE_PROTECTED);
 
 	switch (action) {
 
@@ -639,7 +646,7 @@ repick:
 			if (!value) goto is_none;
 			*D_OUT = *value;
 		} else {
-			if (!value) Trap_Range_DEAD_END(arg);
+			if (!value) raise Error_Out_Of_Range(arg);
 			arg = D_ARG(3);
 			*value = *arg;
 			*D_OUT = *arg;
@@ -652,7 +659,7 @@ repick:
 		if (len > 0) index--;
 		if (len == 0 || index < 0 || index >= tail) {
 			if (action == A_PICK) goto is_none;
-			Trap_Range_DEAD_END(arg);
+			raise Error_Out_Of_Range(arg);
 		}
 		if (action == A_PICK) {
 pick_it:
@@ -755,8 +762,8 @@ zero_blk:
 		}
 		if D_REF(ARG_COPY_TYPES) {
 			arg = D_ARG(ARG_COPY_KINDS);
-			if (IS_DATATYPE(arg)) types |= TYPESET(VAL_TYPE_KIND(arg));
-			else types |= VAL_TYPESET(arg);
+			if (IS_DATATYPE(arg)) types |= FLAGIT_64(VAL_TYPE_KIND(arg));
+			else types |= VAL_TYPESET_BITS(arg);
 		}
 		len = Partial1(value, D_ARG(ARG_COPY_LIMIT));
 		VAL_SERIES(value) = Copy_Array_Core_Managed(
@@ -774,14 +781,14 @@ zero_blk:
 
 	case A_TRIM:
 		args = Find_Refines(call_, ALL_TRIM_REFS);
-		if (args & ~(AM_TRIM_HEAD|AM_TRIM_TAIL)) Trap_DEAD_END(RE_BAD_REFINES);
+		if (args & ~(AM_TRIM_HEAD|AM_TRIM_TAIL)) raise Error_0(RE_BAD_REFINES);
 		Trim_Block(ser, index, args);
 		break;
 
 	case A_SWAP:
 		if (SERIES_WIDE(ser) != SERIES_WIDE(VAL_SERIES(arg)))
-			Trap_Arg_DEAD_END(arg);
-		if (IS_PROTECT_SERIES(VAL_SERIES(arg))) Trap_DEAD_END(RE_PROTECTED);
+			raise Error_Invalid_Arg(arg);
+		if (IS_PROTECT_SERIES(VAL_SERIES(arg))) raise Error_0(RE_PROTECTED);
 		if (index < tail && VAL_INDEX(arg) < VAL_TAIL(arg)) {
 			val = *VAL_BLK_DATA(value);
 			*VAL_BLK_DATA(value) = *VAL_BLK_DATA(arg);
@@ -816,8 +823,8 @@ zero_blk:
 		break;
 
 	case A_RANDOM:
-		if (!IS_BLOCK(value)) Trap_Action_DEAD_END(VAL_TYPE(value), action);
-		if (D_REF(2)) Trap_DEAD_END(RE_BAD_REFINES); // seed
+		if (!IS_BLOCK(value)) raise Error_Illegal_Action(VAL_TYPE(value), action);
+		if (D_REF(2)) raise Error_0(RE_BAD_REFINES); // seed
 		if (D_REF(4)) { // /only
 			if (index >= tail) goto is_none;
 			len = (REBCNT)Random_Int(D_REF(3)) % (tail - index);  // /secure
@@ -830,7 +837,7 @@ zero_blk:
 		break;
 
 	default:
-		Trap_Action_DEAD_END(VAL_TYPE(value), action);
+		raise Error_Illegal_Action(VAL_TYPE(value), action);
 	}
 
 	if (!value)
@@ -847,7 +854,7 @@ is_none:
 #if !defined(NDEBUG)
 /***********************************************************************
 **
-*/	void Assert_Array_Core(const REBSER *series, REBOOL typed_words)
+*/	void Assert_Array_Core(const REBSER *series)
 /*
 ***********************************************************************/
 {
@@ -865,13 +872,6 @@ is_none:
 
 		if (VAL_TYPE(value) == REB_END) {
 			// Premature end
-			Panic_Series(series);
-		}
-
-		if (
-			typed_words
-			&& (!ANY_WORD(value) || !VAL_GET_EXT(value, EXT_WORD_TYPED))
-		) {
 			Panic_Series(series);
 		}
 	}

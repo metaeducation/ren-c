@@ -49,7 +49,8 @@ crlf:      "^M^J"
 
 ;-- Function synonyms:
 q: :quit
-!: :not
+not: :not?
+!: :not?
 min: :minimum
 max: :maximum
 abs: :absolute
@@ -58,3 +59,19 @@ empty?: :tail?
 bind?: :bound?
 
 rebol.com: http://www.rebol.com
+
+; GROUP! is a better name than PAREN! for many reasons.  It's a complete word,
+; it's no more characters, it doesn't have the same first two letters as
+; PATH! so it mentally and typographically hashes better from one of the two
+; other array types, it describes the function of what it does in the
+; evaluator (where "BLOCK! blocks evaluation of the contents, the GROUP!
+; does normal evaluation but limits it to the group)...
+;
+; There are some ways to bridge compatibility between GROUP! and PAREN!, but
+; since it's a big change the burden to bear in initial tests will be on
+; GROUP!.  So the datatype stays PAREN! by default with a special switch to
+; turn group on.  This will give an opportunity to try out the synonym
+; mechanisms on the new idea before a radical change on the old one.
+
+group?: :paren?
+group!: :paren!

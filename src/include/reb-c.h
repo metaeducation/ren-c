@@ -31,12 +31,6 @@
 **
 ***********************************************************************/
 
-#if defined(__clang__) || defined (__GNUC__)
-# define ATTRIBUTE_NO_SANITIZE_ADDRESS __attribute__((no_sanitize_address))
-#else
-# define ATTRIBUTE_NO_SANITIZE_ADDRESS
-#endif
-
 
 /***********************************************************************
 **
@@ -498,11 +492,67 @@ typedef u16 REBUNI;
 
 /***********************************************************************
 **
+**	ATTRIBUTES
+**
+**		The __attribute__ feature is non-standard and only available
+**		in some compilers.  Individual attributes themselves are
+**		also available on a case-by-case basis.
+**
+**		Note: Placing the attribute after the prototype seems to lead
+**		to complaints, and technically there is a suggestion you may
+**		only define attributes on prototypes--not definitions:
+**
+**			http://stackoverflow.com/q/23917031/211160
+**
+**		Putting the attribute *before* the prototype seems to allow
+**		it on both the prototype and definition in gcc, however.
+**
+***********************************************************************/
+
+#ifndef __has_builtin
+	#define __has_builtin(x) 0
+#endif
+
+#ifndef __has_feature
+	#define __has_feature(x) 0
+#endif
+
+#ifdef __GNUC__
+	#define GCC_VERSION_AT_LEAST(m, n) \
+		(__GNUC__ > (m) || (__GNUC__ == (m) && __GNUC_MINOR__ >= (n)))
+#else
+	#define GCC_VERSION_AT_LEAST(m, n) 0
+#endif
+
+#if __has_feature(address_sanitizer) || GCC_VERSION_AT_LEAST(4, 8)
+	#define ATTRIBUTE_NO_SANITIZE_ADDRESS __attribute__ ((no_sanitize_address))
+#else
+	#define ATTRIBUTE_NO_SANITIZE_ADDRESS
+#endif
+
+#if defined(__clang__) || GCC_VERSION_AT_LEAST(2, 5)
+	#define ATTRIBUTE_NO_RETURN __attribute__ ((noreturn))
+#elif defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L
+	#define ATTRIBUTE_NO_RETURN _Noreturn
+#else
+	#define ATTRIBUTE_NO_RETURN
+#endif
+
+#if __has_builtin(__builtin_unreachable) || GCC_VERSION_AT_LEAST(4, 5)
+	#define DEAD_END __builtin_unreachable()
+#else
+	#define DEAD_END
+#endif
+
+
+/***********************************************************************
+**
 **  Useful Macros
 **
 ***********************************************************************/
 
 #define FLAGIT(f)           (1u << (f))
+#define FLAGIT_64(n)        (cast(REBU64, 1) << (n))
 #define GET_FLAG(v,f)       (((v) & (1u << (f))) != 0)
 #define GET_FLAGS(v,f,g)    (((v) & ((1u << (f)) | (1u << (g)))) != 0)
 #define SET_FLAG(v,f)       cast(void, (v) |= (1u << (f)))

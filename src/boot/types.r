@@ -101,5 +101,3 @@ callback    callback    -        -       -      -		-
 handle      0           -        -       -      -		-
 struct      struct      *        *       *      *		-
 library     library     -        -       -      -		-
-utype       utype       -        -       -      -		-
-

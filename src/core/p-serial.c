@@ -55,11 +55,11 @@
 
 	// Validate PORT fields:
 	spec = OFV(port, STD_PORT_SPEC);
-	if (!IS_OBJECT(spec)) Trap_DEAD_END(RE_INVALID_PORT);
+	if (!IS_OBJECT(spec)) raise Error_0(RE_INVALID_PORT);
 	path = Obj_Value(spec, STD_PORT_SPEC_HEAD_REF);
-	if (!path) Trap1_DEAD_END(RE_INVALID_SPEC, spec);
+	if (!path) raise Error_1(RE_INVALID_SPEC, spec);
 
-	//if (!IS_FILE(path)) Trap1_DEAD_END(RE_INVALID_SPEC, path);
+	//if (!IS_FILE(path)) raise Error_1(RE_INVALID_SPEC, path);
 
 	req = cast(REBREQ*, Use_Port_State(port, RDI_SERIAL, sizeof(*req)));
 
@@ -70,9 +70,9 @@
 
 		case A_OPEN:
 			arg = Obj_Value(spec, STD_PORT_SPEC_SERIAL_PATH);  //Should Obj_Value really return a char* ?
-			if (! (IS_FILE(arg) || IS_STRING(arg) || IS_BINARY(arg))) {
-				Trap1_DEAD_END(RE_INVALID_PORT_ARG, arg);
-			}
+			if (! (IS_FILE(arg) || IS_STRING(arg) || IS_BINARY(arg)))
+				raise Error_1(RE_INVALID_PORT_ARG, arg);
+
 			req->special.serial.path = ALLOC_ARRAY(REBCHR, MAX_SERIAL_DEV_PATH);
 			OS_STRNCPY(
 				req->special.serial.path,
@@ -82,24 +82,26 @@
 				MAX_SERIAL_DEV_PATH
 			);
 			arg = Obj_Value(spec, STD_PORT_SPEC_SERIAL_SPEED);
-			if (! IS_INTEGER(arg)) {
-				Trap1_DEAD_END(RE_INVALID_PORT_ARG, arg);
-			}
+			if (! IS_INTEGER(arg))
+				raise Error_1(RE_INVALID_PORT_ARG, arg);
+
 			req->special.serial.baud = VAL_INT32(arg);
 			//Secure_Port(SYM_SERIAL, ???, path, ser);
 			arg = Obj_Value(spec, STD_PORT_SPEC_SERIAL_DATA_SIZE);
 			if (!IS_INTEGER(arg)
 				|| VAL_INT64(arg) < 5
-				|| VAL_INT64(arg) > 8) {
-				Trap1_DEAD_END(RE_INVALID_PORT_ARG, arg);
+				|| VAL_INT64(arg) > 8
+			) {
+				raise Error_1(RE_INVALID_PORT_ARG, arg);
 			}
 			req->special.serial.data_bits = VAL_INT32(arg);
 
 			arg = Obj_Value(spec, STD_PORT_SPEC_SERIAL_STOP_BITS);
 			if (!IS_INTEGER(arg)
 				|| VAL_INT64(arg) < 1
-				|| VAL_INT64(arg) > 2) {
-				Trap1_DEAD_END(RE_INVALID_PORT_ARG, arg);
+				|| VAL_INT64(arg) > 2
+			) {
+				raise Error_1(RE_INVALID_PORT_ARG, arg);
 			}
 			req->special.serial.stop_bits = VAL_INT32(arg);
 
@@ -107,9 +109,9 @@
 			if (IS_NONE(arg)) {
 				req->special.serial.parity = SERIAL_PARITY_NONE;
 			} else {
-				if (!IS_WORD(arg)) {
-					Trap1_DEAD_END(RE_INVALID_PORT_ARG, arg);
-				}
+				if (!IS_WORD(arg))
+					raise Error_1(RE_INVALID_PORT_ARG, arg);
+
 				switch (VAL_WORD_CANON(arg)) {
 					case SYM_ODD:
 						req->special.serial.parity = SERIAL_PARITY_ODD;
@@ -118,7 +120,7 @@
 						req->special.serial.parity = SERIAL_PARITY_EVEN;
 						break;
 					default:
-						Trap1_DEAD_END(RE_INVALID_PORT_ARG, arg);
+						raise Error_1(RE_INVALID_PORT_ARG, arg);
 				}
 			}
 
@@ -126,9 +128,9 @@
 			if (IS_NONE(arg)) {
 				req->special.serial.flow_control = SERIAL_FLOW_CONTROL_NONE;
 			} else {
-				if (!IS_WORD(arg)) {
-					Trap1_DEAD_END(RE_INVALID_PORT_ARG, arg);
-				}
+				if (!IS_WORD(arg))
+					raise Error_1(RE_INVALID_PORT_ARG, arg);
+
 				switch (VAL_WORD_CANON(arg)) {
 					case SYM_HARDWARE:
 						req->special.serial.flow_control = SERIAL_FLOW_CONTROL_HARDWARE;
@@ -137,11 +139,12 @@
 						req->special.serial.flow_control = SERIAL_FLOW_CONTROL_SOFTWARE;
 						break;
 					default:
-						Trap1_DEAD_END(RE_INVALID_PORT_ARG, arg);
+						raise Error_1(RE_INVALID_PORT_ARG, arg);
 				}
 			}
 
-			if (OS_DO_DEVICE(req, RDC_OPEN)) Trap_Port_DEAD_END(RE_CANNOT_OPEN, port, -12);
+			if (OS_DO_DEVICE(req, RDC_OPEN))
+				raise Error_On_Port(RE_CANNOT_OPEN, port, -12);
 			SET_OPEN(req);
 			return R_OUT;
 
@@ -152,7 +155,7 @@
 			return R_FALSE;
 
 		default:
-			Trap_Port_DEAD_END(RE_NOT_OPEN, port, -12);
+			raise Error_On_Port(RE_NOT_OPEN, port, -12);
 		}
 	}
 
@@ -178,7 +181,7 @@
 		printf("(max read length %d)", req->length);
 #endif
 		result = OS_DO_DEVICE(req, RDC_READ); // recv can happen immediately
-		if (result < 0) Trap_Port_DEAD_END(RE_READ_ERROR, port, req->error);
+		if (result < 0) raise Error_On_Port(RE_READ_ERROR, port, req->error);
 #ifdef DEBUG_SERIAL
 		for (len = 0; len < req->actual; len++) {
 			if (len % 16 == 0) printf("\n");
@@ -208,7 +211,7 @@
 
 		//Print("(write length %d)", len);
 		result = OS_DO_DEVICE(req, RDC_WRITE); // send can happen immediately
-		if (result < 0) Trap_Port_DEAD_END(RE_WRITE_ERROR, port, req->error);
+		if (result < 0) raise Error_On_Port(RE_WRITE_ERROR, port, req->error);
 		break;
 	case A_UPDATE:
 		// Update the port object after a READ or WRITE operation.
@@ -232,7 +235,7 @@
 		break;
 
 	default:
-		Trap_Action_DEAD_END(REB_PORT, action);
+		raise Error_Illegal_Action(REB_PORT, action);
 	}
 
 	return R_OUT;

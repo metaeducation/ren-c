@@ -57,7 +57,7 @@ to-png: command [
 ;		dir [string!]
 ;]
 ;
-;request-dir: funct [
+;request-dir: function [
 ;	"Asks user to select a directory and returns it as file path"
 ;	/title
 ;		"Custom dialog title text"

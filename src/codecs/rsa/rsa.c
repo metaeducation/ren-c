@@ -37,6 +37,8 @@
 #include <time.h>
 #include <stdlib.h>
 
+#include <assert.h>
+
 #if defined(TO_OSX_X86) || defined(TO_OSX_PPC)
 	#include <sys/malloc.h>
 #else
@@ -44,20 +46,13 @@
 #endif
 
 #include "rsa.h"
-#ifdef TO_WINDOWS
-    #include <windows.h>
-    #include <wincrypt.h>
-#else
-    #include <fcntl.h>
-	// !!! Ren/C: added to deal with -Wimplicit-function-declaration
-	#include <unistd.h>
-#endif
 
 
+// Initialized by Init_Core_Ext() and released by Shutdown_Core_Ext()
 #ifdef TO_WINDOWS
-static HCRYPTPROV gCryptProv;
+	HCRYPTPROV gCryptProv = 0;
 #else
-static int rng_fd = -1;
+	int rng_fd = -1;
 #endif
 
 /**
@@ -66,15 +61,20 @@ static int rng_fd = -1;
 void get_random(int num_rand_bytes, uint8_t *rand_data)
 {
 #ifdef TO_WINDOWS
-    /* use Microsoft Crypto Libraries */
-    CryptGenRandom(gCryptProv, num_rand_bytes, rand_data);
+	if (CryptGenRandom(gCryptProv, num_rand_bytes, rand_data) != 0)
+		return; // success
 #else
-    if (rng_fd == -1) rng_fd = open("/dev/urandom", O_RDONLY);
-	// !!! Ren/C: pay attention to result to avoid -Wunused-result
-	if (read(rng_fd, rand_data, num_rand_bytes) == -1) {
-		// (cast to void is insufficient for warn_unused_result)
-	}
+	if (rng_fd != -1 && read(rng_fd, rand_data, num_rand_bytes) != -1)
+		return; // success
 #endif
+
+	// !!! If this routine cannot generate random numbers, it is a serious
+	// error which cannot continue.  The organization of this code doesn't
+	// currently include Rebol's failure tools, so for now we assert and
+	// force an exit should this happen.
+
+	assert(0);
+	exit(EXIT_FAILURE);
 }
 
 /**

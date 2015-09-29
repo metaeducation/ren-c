@@ -42,14 +42,13 @@
 **
 ***********************************************************************/
 {
-	if (!Do_Sys_Func(out, SYS_CTX_MAKE_PORT_P, spec, 0)) {
+	if (Do_Sys_Func_Throws(out, SYS_CTX_MAKE_PORT_P, spec, 0)) {
 		// Gave back an unhandled RETURN, BREAK, CONTINUE, etc...
-		Trap_Thrown(out);
-		DEAD_END_VOID;
+		raise Error_No_Catch_For_Throw(out);
 	}
 
 	// !!! Shouldn't this be testing for !IS_PORT( ) ?
-	if (IS_NONE(out)) Trap1(RE_INVALID_SPEC, spec);
+	if (IS_NONE(out)) raise Error_1(RE_INVALID_SPEC, spec);
 }
 
 
@@ -101,7 +100,6 @@
 	if (!IS_BINARY(state)) {
 		REBSER *data = Make_Binary(size);
 		REBREQ *req = (REBREQ*)STR_HEAD(data);
-		Guard_Series(data); // GC safe if no other references
 		req->clen = size;
 		CLEAR(STR_HEAD(data), size);
 		//data->tail = size; // makes it easier for ACCEPT to clone the port
@@ -184,7 +182,8 @@
 	if (only) SET_TRUE(&ref_only);
 	else SET_NONE(&ref_only);
 	// Call the system awake function:
-	Apply_Func(&out, awake, port, &tmp, &ref_only, 0);
+	if (Apply_Func_Throws(&out, awake, port, &tmp, &ref_only, 0))
+		raise Error_No_Catch_For_Throw(&out);
 
 	// Awake function returns 1 for end of WAIT:
 	result = (IS_LOGIC(&out) && VAL_LOGIC(&out)) ? 1 : 0;
@@ -215,8 +214,7 @@
 	while (wt) {
 		if (GET_SIGNAL(SIG_ESCAPE)) {
 			CLR_SIGNAL(SIG_ESCAPE);
-			Halt();
-			DEAD_END;
+			raise Error_Is(TASK_HALT_ERROR);
 		}
 
 		// Process any waiting events:
@@ -295,7 +293,9 @@
 **
 ***********************************************************************/
 {
-	return Find_Word_Index(VAL_OBJ_FRAME(object), VAL_BIND_SYM(Get_Action_Word(action)), FALSE);
+	return Find_Word_Index(
+		VAL_OBJ_FRAME(object), Get_Action_Sym(action), FALSE
+	);
 }
 
 
@@ -324,8 +324,9 @@
 		!IS_FRAME(BLK_HEAD(port)) ||
 		// Must have a spec object:
 		!IS_OBJECT(BLK_SKIP(port, STD_PORT_SPEC))
-	)
-		Trap_DEAD_END(RE_INVALID_PORT);
+	) {
+		raise Error_0(RE_INVALID_PORT);
+	}
 
 	// Get actor for port, if it has one:
 	actor = BLK_SKIP(port, STD_PORT_ACTOR);
@@ -337,15 +338,23 @@
 		return cast(REBPAF, VAL_FUNC_CODE(actor))(call_, port, action);
 
 	// actor must be an object:
-	if (!IS_OBJECT(actor)) Trap_DEAD_END(RE_INVALID_ACTOR);
+	if (!IS_OBJECT(actor)) raise Error_0(RE_INVALID_ACTOR);
 
 	// Dispatch object function:
 	n = Find_Action(actor, action);
 	actor = Obj_Value(actor, n);
 	if (!n || !actor || !ANY_FUNC(actor)) {
-		Trap1_DEAD_END(RE_NO_PORT_ACTION, Get_Action_Word(action));
+		REBVAL action_word;
+		Val_Init_Word_Unbound(&action_word, REB_WORD, Get_Action_Sym(action));
+
+		raise Error_1(RE_NO_PORT_ACTION, &action_word);
 	}
-	Redo_Func(actor);
+
+	if (Redo_Func_Throws(actor)) {
+		// No special handling needed, as we are just going to return
+		// the output value in D_OUT anyway.
+	}
+
 	return R_OUT;
 
 	// If not in PORT actor, use the SCHEME actor:
@@ -402,8 +411,9 @@
 		|| SERIES_WIDE(port) != sizeof(REBVAL)
 		|| !IS_FRAME(BLK_HEAD(port))
 		|| !IS_OBJECT(BLK_SKIP(port, STD_PORT_SPEC))
-	)
-		Trap(RE_INVALID_PORT);
+	) {
+		raise Error_0(RE_INVALID_PORT);
+	}
 }
 
 /***********************************************************************
@@ -497,23 +507,21 @@ SCHEME_ACTIONS *Scheme_Actions;	// Initial Global (not threaded)
 		REBSER *ser = Make_Array(1);
 		act = Alloc_Tail_Array(ser);
 
-		Val_Init_Word_Typed(
+		Val_Init_Typeset(
 			act,
-			REB_WORD,
-			// !!! Because "any word will do", it's using the trick to create a
-			// args list that says [port!] by using the knowledge that the SYM_
-			// values start out with symbols valued to the types plus 1 :-/
-			REB_PORT + 1,
 			// Typeset is chosen as REB_END to prevent normal invocation;
 			// these actors are only dispatched from the C code.
-			TYPESET(REB_END)
+			FLAGIT_64(REB_END),
+			// !!! Because "any word will do", it's just making an args list
+			// that looks like [port!]
+			SYM_FROM_KIND(REB_PORT)
 		);
 
 		// !!! Review: If this spec ever got leaked then it would be leaking
 		// 'typed' words to the user.  For safety, a single global actor spec
 		// could be made at startup.
 		VAL_FUNC_SPEC(actor) = ser;
-		VAL_FUNC_WORDS(actor) = ser;
+		VAL_FUNC_PARAMLIST(actor) = ser;
 		MANAGE_SERIES(ser);
 
 		VAL_FUNC_CODE(actor) = (REBFUN)(Scheme_Actions[n].fun);
@@ -526,6 +534,7 @@ SCHEME_ACTIONS *Scheme_Actions;	// Initial Global (not threaded)
 	if (!IS_OBJECT(actor)) return R_NONE;
 
 	// Map action natives to scheme actor words:
+	map = Scheme_Actions[n].map;
 	for (; map->func; map++) {
 		// Find the action in the scheme actor:
 		n = Find_Action(actor, map->action);
@@ -557,6 +566,7 @@ SCHEME_ACTIONS *Scheme_Actions;	// Initial Global (not threaded)
 ***********************************************************************/
 {
 	Scheme_Actions = ALLOC_ARRAY(SCHEME_ACTIONS, MAX_SCHEMES);
+	CLEAR(Scheme_Actions, MAX_SCHEMES * sizeof(SCHEME_ACTIONS));
 
 	Init_Console_Scheme();
 	Init_File_Scheme();
@@ -577,4 +587,14 @@ SCHEME_ACTIONS *Scheme_Actions;	// Initial Global (not threaded)
 #ifdef HAS_POSIX_SIGNAL
 	Init_Signal_Scheme();
 #endif
+}
+
+
+/***********************************************************************
+**
+*/	void Shutdown_Ports(void)
+/*
+***********************************************************************/
+{
+	FREE_ARRAY(SCHEME_ACTIONS, MAX_SCHEMES, Scheme_Actions);
 }

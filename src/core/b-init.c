@@ -96,15 +96,15 @@ static	BOOT_BLK *Boot_Block;
 	printf("%d %s\n", sizeof(dummy->all), "all");
 #endif
 
-	if (cast(REBCNT, VAL_TYPE(&val)) != 123) Panic(RP_REBVAL_ALIGNMENT);
+	if (cast(REBCNT, VAL_TYPE(&val)) != 123) panic Error_0(RE_REBVAL_ALIGNMENT);
 	if (sizeof(void *) == 8) {
-		if (sizeof(REBVAL) != 32) Panic(RP_REBVAL_ALIGNMENT);
-		if (sizeof(REBGOB) != 84) Panic(RP_BAD_SIZE);
+		if (sizeof(REBVAL) != 32) panic Error_0(RE_REBVAL_ALIGNMENT);
+		if (sizeof(REBGOB) != 84) panic Error_0(RE_BAD_SIZE);
 	} else {
-		if (sizeof(REBVAL) != 16) Panic(RP_REBVAL_ALIGNMENT);
-		if (sizeof(REBGOB) != 64) Panic(RP_BAD_SIZE);
+		if (sizeof(REBVAL) != 16) panic Error_0(RE_REBVAL_ALIGNMENT);
+		if (sizeof(REBGOB) != 64) panic Error_0(RE_BAD_SIZE);
 	}
-	if (sizeof(REBDAT) != 4) Panic(RP_BAD_SIZE);
+	if (sizeof(REBDAT) != 4) panic Error_0(RE_BAD_SIZE);
 
 	// !!! C standard doesn't support 'offsetof(struct S, s_member.submember)'
 	// so we're stuck using addition here.
@@ -116,17 +116,7 @@ static	BOOT_BLK *Boot_Block;
 	) {
 		// When errors are exposed to the user then they must have a frame
 		// and act like objects (they're dispatched through REBTYPE(Object))
-		Panic(RP_MISC);
-	}
-
-	if (
-		offsetof(struct Reb_Word, extra)
-		+ offsetof(union Reb_Word_Extra, typebits)
-		!= offsetof(struct Reb_Typeset, typebits)
-	) {
-		// Currently the typeset checking code is generic to run on both
-		// an EXT_WORD_TYPED WORD! and a TYPESET!.
-		Panic(RP_MISC);
+		panic Error_0(RE_MISC);
 	}
 }
 
@@ -170,10 +160,10 @@ static	BOOT_BLK *Boot_Block;
 	if (rebind > 1) Bind_Values_Deep(BLK_HEAD(block), Sys_Context);
 
 	if (Do_Block_Throws(&result, block, 0))
-		Panic(RP_EARLY_ERROR);
+		panic Error_0(RE_MISC);
 
 	if (!IS_UNSET(&result))
-		Panic(RP_EARLY_ERROR);
+		panic Error_0(RE_MISC);
 }
 
 
@@ -200,7 +190,7 @@ static	BOOT_BLK *Boot_Block;
 	);
 
 	if (!text || (STR_LEN(text) != NAT_UNCOMPRESSED_SIZE))
-		Panic(RP_BOOT_DATA);
+		panic Error_0(RE_BOOT_DATA);
 
 	boot = Scan_Source(STR_HEAD(text), NAT_UNCOMPRESSED_SIZE);
 	Free_Series(text);
@@ -210,9 +200,9 @@ static	BOOT_BLK *Boot_Block;
 	Boot_Block = cast(BOOT_BLK *, VAL_BLK_HEAD(BLK_HEAD(boot)));
 
 	if (VAL_TAIL(&Boot_Block->types) != REB_MAX)
-		Panic(RP_BAD_BOOT_TYPE_BLOCK);
+		panic Error_0(RE_BAD_BOOT_TYPE_BLOCK);
 	if (VAL_WORD_SYM(VAL_BLK_HEAD(&Boot_Block->types)) != SYM_END_TYPE)
-		Panic(RP_BAD_END_TYPE_WORD);
+		panic Error_0(RE_BAD_END_TYPE_WORD);
 
 	// Create low-level string pointers (used by RS_ constants):
 	{
@@ -229,11 +219,11 @@ static	BOOT_BLK *Boot_Block;
 	}
 
 	if (COMPARE_BYTES(cb_cast("end!"), Get_Sym_Name(SYM_END_TYPE)) != 0)
-		Panic(RP_BAD_END_CANON_WORD);
+		panic Error_0(RE_BAD_END_CANON_WORD);
 	if (COMPARE_BYTES(cb_cast("true"), Get_Sym_Name(SYM_TRUE)) != 0)
-		Panic(RP_BAD_TRUE_CANON_WORD);
-	if (COMPARE_BYTES(cb_cast("line"), BOOT_STR(RS_SCAN, 1)) != 0)
-		Panic(RP_BAD_BOOT_STRING);
+		panic Error_0(RE_BAD_TRUE_CANON_WORD);
+	if (COMPARE_BYTES(cb_cast("newline"), BOOT_STR(RS_SCAN, 1)) != 0)
+		panic Error_0(RE_BAD_BOOT_STRING);
 }
 
 
@@ -351,7 +341,8 @@ static	BOOT_BLK *Boot_Block;
 {
 	if ((Native_Limit == 0 && *Native_Functions) || (Native_Count < Native_Limit))
 		Make_Native(D_OUT, VAL_SERIES(D_ARG(1)), *Native_Functions++, REB_NATIVE);
-	else Trap(RE_MAX_NATIVES);
+	else
+		raise Error_0(RE_MAX_NATIVES);
 	Native_Count++;
 	return R_OUT;
 }
@@ -364,7 +355,7 @@ static	BOOT_BLK *Boot_Block;
 ***********************************************************************/
 {
 	Action_Count++;
-	if (Action_Count >= A_MAX_ACTION) Panic(RP_ACTION_OVERFLOW);
+	if (Action_Count >= A_MAX_ACTION) panic Error_0(RE_ACTION_OVERFLOW);
 	Make_Native(
 		D_OUT,
 		VAL_SERIES(D_ARG(1)),
@@ -439,7 +430,7 @@ static	BOOT_BLK *Boot_Block;
 	// native: native [spec [block!]]
 	word = VAL_BLK_SKIP(&Boot_Block->booters, 1);
 	if (!IS_SET_WORD(word) || VAL_WORD_SYM(word) != SYM_NATIVE)
-		Panic(RE_NATIVE_BOOT);
+		panic Error_0(RE_NATIVE_BOOT);
 	//val = BLK_SKIP(Sys_Context, SYS_CTX_NATIVE);
 	val = Append_Frame(Lib_Context, word, 0);
 	Make_Native(val, VAL_SERIES(word+2), Native_Functions[0], REB_NATIVE);
@@ -459,13 +450,13 @@ static	BOOT_BLK *Boot_Block;
 
 /***********************************************************************
 **
-*/	REBVAL *Get_Action_Word(REBCNT action)
+*/	REBCNT Get_Action_Sym(REBCNT action)
 /*
 **		Return the word symbol for a given Action number.
 **
 ***********************************************************************/
 {
-	return FRM_WORD(Lib_Context, Action_Marker+action);
+	return FRM_KEY_SYM(Lib_Context, Action_Marker + action);
 }
 
 
@@ -478,34 +469,6 @@ static	BOOT_BLK *Boot_Block;
 ***********************************************************************/
 {
 	return FRM_VALUE(Lib_Context, Action_Marker+action);
-}
-
-
-/***********************************************************************
-**
-*/	void Init_UType_Proto(void)
-/*
-**		Create prototype func object for UTypes.
-**
-***********************************************************************/
-{
-	REBSER *frm = Make_Frame(A_MAX_ACTION - 1, TRUE);
-	REBVAL *obj;
-	REBINT n;
-
-	Insert_Series(FRM_WORD_SERIES(frm), 1, (REBYTE*)FRM_WORD(Lib_Context, Action_Marker+1), A_MAX_ACTION);
-
-	SERIES_TAIL(frm) = A_MAX_ACTION;
-	for (n = 1; n < A_MAX_ACTION; n++)
-		SET_NONE(BLK_SKIP(frm, n));
-	BLK_TERM(frm);
-
-	// !!! Termination was originally missing for the word series
-	SERIES_TAIL(FRM_WORD_SERIES(frm)) = A_MAX_ACTION;
-	BLK_TERM(FRM_WORD_SERIES(frm));
-
-	obj = Get_System(SYS_STANDARD, STD_UTYPE);
-	Val_Init_Object(obj, frm);
 }
 
 
@@ -527,7 +490,7 @@ static	BOOT_BLK *Boot_Block;
 	REBSER *frame;
 
 	frame = Make_Array(ROOT_MAX);  // Only half the context! (No words)
-	KEEP_SERIES(frame, "root context");
+	LABEL_SERIES(frame, "root context");
 	LOCK_SERIES(frame);
 	Root_Context = (ROOT_CTX*)(frame->data);
 
@@ -571,24 +534,17 @@ static	BOOT_BLK *Boot_Block;
 **
 ***********************************************************************/
 {
-	KEEP_SERIES(ser, label);
+	LABEL_SERIES(ser, label);
 
-	// Val_Init_Block and Val_Init_String would call Manage_Series and
-	// make the series GC Managed, which would be a bad thing for series
-	// like BUF_WORDS...because that would make all the series copied
-	// from it managed too, and we don't always want that.  For now
-	// we reproduce the logic of the routines.
+	// Note that the Val_Init routines call Manage_Series and make the
+	// series GC Managed.  They will hence be freed on shutdown
+	// automatically when the root set is removed from consideration.
 
-	if (Is_Array_Series(ser)) {
-		VAL_SET(value, REB_BLOCK);
-		VAL_SERIES(value) = ser;
-		VAL_INDEX(value) = 0;
-	}
+	if (Is_Array_Series(ser))
+		Val_Init_Block(value, ser);
 	else {
 		assert(SERIES_WIDE(ser) == 1 || SERIES_WIDE(ser) == 2);
-		VAL_SET(value, REB_STRING);
-		VAL_SERIES(value) = ser;
-		VAL_INDEX(value) = 0;
+		Val_Init_String(value, ser);
 	}
 }
 
@@ -608,8 +564,9 @@ static	BOOT_BLK *Boot_Block;
 	//Print_Str("Task Context");
 
 	Task_Series = frame = Make_Array(TASK_MAX);
-	KEEP_SERIES(frame, "task context");
+	LABEL_SERIES(frame, "task context");
 	LOCK_SERIES(frame);
+	MANAGE_SERIES(frame);
 	Task_Context = (TASK_CTX*)(frame->data);
 
 	// Get first value (the SELF for the context):
@@ -658,11 +615,11 @@ static	BOOT_BLK *Boot_Block;
 
 	// Evaluate the block (will eval FRAMEs within):
 	if (Do_Block_Throws(&result, VAL_SERIES(&Boot_Block->sysobj), 0))
-		Panic(RP_EARLY_ERROR);
+		panic Error_0(RE_MISC);
 
 	// Expects UNSET! by convention
 	if (!IS_UNSET(&result))
-		Panic(RP_EARLY_ERROR);
+		panic Error_0(RE_MISC);
 
 	// Create a global value for it:
 	value = Append_Frame(Lib_Context, 0, SYM_SYSTEM);
@@ -698,8 +655,6 @@ static	BOOT_BLK *Boot_Block;
 	// Set system/words to be the main context:
 //	value = Get_System(SYS_WORDS, 0);
 //	Val_Init_Object(value, Lib_Context);
-
-	Init_UType_Proto();
 }
 
 
@@ -1103,8 +1058,30 @@ static REBCNT Set_Option_Word(REBCHR *str, REBCNT field)
 **
 */	void Init_Core(REBARGS *rargs)
 /*
-**		GC is disabled during all init code, so these functions
-**		need not protect themselves.
+**		Initialize the interpreter core.  The initialization will
+**		either succeed or "panic".
+**
+**		!!! Panic currently triggers an exit to the OS.  Offering a
+**		hook to cleanly fail would be ideal--but the code is not
+**		currently written to be able to cleanly shut down from a
+**		partial initialization.
+**
+**		The phases of initialization are tracked by PG_Boot_Phase.
+**		Some system functions are unavailable at certain phases.
+**
+**		Though most of the initialization is run as C code, some
+**		portions are run in Rebol.  Small bits are run during the
+**		loading of natives and actions (for instance, NATIVE and
+**		ACTION are functions that are registered very early on in
+**		the booting process, which are run during boot to register
+**		each of the natives and actions).
+**
+**		At the tail of the initialization, `finish_init_core` is run.
+**		This Rebol function lives in %sys-start.r, and it should be
+**		"host agnostic".  Hence it should not assume things about
+**		command-line switches (or even that there is a command line!)
+**		Converting the code that made such assumptions is an
+**		ongoing process.
 **
 ***********************************************************************/
 {
@@ -1119,7 +1096,6 @@ static REBCNT Set_Option_Word(REBCHR *str, REBCNT field)
 
 #ifndef NDEBUG
 	PG_Always_Malloc = FALSE;
-	PG_Legacy = FALSE;
 #endif
 
 	// Globals
@@ -1127,8 +1103,8 @@ static REBCNT Set_Option_Word(REBCHR *str, REBCNT field)
 	PG_Boot_Level = BOOT_LEVEL_FULL;
 	PG_Mem_Usage = 0;
 	PG_Mem_Limit = 0;
-	PG_Reb_Stats = ALLOC(REB_STATS);
 	Reb_Opts = ALLOC(REB_OPTS);
+	CLEAR(Reb_Opts, sizeof(REB_OPTS));
 	Saved_State = NULL;
 
 	// Thread locals:
@@ -1172,12 +1148,15 @@ static REBCNT Set_Option_Word(REBCHR *str, REBCNT field)
 	PG_Boot_Phase = BOOT_LOADED;
 	//Debug_Str(BOOT_STR(RS_INFO,0)); // Booting...
 
-	// Get the words of the ROOT context (to avoid it being an exception case):
+	// Get the words of the ROOT context (to avoid it being an exception case)
+	// and convert ROOT_ROOT from a BLOCK! to an OBJECT!
 	PG_Root_Words = Collect_Frame(
 		NULL, VAL_BLK_HEAD(&Boot_Block->root), BIND_ALL
 	);
-	KEEP_SERIES(PG_Root_Words, "root words");
-	VAL_FRM_WORDS(ROOT_SELF) = PG_Root_Words;
+	LABEL_SERIES(PG_Root_Words, "root words");
+	MANAGE_SERIES(PG_Root_Words);
+	VAL_FRM_KEYLIST(ROOT_SELF) = PG_Root_Words;
+	Val_Init_Object(ROOT_ROOT, VAL_SERIES(ROOT_ROOT));
 
 	// Create main values:
 	DOUT("Level 3");
@@ -1196,6 +1175,7 @@ static REBCNT Set_Option_Word(REBCHR *str, REBCNT field)
 	Init_Ports();
 	Init_Codecs();
 	Init_Errors(&Boot_Block->errors); // Needs system/standard/error object
+	SET_UNSET(&Callback_Error);
 	PG_Boot_Phase = BOOT_ERRORS;
 
 	// We need these values around to compare to the tags we find in function
@@ -1225,7 +1205,7 @@ static REBCNT Set_Option_Word(REBCHR *str, REBCNT field)
 	PUSH_UNHALTABLE_TRAP(&error, &state);
 
 // The first time through the following code 'error' will be NULL, but...
-// Trap()s can longjmp here, so 'error' won't be NULL *if* that happens!
+// `raise Error` can longjmp here, so 'error' won't be NULL *if* that happens!
 
 	if (error) {
 		// You shouldn't be able to halt during Init_Core() startup.
@@ -1236,8 +1216,7 @@ static REBCNT Set_Option_Word(REBCHR *str, REBCNT field)
 
 		// If an error was raised during startup, print it and crash.
 		Print_Value(error, 1024, FALSE);
-		Panic(RP_EARLY_ERROR);
-		DEAD_END_VOID;
+		panic Error_0(RE_MISC);
 	}
 
 	Init_Year();
@@ -1259,29 +1238,11 @@ static REBCNT Set_Option_Word(REBCHR *str, REBCNT field)
 
 	assert(DSP == -1 && !DSF);
 
-	if (!Do_Sys_Func(&out, SYS_CTX_FINISH_INIT_CORE, 0)) {
-		// You shouldn't be able to exit or quit during Init_Core() startup.
-		// The only way you should be able to stop Init_Core() is by raising
-		// an error, at which point the system will Panic out.
-		Debug_Fmt("** 'finish-init-core' returned THROWN() result: %r", &out);
-
-		// !!! TBD: Enforce not being *able* to trigger QUIT or EXIT, but we
-		// let them slide for the moment, even though we shouldn't.
-		if (
-			IS_WORD(&out) &&
-			(VAL_WORD_SYM(&out) == SYM_QUIT || VAL_WORD_SYM(&out) == SYM_EXIT)
-		) {
-			int status;
-
-			TAKE_THROWN_ARG(&out, &out);
-			status = Exit_Status_From_Value(&out);
-
-			Shutdown_Core();
-			OS_EXIT(status);
-			DEAD_END_VOID;
-		}
-
-		Panic(RP_EARLY_ERROR);
+	if (Do_Sys_Func_Throws(&out, SYS_CTX_FINISH_INIT_CORE, 0)) {
+		// Note: You shouldn't be able to throw any uncaught values during
+		// Init_Core() startup, including throws implementing QUIT or EXIT.
+		assert(FALSE);
+		raise Error_No_Catch_For_Throw(&out);
 	}
 
 	// Success of the 'finish-init-core' Rebol code is signified by returning
@@ -1289,7 +1250,7 @@ static REBCNT Set_Option_Word(REBCHR *str, REBCNT field)
 
 	if (!IS_UNSET(&out)) {
 		Debug_Fmt("** 'finish-init-core' returned non-none!: %r", &out);
-		Panic(RP_EARLY_ERROR);
+		panic Error_0(RE_MISC);
 	}
 
 	assert(DSP == -1 && !DSF);
@@ -1308,12 +1269,74 @@ static REBCNT Set_Option_Word(REBCHR *str, REBCNT field)
 **
 */	void Shutdown_Core(void)
 /*
-**		!!! Merging soon to a Git branch near you:
-**		!!!    The ability to do clean shutdown, zero leaks.
+**		The goal of Shutdown_Core() is to release all memory and
+**		resources that the interpreter has accrued since Init_Core().
+**
+**		Clients may wish to force an exit to the OS instead of calling
+**		Shutdown_Core in a release build, in order to save time.  It
+**		should be noted that when used as a library this doesn't
+**		necessarily work, because Rebol may be initialized and shut
+**		down multiple times during a program run.
+**
+**		Using a tool like Valgrind or Leak Sanitizer, it is possible
+**		to verify that all the allocations have indeed been freed.
+**		Being able to have a report that they have is a good sanity
+**		check on not just the memory lost by leaks, but the semantic
+**		errors and bugs that such leaks may indicate.
 **
 ***********************************************************************/
 {
+	assert(!Saved_State);
+
 	Shutdown_Stacks();
-	assert(Saved_State == NULL);
-	// assert(IS_TRASH(TASK_THROWN_ARG));
+
+	// Run Recycle, but the TRUE flag indicates we want every series
+	// that is managed to be freed.  (Only unmanaged should be left.)
+	//
+	Recycle_Core(TRUE);
+
+	FREE_ARRAY(REBYTE*, RS_MAX, PG_Boot_Strs);
+
+	Shutdown_Ports();
+	Shutdown_Event_Scheme();
+	Shutdown_CRC();
+	Shutdown_Mold();
+	Shutdown_Scanner();
+	Shutdown_Char_Cases();
+	Shutdown_GC();
+
+	// !!! Need to review the relationship between Open_StdIO (which the host
+	// does) and Init_StdIO...they both open, and both close.
+
+	Shutdown_StdIO();
+
+	// !!! Ideally we would free all the manual series by calling them out by
+	// name and not "cheat" here, to be sure everything is under control.
+	// But for the moment we use the same sweep as the garbage collector,
+	// except sweeping the series it *wasn't* responsible for freeing.
+	{
+		REBSEG *seg = Mem_Pools[SERIES_POOL].segs;
+		REBCNT n;
+
+		for (; seg != NULL; seg = seg->next) {
+			REBSER *series = cast(REBSER*, seg + 1);
+			for (n = Mem_Pools[SERIES_POOL].units; n > 0; n--, series++) {
+				if (SERIES_FREED(series))
+					continue;
+
+				// Free_Series asserts that a manual series is freed from
+				// the manuals list.  But the GC_Manuals series was never
+				// added to itself (it couldn't be!)
+				if (series != GC_Manuals)
+					Free_Series(series);
+			}
+		}
+	}
+
+	FREE(REB_OPTS, Reb_Opts);
+
+	// Shutting down the memory manager must be done after all the Free_Mem
+	// calls have been made to balance their Alloc_Mem calls.
+	//
+	Shutdown_Pools();
 }

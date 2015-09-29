@@ -30,7 +30,9 @@ sync-op: func [port body /local state] [
 	;The timeout should be triggered only when the response from other side exceeds the timeout value.
 	;--Richard
 	while [not find [ready close] state/state][
-		unless port? wait [state/connection port/spec/timeout] [http-error "Timeout"]
+		unless port? wait [state/connection port/spec/timeout] [
+			fail make-http-error "Timeout"
+		]
 		if state/state = 'reading-data [read state/connection]
 	]
 	body: copy port
@@ -52,7 +54,7 @@ read-sync-awake: func [event [event!] /local error] [
 		error [
 			error: event/port/state/error
 			event/port/state/error: none
-			do error
+			fail error
 		]
 	] [
 		false
@@ -108,6 +110,7 @@ http-awake: func [event /local port http-port state awake res] [
 		]
 	] [true]
 ]
+
 make-http-error: func [
 	"Make an error for the HTTP protocol"
 	message [string! block!]
@@ -119,12 +122,7 @@ make-http-error: func [
 		arg1: message
 	]
 ]
-http-error: func [
-	"Throw an error for the HTTP protocol"
-	message [string! block!]
-] [
-	do make-http-error message
-]
+
 make-http-request: func [
 	"Create an HTTP request (returns string!)"
 	method [word! string!] "E.g. GET, HEAD, POST etc."
@@ -138,7 +136,7 @@ make-http-request: func [
 		either file? target [next mold target] [target]
 		" HTTP/1.0" CRLF
 	]
-	foreach [word string] headers [
+	for-each [word string] headers [
 		repend result [mold word #" " string CRLF]
 	]
 	if content [
@@ -171,7 +169,7 @@ do-request: func [
 	info/headers: info/response-line: info/response-parsed: port/data:
 	info/size: info/date: info/name: none
 	write port/state/connection
-	make-http-request spec/method to file! any [spec/path %/]
+	make-http-request spec/method any [spec/path %/]
 	spec/headers spec/content
 ]
 parse-write-dialect: func [port block /local spec] [
@@ -461,7 +459,9 @@ sys/make-scheme [
 		] [
 			either any-function? :port/awake [
 				unless open? port [cause-error 'Access 'not-open port/spec/ref]
-				if port/state/state <> 'ready [http-error "Port not ready"]
+				unless port/state/state = 'ready [
+					fail make-http-error "Port not ready"
+				]
 				port/state/awake: :port/awake
 				do-request port
 				port
@@ -477,7 +477,9 @@ sys/make-scheme [
 			unless block? value [value: reduce [[Content-Type: "application/x-www-form-urlencoded; charset=utf-8"] value]]
 			either any-function? :port/awake [
 				unless open? port [cause-error 'Access 'not-open port/spec/ref]
-				if port/state/state <> 'ready [http-error "Port not ready"]
+				unless port/state/state = 'ready [
+					fail make-http-error "Port not ready"
+				]
 				port/state/awake: :port/awake
 				parse-write-dialect port value
 				do-request port
@@ -491,7 +493,9 @@ sys/make-scheme [
 			/local conn
 		] [
 			if port/state [return port]
-			if none? port/spec/host [http-error "Missing host address"]
+			unless port/spec/host [
+				fail make-http-error "Missing host address"
+			]
 			port/state: context [
 				state: 'inited
 				connection:

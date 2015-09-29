@@ -30,8 +30,8 @@
 **  Tokens returned by the scanner.  Keep in sync with boot.r strings area.
 */
 enum Value_Types {
-	TOKEN_EOF = 0,
-	TOKEN_LINE,
+	TOKEN_END = 0,
+	TOKEN_NEWLINE,
 	TOKEN_BLOCK_END,
 	TOKEN_PAREN_END,
 	TOKEN_WORD,
@@ -47,8 +47,8 @@ enum Value_Types {
 	TOKEN_TIME,
 	TOKEN_DATE,
 	TOKEN_CHAR,
-	TOKEN_BLOCK,
-	TOKEN_PAREN,
+	TOKEN_BLOCK_BEGIN,
+	TOKEN_PAREN_BEGIN,
 	TOKEN_STRING,
 	TOKEN_BINARY,
 	TOKEN_PAIR,
@@ -78,10 +78,11 @@ enum Value_Types {
 
 /*
 **	Delimiting Chars (encoded in the LEX_VALUE field)
+**	NOTE: Macros do make assumption that _RETURN is the last space delimiter
 */
 enum LEX_DELIMIT_ENUM {
 	LEX_DELIMIT_SPACE,              /* 20 space */
-	LEX_DELIMIT_END_FILE,           /* 00 EOF */
+	LEX_DELIMIT_END,                /* 00 null terminator, end of input */
 	LEX_DELIMIT_LINEFEED,           /* 0A line-feed */
 	LEX_DELIMIT_RETURN,             /* 0D return */
 	LEX_DELIMIT_LEFT_PAREN,         /* 28 ( */
@@ -90,7 +91,7 @@ enum LEX_DELIMIT_ENUM {
 	LEX_DELIMIT_RIGHT_BRACKET,      /* 5D ] */
 	LEX_DELIMIT_LEFT_BRACE,         /* 7B } */
 	LEX_DELIMIT_RIGHT_BRACE,        /* 7D } */
-	LEX_DELIMIT_QUOTE,              /* 22 " */
+	LEX_DELIMIT_DOUBLE_QUOTE,       /* 22 " */
 	LEX_DELIMIT_SLASH,              /* 2F / - date, path, file */
 	LEX_DELIMIT_SEMICOLON,          /* 3B ; */
 	LEX_DELIMIT_UTF8_ERROR,
@@ -100,6 +101,7 @@ enum LEX_DELIMIT_ENUM {
 
 /*
 **  General Lexical Classes (encoded in the LEX_CLASS field)
+**  NOTE: macros do make assumptions on the order, and that there are 4!
 */
 enum LEX_CLASS_ENUM {
     LEX_CLASS_DELIMIT = 0,
@@ -125,11 +127,11 @@ enum LEX_CLASS_ENUM {
 #define IS_LEX_DELIMIT(c)               (MASK_LEX_CLASS(c) == LEX_DELIMIT)
 #define IS_LEX_SPECIAL(c)               (MASK_LEX_CLASS(c) == LEX_SPECIAL)
 #define IS_LEX_WORD(c)                  (MASK_LEX_CLASS(c) == LEX_WORD)
-#define IS_LEX_NUMBER(c)                (MASK_LEX_CLASS(c) == LEX_NUMBER)
+// Optimization (necessary?)
+#define IS_LEX_NUMBER(c)                (Lex_Map[(REBYTE)c] >= LEX_NUMBER)
 
-#define IS_LEX_AT_LEAST_SPECIAL(c)      (Lex_Map[(REBYTE)c] >= LEX_SPECIAL)
-#define IS_LEX_AT_LEAST_WORD(c)         (Lex_Map[(REBYTE)c] >= LEX_WORD)
-#define IS_LEX_AT_LEAST_NUMBER(c)       (Lex_Map[(REBYTE)c] >= LEX_NUMBER)
+#define IS_LEX_NOT_DELIMIT(c)           (Lex_Map[(REBYTE)c] >= LEX_SPECIAL)
+#define IS_LEX_WORD_OR_NUMBER(c)        (Lex_Map[(REBYTE)c] >= LEX_WORD)
 
 /*
 **  Special Chars (encoded in the LEX_VALUE field)
@@ -139,7 +141,7 @@ enum LEX_SPECIAL_ENUM {             /* The order is important! */
 	LEX_SPECIAL_PERCENT,            /* 25 % - file name */
 	LEX_SPECIAL_BACKSLASH,          /* 5C \  */
 	LEX_SPECIAL_COLON,              /* 3A : - time, get, set */
-	LEX_SPECIAL_TICK,               /* 27 ' - literal */
+	LEX_SPECIAL_APOSTROPHE,         /* 27 ' - literal */
 	LEX_SPECIAL_LESSER,				/* 3C < - compare or tag */
 	LEX_SPECIAL_GREATER,			/* 3E > - compare or end tag */
 	LEX_SPECIAL_PLUS,               /* 2B + - positive number */
@@ -198,9 +200,7 @@ typedef struct rebol_scan_state {
 	REBCNT errors;
 } SCAN_STATE;
 
-#define ACCEPT_TOKEN(s) ((s)->begin = (s)->end)
-
-#define NOT_NEWLINE(c) ((c) && (c) != CR && (c) != LF)
+#define ANY_CR_LF_END(c) (!(c) || (c) == CR || (c) == LF)
 
 enum {
 	SCAN_NEXT,	// load/next feature

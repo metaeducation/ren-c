@@ -19,9 +19,9 @@ any-type! ;-- signals beginning of typesets (SYM_ANY_TYPEX hardcoded reference)
 any-word!
 any-path!
 any-function!
-number!
-scalar!
-series!
+any-number!
+any-scalar!
+any-series!
 any-string!
 any-object!
 any-array! ;-- replacement for any-block! that doesn't conflate with "block"
@@ -34,6 +34,8 @@ datatypes
 ; ...note that the words for types are created programmatically before
 ; this list is applied, so you only see typesets in this file.
 ;-----------------------------------------------------------------------------
+
+group! ;-- replacement for paren! type (incubating as normal word for now)
 
 native
 self
@@ -105,8 +107,9 @@ yearday
 zone
 utc
 
-; Used to recognize Rebol2 use of [catch] in function specs
+; Used to recognize Rebol2 use of [catch] and [throw] in function specs
 catch
+throw
 
 ; Needed for processing of THROW's /NAME words used by system
 ; NOTE: may become something more specific than WORD!
