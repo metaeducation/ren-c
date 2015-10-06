@@ -377,7 +377,7 @@ check-data: func [port /local headers res data out chunk-size mk1 mk2 trailer st
 			;clear the port data only at the beginning of the request --Richard
 			unless port/data [port/data: make binary! length data]
 			out: port/data
-			until [
+			loop-until [
 				either parse data [
 					copy chunk-size some hex-digits thru crlfbin mk1: to end
 				] [

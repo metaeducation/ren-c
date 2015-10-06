@@ -240,6 +240,12 @@ set 'r3-legacy* func [] [
 		; Not contentious, but trying to excise this ASAP
 		funct: (:function)
 
+		; Rebol2 and R3-Alpha had single-arity UNTIL, which was modified
+		; such that UNTIL has a separate condition block (like WHILE).  The
+		; arity-1 variant of UNTIL is LOOP-UNTIL, and LOOP-WHILE was added
+		;
+		until: :loop-until
+
 		; Add simple parse back in by delegating to split, and return a LOGIC!
 		parse: (function [
 			{Parses a string or block series according to grammar rules.}
