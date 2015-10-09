@@ -446,12 +446,12 @@ void Trace_Arg(REBINT num, const REBVAL *arg, const REBVAL *path)
 		Recycle();
 	}
 
-#ifdef NOT_USED_INVESTIGATE
-	if (GET_FLAG(sigs, SIG_EVENT_PORT)) {  // !!! Why not used?
+	// Was #ifdef'd out in R3-Alpha open source code. Enabled due to #1422
+	if (GET_FLAG(sigs, SIG_EVENT_PORT)) {
+		REBINT result = Awake_System(NULL, FALSE); // !!! just event port?
 		CLR_SIGNAL(SIG_EVENT_PORT);
-		Awake_Event_Port();
+		cast(void, result); // !!! Should the result be acted on?
 	}
-#endif
 
 	// Escape only allowed after MEZZ boot (no handlers):
 	if (GET_FLAG(sigs, SIG_ESCAPE) && PG_Boot_Phase >= BOOT_MEZZ) {

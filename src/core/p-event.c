@@ -58,8 +58,15 @@
 
 REBREQ *req;		//!!! move this global
 
-#define EVENTS_LIMIT 0xFFFF //64k
-#define EVENTS_CHUNK 128
+// Event list expansion was added by Atronix to deal with bug #1422.
+// Original expansion set EVENT_LIMIT to 0xFFFF REB_EVENT values (64k).
+// This was much larger than the hard limit of 128 set by original
+// open-source Rebol.  But adding `SET_SIGNAL(SIG_EVENT_PORT)` in
+// `Append_Event()` corrected the bug and allowed the limit to be
+// lowered.  Still the chunking/expansion mechanic is retained.
+//
+#define EVENTS_LIMIT 128
+#define EVENTS_CHUNK 32
 
 /***********************************************************************
 **
@@ -88,10 +95,9 @@ REBREQ *req;		//!!! move this global
 	// Append to tail if room:
 	if (SERIES_FULL(VAL_SERIES(state))) {
 		if (VAL_TAIL(state) > EVENTS_LIMIT) {
-			panic Error_0(RE_MAX_EVENTS);
+			panic Error_0(RE_MAX_EVENTS); // See #1422
 		} else {
 			Extend_Series(VAL_SERIES(state), EVENTS_CHUNK);
-			//RL_Print("event queue increased to :%d\n", SERIES_REST(VAL_SERIES(state)));
 		}
 	}
 	VAL_TAIL(state)++;
@@ -100,11 +106,12 @@ REBREQ *req;		//!!! move this global
 	value--;
 	SET_NONE(value);
 
-	//Dump_Series(VAL_SERIES(state), "state");
-	//Print("Tail: %d %d", VAL_TAIL(state), nn++);
+	SET_SIGNAL(SIG_EVENT_PORT);
 
 	return value;
 }
+
+
 /***********************************************************************
 **
 */	REBVAL *Find_Last_Event (REBINT model, REBINT type)
