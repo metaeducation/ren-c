@@ -58,7 +58,7 @@ binary-to-c: either system/version/4 = 3 [
 	func [comp-data /local out] [
 		out: make string! 4 * (length comp-data)
 		forall comp-data [
-			out: insert out reduce [to-integer first comp-data ", "]
+			out: insert out reduce [to-integer/unsigned first comp-data ", "]
 			if zero? ((index-of comp-data) // 10) [out: insert out "^/^-"]
 		]
 		;remove/part out either (pick out -1) = #" " [-2][-4]

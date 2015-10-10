@@ -93,7 +93,7 @@ dump-obj: function [
 
 ?: help: func [
 	"Prints information about words and values."
-	'word [any-type!]
+	'word [any-value!]
 	/doc "Open web browser to related documentation."
 	/local value args item type-name types tmp print-args
 ][

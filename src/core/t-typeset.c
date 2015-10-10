@@ -50,7 +50,7 @@ const struct {
 	REBCNT sym;
 	REBU64 bits;
 } Typesets[] = {
-	{SYM_ANY_TYPEX, (cast(REBU64, 1) << REB_MAX) - 2}, // do not include END!
+	{SYM_ANY_VALUEX, (cast(REBU64, 1) << REB_MAX) - 2}, // do not include END!
 	{SYM_ANY_WORDX, TS_WORD},
 	{SYM_ANY_PATHX, TS_PATH},
 	{SYM_ANY_FUNCTIONX, TS_FUNCTION},
@@ -157,8 +157,8 @@ const struct {
 				TYPE_SET(value, KIND_FROM_SYM(sym));
 				continue;
 			} // Special typeset symbols:
-			else if (sym >= SYM_ANY_TYPEX && sym < SYM_DATATYPES)
-				val = BLK_SKIP(types, sym - SYM_ANY_TYPEX);
+			else if (sym >= SYM_ANY_VALUEX && sym < SYM_DATATYPES)
+				val = BLK_SKIP(types, sym - SYM_ANY_VALUEX);
 		}
 		if (!val) val = block;
 		if (IS_DATATYPE(val)) {

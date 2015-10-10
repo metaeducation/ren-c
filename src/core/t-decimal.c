@@ -367,7 +367,11 @@ REBOOL almost_equal(REBDEC a, REBDEC b, REBCNT max_diff) {
 				REBYTE *bp;
 				REBCNT len;
 				bp = Qualify_String(val, 24, &len, FALSE);
-				if (Scan_Decimal(bp, len, D_OUT, type != REB_PERCENT)) {
+
+				VAL_SET(D_OUT, REB_DECIMAL);
+				if (Scan_Decimal(
+					&VAL_DECIMAL(D_OUT), bp, len, type != REB_PERCENT
+				)) {
 					d1 = VAL_DECIMAL(D_OUT);
 					if (type == REB_PERCENT) break;
 					goto setDec;
@@ -386,7 +390,7 @@ REBOOL almost_equal(REBDEC a, REBDEC b, REBCNT max_diff) {
 				REBYTE *bp;
 				REBCNT len;
 				bp = Qualify_String(val, MAX_HEX_LEN, &len, FALSE);
-				if (Scan_Hex(bp, &VAL_INT64(D_OUT), len, len) == 0)
+				if (Scan_Hex(&VAL_INT64(D_OUT), bp, len, len) == 0)
 					raise Error_Bad_Make(REB_DECIMAL, val);
 				d1 = VAL_DECIMAL(D_OUT);
 				break;

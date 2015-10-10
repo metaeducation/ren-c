@@ -97,57 +97,57 @@ system/options/result-types: make typeset! [
 
 any-string?: func [
 	"Return TRUE if value is any type of string."
-	value [any-type!]
+	value [any-value!]
 ][find any-string! type-of :value]
 
 any-function?: func [
 	"Return TRUE if value is any type of function."
-	value [any-type!]
+	value [any-value!]
 ][find any-function! type-of :value]
 
 any-word?: func [
 	"Return TRUE if value is any type of word."
-	value [any-type!]
+	value [any-value!]
 ][find any-word! type-of :value]
 
 any-path?: func [
 	"Return TRUE if value is any type of path."
-	value [any-type!]
+	value [any-value!]
 ][find any-path! type-of :value]
 
 any-object?: func [
 	"Return TRUE if value is any type of object."
-	value [any-type!]
+	value [any-value!]
 ][find any-object! type-of :value]
 
 any-number?: func [
 	"Return TRUE if value is a number (integer or decimal)."
-	value [any-type!]
+	value [any-value!]
 ][find any-number! type-of :value]
 
 any-series?: func [
 	"Return TRUE if value is any type of series."
-	value [any-type!]
+	value [any-value!]
 ][find any-series! type-of :value]
 
 any-scalar?: func [
 	"Return TRUE if value is any type of scalar."
-	value [any-type!]
+	value [any-value!]
 ][find any-scalar! type-of :value]
 
 any-array?: func [
 	"Return TRUE if value is a series containing all the same type."
-	value [any-type!]
+	value [any-value!]
 ][find any-array! type-of :value]
 
 true?: func [
 	"Returns true if an expression can be used as true."
-	val ; Note: No [any-type!] - we want unset! to fail.
+	val ; Note: No [any-value!] - we want unset! to fail.
 ] [not not :val]
 
 quote: func [
 	"Returns the value passed to it without evaluation."
-	:value [any-type!]
+	:value [any-value!]
 ] [
 	:value
 ]

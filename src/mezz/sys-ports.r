@@ -106,7 +106,13 @@ make-port*: func [
 			; optional host [:port]
 			opt [
 				copy s1 any user-char
-				opt [#":" copy s2 digits (compose/into [port-id: (to integer! s2)] tail out)]
+				opt [
+					#":" copy s2 digits (
+						compose/into [
+							port-id: (to-integer/unsigned s2)
+						] tail out
+					)
+				]
 				(unless empty? s1 [attempt [s1: to tuple! s1] emit host s1])
 			]
 		]
@@ -304,7 +310,9 @@ init-schemes: func [
 			if url? port/spec/ref [
 				parse port/spec/ref
 					[thru #":" 0 2 slash copy path [to slash | end] skip copy speed to end]
-				if speed: trap [to integer! speed] [port/spec/speed: speed]
+				if speed: trap [to-integer/unsigned speed] [
+					port/spec/speed: speed
+				]
 				port/spec/path: to file! path
 			]
 		]

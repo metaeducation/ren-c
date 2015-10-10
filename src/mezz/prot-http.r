@@ -194,7 +194,11 @@ check-response: func [port /local conn res headers d1 d2 line info state awake s
 		info/response-line: line: to string! copy/part conn/data d1
 		info/headers: headers: construct/with d1 http-response-headers
 		info/name: to file! any [spec/path %/]
-		if headers/content-length [info/size: headers/content-length: to integer! headers/content-length]
+		if headers/content-length [
+			info/size:
+			headers/content-length:
+				to-integer/unsigned headers/content-length
+		]
 		if headers/last-modified [info/date: attempt [to date! headers/last-modified]]
 		remove/part conn/data d2
 		state/state: 'reading-data
@@ -381,7 +385,12 @@ check-data: func [port /local headers res data out chunk-size mk1 mk2 trailer st
 				either parse data [
 					copy chunk-size some hex-digits thru crlfbin mk1: to end
 				] [
-					chunk-size: to integer! to issue! to string! chunk-size
+					; The chunk size is in the byte stream as ASCII chars
+					; forming a hex string.  ISSUE! can decode that.
+					chunk-size: (
+						to-integer/unsigned to issue! to string! chunk-size
+					)
+
 					either chunk-size = 0 [
 						if parse mk1 [
 							crlfbin (trailer: "") to end | copy trailer to crlf2bin to end

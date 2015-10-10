@@ -529,7 +529,7 @@ int main(int argc, char **argv_ansi)
 #endif
 
 	if (Host_Start_Exiting(&exit_status, argc, argv))
-		goto cleanup_and_exit;
+		goto cleanup_and_exit; // exit status is set...
 
 #if !defined(ENCAP)
 	// Console line input loop (just an example, can be improved):
@@ -542,6 +542,10 @@ int main(int argc, char **argv_ansi)
 	) {
 		Host_Repl(&exit_status);
 	}
+	else
+		exit_status = 0; // "success"
+#else
+	exit_status = 0; // "success"
 #endif
 
 cleanup_and_exit:

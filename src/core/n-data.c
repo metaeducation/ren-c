@@ -514,7 +514,7 @@ static int Check_Char_Range(REBVAL *val, REBINT limit)
 */	REBNATIVE(set)
 /*
 **		word [any-word! block! object!] {Word or words to set}
-**		value [any-type!] {Value or block of values}
+**		value [any-value!] {Value or block of values}
 **		/any {Allows setting words to any value.}
 **		/pad {For objects, if block is too short, remaining words are set to NONE.}
 **

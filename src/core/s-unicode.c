@@ -1081,12 +1081,12 @@ ConversionResult ConvertUTF8toUTF32 (
 				c = LF;
 			}
 #endif
-			*dst++ = (REBYTE)c;
+			*dst++ = cast(REBYTE, c);
 			max--;
 		}
 		else {
 			n = Encode_UTF8_Char(buf, c);
-			if (n > max) {bp--; up--; break;}
+			if (n > cast(REBINT, max)) {bp--; up--; break;}
 			memcpy(dst, buf, n);
 			dst += n;
 			max -= n;

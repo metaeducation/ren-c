@@ -64,7 +64,7 @@
 
 /*********************************************************************
 **
-*/	REBYTE *Qualify_String(REBVAL *val, REBINT max_len, REBCNT *length, REBINT opts)
+*/	REBYTE *Qualify_String(const REBVAL *val, REBINT max_len, REBCNT *length, REBINT opts)
 /*
 **	Prequalifies a string before using it with a function that
 **	expects it to be 8-bits.

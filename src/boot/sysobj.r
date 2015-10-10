@@ -150,6 +150,8 @@ options: context [  ; Options supplied to REBOL during startup
 	refinements-true: false
 	no-switch-evals: false
 	no-switch-fallthrough: false
+	forever-64-bit-ints: false
+	print-forms-everything: false
 ]
 
 script: context [

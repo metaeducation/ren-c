@@ -374,7 +374,6 @@
 	ENSURE_FRAME_MANAGED(err_frame);
 
 	VAL_SET(out, REB_ERROR);
-	VAL_ERR_NUM(out) = VAL_INT32(&ERR_VALUES(err_frame)->code);
 	VAL_ERR_OBJECT(out) = err_frame;
 
 	ASSERT_ERROR(out);
@@ -383,13 +382,14 @@
 
 /***********************************************************************
 **
-*/	REBOOL Make_Error_Object(REBVAL *out, REBVAL *arg)
+*/	REBOOL Make_Error_Object_Throws(REBVAL *out, REBVAL *arg)
 /*
 **		Creates an error object from arg and puts it in value.
 **		The arg can be a string or an object body block.
-**		This function is called by MAKE ERROR!.
 **
-**		Returns FALSE if a THROWN() value is made during evaluation.
+**		Returns TRUE if a THROWN() value is made during evaluation.
+**
+**		This function is called by MAKE ERROR!.
 **
 ***********************************************************************/
 {
@@ -400,14 +400,14 @@
 	// Create a new error object from another object, including any non-standard fields:
 	if (IS_ERROR(arg) || IS_OBJECT(arg)) {
 		err = Merge_Frames(VAL_OBJ_FRAME(ROOT_ERROBJ),
-			IS_ERROR(arg) ? VAL_OBJ_FRAME(arg) : VAL_ERR_OBJECT(arg));
+			IS_ERROR(arg) ? VAL_ERR_OBJECT(arg) : VAL_OBJ_FRAME(arg));
 		error = ERR_VALUES(err);
 
 		if (!Find_Error_Info(error, &code)) code = RE_INVALID_ERROR;
 		SET_INTEGER(&error->code, code);
 
 		Val_Init_Error(out, err);
-		return TRUE;
+		return FALSE;
 	}
 
 	// Make a copy of the error object template:
@@ -426,7 +426,7 @@
 		Bind_Values_Deep(VAL_BLK_DATA(arg), err);
 		if (Do_Block_Throws(&evaluated, VAL_SERIES(arg), 0)) {
 			*out = evaluated;
-			return FALSE;
+			return TRUE;
 		}
 
 		if (IS_INTEGER(&error->code) && VAL_INT64(&error->code)) {
@@ -462,7 +462,7 @@
 	MANAGE_SERIES(err);
 	Val_Init_Error(out, err);
 
-	return TRUE;
+	return FALSE;
 }
 
 

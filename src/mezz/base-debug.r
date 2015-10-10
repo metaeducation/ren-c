@@ -18,7 +18,7 @@ REBOL [
 
 probe: func [
 	{Debug print a molded value and returns that same value.}
-	value [any-type!]
+	value [any-value!]
 ][
 	print mold :value
 	:value

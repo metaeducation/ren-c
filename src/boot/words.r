@@ -15,7 +15,7 @@ REBOL [
 	}
 ]
 
-any-type! ;-- signals beginning of typesets (SYM_ANY_TYPEX hardcoded reference)
+any-value! ;-- signal start of typesets (SYM_ANY_VALUEX hardcoded reference)
 any-word!
 any-path!
 any-function!

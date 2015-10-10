@@ -163,7 +163,7 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 	REBVAL out;
 
 	if (bin) {
-		ser = Decompress(bin, len, 10000000, 0);
+		ser = Decompress(bin, len, -1, FALSE, FALSE);
 		if (!ser) return 1;
 
 		val = BLK_SKIP(Sys_Context, SYS_CTX_BOOT_HOST);
@@ -179,7 +179,7 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 		memcpy(&ptype, script, sizeof(ptype));
 
 		if (ptype == 1) {/* COMPRESSed data */
-			ser = Decompress(data, script_len, 10000000, 0);
+			ser = Decompress(data, script_len, -1, FALSE, FALSE);
 		} else {
 			ser = Make_Binary(script_len);
 			if (ser == NULL) {
@@ -486,7 +486,7 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 #endif
 	int do_result;
 
-	text = Decompress(bin, length, 10000000, 0);
+	text = Decompress(bin, length, -1, FALSE, FALSE);
 	if (!text) return FALSE;
 	Append_Codepoint_Raw(text, 0);
 

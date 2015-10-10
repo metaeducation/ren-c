@@ -293,6 +293,8 @@ static struct digest {
 **
 ***********************************************************************/
 {
+	const REBOOL gzip = D_REF(4);
+	const REBOOL only = D_REF(5);
 	REBSER *ser;
 	REBCNT index;
 	REBCNT len;
@@ -301,7 +303,7 @@ static struct digest {
 
 	ser = Temp_Bin_Str_Managed(D_ARG(1), &index, &len);
 
-	Val_Init_Binary(D_OUT, Compress(ser, index, len, D_REF(4))); // /gzip
+	Val_Init_Binary(D_OUT, Compress(ser, index, len, gzip, only));
 
 	return R_OUT;
 }
@@ -316,9 +318,11 @@ static struct digest {
 ***********************************************************************/
 {
 	REBVAL *arg = D_ARG(1);
-	REBINT limit = 0;
 	REBCNT len;
-	REBOOL gzip = D_REF(4); // use gzip checksum
+	REBOOL gzip = D_REF(4);
+	REBOOL limit = D_REF(5);
+	REBINT max = limit ? Int32s(D_ARG(6), 1) : -1;
+	REBOOL only = D_REF(7);
 
 	len = Partial1(D_ARG(1), D_ARG(3));
 
@@ -327,12 +331,11 @@ static struct digest {
 	if (len > BIN_LEN(VAL_SERIES(arg)))
 		len = BIN_LEN(VAL_SERIES(arg));
 
-	if (D_REF(5)) limit = Int32s(D_ARG(6), 1); // /limit size
-	if (limit < 0)
+	if (limit && max < 0)
 		return R_NONE; // !!! Should negative limit be an error instead?
 
 	Val_Init_Binary(D_OUT, Decompress(
-		BIN_HEAD(VAL_SERIES(arg)) + VAL_INDEX(arg), len, limit, gzip
+		BIN_HEAD(VAL_SERIES(arg)) + VAL_INDEX(arg), len, max, gzip, only
 	));
 
 	return R_OUT;

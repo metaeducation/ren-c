@@ -126,7 +126,7 @@ parse-asn: func [
 				unless zero? (d and* 128) [
 					; long form
 					ln: size
-					size: to integer! copy/part next data size
+					size: to-integer/unsigned copy/part next data size
 					data: skip data ln
 				]
 				either zero? size [
@@ -247,7 +247,7 @@ client-hello: func [
 		beg len cs-data
 ] [
 	; generate client random struct
-	ctx/client-random: to-bin to integer! difference now/precise 1-Jan-1970 4
+	ctx/client-random: to-bin to-integer difference now/precise 1-Jan-1970 4
 	random/seed now/time/precise
 	loop 28 [append ctx/client-random (random/secure 256) - 1]
 
@@ -546,7 +546,7 @@ parse-protocol: func [
 	return context [
 		type: proto
 		version: pick [ssl-v3 tls-v1.0 tls-v1.1] data/3 + 1
-		size: to integer! copy/part at data 4 2
+		size: to-integer/unsigned copy/part at data 4 2
 		messages: copy/part at data 6 size
 	]
 ]
@@ -565,7 +565,9 @@ parse-messages: func [
 		debug ["decrypting..."]
 		if ctx/block-size [
 			; deal with padding in CBC mode
-			data: copy/part data (length data) - 1 - (to integer! last data)
+			data: copy/part data (
+				(length data) - 1 - (to-integer/unsigned last data)
+			)
 			debug ["depadding..."]
 		]
 		debug ["data:" data]
@@ -591,7 +593,7 @@ parse-messages: func [
 
 				update-proto-state ctx either ctx/encrypted? ['encrypted-handshake] [msg-type]
 
-				len: to integer! copy/part at data 2 3
+				len: to-integer/unsigned copy/part at data 2 3
 				append result switch msg-type [
 					server-hello [
 						msg-content: copy/part at data 7 len
@@ -693,10 +695,10 @@ parse-messages: func [
 						msg-obj: context [
 							type: msg-type
 							length: len
-							certificates-length: to integer! copy/part msg-content 3
+							certificates-length: to-integer/unsigned copy/part msg-content 3
 							certificate-list: make block! 4
 							while [msg-content/1] [
-								if 0 < clen: to integer! copy/part skip msg-content 3 3 [
+								if 0 < clen: to-integer/unsigned copy/part skip msg-content 3 3 [
 									append certificate-list copy/part at msg-content 7 clen
 								]
 								msg-content: skip msg-content 3 + clen
@@ -726,13 +728,13 @@ parse-messages: func [
 								msg-obj: context [
 									type: msg-type
 									length: len
-									p-length: to integer! copy/part msg-content 2
+									p-length: to-integer/unsigned copy/part msg-content 2
 									p: copy/part at msg-content 3 p-length
-									g-length: to integer! copy/part at msg-content 3 + p-length 2
+									g-length: to-integer/unsigned copy/part at msg-content 3 + p-length 2
 									g: copy/part at msg-content 3 + p-length + 2 g-length
-									ys-length: to integer! copy/part at msg-content 3 + p-length + 2 + g-length 2
+									ys-length: to-integer/unsigned copy/part at msg-content 3 + p-length + 2 + g-length 2
 									ys: copy/part at msg-content 3 + p-length + 2 + g-length + 2 ys-length
-									signature-length: to integer! copy/part at msg-content 3 + p-length + 2 + g-length + 2 + ys-length 2
+									signature-length: to-integer/unsigned copy/part at msg-content 3 + p-length + 2 + g-length + 2 + ys-length 2
 									signature: copy/part at msg-content 3 + p-length + 2 + g-length + 2 + ys-length + 2 signature-length
 								]
 
@@ -965,7 +967,7 @@ tls-read-data: func [
 	while [
 		5 = length copy/part data 5
 	] [
-		len: 5 + to integer! copy/part at data 4 2
+		len: 5 + to-integer/unsigned copy/part at data 4 2
 
 		debug ["reading bytes:" len]
 
@@ -1112,7 +1114,7 @@ sys/make-scheme [
 			return port
 		]
 
-		write: func [port [port!] value [any-type!]] [
+		write: func [port [port!] value [any-value!]] [
 			if find [encrypted-handshake application] port/state/protocol-state [
 				do-commands/no-wait port/state compose [
 					application (value)

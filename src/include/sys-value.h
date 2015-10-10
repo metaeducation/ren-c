@@ -1034,28 +1034,46 @@ struct Reb_Frame {
 **
 **	OBJECTS - Object Support
 **
+**	The Reb_Object is the basic struct used currently for OBJECT!,
+**	MODULE!, ERROR!, and PORT!.
+**
 ***********************************************************************/
 
 struct Reb_Object {
-	REBSER	*frame;
-	REBSER	*body;		// module body
-};
+	// See notes about frames, which actually indicates *two* series.
+	// One is a "keylist" and the other are values associated with
+	// those keys.  At the present time extra pointers are carried
+	// by a special kind of value that sits in the first position of
+	// the series (though that is likely to change).
+	REBSER *frame;
 
-#define SET_MODULE(v,f) \
-	(VAL_SET((v), REB_MODULE), VAL_OBJ_FRAME(v) = (f), NOOP)
+	// The body is currently only retained by modules.
+	REBSER *body;
+};
 
 #define VAL_OBJ_FRAME(v)	((v)->data.object.frame)
 #define VAL_OBJ_VALUES(v)	FRM_VALUES((v)->data.object.frame)
 #define VAL_OBJ_VALUE(v,n)	FRM_VALUE((v)->data.object.frame, n)
 #define VAL_OBJ_KEYLIST(v)	FRM_KEYLIST((v)->data.object.frame)
 #define VAL_OBJ_KEY(v,n)	BLK_SKIP(VAL_OBJ_KEYLIST(v), (n))
-//#define VAL_OBJ_SPEC(v)		((v)->data.object.spec)
 
 #ifdef NDEBUG
 	#define ASSERT_FRAME(f) cast(void, 0)
 #else
 	#define ASSERT_FRAME(f) Assert_Frame_Core(f)
 #endif
+
+
+/***********************************************************************
+**
+**	MODULES - Code isolation units
+**
+**	http://www.rebol.com/r3/docs/concepts/modules-defining.html
+**
+***********************************************************************/
+
+#define SET_MODULE(v,f) \
+	(VAL_SET((v), REB_MODULE), VAL_OBJ_FRAME(v) = (f), NOOP)
 
 #define	VAL_MOD_FRAME(v)	((v)->data.object.frame)
 #define VAL_MOD_BODY(v)		((v)->data.object.body)
@@ -1074,66 +1092,35 @@ struct Reb_Object {
 
 /***********************************************************************
 **
-**	ERRORS - Error values (see %boot/errors.r)
+**	ERRORS - Error values
 **
-**	Errors do double-duty as a type, because they are also used for
-**	an internal pseudo-type to implement THROW/CATCH/BREAK/etc.  The
-**	rationale for not making a separate THROW! type is that there
-**	are only 64 bits for typesets.  Hence if an internal type can
-**	be finessed another way it is.  (It also confuses the users less
-**	by not seeing an internal type "leak" into their consciousness.)
+**	At the present time, all ERROR! frames follow an identical
+**	fixed layout.  That layout is in %sysobj.r as standard/error.
 **
-**	The way it is decided if an error is a real ERROR! or a "THROW!" is
-**	based on the value of 'num'.  Low numbers indicate that the payload
-**	is a Rebol Value being thrown, and higher numbers indicate that
-**	the payload is an error object frame.
+**	Errors can have a maximum of 3 arguments (named arg1, arg2, and
+**	arg3).  There is also an error code which is used to look up
+**	a formatting block that shows where the args are to be inserted
+**	into a message.  The formatting block to use is looked up by
+**	a numeric code established in that table.
 **
-**	For an actual THROW instruction, there is an optional piece of
-**	information, which is the symbol with which the throw was "named".
-**	A RETURN instruction uses its optional piece of information to
-**	hold the identifying series of the stack it wishes to unwind to
-**	and actually return from (for definitionally-scoped RETURN).
+**	!!! The needs of user errors to carry custom information with
+**	custom field names means this rigid design will need to be
+**	enhanced.  System error arguments will likely be named more
+**	meaningfully, but will still use ordering to bridge from the
+**	C calls that create them.
 **
 ***********************************************************************/
 
-union Reb_Error_Data {
-	REBSER *frame;      // error object frame if user-facing ERROR!
-	/* ... */			// THROWN() errors could put something else here
-};
+#define VAL_ERR_OBJECT(v)	VAL_OBJ_FRAME(v)
 
-union Reb_Error_Extra {
-	REBSER *unwind;     // identify function series to RETURN from
-};
-
-struct Reb_Error {
-	// Possibly nothing in this slot (e.g. for CONTINUE)
-	// Note: all user exposed errors can act like ANY-OBJECT!, hence the
-	// 'frame' field must be at the same offest as Reb_Object's 'frame'.
-	union Reb_Error_Data data;
-
-	 // dictates meaning of fields above (and below)
-	REBCNT num;
-
-	// (nothing in this slot if not THROW or RETURN)
-	union Reb_Error_Extra extra;
-};
-
-// Value Accessors:
-#define	VAL_ERR_NUM(v)		((v)->data.error.num)
-#define VAL_ERR_OBJECT(v)	((v)->data.error.data.frame)
-#define VAL_ERR_UNWIND(v)   ((v)->data.error.extra.unwind)
-
-#define VAL_ERR_VALUES(v)	cast(ERROR_OBJ*, FRM_VALUES(VAL_ERR_OBJECT(v)))
-#define	VAL_ERR_ARG1(v)		(&VAL_ERR_VALUES(v)->arg1)
-#define	VAL_ERR_ARG2(v)		(&VAL_ERR_VALUES(v)->arg2)
-
-// Error Object (frame) Accessors:
 #define ERR_VALUES(frame)	cast(ERROR_OBJ*, FRM_VALUES(frame))
-#define	ERR_NUM(frame)		VAL_INT32(&ERR_VALUES(frame)->code)
+#define ERR_NUM(frame)		cast(REBCNT, VAL_INT32(&ERR_VALUES(frame)->code))
+
+#define VAL_ERR_VALUES(v)	ERR_VALUES(VAL_ERR_OBJECT(v))
+#define VAL_ERR_NUM(v)		ERR_NUM(VAL_ERR_OBJECT(v))
 
 #ifdef NDEBUG
-	#define ASSERT_ERROR(e) \
-		cast(void, 0)
+	#define ASSERT_ERROR(e)	(cast(void, 0))
 #else
 	#define ASSERT_ERROR(e) \
 		Assert_Error_Debug(e)
@@ -1598,13 +1585,12 @@ struct Reb_All {
 
 union Reb_Value_Data {
 	struct Reb_Word word;
-	struct Reb_Position position;
+	struct Reb_Position position; // ANY-STRING!, ANY-ARRAY!, BINARY!, VECTOR!
 	REBCNT logic;
 	REBI64 integer;
 	REBU64 unteger;
 	REBDEC decimal; // actually a C 'double', typically 64-bit
 	REBUNI character; // It's CHAR! (for now), but 'char' is a C keyword
-	struct Reb_Error error;
 	struct Reb_Datatype datatype;
 	struct Reb_Frame frame;
 	struct Reb_Typeset typeset;
@@ -1612,7 +1598,7 @@ union Reb_Value_Data {
 	struct Reb_Time time;
 	struct Reb_Tuple tuple;
 	struct Reb_Function func;
-	struct Reb_Object object;
+	struct Reb_Object object; // ERROR!, OBJECT!, PORT!, MODULE!, (TASK!?)
 	struct Reb_Pair pair;
 	struct Reb_Event event;
 	struct Reb_Library library;

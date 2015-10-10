@@ -16,7 +16,7 @@ REBOL [
 ]
 
 ; Special block used as spec to the datatype test functions (e.g. time?):
-["Returns TRUE if it is this type." value [any-type!] 0]
+["Returns TRUE if it is this type." value [any-value!] 0]
 
 ; The native function must be defined first. This is a
 ; special boot function created manually within the C code.

@@ -48,7 +48,7 @@ REBOL [
 
 op?: func [
 	"Returns TRUE if the argument is an ANY-FUNCTION? and INFIX?"
-	value [any-type!]
+	value [any-value!]
 ][
 	either any-function? :value [:infix? :value] false
 ]
@@ -66,7 +66,7 @@ op?: func [
 ;
 type?: function [
 	"Returns the datatype of a value <r3-legacy>."
-	value [any-type!]
+	value [any-value!]
 	/word "No longer in TYPE-OF, as WORD! and DATATYPE! can be EQUAL?"
 ][
 	either word [
@@ -150,6 +150,13 @@ scalar?: :any-scalar?
 series!: :any-series!
 series?: :any-series?
 
+; ANY-TYPE! had an ambiguity in it, which was that with DATATYPE! around
+; (possibly being renamed to TYPE! but maybe not) it sounded as if it might
+; mean ANY-DATATYPE!--which is more narrow than what it meant to say which
+; is "really, any legal Rebol value, type or otherwise".  So ANY-VALUE! is
+; the better word for that.  Added for backwards compatibility.
+;
+any-type!: :any-value!
 
 ; !!! These have not been renamed yet, because of questions over what they
 ; actually return.  CONTEXT-OF was a candidate, however the current behavior
@@ -216,6 +223,8 @@ set 'r3-legacy* func [] [
 	system/options/refinements-true: true
 	system/options/no-switch-evals: true
 	system/options/no-switch-fallthrough: true
+	system/options/forever-64-bit-ints: true
+	system/options/print-forms-everything: true
 
 	; False is already the default for this switch
 	; (e.g. `to-word type-of quote ()` is the word PAREN! and not GROUP!)

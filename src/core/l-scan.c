@@ -592,8 +592,12 @@
 **
 ***********************************************************************/
 {
-	ERROR_OBJ *err_obj;
 	REBSER *frame;
+
+	ERROR_OBJ *err_obj;
+	REBVAL arg1;
+	REBVAL arg2;
+
 	const REBYTE *name;
 	const REBYTE *cp;
 	const REBYTE *bp;
@@ -623,11 +627,14 @@
 	Append_Unencoded(ser, ") ");
 	Append_Series(ser, bp, len);
 
-	frame = Make_Error(errnum, 0, 0, 0);
+	Val_Init_String(&arg1, Copy_Bytes(name, -1));
+	Val_Init_String(&arg2, Copy_Bytes(arg, size));
+
+	frame = Make_Error(errnum, &arg1, &arg2, NULL);
+
+	// Write the NEAREST: information (Make_Error gets it from DSF)
 	err_obj = cast(ERROR_OBJ*, FRM_VALUES(frame));
 	Val_Init_String(&err_obj->nearest, ser);
-	Val_Init_String(&err_obj->arg1, Copy_Bytes(name, -1));
-	Val_Init_String(&err_obj->arg2, Copy_Bytes(arg, size));
 
 	Val_Init_Error(out, frame);
 }
@@ -1508,7 +1515,8 @@ static REBSER *Scan_Full_Block(SCAN_STATE *scan_state, REBYTE mode_char);
 
 		case TOKEN_INTEGER:		// or start of DATE
 			if (*ep != '/' || mode_char == '/') {
-				if (0 == Scan_Integer(bp, len, value))
+				VAL_SET(value, REB_INTEGER);
+				if (!Scan_Integer(&VAL_INT64(value), bp, len))
 					goto syntax_error;
 			}
 			else {				// A / and not in block
@@ -1523,7 +1531,8 @@ static REBSER *Scan_Full_Block(SCAN_STATE *scan_state, REBYTE mode_char);
 		case TOKEN_DECIMAL:
 		case TOKEN_PERCENT:
 			// Do not allow 1.2/abc:
-			if (*ep == '/' || !Scan_Decimal(bp, len, value, 0))
+			VAL_SET(value, REB_DECIMAL);
+			if (*ep == '/' || !Scan_Decimal(&VAL_DECIMAL(value), bp, len, 0))
 				goto syntax_error;
 			if (bp[len-1] == '%') {
 				VAL_SET(value, REB_PERCENT);
@@ -1539,7 +1548,9 @@ static REBSER *Scan_Full_Block(SCAN_STATE *scan_state, REBYTE mode_char);
 
 		case TOKEN_TIME:
 			if (bp[len-1] == ':' && mode_char == '/') {	// could be path/10: set
-				if (!Scan_Integer(bp, len-1, value)) goto syntax_error;
+				VAL_SET(value, REB_INTEGER);
+				if (!Scan_Integer(&VAL_INT64(value), bp, len - 1))
+					goto syntax_error;
 				scan_state->end--;	// put ':' back on end but not beginning
 				break;
 			}

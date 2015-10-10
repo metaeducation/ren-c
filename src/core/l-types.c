@@ -39,7 +39,7 @@ typedef REBFLG (*MAKE_FUNC)(REBVAL *, REBVAL *, REBCNT);
 
 /***********************************************************************
 **
-*/  const REBYTE *Scan_Hex(const REBYTE *cp, REBI64 *num, REBCNT minlen, REBCNT maxlen)
+*/  const REBYTE *Scan_Hex(REBI64 *out, const REBYTE *cp, REBCNT minlen, REBCNT maxlen)
 /*
 **		Scans hex while it is valid and does not exceed the maxlen.
 **		If the hex string is longer than maxlen - it's an error.
@@ -53,21 +53,23 @@ typedef REBFLG (*MAKE_FUNC)(REBVAL *, REBVAL *, REBCNT);
 ***********************************************************************/
 {
 	REBYTE lex;
-	REBYTE v;
-	REBI64 n = 0;
 	REBCNT cnt = 0;
 
-	if (maxlen > MAX_HEX_LEN) return 0;
+	if (maxlen > MAX_HEX_LEN) return NULL;
+
+	*out = 0;
 	while ((lex = Lex_Map[*cp]) > LEX_WORD) {
-		if (++cnt > maxlen) return 0;
-		v = (REBYTE)(lex & LEX_VALUE);   /* char num encoded into lex */
-		if (!v && lex < LEX_NUMBER) return 0;  /* invalid char (word but no val) */
-		n = (n << 4) + v;
+		REBYTE v;
+		if (++cnt > maxlen) return NULL;
+		v = cast(REBYTE, lex & LEX_VALUE); // char num encoded into lex
+		if (!v && lex < LEX_NUMBER)
+			return NULL;  // invalid char (word but no val)
+		*out = (*out << 4) + v;
 		cp++;
 	}
 
 	if (cnt < minlen) return 0;
-	*num = n;
+
 	return cp;
 }
 
@@ -241,7 +243,7 @@ bad_hex:
 
 /***********************************************************************
 **
-*/	const REBYTE *Scan_Decimal(const REBYTE *cp, REBCNT len, REBVAL *value, REBFLG dec_only)
+*/	const REBYTE *Scan_Decimal(REBDEC *out, const REBYTE *cp, REBCNT len, REBFLG dec_only)
 /*
 **		Scan and convert a decimal value.  Return zero if error.
 **
@@ -280,19 +282,17 @@ bad_hex:
 
 	if ((REBCNT)(cp-bp) != len) return 0;
 
-	VAL_SET(value, REB_DECIMAL);
-
 	// !!! need check for NaN, and INF
-	VAL_DECIMAL(value) = STRTOD(s_cast(buf), &se);
+	*out = STRTOD(s_cast(buf), &se);
 
-	if (fabs(VAL_DECIMAL(value)) == HUGE_VAL) raise Error_0(RE_OVERFLOW);
+	if (fabs(*out) == HUGE_VAL) raise Error_0(RE_OVERFLOW);
 	return cp;
 }
 
 
 /***********************************************************************
 **
-*/  const REBYTE *Scan_Integer(const REBYTE *cp, REBCNT len, REBVAL *value)
+*/  const REBYTE *Scan_Integer(REBI64 *out, const REBYTE *cp, REBCNT len)
 /*
 **		Scan and convert an integer value.  Return zero if error.
 **		Allow preceding + - and any combination of ' marks.
@@ -302,16 +302,15 @@ bad_hex:
 	REBINT num = (REBINT)len;
 	REBYTE buf[MAX_NUM_LEN+4];
 	REBYTE *bp;
-	REBI64 n;
 	REBOOL neg = FALSE;
 
 	// Super-fast conversion of zero and one (most common cases):
 	if (num == 1) {
-		if (*cp == '0') {SET_INTEGER(value, 0); return cp+1;}
-		if (*cp == '1') {SET_INTEGER(value, 1); return cp+1;}
+		if (*cp == '0') {*out = 0; return cp + 1;}
+		if (*cp == '1') {*out = 1; return cp + 1;}
 	}
 
-	if (len > MAX_NUM_LEN) return 0; // prevent buffer overflow
+	if (len > MAX_NUM_LEN) return NULL; // prevent buffer overflow
 
 	bp = buf;
 
@@ -329,21 +328,23 @@ bad_hex:
 	for (; num > 0; num--) {
 		if (*cp >= '0' && *cp <= '9') *bp++ = *cp++;
 		else if (*cp == '\'') cp++;
-		else return 0;
+		else return NULL;
 	}
 	*bp = 0;
 
 	// Too many digits?
 	len = bp - &buf[0];
 	if (neg) len--;
-	if (len > 19) return 0;
+	if (len > 19) {
+		// !!! magic number :-( How does it relate to MAX_INT_LEN (also magic)
+		return NULL;
+	}
 
 	// Convert, check, and return:
 	errno = 0;
-	n = CHR_TO_INT(buf);
-	if (errno != 0) return 0; //overflow
-	if ((n > 0 && neg) || (n < 0 && !neg)) return 0;
-	SET_INTEGER(value, n);
+	*out = CHR_TO_INT(buf);
+	if (errno != 0) return NULL; //overflow
+	if ((*out > 0 && neg) || (*out < 0 && !neg)) return NULL;
 	return cp;
 }
 

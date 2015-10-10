@@ -145,23 +145,27 @@
 		ASSERT_VALUE_MANAGED(value);
 
 		if (types & FLAGIT_64(VAL_TYPE(value)) & TS_SERIES_OBJ) {
-			// Replace just the series field of the value
-			// Note that this should work for objects too (the frame).
-			if (Is_Array_Series(VAL_SERIES(value)))
-				VAL_SERIES(value) = Copy_Array_Shallow(VAL_SERIES(value));
-			else
-				VAL_SERIES(value) = Copy_Sequence(VAL_SERIES(value));
+			REBSER *series;
 
-			MANAGE_SERIES(VAL_SERIES(value));
+			if (ANY_OBJECT(value)) {
+				series = Copy_Array_Shallow(VAL_OBJ_FRAME(value));
+				VAL_OBJ_FRAME(value) = series;
+			}
+			else {
+				if (Is_Array_Series(VAL_SERIES(value)))
+					series = Copy_Array_Shallow(VAL_SERIES(value));
+				else
+					series = Copy_Sequence(VAL_SERIES(value));
+				VAL_SERIES(value) = series;
+			}
+
+			MANAGE_SERIES(series);
 
 			if (!deep) continue;
 
 			if (types & FLAGIT_64(VAL_TYPE(value)) & TS_ARRAYS_OBJ) {
 				Clonify_Values_Len_Managed(
-					 BLK_HEAD(VAL_SERIES(value)),
-					 VAL_TAIL(value),
-					 deep,
-					 types
+					 BLK_HEAD(series), VAL_TAIL(value), deep, types
 				);
 			}
 		}

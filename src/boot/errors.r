@@ -81,14 +81,14 @@ Internal: [
 	bad-end-canon-word:	{END was not found}
 	bad-true-canon-word:	{TRUE was not found}
 	bad-end-type-word:	{the end word is not correct}
-	rebval-alignment	{sizeof(REBVAL) not 4x 32-bits or 4x 64-bits}
+	rebval-alignment:	{sizeof(REBVAL) not 4x 32-bits or 4x 64-bits}
 
 	io-error:			{problem with IO}
 	max-words:			{too many words}
 	locked-series:		{locked series expansion}
 	no-saved-state:		{saved state frame is missing}
 	max-events:			{event queue overflow}
-	unexpected-case		{no case in switch statement}
+	unexpected-case:	{no case in switch statement}
 	bad-size:			{expected size did not match}
 	no-buffer:			{buffer not yet allocated}
 	invalid-datatype:	[{invalid datatype #} :arg1]
@@ -190,7 +190,7 @@ Script: [
 ;	no-decode:          [{cannot decode} :arg1 {encoding}]
 	wrong-denom:        [:arg1 {not same denomination as} :arg2]
 ;   bad-convert:        [{invalid conversion value:} :arg1]
-	bad-press:          [{invalid compressed data - problem:} :arg1]
+	bad-compression:    [{invalid compressed data - problem:} :arg1]
 	dialect:            [{incorrect} :arg1 {dialect usage at:} :arg2]
 	bad-command:        {invalid command format (extension function)}
 

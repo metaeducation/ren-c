@@ -365,7 +365,7 @@ collect: func [
 	output [any-series!] "The buffer series (modified)"
 ][
 	unless output [output: make block! 16]
-	eval func [<transparent> keep] body func [value [any-type!] /only] [
+	eval func [<transparent> keep] body func [value [any-value!] /only] [
 		; In the default operation, this could now be written as:
 		;
 		;     output: insert/:only :value

@@ -77,7 +77,7 @@ static REBREQ *Req_SIO;
 
 /***********************************************************************
 **
-*/	static void Print_OS_Line(void)
+*/	void Print_OS_Line(void)
 /*
 **		Print a new line.
 **
@@ -98,7 +98,7 @@ static REBREQ *Req_SIO;
 
 /***********************************************************************
 **
-*/	static void Prin_OS_String(const void *p, REBCNT len, REBOOL uni)
+*/	void Prin_OS_String(const void *p, REBCNT len, REBOOL uni)
 /*
 **		Print a string, but no line terminator or space.
 **

@@ -688,7 +688,7 @@ REBCNT ARGB_To_BGR(REBCNT i)
 **	Finds a value in a series and returns the series at the start of it.
 **
 **		 1 image
-**		 2 value [any-type!]
+**		 2 value [any-value!]
 **		 3 /part {Limits the search to a given length or position.}
 **		 4 range [any-number! any-series! port!]
 **		 5 /only {ignore alpha value.}

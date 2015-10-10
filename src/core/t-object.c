@@ -249,8 +249,7 @@ static REBSER *Trim_Object(REBSER *obj)
 	VAL_SET(out, type);
 	if (type == REB_ERROR) {
 		REBVAL result;
-		if (!Make_Error_Object(&result, out)) {
-			assert(THROWN(&result));
+		if (Make_Error_Object_Throws(&result, out)) {
 			*out = result;
 			return FALSE;
 		}
@@ -367,8 +366,7 @@ static REBSER *Trim_Object(REBSER *obj)
 			// make error! [....]
 			if (type == REB_ERROR) {
 				// arg is block/string, returns value
-				if (!Make_Error_Object(value, arg)) {
-					assert(THROWN(value));
+				if (Make_Error_Object_Throws(value, arg)) {
 					// going to return it anyway, no special handling needed
 				}
 				type = 0;
@@ -436,8 +434,7 @@ static REBSER *Trim_Object(REBSER *obj)
 			type = VAL_TYPE_KIND(value);
 			if (type == REB_ERROR) {
 				// arg is block/string, returns value
-				if (!Make_Error_Object(value, arg)) {
-					assert(THROWN(value));
+				if (Make_Error_Object_Throws(value, arg)) {
 					// going to return it anyway, no special handling needed
 				}
 				type = 0; // type already set

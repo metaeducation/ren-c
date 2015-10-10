@@ -1016,10 +1016,9 @@ was_caught:
 			Val_Init_String(reason, Copy_Form_Value(reason, 0));
 		}
 
-		if (!Make_Error_Object(D_OUT, reason)) {
-			assert(THROWN(D_OUT));
+		if (Make_Error_Object_Throws(D_OUT, reason))
 			return R_OUT;
-		}
+
 		raise Error_Is(D_OUT);
 	}
 

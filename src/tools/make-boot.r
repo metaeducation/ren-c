@@ -881,30 +881,48 @@ emit {
 ^{
 }
 
-err-list: make block! 200
-errs: false
+id-list: make block! 200
 
-for-each [cat msgs] boot-errors [
-	code: second msgs
-	new1: true
-	for-each [word val] skip msgs 4 [
-		err: uppercase form to word! word ;R3
-		replace/all err "-" "_"
-		if find err-list err [print ["DUPLICATE Error Constant:" err] errs: true]
-		append err-list err
-		either new1 [
-			emit-line "RE_" reform [err "=" code] reform [code mold val]
-			new1: false
-		][
-			emit-line "RE_" err reform [code mold val]
+for-each [category info] boot-errors [
+	unless all [
+		(quote code:) == info/1
+		integer? info/2
+		(quote type:) == info/3
+		string? info/4
+	][
+		fail ["%errors.r" category "not [code: INTEGER! type: STRING! ...]"]
+	]
+
+	code: info/2
+
+	new-section: true
+	for-each [key val] skip info 4 [
+		unless set-word? key [
+			fail ["Non SET-WORD! key in %errors.r:" key]
 		]
+
+		id: to-word key
+		if find id-list id [
+			fail ["DUPLICATE id in %errors.r:" id]
+		]
+
+		append id-list id
+
+		; all-caps and dashes to underscores for C naming
+		identifier: replace/all (uppercase to-string id) "-" "_"
+
+		either new-section [
+			emit-line "RE_" reform [identifier "=" code] reform [code mold val]
+			new-section: false
+		][
+			emit-line "RE_" identifier reform [code mold val]
+		]
+
 		code: code + 1
 	]
-	emit-line "RE_" join to word! cat "_max" none ;R3
+	emit-line "RE_" join to word! category "_max" none
 	emit newline
 ]
-
-if errs [fail "Invalid errors.r input"]
 
 emit-end
 

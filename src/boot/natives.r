@@ -25,8 +25,8 @@ ajoin: native [
 
 also: native [
 	{Returns the first value, but also evaluates the second.}
-	value1 [any-type!]
-	value2 [any-type!]
+	value1 [any-value!]
+	value2 [any-value!]
 ]
 
 all: native [
@@ -60,9 +60,9 @@ attempt: native [
 break: native [
 	{Breaks out of a loop, while, until, repeat, for-each, etc.}
 	/with {Forces the loop function to return a value}
-	value [any-type!]
+	value [any-value!]
 	/return {(deprecated synonym for /WITH)}
-	return-value [any-type!]
+	return-value [any-value!]
 ]
 
 case: native [
@@ -114,7 +114,7 @@ continue: native [
 
 ;disarm: native [
 ;	{(Deprecated - not needed) Converts error to an object. Other types not modified.}
-;	error [any-type!]
+;	error [any-value!]
 ;]
 
 do: native [
@@ -131,14 +131,14 @@ do: native [
 
 eval: native [
 	{(Special) Process received value *inline* as the evaluator loop would.}
-	value [any-type!] {BLOCK! passes-thru, FUNCTION! runs, SET-WORD! assigns...}
+	value [any-value!] {BLOCK! passes-thru, FUNCTION! runs, SET-WORD! assigns...}
 ]
 
 either: native [
 	{If TRUE condition return first arg, else second; evaluate blocks by default.}
 	condition
-	true-branch [any-type!]
-	false-branch [any-type!]
+	true-branch [any-value!]
+	false-branch [any-value!]
 	/only "Suppress evaluation of block args."
 ]
 
@@ -152,7 +152,7 @@ every: native [
 exit: native [
 	{Leave whatever enclosing Rebol state EXIT's block *actually* runs in.}
 	/with {Result for enclosing state (default is UNSET!)}
-	value [any-type!]
+	value [any-value!]
 ]
 
 fail: native [
@@ -207,7 +207,7 @@ halt: native [
 if: native [
 	{If TRUE condition, return arg; evaluate blocks by default.}
 	condition
-	true-branch [any-type!]
+	true-branch [any-value!]
 	/only "Return block arg instead of evaluating it."
 ]
 
@@ -233,7 +233,7 @@ map-each: native [
 quit: native [
 	{Stop evaluating and return control to command shell or calling script.}
 	/with {Yield a result (mapped to an integer if given to shell)}
-	value [any-type!] {See: http://en.wikipedia.org/wiki/Exit_status}
+	value [any-value!] {See: http://en.wikipedia.org/wiki/Exit_status}
 	/return {(deprecated synonym for /WITH)}
 	return-value
 ]
@@ -290,7 +290,7 @@ remove-each: native [
 
 return: native [
 	{Returns a value from a function.}
-	value [any-type!]
+	value [any-value!]
 ]
 
 switch: native [
@@ -304,7 +304,7 @@ switch: native [
 
 throw: native [
 	{Throws control back to a previous catch.}
-	value [any-type!] {Value returned from catch}
+	value [any-value!] {Value returned from catch}
 	/name {Throws to a named catch}
 	name-value [word! any-function! object!]
 ]
@@ -327,7 +327,7 @@ trap: native [
 unless: native [
 	{If FALSE condition, return arg; evaluate blocks by default.}
 	condition
-	false-branch [any-type!]
+	false-branch [any-value!]
 	/only "Return block arg instead of evaluating it."
 ]
 
@@ -393,6 +393,7 @@ compress: native [
 	data [binary! string!] {If string, it will be UTF8 encoded}
 	/part limit {Length of data (elements)}
 	/gzip {Use GZIP checksum}
+	/only {Do not store header or envelope information ("raw")}
 ]
 
 ;-- !!! This used to use /PART LENGTH, but when LENGTH? was migrate to LENGTH
@@ -406,6 +407,7 @@ decompress: native [
 	/part lim {Length of compressed data (must match end marker)}
 	/gzip {Use GZIP checksum}
 	/limit size {Error out if result is larger than this}
+	/only {Do not look for header or envelope information ("raw")}
 ]
 
 construct: native [
@@ -567,7 +569,7 @@ parse: native [
 set: native [
 	{Sets a word, path, block of words, or object to specified value(s).}
 	word [any-word! any-path! block! object!] {Word, block of words, path, or object to be set (modified)}
-	value [any-type!] {Value or block of values}
+	value [any-value!] {Value or block of values}
 	/any {Allows setting words to any value, including unset}
 	/pad {For objects, if block is too short, remaining words are set to NONE}
 ]
@@ -579,9 +581,18 @@ to-hex: native [
 	len [integer!]
 ]
 
+to-integer: native [
+	{Synonym of TO INTEGER! when used without refinements, adds /UNSIGNED.}
+	value [
+		integer! decimal! percent! money! char! time!
+		issue! binary! any-string!
+	]
+	/unsigned {For BINARY! interpret as unsigned, otherwise error if signed.}
+]
+
 type-of: native [
 	{Returns the datatype of a value.}
-	value [any-type!]
+	value [any-value!]
 ]
 
 unset: native [
@@ -610,17 +621,17 @@ value?: native [
 
 print: native [
 	{Outputs a value followed by a line break.}
-	value [any-type!] {The value to print}
+	value [any-value!] {The value to print}
 ]
 
 prin: native [
 	{Outputs a value with no line break.}
-	value [any-type!]
+	value [any-value!]
 ]
 
 mold: native [
 	{Converts a value to a REBOL-readable string.}
-	value [any-type!] {The value to mold}
+	value [any-value!] {The value to mold}
 	/only {For a block value, mold only its contents, no outer []}
 	/all  {Use construction syntax}
 	/flat {No indentation}
@@ -628,7 +639,7 @@ mold: native [
 
 form: native [
 	{Converts a value to a human-readable string.}
-	value [any-type!] {The value to form}
+	value [any-value!] {The value to form}
 ]
 
 new-line: native [
@@ -988,44 +999,44 @@ as-pair: native [
 
 equal?: native [
 	{Returns TRUE if the values are equal.}
-	value1 [any-type!]
-	value2 [any-type!]
+	value1 [any-value!]
+	value2 [any-value!]
 ]
 
 not-equal?: native [
 	{Returns TRUE if the values are not equal.}
-	value1 [any-type!]
-	value2 [any-type!]
+	value1 [any-value!]
+	value2 [any-value!]
 ]
 
 equiv?: native [
 	{Returns TRUE if the values are equivalent.}
-	value1 [any-type!]
-	value2 [any-type!]
+	value1 [any-value!]
+	value2 [any-value!]
 ]
 
 not-equiv?: native [
 	{Returns TRUE if the values are not equivalent.}
-	value1 [any-type!]
-	value2 [any-type!]
+	value1 [any-value!]
+	value2 [any-value!]
 ]
 
 strict-equal?: native [
 	{Returns TRUE if the values are strictly equal.}
-	value1 [any-type!]
-	value2 [any-type!]
+	value1 [any-value!]
+	value2 [any-value!]
 ]
 
 strict-not-equal?: native [
 	{Returns TRUE if the values are not strictly equal.}
-	value1 [any-type!]
-	value2 [any-type!]
+	value1 [any-value!]
+	value2 [any-value!]
 ]
 
 same?: native [
 	{Returns TRUE if the values are identical.}
-	value1 [any-type!]
-	value2 [any-type!]
+	value1 [any-value!]
+	value2 [any-value!]
 ]
 
 greater?: native [ ; Note: some datatypes expect >, <, >=, <= to be in this order.

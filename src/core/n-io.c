@@ -105,20 +105,87 @@
 }
 
 
+static void Print_Native_Modifies(
+	REBVAL *value, // Value may be modified.  Contents must be GC-safe!
+	REBOOL newline
+) {
+	if (IS_UNSET(value) || IS_NONE(value)) {
+	#if !defined(NDEBUG)
+		if (LEGACY(OPTIONS_PRINT_FORMS_EVERYTHING))
+			goto form_it;
+	#endif
+
+		// No effect (not even a newline)
+	}
+	else if (IS_BINARY(value)) {
+
+	#if !defined(NDEBUG)
+		if (LEGACY(OPTIONS_PRINT_FORMS_EVERYTHING))
+			goto form_it;
+	#endif
+
+		// Send raw bytes to the console.  CGI+ANSI+VT100 etc. require it
+		// for full 8-bit byte transport (UTF-8 is by definition not good
+		// enough...some bytes are illegal to occur in UTF-8 at all).
+		//
+		// Given that PRINT is not a general-purpose PROBE tool (it has
+		// never output values purely "as is", evaluating blocks for
+		// instance) it's worth doing a "strange" thing (though no stranger
+		// than WRITE) to be able to access the facility.
+
+		Prin_OS_String(VAL_BIN_DATA(value), VAL_LEN(value), FALSE);
+
+		// !!! Binary print should never output a newline.  This would seem
+		// more natural if PRINT's decision to output newlines was guided
+		// by whether it was given a block or not (under consideration).
+	}
+	else if (IS_BLOCK(value)) {
+		// !!! Pending plan for PRINT of BLOCK! is to do something like
+		// COMBINE where NONE! is elided, single characters are not spaced out,
+		// nested blocks are recursed, etc.  So:
+		//
+		//     print ["A" newline "B" if 1 > 2 [newline] if 1 < 2 ["C"]]]
+		//
+		// Would output the following (where _ is space):
+		//
+		//     A
+		//     B_C
+		//
+		// As opposed to historical output, which is:
+		//
+		//     A_
+		//     B_none_C
+		//
+		// Currently it effectively FORM REDUCEs the output.
+
+		Reduce_Block(value, VAL_SERIES(value), VAL_INDEX(value), FALSE);
+		Prin_Value(value, 0, 0);
+		if (newline)
+			Print_OS_Line();
+	}
+	else {
+#if !defined(NDEBUG)
+	form_it: // used only by OPTIONS_PRINT_FORMS_EVERYTHING
+#endif
+		// !!! Full behavior review needed for all types.
+
+		Prin_Value(value, 0, 0);
+		if (newline)
+			Print_OS_Line();
+	}
+}
+
+
 /***********************************************************************
 **
 */	REBNATIVE(print)
 /*
 ***********************************************************************/
 {
+	// Note: value is safe from GC due to being in arg slot
 	REBVAL *value = D_ARG(1);
 
-	if (IS_BLOCK(value))
-		Reduce_Block(value, VAL_SERIES(value), VAL_INDEX(value), FALSE);
-
-	// value is safe from GC due to being in arg slot
-	Print_Value(value, 0, 0);
-
+	Print_Native_Modifies(value, TRUE); // add newline
 	return R_UNSET;
 }
 
@@ -127,16 +194,20 @@
 **
 */	REBNATIVE(prin)
 /*
+**	!!! PRIN is considered as a "poor word" and is pending decisions
+**	about a better solution to newline management in output.  The
+**	following idea has been proposed as giving necessary coverage:
+**
+**		`print x` (no newline if x is not a block)
+**		`print [x]` (newline for all x, no extra one if x is block)
+**		`print form x` (guarantee no newline, even if x is block)
+**
 ***********************************************************************/
 {
+	// Note: value is safe from GC due to being in arg slot
 	REBVAL *value = D_ARG(1);
 
-	if (IS_BLOCK(value))
-		Reduce_Block(value, VAL_SERIES(value), VAL_INDEX(value), FALSE);
-
-	// value is safe from GC due to being in arg slot
-	Prin_Value(value, 0, 0);
-
+	Print_Native_Modifies(value, FALSE); // do not add newline
 	return R_UNSET;
 }
 
