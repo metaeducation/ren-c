@@ -318,11 +318,12 @@
 
 /***********************************************************************
 **
-*/  static REBINT Scan_Char(const REBYTE **bp)
+*/  static const REBYTE *Scan_UTF8_Char_Escapable(REBUNI *out, const REBYTE *bp)
 /*
 **      Scan a char, handling ^A, ^/, ^(null), ^(1234)
 **
-**		Returns the numeric value for char, or -1 for errors.
+**		Returns the numeric value for char, or NULL for errors.
+**		0 is a legal codepoint value which may be returned.
 **
 **		Advances the cp to just past the last position.
 **
@@ -330,86 +331,91 @@
 **
 ***********************************************************************/
 {
-	REBINT n;
 	const REBYTE *cp;
 	REBYTE c;
 	REBYTE lex;
 
-	c = **bp;
+	c = *bp;
 
 	// Handle unicoded char:
 	if (c >= 0x80) {
-		n = Decode_UTF8_Char(bp, 0); // zero on error
-		(*bp)++; // skip char
-		return n == 0 ? -1 : n;
+		if (!(bp = Back_Scan_UTF8_Char(out, bp, NULL))) return NULL;
+		return bp + 1; // Back_Scan advances one less than the full encoding
 	}
 
-	(*bp)++;
+	bp++;
 
-	if (c != '^') return c;
+	if (c != '^') {
+		*out = c;
+		return bp;
+	}
 
 	// Must be ^ escaped char:
-	c = **bp;
-	(*bp)++;
+	c = *bp;
+	bp++;
 
 	switch (c) {
 
 	case 0:
-		n = 0;
+		*out = 0;
 		break;
 
 	case '/':
-		n = LF;
+		*out = LF;
 		break;
 
 	case '^':
-		n = c;
+		*out = c;
 		break;
 
 	case '-':
-		n = TAB;
+		*out = TAB;
 		break;
 
 	case '!':
-		n = '\036'; // record separator
+		*out = '\036'; // record separator
 		break;
 
 	case '(':	// ^(tab) ^(1234)
 		// Check for hex integers ^(1234):
-		cp = *bp; // restart location
-		n = 0;
+		cp = bp; // restart location
+		*out = 0;
 		while ((lex = Lex_Map[*cp]) > LEX_WORD) {
 			c = lex & LEX_VALUE;
 			if (!c && lex < LEX_NUMBER) break;
-			n = (n << 4) + c;
+			*out = (*out << 4) + c;
 			cp++;
 		}
-		if ((cp - *bp) > 4) return -1;
+		if ((cp - bp) > 4) return NULL;
 		if (*cp == ')') {
 			cp++;
-			*bp = cp;
-			return n;
+			return cp;
 		}
 
 		// Check for identifiers:
-		for (n = 0; n < ESC_MAX; n++) {
-			if ((cp = Match_Bytes(*bp, cb_cast(Esc_Names[n])))) {
+		for (c = 0; c < ESC_MAX; c++) {
+			if ((cp = Match_Bytes(bp, cb_cast(Esc_Names[c])))) {
 				if (cp && *cp == ')') {
-					*bp = cp + 1;
-					return Esc_Codes[n];
+					bp = cp + 1;
+					*out = Esc_Codes[c];
+					return bp;
 				}
 			}
 		}
-		return -1;
+		return NULL;
 
 	default:
-		n = UP_CASE(c);
-		if (n >= '@' && n <= '_') n -= '@';
-		else if (n == '~') n = 0x7f; // special for DEL
-		else n = c;  // includes: ^{ ^} ^"
+		*out = c;
+
+		c = UP_CASE(c);
+		if (c >= '@' && c <= '_') *out = c - '@';
+		else if (c == '~') *out = 0x7f; // special for DEL
+		else {
+			// keep original `c` value before UP_CASE (includes: ^{ ^} ^")
+		}
 	}
 
-	return n;
+	return bp;
 }
 
 
@@ -425,7 +431,7 @@
 {
 	REBINT nest = 0;
 	REBUNI term;
-	REBINT chr;
+	REBUNI chr;
 	REBCNT lines = 0;
 
 	term = (*src++ == '{') ? '}' : '"';	// pick termination
@@ -440,8 +446,7 @@
 			return 0; // Scan_state shows error location.
 
 		case '^':
-			chr = Scan_Char(&src);
-			if (chr == -1) return 0;
+			if (!(src = Scan_UTF8_Char_Escapable(&chr, src))) return NULL;
 			src--;
 			break;
 
@@ -464,8 +469,8 @@
 
 		default:
 			if (chr >= 0x80) {
-				chr = Decode_UTF8_Char(&src, 0); // zero on error
-				if (chr == 0) return 0;
+				if (!(src = Back_Scan_UTF8_Char(&chr, src, NULL)))
+					return NULL;
 			}
 		}
 
@@ -531,15 +536,14 @@
 		// Accept ^X encoded char:
 		else if (c == '^') {
 			if (src+1 == end) return 0; // nothing follows ^
-			c = Scan_Char(&src);
+			if (!(src = Scan_UTF8_Char_Escapable(&c, src))) return NULL;
 			if (!term && IS_WHITE(c)) break;
 			src--;
 		}
 
 		// Accept UTF8 encoded char:
 		else if (c >= 0x80) {
-			c = Decode_UTF8_Char(&src, 0); // zero on error
-			if (c == 0) return 0;
+			if (!(src = Back_Scan_UTF8_Char(&c, src, 0))) return NULL;
 		}
 
 		// Is char as literal valid? (e.g. () [] etc.)
@@ -1054,10 +1058,11 @@
 				return TOKEN_CONSTRUCT;
 			}
 			if (*cp == '"') { /* CHAR #"C" */
+				REBUNI dummy;
 				cp++;
-				type = Scan_Char(&cp);
-				if (type >= 0 && *cp == '"') {
-					scan_state->end = cp+1;
+				cp = Scan_UTF8_Char_Escapable(&dummy, cp);
+				if (cp && *cp == '"') {
+					scan_state->end = cp + 1;
 					return TOKEN_CHAR;
 				}
 				// try to recover at next new line...
@@ -1573,8 +1578,8 @@ static REBSER *Scan_Full_Block(SCAN_STATE *scan_state, REBYTE mode_char);
 
 		case TOKEN_CHAR:
 			bp += 2; // skip #"
-			VAL_CHAR(value) = Scan_Char(&bp);
-			bp++; // skip end "
+			if (!Scan_UTF8_Char_Escapable(&VAL_CHAR(value), bp))
+				goto syntax_error;
 			VAL_SET(value, REB_CHAR);
 			break;
 

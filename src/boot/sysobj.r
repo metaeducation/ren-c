@@ -144,7 +144,6 @@ options: context [  ; Options supplied to REBOL during startup
 	exit-functions-only: false
 	broken-case-semantics: false
 	do-runs-functions: false
-	do-raises-errors: false
 	datatype-word-strict: false
 	group-not-paren: false ;; bias the default to PAREN! vs GROUP! (for now...)
 	refinements-true: false

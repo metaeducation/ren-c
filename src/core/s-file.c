@@ -278,7 +278,7 @@
 #ifndef TO_WINDOWS
 	// Posix needs UTF8 conversion:
 	bin = Make_UTF8_Binary(
-		UNI_HEAD(ser), SERIES_LEN(ser), FN_PAD, FLAGIT(OPT_ENC_UNISRC)
+		UNI_HEAD(ser), SERIES_LEN(ser), FN_PAD, OPT_ENC_UNISRC
 	);
 	Free_Series(ser);
 	ser = bin;

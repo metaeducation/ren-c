@@ -98,11 +98,11 @@ static REBREQ *Req_SIO;
 
 /***********************************************************************
 **
-*/	void Prin_OS_String(const void *p, REBCNT len, REBOOL uni)
+*/	void Prin_OS_String(const void *p, REBCNT len, REBFLG opts)
 /*
-**		Print a string, but no line terminator or space.
+**	Print a string (with no line terminator).
 **
-**		The width of the input is specified by UNI.
+**	The encoding options are OPT_ENC_XXX flags OR'd together.
 **
 ***********************************************************************/
 {
@@ -110,16 +110,15 @@ static REBREQ *Req_SIO;
 	REBYTE buffer[BUF_SIZE]; // on stack
 	REBYTE *buf = &buffer[0];
 	REBCNT len2;
-	const REBYTE *bp = uni ? NULL : cast(const REBYTE *, p);
-	const REBUNI *up = uni ? cast(const REBUNI *, p) : NULL;
-	REBFLG encopts = ENCF_OS_CRLF;
+	const REBOOL is_uni = (opts & OPT_ENC_UNISRC) != 0;
 
-	if (uni) SET_FLAG(encopts, OPT_ENC_UNISRC);
+	const REBYTE *bp = is_uni ? NULL : cast(const REBYTE *, p);
+	const REBUNI *up = is_uni ? cast(const REBUNI *, p) : NULL;
 
 	if (!p) panic Error_0(RE_NO_PRINT_PTR);
 
 	// Determine length if not provided:
-	if (len == UNKNOWN) len = uni ? Strlen_Uni(up) : LEN_BYTES(bp);
+	if (len == UNKNOWN) len = is_uni ? Strlen_Uni(up) : LEN_BYTES(bp);
 
 	SET_FLAG(Req_SIO->flags, RRF_FLUSH);
 
@@ -127,23 +126,38 @@ static REBREQ *Req_SIO;
 	Req_SIO->common.data = buf;
 	buffer[0] = 0; // for debug tracing
 
-	while ((len2 = len) > 0) {
-
+	if (opts & OPT_ENC_RAW) {
 		Do_Signals();
 
-		Req_SIO->length = Encode_UTF8(
-			buf,
-			BUF_SIZE - 4,
-			uni ? cast(const void *, up) : cast(const void *, bp),
-			&len2,
-			encopts
-		);
+		// Used by verbatim terminal output, e.g. print of a BINARY!
+		assert(!is_uni);
+		Req_SIO->length = len;
 
-		if (uni) up += len2; else bp += len2;
-		len -= len2;
+		// Mutability cast, but RDC_WRITE should not be modifying the buffer
+		// (doing so could yield undefined behavior)
+		Req_SIO->common.data = m_cast(REBYTE *, bp);
 
 		OS_DO_DEVICE(Req_SIO, RDC_WRITE);
 		if (Req_SIO->error) panic Error_0(RE_IO_ERROR);
+	}
+	else {
+		while ((len2 = len) > 0) {
+			Do_Signals();
+
+			Req_SIO->length = Encode_UTF8(
+				buf,
+				BUF_SIZE - 4,
+				is_uni ? cast(const void *, up) : cast(const void *, bp),
+				&len2,
+				opts
+			);
+
+			if (is_uni) up += len2; else bp += len2;
+			len -= len2;
+
+			OS_DO_DEVICE(Req_SIO, RDC_WRITE);
+			if (Req_SIO->error) panic Error_0(RE_IO_ERROR);
+		}
 	}
 }
 
@@ -165,7 +179,7 @@ static REBREQ *Req_SIO;
 /*
 ***********************************************************************/
 {
-	Prin_OS_String(bp, UNKNOWN, 0);
+	Prin_OS_String(bp, UNKNOWN, OPT_ENC_CRLF_MAYBE);
 	for (; lines > 0; lines--) Print_OS_Line();
 }
 
@@ -222,7 +236,7 @@ static REBREQ *Req_SIO;
 		}
 
 		if (lines == 0) i += 2; // start of next line
-		Prin_OS_String(BIN_SKIP(Trace_Buffer, i), tail-i, 0);
+		Prin_OS_String(BIN_SKIP(Trace_Buffer, i), tail - i, OPT_ENC_CRLF_MAYBE);
 		//RESET_SERIES(Trace_Buffer);
 	}
 	else {
@@ -257,7 +271,9 @@ static REBREQ *Req_SIO;
 		for (; lines > 0; lines--) Append_Codepoint_Raw(Trace_Buffer, LF);
 	}
 	else {
-		Prin_OS_String(p, len, uni);
+		Prin_OS_String(
+			p, len, (uni ? OPT_ENC_UNISRC : 0) | OPT_ENC_CRLF_MAYBE
+		);
 		for (; lines > 0; lines--) Print_OS_Line();
 	}
 
@@ -296,7 +312,7 @@ static REBREQ *Req_SIO;
 **
 ***********************************************************************/
 {
-	const REBFLG encopts = FLAGIT(OPT_ENC_UNISRC) | ENCF_OS_CRLF;
+	const REBFLG encopts = OPT_ENC_UNISRC | OPT_ENC_CRLF_MAYBE;
 	REBCNT ul;
 	REBCNT bl;
 	REBYTE buf[1024];
@@ -818,7 +834,7 @@ mold_value:
 			if (pad != 1 && l > pad) l = pad;
 
 			ul = SERIES_LEN(ser);
-			l = Encode_UTF8(bp, l, UNI_HEAD(ser), &ul, FLAGIT(OPT_ENC_UNISRC));
+			l = Encode_UTF8(bp, l, UNI_HEAD(ser), &ul, OPT_ENC_UNISRC);
 			len += l;
 
 			// Filter out CTRL chars:
@@ -897,7 +913,7 @@ mold_value:
 ***********************************************************************/
 {
 	REBSER *out = Mold_Print_Value(value, limit, mold);
-	Prin_OS_String(out->data, out->tail, TRUE);
+	Prin_OS_String(out->data, out->tail, OPT_ENC_UNISRC | OPT_ENC_CRLF_MAYBE);
 }
 
 

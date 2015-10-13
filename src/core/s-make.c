@@ -639,7 +639,7 @@ cp_same:
 			len = VAL_LEN(val);
 			bp = VAL_BYTE_SIZE(val) ? VAL_BIN_DATA(val) : (REBYTE*)VAL_UNI_DATA(val);
 			bl = Length_As_UTF8(
-				bp, len, VAL_BYTE_SIZE(val) ? 0 : FLAGIT(OPT_ENC_UNISRC)
+				bp, len, VAL_BYTE_SIZE(val) ? 0 : OPT_ENC_UNISRC
 			);
 			EXPAND_SERIES_TAIL(series, bl);
 			series->tail = tail + Encode_UTF8(
@@ -647,7 +647,7 @@ cp_same:
 				bl,
 				bp,
 				&len,
-				VAL_BYTE_SIZE(val) ? 0 : FLAGIT(OPT_ENC_UNISRC)
+				VAL_BYTE_SIZE(val) ? 0 : OPT_ENC_UNISRC
 			);
 			break;
 

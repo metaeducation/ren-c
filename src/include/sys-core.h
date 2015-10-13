@@ -325,20 +325,20 @@ enum {
 
 // Encoding options:
 enum encoding_opts {
-	OPT_ENC_BIG,		// big endian (not little)
-	OPT_ENC_UTF8,		// UTF-8
-	OPT_ENC_UTF16,		// UTF-16
-	OPT_ENC_UTF32,		// UTF-32
-	OPT_ENC_BOM,		// byte order marker
-	OPT_ENC_CRLF,		// CR line termination
-	OPT_ENC_UNISRC,		// source is UCS2
-	OPT_ENC_MAX
+	OPT_ENC_BIG_ENDIAN = 1 << 0, // little is default
+	OPT_ENC_UTF8 = 1 << 1,
+	OPT_ENC_UTF16 = 1 << 2,
+	OPT_ENC_UTF32 = 1 << 3,
+	OPT_ENC_BOM = 1 << 4, // byte order marker
+	OPT_ENC_CRLF = 1 << 5, // CR line termination, see OPT_ENC_CRLF_MAYBE
+	OPT_ENC_UNISRC = 1 << 6, // source is UCS2
+	OPT_ENC_RAW = 1 << 7 // raw binary, no encoding
 };
 
 #if OS_CRLF
-#define ENCF_OS_CRLF (1<<OPT_ENC_CRLF)
+	#define OPT_ENC_CRLF_MAYBE OPT_ENC_CRLF
 #else
-#define ENCF_OS_CRLF 0
+	#define OPT_ENC_CRLF_MAYBE 0
 #endif
 
 /***********************************************************************

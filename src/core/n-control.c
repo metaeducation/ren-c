@@ -677,11 +677,11 @@ was_caught:
 		// trying to use it to trigger errors, because if THROW just didn't
 		// take errors in the spec it wouldn't guide what *to* use.
 		//
-		raise Error_0(RE_USE_FAIL_FOR_ERROR);
+		raise Error_1(RE_USE_FAIL_FOR_ERROR, value);
 
 		// Note: Caller can put the ERROR! in a block or use some other
 		// such trick if it wants to actually throw an error.
-		// (Better than complicating throw with /error-is-intentional!)
+		// (Better than complicating via THROW/ERROR-IS-INTENTIONAL!)
 	}
 
 	if (named) {
@@ -846,13 +846,13 @@ was_caught:
 		return R_OUT;
 
 	case REB_ERROR:
-	#if !defined(NDEBUG)
-		if (LEGACY(OPTIONS_DO_RAISES_ERRORS))
-			raise Error_Is(value);
-	#endif
-		// This path will no longer raise the error you asked for, though it
-		// will still raise *an* error directing you to use FAIL.)
-		raise Error_0(RE_USE_FAIL_FOR_ERROR);
+		// FAIL is the preferred operation for triggering errors, as it has
+		// a natural behavior for blocks passed to construct readable messages
+		// and "FAIL X" more clearly communicates a failure than "DO X"
+		// does.  However DO of an ERROR! would have to raise an error
+		// anyway, so it might as well raise the one it is given.
+		//
+		raise Error_Is(value);
 
 	case REB_TASK:
 		Do_Task(value);

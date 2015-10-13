@@ -65,7 +65,7 @@
 					req->common.data,
 					len / sizeof(REBUNI),
 					0,
-					FLAGIT(OPT_ENC_UNISRC)
+					OPT_ENC_UNISRC
 				));
 			}
 			else {
@@ -104,7 +104,7 @@
 				req->common.data,
 				len / sizeof(REBUNI),
 				0,
-				FLAGIT(OPT_ENC_UNISRC)
+				OPT_ENC_UNISRC
 			));
 		}
 		else {

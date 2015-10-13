@@ -58,7 +58,7 @@
 /*
 ***********************************************************************/
 {
-	REBINT	chr = VAL_CHAR(D_ARG(1));
+	REBUNI chr = VAL_CHAR(D_ARG(1));
 	REBINT	arg;
 	REBVAL	*val;
 
@@ -134,9 +134,19 @@
 			arg = VAL_LEN(val);
 			if (arg == 0) goto bad_make;
 			if (*bp > 0x80) {
-				if (!Legal_UTF8_Char(bp, arg)) goto bad_make;
-				chr = Decode_UTF8_Char(&bp, 0); // zero on error
-				if (!chr) goto bad_make;
+				// !!! This test is presumably redundant - temporarily left
+				// in as a check to see if its presence here detected
+				// anything differently that Scan_UTF8_Char wouldn't.
+				REBOOL redundant_legal = Legal_UTF8_Char(bp, arg);
+
+				if (!Back_Scan_UTF8_Char(&chr, bp, NULL)) {
+					assert(!redundant_legal);
+					goto bad_make;
+				}
+				if (!redundant_legal) {
+					assert(FALSE);
+					goto bad_make;
+				}
 			}
 			else
 				chr = *bp;

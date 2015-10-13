@@ -256,7 +256,7 @@ REBINT Mode_Syms[] = {
 
 	// Auto convert string to UTF-8
 	if (IS_STRING(data)) {
-		ser = Make_UTF8_From_Any_String(data, len, ENCF_OS_CRLF);
+		ser = Make_UTF8_From_Any_String(data, len, OPT_ENC_CRLF_MAYBE);
 		MANAGE_SERIES(ser);
 		file->common.data = BIN_HEAD(ser);
 		len = SERIES_TAIL(ser);

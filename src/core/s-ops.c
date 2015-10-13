@@ -189,7 +189,7 @@
 	else {
 		// UTF-8 conversion is required, and we manage the result.
 
-		series = Make_UTF8_From_Any_String(val, len, ENCF_OS_CRLF);
+		series = Make_UTF8_From_Any_String(val, len, OPT_ENC_CRLF_MAYBE);
 		MANAGE_SERIES(series);
 
 		if (index) *index = 0;

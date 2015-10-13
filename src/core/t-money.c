@@ -156,6 +156,18 @@
 			VAL_MONEY_AMOUNT(D_OUT) = deci_divide(
 				VAL_MONEY_AMOUNT(val), VAL_MONEY_AMOUNT(arg)
 			);
+
+			// It was asked that `$10 / $20` be `0.5` and not `$0.5`
+			// (Not a general solution to dimensional analysis, e.g. `$1 * $1`
+			// does not give "dollars squared".)
+			//
+			if (IS_MONEY(arg)) {
+				// Extract to keep from having a problem with the macro
+				// mutating the value it is sourcing from.
+				REBDEC decimal = deci_to_decimal(VAL_MONEY_AMOUNT(D_OUT));
+				SET_DECIMAL(D_OUT, decimal);
+				return R_OUT;
+			}
 			break;
 
 		case A_REMAINDER:

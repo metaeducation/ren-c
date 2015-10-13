@@ -216,7 +216,6 @@ set 'r3-legacy* func [] [
 	; at different times on a case-by-case basis.
 	;
 	system/options/do-runs-functions: true
-	system/options/do-raises-errors: true
 	system/options/broken-case-semantics: true
 	system/options/exit-functions-only: true
 	system/options/datatype-word-strict: true

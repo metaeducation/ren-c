@@ -133,7 +133,7 @@ static void Print_Native_Modifies(
 		// instance) it's worth doing a "strange" thing (though no stranger
 		// than WRITE) to be able to access the facility.
 
-		Prin_OS_String(VAL_BIN_DATA(value), VAL_LEN(value), FALSE);
+		Prin_OS_String(VAL_BIN_DATA(value), VAL_LEN(value), OPT_ENC_RAW);
 
 		// !!! Binary print should never output a newline.  This would seem
 		// more natural if PRINT's decision to output newlines was guided

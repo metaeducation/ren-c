@@ -102,6 +102,8 @@ Internal: [
 	bad-evaltype:		{invalid datatype for evaluation}
 	hash-overflow:		{Hash ran out of space}
 	no-print-ptr:		{print is missing string pointer}
+
+	codepoint-too-high:	[{codepoint} :arg1 {too large for current interpreter}]
 ]
 
 Syntax: [
@@ -136,7 +138,7 @@ Script: [
 	; !!! Temporary errors while faulty constructs are still outstanding
 	; (more informative than just saying "function doesn't take that type")
 	use-eval-for-eval:  {Use EVAL (not DO) for inline evaluation of a value}
-	use-fail-for-error: {Use FAIL (instead of THROW or DO) to trigger ERROR!}
+	use-fail-for-error: [{Use FAIL (not THROW or DO) to raise} :arg1]
 	use-split-simple:   {Use SPLIT (instead of PARSE) for "simple" parsing}
 
 	limited-fail-input: {FAIL requires complex expressions to be in a PAREN!}
