@@ -178,8 +178,8 @@
 	nums[9] = 0;
 	nums[10] = GC_Ballast;
 	nums[11] = GC_Disabled;
-	nums[12] = SERIES_TAIL(GC_Protect);
-	nums[13] = 0; // Was GC_Last_Infant
+	nums[12] = SERIES_TAIL(GC_Series_Guard);
+	nums[13] = SERIES_TAIL(GC_Value_Guard);
 
 	for (n = 0; n < 14; n++) Debug_Fmt(cs_cast(BOOT_STR(RS_DUMP, n)), nums[n]);
 }

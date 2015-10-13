@@ -646,7 +646,7 @@ bad_target:
 
 	// Copy the value into its own block:
 	newparse.series = Make_Array(1);
-	SAVE_SERIES(newparse.series);
+	PUSH_GUARD_SERIES(newparse.series);
 	Append_Value(newparse.series, &value);
 	newparse.type = REB_BLOCK;
 	newparse.find_flags = parse->find_flags;
@@ -654,7 +654,7 @@ bad_target:
 	newparse.out = parse->out;
 
 	n = (Parse_Next_Block(&newparse, 0, item, 0) != NOT_FOUND) ? index : NOT_FOUND;
-	UNSAVE_SERIES(newparse.series);
+	DROP_GUARD_SERIES(newparse.series);
 	return n;
 }
 

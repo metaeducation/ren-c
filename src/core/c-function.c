@@ -556,7 +556,7 @@
 	// execution.  (We could also protect it by stowing it in the call
 	// frame's copy of the closure value, which we might think of as its
 	// "archetype", but it may be valuable to keep that as-is.)
-	SAVE_SERIES(body);
+	PUSH_GUARD_SERIES(body);
 
 	if (Do_Block_Throws(out, body, 0)) {
 		if (
@@ -570,7 +570,7 @@
 
 	// References to parts of the closure's copied body may still be
 	// extant, but we no longer need to hold this reference on it
-	UNSAVE_SERIES(body);
+	DROP_GUARD_SERIES(body);
 }
 
 

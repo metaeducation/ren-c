@@ -483,6 +483,9 @@ void Trace_Arg(REBINT num, const REBVAL *arg, const REBVAL *path)
 	//
 	REBCNT manuals_tail = SERIES_TAIL(GC_Manuals);
 
+	REBCNT series_guard_tail = SERIES_TAIL(GC_Series_Guard);
+	REBCNT value_guard_tail = SERIES_TAIL(GC_Value_Guard);
+
 	const REBYTE *label_str = Get_Word_Name(DSF_LABEL(call));
 #endif
 
@@ -548,6 +551,9 @@ void Trace_Arg(REBINT num, const REBVAL *arg, const REBVAL *path)
 	}
 
 	MANUALS_LEAK_CHECK(manuals_tail, cs_cast(label_str));
+
+	assert(series_guard_tail == SERIES_TAIL(GC_Series_Guard));
+	assert(value_guard_tail == SERIES_TAIL(GC_Value_Guard));
 #endif
 
 	SET_DSF(dsf_precall);
@@ -615,7 +621,11 @@ void Trace_Arg(REBINT num, const REBVAL *arg, const REBVAL *path)
 	// most notably it applies to the data stack--where output used to always
 	// be returned.
 	//
+#ifdef STRESS_CHECK_DO_OUT_POINTER
+	ASSERT_NOT_IN_SERIES_DATA(out);
+#else
 	assert(!IN_DATA_STACK(out));
+#endif
 
 	// Only need to check this once (C stack size would be the same each
 	// time this line is run if it were in a loop)

@@ -674,7 +674,7 @@ chk_neg:
 		if (IS_STRING(param)) {
 			input_type = STRING_TYPE;
 			os_input = cast(char*, Val_Str_To_OS_Managed(&input_ser, param));
-			SAVE_SERIES(input_ser);
+			PUSH_GUARD_SERIES(input_ser);
 			input_len = VAL_LEN(param);
 		}
 		else if (IS_BINARY(param)) {
@@ -686,7 +686,7 @@ chk_neg:
 			input_type = FILE_TYPE;
 			input_ser = Value_To_OS_Path(param, FALSE);
 			MANAGE_SERIES(input_ser);
-			SAVE_SERIES(input_ser);
+			PUSH_GUARD_SERIES(input_ser);
 			os_input = s_cast(SERIES_DATA(input_ser));
 			input_len = SERIES_TAIL(input_ser);
 		}
@@ -716,7 +716,7 @@ chk_neg:
 			output_type = FILE_TYPE;
 			output_ser = Value_To_OS_Path(param, FALSE);
 			MANAGE_SERIES(output_ser);
-			SAVE_SERIES(output_ser);
+			PUSH_GUARD_SERIES(output_ser);
 			os_output = s_cast(SERIES_DATA(output_ser));
 			output_len = SERIES_TAIL(output_ser);
 		}
@@ -743,7 +743,7 @@ chk_neg:
 			err_type = FILE_TYPE;
 			err_ser = Value_To_OS_Path(param, FALSE);
 			MANAGE_SERIES(err_ser);
-			SAVE_SERIES(err_ser);
+			PUSH_GUARD_SERIES(err_ser);
 			os_err = s_cast(SERIES_DATA(err_ser));
 			err_len = SERIES_TAIL(err_ser);
 		}
@@ -781,7 +781,7 @@ chk_neg:
 		// whether it should go through the shell parsing to do so.
 
 		cmd = Val_Str_To_OS_Managed(&cmd_ser, arg);
-		SAVE_SERIES(cmd_ser);
+		PUSH_GUARD_SERIES(cmd_ser);
 
 		argc = 1;
 		argv_ser = Make_Series(argc + 1, sizeof(REBCHR*), MKS_NONE);
@@ -810,7 +810,7 @@ chk_neg:
 			if (IS_STRING(param)) {
 				REBSER *ser;
 				argv[i] = Val_Str_To_OS_Managed(&ser, param);
-				SAVE_SERIES(ser);
+				PUSH_GUARD_SERIES(ser);
 				cast(REBSER**, SERIES_DATA(argv_saved_sers))[i] = ser;
 			}
 			else if (IS_FILE(param)) {
@@ -818,7 +818,7 @@ chk_neg:
 				argv[i] = cast(REBCHR*, SERIES_DATA(path));
 
 				MANAGE_SERIES(path);
-				SAVE_SERIES(path);
+				PUSH_GUARD_SERIES(path);
 				cast(REBSER**, SERIES_DATA(argv_saved_sers))[i] = path;
 			}
 			else
@@ -839,7 +839,7 @@ chk_neg:
 		argv = cast(const REBCHR**, SERIES_DATA(argv_ser));
 
 		argv[0] = cast(REBCHR*, SERIES_DATA(path));
-		SAVE_SERIES(path);
+		PUSH_GUARD_SERIES(path);
 		cast(REBSER**, SERIES_DATA(argv_saved_sers))[0] = path;
 
 		argv[argc] = NULL;
@@ -863,12 +863,12 @@ chk_neg:
 		assert(argc > 0);
 		do {
 			// Count down: must unsave the most recently saved series first!
-			UNSAVE_SERIES(cast(REBSER**, SERIES_DATA(argv_saved_sers))[i - 1]);
+			DROP_GUARD_SERIES(cast(REBSER**, SERIES_DATA(argv_saved_sers))[i - 1]);
 			--i;
 		} while (i != 0);
 		Free_Series(argv_saved_sers);
 	}
-	if (cmd_ser) UNSAVE_SERIES(cmd_ser);
+	if (cmd_ser) DROP_GUARD_SERIES(cmd_ser);
 	Free_Series(argv_ser); // Unmanaged, so we can free it
 
 	if (output_type == STRING_TYPE) {
@@ -909,9 +909,9 @@ chk_neg:
 	// that series was managed and saved from GC.  Unsave them now.  Note
 	// backwardsness: must unsave the most recently saved series first!!
 	//
-	if (err_ser) UNSAVE_SERIES(err_ser);
-	if (output_ser) UNSAVE_SERIES(output_ser);
-	if (input_ser) UNSAVE_SERIES(input_ser);
+	if (err_ser) DROP_GUARD_SERIES(err_ser);
+	if (output_ser) DROP_GUARD_SERIES(output_ser);
+	if (input_ser) DROP_GUARD_SERIES(input_ser);
 
 	if (flag_info) {
 		REBSER *obj = Make_Frame(2, TRUE);

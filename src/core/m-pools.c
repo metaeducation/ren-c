@@ -671,6 +671,38 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 }
 
 
+#if !defined(NDEBUG)
+
+/***********************************************************************
+**
+*/	void Assert_Not_In_Series_Data_Debug(const void *pointer)
+/*
+***********************************************************************/
+{
+	REBSEG *seg;
+
+	for (seg = Mem_Pools[SERIES_POOL].segs; seg; seg = seg->next) {
+		REBSER *series = cast(REBSER *, seg + 1);
+		REBCNT n;
+		for (n = Mem_Pools[SERIES_POOL].units; n > 0; n--, series++) {
+			if (SERIES_FREED(series))
+				continue;
+
+			assert(
+				(pointer < cast(void *, series->data)) ||
+				(pointer >= cast(void *, (
+					series->data
+					- (SERIES_WIDE(series) * SERIES_BIAS(series))
+					+ Series_Allocated_Size(series)
+				)))
+			);
+		}
+	}
+}
+
+#endif
+
+
 /***********************************************************************
 **
 */	REBCNT Series_Allocated_Size(REBSER *series)

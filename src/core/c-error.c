@@ -45,7 +45,8 @@
 	s->dsp = DSP;
 	s->dsf = DSF;
 
-	s->hold_tail = GC_Protect->tail;
+	s->series_guard_tail = GC_Series_Guard->tail;
+	s->value_guard_tail = GC_Value_Guard->tail;
 	s->gc_disable = GC_Disabled;
 
 	s->manuals_tail = SERIES_TAIL(GC_Manuals);
@@ -110,7 +111,8 @@
 		Free_Series(cast(REBSER**, GC_Manuals->data)[GC_Manuals->tail - 1]);
 	}
 
-	GC_Protect->tail = state->hold_tail;
+	GC_Series_Guard->tail = state->series_guard_tail;
+	GC_Value_Guard->tail = state->value_guard_tail;
 
 	GC_Disabled = state->gc_disable;
 

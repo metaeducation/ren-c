@@ -326,7 +326,7 @@ static ffi_type* struct_to_ffi(const REBVAL *out, REBSER *fields, REBOOL make)
 	} else {
 		REBSER * ser= Make_Series(2, sizeof(ffi_type), MKS_NONE | MKS_LOCK);
 		stype = cast(ffi_type*, SERIES_DATA(ser));
-		SAVE_SERIES(ser);
+		PUSH_GUARD_SERIES(ser);
 	}
 
 	stype->size = stype->alignment = 0;
@@ -340,7 +340,7 @@ static ffi_type* struct_to_ffi(const REBVAL *out, REBSER *fields, REBOOL make)
 	} else {
 		REBSER * ser= Make_Series(2 + n_struct_fields(fields), sizeof(ffi_type *), MKS_NONE | MKS_LOCK);
 		stype->elements = cast(ffi_type**, SERIES_DATA(ser));
-		SAVE_SERIES(ser);
+		PUSH_GUARD_SERIES(ser);
 	}
 
 	for (i = 0; i < SERIES_TAIL(fields); i ++) {
@@ -724,7 +724,7 @@ static void ffi_to_rebol(REBRIN *rin,
 	 *	Instead of remembering how many times SAVE_SERIES has called, it's easier to
 	 *	just remember the initial pointer and restore it later.
 	**/
-	REBCNT GC_Protect_tail = GC_Protect->tail;
+	REBCNT series_guard_tail = GC_Series_Guard->tail;
 
 	if (VAL_ROUTINE_LIB(rot) != NULL) {
 		// lib is NULL when routine is constructed from address directly
@@ -839,7 +839,7 @@ static void ffi_to_rebol(REBRIN *rin,
 	if (ser) Free_Series(ser);
 
 	//restore the saved series stack pointer
-	GC_Protect->tail = GC_Protect_tail;
+	GC_Series_Guard->tail = series_guard_tail;
 }
 
 /***********************************************************************
@@ -868,27 +868,23 @@ static void process_type_block(const REBVAL *out, REBVAL *blk, REBCNT n, REBOOL 
 		REBVAL *t = VAL_BLK_DATA(blk);
 		if (IS_WORD(t) && VAL_WORD_CANON(t) == SYM_STRUCT_TYPE) {
 			/* followed by struct definition */
-			REBSER *ser;
-			REBVAL* tmp;
+			REBVAL tmp;
 
-			//lock the series to make BLK_HEAD permanent
-			ser = Make_Series(2, sizeof(REBVAL), MKS_ARRAY | MKS_LOCK);
-			SAVE_SERIES(ser);
-			tmp = BLK_HEAD(ser);
+			PUSH_GUARD_VALUE(&tmp);
 
 			++ t;
 			if (!IS_BLOCK(t) || VAL_LEN(blk) != 2)
 				raise Error_Invalid_Arg(blk);
 
-			if (!MT_Struct(tmp, t, REB_STRUCT))
+			if (!MT_Struct(&tmp, t, REB_STRUCT))
 				raise Error_Invalid_Arg(blk);
 
-			if (!rebol_type_to_ffi(out, tmp, n, make))
+			if (!rebol_type_to_ffi(out, &tmp, n, make))
 				raise Error_Invalid_Arg(blk);
 
-			UNSAVE_SERIES(ser);
-
-		} else {
+			DROP_GUARD_VALUE(&tmp);
+		}
+		else {
 			if (VAL_LEN(blk) != 1)
 				raise Error_Invalid_Arg(blk);
 
@@ -932,7 +928,7 @@ static void callback_dispatcher(ffi_cif *cif, void *ret, void **args, void *user
 	// so these lines (and the UNSAVE) can be deleted if that happens.
 	//
 	MANAGE_SERIES(ser);
-	SAVE_SERIES(ser);
+	PUSH_GUARD_SERIES(ser);
 
 	elem = Alloc_Tail_Array(ser);
 	SET_TYPE(elem, REB_FUNCTION);
@@ -1026,7 +1022,7 @@ static void callback_dispatcher(ffi_cif *cif, void *ret, void **args, void *user
 	}
 
 	// !!! Could be a Free_Series if not managed/saved to use with DO
-	UNSAVE_SERIES(ser);
+	DROP_GUARD_SERIES(ser);
 
 	DROP_TRAP_SAME_STACKLEVEL_AS_PUSH(&state);
 }

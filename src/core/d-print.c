@@ -369,10 +369,14 @@ static REBREQ *Req_SIO;
 	} else if (ser == PG_Word_Table.hashes) {
 		// Dump hashes somehow?
 		Panic_Series(ser);
-	} else if (ser == GC_Protect) {
+	} else if (ser == GC_Series_Guard) {
 		// Dump protected series pointers somehow?
 		Panic_Series(ser);
-	} else
+	} else if (ser == GC_Value_Guard) {
+		// Dump protected value pointers somehow?
+		Panic_Series(ser);
+	}
+	else
 		Panic_Series(ser);
 
 	assert(GC_Disabled == 1);

@@ -1037,15 +1037,22 @@ static void Propagate_All_GC_Marks(void);
 
 	if (!shutdown) {
 		REBSER **sp;
+		REBVAL **vp;
 
 		// Mark series stack (temp-saved series):
-		sp = cast(REBSER**, GC_Protect->data);
-		for (n = SERIES_TAIL(GC_Protect); n > 0; n--) {
+		sp = cast(REBSER**, GC_Series_Guard->data);
+		for (n = SERIES_TAIL(GC_Series_Guard); n > 0; n--, sp++) {
 			if (Is_Array_Series(*sp))
 				MARK_BLOCK_DEEP(*sp);
 			else
 				MARK_SERIES_ONLY(*sp);
-			sp++; // can't increment inside macro arg (eval'd multiple times)
+		}
+
+		// Mark value stack (temp-saved values):
+		vp = cast(REBVAL**, GC_Value_Guard->data);
+		for (n = SERIES_TAIL(GC_Value_Guard); n > 0; n--, vp++) {
+			Queue_Mark_Value_Deep(*vp);
+			Propagate_All_GC_Marks();
 		}
 
 		// Mark all root series:
@@ -1132,7 +1139,7 @@ static void Propagate_All_GC_Marks(void);
 
 /***********************************************************************
 **
-*/	void Save_Series(REBSER *series)
+*/	void Guard_Series_Core(REBSER *series)
 /*
 ***********************************************************************/
 {
@@ -1145,8 +1152,37 @@ static void Propagate_All_GC_Marks(void);
 	// manually free it.  For the moment, we don't have that feature.
 	ASSERT_SERIES_MANAGED(series);
 
-	if (SERIES_FULL(GC_Protect)) Extend_Series(GC_Protect, 8);
-	((REBSER **)GC_Protect->data)[GC_Protect->tail++] = series;
+	if (SERIES_FULL(GC_Series_Guard)) Extend_Series(GC_Series_Guard, 8);
+
+	cast(REBSER **, GC_Series_Guard->data)[GC_Series_Guard->tail] = series;
+	GC_Series_Guard->tail++;
+}
+
+
+/***********************************************************************
+**
+*/	void Guard_Value_Core(const REBVAL *value)
+/*
+***********************************************************************/
+{
+	// Cheap check; we don't want you to save any values that wouldn't
+	// be safe if the GC saw them.  We exclude REB_END to catch zero
+	// initializations.
+	assert(VAL_TYPE(value) > REB_END && VAL_TYPE(value) < REB_MAX);
+
+#ifdef STRESS_CHECK_GUARD_VALUE_POINTER
+	// Technically we should never call this routine to guard a value that
+	// lives inside of a series.  Not only would we have to guard the
+	// containing series, we would also have to lock the series from
+	// being able to resize and reallocate the data pointer.  But this is
+	// a somewhat expensive check, so it's only feasible to run occasionally.
+	ASSERT_NOT_IN_SERIES_DATA(value);
+#endif
+
+	if (SERIES_FULL(GC_Value_Guard)) Extend_Series(GC_Value_Guard, 8);
+
+	cast(const REBVAL **, GC_Value_Guard->data)[GC_Value_Guard->tail] = value;
+	GC_Value_Guard->tail++;
 }
 
 
@@ -1163,8 +1199,12 @@ static void Propagate_All_GC_Marks(void);
 	GC_Ballast = MEM_BALLAST;
 
 	// Temporary series protected from GC. Holds series pointers.
-	GC_Protect = Make_Series(15, sizeof(REBSER *), MKS_NONE);
-	LABEL_SERIES(GC_Protect, "gc protected");
+	GC_Series_Guard = Make_Series(15, sizeof(REBSER *), MKS_NONE);
+	LABEL_SERIES(GC_Series_Guard, "gc series save");
+
+	// Temporary values protected from GC. Holds value pointers.
+	GC_Value_Guard = Make_Series(15, sizeof(REBVAL *), MKS_NONE);
+	LABEL_SERIES(GC_Value_Guard, "gc value save");
 
 	// The marking queue used in lieu of recursion to ensure that deeply
 	// nested structures don't cause the C stack to overflow.
@@ -1180,6 +1220,7 @@ static void Propagate_All_GC_Marks(void);
 /*
 ***********************************************************************/
 {
-	Free_Series(GC_Protect);
+	Free_Series(GC_Series_Guard);
+	Free_Series(GC_Value_Guard);
 	Free_Series(GC_Mark_Stack);
 }

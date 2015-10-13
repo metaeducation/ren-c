@@ -95,7 +95,8 @@ typedef struct Rebol_State {
 
 	REBINT dsp;
 	struct Reb_Call *dsf;
-	REBCNT hold_tail;	// Tail for GC_Protect
+	REBCNT series_guard_tail;
+	REBCNT value_guard_tail;
 	REBVAL error;
 	REBINT gc_disable;      // Count of GC_Disables at time of Push
 
@@ -195,6 +196,8 @@ typedef struct Rebol_State {
 
 #define DROP_TRAP_SAME_STACKLEVEL_AS_PUSH(s) \
 	do { \
+		assert(GC_Series_Guard->tail == (s)->series_guard_tail); \
+		assert(GC_Value_Guard->tail == (s)->value_guard_tail); \
 		assert(GC_Disabled == (s)->gc_disable); \
 		assert(IS_TRASH(&(s)->error)); \
 		MANUALS_LEAK_CHECK((s)->manuals_tail, "drop trap"); \

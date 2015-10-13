@@ -757,12 +757,55 @@ enum Reb_Fail_Prep {
 #define BUF_OS_STR BUF_FORM
 #endif
 
-// Save/Unsave Macros:
-#define SAVE_SERIES(s) Save_Series(s)
-#define UNSAVE_SERIES(s) \
+
+//
+// GUARDING SERIES (OR VALUE CONTENTS) FROM GARBAGE COLLECTION
+//
+// The garbage collector can run anytime the evaluator runs.  So if a series
+// has had MANAGE_SERIES run on it, the potential exists that any C pointers
+// that are outstanding may "go bad" if the series wasn't reachable from
+// the root set.  This is important to remember any time a pointer is held
+// across a call that runs arbitrary user code.
+//
+// This simple stack approach allows pushing protection for a series, and
+// then can release protection only for the last series pushed.  A parallel
+// pair of macros exists for pushing and popping of guard status for values,
+// to protect any series referred to by the value's contents.  (Note: This can
+// only be used on values that do not live inside of series, because there is
+// no way to guarantee a value in a series will keep its address besides
+// guarding the series AND locking it from resizing.)
+//
+// The guard stack is not meant to accumulate, and must be cleared out before
+// a command ends or a PUSH_TRAP/DROP_TRAP.
+//
+
+#define PUSH_GUARD_SERIES(s) \
+	Guard_Series_Core(s)
+
+#define DROP_GUARD_SERIES(s) \
 	do { \
-		GC_Protect->tail--; \
-		assert(((REBSER **)(GC_Protect->data))[GC_Protect->tail] == s); \
+		GC_Series_Guard->tail--; \
+		assert((s) == cast(REBSER **, GC_Series_Guard->data)[ \
+			GC_Series_Guard->tail \
+		]); \
+	} while (0)
+
+#ifdef NDEBUG
+	#define ASSERT_NOT_IN_SERIES_DATA(p) NOOP
+#else
+	#define ASSERT_NOT_IN_SERIES_DATA(v) \
+		Assert_Not_In_Series_Data_Debug(v)
+#endif
+
+#define PUSH_GUARD_VALUE(v) \
+	Guard_Value_Core(v)
+
+#define DROP_GUARD_VALUE(v) \
+	do { \
+		GC_Value_Guard->tail--; \
+		assert((v) == cast(REBVAL **, GC_Value_Guard->data)[ \
+			GC_Value_Guard->tail \
+		]); \
 	} while (0)
 
 

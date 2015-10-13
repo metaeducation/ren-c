@@ -367,7 +367,7 @@ typedef enum {
 
 		out = Make_Array(VAL_LEN(data));
 		MANAGE_SERIES(out);
-		SAVE_SERIES(out);
+		PUSH_GUARD_SERIES(out);
 	}
 
 	// Get series info:
@@ -390,7 +390,7 @@ typedef enum {
 				SET_INTEGER(D_OUT, 0);
 			}
 			else if (mode == LOOP_MAP_EACH) {
-				UNSAVE_SERIES(out);
+				DROP_GUARD_SERIES(out);
 				Val_Init_Block(D_OUT, out);
 			}
 			return R_OUT;
@@ -587,7 +587,7 @@ skip_hidden: ;
 		return R_OUT;
 
 	case LOOP_MAP_EACH:
-		UNSAVE_SERIES(out);
+		DROP_GUARD_SERIES(out);
 		if (break_with) {
 			// If BREAK is given a /WITH parameter that is not an UNSET!, it
 			// is assumed that you want to override the accumulated mapped

@@ -413,7 +413,7 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 	}
 
 	code = Scan_Source(text, LEN_BYTES(text));
-	SAVE_SERIES(code);
+	PUSH_GUARD_SERIES(code);
 
 	// Bind into lib or user spaces?
 	if (flags) {
@@ -431,7 +431,7 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 	}
 
 	if (Do_Block_Throws(&out, code, 0)) {
-		UNSAVE_SERIES(code);
+		DROP_GUARD_SERIES(code);
 
 		if (
 			IS_WORD(&out) &&
@@ -447,7 +447,7 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 		raise Error_No_Catch_For_Throw(&out);
 	}
 
-	UNSAVE_SERIES(code);
+	DROP_GUARD_SERIES(code);
 
 	DROP_TRAP_SAME_STACKLEVEL_AS_PUSH(&state);
 
@@ -496,9 +496,9 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 	_close(f);
 #endif
 
-	SAVE_SERIES(text);
+	PUSH_GUARD_SERIES(text);
 	do_result = RL_Do_String(exit_status, text->data, flags, result);
-	UNSAVE_SERIES(text);
+	DROP_GUARD_SERIES(text);
 
 	Free_Series(text);
 	return do_result;
