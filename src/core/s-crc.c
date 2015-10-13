@@ -114,14 +114,22 @@ static REBCNT *CRC_Table;
 **
 */	REBINT Compute_CRC(REBYTE *str, REBCNT len)
 /*
+**	Rebol had canonized signed numbers for CRCs, and the signed logic
+**	actually does turn high bytes into negative numbers so they
+**	subtract instead of add *during* the calculation.  Hence the casts
+**	are necessary so long as compatibility with the historical results
+**	of the CHECKSUM native is needed.
+**
 ***********************************************************************/
 {
-	REBYTE	n;
-	REBINT crc = (REBINT)len + (REBINT)((REBYTE)(*str));
+	REBINT crc = cast(REBINT, len) + cast(REBINT, cast(REBYTE, *str));
 
 	for (; len > 0; len--) {
-		n = (REBYTE)((crc >> CRCSHIFTS) ^ (REBYTE)(*str++));
-		crc = MASK_CRC(crc << 8) ^ (REBINT)CRC_Table[n];
+		REBYTE n = cast(REBYTE, (crc >> CRCSHIFTS) ^ cast(REBYTE, *str++));
+
+		// Left shift math must use unsigned to avoid undefined behavior
+		// http://stackoverflow.com/q/3784996/211160
+		crc = cast(REBINT, MASK_CRC(cast(REBCNT, crc) << 8) ^ CRC_Table[n]);
 	}
 
 	return crc;
@@ -137,12 +145,16 @@ static REBCNT *CRC_Table;
 **
 ***********************************************************************/
 {
-	REBYTE	n;
-	REBINT hash = (REBINT)len + (REBINT)((REBYTE)LO_CASE(*str));
+	REBINT hash =
+		cast(REBINT, len) + cast(REBINT, cast(REBYTE, LO_CASE(*str)));
 
 	for (; len > 0; len--) {
-		n = (REBYTE)((hash >> CRCSHIFTS) ^ (REBYTE)LO_CASE(*str++));
-		hash = MASK_CRC(hash << 8) ^ (REBINT)CRC_Table[n];
+		REBYTE n =
+			cast(REBYTE, (hash >> CRCSHIFTS) ^ cast(REBYTE, LO_CASE(*str++)));
+
+		// Left shift math must use unsigned to avoid undefined behavior
+		// http://stackoverflow.com/q/3784996/211160
+		hash = cast(REBINT, MASK_CRC(cast(REBCNT, hash) << 8) ^ CRC_Table[n]);
 	}
 
 	return hash;
@@ -157,22 +169,29 @@ static REBCNT *CRC_Table;
 **
 ***********************************************************************/
 {
-	REBUNI m, n;
-	REBINT hash;
-
-	hash = (REBINT)len + (REBINT)((REBYTE)LO_CASE(*str));
+	REBINT hash =
+		cast(REBINT, len) + cast(REBINT, cast(REBYTE, LO_CASE(*str)));
 
 	for (; len > 0; str++, len--) {
-		n = *str;
-		if (n >= 0x80) {
-			str = Back_Scan_UTF8_Char(&m, str, &len);
-			assert(str); // UTF8 should have already been verified good
+		REBUNI n = *str;
 
-			n = m;
+		if (n >= 0x80) {
+			str = Back_Scan_UTF8_Char(&n, str, &len);
+			assert(str); // UTF8 should have already been verified good
 		}
-		if (n < UNICODE_CASES) n = LO_CASE(n);
-		n = (REBYTE)((hash >> CRCSHIFTS) ^ (REBYTE)n); // drop upper 8 bits
-		hash = MASK_CRC(hash << 8) ^ (REBINT)CRC_Table[n];
+
+		// Optimize `n = cast(REBYTE, LO_CASE(n))` (drop upper 8 bits)
+		// !!! Is this actually faster?
+		if (n < UNICODE_CASES)
+			n = cast(REBYTE, LO_CASE(n));
+		else
+			n = cast(REBYTE, n);
+
+		n = cast(REBYTE, (hash >> CRCSHIFTS) ^ n);
+
+		// Left shift math must use unsigned to avoid undefined behavior
+		// http://stackoverflow.com/q/3784996/211160
+		hash = cast(REBINT, MASK_CRC(cast(REBCNT, hash) << 8) ^ CRC_Table[n]);
 	}
 
 	return hash;
