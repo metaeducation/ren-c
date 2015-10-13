@@ -230,7 +230,7 @@ config-system: func [
 
 	unless result: find-record-unique systems 'id id [
 		fail [
-			{No table entry for} version {found in systems.r}
+			{No table entry for} id {found in systems.r}
 		]
 	]
 
