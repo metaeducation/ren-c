@@ -1,14 +1,15 @@
 ; file: https://raw.githubusercontent.com/codebybrett/reb/master/read-below.reb
-; date: 14-Oct-2015/12:24:17+11:00
+; date: 16-Oct-2015/9:41:42+11:00
 
 Rebol [
 	Title: "read-below"
-	Date: 12-Nov-2013
+	Date: 16-Oct-2015
 	File: %read-below.reb
 	Purpose: {Reads all files and directories below specified directory.}
-	Version: 1.3.1
+	Version: 1.5.0
 	Author: "Brett Handley"
 	History: [
+		1.5.0 [16-Oct-2015 {Add workaround for the fact that Rebol 3 on linux does not return a slash at the end of folder names.}]
 		1.4.0 [13-Oct-2015 {Use FAIL instead of making error directly.}]
 		1.3.1 [12-Nov-2013 {Added read-below-paths} "Brett Handley"]
 		1.3.0 [11-May-2013 {Changed to work with REBOL 3 Alpha.} "Brett Handley"]
@@ -27,7 +28,7 @@ Rebol [
 		support: none
 		license: none
 		comment: {
-Copyright (C) 2004 Brett Handley All rights reserved.
+Copyright (C) 2015 Brett Handley All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
@@ -59,6 +60,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	]
 ]
 
+script-needs [
+	%file-tests.reb
+]
 
 read-below: func [
 	{Read all directories below and including a given file path.}
@@ -94,6 +98,7 @@ read-below: func [
 	set/any 'result if not empty? queue [
 		until [
 			file: first queue
+			if is-dir? file [file: dirize file] ; Support Rebol 3 on linux.
 			queue: remove queue
 			if not find exclude-files file [
 				do-func file
