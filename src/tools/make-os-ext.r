@@ -130,8 +130,6 @@ typedef struct REBOL_Host_Lib ^{
 	REBDEV **devices;
 }
 
-write clipboard:// mold files
-
 file-analysis: load %../../make/data/file-analysis.reb
 
 remove-each [filepath file] file-analysis [
@@ -140,8 +138,6 @@ remove-each [filepath file] file-analysis [
 		find files os-file
 	]
 ]
-
-write clipboard:// mold file-analysis
 
 for-each os-file files [
 	filepath: join %os/ os-file

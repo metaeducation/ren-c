@@ -134,8 +134,6 @@ for-each [filepath file] file-analysis [
 	]
 ]
 
-write clipboard:// mold file-analysis
-
 emit-out {
 #ifdef __cplusplus
 ^}
