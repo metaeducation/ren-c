@@ -141,13 +141,21 @@ remove-each [filepath file] file-analysis [
 		find files os-file
 	]
 ]
+
+if empty? file-analysis [
+	print {No prototypes to process!}
+	quit/return 1
+]
 
 for-each os-file files [
 
 	filepath: join %os/ os-file
+	print reform [{Process:} os-file]
+
 	file: select file-analysis filepath
 	if none? file [
-		fail [{Expected file analysis for} filepath]
+		print reform [{Expected file analysis for} filepath]
+		quit
 	]
 
 	for-each fn file/functions [

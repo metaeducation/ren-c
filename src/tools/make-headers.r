@@ -112,6 +112,11 @@ do
 
 remove-each [filepath file] file-analysis [not equal? %core/ first split-path filepath]
 
+if empty? file-analysis [
+	print {No prototypes to process!}
+	quit/return 1
+]
+
 for-each [filepath file] file-analysis [
 
 	remove-each fn file/functions [

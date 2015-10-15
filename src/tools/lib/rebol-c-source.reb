@@ -496,7 +496,11 @@ rebol-c-source: context [
 		{Loads function specs from C source files.}
 	] [
 
+		log [scan-root (src-folder)]
+
 		file-list: list/c-file
+
+		log [scan-file-count (length file-list)]
 
 		cached/files: make block! 2 * length file-list
 		cached/functions: make block! 300
