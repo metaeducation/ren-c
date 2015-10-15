@@ -13,6 +13,8 @@ REBOL [
 	Needs: 2.100.100
 ]
 
+if error? set/any 'script-error try [
+
 verbose: false
 
 version: load %../boot/version.r
@@ -131,6 +133,7 @@ typedef struct REBOL_Host_Lib ^{
 }
 
 file-analysis: load %../../make/data/file-analysis.reb
+assert [file-analysis]
 
 remove-each [filepath file] file-analysis [
 	not all [
@@ -140,8 +143,14 @@ remove-each [filepath file] file-analysis [
 ]
 
 for-each os-file files [
+
 	filepath: join %os/ os-file
-	for-each fn file-analysis/:filepath/functions [
+	file: select file-analysis filepath
+	if none? file [
+		fail [{Expected file analysis for} filepath]
+	]
+
+	for-each fn file/functions [
 		emit-proto fn
 	]
 ]
@@ -499,3 +508,10 @@ write %../include/host-table.inc out
 
 ;ask "Done"
 print "   "
+
+] [
+
+	?? script-error
+
+	quit/return 1
+]

@@ -169,7 +169,7 @@ env: context [
 			]
 
 			file: clean-path script/file
-			log [run (search-file)]
+			log [run (file)]
 			do script/text
 			def: compose [
 				file (script/file)

@@ -13,6 +13,8 @@ REBOL [
 	Needs: 2.100.100
 ]
 
+if error? set/any 'script-error try [
+
 do %common.r
 
 print "------ Building headers"
@@ -255,3 +257,10 @@ if any [has-duplicates verbose] [
 ]
 
 print "   "
+
+] [
+
+	?? script-error
+
+	quit/return 1
+]
