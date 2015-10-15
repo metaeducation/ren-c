@@ -27,6 +27,11 @@ data-path: repo-path/make/(%data/)
 
 make-dir data-path
 
+if not value? 'apropos [
+	print {Apropos is not defined!}
+	quit/return 1
+]
+
 apropos rebol-c-source [
 	src-folder: repo-path/(%src/)
 	log: :logfn
