@@ -138,6 +138,7 @@ all:
 	$(MAKE) host$(BIN_SUFFIX)
 
 prep: $(REBOL_TOOL)
+	$(REBOL) $T/c-source.reb
 	$(REBOL) $T/make-headers.r
 	$(REBOL) $T/make-boot.r $(OS_ID)
 	$(REBOL) $T/make-host-init.r

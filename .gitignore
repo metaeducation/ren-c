@@ -38,6 +38,7 @@
 make/makefile
 make/r3*
 make/objs/
+make/data/
 
 # It can be convenient if you are doing multiple builds of the same Rebol
 # codebase for different platforms to put them in separate make
@@ -47,6 +48,7 @@ make-*
 
 src/boot/boot-code.r
 src/boot/host-init.r
+src/boot/tmp-*
 
 src/core/b-boot.c
 
