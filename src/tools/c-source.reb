@@ -14,6 +14,8 @@ REBOL [
 do %r2r3-future.r
 do %lib/env.reb
 
+env/log: get in env 'logfn
+
 script-needs [
 	%apropos.reb
 	%rebol-c-source.reb
