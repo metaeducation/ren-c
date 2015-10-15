@@ -29,6 +29,8 @@ make-dir data-path
 
 if not value? 'apropos [
 	print {Apropos is not defined!}
+	print {Apropos as retrieved:}
+	print mold env/retrieve %apropos.reb
 	quit/return 1
 ]
 
