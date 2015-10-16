@@ -454,7 +454,7 @@ rebol-c-source: context [
 				fail {Configuration required.}
 			]
 
-			files: read-below src-folder
+			files: read-below/trace src-folder
 			remove-each file files [not parse/all file [thru {.c}]]
 			sort files
 

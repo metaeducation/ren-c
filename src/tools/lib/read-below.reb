@@ -1,14 +1,15 @@
 ; file: https://raw.githubusercontent.com/codebybrett/reb/master/read-below.reb
-; date: 16-Oct-2015/12:41:54+11:00
+; date: 16-Oct-2015/16:02:57+11:00
 
 Rebol [
 	Title: "read-below"
-	Date: 13-Oct-2015
+	Date: 16-Oct-2015
 	File: %read-below.reb
 	Purpose: {Reads all files and directories below specified directory.}
-	Version: 1.4.0
+	Version: 1.5.0
 	Author: "Brett Handley"
 	History: [
+		1.5.0 [16-Oct-2015 {Added /trace and dirize workaround for old rebols.}]
 		1.4.0 [13-Oct-2015 {Use FAIL instead of making error directly.}]
 		1.3.1 [12-Nov-2013 {Added read-below-paths} "Brett Handley"]
 		1.3.0 [11-May-2013 {Changed to work with REBOL 3 Alpha.} "Brett Handley"]
@@ -59,6 +60,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	]
 ]
 
+script-needs [
+	%file-tests.reb
+]
+
 read-below: func [
 	{Read all directories below and including a given file path.}
 	path [file! url!] "Must be a directory (ending in a trailing slash)."
@@ -66,9 +71,15 @@ read-below: func [
 	/foreach "Evaluates a block for each file or directory found."
 	'word [word!] "Word set to each file or directory."
 	body [block!] "Block to evaluate for each file or directory."
-	/local queue file-list result file do-func *foreach
+	/trace {Logs each folder read.}
+	/local queue file-list result file do-func *foreach files folder log
 ] [
+
 	*foreach: get bind 'foreach 'do
+
+	log: if trace [
+		func [message] [print mold compose/only message]
+	]
 
 	if #"/" <> last path [
 		fail "read-below expected path to have trailing slash."
@@ -88,16 +99,20 @@ read-below: func [
 
 	; Initialise queue
 	queue: read path
+	log [folder (path) (length queue)]
 
 	; Process queue
 	set/any 'result if not empty? queue [
 		until [
 			file: first queue
 			queue: remove queue
+			if is-dir? file [file: dirize file]
 			if not find exclude-files file [
 				do-func file
 				if #"/" = last file [
-					*foreach f read join path file [insert queue join file f]
+					files: read folder: join path file
+					log [folder (folder) (length files)]
+					*foreach f files [insert queue join file f]
 					queue: head queue
 				]
 			]
