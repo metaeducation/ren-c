@@ -455,7 +455,7 @@ rebol-c-source: context [
 			]
 
 			files: read-below src-folder
-			remove-each file files [not parse/all file [thru %.c]]
+			remove-each file files [not parse/all file [thru {.c}]]
 			sort files
 
 			files

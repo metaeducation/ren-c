@@ -1,5 +1,5 @@
 ; file: https://raw.githubusercontent.com/codebybrett/reb/master/env.reb
-; date: 14-Oct-2015/18:38:48+11:00
+; date: 16-Oct-2015/12:41:51+11:00
 
 REBOL [
 	Title: "Environment"
@@ -64,7 +64,7 @@ env: context [
 		] [
 
 			files: read base
-			remove-each file files [not parse/all file [thru %.reb | thru %.r]]
+			remove-each file files [not parse/all file [thru ".reb" | thru ".r"]]
 
 			foreach file files [
 				either text: attempt [read location: master/:file][
