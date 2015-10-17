@@ -62,6 +62,21 @@ rebol-c-source: context [
 	file-warnings: on
 	; True or not.
 
+	fixed-source-paths: [
+		%core/ 
+		%os/ 
+		%os/generic/ 
+		%os/linux/ 
+		%os/posix/ 
+		%os/stub/ 
+		%os/windows/
+	]
+	; Set to none to automatically search subfolders below src-folder.
+	; Or set to a block of relative subfolder paths that
+	; contain C source files.
+	; Needed because some old broken rebols do not return a trailing
+	; slash for subfolders on read of a folder.
+
 	; --- End config.
 
 	cached: context [
@@ -454,7 +469,19 @@ rebol-c-source: context [
 				fail {Configuration required.}
 			]
 
-			files: read-below/trace src-folder
+			either ?? fixed-source-paths [
+				files: make block! []
+				foreach path fixed-source-paths [
+					foreach file read join src-folder path [
+						append files join path file
+					]
+				]
+			][
+				assert [#"/" = last src-folder] ; Correctly specified?
+				assert ['dir = exists? src-folder] ; Exists and rebol not broken?
+				files: read-below src-folder
+			]	
+
 			remove-each file files [not parse/all file [thru {.c}]]
 			sort files
 
