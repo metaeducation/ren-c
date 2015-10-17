@@ -34,6 +34,7 @@ either empty? folders-of any [
 ] [
 
 	; Workaround
+	print {Using is-dir? workaround.}
 
 	is-dir?: funct [
 		{Return true if target is a directory folder.}

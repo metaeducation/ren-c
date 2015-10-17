@@ -1,5 +1,5 @@
 ; file: https://raw.githubusercontent.com/codebybrett/reb/master/read-below.reb
-; date: 16-Oct-2015/16:02:57+11:00
+; date: 17-Oct-2015/15:24:42+11:00
 
 Rebol [
 	Title: "read-below"
@@ -66,6 +66,7 @@ script-needs [
 
 read-below: func [
 	{Read all directories below and including a given file path.}
+	[catch throw]
 	path [file! url!] "Must be a directory (ending in a trailing slash)."
 	/exclude exclude-files [file! url! block!] "Directories/files to be excluded from recursion/result."
 	/foreach "Evaluates a block for each file or directory found."
@@ -99,7 +100,7 @@ read-below: func [
 
 	; Initialise queue
 	queue: read path
-	log [folder (path) (length queue)]
+	log [folder (path) (new-line/all queue true)]
 
 	; Process queue
 	set/any 'result if not empty? queue [
@@ -111,7 +112,7 @@ read-below: func [
 				do-func file
 				if #"/" = last file [
 					files: read folder: join path file
-					log [folder (folder) (length files)]
+					log [folder (folder) (new-line/all files true)]
 					*foreach f files [insert queue join file f]
 					queue: head queue
 				]
