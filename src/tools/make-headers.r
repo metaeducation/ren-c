@@ -80,14 +80,11 @@ func-header: [
 	;-- Scan for function header box:
 	"^/**" to newline
 	"^/*/" any [#" " | #"^-"]
-	copy proto to newline (emit-proto proto)
-	newline
+	copy proto to newline (emit-proto proto) newline
 	opt [
 		"/*" ; must be in func header section, not file banner
 		any [
-			thru "**"
-			[#" " | #"^-"]
-			copy line thru newline
+			thru "**" [#" " | #"^-"] copy line thru newline
 		]
 		thru "*/"
 	]
