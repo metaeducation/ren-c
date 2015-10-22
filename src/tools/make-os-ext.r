@@ -51,7 +51,7 @@ rule: ['+ set scannable [word! | path!] (append files to-file scannable) | skip]
 parse file-base/os [some rule]
 parse os-specific-objs [some rule]
 
-cnt: 0
+proto-count: 0
 
 host-lib-externs: make string! 20000
 
@@ -79,70 +79,69 @@ count: func [s c /local n] [
 	append out ")"
 ]
 
+emit-proto: func [] [
+	if all [
+		proto
+		trim proto
+		not find proto "static"
+		fn: find proto "OS_"
+
+		;-- !!! All functions *should* start with OS_, not just
+		;-- have OS_ somewhere in it!  At time of writing, Atronix
+		;-- has added As_OS_Str and when that is addressed in a
+		;-- later commit to OS_STR_FROM_SERIES (or otherwise) this
+		;-- backwards search can be removed
+		fn: next find/reverse fn space
+		fn: either #"*" = first fn [next fn] [fn]
+
+		find proto #"("
+	] [
+		; !!! We know 'the-file', but it's kind of noise to annotate
+		append host-lib-externs reduce [
+			"extern " proto ";" newline
+		]
+		append checksum-source proto
+		p1: copy/part proto fn
+		p3: find fn #"("
+		p2: copy/part fn p3
+		p2u: uppercase copy p2
+		p2l: lowercase copy p2
+		append host-lib-instance reduce [tab p2 "," newline]
+		append host-lib-struct reduce [
+			tab p1 "(*" p2l ")" p3 ";" newline
+		]
+		args: count p3 #","
+		m: tail rebol-lib-macros
+		append rebol-lib-macros reduce [
+			{#define} space p2u args space {Host_Lib->} p2l args newline
+		]
+		append host-lib-macros reduce [
+			"#define" space p2u args space p2 args newline
+		]
+
+		proto-count: proto-count + 1
+	]
+]
+
+func-header: [
+	thru "/***" 10 100 "*" newline
+	thru "*/"
+	copy proto to newline (emit-proto) newline
+	opt [
+		"/*" ; must be in func header section, not file banner
+		any [
+			thru "**" [#" " | #"^-"] copy line thru newline
+		]
+		thru "*/"
+	]
+]
+
 process: func [file] [
 	if verbose [?? file]
 	data: read the-file: file
 	data: to-string data ; R3
 	parse data [
-		any [
-			thru "/***" 10 100 "*" newline
-			thru "*/"
-			copy spec to newline
-			(if all [
-				spec
-				trim spec
-				not find spec "static"
-				fn: find spec "OS_"
-
-				;-- !!! All functions *should* start with OS_, not just
-				;-- have OS_ somewhere in it!  At time of writing, Atronix
-				;-- has added As_OS_Str and when that is addressed in a
-				;-- later commit to OS_STR_FROM_SERIES (or otherwise) this
-				;-- backwards search can be removed
-				fn: next find/reverse fn space
-				fn: either #"*" = first fn [next fn] [fn]
-
-				find spec #"("
-			][
-				; !!! We know 'the-file', but it's kind of noise to annotate
-				append host-lib-externs reduce [
-					"extern " spec ";" newline
-				]
-				append checksum-source spec
-				p1: copy/part spec fn
-				p3: find fn #"("
-				p2: copy/part fn p3
-				p2u: uppercase copy p2
-				p2l: lowercase copy p2
-				append host-lib-instance reduce [tab p2 "," newline]
-				append host-lib-struct reduce [
-					tab p1 "(*" p2l ")" p3 ";" newline
-				]
-				args: count p3 #","
-				m: tail rebol-lib-macros
-				append rebol-lib-macros reduce [
-					{#define} space p2u args space {Host_Lib->} p2l args newline
-				]
-				append host-lib-macros reduce [
-					"#define" space p2u args space p2 args newline
-				]
-
-				cnt: cnt + 1
-			]
-			)
-			newline
-			[
-				"/*" ; must be in func header section, not file banner
-				any [
-					thru "**"
-					[#" " | #"^-"]
-					copy line thru newline
-				]
-				thru "*/"
-				|
-				none
-			]
-		]
+		any func-header
 	]
 ]
 
@@ -175,7 +174,7 @@ newline
 
 {#define HOST_LIB_VER} space lib-version newline
 {#define HOST_LIB_SUM} space checksum/tcp to-binary checksum-source newline
-{#define HOST_LIB_SIZE} space cnt newline
+{#define HOST_LIB_SIZE} space proto-count newline
 
 {
 
