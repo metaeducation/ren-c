@@ -70,63 +70,73 @@ checksum-source: make string! 1000
 
 count: func [s c /local n] [
 	if find ["()" "(void)"] s [return "()"]
-	out: copy "(a"
+	output-buffer: copy "(a"
 	n: 1
 	while [s: find/tail s c][
-		repend out [#"," #"a" + n]
+		repend output-buffer [#"," #"a" + n]
 		n: n + 1
 	]
-	append out ")"
+	append output-buffer ")"
 ]
 
-emit-proto: func [] [
+emit-proto: funct/extern [
+	proto
+] [
+
 	if all [
 		proto
 		trim proto
 		not find proto "static"
-		fn: find proto "OS_"
+
+		pos.id: find proto "OS_"
 
 		;-- !!! All functions *should* start with OS_, not just
 		;-- have OS_ somewhere in it!  At time of writing, Atronix
 		;-- has added As_OS_Str and when that is addressed in a
 		;-- later commit to OS_STR_FROM_SERIES (or otherwise) this
 		;-- backwards search can be removed
-		fn: next find/reverse fn space
-		fn: either #"*" = first fn [next fn] [fn]
+		pos.id: next find/reverse pos.id space
+		pos.id: either #"*" = first pos.id [next pos.id] [pos.id]
 
 		find proto #"("
 	] [
+
 		; !!! We know 'the-file', but it's kind of noise to annotate
 		append host-lib-externs reduce [
 			"extern " proto ";" newline
 		]
+
 		append checksum-source proto
-		p1: copy/part proto fn
-		p3: find fn #"("
-		p2: copy/part fn p3
-		p2u: uppercase copy p2
-		p2l: lowercase copy p2
-		append host-lib-instance reduce [tab p2 "," newline]
+
+		fn.declarations: copy/part proto pos.id
+		pos.lparen: find pos.id #"("
+		fn.name: copy/part pos.id pos.lparen
+		fn.name.upper: uppercase copy fn.name
+		fn.name.lower: lowercase copy fn.name
+
+		append host-lib-instance reduce [tab fn.name "," newline]
+
 		append host-lib-struct reduce [
-			tab p1 "(*" p2l ")" p3 ";" newline
+			tab fn.declarations "(*" fn.name.lower ")" pos.lparen ";" newline
 		]
-		args: count p3 #","
-		m: tail rebol-lib-macros
+
+		args: count pos.lparen #","
 		append rebol-lib-macros reduce [
-			{#define} space p2u args space {Host_Lib->} p2l args newline
+			{#define} space fn.name.upper args space {Host_Lib->} fn.name.lower args newline
 		]
+
 		append host-lib-macros reduce [
-			"#define" space p2u args space p2 args newline
+			"#define" space fn.name.upper args space fn.name args newline
 		]
 
 		proto-count: proto-count + 1
 	]
-]
+][proto-count]
 
 func-header: [
 	thru "/***" 10 100 "*" newline
 	thru "*/"
-	copy proto to newline (emit-proto) newline
+	copy proto to newline (emit-proto proto) newline
 	opt [
 		"/*" ; must be in func header section, not file banner
 		any [
@@ -166,7 +176,7 @@ append host-lib-struct "} REBOL_HOST_LIB;"
 ; Do a reduce which produces the output string we will write to host-lib.h
 ;
 
-out: reduce [
+output-buffer: reduce [
 
 form-header/gen "Host Access Library" %host-lib.h %make-os-ext.r
 
@@ -459,12 +469,12 @@ newline newline (rebol-lib-macros)
 }
 ]
 
-;print out ;halt
+;print output-buffer ;halt
 ;print ['checksum checksum/tcp checksum-source]
-write %../include/host-lib.h out
+write %../include/host-lib.h output-buffer
 
 
-out: rejoin [
+output-buffer: rejoin [
 form-header/gen "Host Table Definition" %host-table.inc %make-os-ext.r
 
 {
@@ -508,7 +518,7 @@ newline
 "^};" newline
 ]
 
-write %../include/host-table.inc out
+write %../include/host-table.inc output-buffer
 
 ;ask "Done"
 print "   "
