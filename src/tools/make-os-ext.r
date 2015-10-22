@@ -13,6 +13,8 @@ REBOL [
 	Needs: 2.100.100
 ]
 
+if error? set/any 'script-error try [
+
 verbose: false
 
 version: load %../boot/version.r
@@ -28,8 +30,6 @@ config: config-system/guess system/options/args
 do %form-header.r
 
 file-base: make object! load %file-base.r
-
-change-dir %../os/
 
 ; Collect OS-specific host files:
 unless os-specific-objs: select file-base to word! join "os-" config/os-base [
@@ -51,7 +51,7 @@ rule: ['+ set scannable [word! | path!] (append files to-file scannable) | skip]
 parse file-base/os [some rule]
 parse os-specific-objs [some rule]
 
-cnt: 0
+proto-count: 0
 
 host-lib-externs: make string! 20000
 
@@ -72,77 +72,56 @@ count: func [s c /local n] [
 	if find ["()" "(void)"] s [return "()"]
 	out: copy "(a"
 	n: 1
-	while [s: find/tail s c][
+	while [s: find/tail s c] [
 		repend out [#"," #"a" + n]
 		n: n + 1
 	]
 	append out ")"
 ]
 
-process: func [file] [
-	if verbose [?? file]
-	data: read the-file: file
-	data: to-string data ; R3
-	parse data [
-		any [
-			thru "/***" 10 100 "*" newline
-			thru "*/"
-			copy spec to newline
-			(if all [
-				spec
-				trim spec
-				not find spec "static"
-				fn: find spec "OS_"
+emit-proto: func [fn /local proto] [
 
-				;-- !!! All functions *should* start with OS_, not just
-				;-- have OS_ somewhere in it!  At time of writing, Atronix
-				;-- has added As_OS_Str and when that is addressed in a
-				;-- later commit to OS_STR_FROM_SERIES (or otherwise) this
-				;-- backwards search can be removed
-				fn: next find/reverse fn space
-				fn: either #"*" = first fn [next fn] [fn]
+	proto: copy fn/proto
 
-				find spec #"("
-			][
-				; !!! We know 'the-file', but it's kind of noise to annotate
-				append host-lib-externs reduce [
-					"extern " spec ";" newline
-				]
-				append checksum-source spec
-				p1: copy/part spec fn
-				p3: find fn #"("
-				p2: copy/part fn p3
-				p2u: uppercase copy p2
-				p2l: lowercase copy p2
-				append host-lib-instance reduce [tab p2 "," newline]
-				append host-lib-struct reduce [
-					tab p1 "(*" p2l ")" p3 ";" newline
-				]
-				args: count p3 #","
-				m: tail rebol-lib-macros
-				append rebol-lib-macros reduce [
-					{#define} space p2u args space {Host_Lib->} p2l args newline
-				]
-				append host-lib-macros reduce [
-					"#define" space p2u args space p2 args newline
-				]
+	if all [
+		trim proto
+		not find proto "static"
+		fn: find proto "OS_"
 
-				cnt: cnt + 1
-			]
-			)
-			newline
-			[
-				"/*" ; must be in func header section, not file banner
-				any [
-					thru "**"
-					[#" " | #"^-"]
-					copy line thru newline
-				]
-				thru "*/"
-				|
-				none
-			]
+		;-- !!! All functions *should* start with OS_, not just
+		;-- have OS_ somewhere in it!  At time of writing, Atronix
+		;-- has added As_OS_Str and when that is addressed in a
+		;-- later commit to OS_STR_FROM_SERIES (or otherwise) this
+		;-- backwards search can be removed
+		fn: next find/reverse fn space
+		fn: either #"*" = first fn [next fn] [fn]
+
+		find proto #"("
+	] [
+		; !!! We know 'the-file', but it's kind of noise to annotate
+		append host-lib-externs reduce [
+			"extern " proto ";" newline
 		]
+		append checksum-source proto
+		p1: copy/part proto fn
+		p3: find fn #"("
+		p2: copy/part fn p3
+		p2u: uppercase copy p2
+		p2l: lowercase copy p2
+		append host-lib-instance reduce [tab p2 "," newline]
+		append host-lib-struct reduce [
+			tab p1 "(*" p2l ")" p3 ";" newline
+		]
+		args: count p3 #","
+		m: tail rebol-lib-macros
+		append rebol-lib-macros reduce [
+			{#define} space p2u args space {Host_Lib->} p2l args newline
+		]
+		append host-lib-macros reduce [
+			"#define" space p2u args space p2 args newline
+		]
+
+		proto-count: proto-count + 1
 	]
 ]
 
@@ -153,11 +132,35 @@ typedef struct REBOL_Host_Lib ^{
 	REBDEV **devices;
 }
 
-for-each file files [
-	print ["scanning" file]
-	if all [
-		%.c = suffix? file
-	][process file]
+file-analysis: load %../../make/data/file-analysis.reb
+assert [file-analysis]
+
+remove-each [filepath file] file-analysis [
+	not all [
+		parse filepath ["os/" copy os-file to end]
+		find files os-file
+	]
+]
+
+if empty? file-analysis [
+	print {No prototypes to process!}
+	quit/return 1
+]
+
+for-each os-file files [
+
+	filepath: join %os/ os-file
+	print reform [{Process:} os-file]
+
+	file: select file-analysis filepath
+	if none? file [
+		print reform [{Expected file analysis for} filepath]
+		quit
+	]
+
+	for-each fn file/functions [
+		emit-proto fn
+	]
 ]
 
 append host-lib-struct "} REBOL_HOST_LIB;"
@@ -169,15 +172,15 @@ append host-lib-struct "} REBOL_HOST_LIB;"
 
 out: reduce [
 
-form-header/gen "Host Access Library" %host-lib.h %make-os-ext.r
+	form-header/gen "Host Access Library" %host-lib.h %make-os-ext.r
 
-newline
+	newline
 
-{#define HOST_LIB_VER} space lib-version newline
-{#define HOST_LIB_SUM} space checksum/tcp to-binary checksum-source newline
-{#define HOST_LIB_SIZE} space cnt newline
+	{#define HOST_LIB_VER} space lib-version newline
+	{#define HOST_LIB_SUM} space checksum/tcp to-binary checksum-source newline
+	{#define HOST_LIB_SIZE} space proto-count newline
 
-{
+	{
 
 // Function signature typically used to provide the callback for
 // starting a thread, e.g. with beginthread()
@@ -237,9 +240,9 @@ extern REBDEV *Devices[];
 ***********************************************************************/
 }
 
-(host-lib-struct) newline
+	(host-lib-struct) newline
 
-{
+	{
 extern REBOL_HOST_LIB *Host_Lib;
 
 
@@ -248,20 +251,20 @@ extern REBOL_HOST_LIB *Host_Lib;
 #ifndef REB_DEF
 }
 
-newline (host-lib-externs) newline
+	newline (host-lib-externs) newline
 
-newline (host-lib-macros) newline
+	newline (host-lib-macros) newline
 
-{
+	{
 #else //REB_DEF
 
 //** Included by REBOL ********************************************
 
 }
 
-newline newline (rebol-lib-macros)
+	newline newline (rebol-lib-macros)
 
-{
+	{
 #endif //REB_DEF
 
 
@@ -466,9 +469,9 @@ write %../include/host-lib.h out
 
 
 out: rejoin [
-form-header/gen "Host Table Definition" %host-table.inc %make-os-ext.r
+	form-header/gen "Host Table Definition" %host-table.inc %make-os-ext.r
 
-{
+	{
 /***********************************************************************
 **
 **	HOST LIB TABLE DEFINITION
@@ -494,22 +497,29 @@ form-header/gen "Host Table Definition" %host-table.inc %make-os-ext.r
 
 }
 
-newline
+	newline
 
-"REBOL_HOST_LIB Host_Lib_Init = {"
+	"REBOL_HOST_LIB Host_Lib_Init = {"
 
-{
+	{
 	HOST_LIB_SIZE,
 	(HOST_LIB_VER << 16) + HOST_LIB_SUM,
 	(REBDEV**)&Devices,
 }
 
-(host-lib-instance)
+	(host-lib-instance)
 
-"^};" newline
+	"^};" newline
 ]
 
 write %../include/host-table.inc out
 
 ;ask "Done"
 print "   "
+
+] [
+
+	?? script-error
+
+	quit/return 1
+]
