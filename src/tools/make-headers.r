@@ -33,6 +33,18 @@ emit-rlib: func [d] [append repend rlib d newline]
 emit-header: func [t f] [emit-out form-header/gen t f %make-headers]
 
 emit-proto: func [proto] [
+
+	if find proto "()" [
+		print [
+			proto
+			newline
+			{C-Style void arguments should be foo(void) and not foo()}
+			newline
+			http://stackoverflow.com/questions/693788/c-void-arguments
+		]
+		fail "C++ no-arg prototype used instead of C style"
+	]
+
 	;?? proto
 	assert [proto]
 	if all [
@@ -68,22 +80,9 @@ func-header: [
 	;-- Scan for function header box:
 	"^/**" to newline
 	"^/*/" any [#" " | #"^-"]
-	copy proto to newline (
-		if find proto "()" [
-			print [
-				proto
-				newline
-				{C-Style void arguments should be foo(void) and not foo()}
-				newline
-				http://stackoverflow.com/questions/693788/c-void-arguments
-			]
-			fail "C++ no-arg prototype used instead of C style"
-		]
-
-		emit-proto proto
-	)
+	copy proto to newline (emit-proto proto)
 	newline
-	[
+	opt [
 		"/*" ; must be in func header section, not file banner
 		any [
 			thru "**"
@@ -91,8 +90,13 @@ func-header: [
 			copy line thru newline
 		]
 		thru "*/"
-		|
-		none
+	]
+]
+
+segment: [
+	thru "/******" to newline [
+		func-header
+		| thru newline
 	]
 ]
 
@@ -100,14 +104,7 @@ process: func [file] [
 	if verbose [?? file]
 	data: read the-file: file
 	if r3 [data: deline to-string data]
-	parse data [
-		any [
-			thru "/******" to newline
-			[
-				func-header | thru newline
-			]
-		]
-	]
+	parse data [any segment]
 ]
 
 ;-------------------------------------------------------------------------
