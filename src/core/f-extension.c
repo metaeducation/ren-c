@@ -73,7 +73,7 @@ REBCNT Ext_Next = 0;
 
 /***********************************************************************
 **
-*/	RXIARG Value_To_RXI(const REBVAL *val)
+x*/	RXIARG Value_To_RXI(const REBVAL *val)
 /*
 ***********************************************************************/
 {
@@ -117,7 +117,7 @@ REBCNT Ext_Next = 0;
 
 /***********************************************************************
 **
-*/	void RXI_To_Value(REBVAL *val, RXIARG arg, REBCNT type)
+x*/	void RXI_To_Value(REBVAL *val, RXIARG arg, REBCNT type)
 /*
 ***********************************************************************/
 {
@@ -160,7 +160,7 @@ REBCNT Ext_Next = 0;
 
 /***********************************************************************
 **
-*/	void RXI_To_Block(RXIFRM *frm, REBVAL *out) {
+x*/	void RXI_To_Block(RXIFRM *frm, REBVAL *out) {
 /*
 ***********************************************************************/
 	REBCNT n;
@@ -179,7 +179,7 @@ REBCNT Ext_Next = 0;
 
 /***********************************************************************
 **
-*/	REBRXT Do_Callback(REBSER *obj, u32 name, RXIARG *rxis, RXIARG *result)
+x*/	REBRXT Do_Callback(REBSER *obj, u32 name, RXIARG *rxis, RXIARG *result)
 /*
 **		Given an object and a word id, call a REBOL function.
 **		The arguments are converted from extension format directly

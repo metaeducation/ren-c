@@ -38,7 +38,7 @@
 
 /***********************************************************************
 **
-*/	REBOL_API REBINT Reb_Dialect(REBINT dialect, REBSER *block, REBCNT *index, REBSER **arglist)
+x*/	REBOL_API REBINT Reb_Dialect(REBINT dialect, REBSER *block, REBCNT *index, REBSER **arglist)
 /*
 **		Process a standard dialect.
 **
@@ -74,7 +74,7 @@
 
 /***********************************************************************
 **
-*/	REBOL_API void Reb_Set_Var(void *var, void *value)
+x*/	REBOL_API void Reb_Set_Var(void *var, void *value)
 /*
 ***********************************************************************/
 {
@@ -84,7 +84,7 @@
 
 /***********************************************************************
 **
-*/	REBOL_API REBINT Reb_Map_Words(REBYTE **names, REBCNT *symbols)
+x*/	REBOL_API REBINT Reb_Map_Words(REBYTE **names, REBCNT *symbols)
 /*
 **		Given null terminated list of word names, supply the
 **		symbol values for those words. Return length.
@@ -105,7 +105,7 @@
 
 /***********************************************************************
 **
-*/	REBOL_API REBINT Reb_Find_Word(REBCNT sym, REBCNT *symbols, REBINT limit)
+x*/	REBOL_API REBINT Reb_Find_Word(REBCNT sym, REBCNT *symbols, REBINT limit)
 /*
 **		Search a symbol list for a word, and return the index for it.
 **		Return -1 if not found.  Limit can be used to control how many
