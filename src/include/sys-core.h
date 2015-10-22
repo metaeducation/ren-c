@@ -396,10 +396,10 @@ enum encoding_opts {
 **		return value...because the function call would never return!
 **		See PUSH_TRAP() and Error() for more information.
 **
-**	Do_Block_Throws
+**	Do_At_Throws
 **
-**		Do_Block_Throws behaves "as if" it is performing iterated
-**		calls to Do_Next_May_Throw until the end of block is reached.
+**		Do_At_Throws behaves "as if" it is performing iterated
+**		calls to Do_Next_May_Throw until the end of series is reached.
 **		(Under the hood it is actually more efficient than doing so.)
 **		It is named the way it is because it's expected to usually be
 **		used in an 'if' statement.  It cues you into realizing
@@ -417,13 +417,25 @@ enum encoding_opts {
 **		as a function.  So they are named w/Leading_Caps_Underscores
 **		to convey that they abide by this contract.
 **
+**	DO_ARRAY_THROWS
+**
+**		It is very frequent that one has a GROUP! or a BLOCK! at an
+**		index which already indicates where you want to execute from.
+**		This is like Do_At_Throws which uses that implicit position
+**		for the "AT".  Because it repeats an argument, it is all
+**		caps as a warning about calling with evaluated parameters.
+**
 ***********************************************************************/
 
 #define Do_Next_May_Throw(out,series,index) \
 	Do_Core((out), TRUE, (series), (index), TRUE)
 
-#define Do_Block_Throws(out,series,index) \
+#define Do_At_Throws(out,series,index) \
 	(THROWN_FLAG == Do_Core((out), FALSE, (series), (index), TRUE))
+
+#define DO_ARRAY_THROWS(out,array) \
+	(THROWN_FLAG == Do_Core( \
+		(out), FALSE, VAL_SERIES(array), VAL_INDEX(array), TRUE))
 
 
 /***********************************************************************

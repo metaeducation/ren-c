@@ -1307,7 +1307,7 @@
 		return NULL; // is this a case where we should *always* trap?
 	}
 
-	if (trap) raise Error_1(RE_NOT_DEFINED, word);
+	if (trap) raise Error_1(RE_NOT_BOUND, word);
 	return NULL;
 }
 
@@ -1382,7 +1382,7 @@
 		return;
 	}
 
-	raise Error_1(RE_NOT_DEFINED, word);
+	raise Error_1(RE_NOT_BOUND, word);
 }
 
 
@@ -1400,7 +1400,7 @@
 
 	assert(!THROWN(value));
 
-	if (!HAS_FRAME(word)) raise Error_1(RE_NOT_DEFINED, word);
+	if (!HAS_FRAME(word)) raise Error_1(RE_NOT_BOUND, word);
 
 	assert(VAL_WORD_FRAME(word));
 //  Print("Set %s to %s [frame: %x idx: %d]", Get_Word_Name(word), Get_Type_Name(value), VAL_WORD_FRAME(word), VAL_WORD_INDEX(word));
@@ -1426,7 +1426,7 @@
 	call = DSF;
 	while (VAL_WORD_FRAME(word) != VAL_WORD_FRAME(DSF_LABEL(call))) {
 		call = PRIOR_DSF(call);
-		if (!call) raise Error_1(RE_NOT_DEFINED, word); // change error !!!
+		if (!call) raise Error_1(RE_NO_RELATIVE, word);
 	}
 
 	assert(

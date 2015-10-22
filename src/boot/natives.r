@@ -30,12 +30,12 @@ also: native [
 ]
 
 all: native [
-	{Shortcut AND. Evaluates and returns at the first FALSE or NONE.}
+	{Shortcut AND. Returns NONE vs. TRUE (or last evaluation if it was TRUE?)}
 	block [block!] {Block of expressions}
 ]
 
 any: native [
-	{Shortcut OR. Evaluates and returns the first value that is not FALSE or NONE.}
+	{Shortcut OR, ignores unsets. Returns the first TRUE? result, or NONE.}
 	block [block!] {Block of expressions}
 ]
 
@@ -61,7 +61,7 @@ break: native [
 	{Breaks out of a loop, while, until, repeat, for-each, etc.}
 	/with {Forces the loop function to return a value}
 	value [any-value!]
-	/return {(deprecated synonym for /WITH)}
+	/return {(deprecated: mostly /WITH synonym, use THROW+CATCH if not)}
 	return-value [any-value!]
 ]
 
@@ -104,6 +104,8 @@ context: native [
 
 continue: native [
 	{Throws control back to top of loop.}
+	/with {Act as if loop body finished current evaluation with a value}
+	value [any-value!]
 ]
 
 ;dir?: native [
@@ -597,7 +599,7 @@ type-of: native [
 
 unset: native [
 	{Unsets the value of a word (in its current context.)}
-	word [word! block!] {Word or block of words}
+	word [any-word! block!] {Word or block of words}
 ]
 
 utf?: native [

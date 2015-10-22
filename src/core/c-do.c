@@ -224,7 +224,7 @@ void Trace_Arg(REBINT num, const REBVAL *arg, const REBVAL *path)
 
 /***********************************************************************
 **
-*/	void Next_Path(REBPVS *pvs)
+*/	REBFLG Next_Path_Throws(REBPVS *pvs)
 /*
 **		Evaluate next part of a path.
 **
@@ -236,7 +236,7 @@ void Trace_Arg(REBINT num, const REBVAL *arg, const REBVAL *path)
 
 	// Path must have dispatcher, else return:
 	func = Path_Dispatch[VAL_TYPE(pvs->value)];
-	if (!func) return; // unwind, then check for errors
+	if (!func) return FALSE; // unwind, then check for errors
 
 	pvs->path++;
 
@@ -251,9 +251,9 @@ void Trace_Arg(REBINT num, const REBVAL *arg, const REBVAL *path)
 	// object/(expr) case:
 	else if (IS_PAREN(path)) {
 
-		if (Do_Block_Throws(&temp, VAL_SERIES(path), 0)) {
+		if (DO_ARRAY_THROWS(&temp, path)) {
 			*pvs->value = temp;
-			return;
+			return TRUE;
 		}
 
 		pvs->select = &temp;
@@ -290,9 +290,13 @@ void Trace_Arg(REBINT num, const REBVAL *arg, const REBVAL *path)
 		raise Error_Out_Of_Range(pvs->path);
 	case PE_BAD_SET_TYPE:
 		raise Error_2(RE_BAD_FIELD_SET, pvs->path, Type_Of(pvs->setval));
+	default:
+		assert(FALSE);
 	}
 
-	if (NOT_END(pvs->path+1)) Next_Path(pvs);
+	if (NOT_END(pvs->path + 1)) return Next_Path_Throws(pvs);
+
+	return FALSE;
 }
 
 
@@ -345,7 +349,13 @@ void Trace_Arg(REBINT num, const REBVAL *arg, const REBVAL *path)
 		// !!! Is this the desired behavior, or should it be an error?
 	}
 	else if (Path_Dispatch[VAL_TYPE(pvs.value)]) {
-		Next_Path(&pvs);
+		REBFLG threw = Next_Path_Throws(&pvs);
+		assert(threw == THROWN(pvs.value));
+
+		// !!! "thrown bit" is deprecated but let it temporarily pass the
+		// throw state up to the caller so that path interface rewrite isn't
+		// tied into same commit as thrown cleanup.
+
 		// Check for errors:
 		if (NOT_END(pvs.path+1) && !ANY_FUNC(pvs.value)) {
 			// Only function refinements should get by this line:
@@ -374,7 +384,7 @@ void Trace_Arg(REBINT num, const REBVAL *arg, const REBVAL *path)
 */	void Pick_Path(REBVAL *out, REBVAL *value, REBVAL *selector, REBVAL *val)
 /*
 **		Lightweight version of Do_Path used for A_PICK actions.
-**		Result on TOS.
+**		Does not do paren evaluation, hence not designed to throw.
 **
 ***********************************************************************/
 {
@@ -406,6 +416,8 @@ void Trace_Arg(REBINT num, const REBVAL *arg, const REBVAL *path)
 		raise Error_2(RE_INVALID_PATH, pvs.value, pvs.select);
 	case PE_BAD_SET:
 		raise Error_2(RE_BAD_PATH_SET, pvs.value, pvs.select);
+	default:
+		assert(FALSE);
 	}
 }
 
@@ -464,7 +476,7 @@ void Trace_Arg(REBINT num, const REBVAL *arg, const REBVAL *path)
 
 /***********************************************************************
 **
-*/	REBOOL Dispatch_Call_Throws(struct Reb_Call *call)
+*/	REBFLG Dispatch_Call_Throws(struct Reb_Call *call)
 /*
 **		Expects call frame to be ready with all arguments fulfilled.
 **
@@ -490,6 +502,8 @@ void Trace_Arg(REBINT num, const REBVAL *arg, const REBVAL *path)
 	const REBVAL * const func = DSF_FUNC(call);
 	REBVAL *out = DSF_OUT(call);
 
+	REBFLG threw;
+
 	// We need to save what the DSF was prior to our execution, and
 	// cannot simply use our frame's prior...because our frame's
 	// prior call frame may be a *pending* frame that we do not want
@@ -509,22 +523,22 @@ void Trace_Arg(REBINT num, const REBVAL *arg, const REBVAL *path)
 
 	switch (VAL_TYPE(func)) {
 	case REB_NATIVE:
-		Do_Native(func);
+		threw = Do_Native_Throws(func);
 		break;
 	case REB_ACTION:
-		Do_Action(func);
+		threw = Do_Action_Throws(func);
 		break;
 	case REB_COMMAND:
-		Do_Command(func);
+		threw = Do_Command_Throws(func);
 		break;
 	case REB_CLOSURE:
-		Do_Closure(func);
+		threw = Do_Closure_Throws(func);
 		break;
 	case REB_FUNCTION:
-		Do_Function(func);
+		threw = Do_Function_Throws(func);
 		break;
 	case REB_ROUTINE:
-		Do_Routine(func);
+		threw = Do_Routine_Throws(func);
 		break;
 	default:
 		assert(FALSE);
@@ -537,6 +551,8 @@ void Trace_Arg(REBINT num, const REBVAL *arg, const REBVAL *path)
 	assert(VAL_TYPE(out) < REB_MAX); // cheap check
 
 	ASSERT_VALUE_MANAGED(out);
+
+	assert(threw == THROWN(out));
 
 #if !defined(NDEBUG)
 	assert(DSP >= dsp_precall);
@@ -554,7 +570,7 @@ void Trace_Arg(REBINT num, const REBVAL *arg, const REBVAL *path)
 	SET_DSF(dsf_precall);
 	Free_Call(call);
 
-	return THROWN(out);
+	return threw;
 }
 
 
@@ -1110,7 +1126,7 @@ reevaluate:
 		break;
 
 	case REB_PAREN:
-		if (Do_Block_Throws(out, VAL_SERIES(value), 0)) {
+		if (DO_ARRAY_THROWS(out, value)) {
 			index = THROWN_FLAG;
 			goto return_index;
 		}
@@ -1202,7 +1218,7 @@ return_index:
 
 /***********************************************************************
 **
-*/	void Reduce_Block(REBVAL *out, REBSER *block, REBCNT index, REBOOL into)
+*/	REBFLG Reduce_Block_Throws(REBVAL *out, REBSER *block, REBCNT index, REBOOL into)
 /*
 **		Reduce block from the index position specified in the value.
 **		Collect all values from stack and make them a block.
@@ -1217,15 +1233,13 @@ return_index:
 		if (index == THROWN_FLAG) {
 			*out = reduced;
 			DS_DROP_TO(dsp_orig);
-			goto finished;
+			return TRUE;
 		}
 		DS_PUSH(&reduced);
 	}
 
 	Pop_Stack_Values(out, dsp_orig, into);
-
-finished:
-	assert(DSP == dsp_orig);
+	return FALSE;
 }
 
 
@@ -1291,7 +1305,7 @@ finished:
 
 /***********************************************************************
 **
-*/	void Reduce_Block_No_Set(REBVAL *out, REBSER *block, REBCNT index, REBOOL into)
+*/	REBFLG Reduce_Block_No_Set_Throws(REBVAL *out, REBSER *block, REBCNT index, REBOOL into)
 /*
 ***********************************************************************/
 {
@@ -1309,7 +1323,7 @@ finished:
 			if (index == THROWN_FLAG) {
 				*out = reduced;
 				DS_DROP_TO(dsp_orig);
-				goto finished;
+				return TRUE;
 			}
 			DS_PUSH(&reduced);
 		}
@@ -1317,14 +1331,13 @@ finished:
 
 	Pop_Stack_Values(out, dsp_orig, into);
 
-finished:
-	assert(DSP == dsp_orig);
+	return FALSE;
 }
 
 
 /***********************************************************************
 **
-*/	void Compose_Block(REBVAL *out, REBVAL *block, REBFLG deep, REBFLG only, REBOOL into)
+*/	REBFLG Compose_Block_Throws(REBVAL *out, REBVAL *block, REBFLG deep, REBFLG only, REBOOL into)
 /*
 **		Compose a block from a block of un-evaluated values and
 **		paren blocks that are evaluated.  Performs evaluations, so
@@ -1345,10 +1358,10 @@ finished:
 		if (IS_PAREN(value)) {
 			REBVAL evaluated;
 
-			if (Do_Block_Throws(&evaluated, VAL_SERIES(value), 0)) {
+			if (DO_ARRAY_THROWS(&evaluated, value)) {
 				*out = evaluated;
 				DS_DROP_TO(dsp_orig);
-				goto finished;
+				return TRUE;
 			}
 
 			if (IS_BLOCK(&evaluated) && !only) {
@@ -1371,7 +1384,13 @@ finished:
 			if (IS_BLOCK(value)) {
 				// compose/deep [does [(1 + 2)] nested] => [does [3] nested]
 				REBVAL composed;
-				Compose_Block(&composed, value, TRUE, only, into);
+
+				if (Compose_Block_Throws(&composed, value, TRUE, only, into)) {
+					*out = composed;
+					DS_DROP_TO(dsp_orig);
+					return TRUE;
+				}
+
 				DS_PUSH(&composed);
 			}
 			else {
@@ -1392,14 +1411,13 @@ finished:
 
 	Pop_Stack_Values(out, dsp_orig, into);
 
-finished:
-	assert(DSP == dsp_orig);
+	return FALSE;
 }
 
 
 /***********************************************************************
 **
-*/	REBOOL Apply_Block_Throws(REBVAL *out, const REBVAL *func, REBSER *block, REBCNT index, REBFLG reduce, va_list *varargs)
+*/	REBFLG Apply_Block_Throws(REBVAL *out, const REBVAL *func, REBSER *block, REBCNT index, REBFLG reduce, va_list *varargs)
 /*
 **		Invoke a function with arguments, either from a C va_list if
 **		varargs is non-NULL...or sourced from a block at a certain index.
@@ -1519,7 +1537,7 @@ finished:
 			if (index == THROWN_FLAG) {
 				*out = *arg; // `arg` may be equal to `out` (if `too_many`)
 				Free_Call(call);
-				return FALSE;
+				return TRUE;
 			}
 			if (too_many) continue; // don't test `arg` or advance `param`
 		}
@@ -1604,7 +1622,7 @@ finished:
 
 /***********************************************************************
 **
-*/	REBOOL Apply_Function_Throws(REBVAL *out, const REBVAL *func, va_list *varargs)
+*/	REBFLG Apply_Function_Throws(REBVAL *out, const REBVAL *func, va_list *varargs)
 /*
 **		(va_list by pointer: http://stackoverflow.com/a/3369762/211160)
 **
@@ -1657,7 +1675,7 @@ finished:
 
 /***********************************************************************
 **
-*/	REBOOL Apply_Func_Throws(REBVAL *out, REBVAL *func, ...)
+*/	REBFLG Apply_Func_Throws(REBVAL *out, REBVAL *func, ...)
 /*
 **		Applies function from args provided by C call. Zero terminated.
 **
@@ -1665,7 +1683,7 @@ finished:
 **
 ***********************************************************************/
 {
-	REBOOL result;
+	REBFLG result;
 	va_list args;
 
 	va_start(args, func);
@@ -1698,13 +1716,13 @@ finished:
 
 /***********************************************************************
 **
-*/	REBOOL Do_Sys_Func_Throws(REBVAL *out, REBCNT inum, ...)
+*/	REBFLG Do_Sys_Func_Throws(REBVAL *out, REBCNT inum, ...)
 /*
 **		Evaluates a SYS function and out contains the result.
 **
 ***********************************************************************/
 {
-	REBOOL result;
+	REBFLG result;
 	va_list args;
 	REBVAL *value = FRM_VALUE(Sys_Context, inum);
 
@@ -1827,7 +1845,7 @@ finished:
 
 /***********************************************************************
 **
-*/	REBOOL Redo_Func_Throws(REBVAL *func_val)
+*/	REBFLG Redo_Func_Throws(REBVAL *func_val)
 /*
 **		Trampoline a function, restacking arguments as needed.
 **

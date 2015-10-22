@@ -73,7 +73,7 @@
 		CONVERT_NAME_TO_THROWN(D_OUT, UNSET_VALUE);
 	}
 
-	return R_OUT;
+	return R_OUT_IS_THROWN;
 }
 
 
@@ -528,7 +528,7 @@ err:
 	if (ANY_WORD(val)) {
 		if (VAL_WORD_INDEX(val) < 0) return R_TRUE;
 		frm = VAL_WORD_FRAME(val);
-		if (!frm) raise Error_1(RE_NOT_DEFINED, val);
+		if (!frm) raise Error_1(RE_NOT_BOUND, val);
 	}
 	else frm = VAL_OBJ_FRAME(D_ARG(1));
 

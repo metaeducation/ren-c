@@ -239,7 +239,8 @@ x*/	REBRXT Do_Callback(REBSER *obj, u32 name, RXIARG *rxis, RXIARG *result)
 
 	// Evaluate the function:
 	if (Dispatch_Call_Throws(call)) {
-		// !!! Needs better handling for THROWN() to safely "bubble up"
+		// !!! Does this need handling such that there is a way for the thrown
+		// value to "bubble up" out of the callback, or is an error sufficient?
 		raise Error_No_Catch_For_Throw(DSF_OUT(call));
 	}
 
@@ -436,7 +437,7 @@ typedef REBYTE *(INFO_FUNC)(REBINT opts, void *lib);
 
 /***********************************************************************
 **
-*/	void Do_Command(const REBVAL *value)
+*/	REBFLG Do_Command_Throws(const REBVAL *value)
 /*
 **	Evaluates the arguments for a command function and creates
 **	a resulting stack frame (struct or object) for command processing.
@@ -469,6 +470,9 @@ typedef REBYTE *(INFO_FUNC)(REBINT opts, void *lib);
 	// Call the command:
 	n = ext->call(cmd, &frm, 0);
 	val = DSF_OUT(DSF);
+
+	assert(!THROWN(val));
+
 	switch (n) {
 	case RXR_VALUE:
 		RXI_To_Value(val, frm.args[1], RXA_TYPE(&frm, 1));
@@ -501,6 +505,8 @@ typedef REBYTE *(INFO_FUNC)(REBINT opts, void *lib);
 	default:
 		SET_UNSET(val);
 	}
+
+	return FALSE; // There is currently no interface for commands to "throw"
 }
 
 
@@ -594,8 +600,12 @@ typedef REBYTE *(INFO_FUNC)(REBINT opts, void *lib);
 					}
 				}
 				else if (IS_PAREN(val)) {
-					if (Do_Block_Throws(&save, VAL_SERIES(val), 0)) {
-						raise Error_No_Catch_For_Throw(&save); // !!! Better answer?
+					if (DO_ARRAY_THROWS(&save, val)) {
+						// !!! Should this paren evaluation be able to "bubble
+						// up" so that returns and throws can be caught up
+						// the stack, or is raising an error here sufficient?
+
+						raise Error_No_Catch_For_Throw(&save);
 					}
 					val = &save;
 				}

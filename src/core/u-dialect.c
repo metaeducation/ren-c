@@ -187,7 +187,7 @@ static const char *Dia_Fmt = "DELECT - cmd: %s length: %d missed: %d total: %d";
 		break;
 
 	case REB_PAREN:
-		if (Do_Block_Throws(&safe, VAL_SERIES(value), 0)) {
+		if (DO_ARRAY_THROWS(&safe, value)) {
 			// !!! Does not check for thrown cases...what should this
 			// do in case of THROW, BREAK, QUIT?
 			raise Error_No_Catch_For_Throw(&safe);

@@ -137,7 +137,7 @@ static int Check_Char_Range(REBVAL *val, REBINT limit)
 			i = index;
 			index = Do_Next_May_Throw(D_OUT, block, index);
 
-			if (index == THROWN_FLAG) return R_OUT;
+			if (index == THROWN_FLAG) return R_OUT_IS_THROWN;
 
 			if (IS_CONDITIONAL_FALSE(D_OUT)) {
 				// !!! Only copies 3 values (and flaky), see CC#2231
@@ -239,7 +239,7 @@ static int Check_Char_Range(REBVAL *val, REBINT limit)
 		assert(ANY_WORD(arg));
 		rel = (VAL_WORD_INDEX(arg) < 0);
 		frame = VAL_WORD_FRAME(arg);
-		if (!frame) raise Error_1(RE_NOT_DEFINED, arg);
+		if (!frame) raise Error_1(RE_NOT_BOUND, arg);
 	}
 
 	// Block or word to bind:
@@ -635,20 +635,29 @@ static int Check_Char_Range(REBVAL *val, REBINT limit)
 /*
 ***********************************************************************/
 {
-	REBVAL *word = D_ARG(1);
-	REBVAL *value;
+	REBVAL * const value = D_ARG(1);
+	REBVAL *var;
+	REBVAL *word;
 
-	if (IS_WORD(word)) {
-		if (VAL_WORD_FRAME(word)) {
-			value = GET_MUTABLE_VAR(word);
-			SET_UNSET(value);
-		}
-	} else {
-		for (word = VAL_BLK_DATA(word); NOT_END(word); word++) {
-			if (IS_WORD(word) && VAL_WORD_FRAME(word)) {
-				value = GET_MUTABLE_VAR(word);
-				SET_UNSET(value);
-			}
+	if (ANY_WORD(value)) {
+		word = value;
+
+		if (!HAS_FRAME(word)) raise Error_1(RE_NOT_BOUND, word);
+
+		var = GET_MUTABLE_VAR(word);
+		SET_UNSET(var);
+	}
+	else {
+		assert(IS_BLOCK(value));
+
+		for (word = VAL_BLK_DATA(value); NOT_END(word); word++) {
+			if (!ANY_WORD(word))
+				raise Error_Invalid_Arg(word);
+
+			if (!HAS_FRAME(word)) raise Error_1(RE_NOT_BOUND, word);
+
+			var = GET_MUTABLE_VAR(word);
+			SET_UNSET(var);
 		}
 	}
 	return R_UNSET;

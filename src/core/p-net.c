@@ -89,7 +89,8 @@ enum Transport_Types {
 
 	// Create a new port using ACCEPT request passed by sock->common.sock:
 	port = Copy_Array_Shallow(port);
-	SET_PORT(out, port);	// Also for GC protect
+	MANAGE_SERIES(port);
+	Val_Init_Port(out, port); // Also for GC protect
 	SET_NONE(OFV(port, STD_PORT_DATA)); // just to be sure.
 	SET_NONE(OFV(port, STD_PORT_STATE)); // just to be sure.
 

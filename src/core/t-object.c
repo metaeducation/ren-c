@@ -330,8 +330,8 @@ static REBSER *Trim_Object(REBSER *obj)
 					Bind_Values_Deep(VAL_BLK_DATA(arg), obj);
 
 					// GC-OK
-					if (Do_Block_Throws(D_OUT, VAL_SERIES(arg), 0))
-						return R_OUT;
+					if (DO_ARRAY_THROWS(D_OUT, arg))
+						return R_OUT_IS_THROWN;
 
 					break; // returns obj
 				}
@@ -367,7 +367,8 @@ static REBSER *Trim_Object(REBSER *obj)
 			if (type == REB_ERROR) {
 				// arg is block/string, returns value
 				if (Make_Error_Object_Throws(value, arg)) {
-					// going to return it anyway, no special handling needed
+					*D_OUT = *value;
+					return R_OUT_IS_THROWN;
 				}
 				type = 0;
 				break; // returns value
@@ -414,7 +415,8 @@ static REBSER *Trim_Object(REBSER *obj)
 				Bind_Values_Deep(VAL_BLK_DATA(arg), obj);
 
 				// GC-OK
-				if (Do_Block_Throws(D_OUT, VAL_SERIES(arg), 0)) return R_OUT;
+				if (DO_ARRAY_THROWS(D_OUT, arg))
+					return R_OUT_IS_THROWN;
 
 				break; // returns obj
 			}
@@ -435,7 +437,8 @@ static REBSER *Trim_Object(REBSER *obj)
 			if (type == REB_ERROR) {
 				// arg is block/string, returns value
 				if (Make_Error_Object_Throws(value, arg)) {
-					// going to return it anyway, no special handling needed
+					*D_OUT = *value;
+					return R_OUT_IS_THROWN;
 				}
 				type = 0; // type already set
 				break; // returns value

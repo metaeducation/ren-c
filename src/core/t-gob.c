@@ -713,7 +713,15 @@ is_none:
 			if (pvs->setval && IS_PAIR(pvs->store)) {
 				REBVAL *sel = pvs->select;
 				pvs->value = pvs->store;
-				Next_Path(pvs); // sets value in pvs->store
+
+				if (Next_Path_Throws(pvs)) { // sets value in pvs->store
+
+					// !!! Gob and Struct do "sub-dispatch" which may throw
+					// No "PE_THREW" return, however.  (should there be?)
+
+					raise Error_No_Catch_For_Throw(pvs->store);
+				}
+
 				Set_GOB_Var(gob, sel, pvs->store); // write it back to gob
 			}
 			return PE_USE;

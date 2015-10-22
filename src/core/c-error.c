@@ -380,7 +380,7 @@
 
 /***********************************************************************
 **
-*/	REBOOL Make_Error_Object_Throws(REBVAL *out, REBVAL *arg)
+*/	REBFLG Make_Error_Object_Throws(REBVAL *out, REBVAL *arg)
 /*
 **		Creates an error object from arg and puts it in value.
 **		The arg can be a string or an object body block.
@@ -422,7 +422,7 @@
 		// Bind and do an evaluation step (as with MAKE OBJECT! with A_MAKE
 		// code in REBTYPE(Object) and code in REBNATIVE(construct))
 		Bind_Values_Deep(VAL_BLK_DATA(arg), err);
-		if (Do_Block_Throws(&evaluated, VAL_SERIES(arg), 0)) {
+		if (DO_ARRAY_THROWS(&evaluated, arg)) {
 			*out = evaluated;
 			return TRUE;
 		}

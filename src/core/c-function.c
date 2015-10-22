@@ -409,7 +409,7 @@ REBNATIVE(exit);
 
 /***********************************************************************
 **
-*/	void Do_Native(const REBVAL *func)
+*/	REBFLG Do_Native_Throws(const REBVAL *func)
 /*
 ***********************************************************************/
 {
@@ -422,6 +422,7 @@ REBNATIVE(exit);
 
 	switch (ret) {
 	case R_OUT: // for compiler opt
+	case R_OUT_IS_THROWN:
 		break;
 	case R_NONE:
 		SET_NONE(out);
@@ -447,12 +448,17 @@ REBNATIVE(exit);
 	default:
 		assert(FALSE);
 	}
+
+	// The VAL_OPT_THROWN bit is being eliminated, but used temporarily to
+	// check the actions and natives are returning the correct thing.
+	assert(THROWN(out) == (ret == R_OUT_IS_THROWN));
+	return ret == R_OUT_IS_THROWN;
 }
 
 
 /***********************************************************************
 **
-*/	void Do_Action(const REBVAL *func)
+*/	REBFLG Do_Action_Throws(const REBVAL *func)
 /*
 ***********************************************************************/
 {
@@ -469,7 +475,7 @@ REBNATIVE(exit);
 	if (VAL_FUNC_ACT(func) == 0) {
 		VAL_SET(out, REB_LOGIC);
 		VAL_LOGIC(out) = (type == VAL_INT64(BLK_LAST(VAL_FUNC_SPEC(func))));
-		return;
+		return FALSE;
 	}
 
 	action = Value_Dispatch[type];
@@ -478,6 +484,7 @@ REBNATIVE(exit);
 
 	switch (ret) {
 	case R_OUT: // for compiler opt
+	case R_OUT_IS_THROWN:
 		break;
 	case R_NONE:
 		SET_NONE(out);
@@ -503,12 +510,17 @@ REBNATIVE(exit);
 	default:
 		assert(FALSE);
 	}
+
+	// The VAL_OPT_THROWN bit is being eliminated, but used temporarily to
+	// check the actions and natives are returning the correct thing.
+	assert(THROWN(out) == (ret == R_OUT_IS_THROWN));
+	return ret == R_OUT_IS_THROWN;
 }
 
 
 /***********************************************************************
 **
-*/	void Do_Function(const REBVAL *func)
+*/	REBFLG Do_Function_Throws(const REBVAL *func)
 /*
 ***********************************************************************/
 {
@@ -516,23 +528,29 @@ REBNATIVE(exit);
 
 	Eval_Functions++;
 
-	if (Do_Block_Throws(out, VAL_FUNC_BODY(func), 0)) {
+	// Functions have a body series pointer, but no VAL_INDEX, so use 0
+	if (Do_At_Throws(out, VAL_FUNC_BODY(func), 0)) {
 		if (
 			IS_NATIVE(out) && (
 				VAL_FUNC_CODE(out) == VAL_FUNC_CODE(ROOT_RETURN_NATIVE)
 				|| VAL_FUNC_CODE(out) == VAL_FUNC_CODE(ROOT_EXIT_NATIVE)
 			)
 		) {
-			if (!VAL_GET_EXT(func, EXT_FUNC_TRANSPARENT))
+			if (!VAL_GET_EXT(func, EXT_FUNC_TRANSPARENT)) {
 				CATCH_THROWN(out, out);
+				return FALSE; // caught the thrown return arg, don't pass on
+			}
 		}
+		return TRUE; // throw wasn't for us...
 	}
+
+	return FALSE;
 }
 
 
 /***********************************************************************
 **
-*/	void Do_Closure(const REBVAL *func)
+*/	REBFLG Do_Closure_Throws(const REBVAL *func)
 /*
 **		Do a closure by cloning its body and rebinding it to
 **		a new frame of words/values.
@@ -588,27 +606,32 @@ REBNATIVE(exit);
 	// "archetype", but it may be valuable to keep that as-is.)
 	PUSH_GUARD_SERIES(body);
 
-	if (Do_Block_Throws(out, body, 0)) {
+	if (Do_At_Throws(out, body, 0)) {
+		DROP_GUARD_SERIES(body);
 		if (
 			IS_NATIVE(out) && (
 				VAL_FUNC_CODE(out) == VAL_FUNC_CODE(ROOT_RETURN_NATIVE)
 				|| VAL_FUNC_CODE(out) == VAL_FUNC_CODE(ROOT_EXIT_NATIVE)
 			)
 		) {
-			if (!VAL_GET_EXT(func, EXT_FUNC_TRANSPARENT))
-				CATCH_THROWN(out, out);
+			if (!VAL_GET_EXT(func, EXT_FUNC_TRANSPARENT)) {
+				CATCH_THROWN(out, out); // a return that was for us
+				return FALSE;
+			}
 		}
+		return TRUE; // throw wasn't for us
 	}
 
 	// References to parts of the closure's copied body may still be
 	// extant, but we no longer need to hold this reference on it
 	DROP_GUARD_SERIES(body);
+	return FALSE;
 }
 
 
 /***********************************************************************
 **
-*/	void Do_Routine(const REBVAL *routine)
+*/	REBFLG Do_Routine_Throws(const REBVAL *routine)
 /*
  */
 {
@@ -622,4 +645,6 @@ REBNATIVE(exit);
 	Call_Routine(routine, args, DSF_OUT(DSF));
 
 	Free_Series(args);
+
+	return FALSE; // You cannot "throw" a Rebol value across an FFI boundary
 }

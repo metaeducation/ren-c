@@ -237,7 +237,7 @@
 		}
 		// Event holds a port:
 		else if (IS_EVENT_MODEL(value, EVM_PORT)) {
-			SET_PORT(val, VAL_EVENT_SER(m_cast(REBVAL*, value)));
+			Val_Init_Port(val, VAL_EVENT_SER(m_cast(REBVAL*, value)));
 		}
 		// Event holds an object:
 		else if (IS_EVENT_MODEL(value, EVM_OBJECT)) {
@@ -251,7 +251,7 @@
 			// Event holds the IO-Request, which has the PORT:
 			req = VAL_EVENT_REQ(value);
 			if (!req || !req->port) goto is_none;
-			SET_PORT(val, (REBSER*)(req->port));
+			Val_Init_Port(val, cast(REBSER*, req->port));
 		}
 		break;
 
@@ -468,7 +468,7 @@ pick_it:
 			else {
 				req = VAL_EVENT_REQ(value);
 				if (!req || !req->port) goto is_none;
-				SET_PORT(D_OUT, (REBSER*)(req->port));
+				Val_Init_Port(D_OUT, cast(REBSER*, req->port));
 			}
 			return R_OUT;
 

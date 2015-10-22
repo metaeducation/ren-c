@@ -978,7 +978,7 @@ static void callback_dispatcher(ffi_cif *cif, void *ret, void **args, void *user
 		}
 	}
 
-	if (Do_Block_Throws(&safe, ser, 0)) {
+	if (Do_At_Throws(&safe, ser, 0)) {
 		// !!! Does not check for thrown cases...what should this
 		// do in case of THROW, BREAK, QUIT?
 		raise Error_No_Catch_For_Throw(&safe);

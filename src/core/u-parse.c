@@ -206,7 +206,7 @@ void Print_Parse_Index(enum Reb_Kind type, const REBVAL *rules, REBSER *series, 
 	// Do an expression:
 	case REB_PAREN:
 		// might GC
-		if (Do_Block_Throws(&save, VAL_SERIES(item), 0)) {
+		if (DO_ARRAY_THROWS(&save, item)) {
 			*parse->out = save;
 			return THROWN_FLAG;
 		}
@@ -278,7 +278,7 @@ void Print_Parse_Index(enum Reb_Kind type, const REBVAL *rules, REBSER *series, 
 	// Do an expression:
 	case REB_PAREN:
 		// might GC
-		if (Do_Block_Throws(&save, VAL_SERIES(item), 0)) {
+		if (DO_ARRAY_THROWS(&save, item)) {
 			*parse->out = save;
 			return THROWN_FLAG;
 		}
@@ -335,7 +335,7 @@ no_result:
 						if (IS_END(item)) goto bad_target;
 						if (IS_PAREN(item)) {
 							// might GC
-							if (Do_Block_Throws(&save, VAL_SERIES(item), 0)) {
+							if (DO_ARRAY_THROWS(&save, item)) {
 								*parse->out = save;
 								return THROWN_FLAG;
 							}
@@ -445,7 +445,7 @@ next:		// Check for | (required if not end)
 found:
 	if (IS_PAREN(blk + 1)) {
 		REBVAL evaluated;
-		if (Do_Block_Throws(&evaluated, VAL_SERIES(blk + 1), 0)) {
+		if (DO_ARRAY_THROWS(&evaluated, blk + 1)) {
 			*parse->out = evaluated;
 			return THROWN_FLAG;
 		}
@@ -456,7 +456,7 @@ found:
 found1:
 	if (IS_PAREN(blk + 1)) {
 		REBVAL evaluated;
-		if (Do_Block_Throws(&evaluated, VAL_SERIES(blk + 1), 0)) {
+		if (DO_ARRAY_THROWS(&evaluated, blk + 1)) {
 			*parse->out = save;
 			return THROWN_FLAG;
 		}
@@ -601,7 +601,7 @@ bad_target:
 			if (IS_END(item)) raise Error_1(RE_PARSE_END, item - 2);
 			if (IS_PAREN(item)) {
 				// might GC
-				if (Do_Block_Throws(&save, VAL_SERIES(item), 0)) {
+				if (DO_ARRAY_THROWS(&save, item)) {
 					*parse->out = save;
 					return THROWN_FLAG;
 				}
@@ -800,9 +800,7 @@ bad_target:
 						if (IS_PAREN(rules)) {
 							REBVAL evaluated;
 
-							if (Do_Block_Throws(
-								&evaluated, VAL_SERIES(rules), 0
-							)) {
+							if (DO_ARRAY_THROWS(&evaluated, rules)) {
 								// If the paren evaluation result gives a
 								// THROW, BREAK, CONTINUE, etc then we'll
 								// return that
@@ -838,7 +836,7 @@ bad_target:
 						if (!IS_PAREN(item)) raise Error_1(RE_PARSE_RULE, item);
 
 						// might GC
-						if (Do_Block_Throws(&save, VAL_SERIES(item), 0)) {
+						if (DO_ARRAY_THROWS(&save, item)) {
 							*parse->out = save;
 							return THROWN_FLAG;
 						}
@@ -941,7 +939,7 @@ bad_target:
 			REBVAL evaluated;
 
 			// might GC
-			if (Do_Block_Throws(&evaluated, VAL_SERIES(item), 0)) {
+			if (DO_ARRAY_THROWS(&evaluated, item)) {
 				*parse->out = evaluated;
 				return THROWN_FLAG;
 			}
@@ -1009,7 +1007,7 @@ bad_target:
 					rulen = 1;
 					if (IS_PAREN(rules)) {
 						// might GC
-						if (Do_Block_Throws(&save, VAL_SERIES(rules), 0)) {
+						if (DO_ARRAY_THROWS(&save, rules)) {
 							*parse->out = save;
 							return THROWN_FLAG;
 						}
@@ -1327,7 +1325,7 @@ bad_end:
 		}
 
 		// All other throws should just bubble up uncaught.
-		return R_OUT;
+		return R_OUT_IS_THROWN;
 	}
 
 	assert(IS_TRASH(D_OUT));

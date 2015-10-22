@@ -542,9 +542,6 @@ static void Propagate_All_GC_Marks(void);
 	// when an `if (Do_XXX_Throws())` branch was taken and when the throw
 	// should have been caught up the stack (before any more calls made).
 	//
-	// !!! Is it worth causing a panic on this in particular in the
-	// release build?  Odds are things will get more corrupt and crash.
-	//
 	assert(!THROWN(val));
 
 	switch (VAL_TYPE(val)) {

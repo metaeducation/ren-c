@@ -823,11 +823,13 @@ struct Reb_Position
 // Conditional truth and falsehood allows an interpretation where a NONE! is
 // a FALSE value.  These macros (like many others in the codebase) capture
 // their parameters multiple times, so multiple evaluations can happen!
+//
+// Unsets are neither conditionally true nor conditionally false.
 
 #define IS_CONDITIONAL_FALSE(v) \
 	(IS_NONE(v) || (IS_LOGIC(v) && !VAL_LOGIC(v)))
 #define IS_CONDITIONAL_TRUE(v) \
-	!IS_CONDITIONAL_FALSE(v)
+	(!IS_UNSET(v) && !IS_CONDITIONAL_FALSE(v))
 
 
 /***********************************************************************
@@ -1085,7 +1087,6 @@ struct Reb_Object {
 ***********************************************************************/
 
 #define	VAL_PORT(v)			VAL_OBJ_FRAME(v)
-#define SET_PORT(v,s)		VAL_SET(v, REB_PORT), VAL_PORT(v) = s
 
 
 /***********************************************************************
@@ -1164,13 +1165,57 @@ struct Reb_Call;
 // this enumerated type containing its legal values).
 enum {
 	R_OUT = 0,
-	R_NONE,
-	R_UNSET,
-	R_TRUE,
-	R_FALSE,
-	R_ARG1,
-	R_ARG2,
-	R_ARG3
+
+	// !!! The open-sourced Rebol3 of 12-Dec-2012 had the concept that
+	// "thrown-ness" was a property of a value (in particular, certain kinds
+	// of ERROR! which were not to ever be leaked directly to userspace).
+	// Ren/C modifications extended THROW to allow a /NAME that could be
+	// a full REBVAL (instead of a selection from a limited set of words)
+	// hence making it possible to identify a throw by an object, function,
+	// fully bound word, etc.  Yet still the "thrown-ness" was a property
+	// of the throw-name REBVAL, and by virtue of being a property on a
+	// value *it could be dropped on the floor and ignored*.  There were
+	// countless examples of this.
+	//
+	// As part of the process of stamping out the idea that thrownness comes
+	// from a value, all routines that can potentially return thrown values
+	// have been adapted to return a boolean and adopt the XXX_Throws()
+	// naming convention, so one can write:
+	//
+	//     if (XXX_Throws()) {
+	//        /* handling code */
+	//     }
+	//
+	// This forced every caller to consciously have a code path dealing with
+	// potentially thrown values, reigning in the previous problems.  Yet
+	// native function implementations didn't have a way to signal that
+	// return result when the stack passed through them.
+	//
+	// R_OUT_IS_THROWN is a test of that signaling mechanism.  It is currently
+	// being kept in parallel with the THROWN() bit and ensured as matching.
+	// Being in the state of doing a stack unwind will likely be knowable
+	// through other mechanisms even once the thrown bit on the value is
+	// gone...so it may not be the case that natives are asked to do their
+	// own separate indication, so this may wind up replaced with R_OUT.  For
+	// the moment it is good as a double-check.
+
+	R_OUT_IS_THROWN,
+
+	// !!! These R_ values are somewhat superfluous...and actually inefficient
+	// because they have to be checked by the caller in a switch statement
+	// to take the equivalent action.  They have a slight advantage in
+	// hand-written C code for making it more clear that if you have used
+	// the D_OUT return slot for temporary work that you explicitly want
+	// to specify another result...this cannot be caught by the REB_TRASH
+	// trick for detecting an unwritten D_OUT.
+
+	R_UNSET, // => SET_UNSET(D_OUT); return R_OUT;
+	R_NONE, // => SET_NONE(D_OUT); return R_OUT;
+	R_TRUE, // => SET_TRUE(D_OUT); return R_OUT;
+	R_FALSE, // => SET_FALSE(D_OUT); return R_OUT;
+	R_ARG1, // => *D_OUT = *D_ARG(1); return R_OUT;
+	R_ARG2, // => *D_OUT = *D_ARG(2); return R_OUT;
+	R_ARG3 // => *D_OUT = *D_ARG(3); return R_OUT;
 };
 typedef REBCNT REB_R;
 

@@ -1299,6 +1299,50 @@ append:
 
 /***********************************************************************
 **
+*/	REBFLG Form_Reduce_Throws(REBVAL *out, REBSER *block, REBCNT index)
+/*
+**		Reduce a block and then form each value into a string REBVAL.
+**
+***********************************************************************/
+{
+	REBINT start = DSP;
+	REBINT n;
+
+	REB_MOLD mo;
+
+	// Reducing all the items to the data stack before molding is necessary
+	// in order to use the single task-local mold buffer.  Initializing the
+	// mold buffer here and calling it on each evaluation might overwrite it
+	// if the called function does any molding.
+	//
+	// !!! Should the mold buffer be treated as a "mold stack?" to avoid
+	// this problem, while still not needing to allocate more than one buffer
+	// per thread?
+
+	while (index < BLK_LEN(block)) {
+		index = Do_Next_May_Throw(out, block, index);
+		if (index == THROWN_FLAG) {
+			DS_DROP_TO(start);
+			return TRUE;
+		}
+		DS_PUSH(out);
+	}
+
+	CLEARS(&mo);
+	Reset_Mold(&mo);
+
+	for (n = start + 1; n <= DSP; n++)
+		Mold_Value(&mo, DS_AT(n), 0);
+
+	DS_DROP_TO(start);
+
+	Val_Init_String(out, Copy_String(mo.series, 0, -1));
+	return FALSE;
+}
+
+
+/***********************************************************************
+**
 */  REBSER *Form_Tight_Block(const REBVAL *blk)
 /*
 ***********************************************************************/

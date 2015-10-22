@@ -251,22 +251,39 @@ enum {
 **
 */	REBNATIVE(all)
 /*
+**	ALL is effectively Rebol's "short-circuit AND".  Unsets do not vote either
+**	true or false...they are ignored.
+**
+**	To offer a more generically useful result than just TRUE or FALSE, it will
+**	use as a "truthy" value whatever the last evaluation in the chain was.  If
+**	there was no last value, but no conditionally false instance hit to break
+**	the chain, as in `all []` or `all [1 2 ()]`...it will return TRUE.
+**
+**	(Note: It would become a more costly operation to retain the last truthy
+**	value to return 2 in the case of `all [1 2 ()`]`, just to say it could.
+**	The overhead would undermine the raw efficiency of the operation.)
+**
+**	For the "falsy" value, ALL uses a NONE! rather than logic FALSE.  It's a
+**	historical design decision which has some benefits, but perhaps some
+**	drawbacks to those wishing to use it on logic values and stay in the
+**	logic domain.  (`all [true true]` => true, `all [false true]` is NONE!).
+**
 ***********************************************************************/
 {
 	REBSER *block = VAL_SERIES(D_ARG(1));
 	REBCNT index = VAL_INDEX(D_ARG(1));
 
-	// Default result for 'all []'
 	SET_TRUE(D_OUT);
 
 	while (index < SERIES_TAIL(block)) {
 		index = Do_Next_May_Throw(D_OUT, block, index);
-		if (index == THROWN_FLAG) break;
-		if (IS_CONDITIONAL_FALSE(D_OUT)) {
-			SET_TRASH_SAFE(D_OUT);
-			return R_NONE;
-		}
+		if (index == THROWN_FLAG) return R_OUT_IS_THROWN;
+
+		if (IS_CONDITIONAL_FALSE(D_OUT)) return R_NONE;
 	}
+
+	if (IS_UNSET(D_OUT)) return R_TRUE;
+
 	return R_OUT;
 }
 
@@ -275,6 +292,18 @@ enum {
 **
 */	REBNATIVE(any)
 /*
+**	ANY is effectively Rebol's "short-circuit OR".  Unsets do not vote either
+**	true or false...they are ignored.
+**
+**	See ALL's notes about returning the last truthy value or NONE! (vs. FALSE)
+**
+**	The base case of `any []` is NONE! and not TRUE.  This might seem strange
+**	given that `all []` is TRUE.  But this ties more into what the questions
+**	they are used to ask about in practice: "Were all of these things not
+**	false?" as opposed to "Were any of these things true?"  It is also the
+**	case that `FALSE OR X OR Y` matches with `TRUE AND X AND Y` as the
+**	"seed" for not affecting the chain.
+**
 ***********************************************************************/
 {
 	REBSER *block = VAL_SERIES(D_ARG(1));
@@ -282,9 +311,9 @@ enum {
 
 	while (index < SERIES_TAIL(block)) {
 		index = Do_Next_May_Throw(D_OUT, block, index);
-		if (index == THROWN_FLAG) return R_OUT;
+		if (index == THROWN_FLAG) return R_OUT_IS_THROWN;
 
-		if (!IS_CONDITIONAL_FALSE(D_OUT) && !IS_UNSET(D_OUT)) return R_OUT;
+		if (IS_CONDITIONAL_TRUE(D_OUT)) return R_OUT;
 	}
 
 	return R_NONE;
@@ -305,12 +334,12 @@ enum {
 	REBVAL * block = D_ARG(2);
 	REBOOL reduce = !D_REF(3);
 
-	if (!Apply_Block_Throws(
+	if (Apply_Block_Throws(
 		D_OUT, func, VAL_SERIES(block), VAL_INDEX(block), reduce, NULL
 	)) {
-		// No special handling needed if D_OUT is thrown, as we are just
-		// returning it to bubble up anyway
+		return R_OUT_IS_THROWN;
 	}
+
 	return R_OUT;
 }
 
@@ -321,6 +350,8 @@ enum {
 /*
 ***********************************************************************/
 {
+	REBVAL * const block = D_ARG(1);
+
 	REBOL_STATE state;
 	const REBVAL *error;
 
@@ -331,9 +362,11 @@ enum {
 
 	if (error) return R_NONE;
 
-	if (Do_Block_Throws(D_OUT, VAL_SERIES(D_ARG(1)), VAL_INDEX(D_ARG(1)))) {
-		// This means that D_OUT is a THROWN() value, but we have
-		// no special processing to apply.  Fall through and return it.
+	if (DO_ARRAY_THROWS(D_OUT, block)) {
+		DROP_TRAP_SAME_STACKLEVEL_AS_PUSH(&state);
+
+		// Throw name is in D_OUT, thrown value is held task local
+		return R_OUT_IS_THROWN;
 	}
 
 	DROP_TRAP_SAME_STACKLEVEL_AS_PUSH(&state);
@@ -363,7 +396,7 @@ enum {
 
 	CONVERT_NAME_TO_THROWN(D_OUT, value);
 
-	return R_OUT;
+	return R_OUT_IS_THROWN;
 }
 
 
@@ -400,7 +433,7 @@ enum {
 
 		if (index == THROWN_FLAG) {
 			*D_OUT = *condition_result; // is a RETURN, BREAK, THROW...
-			return R_OUT;
+			return R_OUT_IS_THROWN;
 		}
 
 		if (index == END_FLAG) raise Error_0(RE_PAST_END);
@@ -446,7 +479,7 @@ enum {
 
 		if (index == THROWN_FLAG) {
 			*D_OUT = *body_result; // is a RETURN, BREAK, THROW...
-			return R_OUT;
+			return R_OUT_IS_THROWN;
 		}
 
 		if (index == END_FLAG) {
@@ -470,11 +503,8 @@ enum {
 				//     stuff: [print "This will be printed"]
 				//     case [true stuff]
 				//
-				if (Do_Block_Throws(
-					D_OUT, VAL_SERIES(body_result), VAL_INDEX(body_result)
-				)) {
-					return R_OUT;
-				}
+				if (DO_ARRAY_THROWS(D_OUT, body_result))
+					return R_OUT_IS_THROWN;
 			}
 			else {
 				// With /ONLY (or a non-block) don't do more evaluation, so
@@ -539,7 +569,7 @@ enum {
 	// /ANY would override /NAME, so point out the potential confusion
 	if (any && named) raise Error_0(RE_BAD_REFINES);
 
-	if (Do_Block_Throws(D_OUT, VAL_SERIES(block), VAL_INDEX(block))) {
+	if (DO_ARRAY_THROWS(D_OUT, block)) {
 		if (
 			(any && (
 				!IS_NATIVE(D_OUT)
@@ -594,31 +624,32 @@ enum {
 			if (IS_NONE(D_OUT))
 				goto was_caught;
 		}
+
+		// Throw name is in D_OUT, thrown value is held task local
+		return R_OUT_IS_THROWN;
 	}
 
 	return R_OUT;
 
 was_caught:
 	if (with) {
+		// We again re-use the refinement slots, but this time as mutable
+		// space protected from GC for the handler's arguments
+		REBVAL *thrown_arg = D_ARG(4);
+		REBVAL *thrown_name = D_ARG(5);
+
+		CATCH_THROWN(thrown_arg, D_OUT);
+		*thrown_name = *D_OUT; // THROWN bit cleared by TAKE_THROWN_ARG
+
 		if (IS_BLOCK(handler)) {
 			// There's no way to pass args to a block (so just DO it)
-			if (Do_Block_Throws(
-				D_OUT, VAL_SERIES(handler), VAL_INDEX(handler)
-			)) {
-				return R_OUT;
-			}
+			if (DO_ARRAY_THROWS(D_OUT, handler))
+				return R_OUT_IS_THROWN;
+
 			return R_OUT;
 		}
 		else if (ANY_FUNC(handler)) {
 			REBVAL *param = BLK_SKIP(VAL_FUNC_PARAMLIST(handler), 1);
-
-			// We again re-use the refinement slots, but this time as mutable
-			// space protected from GC for the handler's arguments
-			REBVAL *thrown_arg = D_ARG(4);
-			REBVAL *thrown_name = D_ARG(5);
-
-			CATCH_THROWN(thrown_arg, D_OUT);
-			*thrown_name = *D_OUT; // THROWN bit cleared by TAKE_THROWN_ARG
 
 			if (
 				(VAL_FUNC_NUM_PARAMS(handler) == 0)
@@ -627,10 +658,8 @@ was_caught:
 				// If the handler is zero arity or takes a first parameter
 				// that is a refinement, call it with no arguments
 				//
-				if (Apply_Func_Throws(D_OUT, handler, NULL)) {
-					// No need to do anything special in the thrown case,
-					// as we are just returning the thrown value anyway
-				}
+				if (Apply_Func_Throws(D_OUT, handler, NULL))
+					return R_OUT_IS_THROWN;
 			}
 			else if (
 				(VAL_FUNC_NUM_PARAMS(handler) == 1)
@@ -640,10 +669,8 @@ was_caught:
 				// parameter), or a greater arity with a second parameter that
 				// is a refinement...call it with *just* the thrown value.
 				//
-				if (Apply_Func_Throws(D_OUT, handler, thrown_arg, NULL)) {
-					// No need to do anything special in the thrown case,
-					// as we are just returning the thrown value anyway
-				}
+				if (Apply_Func_Throws(D_OUT, handler, thrown_arg, NULL))
+					return R_OUT_IS_THROWN;
 			}
 			else {
 				// For all other handler signatures, try passing both the
@@ -653,8 +680,7 @@ was_caught:
 				if (Apply_Func_Throws(
 					D_OUT, handler, thrown_arg, thrown_name, NULL
 				)) {
-					// No need to do anything special in the thrown case,
-					// as we are just returning the thrown value anyway
+					return R_OUT_IS_THROWN;
 				}
 			}
 
@@ -708,7 +734,8 @@ was_caught:
 
 	CONVERT_NAME_TO_THROWN(D_OUT, value);
 
-	return R_OUT;
+	// Throw name is in D_OUT, thrown value is held task local
+	return R_OUT_IS_THROWN;
 }
 
 
@@ -747,7 +774,8 @@ was_caught:
 	// Compose expects out to contain the target if /INTO
 	if (into) *D_OUT = *D_ARG(5);
 
-	Compose_Block(D_OUT, value, D_REF(2), D_REF(3), into);
+	if (Compose_Block_Throws(D_OUT, value, D_REF(2), D_REF(3), into))
+		return R_OUT_IS_THROWN;
 
 	return R_OUT;
 }
@@ -763,10 +791,13 @@ was_caught:
 **
 ***********************************************************************/
 {
-	*D_OUT = *ROOT_CONTINUE_NATIVE;
-	CONVERT_NAME_TO_THROWN(D_OUT, UNSET_VALUE);
+	REBVAL *value = D_REF(1) ? D_ARG(2) : UNSET_VALUE;
 
-	return R_OUT;
+	*D_OUT = *ROOT_CONTINUE_NATIVE;
+
+	CONVERT_NAME_TO_THROWN(D_OUT, value);
+
+	return R_OUT_IS_THROWN;
 }
 
 
@@ -810,8 +841,14 @@ was_caught:
 			);
 
 			if (VAL_INDEX(value) == THROWN_FLAG) {
-				// We're going to return the value in D_OUT anyway, but
-				// if we looked at D_OUT we'd have to check this first
+				// the throw should make the value irrelevant, but if caught
+				// then have it indicate the start of the thrown expression
+
+				// !!! What if the block was mutated, and D_ARG(1) is no
+				// longer actually the expression that started the throw?
+
+				Set_Var(var, value);
+				return R_OUT_IS_THROWN;
 			}
 
 			if (VAL_INDEX(value) == END_FLAG) {
@@ -824,8 +861,8 @@ was_caught:
 			return R_OUT;
 		}
 
-		if (Do_Block_Throws(D_OUT, VAL_SERIES(value), 0))
-			return R_OUT;
+		if (DO_ARRAY_THROWS(D_OUT, value))
+			return R_OUT_IS_THROWN;
 
 		return R_OUT;
 
@@ -845,8 +882,7 @@ was_caught:
 			var,
 			NULL
 		)) {
-			// Was THROW, RETURN, EXIT, QUIT etc...
-			// No special handling, just return as we were going to
+			return R_OUT_IS_THROWN;
 		}
 		return R_OUT;
 
@@ -878,16 +914,21 @@ was_caught:
 /*
 ***********************************************************************/
 {
-	REBCNT argnum = IS_CONDITIONAL_FALSE(D_ARG(1)) ? 3 : 2;
+	REBVAL * const condition = D_ARG(1);
+	REBVAL * const branch = IS_CONDITIONAL_TRUE(condition)
+		? D_ARG(2) // true-branch
+		: D_ARG(3); // false-branch
+	const REBOOL only = D_REF(4);
 
-	if (IS_BLOCK(D_ARG(argnum)) && !D_REF(4) /* not using /ONLY */) {
-		if (Do_Block_Throws(D_OUT, VAL_SERIES(D_ARG(argnum)), 0))
-			return R_OUT;
-
+	if (only || !IS_BLOCK(branch)) {
+		*D_OUT = *branch;
 		return R_OUT;
 	}
 
-	return argnum == 2 ? R_ARG2 : R_ARG3;
+	if (DO_ARRAY_THROWS(D_OUT, branch))
+		return R_OUT_IS_THROWN;
+
+	return R_OUT;
 }
 
 
@@ -957,7 +998,7 @@ was_caught:
 
 	CONVERT_NAME_TO_THROWN(D_OUT, D_REF(1) ? D_ARG(2) : UNSET_VALUE);
 
-	return R_OUT;
+	return R_OUT_IS_THROWN;
 }
 
 
@@ -1017,12 +1058,20 @@ was_caught:
 
 			// We just reduce and form the result, but since we allow PAREN!
 			// it means you can put in pretty much any expression.
-			Reduce_Block(reason, VAL_SERIES(reason), VAL_INDEX(reason), FALSE);
+			if (Reduce_Block_Throws(
+				reason, VAL_SERIES(reason), VAL_INDEX(reason), FALSE
+			)) {
+				*D_OUT = *reason;
+				return R_OUT_IS_THROWN;
+			}
+
 			Val_Init_String(reason, Copy_Form_Value(reason, 0));
 		}
 
-		if (Make_Error_Object_Throws(D_OUT, reason))
-			return R_OUT;
+		if (Make_Error_Object_Throws(D_OUT, reason)) {
+			// Throw name is in D_OUT, thrown value is held task local
+			return R_OUT_IS_THROWN;
+		}
 
 		raise Error_Is(D_OUT);
 	}
@@ -1037,14 +1086,21 @@ was_caught:
 /*
 ***********************************************************************/
 {
-	if (IS_CONDITIONAL_FALSE(D_ARG(1))) return R_NONE;
-	if (IS_BLOCK(D_ARG(2)) && !D_REF(3) /* not using /ONLY */) {
-		if (Do_Block_Throws(D_OUT, VAL_SERIES(D_ARG(2)), 0))
-			return R_OUT;
+	REBVAL * const condition = D_ARG(1);
+	REBVAL * const branch = D_ARG(2);
+	const REBOOL only = D_REF(3);
 
+	if (IS_CONDITIONAL_FALSE(condition)) return R_NONE;
+
+	if (only || !IS_BLOCK(branch)) {
+		*D_OUT = *branch;
 		return R_OUT;
 	}
-	return R_ARG2;
+
+	if (DO_ARRAY_THROWS(D_OUT, branch))
+		return R_OUT_IS_THROWN;
+
+	return R_OUT;
 }
 
 
@@ -1089,12 +1145,16 @@ was_caught:
 		if (into)
 			*D_OUT = *D_ARG(6);
 
-		if (D_REF(2))
-			Reduce_Block_No_Set(D_OUT, ser, index, into);
+		if (D_REF(2)) {
+			if (Reduce_Block_No_Set_Throws(D_OUT, ser, index, into))
+				return R_OUT_IS_THROWN;
+		}
 		else if (D_REF(3))
 			Reduce_Only(D_OUT, ser, index, D_ARG(4), into);
-		else
-			Reduce_Block(D_OUT, ser, index, into);
+		else {
+			if (Reduce_Block_Throws(D_OUT, ser, index, into))
+				return R_OUT_IS_THROWN;
+		}
 
 		return R_OUT;
 	}
@@ -1119,7 +1179,7 @@ was_caught:
 	*D_OUT = *ROOT_RETURN_NATIVE;
 	CONVERT_NAME_TO_THROWN(D_OUT, arg);
 
-	return R_OUT;
+	return R_OUT_IS_THROWN;
 }
 
 
@@ -1180,8 +1240,8 @@ was_caught:
 			}
 		#endif
 
-			if (Do_Block_Throws(D_OUT, VAL_SERIES(item), VAL_INDEX(item)))
-				return R_OUT;
+			if (DO_ARRAY_THROWS(D_OUT, item))
+				return R_OUT_IS_THROWN;
 		}
 		else if (IS_GET_WORD(item)) {
 
@@ -1240,8 +1300,8 @@ was_caught:
 
 		found = TRUE;
 
-		if (Do_Block_Throws(D_OUT, VAL_SERIES(item), VAL_INDEX(item)))
-			return R_OUT;
+		if (DO_ARRAY_THROWS(D_OUT, item))
+			return R_OUT_IS_THROWN;
 
 		// Only keep processing if the /ALL refinement was specified
 
@@ -1249,12 +1309,9 @@ was_caught:
 	}
 
 	if (!found && IS_BLOCK(default_case)) {
-		if (Do_Block_Throws(
-			D_OUT, VAL_SERIES(default_case), VAL_INDEX(default_case)
-		)) {
-			// No special handling needed if D_OUT is thrown, as we're
-			// just going to return it anyway.
-		}
+		if (DO_ARRAY_THROWS(D_OUT, default_case))
+			return R_OUT_IS_THROWN;
+
 		return R_OUT;
 	}
 
@@ -1307,11 +1364,9 @@ was_caught:
 		if (with) {
 			if (IS_BLOCK(handler)) {
 				// There's no way to pass 'error' to a block (so just DO it)
-				if (Do_Block_Throws(
-					D_OUT, VAL_SERIES(handler), VAL_INDEX(handler)
-				)) {
-					return R_OUT;
-				}
+				if (DO_ARRAY_THROWS(D_OUT, handler))
+					return R_OUT_IS_THROWN;
+
 				return R_OUT;
 			}
 			else if (ANY_FUNC(handler)) {
@@ -1322,20 +1377,16 @@ was_caught:
 					// Arity zero handlers (or handlers whose first
 					// parameter is a refinement) we call without the ERROR!
 					//
-					if (!Apply_Func_Throws(D_OUT, handler, NULL)) {
-						// No need to handle thrown result specially, as we
-						// are just returning it anyway
-					}
+					if (Apply_Func_Throws(D_OUT, handler, NULL))
+						return R_OUT_IS_THROWN;
 				}
 				else {
 					// If the handler takes at least one parameter that
 					// isn't a refinement, try passing it the ERROR! we
 					// trapped.  Apply will do argument checking.
 					//
-					if (!Apply_Func_Throws(D_OUT, handler, error, NULL)) {
-						// No need to handle thrown result specially, as we
-						// are just returning it anyway
-					}
+					if (Apply_Func_Throws(D_OUT, handler, error, NULL))
+						return R_OUT_IS_THROWN;
 				}
 
 				return R_OUT;
@@ -1348,7 +1399,7 @@ was_caught:
 		return R_OUT;
 	}
 
-	if (Do_Block_Throws(D_OUT, VAL_SERIES(block), VAL_INDEX(block))) {
+	if (DO_ARRAY_THROWS(D_OUT, block)) {
 		// Note that we are interested in when errors are raised, which
 		// causes a tricky C longjmp() to the code above.  Yet a THROW
 		// is different from that, and offers an opportunity to each
@@ -1359,6 +1410,9 @@ was_caught:
 		// and just returning the THROWN thing for other stack levels
 		// to look at.  For the construct which does let you catch a
 		// throw, see REBNATIVE(catch), which has code for this case.
+
+		DROP_TRAP_SAME_STACKLEVEL_AS_PUSH(&state);
+		return R_OUT_IS_THROWN;
 	}
 
 	DROP_TRAP_SAME_STACKLEVEL_AS_PUSH(&state);
@@ -1373,14 +1427,19 @@ was_caught:
 /*
 ***********************************************************************/
 {
-	if (IS_CONDITIONAL_TRUE(D_ARG(1))) return R_NONE;
+	REBVAL * const condition = D_ARG(1);
+	REBVAL * const branch = D_ARG(2);
+	const REBOOL only = D_REF(3);
 
-	if (IS_BLOCK(D_ARG(2)) && !D_REF(3) /* not using /ONLY */) {
-		if (Do_Block_Throws(D_OUT, VAL_SERIES(D_ARG(2)), 0))
-			return R_OUT;
+	if (IS_CONDITIONAL_TRUE(condition)) return R_NONE;
 
+	if (only || !IS_BLOCK(branch)) {
+		*D_OUT = *branch;
 		return R_OUT;
 	}
 
-	return R_ARG2;
+	if (DO_ARRAY_THROWS(D_OUT, branch))
+		return R_OUT_IS_THROWN;
+
+	return R_OUT;
 }

@@ -511,6 +511,18 @@
 
 /***********************************************************************
 **
+*/	void Val_Init_Port(REBVAL *value, REBSER *series)
+/*
+***********************************************************************/
+{
+	ENSURE_FRAME_MANAGED(series);
+
+	VAL_SET(value, REB_PORT);
+	VAL_OBJ_FRAME(value) = series;
+}
+
+/***********************************************************************
+**
 */	REBCNT Val_Series_Len(const REBVAL *value)
 /*
 **		Get length of series, but avoid negative values.

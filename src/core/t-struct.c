@@ -609,7 +609,7 @@ static REBOOL parse_field_type(struct Struct_Field *field, REBVAL *spec, REBVAL 
 	if (IS_BLOCK(val)) {// make struct! [a: [int32 [2]] [0 0]]
 		REBVAL ret;
 
-		if (Do_Block_Throws(&ret, VAL_SERIES(val), 0)) {
+		if (DO_ARRAY_THROWS(&ret, val)) {
 			// !!! Does not check for thrown cases...what should this
 			// do in case of THROW, BREAK, QUIT?
 			raise Error_No_Catch_For_Throw(&ret);
@@ -655,7 +655,7 @@ static REBOOL parse_field_type(struct Struct_Field *field, REBVAL *spec, REBVAL 
 	MANAGE_SERIES(VAL_STRUCT_FIELDS(out));
 
 	if (IS_BLOCK(data)) {
-		//Reduce_Block_No_Set(VAL_SERIES(data), 0, NULL);
+		//if (Reduce_Block_No_Set_Throws(VAL_SERIES(data), 0, NULL))...
 		//data = DS_POP;
 		REBVAL *blk = VAL_BLK_DATA(data);
 		REBINT field_idx = 0; /* for field index */
@@ -738,7 +738,9 @@ static REBOOL parse_field_type(struct Struct_Field *field, REBVAL *spec, REBVAL 
 				init = &safe;
 
 				if (IS_BLOCK(blk)) {
-					Reduce_Block(init, VAL_SERIES(blk), 0, FALSE);
+					if (Reduce_Block_Throws(init, VAL_SERIES(blk), 0, FALSE))
+						raise Error_No_Catch_For_Throw(init);
+
 					++ blk;
 				} else {
 					eval_idx = Do_Next_May_Throw(
@@ -871,7 +873,15 @@ failed:
 			&& IS_END(pvs->path + 2)) {
 			REBVAL *sel = pvs->select;
 			pvs->value = pvs->store;
-			Next_Path(pvs); // sets value in pvs->value
+
+			if (Next_Path_Throws(pvs)) { // sets value in pvs->store
+
+				// !!! Gob and Struct do "sub-dispatch" which may throw
+				// No "PE_THREW" return, however.  (should there be?)
+
+				raise Error_No_Catch_For_Throw(pvs->store);
+			}
+
 			if (!Set_Struct_Var(stu, sel, pvs->select, pvs->value)) {
 				return PE_BAD_SET;
 			}

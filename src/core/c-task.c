@@ -75,7 +75,7 @@
 	body = Copy_Array_Deep_Managed(VAL_MOD_BODY(task));
 	OS_TASK_READY(0);
 
-	if (Do_Block_Throws(&ignored, body, 0))
+	if (Do_At_Throws(&ignored, body, 0))
 		raise Error_No_Catch_For_Throw(&ignored);
 
 	Debug_Str("End Task");

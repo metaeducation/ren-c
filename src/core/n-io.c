@@ -105,7 +105,7 @@
 }
 
 
-static void Print_Native_Modifies(
+static REBFLG Print_Native_Modifying_Throws(
 	REBVAL *value, // Value may be modified.  Contents must be GC-safe!
 	REBOOL newline
 ) {
@@ -158,7 +158,12 @@ static void Print_Native_Modifies(
 		//
 		// Currently it effectively FORM REDUCEs the output.
 
-		Reduce_Block(value, VAL_SERIES(value), VAL_INDEX(value), FALSE);
+		if (Reduce_Block_Throws(
+			value, VAL_SERIES(value), VAL_INDEX(value), FALSE
+		)) {
+			return TRUE;
+		}
+
 		Prin_Value(value, 0, 0);
 		if (newline)
 			Print_OS_Line();
@@ -173,6 +178,8 @@ static void Print_Native_Modifies(
 		if (newline)
 			Print_OS_Line();
 	}
+
+	return FALSE;
 }
 
 
@@ -185,7 +192,11 @@ static void Print_Native_Modifies(
 	// Note: value is safe from GC due to being in arg slot
 	REBVAL *value = D_ARG(1);
 
-	Print_Native_Modifies(value, TRUE); // add newline
+	if (Print_Native_Modifying_Throws(value, TRUE)) { // add newline
+		*D_OUT = *value;
+		return R_OUT_IS_THROWN;
+	}
+
 	return R_UNSET;
 }
 
@@ -207,7 +218,11 @@ static void Print_Native_Modifies(
 	// Note: value is safe from GC due to being in arg slot
 	REBVAL *value = D_ARG(1);
 
-	Print_Native_Modifies(value, FALSE); // do not add newline
+	if (Print_Native_Modifying_Throws(value, FALSE)) { // do not add newline
+		*D_OUT = *value;
+		return R_OUT_IS_THROWN;
+	}
+
 	return R_UNSET;
 }
 
@@ -330,7 +345,13 @@ static void Print_Native_Modifies(
 
 	if (IS_BLOCK(val)) {
 		REBVAL unsafe; // temporary not safe from GC
-		Reduce_Block(&unsafe, VAL_SERIES(val), VAL_INDEX(val), FALSE);
+		if (Reduce_Block_Throws(
+			&unsafe, VAL_SERIES(val), VAL_INDEX(val), FALSE
+		)) {
+			*D_OUT = unsafe;
+			return R_OUT_IS_THROWN;
+		}
+
 		ports = VAL_SERIES(&unsafe);
 		for (val = BLK_HEAD(ports); NOT_END(val); val++) { // find timeout
 			if (Pending_Port(val)) n++;

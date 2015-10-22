@@ -40,44 +40,38 @@ typedef enum {
 
 /***********************************************************************
 **
-*/	REBOOL Loop_Throw_Should_Return(REBVAL *val)
+*/	REBFLG Catching_Break_Or_Continue(REBVAL *val, REBFLG *stop)
 /*
-**		Process values thrown during loop, and tell the loop whether
-**		to take that processed value and return it up the stack.
-**		If not, then the throw was a continue...and the code
-**		should just keep going.
+**	Determines if a thrown value is either a break or continue.  If so,
+**	modifies `val` to be the throw's argument, sets `stop` flag if it
+**	was a BREAK or BREAK/WITH, and returns TRUE.
 **
-**		Note: This modifies the input value.  If it returns FALSE
-**		then the value is guaranteed to not be THROWN(), but it
-**		may-or-may-not be THROWN() if TRUE is returned.
+**	If FALSE is returned then the throw name `val` was not a break
+**	or continue, and needs to be bubbled up or handled another way.
 **
 ***********************************************************************/
 {
 	assert(THROWN(val));
 
-	// Using words for BREAK and CONTINUE to parallel old VAL_ERR_SYM()
-	// code.  So if the throw wasn't a word it can't be either of those,
-	// hence the loop doesn't handle it and needs to bubble up the THROWN()
+	// Throw /NAME-s used by CONTINUE and BREAK are the actual native
+	// function values of the routines themselves.
 	if (!IS_NATIVE(val))
-		return TRUE;
-
-	// If it's a CONTINUE then wipe out the THROWN() value with UNSET,
-	// and tell the loop it doesn't have to return.
-	if (VAL_FUNC_CODE(val) == VAL_FUNC_CODE(ROOT_CONTINUE_NATIVE)) {
-		CATCH_THROWN(val, val);
-		SET_UNSET(val);
 		return FALSE;
-	}
 
-	// If it's a BREAK, get the /WITH value (UNSET! if no /WITH) and
-	// say it should be returned.
 	if (VAL_FUNC_CODE(val) == VAL_FUNC_CODE(ROOT_BREAK_NATIVE)) {
-		CATCH_THROWN(val, val);
+		*stop = TRUE; // was BREAK or BREAK/WITH
+		CATCH_THROWN(val, val); // will be unset if no /WITH was used
 		return TRUE;
 	}
 
-	// Else: Let all other THROWN() values bubble up.
-	return TRUE;
+	if (VAL_FUNC_CODE(val) == VAL_FUNC_CODE(ROOT_CONTINUE_NATIVE)) {
+		*stop = FALSE; // was CONTINUE or CONTINUE/WITH
+		CATCH_THROWN(val, val); // will be unset if no /WITH was used
+		return TRUE;
+	}
+
+	// Else: Let all other thrown values bubble up.
+	return FALSE;
 }
 
 
@@ -87,6 +81,11 @@ typedef enum {
 /*
 **		Initialize standard for loops (copy block, make frame, bind).
 **		Spec: WORD or [WORD ...]
+**
+**		Note that because we are copying the block in order to rebind it, the
+**		ensuing loop code will `Do_At_Throws(out, body, 0);`.  Starting at
+**		zero is correct because the duplicate body has already had the
+**		items before its VAL_INDEX() omitted.
 **
 ***********************************************************************/
 {
@@ -141,7 +140,7 @@ typedef enum {
 
 /***********************************************************************
 **
-*/	static void Loop_Series(REBVAL *out, REBVAL *var, REBSER* body, REBVAL *start, REBINT ei, REBINT ii)
+*/	static REBFLG Loop_Series_Throws(REBVAL *out, REBVAL *var, REBSER* body, REBVAL *start, REBINT ei, REBINT ii)
 /*
 ***********************************************************************/
 {
@@ -160,19 +159,27 @@ typedef enum {
 	for (; (ii > 0) ? si <= ei : si >= ei; si += ii) {
 		VAL_INDEX(var) = si;
 
-		if (Do_Block_Throws(out, body, 0)) {
-			if (Loop_Throw_Should_Return(out)) break;
+		if (Do_At_Throws(out, body, 0)) {
+			REBFLG stop;
+			if (Catching_Break_Or_Continue(out, &stop)) {
+				if (stop) break;
+				goto next_iteration;
+			}
+			return TRUE;
 		}
 
+	next_iteration:
 		if (VAL_TYPE(var) != type) raise Error_1(RE_INVALID_TYPE, var);
 		si = VAL_INDEX(var);
 	}
+
+	return FALSE;
 }
 
 
 /***********************************************************************
 **
-*/	static void Loop_Integer(REBVAL *out, REBVAL *var, REBSER* body, REBI64 start, REBI64 end, REBI64 incr)
+*/	static REBFLG Loop_Integer_Throws(REBVAL *out, REBVAL *var, REBSER* body, REBI64 start, REBI64 end, REBI64 incr)
 /*
 ***********************************************************************/
 {
@@ -183,22 +190,30 @@ typedef enum {
 	while ((incr > 0) ? start <= end : start >= end) {
 		VAL_INT64(var) = start;
 
-		if (Do_Block_Throws(out, body, 0)) {
-			if (Loop_Throw_Should_Return(out)) break;
+		if (Do_At_Throws(out, body, 0)) {
+			REBFLG stop;
+			if (Catching_Break_Or_Continue(out, &stop)) {
+				if (stop) break;
+				goto next_iteration;
+			}
+			return TRUE;
 		}
 
+	next_iteration:
 		if (!IS_INTEGER(var)) raise Error_Has_Bad_Type(var);
 		start = VAL_INT64(var);
 
 		if (REB_I64_ADD_OF(start, incr, &start))
 			raise Error_0(RE_OVERFLOW);
 	}
+
+	return FALSE;
 }
 
 
 /***********************************************************************
 **
-*/	static void Loop_Number(REBVAL *out, REBVAL *var, REBSER* body, REBVAL *start, REBVAL *end, REBVAL *incr)
+*/	static REBFLG Loop_Number_Throws(REBVAL *out, REBVAL *var, REBSER* body, REBVAL *start, REBVAL *end, REBVAL *incr)
 /*
 ***********************************************************************/
 {
@@ -234,19 +249,27 @@ typedef enum {
 	for (; (i > 0.0) ? s <= e : s >= e; s += i) {
 		VAL_DECIMAL(var) = s;
 
-		if (Do_Block_Throws(out, body, 0)) {
-			if (Loop_Throw_Should_Return(out)) break;
+		if (Do_At_Throws(out, body, 0)) {
+			REBFLG stop;
+			if (Catching_Break_Or_Continue(out, &stop)) {
+				if (stop) break;
+				goto next_iteration;
+			}
+			return TRUE;
 		}
 
+	next_iteration:
 		if (!IS_DECIMAL(var)) raise Error_Has_Bad_Type(var);
 		s = VAL_DECIMAL(var);
 	}
+
+	return FALSE;
 }
 
 
 /***********************************************************************
 **
-*/	static int Loop_All(struct Reb_Call *call_, REBINT mode)
+*/	static REB_R Loop_All(struct Reb_Call *call_, REBINT mode)
 /*
 **		0: forall
 **		1: forskip
@@ -295,15 +318,22 @@ typedef enum {
 				VAL_INDEX(var) = idx;
 			}
 
-			if (Do_Block_Throws(D_OUT, body, bodi)) {
-				if (Loop_Throw_Should_Return(D_OUT)) {
-					// return value is set, but we still need to assign var
-					break;
+			if (Do_At_Throws(D_OUT, body, bodi)) {
+				REBFLG stop;
+				if (Catching_Break_Or_Continue(D_OUT, &stop)) {
+					if (stop) {
+						// Return value has been set in D_OUT, but we need
+						// to reset var to its initial value
+						*var = *D_ARG(1);
+						return R_OUT;
+					}
+					goto next_iteration;
 				}
+				return R_OUT_IS_THROWN;
 			}
 
+		next_iteration:
 			if (VAL_TYPE(var) != type) raise Error_Invalid_Arg(var);
-
 			VAL_INDEX(var) += inc;
 		}
 	}
@@ -343,11 +373,13 @@ typedef enum {
 	REBINT tail;
 	REBINT windex;	// write
 	REBINT rindex;	// read
-	REBOOL break_with = FALSE;
-	REBOOL every_true = TRUE;
 	REBCNT i;
 	REBCNT j;
 	REBVAL *ds;
+
+	REBFLG stop = FALSE;
+	REBFLG every_true = TRUE;
+	REBOOL threw = FALSE; // did a non-BREAK or non-CONTINUE throw occur
 
 	if (IS_NONE(data)) return R_NONE;
 
@@ -355,7 +387,10 @@ typedef enum {
 	Val_Init_Object(D_ARG(1), frame); // keep GC safe
 	Val_Init_Block(D_ARG(3), body); // keep GC safe
 
-	SET_NONE(D_OUT); // Default result to NONE if the loop does not run
+	if (mode == LOOP_EVERY)
+		SET_TRUE(D_OUT); // Default output is TRUE, to match ALL MAP-EACH
+	else
+		SET_NONE(D_OUT); // !!! Loops may set default to not set in future
 
 	if (mode == LOOP_MAP_EACH) {
 		// Must be managed *and* saved...because we are accumulating results
@@ -502,41 +537,15 @@ typedef enum {
 			index++;
 		}
 
-		if (Do_Block_Throws(D_OUT, body, 0)) {
-			if (
-				IS_NATIVE(D_OUT)
-				&& VAL_FUNC_CODE(D_OUT) == VAL_FUNC_CODE(ROOT_CONTINUE_NATIVE)
-			) {
-				CATCH_THROWN(D_OUT, D_OUT);
-				if (mode == LOOP_REMOVE_EACH) {
-					// signal the post-body-execution processing that we
-					// *do not* want to remove the element on a CONTINUE
-					SET_FALSE(D_OUT);
-				}
-				else {
-					// CONTINUE otherwise acts "as if" the loop body execution
-					// returned an UNSET!
-					SET_UNSET(D_OUT);
-				}
-			}
-			else if (
-				IS_NATIVE(D_OUT)
-				&& VAL_FUNC_CODE(D_OUT) == VAL_FUNC_CODE(ROOT_BREAK_NATIVE)
-			) {
-				// If it's a BREAK, get the /WITH value (UNSET! if no /WITH)
-				// Though technically this doesn't really tell us if a
-				// BREAK/WITH happened, as you can BREAK/WITH an UNSET!
-				CATCH_THROWN(D_OUT, D_OUT);
-				if (!IS_UNSET(D_OUT))
-					break_with = TRUE;
-				index = rindex;
+		if (Do_At_Throws(D_OUT, body, 0)) {
+			if (!Catching_Break_Or_Continue(D_OUT, &stop)) {
+				// A non-loop throw, we should be bubbling up
+				threw = TRUE;
 				break;
 			}
-			else {
-				// Any other kind of throw, with a WORD! name or otherwise...
-				index = rindex;
-				break;
-			}
+
+			// Fall through and process the D_OUT (unset if no /WITH) for
+			// this iteration.  `stop` flag will be checked ater that.
 		}
 
 		switch (mode) {
@@ -544,9 +553,8 @@ typedef enum {
 			// no action needed after body is run
 			break;
 		case LOOP_REMOVE_EACH:
-			// If FALSE return, copy values to the write location
-			// !!! Should UNSET! also act as conditional false here?  Error?
-			if (IS_CONDITIONAL_FALSE(D_OUT)) {
+			// If FALSE return (or unset), copy values to the write location
+			if (IS_CONDITIONAL_FALSE(D_OUT) || IS_UNSET(D_OUT)) {
 				REBYTE wide = SERIES_WIDE(series);
 				// memory areas may overlap, so use memmove and not memcpy!
 
@@ -566,62 +574,79 @@ typedef enum {
 			if (!IS_UNSET(D_OUT)) Append_Value(out, D_OUT);
 			break;
 		case LOOP_EVERY:
-			if (every_true) {
-				// !!! This currently treats UNSET! as true, which ALL
-				// effectively does right now.  That's likely a bad idea.
-				// When ALL changes, so should this.
-				//
-				every_true = IS_CONDITIONAL_TRUE(D_OUT);
-			}
+			every_true = every_true && IS_CONDITIONAL_TRUE(D_OUT);
 			break;
 		default:
 			assert(FALSE);
 		}
+
+		if (stop) break;
+
 skip_hidden: ;
 	}
 
+	if (mode == LOOP_MAP_EACH) DROP_GUARD_SERIES(out);
+
+	if (threw) {
+		// a non-BREAK and non-CONTINUE throw overrides any other return
+		// result we might give (generic THROW, RETURN, QUIT, etc.)
+
+		return R_OUT_IS_THROWN;
+	}
+
+	// Note: This finalization will be run by finished loops as well as
+	// interrupted ones.  So:
+	//
+	//    map-each x [1 2 3 4] [if x = 3 [break]] => [1 2]
+	//
+	//    map-each x [1 2 3 4] [if x = 3 [break/with "A"]] => [1 2 "A"]
+	//
+	//    every x [1 3 6 12] [if x = 6 [break/with 7] even? x] => 7
+	//
+	// This provides the most flexibility in the loop's processing, because
+	// "override" logic already exists in the form of CATCH & THROW.
+
+#if !defined(NDEBUG)
+	if (LEGACY(OPTIONS_BREAK_WITH_OVERRIDES)) {
+		// In legacy R3-ALPHA, BREAK without a provided value did *not*
+		// override the result.  It returned the partial results.
+		if (stop && !IS_UNSET(D_OUT))
+			return R_OUT;
+	}
+#endif
+
 	switch (mode) {
 	case LOOP_FOR_EACH:
-		// Nothing to do but return last result (will be UNSET! if an
-		// ordinary BREAK was used, the /WITH if a BREAK/WITH was used,
-		// and an UNSET! if the last loop iteration did a CONTINUE.)
+		// Returns last body result or /WITH of BREAK (or the /WITH of a
+		// CONTINUE if it turned out to be the last iteration)
 		return R_OUT;
 
 	case LOOP_REMOVE_EACH:
 		// Remove hole (updates tail):
 		if (windex < index) Remove_Series(series, windex, index - windex);
 		SET_INTEGER(D_OUT, index - windex);
-
 		return R_OUT;
 
 	case LOOP_MAP_EACH:
-		DROP_GUARD_SERIES(out);
-		if (break_with) {
-			// If BREAK is given a /WITH parameter that is not an UNSET!, it
-			// is assumed that you want to override the accumulated mapped
-			// data so far and return the /WITH value. (which will be in
-			// D_OUT when the loop above is `break`-ed)
-
-			// !!! Would be nice if we could Free_Series(out), but it is owned
-			// by GC (we had to make it that way to use SAVE_SERIES on it)
-			return R_OUT;
-		}
-
-		// If you BREAK/WITH an UNSET! (or just use a BREAK that has no
-		// /WITH, which is indistinguishable in the thrown value) then it
-		// returns the accumulated results so far up to the break.
-
 		Val_Init_Block(D_OUT, out);
 		return R_OUT;
 
 	case LOOP_EVERY:
+		if (threw) return R_OUT_IS_THROWN;
+
 		// Result is the cumulative TRUE? state of all the input (with any
 		// unsets taken out of the consideration).  The last TRUE? input
-		// if all valid and NONE! otherwise.  (Like ALL.)  If the loop
-		// never runs, `every_true` will be TRUE *but* D_OUT will be NONE!
-		if (!every_true)
-			SET_NONE(D_OUT);
+		// if all valid and NONE! otherwise.  (Like ALL.)
+		if (!every_true) return R_NONE;
+
+		// We want to act like `ALL MAP-EACH ...`, hence we effectively ignore
+		// unsets and return TRUE if the last evaluation leaves an unset.
+		if (IS_UNSET(D_OUT)) return R_TRUE;
+
 		return R_OUT;
+
+	default:
+		assert(FALSE);
 	}
 
 	DEAD_END;
@@ -650,17 +675,37 @@ skip_hidden: ;
 	Val_Init_Block(D_ARG(5), body); // keep GC safe
 
 	if (IS_INTEGER(start) && IS_INTEGER(end) && IS_INTEGER(incr)) {
-		Loop_Integer(D_OUT, var, body, VAL_INT64(start),
-			IS_DECIMAL(end) ? (REBI64)VAL_DECIMAL(end) : VAL_INT64(end), VAL_INT64(incr));
+		if (Loop_Integer_Throws(
+			D_OUT,
+			var,
+			body,
+			VAL_INT64(start),
+			IS_DECIMAL(end) ? (REBI64)VAL_DECIMAL(end) : VAL_INT64(end),
+			VAL_INT64(incr)
+		)) {
+			return R_OUT_IS_THROWN;
+		}
 	}
 	else if (ANY_SERIES(start)) {
-		if (ANY_SERIES(end))
-			Loop_Series(D_OUT, var, body, start, VAL_INDEX(end), Int32(incr));
-		else
-			Loop_Series(D_OUT, var, body, start, Int32s(end, 1) - 1, Int32(incr));
+		if (ANY_SERIES(end)) {
+			if (Loop_Series_Throws(
+				D_OUT, var, body, start, VAL_INDEX(end), Int32(incr)
+			)) {
+				return R_OUT_IS_THROWN;
+			}
+		}
+		else {
+			if (Loop_Series_Throws(
+				D_OUT, var, body, start, Int32s(end, 1) - 1, Int32(incr)
+			)) {
+				return R_OUT_IS_THROWN;
+			}
+		}
 	}
-	else
-		Loop_Number(D_OUT, var, body, start, end, incr);
+	else {
+		if (Loop_Number_Throws(D_OUT, var, body, start, end, incr))
+			return R_OUT_IS_THROWN;
+	}
 
 	return R_OUT;
 }
@@ -692,9 +737,16 @@ skip_hidden: ;
 /*
 ***********************************************************************/
 {
+	REBVAL * const block = D_ARG(1);
+
 	do {
-		if (Do_Block_Throws(D_OUT, VAL_SERIES(D_ARG(1)), 0)) {
-			if (Loop_Throw_Should_Return(D_OUT)) return R_OUT;
+		if (DO_ARRAY_THROWS(D_OUT, block)) {
+			REBFLG stop;
+			if (Catching_Break_Or_Continue(D_OUT, &stop)) {
+				if (stop) return R_OUT;
+				continue;
+			}
+			return R_OUT_IS_THROWN;
 		}
 	} while (TRUE);
 
@@ -766,17 +818,22 @@ skip_hidden: ;
 ***********************************************************************/
 {
 	REBI64 count = Int64(D_ARG(1));
-	REBSER *block = VAL_SERIES(D_ARG(2));
-	REBCNT index  = VAL_INDEX(D_ARG(2));
+	REBVAL * const block = D_ARG(2);
 	REBVAL *ds;
 
 	SET_NONE(D_OUT); // Default result to NONE if the loop does not run
 
 	for (; count > 0; count--) {
-		if (Do_Block_Throws(D_OUT, block, index)) {
-			if (Loop_Throw_Should_Return(D_OUT)) return R_OUT;
+		if (DO_ARRAY_THROWS(D_OUT, block)) {
+			REBFLG stop;
+			if (Catching_Break_Or_Continue(D_OUT, &stop)) {
+				if (stop) return R_OUT;
+				continue;
+			}
+			return R_OUT_IS_THROWN;
 		}
 	}
+
 	return R_OUT;
 }
 
@@ -807,11 +864,18 @@ skip_hidden: ;
 	Val_Init_Block(D_ARG(3), body); // keep GC safe
 
 	if (ANY_SERIES(count)) {
-		Loop_Series(D_OUT, var, body, count, VAL_TAIL(count) - 1, 1);
+		if (Loop_Series_Throws(
+			D_OUT, var, body, count, VAL_TAIL(count) - 1, 1
+		)) {
+			return R_OUT_IS_THROWN;
+		}
+
 		return R_OUT;
 	}
 	else if (IS_INTEGER(count)) {
-		Loop_Integer(D_OUT, var, body, 1, VAL_INT64(count), 1);
+		if (Loop_Integer_Throws(D_OUT, var, body, 1, VAL_INT64(count), 1))
+			return R_OUT_IS_THROWN;
+
 		return R_OUT;
 	}
 
@@ -825,19 +889,22 @@ skip_hidden: ;
 /*
 ***********************************************************************/
 {
-	REBSER *b1 = VAL_SERIES(D_ARG(1));
-	REBCNT i1  = VAL_INDEX(D_ARG(1));
+	REBVAL * const block = D_ARG(1);
 
 	do {
-utop:
-		if (Do_Block_Throws(D_OUT, b1, i1)) {
-			if (Loop_Throw_Should_Return(D_OUT)) return R_OUT;
-			goto utop;
+		if (DO_ARRAY_THROWS(D_OUT, block)) {
+			REBFLG stop;
+			if (Catching_Break_Or_Continue(D_OUT, &stop)) {
+				if (stop) return R_OUT;
+				continue;
+			}
+			return R_OUT_IS_THROWN;
 		}
 
 		if (IS_UNSET(D_OUT)) raise Error_0(RE_NO_RETURN);
 
-	} while (IS_CONDITIONAL_FALSE(D_OUT)); // Break, return errors fall out.
+	} while (IS_CONDITIONAL_FALSE(D_OUT));
+
 	return R_OUT;
 }
 
@@ -848,43 +915,45 @@ utop:
 /*
 ***********************************************************************/
 {
-	REBSER *cond_series = VAL_SERIES(D_ARG(1));
-	REBCNT cond_index = VAL_INDEX(D_ARG(1));
-	REBSER *body_series = VAL_SERIES(D_ARG(2));
-	REBCNT body_index = VAL_INDEX(D_ARG(2));
+	REBVAL * const condition = D_ARG(1);
+	REBVAL * const body = D_ARG(2);
 
 	// We need to keep the condition and body safe from GC, so we can't
 	// use a D_ARG slot for evaluating the condition (can't overwrite
 	// D_OUT because that's the last loop's value we might return)
-	REBVAL cond_out;
+	REBVAL temp;
 
 	// If the loop body never runs (and condition doesn't error or throw),
 	// we want to return a NONE!
 	SET_NONE(D_OUT);
 
 	do {
-		if (Do_Block_Throws(&cond_out, cond_series, cond_index)) {
+		if (DO_ARRAY_THROWS(&temp, condition)) {
 			// A while loop should only look for breaks and continues in its
 			// body, not in its condition.  So `while [break] []` is a
 			// request to break the enclosing loop (or error if there is
 			// nothing to catch that break).  Hence we bubble up the throw.
-			*D_OUT = cond_out;
-			return R_OUT;
+			*D_OUT = temp;
+			return R_OUT_IS_THROWN;
 		}
 
-		if (IS_CONDITIONAL_FALSE(&cond_out)) {
+		if (IS_UNSET(&temp))
+			raise Error_0(RE_NO_RETURN);
+
+		if (IS_CONDITIONAL_FALSE(&temp)) {
 			// When the condition evaluates to a LOGIC! false or a NONE!,
 			// WHILE returns whatever the last value was that the body
 			// evaluated to (or none if no body evaluations yet).
 			return R_OUT;
 		}
 
-		if (IS_UNSET(&cond_out))
-			raise Error_0(RE_NO_RETURN);
-
-		if (Do_Block_Throws(D_OUT, body_series, body_index)) {
-			// !!! Process_Loop_Throw may modify its argument
-			if (Loop_Throw_Should_Return(D_OUT)) return R_OUT;
+		if (DO_ARRAY_THROWS(D_OUT, body)) {
+			REBFLG stop;
+			if (Catching_Break_Or_Continue(D_OUT, &stop)) {
+				if (stop) return R_OUT;
+				continue;
+			}
+			return R_OUT_IS_THROWN;
 		}
 	} while (TRUE);
 }

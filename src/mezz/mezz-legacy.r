@@ -224,6 +224,7 @@ set 'r3-legacy* func [] [
 	system/options/no-switch-fallthrough: true
 	system/options/forever-64-bit-ints: true
 	system/options/print-forms-everything: true
+	system/options/break-with-overrides: true
 
 	; False is already the default for this switch
 	; (e.g. `to-word type-of quote ()` is the word PAREN! and not GROUP!)

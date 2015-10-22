@@ -351,8 +351,8 @@
 	}
 
 	if (Redo_Func_Throws(actor)) {
-		// No special handling needed, as we are just going to return
-		// the output value in D_OUT anyway.
+		// The throw name will be in D_OUT, with thrown value in task vars
+		return R_OUT_IS_THROWN;
 	}
 
 	return R_OUT;

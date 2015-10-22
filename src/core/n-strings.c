@@ -124,20 +124,8 @@ static struct digest {
 /*
 ***********************************************************************/
 {
-	REBSER *block = VAL_SERIES(D_ARG(1));
-	REBCNT index = VAL_INDEX(D_ARG(1));
-
-	REB_MOLD mo;
-	CLEARS(&mo);
-	Reset_Mold(&mo);
-
-	while (index != END_FLAG) {
-		index = Do_Next_May_Throw(D_OUT, block, index);
-		if (index == THROWN_FLAG) return R_OUT;
-		Mold_Value(&mo, D_OUT, 0);
-	}
-
-	Val_Init_String(D_OUT, Copy_String(mo.series, 0, -1));
+	if (Form_Reduce_Throws(D_OUT, VAL_SERIES(D_ARG(1)), VAL_INDEX(D_ARG(1))))
+		return R_OUT_IS_THROWN;
 
 	return R_OUT;
 }
