@@ -38,22 +38,22 @@ do %form-header.r
 ;-----------------------------------------------------------------------------
 ;-----------------------------------------------------------------------------
 
-cnt: 0
+proto-count: 0
 
-xlib: make string! 20000
-rlib: make string! 1000
-mlib: make string! 1000
-dlib: make string! 1000
-cmts: make string! 1000
-xsum: make string! 1000
+xlib-buffer: make string! 20000
+rlib-buffer: make string! 1000
+mlib-buffer: make string! 1000
+dlib-buffer: make string! 1000
+comments-buffer: make string! 1000
+xsum-buffer: make string! 1000
 
-emit:  func [d] [append repend xlib d newline]
-remit: func [d] [append repend rlib d newline]
-demit: func [d] [append repend dlib d newline]
-cemit: func [d] [append repend cmts d newline]
-memit: func [d /nol] [
-	repend mlib d
-	if not nol [append mlib newline]
+emit:  func [d] [append repend xlib-buffer d newline]
+emit-rlib: func [d] [append repend rlib-buffer d newline]
+emit-dlib: func [d] [append repend dlib-buffer d newline]
+emit-comment: func [d] [append repend comments-buffer d newline]
+emit-mlib: func [d /nol] [
+	repend mlib-buffer d
+	if not nol [append mlib-buffer newline]
 ]
 
 count: func [s c /local n] [
@@ -67,25 +67,25 @@ count: func [s c /local n] [
 	append out ")"
 ]
 
-in-sub: func [str pat /local f] [
+in-sub: func [text pattern /local position] [
 	all [
-		f: find cmt pat ":"
-		insert f "^/:"
-		f: find next f newline
-		remove f
-		insert f " - "
+		position: find text pattern ":"
+		insert position "^/:"
+		position: find next position newline
+		remove position
+		insert position " - "
 	]
 ]
 
-gen-doc: func [fspec spec cmt] [
-	replace/all cmt "**" "  "
-	replace/all cmt "/*" "  "
-	replace/all cmt "*/" "  "
-	trim cmt
-	append cmt newline
+gen-doc: func [name proto text] [
+	replace/all text "**" "  "
+	replace/all text "/*" "  "
+	replace/all text "*/" "  "
+	trim text
+	append text newline
 
-	insert find cmt "Arguments:" "^/:"
-	bb: beg: find/tail cmt "Arguments:"
+	insert find text "Arguments:" "^/:"
+	bb: beg: find/tail text "Arguments:"
 	insert any [find bb "notes:" tail bb] newline
 	while [
 		all [
@@ -102,15 +102,15 @@ gen-doc: func [fspec spec cmt] [
 	remove find beg newline
 	remove/part find beg "<br>" 4 ; extra <br>
 
-	remove find cmt "^/Returns:"
-	in-sub cmt "Returns:"
-	in-sub cmt "Notes:"
+	remove find text "^/Returns:"
+	in-sub text "Returns:"
+	in-sub text "Notes:"
 
-	insert cmt reduce [
-		":Function: - " <tt class=word> spec </tt>
+	insert text reduce [
+		":Function: - " <tt class=word> proto </tt>
 		"^/^/:Summary: - "
 	]
-	cemit ["===" fspec newline newline cmt]
+	emit-comment ["===" name newline newline text]
 ]
 
 pads: func [start col] [
@@ -118,60 +118,55 @@ pads: func [start col] [
 	head insert/dup clear "" #" " col
 ]
 
-func-header: [
-	[
-		;-- WARNING: as written this means you can't use RL_API in a comment
-		;-- or this will screw up... more rigor needed.
+emit-proto: funct/extern [proto] [
 
-		thru "RL_API "
-		copy spec to newline skip
-		["/*" copy cmt thru "*/" | none]
-		(
-			if all [
-				spec
-				trim spec
-				fn: find spec preface
-				find spec #"("
-			][
-				emit ["RL_API " spec ";"] ;    // " the-file]
-				append xsum spec
-				p1: copy/part spec fn
-				p3: find fn #"("
-				p2: copy/part fn p3
-				p2u: uppercase copy p2
-				p2l: lowercase copy find/tail p2 preface
-				demit [tab p2 ","]
-				remit [tab p1 "(*" p2l ")" p3 ";"]
-				args: count p3 #","
-				m: tail mlib
-				memit/nol ["#define " p2u args]
-				memit [pads m 35 " RL->" p2l args]
-				if w: find cmt "****" [append clear w "*/"]
-				memit ["/*^/**^-" spec "^/**" cmt newline]
+	if all [
+		proto
+		trim proto
+		pos.id: find proto preface
+		find proto #"("
+	] [
+		emit ["RL_API " proto ";"] ;    // " the-file]
+		append xsum-buffer proto
+		fn.declarations: copy/part proto pos.id
+		pos.lparen: find pos.id #"("
+		fn.name: copy/part pos.id pos.lparen
+		fn.name.upper: uppercase copy fn.name
+		fn.name.lower: lowercase copy find/tail fn.name preface
 
-				gen-doc p2 spec cmt
-				cnt: cnt + 1
-			]
-		)
-		newline
-		[
-			"/*" ; must be in func header section, not file banner
-			any [
-				thru "**"
-				[#" " | #"^-"]
-				copy line thru newline
-			]
-			thru "*/"
-			|
-			none
+		emit-dlib [tab fn.name ","]
+
+		emit-rlib [tab fn.declarations "(*" fn.name.lower ")" pos.lparen ";"]
+
+		args: count pos.lparen #","
+		mlib.tail: tail mlib-buffer
+		emit-mlib/nol ["#define " fn.name.upper args]
+		emit-mlib [pads mlib.tail 35 " RL->" fn.name.lower args]
+		if pos.starredline: find comment-text "****" [
+			append clear pos.starredline "*/"
 		]
-	]
-]
+		emit-mlib ["/*^/**^-" proto "^/**" comment-text newline]
 
-write-if: func [file data] [
-	if data <> attempt [to string! read file][ ;R3
-		print ["UPDATE:" file]
-		write file data
+		gen-doc fn.name proto comment-text
+
+		proto-count: proto-count + 1
+	]
+][proto-count]
+
+func-header: [
+	;-- WARNING: as written this means you can't use RL_API in a comment
+	;-- or this will screw up... more rigor needed.
+
+	thru "RL_API " copy proto to newline skip
+	opt ["/*" copy comment-text thru "*/"]
+	(emit-proto proto)
+	newline
+	opt [
+		"/*" ; must be in func header section, not file banner
+		any [
+			thru "**" [#" " | #"^-"] copy line thru newline
+		]
+		thru "*/"
 	]
 ]
 
@@ -183,12 +178,19 @@ process: func [file] [
 	]
 ]
 
+write-if: func [file data] [
+	if data <> attempt [to string! read file][ ;R3
+		print ["UPDATE:" file]
+		write file data
+	]
+]
+
 ;-----------------------------------------------------------------------------
 
-remit {
+emit-rlib {
 typedef struct rebol_ext_api ^{}
 
-cemit [{Host/Extension API
+emit-comment [{Host/Extension API
 
 =r3
 
@@ -227,7 +229,7 @@ process ext-lib
 
 ;-----------------------------------------------------------------------------
 
-remit "} RL_LIB;"
+emit-rlib "} RL_LIB;"
 
 out: to-string reduce [
 form-header/gen "REBOL Host and Extension API" %reb-lib.r %make-reb-lib.r
@@ -260,7 +262,7 @@ form-header/gen "REBOL Host and Extension API" %reb-lib.r %make-reb-lib.r
 #endif
 
 // Function entry points for reb-lib (used for MACROS below):}
-rlib
+rlib-buffer
 {
 // Extension entry point functions:
 #ifdef TO_WINDOWS
@@ -283,7 +285,7 @@ extern RL_LIB *RL;  // is passed to the RX_Init() function
 // Macros to access reb-lib functions (from non-linked extensions):
 
 }
-mlib
+mlib-buffer
 {
 
 #define RL_MAKE_BINARY(s) RL_MAKE_STRING(s, FALSE)
@@ -291,7 +293,7 @@ mlib
 #ifndef REB_EXT // not extension lib, use direct calls to r3lib
 
 }
-xlib
+xlib-buffer
 {
 #endif // REB_EXT
 
@@ -310,14 +312,14 @@ out: to-string reduce [
 form-header/gen "REBOL Host/Extension API" %reb-lib-lib.r %make-reb-lib.r
 {RL_LIB Ext_Lib = ^{
 }
-dlib
+dlib-buffer
 {^};
 }
 ]
 
 write-if reb-ext-defs out
 
-write-if %../reb-lib-doc.txt cmts
+write-if %../reb-lib-doc.txt comments-buffer
 
 ;ask "Done"
 print "   "
