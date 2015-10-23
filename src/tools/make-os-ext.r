@@ -20,7 +20,8 @@ version: load %../boot/version.r
 lib-version: version/3
 print ["--- Make OS Ext Lib --- Version:" lib-version]
 
-do %common.r
+do %common.r
+do %common-parsers.r
 do %systems.r
 
 config: config-system/guess system/options/args
@@ -134,20 +135,17 @@ emit-proto: func [
 ]
 
 func-header: [
-	thru "/***" 10 100 "*" newline
+	"^/**" to newline
 	thru "^/*/" any [#" " | #"^-"]
 	copy proto to newline (emit-proto proto) newline
-	opt [
-		"/*" ; must be in func header section, not file banner
-		any [
-			thru "**" [#" " | #"^-"] copy line thru newline
-		]
-		thru "*/"
-	]
+	opt format2012.post.comment
 ]
 
 segment: [
-	func-header
+	thru "/******" to newline [
+		func-header
+		| thru newline
+	]
 ]
 
 process: func [file] [

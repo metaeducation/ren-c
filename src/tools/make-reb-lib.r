@@ -32,6 +32,7 @@ reb-ext-defs: out-dir/reb-lib-lib.h  ; for REBOL usage
 ver: load %../boot/version.r
 
 do %common.r
+do %common-parsers.r
 
 do %form-header.r
 
@@ -159,23 +160,20 @@ func-header: [
 	;-- WARNING: as written this means you can't use RL_API in a comment
 	;-- or this will screw up... more rigor needed.
 
-	thru "/***" 10 100 "*" newline
-	thru "^/*/" any [#" " | #"^-"]
+	"^/**" to newline
+	"^/*/" any [#" " | #"^-"]
 	"RL_API " copy proto to newline skip
 	opt ["/*" copy comment-text thru "*/"]
 	(emit-proto proto)
 	newline
-	opt [
-		"/*" ; must be in func header section, not file banner
-		any [
-			thru "**" [#" " | #"^-"] copy line thru newline
-		]
-		thru "*/"
-	]
+	opt format2012.post.comment
 ]
 
 segment: [
-	func-header
+	thru "/******" to newline [
+		func-header
+		| thru newline
+	]
 ]
 
 process: func [file] [
