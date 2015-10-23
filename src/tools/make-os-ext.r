@@ -79,7 +79,7 @@ count: func [s c /local n] [
 	append output-buffer ")"
 ]
 
-emit-proto: funct/extern [
+emit-proto: func [
 	proto
 ] [
 
@@ -131,11 +131,11 @@ emit-proto: funct/extern [
 
 		proto-count: proto-count + 1
 	]
-][proto-count]
+]
 
 func-header: [
 	thru "/***" 10 100 "*" newline
-	thru "*/"
+	thru "^/*/" any [#" " | #"^-"]
 	copy proto to newline (emit-proto proto) newline
 	opt [
 		"/*" ; must be in func header section, not file banner
@@ -146,13 +146,15 @@ func-header: [
 	]
 ]
 
+segment: [
+	func-header
+]
+
 process: func [file] [
 	if verbose [?? file]
 	data: read the-file: file
 	data: to-string data ; R3
-	parse data [
-		any func-header
-	]
+	parse data [any segment]
 ]
 
 append host-lib-struct {

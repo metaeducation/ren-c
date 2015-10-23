@@ -77,7 +77,6 @@ emit-proto: func [proto] [
 ]
 
 func-header: [
-	;-- Scan for function header box:
 	"^/**" to newline
 	"^/*/" any [#" " | #"^-"]
 	copy proto to newline (emit-proto proto) newline

@@ -118,7 +118,9 @@ pads: func [start col] [
 	head insert/dup clear "" #" " col
 ]
 
-emit-proto: funct/extern [proto] [
+emit-proto: func [
+	proto
+] [
 
 	if all [
 		proto
@@ -151,13 +153,15 @@ emit-proto: funct/extern [proto] [
 
 		proto-count: proto-count + 1
 	]
-][proto-count]
+]
 
 func-header: [
 	;-- WARNING: as written this means you can't use RL_API in a comment
 	;-- or this will screw up... more rigor needed.
 
-	thru "RL_API " copy proto to newline skip
+	thru "/***" 10 100 "*" newline
+	thru "^/*/" any [#" " | #"^-"]
+	"RL_API " copy proto to newline skip
 	opt ["/*" copy comment-text thru "*/"]
 	(emit-proto proto)
 	newline
@@ -170,12 +174,15 @@ func-header: [
 	]
 ]
 
+segment: [
+	func-header
+]
+
 process: func [file] [
 	if verbose [?? file]
-	data: to string! read the-file: file ;R3
-	parse data [
-		any func-header
-	]
+	data: read the-file: file ;R3
+	data: to-string data ; R3
+	parse data [any segment]
 ]
 
 write-if: func [file data] [
