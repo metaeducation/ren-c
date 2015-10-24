@@ -78,10 +78,10 @@ emit-proto: func [proto] [
 ]
 
 func-header: [
-	"^/**" to newline
-	"^/*/" any [#" " | #"^-"]
-	copy proto to newline (emit-proto proto) newline
+	format2012.pre.proto
+	copy proto to newline newline
 	opt format2012.post.comment
+	(emit-proto proto)
 ]
 
 segment: [

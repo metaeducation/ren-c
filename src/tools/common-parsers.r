@@ -21,10 +21,11 @@ REBOL [
 ]
 
 
+format2012.pre.proto: [
+	some ["^/**" any [#" " | #"^-"] to newline]
+	"^/*/" any [#" " | #"^-"]
+]
+
 format2012.post.comment: [
-	"/*" ; must be in func header section, not file banner
-	any [
-		thru "**" [#" " | #"^-"] copy line thru newline
-	]
-	thru "*/"
+	"/*" copy comment-text thru "*/"
 ]

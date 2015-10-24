@@ -160,13 +160,10 @@ func-header: [
 	;-- WARNING: as written this means you can't use RL_API in a comment
 	;-- or this will screw up... more rigor needed.
 
-	"^/**" to newline
-	"^/*/" any [#" " | #"^-"]
+	format2012.pre.proto
 	"RL_API " copy proto to newline skip
-	opt ["/*" copy comment-text thru "*/"]
-	(emit-proto proto)
-	newline
 	opt format2012.post.comment
+	(emit-proto proto)
 ]
 
 segment: [
