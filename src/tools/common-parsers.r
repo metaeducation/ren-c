@@ -127,6 +127,7 @@ proto-parser: context [
 	post.proto.notes: none
 	lines: none
 	data: none
+	style: none
 
 	process: func [data] [parse data grammar/rule]
 
@@ -144,7 +145,7 @@ proto-parser: context [
 			doubleslashed-lines
 			and is-format2015.intro
 			proto-prefix copy proto to newline newline
-			(emit-proto proto)
+			(style: 'format2015 emit-proto proto)
 		]
 
 		doubleslashed-lines: [copy lines some ["//" thru newline]]
@@ -171,7 +172,7 @@ proto-parser: context [
 			"^/*/" any [#" " | #"^-"]
 			proto-prefix copy proto to newline newline
 			opt format2012.post.comment
-			(emit-proto proto)
+			(style: 'format2012 emit-proto proto)
 		]
 
 		format2012.post.comment: [
