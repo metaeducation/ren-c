@@ -163,9 +163,6 @@ process: func [file] [
 	data: read the-file: file ;R3
 	data: to-string data ; R3
 
-	;-- WARNING: as written this means you can't use RL_API in a comment
-	;-- or this will screw up... more rigor needed.
-
 	proto-parser/proto-prefix: "RL_API "
 	proto-parser/emit-proto: :emit-proto
 	proto-parser/process data
