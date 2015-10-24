@@ -145,7 +145,8 @@ emit-proto: func [
 		mlib.tail: tail mlib-buffer
 		emit-mlib/nol ["#define " fn.name.upper args]
 		emit-mlib [pads mlib.tail 35 " RL->" fn.name.lower args]
-		comment-text: proto-parser/post.proto.notes
+		comment-text: rejoin [newline proto-parser/post.proto.notes newline]
+		encode-lines comment-text {**} { }
 		if pos.starredline: find comment-text "****" [
 			clear pos.starredline
 		]

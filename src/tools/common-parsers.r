@@ -136,28 +136,27 @@ proto-parser: context [
 		rule: [any segment]
 
 		segment: [
-			format2015.func-header
-			| format2012.func-header
+			format2015-func-header
+			| format2012-func-header
 			| thru newline
 		]
 
-		format2015.func-header: [
+		format2015-func-header: [
 			doubleslashed-lines
-			and is-format2015.intro
+			and is-format2015-intro
 			proto-prefix copy proto to newline newline
 			(style: 'format2015 emit-proto proto)
 		]
 
 		doubleslashed-lines: [copy lines some ["//" thru newline]]
 
-		is-format2015.intro: parsing-at position [
+		is-format2015-intro: parsing-at position [
 			if all [
 				lines: attempt [decode-lines lines {//} { }]
 				data: load-until-blank lines
 				data: attempt [
 					if set-word? first data/1 [
-						encode-lines data/2 {**} { }
-						post.proto.notes: rejoin [{**^/} copy data/2 {**^/}]
+						post.proto.notes: data/2
 						data/1
 					]
 				]
@@ -166,17 +165,13 @@ proto-parser: context [
 			]
 		]
 
-		format2012.func-header: [
+		format2012-func-header: [
 			"/******" to newline
 			some ["^/**" any [#" " | #"^-"] to newline]
 			"^/*/" any [#" " | #"^-"]
 			proto-prefix copy proto to newline newline
-			opt format2012.post.comment
+			opt ["/*" copy post.proto.notes thru "*/"]
 			(style: 'format2012 emit-proto proto)
-		]
-
-		format2012.post.comment: [
-			"/*" copy post.proto.notes thru "*/"
 		]
 	]
 ]
