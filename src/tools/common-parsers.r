@@ -31,22 +31,17 @@ proto-parser: context [
 	rule: [any segment]
 
 	segment: [
-		thru "/******" to newline [
-			format2012.func-header
-			| thru newline
-		]
+		format2012.func-header
+		| thru newline
 	]
 
 	format2012.func-header: [
-		format2012.pre.proto
+		"/******" to newline
+		some ["^/**" any [#" " | #"^-"] to newline]
+		"^/*/" any [#" " | #"^-"]
 		proto-prefix copy proto to newline newline
 		opt format2012.post.comment
 		(emit-proto proto)
-	]
-
-	format2012.pre.proto: [
-		some ["^/**" any [#" " | #"^-"] to newline]
-		"^/*/" any [#" " | #"^-"]
 	]
 
 	format2012.post.comment: [
