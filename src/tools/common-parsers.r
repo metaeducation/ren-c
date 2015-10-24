@@ -20,12 +20,35 @@ REBOL [
 	}
 ]
 
+proto-parser: context [
 
-format2012.pre.proto: [
-	some ["^/**" any [#" " | #"^-"] to newline]
-	"^/*/" any [#" " | #"^-"]
-]
+	emit-proto: none
+	proto-prefix: none
 
-format2012.post.comment: [
-	"/*" copy comment-text thru "*/"
+	process: func [data] [parse data rule]
+
+	rule: [any segment]
+
+	segment: [
+		thru "/******" to newline [
+			format2012.func-header
+			| thru newline
+		]
+	]
+
+	format2012.func-header: [
+		format2012.pre.proto
+		proto-prefix copy proto to newline newline
+		opt format2012.post.comment
+		(emit-proto proto)
+	]
+
+	format2012.pre.proto: [
+		some ["^/**" any [#" " | #"^-"] to newline]
+		"^/*/" any [#" " | #"^-"]
+	]
+
+	format2012.post.comment: [
+		"/*" copy comment-text thru "*/"
+	]
 ]

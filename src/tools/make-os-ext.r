@@ -134,25 +134,12 @@ emit-proto: func [
 	]
 ]
 
-func-header: [
-	format2012.pre.proto
-	copy proto to newline newline
-	opt format2012.post.comment
-	(emit-proto proto)
-]
-
-segment: [
-	thru "/******" to newline [
-		func-header
-		| thru newline
-	]
-]
-
 process: func [file] [
 	if verbose [?? file]
 	data: read the-file: file
 	data: to-string data ; R3
-	parse data [any segment]
+	proto-parser/emit-proto: :emit-proto
+	proto-parser/process data
 ]
 
 append host-lib-struct {

@@ -156,28 +156,17 @@ emit-proto: func [
 	]
 ]
 
-func-header: [
-	;-- WARNING: as written this means you can't use RL_API in a comment
-	;-- or this will screw up... more rigor needed.
-
-	format2012.pre.proto
-	"RL_API " copy proto to newline skip
-	opt format2012.post.comment
-	(emit-proto proto)
-]
-
-segment: [
-	thru "/******" to newline [
-		func-header
-		| thru newline
-	]
-]
-
 process: func [file] [
 	if verbose [?? file]
 	data: read the-file: file ;R3
 	data: to-string data ; R3
-	parse data [any segment]
+
+	;-- WARNING: as written this means you can't use RL_API in a comment
+	;-- or this will screw up... more rigor needed.
+
+	proto-parser/proto-prefix: "RL_API "
+	proto-parser/emit-proto: :emit-proto
+	proto-parser/process data
 ]
 
 write-if: func [file data] [
