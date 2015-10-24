@@ -304,7 +304,10 @@ REBTYPE(Object)
     REBVAL *value = D_ARG(1);
     REBVAL *arg = D_ARGC > 1 ? D_ARG(2) : NULL;
     REBINT n;
+    REBVAL *body;
+    REBVAL *spec;
     REBVAL *val;
+    REBVAL out;
     REBSER *obj, *src_obj;
     REBCNT type = 0;
 
@@ -320,7 +323,14 @@ REBTYPE(Object)
 
                 // make object! [init]
                 if (type == REB_OBJECT) {
-                    obj = Make_Object(0, VAL_BLK_DATA(arg));
+                    n = VAL_TAIL(arg); 
+                    if (n >= 2) { // object mezz add none at end
+                        spec = BLK_HEAD(VAL_SERIES(arg));
+                        body = BLK_SKIP(VAL_SERIES(arg), 1);
+                        if (IS_BLOCK(spec) && IS_BLOCK(body)) arg = body;
+                        else spec = 0;
+                    } else spec = 0;
+                    obj = Make_Object(0, spec ? VAL_SERIES(spec) : 0, VAL_BLK_DATA(arg));
                     Val_Init_Object(D_OUT, obj); // GC save
                     Bind_Values_Deep(VAL_BLK_DATA(arg), obj);
 
@@ -334,10 +344,10 @@ REBTYPE(Object)
                 if (type == REB_MODULE) {
                     Make_Module(value, arg);
                     type = 0;
-                //  VAL_MOD_BODY(value) = VAL_SERIES(arg);
-                //  VAL_SET(value, REB_MODULE); // GC protected
-                //  DO_BLK(arg);
-                //  DS_DROP;
+                //    VAL_MOD_BODY(value) = VAL_SERIES(arg);
+                //    VAL_SET(value, REB_MODULE); // GC protected
+                //    DO_BLK(arg);
+                //    DS_DROP;
                     break; // returns value
                 }
 
@@ -404,12 +414,14 @@ REBTYPE(Object)
                     TS_CLONE // types
                 );
                 Rebind_Frame(src_obj, obj);
-                break;  // returns obj
+                break;    // returns obj
             }
 
             // make parent [...]
             if (IS_BLOCK(arg)) {
-                obj = Make_Object(src_obj, VAL_BLK_DATA(arg));
+                VAL_SERIES(&out) = VAL_OBJ_SPEC(value);
+                VAL_SET(&out, REB_BLOCK);
+                obj = Make_Object(src_obj, VAL_SERIES(&out), VAL_BLK_DATA(arg));
                 Rebind_Frame(src_obj, obj);
                 Val_Init_Object(D_OUT, obj);
                 Bind_Values_Deep(VAL_BLK_DATA(arg), obj);
@@ -526,6 +538,13 @@ REBTYPE(Object)
     case A_REFLECT:
         action = What_Reflector(arg); // zero on error
         if (action == OF_SPEC) {
+            if (IS_OBJECT(value)) {
+                if (!VAL_OBJ_SPEC(value)) return R_NONE;
+                VAL_SERIES(value) = VAL_OBJ_SPEC(value);
+                VAL_SET(value, REB_BLOCK);
+                VAL_INDEX(value) = 0;
+                break;
+            }
             if (!VAL_MOD_SPEC(value)) return R_NONE;
             VAL_OBJ_FRAME(value) = VAL_MOD_SPEC(value);
             VAL_SET(value, REB_OBJECT);

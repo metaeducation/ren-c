@@ -440,17 +440,34 @@ REBSER *Collect_Words(REBVAL value[], REBVAL prior_value[], REBCNT modes)
 //
 REBSER *Create_Frame(REBSER *words, REBSER *spec)
 {
-    REBINT len = SERIES_TAIL(words);
-    REBSER *frame = Make_Array(len);
-    REBVAL *value = BLK_HEAD(frame);
+    REBINT len = 1;
+    REBSER *frame = NULL;
+    REBVAL *value = NULL;
+    if (words) {
+        len = SERIES_TAIL(words);
+        frame = Make_Array(len);
+        value = BLK_HEAD(frame);
 
-    SET_FRAME(value, spec, words);
+        SET_FRAME(value, spec, words);
 
-    SERIES_TAIL(frame) = len;
-    for (value++, len--; len > 0; len--, value++) SET_NONE(value); // skip first value (self)
-    SET_END(value);
+        SERIES_TAIL(frame) = len;
+        for (value++, len--; len > 0; len--, value++) SET_NONE(value); // skip first value (self)
+        SET_END(value);
 
-    return frame;
+        return frame;
+    } else {
+        words = Make_Array(1); // room for SELF
+        frame = Make_Array(1);
+        value = BLK_HEAD(frame);
+
+        // Note: cannot use Append_Frame for first word.
+        value = Alloc_Tail_Array(frame);
+        SET_FRAME(value, spec, words);
+        value = Alloc_Tail_Array(words);
+        Val_Init_Typeset(value, ALL_64, SYM_SELF);
+
+        return frame;
+    }
 }
 
 
@@ -469,11 +486,11 @@ void Rebind_Frame(REBSER *src_frame, REBSER *dst_frame)
 
 //
 //  Make_Object: C
-// 
-// Create an object from a parent object and a spec block.
+//
+// Create an object from a parent object, a spec block and body block.
 // The words within the resultant object are not bound.
 //
-REBSER *Make_Object(REBSER *parent, REBVAL value[])
+REBSER *Make_Object(REBSER *parent, REBSER *spec, REBVAL value[])
 {
     REBSER *words;
     REBSER *object;
@@ -492,13 +509,14 @@ REBSER *Make_Object(REBSER *parent, REBVAL value[])
             );
         }
         else {
-            object = Make_Frame(0, TRUE);
+            if (spec) object = Create_Frame(0, spec);
+            else object = Make_Frame(0, TRUE);
             MANAGE_FRAME(object);
         }
     }
     else {
         words = Collect_Frame(parent, &value[0], BIND_ONLY); // GC safe
-        object = Create_Frame(words, 0); // GC safe
+        object = Create_Frame(words, spec ? spec : 0); // GC safe
         if (parent) {
             if (Reb_Opts->watch_obj_copy)
                 Debug_Fmt(cs_cast(BOOT_STR(RS_WATCH, 2)), SERIES_TAIL(parent) - 1, FRM_KEYLIST(object));
@@ -545,7 +563,7 @@ REBSER *Make_Object(REBSER *parent, REBVAL value[])
 //
 REBSER *Construct_Object(REBSER *parent, REBVAL value[], REBFLG as_is)
 {
-    REBSER *frame = Make_Object(parent, &value[0]);
+    REBSER *frame = Make_Object(parent, 0, &value[0]);
 
     if (NOT_END(value)) Bind_Values_Shallow(&value[0], frame);
 

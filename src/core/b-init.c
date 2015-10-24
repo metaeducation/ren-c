@@ -431,7 +431,7 @@ REBNATIVE(context)
     REBVAL *spec = D_ARG(1);
     REBVAL evaluated;
 
-    Val_Init_Object(D_OUT, Make_Object(0, VAL_BLK_HEAD(spec)));
+    Val_Init_Object(D_OUT, Make_Object(0, 0, VAL_BLK_HEAD(spec)));
     Bind_Values_Deep(VAL_BLK_HEAD(spec), VAL_OBJ_FRAME(D_OUT));
 
     if (DO_ARRAY_THROWS(&evaluated, spec)) {
@@ -702,7 +702,7 @@ static void Init_System_Object(void)
     // subobjects of the system object.
 
     // Create the system object from the sysobj block and bind its fields:
-    frame = Make_Object(0, VAL_BLK_HEAD(&Boot_Block->sysobj));
+    frame = Make_Object(0, 0, VAL_BLK_HEAD(&Boot_Block->sysobj));
     Bind_Values_Deep(VAL_BLK_HEAD(&Boot_Block->sysobj), Lib_Context);
 
     // Bind it so CONTEXT native will work (only used at topmost depth):

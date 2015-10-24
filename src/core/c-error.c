@@ -510,7 +510,7 @@ REBFLG Make_Error_Object_Throws(REBVAL *out, REBVAL *arg)
         // Bind and do an evaluation step (as with MAKE OBJECT! with A_MAKE
         // code in REBTYPE(Object) and code in REBNATIVE(construct))
 
-        frame = Make_Object(root_frame, VAL_BLK_DATA(arg));
+        frame = Make_Object(root_frame, 0, VAL_BLK_DATA(arg));
         Rebind_Frame(root_frame, frame);
         Bind_Values_Deep(VAL_BLK_DATA(arg), frame);
 

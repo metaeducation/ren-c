@@ -842,6 +842,7 @@ static void Mold_Map(const REBVAL *value, REB_MOLD *mold, REBFLG molded)
 static void Form_Object(const REBVAL *value, REB_MOLD *mold)
 {
     REBSER *keylist = VAL_OBJ_KEYLIST(value);
+    REBSER *ser; 
     REBVAL *keys = BLK_HEAD(keylist);
     REBVAL *vals  = VAL_OBJ_VALUES(value); // first value is context
     REBCNT n;
@@ -872,7 +873,9 @@ static void Form_Object(const REBVAL *value, REB_MOLD *mold)
 static void Mold_Object(const REBVAL *value, REB_MOLD *mold)
 {
     REBSER *keylist = VAL_OBJ_KEYLIST(value);
+    REBSER *ser;
     REBVAL *keys = BLK_HEAD(keylist);
+    REBVAL spec;
     REBVAL *vals = VAL_OBJ_VALUES(value); // first value is context
     REBCNT n;
 
@@ -889,7 +892,18 @@ static void Mold_Object(const REBVAL *value, REB_MOLD *mold)
     }
     Append_Value(MOLD_LOOP, value);
 
+    ser = VAL_OBJ_SPEC(value);
     mold->indent++;
+    if (ser) {
+        VAL_SERIES(&spec) = ser;
+        VAL_SET(&spec, REB_BLOCK);
+        VAL_INDEX(&spec) = 0;
+        New_Indented_Line(mold);
+        Mold_Value(mold, &spec, TRUE);
+        New_Indented_Line(mold);
+        Append_Codepoint_Raw(mold->series, '[');
+        mold->indent++;
+    }
     for (n = 1; n < SERIES_TAIL(keylist); n++) {
         if (
             !VAL_GET_EXT(keys + n, EXT_WORD_HIDE) &&
@@ -909,6 +923,11 @@ static void Mold_Object(const REBVAL *value, REB_MOLD *mold)
     mold->indent--;
     New_Indented_Line(mold);
     Append_Codepoint_Raw(mold->series, ']');
+    if (ser) {
+        mold->indent--;
+        New_Indented_Line(mold);
+        Append_Codepoint_Raw(mold->series, ']');
+    }
 
     End_Mold(mold);
     Remove_Array_Last(MOLD_LOOP);

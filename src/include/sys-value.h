@@ -1130,6 +1130,7 @@ struct Reb_Object {
 #define VAL_MOD_FRAME(v)    ((v)->data.object.frame)
 #define VAL_MOD_BODY(v)     ((v)->data.object.body)
 #define VAL_MOD_SPEC(v)     VAL_FRM_SPEC(VAL_OBJ_VALUES(v))
+#define VAL_OBJ_SPEC(v)     VAL_MOD_SPEC(v)
 
 
 /***********************************************************************
