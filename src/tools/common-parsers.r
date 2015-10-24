@@ -24,6 +24,7 @@ proto-parser: context [
 
 	emit-proto: none
 	proto-prefix: none
+	post.proto.notes: none
 
 	process: func [data] [parse data rule]
 
@@ -49,6 +50,6 @@ proto-parser: context [
 	]
 
 	format2012.post.comment: [
-		"/*" copy comment-text thru "*/"
+		"/*" copy post.proto.notes thru "*/"
 	]
 ]
