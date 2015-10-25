@@ -145,12 +145,16 @@ emit-proto: func [
 		mlib.tail: tail mlib-buffer
 		emit-mlib/nol ["#define " fn.name.upper args]
 		emit-mlib [pads mlib.tail 35 " RL->" fn.name.lower args]
-		comment-text: rejoin [newline proto-parser/post.proto.notes newline]
-		encode-lines comment-text {**} { }
-		if pos.starredline: find comment-text "****" [
-			clear pos.starredline
+
+		comment-text: proto-parser/notes.post
+		if proto-parser/style = 'format2012 [
+			if position: find comment-text "****" [clear position]
+			decode-lines comment-text {**} {}
+			trim/auto comment-text
 		]
-		emit-mlib ["/*^/**^-" proto "^/**" comment-text "*/" newline]
+		encode-lines comment-text {**} { }
+
+		emit-mlib ["/*^/**^-" proto "^/**^/" comment-text "*/" newline]
 
 		gen-doc fn.name proto comment-text
 

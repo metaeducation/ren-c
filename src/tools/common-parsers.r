@@ -124,7 +124,7 @@ proto-parser: context [
 
 	emit-proto: none
 	proto-prefix: none
-	post.proto.notes: none
+	notes.post: none
 	lines: none
 	data: none
 	style: none
@@ -145,7 +145,10 @@ proto-parser: context [
 			doubleslashed-lines
 			and is-format2015-intro
 			proto-prefix copy proto to newline newline
-			(style: 'format2015 emit-proto proto)
+			(
+				style: 'format2015
+				emit-proto proto
+			)
 		]
 
 		doubleslashed-lines: [copy lines some ["//" thru newline]]
@@ -156,11 +159,11 @@ proto-parser: context [
 				data: load-until-blank lines
 				data: attempt [
 					if set-word? first data/1 [
-						post.proto.notes: data/2
+						notes.post: data/2
 						data/1
 					]
 				]
-			][
+			] [
 				position ; Success.
 			]
 		]
@@ -170,8 +173,11 @@ proto-parser: context [
 			some ["^/**" any [#" " | #"^-"] to newline]
 			"^/*/" any [#" " | #"^-"]
 			proto-prefix copy proto to newline newline
-			opt ["/*" copy post.proto.notes thru "*/"]
-			(style: 'format2012 emit-proto proto)
+			opt ["/*" newline copy notes.post to "*/" "*/"]
+			(
+				style: 'format2012
+				emit-proto proto
+			)
 		]
 	]
 ]
