@@ -169,6 +169,15 @@ any-type!: :any-value!
 ;bound?
 
 
+; Precedent in Rebol has used the word OPT for OPTIONAL, arguing that it's
+; less typing and also used in English ("opt-in", "you may opt for a...").
+; Its commonality also leads it to be a shorthand for a variable name for
+; an "option".  This creates the synonym in order to allow the experiment,
+; though it doesn't seem like a good language keyword.
+
+opt: :optional
+
+
 ; !!! These less common cases still linger as question mark routines that
 ; don't return LOGIC!, and they seem like they need greater rethinking in
 ; general. What replaces them (for ones that are kept) might be entirely new.

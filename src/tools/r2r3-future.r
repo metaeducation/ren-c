@@ -25,6 +25,15 @@ REBOL [
 	}
 ]
 
+; Older versions of Rebol had a different concept of what FUNCTION meant
+; (an arity-3 variation of FUNC).  Eventually the arity-2 construct that
+; did locals-gathering by default named FUNCT overtook it, with the name
+; FUNCT deprecated.
+;
+unless (copy/part words-of :function 2) = [spec body] [
+	function: :funct
+]
+
 unless value? 'length [length: :length? unset 'length?]
 unless value? 'index-of [index-of: :index? unset 'index?]
 unless value? 'offset-of [offset-of: :offset? unset 'offset?]

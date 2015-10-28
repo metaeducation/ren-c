@@ -551,6 +551,16 @@ get: native [
 	/any {Allows word to have no value (allows unset)}
 ]
 
+relax: native [
+	{Turns unset to NONE, with ANY-VALUE! passing through. (See: OPTIONAL)}
+	value [any-value!]
+]
+
+optional: native [
+	{NONEs become unset, all other value types pass through. (See: RELAX)}
+	value [any-value!]
+]
+
 in: native [
 	{Returns the word or block in the object's context.}
 	object [any-object! block!]

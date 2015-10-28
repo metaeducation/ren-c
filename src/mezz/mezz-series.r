@@ -124,43 +124,65 @@ array: func [
 replace: func [
 	"Replaces a search value with the replace value within the target series."
 	target  [any-series!] "Series to replace within (modified)"
-	search  "Value to be replaced (converted if necessary)"
-	replace "Value to replace with (called each time if a function)"
-	/all "Replace all occurrences"  ;!!! Note ALL is redefined in here!
-	/case "Case-sensitive replacement"  ;!!! Note CASE is redefined in here!
-	/tail "Return target after the last replacement position"  ;!!! Note TAIL is redefined in here!
+	pattern "Value to be replaced (converted if necessary)"
+	replacement "Value to replace with (called each time if a function)"
+
+	; !!! Note these refinments alias ALL, CASE, TAIL natives!
+	/all "Replace all occurrences"
+	/case "Case-sensitive replacement"
+	/tail "Return target after the last replacement position"
+
 	/local save-target len value pos do-break
+
+	; Consider adding an /any refinement to use find/any, once that works.
 ][
 	save-target: target
-	; If target is a string but search is not, make search a string (except for bitset).
-	; If target is a binary but search is not, make search a binary (except for bitset).
-	; If target is a bitset, or a block and search is not a block, len = 1
+
+	; !!! These conversions being missing seems a problem with FIND the native
+	; as a holdover from pre-open-source Rebol when mezzanine development
+	; had no access to source (?).  Correct answer is likely to fix FIND:
+	;
+	;    >> find "abcdef" <cde>
+	;    >> == "cdef" ; should probably be NONE!
+	;
+	;    >> find "ab<cde>f" <cde>
+	;    == "cde>f" ; should be "<cde>f"
+	;
+	; Note that if a FORM actually happens inside of FIND, it could wind up
+	; happening repeatedly in the /ALL case if that happens.
+
 	len: lib/case [
-		bitset? :search  1
+		; leave bitset patterns as-is regardless of target type, len = 1
+		bitset? :pattern 1
+
 		any-string? target [
-			if any [not any-string? :search tag? :search] [search: form :search]
-			length :search
+			unless string? :pattern [pattern: form :pattern]
+			length :pattern
 		]
+
 		binary? target [
-			unless binary? :search [search: to-binary :search] ; Must be convertable
-			length :search
+			; Target is binary, pattern is not, make pattern a binary
+			unless binary? :pattern [pattern: to-binary :pattern]
+			length :pattern
 		]
-		any-block? :search [length :search]
-		true  1
+
+		any-block? :pattern [length :pattern]
+
+		true 1
 	]
-	; /all and /case checked before the while, /tail after
-	do-break: unless all [:break] ; Will be none if not /all, a noop
-	while pick [
-		[pos: find target :search]
-		[pos: find/case target :search]
-	] not case [
-		(value: replace pos) ; The replace argument can be a function
+
+	while [pos: find/:case target :pattern] [
+		; apply replacement if function, or drops pos if not
+		; the parens quarantine function invocation to maximum arity of 1
+		(value: replacement pos)
+
 		target: change/part pos :value len
-		do-break
+
+		unless all [break] ;-- tests /ALL refinement, not ALL native
 	]
+
 	either tail [target] [save-target]
 ]
-; We need to consider adding an /any refinement to use find/any, once that works.
 
 reword: func [
 	"Make a string or binary based on a template and substitution values."

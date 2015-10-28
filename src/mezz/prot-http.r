@@ -11,13 +11,39 @@ REBOL [
 	}
 	Name: 'http
 	Type: 'module
-	Version: 0.1.4
 	File: %prot-http.r
+	Version: 0.1.47
 	Purpose: {
 		This program defines the HTTP protocol scheme for REBOL 3.
 	}
 	Author: ["Gabriele Santilli" "Richard Smolak"]
 	Date: 26-Nov-2012
+	History: [
+		8-Oct-2015 {Modified by @GrahamChiu to return an error object with
+		the info object when manual redirect required}
+	]
+]
+
+digit: charset [#"0" - #"9"]
+alpha: charset [#"a" - #"z" #"A" - #"Z"]
+idate-to-date: function [date [string!]] [
+	either parse date [
+		5 skip
+		copy day: 2 digit
+		space
+		copy month: 3 alpha
+		space
+		copy year: 4 digit
+		space
+		copy time: to space
+		space
+		copy zone: to end
+	][
+		if zone = "GMT" [zone: copy "+0"]
+		to date! ajoin [day "-" month "-" year "/" time zone]
+	][
+		none
+	]
 ]
 
 sync-op: func [port body /local state] [
@@ -37,7 +63,11 @@ sync-op: func [port body /local state] [
 	]
 	body: copy port
 	if state/close? [close port]
-	body
+	either port/spec/debug [
+		state/connection/locals
+	][
+		body
+	]
 ]
 read-sync-awake: func [event [event!] /local error] [
 	switch/default event/type [
@@ -110,19 +140,39 @@ http-awake: func [event /local port http-port state awake res] [
 		]
 	] [true]
 ]
-
 make-http-error: func [
 	"Make an error for the HTTP protocol"
 	message [string! block!]
+	/inf obj
+	/otherhost new-url [url!]
 ] [
 	if block? message [message: ajoin message]
-	make error! [
-		type: 'Access
-		id: 'Protocol
-		arg1: message
+	case [
+		inf [
+			make error! [
+				type: 'Access
+				id: 'Protocol
+				arg1: message
+				arg2: obj
+			]
+		]
+		otherhost [
+			make error! [
+				type: 'Access
+				id: 'Protocol
+				arg1: message
+				arg3: new-url
+			]
+		]
+		true [
+			make error! [
+				type: 'Access
+				id: 'Protocol
+				arg1: message
+			]
+		]
 	]
 ]
-
 make-http-request: func [
 	"Create an HTTP request (returns string!)"
 	method [word! string!] "E.g. GET, HEAD, POST etc."
@@ -170,11 +220,15 @@ do-request: func [
 	info/size: info/date: info/name: none
 	write port/state/connection
 	make-http-request spec/method any [spec/path %/]
+	; to file! double encodes any % in the url
+	; make-http-request spec/method to file! any [spec/path %/]
 	spec/headers spec/content
 ]
-parse-write-dialect: func [port block /local spec] [
+parse-write-dialect: func [port block /local spec debug] [
 	spec: port/spec
-	parse block [[set block word! (spec/method: block) | (spec/method: 'post)]
+	parse block [
+		opt [ 'headers ( spec/debug: true ) ]
+		[set block word! (spec/method: block) | (spec/method: 'post)]
 		opt [set block [file! | url!] (spec/path: block)] [set block block! (spec/headers: block) | (spec/headers: [])] [set block [any-string! | binary!] (spec/content: block) | (spec/content: none)]
 	]
 ]
@@ -199,7 +253,9 @@ check-response: func [port /local conn res headers d1 d2 line info state awake s
 			headers/content-length:
 				to-integer/unsigned headers/content-length
 		]
-		if headers/last-modified [info/date: attempt [to date! headers/last-modified]]
+		if headers/last-modified [
+			info/date: attempt [idate-to-date headers/last-modified]
+		]
 		remove/part conn/data d2
 		state/state: 'reading-data
 	]
@@ -238,6 +294,9 @@ check-response: func [port /local conn res headers d1 d2 line info state awake s
 			]
 			| (info/response-parsed: 'version-not-supported)
 		]
+	]
+	if all [logic? spec/debug true? spec/debug]  [
+		spec/debug: info
 	]
 	switch/all info/response-parsed [
 		ok [
@@ -278,7 +337,7 @@ check-response: func [port /local conn res headers d1 d2 line info state awake s
 				] [
 					res: do-redirect port headers/location
 				] [
-					state/error: make-http-error "Redirect requires manual intervention"
+					state/error: make-http-error/inf "Redirect requires manual intervention" info
 					res: awake make event! [type: 'error port: port]
 				]
 			]
@@ -366,7 +425,7 @@ do-redirect: func [port [port!] new-uri [url! string! file!] /local spec state] 
 		do-request port
 		false
 	] [
-		state/error: make-http-error "Redirect to other host - requires custom handling"
+		state/error: make-http-error/otherhost "Redirect to other host - requires custom handling" to-url rejoin [new-uri/scheme "://" new-uri/host new-uri/path]
 		state/awake make event! [type: 'error port: port]
 	]
 ]
@@ -456,6 +515,7 @@ sys/make-scheme [
 		headers: []
 		content: none
 		timeout: 15
+		debug: none
 	]
 	info: make system/standard/file-info [
 		response-line:

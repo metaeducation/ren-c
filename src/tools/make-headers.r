@@ -14,93 +14,66 @@ REBOL [
 ]
 
 do %common.r
+do %common-parsers.r
 
 print "------ Building headers"
 
 r3: system/version > 2.100.0
 
 verbose: false
-chk-dups: true
-dups: make block! 10000 ; get pick [map! hash!] r3 1000
-dup-found: false
+check-duplicates: true
+prototypes: make block! 10000 ; get pick [map! hash!] r3 1000
+has-duplicates: false
 
 do %form-header.r
 
-tmp: context [
-
 change-dir %../core/
 
-count: 0
-output: make string! 20000
+emit-out: func [d] [append repend output-buffer d newline]
+emit-rlib: func [d] [append repend rlib d newline]
+emit-header: func [t f] [emit-out form-header/gen t f %make-headers]
 
-emit: func [d] [append repend output d newline]
-remit: func [d] [append repend rlib d newline]
+emit-proto: func [proto] [
 
-emit-header: func [t f] [emit form-header/gen t f %make-headers]
-rlib: form-header/gen "REBOL Interface Library" %reb-lib.h %make-headers.r
-append rlib newline
+	if find proto "()" [
+		print [
+			proto
+			newline
+			{C-Style void arguments should be foo(void) and not foo()}
+			newline
+			http://stackoverflow.com/questions/693788/c-void-arguments
+		]
+		fail "C++ no-arg prototype used instead of C style"
+	]
 
-append-spec: func [spec] [
-	;?? spec
-	assert [spec]
+	;?? proto
+	assert [proto]
 	if all [
-		not find spec "static"
-		not find spec "REBNATIVE("
+		not find proto "static"
+		not find proto "REBNATIVE("
 
 		; The REBTYPE macro actually is expanded in the tmp-funcs
 		; Should we allow macro expansion or do the REBTYPE another way?
-		(comment [not find spec "REBTYPE("] true)
+		(comment [not find proto "REBTYPE("] true)
 
-		find spec #"("
+		find proto #"("
 	][
-		spec: trim spec
+		proto: trim proto
 		either all [
-			chk-dups
-			find dups spec
+			check-duplicates
+			find prototypes proto
 		][
-			print ["Duplicate:" the-file ":" spec]
-			dup-found: true
+			print ["Duplicate:" the-file ":" proto]
+			has-duplicates: true
 		][
-			append dups spec
+			append prototypes proto
 		]
-		either find spec "RL_API" [
-			remit ["extern " spec "; // " the-file]
+		either find proto "RL_API" [
+			emit-rlib ["extern " proto "; // " the-file]
 		][
-			emit ["extern " spec "; // " the-file]
+			emit-out ["extern " proto "; // " the-file]
 		]
-		count: count + 1
-	]
-]
-
-func-header: [
-	;-- Scan for function header box:
-	"^/**" to newline
-	"^/*/" any [#" " | #"^-"]
-	copy spec to newline (
-		if find spec "()" [
-			print [
-				spec
-				newline
-				{C-Style void arguments should be foo(void) and not foo()}
-				newline
-				http://stackoverflow.com/questions/693788/c-void-arguments
-			]
-			fail "C++ no-arg prototype used instead of C style"
-		]
-
-		append-spec spec
-	)
-	newline
-	[
-		"/*" ; must be in func header section, not file banner
-		any [
-			thru "**"
-			[#" " | #"^-"]
-			copy line thru newline
-		]
-		thru "*/"
-		|
-		none
+		proto-count: proto-count + 1
 	]
 ]
 
@@ -108,19 +81,24 @@ process: func [file] [
 	if verbose [?? file]
 	data: read the-file: file
 	if r3 [data: deline to-string data]
-	parse data [
-		any [
-			thru "/******" to newline
-			[
-				func-header | thru newline
-			]
-		]
-	]
+	proto-parser/emit-proto: :emit-proto
+	proto-parser/process data
 ]
+
+;-------------------------------------------------------------------------
+
+rlib: form-header/gen "REBOL Interface Library" %reb-lib.h %make-headers.r
+append rlib newline
+
+
+;-------------------------------------------------------------------------
+
+proto-count: 0
+output-buffer: make string! 20000
 
 emit-header "Function Prototypes" %funcs.h
 
-emit {
+emit-out {
 #ifdef __cplusplus
 extern "C" ^{
 #endif
@@ -143,26 +121,26 @@ for-each file files [
 	][process file]
 ]
 
-emit {
+emit-out {
 #ifdef __cplusplus
 ^}
 #endif
 }
 
-write %../include/tmp-funcs.h output
+write %../include/tmp-funcs.h output-buffer
 
-print [count "function prototypes"]
+print [proto-count "function prototypes"]
 ;wait 1
 
 ;-------------------------------------------------------------------------
 
-clear output
+clear output-buffer
 
 emit-header "Function Argument Enums" %func-args.h
 
 make-arg-enums: func [word] [
 	; Search file for definition:
-	def: find acts to-set-word word
+	def: find action-list to-set-word word
 	def: skip def 2
 	args: copy []
 	refs: copy []
@@ -179,33 +157,33 @@ make-arg-enums: func [word] [
 	word: lowercase copy uword
 
 	; Argument numbers:
-	emit ["enum act_" word "_arg {"]
-	emit [tab "ARG_" uword "_0,"]
-	for-each w args [emit [tab "ARG_" uword "_" w ","]]
-	emit [tab "ARG_" uword "_MAX"]
-	emit "};^/"
+	emit-out ["enum act_" word "_arg {"]
+	emit-out [tab "ARG_" uword "_0,"]
+	for-each w args [emit-out [tab "ARG_" uword "_" w ","]]
+	emit-out [tab "ARG_" uword "_MAX"]
+	emit-out "};^/"
 
 	; Argument bitmask:
 	n: 0
-	emit ["enum act_" word "_mask {"]
+	emit-out ["enum act_" word "_mask {"]
 	for-each w args [
-		emit [tab "AM_" uword "_" w " = 1 << " n ","]
+		emit-out [tab "AM_" uword "_" w " = 1 << " n ","]
 		n: n + 1
 	]
-	emit [tab "AM_" uword "_MAX"]
-	emit "};^/"
+	emit-out [tab "AM_" uword "_MAX"]
+	emit-out "};^/"
 
-	repend output ["#define ALL_" uword "_REFS ("]
+	repend output-buffer ["#define ALL_" uword "_REFS ("]
 	for-each w refs [
-		repend output ["AM_" uword "_" w "|"]
+		repend output-buffer ["AM_" uword "_" w "|"]
 	]
-	remove back tail output
-	append output ")^/^/"
+	remove back tail output-buffer
+	append output-buffer ")^/^/"
 
-	;?? output halt
+	;?? output-buffer halt
 ]
 
-acts: load %../boot/actions.r
+action-list: load %../boot/actions.r
 
 for-each word [
 	copy
@@ -218,20 +196,20 @@ for-each word [
 	write
 ] [make-arg-enums word]
 
-acts: load %../boot/natives.r
+action-list: load %../boot/natives.r
 
 for-each word [
 	checksum
 	request-file
 ] [make-arg-enums word]
 
-;?? output
-write %../include/tmp-funcargs.h output
+;?? output-buffer
+write %../include/tmp-funcargs.h output-buffer
 
 
 ;-------------------------------------------------------------------------
 
-clear output
+clear output-buffer
 
 emit-header "REBOL Constants Strings" %str-consts.h
 
@@ -240,22 +218,20 @@ data: to string! read %a-constants.c ;R3
 parse data [
 	some [
 		to "^/const"
-		copy d to "="
+		copy constd to "="
 		(
-			remove d
-			;replace d "const" "extern"
-			insert d "extern "
-			append trim/tail d #";"
-			emit d
+			remove constd
+			;replace constd "const" "extern"
+			insert constd "extern "
+			append trim/tail constd #";"
+			emit-out constd
 		)
 	]
 ]
 
-write %../include/tmp-strings.h output
+write %../include/tmp-strings.h output-buffer
 
-]
-
-if any [dup-found verbose] [
+if any [has-duplicates verbose] [
 	print "** NOTE ABOVE PROBLEM!"
 	wait 5
 ]
