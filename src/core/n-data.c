@@ -135,7 +135,7 @@ static int Check_Char_Range(REBVAL *val, REBINT limit)
 
 		while (index < SERIES_TAIL(block)) {
 			i = index;
-			index = Do_Next_May_Throw(D_OUT, block, index);
+			DO_NEXT_MAY_THROW(index, D_OUT, block, index);
 
 			if (index == THROWN_FLAG) return R_OUT_IS_THROWN;
 
@@ -285,8 +285,36 @@ static int Check_Char_Range(REBVAL *val, REBINT limit)
 	REBVAL *word = D_ARG(1);
 
 	if (!HAS_FRAME(word)) return R_NONE;
-	if (VAL_WORD_INDEX(word) < 0) return R_TRUE;
-	Val_Init_Object(D_OUT, VAL_WORD_FRAME(word));
+
+	if (VAL_WORD_INDEX(word) < 0) {
+		// Function frames use negative numbers to indicate they are
+		// "stack relative" bindings.  Hence there is no way to get
+		// their value if the function is not running.  (This is why
+		// if you leak a local word to your caller and they look it
+		// up they get an error).
+		//
+		// Historically there was nothing you could do with a function
+		// word frame.  But then slot 0 (which had been unused, as the
+		// params start at 1) was converted to hold the value of the
+		// function the params belong to.  This returns that stored value.
+
+		*D_OUT = *BLK_HEAD(VAL_WORD_FRAME(word));
+
+		// You should never get a way to a stack relative binding of a
+		// closure.  They make an object on each call.
+
+		assert(IS_FUNCTION(D_OUT));
+	}
+	else {
+		// It's just an object.  Note that if objects were adapted to use
+		// the same technique (they will be) then it would be possible to
+		// get a "full value"-sized objects (if an object were not entirely
+		// recoverable from a series value alone, which for instance a
+		// MODULE! would not be.)
+
+		Val_Init_Object(D_OUT, VAL_WORD_FRAME(word));
+	}
+
 	return R_OUT;
 }
 
@@ -385,7 +413,7 @@ static int Check_Char_Range(REBVAL *val, REBINT limit)
 
 /***********************************************************************
 **
-*/	REBNATIVE(relax)
+*/	REBNATIVE(to_value)
 /*
 ***********************************************************************/
 {
@@ -395,7 +423,7 @@ static int Check_Char_Range(REBVAL *val, REBINT limit)
 
 /***********************************************************************
 **
-*/	REBNATIVE(optional)
+*/	REBNATIVE(opt)
 /*
 ***********************************************************************/
 {

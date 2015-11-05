@@ -24,7 +24,7 @@ binary-to-infix: func [
 ][
 	; SPEC-OF isn't defined yet at this point in the boot...
 	func (
-		insert (reflect :value 'spec) <infix>
+		head insert (reflect :value 'spec) <infix>
 	)(
 		; WORDS-OF isn't defined either...
 		compose [

@@ -121,7 +121,7 @@ static void Append_Obj(REBSER *obj, REBVAL *arg)
 
 		if (!IS_WORD(word) && !IS_SET_WORD(word)) {
 			// release binding table
-			BLK_TERM(BUF_COLLECT);
+			TERM_ARRAY(BUF_COLLECT);
 			Collect_Keys_End(obj);
 			raise Error_Invalid_Arg(word);
 		}
@@ -130,7 +130,7 @@ static void Append_Obj(REBSER *obj, REBVAL *arg)
 			// bug fix, 'self is protected only in selfish frames:
 			if ((VAL_WORD_CANON(word) == SYM_SELF) && !IS_SELFLESS(obj)) {
 				// release binding table
-				BLK_TERM(BUF_COLLECT);
+				TERM_ARRAY(BUF_COLLECT);
 				Collect_Keys_End(obj);
 				raise Error_0(RE_SELF_PROTECTED);
 			}
@@ -144,7 +144,7 @@ static void Append_Obj(REBSER *obj, REBVAL *arg)
 		if (IS_END(word + 1)) break; // fix bug#708
 	}
 
-	BLK_TERM(BUF_COLLECT);
+	TERM_ARRAY(BUF_COLLECT);
 
 	// Append new words to obj
 	len = SERIES_TAIL(obj);
@@ -240,7 +240,7 @@ static REBSER *Trim_Object(REBSER *obj)
 
 /***********************************************************************
 **
-*/	REBFLG MT_Object(REBVAL *out, REBVAL *data, REBCNT type)
+*/	REBFLG MT_Object(REBVAL *out, REBVAL *data, enum Reb_Kind type)
 /*
 ***********************************************************************/
 {

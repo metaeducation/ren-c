@@ -46,7 +46,7 @@
 
 /***********************************************************************
 **
-*/	REBFLG MT_Tuple(REBVAL *out, REBVAL *data, REBCNT type)
+*/	REBFLG MT_Tuple(REBVAL *out, REBVAL *data, enum Reb_Kind type)
 /*
 ***********************************************************************/
 {
@@ -341,7 +341,7 @@
 			if (Scan_Tuple(ap, len, D_OUT)) return R_OUT;
 			goto bad_arg;
 		}
-		if (ANY_BLOCK(arg)) {
+		if (ANY_ARRAY(arg)) {
 			if (!MT_Tuple(D_OUT, VAL_BLK_DATA(arg), REB_TUPLE))
 				raise Error_Bad_Make(REB_TUPLE, arg);
 			return R_OUT;

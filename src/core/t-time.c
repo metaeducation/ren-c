@@ -204,7 +204,7 @@
 			raise Error_Out_Of_Range(val);
 		secs = DEC_TO_SECS(VAL_DECIMAL(val));
 	}
-	else if (ANY_BLOCK(val) && VAL_BLK_LEN(val) <= 3) {
+	else if (ANY_ARRAY(val) && VAL_BLK_LEN(val) <= 3) {
 		REBFLG neg = FALSE;
 		REBI64 i;
 
@@ -247,7 +247,7 @@
 
 /***********************************************************************
 **
-*/	REBFLG MT_Time(REBVAL *out, REBVAL *data, REBCNT type)
+*/	REBFLG MT_Time(REBVAL *out, REBVAL *data, enum Reb_Kind type)
 /*
 ***********************************************************************/
 {

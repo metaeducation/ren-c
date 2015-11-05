@@ -145,7 +145,7 @@ Script: [
 
 	no-refine:          [:arg1 {has no refinement called} :arg2]
 	bad-refines:        {incompatible or invalid refinements}
-	bad-refine:         [{incompatible refinement:} :arg1]
+	bad-refine:         [{incompatible or duplicate refinement:} :arg1]
 	invalid-path:       [{cannot access} :arg2 {in path} :arg1]
 	bad-path-type:      [{path} :arg1 {is not valid for} :arg2 {type}]
 	bad-path-set:       [{cannot set} :arg2 {in path} :arg1]

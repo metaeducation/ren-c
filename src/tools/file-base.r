@@ -270,7 +270,43 @@ os-linux: [
 	; Linux supports siginfo_t-style signals
 	linux/dev-signal.c
 ]
+; cloned from os-linux TODO: check'n'fix !!
+os-android: [ 
+	+ generic/host-memory.c
+	+ generic/host-locale.c
+	generic/iso-639.c
+	generic/iso-3166.c
+	+ generic/host-gob.c
 
+	; Android uses the POSIX file I/O for now
+	posix/host-readline.c
+	posix/dev-stdio.c
+	posix/dev-file.c
+
+	; It also uses POSIX for most host functions
+	+ posix/host-config.c
+	+ posix/host-error.c
+	+ posix/host-library.c
+	+ posix/host-process.c
+	+ posix/host-thread.c
+	+ posix/host-time.c
+
+	; Android  has some kind of MIME-based opening vs. posix /usr/bin/open
+	+ linux/host-browse.c
+
+	; Atronix dev-event.c for linux depends on X11, and core builds should
+	; not be using X11 as a dependency (probably)
+	posix/dev-event.c
+
+	; Android has support for ELF format encapping
+	+ linux/host-encap.c
+
+	; There is a Android serial device
+	linux/dev-serial.c
+
+	; Android don't supports siginfo_t-style signals
+	; linux/dev-signal.c
+]
 boot-files: [
 	version.r
 

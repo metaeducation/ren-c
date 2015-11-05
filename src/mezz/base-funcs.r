@@ -16,36 +16,47 @@ REBOL [
 	}
 ]
 
-func: make function! [[
-	; !!! This is a special minimal FUNC for more efficient boot. Gets replaced later in boot.
-	{Non-copying function constructor (optimized for boot).}
-	spec [block!] {Help string (opt) followed by arg words (and opt type and string)}
+does: func [
+	{A shortcut to define a function that has no arguments or locals.}
 	body [block!] {The body block of the function}
 ][
-	make function! reduce [spec body]
-]]
+	func [] body
+]
+
+; We do use the RETURN native spec (for now) to provide the prototype for
+; the fake definitional return.  But the only way you should be able to get
+; at *that* return is through the FUNC and CLOS generators (when they hack
+; out its function pointer to do the implement the EXT_FUNC_HAS_RETURN)
+;
+return: func [] [
+	fail "RETURN called--but no function generator providing it in use"
+]
 
 function: func [
+	; !!! Should have a unified constructor with CLOSURE
 	{Defines a function with all set-words as locals.}
 	spec [block!] {Help string (opt) followed by arg words (and opt type and string)}
 	body [block!] {The body block of the function}
 	/with {Define or use a persistent object (self)}
 	object [object! block! map!] {The object or spec}
 	/extern words [block!] {These words are not local}
-	/closure
 ][
-	; Copy the spec and add /local to the end if not found
-	unless find spec: copy/deep spec /local [append spec [
+	; Copy the spec and add /local to the end if not found (no deep copy needed)
+	unless find spec: copy spec /local [append spec [
 		/local ; In a block so the generated source gets the newlines
 	]]
-	; Make a full copy of the body, to allow reuse of the original
-	body: copy/deep body
+
 	; Collect all set-words in the body as words to be used as locals, and add
 	; them to the spec. Don't include the words already in the spec or object.
 	insert find/tail spec /local collect-words/deep/set/ignore body either with [
 		; Make our own local object if a premade one is not provided
 		unless object? object [object: make object! object]
+
+		; Make a full copy of the body, to allow reuse of the original
+		body: copy/deep body
+
 		bind body object  ; Bind any object words found in the body
+
 		; Ignore the words in the spec and those in the object. The spec needs
 		; to be copied since the object words shouldn't be added to the locals.
 		append append append copy spec 'self words-of object words ; ignore 'self too
@@ -53,29 +64,26 @@ function: func [
 		; Don't include the words in the spec, or any extern words.
 		either extern [append copy spec words] [spec]
 	]
-	make either closure [closure!][function!] reduce [spec body]
-]
 
-does: func [
-	{A shortcut to define a function that has no arguments or locals.}
-	body [block!] {The body block of the function}
-][
-	make function! copy/deep reduce [[] body]
+	func spec body
 ]
 
 use: func [
-	<transparent>
 	{Defines words local to a block.}
 	vars [block! word!] {Local word(s) to the block}
 	body [block!] {Block to evaluate}
 ][
-	apply make closure! reduce [
-		compose [<transparent> /local (vars)] copy/deep body
-	] []
+	; We are building a CLOS out of the body that was passed to us, and that
+	; body may have RETURN words with bindings in them already that we do
+	; not want to disturb with the definitional bindings in the new code.
+	; So that means either using MAKE CLOSURE! (which wouldn't disrupt
+	; RETURN bindings) or using the more friendly CLOS with <transparent>
+	; (they do the same thing, just CLOS is arity-2)
+	;
+	eval clos compose [<transparent> /local (vars)] body
 ]
 
 object: func [
-	<transparent>
 	{Defines a unique object.}
 	blk [block!] {Object words and values (modified)}
 ][
@@ -83,7 +91,6 @@ object: func [
 ]
 
 module: func [
-	<transparent>
 	"Creates a new module."
 	spec [block!] "The header block of the module (modified)"
 	body [block!] "The body block of the module (modified)"

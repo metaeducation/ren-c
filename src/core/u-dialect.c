@@ -316,7 +316,7 @@ again:
 
 		// Repeat did not match, so stop repeating and remove unused output slot:
 		if (rept) {
-			Remove_Last(dia->out);
+			Remove_Array_Last(dia->out);
 			outp--;
 			rept = 0;
 			continue;
@@ -388,7 +388,7 @@ again:
 	}
 	else {
 		Resize_Series(dia->out, size+1); // tail = 0
-		CLEAR_SERIES(dia->out); // Be sure it is entirely cleared
+		CLEAR_SEQUENCE(dia->out); // Be sure it is entirely cleared
 	}
 
 	// Insert command word:

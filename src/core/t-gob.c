@@ -679,7 +679,7 @@ is_none:
 
 /***********************************************************************
 **
-*/	REBFLG MT_Gob(REBVAL *out, REBVAL *data, REBCNT type)
+*/	REBFLG MT_Gob(REBVAL *out, REBVAL *data, enum Reb_Kind type)
 /*
 ***********************************************************************/
 {

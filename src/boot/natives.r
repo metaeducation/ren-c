@@ -83,6 +83,12 @@ catch: native [
 	handler [block! any-function!] {If FUNCTION!, spec matches [value name]}
 ]
 
+clos: native [
+	{Defines a closure function.}
+	spec [block!] {Help string (opt) followed by arg words (and opt type and string)}
+	body [block!] {The body block of the function}
+]
+
 comment: native [
 	{Ignores the argument value and returns nothing (no evaluations performed).}
 	:value [block! any-string! any-scalar!] {Literal value to be ignored.}
@@ -121,10 +127,10 @@ continue: native [
 
 do: native [
 	{Evaluates a block of source code (directly or fetched according to type)}
-	;source [none! block! paren! string! binary! url! file! tag!]
+	;source [unset! none! block! paren! string! binary! url! file! tag!]
 	; !!! Actually does not handle ERROR! or ANY-FUNCTION! but temporarily
 	; accepts them to trigger more informataive errors suggesting FAIL and EVAL
-	source [none! block! paren! string! binary! url! file! tag! error! any-function!]
+	source [unset! none! block! paren! string! binary! url! file! tag! error! any-function!]
 	/args "If value is a script, this will set its system/script/args"
 	arg   "Args passed to a script (normally a string)"
 	/next "Do next expression only, return it, update block variable"
@@ -199,7 +205,12 @@ forskip: native [
 	'word [word!] {Word that refers to the series, set to each position in series}
 	size [integer! decimal!] "Number of positions to skip each time"
 	body [block!] "Block to evaluate each time"
-	/local orig result
+]
+
+func: native [
+	{Defines a user function with given spec and body.}
+	spec [block!] {Help string (opt) followed by arg words (and opt type and string)}
+	body [block!] {The body block of the function}
 ]
 
 halt: native [
@@ -484,8 +495,8 @@ delect: native [
 
 difference: native [
 	{Returns the special difference of two values.}
-	set1 [block! string! binary! bitset! date! typeset!] "First data set"
-	set2 [block! string! binary! bitset! date! typeset!] "Second data set"
+	set1 [any-array! any-string! binary! bitset! date! typeset!] "First data set"
+	set2 [any-array! any-string! binary! bitset! date! typeset!] "Second data set"
 	/case {Uses case-sensitive comparison}
 	/skip {Treat the series as records of fixed size}
 	size [integer!]
@@ -493,8 +504,8 @@ difference: native [
 
 exclude: native [
 	{Returns the first data set less the second data set.}
-	set1 [block! string! binary! bitset! typeset!] "First data set"
-	set2 [block! string! binary! bitset! typeset!] "Second data set"
+	set1 [any-array! any-string! binary! bitset! typeset!] "First data set"
+	set2 [any-array! any-string! binary! bitset! typeset!] "Second data set"
 	/case {Uses case-sensitive comparison}
 	/skip {Treat the series as records of fixed size}
 	size [integer!]
@@ -502,8 +513,8 @@ exclude: native [
 
 intersect: native [
 	{Returns the intersection of two data sets.}
-	set1 [block! string! binary! bitset! typeset!] "first set"
-	set2 [block! string! binary! bitset! typeset!] "second set"
+	set1 [any-array! any-string! binary! bitset! typeset!] "first set"
+	set2 [any-array! any-string! binary! bitset! typeset!] "second set"
 	/case {Uses case-sensitive comparison}
 	/skip {Treat the series as records of fixed size}
 	size [integer!]
@@ -511,8 +522,8 @@ intersect: native [
 
 union: native [
 	{Returns the union of two data sets.}
-	set1 [block! string! binary! bitset! typeset!] "first set"
-	set2 [block! string! binary! bitset! typeset!] "second set"
+	set1 [any-array! any-string! binary! bitset! typeset!] "first set"
+	set2 [any-array! any-string! binary! bitset! typeset!] "second set"
 	/case {Use case-sensitive comparison}
 	/skip {Treat the series as records of fixed size}
 	size [integer!]
@@ -520,7 +531,7 @@ union: native [
 
 unique: native [
 	{Returns the data set with duplicates removed.}
-	set1 [block! string! binary! bitset! typeset!]
+	set1 [any-array! any-string! binary! bitset! typeset!]
 	/case  {Use case-sensitive comparison (except bitsets)}
 	/skip {Treat the series as records of fixed size}
 	size [integer!]
@@ -551,13 +562,13 @@ get: native [
 	/any {Allows word to have no value (allows unset)}
 ]
 
-relax: native [
-	{Turns unset to NONE, with ANY-VALUE! passing through. (See: OPTIONAL)}
+to-value: native [
+	{Turns unset to NONE, with ANY-VALUE! passing through. (See: OPT)}
 	value [any-value!]
 ]
 
-optional: native [
-	{NONEs become unset, all other value types pass through. (See: RELAX)}
+opt: native [
+	{NONEs become unset, all other value types pass through. (See: TO-VALUE)}
 	value [any-value!]
 ]
 
@@ -584,6 +595,11 @@ set: native [
 	value [any-value!] {Value or block of values}
 	/any {Allows setting words to any value, including unset}
 	/pad {For objects, if block is too short, remaining words are set to NONE}
+]
+
+spelling-of: native [
+	{Gives the delimiter-less spelling of words or strings}
+	value [any-word! any-string!]
 ]
 
 to-hex: native [

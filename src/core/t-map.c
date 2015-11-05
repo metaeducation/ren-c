@@ -91,7 +91,7 @@
 
 /***********************************************************************
 **
-*/	REBINT Find_Key(REBSER *series, REBSER *hser, REBVAL *key, REBINT wide, REBCNT cased, REBYTE mode)
+*/	REBINT Find_Key(REBSER *series, REBSER *hser, const REBVAL *key, REBINT wide, REBCNT cased, REBYTE mode)
 /*
 **		Returns hash index (either the match or the new one).
 **		A return of zero is valid (as a hash index);
@@ -157,10 +157,8 @@
 
 	// Append new value the target series:
 	if (mode > 1) {
-		hashes[hash] = SERIES_TAIL(series)+1;
-		//Debug_Num("hash:", hashes[hash]);
-		Append_Series(series, (REBYTE*)key, wide);
-		//Dump_Series(series, "hash");
+		hashes[hash] = SERIES_TAIL(series) + 1;
+		Append_Values_Len(series, key, wide);
 	}
 
 	return (mode > 0) ? NOT_FOUND : hash;
@@ -359,7 +357,7 @@
 
 /***********************************************************************
 **
-*/	REBFLG MT_Map(REBVAL *out, REBVAL *data, REBCNT type)
+*/	REBFLG MT_Map(REBVAL *out, REBVAL *data, enum Reb_Kind type)
 /*
 ***********************************************************************/
 {
@@ -535,7 +533,7 @@
 	case A_TO:
 		// make map! [word val word val]
 		if (IS_BLOCK(arg) || IS_PAREN(arg) || IS_MAP(arg)) {
-			if (MT_Map(D_OUT, arg, 0)) return R_OUT;
+			if (MT_Map(D_OUT, arg, REB_MAP)) return R_OUT;
 			raise Error_Invalid_Arg(arg);
 //		} else if (IS_NONE(arg)) {
 //			n = 3; // just a start
@@ -553,11 +551,11 @@
 		break;
 
 	case A_COPY:
-		if (MT_Map(D_OUT, val, 0)) return R_OUT;
+		if (MT_Map(D_OUT, val, REB_MAP)) return R_OUT;
 		raise Error_Invalid_Arg(val);
 
 	case A_CLEAR:
-		Clear_Series(series);
+		Reset_Array(series);
 		if (series->extra.series) Clear_Series(series->extra.series);
 		Val_Init_Map(D_OUT, series);
 		break;

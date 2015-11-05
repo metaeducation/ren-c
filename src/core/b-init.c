@@ -213,7 +213,7 @@ static	BOOT_BLK *Boot_Block;
 
 	if (VAL_TAIL(&Boot_Block->types) != REB_MAX)
 		panic Error_0(RE_BAD_BOOT_TYPE_BLOCK);
-	if (VAL_WORD_SYM(VAL_BLK_HEAD(&Boot_Block->types)) != SYM_END_TYPE)
+	if (VAL_WORD_SYM(VAL_BLK_HEAD(&Boot_Block->types)) != SYM_TRASH_TYPE)
 		panic Error_0(RE_BAD_END_TYPE_WORD);
 
 	// Create low-level string pointers (used by RS_ constants):
@@ -501,7 +501,10 @@ static	BOOT_BLK *Boot_Block;
 	REBINT n;
 	REBSER *frame;
 
-	frame = Make_Array(ROOT_MAX);  // Only half the context! (No words)
+	// Only half the context! (No words)
+	frame = Make_Series(ROOT_MAX + 1, sizeof(REBVAL), MKS_ARRAY | MKS_FRAME);
+	SET_END(BLK_HEAD(frame)); // !!! Need since we're using Make_Series?
+
 	LABEL_SERIES(frame, "root context");
 	LOCK_SERIES(frame);
 	Root_Context = (ROOT_CTX*)(frame->data);
@@ -526,6 +529,18 @@ static	BOOT_BLK *Boot_Block;
 	Val_Init_Block(ROOT_EMPTY_BLOCK, Make_Array(0));
 	SERIES_SET_FLAG(VAL_SERIES(ROOT_EMPTY_BLOCK), SER_PROT);
 	SERIES_SET_FLAG(VAL_SERIES(ROOT_EMPTY_BLOCK), SER_LOCK);
+
+	// Used by FUNC and CLOS generators: RETURN:
+	Val_Init_Word_Unbound(ROOT_RETURN_SET_WORD, REB_SET_WORD, SYM_RETURN);
+
+	// Make a series that's just [return:], that is made often in function
+	// spec blocks (when the original spec was just []).  Unlike the paramlist
+	// a function spec doesn't need unique mutable identity, so a shared
+	// series saves on allocation time and space...
+	Val_Init_Block(ROOT_RETURN_BLOCK, Make_Array(1));
+	Append_Value(VAL_SERIES(ROOT_RETURN_BLOCK), ROOT_RETURN_SET_WORD);
+	SERIES_SET_FLAG(VAL_SERIES(ROOT_RETURN_BLOCK), SER_PROT);
+	SERIES_SET_FLAG(VAL_SERIES(ROOT_RETURN_BLOCK), SER_LOCK);
 
 	// We can't actually put a REB_END value in the middle of a block,
 	// so we poke this one into a program global
@@ -575,7 +590,10 @@ static	BOOT_BLK *Boot_Block;
 
 	//Print_Str("Task Context");
 
-	Task_Series = frame = Make_Array(TASK_MAX);
+	frame = Make_Series(TASK_MAX + 1, sizeof(REBVAL), MKS_ARRAY | MKS_FRAME);
+	SET_END(BLK_HEAD(frame)); // !!! Needed since we're using Make_Series?
+	Task_Series = frame;
+
 	LABEL_SERIES(frame, "task context");
 	LOCK_SERIES(frame);
 	MANAGE_SERIES(frame);
@@ -978,7 +996,7 @@ static REBCNT Set_Option_Word(REBCHR *str, REBCNT field)
 			Val_Init_String(
 				BLK_SKIP(ser, n), Copy_OS_Str(data, OS_STRLEN(data))
 			);
-		BLK_TERM(ser);
+		TERM_ARRAY(ser);
 	}
 
 	Set_Option_String(rargs->debug, OPTIONS_DEBUG);
@@ -1105,6 +1123,7 @@ static REBCNT Set_Option_Word(REBCHR *str, REBCNT field)
 
 	const REBYTE transparent[] = "transparent";
 	const REBYTE infix[] = "infix";
+	const REBYTE local[] = "local";
 
 	DOUT("Main init");
 
@@ -1192,7 +1211,13 @@ static REBCNT Set_Option_Word(REBCHR *str, REBCNT field)
 	SET_UNSET(&Callback_Error);
 	PG_Boot_Phase = BOOT_ERRORS;
 
-	// We need these values around to compare to the tags we find in function
+	// Although the goal is for the core not to depend on any specific
+	// "keywords", there are some native-optimized generators that are not
+	// conceptually "part of the core".  Hence, they rely on some keywords,
+	// but a dissatisfied user could rewrite them with different ones
+	// (at only a cost in performance).
+	//
+	// We need these tags around to compare to the tags we find in function
 	// specs.  There may be a better place to put them or a better way to do
 	// it, but it didn't seem there was a "compare UTF8 byte array to
 	// arbitrary decoded REB_TAG which may or may not be REBUNI" routine.
@@ -1210,6 +1235,13 @@ static REBCNT Set_Option_Word(REBCHR *str, REBCNT field)
 	);
 	SERIES_SET_FLAG(VAL_SERIES(ROOT_INFIX_TAG), SER_LOCK);
 	SERIES_SET_FLAG(VAL_SERIES(ROOT_INFIX_TAG), SER_PROT);
+
+	Val_Init_Tag(
+		ROOT_LOCAL_TAG,
+		Append_UTF8(NULL, local, LEN_BYTES(local))
+	);
+	SERIES_SET_FLAG(VAL_SERIES(ROOT_LOCAL_TAG), SER_LOCK);
+	SERIES_SET_FLAG(VAL_SERIES(ROOT_LOCAL_TAG), SER_PROT);
 
 	// Special pre-made errors:
 	Val_Init_Error(TASK_STACK_ERROR, Make_Error(RE_STACK_OVERFLOW, NULL));

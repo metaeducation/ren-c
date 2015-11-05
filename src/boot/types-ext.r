@@ -14,49 +14,50 @@ REBOL [
 	}
 ]
 
-end			0	0
+trash		*	0
+end			1	0
 unset		*	null
 none		*	null
 handle		*	ptr
 
-logic 		4	32
+logic 		5	32
 integer		*	64
 decimal		*	64
 percent		*	64
 
-char		10	32
+char		11	32
 pair		*	64
 tuple		*	64
 time		*	64
 date		*	date
 
-word 		16	sym
+word 		17	sym
 set-word	*	sym
 get-word	*	sym
 lit-word	*	sym
 refinement	*	sym
 issue		*	sym
 
-string		24	ser
+string		25	ser
 file		*	ser
 email		*	ser
 url			*	ser
 tag			*	ser
 
-block		32	ser
+block		33	ser
 paren		*	ser
 path		*	ser
 set-path	*	ser
 get-path	*	ser
 lit-path	*	ser
 
-binary		40	ser
+binary		41	ser
 bitset		*	ser
 vector		*	ser
 image		*	image
 
-gob			47	ser
+gob			48	ser
 
-object		48	ptr
+object		49	ptr
 module		*	ptr
 

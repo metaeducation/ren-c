@@ -112,7 +112,7 @@
 	REBVAL *values = BLK_SKIP(DS_Series, dsp_start + 1);
 
 	if (into) {
-		assert(ANY_BLOCK(out));
+		assert(ANY_ARRAY(out));
 		series = VAL_SERIES(out);
 		if (IS_PROTECT_SERIES(series)) raise Error_0(RE_PROTECTED);
 		VAL_INDEX(out) = Insert_Series(
@@ -242,28 +242,27 @@
 			&call->label, REB_WORD, SYM_FROM_KIND(VAL_TYPE(func))
 		);
 	}
-	else {
+	else
 		call->label = *label;
-	}
-	// !!! Not sure why this is needed; seems the label word should be unbound
-	// if anything...
-	VAL_WORD_FRAME(&call->label) = VAL_FUNC_PARAMLIST(func);
+
 	assert(IS_WORD(DSF_LABEL(call)));
 
-	// Fill call frame's args with default of NONE!.  Have to do this in
-	// advance because refinement filling often skips around; if you have
-	// 'foo: func [/bar a /baz b] [...]' and you call foo/baz, it will jump
-	// ahead to process positions 3 and 4, then determine there are no more
-	// refinements, and not revisit slots 1 and 2.
-	//
-	// It's also necessary because the slots must be GC-safe values, in case
-	// there is a Recycle() during argument fulfillment.
-
 	call->num_vars = num_vars;
+
+	// Make_Call does not fill the args in the frame--that is up to Do_Core
+	// and Apply_Block to do as they go along.  But the frame has to survive
+	// Recycle() during arg fulfillment...slots can't be left uninitialized.
+	// Set to UNSET in the release build, but "GC safe" trash in the debug
+	// build to help catch skipped slots that aren't written intentionally.
 	{
 		REBCNT var_index;
-		for (var_index = 0; var_index < num_vars; var_index++)
-			SET_NONE(&call->vars[var_index]);
+		for (var_index = 0; var_index < num_vars; var_index++) {
+		#ifdef NDEBUG
+			SET_UNSET(&call->vars[var_index]);
+		#else
+			SET_TRASH_SAFE(&call->vars[var_index]);
+		#endif
+		}
 	}
 
 	assert(size == DSF_SIZE(call));

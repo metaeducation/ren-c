@@ -87,7 +87,7 @@
 
 /***********************************************************************
 **
-*/	REBFLG MT_Bitset(REBVAL *out, REBVAL *data, REBCNT type)
+*/	REBFLG MT_Bitset(REBVAL *out, REBVAL *data, enum Reb_Kind type)
 /*
 ***********************************************************************/
 {
@@ -312,7 +312,7 @@ retry:
 		return TRUE;
 	}
 
-	if (!ANY_BLOCK(val)) raise Error_Has_Bad_Type(val);
+	if (!ANY_ARRAY(val)) raise Error_Has_Bad_Type(val);
 
 	val = VAL_BLK_DATA(val);
 	if (IS_SAME_WORD(val, SYM_NOT)) {
@@ -411,7 +411,7 @@ span_bits:
 	if (ANY_BINSTR(val))
 		return Check_Bit_Str(bset, val, uncased);
 
-	if (!ANY_BLOCK(val)) raise Error_Has_Bad_Type(val);
+	if (!ANY_ARRAY(val)) raise Error_Has_Bad_Type(val);
 
 	// Loop through block of bit specs:
 	for (val = VAL_BLK_DATA(val); NOT_END(val); val++) {

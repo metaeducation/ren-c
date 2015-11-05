@@ -193,6 +193,9 @@ static int window_bits_gzip_raw = -(MAX_WBITS | 16); // is "raw gzip" a thing?
 **
 ***********************************************************************/
 {
+	REBOL_STATE state;
+	const REBVAL *error;
+
 	REBCNT buf_size;
 	REBSER *output;
 	int ret;
@@ -265,6 +268,26 @@ static int window_bits_gzip_raw = -(MAX_WBITS | 16); // is "raw gzip" a thing?
 	if (ret != Z_OK)
 		raise Error_Compression(&strm, ret);
 
+	// Zlib internally allocates state which must be freed, and is not series
+	// memory.  *But* the following code is a mixture of Zlib code and Rebol
+	// code (e.g. Extend_Series may run out of memory).  If any error is
+	// raised, a longjmp skips `inflateEnd()` and the Zlib state is leaked,
+	// ruining the pristine Valgrind output.
+	//
+	// Since we do the trap anyway, this is the way we handle explicit errors
+	// called in the code below also.
+
+	PUSH_UNHALTABLE_TRAP(&error, &state);
+
+// The first time through the following code 'error' will be NULL, but...
+// `raise Error` can longjmp here, so 'error' won't be NULL *if* that happens!
+
+	if (error) {
+		// output will already have been freed
+		inflateEnd(&strm);
+		raise Error_Is(error);
+	}
+
 	// Since the initialization succeeded, go ahead and make the output buffer
 	output = Make_Binary(buf_size);
 	strm.avail_out = buf_size;
@@ -272,10 +295,6 @@ static int window_bits_gzip_raw = -(MAX_WBITS | 16); // is "raw gzip" a thing?
 
 	// Loop through and allocate a larger buffer each time we find the
 	// decompression did not run to completion.  Stop if we exceed max.
-	//
-	// NOTE: All exit paths must call inflateEnd().  The buffer does not
-	// technically need to be freed if an error is raised.
-	//
 	while (TRUE) {
 
 		// Perform the inflation
@@ -283,7 +302,6 @@ static int window_bits_gzip_raw = -(MAX_WBITS | 16); // is "raw gzip" a thing?
 
 		if (ret == Z_STREAM_END) {
 			// Finished with the buffer being big enough...
-			inflateEnd(&strm);
 			break;
 		}
 
@@ -295,8 +313,6 @@ static int window_bits_gzip_raw = -(MAX_WBITS | 16); // is "raw gzip" a thing?
 			if (max >= 0 && buf_size >= cast(REBCNT, max)) {
 				REBVAL temp;
 				VAL_SET(&temp, max);
-
-				inflateEnd(&strm);
 
 				// NOTE: You can hit this on 'make prep' without doing a full
 				// rebuild.  'make clean' and build again, it should go away.
@@ -321,12 +337,8 @@ static int window_bits_gzip_raw = -(MAX_WBITS | 16); // is "raw gzip" a thing?
 
 			strm.avail_out += buf_size - old_size;
 		}
-		else {
-			inflateEnd(&strm);
-			Free_Series(output);
-
+		else
 			raise Error_Compression(&strm, ret);
-		}
 	}
 
 	SET_STR_END(output, strm.total_out);
@@ -338,6 +350,11 @@ static int window_bits_gzip_raw = -(MAX_WBITS | 16); // is "raw gzip" a thing?
 		Free_Series(output);
 		output = smaller;
 	}
+
+	DROP_TRAP_SAME_STACKLEVEL_AS_PUSH(&state);
+
+	// Make this the last thing done so strm variables can be read up to end
+	inflateEnd(&strm);
 
 	return output;
 }

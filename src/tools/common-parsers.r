@@ -84,7 +84,7 @@ load-until-blank: function [
 
 	rebol-value: parsing-at x [
 		res: any [attempt [load-next x] []]
-		if not empty? res [second res]
+		either empty? res [none] [second res]
 	]
 
 	terminator: [opt wsp newline opt wsp newline]
@@ -94,9 +94,11 @@ load-until-blank: function [
 		opt wsp opt [1 2 newline] position: to end
 	]
 
-	if parse text rule [
+	either parse text rule [
 		values: load copy/part text position
 		reduce [values position]
+	][
+		none
 	]
 ]
 
@@ -154,17 +156,21 @@ proto-parser: context [
 		doubleslashed-lines: [copy lines some ["//" thru newline]]
 
 		is-format2015-intro: parsing-at position [
-			if all [
+			either all [
 				lines: attempt [decode-lines lines {//} { }]
 				data: load-until-blank lines
 				data: attempt [
-					if set-word? first data/1 [
+					either set-word? first data/1 [
 						notes.post: data/2
 						data/1
+					][
+						none
 					]
 				]
 			] [
 				position ; Success.
+			][
+				none
 			]
 		]
 

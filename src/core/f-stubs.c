@@ -475,6 +475,9 @@
 {
 	ENSURE_SERIES_MANAGED(series);
 
+	if (type != REB_IMAGE && type != REB_VECTOR)
+		ASSERT_SERIES_TERM(series); // doesn't apply to image/vector
+
 	VAL_SET(value, type);
 	VAL_SERIES(value) = series;
 	VAL_INDEX(value) = index;

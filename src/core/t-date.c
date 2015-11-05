@@ -414,7 +414,7 @@
 
 /***********************************************************************
 **
-*/	REBFLG MT_Date(REBVAL *val, REBVAL *arg, REBCNT type)
+*/	REBFLG MT_Date(REBVAL *val, REBVAL *arg, enum Reb_Kind type)
 /*
 **		Given a block of values, construct a date datatype.
 **
@@ -789,7 +789,7 @@ setDate:
 				bp = Qualify_String(arg, 45, &len, FALSE); // can trap, ret diff str
 				if (Scan_Date(bp, len, D_OUT)) return R_OUT;
 			}
-			else if (ANY_BLOCK(arg) && VAL_BLK_LEN(arg) >= 3) {
+			else if (ANY_ARRAY(arg) && VAL_BLK_LEN(arg) >= 3) {
 				if (MT_Date(D_OUT, VAL_BLK_DATA(arg), REB_DATE)) {
 					return R_OUT;
 				}

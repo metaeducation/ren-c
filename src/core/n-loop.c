@@ -154,7 +154,7 @@ typedef enum {
 
 	if (ei < 0) ei = 0;
 
-	SET_NONE(out); // Default result to NONE if the loop does not run
+	SET_UNSET_UNLESS_LEGACY_NONE(out); // Default if the loop does not run
 
 	for (; (ii > 0) ? si <= ei : si >= ei; si += ii) {
 		VAL_INDEX(var) = si;
@@ -185,7 +185,7 @@ typedef enum {
 {
 	VAL_SET(var, REB_INTEGER);
 
-	SET_NONE(out); // Default result to NONE if the loop does not run
+	SET_UNSET_UNLESS_LEGACY_NONE(out); // Default if the loop does not run
 
 	while ((incr > 0) ? start <= end : start >= end) {
 		VAL_INT64(var) = start;
@@ -244,7 +244,7 @@ typedef enum {
 
 	VAL_SET(var, REB_DECIMAL);
 
-	SET_NONE(out); // Default result to NONE if the loop does not run
+	SET_UNSET_UNLESS_LEGACY_NONE(out); // Default if the loop does not run
 
 	for (; (i > 0.0) ? s <= e : s >= e; s += i) {
 		VAL_DECIMAL(var) = s;
@@ -286,12 +286,16 @@ typedef enum {
 	REBVAL *ds;
 
 	var = GET_MUTABLE_VAR(D_ARG(1));
-	if (IS_NONE(var)) return R_NONE;
+
+	SET_UNSET_UNLESS_LEGACY_NONE(D_OUT);
+
+	// Useful when the caller does an evaluation like `forall (any ...) [...]`
+	// and wishes the code to effectively "opt-out" of the loop on an unset
+	// or a none.
+	if (IS_NONE(var) || IS_UNSET(var)) return R_OUT;
 
 	// Save the starting var value:
 	*D_ARG(1) = *var;
-
-	SET_NONE(D_OUT);
 
 	if (mode == 1) inc = Int32(D_ARG(2));
 
@@ -378,19 +382,19 @@ typedef enum {
 	REBVAL *ds;
 
 	REBFLG stop = FALSE;
-	REBFLG every_true = TRUE;
+	REBFLG every_true = TRUE; // need due to OPTIONS_NONE_INSTEAD_OF_UNSETS
 	REBOOL threw = FALSE; // did a non-BREAK or non-CONTINUE throw occur
-
-	if (IS_NONE(data)) return R_NONE;
-
-	body = Init_Loop(D_ARG(1), D_ARG(3), &frame); // vars, body
-	Val_Init_Object(D_ARG(1), frame); // keep GC safe
-	Val_Init_Block(D_ARG(3), body); // keep GC safe
 
 	if (mode == LOOP_EVERY)
 		SET_TRUE(D_OUT); // Default output is TRUE, to match ALL MAP-EACH
 	else
-		SET_NONE(D_OUT); // !!! Loops may set default to not set in future
+		SET_UNSET_UNLESS_LEGACY_NONE(D_OUT); // Default if loop does not run
+
+	if (IS_NONE(data) || IS_UNSET(data)) return R_OUT;
+
+	body = Init_Loop(D_ARG(1), D_ARG(3), &frame); // vars, body
+	Val_Init_Object(D_ARG(1), frame); // keep GC safe
+	Val_Init_Block(D_ARG(3), body); // keep GC safe
 
 	if (mode == LOOP_MAP_EACH) {
 		// Must be managed *and* saved...because we are accumulating results
@@ -451,7 +455,7 @@ typedef enum {
 
 				if (index < tail) {
 
-					if (ANY_BLOCK(data)) {
+					if (ANY_ARRAY(data)) {
 						*vars = *BLK_SKIP(series, index);
 					}
 					else if (data_is_object) {
@@ -821,7 +825,7 @@ skip_hidden: ;
 	REBVAL * const block = D_ARG(2);
 	REBVAL *ds;
 
-	SET_NONE(D_OUT); // Default result to NONE if the loop does not run
+	SET_UNSET_UNLESS_LEGACY_NONE(D_OUT); // Default if the loop does not run
 
 	for (; count > 0; count--) {
 		if (DO_ARRAY_THROWS(D_OUT, block)) {
@@ -851,7 +855,10 @@ skip_hidden: ;
 	REBVAL *var;
 	REBVAL *count = D_ARG(2);
 
-	if (IS_NONE(count)) return R_NONE;
+	if (IS_NONE(count)) {
+		SET_UNSET_UNLESS_LEGACY_NONE(D_OUT);
+		return R_OUT;
+	}
 
 	if (IS_DECIMAL(count) || IS_PERCENT(count)) {
 		VAL_INT64(count) = Int64(count);
@@ -879,7 +886,8 @@ skip_hidden: ;
 		return R_OUT;
 	}
 
-	return R_NONE;
+	SET_UNSET_UNLESS_LEGACY_NONE(D_OUT);
+	return R_OUT;
 }
 
 
@@ -924,8 +932,8 @@ skip_hidden: ;
 	REBVAL temp;
 
 	// If the loop body never runs (and condition doesn't error or throw),
-	// we want to return a NONE!
-	SET_NONE(D_OUT);
+	// we want to return an UNSET!
+	SET_UNSET_UNLESS_LEGACY_NONE(D_OUT);
 
 	do {
 		if (DO_ARRAY_THROWS(&temp, condition)) {

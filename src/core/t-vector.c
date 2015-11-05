@@ -437,7 +437,7 @@ void Set_Vector_Row(REBSER *ser, REBVAL *blk)
 
 /***********************************************************************
 **
-*/	REBFLG MT_Vector(REBVAL *out, REBVAL *data, REBCNT type)
+*/	REBFLG MT_Vector(REBVAL *out, REBVAL *data, enum Reb_Kind type)
 /*
 ***********************************************************************/
 {

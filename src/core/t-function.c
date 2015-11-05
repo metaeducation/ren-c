@@ -68,11 +68,62 @@ static REBOOL Same_Func(REBVAL *val, REBVAL *arg)
 
 /***********************************************************************
 **
-*/	REBFLG MT_Function(REBVAL *out, REBVAL *data, REBCNT type)
+*/	REBFLG MT_Function(REBVAL *out, REBVAL *def, enum Reb_Kind type)
 /*
+**	For REB_FUNCTION and REB_CLOSURE "make spec", there is a function spec
+**	block and then a block of Rebol code implementing that function.  In that
+**	case we expect that `def` should be:
+**
+**		[[spec] [body]]
+**
+**	With REB_COMMAND, the code is implemented via a C DLL, under a system of
+**	APIs that pre-date Rebol's open sourcing and hence Ren/C:
+**
+**		[[spec] extension command-num]
+**
+**	See notes in Make_Command() regarding that mechanism and meaning.
+**
 ***********************************************************************/
 {
-	return Make_Function(out, type, data);
+	REBVAL *spec;
+	REBCNT len;
+
+	if (!IS_BLOCK(def)) return FALSE;
+
+	len = VAL_LEN(def);
+	if (len < 2) return FALSE;
+
+	spec = VAL_BLK_HEAD(def);
+
+	if (!IS_BLOCK(def)) return FALSE;
+
+	if (type == REB_COMMAND) {
+		REBVAL *extension = VAL_BLK_SKIP(def, 1);
+		REBVAL *command_num;
+
+		if (len != 3) return FALSE;
+		command_num = VAL_BLK_SKIP(def, 2);
+
+		Make_Command(out, spec, extension, command_num);
+	}
+	else if (type == REB_FUNCTION || type == REB_CLOSURE) {
+		REBVAL *body = VAL_BLK_SKIP(def, 1);
+
+		// Spec-constructed functions do *not* have definitional returns
+		// added automatically.  They are part of the generators.
+
+		REBFLG has_return = FALSE;
+
+		if (len != 2) return FALSE;
+
+		Make_Function(out, type, spec, body, has_return);
+	}
+	else
+		return FALSE;
+
+
+	// We only get here if neither Make() raises an error...
+	return TRUE;
 }
 
 
@@ -94,15 +145,19 @@ static REBOOL Same_Func(REBVAL *val, REBVAL *arg)
 	case A_MAKE:
 		if (!IS_DATATYPE(value)) raise Error_Invalid_Arg(value);
 
-		// Make_Function checks for an `[[args] [body]]`-style make argument
-		if (!Make_Function(D_OUT, VAL_TYPE_KIND(value), arg))
+		// MT_Function checks for `[[spec] [body]]` arg if function/closure
+		// and for `[[spec] extension command-num]` if command
+		if (!MT_Function(D_OUT, arg, VAL_TYPE_KIND(value)))
 			raise Error_Bad_Make(VAL_TYPE_KIND(value), arg);
 		return R_OUT;
 
 	case A_COPY:
-		// Functions can modify their bodies while running, effectively
-		// accruing state which you may want to snapshot as a copy.
-		Copy_Function(D_OUT, value);
+		// !!! The R3-Alpha theory was that functions could modify "their
+		// bodies" while running, effectively accruing state that one might
+		// want to snapshot.  See notes on Clonify_Function about why this
+		// idea may be incorrect.
+		*D_OUT = *value;
+		Clonify_Function(D_OUT);
 		return R_OUT;
 
 	case A_REFLECT:
@@ -111,24 +166,27 @@ static REBOOL Same_Func(REBVAL *val, REBVAL *arg)
 			Val_Init_Block(D_OUT, List_Func_Words(value));
 			return R_OUT;
 
-		case OF_BODY:
-			switch (VAL_TYPE(value)) {
+		case OF_BODY: {
+			switch (VAL_TYPE(value))
 			case REB_FUNCTION:
-				Val_Init_Block(
-					D_OUT, Copy_Array_Deep_Managed(VAL_FUNC_BODY(value))
-				);
-				// See CC#2221 for why function body copies don't unbind locals
-				return R_OUT;
+			case REB_CLOSURE: {
+				// BODY-OF is an example of user-facing code that needs to be
+				// complicit in the "lie" about the effective bodies of the
+				// functions made by the optimized generators FUNC and CLOS...
 
-			case REB_CLOSURE:
-				Val_Init_Block(
-					D_OUT, Copy_Array_Deep_Managed(VAL_FUNC_BODY(value))
-				);
-				// See CC#2221 for why closure body copies have locals unbound
-				Unbind_Values_Core(
-					VAL_BLK_HEAD(D_OUT), VAL_FUNC_PARAMLIST(value), TRUE
-				);
+				REBFLG is_fake;
+				REBSER *body = Get_Maybe_Fake_Func_Body(&is_fake, value);
+				Val_Init_Block(D_OUT, Copy_Array_Deep_Managed(body));
+
+				if (VAL_TYPE(value) == REB_CLOSURE) {
+					// See #2221 for why closure body copies unbind locals
+					Unbind_Values_Core(
+						VAL_BLK_HEAD(D_OUT), VAL_FUNC_PARAMLIST(value), TRUE
+					);
+				}
+				if (is_fake) Free_Series(body); // was shallow copy
 				return R_OUT;
+			}
 
 			case REB_NATIVE:
 			case REB_COMMAND:

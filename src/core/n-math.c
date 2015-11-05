@@ -287,7 +287,7 @@ enum {SINE, COSINE, TANGENT};
 
 /***********************************************************************
 **
-*/	REBOOL Compare_Modify_Values(REBVAL *a, REBVAL *b, REBINT strictness)
+*/	REBINT Compare_Modify_Values(REBVAL *a, REBVAL *b, REBINT strictness)
 /*
 **		Compare 2 values depending on level of strictness.  It leans
 **		upon the per-type comparison functions (that have a more typical
@@ -356,32 +356,6 @@ enum {SINE, COSINE, TANGENT};
 			}
 			break;
 
-		case REB_DATATYPE:
-			if (ANY_WORD(b)) {
-				// Let DATATYPE! compare as a word: `(type-of 3) = 'integer!`
-				REBCNT sym = VAL_TYPE_SYM(a); // save before modify
-
-			#if !defined(NDEBUG)
-				if (LEGACY(OPTIONS_DATATYPE_WORD_STRICT)) break;
-			#endif
-
-			#if !defined(NDEBUG)
-				if (
-					LEGACY(OPTIONS_GROUP_NOT_PAREN)
-					&& VAL_WORD_SYM(b) == SYM_GROUPX
-					&& VAL_TYPE_KIND(a) == REB_PAREN
-				) {
-					// If comparing PAREN! datatype to GROUP! word, mutate
-					// the fake word made from datatype to have group symbol
-					sym = SYM_GROUPX;
-				}
-			#endif
-
-				Val_Init_Word_Unbound(a, REB_WORD, sym);
-				goto compare;
-			}
-			break;
-
 		case REB_WORD:
 		case REB_SET_WORD:
 		case REB_GET_WORD:
@@ -389,30 +363,6 @@ enum {SINE, COSINE, TANGENT};
 		case REB_REFINEMENT:
 		case REB_ISSUE:
 			if (ANY_WORD(b)) goto compare;
-
-			if (IS_DATATYPE(b)) {
-				// Let DATATYPE! compare as a word: `(type-of 3) = 'integer!`
-				REBCNT sym = VAL_TYPE_SYM(b); // save before modify
-
-			#if !defined(NDEBUG)
-				if (LEGACY(OPTIONS_DATATYPE_WORD_STRICT)) break;
-			#endif
-
-			#if !defined(NDEBUG)
-				if (
-					LEGACY(OPTIONS_GROUP_NOT_PAREN)
-					&& VAL_WORD_SYM(a) == SYM_GROUPX
-					&& VAL_TYPE_KIND(b) == REB_PAREN
-				) {
-					// If comparing PAREN! datatype to GROUP! word, mutate
-					// the fake word made from datatype to have group symbol
-					sym = SYM_GROUPX;
-				}
-			#endif
-
-				Val_Init_Word_Unbound(b, REB_WORD, sym);
-				goto compare;
-			}
 			break;
 
 		case REB_STRING:
@@ -434,7 +384,7 @@ compare:
 	if (!(code = Compare_Types[VAL_TYPE(a)])) return FALSE;
 	result = code(a, b, strictness);
 	if (result < 0) raise Error_2(RE_INVALID_COMPARE, Type_Of(a), Type_Of(b));
-	return result ? TRUE : FALSE;
+	return result;
 }
 
 

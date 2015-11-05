@@ -43,15 +43,16 @@
 
 /***********************************************************************
 **
-*/	REBFLG MT_Datatype(REBVAL *out, REBVAL *data, REBCNT type)
+*/	REBFLG MT_Datatype(REBVAL *out, REBVAL *data, enum Reb_Kind type)
 /*
 ***********************************************************************/
 {
+	REBCNT sym;
 	if (!IS_WORD(data)) return FALSE;
-	type = VAL_WORD_CANON(data);
-	if (type > REB_MAX) return FALSE;
+	sym = VAL_WORD_CANON(data);
+	if (sym > REB_MAX) return FALSE;
 	VAL_SET(out, REB_DATATYPE);
-	VAL_TYPE_KIND(out) = cast(enum Reb_Kind, type - 1);
+	VAL_TYPE_KIND(out) = KIND_FROM_SYM(sym);
 	VAL_TYPE_SPEC(out) = 0;
 	return TRUE;
 }
@@ -104,17 +105,6 @@
 			//return R_NONE;
 			raise Error_Bad_Make(kind, arg);
 		}
-
-		#if !defined(NDEBUG)
-			if (
-				LEGACY(OPTIONS_GROUP_NOT_PAREN)
-				&& IS_WORD(arg)
-				&& VAL_WORD_SYM(arg) == SYM_GROUPX
-			) {
-				VAL_WORD_SYM(arg) = SYM_FROM_KIND(REB_PAREN);
-			}
-		#endif
-
 		// if (IS_NONE(arg)) return R_NONE;
 		if (MT_Datatype(D_OUT, arg, REB_DATATYPE))
 			break;

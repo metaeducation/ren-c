@@ -115,7 +115,7 @@ math: function/with [
 		:pre-uop :post-uop :prim-val
 	]
 
-	res: if parse expr expression [expr-val]
+	res: either parse expr expression [expr-val] [none]
 
 	set [
 		expr-val expr-op term-val term-op power-val unary-val

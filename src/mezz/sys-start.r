@@ -112,7 +112,7 @@ finish-rl-start: func [
 		do-arg  block!
 		debug   block!
 		secure  word!
-		import  [if import [to-rebol-file import]]
+		import  [to-value if import [to-rebol-file import]]
 		version tuple!
 	][
 		set opt attempt either block? act [act][

@@ -200,6 +200,5 @@ typedef struct Rebol_State {
 		assert(GC_Value_Guard->tail == (s)->value_guard_tail); \
 		assert(GC_Disabled == (s)->gc_disable); \
 		assert(IS_TRASH(&(s)->error)); \
-		MANUALS_LEAK_CHECK((s)->manuals_tail, "drop trap"); \
 		Saved_State = (s)->last_state; \
 	} while (0)

@@ -155,7 +155,9 @@ file-type?: func [
 	"Return the identifying word for a specific file type (or NONE)."
 	file [file! url!]
 ][
-	if file: find find system/options/file-types suffix? file word! [first file]
+	to-value if file: find find system/options/file-types suffix? file word! [
+		first file
+	]
 ]
 
 split-path: func [

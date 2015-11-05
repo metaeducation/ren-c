@@ -387,51 +387,102 @@ typedef REBYTE *(INFO_FUNC)(REBINT opts, void *lib);
 
 /***********************************************************************
 **
-*/	void Make_Command(REBVAL *value, REBVAL *def)
+*/	void Make_Command(REBVAL *out, const REBVAL *spec, const REBVAL *extension, const REBVAL *command_num)
 /*
-**		Assumes prior function has already stored the spec and args
-**		series. This function validates the body.
+**	A REB_COMMAND is used to connect a Rebol function spec to implementation
+**	inside of a C DLL.  That implementation uses a set of APIs (RXIARG, etc.)
+**	which were developed prior to Rebol becoming open source.  It was
+**	intended that C developers could use an API that was a parallel subset
+**	of Rebol's internal code, that would be binary stable to survive any
+**	reorganizations.
+**
+**	`extension` is an object or module that represents the properties of the
+**	DLL or shared library (including its DLL handle, load or unload status,
+**	etc.)  `command-num` is a numbered function inside of that DLL, which
+**	(one hopes) has a binary interface able to serve the spec which was
+**	provided.  Though the same spec format is used as for ordinary functions
+**	in Rebol, the allowed datatypes are more limited...as not all Rebol types
+**	had a parallel interface under this conception.
+**
+**	Subsequent to the open-sourcing, the Ren/C initiative is not focusing on
+**	the REB_COMMAND model--preferring to connect the Rebol core directly as
+**	a library to bindings.  However, as it was the only extension model
+**	available under closed-source Rebol3, several pieces of code were built
+**	to depend upon it for functionality.  This included the cryptography
+**	extensions needed for secure sockets and a large part of the GUI.
+**
+**	Being able to quarantine the REB_COMMAND machinery to only builds that
+**	need it is a working objective.
 **
 ***********************************************************************/
 {
-	REBVAL *args = BLK_HEAD(VAL_FUNC_PARAMLIST(value));
-	REBCNT n;
-	REBVAL *val = VAL_BLK_SKIP(def, 1);
-	REBEXT *ext;
+	if (!IS_MODULE(extension) && !IS_OBJECT(extension)) goto bad_func_def;
 
-	if (
-		VAL_LEN(def) != 3
-		|| !(IS_MODULE(val) || IS_OBJECT(val))
-		|| !IS_HANDLE(VAL_OBJ_VALUE(val, 1))
-		|| !IS_INTEGER(val+1)
-		|| VAL_INT64(val+1) > 0xffff
-	) {
-		raise Error_1(RE_BAD_FUNC_DEF, def);
+	// Check that handle and extension are somewhat valid (not used)
+	{
+		REBEXT *rebext;
+		REBVAL *handle = VAL_OBJ_VALUE(extension, 1);
+		if (!IS_HANDLE(handle)) goto bad_func_def;
+		rebext = &Ext_List[VAL_I32(handle)];
+		if (!rebext || !rebext->call) goto bad_func_def;
 	}
 
-	val = VAL_OBJ_VALUE(val, 1);
-	if (
-		!(ext = &Ext_List[VAL_I32(val)])
-		|| !(ext->call)
-	) {
-		raise Error_1(RE_BAD_EXTENSION, def);
+	if (!IS_INTEGER(command_num) || VAL_INT64(command_num) > 0xffff)
+		goto bad_func_def;
+
+	if (!IS_BLOCK(spec)) goto bad_func_def;
+
+	// See notes in `Make_Function()` about why a copy is *required*.
+	VAL_FUNC_SPEC(out) =
+		Copy_Array_At_Deep_Managed(VAL_SERIES(spec), VAL_INDEX(spec));
+
+	VAL_FUNC_PARAMLIST(out) = Check_Func_Spec(VAL_FUNC_SPEC(spec));
+
+	// Make sure the command doesn't use any types for which an "RXT" parallel
+	// datatype (to a REB_XXX type) has not been published:
+	{
+		REBVAL *args = BLK_HEAD(VAL_FUNC_PARAMLIST(out)) + 1; // skip SELF
+		for (; NOT_END(args); args++) {
+			if (
+				(3 != ~VAL_TYPESET_BITS(args)) // not END and UNSET (no args)
+				&& (VAL_TYPESET_BITS(args) & ~RXT_ALLOWED_TYPES)
+			) {
+				raise Error_1(RE_BAD_FUNC_ARG, args);
+			}
+		}
 	}
 
-	// make command! [[arg-spec] handle cmd-index]
-	VAL_FUNC_BODY(value) = Copy_Array_At_Max_Shallow(VAL_SERIES(def), 1, 2);
-	MANAGE_SERIES(VAL_FUNC_BODY(value));
+	// There is no "body", but we want to save `extension` and `command_num`
+	// and the only place there is to put it is in the place where a function
+	// body series would go.  So make a 2 element series to store them and
+	// copy the values into it.
+	//
+	VAL_FUNC_BODY(out) = Make_Array(2);
+	Append_Value(VAL_FUNC_BODY(out), extension);
+	Append_Value(VAL_FUNC_BODY(out), command_num);
+	MANAGE_SERIES(VAL_FUNC_BODY(out));
 
-	// Check for valid command arg datatypes:
-	args++; // skip self
-	n = 1;
-	for (; NOT_END(args); args++, n++) {
-		// If the typeset contains args that are not valid:
-		// (3 is the default when no args given, for not END and UNSET)
-		if (3 != ~VAL_TYPESET_BITS(args) && (VAL_TYPESET_BITS(args) & ~RXT_ALLOWED_TYPES))
-			raise Error_1(RE_BAD_FUNC_ARG, args);
+	VAL_SET(out, REB_COMMAND); // clears exts and opts in header...
+
+	// Put the command REBVAL in slot 0 so that REB_COMMAND, like other
+	// function types, can find the function value from the paramlist.
+
+	*BLK_HEAD(VAL_FUNC_PARAMLIST(out)) = *out;
+
+	return;
+
+bad_func_def:
+	{
+		// emulate error before refactoring (improve if it's relevant...)
+		REBVAL def;
+		REBSER *series = Make_Array(3);
+		Append_Value(series, spec);
+		Append_Value(series, extension);
+		Append_Value(series, command_num);
+		Val_Init_Block(&def, series);
+
+		raise Error_1(RE_BAD_FUNC_DEF, &def);
 	}
-
-	VAL_SET(value, REB_COMMAND);
 }
 
 

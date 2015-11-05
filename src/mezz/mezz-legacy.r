@@ -158,24 +158,15 @@ series?: :any-series?
 ;
 any-type!: :any-value!
 
-; !!! These have not been renamed yet, because of questions over what they
-; actually return.  CONTEXT-OF was a candidate, however the current behavior
-; of just returning TRUE from BIND? when the word is linked to a function
-; arg or local is being reconsidered to perhaps return the function, and to
-; be able to use functions as targets for BIND as well.  So binding-of might
-; be the better name, or bind-of as it's shorter.
+; !!! BIND? and BOUND? will have to go, but it's not clear exactly if
+; BIND-OF or CONTEXT-OF or what is the right term.  So a mass renaming
+; effort has not been undertaken, especially given the number of bootstrap
+; references.  When the new name final decision comes, then BIND? and BOUND?
+; will be the ones with their home in the legacy module...
 
+bind-of: :bound?
 ;bind?
 ;bound?
-
-
-; Precedent in Rebol has used the word OPT for OPTIONAL, arguing that it's
-; less typing and also used in English ("opt-in", "you may opt for a...").
-; Its commonality also leads it to be a shorthand for a variable name for
-; an "option".  This creates the synonym in order to allow the experiment,
-; though it doesn't seem like a good language keyword.
-
-opt: :optional
 
 
 ; !!! These less common cases still linger as question mark routines that
@@ -204,13 +195,24 @@ opt: :optional
 ; time...so TRY is left to linger without needing `do <r3-legacy>`
 ;
 try: func [
-	<transparent>
 	{Tries to DO a block and returns its value or an error.}
 	block [block!]
 	/except "On exception, evaluate this code block"
 	code [block! any-function!]
 ][
 	either except [trap/with block :code] [trap block]
+]
+
+
+; HAS is targeted for use to be the arity-1 parallel to OBJECT as arity-2,
+; (similar to the relationship between DOES and FUNCTION).
+;
+has: func [
+	{A shortcut to define a function that has local variables but no arguments.}
+	vars [block!] {List of words that are local to the function}
+	body [block!] {The body block of the function}
+][
+	func (head insert copy vars /local) body
 ]
 
 
@@ -227,18 +229,14 @@ set 'r3-legacy* func [] [
 	system/options/do-runs-functions: true
 	system/options/broken-case-semantics: true
 	system/options/exit-functions-only: true
-	system/options/datatype-word-strict: true
 	system/options/refinements-true: true
 	system/options/no-switch-evals: true
 	system/options/no-switch-fallthrough: true
 	system/options/forever-64-bit-ints: true
 	system/options/print-forms-everything: true
 	system/options/break-with-overrides: true
-
-	; False is already the default for this switch
-	; (e.g. `to-word type-of quote ()` is the word PAREN! and not GROUP!)
-	;
-	system/options/group-not-paren: false
+	system/options/none-instead-of-unsets: true
+	system/options/cant-unset-set-words: true
 
 	append system/contexts/user compose [
 

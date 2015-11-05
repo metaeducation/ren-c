@@ -71,6 +71,11 @@
 // Local includes:
 #include "reb-c.h"
 
+// !!! Is there a more ideal location for these prototypes?
+typedef int cmp_t(void *, const void *, const void *);
+extern void reb_qsort_r(void *a, size_t n, size_t es, void *thunk, cmp_t *cmp);
+
+
 // Must be defined at the end of reb-c.h, but not *in* reb-c.h so that
 // files including sys-core.h and reb-host.h can have differing
 // definitions of REBCHR.  (We want it opaque to the core, but the
@@ -172,7 +177,8 @@ enum {
 	MKS_EXTERNAL	= 1 << 2,	// Uses external pointer--don't alloc data
 	MKS_PRESERVE	= 1 << 3,	// "Remake" only (save what data possible)
 	MKS_LOCK		= 1 << 4,	// series is unexpandable
-	MKS_GC_MANUALS	= 1 << 5	// used in implementation of series itself
+	MKS_GC_MANUALS	= 1 << 5,	// used in implementation of series itself
+	MKS_FRAME		= 1 << 6	// is a frame w/key series (and legal UNSETs)
 };
 
 // Modes allowed by Copy_Block function:
@@ -367,11 +373,18 @@ enum encoding_opts {
 
 /***********************************************************************
 **
-**	Do_Next_May_Throw
+**	DO_NEXT_MAY_THROW_CORE and DO_NEXT_MAY_THROW
 **
-**		This is a wrapper for the basic building block of Rebol
-**		evaluation.  See Do_Next_Core() for its inner workings, but
-**		it will return:
+**		This is a wrapper for the basic building block of Rebol evaluation.
+**		It is a macro stylized to take the index as a parameter, and does
+**		a test using ANY_EVAL() of the value at the position requested...
+**		and possibly the position after it.  It can avoid calling Do_Core
+**		at all in some situations for blocks and other inert types.  This
+**		is disabled in debug builds on Linux by default, but not other
+**		platforms so that the debug versions run the release code path.
+**
+**		For the central functionality see Do_Next_Core().  The return value
+**		is *not* always a series index, it may return:
 **
 **			END_FLAG if end of series prohibited a full evaluation
 **			THROWN_FLAG if the output is THROWN()--you MUST check!
@@ -427,8 +440,33 @@ enum encoding_opts {
 **
 ***********************************************************************/
 
-#define Do_Next_May_Throw(out,series,index) \
-	Do_Core((out), TRUE, (series), (index), TRUE)
+#if defined(NDEBUG) || !defined(TO_LINUX)
+	#define DO_NEXT_MAY_THROW_CORE(index_out,out,series,index_in,lookahead) \
+		do { \
+			const REBVAL *val_at = BLK_SKIP((series),(index_in)); \
+			if (IS_END(val_at)) { \
+				SET_UNSET(out); \
+				(index_out) = END_FLAG; \
+				break; \
+			} \
+			if (!ANY_EVAL(val_at) && !ANY_EVAL(val_at + 1)) { \
+				*(out) = *BLK_SKIP((series), (index_in)); \
+				(index_out) = ((index_in) + 1); \
+				break; \
+			} \
+			(index_out) = Do_Core( \
+				(out), TRUE, (series), (index_in), (lookahead) \
+			); \
+		} while (FALSE)
+#else
+	// Linux debug builds currently default to running the evaluator on
+	// every value--whether it has evaluator behavior or not.
+	#define DO_NEXT_MAY_THROW_CORE(index_out,out,series,index_in,lookahead) \
+		(index_out) = Do_Core((out), TRUE, (series), (index_in), (lookahead));
+#endif
+
+#define DO_NEXT_MAY_THROW(index_out,out,series,index) \
+	DO_NEXT_MAY_THROW_CORE((index_out), (out), (series), (index), TRUE)
 
 #define Do_At_Throws(out,series,index) \
 	(THROWN_FLAG == Do_Core((out), FALSE, (series), (index), TRUE))

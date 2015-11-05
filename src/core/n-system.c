@@ -362,7 +362,7 @@ const char *evoke_help = "Evoke values:\n"
 	ser = VAL_SERIES(val = D_ARG(1));
 	*D_OUT = *val;
 
-	if (ANY_BLOCK(val)) {
+	if (ANY_ARRAY(val)) {
 		for (n = 0; n < SERIES_TAIL(ser); n++) {
 			if (IS_END(BLK_SKIP(ser, n))) goto err;
 		}

@@ -90,7 +90,7 @@ enum {
 	else
 		UNPROTECT_SERIES(series);
 
-	if (!ANY_BLOCK(val) || !GET_FLAG(flags, PROT_DEEP)) return;
+	if (!ANY_ARRAY(val) || !GET_FLAG(flags, PROT_DEEP)) return;
 
 	SERIES_SET_FLAG(series, SER_MARK); // recursion protection
 
@@ -276,7 +276,7 @@ enum {
 	SET_TRUE(D_OUT);
 
 	while (index < SERIES_TAIL(block)) {
-		index = Do_Next_May_Throw(D_OUT, block, index);
+		DO_NEXT_MAY_THROW(index, D_OUT, block, index);
 		if (index == THROWN_FLAG) return R_OUT_IS_THROWN;
 
 		if (IS_CONDITIONAL_FALSE(D_OUT)) return R_NONE;
@@ -310,7 +310,7 @@ enum {
 	REBCNT index = VAL_INDEX(D_ARG(1));
 
 	while (index < SERIES_TAIL(block)) {
-		index = Do_Next_May_Throw(D_OUT, block, index);
+		DO_NEXT_MAY_THROW(index, D_OUT, block, index);
 		if (index == THROWN_FLAG) return R_OUT_IS_THROWN;
 
 		if (IS_CONDITIONAL_TRUE(D_OUT)) return R_OUT;
@@ -423,13 +423,13 @@ enum {
 	REBVAL * const body_result = D_ARG(3);
 
 	// CASE is in the same family as IF/UNLESS/EITHER, so if there is no
-	// matching condition it will return a NONE!.  Set that as default.
+	// matching condition it will return UNSET!.  Set that as default.
 
-	SET_NONE(D_OUT);
+	SET_UNSET_UNLESS_LEGACY_NONE(D_OUT);
 
 	while (index < SERIES_TAIL(block)) {
 
-		index = Do_Next_May_Throw(condition_result, block, index);
+		DO_NEXT_MAY_THROW(index, condition_result, block, index);
 
 		if (index == THROWN_FLAG) {
 			*D_OUT = *condition_result; // is a RETURN, BREAK, THROW...
@@ -470,12 +470,12 @@ enum {
 
 			// forgets the last evaluative result for a TRUE condition
 			// when /ALL is set (instead of keeping it to return)
-			SET_NONE(D_OUT);
+			SET_UNSET_UNLESS_LEGACY_NONE(D_OUT);
 			continue;
 		}
 	#endif
 
-		index = Do_Next_May_Throw(body_result, block, index);
+		DO_NEXT_MAY_THROW(index, body_result, block, index);
 
 		if (index == THROWN_FLAG) {
 			*D_OUT = *body_result; // is a RETURN, BREAK, THROW...
@@ -829,15 +829,19 @@ was_caught:
 #endif
 
 	switch (VAL_TYPE(value)) {
+	case REB_UNSET:
+		// useful for `do if ...` types of scenarios
+		return R_UNSET;
+
 	case REB_NONE:
-		// No-op is convenient for `do if ...` constructions
+		// useful for `do all ...` types of scenarios
 		return R_NONE;
 
 	case REB_BLOCK:
 	case REB_PAREN:
 		if (D_REF(4)) { // next
-			VAL_INDEX(value) = Do_Next_May_Throw(
-				D_OUT, VAL_SERIES(value), VAL_INDEX(value)
+			DO_NEXT_MAY_THROW(
+				VAL_INDEX(value), D_OUT, VAL_SERIES(value), VAL_INDEX(value)
 			);
 
 			if (VAL_INDEX(value) == THROWN_FLAG) {
@@ -1090,14 +1094,13 @@ was_caught:
 	REBVAL * const branch = D_ARG(2);
 	const REBOOL only = D_REF(3);
 
-	if (IS_CONDITIONAL_FALSE(condition)) return R_NONE;
-
-	if (only || !IS_BLOCK(branch)) {
-		*D_OUT = *branch;
-		return R_OUT;
+	if (IS_CONDITIONAL_FALSE(condition)) {
+		SET_UNSET_UNLESS_LEGACY_NONE(D_OUT);
 	}
-
-	if (DO_ARRAY_THROWS(D_OUT, branch))
+	else if (only || !IS_BLOCK(branch)) {
+		*D_OUT = *branch;
+	}
+	else if (DO_ARRAY_THROWS(D_OUT, branch))
 		return R_OUT_IS_THROWN;
 
 	return R_OUT;
@@ -1167,19 +1170,20 @@ was_caught:
 **
 */	REBNATIVE(return)
 /*
-**	The implementation of RETURN here is a simple THROWN() value and
-**	has no "definitional scoping".  It will be the only way to return
-**	from a MAKE FUNCTION! which has not defined a local specific
-**	definitional return.
+**	There is a RETURN native defined, and its native function spec is
+**	utilized to create the appropriate help and calling protocol
+**	information for values that have overridden its VAL_FUNC_CODE
+**	slot with a VAL_FUNC_RETURN_TO spec.
+**
+**	However: this native is unset and its actual code body should
+**	never be able to be called.  The non-definitional return construct
+**	that people should use if they need it would be EXIT and EXIT/WITH
 **
 ***********************************************************************/
 {
-	REBVAL *arg = D_ARG(1);
+	panic Error_0(RE_MISC);
 
-	*D_OUT = *ROOT_RETURN_NATIVE;
-	CONVERT_NAME_TO_THROWN(D_OUT, arg);
-
-	return R_OUT_IS_THROWN;
+	return R_NONE;
 }
 
 
@@ -1207,7 +1211,7 @@ was_caught:
 
 	REBVAL *item = VAL_BLK_DATA(cases);
 
-	SET_NONE(D_OUT); // default return value if no cases run
+	SET_UNSET_UNLESS_LEGACY_NONE(D_OUT); // default return if no cases run
 
 	for (; NOT_END(item); item++) {
 
@@ -1218,10 +1222,10 @@ was_caught:
 
 		if (IS_BLOCK(item)) {
 			// Each time we see a block that we don't take, we reset
-			// the output to NONE!...because we only leak evaluations
+			// the output to UNSET!...because we only leak evaluations
 			// out the bottom of the switch if no block would catch it
 
-			SET_NONE(D_OUT);
+			SET_UNSET_UNLESS_LEGACY_NONE(D_OUT);
 			continue;
 		}
 
@@ -1431,14 +1435,13 @@ was_caught:
 	REBVAL * const branch = D_ARG(2);
 	const REBOOL only = D_REF(3);
 
-	if (IS_CONDITIONAL_TRUE(condition)) return R_NONE;
-
-	if (only || !IS_BLOCK(branch)) {
-		*D_OUT = *branch;
-		return R_OUT;
+	if (IS_CONDITIONAL_TRUE(condition)) {
+		SET_UNSET_UNLESS_LEGACY_NONE(D_OUT);
 	}
-
-	if (DO_ARRAY_THROWS(D_OUT, branch))
+	else if (only || !IS_BLOCK(branch)) {
+		*D_OUT = *branch;
+	}
+	else if (DO_ARRAY_THROWS(D_OUT, branch))
 		return R_OUT_IS_THROWN;
 
 	return R_OUT;

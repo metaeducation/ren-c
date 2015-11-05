@@ -385,12 +385,14 @@ static REBYTE seed_str[SEED_LEN] = {
 	REBCNT tail;
 	REBUNI c;
 
+	assert(!Is_Array_Series(src));
+
 	for (tail = SERIES_TAIL(src); tail > 0; tail--) {
 		c = is_uni ? *UNI_SKIP(src, tail - 1) : *BIN_SKIP(src, tail - 1);
 		if (c != chr) break;
 	}
 	SERIES_TAIL(src) = tail;
-	TERM_SERIES(src);
+	TERM_SEQUENCE(src);
 }
 
 

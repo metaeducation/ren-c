@@ -49,7 +49,7 @@
 	// is straightened out, terminate for both possibilities.
 
 	BIN_DATA(series)[length] = 0;
-	TERM_SERIES(series);
+	TERM_SEQUENCE(series);
 	return series;
 }
 
@@ -72,7 +72,7 @@
 	// is straightened out, terminate for both possibilities.
 
 	UNI_HEAD(series)[length] = 0;
-	TERM_SERIES(series);
+	TERM_SEQUENCE(series);
 	return series;
 }
 
@@ -273,7 +273,7 @@ cp_same:
 	dst = Make_Series(length + 1, wide, MKS_NONE);
 	Insert_String(dst, 0, src, index, length, TRUE);
 	SERIES_TAIL(dst) = length;
-	TERM_SERIES(dst);
+	TERM_SEQUENCE(dst);
 
 	return dst;
 }
@@ -446,7 +446,7 @@ cp_same:
 	assert(codepoint < (1 << 16));
 
 	out = (codepoint > 255) ? Make_Unicode(1) : Make_Binary(1);
-	TERM_SERIES(out);
+	TERM_SEQUENCE(out);
 
 	Append_Codepoint_Raw(out, codepoint);
 

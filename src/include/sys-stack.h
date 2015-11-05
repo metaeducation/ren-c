@@ -157,7 +157,7 @@
 // POPPING AND "DROPPING"
 
 #define DS_DROP \
-	(--DS_Series->tail, BLK_TERM(DS_Series), NOOP)
+	(--DS_Series->tail, SET_END(BLK_TAIL(DS_Series)), NOOP)
 
 #define DS_POP_INTO(v) \
 	do { \
@@ -168,7 +168,7 @@
 
 #ifdef NDEBUG
 	#define DS_DROP_TO(dsp) \
-		(DS_Series->tail = (dsp) + 1, BLK_TERM(DS_Series), NOOP)
+		(DS_Series->tail = (dsp) + 1, SET_END(BLK_TAIL(DS_Series)), NOOP)
 #else
 	#define DS_DROP_TO(dsp) \
 		do { \

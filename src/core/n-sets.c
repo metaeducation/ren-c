@@ -30,62 +30,73 @@
 #include "sys-core.h"
 
 enum {
-	SOP_BOTH,		// combine and interate over both series
-	SOP_CHECK,		// check other series for value existence
-	SOP_INVERT,		// invert the result of the search
-	SOP_MAX
+	SOP_NONE = 0, // used by UNIQUE (other flags do not apply)
+	SOP_FLAG_BOTH = 1 << 0, // combine and interate over both series
+	SOP_FLAG_CHECK = 1 << 1, // check other series for value existence
+	SOP_FLAG_INVERT = 1 << 2 // invert the result of the search
 };
-
-#define SET_OP_UNIQUE		0
-#define SET_OP_UNION		FLAGIT(SOP_BOTH)
-#define SET_OP_INTERSECT	FLAGIT(SOP_CHECK)
-#define SET_OP_EXCLUDE		(FLAGIT(SOP_CHECK) | FLAGIT(SOP_INVERT))
-#define SET_OP_DIFFERENCE	(FLAGIT(SOP_BOTH) | FLAGIT(SOP_CHECK) | FLAGIT(SOP_INVERT))
 
 
 /***********************************************************************
 **
-*/	static REBINT Do_Set_Operation(struct Reb_Call *call_, REBCNT flags)
+*/	static REBSER *Make_Set_Operation_Series(const REBVAL *val1, const REBVAL *val2, REBCNT flags, REBCNT cased, REBCNT skip)
 /*
-**		Do set operations on a series.
+**	Do set operations on a series.  Case-sensitive if `cased` is TRUE.
+**	`skip` is the record size.
 **
 ***********************************************************************/
 {
-	REBVAL *val;
-	REBVAL *val1;
-	REBVAL *val2 = 0;
-	REBSER *ser;
-	REBSER *hser = 0;	// hash table for series
-	REBSER *retser;		// return series
-	REBSER *hret;		// hash table for return series
+	REBSER *buffer;		// buffer for building the return series
 	REBCNT i;
 	REBINT h = TRUE;
-	REBCNT skip = 1;	// record size
-	REBCNT cased = 0;	// case sensitive when TRUE
+	REBFLG first_pass = TRUE; // are we in the first pass over the series?
+	REBSER *out_ser;
 
-	SET_NONE(D_OUT);
-	val1 = D_ARG(1);
-	i = 2;
+	// This routine should only be called with SERIES! values
+	assert(ANY_SERIES(val1));
 
-	// Check for second series argument:
-	if (flags != SET_OP_UNIQUE) {
-		val2 = D_ARG(i++);
-		if (VAL_TYPE(val1) != VAL_TYPE(val2))
-			raise Error_Unexpected_Type(VAL_TYPE(val1), VAL_TYPE(val2));
+	if (val2) {
+		assert(ANY_SERIES(val2));
+
+		if (ANY_ARRAY(val1)) {
+			if (!ANY_ARRAY(val2))
+				raise Error_Unexpected_Type(VAL_TYPE(val1), VAL_TYPE(val2));
+
+			// As long as they're both arrays, we're willing to do:
+			//
+			//     >> union quote (a b c) 'b/d/e
+			//     (a b c d e)
+			//
+			// The type of the result will match the first value.
+		}
+		else if (!IS_BINARY(val1)) {
+
+			// We will similarly do any two ANY-STRING! types:
+			//
+			//      >> union <abc> "bde"
+			//      <abcde>
+
+			if (IS_BINARY(val2))
+				raise Error_Unexpected_Type(VAL_TYPE(val1), VAL_TYPE(val2));
+		}
+		else {
+			// Binaries only operate with other binaries
+
+			if (!IS_BINARY(val2))
+				raise Error_Unexpected_Type(VAL_TYPE(val1), VAL_TYPE(val2));
+		}
 	}
 
-	// Refinements /case and /skip N
-	cased = D_REF(i++); // cased
-	if (D_REF(i++)) skip = Int32s(D_ARG(i), 1);
+	// Calculate i as length of result block.
+	i = VAL_LEN(val1);
+	if (flags & SOP_FLAG_BOTH) i += VAL_LEN(val2);
 
-	switch (VAL_TYPE(val1)) {
+	if (ANY_ARRAY(val1)) {
+		REBSER *hser = 0;	// hash table for series
+		REBSER *hret;		// hash table for return series
 
-	case REB_BLOCK:
-		i = VAL_LEN(val1);
-		// Setup result block:
-		if (GET_FLAG(flags, SOP_BOTH)) i += VAL_LEN(val2);
-		retser = BUF_EMIT;			// use preallocated shared block
-		Resize_Series(retser, i);
+		buffer = BUF_EMIT;			// use preallocated shared block
+		Resize_Series(buffer, i);
 		hret = Make_Hash_Sequence(i);	// allocated
 
 		// Optimization note: !!
@@ -93,133 +104,109 @@ enum {
 		// and extending Find_Key to do a FIND on the value itself w/o the hash.
 
 		do {
+			REBSER *ser = VAL_SERIES(val1); // val1 and val2 swapped 2nd pass!
+
 			// Check what is in series1 but not in series2:
-			if (GET_FLAG(flags, SOP_CHECK))
+			if (flags & SOP_FLAG_CHECK)
 				hser = Hash_Block(val2, cased);
 
 			// Iterate over first series:
-			ser = VAL_SERIES(val1);
 			i = VAL_INDEX(val1);
-			for (; val = BLK_SKIP(ser, i), i < SERIES_TAIL(ser); i += skip) {
-				if (GET_FLAG(flags, SOP_CHECK)) {
-					h = Find_Key(VAL_SERIES(val2), hser, val, skip, cased, 1) >= 0;
-					if (GET_FLAG(flags, SOP_INVERT)) h = !h;
+			for (; i < SERIES_TAIL(ser); i += skip) {
+				REBVAL *item = BLK_SKIP(ser, i);
+				if (flags & SOP_FLAG_CHECK) {
+					h = Find_Key(VAL_SERIES(val2), hser, item, skip, cased, 1);
+					h = (h >= 0);
+					if (flags & SOP_FLAG_INVERT) h = !h;
 				}
-				if (h) Find_Key(retser, hret, val, skip, cased, 2);
+				if (h) Find_Key(buffer, hret, item, skip, cased, 2);
 			}
+
+			if (flags & SOP_FLAG_CHECK)
+				Free_Series(hser);
+
+			if (!first_pass) break;
+			first_pass = FALSE;
 
 			// Iterate over second series?
-			if ((i = GET_FLAG(flags, SOP_BOTH))) {
-				val = val1;
+			if ((i = ((flags & SOP_FLAG_BOTH) != 0))) {
+				const REBVAL *temp = val1;
 				val1 = val2;
-				val2 = val;
-				CLR_FLAG(flags, SOP_BOTH);
+				val2 = temp;
 			}
-
-			if (GET_FLAG(flags, SOP_CHECK))
-				Free_Series(hser);
 		} while (i);
 
 		if (hret)
 			Free_Series(hret);
 
-		Val_Init_Block(D_OUT, Copy_Array_Shallow(retser));
-		RESET_TAIL(retser); // required - allow reuse
+		out_ser = Copy_Array_Shallow(buffer);
+		RESET_TAIL(buffer); // required - allow reuse
+	}
+	else {
+		if (IS_BINARY(val1)) {
+			// All binaries use "case-sensitive" comparison (e.g. each byte
+			// is treated distinctly)
+			cased = TRUE;
+		}
 
-		break;
-
-	case REB_BINARY:
-		cased = TRUE;
-		SET_TYPE(D_OUT, REB_BINARY);
-	case REB_STRING:
-		i = VAL_LEN(val1);
-		// Setup result block:
-		if (GET_FLAG(flags, SOP_BOTH)) i += VAL_LEN(val2);
-
-		retser = BUF_MOLD;
-		Reset_Buffer(retser, i);
-		RESET_TAIL(retser);
+		buffer = BUF_MOLD;
+		Reset_Buffer(buffer, i);
+		RESET_TAIL(buffer);
 
 		do {
+			REBSER *ser = VAL_SERIES(val1); // val1 and val2 swapped 2nd pass!
 			REBUNI uc;
 
-			cased = cased ? AM_FIND_CASE : 0;
-
 			// Iterate over first series:
-			ser = VAL_SERIES(val1);
 			i = VAL_INDEX(val1);
 			for (; i < SERIES_TAIL(ser); i += skip) {
 				uc = GET_ANY_CHAR(ser, i);
-				if (GET_FLAG(flags, SOP_CHECK)) {
-					h = Find_Str_Char(VAL_SERIES(val2), 0, VAL_INDEX(val2), VAL_TAIL(val2), skip, uc, cased) != NOT_FOUND;
-					if (GET_FLAG(flags, SOP_INVERT)) h = !h;
+				if (flags & SOP_FLAG_CHECK) {
+					h = (NOT_FOUND != Find_Str_Char(
+						VAL_SERIES(val2),
+						0,
+						VAL_INDEX(val2),
+						VAL_TAIL(val2),
+						skip,
+						uc,
+						cased ? AM_FIND_CASE : 0
+					));
+
+					if (flags & SOP_FLAG_INVERT) h = !h;
 				}
-				if (h && (Find_Str_Char(retser, 0, 0, SERIES_TAIL(retser), skip, uc, cased) == NOT_FOUND)) {
-					Append_String(retser, ser, i, skip);
+
+				if (!h) continue;
+
+				if (
+					NOT_FOUND == Find_Str_Char(
+						buffer,
+						0,
+						0,
+						SERIES_TAIL(buffer),
+						skip,
+						uc,
+						cased ? AM_FIND_CASE : 0
+					)
+				) {
+					Append_String(buffer, ser, i, skip);
 				}
 			}
 
+			if (!first_pass) break;
+			first_pass = FALSE;
+
 			// Iterate over second series?
-			if ((i = GET_FLAG(flags, SOP_BOTH))) {
-				val = val1;
+			if ((i = ((flags & SOP_FLAG_BOTH) != 0))) {
+				const REBVAL *temp = val1;
 				val1 = val2;
-				val2 = val;
-				CLR_FLAG(flags, SOP_BOTH);
+				val2 = temp;
 			}
 		} while (i);
 
-		ser = Copy_String(retser, 0, -1);
-		if (IS_BINARY(D_OUT))
-			Val_Init_Binary(D_OUT, ser);
-		else
-			Val_Init_String(D_OUT, ser);
-		break;
-
-	case REB_BITSET:
-		switch (flags) {
-		case SET_OP_UNIQUE:
-			return R_ARG1;
-		case SET_OP_UNION:
-			i = A_OR;
-			break;
-		case SET_OP_INTERSECT:
-			i = A_AND;
-			break;
-		case SET_OP_DIFFERENCE:
-			i = A_XOR;
-			break;
-		case SET_OP_EXCLUDE:
-			i = 0; // special case
-			break;
-		}
-		ser = Xandor_Binary(i, val1, val2);
-		Val_Init_Bitset(D_OUT, ser);
-		break;
-
-	case REB_TYPESET:
-		switch (flags) {
-		case SET_OP_UNIQUE:
-			break;
-		case SET_OP_UNION:
-			VAL_TYPESET_BITS(val1) |= VAL_TYPESET_BITS(val2);
-			break;
-		case SET_OP_INTERSECT:
-			VAL_TYPESET_BITS(val1) &= VAL_TYPESET_BITS(val2);
-			break;
-		case SET_OP_DIFFERENCE:
-			VAL_TYPESET_BITS(val1) ^= VAL_TYPESET_BITS(val2);
-			break;
-		case SET_OP_EXCLUDE:
-			VAL_TYPESET_BITS(val1) &= ~VAL_TYPESET_BITS(val2);
-			break;
-		}
-		return R_ARG1;
-
-	default:
-		raise Error_Invalid_Arg(val1);
+		out_ser = Copy_String(buffer, 0, -1);
 	}
 
-	return R_OUT;
+	return out_ser;
 }
 
 
@@ -227,29 +214,54 @@ enum {
 **
 */	REBNATIVE(difference)
 /*
-**	Set functions use this arg pattern:
-**
-**		set1 [ any-series! bitset! date! ] "first set"
-**		set2 [ any-series! bitset! date! ] "second set"
-**		/case "case sensitive"
-**		/skip "treat the series as records of fixed size"
-**		size [integer!]
-**
 ***********************************************************************/
 {
-	REBVAL *val1, *val2;
+	REBVAL *val1 = D_ARG(1);
+	REBVAL *val2 = D_ARG(2);
 
-	val1 = D_ARG(1);
-	val2 = D_ARG(2);
+	const REBOOL cased = D_REF(3);
+	const REBOOL skip = D_REF(4) ? Int32s(D_ARG(5), 1) : 1;
 
+	// Plain SUBTRACT on dates has historically given a count of days.
+	// DIFFERENCE has been the way to get the time difference.
+	// !!! Is this sensible?
 	if (IS_DATE(val1) || IS_DATE(val2)) {
-		if (!IS_DATE(val1)) raise Error_Invalid_Arg(val1);
-		if (!IS_DATE(val2)) raise Error_Invalid_Arg(val2);
+		if (VAL_TYPE(val1) != VAL_TYPE(val2))
+			raise Error_Unexpected_Type(VAL_TYPE(val1), VAL_TYPE(val2));
+
 		Subtract_Date(val1, val2, D_OUT);
 		return R_OUT;
 	}
 
-	return Do_Set_Operation(call_, SET_OP_DIFFERENCE);
+	if (IS_BITSET(val1) || IS_BITSET(val2)) {
+		if (VAL_TYPE(val1) != VAL_TYPE(val2))
+			raise Error_Unexpected_Type(VAL_TYPE(val1), VAL_TYPE(val2));
+
+		Val_Init_Bitset(D_OUT, Xandor_Binary(A_XOR, val1, val2));
+		return R_OUT;
+	}
+
+	if (IS_TYPESET(val1) || IS_TYPESET(val2)) {
+		if (VAL_TYPE(val1) != VAL_TYPE(val2))
+			raise Error_Unexpected_Type(VAL_TYPE(val1), VAL_TYPE(val2));
+
+		*D_OUT = *val1;
+		VAL_TYPESET_BITS(D_OUT) ^= VAL_TYPESET_BITS(val2);
+		return R_OUT;
+	}
+
+	Val_Init_Series(
+		D_OUT,
+		VAL_TYPE(val1),
+		Make_Set_Operation_Series(
+			val1,
+			val2,
+			SOP_FLAG_BOTH | SOP_FLAG_CHECK | SOP_FLAG_INVERT,
+			cased,
+			skip
+		)
+	);
+	return R_OUT;
 }
 
 
@@ -259,7 +271,38 @@ enum {
 /*
 ***********************************************************************/
 {
-	return Do_Set_Operation(call_, SET_OP_EXCLUDE);
+	REBVAL *val1 = D_ARG(1);
+	REBVAL *val2 = D_ARG(2);
+
+	const REBOOL cased = D_REF(3);
+	const REBOOL skip = D_REF(4) ? Int32s(D_ARG(5), 1) : 1;
+
+	if (IS_BITSET(val1) || IS_BITSET(val2)) {
+		if (VAL_TYPE(val1) != VAL_TYPE(val2))
+			raise Error_Unexpected_Type(VAL_TYPE(val1), VAL_TYPE(val2));
+
+		// !!! 0 was said to be a "special case" in original code
+		Val_Init_Bitset(D_OUT, Xandor_Binary(0, val1, val2));
+		return R_OUT;
+	}
+
+	if (IS_TYPESET(val1) || IS_TYPESET(val2)) {
+		if (VAL_TYPE(val1) != VAL_TYPE(val2))
+			raise Error_Unexpected_Type(VAL_TYPE(val1), VAL_TYPE(val2));
+
+		*D_OUT = *val1;
+		VAL_TYPESET_BITS(D_OUT) &= ~VAL_TYPESET_BITS(val2);
+		return R_OUT;
+	}
+
+	Val_Init_Series(
+		D_OUT,
+		VAL_TYPE(val1),
+		Make_Set_Operation_Series(
+			val1, val2, SOP_FLAG_CHECK | SOP_FLAG_INVERT, cased, skip
+		)
+	);
+	return R_OUT;
 }
 
 
@@ -269,7 +312,37 @@ enum {
 /*
 ***********************************************************************/
 {
-	return Do_Set_Operation(call_, SET_OP_INTERSECT);
+	REBVAL *val1 = D_ARG(1);
+	REBVAL *val2 = D_ARG(2);
+
+	const REBOOL cased = D_REF(3);
+	const REBOOL skip = D_REF(4) ? Int32s(D_ARG(5), 1) : 1;
+
+	if (IS_BITSET(val1) || IS_BITSET(val2)) {
+		if (VAL_TYPE(val1) != VAL_TYPE(val2))
+			raise Error_Unexpected_Type(VAL_TYPE(val1), VAL_TYPE(val2));
+
+		Val_Init_Bitset(D_OUT, Xandor_Binary(A_AND, val1, val2));
+		return R_OUT;
+	}
+
+	if (IS_TYPESET(val1) || IS_TYPESET(val2)) {
+		if (VAL_TYPE(val1) != VAL_TYPE(val2))
+			raise Error_Unexpected_Type(VAL_TYPE(val1), VAL_TYPE(val2));
+
+		*D_OUT = *val1;
+		VAL_TYPESET_BITS(D_OUT) &= VAL_TYPESET_BITS(val2);
+		return R_OUT;
+	}
+
+	Val_Init_Series(
+		D_OUT,
+		VAL_TYPE(val1),
+		Make_Set_Operation_Series(
+			val1, val2, SOP_FLAG_CHECK, cased, skip
+		)
+	);
+	return R_OUT;
 }
 
 
@@ -279,7 +352,37 @@ enum {
 /*
 ***********************************************************************/
 {
-	return Do_Set_Operation(call_, SET_OP_UNION);
+	REBVAL *val1 = D_ARG(1);
+	REBVAL *val2 = D_ARG(2);
+
+	const REBOOL cased = D_REF(3);
+	const REBOOL skip = D_REF(4) ? Int32s(D_ARG(5), 1) : 1;
+
+	if (IS_BITSET(val1) || IS_BITSET(val2)) {
+		if (VAL_TYPE(val1) != VAL_TYPE(val2))
+			raise Error_Unexpected_Type(VAL_TYPE(val1), VAL_TYPE(val2));
+
+		Val_Init_Bitset(D_OUT, Xandor_Binary(A_OR, val1, val2));
+		return R_OUT;
+	}
+
+	if (IS_TYPESET(val1) || IS_TYPESET(val2)) {
+		if (VAL_TYPE(val1) != VAL_TYPE(val2))
+			raise Error_Unexpected_Type(VAL_TYPE(val1), VAL_TYPE(val2));
+
+		*D_OUT = *val1;
+		VAL_TYPESET_BITS(D_OUT) |= VAL_TYPESET_BITS(val2);
+		return R_OUT;
+	}
+
+	Val_Init_Series(
+		D_OUT,
+		VAL_TYPE(val1),
+		Make_Set_Operation_Series(
+			val1, val2, SOP_FLAG_BOTH, cased, skip
+		)
+	);
+	return R_OUT;
 }
 
 
@@ -289,7 +392,20 @@ enum {
 /*
 ***********************************************************************/
 {
-	return Do_Set_Operation(call_, SET_OP_UNIQUE);
+	REBVAL *val1 = D_ARG(1);
+
+	const REBOOL cased = D_REF(2);
+	const REBOOL skip = D_REF(3) ? Int32s(D_ARG(4), 1) : 1;
+
+	if (IS_BITSET(val1) || IS_TYPESET(val1)) {
+		// Bitsets and typesets already unique (by definition)
+		return R_ARG1;
+	}
+
+	Val_Init_Series(
+		D_OUT,
+		VAL_TYPE(val1),
+		Make_Set_Operation_Series(val1, NULL, SOP_NONE, cased, skip)
+	);
+	return R_OUT;
 }
-
-

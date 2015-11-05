@@ -109,13 +109,15 @@ static REBFLG Print_Native_Modifying_Throws(
 	REBVAL *value, // Value may be modified.  Contents must be GC-safe!
 	REBOOL newline
 ) {
-	if (IS_UNSET(value) || IS_NONE(value)) {
+	if (IS_UNSET(value)) {
 	#if !defined(NDEBUG)
 		if (LEGACY(OPTIONS_PRINT_FORMS_EVERYTHING))
 			goto form_it;
 	#endif
 
-		// No effect (not even a newline)
+		// No effect (not even a newline).  Previously this also was the
+		// behavior for NONE, but now that none is considered "reified" it
+		// does not opt out from rendering.
 	}
 	else if (IS_BINARY(value)) {
 

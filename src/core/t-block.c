@@ -30,11 +30,6 @@
 #include "sys-core.h"
 
 
-// !!! Should there be a qsort header so we don't redefine it here?
-typedef int cmp_t(const void *, const void *);
-extern void reb_qsort(void *a, size_t n, size_t es, cmp_t *cmp);
-
-
 /***********************************************************************
 **
 */	REBINT CT_Array(REBVAL *a, REBVAL *b, REBINT mode)
@@ -70,22 +65,22 @@ static void No_Nones(REBVAL *arg) {
 
 /***********************************************************************
 **
-*/	REBFLG MT_Array(REBVAL *out, REBVAL *data, REBCNT type)
+*/	REBFLG MT_Array(REBVAL *out, REBVAL *data, enum Reb_Kind type)
 /*
 **	"Make Type" dispatcher for the following subtypes:
 **
-**		MT_Block(REBVAL *out, REBVAL *data, REBCNT type)
-**		MT_Paren(REBVAL *out, REBVAL *data, REBCNT type)
-**		MT_Path(REBVAL *out, REBVAL *data, REBCNT type)
-**		MT_Set_Path(REBVAL *out, REBVAL *data, REBCNT type)
-**		MT_Get_Path(REBVAL *out, REBVAL *data, REBCNT type)
-**		MT_Lit_Path(REBVAL *out, REBVAL *data, REBCNT type)
+**		MT_Block
+**		MT_Paren
+**		MT_Path
+**		MT_Set_Path
+**		MT_Get_Path
+**		MT_Lit_Path
 **
 ***********************************************************************/
 {
 	REBCNT i;
 
-	if (!ANY_BLOCK(data)) return FALSE;
+	if (!ANY_ARRAY(data)) return FALSE;
 	if (type >= REB_PATH && type <= REB_LIT_PATH)
 		if (!ANY_WORD(VAL_BLK_HEAD(data))) return FALSE;
 
@@ -154,7 +149,7 @@ static void No_Nones(REBVAL *arg) {
 		return NOT_FOUND;
 	}
 	// Match a block against a block:
-	else if (ANY_BLOCK(target) && !(flags & AM_FIND_ONLY)) {
+	else if (ANY_ARRAY(target) && !(flags & AM_FIND_ONLY)) {
 		for (; index >= start && index < end; index += skip) {
 			cnt = 0;
 			value = BLK_SKIP(series, index);
@@ -224,7 +219,7 @@ static void No_Nones(REBVAL *arg) {
 		type = VAL_TYPE(value);
 
 	// make block! [1 2 3]
-	if (ANY_BLOCK(arg)) {
+	if (ANY_ARRAY(arg)) {
 		len = VAL_BLK_LEN(arg);
 		if (len > 0 && type >= REB_PATH && type <= REB_LIT_PATH)
 			No_Nones(arg);
@@ -298,7 +293,7 @@ static struct {
 
 /***********************************************************************
 **
-*/	static int Compare_Val(const void *v1, const void *v2)
+*/	static int Compare_Val(void *thunk, const void *v1, const void *v2)
 /*
 ***********************************************************************/
 {
@@ -328,7 +323,7 @@ static struct {
 
 /***********************************************************************
 **
-*/	static int Compare_Call(const void *v1, const void *v2)
+*/	static int Compare_Call(void *thunk, const void *v1, const void *v2)
 /*
 ***********************************************************************/
 {
@@ -429,9 +424,9 @@ static struct {
 	if (skip > 1) len /= skip, size *= skip;
 
 	if (sort_flags.compare)
-		reb_qsort(VAL_BLK_DATA(block), len, size, Compare_Call);
+		reb_qsort_r(VAL_BLK_DATA(block), len, size, NULL, Compare_Call);
 	else
-		reb_qsort(VAL_BLK_DATA(block), len, size, Compare_Val);
+		reb_qsort_r(VAL_BLK_DATA(block), len, size, NULL, Compare_Val);
 
 }
 
@@ -703,8 +698,8 @@ zero_blk:
 	case A_FIND:
 	case A_SELECT:
 		args = Find_Refines(call_, ALL_FIND_REFS);
-//		if (ANY_BLOCK(arg) || args) {
-			len = ANY_BLOCK(arg) ? VAL_BLK_LEN(arg) : 1;
+//		if (ANY_ARRAY(arg) || args) {
+			len = ANY_ARRAY(arg) ? VAL_BLK_LEN(arg) : 1;
 			if (args & AM_FIND_PART) tail = Partial1(value, D_ARG(ARG_FIND_LIMIT));
 			ret = 1;
 			if (args & AM_FIND_SKIP) ret = Int32s(D_ARG(ARG_FIND_SIZE), 1);
@@ -744,7 +739,7 @@ zero_blk:
 
 	case A_CLEAR:
 		if (index < tail) {
-			if (index == 0) Reset_Series(ser);
+			if (index == 0) Reset_Array(ser);
 			else {
 				SET_END(BLK_SKIP(ser, index));
 				VAL_TAIL(value) = (REBCNT)index;

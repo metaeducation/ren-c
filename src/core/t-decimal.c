@@ -113,7 +113,7 @@ REBOOL almost_equal(REBDEC a, REBDEC b, REBCNT max_diff) {
 
 /***********************************************************************
 **
-*/  REBFLG MT_Decimal(REBVAL *out, REBVAL *data, REBCNT type)
+*/  REBFLG MT_Decimal(REBVAL *out, REBVAL *data, enum Reb_Kind type)
 /*
 ***********************************************************************/
 {
@@ -398,7 +398,7 @@ REBOOL almost_equal(REBDEC a, REBDEC b, REBCNT max_diff) {
 #endif
 
 			default:
-				if (ANY_BLOCK(val) && VAL_BLK_LEN(val) == 2) {
+				if (ANY_ARRAY(val) && VAL_BLK_LEN(val) == 2) {
 					arg = VAL_BLK_DATA(val);
 					if (IS_INTEGER(arg))
 						d1 = (REBDEC)VAL_INT64(arg);

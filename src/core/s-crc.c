@@ -138,7 +138,7 @@ static REBCNT *CRC_Table;
 
 /***********************************************************************
 **
-*/	REBINT Hash_String(REBYTE *str, REBCNT len)
+*/	REBINT Hash_String(const REBYTE *str, REBCNT len)
 /*
 **		Return a case insensitive hash value for the string.  The
 **		string does not have to be zero terminated and UTF8 is ok.
@@ -200,7 +200,7 @@ static REBCNT *CRC_Table;
 
 /***********************************************************************
 **
-*/	REBINT Hash_Value(REBVAL *val, REBCNT hash_size)
+*/	REBINT Hash_Value(const REBVAL *val, REBCNT hash_size)
 /*
 **		Return a case insensitive hash value for any value.
 **
@@ -331,7 +331,7 @@ static REBCNT *CRC_Table;
 
 /***********************************************************************
 **
-*/	REBSER *Hash_Block(REBVAL *block, REBCNT cased)
+*/	REBSER *Hash_Block(const REBVAL *block, REBCNT cased)
 /*
 **		Hash ALL values of a block. Return hash array series.
 **		Used for SET logic (unique, union, etc.)

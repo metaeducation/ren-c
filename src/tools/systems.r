@@ -104,7 +104,10 @@ systems: [
 			[LP64 LEN LLC +O1 ST1 -LM]
 	;-------------------------------------------------------------------------
 	0.13.01		android-arm		android
-			[LEN LLC HID F64 LDL LLOG -LM CST]
+			[LEN LLC HID F64 LDL LLOG -LM]
+	;-------------------------------------------------------------------------
+	0.13.02		android5-arm		android
+			[LEN LLC HID F64 LDL LLOG -LM PIE PIC]
 	;-------------------------------------------------------------------------
 	0.14.01		syllable-dtp	posix
 			[LEN LLC +O2 HID LDL ST1 -LM LC25]
@@ -158,6 +161,7 @@ linker-flags: context [
 	LC25: ""						; libc 2.5
 	LC211: ""						; libc 2.11
 	LCB: ""							; bionic (Android)
+	PIE: "-pie"
 ]
 
 other-flags: context [

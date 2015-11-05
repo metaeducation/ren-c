@@ -1730,6 +1730,7 @@ exit_block:
 	len = emitbuf->tail;
 	block = Copy_Values_Len_Shallow(BLK_SKIP(emitbuf, begin), len - begin);
 	LABEL_SERIES(block, "scan block");
+	ASSERT_SERIES_TERM(block);
 
 	emitbuf->tail = begin;
 

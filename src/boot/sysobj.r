@@ -144,14 +144,14 @@ options: context [  ; Options supplied to REBOL during startup
 	exit-functions-only: false
 	broken-case-semantics: false
 	do-runs-functions: false
-	datatype-word-strict: false
-	group-not-paren: false ;; bias the default to PAREN! vs GROUP! (for now...)
 	refinements-true: false
 	no-switch-evals: false
 	no-switch-fallthrough: false
 	forever-64-bit-ints: false
 	print-forms-everything: false
 	break-with-overrides: false
+	none-instead-of-unsets: false
+	cant-unset-set-words: false
 ]
 
 script: context [
@@ -164,6 +164,26 @@ script: context [
 ]
 
 standard: context [
+
+	; FUNC+CLOS implement a native-optimized variant of a function generator.
+	; This is the body template that it provides as the code *equivalent* of
+	; what it is doing (via a more specialized/internal method).  Though
+	; the only "real" body stored and used is the one the user provided
+	; (substituted in #BODY), this template is used to "lie" when asked what
+	; the BODY-OF the function is.
+	;
+	; The substitution locations are hardcoded at index 5 (function! or
+	; closure!) and index 8 in the block.  It does not "scan" to find #TYPE
+	; or #BODY, just asserts the positions are ISSUE!.
+	;
+	func-body: [
+		comment {boilerplate is equivalent user code (simulated, optimized)}
+		return: make #TYPE [
+			[{Returns a value from a function.} value [any-value!]]
+			[throw/name :value bind-of 'return]
+		]
+		catch/name #BODY bind-of 'return
+	]
 
 	error: context [ ; Template used for all errors:
 		code: 0

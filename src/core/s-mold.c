@@ -588,7 +588,13 @@ static void Mold_Block_Series(REB_MOLD *mold, REBSER *series, REBCNT index, cons
 		}
 	}
 	value = Alloc_Tail_Array(MOLD_LOOP);
-	Val_Init_Block(value, series);
+
+	// We don't want to use Val_Init_Block because it will create an implicit
+	// managed value, and the incoming series may be from an unmanaged source
+	// !!! Review how to avoid needing to put the series into a value
+	VAL_SET(value, REB_BLOCK);
+	VAL_SERIES(value) = series;
+	VAL_INDEX(value) = 0;
 
 	if (sep[1]) {
 		Append_Codepoint_Raw(out, sep[0]);
@@ -616,7 +622,7 @@ static void Mold_Block_Series(REB_MOLD *mold, REBSER *series, REBCNT index, cons
 		Append_Codepoint_Raw(out, sep[1]);
 	}
 
-	Remove_Last(MOLD_LOOP);
+	Remove_Array_Last(MOLD_LOOP);
 }
 
 static void Mold_Block(const REBVAL *value, REB_MOLD *mold)
@@ -788,8 +794,18 @@ static void Mold_Function(const REBVAL *value, REB_MOLD *mold)
 
 	Mold_Block_Series(mold, VAL_FUNC_SPEC(value), 0, 0); //// & ~(1<<MOPT_MOLD_ALL)); // Never literalize it (/all).
 
-	if (IS_FUNCTION(value) || IS_CLOSURE(value))
-		Mold_Block_Series(mold, VAL_FUNC_BODY(value), 0, 0);
+	if (IS_FUNCTION(value) || IS_CLOSURE(value)) {
+		// MOLD is an example of user-facing code that needs to be complicit
+		// in the "lie" about the effective bodies of the functions made
+		// by the optimized generators FUNC and CLOS...
+
+		REBFLG is_fake;
+		REBSER *body = Get_Maybe_Fake_Func_Body(&is_fake, value);
+
+		Mold_Block_Series(mold, body, 0, 0);
+
+		if (is_fake) Free_Series(body); // was shallow copy
+	}
 
 	Append_Codepoint_Raw(mold->series, ']');
 	End_Mold(mold);
@@ -829,7 +845,7 @@ static void Mold_Map(const REBVAL *value, REB_MOLD *mold, REBFLG molded)
 	}
 
 	End_Mold(mold);
-	Remove_Last(MOLD_LOOP);
+	Remove_Array_Last(MOLD_LOOP);
 }
 
 static void Form_Object(const REBVAL *value, REB_MOLD *mold)
@@ -838,6 +854,7 @@ static void Form_Object(const REBVAL *value, REB_MOLD *mold)
 	REBVAL *keys = BLK_HEAD(keylist);
 	REBVAL *vals  = VAL_OBJ_VALUES(value); // first value is context
 	REBCNT n;
+	REBFLG had_output = FALSE;
 
 	// Prevent endless mold loop:
 	if (Find_Same_Block(MOLD_LOOP, value) > 0) {
@@ -848,11 +865,17 @@ static void Form_Object(const REBVAL *value, REB_MOLD *mold)
 
 	// Mold all words and their values:
 	for (n = 1; n < SERIES_TAIL(keylist); n++) {
-		if (!VAL_GET_EXT(keys + n, EXT_WORD_HIDE))
+		if (!VAL_GET_EXT(keys + n, EXT_WORD_HIDE)) {
+			had_output = TRUE;
 			Emit(mold, "N: V\n", VAL_TYPESET_SYM(keys + n), vals + n);
+		}
 	}
-	Remove_Last(mold->series);
-	Remove_Last(MOLD_LOOP);
+
+	// Remove the final newline...but only if WE added something to the buffer
+	if (had_output)
+		Remove_Sequence_Last(mold->series);
+
+	Remove_Array_Last(MOLD_LOOP);
 }
 
 static void Mold_Object(const REBVAL *value, REB_MOLD *mold)
@@ -897,7 +920,7 @@ static void Mold_Object(const REBVAL *value, REB_MOLD *mold)
 	Append_Codepoint_Raw(mold->series, ']');
 
 	End_Mold(mold);
-	Remove_Last(MOLD_LOOP);
+	Remove_Array_Last(MOLD_LOOP);
 }
 
 static void Mold_Error(const REBVAL *value, REB_MOLD *mold, REBFLG molded)
@@ -1320,7 +1343,7 @@ append:
 	// per thread?
 
 	while (index < BLK_LEN(block)) {
-		index = Do_Next_May_Throw(out, block, index);
+		DO_NEXT_MAY_THROW(index, out, block, index);
 		if (index == THROWN_FLAG) {
 			DS_DROP_TO(start);
 			return TRUE;

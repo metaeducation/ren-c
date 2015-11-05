@@ -699,6 +699,26 @@
 #endif
 
 
+
+/***********************************************************************
+**
+*/	ATTRIBUTE_NO_RETURN void Error_Bad_Func_Def(const REBVAL *spec, const REBVAL *body)
+/*
+***********************************************************************/
+{
+	// !!! Improve this error; it's simply a direct emulation of arity-1
+	// error that existed before refactoring code out of MT_Function().
+
+	REBVAL def;
+	REBSER *series = Make_Array(2);
+	Append_Value(series, spec);
+	Append_Value(series, body);
+	Val_Init_Block(&def, series);
+
+	Error_1(RE_BAD_FUNC_DEF, &def);
+}
+
+
 /***********************************************************************
 **
 */	ATTRIBUTE_NO_RETURN void Error_No_Arg(const REBVAL *label, const REBVAL *key)

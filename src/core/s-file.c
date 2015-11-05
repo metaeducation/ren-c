@@ -94,7 +94,7 @@
 		SET_ANY_CHAR(dst, n++, '/');
 	}
 	SERIES_TAIL(dst) = n;
-	TERM_SERIES(dst);
+	TERM_SEQUENCE(dst);
 
 #ifdef TO_WINDOWS
 	// Change C:/ to /C/ (and C:X to /C/X):
@@ -238,7 +238,7 @@
 	}
 	out[n] = 0;
 	SERIES_TAIL(dst) = n;
-//	TERM_SERIES(dst);
+//	TERM_SEQUENCE(dst);
 //	Debug_Uni(dst);
 
 	return dst;

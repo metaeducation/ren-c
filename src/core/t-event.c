@@ -351,7 +351,7 @@ is_none:
 
 /***********************************************************************
 **
-*/	REBFLG MT_Event(REBVAL *out, REBVAL *data, REBCNT type)
+*/	REBFLG MT_Event(REBVAL *out, REBVAL *data, enum Reb_Kind type)
 /*
 ***********************************************************************/
 {

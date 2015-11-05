@@ -59,7 +59,7 @@
 	if (action == A_APPEND || dst_idx > tail) dst_idx = tail;
 
 	// Check /PART, compute LEN:
-	if (!GET_FLAG(flags, AN_ONLY) && ANY_BLOCK(src_val)) {
+	if (!GET_FLAG(flags, AN_ONLY) && ANY_ARRAY(src_val)) {
 		// Adjust length of insertion if changing /PART:
 		if (action != A_CHANGE && GET_FLAG(flags, AN_PART))
 			ilen = dst_len;
@@ -108,7 +108,7 @@
 		memcpy(dst_ser->data + dst_idx, src_val, ilen);
 		dst_idx += ilen;
 	}
-	BLK_TERM(dst_ser);
+	TERM_ARRAY(dst_ser);
 
 	return tail;
 }
@@ -239,7 +239,7 @@
 		dst_idx += src_len;
 	}
 
-	TERM_SERIES(dst_ser);
+	TERM_SEQUENCE(dst_ser);
 
 	if (needs_free) {
 		// If we did not use the series that was passed in, but rather

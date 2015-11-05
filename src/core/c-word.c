@@ -218,7 +218,7 @@
 	}
 	if (SERIES_FULL(Bind_Table)) {
 		Extend_Series(Bind_Table, 256);
-		CLEAR_SERIES(Bind_Table);
+		CLEAR_SEQUENCE(Bind_Table);
 	}
 
 	size   = (REBINT)PG_Word_Table.hashes->tail;
@@ -429,6 +429,6 @@ make_sym:
 		SERIES_REST(PG_Word_Table.series), sizeof(REBCNT), MKS_NONE
 	);
 	LABEL_SERIES(Bind_Table, "bind table"); // numeric table
-	CLEAR_SERIES(Bind_Table);
+	CLEAR_SEQUENCE(Bind_Table);
 	Bind_Table->tail = PG_Word_Table.series->tail;
 }

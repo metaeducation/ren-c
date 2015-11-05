@@ -2,6 +2,24 @@
  * https://raw.github.com/android/platform_bionic/master/libc/upstream-freebsd/lib/libc/stdlib/qsort.c
  */
 
+
+// "The qsort_r() function is identical to qsort() except that the comparison
+// function takes a third argument. A pointer is passed to the comparison
+// function via [thunk]. In this way, the comparison function does not
+// need to use global variables to pass through arbitrary arguments, and
+// is therefore reentrant and safe to use in threads."
+//
+// This file can declare either qsort or qsort_r, and we'd like the latter.
+// Note that `qsort_r` is part of no portability standard, and this version
+// (used by Android) puts the "thunk" as the next to last parameter instead
+// of the last one.  :-/
+//
+#define I_AM_QSORT_R
+
+// When qsort_r is defined, it will actually wind up being named reb_qsort_r.
+#define qsort_r reb_qsort_r
+
+
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -41,8 +59,6 @@ __FBSDID("$FreeBSD$");
 */
 
 #include <stdlib.h>
-
-#define qsort reb_qsort
 
 #ifdef I_AM_QSORT_R
 typedef int		 cmp_t(void *, const void *, const void *);

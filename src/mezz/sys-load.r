@@ -575,7 +575,7 @@ load-module: function [
 				ver0 > modver [ ; and it's newer, use it instead
 					mod: none  set [hdr code] mod0
 					modver: ver0  modsum: sum0
-					ext: if object? code [code] ; delayed extension
+					ext: all [(object? code) code] ; delayed extension
 					override?: not delay  ; stays delayed if /delay
 				]
 			]

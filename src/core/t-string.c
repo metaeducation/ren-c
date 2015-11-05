@@ -33,11 +33,6 @@
 #include "sys-int-funcs.h"
 
 
-// !!! Should there be a qsort header so we don't redefine it here?
-typedef int cmp_t(const void *, const void *);
-extern void reb_qsort(void *a, size_t n, size_t es, cmp_t *cmp);
-
-
 /***********************************************************************
 **
 */	REBINT CT_String(REBVAL *a, REBVAL *b, REBINT mode)
@@ -281,7 +276,7 @@ static REBSER *make_binary(REBVAL *arg, REBOOL make)
 
 /***********************************************************************
 **
-*/	REBFLG MT_String(REBVAL *out, REBVAL *data, REBCNT type)
+*/	REBFLG MT_String(REBVAL *out, REBVAL *data, enum Reb_Kind type)
 /*
 ***********************************************************************/
 {
@@ -297,25 +292,59 @@ static REBSER *make_binary(REBVAL *arg, REBOOL make)
 }
 
 
-/***********************************************************************
-**
-*/	static int Compare_Chr(const void *v1, const void *v2)
-/*
-***********************************************************************/
-{
-	return cast(int, *cast(const REBYTE *, v1))
-		- cast(int, *cast(const REBYTE *, v2));
-}
+enum COMPARE_CHR_FLAGS {
+	CC_FLAG_WIDE = 1 << 0, // String is REBUNI[] and not REBYTE[]
+	CC_FLAG_CASE = 1 << 1, // Case sensitive sort
+	CC_FLAG_REVERSE = 1 << 2 // Reverse sort order
+};
 
 
 /***********************************************************************
 **
-*/	static int Compare_Chr_Rev(const void *v1, const void *v2)
+*/	static int Compare_Chr(void *thunk, const void *v1, const void *v2)
 /*
+**	This function is called by qsort_r, on behalf of the string sort
+**	function.  The `thunk` is an argument passed through from the caller
+**	and given to us by the sort routine, which tells us about the string
+**	and the kind of sort that was requested.
+**
 ***********************************************************************/
 {
-	return cast(int, *cast(const REBYTE *, v2))
-		- cast(int, *cast(const REBYTE *, v1));
+	REBCNT * const flags = cast(REBCNT*, thunk);
+
+	REBUNI c1;
+	REBUNI c2;
+	if (*flags & CC_FLAG_WIDE) {
+		c1 = *cast(const REBUNI*, v1);
+		c2 = *cast(const REBUNI*, v2);
+	}
+	else {
+		c1 = cast(REBUNI, *cast(const REBYTE*, v1));
+		c2 = cast(REBUNI, *cast(const REBYTE*, v2));
+	}
+
+	if (*flags & CC_FLAG_CASE) {
+		if (*flags & CC_FLAG_REVERSE)
+			return *cast(const REBYTE*, v2) - *cast(const REBYTE*, v1);
+		else
+			return *cast(const REBYTE*, v1) - *cast(const REBYTE*, v2);
+	}
+	else {
+		if (*flags & CC_FLAG_REVERSE) {
+			if (c1 < UNICODE_CASES)
+				c1 = UP_CASE(c1);
+			if (c2 < UNICODE_CASES)
+				c2 = UP_CASE(c2);
+			return c2 - c1;
+		}
+		else {
+			if (c1 < UNICODE_CASES)
+				c1 = UP_CASE(c1);
+			if (c2 < UNICODE_CASES)
+				c2 = UP_CASE(c2);
+			return c1 - c2;
+		}
+	}
 }
 
 
@@ -328,6 +357,7 @@ static REBSER *make_binary(REBVAL *arg, REBOOL make)
 	REBCNT len;
 	REBCNT skip = 1;
 	REBCNT size = 1;
+	REBCNT thunk = 0;
 	int (*sfunc)(const void *v1, const void *v2);
 
 	// Determine length of sort:
@@ -343,10 +373,18 @@ static REBSER *make_binary(REBVAL *arg, REBOOL make)
 
 	// Use fast quicksort library function:
 	if (skip > 1) len /= skip, size *= skip;
-	sfunc = rev ? Compare_Chr_Rev : Compare_Chr;
 
-	//!!uni - needs to compare wide chars too
-	reb_qsort(VAL_DATA(string), len, size * SERIES_WIDE(VAL_SERIES(string)), sfunc);
+	if (!VAL_BYTE_SIZE(string)) thunk |= CC_FLAG_WIDE;
+	if (ccase) thunk |= CC_FLAG_CASE;
+	if (rev) thunk |= CC_FLAG_REVERSE;
+
+	reb_qsort_r(
+		VAL_DATA(string),
+		len,
+		size * SERIES_WIDE(VAL_SERIES(string)),
+		&thunk,
+		Compare_Chr
+	);
 }
 
 
@@ -634,7 +672,7 @@ zero_str:
 			if (index == 0) Reset_Series(VAL_SERIES(value));
 			else {
 				VAL_TAIL(value) = (REBCNT)index;
-				TERM_SERIES(VAL_SERIES(value));
+				TERM_SEQUENCE(VAL_SERIES(value));
 			}
 		}
 		break;

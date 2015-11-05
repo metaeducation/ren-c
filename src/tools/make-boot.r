@@ -137,19 +137,18 @@ emit-line: func [prefix word cmt /var /define /code /decl /up1 /local str][
 
 	if up1 [uppercase/part str 1]
 
-	str: any [
-		if define [rejoin [prefix str]]
-		if code   [rejoin ["    " prefix str cmt]]
-		if decl   [rejoin [prefix str cmt]]
-		rejoin ["    " prefix str ","]
+	str: case [
+		define [rejoin [prefix str]]
+		code   [rejoin ["    " prefix str cmt]]
+		decl   [rejoin [prefix str cmt]]
+		true   [rejoin ["    " prefix str ","]]
 	]
 	if any [code decl] [cmt: none]
 	if cmt [
-		len: 32 - length str
-		loop to-integer len / 4 [append str tab]
-		any [
-			if define [repend str cmt]
-			if cmt [repend str ["// " cmt]]
+		append str space
+		case [
+			define [repend str cmt]
+			cmt [repend str ["// " cmt]]
 		]
 	]
 	append str newline
@@ -194,11 +193,50 @@ emit {
 }
 
 for-each-record-NO-RETURN type boot-types [
+	if paren? type/class [type/class: first type/class]
+
 	emit-line/var "T_" type/class type/name
 ]
 emit-end
 
+
 emit {
+
+/***********************************************************************
+**
+*/	const REBFLG Eval_Table[REB_MAX] =
+/*
+** This table is used to bypass a Do_Core evaluation for certain types.  So
+** if you have `foo [x] [y]`, the DO_NEXT_MAY_THROW macro checks the table
+** and realizes that both [x] and [y] are blocks and have no evaluator
+** behavior, so it set the output value to [x] without calling Do_Core.
+**
+** There is a catch, because infix operators suggest the need to use the
+** dispatch for cases like `foo [x] + [y]`.  So the only way to do the
+** optimization is if *both* the next value and the one after it is inert.
+**
+** Vague empirical tests of release builds show the gains are somewhere
+** around 6%-ish on real code, which is enough to be worth doing.  It does
+** make debugging a little complicated, so it is disabled in the debug
+** build...but only on Linux so that any debug builds run on other platforms
+** can help raise alerts on the problem.
+**
+***********************************************************************/
+^{
+}
+
+for-each-record-NO-RETURN type boot-types [
+	either paren? type/class [
+		emit-line "TRUE" "" type/name
+	][
+		emit-line "FALSE" "" type/name
+	]
+]
+emit-end
+
+
+emit {
+
 /***********************************************************************
 **
 */	const REBPEF Path_Dispatch[REB_MAX] =
@@ -210,6 +248,8 @@ emit {
 }
 
 for-each-record-NO-RETURN type boot-types [
+	if paren? type/class [type/class: first type/class]
+
 	emit-line/var "PD_" switch/default type/path [
 		* [type/class]
 		- [0]
@@ -232,6 +272,8 @@ emit newline
 types-used: []
 
 for-each-record-NO-RETURN type boot-types [
+	if paren? type/class [type/class: first type/class]
+
 	if all [
 		type/make = '*
 		word? type/class
@@ -260,6 +302,8 @@ emit {
 }
 
 for-each-record-NO-RETURN type boot-types [
+	if paren? type/class [type/class: first type/class]
+
 	either type/make = '* [
 		emit-line/var "MT_" type/class type/name
 	][
@@ -283,6 +327,8 @@ emit newline
 types-used: []
 
 for-each-record-NO-RETURN type boot-types [
+	if paren? type/class [type/class: first type/class]
+
 	if all [
 		word? type/class
 		not find types-used type/class
@@ -309,6 +355,8 @@ emit {
 }
 
 for-each-record-NO-RETURN type boot-types [
+	if paren? type/class [type/class: first type/class]
+
 	emit-line/var "CT_" type/class type/name
 ]
 emit-end
@@ -336,6 +384,8 @@ write inc/tmp-comptypes.h out
 ;}
 ;
 ;for-each-record-NO-RETURN type boot-types [
+;	if paren? type/class [type/class: first type/class]
+;
 ;	f: "Mold_"
 ;	switch/default type/mold [
 ;		* [t: type/class]
@@ -359,6 +409,7 @@ write inc/tmp-comptypes.h out
 ;^{
 ;}
 ;for-each-record-NO-RETURN type boot-types [
+;	if paren? type/class [type/class: first type/class]
 ;	f: "Mold_"
 ;	switch/default type/form [
 ;		*  [t: type/class]
@@ -425,6 +476,46 @@ for-each-record-NO-RETURN type boot-types [
 	loop to-integer len / 4 [append def tab]
 	emit [def "(VAL_TYPE(v)==REB_" str ")" newline]
 ]
+
+emit {
+#define ANY_SERIES(v) \
+	(VAL_TYPE(v) >= REB_BINARY && VAL_TYPE(v) <= REB_LIT_PATH)
+
+#define ANY_STR(v) \
+	(VAL_TYPE(v) >= REB_STRING && VAL_TYPE(v) <= REB_TAG)
+
+#define ANY_BINSTR(v) \
+	(VAL_TYPE(v) >= REB_BINARY && VAL_TYPE(v) <= REB_TAG)
+
+#define ANY_ARRAY(v) \
+	(VAL_TYPE(v) >= REB_BLOCK && VAL_TYPE(v) <= REB_LIT_PATH)
+
+#define ANY_WORD(v) \
+	(VAL_TYPE(v) >= REB_WORD && VAL_TYPE(v) <= REB_ISSUE)
+
+#define ANY_PATH(v) \
+	(VAL_TYPE(v) >= REB_PATH && VAL_TYPE(v) <= REB_LIT_PATH)
+
+#define ANY_FUNC(v) \
+	(VAL_TYPE(v) >= REB_NATIVE && VAL_TYPE(v) <= REB_FUNCTION)
+
+#define ANY_EVAL_BLOCK(v) \
+	(VAL_TYPE(v) >= REB_BLOCK  && VAL_TYPE(v) <= REB_PAREN)
+
+#define ANY_OBJECT(v) \
+	(VAL_TYPE(v) >= REB_OBJECT && VAL_TYPE(v) <= REB_PORT)
+
+// If the type has evaluator behavior (vs. just passing through).  So like
+// WORD!, PAREN!, FUNCTION! (as opposed to BLOCK!, INTEGER!, OBJECT!).
+// The types are not arranged in an order that makes a super fast test easy
+// (though perhaps someday it could be tweaked so that all the evaluated types
+// had a certain bit set?) hence use a small fixed table.
+
+extern const REBFLG Eval_Table[REB_MAX];
+
+#define ANY_EVAL(v) Eval_Table[VAL_TYPE(v)]
+}
+
 
 emit {
 /***********************************************************************

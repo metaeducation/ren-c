@@ -95,16 +95,6 @@
 			}
 			else if (IS_DATATYPE(arg)) {
 				sym = VAL_TYPE_SYM(arg);
-
-			#if !defined(NDEBUG)
-				if (
-					LEGACY(OPTIONS_GROUP_NOT_PAREN)
-					&& VAL_TYPE_KIND(arg) == REB_PAREN
-				) {
-					// Override the symbol to return GROUP! instead of PAREN!
-					sym = SYM_GROUPX;
-				}
-			#endif
 			}
 			else if (IS_LOGIC(arg)) {
 				sym = VAL_LOGIC(arg) ? SYM_TRUE : SYM_FALSE;

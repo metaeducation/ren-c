@@ -33,7 +33,7 @@
 #include "sys-dec-to-char.h"
 #include <errno.h>
 
-typedef REBFLG (*MAKE_FUNC)(REBVAL *, REBVAL *, REBCNT);
+typedef REBFLG (*MAKE_FUNC)(REBVAL *, REBVAL *, enum Reb_Kind);
 #include "tmp-maketypes.h"
 
 
@@ -857,9 +857,11 @@ end_date:
 
 /***********************************************************************
 **
-*/	REBFLG Construct_Value(REBVAL *value, REBSER *spec)
+*/	REBFLG Construct_Value(REBVAL *out, REBSER *spec)
 /*
 **		Lexical datatype constructor. Return TRUE on success.
+**
+**		!!! `out` slot *must* be gc safe !!!
 **
 **		This function makes datatypes that are not normally expressible
 **		in unevaluated source code format. The format of the datatype
@@ -877,55 +879,66 @@ end_date:
 ***********************************************************************/
 {
 	REBVAL *val;
-	REBCNT type;
+	REBCNT sym;
+	enum Reb_Kind type;
 	MAKE_FUNC func;
 
 	val = BLK_HEAD(spec);
 
 	if (!IS_WORD(val)) return FALSE;
 
-	Val_Init_Block(value, spec); //GC
-
 	// Handle the datatype or keyword:
-	type = VAL_WORD_CANON(val);
-	if (type > REB_MAX) { // >, not >=, because they are one-based
+	sym = VAL_WORD_CANON(val);
+	if (sym > REB_MAX) { // >, not >=, because they are one-based
 
-		switch (type) {
+		switch (sym) {
 
 		case SYM_NONE:
-			SET_NONE(value);
+			SET_NONE(out);
 			return TRUE;
 
 		case SYM_FALSE:
-			SET_FALSE(value);
+			SET_FALSE(out);
 			return TRUE;
 
 		case SYM_TRUE:
-			SET_TRUE(value);
+			SET_TRUE(out);
 			return TRUE;
 
 		default:
 			return FALSE;
 		}
 	}
-	type--;	// The global word for datatype x is at word x+1.
+
+	type = KIND_FROM_SYM(sym);
 
 	// Check for trivial types:
 	if (type == REB_UNSET) {
-		SET_UNSET(value);
+		SET_UNSET(out);
 		return TRUE;
 	}
 	if (type == REB_NONE) {
-		SET_NONE(value);
+		SET_NONE(out);
 		return TRUE;
 	}
 
 	val++;
 	if (IS_END(val)) return FALSE;
 
-	// Dispatch maker:
 	if ((func = Make_Dispatch[type])) {
-		if (func(value, val, type)) return TRUE;
+		// As written today, the creation process may call into the evaluator.
+		// The spec content should not be GC'd during that time.  (This was
+		// previously managed by holding it in the `out` slot, but making
+		// the protection of the spec value come from the destination would
+		// be bad if it were overwritten partway through, then the val
+		// out of the spec referred to again...)
+
+		PUSH_GUARD_SERIES(spec);
+		if (func(out, val, type)) {
+			DROP_GUARD_SERIES(spec);
+			return TRUE;
+		}
+		DROP_GUARD_SERIES(spec);
 	}
 
 	return FALSE;

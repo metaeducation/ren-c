@@ -357,7 +357,7 @@ no_result:
 
 			// Try to match it:
 			if (type >= REB_BLOCK) {
-				if (ANY_BLOCK(item)) goto bad_target;
+				if (ANY_ARRAY(item)) goto bad_target;
 				i = Parse_Next_Block(parse, index, item, 0);
 				if (i == THROWN_FLAG)
 					return THROWN_FLAG;
@@ -579,7 +579,7 @@ bad_target:
 	}
 
 	// Evaluate next N input values:
-	index = Do_Next_May_Throw(&value, parse->series, index);
+	DO_NEXT_MAY_THROW(index, &value, parse->series, index);
 
 	if (index == THROWN_FLAG) {
 		// Value is a THROW, RETURN, BREAK, etc...we have to stop processing
@@ -617,7 +617,7 @@ bad_target:
 			if (IS_END(item)) raise Error_1(RE_PARSE_END, item - 2);
 			item = Get_Parse_Value(&save, item); // sub-rules
 			if (!IS_BLOCK(item)) raise Error_1(RE_PARSE_RULE, item - 2);
-			if (!ANY_BINSTR(&value) && !ANY_BLOCK(&value)) return NOT_FOUND;
+			if (!ANY_BINSTR(&value) && !ANY_ARRAY(&value)) return NOT_FOUND;
 
 			sub_parse.series = VAL_SERIES(&value);
 			sub_parse.type = VAL_TYPE(&value);
@@ -1026,7 +1026,7 @@ bad_target:
 					if (!IS_BLOCK(item)) goto bad_rule;
 					val = BLK_SKIP(series, index);
 
-					if (!ANY_BINSTR(val) && !ANY_BLOCK(val)) {
+					if (!ANY_BINSTR(val) && !ANY_ARRAY(val)) {
 						i = NOT_FOUND;
 						break;
 					}

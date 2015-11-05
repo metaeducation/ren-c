@@ -42,7 +42,7 @@
 
 /***********************************************************************
 **
-*/	REBFLG MT_None(REBVAL *out, REBVAL *data, REBCNT type)
+*/	REBFLG MT_None(REBVAL *out, REBVAL *data, enum Reb_Kind type)
 /*
 ***********************************************************************/
 {

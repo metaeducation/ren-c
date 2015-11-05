@@ -177,7 +177,7 @@ const struct {
 
 /***********************************************************************
 **
-*/	REBFLG MT_Typeset(REBVAL *out, REBVAL *data, REBCNT type)
+*/	REBFLG MT_Typeset(REBVAL *out, REBVAL *data, enum Reb_Kind type)
 /*
 ***********************************************************************/
 {

@@ -55,7 +55,7 @@
 
 /***********************************************************************
 **
-*/	REBFLG MT_Image(REBVAL *out, REBVAL *data, REBCNT type)
+*/	REBFLG MT_Image(REBVAL *out, REBVAL *data, enum Reb_Kind type)
 /*
 ***********************************************************************/
 {

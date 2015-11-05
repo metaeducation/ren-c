@@ -119,7 +119,8 @@
 	REBVAL *value;
 
 	words = Make_Array(len + 1); // size + room for SELF
-	frame = Make_Array(len + 1);
+	frame = Make_Series((len + 1) + 1, sizeof(REBVAL), MKS_ARRAY | MKS_FRAME);
+	SET_END(BLK_HEAD(frame)); // !!! Needed since we used Make_Series?
 
 	// Note: cannot use Append_Frame for first word.
 	value = Alloc_Tail_Array(frame);
@@ -142,7 +143,7 @@
 	REBSER *keylist = FRM_KEYLIST(frame);
 
 	Extend_Series(frame, delta);
-	BLK_TERM(frame);
+	TERM_ARRAY(frame);
 
 	// Expand or copy WORDS block:
 	if (copy) {
@@ -152,7 +153,7 @@
 	}
 	else {
 		Extend_Series(keylist, delta);
-		BLK_TERM(keylist);
+		TERM_ARRAY(keylist);
 	}
 }
 
@@ -177,7 +178,7 @@
 	EXPAND_SERIES_TAIL(keylist, 1);
 	value = BLK_LAST(keylist);
 	Val_Init_Typeset(value, ALL_64, word ? VAL_WORD_SYM(word) : sym);
-	BLK_TERM(keylist);
+	TERM_ARRAY(keylist);
 
 	// Bind the word to this frame:
 	if (word) {
@@ -192,7 +193,7 @@
 	EXPAND_SERIES_TAIL(frame, 1);
 	value = BLK_LAST(frame);
 	SET_UNSET(value);
-	BLK_TERM(frame);
+	TERM_ARRAY(frame);
 
 	return value; // The variable value location for the key we just added.
 }
@@ -278,7 +279,24 @@
 	RESIZE_SERIES(BUF_COLLECT, SERIES_TAIL(prior));
 
 	// Typeset values in keys (with key symbol) can be copied just as bits
-	memcpy(BLK_HEAD(BUF_COLLECT), keys, SERIES_TAIL(prior) * sizeof(REBVAL));
+	assert(SERIES_TAIL(prior) > 0);
+	if (IS_SELFLESS(prior)) {
+		// A selfless frame can use its 0 slot for things other than words
+		// (e.g. a CLOSURE! uses it for the function value of the closure
+		// itself).  Eventually this will be what OBJECT! does, too...and
+		// self will just be a way of establishing a relationship to that
+		// 0 slot object value.
+		memcpy(
+			BLK_HEAD(BUF_COLLECT),
+			keys + 1,
+			(SERIES_TAIL(prior) - 1) * sizeof(REBVAL)
+		);
+	}
+	else {
+		memcpy(
+			BLK_HEAD(BUF_COLLECT), keys, SERIES_TAIL(prior) * sizeof(REBVAL)
+		);
+	}
 
 	SERIES_TAIL(BUF_COLLECT) = SERIES_TAIL(prior);
 	for (n = 1, keys++; NOT_END(keys); keys++) // skips first = SELF
@@ -328,7 +346,8 @@
 		// In this mode (foreach native), do not allow non-words:
 		//else if (modes & BIND_GET) raise Error_Invalid_Arg(value);
 	}
-	BLK_TERM(BUF_COLLECT);
+
+	TERM_ARRAY(BUF_COLLECT);
 }
 
 
@@ -702,7 +721,7 @@
 
 	// Terminate the child frame:
 	SERIES_TAIL(child) = SERIES_TAIL(wrds);
-	BLK_TERM(child);
+	TERM_ARRAY(child);
 
 	// Deep copy the child
 	Clonify_Values_Len_Managed(
@@ -880,7 +899,7 @@
 				}
 			}
 		}
-		else if (ANY_BLOCK(value) && (mode & BIND_DEEP))
+		else if (ANY_ARRAY(value) && (mode & BIND_DEEP))
 			Bind_Values_Inner_Loop(
 				binds, VAL_BLK_DATA(value), frame, mode
 			);
@@ -957,7 +976,7 @@
 		if (ANY_WORD(value) && (!frame || VAL_WORD_FRAME(value) == frame))
 			UNBIND_WORD(value);
 
-		if (ANY_BLOCK(value) && deep)
+		if (ANY_ARRAY(value) && deep)
 			Unbind_Values_Core(VAL_BLK_DATA(value), frame, TRUE);
 	}
 }
@@ -1006,7 +1025,7 @@
 				VAL_WORD_FRAME(value) = frame; // func body
 			}
 		}
-		else if (ANY_BLOCK(value))
+		else if (ANY_ARRAY(value))
 			Bind_Relative_Inner_Loop(binds, frame, VAL_SERIES(value));
 	}
 }
@@ -1091,7 +1110,7 @@
 	REBINT *binds = WORDS_HEAD(Bind_Table);
 
 	for (; NOT_END(data); data++) {
-		if (ANY_BLOCK(data))
+		if (ANY_ARRAY(data))
 			Rebind_Block(src_frame, dst_frame, VAL_BLK_DATA(data), modes);
 		else if (ANY_WORD(data) && VAL_WORD_FRAME(data) == src_frame) {
 			VAL_WORD_FRAME(data) = dst_frame;
@@ -1424,7 +1443,7 @@
 
 	// Find relative value:
 	call = DSF;
-	while (VAL_WORD_FRAME(word) != VAL_WORD_FRAME(DSF_LABEL(call))) {
+	while (VAL_WORD_FRAME(word) != VAL_FUNC_PARAMLIST(DSF_FUNC(call))) {
 		call = PRIOR_DSF(call);
 		if (!call) raise Error_1(RE_NO_RELATIVE, word);
 	}
@@ -1526,11 +1545,20 @@
 	for (n = 0; n < tail; n++, value++, key++) {
 		if (n == 0) {
 			if (
-				VAL_TYPESET_SYM(key) != SYM_SELF
-				&& VAL_TYPESET_SYM(key) != SYM_0
+				!(IS_TYPESET(key) && (
+					VAL_TYPESET_SYM(key) == SYM_SELF
+					|| VAL_TYPESET_SYM(key) == SYM_0
+				))
+				&& !IS_CLOSURE(key)
 			) {
-				Debug_Fmt("** First slot in frame is not SELF or null symbol");
+				Debug_Fmt("** First frame slot not SELF, SYM_0 or CLOSURE!");
 				Panic_Series(frame);
+			}
+		}
+		else {
+			if (!IS_TYPESET(key)) {
+				Debug_Fmt("** Non-typeset in frame keys: %d\n", VAL_TYPE(key));
+				Panic_Series(FRM_KEYLIST(frame));
 			}
 		}
 
@@ -1541,11 +1569,6 @@
 				n
 			);
 			Panic_Series(frame);
-		}
-
-		if (!IS_TYPESET(key)) {
-			Debug_Fmt("** Non-typeset in frame keys: %d\n", VAL_TYPE(key));
-			Panic_Series(FRM_KEYLIST(frame));
 		}
 	}
 

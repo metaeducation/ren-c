@@ -133,6 +133,39 @@ static struct digest {
 
 /***********************************************************************
 **
+*/	REBNATIVE(spelling_of)
+/*
+**	This is a native implementation of SPELLING-OF from rebol-proposals.
+**
+***********************************************************************/
+{
+	REBVAL * const value = D_ARG(1);
+	REBSER *series;
+
+	// Shouldn't take binary types...
+	assert(!IS_BINARY(value));
+
+	if (ANY_BINSTR(value)) {
+		// Grab the data out of all string types, which has no delimiters
+		// included (they are added in the forming process)
+
+		series = Copy_String(VAL_SERIES(value), VAL_INDEX(value), -1);
+	}
+	else {
+		// turn all words into regular words so they'll have no delimiters
+		// during the FORMing process
+
+		VAL_SET(value, REB_WORD);
+		series = Copy_Mold_Value(value, TRUE);
+	}
+
+	Val_Init_String(D_OUT, series);
+	return R_OUT;
+}
+
+
+/***********************************************************************
+**
 */	REBNATIVE(checksum)
 /*
 **		Computes checksum or hash value.
@@ -197,7 +230,7 @@ static struct digest {
 
 			if (digests[i].index == sym) {
 				REBSER *digest = Make_Series(
-					digests[i].len, sizeof(char), FALSE
+					digests[i].len + 1, sizeof(char), FALSE
 				);
 
 				LABEL_SERIES(digest, "checksum digest");
@@ -244,6 +277,7 @@ static struct digest {
 				}
 
 				SERIES_TAIL(digest) = digests[i].len;
+				TERM_SEQUENCE(digest);
 				Val_Init_Binary(D_OUT, digest);
 
 				return 0;

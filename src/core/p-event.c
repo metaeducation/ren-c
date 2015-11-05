@@ -195,7 +195,7 @@ act_blk:
 
 	case A_CLEAR:
 		VAL_TAIL(state) = 0;
-		VAL_BLK_TERM(state);
+		VAL_TERM_ARRAY(state);
 		CLR_SIGNAL(SIG_EVENT_PORT);
 		break;
 

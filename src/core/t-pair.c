@@ -48,7 +48,7 @@
 
 /***********************************************************************
 **
-*/	REBFLG MT_Pair(REBVAL *out, REBVAL *data, REBCNT type)
+*/	REBFLG MT_Pair(REBVAL *out, REBVAL *data, enum Reb_Kind type)
 /*
 ***********************************************************************/
 {
@@ -346,7 +346,7 @@
 				x1 = y1 = (REBD32)VAL_DECIMAL(val);
 				goto setPair;
 			}
-			if (ANY_BLOCK(val) && VAL_LEN(val) <= 2) {
+			if (ANY_ARRAY(val) && VAL_LEN(val) <= 2) {
 				if (MT_Pair(D_OUT, val, REB_PAIR))
 					return R_OUT;
 			}

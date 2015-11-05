@@ -386,22 +386,60 @@ collect: func [
 	/into "Insert into a buffer instead (returns position after insert)"
 	output [any-series!] "The buffer series (modified)"
 ][
-	unless output [output: make block! 16]
-	eval func [<transparent> keep] body func [value [any-value!] /only] [
-		; In the default operation, this could now be written as:
-		;
-		;     output: insert/:only :value
-		;
-		; However, even though the system/options/refinements-true operation
-		; is captured at function definition time to work how the function
-		; expected, this is creating new functions *dynamically*.  As long as
-		; the option exists, we must use APPLY in case the compatibility
-		; mode is on and ONLY is #[true] (instead of the WORD! ONLY)
-		;
-		output: apply :insert [output :value none none only]
-		:value
+	; Due to the desire to still be able to use COLLECT in <r3-legacy> mode,
+	; the "true valued refinements switch" must be respected.  This is even
+	; though the function captures a modality at the time a switch is on,
+	; because collect *makes* a function.  :-/
+
+	; This is sad, because @HostileFork considered the ability to add a
+	; language feature as powerful as COLLECT to be a compass point driving
+	; the repairs and cleanups in Ren/C.  Most of those are invisible, but
+	; in this case it cannot be to keep working in legacy mode.
+	;
+	; But as long as the concern is polluting Ren/C's mezzanine to where it
+	; can't be "perfect", the "perfect" version is separated out entirely
+	; instead of intermingled.  :-)
+
+	either system/options/refinements-true [
+		;; Rebol2, R3-Alpha, Red ;;
+
+		unless output [output: make block! 16]
+		do func [keep] body func [
+			value [any-type!] /only
+		][
+			output: apply :insert [output :value none none only]
+			:value
+		]
+		either into [output] [head output]
+	][
+		;; Ren/C ;;
+
+		unless output [output: make block! 16]
+		eval func [<transparent> keep] body func [
+			value [any-value!] /only
+		][
+			output: insert/:only output :value
+			:value
+		]
+		either into [output] [head output]
 	]
-	either into [output] [head output]
+
+	; Note that the addition of the <transparent> ties into the successful
+	; implementation of definitional return.  Since COLLECT is receiving
+	; raw body material from an outside caller, that may have one or more
+	; RETURNs in it that have been definitionally bound to their callers.
+	; Since FUNC is a generator which makes a local RETURN, it would
+	; destroy those bindings unless told not to.  You can choose one way
+	; or another, but the right choice here is to leave the bindings as is
+	;
+	; Note also that removing the ability for DO to evaluate functions in
+	; this way is critical to being able to write a wrapper for DO.  If
+	; evaluation of this form is allowed to become part of a function,
+	; you could never emulate its behavior.  So only one primitive was
+	; made that can do this inline evaluation trick: EVAL.
+	;
+	; As another small point of contrast, ANY-TYPE! is less obvious than
+	; ANY-VALUE!...it sounds like it might mean "any DATATYPE! value"
 ]
 
 format: function [
@@ -550,7 +588,6 @@ split: func [
 ]
 
 find-all: function [
-	<transparent>
 	"Find all occurrences of a value within a series (allows modification)."
 	'series [word!] "Variable for block, string, or other series"
 	value

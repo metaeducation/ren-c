@@ -406,7 +406,7 @@ err:
 	// If the input series was zero length, return empty series
 	if (!len) {
 		SERIES_TAIL(series) = 0;
-		TERM_SERIES(series);
+		TERM_SEQUENCE(series);
 		return series;
 	}
 
@@ -455,7 +455,7 @@ err:
 	// If the input series was zero length, return empty series
 	if (!len) {
 		SERIES_TAIL(series) = 0;
-		TERM_SERIES(series);
+		TERM_SEQUENCE(series);
 		return series;
 	}
 
@@ -496,7 +496,7 @@ err:
 	// If the input series was zero length, return empty series
 	if (!len) {
 		SERIES_TAIL(series) = 0;
-		TERM_SERIES(series);
+		TERM_SEQUENCE(series);
 		return series;
 	}
 

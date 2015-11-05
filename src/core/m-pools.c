@@ -792,6 +792,8 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 
 	if (flags & MKS_LOCK) SERIES_SET_FLAG(series, SER_LOCK);
 
+	if (flags & MKS_FRAME) SERIES_SET_FLAG(series, SER_FRAME);
+
 	if (flags & MKS_EXTERNAL) {
 		// External series will poke in their own data pointer after the
 		// REBSER header allocation is done
@@ -1104,7 +1106,10 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 	} else
 		series->tail = 0;
 
-	TERM_SERIES(series);
+	if (flags & MKS_ARRAY)
+		TERM_ARRAY(series);
+	else
+		TERM_SEQUENCE(series);
 
 	Free_Unbiased_Series_Data(data_old - (wide_old * bias_old), size_old);
 }
@@ -1263,7 +1268,7 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 	}
 	else {
 		SERIES_TAIL(series) = 0;
-		TERM_SERIES(series);
+		TERM_SEQUENCE(series);
 	}
 
 	Free_Unbiased_Series_Data(data_old - (wide_old * bias_old), size_old);

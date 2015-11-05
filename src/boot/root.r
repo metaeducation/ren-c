@@ -29,10 +29,12 @@ unset-val		; a value of type UNSET!
 empty-block		; a value that is an empty BLOCK!
 noname			; noname function word
 
-;; Tags used in function specs
+;; Tags used in the native-optimized versions of user-function-generators
+;; FUNC and CLOS
 
 transparent-tag	; func w/o definitional return, ignores non-definitional ones
 infix-tag		; func is treated as "infix" (first parameter comes before it)
+local-tag		; marks the beginning of a list of "pure locals"
 
 ;; Natives needed as values by the system for throw names (they use their
 ;; own function values as names, to be agnostic about words)
@@ -43,6 +45,15 @@ continue-native
 quit-native
 return-native
 exit-native
+
+;; The FUNC and CLOS function generators are native code, and quick access
+;; to a block containing [RETURN:] is useful to share across all of the
+;; instances of functions like those created by DOES.  Having a filled
+;; REBVAL of the word alone saves a call to Val_Init_Word_Unbound with
+;; the symbol as well.
+
+return-set-word
+return-block
 
 boot			; boot block defined in boot.r (GC'd after boot is done)
 

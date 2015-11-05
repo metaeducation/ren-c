@@ -22,12 +22,16 @@ REBOL [
 		path		- it supports various path forms (* for same as typeclass)
 		make		- It can be made with #[datatype] method
 		typesets	- what typesets the type belongs to
+
+		If the (CLASS) is in a paren that means it has evaluator behavior,
+		vs. being passed through as-is.  (e.g. a lit-word is "evaluative")
 	}
 ]
 
 
 [name		class		mold	form	path	make	typesets]
 
+trash		0			-		-		-		-		-
 end         0           -		-       -		-		-
 unset       none        -		-       -		*		-
 
@@ -59,12 +63,12 @@ image       image       +		+       *		*		[series]
 vector      vector      -		-       *		*		[series]
 
 block       array       *		f*      *		*		[series array]
-paren       array       *		f*      *		*		[series array]
+paren       (array)      *		f*      *		*		[series array]
 
-path        array       *		*       *		*		[series path array]
-set-path    array       *		*       *		*		[series path array]
-get-path    array       *		*       *		*		[series path array]
-lit-path    array       *		*       *		*		[series path array]
+path        (array)     *		*       *		*		[series path array]
+set-path    (array)     *		*       *		*		[series path array]
+get-path    (array)     *		*       *		*		[series path array]
+lit-path    (array)     *		*       *		*		[series path array]
 
 map         map         +		f*      *		*		-
 
@@ -73,21 +77,23 @@ typeset     typeset     +		f*      -		*		-
 
 ;-- Order dependent: next few words
 
-word        word        +        *       -      -		word
-set-word    word        +        *       -      -		word
-get-word    word        +        *       -      -		word
-lit-word    word        +        *       -      -		word
+word        (word)      +        *       -      -		word
+set-word    (word)      +        *       -      -		word
+get-word    (word)      +        *       -      -		word
+lit-word    (word)      +        *       -      -		word
 refinement  word        +        *       -      -		word
 issue       word        +        *       -      -		word
 
-native      function    *        -       -      *		function
-action      function    *        -       -      *		function
-routine     routine     *        -       -      *		function
-command     function    -        -       -      *		function
-closure     function    *        -       -      *		function
-function    function    *        -       -      *		function
+native      (function)  *        -       -      *		function
+action      (function)  *        -       -      *		function
+routine     (routine)   *        -       -      *		function
+command     (function)  -        -       -      *		function
+closure     (function)  *        -       -      *		function
+function    (function)  *        -       -      *		function
 
-frame       frame       -        -       *      -		-
+;-- we make FRAME! evaluative so the evaluator can see it to crash on it...
+frame       (frame)     -        -       *      -		-
+
 object      object      *        f*      *      *		object
 module      object      *        f*      *      *		object
 error       object      +        f+      *      *		object
