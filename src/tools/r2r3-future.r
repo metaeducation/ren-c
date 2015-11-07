@@ -39,6 +39,26 @@ unless value? 'index-of [index-of: :index? unset 'index?]
 unless value? 'offset-of [offset-of: :offset? unset 'offset?]
 unless value? 'type-of [type-of: :type? unset 'type?]
 
+unless value? 'opt [
+	opt: func [
+		{NONEs become unset, all other value types pass through. (See: TO-VALUE)}
+		value [any-type!]
+	][
+		either none? get/any 'value [()][
+			get/any 'value
+		]
+	]
+]
+
+unless value? 'to-value [
+	to-value: func [
+		{Turns unset to NONE, with ANY-VALUE! passing through. (See: OPT)}
+		value [any-type!]
+	] [
+		either unset? get/any 'value [none][:value]
+	]
+]
+
 unless value? 'something? [
 	something?: func [value [any-type!]] [
 		not any [

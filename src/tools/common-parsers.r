@@ -109,10 +109,10 @@ parsing-at: func [
 	block [block!] {Block to evaluate. Return next input position, or none/false.}
 	/end {Drop the default tail check (allows evaluation at the tail).}
 ] [
-	use [result position] [
-		block: to paren! block
+	use [result position][
+		block: compose/only [to-value (to paren! block)]
 		if not end [
-			block: compose/deep/only [all [not tail? (word) (block)]]
+			block: compose/deep [all [not tail? (word) (block)]]
 		]
 		block: compose/deep [result: either position: (block) [[:position]] [[end skip]]]
 		use compose [(word)] compose/deep [
