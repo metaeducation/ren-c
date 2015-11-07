@@ -151,3 +151,13 @@ quote: func [
 ] [
 	:value
 ]
+
+something?: func [
+	"Returns whether a value is neither a NONE! nor unset"
+	value [unset! any-value!]
+][
+	all [
+		set? :value
+		not equal? :value none
+	]
+]

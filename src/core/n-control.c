@@ -991,14 +991,7 @@ was_caught:
 **
 ***********************************************************************/
 {
-#if !defined(NDEBUG)
-	if (LEGACY(OPTIONS_EXIT_FUNCTIONS_ONLY))
-		*D_OUT = *ROOT_RETURN_NATIVE;
-	else
-		*D_OUT = *ROOT_EXIT_NATIVE;
-#else
 	*D_OUT = *ROOT_EXIT_NATIVE;
-#endif
 
 	CONVERT_NAME_TO_THROWN(D_OUT, D_REF(1) ? D_ARG(2) : UNSET_VALUE);
 

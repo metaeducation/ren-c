@@ -195,7 +195,9 @@ load-ext-module: function [
 				args [integer! block!]
 			][
 				; (contains module-local variables)
-				make command! reduce [args self ++ cmd-index]
+				make command! reduce [
+					args self also cmd-index (cmd-index: cmd-index + 1)
+				]
 			]
 			protect/hide/words [cmd-index command]
 		]

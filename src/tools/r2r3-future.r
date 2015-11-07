@@ -39,6 +39,15 @@ unless value? 'index-of [index-of: :index? unset 'index?]
 unless value? 'offset-of [offset-of: :offset? unset 'offset?]
 unless value? 'type-of [type-of: :type? unset 'type?]
 
+unless value? 'something? [
+	something?: func [value [any-type!]] [
+		not any [
+			unset? :value
+			none? :value
+		]
+	]
+]
+
 unless value? 'for-each [
 	for-each: :foreach
 	;unset 'foreach ;-- tolerate it (for now, maybe indefinitely?)

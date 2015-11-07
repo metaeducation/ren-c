@@ -151,6 +151,14 @@ options: context [  ; Options supplied to REBOL during startup
 	print-forms-everything: false
 	break-with-overrides: false
 	none-instead-of-unsets: false
+
+	; Legacy Options that *cannot* be enabled (due to mezzanine dependency
+	; on the new behavior).  The points are retained in the code for purpose
+	; of instruction to those curious about where such a decision is made, or
+	; even if a motivated individual wanted to change the behavior.  That
+	; would mean adapting the mezzanine (or finding a way to mark a routine
+	; as not being in the mezzanine and following a different rule.)
+
 	cant-unset-set-words: false
 ]
 

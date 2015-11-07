@@ -11,6 +11,29 @@ REBOL [
 	}
 ]
 
+; ++ and -- were previously used to take a quoted word and increment
+; it.  They were ordinary prefix operations
+
+++: func [
+	{Increment an integer or series index. Return its prior value.}
+	'word [word!] "Integer or series variable"
+	/local prior
+][
+	also (prior: get word) (
+		set word either series? prior [next prior] [prior + 1]
+	)
+]
+
+--: func [
+	{Decrement an integer or series index. Return its prior value.}
+	'word [word!] "Integer or series variable"
+	/local prior
+][
+	also (prior: get word) (
+		set word either series? prior [back prior] [prior - 1]
+	)
+]
+
 mod: func [
 	"Compute a nonnegative remainder of A divided by B."
 	; In fact the function tries to find the remainder,

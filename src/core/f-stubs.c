@@ -475,8 +475,22 @@
 {
 	ENSURE_SERIES_MANAGED(series);
 
-	if (type != REB_IMAGE && type != REB_VECTOR)
+	if (type != REB_IMAGE && type != REB_VECTOR) {
+		// Code in various places seemed to have different opinions of
+		// whether a BINARY needed to be zero terminated.  It doesn't
+		// make a lot of sense to zero terminate a binary unless it
+		// simplifies the code assumptions somehow--it's in the class
+		// "ANY_BINSTR()" so that suggests perhaps it has a bit more
+		// obligation to conform.  Also, the original Make_Binary comment
+		// from the open source release read:
+		//
+		//     Make a binary string series. For byte, C, and UTF8 strings.
+		//     Add 1 extra for terminator.
+		//
+		// Until that is consciously overturned, check the REB_BINARY too
+
 		ASSERT_SERIES_TERM(series); // doesn't apply to image/vector
+	}
 
 	VAL_SET(value, type);
 	VAL_SERIES(value) = series;

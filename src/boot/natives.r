@@ -378,6 +378,11 @@ bound?: native [
 	word [any-word!]
 ]
 
+set?: native [
+	{Returns whether a value is set.}
+	cell [unset! any-value!]
+]
+
 collect-words: native [
 	"Collect unique words used in a block (used for context construction)."
 	block [block!]
@@ -840,19 +845,6 @@ xor?: native [
 	{Returns true if only one of the two values is conditionally true.}
 	value1
 	value2
-]
-
-
-;-- New, hackish stuff:
-
-++: native [
-	{Increment an integer or series index. Return its prior value.}
-	'word [word!] "Integer or series variable"
-]
-
---: native [
-	{Decrement an integer or series index. Return its prior value.}
-	'word [word!] "Integer or series variable"
 ]
 
 stack: native [

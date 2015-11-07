@@ -236,7 +236,6 @@ set 'r3-legacy* func [] [
 	system/options/print-forms-everything: true
 	system/options/break-with-overrides: true
 	system/options/none-instead-of-unsets: true
-	system/options/cant-unset-set-words: true
 
 	append system/contexts/user compose [
 

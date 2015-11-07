@@ -321,6 +321,16 @@ static int Check_Char_Range(REBVAL *val, REBINT limit)
 
 /***********************************************************************
 **
+*/	REBNATIVE(setq)
+/*
+***********************************************************************/
+{
+	return IS_UNSET(D_ARG(1)) ? R_FALSE : R_TRUE;
+}
+
+
+/***********************************************************************
+**
 */	REBNATIVE(unbind)
 /*
 **		word | context
@@ -744,74 +754,6 @@ static int Check_Char_Range(REBVAL *val, REBINT limit)
 
 
 //** SERIES ************************************************************
-
-
-/***********************************************************************
-**
-*/	REBNATIVE(_add_add)
-/*
-**		i: ++ int
-**		s: ++ series
-**
-***********************************************************************/
-{
-	REBVAL *value;
-	REBCNT n;
-	REBVAL *word = D_ARG(1);
-
-	value = GET_MUTABLE_VAR(word); // traps if protected
-
-	*D_OUT = *value;
-
-	if (IS_INTEGER(value)) {
-		VAL_INT64(value)++;
-	}
-	else if (ANY_SERIES(value)) {
-		n = VAL_INDEX(value);
-		if (n < VAL_TAIL(value)) VAL_INDEX(value) = n + 1;
-	}
-	else if (IS_DECIMAL(value)) {
-		VAL_DECIMAL(value) += 1.0;
-	}
-	else
-		raise Error_Invalid_Arg(D_ARG(1));
-
-	return R_OUT;
-}
-
-
-/***********************************************************************
-**
-*/	REBNATIVE(__)
-/*
-**		i: -- int
-**		s: -- series
-**
-***********************************************************************/
-{
-	REBVAL *value;
-	REBCNT n;
-	REBVAL *word = D_ARG(1);
-
-	value = GET_MUTABLE_VAR(word); // traps if protected
-
-	*D_OUT = *value;
-
-	if (IS_INTEGER(value)) {
-		VAL_INT64(value)--;
-	}
-	else if (ANY_SERIES(value)) {
-		n = VAL_INDEX(value);
-		if (n > 0) VAL_INDEX(value) = n - 1;
-	}
-	else if (IS_DECIMAL(value)) {
-		VAL_DECIMAL(value) -= 1.0;
-	}
-	else
-		raise Error_Invalid_Arg(D_ARG(1));
-
-	return R_OUT;
-}
 
 
 /***********************************************************************

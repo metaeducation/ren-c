@@ -34,8 +34,9 @@ first: func [
 first+: func [
 	{Return the FIRST of a series then increment the series index.}
 	'word [word!] "Word must refer to a series"
-] [
-	also (pick get word 1) (++ :word)
+	/local prior
+][
+	also (pick prior: get word 1) (set word next prior)
 ]
 
 second: func [

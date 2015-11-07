@@ -204,7 +204,7 @@ init-schemes: func [
 						;print ["==System-waked:" port/spec/ref]
 						unless find waked port [append waked port]
 					]
-					++ n-event
+					n-event: n-event + 1
 				][
 					event-list: next event-list
 				]

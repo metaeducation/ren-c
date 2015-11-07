@@ -248,6 +248,7 @@ static REBSER *make_binary(REBVAL *arg, REBOOL make)
 	case REB_CHAR:
 		ser = Make_Binary(6);
 		ser->tail = Encode_UTF8_Char(BIN_HEAD(ser), VAL_CHAR(arg));
+		TERM_SEQUENCE(ser);
 		break;
 
 	// MAKE/TO BINARY! <bitset!>

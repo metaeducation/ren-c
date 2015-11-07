@@ -221,6 +221,11 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 	}
 
 	if (Do_Sys_Func_Throws(&out, SYS_CTX_FINISH_RL_START, 0)) {
+		#if !defined(NDEBUG)
+			if (LEGACY(OPTIONS_EXIT_FUNCTIONS_ONLY))
+				raise Error_No_Catch_For_Throw(&out);
+		#endif
+
 		if (
 			IS_NATIVE(&out) && (
 				VAL_FUNC_CODE(&out) == VAL_FUNC_CODE(ROOT_QUIT_NATIVE)
