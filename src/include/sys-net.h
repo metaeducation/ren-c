@@ -31,16 +31,16 @@
 
 #include <winsock.h>
 
-#define GET_ERROR		WSAGetLastError()
-#define IOCTL			ioctlsocket
-#define CLOSE_SOCKET	closesocket
+#define GET_ERROR       WSAGetLastError()
+#define IOCTL           ioctlsocket
+#define CLOSE_SOCKET    closesocket
 
-#define NE_ISCONN		WSAEISCONN
-#define NE_WOULDBLOCK	WSAEWOULDBLOCK
-#define NE_INPROGRESS	WSAEINPROGRESS
-#define NE_ALREADY		WSAEALREADY
-#define NE_NOTCONN		WSAENOTCONN
-#define NE_INVALID		WSAEINVAL
+#define NE_ISCONN       WSAEISCONN
+#define NE_WOULDBLOCK   WSAEWOULDBLOCK
+#define NE_INPROGRESS   WSAEINPROGRESS
+#define NE_ALREADY      WSAEALREADY
+#define NE_NOTCONN      WSAENOTCONN
+#define NE_INVALID      WSAEINVAL
 
 //----- BSD - The network standard the rest of the world uses
 #else
@@ -59,17 +59,17 @@ typedef long __LONG;
 #include <netinet/in.h>
 #include <unistd.h>
 
-#define GET_ERROR		errno
-#define IOCTL			ioctl
-#define CLOSE_SOCKET	close
-#define SOCKET			unsigned int
+#define GET_ERROR       errno
+#define IOCTL           ioctl
+#define CLOSE_SOCKET    close
+#define SOCKET          unsigned int
 
-#define NE_ISCONN		EISCONN
-#define NE_WOULDBLOCK	EAGAIN		// see include/asm/errno.h
-#define NE_INPROGRESS	EINPROGRESS
-#define NE_ALREADY		EALREADY
-#define NE_NOTCONN		ENOTCONN
-#define NE_INVALID		EINVAL
+#define NE_ISCONN       EISCONN
+#define NE_WOULDBLOCK   EAGAIN      // see include/asm/errno.h
+#define NE_INPROGRESS   EINPROGRESS
+#define NE_ALREADY      EALREADY
+#define NE_NOTCONN      ENOTCONN
+#define NE_INVALID      EINVAL
 
 // Null Win32 functions:
 #define WSADATA int
@@ -92,5 +92,5 @@ typedef struct hostent HOSTENT;
 typedef struct sockaddr_in SOCKAI; // Internet extensions
 
 #define BAD_SOCKET (~0)
-#define MAX_TRANSFER 32000		// Max send/recv buffer size
-#define MAX_HOST_NAME 256		// Max length of host name
+#define MAX_TRANSFER 32000      // Max send/recv buffer size
+#define MAX_HOST_NAME 256       // Max length of host name

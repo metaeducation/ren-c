@@ -40,9 +40,9 @@
 #include <assert.h>
 
 #if defined(TO_OSX_X86) || defined(TO_OSX_PPC)
-	#include <sys/malloc.h>
+    #include <sys/malloc.h>
 #else
-	#include <stdlib.h>
+    #include <stdlib.h>
 #endif
 
 #include "rsa.h"
@@ -50,9 +50,9 @@
 
 // Initialized by Init_Core_Ext() and released by Shutdown_Core_Ext()
 #ifdef TO_WINDOWS
-	HCRYPTPROV gCryptProv = 0;
+    HCRYPTPROV gCryptProv = 0;
 #else
-	int rng_fd = -1;
+    int rng_fd = -1;
 #endif
 
 /**
@@ -61,20 +61,20 @@
 void get_random(int num_rand_bytes, uint8_t *rand_data)
 {
 #ifdef TO_WINDOWS
-	if (CryptGenRandom(gCryptProv, num_rand_bytes, rand_data) != 0)
-		return; // success
+    if (CryptGenRandom(gCryptProv, num_rand_bytes, rand_data) != 0)
+        return; // success
 #else
-	if (rng_fd != -1 && read(rng_fd, rand_data, num_rand_bytes) != -1)
-		return; // success
+    if (rng_fd != -1 && read(rng_fd, rand_data, num_rand_bytes) != -1)
+        return; // success
 #endif
 
-	// !!! If this routine cannot generate random numbers, it is a serious
-	// error which cannot continue.  The organization of this code doesn't
-	// currently include Rebol's failure tools, so for now we assert and
-	// force an exit should this happen.
+    // !!! If this routine cannot generate random numbers, it is a serious
+    // error which cannot continue.  The organization of this code doesn't
+    // currently include Rebol's failure tools, so for now we assert and
+    // force an exit should this happen.
 
-	assert(0);
-	exit(EXIT_FAILURE);
+    assert(0);
+    exit(EXIT_FAILURE);
 }
 
 /**
@@ -220,29 +220,29 @@ int RSA_decrypt(const RSA_CTX *ctx, const uint8_t *in_data,
     /* convert to a normal block */
     bi_export(ctx->bi_ctx, decrypted_bi, block, byte_size);
 
-	if (padding)
-	{
-		i = 0;
-	}
-	else
-	{
+    if (padding)
+    {
+        i = 0;
+    }
+    else
+    {
 
-		i = 10; /* start at the first possible non-padded byte */
+        i = 10; /* start at the first possible non-padded byte */
 
 #ifdef CONFIG_SSL_CERT_VERIFICATION
-		if (is_decryption == 0) /* PKCS1.5 signing pads with "0xff"s */
-		{
-			while (block[i++] == 0xff && i < byte_size);
+        if (is_decryption == 0) /* PKCS1.5 signing pads with "0xff"s */
+        {
+            while (block[i++] == 0xff && i < byte_size);
 
-			if (block[i-2] != 0xff)
-				i = byte_size;     /*ensure size is 0 */
-		}
-		else                    /* PKCS1.5 encryption padding is random */
+            if (block[i-2] != 0xff)
+                i = byte_size;     /*ensure size is 0 */
+        }
+        else                    /* PKCS1.5 encryption padding is random */
 #endif
-		{
-			while (block[i++] && i < byte_size);
-		}
-	}
+        {
+            while (block[i++] && i < byte_size);
+        }
+    }
     size = byte_size - i;
 
     /* get only the bit we want */
@@ -311,34 +311,34 @@ int RSA_encrypt(const RSA_CTX *ctx, const uint8_t *in_data, uint16_t in_len,
     int byte_size = ctx->num_octets;
     bigint *dat_bi, *encrypt_bi;
 
-	if (padding)
-	{
-		int num_pads_needed = byte_size-in_len-3;
+    if (padding)
+    {
+        int num_pads_needed = byte_size-in_len-3;
 
-		//input won't fit pkcs output
-		if (num_pads_needed < 0) return -1;
+        //input won't fit pkcs output
+        if (num_pads_needed < 0) return -1;
 
-		/* note: in_len+11 must be > byte_size */
-		out_data[0] = 0;     /* ensure encryption block is < modulus */
+        /* note: in_len+11 must be > byte_size */
+        out_data[0] = 0;     /* ensure encryption block is < modulus */
 
-		if (is_signing)
-		{
-			out_data[1] = 1;        /* PKCS1.5 signing pads with "0xff"'s */
-			memset(&out_data[2], 0xff, num_pads_needed);
-		}
-		else /* randomize the encryption padding with non-zero bytes */
-		{
-			out_data[1] = 2;
-			get_random_NZ(num_pads_needed, &out_data[2]);
-		}
+        if (is_signing)
+        {
+            out_data[1] = 1;        /* PKCS1.5 signing pads with "0xff"'s */
+            memset(&out_data[2], 0xff, num_pads_needed);
+        }
+        else /* randomize the encryption padding with non-zero bytes */
+        {
+            out_data[1] = 2;
+            get_random_NZ(num_pads_needed, &out_data[2]);
+        }
 
-		out_data[2+num_pads_needed] = 0;
-		memcpy(&out_data[3+num_pads_needed], in_data, in_len);
-	}
-	else
-	{
-		memcpy(out_data, in_data, in_len);
-	}
+        out_data[2+num_pads_needed] = 0;
+        memcpy(&out_data[3+num_pads_needed], in_data, in_len);
+    }
+    else
+    {
+        memcpy(out_data, in_data, in_len);
+    }
 
     /* now encrypt it */
     dat_bi = bi_import(ctx->bi_ctx, out_data, byte_size);

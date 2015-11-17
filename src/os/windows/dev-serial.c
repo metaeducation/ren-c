@@ -45,69 +45,69 @@ extern void Signal_Device(REBREQ *req, REBINT type);
 #define MAX_SERIAL_DEV_PATH 128
 
 const int speeds[] = {
-	110, CBR_110,
-	300, CBR_300,
-	600, CBR_600,
-	1200, CBR_1200,
-	2400, CBR_2400,
-	4800, CBR_4800,
-	9600, CBR_9600,
-	14400, CBR_14400,
-	19200, CBR_19200,
-	38400, CBR_38400,
-	57600, CBR_57600,
-	115200, CBR_115200,
-	128000, CBR_128000,
-	230400, CBR_256000,
-	0
+    110, CBR_110,
+    300, CBR_300,
+    600, CBR_600,
+    1200, CBR_1200,
+    2400, CBR_2400,
+    4800, CBR_4800,
+    9600, CBR_9600,
+    14400, CBR_14400,
+    19200, CBR_19200,
+    38400, CBR_38400,
+    57600, CBR_57600,
+    115200, CBR_115200,
+    128000, CBR_128000,
+    230400, CBR_256000,
+    0
 };
 
 
 /***********************************************************************
 **
-**	Local Functions
+**  Local Functions
 **
 ***********************************************************************/
 static REBINT Set_Serial_Settings(HANDLE h, REBREQ *req)
 {
     DCB dcbSerialParams;
-	REBINT n;
-	int speed = req->special.serial.baud;
+    REBINT n;
+    int speed = req->special.serial.baud;
 
     memset(&dcbSerialParams, '\0', sizeof(dcbSerialParams));
-	dcbSerialParams.DCBlength = sizeof(dcbSerialParams);
-	if (GetCommState(h, &dcbSerialParams) == 0) return 1;
+    dcbSerialParams.DCBlength = sizeof(dcbSerialParams);
+    if (GetCommState(h, &dcbSerialParams) == 0) return 1;
 
 
-	for (n = 0; speeds[n]; n += 2) {
-		if (speed == speeds[n]) {
-			dcbSerialParams.BaudRate = speeds[n+1];
-			break;
-		}
-	}
-	if (speeds[n] == 0) dcbSerialParams.BaudRate = CBR_115200; // invalid, use default
+    for (n = 0; speeds[n]; n += 2) {
+        if (speed == speeds[n]) {
+            dcbSerialParams.BaudRate = speeds[n+1];
+            break;
+        }
+    }
+    if (speeds[n] == 0) dcbSerialParams.BaudRate = CBR_115200; // invalid, use default
 
-	dcbSerialParams.ByteSize = req->special.serial.data_bits;
-	dcbSerialParams.StopBits = req->special.serial.stop_bits == 1? ONESTOPBIT : TWOSTOPBITS;
-	switch (req->special.serial.parity) {
-		case SERIAL_PARITY_ODD:
-			dcbSerialParams.Parity = ODDPARITY;
-			break;
-		case SERIAL_PARITY_EVEN:
-			dcbSerialParams.Parity = EVENPARITY;
-			break;
-		case SERIAL_PARITY_NONE:
-		default:
-			dcbSerialParams.Parity = NOPARITY;
-			break;
-	}
+    dcbSerialParams.ByteSize = req->special.serial.data_bits;
+    dcbSerialParams.StopBits = req->special.serial.stop_bits == 1? ONESTOPBIT : TWOSTOPBITS;
+    switch (req->special.serial.parity) {
+        case SERIAL_PARITY_ODD:
+            dcbSerialParams.Parity = ODDPARITY;
+            break;
+        case SERIAL_PARITY_EVEN:
+            dcbSerialParams.Parity = EVENPARITY;
+            break;
+        case SERIAL_PARITY_NONE:
+        default:
+            dcbSerialParams.Parity = NOPARITY;
+            break;
+    }
 
 
-	if(SetCommState(h, &dcbSerialParams) == 0) {
-		return 1;
-	}
+    if(SetCommState(h, &dcbSerialParams) == 0) {
+        return 1;
+    }
 
-	PurgeComm(h,PURGE_RXCLEAR|PURGE_TXCLEAR);  //make sure buffers are clean
+    PurgeComm(h,PURGE_RXCLEAR|PURGE_TXCLEAR);  //make sure buffers are clean
     return 0;
 }
 
@@ -119,48 +119,48 @@ static REBINT Set_Serial_Settings(HANDLE h, REBREQ *req)
 //
 DEVICE_CMD Open_Serial(REBREQ *req)
 {
-	HANDLE h;
+    HANDLE h;
     COMMTIMEOUTS timeouts; //add in timeouts? Currently unused
 
     memset(&timeouts, '\0', sizeof(timeouts));
 
-	// req->special.serial.path should be prefixed with "\\.\" to allow for higher com port numbers
-	wchar_t fullpath[MAX_SERIAL_DEV_PATH] = L"\\\\.\\";
+    // req->special.serial.path should be prefixed with "\\.\" to allow for higher com port numbers
+    wchar_t fullpath[MAX_SERIAL_DEV_PATH] = L"\\\\.\\";
 
-	if (!req->special.serial.path) {
-		req->error = -RFE_BAD_PATH;
-		return DR_ERROR;
-	}
+    if (!req->special.serial.path) {
+        req->error = -RFE_BAD_PATH;
+        return DR_ERROR;
+    }
 
-	wcsncat(fullpath, req->special.serial.path, MAX_SERIAL_DEV_PATH);
+    wcsncat(fullpath, req->special.serial.path, MAX_SERIAL_DEV_PATH);
 
-	h = CreateFile(fullpath, GENERIC_READ|GENERIC_WRITE, 0, NULL,OPEN_EXISTING, 0, NULL );
-	if (h == INVALID_HANDLE_VALUE) {
-		req->error = -RFE_OPEN_FAIL;
-		return DR_ERROR;
-	}
+    h = CreateFile(fullpath, GENERIC_READ|GENERIC_WRITE, 0, NULL,OPEN_EXISTING, 0, NULL );
+    if (h == INVALID_HANDLE_VALUE) {
+        req->error = -RFE_OPEN_FAIL;
+        return DR_ERROR;
+    }
 
-	if (Set_Serial_Settings(h, req)==0) {
-		CloseHandle(h);
-		req->error = -RFE_OPEN_FAIL;
-		return DR_ERROR;
-	}
+    if (Set_Serial_Settings(h, req)==0) {
+        CloseHandle(h);
+        req->error = -RFE_OPEN_FAIL;
+        return DR_ERROR;
+    }
 
 
-	// See: http://msdn.microsoft.com/en-us/library/windows/desktop/aa363190%28v=vs.85%29.aspx
-	timeouts.ReadIntervalTimeout = MAXDWORD;
-	timeouts.ReadTotalTimeoutMultiplier = 0;
-	timeouts.ReadTotalTimeoutConstant = 0;
-	timeouts.WriteTotalTimeoutMultiplier = 1;   // These two write lines may need to be set to 0.
-	timeouts.WriteTotalTimeoutConstant = 1;
-	if (!SetCommTimeouts(h, &timeouts)) {
-		CloseHandle(h);
-		req->error = -RFE_OPEN_FAIL;
-		return DR_ERROR;
-	}
+    // See: http://msdn.microsoft.com/en-us/library/windows/desktop/aa363190%28v=vs.85%29.aspx
+    timeouts.ReadIntervalTimeout = MAXDWORD;
+    timeouts.ReadTotalTimeoutMultiplier = 0;
+    timeouts.ReadTotalTimeoutConstant = 0;
+    timeouts.WriteTotalTimeoutMultiplier = 1;   // These two write lines may need to be set to 0.
+    timeouts.WriteTotalTimeoutConstant = 1;
+    if (!SetCommTimeouts(h, &timeouts)) {
+        CloseHandle(h);
+        req->error = -RFE_OPEN_FAIL;
+        return DR_ERROR;
+    }
 
-	req->requestee.handle = h;
-	return DR_DONE;
+    req->requestee.handle = h;
+    return DR_DONE;
 }
 
 
@@ -169,12 +169,12 @@ DEVICE_CMD Open_Serial(REBREQ *req)
 //
 DEVICE_CMD Close_Serial(REBREQ *req)
 {
-	if (req->requestee.handle) {
-		// !!! Should we free req->special.serial.prior_attr termios struct?
-		CloseHandle(req->requestee.handle);
-		req->requestee.handle = 0;
-	}
-	return DR_DONE;
+    if (req->requestee.handle) {
+        // !!! Should we free req->special.serial.prior_attr termios struct?
+        CloseHandle(req->requestee.handle);
+        req->requestee.handle = 0;
+    }
+    return DR_DONE;
 }
 
 
@@ -184,31 +184,31 @@ DEVICE_CMD Close_Serial(REBREQ *req)
 DEVICE_CMD Read_Serial(REBREQ *req)
 {
     DWORD result = 0;
-	if (!req->requestee.handle) {
-		req->error = -RFE_NO_HANDLE;
-		return DR_ERROR;
-	}
+    if (!req->requestee.handle) {
+        req->error = -RFE_NO_HANDLE;
+        return DR_ERROR;
+    }
 
-	//RL_Print("reading %d bytes\n", req->length);
+    //RL_Print("reading %d bytes\n", req->length);
     if (!ReadFile(req->requestee.handle, req->common.data, req->length, &result, 0)) {
-		req->error = -RFE_BAD_READ;
-		Signal_Device(req, EVT_ERROR);
-		return DR_ERROR;
-	} else {
-		if (result == 0) {
-			return DR_PEND;
-		} else if (result > 0){
-			//RL_Print("read %d bytes\n", req->actual);
-			req->actual = result;
-			Signal_Device(req, EVT_READ);
-		}
-	}
+        req->error = -RFE_BAD_READ;
+        Signal_Device(req, EVT_ERROR);
+        return DR_ERROR;
+    } else {
+        if (result == 0) {
+            return DR_PEND;
+        } else if (result > 0){
+            //RL_Print("read %d bytes\n", req->actual);
+            req->actual = result;
+            Signal_Device(req, EVT_READ);
+        }
+    }
 
 #ifdef DEBUG_SERIAL
-	printf("read %d ret: %d\n", req->length, req->actual);
+    printf("read %d ret: %d\n", req->length, req->actual);
 #endif
 
-	return DR_DONE;
+    return DR_DONE;
 }
 
 
@@ -219,15 +219,15 @@ DEVICE_CMD Write_Serial(REBREQ *req)
 {
     DWORD result = 0;
     DWORD len = req->length - req->actual;
-	if (!req->requestee.handle) {
-		req->error = -RFE_NO_HANDLE;
-		return DR_ERROR;
-	}
+    if (!req->requestee.handle) {
+        req->error = -RFE_NO_HANDLE;
+        return DR_ERROR;
+    }
 
-	if (len <= 0) return DR_DONE;
+    if (len <= 0) return DR_DONE;
 
-	if (!WriteFile(
-		req->requestee.handle, req->common.data, len, &result, NULL
+    if (!WriteFile(
+        req->requestee.handle, req->common.data, len, &result, NULL
     )) {
         req->error = -RFE_BAD_WRITE;
         Signal_Device(req, EVT_ERROR);
@@ -235,18 +235,18 @@ DEVICE_CMD Write_Serial(REBREQ *req)
     }
 
 #ifdef DEBUG_SERIAL
-	printf("write %d ret: %d\n", req->length, req->actual);
+    printf("write %d ret: %d\n", req->length, req->actual);
 #endif
 
-	req->actual += result;
-	req->common.data += result;
-	if (req->actual >= req->length) {
-		Signal_Device(req, EVT_WROTE);
-		return DR_DONE;
-	} else {
-		SET_FLAG(req->flags, RRF_ACTIVE); /* notify OS_WAIT of activity */
-		return DR_PEND;
-	}
+    req->actual += result;
+    req->common.data += result;
+    if (req->actual >= req->length) {
+        Signal_Device(req, EVT_WROTE);
+        return DR_DONE;
+    } else {
+        SET_FLAG(req->flags, RRF_ACTIVE); /* notify OS_WAIT of activity */
+        return DR_PEND;
+    }
 }
 
 
@@ -256,38 +256,38 @@ DEVICE_CMD Write_Serial(REBREQ *req)
 DEVICE_CMD Query_Serial(REBREQ *req)
 {
 #ifdef QUERY_IMPLEMENTED
-	struct pollfd pfd;
+    struct pollfd pfd;
 
-	if (req->requestee.handle) {
-		pfd.fd = req->requestee.handle;
-		pfd.events = POLLIN;
-		n = poll(&pfd, 1, 0);
-	}
+    if (req->requestee.handle) {
+        pfd.fd = req->requestee.handle;
+        pfd.events = POLLIN;
+        n = poll(&pfd, 1, 0);
+    }
 #endif
-	return DR_DONE;
+    return DR_DONE;
 }
 
 
 /***********************************************************************
 **
-**	Command Dispatch Table (RDC_ enum order)
+**  Command Dispatch Table (RDC_ enum order)
 **
 ***********************************************************************/
 
 static DEVICE_CMD_FUNC Dev_Cmds[RDC_MAX] = {
-	0,
-	0,
-	Open_Serial,
-	Close_Serial,
-	Read_Serial,
-	Write_Serial,
-	0,  // poll
-	0,	// connect
-	Query_Serial,
-	0,	// modify
-	0,	// create
-	0,	// delete
-	0	// rename
+    0,
+    0,
+    Open_Serial,
+    Close_Serial,
+    Read_Serial,
+    Write_Serial,
+    0,  // poll
+    0,  // connect
+    Query_Serial,
+    0,  // modify
+    0,  // create
+    0,  // delete
+    0   // rename
 };
 
 DEFINE_DEV(Dev_Serial, "Serial IO", 1, Dev_Cmds, RDC_MAX, sizeof(REBREQ));

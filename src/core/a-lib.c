@@ -71,12 +71,12 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 //
 RL_API void RL_Version(REBYTE vers[])
 {
-	// [0] is length
-	vers[1] = REBOL_VER;
-	vers[2] = REBOL_REV;
-	vers[3] = REBOL_UPD;
-	vers[4] = REBOL_SYS;
-	vers[5] = REBOL_VAR;
+    // [0] is length
+    vers[1] = REBOL_VER;
+    vers[2] = REBOL_REV;
+    vers[3] = REBOL_UPD;
+    vers[4] = REBOL_SYS;
+    vers[5] = REBOL_VAR;
 }
 
 
@@ -100,34 +100,34 @@ RL_API void RL_Version(REBYTE vers[])
 //
 RL_API int RL_Init(REBARGS *rargs, void *lib)
 {
-	int marker;
-	REBUPT bounds;
-	const char *env_legacy = NULL;
+    int marker;
+    REBUPT bounds;
+    const char *env_legacy = NULL;
 
-	Host_Lib = cast(REBOL_HOST_LIB *, lib);
+    Host_Lib = cast(REBOL_HOST_LIB *, lib);
 
-	if (Host_Lib->size < HOST_LIB_SIZE) return 1;
-	if (((HOST_LIB_VER << 16) + HOST_LIB_SUM) != Host_Lib->ver_sum) return 2;
+    if (Host_Lib->size < HOST_LIB_SIZE) return 1;
+    if (((HOST_LIB_VER << 16) + HOST_LIB_SUM) != Host_Lib->ver_sum) return 2;
 
-	bounds = (REBUPT)OS_CONFIG(1, 0);
-	if (bounds == 0) bounds = (REBUPT)STACK_BOUNDS;
+    bounds = (REBUPT)OS_CONFIG(1, 0);
+    if (bounds == 0) bounds = (REBUPT)STACK_BOUNDS;
 
 #ifdef OS_STACK_GROWS_UP
-	Stack_Limit = (REBUPT)(&marker) + bounds;
+    Stack_Limit = (REBUPT)(&marker) + bounds;
 #else
-	if (bounds > (REBUPT) &marker) Stack_Limit = 100;
-	else Stack_Limit = (REBUPT)&marker - bounds;
+    if (bounds > (REBUPT) &marker) Stack_Limit = 100;
+    else Stack_Limit = (REBUPT)&marker - bounds;
 #endif
 
-	Init_Core(rargs);
+    Init_Core(rargs);
 
-	GC_Active = TRUE; // Turn on GC
-	if (rargs->options & RO_TRACE) {
-		Trace_Level = 9999;
-		Trace_Flags = 1;
-	}
+    GC_Active = TRUE; // Turn on GC
+    if (rargs->options & RO_TRACE) {
+        Trace_Level = 9999;
+        Trace_Flags = 1;
+    }
 
-	return 0;
+    return 0;
 }
 
 
@@ -148,117 +148,117 @@ RL_API int RL_Init(REBARGS *rargs, void *lib)
 //
 RL_API int RL_Start(REBYTE *bin, REBINT len, REBYTE *script, REBINT script_len, REBCNT flags)
 {
-	REBVAL *val;
-	REBSER *ser;
+    REBVAL *val;
+    REBSER *ser;
 
-	REBOL_STATE state;
-	REBSER *error_frame;
+    REBOL_STATE state;
+    REBSER *error_frame;
 
-	REBVAL start_result;
+    REBVAL start_result;
 
-	int result;
-	REBVAL out;
+    int result;
+    REBVAL out;
 
-	if (bin) {
-		ser = Decompress(bin, len, -1, FALSE, FALSE);
-		if (!ser) return 1;
+    if (bin) {
+        ser = Decompress(bin, len, -1, FALSE, FALSE);
+        if (!ser) return 1;
 
-		val = BLK_SKIP(Sys_Context, SYS_CTX_BOOT_HOST);
-		Val_Init_Binary(val, ser);
-	}
+        val = BLK_SKIP(Sys_Context, SYS_CTX_BOOT_HOST);
+        Val_Init_Binary(val, ser);
+    }
 
-	if (script && script_len > 4) {
-		/* a 4-byte long payload type at the beginning */
-		i32 ptype = 0;
-		REBYTE *data = script + sizeof(ptype);
-		script_len -= sizeof(ptype);
+    if (script && script_len > 4) {
+        /* a 4-byte long payload type at the beginning */
+        i32 ptype = 0;
+        REBYTE *data = script + sizeof(ptype);
+        script_len -= sizeof(ptype);
 
-		memcpy(&ptype, script, sizeof(ptype));
+        memcpy(&ptype, script, sizeof(ptype));
 
-		if (ptype == 1) {/* COMPRESSed data */
-			ser = Decompress(data, script_len, -1, FALSE, FALSE);
-		} else {
-			ser = Make_Binary(script_len);
-			if (ser == NULL) {
-				OS_FREE(script);
-				return 1;
-			}
-			memcpy(BIN_HEAD(ser), data, script_len);
-		}
-		OS_FREE(script);
+        if (ptype == 1) {/* COMPRESSed data */
+            ser = Decompress(data, script_len, -1, FALSE, FALSE);
+        } else {
+            ser = Make_Binary(script_len);
+            if (ser == NULL) {
+                OS_FREE(script);
+                return 1;
+            }
+            memcpy(BIN_HEAD(ser), data, script_len);
+        }
+        OS_FREE(script);
 
-		val = BLK_SKIP(Sys_Context, SYS_CTX_BOOT_EMBEDDED);
-		Val_Init_Binary(val, ser);
-	}
+        val = BLK_SKIP(Sys_Context, SYS_CTX_BOOT_EMBEDDED);
+        Val_Init_Binary(val, ser);
+    }
 
-	PUSH_UNHALTABLE_TRAP(&error_frame, &state);
+    PUSH_UNHALTABLE_TRAP(&error_frame, &state);
 
 // The first time through the following code 'error_frame' will be NULL, but...
 // `fail` can longjmp here, so 'error_frame' won't be NULL *if* that happens!
 
-	if (error_frame) {
-		// Save error for WHY?
-		REBVAL *error = Get_System(SYS_STATE, STATE_LAST_ERROR);
-		Val_Init_Error(error, error_frame);
+    if (error_frame) {
+        // Save error for WHY?
+        REBVAL *error = Get_System(SYS_STATE, STATE_LAST_ERROR);
+        Val_Init_Error(error, error_frame);
 
-		Print_Value(error, 1024, FALSE);
+        Print_Value(error, 1024, FALSE);
 
-		// !!! When running in a script, whether or not the Rebol interpreter
-		// just exits in an error case with a bad error code or breaks you
-		// into the console to debug the environment should be controlled by
-		// a command line option.  Defaulting to returning an error code
-		// seems better, because kicking into an interactive session can
-		// cause logging systems to hang.
+        // !!! When running in a script, whether or not the Rebol interpreter
+        // just exits in an error case with a bad error code or breaks you
+        // into the console to debug the environment should be controlled by
+        // a command line option.  Defaulting to returning an error code
+        // seems better, because kicking into an interactive session can
+        // cause logging systems to hang.
 
-		// For RE_HALT and all other errors we return the error
-		// number.  Error numbers are not set in stone (currently), but
-		// are never zero...which is why we can use 0 for success.
-		return ERR_NUM(error_frame);
-	}
+        // For RE_HALT and all other errors we return the error
+        // number.  Error numbers are not set in stone (currently), but
+        // are never zero...which is why we can use 0 for success.
+        return ERR_NUM(error_frame);
+    }
 
-	if (Do_Sys_Func_Throws(&out, SYS_CTX_FINISH_RL_START, 0)) {
-		#if !defined(NDEBUG)
-			if (LEGACY(OPTIONS_EXIT_FUNCTIONS_ONLY))
-				fail (Error_No_Catch_For_Throw(&out));
-		#endif
+    if (Do_Sys_Func_Throws(&out, SYS_CTX_FINISH_RL_START, 0)) {
+        #if !defined(NDEBUG)
+            if (LEGACY(OPTIONS_EXIT_FUNCTIONS_ONLY))
+                fail (Error_No_Catch_For_Throw(&out));
+        #endif
 
-		if (
-			IS_NATIVE(&out) && (
-				VAL_FUNC_CODE(&out) == VAL_FUNC_CODE(ROOT_QUIT_NATIVE)
-				|| VAL_FUNC_CODE(&out) == VAL_FUNC_CODE(ROOT_EXIT_NATIVE)
-			)
-		) {
-			int status;
+        if (
+            IS_NATIVE(&out) && (
+                VAL_FUNC_CODE(&out) == VAL_FUNC_CODE(ROOT_QUIT_NATIVE)
+                || VAL_FUNC_CODE(&out) == VAL_FUNC_CODE(ROOT_EXIT_NATIVE)
+            )
+        ) {
+            int status;
 
-			CATCH_THROWN(&out, &out);
-			status = Exit_Status_From_Value(&out);
+            CATCH_THROWN(&out, &out);
+            status = Exit_Status_From_Value(&out);
 
-			DROP_TRAP_SAME_STACKLEVEL_AS_PUSH(&state);
+            DROP_TRAP_SAME_STACKLEVEL_AS_PUSH(&state);
 
-			Shutdown_Core();
-			OS_EXIT(status);
-			DEAD_END;
-		}
+            Shutdown_Core();
+            OS_EXIT(status);
+            DEAD_END;
+        }
 
-		fail (Error_No_Catch_For_Throw(&out));
-	}
+        fail (Error_No_Catch_For_Throw(&out));
+    }
 
-	DROP_TRAP_SAME_STACKLEVEL_AS_PUSH(&state);
+    DROP_TRAP_SAME_STACKLEVEL_AS_PUSH(&state);
 
-	// The convention in the API was to return 0 for success.  We use the
-	// convention (as for FINISH_INIT_CORE) that any non-UNSET! result from
-	// FINISH_RL_START indicates something went wrong.
+    // The convention in the API was to return 0 for success.  We use the
+    // convention (as for FINISH_INIT_CORE) that any non-UNSET! result from
+    // FINISH_RL_START indicates something went wrong.
 
-	if (IS_UNSET(&out))
-		result = 0;
-	else {
-		assert(FALSE); // should not happen (raise an error instead)
-		Debug_Fmt("** finish-rl-start returned non-NONE!:");
-		Debug_Fmt("%r", &out);
-		result = RE_MISC;
-	}
+    if (IS_UNSET(&out))
+        result = 0;
+    else {
+        assert(FALSE); // should not happen (raise an error instead)
+        Debug_Fmt("** finish-rl-start returned non-NONE!:");
+        Debug_Fmt("%r", &out);
+        result = RE_MISC;
+    }
 
-	return result;
+    return result;
 }
 
 
@@ -278,19 +278,19 @@ RL_API int RL_Start(REBYTE *bin, REBINT len, REBYTE *script, REBINT script_len, 
 //
 RL_API void RL_Shutdown(REBOOL clean)
 {
-	// At time of writing, nothing Shutdown_Core() does pertains to
-	// committing unfinished data to disk.  So really there is
-	// nothing to do in the case of an "unclean" shutdown...yet.
+    // At time of writing, nothing Shutdown_Core() does pertains to
+    // committing unfinished data to disk.  So really there is
+    // nothing to do in the case of an "unclean" shutdown...yet.
 
 #ifdef NDEBUG
-	// Only do the work above this line in an unclean shutdown
-	if (!clean) return;
+    // Only do the work above this line in an unclean shutdown
+    if (!clean) return;
 #else
-	// Run a clean shutdown anyway in debug builds--even if the
-	// caller didn't need it--to see if it triggers any alerts.
+    // Run a clean shutdown anyway in debug builds--even if the
+    // caller didn't need it--to see if it triggers any alerts.
 #endif
 
-	Shutdown_Core();
+    Shutdown_Core();
 }
 
 
@@ -315,21 +315,21 @@ RL_API void RL_Shutdown(REBOOL clean)
 //
 RL_API void *RL_Extend(const REBYTE *source, RXICAL call)
 {
-	REBVAL *value;
-	REBSER *ser;
+    REBVAL *value;
+    REBSER *ser;
 
-	value = BLK_SKIP(Sys_Context, SYS_CTX_BOOT_EXTS);
-	if (IS_BLOCK(value)) ser = VAL_SERIES(value);
-	else {
-		ser = Make_Array(2);
-		Val_Init_Block(value, ser);
-	}
-	value = Alloc_Tail_Array(ser);
-	Val_Init_Binary(value, Copy_Bytes(source, -1)); // UTF-8
-	value = Alloc_Tail_Array(ser);
-	SET_HANDLE_CODE(value, cast(CFUNC*, call));
+    value = BLK_SKIP(Sys_Context, SYS_CTX_BOOT_EXTS);
+    if (IS_BLOCK(value)) ser = VAL_SERIES(value);
+    else {
+        ser = Make_Array(2);
+        Val_Init_Block(value, ser);
+    }
+    value = Alloc_Tail_Array(ser);
+    Val_Init_Binary(value, Copy_Bytes(source, -1)); // UTF-8
+    value = Alloc_Tail_Array(ser);
+    SET_HANDLE_CODE(value, cast(CFUNC*, call));
 
-	return Extension_Lib();
+    return Extension_Lib();
 }
 
 
@@ -350,7 +350,7 @@ RL_API void *RL_Extend(const REBYTE *source, RXICAL call)
 //
 RL_API void RL_Escape(REBINT reserved)
 {
-	SET_SIGNAL(SIG_ESCAPE);
+    SET_SIGNAL(SIG_ESCAPE);
 }
 
 
@@ -381,84 +381,84 @@ RL_API void RL_Escape(REBINT reserved)
 //
 RL_API int RL_Do_String(int *exit_status, const REBYTE *text, REBCNT flags, RXIARG *result)
 {
-	REBSER *code;
-	REBVAL out;
+    REBSER *code;
+    REBVAL out;
 
-	REBOL_STATE state;
-	REBSER *error_frame;
+    REBOL_STATE state;
+    REBSER *error_frame;
 
-	// assumes it can only be run at the topmost level where
-	// the data stack is completely empty.
-	assert(DSP == -1);
+    // assumes it can only be run at the topmost level where
+    // the data stack is completely empty.
+    assert(DSP == -1);
 
-	PUSH_UNHALTABLE_TRAP(&error_frame, &state);
+    PUSH_UNHALTABLE_TRAP(&error_frame, &state);
 
 // The first time through the following code 'error_frame' will be NULL, but...
 // `fail` can longjmp here, so 'error_frame' won't be NULL *if* that happens!
 
-	if (error_frame) {
-		// Save error for WHY?
-		REBVAL *error = Get_System(SYS_STATE, STATE_LAST_ERROR);
-		Val_Init_Error(error, error_frame);
+    if (error_frame) {
+        // Save error for WHY?
+        REBVAL *error = Get_System(SYS_STATE, STATE_LAST_ERROR);
+        Val_Init_Error(error, error_frame);
 
-		if (ERR_NUM(error_frame) == RE_HALT)
-			return -1; // !!! Revisit hardcoded #
+        if (ERR_NUM(error_frame) == RE_HALT)
+            return -1; // !!! Revisit hardcoded #
 
-		if (result)
-			*result = Value_To_RXI(error);
-		else
-			DS_PUSH(error);
+        if (result)
+            *result = Value_To_RXI(error);
+        else
+            DS_PUSH(error);
 
-		return -ERR_NUM(error_frame);
-	}
+        return -ERR_NUM(error_frame);
+    }
 
-	code = Scan_Source(text, LEN_BYTES(text));
-	PUSH_GUARD_SERIES(code);
+    code = Scan_Source(text, LEN_BYTES(text));
+    PUSH_GUARD_SERIES(code);
 
-	// Bind into lib or user spaces?
-	if (flags) {
-		// Top words will be added to lib:
-		Bind_Values_Set_Forward_Shallow(BLK_HEAD(code), Lib_Context);
-		Bind_Values_Deep(BLK_HEAD(code), Lib_Context);
-	} else {
-		REBCNT len;
-		REBVAL vali;
-		REBSER *user = VAL_OBJ_FRAME(Get_System(SYS_CONTEXTS, CTX_USER));
-		len = user->tail;
-		Bind_Values_All_Deep(BLK_HEAD(code), user);
-		SET_INTEGER(&vali, len);
-		Resolve_Context(user, Lib_Context, &vali, FALSE, 0);
-	}
+    // Bind into lib or user spaces?
+    if (flags) {
+        // Top words will be added to lib:
+        Bind_Values_Set_Forward_Shallow(BLK_HEAD(code), Lib_Context);
+        Bind_Values_Deep(BLK_HEAD(code), Lib_Context);
+    } else {
+        REBCNT len;
+        REBVAL vali;
+        REBSER *user = VAL_OBJ_FRAME(Get_System(SYS_CONTEXTS, CTX_USER));
+        len = user->tail;
+        Bind_Values_All_Deep(BLK_HEAD(code), user);
+        SET_INTEGER(&vali, len);
+        Resolve_Context(user, Lib_Context, &vali, FALSE, 0);
+    }
 
-	if (Do_At_Throws(&out, code, 0)) {
-		DROP_GUARD_SERIES(code);
+    if (Do_At_Throws(&out, code, 0)) {
+        DROP_GUARD_SERIES(code);
 
-		if (
-			IS_NATIVE(&out) && (
-				VAL_FUNC_CODE(&out) == VAL_FUNC_CODE(ROOT_QUIT_NATIVE)
-				|| VAL_FUNC_CODE(&out) == VAL_FUNC_CODE(ROOT_EXIT_NATIVE)
-			)
-		) {
-			CATCH_THROWN(&out, &out);
-			DROP_TRAP_SAME_STACKLEVEL_AS_PUSH(&state);
+        if (
+            IS_NATIVE(&out) && (
+                VAL_FUNC_CODE(&out) == VAL_FUNC_CODE(ROOT_QUIT_NATIVE)
+                || VAL_FUNC_CODE(&out) == VAL_FUNC_CODE(ROOT_EXIT_NATIVE)
+            )
+        ) {
+            CATCH_THROWN(&out, &out);
+            DROP_TRAP_SAME_STACKLEVEL_AS_PUSH(&state);
 
-			*exit_status = Exit_Status_From_Value(&out);
-			return -2; // Revisit hardcoded #
-		}
+            *exit_status = Exit_Status_From_Value(&out);
+            return -2; // Revisit hardcoded #
+        }
 
-		fail (Error_No_Catch_For_Throw(&out));
-	}
+        fail (Error_No_Catch_For_Throw(&out));
+    }
 
-	DROP_GUARD_SERIES(code);
+    DROP_GUARD_SERIES(code);
 
-	DROP_TRAP_SAME_STACKLEVEL_AS_PUSH(&state);
+    DROP_TRAP_SAME_STACKLEVEL_AS_PUSH(&state);
 
-	if (result)
-		*result = Value_To_RXI(&out);
-	else
-		DS_PUSH(&out);
+    if (result)
+        *result = Value_To_RXI(&out);
+    else
+        DS_PUSH(&out);
 
-	return Reb_To_RXT[VAL_TYPE(&out)];
+    return Reb_To_RXT[VAL_TYPE(&out)];
 }
 
 
@@ -481,28 +481,28 @@ RL_API int RL_Do_String(int *exit_status, const REBYTE *text, REBCNT flags, RXIA
 //
 RL_API int RL_Do_Binary(int *exit_status, const REBYTE *bin, REBINT length, REBCNT flags, REBCNT key, RXIARG *result)
 {
-	REBSER *text;
+    REBSER *text;
 #ifdef DUMP_INIT_SCRIPT
-	int f;
+    int f;
 #endif
-	int do_result;
+    int do_result;
 
-	text = Decompress(bin, length, -1, FALSE, FALSE);
-	if (!text) return FALSE;
-	Append_Codepoint_Raw(text, 0);
+    text = Decompress(bin, length, -1, FALSE, FALSE);
+    if (!text) return FALSE;
+    Append_Codepoint_Raw(text, 0);
 
 #ifdef DUMP_INIT_SCRIPT
-	f = _open("host-boot.r", _O_CREAT | _O_RDWR, _S_IREAD | _S_IWRITE );
-	_write(f, STR_HEAD(text), LEN_BYTES(STR_HEAD(text)));
-	_close(f);
+    f = _open("host-boot.r", _O_CREAT | _O_RDWR, _S_IREAD | _S_IWRITE );
+    _write(f, STR_HEAD(text), LEN_BYTES(STR_HEAD(text)));
+    _close(f);
 #endif
 
-	PUSH_GUARD_SERIES(text);
-	do_result = RL_Do_String(exit_status, text->data, flags, result);
-	DROP_GUARD_SERIES(text);
+    PUSH_GUARD_SERIES(text);
+    do_result = RL_Do_String(exit_status, text->data, flags, result);
+    DROP_GUARD_SERIES(text);
 
-	Free_Series(text);
-	return do_result;
+    Free_Series(text);
+    return do_result;
 }
 
 
@@ -523,7 +523,7 @@ RL_API int RL_Do_Binary(int *exit_status, const REBYTE *bin, REBINT length, REBC
 //
 RL_API int RL_Do_Block(REBSER *blk, REBCNT flags, RXIARG *result)
 {
-	return 0;
+    return 0;
 }
 
 
@@ -546,8 +546,8 @@ RL_API int RL_Do_Block(REBSER *blk, REBCNT flags, RXIARG *result)
 //
 RL_API void RL_Do_Commands(REBSER *blk, REBCNT flags, REBCEC *context)
 {
-	REBVAL out;
-	Do_Commands(&out, blk, context);
+    REBVAL out;
+    Do_Commands(&out, blk, context);
 }
 
 
@@ -568,10 +568,10 @@ RL_API void RL_Do_Commands(REBSER *blk, REBCNT flags, REBCEC *context)
 //
 RL_API void RL_Print(const REBYTE *fmt, ...)
 {
-	va_list args;
-	va_start(args, fmt);
-	Debug_Buf(cs_cast(fmt), &args);
-	va_end(args);
+    va_list args;
+    va_start(args, fmt);
+    Debug_Buf(cs_cast(fmt), &args);
+    va_end(args);
 }
 
 
@@ -597,16 +597,16 @@ RL_API void RL_Print(const REBYTE *fmt, ...)
 //
 RL_API void RL_Print_TOS(REBOOL mold, const REBYTE *marker)
 {
-	if (DSP != 0)
-		Debug_Fmt(Str_Stack_Misaligned, DSP);
+    if (DSP != 0)
+        Debug_Fmt(Str_Stack_Misaligned, DSP);
 
-	// We shouldn't get any THROWN() values exposed to the client
-	assert(!THROWN(DS_TOP));
+    // We shouldn't get any THROWN() values exposed to the client
+    assert(!THROWN(DS_TOP));
 
-	if (!IS_UNSET(DS_TOP)) {
-		if (marker) Out_Str(marker, 0);
-		Out_Value(DS_TOP, 500, mold, 1); // limit print length
-	}
+    if (!IS_UNSET(DS_TOP)) {
+        if (marker) Out_Str(marker, 0);
+        Out_Value(DS_TOP, 500, mold, 1); // limit print length
+    }
 }
 
 
@@ -622,7 +622,7 @@ RL_API void RL_Print_TOS(REBOOL mold, const REBYTE *marker)
 //
 RL_API void RL_Drop_TOS(void)
 {
-	DS_DROP;
+    DS_DROP;
 }
 
 
@@ -644,15 +644,15 @@ RL_API void RL_Drop_TOS(void)
 //
 RL_API int RL_Event(REBEVT *evt)
 {
-	REBVAL *event = Append_Event();		// sets signal
+    REBVAL *event = Append_Event();     // sets signal
 
-	if (event) {						// null if no room left in series
-		VAL_SET(event, REB_EVENT);		// (has more space, if we need it)
-		event->data.event = *evt;
-		return 1;
-	}
+    if (event) {                        // null if no room left in series
+        VAL_SET(event, REB_EVENT);      // (has more space, if we need it)
+        event->data.event = *evt;
+        return 1;
+    }
 
-	return 0;
+    return 0;
 }
 
 
@@ -671,14 +671,14 @@ RL_API int RL_Event(REBEVT *evt)
 //
 RL_API int RL_Update_Event(REBEVT *evt)
 {
-	REBVAL *event = Find_Last_Event(evt->model, evt->type);
+    REBVAL *event = Find_Last_Event(evt->model, evt->type);
 
-	if (event) {
-		event->data.event = *evt;
-		return 1;
-	}
+    if (event) {
+        event->data.event = *evt;
+        return 1;
+    }
 
-	return RL_Event(evt) - 1;
+    return RL_Event(evt) - 1;
 }
 
 
@@ -686,21 +686,21 @@ RL_API int RL_Update_Event(REBEVT *evt)
 **
 */ RL_API REBEVT *RL_Find_Event (REBINT model, REBINT type)
 /*
-**	Find an application event (e.g. GUI) to the event port.
+**  Find an application event (e.g. GUI) to the event port.
 **
-**	Returns:
-**  	A pointer to the find event
+**  Returns:
+**      A pointer to the find event
 **  Arguments:
 **      model - event model
 **      type - event type
 **
 ***********************************************************************/
 {
-	REBVAL * val = Find_Last_Event(model, type);
-	if (val != NULL) {
-		return &val->data.event;
-	}
-	return NULL;
+    REBVAL * val = Find_Last_Event(model, type);
+    if (val != NULL) {
+        return &val->data.event;
+    }
+    return NULL;
 }
 
 
@@ -726,7 +726,7 @@ RL_API int RL_Update_Event(REBEVT *evt)
 //
 RL_API void *RL_Make_Block(u32 size)
 {
-	return Make_Array(size);
+    return Make_Array(size);
 }
 
 
@@ -751,13 +751,13 @@ RL_API void *RL_Make_Block(u32 size)
 //
 RL_API void *RL_Make_String(u32 size, int unicode)
 {
-	REBSER *result = unicode ? Make_Unicode(size) : Make_Binary(size);
+    REBSER *result = unicode ? Make_Unicode(size) : Make_Binary(size);
 
-	// !!! Assume client does not have Free_Series() or MANAGE_SERIES()
-	// APIs, so the series we give back must be managed.  But how can
-	// we be sure they get what usage they needed before the GC happens?
-	MANAGE_SERIES(result);
-	return result;
+    // !!! Assume client does not have Free_Series() or MANAGE_SERIES()
+    // APIs, so the series we give back must be managed.  But how can
+    // we be sure they get what usage they needed before the GC happens?
+    MANAGE_SERIES(result);
+    return result;
 }
 
 
@@ -778,7 +778,7 @@ RL_API void *RL_Make_String(u32 size, int unicode)
 //
 RL_API void *RL_Make_Image(u32 width, u32 height)
 {
-	return Make_Image(width, height, FALSE);
+    return Make_Image(width, height, FALSE);
 }
 
 
@@ -803,15 +803,15 @@ RL_API void *RL_Make_Image(u32 width, u32 height)
 //
 RL_API void RL_Protect_GC(REBSER *series, u32 flags)
 {
-	// !!! With series flags in short supply, this undesirable routine
-	// was removed along with SER_KEEP.  (Note that it is not possible
-	// to simply flip off the SER_MANAGED bit, because there is more
-	// involved in tracking the managed state than just that bit.)
-	//
-	// For the purpose intended by this routine, use the GC_Mark_Hook (or
-	// its hopeful improved successors.)
+    // !!! With series flags in short supply, this undesirable routine
+    // was removed along with SER_KEEP.  (Note that it is not possible
+    // to simply flip off the SER_MANAGED bit, because there is more
+    // involved in tracking the managed state than just that bit.)
+    //
+    // For the purpose intended by this routine, use the GC_Mark_Hook (or
+    // its hopeful improved successors.)
 
-	panic (Error(RE_MISC));
+    panic (Error(RE_MISC));
 }
 
 
@@ -819,34 +819,34 @@ RL_API void RL_Protect_GC(REBSER *series, u32 flags)
 **
 */ RL_API int RL_Get_String(REBSER *series, u32 index, void **str)
 /*
-**	Obtain a pointer into a string (bytes or unicode).
+**  Obtain a pointer into a string (bytes or unicode).
 **
-**	Returns:
-**		The length and type of string. When len > 0, string is unicode.
-**		When len < 0, string is bytes.
+**  Returns:
+**      The length and type of string. When len > 0, string is unicode.
+**      When len < 0, string is bytes.
 **  Arguments:
-**		series - string series pointer
-**		index - index from beginning (zero-based)
-**		str   - pointer to first character
-**	Notes:
-**		If the len is less than zero, then the string is optimized to
-**		codepoints (chars) 255 or less for ASCII and LATIN-1 charsets.
-**		Strings are allowed to move in memory. Therefore, you will want
-**		to make a copy of the string if needed.
+**      series - string series pointer
+**      index - index from beginning (zero-based)
+**      str   - pointer to first character
+**  Notes:
+**      If the len is less than zero, then the string is optimized to
+**      codepoints (chars) 255 or less for ASCII and LATIN-1 charsets.
+**      Strings are allowed to move in memory. Therefore, you will want
+**      to make a copy of the string if needed.
 **
 ***********************************************************************/
-{	// ret: len or -len
-	int len = (index >= series->tail) ? 0 : series->tail - index;
+{   // ret: len or -len
+    int len = (index >= series->tail) ? 0 : series->tail - index;
 
-	if (BYTE_SIZE(series)) {
-		*str = BIN_SKIP(series, index);
-		len = -len;
-	}
-	else {
-		*str = UNI_SKIP(series, index);
-	}
+    if (BYTE_SIZE(series)) {
+        *str = BIN_SKIP(series, index);
+        len = -len;
+    }
+    else {
+        *str = UNI_SKIP(series, index);
+    }
 
-	return len;
+    return len;
 }
 
 
@@ -866,7 +866,7 @@ RL_API void RL_Protect_GC(REBSER *series, u32 flags)
 //
 RL_API u32 RL_Map_Word(REBYTE *string)
 {
-	return Make_Word(string, LEN_BYTES(string));
+    return Make_Word(string, LEN_BYTES(string));
 }
 
 
@@ -887,20 +887,20 @@ RL_API u32 RL_Map_Word(REBYTE *string)
 //
 RL_API u32 *RL_Map_Words(REBSER *series)
 {
-	REBCNT i = 1;
-	u32 *words;
-	REBVAL *val = BLK_HEAD(series);
+    REBCNT i = 1;
+    u32 *words;
+    REBVAL *val = BLK_HEAD(series);
 
-	words = OS_ALLOC_ARRAY(u32, series->tail + 2);
+    words = OS_ALLOC_ARRAY(u32, series->tail + 2);
 
-	for (; NOT_END(val); val++) {
-		if (ANY_WORD(val)) words[i++] = VAL_WORD_CANON(val);
-	}
+    for (; NOT_END(val); val++) {
+        if (ANY_WORD(val)) words[i++] = VAL_WORD_CANON(val);
+    }
 
-	words[0] = i;
-	words[i] = 0;
+    words[0] = i;
+    words[i] = 0;
 
-	return words;
+    return words;
 }
 
 
@@ -922,13 +922,13 @@ RL_API u32 *RL_Map_Words(REBSER *series)
 //
 RL_API REBYTE *RL_Word_String(u32 word)
 {
-	REBYTE *s1, *s2;
-	// !!This code should use a function from c-words.c (but nothing perfect yet.)
-	if (word == 0 || word >= PG_Word_Table.series->tail) return 0;
-	s1 = VAL_SYM_NAME(BLK_SKIP(PG_Word_Table.series, word));
-	s2 = OS_ALLOC_ARRAY(REBYTE, LEN_BYTES(s1) + 1);
-	COPY_BYTES(s2, s1, LEN_BYTES(s1) + 1);
-	return s2;
+    REBYTE *s1, *s2;
+    // !!This code should use a function from c-words.c (but nothing perfect yet.)
+    if (word == 0 || word >= PG_Word_Table.series->tail) return 0;
+    s1 = VAL_SYM_NAME(BLK_SKIP(PG_Word_Table.series, word));
+    s2 = OS_ALLOC_ARRAY(REBYTE, LEN_BYTES(s1) + 1);
+    COPY_BYTES(s2, s1, LEN_BYTES(s1) + 1);
+    return s2;
 }
 
 
@@ -947,14 +947,14 @@ RL_API REBYTE *RL_Word_String(u32 word)
 //
 RL_API u32 RL_Find_Word(u32 *words, u32 word)
 {
-	REBCNT n = 0;
+    REBCNT n = 0;
 
-	if (words == 0) return 0;
+    if (words == 0) return 0;
 
-	for (n = 1; n < words[0]; n++) {
-		if (words[n] == word) return n;
-	}
-	return 0;
+    for (n = 1; n < words[0]; n++) {
+        if (words[n] == word) return n;
+    }
+    return 0;
 }
 
 
@@ -973,14 +973,14 @@ RL_API u32 RL_Find_Word(u32 *words, u32 word)
 //
 RL_API REBUPT RL_Series(REBSER *series, REBCNT what)
 {
-	switch (what) {
-	case RXI_SER_DATA: return (REBUPT)SERIES_DATA(series);
-	case RXI_SER_TAIL: return SERIES_TAIL(series);
-	case RXI_SER_LEFT: return SERIES_AVAIL(series);
-	case RXI_SER_SIZE: return SERIES_REST(series);
-	case RXI_SER_WIDE: return SERIES_WIDE(series);
-	}
-	return 0;
+    switch (what) {
+    case RXI_SER_DATA: return (REBUPT)SERIES_DATA(series);
+    case RXI_SER_TAIL: return SERIES_TAIL(series);
+    case RXI_SER_LEFT: return SERIES_AVAIL(series);
+    case RXI_SER_SIZE: return SERIES_REST(series);
+    case RXI_SER_WIDE: return SERIES_WIDE(series);
+    }
+    return 0;
 }
 
 
@@ -1002,8 +1002,8 @@ RL_API REBUPT RL_Series(REBSER *series, REBCNT what)
 //
 RL_API int RL_Get_Char(REBSER *series, u32 index)
 {
-	if (index >= series->tail) return -1;
-	return GET_ANY_CHAR(series, index);
+    if (index >= series->tail) return -1;
+    return GET_ANY_CHAR(series, index);
 }
 
 
@@ -1022,12 +1022,12 @@ RL_API int RL_Get_Char(REBSER *series, u32 index)
 //
 RL_API u32 RL_Set_Char(REBSER *series, u32 index, u32 chr)
 {
-	if (index >= series->tail) {
-		index = series->tail;
-		EXPAND_SERIES_TAIL(series, 1);
-	}
-	SET_ANY_CHAR(series, index, chr);
-	return index;
+    if (index >= series->tail) {
+        index = series->tail;
+        EXPAND_SERIES_TAIL(series, 1);
+    }
+    SET_ANY_CHAR(series, index, chr);
+    return index;
 }
 
 
@@ -1045,11 +1045,11 @@ RL_API u32 RL_Set_Char(REBSER *series, u32 index, u32 chr)
 //
 RL_API int RL_Get_Value(REBSER *series, u32 index, RXIARG *result)
 {
-	REBVAL *value;
-	if (index >= series->tail) return 0;
-	value = BLK_SKIP(series, index);
-	*result = Value_To_RXI(value);
-	return Reb_To_RXT[VAL_TYPE(value)];
+    REBVAL *value;
+    if (index >= series->tail) return 0;
+    value = BLK_SKIP(series, index);
+    *result = Value_To_RXI(value);
+    return Reb_To_RXT[VAL_TYPE(value)];
 }
 
 
@@ -1068,15 +1068,15 @@ RL_API int RL_Get_Value(REBSER *series, u32 index, RXIARG *result)
 //
 RL_API int RL_Set_Value(REBSER *series, u32 index, RXIARG val, int type)
 {
-	REBVAL value;
-	CLEARS(&value);
-	RXI_To_Value(&value, val, type);
-	if (index >= series->tail) {
-		Append_Value(series, &value);
-		return TRUE;
-	}
-	*BLK_SKIP(series, index) = value;
-	return FALSE;
+    REBVAL value;
+    CLEARS(&value);
+    RXI_To_Value(&value, val, type);
+    if (index >= series->tail) {
+        Append_Value(series, &value);
+        return TRUE;
+    }
+    *BLK_SKIP(series, index) = value;
+    return FALSE;
 }
 
 
@@ -1095,18 +1095,18 @@ RL_API int RL_Set_Value(REBSER *series, u32 index, RXIARG val, int type)
 //
 RL_API u32 *RL_Words_Of_Object(REBSER *obj)
 {
-	REBCNT index;
-	u32 *syms;
-	REBVAL *keys;
+    REBCNT index;
+    u32 *syms;
+    REBVAL *keys;
 
-	keys = FRM_KEY(obj, 1);
-	// One less, because SELF not included.
-	syms = OS_ALLOC_ARRAY(u32, obj->tail);
-	for (index = 0; index < (obj->tail - 1); keys++, index++) {
-		syms[index] = VAL_TYPESET_CANON(keys);
-	}
-	syms[index] = 0;
-	return syms;
+    keys = FRM_KEY(obj, 1);
+    // One less, because SELF not included.
+    syms = OS_ALLOC_ARRAY(u32, obj->tail);
+    for (index = 0; index < (obj->tail - 1); keys++, index++) {
+        syms[index] = VAL_TYPESET_CANON(keys);
+    }
+    syms[index] = 0;
+    return syms;
 }
 
 
@@ -1124,11 +1124,11 @@ RL_API u32 *RL_Words_Of_Object(REBSER *obj)
 //
 RL_API int RL_Get_Field(REBSER *obj, u32 word, RXIARG *result)
 {
-	REBVAL *value;
-	if (!(word = Find_Word_Index(obj, word, FALSE))) return 0;
-	value = BLK_SKIP(obj, word);
-	*result = Value_To_RXI(value);
-	return Reb_To_RXT[VAL_TYPE(value)];
+    REBVAL *value;
+    if (!(word = Find_Word_Index(obj, word, FALSE))) return 0;
+    value = BLK_SKIP(obj, word);
+    *result = Value_To_RXI(value);
+    return Reb_To_RXT[VAL_TYPE(value)];
 }
 
 
@@ -1147,12 +1147,12 @@ RL_API int RL_Get_Field(REBSER *obj, u32 word, RXIARG *result)
 //
 RL_API int RL_Set_Field(REBSER *obj, u32 word, RXIARG val, int type)
 {
-	REBVAL value;
-	CLEARS(&value);
-	if (!(word = Find_Word_Index(obj, word, FALSE))) return 0;
-	if (VAL_GET_EXT(FRM_KEYS(obj) + word, EXT_WORD_LOCK)) return 0;
-	RXI_To_Value(FRM_VALUES(obj)+word, val, type);
-	return type;
+    REBVAL value;
+    CLEARS(&value);
+    if (!(word = Find_Word_Index(obj, word, FALSE))) return 0;
+    if (VAL_GET_EXT(FRM_KEYS(obj) + word, EXT_WORD_LOCK)) return 0;
+    RXI_To_Value(FRM_VALUES(obj)+word, val, type);
+    return type;
 }
 
 
@@ -1182,20 +1182,20 @@ RL_API int RL_Set_Field(REBSER *obj, u32 word, RXIARG val, int type)
 //
 RL_API int RL_Callback(RXICBI *cbi)
 {
-	REBEVT evt;
+    REBEVT evt;
 
-	// Synchronous callback?
-	if (!GET_FLAG(cbi->flags, RXC_ASYNC)) {
-		return Do_Callback(cbi->obj, cbi->word, cbi->args, &(cbi->result));
-	}
+    // Synchronous callback?
+    if (!GET_FLAG(cbi->flags, RXC_ASYNC)) {
+        return Do_Callback(cbi->obj, cbi->word, cbi->args, &(cbi->result));
+    }
 
-	CLEARS(&evt);
-	evt.type = EVT_CALLBACK;
-	evt.model = EVM_CALLBACK;
-	evt.eventee.ser = cbi;
-	SET_FLAG(cbi->flags, RXC_QUEUED);
+    CLEARS(&evt);
+    evt.type = EVT_CALLBACK;
+    evt.model = EVM_CALLBACK;
+    evt.eventee.ser = cbi;
+    SET_FLAG(cbi->flags, RXC_QUEUED);
 
-	return RL_Event(&evt);	// (returns 0 if queue is full, ignored)
+    return RL_Event(&evt);  // (returns 0 if queue is full, ignored)
 }
 
 
@@ -1220,11 +1220,11 @@ RL_API int RL_Callback(RXICBI *cbi)
 //
 RL_API REBCNT RL_Length_As_UTF8(const void *p, REBCNT len, REBOOL uni, REBOOL ccr)
 {
-	return Length_As_UTF8(
-		p,
-		len,
-		(uni ? OPT_ENC_UNISRC : 0) | (ccr ? OPT_ENC_CRLF : 0)
-	);
+    return Length_As_UTF8(
+        p,
+        len,
+        (uni ? OPT_ENC_UNISRC : 0) | (ccr ? OPT_ENC_CRLF : 0)
+    );
 }
 
 
@@ -1254,13 +1254,13 @@ RL_API REBCNT RL_Length_As_UTF8(const void *p, REBCNT len, REBOOL uni, REBOOL cc
 //
 RL_API REBCNT RL_Encode_UTF8(REBYTE *dst, REBINT max, const void *src, REBCNT *len, REBFLG uni, REBFLG ccr)
 {
-	return Encode_UTF8(
-		dst,
-		max,
-		src,
-		len,
-		(uni ? OPT_ENC_UNISRC : 0) | (ccr ? OPT_ENC_CRLF : 0)
-	);
+    return Encode_UTF8(
+        dst,
+        max,
+        src,
+        len,
+        (uni ? OPT_ENC_UNISRC : 0) | (ccr ? OPT_ENC_CRLF : 0)
+    );
 }
 
 
@@ -1271,5 +1271,5 @@ RL_API REBCNT RL_Encode_UTF8(REBYTE *dst, REBINT max, const void *src, REBCNT *l
 //
 void *Extension_Lib(void)
 {
-	return &Ext_Lib;
+    return &Ext_Lib;
 }

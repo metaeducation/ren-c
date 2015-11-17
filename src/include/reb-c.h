@@ -34,93 +34,93 @@
 
 /***********************************************************************
 **
-**	CASTING MACROS
+**  CASTING MACROS
 **
-**		The following code and explanation is taken from the article
-**		"Casts for the Masses (in C)":
+**      The following code and explanation is taken from the article
+**      "Casts for the Masses (in C)":
 **
-**		http://blog.hostilefork.com/c-casts-for-the-masses/
+**      http://blog.hostilefork.com/c-casts-for-the-masses/
 **
 ***********************************************************************/
 
 #if !defined(__cplusplus)
-	/* These macros are easier-to-spot variants of the parentheses cast.
-	 * The 'm_cast' is when getting [M]utablity on a const is okay (RARELY!)
-	 * Plain 'cast' can do everything else (except remove volatile)
-	 * The 'c_cast' helper ensures you're ONLY adding [C]onst to a value
-	 */
-	#define m_cast(t,v)		((t)(v))
-	#define cast(t,v)		((t)(v))
-	#define c_cast(t,v)		((t)(v))
-	/*
-	 * Q: Why divide roles?  A: Frequently, input to cast is const but you
-	 * "just forget" to include const in the result type, gaining mutable
-	 * access.  Stray writes to that can cause even time-traveling bugs, with
-	 * effects *before* that write is made...due to "undefined behavior".
-	 */
+    /* These macros are easier-to-spot variants of the parentheses cast.
+     * The 'm_cast' is when getting [M]utablity on a const is okay (RARELY!)
+     * Plain 'cast' can do everything else (except remove volatile)
+     * The 'c_cast' helper ensures you're ONLY adding [C]onst to a value
+     */
+    #define m_cast(t,v)     ((t)(v))
+    #define cast(t,v)       ((t)(v))
+    #define c_cast(t,v)     ((t)(v))
+    /*
+     * Q: Why divide roles?  A: Frequently, input to cast is const but you
+     * "just forget" to include const in the result type, gaining mutable
+     * access.  Stray writes to that can cause even time-traveling bugs, with
+     * effects *before* that write is made...due to "undefined behavior".
+     */
 #elif defined(__cplusplus) /* <= gcc -Wundef */ && (__cplusplus < 201103L)
-	/* Well-intentioned macros aside, C has no way to enforce that you can't
-	 * cast away a const without m_cast. C++98 builds can do that, at least:
-	 */
-	#define m_cast(t,v)		const_cast<t>(v)
-	#define cast(t,v)		((t)(v))
-	#define c_cast(t,v)		const_cast<t>(v)
+    /* Well-intentioned macros aside, C has no way to enforce that you can't
+     * cast away a const without m_cast. C++98 builds can do that, at least:
+     */
+    #define m_cast(t,v)     const_cast<t>(v)
+    #define cast(t,v)       ((t)(v))
+    #define c_cast(t,v)     const_cast<t>(v)
 #else
-	/* __cplusplus >= 201103L has C++11's type_traits, where we get some
-	 * actual power.  cast becomes a reinterpret_cast for pointers and a
-	 * static_cast otherwise.  We ensure c_cast added a const and m_cast
-	 * removed one, and that neither affected volatility.
-	 */
-	#include <type_traits>
-	template<typename T, typename V>
-	T m_cast_helper(V v) {
-		static_assert(!std::is_const<T>::value,
-			"invalid m_cast() - requested a const type for output result");
-		static_assert(std::is_volatile<T>::value == std::is_volatile<V>::value,
-			"invalid m_cast() - input and output have mismatched volatility");
-		return const_cast<T>(v);
-	}
-	template<typename T, typename V,
-		typename std::enable_if<std::is_pointer<V>::value
-			|| std::is_pointer<T>::value>::type* = nullptr>
-				T cast_helper(V v) { return reinterpret_cast<T>(v); }
-	template<typename T, typename V,
-		typename std::enable_if<!std::is_pointer<V>::value
-			&& !std::is_pointer<T>::value>::type* = nullptr>
-				T cast_helper(V v) { return static_cast<T>(v); }
-	template<typename T, typename V>
-	T c_cast_helper(V v) {
-		static_assert(!std::is_const<T>::value,
-			"invalid c_cast() - did not request const type for output result");
-		static_assert(std::is_volatile<T>::value == std::is_volatile<V>::value,
-			"invalid c_cast() - input and output have mismatched volatility");
-		return const_cast<T>(v);
-	}
-	#define m_cast(t, v)	m_cast_helper<t>(v)
-	#define cast(t, v)		cast_helper<t>(v)
-	#define c_cast(t, v)	c_cast_helper<t>(v)
+    /* __cplusplus >= 201103L has C++11's type_traits, where we get some
+     * actual power.  cast becomes a reinterpret_cast for pointers and a
+     * static_cast otherwise.  We ensure c_cast added a const and m_cast
+     * removed one, and that neither affected volatility.
+     */
+    #include <type_traits>
+    template<typename T, typename V>
+    T m_cast_helper(V v) {
+        static_assert(!std::is_const<T>::value,
+            "invalid m_cast() - requested a const type for output result");
+        static_assert(std::is_volatile<T>::value == std::is_volatile<V>::value,
+            "invalid m_cast() - input and output have mismatched volatility");
+        return const_cast<T>(v);
+    }
+    template<typename T, typename V,
+        typename std::enable_if<std::is_pointer<V>::value
+            || std::is_pointer<T>::value>::type* = nullptr>
+                T cast_helper(V v) { return reinterpret_cast<T>(v); }
+    template<typename T, typename V,
+        typename std::enable_if<!std::is_pointer<V>::value
+            && !std::is_pointer<T>::value>::type* = nullptr>
+                T cast_helper(V v) { return static_cast<T>(v); }
+    template<typename T, typename V>
+    T c_cast_helper(V v) {
+        static_assert(!std::is_const<T>::value,
+            "invalid c_cast() - did not request const type for output result");
+        static_assert(std::is_volatile<T>::value == std::is_volatile<V>::value,
+            "invalid c_cast() - input and output have mismatched volatility");
+        return const_cast<T>(v);
+    }
+    #define m_cast(t, v)    m_cast_helper<t>(v)
+    #define cast(t, v)      cast_helper<t>(v)
+    #define c_cast(t, v)    c_cast_helper<t>(v)
 #endif
 #if defined(NDEBUG) || !defined(REB_DEF)
-	/* These [S]tring and [B]inary casts are for "flips" between a 'char *'
-	 * and 'unsigned char *' (or 'const char *' and 'const unsigned char *').
-	 * Being single-arity with no type passed in, they are succinct to use:
-	 */
-	#define s_cast(b)		((char *)(b))
-	#define cs_cast(b)		((const char *)(b))
-	#define b_cast(s)		((unsigned char *)(s))
-	#define cb_cast(s)		((const unsigned char *)(s))
-	/*
-	 * In C++ (or C with '-Wpointer-sign') this is powerful.  'char *' can
-	 * be used with string functions like strlen().  Then 'unsigned char *'
-	 * can be saved for things you shouldn't _accidentally_ pass to functions
-	 * like strlen().  (One GREAT example: encoded UTF-8 byte strings.)
-	 */
+    /* These [S]tring and [B]inary casts are for "flips" between a 'char *'
+     * and 'unsigned char *' (or 'const char *' and 'const unsigned char *').
+     * Being single-arity with no type passed in, they are succinct to use:
+     */
+    #define s_cast(b)       ((char *)(b))
+    #define cs_cast(b)      ((const char *)(b))
+    #define b_cast(s)       ((unsigned char *)(s))
+    #define cb_cast(s)      ((const unsigned char *)(s))
+    /*
+     * In C++ (or C with '-Wpointer-sign') this is powerful.  'char *' can
+     * be used with string functions like strlen().  Then 'unsigned char *'
+     * can be saved for things you shouldn't _accidentally_ pass to functions
+     * like strlen().  (One GREAT example: encoded UTF-8 byte strings.)
+     */
 #else
-	/* We want to ensure the input type is what we thought we were flipping,
-	 * particularly not the already-flipped type.  Instead of type_traits, 4
-	 * functions check in both C and C++ (here only during Debug builds):
-	 * (Definitions are in n-strings.c w/prototypes built by make-headers.r)
-	 */
+    /* We want to ensure the input type is what we thought we were flipping,
+     * particularly not the already-flipped type.  Instead of type_traits, 4
+     * functions check in both C and C++ (here only during Debug builds):
+     * (Definitions are in n-strings.c w/prototypes built by make-headers.r)
+     */
     #define s_cast(b)       s_cast_(b)
     #define cs_cast(b)      cs_cast_(b)
     #define b_cast(s)       b_cast_(s)
@@ -145,7 +145,7 @@
 // for the type (as used in types like LPVOID)
 
 #ifndef NOOP
-	#define NOOP cast(void, 0)
+    #define NOOP cast(void, 0)
 #endif
 
 
@@ -165,53 +165,53 @@
 
 #include <stdint.h>
 
-typedef int8_t			i8;
-typedef uint8_t			u8;
-typedef int16_t			i16;
-typedef uint16_t		u16;
-typedef int32_t			i32;
-typedef uint32_t		u32;
-typedef int64_t			i64;
-typedef uint64_t		u64;
-typedef intptr_t		REBIPT;		// integral counterpart of void*
-typedef uintptr_t		REBUPT;		// unsigned counterpart of void*
+typedef int8_t          i8;
+typedef uint8_t         u8;
+typedef int16_t         i16;
+typedef uint16_t        u16;
+typedef int32_t         i32;
+typedef uint32_t        u32;
+typedef int64_t         i64;
+typedef uint64_t        u64;
+typedef intptr_t        REBIPT;     // integral counterpart of void*
+typedef uintptr_t       REBUPT;     // unsigned counterpart of void*
 
 #define MAX_I32 INT32_MAX
 #define MIN_I32 INT32_MIN
 #define MAX_I64 INT64_MAX
 #define MIN_I64 INT64_MIN
 
-#define I8_C(c)			INT8_C(c)
-#define U8_C(c)			UINT8_C(c)
+#define I8_C(c)         INT8_C(c)
+#define U8_C(c)         UINT8_C(c)
 
-#define I16_C(c)		INT16_C(c)
-#define U16_C(c)		UINT16_C(c)
+#define I16_C(c)        INT16_C(c)
+#define U16_C(c)        UINT16_C(c)
 
-#define I32_C(c)		INT32_C(c)
-#define U32_C(c)		UINT32_C(c)
+#define I32_C(c)        INT32_C(c)
+#define U32_C(c)        UINT32_C(c)
 
-#define I64_C(c)		INT64_C(c)
-#define U64_C(c)		UINT64_C(c)
+#define I64_C(c)        INT64_C(c)
+#define U64_C(c)        UINT64_C(c)
 
 #else
 /* C-code types: C99 definitions unavailable, do it ourselves */
 
-typedef char			i8;
-typedef unsigned char	u8;
-#define I8(c) 			c
-#define U8(c) 			c
+typedef char            i8;
+typedef unsigned char   u8;
+#define I8(c)           c
+#define U8(c)           c
 
-typedef short			i16;
-typedef unsigned short	u16;
-#define I16(c) 			c
-#define U16(c) 			c
+typedef short           i16;
+typedef unsigned short  u16;
+#define I16(c)          c
+#define U16(c)          c
 
 #ifdef __LP64__
-typedef int				i32;
-typedef unsigned int	u32;
+typedef int             i32;
+typedef unsigned int    u32;
 #else
-typedef long			i32;
-typedef unsigned long	u32;
+typedef long            i32;
+typedef unsigned long   u32;
 #endif
 #define I32_C(c) c
 #define U32_C(c) c ## U
@@ -228,11 +228,11 @@ typedef unsigned long long u64;
 #define U64_C(c) c ## ULL
 #endif
 #ifdef __LLP64__
-typedef long long		REBIPT;		// integral counterpart of void*
-typedef unsigned long long	REBUPT;		// unsigned counterpart of void*
+typedef long long       REBIPT;     // integral counterpart of void*
+typedef unsigned long long  REBUPT;     // unsigned counterpart of void*
 #else
-typedef long			REBIPT;		// integral counterpart of void*
-typedef unsigned long	REBUPT;		// unsigned counterpart of void*
+typedef long            REBIPT;     // integral counterpart of void*
+typedef unsigned long   REBUPT;     // unsigned counterpart of void*
 #endif
 
 #define MAX_I32 I32_C(0x7fffffff)
@@ -247,7 +247,7 @@ typedef unsigned long	REBUPT;		// unsigned counterpart of void*
 #define MAX_U64 U64_C(0xffffffffffffffff)
 
 
-#ifndef DEF_UINT		// some systems define it, don't define it again
+#ifndef DEF_UINT        // some systems define it, don't define it again
 typedef unsigned int    uint;
 #endif
 
@@ -262,8 +262,8 @@ typedef int BOOL;       // (int is used for speed in modern CPUs)
 // (Note: compatible with FILETIME used in Windows)
 #pragma pack(4)
 typedef struct sInt64 {
-	i32 l;
-	i32 h;
+    i32 l;
+    i32 h;
 } I64;
 #pragma pack()
 
@@ -273,28 +273,28 @@ typedef struct sInt64 {
 **
 ***********************************************************************/
 
-typedef i32				REBINT;     // 32 bit (64 bit defined below)
-typedef u32				REBCNT;     // 32 bit (counting number)
-typedef i64				REBI64;     // 64 bit integer
-typedef u64				REBU64;     // 64 bit unsigned integer
-typedef i8				REBOOL;     // 8  bit flag (for struct usage)
-typedef u32				REBFLG;     // 32 bit flag (for cpu efficiency)
-typedef float			REBD32;     // 32 bit decimal
-typedef double			REBDEC;     // 64 bit decimal
+typedef i32             REBINT;     // 32 bit (64 bit defined below)
+typedef u32             REBCNT;     // 32 bit (counting number)
+typedef i64             REBI64;     // 64 bit integer
+typedef u64             REBU64;     // 64 bit unsigned integer
+typedef i8              REBOOL;     // 8  bit flag (for struct usage)
+typedef u32             REBFLG;     // 32 bit flag (for cpu efficiency)
+typedef float           REBD32;     // 32 bit decimal
+typedef double          REBDEC;     // 64 bit decimal
 
-typedef unsigned char	REBYTE;     // unsigned byte data
+typedef unsigned char   REBYTE;     // unsigned byte data
 
 #define MIN_D64 ((double)-9.2233720368547758e18)
 #define MAX_D64 ((double) 9.2233720368547758e18)
 
 // Useful char constants:
 enum {
-	BEL =   7,
-	BS  =   8,
-	LF  =  10,
-	CR  =  13,
-	ESC =  27,
-	DEL = 127
+    BEL =   7,
+    BS  =   8,
+    LF  =  10,
+    CR  =  13,
+    ESC =  27,
+    DEL = 127
 };
 
 // Used for MOLDing:
@@ -330,28 +330,28 @@ enum {
 **
 **  C FUNCTION TYPE (__cdecl)
 **
-**		Note that you *CANNOT* cast something like a `void *` to
-**		(or from) a function pointer.  Pointers to functions are not
-**		guaranteed to be the same size as to data, in either C or C++.
-**		A compiler might count the number of functions in your program,
-**		find less than 255, and use bytes for function pointers:
+**      Note that you *CANNOT* cast something like a `void *` to
+**      (or from) a function pointer.  Pointers to functions are not
+**      guaranteed to be the same size as to data, in either C or C++.
+**      A compiler might count the number of functions in your program,
+**      find less than 255, and use bytes for function pointers:
 **
-**			http://stackoverflow.com/questions/3941793/
+**          http://stackoverflow.com/questions/3941793/
 **
-**		So if you want something to hold either a function pointer or
-**		a data pointer, you have to implement that as a union...and
-**		know what you're doing when writing and reading it.
+**      So if you want something to hold either a function pointer or
+**      a data pointer, you have to implement that as a union...and
+**      know what you're doing when writing and reading it.
 **
-**		For info on the difference between __stdcall and __cdecl:
+**      For info on the difference between __stdcall and __cdecl:
 **
-**			http://stackoverflow.com/questions/3404372/
+**          http://stackoverflow.com/questions/3404372/
 **
 ***********************************************************************/
 
 #ifdef TO_WINDOWS
-	typedef void (__cdecl CFUNC)(void);
+    typedef void (__cdecl CFUNC)(void);
 #else
-	typedef void (CFUNC)(void);
+    typedef void (CFUNC)(void);
 #endif
 
 
@@ -359,33 +359,33 @@ enum {
 **
 **  TESTING IF A NUMBER IS FINITE
 **
-**		C89 and C++98 had no standard way of testing for if a number
-**		was finite or not.  Windows and POSIX came up with their
-**		own methods.  Finally it was standardized in C99 and C++11:
+**      C89 and C++98 had no standard way of testing for if a number
+**      was finite or not.  Windows and POSIX came up with their
+**      own methods.  Finally it was standardized in C99 and C++11:
 **
-**			http://en.cppreference.com/w/cpp/numeric/math/isfinite
+**          http://en.cppreference.com/w/cpp/numeric/math/isfinite
 **
-**		The name was changed to `isfinite()`.  And conforming C99
-**		and C++11 compilers can omit the old versions, so one cannot
-**		necessarily fall back on the old versions still being there.
-**		Yet the old versions don't have isfinite, so those have to
-**		be worked around here as well.
+**      The name was changed to `isfinite()`.  And conforming C99
+**      and C++11 compilers can omit the old versions, so one cannot
+**      necessarily fall back on the old versions still being there.
+**      Yet the old versions don't have isfinite, so those have to
+**      be worked around here as well.
 **
 ***********************************************************************/
 
 #if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L
-	// C99 or later
-	#define FINITE isfinite
+    // C99 or later
+    #define FINITE isfinite
 #elif defined(__cplusplus) && __cplusplus >= 199711L
-	// C++11 or later
-	#define FINITE isfinite
+    // C++11 or later
+    #define FINITE isfinite
 #else
-	// Other fallbacks...
-	#ifdef TO_WINDOWS
-		#define FINITE _finite // The usual answer for Windows
-	#else
-		#define FINITE finite // The usual answer for POSIX
-	#endif
+    // Other fallbacks...
+    #ifdef TO_WINDOWS
+        #define FINITE _finite // The usual answer for Windows
+    #else
+        #define FINITE finite // The usual answer for POSIX
+    #endif
 #endif
 
 
@@ -393,25 +393,25 @@ enum {
 **
 **  UNICODE CHARACTER TYPE
 **
-**		REBUNI is a two-byte UCS-2 representation of a Unicode codepoint.
-**		Some routines once errantly conflated wchar_t with REBUNI, but
-**		a wchar_t is not 2 bytes on all platforms (it's 4 on GCC in
-**		64-bit Linux, for instance).  Routines for handling UCS-2 must be
-**		custom coded or come from a library.  (For example: you can't use
-**		wcslen() so Strlen_Uni() is implemented inside of Rebol.)
+**      REBUNI is a two-byte UCS-2 representation of a Unicode codepoint.
+**      Some routines once errantly conflated wchar_t with REBUNI, but
+**      a wchar_t is not 2 bytes on all platforms (it's 4 on GCC in
+**      64-bit Linux, for instance).  Routines for handling UCS-2 must be
+**      custom coded or come from a library.  (For example: you can't use
+**      wcslen() so Strlen_Uni() is implemented inside of Rebol.)
 **
-**		Rebol is able to have its strings start out as UCS-1, with a
-**		single byte per character.  For that it uses REBYTEs.  But when
-**		you insert something requiring a higher codepoint, it goes
-**		to UCS-2 with REBUNI and will not go back (at time of writing).
+**      Rebol is able to have its strings start out as UCS-1, with a
+**      single byte per character.  For that it uses REBYTEs.  But when
+**      you insert something requiring a higher codepoint, it goes
+**      to UCS-2 with REBUNI and will not go back (at time of writing).
 **
-**		!!! BEWARE that several lower level routines don't do this
-**		widening, so be sure that you check which are which.
+**      !!! BEWARE that several lower level routines don't do this
+**      widening, so be sure that you check which are which.
 **
-**		Longer term, Rebol should seek to align with Red's Unicode
-**		strategy, which would go further to UCS-4:
+**      Longer term, Rebol should seek to align with Red's Unicode
+**      strategy, which would go further to UCS-4:
 **
-**		http://www.red-lang.org/2012/09/plan-for-unicode-support.html
+**      http://www.red-lang.org/2012/09/plan-for-unicode-support.html
 ** 
 ***********************************************************************/
 
@@ -422,67 +422,67 @@ typedef u16 REBUNI;
 
 /***********************************************************************
 **
-**	MEMORY ALLOCATION AND FREEING MACROS
+**  MEMORY ALLOCATION AND FREEING MACROS
 **
-**		Rebol's internal memory management is done based on a pooled
-**		model, which use Alloc_Mem and Free_Mem instead of calling
-**		malloc directly.  (See the comments on those routines for
-**		explanations of why this makes sense--even in an age of
-**		modern thread-safe allocators--due to Rebol's ability to
-**		exploit extra data in its pool block when a series grows.)
+**      Rebol's internal memory management is done based on a pooled
+**      model, which use Alloc_Mem and Free_Mem instead of calling
+**      malloc directly.  (See the comments on those routines for
+**      explanations of why this makes sense--even in an age of
+**      modern thread-safe allocators--due to Rebol's ability to
+**      exploit extra data in its pool block when a series grows.)
 **
-**		Since Free_Mem requires the caller to pass in the size of
-**		the memory being freed, it can be tricky.  These macros are
-**		are modeled after C++'s new/delete and new[]/delete[], and
-**		allocations take either a type or a type and a length.  The
-**		size calculation is done automatically, and the result is
-**		cast to the appropriate type.  The deallocations also take
-**		a type and do the calculations.
+**      Since Free_Mem requires the caller to pass in the size of
+**      the memory being freed, it can be tricky.  These macros are
+**      are modeled after C++'s new/delete and new[]/delete[], and
+**      allocations take either a type or a type and a length.  The
+**      size calculation is done automatically, and the result is
+**      cast to the appropriate type.  The deallocations also take
+**      a type and do the calculations.
 **
-**		In a C++11 build, an extra check is done to ensure the type
-**		you pass in a FREE or FREE_ARRAY lines up with the type of
-**		pointer being passed in to be freed.
+**      In a C++11 build, an extra check is done to ensure the type
+**      you pass in a FREE or FREE_ARRAY lines up with the type of
+**      pointer being passed in to be freed.
 **
 ***********************************************************************/
 
 #define ALLOC(t) \
-	cast(t *, Alloc_Mem(sizeof(t)))
+    cast(t *, Alloc_Mem(sizeof(t)))
 
 #define ALLOC_ZEROFILL(t) \
-	cast(t *, memset(ALLOC(t), '\0', sizeof(t)))
+    cast(t *, memset(ALLOC(t), '\0', sizeof(t)))
 
 #define ALLOC_ARRAY(t,n) \
-	cast(t *, Alloc_Mem(sizeof(t) * (n)))
+    cast(t *, Alloc_Mem(sizeof(t) * (n)))
 
 #define ALLOC_ARRAY_ZEROFILL(t,n) \
-	cast(t *, memset(ALLOC_ARRAY(t, (n)), '\0', sizeof(t) * (n)))
+    cast(t *, memset(ALLOC_ARRAY(t, (n)), '\0', sizeof(t) * (n)))
 
 #if defined(__cplusplus) && __cplusplus >= 201103L
-	#include <type_traits>
+    #include <type_traits>
 
-	#define FREE(t,p) \
-		do { \
-			static_assert( \
-				std::is_same<decltype(p), std::add_pointer<t>::type>::value, \
-				"mismatched FREE type" \
-			); \
-			Free_Mem(p, sizeof(t)); \
-		} while (0)
+    #define FREE(t,p) \
+        do { \
+            static_assert( \
+                std::is_same<decltype(p), std::add_pointer<t>::type>::value, \
+                "mismatched FREE type" \
+            ); \
+            Free_Mem(p, sizeof(t)); \
+        } while (0)
 
-	#define FREE_ARRAY(t,n,p)	\
-		do { \
-			static_assert( \
-				std::is_same<decltype(p), std::add_pointer<t>::type>::value, \
-				"mismatched FREE_ARRAY type" \
-			); \
-			Free_Mem(p, sizeof(t) * (n)); \
-		} while (0)
+    #define FREE_ARRAY(t,n,p)   \
+        do { \
+            static_assert( \
+                std::is_same<decltype(p), std::add_pointer<t>::type>::value, \
+                "mismatched FREE_ARRAY type" \
+            ); \
+            Free_Mem(p, sizeof(t) * (n)); \
+        } while (0)
 #else
-	#define FREE(t,p) \
-		Free_Mem((p), sizeof(t))
+    #define FREE(t,p) \
+        Free_Mem((p), sizeof(t))
 
-	#define FREE_ARRAY(t,n,p)	\
-		Free_Mem((p), sizeof(t) * (n))
+    #define FREE_ARRAY(t,n,p)   \
+        Free_Mem((p), sizeof(t) * (n))
 #endif
 
 // Memory clearing macros:
@@ -492,56 +492,56 @@ typedef u16 REBUNI;
 
 /***********************************************************************
 **
-**	ATTRIBUTES
+**  ATTRIBUTES
 **
-**		The __attribute__ feature is non-standard and only available
-**		in some compilers.  Individual attributes themselves are
-**		also available on a case-by-case basis.
+**      The __attribute__ feature is non-standard and only available
+**      in some compilers.  Individual attributes themselves are
+**      also available on a case-by-case basis.
 **
-**		Note: Placing the attribute after the prototype seems to lead
-**		to complaints, and technically there is a suggestion you may
-**		only define attributes on prototypes--not definitions:
+**      Note: Placing the attribute after the prototype seems to lead
+**      to complaints, and technically there is a suggestion you may
+**      only define attributes on prototypes--not definitions:
 **
-**			http://stackoverflow.com/q/23917031/211160
+**          http://stackoverflow.com/q/23917031/211160
 **
-**		Putting the attribute *before* the prototype seems to allow
-**		it on both the prototype and definition in gcc, however.
+**      Putting the attribute *before* the prototype seems to allow
+**      it on both the prototype and definition in gcc, however.
 **
 ***********************************************************************/
 
 #ifndef __has_builtin
-	#define __has_builtin(x) 0
+    #define __has_builtin(x) 0
 #endif
 
 #ifndef __has_feature
-	#define __has_feature(x) 0
+    #define __has_feature(x) 0
 #endif
 
 #ifdef __GNUC__
-	#define GCC_VERSION_AT_LEAST(m, n) \
-		(__GNUC__ > (m) || (__GNUC__ == (m) && __GNUC_MINOR__ >= (n)))
+    #define GCC_VERSION_AT_LEAST(m, n) \
+        (__GNUC__ > (m) || (__GNUC__ == (m) && __GNUC_MINOR__ >= (n)))
 #else
-	#define GCC_VERSION_AT_LEAST(m, n) 0
+    #define GCC_VERSION_AT_LEAST(m, n) 0
 #endif
 
 #if __has_feature(address_sanitizer) || GCC_VERSION_AT_LEAST(4, 8)
-	#define ATTRIBUTE_NO_SANITIZE_ADDRESS __attribute__ ((no_sanitize_address))
+    #define ATTRIBUTE_NO_SANITIZE_ADDRESS __attribute__ ((no_sanitize_address))
 #else
-	#define ATTRIBUTE_NO_SANITIZE_ADDRESS
+    #define ATTRIBUTE_NO_SANITIZE_ADDRESS
 #endif
 
 #if defined(__clang__) || GCC_VERSION_AT_LEAST(2, 5)
-	#define ATTRIBUTE_NO_RETURN __attribute__ ((noreturn))
+    #define ATTRIBUTE_NO_RETURN __attribute__ ((noreturn))
 #elif defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L
-	#define ATTRIBUTE_NO_RETURN _Noreturn
+    #define ATTRIBUTE_NO_RETURN _Noreturn
 #else
-	#define ATTRIBUTE_NO_RETURN
+    #define ATTRIBUTE_NO_RETURN
 #endif
 
 #if __has_builtin(__builtin_unreachable) || GCC_VERSION_AT_LEAST(4, 5)
-	#define DEAD_END __builtin_unreachable()
+    #define DEAD_END __builtin_unreachable()
 #else
-	#define DEAD_END
+    #define DEAD_END
 #endif
 
 
@@ -576,25 +576,25 @@ typedef u16 REBUNI;
 //
 // For APPEND_BYTES_LIMIT, m is the max-size allocated for d (dest)
 #if defined(NDEBUG) || !defined(REB_DEF)
-	#define LEN_BYTES(s) \
-		strlen((const char*)(s))
-	#define COPY_BYTES(d,s,n) \
-		strncpy((char*)(d), (const char*)(s), (n))
-	#define COMPARE_BYTES(l,r) \
-		strcmp((const char*)(l), (const char*)(r))
-	#define APPEND_BYTES_LIMIT(d,s,m) \
-		strncat((char*)d, (const char*)s, MAX((m) - strlen((char*)d) - 1, 0))
+    #define LEN_BYTES(s) \
+        strlen((const char*)(s))
+    #define COPY_BYTES(d,s,n) \
+        strncpy((char*)(d), (const char*)(s), (n))
+    #define COMPARE_BYTES(l,r) \
+        strcmp((const char*)(l), (const char*)(r))
+    #define APPEND_BYTES_LIMIT(d,s,m) \
+        strncat((char*)d, (const char*)s, MAX((m) - strlen((char*)d) - 1, 0))
 #else
-	// Debug build uses function stubs to ensure you pass in REBYTE *
-	// (But only if building in Rebol Core, host doesn't get the exports)
-	#define LEN_BYTES(s) \
-		LEN_BYTES_(s)
-	#define COPY_BYTES(d,s,n) \
-		COPY_BYTES_((d), (s), (n))
-	#define COMPARE_BYTES(l,r) \
-		COMPARE_BYTES_((l), (r))
-	#define APPEND_BYTES_LIMIT(d,s,m) \
-		APPEND_BYTES_LIMIT_((d), (s), (m))
+    // Debug build uses function stubs to ensure you pass in REBYTE *
+    // (But only if building in Rebol Core, host doesn't get the exports)
+    #define LEN_BYTES(s) \
+        LEN_BYTES_(s)
+    #define COPY_BYTES(d,s,n) \
+        COPY_BYTES_((d), (s), (n))
+    #define COMPARE_BYTES(l,r) \
+        COMPARE_BYTES_((l), (r))
+    #define APPEND_BYTES_LIMIT(d,s,m) \
+        APPEND_BYTES_LIMIT_((d), (s), (m))
 #endif
 
 #define ROUND_TO_INT(d) (REBINT)(floor((MAX(MIN_I32, MIN(MAX_I32, d))) + 0.5))
@@ -613,51 +613,51 @@ typedef u16 REBUNI;
 // image! datatype byte order
 
 #ifdef ENDIAN_BIG // ARGB pixel format on big endian systems
-	#define TO_RGBA_COLOR(r,g,b,a) \
-		(cast(REBCNT, (r)) << 24 \
-		| cast(REBCNT, (g)) << 16 \
-		| cast(REBCNT, (b)) << 8 \
-		| cast(REBCNT, (a)))
+    #define TO_RGBA_COLOR(r,g,b,a) \
+        (cast(REBCNT, (r)) << 24 \
+        | cast(REBCNT, (g)) << 16 \
+        | cast(REBCNT, (b)) << 8 \
+        | cast(REBCNT, (a)))
 
-	#define C_A 0
-	#define C_R 1
-	#define C_G 2
-	#define C_B 3
+    #define C_A 0
+    #define C_R 1
+    #define C_G 2
+    #define C_B 3
 
-	#define TO_PIXEL_COLOR(r,g,b,a) \
-		(cast(REBCNT, (a)) << 24 \
-		| cast(REBCNT, (r)) << 16 \
-		| cast(REBCNT, (g)) << 8 \
-		| cast(REBCNT, (b)))
+    #define TO_PIXEL_COLOR(r,g,b,a) \
+        (cast(REBCNT, (a)) << 24 \
+        | cast(REBCNT, (r)) << 16 \
+        | cast(REBCNT, (g)) << 8 \
+        | cast(REBCNT, (b)))
 #else
-	#define TO_RGBA_COLOR(r,g,b,a) \
-		(cast(REBCNT, (a)) << 24 \
-		| cast(REBCNT, (b)) << 16 \
-		| cast(REBCNT, (g)) << 8 \
-		| cast(REBCNT, (r)))
+    #define TO_RGBA_COLOR(r,g,b,a) \
+        (cast(REBCNT, (a)) << 24 \
+        | cast(REBCNT, (b)) << 16 \
+        | cast(REBCNT, (g)) << 8 \
+        | cast(REBCNT, (r)))
 
-	#ifdef TO_ANDROID_ARM // RGBA pixel format on Android
-		#define C_R 0
-		#define C_G 1
-		#define C_B 2
-		#define C_A 3
+    #ifdef TO_ANDROID_ARM // RGBA pixel format on Android
+        #define C_R 0
+        #define C_G 1
+        #define C_B 2
+        #define C_A 3
 
-		#define TO_PIXEL_COLOR(r,g,b,a) \
-			(cast(REBCNT, (a)) << 24 \
-			| cast(REBCNT, (b)) << 16 \
-			| cast(REBCNT, (g)) << 8 \
-			| cast(REBCNT, (r)))
+        #define TO_PIXEL_COLOR(r,g,b,a) \
+            (cast(REBCNT, (a)) << 24 \
+            | cast(REBCNT, (b)) << 16 \
+            | cast(REBCNT, (g)) << 8 \
+            | cast(REBCNT, (r)))
 
-	#else // BGRA pixel format on Windows
-		#define C_B 0
-		#define C_G 1
-		#define C_R 2
-		#define C_A 3
+    #else // BGRA pixel format on Windows
+        #define C_B 0
+        #define C_G 1
+        #define C_R 2
+        #define C_A 3
 
-		#define TO_PIXEL_COLOR(r,g,b,a) \
-			(cast(REBCNT, (a)) << 24 \
-			| cast(REBCNT, (r)) << 16 \
-			| cast(REBCNT, (g)) << 8 \
-			| cast(REBCNT, (b)))
-	#endif
+        #define TO_PIXEL_COLOR(r,g,b,a) \
+            (cast(REBCNT, (a)) << 24 \
+            | cast(REBCNT, (r)) << 16 \
+            | cast(REBCNT, (g)) << 8 \
+            | cast(REBCNT, (b)))
+    #endif
 #endif

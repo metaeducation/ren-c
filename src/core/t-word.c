@@ -35,23 +35,23 @@
 //
 REBINT CT_Word(REBVAL *a, REBVAL *b, REBINT mode)
 {
-	REBINT e;
-	REBINT diff;
-	if (mode >= 0) {
-		e = VAL_WORD_CANON(a) == VAL_WORD_CANON(b);
-		if (mode == 1) e &= VAL_WORD_INDEX(a) == VAL_WORD_INDEX(b)
-			&& VAL_WORD_FRAME(a) == VAL_WORD_FRAME(b);
-		else if (mode >= 2) {
-			e = (VAL_WORD_SYM(a) == VAL_WORD_SYM(b) &&
-				VAL_WORD_INDEX(a) == VAL_WORD_INDEX(b) &&
-				VAL_WORD_FRAME(a) == VAL_WORD_FRAME(b));
-		}
-	} else {
-		diff = Compare_Word(a, b, FALSE);
-		if (mode == -1) e = diff >= 0;
-		else e = diff > 0;
-	}
-	return e;
+    REBINT e;
+    REBINT diff;
+    if (mode >= 0) {
+        e = VAL_WORD_CANON(a) == VAL_WORD_CANON(b);
+        if (mode == 1) e &= VAL_WORD_INDEX(a) == VAL_WORD_INDEX(b)
+            && VAL_WORD_FRAME(a) == VAL_WORD_FRAME(b);
+        else if (mode >= 2) {
+            e = (VAL_WORD_SYM(a) == VAL_WORD_SYM(b) &&
+                VAL_WORD_INDEX(a) == VAL_WORD_INDEX(b) &&
+                VAL_WORD_FRAME(a) == VAL_WORD_FRAME(b));
+        }
+    } else {
+        diff = Compare_Word(a, b, FALSE);
+        if (mode == -1) e = diff >= 0;
+        else e = diff > 0;
+    }
+    return e;
 }
 
 
@@ -60,53 +60,53 @@ REBINT CT_Word(REBVAL *a, REBVAL *b, REBINT mode)
 //
 REBTYPE(Word)
 {
-	REBVAL *val = D_ARG(1);
-	REBVAL *arg = D_ARG(2);
-	REBCNT type = VAL_TYPE(val);
-	REBINT diff;
-	REBCNT sym;
+    REBVAL *val = D_ARG(1);
+    REBVAL *arg = D_ARG(2);
+    REBCNT type = VAL_TYPE(val);
+    REBINT diff;
+    REBCNT sym;
 
-	switch (action) {
-	case A_MAKE:
-	case A_TO:
-		// TO word! ...
-		if (type == REB_DATATYPE) type = VAL_TYPE_KIND(val);
-		if (ANY_WORD(arg)) {
-			VAL_SET(arg, type);
-			return R_ARG2;
-		}
-		else {
-			if (IS_STRING(arg)) {
-				REBYTE *bp;
-				REBCNT len;
-				// Set sym. Rest is set below.
-				bp = Temp_Byte_Chars_May_Fail(arg, MAX_SCAN_WORD, &len, TRUE);
-				if (type == REB_ISSUE) sym = Scan_Issue(bp, len);
-				else sym = Scan_Word(bp, len);
-				if (!sym) fail (Error(RE_BAD_CHAR, arg));
-			}
-			else if (IS_CHAR(arg)) {
-				REBYTE buf[8];
-				sym = Encode_UTF8_Char(&buf[0], VAL_CHAR(arg)); //returns length
-				sym = Scan_Word(&buf[0], sym);
-				if (!sym) fail (Error(RE_BAD_CHAR, arg));
-			}
-			else if (IS_DATATYPE(arg)) {
-				sym = VAL_TYPE_SYM(arg);
-			}
-			else if (IS_LOGIC(arg)) {
-				sym = VAL_LOGIC(arg) ? SYM_TRUE : SYM_FALSE;
-			}
-			else
-				fail (Error_Unexpected_Type(REB_WORD, VAL_TYPE(arg)));
+    switch (action) {
+    case A_MAKE:
+    case A_TO:
+        // TO word! ...
+        if (type == REB_DATATYPE) type = VAL_TYPE_KIND(val);
+        if (ANY_WORD(arg)) {
+            VAL_SET(arg, type);
+            return R_ARG2;
+        }
+        else {
+            if (IS_STRING(arg)) {
+                REBYTE *bp;
+                REBCNT len;
+                // Set sym. Rest is set below.
+                bp = Temp_Byte_Chars_May_Fail(arg, MAX_SCAN_WORD, &len, TRUE);
+                if (type == REB_ISSUE) sym = Scan_Issue(bp, len);
+                else sym = Scan_Word(bp, len);
+                if (!sym) fail (Error(RE_BAD_CHAR, arg));
+            }
+            else if (IS_CHAR(arg)) {
+                REBYTE buf[8];
+                sym = Encode_UTF8_Char(&buf[0], VAL_CHAR(arg)); //returns length
+                sym = Scan_Word(&buf[0], sym);
+                if (!sym) fail (Error(RE_BAD_CHAR, arg));
+            }
+            else if (IS_DATATYPE(arg)) {
+                sym = VAL_TYPE_SYM(arg);
+            }
+            else if (IS_LOGIC(arg)) {
+                sym = VAL_LOGIC(arg) ? SYM_TRUE : SYM_FALSE;
+            }
+            else
+                fail (Error_Unexpected_Type(REB_WORD, VAL_TYPE(arg)));
 
-			Val_Init_Word_Unbound(D_OUT, type, sym);
-		}
-		break;
+            Val_Init_Word_Unbound(D_OUT, type, sym);
+        }
+        break;
 
-	default:
-		fail (Error_Illegal_Action(type, action));
-	}
+    default:
+        fail (Error_Illegal_Action(type, action));
+    }
 
-	return R_OUT;
+    return R_OUT;
 }

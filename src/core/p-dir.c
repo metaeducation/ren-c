@@ -42,42 +42,42 @@
 //
 static int Read_Dir(REBREQ *dir, REBSER *files)
 {
-	REBINT result;
-	REBCNT len;
-	REBSER *fname;
-	REBSER *name;
-	REBREQ file;
+    REBINT result;
+    REBCNT len;
+    REBSER *fname;
+    REBSER *name;
+    REBREQ file;
 
-	RESET_TAIL(files);
-	CLEARS(&file);
+    RESET_TAIL(files);
+    CLEARS(&file);
 
-	// Temporary filename storage:
-	fname = BUF_OS_STR;
-	file.special.file.path = cast(REBCHR*, Reset_Buffer(fname, MAX_FILE_NAME));
+    // Temporary filename storage:
+    fname = BUF_OS_STR;
+    file.special.file.path = cast(REBCHR*, Reset_Buffer(fname, MAX_FILE_NAME));
 
-	SET_FLAG(dir->modes, RFM_DIR);
+    SET_FLAG(dir->modes, RFM_DIR);
 
-	dir->common.data = cast(REBYTE*, &file);
+    dir->common.data = cast(REBYTE*, &file);
 
-	while ((result = OS_DO_DEVICE(dir, RDC_READ)) == 0 && !GET_FLAG(dir->flags, RRF_DONE)) {
-		len = OS_STRLEN(file.special.file.path);
-		if (GET_FLAG(file.modes, RFM_DIR)) len++;
-		name = Copy_OS_Str(file.special.file.path, len);
-		if (GET_FLAG(file.modes, RFM_DIR))
-			SET_ANY_CHAR(name, name->tail-1, '/');
-		Val_Init_File(Alloc_Tail_Array(files), name);
-	}
+    while ((result = OS_DO_DEVICE(dir, RDC_READ)) == 0 && !GET_FLAG(dir->flags, RRF_DONE)) {
+        len = OS_STRLEN(file.special.file.path);
+        if (GET_FLAG(file.modes, RFM_DIR)) len++;
+        name = Copy_OS_Str(file.special.file.path, len);
+        if (GET_FLAG(file.modes, RFM_DIR))
+            SET_ANY_CHAR(name, name->tail-1, '/');
+        Val_Init_File(Alloc_Tail_Array(files), name);
+    }
 
-	if (result < 0 && dir->error != -RFE_OPEN_FAIL
-		&& (
-			OS_STRCHR(dir->special.file.path, '*')
-			|| OS_STRCHR(dir->special.file.path, '?')
-		)
-	) {
-		result = 0;  // no matches found, but not an error
-	}
+    if (result < 0 && dir->error != -RFE_OPEN_FAIL
+        && (
+            OS_STRCHR(dir->special.file.path, '*')
+            || OS_STRCHR(dir->special.file.path, '?')
+        )
+    ) {
+        result = 0;  // no matches found, but not an error
+    }
 
-	return result;
+    return result;
 }
 
 
@@ -95,62 +95,62 @@ static int Read_Dir(REBREQ *dir, REBSER *files)
 //
 static void Init_Dir_Path(REBREQ *dir, REBVAL *path, REBINT wild, REBCNT policy)
 {
-	REBINT len;
-	REBSER *ser;
-	//REBYTE *flags;
+    REBINT len;
+    REBSER *ser;
+    //REBYTE *flags;
 
-	SET_FLAG(dir->modes, RFM_DIR);
+    SET_FLAG(dir->modes, RFM_DIR);
 
-	// We depend on To_Local_Path giving us 2 extra chars for / and *
-	ser = Value_To_OS_Path(path, TRUE);
-	len = ser->tail;
-	dir->special.file.path = cast(REBCHR*, ser->data);
+    // We depend on To_Local_Path giving us 2 extra chars for / and *
+    ser = Value_To_OS_Path(path, TRUE);
+    len = ser->tail;
+    dir->special.file.path = cast(REBCHR*, ser->data);
 
-	Secure_Port(SYM_FILE, dir, path, ser);
+    Secure_Port(SYM_FILE, dir, path, ser);
 
-	if (len == 1 && OS_CH_EQUAL(dir->special.file.path[0], '.')) {
-		if (wild > 0) {
-			dir->special.file.path[0] = OS_MAKE_CH('*');
-			dir->special.file.path[1] = OS_MAKE_CH('\0');
-		}
-	}
-	else if (
-		len == 2
-		&& OS_CH_EQUAL(dir->special.file.path[0], '.')
-		&& OS_CH_EQUAL(dir->special.file.path[1], '.')
-	) {
-		// Insert * if needed:
-		if (wild > 0) {
-			dir->special.file.path[len++] = OS_MAKE_CH('/');
-			dir->special.file.path[len++] = OS_MAKE_CH('*');
-			dir->special.file.path[len] = OS_MAKE_CH('\0');
-		}
-	}
-	else if (
-		OS_CH_EQUAL(dir->special.file.path[len-1], '/')
-		|| OS_CH_EQUAL(dir->special.file.path[len-1], '\\')
-	) {
-		if (policy & REMOVE_TAIL_SLASH) {
-			dir->special.file.path[len-1] = OS_MAKE_CH('\0');
-		}
-		else {
-			// Insert * if needed:
-			if (wild > 0) {
-				dir->special.file.path[len++] = OS_MAKE_CH('*');
-				dir->special.file.path[len] = OS_MAKE_CH('\0');
-			}
-		}
-	} else {
-		// Path did not end with /, so we better be wild:
-		if (wild == 0) {
-			// !!! Comment said `OS_FREE(dir->special.file.path);` (needed?)
-			fail (Error(RE_BAD_FILE_PATH, path));
-		}
-		else if (wild < 0) {
-			dir->special.file.path[len++] = OS_MAKE_CH(OS_DIR_SEP);
-			dir->special.file.path[len] = OS_MAKE_CH('\0');
-		}
-	}
+    if (len == 1 && OS_CH_EQUAL(dir->special.file.path[0], '.')) {
+        if (wild > 0) {
+            dir->special.file.path[0] = OS_MAKE_CH('*');
+            dir->special.file.path[1] = OS_MAKE_CH('\0');
+        }
+    }
+    else if (
+        len == 2
+        && OS_CH_EQUAL(dir->special.file.path[0], '.')
+        && OS_CH_EQUAL(dir->special.file.path[1], '.')
+    ) {
+        // Insert * if needed:
+        if (wild > 0) {
+            dir->special.file.path[len++] = OS_MAKE_CH('/');
+            dir->special.file.path[len++] = OS_MAKE_CH('*');
+            dir->special.file.path[len] = OS_MAKE_CH('\0');
+        }
+    }
+    else if (
+        OS_CH_EQUAL(dir->special.file.path[len-1], '/')
+        || OS_CH_EQUAL(dir->special.file.path[len-1], '\\')
+    ) {
+        if (policy & REMOVE_TAIL_SLASH) {
+            dir->special.file.path[len-1] = OS_MAKE_CH('\0');
+        }
+        else {
+            // Insert * if needed:
+            if (wild > 0) {
+                dir->special.file.path[len++] = OS_MAKE_CH('*');
+                dir->special.file.path[len] = OS_MAKE_CH('\0');
+            }
+        }
+    } else {
+        // Path did not end with /, so we better be wild:
+        if (wild == 0) {
+            // !!! Comment said `OS_FREE(dir->special.file.path);` (needed?)
+            fail (Error(RE_BAD_FILE_PATH, path));
+        }
+        else if (wild < 0) {
+            dir->special.file.path[len++] = OS_MAKE_CH(OS_DIR_SEP);
+            dir->special.file.path[len] = OS_MAKE_CH('\0');
+        }
+    }
 }
 
 
@@ -161,154 +161,154 @@ static void Init_Dir_Path(REBREQ *dir, REBVAL *path, REBINT wild, REBCNT policy)
 //
 static REB_R Dir_Actor(struct Reb_Call *call_, REBSER *port, REBCNT action)
 {
-	REBVAL *spec;
-	REBVAL *path;
-	REBVAL *state;
-	REBREQ dir;
-	REBCNT args = 0;
-	REBINT result;
-	REBCNT len;
-	//REBYTE *flags;
+    REBVAL *spec;
+    REBVAL *path;
+    REBVAL *state;
+    REBREQ dir;
+    REBCNT args = 0;
+    REBINT result;
+    REBCNT len;
+    //REBYTE *flags;
 
-	Validate_Port(port, action);
+    Validate_Port(port, action);
 
-	*D_OUT = *D_ARG(1);
-	CLEARS(&dir);
+    *D_OUT = *D_ARG(1);
+    CLEARS(&dir);
 
-	// Validate and fetch relevant PORT fields:
-	spec  = BLK_SKIP(port, STD_PORT_SPEC);
-	if (!IS_OBJECT(spec)) fail (Error(RE_INVALID_SPEC, spec));
-	path = Obj_Value(spec, STD_PORT_SPEC_HEAD_REF);
-	if (!path) fail (Error(RE_INVALID_SPEC, spec));
+    // Validate and fetch relevant PORT fields:
+    spec  = BLK_SKIP(port, STD_PORT_SPEC);
+    if (!IS_OBJECT(spec)) fail (Error(RE_INVALID_SPEC, spec));
+    path = Obj_Value(spec, STD_PORT_SPEC_HEAD_REF);
+    if (!path) fail (Error(RE_INVALID_SPEC, spec));
 
-	if (IS_URL(path)) path = Obj_Value(spec, STD_PORT_SPEC_HEAD_PATH);
-	else if (!IS_FILE(path)) fail (Error(RE_INVALID_SPEC, path));
+    if (IS_URL(path)) path = Obj_Value(spec, STD_PORT_SPEC_HEAD_PATH);
+    else if (!IS_FILE(path)) fail (Error(RE_INVALID_SPEC, path));
 
-	state = BLK_SKIP(port, STD_PORT_STATE); // if block, then port is open.
+    state = BLK_SKIP(port, STD_PORT_STATE); // if block, then port is open.
 
-	//flags = Security_Policy(SYM_FILE, path);
+    //flags = Security_Policy(SYM_FILE, path);
 
-	// Get or setup internal state data:
-	dir.port = port;
-	dir.device = RDI_FILE;
+    // Get or setup internal state data:
+    dir.port = port;
+    dir.device = RDI_FILE;
 
-	switch (action) {
+    switch (action) {
 
-	case A_READ:
-		//Trap_Security(flags[POL_READ], POL_READ, path);
-		args = Find_Refines(call_, ALL_READ_REFS);
-		if (!IS_BLOCK(state)) {		// !!! ignores /SKIP and /PART, for now
-			Init_Dir_Path(&dir, path, 1, POL_READ);
-			Val_Init_Block(state, Make_Array(7)); // initial guess
-			result = Read_Dir(&dir, VAL_SERIES(state));
-			///OS_FREE(dir.file.path);
-			if (result < 0)
-				fail (Error_On_Port(RE_CANNOT_OPEN, port, dir.error));
-			*D_OUT = *state;
-			SET_NONE(state);
-		}
-		else {
-			// !!! This copies the strings in the block, shallowly.  What is
-			// the purpose of doing this?  Why copy at all?
-			Val_Init_Block(
-				D_OUT,
-				Copy_Array_Core_Managed(
-					VAL_SERIES(state),
-					0,
-					VAL_BLK_LEN(state),
-					FALSE, // !deep
-					TS_STRING
-				)
-			);
-		}
-		break;
+    case A_READ:
+        //Trap_Security(flags[POL_READ], POL_READ, path);
+        args = Find_Refines(call_, ALL_READ_REFS);
+        if (!IS_BLOCK(state)) {     // !!! ignores /SKIP and /PART, for now
+            Init_Dir_Path(&dir, path, 1, POL_READ);
+            Val_Init_Block(state, Make_Array(7)); // initial guess
+            result = Read_Dir(&dir, VAL_SERIES(state));
+            ///OS_FREE(dir.file.path);
+            if (result < 0)
+                fail (Error_On_Port(RE_CANNOT_OPEN, port, dir.error));
+            *D_OUT = *state;
+            SET_NONE(state);
+        }
+        else {
+            // !!! This copies the strings in the block, shallowly.  What is
+            // the purpose of doing this?  Why copy at all?
+            Val_Init_Block(
+                D_OUT,
+                Copy_Array_Core_Managed(
+                    VAL_SERIES(state),
+                    0,
+                    VAL_BLK_LEN(state),
+                    FALSE, // !deep
+                    TS_STRING
+                )
+            );
+        }
+        break;
 
-	case A_CREATE:
-		//Trap_Security(flags[POL_WRITE], POL_WRITE, path);
-		if (IS_BLOCK(state)) fail (Error(RE_ALREADY_OPEN, path));
+    case A_CREATE:
+        //Trap_Security(flags[POL_WRITE], POL_WRITE, path);
+        if (IS_BLOCK(state)) fail (Error(RE_ALREADY_OPEN, path));
 create:
-		Init_Dir_Path(&dir, path, 0, POL_WRITE | REMOVE_TAIL_SLASH); // Sets RFM_DIR too
-		result = OS_DO_DEVICE(&dir, RDC_CREATE);
-		///OS_FREE(dir.file.path);
-		if (result < 0) fail (Error(RE_NO_CREATE, path));
-		if (action == A_CREATE) {
-			// !!! Used to return R_ARG2, but create is single arity.  :-/
-			return R_ARG1;
-		}
-		SET_NONE(state);
-		break;
+        Init_Dir_Path(&dir, path, 0, POL_WRITE | REMOVE_TAIL_SLASH); // Sets RFM_DIR too
+        result = OS_DO_DEVICE(&dir, RDC_CREATE);
+        ///OS_FREE(dir.file.path);
+        if (result < 0) fail (Error(RE_NO_CREATE, path));
+        if (action == A_CREATE) {
+            // !!! Used to return R_ARG2, but create is single arity.  :-/
+            return R_ARG1;
+        }
+        SET_NONE(state);
+        break;
 
-	case A_RENAME:
-		if (IS_BLOCK(state)) fail (Error(RE_ALREADY_OPEN, path));
-		else {
-			REBSER *target;
+    case A_RENAME:
+        if (IS_BLOCK(state)) fail (Error(RE_ALREADY_OPEN, path));
+        else {
+            REBSER *target;
 
-			Init_Dir_Path(&dir, path, 0, POL_WRITE | REMOVE_TAIL_SLASH); // Sets RFM_DIR too
-			// Convert file name to OS format:
-			if (!(target = Value_To_OS_Path(D_ARG(2), TRUE)))
-				fail (Error(RE_BAD_FILE_PATH, D_ARG(2)));
-			dir.common.data = BIN_DATA(target);
-			OS_DO_DEVICE(&dir, RDC_RENAME);
-			Free_Series(target);
-			if (dir.error) fail (Error(RE_NO_RENAME, path));
-		}
-		break;
+            Init_Dir_Path(&dir, path, 0, POL_WRITE | REMOVE_TAIL_SLASH); // Sets RFM_DIR too
+            // Convert file name to OS format:
+            if (!(target = Value_To_OS_Path(D_ARG(2), TRUE)))
+                fail (Error(RE_BAD_FILE_PATH, D_ARG(2)));
+            dir.common.data = BIN_DATA(target);
+            OS_DO_DEVICE(&dir, RDC_RENAME);
+            Free_Series(target);
+            if (dir.error) fail (Error(RE_NO_RENAME, path));
+        }
+        break;
 
-	case A_DELETE:
-		//Trap_Security(flags[POL_WRITE], POL_WRITE, path);
-		SET_NONE(state);
-		Init_Dir_Path(&dir, path, 0, POL_WRITE);
-		// !!! add *.r deletion
-		// !!! add recursive delete (?)
-		result = OS_DO_DEVICE(&dir, RDC_DELETE);
-		///OS_FREE(dir.file.path);
-		if (result < 0) fail (Error(RE_NO_DELETE, path));
-		// !!! Returned R_ARG2 before, but there is no second argument :-/
-		return R_ARG1;
+    case A_DELETE:
+        //Trap_Security(flags[POL_WRITE], POL_WRITE, path);
+        SET_NONE(state);
+        Init_Dir_Path(&dir, path, 0, POL_WRITE);
+        // !!! add *.r deletion
+        // !!! add recursive delete (?)
+        result = OS_DO_DEVICE(&dir, RDC_DELETE);
+        ///OS_FREE(dir.file.path);
+        if (result < 0) fail (Error(RE_NO_DELETE, path));
+        // !!! Returned R_ARG2 before, but there is no second argument :-/
+        return R_ARG1;
 
-	case A_OPEN:
-		// !! If open fails, what if user does a READ w/o checking for error?
-		if (IS_BLOCK(state)) fail (Error(RE_ALREADY_OPEN, path));
-		//Trap_Security(flags[POL_READ], POL_READ, path);
-		args = Find_Refines(call_, ALL_OPEN_REFS);
-		if (args & AM_OPEN_NEW) goto create;
-		//if (args & ~AM_OPEN_READ) fail (Error(RE_INVALID_SPEC, path));
-		Val_Init_Block(state, Make_Array(7));
-		Init_Dir_Path(&dir, path, 1, POL_READ);
-		result = Read_Dir(&dir, VAL_SERIES(state));
-		///OS_FREE(dir.file.path);
-		if (result < 0) fail (Error_On_Port(RE_CANNOT_OPEN, port, dir.error));
-		break;
+    case A_OPEN:
+        // !! If open fails, what if user does a READ w/o checking for error?
+        if (IS_BLOCK(state)) fail (Error(RE_ALREADY_OPEN, path));
+        //Trap_Security(flags[POL_READ], POL_READ, path);
+        args = Find_Refines(call_, ALL_OPEN_REFS);
+        if (args & AM_OPEN_NEW) goto create;
+        //if (args & ~AM_OPEN_READ) fail (Error(RE_INVALID_SPEC, path));
+        Val_Init_Block(state, Make_Array(7));
+        Init_Dir_Path(&dir, path, 1, POL_READ);
+        result = Read_Dir(&dir, VAL_SERIES(state));
+        ///OS_FREE(dir.file.path);
+        if (result < 0) fail (Error_On_Port(RE_CANNOT_OPEN, port, dir.error));
+        break;
 
-	case A_OPENQ:
-		if (IS_BLOCK(state)) return R_TRUE;
-		return R_FALSE;
+    case A_OPENQ:
+        if (IS_BLOCK(state)) return R_TRUE;
+        return R_FALSE;
 
-	case A_CLOSE:
-		SET_NONE(state);
-		break;
+    case A_CLOSE:
+        SET_NONE(state);
+        break;
 
-	case A_QUERY:
-		//Trap_Security(flags[POL_READ], POL_READ, path);
-		SET_NONE(state);
-		Init_Dir_Path(&dir, path, -1, REMOVE_TAIL_SLASH | POL_READ);
-		if (OS_DO_DEVICE(&dir, RDC_QUERY) < 0) return R_NONE;
-		Ret_Query_File(port, &dir, D_OUT);
-		///OS_FREE(dir.file.path);
-		break;
+    case A_QUERY:
+        //Trap_Security(flags[POL_READ], POL_READ, path);
+        SET_NONE(state);
+        Init_Dir_Path(&dir, path, -1, REMOVE_TAIL_SLASH | POL_READ);
+        if (OS_DO_DEVICE(&dir, RDC_QUERY) < 0) return R_NONE;
+        Ret_Query_File(port, &dir, D_OUT);
+        ///OS_FREE(dir.file.path);
+        break;
 
-	//-- Port Series Actions (only called if opened as a port)
+    //-- Port Series Actions (only called if opened as a port)
 
-	case A_LENGTH:
-		len = IS_BLOCK(state) ? VAL_BLK_LEN(state) : 0;
-		SET_INTEGER(D_OUT, len);
-		break;
+    case A_LENGTH:
+        len = IS_BLOCK(state) ? VAL_BLK_LEN(state) : 0;
+        SET_INTEGER(D_OUT, len);
+        break;
 
-	default:
-		fail (Error_Illegal_Action(REB_PORT, action));
-	}
+    default:
+        fail (Error_Illegal_Action(REB_PORT, action));
+    }
 
-	return R_OUT;
+    return R_OUT;
 }
 
 
@@ -317,5 +317,5 @@ create:
 //
 void Init_Dir_Scheme(void)
 {
-	Register_Scheme(SYM_DIR, 0, Dir_Actor);
+    Register_Scheme(SYM_DIR, 0, Dir_Actor);
 }

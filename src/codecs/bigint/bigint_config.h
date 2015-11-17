@@ -33,14 +33,14 @@
  */
 
 /*
-		CONFIG_BIGINT_DEBUG
-		Enable diagnostics. Most of the extra size in this mode is
-		due to the storage of various strings that are used.
+        CONFIG_BIGINT_DEBUG
+        Enable diagnostics. Most of the extra size in this mode is
+        due to the storage of various strings that are used.
 */
 #undef CONFIG_BIGINT_DEBUG
 
 /*
-		CONFIG_BIGINT_CLASSICAL
+        CONFIG_BIGINT_CLASSICAL
         Classical uses standard division. It has no limitations and is
         theoretically the slowest due to the divisions used. For this particular
         implementation it is surprisingly quite fast.
@@ -48,7 +48,7 @@
 #undef CONFIG_BIGINT_CLASSICAL
 
 /*
-		CONFIG_BIGINT_MONTGOMERY
+        CONFIG_BIGINT_MONTGOMERY
         Montgomery uses simple addition and multiplication to achieve its
         performance.  It has the limitation that 0 <= x, y < m, and so is not
         used when CRT is active.
@@ -56,7 +56,7 @@
 #undef CONFIG_BIGINT_MONTGOMERY
 
 /*
-		CONFIG_BIGINT_BARRETT
+        CONFIG_BIGINT_BARRETT
         Barrett performs expensive precomputation before reduction and partial
         multiplies for computational speed.
 
@@ -66,17 +66,17 @@
 #define CONFIG_BIGINT_BARRETT 1
 
 /*
-		CONFIG_BIGINT_CRT
+        CONFIG_BIGINT_CRT
         Uses a number of extra coefficients from the private key to improve the
         performance of a decryption. This feature is one of the most
         significant performance improvements (it reduces a decryption time by
         over 3 times).
-		This option should be selected.
+        This option should be selected.
 */
 #define CONFIG_BIGINT_CRT 1
 
 /*
-		CONFIG_BIGINT_KARATSUBA
+        CONFIG_BIGINT_KARATSUBA
         Uses 3 multiplications (plus a number of additions/subtractions)
         instead of 4. Multiplications are O(N^2) but addition/subtraction
         is O(N) hence for large numbers is beneficial. For this project, the
@@ -87,7 +87,7 @@
 #undef CONFIG_BIGINT_KARATSUBA
 
 /*
-		MUL_KARATSUBA_THRESH
+        MUL_KARATSUBA_THRESH
         The minimum number of components needed before Karasuba muliplication
         is used.
 
@@ -98,7 +98,7 @@
 #define MUL_KARATSUBA_THRESH
 
 /*
-		SQU_KARATSUBA_THRESH
+        SQU_KARATSUBA_THRESH
         The minimum number of components needed before Karatsuba squaring
         is used.
 
@@ -109,7 +109,7 @@
 #define SQU_KARATSUBA_THRESH
 
 /*
-		CONFIG_BIGINT_SLIDING_WINDOW
+        CONFIG_BIGINT_SLIDING_WINDOW
         Allow Sliding-Window Exponentiation to be used.
         Potentially processes more than 1 bit at a time when doing
         exponentiation. The sliding-window technique reduces the number of
@@ -122,7 +122,7 @@
 #undef CONFIG_BIGINT_SLIDING_WINDOW
 
 /*
-		CONFIG_BIGINT_SQUARE
+        CONFIG_BIGINT_SQUARE
         Allow squaring to be used instead of a multiplication. It uses
         1/2 of the standard multiplies to obtain its performance.
         It gives a 20% speed improvement overall and so should be selected.
@@ -130,7 +130,7 @@
 #define CONFIG_BIGINT_SQUARE 1
 
 /*
-		CONFIG_BIGINT_CHECK_ON
+        CONFIG_BIGINT_CHECK_ON
         This is used when developing bigint algorithms. It performs a sanity
         check on all operations at the expense of speed.
         This option is only selected when developing and should normally be
@@ -139,19 +139,19 @@
 #undef CONFIG_BIGINT_CHECK_ON
 
 /*
-	CONFIG_INTEGER_32BIT
-	The native integer size is 32 bits or higher.
+    CONFIG_INTEGER_32BIT
+    The native integer size is 32 bits or higher.
 */
 #define CONFIG_INTEGER_32BIT 1
 
 /*
-	CONFIG_INTEGER_16BIT
-	The native integer size is 16 bits.
+    CONFIG_INTEGER_16BIT
+    The native integer size is 16 bits.
 */
 #undef CONFIG_INTEGER_16BIT
 
 /*
-	CONFIG_INTEGER_8BIT
-	The native integer size is 8 bits.
+    CONFIG_INTEGER_8BIT
+    The native integer size is 8 bits.
 */
 #undef CONFIG_INTEGER_8BIT

@@ -35,11 +35,11 @@
 //
 void REBCNT_To_Bytes(REBYTE *out, REBCNT in)
 {
-	assert(sizeof(REBCNT) == 4);
-	out[0] = (REBYTE) in;
-	out[1] = (REBYTE)(in >> 8);
-	out[2] = (REBYTE)(in >> 16);
-	out[3] = (REBYTE)(in >> 24);
+    assert(sizeof(REBCNT) == 4);
+    out[0] = (REBYTE) in;
+    out[1] = (REBYTE)(in >> 8);
+    out[2] = (REBYTE)(in >> 16);
+    out[3] = (REBYTE)(in >> 24);
 }
 
 
@@ -48,11 +48,11 @@ void REBCNT_To_Bytes(REBYTE *out, REBCNT in)
 //
 REBCNT Bytes_To_REBCNT(const REBYTE * const in)
 {
-	assert(sizeof(REBCNT) == 4);
-	return (REBCNT) in[0]          // & 0xFF
-		| (REBCNT)  in[1] <<  8    // & 0xFF00;
-		| (REBCNT)  in[2] << 16    // & 0xFF0000;
-		| (REBCNT)  in[3] << 24;   // & 0xFF000000;
+    assert(sizeof(REBCNT) == 4);
+    return (REBCNT) in[0]          // & 0xFF
+        | (REBCNT)  in[1] <<  8    // & 0xFF00;
+        | (REBCNT)  in[2] << 16    // & 0xFF0000;
+        | (REBCNT)  in[3] << 24;   // & 0xFF000000;
 }
 
 
@@ -61,11 +61,11 @@ REBCNT Bytes_To_REBCNT(const REBYTE * const in)
 //
 REBCNT Find_Int(REBINT *array, REBINT num)
 {
-	REBCNT n;
+    REBCNT n;
 
-	for (n = 0; array[n] && array[n] != num; n++);
-	if (array[n]) return n;
-	return NOT_FOUND;
+    for (n = 0; array[n] && array[n] != num; n++);
+    if (array[n]) return n;
+    return NOT_FOUND;
 }
 
 
@@ -78,24 +78,24 @@ REBCNT Find_Int(REBINT *array, REBINT num)
 //
 REBINT Get_Num_Arg(REBVAL *val)
 {
-	REBINT n;
+    REBINT n;
 
-	if (IS_INTEGER(val)) {
-		if (VAL_INT64(val) > (i64)MAX_I32 || VAL_INT64(val) < (i64)MIN_I32)
-			fail (Error_Out_Of_Range(val));
-		n = VAL_INT32(val);
-	}
-	else if (IS_DECIMAL(val) || IS_PERCENT(val)) {
-		if (VAL_DECIMAL(val) > MAX_I32 || VAL_DECIMAL(val) < MIN_I32)
-			fail (Error_Out_Of_Range(val));
-		n = (REBINT)VAL_DECIMAL(val);
-	}
-	else if (IS_LOGIC(val))
-		n = (VAL_LOGIC(val) ? 1 : 2);
-	else
-		fail (Error_Invalid_Arg(val));
+    if (IS_INTEGER(val)) {
+        if (VAL_INT64(val) > (i64)MAX_I32 || VAL_INT64(val) < (i64)MIN_I32)
+            fail (Error_Out_Of_Range(val));
+        n = VAL_INT32(val);
+    }
+    else if (IS_DECIMAL(val) || IS_PERCENT(val)) {
+        if (VAL_DECIMAL(val) > MAX_I32 || VAL_DECIMAL(val) < MIN_I32)
+            fail (Error_Out_Of_Range(val));
+        n = (REBINT)VAL_DECIMAL(val);
+    }
+    else if (IS_LOGIC(val))
+        n = (VAL_LOGIC(val) ? 1 : 2);
+    else
+        fail (Error_Invalid_Arg(val));
 
-	return n;
+    return n;
 }
 
 
@@ -104,11 +104,11 @@ REBINT Get_Num_Arg(REBVAL *val)
 //
 REBINT Float_Int16(REBD32 f)
 {
-	if (fabs(f) > (REBD32)(0x7FFF)) {
-		DS_PUSH_DECIMAL(f);
-		fail (Error_Out_Of_Range(DS_TOP));
-	}
-	return (REBINT)f;
+    if (fabs(f) > (REBD32)(0x7FFF)) {
+        DS_PUSH_DECIMAL(f);
+        fail (Error_Out_Of_Range(DS_TOP));
+    }
+    return (REBINT)f;
 }
 
 
@@ -117,19 +117,19 @@ REBINT Float_Int16(REBD32 f)
 //
 REBINT Int32(const REBVAL *val)
 {
-	REBINT n = 0;
+    REBINT n = 0;
 
-	if (IS_DECIMAL(val)) {
-		if (VAL_DECIMAL(val) > MAX_I32 || VAL_DECIMAL(val) < MIN_I32)
-			fail (Error_Out_Of_Range(val));
-		n = (REBINT)VAL_DECIMAL(val);
-	} else {
-		if (VAL_INT64(val) > (i64)MAX_I32 || VAL_INT64(val) < (i64)MIN_I32)
-			fail (Error_Out_Of_Range(val));
-		n = VAL_INT32(val);
-	}
+    if (IS_DECIMAL(val)) {
+        if (VAL_DECIMAL(val) > MAX_I32 || VAL_DECIMAL(val) < MIN_I32)
+            fail (Error_Out_Of_Range(val));
+        n = (REBINT)VAL_DECIMAL(val);
+    } else {
+        if (VAL_INT64(val) > (i64)MAX_I32 || VAL_INT64(val) < (i64)MIN_I32)
+            fail (Error_Out_Of_Range(val));
+        n = VAL_INT32(val);
+    }
 
-	return n;
+    return n;
 }
 
 
@@ -144,29 +144,29 @@ REBINT Int32(const REBVAL *val)
 //
 REBINT Int32s(const REBVAL *val, REBINT sign)
 {
-	REBINT n = 0;
+    REBINT n = 0;
 
-	if (IS_DECIMAL(val)) {
-		if (VAL_DECIMAL(val) > MAX_I32 || VAL_DECIMAL(val) < MIN_I32)
-			fail (Error_Out_Of_Range(val));
+    if (IS_DECIMAL(val)) {
+        if (VAL_DECIMAL(val) > MAX_I32 || VAL_DECIMAL(val) < MIN_I32)
+            fail (Error_Out_Of_Range(val));
 
-		n = (REBINT)VAL_DECIMAL(val);
-	} else {
-		if (VAL_INT64(val) > (i64)MAX_I32 || VAL_INT64(val) < (i64)MIN_I32)
-			fail (Error_Out_Of_Range(val));
+        n = (REBINT)VAL_DECIMAL(val);
+    } else {
+        if (VAL_INT64(val) > (i64)MAX_I32 || VAL_INT64(val) < (i64)MIN_I32)
+            fail (Error_Out_Of_Range(val));
 
-		n = VAL_INT32(val);
-	}
+        n = VAL_INT32(val);
+    }
 
-	// More efficient to use positive sense:
-	if (
-		(sign == 0 && n >= 0) ||
-		(sign >  0 && n >  0) ||
-		(sign <  0 && n <  0)
-	)
-		return n;
+    // More efficient to use positive sense:
+    if (
+        (sign == 0 && n >= 0) ||
+        (sign >  0 && n >  0) ||
+        (sign <  0 && n <  0)
+    )
+        return n;
 
-	fail (Error_Out_Of_Range(val));
+    fail (Error_Out_Of_Range(val));
 }
 
 
@@ -175,14 +175,14 @@ REBINT Int32s(const REBVAL *val, REBINT sign)
 //
 REBI64 Int64(const REBVAL *val)
 {
-	if (IS_INTEGER(val))
-		return VAL_INT64(val);
-	if (IS_DECIMAL(val) || IS_PERCENT(val))
-		return cast(REBI64, VAL_DECIMAL(val));
-	if (IS_MONEY(val))
-		return deci_to_int(VAL_MONEY_AMOUNT(val));
+    if (IS_INTEGER(val))
+        return VAL_INT64(val);
+    if (IS_DECIMAL(val) || IS_PERCENT(val))
+        return cast(REBI64, VAL_DECIMAL(val));
+    if (IS_MONEY(val))
+        return deci_to_int(VAL_MONEY_AMOUNT(val));
 
-	fail (Error_Invalid_Arg(val));
+    fail (Error_Invalid_Arg(val));
 }
 
 
@@ -191,14 +191,14 @@ REBI64 Int64(const REBVAL *val)
 //
 REBDEC Dec64(const REBVAL *val)
 {
-	if (IS_DECIMAL(val) || IS_PERCENT(val))
-		return VAL_DECIMAL(val);
-	if (IS_INTEGER(val))
-		return cast(REBDEC, VAL_INT64(val));
-	if (IS_MONEY(val))
-		return deci_to_decimal(VAL_MONEY_AMOUNT(val));
+    if (IS_DECIMAL(val) || IS_PERCENT(val))
+        return VAL_DECIMAL(val);
+    if (IS_INTEGER(val))
+        return cast(REBDEC, VAL_INT64(val));
+    if (IS_MONEY(val))
+        return deci_to_decimal(VAL_MONEY_AMOUNT(val));
 
-	fail (Error_Invalid_Arg(val));
+    fail (Error_Invalid_Arg(val));
 }
 
 
@@ -213,25 +213,25 @@ REBDEC Dec64(const REBVAL *val)
 //
 REBI64 Int64s(const REBVAL *val, REBINT sign)
 {
-	REBI64 n;
+    REBI64 n;
 
-	if (IS_DECIMAL(val)) {
-		if (VAL_DECIMAL(val) > MAX_I64 || VAL_DECIMAL(val) < MIN_I64)
-			fail (Error_Out_Of_Range(val));
-		n = (REBI64)VAL_DECIMAL(val);
-	} else {
-		n = VAL_INT64(val);
-	}
+    if (IS_DECIMAL(val)) {
+        if (VAL_DECIMAL(val) > MAX_I64 || VAL_DECIMAL(val) < MIN_I64)
+            fail (Error_Out_Of_Range(val));
+        n = (REBI64)VAL_DECIMAL(val);
+    } else {
+        n = VAL_INT64(val);
+    }
 
-	// More efficient to use positive sense:
-	if (
-		(sign == 0 && n >= 0) ||
-		(sign >  0 && n >  0) ||
-		(sign <  0 && n <  0)
-	)
-		return n;
+    // More efficient to use positive sense:
+    if (
+        (sign == 0 && n >= 0) ||
+        (sign >  0 && n >  0) ||
+        (sign <  0 && n <  0)
+    )
+        return n;
 
-	fail (Error_Out_Of_Range(val));
+    fail (Error_Out_Of_Range(val));
 }
 
 
@@ -240,10 +240,10 @@ REBI64 Int64s(const REBVAL *val, REBINT sign)
 //
 REBINT Int8u(const REBVAL *val)
 {
-	if (VAL_INT64(val) > cast(i64, 255) || VAL_INT64(val) < cast(i64, 0))
-		fail (Error_Out_Of_Range(val));
+    if (VAL_INT64(val) > cast(i64, 255) || VAL_INT64(val) < cast(i64, 0))
+        fail (Error_Out_Of_Range(val));
 
-	return VAL_INT32(val);
+    return VAL_INT32(val);
 }
 
 
@@ -255,16 +255,16 @@ REBINT Int8u(const REBVAL *val)
 //
 REBCNT Find_Refines(struct Reb_Call *call_, REBCNT mask)
 {
-	REBINT n;
-	REBCNT result = 0;
+    REBINT n;
+    REBCNT result = 0;
 
-	REBINT max = DSF_NUM_ARGS(call_);
+    REBINT max = DSF_NUM_ARGS(call_);
 
-	for (n = 0; n < max; n++) {
-		if ((mask & (1 << n) && D_REF(n + 1)))
-			result |= 1 << n;
-	}
-	return result;
+    for (n = 0; n < max; n++) {
+        if ((mask & (1 << n) && D_REF(n + 1)))
+            result |= 1 << n;
+    }
+    return result;
 }
 
 
@@ -273,7 +273,7 @@ REBCNT Find_Refines(struct Reb_Call *call_, REBCNT mask)
 //
 void Val_Init_Datatype(REBVAL *value, REBINT n)
 {
-	*value = *BLK_SKIP(Lib_Context, n+1);
+    *value = *BLK_SKIP(Lib_Context, n+1);
 }
 
 
@@ -285,8 +285,8 @@ void Val_Init_Datatype(REBVAL *value, REBINT n)
 //
 REBVAL *Get_Type(REBCNT index)
 {
-	assert(index < SERIES_TAIL(Lib_Context));
-	return FRM_VALUES(Lib_Context) + index + 1;
+    assert(index < SERIES_TAIL(Lib_Context));
+    return FRM_VALUES(Lib_Context) + index + 1;
 }
 
 
@@ -298,7 +298,7 @@ REBVAL *Get_Type(REBCNT index)
 //
 REBVAL *Type_Of(const REBVAL *value)
 {
-	return FRM_VALUES(Lib_Context) + VAL_TYPE(value) + 1;
+    return FRM_VALUES(Lib_Context) + VAL_TYPE(value) + 1;
 }
 
 
@@ -309,7 +309,7 @@ REBVAL *Type_Of(const REBVAL *value)
 //
 REBINT Get_Type_Sym(REBCNT type)
 {
-	return FRM_KEY_SYM(Lib_Context, type + 1);
+    return FRM_KEY_SYM(Lib_Context, type + 1);
 }
 
 
@@ -320,8 +320,8 @@ REBINT Get_Type_Sym(REBCNT type)
 //
 const REBYTE *Get_Field_Name(REBSER *obj, REBCNT index)
 {
-	assert(index < SERIES_TAIL(obj));
-	return Get_Sym_Name(FRM_KEY_SYM(obj, index));
+    assert(index < SERIES_TAIL(obj));
+    return Get_Sym_Name(FRM_KEY_SYM(obj, index));
 }
 
 
@@ -332,8 +332,8 @@ const REBYTE *Get_Field_Name(REBSER *obj, REBCNT index)
 //
 REBVAL *Get_Field(REBSER *obj, REBCNT index)
 {
-	assert(index < SERIES_TAIL(obj));
-	return FRM_VALUES(obj) + index;
+    assert(index < SERIES_TAIL(obj));
+    return FRM_VALUES(obj) + index;
 }
 
 
@@ -344,10 +344,10 @@ REBVAL *Get_Field(REBSER *obj, REBCNT index)
 //
 REBVAL *Get_Object(const REBVAL *objval, REBCNT index)
 {
-	REBSER *obj = VAL_OBJ_FRAME(objval);
-	assert(IS_FRAME(BLK_HEAD(obj)));
-	assert(index < SERIES_TAIL(obj));
-	return FRM_VALUES(obj) + index;
+    REBSER *obj = VAL_OBJ_FRAME(objval);
+    assert(IS_FRAME(BLK_HEAD(obj)));
+    assert(index < SERIES_TAIL(obj));
+    return FRM_VALUES(obj) + index;
 }
 
 
@@ -359,26 +359,26 @@ REBVAL *Get_Object(const REBVAL *objval, REBCNT index)
 //
 REBVAL *In_Object(REBSER *base, ...)
 {
-	REBVAL *obj = 0;
-	REBCNT n;
-	va_list args;
+    REBVAL *obj = 0;
+    REBCNT n;
+    va_list args;
 
-	va_start(args, base);
-	while ((n = va_arg(args, REBCNT))) {
-		if (n >= SERIES_TAIL(base)) {
-			va_end(args);
-			return 0;
-		}
-		obj = OFV(base, n);
-		if (!IS_OBJECT(obj)) {
-			va_end(args);
-			return 0;
-		}
-		base = VAL_OBJ_FRAME(obj);
-	}
-	va_end(args);
+    va_start(args, base);
+    while ((n = va_arg(args, REBCNT))) {
+        if (n >= SERIES_TAIL(base)) {
+            va_end(args);
+            return 0;
+        }
+        obj = OFV(base, n);
+        if (!IS_OBJECT(obj)) {
+            va_end(args);
+            return 0;
+        }
+        base = VAL_OBJ_FRAME(obj);
+    }
+    va_end(args);
 
-	return obj;
+    return obj;
 }
 
 
@@ -389,12 +389,12 @@ REBVAL *In_Object(REBSER *base, ...)
 //
 REBVAL *Get_System(REBCNT i1, REBCNT i2)
 {
-	REBVAL *obj;
+    REBVAL *obj;
 
-	obj = VAL_OBJ_VALUES(ROOT_SYSTEM) + i1;
-	if (!i2) return obj;
-	assert(IS_OBJECT(obj));
-	return Get_Field(VAL_OBJ_FRAME(obj), i2);
+    obj = VAL_OBJ_VALUES(ROOT_SYSTEM) + i1;
+    if (!i2) return obj;
+    assert(IS_OBJECT(obj));
+    return Get_Field(VAL_OBJ_FRAME(obj), i2);
 }
 
 
@@ -405,9 +405,9 @@ REBVAL *Get_System(REBCNT i1, REBCNT i2)
 //
 REBINT Get_System_Int(REBCNT i1, REBCNT i2, REBINT default_int)
 {
-	REBVAL *val = Get_System(i1, i2);
-	if (IS_INTEGER(val)) return VAL_INT32(val);
-	return default_int;
+    REBVAL *val = Get_System(i1, i2);
+    if (IS_INTEGER(val)) return VAL_INT32(val);
+    return default_int;
 }
 
 
@@ -416,14 +416,14 @@ REBINT Get_System_Int(REBCNT i1, REBCNT i2, REBINT default_int)
 //
 REBSER *Make_Std_Object_Managed(REBCNT index)
 {
-	REBSER *result = Copy_Array_Shallow(
-		VAL_OBJ_FRAME(Get_System(SYS_STANDARD, index))
-	);
-	// The system object is accessible by the user, and all of its
-	// content is managed already.  We copy the frame shallowly,
-	// but the word series inside it is managed.
-	MANAGE_SERIES(result);
-	return result;
+    REBSER *result = Copy_Array_Shallow(
+        VAL_OBJ_FRAME(Get_System(SYS_STANDARD, index))
+    );
+    // The system object is accessible by the user, and all of its
+    // content is managed already.  We copy the frame shallowly,
+    // but the word series inside it is managed.
+    MANAGE_SERIES(result);
+    return result;
 }
 
 
@@ -432,12 +432,12 @@ REBSER *Make_Std_Object_Managed(REBCNT index)
 //
 void Set_Object_Values(REBSER *obj, REBVAL *vals)
 {
-	REBVAL *value;
+    REBVAL *value;
 
-	for (value = FRM_VALUES(obj) + 1; NOT_END(value); value++) { // skip self
-		if (IS_END(vals)) SET_NONE(value);
-		else *value = *vals++;
-	}
+    for (value = FRM_VALUES(obj) + 1; NOT_END(value); value++) { // skip self
+        if (IS_END(vals)) SET_NONE(value);
+        else *value = *vals++;
+    }
 }
 
 
@@ -448,28 +448,28 @@ void Set_Object_Values(REBSER *obj, REBVAL *vals)
 //
 void Val_Init_Series_Index_Core(REBVAL *value, enum Reb_Kind type, REBSER *series, REBCNT index)
 {
-	ENSURE_SERIES_MANAGED(series);
+    ENSURE_SERIES_MANAGED(series);
 
-	if (type != REB_IMAGE && type != REB_VECTOR) {
-		// Code in various places seemed to have different opinions of
-		// whether a BINARY needed to be zero terminated.  It doesn't
-		// make a lot of sense to zero terminate a binary unless it
-		// simplifies the code assumptions somehow--it's in the class
-		// "ANY_BINSTR()" so that suggests perhaps it has a bit more
-		// obligation to conform.  Also, the original Make_Binary comment
-		// from the open source release read:
-		//
-		//     Make a binary string series. For byte, C, and UTF8 strings.
-		//     Add 1 extra for terminator.
-		//
-		// Until that is consciously overturned, check the REB_BINARY too
+    if (type != REB_IMAGE && type != REB_VECTOR) {
+        // Code in various places seemed to have different opinions of
+        // whether a BINARY needed to be zero terminated.  It doesn't
+        // make a lot of sense to zero terminate a binary unless it
+        // simplifies the code assumptions somehow--it's in the class
+        // "ANY_BINSTR()" so that suggests perhaps it has a bit more
+        // obligation to conform.  Also, the original Make_Binary comment
+        // from the open source release read:
+        //
+        //     Make a binary string series. For byte, C, and UTF8 strings.
+        //     Add 1 extra for terminator.
+        //
+        // Until that is consciously overturned, check the REB_BINARY too
 
-		ASSERT_SERIES_TERM(series); // doesn't apply to image/vector
-	}
+        ASSERT_SERIES_TERM(series); // doesn't apply to image/vector
+    }
 
-	VAL_SET(value, type);
-	VAL_SERIES(value) = series;
-	VAL_INDEX(value) = index;
+    VAL_SET(value, type);
+    VAL_SERIES(value) = series;
+    VAL_INDEX(value) = index;
 }
 
 
@@ -478,12 +478,12 @@ void Val_Init_Series_Index_Core(REBVAL *value, enum Reb_Kind type, REBSER *serie
 //
 void Set_Tuple(REBVAL *value, REBYTE *bytes, REBCNT len)
 {
-	REBYTE *bp;
+    REBYTE *bp;
 
-	VAL_SET(value, REB_TUPLE);
-	VAL_TUPLE_LEN(value) = (REBYTE)len;
-	for (bp = VAL_TUPLE(value); len > 0; len--)
-		*bp++ = *bytes++;
+    VAL_SET(value, REB_TUPLE);
+    VAL_TUPLE_LEN(value) = (REBYTE)len;
+    for (bp = VAL_TUPLE(value); len > 0; len--)
+        *bp++ = *bytes++;
 }
 
 
@@ -492,10 +492,10 @@ void Set_Tuple(REBVAL *value, REBYTE *bytes, REBCNT len)
 //
 void Val_Init_Object(REBVAL *value, REBSER *series)
 {
-	ENSURE_FRAME_MANAGED(series);
+    ENSURE_FRAME_MANAGED(series);
 
-	VAL_SET(value, REB_OBJECT);
-	VAL_OBJ_FRAME(value) = series;
+    VAL_SET(value, REB_OBJECT);
+    VAL_OBJ_FRAME(value) = series;
 }
 
 
@@ -504,10 +504,10 @@ void Val_Init_Object(REBVAL *value, REBSER *series)
 //
 void Val_Init_Port(REBVAL *value, REBSER *series)
 {
-	ENSURE_FRAME_MANAGED(series);
+    ENSURE_FRAME_MANAGED(series);
 
-	VAL_SET(value, REB_PORT);
-	VAL_OBJ_FRAME(value) = series;
+    VAL_SET(value, REB_PORT);
+    VAL_OBJ_FRAME(value) = series;
 }
 
 //
@@ -517,8 +517,8 @@ void Val_Init_Port(REBVAL *value, REBSER *series)
 //
 REBCNT Val_Series_Len(const REBVAL *value)
 {
-	if (VAL_INDEX(value) >= VAL_TAIL(value)) return 0;
-	return VAL_TAIL(value) - VAL_INDEX(value);
+    if (VAL_INDEX(value) >= VAL_TAIL(value)) return 0;
+    return VAL_TAIL(value) - VAL_INDEX(value);
 }
 
 
@@ -529,8 +529,8 @@ REBCNT Val_Series_Len(const REBVAL *value)
 //
 REBCNT Val_Byte_Len(const REBVAL *value)
 {
-	if (VAL_INDEX(value) >= VAL_TAIL(value)) return 0;
-	return (VAL_TAIL(value) - VAL_INDEX(value)) * SERIES_WIDE(VAL_SERIES(value));
+    if (VAL_INDEX(value) >= VAL_TAIL(value)) return 0;
+    return (VAL_TAIL(value) - VAL_INDEX(value)) * SERIES_WIDE(VAL_SERIES(value));
 }
 
 
@@ -539,16 +539,16 @@ REBCNT Val_Byte_Len(const REBVAL *value)
 //
 REBFLG Get_Logic_Arg(REBVAL *arg)
 {
-	if (IS_NONE(arg))
-		return 0;
-	if (IS_INTEGER(arg))
-		return VAL_INT64(arg) != 0;
-	if (IS_LOGIC(arg))
-		return VAL_LOGIC(arg) != 0;
-	if (IS_DECIMAL(arg) || IS_PERCENT(arg))
-		return VAL_DECIMAL(arg) != 0.0;
+    if (IS_NONE(arg))
+        return 0;
+    if (IS_INTEGER(arg))
+        return VAL_INT64(arg) != 0;
+    if (IS_LOGIC(arg))
+        return VAL_LOGIC(arg) != 0;
+    if (IS_DECIMAL(arg) || IS_PERCENT(arg))
+        return VAL_DECIMAL(arg) != 0.0;
 
-	fail (Error_Invalid_Arg(arg));
+    fail (Error_Invalid_Arg(arg));
 }
 
 
@@ -560,37 +560,37 @@ REBFLG Get_Logic_Arg(REBVAL *arg)
 //
 REBINT Partial1(REBVAL *sval, REBVAL *lval)
 {
-	REBI64 len;
-	REBINT maxlen;
-	REBINT is_ser = ANY_SERIES(sval);
+    REBI64 len;
+    REBINT maxlen;
+    REBINT is_ser = ANY_SERIES(sval);
 
-	// If lval is not set, use the current len of the target value:
-	if (IS_UNSET(lval)) {
-		if (!is_ser) return 1;
-		if (VAL_INDEX(sval) >= VAL_TAIL(sval)) return 0;
-		return (VAL_TAIL(sval) - VAL_INDEX(sval));
-	}
-	if (IS_INTEGER(lval) || IS_DECIMAL(lval)) len = Int32(lval);
-	else {
-		if (is_ser && VAL_TYPE(sval) == VAL_TYPE(lval) && VAL_SERIES(sval) == VAL_SERIES(lval))
-			len = (REBINT)VAL_INDEX(lval) - (REBINT)VAL_INDEX(sval);
-		else
-			fail (Error(RE_INVALID_PART, lval));
-	}
+    // If lval is not set, use the current len of the target value:
+    if (IS_UNSET(lval)) {
+        if (!is_ser) return 1;
+        if (VAL_INDEX(sval) >= VAL_TAIL(sval)) return 0;
+        return (VAL_TAIL(sval) - VAL_INDEX(sval));
+    }
+    if (IS_INTEGER(lval) || IS_DECIMAL(lval)) len = Int32(lval);
+    else {
+        if (is_ser && VAL_TYPE(sval) == VAL_TYPE(lval) && VAL_SERIES(sval) == VAL_SERIES(lval))
+            len = (REBINT)VAL_INDEX(lval) - (REBINT)VAL_INDEX(sval);
+        else
+            fail (Error(RE_INVALID_PART, lval));
+    }
 
-	if (is_ser) {
-		// Restrict length to the size available:
-		if (len >= 0) {
-			maxlen = (REBINT)VAL_LEN(sval);
-			if (len > maxlen) len = maxlen;
-		} else {
-			len = -len;
-			if (len > (REBINT)VAL_INDEX(sval)) len = (REBINT)VAL_INDEX(sval);
-			VAL_INDEX(sval) -= (REBCNT)len;
-		}
-	}
+    if (is_ser) {
+        // Restrict length to the size available:
+        if (len >= 0) {
+            maxlen = (REBINT)VAL_LEN(sval);
+            if (len > maxlen) len = maxlen;
+        } else {
+            len = -len;
+            if (len > (REBINT)VAL_INDEX(sval)) len = (REBINT)VAL_INDEX(sval);
+            VAL_INDEX(sval) -= (REBCNT)len;
+        }
+    }
 
-	return (REBINT)len;
+    return (REBINT)len;
 }
 
 
@@ -615,53 +615,53 @@ REBINT Partial1(REBVAL *sval, REBVAL *lval)
 //
 REBINT Partial(REBVAL *aval, REBVAL *bval, REBVAL *lval, REBFLG flag)
 {
-	REBVAL *val;
-	REBINT len;
-	REBINT maxlen;
+    REBVAL *val;
+    REBINT len;
+    REBINT maxlen;
 
-	// If lval is unset, use the current len of the target value:
-	if (IS_UNSET(lval)) {
-		val = (bval && ANY_SERIES(bval)) ? bval : aval;
-		if (VAL_INDEX(val) >= VAL_TAIL(val)) return 0;
-		return (VAL_TAIL(val) - VAL_INDEX(val));
-	}
+    // If lval is unset, use the current len of the target value:
+    if (IS_UNSET(lval)) {
+        val = (bval && ANY_SERIES(bval)) ? bval : aval;
+        if (VAL_INDEX(val) >= VAL_TAIL(val)) return 0;
+        return (VAL_TAIL(val) - VAL_INDEX(val));
+    }
 
-	if (IS_INTEGER(lval)) {
-		len = Int32(lval);
-		val = flag ? aval : bval;
-	}
+    if (IS_INTEGER(lval)) {
+        len = Int32(lval);
+        val = flag ? aval : bval;
+    }
 
-	else if (IS_DECIMAL(lval)) {
-		len = Int32(lval);
-		val = bval;
-	}
+    else if (IS_DECIMAL(lval)) {
+        len = Int32(lval);
+        val = bval;
+    }
 
-	else {
-		// So, lval must be relative to aval or bval series:
-		if (VAL_TYPE(aval) == VAL_TYPE(lval) && VAL_SERIES(aval) == VAL_SERIES(lval))
-			val = aval;
-		else if (bval && VAL_TYPE(bval) == VAL_TYPE(lval) && VAL_SERIES(bval) == VAL_SERIES(lval))
-			val = bval;
-		else
-			fail (Error(RE_INVALID_PART, lval));
+    else {
+        // So, lval must be relative to aval or bval series:
+        if (VAL_TYPE(aval) == VAL_TYPE(lval) && VAL_SERIES(aval) == VAL_SERIES(lval))
+            val = aval;
+        else if (bval && VAL_TYPE(bval) == VAL_TYPE(lval) && VAL_SERIES(bval) == VAL_SERIES(lval))
+            val = bval;
+        else
+            fail (Error(RE_INVALID_PART, lval));
 
-		len = (REBINT)VAL_INDEX(lval) - (REBINT)VAL_INDEX(val);
-	}
+        len = (REBINT)VAL_INDEX(lval) - (REBINT)VAL_INDEX(val);
+    }
 
-	if (!val) val = aval;
+    if (!val) val = aval;
 
-	// Restrict length to the size available:
-	if (len >= 0) {
-		maxlen = (REBINT)VAL_LEN(val);
-		if (len > maxlen) len = maxlen;
-	} else {
-		len = -len;
-		if (len > (REBINT)VAL_INDEX(val)) len = (REBINT)VAL_INDEX(val);
-		VAL_INDEX(val) -= (REBCNT)len;
-//		if ((-len) > (REBINT)VAL_INDEX(val)) len = -(REBINT)VAL_INDEX(val);
-	}
+    // Restrict length to the size available:
+    if (len >= 0) {
+        maxlen = (REBINT)VAL_LEN(val);
+        if (len > maxlen) len = maxlen;
+    } else {
+        len = -len;
+        if (len > (REBINT)VAL_INDEX(val)) len = (REBINT)VAL_INDEX(val);
+        VAL_INDEX(val) -= (REBCNT)len;
+//      if ((-len) > (REBINT)VAL_INDEX(val)) len = -(REBINT)VAL_INDEX(val);
+    }
 
-	return len;
+    return len;
 }
 
 
@@ -670,9 +670,9 @@ REBINT Partial(REBVAL *aval, REBVAL *bval, REBVAL *lval, REBFLG flag)
 //
 int Clip_Int(int val, int mini, int maxi)
 {
-	if (val < mini) val = mini;
-	else if (val > maxi) val = maxi;
-	return val;
+    if (val < mini) val = mini;
+    else if (val > maxi) val = maxi;
+    return val;
 }
 
 //
@@ -683,16 +683,16 @@ int Clip_Int(int val, int mini, int maxi)
 //
 void memswapl(void *m1, void *m2, size_t len)
 {
-	long t, *a, *b;
+    long t, *a, *b;
 
-	a = cast(long*, m1);
-	b = cast(long*, m2);
-	len /= sizeof(long);
-	while (len--) {
-		t = *b;
-		*b++ = *a;
-		*a++ = t;
-	}
+    a = cast(long*, m1);
+    b = cast(long*, m2);
+    len /= sizeof(long);
+    while (len--) {
+        t = *b;
+        *b++ = *a;
+        *a++ = t;
+    }
 }
 
 
@@ -701,12 +701,12 @@ void memswapl(void *m1, void *m2, size_t len)
 //
 i64 Add_Max(int type, i64 n, i64 m, i64 maxi)
 {
-	i64 r = n + m;
-	if (r < -maxi || r > maxi) {
-		if (type) fail (Error(RE_TYPE_LIMIT, Get_Type(type)));
-		r = r > 0 ? maxi : -maxi;
-	}
-	return r;
+    i64 r = n + m;
+    if (r < -maxi || r > maxi) {
+        if (type) fail (Error(RE_TYPE_LIMIT, Get_Type(type)));
+        r = r > 0 ? maxi : -maxi;
+    }
+    return r;
 }
 
 
@@ -715,9 +715,9 @@ i64 Add_Max(int type, i64 n, i64 m, i64 maxi)
 //
 int Mul_Max(int type, i64 n, i64 m, i64 maxi)
 {
-	i64 r = n * m;
-	if (r < -maxi || r > maxi) fail (Error(RE_TYPE_LIMIT, Get_Type(type)));
-	return (int)r;
+    i64 r = n * m;
+    if (r < -maxi || r > maxi) fail (Error(RE_TYPE_LIMIT, Get_Type(type)));
+    return (int)r;
 }
 
 
@@ -726,10 +726,10 @@ int Mul_Max(int type, i64 n, i64 m, i64 maxi)
 //
 void Make_OS_Error(REBVAL *out, int errnum)
 {
-	REBCHR str[100];
+    REBCHR str[100];
 
-	OS_FORM_ERROR(errnum, str, 100);
-	Val_Init_String(out, Copy_OS_Str(str, OS_STRLEN(str)));
+    OS_FORM_ERROR(errnum, str, 100);
+    Val_Init_String(out, Copy_OS_Str(str, OS_STRLEN(str)));
 }
 
 
@@ -742,21 +742,21 @@ void Make_OS_Error(REBVAL *out, int errnum)
 //
 REBSER *At_Head(REBVAL *value)
 {
-	REBCNT len;
-	REBSER *ser;
-	REBSER *src = VAL_SERIES(value);
-	REBYTE wide;
+    REBCNT len;
+    REBSER *ser;
+    REBSER *src = VAL_SERIES(value);
+    REBYTE wide;
 
-	if (VAL_INDEX(value) == 0) return src;
+    if (VAL_INDEX(value) == 0) return src;
 
-	len = VAL_LEN(value);
-	wide = SERIES_WIDE(src);
-	ser = Make_Series(len, wide, Is_Array_Series(src) ? MKS_ARRAY : MKS_NONE);
+    len = VAL_LEN(value);
+    wide = SERIES_WIDE(src);
+    ser = Make_Series(len, wide, Is_Array_Series(src) ? MKS_ARRAY : MKS_NONE);
 
-	memcpy(ser->data, src->data + (VAL_INDEX(value) * wide), len * wide);
-	ser->tail = len;
+    memcpy(ser->data, src->data + (VAL_INDEX(value) * wide), len * wide);
+    ser->tail = len;
 
-	return ser;
+    return ser;
 }
 
 
@@ -767,23 +767,23 @@ REBSER *At_Head(REBVAL *value)
 //
 REBSER *Collect_Set_Words(REBVAL *val)
 {
-	REBCNT cnt = 0;
-	REBVAL *val2 = val;
-	REBSER *ser;
+    REBCNT cnt = 0;
+    REBVAL *val2 = val;
+    REBSER *ser;
 
-	for (; NOT_END(val); val++) if (IS_SET_WORD(val)) cnt++;
-	val = val2;
+    for (; NOT_END(val); val++) if (IS_SET_WORD(val)) cnt++;
+    val = val2;
 
-	ser = Make_Array(cnt);
-	val2 = BLK_HEAD(ser);
-	for (; NOT_END(val); val++) {
-		if (IS_SET_WORD(val))
-			Val_Init_Word_Unbound(val2++, REB_WORD, VAL_WORD_SYM(val));
-	}
-	SET_END(val2);
-	SERIES_TAIL(ser) = cnt;
+    ser = Make_Array(cnt);
+    val2 = BLK_HEAD(ser);
+    for (; NOT_END(val); val++) {
+        if (IS_SET_WORD(val))
+            Val_Init_Word_Unbound(val2++, REB_WORD, VAL_WORD_SYM(val));
+    }
+    SET_END(val2);
+    SERIES_TAIL(ser) = cnt;
 
-	return ser;
+    return ser;
 }
 
 
@@ -792,15 +792,15 @@ REBSER *Collect_Set_Words(REBVAL *val)
 //
 REBINT What_Reflector(REBVAL *word)
 {
-	if (IS_WORD(word)) {
-		switch (VAL_WORD_SYM(word)) {
-		case SYM_SPEC:   return OF_SPEC;
-		case SYM_BODY:   return OF_BODY;
-		case SYM_WORDS:  return OF_WORDS;
-		case SYM_VALUES: return OF_VALUES;
-		case SYM_TYPES:  return OF_TYPES;
-		case SYM_TITLE:  return OF_TITLE;
-		}
-	}
-	return 0;
+    if (IS_WORD(word)) {
+        switch (VAL_WORD_SYM(word)) {
+        case SYM_SPEC:   return OF_SPEC;
+        case SYM_BODY:   return OF_BODY;
+        case SYM_WORDS:  return OF_WORDS;
+        case SYM_VALUES: return OF_VALUES;
+        case SYM_TYPES:  return OF_TYPES;
+        case SYM_TITLE:  return OF_TITLE;
+        }
+    }
+    return 0;
 }

@@ -26,9 +26,9 @@
 ***********************************************************************/
 
 #ifndef __cplusplus
-	// See feature_test_macros(7)
-	// This definition is redundant under C++
-	#define _GNU_SOURCE
+    // See feature_test_macros(7)
+    // This definition is redundant under C++
+    #define _GNU_SOURCE
 #endif
 
 #include <stdlib.h>
@@ -65,18 +65,18 @@
 static int Get_Timezone(struct tm *local_tm)
 {
 #ifdef HAS_SMART_TIMEZONE
-	time_t rightnow;
-	time(&rightnow);
-	return cast(int,
-		difftime(mktime(localtime(&rightnow)), mktime(gmtime(&rightnow))) / 60
-	);
+    time_t rightnow;
+    time(&rightnow);
+    return cast(int,
+        difftime(mktime(localtime(&rightnow)), mktime(gmtime(&rightnow))) / 60
+    );
 #else
-	struct tm tm2;
-	time_t rightnow;
-	time(&rightnow);
-	tm2 = *localtime(&rightnow);
-	tm2.tm_isdst=0;
-	return (int)difftime(mktime(&tm2), mktime(gmtime(&rightnow))) / 60;
+    struct tm tm2;
+    time_t rightnow;
+    time(&rightnow);
+    tm2 = *localtime(&rightnow);
+    tm2.tm_isdst=0;
+    return (int)difftime(mktime(&tm2), mktime(gmtime(&rightnow))) / 60;
 #endif
 }
 
@@ -89,18 +89,18 @@ static int Get_Timezone(struct tm *local_tm)
 //
 void Convert_Date(time_t *stime, REBOL_DAT *dat, long zone)
 {
-	struct tm *time;
+    struct tm *time;
 
-	CLEARS(dat);
+    CLEARS(dat);
 
-	time = gmtime(stime);
+    time = gmtime(stime);
 
-	dat->year  = time->tm_year + 1900;
-	dat->month = time->tm_mon + 1;
-	dat->day   = time->tm_mday;
-	dat->time  = time->tm_hour * 3600 + time->tm_min * 60 + time->tm_sec;
-	dat->nano  = 0;
-	dat->zone  = Get_Timezone(time);
+    dat->year  = time->tm_year + 1900;
+    dat->month = time->tm_mon + 1;
+    dat->day   = time->tm_mday;
+    dat->time  = time->tm_hour * 3600 + time->tm_min * 60 + time->tm_sec;
+    dat->nano  = 0;
+    dat->zone  = Get_Timezone(time);
 }
 
 
@@ -111,13 +111,13 @@ void Convert_Date(time_t *stime, REBOL_DAT *dat, long zone)
 //
 void OS_Get_Time(REBOL_DAT *dat)
 {
-	struct timeval tv;
-	time_t stime;
+    struct timeval tv;
+    time_t stime;
 
-	gettimeofday(&tv, 0); // (tz field obsolete)
-	stime = tv.tv_sec;
-	Convert_Date(&stime, dat, -1);
-	dat->nano  = tv.tv_usec * 1000;
+    gettimeofday(&tv, 0); // (tz field obsolete)
+    stime = tv.tv_sec;
+    Convert_Date(&stime, dat, -1);
+    dat->nano  = tv.tv_usec * 1000;
 }
 
 
@@ -133,16 +133,16 @@ void OS_Get_Time(REBOL_DAT *dat)
 //
 i64 OS_Delta_Time(i64 base, int flags)
 {
-	struct timeval tv;
-	i64 time;
+    struct timeval tv;
+    i64 time;
 
-	gettimeofday(&tv,0);
+    gettimeofday(&tv,0);
 
-	time = cast(i64, tv.tv_sec * 1000000) + tv.tv_usec;
+    time = cast(i64, tv.tv_sec * 1000000) + tv.tv_usec;
 
-	if (base == 0) return time;
+    if (base == 0) return time;
 
-	return time - base;
+    return time - base;
 }
 
 
@@ -154,12 +154,12 @@ i64 OS_Delta_Time(i64 base, int flags)
 //
 void OS_File_Time(REBREQ *file, REBOL_DAT *dat)
 {
-	if (sizeof(time_t) > sizeof(file->special.file.time.l)) {
-		REBI64 t = file->special.file.time.l;
-		t |= cast(REBI64, file->special.file.time.h) << 32;
-		Convert_Date(cast(time_t*, &t), dat, 0);
-	} else {
-		Convert_Date(cast(time_t *, &file->special.file.time.l), dat, 0);
-	}
+    if (sizeof(time_t) > sizeof(file->special.file.time.l)) {
+        REBI64 t = file->special.file.time.l;
+        t |= cast(REBI64, file->special.file.time.h) << 32;
+        Convert_Date(cast(time_t*, &t), dat, 0);
+    } else {
+        Convert_Date(cast(time_t *, &file->special.file.time.l), dat, 0);
+    }
 }
 

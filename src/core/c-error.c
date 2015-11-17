@@ -39,22 +39,22 @@
 //
 void Push_Trap_Helper(REBOL_STATE *s)
 {
-	assert(Saved_State || (DSP == -1 && !DSF));
+    assert(Saved_State || (DSP == -1 && !DSF));
 
-	s->dsp = DSP;
-	s->dsf = DSF;
+    s->dsp = DSP;
+    s->dsf = DSF;
 
-	s->series_guard_tail = GC_Series_Guard->tail;
-	s->value_guard_tail = GC_Value_Guard->tail;
-	s->gc_disable = GC_Disabled;
+    s->series_guard_tail = GC_Series_Guard->tail;
+    s->value_guard_tail = GC_Value_Guard->tail;
+    s->gc_disable = GC_Disabled;
 
-	s->manuals_tail = SERIES_TAIL(GC_Manuals);
+    s->manuals_tail = SERIES_TAIL(GC_Manuals);
 
-	s->last_state = Saved_State;
-	Saved_State = s;
+    s->last_state = Saved_State;
+    Saved_State = s;
 
-	// !!! Is this initialization necessary?
-	s->error_frame = NULL;
+    // !!! Is this initialization necessary?
+    s->error_frame = NULL;
 }
 
 
@@ -81,41 +81,41 @@ void Push_Trap_Helper(REBOL_STATE *s)
 //
 REBOOL Trapped_Helper_Halted(REBOL_STATE *state)
 {
-	struct Reb_Call *call = CS_Top;
-	REBOOL halted;
+    struct Reb_Call *call = CS_Top;
+    REBOOL halted;
 
-	// Check for more "error frame validity"?
-	ASSERT_FRAME(state->error_frame);
+    // Check for more "error frame validity"?
+    ASSERT_FRAME(state->error_frame);
 
-	halted = (ERR_NUM(state->error_frame) == RE_HALT);
+    halted = (ERR_NUM(state->error_frame) == RE_HALT);
 
-	// Restore Rebol call stack frame at time of Push_Trap
-	while (call != state->dsf) {
-		struct Reb_Call *prior = call->prior;
-		Free_Call(call);
-		call = prior;
-	}
-	SET_DSF(state->dsf);
+    // Restore Rebol call stack frame at time of Push_Trap
+    while (call != state->dsf) {
+        struct Reb_Call *prior = call->prior;
+        Free_Call(call);
+        call = prior;
+    }
+    SET_DSF(state->dsf);
 
-	// Restore Rebol data stack pointer at time of Push_Trap
-	DS_DROP_TO(state->dsp);
+    // Restore Rebol data stack pointer at time of Push_Trap
+    DS_DROP_TO(state->dsp);
 
-	// Free any manual series that were extant at the time of the error
-	// (that were created since this PUSH_TRAP started)
-	assert(GC_Manuals->tail >= state->manuals_tail);
-	while (GC_Manuals->tail != state->manuals_tail) {
-		// Freeing the series will update the tail...
-		Free_Series(cast(REBSER**, GC_Manuals->data)[GC_Manuals->tail - 1]);
-	}
+    // Free any manual series that were extant at the time of the error
+    // (that were created since this PUSH_TRAP started)
+    assert(GC_Manuals->tail >= state->manuals_tail);
+    while (GC_Manuals->tail != state->manuals_tail) {
+        // Freeing the series will update the tail...
+        Free_Series(cast(REBSER**, GC_Manuals->data)[GC_Manuals->tail - 1]);
+    }
 
-	GC_Series_Guard->tail = state->series_guard_tail;
-	GC_Value_Guard->tail = state->value_guard_tail;
+    GC_Series_Guard->tail = state->series_guard_tail;
+    GC_Value_Guard->tail = state->value_guard_tail;
 
-	GC_Disabled = state->gc_disable;
+    GC_Disabled = state->gc_disable;
 
-	Saved_State = state->last_state;
+    Saved_State = state->last_state;
 
-	return halted;
+    return halted;
 }
 
 
@@ -129,13 +129,13 @@ REBOOL Trapped_Helper_Halted(REBOL_STATE *state)
 //
 void Convert_Name_To_Thrown_Debug(REBVAL *name, const REBVAL *arg)
 {
-	assert(!THROWN(name));
-	VAL_SET_OPT(name, OPT_VALUE_THROWN);
+    assert(!THROWN(name));
+    VAL_SET_OPT(name, OPT_VALUE_THROWN);
 
-	assert(IS_TRASH(TASK_THROWN_ARG));
-	assert(!IS_TRASH(arg));
+    assert(IS_TRASH(TASK_THROWN_ARG));
+    assert(!IS_TRASH(arg));
 
-	*TASK_THROWN_ARG = *arg;
+    *TASK_THROWN_ARG = *arg;
 }
 
 
@@ -151,14 +151,14 @@ void Convert_Name_To_Thrown_Debug(REBVAL *name, const REBVAL *arg)
 //
 void Catch_Thrown_Debug(REBVAL *out, REBVAL *thrown)
 {
-	assert(THROWN(thrown));
-	VAL_CLR_OPT(thrown, OPT_VALUE_THROWN);
+    assert(THROWN(thrown));
+    VAL_CLR_OPT(thrown, OPT_VALUE_THROWN);
 
-	assert(!IS_TRASH(TASK_THROWN_ARG));
+    assert(!IS_TRASH(TASK_THROWN_ARG));
 
-	*out = *TASK_THROWN_ARG;
+    *out = *TASK_THROWN_ARG;
 
-	SET_TRASH_SAFE(TASK_THROWN_ARG);
+    SET_TRASH_SAFE(TASK_THROWN_ARG);
 }
 
 
@@ -174,61 +174,61 @@ void Catch_Thrown_Debug(REBVAL *out, REBVAL *thrown)
 //
 ATTRIBUTE_NO_RETURN void Fail_Core(REBSER *frame)
 {
-	ASSERT_FRAME(frame);
+    ASSERT_FRAME(frame);
 
 #if !defined(NDEBUG)
-	// All calls to Fail_Core should originate from the `fail` macro,
-	// which in the debug build sets TG_Erroring_C_File and TG_Erroring_C_Line.
-	// Any error creations as arguments to that fail should have picked
-	// it up, and we now need to NULL it out so other Make_Error calls
-	// that are not inside of a fail invocation don't get confused and
-	// have the wrong information
+    // All calls to Fail_Core should originate from the `fail` macro,
+    // which in the debug build sets TG_Erroring_C_File and TG_Erroring_C_Line.
+    // Any error creations as arguments to that fail should have picked
+    // it up, and we now need to NULL it out so other Make_Error calls
+    // that are not inside of a fail invocation don't get confused and
+    // have the wrong information
 
-	assert(TG_Erroring_C_File);
-	TG_Erroring_C_File = NULL;
+    assert(TG_Erroring_C_File);
+    TG_Erroring_C_File = NULL;
 
-	// If we raise the error we'll lose the stack, and if it's an early
-	// error we always want to see it (do not use ATTEMPT or TRY on
-	// purpose in Init_Core()...)
+    // If we raise the error we'll lose the stack, and if it's an early
+    // error we always want to see it (do not use ATTEMPT or TRY on
+    // purpose in Init_Core()...)
 
-	if (PG_Boot_Phase < BOOT_DONE) {
-		REBVAL error;
-		Val_Init_Error(&error, frame);
-		Debug_Fmt("** Error raised during Init_Core(), should not happen!");
-		Debug_Fmt("%v", &error);
-		assert(FALSE);
-	}
+    if (PG_Boot_Phase < BOOT_DONE) {
+        REBVAL error;
+        Val_Init_Error(&error, frame);
+        Debug_Fmt("** Error raised during Init_Core(), should not happen!");
+        Debug_Fmt("%v", &error);
+        assert(FALSE);
+    }
 #endif
 
-	if (!Saved_State) {
-		// There should be a PUSH_TRAP of some kind in effect if a `fail` can
-		// ever be run, so mention that before panicking.  The error contains
-		// arguments and information, however, so that should be the panic
+    if (!Saved_State) {
+        // There should be a PUSH_TRAP of some kind in effect if a `fail` can
+        // ever be run, so mention that before panicking.  The error contains
+        // arguments and information, however, so that should be the panic
 
-		Debug_Fmt("*** NO \"SAVED STATE\" - PLEASE MENTION THIS FACT! ***");
-		panic (frame);
-	}
+        Debug_Fmt("*** NO \"SAVED STATE\" - PLEASE MENTION THIS FACT! ***");
+        panic (frame);
+    }
 
-	if (Trace_Level) {
-		Debug_Fmt(
-			cs_cast(BOOT_STR(RS_TRACE, 10)),
-			&ERR_VALUES(frame)->type,
-			&ERR_VALUES(frame)->id
-		);
-	}
+    if (Trace_Level) {
+        Debug_Fmt(
+            cs_cast(BOOT_STR(RS_TRACE, 10)),
+            &ERR_VALUES(frame)->type,
+            &ERR_VALUES(frame)->id
+        );
+    }
 
-	// We pass the error as a frame rather than as a value.
+    // We pass the error as a frame rather than as a value.
 
-	Saved_State->error_frame = frame;
+    Saved_State->error_frame = frame;
 
-	// If a THROWN() was being processed up the stack when the error was
-	// raised, then it had the thrown argument set.  We ensure that it is
-	// not set any longer (even in release builds, this is needed to keep
-	// it from having a hold on the GC of the thrown value).
+    // If a THROWN() was being processed up the stack when the error was
+    // raised, then it had the thrown argument set.  We ensure that it is
+    // not set any longer (even in release builds, this is needed to keep
+    // it from having a hold on the GC of the thrown value).
 
-	SET_TRASH_SAFE(TASK_THROWN_ARG);
+    SET_TRASH_SAFE(TASK_THROWN_ARG);
 
-	LONG_JUMP(Saved_State->cpu_state, 1);
+    LONG_JUMP(Saved_State->cpu_state, 1);
 }
 
 
@@ -243,17 +243,17 @@ ATTRIBUTE_NO_RETURN void Fail_Core(REBSER *frame)
 //
 void Trap_Stack_Overflow(void)
 {
-	if (!Saved_State) {
-		// The most likely case for there not being a PUSH_TRAP in effect
-		// would be a stack overflow during boot.
+    if (!Saved_State) {
+        // The most likely case for there not being a PUSH_TRAP in effect
+        // would be a stack overflow during boot.
 
-		Debug_Fmt("*** NO \"SAVED STATE\" - PLEASE MENTION THIS FACT! ***");
-		panic (VAL_ERR_OBJECT(TASK_STACK_ERROR));
-	}
+        Debug_Fmt("*** NO \"SAVED STATE\" - PLEASE MENTION THIS FACT! ***");
+        panic (VAL_ERR_OBJECT(TASK_STACK_ERROR));
+    }
 
-	Saved_State->error_frame = VAL_ERR_OBJECT(TASK_STACK_ERROR);
+    Saved_State->error_frame = VAL_ERR_OBJECT(TASK_STACK_ERROR);
 
-	LONG_JUMP(Saved_State->cpu_state, 1);
+    LONG_JUMP(Saved_State->cpu_state, 1);
 }
 
 
@@ -262,15 +262,15 @@ void Trap_Stack_Overflow(void)
 //
 REBCNT Stack_Depth(void)
 {
-	struct Reb_Call *call = DSF;
-	REBCNT count = 0;
+    struct Reb_Call *call = DSF;
+    REBCNT count = 0;
 
-	while (call) {
-		count++;
-		call = PRIOR_DSF(call);
-	}
+    while (call) {
+        count++;
+        call = PRIOR_DSF(call);
+    }
 
-	return count;
+    return count;
 }
 
 
@@ -281,19 +281,19 @@ REBCNT Stack_Depth(void)
 //
 REBSER *Make_Backtrace(REBINT start)
 {
-	REBCNT depth = Stack_Depth();
-	REBSER *blk = Make_Array(depth - start);
-	struct Reb_Call *call;
-	REBVAL *val;
+    REBCNT depth = Stack_Depth();
+    REBSER *blk = Make_Array(depth - start);
+    struct Reb_Call *call;
+    REBVAL *val;
 
-	for (call = DSF; call != NULL; call = PRIOR_DSF(call)) {
-		if (start-- <= 0) {
-			val = Alloc_Tail_Array(blk);
-			Val_Init_Word_Unbound(val, REB_WORD, VAL_WORD_SYM(DSF_LABEL(call)));
-		}
-	}
+    for (call = DSF; call != NULL; call = PRIOR_DSF(call)) {
+        if (start-- <= 0) {
+            val = Alloc_Tail_Array(blk);
+            Val_Init_Word_Unbound(val, REB_WORD, VAL_WORD_SYM(DSF_LABEL(call)));
+        }
+    }
 
-	return blk;
+    return blk;
 }
 
 
@@ -311,66 +311,66 @@ REBSER *Make_Backtrace(REBINT start)
 //
 REBVAL *Find_Error_For_Code(REBVAL *id_out, REBVAL *type_out, REBCNT code)
 {
-	// See %errors.r for the list of data which is loaded into the boot
-	// file as objects for the "error catalog"
-	REBSER *categories = VAL_OBJ_FRAME(Get_System(SYS_CATALOG, CAT_ERRORS));
+    // See %errors.r for the list of data which is loaded into the boot
+    // file as objects for the "error catalog"
+    REBSER *categories = VAL_OBJ_FRAME(Get_System(SYS_CATALOG, CAT_ERRORS));
 
-	REBSER *category;
-	REBCNT n;
-	REBVAL *message;
+    REBSER *category;
+    REBCNT n;
+    REBVAL *message;
 
-	// Find the correct catalog category
-	n = code / 100; // 0 for Special, 1 for Internal...
-	if (n + 1 > SERIES_TAIL(categories)) // +1 account for SELF
-		return NULL;
+    // Find the correct catalog category
+    n = code / 100; // 0 for Special, 1 for Internal...
+    if (n + 1 > SERIES_TAIL(categories)) // +1 account for SELF
+        return NULL;
 
-	// Get frame of object representing the elements of the category itself
-	if (!IS_OBJECT(FRM_VALUE(categories, n + 1))) {
-		assert(FALSE);
-		return NULL;
-	}
-	category = VAL_OBJ_FRAME(FRM_VALUE(categories, n + 1));
+    // Get frame of object representing the elements of the category itself
+    if (!IS_OBJECT(FRM_VALUE(categories, n + 1))) {
+        assert(FALSE);
+        return NULL;
+    }
+    category = VAL_OBJ_FRAME(FRM_VALUE(categories, n + 1));
 
-	// Find the correct template in the catalog category (see %errors.r)
-	n = code % 100; // 0-based order within category
-	if (n + 3 > SERIES_TAIL(category)) // +3 account for SELF, CODE: TYPE:
-		return NULL;
+    // Find the correct template in the catalog category (see %errors.r)
+    n = code % 100; // 0-based order within category
+    if (n + 3 > SERIES_TAIL(category)) // +3 account for SELF, CODE: TYPE:
+        return NULL;
 
-	// Sanity check CODE: field of category object
-	if (!IS_INTEGER(FRM_VALUE(category, 1))) {
-		assert(FALSE);
-		return NULL;
-	}
-	assert(
-		cast(REBCNT, VAL_INT32(FRM_VALUE(category, 1))) == (code / 100) * 100
-	);
+    // Sanity check CODE: field of category object
+    if (!IS_INTEGER(FRM_VALUE(category, 1))) {
+        assert(FALSE);
+        return NULL;
+    }
+    assert(
+        cast(REBCNT, VAL_INT32(FRM_VALUE(category, 1))) == (code / 100) * 100
+    );
 
-	// Sanity check TYPE: field of category object
-	// !!! Same spelling as what we set in VAL_WORD_SYM(type_out))?
-	if (!IS_STRING(FRM_VALUE(category, 2))) {
-		assert(FALSE);
-		return NULL;
-	}
+    // Sanity check TYPE: field of category object
+    // !!! Same spelling as what we set in VAL_WORD_SYM(type_out))?
+    if (!IS_STRING(FRM_VALUE(category, 2))) {
+        assert(FALSE);
+        return NULL;
+    }
 
-	message = FRM_VALUE(category, n + 3);
+    message = FRM_VALUE(category, n + 3);
 
-	// Error message template must be string or block
-	assert(IS_BLOCK(message) || IS_STRING(message));
+    // Error message template must be string or block
+    assert(IS_BLOCK(message) || IS_STRING(message));
 
-	// Success! Write category word from the category list frame key sym,
-	// and specific error ID word from the frame key sym within category
-	Val_Init_Word_Unbound(
-		type_out,
-		REB_WORD,
-		VAL_TYPESET_SYM(FRM_KEY(categories, (code / 100) + 1))
-	);
-	Val_Init_Word_Unbound(
-		id_out,
-		REB_WORD,
-		VAL_TYPESET_SYM(FRM_KEY(category, (code % 100) + 3))
-	);
+    // Success! Write category word from the category list frame key sym,
+    // and specific error ID word from the frame key sym within category
+    Val_Init_Word_Unbound(
+        type_out,
+        REB_WORD,
+        VAL_TYPESET_SYM(FRM_KEY(categories, (code / 100) + 1))
+    );
+    Val_Init_Word_Unbound(
+        id_out,
+        REB_WORD,
+        VAL_TYPESET_SYM(FRM_KEY(category, (code % 100) + 3))
+    );
 
-	return message;
+    return message;
 }
 
 
@@ -379,12 +379,12 @@ REBVAL *Find_Error_For_Code(REBVAL *id_out, REBVAL *type_out, REBCNT code)
 //
 void Val_Init_Error(REBVAL *out, REBSER *frame)
 {
-	ENSURE_FRAME_MANAGED(frame);
+    ENSURE_FRAME_MANAGED(frame);
 
-	VAL_SET(out, REB_ERROR);
-	VAL_ERR_OBJECT(out) = frame;
+    VAL_SET(out, REB_ERROR);
+    VAL_ERR_OBJECT(out) = frame;
 
-	ASSERT_ERROR(out);
+    ASSERT_ERROR(out);
 }
 
 
@@ -416,35 +416,35 @@ void Val_Init_Error(REBVAL *out, REBSER *frame)
 //
 static REBSER *Make_Guarded_Arg123_Error_Frame(void)
 {
-	REBSER *root_frame = VAL_OBJ_FRAME(ROOT_ERROBJ);
-	REBCNT len = SERIES_LEN(root_frame);
-	REBSER *frame = Make_Frame(len + 3, TRUE);
-	REBVAL *key = FRM_KEY(frame, 0);
-	REBVAL *value = FRM_VALUE(frame, 0);
-	REBCNT n;
+    REBSER *root_frame = VAL_OBJ_FRAME(ROOT_ERROBJ);
+    REBCNT len = SERIES_LEN(root_frame);
+    REBSER *frame = Make_Frame(len + 3, TRUE);
+    REBVAL *key = FRM_KEY(frame, 0);
+    REBVAL *value = FRM_VALUE(frame, 0);
+    REBCNT n;
 
-	for (n = 0; n < len; n++, key++, value++) {
-		if (n == 0) continue; // skip SELF:
-		*key = *FRM_KEY(root_frame, n);
-		*value = *FRM_VALUE(root_frame, n);
-		assert(IS_TYPESET(key));
-	}
+    for (n = 0; n < len; n++, key++, value++) {
+        if (n == 0) continue; // skip SELF:
+        *key = *FRM_KEY(root_frame, n);
+        *value = *FRM_VALUE(root_frame, n);
+        assert(IS_TYPESET(key));
+    }
 
-	for (n = 0; n < 3; n++, key++, value++) {
-		Val_Init_Typeset(key, ALL_64, SYM_ARG1 + n);
-		SET_NONE(value);
-	}
+    for (n = 0; n < 3; n++, key++, value++) {
+        Val_Init_Typeset(key, ALL_64, SYM_ARG1 + n);
+        SET_NONE(value);
+    }
 
-	SET_END(key);
-	SET_END(value);
+    SET_END(key);
+    SET_END(value);
 
-	frame->tail = len + 3;
-	FRM_KEYLIST(frame)->tail = len + 3;
+    frame->tail = len + 3;
+    FRM_KEYLIST(frame)->tail = len + 3;
 
-	ASSERT_FRAME(frame);
-	MANAGE_FRAME(frame);
-	PUSH_GUARD_SERIES(frame);
-	return frame;
+    ASSERT_FRAME(frame);
+    MANAGE_FRAME(frame);
+    PUSH_GUARD_SERIES(frame);
+    return frame;
 }
 
 #endif
@@ -471,262 +471,262 @@ static REBSER *Make_Guarded_Arg123_Error_Frame(void)
 //
 REBFLG Make_Error_Object_Throws(REBVAL *out, REBVAL *arg)
 {
-	// Frame from the error object template defined in %sysobj.r
-	REBSER *root_frame = VAL_OBJ_FRAME(ROOT_ERROBJ);
+    // Frame from the error object template defined in %sysobj.r
+    REBSER *root_frame = VAL_OBJ_FRAME(ROOT_ERROBJ);
 
-	REBSER *frame;
-	ERROR_OBJ *error_obj;
-
-#if !defined(NDEBUG)
-	if (LEGACY(OPTIONS_ARG1_ARG2_ARG3_ERROR))
-		root_frame = Make_Guarded_Arg123_Error_Frame();
-#endif
-
-	if (IS_ERROR(arg) || IS_OBJECT(arg)) {
-		// Create a new error object from another object, including any
-		// non-standard fields.  WHERE: and NEAR: will be overridden if
-		// used.  If ID:, TYPE:, or CODE: were used in a way that would
-		// be inconsistent with a Rebol system error, an error will be
-		// raised later in the routine.
-
-		frame = Merge_Frames(
-			root_frame,
-			IS_ERROR(arg) ? VAL_ERR_OBJECT(arg) : VAL_OBJ_FRAME(arg)
-		);
-		error_obj = ERR_VALUES(frame);
-	}
-	else if (IS_BLOCK(arg)) {
-		// If a block, then effectively MAKE OBJECT! on it.  Afterward,
-		// apply the same logic as if an OBJECT! had been passed in above.
-
-		REBVAL evaluated;
-
-		// Bind and do an evaluation step (as with MAKE OBJECT! with A_MAKE
-		// code in REBTYPE(Object) and code in REBNATIVE(construct))
-
-		frame = Make_Object(root_frame, VAL_BLK_DATA(arg));
-		Rebind_Frame(root_frame, frame);
-		Bind_Values_Deep(VAL_BLK_DATA(arg), frame);
-
-		if (DO_ARRAY_THROWS(&evaluated, arg)) {
-			*out = evaluated;
-
-		#if !defined(NDEBUG)
-			// Let our fake root_frame that had arg1: arg2: arg3: on it be
-			// garbage collected.
-			if (LEGACY(OPTIONS_ARG1_ARG2_ARG3_ERROR))
-				DROP_GUARD_SERIES(root_frame);
-		#endif
-
-			return TRUE;
-		}
-
-		error_obj = ERR_VALUES(frame);
-	}
-	else if (IS_STRING(arg)) {
-		// String argument to MAKE ERROR! makes a custom error from user:
-		//
-		//     code: 1000 ;-- default none
-		//     type: 'user
-		//     id: 'message
-		//     message: "whatever the string was" ;-- default none
-		//
-		// Minus the code number and message, this is the default state of
-		// root_frame if not overridden.
-
-		frame = Copy_Array_Shallow(root_frame);
-		MANAGE_SERIES(frame);
-		error_obj = ERR_VALUES(frame);
-
-		assert(IS_NONE(&error_obj->code));
-		// fill in RE_USER (1000) later if it passes the check
-
-		Val_Init_String(&error_obj->message, Copy_Sequence_At_Position(arg));
-	}
-	else {
-		// No other argument types are handled by this routine at this time.
-
-		fail (Error(RE_INVALID_ERROR, arg));
-	}
-
-	// Validate the error contents, and reconcile message template and ID
-	// information with any data in the object.  Do this for the IS_STRING
-	// creation case just to make sure the rules are followed there too.
-
-	// !!! Note that this code is very cautious because the goal isn't to do
-	// this as efficiently as possible, rather to put up lots of alarms and
-	// traffic cones to make it easy to pick and choose what parts to excise
-	// or tighten in an error enhancement upgrade.
-
-	if (IS_INTEGER(&error_obj->code)) {
-		if (VAL_INT32(&error_obj->code) < RE_USER) {
-			// Users can make up anything for error codes allocated to them,
-			// but Rebol's historical default is to "own" error codes less
-			// than 1000.  If a code is used in the sub-1000 range then make
-			// sure any id or type provided do not conflict.
-
-			REBVAL id;
-			REBVAL type;
-			REBVAL *message;
-
-			if (!IS_NONE(&error_obj->message)) // assume a MESSAGE: is wrong
-				fail (Error(RE_INVALID_ERROR, arg));
-
-			message = Find_Error_For_Code(
-				&id,
-				&type,
-				cast(REBCNT, VAL_INT32(&error_obj->code))
-			);
-
-			if (!message)
-				fail (Error(RE_INVALID_ERROR, arg));
-
-			error_obj->message = *message;
-
-			if (!IS_NONE(&error_obj->id)) {
-				if (
-					!IS_WORD(&error_obj->id)
-					|| !SAME_SYM(
-						VAL_WORD_SYM(&error_obj->id), VAL_WORD_SYM(&id)
-					)
-				) {
-					fail (Error(RE_INVALID_ERROR, arg));
-				}
-			}
-			error_obj->id = id; // normalize binding and case
-
-			if (!IS_NONE(&error_obj->type)) {
-				if (
-					!IS_WORD(&error_obj->id)
-					|| !SAME_SYM(
-						VAL_WORD_SYM(&error_obj->type), VAL_WORD_SYM(&type)
-					)
-				) {
-					fail (Error(RE_INVALID_ERROR, arg));
-				}
-			}
-			error_obj->type = type; // normalize binding and case
-
-			// !!! TBD: Check that all arguments were provided!
-		}
-	}
-	else if (IS_WORD(&error_obj->type) && IS_WORD(&error_obj->id)) {
-		// If there was no CODE: supplied but there was a TYPE: and ID: then
-		// this may overlap a combination used by Rebol where we wish to
-		// fill in the code.  (No fast lookup for this, must search.)
-
-		REBSER *categories = VAL_OBJ_FRAME(Get_System(SYS_CATALOG, CAT_ERRORS));
-		REBVAL *category;
-
-		assert(IS_NONE(&error_obj->code));
-
-		// Find correct category for TYPE: (if any)
-		category = Find_Word_Value(categories, VAL_WORD_SYM(&error_obj->type));
-		if (category) {
-			REBCNT code;
-			REBVAL *message;
-
-			assert(IS_OBJECT(category)); // SELF: 0
-
-			assert(
-				SAME_SYM(VAL_TYPESET_SYM(VAL_OBJ_KEY(category, 1)), SYM_CODE)
-			);
-			assert(IS_INTEGER(VAL_OBJ_VALUE(category, 1)));
-			code = cast(REBCNT, VAL_INT32(VAL_OBJ_VALUE(category, 1)));
-
-			assert(
-				SAME_SYM(VAL_TYPESET_SYM(VAL_OBJ_KEY(category, 2)), SYM_TYPE)
-			);
-			assert(IS_STRING(VAL_OBJ_VALUE(category, 2)));
-
-			// Find correct message for ID: (if any)
-			message = Find_Word_Value(
-				VAL_OBJ_FRAME(category), VAL_WORD_SYM(&error_obj->id)
-			);
-
-			if (message) {
-				assert(IS_STRING(message) || IS_BLOCK(message));
-
-				if (!IS_NONE(&error_obj->message))
-					fail (Error(RE_INVALID_ERROR, arg));
-
-				error_obj->message = *message;
-
-				SET_INTEGER(&error_obj->code,
-					code
-					+ Find_Word_Index(frame, VAL_WORD_SYM(&error_obj->id), FALSE)
-					- Find_Word_Index(frame, SYM_TYPE, FALSE)
-					- 1
-				);
-			}
-			else {
-				// At the moment, we don't let the user make a user-ID'd
-				// error using a category from the internal list just
-				// because there was no id from that category.  In effect
-				// all the category words have been "reserved"
-
-				// !!! Again, remember this is all here just to show compliance
-				// with what the test suite tested for, it disallowed e.g.
-				// it expected the following to be an illegal error because
-				// the `script` category had no `set-self` error ID.
-				//
-				//     make error! [type: 'script id: 'set-self]
-
-				fail (Error(RE_INVALID_ERROR, arg));
-			}
-		}
-		else {
-			// The type and category picked did not overlap any existing one
-			// so let it be a user error.
-			SET_INTEGER(&error_obj->code, RE_USER);
-		}
-	}
-	else {
-		// It's either a user-created error or otherwise.  It may
-		// have bad ID, TYPE, or message fields, or a completely
-		// strange code #.  The question of how non-standard to
-		// tolerate is an open one.
-
-		// For now we just write 1000 into the error code field, if that was
-		// not already there.
-
-		if (IS_NONE(&error_obj->code))
-			SET_INTEGER(&error_obj->code, RE_USER);
-		else if (IS_INTEGER(&error_obj->code)) {
-			if (VAL_INT32(&error_obj->code) != RE_USER)
-				fail (Error(RE_INVALID_ERROR, arg));
-		}
-		else
-			fail (Error(RE_INVALID_ERROR, arg));
-
-		// !!! Because we will experience crashes in the molding logic,
-		// we put some level of requirement besides "code # not 0".
-		// This is conservative logic and not good for general purposes.
-
-		if (
-			!(IS_WORD(&error_obj->id) || IS_NONE(&error_obj->id))
-			|| !(IS_WORD(&error_obj->type) || IS_NONE(&error_obj->type))
-			|| !(
-				IS_BLOCK(&error_obj->message)
-				|| IS_STRING(&error_obj->message)
-				|| IS_NONE(&error_obj->message)
-			)
-		) {
-			fail (Error(RE_INVALID_ERROR, arg));
-		}
-	}
-
-	assert(IS_INTEGER(&error_obj->code));
+    REBSER *frame;
+    ERROR_OBJ *error_obj;
 
 #if !defined(NDEBUG)
-	// Let our fake root_frame that had arg1: arg2: arg3: on it be
-	// garbage collected.
-	if (LEGACY(OPTIONS_ARG1_ARG2_ARG3_ERROR))
-		DROP_GUARD_SERIES(root_frame);
+    if (LEGACY(OPTIONS_ARG1_ARG2_ARG3_ERROR))
+        root_frame = Make_Guarded_Arg123_Error_Frame();
 #endif
 
-	Val_Init_Error(out, frame);
-	return FALSE;
+    if (IS_ERROR(arg) || IS_OBJECT(arg)) {
+        // Create a new error object from another object, including any
+        // non-standard fields.  WHERE: and NEAR: will be overridden if
+        // used.  If ID:, TYPE:, or CODE: were used in a way that would
+        // be inconsistent with a Rebol system error, an error will be
+        // raised later in the routine.
+
+        frame = Merge_Frames(
+            root_frame,
+            IS_ERROR(arg) ? VAL_ERR_OBJECT(arg) : VAL_OBJ_FRAME(arg)
+        );
+        error_obj = ERR_VALUES(frame);
+    }
+    else if (IS_BLOCK(arg)) {
+        // If a block, then effectively MAKE OBJECT! on it.  Afterward,
+        // apply the same logic as if an OBJECT! had been passed in above.
+
+        REBVAL evaluated;
+
+        // Bind and do an evaluation step (as with MAKE OBJECT! with A_MAKE
+        // code in REBTYPE(Object) and code in REBNATIVE(construct))
+
+        frame = Make_Object(root_frame, VAL_BLK_DATA(arg));
+        Rebind_Frame(root_frame, frame);
+        Bind_Values_Deep(VAL_BLK_DATA(arg), frame);
+
+        if (DO_ARRAY_THROWS(&evaluated, arg)) {
+            *out = evaluated;
+
+        #if !defined(NDEBUG)
+            // Let our fake root_frame that had arg1: arg2: arg3: on it be
+            // garbage collected.
+            if (LEGACY(OPTIONS_ARG1_ARG2_ARG3_ERROR))
+                DROP_GUARD_SERIES(root_frame);
+        #endif
+
+            return TRUE;
+        }
+
+        error_obj = ERR_VALUES(frame);
+    }
+    else if (IS_STRING(arg)) {
+        // String argument to MAKE ERROR! makes a custom error from user:
+        //
+        //     code: 1000 ;-- default none
+        //     type: 'user
+        //     id: 'message
+        //     message: "whatever the string was" ;-- default none
+        //
+        // Minus the code number and message, this is the default state of
+        // root_frame if not overridden.
+
+        frame = Copy_Array_Shallow(root_frame);
+        MANAGE_SERIES(frame);
+        error_obj = ERR_VALUES(frame);
+
+        assert(IS_NONE(&error_obj->code));
+        // fill in RE_USER (1000) later if it passes the check
+
+        Val_Init_String(&error_obj->message, Copy_Sequence_At_Position(arg));
+    }
+    else {
+        // No other argument types are handled by this routine at this time.
+
+        fail (Error(RE_INVALID_ERROR, arg));
+    }
+
+    // Validate the error contents, and reconcile message template and ID
+    // information with any data in the object.  Do this for the IS_STRING
+    // creation case just to make sure the rules are followed there too.
+
+    // !!! Note that this code is very cautious because the goal isn't to do
+    // this as efficiently as possible, rather to put up lots of alarms and
+    // traffic cones to make it easy to pick and choose what parts to excise
+    // or tighten in an error enhancement upgrade.
+
+    if (IS_INTEGER(&error_obj->code)) {
+        if (VAL_INT32(&error_obj->code) < RE_USER) {
+            // Users can make up anything for error codes allocated to them,
+            // but Rebol's historical default is to "own" error codes less
+            // than 1000.  If a code is used in the sub-1000 range then make
+            // sure any id or type provided do not conflict.
+
+            REBVAL id;
+            REBVAL type;
+            REBVAL *message;
+
+            if (!IS_NONE(&error_obj->message)) // assume a MESSAGE: is wrong
+                fail (Error(RE_INVALID_ERROR, arg));
+
+            message = Find_Error_For_Code(
+                &id,
+                &type,
+                cast(REBCNT, VAL_INT32(&error_obj->code))
+            );
+
+            if (!message)
+                fail (Error(RE_INVALID_ERROR, arg));
+
+            error_obj->message = *message;
+
+            if (!IS_NONE(&error_obj->id)) {
+                if (
+                    !IS_WORD(&error_obj->id)
+                    || !SAME_SYM(
+                        VAL_WORD_SYM(&error_obj->id), VAL_WORD_SYM(&id)
+                    )
+                ) {
+                    fail (Error(RE_INVALID_ERROR, arg));
+                }
+            }
+            error_obj->id = id; // normalize binding and case
+
+            if (!IS_NONE(&error_obj->type)) {
+                if (
+                    !IS_WORD(&error_obj->id)
+                    || !SAME_SYM(
+                        VAL_WORD_SYM(&error_obj->type), VAL_WORD_SYM(&type)
+                    )
+                ) {
+                    fail (Error(RE_INVALID_ERROR, arg));
+                }
+            }
+            error_obj->type = type; // normalize binding and case
+
+            // !!! TBD: Check that all arguments were provided!
+        }
+    }
+    else if (IS_WORD(&error_obj->type) && IS_WORD(&error_obj->id)) {
+        // If there was no CODE: supplied but there was a TYPE: and ID: then
+        // this may overlap a combination used by Rebol where we wish to
+        // fill in the code.  (No fast lookup for this, must search.)
+
+        REBSER *categories = VAL_OBJ_FRAME(Get_System(SYS_CATALOG, CAT_ERRORS));
+        REBVAL *category;
+
+        assert(IS_NONE(&error_obj->code));
+
+        // Find correct category for TYPE: (if any)
+        category = Find_Word_Value(categories, VAL_WORD_SYM(&error_obj->type));
+        if (category) {
+            REBCNT code;
+            REBVAL *message;
+
+            assert(IS_OBJECT(category)); // SELF: 0
+
+            assert(
+                SAME_SYM(VAL_TYPESET_SYM(VAL_OBJ_KEY(category, 1)), SYM_CODE)
+            );
+            assert(IS_INTEGER(VAL_OBJ_VALUE(category, 1)));
+            code = cast(REBCNT, VAL_INT32(VAL_OBJ_VALUE(category, 1)));
+
+            assert(
+                SAME_SYM(VAL_TYPESET_SYM(VAL_OBJ_KEY(category, 2)), SYM_TYPE)
+            );
+            assert(IS_STRING(VAL_OBJ_VALUE(category, 2)));
+
+            // Find correct message for ID: (if any)
+            message = Find_Word_Value(
+                VAL_OBJ_FRAME(category), VAL_WORD_SYM(&error_obj->id)
+            );
+
+            if (message) {
+                assert(IS_STRING(message) || IS_BLOCK(message));
+
+                if (!IS_NONE(&error_obj->message))
+                    fail (Error(RE_INVALID_ERROR, arg));
+
+                error_obj->message = *message;
+
+                SET_INTEGER(&error_obj->code,
+                    code
+                    + Find_Word_Index(frame, VAL_WORD_SYM(&error_obj->id), FALSE)
+                    - Find_Word_Index(frame, SYM_TYPE, FALSE)
+                    - 1
+                );
+            }
+            else {
+                // At the moment, we don't let the user make a user-ID'd
+                // error using a category from the internal list just
+                // because there was no id from that category.  In effect
+                // all the category words have been "reserved"
+
+                // !!! Again, remember this is all here just to show compliance
+                // with what the test suite tested for, it disallowed e.g.
+                // it expected the following to be an illegal error because
+                // the `script` category had no `set-self` error ID.
+                //
+                //     make error! [type: 'script id: 'set-self]
+
+                fail (Error(RE_INVALID_ERROR, arg));
+            }
+        }
+        else {
+            // The type and category picked did not overlap any existing one
+            // so let it be a user error.
+            SET_INTEGER(&error_obj->code, RE_USER);
+        }
+    }
+    else {
+        // It's either a user-created error or otherwise.  It may
+        // have bad ID, TYPE, or message fields, or a completely
+        // strange code #.  The question of how non-standard to
+        // tolerate is an open one.
+
+        // For now we just write 1000 into the error code field, if that was
+        // not already there.
+
+        if (IS_NONE(&error_obj->code))
+            SET_INTEGER(&error_obj->code, RE_USER);
+        else if (IS_INTEGER(&error_obj->code)) {
+            if (VAL_INT32(&error_obj->code) != RE_USER)
+                fail (Error(RE_INVALID_ERROR, arg));
+        }
+        else
+            fail (Error(RE_INVALID_ERROR, arg));
+
+        // !!! Because we will experience crashes in the molding logic,
+        // we put some level of requirement besides "code # not 0".
+        // This is conservative logic and not good for general purposes.
+
+        if (
+            !(IS_WORD(&error_obj->id) || IS_NONE(&error_obj->id))
+            || !(IS_WORD(&error_obj->type) || IS_NONE(&error_obj->type))
+            || !(
+                IS_BLOCK(&error_obj->message)
+                || IS_STRING(&error_obj->message)
+                || IS_NONE(&error_obj->message)
+            )
+        ) {
+            fail (Error(RE_INVALID_ERROR, arg));
+        }
+    }
+
+    assert(IS_INTEGER(&error_obj->code));
+
+#if !defined(NDEBUG)
+    // Let our fake root_frame that had arg1: arg2: arg3: on it be
+    // garbage collected.
+    if (LEGACY(OPTIONS_ARG1_ARG2_ARG3_ERROR))
+        DROP_GUARD_SERIES(root_frame);
+#endif
+
+    Val_Init_Error(out, frame);
+    return FALSE;
 }
 
 
@@ -756,231 +756,231 @@ REBFLG Make_Error_Object_Throws(REBVAL *out, REBVAL *arg)
 //
 REBSER *Make_Error_Core(REBCNT code, va_list *args)
 {
-	REBSER *root_frame;
+    REBSER *root_frame;
 
-	REBSER *frame; // Error object frame
-	ERROR_OBJ *error_obj; // Error object values
-	REBVAL *message;
-	REBVAL id;
-	REBVAL type;
+    REBSER *frame; // Error object frame
+    ERROR_OBJ *error_obj; // Error object values
+    REBVAL *message;
+    REBVAL id;
+    REBVAL type;
 
-	REBCNT expected_args;
-
-#if !defined(NDEBUG)
-	// The legacy error mechanism expects us to have exactly three fields
-	// in each error generated by the C code with names arg1: arg2: arg3.
-	// Track how many of those we've gone through if we need to.
-	static const REBCNT legacy_data[] = {SYM_ARG1, SYM_ARG2, SYM_ARG3, SYM_0};
-	const REBCNT *arg1_arg2_arg3 = legacy_data;
-#endif
-
-	assert(code != 0);
-
-	if (PG_Boot_Phase < BOOT_ERRORS) {
-		Panic_Core(code, NULL, args);
-		DEAD_END;
-	}
-
-	// Safe to initialize the root frame now...
-	root_frame = VAL_OBJ_FRAME(ROOT_ERROBJ);
-
-	message = Find_Error_For_Code(&id, &type, code);
-	assert(message);
-
-	if (IS_BLOCK(message)) {
-		// For a system error coming from a C vararg call, the # of
-		// GET-WORD!s in the format block should match the varargs supplied.
-
-		REBVAL *temp = VAL_BLK_HEAD(message);
-		expected_args = 0;
-		while (NOT_END(temp)) {
-			if (IS_GET_WORD(temp))
-				expected_args++;
-			else
-				assert(IS_STRING(temp));
-			temp++;
-		}
-	}
-	else {
-		// Just a string, no arguments expected.
-
-		assert(IS_STRING(message));
-		expected_args = 0;
-	}
+    REBCNT expected_args;
 
 #if !defined(NDEBUG)
-	if (LEGACY(OPTIONS_ARG1_ARG2_ARG3_ERROR)) {
-		// However many arguments were expected, forget it in legacy mode...
-		// there will be 3 even if they're not all used, arg1: arg2: arg3:
-		expected_args = 3;
-	}
-	else {
-		// !!! We may have the C source file and line information for where
-		// the error was triggered, if this error is being created during
-		// invocation of a `fail` or `panic`.  (The file and line number are
-		// captured before the parameter to the invoker is evaluated).
-		// Add them in the error so they can be seen with PROBE but not
-		// when FORM'd to users.
-
-		if (TG_Erroring_C_File)
-			expected_args += 2;
-	}
+    // The legacy error mechanism expects us to have exactly three fields
+    // in each error generated by the C code with names arg1: arg2: arg3.
+    // Track how many of those we've gone through if we need to.
+    static const REBCNT legacy_data[] = {SYM_ARG1, SYM_ARG2, SYM_ARG3, SYM_0};
+    const REBCNT *arg1_arg2_arg3 = legacy_data;
 #endif
 
-	if (expected_args == 0) {
-		// If there are no arguments, we don't need to make a new keylist...
-		// just a new valuelist to hold this instance's settings. (root
-		// frame keylist is already managed)
+    assert(code != 0);
 
-		frame = Copy_Array_Shallow(root_frame);
-	}
-	else {
-		REBVAL *key;
-		REBVAL *value;
-		REBVAL *temp;
+    if (PG_Boot_Phase < BOOT_ERRORS) {
+        Panic_Core(code, NULL, args);
+        DEAD_END;
+    }
 
-		// Should the error be well-formed, we'll need room for the new
-		// expected values *and* their new keys in the keylist.
-		//
-		frame = Copy_Array_Extra_Shallow(root_frame, expected_args);
-		FRM_KEYLIST(frame) = Copy_Array_Extra_Shallow(
-			FRM_KEYLIST(root_frame), expected_args
-		);
+    // Safe to initialize the root frame now...
+    root_frame = VAL_OBJ_FRAME(ROOT_ERROBJ);
 
-		key = BLK_SKIP(FRM_KEYLIST(frame), SERIES_LEN(root_frame));
-		value = BLK_SKIP(frame, SERIES_LEN(root_frame));
+    message = Find_Error_For_Code(&id, &type, code);
+    assert(message);
 
-	#ifdef NDEBUG
-		temp = VAL_BLK_HEAD(message);
-	#else
-		// Will get here even for a parameterless string due to throwing in
-		// the extra "arguments" of the __FILE__ and __LINE__
-		temp = IS_STRING(message) ? END_VALUE : VAL_BLK_HEAD(message);
-	#endif
+    if (IS_BLOCK(message)) {
+        // For a system error coming from a C vararg call, the # of
+        // GET-WORD!s in the format block should match the varargs supplied.
 
-		while (NOT_END(temp)) {
-			if (IS_GET_WORD(temp)) {
-				REBVAL *arg = va_arg(*args, REBVAL*);
+        REBVAL *temp = VAL_BLK_HEAD(message);
+        expected_args = 0;
+        while (NOT_END(temp)) {
+            if (IS_GET_WORD(temp))
+                expected_args++;
+            else
+                assert(IS_STRING(temp));
+            temp++;
+        }
+    }
+    else {
+        // Just a string, no arguments expected.
 
-				if (!arg) {
-					// Terminating with a NULL is optional but can help
-					// catch errors here of too few args passed when the
-					// template expected more substitutions.
+        assert(IS_STRING(message));
+        expected_args = 0;
+    }
 
-				#ifdef NDEBUG
-					// If the C code passed too few args in a debug build,
-					// prevent a crash in the release build by filling it.
-					// No perfect answer if you're going to keep running...
-					// something like ISSUE! #404 could be an homage:
-					//
-					//     http://www.room404.com/page.php?pg=homepage
-					//
-					// But we'll just use NONE.  Debug build asserts here.
+#if !defined(NDEBUG)
+    if (LEGACY(OPTIONS_ARG1_ARG2_ARG3_ERROR)) {
+        // However many arguments were expected, forget it in legacy mode...
+        // there will be 3 even if they're not all used, arg1: arg2: arg3:
+        expected_args = 3;
+    }
+    else {
+        // !!! We may have the C source file and line information for where
+        // the error was triggered, if this error is being created during
+        // invocation of a `fail` or `panic`.  (The file and line number are
+        // captured before the parameter to the invoker is evaluated).
+        // Add them in the error so they can be seen with PROBE but not
+        // when FORM'd to users.
 
-					arg = NONE_VALUE;
-				#else
-					Debug_Fmt(
-						"too few args passed for error code %d at %s line %d",
-						code,
-						TG_Erroring_C_File ? TG_Erroring_C_File : "<unknown>",
-						TG_Erroring_C_File ? TG_Erroring_C_Line : -1
-					);
-					assert(FALSE);
+        if (TG_Erroring_C_File)
+            expected_args += 2;
+    }
+#endif
 
-					// !!! Note that we have no way of checking for too *many*
-					// args with C's vararg machinery
-				#endif
-				}
+    if (expected_args == 0) {
+        // If there are no arguments, we don't need to make a new keylist...
+        // just a new valuelist to hold this instance's settings. (root
+        // frame keylist is already managed)
 
-				ASSERT_VALUE_MANAGED(arg);
+        frame = Copy_Array_Shallow(root_frame);
+    }
+    else {
+        REBVAL *key;
+        REBVAL *value;
+        REBVAL *temp;
 
-			#if !defined(NDEBUG)
-				if (LEGACY(OPTIONS_ARG1_ARG2_ARG3_ERROR)) {
-					if (*arg1_arg2_arg3 == SYM_0) {
-						Debug_Fmt("Legacy arg1_arg2_arg3 error with > 3 args");
-						panic (Error(RE_MISC));
-					}
-					Val_Init_Typeset(key, ALL_64, *arg1_arg2_arg3);
-					arg1_arg2_arg3++;
-				}
-				else
-			#endif
-					Val_Init_Typeset(key, ALL_64, VAL_WORD_SYM(temp));
+        // Should the error be well-formed, we'll need room for the new
+        // expected values *and* their new keys in the keylist.
+        //
+        frame = Copy_Array_Extra_Shallow(root_frame, expected_args);
+        FRM_KEYLIST(frame) = Copy_Array_Extra_Shallow(
+            FRM_KEYLIST(root_frame), expected_args
+        );
 
-				*value = *arg;
+        key = BLK_SKIP(FRM_KEYLIST(frame), SERIES_LEN(root_frame));
+        value = BLK_SKIP(frame, SERIES_LEN(root_frame));
 
-				key++;
-				value++;
-			}
-			temp++;
-		}
+    #ifdef NDEBUG
+        temp = VAL_BLK_HEAD(message);
+    #else
+        // Will get here even for a parameterless string due to throwing in
+        // the extra "arguments" of the __FILE__ and __LINE__
+        temp = IS_STRING(message) ? END_VALUE : VAL_BLK_HEAD(message);
+    #endif
 
-	#if !defined(NDEBUG)
-		if (LEGACY(OPTIONS_ARG1_ARG2_ARG3_ERROR)) {
-			// Need to fill in nones for any remaining args.
-			while (*arg1_arg2_arg3 != SYM_0) {
-				Val_Init_Typeset(key, ALL_64, *arg1_arg2_arg3);
-				arg1_arg2_arg3++;
-				key++;
-				SET_NONE(value);
-				value++;
-			}
-		}
-		else if (TG_Erroring_C_File) {
-			// This error is being created during a `fail` or `panic`
-			// (two extra fields accounted for above in creation)
+        while (NOT_END(temp)) {
+            if (IS_GET_WORD(temp)) {
+                REBVAL *arg = va_arg(*args, REBVAL*);
 
-			// error/__FILE__ (a FILE! value)
-			Val_Init_Typeset(key, ALL_64, SYM___FILE__);
-			key++;
-			Val_Init_File(
-				value,
-				Append_UTF8(
-					NULL,
-					cb_cast(TG_Erroring_C_File),
-					LEN_BYTES(cb_cast(TG_Erroring_C_File))
-				)
-			);
-			value++;
+                if (!arg) {
+                    // Terminating with a NULL is optional but can help
+                    // catch errors here of too few args passed when the
+                    // template expected more substitutions.
 
-			// error/__LINE__ (an INTEGER! value)
-			Val_Init_Typeset(key, ALL_64, SYM___LINE__);
-			key++;
-			SET_INTEGER(value, TG_Erroring_C_Line);
-			value++;
-		}
-	#endif
+                #ifdef NDEBUG
+                    // If the C code passed too few args in a debug build,
+                    // prevent a crash in the release build by filling it.
+                    // No perfect answer if you're going to keep running...
+                    // something like ISSUE! #404 could be an homage:
+                    //
+                    //     http://www.room404.com/page.php?pg=homepage
+                    //
+                    // But we'll just use NONE.  Debug build asserts here.
 
-		SET_END(key);
-		SET_END(value);
+                    arg = NONE_VALUE;
+                #else
+                    Debug_Fmt(
+                        "too few args passed for error code %d at %s line %d",
+                        code,
+                        TG_Erroring_C_File ? TG_Erroring_C_File : "<unknown>",
+                        TG_Erroring_C_File ? TG_Erroring_C_Line : -1
+                    );
+                    assert(FALSE);
 
-		// Fix up the tail (was not done so automatically);
-		SERIES_TAIL(FRM_KEYLIST(frame)) += expected_args;
-		SERIES_TAIL(frame) += expected_args;
+                    // !!! Note that we have no way of checking for too *many*
+                    // args with C's vararg machinery
+                #endif
+                }
 
-		MANAGE_SERIES(FRM_KEYLIST(frame));
-	}
+                ASSERT_VALUE_MANAGED(arg);
 
-	MANAGE_SERIES(frame);
+            #if !defined(NDEBUG)
+                if (LEGACY(OPTIONS_ARG1_ARG2_ARG3_ERROR)) {
+                    if (*arg1_arg2_arg3 == SYM_0) {
+                        Debug_Fmt("Legacy arg1_arg2_arg3 error with > 3 args");
+                        panic (Error(RE_MISC));
+                    }
+                    Val_Init_Typeset(key, ALL_64, *arg1_arg2_arg3);
+                    arg1_arg2_arg3++;
+                }
+                else
+            #endif
+                    Val_Init_Typeset(key, ALL_64, VAL_WORD_SYM(temp));
 
-	error_obj = ERR_VALUES(frame);
+                *value = *arg;
 
-	// Set error number:
-	SET_INTEGER(&error_obj->code, code);
+                key++;
+                value++;
+            }
+            temp++;
+        }
 
-	error_obj->message = *message;
-	error_obj->id = id;
-	error_obj->type = type;
+    #if !defined(NDEBUG)
+        if (LEGACY(OPTIONS_ARG1_ARG2_ARG3_ERROR)) {
+            // Need to fill in nones for any remaining args.
+            while (*arg1_arg2_arg3 != SYM_0) {
+                Val_Init_Typeset(key, ALL_64, *arg1_arg2_arg3);
+                arg1_arg2_arg3++;
+                key++;
+                SET_NONE(value);
+                value++;
+            }
+        }
+        else if (TG_Erroring_C_File) {
+            // This error is being created during a `fail` or `panic`
+            // (two extra fields accounted for above in creation)
 
-	// Set backtrace and location information:
-	if (DSF) {
-		// Where (what function) is the error:
-		Val_Init_Block(&error_obj->where, Make_Backtrace(0));
-		// Nearby location of the error (in block being evaluated):
-		error_obj->nearest = *DSF_WHERE(DSF);
-	}
+            // error/__FILE__ (a FILE! value)
+            Val_Init_Typeset(key, ALL_64, SYM___FILE__);
+            key++;
+            Val_Init_File(
+                value,
+                Append_UTF8(
+                    NULL,
+                    cb_cast(TG_Erroring_C_File),
+                    LEN_BYTES(cb_cast(TG_Erroring_C_File))
+                )
+            );
+            value++;
 
-	return frame;
+            // error/__LINE__ (an INTEGER! value)
+            Val_Init_Typeset(key, ALL_64, SYM___LINE__);
+            key++;
+            SET_INTEGER(value, TG_Erroring_C_Line);
+            value++;
+        }
+    #endif
+
+        SET_END(key);
+        SET_END(value);
+
+        // Fix up the tail (was not done so automatically);
+        SERIES_TAIL(FRM_KEYLIST(frame)) += expected_args;
+        SERIES_TAIL(frame) += expected_args;
+
+        MANAGE_SERIES(FRM_KEYLIST(frame));
+    }
+
+    MANAGE_SERIES(frame);
+
+    error_obj = ERR_VALUES(frame);
+
+    // Set error number:
+    SET_INTEGER(&error_obj->code, code);
+
+    error_obj->message = *message;
+    error_obj->id = id;
+    error_obj->type = type;
+
+    // Set backtrace and location information:
+    if (DSF) {
+        // Where (what function) is the error:
+        Val_Init_Block(&error_obj->where, Make_Backtrace(0));
+        // Nearby location of the error (in block being evaluated):
+        error_obj->nearest = *DSF_WHERE(DSF);
+    }
+
+    return frame;
 }
 
 
@@ -1003,14 +1003,14 @@ REBSER *Make_Error_Core(REBCNT code, va_list *args)
 //
 REBSER *Error(REBCNT num, ... /* REBVAL *arg1, REBVAL *arg2, ... */)
 {
-	va_list args;
-	REBSER *frame;
+    va_list args;
+    REBSER *frame;
 
-	va_start(args, num);
-	frame = Make_Error_Core(num, &args);
-	va_end(args);
+    va_start(args, num);
+    frame = Make_Error_Core(num, &args);
+    va_end(args);
 
-	return frame;
+    return frame;
 }
 
 
@@ -1019,15 +1019,15 @@ REBSER *Error(REBCNT num, ... /* REBVAL *arg1, REBVAL *arg2, ... */)
 //
 REBSER *Error_Bad_Func_Def(const REBVAL *spec, const REBVAL *body)
 {
-	// !!! Improve this error; it's simply a direct emulation of arity-1
-	// error that existed before refactoring code out of MT_Function().
+    // !!! Improve this error; it's simply a direct emulation of arity-1
+    // error that existed before refactoring code out of MT_Function().
 
-	REBVAL def;
-	REBSER *series = Make_Array(2);
-	Append_Value(series, spec);
-	Append_Value(series, body);
-	Val_Init_Block(&def, series);
-	return Error(RE_BAD_FUNC_DEF, &def, NULL);
+    REBVAL def;
+    REBSER *series = Make_Array(2);
+    Append_Value(series, spec);
+    Append_Value(series, body);
+    Val_Init_Block(&def, series);
+    return Error(RE_BAD_FUNC_DEF, &def, NULL);
 }
 
 
@@ -1036,10 +1036,10 @@ REBSER *Error_Bad_Func_Def(const REBVAL *spec, const REBVAL *body)
 //
 REBSER *Error_No_Arg(const REBVAL *label, const REBVAL *key)
 {
-	REBVAL key_word;
-	assert(IS_TYPESET(key));
-	Val_Init_Word_Unbound(&key_word, REB_WORD, VAL_TYPESET_SYM(key));
-	return Error(RE_NO_ARG, label, &key_word, NULL);
+    REBVAL key_word;
+    assert(IS_TYPESET(key));
+    Val_Init_Word_Unbound(&key_word, REB_WORD, VAL_TYPESET_SYM(key));
+    return Error(RE_NO_ARG, label, &key_word, NULL);
 }
 
 
@@ -1048,9 +1048,9 @@ REBSER *Error_No_Arg(const REBVAL *label, const REBVAL *key)
 //
 REBSER *Error_Invalid_Datatype(REBCNT id)
 {
-	REBVAL id_value;
-	SET_INTEGER(&id_value, id);
-	return Error(RE_INVALID_DATATYPE, &id_value, NULL);
+    REBVAL id_value;
+    SET_INTEGER(&id_value, id);
+    return Error(RE_INVALID_DATATYPE, &id_value, NULL);
 }
 
 
@@ -1059,9 +1059,9 @@ REBSER *Error_Invalid_Datatype(REBCNT id)
 //
 REBSER *Error_No_Memory(REBCNT bytes)
 {
-	REBVAL bytes_value;
-	SET_INTEGER(&bytes_value, bytes);
-	return Error(RE_NO_MEMORY, &bytes_value, NULL);
+    REBVAL bytes_value;
+    SET_INTEGER(&bytes_value, bytes);
+    return Error(RE_NO_MEMORY, &bytes_value, NULL);
 }
 
 
@@ -1075,7 +1075,7 @@ REBSER *Error_No_Memory(REBCNT bytes)
 //
 REBSER *Error_Invalid_Arg(const REBVAL *value)
 {
-	return Error(RE_INVALID_ARG, value, NULL);
+    return Error(RE_INVALID_ARG, value, NULL);
 }
 
 
@@ -1084,14 +1084,14 @@ REBSER *Error_Invalid_Arg(const REBVAL *value)
 //
 REBSER *Error_No_Catch_For_Throw(REBVAL *thrown)
 {
-	REBVAL arg;
-	assert(THROWN(thrown));
-	CATCH_THROWN(&arg, thrown); // clears bit
+    REBVAL arg;
+    assert(THROWN(thrown));
+    CATCH_THROWN(&arg, thrown); // clears bit
 
-	if (IS_NONE(thrown))
-		return Error(RE_NO_CATCH, &arg, NULL);
+    if (IS_NONE(thrown))
+        return Error(RE_NO_CATCH, &arg, NULL);
 
-	return Error(RE_NO_CATCH_NAMED, &arg, thrown, NULL);
+    return Error(RE_NO_CATCH_NAMED, &arg, thrown, NULL);
 }
 
 
@@ -1102,7 +1102,7 @@ REBSER *Error_No_Catch_For_Throw(REBVAL *thrown)
 //
 REBSER *Error_Has_Bad_Type(const REBVAL *value)
 {
-	return Error(RE_INVALID_TYPE, Type_Of(value), NULL);
+    return Error(RE_INVALID_TYPE, Type_Of(value), NULL);
 }
 
 
@@ -1113,7 +1113,7 @@ REBSER *Error_Has_Bad_Type(const REBVAL *value)
 //
 REBSER *Error_Out_Of_Range(const REBVAL *arg)
 {
-	return Error(RE_OUT_OF_RANGE, arg, NULL);
+    return Error(RE_OUT_OF_RANGE, arg, NULL);
 }
 
 
@@ -1122,11 +1122,11 @@ REBSER *Error_Out_Of_Range(const REBVAL *arg)
 //
 REBSER *Error_Protected_Key(REBVAL *key)
 {
-	REBVAL key_name;
-	assert(IS_TYPESET(key));
-	Val_Init_Word_Unbound(&key_name, REB_WORD, VAL_TYPESET_SYM(key));
+    REBVAL key_name;
+    assert(IS_TYPESET(key));
+    Val_Init_Word_Unbound(&key_name, REB_WORD, VAL_TYPESET_SYM(key));
 
-	return Error(RE_LOCKED_WORD, &key_name, NULL);
+    return Error(RE_LOCKED_WORD, &key_name, NULL);
 }
 
 
@@ -1135,10 +1135,10 @@ REBSER *Error_Protected_Key(REBVAL *key)
 //
 REBSER *Error_Illegal_Action(REBCNT type, REBCNT action)
 {
-	REBVAL action_word;
-	Val_Init_Word_Unbound(&action_word, REB_WORD, Get_Action_Sym(action));
+    REBVAL action_word;
+    Val_Init_Word_Unbound(&action_word, REB_WORD, Get_Action_Sym(action));
 
-	return Error(RE_CANNOT_USE, &action_word, Get_Type(type), NULL);
+    return Error(RE_CANNOT_USE, &action_word, Get_Type(type), NULL);
 }
 
 
@@ -1147,10 +1147,10 @@ REBSER *Error_Illegal_Action(REBCNT type, REBCNT action)
 //
 REBSER *Error_Math_Args(enum Reb_Kind type, REBCNT action)
 {
-	REBVAL action_word;
-	Val_Init_Word_Unbound(&action_word, REB_WORD, Get_Action_Sym(action));
+    REBVAL action_word;
+    Val_Init_Word_Unbound(&action_word, REB_WORD, Get_Action_Sym(action));
 
-	return Error(RE_NOT_RELATED, &action_word, Get_Type(type), NULL);
+    return Error(RE_NOT_RELATED, &action_word, Get_Type(type), NULL);
 }
 
 
@@ -1159,10 +1159,10 @@ REBSER *Error_Math_Args(enum Reb_Kind type, REBCNT action)
 //
 REBSER *Error_Unexpected_Type(enum Reb_Kind expected, enum Reb_Kind actual)
 {
-	assert(expected != REB_END && expected < REB_MAX);
-	assert(actual != REB_END && actual < REB_MAX);
+    assert(expected != REB_END && expected < REB_MAX);
+    assert(actual != REB_END && actual < REB_MAX);
 
-	return Error(RE_EXPECT_VAL, Get_Type(expected), Get_Type(actual), NULL);
+    return Error(RE_EXPECT_VAL, Get_Type(expected), Get_Type(actual), NULL);
 }
 
 
@@ -1174,12 +1174,12 @@ REBSER *Error_Unexpected_Type(enum Reb_Kind expected, enum Reb_Kind actual)
 //
 REBSER *Error_Arg_Type(const struct Reb_Call *call, const REBVAL *param, const REBVAL *arg_type)
 {
-	REBVAL param_word;
-	assert(IS_TYPESET(param));
-	Val_Init_Word_Unbound(&param_word, REB_WORD, VAL_TYPESET_SYM(param));
+    REBVAL param_word;
+    assert(IS_TYPESET(param));
+    Val_Init_Word_Unbound(&param_word, REB_WORD, VAL_TYPESET_SYM(param));
 
-	assert(IS_DATATYPE(arg_type));
-	return Error(RE_EXPECT_ARG, DSF_LABEL(call), &param_word, arg_type, NULL);
+    assert(IS_DATATYPE(arg_type));
+    return Error(RE_EXPECT_ARG, DSF_LABEL(call), &param_word, arg_type, NULL);
 }
 
 
@@ -1188,7 +1188,7 @@ REBSER *Error_Arg_Type(const struct Reb_Call *call, const REBVAL *param, const R
 //
 REBSER *Error_Bad_Make(REBCNT type, const REBVAL *spec)
 {
-	return Error(RE_BAD_MAKE_ARG, Get_Type(type), spec, NULL);
+    return Error(RE_BAD_MAKE_ARG, Get_Type(type), spec, NULL);
 }
 
 
@@ -1197,7 +1197,7 @@ REBSER *Error_Bad_Make(REBCNT type, const REBVAL *spec)
 //
 REBSER *Error_Cannot_Reflect(REBCNT type, const REBVAL *arg)
 {
-	return Error(RE_CANNOT_USE, arg, Get_Type(type), NULL);
+    return Error(RE_CANNOT_USE, arg, Get_Type(type), NULL);
 }
 
 
@@ -1206,17 +1206,17 @@ REBSER *Error_Cannot_Reflect(REBCNT type, const REBVAL *arg)
 //
 REBSER *Error_On_Port(REBCNT errnum, REBSER *port, REBINT err_code)
 {
-	REBVAL *spec = OFV(port, STD_PORT_SPEC);
-	REBVAL *val;
-	REBVAL err_code_value;
+    REBVAL *spec = OFV(port, STD_PORT_SPEC);
+    REBVAL *val;
+    REBVAL err_code_value;
 
-	if (!IS_OBJECT(spec)) fail (Error(RE_INVALID_PORT));
+    if (!IS_OBJECT(spec)) fail (Error(RE_INVALID_PORT));
 
-	val = Get_Object(spec, STD_PORT_SPEC_HEAD_REF); // most informative
-	if (IS_NONE(val)) val = Get_Object(spec, STD_PORT_SPEC_HEAD_TITLE);
+    val = Get_Object(spec, STD_PORT_SPEC_HEAD_REF); // most informative
+    if (IS_NONE(val)) val = Get_Object(spec, STD_PORT_SPEC_HEAD_TITLE);
 
-	SET_INTEGER(&err_code_value, err_code);
-	return Error(errnum, val, &err_code_value, NULL);
+    SET_INTEGER(&err_code_value, err_code);
+    return Error(errnum, val, &err_code_value, NULL);
 }
 
 
@@ -1230,37 +1230,37 @@ REBSER *Error_On_Port(REBCNT errnum, REBSER *port, REBINT err_code)
 //
 int Exit_Status_From_Value(REBVAL *value)
 {
-	assert(!THROWN(value));
+    assert(!THROWN(value));
 
-	if (IS_INTEGER(value)) {
-		// Fairly obviously, an integer should return an integer
-		// result.  But Rebol integers are 64 bit and signed, while
-		// exit statuses don't go that large.
-		//
-		return VAL_INT32(value);
-	}
-	else if (IS_UNSET(value) || IS_NONE(value)) {
-		// An unset would happen with just QUIT or EXIT and no /WITH,
-		// so treating that as a 0 for success makes sense.  A NONE!
-		// seems like nothing to report as well, for instance:
-		//
-		//     exit/with if badthing [badthing-code]
-		//
-		return 0;
-	}
-	else if (IS_ERROR(value)) {
-		// Rebol errors do have an error number in them, and if your
-		// program tries to return a Rebol error it seems it wouldn't
-		// hurt to try using that.  They may be out of range for
-		// platforms using byte-sized error codes, however...but if
-		// that causes bad things OS_EXIT() should be graceful about it.
-		//
-		return VAL_ERR_NUM(value);
-	}
+    if (IS_INTEGER(value)) {
+        // Fairly obviously, an integer should return an integer
+        // result.  But Rebol integers are 64 bit and signed, while
+        // exit statuses don't go that large.
+        //
+        return VAL_INT32(value);
+    }
+    else if (IS_UNSET(value) || IS_NONE(value)) {
+        // An unset would happen with just QUIT or EXIT and no /WITH,
+        // so treating that as a 0 for success makes sense.  A NONE!
+        // seems like nothing to report as well, for instance:
+        //
+        //     exit/with if badthing [badthing-code]
+        //
+        return 0;
+    }
+    else if (IS_ERROR(value)) {
+        // Rebol errors do have an error number in them, and if your
+        // program tries to return a Rebol error it seems it wouldn't
+        // hurt to try using that.  They may be out of range for
+        // platforms using byte-sized error codes, however...but if
+        // that causes bad things OS_EXIT() should be graceful about it.
+        //
+        return VAL_ERR_NUM(value);
+    }
 
-	// Just 1 otherwise.
-	//
-	return 1;
+    // Just 1 otherwise.
+    //
+    return 1;
 }
 
 
@@ -1269,20 +1269,20 @@ int Exit_Status_From_Value(REBVAL *value)
 //
 void Init_Errors(REBVAL *errors)
 {
-	REBSER *errs;
-	REBVAL *val;
+    REBSER *errs;
+    REBVAL *val;
 
-	// Create error objects and error type objects:
-	*ROOT_ERROBJ = *Get_System(SYS_STANDARD, STD_ERROR);
-	errs = Construct_Object(NULL, VAL_BLK_HEAD(errors), FALSE);
+    // Create error objects and error type objects:
+    *ROOT_ERROBJ = *Get_System(SYS_STANDARD, STD_ERROR);
+    errs = Construct_Object(NULL, VAL_BLK_HEAD(errors), FALSE);
 
-	Val_Init_Object(Get_System(SYS_CATALOG, CAT_ERRORS), errs);
+    Val_Init_Object(Get_System(SYS_CATALOG, CAT_ERRORS), errs);
 
-	// Create objects for all error types:
-	for (val = BLK_SKIP(errs, 1); NOT_END(val); val++) {
-		errs = Construct_Object(NULL, VAL_BLK_HEAD(val), FALSE);
-		Val_Init_Object(val, errs);
-	}
+    // Create objects for all error types:
+    for (val = BLK_SKIP(errs, 1); NOT_END(val); val++) {
+        errs = Construct_Object(NULL, VAL_BLK_HEAD(val), FALSE);
+        Val_Init_Object(val, errs);
+    }
 }
 
 
@@ -1320,65 +1320,65 @@ void Init_Errors(REBVAL *errors)
 //
 REBYTE *Security_Policy(REBCNT sym, REBVAL *name)
 {
-	REBVAL *policy = Get_System(SYS_STATE, STATE_POLICIES);
-	REBYTE *flags;
-	REBCNT len;
-	REBCNT errcode = RE_SECURITY_ERROR;
+    REBVAL *policy = Get_System(SYS_STATE, STATE_POLICIES);
+    REBYTE *flags;
+    REBCNT len;
+    REBCNT errcode = RE_SECURITY_ERROR;
 
-	if (!IS_OBJECT(policy)) goto error;
+    if (!IS_OBJECT(policy)) goto error;
 
-	// Find the security class in the block: (file net call...)
-	policy = Find_Word_Value(VAL_OBJ_FRAME(policy), sym);
-	if (!policy) goto error;
+    // Find the security class in the block: (file net call...)
+    policy = Find_Word_Value(VAL_OBJ_FRAME(policy), sym);
+    if (!policy) goto error;
 
-	// Obtain the policies for it:
-	// Check for a master tuple: [file rrrr.wwww.xxxx]
-	if (IS_TUPLE(policy)) return VAL_TUPLE(policy); // non-aligned
-	// removed A90: if (IS_INTEGER(policy)) return (REBYTE*)VAL_INT64(policy); // probably not used
+    // Obtain the policies for it:
+    // Check for a master tuple: [file rrrr.wwww.xxxx]
+    if (IS_TUPLE(policy)) return VAL_TUPLE(policy); // non-aligned
+    // removed A90: if (IS_INTEGER(policy)) return (REBYTE*)VAL_INT64(policy); // probably not used
 
-	// Only other form is detailed block:
-	if (!IS_BLOCK(policy)) goto error;
+    // Only other form is detailed block:
+    if (!IS_BLOCK(policy)) goto error;
 
-	// Scan block of policies for the class: [file [allow read quit write]]
-	len = 0;	// file or url length
-	flags = 0;	// policy flags
-	for (policy = VAL_BLK_HEAD(policy); NOT_END(policy); policy += 2) {
+    // Scan block of policies for the class: [file [allow read quit write]]
+    len = 0;    // file or url length
+    flags = 0;  // policy flags
+    for (policy = VAL_BLK_HEAD(policy); NOT_END(policy); policy += 2) {
 
-		// Must be a policy tuple:
-		if (!IS_TUPLE(policy+1)) goto error;
+        // Must be a policy tuple:
+        if (!IS_TUPLE(policy+1)) goto error;
 
-		// Is it a policy word:
-		if (IS_WORD(policy)) { // any word works here
-			// If no strings found, use the default:
-			if (len == 0) flags = VAL_TUPLE(policy+1); // non-aligned
-		}
+        // Is it a policy word:
+        if (IS_WORD(policy)) { // any word works here
+            // If no strings found, use the default:
+            if (len == 0) flags = VAL_TUPLE(policy+1); // non-aligned
+        }
 
-		// Is it a string (file or URL):
-		else if (ANY_BINSTR(policy) && name) {
-			//Debug_Fmt("sec: %r %r", policy, name);
-			if (Match_Sub_Path(VAL_SERIES(policy), VAL_SERIES(name))) {
-				// Is the match adequate?
-				if (VAL_TAIL(name) >= len) {
-					len = VAL_TAIL(name);
-					flags = VAL_TUPLE(policy+1); // non-aligned
-				}
-			}
-		}
-		else goto error;
-	}
+        // Is it a string (file or URL):
+        else if (ANY_BINSTR(policy) && name) {
+            //Debug_Fmt("sec: %r %r", policy, name);
+            if (Match_Sub_Path(VAL_SERIES(policy), VAL_SERIES(name))) {
+                // Is the match adequate?
+                if (VAL_TAIL(name) >= len) {
+                    len = VAL_TAIL(name);
+                    flags = VAL_TUPLE(policy+1); // non-aligned
+                }
+            }
+        }
+        else goto error;
+    }
 
-	if (!flags) {
-		errcode = RE_SECURITY;
-		policy = name ? name : 0;
+    if (!flags) {
+        errcode = RE_SECURITY;
+        policy = name ? name : 0;
 error:
-		if (!policy) {
-			Val_Init_Word_Unbound(DS_TOP, REB_WORD, sym);
-			policy = DS_TOP;
-		}
-		fail (Error(errcode, policy));
-	}
+        if (!policy) {
+            Val_Init_Word_Unbound(DS_TOP, REB_WORD, sym);
+            policy = DS_TOP;
+        }
+        fail (Error(errcode, policy));
+    }
 
-	return flags;
+    return flags;
 }
 
 
@@ -1390,14 +1390,14 @@ error:
 //
 void Trap_Security(REBCNT flag, REBCNT sym, REBVAL *value)
 {
-	if (flag == SEC_THROW) {
-		if (!value) {
-			Val_Init_Word_Unbound(DS_TOP, REB_WORD, sym);
-			value = DS_TOP;
-		}
-		fail (Error(RE_SECURITY, value));
-	}
-	else if (flag == SEC_QUIT) OS_EXIT(101);
+    if (flag == SEC_THROW) {
+        if (!value) {
+            Val_Init_Word_Unbound(DS_TOP, REB_WORD, sym);
+            value = DS_TOP;
+        }
+        fail (Error(RE_SECURITY, value));
+    }
+    else if (flag == SEC_QUIT) OS_EXIT(101);
 }
 
 
@@ -1410,10 +1410,10 @@ void Trap_Security(REBCNT flag, REBCNT sym, REBVAL *value)
 //
 void Check_Security(REBCNT sym, REBCNT policy, REBVAL *value)
 {
-	REBYTE *flags;
+    REBYTE *flags;
 
-	flags = Security_Policy(sym, value);
-	Trap_Security(flags[policy], sym, value);
+    flags = Security_Policy(sym, value);
+    Trap_Security(flags[policy], sym, value);
 }
 
 
@@ -1426,10 +1426,10 @@ void Check_Security(REBCNT sym, REBCNT policy, REBVAL *value)
 //
 void Assert_Error_Debug(const REBVAL *err)
 {
-	assert(IS_ERROR(err));
-	assert(VAL_ERR_NUM(err) != 0);
+    assert(IS_ERROR(err));
+    assert(VAL_ERR_NUM(err) != 0);
 
-	ASSERT_FRAME(VAL_ERR_OBJECT(err));
+    ASSERT_FRAME(VAL_ERR_OBJECT(err));
 }
 
 #endif

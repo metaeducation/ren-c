@@ -21,7 +21,7 @@
 **
 **  Title: Host Thread Services
 **  Purpose:
-**		Support for the TASK! type (not currently implemented).
+**      Support for the TASK! type (not currently implemented).
 **
 ***********************************************************************/
 
@@ -47,17 +47,17 @@ static void *Task_Ready;
 //
 REBINT OS_Create_Thread(THREADFUNC *init, void *arg, REBCNT stack_size)
 {
-	REBINT thread;
+    REBINT thread;
 /*
-	Task_Ready = CreateEvent(NULL, TRUE, FALSE, "REBOL_Task_Launch");
-	if (!Task_Ready) return -1;
+    Task_Ready = CreateEvent(NULL, TRUE, FALSE, "REBOL_Task_Launch");
+    if (!Task_Ready) return -1;
 
-	thread = _beginthread(init, stack_size, arg);
+    thread = _beginthread(init, stack_size, arg);
 
-	if (thread) WaitForSingleObject(Task_Ready, 2000);
-	CloseHandle(Task_Ready);
+    if (thread) WaitForSingleObject(Task_Ready, 2000);
+    CloseHandle(Task_Ready);
 */
-	return 1;
+    return 1;
 }
 
 
@@ -68,7 +68,7 @@ REBINT OS_Create_Thread(THREADFUNC *init, void *arg, REBCNT stack_size)
 //
 void OS_Delete_Thread(void)
 {
-	//_endthread();
+    //_endthread();
 }
 
 
@@ -80,5 +80,5 @@ void OS_Delete_Thread(void)
 //
 void OS_Task_Ready(REBINT tid)
 {
-	//SetEvent(Task_Ready);
+    //SetEvent(Task_Ready);
 }

@@ -21,17 +21,17 @@
 **
 **  Title: GOB Hostkit Facilities
 **  Purpose:
-**		@HostileFork doesn't particularly like the way GOB! is done,
-**		and feels it's an instance of a more general need for external
-**		types that participate in Rebol's type system and garbage
-**		collector.  For now these routines are kept together here.
+**      @HostileFork doesn't particularly like the way GOB! is done,
+**      and feels it's an instance of a more general need for external
+**      types that participate in Rebol's type system and garbage
+**      collector.  For now these routines are kept together here.
 **
 ***********************************************************************/
 
 #ifndef __cplusplus
-	// See feature_test_macros(7)
-	// This definition is redundant under C++
-	#define _GNU_SOURCE
+    // See feature_test_macros(7)
+    // This definition is redundant under C++
+    #define _GNU_SOURCE
 #endif
 
 #include <stdlib.h>
@@ -64,9 +64,9 @@ REBSER* Gob_To_Image(REBGOB *gob);
 REBSER *OS_GOB_To_Image(REBGOB *gob)
 {
 #if (defined REB_CORE)
-	return 0;
+    return 0;
 #else
-	return Gob_To_Image(gob);
+    return Gob_To_Image(gob);
 #endif
 }
 
@@ -85,28 +85,28 @@ REBSER *OS_GOB_To_Image(REBGOB *gob)
 //
 REBOOL As_OS_Str(REBSER *series, REBCHR **string)
 {
-	int n;
-	void *str;
-	REBCNT len;
+    int n;
+    void *str;
+    REBCNT len;
 
-	if ((n = RL_Get_String(series, 0, &str)) < 0) {
-		// Latin1 byte string - use as is
-		*string = cast(char*, str);
-		return FALSE;
-	}
+    if ((n = RL_Get_String(series, 0, &str)) < 0) {
+        // Latin1 byte string - use as is
+        *string = cast(char*, str);
+        return FALSE;
+    }
 
-	len = n;
+    len = n;
 
-	//empty string check
-	if (len == 0) { /* shortcut */
-		*string = OS_ALLOC_ARRAY(REBCHR, 1);
-		*string[0] = '\0';
-	} else {
-		//convert to UTF8
-		REBCNT utf8_len = RL_Length_As_UTF8(str, len, TRUE, FALSE);
-		*string = OS_ALLOC_ARRAY(char, utf8_len + 1);
-		RL_Encode_UTF8(b_cast(*string), utf8_len, str, &len, TRUE, FALSE);
-		(*string)[utf8_len] = '\0';
-	}
-	return TRUE;
+    //empty string check
+    if (len == 0) { /* shortcut */
+        *string = OS_ALLOC_ARRAY(REBCHR, 1);
+        *string[0] = '\0';
+    } else {
+        //convert to UTF8
+        REBCNT utf8_len = RL_Length_As_UTF8(str, len, TRUE, FALSE);
+        *string = OS_ALLOC_ARRAY(char, utf8_len + 1);
+        RL_Encode_UTF8(b_cast(*string), utf8_len, str, &len, TRUE, FALSE);
+        (*string)[utf8_len] = '\0';
+    }
+    return TRUE;
 }

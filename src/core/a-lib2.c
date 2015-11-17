@@ -38,90 +38,90 @@
 
 /***********************************************************************
 **
-x*/	REBOL_API REBINT Reb_Dialect(REBINT dialect, REBSER *block, REBCNT *index, REBSER **arglist)
+x*/ REBOL_API REBINT Reb_Dialect(REBINT dialect, REBSER *block, REBCNT *index, REBSER **arglist)
 /*
-**		Process a standard dialect.
+**      Process a standard dialect.
 **
-**		The index points to the next value to interpret and is updated
-**		on return (for next loop or error). The system/dialect
-**		object is used for the dialect specification.
+**      The index points to the next value to interpret and is updated
+**      on return (for next loop or error). The system/dialect
+**      object is used for the dialect specification.
 **
-**		A block is returned with the arguments, ordered according
-**		to the dialect specification for the command. Note that the
-**		returned block is reset and reused with each command. (To
-**		minimize GC trash.). The cmd arg returns the command number
-**		or error number (when result is zero).
+**      A block is returned with the arguments, ordered according
+**      to the dialect specification for the command. Note that the
+**      returned block is reset and reused with each command. (To
+**      minimize GC trash.). The cmd arg returns the command number
+**      or error number (when result is zero).
 **
-**		A zero is returned for errors and end-of-block. For the former
-**		an error is returned in cmd. For the latter, cmd is zero.
+**      A zero is returned for errors and end-of-block. For the former
+**      an error is returned in cmd. For the latter, cmd is zero.
 **
 ***********************************************************************/
 {
-	REBVAL *val = Get_System(SYS_DIALECTS, 0);
+    REBVAL *val = Get_System(SYS_DIALECTS, 0);
 
-	if (!IS_OBJECT(val)
-		||  dialect <= 0
-		||	dialect >= (REBINT)SERIES_TAIL(VAL_OBJ_FRAME(val))
-	) {
-		return -REB_DIALECT_MISSING;
-	}
+    if (!IS_OBJECT(val)
+        ||  dialect <= 0
+        ||  dialect >= (REBINT)SERIES_TAIL(VAL_OBJ_FRAME(val))
+    ) {
+        return -REB_DIALECT_MISSING;
+    }
 
-	val = Get_System(SYS_DIALECTS, dialect);
-	if (!IS_OBJECT(val)) return -REB_DIALECT_MISSING;;
-	return Do_Dialect(VAL_OBJ_FRAME(val), block, index, arglist);
+    val = Get_System(SYS_DIALECTS, dialect);
+    if (!IS_OBJECT(val)) return -REB_DIALECT_MISSING;;
+    return Do_Dialect(VAL_OBJ_FRAME(val), block, index, arglist);
 }
 
 
 /***********************************************************************
 **
-x*/	REBOL_API void Reb_Set_Var(void *var, void *value)
+x*/ REBOL_API void Reb_Set_Var(void *var, void *value)
 /*
 ***********************************************************************/
 {
-	Set_Var(var, value); // Check context, index, range
+    Set_Var(var, value); // Check context, index, range
 }
 
 
 /***********************************************************************
 **
-x*/	REBOL_API REBINT Reb_Map_Words(REBYTE **names, REBCNT *symbols)
+x*/ REBOL_API REBINT Reb_Map_Words(REBYTE **names, REBCNT *symbols)
 /*
-**		Given null terminated list of word names, supply the
-**		symbol values for those words. Return length.
-**		The names must be UTF8 valid.
+**      Given null terminated list of word names, supply the
+**      symbol values for those words. Return length.
+**      The names must be UTF8 valid.
 **
 ***********************************************************************/
 {
-	REBINT count = 0;
+    REBINT count = 0;
 
-	for (; *names; names++, count++) {
-		*symbols++ = Make_Word(*names, 0);
-	}
-	*symbols++ = 0;
+    for (; *names; names++, count++) {
+        *symbols++ = Make_Word(*names, 0);
+    }
+    *symbols++ = 0;
 
-	return count;
+    return count;
 }
 
 
 /***********************************************************************
 **
-x*/	REBOL_API REBINT Reb_Find_Word(REBCNT sym, REBCNT *symbols, REBINT limit)
+x*/ REBOL_API REBINT Reb_Find_Word(REBCNT sym, REBCNT *symbols, REBINT limit)
 /*
-**		Search a symbol list for a word, and return the index for it.
-**		Return -1 if not found.  Limit can be used to control how many
-**		words in the symbol list will be compared.
+**      Search a symbol list for a word, and return the index for it.
+**      Return -1 if not found.  Limit can be used to control how many
+**      words in the symbol list will be compared.
 **
 ***********************************************************************/
 {
-	REBINT index;
+    REBINT index;
 
-	if (sym >= SERIES_TAIL(PG_Word_Table.series)) return -1;
-	if (limit == 0) limit = 100000;
+    if (sym >= SERIES_TAIL(PG_Word_Table.series)) return -1;
+    if (limit == 0) limit = 100000;
 
-	for (index = 0; limit > 0 && symbols[index]; limit--, index++) {
-		if (sym == symbols[index] || SYMBOL_TO_CANON(sym) == SYMBOL_TO_CANON(symbols[index]))
-			return index;
-	}
+    for (index = 0; limit > 0 && symbols[index]; limit--, index++) {
+        if (sym == symbols[index] || SYMBOL_TO_CANON(sym) == SYMBOL_TO_CANON(symbols[index]))
+            return index;
+    }
 
-	return -1;
+    return -1;
 }

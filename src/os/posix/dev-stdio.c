@@ -47,21 +47,21 @@
 
 #include "reb-host.h"
 
-#define SF_DEV_NULL 31		// local flag to mark NULL device
+#define SF_DEV_NULL 31      // local flag to mark NULL device
 
 // Temporary globals: (either move or remove?!)
 static int Std_Inp = STDIN_FILENO;
 static int Std_Out = STDOUT_FILENO;
 static FILE *Std_Echo = NULL;
 
-#ifndef HAS_SMART_CONSOLE	// console line-editing and recall needed
+#ifndef HAS_SMART_CONSOLE   // console line-editing and recall needed
 typedef struct term_data {
-	char *buffer;
-	char *residue;
-	char *out;
-	int pos;
-	int end;
-	int hist;
+    char *buffer;
+    char *residue;
+    char *out;
+    int pos;
+    int end;
+    int hist;
 } STD_TERM;
 
 extern STD_TERM *Init_Terminal();
@@ -77,29 +77,29 @@ static int interrupted = 0;
 
 static void Handle_Signal(int sig)
 {
-	RL_Escape(0); /* This will cause the next evalution escaped */
-	interrupted = 1;
+    RL_Escape(0); /* This will cause the next evalution escaped */
+    interrupted = 1;
 }
 
 static void Init_Signals(void)
 {
-	signal(SIGINT, Handle_Signal);
-	signal(SIGHUP, Handle_Signal);
-	signal(SIGTERM, Handle_Signal);
+    signal(SIGINT, Handle_Signal);
+    signal(SIGHUP, Handle_Signal);
+    signal(SIGTERM, Handle_Signal);
 }
 
 static void Close_Stdio(void)
 {
 #ifndef HAS_SMART_CONSOLE
-	if (Term_IO) {
-		Quit_Terminal(Term_IO);
-		Term_IO = 0;
-	}
+    if (Term_IO) {
+        Quit_Terminal(Term_IO);
+        Term_IO = 0;
+    }
 #endif
-	if (Std_Echo) {
-		fclose(Std_Echo);
-		Std_Echo = 0;
-	}
+    if (Std_Echo) {
+        fclose(Std_Echo);
+        Std_Echo = 0;
+    }
 }
 
 //
@@ -107,12 +107,12 @@ static void Close_Stdio(void)
 //
 DEVICE_CMD Quit_IO(REBREQ *dr)
 {
-	REBDEV *dev = (REBDEV*)dr; // just to keep compiler happy above
+    REBDEV *dev = (REBDEV*)dr; // just to keep compiler happy above
 
-	Close_Stdio();
+    Close_Stdio();
 
-	CLR_FLAG(dev->flags, RDF_OPEN);
-	return DR_DONE;
+    CLR_FLAG(dev->flags, RDF_OPEN);
+    return DR_DONE;
 }
 
 
@@ -121,36 +121,36 @@ DEVICE_CMD Quit_IO(REBREQ *dr)
 //
 DEVICE_CMD Open_IO(REBREQ *req)
 {
-	REBDEV *dev;
+    REBDEV *dev;
 
-	dev = Devices[req->device];
+    dev = Devices[req->device];
 
-	// Avoid opening the console twice (compare dev and req flags):
-	if (GET_FLAG(dev->flags, RDF_OPEN)) {
-		// Device was opened earlier as null, so req must have that flag:
-		if (GET_FLAG(dev->flags, SF_DEV_NULL))
-			SET_FLAG(req->modes, RDM_NULL);
-		SET_FLAG(req->flags, RRF_OPEN);
-		return DR_DONE; // Do not do it again
-	}
+    // Avoid opening the console twice (compare dev and req flags):
+    if (GET_FLAG(dev->flags, RDF_OPEN)) {
+        // Device was opened earlier as null, so req must have that flag:
+        if (GET_FLAG(dev->flags, SF_DEV_NULL))
+            SET_FLAG(req->modes, RDM_NULL);
+        SET_FLAG(req->flags, RRF_OPEN);
+        return DR_DONE; // Do not do it again
+    }
 
-	Init_Signals();
+    Init_Signals();
 
-	if (!GET_FLAG(req->modes, RDM_NULL)) {
+    if (!GET_FLAG(req->modes, RDM_NULL)) {
 
 #ifndef HAS_SMART_CONSOLE
-		if (isatty(Std_Inp))
-			Term_IO = Init_Terminal();
+        if (isatty(Std_Inp))
+            Term_IO = Init_Terminal();
 #endif
-		//printf("%x\r\n", req->requestee.handle);
-	}
-	else
-		SET_FLAG(dev->flags, SF_DEV_NULL);
+        //printf("%x\r\n", req->requestee.handle);
+    }
+    else
+        SET_FLAG(dev->flags, SF_DEV_NULL);
 
-	SET_FLAG(req->flags, RRF_OPEN);
-	SET_FLAG(dev->flags, RDF_OPEN);
+    SET_FLAG(req->flags, RRF_OPEN);
+    SET_FLAG(dev->flags, RDF_OPEN);
 
-	return DR_DONE;
+    return DR_DONE;
 }
 
 
@@ -159,13 +159,13 @@ DEVICE_CMD Open_IO(REBREQ *req)
 //
 DEVICE_CMD Close_IO(REBREQ *req)
 {
-	REBDEV *dev = Devices[req->device];
+    REBDEV *dev = Devices[req->device];
 
-	Close_Stdio();
+    Close_Stdio();
 
-	CLR_FLAG(dev->flags, RRF_OPEN);
+    CLR_FLAG(dev->flags, RRF_OPEN);
 
-	return DR_DONE;
+    return DR_DONE;
 }
 
 
@@ -180,35 +180,35 @@ DEVICE_CMD Close_IO(REBREQ *req)
 //
 DEVICE_CMD Write_IO(REBREQ *req)
 {
-	long total;
+    long total;
 
-	if (GET_FLAG(req->modes, RDM_NULL)) {
-		req->actual = req->length;
-		return DR_DONE;
-	}
+    if (GET_FLAG(req->modes, RDM_NULL)) {
+        req->actual = req->length;
+        return DR_DONE;
+    }
 
-	if (Std_Out >= 0) {
+    if (Std_Out >= 0) {
 
-		total = write(Std_Out, req->common.data, req->length);
+        total = write(Std_Out, req->common.data, req->length);
 
-		if (total < 0) {
-			req->error = errno;
-			return DR_ERROR;
-		}
+        if (total < 0) {
+            req->error = errno;
+            return DR_ERROR;
+        }
 
-		//if (GET_FLAG(req->flags, RRF_FLUSH)) {
-			//FLUSH();
-		//}
+        //if (GET_FLAG(req->flags, RRF_FLUSH)) {
+            //FLUSH();
+        //}
 
-		req->actual = total;
-	}
+        req->actual = total;
+    }
 
-	if (Std_Echo) {
-		fwrite(req->common.data, req->length, 1, Std_Echo);
-		//fflush(Std_Echo); //slow!
-	}
+    if (Std_Echo) {
+        fwrite(req->common.data, req->length, 1, Std_Echo);
+        //fflush(Std_Echo); //slow!
+    }
 
-	return DR_DONE;
+    return DR_DONE;
 }
 
 
@@ -223,41 +223,41 @@ DEVICE_CMD Write_IO(REBREQ *req)
 //
 DEVICE_CMD Read_IO(REBREQ *req)
 {
-	long total = 0;
-	int len = req->length;
+    long total = 0;
+    int len = req->length;
 
-	if (GET_FLAG(req->modes, RDM_NULL)) {
-		req->common.data[0] = 0;
-		return DR_DONE;
-	}
+    if (GET_FLAG(req->modes, RDM_NULL)) {
+        req->common.data[0] = 0;
+        return DR_DONE;
+    }
 
-	req->actual = 0;
+    req->actual = 0;
 
-	if (Std_Inp >= 0) {
+    if (Std_Inp >= 0) {
 
-		interrupted = 0;
-		// Perform a processed read or a raw read?
+        interrupted = 0;
+        // Perform a processed read or a raw read?
 #ifndef HAS_SMART_CONSOLE
-		if (Term_IO)
-			total = Read_Line(Term_IO, s_cast(req->common.data), len);
-		else
+        if (Term_IO)
+            total = Read_Line(Term_IO, s_cast(req->common.data), len);
+        else
 #endif
-			total = read(Std_Inp, req->common.data, len); /* will be restarted in case of signal */
+            total = read(Std_Inp, req->common.data, len); /* will be restarted in case of signal */
 
-		if (total < 0) {
-			req->error = errno;
-			return DR_ERROR;
-		}
-		if (interrupted) {
-			char noop[] = "does[]\n";
-			APPEND_BYTES_LIMIT(req->common.data, cb_cast(noop), len);
-			total += sizeof(noop);
-		}
+        if (total < 0) {
+            req->error = errno;
+            return DR_ERROR;
+        }
+        if (interrupted) {
+            char noop[] = "does[]\n";
+            APPEND_BYTES_LIMIT(req->common.data, cb_cast(noop), len);
+            total += sizeof(noop);
+        }
 
-		req->actual = total;
-	}
+        req->actual = total;
+    }
 
-	return DR_DONE;
+    return DR_DONE;
 }
 
 
@@ -268,42 +268,42 @@ DEVICE_CMD Read_IO(REBREQ *req)
 //
 DEVICE_CMD Open_Echo(REBREQ *req)
 {
-	if (Std_Echo) {
-		fclose(Std_Echo);
-		Std_Echo = 0;
-	}
+    if (Std_Echo) {
+        fclose(Std_Echo);
+        Std_Echo = 0;
+    }
 
-	if (req->special.file.path) {
-		Std_Echo = fopen(req->special.file.path, "w");  // null on error
-		if (!Std_Echo) {
-			req->error = errno;
-			return DR_ERROR;
-		}
-	}
+    if (req->special.file.path) {
+        Std_Echo = fopen(req->special.file.path, "w");  // null on error
+        if (!Std_Echo) {
+            req->error = errno;
+            return DR_ERROR;
+        }
+    }
 
-	return DR_DONE;
+    return DR_DONE;
 }
 
 
 /***********************************************************************
 **
-**	Command Dispatch Table (RDC_ enum order)
+**  Command Dispatch Table (RDC_ enum order)
 **
 ***********************************************************************/
 
 static DEVICE_CMD_FUNC Dev_Cmds[RDC_MAX] =
 {
-	0,	// init
-	Quit_IO,
-	Open_IO,
-	Close_IO,
-	Read_IO,
-	Write_IO,
-	0,	// poll
-	0,	// connect
-	0,	// query
-	0,	// modify
-	Open_Echo,	// CREATE used for opening echo file
+    0,  // init
+    Quit_IO,
+    Open_IO,
+    Close_IO,
+    Read_IO,
+    Write_IO,
+    0,  // poll
+    0,  // connect
+    0,  // query
+    0,  // modify
+    Open_Echo,  // CREATE used for opening echo file
 };
 
 DEFINE_DEV(Dev_StdIO, "Standard IO", 1, Dev_Cmds, RDC_MAX, 0);

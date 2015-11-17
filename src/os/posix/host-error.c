@@ -21,7 +21,7 @@
 **
 **  Title: POSIX Exit and Error Functions
 **  Purpose:
-**		...
+**      ...
 **
 ***********************************************************************/
 
@@ -32,8 +32,8 @@
 #include <string.h>
 
 #ifdef HAVE_EXECINFO_AVAILABLE
-	#include <execinfo.h>
-	#include <unistd.h>  // STDERR_FILENO
+    #include <execinfo.h>
+    #include <unistd.h>  // STDERR_FILENO
 #endif
 
 #include "reb-host.h"
@@ -47,12 +47,12 @@
 //
 void OS_Exit(int code)
 {
-	//OS_Call_Device(RDI_STDIO, RDC_CLOSE); // close echo
-	OS_Quit_Devices(0);
+    //OS_Call_Device(RDI_STDIO, RDC_CLOSE); // close echo
+    OS_Quit_Devices(0);
 #ifndef REB_CORE
-	OS_Destroy_Graphics();
+    OS_Destroy_Graphics();
 #endif
-	exit(code);
+    exit(code);
 }
 
 //
@@ -72,28 +72,28 @@ void OS_Exit(int code)
 //
 void OS_Crash(const REBYTE *title, const REBYTE *content)
 {
-	// Echo crash message if echo file is open:
-	///PUTE(content);
-	OS_Call_Device(RDI_STDIO, RDC_CLOSE); // close echo
+    // Echo crash message if echo file is open:
+    ///PUTE(content);
+    OS_Call_Device(RDI_STDIO, RDC_CLOSE); // close echo
 
-	// A title tells us we should alert the user:
-	if (title) {
-		fputs(cs_cast(title), stderr);
-		fputs(":\n", stderr);
-	}
-	fputs(cs_cast(content), stderr);
-	fputs("\n\n", stderr);
+    // A title tells us we should alert the user:
+    if (title) {
+        fputs(cs_cast(title), stderr);
+        fputs(":\n", stderr);
+    }
+    fputs(cs_cast(content), stderr);
+    fputs("\n\n", stderr);
 
 #ifdef HAVE_EXECINFO_AVAILABLE  // backtrace is a GNU extension.
-	{
-		void *backtrace_buf[1024];
-		int n_backtrace = backtrace(backtrace_buf, sizeof(backtrace_buf)/sizeof(backtrace_buf[0]));
-		fputs("Backtrace:\n", stderr);
-		backtrace_symbols_fd(backtrace_buf, n_backtrace, STDERR_FILENO);
-	}
+    {
+        void *backtrace_buf[1024];
+        int n_backtrace = backtrace(backtrace_buf, sizeof(backtrace_buf)/sizeof(backtrace_buf[0]));
+        fputs("Backtrace:\n", stderr);
+        backtrace_symbols_fd(backtrace_buf, n_backtrace, STDERR_FILENO);
+    }
 #endif
 
-	exit(EXIT_FAILURE);
+    exit(EXIT_FAILURE);
 }
 
 
@@ -105,55 +105,55 @@ void OS_Crash(const REBYTE *title, const REBYTE *content)
 //
 REBCHR *OS_Form_Error(int errnum, REBCHR *str, int len)
 {
-	// strerror() is not thread-safe, but strerror_r is. Unfortunately, at
-	// least in glibc, there are two different protocols for strerror_r(),
-	// depending on whether you are using the POSIX-compliant
-	// implementation or the GNU implementation. The convoluted test below
-	// is the inversion of the actual test recommended by glibc to discern
-	// the version of strerror_r() provided. As other, non-glibc
-	// implementations (such as OS X's libSystem) also provide the
-	// POSIX-compliant version, we invert the test: explicitly use the
-	// older GNU implementation when we are sure about it, and use the
-	// more modern POSIX-compliant version otherwise. Finally, we only
-	// attempt this feature detection when using glibc (__GNU_LIBRARY__),
-	// as this particular combination of the (more widely standardised)
-	// _POSIX_C_SOURCE and _XOPEN_SOURCE defines might mean something
-	// completely different on non-glibc implementations. (Note that
-	// undefined pre-processor names arithmetically compare as 0, which is
-	// used in the original glibc test; we are more explicit.)
+    // strerror() is not thread-safe, but strerror_r is. Unfortunately, at
+    // least in glibc, there are two different protocols for strerror_r(),
+    // depending on whether you are using the POSIX-compliant
+    // implementation or the GNU implementation. The convoluted test below
+    // is the inversion of the actual test recommended by glibc to discern
+    // the version of strerror_r() provided. As other, non-glibc
+    // implementations (such as OS X's libSystem) also provide the
+    // POSIX-compliant version, we invert the test: explicitly use the
+    // older GNU implementation when we are sure about it, and use the
+    // more modern POSIX-compliant version otherwise. Finally, we only
+    // attempt this feature detection when using glibc (__GNU_LIBRARY__),
+    // as this particular combination of the (more widely standardised)
+    // _POSIX_C_SOURCE and _XOPEN_SOURCE defines might mean something
+    // completely different on non-glibc implementations. (Note that
+    // undefined pre-processor names arithmetically compare as 0, which is
+    // used in the original glibc test; we are more explicit.)
 
 #if defined(__GNU_LIBRARY__) \
-		&& (defined(_GNU_SOURCE) \
-			|| ((!defined(_POSIX_C_SOURCE) || _POSIX_C_SOURCE < 200112L) \
-				&& (!defined(_XOPEN_SOURCE) || _XOPEN_SOURCE < 600)))
-	// May return an immutable string instead of filling the buffer
-	char *maybe_str = strerror_r(errnum, str, len);
-	if (maybe_str != str)
-		strncpy(str, maybe_str, len);
+        && (defined(_GNU_SOURCE) \
+            || ((!defined(_POSIX_C_SOURCE) || _POSIX_C_SOURCE < 200112L) \
+                && (!defined(_XOPEN_SOURCE) || _XOPEN_SOURCE < 600)))
+    // May return an immutable string instead of filling the buffer
+    char *maybe_str = strerror_r(errnum, str, len);
+    if (maybe_str != str)
+        strncpy(str, maybe_str, len);
 #else
-	// Quoting glibc's strerror_r manpage: "The XSI-compliant strerror_r()
-	// function returns 0 on success. On error, a (positive) error number is
-	// returned (since glibc 2.13), or -1 is returned and errno is set to
-	// indicate the error (glibc versions before 2.13)."
+    // Quoting glibc's strerror_r manpage: "The XSI-compliant strerror_r()
+    // function returns 0 on success. On error, a (positive) error number is
+    // returned (since glibc 2.13), or -1 is returned and errno is set to
+    // indicate the error (glibc versions before 2.13)."
 
-	int result = strerror_r(errnum, str, len);
+    int result = strerror_r(errnum, str, len);
 
-	// Alert us to any problems in a debug build.
-	assert(result == 0);
+    // Alert us to any problems in a debug build.
+    assert(result == 0);
 
-	if (result == 0) {
-		// success...
-	}
-	else if (result == EINVAL) {
-		strncpy(str, "EINVAL: bad error num passed to strerror_r()", len);
-	}
-	else if (result == ERANGE) {
-		strncpy(str, "ERANGE: insufficient size in buffer for error", len);
-	}
-	else {
-		strncpy(str, "Unknown error while getting strerror_r() message", len);
-	}
+    if (result == 0) {
+        // success...
+    }
+    else if (result == EINVAL) {
+        strncpy(str, "EINVAL: bad error num passed to strerror_r()", len);
+    }
+    else if (result == ERANGE) {
+        strncpy(str, "ERANGE: insufficient size in buffer for error", len);
+    }
+    else {
+        strncpy(str, "Unknown error while getting strerror_r() message", len);
+    }
 #endif
 
-	return str;
+    return str;
 }

@@ -29,44 +29,44 @@
 
 // REBOL startup option structure:
 typedef struct rebol_args {
-	REBCNT options;
-	REBCHR *script;
-	REBCHR **args;
-	REBCHR *do_arg;
-	REBCHR *version;
-	REBCHR *debug;
-	REBCHR *import;
-	REBCHR *secure;
-	REBCHR *boot;
-	REBCHR *exe_path;
-	REBCHR *home_dir;
+    REBCNT options;
+    REBCHR *script;
+    REBCHR **args;
+    REBCHR *do_arg;
+    REBCHR *version;
+    REBCHR *debug;
+    REBCHR *import;
+    REBCHR *secure;
+    REBCHR *boot;
+    REBCHR *exe_path;
+    REBCHR *home_dir;
 } REBARGS;
 
 // REBOL arg option flags:
 // Must stay matched to system/catalog/boot-flags.
 enum arg_opts {
-	ROF_EXT,
+    ROF_EXT,
 
-	ROF_DO,
-	ROF_IMPORT,
-	ROF_VERSION,
-	ROF_DEBUG,
-	ROF_SECURE,
+    ROF_DO,
+    ROF_IMPORT,
+    ROF_VERSION,
+    ROF_DEBUG,
+    ROF_SECURE,
 
-	ROF_HELP,
-	ROF_VERS,
-	ROF_QUIET,
-	ROF_VERBOSE,
-	ROF_SECURE_MIN,
-	ROF_SECURE_MAX,
-	ROF_TRACE,
-	ROF_HALT,
-	ROF_CGI,
-	ROF_BOOT,
-	ROF_NO_WINDOW,
+    ROF_HELP,
+    ROF_VERS,
+    ROF_QUIET,
+    ROF_VERBOSE,
+    ROF_SECURE_MIN,
+    ROF_SECURE_MAX,
+    ROF_TRACE,
+    ROF_HALT,
+    ROF_CGI,
+    ROF_BOOT,
+    ROF_NO_WINDOW,
 
-	ROF_IGNORE, // not an option
-	ROF_MAX
+    ROF_IGNORE, // not an option
+    ROF_MAX
 };
 
 #define RO_EXT         (1<<ROF_EXT)

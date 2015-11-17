@@ -37,10 +37,10 @@
 #ifdef OS_WIDE_CHAR
     typedef wchar_t REBCHR;
 #else
-	typedef char REBCHR;
+    typedef char REBCHR;
 #endif
 
-#include "reb-ext.h"		// includes reb-defs.h
+#include "reb-ext.h"        // includes reb-defs.h
 #include "reb-args.h"
 #include "reb-device.h"
 #include "reb-file.h"

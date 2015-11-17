@@ -8,23 +8,23 @@ The code uses Bigint implementation Copyright (c) 2007, Cameron Rich
 
 typedef struct
 {
-	int	len;		//length of keys in bytes
-	int glen;		//length of generator in bytes
-    uint8_t *p;		// prime modulus
-    uint8_t *g;		// generator
-    uint8_t *x;		// private key
-    uint8_t *gx;	// public key(self)
-    uint8_t *gy;	// public key(peer)
-	uint8_t *k;		// negotiated key
+    int len;        //length of keys in bytes
+    int glen;       //length of generator in bytes
+    uint8_t *p;     // prime modulus
+    uint8_t *g;     // generator
+    uint8_t *x;     // private key
+    uint8_t *gx;    // public key(self)
+    uint8_t *gy;    // public key(peer)
+    uint8_t *k;     // negotiated key
 }
 DH_CTX;
 
 
 void DH_generate_key(
-	DH_CTX *dh_ctx
+    DH_CTX *dh_ctx
 );
 
 void DH_compute_key(
-	DH_CTX *dh_ctx
+    DH_CTX *dh_ctx
 );
 

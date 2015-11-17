@@ -28,33 +28,33 @@
 ***********************************************************************/
 
 /*
-	Making a Task:
+    Making a Task:
 
-	1. Local copies of:
-		Main globals
-			For data stack
-			Interpreter flags
-			Memory management
-		Root series (all or part?)
-		Data stack
-		System object (for module)
-		C stack (thread provided)
+    1. Local copies of:
+        Main globals
+            For data stack
+            Interpreter flags
+            Memory management
+        Root series (all or part?)
+        Data stack
+        System object (for module)
+        C stack (thread provided)
 
-	2. Share copies of:
-		Boot strings and values
-		System functions (natives and mezzanine)
-		Word table
-		Various sub-objects of system object
+    2. Share copies of:
+        Boot strings and values
+        System functions (natives and mezzanine)
+        Word table
+        Various sub-objects of system object
 
-	Task Spec is a module definition. Needs new context.
+    Task Spec is a module definition. Needs new context.
 
-	Questions:
-		System object is already copied for local user context
-		System blocks might hold references to local series (how to GC)
-		Can system values (objects and functions) be modified by other
-		tasks? How are they protected? Is it good enough that our local
-		references to functions refer to the older ones? How can we
-		"update" our references?
+    Questions:
+        System object is already copied for local user context
+        System blocks might hold references to local series (how to GC)
+        Can system values (objects and functions) be modified by other
+        tasks? How are they protected? Is it good enough that our local
+        references to functions refer to the older ones? How can we
+        "update" our references?
 */
 
 #include "sys-core.h"
@@ -64,20 +64,20 @@
 //
 static void Launch_Task(void *task_rebval)
 {
-	REBVAL *task = cast(REBVAL*, task_rebval);
-	REBSER *body;
-	REBVAL ignored; // !!! Should result be ignored?
+    REBVAL *task = cast(REBVAL*, task_rebval);
+    REBSER *body;
+    REBVAL ignored; // !!! Should result be ignored?
 
-	Debug_Str("Begin Task");
+    Debug_Str("Begin Task");
 
-	Init_Task();
-	body = Copy_Array_Deep_Managed(VAL_MOD_BODY(task));
-	OS_TASK_READY(0);
+    Init_Task();
+    body = Copy_Array_Deep_Managed(VAL_MOD_BODY(task));
+    OS_TASK_READY(0);
 
-	if (Do_At_Throws(&ignored, body, 0))
-		fail (Error_No_Catch_For_Throw(&ignored));
+    if (Do_At_Throws(&ignored, body, 0))
+        fail (Error_No_Catch_For_Throw(&ignored));
 
-	Debug_Str("End Task");
+    Debug_Str("End Task");
 }
 
 
@@ -86,5 +86,5 @@ static void Launch_Task(void *task_rebval)
 //
 void Do_Task(REBVAL *task)
 {
-	OS_CREATE_THREAD(Launch_Task, task, 50000);
+    OS_CREATE_THREAD(Launch_Task, task, 50000);
 }

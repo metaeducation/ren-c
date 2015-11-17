@@ -71,9 +71,9 @@ extern "C" {
 
 #define SHA_DEFINED
 
-#define SHA_CBLOCK	64
-#define SHA_LBLOCK	16
-#define SHA_BLOCK	16
+#define SHA_CBLOCK  64
+#define SHA_LBLOCK  16
+#define SHA_BLOCK   16
 #define SHA_LAST_BLOCK  56
 #define SHA_LENGTH_BLOCK 8
 #define SHA_DIGEST_LENGTH 20
@@ -81,12 +81,12 @@ extern "C" {
 #define SHA_LONG u32
 
 typedef struct SHAstate_st
-	{
-	SHA_LONG h0,h1,h2,h3,h4;
-	SHA_LONG Nl,Nh;
-	SHA_LONG data[SHA_LBLOCK];
-	unsigned int num;
-	} SHA_CTX;
+    {
+    SHA_LONG h0,h1,h2,h3,h4;
+    SHA_LONG Nl,Nh;
+    SHA_LONG data[SHA_LBLOCK];
+    unsigned int num;
+    } SHA_CTX;
 
 void SHA1_Init(void *c);
 void SHA1_Update(void *c, unsigned char *data, size_t len);
@@ -100,105 +100,105 @@ int SHA1_CtxSize(void);
 #endif
 
 
-#define ULONG	SHA_LONG
-#define UCHAR	unsigned char
-#define UINT	unsigned int
+#define ULONG   SHA_LONG
+#define UCHAR   unsigned char
+#define UINT    unsigned int
 
 #ifdef NOCONST
 #define const
 #endif
 
 #undef c2nl
-#define c2nl(c,l)	(l =(((SHA_LONG)(*((c)++)))<<24), \
-			 l|=(((SHA_LONG)(*((c)++)))<<16), \
-			 l|=(((SHA_LONG)(*((c)++)))<< 8), \
-			 l|=(((SHA_LONG)(*((c)++)))    ))
+#define c2nl(c,l)   (l =(((SHA_LONG)(*((c)++)))<<24), \
+             l|=(((SHA_LONG)(*((c)++)))<<16), \
+             l|=(((SHA_LONG)(*((c)++)))<< 8), \
+             l|=(((SHA_LONG)(*((c)++)))    ))
 
 #undef p_c2nl
-#define p_c2nl(c,l,n)	{ \
-			switch (n) { \
-			case 0: l =((SHA_LONG)(*((c)++)))<<24; \
-			case 1: l|=((SHA_LONG)(*((c)++)))<<16; \
-			case 2: l|=((SHA_LONG)(*((c)++)))<< 8; \
-			case 3: l|=((SHA_LONG)(*((c)++))); \
-				} \
-			}
+#define p_c2nl(c,l,n)   { \
+            switch (n) { \
+            case 0: l =((SHA_LONG)(*((c)++)))<<24; \
+            case 1: l|=((SHA_LONG)(*((c)++)))<<16; \
+            case 2: l|=((SHA_LONG)(*((c)++)))<< 8; \
+            case 3: l|=((SHA_LONG)(*((c)++))); \
+                } \
+            }
 
 #undef c2nl_p
 /* NOTE the pointer is not incremented at the end of this */
-#define c2nl_p(c,l,n)	{ \
-			l=0; \
-			(c)+=n; \
-			switch (n) { \
-			case 3: l =((SHA_LONG)(*(--(c))))<< 8; \
-			case 2: l|=((SHA_LONG)(*(--(c))))<<16; \
-			case 1: l|=((SHA_LONG)(*(--(c))))<<24; \
-				} \
-			}
+#define c2nl_p(c,l,n)   { \
+            l=0; \
+            (c)+=n; \
+            switch (n) { \
+            case 3: l =((SHA_LONG)(*(--(c))))<< 8; \
+            case 2: l|=((SHA_LONG)(*(--(c))))<<16; \
+            case 1: l|=((SHA_LONG)(*(--(c))))<<24; \
+                } \
+            }
 
 #undef p_c2nl_p
 #define p_c2nl_p(c,l,sc,len) { \
-			switch (sc) \
-				{ \
-			case 0: l =((SHA_LONG)(*((c)++)))<<24; \
-				if (--len == 0) break; \
-			case 1: l|=((SHA_LONG)(*((c)++)))<<16; \
-				if (--len == 0) break; \
-			case 2: l|=((SHA_LONG)(*((c)++)))<< 8; \
-				} \
-			}
+            switch (sc) \
+                { \
+            case 0: l =((SHA_LONG)(*((c)++)))<<24; \
+                if (--len == 0) break; \
+            case 1: l|=((SHA_LONG)(*((c)++)))<<16; \
+                if (--len == 0) break; \
+            case 2: l|=((SHA_LONG)(*((c)++)))<< 8; \
+                } \
+            }
 
 #undef nl2c
-#define nl2c(l,c)	(*((c)++)=(unsigned char)(((l)>>24)&0xff), \
-			 *((c)++)=(unsigned char)(((l)>>16)&0xff), \
-			 *((c)++)=(unsigned char)(((l)>> 8)&0xff), \
-			 *((c)++)=(unsigned char)(((l)    )&0xff))
+#define nl2c(l,c)   (*((c)++)=(unsigned char)(((l)>>24)&0xff), \
+             *((c)++)=(unsigned char)(((l)>>16)&0xff), \
+             *((c)++)=(unsigned char)(((l)>> 8)&0xff), \
+             *((c)++)=(unsigned char)(((l)    )&0xff))
 
 #undef c2l
-#define c2l(c,l)	(l =(((SHA_LONG)(*((c)++)))    ), \
-			 l|=(((SHA_LONG)(*((c)++)))<< 8), \
-			 l|=(((SHA_LONG)(*((c)++)))<<16), \
-			 l|=(((SHA_LONG)(*((c)++)))<<24))
+#define c2l(c,l)    (l =(((SHA_LONG)(*((c)++)))    ), \
+             l|=(((SHA_LONG)(*((c)++)))<< 8), \
+             l|=(((SHA_LONG)(*((c)++)))<<16), \
+             l|=(((SHA_LONG)(*((c)++)))<<24))
 
 #undef p_c2l
-#define p_c2l(c,l,n)	{ \
-			switch (n) { \
-			case 0: l =((SHA_LONG)(*((c)++))); \
-			case 1: l|=((SHA_LONG)(*((c)++)))<< 8; \
-			case 2: l|=((SHA_LONG)(*((c)++)))<<16; \
-			case 3: l|=((SHA_LONG)(*((c)++)))<<24; \
-				} \
-			}
+#define p_c2l(c,l,n)    { \
+            switch (n) { \
+            case 0: l =((SHA_LONG)(*((c)++))); \
+            case 1: l|=((SHA_LONG)(*((c)++)))<< 8; \
+            case 2: l|=((SHA_LONG)(*((c)++)))<<16; \
+            case 3: l|=((SHA_LONG)(*((c)++)))<<24; \
+                } \
+            }
 
 #undef c2l_p
 /* NOTE the pointer is not incremented at the end of this */
-#define c2l_p(c,l,n)	{ \
-			l=0; \
-			(c)+=n; \
-			switch (n) { \
-			case 3: l =((SHA_LONG)(*(--(c))))<<16; \
-			case 2: l|=((SHA_LONG)(*(--(c))))<< 8; \
-			case 1: l|=((SHA_LONG)(*(--(c)))); \
-				} \
-			}
+#define c2l_p(c,l,n)    { \
+            l=0; \
+            (c)+=n; \
+            switch (n) { \
+            case 3: l =((SHA_LONG)(*(--(c))))<<16; \
+            case 2: l|=((SHA_LONG)(*(--(c))))<< 8; \
+            case 1: l|=((SHA_LONG)(*(--(c)))); \
+                } \
+            }
 
 #undef p_c2l_p
 #define p_c2l_p(c,l,sc,len) { \
-			switch (sc) \
-				{ \
-			case 0: l =((SHA_LONG)(*((c)++))); \
-				if (--len == 0) break; \
-			case 1: l|=((SHA_LONG)(*((c)++)))<< 8; \
-				if (--len == 0) break; \
-			case 2: l|=((SHA_LONG)(*((c)++)))<<16; \
-				} \
-			}
+            switch (sc) \
+                { \
+            case 0: l =((SHA_LONG)(*((c)++))); \
+                if (--len == 0) break; \
+            case 1: l|=((SHA_LONG)(*((c)++)))<< 8; \
+                if (--len == 0) break; \
+            case 2: l|=((SHA_LONG)(*((c)++)))<<16; \
+                } \
+            }
 
 #undef l2c
-#define l2c(l,c)	(*((c)++)=(unsigned char)(((l)    )&0xff), \
-			 *((c)++)=(unsigned char)(((l)>> 8)&0xff), \
-			 *((c)++)=(unsigned char)(((l)>>16)&0xff), \
-			 *((c)++)=(unsigned char)(((l)>>24)&0xff))
+#define l2c(l,c)    (*((c)++)=(unsigned char)(((l)    )&0xff), \
+             *((c)++)=(unsigned char)(((l)>> 8)&0xff), \
+             *((c)++)=(unsigned char)(((l)>>16)&0xff), \
+             *((c)++)=(unsigned char)(((l)>>24)&0xff))
 
 #undef ROTATE
 #if defined(TO_WINDOWS)
@@ -217,18 +217,18 @@ SHA_LONG __builtin_rol(SHA_LONG,int,int);
 #if defined(TO_WINDOWS)
 /* 5 instructions with rotate instruction, else 9 */
 #define Endian_Reverse32(a) \
-	{ \
-	SHA_LONG l=(a); \
-	(a)=((ROTATE(l,8)&0x00FF00FF)|(ROTATE(l,24)&0xFF00FF00)); \
-	}
+    { \
+    SHA_LONG l=(a); \
+    (a)=((ROTATE(l,8)&0x00FF00FF)|(ROTATE(l,24)&0xFF00FF00)); \
+    }
 #else
 /* 6 instructions with rotate instruction, else 8 */
 #define Endian_Reverse32(a) \
-	{ \
-	SHA_LONG l=(a); \
-	l=(((l&0xFF00FF00)>>8L)|((l&0x00FF00FF)<<8L)); \
-	(a)=ROTATE(l,16L); \
-	}
+    { \
+    SHA_LONG l=(a); \
+    l=(((l&0xFF00FF00)>>8L)|((l&0x00FF00FF)<<8L)); \
+    (a)=ROTATE(l,16L); \
+    }
 #endif
 #endif
 
@@ -239,44 +239,44 @@ SHA_LONG __builtin_rol(SHA_LONG,int,int);
  * I've just become aware of another tweak to be made, again from Wei Dai,
  * in F_40_59, (x&a)|(y&a) -> (x|y)&a
  */
-#define	F_00_19(b,c,d)	((((c) ^ (d)) & (b)) ^ (d))
-#define	F_20_39(b,c,d)	((b) ^ (c) ^ (d))
-#define F_40_59(b,c,d)	(((b) & (c)) | (((b)|(c)) & (d)))
-#define	F_60_79(b,c,d)	F_20_39(b,c,d)
+#define F_00_19(b,c,d)  ((((c) ^ (d)) & (b)) ^ (d))
+#define F_20_39(b,c,d)  ((b) ^ (c) ^ (d))
+#define F_40_59(b,c,d)  (((b) & (c)) | (((b)|(c)) & (d)))
+#define F_60_79(b,c,d)  F_20_39(b,c,d)
 
 #undef Xupdate
 #define Xupdate(a,i,ia,ib,ic,id) (a)=\
-	(ia[(i)&0x0f]^ib[((i)+2)&0x0f]^ic[((i)+8)&0x0f]^id[((i)+13)&0x0f]);\
-	X[(i)&0x0f]=(a)=ROTATE((a),1);
+    (ia[(i)&0x0f]^ib[((i)+2)&0x0f]^ic[((i)+8)&0x0f]^id[((i)+13)&0x0f]);\
+    X[(i)&0x0f]=(a)=ROTATE((a),1);
 
 #define BODY_00_15(i,a,b,c,d,e,f,xa) \
-	(f)=xa[i]+(e)+K_00_19+ROTATE((a),5)+F_00_19((b),(c),(d)); \
-	(b)=ROTATE((b),30);
+    (f)=xa[i]+(e)+K_00_19+ROTATE((a),5)+F_00_19((b),(c),(d)); \
+    (b)=ROTATE((b),30);
 
 #define BODY_16_19(i,a,b,c,d,e,f,xa,xb,xc,xd) \
-	Xupdate(f,i,xa,xb,xc,xd); \
-	(f)+=(e)+K_00_19+ROTATE((a),5)+F_00_19((b),(c),(d)); \
-	(b)=ROTATE((b),30);
+    Xupdate(f,i,xa,xb,xc,xd); \
+    (f)+=(e)+K_00_19+ROTATE((a),5)+F_00_19((b),(c),(d)); \
+    (b)=ROTATE((b),30);
 
 #define BODY_20_31(i,a,b,c,d,e,f,xa,xb,xc,xd) \
-	Xupdate(f,i,xa,xb,xc,xd); \
-	(f)+=(e)+K_20_39+ROTATE((a),5)+F_20_39((b),(c),(d)); \
-	(b)=ROTATE((b),30);
+    Xupdate(f,i,xa,xb,xc,xd); \
+    (f)+=(e)+K_20_39+ROTATE((a),5)+F_20_39((b),(c),(d)); \
+    (b)=ROTATE((b),30);
 
 #define BODY_32_39(i,a,b,c,d,e,f,xa) \
-	Xupdate(f,i,xa,xa,xa,xa); \
-	(f)+=(e)+K_20_39+ROTATE((a),5)+F_20_39((b),(c),(d)); \
-	(b)=ROTATE((b),30);
+    Xupdate(f,i,xa,xa,xa,xa); \
+    (f)+=(e)+K_20_39+ROTATE((a),5)+F_20_39((b),(c),(d)); \
+    (b)=ROTATE((b),30);
 
 #define BODY_40_59(i,a,b,c,d,e,f,xa) \
-	Xupdate(f,i,xa,xa,xa,xa); \
-	(f)+=(e)+K_40_59+ROTATE((a),5)+F_40_59((b),(c),(d)); \
-	(b)=ROTATE((b),30);
+    Xupdate(f,i,xa,xa,xa,xa); \
+    (f)+=(e)+K_40_59+ROTATE((a),5)+F_40_59((b),(c),(d)); \
+    (b)=ROTATE((b),30);
 
 #define BODY_60_79(i,a,b,c,d,e,f,xa) \
-	Xupdate(f,i,xa,xa,xa,xa); \
-	(f)=X[(i)&0x0f]+(e)+K_60_79+ROTATE((a),5)+F_60_79((b),(c),(d)); \
-	(b)=ROTATE((b),30);
+    Xupdate(f,i,xa,xa,xa,xa); \
+    (f)=X[(i)&0x0f]+(e)+K_60_79+ROTATE((a),5)+F_60_79((b),(c),(d)); \
+    (b)=ROTATE((b),30);
 
 
 /* Implemented from SHA-1 document - The Secure Hash Algorithm
@@ -288,385 +288,385 @@ SHA_LONG __builtin_rol(SHA_LONG,int,int);
 #define INIT_DATA_h3 (SHA_LONG)0x10325476L
 #define INIT_DATA_h4 (SHA_LONG)0xc3d2e1f0L
 
-#define K_00_19	0x5a827999L
+#define K_00_19 0x5a827999L
 #define K_20_39 0x6ed9eba1L
 #define K_40_59 0x8f1bbcdcL
 #define K_60_79 0xca62c1d6L
 
 #  ifdef SHA1_ASM
-	 void sha1_block_x86(SHA_CTX *c, SHA_LONG *p, int num);
+     void sha1_block_x86(SHA_CTX *c, SHA_LONG *p, int num);
 #    define sha1_block sha1_block_x86
 #  else
-	 static void sha1_block(SHA_CTX *c, SHA_LONG *p, int num);
+     static void sha1_block(SHA_CTX *c, SHA_LONG *p, int num);
 #  endif
 
 
 #if defined(ENDIAN_LITTLE) && defined(SHA1_ASM)
-#  define	M_c2nl 		c2l
-#  define	M_p_c2nl 	p_c2l
-#  define	M_c2nl_p	c2l_p
-#  define	M_p_c2nl_p	p_c2l_p
-#  define	M_nl2c		l2c
+#  define   M_c2nl      c2l
+#  define   M_p_c2nl    p_c2l
+#  define   M_c2nl_p    c2l_p
+#  define   M_p_c2nl_p  p_c2l_p
+#  define   M_nl2c      l2c
 #else
-#  define	M_c2nl 		c2nl
-#  define	M_p_c2nl	p_c2nl
-#  define	M_c2nl_p	c2nl_p
-#  define	M_p_c2nl_p	p_c2nl_p
-#  define	M_nl2c		nl2c
+#  define   M_c2nl      c2nl
+#  define   M_p_c2nl    p_c2nl
+#  define   M_c2nl_p    c2nl_p
+#  define   M_p_c2nl_p  p_c2nl_p
+#  define   M_nl2c      nl2c
 #endif
 
 void SHA1_Init(void *c_opaque)
-	{
-	SHA_CTX *c = (SHA_CTX*)c_opaque;
-	c->h0=INIT_DATA_h0;
-	c->h1=INIT_DATA_h1;
-	c->h2=INIT_DATA_h2;
-	c->h3=INIT_DATA_h3;
-	c->h4=INIT_DATA_h4;
-	c->Nl=0;
-	c->Nh=0;
-	c->num=0;
-	}
+    {
+    SHA_CTX *c = (SHA_CTX*)c_opaque;
+    c->h0=INIT_DATA_h0;
+    c->h1=INIT_DATA_h1;
+    c->h2=INIT_DATA_h2;
+    c->h3=INIT_DATA_h3;
+    c->h4=INIT_DATA_h4;
+    c->Nl=0;
+    c->Nh=0;
+    c->num=0;
+    }
 
 void SHA1_Update(void *c_opaque, unsigned char *data, size_t len)
-	{
-	SHA_CTX *c = (SHA_CTX*)c_opaque;
-	ULONG *p;
-	int ew,ec,sw,sc;
-	ULONG l;
+    {
+    SHA_CTX *c = (SHA_CTX*)c_opaque;
+    ULONG *p;
+    int ew,ec,sw,sc;
+    ULONG l;
 
-	if (len == 0) return;
+    if (len == 0) return;
 
-	l=(c->Nl+((SHA_LONG)len<<3))&(SHA_LONG)-1;
-	if (l < c->Nl) /* overflow */
-		c->Nh++;
-	c->Nh+=(len>>29);
-	c->Nl=l;
+    l=(c->Nl+((SHA_LONG)len<<3))&(SHA_LONG)-1;
+    if (l < c->Nl) /* overflow */
+        c->Nh++;
+    c->Nh+=(len>>29);
+    c->Nl=l;
 
-	if (c->num != 0)
-		{
-		p=c->data;
-		sw=c->num>>2;
-		sc=c->num&0x03;
+    if (c->num != 0)
+        {
+        p=c->data;
+        sw=c->num>>2;
+        sc=c->num&0x03;
 
-		if ((c->num+len) >= SHA_CBLOCK)
-			{
-			l= p[sw];
-			M_p_c2nl(data,l,sc);
-			p[sw++]=l;
-			for (; sw<SHA_LBLOCK; sw++)
-				{
-				M_c2nl(data,l);
-				p[sw]=l;
-				}
-			len-=(SHA_CBLOCK-c->num);
+        if ((c->num+len) >= SHA_CBLOCK)
+            {
+            l= p[sw];
+            M_p_c2nl(data,l,sc);
+            p[sw++]=l;
+            for (; sw<SHA_LBLOCK; sw++)
+                {
+                M_c2nl(data,l);
+                p[sw]=l;
+                }
+            len-=(SHA_CBLOCK-c->num);
 
-			sha1_block(c,p,64);
-			c->num=0;
-			/* drop through and do the rest */
-			}
-		else
-			{
-			c->num+=(int)len;
-			if ((sc+len) < 4) /* ugly, add char's to a word */
-				{
-				l= p[sw];
-				M_p_c2nl_p(data,l,sc,len);
-				p[sw]=l;
-				}
-			else
-				{
-				ew=(c->num>>2);
-				ec=(c->num&0x03);
-				l= p[sw];
-				M_p_c2nl(data,l,sc);
-				p[sw++]=l;
-				for (; sw < ew; sw++)
-					{ M_c2nl(data,l); p[sw]=l; }
-				if (ec)
-					{
-					M_c2nl_p(data,l,ec);
-					p[sw]=l;
-					}
-				}
-			return;
-			}
-		}
-	/* We can only do the following code for assember, the reason
-	 * being that the sha1_block 'C' version changes the values
-	 * in the 'data' array.  The assember code avoids this and
-	 * copies it to a local array.  I should be able to do this for
-	 * the C version as well....
-	 */
+            sha1_block(c,p,64);
+            c->num=0;
+            /* drop through and do the rest */
+            }
+        else
+            {
+            c->num+=(int)len;
+            if ((sc+len) < 4) /* ugly, add char's to a word */
+                {
+                l= p[sw];
+                M_p_c2nl_p(data,l,sc,len);
+                p[sw]=l;
+                }
+            else
+                {
+                ew=(c->num>>2);
+                ec=(c->num&0x03);
+                l= p[sw];
+                M_p_c2nl(data,l,sc);
+                p[sw++]=l;
+                for (; sw < ew; sw++)
+                    { M_c2nl(data,l); p[sw]=l; }
+                if (ec)
+                    {
+                    M_c2nl_p(data,l,ec);
+                    p[sw]=l;
+                    }
+                }
+            return;
+            }
+        }
+    /* We can only do the following code for assember, the reason
+     * being that the sha1_block 'C' version changes the values
+     * in the 'data' array.  The assember code avoids this and
+     * copies it to a local array.  I should be able to do this for
+     * the C version as well....
+     */
 #if defined(ENDIAN_BIG) || defined(SHA1_ASM)
-	if ((((SHA_LONG)data)%sizeof(ULONG)) == 0)
-		{
-		sw=len/SHA_CBLOCK;
-		if (sw)
-			{
-			sw*=SHA_CBLOCK;
-			sha1_block(c,(ULONG *)data,sw);
-			data+=sw;
-			len-=sw;
-			}
-		}
+    if ((((SHA_LONG)data)%sizeof(ULONG)) == 0)
+        {
+        sw=len/SHA_CBLOCK;
+        if (sw)
+            {
+            sw*=SHA_CBLOCK;
+            sha1_block(c,(ULONG *)data,sw);
+            data+=sw;
+            len-=sw;
+            }
+        }
 #endif
-	/* we now can process the input data in blocks of SHA_CBLOCK
-	 * chars and save the leftovers to c->data. */
-	p=c->data;
-	while (len >= SHA_CBLOCK)
-		{
+    /* we now can process the input data in blocks of SHA_CBLOCK
+     * chars and save the leftovers to c->data. */
+    p=c->data;
+    while (len >= SHA_CBLOCK)
+        {
 #if defined(ENDIAN_BIG) || defined(ENDIAN_LITTLE)
-		if (p != (SHA_LONG *)data)
-			memcpy(p,data,SHA_CBLOCK);
-		data+=SHA_CBLOCK;
+        if (p != (SHA_LONG *)data)
+            memcpy(p,data,SHA_CBLOCK);
+        data+=SHA_CBLOCK;
 #  ifdef ENDIAN_LITTLE
 #    ifndef SHA1_ASM /* Will not happen */
-		for (sw=(SHA_LBLOCK/4); sw; sw--)
-			{
-			Endian_Reverse32(p[0]);
-			Endian_Reverse32(p[1]);
-			Endian_Reverse32(p[2]);
-			Endian_Reverse32(p[3]);
-			p+=4;
-			}
-		p=c->data;
+        for (sw=(SHA_LBLOCK/4); sw; sw--)
+            {
+            Endian_Reverse32(p[0]);
+            Endian_Reverse32(p[1]);
+            Endian_Reverse32(p[2]);
+            Endian_Reverse32(p[3]);
+            p+=4;
+            }
+        p=c->data;
 #    endif
 #  endif
 #else
-		for (sw=(SHA_BLOCK/4); sw; sw--)
-			{
-			M_c2nl(data,l); *(p++)=l;
-			M_c2nl(data,l); *(p++)=l;
-			M_c2nl(data,l); *(p++)=l;
-			M_c2nl(data,l); *(p++)=l;
-			}
-		p=c->data;
+        for (sw=(SHA_BLOCK/4); sw; sw--)
+            {
+            M_c2nl(data,l); *(p++)=l;
+            M_c2nl(data,l); *(p++)=l;
+            M_c2nl(data,l); *(p++)=l;
+            M_c2nl(data,l); *(p++)=l;
+            }
+        p=c->data;
 #endif
-		sha1_block(c,p,64);
-		len-=SHA_CBLOCK;
-		}
-	ec=(int)len;
-	c->num=ec;
-	ew=(ec>>2);
-	ec&=0x03;
+        sha1_block(c,p,64);
+        len-=SHA_CBLOCK;
+        }
+    ec=(int)len;
+    c->num=ec;
+    ew=(ec>>2);
+    ec&=0x03;
 
-	for (sw=0; sw < ew; sw++)
-		{ M_c2nl(data,l); p[sw]=l; }
-	M_c2nl_p(data,l,ec);
-	p[sw]=l;
-	}
+    for (sw=0; sw < ew; sw++)
+        { M_c2nl(data,l); p[sw]=l; }
+    M_c2nl_p(data,l,ec);
+    p[sw]=l;
+    }
 
 #if 0
 static void SHA1_Transform(c,b)
 SHA_CTX *c;
 unsigned char *b;
-	{
-	ULONG p[16];
+    {
+    ULONG p[16];
 #ifndef ENDIAN_BIG
-	ULONG *q;
-	int i;
+    ULONG *q;
+    int i;
 #endif
 
 #if defined(ENDIAN_BIG) || defined(ENDIAN_LITTLE)
-	memcpy(p,b,64);
+    memcpy(p,b,64);
 #ifdef ENDIAN_LITTLE
-	q=p;
-	for (i=(SHA_LBLOCK/4); i; i--)
-		{
-		Endian_Reverse32(q[0]);
-		Endian_Reverse32(q[1]);
-		Endian_Reverse32(q[2]);
-		Endian_Reverse32(q[3]);
-		q+=4;
-		}
+    q=p;
+    for (i=(SHA_LBLOCK/4); i; i--)
+        {
+        Endian_Reverse32(q[0]);
+        Endian_Reverse32(q[1]);
+        Endian_Reverse32(q[2]);
+        Endian_Reverse32(q[3]);
+        q+=4;
+        }
 #endif
 #else
-	q=p;
-	for (i=(SHA_LBLOCK/4); i; i--)
-		{
-		ULONG l;
-		c2nl(b,l); *(q++)=l;
-		c2nl(b,l); *(q++)=l;
-		c2nl(b,l); *(q++)=l;
-		c2nl(b,l); *(q++)=l;
-		}
+    q=p;
+    for (i=(SHA_LBLOCK/4); i; i--)
+        {
+        ULONG l;
+        c2nl(b,l); *(q++)=l;
+        c2nl(b,l); *(q++)=l;
+        c2nl(b,l); *(q++)=l;
+        c2nl(b,l); *(q++)=l;
+        }
 #endif
-	sha1_block(c,p,64);
-	}
+    sha1_block(c,p,64);
+    }
 #endif
 
 #ifndef SHA1_ASM
 
 static void sha1_block(SHA_CTX *c, SHA_LONG *W, int num)
-	{
-	ULONG A,B,C,D,E,T;
-	ULONG X[16];
+    {
+    ULONG A,B,C,D,E,T;
+    ULONG X[16];
 
-	A=c->h0;
-	B=c->h1;
-	C=c->h2;
-	D=c->h3;
-	E=c->h4;
+    A=c->h0;
+    B=c->h1;
+    C=c->h2;
+    D=c->h3;
+    E=c->h4;
 
-	for (;;)
-		{
-	BODY_00_15( 0,A,B,C,D,E,T,W);
-	BODY_00_15( 1,T,A,B,C,D,E,W);
-	BODY_00_15( 2,E,T,A,B,C,D,W);
-	BODY_00_15( 3,D,E,T,A,B,C,W);
-	BODY_00_15( 4,C,D,E,T,A,B,W);
-	BODY_00_15( 5,B,C,D,E,T,A,W);
-	BODY_00_15( 6,A,B,C,D,E,T,W);
-	BODY_00_15( 7,T,A,B,C,D,E,W);
-	BODY_00_15( 8,E,T,A,B,C,D,W);
-	BODY_00_15( 9,D,E,T,A,B,C,W);
-	BODY_00_15(10,C,D,E,T,A,B,W);
-	BODY_00_15(11,B,C,D,E,T,A,W);
-	BODY_00_15(12,A,B,C,D,E,T,W);
-	BODY_00_15(13,T,A,B,C,D,E,W);
-	BODY_00_15(14,E,T,A,B,C,D,W);
-	BODY_00_15(15,D,E,T,A,B,C,W);
-	BODY_16_19(16,C,D,E,T,A,B,W,W,W,W);
-	BODY_16_19(17,B,C,D,E,T,A,W,W,W,W);
-	BODY_16_19(18,A,B,C,D,E,T,W,W,W,W);
-	BODY_16_19(19,T,A,B,C,D,E,W,W,W,X);
+    for (;;)
+        {
+    BODY_00_15( 0,A,B,C,D,E,T,W);
+    BODY_00_15( 1,T,A,B,C,D,E,W);
+    BODY_00_15( 2,E,T,A,B,C,D,W);
+    BODY_00_15( 3,D,E,T,A,B,C,W);
+    BODY_00_15( 4,C,D,E,T,A,B,W);
+    BODY_00_15( 5,B,C,D,E,T,A,W);
+    BODY_00_15( 6,A,B,C,D,E,T,W);
+    BODY_00_15( 7,T,A,B,C,D,E,W);
+    BODY_00_15( 8,E,T,A,B,C,D,W);
+    BODY_00_15( 9,D,E,T,A,B,C,W);
+    BODY_00_15(10,C,D,E,T,A,B,W);
+    BODY_00_15(11,B,C,D,E,T,A,W);
+    BODY_00_15(12,A,B,C,D,E,T,W);
+    BODY_00_15(13,T,A,B,C,D,E,W);
+    BODY_00_15(14,E,T,A,B,C,D,W);
+    BODY_00_15(15,D,E,T,A,B,C,W);
+    BODY_16_19(16,C,D,E,T,A,B,W,W,W,W);
+    BODY_16_19(17,B,C,D,E,T,A,W,W,W,W);
+    BODY_16_19(18,A,B,C,D,E,T,W,W,W,W);
+    BODY_16_19(19,T,A,B,C,D,E,W,W,W,X);
 
-	BODY_20_31(20,E,T,A,B,C,D,W,W,W,X);
-	BODY_20_31(21,D,E,T,A,B,C,W,W,W,X);
-	BODY_20_31(22,C,D,E,T,A,B,W,W,W,X);
-	BODY_20_31(23,B,C,D,E,T,A,W,W,W,X);
-	BODY_20_31(24,A,B,C,D,E,T,W,W,X,X);
-	BODY_20_31(25,T,A,B,C,D,E,W,W,X,X);
-	BODY_20_31(26,E,T,A,B,C,D,W,W,X,X);
-	BODY_20_31(27,D,E,T,A,B,C,W,W,X,X);
-	BODY_20_31(28,C,D,E,T,A,B,W,W,X,X);
-	BODY_20_31(29,B,C,D,E,T,A,W,W,X,X);
-	BODY_20_31(30,A,B,C,D,E,T,W,X,X,X);
-	BODY_20_31(31,T,A,B,C,D,E,W,X,X,X);
-	BODY_32_39(32,E,T,A,B,C,D,X);
-	BODY_32_39(33,D,E,T,A,B,C,X);
-	BODY_32_39(34,C,D,E,T,A,B,X);
-	BODY_32_39(35,B,C,D,E,T,A,X);
-	BODY_32_39(36,A,B,C,D,E,T,X);
-	BODY_32_39(37,T,A,B,C,D,E,X);
-	BODY_32_39(38,E,T,A,B,C,D,X);
-	BODY_32_39(39,D,E,T,A,B,C,X);
+    BODY_20_31(20,E,T,A,B,C,D,W,W,W,X);
+    BODY_20_31(21,D,E,T,A,B,C,W,W,W,X);
+    BODY_20_31(22,C,D,E,T,A,B,W,W,W,X);
+    BODY_20_31(23,B,C,D,E,T,A,W,W,W,X);
+    BODY_20_31(24,A,B,C,D,E,T,W,W,X,X);
+    BODY_20_31(25,T,A,B,C,D,E,W,W,X,X);
+    BODY_20_31(26,E,T,A,B,C,D,W,W,X,X);
+    BODY_20_31(27,D,E,T,A,B,C,W,W,X,X);
+    BODY_20_31(28,C,D,E,T,A,B,W,W,X,X);
+    BODY_20_31(29,B,C,D,E,T,A,W,W,X,X);
+    BODY_20_31(30,A,B,C,D,E,T,W,X,X,X);
+    BODY_20_31(31,T,A,B,C,D,E,W,X,X,X);
+    BODY_32_39(32,E,T,A,B,C,D,X);
+    BODY_32_39(33,D,E,T,A,B,C,X);
+    BODY_32_39(34,C,D,E,T,A,B,X);
+    BODY_32_39(35,B,C,D,E,T,A,X);
+    BODY_32_39(36,A,B,C,D,E,T,X);
+    BODY_32_39(37,T,A,B,C,D,E,X);
+    BODY_32_39(38,E,T,A,B,C,D,X);
+    BODY_32_39(39,D,E,T,A,B,C,X);
 
-	BODY_40_59(40,C,D,E,T,A,B,X);
-	BODY_40_59(41,B,C,D,E,T,A,X);
-	BODY_40_59(42,A,B,C,D,E,T,X);
-	BODY_40_59(43,T,A,B,C,D,E,X);
-	BODY_40_59(44,E,T,A,B,C,D,X);
-	BODY_40_59(45,D,E,T,A,B,C,X);
-	BODY_40_59(46,C,D,E,T,A,B,X);
-	BODY_40_59(47,B,C,D,E,T,A,X);
-	BODY_40_59(48,A,B,C,D,E,T,X);
-	BODY_40_59(49,T,A,B,C,D,E,X);
-	BODY_40_59(50,E,T,A,B,C,D,X);
-	BODY_40_59(51,D,E,T,A,B,C,X);
-	BODY_40_59(52,C,D,E,T,A,B,X);
-	BODY_40_59(53,B,C,D,E,T,A,X);
-	BODY_40_59(54,A,B,C,D,E,T,X);
-	BODY_40_59(55,T,A,B,C,D,E,X);
-	BODY_40_59(56,E,T,A,B,C,D,X);
-	BODY_40_59(57,D,E,T,A,B,C,X);
-	BODY_40_59(58,C,D,E,T,A,B,X);
-	BODY_40_59(59,B,C,D,E,T,A,X);
+    BODY_40_59(40,C,D,E,T,A,B,X);
+    BODY_40_59(41,B,C,D,E,T,A,X);
+    BODY_40_59(42,A,B,C,D,E,T,X);
+    BODY_40_59(43,T,A,B,C,D,E,X);
+    BODY_40_59(44,E,T,A,B,C,D,X);
+    BODY_40_59(45,D,E,T,A,B,C,X);
+    BODY_40_59(46,C,D,E,T,A,B,X);
+    BODY_40_59(47,B,C,D,E,T,A,X);
+    BODY_40_59(48,A,B,C,D,E,T,X);
+    BODY_40_59(49,T,A,B,C,D,E,X);
+    BODY_40_59(50,E,T,A,B,C,D,X);
+    BODY_40_59(51,D,E,T,A,B,C,X);
+    BODY_40_59(52,C,D,E,T,A,B,X);
+    BODY_40_59(53,B,C,D,E,T,A,X);
+    BODY_40_59(54,A,B,C,D,E,T,X);
+    BODY_40_59(55,T,A,B,C,D,E,X);
+    BODY_40_59(56,E,T,A,B,C,D,X);
+    BODY_40_59(57,D,E,T,A,B,C,X);
+    BODY_40_59(58,C,D,E,T,A,B,X);
+    BODY_40_59(59,B,C,D,E,T,A,X);
 
-	BODY_60_79(60,A,B,C,D,E,T,X);
-	BODY_60_79(61,T,A,B,C,D,E,X);
-	BODY_60_79(62,E,T,A,B,C,D,X);
-	BODY_60_79(63,D,E,T,A,B,C,X);
-	BODY_60_79(64,C,D,E,T,A,B,X);
-	BODY_60_79(65,B,C,D,E,T,A,X);
-	BODY_60_79(66,A,B,C,D,E,T,X);
-	BODY_60_79(67,T,A,B,C,D,E,X);
-	BODY_60_79(68,E,T,A,B,C,D,X);
-	BODY_60_79(69,D,E,T,A,B,C,X);
-	BODY_60_79(70,C,D,E,T,A,B,X);
-	BODY_60_79(71,B,C,D,E,T,A,X);
-	BODY_60_79(72,A,B,C,D,E,T,X);
-	BODY_60_79(73,T,A,B,C,D,E,X);
-	BODY_60_79(74,E,T,A,B,C,D,X);
-	BODY_60_79(75,D,E,T,A,B,C,X);
-	BODY_60_79(76,C,D,E,T,A,B,X);
-	BODY_60_79(77,B,C,D,E,T,A,X);
-	BODY_60_79(78,A,B,C,D,E,T,X);
-	BODY_60_79(79,T,A,B,C,D,E,X);
+    BODY_60_79(60,A,B,C,D,E,T,X);
+    BODY_60_79(61,T,A,B,C,D,E,X);
+    BODY_60_79(62,E,T,A,B,C,D,X);
+    BODY_60_79(63,D,E,T,A,B,C,X);
+    BODY_60_79(64,C,D,E,T,A,B,X);
+    BODY_60_79(65,B,C,D,E,T,A,X);
+    BODY_60_79(66,A,B,C,D,E,T,X);
+    BODY_60_79(67,T,A,B,C,D,E,X);
+    BODY_60_79(68,E,T,A,B,C,D,X);
+    BODY_60_79(69,D,E,T,A,B,C,X);
+    BODY_60_79(70,C,D,E,T,A,B,X);
+    BODY_60_79(71,B,C,D,E,T,A,X);
+    BODY_60_79(72,A,B,C,D,E,T,X);
+    BODY_60_79(73,T,A,B,C,D,E,X);
+    BODY_60_79(74,E,T,A,B,C,D,X);
+    BODY_60_79(75,D,E,T,A,B,C,X);
+    BODY_60_79(76,C,D,E,T,A,B,X);
+    BODY_60_79(77,B,C,D,E,T,A,X);
+    BODY_60_79(78,A,B,C,D,E,T,X);
+    BODY_60_79(79,T,A,B,C,D,E,X);
 
-	c->h0=(c->h0+E)&0xffffffffL;
-	c->h1=(c->h1+T)&0xffffffffL;
-	c->h2=(c->h2+A)&0xffffffffL;
-	c->h3=(c->h3+B)&0xffffffffL;
-	c->h4=(c->h4+C)&0xffffffffL;
+    c->h0=(c->h0+E)&0xffffffffL;
+    c->h1=(c->h1+T)&0xffffffffL;
+    c->h2=(c->h2+A)&0xffffffffL;
+    c->h3=(c->h3+B)&0xffffffffL;
+    c->h4=(c->h4+C)&0xffffffffL;
 
-	num-=64;
-	if (num <= 0) break;
+    num-=64;
+    if (num <= 0) break;
 
-	A=c->h0;
-	B=c->h1;
-	C=c->h2;
-	D=c->h3;
-	E=c->h4;
+    A=c->h0;
+    B=c->h1;
+    C=c->h2;
+    D=c->h3;
+    E=c->h4;
 
-	W+=16;
-		}
-	}
+    W+=16;
+        }
+    }
 #endif
 
 void SHA1_Final(unsigned char *md, void *c_opaque)
-	{
-	SHA_CTX *c = (SHA_CTX*)c_opaque;
-	int i,j;
-	ULONG l;
-	ULONG *p;
-	static unsigned char end[4]={0x80,0x00,0x00,0x00};
-	unsigned char *cp=end;
+    {
+    SHA_CTX *c = (SHA_CTX*)c_opaque;
+    int i,j;
+    ULONG l;
+    ULONG *p;
+    static unsigned char end[4]={0x80,0x00,0x00,0x00};
+    unsigned char *cp=end;
 
-	/* c->num should definitly have room for at least one more byte. */
-	p=c->data;
-	j=c->num;
-	i=j>>2;
+    /* c->num should definitly have room for at least one more byte. */
+    p=c->data;
+    j=c->num;
+    i=j>>2;
 #ifdef PURIFY
-	if ((j&0x03) == 0) p[i]=0;
+    if ((j&0x03) == 0) p[i]=0;
 #endif
-	l=p[i];
-	M_p_c2nl(cp,l,j&0x03);
-	p[i]=l;
-	i++;
-	/* i is the next 'undefined word' */
-	if (c->num >= SHA_LAST_BLOCK)
-		{
-		for (; i<SHA_LBLOCK; i++)
-			p[i]=0;
-		sha1_block(c,p,64);
-		i=0;
-		}
-	for (; i<(SHA_LBLOCK-2); i++)
-		p[i]=0;
-	p[SHA_LBLOCK-2]=c->Nh;
-	p[SHA_LBLOCK-1]=c->Nl;
+    l=p[i];
+    M_p_c2nl(cp,l,j&0x03);
+    p[i]=l;
+    i++;
+    /* i is the next 'undefined word' */
+    if (c->num >= SHA_LAST_BLOCK)
+        {
+        for (; i<SHA_LBLOCK; i++)
+            p[i]=0;
+        sha1_block(c,p,64);
+        i=0;
+        }
+    for (; i<(SHA_LBLOCK-2); i++)
+        p[i]=0;
+    p[SHA_LBLOCK-2]=c->Nh;
+    p[SHA_LBLOCK-1]=c->Nl;
 #if defined(ENDIAN_LITTLE) && defined(SHA1_ASM)
-	Endian_Reverse32(p[SHA_LBLOCK-2]);
-	Endian_Reverse32(p[SHA_LBLOCK-1]);
+    Endian_Reverse32(p[SHA_LBLOCK-2]);
+    Endian_Reverse32(p[SHA_LBLOCK-1]);
 #endif
-	sha1_block(c,p,64);
-	cp=md;
-	l=c->h0; nl2c(l,cp);
-	l=c->h1; nl2c(l,cp);
-	l=c->h2; nl2c(l,cp);
-	l=c->h3; nl2c(l,cp);
-	l=c->h4; nl2c(l,cp);
+    sha1_block(c,p,64);
+    cp=md;
+    l=c->h0; nl2c(l,cp);
+    l=c->h1; nl2c(l,cp);
+    l=c->h2; nl2c(l,cp);
+    l=c->h3; nl2c(l,cp);
+    l=c->h4; nl2c(l,cp);
 
-	/* clear stuff, sha1_block may be leaving some stuff on the stack
-	 * but I'm not worried :-) */
-	c->num=0;
-/*	memset(&c,0,sizeof(c));*/
-	}
+    /* clear stuff, sha1_block may be leaving some stuff on the stack
+     * but I'm not worried :-) */
+    c->num=0;
+/*  memset(&c,0,sizeof(c));*/
+    }
 
 int SHA1_CtxSize(void) {
-	return sizeof(SHA_CTX);
+    return sizeof(SHA_CTX);
 }
 
 //
@@ -674,15 +674,15 @@ int SHA1_CtxSize(void) {
 //
 REBYTE *SHA1(REBYTE *d, REBCNT n, REBYTE *md)
 {
-	// d is data, n is length
-	SHA_CTX c;
-	static unsigned char m[SHA_DIGEST_LENGTH];
+    // d is data, n is length
+    SHA_CTX c;
+    static unsigned char m[SHA_DIGEST_LENGTH];
 
-	if (md == NULL) md = (REBYTE*)m;
-	SHA1_Init(&c);
-	SHA1_Update(&c,(unsigned char*)d,n);
-	SHA1_Final((unsigned char*)md,&c);
-	memset(&c,0,sizeof(c));
-	return md;
+    if (md == NULL) md = (REBYTE*)m;
+    SHA1_Init(&c);
+    SHA1_Update(&c,(unsigned char*)d,n);
+    SHA1_Final((unsigned char*)md,&c);
+    memset(&c,0,sizeof(c));
+    return md;
 }
 

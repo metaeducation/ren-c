@@ -26,10 +26,10 @@
 ***********************************************************************/
 
 typedef struct deci {
-    unsigned m0:32;	/* significand, lowest part */
-	unsigned m1:32;	/* significand, continuation */
-    unsigned m2:23;	/* significand, highest part */
-	unsigned s:1;	/* sign, 0 means nonnegative, 1 means nonpositive */
-	int e:8;		/* exponent */
+    unsigned m0:32; /* significand, lowest part */
+    unsigned m1:32; /* significand, continuation */
+    unsigned m2:23; /* significand, highest part */
+    unsigned s:1;   /* sign, 0 means nonnegative, 1 means nonpositive */
+    int e:8;        /* exponent */
 } deci;
 

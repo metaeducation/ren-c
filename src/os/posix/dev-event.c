@@ -56,9 +56,9 @@ extern void Done_Device(REBUPT handle, int error);
 //
 DEVICE_CMD Init_Events(REBREQ *dr)
 {
-	REBDEV *dev = (REBDEV*)dr; // just to keep compiler happy
-	SET_FLAG(dev->flags, RDF_INIT);
-	return DR_DONE;
+    REBDEV *dev = (REBDEV*)dr; // just to keep compiler happy
+    SET_FLAG(dev->flags, RDF_INIT);
+    return DR_DONE;
 }
 
 
@@ -70,8 +70,8 @@ DEVICE_CMD Init_Events(REBREQ *dr)
 //
 DEVICE_CMD Poll_Events(REBREQ *req)
 {
-	int flag = DR_DONE;
-	return flag;	// different meaning compared to most commands
+    int flag = DR_DONE;
+    return flag;    // different meaning compared to most commands
 }
 
 
@@ -84,21 +84,21 @@ DEVICE_CMD Poll_Events(REBREQ *req)
 //
 DEVICE_CMD Query_Events(REBREQ *req)
 {
-	struct timeval tv;
-	int result;
+    struct timeval tv;
+    int result;
 
-	tv.tv_sec = 0;
-	tv.tv_usec = req->length * 1000;
-	//printf("usec %d\n", tv.tv_usec);
+    tv.tv_sec = 0;
+    tv.tv_usec = req->length * 1000;
+    //printf("usec %d\n", tv.tv_usec);
 
-	result = select(0, 0, 0, 0, &tv);
-	if (result < 0) {
-		// !!! set error code
-		printf("ERROR!!!!\n");
-		return DR_ERROR;
-	}
+    result = select(0, 0, 0, 0, &tv);
+    if (result < 0) {
+        // !!! set error code
+        printf("ERROR!!!!\n");
+        return DR_ERROR;
+    }
 
-	return DR_DONE;
+    return DR_DONE;
 }
 
 
@@ -110,26 +110,26 @@ DEVICE_CMD Query_Events(REBREQ *req)
 //
 DEVICE_CMD Connect_Events(REBREQ *req)
 {
-	return DR_PEND;	// keep pending
+    return DR_PEND; // keep pending
 }
 
 
 /***********************************************************************
 **
-**	Command Dispatch Table (RDC_ enum order)
+**  Command Dispatch Table (RDC_ enum order)
 **
 ***********************************************************************/
 
 static DEVICE_CMD_FUNC Dev_Cmds[RDC_MAX] = {
-	Init_Events,			// init device driver resources
-	0,	// RDC_QUIT,		// cleanup device driver resources
-	0,	// RDC_OPEN,		// open device unit (port)
-	0,	// RDC_CLOSE,		// close device unit
-	0,	// RDC_READ,		// read from unit
-	0,	// RDC_WRITE,		// write to unit
-	Poll_Events,
-	Connect_Events,
-	Query_Events,
+    Init_Events,            // init device driver resources
+    0,  // RDC_QUIT,        // cleanup device driver resources
+    0,  // RDC_OPEN,        // open device unit (port)
+    0,  // RDC_CLOSE,       // close device unit
+    0,  // RDC_READ,        // read from unit
+    0,  // RDC_WRITE,       // write to unit
+    Poll_Events,
+    Connect_Events,
+    Query_Events,
 };
 
 DEFINE_DEV(Dev_Event, "OS Events", 1, Dev_Cmds, RDC_MAX, 0);

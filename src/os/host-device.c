@@ -57,10 +57,10 @@
 
 /***********************************************************************
 **
-**	REBOL Device Table
+**  REBOL Device Table
 **
-**		The table most be in same order as the RDI_ enums.
-**		Table is in polling priority order.
+**      The table most be in same order as the RDI_ enums.
+**      Table is in polling priority order.
 **
 ***********************************************************************/
 
@@ -86,67 +86,67 @@ extern REBDEV Dev_Signal;
 
 REBDEV *Devices[RDI_LIMIT] =
 {
-	0,
-	&Dev_StdIO,
-	0,
-	&Dev_File,
-	&Dev_Event,
-	&Dev_Net,
-	&Dev_DNS,
+    0,
+    &Dev_StdIO,
+    0,
+    &Dev_File,
+    &Dev_Event,
+    &Dev_Net,
+    &Dev_DNS,
 #ifdef TO_WINDOWS
-	&Dev_Clipboard,
+    &Dev_Clipboard,
 #else
-	0,
+    0,
 #endif
 
 #if defined(TO_WINDOWS) || defined(TO_LINUX)
-	&Dev_Serial,
+    &Dev_Serial,
 #else
-	NULL,
+    NULL,
 #endif
 
 #ifdef HAS_POSIX_SIGNAL
-	&Dev_Signal,
+    &Dev_Signal,
 #endif
-	0,
+    0,
 };
 
 
 static int Poll_Default(REBDEV *dev)
 {
-	// The default polling function for devices.
-	// Retries pending requests. Return TRUE if status changed.
-	REBREQ **prior = &dev->pending;
-	REBREQ *req;
-	REBOOL change = FALSE;
-	int result;
+    // The default polling function for devices.
+    // Retries pending requests. Return TRUE if status changed.
+    REBREQ **prior = &dev->pending;
+    REBREQ *req;
+    REBOOL change = FALSE;
+    int result;
 
-	for (req = *prior; req; req = *prior) {
+    for (req = *prior; req; req = *prior) {
 
-		// Call command again:
-		if (req->command < RDC_MAX) {
-			CLR_FLAG(req->flags, RRF_ACTIVE);
-			result = dev->commands[req->command](req);
-		} else {
-			result = -1;	// invalid command, remove it
-			req->error = ((REBCNT)-1);
-		}
+        // Call command again:
+        if (req->command < RDC_MAX) {
+            CLR_FLAG(req->flags, RRF_ACTIVE);
+            result = dev->commands[req->command](req);
+        } else {
+            result = -1;    // invalid command, remove it
+            req->error = ((REBCNT)-1);
+        }
 
-		// If done or error, remove command from list:
-		if (result <= 0) {
-			*prior = req->next;
-			req->next = 0;
-			CLR_FLAG(req->flags, RRF_PENDING);
-			change = TRUE;
-		} else {
-			prior = &req->next;
-			if (GET_FLAG(req->flags, RRF_ACTIVE)) {
-				change = TRUE;
-			}
-		}
-	}
+        // If done or error, remove command from list:
+        if (result <= 0) {
+            *prior = req->next;
+            req->next = 0;
+            CLR_FLAG(req->flags, RRF_PENDING);
+            change = TRUE;
+        } else {
+            prior = &req->next;
+            if (GET_FLAG(req->flags, RRF_ACTIVE)) {
+                change = TRUE;
+            }
+        }
+    }
 
-	return change;
+    return change;
 }
 
 
@@ -158,23 +158,23 @@ static int Poll_Default(REBDEV *dev)
 //
 void Attach_Request(REBREQ **node, REBREQ *req)
 {
-	REBREQ *r;
+    REBREQ *r;
 
 #ifdef special_debug
-	if (req->device == 5)
-		Debug_Fmt("Attach: %x %x %x %x", req, req->device, req->port, req->next);
+    if (req->device == 5)
+        Debug_Fmt("Attach: %x %x %x %x", req, req->device, req->port, req->next);
 #endif
 
-	// See if its there, and get last req:
-	for (r = *node; r; r = *node) {
-		if (r == req) return; // already in list
-		node = &r->next;
-	}
+    // See if its there, and get last req:
+    for (r = *node; r; r = *node) {
+        if (r == req) return; // already in list
+        node = &r->next;
+    }
 
-	// Link the new request to end:
-	*node = req;
-	req->next = 0;
-	SET_FLAG(req->flags, RRF_PENDING);
+    // Link the new request to end:
+    *node = req;
+    req->next = 0;
+    SET_FLAG(req->flags, RRF_PENDING);
 }
 
 
@@ -186,27 +186,27 @@ void Attach_Request(REBREQ **node, REBREQ *req)
 //
 void Detach_Request(REBREQ **node, REBREQ *req)
 {
-	REBREQ *r;
+    REBREQ *r;
 
 #ifdef special_debug
-	if (req->device == 5)
-		Debug_Fmt("Detach= n: %x r: %x p: %x %x", *node, req, req->port, &req->next);
+    if (req->device == 5)
+        Debug_Fmt("Detach= n: %x r: %x p: %x %x", *node, req, req->port, &req->next);
 #endif
 
-	// See if its there, and get last req:
-	for (r = *node; r; r = *node) {
+    // See if its there, and get last req:
+    for (r = *node; r; r = *node) {
 #ifdef special_debug
-	if (req->device == 5)
-		Debug_Fmt("Detach: r: %x n: %x", r, r->next);
+    if (req->device == 5)
+        Debug_Fmt("Detach: r: %x n: %x", r, r->next);
 #endif
-		if (r == req) {
-			*node = req->next;
-			req->next = 0;
-			CLR_FLAG(req->flags, RRF_PENDING);
-			return;
-		}
-		node = &r->next;
-	}
+        if (r == req) {
+            *node = req->next;
+            req->next = 0;
+            CLR_FLAG(req->flags, RRF_PENDING);
+            return;
+        }
+        node = &r->next;
+    }
 }
 
 
@@ -220,24 +220,24 @@ extern void Done_Device(REBUPT handle, int error);
 //
 void Done_Device(REBUPT handle, int error)
 {
-	REBINT d;
-	REBDEV *dev;
-	REBREQ **prior;
-	REBREQ *req;
+    REBINT d;
+    REBDEV *dev;
+    REBREQ **prior;
+    REBREQ *req;
 
-	for (d = RDI_NET; d <= RDI_DNS; d++) {
-		dev = Devices[d];
-		prior = &dev->pending;
-		// Scan the pending requests, mark the one we got:
-		for (req = *prior; req; req = *prior) {
-			if (cast(REBUPT, req->requestee.handle) == handle) {
-				req->error = error; // zero when no error
-				SET_FLAG(req->flags, RRF_DONE);
-				return;
-			}
-			prior = &req->next;
-		}
-	}
+    for (d = RDI_NET; d <= RDI_DNS; d++) {
+        dev = Devices[d];
+        prior = &dev->pending;
+        // Scan the pending requests, mark the one we got:
+        for (req = *prior; req; req = *prior) {
+            if (cast(REBUPT, req->requestee.handle) == handle) {
+                req->error = error; // zero when no error
+                SET_FLAG(req->flags, RRF_DONE);
+                return;
+            }
+            prior = &req->next;
+        }
+    }
 }
 
 
@@ -248,16 +248,16 @@ void Done_Device(REBUPT handle, int error)
 //
 void Signal_Device(REBREQ *req, REBINT type)
 {
-	REBEVT evt;
+    REBEVT evt;
 
-	CLEARS(&evt);
+    CLEARS(&evt);
 
-	evt.type = (REBYTE)type;
-	evt.model = EVM_DEVICE;
-	evt.eventee.req = req;
-	if (type == EVT_ERROR) evt.data = req->error;
+    evt.type = (REBYTE)type;
+    evt.model = EVM_DEVICE;
+    evt.eventee.req = req;
+    if (type == EVT_ERROR) evt.data = req->error;
 
-	RL_Event(&evt);	// (returns 0 if queue is full, ignored)
+    RL_Event(&evt); // (returns 0 if queue is full, ignored)
 }
 
 
@@ -274,22 +274,22 @@ void Signal_Device(REBREQ *req, REBINT type)
 //
 int OS_Call_Device(REBINT device, REBCNT command)
 {
-	REBDEV *dev;
-	REBREQ req;
+    REBDEV *dev;
+    REBREQ req;
 
-	// Validate device:
-	if (device >= RDI_MAX || !(dev = Devices[device]))
-		return -1;
+    // Validate device:
+    if (device >= RDI_MAX || !(dev = Devices[device]))
+        return -1;
 
-	// Validate command:
-	if (command > dev->max_command || dev->commands[command] == 0)
-		return -2;
+    // Validate command:
+    if (command > dev->max_command || dev->commands[command] == 0)
+        return -2;
 
-	// Do command, return result:
-	/* fake a request, not all fields are set */
-	req.device = device;
-	req.command = command;
-	return dev->commands[command](&req);
+    // Do command, return result:
+    /* fake a request, not all fields are set */
+    req.device = device;
+    req.command = command;
+    return dev->commands[command](&req);
 }
 
 
@@ -306,48 +306,48 @@ int OS_Call_Device(REBINT device, REBCNT command)
 //
 int OS_Do_Device(REBREQ *req, REBCNT command)
 {
-	REBDEV *dev;
-	REBINT result;
+    REBDEV *dev;
+    REBINT result;
 
-	req->error = 0; // A94 - be sure its cleared
+    req->error = 0; // A94 - be sure its cleared
 
-	// Validate device:
-	if (req->device >= RDI_MAX || !(dev = Devices[req->device])) {
-		req->error = RDE_NO_DEVICE;
-		return -1;
-	}
+    // Validate device:
+    if (req->device >= RDI_MAX || !(dev = Devices[req->device])) {
+        req->error = RDE_NO_DEVICE;
+        return -1;
+    }
 
-	// Confirm device is initialized. If not, return an error or init
-	// it if auto init option is set.
-	if (!GET_FLAG(dev->flags, RDF_INIT)) {
-		if (GET_FLAG(dev->flags, RDO_MUST_INIT)) {
-			req->error = RDE_NO_INIT;
-			return -1;
-		}
-		if (!dev->commands[RDC_INIT] || !dev->commands[RDC_INIT]((REBREQ*)dev))
-		SET_FLAG(dev->flags, RDF_INIT);
-	}
+    // Confirm device is initialized. If not, return an error or init
+    // it if auto init option is set.
+    if (!GET_FLAG(dev->flags, RDF_INIT)) {
+        if (GET_FLAG(dev->flags, RDO_MUST_INIT)) {
+            req->error = RDE_NO_INIT;
+            return -1;
+        }
+        if (!dev->commands[RDC_INIT] || !dev->commands[RDC_INIT]((REBREQ*)dev))
+        SET_FLAG(dev->flags, RDF_INIT);
+    }
 
-	// Validate command:
-	if (command > dev->max_command || dev->commands[command] == 0) {
-		req->error = RDE_NO_COMMAND;
-		return -1;
-	}
+    // Validate command:
+    if (command > dev->max_command || dev->commands[command] == 0) {
+        req->error = RDE_NO_COMMAND;
+        return -1;
+    }
 
-	// Do the command:
-	req->command = command;
-	result = dev->commands[command](req);
+    // Do the command:
+    req->command = command;
+    result = dev->commands[command](req);
 
-	// If request is pending, attach it to device for polling:
-	if (result > 0) Attach_Request(&dev->pending, req);
-	else if (dev->pending) {
-		Detach_Request(&dev->pending, req); // often a no-op
-		if (result == DR_ERROR && GET_FLAG(req->flags, RRF_ALLOC)) { // not on stack
-			Signal_Device(req, EVT_ERROR);
-		}
-	}
+    // If request is pending, attach it to device for polling:
+    if (result > 0) Attach_Request(&dev->pending, req);
+    else if (dev->pending) {
+        Detach_Request(&dev->pending, req); // often a no-op
+        if (result == DR_ERROR && GET_FLAG(req->flags, RRF_ALLOC)) { // not on stack
+            Signal_Device(req, EVT_ERROR);
+        }
+    }
 
-	return result;
+    return result;
 }
 
 
@@ -356,21 +356,21 @@ int OS_Do_Device(REBREQ *req, REBCNT command)
 //
 REBREQ *OS_Make_Devreq(int device)
 {
-	REBDEV *dev;
-	REBREQ *req;
-	unsigned int size;
+    REBDEV *dev;
+    REBREQ *req;
+    unsigned int size;
 
-	// Validate device:
-	if (device >= RDI_MAX || !(dev = Devices[device]))
-		return 0;
+    // Validate device:
+    if (device >= RDI_MAX || !(dev = Devices[device]))
+        return 0;
 
-	size = dev->req_size ? dev->req_size : sizeof(REBREQ);
-	req = cast(REBREQ*, OS_ALLOC_ARRAY_ZEROFILL(char, size));
-	SET_FLAG(req->flags, RRF_ALLOC);
-	req->clen = size;
-	req->device = device;
+    size = dev->req_size ? dev->req_size : sizeof(REBREQ);
+    req = cast(REBREQ*, OS_ALLOC_ARRAY_ZEROFILL(char, size));
+    SET_FLAG(req->flags, RRF_ALLOC);
+    req->clen = size;
+    req->device = device;
 
-	return req;
+    return req;
 }
 
 
@@ -381,10 +381,10 @@ REBREQ *OS_Make_Devreq(int device)
 //
 int OS_Abort_Device(REBREQ *req)
 {
-	REBDEV *dev;
+    REBDEV *dev;
 
-	if ((dev = Devices[req->device]) != 0) Detach_Request(&dev->pending, req);
-	return 0;
+    if ((dev = Devices[req->device]) != 0) Detach_Request(&dev->pending, req);
+    return 0;
 }
 
 
@@ -403,29 +403,29 @@ int OS_Abort_Device(REBREQ *req)
 //
 int OS_Poll_Devices(void)
 {
-	int d;
-	int cnt = 0;
-	REBDEV *dev;
-	//int cc = 0;
+    int d;
+    int cnt = 0;
+    REBDEV *dev;
+    //int cc = 0;
 
-	//printf("Polling Devices\n");
+    //printf("Polling Devices\n");
 
-	// Check each device:
-	for (d = 0; d < RDI_MAX; d++) {
-		dev = Devices[d];
-		if (dev && (dev->pending || GET_FLAG(dev->flags, RDO_AUTO_POLL))) {
-			// If there is a custom polling function, use it:
-			if (dev->commands[RDC_POLL]) {
-				if (dev->commands[RDC_POLL]((REBREQ*)dev)) cnt++;
-			}
-			else {
-				if (Poll_Default(dev)) cnt++;
-			}
-		}
-		//if (cc != cnt) {printf("dev=%s ", dev->title); cc = cnt;}
-	}
+    // Check each device:
+    for (d = 0; d < RDI_MAX; d++) {
+        dev = Devices[d];
+        if (dev && (dev->pending || GET_FLAG(dev->flags, RDO_AUTO_POLL))) {
+            // If there is a custom polling function, use it:
+            if (dev->commands[RDC_POLL]) {
+                if (dev->commands[RDC_POLL]((REBREQ*)dev)) cnt++;
+            }
+            else {
+                if (Poll_Default(dev)) cnt++;
+            }
+        }
+        //if (cc != cnt) {printf("dev=%s ", dev->title); cc = cnt;}
+    }
 
-	return cnt;
+    return cnt;
 }
 
 
@@ -443,17 +443,17 @@ int OS_Poll_Devices(void)
 //
 int OS_Quit_Devices(int flags)
 {
-	int d;
-	REBDEV *dev;
+    int d;
+    REBDEV *dev;
 
-	for (d = RDI_MAX-1; d >= 0; d--) {
-		dev = Devices[d];
-		if (dev && GET_FLAG(dev->flags, RDF_INIT) && dev->commands[RDC_QUIT]) {
-			dev->commands[RDC_QUIT]((REBREQ*)dev);
-		}
-	}
+    for (d = RDI_MAX-1; d >= 0; d--) {
+        dev = Devices[d];
+        if (dev && GET_FLAG(dev->flags, RDF_INIT) && dev->commands[RDC_QUIT]) {
+            dev->commands[RDC_QUIT]((REBREQ*)dev);
+        }
+    }
 
-	return 0;
+    return 0;
 }
 
 
@@ -476,31 +476,31 @@ int OS_Quit_Devices(int flags)
 //
 REBINT OS_Wait(REBCNT millisec, REBCNT res)
 {
-	REBREQ req;		// OK: QUERY below does not store it
-	REBCNT delta;
-	i64 base;
+    REBREQ req;     // OK: QUERY below does not store it
+    REBCNT delta;
+    i64 base;
 
-	// printf("OS_Wait %d\n", millisec);
+    // printf("OS_Wait %d\n", millisec);
 
-	base = OS_Delta_Time(0, 0); // start timing
+    base = OS_Delta_Time(0, 0); // start timing
 
-	// Setup for timing:
-	CLEARS(&req);
-	req.device = RDI_EVENT;
+    // Setup for timing:
+    CLEARS(&req);
+    req.device = RDI_EVENT;
 
-	OS_Reap_Process(-1, NULL, 0);
+    OS_Reap_Process(-1, NULL, 0);
 
-	// Let any pending device I/O have a chance to run:
-	if (OS_Poll_Devices()) return -1;
+    // Let any pending device I/O have a chance to run:
+    if (OS_Poll_Devices()) return -1;
 
-	// Nothing, so wait for period of time
-	delta = (REBCNT)OS_Delta_Time(base, 0)/1000 + res;
-	if (delta >= millisec) return 0;
-	millisec -= delta;  // account for time lost above
-	req.length = millisec;
+    // Nothing, so wait for period of time
+    delta = (REBCNT)OS_Delta_Time(base, 0)/1000 + res;
+    if (delta >= millisec) return 0;
+    millisec -= delta;  // account for time lost above
+    req.length = millisec;
 
-	// printf("Wait: %d ms\n", millisec);
-	OS_Do_Device(&req, RDC_QUERY); // wait for timer or other event
+    // printf("Wait: %d ms\n", millisec);
+    OS_Do_Device(&req, RDC_QUERY); // wait for timer or other event
 
-	return 1;  // layer above should check delta again
+    return 1;  // layer above should check delta again
 }

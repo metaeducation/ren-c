@@ -30,17 +30,17 @@
 
 #pragma pack(4)
 struct Reb_Event {
-	u8  type;		// event id (mouse-move, mouse-button, etc)
-	u8  flags;		// special flags
-	u8  win;		// window id
-	u8  model;		// port, object, gui, callback
-	u32 data;		// an x/y position or keycode (raw/decoded)
-	union {
-		REBREQ *req;	// request (for device events)
-		void *ser;		// port or object
-	} eventee;				// !!! REVIEW: Not always "sender"?  The name is
-							// "bad" (?) but at least unique, making it easy
-							// to change.  See also rebol_devreq->requestee
+    u8  type;       // event id (mouse-move, mouse-button, etc)
+    u8  flags;      // special flags
+    u8  win;        // window id
+    u8  model;      // port, object, gui, callback
+    u32 data;       // an x/y position or keycode (raw/decoded)
+    union {
+        REBREQ *req;    // request (for device events)
+        void *ser;      // port or object
+    } eventee;              // !!! REVIEW: Not always "sender"?  The name is
+                            // "bad" (?) but at least unique, making it easy
+                            // to change.  See also rebol_devreq->requestee
 };
 #pragma pack()
 
@@ -51,24 +51,24 @@ typedef struct Reb_Event REBEVT;
 // Special event flags:
 
 enum {
-	EVF_COPIED,		// event data has been copied
-	EVF_HAS_XY,		// map-event will work on it
-	EVF_DOUBLE,		// double click detected
-	EVF_CONTROL,
-	EVF_SHIFT,
-	EVF_MAX
+    EVF_COPIED,     // event data has been copied
+    EVF_HAS_XY,     // map-event will work on it
+    EVF_DOUBLE,     // double click detected
+    EVF_CONTROL,
+    EVF_SHIFT,
+    EVF_MAX
 };
 
 
 // Event port data model
 
 enum {
-	EVM_DEVICE,		// I/O request holds the port pointer
-	EVM_PORT,		// event holds port pointer
-	EVM_OBJECT,		// event holds object frame pointer
-	EVM_GUI,		// GUI event uses system/view/event/port
-	EVM_CALLBACK,	// Callback event uses system/ports/callback port
-	EVM_MAX
+    EVM_DEVICE,     // I/O request holds the port pointer
+    EVM_PORT,       // event holds port pointer
+    EVM_OBJECT,     // event holds object frame pointer
+    EVM_GUI,        // GUI event uses system/view/event/port
+    EVM_CALLBACK,   // Callback event uses system/ports/callback port
+    EVM_MAX
 };
 
 // Special messages

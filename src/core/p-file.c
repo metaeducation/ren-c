@@ -43,36 +43,36 @@
 //
 static void Setup_File(REBREQ *file, REBCNT args, REBVAL *path)
 {
-	REBSER *ser;
+    REBSER *ser;
 
-	if (args & AM_OPEN_WRITE) SET_FLAG(file->modes, RFM_WRITE);
-	if (args & AM_OPEN_READ) SET_FLAG(file->modes, RFM_READ);
-	if (args & AM_OPEN_SEEK) SET_FLAG(file->modes, RFM_SEEK);
+    if (args & AM_OPEN_WRITE) SET_FLAG(file->modes, RFM_WRITE);
+    if (args & AM_OPEN_READ) SET_FLAG(file->modes, RFM_READ);
+    if (args & AM_OPEN_SEEK) SET_FLAG(file->modes, RFM_SEEK);
 
-	if (args & AM_OPEN_NEW) {
-		SET_FLAG(file->modes, RFM_NEW);
-		if (!(args & AM_OPEN_WRITE))
-			fail (Error(RE_BAD_FILE_MODE, path));
-	}
+    if (args & AM_OPEN_NEW) {
+        SET_FLAG(file->modes, RFM_NEW);
+        if (!(args & AM_OPEN_WRITE))
+            fail (Error(RE_BAD_FILE_MODE, path));
+    }
 
-	if (!(ser = Value_To_OS_Path(path, TRUE)))
-		fail (Error(RE_BAD_FILE_PATH, path));
+    if (!(ser = Value_To_OS_Path(path, TRUE)))
+        fail (Error(RE_BAD_FILE_PATH, path));
 
-	// !!! Original comment said "Convert file name to OS format, let
-	// it GC later."  Then it grabs the series data from inside of it.
-	// It's not clear what lifetime file->file.path is supposed to have,
-	// and saying "good until whenever the GC runs" is not rigorous.
-	// The series should be kept manual and freed when the data is
-	// no longer used, or the managed series saved in a GC-safe place
-	// as long as the bytes are needed.
-	//
-	MANAGE_SERIES(ser);
+    // !!! Original comment said "Convert file name to OS format, let
+    // it GC later."  Then it grabs the series data from inside of it.
+    // It's not clear what lifetime file->file.path is supposed to have,
+    // and saying "good until whenever the GC runs" is not rigorous.
+    // The series should be kept manual and freed when the data is
+    // no longer used, or the managed series saved in a GC-safe place
+    // as long as the bytes are needed.
+    //
+    MANAGE_SERIES(ser);
 
-	file->special.file.path = cast(REBCHR*, ser->data);
+    file->special.file.path = cast(REBCHR*, ser->data);
 
-	SET_FLAG(file->modes, RFM_NAME_MEM);
+    SET_FLAG(file->modes, RFM_NAME_MEM);
 
-	Secure_Port(SYM_FILE, file, path, ser);
+    Secure_Port(SYM_FILE, file, path, ser);
 }
 
 
@@ -81,12 +81,12 @@ static void Setup_File(REBREQ *file, REBCNT args, REBVAL *path)
 //
 static void Cleanup_File(REBREQ *file)
 {
-	if (GET_FLAG(file->modes, RFM_NAME_MEM)) {
-		//NOTE: file->special.file.path will get GC'd
-		file->special.file.path = 0;
-		CLR_FLAG(file->modes, RFM_NAME_MEM);
-	}
-	SET_CLOSED(file);
+    if (GET_FLAG(file->modes, RFM_NAME_MEM)) {
+        //NOTE: file->special.file.path will get GC'd
+        file->special.file.path = 0;
+        CLR_FLAG(file->modes, RFM_NAME_MEM);
+    }
+    SET_CLOSED(file);
 }
 
 
@@ -97,10 +97,10 @@ static void Cleanup_File(REBREQ *file)
 //
 static void Set_File_Date(REBREQ *file, REBVAL *val)
 {
-	REBOL_DAT dat;
+    REBOL_DAT dat;
 
-	OS_FILE_TIME(file, &dat);
-	Set_Date(val, &dat);
+    OS_FILE_TIME(file, &dat);
+    Set_Date(val, &dat);
 }
 
 
@@ -111,28 +111,28 @@ static void Set_File_Date(REBREQ *file, REBVAL *val)
 //
 void Ret_Query_File(REBSER *port, REBREQ *file, REBVAL *ret)
 {
-	REBVAL *info = In_Object(port, STD_PORT_SCHEME, STD_SCHEME_INFO, 0);
-	REBSER *obj;
-	REBSER *ser;
+    REBVAL *info = In_Object(port, STD_PORT_SCHEME, STD_SCHEME_INFO, 0);
+    REBSER *obj;
+    REBSER *ser;
 
-	if (!info || !IS_OBJECT(info))
-		fail (Error_On_Port(RE_INVALID_SPEC, port, -10));
+    if (!info || !IS_OBJECT(info))
+        fail (Error_On_Port(RE_INVALID_SPEC, port, -10));
 
-	obj = Copy_Array_Shallow(VAL_OBJ_FRAME(info));
-	MANAGE_SERIES(obj);
+    obj = Copy_Array_Shallow(VAL_OBJ_FRAME(info));
+    MANAGE_SERIES(obj);
 
-	Val_Init_Object(ret, obj);
-	Val_Init_Word_Unbound(
-		OFV(obj, STD_FILE_INFO_TYPE),
-		REB_WORD,
-		GET_FLAG(file->modes, RFM_DIR) ? SYM_DIR : SYM_FILE
-	);
-	SET_INTEGER(OFV(obj, STD_FILE_INFO_SIZE), file->special.file.size);
-	Set_File_Date(file, OFV(obj, STD_FILE_INFO_DATE));
+    Val_Init_Object(ret, obj);
+    Val_Init_Word_Unbound(
+        OFV(obj, STD_FILE_INFO_TYPE),
+        REB_WORD,
+        GET_FLAG(file->modes, RFM_DIR) ? SYM_DIR : SYM_FILE
+    );
+    SET_INTEGER(OFV(obj, STD_FILE_INFO_SIZE), file->special.file.size);
+    Set_File_Date(file, OFV(obj, STD_FILE_INFO_DATE));
 
-	ser = To_REBOL_Path(file->special.file.path, 0, OS_WIDE, 0);
+    ser = To_REBOL_Path(file->special.file.path, 0, OS_WIDE, 0);
 
-	Val_Init_File(OFV(obj, STD_FILE_INFO_NAME), ser);
+    Val_Init_File(OFV(obj, STD_FILE_INFO_NAME), ser);
 }
 
 
@@ -143,13 +143,13 @@ void Ret_Query_File(REBSER *port, REBREQ *file, REBVAL *ret)
 //
 static void Open_File_Port(REBSER *port, REBREQ *file, REBVAL *path)
 {
-	if (Is_Port_Open(port))
-		fail (Error(RE_ALREADY_OPEN, path));
+    if (Is_Port_Open(port))
+        fail (Error(RE_ALREADY_OPEN, path));
 
-	if (OS_DO_DEVICE(file, RDC_OPEN) < 0)
-		fail (Error_On_Port(RE_CANNOT_OPEN, port, file->error));
+    if (OS_DO_DEVICE(file, RDC_OPEN) < 0)
+        fail (Error_On_Port(RE_CANNOT_OPEN, port, file->error));
 
-	Set_Port_Open(port, TRUE);
+    Set_Port_Open(port, TRUE);
 }
 
 
@@ -163,7 +163,7 @@ REBINT Mode_Syms[] = {
     SYM_WORLD_READ,
     SYM_WORLD_WRITE,
     SYM_WORLD_EXECUTE,
-	0
+    0
 };
 
 
@@ -172,12 +172,12 @@ REBINT Mode_Syms[] = {
 //
 static REBCNT Get_Mode_Id(REBVAL *word)
 {
-	REBCNT id = 0;
-	if (IS_WORD(word)) {
-		id = Find_Int(&Mode_Syms[0], VAL_WORD_CANON(word));
-		if (id == NOT_FOUND) fail (Error_Invalid_Arg(word));
-	}
-	return id;
+    REBCNT id = 0;
+    if (IS_WORD(word)) {
+        id = Find_Int(&Mode_Syms[0], VAL_WORD_CANON(word));
+        if (id == NOT_FOUND) fail (Error_Invalid_Arg(word));
+    }
+    return id;
 }
 
 
@@ -186,7 +186,7 @@ static REBCNT Get_Mode_Id(REBVAL *word)
 //
 static REBCNT Set_Mode_Value(REBREQ *file, REBCNT mode, REBVAL *val)
 {
-	return 0;
+    return 0;
 }
 
 
@@ -197,29 +197,29 @@ static REBCNT Set_Mode_Value(REBREQ *file, REBCNT mode, REBVAL *val)
 //
 static void Read_File_Port(REBVAL *out, REBSER *port, REBREQ *file, REBVAL *path, REBCNT args, REBCNT len)
 {
-	REBSER *ser;
+    REBSER *ser;
 
-	// Allocate read result buffer:
-	ser = Make_Binary(len);
-	Val_Init_Binary(out, ser); //??? what if already set?
+    // Allocate read result buffer:
+    ser = Make_Binary(len);
+    Val_Init_Binary(out, ser); //??? what if already set?
 
-	// Do the read, check for errors:
-	file->common.data = BIN_HEAD(ser);
-	file->length = len;
-	if (OS_DO_DEVICE(file, RDC_READ) < 0)
-		fail (Error_On_Port(RE_READ_ERROR, port, file->error));
-	SERIES_TAIL(ser) = file->actual;
-	STR_TERM(ser);
+    // Do the read, check for errors:
+    file->common.data = BIN_HEAD(ser);
+    file->length = len;
+    if (OS_DO_DEVICE(file, RDC_READ) < 0)
+        fail (Error_On_Port(RE_READ_ERROR, port, file->error));
+    SERIES_TAIL(ser) = file->actual;
+    STR_TERM(ser);
 
-	// Convert to string or block of strings.
-	// NOTE: This code is incorrect for files read in chunks!!!
-	if (args & (AM_READ_STRING | AM_READ_LINES)) {
-		REBSER *nser = Decode_UTF_String(BIN_HEAD(ser), file->actual, -1);
-		if (nser == NULL) fail (Error(RE_BAD_DECODE));
-		Val_Init_String(out, nser);
+    // Convert to string or block of strings.
+    // NOTE: This code is incorrect for files read in chunks!!!
+    if (args & (AM_READ_STRING | AM_READ_LINES)) {
+        REBSER *nser = Decode_UTF_String(BIN_HEAD(ser), file->actual, -1);
+        if (nser == NULL) fail (Error(RE_BAD_DECODE));
+        Val_Init_String(out, nser);
 
-		if (args & AM_READ_LINES) Val_Init_Block(out, Split_Lines(out));
-	}
+        if (args & AM_READ_LINES) Val_Init_Block(out, Split_Lines(out));
+    }
 }
 
 
@@ -228,35 +228,35 @@ static void Read_File_Port(REBVAL *out, REBSER *port, REBREQ *file, REBVAL *path
 //
 static void Write_File_Port(REBREQ *file, REBVAL *data, REBCNT len, REBCNT args)
 {
-	REBSER *ser;
+    REBSER *ser;
 
-	if (IS_BLOCK(data)) {
-		// Form the values of the block
-		// !! Could be made more efficient if we broke the FORM
-		// into 32K chunks for writing.
-		REB_MOLD mo;
-		CLEARS(&mo);
-		Reset_Mold(&mo);
-		if (args & AM_WRITE_LINES) {
-			mo.opts = 1 << MOPT_LINES;
-		}
-		Mold_Value(&mo, data, 0);
-		Val_Init_String(data, mo.series); // fall into next section
-		len = SERIES_TAIL(mo.series);
-	}
+    if (IS_BLOCK(data)) {
+        // Form the values of the block
+        // !! Could be made more efficient if we broke the FORM
+        // into 32K chunks for writing.
+        REB_MOLD mo;
+        CLEARS(&mo);
+        Reset_Mold(&mo);
+        if (args & AM_WRITE_LINES) {
+            mo.opts = 1 << MOPT_LINES;
+        }
+        Mold_Value(&mo, data, 0);
+        Val_Init_String(data, mo.series); // fall into next section
+        len = SERIES_TAIL(mo.series);
+    }
 
-	// Auto convert string to UTF-8
-	if (IS_STRING(data)) {
-		ser = Make_UTF8_From_Any_String(data, len, OPT_ENC_CRLF_MAYBE);
-		MANAGE_SERIES(ser);
-		file->common.data = BIN_HEAD(ser);
-		len = SERIES_TAIL(ser);
-	}
-	else {
-		file->common.data = VAL_BIN_DATA(data);
-	}
-	file->length = len;
-	OS_DO_DEVICE(file, RDC_WRITE);
+    // Auto convert string to UTF-8
+    if (IS_STRING(data)) {
+        ser = Make_UTF8_From_Any_String(data, len, OPT_ENC_CRLF_MAYBE);
+        MANAGE_SERIES(ser);
+        file->common.data = BIN_HEAD(ser);
+        len = SERIES_TAIL(ser);
+    }
+    else {
+        file->common.data = VAL_BIN_DATA(data);
+    }
+    file->length = len;
+    OS_DO_DEVICE(file, RDC_WRITE);
 }
 
 
@@ -269,20 +269,20 @@ static void Write_File_Port(REBREQ *file, REBVAL *data, REBCNT len, REBCNT args)
 //
 static REBCNT Set_Length(const REBREQ *file, REBI64 limit)
 {
-	REBI64 len;
-	int what_if_it_changed;
+    REBI64 len;
+    int what_if_it_changed;
 
-	// Compute and bound bytes remaining:
-	len = file->special.file.size - file->special.file.index; // already read
-	if (len < 0) return 0;
-	len &= MAX_READ_MASK; // limit the size
+    // Compute and bound bytes remaining:
+    len = file->special.file.size - file->special.file.index; // already read
+    if (len < 0) return 0;
+    len &= MAX_READ_MASK; // limit the size
 
-	// Return requested length:
-	if (limit < 0) return (REBCNT)len;
+    // Return requested length:
+    if (limit < 0) return (REBCNT)len;
 
-	// Limit size of requested read:
-	if (limit > len) return cast(REBCNT, len);
-	return cast(REBCNT, limit);
+    // Limit size of requested read:
+    if (limit > len) return cast(REBCNT, len);
+    return cast(REBCNT, limit);
 }
 
 
@@ -293,15 +293,15 @@ static REBCNT Set_Length(const REBREQ *file, REBI64 limit)
 //
 static void Set_Seek(REBREQ *file, REBVAL *arg)
 {
-	REBI64 cnt;
+    REBI64 cnt;
 
-	cnt = Int64s(arg, 0);
+    cnt = Int64s(arg, 0);
 
-	if (cnt > file->special.file.size) cnt = file->special.file.size;
+    if (cnt > file->special.file.size) cnt = file->special.file.size;
 
-	file->special.file.index = cnt;
+    file->special.file.index = cnt;
 
-	SET_FLAG(file->modes, RFM_RESEEK); // force a seek
+    SET_FLAG(file->modes, RFM_RESEEK); // force a seek
 }
 
 
@@ -312,262 +312,262 @@ static void Set_Seek(REBREQ *file, REBVAL *arg)
 //
 static REB_R File_Actor(struct Reb_Call *call_, REBSER *port, REBCNT action)
 {
-	REBVAL *spec;
-	REBVAL *path;
-	REBREQ *file = 0;
-	REBCNT args = 0;
-	REBCNT len;
-	REBOOL opened = FALSE;	// had to be opened (shortcut case)
+    REBVAL *spec;
+    REBVAL *path;
+    REBREQ *file = 0;
+    REBCNT args = 0;
+    REBCNT len;
+    REBOOL opened = FALSE;  // had to be opened (shortcut case)
 
-	//Print("FILE ACTION: %d", Get_Action_Sym(action));
+    //Print("FILE ACTION: %d", Get_Action_Sym(action));
 
-	Validate_Port(port, action);
+    Validate_Port(port, action);
 
-	*D_OUT = *D_ARG(1);
+    *D_OUT = *D_ARG(1);
 
-	// Validate PORT fields:
-	spec = BLK_SKIP(port, STD_PORT_SPEC);
-	if (!IS_OBJECT(spec)) fail (Error(RE_INVALID_SPEC, spec));
-	path = Obj_Value(spec, STD_PORT_SPEC_HEAD_REF);
-	if (!path) fail (Error(RE_INVALID_SPEC, spec));
+    // Validate PORT fields:
+    spec = BLK_SKIP(port, STD_PORT_SPEC);
+    if (!IS_OBJECT(spec)) fail (Error(RE_INVALID_SPEC, spec));
+    path = Obj_Value(spec, STD_PORT_SPEC_HEAD_REF);
+    if (!path) fail (Error(RE_INVALID_SPEC, spec));
 
-	if (IS_URL(path)) path = Obj_Value(spec, STD_PORT_SPEC_HEAD_PATH);
-	else if (!IS_FILE(path)) fail (Error(RE_INVALID_SPEC, path));
+    if (IS_URL(path)) path = Obj_Value(spec, STD_PORT_SPEC_HEAD_PATH);
+    else if (!IS_FILE(path)) fail (Error(RE_INVALID_SPEC, path));
 
-	// Get or setup internal state data:
-	file = (REBREQ*)Use_Port_State(port, RDI_FILE, sizeof(*file));
+    // Get or setup internal state data:
+    file = (REBREQ*)Use_Port_State(port, RDI_FILE, sizeof(*file));
 
-	switch (action) {
+    switch (action) {
 
-	case A_READ:
-		args = Find_Refines(call_, ALL_READ_REFS);
+    case A_READ:
+        args = Find_Refines(call_, ALL_READ_REFS);
 
-		// Handle the READ %file shortcut case:
-		if (!IS_OPEN(file)) {
-			REBCNT nargs = AM_OPEN_READ;
-			if (args & AM_READ_SEEK) nargs |= AM_OPEN_SEEK;
-			Setup_File(file, nargs, path);
-			Open_File_Port(port, file, path);
-			opened = TRUE;
-		}
+        // Handle the READ %file shortcut case:
+        if (!IS_OPEN(file)) {
+            REBCNT nargs = AM_OPEN_READ;
+            if (args & AM_READ_SEEK) nargs |= AM_OPEN_SEEK;
+            Setup_File(file, nargs, path);
+            Open_File_Port(port, file, path);
+            opened = TRUE;
+        }
 
-		if (args & AM_READ_SEEK) Set_Seek(file, D_ARG(ARG_READ_INDEX));
-		len = Set_Length(
-			file, D_REF(ARG_READ_PART) ? VAL_INT64(D_ARG(ARG_READ_LIMIT)) : -1
-		);
-		Read_File_Port(D_OUT, port, file, path, args, len);
+        if (args & AM_READ_SEEK) Set_Seek(file, D_ARG(ARG_READ_INDEX));
+        len = Set_Length(
+            file, D_REF(ARG_READ_PART) ? VAL_INT64(D_ARG(ARG_READ_LIMIT)) : -1
+        );
+        Read_File_Port(D_OUT, port, file, path, args, len);
 
-		if (opened) {
-			OS_DO_DEVICE(file, RDC_CLOSE);
-			Cleanup_File(file);
-		}
+        if (opened) {
+            OS_DO_DEVICE(file, RDC_CLOSE);
+            Cleanup_File(file);
+        }
 
-		if (file->error)
-			fail (Error_On_Port(RE_READ_ERROR, port, file->error));
-		break;
+        if (file->error)
+            fail (Error_On_Port(RE_READ_ERROR, port, file->error));
+        break;
 
-	case A_APPEND:
-		if (!(IS_BINARY(D_ARG(2)) || IS_STRING(D_ARG(2)) || IS_BLOCK(D_ARG(2))))
-			fail (Error(RE_INVALID_ARG, D_ARG(2)));
-		file->special.file.index = file->special.file.size;
-		SET_FLAG(file->modes, RFM_RESEEK);
+    case A_APPEND:
+        if (!(IS_BINARY(D_ARG(2)) || IS_STRING(D_ARG(2)) || IS_BLOCK(D_ARG(2))))
+            fail (Error(RE_INVALID_ARG, D_ARG(2)));
+        file->special.file.index = file->special.file.size;
+        SET_FLAG(file->modes, RFM_RESEEK);
 
-	case A_WRITE:
-		args = Find_Refines(call_, ALL_WRITE_REFS);
-		spec = D_ARG(2); // data (binary, string, or block)
+    case A_WRITE:
+        args = Find_Refines(call_, ALL_WRITE_REFS);
+        spec = D_ARG(2); // data (binary, string, or block)
 
-		// Handle the READ %file shortcut case:
-		if (!IS_OPEN(file)) {
-			REBCNT nargs = AM_OPEN_WRITE;
-			if (args & AM_WRITE_SEEK || args & AM_WRITE_APPEND) nargs |= AM_OPEN_SEEK;
-			else nargs |= AM_OPEN_NEW;
-			Setup_File(file, nargs, path);
-			Open_File_Port(port, file, path);
-			opened = TRUE;
-		}
-		else {
-			if (!GET_FLAG(file->modes, RFM_WRITE))
-				fail (Error(RE_READ_ONLY, path));
-		}
+        // Handle the READ %file shortcut case:
+        if (!IS_OPEN(file)) {
+            REBCNT nargs = AM_OPEN_WRITE;
+            if (args & AM_WRITE_SEEK || args & AM_WRITE_APPEND) nargs |= AM_OPEN_SEEK;
+            else nargs |= AM_OPEN_NEW;
+            Setup_File(file, nargs, path);
+            Open_File_Port(port, file, path);
+            opened = TRUE;
+        }
+        else {
+            if (!GET_FLAG(file->modes, RFM_WRITE))
+                fail (Error(RE_READ_ONLY, path));
+        }
 
-		// Setup for /append or /seek:
-		if (args & AM_WRITE_APPEND) {
-			file->special.file.index = -1; // append
-			SET_FLAG(file->modes, RFM_RESEEK);
-		}
-		if (args & AM_WRITE_SEEK) Set_Seek(file, D_ARG(ARG_WRITE_INDEX));
+        // Setup for /append or /seek:
+        if (args & AM_WRITE_APPEND) {
+            file->special.file.index = -1; // append
+            SET_FLAG(file->modes, RFM_RESEEK);
+        }
+        if (args & AM_WRITE_SEEK) Set_Seek(file, D_ARG(ARG_WRITE_INDEX));
 
-		// Determine length. Clip /PART to size of string if needed.
-		len = VAL_LEN(spec);
-		if (args & AM_WRITE_PART) {
-			REBCNT n = Int32s(D_ARG(ARG_WRITE_LIMIT), 0);
-			if (n <= len) len = n;
-		}
+        // Determine length. Clip /PART to size of string if needed.
+        len = VAL_LEN(spec);
+        if (args & AM_WRITE_PART) {
+            REBCNT n = Int32s(D_ARG(ARG_WRITE_LIMIT), 0);
+            if (n <= len) len = n;
+        }
 
-		Write_File_Port(file, spec, len, args);
+        Write_File_Port(file, spec, len, args);
 
-		if (opened) {
-			OS_DO_DEVICE(file, RDC_CLOSE);
-			Cleanup_File(file);
-		}
+        if (opened) {
+            OS_DO_DEVICE(file, RDC_CLOSE);
+            Cleanup_File(file);
+        }
 
-		if (file->error) fail (Error(RE_WRITE_ERROR, path));
-		break;
+        if (file->error) fail (Error(RE_WRITE_ERROR, path));
+        break;
 
-	case A_OPEN:
-		args = Find_Refines(call_, ALL_OPEN_REFS);
-		// Default file modes if not specified:
-		if (!(args & (AM_OPEN_READ | AM_OPEN_WRITE))) args |= (AM_OPEN_READ | AM_OPEN_WRITE);
-		Setup_File(file, args, path);
-		Open_File_Port(port, file, path); // !!! needs to change file modes to R/O if necessary
-		break;
+    case A_OPEN:
+        args = Find_Refines(call_, ALL_OPEN_REFS);
+        // Default file modes if not specified:
+        if (!(args & (AM_OPEN_READ | AM_OPEN_WRITE))) args |= (AM_OPEN_READ | AM_OPEN_WRITE);
+        Setup_File(file, args, path);
+        Open_File_Port(port, file, path); // !!! needs to change file modes to R/O if necessary
+        break;
 
-	case A_COPY:
-		if (!IS_OPEN(file)) fail (Error(RE_NOT_OPEN, path)); // !!! wrong msg
-		len = Set_Length(file, D_REF(2) ? VAL_INT64(D_ARG(3)) : -1);
-		Read_File_Port(D_OUT, port, file, path, args, len);
-		break;
+    case A_COPY:
+        if (!IS_OPEN(file)) fail (Error(RE_NOT_OPEN, path)); // !!! wrong msg
+        len = Set_Length(file, D_REF(2) ? VAL_INT64(D_ARG(3)) : -1);
+        Read_File_Port(D_OUT, port, file, path, args, len);
+        break;
 
-	case A_OPENQ:
-		if (IS_OPEN(file)) return R_TRUE;
-		return R_FALSE;
+    case A_OPENQ:
+        if (IS_OPEN(file)) return R_TRUE;
+        return R_FALSE;
 
-	case A_CLOSE:
-		if (IS_OPEN(file)) {
-			OS_DO_DEVICE(file, RDC_CLOSE);
-			Cleanup_File(file);
-		}
-		break;
+    case A_CLOSE:
+        if (IS_OPEN(file)) {
+            OS_DO_DEVICE(file, RDC_CLOSE);
+            Cleanup_File(file);
+        }
+        break;
 
-	case A_DELETE:
-		if (IS_OPEN(file)) fail (Error(RE_NO_DELETE, path));
-		Setup_File(file, 0, path);
-		if (OS_DO_DEVICE(file, RDC_DELETE) < 0)
-			fail (Error(RE_NO_DELETE, path));
-		break;
+    case A_DELETE:
+        if (IS_OPEN(file)) fail (Error(RE_NO_DELETE, path));
+        Setup_File(file, 0, path);
+        if (OS_DO_DEVICE(file, RDC_DELETE) < 0)
+            fail (Error(RE_NO_DELETE, path));
+        break;
 
-	case A_RENAME:
-		if (IS_OPEN(file)) fail (Error(RE_NO_RENAME, path));
-		else {
-			REBSER *target;
+    case A_RENAME:
+        if (IS_OPEN(file)) fail (Error(RE_NO_RENAME, path));
+        else {
+            REBSER *target;
 
-			Setup_File(file, 0, path);
+            Setup_File(file, 0, path);
 
-			// Convert file name to OS format:
-			if (!(target = Value_To_OS_Path(D_ARG(2), TRUE)))
-				fail (Error(RE_BAD_FILE_PATH, D_ARG(2)));
-			file->common.data = BIN_DATA(target);
-			OS_DO_DEVICE(file, RDC_RENAME);
-			Free_Series(target);
-			if (file->error) fail (Error(RE_NO_RENAME, path));
-		}
-		break;
+            // Convert file name to OS format:
+            if (!(target = Value_To_OS_Path(D_ARG(2), TRUE)))
+                fail (Error(RE_BAD_FILE_PATH, D_ARG(2)));
+            file->common.data = BIN_DATA(target);
+            OS_DO_DEVICE(file, RDC_RENAME);
+            Free_Series(target);
+            if (file->error) fail (Error(RE_NO_RENAME, path));
+        }
+        break;
 
-	case A_CREATE:
-		// !!! should it leave file open???
-		if (!IS_OPEN(file)) {
-			Setup_File(file, AM_OPEN_WRITE | AM_OPEN_NEW, path);
-			if (OS_DO_DEVICE(file, RDC_CREATE) < 0)
-				fail (Error_On_Port(RE_CANNOT_OPEN, port, file->error));
-			OS_DO_DEVICE(file, RDC_CLOSE);
-		}
-		break;
+    case A_CREATE:
+        // !!! should it leave file open???
+        if (!IS_OPEN(file)) {
+            Setup_File(file, AM_OPEN_WRITE | AM_OPEN_NEW, path);
+            if (OS_DO_DEVICE(file, RDC_CREATE) < 0)
+                fail (Error_On_Port(RE_CANNOT_OPEN, port, file->error));
+            OS_DO_DEVICE(file, RDC_CLOSE);
+        }
+        break;
 
-	case A_QUERY:
-		if (!IS_OPEN(file)) {
-			Setup_File(file, 0, path);
-			if (OS_DO_DEVICE(file, RDC_QUERY) < 0) return R_NONE;
-		}
-		Ret_Query_File(port, file, D_OUT);
-		// !!! free file path?
-		break;
+    case A_QUERY:
+        if (!IS_OPEN(file)) {
+            Setup_File(file, 0, path);
+            if (OS_DO_DEVICE(file, RDC_QUERY) < 0) return R_NONE;
+        }
+        Ret_Query_File(port, file, D_OUT);
+        // !!! free file path?
+        break;
 
-	case A_MODIFY:
-		Set_Mode_Value(file, Get_Mode_Id(D_ARG(2)), D_ARG(3));
-		if (!IS_OPEN(file)) {
-			Setup_File(file, 0, path);
-			if (OS_DO_DEVICE(file, RDC_MODIFY) < 0) return R_NONE;
-		}
-		return R_TRUE;
-		break;
+    case A_MODIFY:
+        Set_Mode_Value(file, Get_Mode_Id(D_ARG(2)), D_ARG(3));
+        if (!IS_OPEN(file)) {
+            Setup_File(file, 0, path);
+            if (OS_DO_DEVICE(file, RDC_MODIFY) < 0) return R_NONE;
+        }
+        return R_TRUE;
+        break;
 
-	case A_INDEX_OF:
-		SET_INTEGER(D_OUT, file->special.file.index + 1);
-		break;
+    case A_INDEX_OF:
+        SET_INTEGER(D_OUT, file->special.file.index + 1);
+        break;
 
-	case A_LENGTH:
-		SET_INTEGER(D_OUT, file->special.file.size - file->special.file.index); // !clip at zero
-		break;
+    case A_LENGTH:
+        SET_INTEGER(D_OUT, file->special.file.size - file->special.file.index); // !clip at zero
+        break;
 
-	case A_HEAD:
-		file->special.file.index = 0;
-		goto seeked;
+    case A_HEAD:
+        file->special.file.index = 0;
+        goto seeked;
 
     case A_TAIL:
-		file->special.file.index = file->special.file.size;
-		goto seeked;
+        file->special.file.index = file->special.file.size;
+        goto seeked;
 
-	case A_NEXT:
-		file->special.file.index++;
-		goto seeked;
+    case A_NEXT:
+        file->special.file.index++;
+        goto seeked;
 
-	case A_BACK:
-		if (file->special.file.index > 0) file->special.file.index--;
-		goto seeked;
+    case A_BACK:
+        if (file->special.file.index > 0) file->special.file.index--;
+        goto seeked;
 
-	case A_SKIP:
-		file->special.file.index += Get_Num_Arg(D_ARG(2));
-		goto seeked;
+    case A_SKIP:
+        file->special.file.index += Get_Num_Arg(D_ARG(2));
+        goto seeked;
 
     case A_HEADQ:
-		DECIDE(file->special.file.index == 0);
+        DECIDE(file->special.file.index == 0);
 
     case A_TAILQ:
-		DECIDE(file->special.file.index >= file->special.file.size);
+        DECIDE(file->special.file.index >= file->special.file.size);
 
     case A_PASTQ:
-		DECIDE(file->special.file.index > file->special.file.size);
+        DECIDE(file->special.file.index > file->special.file.size);
 
-	case A_CLEAR:
-		// !! check for write enabled?
-		SET_FLAG(file->modes, RFM_RESEEK);
-		SET_FLAG(file->modes, RFM_TRUNCATE);
-		file->length = 0;
-		if (OS_DO_DEVICE(file, RDC_WRITE) < 0)
-			fail (Error(RE_WRITE_ERROR, path));
-		break;
+    case A_CLEAR:
+        // !! check for write enabled?
+        SET_FLAG(file->modes, RFM_RESEEK);
+        SET_FLAG(file->modes, RFM_TRUNCATE);
+        file->length = 0;
+        if (OS_DO_DEVICE(file, RDC_WRITE) < 0)
+            fail (Error(RE_WRITE_ERROR, path));
+        break;
 
-	/* Not yet implemented:
-		A_AT,					// 38
-		A_PICK,					// 41
-		A_PATH,					// 42
-		A_PATH_SET,				// 43
-		A_FIND,					// 44
-		A_SELECT,				// 45
-		A_TAKE,					// 49
-		A_INSERT,				// 50
-		A_REMOVE,				// 52
-		A_CHANGE,				// 53
-		A_POKE,					// 54
-		A_QUERY,				// 64
-		A_FLUSH,				// 65
-	*/
+    /* Not yet implemented:
+        A_AT,                   // 38
+        A_PICK,                 // 41
+        A_PATH,                 // 42
+        A_PATH_SET,             // 43
+        A_FIND,                 // 44
+        A_SELECT,               // 45
+        A_TAKE,                 // 49
+        A_INSERT,               // 50
+        A_REMOVE,               // 52
+        A_CHANGE,               // 53
+        A_POKE,                 // 54
+        A_QUERY,                // 64
+        A_FLUSH,                // 65
+    */
 
-	default:
-		fail (Error_Illegal_Action(REB_PORT, action));
-	}
+    default:
+        fail (Error_Illegal_Action(REB_PORT, action));
+    }
 
-	return R_OUT;
+    return R_OUT;
 
 seeked:
-	SET_FLAG(file->modes, RFM_RESEEK);
-	return R_ARG1;
+    SET_FLAG(file->modes, RFM_RESEEK);
+    return R_ARG1;
 
 is_true:
-	return R_TRUE;
+    return R_TRUE;
 
 is_false:
-	return R_FALSE;
+    return R_FALSE;
 }
 
 
@@ -580,5 +580,5 @@ is_false:
 //
 void Init_File_Scheme(void)
 {
-	Register_Scheme(SYM_FILE, 0, File_Actor);
+    Register_Scheme(SYM_FILE, 0, File_Actor);
 }

@@ -60,52 +60,52 @@
 #include "reb-host.h"
 
 // Configuration:
-#define TERM_BUF_LEN 4096	// chars allowed per line
-#define READ_BUF_LEN 64		// chars per read()
-#define MAX_HISTORY  300	// number of lines stored
+#define TERM_BUF_LEN 4096   // chars allowed per line
+#define READ_BUF_LEN 64     // chars per read()
+#define MAX_HISTORY  300    // number of lines stored
 
 // Macros: (does not use reb-c.h)
 
 #define WRITE_CHAR(s) \
-	do { \
-		if (write(1, s, 1) == -1) { \
-			/* Error here, or better to "just try to keep going"? */ \
-		} \
-	} while (0)
+    do { \
+        if (write(1, s, 1) == -1) { \
+            /* Error here, or better to "just try to keep going"? */ \
+        } \
+    } while (0)
 
 #define WRITE_CHARS(s,n) \
-	do { \
-		if (write(1, s, n) == -1) { \
-			/* Error here, or better to "just try to keep going"? */ \
-		} \
-	} while (0)
+    do { \
+        if (write(1, s, n) == -1) { \
+            /* Error here, or better to "just try to keep going"? */ \
+        } \
+    } while (0)
 
 #define WRITE_STR(s) \
-	do { \
-		if (write(1, s, strlen(s)) == -1) { \
-			/* Error here, or better to "just try to keep going"? */ \
-		} \
-	} while (0)
+    do { \
+        if (write(1, s, strlen(s)) == -1) { \
+            /* Error here, or better to "just try to keep going"? */ \
+        } \
+    } while (0)
 
 #define DBG_INT(t,n) //printf("\r\ndbg[%s]: %d\r\n", t, (n));
 #define DBG_STR(t,s) //printf("\r\ndbg[%s]: %s\r\n", t, (s));
 
 typedef struct term_data {
-	char *buffer;
-	char *residue;
-	char *out;
-	int pos;
-	int end;
-	int hist;
+    char *buffer;
+    char *residue;
+    char *out;
+    int pos;
+    int end;
+    int hist;
 } STD_TERM;
 
 // Globals:
-static int  Term_Init = 0;			// Terminal init was successful
-static char **Line_History;		// Prior input lines
-static int Line_Count;			// Number of prior lines
+static int  Term_Init = 0;          // Terminal init was successful
+static char **Line_History;     // Prior input lines
+static int Line_Count;          // Number of prior lines
 
 #ifndef NO_TTY_ATTRIBUTES
-static struct termios Term_Attrs;	// Initial settings, restored on exit
+static struct termios Term_Attrs;   // Initial settings, restored on exit
 #endif
 
 
@@ -119,47 +119,47 @@ extern STD_TERM *Init_Terminal(void);
 //
 STD_TERM *Init_Terminal(void)
 {
-	STD_TERM *term;
-	const char empty_line[] = "";
+    STD_TERM *term;
+    const char empty_line[] = "";
 
 #ifndef NO_TTY_ATTRIBUTES
-	struct termios attrs;
+    struct termios attrs;
 
-	if (Term_Init || tcgetattr(0, &Term_Attrs)) return FALSE;
+    if (Term_Init || tcgetattr(0, &Term_Attrs)) return FALSE;
 
-	attrs = Term_Attrs;
+    attrs = Term_Attrs;
 
-	// Local modes:
-	attrs.c_lflag &= ~(ECHO | ICANON); // raw input
+    // Local modes:
+    attrs.c_lflag &= ~(ECHO | ICANON); // raw input
 
-	// Input modes:
-	attrs.c_iflag &= ~(ICRNL | INLCR); // leave CR an LF as is
+    // Input modes:
+    attrs.c_iflag &= ~(ICRNL | INLCR); // leave CR an LF as is
 
-	// Output modes:
-	attrs.c_oflag |= ONLCR; // On output, emit CRLF
+    // Output modes:
+    attrs.c_oflag |= ONLCR; // On output, emit CRLF
 
-	// Special modes:
-	attrs.c_cc[VMIN] = 1;	// min num of bytes for READ to return
-	attrs.c_cc[VTIME] = 0;	// how long to wait for input
+    // Special modes:
+    attrs.c_cc[VMIN] = 1;   // min num of bytes for READ to return
+    attrs.c_cc[VTIME] = 0;  // how long to wait for input
 
-	tcsetattr(0, TCSADRAIN, &attrs);
+    tcsetattr(0, TCSADRAIN, &attrs);
 #endif
 
-	// Setup variables:
-	Line_History = OS_ALLOC_ARRAY(char*, MAX_HISTORY + 2);
+    // Setup variables:
+    Line_History = OS_ALLOC_ARRAY(char*, MAX_HISTORY + 2);
     Line_History[0] = OS_ALLOC_ARRAY(char, strlen(empty_line) + 1);
     strcpy(Line_History[0], empty_line);
-	Line_Count = 1;
+    Line_Count = 1;
 
-	term = OS_ALLOC_ZEROFILL(STD_TERM);
-	term->buffer = OS_ALLOC_ARRAY(char, TERM_BUF_LEN);
-	term->buffer[0] = 0;
-	term->residue = OS_ALLOC_ARRAY(char, TERM_BUF_LEN);
-	term->residue[0] = 0;
+    term = OS_ALLOC_ZEROFILL(STD_TERM);
+    term->buffer = OS_ALLOC_ARRAY(char, TERM_BUF_LEN);
+    term->buffer[0] = 0;
+    term->residue = OS_ALLOC_ARRAY(char, TERM_BUF_LEN);
+    term->residue[0] = 0;
 
-	Term_Init = TRUE;
+    Term_Init = TRUE;
 
-	return term;
+    return term;
 }
 
 
@@ -173,20 +173,20 @@ extern void Quit_Terminal(STD_TERM *term);
 //
 void Quit_Terminal(STD_TERM *term)
 {
-	int n;
+    int n;
 
-	if (Term_Init) {
+    if (Term_Init) {
 #ifndef NO_TTY_ATTRIBUTES
-		tcsetattr(0, TCSADRAIN, &Term_Attrs);
+        tcsetattr(0, TCSADRAIN, &Term_Attrs);
 #endif
-		OS_FREE(term->residue);
-		OS_FREE(term->buffer);
-		OS_FREE(term);
-		for (n = 0; n < Line_Count; n++) OS_FREE(Line_History[n]);
-		OS_FREE(Line_History);
-	}
+        OS_FREE(term->residue);
+        OS_FREE(term->buffer);
+        OS_FREE(term);
+        for (n = 0; n < Line_Count; n++) OS_FREE(Line_History[n]);
+        OS_FREE(Line_History);
+    }
 
-	Term_Init = FALSE;
+    Term_Init = FALSE;
 }
 
 
@@ -198,10 +198,10 @@ void Quit_Terminal(STD_TERM *term)
 //
 static void Write_Char(char c, int n)
 {
-	char buf[4];
+    char buf[4];
 
-	buf[0] = c;
-	for (; n > 0; n--) WRITE_CHAR(buf);
+    buf[0] = c;
+    for (; n > 0; n--) WRITE_CHAR(buf);
 }
 
 
@@ -213,18 +213,18 @@ static void Write_Char(char c, int n)
 //
 static void Store_Line(STD_TERM *term)
 {
-	term->buffer[term->end] = 0;
-	term->out = OS_ALLOC_ARRAY(char, term->end + 1);
-	strcpy(term->out, term->buffer);
+    term->buffer[term->end] = 0;
+    term->out = OS_ALLOC_ARRAY(char, term->end + 1);
+    strcpy(term->out, term->buffer);
 
-	// If max history, drop older lines (but not [0] empty line):
-	if (Line_Count >= MAX_HISTORY) {
-		OS_FREE(Line_History[1]);
-		memmove(Line_History+1, Line_History+2, (MAX_HISTORY-2)*sizeof(char*));
-		Line_Count = MAX_HISTORY-1;
-	}
+    // If max history, drop older lines (but not [0] empty line):
+    if (Line_Count >= MAX_HISTORY) {
+        OS_FREE(Line_History[1]);
+        memmove(Line_History+1, Line_History+2, (MAX_HISTORY-2)*sizeof(char*));
+        Line_Count = MAX_HISTORY-1;
+    }
 
-	Line_History[Line_Count++] = term->out;
+    Line_History[Line_Count++] = term->out;
 }
 
 
@@ -238,22 +238,22 @@ static void Store_Line(STD_TERM *term)
 //
 static void Recall_Line(STD_TERM *term)
 {
-	if (term->hist < 0) term->hist = 0;
+    if (term->hist < 0) term->hist = 0;
 
-	if (term->hist == 0)
-		Write_Char(BEL, 1); // bell
+    if (term->hist == 0)
+        Write_Char(BEL, 1); // bell
 
-	if (term->hist >= Line_Count) {
-		// Special case: no "next" line:
-		term->hist = Line_Count;
-		term->buffer[0] = 0;
-		term->pos = term->end = 0;
-	}
-	else {
-		// Fetch prior line:
-		strcpy(term->buffer, Line_History[term->hist]);
-		term->pos = term->end = strlen(term->buffer);
-	}
+    if (term->hist >= Line_Count) {
+        // Special case: no "next" line:
+        term->hist = Line_Count;
+        term->buffer[0] = 0;
+        term->pos = term->end = 0;
+    }
+    else {
+        // Fetch prior line:
+        strcpy(term->buffer, Line_History[term->hist]);
+        term->pos = term->end = strlen(term->buffer);
+    }
 }
 
 
@@ -266,8 +266,8 @@ static void Recall_Line(STD_TERM *term)
 //
 static void Clear_Line(STD_TERM *term)
 {
-	Write_Char(' ', term->end - term->pos); // wipe prior line
-	Write_Char(BS, term->end - term->pos); // return to position
+    Write_Char(' ', term->end - term->pos); // wipe prior line
+    Write_Char(BS, term->end - term->pos); // return to position
 }
 
 
@@ -279,8 +279,8 @@ static void Clear_Line(STD_TERM *term)
 //
 static void Home_Line(STD_TERM *term)
 {
-	Write_Char(BS, term->pos);
-	term->pos = 0;
+    Write_Char(BS, term->pos);
+    term->pos = 0;
 }
 
 
@@ -292,12 +292,12 @@ static void Home_Line(STD_TERM *term)
 //
 static void End_Line(STD_TERM *term)
 {
-	int len = term->end - term->pos;
+    int len = term->end - term->pos;
 
-	if (len > 0) {
-		WRITE_CHARS(term->buffer+term->pos, len);
-		term->pos = term->end;
-	}
+    if (len > 0) {
+        WRITE_CHARS(term->buffer+term->pos, len);
+        term->pos = term->end;
+    }
 }
 
 
@@ -312,26 +312,26 @@ static void End_Line(STD_TERM *term)
 //
 static void Show_Line(STD_TERM *term, int blanks)
 {
-	int len;
+    int len;
 
-	//printf("\r\nsho pos: %d end: %d ==", term->pos, term->end);
+    //printf("\r\nsho pos: %d end: %d ==", term->pos, term->end);
 
-	// Clip bounds:
-	if (term->pos < 0) term->pos = 0;
-	else if (term->pos > term->end) term->pos = term->end;
+    // Clip bounds:
+    if (term->pos < 0) term->pos = 0;
+    else if (term->pos > term->end) term->pos = term->end;
 
-	if (blanks >= 0) {
-		len = term->end - term->pos;
-		WRITE_CHARS(term->buffer+term->pos, len);
-	}
-	else {
-		WRITE_CHARS(term->buffer, term->end);
-		blanks = -blanks;
-		len = 0;
-	}
+    if (blanks >= 0) {
+        len = term->end - term->pos;
+        WRITE_CHARS(term->buffer+term->pos, len);
+    }
+    else {
+        WRITE_CHARS(term->buffer, term->end);
+        blanks = -blanks;
+        len = 0;
+    }
 
-	Write_Char(' ', blanks);
-	Write_Char(BS, blanks + len); // return to position or end
+    Write_Char(' ', blanks);
+    Write_Char(BS, blanks + len); // return to position or end
 }
 
 
@@ -344,20 +344,20 @@ static void Show_Line(STD_TERM *term, int blanks)
 //
 static char *Insert_Char(STD_TERM *term, char *cp)
 {
-	//printf("\r\nins pos: %d end: %d ==", term->pos, term->end);
-	if (term->end < TERM_BUF_LEN-1) { // avoid buffer overrun
+    //printf("\r\nins pos: %d end: %d ==", term->pos, term->end);
+    if (term->end < TERM_BUF_LEN-1) { // avoid buffer overrun
 
-		if (term->pos < term->end) { // open space for it:
-			memmove(term->buffer + term->pos + 1, term->buffer + term->pos, 1 + term->end - term->pos);
-		}
-		WRITE_CHAR(cp);
-		term->buffer[term->pos] = *cp;
-		term->end++;
-		term->pos++;
-		Show_Line(term, 0);
-	}
+        if (term->pos < term->end) { // open space for it:
+            memmove(term->buffer + term->pos + 1, term->buffer + term->pos, 1 + term->end - term->pos);
+        }
+        WRITE_CHAR(cp);
+        term->buffer[term->pos] = *cp;
+        term->end++;
+        term->pos++;
+        Show_Line(term, 0);
+    }
 
-	return ++cp;
+    return ++cp;
 }
 
 
@@ -370,21 +370,21 @@ static char *Insert_Char(STD_TERM *term, char *cp)
 //
 static void Delete_Char(STD_TERM *term, int back)
 {
-	int len;
+    int len;
 
-	if ( (term->pos == term->end) && back == 0) return; //Ctrl-D at EOL
+    if ( (term->pos == term->end) && back == 0) return; //Ctrl-D at EOL
 
-	if (back) term->pos--;
+    if (back) term->pos--;
 
-	len = 1 + term->end - term->pos;
+    len = 1 + term->end - term->pos;
 
-	if (term->pos >= 0 && len > 0) {
-		memmove(term->buffer + term->pos, term->buffer + term->pos + 1, len);
-		if (back) Write_Char(BS, 1);
-		term->end--;
-		Show_Line(term, 1);
-	}
-	else term->pos = 0;
+    if (term->pos >= 0 && len > 0) {
+        memmove(term->buffer + term->pos, term->buffer + term->pos + 1, len);
+        if (back) Write_Char(BS, 1);
+        term->end--;
+        Show_Line(term, 1);
+    }
+    else term->pos = 0;
 }
 
 
@@ -396,18 +396,18 @@ static void Delete_Char(STD_TERM *term, int back)
 //
 static void Move_Cursor(STD_TERM *term, int count)
 {
-	if (count < 0) {
-		if (term->pos > 0) {
-			term->pos--;
-			Write_Char(BS, 1);
-		}
-	}
-	else {
-		if (term->pos < term->end) {
-			WRITE_CHAR(term->buffer + term->pos);
-			term->pos++;
-		}
-	}
+    if (count < 0) {
+        if (term->pos > 0) {
+            term->pos--;
+            Write_Char(BS, 1);
+        }
+    }
+    else {
+        if (term->pos < term->end) {
+            WRITE_CHAR(term->buffer + term->pos);
+            term->pos++;
+        }
+    }
 }
 
 
@@ -420,125 +420,125 @@ static void Move_Cursor(STD_TERM *term, int count)
 //
 static char *Process_Key(STD_TERM *term, char *cp)
 {
-	int len;
+    int len;
 
-	if (*cp == 0) return cp;
+    if (*cp == 0) return cp;
 
-	// No UTF-8 yet
-	if (*cp < 0) *cp = '?';
+    // No UTF-8 yet
+    if (*cp < 0) *cp = '?';
 
-	if (*cp == ESC) {
-		// Escape sequence:
-		cp++;
-		if (*cp == '[' || *cp == 'O') {
+    if (*cp == ESC) {
+        // Escape sequence:
+        cp++;
+        if (*cp == '[' || *cp == 'O') {
 
-			// Special key:
-			switch (*++cp) {
+            // Special key:
+            switch (*++cp) {
 
-			// Arrow keys:
-			case 'A':	// up arrow
-				term->hist -= 2;
-			case 'B':	// down arrow
-				term->hist++;
-				len = term->end;
-				Home_Line(term);
-				Recall_Line(term);
-				if (len <= term->end) len = 0;
-				else len = term->end - len;
-				Show_Line(term, len-1); // len < 0 (stay at end)
-				break;
+            // Arrow keys:
+            case 'A':   // up arrow
+                term->hist -= 2;
+            case 'B':   // down arrow
+                term->hist++;
+                len = term->end;
+                Home_Line(term);
+                Recall_Line(term);
+                if (len <= term->end) len = 0;
+                else len = term->end - len;
+                Show_Line(term, len-1); // len < 0 (stay at end)
+                break;
 
-			case 'D':	// left arrow
-				Move_Cursor(term, -1);
-				break;
-			case 'C':	// right arrow
-				Move_Cursor(term, 1);
-				break;
+            case 'D':   // left arrow
+                Move_Cursor(term, -1);
+                break;
+            case 'C':   // right arrow
+                Move_Cursor(term, 1);
+                break;
 
-			// Other special keys:
-			case '1':	// home
-				Home_Line(term);
-				cp++; // remove ~
-				break;
-			case '4':	// end
-				End_Line(term);
-				cp++; // remove ~
-				break;
-			case '3':	// delete
-				Delete_Char(term, FALSE);
-				cp++; // remove ~
-				break;
+            // Other special keys:
+            case '1':   // home
+                Home_Line(term);
+                cp++; // remove ~
+                break;
+            case '4':   // end
+                End_Line(term);
+                cp++; // remove ~
+                break;
+            case '3':   // delete
+                Delete_Char(term, FALSE);
+                cp++; // remove ~
+                break;
 
-			case 'H':	// home
-				Home_Line(term);
-				break;
-			case 'F':	// end
-				End_Line(term);
-				break;
+            case 'H':   // home
+                Home_Line(term);
+                break;
+            case 'F':   // end
+                End_Line(term);
+                break;
 
-			case 'J':	// erase to end of screen
-				Clear_Line(term);
-				break;
+            case 'J':   // erase to end of screen
+                Clear_Line(term);
+                break;
 
-			default:
-				WRITE_STR("[ESC]");
-				cp--;
-			}
-		}
-		else {
-			switch (*++cp) {
-			case 'H':	// home
-				Home_Line(term);
-				break;
-			case 'F':	// end
-				End_Line(term);
-				break;
-			default:
-				// Q: what other keys do we want to support ?!
-				WRITE_STR("[ESC]");
-				cp--;
-			}
-		}
-	}
-	else {
-		// ASCII char:
-		switch (*cp) {
+            default:
+                WRITE_STR("[ESC]");
+                cp--;
+            }
+        }
+        else {
+            switch (*++cp) {
+            case 'H':   // home
+                Home_Line(term);
+                break;
+            case 'F':   // end
+                End_Line(term);
+                break;
+            default:
+                // Q: what other keys do we want to support ?!
+                WRITE_STR("[ESC]");
+                cp--;
+            }
+        }
+    }
+    else {
+        // ASCII char:
+        switch (*cp) {
 
-		case  BS:	// backspace
-		case DEL:	// delete
-			Delete_Char(term, TRUE);
-			break;
+        case  BS:   // backspace
+        case DEL:   // delete
+            Delete_Char(term, TRUE);
+            break;
 
-		case CR:	// CR
-			if (cp[1] == LF) cp++; // eat
-		case LF:	// LF
-			WRITE_STR("\r\n");
-			Store_Line(term);
-			break;
+        case CR:    // CR
+            if (cp[1] == LF) cp++; // eat
+        case LF:    // LF
+            WRITE_STR("\r\n");
+            Store_Line(term);
+            break;
 
-		case 1:	// CTRL-A
-			Home_Line(term);
-			break;
-		case 2:	// CTRL-B
-			Move_Cursor(term, -1);
-			break;
-		case 4:	// CTRL-D
-			Delete_Char(term, FALSE);
-			break;
-		case 5:	// CTRL-E
-			End_Line(term);
-			break;
-		case 6:	// CTRL-F
-			Move_Cursor(term, 1);
-			break;
+        case 1: // CTRL-A
+            Home_Line(term);
+            break;
+        case 2: // CTRL-B
+            Move_Cursor(term, -1);
+            break;
+        case 4: // CTRL-D
+            Delete_Char(term, FALSE);
+            break;
+        case 5: // CTRL-E
+            End_Line(term);
+            break;
+        case 6: // CTRL-F
+            Move_Cursor(term, 1);
+            break;
 
-		default:
-			cp = Insert_Char(term, cp);
-			cp--;
-		}
-	}
+        default:
+            cp = Insert_Char(term, cp);
+            cp--;
+        }
+    }
 
-	return ++cp;
+    return ++cp;
 }
 
 
@@ -549,34 +549,34 @@ static char *Process_Key(STD_TERM *term, char *cp)
 //
 static int Read_Bytes(STD_TERM *term, char *buf, int len)
 {
-	int end;
+    int end;
 
-	// If we have leftovers:
-	if (term->residue[0]) {
-		end = strlen(term->residue);
-		if (end < len) len = end;
-		strncpy(buf, term->residue, len); // terminated below
-		memmove(term->residue, term->residue+len, end-len); // remove
-		term->residue[end-len] = 0;
-	}
-	else {
-		// Read next few bytes. We don't know how many may be waiting.
-		// We assume that escape-sequences are always complete in buf.
-		// (No partial escapes.) If this is not true, then we will need
-		// to add an additional "collection" loop here.
-		if ((len = read(0, buf, len)) < 0) {
-			WRITE_STR("\r\nI/O terminated\r\n");
-			Quit_Terminal(term); // something went wrong
-			exit(100);
-		}
-	}
+    // If we have leftovers:
+    if (term->residue[0]) {
+        end = strlen(term->residue);
+        if (end < len) len = end;
+        strncpy(buf, term->residue, len); // terminated below
+        memmove(term->residue, term->residue+len, end-len); // remove
+        term->residue[end-len] = 0;
+    }
+    else {
+        // Read next few bytes. We don't know how many may be waiting.
+        // We assume that escape-sequences are always complete in buf.
+        // (No partial escapes.) If this is not true, then we will need
+        // to add an additional "collection" loop here.
+        if ((len = read(0, buf, len)) < 0) {
+            WRITE_STR("\r\nI/O terminated\r\n");
+            Quit_Terminal(term); // something went wrong
+            exit(100);
+        }
+    }
 
-	buf[len] = 0;
-	buf[len+1] = 0;
+    buf[len] = 0;
+    buf[len+1] = 0;
 
-	DBG_INT("read len", len);
+    DBG_INT("read len", len);
 
-	return len;
+    return len;
 }
 
 
@@ -591,70 +591,70 @@ extern int Read_Line(STD_TERM *term, char *result, int limit);
 //
 int Read_Line(STD_TERM *term, char *result, int limit)
 {
-	char buf[READ_BUF_LEN];
-	char *cp;
-	int len;		// length of IO read
+    char buf[READ_BUF_LEN];
+    char *cp;
+    int len;        // length of IO read
 
-	term->pos = term->end = 0;
-	term->hist = Line_Count;
-	term->out = 0;
-	term->buffer[0] = 0;
+    term->pos = term->end = 0;
+    term->hist = Line_Count;
+    term->out = 0;
+    term->buffer[0] = 0;
 
-	do {
-		Read_Bytes(term, buf, READ_BUF_LEN-2);
-		for (cp = buf; *cp;) {
-			cp = Process_Key(term, cp);
-		}
-	} while (!term->out);
+    do {
+        Read_Bytes(term, buf, READ_BUF_LEN-2);
+        for (cp = buf; *cp;) {
+            cp = Process_Key(term, cp);
+        }
+    } while (!term->out);
 
-	// Not at end of input? Save any unprocessed chars:
-	if (*cp) {
-		if (strlen(term->residue) + strlen(cp) < TERM_BUF_LEN-1) // avoid overrun
-			strcat(term->residue, cp);
-	}
+    // Not at end of input? Save any unprocessed chars:
+    if (*cp) {
+        if (strlen(term->residue) + strlen(cp) < TERM_BUF_LEN-1) // avoid overrun
+            strcat(term->residue, cp);
+    }
 
-	// Fill the output buffer:
-	len = strlen(term->out);
-	if (len >= limit-1) len = limit-2;
-	strncpy(result, term->out, limit);
-	result[len++] = LF;
-	result[len] = 0;
+    // Fill the output buffer:
+    len = strlen(term->out);
+    if (len >= limit-1) len = limit-2;
+    strncpy(result, term->out, limit);
+    result[len++] = LF;
+    result[len] = 0;
 
-	return len;
+    return len;
 }
 
 #ifdef TEST_MODE
 test(STD_TERM *term, char *cp) {
-	term->hist = Line_Count;
-	term->pos = term->end = 0;
-	term->out = 0;
-	term->buffer[0] = 0;
-	while (*cp) cp = Process_Key(term, cp);
+    term->hist = Line_Count;
+    term->pos = term->end = 0;
+    term->out = 0;
+    term->buffer[0] = 0;
+    while (*cp) cp = Process_Key(term, cp);
 }
 
 main() {
-	int i;
-	char buf[1024];
-	STD_TERM *term;
+    int i;
+    char buf[1024];
+    STD_TERM *term;
 
-	term = Init_Terminal();
+    term = Init_Terminal();
 
-	Write_Char('-', 50);
-	WRITE_STR("\r\n");
+    Write_Char('-', 50);
+    WRITE_STR("\r\n");
 
 #ifdef WIN32
-	test(term, "text\010\010st\n"); //bs bs
-	test(term, "test\001xxxx\n"); // home
-	test(term, "test\001\005xxxx\n"); // home
-	test(term, "\033[A\n"); // up arrow
+    test(term, "text\010\010st\n"); //bs bs
+    test(term, "test\001xxxx\n"); // home
+    test(term, "test\001\005xxxx\n"); // home
+    test(term, "\033[A\n"); // up arrow
 #endif
 
-	do {
-		WRITE_STR(">> ");
-		i = Read_Line(term, buf, 1000);
-		printf("len: %d %s\r\n", i, term->out);
-	} while (i > 0);
+    do {
+        WRITE_STR(">> ");
+        i = Read_Line(term, buf, 1000);
+        printf("len: %d %s\r\n", i, term->out);
+    } while (i > 0);
 
-	Quit_Terminal(term);
+    Quit_Terminal(term);
 }
 #endif

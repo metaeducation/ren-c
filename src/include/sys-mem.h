@@ -27,87 +27,87 @@
 ***********************************************************************/
 
 #ifdef DBG_CHECK_MEM
-#define	CHECK_MEMORY(n) if (n > MEM_CARE) Check_Memory()
+#define CHECK_MEMORY(n) if (n > MEM_CARE) Check_Memory()
 #else
-#define	CHECK_MEMORY(n)
+#define CHECK_MEMORY(n)
 #endif
 
-typedef void *REBNOD;			// Just used for linking free nodes
+typedef void *REBNOD;           // Just used for linking free nodes
 
 /***********************************************************************
 **
-*/	typedef struct rebol_mem_segment
+*/  typedef struct rebol_mem_segment
 /*
-**		Linked list of used memory segments.
+**      Linked list of used memory segments.
 **
-**		Size: 8 bytes
+**      Size: 8 bytes
 **
 ***********************************************************************/
 {
-	struct	rebol_mem_segment *next;
-	REBCNT	size;
+    struct  rebol_mem_segment *next;
+    REBCNT  size;
 #if defined(__LP64__) || defined (__LLP64__)
-//	REBCNT	padding; /* make if 16 byte long, such that the next element is pointer aligned */
+//  REBCNT  padding; /* make if 16 byte long, such that the next element is pointer aligned */
 #endif
 } REBSEG;
 
 
 /***********************************************************************
 **
-*/	typedef struct rebol_mem_spec
+*/  typedef struct rebol_mem_spec
 /*
-**		Specifies initial pool sizes
+**      Specifies initial pool sizes
 **
 ***********************************************************************/
 {
-	REBCNT wide;				// size of allocation unit
-	REBCNT units;				// units per segment allocation
+    REBCNT wide;                // size of allocation unit
+    REBCNT units;               // units per segment allocation
 } REBPOOLSPEC;
 
 
 /***********************************************************************
 **
-*/	typedef struct rebol_mem_pool
+*/  typedef struct rebol_mem_pool
 /*
-**		Pools manage fixed sized blocks of memory.
+**      Pools manage fixed sized blocks of memory.
 **
 ***********************************************************************/
 {
-	REBSEG	*segs;				// first memory segment
-	REBNOD	*first;				// first free node in pool
-	REBNOD	*last;				// last free node in pool
-	REBCNT	wide;				// size of allocation unit
-	REBCNT	units;				// units per segment allocation
-	REBCNT	free;				// number of units remaining
-	REBCNT	has;				// total number of units
-//	UL		total;				// total bytes for all segs
-//	char	*name;				// identifying string
-//	UL		extra;				// reserved
+    REBSEG  *segs;              // first memory segment
+    REBNOD  *first;             // first free node in pool
+    REBNOD  *last;              // last free node in pool
+    REBCNT  wide;               // size of allocation unit
+    REBCNT  units;              // units per segment allocation
+    REBCNT  free;               // number of units remaining
+    REBCNT  has;                // total number of units
+//  UL      total;              // total bytes for all segs
+//  char    *name;              // identifying string
+//  UL      extra;              // reserved
 } REBPOL;
 
 
 /***********************************************************************
 **
-*/	enum Mem_Pool_Specs
+*/  enum Mem_Pool_Specs
 /*
 ***********************************************************************/
 {
-	MEM_TINY_POOL = 1,
-	MEM_SMALL_POOLS = MEM_TINY_POOL   + 16,
-	MEM_MID_POOLS   = MEM_SMALL_POOLS +  4,
-	MEM_BIG_POOLS   = MEM_MID_POOLS   +  4, // larger pools
-	SERIES_POOL     = MEM_BIG_POOLS,
-	GOB_POOL,
-	LIB_POOL,
-	RIN_POOL, /* routine info */
-	SYSTEM_POOL,
-	MAX_POOLS
+    MEM_TINY_POOL = 1,
+    MEM_SMALL_POOLS = MEM_TINY_POOL   + 16,
+    MEM_MID_POOLS   = MEM_SMALL_POOLS +  4,
+    MEM_BIG_POOLS   = MEM_MID_POOLS   +  4, // larger pools
+    SERIES_POOL     = MEM_BIG_POOLS,
+    GOB_POOL,
+    LIB_POOL,
+    RIN_POOL, /* routine info */
+    SYSTEM_POOL,
+    MAX_POOLS
 };
 
 #define DEF_POOL(size, count) {size, count}
 #define MOD_POOL(size, count) {size * MEM_MIN_SIZE, count}
 
-#define	MEM_MIN_SIZE sizeof(REBVAL)
+#define MEM_MIN_SIZE sizeof(REBVAL)
 #define MEM_BIG_SIZE 1024
 
 #define MEM_BALLAST 3000000

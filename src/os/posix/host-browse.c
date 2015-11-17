@@ -21,15 +21,15 @@
 **
 **  Title: Browser Launch Host
 **  Purpose:
-**		This provides the ability to launch a web browser or file
-**		browser on the host.
+**      This provides the ability to launch a web browser or file
+**      browser on the host.
 **
 ***********************************************************************/
 
 #ifndef __cplusplus
-	// See feature_test_macros(7)
-	// This definition is redundant under C++
-	#define _GNU_SOURCE
+    // See feature_test_macros(7)
+    // This definition is redundant under C++
+    #define _GNU_SOURCE
 #endif
 
 #include <stdlib.h>
@@ -66,9 +66,9 @@ void OS_Destroy_Graphics(void);
 //
 int OS_Get_Current_Dir(REBCHR **path)
 {
-	*path = OS_ALLOC_ARRAY(char, PATH_MAX);
-	if (!getcwd(*path, PATH_MAX-1)) *path[0] = 0;
-	return strlen(*path);
+    *path = OS_ALLOC_ARRAY(char, PATH_MAX);
+    if (!getcwd(*path, PATH_MAX-1)) *path[0] = 0;
+    return strlen(*path);
 }
 
 
@@ -80,7 +80,7 @@ int OS_Get_Current_Dir(REBCHR **path)
 //
 REBOOL OS_Set_Current_Dir(REBCHR *path)
 {
-	return chdir(path) == 0;
+    return chdir(path) == 0;
 }
 
 
@@ -89,7 +89,7 @@ REBOOL OS_Set_Current_Dir(REBCHR *path)
 //
 REBOOL OS_Request_File(REBRFR *fr)
 {
-	return FALSE;
+    return FALSE;
 }
 
 
@@ -101,30 +101,30 @@ REBOOL OS_Request_File(REBRFR *fr)
 //
 REBOOL OS_Request_Dir(REBCHR* title, REBCHR** folder, REBCHR* path)
 {
-	return FALSE;
+    return FALSE;
 }
 
 
 static int Try_Browser(const char *browser, const REBCHR *url)
 {
-	pid_t pid;
-	int result, status;
+    pid_t pid;
+    int result, status;
 
-	switch (pid = fork()) {
-		case -1:
-			result = FALSE;
-			break;
-		case 0:
-			execlp(browser, browser, url, NULL);
-			exit(1);
-			break;
-		default:
-			waitpid(pid, &status, WUNTRACED);
-			result = WIFEXITED(status)
-					&& (WEXITSTATUS(status) == 0);
-	}
+    switch (pid = fork()) {
+        case -1:
+            result = FALSE;
+            break;
+        case 0:
+            execlp(browser, browser, url, NULL);
+            exit(1);
+            break;
+        default:
+            waitpid(pid, &status, WUNTRACED);
+            result = WIFEXITED(status)
+                    && (WEXITSTATUS(status) == 0);
+    }
 
-	return result;
+    return result;
 }
 
 
@@ -133,8 +133,8 @@ static int Try_Browser(const char *browser, const REBCHR *url)
 //
 int OS_Browse(const REBCHR *url, int reserved)
 {
-	if (Try_Browser("/usr/bin/open", url))
-		return TRUE;
-	return FALSE;
+    if (Try_Browser("/usr/bin/open", url))
+        return TRUE;
+    return FALSE;
 }
 

@@ -32,13 +32,13 @@
 
 // Rounding flags (passed as refinements to ROUND function):
 enum {
-	RF_TO,
-	RF_EVEN,
-	RF_DOWN,
-	RF_HALF_DOWN,
-	RF_FLOOR,
-	RF_CEILING,
-	RF_HALF_CEILING
+    RF_TO,
+    RF_EVEN,
+    RF_DOWN,
+    RF_HALF_DOWN,
+    RF_FLOOR,
+    RF_CEILING,
+    RF_HALF_CEILING
 };
 
 #define RB_DFC (1 << RF_DOWN | 1 << RF_FLOOR | 1 << RF_CEILING)
@@ -58,17 +58,17 @@ enum {
 //
 REBCNT Get_Round_Flags(struct Reb_Call *call_)
 {
-	REBCNT flags = 0;
+    REBCNT flags = 0;
 
-	if (D_REF(2)) SET_FLAG(flags, RF_TO);
-	if (D_REF(4)) SET_FLAG(flags, RF_EVEN);
-	if (D_REF(5)) SET_FLAG(flags, RF_DOWN);
-	if (D_REF(6)) SET_FLAG(flags, RF_HALF_DOWN);
-	if (D_REF(7)) SET_FLAG(flags, RF_FLOOR);
-	if (D_REF(8)) SET_FLAG(flags, RF_CEILING);
-	if (D_REF(9)) SET_FLAG(flags, RF_HALF_CEILING);
+    if (D_REF(2)) SET_FLAG(flags, RF_TO);
+    if (D_REF(4)) SET_FLAG(flags, RF_EVEN);
+    if (D_REF(5)) SET_FLAG(flags, RF_DOWN);
+    if (D_REF(6)) SET_FLAG(flags, RF_HALF_DOWN);
+    if (D_REF(7)) SET_FLAG(flags, RF_FLOOR);
+    if (D_REF(8)) SET_FLAG(flags, RF_CEILING);
+    if (D_REF(9)) SET_FLAG(flags, RF_HALF_CEILING);
 
-	return flags;
+    return flags;
 }
 
 
@@ -83,93 +83,93 @@ REBCNT Get_Round_Flags(struct Reb_Call *call_)
 //
 REBDEC Round_Dec(REBDEC dec, REBCNT flags, REBDEC scale)
 {
-	REBDEC r;
-	int e;
-	REBFLG v;
-	union {REBDEC d; REBI64 i;} m;
-	REBI64 j;
+    REBDEC r;
+    int e;
+    REBFLG v;
+    union {REBDEC d; REBI64 i;} m;
+    REBI64 j;
 
-	if (GET_FLAG(flags, RF_TO)) {
-		if (scale == 0.0) fail (Error(RE_ZERO_DIVIDE));
-		scale = fabs(scale);
-	} else scale = 1.0;
+    if (GET_FLAG(flags, RF_TO)) {
+        if (scale == 0.0) fail (Error(RE_ZERO_DIVIDE));
+        scale = fabs(scale);
+    } else scale = 1.0;
 
-	/* is scale negligible? */
-	if (scale < ldexp(fabs(dec), -53)) return dec;
+    /* is scale negligible? */
+    if (scale < ldexp(fabs(dec), -53)) return dec;
 
-	if ((v = scale >= 1.0)) dec = dec / scale;
-	else {
-		r = frexp(scale, &e);
-		if (e <= -1022) {
-		    scale = r;
-			dec = ldexp(dec, e);
-		} else e = 0;
-		scale = 1.0 / scale;
-		dec = dec * scale;
-	}
-	if (flags & RB_DFC) {
-	    if (GET_FLAG(flags, RF_FLOOR)) dec = floor(dec);
-	    else if (GET_FLAG(flags, RF_DOWN)) dec = Dec_Trunc(dec);
-		else dec = ceil(dec);
-	} else {
-	    /*	integer-compare fabs(dec) and floor(fabs(dec)) + 0.5,
-	        which is equivalent to "tolerant comparison" of the
-	        fractional part with 0.5								*/
-		m.d = fabs(dec);
-		j = m.i;
-		m.d = floor(m.d) + 0.5;
-		if (j - m.i < -10) dec = Dec_Trunc(dec);
-		else if (j - m.i > 10) dec = Dec_Away(dec);
-	    else if (GET_FLAG(flags, RF_EVEN)) {
-			if (fmod(fabs(dec), 2.0) < 1.0) dec = Dec_Trunc(dec);
-			else dec = Dec_Away(dec);
-		}
-		else if (GET_FLAG(flags, RF_HALF_DOWN)) dec = Dec_Trunc(dec);
-		else if (GET_FLAG(flags, RF_HALF_CEILING)) dec = ceil(dec);
-		else dec = Dec_Away(dec);
-	}
+    if ((v = scale >= 1.0)) dec = dec / scale;
+    else {
+        r = frexp(scale, &e);
+        if (e <= -1022) {
+            scale = r;
+            dec = ldexp(dec, e);
+        } else e = 0;
+        scale = 1.0 / scale;
+        dec = dec * scale;
+    }
+    if (flags & RB_DFC) {
+        if (GET_FLAG(flags, RF_FLOOR)) dec = floor(dec);
+        else if (GET_FLAG(flags, RF_DOWN)) dec = Dec_Trunc(dec);
+        else dec = ceil(dec);
+    } else {
+        /*  integer-compare fabs(dec) and floor(fabs(dec)) + 0.5,
+            which is equivalent to "tolerant comparison" of the
+            fractional part with 0.5                                */
+        m.d = fabs(dec);
+        j = m.i;
+        m.d = floor(m.d) + 0.5;
+        if (j - m.i < -10) dec = Dec_Trunc(dec);
+        else if (j - m.i > 10) dec = Dec_Away(dec);
+        else if (GET_FLAG(flags, RF_EVEN)) {
+            if (fmod(fabs(dec), 2.0) < 1.0) dec = Dec_Trunc(dec);
+            else dec = Dec_Away(dec);
+        }
+        else if (GET_FLAG(flags, RF_HALF_DOWN)) dec = Dec_Trunc(dec);
+        else if (GET_FLAG(flags, RF_HALF_CEILING)) dec = ceil(dec);
+        else dec = Dec_Away(dec);
+    }
 
-	if (v) {
-		if (fabs(dec = dec * scale) != HUGE_VAL)
-			return dec;
-		else
-			fail (Error(RE_OVERFLOW));
-	}
-	return ldexp(dec / scale, e);
+    if (v) {
+        if (fabs(dec = dec * scale) != HUGE_VAL)
+            return dec;
+        else
+            fail (Error(RE_OVERFLOW));
+    }
+    return ldexp(dec / scale, e);
 }
 
 #define Int_Abs(x) ((x) < 0) ? -(x) : (x)
 
 #define Int_Trunc { \
-	num = (num > 0) ? cast(REBI64, n - r) : -cast(REBI64, n - r); \
+    num = (num > 0) ? cast(REBI64, n - r) : -cast(REBI64, n - r); \
 }
 
 #define Int_Floor { \
-	if (num > 0) \
-		num = n - r; \
-	else if ((m = n + s) <= cast(REBU64, 1) << 63) \
-		num = -cast(REBI64, m); \
-	else \
-		fail (Error(RE_OVERFLOW)); \
+    if (num > 0) \
+        num = n - r; \
+    else if ((m = n + s) <= cast(REBU64, 1) << 63) \
+        num = -cast(REBI64, m); \
+    else \
+        fail (Error(RE_OVERFLOW)); \
 }
 
 #define Int_Ceil { \
-	if (num < 0) \
-		num = -cast(REBI64, n - r); \
-	else if ((m = n + s) < cast(REBU64, 1) << 63) \
-		num = m; \
-	else \
-		fail (Error(RE_OVERFLOW)); \
+    if (num < 0) \
+        num = -cast(REBI64, n - r); \
+    else if ((m = n + s) < cast(REBU64, 1) << 63) \
+        num = m; \
+    else \
+        fail (Error(RE_OVERFLOW)); \
 }
 
 #define Int_Away { \
-	if ((m = n + s) >= cast(REBU64, 1) << 63) \
-		if (num < 0 && m == cast(REBU64, 1) << 63) \
-			num = m; \
-		else \
-			fail (Error(RE_OVERFLOW)); \
-	else \
-		num = (num > 0) ? cast(REBI64, m) : -cast(REBI64, m); \
+    if ((m = n + s) >= cast(REBU64, 1) << 63) \
+        if (num < 0 && m == cast(REBU64, 1) << 63) \
+            num = m; \
+        else \
+            fail (Error(RE_OVERFLOW)); \
+    else \
+        num = (num > 0) ? cast(REBI64, m) : -cast(REBI64, m); \
 }
 
 
@@ -181,39 +181,39 @@ REBDEC Round_Dec(REBDEC dec, REBCNT flags, REBDEC scale)
 //
 REBI64 Round_Int(REBI64 num, REBCNT flags, REBI64 scale)
 {
-	/* using safe unsigned arithmetic */
-	REBU64 sc, n, r, m, s;
+    /* using safe unsigned arithmetic */
+    REBU64 sc, n, r, m, s;
 
-	if (GET_FLAG(flags, RF_TO)) {
-		if (scale == 0) fail (Error(RE_ZERO_DIVIDE));
-		sc = Int_Abs(scale);
-	}
-	else sc = 1;
+    if (GET_FLAG(flags, RF_TO)) {
+        if (scale == 0) fail (Error(RE_ZERO_DIVIDE));
+        sc = Int_Abs(scale);
+    }
+    else sc = 1;
 
-	n = Int_Abs(num);
-	r = n % sc;
-	s = sc - r;
-	if (r == 0) return num;
+    n = Int_Abs(num);
+    r = n % sc;
+    s = sc - r;
+    if (r == 0) return num;
 
-	if (flags & RB_DFC) {
-		if (GET_FLAG(flags, RF_DOWN)) {Int_Trunc; return num;}
-		if (GET_FLAG(flags, RF_FLOOR)) {Int_Floor; return num;}
-		Int_Ceil; return num;
-	}
+    if (flags & RB_DFC) {
+        if (GET_FLAG(flags, RF_DOWN)) {Int_Trunc; return num;}
+        if (GET_FLAG(flags, RF_FLOOR)) {Int_Floor; return num;}
+        Int_Ceil; return num;
+    }
 
-	/* "genuine" rounding */
-	if (r < s) {Int_Trunc; return num;}
-	else if (r > s) {Int_Away; return num;}
+    /* "genuine" rounding */
+    if (r < s) {Int_Trunc; return num;}
+    else if (r > s) {Int_Away; return num;}
 
-	/* half */
-	if (GET_FLAG(flags, RF_EVEN)) {
-	    if ((n / sc) & 1) {Int_Away; return num;}
-		else {Int_Trunc; return num;}
-	}
-	if (GET_FLAG(flags, RF_HALF_DOWN)) {Int_Trunc; return num;}
-	if (GET_FLAG(flags, RF_HALF_CEILING)) {Int_Ceil; return num;}
+    /* half */
+    if (GET_FLAG(flags, RF_EVEN)) {
+        if ((n / sc) & 1) {Int_Away; return num;}
+        else {Int_Trunc; return num;}
+    }
+    if (GET_FLAG(flags, RF_HALF_DOWN)) {Int_Trunc; return num;}
+    if (GET_FLAG(flags, RF_HALF_CEILING)) {Int_Ceil; return num;}
 
-	Int_Away; return num; /* this is round_half_away */
+    Int_Away; return num; /* this is round_half_away */
 }
 
 //
@@ -224,20 +224,20 @@ REBI64 Round_Int(REBI64 num, REBCNT flags, REBI64 scale)
 //
 deci Round_Deci(deci num, REBCNT flags, deci scale)
 {
-	deci deci_one = {1u, 0u, 0u, 0u, 0};
+    deci deci_one = {1u, 0u, 0u, 0u, 0};
 
-	if (GET_FLAG(flags, RF_TO)) {
-		if (deci_is_zero(scale)) fail (Error(RE_ZERO_DIVIDE));
-		scale = deci_abs(scale);
-	}
-	else scale = deci_one;
+    if (GET_FLAG(flags, RF_TO)) {
+        if (deci_is_zero(scale)) fail (Error(RE_ZERO_DIVIDE));
+        scale = deci_abs(scale);
+    }
+    else scale = deci_one;
 
-	if (GET_FLAG(flags, RF_EVEN)) return deci_half_even(num, scale);
-	if (GET_FLAG(flags, RF_DOWN)) return deci_truncate(num, scale);
-	if (GET_FLAG(flags, RF_HALF_DOWN)) return deci_half_truncate(num, scale);
-	if (GET_FLAG(flags, RF_FLOOR)) return deci_floor(num, scale);
-	if (GET_FLAG(flags, RF_CEILING)) return deci_ceil(num, scale);
-	if (GET_FLAG(flags, RF_HALF_CEILING)) return deci_half_ceil(num, scale);
+    if (GET_FLAG(flags, RF_EVEN)) return deci_half_even(num, scale);
+    if (GET_FLAG(flags, RF_DOWN)) return deci_truncate(num, scale);
+    if (GET_FLAG(flags, RF_HALF_DOWN)) return deci_half_truncate(num, scale);
+    if (GET_FLAG(flags, RF_FLOOR)) return deci_floor(num, scale);
+    if (GET_FLAG(flags, RF_CEILING)) return deci_ceil(num, scale);
+    if (GET_FLAG(flags, RF_HALF_CEILING)) return deci_half_ceil(num, scale);
 
-	return deci_half_away(num, scale);
+    return deci_half_away(num, scale);
 }

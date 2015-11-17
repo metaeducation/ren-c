@@ -23,28 +23,28 @@
 **  Module:  reb-config.h
 **  Author:  Carl Sassenrath
 **  Notes:
-**		This is the first file included.  It is included by both
-**		reb-host.h and sys-core.h, and all Rebol code can include
-**		one (and only one) of those...based on whether the file is
-**		part of the core or in the "host".
+**      This is the first file included.  It is included by both
+**      reb-host.h and sys-core.h, and all Rebol code can include
+**      one (and only one) of those...based on whether the file is
+**      part of the core or in the "host".
 **
-**		Many of the flags controlling the build (such as
-**		the TO_<target> definitions) come from -DTO_<target> in the
-**		compiler command-line.  These command lines are generally
-**		produced automatically, based on the build that is picked
-**		from %systems.r.
+**      Many of the flags controlling the build (such as
+**      the TO_<target> definitions) come from -DTO_<target> in the
+**      compiler command-line.  These command lines are generally
+**      produced automatically, based on the build that is picked
+**      from %systems.r.
 **
-**		However, some flags require the preprocessor's help to
-**		decide if they are relevant, for instance if they involve
-**		detecting features of the compiler while it's running.
-**		Or they may adjust a feature so narrowly that putting it
-**		into the system configuration would seem unnecessary.
+**      However, some flags require the preprocessor's help to
+**      decide if they are relevant, for instance if they involve
+**      detecting features of the compiler while it's running.
+**      Or they may adjust a feature so narrowly that putting it
+**      into the system configuration would seem unnecessary.
 **
-**		Over time, this file should be balanced and adjusted with
-**		%systems.r in order to make the most convenient and clear
-**		build process.  If there is difficulty in making a build
-**		work on a system, use that as an opportunity to reflect
-**		how to make this better.
+**      Over time, this file should be balanced and adjusted with
+**      %systems.r in order to make the most convenient and clear
+**      build process.  If there is difficulty in making a build
+**      work on a system, use that as an opportunity to reflect
+**      how to make this better.
 **
 ***********************************************************************/
 
@@ -53,30 +53,30 @@
 
 The primary target system is defined by:
 
-	TO_(os-base)	- for example TO_WINDOWS or TO_LINUX
-	TO_(os-name)	- for example TO_WINDOWS_X86 or TO_LINUX_X64
+    TO_(os-base)    - for example TO_WINDOWS or TO_LINUX
+    TO_(os-name)    - for example TO_WINDOWS_X86 or TO_LINUX_X64
 
 The default config builds an R3 HOST executable program.
 
 To change the config, host-kit developers can define:
 
-	REB_EXT			- build an extension module
-					  * create a DLL, not a host executable
-					  * do not export a host lib (OS_ lib)
-					  * call r3lib via struct and macros
+    REB_EXT         - build an extension module
+                      * create a DLL, not a host executable
+                      * do not export a host lib (OS_ lib)
+                      * call r3lib via struct and macros
 
-	REB_CORE		- build /core only, no graphics, windows, etc.
+    REB_CORE        - build /core only, no graphics, windows, etc.
 
 Special internal defines used by RT, not Host-Kit developers:
 
-	REB_API			- build r3lib as API
-					  * export r3lib functions
-					  * build r3lib dispatch table
-					  * call host lib (OS_) via struct and macros
+    REB_API         - build r3lib as API
+                      * export r3lib functions
+                      * build r3lib dispatch table
+                      * call host lib (OS_) via struct and macros
 
-	REB_EXE			- build r3 as a standalone executable
+    REB_EXE         - build r3 as a standalone executable
 
-	REB_DEF			- special includes, symbols, and tables
+    REB_DEF         - special includes, symbols, and tables
 
 */
 
@@ -89,16 +89,16 @@ Special internal defines used by RT, not Host-Kit developers:
 
 
 #ifdef REB_EXE
-	// standalone exe from RT
-	#define RL_API
+    // standalone exe from RT
+    #define RL_API
 #else
-	#ifdef REB_API
-		// r3lib dll from RT
-		#define RL_API API_EXPORT
-	#else
-		// for host exe (not used for extension dlls)
-		#define RL_API API_IMPORT
-	#endif
+    #ifdef REB_API
+        // r3lib dll from RT
+        #define RL_API API_EXPORT
+    #else
+        // for host exe (not used for extension dlls)
+        #define RL_API API_IMPORT
+    #endif
 #endif
 
 
@@ -112,46 +112,46 @@ Special internal defines used by RT, not Host-Kit developers:
 #endif
 
 #ifdef TO_WINDOWS
-	#define OS_DIR_SEP '\\'			// file path separator (Thanks Bill.)
-	#define OS_CRLF TRUE			// uses CRLF as line terminator
+    #define OS_DIR_SEP '\\'         // file path separator (Thanks Bill.)
+    #define OS_CRLF TRUE            // uses CRLF as line terminator
 
-	#if (defined(_MSC_VER) && (_MSC_VER <= 1200))
-		#define WEIRD_INT_64		// non-standard MSVC int64 declarations
-	#else
-		#define HAS_LL_CONSTS
-	#endif
+    #if (defined(_MSC_VER) && (_MSC_VER <= 1200))
+        #define WEIRD_INT_64        // non-standard MSVC int64 declarations
+    #else
+        #define HAS_LL_CONSTS
+    #endif
 
-	#define OS_WIDE_CHAR			// wchar_t used strings passed to OS API
+    #define OS_WIDE_CHAR            // wchar_t used strings passed to OS API
 
-	// ASCII strings to Integer
-	#define ATOI					// supports it
-	#define ATOI64					// supports it
-	#define ITOA64					// supports it
+    // ASCII strings to Integer
+    #define ATOI                    // supports it
+    #define ATOI64                  // supports it
+    #define ITOA64                  // supports it
 
-	#define HAS_ASYNC_DNS			// supports it
+    #define HAS_ASYNC_DNS           // supports it
 
-	#define NO_TTY_ATTRIBUTES		// used in read-line.c
+    #define NO_TTY_ATTRIBUTES       // used in read-line.c
 
-	#ifdef THREADED
-		#ifndef __MINGW32__
-			#undef THREAD
-			#define THREAD __declspec(thread)
-		#endif
-	#endif
+    #ifdef THREADED
+        #ifndef __MINGW32__
+            #undef THREAD
+            #define THREAD __declspec(thread)
+        #endif
+    #endif
 
-	// Used when we build REBOL as a DLL:
-	#define API_EXPORT __declspec(dllexport)
-	#define API_IMPORT __declspec(dllimport)
+    // Used when we build REBOL as a DLL:
+    #define API_EXPORT __declspec(dllexport)
+    #define API_IMPORT __declspec(dllimport)
 
-	#define WIN32_LEAN_AND_MEAN		// trim down the Win32 headers
+    #define WIN32_LEAN_AND_MEAN     // trim down the Win32 headers
 #else
-	#define OS_DIR_SEP '/'			// rest of the world uses it
-	#define OS_CRLF FALSE			// just LF in strings
+    #define OS_DIR_SEP '/'          // rest of the world uses it
+    #define OS_CRLF FALSE           // just LF in strings
 
-	#define API_IMPORT
-	// Note: Unsupported by gcc 2.95.3-haiku-121101
-	// (We #undef it in the Haiku section)
-	#define API_EXPORT __attribute__((visibility("default")))
+    #define API_IMPORT
+    // Note: Unsupported by gcc 2.95.3-haiku-121101
+    // (We #undef it in the Haiku section)
+    #define API_EXPORT __attribute__((visibility("default")))
 #endif
 
 
@@ -173,27 +173,27 @@ Special internal defines used by RT, not Host-Kit developers:
 #endif
 
 #ifdef TO_LINUX
-	#define HAS_POSIX_SIGNAL
+    #define HAS_POSIX_SIGNAL
 
-	// !!! The Atronix build introduced a differentiation between
-	// a Linux build and a POSIX build, and one difference is the
-	// usage of some signal functions that are not available if
-	// you compile with a strict --std=c99 switch:
-	//
-	//		http://stackoverflow.com/a/22913324/211160
-	//
-	// Yet it appears that defining _POSIX_C_SOURCE is good enough
-	// to get it working in --std=gnu99.  Because there are some
-	// other barriers to pure C99 for the moment in the additions
-	// from Saphirion (such as the use of alloca()), backing off the
-	// pure C99 and doing it this way for now.
-	//
-	// These files may not include reb-config.h as the first include,
-	// so be sure to say:
-	//
-	//     #define _POSIX_C_SOURCE 199309L
-	//
-	// ...at the top of the file.
+    // !!! The Atronix build introduced a differentiation between
+    // a Linux build and a POSIX build, and one difference is the
+    // usage of some signal functions that are not available if
+    // you compile with a strict --std=c99 switch:
+    //
+    //      http://stackoverflow.com/a/22913324/211160
+    //
+    // Yet it appears that defining _POSIX_C_SOURCE is good enough
+    // to get it working in --std=gnu99.  Because there are some
+    // other barriers to pure C99 for the moment in the additions
+    // from Saphirion (such as the use of alloca()), backing off the
+    // pure C99 and doing it this way for now.
+    //
+    // These files may not include reb-config.h as the first include,
+    // so be sure to say:
+    //
+    //     #define _POSIX_C_SOURCE 199309L
+    //
+    // ...at the top of the file.
 #endif
 
 
@@ -230,10 +230,10 @@ Special internal defines used by RT, not Host-Kit developers:
 //* HaikuOS ********************************************************
 
 #ifdef TO_HAIKU
-	#undef API_EXPORT
-	#define API_EXPORT
+    #undef API_EXPORT
+    #define API_EXPORT
 
-	#define DEF_UINT
+    #define DEF_UINT
 #endif
 
 
@@ -250,7 +250,7 @@ Special internal defines used by RT, not Host-Kit developers:
 // Amiga hardware is dated 5-Mar-2011
 
 #ifdef TO_AMIGA
-	#define HAS_BOOL
-	#define HAS_SMART_CONSOLE
-	#define NO_DL_LIB
+    #define HAS_BOOL
+    #define HAS_SMART_CONSOLE
+    #define NO_DL_LIB
 #endif

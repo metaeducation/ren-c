@@ -35,8 +35,8 @@
 //
 REBINT CT_Datatype(REBVAL *a, REBVAL *b, REBINT mode)
 {
-	if (mode >= 0) return (VAL_TYPE_KIND(a) == VAL_TYPE_KIND(b));
-	return -1;
+    if (mode >= 0) return (VAL_TYPE_KIND(a) == VAL_TYPE_KIND(b));
+    return -1;
 }
 
 
@@ -45,14 +45,14 @@ REBINT CT_Datatype(REBVAL *a, REBVAL *b, REBINT mode)
 //
 REBFLG MT_Datatype(REBVAL *out, REBVAL *data, enum Reb_Kind type)
 {
-	REBCNT sym;
-	if (!IS_WORD(data)) return FALSE;
-	sym = VAL_WORD_CANON(data);
-	if (sym > REB_MAX) return FALSE;
-	VAL_SET(out, REB_DATATYPE);
-	VAL_TYPE_KIND(out) = KIND_FROM_SYM(sym);
-	VAL_TYPE_SPEC(out) = 0;
-	return TRUE;
+    REBCNT sym;
+    if (!IS_WORD(data)) return FALSE;
+    sym = VAL_WORD_CANON(data);
+    if (sym > REB_MAX) return FALSE;
+    VAL_SET(out, REB_DATATYPE);
+    VAL_TYPE_KIND(out) = KIND_FROM_SYM(sym);
+    VAL_TYPE_SPEC(out) = 0;
+    return TRUE;
 }
 
 
@@ -61,56 +61,56 @@ REBFLG MT_Datatype(REBVAL *out, REBVAL *data, enum Reb_Kind type)
 //
 REBTYPE(Datatype)
 {
-	REBVAL *value = D_ARG(1);
-	REBVAL *arg = D_ARG(2);
-	REBACT act;
-	enum Reb_Kind kind = VAL_TYPE_KIND(value);
-	REBSER *obj;
-	REBINT n;
+    REBVAL *value = D_ARG(1);
+    REBVAL *arg = D_ARG(2);
+    REBACT act;
+    enum Reb_Kind kind = VAL_TYPE_KIND(value);
+    REBSER *obj;
+    REBINT n;
 
-	switch (action) {
+    switch (action) {
 
-	case A_REFLECT:
-		n = What_Reflector(arg); // zero on error
-		if (n == OF_SPEC) {
-			obj = Make_Std_Object_Managed(STD_TYPE_SPEC);
-			Set_Object_Values(
-				obj,
-				BLK_HEAD(
-					VAL_TYPE_SPEC(BLK_SKIP(Lib_Context, SYM_FROM_KIND(kind)))
-				)
-			);
-			Val_Init_Object(D_OUT, obj);
-		}
-		else if (n == OF_TITLE) {
-			Val_Init_String(
-				D_OUT,
-				Copy_Array_Shallow(VAL_SERIES(BLK_HEAD(
-					VAL_TYPE_SPEC(BLK_SKIP(Lib_Context, SYM_FROM_KIND(kind)))
-				)))
-			);
-		}
-		else
-			fail (Error_Cannot_Reflect(VAL_TYPE(value), arg));
-		break;
+    case A_REFLECT:
+        n = What_Reflector(arg); // zero on error
+        if (n == OF_SPEC) {
+            obj = Make_Std_Object_Managed(STD_TYPE_SPEC);
+            Set_Object_Values(
+                obj,
+                BLK_HEAD(
+                    VAL_TYPE_SPEC(BLK_SKIP(Lib_Context, SYM_FROM_KIND(kind)))
+                )
+            );
+            Val_Init_Object(D_OUT, obj);
+        }
+        else if (n == OF_TITLE) {
+            Val_Init_String(
+                D_OUT,
+                Copy_Array_Shallow(VAL_SERIES(BLK_HEAD(
+                    VAL_TYPE_SPEC(BLK_SKIP(Lib_Context, SYM_FROM_KIND(kind)))
+                )))
+            );
+        }
+        else
+            fail (Error_Cannot_Reflect(VAL_TYPE(value), arg));
+        break;
 
-	case A_MAKE:
-	case A_TO:
-		if (kind != REB_DATATYPE) {
-			act = Value_Dispatch[kind];
-			if (act) return act(call_, action);
-			//return R_NONE;
-			fail (Error_Bad_Make(kind, arg));
-		}
-		// if (IS_NONE(arg)) return R_NONE;
-		if (MT_Datatype(D_OUT, arg, REB_DATATYPE))
-			break;
+    case A_MAKE:
+    case A_TO:
+        if (kind != REB_DATATYPE) {
+            act = Value_Dispatch[kind];
+            if (act) return act(call_, action);
+            //return R_NONE;
+            fail (Error_Bad_Make(kind, arg));
+        }
+        // if (IS_NONE(arg)) return R_NONE;
+        if (MT_Datatype(D_OUT, arg, REB_DATATYPE))
+            break;
 
-		fail (Error_Bad_Make(REB_DATATYPE, arg));
+        fail (Error_Bad_Make(REB_DATATYPE, arg));
 
-	default:
-		fail (Error_Illegal_Action(REB_DATATYPE, action));
-	}
+    default:
+        fail (Error_Illegal_Action(REB_DATATYPE, action));
+    }
 
-	return R_OUT;
+    return R_OUT;
 }

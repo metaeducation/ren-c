@@ -54,51 +54,51 @@ static REBCNT inbuf_len = 32*1024;
 
 static REBYTE *Get_Next_Line()
 {
-	REBYTE *bp;
-	REBYTE *out;
-	REBCNT len;
+    REBYTE *bp;
+    REBYTE *out;
+    REBCNT len;
 
-	// Scan for line terminator or end:
-	for (bp = inbuf; *bp != CR && *bp != LF && *bp != 0; bp++);
+    // Scan for line terminator or end:
+    for (bp = inbuf; *bp != CR && *bp != LF && *bp != 0; bp++);
 
-	// If found, copy the line and remove it from buffer:
-	if (*bp) {
-		if (*bp == CR && bp[1] == LF) bp++;
-		len = bp - inbuf;
-		out = OS_ALLOC_ARRAY(REBYTE, len + 2);
-		COPY_BYTES(out, inbuf, len+1);
-		out[len+1] = 0;
-		memmove(inbuf, bp + 1, 1 + LEN_BYTES(bp + 1));
-		return out;
-	}
+    // If found, copy the line and remove it from buffer:
+    if (*bp) {
+        if (*bp == CR && bp[1] == LF) bp++;
+        len = bp - inbuf;
+        out = OS_ALLOC_ARRAY(REBYTE, len + 2);
+        COPY_BYTES(out, inbuf, len+1);
+        out[len+1] = 0;
+        memmove(inbuf, bp + 1, 1 + LEN_BYTES(bp + 1));
+        return out;
+    }
 
-	return 0; // more input needed
+    return 0; // more input needed
 }
 
 static int Fetch_Buf()
 {
-	REBCNT len = LEN_BYTES(inbuf);
+    REBCNT len = LEN_BYTES(inbuf);
 
-	Std_IO_Req.common.data = inbuf + len;
-	Std_IO_Req.length = inbuf_len - len - 1;
-	Std_IO_Req.actual = 0;
+    Std_IO_Req.common.data = inbuf + len;
+    Std_IO_Req.length = inbuf_len - len - 1;
+    Std_IO_Req.actual = 0;
 
-	OS_Do_Device(&Std_IO_Req, RDC_READ);
+    OS_Do_Device(&Std_IO_Req, RDC_READ);
 
-	// If error, don't crash, just ignore it:
-	if (Std_IO_Req.error) return 0; //Host_Crash("stdio read");
+    // If error, don't crash, just ignore it:
+    if (Std_IO_Req.error) return 0; //Host_Crash("stdio read");
 
-	// Terminate (LF) last line?
-	if (len > 0 && Std_IO_Req.actual == 0) {
-		inbuf[len++] = LF;
-		inbuf[len] = 0;
-		return TRUE;
-	}
+    // Terminate (LF) last line?
+    if (len > 0 && Std_IO_Req.actual == 0) {
+        inbuf[len++] = LF;
+        inbuf[len] = 0;
+        return TRUE;
+    }
 
-	// Null terminate buffer:
-	len = Std_IO_Req.actual;
-	Std_IO_Req.common.data[len] = 0;
-	return len > 0;
+    // Null terminate buffer:
+    len = Std_IO_Req.actual;
+    Std_IO_Req.common.data[len] = 0;
+    return len > 0;
 }
 
 
@@ -113,16 +113,16 @@ static int Fetch_Buf()
 //
 void Open_StdIO(void)
 {
-	CLEARS(&Std_IO_Req);
-	Std_IO_Req.clen = sizeof(Std_IO_Req);
-	Std_IO_Req.device = RDI_STDIO;
+    CLEARS(&Std_IO_Req);
+    Std_IO_Req.clen = sizeof(Std_IO_Req);
+    Std_IO_Req.device = RDI_STDIO;
 
-	OS_Do_Device(&Std_IO_Req, RDC_OPEN);
+    OS_Do_Device(&Std_IO_Req, RDC_OPEN);
 
-	if (Std_IO_Req.error) Host_Crash("stdio open");
+    if (Std_IO_Req.error) Host_Crash("stdio open");
 
-	inbuf = OS_ALLOC_ARRAY(REBYTE, inbuf_len);
-	inbuf[0] = 0;
+    inbuf = OS_ALLOC_ARRAY(REBYTE, inbuf_len);
+    inbuf[0] = 0;
 }
 
 
@@ -133,7 +133,7 @@ void Open_StdIO(void)
 //
 void Close_StdIO(void)
 {
-	OS_FREE(inbuf);
+    OS_FREE(inbuf);
 }
 
 
@@ -147,13 +147,13 @@ void Close_StdIO(void)
 //
 REBYTE *Get_Str()
 {
-	REBYTE *line;
+    REBYTE *line;
 
-	if ((line = Get_Next_Line())) return line;
+    if ((line = Get_Next_Line())) return line;
 
-	if (Fetch_Buf()) return Get_Next_Line();
+    if (Fetch_Buf()) return Get_Next_Line();
 
-	return 0;
+    return 0;
 }
 
 
@@ -166,20 +166,20 @@ REBYTE *Get_Str()
 //
 void Put_Str(const REBYTE *buf)
 {
-	/* This function could be called by signal handler and inside of Fetch_Buf */
-	REBREQ req;
-	memcpy(&req, &Std_IO_Req, sizeof(req));
+    /* This function could be called by signal handler and inside of Fetch_Buf */
+    REBREQ req;
+    memcpy(&req, &Std_IO_Req, sizeof(req));
 
-	// !!! A request should ideally have a way to enforce that it is not
-	// going to modify the data.  For now we "trust it" and use m_cast.
-	// Undefined behavior will result should a RDC_WRITE request make
-	// modifications to the data pointed to.
-	//
-	req.common.data = m_cast(REBYTE*, buf);
-	req.length = LEN_BYTES(buf);
-	req.actual = 0;
+    // !!! A request should ideally have a way to enforce that it is not
+    // going to modify the data.  For now we "trust it" and use m_cast.
+    // Undefined behavior will result should a RDC_WRITE request make
+    // modifications to the data pointed to.
+    //
+    req.common.data = m_cast(REBYTE*, buf);
+    req.length = LEN_BYTES(buf);
+    req.actual = 0;
 
-	OS_Do_Device(&req, RDC_WRITE);
+    OS_Do_Device(&req, RDC_WRITE);
 
-	if (req.error) Host_Crash("stdio write");
+    if (req.error) Host_Crash("stdio write");
 }

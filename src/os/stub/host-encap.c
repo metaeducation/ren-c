@@ -21,9 +21,9 @@
 **
 **  Title: Stub File for Encap
 **  Purpose:
-**		Under the current design of the hostkit, certain functions that
-**		are called must be provided.  The encap hook is called by the
-**		main, so we need a null function.
+**      Under the current design of the hostkit, certain functions that
+**      are called must be provided.  The encap hook is called by the
+**      main, so we need a null function.
 **
 ***********************************************************************/
 
@@ -34,10 +34,10 @@
 
 /***********************************************************************
 **
-*/	REBYTE * OS_Read_Embedded (REBI64 *script_size)
+*/  REBYTE * OS_Read_Embedded (REBI64 *script_size)
 /*
 ***********************************************************************/
 {
-	return NULL;
+    return NULL;
 }
 

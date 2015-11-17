@@ -35,65 +35,65 @@
 #include "rpi-lib.h"
 
 const char *init_block =
-	"REBOL [\n"
-		"Title: {Example plugin}\n"
-		"Name: example\n"
-		"Type: plugin\n"
-		"Exports: [map-words cmd1 cmd2 cmd2i cmd2d cmdw cmds cmdb cmdbl]\n"
-	"]\n"
-	"map-words: command [words [block!]]\n"
-	"cmd1: command [a]\n"
-	"cmd2: command [a b]\n"
-	"cmd2i: command [a [integer!] b [integer!]]\n"
-	"cmd2d: command [a [decimal!] b [decimal!]]\n"
-	"cmdw: command [w]\n"
-	"cmds: command [str [string!] index [integer!]]\n"
-	"cmdb: command [blk [block!] index [integer!]]\n"
-	"cmdbl: command [blk [block!]]\n"
+    "REBOL [\n"
+        "Title: {Example plugin}\n"
+        "Name: example\n"
+        "Type: plugin\n"
+        "Exports: [map-words cmd1 cmd2 cmd2i cmd2d cmdw cmds cmdb cmdbl]\n"
+    "]\n"
+    "map-words: command [words [block!]]\n"
+    "cmd1: command [a]\n"
+    "cmd2: command [a b]\n"
+    "cmd2i: command [a [integer!] b [integer!]]\n"
+    "cmd2d: command [a [decimal!] b [decimal!]]\n"
+    "cmdw: command [w]\n"
+    "cmds: command [str [string!] index [integer!]]\n"
+    "cmdb: command [blk [block!] index [integer!]]\n"
+    "cmdbl: command [blk [block!]]\n"
 ;
 
 RPIEXT const char *RPI_Init(int opts, RPILIB *lib) {
-	RPI = lib;
-	if (lib->version == RPI_VERSION) return init_block;
-	return 0;
+    RPI = lib;
+    if (lib->version == RPI_VERSION) return init_block;
+    return 0;
 }
 
 RPIEXT int RPI_Quit(int opts) {
-	return 0;
+    return 0;
 }
 
 u32 *word_ids = 0;
 
 RPIEXT int RPI_Call(int cmd, RPIFRM *frm) {
-	switch (cmd) {
-	case 0:
-		word_ids = RPI_MAP_WORDS(RPA_SERIES(frm,1));
-		return RPR_TRUE;
-	case 1:
-		RPA_INT64(frm,1) = -RPA_INT64(frm,1);
-		break;
-	case 2:
-	case 3:
-		RPA_INT64(frm,1) = RPA_INT64(frm, 1) + RPA_INT64(frm, 2);
-		break;
-	case 4:
-		RPA_DEC64(frm,1) = RPA_DEC64(frm, 1) + RPA_DEC64(frm, 2);
-		break;
-	case 5:
-		RPA_INT64(frm,1) = RPI_FIND_WORD(word_ids, RPA_WORD(frm,1));
-		RPA_TYPE(frm,1) = RPT_INTEGER;
-		break;
-	case 6:
-		RPA_INT64(frm,1) = RPI_GET_CHAR(RPA_SERIES(frm,1), (u32)RPA_INT64(frm,2)-1);
-		RPA_TYPE(frm,1) = RPT_INTEGER;
-		break;
-	case 7:
-		RPA_TYPE(frm,1) = RPI_GET_VALUE(RPA_SERIES(frm,1), (u32)RPA_INT64(frm,2)-1, &RPA_ARG(frm, 1));
-		break;
-	case 8:
-		RPA_INT64(frm,1) = RPI_SERIES_INFO(RPA_SERIES(frm,1), RPI_INFO_TAIL);
-		RPA_TYPE(frm,1) = RPT_INTEGER;
-		break;
-	}
-	return RPR_VALUE;
+    switch (cmd) {
+    case 0:
+        word_ids = RPI_MAP_WORDS(RPA_SERIES(frm,1));
+        return RPR_TRUE;
+    case 1:
+        RPA_INT64(frm,1) = -RPA_INT64(frm,1);
+        break;
+    case 2:
+    case 3:
+        RPA_INT64(frm,1) = RPA_INT64(frm, 1) + RPA_INT64(frm, 2);
+        break;
+    case 4:
+        RPA_DEC64(frm,1) = RPA_DEC64(frm, 1) + RPA_DEC64(frm, 2);
+        break;
+    case 5:
+        RPA_INT64(frm,1) = RPI_FIND_WORD(word_ids, RPA_WORD(frm,1));
+        RPA_TYPE(frm,1) = RPT_INTEGER;
+        break;
+    case 6:
+        RPA_INT64(frm,1) = RPI_GET_CHAR(RPA_SERIES(frm,1), (u32)RPA_INT64(frm,2)-1);
+        RPA_TYPE(frm,1) = RPT_INTEGER;
+        break;
+    case 7:
+        RPA_TYPE(frm,1) = RPI_GET_VALUE(RPA_SERIES(frm,1), (u32)RPA_INT64(frm,2)-1, &RPA_ARG(frm, 1));
+        break;
+    case 8:
+        RPA_INT64(frm,1) = RPI_SERIES_INFO(RPA_SERIES(frm,1), RPI_INFO_TAIL);
+        RPA_TYPE(frm,1) = RPT_INTEGER;
+        break;
+    }
+    return RPR_VALUE;
 }

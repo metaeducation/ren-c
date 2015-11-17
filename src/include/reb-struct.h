@@ -27,55 +27,55 @@
 ***********************************************************************/
 
 enum {
-	STRUCT_TYPE_UINT8 = 0,
-	STRUCT_TYPE_INT8,
-	STRUCT_TYPE_UINT16,
-	STRUCT_TYPE_INT16,
-	STRUCT_TYPE_UINT32,
-	STRUCT_TYPE_INT32,
-	STRUCT_TYPE_UINT64,
-	STRUCT_TYPE_INT64,
-	STRUCT_TYPE_INTEGER,
+    STRUCT_TYPE_UINT8 = 0,
+    STRUCT_TYPE_INT8,
+    STRUCT_TYPE_UINT16,
+    STRUCT_TYPE_INT16,
+    STRUCT_TYPE_UINT32,
+    STRUCT_TYPE_INT32,
+    STRUCT_TYPE_UINT64,
+    STRUCT_TYPE_INT64,
+    STRUCT_TYPE_INTEGER,
 
-	STRUCT_TYPE_FLOAT,
-	STRUCT_TYPE_DOUBLE,
-	STRUCT_TYPE_DECIMAL,
+    STRUCT_TYPE_FLOAT,
+    STRUCT_TYPE_DOUBLE,
+    STRUCT_TYPE_DECIMAL,
 
-	STRUCT_TYPE_POINTER,
-	STRUCT_TYPE_STRUCT,
-	STRUCT_TYPE_REBVAL,
-	STRUCT_TYPE_MAX
+    STRUCT_TYPE_POINTER,
+    STRUCT_TYPE_STRUCT,
+    STRUCT_TYPE_REBVAL,
+    STRUCT_TYPE_MAX
 };
 
 struct Struct_Field {
-	REBSER* spec; /* for nested struct */
-	REBSER* fields; /* for nested struct */
-	REBCNT sym;
+    REBSER* spec; /* for nested struct */
+    REBSER* fields; /* for nested struct */
+    REBCNT sym;
 
-	REBINT type; /* rebol type */
+    REBINT type; /* rebol type */
 
-	/* size is limited by struct->offset, so only 16-bit */
-	REBCNT offset;
-	REBCNT dimension; /* for arrays */
-	REBCNT size; /* size of element, in bytes */
+    /* size is limited by struct->offset, so only 16-bit */
+    REBCNT offset;
+    REBCNT dimension; /* for arrays */
+    REBCNT size; /* size of element, in bytes */
 
-	/* Note: C89 bitfields may be 'int', 'unsigned int', or 'signed int' */
-	unsigned int array:1;
-	/* field is initialized? */
-	/* (used by GC to decide if the value needs to be marked) */
-	unsigned int done:1;
+    /* Note: C89 bitfields may be 'int', 'unsigned int', or 'signed int' */
+    unsigned int array:1;
+    /* field is initialized? */
+    /* (used by GC to decide if the value needs to be marked) */
+    unsigned int done:1;
 };
 
 /* this is hackish to work around the size limit of REBSTU
- *	VAL_STRUCT_DATA(val) is not the actual data, but a series with
- *	one Struct_Data element, and this element has various infomation
- *	about the struct data
+ *  VAL_STRUCT_DATA(val) is not the actual data, but a series with
+ *  one Struct_Data element, and this element has various infomation
+ *  about the struct data
  * */
 struct Struct_Data {
-	REBSER *data;
-	REBCNT offset;
-	REBCNT len;
-	REBFLG flags;
+    REBSER *data;
+    REBCNT offset;
+    REBCNT len;
+    REBFLG flags;
 };
 
 #define STRUCT_DATA_BIN(v) (((struct Struct_Data*)SERIES_DATA((v)->data))->data)
@@ -87,4 +87,4 @@ struct Struct_Data {
 #define VAL_STRUCT_OFFSET(v) (((struct Struct_Data*)SERIES_DATA(VAL_STRUCT_DATA(v)))->offset)
 #define VAL_STRUCT_LEN(v) (((struct Struct_Data*)SERIES_DATA(VAL_STRUCT_DATA(v)))->len)
 #define VAL_STRUCT_FLAGS(v) (((struct Struct_Data*)SERIES_DATA(VAL_STRUCT_DATA(v)))->flags)
-#define VAL_STRUCT_LIMIT	MAX_U32
+#define VAL_STRUCT_LIMIT    MAX_U32

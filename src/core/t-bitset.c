@@ -38,13 +38,13 @@
 //
 REBINT CT_Bitset(REBVAL *a, REBVAL *b, REBINT mode)
 {
-	if (mode == 3) return VAL_SERIES(a) == VAL_SERIES(b);
-	if (mode >= 0) return (
-		BITS_NOT(VAL_SERIES(a)) == BITS_NOT(VAL_SERIES(b))
-		&&
-		Compare_Binary_Vals(a, b) == 0
-	);
-	return -1;
+    if (mode == 3) return VAL_SERIES(a) == VAL_SERIES(b);
+    if (mode >= 0) return (
+        BITS_NOT(VAL_SERIES(a)) == BITS_NOT(VAL_SERIES(b))
+        &&
+        Compare_Binary_Vals(a, b) == 0
+    );
+    return -1;
 }
 
 
@@ -57,15 +57,15 @@ REBINT CT_Bitset(REBVAL *a, REBVAL *b, REBINT mode)
 //
 REBSER *Make_Bitset(REBCNT len)
 {
-	REBSER *ser;
+    REBSER *ser;
 
-	len = (len + 7) / 8;
-	ser = Make_Binary(len);
-	Clear_Series(ser);
-	SERIES_TAIL(ser) = len;
-	BITS_NOT(ser) = 0;
+    len = (len + 7) / 8;
+    ser = Make_Binary(len);
+    Clear_Series(ser);
+    SERIES_TAIL(ser) = len;
+    BITS_NOT(ser) = 0;
 
-	return ser;
+    return ser;
 }
 
 
@@ -74,11 +74,11 @@ REBSER *Make_Bitset(REBCNT len)
 //
 void Mold_Bitset(const REBVAL *value, REB_MOLD *mold)
 {
-	REBSER *ser = VAL_SERIES(value);
+    REBSER *ser = VAL_SERIES(value);
 
-	if (BITS_NOT(ser)) Append_Unencoded(mold->series, "[not bits ");
-	Mold_Binary(value, mold);
-	if (BITS_NOT(ser)) Append_Codepoint_Raw(mold->series, ']');
+    if (BITS_NOT(ser)) Append_Unencoded(mold->series, "[not bits ");
+    Mold_Binary(value, mold);
+    if (BITS_NOT(ser)) Append_Codepoint_Raw(mold->series, ']');
 }
 
 
@@ -87,22 +87,22 @@ void Mold_Bitset(const REBVAL *value, REB_MOLD *mold)
 //
 REBFLG MT_Bitset(REBVAL *out, REBVAL *data, enum Reb_Kind type)
 {
-	REBFLG is_not = 0;
+    REBFLG is_not = 0;
 
-	if (IS_BLOCK(data)) {
-		REBINT len = Find_Max_Bit(data);
-		REBSER *ser;
-		if (len < 0 || len > 0xFFFFFF) fail (Error_Invalid_Arg(data));
-		ser = Make_Bitset(len);
-		Set_Bits(ser, data, TRUE);
-		Val_Init_Bitset(out, ser);
-		return TRUE;
-	}
+    if (IS_BLOCK(data)) {
+        REBINT len = Find_Max_Bit(data);
+        REBSER *ser;
+        if (len < 0 || len > 0xFFFFFF) fail (Error_Invalid_Arg(data));
+        ser = Make_Bitset(len);
+        Set_Bits(ser, data, TRUE);
+        Val_Init_Bitset(out, ser);
+        return TRUE;
+    }
 
-	if (!IS_BINARY(data)) return FALSE;
-	Val_Init_Bitset(out, Copy_Sequence_At_Position(data));
-	BITS_NOT(VAL_SERIES(out)) = 0;
-	return TRUE;
+    if (!IS_BINARY(data)) return FALSE;
+    Val_Init_Bitset(out, Copy_Sequence_At_Position(data));
+    BITS_NOT(VAL_SERIES(out)) = 0;
+    return TRUE;
 }
 
 
@@ -114,61 +114,61 @@ REBFLG MT_Bitset(REBVAL *out, REBVAL *data, enum Reb_Kind type)
 //
 REBINT Find_Max_Bit(REBVAL *val)
 {
-	REBINT maxi = 0;
-	REBINT n;
+    REBINT maxi = 0;
+    REBINT n;
 
-	switch (VAL_TYPE(val)) {
+    switch (VAL_TYPE(val)) {
 
-	case REB_CHAR:
-		maxi = VAL_CHAR(val)+1;
-		break;
+    case REB_CHAR:
+        maxi = VAL_CHAR(val)+1;
+        break;
 
-	case REB_INTEGER:
-		maxi = Int32s(val, 0);
-		break;
+    case REB_INTEGER:
+        maxi = Int32s(val, 0);
+        break;
 
-	case REB_STRING:
-	case REB_FILE:
-	case REB_EMAIL:
-	case REB_URL:
-	case REB_TAG:
-//	case REB_ISSUE:
-		n = VAL_INDEX(val);
-		if (VAL_BYTE_SIZE(val)) {
-			REBYTE *bp = VAL_BIN(val);
-			for (; n < (REBINT)VAL_TAIL(val); n++)
-				if (bp[n] > maxi) maxi = bp[n];
-		}
-		else {
-			REBUNI *up = VAL_UNI(val);
-			for (; n < (REBINT)VAL_TAIL(val); n++)
-				if (up[n] > maxi) maxi = up[n];
-		}
-		maxi++;
-		break;
+    case REB_STRING:
+    case REB_FILE:
+    case REB_EMAIL:
+    case REB_URL:
+    case REB_TAG:
+//  case REB_ISSUE:
+        n = VAL_INDEX(val);
+        if (VAL_BYTE_SIZE(val)) {
+            REBYTE *bp = VAL_BIN(val);
+            for (; n < (REBINT)VAL_TAIL(val); n++)
+                if (bp[n] > maxi) maxi = bp[n];
+        }
+        else {
+            REBUNI *up = VAL_UNI(val);
+            for (; n < (REBINT)VAL_TAIL(val); n++)
+                if (up[n] > maxi) maxi = up[n];
+        }
+        maxi++;
+        break;
 
-	case REB_BINARY:
-		maxi = VAL_LEN(val) * 8 - 1;
-		if (maxi < 0) maxi = 0;
-		break;
+    case REB_BINARY:
+        maxi = VAL_LEN(val) * 8 - 1;
+        if (maxi < 0) maxi = 0;
+        break;
 
-	case REB_BLOCK:
-		for (val = VAL_BLK_DATA(val); NOT_END(val); val++) {
-			n = Find_Max_Bit(val);
-			if (n > maxi) maxi = n;
-		}
-		//maxi++;
-		break;
+    case REB_BLOCK:
+        for (val = VAL_BLK_DATA(val); NOT_END(val); val++) {
+            n = Find_Max_Bit(val);
+            if (n > maxi) maxi = n;
+        }
+        //maxi++;
+        break;
 
-	case REB_NONE:
-		maxi = 0;
-		break;
+    case REB_NONE:
+        maxi = 0;
+        break;
 
-	default:
-		return -1;
-	}
+    default:
+        return -1;
+    }
 
-	return maxi;
+    return maxi;
 }
 
 
@@ -180,29 +180,29 @@ REBINT Find_Max_Bit(REBVAL *val)
 //
 REBFLG Check_Bit(REBSER *bset, REBCNT c, REBFLG uncased)
 {
-	REBCNT i, n = c;
-	REBCNT tail = SERIES_TAIL(bset);
-	REBFLG flag = 0;
+    REBCNT i, n = c;
+    REBCNT tail = SERIES_TAIL(bset);
+    REBFLG flag = 0;
 
-	if (uncased) {
-		if (n >= UNICODE_CASES) uncased = FALSE; // no need to check
-		else n = LO_CASE(c);
-	}
+    if (uncased) {
+        if (n >= UNICODE_CASES) uncased = FALSE; // no need to check
+        else n = LO_CASE(c);
+    }
 
-	// Check lowercase char:
+    // Check lowercase char:
 retry:
-	i = n >> 3;
-	if (i < tail)
-		flag = (0 != (BIN_HEAD(bset)[i] & (1 << (7 - ((n) & 7)))));
+    i = n >> 3;
+    if (i < tail)
+        flag = (0 != (BIN_HEAD(bset)[i] & (1 << (7 - ((n) & 7)))));
 
-	// Check uppercase if needed:
-	if (uncased && !flag) {
-		n = UP_CASE(c);
-		uncased = FALSE;
-		goto retry;
-	}
+    // Check uppercase if needed:
+    if (uncased && !flag) {
+        n = UP_CASE(c);
+        uncased = FALSE;
+        goto retry;
+    }
 
-	return (BITS_NOT(bset)) ? !flag : flag;
+    return (BITS_NOT(bset)) ? !flag : flag;
 }
 
 
@@ -213,19 +213,19 @@ retry:
 //
 REBFLG Check_Bit_Str(REBSER *bset, REBVAL *val, REBFLG uncased)
 {
-	REBCNT n = VAL_INDEX(val);
+    REBCNT n = VAL_INDEX(val);
 
-	if (VAL_BYTE_SIZE(val)) {
-		REBYTE *bp = VAL_BIN(val);
-		for (; n < VAL_TAIL(val); n++)
-			if (Check_Bit(bset, bp[n], uncased)) return TRUE;
-	}
-	else {
-		REBUNI *up = VAL_UNI(val);
-		for (; n < VAL_TAIL(val); n++)
-			if (Check_Bit(bset, up[n], uncased)) return TRUE;
-	}
-	return FALSE;
+    if (VAL_BYTE_SIZE(val)) {
+        REBYTE *bp = VAL_BIN(val);
+        for (; n < VAL_TAIL(val); n++)
+            if (Check_Bit(bset, bp[n], uncased)) return TRUE;
+    }
+    else {
+        REBUNI *up = VAL_UNI(val);
+        for (; n < VAL_TAIL(val); n++)
+            if (Check_Bit(bset, up[n], uncased)) return TRUE;
+    }
+    return FALSE;
 }
 
 
@@ -236,22 +236,22 @@ REBFLG Check_Bit_Str(REBSER *bset, REBVAL *val, REBFLG uncased)
 //
 void Set_Bit(REBSER *bset, REBCNT n, REBOOL set)
 {
-	REBCNT i = n >> 3;
-	REBCNT tail = SERIES_TAIL(bset);
-	REBYTE bit;
+    REBCNT i = n >> 3;
+    REBCNT tail = SERIES_TAIL(bset);
+    REBYTE bit;
 
-	// Expand if not enough room:
-	if (i >= tail) {
-		if (!set) return; // no need to expand
-		Expand_Series(bset, tail, (i - tail) + 1);
-		CLEAR(BIN_SKIP(bset, tail), (i - tail) + 1);
-	}
+    // Expand if not enough room:
+    if (i >= tail) {
+        if (!set) return; // no need to expand
+        Expand_Series(bset, tail, (i - tail) + 1);
+        CLEAR(BIN_SKIP(bset, tail), (i - tail) + 1);
+    }
 
-	bit = 1 << (7 - ((n) & 7));
-	if (set)
-		BIN_HEAD(bset)[i] |= bit;
-	else
-		BIN_HEAD(bset)[i] &= ~bit;
+    bit = 1 << (7 - ((n) & 7));
+    if (set)
+        BIN_HEAD(bset)[i] |= bit;
+    else
+        BIN_HEAD(bset)[i] &= ~bit;
 }
 
 
@@ -260,18 +260,18 @@ void Set_Bit(REBSER *bset, REBCNT n, REBOOL set)
 //
 void Set_Bit_Str(REBSER *bset, REBVAL *val, REBOOL set)
 {
-	REBCNT n = VAL_INDEX(val);
+    REBCNT n = VAL_INDEX(val);
 
-	if (VAL_BYTE_SIZE(val)) {
-		REBYTE *bp = VAL_BIN(val);
-		for (; n < VAL_TAIL(val); n++)
-			Set_Bit(bset, bp[n], set);
-	}
-	else {
-		REBUNI *up = VAL_UNI(val);
-		for (; n < VAL_TAIL(val); n++)
-			Set_Bit(bset, up[n], set);
-	}
+    if (VAL_BYTE_SIZE(val)) {
+        REBYTE *bp = VAL_BIN(val);
+        for (; n < VAL_TAIL(val); n++)
+            Set_Bit(bset, bp[n], set);
+    }
+    else {
+        REBUNI *up = VAL_UNI(val);
+        for (; n < VAL_TAIL(val); n++)
+            Set_Bit(bset, up[n], set);
+    }
 }
 
 
@@ -282,101 +282,101 @@ void Set_Bit_Str(REBSER *bset, REBVAL *val, REBOOL set)
 //
 REBFLG Set_Bits(REBSER *bset, REBVAL *val, REBOOL set)
 {
-	REBCNT n;
-	REBCNT c;
+    REBCNT n;
+    REBCNT c;
 
-	if (IS_CHAR(val)) {
-		Set_Bit(bset, VAL_CHAR(val), set);
-		return TRUE;
-	}
+    if (IS_CHAR(val)) {
+        Set_Bit(bset, VAL_CHAR(val), set);
+        return TRUE;
+    }
 
-	if (IS_INTEGER(val)) {
-		n = Int32s(val, 0);
-		if (n > MAX_BITSET) return 0;
-		Set_Bit(bset, n, set);
-		return TRUE;
-	}
+    if (IS_INTEGER(val)) {
+        n = Int32s(val, 0);
+        if (n > MAX_BITSET) return 0;
+        Set_Bit(bset, n, set);
+        return TRUE;
+    }
 
-	if (ANY_BINSTR(val)) {
-		Set_Bit_Str(bset, val, set);
-		return TRUE;
-	}
+    if (ANY_BINSTR(val)) {
+        Set_Bit_Str(bset, val, set);
+        return TRUE;
+    }
 
-	if (!ANY_ARRAY(val)) fail (Error_Has_Bad_Type(val));
+    if (!ANY_ARRAY(val)) fail (Error_Has_Bad_Type(val));
 
-	val = VAL_BLK_DATA(val);
-	if (IS_SAME_WORD(val, SYM_NOT)) {
-		BITS_NOT(bset) = TRUE;
-		val++;
-	}
+    val = VAL_BLK_DATA(val);
+    if (IS_SAME_WORD(val, SYM_NOT)) {
+        BITS_NOT(bset) = TRUE;
+        val++;
+    }
 
-	// Loop through block of bit specs:
-	for (; NOT_END(val); val++) {
+    // Loop through block of bit specs:
+    for (; NOT_END(val); val++) {
 
-		switch (VAL_TYPE(val)) {
+        switch (VAL_TYPE(val)) {
 
-		case REB_CHAR:
-			c = VAL_CHAR(val);
-			if (IS_SAME_WORD(val + 1, SYM__)) {
-				val += 2;
-				if (IS_CHAR(val)) {
-					n = VAL_CHAR(val);
+        case REB_CHAR:
+            c = VAL_CHAR(val);
+            if (IS_SAME_WORD(val + 1, SYM__)) {
+                val += 2;
+                if (IS_CHAR(val)) {
+                    n = VAL_CHAR(val);
 span_bits:
-					if (n < c) fail (Error(RE_PAST_END, val));
-					for (; c <= n; c++) Set_Bit(bset, c, set);
-				}
-				else
-					fail (Error_Invalid_Arg(val));
-			}
-			else Set_Bit(bset, c, set);
-			break;
+                    if (n < c) fail (Error(RE_PAST_END, val));
+                    for (; c <= n; c++) Set_Bit(bset, c, set);
+                }
+                else
+                    fail (Error_Invalid_Arg(val));
+            }
+            else Set_Bit(bset, c, set);
+            break;
 
-		case REB_INTEGER:
-			n = Int32s(val, 0);
-			if (n > MAX_BITSET) return 0;
-			if (IS_SAME_WORD(val + 1, SYM__)) {
-				c = n;
-				val += 2;
-				if (IS_INTEGER(val)) {
-					n = Int32s(val, 0);
-					goto span_bits;
-				}
-				else
-					fail (Error_Invalid_Arg(val));
-			}
-			else Set_Bit(bset, n, set);
-			break;
+        case REB_INTEGER:
+            n = Int32s(val, 0);
+            if (n > MAX_BITSET) return 0;
+            if (IS_SAME_WORD(val + 1, SYM__)) {
+                c = n;
+                val += 2;
+                if (IS_INTEGER(val)) {
+                    n = Int32s(val, 0);
+                    goto span_bits;
+                }
+                else
+                    fail (Error_Invalid_Arg(val));
+            }
+            else Set_Bit(bset, n, set);
+            break;
 
-		case REB_BINARY:
-		case REB_STRING:
-		case REB_FILE:
-		case REB_EMAIL:
-		case REB_URL:
-		case REB_TAG:
-//		case REB_ISSUE:
-			Set_Bit_Str(bset, val, set);
-			break;
+        case REB_BINARY:
+        case REB_STRING:
+        case REB_FILE:
+        case REB_EMAIL:
+        case REB_URL:
+        case REB_TAG:
+//      case REB_ISSUE:
+            Set_Bit_Str(bset, val, set);
+            break;
 
-		case REB_WORD:
-			// Special: BITS #{000...}
-			if (!IS_SAME_WORD(val, SYM_BITS)) return 0;
-			val++;
-			if (!IS_BINARY(val)) return 0;
-			n = VAL_LEN(val);
-			c = bset->tail;
-			if (n >= c) {
-				Expand_Series(bset, c, (n - c));
-				CLEAR(BIN_SKIP(bset, c), (n - c));
-			}
-			memcpy(BIN_HEAD(bset), VAL_BIN_DATA(val), n);
-			break;
+        case REB_WORD:
+            // Special: BITS #{000...}
+            if (!IS_SAME_WORD(val, SYM_BITS)) return 0;
+            val++;
+            if (!IS_BINARY(val)) return 0;
+            n = VAL_LEN(val);
+            c = bset->tail;
+            if (n >= c) {
+                Expand_Series(bset, c, (n - c));
+                CLEAR(BIN_SKIP(bset, c), (n - c));
+            }
+            memcpy(BIN_HEAD(bset), VAL_BIN_DATA(val), n);
+            break;
 
-		default:
-			return 0;
-		}
-	}
+        default:
+            return 0;
+        }
+    }
 
-	return TRUE;
+    return TRUE;
 }
 
 
@@ -388,78 +388,78 @@ span_bits:
 //
 REBFLG Check_Bits(REBSER *bset, REBVAL *val, REBFLG uncased)
 {
-	REBCNT n;
-	REBUNI c;
+    REBCNT n;
+    REBUNI c;
 
-	if (IS_CHAR(val))
-		return Check_Bit(bset, VAL_CHAR(val), uncased);
+    if (IS_CHAR(val))
+        return Check_Bit(bset, VAL_CHAR(val), uncased);
 
-	if (IS_INTEGER(val))
-		return Check_Bit(bset, Int32s(val, 0), uncased);
+    if (IS_INTEGER(val))
+        return Check_Bit(bset, Int32s(val, 0), uncased);
 
-	if (ANY_BINSTR(val))
-		return Check_Bit_Str(bset, val, uncased);
+    if (ANY_BINSTR(val))
+        return Check_Bit_Str(bset, val, uncased);
 
-	if (!ANY_ARRAY(val)) fail (Error_Has_Bad_Type(val));
+    if (!ANY_ARRAY(val)) fail (Error_Has_Bad_Type(val));
 
-	// Loop through block of bit specs:
-	for (val = VAL_BLK_DATA(val); NOT_END(val); val++) {
+    // Loop through block of bit specs:
+    for (val = VAL_BLK_DATA(val); NOT_END(val); val++) {
 
-		switch (VAL_TYPE(val)) {
+        switch (VAL_TYPE(val)) {
 
-		case REB_CHAR:
-			c = VAL_CHAR(val);
-			if (IS_SAME_WORD(val + 1, SYM__)) {
-				val += 2;
-				if (IS_CHAR(val)) {
-					n = VAL_CHAR(val);
+        case REB_CHAR:
+            c = VAL_CHAR(val);
+            if (IS_SAME_WORD(val + 1, SYM__)) {
+                val += 2;
+                if (IS_CHAR(val)) {
+                    n = VAL_CHAR(val);
 scan_bits:
-					if (n < c) fail (Error(RE_PAST_END, val));
-					for (; c <= n; c++)
-						if (Check_Bit(bset, c, uncased)) goto found;
-				}
-				else
-					fail (Error_Invalid_Arg(val));
-			}
-			else
-				if (Check_Bit(bset, c, uncased)) goto found;
-			break;
+                    if (n < c) fail (Error(RE_PAST_END, val));
+                    for (; c <= n; c++)
+                        if (Check_Bit(bset, c, uncased)) goto found;
+                }
+                else
+                    fail (Error_Invalid_Arg(val));
+            }
+            else
+                if (Check_Bit(bset, c, uncased)) goto found;
+            break;
 
-		case REB_INTEGER:
-			n = Int32s(val, 0);
-			if (n > 0xffff) return 0;
-			if (IS_SAME_WORD(val + 1, SYM__)) {
-				c = n;
-				val += 2;
-				if (IS_INTEGER(val)) {
-					n = Int32s(val, 0);
-					goto scan_bits;
-				}
-				else
-					fail (Error_Invalid_Arg(val));
-			}
-			else
-				if (Check_Bit(bset, n, uncased)) goto found;
-			break;
+        case REB_INTEGER:
+            n = Int32s(val, 0);
+            if (n > 0xffff) return 0;
+            if (IS_SAME_WORD(val + 1, SYM__)) {
+                c = n;
+                val += 2;
+                if (IS_INTEGER(val)) {
+                    n = Int32s(val, 0);
+                    goto scan_bits;
+                }
+                else
+                    fail (Error_Invalid_Arg(val));
+            }
+            else
+                if (Check_Bit(bset, n, uncased)) goto found;
+            break;
 
-		case REB_BINARY:
-		case REB_STRING:
-		case REB_FILE:
-		case REB_EMAIL:
-		case REB_URL:
-		case REB_TAG:
-//		case REB_ISSUE:
-			if (Check_Bit_Str(bset, val, uncased)) goto found;
-			break;
+        case REB_BINARY:
+        case REB_STRING:
+        case REB_FILE:
+        case REB_EMAIL:
+        case REB_URL:
+        case REB_TAG:
+//      case REB_ISSUE:
+            if (Check_Bit_Str(bset, val, uncased)) goto found;
+            break;
 
-		default:
-			fail (Error_Has_Bad_Type(val));
-		}
-	}
-	return FALSE;
+        default:
+            fail (Error_Has_Bad_Type(val));
+        }
+    }
+    return FALSE;
 
 found:
-	return TRUE;
+    return TRUE;
 }
 
 
@@ -468,25 +468,25 @@ found:
 //
 REBINT PD_Bitset(REBPVS *pvs)
 {
-	REBVAL *data = pvs->value;
-	REBVAL *val = pvs->setval;
-	REBSER *ser = VAL_SERIES(data);
-	REBFLG t;
+    REBVAL *data = pvs->value;
+    REBVAL *val = pvs->setval;
+    REBSER *ser = VAL_SERIES(data);
+    REBFLG t;
 
-	if (val == 0) {
-		if (Check_Bits(ser, pvs->select, 0)) {
-			SET_TRUE(pvs->store);
-			return PE_USE;
-		}
-		return PE_NONE;
-	}
+    if (val == 0) {
+        if (Check_Bits(ser, pvs->select, 0)) {
+            SET_TRUE(pvs->store);
+            return PE_USE;
+        }
+        return PE_NONE;
+    }
 
-	t = IS_CONDITIONAL_TRUE(val);
-	if (BITS_NOT(ser)) t = !t;
-	if (Set_Bits(ser, pvs->select, (REBOOL)t))
-		return PE_OK;
+    t = IS_CONDITIONAL_TRUE(val);
+    if (BITS_NOT(ser)) t = !t;
+    if (Set_Bits(ser, pvs->select, (REBOOL)t))
+        return PE_OK;
 
-	return PE_BAD_SET;
+    return PE_BAD_SET;
 }
 
 
@@ -497,13 +497,13 @@ REBINT PD_Bitset(REBPVS *pvs)
 //
 void Trim_Tail_Zeros(REBSER *ser)
 {
-	REBCNT tail = SERIES_TAIL(ser);
-	REBYTE *bp = BIN_HEAD(ser);
+    REBCNT tail = SERIES_TAIL(ser);
+    REBYTE *bp = BIN_HEAD(ser);
 
-	for (; tail > 0 && !bp[tail]; tail--);
+    for (; tail > 0 && !bp[tail]; tail--);
 
-	if (bp[tail]) tail++;
-	SERIES_TAIL(ser) = tail;
+    if (bp[tail]) tail++;
+    SERIES_TAIL(ser) = tail;
 }
 
 
@@ -512,104 +512,104 @@ void Trim_Tail_Zeros(REBSER *ser)
 //
 REBTYPE(Bitset)
 {
-	REBVAL *value = D_ARG(1);
-	REBVAL *arg = DS_ARGC > 1 ? D_ARG(2) : NULL;
-	REBSER *ser;
-	REBINT len;
-	REBINT diff;
+    REBVAL *value = D_ARG(1);
+    REBVAL *arg = DS_ARGC > 1 ? D_ARG(2) : NULL;
+    REBSER *ser;
+    REBINT len;
+    REBINT diff;
 
-	// Check must be in this order (to avoid checking a non-series value);
-	if (action >= A_TAKE && action <= A_SORT && IS_PROTECT_SERIES(VAL_SERIES(value)))
-		fail (Error(RE_PROTECTED));
+    // Check must be in this order (to avoid checking a non-series value);
+    if (action >= A_TAKE && action <= A_SORT && IS_PROTECT_SERIES(VAL_SERIES(value)))
+        fail (Error(RE_PROTECTED));
 
-	switch (action) {
+    switch (action) {
 
-	// Define PICK for BITSETS?  PICK's set bits and returns #?
-	// Add AND, OR, XOR
+    // Define PICK for BITSETS?  PICK's set bits and returns #?
+    // Add AND, OR, XOR
 
-	case A_PICK:
-	case A_FIND:
-		if (!Check_Bits(VAL_SERIES(value), arg, D_REF(ARG_FIND_CASE))) return R_NONE;
-		return R_TRUE;
+    case A_PICK:
+    case A_FIND:
+        if (!Check_Bits(VAL_SERIES(value), arg, D_REF(ARG_FIND_CASE))) return R_NONE;
+        return R_TRUE;
 
-	case A_COMPLEMENT:
-	case A_NEGATE:
-		ser = Copy_Sequence(VAL_SERIES(value));
-		BITS_NOT(ser) = !BITS_NOT(VAL_SERIES(value));
-		Val_Init_Bitset(value, ser);
-		break;
+    case A_COMPLEMENT:
+    case A_NEGATE:
+        ser = Copy_Sequence(VAL_SERIES(value));
+        BITS_NOT(ser) = !BITS_NOT(VAL_SERIES(value));
+        Val_Init_Bitset(value, ser);
+        break;
 
-	case A_MAKE:
-	case A_TO:
-		// Determine size of bitset. Returns -1 for errors.
-		len = Find_Max_Bit(arg);
-		if (len < 0 || len > 0x0FFFFFFF) fail (Error_Invalid_Arg(arg));
+    case A_MAKE:
+    case A_TO:
+        // Determine size of bitset. Returns -1 for errors.
+        len = Find_Max_Bit(arg);
+        if (len < 0 || len > 0x0FFFFFFF) fail (Error_Invalid_Arg(arg));
 
-		ser = Make_Bitset(len);
-		Val_Init_Bitset(value, ser);
+        ser = Make_Bitset(len);
+        Val_Init_Bitset(value, ser);
 
-		// Nothing more to do.
-		if (IS_INTEGER(arg)) break;
+        // Nothing more to do.
+        if (IS_INTEGER(arg)) break;
 
-		if (IS_BINARY(arg)) {
-			memcpy(BIN_HEAD(ser), VAL_BIN_DATA(arg), len/8 + 1);
-			break;
-		}
-		// FALL THRU...
+        if (IS_BINARY(arg)) {
+            memcpy(BIN_HEAD(ser), VAL_BIN_DATA(arg), len/8 + 1);
+            break;
+        }
+        // FALL THRU...
 
-	case A_APPEND:	// Accepts: #"a" "abc" [1 - 10] [#"a" - #"z"] etc.
-	case A_INSERT:
-		diff = TRUE;
-		goto set_bits;
+    case A_APPEND:  // Accepts: #"a" "abc" [1 - 10] [#"a" - #"z"] etc.
+    case A_INSERT:
+        diff = TRUE;
+        goto set_bits;
 
-	case A_POKE:
-		diff = Get_Logic_Arg(D_ARG(3));
+    case A_POKE:
+        diff = Get_Logic_Arg(D_ARG(3));
 set_bits:
-		if (BITS_NOT(VAL_SERIES(value))) diff = !diff;
-		if (Set_Bits(VAL_SERIES(value), arg, (REBOOL)diff)) break;
-		fail (Error_Invalid_Arg(arg));
+        if (BITS_NOT(VAL_SERIES(value))) diff = !diff;
+        if (Set_Bits(VAL_SERIES(value), arg, (REBOOL)diff)) break;
+        fail (Error_Invalid_Arg(arg));
 
-	case A_REMOVE:	// #"a" "abc"  remove/part bs "abcd"  yuk: /part ?
-		if (!D_REF(2)) fail (Error(RE_MISSING_ARG)); // /part required
-		if (Set_Bits(VAL_SERIES(value), D_ARG(3), FALSE)) break;
-		fail (Error_Invalid_Arg(D_ARG(3)));
+    case A_REMOVE:  // #"a" "abc"  remove/part bs "abcd"  yuk: /part ?
+        if (!D_REF(2)) fail (Error(RE_MISSING_ARG)); // /part required
+        if (Set_Bits(VAL_SERIES(value), D_ARG(3), FALSE)) break;
+        fail (Error_Invalid_Arg(D_ARG(3)));
 
-	case A_COPY:
-		Val_Init_Series_Index(
-			D_OUT,
-			REB_BITSET,
-			Copy_Sequence_At_Position(value),
-			VAL_INDEX(value)
-		);
-		return R_OUT;
+    case A_COPY:
+        Val_Init_Series_Index(
+            D_OUT,
+            REB_BITSET,
+            Copy_Sequence_At_Position(value),
+            VAL_INDEX(value)
+        );
+        return R_OUT;
 
-	case A_LENGTH:
-		len = VAL_TAIL(value) * 8;
-		SET_INTEGER(value, len);
-		break;
+    case A_LENGTH:
+        len = VAL_TAIL(value) * 8;
+        SET_INTEGER(value, len);
+        break;
 
-	case A_TAILQ:
-		// Necessary to make EMPTY? work:
-		return (VAL_TAIL(value) == 0) ? R_TRUE : R_FALSE;
+    case A_TAILQ:
+        // Necessary to make EMPTY? work:
+        return (VAL_TAIL(value) == 0) ? R_TRUE : R_FALSE;
 
-	case A_CLEAR:
-		Clear_Series(VAL_SERIES(value));
-		break;
+    case A_CLEAR:
+        Clear_Series(VAL_SERIES(value));
+        break;
 
-	case A_AND:
-	case A_OR:
-	case A_XOR:
-		if (!IS_BITSET(arg) && !IS_BINARY(arg))
-			fail (Error_Math_Args(VAL_TYPE(arg), action));
-		VAL_SERIES(value) = ser = Xandor_Binary(action, value, arg);
-		Trim_Tail_Zeros(ser);
-		break;
+    case A_AND:
+    case A_OR:
+    case A_XOR:
+        if (!IS_BITSET(arg) && !IS_BINARY(arg))
+            fail (Error_Math_Args(VAL_TYPE(arg), action));
+        VAL_SERIES(value) = ser = Xandor_Binary(action, value, arg);
+        Trim_Tail_Zeros(ser);
+        break;
 
-	default:
-		fail (Error_Illegal_Action(REB_BITSET, action));
-	}
+    default:
+        fail (Error_Illegal_Action(REB_BITSET, action));
+    }
 
-	*D_OUT = *value;
-	return R_OUT;
+    *D_OUT = *value;
+    return R_OUT;
 }
 

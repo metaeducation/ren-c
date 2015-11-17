@@ -30,38 +30,38 @@
 **  Tokens returned by the scanner.  Keep in sync with boot.r strings area.
 */
 enum Value_Types {
-	TOKEN_END = 0,
-	TOKEN_NEWLINE,
-	TOKEN_BLOCK_END,
-	TOKEN_PAREN_END,
-	TOKEN_WORD,
-	TOKEN_SET,
-	TOKEN_GET,
-	TOKEN_LIT,
-	TOKEN_NONE,		// not needed
-	TOKEN_LOGIC,	// not needed
-	TOKEN_INTEGER,
-	TOKEN_DECIMAL,
-	TOKEN_PERCENT,
-	TOKEN_MONEY,
-	TOKEN_TIME,
-	TOKEN_DATE,
-	TOKEN_CHAR,
-	TOKEN_BLOCK_BEGIN,
-	TOKEN_PAREN_BEGIN,
-	TOKEN_STRING,
-	TOKEN_BINARY,
-	TOKEN_PAIR,
-	TOKEN_TUPLE,
-	TOKEN_FILE,
-	TOKEN_EMAIL,
-	TOKEN_URL,
-	TOKEN_ISSUE,
-	TOKEN_TAG,
-	TOKEN_PATH,
-	TOKEN_REFINE,
-	TOKEN_CONSTRUCT,
-	TOKEN_MAX
+    TOKEN_END = 0,
+    TOKEN_NEWLINE,
+    TOKEN_BLOCK_END,
+    TOKEN_PAREN_END,
+    TOKEN_WORD,
+    TOKEN_SET,
+    TOKEN_GET,
+    TOKEN_LIT,
+    TOKEN_NONE,     // not needed
+    TOKEN_LOGIC,    // not needed
+    TOKEN_INTEGER,
+    TOKEN_DECIMAL,
+    TOKEN_PERCENT,
+    TOKEN_MONEY,
+    TOKEN_TIME,
+    TOKEN_DATE,
+    TOKEN_CHAR,
+    TOKEN_BLOCK_BEGIN,
+    TOKEN_PAREN_BEGIN,
+    TOKEN_STRING,
+    TOKEN_BINARY,
+    TOKEN_PAIR,
+    TOKEN_TUPLE,
+    TOKEN_FILE,
+    TOKEN_EMAIL,
+    TOKEN_URL,
+    TOKEN_ISSUE,
+    TOKEN_TAG,
+    TOKEN_PATH,
+    TOKEN_REFINE,
+    TOKEN_CONSTRUCT,
+    TOKEN_MAX
 };
 
 
@@ -77,25 +77,25 @@ enum Value_Types {
 
 
 /*
-**	Delimiting Chars (encoded in the LEX_VALUE field)
-**	NOTE: Macros do make assumption that _RETURN is the last space delimiter
+**  Delimiting Chars (encoded in the LEX_VALUE field)
+**  NOTE: Macros do make assumption that _RETURN is the last space delimiter
 */
 enum LEX_DELIMIT_ENUM {
-	LEX_DELIMIT_SPACE,              /* 20 space */
-	LEX_DELIMIT_END,                /* 00 null terminator, end of input */
-	LEX_DELIMIT_LINEFEED,           /* 0A line-feed */
-	LEX_DELIMIT_RETURN,             /* 0D return */
-	LEX_DELIMIT_LEFT_PAREN,         /* 28 ( */
-	LEX_DELIMIT_RIGHT_PAREN,        /* 29 ) */
-	LEX_DELIMIT_LEFT_BRACKET,       /* 5B [ */
-	LEX_DELIMIT_RIGHT_BRACKET,      /* 5D ] */
-	LEX_DELIMIT_LEFT_BRACE,         /* 7B } */
-	LEX_DELIMIT_RIGHT_BRACE,        /* 7D } */
-	LEX_DELIMIT_DOUBLE_QUOTE,       /* 22 " */
-	LEX_DELIMIT_SLASH,              /* 2F / - date, path, file */
-	LEX_DELIMIT_SEMICOLON,          /* 3B ; */
-	LEX_DELIMIT_UTF8_ERROR,
-	LEX_DELIMIT_MAX
+    LEX_DELIMIT_SPACE,              /* 20 space */
+    LEX_DELIMIT_END,                /* 00 null terminator, end of input */
+    LEX_DELIMIT_LINEFEED,           /* 0A line-feed */
+    LEX_DELIMIT_RETURN,             /* 0D return */
+    LEX_DELIMIT_LEFT_PAREN,         /* 28 ( */
+    LEX_DELIMIT_RIGHT_PAREN,        /* 29 ) */
+    LEX_DELIMIT_LEFT_BRACKET,       /* 5B [ */
+    LEX_DELIMIT_RIGHT_BRACKET,      /* 5D ] */
+    LEX_DELIMIT_LEFT_BRACE,         /* 7B } */
+    LEX_DELIMIT_RIGHT_BRACE,        /* 7D } */
+    LEX_DELIMIT_DOUBLE_QUOTE,       /* 22 " */
+    LEX_DELIMIT_SLASH,              /* 2F / - date, path, file */
+    LEX_DELIMIT_SEMICOLON,          /* 3B ; */
+    LEX_DELIMIT_UTF8_ERROR,
+    LEX_DELIMIT_MAX
 };
 
 
@@ -123,7 +123,7 @@ enum LEX_CLASS_ENUM {
 
 #define MASK_LEX_CLASS(c)               (Lex_Map[(REBYTE)c] & LEX_CLASS)
 #define IS_LEX_SPACE(c)                 (!Lex_Map[(REBYTE)c])
-#define IS_LEX_ANY_SPACE(c)				(Lex_Map[(REBYTE)c]<=LEX_DELIMIT_RETURN)
+#define IS_LEX_ANY_SPACE(c)             (Lex_Map[(REBYTE)c]<=LEX_DELIMIT_RETURN)
 #define IS_LEX_DELIMIT(c)               (MASK_LEX_CLASS(c) == LEX_DELIMIT)
 #define IS_LEX_SPECIAL(c)               (MASK_LEX_CLASS(c) == LEX_SPECIAL)
 #define IS_LEX_WORD(c)                  (MASK_LEX_CLASS(c) == LEX_WORD)
@@ -137,23 +137,23 @@ enum LEX_CLASS_ENUM {
 **  Special Chars (encoded in the LEX_VALUE field)
 */
 enum LEX_SPECIAL_ENUM {             /* The order is important! */
-	LEX_SPECIAL_AT,                 /* 40 @ - email */
-	LEX_SPECIAL_PERCENT,            /* 25 % - file name */
-	LEX_SPECIAL_BACKSLASH,          /* 5C \  */
-	LEX_SPECIAL_COLON,              /* 3A : - time, get, set */
-	LEX_SPECIAL_APOSTROPHE,         /* 27 ' - literal */
-	LEX_SPECIAL_LESSER,				/* 3C < - compare or tag */
-	LEX_SPECIAL_GREATER,			/* 3E > - compare or end tag */
-	LEX_SPECIAL_PLUS,               /* 2B + - positive number */
-	LEX_SPECIAL_MINUS,              /* 2D - - date, negative number */
-	LEX_SPECIAL_TILDE,              /* 7E ~ - complement number */
-									/** Any of these can follow - or ~ : */
-	LEX_SPECIAL_PERIOD,             /* 2E . - decimal number */
-	LEX_SPECIAL_COMMA,              /* 2C , - decimal number */
-	LEX_SPECIAL_POUND,              /* 23 # - hex number */
-	LEX_SPECIAL_DOLLAR,             /* 24 $ - money */
-	LEX_SPECIAL_WORD,               /* SPECIAL - used for word chars (for nums) */
-	LEX_SPECIAL_MAX
+    LEX_SPECIAL_AT,                 /* 40 @ - email */
+    LEX_SPECIAL_PERCENT,            /* 25 % - file name */
+    LEX_SPECIAL_BACKSLASH,          /* 5C \  */
+    LEX_SPECIAL_COLON,              /* 3A : - time, get, set */
+    LEX_SPECIAL_APOSTROPHE,         /* 27 ' - literal */
+    LEX_SPECIAL_LESSER,             /* 3C < - compare or tag */
+    LEX_SPECIAL_GREATER,            /* 3E > - compare or end tag */
+    LEX_SPECIAL_PLUS,               /* 2B + - positive number */
+    LEX_SPECIAL_MINUS,              /* 2D - - date, negative number */
+    LEX_SPECIAL_TILDE,              /* 7E ~ - complement number */
+                                    /** Any of these can follow - or ~ : */
+    LEX_SPECIAL_PERIOD,             /* 2E . - decimal number */
+    LEX_SPECIAL_COMMA,              /* 2C , - decimal number */
+    LEX_SPECIAL_POUND,              /* 23 # - hex number */
+    LEX_SPECIAL_DOLLAR,             /* 24 $ - money */
+    LEX_SPECIAL_WORD,               /* SPECIAL - used for word chars (for nums) */
+    LEX_SPECIAL_MAX
 };
 
 /*
@@ -168,21 +168,21 @@ enum LEX_SPECIAL_ENUM {             /* The order is important! */
                         LEX_FLAG(LEX_SPECIAL_PERCENT) |         \
                         LEX_FLAG(LEX_SPECIAL_BACKSLASH) |       \
                         LEX_FLAG(LEX_SPECIAL_COMMA) |           \
-						LEX_FLAG(LEX_SPECIAL_POUND) |			\
-						LEX_FLAG(LEX_SPECIAL_DOLLAR) |			\
+                        LEX_FLAG(LEX_SPECIAL_POUND) |           \
+                        LEX_FLAG(LEX_SPECIAL_DOLLAR) |          \
                         LEX_FLAG(LEX_SPECIAL_COLON))
 
 enum rebol_esc_codes {
-	// Must match Esc_Names[]!
-	ESC_LINE,
-	ESC_TAB,
-	ESC_PAGE,
-	ESC_ESCAPE,
-	ESC_ESC,
-	ESC_BACK,
-	ESC_DEL,
-	ESC_NULL,
-	ESC_MAX
+    // Must match Esc_Names[]!
+    ESC_LINE,
+    ESC_TAB,
+    ESC_PAGE,
+    ESC_ESCAPE,
+    ESC_ESC,
+    ESC_BACK,
+    ESC_DEL,
+    ESC_NULL,
+    ESC_MAX
 };
 
 
@@ -191,22 +191,22 @@ enum rebol_esc_codes {
 */
 
 typedef struct rebol_scan_state {
-	const REBYTE *begin;
-	const REBYTE *end;
-	const REBYTE *limit;    /* no chars after this point */
-	REBCNT line_count;
-	const REBYTE *head_line;		// head of current line (used for errors)
-	REBCNT opts;
-	REBCNT errors;
+    const REBYTE *begin;
+    const REBYTE *end;
+    const REBYTE *limit;    /* no chars after this point */
+    REBCNT line_count;
+    const REBYTE *head_line;        // head of current line (used for errors)
+    REBCNT opts;
+    REBCNT errors;
 } SCAN_STATE;
 
 #define ANY_CR_LF_END(c) (!(c) || (c) == CR || (c) == LF)
 
 enum {
-	SCAN_NEXT,	// load/next feature
-	SCAN_ONLY,  // only single value (no blocks)
-	SCAN_RELAX,	// no error throw
-	SCAN_MAX
+    SCAN_NEXT,  // load/next feature
+    SCAN_ONLY,  // only single value (no blocks)
+    SCAN_RELAX, // no error throw
+    SCAN_MAX
 };
 
 

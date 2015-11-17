@@ -46,23 +46,23 @@
 
 #include "reb-host.h"
 
-#define BUF_SIZE (16 * 1024)	// MS restrictions apply
+#define BUF_SIZE (16 * 1024)    // MS restrictions apply
 
-#define SF_DEV_NULL 31			// Local flag to mark NULL device.
+#define SF_DEV_NULL 31          // Local flag to mark NULL device.
 
 #define CONSOLE_MODES \
-		ENABLE_LINE_INPUT | ENABLE_PROCESSED_INPUT | ENABLE_ECHO_INPUT \
-		| 0x0040 | 0x0020		// quick edit and insert mode (not defined in VC6)
+        ENABLE_LINE_INPUT | ENABLE_PROCESSED_INPUT | ENABLE_ECHO_INPUT \
+        | 0x0040 | 0x0020       // quick edit and insert mode (not defined in VC6)
 
 static HANDLE Std_Out = NULL;
 static HANDLE Std_Inp = NULL;
 static HANDLE Std_Echo = NULL;
-static wchar_t *Std_Buf = NULL;	// Used for UTF-8 conversion of stdin/stdout.
+static wchar_t *Std_Buf = NULL; // Used for UTF-8 conversion of stdin/stdout.
 
 static BOOL Redir_Out = 0;
 static BOOL Redir_Inp = 0;
 
-static BOOL Con_Out = 1;		//controls the console text output
+static BOOL Con_Out = 1;        //controls the console text output
 
 // Special access:
 extern REBDEV *Devices[];
@@ -72,24 +72,24 @@ extern REBDEV *Devices[];
 
 BOOL WINAPI Handle_Break(DWORD dwCtrlType)
 {
-	// Handle the MS CMD console CTRL-C, BREAK, and other events:
-	if (dwCtrlType >= CTRL_CLOSE_EVENT) OS_Exit(100); // close button, shutdown, etc.
-	RL_Escape(0);
-	return TRUE;	// We handled it
+    // Handle the MS CMD console CTRL-C, BREAK, and other events:
+    if (dwCtrlType >= CTRL_CLOSE_EVENT) OS_Exit(100); // close button, shutdown, etc.
+    RL_Escape(0);
+    return TRUE;    // We handled it
 }
 
 
 static void Close_Stdio(void)
 {
-	if (Std_Buf) {
-		OS_FREE(Std_Buf);
-		Std_Buf = 0;
-		//FreeConsole();  // problem: causes a delay
-	}
-	if (Std_Echo) {
-		CloseHandle(Std_Echo);
-		Std_Echo = 0;
-	}
+    if (Std_Buf) {
+        OS_FREE(Std_Buf);
+        Std_Buf = 0;
+        //FreeConsole();  // problem: causes a delay
+    }
+    if (Std_Echo) {
+        CloseHandle(Std_Echo);
+        Std_Echo = 0;
+    }
 }
 
 
@@ -98,12 +98,12 @@ static void Close_Stdio(void)
 //
 DEVICE_CMD Quit_IO(REBREQ *dr)
 {
-	REBDEV *dev = (REBDEV*)dr; // just to keep compiler happy above
+    REBDEV *dev = (REBDEV*)dr; // just to keep compiler happy above
 
-	Close_Stdio();
-	//if (GET_FLAG(dev->flags, RDF_OPEN)) FreeConsole();
-	CLR_FLAG(dev->flags, RDF_OPEN);
-	return DR_DONE;
+    Close_Stdio();
+    //if (GET_FLAG(dev->flags, RDF_OPEN)) FreeConsole();
+    CLR_FLAG(dev->flags, RDF_OPEN);
+    return DR_DONE;
 }
 
 
@@ -112,50 +112,50 @@ DEVICE_CMD Quit_IO(REBREQ *dr)
 //
 DEVICE_CMD Open_IO(REBREQ *req)
 {
-	REBDEV *dev;
+    REBDEV *dev;
 
-	dev = Devices[req->device];
+    dev = Devices[req->device];
 
-	// Avoid opening the console twice (compare dev and req flags):
-	if (GET_FLAG(dev->flags, RDF_OPEN)) {
-		// Device was opened earlier as null, so req must have that flag:
-		if (GET_FLAG(dev->flags, SF_DEV_NULL))
-			SET_FLAG(req->modes, RDM_NULL);
-		SET_FLAG(req->flags, RRF_OPEN);
-		return DR_DONE; // Do not do it again
-	}
+    // Avoid opening the console twice (compare dev and req flags):
+    if (GET_FLAG(dev->flags, RDF_OPEN)) {
+        // Device was opened earlier as null, so req must have that flag:
+        if (GET_FLAG(dev->flags, SF_DEV_NULL))
+            SET_FLAG(req->modes, RDM_NULL);
+        SET_FLAG(req->flags, RRF_OPEN);
+        return DR_DONE; // Do not do it again
+    }
 
-	if (!GET_FLAG(req->modes, RDM_NULL)) {
-		// Get the raw stdio handles:
-		Std_Out = GetStdHandle(STD_OUTPUT_HANDLE);
-		Std_Inp = GetStdHandle(STD_INPUT_HANDLE);
-		//Std_Err = GetStdHandle(STD_ERROR_HANDLE);
-		Std_Echo = 0;
+    if (!GET_FLAG(req->modes, RDM_NULL)) {
+        // Get the raw stdio handles:
+        Std_Out = GetStdHandle(STD_OUTPUT_HANDLE);
+        Std_Inp = GetStdHandle(STD_INPUT_HANDLE);
+        //Std_Err = GetStdHandle(STD_ERROR_HANDLE);
+        Std_Echo = 0;
 
-		Redir_Out = (GetFileType(Std_Out) != 0);
-		Redir_Inp = (GetFileType(Std_Inp) != 0);
+        Redir_Out = (GetFileType(Std_Out) != 0);
+        Redir_Inp = (GetFileType(Std_Inp) != 0);
 
-		if (!Redir_Inp || !Redir_Out) {
-			// If either input or output is not redirected, preallocate
-			// a buffer for conversion from/to UTF-8.
-			Std_Buf = OS_ALLOC_ARRAY(wchar_t, BUF_SIZE);
-		}
+        if (!Redir_Inp || !Redir_Out) {
+            // If either input or output is not redirected, preallocate
+            // a buffer for conversion from/to UTF-8.
+            Std_Buf = OS_ALLOC_ARRAY(wchar_t, BUF_SIZE);
+        }
 
-		if (!Redir_Inp) {
-			// Make the Win32 console a bit smarter by default.
-			SetConsoleMode(Std_Inp, CONSOLE_MODES);
+        if (!Redir_Inp) {
+            // Make the Win32 console a bit smarter by default.
+            SetConsoleMode(Std_Inp, CONSOLE_MODES);
 
-			// Handle CTRL-C interrupt.
-			SetConsoleCtrlHandler(Handle_Break, TRUE);
-		}
-	}
-	else
-		SET_FLAG(dev->flags, SF_DEV_NULL);
+            // Handle CTRL-C interrupt.
+            SetConsoleCtrlHandler(Handle_Break, TRUE);
+        }
+    }
+    else
+        SET_FLAG(dev->flags, SF_DEV_NULL);
 
-	SET_FLAG(req->flags, RRF_OPEN);
-	SET_FLAG(dev->flags, RDF_OPEN);
+    SET_FLAG(req->flags, RRF_OPEN);
+    SET_FLAG(dev->flags, RDF_OPEN);
 
-	return DR_DONE;
+    return DR_DONE;
 }
 
 
@@ -164,13 +164,13 @@ DEVICE_CMD Open_IO(REBREQ *req)
 //
 DEVICE_CMD Close_IO(REBREQ *req)
 {
-	REBDEV *dev = Devices[req->device];
+    REBDEV *dev = Devices[req->device];
 
-	Close_Stdio();
+    Close_Stdio();
 
-	CLR_FLAG(dev->flags, RRF_OPEN);
+    CLR_FLAG(dev->flags, RRF_OPEN);
 
-	return DR_DONE;
+    return DR_DONE;
 }
 
 
@@ -185,49 +185,49 @@ DEVICE_CMD Close_IO(REBREQ *req)
 //
 DEVICE_CMD Write_IO(REBREQ *req)
 {
-	DWORD len;
-	DWORD total = 0;
-	BOOL ok = FALSE;
+    DWORD len;
+    DWORD total = 0;
+    BOOL ok = FALSE;
 
-	if (GET_FLAG(req->modes, RDM_NULL)) {
-		req->actual = req->length;
-		return DR_DONE;
-	}
+    if (GET_FLAG(req->modes, RDM_NULL)) {
+        req->actual = req->length;
+        return DR_DONE;
+    }
 
-	if (Std_Out) {
+    if (Std_Out) {
 
-		if (Redir_Out) { // Always UTF-8
-			ok = WriteFile(Std_Out, req->common.data, req->length, &total, 0);
-		}
-		else {
-			// Convert UTF-8 buffer to Win32 wide-char format for console.
-			// Thankfully, MS provides something other than mbstowcs();
-			// however, if our buffer overflows, it's an error. There's no
-			// efficient way at this level to split-up the input data,
-			// because its UTF-8 with variable char sizes.
-			len = MultiByteToWideChar(CP_UTF8, 0, s_cast(req->common.data), req->length, Std_Buf, BUF_SIZE);
-			if (len > 0) // no error
-				ok = WriteConsoleW(Std_Out, Std_Buf, len, &total, 0);
-		}
+        if (Redir_Out) { // Always UTF-8
+            ok = WriteFile(Std_Out, req->common.data, req->length, &total, 0);
+        }
+        else {
+            // Convert UTF-8 buffer to Win32 wide-char format for console.
+            // Thankfully, MS provides something other than mbstowcs();
+            // however, if our buffer overflows, it's an error. There's no
+            // efficient way at this level to split-up the input data,
+            // because its UTF-8 with variable char sizes.
+            len = MultiByteToWideChar(CP_UTF8, 0, s_cast(req->common.data), req->length, Std_Buf, BUF_SIZE);
+            if (len > 0) // no error
+                ok = WriteConsoleW(Std_Out, Std_Buf, len, &total, 0);
+        }
 
-		if (!ok) {
-			req->error = GetLastError();
-			return DR_ERROR;
-		}
+        if (!ok) {
+            req->error = GetLastError();
+            return DR_ERROR;
+        }
 
-		req->actual = req->length;  // do not use "total" (can be byte or wide)
+        req->actual = req->length;  // do not use "total" (can be byte or wide)
 
-		//if (GET_FLAG(req->flags, RRF_FLUSH)) {
-		//	FLUSH();
-		//}
-	}
+        //if (GET_FLAG(req->flags, RRF_FLUSH)) {
+        //  FLUSH();
+        //}
+    }
 
-	if (Std_Echo) {	// always UTF-8
-		WriteFile(Std_Echo, req->common.data, req->length, &total, 0);
-		//FlushFileBuffers(Std_Echo);
-	}
+    if (Std_Echo) { // always UTF-8
+        WriteFile(Std_Echo, req->common.data, req->length, &total, 0);
+        //FlushFileBuffers(Std_Echo);
+    }
 
-	return DR_DONE;
+    return DR_DONE;
 }
 
 
@@ -242,40 +242,40 @@ DEVICE_CMD Write_IO(REBREQ *req)
 //
 DEVICE_CMD Read_IO(REBREQ *req)
 {
-	DWORD total = 0;
-	DWORD len;
-	BOOL ok;
+    DWORD total = 0;
+    DWORD len;
+    BOOL ok;
 
-	if (GET_FLAG(req->modes, RDM_NULL)) {
-		req->common.data[0] = 0;
-		return DR_DONE;
-	}
+    if (GET_FLAG(req->modes, RDM_NULL)) {
+        req->common.data[0] = 0;
+        return DR_DONE;
+    }
 
-	req->actual = 0;
+    req->actual = 0;
 
-	if (Std_Inp) {
+    if (Std_Inp) {
 
-		if (Redir_Inp) { // always UTF-8
-			len = MIN(req->length, BUF_SIZE);
-			ok = ReadFile(Std_Inp, req->common.data, len, &total, 0);
-		}
-		else {
-			ok = ReadConsoleW(Std_Inp, Std_Buf, BUF_SIZE-1, &total, 0);
-			if (ok) {
-				total = WideCharToMultiByte(CP_UTF8, 0, Std_Buf, total, s_cast(req->common.data), req->length, 0, 0);
-				if (!total) ok = FALSE;
-			}
-		}
+        if (Redir_Inp) { // always UTF-8
+            len = MIN(req->length, BUF_SIZE);
+            ok = ReadFile(Std_Inp, req->common.data, len, &total, 0);
+        }
+        else {
+            ok = ReadConsoleW(Std_Inp, Std_Buf, BUF_SIZE-1, &total, 0);
+            if (ok) {
+                total = WideCharToMultiByte(CP_UTF8, 0, Std_Buf, total, s_cast(req->common.data), req->length, 0, 0);
+                if (!total) ok = FALSE;
+            }
+        }
 
-		if (!ok) {
-			req->error = GetLastError();
-			return DR_ERROR;
-		}
+        if (!ok) {
+            req->error = GetLastError();
+            return DR_ERROR;
+        }
 
-		req->actual = total;
-	}
+        req->actual = total;
+    }
 
-	return DR_DONE;
+    return DR_DONE;
 }
 
 
@@ -286,43 +286,43 @@ DEVICE_CMD Read_IO(REBREQ *req)
 //
 DEVICE_CMD Open_Echo(REBREQ *req)
 {
-	if (Std_Echo) {
-		CloseHandle(Std_Echo);
-		Std_Echo = 0;
-	}
+    if (Std_Echo) {
+        CloseHandle(Std_Echo);
+        Std_Echo = 0;
+    }
 
-	if (req->special.file.path) {
-		Std_Echo = CreateFile(req->special.file.path, GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE, 0, CREATE_ALWAYS, 0, 0);
-		if (Std_Echo == INVALID_HANDLE_VALUE) {
-			Std_Echo = 0;
-			req->error = GetLastError();
-			return DR_ERROR;
-		}
-	}
+    if (req->special.file.path) {
+        Std_Echo = CreateFile(req->special.file.path, GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE, 0, CREATE_ALWAYS, 0, 0);
+        if (Std_Echo == INVALID_HANDLE_VALUE) {
+            Std_Echo = 0;
+            req->error = GetLastError();
+            return DR_ERROR;
+        }
+    }
 
-	return DR_DONE;
+    return DR_DONE;
 }
 
 
 /***********************************************************************
 **
-**	Command Dispatch Table (RDC_ enum order)
+**  Command Dispatch Table (RDC_ enum order)
 **
 ***********************************************************************/
 
 static DEVICE_CMD_FUNC Dev_Cmds[RDC_MAX] =
 {
-	0,	// init
-	Quit_IO,
-	Open_IO,
-	Close_IO,
-	Read_IO,
-	Write_IO,
-	0,	// poll
-	0,	// connect
-	0,	// query
-	0,	// modify
-	Open_Echo,	// CREATE used for opening echo file
+    0,  // init
+    Quit_IO,
+    Open_IO,
+    Close_IO,
+    Read_IO,
+    Write_IO,
+    0,  // poll
+    0,  // connect
+    0,  // query
+    0,  // modify
+    Open_Echo,  // CREATE used for opening echo file
 };
 
 DEFINE_DEV(Dev_StdIO, "Standard IO", 1, Dev_Cmds, RDC_MAX, 0);

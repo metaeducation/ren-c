@@ -28,15 +28,15 @@
 ***********************************************************************/
 
 struct rebol_series {
-	REBYTE *data;
-	REBCNT tail;
-	REBCNT rest;
-	REBINT info;
+    REBYTE *data;
+    REBCNT tail;
+    REBCNT rest;
+    REBINT info;
 #if defined(__LP64__) || defined(__LLP64__)
-	REBCNT padding; /* make the size multiple of sizeof(pointer) */
+    REBCNT padding; /* make the size multiple of sizeof(pointer) */
 #endif
-	REBCNT size; // Temp - size of image w/h
-	// OPTIONAL Extensions
+    REBCNT size; // Temp - size of image w/h
+    // OPTIONAL Extensions
 };
 
 #define SERIES_TAIL(s) ((s)->tail)

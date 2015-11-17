@@ -36,20 +36,20 @@
 //
 REBINT CT_Money(REBVAL *a, REBVAL *b, REBINT mode)
 {
-	REBFLG e, g;
+    REBFLG e, g;
 
-	if (mode >= 3) e = deci_is_same(VAL_MONEY_AMOUNT(a), VAL_MONEY_AMOUNT(b));
-	else {
-		e = deci_is_equal(VAL_MONEY_AMOUNT(a), VAL_MONEY_AMOUNT(b));
-		if (mode < 0) {
-			g = deci_is_lesser_or_equal(
-				VAL_MONEY_AMOUNT(b), VAL_MONEY_AMOUNT(a)
-			);
-			if (mode == -1) e |= g;
-			else e = g & !e;
-		}
-	}
-	return e != 0;;
+    if (mode >= 3) e = deci_is_same(VAL_MONEY_AMOUNT(a), VAL_MONEY_AMOUNT(b));
+    else {
+        e = deci_is_equal(VAL_MONEY_AMOUNT(a), VAL_MONEY_AMOUNT(b));
+        if (mode < 0) {
+            g = deci_is_lesser_or_equal(
+                VAL_MONEY_AMOUNT(b), VAL_MONEY_AMOUNT(a)
+            );
+            if (mode == -1) e |= g;
+            else e = g & !e;
+        }
+    }
+    return e != 0;;
 }
 
 
@@ -58,7 +58,7 @@ REBINT CT_Money(REBVAL *a, REBVAL *b, REBINT mode)
 //
 REBINT Emit_Money(const REBVAL *value, REBYTE *buf, REBCNT opts)
 {
-	return deci_to_string(buf, VAL_MONEY_AMOUNT(value), '$', '.');
+    return deci_to_string(buf, VAL_MONEY_AMOUNT(value), '$', '.');
 }
 
 
@@ -67,39 +67,39 @@ REBINT Emit_Money(const REBVAL *value, REBYTE *buf, REBCNT opts)
 //
 REBINT Bin_To_Money(REBVAL *result, REBVAL *val)
 {
-	REBCNT len;
-	REBYTE buf[MAX_HEX_LEN+4] = {0}; // binary to convert
+    REBCNT len;
+    REBYTE buf[MAX_HEX_LEN+4] = {0}; // binary to convert
 
-	if (IS_BINARY(val)) {
-		len = VAL_LEN(val);
-		if (len > 12) len = 12;
-		memcpy(buf, VAL_BIN_DATA(val), len);
-	}
+    if (IS_BINARY(val)) {
+        len = VAL_LEN(val);
+        if (len > 12) len = 12;
+        memcpy(buf, VAL_BIN_DATA(val), len);
+    }
 #ifdef removed
-	else if (IS_ISSUE(val)) {
-		//if (!(len = Scan_Hex_Bytes(val, 24, buf))) return FALSE;
-		REBYTE *ap = Get_Word_Name(val);
-		REBYTE *bp = &buf[0];
-		REBCNT alen;
-		REBUNI c;
-		len = LEN_BYTES(ap);  // UTF-8 len
-		if (len & 1) return FALSE; // must have even # of chars
-		len /= 2;
-		if (len > 12) return FALSE; // valid even for UTF-8
-		for (alen = 0; alen < len; alen++) {
-			if (!Scan_Hex2(ap, &c, 0)) return FALSE;
-			*bp++ = (REBYTE)c;
-			ap += 2;
-		}
-	}
+    else if (IS_ISSUE(val)) {
+        //if (!(len = Scan_Hex_Bytes(val, 24, buf))) return FALSE;
+        REBYTE *ap = Get_Word_Name(val);
+        REBYTE *bp = &buf[0];
+        REBCNT alen;
+        REBUNI c;
+        len = LEN_BYTES(ap);  // UTF-8 len
+        if (len & 1) return FALSE; // must have even # of chars
+        len /= 2;
+        if (len > 12) return FALSE; // valid even for UTF-8
+        for (alen = 0; alen < len; alen++) {
+            if (!Scan_Hex2(ap, &c, 0)) return FALSE;
+            *bp++ = (REBYTE)c;
+            ap += 2;
+        }
+    }
 #endif
-	else
-		fail (Error_Invalid_Arg(val));
+    else
+        fail (Error_Invalid_Arg(val));
 
-	memcpy(buf + 12 - len, buf, len); // shift to right side
-	memset(buf, 0, 12 - len);
-	VAL_MONEY_AMOUNT(result) = binary_to_deci(buf);
-	return TRUE;
+    memcpy(buf + 12 - len, buf, len); // shift to right side
+    memset(buf, 0, 12 - len);
+    VAL_MONEY_AMOUNT(result) = binary_to_deci(buf);
+    return TRUE;
 }
 
 
@@ -108,172 +108,172 @@ REBINT Bin_To_Money(REBVAL *result, REBVAL *val)
 //
 REBTYPE(Money)
 {
-	REBVAL *val = D_ARG(1);
-	REBVAL *arg;
-	const REBYTE *str;
-	REBINT equal = 1;
+    REBVAL *val = D_ARG(1);
+    REBVAL *arg;
+    const REBYTE *str;
+    REBINT equal = 1;
 
-	if (IS_BINARY_ACT(action)) {
-		arg = D_ARG(2);
+    if (IS_BINARY_ACT(action)) {
+        arg = D_ARG(2);
 
-		if (IS_MONEY(arg))
-			;
-		else if (IS_INTEGER(arg)) {
-			VAL_MONEY_AMOUNT(D_OUT) = int_to_deci(VAL_INT64(arg));
-			arg = D_OUT;
-		}
-		else if (IS_DECIMAL(arg) || IS_PERCENT(arg)) {
-			VAL_MONEY_AMOUNT(D_OUT) = decimal_to_deci(VAL_DECIMAL(arg));
-			arg = D_OUT;
-		}
-		else
-			fail (Error_Math_Args(REB_MONEY, action));
+        if (IS_MONEY(arg))
+            ;
+        else if (IS_INTEGER(arg)) {
+            VAL_MONEY_AMOUNT(D_OUT) = int_to_deci(VAL_INT64(arg));
+            arg = D_OUT;
+        }
+        else if (IS_DECIMAL(arg) || IS_PERCENT(arg)) {
+            VAL_MONEY_AMOUNT(D_OUT) = decimal_to_deci(VAL_DECIMAL(arg));
+            arg = D_OUT;
+        }
+        else
+            fail (Error_Math_Args(REB_MONEY, action));
 
-		switch (action) {
-		case A_ADD:
-			VAL_MONEY_AMOUNT(D_OUT) = deci_add(
-				VAL_MONEY_AMOUNT(val), VAL_MONEY_AMOUNT(arg)
-			);
-			break;
+        switch (action) {
+        case A_ADD:
+            VAL_MONEY_AMOUNT(D_OUT) = deci_add(
+                VAL_MONEY_AMOUNT(val), VAL_MONEY_AMOUNT(arg)
+            );
+            break;
 
-		case A_SUBTRACT:
-			VAL_MONEY_AMOUNT(D_OUT) = deci_subtract(
-				VAL_MONEY_AMOUNT(val), VAL_MONEY_AMOUNT(arg)
-			);
-			break;
+        case A_SUBTRACT:
+            VAL_MONEY_AMOUNT(D_OUT) = deci_subtract(
+                VAL_MONEY_AMOUNT(val), VAL_MONEY_AMOUNT(arg)
+            );
+            break;
 
-		case A_MULTIPLY:
-			VAL_MONEY_AMOUNT(D_OUT) = deci_multiply(
-				VAL_MONEY_AMOUNT(val), VAL_MONEY_AMOUNT(arg)
-			);
-			break;
+        case A_MULTIPLY:
+            VAL_MONEY_AMOUNT(D_OUT) = deci_multiply(
+                VAL_MONEY_AMOUNT(val), VAL_MONEY_AMOUNT(arg)
+            );
+            break;
 
-		case A_DIVIDE:
-			VAL_MONEY_AMOUNT(D_OUT) = deci_divide(
-				VAL_MONEY_AMOUNT(val), VAL_MONEY_AMOUNT(arg)
-			);
+        case A_DIVIDE:
+            VAL_MONEY_AMOUNT(D_OUT) = deci_divide(
+                VAL_MONEY_AMOUNT(val), VAL_MONEY_AMOUNT(arg)
+            );
 
-			// It was asked that `$10 / $20` be `0.5` and not `$0.5`
-			// (Not a general solution to dimensional analysis, e.g. `$1 * $1`
-			// does not give "dollars squared".)
-			//
-			if (IS_MONEY(arg)) {
-				// Extract to keep from having a problem with the macro
-				// mutating the value it is sourcing from.
-				REBDEC decimal = deci_to_decimal(VAL_MONEY_AMOUNT(D_OUT));
-				SET_DECIMAL(D_OUT, decimal);
-				return R_OUT;
-			}
-			break;
+            // It was asked that `$10 / $20` be `0.5` and not `$0.5`
+            // (Not a general solution to dimensional analysis, e.g. `$1 * $1`
+            // does not give "dollars squared".)
+            //
+            if (IS_MONEY(arg)) {
+                // Extract to keep from having a problem with the macro
+                // mutating the value it is sourcing from.
+                REBDEC decimal = deci_to_decimal(VAL_MONEY_AMOUNT(D_OUT));
+                SET_DECIMAL(D_OUT, decimal);
+                return R_OUT;
+            }
+            break;
 
-		case A_REMAINDER:
-			VAL_MONEY_AMOUNT(D_OUT) = deci_mod(
-				VAL_MONEY_AMOUNT(val), VAL_MONEY_AMOUNT(arg)
-			);
-			break;
+        case A_REMAINDER:
+            VAL_MONEY_AMOUNT(D_OUT) = deci_mod(
+                VAL_MONEY_AMOUNT(val), VAL_MONEY_AMOUNT(arg)
+            );
+            break;
 
-		default:
-			fail (Error_Illegal_Action(REB_MONEY, action));
-		}
+        default:
+            fail (Error_Illegal_Action(REB_MONEY, action));
+        }
 
-		SET_TYPE(D_OUT, REB_MONEY);
-		return R_OUT;
-	}
+        SET_TYPE(D_OUT, REB_MONEY);
+        return R_OUT;
+    }
 
-	switch(action) {
-	case A_NEGATE:
-		VAL_MONEY_AMOUNT(val).s = !VAL_MONEY_AMOUNT(val).s;
-		return R_ARG1;
+    switch(action) {
+    case A_NEGATE:
+        VAL_MONEY_AMOUNT(val).s = !VAL_MONEY_AMOUNT(val).s;
+        return R_ARG1;
 
-	case A_ABSOLUTE:
-		VAL_MONEY_AMOUNT(val).s = 0;
-		return R_ARG1;
+    case A_ABSOLUTE:
+        VAL_MONEY_AMOUNT(val).s = 0;
+        return R_ARG1;
 
-	case A_ROUND:
-		arg = D_ARG(3);
-		if (D_REF(2)) {
-			if (IS_INTEGER(arg))
-				VAL_MONEY_AMOUNT(arg) = int_to_deci(VAL_INT64(arg));
-			else if (IS_DECIMAL(arg) || IS_PERCENT(arg))
-				VAL_MONEY_AMOUNT(arg) = decimal_to_deci(VAL_DECIMAL(arg));
-			else if (!IS_MONEY(arg)) fail (Error_Invalid_Arg(arg));
-		}
-		VAL_MONEY_AMOUNT(D_OUT) = Round_Deci(
-			VAL_MONEY_AMOUNT(val),
-			Get_Round_Flags(call_),
-			VAL_MONEY_AMOUNT(arg)
-		);
-		if (D_REF(2)) {
-			if (IS_DECIMAL(arg) || IS_PERCENT(arg)) {
-				VAL_DECIMAL(D_OUT) = deci_to_decimal(VAL_MONEY_AMOUNT(D_OUT));
-				SET_TYPE(D_OUT, VAL_TYPE(arg));
-				return R_OUT;
-			}
-			if (IS_INTEGER(arg)) {
-				VAL_INT64(D_OUT) = deci_to_int(VAL_MONEY_AMOUNT(D_OUT));;
-				SET_TYPE(D_OUT, REB_INTEGER);
-				return R_OUT;
-			}
-		}
-		break;
+    case A_ROUND:
+        arg = D_ARG(3);
+        if (D_REF(2)) {
+            if (IS_INTEGER(arg))
+                VAL_MONEY_AMOUNT(arg) = int_to_deci(VAL_INT64(arg));
+            else if (IS_DECIMAL(arg) || IS_PERCENT(arg))
+                VAL_MONEY_AMOUNT(arg) = decimal_to_deci(VAL_DECIMAL(arg));
+            else if (!IS_MONEY(arg)) fail (Error_Invalid_Arg(arg));
+        }
+        VAL_MONEY_AMOUNT(D_OUT) = Round_Deci(
+            VAL_MONEY_AMOUNT(val),
+            Get_Round_Flags(call_),
+            VAL_MONEY_AMOUNT(arg)
+        );
+        if (D_REF(2)) {
+            if (IS_DECIMAL(arg) || IS_PERCENT(arg)) {
+                VAL_DECIMAL(D_OUT) = deci_to_decimal(VAL_MONEY_AMOUNT(D_OUT));
+                SET_TYPE(D_OUT, VAL_TYPE(arg));
+                return R_OUT;
+            }
+            if (IS_INTEGER(arg)) {
+                VAL_INT64(D_OUT) = deci_to_int(VAL_MONEY_AMOUNT(D_OUT));;
+                SET_TYPE(D_OUT, REB_INTEGER);
+                return R_OUT;
+            }
+        }
+        break;
 
-	case A_EVENQ:
-	case A_ODDQ:
-		equal = 1 & (REBINT)deci_to_int(VAL_MONEY_AMOUNT(val));
-		if (action == A_EVENQ) equal = !equal;
-		if (equal) goto is_true;
-		goto is_false;
+    case A_EVENQ:
+    case A_ODDQ:
+        equal = 1 & (REBINT)deci_to_int(VAL_MONEY_AMOUNT(val));
+        if (action == A_EVENQ) equal = !equal;
+        if (equal) goto is_true;
+        goto is_false;
 
-	case A_MAKE:
-	case A_TO:
-		arg = D_ARG(2);
+    case A_MAKE:
+    case A_TO:
+        arg = D_ARG(2);
 
-		switch (VAL_TYPE(arg)) {
+        switch (VAL_TYPE(arg)) {
 
-		case REB_INTEGER:
-			VAL_MONEY_AMOUNT(D_OUT) = int_to_deci(VAL_INT64(arg));
-			break;
+        case REB_INTEGER:
+            VAL_MONEY_AMOUNT(D_OUT) = int_to_deci(VAL_INT64(arg));
+            break;
 
-		case REB_DECIMAL:
-		case REB_PERCENT:
-			VAL_MONEY_AMOUNT(D_OUT) = decimal_to_deci(VAL_DECIMAL(arg));
-			break;
+        case REB_DECIMAL:
+        case REB_PERCENT:
+            VAL_MONEY_AMOUNT(D_OUT) = decimal_to_deci(VAL_DECIMAL(arg));
+            break;
 
-		case REB_MONEY:
-			return R_ARG2;
+        case REB_MONEY:
+            return R_ARG2;
 
-		case REB_STRING:
-		{
-			const REBYTE *end;
-			str = Temp_Byte_Chars_May_Fail(arg, MAX_SCAN_MONEY, 0, FALSE);
-			VAL_MONEY_AMOUNT(D_OUT) = string_to_deci(str, &end);
-			if (end == str || *end != 0) fail (Error_Bad_Make(REB_MONEY, arg));
-			break;
-		}
+        case REB_STRING:
+        {
+            const REBYTE *end;
+            str = Temp_Byte_Chars_May_Fail(arg, MAX_SCAN_MONEY, 0, FALSE);
+            VAL_MONEY_AMOUNT(D_OUT) = string_to_deci(str, &end);
+            if (end == str || *end != 0) fail (Error_Bad_Make(REB_MONEY, arg));
+            break;
+        }
 
-//		case REB_ISSUE:
-		case REB_BINARY:
-			if (!Bin_To_Money(D_OUT, arg)) goto err;
-			break;
+//      case REB_ISSUE:
+        case REB_BINARY:
+            if (!Bin_To_Money(D_OUT, arg)) goto err;
+            break;
 
-		case REB_LOGIC:
-			equal = !VAL_LOGIC(arg);
-//		case REB_NONE: // 'equal defaults to 1
-			VAL_MONEY_AMOUNT(D_OUT) = int_to_deci(equal ? 0 : 1);
-			break;
+        case REB_LOGIC:
+            equal = !VAL_LOGIC(arg);
+//      case REB_NONE: // 'equal defaults to 1
+            VAL_MONEY_AMOUNT(D_OUT) = int_to_deci(equal ? 0 : 1);
+            break;
 
-		default:
-		err:
-			fail (Error_Bad_Make(REB_MONEY, arg));
-		}
-		break;
+        default:
+        err:
+            fail (Error_Bad_Make(REB_MONEY, arg));
+        }
+        break;
 
-	default:
-		fail (Error_Illegal_Action(REB_MONEY, action));
-	}
+    default:
+        fail (Error_Illegal_Action(REB_MONEY, action));
+    }
 
-	SET_TYPE(D_OUT, REB_MONEY);
-	return R_OUT;
+    SET_TYPE(D_OUT, REB_MONEY);
+    return R_OUT;
 
 is_true:  return R_TRUE;
 is_false: return R_FALSE;

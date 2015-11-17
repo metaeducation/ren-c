@@ -61,8 +61,8 @@ extern void Signal_Device(REBREQ *req, REBINT type);
 //
 DEVICE_CMD Open_Clipboard(REBREQ *req)
 {
-	SET_OPEN(req);
-	return DR_DONE;
+    SET_OPEN(req);
+    return DR_DONE;
 }
 
 
@@ -71,8 +71,8 @@ DEVICE_CMD Open_Clipboard(REBREQ *req)
 //
 DEVICE_CMD Close_Clipboard(REBREQ *req)
 {
-	SET_CLOSED(req);
-	return DR_DONE;
+    SET_CLOSED(req);
+    return DR_DONE;
 }
 
 
@@ -81,52 +81,52 @@ DEVICE_CMD Close_Clipboard(REBREQ *req)
 //
 DEVICE_CMD Read_Clipboard(REBREQ *req)
 {
-	HANDLE data;
+    HANDLE data;
     wchar_t *cp;
     wchar_t *bin;
-	REBINT len;
+    REBINT len;
 
-	req->actual = 0;
+    req->actual = 0;
 
-	// If there is no clipboard data:
-	if (!IsClipboardFormatAvailable(CF_UNICODETEXT)) {
-		req->error = 10;
-		return DR_ERROR;
-	}
+    // If there is no clipboard data:
+    if (!IsClipboardFormatAvailable(CF_UNICODETEXT)) {
+        req->error = 10;
+        return DR_ERROR;
+    }
 
-	if (!OpenClipboard(NULL)) {
-		req->error = 20;
-		return DR_ERROR;
-	}
+    if (!OpenClipboard(NULL)) {
+        req->error = 20;
+        return DR_ERROR;
+    }
 
-	// Read the UTF-8 data:
-	if ((data = GetClipboardData(CF_UNICODETEXT)) == NULL) {
-		CloseClipboard();
-		req->error = 30;
-		return DR_ERROR;
-	}
+    // Read the UTF-8 data:
+    if ((data = GetClipboardData(CF_UNICODETEXT)) == NULL) {
+        CloseClipboard();
+        req->error = 30;
+        return DR_ERROR;
+    }
 
     cp = cast(wchar_t*, GlobalLock(data));
-	if (!cp) {
-		GlobalUnlock(data);
-		CloseClipboard();
-		req->error = 40;
-		return DR_ERROR;
-	}
+    if (!cp) {
+        GlobalUnlock(data);
+        CloseClipboard();
+        req->error = 40;
+        return DR_ERROR;
+    }
 
-	len = wcslen(cp);
-	bin = OS_ALLOC_ARRAY(wchar_t, len + 1);
-	wcsncpy(bin, cp, len);
+    len = wcslen(cp);
+    bin = OS_ALLOC_ARRAY(wchar_t, len + 1);
+    wcsncpy(bin, cp, len);
 
-	GlobalUnlock(data);
+    GlobalUnlock(data);
 
-	CloseClipboard();
+    CloseClipboard();
 
-	SET_FLAG(req->flags, RRF_WIDE);
-	req->common.data = cast(REBYTE *, bin);
-	req->actual = len * sizeof(wchar_t);
-	Signal_Device(req, EVT_READ);
-	return DR_DONE;
+    SET_FLAG(req->flags, RRF_WIDE);
+    req->common.data = cast(REBYTE *, bin);
+    req->actual = len * sizeof(wchar_t);
+    Signal_Device(req, EVT_READ);
+    return DR_DONE;
 }
 
 
@@ -138,49 +138,49 @@ DEVICE_CMD Read_Clipboard(REBREQ *req)
 //
 DEVICE_CMD Write_Clipboard(REBREQ *req)
 {
-	HANDLE data;
-	REBYTE *bin;
-	REBCNT err;
-	REBINT len = req->length; // in bytes
+    HANDLE data;
+    REBYTE *bin;
+    REBCNT err;
+    REBINT len = req->length; // in bytes
 
-	req->actual = 0;
+    req->actual = 0;
 
-	data = GlobalAlloc(GHND, len + 4);
-	if (data == NULL) {
-		req->error = 5;
-		return DR_ERROR;
-	}
+    data = GlobalAlloc(GHND, len + 4);
+    if (data == NULL) {
+        req->error = 5;
+        return DR_ERROR;
+    }
 
-	// Lock and copy the string:
+    // Lock and copy the string:
     bin = cast(REBYTE*, GlobalLock(data));
-	if (bin == NULL) {
-		req->error = 10;
-		return DR_ERROR;
-	}
+    if (bin == NULL) {
+        req->error = 10;
+        return DR_ERROR;
+    }
 
-	memcpy(bin, req->common.data, len);
-	bin[len] = 0;
-	GlobalUnlock(data);
+    memcpy(bin, req->common.data, len);
+    bin[len] = 0;
+    GlobalUnlock(data);
 
-	if (!OpenClipboard(NULL)) {
-		req->error = 20;
-		return DR_ERROR;
-	}
+    if (!OpenClipboard(NULL)) {
+        req->error = 20;
+        return DR_ERROR;
+    }
 
-	EmptyClipboard();
+    EmptyClipboard();
 
-	err = !SetClipboardData(GET_FLAG(req->flags, RRF_WIDE) ? CF_UNICODETEXT : CF_TEXT, data);
+    err = !SetClipboardData(GET_FLAG(req->flags, RRF_WIDE) ? CF_UNICODETEXT : CF_TEXT, data);
 
-	CloseClipboard();
+    CloseClipboard();
 
-	if (err) {
-		req->error = 50;
-		return DR_ERROR;
-	}
+    if (err) {
+        req->error = 50;
+        return DR_ERROR;
+    }
 
-	req->actual = len;
-	Signal_Device(req, EVT_WROTE);
-	return DR_DONE;
+    req->actual = len;
+    Signal_Device(req, EVT_WROTE);
+    return DR_DONE;
 }
 
 
@@ -189,25 +189,25 @@ DEVICE_CMD Write_Clipboard(REBREQ *req)
 //
 DEVICE_CMD Poll_Clipboard(REBREQ *req)
 {
-	return DR_DONE;
+    return DR_DONE;
 }
 
 
 /***********************************************************************
 **
-**	Command Dispatch Table (RDC_ enum order)
+**  Command Dispatch Table (RDC_ enum order)
 **
 ***********************************************************************/
 
 static DEVICE_CMD_FUNC Dev_Cmds[RDC_MAX] =
 {
-	0,
-	0,
-	Open_Clipboard,
-	Close_Clipboard,
-	Read_Clipboard,
-	Write_Clipboard,
-	Poll_Clipboard,
+    0,
+    0,
+    Open_Clipboard,
+    Close_Clipboard,
+    Read_Clipboard,
+    Write_Clipboard,
+    Poll_Clipboard,
 };
 
 DEFINE_DEV(Dev_Clipboard, "Clipboard", 1, Dev_Cmds, RDC_MAX, 0);

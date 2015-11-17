@@ -38,10 +38,10 @@
 //
 REBOOL All_Bytes_ASCII(REBYTE *bp, REBCNT len)
 {
-	for (; len > 0; len--, bp++)
-		if (*bp >= 0x80) return FALSE;
+    for (; len > 0; len--, bp++)
+        if (*bp >= 0x80) return FALSE;
 
-	return TRUE;
+    return TRUE;
 }
 
 
@@ -52,10 +52,10 @@ REBOOL All_Bytes_ASCII(REBYTE *bp, REBCNT len)
 //
 REBOOL Is_Wide(const REBUNI *up, REBCNT len)
 {
-	for (; len > 0; len--, up++)
-		if (*up >= 0x100) return TRUE;
+    for (; len > 0; len--, up++)
+        if (*up >= 0x100) return TRUE;
 
-	return FALSE;
+    return FALSE;
 }
 
 
@@ -88,56 +88,56 @@ REBOOL Is_Wide(const REBUNI *up, REBCNT len)
 //
 REBYTE *Temp_Byte_Chars_May_Fail(const REBVAL *val, REBINT max_len, REBCNT *length, REBINT opts)
 {
-	REBCNT tail = VAL_TAIL(val);
-	REBCNT index = VAL_INDEX(val);
-	REBCNT len;
-	REBUNI c;
-	REBYTE *bp;
-	REBSER *src = VAL_SERIES(val);
+    REBCNT tail = VAL_TAIL(val);
+    REBCNT index = VAL_INDEX(val);
+    REBCNT len;
+    REBUNI c;
+    REBYTE *bp;
+    REBSER *src = VAL_SERIES(val);
 
-	if (index > tail) fail (Error(RE_PAST_END));
+    if (index > tail) fail (Error(RE_PAST_END));
 
-	Resize_Series(BUF_FORM, max_len+1);
-	bp = BIN_HEAD(BUF_FORM);
+    Resize_Series(BUF_FORM, max_len+1);
+    bp = BIN_HEAD(BUF_FORM);
 
-	// Skip leading whitespace:
-	for (; index < tail; index++) {
-		c = GET_ANY_CHAR(src, index);
-		if (!IS_SPACE(c)) break;
-	}
+    // Skip leading whitespace:
+    for (; index < tail; index++) {
+        c = GET_ANY_CHAR(src, index);
+        if (!IS_SPACE(c)) break;
+    }
 
-	// Copy chars that are valid:
-	for (; index < tail; index++) {
-		c = GET_ANY_CHAR(src, index);
-		if (opts < 2 && c >= 0x80) {
-			if (opts == 0) fail (Error(RE_INVALID_CHARS));
-			len = Encode_UTF8_Char(bp, c);
-			max_len -= len;
-			bp += len;
-		}
-		else if (!IS_SPACE(c)) {
-			*bp++ = (REBYTE)c;
-			max_len--;
-		}
-		else break;
-		if (max_len < 0)
-			fail (Error(RE_TOO_LONG));
-	}
+    // Copy chars that are valid:
+    for (; index < tail; index++) {
+        c = GET_ANY_CHAR(src, index);
+        if (opts < 2 && c >= 0x80) {
+            if (opts == 0) fail (Error(RE_INVALID_CHARS));
+            len = Encode_UTF8_Char(bp, c);
+            max_len -= len;
+            bp += len;
+        }
+        else if (!IS_SPACE(c)) {
+            *bp++ = (REBYTE)c;
+            max_len--;
+        }
+        else break;
+        if (max_len < 0)
+            fail (Error(RE_TOO_LONG));
+    }
 
-	// Rest better be just spaces:
-	for (; index < tail; index++) {
-		c = GET_ANY_CHAR(src, index);
-		if (!IS_SPACE(c)) fail (Error(RE_INVALID_CHARS));
-	}
+    // Rest better be just spaces:
+    for (; index < tail; index++) {
+        c = GET_ANY_CHAR(src, index);
+        if (!IS_SPACE(c)) fail (Error(RE_INVALID_CHARS));
+    }
 
-	*bp= 0;
+    *bp= 0;
 
-	len = bp - BIN_HEAD(BUF_FORM);
-	if (len == 0) fail (Error(RE_TOO_SHORT));
+    len = bp - BIN_HEAD(BUF_FORM);
+    if (len == 0) fail (Error(RE_TOO_SHORT));
 
-	if (length) *length = len;
+    if (length) *length = len;
 
-	return BIN_HEAD(BUF_FORM);
+    return BIN_HEAD(BUF_FORM);
 }
 
 
@@ -167,32 +167,32 @@ REBYTE *Temp_Byte_Chars_May_Fail(const REBVAL *val, REBINT max_len, REBCNT *leng
 //
 REBSER *Temp_Bin_Str_Managed(REBVAL *val, REBCNT *index, REBCNT *length)
 {
-	REBCNT len = (length && *length) ? *length : VAL_LEN(val);
-	REBSER *series;
+    REBCNT len = (length && *length) ? *length : VAL_LEN(val);
+    REBSER *series;
 
-	assert(IS_BINARY(val) || ANY_STR(val));
+    assert(IS_BINARY(val) || ANY_STR(val));
 
-	if (len == 0 || IS_BINARY(val) || VAL_STR_IS_ASCII(val)) {
-		// If it's zero length, BINARY!, or an ANY-STRING! whose bytes are
-		// all values less than 128, we reuse the series.
+    if (len == 0 || IS_BINARY(val) || VAL_STR_IS_ASCII(val)) {
+        // If it's zero length, BINARY!, or an ANY-STRING! whose bytes are
+        // all values less than 128, we reuse the series.
 
-		series = VAL_SERIES(val);
-		ASSERT_SERIES_MANAGED(series);
+        series = VAL_SERIES(val);
+        ASSERT_SERIES_MANAGED(series);
 
-		if (index) *index = VAL_INDEX(val);
-		if (length) *length = len;
-	}
-	else {
-		// UTF-8 conversion is required, and we manage the result.
+        if (index) *index = VAL_INDEX(val);
+        if (length) *length = len;
+    }
+    else {
+        // UTF-8 conversion is required, and we manage the result.
 
-		series = Make_UTF8_From_Any_String(val, len, OPT_ENC_CRLF_MAYBE);
-		MANAGE_SERIES(series);
+        series = Make_UTF8_From_Any_String(val, len, OPT_ENC_CRLF_MAYBE);
+        MANAGE_SERIES(series);
 
-		if (index) *index = 0;
-		if (length) *length = SERIES_TAIL(series);
-	}
+        if (index) *index = 0;
+        if (length) *length = SERIES_TAIL(series);
+    }
 
-	return series;
+    return series;
 }
 
 
@@ -203,48 +203,48 @@ REBSER *Temp_Bin_Str_Managed(REBVAL *val, REBCNT *index, REBCNT *length)
 //
 REBSER *Xandor_Binary(REBCNT action, REBVAL *value, REBVAL *arg)
 {
-		REBSER *series;
-		REBYTE *p0 = VAL_BIN_DATA(value);
-		REBYTE *p1 = VAL_BIN_DATA(arg);
-		REBYTE *p2;
-		REBCNT i;
-		REBCNT mt, t1, t0, t2;
+        REBSER *series;
+        REBYTE *p0 = VAL_BIN_DATA(value);
+        REBYTE *p1 = VAL_BIN_DATA(arg);
+        REBYTE *p2;
+        REBCNT i;
+        REBCNT mt, t1, t0, t2;
 
-		t0 = VAL_LEN(value);
-		t1 = VAL_LEN(arg);
+        t0 = VAL_LEN(value);
+        t1 = VAL_LEN(arg);
 
-		mt = MIN(t0, t1); // smaller array size
-		// For AND - result is size of shortest input:
-//		if (action == A_AND || (action == 0 && t1 >= t0))
-//			t2 = mt;
-//		else
-		t2 = MAX(t0, t1);
+        mt = MIN(t0, t1); // smaller array size
+        // For AND - result is size of shortest input:
+//      if (action == A_AND || (action == 0 && t1 >= t0))
+//          t2 = mt;
+//      else
+        t2 = MAX(t0, t1);
 
-		series = Make_Binary(t2);
-		SERIES_TAIL(series) = t2;
-		p2 = BIN_HEAD(series);
+        series = Make_Binary(t2);
+        SERIES_TAIL(series) = t2;
+        p2 = BIN_HEAD(series);
 
-		switch (action) {
-		case A_AND:
-			for (i = 0; i < mt; i++) *p2++ = *p0++ & *p1++;
-			CLEAR(p2, t2 - mt);
-			return series;
-		case A_OR:
-			for (i = 0; i < mt; i++) *p2++ = *p0++ | *p1++;
-			break;
-		case A_XOR:
-			for (i = 0; i < mt; i++) *p2++ = *p0++ ^ *p1++;
-			break;
-		default:
-			// special bit set case EXCLUDE:
-			for (i = 0; i < mt; i++) *p2++ = *p0++ & ~*p1++;
-			if (t0 > t1) memcpy(p2, p0, t0 - t1); // residual from first only
-			return series;
-		}
+        switch (action) {
+        case A_AND:
+            for (i = 0; i < mt; i++) *p2++ = *p0++ & *p1++;
+            CLEAR(p2, t2 - mt);
+            return series;
+        case A_OR:
+            for (i = 0; i < mt; i++) *p2++ = *p0++ | *p1++;
+            break;
+        case A_XOR:
+            for (i = 0; i < mt; i++) *p2++ = *p0++ ^ *p1++;
+            break;
+        default:
+            // special bit set case EXCLUDE:
+            for (i = 0; i < mt; i++) *p2++ = *p0++ & ~*p1++;
+            if (t0 > t1) memcpy(p2, p0, t0 - t1); // residual from first only
+            return series;
+        }
 
-		// Copy the residual:
-		memcpy(p2, ((t0 > t1) ? p0 : p1), t2 - mt);
-		return series;
+        // Copy the residual:
+        memcpy(p2, ((t0 > t1) ? p0 : p1), t2 - mt);
+        return series;
 }
 
 
@@ -255,18 +255,18 @@ REBSER *Xandor_Binary(REBCNT action, REBVAL *value, REBVAL *arg)
 //
 REBSER *Complement_Binary(REBVAL *value)
 {
-		REBSER *series;
-		REBYTE *str = VAL_BIN_DATA(value);
-		REBINT len = VAL_LEN(value);
-		REBYTE *out;
+        REBSER *series;
+        REBYTE *str = VAL_BIN_DATA(value);
+        REBINT len = VAL_LEN(value);
+        REBYTE *out;
 
-		series = Make_Binary(len);
-		SERIES_TAIL(series) = len;
-		out = BIN_HEAD(series);
-		for (; len > 0; len--)
-			*out++ = ~ *str++;
+        series = Make_Binary(len);
+        SERIES_TAIL(series) = len;
+        out = BIN_HEAD(series);
+        for (; len > 0; len--)
+            *out++ = ~ *str++;
 
-		return series;
+        return series;
 }
 
 
@@ -278,29 +278,29 @@ REBSER *Complement_Binary(REBVAL *value)
 //
 void Shuffle_String(REBVAL *value, REBFLG secure)
 {
-	REBCNT n;
-	REBCNT k;
-	REBSER *series = VAL_SERIES(value);
-	REBCNT idx     = VAL_INDEX(value);
-	REBUNI swap;
+    REBCNT n;
+    REBCNT k;
+    REBSER *series = VAL_SERIES(value);
+    REBCNT idx     = VAL_INDEX(value);
+    REBUNI swap;
 
-	for (n = VAL_LEN(value); n > 1;) {
-		k = idx + (REBCNT)Random_Int(secure) % n;
-		n--;
-		swap = GET_ANY_CHAR(series, k);
-		SET_ANY_CHAR(series, k, GET_ANY_CHAR(series, n + idx));
-		SET_ANY_CHAR(series, n + idx, swap);
-	}
+    for (n = VAL_LEN(value); n > 1;) {
+        k = idx + (REBCNT)Random_Int(secure) % n;
+        n--;
+        swap = GET_ANY_CHAR(series, k);
+        SET_ANY_CHAR(series, k, GET_ANY_CHAR(series, n + idx));
+        SET_ANY_CHAR(series, n + idx, swap);
+    }
 }
 
 
 /*
 #define SEED_LEN 10
 static REBYTE seed_str[SEED_LEN] = {
-	249, 52, 217, 38, 207, 59, 216, 52, 222, 61 // xor "Sassenrath" #{AA55..}
+    249, 52, 217, 38, 207, 59, 216, 52, 222, 61 // xor "Sassenrath" #{AA55..}
 };
-//		kp = seed_str; // Any seed constant.
-//		klen = SEED_LEN;
+//      kp = seed_str; // Any seed constant.
+//      klen = SEED_LEN;
 */
 
 //
@@ -313,55 +313,55 @@ static REBYTE seed_str[SEED_LEN] = {
 //
 REBOOL Cloak(REBOOL decode, REBYTE *cp, REBCNT dlen, REBYTE *kp, REBCNT klen, REBFLG as_is)
 {
-	REBCNT i, n;
-	REBYTE src[20];
-	REBYTE dst[20];
+    REBCNT i, n;
+    REBYTE src[20];
+    REBYTE dst[20];
 
-	if (dlen == 0) return TRUE;
+    if (dlen == 0) return TRUE;
 
-	// Decode KEY as VALUE field (binary, string, or integer)
-	if (klen == 0) {
-		REBVAL *val = (REBVAL*)kp;
-		REBSER *ser;
+    // Decode KEY as VALUE field (binary, string, or integer)
+    if (klen == 0) {
+        REBVAL *val = (REBVAL*)kp;
+        REBSER *ser;
 
-		switch (VAL_TYPE(val)) {
-		case REB_BINARY:
-			kp = VAL_BIN_DATA(val);
-			klen = VAL_LEN(val);
-			break;
-		case REB_STRING:
-			ser = Temp_Bin_Str_Managed(val, &i, &klen);
-			kp = BIN_SKIP(ser, i);
-			break;
-		case REB_INTEGER:
-			INT_TO_STR(VAL_INT64(val), dst);
-			klen = LEN_BYTES(dst);
-			as_is = FALSE;
-			break;
-		}
+        switch (VAL_TYPE(val)) {
+        case REB_BINARY:
+            kp = VAL_BIN_DATA(val);
+            klen = VAL_LEN(val);
+            break;
+        case REB_STRING:
+            ser = Temp_Bin_Str_Managed(val, &i, &klen);
+            kp = BIN_SKIP(ser, i);
+            break;
+        case REB_INTEGER:
+            INT_TO_STR(VAL_INT64(val), dst);
+            klen = LEN_BYTES(dst);
+            as_is = FALSE;
+            break;
+        }
 
-		if (klen == 0) return FALSE;
-	}
+        if (klen == 0) return FALSE;
+    }
 
-	if (!as_is) {
-		for (i = 0; i < 20; i++) src[i] = kp[i % klen];
-		SHA1(src, 20, dst);
-		klen = 20;
-		kp = dst;
-	}
+    if (!as_is) {
+        for (i = 0; i < 20; i++) src[i] = kp[i % klen];
+        SHA1(src, 20, dst);
+        klen = 20;
+        kp = dst;
+    }
 
-	if (decode)
-		for (i = dlen-1; i > 0; i--) cp[i] ^= cp[i-1] ^ kp[i % klen];
+    if (decode)
+        for (i = dlen-1; i > 0; i--) cp[i] ^= cp[i-1] ^ kp[i % klen];
 
-	// Change starting byte based all other bytes.
-	n = 0xa5;
-	for (i = 1; i < dlen; i++) n += cp[i];
-	cp[0] ^= (REBYTE)n;
+    // Change starting byte based all other bytes.
+    n = 0xa5;
+    for (i = 1; i < dlen; i++) n += cp[i];
+    cp[0] ^= (REBYTE)n;
 
-	if (!decode)
-		for (i = 1; i < dlen; i++) cp[i] ^= cp[i-1] ^ kp[i % klen];
+    if (!decode)
+        for (i = 1; i < dlen; i++) cp[i] ^= cp[i-1] ^ kp[i % klen];
 
-	return TRUE;
+    return TRUE;
 }
 
 
@@ -372,18 +372,18 @@ REBOOL Cloak(REBOOL decode, REBYTE *cp, REBCNT dlen, REBYTE *kp, REBCNT klen, RE
 //
 void Trim_Tail(REBSER *src, REBYTE chr)
 {
-	REBOOL is_uni = !BYTE_SIZE(src);
-	REBCNT tail;
-	REBUNI c;
+    REBOOL is_uni = !BYTE_SIZE(src);
+    REBCNT tail;
+    REBUNI c;
 
-	assert(!Is_Array_Series(src));
+    assert(!Is_Array_Series(src));
 
-	for (tail = SERIES_TAIL(src); tail > 0; tail--) {
-		c = is_uni ? *UNI_SKIP(src, tail - 1) : *BIN_SKIP(src, tail - 1);
-		if (c != chr) break;
-	}
-	SERIES_TAIL(src) = tail;
-	TERM_SEQUENCE(src);
+    for (tail = SERIES_TAIL(src); tail > 0; tail--) {
+        c = is_uni ? *UNI_SKIP(src, tail - 1) : *BIN_SKIP(src, tail - 1);
+        if (c != chr) break;
+    }
+    SERIES_TAIL(src) = tail;
+    TERM_SEQUENCE(src);
 }
 
 
@@ -396,22 +396,22 @@ void Trim_Tail(REBSER *src, REBYTE chr)
 //
 REBCNT Deline_Bytes(REBYTE *buf, REBCNT len)
 {
-	REBYTE	c, *cp, *tp;
+    REBYTE  c, *cp, *tp;
 
-	cp = tp = buf;
-	while (cp < buf + len) {
-		if ((c = *cp++) == LF) {
-			if (*cp == CR) cp++;
-		}
-		else if (c == CR) {
-			c = LF;
-			if (*cp == LF) cp++;
-		}
-		*tp++ = c;
-	}
-	*tp = 0;
+    cp = tp = buf;
+    while (cp < buf + len) {
+        if ((c = *cp++) == LF) {
+            if (*cp == CR) cp++;
+        }
+        else if (c == CR) {
+            c = LF;
+            if (*cp == LF) cp++;
+        }
+        *tp++ = c;
+    }
+    *tp = 0;
 
-	return (REBCNT)(tp - buf);
+    return (REBCNT)(tp - buf);
 }
 
 
@@ -420,22 +420,22 @@ REBCNT Deline_Bytes(REBYTE *buf, REBCNT len)
 //
 REBCNT Deline_Uni(REBUNI *buf, REBCNT len)
 {
-	REBUNI c, *cp, *tp;
+    REBUNI c, *cp, *tp;
 
-	cp = tp = buf;
-	while (cp < buf + len) {
-		if ((c = *cp++) == LF) {
-			if (*cp == CR) cp++;
-		}
-		else if (c == CR) {
-			c = LF;
-			if (*cp == LF) cp++;
-		}
-		*tp++ = c;
-	}
-	*tp = 0;
+    cp = tp = buf;
+    while (cp < buf + len) {
+        if ((c = *cp++) == LF) {
+            if (*cp == CR) cp++;
+        }
+        else if (c == CR) {
+            c = LF;
+            if (*cp == LF) cp++;
+        }
+        *tp++ = c;
+    }
+    *tp = 0;
 
-	return (REBCNT)(tp - buf);
+    return (REBCNT)(tp - buf);
 }
 
 
@@ -444,35 +444,35 @@ REBCNT Deline_Uni(REBUNI *buf, REBCNT len)
 //
 void Enline_Bytes(REBSER *ser, REBCNT idx, REBCNT len)
 {
-	REBCNT cnt = 0;
-	REBYTE *bp;
-	REBYTE c = 0;
-	REBCNT tail;
+    REBCNT cnt = 0;
+    REBYTE *bp;
+    REBYTE c = 0;
+    REBCNT tail;
 
-	// Calculate the size difference by counting the number of LF's
-	// that have no CR's in front of them.
-	bp = BIN_SKIP(ser, idx);
-	for (; len > 0; len--) {
-		if (*bp == LF && c != CR) cnt++;
-		c = *bp++;
-	}
-	if (cnt == 0) return;
+    // Calculate the size difference by counting the number of LF's
+    // that have no CR's in front of them.
+    bp = BIN_SKIP(ser, idx);
+    for (; len > 0; len--) {
+        if (*bp == LF && c != CR) cnt++;
+        c = *bp++;
+    }
+    if (cnt == 0) return;
 
-	// Extend series:
-	len = SERIES_TAIL(ser); // before expansion
-	EXPAND_SERIES_TAIL(ser, cnt);
-	tail = SERIES_TAIL(ser); // after expansion
-	bp = BIN_HEAD(ser); // expand may change it
+    // Extend series:
+    len = SERIES_TAIL(ser); // before expansion
+    EXPAND_SERIES_TAIL(ser, cnt);
+    tail = SERIES_TAIL(ser); // after expansion
+    bp = BIN_HEAD(ser); // expand may change it
 
-	// Add missing CRs:
-	while (cnt > 0) {
-		bp[tail--] = bp[len]; // Copy src to dst.
-		if (bp[len] == LF && (len == 0 || bp[len - 1] != CR)) {
-			bp[tail--] = CR;
-			cnt--;
-		}
-		len--;
-	}
+    // Add missing CRs:
+    while (cnt > 0) {
+        bp[tail--] = bp[len]; // Copy src to dst.
+        if (bp[len] == LF && (len == 0 || bp[len - 1] != CR)) {
+            bp[tail--] = CR;
+            cnt--;
+        }
+        len--;
+    }
 }
 
 
@@ -481,35 +481,35 @@ void Enline_Bytes(REBSER *ser, REBCNT idx, REBCNT len)
 //
 void Enline_Uni(REBSER *ser, REBCNT idx, REBCNT len)
 {
-	REBCNT cnt = 0;
-	REBUNI *bp;
-	REBUNI c = 0;
-	REBCNT tail;
+    REBCNT cnt = 0;
+    REBUNI *bp;
+    REBUNI c = 0;
+    REBCNT tail;
 
-	// Calculate the size difference by counting the number of LF's
-	// that have no CR's in front of them.
-	bp = UNI_SKIP(ser, idx);
-	for (; len > 0; len--) {
-		if (*bp == LF && c != CR) cnt++;
-		c = *bp++;
-	}
-	if (cnt == 0) return;
+    // Calculate the size difference by counting the number of LF's
+    // that have no CR's in front of them.
+    bp = UNI_SKIP(ser, idx);
+    for (; len > 0; len--) {
+        if (*bp == LF && c != CR) cnt++;
+        c = *bp++;
+    }
+    if (cnt == 0) return;
 
-	// Extend series:
-	len = SERIES_TAIL(ser); // before expansion
-	EXPAND_SERIES_TAIL(ser, cnt);
-	tail = SERIES_TAIL(ser); // after expansion
-	bp = UNI_HEAD(ser); // expand may change it
+    // Extend series:
+    len = SERIES_TAIL(ser); // before expansion
+    EXPAND_SERIES_TAIL(ser, cnt);
+    tail = SERIES_TAIL(ser); // after expansion
+    bp = UNI_HEAD(ser); // expand may change it
 
-	// Add missing CRs:
-	while (cnt > 0) {
-		bp[tail--] = bp[len]; // Copy src to dst.
-		if (bp[len] == LF && (len == 0 || bp[len - 1] != CR)) {
-			bp[tail--] = CR;
-			cnt--;
-		}
-		len--;
-	}
+    // Add missing CRs:
+    while (cnt > 0) {
+        bp[tail--] = bp[len]; // Copy src to dst.
+        if (bp[len] == LF && (len == 0 || bp[len - 1] != CR)) {
+            bp[tail--] = CR;
+            cnt--;
+        }
+        len--;
+    }
 }
 
 
@@ -520,42 +520,42 @@ void Enline_Uni(REBSER *ser, REBCNT idx, REBCNT len)
 //
 REBSER *Entab_Bytes(REBYTE *bp, REBCNT index, REBCNT len, REBINT tabsize)
 {
-	REBINT n = 0;
-	REBYTE *dp;
-	REBYTE c;
+    REBINT n = 0;
+    REBYTE *dp;
+    REBYTE c;
 
-	dp = Reset_Buffer(BUF_FORM, len);
+    dp = Reset_Buffer(BUF_FORM, len);
 
-	for (; index < len; index++) {
+    for (; index < len; index++) {
 
-		c = bp[index];
+        c = bp[index];
 
-		// Count leading spaces, insert TAB for each tabsize:
-		if (c == ' ') {
-			if (++n >= tabsize) {
-				*dp++ = '\t';
-				n = 0;
-			}
-			continue;
-		}
+        // Count leading spaces, insert TAB for each tabsize:
+        if (c == ' ') {
+            if (++n >= tabsize) {
+                *dp++ = '\t';
+                n = 0;
+            }
+            continue;
+        }
 
-		// Hitting a leading TAB resets space counter:
-		if (c == '\t') {
-			*dp++ = (REBYTE)c;
-			n = 0;
-		}
-		else {
-			// Incomplete tab space, pad with spaces:
-			for (; n > 0; n--) *dp++ = ' ';
+        // Hitting a leading TAB resets space counter:
+        if (c == '\t') {
+            *dp++ = (REBYTE)c;
+            n = 0;
+        }
+        else {
+            // Incomplete tab space, pad with spaces:
+            for (; n > 0; n--) *dp++ = ' ';
 
-			// Copy chars thru end-of-line (or end of buffer):
-			while (index < len) {
-				if ((*dp++ = bp[index++]) == '\n') break;
-			}
-		}
-	}
+            // Copy chars thru end-of-line (or end of buffer):
+            while (index < len) {
+                if ((*dp++ = bp[index++]) == '\n') break;
+            }
+        }
+    }
 
-	return Copy_Buffer(BUF_FORM, dp);
+    return Copy_Buffer(BUF_FORM, dp);
 }
 
 
@@ -566,42 +566,42 @@ REBSER *Entab_Bytes(REBYTE *bp, REBCNT index, REBCNT len, REBINT tabsize)
 //
 REBSER *Entab_Unicode(REBUNI *bp, REBCNT index, REBCNT len, REBINT tabsize)
 {
-	REBINT n = 0;
-	REBUNI *dp;
-	REBUNI c;
+    REBINT n = 0;
+    REBUNI *dp;
+    REBUNI c;
 
-	dp = (REBUNI *)Reset_Buffer(BUF_MOLD, len);
+    dp = (REBUNI *)Reset_Buffer(BUF_MOLD, len);
 
-	for (; index < len; index++) {
+    for (; index < len; index++) {
 
-		c = bp[index];
+        c = bp[index];
 
-		// Count leading spaces, insert TAB for each tabsize:
-		if (c == ' ') {
-			if (++n >= tabsize) {
-				*dp++ = '\t';
-				n = 0;
-			}
-			continue;
-		}
+        // Count leading spaces, insert TAB for each tabsize:
+        if (c == ' ') {
+            if (++n >= tabsize) {
+                *dp++ = '\t';
+                n = 0;
+            }
+            continue;
+        }
 
-		// Hitting a leading TAB resets space counter:
-		if (c == '\t') {
-			*dp++ = (REBYTE)c;
-			n = 0;
-		}
-		else {
-			// Incomplete tab space, pad with spaces:
-			for (; n > 0; n--) *dp++ = ' ';
+        // Hitting a leading TAB resets space counter:
+        if (c == '\t') {
+            *dp++ = (REBYTE)c;
+            n = 0;
+        }
+        else {
+            // Incomplete tab space, pad with spaces:
+            for (; n > 0; n--) *dp++ = ' ';
 
-			// Copy chars thru end-of-line (or end of buffer):
-			while (index < len) {
-				if ((*dp++ = bp[index++]) == '\n') break;
-			}
-		}
-	}
+            // Copy chars thru end-of-line (or end of buffer):
+            while (index < len) {
+                if ((*dp++ = bp[index++]) == '\n') break;
+            }
+        }
+    }
 
-	return Copy_Buffer(BUF_MOLD, dp);
+    return Copy_Buffer(BUF_MOLD, dp);
 }
 
 
@@ -612,36 +612,36 @@ REBSER *Entab_Unicode(REBUNI *bp, REBCNT index, REBCNT len, REBINT tabsize)
 //
 REBSER *Detab_Bytes(REBYTE *bp, REBCNT index, REBCNT len, REBINT tabsize)
 {
-	REBCNT cnt = 0;
-	REBCNT n;
-	REBYTE *dp;
-	REBYTE c;
+    REBCNT cnt = 0;
+    REBCNT n;
+    REBYTE *dp;
+    REBYTE c;
 
-	// Estimate new length based on tab expansion:
-	for (n = index; n < len; n++)
-		if (bp[n] == TAB) cnt++;
+    // Estimate new length based on tab expansion:
+    for (n = index; n < len; n++)
+        if (bp[n] == TAB) cnt++;
 
-	dp = Reset_Buffer(BUF_FORM, len + (cnt * (tabsize-1)));
+    dp = Reset_Buffer(BUF_FORM, len + (cnt * (tabsize-1)));
 
-	n = 0;
-	while (index < len) {
+    n = 0;
+    while (index < len) {
 
-		c = bp[index++];
+        c = bp[index++];
 
-		if (c == '\t') {
-			*dp++ = ' ';
-			n++;
-			for (; n % tabsize != 0; n++) *dp++ = ' ';
-			continue;
-		}
+        if (c == '\t') {
+            *dp++ = ' ';
+            n++;
+            for (; n % tabsize != 0; n++) *dp++ = ' ';
+            continue;
+        }
 
-		if (c == '\n') n = 0;
-		else n++;
+        if (c == '\n') n = 0;
+        else n++;
 
-		*dp++ = c;
-	}
+        *dp++ = c;
+    }
 
-	return Copy_Buffer(BUF_FORM, dp);
+    return Copy_Buffer(BUF_FORM, dp);
 }
 
 
@@ -652,36 +652,36 @@ REBSER *Detab_Bytes(REBYTE *bp, REBCNT index, REBCNT len, REBINT tabsize)
 //
 REBSER *Detab_Unicode(REBUNI *bp, REBCNT index, REBCNT len, REBINT tabsize)
 {
-	REBCNT cnt = 0;
-	REBCNT n;
-	REBUNI *dp;
-	REBUNI c;
+    REBCNT cnt = 0;
+    REBCNT n;
+    REBUNI *dp;
+    REBUNI c;
 
-	// Estimate new length based on tab expansion:
-	for (n = index; n < len; n++)
-		if (bp[n] == TAB) cnt++;
+    // Estimate new length based on tab expansion:
+    for (n = index; n < len; n++)
+        if (bp[n] == TAB) cnt++;
 
-	dp = (REBUNI *)Reset_Buffer(BUF_MOLD, len + (cnt * (tabsize-1)));
+    dp = (REBUNI *)Reset_Buffer(BUF_MOLD, len + (cnt * (tabsize-1)));
 
-	n = 0;
-	while (index < len) {
+    n = 0;
+    while (index < len) {
 
-		c = bp[index++];
+        c = bp[index++];
 
-		if (c == '\t') {
-			*dp++ = ' ';
-			n++;
-			for (; n % tabsize != 0; n++) *dp++ = ' ';
-			continue;
-		}
+        if (c == '\t') {
+            *dp++ = ' ';
+            n++;
+            for (; n % tabsize != 0; n++) *dp++ = ' ';
+            continue;
+        }
 
-		if (c == '\n') n = 0;
-		else n++;
+        if (c == '\n') n = 0;
+        else n++;
 
-		*dp++ = c;
-	}
+        *dp++ = c;
+    }
 
-	return Copy_Buffer(BUF_MOLD, dp);
+    return Copy_Buffer(BUF_MOLD, dp);
 }
 
 
@@ -692,48 +692,48 @@ REBSER *Detab_Unicode(REBUNI *bp, REBCNT index, REBCNT len, REBINT tabsize)
 //
 void Change_Case(REBVAL *out, REBVAL *val, REBVAL *part, REBOOL upper)
 {
-	REBCNT len;
-	REBCNT n;
+    REBCNT len;
+    REBCNT n;
 
-	*out = *val;
+    *out = *val;
 
-	if (IS_CHAR(val)) {
-		REBUNI c = VAL_CHAR(val);
-		if (c < UNICODE_CASES) {
-			c = upper ? UP_CASE(c) : LO_CASE(c);
-		}
-		VAL_CHAR(out) = c;
-		return;
-	}
+    if (IS_CHAR(val)) {
+        REBUNI c = VAL_CHAR(val);
+        if (c < UNICODE_CASES) {
+            c = upper ? UP_CASE(c) : LO_CASE(c);
+        }
+        VAL_CHAR(out) = c;
+        return;
+    }
 
-	// String series:
+    // String series:
 
-	if (IS_PROTECT_SERIES(VAL_SERIES(val))) fail (Error(RE_PROTECTED));
+    if (IS_PROTECT_SERIES(VAL_SERIES(val))) fail (Error(RE_PROTECTED));
 
-	len = Partial(val, 0, part, 0);
-	n = VAL_INDEX(val);
-	len += n;
+    len = Partial(val, 0, part, 0);
+    n = VAL_INDEX(val);
+    len += n;
 
-	if (VAL_BYTE_SIZE(val)) {
-		REBYTE *bp = VAL_BIN(val);
-		if (upper)
-			for (; n < len; n++) bp[n] = (REBYTE)UP_CASE(bp[n]);
-		else {
-			for (; n < len; n++) bp[n] = (REBYTE)LO_CASE(bp[n]);
-		}
-	} else {
-		REBUNI *up = VAL_UNI(val);
-		if (upper) {
-			for (; n < len; n++) {
-				if (up[n] < UNICODE_CASES) up[n] = UP_CASE(up[n]);
-			}
-		}
-		else {
-			for (; n < len; n++) {
-				if (up[n] < UNICODE_CASES) up[n] = LO_CASE(up[n]);
-			}
-		}
-	}
+    if (VAL_BYTE_SIZE(val)) {
+        REBYTE *bp = VAL_BIN(val);
+        if (upper)
+            for (; n < len; n++) bp[n] = (REBYTE)UP_CASE(bp[n]);
+        else {
+            for (; n < len; n++) bp[n] = (REBYTE)LO_CASE(bp[n]);
+        }
+    } else {
+        REBUNI *up = VAL_UNI(val);
+        if (upper) {
+            for (; n < len; n++) {
+                if (up[n] < UNICODE_CASES) up[n] = UP_CASE(up[n]);
+            }
+        }
+        else {
+            for (; n < len; n++) {
+                if (up[n] < UNICODE_CASES) up[n] = LO_CASE(up[n]);
+            }
+        }
+    }
 }
 
 
@@ -745,37 +745,37 @@ void Change_Case(REBVAL *out, REBVAL *val, REBVAL *part, REBOOL upper)
 //
 REBSER *Split_Lines(REBVAL *val)
 {
-	REBSER *ser = BUF_EMIT; // GC protected (because it is emit buffer)
-	REBSER *str = VAL_SERIES(val);
-	REBCNT len = VAL_LEN(val);
-	REBCNT idx = VAL_INDEX(val);
-	REBCNT start = idx;
-	REBSER *out;
-	REBUNI c;
+    REBSER *ser = BUF_EMIT; // GC protected (because it is emit buffer)
+    REBSER *str = VAL_SERIES(val);
+    REBCNT len = VAL_LEN(val);
+    REBCNT idx = VAL_INDEX(val);
+    REBCNT start = idx;
+    REBSER *out;
+    REBUNI c;
 
-	BLK_RESET(ser);
+    BLK_RESET(ser);
 
-	while (idx < len) {
-		c = GET_ANY_CHAR(str, idx);
-		if (c == LF || c == CR) {
-			out = Copy_String(str, start, idx - start);
-			val = Alloc_Tail_Array(ser);
-			Val_Init_String(val, out);
-			VAL_SET_OPT(val, OPT_VALUE_LINE);
-			idx++;
-			if (c == CR && GET_ANY_CHAR(str, idx) == LF)
-				idx++;
-			start = idx;
-		}
-		else idx++;
-	}
-	// Possible remainder (no terminator)
-	if (idx > start) {
-		out = Copy_String(str, start, idx - start);
-		val = Alloc_Tail_Array(ser);
-		Val_Init_String(val, out);
-		VAL_SET_OPT(val, OPT_VALUE_LINE);
-	}
+    while (idx < len) {
+        c = GET_ANY_CHAR(str, idx);
+        if (c == LF || c == CR) {
+            out = Copy_String(str, start, idx - start);
+            val = Alloc_Tail_Array(ser);
+            Val_Init_String(val, out);
+            VAL_SET_OPT(val, OPT_VALUE_LINE);
+            idx++;
+            if (c == CR && GET_ANY_CHAR(str, idx) == LF)
+                idx++;
+            start = idx;
+        }
+        else idx++;
+    }
+    // Possible remainder (no terminator)
+    if (idx > start) {
+        out = Copy_String(str, start, idx - start);
+        val = Alloc_Tail_Array(ser);
+        Val_Init_String(val, out);
+        VAL_SET_OPT(val, OPT_VALUE_LINE);
+    }
 
-	return Copy_Array_Shallow(ser);
+    return Copy_Array_Shallow(ser);
 }

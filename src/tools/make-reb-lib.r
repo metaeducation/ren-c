@@ -1,16 +1,16 @@
 REBOL [
-	System: "REBOL [R3] Language Interpreter and Run-time Environment"
-	Title: "Make Reb-Lib related files"
-	Rights: {
-		Copyright 2012 REBOL Technologies
-		REBOL is a trademark of REBOL Technologies
-	}
-	License: {
-		Licensed under the Apache License, Version 2.0
-		See: http://www.apache.org/licenses/LICENSE-2.0
-	}
-	Author: "Carl Sassenrath"
-	Needs: 2.100.100
+    System: "REBOL [R3] Language Interpreter and Run-time Environment"
+    Title: "Make Reb-Lib related files"
+    Rights: {
+        Copyright 2012 REBOL Technologies
+        REBOL is a trademark of REBOL Technologies
+    }
+    License: {
+        Licensed under the Apache License, Version 2.0
+        See: http://www.apache.org/licenses/LICENSE-2.0
+    }
+    Author: "Carl Sassenrath"
+    Needs: 2.100.100
 ]
 
 print "--- Make Reb-Lib Headers ---"
@@ -53,130 +53,130 @@ emit-rlib: func [d] [append repend rlib-buffer d newline]
 emit-dlib: func [d] [append repend dlib-buffer d newline]
 emit-comment: func [d] [append repend comments-buffer d newline]
 emit-mlib: func [d /nol] [
-	repend mlib-buffer d
-	if not nol [append mlib-buffer newline]
+    repend mlib-buffer d
+    if not nol [append mlib-buffer newline]
 ]
 
 count: func [s c /local n] [
-	if find ["()" "(void)"] s [return "()"]
-	out: copy "(a"
-	n: 1
-	while [s: find/tail s c][
-		repend out [#"," #"a" + n]
-		n: n + 1
-	]
-	append out ")"
+    if find ["()" "(void)"] s [return "()"]
+    out: copy "(a"
+    n: 1
+    while [s: find/tail s c][
+        repend out [#"," #"a" + n]
+        n: n + 1
+    ]
+    append out ")"
 ]
 
 in-sub: func [text pattern /local position] [
-	all [
-		position: find text pattern ":"
-		insert position "^/:"
-		position: find next position newline
-		remove position
-		insert position " - "
-	]
+    all [
+        position: find text pattern ":"
+        insert position "^/:"
+        position: find next position newline
+        remove position
+        insert position " - "
+    ]
 ]
 
 gen-doc: func [name proto text] [
-	replace/all text "**" "  "
-	replace/all text "/*" "  "
-	replace/all text "*/" "  "
-	trim text
-	append text newline
+    replace/all text "**" "  "
+    replace/all text "/*" "  "
+    replace/all text "*/" "  "
+    trim text
+    append text newline
 
-	insert find text "Arguments:" "^/:"
-	bb: beg: find/tail text "Arguments:"
-	insert any [find bb "notes:" tail bb] newline
-	while [
-		all [
-			beg: find beg " - "
-			positive? offset-of beg any [find beg "notes:" tail beg]
-		]
-	][
-		insert beg </tt>
-		insert find/tail/reverse beg newline {<br><tt class=word>}
-		beg: find/tail beg " - "
-	]
+    insert find text "Arguments:" "^/:"
+    bb: beg: find/tail text "Arguments:"
+    insert any [find bb "notes:" tail bb] newline
+    while [
+        all [
+            beg: find beg " - "
+            positive? offset-of beg any [find beg "notes:" tail beg]
+        ]
+    ][
+        insert beg </tt>
+        insert find/tail/reverse beg newline {<br><tt class=word>}
+        beg: find/tail beg " - "
+    ]
 
-	beg: insert bb { - } ;<div style="white-space: pre;">}
-	remove find beg newline
-	remove/part find beg "<br>" 4 ; extra <br>
+    beg: insert bb { - } ;<div style="white-space: pre;">}
+    remove find beg newline
+    remove/part find beg "<br>" 4 ; extra <br>
 
-	remove find text "^/Returns:"
-	in-sub text "Returns:"
-	in-sub text "Notes:"
+    remove find text "^/Returns:"
+    in-sub text "Returns:"
+    in-sub text "Notes:"
 
-	insert text reduce [
-		":Function: - " <tt class=word> proto </tt>
-		"^/^/:Summary: - "
-	]
-	emit-comment ["===" name newline newline text]
+    insert text reduce [
+        ":Function: - " <tt class=word> proto </tt>
+        "^/^/:Summary: - "
+    ]
+    emit-comment ["===" name newline newline text]
 ]
 
 pads: func [start col] [
-	col: col - offset-of start tail start
-	head insert/dup clear "" #" " col
+    col: col - offset-of start tail start
+    head insert/dup clear "" #" " col
 ]
 
 emit-proto: func [
-	proto
+    proto
 ] [
 
-	if all [
-		proto
-		trim proto
-		pos.id: find proto preface
-		find proto #"("
-	] [
-		emit ["RL_API " proto ";"] ;    // " the-file]
-		append xsum-buffer proto
-		fn.declarations: copy/part proto pos.id
-		pos.lparen: find pos.id #"("
-		fn.name: copy/part pos.id pos.lparen
-		fn.name.upper: uppercase copy fn.name
-		fn.name.lower: lowercase copy find/tail fn.name preface
+    if all [
+        proto
+        trim proto
+        pos.id: find proto preface
+        find proto #"("
+    ] [
+        emit ["RL_API " proto ";"] ;    // " the-file]
+        append xsum-buffer proto
+        fn.declarations: copy/part proto pos.id
+        pos.lparen: find pos.id #"("
+        fn.name: copy/part pos.id pos.lparen
+        fn.name.upper: uppercase copy fn.name
+        fn.name.lower: lowercase copy find/tail fn.name preface
 
-		emit-dlib [tab fn.name ","]
+        emit-dlib [tab fn.name ","]
 
-		emit-rlib [tab fn.declarations "(*" fn.name.lower ")" pos.lparen ";"]
+        emit-rlib [tab fn.declarations "(*" fn.name.lower ")" pos.lparen ";"]
 
-		args: count pos.lparen #","
-		mlib.tail: tail mlib-buffer
-		emit-mlib/nol ["#define " fn.name.upper args]
-		emit-mlib [pads mlib.tail 35 " RL->" fn.name.lower args]
+        args: count pos.lparen #","
+        mlib.tail: tail mlib-buffer
+        emit-mlib/nol ["#define " fn.name.upper args]
+        emit-mlib [pads mlib.tail 35 " RL->" fn.name.lower args]
 
-		comment-text: proto-parser/notes.post
-		if proto-parser/style = 'format2012 [
-			if position: find comment-text "****" [clear position]
-			decode-lines comment-text {**} {}
-			trim/auto comment-text
-		]
-		encode-lines comment-text {**} { }
+        comment-text: proto-parser/notes.post
+        if proto-parser/style = 'format2012 [
+            if position: find comment-text "****" [clear position]
+            decode-lines comment-text {**} {}
+            trim/auto comment-text
+        ]
+        encode-lines comment-text {**} { }
 
-		emit-mlib ["/*^/**^-" proto "^/**^/" comment-text "*/" newline]
+        emit-mlib ["/*^/**^-" proto "^/**^/" comment-text "*/" newline]
 
-		gen-doc fn.name proto comment-text
+        gen-doc fn.name proto comment-text
 
-		proto-count: proto-count + 1
-	]
+        proto-count: proto-count + 1
+    ]
 ]
 
 process: func [file] [
-	if verbose [?? file]
-	data: read the-file: file ;R3
-	data: to-string data ; R3
+    if verbose [?? file]
+    data: read the-file: file ;R3
+    data: to-string data ; R3
 
-	proto-parser/proto-prefix: "RL_API "
-	proto-parser/emit-proto: :emit-proto
-	proto-parser/process data
+    proto-parser/proto-prefix: "RL_API "
+    proto-parser/emit-proto: :emit-proto
+    proto-parser/process data
 ]
 
 write-if: func [file data] [
-	if data <> attempt [to string! read file][ ;R3
-		print ["UPDATE:" file]
-		write file data
-	]
+    if data <> attempt [to string! read file][ ;R3
+        print ["UPDATE:" file]
+        write file data
+    ]
 ]
 
 ;-----------------------------------------------------------------------------
@@ -240,17 +240,17 @@ form-header/gen "REBOL Host and Extension API" %reb-lib.r %make-reb-lib.r
 #if defined(__LP64__) || defined(__LLP64__)
 
 #ifdef HAS_POSIX_SIGNAL
-	#define CHECK_STRUCT_ALIGN (sizeof(REBREQ) == 196 && sizeof(REBEVT) == 16)
+    #define CHECK_STRUCT_ALIGN (sizeof(REBREQ) == 196 && sizeof(REBEVT) == 16)
 #else
-	#define CHECK_STRUCT_ALIGN (sizeof(REBREQ) == 100 && sizeof(REBEVT) == 16)
+    #define CHECK_STRUCT_ALIGN (sizeof(REBREQ) == 100 && sizeof(REBEVT) == 16)
 #endif //HAS_POSIX_SIGNAL
 
 #else // !defined(__LP64__) && !defined(__LLP64__)
 
 #ifdef HAS_POSIX_SIGNAL
-	#define CHECK_STRUCT_ALIGN (sizeof(REBREQ) == 180 && sizeof(REBEVT) == 12)
+    #define CHECK_STRUCT_ALIGN (sizeof(REBREQ) == 180 && sizeof(REBEVT) == 12)
 #else
-	#define CHECK_STRUCT_ALIGN (sizeof(REBREQ) == 80 && sizeof(REBEVT) == 12)
+    #define CHECK_STRUCT_ALIGN (sizeof(REBREQ) == 80 && sizeof(REBEVT) == 12)
 #endif //HAS_POSIX_SIGNAL
 
 #endif
@@ -260,9 +260,9 @@ rlib-buffer
 {
 // Extension entry point functions:
 #ifdef TO_WINDOWS
-	#define RXIEXT __declspec(dllexport)
+    #define RXIEXT __declspec(dllexport)
 #else
-	#define RXIEXT extern
+    #define RXIEXT extern
 #endif
 
 #ifdef __cplusplus

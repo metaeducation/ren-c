@@ -43,44 +43,44 @@
 // Value structure (for passing args to and from):
 #pragma pack(4)
 typedef union rxi_arg_val {
-	void *addr;
-	i64    int64;
-	double dec64;
-	REBXYF pair;
-	REBYTE bytes[8];
-	struct {
-		i32 int32a;
-		i32 int32b;
-	} i2;
-	struct {
-		REBD32 dec32a;
-		REBD32 dec32b;
-	} d2;
-	struct {
-		void *series;
-		u32 index;
-	} sri;
-	struct {
-		void *image;
-		int width:16;
-		int height:16;
-	} iwh;
+    void *addr;
+    i64    int64;
+    double dec64;
+    REBXYF pair;
+    REBYTE bytes[8];
+    struct {
+        i32 int32a;
+        i32 int32b;
+    } i2;
+    struct {
+        REBD32 dec32a;
+        REBD32 dec32b;
+    } d2;
+    struct {
+        void *series;
+        u32 index;
+    } sri;
+    struct {
+        void *image;
+        int width:16;
+        int height:16;
+    } iwh;
 } RXIARG;
 
 // For direct access to arg array:
-#define RXI_COUNT(a)	(a[0].bytes[0])
-#define RXI_TYPE(a,n)	(a[0].bytes[n])
-#define RXI_COLOR_TUPLE(a)    (TO_RGBA_COLOR(a.bytes[1], a.bytes[2], a.bytes[3], a.bytes[0] > 3 ? a.bytes[4] : 0xff))	//always RGBA order
+#define RXI_COUNT(a)    (a[0].bytes[0])
+#define RXI_TYPE(a,n)   (a[0].bytes[n])
+#define RXI_COLOR_TUPLE(a)    (TO_RGBA_COLOR(a.bytes[1], a.bytes[2], a.bytes[3], a.bytes[0] > 3 ? a.bytes[4] : 0xff))   //always RGBA order
 
 // Command function call frame:
 typedef struct rxi_cmd_frame {
-	RXIARG args[8];	// arg values (64 bits each)
+    RXIARG args[8]; // arg values (64 bits each)
 } RXIFRM;
 
 typedef struct rxi_cmd_context {
-	void *envr;		// for holding a reference to your environment
-	REBSER *block;	// block being evaluated
-	REBCNT index;	// 0-based index of current command in block
+    void *envr;     // for holding a reference to your environment
+    REBSER *block;  // block being evaluated
+    REBCNT index;   // 0-based index of current command in block
 } REBCEC;
 
 typedef unsigned char REBRXT;
@@ -89,83 +89,83 @@ typedef int (*RXICAL)(int cmd, RXIFRM *args, REBCEC *ctx);
 #pragma pack()
 
 // Access macros (indirect access via RXIFRM pointer):
-#define RXA_ARG(f,n)	((f)->args[n])
-#define RXA_COUNT(f)	(RXA_ARG(f,0).bytes[0]) // number of args
-#define RXA_TYPE(f,n)	(RXA_ARG(f,0).bytes[n]) // types (of first 7 args)
-#define RXA_REF(f,n)	(RXA_ARG(f,n).i2.int32a)
+#define RXA_ARG(f,n)    ((f)->args[n])
+#define RXA_COUNT(f)    (RXA_ARG(f,0).bytes[0]) // number of args
+#define RXA_TYPE(f,n)   (RXA_ARG(f,0).bytes[n]) // types (of first 7 args)
+#define RXA_REF(f,n)    (RXA_ARG(f,n).i2.int32a)
 
-#define RXA_INT64(f,n)	(RXA_ARG(f,n).int64)
-#define RXA_INT32(f,n)	(i32)(RXA_ARG(f,n).int64)
-#define RXA_DEC64(f,n)	(RXA_ARG(f,n).dec64)
-#define RXA_LOGIC(f,n)	(RXA_ARG(f,n).i2.int32a)
-#define RXA_CHAR(f,n)	(RXA_ARG(f,n).i2.int32a)
-#define RXA_TIME(f,n)	(RXA_ARG(f,n).int64)
-#define RXA_DATE(f,n)	(RXA_ARG(f,n).i2.int32a)
-#define RXA_WORD(f,n)	(RXA_ARG(f,n).i2.int32a)
-#define RXA_LOG_PAIR(f,n)	{LOG_COORD_X(RXA_ARG(f,n).pair.x), LOG_COORD_Y(RXA_ARG(f,n).pair.y)}
-#define RXA_PAIR(f,n)	(RXA_ARG(f,n).pair)
-#define RXA_TUPLE(f,n)	(RXA_ARG(f,n).bytes)
-#define RXA_SERIES(f,n)	(RXA_ARG(f,n).sri.series)
-#define RXA_INDEX(f,n)	(RXA_ARG(f,n).sri.index)
-#define RXA_OBJECT(f,n)	(RXA_ARG(f,n).addr)
-#define RXA_MODULE(f,n)	(RXA_ARG(f,n).addr)
-#define RXA_HANDLE(f,n)	(RXA_ARG(f,n).addr)
-#define RXA_IMAGE(f,n)	(RXA_ARG(f,n).iwh.image)
+#define RXA_INT64(f,n)  (RXA_ARG(f,n).int64)
+#define RXA_INT32(f,n)  (i32)(RXA_ARG(f,n).int64)
+#define RXA_DEC64(f,n)  (RXA_ARG(f,n).dec64)
+#define RXA_LOGIC(f,n)  (RXA_ARG(f,n).i2.int32a)
+#define RXA_CHAR(f,n)   (RXA_ARG(f,n).i2.int32a)
+#define RXA_TIME(f,n)   (RXA_ARG(f,n).int64)
+#define RXA_DATE(f,n)   (RXA_ARG(f,n).i2.int32a)
+#define RXA_WORD(f,n)   (RXA_ARG(f,n).i2.int32a)
+#define RXA_LOG_PAIR(f,n)   {LOG_COORD_X(RXA_ARG(f,n).pair.x), LOG_COORD_Y(RXA_ARG(f,n).pair.y)}
+#define RXA_PAIR(f,n)   (RXA_ARG(f,n).pair)
+#define RXA_TUPLE(f,n)  (RXA_ARG(f,n).bytes)
+#define RXA_SERIES(f,n) (RXA_ARG(f,n).sri.series)
+#define RXA_INDEX(f,n)  (RXA_ARG(f,n).sri.index)
+#define RXA_OBJECT(f,n) (RXA_ARG(f,n).addr)
+#define RXA_MODULE(f,n) (RXA_ARG(f,n).addr)
+#define RXA_HANDLE(f,n) (RXA_ARG(f,n).addr)
+#define RXA_IMAGE(f,n)  (RXA_ARG(f,n).iwh.image)
 #define RXA_IMAGE_WIDTH(f,n)  (RXA_ARG(f,n).iwh.width)
 #define RXA_IMAGE_HEIGHT(f,n) (RXA_ARG(f,n).iwh.height)
 #define RXA_COLOR_TUPLE(f,n)  (TO_RGBA_COLOR(RXA_TUPLE(f,n)[1], RXA_TUPLE(f,n)[2], RXA_TUPLE(f,n)[3], RXA_TUPLE(f,n)[0] > 3 ? RXA_TUPLE(f,n)[4] : 0xff)) //always RGBA order
 
-#define RXI_LOG_PAIR(v)	{LOG_COORD_X(v.pair.x) , LOG_COORD_Y(v.pair.y)}
+#define RXI_LOG_PAIR(v) {LOG_COORD_X(v.pair.x) , LOG_COORD_Y(v.pair.y)}
 
 // Command function return values:
 enum rxi_return {
-	RXR_UNSET,
-	RXR_NONE,
-	RXR_TRUE,
-	RXR_FALSE,
+    RXR_UNSET,
+    RXR_NONE,
+    RXR_TRUE,
+    RXR_FALSE,
 
-	RXR_VALUE,
-	RXR_BLOCK,
-	RXR_ERROR,
-	RXR_BAD_ARGS,
-	RXR_NO_COMMAND,
-	RXR_MAX
+    RXR_VALUE,
+    RXR_BLOCK,
+    RXR_ERROR,
+    RXR_BAD_ARGS,
+    RXR_NO_COMMAND,
+    RXR_MAX
 };
 
 // Used with RXI_SERIES_INFO:
 enum {
-	RXI_SER_DATA,	// pointer to data
-	RXI_SER_TAIL,	// series tail index (length of data)
-	RXI_SER_SIZE,	// size of series (in units)
-	RXI_SER_WIDE,	// width of series (in bytes)
-	RXI_SER_LEFT,	// units free in series (past tail)
-	RXI_MAX
+    RXI_SER_DATA,   // pointer to data
+    RXI_SER_TAIL,   // series tail index (length of data)
+    RXI_SER_SIZE,   // size of series (in units)
+    RXI_SER_WIDE,   // width of series (in bytes)
+    RXI_SER_LEFT,   // units free in series (past tail)
+    RXI_MAX
 };
 
 // Error Codes (returned in result value from some API functions):
 enum {
-	RXE_NO_ERROR,
-	RXE_NO_WORD,	// the word cannot be found (e.g. in an object)
-	RXE_NOT_FUNC,	// the value is not a function (for callback)
-	RXE_BAD_ARGS,	// function arguments to not match
-	RXE_MAX
+    RXE_NO_ERROR,
+    RXE_NO_WORD,    // the word cannot be found (e.g. in an object)
+    RXE_NOT_FUNC,   // the value is not a function (for callback)
+    RXE_BAD_ARGS,   // function arguments to not match
+    RXE_MAX
 };
 
 #define SET_EXT_ERROR(v,n) ((v)->i2.int32a = (n))
 #define GET_EXT_ERROR(v)   ((v)->i2.int32a)
 
 typedef struct rxi_callback_info {
-	u32 flags;
-	REBSER *obj;	// object that holds the function
-	u32 word;		// word id for function (name)
-	RXIARG *args;	// argument list for function
-	RXIARG result;	// result from function
+    u32 flags;
+    REBSER *obj;    // object that holds the function
+    u32 word;       // word id for function (name)
+    RXIARG *args;   // argument list for function
+    RXIARG result;  // result from function
 } RXICBI;
 
 enum {
-	RXC_NONE,
-	RXC_ASYNC,		// async callback
-	RXC_QUEUED,		// pending in event queue
-	RXC_DONE,		// call completed, structs can be freed
-	RXC_MAX
+    RXC_NONE,
+    RXC_ASYNC,      // async callback
+    RXC_QUEUED,     // pending in event queue
+    RXC_DONE,       // call completed, structs can be freed
+    RXC_MAX
 };

@@ -1,18 +1,18 @@
 REBOL [
-	System: "REBOL [R3] Language Interpreter and Run-time Environment"
-	Title: "Canonical words"
-	Rights: {
-		Copyright 2012 REBOL Technologies
-		REBOL is a trademark of REBOL Technologies
-	}
-	License: {
-		Licensed under the Apache License, Version 2.0
-		See: http://www.apache.org/licenses/LICENSE-2.0
-	}
-	Purpose: {
-		These words are used internally by REBOL and must have specific canon
-		word values in order to be correctly identified.
-	}
+    System: "REBOL [R3] Language Interpreter and Run-time Environment"
+    Title: "Canonical words"
+    Rights: {
+        Copyright 2012 REBOL Technologies
+        REBOL is a trademark of REBOL Technologies
+    }
+    License: {
+        Licensed under the Apache License, Version 2.0
+        See: http://www.apache.org/licenses/LICENSE-2.0
+    }
+    Purpose: {
+        These words are used internally by REBOL and must have specific canon
+        word values in order to be correctly identified.
+    }
 ]
 
 any-value! ;-- signal start of typesets (SYM_ANY_VALUEX hardcoded reference)
@@ -69,9 +69,9 @@ y
 -
 *
 unsigned
--unnamed- 	; lambda (unnamed) functions
--apply-		; apply func
-code		; error field
+-unnamed-   ; lambda (unnamed) functions
+-apply-     ; apply func
+code        ; error field
 delect
 
 ; Secure:  (add to system/state/policies object too)
@@ -119,7 +119,7 @@ continue
 
 ; Parse: - These words must not reserved above!!
 parse
-|	 ; must be first
+|    ; must be first
 ; prep words:
 set
 copy

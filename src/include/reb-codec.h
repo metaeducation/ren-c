@@ -46,49 +46,49 @@
 // so the deallocation is left to GC
 //
 typedef struct reb_codec_image {
-	int action;
-	int w;
-	int h;
-	unsigned int len;
-	int alpha;
-	unsigned char *data;
-	union {
-		u32 *bits;
-		void *other;
-	} extra;
-	int error;
+    int action;
+    int w;
+    int h;
+    unsigned int len;
+    int alpha;
+    unsigned char *data;
+    union {
+        u32 *bits;
+        void *other;
+    } extra;
+    int error;
 } REBCDI;
 
 typedef REBINT (*codo)(REBCDI *cdi);
 
 // Media types:
 enum {
-	CODI_ERROR,
-	CODI_CHECK,				// error code is inverted result (IDENTIFY)
-	CODI_BINARY,
-	CODI_TEXT,
-	CODI_IMAGE,
-	CODI_SOUND,
-	CODI_BLOCK,
-	CODI_MAX
+    CODI_ERROR,
+    CODI_CHECK,             // error code is inverted result (IDENTIFY)
+    CODI_BINARY,
+    CODI_TEXT,
+    CODI_IMAGE,
+    CODI_SOUND,
+    CODI_BLOCK,
+    CODI_MAX
 };
 
 // Codec commands:
 enum {
-	CODI_ACT_IDENTIFY,
-	CODI_ACT_DECODE,
-	CODI_ACT_ENCODE,
-	CODI_ACT_MAX
+    CODI_ACT_IDENTIFY,
+    CODI_ACT_DECODE,
+    CODI_ACT_ENCODE,
+    CODI_ACT_MAX
 };
 
 // Codec errors:
 enum {
-	CODI_ERR_NA = 1,		// Feature not available
-	CODI_ERR_NO_ACTION,		// Requested action unknown
-	CODI_ERR_ENCODING,		// Encoding method not supported
-	CODI_ERR_SIGNATURE,		// Header signature is not correct
-	CODI_ERR_BIT_LEN,		// Bit length is not supported
-	CODI_ERR_BAD_TABLE,		// Image tables are wrong
-	CODI_ERR_BAD_DATA,		// Generic
-	CODI_ERR_MAX
+    CODI_ERR_NA = 1,        // Feature not available
+    CODI_ERR_NO_ACTION,     // Requested action unknown
+    CODI_ERR_ENCODING,      // Encoding method not supported
+    CODI_ERR_SIGNATURE,     // Header signature is not correct
+    CODI_ERR_BIT_LEN,       // Bit length is not supported
+    CODI_ERR_BAD_TABLE,     // Image tables are wrong
+    CODI_ERR_BAD_DATA,      // Generic
+    CODI_ERR_MAX
 };

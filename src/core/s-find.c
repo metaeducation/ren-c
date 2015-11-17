@@ -41,18 +41,18 @@
 //
 REBINT Compare_Binary_Vals(const REBVAL *v1, const REBVAL *v2)
 {
-	REBCNT l1 = VAL_LEN(v1);
-	REBCNT l2 = VAL_LEN(v2);
-	REBCNT len = MIN(l1, l2);
-	REBINT n;
+    REBCNT l1 = VAL_LEN(v1);
+    REBCNT l2 = VAL_LEN(v2);
+    REBCNT len = MIN(l1, l2);
+    REBINT n;
 
-	if (IS_IMAGE(v1)) len *= 4;
+    if (IS_IMAGE(v1)) len *= 4;
 
-	n = memcmp(VAL_BIN_DATA(v1), VAL_BIN_DATA(v2), len);
+    n = memcmp(VAL_BIN_DATA(v1), VAL_BIN_DATA(v2), len);
 
-	if (n != 0) return n;
+    if (n != 0) return n;
 
-	return l1 - l2;
+    return l1 - l2;
 }
 
 
@@ -65,19 +65,19 @@ REBINT Compare_Binary_Vals(const REBVAL *v1, const REBVAL *v2)
 //
 REBINT Compare_Bytes(const REBYTE *b1, const REBYTE *b2, REBCNT len, REBOOL uncase)
 {
-	REBINT d;
+    REBINT d;
 
-	for (; len > 0; len--, b1++, b2++) {
+    for (; len > 0; len--, b1++, b2++) {
 
-		if (uncase)
-			d = LO_CASE(*b1) - LO_CASE(*b2);
-		else
-			d = *b1 - *b2;
+        if (uncase)
+            d = LO_CASE(*b1) - LO_CASE(*b2);
+        else
+            d = *b1 - *b2;
 
-		if (d != 0) return d;
-	}
+        if (d != 0) return d;
+    }
 
-	return 0;
+    return 0;
 }
 
 
@@ -89,13 +89,13 @@ REBINT Compare_Bytes(const REBYTE *b1, const REBYTE *b2, REBCNT len, REBOOL unca
 //
 const REBYTE *Match_Bytes(const REBYTE *src, const REBYTE *pat)
 {
-	while (*src && *pat) {
-		if (LO_CASE(*src++) != LO_CASE(*pat++)) return 0;
-	}
+    while (*src && *pat) {
+        if (LO_CASE(*src++) != LO_CASE(*pat++)) return 0;
+    }
 
-	if (*pat) return 0;	// if not at end of pat, then error
+    if (*pat) return 0; // if not at end of pat, then error
 
-	return src;
+    return src;
 }
 
 
@@ -108,36 +108,36 @@ const REBYTE *Match_Bytes(const REBYTE *src, const REBYTE *pat)
 //
 REBFLG Match_Sub_Path(REBSER *s1, REBSER *s2)
 {
-	REBCNT len = s1->tail;
-	REBCNT n;
-	REBUNI c1 = 0;
-	REBUNI c2;
+    REBCNT len = s1->tail;
+    REBCNT n;
+    REBUNI c1 = 0;
+    REBUNI c2;
 
-//	Debug_Series(s1);
-//	Debug_Series(s2);
+//  Debug_Series(s1);
+//  Debug_Series(s2);
 
-	// s1 len must be <= s2 len
-	if (len > s2->tail) return FALSE;
+    // s1 len must be <= s2 len
+    if (len > s2->tail) return FALSE;
 
-	for (n = 0; n < len; n++) { // includes terminator
+    for (n = 0; n < len; n++) { // includes terminator
 
-		c1 = GET_ANY_CHAR(s1, n);
-		c2 = GET_ANY_CHAR(s2, n);
+        c1 = GET_ANY_CHAR(s1, n);
+        c2 = GET_ANY_CHAR(s2, n);
 
-		if (c1 < UNICODE_CASES) c1 = LO_CASE(c1);
-		if (c2 < UNICODE_CASES) c2 = LO_CASE(c2);
+        if (c1 < UNICODE_CASES) c1 = LO_CASE(c1);
+        if (c2 < UNICODE_CASES) c2 = LO_CASE(c2);
 
-		if (c1 != c2) break;
-	}
+        if (c1 != c2) break;
+    }
 
-	// a/b matches: a/b, a/b/, a/b/c
-	c2 = GET_ANY_CHAR(s2, n);
-	return (
-			n >= len  // all chars matched
-			&&  // Must be at end or at dir sep:
-			(c1 == '/' || c1 == '\\'
-			|| c2 == 0 || c2 == '/' || c2 == '\\')
-	);
+    // a/b matches: a/b, a/b/, a/b/c
+    c2 = GET_ANY_CHAR(s2, n);
+    return (
+            n >= len  // all chars matched
+            &&  // Must be at end or at dir sep:
+            (c1 == '/' || c1 == '\\'
+            || c2 == 0 || c2 == '/' || c2 == '\\')
+    );
 }
 
 
@@ -150,24 +150,24 @@ REBFLG Match_Sub_Path(REBSER *s1, REBSER *s2)
 //
 REBINT Compare_Uni_Byte(REBUNI *u1, REBYTE *b2, REBCNT len, REBOOL uncase)
 {
-	REBINT d;
-	REBUNI c1;
-	REBUNI c2;
+    REBINT d;
+    REBUNI c1;
+    REBUNI c2;
 
-	for (; len > 0; len--) {
+    for (; len > 0; len--) {
 
-		c1 = *u1++;
-		c2 = *b2++;
+        c1 = *u1++;
+        c2 = *b2++;
 
-		if (uncase && c1 < UNICODE_CASES)
-			d = LO_CASE(c1) - LO_CASE(c2);
-		else
-			d = c1 - c2;
+        if (uncase && c1 < UNICODE_CASES)
+            d = LO_CASE(c1) - LO_CASE(c2);
+        else
+            d = c1 - c2;
 
-		if (d != 0) return d;
-	}
+        if (d != 0) return d;
+    }
 
-	return 0;
+    return 0;
 }
 
 
@@ -180,24 +180,24 @@ REBINT Compare_Uni_Byte(REBUNI *u1, REBYTE *b2, REBCNT len, REBOOL uncase)
 //
 REBINT Compare_Uni_Str(REBUNI *u1, REBUNI *u2, REBCNT len, REBOOL uncase)
 {
-	REBINT d;
-	REBUNI c1;
-	REBUNI c2;
+    REBINT d;
+    REBUNI c1;
+    REBUNI c2;
 
-	for (; len > 0; len--) {
+    for (; len > 0; len--) {
 
-		c1 = *u1++;
-		c2 = *u2++;
+        c1 = *u1++;
+        c2 = *u2++;
 
-		if (uncase && c1 < UNICODE_CASES && c2 < UNICODE_CASES)
-			d = LO_CASE(c1) - LO_CASE(c2);
-		else
-			d = c1 - c2;
+        if (uncase && c1 < UNICODE_CASES && c2 < UNICODE_CASES)
+            d = LO_CASE(c1) - LO_CASE(c2);
+        else
+            d = c1 - c2;
 
-		if (d != 0) return d;
-	}
+        if (d != 0) return d;
+    }
 
-	return 0;
+    return 0;
 }
 
 
@@ -212,28 +212,28 @@ REBINT Compare_Uni_Str(REBUNI *u1, REBUNI *u2, REBCNT len, REBOOL uncase)
 //
 REBINT Compare_String_Vals(const REBVAL *v1, const REBVAL *v2, REBOOL uncase)
 {
-	REBCNT l1  = VAL_LEN(v1);
-	REBCNT l2  = VAL_LEN(v2);
-	REBCNT len = MIN(l1, l2);
-	REBINT n;
+    REBCNT l1  = VAL_LEN(v1);
+    REBCNT l2  = VAL_LEN(v2);
+    REBCNT len = MIN(l1, l2);
+    REBINT n;
 
-	if (IS_BINARY(v1) || IS_BINARY(v2)) uncase = FALSE;
+    if (IS_BINARY(v1) || IS_BINARY(v2)) uncase = FALSE;
 
-	if (VAL_BYTE_SIZE(v1)) { // v1 is 8
-		if (VAL_BYTE_SIZE(v2))
-			n = Compare_Bytes(VAL_BIN_DATA(v1), VAL_BIN_DATA(v2), len, uncase);
-		else
-			n = -Compare_Uni_Byte(VAL_UNI_DATA(v2), VAL_BIN_DATA(v1), len, uncase);
-	}
-	else { // v1 is 16
-		if (VAL_BYTE_SIZE(v2))
-			n = Compare_Uni_Byte(VAL_UNI_DATA(v1), VAL_BIN_DATA(v2), len, uncase);
-		else
-			n = Compare_Uni_Str(VAL_UNI_DATA(v1), VAL_UNI_DATA(v2), len, uncase);
-	}
+    if (VAL_BYTE_SIZE(v1)) { // v1 is 8
+        if (VAL_BYTE_SIZE(v2))
+            n = Compare_Bytes(VAL_BIN_DATA(v1), VAL_BIN_DATA(v2), len, uncase);
+        else
+            n = -Compare_Uni_Byte(VAL_UNI_DATA(v2), VAL_BIN_DATA(v1), len, uncase);
+    }
+    else { // v1 is 16
+        if (VAL_BYTE_SIZE(v2))
+            n = Compare_Uni_Byte(VAL_UNI_DATA(v1), VAL_BIN_DATA(v2), len, uncase);
+        else
+            n = Compare_Uni_Str(VAL_UNI_DATA(v1), VAL_UNI_DATA(v2), len, uncase);
+    }
 
-	if (n != 0) return n;
-	return l1 - l2;
+    if (n != 0) return n;
+    return l1 - l2;
 }
 
 
@@ -259,32 +259,32 @@ REBINT Compare_String_Vals(const REBVAL *v1, const REBVAL *v2, REBOOL uncase)
 //
 REBINT Compare_UTF8(const REBYTE *s1, const REBYTE *s2, REBCNT l2)
 {
-	REBUNI c1, c2;
-	REBCNT l1 = LEN_BYTES(s1);
-	REBINT result = 0;
+    REBUNI c1, c2;
+    REBCNT l1 = LEN_BYTES(s1);
+    REBINT result = 0;
 
-	for (; l1 > 0 && l2 > 0; s1++, s2++, l1--, l2--) {
-		c1 = *s1;
-		c2 = *s2;
-		if (c1 > 127) {
-			s1 = Back_Scan_UTF8_Char(&c1, s1, &l1);
-			assert(s1); // UTF8 should have already been verified good
-		}
-		if (c2 > 127) {
-			s2 = Back_Scan_UTF8_Char(&c1, s2, &l2);
-			assert(s2); // UTF8 should have already been verified good
-		}
-		if (c1 != c2) {
-			if (c1 >= UNICODE_CASES || c2 >= UNICODE_CASES ||
-				LO_CASE(c1) != LO_CASE(c2)) {
-				return (c1 > c2) ? -1 : -3;
-			}
-			if (!result) result = (c1 > c2) ? 3 : 1;
-		}
-	}
-	if (l1 != l2) result = (l1 > l2) ? -1 : -3;
+    for (; l1 > 0 && l2 > 0; s1++, s2++, l1--, l2--) {
+        c1 = *s1;
+        c2 = *s2;
+        if (c1 > 127) {
+            s1 = Back_Scan_UTF8_Char(&c1, s1, &l1);
+            assert(s1); // UTF8 should have already been verified good
+        }
+        if (c2 > 127) {
+            s2 = Back_Scan_UTF8_Char(&c1, s2, &l2);
+            assert(s2); // UTF8 should have already been verified good
+        }
+        if (c1 != c2) {
+            if (c1 >= UNICODE_CASES || c2 >= UNICODE_CASES ||
+                LO_CASE(c1) != LO_CASE(c2)) {
+                return (c1 > c2) ? -1 : -3;
+            }
+            if (!result) result = (c1 > c2) ? 3 : 1;
+        }
+    }
+    if (l1 != l2) result = (l1 > l2) ? -1 : -3;
 
-	return result;
+    return result;
 }
 
 
@@ -302,51 +302,51 @@ REBINT Compare_UTF8(const REBYTE *s1, const REBYTE *s2, REBCNT l2)
 //
 REBCNT Find_Byte_Str(REBSER *series, REBCNT index, REBYTE *b2, REBCNT l2, REBFLG uncase, REBFLG match)
 {
-	REBYTE *b1;
-	REBYTE *e1;
-	REBCNT l1;
-	REBYTE c;
-	REBCNT n;
+    REBYTE *b1;
+    REBYTE *e1;
+    REBCNT l1;
+    REBYTE c;
+    REBCNT n;
 
-	// The pattern empty or is longer than the target:
-	if (l2 == 0 || (l2 + index) > SERIES_TAIL(series)) return NOT_FOUND;
+    // The pattern empty or is longer than the target:
+    if (l2 == 0 || (l2 + index) > SERIES_TAIL(series)) return NOT_FOUND;
 
-	b1 = BIN_SKIP(series, index);
-	l1 = SERIES_TAIL(series) - index;
+    b1 = BIN_SKIP(series, index);
+    l1 = SERIES_TAIL(series) - index;
 
-	e1 = b1 + (match ? 1 : l1 - (l2 - 1));
+    e1 = b1 + (match ? 1 : l1 - (l2 - 1));
 
-	c = *b2; // first char
+    c = *b2; // first char
 
-	if (!uncase) {
+    if (!uncase) {
 
-		while (b1 != e1) {
-			if (*b1 == c) { // matched first char
-				for (n = 1; n < l2; n++) {
-					if (b1[n] != b2[n]) break;
-				}
-				if (n == l2) return (b1 - BIN_HEAD(series));
-			}
-			b1++;
-		}
+        while (b1 != e1) {
+            if (*b1 == c) { // matched first char
+                for (n = 1; n < l2; n++) {
+                    if (b1[n] != b2[n]) break;
+                }
+                if (n == l2) return (b1 - BIN_HEAD(series));
+            }
+            b1++;
+        }
 
-	} else {
+    } else {
 
-		c = (REBYTE)LO_CASE(c); // OK! (never > 255)
+        c = (REBYTE)LO_CASE(c); // OK! (never > 255)
 
-		while (b1 != e1) {
-			if (LO_CASE(*b1) == c) { // matched first char
-				for (n = 1; n < l2; n++) {
-					if (LO_CASE(b1[n]) != LO_CASE(b2[n])) break;
-				}
-				if (n == l2) return (b1 - BIN_HEAD(series));
-			}
-			b1++;
-		}
+        while (b1 != e1) {
+            if (LO_CASE(*b1) == c) { // matched first char
+                for (n = 1; n < l2; n++) {
+                    if (LO_CASE(b1[n]) != LO_CASE(b2[n])) break;
+                }
+                if (n == l2) return (b1 - BIN_HEAD(series));
+            }
+            b1++;
+        }
 
-	}
+    }
 
-	return NOT_FOUND;
+    return NOT_FOUND;
 }
 
 
@@ -363,39 +363,39 @@ REBCNT Find_Byte_Str(REBSER *series, REBCNT index, REBYTE *b2, REBCNT l2, REBFLG
 //
 REBCNT Find_Str_Str(REBSER *ser1, REBCNT head, REBCNT index, REBCNT tail, REBINT skip, REBSER *ser2, REBCNT index2, REBCNT len, REBCNT flags)
 {
-	REBUNI c1;
-	REBUNI c2;
-	REBUNI c3;
-	REBCNT n = 0;
-	REBOOL uncase = !(flags & AM_FIND_CASE); // uncase = case insenstive
+    REBUNI c1;
+    REBUNI c2;
+    REBUNI c3;
+    REBCNT n = 0;
+    REBOOL uncase = !(flags & AM_FIND_CASE); // uncase = case insenstive
 
-	c2 = GET_ANY_CHAR(ser2, index2); // starting char
-	if (uncase && c2 < UNICODE_CASES) c2 = LO_CASE(c2);
+    c2 = GET_ANY_CHAR(ser2, index2); // starting char
+    if (uncase && c2 < UNICODE_CASES) c2 = LO_CASE(c2);
 
-	for (; index >= head && index < tail; index += skip) {
+    for (; index >= head && index < tail; index += skip) {
 
-		c1 = GET_ANY_CHAR(ser1, index);
-		if (uncase && c1 < UNICODE_CASES) c1 = LO_CASE(c1);
+        c1 = GET_ANY_CHAR(ser1, index);
+        if (uncase && c1 < UNICODE_CASES) c1 = LO_CASE(c1);
 
-		if (c1 == c2) {
-			for (n = 1; n < len; n++) {
-				c1 = GET_ANY_CHAR(ser1, index+n);
-				c3 = GET_ANY_CHAR(ser2, index2+n);
-				if (uncase && c1 < UNICODE_CASES && c3 < UNICODE_CASES) {
-					if (LO_CASE(c1) != LO_CASE(c3)) break;
-				} else {
-					if (c1 != c3) break;
-				}
-			}
-			if (n == len) {
-				if (flags & AM_FIND_TAIL) return index + len;
-				return index;
-			}
-		}
-		if (flags & AM_FIND_MATCH) break;
-	}
+        if (c1 == c2) {
+            for (n = 1; n < len; n++) {
+                c1 = GET_ANY_CHAR(ser1, index+n);
+                c3 = GET_ANY_CHAR(ser2, index2+n);
+                if (uncase && c1 < UNICODE_CASES && c3 < UNICODE_CASES) {
+                    if (LO_CASE(c1) != LO_CASE(c3)) break;
+                } else {
+                    if (c1 != c3) break;
+                }
+            }
+            if (n == len) {
+                if (flags & AM_FIND_TAIL) return index + len;
+                return index;
+            }
+        }
+        if (flags & AM_FIND_MATCH) break;
+    }
 
-	return NOT_FOUND;
+    return NOT_FOUND;
 }
 
 
@@ -412,22 +412,22 @@ REBCNT Find_Str_Str(REBSER *ser1, REBCNT head, REBCNT index, REBCNT tail, REBINT
 //
 REBCNT Find_Str_Char(REBSER *ser, REBCNT head, REBCNT index, REBCNT tail, REBINT skip, REBUNI c2, REBCNT flags)
 {
-	REBUNI c1;
-	REBOOL uncase = !GET_FLAG(flags, ARG_FIND_CASE-1); // uncase = case insenstive
+    REBUNI c1;
+    REBOOL uncase = !GET_FLAG(flags, ARG_FIND_CASE-1); // uncase = case insenstive
 
-	if (uncase && c2 < UNICODE_CASES) c2 = LO_CASE(c2);
+    if (uncase && c2 < UNICODE_CASES) c2 = LO_CASE(c2);
 
-	for (; index >= head && index < tail; index += skip) {
+    for (; index >= head && index < tail; index += skip) {
 
-		c1 = GET_ANY_CHAR(ser, index);
-		if (uncase && c1 < UNICODE_CASES) c1 = LO_CASE(c1);
+        c1 = GET_ANY_CHAR(ser, index);
+        if (uncase && c1 < UNICODE_CASES) c1 = LO_CASE(c1);
 
-		if (c1 == c2) return index;
+        if (c1 == c2) return index;
 
-		if GET_FLAG(flags, ARG_FIND_MATCH-1) break;
-	}
+        if GET_FLAG(flags, ARG_FIND_MATCH-1) break;
+    }
 
-	return NOT_FOUND;
+    return NOT_FOUND;
 }
 
 
@@ -444,24 +444,24 @@ REBCNT Find_Str_Char(REBSER *ser, REBCNT head, REBCNT index, REBCNT tail, REBINT
 //
 REBCNT Find_Str_Bitset(REBSER *ser, REBCNT head, REBCNT index, REBCNT tail, REBINT skip, REBSER *bset, REBCNT flags)
 {
-	REBUNI c1;
-	REBOOL uncase = !GET_FLAG(flags, ARG_FIND_CASE-1); // uncase = case insenstive
+    REBUNI c1;
+    REBOOL uncase = !GET_FLAG(flags, ARG_FIND_CASE-1); // uncase = case insenstive
 
-	for (; index >= head && index < tail; index += skip) {
+    for (; index >= head && index < tail; index += skip) {
 
-		c1 = GET_ANY_CHAR(ser, index);
+        c1 = GET_ANY_CHAR(ser, index);
 
-		//if (uncase && c1 < UNICODE_CASES) {
-		//	if (Check_Bit(bset, LO_CASE(c1)) || Check_Bit(bset, UP_CASE(c1)))
-		//		return index;
-		//}
-		//else
-		if (Check_Bit(bset, c1, uncase)) return index;
+        //if (uncase && c1 < UNICODE_CASES) {
+        //  if (Check_Bit(bset, LO_CASE(c1)) || Check_Bit(bset, UP_CASE(c1)))
+        //      return index;
+        //}
+        //else
+        if (Check_Bit(bset, c1, uncase)) return index;
 
-		if (flags & AM_FIND_MATCH) break;
-	}
+        if (flags & AM_FIND_MATCH) break;
+    }
 
-	return NOT_FOUND;
+    return NOT_FOUND;
 }
 
 
@@ -472,18 +472,18 @@ REBCNT Find_Str_Bitset(REBSER *ser, REBCNT head, REBCNT index, REBCNT tail, REBI
 //
 REBCNT Count_Lines(REBYTE *bp, REBCNT len)
 {
-	REBCNT count = 0;
+    REBCNT count = 0;
 
-	for (; len > 0; bp++, len--) {
-		if (*bp == CR) {
-			count++;
-			if (len == 1) break;
-			if (bp[1] == LF) bp++, len--;
-		}
-		else if (*bp == LF) count++;
-	}
+    for (; len > 0; bp++, len--) {
+        if (*bp == CR) {
+            count++;
+            if (len == 1) break;
+            if (bp[1] == LF) bp++, len--;
+        }
+        else if (*bp == LF) count++;
+    }
 
-	return count;
+    return count;
 }
 
 
@@ -494,22 +494,22 @@ REBCNT Count_Lines(REBYTE *bp, REBCNT len)
 //
 REBCNT Next_Line(REBYTE **bin)
 {
-	REBCNT count = 0;
-	REBYTE *bp = *bin;
+    REBCNT count = 0;
+    REBYTE *bp = *bin;
 
-	for (; *bp; bp++) {
-		if (*bp == CR) {
-			bp++;
-			if (*bp == LF) bp++;
-			break;
-		}
-		else if (*bp == LF) {
-			bp++;
-			break;
-		}
-		else count++;
-	}
+    for (; *bp; bp++) {
+        if (*bp == CR) {
+            bp++;
+            if (*bp == LF) bp++;
+            break;
+        }
+        else if (*bp == LF) {
+            bp++;
+            break;
+        }
+        else count++;
+    }
 
-	*bin = bp;
-	return count;
+    *bin = bp;
+    return count;
 }

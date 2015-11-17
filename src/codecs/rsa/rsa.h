@@ -36,15 +36,15 @@ extern "C" {
 #endif
 
 #ifdef TO_WINDOWS
-	#include <windows.h>
-	#include <wincrypt.h>
+    #include <windows.h>
+    #include <wincrypt.h>
 
-	extern HCRYPTPROV gCryptProv; // encryption provider handle
+    extern HCRYPTPROV gCryptProv; // encryption provider handle
 #else
-	#include <fcntl.h>
-	#include <unistd.h>
+    #include <fcntl.h>
+    #include <unistd.h>
 
-	extern int rng_fd; // file descriptor for random number generator
+    extern int rng_fd; // file descriptor for random number generator
 #endif
 
 
@@ -53,9 +53,9 @@ extern "C" {
  */
 
 /*
-		CONFIG_SSL_DEBUG
-		Enable diagnostics. Most of the extra size in this mode is
-		due to the storage of various strings that are used.
+        CONFIG_SSL_DEBUG
+        Enable diagnostics. Most of the extra size in this mode is
+        due to the storage of various strings that are used.
 */
 #undef CONFIG_SSL_DEBUG
 

@@ -29,34 +29,34 @@
 /*
   Basics:
 
-	  Ports use requests to control devices.
-	  Devices do their best, and return when no more is possible.
-	  Progs call WAIT to check if devices have changed.
-	  If devices changed, modifies request, and sends event.
-	  If no devices changed, timeout happens.
-	  On REBOL side, we scan event queue.
-	  If we find an event, we call its port/awake function.
+      Ports use requests to control devices.
+      Devices do their best, and return when no more is possible.
+      Progs call WAIT to check if devices have changed.
+      If devices changed, modifies request, and sends event.
+      If no devices changed, timeout happens.
+      On REBOL side, we scan event queue.
+      If we find an event, we call its port/awake function.
 
-	  Different cases exist:
+      Different cases exist:
 
-	  1. wait for time only
+      1. wait for time only
 
-	  2. wait for ports and time.  Need a master wait list to
-		 merge with the list provided this function.
+      2. wait for ports and time.  Need a master wait list to
+         merge with the list provided this function.
 
-	  3. wait for windows to close - check each time we process
-		 a close event.
+      3. wait for windows to close - check each time we process
+         a close event.
 
-	  4. what to do on console ESCAPE interrupt? Can use catch it?
+      4. what to do on console ESCAPE interrupt? Can use catch it?
 
-	  5. how dow we relate events back to their ports?
+      5. how dow we relate events back to their ports?
 
-	  6. async callbacks
+      6. async callbacks
 */
 
 #include "sys-core.h"
 
-REBREQ *req;		//!!! move this global
+REBREQ *req;        //!!! move this global
 
 #define EVENTS_LIMIT 0xFFFF //64k
 #define EVENTS_CHUNK 128
@@ -73,70 +73,70 @@ REBREQ *req;		//!!! move this global
 //
 REBVAL *Append_Event(void)
 {
-	REBVAL *port;
-	REBVAL *value;
-	REBVAL *state;
+    REBVAL *port;
+    REBVAL *value;
+    REBVAL *state;
 
-	port = Get_System(SYS_PORTS, PORTS_SYSTEM);
-	if (!IS_PORT(port)) return 0; // verify it is a port object
+    port = Get_System(SYS_PORTS, PORTS_SYSTEM);
+    if (!IS_PORT(port)) return 0; // verify it is a port object
 
-	// Get queue block:
-	state = VAL_OBJ_VALUE(port, STD_PORT_STATE);
-	if (!IS_BLOCK(state)) return 0;
+    // Get queue block:
+    state = VAL_OBJ_VALUE(port, STD_PORT_STATE);
+    if (!IS_BLOCK(state)) return 0;
 
-	// Append to tail if room:
-	if (SERIES_FULL(VAL_SERIES(state))) {
-		if (VAL_TAIL(state) > EVENTS_LIMIT) {
-			panic (Error(RE_MAX_EVENTS));
-		} else {
-			Extend_Series(VAL_SERIES(state), EVENTS_CHUNK);
-			//RL_Print("event queue increased to :%d\n", SERIES_REST(VAL_SERIES(state)));
-		}
-	}
-	VAL_TAIL(state)++;
-	value = VAL_BLK_TAIL(state);
-	SET_END(value);
-	value--;
-	SET_NONE(value);
+    // Append to tail if room:
+    if (SERIES_FULL(VAL_SERIES(state))) {
+        if (VAL_TAIL(state) > EVENTS_LIMIT) {
+            panic (Error(RE_MAX_EVENTS));
+        } else {
+            Extend_Series(VAL_SERIES(state), EVENTS_CHUNK);
+            //RL_Print("event queue increased to :%d\n", SERIES_REST(VAL_SERIES(state)));
+        }
+    }
+    VAL_TAIL(state)++;
+    value = VAL_BLK_TAIL(state);
+    SET_END(value);
+    value--;
+    SET_NONE(value);
 
-	//Dump_Series(VAL_SERIES(state), "state");
-	//Print("Tail: %d %d", VAL_TAIL(state), nn++);
+    //Dump_Series(VAL_SERIES(state), "state");
+    //Print("Tail: %d %d", VAL_TAIL(state), nn++);
 
-	return value;
+    return value;
 }
 /***********************************************************************
 **
-*/	REBVAL *Find_Last_Event (REBINT model, REBINT type)
+*/  REBVAL *Find_Last_Event (REBINT model, REBINT type)
 /*
-**		Find the last event in the queue by the model
-**		Check its type, if it matches, then return the event or NULL
+**      Find the last event in the queue by the model
+**      Check its type, if it matches, then return the event or NULL
 **
 **
 ***********************************************************************/
 {
-	REBVAL *port;
-	REBVAL *value;
-	REBVAL *state;
+    REBVAL *port;
+    REBVAL *value;
+    REBVAL *state;
 
-	port = Get_System(SYS_PORTS, PORTS_SYSTEM);
-	if (!IS_PORT(port)) return NULL; // verify it is a port object
+    port = Get_System(SYS_PORTS, PORTS_SYSTEM);
+    if (!IS_PORT(port)) return NULL; // verify it is a port object
 
-	// Get queue block:
-	state = VAL_OBJ_VALUE(port, STD_PORT_STATE);
-	if (!IS_BLOCK(state)) return NULL;
+    // Get queue block:
+    state = VAL_OBJ_VALUE(port, STD_PORT_STATE);
+    if (!IS_BLOCK(state)) return NULL;
 
-	value = VAL_BLK_TAIL(state) - 1;
-	for (; value >= VAL_BLK_HEAD(state); --value) {
-		if (VAL_EVENT_MODEL(value) == model) {
-			if (VAL_EVENT_TYPE(value) == type) {
-				return value;
-			} else {
-				return NULL;
-			}
-		}
-	}
+    value = VAL_BLK_TAIL(state) - 1;
+    for (; value >= VAL_BLK_HEAD(state); --value) {
+        if (VAL_EVENT_MODEL(value) == model) {
+            if (VAL_EVENT_TYPE(value) == type) {
+                return value;
+            } else {
+                return NULL;
+            }
+        }
+    }
 
-	return NULL;
+    return NULL;
 }
 
 //
@@ -146,86 +146,86 @@ REBVAL *Append_Event(void)
 //
 static REB_R Event_Actor(struct Reb_Call *call_, REBSER *port, REBCNT action)
 {
-	REBVAL *spec;
-	REBVAL *state;
-	REB_R result;
-	REBVAL *arg;
-	REBVAL save_port;
+    REBVAL *spec;
+    REBVAL *state;
+    REB_R result;
+    REBVAL *arg;
+    REBVAL save_port;
 
-	Validate_Port(port, action);
+    Validate_Port(port, action);
 
-	arg = DS_ARGC > 1 ? D_ARG(2) : NULL;
-	*D_OUT = *D_ARG(1);
+    arg = DS_ARGC > 1 ? D_ARG(2) : NULL;
+    *D_OUT = *D_ARG(1);
 
-	// Validate and fetch relevant PORT fields:
-	state = BLK_SKIP(port, STD_PORT_STATE);
-	spec  = BLK_SKIP(port, STD_PORT_SPEC);
-	if (!IS_OBJECT(spec)) fail (Error(RE_INVALID_SPEC, spec));
+    // Validate and fetch relevant PORT fields:
+    state = BLK_SKIP(port, STD_PORT_STATE);
+    spec  = BLK_SKIP(port, STD_PORT_SPEC);
+    if (!IS_OBJECT(spec)) fail (Error(RE_INVALID_SPEC, spec));
 
-	// Get or setup internal state data:
-	if (!IS_BLOCK(state)) Val_Init_Block(state, Make_Array(EVENTS_CHUNK - 1));
+    // Get or setup internal state data:
+    if (!IS_BLOCK(state)) Val_Init_Block(state, Make_Array(EVENTS_CHUNK - 1));
 
-	switch (action) {
+    switch (action) {
 
-	case A_UPDATE:
-		return R_NONE;
+    case A_UPDATE:
+        return R_NONE;
 
-	// Normal block actions done on events:
-	case A_POKE:
-		if (!IS_EVENT(D_ARG(3))) fail (Error_Invalid_Arg(D_ARG(3)));
-		goto act_blk;
-	case A_INSERT:
-	case A_APPEND:
-	//case A_PATH:		// not allowed: port/foo is port object field access
-	//case A_PATH_SET:	// not allowed: above
-		if (!IS_EVENT(arg)) fail (Error_Invalid_Arg(arg));
-	case A_PICK:
+    // Normal block actions done on events:
+    case A_POKE:
+        if (!IS_EVENT(D_ARG(3))) fail (Error_Invalid_Arg(D_ARG(3)));
+        goto act_blk;
+    case A_INSERT:
+    case A_APPEND:
+    //case A_PATH:      // not allowed: port/foo is port object field access
+    //case A_PATH_SET:  // not allowed: above
+        if (!IS_EVENT(arg)) fail (Error_Invalid_Arg(arg));
+    case A_PICK:
 act_blk:
-		save_port = *D_ARG(1); // save for return
-		*D_ARG(1) = *state;
-		result = T_Array(call_, action);
-		SET_SIGNAL(SIG_EVENT_PORT);
-		if (action == A_INSERT || action == A_APPEND || action == A_REMOVE) {
-			*D_OUT = save_port;
-			break;
-		}
-		return result; // return condition
+        save_port = *D_ARG(1); // save for return
+        *D_ARG(1) = *state;
+        result = T_Array(call_, action);
+        SET_SIGNAL(SIG_EVENT_PORT);
+        if (action == A_INSERT || action == A_APPEND || action == A_REMOVE) {
+            *D_OUT = save_port;
+            break;
+        }
+        return result; // return condition
 
-	case A_CLEAR:
-		VAL_TAIL(state) = 0;
-		VAL_TERM_ARRAY(state);
-		CLR_SIGNAL(SIG_EVENT_PORT);
-		break;
+    case A_CLEAR:
+        VAL_TAIL(state) = 0;
+        VAL_TERM_ARRAY(state);
+        CLR_SIGNAL(SIG_EVENT_PORT);
+        break;
 
-	case A_LENGTH:
-		SET_INTEGER(D_OUT, VAL_TAIL(state));
-		break;
+    case A_LENGTH:
+        SET_INTEGER(D_OUT, VAL_TAIL(state));
+        break;
 
-	case A_OPEN:
-		if (!req) { //!!!
-			req = OS_MAKE_DEVREQ(RDI_EVENT);
-			if (req) {
-				SET_OPEN(req);
-				OS_DO_DEVICE(req, RDC_CONNECT);		// stays queued
-			}
-		}
-		break;
+    case A_OPEN:
+        if (!req) { //!!!
+            req = OS_MAKE_DEVREQ(RDI_EVENT);
+            if (req) {
+                SET_OPEN(req);
+                OS_DO_DEVICE(req, RDC_CONNECT);     // stays queued
+            }
+        }
+        break;
 
-	case A_CLOSE:
-		OS_ABORT_DEVICE(req);
-		OS_DO_DEVICE(req, RDC_CLOSE);
-		// free req!!!
-		SET_CLOSED(req);
-		req = 0;
-		break;
+    case A_CLOSE:
+        OS_ABORT_DEVICE(req);
+        OS_DO_DEVICE(req, RDC_CLOSE);
+        // free req!!!
+        SET_CLOSED(req);
+        req = 0;
+        break;
 
-	case A_FIND: // add it
+    case A_FIND: // add it
 
-	default:
-		fail (Error_Illegal_Action(REB_PORT, action));
-	}
+    default:
+        fail (Error_Illegal_Action(REB_PORT, action));
+    }
 
-	return R_OUT;
+    return R_OUT;
 }
 
 
@@ -234,10 +234,10 @@ act_blk:
 //
 void Init_Event_Scheme(void)
 {
-	req = 0; // move to port struct
-	Register_Scheme(SYM_SYSTEM, 0, Event_Actor);
-	Register_Scheme(SYM_EVENT, 0, Event_Actor);
-	Register_Scheme(SYM_CALLBACK, 0, Event_Actor);
+    req = 0; // move to port struct
+    Register_Scheme(SYM_SYSTEM, 0, Event_Actor);
+    Register_Scheme(SYM_EVENT, 0, Event_Actor);
+    Register_Scheme(SYM_CALLBACK, 0, Event_Actor);
 }
 
 
@@ -246,8 +246,8 @@ void Init_Event_Scheme(void)
 //
 void Shutdown_Event_Scheme(void)
 {
-	if (req) {
-		OS_FREE(req);
-		req = NULL;
-	}
+    if (req) {
+        OS_FREE(req);
+        req = NULL;
+    }
 }

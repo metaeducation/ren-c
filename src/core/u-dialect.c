@@ -31,25 +31,25 @@
 #include "reb-dialect.h"
 
 typedef struct Reb_Dialect_Parse {
-	REBSER *dialect;	// dialect object
-	REBSER *fargs;		// formal arg block
-	REBCNT fargi;		// start index in fargs
-	REBSER *args;		// argument block
-	REBCNT argi;		// current arg index
-	REBINT cmd;			// command id
-	REBINT len;			// limit of current command
-	REBSER *out;		// result block
-	REBINT outi;		// result block index
-	REBINT flags;
-	REBINT missed;		// counter of arg misses
-	REBVAL *contexts;	// contexts to search for variables
+    REBSER *dialect;    // dialect object
+    REBSER *fargs;      // formal arg block
+    REBCNT fargi;       // start index in fargs
+    REBSER *args;       // argument block
+    REBCNT argi;        // current arg index
+    REBINT cmd;         // command id
+    REBINT len;         // limit of current command
+    REBSER *out;        // result block
+    REBINT outi;        // result block index
+    REBINT flags;
+    REBINT missed;      // counter of arg misses
+    REBVAL *contexts;   // contexts to search for variables
 } REBDIA;
 
 enum {
-	RDIA_NO_CMD,		// do not store command in block
-	RDIA_LIT_CMD,		// 'command
-	RDIA_ALL,			// all commands, do not reset output
-	RDIA_MAX
+    RDIA_NO_CMD,        // do not store command in block
+    RDIA_LIT_CMD,       // 'command
+    RDIA_ALL,           // all commands, do not reset output
+    RDIA_MAX
 };
 
 static REBINT Delect_Debug = 0;
@@ -65,27 +65,27 @@ static const char *Dia_Fmt = "DELECT - cmd: %s length: %d missed: %d total: %d";
 //
 REBVAL *Find_Mutable_In_Contexts(REBCNT sym, REBVAL *where)
 {
-	REBVAL *val;
-	REBVAL safe;
+    REBVAL *val;
+    REBVAL safe;
 
-	for (; NOT_END(where); where++) {
-		if (IS_WORD(where)) {
-			val = GET_MUTABLE_VAR(where);
-		}
-		else if (IS_PATH(where)) {
-			const REBVAL *where_const = where;
-			Do_Path(&safe, &where_const, 0);
-			val = &safe;
-		}
-		else
-			val = where;
+    for (; NOT_END(where); where++) {
+        if (IS_WORD(where)) {
+            val = GET_MUTABLE_VAR(where);
+        }
+        else if (IS_PATH(where)) {
+            const REBVAL *where_const = where;
+            Do_Path(&safe, &where_const, 0);
+            val = &safe;
+        }
+        else
+            val = where;
 
-		if (IS_OBJECT(val)) {
-			val = Find_Word_Value(VAL_OBJ_FRAME(val), sym);
-			if (val) return val;
-		}
-	}
-	return 0;
+        if (IS_OBJECT(val)) {
+            val = Find_Word_Value(VAL_OBJ_FRAME(val), sym);
+            if (val) return val;
+        }
+    }
+    return 0;
 }
 
 
@@ -97,20 +97,20 @@ REBVAL *Find_Mutable_In_Contexts(REBCNT sym, REBVAL *where)
 //
 static int Find_Command(REBSER *dialect, REBVAL *word)
 {
-	REBINT n;
+    REBINT n;
 
-	if (dialect == VAL_WORD_FRAME(word)) n = VAL_WORD_INDEX(word);
-	else {
-		if ((n = Find_Word_Index(dialect, VAL_WORD_SYM(word), FALSE))) {
-			VAL_WORD_FRAME(word) = dialect;
-			VAL_WORD_INDEX(word) = n;
-		}
-		else return 0;
-	}
+    if (dialect == VAL_WORD_FRAME(word)) n = VAL_WORD_INDEX(word);
+    else {
+        if ((n = Find_Word_Index(dialect, VAL_WORD_SYM(word), FALSE))) {
+            VAL_WORD_FRAME(word) = dialect;
+            VAL_WORD_INDEX(word) = n;
+        }
+        else return 0;
+    }
 
-	// If keyword (not command) return negated index:
-	if (IS_NONE(FRM_VALUES(dialect) + n)) return -n;
-	return n;
+    // If keyword (not command) return negated index:
+    if (IS_NONE(FRM_VALUES(dialect) + n)) return -n;
+    return n;
 }
 
 
@@ -122,17 +122,17 @@ static int Find_Command(REBSER *dialect, REBVAL *word)
 //
 static int Count_Dia_Args(REBVAL *args)
 {
-	REBINT n = 0;
+    REBINT n = 0;
 
-	for (; NOT_END(args); args++) {
-		if (IS_WORD(args)) {
-			if (VAL_WORD_SYM(args) == SYM__P) { // skip: * type
-				if (NOT_END(args+1)) args++;
-			} else n++;
-		}
-		else if (IS_DATATYPE(args) || IS_TYPESET(args)) n++;
-	}
-	return n;
+    for (; NOT_END(args); args++) {
+        if (IS_WORD(args)) {
+            if (VAL_WORD_SYM(args) == SYM__P) { // skip: * type
+                if (NOT_END(args+1)) args++;
+            } else n++;
+        }
+        else if (IS_DATATYPE(args) || IS_TYPESET(args)) n++;
+    }
+    return n;
 }
 
 
@@ -149,51 +149,51 @@ static int Count_Dia_Args(REBVAL *args)
 //
 static REBVAL *Eval_Arg(REBDIA *dia)
 {
-	REBVAL *value = BLK_SKIP(dia->args, dia->argi);
-	REBVAL safe;
+    REBVAL *value = BLK_SKIP(dia->args, dia->argi);
+    REBVAL safe;
 
-	switch (VAL_TYPE(value)) {
+    switch (VAL_TYPE(value)) {
 
-	case REB_WORD:
-		// Only look it up if not part of dialect:
-		if (Find_Command(dia->dialect, value) == 0) {
-			REBVAL *val = value; // save
-			if (dia->contexts) {
-				value = Find_Mutable_In_Contexts(
-					VAL_WORD_CANON(value), dia->contexts
-				);
-				if (value) break;
-			}
-			value = TRY_GET_MUTABLE_VAR(val); // NULL if protected or not found
-		}
-		break;
+    case REB_WORD:
+        // Only look it up if not part of dialect:
+        if (Find_Command(dia->dialect, value) == 0) {
+            REBVAL *val = value; // save
+            if (dia->contexts) {
+                value = Find_Mutable_In_Contexts(
+                    VAL_WORD_CANON(value), dia->contexts
+                );
+                if (value) break;
+            }
+            value = TRY_GET_MUTABLE_VAR(val); // NULL if protected or not found
+        }
+        break;
 
-	case REB_PATH: {
-		const REBVAL *value_const = value;
-		if (Do_Path(&safe, &value_const, 0)) return 0;
-		DS_PUSH(&safe);
-		value = DS_TOP;
-		break;
-	}
+    case REB_PATH: {
+        const REBVAL *value_const = value;
+        if (Do_Path(&safe, &value_const, 0)) return 0;
+        DS_PUSH(&safe);
+        value = DS_TOP;
+        break;
+    }
 
-	case REB_LIT_WORD:
-		DS_PUSH(value);
-		value = DS_TOP;
-		VAL_SET(value, REB_WORD);
-		break;
+    case REB_LIT_WORD:
+        DS_PUSH(value);
+        value = DS_TOP;
+        VAL_SET(value, REB_WORD);
+        break;
 
-	case REB_PAREN:
-		if (DO_ARRAY_THROWS(&safe, value)) {
-			// !!! Does not check for thrown cases...what should this
-			// do in case of THROW, BREAK, QUIT?
-			fail (Error_No_Catch_For_Throw(&safe));
-		}
-		DS_PUSH(&safe);
-		value = DS_TOP;
-		break;
-	}
+    case REB_PAREN:
+        if (DO_ARRAY_THROWS(&safe, value)) {
+            // !!! Does not check for thrown cases...what should this
+            // do in case of THROW, BREAK, QUIT?
+            fail (Error_No_Catch_For_Throw(&safe));
+        }
+        DS_PUSH(&safe);
+        value = DS_TOP;
+        break;
+    }
 
-	return value;
+    return value;
 }
 
 
@@ -212,146 +212,146 @@ static REBVAL *Eval_Arg(REBDIA *dia)
 //
 static REBINT Add_Arg(REBDIA *dia, REBVAL *value)
 {
-	REBINT type = 0;
-	REBINT accept = 0;
-	REBVAL *fargs;
-	REBINT fargi;
-	REBVAL *outp;
-	REBINT rept = 0;
+    REBINT type = 0;
+    REBINT accept = 0;
+    REBVAL *fargs;
+    REBINT fargi;
+    REBVAL *outp;
+    REBINT rept = 0;
 
-	outp = BLK_SKIP(dia->out, dia->outi);
+    outp = BLK_SKIP(dia->out, dia->outi);
 
-	// Scan all formal args, looking for one that matches given value:
-	for (fargi = dia->fargi;; fargi++) {
+    // Scan all formal args, looking for one that matches given value:
+    for (fargi = dia->fargi;; fargi++) {
 
-		//Debug_Fmt("Add_Arg fargi: %d outi: %d", fargi, outi);
+        //Debug_Fmt("Add_Arg fargi: %d outi: %d", fargi, outi);
 
-		if (IS_END(fargs = BLK_SKIP(dia->fargs, fargi))) return 0;
+        if (IS_END(fargs = BLK_SKIP(dia->fargs, fargi))) return 0;
 
 again:
-		// Formal arg can be a word (type or refinement), datatype, or * (repeater):
-		if (IS_WORD(fargs)) {
+        // Formal arg can be a word (type or refinement), datatype, or * (repeater):
+        if (IS_WORD(fargs)) {
 
-			// If word is a datatype name:
-			type = VAL_WORD_CANON(fargs);
-			if (type < REB_MAX) {
-				type--;	// the type id
-			}
-			else if (type == SYM__P) {
-				// repeat: * integer!
-				rept = 1;
-				fargs++;
-				goto again;
-			}
-			else {
-				// typeset or refinement
-				REBVAL *temp;
+            // If word is a datatype name:
+            type = VAL_WORD_CANON(fargs);
+            if (type < REB_MAX) {
+                type--; // the type id
+            }
+            else if (type == SYM__P) {
+                // repeat: * integer!
+                rept = 1;
+                fargs++;
+                goto again;
+            }
+            else {
+                // typeset or refinement
+                REBVAL *temp;
 
-				type = -1;
+                type = -1;
 
-				// Is it a refinement word?
-				if (IS_WORD(value) && VAL_WORD_CANON(fargs) == VAL_WORD_CANON(value)) {
-					accept = 4;
-				}
-				// Is it a typeset?
-				else if (
-					(temp = TRY_GET_MUTABLE_VAR(fargs)) && IS_TYPESET(temp)
-				) {
-					if (TYPE_CHECK(temp, VAL_TYPE(value))) accept = 1;
-				}
-				else if (!IS_WORD(value)) return 0; // do not search past a refinement
-				//else return -REB_DIALECT_BAD_SPEC;
-			}
-		}
-		// It's been reduced and is an actual datatype or typeset:
-		else if (IS_DATATYPE(fargs)) {
-			type = VAL_TYPE_KIND(fargs);
-		}
-		else if (IS_TYPESET(fargs)) {
-			if (TYPE_CHECK(fargs, VAL_TYPE(value))) accept = 1;
-		} else
-			return -REB_DIALECT_BAD_SPEC;
+                // Is it a refinement word?
+                if (IS_WORD(value) && VAL_WORD_CANON(fargs) == VAL_WORD_CANON(value)) {
+                    accept = 4;
+                }
+                // Is it a typeset?
+                else if (
+                    (temp = TRY_GET_MUTABLE_VAR(fargs)) && IS_TYPESET(temp)
+                ) {
+                    if (TYPE_CHECK(temp, VAL_TYPE(value))) accept = 1;
+                }
+                else if (!IS_WORD(value)) return 0; // do not search past a refinement
+                //else return -REB_DIALECT_BAD_SPEC;
+            }
+        }
+        // It's been reduced and is an actual datatype or typeset:
+        else if (IS_DATATYPE(fargs)) {
+            type = VAL_TYPE_KIND(fargs);
+        }
+        else if (IS_TYPESET(fargs)) {
+            if (TYPE_CHECK(fargs, VAL_TYPE(value))) accept = 1;
+        } else
+            return -REB_DIALECT_BAD_SPEC;
 
-		// Make room for it in the output block:
-		if (IS_END(outp)) {
-			outp = Alloc_Tail_Array(dia->out);
-			SET_NONE(outp);
-		} else if (!IS_NONE(outp)) {
-			// There's already an arg in this slot, so skip it...
-			if (dia->cmd > 1) outp++;
-			if (!rept) continue; // see if there's another farg that will work for it
-			// Look for first empty slot:
-			while (NOT_END(outp) && !IS_NONE(outp)) outp++;
-			if (IS_END(outp)) {
-				outp = Alloc_Tail_Array(dia->out);
-				SET_NONE(outp);
-			}
-		}
+        // Make room for it in the output block:
+        if (IS_END(outp)) {
+            outp = Alloc_Tail_Array(dia->out);
+            SET_NONE(outp);
+        } else if (!IS_NONE(outp)) {
+            // There's already an arg in this slot, so skip it...
+            if (dia->cmd > 1) outp++;
+            if (!rept) continue; // see if there's another farg that will work for it
+            // Look for first empty slot:
+            while (NOT_END(outp) && !IS_NONE(outp)) outp++;
+            if (IS_END(outp)) {
+                outp = Alloc_Tail_Array(dia->out);
+                SET_NONE(outp);
+            }
+        }
 
-		// The datatype was correct from above!
-		if (accept) break;
+        // The datatype was correct from above!
+        if (accept) break;
 
-		//Debug_Fmt("want: %d got: %d rept: %d", type, VAL_TYPE(value), rept);
+        //Debug_Fmt("want: %d got: %d rept: %d", type, VAL_TYPE(value), rept);
 
-		// Direct match to datatype or to integer/decimal coersions:
-		if (type == (REBINT)VAL_TYPE(value)) {
-			accept = 1;
-			break;
-		}
-		else if (type == REB_INTEGER && IS_DECIMAL(value)) {
-			accept = 2;
-			break;
-		}
-		else if (type == REB_DECIMAL && IS_INTEGER(value)) {
-			accept = 3;
-			break;
-		}
+        // Direct match to datatype or to integer/decimal coersions:
+        if (type == (REBINT)VAL_TYPE(value)) {
+            accept = 1;
+            break;
+        }
+        else if (type == REB_INTEGER && IS_DECIMAL(value)) {
+            accept = 2;
+            break;
+        }
+        else if (type == REB_DECIMAL && IS_INTEGER(value)) {
+            accept = 3;
+            break;
+        }
 
-		dia->missed++;				// for debugging
+        dia->missed++;              // for debugging
 
-		// Repeat did not match, so stop repeating and remove unused output slot:
-		if (rept) {
-			Remove_Array_Last(dia->out);
-			outp--;
-			rept = 0;
-			continue;
-		}
+        // Repeat did not match, so stop repeating and remove unused output slot:
+        if (rept) {
+            Remove_Array_Last(dia->out);
+            outp--;
+            rept = 0;
+            continue;
+        }
 
-		if (dia->cmd > 1) outp++;	// skip output slot (for non-default values)
-	}
+        if (dia->cmd > 1) outp++;   // skip output slot (for non-default values)
+    }
 
-	// Process the result:
-	switch (accept) {
+    // Process the result:
+    switch (accept) {
 
-	case 1:
-		*outp = *value;
-		break;
+    case 1:
+        *outp = *value;
+        break;
 
-	case 2:
-		SET_INTEGER(outp, (REBI64)VAL_DECIMAL(value));
-		break;
+    case 2:
+        SET_INTEGER(outp, (REBI64)VAL_DECIMAL(value));
+        break;
 
-	case 3:
-		SET_DECIMAL(outp, (REBDEC)VAL_INT64(value));
-		break;
+    case 3:
+        SET_DECIMAL(outp, (REBDEC)VAL_INT64(value));
+        break;
 
-	case 4:	// refinement:
-		dia->fargi = fargs - BLK_HEAD(dia->fargs) + 1;
-		dia->outi = outp - BLK_HEAD(dia->out) + 1;
-		*outp = *value;
-		return 1;
+    case 4: // refinement:
+        dia->fargi = fargs - BLK_HEAD(dia->fargs) + 1;
+        dia->outi = outp - BLK_HEAD(dia->out) + 1;
+        *outp = *value;
+        return 1;
 
-	case 0:
-		return 0;
-	}
+    case 0:
+        return 0;
+    }
 
-	// Optimization: arg was in correct order:
-	if (!rept && fargi == (signed)(dia->fargi)) {
-		dia->fargi++;
-		dia->outi++;
-	}
+    // Optimization: arg was in correct order:
+    if (!rept && fargi == (signed)(dia->fargi)) {
+        dia->fargi++;
+        dia->outi++;
+    }
 
-	return 1;
+    return 1;
 }
 
 
@@ -362,69 +362,69 @@ again:
 //
 static REBINT Do_Cmd(REBDIA *dia)
 {
-	REBVAL *fargs;
-	REBINT size;
-	REBVAL *val;
-	REBINT err;
-	REBINT n;
+    REBVAL *fargs;
+    REBINT size;
+    REBVAL *val;
+    REBINT err;
+    REBINT n;
 
-	// Get formal arguments block for this command:
-	fargs = FRM_VALUES(dia->dialect) + dia->cmd;
-	if (!IS_BLOCK(fargs)) return -REB_DIALECT_BAD_SPEC;
-	dia->fargs = VAL_SERIES(fargs);
-	fargs = VAL_BLK_DATA(fargs);
-	size = Count_Dia_Args(fargs); // approximate
+    // Get formal arguments block for this command:
+    fargs = FRM_VALUES(dia->dialect) + dia->cmd;
+    if (!IS_BLOCK(fargs)) return -REB_DIALECT_BAD_SPEC;
+    dia->fargs = VAL_SERIES(fargs);
+    fargs = VAL_BLK_DATA(fargs);
+    size = Count_Dia_Args(fargs); // approximate
 
-	// Preallocate output block (optimize for large blocks):
-	if (dia->len > size) size = dia->len;
-	if (GET_FLAG(dia->flags, RDIA_ALL)) {
-		Extend_Series(dia->out, size+1);
-	}
-	else {
-		Resize_Series(dia->out, size+1); // tail = 0
-		CLEAR_SEQUENCE(dia->out); // Be sure it is entirely cleared
-	}
+    // Preallocate output block (optimize for large blocks):
+    if (dia->len > size) size = dia->len;
+    if (GET_FLAG(dia->flags, RDIA_ALL)) {
+        Extend_Series(dia->out, size+1);
+    }
+    else {
+        Resize_Series(dia->out, size+1); // tail = 0
+        CLEAR_SEQUENCE(dia->out); // Be sure it is entirely cleared
+    }
 
-	// Insert command word:
-	if (!GET_FLAG(dia->flags, RDIA_NO_CMD)) {
-		val = Alloc_Tail_Array(dia->out);
-		Val_Init_Word(
-			val,
-			GET_FLAG(dia->flags, RDIA_LIT_CMD) ? REB_LIT_WORD : REB_WORD,
-			FRM_KEY_SYM(dia->dialect, dia->cmd),
-			dia->dialect,
-			dia->cmd
-		);
-		dia->outi++;
-		size++;
-	}
-	if (dia->cmd > 1) dia->argi++; // default cmd has no word arg
+    // Insert command word:
+    if (!GET_FLAG(dia->flags, RDIA_NO_CMD)) {
+        val = Alloc_Tail_Array(dia->out);
+        Val_Init_Word(
+            val,
+            GET_FLAG(dia->flags, RDIA_LIT_CMD) ? REB_LIT_WORD : REB_WORD,
+            FRM_KEY_SYM(dia->dialect, dia->cmd),
+            dia->dialect,
+            dia->cmd
+        );
+        dia->outi++;
+        size++;
+    }
+    if (dia->cmd > 1) dia->argi++; // default cmd has no word arg
 
-	// Foreach argument provided:
-	for (n = dia->len; n > 0; n--, dia->argi++) {
-		val = Eval_Arg(dia);
-		if (!val)
-			return -REB_DIALECT_BAD_ARG;
-		if (IS_END(val)) break;
-		if (!IS_NONE(val)) {
-			//Print("n %d len %d argi %d", n, dia->len, dia->argi);
-			err = Add_Arg(dia, val); // 1: good, 0: no-type, -N: error
-			if (err == 0) return n; // remainder
-			if (err < 0) return err;
-		}
-	}
+    // Foreach argument provided:
+    for (n = dia->len; n > 0; n--, dia->argi++) {
+        val = Eval_Arg(dia);
+        if (!val)
+            return -REB_DIALECT_BAD_ARG;
+        if (IS_END(val)) break;
+        if (!IS_NONE(val)) {
+            //Print("n %d len %d argi %d", n, dia->len, dia->argi);
+            err = Add_Arg(dia, val); // 1: good, 0: no-type, -N: error
+            if (err == 0) return n; // remainder
+            if (err < 0) return err;
+        }
+    }
 
-	// If not enough args, pad with NONE values:
-	if (dia->cmd > 1) {
-		for (n = SERIES_TAIL(dia->out); n < size; n++) {
-			REBVAL *temp = Alloc_Tail_Array(dia->out);
-			SET_NONE(temp);
-		}
-	}
+    // If not enough args, pad with NONE values:
+    if (dia->cmd > 1) {
+        for (n = SERIES_TAIL(dia->out); n < size; n++) {
+            REBVAL *temp = Alloc_Tail_Array(dia->out);
+            SET_NONE(temp);
+        }
+    }
 
-	dia->outi = SERIES_TAIL(dia->out);
+    dia->outi = SERIES_TAIL(dia->out);
 
-	return 0;
+    return 0;
 }
 
 
@@ -439,39 +439,39 @@ static REBINT Do_Cmd(REBDIA *dia)
 //
 static REBINT Do_Dia(REBDIA *dia)
 {
-	REBVAL *next = BLK_SKIP(dia->args, dia->argi);
-	REBVAL *head;
-	REBINT err;
+    REBVAL *next = BLK_SKIP(dia->args, dia->argi);
+    REBVAL *head;
+    REBINT err;
 
-	if (IS_END(next)) return 0;
+    if (IS_END(next)) return 0;
 
-	// Find the command if a word is provided:
-	if (IS_WORD(next) || IS_LIT_WORD(next)) {
-		if (IS_LIT_WORD(next)) SET_FLAG(dia->flags, RDIA_LIT_CMD);
-		dia->cmd = Find_Command(dia->dialect, next);
-	}
+    // Find the command if a word is provided:
+    if (IS_WORD(next) || IS_LIT_WORD(next)) {
+        if (IS_LIT_WORD(next)) SET_FLAG(dia->flags, RDIA_LIT_CMD);
+        dia->cmd = Find_Command(dia->dialect, next);
+    }
 
-	// Handle defaults - process values before a command is reached:
-	if (dia->cmd <= 1) {
-		dia->cmd = 1;
-		dia->len = 1;
-		err = Do_Cmd(dia); // DEFAULT cmd
-		// It must be processed, else it is not in the dialect.
-		// Check for noop result:
-		if (err > 0) err = -REB_DIALECT_BAD_ARG;
-		return err;
-	}
+    // Handle defaults - process values before a command is reached:
+    if (dia->cmd <= 1) {
+        dia->cmd = 1;
+        dia->len = 1;
+        err = Do_Cmd(dia); // DEFAULT cmd
+        // It must be processed, else it is not in the dialect.
+        // Check for noop result:
+        if (err > 0) err = -REB_DIALECT_BAD_ARG;
+        return err;
+    }
 
-	// Delimit the command - search for next command or end:
-	for (head = ++next; NOT_END(next); next++) {
-		if ((IS_WORD(next) || IS_LIT_WORD(next)) && Find_Command(dia->dialect, next) > 1) break;
-	}
+    // Delimit the command - search for next command or end:
+    for (head = ++next; NOT_END(next); next++) {
+        if ((IS_WORD(next) || IS_LIT_WORD(next)) && Find_Command(dia->dialect, next) > 1) break;
+    }
 
-	// Note: command may be shorter than length provided here (defaults):
-	dia->len = next - head; // length of args, not including command
-	err = Do_Cmd(dia);
-	if (GET_FLAG(dia->flags, RDIA_LIT_CMD)) dia->cmd += DIALECT_LIT_CMD;
-	return err;
+    // Note: command may be shorter than length provided here (defaults):
+    dia->len = next - head; // length of args, not including command
+    err = Do_Cmd(dia);
+    if (GET_FLAG(dia->flags, RDIA_LIT_CMD)) dia->cmd += DIALECT_LIT_CMD;
+    return err;
 }
 
 
@@ -494,41 +494,41 @@ static REBINT Do_Dia(REBDIA *dia)
 //
 REBINT Do_Dialect(REBSER *dialect, REBSER *block, REBCNT *index, REBSER **out)
 {
-	REBDIA dia;
-	REBINT n;
-	REBINT dsp_orig = DSP; // Save stack position
+    REBDIA dia;
+    REBINT n;
+    REBINT dsp_orig = DSP; // Save stack position
 
-	CLEARS(&dia);
+    CLEARS(&dia);
 
-	if (*index >= SERIES_TAIL(block)) return 0; // end of block
+    if (*index >= SERIES_TAIL(block)) return 0; // end of block
 
-	// !!! This used to say "Avoid GC during Dialect (prevents unknown
-	// crash problem)".  To the extent DELECT is still used, this unknown
-	// crash problem should be resolved...not the GC disabled.
+    // !!! This used to say "Avoid GC during Dialect (prevents unknown
+    // crash problem)".  To the extent DELECT is still used, this unknown
+    // crash problem should be resolved...not the GC disabled.
 
-	if (!*out) *out = Make_Array(25);
+    if (!*out) *out = Make_Array(25);
 
-	dia.dialect = dialect;
-	dia.args = block;
-	dia.argi = *index;
-	dia.out  = *out;
-	SET_FLAG(dia.flags, RDIA_NO_CMD);
+    dia.dialect = dialect;
+    dia.args = block;
+    dia.argi = *index;
+    dia.out  = *out;
+    SET_FLAG(dia.flags, RDIA_NO_CMD);
 
-	//Print("DSP: %d Dinp: %r - %m", DSP, BLK_SKIP(block, *index), block);
-	n = Do_Dia(&dia);
-	//Print("DSP: %d Dout: CMD: %d %m", DSP, dia.cmd, *out);
-	DS_DROP_TO(dsp_orig); // pop any temp values used above
+    //Print("DSP: %d Dinp: %r - %m", DSP, BLK_SKIP(block, *index), block);
+    n = Do_Dia(&dia);
+    //Print("DSP: %d Dout: CMD: %d %m", DSP, dia.cmd, *out);
+    DS_DROP_TO(dsp_orig); // pop any temp values used above
 
-	if (Delect_Debug > 0) {
-		Total_Missed += dia.missed;
-		// !!!! debug
-		if (dia.missed) Debug_Fmt(Dia_Fmt, Get_Field_Name(dia.dialect, dia.cmd), dia.out->tail, dia.missed, Total_Missed);
-	}
+    if (Delect_Debug > 0) {
+        Total_Missed += dia.missed;
+        // !!!! debug
+        if (dia.missed) Debug_Fmt(Dia_Fmt, Get_Field_Name(dia.dialect, dia.cmd), dia.out->tail, dia.missed, Total_Missed);
+    }
 
-	if (n < 0) return n; //error
-	*index = dia.argi;
+    if (n < 0) return n; //error
+    *index = dia.argi;
 
-	return dia.cmd;
+    return dia.cmd;
 }
 
 
@@ -547,51 +547,51 @@ REBINT Do_Dialect(REBSER *dialect, REBSER *block, REBCNT *index, REBSER **out)
 //
 REBNATIVE(delect)
 {
-	REBDIA dia;
-	REBINT err;
-	REBFLG all;
+    REBDIA dia;
+    REBINT err;
+    REBFLG all;
 
-	CLEARS(&dia);
+    CLEARS(&dia);
 
-	dia.dialect = VAL_OBJ_FRAME(D_ARG(1));
-	dia.args = VAL_SERIES(D_ARG(2));
-	dia.argi = VAL_INDEX(D_ARG(2));
-	dia.out = VAL_SERIES(D_ARG(3));
-	dia.outi = VAL_INDEX(D_ARG(3));
+    dia.dialect = VAL_OBJ_FRAME(D_ARG(1));
+    dia.args = VAL_SERIES(D_ARG(2));
+    dia.argi = VAL_INDEX(D_ARG(2));
+    dia.out = VAL_SERIES(D_ARG(3));
+    dia.outi = VAL_INDEX(D_ARG(3));
 
-	if (dia.argi >= SERIES_TAIL(dia.args)) return R_NONE; // end of block
+    if (dia.argi >= SERIES_TAIL(dia.args)) return R_NONE; // end of block
 
-	if (D_REF(4)) { // in
-		if (!IS_BLOCK(dia.contexts = D_ARG(5)))
-			fail (Error_Invalid_Arg(dia.contexts));
-		dia.contexts = VAL_BLK_DATA(dia.contexts);
-	}
+    if (D_REF(4)) { // in
+        if (!IS_BLOCK(dia.contexts = D_ARG(5)))
+            fail (Error_Invalid_Arg(dia.contexts));
+        dia.contexts = VAL_BLK_DATA(dia.contexts);
+    }
 
-	if ((all = D_REF(6))) {
-		SET_FLAG(dia.flags, RDIA_ALL);
-		Resize_Series(dia.out, VAL_LEN(D_ARG(2)));
-		while (TRUE) {
-			dia.cmd = 0;
-			dia.len = 0;
-			dia.fargi = 0;
-			err = Do_Dia(&dia);
-			//Debug_Fmt("Ret: %d argi: %d outi: %d len: %d", err, dia.argi, dia.outi, dia.len);
-			if (err < 0 || IS_END(BLK_SKIP(dia.args, dia.argi))) break;
-		}
-	}
-	else
-		err = Do_Dia(&dia);
+    if ((all = D_REF(6))) {
+        SET_FLAG(dia.flags, RDIA_ALL);
+        Resize_Series(dia.out, VAL_LEN(D_ARG(2)));
+        while (TRUE) {
+            dia.cmd = 0;
+            dia.len = 0;
+            dia.fargi = 0;
+            err = Do_Dia(&dia);
+            //Debug_Fmt("Ret: %d argi: %d outi: %d len: %d", err, dia.argi, dia.outi, dia.len);
+            if (err < 0 || IS_END(BLK_SKIP(dia.args, dia.argi))) break;
+        }
+    }
+    else
+        err = Do_Dia(&dia);
 
-	VAL_INDEX(D_ARG(2)) = MIN(dia.argi, SERIES_TAIL(dia.args));
+    VAL_INDEX(D_ARG(2)) = MIN(dia.argi, SERIES_TAIL(dia.args));
 
-	if (Delect_Debug > 0) {
-		Total_Missed += dia.missed;
-		if (dia.missed) Debug_Fmt(Dia_Fmt, Get_Field_Name(dia.dialect, dia.cmd), dia.out->tail, dia.missed, Total_Missed);
-	}
+    if (Delect_Debug > 0) {
+        Total_Missed += dia.missed;
+        if (dia.missed) Debug_Fmt(Dia_Fmt, Get_Field_Name(dia.dialect, dia.cmd), dia.out->tail, dia.missed, Total_Missed);
+    }
 
-	if (err < 0) fail (Error_Invalid_Arg(D_ARG(2))); // !!! needs better error
+    if (err < 0) fail (Error_Invalid_Arg(D_ARG(2))); // !!! needs better error
 
-	return R_ARG2;
+    return R_ARG2;
 }
 
 
@@ -600,5 +600,5 @@ REBNATIVE(delect)
 //
 void Trace_Delect(REBINT level)
 {
-	Delect_Debug = level;
+    Delect_Debug = level;
 }

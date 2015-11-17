@@ -27,15 +27,15 @@
 **
 ***********************************************************************/
 /*
-	General idea of usage:
+    General idea of usage:
 
-	t: open timer://name
-	write t 10	; set timer - also allow: 1.23 1:23
-	wait t
-	clear t		; reset or delete?
-	read t		; get timer value
-	t/awake: func [event] [print "timer!"]
-	one-shot vs restart timer
+    t: open timer://name
+    write t 10  ; set timer - also allow: 1.23 1:23
+    wait t
+    clear t     ; reset or delete?
+    read t      ; get timer value
+    t/awake: func [event] [print "timer!"]
+    one-shot vs restart timer
 */
 
 #include "sys-core.h"
@@ -46,74 +46,74 @@
 //
 static REB_R Event_Actor(struct Reb_Call *call_, REBSER *port, REBCNT action)
 {
-	REBVAL *spec;
-	REBVAL *state;
-	REBCNT result;
-	REBVAL *arg;
-	REBVAL save_port;
+    REBVAL *spec;
+    REBVAL *state;
+    REBCNT result;
+    REBVAL *arg;
+    REBVAL save_port;
 
-	Validate_Port(port, action);
+    Validate_Port(port, action);
 
-	arg = DS_ARGC > 1 ? D_ARG(2) : NULL;
-	*D_OUT = *D_ARG(1);
+    arg = DS_ARGC > 1 ? D_ARG(2) : NULL;
+    *D_OUT = *D_ARG(1);
 
-	// Validate and fetch relevant PORT fields:
-	state = BLK_SKIP(port, STD_PORT_STATE);
-	spec  = BLK_SKIP(port, STD_PORT_SPEC);
-	if (!IS_OBJECT(spec)) fail (Error(RE_INVALID_SPEC, spec));
+    // Validate and fetch relevant PORT fields:
+    state = BLK_SKIP(port, STD_PORT_STATE);
+    spec  = BLK_SKIP(port, STD_PORT_SPEC);
+    if (!IS_OBJECT(spec)) fail (Error(RE_INVALID_SPEC, spec));
 
-	// Get or setup internal state data:
-	if (!IS_BLOCK(state)) Val_Init_Block(state, Make_Array(127));
+    // Get or setup internal state data:
+    if (!IS_BLOCK(state)) Val_Init_Block(state, Make_Array(127));
 
-	switch (action) {
+    switch (action) {
 
-	case A_UPDATE:
-		return R_NONE;
+    case A_UPDATE:
+        return R_NONE;
 
-	// Normal block actions done on events:
-	case A_POKE:
-		if (!IS_EVENT(D_ARG(3))) fail (Error_Invalid_Arg(D_ARG(3)));
-		goto act_blk;
-	case A_INSERT:
-	case A_APPEND:
-	//case A_PATH:		// not allowed: port/foo is port object field access
-	//case A_PATH_SET:	// not allowed: above
-		if (!IS_EVENT(arg)) fail (Error_Invalid_Arg(arg));
-	case A_PICK:
+    // Normal block actions done on events:
+    case A_POKE:
+        if (!IS_EVENT(D_ARG(3))) fail (Error_Invalid_Arg(D_ARG(3)));
+        goto act_blk;
+    case A_INSERT:
+    case A_APPEND:
+    //case A_PATH:      // not allowed: port/foo is port object field access
+    //case A_PATH_SET:  // not allowed: above
+        if (!IS_EVENT(arg)) fail (Error_Invalid_Arg(arg));
+    case A_PICK:
 act_blk:
-		save_port = *D_ARG(1); // save for return
-		*D_ARG(1) = *state;
-		result = T_Block(ds, action);
-		SET_FLAG(Eval_Signals, SIG_EVENT_PORT);
-		if (action == A_INSERT || action == A_APPEND || action == A_REMOVE) {
-			*D_OUT = save_port;
-			break;
-		}
-		return result; // return condition
+        save_port = *D_ARG(1); // save for return
+        *D_ARG(1) = *state;
+        result = T_Block(ds, action);
+        SET_FLAG(Eval_Signals, SIG_EVENT_PORT);
+        if (action == A_INSERT || action == A_APPEND || action == A_REMOVE) {
+            *D_OUT = save_port;
+            break;
+        }
+        return result; // return condition
 
-	case A_CLEAR:
-		VAL_TAIL(state) = 0;
-		VAL_TERM_ARRAY(state);
-		CLR_FLAG(Eval_Signals, SIG_EVENT_PORT);
-		break;
+    case A_CLEAR:
+        VAL_TAIL(state) = 0;
+        VAL_TERM_ARRAY(state);
+        CLR_FLAG(Eval_Signals, SIG_EVENT_PORT);
+        break;
 
-	case A_LENGTH:
-		SET_INTEGER(D_OUT, VAL_TAIL(state));
-		break;
+    case A_LENGTH:
+        SET_INTEGER(D_OUT, VAL_TAIL(state));
+        break;
 
-	case A_OPEN:
-		if (!req) { //!!!
-			req = OS_MAKE_DEVREQ(RDI_EVENT);
-			SET_OPEN(req);
-			OS_DO_DEVICE(req, RDC_CONNECT);		// stays queued
-		}
-		break;
+    case A_OPEN:
+        if (!req) { //!!!
+            req = OS_MAKE_DEVREQ(RDI_EVENT);
+            SET_OPEN(req);
+            OS_DO_DEVICE(req, RDC_CONNECT);     // stays queued
+        }
+        break;
 
-	default:
-		fail (Error_Illegal_Action(REB_PORT, action));
-	}
+    default:
+        fail (Error_Illegal_Action(REB_PORT, action));
+    }
 
-	return R_OUT;
+    return R_OUT;
 }
 
 
@@ -122,5 +122,5 @@ act_blk:
 //
 void Init_Timer_Scheme(void)
 {
-	Register_Scheme(SYM_TIMER, 0, Event_Actor);
+    Register_Scheme(SYM_TIMER, 0, Event_Actor);
 }

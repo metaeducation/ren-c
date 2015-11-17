@@ -38,17 +38,17 @@
 //
 REBSER *Make_Binary(REBCNT length)
 {
-	REBSER *series = Make_Series(length + 1, sizeof(REBYTE), MKS_NONE);
-	LABEL_SERIES(series, "make binary");
+    REBSER *series = Make_Series(length + 1, sizeof(REBYTE), MKS_NONE);
+    LABEL_SERIES(series, "make binary");
 
-	// !!! Clients seem to have different expectations of if `length` is
-	// total capacity (and the binary should be empty) or actually is
-	// specifically being preallocated at a fixed length.  Until this
-	// is straightened out, terminate for both possibilities.
+    // !!! Clients seem to have different expectations of if `length` is
+    // total capacity (and the binary should be empty) or actually is
+    // specifically being preallocated at a fixed length.  Until this
+    // is straightened out, terminate for both possibilities.
 
-	BIN_DATA(series)[length] = 0;
-	TERM_SEQUENCE(series);
-	return series;
+    BIN_DATA(series)[length] = 0;
+    TERM_SEQUENCE(series);
+    return series;
 }
 
 
@@ -60,17 +60,17 @@ REBSER *Make_Binary(REBCNT length)
 //
 REBSER *Make_Unicode(REBCNT length)
 {
-	REBSER *series = Make_Series(length + 1, sizeof(REBUNI), MKS_NONE);
-	LABEL_SERIES(series, "make unicode");
+    REBSER *series = Make_Series(length + 1, sizeof(REBUNI), MKS_NONE);
+    LABEL_SERIES(series, "make unicode");
 
-	// !!! Clients seem to have different expectations of if `length` is
-	// total capacity (and the binary should be empty) or actually is
-	// specifically being preallocated at a fixed length.  Until this
-	// is straightened out, terminate for both possibilities.
+    // !!! Clients seem to have different expectations of if `length` is
+    // total capacity (and the binary should be empty) or actually is
+    // specifically being preallocated at a fixed length.  Until this
+    // is straightened out, terminate for both possibilities.
 
-	UNI_HEAD(series)[length] = 0;
-	TERM_SEQUENCE(series);
-	return series;
+    UNI_HEAD(series)[length] = 0;
+    TERM_SEQUENCE(series);
+    return series;
 }
 
 
@@ -82,16 +82,16 @@ REBSER *Make_Unicode(REBCNT length)
 //
 REBSER *Copy_Bytes(const REBYTE *src, REBINT len)
 {
-	REBSER *dst;
+    REBSER *dst;
 
-	if (len < 0) len = LEN_BYTES(src);
+    if (len < 0) len = LEN_BYTES(src);
 
-	dst = Make_Binary(len);
-	memcpy(STR_DATA(dst), src, len);
-	SERIES_TAIL(dst) = len;
-	STR_TERM(dst);
+    dst = Make_Binary(len);
+    memcpy(STR_DATA(dst), src, len);
+    SERIES_TAIL(dst) = len;
+    STR_TERM(dst);
 
-	return dst;
+    return dst;
 }
 
 
@@ -103,20 +103,20 @@ REBSER *Copy_Bytes(const REBYTE *src, REBINT len)
 //
 REBSER *Copy_Bytes_To_Unicode(REBYTE *src, REBINT len)
 {
-	REBSER *series;
-	REBUNI *dst;
+    REBSER *series;
+    REBUNI *dst;
 
-	series = Make_Unicode(len);
-	dst = UNI_HEAD(series);
-	SERIES_TAIL(series) = len;
+    series = Make_Unicode(len);
+    dst = UNI_HEAD(series);
+    SERIES_TAIL(series) = len;
 
-	for (; len > 0; len--) {
-		*dst++ = (REBUNI)(*src++);
-	}
+    for (; len > 0; len--) {
+        *dst++ = (REBUNI)(*src++);
+    }
 
-	UNI_TERM(series);
+    UNI_TERM(series);
 
-	return series;
+    return series;
 }
 
 
@@ -128,25 +128,25 @@ REBSER *Copy_Bytes_To_Unicode(REBYTE *src, REBINT len)
 //
 REBSER *Copy_Wide_Str(void *src, REBINT len)
 {
-	REBSER *dst;
-	REBUNI *str = (REBUNI*)src;
-	if (Is_Wide(str, len)) {
-		REBUNI *up;
-		dst = Make_Unicode(len);
-		SERIES_TAIL(dst) = len;
-		up = UNI_HEAD(dst);
-		while (len-- > 0) *up++ = *str++;
-		*up = 0;
-	}
-	else {
-		REBYTE *bp;
-		dst = Make_Binary(len);
-		SERIES_TAIL(dst) = len;
-		bp = BIN_HEAD(dst);
-		while (len-- > 0) *bp++ = (REBYTE)*str++;
-		*bp = 0;
-	}
-	return dst;
+    REBSER *dst;
+    REBUNI *str = (REBUNI*)src;
+    if (Is_Wide(str, len)) {
+        REBUNI *up;
+        dst = Make_Unicode(len);
+        SERIES_TAIL(dst) = len;
+        up = UNI_HEAD(dst);
+        while (len-- > 0) *up++ = *str++;
+        *up = 0;
+    }
+    else {
+        REBYTE *bp;
+        dst = Make_Binary(len);
+        SERIES_TAIL(dst) = len;
+        bp = BIN_HEAD(dst);
+        while (len-- > 0) *bp++ = (REBYTE)*str++;
+        *bp = 0;
+    }
+    return dst;
 }
 
 //
@@ -163,9 +163,9 @@ REBSER *Copy_Wide_Str(void *src, REBINT len)
 REBSER *Copy_OS_Str(void *src, REBINT len)
 {
 #ifdef OS_WIDE_CHAR
-	return Copy_Wide_Str(src, len);
+    return Copy_Wide_Str(src, len);
 #else
-	return Decode_UTF_String((REBYTE*)src, len, 8);
+    return Decode_UTF_String((REBYTE*)src, len, 8);
 #endif
 }
 
@@ -177,10 +177,10 @@ REBSER *Copy_OS_Str(void *src, REBINT len)
 //
 void Insert_Char(REBSER *dst, REBCNT index, REBCNT chr)
 {
-	if (index > dst->tail) index = dst->tail;
-	if (chr > 0xFF && BYTE_SIZE(dst)) Widen_String(dst, TRUE);
-	Expand_Series(dst, index, 1);
-	SET_ANY_CHAR(dst, index, chr);
+    if (index > dst->tail) index = dst->tail;
+    if (chr > 0xFF && BYTE_SIZE(dst)) Widen_String(dst, TRUE);
+    Expand_Series(dst, index, 1);
+    SET_ANY_CHAR(dst, index, chr);
 }
 
 
@@ -193,46 +193,46 @@ void Insert_Char(REBSER *dst, REBCNT index, REBCNT chr)
 //
 void Insert_String(REBSER *dst, REBCNT idx, const REBSER *src, REBCNT pos, REBCNT len, REBFLG no_expand)
 {
-	REBUNI *up;
-	REBYTE *bp;
-	REBCNT n;
+    REBUNI *up;
+    REBYTE *bp;
+    REBCNT n;
 
-	if (idx > dst->tail) idx = dst->tail;
-	if (!no_expand) Expand_Series(dst, idx, len); // tail changed too
+    if (idx > dst->tail) idx = dst->tail;
+    if (!no_expand) Expand_Series(dst, idx, len); // tail changed too
 
-	// Src and dst have same width (8 or 16):
-	if (SERIES_WIDE(dst) == SERIES_WIDE(src)) {
+    // Src and dst have same width (8 or 16):
+    if (SERIES_WIDE(dst) == SERIES_WIDE(src)) {
 cp_same:
-		if (BYTE_SIZE(dst))
-			memcpy(BIN_SKIP(dst, idx), BIN_SKIP(src, pos), len);
-		else
-			memcpy(UNI_SKIP(dst, idx), UNI_SKIP(src, pos), sizeof(REBUNI) * len);
-		return;
-	}
+        if (BYTE_SIZE(dst))
+            memcpy(BIN_SKIP(dst, idx), BIN_SKIP(src, pos), len);
+        else
+            memcpy(UNI_SKIP(dst, idx), UNI_SKIP(src, pos), sizeof(REBUNI) * len);
+        return;
+    }
 
-	// Src is 8 and dst is 16:
-	if (!BYTE_SIZE(dst)) {
-		bp = BIN_SKIP(src, pos);
-		up = UNI_SKIP(dst, idx);
-		for (n = 0; n < len; n++) up[n] = (REBUNI)bp[n];
-		return;
-	}
+    // Src is 8 and dst is 16:
+    if (!BYTE_SIZE(dst)) {
+        bp = BIN_SKIP(src, pos);
+        up = UNI_SKIP(dst, idx);
+        for (n = 0; n < len; n++) up[n] = (REBUNI)bp[n];
+        return;
+    }
 
-	// Src is 16 and dst is 8:
-	bp = BIN_SKIP(dst, idx);
-	up = UNI_SKIP(src, pos);
-	for (n = 0; n < len; n++) {
-		if (up[n] > 0xFF) {
-			//Debug_Num("##Widen-series because char value is:", up[n]);
-			// Expand dst and restart:
-			idx += n;
-			pos += n;
-			len -= n;
-			Widen_String(dst, TRUE);
-			goto cp_same;
-		}
-		bp[n] = (REBYTE)up[n];
-	}
+    // Src is 16 and dst is 8:
+    bp = BIN_SKIP(dst, idx);
+    up = UNI_SKIP(src, pos);
+    for (n = 0; n < len; n++) {
+        if (up[n] > 0xFF) {
+            //Debug_Num("##Widen-series because char value is:", up[n]);
+            // Expand dst and restart:
+            idx += n;
+            pos += n;
+            len -= n;
+            Widen_String(dst, TRUE);
+            goto cp_same;
+        }
+        bp[n] = (REBYTE)up[n];
+    }
 }
 
 
@@ -246,27 +246,27 @@ cp_same:
 //
 REBSER *Copy_String(REBSER *src, REBCNT index, REBINT length)
 {
-	REBUNI *up;
-	REBYTE wide = 1;
-	REBSER *dst;
-	REBINT n;
+    REBUNI *up;
+    REBYTE wide = 1;
+    REBSER *dst;
+    REBINT n;
 
-	if (length < 0) length = src->tail;
+    if (length < 0) length = src->tail;
 
-	// Can it be slimmed down?
-	if (!BYTE_SIZE(src)) {
-		up = UNI_SKIP(src, index);
-		for (n = 0; n < length; n++)
-			if (up[n] > 0xff) break;
-		if (n < length) wide = sizeof(REBUNI);
-	}
+    // Can it be slimmed down?
+    if (!BYTE_SIZE(src)) {
+        up = UNI_SKIP(src, index);
+        for (n = 0; n < length; n++)
+            if (up[n] > 0xff) break;
+        if (n < length) wide = sizeof(REBUNI);
+    }
 
-	dst = Make_Series(length + 1, wide, MKS_NONE);
-	Insert_String(dst, 0, src, index, length, TRUE);
-	SERIES_TAIL(dst) = length;
-	TERM_SEQUENCE(dst);
+    dst = Make_Series(length + 1, wide, MKS_NONE);
+    Insert_String(dst, 0, src, index, length, TRUE);
+    SERIES_TAIL(dst) = length;
+    TERM_SEQUENCE(dst);
 
-	return dst;
+    return dst;
 }
 
 
@@ -292,48 +292,48 @@ REBSER *Copy_String(REBSER *src, REBCNT index, REBINT length)
 REBCHR *Val_Str_To_OS_Managed(REBSER **out, REBVAL *val)
 {
 #ifdef OS_WIDE_CHAR
-	if (VAL_BYTE_SIZE(val)) {
-		// On windows, we need to convert byte to wide:
-		REBINT n = VAL_LEN(val);
-		REBSER *up = Make_Unicode(n);
+    if (VAL_BYTE_SIZE(val)) {
+        // On windows, we need to convert byte to wide:
+        REBINT n = VAL_LEN(val);
+        REBSER *up = Make_Unicode(n);
 
-		// !!!"Leaks" in the sense that the GC has to take care of this
-		MANAGE_SERIES(up);
+        // !!!"Leaks" in the sense that the GC has to take care of this
+        MANAGE_SERIES(up);
 
-		n = Decode_UTF8(UNI_HEAD(up), VAL_BIN_DATA(val), n, FALSE);
-		SERIES_TAIL(up) = abs(n);
-		UNI_TERM(up);
+        n = Decode_UTF8(UNI_HEAD(up), VAL_BIN_DATA(val), n, FALSE);
+        SERIES_TAIL(up) = abs(n);
+        UNI_TERM(up);
 
-		if (out) *out = up;
+        if (out) *out = up;
 
-		return cast(REBCHR*, UNI_HEAD(up));
-	}
-	else {
-		// Already wide, we can use it as-is:
-		// !Assumes the OS uses same wide format!
+        return cast(REBCHR*, UNI_HEAD(up));
+    }
+    else {
+        // Already wide, we can use it as-is:
+        // !Assumes the OS uses same wide format!
 
-		if (out) *out = VAL_SERIES(val);
+        if (out) *out = VAL_SERIES(val);
 
-		return cast(REBCHR*, VAL_UNI_DATA(val));
-	}
+        return cast(REBCHR*, VAL_UNI_DATA(val));
+    }
 #else
-	if (VAL_STR_IS_ASCII(val)) {
-		if (out) *out = VAL_SERIES(val);
+    if (VAL_STR_IS_ASCII(val)) {
+        if (out) *out = VAL_SERIES(val);
 
-		// On Linux/Unix we can use ASCII directly (it is valid UTF-8):
-		return cast(REBCHR*, VAL_BIN_DATA(val));
-	}
-	else {
-		REBCNT n = VAL_LEN(val);
+        // On Linux/Unix we can use ASCII directly (it is valid UTF-8):
+        return cast(REBCHR*, VAL_BIN_DATA(val));
+    }
+    else {
+        REBCNT n = VAL_LEN(val);
 
-		// !!! "Leaks" in the sense that the GC has to take care of this
-		REBSER *ser = Temp_Bin_Str_Managed(val, 0, &n);
+        // !!! "Leaks" in the sense that the GC has to take care of this
+        REBSER *ser = Temp_Bin_Str_Managed(val, 0, &n);
 
-		if (out) *out = ser;
+        if (out) *out = ser;
 
-		// NOTE: may return a shared buffer!
-		return cast(REBCHR*, BIN_HEAD(ser));
-	}
+        // NOTE: may return a shared buffer!
+        return cast(REBCHR*, BIN_HEAD(ser));
+    }
 #endif
 }
 
@@ -349,28 +349,28 @@ REBCHR *Val_Str_To_OS_Managed(REBSER **out, REBVAL *val)
 //
 REBSER *Append_Unencoded_Len(REBSER *dst, const char *src, REBCNT len)
 {
-	REBUNI *up;
-	REBCNT tail;
+    REBUNI *up;
+    REBCNT tail;
 
-	if (!dst) {
-		dst = Make_Binary(len);
-		tail = 0;
-	} else {
-		tail = SERIES_TAIL(dst);
-		EXPAND_SERIES_TAIL(dst, len);
-	}
+    if (!dst) {
+        dst = Make_Binary(len);
+        tail = 0;
+    } else {
+        tail = SERIES_TAIL(dst);
+        EXPAND_SERIES_TAIL(dst, len);
+    }
 
-	if (BYTE_SIZE(dst)) {
-		memcpy(STR_SKIP(dst, tail), src, len);
-		STR_TERM(dst);
-	}
-	else {
-		up = UNI_SKIP(dst, tail);
-		for (; len > 0; len--) *up++ = (REBUNI)*src++;
-		*up = 0;
-	}
+    if (BYTE_SIZE(dst)) {
+        memcpy(STR_SKIP(dst, tail), src, len);
+        STR_TERM(dst);
+    }
+    else {
+        up = UNI_SKIP(dst, tail);
+        for (; len > 0; len--) *up++ = (REBUNI)*src++;
+        *up = 0;
+    }
 
-	return dst;
+    return dst;
 }
 
 
@@ -384,7 +384,7 @@ REBSER *Append_Unencoded_Len(REBSER *dst, const char *src, REBCNT len)
 //
 REBSER *Append_Unencoded(REBSER *dst, const char *src)
 {
-	return Append_Unencoded_Len(dst, src, strlen(src));
+    return Append_Unencoded_Len(dst, src, strlen(src));
 }
 
 
@@ -396,22 +396,22 @@ REBSER *Append_Unencoded(REBSER *dst, const char *src)
 //
 REBSER *Append_Codepoint_Raw(REBSER *dst, REBCNT codepoint)
 {
-	REBCNT tail = SERIES_TAIL(dst);
+    REBCNT tail = SERIES_TAIL(dst);
 
-	EXPAND_SERIES_TAIL(dst, 1);
+    EXPAND_SERIES_TAIL(dst, 1);
 
-	if (BYTE_SIZE(dst)) {
-		assert(codepoint < (1 << 8));
-		*STR_SKIP(dst, tail) = cast(REBYTE, codepoint);
-		STR_TERM(dst);
-	}
-	else {
-		assert(codepoint < (1 << 16));
-		*UNI_SKIP(dst, tail) = cast(REBUNI, codepoint);
-		UNI_TERM(dst);
-	}
+    if (BYTE_SIZE(dst)) {
+        assert(codepoint < (1 << 8));
+        *STR_SKIP(dst, tail) = cast(REBYTE, codepoint);
+        STR_TERM(dst);
+    }
+    else {
+        assert(codepoint < (1 << 16));
+        *UNI_SKIP(dst, tail) = cast(REBUNI, codepoint);
+        UNI_TERM(dst);
+    }
 
-	return dst;
+    return dst;
 }
 
 
@@ -427,16 +427,16 @@ REBSER *Append_Codepoint_Raw(REBSER *dst, REBCNT codepoint)
 //
 REBSER *Make_Series_Codepoint(REBCNT codepoint)
 {
-	REBSER *out;
+    REBSER *out;
 
-	assert(codepoint < (1 << 16));
+    assert(codepoint < (1 << 16));
 
-	out = (codepoint > 255) ? Make_Unicode(1) : Make_Binary(1);
-	TERM_SEQUENCE(out);
+    out = (codepoint > 255) ? Make_Unicode(1) : Make_Binary(1);
+    TERM_SEQUENCE(out);
 
-	Append_Codepoint_Raw(out, codepoint);
+    Append_Codepoint_Raw(out, codepoint);
 
-	return out;
+    return out;
 }
 
 
@@ -447,17 +447,17 @@ REBSER *Make_Series_Codepoint(REBCNT codepoint)
 //
 void Append_Uni_Bytes(REBSER *dst, const REBUNI *src, REBCNT len)
 {
-	REBYTE *bp;
-	REBCNT tail = SERIES_TAIL(dst);
+    REBYTE *bp;
+    REBCNT tail = SERIES_TAIL(dst);
 
-	EXPAND_SERIES_TAIL(dst, len);
+    EXPAND_SERIES_TAIL(dst, len);
 
-	bp = BIN_SKIP(dst, tail);
+    bp = BIN_SKIP(dst, tail);
 
-	for (; len > 0; len--)
-		*bp++ = (REBYTE)*src++;
+    for (; len > 0; len--)
+        *bp++ = (REBYTE)*src++;
 
-	*bp = 0;
+    *bp = 0;
 }
 
 
@@ -468,17 +468,17 @@ void Append_Uni_Bytes(REBSER *dst, const REBUNI *src, REBCNT len)
 //
 void Append_Uni_Uni(REBSER *dst, const REBUNI *src, REBCNT len)
 {
-	REBUNI *up;
-	REBCNT tail = SERIES_TAIL(dst);
+    REBUNI *up;
+    REBCNT tail = SERIES_TAIL(dst);
 
-	EXPAND_SERIES_TAIL(dst, len);
+    EXPAND_SERIES_TAIL(dst, len);
 
-	up = UNI_SKIP(dst, tail);
+    up = UNI_SKIP(dst, tail);
 
-	for (; len > 0; len--)
-		*up++ = *src++;
+    for (; len > 0; len--)
+        *up++ = *src++;
 
-	*up = 0;
+    *up = 0;
 }
 
 
@@ -489,7 +489,7 @@ void Append_Uni_Uni(REBSER *dst, const REBUNI *src, REBCNT len)
 //
 void Append_String(REBSER *dst, const REBSER *src, REBCNT i, REBCNT len)
 {
-	Insert_String(dst, SERIES_TAIL(dst), src, i, len, 0);
+    Insert_String(dst, SERIES_TAIL(dst), src, i, len, 0);
 }
 
 
@@ -498,7 +498,7 @@ void Append_String(REBSER *dst, const REBSER *src, REBCNT i, REBCNT len)
 //
 void Append_Boot_Str(REBSER *dst, REBINT num)
 {
-	Append_Unencoded(dst, s_cast(PG_Boot_Strs[num]));
+    Append_Unencoded(dst, s_cast(PG_Boot_Strs[num]));
 }
 
 
@@ -509,10 +509,10 @@ void Append_Boot_Str(REBSER *dst, REBINT num)
 //
 void Append_Int(REBSER *dst, REBINT num)
 {
-	REBYTE buf[32];
+    REBYTE buf[32];
 
-	Form_Int(buf, num);
-	Append_Unencoded(dst, s_cast(buf));
+    Form_Int(buf, num);
+    Append_Unencoded(dst, s_cast(buf));
 }
 
 
@@ -523,13 +523,13 @@ void Append_Int(REBSER *dst, REBINT num)
 //
 void Append_Int_Pad(REBSER *dst, REBINT num, REBINT digs)
 {
-	REBYTE buf[32];
-	if (digs > 0)
-		Form_Int_Pad(buf, num, digs, -digs, '0');
-	else
-		Form_Int_Pad(buf, num, -digs, digs, '0');
+    REBYTE buf[32];
+    if (digs > 0)
+        Form_Int_Pad(buf, num, digs, -digs, '0');
+    else
+        Form_Int_Pad(buf, num, -digs, digs, '0');
 
-	Append_Unencoded(dst, s_cast(buf));
+    Append_Unencoded(dst, s_cast(buf));
 }
 
 
@@ -545,28 +545,28 @@ void Append_Int_Pad(REBSER *dst, REBINT num, REBINT digs)
 //
 REBSER *Append_UTF8(REBSER *dst, const REBYTE *src, REBINT len)
 {
-	REBSER *ser = BUF_UTF8;	// buffer is Unicode width
+    REBSER *ser = BUF_UTF8; // buffer is Unicode width
 
-	if (len < 0) len = LEN_BYTES(src);
+    if (len < 0) len = LEN_BYTES(src);
 
-	Resize_Series(ser, len+1); // needs at most this much
+    Resize_Series(ser, len+1); // needs at most this much
 
-	len = Decode_UTF8(UNI_HEAD(ser), src, len, FALSE);
+    len = Decode_UTF8(UNI_HEAD(ser), src, len, FALSE);
 
-	if (len < 0) {
-		len = -len;
-		if (!dst) dst = Make_Binary(len);
-		if (BYTE_SIZE(dst)) {
-			Append_Uni_Bytes(dst, UNI_HEAD(ser), len);
-			return dst;
-		}
-	} else {
-		if (!dst) dst = Make_Unicode(len);
-	}
+    if (len < 0) {
+        len = -len;
+        if (!dst) dst = Make_Binary(len);
+        if (BYTE_SIZE(dst)) {
+            Append_Uni_Bytes(dst, UNI_HEAD(ser), len);
+            return dst;
+        }
+    } else {
+        if (!dst) dst = Make_Unicode(len);
+    }
 
-	Append_Uni_Uni(dst, UNI_HEAD(ser), len);
+    Append_Uni_Uni(dst, UNI_HEAD(ser), len);
 
-	return dst;
+    return dst;
 }
 
 
@@ -582,67 +582,67 @@ REBSER *Append_UTF8(REBSER *dst, const REBYTE *src, REBINT len)
 //
 REBSER *Join_Binary(const REBVAL *blk, REBINT limit)
 {
-	REBSER *series = BUF_FORM;
-	REBVAL *val;
-	REBCNT tail = 0;
-	REBCNT len;
-	REBCNT bl;
-	void *bp;
+    REBSER *series = BUF_FORM;
+    REBVAL *val;
+    REBCNT tail = 0;
+    REBCNT len;
+    REBCNT bl;
+    void *bp;
 
-	if (limit < 0) limit = VAL_LEN(blk);
+    if (limit < 0) limit = VAL_LEN(blk);
 
-	RESET_TAIL(series);
+    RESET_TAIL(series);
 
-	for (val = VAL_BLK_DATA(blk); limit > 0; val++, limit--) {
-		switch (VAL_TYPE(val)) {
+    for (val = VAL_BLK_DATA(blk); limit > 0; val++, limit--) {
+        switch (VAL_TYPE(val)) {
 
-		case REB_INTEGER:
-			if (VAL_INT64(val) > cast(i64, 255) || VAL_INT64(val) < 0)
-				fail (Error_Out_Of_Range(val));
-			EXPAND_SERIES_TAIL(series, 1);
-			*BIN_SKIP(series, tail) = (REBYTE)VAL_INT32(val);
-			break;
+        case REB_INTEGER:
+            if (VAL_INT64(val) > cast(i64, 255) || VAL_INT64(val) < 0)
+                fail (Error_Out_Of_Range(val));
+            EXPAND_SERIES_TAIL(series, 1);
+            *BIN_SKIP(series, tail) = (REBYTE)VAL_INT32(val);
+            break;
 
-		case REB_BINARY:
-			len = VAL_LEN(val);
-			EXPAND_SERIES_TAIL(series, len);
-			memcpy(BIN_SKIP(series, tail), VAL_BIN_DATA(val), len);
-			break;
+        case REB_BINARY:
+            len = VAL_LEN(val);
+            EXPAND_SERIES_TAIL(series, len);
+            memcpy(BIN_SKIP(series, tail), VAL_BIN_DATA(val), len);
+            break;
 
-		case REB_STRING:
-		case REB_FILE:
-		case REB_EMAIL:
-		case REB_URL:
-		case REB_TAG:
-			len = VAL_LEN(val);
-			bp = VAL_BYTE_SIZE(val) ? VAL_BIN_DATA(val) : (REBYTE*)VAL_UNI_DATA(val);
-			bl = Length_As_UTF8(
-				bp, len, VAL_BYTE_SIZE(val) ? 0 : OPT_ENC_UNISRC
-			);
-			EXPAND_SERIES_TAIL(series, bl);
-			series->tail = tail + Encode_UTF8(
-				BIN_SKIP(series, tail),
-				bl,
-				bp,
-				&len,
-				VAL_BYTE_SIZE(val) ? 0 : OPT_ENC_UNISRC
-			);
-			break;
+        case REB_STRING:
+        case REB_FILE:
+        case REB_EMAIL:
+        case REB_URL:
+        case REB_TAG:
+            len = VAL_LEN(val);
+            bp = VAL_BYTE_SIZE(val) ? VAL_BIN_DATA(val) : (REBYTE*)VAL_UNI_DATA(val);
+            bl = Length_As_UTF8(
+                bp, len, VAL_BYTE_SIZE(val) ? 0 : OPT_ENC_UNISRC
+            );
+            EXPAND_SERIES_TAIL(series, bl);
+            series->tail = tail + Encode_UTF8(
+                BIN_SKIP(series, tail),
+                bl,
+                bp,
+                &len,
+                VAL_BYTE_SIZE(val) ? 0 : OPT_ENC_UNISRC
+            );
+            break;
 
-		case REB_CHAR:
-			EXPAND_SERIES_TAIL(series, 6);
-			len = Encode_UTF8_Char(BIN_SKIP(series, tail), VAL_CHAR(val));
-			series->tail = tail + len;
-			break;
+        case REB_CHAR:
+            EXPAND_SERIES_TAIL(series, 6);
+            len = Encode_UTF8_Char(BIN_SKIP(series, tail), VAL_CHAR(val));
+            series->tail = tail + len;
+            break;
 
-		default:
-			fail (Error_Invalid_Arg(val));
-		}
+        default:
+            fail (Error_Invalid_Arg(val));
+        }
 
-		tail = series->tail;
-	}
+        tail = series->tail;
+    }
 
-	SET_STR_END(series, tail);
+    SET_STR_END(series, tail);
 
-	return series;  // SHARED FORM SERIES!
+    return series;  // SHARED FORM SERIES!
 }

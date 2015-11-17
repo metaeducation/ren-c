@@ -53,36 +53,36 @@ extern void Signal_Device(REBREQ *req, REBINT type);
 //
 DEVICE_CMD Open_Signal(REBREQ *req)
 {
-	//RL_Print("Open_Signal\n");
+    //RL_Print("Open_Signal\n");
 
-	sigset_t mask;
-	sigset_t overlap;
+    sigset_t mask;
+    sigset_t overlap;
 
 #ifdef CHECK_MASK_OVERLAP //doesn't work yet
-	if (sigprocmask(SIG_BLOCK, NULL, &mask) < 0) {
-		goto error;
-	}
-	if (sigandset(&overlap, &mask, &req->special.signal.mask) < 0) {
-		goto error;
-	}
-	if (!sigisemptyset(&overlap)) {
-		req->error = EBUSY;
-		return DR_ERROR;
-	}
+    if (sigprocmask(SIG_BLOCK, NULL, &mask) < 0) {
+        goto error;
+    }
+    if (sigandset(&overlap, &mask, &req->special.signal.mask) < 0) {
+        goto error;
+    }
+    if (!sigisemptyset(&overlap)) {
+        req->error = EBUSY;
+        return DR_ERROR;
+    }
 #endif
 
-	if (sigprocmask(SIG_BLOCK, &req->special.signal.mask, NULL) < 0) {
-		goto error;
-	}
+    if (sigprocmask(SIG_BLOCK, &req->special.signal.mask, NULL) < 0) {
+        goto error;
+    }
 
-	SET_OPEN(req);
-	Signal_Device(req, EVT_OPEN);
+    SET_OPEN(req);
+    Signal_Device(req, EVT_OPEN);
 
-	return DR_DONE;
+    return DR_DONE;
 
 error:
-	req->error = errno;
-	return DR_ERROR;
+    req->error = errno;
+    return DR_ERROR;
 }
 
 //
@@ -90,16 +90,16 @@ error:
 //
 DEVICE_CMD Close_Signal(REBREQ *req)
 {
-	//RL_Print("Close_Signal\n");
-	if (sigprocmask(SIG_UNBLOCK, &req->special.signal.mask, NULL) < 0) {
-		goto error;
-	}
-	SET_CLOSED(req);
-	return DR_DONE;
+    //RL_Print("Close_Signal\n");
+    if (sigprocmask(SIG_UNBLOCK, &req->special.signal.mask, NULL) < 0) {
+        goto error;
+    }
+    SET_CLOSED(req);
+    return DR_DONE;
 
 error:
-	req->error = errno;
-	return DR_ERROR;
+    req->error = errno;
+    return DR_ERROR;
 }
 
 //
@@ -107,54 +107,54 @@ error:
 //
 DEVICE_CMD Read_Signal(REBREQ *req)
 {
-	struct timespec timeout = {0, 0};
-	unsigned int i = 0;
+    struct timespec timeout = {0, 0};
+    unsigned int i = 0;
 
-	errno = 0;
+    errno = 0;
 
-	for (i = 0; i < req->length; i ++) {
-		int result = sigtimedwait(
-			&req->special.signal.mask,
-			&(cast(siginfo_t*, req->common.data)[i]),
-			&timeout
-		);
+    for (i = 0; i < req->length; i ++) {
+        int result = sigtimedwait(
+            &req->special.signal.mask,
+            &(cast(siginfo_t*, req->common.data)[i]),
+            &timeout
+        );
 
-		if (result < 0) {
-			if (errno != EAGAIN && i == 0) {
-				Signal_Device(req, EVT_ERROR);
-				return DR_ERROR;
-			} else {
-				break;
-			}
-		}
-	}
+        if (result < 0) {
+            if (errno != EAGAIN && i == 0) {
+                Signal_Device(req, EVT_ERROR);
+                return DR_ERROR;
+            } else {
+                break;
+            }
+        }
+    }
 
-	req->actual = i;
-	if (i > 0) {
-	//printf("read %d signals\n", req->actual);
-		Signal_Device(req, EVT_READ);
-		return DR_DONE;
-	} else {
-		return DR_PEND;
-	}
+    req->actual = i;
+    if (i > 0) {
+    //printf("read %d signals\n", req->actual);
+        Signal_Device(req, EVT_READ);
+        return DR_DONE;
+    } else {
+        return DR_PEND;
+    }
 }
 
 
 /***********************************************************************
 **
-**	Command Dispatch Table (RDC_ enum order)
+**  Command Dispatch Table (RDC_ enum order)
 **
 ***********************************************************************/
 
 static DEVICE_CMD_FUNC Dev_Cmds[RDC_MAX] =
 {
-	0,
-	0,
-	Open_Signal,
-	Close_Signal,
-	Read_Signal,
-	0,
-	0,
+    0,
+    0,
+    Open_Signal,
+    Close_Signal,
+    Read_Signal,
+    0,
+    0,
 };
 
 DEFINE_DEV(Dev_Signal, "Signal", 1, Dev_Cmds, RDC_MAX, 0);

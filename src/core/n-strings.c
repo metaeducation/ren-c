@@ -34,86 +34,86 @@
 
 /***********************************************************************
 **
-**	Hash Function Externs
+**  Hash Function Externs
 **
 ***********************************************************************/
 
 #if !defined(SHA_DEFINED) && defined(HAS_SHA1)
-	// make-headers.r outputs a prototype already, because it is used by cloak
-	// (triggers warning -Wredundant-decls)
-	// REBYTE *SHA1(REBYTE *, REBCNT, REBYTE *);
-	#ifdef __cplusplus
-	extern "C" {
-	#endif
+    // make-headers.r outputs a prototype already, because it is used by cloak
+    // (triggers warning -Wredundant-decls)
+    // REBYTE *SHA1(REBYTE *, REBCNT, REBYTE *);
+    #ifdef __cplusplus
+    extern "C" {
+    #endif
 
-	void SHA1_Init(void *c);
-	void SHA1_Update(void *c, REBYTE *data, REBCNT len);
-	void SHA1_Final(REBYTE *md, void *c);
-	int  SHA1_CtxSize(void);
+    void SHA1_Init(void *c);
+    void SHA1_Update(void *c, REBYTE *data, REBCNT len);
+    void SHA1_Final(REBYTE *md, void *c);
+    int  SHA1_CtxSize(void);
 
-	#ifdef __cplusplus
-	}
-	#endif
-	#endif
+    #ifdef __cplusplus
+    }
+    #endif
+    #endif
 
 #if !defined(MD5_DEFINED) && defined(HAS_MD5)
-	#ifdef __cplusplus
-	extern "C" {
-	#endif
+    #ifdef __cplusplus
+    extern "C" {
+    #endif
 
-	void MD5_Init(void *c);
-	void MD5_Update(void *c, REBYTE *data, REBCNT len);
-	void MD5_Final(REBYTE *md, void *c);
-	int  MD5_CtxSize(void);
+    void MD5_Init(void *c);
+    void MD5_Update(void *c, REBYTE *data, REBCNT len);
+    void MD5_Final(REBYTE *md, void *c);
+    int  MD5_CtxSize(void);
 
-	#ifdef __cplusplus
-	}
-	#endif
+    #ifdef __cplusplus
+    }
+    #endif
 #endif
 
 #ifdef HAS_MD4
-	REBYTE *MD4(REBYTE *, REBCNT, REBYTE *);
+    REBYTE *MD4(REBYTE *, REBCNT, REBYTE *);
 
-	#ifdef __cplusplus
-	extern "C" {
-	#endif
+    #ifdef __cplusplus
+    extern "C" {
+    #endif
 
-	void MD4_Init(void *c);
-	void MD4_Update(void *c, REBYTE *data, REBCNT len);
-	void MD4_Final(REBYTE *md, void *c);
-	int  MD4_CtxSize(void);
+    void MD4_Init(void *c);
+    void MD4_Update(void *c, REBYTE *data, REBCNT len);
+    void MD4_Final(REBYTE *md, void *c);
+    int  MD4_CtxSize(void);
 
-	#ifdef __cplusplus
-	}
-	#endif
+    #ifdef __cplusplus
+    }
+    #endif
 #endif
 
 
 // Table of has functions and parameters:
 static struct digest {
-	REBYTE *(*digest)(REBYTE *, REBCNT, REBYTE *);
-	void (*init)(void *);
-	void (*update)(void *, REBYTE *, REBCNT);
-	void (*final)(REBYTE *, void *);
-	int (*ctxsize)(void);
-	REBINT index;
-	REBINT len;
-	REBINT hmacblock;
+    REBYTE *(*digest)(REBYTE *, REBCNT, REBYTE *);
+    void (*init)(void *);
+    void (*update)(void *, REBYTE *, REBCNT);
+    void (*final)(REBYTE *, void *);
+    int (*ctxsize)(void);
+    REBINT index;
+    REBINT len;
+    REBINT hmacblock;
 } digests[] = {
 
 #ifdef HAS_SHA1
-	{SHA1, SHA1_Init, SHA1_Update, SHA1_Final, SHA1_CtxSize, SYM_SHA1, 20, 64},
+    {SHA1, SHA1_Init, SHA1_Update, SHA1_Final, SHA1_CtxSize, SYM_SHA1, 20, 64},
 #endif
 
 #ifdef HAS_MD4
-	{MD4, MD4_Init, MD4_Update, MD4_Final, MD4_CtxSize, SYM_MD4, 16, 64},
+    {MD4, MD4_Init, MD4_Update, MD4_Final, MD4_CtxSize, SYM_MD4, 16, 64},
 #endif
 
 #ifdef HAS_MD5
-	{MD5, MD5_Init, MD5_Update, MD5_Final, MD5_CtxSize, SYM_MD5, 16, 64},
+    {MD5, MD5_Init, MD5_Update, MD5_Final, MD5_CtxSize, SYM_MD5, 16, 64},
 #endif
 
-	{NULL, NULL, NULL, NULL, NULL, SYM_0, 0, 0}
+    {NULL, NULL, NULL, NULL, NULL, SYM_0, 0, 0}
 
 };
 
@@ -128,10 +128,10 @@ static struct digest {
 //
 REBNATIVE(ajoin)
 {
-	if (Form_Reduce_Throws(D_OUT, VAL_SERIES(D_ARG(1)), VAL_INDEX(D_ARG(1))))
-		return R_OUT_IS_THROWN;
+    if (Form_Reduce_Throws(D_OUT, VAL_SERIES(D_ARG(1)), VAL_INDEX(D_ARG(1))))
+        return R_OUT_IS_THROWN;
 
-	return R_OUT;
+    return R_OUT;
 }
 
 
@@ -147,28 +147,28 @@ REBNATIVE(spelling_of)
 //
 // This is a native implementation of SPELLING-OF from rebol-proposals.
 {
-	REBVAL * const value = D_ARG(1);
-	REBSER *series;
+    REBVAL * const value = D_ARG(1);
+    REBSER *series;
 
-	// Shouldn't take binary types...
-	assert(!IS_BINARY(value));
+    // Shouldn't take binary types...
+    assert(!IS_BINARY(value));
 
-	if (ANY_BINSTR(value)) {
-		// Grab the data out of all string types, which has no delimiters
-		// included (they are added in the forming process)
+    if (ANY_BINSTR(value)) {
+        // Grab the data out of all string types, which has no delimiters
+        // included (they are added in the forming process)
 
-		series = Copy_String(VAL_SERIES(value), VAL_INDEX(value), -1);
-	}
-	else {
-		// turn all words into regular words so they'll have no delimiters
-		// during the FORMing process
+        series = Copy_String(VAL_SERIES(value), VAL_INDEX(value), -1);
+    }
+    else {
+        // turn all words into regular words so they'll have no delimiters
+        // during the FORMing process
 
-		VAL_SET(value, REB_WORD);
-		series = Copy_Mold_Value(value, TRUE);
-	}
+        VAL_SET(value, REB_WORD);
+        series = Copy_Mold_Value(value, TRUE);
+    }
 
-	Val_Init_String(D_OUT, series);
-	return R_OUT;
+    Val_Init_String(D_OUT, series);
+    return R_OUT;
 }
 
 
@@ -191,122 +191,122 @@ REBNATIVE(spelling_of)
 //
 REBNATIVE(checksum)
 {
-	REBVAL *arg = D_ARG(ARG_CHECKSUM_DATA);
-	REBYTE *data = VAL_BIN_DATA(arg);
-	REBCNT len = Partial1(arg, D_ARG(ARG_CHECKSUM_SIZE));
-	REBINT sym = SYM_SHA1;
+    REBVAL *arg = D_ARG(ARG_CHECKSUM_DATA);
+    REBYTE *data = VAL_BIN_DATA(arg);
+    REBCNT len = Partial1(arg, D_ARG(ARG_CHECKSUM_SIZE));
+    REBINT sym = SYM_SHA1;
 
-	// Method word:
-	if (D_REF(ARG_CHECKSUM_METHOD)) sym = VAL_WORD_CANON(D_ARG(ARG_CHECKSUM_WORD));
+    // Method word:
+    if (D_REF(ARG_CHECKSUM_METHOD)) sym = VAL_WORD_CANON(D_ARG(ARG_CHECKSUM_WORD));
 
-	// If method, secure, or key... find matching digest:
-	if (D_REF(ARG_CHECKSUM_METHOD) || D_REF(ARG_CHECKSUM_SECURE) || D_REF(ARG_CHECKSUM_KEY)) {
-		REBCNT i;
+    // If method, secure, or key... find matching digest:
+    if (D_REF(ARG_CHECKSUM_METHOD) || D_REF(ARG_CHECKSUM_SECURE) || D_REF(ARG_CHECKSUM_KEY)) {
+        REBCNT i;
 
-		if (sym == SYM_CRC32) {
-			// The CRC32() routine returns an unsigned 32-bit number and uses
-			// the full range of values.  Yet Rebol chose to export this as
-			// a signed integer via checksum.  Perhaps (?) to generate a value
-			// that could also be used by Rebol2, as it only had 32-bit
-			// signed INTEGER! available.
+        if (sym == SYM_CRC32) {
+            // The CRC32() routine returns an unsigned 32-bit number and uses
+            // the full range of values.  Yet Rebol chose to export this as
+            // a signed integer via checksum.  Perhaps (?) to generate a value
+            // that could also be used by Rebol2, as it only had 32-bit
+            // signed INTEGER! available.
 
-			REBINT crc32;
-			if (D_REF(ARG_CHECKSUM_SECURE) || D_REF(ARG_CHECKSUM_KEY))
-				fail (Error(RE_BAD_REFINES));
-			crc32 = cast(REBINT, CRC32(data, len));
-			SET_INTEGER(D_OUT, crc32);
-			return R_OUT;
-		}
+            REBINT crc32;
+            if (D_REF(ARG_CHECKSUM_SECURE) || D_REF(ARG_CHECKSUM_KEY))
+                fail (Error(RE_BAD_REFINES));
+            crc32 = cast(REBINT, CRC32(data, len));
+            SET_INTEGER(D_OUT, crc32);
+            return R_OUT;
+        }
 
-		if (sym == SYM_ADLER32) {
-			// adler32() is a Saphirion addition since 64-bit INTEGER! was
-			// available in Rebol3, and did not convert the unsigned result
-			// of the adler calculation to a signed integer.
+        if (sym == SYM_ADLER32) {
+            // adler32() is a Saphirion addition since 64-bit INTEGER! was
+            // available in Rebol3, and did not convert the unsigned result
+            // of the adler calculation to a signed integer.
 
-			uLong adler = z_adler32(0L, data, len);
-			if (D_REF(ARG_CHECKSUM_SECURE) || D_REF(ARG_CHECKSUM_KEY))
-				fail (Error(RE_BAD_REFINES));
-			SET_INTEGER(D_OUT, adler);
-			return R_OUT;
-		}
+            uLong adler = z_adler32(0L, data, len);
+            if (D_REF(ARG_CHECKSUM_SECURE) || D_REF(ARG_CHECKSUM_KEY))
+                fail (Error(RE_BAD_REFINES));
+            SET_INTEGER(D_OUT, adler);
+            return R_OUT;
+        }
 
-		for (i = 0; i < sizeof(digests) / sizeof(digests[0]); i++) {
+        for (i = 0; i < sizeof(digests) / sizeof(digests[0]); i++) {
 
-			if (digests[i].index == sym) {
-				REBSER *digest = Make_Series(
-					digests[i].len + 1, sizeof(char), FALSE
-				);
+            if (digests[i].index == sym) {
+                REBSER *digest = Make_Series(
+                    digests[i].len + 1, sizeof(char), FALSE
+                );
 
-				LABEL_SERIES(digest, "checksum digest");
+                LABEL_SERIES(digest, "checksum digest");
 
-				if (D_REF(ARG_CHECKSUM_KEY)) {
-					REBYTE tmpdigest[20];		// Size must be max of all digest[].len;
-					REBYTE ipad[64],opad[64];	// Size must be max of all digest[].hmacblock;
-					char *ctx = ALLOC_ARRAY(char, digests[i].ctxsize());
-					REBVAL *key = D_ARG(ARG_CHECKSUM_KEY_VALUE);
-					REBYTE *keycp = VAL_BIN_DATA(key);
-					int keylen = VAL_LEN(key);
-					int blocklen = digests[i].hmacblock;
-					REBINT j;
+                if (D_REF(ARG_CHECKSUM_KEY)) {
+                    REBYTE tmpdigest[20];       // Size must be max of all digest[].len;
+                    REBYTE ipad[64],opad[64];   // Size must be max of all digest[].hmacblock;
+                    char *ctx = ALLOC_ARRAY(char, digests[i].ctxsize());
+                    REBVAL *key = D_ARG(ARG_CHECKSUM_KEY_VALUE);
+                    REBYTE *keycp = VAL_BIN_DATA(key);
+                    int keylen = VAL_LEN(key);
+                    int blocklen = digests[i].hmacblock;
+                    REBINT j;
 
-					if (keylen > blocklen) {
-						digests[i].digest(keycp,keylen,tmpdigest);
-						keycp = tmpdigest;
-						keylen = digests[i].len;
-					}
+                    if (keylen > blocklen) {
+                        digests[i].digest(keycp,keylen,tmpdigest);
+                        keycp = tmpdigest;
+                        keylen = digests[i].len;
+                    }
 
-					memset(ipad, 0, blocklen);
-					memset(opad, 0, blocklen);
-					memcpy(ipad, keycp, keylen);
-					memcpy(opad, keycp, keylen);
+                    memset(ipad, 0, blocklen);
+                    memset(opad, 0, blocklen);
+                    memcpy(ipad, keycp, keylen);
+                    memcpy(opad, keycp, keylen);
 
-					for (j = 0; j < blocklen; j++) {
-						ipad[j]^=0x36;
-						opad[j]^=0x5c;
-					}
+                    for (j = 0; j < blocklen; j++) {
+                        ipad[j]^=0x36;
+                        opad[j]^=0x5c;
+                    }
 
-					digests[i].init(ctx);
-					digests[i].update(ctx,ipad,blocklen);
-					digests[i].update(ctx, data, len);
-					digests[i].final(tmpdigest,ctx);
-					digests[i].init(ctx);
-					digests[i].update(ctx,opad,blocklen);
-					digests[i].update(ctx,tmpdigest,digests[i].len);
-					digests[i].final(BIN_HEAD(digest),ctx);
+                    digests[i].init(ctx);
+                    digests[i].update(ctx,ipad,blocklen);
+                    digests[i].update(ctx, data, len);
+                    digests[i].final(tmpdigest,ctx);
+                    digests[i].init(ctx);
+                    digests[i].update(ctx,opad,blocklen);
+                    digests[i].update(ctx,tmpdigest,digests[i].len);
+                    digests[i].final(BIN_HEAD(digest),ctx);
 
-					FREE_ARRAY(char, digests[i].ctxsize(), ctx);
+                    FREE_ARRAY(char, digests[i].ctxsize(), ctx);
 
-				} else {
-					digests[i].digest(data, len, BIN_HEAD(digest));
-				}
+                } else {
+                    digests[i].digest(data, len, BIN_HEAD(digest));
+                }
 
-				SERIES_TAIL(digest) = digests[i].len;
-				TERM_SEQUENCE(digest);
-				Val_Init_Binary(D_OUT, digest);
+                SERIES_TAIL(digest) = digests[i].len;
+                TERM_SEQUENCE(digest);
+                Val_Init_Binary(D_OUT, digest);
 
-				return 0;
-			}
-		}
+                return 0;
+            }
+        }
 
-		fail (Error_Invalid_Arg(D_ARG(ARG_CHECKSUM_WORD)));
-	}
-	else if (D_REF(ARG_CHECKSUM_TCP)) { // /tcp
-		REBINT ipc = Compute_IPC(data, len);
-		SET_INTEGER(D_OUT, ipc);
-	}
-	else if (D_REF(ARG_CHECKSUM_HASH)) {  // /hash
-		REBINT hash;
-		REBINT sum = VAL_INT32(D_ARG(ARG_CHECKSUM_SIZE)); // /size
-		if (sum <= 1) sum = 1;
-		hash = Hash_String(data, len) % sum;
-		SET_INTEGER(D_OUT, hash);
-	}
-	else {
-		REBINT crc = Compute_CRC(data, len);
-		SET_INTEGER(D_OUT, crc);
-	}
+        fail (Error_Invalid_Arg(D_ARG(ARG_CHECKSUM_WORD)));
+    }
+    else if (D_REF(ARG_CHECKSUM_TCP)) { // /tcp
+        REBINT ipc = Compute_IPC(data, len);
+        SET_INTEGER(D_OUT, ipc);
+    }
+    else if (D_REF(ARG_CHECKSUM_HASH)) {  // /hash
+        REBINT hash;
+        REBINT sum = VAL_INT32(D_ARG(ARG_CHECKSUM_SIZE)); // /size
+        if (sum <= 1) sum = 1;
+        hash = Hash_String(data, len) % sum;
+        SET_INTEGER(D_OUT, hash);
+    }
+    else {
+        REBINT crc = Compute_CRC(data, len);
+        SET_INTEGER(D_OUT, crc);
+    }
 
-	return R_OUT;
+    return R_OUT;
 }
 
 
@@ -325,19 +325,19 @@ REBNATIVE(compress)
 //
 // Binary and string (gets UTF8 converted).
 {
-	const REBOOL gzip = D_REF(4);
-	const REBOOL only = D_REF(5);
-	REBSER *ser;
-	REBCNT index;
-	REBCNT len;
+    const REBOOL gzip = D_REF(4);
+    const REBOOL only = D_REF(5);
+    REBSER *ser;
+    REBCNT index;
+    REBCNT len;
 
-	len = Partial1(D_ARG(1), D_ARG(3));
+    len = Partial1(D_ARG(1), D_ARG(3));
 
-	ser = Temp_Bin_Str_Managed(D_ARG(1), &index, &len);
+    ser = Temp_Bin_Str_Managed(D_ARG(1), &index, &len);
 
-	Val_Init_Binary(D_OUT, Compress(ser, index, len, gzip, only));
+    Val_Init_Binary(D_OUT, Compress(ser, index, len, gzip, only));
 
-	return R_OUT;
+    return R_OUT;
 }
 
 
@@ -357,28 +357,28 @@ REBNATIVE(decompress)
 //
 // Binary only.
 {
-	REBVAL *arg = D_ARG(1);
-	REBCNT len;
-	REBOOL gzip = D_REF(4);
-	REBOOL limit = D_REF(5);
-	REBINT max = limit ? Int32s(D_ARG(6), 1) : -1;
-	REBOOL only = D_REF(7);
+    REBVAL *arg = D_ARG(1);
+    REBCNT len;
+    REBOOL gzip = D_REF(4);
+    REBOOL limit = D_REF(5);
+    REBINT max = limit ? Int32s(D_ARG(6), 1) : -1;
+    REBOOL only = D_REF(7);
 
-	len = Partial1(D_ARG(1), D_ARG(3));
+    len = Partial1(D_ARG(1), D_ARG(3));
 
-	// This truncation rule used to be in Decompress, which passed len
-	// in as an extra parameter.  This was the only call that used it.
-	if (len > BIN_LEN(VAL_SERIES(arg)))
-		len = BIN_LEN(VAL_SERIES(arg));
+    // This truncation rule used to be in Decompress, which passed len
+    // in as an extra parameter.  This was the only call that used it.
+    if (len > BIN_LEN(VAL_SERIES(arg)))
+        len = BIN_LEN(VAL_SERIES(arg));
 
-	if (limit && max < 0)
-		return R_NONE; // !!! Should negative limit be an error instead?
+    if (limit && max < 0)
+        return R_NONE; // !!! Should negative limit be an error instead?
 
-	Val_Init_Binary(D_OUT, Decompress(
-		BIN_HEAD(VAL_SERIES(arg)) + VAL_INDEX(arg), len, max, gzip, only
-	));
+    Val_Init_Binary(D_OUT, Decompress(
+        BIN_HEAD(VAL_SERIES(arg)) + VAL_INDEX(arg), len, max, gzip, only
+    ));
 
-	return R_OUT;
+    return R_OUT;
 }
 
 
@@ -394,31 +394,31 @@ REBNATIVE(decompress)
 //
 REBNATIVE(construct)
 {
-	REBVAL *value = D_ARG(1);
-	REBSER *parent = 0;
-	REBSER *frame;
+    REBVAL *value = D_ARG(1);
+    REBSER *parent = 0;
+    REBSER *frame;
 
-	if (IS_STRING(value) || IS_BINARY(value)) {
-		REBCNT index;
+    if (IS_STRING(value) || IS_BINARY(value)) {
+        REBCNT index;
 
-		// Just a guess at size:
-		frame = Make_Array(10);		// Use a std BUF_?
-		Val_Init_Block(D_OUT, frame); // Keep safe
+        // Just a guess at size:
+        frame = Make_Array(10);     // Use a std BUF_?
+        Val_Init_Block(D_OUT, frame); // Keep safe
 
-		// Convert string if necessary. Store back for safety.
-		VAL_SERIES(value) = Temp_Bin_Str_Managed(value, &index, 0);
+        // Convert string if necessary. Store back for safety.
+        VAL_SERIES(value) = Temp_Bin_Str_Managed(value, &index, 0);
 
-		// !issue! Is this what we really want here?
-		Scan_Net_Header(frame, VAL_BIN(value) + index);
-		value = D_OUT;
-	}
+        // !issue! Is this what we really want here?
+        Scan_Net_Header(frame, VAL_BIN(value) + index);
+        value = D_OUT;
+    }
 
-	if (D_REF(2)) parent = VAL_OBJ_FRAME(D_ARG(3));
+    if (D_REF(2)) parent = VAL_OBJ_FRAME(D_ARG(3));
 
-	frame = Construct_Object(parent, VAL_BLK_DATA(value), D_REF(4));
-	Val_Init_Object(D_OUT, frame);
+    frame = Construct_Object(parent, VAL_BLK_DATA(value), D_REF(4));
+    Val_Init_Object(D_OUT, frame);
 
-	return R_OUT;
+    return R_OUT;
 }
 
 
@@ -438,19 +438,19 @@ REBNATIVE(debase)
 // Input is a STRING, but BINARY is also accepted.
 // BINARY is returned. We don't know the encoding.
 {
-	REBINT base = 64;
-	REBSER *ser;
-	REBCNT index;
-	REBCNT len = 0;
+    REBINT base = 64;
+    REBSER *ser;
+    REBCNT index;
+    REBCNT len = 0;
 
-	ser = Temp_Bin_Str_Managed(D_ARG(1), &index, &len);
+    ser = Temp_Bin_Str_Managed(D_ARG(1), &index, &len);
 
-	if (D_REF(2)) base = VAL_INT32(D_ARG(3)); // /base
+    if (D_REF(2)) base = VAL_INT32(D_ARG(3)); // /base
 
-	if (!Decode_Binary(D_OUT, BIN_SKIP(ser, index), len, base, 0))
-		fail (Error(RE_INVALID_DATA, D_ARG(1)));
+    if (!Decode_Binary(D_OUT, BIN_SKIP(ser, index), len, base, 0))
+        fail (Error(RE_INVALID_DATA, D_ARG(1)));
 
-	return R_OUT;
+    return R_OUT;
 }
 
 
@@ -469,33 +469,33 @@ REBNATIVE(enbase)
 // Converts a binary to a binary base representation STRING.
 // Input is BINARY or STRING (UTF8 encoded).
 {
-	REBINT base = 64;
-	REBSER *ser;
-	REBCNT index;
-	REBVAL *arg = D_ARG(1);
+    REBINT base = 64;
+    REBSER *ser;
+    REBCNT index;
+    REBVAL *arg = D_ARG(1);
 
-	Val_Init_Binary(arg, Temp_Bin_Str_Managed(arg, &index, 0));
-	VAL_INDEX(arg) = index;
+    Val_Init_Binary(arg, Temp_Bin_Str_Managed(arg, &index, 0));
+    VAL_INDEX(arg) = index;
 
-	if (D_REF(2)) base = VAL_INT32(D_ARG(3));
+    if (D_REF(2)) base = VAL_INT32(D_ARG(3));
 
-	switch (base) {
-	case 64:
-		ser = Encode_Base64(arg, 0, FALSE);
-		break;
-	case 16:
-		ser = Encode_Base16(arg, 0, FALSE);
-		break;
-	case 2:
-		ser = Encode_Base2(arg, 0, FALSE);
-		break;
-	default:
-		fail (Error_Invalid_Arg(D_ARG(3)));
-	}
+    switch (base) {
+    case 64:
+        ser = Encode_Base64(arg, 0, FALSE);
+        break;
+    case 16:
+        ser = Encode_Base16(arg, 0, FALSE);
+        break;
+    case 2:
+        ser = Encode_Base2(arg, 0, FALSE);
+        break;
+    default:
+        fail (Error_Invalid_Arg(D_ARG(3)));
+    }
 
-	Val_Init_String(D_OUT, ser);
+    Val_Init_String(D_OUT, ser);
 
-	return R_OUT;
+    return R_OUT;
 }
 
 
@@ -513,13 +513,13 @@ REBNATIVE(decloak)
 //
 // Input is BINARY only. Modifies input.
 {
-	REBVAL *data = D_ARG(1);
-	REBVAL *key  = D_ARG(2);
+    REBVAL *data = D_ARG(1);
+    REBVAL *key  = D_ARG(2);
 
-	if (!Cloak(TRUE, VAL_BIN_DATA(data), VAL_LEN(data), (REBYTE*)key, 0, D_REF(3)))
-		fail (Error_Invalid_Arg(key));
+    if (!Cloak(TRUE, VAL_BIN_DATA(data), VAL_LEN(data), (REBYTE*)key, 0, D_REF(3)))
+        fail (Error_Invalid_Arg(key));
 
-	return R_ARG1;
+    return R_ARG1;
 }
 
 
@@ -537,13 +537,13 @@ REBNATIVE(encloak)
 //
 // Input is BINARY only. Modifies input.
 {
-	REBVAL *data = D_ARG(1);
-	REBVAL *key  = D_ARG(2);
+    REBVAL *data = D_ARG(1);
+    REBVAL *key  = D_ARG(2);
 
-	if (!Cloak(FALSE, VAL_BIN_DATA(data), VAL_LEN(data), (REBYTE*)key, 0, D_REF(3)))
-		fail (Error_Invalid_Arg(key));
+    if (!Cloak(FALSE, VAL_BIN_DATA(data), VAL_LEN(data), (REBYTE*)key, 0, D_REF(3)))
+        fail (Error_Invalid_Arg(key));
 
-	return R_ARG1;
+    return R_ARG1;
 }
 
 
@@ -559,47 +559,47 @@ REBNATIVE(dehex)
 //
 // Works for any string.
 {
-	REBVAL *arg = D_ARG(1);
-	REBINT len = (REBINT)VAL_LEN(arg); // due to len -= 2 below
-	REBUNI n;
-	REBSER *ser;
+    REBVAL *arg = D_ARG(1);
+    REBINT len = (REBINT)VAL_LEN(arg); // due to len -= 2 below
+    REBUNI n;
+    REBSER *ser;
 
-	if (VAL_BYTE_SIZE(arg)) {
-		REBYTE *bp = VAL_BIN_DATA(arg);
-		REBYTE *dp = Reset_Buffer(BUF_FORM, len);
+    if (VAL_BYTE_SIZE(arg)) {
+        REBYTE *bp = VAL_BIN_DATA(arg);
+        REBYTE *dp = Reset_Buffer(BUF_FORM, len);
 
-		for (; len > 0; len--) {
-			if (*bp == '%' && len > 2 && Scan_Hex2(bp+1, &n, FALSE)) {
-				*dp++ = (REBYTE)n;
-				bp += 3;
-				len -= 2;
-			}
-			else *dp++ = *bp++;
-		}
+        for (; len > 0; len--) {
+            if (*bp == '%' && len > 2 && Scan_Hex2(bp+1, &n, FALSE)) {
+                *dp++ = (REBYTE)n;
+                bp += 3;
+                len -= 2;
+            }
+            else *dp++ = *bp++;
+        }
 
-		*dp = 0;
-		ser = Copy_String(BUF_FORM, 0, dp - BIN_HEAD(BUF_FORM));
-	}
-	else {
-		REBUNI *up = VAL_UNI_DATA(arg);
-		REBUNI *dp = (REBUNI*)Reset_Buffer(BUF_MOLD, len);
+        *dp = 0;
+        ser = Copy_String(BUF_FORM, 0, dp - BIN_HEAD(BUF_FORM));
+    }
+    else {
+        REBUNI *up = VAL_UNI_DATA(arg);
+        REBUNI *dp = (REBUNI*)Reset_Buffer(BUF_MOLD, len);
 
-		for (; len > 0; len--) {
-			if (*up == '%' && len > 2 && Scan_Hex2((REBYTE*)(up+1), &n, TRUE)) {
-				*dp++ = (REBUNI)n;
-				up += 3;
-				len -= 2;
-			}
-			else *dp++ = *up++;
-		}
+        for (; len > 0; len--) {
+            if (*up == '%' && len > 2 && Scan_Hex2((REBYTE*)(up+1), &n, TRUE)) {
+                *dp++ = (REBUNI)n;
+                up += 3;
+                len -= 2;
+            }
+            else *dp++ = *up++;
+        }
 
-		*dp = 0;
-		ser = Copy_String(BUF_MOLD, 0, dp - UNI_HEAD(BUF_MOLD));
-	}
+        *dp = 0;
+        ser = Copy_String(BUF_MOLD, 0, dp - UNI_HEAD(BUF_MOLD));
+    }
 
-	Val_Init_Series(D_OUT, VAL_TYPE(arg), ser);
+    Val_Init_Series(D_OUT, VAL_TYPE(arg), ser);
 
-	return R_OUT;
+    return R_OUT;
 }
 
 
@@ -617,26 +617,26 @@ REBNATIVE(deline)
 //
 // Convert CR or CRLF strings to just LF strings.
 {
-	REBVAL *val = D_ARG(1);
-	REBINT len = VAL_LEN(val);
-	REBINT n;
+    REBVAL *val = D_ARG(1);
+    REBINT len = VAL_LEN(val);
+    REBINT n;
 
-	if (D_REF(2)) { //lines
-		Val_Init_Block(D_OUT, Split_Lines(val));
-		return R_OUT;
-	}
+    if (D_REF(2)) { //lines
+        Val_Init_Block(D_OUT, Split_Lines(val));
+        return R_OUT;
+    }
 
-	if (VAL_BYTE_SIZE(val)) {
-		REBYTE *bp = VAL_BIN_DATA(val);
-		n = Deline_Bytes(bp, len);
-	} else {
-		REBUNI *up = VAL_UNI_DATA(val);
-		n = Deline_Uni(up, len);
-	}
+    if (VAL_BYTE_SIZE(val)) {
+        REBYTE *bp = VAL_BIN_DATA(val);
+        n = Deline_Bytes(bp, len);
+    } else {
+        REBUNI *up = VAL_UNI_DATA(val);
+        n = Deline_Uni(up, len);
+    }
 
-	VAL_TAIL(val) -= (len - n);
+    VAL_TAIL(val) -= (len - n);
 
-	return R_ARG1;
+    return R_ARG1;
 }
 
 
@@ -652,17 +652,17 @@ REBNATIVE(enline)
 //
 // Convert LF to CRLF or native format.
 {
-	REBVAL *val = D_ARG(1);
-	REBSER *ser = VAL_SERIES(val);
+    REBVAL *val = D_ARG(1);
+    REBSER *ser = VAL_SERIES(val);
 
-	if (SERIES_TAIL(ser)) {
-		if (VAL_BYTE_SIZE(val))
-			Enline_Bytes(ser, VAL_INDEX(val), VAL_LEN(val));
-		else
-			Enline_Uni(ser, VAL_INDEX(val), VAL_LEN(val));
-	}
+    if (SERIES_TAIL(ser)) {
+        if (VAL_BYTE_SIZE(val))
+            Enline_Bytes(ser, VAL_INDEX(val), VAL_LEN(val));
+        else
+            Enline_Uni(ser, VAL_INDEX(val), VAL_LEN(val));
+    }
 
-	return R_ARG1;
+    return R_ARG1;
 }
 
 
@@ -680,22 +680,22 @@ REBNATIVE(entab)
 //
 // Modifies input.
 {
-	REBVAL *val = D_ARG(1);
-	REBINT tabsize = TAB_SIZE;
-	REBSER *ser;
-	REBCNT len = VAL_LEN(val);
+    REBVAL *val = D_ARG(1);
+    REBINT tabsize = TAB_SIZE;
+    REBSER *ser;
+    REBCNT len = VAL_LEN(val);
 
-	if (D_REF(2)) tabsize = Int32s(D_ARG(3), 1);
+    if (D_REF(2)) tabsize = Int32s(D_ARG(3), 1);
 
-	// Set up the copy buffer:
-	if (VAL_BYTE_SIZE(val))
-		ser = Entab_Bytes(VAL_BIN(val), VAL_INDEX(val), len, tabsize);
-	else
-		ser = Entab_Unicode(VAL_UNI(val), VAL_INDEX(val), len, tabsize);
+    // Set up the copy buffer:
+    if (VAL_BYTE_SIZE(val))
+        ser = Entab_Bytes(VAL_BIN(val), VAL_INDEX(val), len, tabsize);
+    else
+        ser = Entab_Unicode(VAL_UNI(val), VAL_INDEX(val), len, tabsize);
 
-	Val_Init_Series(D_OUT, VAL_TYPE(val), ser);
+    Val_Init_Series(D_OUT, VAL_TYPE(val), ser);
 
-	return R_OUT;
+    return R_OUT;
 }
 
 
@@ -711,22 +711,22 @@ REBNATIVE(entab)
 //
 REBNATIVE(detab)
 {
-	REBVAL *val = D_ARG(1);
-	REBINT tabsize = TAB_SIZE;
-	REBSER *ser;
-	REBCNT len = VAL_LEN(val);
+    REBVAL *val = D_ARG(1);
+    REBINT tabsize = TAB_SIZE;
+    REBSER *ser;
+    REBCNT len = VAL_LEN(val);
 
-	if (D_REF(2)) tabsize = Int32s(D_ARG(3), 1);
+    if (D_REF(2)) tabsize = Int32s(D_ARG(3), 1);
 
-	// Set up the copy buffer:
-	if (VAL_BYTE_SIZE(val))
-		ser = Detab_Bytes(VAL_BIN(val), VAL_INDEX(val), len, tabsize);
-	else
-		ser = Detab_Unicode(VAL_UNI(val), VAL_INDEX(val), len, tabsize);
+    // Set up the copy buffer:
+    if (VAL_BYTE_SIZE(val))
+        ser = Detab_Bytes(VAL_BIN(val), VAL_INDEX(val), len, tabsize);
+    else
+        ser = Detab_Unicode(VAL_UNI(val), VAL_INDEX(val), len, tabsize);
 
-	Val_Init_Series(D_OUT, VAL_TYPE(val), ser);
+    Val_Init_Series(D_OUT, VAL_TYPE(val), ser);
 
-	return R_OUT;
+    return R_OUT;
 }
 
 
@@ -742,8 +742,8 @@ REBNATIVE(detab)
 //
 REBNATIVE(lowercase)
 {
-	Change_Case(D_OUT, D_ARG(1), D_ARG(3), FALSE);
-	return R_OUT;
+    Change_Case(D_OUT, D_ARG(1), D_ARG(3), FALSE);
+    return R_OUT;
 }
 
 
@@ -759,8 +759,8 @@ REBNATIVE(lowercase)
 //
 REBNATIVE(uppercase)
 {
-	Change_Case(D_OUT, D_ARG(1), D_ARG(3), TRUE);
-	return R_OUT;
+    Change_Case(D_OUT, D_ARG(1), D_ARG(3), TRUE);
+    return R_OUT;
 }
 
 
@@ -776,41 +776,41 @@ REBNATIVE(uppercase)
 //
 REBNATIVE(to_hex)
 {
-	REBVAL *arg = D_ARG(1);
-	REBINT len;
-//	REBSER *series;
-	REBYTE buffer[MAX_TUPLE*2+4];  // largest value possible
-	REBYTE *buf;
+    REBVAL *arg = D_ARG(1);
+    REBINT len;
+//  REBSER *series;
+    REBYTE buffer[MAX_TUPLE*2+4];  // largest value possible
+    REBYTE *buf;
 
-	buf = &buffer[0];
+    buf = &buffer[0];
 
-	len = -1;
-	if (D_REF(2)) {	// /size
-		len = (REBINT) VAL_INT64(D_ARG(3));
-		if (len < 0) fail (Error_Invalid_Arg(D_ARG(3)));
-	}
-	if (IS_INTEGER(arg)) { // || IS_DECIMAL(arg)) {
-		if (len < 0 || len > MAX_HEX_LEN) len = MAX_HEX_LEN;
-		Form_Hex_Pad(buf, VAL_INT64(arg), len);
-	}
-	else if (IS_TUPLE(arg)) {
-		REBINT n;
-		if (len < 0 || len > 2 * MAX_TUPLE || len > 2 * VAL_TUPLE_LEN(arg))
-			len = 2 * VAL_TUPLE_LEN(arg);
-		for (n = 0; n < VAL_TUPLE_LEN(arg); n++)
-			buf = Form_Hex2(buf, VAL_TUPLE(arg)[n]);
-		for (; n < 3; n++)
-			buf = Form_Hex2(buf, 0);
-		*buf = 0;
-	}
-	else
-		fail (Error_Invalid_Arg(arg));
+    len = -1;
+    if (D_REF(2)) { // /size
+        len = (REBINT) VAL_INT64(D_ARG(3));
+        if (len < 0) fail (Error_Invalid_Arg(D_ARG(3)));
+    }
+    if (IS_INTEGER(arg)) { // || IS_DECIMAL(arg)) {
+        if (len < 0 || len > MAX_HEX_LEN) len = MAX_HEX_LEN;
+        Form_Hex_Pad(buf, VAL_INT64(arg), len);
+    }
+    else if (IS_TUPLE(arg)) {
+        REBINT n;
+        if (len < 0 || len > 2 * MAX_TUPLE || len > 2 * VAL_TUPLE_LEN(arg))
+            len = 2 * VAL_TUPLE_LEN(arg);
+        for (n = 0; n < VAL_TUPLE_LEN(arg); n++)
+            buf = Form_Hex2(buf, VAL_TUPLE(arg)[n]);
+        for (; n < 3; n++)
+            buf = Form_Hex2(buf, 0);
+        *buf = 0;
+    }
+    else
+        fail (Error_Invalid_Arg(arg));
 
-//	SERIES_TAIL(series) = len;
-//	Val_Init_Series(D_OUT, REB_ISSUE, series);
-	Val_Init_Word_Unbound(D_OUT, REB_ISSUE, Scan_Issue(&buffer[0], len));
+//  SERIES_TAIL(series) = len;
+//  Val_Init_Series(D_OUT, REB_ISSUE, series);
+    Val_Init_Word_Unbound(D_OUT, REB_ISSUE, Scan_Issue(&buffer[0], len));
 
-	return R_OUT;
+    return R_OUT;
 }
 
 
@@ -824,22 +824,22 @@ REBNATIVE(to_hex)
 //
 REBNATIVE(find_script)
 {
-	REBVAL *arg = D_ARG(1);
-	REBINT n;
+    REBVAL *arg = D_ARG(1);
+    REBINT n;
 
-	n = What_UTF(VAL_BIN_DATA(arg), VAL_LEN(arg));
+    n = What_UTF(VAL_BIN_DATA(arg), VAL_LEN(arg));
 
-	if (n != 0 && n != 8) return R_NONE;  // UTF8 only
+    if (n != 0 && n != 8) return R_NONE;  // UTF8 only
 
-	if (n == 8) VAL_INDEX(arg) += 3;  // BOM8 length
+    if (n == 8) VAL_INDEX(arg) += 3;  // BOM8 length
 
-	n = Scan_Header(VAL_BIN_DATA(arg), VAL_LEN(arg)); // returns offset
+    n = Scan_Header(VAL_BIN_DATA(arg), VAL_LEN(arg)); // returns offset
 
-	if (n == -1) return R_NONE;
+    if (n == -1) return R_NONE;
 
-	VAL_INDEX(arg) += n;
+    VAL_INDEX(arg) += n;
 
-	return R_ARG1;
+    return R_ARG1;
 }
 
 
@@ -853,9 +853,9 @@ REBNATIVE(find_script)
 //
 REBNATIVE(utfq)
 {
-	REBINT utf = What_UTF(VAL_BIN_DATA(D_ARG(1)), VAL_LEN(D_ARG(1)));
-	SET_INTEGER(D_OUT, utf);
-	return R_OUT;
+    REBINT utf = What_UTF(VAL_BIN_DATA(D_ARG(1)), VAL_LEN(D_ARG(1)));
+    SET_INTEGER(D_OUT, utf);
+    return R_OUT;
 }
 
 
@@ -871,14 +871,14 @@ REBNATIVE(utfq)
 //
 REBNATIVE(invalid_utfq)
 {
-	REBVAL *arg = D_ARG(1);
-	REBYTE *bp;
+    REBVAL *arg = D_ARG(1);
+    REBYTE *bp;
 
-	bp = Check_UTF8(VAL_BIN_DATA(arg), VAL_LEN(arg));
-	if (bp == 0) return R_NONE;
+    bp = Check_UTF8(VAL_BIN_DATA(arg), VAL_LEN(arg));
+    if (bp == 0) return R_NONE;
 
-	VAL_INDEX(arg) = bp - VAL_BIN_HEAD(arg);
-	return R_ARG1;
+    VAL_INDEX(arg) = bp - VAL_BIN_HEAD(arg);
+    return R_ARG1;
 }
 
 
@@ -891,7 +891,7 @@ REBNATIVE(invalid_utfq)
 //
 REBYTE *b_cast_(char *s)
 {
-	return cast(REBYTE *, s);
+    return cast(REBYTE *, s);
 }
 
 
@@ -903,7 +903,7 @@ REBYTE *b_cast_(char *s)
 //
 const REBYTE *cb_cast_(const char *s)
 {
-	return cast(const REBYTE *, s);
+    return cast(const REBYTE *, s);
 }
 
 
@@ -915,7 +915,7 @@ const REBYTE *cb_cast_(const char *s)
 //
 char *s_cast_(REBYTE *s)
 {
-	return cast(char*, s);
+    return cast(char*, s);
 }
 
 
@@ -927,7 +927,7 @@ char *s_cast_(REBYTE *s)
 //
 const char *cs_cast_(const REBYTE *s)
 {
-	return cast(const char *, s);
+    return cast(const char *, s);
 }
 
 
@@ -939,7 +939,7 @@ const char *cs_cast_(const REBYTE *s)
 //
 REBYTE *COPY_BYTES_(REBYTE *dest, const REBYTE *src, size_t count)
 {
-	return b_cast(strncpy(s_cast(dest), cs_cast(src), count));
+    return b_cast(strncpy(s_cast(dest), cs_cast(src), count));
 }
 
 
@@ -951,7 +951,7 @@ REBYTE *COPY_BYTES_(REBYTE *dest, const REBYTE *src, size_t count)
 //
 size_t LEN_BYTES_(const REBYTE *str)
 {
-	return strlen(cs_cast(str));
+    return strlen(cs_cast(str));
 }
 
 
@@ -963,7 +963,7 @@ size_t LEN_BYTES_(const REBYTE *str)
 //
 int COMPARE_BYTES_(const REBYTE *lhs, const REBYTE *rhs)
 {
-	return strcmp(cs_cast(lhs), cs_cast(rhs));
+    return strcmp(cs_cast(lhs), cs_cast(rhs));
 }
 
 
@@ -976,9 +976,9 @@ int COMPARE_BYTES_(const REBYTE *lhs, const REBYTE *rhs)
 //
 REBYTE *APPEND_BYTES_LIMIT_(REBYTE *dest, const REBYTE *src, size_t max)
 {
-	return b_cast(strncat(
-		s_cast(dest), cs_cast(src), MAX(max - LEN_BYTES(dest) - 1, 0)
-	));
+    return b_cast(strncat(
+        s_cast(dest), cs_cast(src), MAX(max - LEN_BYTES(dest) - 1, 0)
+    ));
 }
 
 
@@ -990,19 +990,19 @@ REBYTE *APPEND_BYTES_LIMIT_(REBYTE *dest, const REBYTE *src, size_t max)
 REBCHR *OS_STRNCPY_(REBCHR *dest, const REBCHR *src, size_t count)
 {
 #ifdef OS_WIDE_CHAR
-	return cast(REBCHR*,
-		wcsncpy(cast(wchar_t*, dest), cast(const wchar_t*, src), count)
-	);
+    return cast(REBCHR*,
+        wcsncpy(cast(wchar_t*, dest), cast(const wchar_t*, src), count)
+    );
 #else
-	#ifdef TO_OPENBSD
-		return cast(REBCHR*,
-			strlcpy(cast(char*, dest), cast(const char*, src), count)
-		);
-	#else
-		return cast(REBCHR*,
-			strncpy(cast(char*, dest), cast(const char*, src), count)
-		);
-	#endif
+    #ifdef TO_OPENBSD
+        return cast(REBCHR*,
+            strlcpy(cast(char*, dest), cast(const char*, src), count)
+        );
+    #else
+        return cast(REBCHR*,
+            strncpy(cast(char*, dest), cast(const char*, src), count)
+        );
+    #endif
 #endif
 }
 
@@ -1015,19 +1015,19 @@ REBCHR *OS_STRNCPY_(REBCHR *dest, const REBCHR *src, size_t count)
 REBCHR *OS_STRNCAT_(REBCHR *dest, const REBCHR *src, size_t max)
 {
 #ifdef OS_WIDE_CHAR
-	return cast(REBCHR*,
-		wcsncat(cast(wchar_t*, dest), cast(const wchar_t*, src), max)
-	);
+    return cast(REBCHR*,
+        wcsncat(cast(wchar_t*, dest), cast(const wchar_t*, src), max)
+    );
 #else
-	#ifdef TO_OPENBSD
-		return cast(REBCHR*,
-			strlcat(cast(char*, dest), cast(const char*, src), max)
-		);
-	#else
-		return cast(REBCHR*,
-			strncat(cast(char*, dest), cast(const char*, src), max)
-		);
-	#endif
+    #ifdef TO_OPENBSD
+        return cast(REBCHR*,
+            strlcat(cast(char*, dest), cast(const char*, src), max)
+        );
+    #else
+        return cast(REBCHR*,
+            strncat(cast(char*, dest), cast(const char*, src), max)
+        );
+    #endif
 #endif
 }
 
@@ -1040,9 +1040,9 @@ REBCHR *OS_STRNCAT_(REBCHR *dest, const REBCHR *src, size_t max)
 int OS_STRNCMP_(const REBCHR *lhs, const REBCHR *rhs, size_t max)
 {
 #ifdef OS_WIDE_CHAR
-	return wcsncmp(cast(const wchar_t*, lhs), cast(const wchar_t*, rhs), max);
+    return wcsncmp(cast(const wchar_t*, lhs), cast(const wchar_t*, rhs), max);
 #else
-	return strncmp(cast(const char*, lhs), cast (const char*, rhs), max);
+    return strncmp(cast(const char*, lhs), cast (const char*, rhs), max);
 #endif
 }
 
@@ -1055,9 +1055,9 @@ int OS_STRNCMP_(const REBCHR *lhs, const REBCHR *rhs, size_t max)
 size_t OS_STRLEN_(const REBCHR *str)
 {
 #ifdef OS_WIDE_CHAR
-	return wcslen(cast(const wchar_t*, str));
+    return wcslen(cast(const wchar_t*, str));
 #else
-	return strlen(cast(const char*, str));
+    return strlen(cast(const char*, str));
 #endif
 }
 
@@ -1069,17 +1069,17 @@ size_t OS_STRLEN_(const REBCHR *str)
 //
 REBCHR *OS_STRCHR_(const REBCHR *str, REBCNT ch)
 {
-	// We have to m_cast because C++ actually has a separate overloads of
-	// wcschr and strchr which will return a const pointer if the in pointer
-	// was const.
+    // We have to m_cast because C++ actually has a separate overloads of
+    // wcschr and strchr which will return a const pointer if the in pointer
+    // was const.
 #ifdef OS_WIDE_CHAR
-	return cast(REBCHR*,
-		m_cast(wchar_t*, wcschr(cast(const wchar_t*, str), ch))
-	);
+    return cast(REBCHR*,
+        m_cast(wchar_t*, wcschr(cast(const wchar_t*, str), ch))
+    );
 #else
-	return cast(REBCHR*,
-		m_cast(char*, strchr(cast(const char*, str), ch))
-	);
+    return cast(REBCHR*,
+        m_cast(char*, strchr(cast(const char*, str), ch))
+    );
 #endif
 }
 
@@ -1091,9 +1091,9 @@ REBCHR *OS_STRCHR_(const REBCHR *str, REBCNT ch)
 //
 REBCHR OS_MAKE_CH_(REBCNT ch)
 {
-	REBCHR result;
-	result.num = ch;
-	return result;
+    REBCHR result;
+    result.num = ch;
+    return result;
 }
 
 #endif

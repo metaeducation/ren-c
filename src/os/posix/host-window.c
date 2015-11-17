@@ -91,7 +91,7 @@ void OS_GUI_Metrics(REBOL_OS_METRICS *met)
 //
 REBINT OS_Show_Gob(REBGOB *gob)
 {
-	return 0;
+    return 0;
 }
 
 
@@ -112,7 +112,7 @@ void OS_Map_Gob(REBGOB **gob, REBPAR *xy, REBOOL inner)
 //
 REBINT OS_Size_Text(REBGOB *gob, REBPAR *size)
 {
-	return 0;
+    return 0;
 }
 
 
@@ -123,7 +123,7 @@ REBINT OS_Size_Text(REBGOB *gob, REBPAR *size)
 //
 REBINT OS_Offset_To_Caret(REBGOB *gob, REBPAR xy, REBINT *element, REBINT *position)
 {
-	return 0;
+    return 0;
 }
 
 
@@ -134,7 +134,7 @@ REBINT OS_Offset_To_Caret(REBGOB *gob, REBPAR xy, REBINT *element, REBINT *posit
 //
 REBINT OS_Caret_To_Offset(REBGOB *gob, REBPAR *xy, REBINT element, REBINT position)
 {
-	return 0;
+    return 0;
 }
 
 
@@ -146,7 +146,7 @@ REBINT OS_Caret_To_Offset(REBGOB *gob, REBPAR *xy, REBINT element, REBINT positi
 //
 REBINT OS_Gob_To_Image(REBSER *image, REBGOB *gob)
 {
-	return 0;
+    return 0;
 }
 
 
@@ -158,7 +158,7 @@ REBINT OS_Gob_To_Image(REBSER *image, REBGOB *gob)
 //
 REBINT OS_Draw_Image(REBSER *image, REBSER *block)
 {
-	return 0;
+    return 0;
 }
 
 
@@ -170,7 +170,7 @@ REBINT OS_Draw_Image(REBSER *image, REBSER *block)
 //
 REBINT OS_Effect_Image(REBSER *image, REBSER *block)
 {
-	return 0;
+    return 0;
 }
 
 //

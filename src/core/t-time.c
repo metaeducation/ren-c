@@ -34,22 +34,22 @@
 //
 void Split_Time(REBI64 t, REB_TIMEF *tf)
 {
-	// note: negative sign will be lost.
-	REBI64 h, m, s, n, i;
+    // note: negative sign will be lost.
+    REBI64 h, m, s, n, i;
 
-	if (t < 0) t = -t;
+    if (t < 0) t = -t;
 
-	h = t / HR_SEC;
-	i = t - (h * HR_SEC);
-	m = i / MIN_SEC;
-	i = i - (m * MIN_SEC);
-	s = i / SEC_SEC;
-	n = i - (s * SEC_SEC);
+    h = t / HR_SEC;
+    i = t - (h * HR_SEC);
+    m = i / MIN_SEC;
+    i = i - (m * MIN_SEC);
+    s = i / SEC_SEC;
+    n = i - (s * SEC_SEC);
 
-	tf->h = (REBCNT)h;
-	tf->m = (REBCNT)m;
-	tf->s = (REBCNT)s;
-	tf->n = (REBCNT)n;
+    tf->h = (REBCNT)h;
+    tf->m = (REBCNT)m;
+    tf->s = (REBCNT)s;
+    tf->n = (REBCNT)n;
 }
 
 //
@@ -63,10 +63,10 @@ void Split_Time(REBI64 t, REB_TIMEF *tf)
 //
 REBI64 Join_Time(REB_TIMEF *tf, REBFLG neg)
 {
-	REBI64 t;
+    REBI64 t;
 
-	t = (tf->h * HR_SEC) + (tf->m * MIN_SEC) + (tf->s * SEC_SEC) + tf->n;
-	return neg ? -t : t;
+    t = (tf->h * HR_SEC) + (tf->m * MIN_SEC) + (tf->s * SEC_SEC) + tf->n;
+    return neg ? -t : t;
 }
 
 //
@@ -76,62 +76,62 @@ REBI64 Join_Time(REB_TIMEF *tf, REBFLG neg)
 //
 const REBYTE *Scan_Time(const REBYTE *cp, REBCNT len, REBVAL *value)
 {
-	const REBYTE  *sp;
-	REBYTE	merid = FALSE;
-	REBOOL	neg = FALSE;
-	REBINT	part1, part2, part3 = -1;
-	REBINT	part4 = -1;
+    const REBYTE  *sp;
+    REBYTE  merid = FALSE;
+    REBOOL  neg = FALSE;
+    REBINT  part1, part2, part3 = -1;
+    REBINT  part4 = -1;
 
-	if (*cp == '-') cp++, neg = TRUE;
-	else if (*cp == '+') cp++;
+    if (*cp == '-') cp++, neg = TRUE;
+    else if (*cp == '+') cp++;
 
-	if (*cp == '-' || *cp == '+') return 0; // small hole: --1:23
+    if (*cp == '-' || *cp == '+') return 0; // small hole: --1:23
 
-	// Can be:
-	//    HH:MM       as part1:part2
-	//    HH:MM:SS    as part1:part2:part3
-	//    HH:MM:SS.DD as part1:part2:part3.part4
-	//    MM:SS.DD    as part1:part2.part4
-	cp = Grab_Int(cp, &part1);
-	if (part1 > MAX_HOUR) return 0;
-	if (*cp++ != ':') return 0;
-	sp = Grab_Int(cp, &part2);
-	if (part2 < 0 || sp == cp) return 0;
-	cp = sp;
-	if (*cp == ':') {	// optional seconds
-		sp = cp + 1;
-		cp = Grab_Int(sp, &part3);
-		if (part3 < 0 || cp == sp) return 0;  //part3 = -1;
-	}
-	if (*cp == '.' || *cp == ',') {
-		sp = ++cp;
-		cp = Grab_Int_Scale(sp, &part4, 9);
-		if (part4 == 0) part4 = -1;
-	}
-	if ((UP_CASE(*cp) == 'A' || UP_CASE(*cp) == 'P') && (UP_CASE(cp[1]) == 'M')) {
-		merid = (REBYTE)UP_CASE(*cp);
-		cp += 2;
-	}
+    // Can be:
+    //    HH:MM       as part1:part2
+    //    HH:MM:SS    as part1:part2:part3
+    //    HH:MM:SS.DD as part1:part2:part3.part4
+    //    MM:SS.DD    as part1:part2.part4
+    cp = Grab_Int(cp, &part1);
+    if (part1 > MAX_HOUR) return 0;
+    if (*cp++ != ':') return 0;
+    sp = Grab_Int(cp, &part2);
+    if (part2 < 0 || sp == cp) return 0;
+    cp = sp;
+    if (*cp == ':') {   // optional seconds
+        sp = cp + 1;
+        cp = Grab_Int(sp, &part3);
+        if (part3 < 0 || cp == sp) return 0;  //part3 = -1;
+    }
+    if (*cp == '.' || *cp == ',') {
+        sp = ++cp;
+        cp = Grab_Int_Scale(sp, &part4, 9);
+        if (part4 == 0) part4 = -1;
+    }
+    if ((UP_CASE(*cp) == 'A' || UP_CASE(*cp) == 'P') && (UP_CASE(cp[1]) == 'M')) {
+        merid = (REBYTE)UP_CASE(*cp);
+        cp += 2;
+    }
 
-	if (part3 >= 0 || part4 < 0) {	// HH:MM mode
-		if (merid) {
-			if (part1 > 12) return 0;
-			if (part1 == 12) part1 = 0;
-			if (merid == 'P') part1 += 12;
-		}
-		if (part3 < 0) part3 = 0;
-		VAL_TIME(value) = HOUR_TIME(part1) + MIN_TIME(part2) + SEC_TIME(part3);
-	} else {						// MM:SS mode
-		if (merid) return 0;		// no AM/PM for minutes
-		VAL_TIME(value) = MIN_TIME(part1) + SEC_TIME(part2);
-	}
+    if (part3 >= 0 || part4 < 0) {  // HH:MM mode
+        if (merid) {
+            if (part1 > 12) return 0;
+            if (part1 == 12) part1 = 0;
+            if (merid == 'P') part1 += 12;
+        }
+        if (part3 < 0) part3 = 0;
+        VAL_TIME(value) = HOUR_TIME(part1) + MIN_TIME(part2) + SEC_TIME(part3);
+    } else {                        // MM:SS mode
+        if (merid) return 0;        // no AM/PM for minutes
+        VAL_TIME(value) = MIN_TIME(part1) + SEC_TIME(part2);
+    }
 
-	if (part4 > 0) VAL_TIME(value) += part4;
+    if (part4 > 0) VAL_TIME(value) += part4;
 
-	if (neg) VAL_TIME(value) = -VAL_TIME(value);
-	VAL_SET(value, REB_TIME);
+    if (neg) VAL_TIME(value) = -VAL_TIME(value);
+    VAL_SET(value, REB_TIME);
 
-	return cp;
+    return cp;
 }
 
 
@@ -140,20 +140,20 @@ const REBYTE *Scan_Time(const REBYTE *cp, REBCNT len, REBVAL *value)
 //
 void Emit_Time(REB_MOLD *mold, const REBVAL *value)
 {
-	REB_TIMEF tf;
-	const char *fmt;
+    REB_TIMEF tf;
+    const char *fmt;
 
-	Split_Time(VAL_TIME(value), &tf); // loses sign
+    Split_Time(VAL_TIME(value), &tf); // loses sign
 
-	if (tf.s == 0 && tf.n == 0) fmt = "I:2";
-	else fmt = "I:2:2";
+    if (tf.s == 0 && tf.n == 0) fmt = "I:2";
+    else fmt = "I:2:2";
 
-	if (VAL_TIME(value) < cast(REBI64, 0))
-		Append_Codepoint_Raw(mold->series, '-');
+    if (VAL_TIME(value) < cast(REBI64, 0))
+        Append_Codepoint_Raw(mold->series, '-');
 
-	Emit(mold, fmt, tf.h, tf.m, tf.s, 0);
+    Emit(mold, fmt, tf.h, tf.m, tf.s, 0);
 
-	if (tf.n > 0) Emit(mold, ".i", tf.n);
+    if (tf.n > 0) Emit(mold, ".i", tf.n);
 }
 
 
@@ -162,10 +162,10 @@ void Emit_Time(REB_MOLD *mold, const REBVAL *value)
 //
 REBINT CT_Time(REBVAL *a, REBVAL *b, REBINT mode)
 {
-	REBINT num = Cmp_Time(a, b);
-	if (mode >= 0)  return (num == 0);
-	if (mode == -1) return (num >= 0);
-	return (num > 0);
+    REBINT num = Cmp_Time(a, b);
+    if (mode >= 0)  return (num == 0);
+    if (mode == -1) return (num >= 0);
+    return (num > 0);
 }
 
 
@@ -176,66 +176,66 @@ REBINT CT_Time(REBVAL *a, REBVAL *b, REBINT mode)
 //
 REBI64 Make_Time(REBVAL *val)
 {
-	REBI64 secs = 0;
+    REBI64 secs = 0;
 
-	if (IS_TIME(val)) {
-		secs = VAL_TIME(val);
-	}
-	else if (IS_STRING(val)) {
-		REBYTE *bp;
-		REBCNT len;
-		bp = Temp_Byte_Chars_May_Fail(val, MAX_SCAN_TIME, &len, FALSE);
-		if (!Scan_Time(bp, len, val)) goto no_time;
-		secs = VAL_TIME(val);
-	}
-	else if (IS_INTEGER(val)) {
-		if (VAL_INT64(val) < -MAX_SECONDS || VAL_INT64(val) > MAX_SECONDS)
-			fail (Error_Out_Of_Range(val));
-		secs = VAL_INT64(val) * SEC_SEC;
-	}
-	else if (IS_DECIMAL(val)) {
-		if (VAL_DECIMAL(val) < (REBDEC)(-MAX_SECONDS) || VAL_DECIMAL(val) > (REBDEC)MAX_SECONDS)
-			fail (Error_Out_Of_Range(val));
-		secs = DEC_TO_SECS(VAL_DECIMAL(val));
-	}
-	else if (ANY_ARRAY(val) && VAL_BLK_LEN(val) <= 3) {
-		REBFLG neg = FALSE;
-		REBI64 i;
+    if (IS_TIME(val)) {
+        secs = VAL_TIME(val);
+    }
+    else if (IS_STRING(val)) {
+        REBYTE *bp;
+        REBCNT len;
+        bp = Temp_Byte_Chars_May_Fail(val, MAX_SCAN_TIME, &len, FALSE);
+        if (!Scan_Time(bp, len, val)) goto no_time;
+        secs = VAL_TIME(val);
+    }
+    else if (IS_INTEGER(val)) {
+        if (VAL_INT64(val) < -MAX_SECONDS || VAL_INT64(val) > MAX_SECONDS)
+            fail (Error_Out_Of_Range(val));
+        secs = VAL_INT64(val) * SEC_SEC;
+    }
+    else if (IS_DECIMAL(val)) {
+        if (VAL_DECIMAL(val) < (REBDEC)(-MAX_SECONDS) || VAL_DECIMAL(val) > (REBDEC)MAX_SECONDS)
+            fail (Error_Out_Of_Range(val));
+        secs = DEC_TO_SECS(VAL_DECIMAL(val));
+    }
+    else if (ANY_ARRAY(val) && VAL_BLK_LEN(val) <= 3) {
+        REBFLG neg = FALSE;
+        REBI64 i;
 
-		val = VAL_BLK_DATA(val);
-		if (!IS_INTEGER(val)) goto no_time;
-		i = Int32(val);
-		if (i < 0) i = -i, neg = TRUE;
-		secs = i * 3600;
-		if (secs > MAX_SECONDS) goto no_time;
+        val = VAL_BLK_DATA(val);
+        if (!IS_INTEGER(val)) goto no_time;
+        i = Int32(val);
+        if (i < 0) i = -i, neg = TRUE;
+        secs = i * 3600;
+        if (secs > MAX_SECONDS) goto no_time;
 
-		if (NOT_END(++val)) {
-			if (!IS_INTEGER(val)) goto no_time;
-			if ((i = Int32(val)) < 0) goto no_time;
-			secs += i * 60;
-			if (secs > MAX_SECONDS) goto no_time;
+        if (NOT_END(++val)) {
+            if (!IS_INTEGER(val)) goto no_time;
+            if ((i = Int32(val)) < 0) goto no_time;
+            secs += i * 60;
+            if (secs > MAX_SECONDS) goto no_time;
 
-			if (NOT_END(++val)) {
-				if (IS_INTEGER(val)) {
-					if ((i = Int32(val)) < 0) goto no_time;
-					secs += i;
-					if (secs > MAX_SECONDS) goto no_time;
-				}
-				else if (IS_DECIMAL(val)) {
-					if (secs + (REBI64)VAL_DECIMAL(val) + 1 > MAX_SECONDS) goto no_time;
-					// added in below
-				}
-				else goto no_time;
-			}
-		}
-		secs *= SEC_SEC;
-		if (IS_DECIMAL(val)) secs += DEC_TO_SECS(VAL_DECIMAL(val));
-		if (neg) secs = -secs;
-	}
-	else
-		no_time: return NO_TIME;
+            if (NOT_END(++val)) {
+                if (IS_INTEGER(val)) {
+                    if ((i = Int32(val)) < 0) goto no_time;
+                    secs += i;
+                    if (secs > MAX_SECONDS) goto no_time;
+                }
+                else if (IS_DECIMAL(val)) {
+                    if (secs + (REBI64)VAL_DECIMAL(val) + 1 > MAX_SECONDS) goto no_time;
+                    // added in below
+                }
+                else goto no_time;
+            }
+        }
+        secs *= SEC_SEC;
+        if (IS_DECIMAL(val)) secs += DEC_TO_SECS(VAL_DECIMAL(val));
+        if (neg) secs = -secs;
+    }
+    else
+        no_time: return NO_TIME;
 
-	return secs;
+    return secs;
 }
 
 
@@ -244,15 +244,15 @@ REBI64 Make_Time(REBVAL *val)
 //
 REBFLG MT_Time(REBVAL *out, REBVAL *data, enum Reb_Kind type)
 {
-	REBI64 secs = Make_Time(data);
+    REBI64 secs = Make_Time(data);
 
-	if (secs == NO_TIME) return FALSE;
+    if (secs == NO_TIME) return FALSE;
 
-	VAL_SET(out, REB_TIME);
-	VAL_TIME(out) = secs;
-	VAL_DATE(out).bits = 0;
+    VAL_SET(out, REB_TIME);
+    VAL_TIME(out) = secs;
+    VAL_DATE(out).bits = 0;
 
-	return TRUE;
+    return TRUE;
 }
 
 
@@ -263,14 +263,14 @@ REBFLG MT_Time(REBVAL *out, REBVAL *data, enum Reb_Kind type)
 //
 REBINT Cmp_Time(const REBVAL *v1, const REBVAL *v2)
 {
-	REBI64 t1 = VAL_TIME(v1);
-	REBI64 t2 = VAL_TIME(v2);
+    REBI64 t1 = VAL_TIME(v1);
+    REBI64 t2 = VAL_TIME(v2);
 
-	if (t1 == NO_TIME) t1 = 0L;
-	if (t2 == NO_TIME) t2 = 0L;
-	if (t2 == t1) return 0;
-	if (t1 > t2) return 1;
-	return -1;
+    if (t1 == NO_TIME) t1 = 0L;
+    if (t2 == NO_TIME) t2 = 0L;
+    if (t2 == t1) return 0;
+    if (t1 > t2) return 1;
+    return -1;
 }
 
 
@@ -279,78 +279,78 @@ REBINT Cmp_Time(const REBVAL *v1, const REBVAL *v2)
 //
 REBINT PD_Time(REBPVS *pvs)
 {
-	REBVAL *val;
-	REBINT i;
-	REBINT n;
-	REBDEC f;
-	REB_TIMEF tf;
+    REBVAL *val;
+    REBINT i;
+    REBINT n;
+    REBDEC f;
+    REB_TIMEF tf;
 
-	if (IS_WORD(pvs->select)) {
-		switch (VAL_WORD_CANON(pvs->select)) {
-		case SYM_HOUR:   i = 0; break;
-		case SYM_MINUTE: i = 1; break;
-		case SYM_SECOND: i = 2; break;
-		default: return PE_BAD_SELECT;
-		}
-	}
-	else if (IS_INTEGER(pvs->select))
-		i = VAL_INT32(pvs->select) - 1;
-	else
-		return PE_BAD_SELECT;
+    if (IS_WORD(pvs->select)) {
+        switch (VAL_WORD_CANON(pvs->select)) {
+        case SYM_HOUR:   i = 0; break;
+        case SYM_MINUTE: i = 1; break;
+        case SYM_SECOND: i = 2; break;
+        default: return PE_BAD_SELECT;
+        }
+    }
+    else if (IS_INTEGER(pvs->select))
+        i = VAL_INT32(pvs->select) - 1;
+    else
+        return PE_BAD_SELECT;
 
-	Split_Time(VAL_TIME(pvs->value), &tf); // loses sign
+    Split_Time(VAL_TIME(pvs->value), &tf); // loses sign
 
-	if (!(val = pvs->setval)) {
-		val = pvs->store;
-		switch(i) {
-		case 0: // hours
-			SET_INTEGER(val, tf.h);
-			break;
-		case 1:
-			SET_INTEGER(val, tf.m);
-			break;
-		case 2:
-			if (tf.n == 0)
-				SET_INTEGER(val, tf.s);
-			else
-				SET_DECIMAL(val, (REBDEC)tf.s + (tf.n * NANO));
-			break;
-		default:
-			return PE_NONE;
-		}
-		return PE_USE;
+    if (!(val = pvs->setval)) {
+        val = pvs->store;
+        switch(i) {
+        case 0: // hours
+            SET_INTEGER(val, tf.h);
+            break;
+        case 1:
+            SET_INTEGER(val, tf.m);
+            break;
+        case 2:
+            if (tf.n == 0)
+                SET_INTEGER(val, tf.s);
+            else
+                SET_DECIMAL(val, (REBDEC)tf.s + (tf.n * NANO));
+            break;
+        default:
+            return PE_NONE;
+        }
+        return PE_USE;
 
-	} else {
-		if (IS_INTEGER(val) || IS_DECIMAL(val)) n = Int32s(val, 0);
-		else if (IS_NONE(val)) n = 0;
-		else return PE_BAD_SET;
+    } else {
+        if (IS_INTEGER(val) || IS_DECIMAL(val)) n = Int32s(val, 0);
+        else if (IS_NONE(val)) n = 0;
+        else return PE_BAD_SET;
 
-		switch(i) {
-		case 0:
-			tf.h = n;
-			break;
-		case 1:
-			tf.m = n;
-			break;
-		case 2:
-			if (IS_DECIMAL(val)) {
-				f = VAL_DECIMAL(val);
-				if (f < 0.0) fail (Error_Out_Of_Range(val));
-				tf.s = (REBINT)f;
-				tf.n = (REBINT)((f - tf.s) * SEC_SEC);
-			}
-			else {
-				tf.s = n;
-				tf.n = 0;
-			}
-			break;
-		default:
-			return PE_BAD_SELECT;
-		}
+        switch(i) {
+        case 0:
+            tf.h = n;
+            break;
+        case 1:
+            tf.m = n;
+            break;
+        case 2:
+            if (IS_DECIMAL(val)) {
+                f = VAL_DECIMAL(val);
+                if (f < 0.0) fail (Error_Out_Of_Range(val));
+                tf.s = (REBINT)f;
+                tf.n = (REBINT)((f - tf.s) * SEC_SEC);
+            }
+            else {
+                tf.s = n;
+                tf.n = 0;
+            }
+            break;
+        default:
+            return PE_BAD_SELECT;
+        }
 
-		VAL_TIME(pvs->value) = Join_Time(&tf, FALSE);
-		return PE_OK;
-	}
+        VAL_TIME(pvs->value) = Join_Time(&tf, FALSE);
+        return PE_OK;
+    }
 }
 
 
@@ -359,200 +359,200 @@ REBINT PD_Time(REBPVS *pvs)
 //
 REBTYPE(Time)
 {
-	REBI64	secs;
-	REBVAL	*val;
-	REBVAL	*arg = NULL;
-	REBI64	num;
+    REBI64  secs;
+    REBVAL  *val;
+    REBVAL  *arg = NULL;
+    REBI64  num;
 
-	val = D_ARG(1);
+    val = D_ARG(1);
 
-	secs = VAL_TIME(val); // note: not always valid REB_TIME (e.g. MAKE)
+    secs = VAL_TIME(val); // note: not always valid REB_TIME (e.g. MAKE)
 
-	if (DS_ARGC > 1) {
-		arg = D_ARG(2);
-	}
+    if (DS_ARGC > 1) {
+        arg = D_ARG(2);
+    }
 
-	if (IS_BINARY_ACT(action)) {
-		REBINT	type = VAL_TYPE(arg);
+    if (IS_BINARY_ACT(action)) {
+        REBINT  type = VAL_TYPE(arg);
 
-		assert(arg);
+        assert(arg);
 
-		if (type == REB_TIME) {		// handle TIME - TIME cases
-			REBI64	secs2 = VAL_TIME(arg);
+        if (type == REB_TIME) {     // handle TIME - TIME cases
+            REBI64  secs2 = VAL_TIME(arg);
 
-			switch (action) {
+            switch (action) {
 
-			case A_ADD:
-				secs = Add_Max(REB_TIME, secs, secs2, MAX_TIME);
-				goto fixTime;
+            case A_ADD:
+                secs = Add_Max(REB_TIME, secs, secs2, MAX_TIME);
+                goto fixTime;
 
-			case A_SUBTRACT:
-				secs = Add_Max(REB_TIME, secs, -secs2, MAX_TIME);
-				goto fixTime;
+            case A_SUBTRACT:
+                secs = Add_Max(REB_TIME, secs, -secs2, MAX_TIME);
+                goto fixTime;
 
-			case A_DIVIDE:
-				if (secs2 == 0) fail (Error(RE_ZERO_DIVIDE));
-				//secs /= secs2;
-				VAL_SET(D_OUT, REB_DECIMAL);
-				VAL_DECIMAL(D_OUT) = (REBDEC)secs / (REBDEC)secs2;
-				return R_OUT;
+            case A_DIVIDE:
+                if (secs2 == 0) fail (Error(RE_ZERO_DIVIDE));
+                //secs /= secs2;
+                VAL_SET(D_OUT, REB_DECIMAL);
+                VAL_DECIMAL(D_OUT) = (REBDEC)secs / (REBDEC)secs2;
+                return R_OUT;
 
-			case A_REMAINDER:
-				if (secs2 == 0) fail (Error(RE_ZERO_DIVIDE));
-				secs %= secs2;
-				goto setTime;
-			}
-		}
-		else if (type == REB_INTEGER) {		// handle TIME - INTEGER cases
+            case A_REMAINDER:
+                if (secs2 == 0) fail (Error(RE_ZERO_DIVIDE));
+                secs %= secs2;
+                goto setTime;
+            }
+        }
+        else if (type == REB_INTEGER) {     // handle TIME - INTEGER cases
 
-			num = VAL_INT64(arg);
+            num = VAL_INT64(arg);
 
-			switch(action) {
-			case A_ADD:
-				secs = Add_Max(REB_TIME, secs, num * SEC_SEC, MAX_TIME);
-				goto fixTime;
+            switch(action) {
+            case A_ADD:
+                secs = Add_Max(REB_TIME, secs, num * SEC_SEC, MAX_TIME);
+                goto fixTime;
 
-			case A_SUBTRACT:
-				secs = Add_Max(REB_TIME, secs, num * -SEC_SEC, MAX_TIME);
-				goto fixTime;
+            case A_SUBTRACT:
+                secs = Add_Max(REB_TIME, secs, num * -SEC_SEC, MAX_TIME);
+                goto fixTime;
 
-			case A_MULTIPLY:
-				secs *= num;
-				if (secs < -MAX_TIME || secs > MAX_TIME)
-					fail (Error(RE_TYPE_LIMIT, Get_Type(REB_TIME)));
-				goto setTime;
+            case A_MULTIPLY:
+                secs *= num;
+                if (secs < -MAX_TIME || secs > MAX_TIME)
+                    fail (Error(RE_TYPE_LIMIT, Get_Type(REB_TIME)));
+                goto setTime;
 
-			case A_DIVIDE:
-				if (num == 0) fail (Error(RE_ZERO_DIVIDE));
-				secs /= num;
-				SET_INTEGER(D_OUT, secs);
-				goto setTime;
+            case A_DIVIDE:
+                if (num == 0) fail (Error(RE_ZERO_DIVIDE));
+                secs /= num;
+                SET_INTEGER(D_OUT, secs);
+                goto setTime;
 
-			case A_REMAINDER:
-				if (num == 0) fail (Error(RE_ZERO_DIVIDE));
-				secs %= num;
-				goto setTime;
-			}
-		}
-		else if (type == REB_DECIMAL) {		// handle TIME - DECIMAL cases
-			REBDEC dec = VAL_DECIMAL(arg);
+            case A_REMAINDER:
+                if (num == 0) fail (Error(RE_ZERO_DIVIDE));
+                secs %= num;
+                goto setTime;
+            }
+        }
+        else if (type == REB_DECIMAL) {     // handle TIME - DECIMAL cases
+            REBDEC dec = VAL_DECIMAL(arg);
 
-			switch(action) {
-			case A_ADD:
-				secs = Add_Max(REB_TIME, secs, (i64)(dec * SEC_SEC), MAX_TIME);
-				goto fixTime;
+            switch(action) {
+            case A_ADD:
+                secs = Add_Max(REB_TIME, secs, (i64)(dec * SEC_SEC), MAX_TIME);
+                goto fixTime;
 
-			case A_SUBTRACT:
-				secs = Add_Max(REB_TIME, secs, (i64)(dec * -SEC_SEC), MAX_TIME);
-				goto fixTime;
+            case A_SUBTRACT:
+                secs = Add_Max(REB_TIME, secs, (i64)(dec * -SEC_SEC), MAX_TIME);
+                goto fixTime;
 
-			case A_MULTIPLY:
-				secs = (REBI64)(secs * dec);
-				goto setTime;
+            case A_MULTIPLY:
+                secs = (REBI64)(secs * dec);
+                goto setTime;
 
-			case A_DIVIDE:
-				if (dec == 0.0) fail (Error(RE_ZERO_DIVIDE));
-				secs = (REBI64)(secs / dec);
-				goto setTime;
+            case A_DIVIDE:
+                if (dec == 0.0) fail (Error(RE_ZERO_DIVIDE));
+                secs = (REBI64)(secs / dec);
+                goto setTime;
 
-//			case A_REMAINDER:
-//				ld = fmod(ld, VAL_DECIMAL(arg));
-//				goto decTime;
-			}
-		}
-		else if (type == REB_DATE && action == A_ADD) {	// TIME + DATE case
-			// Swap args and call DATE datatupe:
-			*D_ARG(3) = *val; // (temporary location for swap)
-			*D_ARG(1) = *arg;
-			*D_ARG(2) = *D_ARG(3);
-			return T_Date(call_, action);
-		}
-		fail (Error_Math_Args(REB_TIME, action));
-	}
-	else {
-		// unary actions
-		switch(action) {
+//          case A_REMAINDER:
+//              ld = fmod(ld, VAL_DECIMAL(arg));
+//              goto decTime;
+            }
+        }
+        else if (type == REB_DATE && action == A_ADD) { // TIME + DATE case
+            // Swap args and call DATE datatupe:
+            *D_ARG(3) = *val; // (temporary location for swap)
+            *D_ARG(1) = *arg;
+            *D_ARG(2) = *D_ARG(3);
+            return T_Date(call_, action);
+        }
+        fail (Error_Math_Args(REB_TIME, action));
+    }
+    else {
+        // unary actions
+        switch(action) {
 
-		case A_ODDQ:
-			DECIDE((SECS_IN(secs) & 1) != 0);
+        case A_ODDQ:
+            DECIDE((SECS_IN(secs) & 1) != 0);
 
-		case A_EVENQ:
-			DECIDE((SECS_IN(secs) & 1) == 0);
+        case A_EVENQ:
+            DECIDE((SECS_IN(secs) & 1) == 0);
 
-		case A_NEGATE:
-			secs = -secs;
-			goto setTime;
+        case A_NEGATE:
+            secs = -secs;
+            goto setTime;
 
-		case A_ABSOLUTE:
-			if (secs < 0) secs = -secs;
-			goto setTime;
+        case A_ABSOLUTE:
+            if (secs < 0) secs = -secs;
+            goto setTime;
 
-		case A_ROUND:
-			if (D_REF(2)) {
-				arg = D_ARG(3);
-				if (IS_TIME(arg)) {
-					secs = Round_Int(secs, Get_Round_Flags(call_), VAL_TIME(arg));
-				}
-				else if (IS_DECIMAL(arg)) {
-					VAL_DECIMAL(arg) = Round_Dec(
-						cast(REBDEC, secs),
-						Get_Round_Flags(call_),
-						Dec64(arg) * SEC_SEC
-					);
-					VAL_DECIMAL(arg) /= SEC_SEC;
-					VAL_SET(arg, REB_DECIMAL);
-					return R_ARG3;
-				}
-				else if (IS_INTEGER(arg)) {
-					VAL_INT64(arg) = Round_Int(secs, 1, Int32(arg) * SEC_SEC) / SEC_SEC;
-					VAL_SET(arg, REB_INTEGER);
-					return R_ARG3;
-				}
-				else fail (Error_Invalid_Arg(arg));
-			}
-			else {
-				secs = Round_Int(secs, Get_Round_Flags(call_) | 1, SEC_SEC);
-			}
-			goto fixTime;
+        case A_ROUND:
+            if (D_REF(2)) {
+                arg = D_ARG(3);
+                if (IS_TIME(arg)) {
+                    secs = Round_Int(secs, Get_Round_Flags(call_), VAL_TIME(arg));
+                }
+                else if (IS_DECIMAL(arg)) {
+                    VAL_DECIMAL(arg) = Round_Dec(
+                        cast(REBDEC, secs),
+                        Get_Round_Flags(call_),
+                        Dec64(arg) * SEC_SEC
+                    );
+                    VAL_DECIMAL(arg) /= SEC_SEC;
+                    VAL_SET(arg, REB_DECIMAL);
+                    return R_ARG3;
+                }
+                else if (IS_INTEGER(arg)) {
+                    VAL_INT64(arg) = Round_Int(secs, 1, Int32(arg) * SEC_SEC) / SEC_SEC;
+                    VAL_SET(arg, REB_INTEGER);
+                    return R_ARG3;
+                }
+                else fail (Error_Invalid_Arg(arg));
+            }
+            else {
+                secs = Round_Int(secs, Get_Round_Flags(call_) | 1, SEC_SEC);
+            }
+            goto fixTime;
 
-		case A_RANDOM:
-			if (D_REF(2)) {
-				Set_Random(secs);
-				return R_UNSET;
-			}
-			secs = Random_Range(secs / SEC_SEC, D_REF(3)) * SEC_SEC;
-			goto fixTime;
+        case A_RANDOM:
+            if (D_REF(2)) {
+                Set_Random(secs);
+                return R_UNSET;
+            }
+            secs = Random_Range(secs / SEC_SEC, D_REF(3)) * SEC_SEC;
+            goto fixTime;
 
-		case A_PICK:
-			assert(arg);
+        case A_PICK:
+            assert(arg);
 
-			Pick_Path(D_OUT, val, arg, 0);
-			return R_OUT;
+            Pick_Path(D_OUT, val, arg, 0);
+            return R_OUT;
 
-///		case A_POKE:
-///			Pick_Path(D_OUT, val, arg, D_ARG(3));
-///			return R_ARG3;
+///     case A_POKE:
+///         Pick_Path(D_OUT, val, arg, D_ARG(3));
+///         return R_ARG3;
 
-		case A_MAKE:
-		case A_TO:
-			assert(arg);
+        case A_MAKE:
+        case A_TO:
+            assert(arg);
 
-			secs = Make_Time(arg);
-			if (secs == NO_TIME) fail (Error_Bad_Make(REB_TIME, arg));
-			goto setTime;
-		}
-	}
-	fail (Error_Illegal_Action(REB_TIME, action));
+            secs = Make_Time(arg);
+            if (secs == NO_TIME) fail (Error_Bad_Make(REB_TIME, arg));
+            goto setTime;
+        }
+    }
+    fail (Error_Illegal_Action(REB_TIME, action));
 
 fixTime:
 setTime:
-	VAL_TIME(D_OUT) = secs;
-	VAL_SET(D_OUT, REB_TIME);
-	return R_OUT;
+    VAL_TIME(D_OUT) = secs;
+    VAL_SET(D_OUT, REB_TIME);
+    return R_OUT;
 
 is_false:
-	return R_FALSE;
+    return R_FALSE;
 
 is_true:
-	return R_TRUE;
+    return R_TRUE;
 }

@@ -44,93 +44,93 @@
 //
 static REB_R Console_Actor(struct Reb_Call *call_, REBSER *port, REBCNT action)
 {
-	REBREQ *req;
-	REBINT result;
-	REBVAL *arg;
-	REBSER *ser;
+    REBREQ *req;
+    REBINT result;
+    REBVAL *arg;
+    REBSER *ser;
 
-	Validate_Port(port, action);
+    Validate_Port(port, action);
 
-	arg = DS_ARGC > 1 ? D_ARG(2) : NULL;
-	*D_OUT = *D_ARG(1);
+    arg = DS_ARGC > 1 ? D_ARG(2) : NULL;
+    *D_OUT = *D_ARG(1);
 
-	req = cast(REBREQ*, Use_Port_State(port, RDI_STDIO, sizeof(REBREQ)));
+    req = cast(REBREQ*, Use_Port_State(port, RDI_STDIO, sizeof(REBREQ)));
 
-	switch (action) {
+    switch (action) {
 
-	case A_READ:
+    case A_READ:
 
-		// If not open, open it:
-		if (!IS_OPEN(req)) {
-			if (OS_DO_DEVICE(req, RDC_OPEN))
-				fail (Error_On_Port(RE_CANNOT_OPEN, port, req->error));
-		}
+        // If not open, open it:
+        if (!IS_OPEN(req)) {
+            if (OS_DO_DEVICE(req, RDC_OPEN))
+                fail (Error_On_Port(RE_CANNOT_OPEN, port, req->error));
+        }
 
-		// If no buffer, create a buffer:
-		arg = OFV(port, STD_PORT_DATA);
-		if (!IS_STRING(arg) && !IS_BINARY(arg)) {
-			Val_Init_Binary(arg, MAKE_OS_BUFFER(OUT_BUF_SIZE));
-		}
-		ser = VAL_SERIES(arg);
-		RESET_SERIES(ser);
+        // If no buffer, create a buffer:
+        arg = OFV(port, STD_PORT_DATA);
+        if (!IS_STRING(arg) && !IS_BINARY(arg)) {
+            Val_Init_Binary(arg, MAKE_OS_BUFFER(OUT_BUF_SIZE));
+        }
+        ser = VAL_SERIES(arg);
+        RESET_SERIES(ser);
 
-		req->common.data = BIN_HEAD(ser);
-		req->length = SERIES_AVAIL(ser);
-
-#ifdef nono
-		// Is the buffer large enough?
-		req->length = SERIES_AVAIL(ser); // space available
-		if (req->length < OUT_BUF_SIZE/2) Extend_Series(ser, OUT_BUF_SIZE);
-		req->length = SERIES_AVAIL(ser);
-
-		// Don't make buffer too large:  Bug #174   ?????
-		if (req->length > 1024) req->length = 1024;  //???
-		req->common.data = STR_TAIL(ser); // write at tail  //???
-		if (SERIES_TAIL(ser) == 0) req->actual = 0;  //???
-#endif
-
-		result = OS_DO_DEVICE(req, RDC_READ);
-		if (result < 0) fail (Error_On_Port(RE_READ_ERROR, port, req->error));
+        req->common.data = BIN_HEAD(ser);
+        req->length = SERIES_AVAIL(ser);
 
 #ifdef nono
-		// Does not belong here!!
-		// Remove or replace CRs:
-		result = 0;
-		for (n = 0; n < req->actual; n++) {
-			chr = GET_ANY_CHAR(ser, n);
-			if (chr == CR) {
-				chr = LF;
-				// Skip LF if it follows:
-				if ((n+1) < req->actual &&
-					LF == GET_ANY_CHAR(ser, n+1)) n++;
-			}
-			SET_ANY_CHAR(ser, result, chr);
-			result++;
-		}
+        // Is the buffer large enough?
+        req->length = SERIES_AVAIL(ser); // space available
+        if (req->length < OUT_BUF_SIZE/2) Extend_Series(ser, OUT_BUF_SIZE);
+        req->length = SERIES_AVAIL(ser);
+
+        // Don't make buffer too large:  Bug #174   ?????
+        if (req->length > 1024) req->length = 1024;  //???
+        req->common.data = STR_TAIL(ser); // write at tail  //???
+        if (SERIES_TAIL(ser) == 0) req->actual = 0;  //???
 #endif
-		// !!! Among many confusions in this file, it said "Another copy???"
-		//Val_Init_String(D_OUT, Copy_OS_Str(ser->data, result));
-		Val_Init_Binary(D_OUT, Copy_Bytes(req->common.data, req->actual));
-		break;
 
-	case A_OPEN:
-		SET_OPEN(req);
-		break;
+        result = OS_DO_DEVICE(req, RDC_READ);
+        if (result < 0) fail (Error_On_Port(RE_READ_ERROR, port, req->error));
 
-	case A_CLOSE:
-		SET_CLOSED(req);
-		//OS_DO_DEVICE(req, RDC_CLOSE);
-		break;
+#ifdef nono
+        // Does not belong here!!
+        // Remove or replace CRs:
+        result = 0;
+        for (n = 0; n < req->actual; n++) {
+            chr = GET_ANY_CHAR(ser, n);
+            if (chr == CR) {
+                chr = LF;
+                // Skip LF if it follows:
+                if ((n+1) < req->actual &&
+                    LF == GET_ANY_CHAR(ser, n+1)) n++;
+            }
+            SET_ANY_CHAR(ser, result, chr);
+            result++;
+        }
+#endif
+        // !!! Among many confusions in this file, it said "Another copy???"
+        //Val_Init_String(D_OUT, Copy_OS_Str(ser->data, result));
+        Val_Init_Binary(D_OUT, Copy_Bytes(req->common.data, req->actual));
+        break;
 
-	case A_OPENQ:
-		if (IS_OPEN(req)) return R_TRUE;
-		return R_FALSE;
+    case A_OPEN:
+        SET_OPEN(req);
+        break;
 
-	default:
-		fail (Error_Illegal_Action(REB_PORT, action));
-	}
+    case A_CLOSE:
+        SET_CLOSED(req);
+        //OS_DO_DEVICE(req, RDC_CLOSE);
+        break;
 
-	return R_OUT;
+    case A_OPENQ:
+        if (IS_OPEN(req)) return R_TRUE;
+        return R_FALSE;
+
+    default:
+        fail (Error_Illegal_Action(REB_PORT, action));
+    }
+
+    return R_OUT;
 }
 
 
@@ -139,5 +139,5 @@ static REB_R Console_Actor(struct Reb_Call *call_, REBSER *port, REBCNT action)
 //
 void Init_Console_Scheme(void)
 {
-	Register_Scheme(SYM_CONSOLE, 0, Console_Actor);
+    Register_Scheme(SYM_CONSOLE, 0, Console_Actor);
 }

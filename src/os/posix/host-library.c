@@ -21,15 +21,15 @@
 **
 **  Title: POSIX Library-related functions
 **  Purpose:
-**		This is for support of the LIBRARY! type from the host on
-**		systems that support 'dlopen'.
+**      This is for support of the LIBRARY! type from the host on
+**      systems that support 'dlopen'.
 **
 ***********************************************************************/
 
 #ifndef __cplusplus
-	// See feature_test_macros(7)
-	// This definition is redundant under C++
-	#define _GNU_SOURCE
+    // See feature_test_macros(7)
+    // This definition is redundant under C++
+    #define _GNU_SOURCE
 #endif
 
 #include <stdlib.h>
@@ -63,14 +63,14 @@
 void *OS_Open_Library(const REBCHR *path, REBCNT *error)
 {
 #ifndef NO_DL_LIB
-	void *dll = dlopen(path, RTLD_LAZY/*|RTLD_GLOBAL*/);
-	if (error) {
-		*error = 0; // dlerror() returns a char* error message, so there's
-	}
-				// no immediate way to return an "error code" in *error
-	return dll;
+    void *dll = dlopen(path, RTLD_LAZY/*|RTLD_GLOBAL*/);
+    if (error) {
+        *error = 0; // dlerror() returns a char* error message, so there's
+    }
+                // no immediate way to return an "error code" in *error
+    return dll;
 #else
-	return 0;
+    return 0;
 #endif
 }
 
@@ -83,7 +83,7 @@ void *OS_Open_Library(const REBCHR *path, REBCNT *error)
 void OS_Close_Library(void *dll)
 {
 #ifndef NO_DL_LIB
-	dlclose(dll);
+    dlclose(dll);
 #endif
 }
 
@@ -96,18 +96,18 @@ void OS_Close_Library(void *dll)
 CFUNC *OS_Find_Function(void *dll, const char *funcname)
 {
 #ifndef NO_DL_LIB
-	// !!! See notes about data pointers vs. function pointers in the
-	// definition of CFUNC.  This is trying to stay on the right side
-	// of the specification, but OS APIs often are not standard C.  So
-	// this implementation is not guaranteed to work, just to suppress
-	// compiler warnings.  See:
-	//
-	//		http://stackoverflow.com/a/1096349/211160
+    // !!! See notes about data pointers vs. function pointers in the
+    // definition of CFUNC.  This is trying to stay on the right side
+    // of the specification, but OS APIs often are not standard C.  So
+    // this implementation is not guaranteed to work, just to suppress
+    // compiler warnings.  See:
+    //
+    //      http://stackoverflow.com/a/1096349/211160
 
-	CFUNC *fp;
-	*cast(void**, &fp) = dlsym(dll, funcname);
-	return fp;
+    CFUNC *fp;
+    *cast(void**, &fp) = dlsym(dll, funcname);
+    return fp;
 #else
-	return NULL;
+    return NULL;
 #endif
 }

@@ -24,9 +24,9 @@
 **  Section: environment
 **  Author:  Carl Sassenrath
 **  Notes:
-**	  There are two types of global variables:
-**		process vars - single instance for main process
-**		thread vars - duplicated within each R3 task
+**    There are two types of global variables:
+**      process vars - single instance for main process
+**      thread vars - duplicated within each R3 task
 **
 ***********************************************************************/
 

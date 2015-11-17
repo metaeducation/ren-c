@@ -34,22 +34,22 @@
 //
 void Init_Stacks(REBCNT size)
 {
-	// We always keep one call stack chunk frame around for the first
-	// call frame push.  The first frame allocated out of it is
-	// saved as CS_Root.
+    // We always keep one call stack chunk frame around for the first
+    // call frame push.  The first frame allocated out of it is
+    // saved as CS_Root.
 
-	struct Reb_Chunk *chunk = ALLOC(struct Reb_Chunk);
+    struct Reb_Chunk *chunk = ALLOC(struct Reb_Chunk);
 #if !defined(NDEBUG)
-	memset(chunk, 0xBD, sizeof(struct Reb_Chunk));
+    memset(chunk, 0xBD, sizeof(struct Reb_Chunk));
 #endif
-	chunk->next = NULL;
-	CS_Root = cast(struct Reb_Call*, &chunk->payload);
+    chunk->next = NULL;
+    CS_Root = cast(struct Reb_Call*, &chunk->payload);
 
-	CS_Top = NULL;
-	CS_Running = NULL;
+    CS_Top = NULL;
+    CS_Running = NULL;
 
-	DS_Series = Make_Array(size);
-	Set_Root_Series(TASK_STACK, DS_Series, "data stack"); // uses special GC
+    DS_Series = Make_Array(size);
+    Set_Root_Series(TASK_STACK, DS_Series, "data stack"); // uses special GC
 }
 
 
@@ -58,16 +58,16 @@ void Init_Stacks(REBCNT size)
 //
 void Shutdown_Stacks(void)
 {
-	struct Reb_Chunk* chunk = cast(struct Reb_Chunk*,
-		cast(REBYTE*, CS_Root) - sizeof(struct Reb_Chunk*)
-	);
+    struct Reb_Chunk* chunk = cast(struct Reb_Chunk*,
+        cast(REBYTE*, CS_Root) - sizeof(struct Reb_Chunk*)
+    );
 
-	assert(!CS_Running);
-	assert(!CS_Top);
+    assert(!CS_Running);
+    assert(!CS_Top);
 
-	FREE(struct Reb_Chunk, chunk);
+    FREE(struct Reb_Chunk, chunk);
 
-	assert(DSP == -1);
+    assert(DSP == -1);
 }
 
 
@@ -85,9 +85,9 @@ void Shutdown_Stacks(void)
 //
 void Push_Stack_Values(const REBVAL *values, REBINT length)
 {
-	Insert_Series(
-		DS_Series, SERIES_TAIL(DS_Series), cast(const REBYTE*, values), length
-	);
+    Insert_Series(
+        DS_Series, SERIES_TAIL(DS_Series), cast(const REBYTE*, values), length
+    );
 }
 
 
@@ -103,24 +103,24 @@ void Push_Stack_Values(const REBVAL *values, REBINT length)
 //
 void Pop_Stack_Values(REBVAL *out, REBINT dsp_start, REBOOL into)
 {
-	REBSER *series;
-	REBCNT len = DSP - dsp_start;
-	REBVAL *values = BLK_SKIP(DS_Series, dsp_start + 1);
+    REBSER *series;
+    REBCNT len = DSP - dsp_start;
+    REBVAL *values = BLK_SKIP(DS_Series, dsp_start + 1);
 
-	if (into) {
-		assert(ANY_ARRAY(out));
-		series = VAL_SERIES(out);
-		if (IS_PROTECT_SERIES(series)) fail (Error(RE_PROTECTED));
-		VAL_INDEX(out) = Insert_Series(
-			series, VAL_INDEX(out), cast(REBYTE*, values), len
-		);
-	}
-	else {
-		series = Copy_Values_Len_Shallow(values, len);
-		Val_Init_Block(out, series);
-	}
+    if (into) {
+        assert(ANY_ARRAY(out));
+        series = VAL_SERIES(out);
+        if (IS_PROTECT_SERIES(series)) fail (Error(RE_PROTECTED));
+        VAL_INDEX(out) = Insert_Series(
+            series, VAL_INDEX(out), cast(REBYTE*, values), len
+        );
+    }
+    else {
+        series = Copy_Values_Len_Shallow(values, len);
+        Val_Init_Block(out, series);
+    }
 
-	DS_DROP_TO(dsp_start);
+    DS_DROP_TO(dsp_start);
 }
 
 
@@ -133,9 +133,9 @@ void Pop_Stack_Values(REBVAL *out, REBINT dsp_start, REBOOL into)
 //
 void Expand_Stack(REBCNT amount)
 {
-	if (SERIES_REST(DS_Series) >= STACK_LIMIT) Trap_Stack_Overflow();
-	Extend_Series(DS_Series, amount);
-	Debug_Fmt(cs_cast(BOOT_STR(RS_STACK, 0)), DSP, SERIES_REST(DS_Series));
+    if (SERIES_REST(DS_Series) >= STACK_LIMIT) Trap_Stack_Overflow();
+    Extend_Series(DS_Series, amount);
+    Debug_Fmt(cs_cast(BOOT_STR(RS_STACK, 0)), DSP, SERIES_REST(DS_Series));
 }
 
 
@@ -155,108 +155,108 @@ void Expand_Stack(REBCNT amount)
 //
 struct Reb_Call *Make_Call(REBVAL *out, REBSER *block, REBCNT index, const REBVAL *label, const REBVAL *func)
 {
-	REBCNT num_vars = VAL_FUNC_NUM_PARAMS(func);
+    REBCNT num_vars = VAL_FUNC_NUM_PARAMS(func);
 
-	REBCNT size = (
-		sizeof(struct Reb_Call)
-		+ sizeof(REBVAL) * (num_vars > 0 ? num_vars - 1 : 0)
-	);
+    REBCNT size = (
+        sizeof(struct Reb_Call)
+        + sizeof(REBVAL) * (num_vars > 0 ? num_vars - 1 : 0)
+    );
 
-	struct Reb_Call *call;
+    struct Reb_Call *call;
 
-	// Establish invariant where 'call' points to a location big enough to
-	// hold the new frame (with frame's size accounted for in chunk_size)
+    // Establish invariant where 'call' points to a location big enough to
+    // hold the new frame (with frame's size accounted for in chunk_size)
 
-	if (!CS_Top) {
-		// If not big enough, a new chunk wouldn't be big enough, either!
-		assert(size <= CS_CHUNK_PAYLOAD);
+    if (!CS_Top) {
+        // If not big enough, a new chunk wouldn't be big enough, either!
+        assert(size <= CS_CHUNK_PAYLOAD);
 
-		// Claim the root frame
-		call = CS_Root;
-		call->chunk_left = CS_CHUNK_PAYLOAD - size;
-	}
-	else if (CS_Top->chunk_left >= cast(REBINT, size)) { // Chunk has space
+        // Claim the root frame
+        call = CS_Root;
+        call->chunk_left = CS_CHUNK_PAYLOAD - size;
+    }
+    else if (CS_Top->chunk_left >= cast(REBINT, size)) { // Chunk has space
 
-		// Advance past the topmost frame (whose size depends on num_vars)
-		call = cast(struct Reb_Call*,
-			cast(REBYTE*, CS_Top) + DSF_SIZE(CS_Top)
-		);
+        // Advance past the topmost frame (whose size depends on num_vars)
+        call = cast(struct Reb_Call*,
+            cast(REBYTE*, CS_Top) + DSF_SIZE(CS_Top)
+        );
 
-		// top's chunk_left accounted for previous frame, account for ours
-		call->chunk_left = CS_Top->chunk_left - size;
-	}
-	else { // Not enough space
+        // top's chunk_left accounted for previous frame, account for ours
+        call->chunk_left = CS_Top->chunk_left - size;
+    }
+    else { // Not enough space
 
-		struct Reb_Chunk *chunk = DSF_CHUNK(CS_Top);
+        struct Reb_Chunk *chunk = DSF_CHUNK(CS_Top);
 
-		if (chunk->next) {
-			// Previously allocated chunk exists already to grow into
-			assert(!chunk->next->next);
-		}
-		else {
-			// No previously allocated chunk...we have to allocate it
-			chunk->next = ALLOC(struct Reb_Chunk);
-			chunk->next->next = NULL;
-		}
+        if (chunk->next) {
+            // Previously allocated chunk exists already to grow into
+            assert(!chunk->next->next);
+        }
+        else {
+            // No previously allocated chunk...we have to allocate it
+            chunk->next = ALLOC(struct Reb_Chunk);
+            chunk->next->next = NULL;
+        }
 
-		call = cast(struct Reb_Call*, &chunk->next->payload);
-		call->chunk_left = CS_CHUNK_PAYLOAD - size;
-	}
+        call = cast(struct Reb_Call*, &chunk->next->payload);
+        call->chunk_left = CS_CHUNK_PAYLOAD - size;
+    }
 
-	assert(call->chunk_left >= 0);
+    assert(call->chunk_left >= 0);
 
-	// Even though we can't push this stack frame to the CSP yet, it
-	// still needs to be considered for GC and freeing in case of a
-	// trap.  In a recursive DO we can get many pending frames before
-	// we come back to actually putting the topmost one in effect.
-	// !!! Better design for call frame stack coming.
+    // Even though we can't push this stack frame to the CSP yet, it
+    // still needs to be considered for GC and freeing in case of a
+    // trap.  In a recursive DO we can get many pending frames before
+    // we come back to actually putting the topmost one in effect.
+    // !!! Better design for call frame stack coming.
 
-	call->prior = CS_Top;
-	CS_Top = call;
+    call->prior = CS_Top;
+    CS_Top = call;
 
-	call->args_ready = FALSE;
+    call->args_ready = FALSE;
 
-	call->out = out;
+    call->out = out;
 
-	assert(ANY_FUNC(func));
-	call->func = *func;
+    assert(ANY_FUNC(func));
+    call->func = *func;
 
-	assert(block); // Don't accept NULL series
-	Val_Init_Block_Index(&call->where, block, index);
+    assert(block); // Don't accept NULL series
+    Val_Init_Block_Index(&call->where, block, index);
 
-	// Save symbol describing the function (if we called this as the result of
-	// a word or path lookup)
-	if (!label) {
-		// !!! When a function was not invoked through looking up a word to
-		// (or a word in a path) to use as a label, there were three different
-		// alternate labels used.  One was SYM__APPLY_, another was
-		// ROOT_NONAME, and another was to be the type of the function being
-		// executed.  None are fantastic, but we do the type for now.
-		Val_Init_Word_Unbound(
-			&call->label, REB_WORD, SYM_FROM_KIND(VAL_TYPE(func))
-		);
-	}
-	else
-		call->label = *label;
+    // Save symbol describing the function (if we called this as the result of
+    // a word or path lookup)
+    if (!label) {
+        // !!! When a function was not invoked through looking up a word to
+        // (or a word in a path) to use as a label, there were three different
+        // alternate labels used.  One was SYM__APPLY_, another was
+        // ROOT_NONAME, and another was to be the type of the function being
+        // executed.  None are fantastic, but we do the type for now.
+        Val_Init_Word_Unbound(
+            &call->label, REB_WORD, SYM_FROM_KIND(VAL_TYPE(func))
+        );
+    }
+    else
+        call->label = *label;
 
-	assert(IS_WORD(DSF_LABEL(call)));
+    assert(IS_WORD(DSF_LABEL(call)));
 
-	call->num_vars = num_vars;
+    call->num_vars = num_vars;
 
-	// Make_Call does not fill the args in the frame--that is up to Do_Core
-	// and Apply_Block to do as they go along.  But the frame has to survive
-	// Recycle() during arg fulfillment...slots can't be left uninitialized.
-	// It is important to set to UNSET for bookkeeping so that refinement
-	// scanning knows when it has filled a refinement or not.
-	{
-		REBCNT index;
-		for (index = 0; index < num_vars; index++)
-			SET_UNSET(&call->vars[index]);
-	}
+    // Make_Call does not fill the args in the frame--that is up to Do_Core
+    // and Apply_Block to do as they go along.  But the frame has to survive
+    // Recycle() during arg fulfillment...slots can't be left uninitialized.
+    // It is important to set to UNSET for bookkeeping so that refinement
+    // scanning knows when it has filled a refinement or not.
+    {
+        REBCNT index;
+        for (index = 0; index < num_vars; index++)
+            SET_UNSET(&call->vars[index]);
+    }
 
-	assert(size == DSF_SIZE(call));
+    assert(size == DSF_SIZE(call));
 
-	return call;
+    return call;
 }
 
 
@@ -269,33 +269,33 @@ struct Reb_Call *Make_Call(REBVAL *out, REBSER *block, REBCNT index, const REBVA
 //
 void Free_Call(struct Reb_Call* call)
 {
-	assert(call == CS_Top);
+    assert(call == CS_Top);
 
-	// Drop to the prior top call stack frame
-	CS_Top = call->prior;
+    // Drop to the prior top call stack frame
+    CS_Top = call->prior;
 
-	if (cast(REBCNT, call->chunk_left) == CS_CHUNK_PAYLOAD - DSF_SIZE(call)) {
-		// This call frame sits at the head of a chunk.
+    if (cast(REBCNT, call->chunk_left) == CS_CHUNK_PAYLOAD - DSF_SIZE(call)) {
+        // This call frame sits at the head of a chunk.
 
-		struct Reb_Chunk *chunk = cast(struct Reb_Chunk *,
-			cast(REBYTE*, call) - sizeof(struct Reb_Chunk*)
-		);
-		assert(DSF_CHUNK(call) == chunk);
+        struct Reb_Chunk *chunk = cast(struct Reb_Chunk *,
+            cast(REBYTE*, call) - sizeof(struct Reb_Chunk*)
+        );
+        assert(DSF_CHUNK(call) == chunk);
 
-		// When we've completely emptied a chunk, we check to see if the
-		// chunk after it is still live.  If so, we free it.  But we
-		// want to keep *this* just-emptied chunk alive for overflows if we
-		// rapidly get another push, to avoid Make_Mem()/Free_Mem() costs.
+        // When we've completely emptied a chunk, we check to see if the
+        // chunk after it is still live.  If so, we free it.  But we
+        // want to keep *this* just-emptied chunk alive for overflows if we
+        // rapidly get another push, to avoid Make_Mem()/Free_Mem() costs.
 
-		if (chunk->next) {
-			FREE(struct Reb_Chunk, chunk->next);
-			chunk->next = NULL;
-		}
-	}
+        if (chunk->next) {
+            FREE(struct Reb_Chunk, chunk->next);
+            chunk->next = NULL;
+        }
+    }
 
-	// In debug builds we poison the memory for the frame
+    // In debug builds we poison the memory for the frame
 #if !defined(NDEBUG)
-	memset(call, 0xBD, DSF_SIZE(call));
+    memset(call, 0xBD, DSF_SIZE(call));
 #endif
 }
 
@@ -311,8 +311,8 @@ void Free_Call(struct Reb_Call* call)
 //
 REBVAL *DSF_VAR_Debug(struct Reb_Call *call, REBCNT n)
 {
-	assert(n <= call->num_vars);
-	return &call->vars[n - 1];
+    assert(n <= call->num_vars);
+    return &call->vars[n - 1];
 }
 
 #endif

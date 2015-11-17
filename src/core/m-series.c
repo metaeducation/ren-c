@@ -38,9 +38,9 @@
 //
 void Extend_Series(REBSER *series, REBCNT delta)
 {
-	REBCNT tail = series->tail;	// maintain tail position
-	EXPAND_SERIES_TAIL(series, delta);
-	series->tail = tail;
+    REBCNT tail = series->tail; // maintain tail position
+    EXPAND_SERIES_TAIL(series, delta);
+    series->tail = tail;
 }
 
 
@@ -53,12 +53,12 @@ void Extend_Series(REBSER *series, REBCNT delta)
 //
 REBCNT Insert_Series(REBSER *series, REBCNT index, const REBYTE *data, REBCNT len)
 {
-	if (index > series->tail) index = series->tail;
-	Expand_Series(series, index, len); // tail += len
-	//Print("i: %d t: %d l: %d x: %d s: %d", index, series->tail, len, (series->tail + 1) * SERIES_WIDE(series), series->size);
-	memcpy(series->data + (SERIES_WIDE(series) * index), data, SERIES_WIDE(series) * len);
-	//*(int *)(series->data + (series->tail-1) * SERIES_WIDE(series)) = 5; // for debug purposes
-	return index + len;
+    if (index > series->tail) index = series->tail;
+    Expand_Series(series, index, len); // tail += len
+    //Print("i: %d t: %d l: %d x: %d s: %d", index, series->tail, len, (series->tail + 1) * SERIES_WIDE(series), series->size);
+    memcpy(series->data + (SERIES_WIDE(series) * index), data, SERIES_WIDE(series) * len);
+    //*(int *)(series->data + (series->tail-1) * SERIES_WIDE(series)) = 5; // for debug purposes
+    return index + len;
 }
 
 
@@ -73,13 +73,13 @@ REBCNT Insert_Series(REBSER *series, REBCNT index, const REBYTE *data, REBCNT le
 //
 void Append_Series(REBSER *series, const REBYTE *data, REBCNT len)
 {
-	REBCNT tail = series->tail;
-	REBYTE wide = SERIES_WIDE(series);
+    REBCNT tail = series->tail;
+    REBYTE wide = SERIES_WIDE(series);
 
-	assert(!Is_Array_Series(series));
-	EXPAND_SERIES_TAIL(series, len);
-	memcpy(series->data + (wide * tail), data, wide * len);
-	CLEAR(series->data + (wide * series->tail), wide); // terminator
+    assert(!Is_Array_Series(series));
+    EXPAND_SERIES_TAIL(series, len);
+    memcpy(series->data + (wide * tail), data, wide * len);
+    CLEAR(series->data + (wide * series->tail), wide); // terminator
 }
 
 
@@ -92,15 +92,15 @@ void Append_Series(REBSER *series, const REBYTE *data, REBCNT len)
 //
 void Append_Values_Len(REBSER *array, const REBVAL value[], REBCNT len)
 {
-	REBYTE *dest = array->data + (sizeof(REBVAL) * array->tail);
+    REBYTE *dest = array->data + (sizeof(REBVAL) * array->tail);
 
-	assert(Is_Array_Series(array));
+    assert(Is_Array_Series(array));
 
-	EXPAND_SERIES_TAIL(array, len); // updates tail (hence we calculated dest)
+    EXPAND_SERIES_TAIL(array, len); // updates tail (hence we calculated dest)
 
-	memcpy(dest, &value[0], sizeof(REBVAL) * len);
+    memcpy(dest, &value[0], sizeof(REBVAL) * len);
 
-	TERM_ARRAY(array);
+    TERM_ARRAY(array);
 }
 
 
@@ -115,18 +115,18 @@ void Append_Values_Len(REBSER *array, const REBVAL value[], REBCNT len)
 //
 void Append_Mem_Extra(REBSER *series, const REBYTE *data, REBCNT len, REBCNT extra)
 {
-	REBCNT tail = series->tail;
+    REBCNT tail = series->tail;
 
-	if ((tail + len + extra + 1) >= SERIES_REST(series)) {
-		Expand_Series(series, tail, len+extra); // series->tail changed
-		series->tail -= extra;
-	}
-	else {
-		series->tail += len;
-	}
+    if ((tail + len + extra + 1) >= SERIES_REST(series)) {
+        Expand_Series(series, tail, len+extra); // series->tail changed
+        series->tail -= extra;
+    }
+    else {
+        series->tail += len;
+    }
 
-	memcpy(series->data + tail, data, len);
-	STR_TERM(series);
+    memcpy(series->data + tail, data, len);
+    STR_TERM(series);
 }
 
 
@@ -149,14 +149,14 @@ void Append_Mem_Extra(REBSER *series, const REBYTE *data, REBCNT len, REBCNT ext
 //
 REBSER *Copy_Sequence(REBSER *source)
 {
-	REBCNT len = source->tail + 1;
-	REBSER *series = Make_Series(len, SERIES_WIDE(source), MKS_NONE);
+    REBCNT len = source->tail + 1;
+    REBSER *series = Make_Series(len, SERIES_WIDE(source), MKS_NONE);
 
-	assert(!Is_Array_Series(source));
+    assert(!Is_Array_Series(source));
 
-	memcpy(series->data, source->data, len * SERIES_WIDE(source));
-	series->tail = source->tail;
-	return series;
+    memcpy(series->data, source->data, len * SERIES_WIDE(source));
+    series->tail = source->tail;
+    return series;
 }
 
 
@@ -171,17 +171,17 @@ REBSER *Copy_Sequence(REBSER *source)
 //
 REBSER *Copy_Sequence_At_Len(REBSER *source, REBCNT index, REBCNT len)
 {
-	REBSER *series = Make_Series(len + 1, SERIES_WIDE(source), MKS_NONE);
+    REBSER *series = Make_Series(len + 1, SERIES_WIDE(source), MKS_NONE);
 
-	assert(!Is_Array_Series(source));
+    assert(!Is_Array_Series(source));
 
-	memcpy(
-		series->data,
-		source->data + index * SERIES_WIDE(source),
-		(len + 1) * SERIES_WIDE(source)
-	);
-	series->tail = len;
-	return series;
+    memcpy(
+        series->data,
+        source->data + index * SERIES_WIDE(source),
+        (len + 1) * SERIES_WIDE(source)
+    );
+    series->tail = len;
+    return series;
 }
 
 
@@ -193,9 +193,9 @@ REBSER *Copy_Sequence_At_Len(REBSER *source, REBCNT index, REBCNT len)
 //
 REBSER *Copy_Sequence_At_Position(const REBVAL *position)
 {
-	return Copy_Sequence_At_Len(
-		VAL_SERIES(position), VAL_INDEX(position), VAL_LEN(position)
-	);
+    return Copy_Sequence_At_Len(
+        VAL_SERIES(position), VAL_INDEX(position), VAL_LEN(position)
+    );
 }
 
 
@@ -207,72 +207,72 @@ REBSER *Copy_Sequence_At_Position(const REBVAL *position)
 //
 void Remove_Series(REBSER *series, REBCNT index, REBINT len)
 {
-	REBCNT	start;
-	REBCNT	length;
-	REBYTE	*data;
+    REBCNT  start;
+    REBCNT  length;
+    REBYTE  *data;
 
-	if (len <= 0) return;
+    if (len <= 0) return;
 
-	// Optimized case of head removal:
-	if (index == 0) {
-		if ((REBCNT)len > series->tail) len = series->tail;
-		SERIES_TAIL(series) -= len;
-		if (SERIES_TAIL(series) == 0) {
-			// Reset bias to zero:
-			len = SERIES_BIAS(series);
-			SERIES_SET_BIAS(series, 0);
-			SERIES_REST(series) += len;
-			series->data -= SERIES_WIDE(series) * len;
-			TERM_SERIES(series);
-		}
-		else {
-			// Add bias to head:
-			REBCNT bias = SERIES_BIAS(series);
-			if (REB_U32_ADD_OF(bias, len, &bias))
-				fail (Error(RE_OVERFLOW));
+    // Optimized case of head removal:
+    if (index == 0) {
+        if ((REBCNT)len > series->tail) len = series->tail;
+        SERIES_TAIL(series) -= len;
+        if (SERIES_TAIL(series) == 0) {
+            // Reset bias to zero:
+            len = SERIES_BIAS(series);
+            SERIES_SET_BIAS(series, 0);
+            SERIES_REST(series) += len;
+            series->data -= SERIES_WIDE(series) * len;
+            TERM_SERIES(series);
+        }
+        else {
+            // Add bias to head:
+            REBCNT bias = SERIES_BIAS(series);
+            if (REB_U32_ADD_OF(bias, len, &bias))
+                fail (Error(RE_OVERFLOW));
 
-			if (bias > 0xffff) { //bias is 16-bit, so a simple SERIES_ADD_BIAS could overflow it
-				REBYTE *data = series->data;
+            if (bias > 0xffff) { //bias is 16-bit, so a simple SERIES_ADD_BIAS could overflow it
+                REBYTE *data = series->data;
 
-				data += SERIES_WIDE(series) * len;
-				series->data -= SERIES_WIDE(series) * SERIES_BIAS(series);
-				SERIES_REST(series) += SERIES_BIAS(series);
-				SERIES_SET_BIAS(series, 0);
+                data += SERIES_WIDE(series) * len;
+                series->data -= SERIES_WIDE(series) * SERIES_BIAS(series);
+                SERIES_REST(series) += SERIES_BIAS(series);
+                SERIES_SET_BIAS(series, 0);
 
-				memmove(series->data, data, SERIES_USED(series));
-			}
-			else {
-				SERIES_SET_BIAS(series, bias);
-				SERIES_REST(series) -= len;
-				series->data += SERIES_WIDE(series) * len;
-				if ((start = SERIES_BIAS(series))) {
-					// If more than half biased:
-					if (start >= MAX_SERIES_BIAS || start > SERIES_REST(series))
-						Unbias_Series(series, TRUE);
-				}
-			}
-		}
-		return;
-	}
+                memmove(series->data, data, SERIES_USED(series));
+            }
+            else {
+                SERIES_SET_BIAS(series, bias);
+                SERIES_REST(series) -= len;
+                series->data += SERIES_WIDE(series) * len;
+                if ((start = SERIES_BIAS(series))) {
+                    // If more than half biased:
+                    if (start >= MAX_SERIES_BIAS || start > SERIES_REST(series))
+                        Unbias_Series(series, TRUE);
+                }
+            }
+        }
+        return;
+    }
 
-	if (index >= series->tail) return;
+    if (index >= series->tail) return;
 
-	start = index * SERIES_WIDE(series);
+    start = index * SERIES_WIDE(series);
 
-	// Clip if past end and optimize the remove operation:
-	if (len + index >= series->tail) {
-		series->tail = index;
-		TERM_SERIES(series);
-		return;
-	}
+    // Clip if past end and optimize the remove operation:
+    if (len + index >= series->tail) {
+        series->tail = index;
+        TERM_SERIES(series);
+        return;
+    }
 
-	length = (SERIES_LEN(series) + 1) * SERIES_WIDE(series); // include term.
-	series->tail -= (REBCNT)len;
-	len *= SERIES_WIDE(series);
-	data = series->data + start;
-	memmove(data, data + len, length - (start + len));
+    length = (SERIES_LEN(series) + 1) * SERIES_WIDE(series); // include term.
+    series->tail -= (REBCNT)len;
+    len *= SERIES_WIDE(series);
+    data = series->data + start;
+    memmove(data, data + len, length - (start + len));
 
-	CHECK_MEMORY(5);
+    CHECK_MEMORY(5);
 }
 
 
@@ -283,10 +283,10 @@ void Remove_Series(REBSER *series, REBCNT index, REBINT len)
 //
 void Remove_Sequence_Last(REBSER *series)
 {
-	assert(!Is_Array_Series(series));
-	assert(series->tail != 0);
-	series->tail--;
-	TERM_SEQUENCE(series);
+    assert(!Is_Array_Series(series));
+    assert(series->tail != 0);
+    series->tail--;
+    TERM_SEQUENCE(series);
 }
 
 
@@ -297,10 +297,10 @@ void Remove_Sequence_Last(REBSER *series)
 //
 void Remove_Array_Last(REBSER *series)
 {
-	assert(Is_Array_Series(series));
-	assert(series->tail != 0);
-	series->tail--;
-	TERM_ARRAY(series);
+    assert(Is_Array_Series(series));
+    assert(series->tail != 0);
+    series->tail--;
+    TERM_ARRAY(series);
 }
 
 
@@ -311,18 +311,18 @@ void Remove_Array_Last(REBSER *series)
 //
 void Unbias_Series(REBSER *series, REBOOL keep)
 {
-	REBCNT len;
-	REBYTE *data = series->data;
+    REBCNT len;
+    REBYTE *data = series->data;
 
-	len = SERIES_BIAS(series);
-	if (len == 0) return;
+    len = SERIES_BIAS(series);
+    if (len == 0) return;
 
-	SERIES_SET_BIAS(series, 0);
-	SERIES_REST(series) += len;
-	series->data -= SERIES_WIDE(series) * len;
+    SERIES_SET_BIAS(series, 0);
+    SERIES_REST(series) += len;
+    series->data -= SERIES_WIDE(series) * len;
 
-	if (keep)
-		memmove(series->data, data, SERIES_USED(series));
+    if (keep)
+        memmove(series->data, data, SERIES_USED(series));
 }
 
 
@@ -334,10 +334,10 @@ void Unbias_Series(REBSER *series, REBOOL keep)
 //
 void Reset_Series(REBSER *series)
 {
-	assert(!Is_Array_Series(series));
-	Unbias_Series(series, FALSE);
-	series->tail = 0;
-	TERM_SERIES(series);
+    assert(!Is_Array_Series(series));
+    Unbias_Series(series, FALSE);
+    series->tail = 0;
+    TERM_SERIES(series);
 }
 
 
@@ -349,10 +349,10 @@ void Reset_Series(REBSER *series)
 //
 void Reset_Array(REBSER *array)
 {
-	assert(Is_Array_Series(array));
-	Unbias_Series(array, FALSE);
-	array->tail = 0;
-	TERM_ARRAY(array);
+    assert(Is_Array_Series(array));
+    Unbias_Series(array, FALSE);
+    array->tail = 0;
+    TERM_ARRAY(array);
 }
 
 
@@ -364,10 +364,10 @@ void Reset_Array(REBSER *array)
 //
 void Clear_Series(REBSER *series)
 {
-	Unbias_Series(series, FALSE);
-	series->tail = 0;
-	CLEAR(series->data, SERIES_SPACE(series));
-	TERM_SERIES(series);
+    Unbias_Series(series, FALSE);
+    series->tail = 0;
+    CLEAR(series->data, SERIES_SPACE(series));
+    TERM_SERIES(series);
 }
 
 
@@ -379,11 +379,11 @@ void Clear_Series(REBSER *series)
 //
 void Resize_Series(REBSER *series, REBCNT size)
 {
-	series->tail = 0;
-	Unbias_Series(series, TRUE);
-	EXPAND_SERIES_TAIL(series, size);
-	series->tail = 0;
-	TERM_SERIES(series);
+    series->tail = 0;
+    Unbias_Series(series, TRUE);
+    EXPAND_SERIES_TAIL(series, size);
+    series->tail = 0;
+    TERM_SERIES(series);
 }
 
 
@@ -396,13 +396,13 @@ void Resize_Series(REBSER *series, REBCNT size)
 //
 REBYTE *Reset_Buffer(REBSER *buf, REBCNT len)
 {
-	if (!buf) panic (Error(RE_NO_BUFFER));
+    if (!buf) panic (Error(RE_NO_BUFFER));
 
-	RESET_TAIL(buf);
-	Unbias_Series(buf, TRUE);
-	Expand_Series(buf, 0, len); // sets new tail
+    RESET_TAIL(buf);
+    Unbias_Series(buf, TRUE);
+    Expand_Series(buf, 0, len); // sets new tail
 
-	return BIN_DATA(buf);
+    return BIN_DATA(buf);
 }
 
 
@@ -413,21 +413,21 @@ REBYTE *Reset_Buffer(REBSER *buf, REBCNT len)
 //
 REBSER *Copy_Buffer(REBSER *buf, void *end)
 {
-	REBSER *ser;
-	REBCNT len;
+    REBSER *ser;
+    REBCNT len;
 
-	assert(!Is_Array_Series(buf));
+    assert(!Is_Array_Series(buf));
 
-	len = BYTE_SIZE(buf) ? ((REBYTE *)end) - BIN_HEAD(buf)
-		: ((REBUNI *)end) - UNI_HEAD(buf);
+    len = BYTE_SIZE(buf) ? ((REBYTE *)end) - BIN_HEAD(buf)
+        : ((REBUNI *)end) - UNI_HEAD(buf);
 
-	ser = Make_Series(len + 1, SERIES_WIDE(buf), MKS_NONE);
+    ser = Make_Series(len + 1, SERIES_WIDE(buf), MKS_NONE);
 
-	memcpy(ser->data, buf->data, SERIES_WIDE(buf) * len);
-	ser->tail = len;
-	TERM_SEQUENCE(ser);
+    memcpy(ser->data, buf->data, SERIES_WIDE(buf) * len);
+    ser->tail = len;
+    TERM_SEQUENCE(ser);
 
-	return ser;
+    return ser;
 }
 
 
@@ -438,23 +438,23 @@ REBSER *Copy_Buffer(REBSER *buf, void *end)
 //
 void Assert_Series_Term_Core(REBSER *series)
 {
-	if (Is_Array_Series(series)) {
-		// REB_END values may not be canonized to zero bytes, check type only
-		if (!IS_END(BLK_SKIP(series, series->tail))) {
-			Debug_Fmt("Unterminated blocklike series detected");
-			Panic_Series(series);
-		}
-	}
-	else {
-		// Non-REBVAL-bearing series must have their terminal as all 0 bytes
-		int n;
-		for (n = 0; n < SERIES_WIDE(series); n++) {
-			if (0 != series->data[series->tail * SERIES_WIDE(series) + n]) {
-				Debug_Fmt("Non-zero byte in terminator of non-block series");
-				Panic_Series(series);
-			}
-		}
-	}
+    if (Is_Array_Series(series)) {
+        // REB_END values may not be canonized to zero bytes, check type only
+        if (!IS_END(BLK_SKIP(series, series->tail))) {
+            Debug_Fmt("Unterminated blocklike series detected");
+            Panic_Series(series);
+        }
+    }
+    else {
+        // Non-REBVAL-bearing series must have their terminal as all 0 bytes
+        int n;
+        for (n = 0; n < SERIES_WIDE(series); n++) {
+            if (0 != series->data[series->tail * SERIES_WIDE(series) + n]) {
+                Debug_Fmt("Non-zero byte in terminator of non-block series");
+                Panic_Series(series);
+            }
+        }
+    }
 }
 
 
@@ -466,10 +466,10 @@ void Assert_Series_Term_Core(REBSER *series)
 //
 void Panic_Series_Debug(const REBSER *series, const char *file, int line)
 {
-	Debug_Fmt("Panic_Series() in %s at line %d", file, line);
-	if (*series->guard == 1020) // should make valgrind or asan alert
-		panic (Error(RE_MISC));
-	panic (Error(RE_MISC)); // just in case it didn't crash
+    Debug_Fmt("Panic_Series() in %s at line %d", file, line);
+    if (*series->guard == 1020) // should make valgrind or asan alert
+        panic (Error(RE_MISC));
+    panic (Error(RE_MISC)); // just in case it didn't crash
 }
 
 #endif

@@ -31,13 +31,13 @@
 
 #define CRC_DEFINED
 
-#define CRCBITS 24			/* may be 16, 24, or 32 */
-#define MASK_CRC(crc) ((crc) & I32_C(0x00ffffff))	  /* if CRCBITS is 24 */
+#define CRCBITS 24          /* may be 16, 24, or 32 */
+#define MASK_CRC(crc) ((crc) & I32_C(0x00ffffff))     /* if CRCBITS is 24 */
 #define CRCHIBIT ((REBCNT) (I32_C(1)<<(CRCBITS-1))) /* 0x8000 if CRCBITS is 16 */
 #define CRCSHIFTS (CRCBITS-8)
-#define CCITTCRC 0x1021 	/* CCITT's 16-bit CRC generator polynomial */
-#define PRZCRC   0x864cfb	/* PRZ's 24-bit CRC generator polynomial */
-#define CRCINIT  0xB704CE	/* Init value for CRC accumulator */
+#define CCITTCRC 0x1021     /* CCITT's 16-bit CRC generator polynomial */
+#define PRZCRC   0x864cfb   /* PRZ's 24-bit CRC generator polynomial */
+#define CRCINIT  0xB704CE   /* Init value for CRC accumulator */
 
 static REBCNT *CRC_Table;
 
@@ -77,18 +77,18 @@ static REBCNT *CRC_Table;
 //
 static REBCNT Generate_CRC(REBYTE ch, REBCNT poly, REBCNT accum)
 {
-	REBINT i;
-	REBCNT data;
+    REBINT i;
+    REBCNT data;
 
-	data = ch;
-	data <<= CRCSHIFTS; 	/* shift data to line up with MSB of accum */
-	i = 8;					/* counts 8 bits of data */
-	do {	/* if MSB of (data XOR accum) is TRUE, shift and subtract poly */
-		if ((data ^ accum) & CRCHIBIT) accum = (accum<<1) ^ poly;
-		else accum <<= 1;
-		data <<= 1;
-	} while (--i);	/* counts 8 bits of data */
-	return (MASK_CRC(accum));
+    data = ch;
+    data <<= CRCSHIFTS;     /* shift data to line up with MSB of accum */
+    i = 8;                  /* counts 8 bits of data */
+    do {    /* if MSB of (data XOR accum) is TRUE, shift and subtract poly */
+        if ((data ^ accum) & CRCHIBIT) accum = (accum<<1) ^ poly;
+        else accum <<= 1;
+        data <<= 1;
+    } while (--i);  /* counts 8 bits of data */
+    return (MASK_CRC(accum));
 }
 
 
@@ -101,10 +101,10 @@ static REBCNT Generate_CRC(REBYTE ch, REBCNT poly, REBCNT accum)
 //
 static void Make_CRC_Table(REBCNT poly)
 {
-	REBINT i;
+    REBINT i;
 
-	for (i = 0; i < 256; i++)
-		CRC_Table[i] = Generate_CRC(cast(REBYTE, i), poly, 0);
+    for (i = 0; i < 256; i++)
+        CRC_Table[i] = Generate_CRC(cast(REBYTE, i), poly, 0);
 }
 
 
@@ -119,17 +119,17 @@ static void Make_CRC_Table(REBCNT poly)
 //
 REBINT Compute_CRC(REBYTE *str, REBCNT len)
 {
-	REBINT crc = cast(REBINT, len) + cast(REBINT, cast(REBYTE, *str));
+    REBINT crc = cast(REBINT, len) + cast(REBINT, cast(REBYTE, *str));
 
-	for (; len > 0; len--) {
-		REBYTE n = cast(REBYTE, (crc >> CRCSHIFTS) ^ cast(REBYTE, *str++));
+    for (; len > 0; len--) {
+        REBYTE n = cast(REBYTE, (crc >> CRCSHIFTS) ^ cast(REBYTE, *str++));
 
-		// Left shift math must use unsigned to avoid undefined behavior
-		// http://stackoverflow.com/q/3784996/211160
-		crc = cast(REBINT, MASK_CRC(cast(REBCNT, crc) << 8) ^ CRC_Table[n]);
-	}
+        // Left shift math must use unsigned to avoid undefined behavior
+        // http://stackoverflow.com/q/3784996/211160
+        crc = cast(REBINT, MASK_CRC(cast(REBCNT, crc) << 8) ^ CRC_Table[n]);
+    }
 
-	return crc;
+    return crc;
 }
 
 
@@ -141,19 +141,19 @@ REBINT Compute_CRC(REBYTE *str, REBCNT len)
 //
 REBINT Hash_String(const REBYTE *str, REBCNT len)
 {
-	REBINT hash =
-		cast(REBINT, len) + cast(REBINT, cast(REBYTE, LO_CASE(*str)));
+    REBINT hash =
+        cast(REBINT, len) + cast(REBINT, cast(REBYTE, LO_CASE(*str)));
 
-	for (; len > 0; len--) {
-		REBYTE n =
-			cast(REBYTE, (hash >> CRCSHIFTS) ^ cast(REBYTE, LO_CASE(*str++)));
+    for (; len > 0; len--) {
+        REBYTE n =
+            cast(REBYTE, (hash >> CRCSHIFTS) ^ cast(REBYTE, LO_CASE(*str++)));
 
-		// Left shift math must use unsigned to avoid undefined behavior
-		// http://stackoverflow.com/q/3784996/211160
-		hash = cast(REBINT, MASK_CRC(cast(REBCNT, hash) << 8) ^ CRC_Table[n]);
-	}
+        // Left shift math must use unsigned to avoid undefined behavior
+        // http://stackoverflow.com/q/3784996/211160
+        hash = cast(REBINT, MASK_CRC(cast(REBCNT, hash) << 8) ^ CRC_Table[n]);
+    }
 
-	return hash;
+    return hash;
 }
 
 
@@ -164,32 +164,32 @@ REBINT Hash_String(const REBYTE *str, REBCNT len)
 //
 REBINT Hash_Word(const REBYTE *str, REBCNT len)
 {
-	REBINT hash =
-		cast(REBINT, len) + cast(REBINT, cast(REBYTE, LO_CASE(*str)));
+    REBINT hash =
+        cast(REBINT, len) + cast(REBINT, cast(REBYTE, LO_CASE(*str)));
 
-	for (; len > 0; str++, len--) {
-		REBUNI n = *str;
+    for (; len > 0; str++, len--) {
+        REBUNI n = *str;
 
-		if (n >= 0x80) {
-			str = Back_Scan_UTF8_Char(&n, str, &len);
-			assert(str); // UTF8 should have already been verified good
-		}
+        if (n >= 0x80) {
+            str = Back_Scan_UTF8_Char(&n, str, &len);
+            assert(str); // UTF8 should have already been verified good
+        }
 
-		// Optimize `n = cast(REBYTE, LO_CASE(n))` (drop upper 8 bits)
-		// !!! Is this actually faster?
-		if (n < UNICODE_CASES)
-			n = cast(REBYTE, LO_CASE(n));
-		else
-			n = cast(REBYTE, n);
+        // Optimize `n = cast(REBYTE, LO_CASE(n))` (drop upper 8 bits)
+        // !!! Is this actually faster?
+        if (n < UNICODE_CASES)
+            n = cast(REBYTE, LO_CASE(n));
+        else
+            n = cast(REBYTE, n);
 
-		n = cast(REBYTE, (hash >> CRCSHIFTS) ^ n);
+        n = cast(REBYTE, (hash >> CRCSHIFTS) ^ n);
 
-		// Left shift math must use unsigned to avoid undefined behavior
-		// http://stackoverflow.com/q/3784996/211160
-		hash = cast(REBINT, MASK_CRC(cast(REBCNT, hash) << 8) ^ CRC_Table[n]);
-	}
+        // Left shift math must use unsigned to avoid undefined behavior
+        // http://stackoverflow.com/q/3784996/211160
+        hash = cast(REBINT, MASK_CRC(cast(REBCNT, hash) << 8) ^ CRC_Table[n]);
+    }
 
-	return hash;
+    return hash;
 }
 
 
@@ -203,82 +203,82 @@ REBINT Hash_Word(const REBYTE *str, REBCNT len)
 //
 REBINT Hash_Value(const REBVAL *val, REBCNT hash_size)
 {
-	REBCNT ret;
-	const REBYTE *name;
+    REBCNT ret;
+    const REBYTE *name;
 
-	switch(VAL_TYPE(val)) {
+    switch(VAL_TYPE(val)) {
 
-	case REB_WORD:
-	case REB_SET_WORD:
-	case REB_GET_WORD:
-	case REB_LIT_WORD:
-	case REB_REFINEMENT:
-	case REB_ISSUE:
-		ret = VAL_WORD_CANON(val);
-		break;
+    case REB_WORD:
+    case REB_SET_WORD:
+    case REB_GET_WORD:
+    case REB_LIT_WORD:
+    case REB_REFINEMENT:
+    case REB_ISSUE:
+        ret = VAL_WORD_CANON(val);
+        break;
 
-	case REB_BINARY:
-	case REB_STRING:
-	case REB_FILE:
-	case REB_EMAIL:
-	case REB_URL:
-	case REB_TAG:
-		ret = Hash_String(VAL_BIN_DATA(val), Val_Byte_Len(val));
-		break;
+    case REB_BINARY:
+    case REB_STRING:
+    case REB_FILE:
+    case REB_EMAIL:
+    case REB_URL:
+    case REB_TAG:
+        ret = Hash_String(VAL_BIN_DATA(val), Val_Byte_Len(val));
+        break;
 
-	case REB_LOGIC:
-		ret = VAL_LOGIC(val) ? (hash_size/5) : (2*hash_size/5);
-		break;
+    case REB_LOGIC:
+        ret = VAL_LOGIC(val) ? (hash_size/5) : (2*hash_size/5);
+        break;
 
-	case REB_INTEGER:
-	case REB_DECIMAL: // depends on INT64 sharing the DEC64 bits
-		ret = (REBCNT)(VAL_INT64(val) >> 32) ^ ((REBCNT)VAL_INT64(val));
-		break;
+    case REB_INTEGER:
+    case REB_DECIMAL: // depends on INT64 sharing the DEC64 bits
+        ret = (REBCNT)(VAL_INT64(val) >> 32) ^ ((REBCNT)VAL_INT64(val));
+        break;
 
-	case REB_CHAR:
-		ret = VAL_CHAR(val) << 15; // avoid running into WORD hashes
-		break;
+    case REB_CHAR:
+        ret = VAL_CHAR(val) << 15; // avoid running into WORD hashes
+        break;
 
-	case REB_MONEY:
-		ret = VAL_ALL_BITS(val)[0] ^ VAL_ALL_BITS(val)[1] ^ VAL_ALL_BITS(val)[2];
-		break;
+    case REB_MONEY:
+        ret = VAL_ALL_BITS(val)[0] ^ VAL_ALL_BITS(val)[1] ^ VAL_ALL_BITS(val)[2];
+        break;
 
-	case REB_TIME:
-	case REB_DATE:
-		ret = (REBCNT)(VAL_TIME(val) ^ (VAL_TIME(val) / SEC_SEC));
-		if (IS_DATE(val)) ret ^= VAL_DATE(val).bits;
-		break;
+    case REB_TIME:
+    case REB_DATE:
+        ret = (REBCNT)(VAL_TIME(val) ^ (VAL_TIME(val) / SEC_SEC));
+        if (IS_DATE(val)) ret ^= VAL_DATE(val).bits;
+        break;
 
-	case REB_TUPLE:
-		ret = Hash_String(VAL_TUPLE(val), VAL_TUPLE_LEN(val));
-		break;
+    case REB_TUPLE:
+        ret = Hash_String(VAL_TUPLE(val), VAL_TUPLE_LEN(val));
+        break;
 
-	case REB_PAIR:
-		ret = VAL_ALL_BITS(val)[0] ^ VAL_ALL_BITS(val)[1];
-		break;
+    case REB_PAIR:
+        ret = VAL_ALL_BITS(val)[0] ^ VAL_ALL_BITS(val)[1];
+        break;
 
-	case REB_OBJECT:
-		ret = (REBCNT)((REBUPT)VAL_OBJ_FRAME(val) >> 4);
-		break;
+    case REB_OBJECT:
+        ret = (REBCNT)((REBUPT)VAL_OBJ_FRAME(val) >> 4);
+        break;
 
-	case REB_DATATYPE:
-		name = Get_Sym_Name(VAL_TYPE_SYM(val));
-		ret = Hash_Word(name, LEN_BYTES(name));
-		break;
+    case REB_DATATYPE:
+        name = Get_Sym_Name(VAL_TYPE_SYM(val));
+        ret = Hash_Word(name, LEN_BYTES(name));
+        break;
 
-	case REB_NONE:
-		ret = 1;
-		break;
+    case REB_NONE:
+        ret = 1;
+        break;
 
-	case REB_UNSET:
-		ret = 0;
-		break;
+    case REB_UNSET:
+        ret = 0;
+        break;
 
-	default:
-		return 0;  //ret = 3 * (hash_size/5);
-	}
+    default:
+        return 0;  //ret = 3 * (hash_size/5);
+    }
 
-	return 1 + ((hash_size-1) & ret);
+    return 1 + ((hash_size-1) & ret);
 }
 
 
@@ -287,22 +287,22 @@ REBINT Hash_Value(const REBVAL *val, REBCNT hash_size)
 //
 REBSER *Make_Hash_Sequence(REBCNT len)
 {
-	REBCNT n;
-	REBSER *ser;
+    REBCNT n;
+    REBSER *ser;
 
-	n = Get_Hash_Prime(len * 2); // best when 2X # of keys
-	if (!n) {
-		REBVAL temp;
-		SET_INTEGER(&temp, len);
-		fail (Error(RE_SIZE_LIMIT, &temp));
-	}
+    n = Get_Hash_Prime(len * 2); // best when 2X # of keys
+    if (!n) {
+        REBVAL temp;
+        SET_INTEGER(&temp, len);
+        fail (Error(RE_SIZE_LIMIT, &temp));
+    }
 
-	ser = Make_Series(n + 1, sizeof(REBCNT), MKS_NONE);
-	LABEL_SERIES(ser, "make hash array");
-	Clear_Series(ser);
-	ser->tail = n;
+    ser = Make_Series(n + 1, sizeof(REBCNT), MKS_NONE);
+    LABEL_SERIES(ser, "make hash array");
+    Clear_Series(ser);
+    ser->tail = n;
 
-	return ser;
+    return ser;
 }
 
 
@@ -315,9 +315,9 @@ REBSER *Make_Hash_Sequence(REBCNT len)
 //
 void Val_Init_Map(REBVAL *out, REBSER *ser)
 {
-	Val_Init_Series(out, REB_MAP, ser);
-	if (ser->extra.series)
-		ENSURE_SERIES_MANAGED(ser->extra.series);
+    Val_Init_Series(out, REB_MAP, ser);
+    if (ser->extra.series)
+        ENSURE_SERIES_MANAGED(ser->extra.series);
 }
 
 
@@ -331,22 +331,22 @@ void Val_Init_Map(REBVAL *out, REBSER *ser)
 //
 REBSER *Hash_Block(const REBVAL *block, REBCNT cased)
 {
-	REBCNT n;
-	REBCNT key;
-	REBSER *hser;
-	REBCNT *hashes;
-	REBSER *series = VAL_SERIES(block);
+    REBCNT n;
+    REBCNT key;
+    REBSER *hser;
+    REBCNT *hashes;
+    REBSER *series = VAL_SERIES(block);
 
-	// Create the hash array (integer indexes):
-	hser = Make_Hash_Sequence(VAL_LEN(block));
-	hashes = (REBCNT*)hser->data;
+    // Create the hash array (integer indexes):
+    hser = Make_Hash_Sequence(VAL_LEN(block));
+    hashes = (REBCNT*)hser->data;
 
-	for (n = VAL_INDEX(block); n < series->tail; n++) {
-		key = Find_Key(series, hser, BLK_SKIP(series, n), 1, cased, 0);
-		hashes[key] = n + 1;
-	}
+    for (n = VAL_INDEX(block); n < series->tail; n++) {
+        key = Find_Key(series, hser, BLK_SKIP(series, n), 1, cased, 0);
+        hashes[key] = n + 1;
+    }
 
-	return hser;
+    return hser;
 }
 
 
@@ -358,22 +358,22 @@ REBSER *Hash_Block(const REBVAL *block, REBCNT cased)
 //
 REBINT Compute_IPC(REBYTE *data, REBCNT length)
 {
-	REBCNT	lSum = 0;	// stores the summation
-	REBYTE	*up = data;
+    REBCNT  lSum = 0;   // stores the summation
+    REBYTE  *up = data;
 
-	while (length > 1) {
-		lSum += (up[0] << 8) | up[1];
-		up += 2;
-		length -= 2;
-	}
+    while (length > 1) {
+        lSum += (up[0] << 8) | up[1];
+        up += 2;
+        length -= 2;
+    }
 
-	// Handle the odd byte if necessary
-	if (length) lSum += *up;
+    // Handle the odd byte if necessary
+    if (length) lSum += *up;
 
-	// Add back the carry outs from the 16 bits to the low 16 bits
-	lSum = (lSum >> 16) + (lSum & 0xffff);	// Add high-16 to low-16
-	lSum += (lSum >> 16);					// Add carry
-	return (REBINT)( (~lSum) & 0xffff);		// 1's complement, then truncate
+    // Add back the carry outs from the 16 bits to the low 16 bits
+    lSum = (lSum >> 16) + (lSum & 0xffff);  // Add high-16 to low-16
+    lSum += (lSum >> 16);                   // Add carry
+    return (REBINT)( (~lSum) & 0xffff);     // 1's complement, then truncate
 }
 
 
@@ -382,33 +382,33 @@ REBINT Compute_IPC(REBYTE *data, REBCNT length)
 static u32 *crc32_table = 0;
 
 static void Make_CRC32_Table(void) {
-	u32 c;
-	int n,k;
+    u32 c;
+    int n,k;
 
-	crc32_table = ALLOC_ARRAY(u32, 256);
+    crc32_table = ALLOC_ARRAY(u32, 256);
 
-	for(n=0;n<256;n++) {
-		c=(u32)n;
-		for(k=0;k<8;k++) {
-			if(c&1)
-				c=U32_C(0xedb88320)^(c>>1);
-			else
-				c=c>>1;
-		}
-		crc32_table[n]=c;
-	}
+    for(n=0;n<256;n++) {
+        c=(u32)n;
+        for(k=0;k<8;k++) {
+            if(c&1)
+                c=U32_C(0xedb88320)^(c>>1);
+            else
+                c=c>>1;
+        }
+        crc32_table[n]=c;
+    }
 }
 
 REBCNT Update_CRC32(u32 crc, REBYTE *buf, int len) {
-	u32 c = ~crc;
-	int n;
+    u32 c = ~crc;
+    int n;
 
-	if(!crc32_table) Make_CRC32_Table();
+    if(!crc32_table) Make_CRC32_Table();
 
-	for(n = 0; n < len; n++)
-		c = crc32_table[(c^buf[n])&0xff]^(c>>8);
+    for(n = 0; n < len; n++)
+        c = crc32_table[(c^buf[n])&0xff]^(c>>8);
 
-	return ~c;
+    return ~c;
 }
 
 //
@@ -416,7 +416,7 @@ REBCNT Update_CRC32(u32 crc, REBYTE *buf, int len) {
 //
 REBCNT CRC32(REBYTE *buf, REBCNT len)
 {
-	return Update_CRC32(U32_C(0x00000000), buf, len);
+    return Update_CRC32(U32_C(0x00000000), buf, len);
 }
 
 
@@ -425,8 +425,8 @@ REBCNT CRC32(REBYTE *buf, REBCNT len)
 //
 void Init_CRC(void)
 {
-	CRC_Table = ALLOC_ARRAY(REBCNT, 256);
-	Make_CRC_Table(PRZCRC);
+    CRC_Table = ALLOC_ARRAY(REBCNT, 256);
+    Make_CRC_Table(PRZCRC);
 }
 
 
@@ -435,9 +435,9 @@ void Init_CRC(void)
 //
 void Shutdown_CRC(void)
 {
-	if (crc32_table) FREE_ARRAY(u32, 256, crc32_table);
+    if (crc32_table) FREE_ARRAY(u32, 256, crc32_table);
 
-	FREE_ARRAY(REBCNT, 256, CRC_Table);
+    FREE_ARRAY(REBCNT, 256, CRC_Table);
 }
 
 
@@ -559,7 +559,7 @@ int CRCdemo::Get_CRC(char* text)
 
 #include "crc32.h"
 
-#if __GNUC__ >= 3	/* 2.x has "attribute", but only 3.0 has "pure */
+#if __GNUC__ >= 3   /* 2.x has "attribute", but only 3.0 has "pure */
 #define attribute(x) __attribute__(x)
 #else
 #define attribute(x)
@@ -603,15 +603,15 @@ int CRCdemo::Get_CRC(char* text)
  */
 uint32_t attribute((pure)) crc32_le(uint32_t crc, unsigned char const *p, size_t len)
 {
-	int i;
-	while (len--) {
-		crc ^= *p++;
-		for (i = 0; i < 8; i++)
-			crc = (crc >> 1) ^ ((crc & 1) ? CRCPOLY_LE : 0);
-	}
-	return crc;
+    int i;
+    while (len--) {
+        crc ^= *p++;
+        for (i = 0; i < 8; i++)
+            crc = (crc >> 1) ^ ((crc & 1) ? CRCPOLY_LE : 0);
+    }
+    return crc;
 }
-#else				/* Table-based approach */
+#else               /* Table-based approach */
 
 static uint32_t *crc32table_le;
 /**
@@ -624,21 +624,21 @@ static uint32_t *crc32table_le;
 static int
 crc32init_le(void)
 {
-	unsigned i, j;
-	uint32_t crc = 1;
+    unsigned i, j;
+    uint32_t crc = 1;
 
-	crc32table_le =
-		malloc((1 << CRC_LE_BITS) * sizeof(uint32_t));
-	if (!crc32table_le)
-		return 1;
-	crc32table_le[0] = 0;
+    crc32table_le =
+        malloc((1 << CRC_LE_BITS) * sizeof(uint32_t));
+    if (!crc32table_le)
+        return 1;
+    crc32table_le[0] = 0;
 
-	for (i = 1 << (CRC_LE_BITS - 1); i; i >>= 1) {
-		crc = (crc >> 1) ^ ((crc & 1) ? CRCPOLY_LE : 0);
-		for (j = 0; j < 1 << CRC_LE_BITS; j += 2 * i)
-			crc32table_le[i + j] = crc ^ crc32table_le[j];
-	}
-	return 0;
+    for (i = 1 << (CRC_LE_BITS - 1); i; i >>= 1) {
+        crc = (crc >> 1) ^ ((crc & 1) ? CRCPOLY_LE : 0);
+        for (j = 0; j < 1 << CRC_LE_BITS; j += 2 * i)
+            crc32table_le[i + j] = crc ^ crc32table_le[j];
+    }
+    return 0;
 }
 
 /**
@@ -647,8 +647,8 @@ crc32init_le(void)
 static void
 crc32cleanup_le(void)
 {
-	if (crc32table_le) free(crc32table_le);
-	crc32table_le = NULL;
+    if (crc32table_le) free(crc32table_le);
+    crc32table_le = NULL;
 }
 
 /**
@@ -661,22 +661,22 @@ crc32cleanup_le(void)
  */
 uint32_t attribute((pure)) crc32_le(uint32_t crc, unsigned char const *p, size_t len)
 {
-	while (len--) {
+    while (len--) {
 # if CRC_LE_BITS == 8
-		crc = (crc >> 8) ^ crc32table_le[(crc ^ *p++) & 255];
+        crc = (crc >> 8) ^ crc32table_le[(crc ^ *p++) & 255];
 # elif CRC_LE_BITS == 4
-		crc ^= *p++;
-		crc = (crc >> 4) ^ crc32table_le[crc & 15];
-		crc = (crc >> 4) ^ crc32table_le[crc & 15];
+        crc ^= *p++;
+        crc = (crc >> 4) ^ crc32table_le[crc & 15];
+        crc = (crc >> 4) ^ crc32table_le[crc & 15];
 # elif CRC_LE_BITS == 2
-		crc ^= *p++;
-		crc = (crc >> 2) ^ crc32table_le[crc & 3];
-		crc = (crc >> 2) ^ crc32table_le[crc & 3];
-		crc = (crc >> 2) ^ crc32table_le[crc & 3];
-		crc = (crc >> 2) ^ crc32table_le[crc & 3];
+        crc ^= *p++;
+        crc = (crc >> 2) ^ crc32table_le[crc & 3];
+        crc = (crc >> 2) ^ crc32table_le[crc & 3];
+        crc = (crc >> 2) ^ crc32table_le[crc & 3];
+        crc = (crc >> 2) ^ crc32table_le[crc & 3];
 # endif
-	}
-	return crc;
+    }
+    return crc;
 }
 #endif
 
@@ -706,18 +706,18 @@ uint32_t attribute((pure)) crc32_le(uint32_t crc, unsigned char const *p, size_t
  */
 uint32_t attribute((pure)) crc32_be(uint32_t crc, unsigned char const *p, size_t len)
 {
-	int i;
-	while (len--) {
-		crc ^= *p++ << 24;
-		for (i = 0; i < 8; i++)
-			crc =
-			    (crc << 1) ^ ((crc & 0x80000000) ? CRCPOLY_BE :
-					  0);
-	}
-	return crc;
+    int i;
+    while (len--) {
+        crc ^= *p++ << 24;
+        for (i = 0; i < 8; i++)
+            crc =
+                (crc << 1) ^ ((crc & 0x80000000) ? CRCPOLY_BE :
+                      0);
+    }
+    return crc;
 }
 
-#else				/* Table-based approach */
+#else               /* Table-based approach */
 static uint32_t *crc32table_be;
 
 /**
@@ -726,21 +726,21 @@ static uint32_t *crc32table_be;
 static int
 crc32init_be(void)
 {
-	unsigned i, j;
-	uint32_t crc = 0x80000000;
+    unsigned i, j;
+    uint32_t crc = 0x80000000;
 
-	crc32table_be =
-		malloc((1 << CRC_BE_BITS) * sizeof(uint32_t));
-	if (!crc32table_be)
-		return 1;
-	crc32table_be[0] = 0;
+    crc32table_be =
+        malloc((1 << CRC_BE_BITS) * sizeof(uint32_t));
+    if (!crc32table_be)
+        return 1;
+    crc32table_be[0] = 0;
 
-	for (i = 1; i < 1 << CRC_BE_BITS; i <<= 1) {
-		crc = (crc << 1) ^ ((crc & 0x80000000) ? CRCPOLY_BE : 0);
-		for (j = 0; j < i; j++)
-			crc32table_be[i + j] = crc ^ crc32table_be[j];
-	}
-	return 0;
+    for (i = 1; i < 1 << CRC_BE_BITS; i <<= 1) {
+        crc = (crc << 1) ^ ((crc & 0x80000000) ? CRCPOLY_BE : 0);
+        for (j = 0; j < i; j++)
+            crc32table_be[i + j] = crc ^ crc32table_be[j];
+    }
+    return 0;
 }
 
 /**
@@ -749,8 +749,8 @@ crc32init_be(void)
 static void
 crc32cleanup_be(void)
 {
-	if (crc32table_be) free(crc32table_be);
-	crc32table_be = NULL;
+    if (crc32table_be) free(crc32table_be);
+    crc32table_be = NULL;
 }
 
 
@@ -764,22 +764,22 @@ crc32cleanup_be(void)
  */
 uint32_t attribute((pure)) crc32_be(uint32_t crc, unsigned char const *p, size_t len)
 {
-	while (len--) {
+    while (len--) {
 # if CRC_BE_BITS == 8
-		crc = (crc << 8) ^ crc32table_be[(crc >> 24) ^ *p++];
+        crc = (crc << 8) ^ crc32table_be[(crc >> 24) ^ *p++];
 # elif CRC_BE_BITS == 4
-		crc ^= *p++ << 24;
-		crc = (crc << 4) ^ crc32table_be[crc >> 28];
-		crc = (crc << 4) ^ crc32table_be[crc >> 28];
+        crc ^= *p++ << 24;
+        crc = (crc << 4) ^ crc32table_be[crc >> 28];
+        crc = (crc << 4) ^ crc32table_be[crc >> 28];
 # elif CRC_BE_BITS == 2
-		crc ^= *p++ << 24;
-		crc = (crc << 2) ^ crc32table_be[crc >> 30];
-		crc = (crc << 2) ^ crc32table_be[crc >> 30];
-		crc = (crc << 2) ^ crc32table_be[crc >> 30];
-		crc = (crc << 2) ^ crc32table_be[crc >> 30];
+        crc ^= *p++ << 24;
+        crc = (crc << 2) ^ crc32table_be[crc >> 30];
+        crc = (crc << 2) ^ crc32table_be[crc >> 30];
+        crc = (crc << 2) ^ crc32table_be[crc >> 30];
+        crc = (crc << 2) ^ crc32table_be[crc >> 30];
 # endif
-	}
-	return crc;
+    }
+    return crc;
 }
 #endif
 
@@ -828,8 +828,8 @@ uint32_t attribute((pure)) crc32_be(uint32_t crc, unsigned char const *p, size_t
  *
  * A big-endian CRC written this way would be coded like:
  * for (i = 0; i < input_bits; i++) {
- * 	multiple = remainder & 0x80000000 ? CRCPOLY : 0;
- * 	remainder = (remainder << 1 | next_input_bit()) ^ multiple;
+ *  multiple = remainder & 0x80000000 ? CRCPOLY : 0;
+ *  remainder = (remainder << 1 | next_input_bit()) ^ multiple;
  * }
  * Notice how, to get at bit 32 of the shifted remainder, we look
  * at bit 31 of the remainder *before* shifting it.
@@ -848,14 +848,14 @@ uint32_t attribute((pure)) crc32_be(uint32_t crc, unsigned char const *p, size_t
  * This changes the code to:
  * for (i = 0; i < input_bits; i++) {
  *      remainder ^= next_input_bit() << 31;
- * 	multiple = (remainder & 0x80000000) ? CRCPOLY : 0;
- * 	remainder = (remainder << 1) ^ multiple;
+ *  multiple = (remainder & 0x80000000) ? CRCPOLY : 0;
+ *  remainder = (remainder << 1) ^ multiple;
  * }
  * With this optimization, the little-endian code is simpler:
  * for (i = 0; i < input_bits; i++) {
  *      remainder ^= next_input_bit();
- * 	multiple = (remainder & 1) ? CRCPOLY : 0;
- * 	remainder = (remainder >> 1) ^ multiple;
+ *  multiple = (remainder & 1) ? CRCPOLY : 0;
+ *  remainder = (remainder >> 1) ^ multiple;
  * }
  *
  * Note that the other details of endianness have been hidden in CRCPOLY
@@ -865,19 +865,19 @@ uint32_t attribute((pure)) crc32_be(uint32_t crc, unsigned char const *p, size_t
  * order, we can actually do the merging 8 or more bits at a time rather
  * than one bit at a time:
  * for (i = 0; i < input_bytes; i++) {
- * 	remainder ^= next_input_byte() << 24;
- * 	for (j = 0; j < 8; j++) {
- * 		multiple = (remainder & 0x80000000) ? CRCPOLY : 0;
- * 		remainder = (remainder << 1) ^ multiple;
- * 	}
+ *  remainder ^= next_input_byte() << 24;
+ *  for (j = 0; j < 8; j++) {
+ *      multiple = (remainder & 0x80000000) ? CRCPOLY : 0;
+ *      remainder = (remainder << 1) ^ multiple;
+ *  }
  * }
  * Or in little-endian:
  * for (i = 0; i < input_bytes; i++) {
- * 	remainder ^= next_input_byte();
- * 	for (j = 0; j < 8; j++) {
- * 		multiple = (remainder & 1) ? CRCPOLY : 0;
- * 		remainder = (remainder << 1) ^ multiple;
- * 	}
+ *  remainder ^= next_input_byte();
+ *  for (j = 0; j < 8; j++) {
+ *      multiple = (remainder & 1) ? CRCPOLY : 0;
+ *      remainder = (remainder << 1) ^ multiple;
+ *  }
  * }
  * If the input is a multiple of 32 bits, you can even XOR in a 32-bit
  * word at a time and increase the inner loop count to 32.
@@ -926,11 +926,11 @@ uint32_t attribute((pure)) crc32_be(uint32_t crc, unsigned char const *p, size_t
 int
 init_crc32(void)
 {
-	int rc1, rc2, rc;
-	rc1 = crc32init_le();
-	rc2 = crc32init_be();
-	rc = rc1 || rc2;
-	return rc;
+    int rc1, rc2, rc;
+    rc1 = crc32init_le();
+    rc2 = crc32init_be();
+    rc = rc1 || rc2;
+    return rc;
 }
 
 /**
@@ -939,8 +939,8 @@ init_crc32(void)
 void
 cleanup_crc32(void)
 {
-	crc32cleanup_le();
-	crc32cleanup_be();
+    crc32cleanup_le();
+    crc32cleanup_be();
 }
 
 #endif // USE_ARCHIVED_CRC_CODE

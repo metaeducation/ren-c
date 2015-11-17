@@ -59,8 +59,8 @@ extern HWND Event_Handle;
 //
 DEVICE_CMD Open_DNS(REBREQ *sock)
 {
-	SET_OPEN(sock);
-	return DR_DONE;
+    SET_OPEN(sock);
+    return DR_DONE;
 }
 
 
@@ -71,18 +71,18 @@ DEVICE_CMD Open_DNS(REBREQ *sock)
 //
 DEVICE_CMD Close_DNS(REBREQ *sock)
 {
-	// Terminate a pending request:
+    // Terminate a pending request:
 #ifdef HAS_ASYNC_DNS
-	if (GET_FLAG(sock->flags, RRF_PENDING)) {
-		CLR_FLAG(sock->flags, RRF_PENDING);
-		if (sock->requestee.handle) WSACancelAsyncRequest(sock->requestee.handle);
-	}
+    if (GET_FLAG(sock->flags, RRF_PENDING)) {
+        CLR_FLAG(sock->flags, RRF_PENDING);
+        if (sock->requestee.handle) WSACancelAsyncRequest(sock->requestee.handle);
+    }
 #endif
-	if (sock->special.net.host_info) OS_FREE(sock->special.net.host_info);
-	sock->special.net.host_info = 0;
-	sock->requestee.handle = 0;
-	SET_CLOSED(sock);
-	return DR_DONE; // Removes it from device's pending list (if needed)
+    if (sock->special.net.host_info) OS_FREE(sock->special.net.host_info);
+    sock->special.net.host_info = 0;
+    sock->requestee.handle = 0;
+    SET_CLOSED(sock);
+    return DR_DONE; // Removes it from device's pending list (if needed)
 }
 
 
@@ -96,54 +96,54 @@ DEVICE_CMD Read_DNS(REBREQ *sock)
 {
     char *host;
 #ifdef HAS_ASYNC_DNS
-	HANDLE handle;
+    HANDLE handle;
 #else
-	HOSTENT *he;
+    HOSTENT *he;
 #endif
 
-	host = OS_ALLOC_ARRAY(char, MAXGETHOSTSTRUCT); // be sure to free it
+    host = OS_ALLOC_ARRAY(char, MAXGETHOSTSTRUCT); // be sure to free it
 
 #ifdef HAS_ASYNC_DNS
-	if (!GET_FLAG(sock->modes, RST_REVERSE)) // hostname lookup
+    if (!GET_FLAG(sock->modes, RST_REVERSE)) // hostname lookup
         handle = WSAAsyncGetHostByName(Event_Handle, WM_DNS, s_cast(sock->common.data), host, MAXGETHOSTSTRUCT);
-	else
+    else
         handle = WSAAsyncGetHostByAddr(Event_Handle, WM_DNS, s_cast(&sock->special.net.remote_ip), 4, AF_INET, host, MAXGETHOSTSTRUCT);
 
-	if (handle != 0) {
-		sock->special.net.host_info = host;
-		sock->requestee.handle = handle;
-		return DR_PEND; // keep it on pending list
-	}
+    if (handle != 0) {
+        sock->special.net.host_info = host;
+        sock->requestee.handle = handle;
+        return DR_PEND; // keep it on pending list
+    }
 #else
-	// Use old-style blocking DNS (mainly for testing purposes):
-	if (GET_FLAG(sock->modes, RST_REVERSE)) {
-		he = gethostbyaddr(
-			cast(char*, &sock->special.net.remote_ip), 4, AF_INET
-		);
-		if (he) {
-			sock->special.net.host_info = host; //???
-			sock->common.data = b_cast(he->h_name);
-			SET_FLAG(sock->flags, RRF_DONE);
-			return DR_DONE;
-		}
-	}
-	else {
-		he = gethostbyname(s_cast(sock->common.data));
-		if (he) {
-			sock->special.net.host_info = host; // ?? who deallocs?
-			memcpy(&sock->special.net.remote_ip, *he->h_addr_list, 4); //he->h_length);
-			SET_FLAG(sock->flags, RRF_DONE);
-			return DR_DONE;
-		}
-	}
+    // Use old-style blocking DNS (mainly for testing purposes):
+    if (GET_FLAG(sock->modes, RST_REVERSE)) {
+        he = gethostbyaddr(
+            cast(char*, &sock->special.net.remote_ip), 4, AF_INET
+        );
+        if (he) {
+            sock->special.net.host_info = host; //???
+            sock->common.data = b_cast(he->h_name);
+            SET_FLAG(sock->flags, RRF_DONE);
+            return DR_DONE;
+        }
+    }
+    else {
+        he = gethostbyname(s_cast(sock->common.data));
+        if (he) {
+            sock->special.net.host_info = host; // ?? who deallocs?
+            memcpy(&sock->special.net.remote_ip, *he->h_addr_list, 4); //he->h_length);
+            SET_FLAG(sock->flags, RRF_DONE);
+            return DR_DONE;
+        }
+    }
 #endif
 
-	OS_FREE(host);
-	sock->special.net.host_info = 0;
+    OS_FREE(host);
+    sock->special.net.host_info = 0;
 
-	sock->error = GET_ERROR;
-	//Signal_Device(sock, EVT_ERROR);
-	return DR_ERROR; // Remove it from pending list
+    sock->error = GET_ERROR;
+    //Signal_Device(sock, EVT_ERROR);
+    return DR_ERROR; // Remove it from pending list
 }
 
 
@@ -157,55 +157,55 @@ DEVICE_CMD Read_DNS(REBREQ *sock)
 //
 DEVICE_CMD Poll_DNS(REBREQ *dr)
 {
-	REBDEV *dev = (REBDEV*)dr;  // to keep compiler happy
-	REBREQ **prior = &dev->pending;
-	REBREQ *req;
-	REBOOL change = FALSE;
-	HOSTENT *host;
+    REBDEV *dev = (REBDEV*)dr;  // to keep compiler happy
+    REBREQ **prior = &dev->pending;
+    REBREQ *req;
+    REBOOL change = FALSE;
+    HOSTENT *host;
 
-	// Scan the pending request list:
-	for (req = *prior; req; req = *prior) {
+    // Scan the pending request list:
+    for (req = *prior; req; req = *prior) {
 
-		// If done or error, remove command from list:
-		if (GET_FLAG(req->flags, RRF_DONE)) { // req->error may be set
-			*prior = req->next;
-			req->next = 0;
-			CLR_FLAG(req->flags, RRF_PENDING);
+        // If done or error, remove command from list:
+        if (GET_FLAG(req->flags, RRF_DONE)) { // req->error may be set
+            *prior = req->next;
+            req->next = 0;
+            CLR_FLAG(req->flags, RRF_PENDING);
 
-			if (!req->error) { // success!
-				host = cast(HOSTENT*, req->special.net.host_info);
-				if (GET_FLAG(req->modes, RST_REVERSE))
-					req->common.data = b_cast(host->h_name);
-				else
-					memcpy(&req->special.net.remote_ip, *host->h_addr_list, 4); //he->h_length);
-				Signal_Device(req, EVT_READ);
-			}
-			else
-				Signal_Device(req, EVT_ERROR);
-			change = TRUE;
-		}
-		else prior = &req->next;
-	}
+            if (!req->error) { // success!
+                host = cast(HOSTENT*, req->special.net.host_info);
+                if (GET_FLAG(req->modes, RST_REVERSE))
+                    req->common.data = b_cast(host->h_name);
+                else
+                    memcpy(&req->special.net.remote_ip, *host->h_addr_list, 4); //he->h_length);
+                Signal_Device(req, EVT_READ);
+            }
+            else
+                Signal_Device(req, EVT_ERROR);
+            change = TRUE;
+        }
+        else prior = &req->next;
+    }
 
-	return change;
+    return change;
 }
 
 
 /***********************************************************************
 **
-**	Command Dispatch Table (RDC_ enum order)
+**  Command Dispatch Table (RDC_ enum order)
 **
 ***********************************************************************/
 
 static DEVICE_CMD_FUNC Dev_Cmds[RDC_MAX] =
 {
-	Init_Net,	// Shared init - called only once
-	Quit_Net,	// Shared
-	Open_DNS,
-	Close_DNS,
-	Read_DNS,
-	0,	// write
-	Poll_DNS,
+    Init_Net,   // Shared init - called only once
+    Quit_Net,   // Shared
+    Open_DNS,
+    Close_DNS,
+    Read_DNS,
+    0,  // write
+    Poll_DNS,
 };
 
 DEFINE_DEV(Dev_DNS, "DNS", 1, Dev_Cmds, RDC_MAX, 0);

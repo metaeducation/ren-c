@@ -1,35 +1,35 @@
 REBOL [
-	System: "REBOL [R3] Language Interpreter and Run-time Environment"
-	Title: "Weird Words list for bootstrap to append to lib context"
-	Rights: {
-		Copyright 2012 REBOL Technologies
-		REBOL is a trademark of REBOL Technologies
-	}
-	License: {
-		Licensed under the Apache License, Version 2.0.
-		See: http://www.apache.org/licenses/LICENSE-2.0
-	}
-	Purpose: {
-		This contains the weird words that the lexer doesn't easily
-		let us make set-words out of, like /: and //: and <>:
-		It turns out there can be a big big difference between:
+    System: "REBOL [R3] Language Interpreter and Run-time Environment"
+    Title: "Weird Words list for bootstrap to append to lib context"
+    Rights: {
+        Copyright 2012 REBOL Technologies
+        REBOL is a trademark of REBOL Technologies
+    }
+    License: {
+        Licensed under the Apache License, Version 2.0.
+        See: http://www.apache.org/licenses/LICENSE-2.0
+    }
+    Purpose: {
+        This contains the weird words that the lexer doesn't easily
+        let us make set-words out of, like /: and //: and <>:
+        It turns out there can be a big big difference between:
 
-			<>: func [...] [...]
+            <>: func [...] [...]
 
-		and:
+        and:
 
-			set (bind/new first [<>] bind? 'func) func [...] [...]
+            set (bind/new first [<>] bind? 'func) func [...] [...]
 
-		You may be able to get an assignment with the second.  BUT
-		it could be too late for references that have already been
-		loaded unbound, if those references existed within the same
-		module that planned on defining them for export.
+        You may be able to get an assignment with the second.  BUT
+        it could be too late for references that have already been
+        loaded unbound, if those references existed within the same
+        module that planned on defining them for export.
 
-		Hence this just lists those 7 words, and during the boot
-		process they are injected into the lib context prior to
-		running the mezzanine code in base-infix.r that wishes to
-		assign functionality to them.
-	}
+        Hence this just lists those 7 words, and during the boot
+        process they are injected into the lib context prior to
+        running the mezzanine code in base-infix.r that wishes to
+        assign functionality to them.
+    }
 ]
 
 

@@ -21,9 +21,9 @@
 **
 **  Title: POSIX Host Configuration Routines
 **  Purpose:
-**		This file is for situations where there is some kind of
-**		configuration information (e.g. environment variables, boot
-**		paths) that Rebol wants to get at from the host.
+**      This file is for situations where there is some kind of
+**      configuration information (e.g. environment variables, boot
+**      paths) that Rebol wants to get at from the host.
 **
 ***********************************************************************/
 
@@ -45,12 +45,12 @@ REBINT OS_Config(int id, REBYTE *result)
 {
 #define OCID_STACK_SIZE 1  // needs to move to .h file
 
-	switch (id) {
-	case OCID_STACK_SIZE:
-		return 0;  // (size in bytes should be returned here)
-	}
+    switch (id) {
+    case OCID_STACK_SIZE:
+        return 0;  // (size in bytes should be returned here)
+    }
 
-	return 0;
+    return 0;
 }
 
 
@@ -63,7 +63,7 @@ REBINT OS_Config(int id, REBYTE *result)
 //
 REBOOL OS_Get_Boot_Path(REBCHR *name)
 {
-	return FALSE; // not yet used
+    return FALSE; // not yet used
 }
 
 
@@ -77,21 +77,21 @@ REBOOL OS_Get_Boot_Path(REBCHR *name)
 //
 REBINT OS_Get_Env(REBCHR *envname, REBCHR* envval, REBINT valsize)
 {
-	// Note: The Posix variant of this API is case-sensitive
+    // Note: The Posix variant of this API is case-sensitive
 
-	REBINT len;
-	const char* value = getenv(envname);
-	if (value == 0) return 0;
+    REBINT len;
+    const char* value = getenv(envname);
+    if (value == 0) return 0;
 
-	len = strlen(value);
-	if (len == 0) return -1; // shouldn't have saved an empty env string
+    len = strlen(value);
+    if (len == 0) return -1; // shouldn't have saved an empty env string
 
-	if (len + 1 > valsize) {
-		return len + 1;
-	}
+    if (len + 1 > valsize) {
+        return len + 1;
+    }
 
-	strncpy(envval, value, len);
-	return len;
+    strncpy(envval, value, len);
+    return len;
 }
 
 
@@ -103,62 +103,62 @@ REBINT OS_Get_Env(REBCHR *envname, REBCHR* envval, REBINT valsize)
 //
 REBOOL OS_Set_Env(REBCHR *envname, REBCHR *envval)
 {
-	if (envval) {
+    if (envval) {
 #ifdef setenv
-		// we pass 1 for overwrite (make call to OS_Get_Env if you
-		// want to check if already exists)
+        // we pass 1 for overwrite (make call to OS_Get_Env if you
+        // want to check if already exists)
 
-		if (setenv(envname, envval, 1) == -1)
-			return FALSE;
+        if (setenv(envname, envval, 1) == -1)
+            return FALSE;
 #else
-		// WARNING: KNOWN MEMORY LEAK!
+        // WARNING: KNOWN MEMORY LEAK!
 
-		// putenv is *fatally flawed*, and was obsoleted by setenv
-		// and unsetenv System V...
+        // putenv is *fatally flawed*, and was obsoleted by setenv
+        // and unsetenv System V...
 
-		// http://stackoverflow.com/a/5876818/211160
+        // http://stackoverflow.com/a/5876818/211160
 
-		// once you have passed a string to it you never know when that
-		// string will no longer be needed.  Thus it may either not be
-		// dynamic or you must leak it, or track a local copy of the
-		// environment yourself.
+        // once you have passed a string to it you never know when that
+        // string will no longer be needed.  Thus it may either not be
+        // dynamic or you must leak it, or track a local copy of the
+        // environment yourself.
 
-		// If you're stuck without setenv on some old platform, but
-		// really need to set an environment variable, here's a way
-		// that just leaks a string each time you call.
+        // If you're stuck without setenv on some old platform, but
+        // really need to set an environment variable, here's a way
+        // that just leaks a string each time you call.
 
-		char *expr = OS_ALLOC_ARRAY(char,
-			strlen(envname) + 1 + strlen(envval) + 1
-		);
+        char *expr = OS_ALLOC_ARRAY(char,
+            strlen(envname) + 1 + strlen(envval) + 1
+        );
 
-		strcpy(expr, envname);
-		strcat(expr, "=");
-		strcat(expr, envval);
+        strcpy(expr, envname);
+        strcat(expr, "=");
+        strcat(expr, envval);
 
-		if (putenv(expr) == -1)
-			return FALSE;
+        if (putenv(expr) == -1)
+            return FALSE;
 #endif
-		return TRUE;
-	}
+        return TRUE;
+    }
 
 #ifdef unsetenv
-	if (unsetenv(envname) == -1)
-		return FALSE;
+    if (unsetenv(envname) == -1)
+        return FALSE;
 #else
-	// WARNING: KNOWN PORTABILITY ISSUE
+    // WARNING: KNOWN PORTABILITY ISSUE
 
-	// Simply saying putenv("FOO") will delete FOO from
-	// the environment, but it's not consistent...does
-	// nothing on NetBSD for instance.  But not all
-	// other systems have unsetenv...
-	//
-	// http://julipedia.meroh.net/2004/10/portability-unsetenvfoo-vs-putenvfoo.html
+    // Simply saying putenv("FOO") will delete FOO from
+    // the environment, but it's not consistent...does
+    // nothing on NetBSD for instance.  But not all
+    // other systems have unsetenv...
+    //
+    // http://julipedia.meroh.net/2004/10/portability-unsetenvfoo-vs-putenvfoo.html
 
-	// going to hope this case doesn't hold onto the string...
-	if (putenv((char*)envname) == -1)
-		return FALSE;
+    // going to hope this case doesn't hold onto the string...
+    if (putenv((char*)envname) == -1)
+        return FALSE;
 #endif
-	return TRUE;
+    return TRUE;
 }
 
 
@@ -167,24 +167,24 @@ REBOOL OS_Set_Env(REBCHR *envname, REBCHR *envval)
 //
 REBCHR *OS_List_Env(void)
 {
-	int n, len = 0;
-	char *str, *cp;
+    int n, len = 0;
+    char *str, *cp;
 
-	// compute total size:
-	// Note: 'environ' is an extern of a global found in <unistd.h>
-	for (n = 0; environ[n]; n++) len += 1 + strlen(environ[n]);
+    // compute total size:
+    // Note: 'environ' is an extern of a global found in <unistd.h>
+    for (n = 0; environ[n]; n++) len += 1 + strlen(environ[n]);
 
-	cp = str = OS_ALLOC_ARRAY(char, len + 1); // +terminator
-	*cp = 0;
+    cp = str = OS_ALLOC_ARRAY(char, len + 1); // +terminator
+    *cp = 0;
 
-	// combine all strings into one:
-	for (n = 0; environ[n]; n++) {
-		len = strlen(environ[n]);
-		strcat(cp, environ[n]);
-		cp += len;
-		*cp++ = 0;
-		*cp = 0;
-	}
+    // combine all strings into one:
+    for (n = 0; environ[n]; n++) {
+        len = strlen(environ[n]);
+        strcat(cp, environ[n]);
+        cp += len;
+        *cp++ = 0;
+        *cp = 0;
+    }
 
-	return str; // caller will free it
+    return str; // caller will free it
 }

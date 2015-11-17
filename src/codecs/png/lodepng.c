@@ -372,14 +372,14 @@ unsigned lodepng_load_file(unsigned char** out, size_t* outsize, const char* fil
 
   /*get filesize:*/
   if (fseek(file , 0 , SEEK_END) < 0) {
-	  fclose(file);
-	  return 90;
+      fclose(file);
+      return 90;
   }
   size = ftell(file);
   if (size <= 0) {
-	  /* file size can't be zero */
-	  fclose(file);
-	  return 91;
+      /* file size can't be zero */
+      fclose(file);
+      return 91;
   }
   rewind(file);
 
@@ -4409,9 +4409,9 @@ static unsigned readChunk_zTXt(LodePNGInfo* info, const LodePNGDecompressSetting
 
     length = chunkLength - string2_begin;
     /*will fail if zlib error, e.g. if length is too small*/
-	// Ren/C: Fix cast away of const
+    // Ren/C: Fix cast away of const
     error = zlib_decompress(&decoded.data, &decoded.size,
-							(const unsigned char*)(&data[string2_begin]),
+                            (const unsigned char*)(&data[string2_begin]),
                             length, zlibsettings);
     if(error) break;
     ucvector_push_back(&decoded, 0);
@@ -4493,9 +4493,9 @@ static unsigned readChunk_iTXt(LodePNGInfo* info, const LodePNGDecompressSetting
     if(compressed)
     {
       /*will fail if zlib error, e.g. if length is too small*/
-	  // Ren/C fix cast away of const
+      // Ren/C fix cast away of const
       error = zlib_decompress(&decoded.data, &decoded.size,
-							  (const unsigned char*)(&data[begin]),
+                              (const unsigned char*)(&data[begin]),
                               length, zlibsettings);
       if(error) break;
       if(decoded.allocsize < decoded.size) decoded.allocsize = decoded.size;
@@ -5031,7 +5031,7 @@ static unsigned addChunk_zTXt(ucvector* out, const char* keyword, const char* te
 
   // Ren/C: fix cast away of const
   error = zlib_compress(&compressed.data, &compressed.size,
-						(const unsigned char*)textstring, textsize, zlibsettings);
+                        (const unsigned char*)textstring, textsize, zlibsettings);
   if(!error)
   {
     for(i = 0; i < compressed.size; i++) ucvector_push_back(&data, compressed.data[i]);
@@ -5066,9 +5066,9 @@ static unsigned addChunk_iTXt(ucvector* out, unsigned compressed, const char* ke
   {
     ucvector compressed_data;
     ucvector_init(&compressed_data);
-	// Ren/C: Fix cast away of const
+    // Ren/C: Fix cast away of const
     error = zlib_compress(&compressed_data.data, &compressed_data.size,
-						  (const unsigned char*)textstring, textsize, zlibsettings);
+                          (const unsigned char*)textstring, textsize, zlibsettings);
     if(!error)
     {
       for(i = 0; i < compressed_data.size; i++) ucvector_push_back(&data, compressed_data.data[i]);
@@ -5283,13 +5283,13 @@ static unsigned filter(unsigned char* out, const unsigned char* in, unsigned w, 
     {
       ucvector_init(&attempt[type]);
       if(!ucvector_resize(&attempt[type], linebytes))
-	  {
-	    while(type > 0) {
-		  free(attempt[type - 1].data);
-		  type --;
-		}
-		return 83; /*alloc fail*/
-	  }
+      {
+        while(type > 0) {
+          free(attempt[type - 1].data);
+          type --;
+        }
+        return 83; /*alloc fail*/
+      }
     }
 
     if(!error)
@@ -5349,13 +5349,13 @@ static unsigned filter(unsigned char* out, const unsigned char* in, unsigned w, 
     {
       ucvector_init(&attempt[type]);
       if(!ucvector_resize(&attempt[type], linebytes))
-	  {
-	    while(type > 0) {
-		  free(attempt[type - 1].data);
-		  type --;
-		}
-		return 83; /*alloc fail*/
-	  }
+      {
+        while(type > 0) {
+          free(attempt[type - 1].data);
+          type --;
+        }
+        return 83; /*alloc fail*/
+      }
     }
 
     for(y = 0; y < h; y++)
@@ -5726,26 +5726,26 @@ unsigned lodepng_encode(unsigned char** out, size_t* outsize,
     if(!converted && size) state->error = 83; /*alloc fail*/
     if(!state->error)
     {
-		if (
-			info.color.colortype == LCT_RGBA && info.color.bitdepth == 8 &&
-			lodepng_color_mode_equal(&state->info_raw, &info.color)
-		){
-			//convert BGRA format used by REBOL to RGBA
-			size_t i;
-			size_t size = w * h;
-			const unsigned char* src = image;
-			unsigned char* dst = converted;
+        if (
+            info.color.colortype == LCT_RGBA && info.color.bitdepth == 8 &&
+            lodepng_color_mode_equal(&state->info_raw, &info.color)
+        ){
+            //convert BGRA format used by REBOL to RGBA
+            size_t i;
+            size_t size = w * h;
+            const unsigned char* src = image;
+            unsigned char* dst = converted;
 
-			for (i=0; i<size; i++, src+=4,dst+=4)
-			{
-					dst[0] = src[C_R];
-					dst[1] = src[C_G];
-					dst[2] = src[C_B];
-					dst[3] = src[C_A];
-			}
-		} else {
-			state->error = lodepng_convert(converted, image, &info.color, &state->info_raw, w, h);
-		}
+            for (i=0; i<size; i++, src+=4,dst+=4)
+            {
+                    dst[0] = src[C_R];
+                    dst[1] = src[C_G];
+                    dst[2] = src[C_B];
+                    dst[3] = src[C_A];
+            }
+        } else {
+            state->error = lodepng_convert(converted, image, &info.color, &state->info_raw, w, h);
+        }
     }
     if(!state->error) preProcessScanlines(&data, &datasize, converted, w, h, &info, &state->encoder);
     lodepng_free(converted);

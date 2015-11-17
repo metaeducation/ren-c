@@ -1,56 +1,56 @@
 REBOL [
-	System: "REBOL [R3] Language Interpreter and Run-time Environment"
-	Title: "REBOL 3 Mezzanine: Legacy compatibility"
-	Rights: {
-		Copyright 1997-2015 REBOL Technologies
-		Copyright 2012-2015 Rebol Open Source Contributors
+    System: "REBOL [R3] Language Interpreter and Run-time Environment"
+    Title: "REBOL 3 Mezzanine: Legacy compatibility"
+    Rights: {
+        Copyright 1997-2015 REBOL Technologies
+        Copyright 2012-2015 Rebol Open Source Contributors
 
-		REBOL is a trademark of REBOL Technologies
-	}
-	License: {
-		Licensed under the Apache License, Version 2.0
-		See: http://www.apache.org/licenses/LICENSE-2.0
-	}
-	Description: {
-		These definitions turn the clock backward for Rebol code that was
-		written prior to Ren/C, e.g. binaries available on rebolsource.net
-		or R3-Alpha binaries from rebol.com.  Some flags which are set
-		which affect the behavior of natives and the evaluator ARE ONLY
-		ENABLED IN DEBUG BUILDS OF REN/C...so be aware of that.
+        REBOL is a trademark of REBOL Technologies
+    }
+    License: {
+        Licensed under the Apache License, Version 2.0
+        See: http://www.apache.org/licenses/LICENSE-2.0
+    }
+    Description: {
+        These definitions turn the clock backward for Rebol code that was
+        written prior to Ren/C, e.g. binaries available on rebolsource.net
+        or R3-Alpha binaries from rebol.com.  Some flags which are set
+        which affect the behavior of natives and the evaluator ARE ONLY
+        ENABLED IN DEBUG BUILDS OF REN/C...so be aware of that.
 
-		Some "legacy" definitions (like `foreach` as synonym of `for-each`)
-		are kept by default for now, possibly indefinitely.  For other
-		changes--such as variations in behavior of natives of the same
-		name--you need to add the following to your code:
+        Some "legacy" definitions (like `foreach` as synonym of `for-each`)
+        are kept by default for now, possibly indefinitely.  For other
+        changes--such as variations in behavior of natives of the same
+        name--you need to add the following to your code:
 
-			do <r3-legacy>
+            do <r3-legacy>
 
-		(Dispatch for this from DO is in the DO* function of sys-base.r)
+        (Dispatch for this from DO is in the DO* function of sys-base.r)
 
-		This statement will be a NO-OP in older Rebols, since executing a
-		tag evaluates to just a tag.  Note that the current trick will
-		modify the user context directly, and is not module-based...so
-		you really are sort of "backdating" the system globally.  A
-		more selective version that turns features on and off one at
-		a time to ease porting is needed, perhaps like:
+        This statement will be a NO-OP in older Rebols, since executing a
+        tag evaluates to just a tag.  Note that the current trick will
+        modify the user context directly, and is not module-based...so
+        you really are sort of "backdating" the system globally.  A
+        more selective version that turns features on and off one at
+        a time to ease porting is needed, perhaps like:
 
-			do/args <r3-legacy> [
-				new-do: off
-				question-marks: on
-			]
+            do/args <r3-legacy> [
+                new-do: off
+                question-marks: on
+            ]
 
-		As always, feedback and improvement welcome.  A porting guide Trello
-		has been started at:
+        As always, feedback and improvement welcome.  A porting guide Trello
+        has been started at:
 
-			https://trello.com/b/l385BE7a/porting-guide
-	}
+            https://trello.com/b/l385BE7a/porting-guide
+    }
 ]
 
 op?: func [
-	"Returns TRUE if the argument is an ANY-FUNCTION? and INFIX?"
-	value [any-value!]
+    "Returns TRUE if the argument is an ANY-FUNCTION? and INFIX?"
+    value [any-value!]
 ][
-	either any-function? :value [:infix? :value] false
+    either any-function? :value [:infix? :value] false
 ]
 
 
@@ -65,19 +65,19 @@ op?: func [
 ; use TO-WORD TYPE-OF.
 ;
 type?: function [
-	"Returns the datatype of a value <r3-legacy>."
-	value [any-value!]
-	/word "No longer in TYPE-OF, as WORD! and DATATYPE! can be EQUAL?"
+    "Returns the datatype of a value <r3-legacy>."
+    value [any-value!]
+    /word "No longer in TYPE-OF, as WORD! and DATATYPE! can be EQUAL?"
 ][
-	either word [
-		; Right now TO-WORD is still returning PAREN! for a PAREN! type,
-		; so the EITHER isn't necessary.  But it's a talking point about
-		; TYPE?/WORD's compatibility story if TO-WORD changed.
-		;
-		either (word: to-word type-of :value) = 'group! [paren!] [word]
-	][
-		type-of :value
-	]
+    either word [
+        ; Right now TO-WORD is still returning PAREN! for a PAREN! type,
+        ; so the EITHER isn't necessary.  But it's a talking point about
+        ; TYPE?/WORD's compatibility story if TO-WORD changed.
+        ;
+        either (word: to-word type-of :value) = 'group! [paren!] [word]
+    ][
+        type-of :value
+    ]
 ]
 
 
@@ -195,12 +195,12 @@ bind-of: :bound?
 ; time...so TRY is left to linger without needing `do <r3-legacy>`
 ;
 try: func [
-	{Tries to DO a block and returns its value or an error.}
-	block [block!]
-	/except "On exception, evaluate this code block"
-	code [block! any-function!]
+    {Tries to DO a block and returns its value or an error.}
+    block [block!]
+    /except "On exception, evaluate this code block"
+    code [block! any-function!]
 ][
-	either except [trap/with block :code] [trap block]
+    either except [trap/with block :code] [trap block]
 ]
 
 
@@ -208,11 +208,11 @@ try: func [
 ; (similar to the relationship between DOES and FUNCTION).
 ;
 has: func [
-	{A shortcut to define a function that has local variables but no arguments.}
-	vars [block!] {List of words that are local to the function}
-	body [block!] {The body block of the function}
+    {A shortcut to define a function that has local variables but no arguments.}
+    vars [block!] {List of words that are local to the function}
+    body [block!] {The body block of the function}
 ][
-	func (head insert copy vars /local) body
+    func (head insert copy vars /local) body
 ]
 
 
@@ -222,114 +222,114 @@ has: func [
 ;
 set 'r3-legacy* func [] [
 
-	; NOTE: these flags only work in debug builds.  A better availability
-	; test for the functionality is needed, as these flags may be expired
-	; at different times on a case-by-case basis.
-	;
-	system/options/lit-word-decay: true
-	system/options/do-runs-functions: true
-	system/options/broken-case-semantics: true
-	system/options/exit-functions-only: true
-	system/options/refinements-true: true
-	system/options/no-switch-evals: true
-	system/options/no-switch-fallthrough: true
-	system/options/forever-64-bit-ints: true
-	system/options/print-forms-everything: true
-	system/options/break-with-overrides: true
-	system/options/none-instead-of-unsets: true
-	system/options/arg1-arg2-arg3-error: true
+    ; NOTE: these flags only work in debug builds.  A better availability
+    ; test for the functionality is needed, as these flags may be expired
+    ; at different times on a case-by-case basis.
+    ;
+    system/options/lit-word-decay: true
+    system/options/do-runs-functions: true
+    system/options/broken-case-semantics: true
+    system/options/exit-functions-only: true
+    system/options/refinements-true: true
+    system/options/no-switch-evals: true
+    system/options/no-switch-fallthrough: true
+    system/options/forever-64-bit-ints: true
+    system/options/print-forms-everything: true
+    system/options/break-with-overrides: true
+    system/options/none-instead-of-unsets: true
+    system/options/arg1-arg2-arg3-error: true
 
-	append system/contexts/user compose [
+    append system/contexts/user compose [
 
-		and: (:and*)
+        and: (:and*)
 
-		or: (:or+)
+        or: (:or+)
 
-		xor: (:xor-)
+        xor: (:xor-)
 
-		; Not contentious, but trying to excise this ASAP
-		funct: (:function)
+        ; Not contentious, but trying to excise this ASAP
+        funct: (:function)
 
-		; Add simple parse back in by delegating to split, and return a LOGIC!
-		parse: (function [
-			{Parses a string or block series according to grammar rules.}
-			input [any-series!] "Input series to parse"
-			rules [block! string! none!] "Rules (string! is <r3-legacy>, use SPLIT)"
-			/case "Uses case-sensitive comparison"
-			/all "Ignored refinement for <r3-legacy>"
-		][
-			lib/case [
-				none? rules [
-					split input charset reduce [tab space cr lf]
-				]
+        ; Add simple parse back in by delegating to split, and return a LOGIC!
+        parse: (function [
+            {Parses a string or block series according to grammar rules.}
+            input [any-series!] "Input series to parse"
+            rules [block! string! none!] "Rules (string! is <r3-legacy>, use SPLIT)"
+            /case "Uses case-sensitive comparison"
+            /all "Ignored refinement for <r3-legacy>"
+        ][
+            lib/case [
+                none? rules [
+                    split input charset reduce [tab space cr lf]
+                ]
 
-				string? rules [
-					split input to-bitset rules
-				]
+                string? rules [
+                    split input to-bitset rules
+                ]
 
-				true [
-					; !!! We could write this as:
-					;
-					;     lib/parse/:case input rules
-					;
-					; However, system/options/refinements-true has been set.
-					; We could move the set to after the function is defined,
-					; but probably best since this is "mixed up" code to use
-					; the pattern that works either way.
-					;
-					true? apply :lib/parse [input rules case]
-				]
-			]
-		])
+                true [
+                    ; !!! We could write this as:
+                    ;
+                    ;     lib/parse/:case input rules
+                    ;
+                    ; However, system/options/refinements-true has been set.
+                    ; We could move the set to after the function is defined,
+                    ; but probably best since this is "mixed up" code to use
+                    ; the pattern that works either way.
+                    ;
+                    true? apply :lib/parse [input rules case]
+                ]
+            ]
+        ])
 
-		; For reasons of optimization, underuse, aesthetics, and a better
-		; future strategy for the feature... /only has been removed from
-		; the conditionals.
+        ; For reasons of optimization, underuse, aesthetics, and a better
+        ; future strategy for the feature... /only has been removed from
+        ; the conditionals.
 
-		if: (func [
-			{If TRUE condition, return arg; evaluate blocks by default.}
-			condition
-			true-branch [any-value!]
-			/only "Return block arg instead of evaluating it."
-		][
-			lib/either all [only block? :true-branch] [
-				lib/if :condition [:true-branch]
-			][
-				lib/if :condition :true-branch
-			]
-		])
+        if: (func [
+            {If TRUE condition, return arg; evaluate blocks by default.}
+            condition
+            true-branch [any-value!]
+            /only "Return block arg instead of evaluating it."
+        ][
+            lib/either all [only block? :true-branch] [
+                lib/if :condition [:true-branch]
+            ][
+                lib/if :condition :true-branch
+            ]
+        ])
 
-		either: (func [
-			{If TRUE condition return first arg, else second; evaluate blocks by default.}
-			condition
-			true-branch [any-value!]
-			false-branch [any-value!]
-			/only "Suppress evaluation of block args."
-		][
-			lib/either :condition [
-				lib/either all [only block? :true-branch] [
-					:true-branch
-				] :true-branch
-			][
-				lib/either all [only block? :false-branch] [
-					:false-branch
-				] :false-branch
-			]
-		])
+        either: (func [
+            {If TRUE condition return first arg, else second; evaluate blocks by default.}
+            condition
+            true-branch [any-value!]
+            false-branch [any-value!]
+            /only "Suppress evaluation of block args."
+        ][
+            lib/either :condition [
+                lib/either all [only block? :true-branch] [
+                    :true-branch
+                ] :true-branch
+            ][
+                lib/either all [only block? :false-branch] [
+                    :false-branch
+                ] :false-branch
+            ]
+        ])
 
-		unless: (func [
-			{If FALSE condition, return arg; evaluate blocks by default.}
-			condition
-			false-branch [any-value!]
-			/only "Return block arg instead of evaluating it."
-		][
-			lib/either all [only block? :false-branch] [
-				lib/unless :condition [:false-branch]
-			][
-				lib/unless :condition :false-branch
-			]
-		])
-	]
+        unless: (func [
+            {If FALSE condition, return arg; evaluate blocks by default.}
+            condition
+            false-branch [any-value!]
+            /only "Return block arg instead of evaluating it."
+        ][
+            lib/either all [only block? :false-branch] [
+                lib/unless :condition [:false-branch]
+            ][
+                lib/unless :condition :false-branch
+            ]
+        ])
+    ]
 
-	return none
+    return none
 ]

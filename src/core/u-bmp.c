@@ -32,12 +32,12 @@
 
 //**********************************************************************
 
-#define	WADJUST(x) (((x * 3L + 3) / 4) * 4)
+#define WADJUST(x) (((x * 3L + 3) / 4) * 4)
 
-typedef unsigned char	BYTE;
-typedef unsigned short	WORD;
-typedef unsigned int	DWORD;
-typedef int				LONG;
+typedef unsigned char   BYTE;
+typedef unsigned short  WORD;
+typedef unsigned int    DWORD;
+typedef int             LONG;
 
 typedef struct tagBITMAP
 {
@@ -47,7 +47,7 @@ typedef struct tagBITMAP
     int     bmWidthBytes;
     BYTE    bmPlanes;
     BYTE    bmBitsPixel;
-    void 	*bmBits;
+    void    *bmBits;
 } BITMAP;
 typedef BITMAP *PBITMAP;
 typedef BITMAP *NPBITMAP;
@@ -144,129 +144,129 @@ typedef RGBQUAD *RGBQUADPTR;
 //**********************************************************************
 
 static int longaligned(void) {
-	static char filldata[] = {0,0,1,1,1,1};
-	struct {
-		unsigned short a;
-		unsigned int b;
-	} a;
-	memset(&a, '\0', sizeof(a));
-	memcpy(&a, filldata, 6);
-	if (a.b != 0x01010101) return TRUE;
-	return FALSE;
+    static char filldata[] = {0,0,1,1,1,1};
+    struct {
+        unsigned short a;
+        unsigned int b;
+    } a;
+    memset(&a, '\0', sizeof(a));
+    memcpy(&a, filldata, 6);
+    if (a.b != 0x01010101) return TRUE;
+    return FALSE;
 }
 
 void Map_Bytes(void *dstp, REBYTE **srcp, const char *map) {
-	REBYTE *src = *srcp;
-	REBYTE *dst = cast(REBYTE*, dstp);
-	char c;
+    REBYTE *src = *srcp;
+    REBYTE *dst = cast(REBYTE*, dstp);
+    char c;
 #ifdef ENDIAN_LITTLE
-	while ((c = *map++) != 0) {
-		switch(c) {
-		case 'b':
-			*dst++ = *src++;
-			break;
+    while ((c = *map++) != 0) {
+        switch(c) {
+        case 'b':
+            *dst++ = *src++;
+            break;
 
-		case 's':
-			*((short *)dst) = *((short *)src);
-			dst += sizeof(short);
-			src += 2;
-			break;
+        case 's':
+            *((short *)dst) = *((short *)src);
+            dst += sizeof(short);
+            src += 2;
+            break;
 
-		case 'l':
-			if (longaligned()) {
-				while(((REBUPT)dst)&3)
-					dst++;
-			}
-			*((REBCNT *)dst) = *((REBCNT *)src);
-			dst += sizeof(REBCNT);
-			src += 4;
-			break;
-		}
-	}
+        case 'l':
+            if (longaligned()) {
+                while(((REBUPT)dst)&3)
+                    dst++;
+            }
+            *((REBCNT *)dst) = *((REBCNT *)src);
+            dst += sizeof(REBCNT);
+            src += 4;
+            break;
+        }
+    }
 #else
-	while ((c = *map++) != 0) {
-		switch(c) {
-		case 'b':
-			*dst++ = *src++;
-			break;
+    while ((c = *map++) != 0) {
+        switch(c) {
+        case 'b':
+            *dst++ = *src++;
+            break;
 
-		case 's':
-			*((short *)dst) = src[0]|(src[1]<<8);
-			dst += sizeof(short);
-			src += 2;
-			break;
+        case 's':
+            *((short *)dst) = src[0]|(src[1]<<8);
+            dst += sizeof(short);
+            src += 2;
+            break;
 
-		case 'l':
-			if (longaligned()) {
-				while (((unsigned long)dst)&3)
-					dst++;
-			}
-			*((REBCNT *)dst) = src[0]|(src[1]<<8)|
-					(src[2]<<16)|(src[3]<<24);
-			dst += sizeof(REBCNT);
-			src += 4;
-			break;
-		}
-	}
+        case 'l':
+            if (longaligned()) {
+                while (((unsigned long)dst)&3)
+                    dst++;
+            }
+            *((REBCNT *)dst) = src[0]|(src[1]<<8)|
+                    (src[2]<<16)|(src[3]<<24);
+            dst += sizeof(REBCNT);
+            src += 4;
+            break;
+        }
+    }
 #endif
-	*srcp = src;
+    *srcp = src;
 }
 
 void Unmap_Bytes(void *srcp, REBYTE **dstp, const char *map) {
-	REBYTE *src = cast(REBYTE*, srcp);
-	REBYTE *dst = *dstp;
-	char c;
+    REBYTE *src = cast(REBYTE*, srcp);
+    REBYTE *dst = *dstp;
+    char c;
 #ifdef ENDIAN_LITTLE
-	while ((c = *map++) != 0) {
-		switch(c) {
-		case 'b':
-			*dst++ = *src++;
-			break;
+    while ((c = *map++) != 0) {
+        switch(c) {
+        case 'b':
+            *dst++ = *src++;
+            break;
 
-		case 's':
-			*((short *)dst) = *((short *)src);
-			src += sizeof(short);
-			dst += 2;
-			break;
+        case 's':
+            *((short *)dst) = *((short *)src);
+            src += sizeof(short);
+            dst += 2;
+            break;
 
-		case 'l':
-			if (longaligned()) {
-				while(((REBUPT)src)&3)
-					src++;
-			}
-			*((REBCNT *)dst) = *((REBCNT *)src);
-			src += sizeof(REBCNT);
-			dst += 4;
-			break;
-		}
-	}
+        case 'l':
+            if (longaligned()) {
+                while(((REBUPT)src)&3)
+                    src++;
+            }
+            *((REBCNT *)dst) = *((REBCNT *)src);
+            src += sizeof(REBCNT);
+            dst += 4;
+            break;
+        }
+    }
 #else
-	while ((c = *map++) != 0) {
-		switch(c) {
-		case 'b':
-			*dst++ = *src++;
-			break;
+    while ((c = *map++) != 0) {
+        switch(c) {
+        case 'b':
+            *dst++ = *src++;
+            break;
 
-		case 's':
-			*((short *)dst) = src[0]|(src[1]<<8);
-			src += sizeof(short);
-			dst += 2;
-			break;
+        case 's':
+            *((short *)dst) = src[0]|(src[1]<<8);
+            src += sizeof(short);
+            dst += 2;
+            break;
 
-		case 'l':
-			if (longaligned()) {
-				while (((unsigned long)src)&3)
-					src++;
-			}
-			*((REBCNT *)dst) = src[0]|(src[1]<<8)|
-					(src[2]<<16)|(src[3]<<24);
-			src += sizeof(REBCNT);
-			dst += 4;
-			break;
-		}
-	}
+        case 'l':
+            if (longaligned()) {
+                while (((unsigned long)src)&3)
+                    src++;
+            }
+            *((REBCNT *)dst) = src[0]|(src[1]<<8)|
+                    (src[2]<<16)|(src[3]<<24);
+            src += sizeof(REBCNT);
+            dst += 4;
+            break;
+        }
+    }
 #endif
-	*dstp = dst;
+    *dstp = dst;
 }
 
 
@@ -280,227 +280,227 @@ void Unmap_Bytes(void *srcp, REBYTE **dstp, const char *map) {
 //
 static void Decode_BMP_Image(REBCDI *codi)
 {
-	REBINT				i, j, x, y, c;
-	REBINT				colors, compression, bitcount;
-	REBINT				w, h;
-	BITMAPFILEHEADER	bmfh;
-	BITMAPINFOHEADER	bmih;
-	BITMAPCOREHEADER	bmch;
-	REBYTE				*cp, *tp;
-	REBCNT				*dp;
-	RGBQUADPTR			color;
-	RGBQUADPTR			ctab = 0;
+    REBINT              i, j, x, y, c;
+    REBINT              colors, compression, bitcount;
+    REBINT              w, h;
+    BITMAPFILEHEADER    bmfh;
+    BITMAPINFOHEADER    bmih;
+    BITMAPCOREHEADER    bmch;
+    REBYTE              *cp, *tp;
+    REBCNT              *dp;
+    RGBQUADPTR          color;
+    RGBQUADPTR          ctab = 0;
 
-	cp = codi->data;
-	Map_Bytes(&bmfh, &cp, mapBITMAPFILEHEADER);
-	if (bmfh.bfType[0] != 'B' || bmfh.bfType[1] != 'M') {
-		codi->error = CODI_ERR_SIGNATURE;
-		return;
-	}
-	if (codi->action == CODI_ACT_IDENTIFY) return; // no error means success
+    cp = codi->data;
+    Map_Bytes(&bmfh, &cp, mapBITMAPFILEHEADER);
+    if (bmfh.bfType[0] != 'B' || bmfh.bfType[1] != 'M') {
+        codi->error = CODI_ERR_SIGNATURE;
+        return;
+    }
+    if (codi->action == CODI_ACT_IDENTIFY) return; // no error means success
 
-	tp = cp;
-	Map_Bytes(&bmih, &cp, mapBITMAPINFOHEADER);
-	if (bmih.biSize < sizeof(BITMAPINFOHEADER)) {
-		cp = tp;
-		Map_Bytes(&bmch, &cp, mapBITMAPCOREHEADER);
+    tp = cp;
+    Map_Bytes(&bmih, &cp, mapBITMAPINFOHEADER);
+    if (bmih.biSize < sizeof(BITMAPINFOHEADER)) {
+        cp = tp;
+        Map_Bytes(&bmch, &cp, mapBITMAPCOREHEADER);
 
-		w = bmch.bcWidth;
-		h = bmch.bcHeight;
-		compression = 0;
-		bitcount = bmch.bcBitCount;
+        w = bmch.bcWidth;
+        h = bmch.bcHeight;
+        compression = 0;
+        bitcount = bmch.bcBitCount;
 
-		if (bmch.bcBitCount < 24)
-			colors = 1 << bmch.bcBitCount;
-		else
-			colors = 0;
+        if (bmch.bcBitCount < 24)
+            colors = 1 << bmch.bcBitCount;
+        else
+            colors = 0;
 
-		if (colors) {
-			ctab = ALLOC_ARRAY(RGBQUAD, colors);
-			for (i = 0; i<colors; i++) {
-				ctab[i].rgbBlue = *cp++;
-				ctab[i].rgbGreen = *cp++;
-				ctab[i].rgbRed = *cp++;
-				ctab[i].rgbReserved = 0;
-			}
-		}
-	}
-	else {
-		w = bmih.biWidth;
-		h = bmih.biHeight;
-		compression = bmih.biCompression;
-		bitcount = bmih.biBitCount;
+        if (colors) {
+            ctab = ALLOC_ARRAY(RGBQUAD, colors);
+            for (i = 0; i<colors; i++) {
+                ctab[i].rgbBlue = *cp++;
+                ctab[i].rgbGreen = *cp++;
+                ctab[i].rgbRed = *cp++;
+                ctab[i].rgbReserved = 0;
+            }
+        }
+    }
+    else {
+        w = bmih.biWidth;
+        h = bmih.biHeight;
+        compression = bmih.biCompression;
+        bitcount = bmih.biBitCount;
 
-		if (bmih.biClrUsed == 0 && bmih.biBitCount < 24)
-			colors = 1 << bmih.biBitCount;
-		else
-			colors = bmih.biClrUsed;
+        if (bmih.biClrUsed == 0 && bmih.biBitCount < 24)
+            colors = 1 << bmih.biBitCount;
+        else
+            colors = bmih.biClrUsed;
 
-		if (colors) {
-			ctab = ALLOC_ARRAY(RGBQUAD, colors);
-			memcpy(ctab, cp, colors * sizeof(RGBQUAD));
-			cp += colors * sizeof(RGBQUAD);
-		}
-	}
+        if (colors) {
+            ctab = ALLOC_ARRAY(RGBQUAD, colors);
+            memcpy(ctab, cp, colors * sizeof(RGBQUAD));
+            cp += colors * sizeof(RGBQUAD);
+        }
+    }
 
-	if (bmfh.bfOffBits != (DWORD)(cp - codi->data))
-		cp = codi->data + bmfh.bfOffBits;
+    if (bmfh.bfOffBits != (DWORD)(cp - codi->data))
+        cp = codi->data + bmfh.bfOffBits;
 
-	codi->w = w;
-	codi->h = h;
-	codi->extra.bits = ALLOC_ARRAY(u32, w * h);
+    codi->w = w;
+    codi->h = h;
+    codi->extra.bits = ALLOC_ARRAY(u32, w * h);
 
-	dp = cast(REBCNT *, codi->extra.bits);
-	dp += w * h - w;
+    dp = cast(REBCNT *, codi->extra.bits);
+    dp += w * h - w;
 
-	for (y = 0; y<h; y++) {
-		switch(compression) {
-		case BI_RGB:
-			switch(bitcount) {
-			case 1:
-				x = 0;
-				for (i = 0; i<w; i++) {
-					if (x == 0) {
-						x = 0x80;
-						c = *cp++ & 0xff;
-					}
-					color = &ctab[(c&x) != 0];
-					*dp++ = TO_PIXEL_COLOR(color->rgbRed, color->rgbGreen, color->rgbBlue, 0xff);
-					x >>= 1;
-				}
-				i = (w+7) / 8;
-				break;
+    for (y = 0; y<h; y++) {
+        switch(compression) {
+        case BI_RGB:
+            switch(bitcount) {
+            case 1:
+                x = 0;
+                for (i = 0; i<w; i++) {
+                    if (x == 0) {
+                        x = 0x80;
+                        c = *cp++ & 0xff;
+                    }
+                    color = &ctab[(c&x) != 0];
+                    *dp++ = TO_PIXEL_COLOR(color->rgbRed, color->rgbGreen, color->rgbBlue, 0xff);
+                    x >>= 1;
+                }
+                i = (w+7) / 8;
+                break;
 
-			case 4:
-				for (i = 0; i<w; i++) {
-					if ((i&1) == 0) {
-						c = *cp++ & 0xff;
-						x = c >> 4;
-					}
-					else
-						x = c & 0xf;
-					if (x > colors) {
-						codi->error = CODI_ERR_BAD_TABLE;
-						goto error;
-					}
-					color = &ctab[x];
-					*dp++ = TO_PIXEL_COLOR(color->rgbRed, color->rgbGreen, color->rgbBlue, 0xff);
-				}
-				i = (w+1) / 2;
-				break;
+            case 4:
+                for (i = 0; i<w; i++) {
+                    if ((i&1) == 0) {
+                        c = *cp++ & 0xff;
+                        x = c >> 4;
+                    }
+                    else
+                        x = c & 0xf;
+                    if (x > colors) {
+                        codi->error = CODI_ERR_BAD_TABLE;
+                        goto error;
+                    }
+                    color = &ctab[x];
+                    *dp++ = TO_PIXEL_COLOR(color->rgbRed, color->rgbGreen, color->rgbBlue, 0xff);
+                }
+                i = (w+1) / 2;
+                break;
 
-			case 8:
-				for (i = 0; i<w; i++) {
-					c = *cp++ & 0xff;
-					if (c > colors) {
-						codi->error = CODI_ERR_BAD_TABLE;
-						goto error;
-					}
-					color = &ctab[c];
-					*dp++ = TO_PIXEL_COLOR(color->rgbRed, color->rgbGreen, color->rgbBlue, 0xff);
-				}
-				break;
+            case 8:
+                for (i = 0; i<w; i++) {
+                    c = *cp++ & 0xff;
+                    if (c > colors) {
+                        codi->error = CODI_ERR_BAD_TABLE;
+                        goto error;
+                    }
+                    color = &ctab[c];
+                    *dp++ = TO_PIXEL_COLOR(color->rgbRed, color->rgbGreen, color->rgbBlue, 0xff);
+                }
+                break;
 
-			case 24:
-				for (i = 0; i<w; i++) {
-					*dp++ = TO_PIXEL_COLOR(cp[2], cp[1], cp[0], 0xff);
-					cp += 3;
-				}
-				i = w * 3;
-				break;
+            case 24:
+                for (i = 0; i<w; i++) {
+                    *dp++ = TO_PIXEL_COLOR(cp[2], cp[1], cp[0], 0xff);
+                    cp += 3;
+                }
+                i = w * 3;
+                break;
 
-			default:
-				codi->error = CODI_ERR_BIT_LEN;
-				goto error;
-			}
-			while (i++ % 4)
-				cp++;
-			break;
+            default:
+                codi->error = CODI_ERR_BIT_LEN;
+                goto error;
+            }
+            while (i++ % 4)
+                cp++;
+            break;
 
-		case BI_RLE4:
-			i = 0;
-			for (;;) {
-				c = *cp++ & 0xff;
+        case BI_RLE4:
+            i = 0;
+            for (;;) {
+                c = *cp++ & 0xff;
 
-				if (c == 0) {
-					c = *cp++ & 0xff;
-					if (c == 0 || c == 1)
-						break;
-					if (c == 2) {
-						codi->error = CODI_ERR_BAD_TABLE;
-						goto error;
-					}
-					for (j = 0; j<c; j++) {
-						if (i == w)
-							goto error;
-						if ((j&1) == 0) {
-							x = *cp++ & 0xff;
-							color = &ctab[x>>4];
-						}
-						else
-							color = &ctab[x&0x0f];
-						*dp++ = TO_PIXEL_COLOR(color->rgbRed, color->rgbGreen, color->rgbBlue, 0xff);
-					}
-					j = (c+1) / 2;
-					while (j++%2)
-						cp++;
-				}
-				else {
-					x = *cp++ & 0xff;
-					for (j = 0; j<c; j++) {
-						if (i == w) {
-							codi->error = CODI_ERR_BAD_TABLE;
-							goto error;
-						}
-						if (j&1)
-							color = &ctab[x&0x0f];
-						else
-							color = &ctab[x>>4];
-						*dp++ = TO_PIXEL_COLOR(color->rgbRed, color->rgbGreen, color->rgbBlue, 0xff);
-					}
-				}
-			}
-			break;
+                if (c == 0) {
+                    c = *cp++ & 0xff;
+                    if (c == 0 || c == 1)
+                        break;
+                    if (c == 2) {
+                        codi->error = CODI_ERR_BAD_TABLE;
+                        goto error;
+                    }
+                    for (j = 0; j<c; j++) {
+                        if (i == w)
+                            goto error;
+                        if ((j&1) == 0) {
+                            x = *cp++ & 0xff;
+                            color = &ctab[x>>4];
+                        }
+                        else
+                            color = &ctab[x&0x0f];
+                        *dp++ = TO_PIXEL_COLOR(color->rgbRed, color->rgbGreen, color->rgbBlue, 0xff);
+                    }
+                    j = (c+1) / 2;
+                    while (j++%2)
+                        cp++;
+                }
+                else {
+                    x = *cp++ & 0xff;
+                    for (j = 0; j<c; j++) {
+                        if (i == w) {
+                            codi->error = CODI_ERR_BAD_TABLE;
+                            goto error;
+                        }
+                        if (j&1)
+                            color = &ctab[x&0x0f];
+                        else
+                            color = &ctab[x>>4];
+                        *dp++ = TO_PIXEL_COLOR(color->rgbRed, color->rgbGreen, color->rgbBlue, 0xff);
+                    }
+                }
+            }
+            break;
 
-		case BI_RLE8:
-			i = 0;
-			for (;;) {
-				c = *cp++ & 0xff;
+        case BI_RLE8:
+            i = 0;
+            for (;;) {
+                c = *cp++ & 0xff;
 
-				if (c == 0) {
-					c = *cp++ & 0xff;
-					if (c == 0 || c == 1)
-						break;
-					if (c == 2) {
-						codi->error = CODI_ERR_BAD_TABLE;
-						goto error;
-					}
-					for (j = 0; j<c; j++) {
-						x = *cp++ & 0xff;
-						color = &ctab[x];
-						*dp++ = TO_PIXEL_COLOR(color->rgbRed, color->rgbGreen, color->rgbBlue, 0xff);
-					}
-					while (j++ % 2)
-						cp++;
-				}
-				else {
-					x = *cp++ & 0xff;
-					for (j = 0; j<c; j++) {
-						color = &ctab[x];
-						*dp++ = TO_PIXEL_COLOR(color->rgbRed, color->rgbGreen, color->rgbBlue, 0xff);
-					}
-				}
-			}
-			break;
+                if (c == 0) {
+                    c = *cp++ & 0xff;
+                    if (c == 0 || c == 1)
+                        break;
+                    if (c == 2) {
+                        codi->error = CODI_ERR_BAD_TABLE;
+                        goto error;
+                    }
+                    for (j = 0; j<c; j++) {
+                        x = *cp++ & 0xff;
+                        color = &ctab[x];
+                        *dp++ = TO_PIXEL_COLOR(color->rgbRed, color->rgbGreen, color->rgbBlue, 0xff);
+                    }
+                    while (j++ % 2)
+                        cp++;
+                }
+                else {
+                    x = *cp++ & 0xff;
+                    for (j = 0; j<c; j++) {
+                        color = &ctab[x];
+                        *dp++ = TO_PIXEL_COLOR(color->rgbRed, color->rgbGreen, color->rgbBlue, 0xff);
+                    }
+                }
+            }
+            break;
 
-		default:
-			codi->error = CODI_ERR_ENCODING;
-			goto error;
-		}
-		dp -= 2 * w;
-	}
+        default:
+            codi->error = CODI_ERR_ENCODING;
+            goto error;
+        }
+        dp -= 2 * w;
+    }
 error:
-	if (ctab) free(ctab);
+    if (ctab) free(ctab);
 }
 
 
@@ -514,57 +514,57 @@ error:
 //
 static void Encode_BMP_Image(REBCDI *codi)
 {
-	REBINT i, y;
-	REBINT w, h;
-	REBYTE *cp, *v;
-	REBCNT *dp;
-	BITMAPFILEHEADER bmfh;
-	BITMAPINFOHEADER bmih;
+    REBINT i, y;
+    REBINT w, h;
+    REBYTE *cp, *v;
+    REBCNT *dp;
+    BITMAPFILEHEADER bmfh;
+    BITMAPINFOHEADER bmih;
 
-	w = codi->w;
-	h = codi->h;
+    w = codi->w;
+    h = codi->h;
 
-	memset(&bmfh, 0, sizeof(bmfh));
-	bmfh.bfType[0] = 'B';
-	bmfh.bfType[1] = 'M';
-	bmfh.bfSize = 14 + 40 + h * WADJUST(w);
-	bmfh.bfOffBits = 14 + 40;
+    memset(&bmfh, 0, sizeof(bmfh));
+    bmfh.bfType[0] = 'B';
+    bmfh.bfType[1] = 'M';
+    bmfh.bfSize = 14 + 40 + h * WADJUST(w);
+    bmfh.bfOffBits = 14 + 40;
 
-	// Create binary string:
-	cp = codi->data = ALLOC_ARRAY(REBYTE, bmfh.bfSize);
-	codi->len = bmfh.bfSize;
-	Unmap_Bytes(&bmfh, &cp, mapBITMAPFILEHEADER);
+    // Create binary string:
+    cp = codi->data = ALLOC_ARRAY(REBYTE, bmfh.bfSize);
+    codi->len = bmfh.bfSize;
+    Unmap_Bytes(&bmfh, &cp, mapBITMAPFILEHEADER);
 
-	memset(&bmih, 0, sizeof(bmih));
-	bmih.biSize = 40;
-	bmih.biWidth = w;
-	bmih.biHeight = h;
-	bmih.biPlanes = 1;
-	bmih.biBitCount = 24;
-	bmih.biCompression = 0;
-	bmih.biSizeImage = 0;
-	bmih.biXPelsPerMeter = 0;
-	bmih.biYPelsPerMeter = 0;
-	bmih.biClrUsed = 0;
-	bmih.biClrImportant = 0;
-	Unmap_Bytes(&bmih, &cp, mapBITMAPINFOHEADER);
+    memset(&bmih, 0, sizeof(bmih));
+    bmih.biSize = 40;
+    bmih.biWidth = w;
+    bmih.biHeight = h;
+    bmih.biPlanes = 1;
+    bmih.biBitCount = 24;
+    bmih.biCompression = 0;
+    bmih.biSizeImage = 0;
+    bmih.biXPelsPerMeter = 0;
+    bmih.biYPelsPerMeter = 0;
+    bmih.biClrUsed = 0;
+    bmih.biClrImportant = 0;
+    Unmap_Bytes(&bmih, &cp, mapBITMAPINFOHEADER);
 
-	dp = cast(REBCNT *, codi->extra.bits);
-	dp += w * h - w;
+    dp = cast(REBCNT *, codi->extra.bits);
+    dp += w * h - w;
 
-	for (y = 0; y<h; y++) {
-		for (i = 0; i<w; i++) {
-			v = (REBYTE*)dp++;
-			cp[0] = v[C_B];
-			cp[1] = v[C_G];
-			cp[2] = v[C_R];
-			cp += 3;
-		}
-		i = w * 3;
-		while (i++ % 4)
-			*cp++ = 0;
-		dp -= 2 * w;
-	}
+    for (y = 0; y<h; y++) {
+        for (i = 0; i<w; i++) {
+            v = (REBYTE*)dp++;
+            cp[0] = v[C_B];
+            cp[1] = v[C_G];
+            cp[2] = v[C_R];
+            cp += 3;
+        }
+        i = w * 3;
+        while (i++ % 4)
+            *cp++ = 0;
+        dp -= 2 * w;
+    }
 }
 
 
@@ -573,25 +573,25 @@ static void Encode_BMP_Image(REBCDI *codi)
 //
 REBINT Codec_BMP_Image(REBCDI *codi)
 {
-	codi->error = 0;
+    codi->error = 0;
 
-	if (codi->action == CODI_ACT_IDENTIFY) {
-		Decode_BMP_Image(codi);
-		return CODI_CHECK; // error code is inverted result
-	}
+    if (codi->action == CODI_ACT_IDENTIFY) {
+        Decode_BMP_Image(codi);
+        return CODI_CHECK; // error code is inverted result
+    }
 
-	if (codi->action == CODI_ACT_DECODE) {
-		Decode_BMP_Image(codi);
-		return CODI_IMAGE;
-	}
+    if (codi->action == CODI_ACT_DECODE) {
+        Decode_BMP_Image(codi);
+        return CODI_IMAGE;
+    }
 
-	if (codi->action == CODI_ACT_ENCODE) {
-		Encode_BMP_Image(codi);
-		return CODI_BINARY;
-	}
+    if (codi->action == CODI_ACT_ENCODE) {
+        Encode_BMP_Image(codi);
+        return CODI_BINARY;
+    }
 
-	codi->error = CODI_ERR_NA;
-	return CODI_ERROR;
+    codi->error = CODI_ERR_NA;
+    return CODI_ERROR;
 }
 
 
@@ -600,5 +600,5 @@ REBINT Codec_BMP_Image(REBCDI *codi)
 //
 void Init_BMP_Codec(void)
 {
-	Register_Codec(cb_cast("bmp"), Codec_BMP_Image);
+    Register_Codec(cb_cast("bmp"), Codec_BMP_Image);
 }

@@ -34,8 +34,8 @@
 //
 REBINT CT_None(REBVAL *a, REBVAL *b, REBINT mode)
 {
-	if (mode >= 0) return (VAL_TYPE(a) == VAL_TYPE(b));
-	return -1;
+    if (mode >= 0) return (VAL_TYPE(a) == VAL_TYPE(b));
+    return -1;
 }
 
 
@@ -44,8 +44,8 @@ REBINT CT_None(REBVAL *a, REBVAL *b, REBINT mode)
 //
 REBFLG MT_None(REBVAL *out, REBVAL *data, enum Reb_Kind type)
 {
-	VAL_SET(out, type);
-	return TRUE;
+    VAL_SET(out, type);
+    return TRUE;
 }
 
 
@@ -56,32 +56,32 @@ REBFLG MT_None(REBVAL *out, REBVAL *data, enum Reb_Kind type)
 //
 REBTYPE(None)
 {
-	REBVAL *val = D_ARG(1);
+    REBVAL *val = D_ARG(1);
 
-	switch (action) {
+    switch (action) {
 
-	case A_MAKE:
-	case A_TO:
-		if (IS_DATATYPE(val))
-			return VAL_TYPE_KIND(val) == REB_NONE ? R_NONE : R_UNSET;
-		else
-			return IS_NONE(val) ? R_NONE : R_UNSET;
+    case A_MAKE:
+    case A_TO:
+        if (IS_DATATYPE(val))
+            return VAL_TYPE_KIND(val) == REB_NONE ? R_NONE : R_UNSET;
+        else
+            return IS_NONE(val) ? R_NONE : R_UNSET;
 
-	case A_TAILQ:
-		if (IS_NONE(val)) return R_TRUE;
-		goto trap_it;
-	case A_INDEX_OF:
-	case A_LENGTH:
-	case A_SELECT:
-	case A_FIND:
-	case A_REMOVE:
-	case A_CLEAR:
-	case A_TAKE:
-		if (IS_NONE(val)) return R_NONE;
-	default:
-	trap_it:
-		fail (Error_Illegal_Action(VAL_TYPE(val), action));
-	}
+    case A_TAILQ:
+        if (IS_NONE(val)) return R_TRUE;
+        goto trap_it;
+    case A_INDEX_OF:
+    case A_LENGTH:
+    case A_SELECT:
+    case A_FIND:
+    case A_REMOVE:
+    case A_CLEAR:
+    case A_TAKE:
+        if (IS_NONE(val)) return R_NONE;
+    default:
+    trap_it:
+        fail (Error_Illegal_Action(VAL_TYPE(val), action));
+    }
 
-	return R_OUT;
+    return R_OUT;
 }

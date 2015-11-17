@@ -1,40 +1,40 @@
 REBOL [
-	System: "REBOL [R3] Language Interpreter and Run-time Environment"
-	Title: "Infix operator symbol definitions"
-	Rights: {
-		Copyright 2012 REBOL Technologies
-		REBOL is a trademark of REBOL Technologies
-	}
-	License: {
-		Licensed under the Apache License, Version 2.0.
-		See: http://www.apache.org/licenses/LICENSE-2.0
-	}
-	Purpose: {
-		This defines some infix operators.
+    System: "REBOL [R3] Language Interpreter and Run-time Environment"
+    Title: "Infix operator symbol definitions"
+    Rights: {
+        Copyright 2012 REBOL Technologies
+        REBOL is a trademark of REBOL Technologies
+    }
+    License: {
+        Licensed under the Apache License, Version 2.0.
+        See: http://www.apache.org/licenses/LICENSE-2.0
+    }
+    Purpose: {
+        This defines some infix operators.
 
-		See ops.r for how the "weird" words that have to be done through
-		a tricky SET manage to have bindings in the lib context, even
-		though they aren't picked up here as SET-WORD!.
-	}
+        See ops.r for how the "weird" words that have to be done through
+        a tricky SET manage to have bindings in the lib context, even
+        though they aren't picked up here as SET-WORD!.
+    }
 ]
 
 binary-to-infix: func [
-	{Convert a binary function to its infix equivalent}
-	value [any-function!]
+    {Convert a binary function to its infix equivalent}
+    value [any-function!]
 ][
-	; SPEC-OF isn't defined yet at this point in the boot...
-	func (
-		head insert (reflect :value 'spec) <infix>
-	)(
-		; WORDS-OF isn't defined either...
-		compose [
-			(:value) (map-each word reflect :value 'words [to get-word! word])
-		]
+    ; SPEC-OF isn't defined yet at this point in the boot...
+    func (
+        head insert (reflect :value 'spec) <infix>
+    )(
+        ; WORDS-OF isn't defined either...
+        compose [
+            (:value) (map-each word reflect :value 'words [to get-word! word])
+        ]
 
-		; Note that this is effectively "compiling in" the function as
-		; a direct value, which is kind of interesting...this means that
-		; changing ADD won't change the behavior of +
-	)
+        ; Note that this is effectively "compiling in" the function as
+        ; a direct value, which is kind of interesting...this means that
+        ; changing ADD won't change the behavior of +
+    )
 ]
 
 +: binary-to-infix :add

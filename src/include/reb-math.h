@@ -28,9 +28,9 @@
 
 // Decimal number formatting specifications:
 typedef struct Reb_Deci_Spec {
-	REBDEC dec;		// number to form
-	REBINT len;		// # of digits requested
-	REBCHR *out;	// result: string of digits (no point or sign)
-	REBINT point;	// result: position of decimal point
-	REBINT sign;	// result: sign of number
+    REBDEC dec;     // number to form
+    REBINT len;     // # of digits requested
+    REBCHR *out;    // result: string of digits (no point or sign)
+    REBINT point;   // result: position of decimal point
+    REBINT sign;    // result: sign of number
 } REBDCS;

@@ -23,32 +23,32 @@
 **  Module:  sys-state.h
 **  Author:  Carl Sassenrath, @HostileFork
 **  Notes:
-**		Rebol is settled upon a stable and pervasive implementation
-**		baseline of ANSI-C (C89).  That commitment provides certain
-**		advantages.  One of the disadvantages is that there is no safe
-**		way to do non-local jumps with stack unwinding (as in C++).  If
-**		you've written some code that performs a raw malloc and then
-**		wants to "throw" with a longjmp, that will leak the malloc.
+**      Rebol is settled upon a stable and pervasive implementation
+**      baseline of ANSI-C (C89).  That commitment provides certain
+**      advantages.  One of the disadvantages is that there is no safe
+**      way to do non-local jumps with stack unwinding (as in C++).  If
+**      you've written some code that performs a raw malloc and then
+**      wants to "throw" with a longjmp, that will leak the malloc.
 **
-**		Basically all code must be aware of "throws", and if one can
-**		happen then there must be explicit handling of the cleanup.
-**		This must be either at the point of the longjmp, or the moment
-**		when the setjmp runs its "true" branch after a non-local jump:
+**      Basically all code must be aware of "throws", and if one can
+**      happen then there must be explicit handling of the cleanup.
+**      This must be either at the point of the longjmp, or the moment
+**      when the setjmp runs its "true" branch after a non-local jump:
 **
-**			http://stackoverflow.com/questions/1376085/
+**          http://stackoverflow.com/questions/1376085/
 **
-**		(Note:  If you are integrating with C++ and a longjmp crosses
-**		a constructed object, abandon all hope...UNLESS you use Ren/C++.
-**		It is careful to avoid this trap, and you don't want to redo
-**		that work.)
+**      (Note:  If you are integrating with C++ and a longjmp crosses
+**      a constructed object, abandon all hope...UNLESS you use Ren/C++.
+**      It is careful to avoid this trap, and you don't want to redo
+**      that work.)
 **
-**		!!! v-- TRIAGE NOT YET INTEGRATED IN REN/C
+**      !!! v-- TRIAGE NOT YET INTEGRATED IN REN/C
 **
-**		In order to mitigate the inherent failure of trying to emulate
-**		stack unwinding via longjmp, Rebol wraps the abstraction a bit.
-**		If you had allocated any series and they were in "triage" at
-**		the time the "throw" happened, then those will be automatically
-**		freed (the garbage collector didn't know about them yet).
+**      In order to mitigate the inherent failure of trying to emulate
+**      stack unwinding via longjmp, Rebol wraps the abstraction a bit.
+**      If you had allocated any series and they were in "triage" at
+**      the time the "throw" happened, then those will be automatically
+**      freed (the garbage collector didn't know about them yet).
 **
 ***********************************************************************/
 
@@ -79,11 +79,11 @@
 // It is best to use a new variable if you encounter such a warning.
 
 #ifdef HAS_POSIX_SIGNAL
-	#define SET_JUMP(s) sigsetjmp((s), 1)
-	#define LONG_JUMP(s, v) siglongjmp((s), (v))
+    #define SET_JUMP(s) sigsetjmp((s), 1)
+    #define LONG_JUMP(s, v) siglongjmp((s), (v))
 #else
-	#define SET_JUMP(s) setjmp(s)
-	#define LONG_JUMP(s, v) longjmp((s), (v))
+    #define SET_JUMP(s) setjmp(s)
+    #define LONG_JUMP(s, v) longjmp((s), (v))
 #endif
 
 
@@ -91,21 +91,21 @@
 // wanted to set up an opportunity to intercept a `fail (Error_XXX())`
 
 typedef struct Rebol_State {
-	struct Rebol_State *last_state;
+    struct Rebol_State *last_state;
 
-	REBINT dsp;
-	struct Reb_Call *dsf;
-	REBCNT series_guard_tail;
-	REBCNT value_guard_tail;
-	REBSER *error_frame;
-	REBINT gc_disable;      // Count of GC_Disables at time of Push
+    REBINT dsp;
+    struct Reb_Call *dsf;
+    REBCNT series_guard_tail;
+    REBCNT value_guard_tail;
+    REBSER *error_frame;
+    REBINT gc_disable;      // Count of GC_Disables at time of Push
 
-	REBCNT manuals_tail;	// Where GC_Manuals was when state started
+    REBCNT manuals_tail;    // Where GC_Manuals was when state started
 
 #ifdef HAS_POSIX_SIGNAL
-	sigjmp_buf cpu_state;
+    sigjmp_buf cpu_state;
 #else
-	jmp_buf cpu_state;
+    jmp_buf cpu_state;
 #endif
 } REBOL_STATE;
 
@@ -133,23 +133,23 @@ typedef struct Rebol_State {
 // ugly, it helps establish that anyone modifying this code later not be
 // able to avoid the truth of the limitation:
 //
-//		http://stackoverflow.com/questions/30416403/
+//      http://stackoverflow.com/questions/30416403/
 
 #define PUSH_TRAP(e,s) \
-	do { \
-		Push_Trap_Helper(s); \
-		assert((s)->last_state != NULL); /* top push MUST handle halts */ \
-		if (!SET_JUMP((s)->cpu_state)) { \
-			/* this branch will always be run */ \
-			*(e) = NULL; \
-		} else { \
-			/* this runs if before the DROP_TRAP a longjmp() happens */ \
-			if (Trapped_Helper_Halted(s)) \
-				fail ((s)->error_frame); /* proxy the halt up the stack */ \
-			else \
-				*(e) = (s)->error_frame; \
-		} \
-	} while (0)
+    do { \
+        Push_Trap_Helper(s); \
+        assert((s)->last_state != NULL); /* top push MUST handle halts */ \
+        if (!SET_JUMP((s)->cpu_state)) { \
+            /* this branch will always be run */ \
+            *(e) = NULL; \
+        } else { \
+            /* this runs if before the DROP_TRAP a longjmp() happens */ \
+            if (Trapped_Helper_Halted(s)) \
+                fail ((s)->error_frame); /* proxy the halt up the stack */ \
+            else \
+                *(e) = (s)->error_frame; \
+        } \
+    } while (0)
 
 
 // PUSH_UNHALTABLE_TRAP is a form of PUSH_TRAP that will receive RE_HALT in
@@ -169,17 +169,17 @@ typedef struct Rebol_State {
 // Rebol code, for instance with a "TRY/HALTABLE" construction.
 
 #define PUSH_UNHALTABLE_TRAP(e,s) \
-	do { \
-		Push_Trap_Helper(s); \
-		if (!SET_JUMP((s)->cpu_state)) { \
-			/* this branch will always be run */ \
-			*(e) = NULL; \
-		} else { \
-			/* this runs if before the DROP_TRAP a longjmp() happens */ \
-			cast(void, Trapped_Helper_Halted(s)); \
-			*(e) = (s)->error_frame; \
-		} \
-	} while (0)
+    do { \
+        Push_Trap_Helper(s); \
+        if (!SET_JUMP((s)->cpu_state)) { \
+            /* this branch will always be run */ \
+            *(e) = NULL; \
+        } else { \
+            /* this runs if before the DROP_TRAP a longjmp() happens */ \
+            cast(void, Trapped_Helper_Halted(s)); \
+            *(e) = (s)->error_frame; \
+        } \
+    } while (0)
 
 
 // If either a haltable or non-haltable TRY is PUSHed, it must be DROP'd.
@@ -188,18 +188,18 @@ typedef struct Rebol_State {
 // from.  (So do not call PUSH_TRAP in a function, then return from that
 // function and DROP_TRY at another stack level.)
 //
-//		"If the function that called setjmp has exited (whether by return
-//		or by a different longjmp higher up the stack), the behavior is
-//		undefined. In other words, only long jumps up the call stack
-//		are allowed."
+//      "If the function that called setjmp has exited (whether by return
+//      or by a different longjmp higher up the stack), the behavior is
+//      undefined. In other words, only long jumps up the call stack
+//      are allowed."
 //
-//		http://en.cppreference.com/w/c/program/longjmp
+//      http://en.cppreference.com/w/c/program/longjmp
 
 #define DROP_TRAP_SAME_STACKLEVEL_AS_PUSH(s) \
-	do { \
-		assert(GC_Series_Guard->tail == (s)->series_guard_tail); \
-		assert(GC_Value_Guard->tail == (s)->value_guard_tail); \
-		assert(GC_Disabled == (s)->gc_disable); \
-		assert(!(s)->error_frame); \
-		Saved_State = (s)->last_state; \
-	} while (0)
+    do { \
+        assert(GC_Series_Guard->tail == (s)->series_guard_tail); \
+        assert(GC_Value_Guard->tail == (s)->value_guard_tail); \
+        assert(GC_Disabled == (s)->gc_disable); \
+        assert(!(s)->error_frame); \
+        Saved_State = (s)->last_state; \
+    } while (0)

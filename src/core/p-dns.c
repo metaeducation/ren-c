@@ -36,108 +36,108 @@
 //
 static REB_R DNS_Actor(struct Reb_Call *call_, REBSER *port, REBCNT action)
 {
-	REBVAL *spec;
-	REBREQ *sock;
-	REBINT result;
-	REBVAL *arg;
-	REBCNT len;
-	REBOOL sync = FALSE; // act synchronously
-	REBVAL tmp;
+    REBVAL *spec;
+    REBREQ *sock;
+    REBINT result;
+    REBVAL *arg;
+    REBCNT len;
+    REBOOL sync = FALSE; // act synchronously
+    REBVAL tmp;
 
-	Validate_Port(port, action);
+    Validate_Port(port, action);
 
-	arg = DS_ARGC > 1 ? D_ARG(2) : NULL;
-	*D_OUT = *D_ARG(1);
+    arg = DS_ARGC > 1 ? D_ARG(2) : NULL;
+    *D_OUT = *D_ARG(1);
 
-	sock = cast(REBREQ*, Use_Port_State(port, RDI_DNS, sizeof(*sock)));
-	spec = OFV(port, STD_PORT_SPEC);
-	if (!IS_OBJECT(spec)) fail (Error(RE_INVALID_PORT));
+    sock = cast(REBREQ*, Use_Port_State(port, RDI_DNS, sizeof(*sock)));
+    spec = OFV(port, STD_PORT_SPEC);
+    if (!IS_OBJECT(spec)) fail (Error(RE_INVALID_PORT));
 
-	sock->timeout = 4000; // where does this go? !!!
+    sock->timeout = 4000; // where does this go? !!!
 
-	switch (action) {
+    switch (action) {
 
-	case A_READ:
-		if (!IS_OPEN(sock)) {
-			if (OS_DO_DEVICE(sock, RDC_OPEN))
-				fail (Error_On_Port(RE_CANNOT_OPEN, port, sock->error));
-			sync = TRUE;
-		}
+    case A_READ:
+        if (!IS_OPEN(sock)) {
+            if (OS_DO_DEVICE(sock, RDC_OPEN))
+                fail (Error_On_Port(RE_CANNOT_OPEN, port, sock->error));
+            sync = TRUE;
+        }
 
-		arg = Obj_Value(spec, STD_PORT_SPEC_NET_HOST);
+        arg = Obj_Value(spec, STD_PORT_SPEC_NET_HOST);
 
-		if (IS_TUPLE(arg) && Scan_Tuple(VAL_BIN(arg), LEN_BYTES(VAL_BIN(arg)), &tmp)) {
-			SET_FLAG(sock->modes, RST_REVERSE);
-			memcpy(&sock->special.net.remote_ip, VAL_TUPLE(&tmp), 4);
-		}
-		else if (IS_STRING(arg)) {
-			sock->common.data = VAL_BIN(arg);
-		}
-		else
-			fail (Error_On_Port(RE_INVALID_SPEC, port, -10));
+        if (IS_TUPLE(arg) && Scan_Tuple(VAL_BIN(arg), LEN_BYTES(VAL_BIN(arg)), &tmp)) {
+            SET_FLAG(sock->modes, RST_REVERSE);
+            memcpy(&sock->special.net.remote_ip, VAL_TUPLE(&tmp), 4);
+        }
+        else if (IS_STRING(arg)) {
+            sock->common.data = VAL_BIN(arg);
+        }
+        else
+            fail (Error_On_Port(RE_INVALID_SPEC, port, -10));
 
-		result = OS_DO_DEVICE(sock, RDC_READ);
-		if (result < 0)
-			fail (Error_On_Port(RE_READ_ERROR, port, sock->error));
+        result = OS_DO_DEVICE(sock, RDC_READ);
+        if (result < 0)
+            fail (Error_On_Port(RE_READ_ERROR, port, sock->error));
 
-		// Wait for it...
-		if (sync && result == DR_PEND) {
-			for (len = 0; GET_FLAG(sock->flags, RRF_PENDING) && len < 10; len++) {
-				OS_WAIT(2000, 0);
-			}
-			len = 1;
-			goto pick;
-		}
-		if (result == DR_DONE) {
-			len = 1;
-			goto pick;
-		}
-		break;
+        // Wait for it...
+        if (sync && result == DR_PEND) {
+            for (len = 0; GET_FLAG(sock->flags, RRF_PENDING) && len < 10; len++) {
+                OS_WAIT(2000, 0);
+            }
+            len = 1;
+            goto pick;
+        }
+        if (result == DR_DONE) {
+            len = 1;
+            goto pick;
+        }
+        break;
 
-	case A_PICK:  // FIRST - return result
-		if (!IS_OPEN(sock))
-			fail (Error_On_Port(RE_NOT_OPEN, port, -12));
+    case A_PICK:  // FIRST - return result
+        if (!IS_OPEN(sock))
+            fail (Error_On_Port(RE_NOT_OPEN, port, -12));
 
-		len = Get_Num_Arg(arg); // Position
+        len = Get_Num_Arg(arg); // Position
 pick:
-		if (len == 1) {
-			if (!sock->special.net.host_info || !GET_FLAG(sock->flags, RRF_DONE)) return R_NONE;
-			if (sock->error) {
-				OS_DO_DEVICE(sock, RDC_CLOSE);
-				fail (Error_On_Port(RE_READ_ERROR, port, sock->error));
-			}
-			if (GET_FLAG(sock->modes, RST_REVERSE)) {
-				Val_Init_String(D_OUT, Copy_Bytes(sock->common.data, LEN_BYTES(sock->common.data)));
-			} else {
-				Set_Tuple(D_OUT, cast(REBYTE*, &sock->special.net.remote_ip), 4);
-			}
-			OS_DO_DEVICE(sock, RDC_CLOSE);
-		}
-		else
-			fail (Error_Out_Of_Range(arg));
-		break;
+        if (len == 1) {
+            if (!sock->special.net.host_info || !GET_FLAG(sock->flags, RRF_DONE)) return R_NONE;
+            if (sock->error) {
+                OS_DO_DEVICE(sock, RDC_CLOSE);
+                fail (Error_On_Port(RE_READ_ERROR, port, sock->error));
+            }
+            if (GET_FLAG(sock->modes, RST_REVERSE)) {
+                Val_Init_String(D_OUT, Copy_Bytes(sock->common.data, LEN_BYTES(sock->common.data)));
+            } else {
+                Set_Tuple(D_OUT, cast(REBYTE*, &sock->special.net.remote_ip), 4);
+            }
+            OS_DO_DEVICE(sock, RDC_CLOSE);
+        }
+        else
+            fail (Error_Out_Of_Range(arg));
+        break;
 
-	case A_OPEN:
-		if (OS_DO_DEVICE(sock, RDC_OPEN))
-			fail (Error_On_Port(RE_CANNOT_OPEN, port, -12));
-		break;
+    case A_OPEN:
+        if (OS_DO_DEVICE(sock, RDC_OPEN))
+            fail (Error_On_Port(RE_CANNOT_OPEN, port, -12));
+        break;
 
-	case A_CLOSE:
-		OS_DO_DEVICE(sock, RDC_CLOSE);
-		break;
+    case A_CLOSE:
+        OS_DO_DEVICE(sock, RDC_CLOSE);
+        break;
 
-	case A_OPENQ:
-		if (IS_OPEN(sock)) return R_TRUE;
-		return R_FALSE;
+    case A_OPENQ:
+        if (IS_OPEN(sock)) return R_TRUE;
+        return R_FALSE;
 
-	case A_UPDATE:
-		return R_NONE;
+    case A_UPDATE:
+        return R_NONE;
 
-	default:
-		fail (Error_Illegal_Action(REB_PORT, action));
-	}
+    default:
+        fail (Error_Illegal_Action(REB_PORT, action));
+    }
 
-	return R_OUT;
+    return R_OUT;
 }
 
 
@@ -146,5 +146,5 @@ pick:
 //
 void Init_DNS_Scheme(void)
 {
-	Register_Scheme(SYM_DNS, 0, DNS_Actor);
+    Register_Scheme(SYM_DNS, 0, DNS_Actor);
 }

@@ -28,19 +28,19 @@
 ***********************************************************************/
 #include "sys-core.h"
 
-static REBARGS Main_Args;	// Not multi-threaded
+static REBARGS Main_Args;   // Not multi-threaded
 
 //
 //  Prompt_User: C
 //
 char *Prompt_User(void)
 {
-	char *text;
+    char *text;
 
-	Prin("DSP: %d Mem: %d >> ", DSP, PG_Mem_Usage);
-	text = Input_Str();
-	if (*text == '\n') exit(0);
-	return text;
+    Prin("DSP: %d Mem: %d >> ", DSP, PG_Mem_Usage);
+    text = Input_Str();
+    if (*text == '\n') exit(0);
+    return text;
 }
 
 
@@ -49,30 +49,30 @@ char *Prompt_User(void)
 //
 int main(int argc, char **argv)
 {
-	char *cmd;
+    char *cmd;
 
-	// Parse command line arguments. Done early. May affect REBOL boot.
-	Parse_Args(argc, argv, &Main_Args);
+    // Parse command line arguments. Done early. May affect REBOL boot.
+    Parse_Args(argc, argv, &Main_Args);
 
-	Print_Str("REBOL 3.0\n");
+    Print_Str("REBOL 3.0\n");
 
-	REBOL_Init(&Main_Args);
+    REBOL_Init(&Main_Args);
 
-	// Evaluate user input:
-	while (TRUE) {
-		cmd = Prompt_User();
-		REBOL_Do_String(cmd);
-		if (!IS_UNSET(DS_TOP)) {
-			//if (DSP > 0) {
-				if (!IS_ERROR(DS_TOP)) {
-					Prin("== ");
-					Print_Value(DS_TOP, 0, TRUE);
-				} else
-					Print_Value(DS_TOP, 0, FALSE);
-			//}
-		}
-		//DS_DROP; // result
-	}
+    // Evaluate user input:
+    while (TRUE) {
+        cmd = Prompt_User();
+        REBOL_Do_String(cmd);
+        if (!IS_UNSET(DS_TOP)) {
+            //if (DSP > 0) {
+                if (!IS_ERROR(DS_TOP)) {
+                    Prin("== ");
+                    Print_Value(DS_TOP, 0, TRUE);
+                } else
+                    Print_Value(DS_TOP, 0, FALSE);
+            //}
+        }
+        //DS_DROP; // result
+    }
 
-	return 0;
+    return 0;
 }
