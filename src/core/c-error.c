@@ -31,14 +31,13 @@
 #include "sys-core.h"
 
 
-/***********************************************************************
-**
-*/	void Push_Trap_Helper(REBOL_STATE *s)
-/*
-**		Used by both TRY and TRY_ANY, whose differentiation comes
-**		from how they react to HALT.
-**
-***********************************************************************/
+//
+//  Push_Trap_Helper: C
+// 
+// Used by both TRY and TRY_ANY, whose differentiation comes
+// from how they react to HALT.
+//
+void Push_Trap_Helper(REBOL_STATE *s)
 {
 	assert(Saved_State || (DSP == -1 && !DSF));
 
@@ -59,29 +58,28 @@
 }
 
 
-/***********************************************************************
-**
-*/	REBOOL Trapped_Helper_Halted(REBOL_STATE *state)
-/*
-**		This is used by both PUSH_TRAP and PUSH_UNHALTABLE_TRAP to do
-**		the work of responding to a longjmp.  (Hence it is run when
-**		setjmp returns TRUE.)  Its job is to safely recover from
-**		a sudden interruption, though the list of things which can
-**		be safely recovered from is finite.  Among the countless
-**		things that are not handled automatically would be a memory
-**		allocation.
-**
-**		(Note: This is a crucial difference between C and C++, as
-**		C++ will walk up the stack at each level and make sure
-**		any constructors have their associated destructors run.
-**		*Much* safer for large systems, though not without cost.
-**		Rebol's greater concern is not so much the cost of setup
-**		for stack unwinding, but being able to be compiled without
-**		requiring a C++ compiler.)
-**
-**		Returns whether the trapped error was a RE_HALT or not.
-**
-***********************************************************************/
+//
+//  Trapped_Helper_Halted: C
+// 
+// This is used by both PUSH_TRAP and PUSH_UNHALTABLE_TRAP to do
+// the work of responding to a longjmp.  (Hence it is run when
+// setjmp returns TRUE.)  Its job is to safely recover from
+// a sudden interruption, though the list of things which can
+// be safely recovered from is finite.  Among the countless
+// things that are not handled automatically would be a memory
+// allocation.
+// 
+// (Note: This is a crucial difference between C and C++, as
+// C++ will walk up the stack at each level and make sure
+// any constructors have their associated destructors run.
+// *Much* safer for large systems, though not without cost.
+// Rebol's greater concern is not so much the cost of setup
+// for stack unwinding, but being able to be compiled without
+// requiring a C++ compiler.)
+// 
+// Returns whether the trapped error was a RE_HALT or not.
+//
+REBOOL Trapped_Helper_Halted(REBOL_STATE *state)
 {
 	struct Reb_Call *call = CS_Top;
 	REBOOL halted;
@@ -121,16 +119,15 @@
 }
 
 
-/***********************************************************************
-**
-*/	void Convert_Name_To_Thrown_Debug(REBVAL *name, const REBVAL *arg)
-/*
-**		Debug-only version of CONVERT_NAME_TO_THROWN
-**
-**		Sets a task-local value to be associated with the name and
-**		mark it as the proxy value indicating a THROW().
-**
-***********************************************************************/
+//
+//  Convert_Name_To_Thrown_Debug: C
+// 
+// Debug-only version of CONVERT_NAME_TO_THROWN
+// 
+// Sets a task-local value to be associated with the name and
+// mark it as the proxy value indicating a THROW().
+//
+void Convert_Name_To_Thrown_Debug(REBVAL *name, const REBVAL *arg)
 {
 	assert(!THROWN(name));
 	VAL_SET_OPT(name, OPT_VALUE_THROWN);
@@ -142,18 +139,17 @@
 }
 
 
-/***********************************************************************
-**
-*/	void Catch_Thrown_Debug(REBVAL *out, REBVAL *thrown)
-/*
-**		Debug-only version of TAKE_THROWN_ARG
-**
-**		Gets the task-local value associated with the thrown,
-**		and clears the thrown bit from thrown.
-**
-**		WARNING: 'out' can be the same pointer as 'thrown'
-**
-***********************************************************************/
+//
+//  Catch_Thrown_Debug: C
+// 
+// Debug-only version of TAKE_THROWN_ARG
+// 
+// Gets the task-local value associated with the thrown,
+// and clears the thrown bit from thrown.
+// 
+// WARNING: 'out' can be the same pointer as 'thrown'
+//
+void Catch_Thrown_Debug(REBVAL *out, REBVAL *thrown)
 {
 	assert(THROWN(thrown));
 	VAL_CLR_OPT(thrown, OPT_VALUE_THROWN);
@@ -166,18 +162,17 @@
 }
 
 
-/***********************************************************************
-**
-*/	ATTRIBUTE_NO_RETURN void Fail_Core(REBSER *frame)
-/*
-**		Cause a "trap" of an error by longjmp'ing to the enclosing
-**		PUSH_TRAP or PUSH_TRAP_ANY.  Although the error being passed
-**		may not be something that strictly represents an error
-**		condition (e.g. a BREAK or CONTINUE or THROW), if it gets
-**		passed to this routine then it has not been caught by its
-**		intended recipient, and is being treated as an error.
-**
-***********************************************************************/
+//
+//  Fail_Core: C
+// 
+// Cause a "trap" of an error by longjmp'ing to the enclosing
+// PUSH_TRAP or PUSH_TRAP_ANY.  Although the error being passed
+// may not be something that strictly represents an error
+// condition (e.g. a BREAK or CONTINUE or THROW), if it gets
+// passed to this routine then it has not been caught by its
+// intended recipient, and is being treated as an error.
+//
+ATTRIBUTE_NO_RETURN void Fail_Core(REBSER *frame)
 {
 	ASSERT_FRAME(frame);
 
@@ -237,17 +232,16 @@
 }
 
 
-/***********************************************************************
-**
-*/	void Trap_Stack_Overflow(void)
-/*
-**		See comments on C_STACK_OVERFLOWING.  This routine is
-**		deliberately separate and simple so that it allocates no
-**		objects or locals...and doesn't run any code that itself
-**		might wind up calling C_STACK_OVERFLOWING.  Hence it uses
-**		the preallocated TASK_STACK_ERROR frame.
-**
-***********************************************************************/
+//
+//  Trap_Stack_Overflow: C
+// 
+// See comments on C_STACK_OVERFLOWING.  This routine is
+// deliberately separate and simple so that it allocates no
+// objects or locals...and doesn't run any code that itself
+// might wind up calling C_STACK_OVERFLOWING.  Hence it uses
+// the preallocated TASK_STACK_ERROR frame.
+//
+void Trap_Stack_Overflow(void)
 {
 	if (!Saved_State) {
 		// The most likely case for there not being a PUSH_TRAP in effect
@@ -263,11 +257,10 @@
 }
 
 
-/***********************************************************************
-**
-*/	REBCNT Stack_Depth(void)
-/*
-***********************************************************************/
+//
+//  Stack_Depth: C
+//
+REBCNT Stack_Depth(void)
 {
 	struct Reb_Call *call = DSF;
 	REBCNT count = 0;
@@ -281,13 +274,12 @@
 }
 
 
-/***********************************************************************
-**
-*/	REBSER *Make_Backtrace(REBINT start)
-/*
-**		Return a block of backtrace words.
-**
-***********************************************************************/
+//
+//  Make_Backtrace: C
+// 
+// Return a block of backtrace words.
+//
+REBSER *Make_Backtrace(REBINT start)
 {
 	REBCNT depth = Stack_Depth();
 	REBSER *blk = Make_Array(depth - start);
@@ -305,20 +297,19 @@
 }
 
 
-/***********************************************************************
-**
-*/	REBVAL *Find_Error_For_Code(REBVAL *id_out, REBVAL *type_out, REBCNT code)
-/*
-**		Find the id word, the error type (category) word, and the error
-**		message template block-or-string for a given error number.
-**
-**		This scans the data which is loaded into the boot file by
-**		processing %errors.r
-**
-**		If the message is not found, return NULL.  Will not write to
-**		`id_out` or `type_out` unless returning a non-NULL pointer.
-**
-***********************************************************************/
+//
+//  Find_Error_For_Code: C
+// 
+// Find the id word, the error type (category) word, and the error
+// message template block-or-string for a given error number.
+// 
+// This scans the data which is loaded into the boot file by
+// processing %errors.r
+// 
+// If the message is not found, return NULL.  Will not write to
+// `id_out` or `type_out` unless returning a non-NULL pointer.
+//
+REBVAL *Find_Error_For_Code(REBVAL *id_out, REBVAL *type_out, REBCNT code)
 {
 	// See %errors.r for the list of data which is loaded into the boot
 	// file as objects for the "error catalog"
@@ -383,11 +374,10 @@
 }
 
 
-/***********************************************************************
-**
-*/	void Val_Init_Error(REBVAL *out, REBSER *frame)
-/*
-***********************************************************************/
+//
+//  Val_Init_Error: C
+//
+void Val_Init_Error(REBVAL *out, REBSER *frame)
 {
 	ENSURE_FRAME_MANAGED(frame);
 
@@ -400,32 +390,31 @@
 
 #if !defined(NDEBUG)
 
-/***********************************************************************
-**
-*/	static REBSER *Make_Guarded_Arg123_Error_Frame(void)
-/*
-**	Needed only for compatibility trick to "fake in" ARG1: ARG2: ARG3:
-**
-**	Rebol2 and R3-Alpha errors were limited to three arguments with
-**	fixed names, arg1 arg2 arg3.  (Though R3 comments alluded to
-**	the idea that MAKE ERROR! from an OBJECT! would inherit that
-**	object's fields, it did not actually work.)  With FAIL and more
-**	flexible error creation this is being extended.
-**
-**	Change is not made to the root error object because there is no
-**	"moment" to effect that (e.g. <r3-legacy> mode will not be started
-**	at boot time, it happens after).  This allows the stock args to be
-**	enabled and disabled dynamically in the legacy settings, at the
-**	cost of creating a new error object each time.
-**
-**	To make code handling it like the regular error frame (and keep that
-**	code "relatively uncontaminated" by the #ifdefs), it must behave
-**	as GC managed.  So it has to be guarded, thus the client drops the
-**	guard and it will wind up being freed since it's not in the root set.
-**	This is a bit inefficient but it's for legacy mode only, so best
-**	to bend to the expectations of the non-legacy code.
-**
-***********************************************************************/
+//
+//  Make_Guarded_Arg123_Error_Frame: C
+// 
+// Needed only for compatibility trick to "fake in" ARG1: ARG2: ARG3:
+// 
+// Rebol2 and R3-Alpha errors were limited to three arguments with
+// fixed names, arg1 arg2 arg3.  (Though R3 comments alluded to
+// the idea that MAKE ERROR! from an OBJECT! would inherit that
+// object's fields, it did not actually work.)  With FAIL and more
+// flexible error creation this is being extended.
+// 
+// Change is not made to the root error object because there is no
+// "moment" to effect that (e.g. <r3-legacy> mode will not be started
+// at boot time, it happens after).  This allows the stock args to be
+// enabled and disabled dynamically in the legacy settings, at the
+// cost of creating a new error object each time.
+// 
+// To make code handling it like the regular error frame (and keep that
+// code "relatively uncontaminated" by the #ifdefs), it must behave
+// as GC managed.  So it has to be guarded, thus the client drops the
+// guard and it will wind up being freed since it's not in the root set.
+// This is a bit inefficient but it's for legacy mode only, so best
+// to bend to the expectations of the non-legacy code.
+//
+static REBSER *Make_Guarded_Arg123_Error_Frame(void)
 {
 	REBSER *root_frame = VAL_OBJ_FRAME(ROOT_ERROBJ);
 	REBCNT len = SERIES_LEN(root_frame);
@@ -461,27 +450,26 @@
 #endif
 
 
-/***********************************************************************
-**
-*/	REBFLG Make_Error_Object_Throws(REBVAL *out, REBVAL *arg)
-/*
-**		Creates an error object from arg and puts it in value.
-**		The arg can be a string or an object body block.
-**
-**		Returns TRUE if a THROWN() value is made during evaluation.
-**
-**		This function is called by MAKE ERROR!.  Note that most often
-**		system errors from %errors.r are thrown by C code using
-**		Make_Error(), but this routine accommodates verification of
-**		errors created through user code...which may be mezzanine
-**		Rebol itself.  A goal is to not allow any such errors to
-**		be formed differently than the C code would have made them,
-**		and to cross through the point of R3-Alpha error compatibility,
-**		which makes this a rather tortured routine.  However, it
-**		maps out the existing landscape so that if it is to be changed
-**		then it can be seen exactly what is changing.
-**
-***********************************************************************/
+//
+//  Make_Error_Object_Throws: C
+// 
+// Creates an error object from arg and puts it in value.
+// The arg can be a string or an object body block.
+// 
+// Returns TRUE if a THROWN() value is made during evaluation.
+// 
+// This function is called by MAKE ERROR!.  Note that most often
+// system errors from %errors.r are thrown by C code using
+// Make_Error(), but this routine accommodates verification of
+// errors created through user code...which may be mezzanine
+// Rebol itself.  A goal is to not allow any such errors to
+// be formed differently than the C code would have made them,
+// and to cross through the point of R3-Alpha error compatibility,
+// which makes this a rather tortured routine.  However, it
+// maps out the existing landscape so that if it is to be changed
+// then it can be seen exactly what is changing.
+//
+REBFLG Make_Error_Object_Throws(REBVAL *out, REBVAL *arg)
 {
 	// Frame from the error object template defined in %sysobj.r
 	REBSER *root_frame = VAL_OBJ_FRAME(ROOT_ERROBJ);
@@ -742,32 +730,31 @@
 }
 
 
-/***********************************************************************
-**
-*/	REBSER *Make_Error_Core(REBCNT code, va_list *args)
-/*
-**		(va_list by pointer: http://stackoverflow.com/a/3369762/211160)
-**
-**		Create and init a new error object based on a C vararg list
-**		and an error code.  This routine is responsible also for
-**		noticing if there is an attempt to make an error at a time
-**		that is too early for error creation, and not try and invoke
-**		the error creation machinery.  That means if you write:
-**
-**			panic (Error(RE_SOMETHING, arg1, ...));
-**
-**		...and it's too early to make an error, the inner call to
-**		Error will be the one doing the panic.  Hence, both fail and
-**		panic behave identically in that early phase of the system
-**		(though panic is better documentation that one knows the
-**		error cannot be trapped).
-**
-**		Besides that caveat and putting running-out-of-memory aside,
-**		this routine should not fail internally.  Hence it should
-**		return to the caller to properly call va_end with no longjmp
-**		to skip it.
-**
-***********************************************************************/
+//
+//  Make_Error_Core: C
+// 
+// (va_list by pointer: http://stackoverflow.com/a/3369762/211160)
+// 
+// Create and init a new error object based on a C vararg list
+// and an error code.  This routine is responsible also for
+// noticing if there is an attempt to make an error at a time
+// that is too early for error creation, and not try and invoke
+// the error creation machinery.  That means if you write:
+// 
+//     panic (Error(RE_SOMETHING, arg1, ...));
+// 
+// ...and it's too early to make an error, the inner call to
+// Error will be the one doing the panic.  Hence, both fail and
+// panic behave identically in that early phase of the system
+// (though panic is better documentation that one knows the
+// error cannot be trapped).
+// 
+// Besides that caveat and putting running-out-of-memory aside,
+// this routine should not fail internally.  Hence it should
+// return to the caller to properly call va_end with no longjmp
+// to skip it.
+//
+REBSER *Make_Error_Core(REBCNT code, va_list *args)
 {
 	REBSER *root_frame;
 
@@ -997,25 +984,24 @@
 }
 
 
-/***********************************************************************
-**
-*/	REBSER *Error(REBCNT num, ... /* REBVAL *arg1, REBVAL *arg2, ... */)
-/*
-**		This is a variadic function which is designed to be the
-**		"argument" of either a `fail` or a `panic` "keyword".
-**		It can be called directly, or indirectly by another proxy
-**		error function.  It takes a number of REBVAL* arguments
-**		appropriate for the error number passed.
-**
-**		With C variadic functions it is not known how many arguments
-**		were passed.  Make_Error_Core() knows how many arguments are
-**		in an error's template in %errors.r for a given error #, so
-**		that is the number of arguments it will attempt to use.
-**		If desired, a caller can pass a NULL after the last argument
-**		to double-check that too few arguments are not given, though
-**		this is not enforced (to help with callsite readability).
-**
-***********************************************************************/
+//
+//  Error: C
+// 
+// This is a variadic function which is designed to be the
+// "argument" of either a `fail` or a `panic` "keyword".
+// It can be called directly, or indirectly by another proxy
+// error function.  It takes a number of REBVAL* arguments
+// appropriate for the error number passed.
+// 
+// With C variadic functions it is not known how many arguments
+// were passed.  Make_Error_Core() knows how many arguments are
+// in an error's template in %errors.r for a given error #, so
+// that is the number of arguments it will attempt to use.
+// If desired, a caller can pass a NULL after the last argument
+// to double-check that too few arguments are not given, though
+// this is not enforced (to help with callsite readability).
+//
+REBSER *Error(REBCNT num, ... /* REBVAL *arg1, REBVAL *arg2, ... */)
 {
 	va_list args;
 	REBSER *frame;
@@ -1028,11 +1014,10 @@
 }
 
 
-/***********************************************************************
-**
-*/	REBSER *Error_Bad_Func_Def(const REBVAL *spec, const REBVAL *body)
-/*
-***********************************************************************/
+//
+//  Error_Bad_Func_Def: C
+//
+REBSER *Error_Bad_Func_Def(const REBVAL *spec, const REBVAL *body)
 {
 	// !!! Improve this error; it's simply a direct emulation of arity-1
 	// error that existed before refactoring code out of MT_Function().
@@ -1046,11 +1031,10 @@
 }
 
 
-/***********************************************************************
-**
-*/	REBSER *Error_No_Arg(const REBVAL *label, const REBVAL *key)
-/*
-***********************************************************************/
+//
+//  Error_No_Arg: C
+//
+REBSER *Error_No_Arg(const REBVAL *label, const REBVAL *key)
 {
 	REBVAL key_word;
 	assert(IS_TYPESET(key));
@@ -1059,11 +1043,10 @@
 }
 
 
-/***********************************************************************
-**
-*/	REBSER *Error_Invalid_Datatype(REBCNT id)
-/*
-***********************************************************************/
+//
+//  Error_Invalid_Datatype: C
+//
+REBSER *Error_Invalid_Datatype(REBCNT id)
 {
 	REBVAL id_value;
 	SET_INTEGER(&id_value, id);
@@ -1071,11 +1054,10 @@
 }
 
 
-/***********************************************************************
-**
-*/	REBSER *Error_No_Memory(REBCNT bytes)
-/*
-***********************************************************************/
+//
+//  Error_No_Memory: C
+//
+REBSER *Error_No_Memory(REBCNT bytes)
 {
 	REBVAL bytes_value;
 	SET_INTEGER(&bytes_value, bytes);
@@ -1083,26 +1065,24 @@
 }
 
 
-/***********************************************************************
-**
-*/	REBSER *Error_Invalid_Arg(const REBVAL *value)
-/*
-**		This error is pretty vague...it's just "invalid argument"
-**		and the value with no further commentary or context.  It
-**		becomes a catch all for "unexpected input" when a more
-**		specific error would be more useful.
-**
-***********************************************************************/
+//
+//  Error_Invalid_Arg: C
+// 
+// This error is pretty vague...it's just "invalid argument"
+// and the value with no further commentary or context.  It
+// becomes a catch all for "unexpected input" when a more
+// specific error would be more useful.
+//
+REBSER *Error_Invalid_Arg(const REBVAL *value)
 {
 	return Error(RE_INVALID_ARG, value, NULL);
 }
 
 
-/***********************************************************************
-**
-*/	REBSER *Error_No_Catch_For_Throw(REBVAL *thrown)
-/*
-***********************************************************************/
+//
+//  Error_No_Catch_For_Throw: C
+//
+REBSER *Error_No_Catch_For_Throw(REBVAL *thrown)
 {
 	REBVAL arg;
 	assert(THROWN(thrown));
@@ -1115,35 +1095,32 @@
 }
 
 
-/***********************************************************************
-**
-*/	REBSER *Error_Has_Bad_Type(const REBVAL *value)
-/*
-**		<type> type is not allowed here
-**
-***********************************************************************/
+//
+//  Error_Has_Bad_Type: C
+// 
+// <type> type is not allowed here
+//
+REBSER *Error_Has_Bad_Type(const REBVAL *value)
 {
 	return Error(RE_INVALID_TYPE, Type_Of(value), NULL);
 }
 
 
-/***********************************************************************
-**
-*/	REBSER *Error_Out_Of_Range(const REBVAL *arg)
-/*
-**		value out of range: <value>
-**
-***********************************************************************/
+//
+//  Error_Out_Of_Range: C
+// 
+// value out of range: <value>
+//
+REBSER *Error_Out_Of_Range(const REBVAL *arg)
 {
 	return Error(RE_OUT_OF_RANGE, arg, NULL);
 }
 
 
-/***********************************************************************
-**
-*/	REBSER *Error_Protected_Key(REBVAL *key)
-/*
-***********************************************************************/
+//
+//  Error_Protected_Key: C
+//
+REBSER *Error_Protected_Key(REBVAL *key)
 {
 	REBVAL key_name;
 	assert(IS_TYPESET(key));
@@ -1153,11 +1130,10 @@
 }
 
 
-/***********************************************************************
-**
-*/	REBSER *Error_Illegal_Action(REBCNT type, REBCNT action)
-/*
-***********************************************************************/
+//
+//  Error_Illegal_Action: C
+//
+REBSER *Error_Illegal_Action(REBCNT type, REBCNT action)
 {
 	REBVAL action_word;
 	Val_Init_Word_Unbound(&action_word, REB_WORD, Get_Action_Sym(action));
@@ -1166,11 +1142,10 @@
 }
 
 
-/***********************************************************************
-**
-*/	REBSER *Error_Math_Args(enum Reb_Kind type, REBCNT action)
-/*
-***********************************************************************/
+//
+//  Error_Math_Args: C
+//
+REBSER *Error_Math_Args(enum Reb_Kind type, REBCNT action)
 {
 	REBVAL action_word;
 	Val_Init_Word_Unbound(&action_word, REB_WORD, Get_Action_Sym(action));
@@ -1179,11 +1154,10 @@
 }
 
 
-/***********************************************************************
-**
-*/	REBSER *Error_Unexpected_Type(enum Reb_Kind expected, enum Reb_Kind actual)
-/*
-***********************************************************************/
+//
+//  Error_Unexpected_Type: C
+//
+REBSER *Error_Unexpected_Type(enum Reb_Kind expected, enum Reb_Kind actual)
 {
 	assert(expected != REB_END && expected < REB_MAX);
 	assert(actual != REB_END && actual < REB_MAX);
@@ -1192,14 +1166,13 @@
 }
 
 
-/***********************************************************************
-**
-*/	REBSER *Error_Arg_Type(const struct Reb_Call *call, const REBVAL *param, const REBVAL *arg_type)
-/*
-**		Function in frame of `call` expected parameter `param` to be
-**		a type different than the arg given (which had `arg_type`)
-**
-***********************************************************************/
+//
+//  Error_Arg_Type: C
+// 
+// Function in frame of `call` expected parameter `param` to be
+// a type different than the arg given (which had `arg_type`)
+//
+REBSER *Error_Arg_Type(const struct Reb_Call *call, const REBVAL *param, const REBVAL *arg_type)
 {
 	REBVAL param_word;
 	assert(IS_TYPESET(param));
@@ -1210,31 +1183,28 @@
 }
 
 
-/***********************************************************************
-**
-*/	REBSER *Error_Bad_Make(REBCNT type, const REBVAL *spec)
-/*
-***********************************************************************/
+//
+//  Error_Bad_Make: C
+//
+REBSER *Error_Bad_Make(REBCNT type, const REBVAL *spec)
 {
 	return Error(RE_BAD_MAKE_ARG, Get_Type(type), spec, NULL);
 }
 
 
-/***********************************************************************
-**
-*/	REBSER *Error_Cannot_Reflect(REBCNT type, const REBVAL *arg)
-/*
-***********************************************************************/
+//
+//  Error_Cannot_Reflect: C
+//
+REBSER *Error_Cannot_Reflect(REBCNT type, const REBVAL *arg)
 {
 	return Error(RE_CANNOT_USE, arg, Get_Type(type), NULL);
 }
 
 
-/***********************************************************************
-**
-*/	REBSER *Error_On_Port(REBCNT errnum, REBSER *port, REBINT err_code)
-/*
-***********************************************************************/
+//
+//  Error_On_Port: C
+//
+REBSER *Error_On_Port(REBCNT errnum, REBSER *port, REBINT err_code)
 {
 	REBVAL *spec = OFV(port, STD_PORT_SPEC);
 	REBVAL *val;
@@ -1250,16 +1220,15 @@
 }
 
 
-/***********************************************************************
-**
-*/	int Exit_Status_From_Value(REBVAL *value)
-/*
-**		This routine's job is to turn an arbitrary value into an
-**		operating system exit status:
-**
-**			https://en.wikipedia.org/wiki/Exit_status
-**
-***********************************************************************/
+//
+//  Exit_Status_From_Value: C
+// 
+// This routine's job is to turn an arbitrary value into an
+// operating system exit status:
+// 
+//     https://en.wikipedia.org/wiki/Exit_status
+//
+int Exit_Status_From_Value(REBVAL *value)
 {
 	assert(!THROWN(value));
 
@@ -1295,11 +1264,10 @@
 }
 
 
-/***********************************************************************
-**
-*/	void Init_Errors(REBVAL *errors)
-/*
-***********************************************************************/
+//
+//  Init_Errors: C
+//
+void Init_Errors(REBVAL *errors)
 {
 	REBSER *errs;
 	REBVAL *val;
@@ -1318,40 +1286,39 @@
 }
 
 
-/***********************************************************************
-**
-*/	REBYTE *Security_Policy(REBCNT sym, REBVAL *name)
-/*
-**	Given a security symbol (like FILE) and a value (like the file
-**	path) returns the security policy (RWX) allowed for it.
-**
-**	Args:
-**
-**		sym:  word that represents the type ['file 'net]
-**		name: file or path value
-**
-**	Returns BTYE array of flags for the policy class:
-**
-**		flags: [rrrr wwww xxxx ----]
-**
-**		Where each byte is:
-**			0: SEC_ALLOW
-**			1: SEC_ASK
-**			2: SEC_THROW
-**			3: SEC_QUIT
-**
-**	The secuity is defined by the system/state/policies object, that
-**	is of the form:
-**
-**		[
-**			file:  [%file1 tuple-flags %file2 ... default tuple-flags]
-**			net:   [...]
-**			call:  tuple-flags
-**			stack: tuple-flags
-**			eval:  integer (limit)
-**		]
-**
-***********************************************************************/
+//
+//  Security_Policy: C
+// 
+// Given a security symbol (like FILE) and a value (like the file
+// path) returns the security policy (RWX) allowed for it.
+// 
+// Args:
+// 
+//     sym:  word that represents the type ['file 'net]
+//     name: file or path value
+// 
+// Returns BTYE array of flags for the policy class:
+// 
+//     flags: [rrrr wwww xxxx ----]
+// 
+//     Where each byte is:
+//         0: SEC_ALLOW
+//         1: SEC_ASK
+//         2: SEC_THROW
+//         3: SEC_QUIT
+// 
+// The secuity is defined by the system/state/policies object, that
+// is of the form:
+// 
+//     [
+//         file:  [%file1 tuple-flags %file2 ... default tuple-flags]
+//         net:   [...]
+//         call:  tuple-flags
+//         stack: tuple-flags
+//         eval:  integer (limit)
+//     ]
+//
+REBYTE *Security_Policy(REBCNT sym, REBVAL *name)
 {
 	REBVAL *policy = Get_System(SYS_STATE, STATE_POLICIES);
 	REBYTE *flags;
@@ -1415,14 +1382,13 @@ error:
 }
 
 
-/***********************************************************************
-**
-*/	void Trap_Security(REBCNT flag, REBCNT sym, REBVAL *value)
-/*
-**		Take action on the policy flags provided. The sym and value
-**		are provided for error message purposes only.
-**
-***********************************************************************/
+//
+//  Trap_Security: C
+// 
+// Take action on the policy flags provided. The sym and value
+// are provided for error message purposes only.
+//
+void Trap_Security(REBCNT flag, REBCNT sym, REBVAL *value)
 {
 	if (flag == SEC_THROW) {
 		if (!value) {
@@ -1435,15 +1401,14 @@ error:
 }
 
 
-/***********************************************************************
-**
-*/	void Check_Security(REBCNT sym, REBCNT policy, REBVAL *value)
-/*
-**		A helper function that fetches the security flags for
-**		a given symbol (FILE) and value (path), and then tests
-**		that they are allowed.
-**
-***********************************************************************/
+//
+//  Check_Security: C
+// 
+// A helper function that fetches the security flags for
+// a given symbol (FILE) and value (path), and then tests
+// that they are allowed.
+//
+void Check_Security(REBCNT sym, REBCNT policy, REBVAL *value)
 {
 	REBYTE *flags;
 
@@ -1454,13 +1419,12 @@ error:
 
 #if !defined(NDEBUG)
 
-/***********************************************************************
-**
-*/	void Assert_Error_Debug(const REBVAL *err)
-/*
-**		Debug-only implementation of ASSERT_ERROR
-**
-***********************************************************************/
+//
+//  Assert_Error_Debug: C
+// 
+// Debug-only implementation of ASSERT_ERROR
+//
+void Assert_Error_Debug(const REBVAL *err)
 {
 	assert(IS_ERROR(err));
 	assert(VAL_ERR_NUM(err) != 0);

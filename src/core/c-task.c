@@ -59,11 +59,10 @@
 
 #include "sys-core.h"
 
-/***********************************************************************
-**
-*/	static void Launch_Task(void *task_rebval)
-/*
-***********************************************************************/
+//
+//  Launch_Task: C
+//
+static void Launch_Task(void *task_rebval)
 {
 	REBVAL *task = cast(REBVAL*, task_rebval);
 	REBSER *body;
@@ -82,11 +81,10 @@
 }
 
 
-/***********************************************************************
-**
-*/	void Do_Task(REBVAL *task)
-/*
-***********************************************************************/
+//
+//  Do_Task: C
+//
+void Do_Task(REBVAL *task)
 {
 	OS_CREATE_THREAD(Launch_Task, task, 50000);
 }

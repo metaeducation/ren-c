@@ -30,30 +30,41 @@
 #include "sys-core.h"
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(halt)
-/*
-***********************************************************************/
+//
+//  halt: native [
+//  
+//  "Stops evaluation and returns to the input prompt."
+//  
+//      ; No arguments
+//  ]
+//
+REBNATIVE(halt)
 {
 	fail (VAL_ERR_OBJECT(TASK_HALT_ERROR));
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(quit)
-/*
-**	1: /with
-**	2: value
-**	3: /return (deprecated)
-**	4: /return-value (deprecated)
-**
-**	QUIT is implemented via a THROWN() value that bubbles up through
-**	the stack.  It uses the value of its own native function as the
-**	name of the throw, like `throw/name value :quit`.
-**
-***********************************************************************/
+//
+//  quit: native [
+//  
+//  {Stop evaluating and return control to command shell or calling script.}
+//  
+//      /with {Yield a result (mapped to an integer if given to shell)}
+//      value [any-value!] "See: http://en.wikipedia.org/wiki/Exit_status"
+//      /return "(deprecated synonym for /WITH)"
+//      return-value
+//  ]
+//
+REBNATIVE(quit)
+//
+// 1: /with
+// 2: value
+// 3: /return (deprecated)
+// 4: /return-value (deprecated)
+// 
+// QUIT is implemented via a THROWN() value that bubbles up through
+// the stack.  It uses the value of its own native function as the
+// name of the throw, like `throw/name value :quit`.
 {
 	*D_OUT = *ROOT_QUIT_NATIVE;
 
@@ -77,11 +88,19 @@
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(recycle)
-/*
-***********************************************************************/
+//
+//  recycle: native [
+//  
+//  "Recycles unused memory."
+//  
+//      /off "Disable auto-recycling"
+//      /on "Enable auto-recycling"
+//      /ballast "Trigger for auto-recycle (memory used)"
+//      size [integer!]
+//      /torture "Constant recycle (for internal debugging)"
+//  ]
+//
+REBNATIVE(recycle)
 {
 	REBCNT count;
 
@@ -112,11 +131,20 @@
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(stats)
-/*
-***********************************************************************/
+//
+//  stats: native [
+//  
+//  {Provides status and statistics information about the interpreter.}
+//  
+//      /show "Print formatted results to console"
+//      /profile "Returns profiler object"
+//      /timer "High resolution time difference from start"
+//      /evals "Number of values evaluated by interpreter"
+//      /dump-series pool-id [integer!] 
+//      "Dump all series in pool pool-id, -1 for all pools"
+//  ]
+//
+REBNATIVE(stats)
 {
 	REBI64 n;
 	REBCNT flags = 0;
@@ -193,11 +221,15 @@ const char *evoke_help = "Evoke values:\n"
 	"3: check bind table\n"
 ;
 
-/***********************************************************************
-**
-*/	REBNATIVE(evoke)
-/*
-***********************************************************************/
+//
+//  evoke: native [
+//  
+//  "Special guru meditations. (Not for beginners.)"
+//  
+//      chant [word! block! integer!] "Single or block of words ('? to list)"
+//  ]
+//
+REBNATIVE(evoke)
 {
 	REBVAL *arg = D_ARG(1);
 	REBCNT len;
@@ -260,11 +292,10 @@ const char *evoke_help = "Evoke values:\n"
 }
 
 #ifdef NOT_USED
-/***********************************************************************
-**
-*/	REBNATIVE(in_context)
-/*
-***********************************************************************/
+//
+//  in-context: native none
+//
+REBNATIVE(in_context)
 {
 	REBVAL *value;
 	value = D_ARG(1);
@@ -273,11 +304,16 @@ const char *evoke_help = "Evoke values:\n"
 }
 #endif
 
-/***********************************************************************
-**
-*/	REBNATIVE(limit_usage)
-/*
-***********************************************************************/
+//
+//  limit-usage: native [
+//  
+//  "Set a usage limit only once (used for SECURE)."
+//  
+//      field [word!] "eval (count) or memory (bytes)"
+//      limit [any-number!]
+//  ]
+//
+REBNATIVE(limit_usage)
 {
 	REBCNT sym;
 
@@ -293,23 +329,22 @@ const char *evoke_help = "Evoke values:\n"
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(stack)
-/*
-**	stack: native [
-**		{Returns stack backtrace or other values.}
-**		offset [integer!] "Relative backward offset"
-**		/block "Block evaluation position"
-**		/word "Function or object name, if known"
-**		/func "Function value"
-**		/args "Block of args (may be modified)"
-**		/size "Current stack size (in value units)"
-**		/depth "Stack depth (frames)"
-**		/limit "Stack bounds (auto expanding)"
-**	]
-**
-***********************************************************************/
+//
+//  stack: native [
+//  
+//  "Returns stack backtrace or other values."
+//  
+//      offset [integer!] "Relative backward offset"
+//      /block "Block evaluation position"
+//      /word "Function or object name, if known"
+//      /func "Function value"
+//      /args "Block of args (may be modified)"
+//      /size "Current stack size (in value units)"
+//      /depth "Stack depth (frames)"
+//      /limit "Stack bounds (auto expanding)"
+//  ]
+//
+REBNATIVE(stack)
 {
 	REBINT index = VAL_INT32(D_ARG(1));
 	struct Reb_Call *call;
@@ -349,11 +384,12 @@ const char *evoke_help = "Evoke values:\n"
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(check)
-/*
-***********************************************************************/
+//
+//  check: native [
+//  "Temporary series debug check"
+//   val [any-series!]]
+//
+REBNATIVE(check)
 {
 	REBVAL *val;
 	REBSER *ser;
@@ -380,30 +416,38 @@ err:
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(ds)
-/*
-***********************************************************************/
+//
+//  ds: native [
+//  "Temporary stack debug"
+//      ; No arguments
+//  ]
+//
+REBNATIVE(ds)
 {
 	Dump_Stack(0, 0);
 	return R_UNSET;
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(do_codec)
-/*
-**		Calls a codec handle with specific data:
-**
-**	Args:
-**		1: codec:  handle!
-**		2: action: word! (identify, decode, encode)
-**		3: data:   binary! image! sound!
-**		4: option: (optional)
-**
-***********************************************************************/
+//
+//  do-codec: native [
+//  
+//  {Evaluate a CODEC function to encode or decode media types.}
+//  
+//      handle [handle!] "Internal link to codec"
+//      action [word!] "Decode, encode, identify"
+//      data [binary! image! string!]
+//  ]
+//
+REBNATIVE(do_codec)
+//
+// Calls a codec handle with specific data:
+// 
+// Args:
+// 1: codec:  handle!
+// 2: action: word! (identify, decode, encode)
+// 3: data:   binary! image! sound!
+// 4: option: (optional)
 {
 	REBCDI codi;
 	REBVAL *val;
@@ -516,11 +560,15 @@ err:
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(selflessq)
-/*
-***********************************************************************/
+//
+//  selfless?: native [
+//  
+//  "Returns true if the context doesn't bind 'self."
+//  
+//      context [any-word! any-object!] "A reference to the target context"
+//  ]
+//
+REBNATIVE(selflessq)
 {
 	REBVAL *val = D_ARG(1);
 	REBSER *frm;

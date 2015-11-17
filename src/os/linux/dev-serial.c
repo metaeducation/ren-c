@@ -197,14 +197,13 @@ static REBINT Set_Serial_Settings(int ttyfd, REBREQ *req)
 	return 0;
 }
 
-/***********************************************************************
-**
-*/	DEVICE_CMD Open_Serial(REBREQ *req)
-/*
-**		serial.path = the /dev name for the serial port
-**		serial.baud = speed (baudrate)
-**
-***********************************************************************/
+//
+//  Open_Serial: C
+// 
+// serial.path = the /dev name for the serial port
+// serial.baud = speed (baudrate)
+//
+DEVICE_CMD Open_Serial(REBREQ *req)
 {
 	char *path;
 	char devpath[MAX_SERIAL_PATH];
@@ -244,11 +243,10 @@ static REBINT Set_Serial_Settings(int ttyfd, REBREQ *req)
 }
 
 
-/***********************************************************************
-**
-*/	DEVICE_CMD Close_Serial(REBREQ *req)
-/*
-***********************************************************************/
+//
+//  Close_Serial: C
+//
+DEVICE_CMD Close_Serial(REBREQ *req)
 {
 	if (req->requestee.id) {
 		// !!! should we free req->special.serial.prior_attr termios struct?
@@ -264,11 +262,10 @@ static REBINT Set_Serial_Settings(int ttyfd, REBREQ *req)
 }
 
 
-/***********************************************************************
-**
-*/	DEVICE_CMD Read_Serial(REBREQ *req)
-/*
-***********************************************************************/
+//
+//  Read_Serial: C
+//
+DEVICE_CMD Read_Serial(REBREQ *req)
 {
 	ssize_t result = 0;
 	if (!req->requestee.id) {
@@ -295,11 +292,10 @@ static REBINT Set_Serial_Settings(int ttyfd, REBREQ *req)
 }
 
 
-/***********************************************************************
-**
-*/	DEVICE_CMD Write_Serial(REBREQ *req)
-/*
-***********************************************************************/
+//
+//  Write_Serial: C
+//
+DEVICE_CMD Write_Serial(REBREQ *req)
 {
 	REBINT result = 0, len = 0;
 	len = req->length - req->actual;
@@ -334,11 +330,10 @@ static REBINT Set_Serial_Settings(int ttyfd, REBREQ *req)
 }
 
 
-/***********************************************************************
-**
-*/	DEVICE_CMD Query_Serial(REBREQ *req)
-/*
-***********************************************************************/
+//
+//  Query_Serial: C
+//
+DEVICE_CMD Query_Serial(REBREQ *req)
 {
 #ifdef QUERY_IMPLEMENTED
 	struct pollfd pfd;

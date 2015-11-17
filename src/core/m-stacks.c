@@ -29,11 +29,10 @@
 #include "sys-core.h"
 
 
-/***********************************************************************
-**
-*/	void Init_Stacks(REBCNT size)
-/*
-***********************************************************************/
+//
+//  Init_Stacks: C
+//
+void Init_Stacks(REBCNT size)
 {
 	// We always keep one call stack chunk frame around for the first
 	// call frame push.  The first frame allocated out of it is
@@ -54,11 +53,10 @@
 }
 
 
-/***********************************************************************
-**
-*/	void Shutdown_Stacks(void)
-/*
-***********************************************************************/
+//
+//  Shutdown_Stacks: C
+//
+void Shutdown_Stacks(void)
 {
 	struct Reb_Chunk* chunk = cast(struct Reb_Chunk*,
 		cast(REBYTE*, CS_Root) - sizeof(struct Reb_Chunk*)
@@ -73,20 +71,19 @@
 }
 
 
-/***********************************************************************
-**
-*/	void Push_Stack_Values(const REBVAL *values, REBINT length)
-/*
-**		Pushes sequential values from a series onto the stack all
-**		in one go.  All of this needs review in terms of whether
-**		things like COMPOSE should be using arbitrary stack pushes
-** 		in the first place or if it should not pile up the stack
-**		like this.
-**
-**		!!! Notably simple implementation, just hammering out the
-**		client interfaces that made sequential stack memory assumptions.
-**
-***********************************************************************/
+//
+//  Push_Stack_Values: C
+// 
+// Pushes sequential values from a series onto the stack all
+// in one go.  All of this needs review in terms of whether
+// things like COMPOSE should be using arbitrary stack pushes
+//      in the first place or if it should not pile up the stack
+// like this.
+// 
+// !!! Notably simple implementation, just hammering out the
+// client interfaces that made sequential stack memory assumptions.
+//
+void Push_Stack_Values(const REBVAL *values, REBINT length)
 {
 	Insert_Series(
 		DS_Series, SERIES_TAIL(DS_Series), cast(const REBYTE*, values), length
@@ -94,18 +91,17 @@
 }
 
 
-/***********************************************************************
-**
-*/	void Pop_Stack_Values(REBVAL *out, REBINT dsp_start, REBOOL into)
-/*
-**		Pop_Stack_Values computed values from the stack into the series
-**		specified by "into", or if into is NULL then store it as a
-**		block on top of the stack.  (Also checks to see if into
-**		is protected, and will trigger a trap if that is the case.)
-**
-**		Protocol for /INTO is to set the position to the tail.
-**
-***********************************************************************/
+//
+//  Pop_Stack_Values: C
+// 
+// Pop_Stack_Values computed values from the stack into the series
+// specified by "into", or if into is NULL then store it as a
+// block on top of the stack.  (Also checks to see if into
+// is protected, and will trigger a trap if that is the case.)
+// 
+// Protocol for /INTO is to set the position to the tail.
+//
+void Pop_Stack_Values(REBVAL *out, REBINT dsp_start, REBOOL into)
 {
 	REBSER *series;
 	REBCNT len = DSP - dsp_start;
@@ -128,15 +124,14 @@
 }
 
 
-/***********************************************************************
-**
-*/	void Expand_Stack(REBCNT amount)
-/*
-**		Expand the datastack. Invalidates any references to stack
-**		values, so code should generally use stack index integers,
-**		not pointers into the stack.
-**
-***********************************************************************/
+//
+//  Expand_Stack: C
+// 
+// Expand the datastack. Invalidates any references to stack
+// values, so code should generally use stack index integers,
+// not pointers into the stack.
+//
+void Expand_Stack(REBCNT amount)
 {
 	if (SERIES_REST(DS_Series) >= STACK_LIMIT) Trap_Stack_Overflow();
 	Extend_Series(DS_Series, amount);
@@ -144,22 +139,21 @@
 }
 
 
-/***********************************************************************
-**
-*/	struct Reb_Call *Make_Call(REBVAL *out, REBSER *block, REBCNT index, const REBVAL *label, const REBVAL *func)
-/*
-**		Create a function call frame.  This doesn't necessarily call
-**		Alloc_Mem, because call frames are allocated sequentially
-**		inside of "memory chunks" in their ordering on the stack.
-**		Allocation is only required if we need to step into a new
-**		chunk (and even then only if we aren't stepping into a chunk
-**		that we are reusing from a prior expansion).
-**
-**		We do not set the frame as "Running" at the same time we create
-**		it, because we need to fulfill its arguments in the caller's
-**		frame before we actually invoke the function.
-**
-***********************************************************************/
+//
+//  Make_Call: C
+// 
+// Create a function call frame.  This doesn't necessarily call
+// Alloc_Mem, because call frames are allocated sequentially
+// inside of "memory chunks" in their ordering on the stack.
+// Allocation is only required if we need to step into a new
+// chunk (and even then only if we aren't stepping into a chunk
+// that we are reusing from a prior expansion).
+// 
+// We do not set the frame as "Running" at the same time we create
+// it, because we need to fulfill its arguments in the caller's
+// frame before we actually invoke the function.
+//
+struct Reb_Call *Make_Call(REBVAL *out, REBSER *block, REBCNT index, const REBVAL *label, const REBVAL *func)
 {
 	REBCNT num_vars = VAL_FUNC_NUM_PARAMS(func);
 
@@ -266,15 +260,14 @@
 }
 
 
-/***********************************************************************
-**
-*/	void Free_Call(struct Reb_Call* call)
-/*
-**		Free a call frame.  This only occasionally requires an actual
-**		call to Free_Mem(), due to allocating call frames sequentially
-**		in chunks of memory.
-**
-***********************************************************************/
+//
+//  Free_Call: C
+// 
+// Free a call frame.  This only occasionally requires an actual
+// call to Free_Mem(), due to allocating call frames sequentially
+// in chunks of memory.
+//
+void Free_Call(struct Reb_Call* call)
 {
 	assert(call == CS_Top);
 
@@ -309,15 +302,14 @@
 
 #if !defined(NDEBUG)
 
-/***********************************************************************
-**
-*/	REBVAL *DSF_VAR_Debug(struct Reb_Call *call, REBCNT n)
-/*
-**		Debug-only version of getting a variable out of a call
-**		frame, which asserts if you use an index that is higher
-**		than the number of arguments in the frame.
-**
-***********************************************************************/
+//
+//  DSF_VAR_Debug: C
+// 
+// Debug-only version of getting a variable out of a call
+// frame, which asserts if you use an index that is higher
+// than the number of arguments in the frame.
+//
+REBVAL *DSF_VAR_Debug(struct Reb_Call *call, REBCNT n)
 {
 	assert(n <= call->num_vars);
 	return &call->vars[n - 1];

@@ -31,11 +31,10 @@
 #include "sys-deci-funcs.h"
 
 
-/***********************************************************************
-**
-*/	REBINT CT_Money(REBVAL *a, REBVAL *b, REBINT mode)
-/*
-***********************************************************************/
+//
+//  CT_Money: C
+//
+REBINT CT_Money(REBVAL *a, REBVAL *b, REBINT mode)
 {
 	REBFLG e, g;
 
@@ -54,21 +53,19 @@
 }
 
 
-/***********************************************************************
-**
-*/  REBINT Emit_Money(const REBVAL *value, REBYTE *buf, REBCNT opts)
-/*
-***********************************************************************/
+//
+//  Emit_Money: C
+//
+REBINT Emit_Money(const REBVAL *value, REBYTE *buf, REBCNT opts)
 {
 	return deci_to_string(buf, VAL_MONEY_AMOUNT(value), '$', '.');
 }
 
 
-/***********************************************************************
-**
-*/  REBINT Bin_To_Money(REBVAL *result, REBVAL *val)
-/*
-***********************************************************************/
+//
+//  Bin_To_Money: C
+//
+REBINT Bin_To_Money(REBVAL *result, REBVAL *val)
 {
 	REBCNT len;
 	REBYTE buf[MAX_HEX_LEN+4] = {0}; // binary to convert
@@ -106,11 +103,10 @@
 }
 
 
-/***********************************************************************
-**
-*/	REBTYPE(Money)
-/*
-***********************************************************************/
+//
+//  REBTYPE: C
+//
+REBTYPE(Money)
 {
 	REBVAL *val = D_ARG(1);
 	REBVAL *arg;

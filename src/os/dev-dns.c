@@ -54,24 +54,22 @@ extern void Signal_Device(REBREQ *req, REBINT type);
 extern HWND Event_Handle;
 #endif
 
-/***********************************************************************
-**
-*/	DEVICE_CMD Open_DNS(REBREQ *sock)
-/*
-***********************************************************************/
+//
+//  Open_DNS: C
+//
+DEVICE_CMD Open_DNS(REBREQ *sock)
 {
 	SET_OPEN(sock);
 	return DR_DONE;
 }
 
 
-/***********************************************************************
-**
-*/	DEVICE_CMD Close_DNS(REBREQ *sock)
-/*
-**		Note: valid even if not open.
-**
-***********************************************************************/
+//
+//  Close_DNS: C
+// 
+// Note: valid even if not open.
+//
+DEVICE_CMD Close_DNS(REBREQ *sock)
 {
 	// Terminate a pending request:
 #ifdef HAS_ASYNC_DNS
@@ -88,14 +86,13 @@ extern HWND Event_Handle;
 }
 
 
-/***********************************************************************
-**
-*/	DEVICE_CMD Read_DNS(REBREQ *sock)
-/*
-**		Initiate the GetHost request and return immediately.
-**		Note the temporary results buffer (must be freed later).
-**
-***********************************************************************/
+//
+//  Read_DNS: C
+// 
+// Initiate the GetHost request and return immediately.
+// Note the temporary results buffer (must be freed later).
+//
+DEVICE_CMD Read_DNS(REBREQ *sock)
 {
     char *host;
 #ifdef HAS_ASYNC_DNS
@@ -150,16 +147,15 @@ extern HWND Event_Handle;
 }
 
 
-/***********************************************************************
-**
-*/	DEVICE_CMD Poll_DNS(REBREQ *dr)
-/*
-**		Check for completed DNS requests. These are marked with
-**		RRF_DONE by the windows message event handler (dev-event.c).
-**		Completed requests are removed from the pending queue and
-**		event is signalled (for awake dispatch).
-**
-***********************************************************************/
+//
+//  Poll_DNS: C
+// 
+// Check for completed DNS requests. These are marked with
+// RRF_DONE by the windows message event handler (dev-event.c).
+// Completed requests are removed from the pending queue and
+// event is signalled (for awake dispatch).
+//
+DEVICE_CMD Poll_DNS(REBREQ *dr)
 {
 	REBDEV *dev = (REBDEV*)dr;  // to keep compiler happy
 	REBREQ **prior = &dev->pending;

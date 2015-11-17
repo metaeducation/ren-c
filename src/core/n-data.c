@@ -60,34 +60,41 @@ static int Check_Char_Range(REBVAL *val, REBINT limit)
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(asciiq)
-/*
-***********************************************************************/
+//
+//  ascii?: native [
+//  
+//  {Returns TRUE if value or string is in ASCII character range (below 128).}
+//  
+//      value [any-string! char! integer!]
+//  ]
+//
+REBNATIVE(asciiq)
 {
 	return Check_Char_Range(D_ARG(1), 0x7f);
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(latin1q)
-/*
-***********************************************************************/
+//
+//  latin1?: native [
+//  
+//  {Returns TRUE if value or string is in Latin-1 character range (below 256).}
+//  
+//      value [any-string! char! integer!]
+//  ]
+//
+REBNATIVE(latin1q)
 {
 	return Check_Char_Range(D_ARG(1), 0xff);
 }
 
 
-/***********************************************************************
-**
-*/	static REBOOL Is_Type_Of(const REBVAL *value, REBVAL *types)
-/*
-**		Types can be: word or block. Each element must be either
-**		a datatype or a typeset.
-**
-***********************************************************************/
+//
+//  Is_Type_Of: C
+// 
+// Types can be: word or block. Each element must be either
+// a datatype or a typeset.
+//
+static REBOOL Is_Type_Of(const REBVAL *value, REBVAL *types)
 {
 	const REBVAL *val;
 
@@ -120,11 +127,16 @@ static int Check_Char_Range(REBVAL *val, REBINT limit)
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(assert)
-/*
-***********************************************************************/
+//
+//  assert: native [
+//  
+//  {Assert that condition is true, else cause an assertion error.}
+//  
+//      conditions [block!]
+//      /type {Safely check datatypes of variables (words and paths)}
+//  ]
+//
+REBNATIVE(assert)
 {
 	REBVAL *value = D_ARG(1);  // block, logic, or none
 
@@ -179,11 +191,16 @@ static int Check_Char_Range(REBVAL *val, REBINT limit)
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(as_pair)
-/*
-***********************************************************************/
+//
+//  as-pair: native [
+//  
+//  "Combine X and Y values into a pair."
+//  
+//      x [any-number!]
+//      y [any-number!]
+//  ]
+//
+REBNATIVE(as_pair)
 {
 	REBVAL *val = D_ARG(1);
 
@@ -208,18 +225,20 @@ static int Check_Char_Range(REBVAL *val, REBINT limit)
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(bind)
-/*
-**		1 words
-**		2 context | word
-**		3 /copy
-**		4 /only
-**		5 /new
-**		6 /set
-**
-***********************************************************************/
+//
+//  bind: native [
+//  
+//  "Binds words to the specified context."
+//  
+//      word [block! any-word!] "A word or block (modified) (returned)"
+//      context [any-word! any-object!] "A reference to the target context"
+//      /copy {Bind and return a deep copy of a block, don't modify original}
+//      /only "Bind only first block (not deep)"
+//      /new "Add to context any new words found"
+//      /set "Add to context any new set-words found"
+//  ]
+//
+REBNATIVE(bind)
 {
 	REBVAL *arg;
 	REBSER *blk;
@@ -276,11 +295,15 @@ static int Check_Char_Range(REBVAL *val, REBINT limit)
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(boundq)
-/*
-***********************************************************************/
+//
+//  bound?: native [
+//  
+//  "Returns the context in which a word is bound."
+//  
+//      word [any-word!]
+//  ]
+//
+REBNATIVE(boundq)
 {
 	REBVAL *word = D_ARG(1);
 
@@ -319,24 +342,33 @@ static int Check_Char_Range(REBVAL *val, REBINT limit)
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(setq)
-/*
-***********************************************************************/
+//
+//  set?: native [
+//  
+//  "Returns whether a value is set."
+//  
+//      cell [unset! any-value!]
+//  ]
+//
+REBNATIVE(setq)
 {
 	return IS_UNSET(D_ARG(1)) ? R_FALSE : R_TRUE;
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(unbind)
-/*
-**		word | context
-**		/deep
-**
-***********************************************************************/
+//
+//  unbind: native [
+//  
+//  "Unbinds words from context."
+//  
+//      word [block! any-word!] "A word or block (modified) (returned)"
+//      /deep "Process nested blocks"
+//  ]
+//
+REBNATIVE(unbind)
+//
+// word | context
+// /deep
 {
 	REBVAL *word = D_ARG(1);
 
@@ -349,17 +381,19 @@ static int Check_Char_Range(REBVAL *val, REBINT limit)
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(collect_words)
-/*
-**		1 block
-**		3 /deep
-**		4 /set
-**      4 /ignore
-**      5 object | block
-**
-***********************************************************************/
+//
+//  collect-words: native [
+//  
+//  {Collect unique words used in a block (used for context construction).}
+//  
+//      block [block!]
+//      /deep "Include nested blocks"
+//      /set "Only include set-words"
+//      /ignore "Ignore prior words"
+//      words [any-object! block! none!] "Words to ignore"
+//  ]
+//
+REBNATIVE(collect_words)
 {
 	REBSER *words;
 	REBCNT modes = 0;
@@ -386,11 +420,16 @@ static int Check_Char_Range(REBVAL *val, REBINT limit)
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(get)
-/*
-***********************************************************************/
+//
+//  get: native [
+//  
+//  {Gets the value of a word or path, or values of an object.}
+//  
+//      word "Word, path, object to get"
+//      /any "Allows word to have no value (allows unset)"
+//  ]
+//
+REBNATIVE(get)
 {
 	REBVAL *word = D_ARG(1);
 
@@ -421,31 +460,44 @@ static int Check_Char_Range(REBVAL *val, REBINT limit)
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(to_value)
-/*
-***********************************************************************/
+//
+//  to-value: native [
+//  
+//  {Turns unset to NONE, with ANY-VALUE! passing through. (See: OPT)}
+//  
+//      value [any-value!]
+//  ]
+//
+REBNATIVE(to_value)
 {
 	return IS_UNSET(D_ARG(1)) ? R_NONE : R_ARG1;
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(opt)
-/*
-***********************************************************************/
+//
+//  opt: native [
+//  
+//  {NONEs become unset, all other value types pass through. (See: TO-VALUE)}
+//  
+//      value [any-value!]
+//  ]
+//
+REBNATIVE(opt)
 {
 	return IS_NONE(D_ARG(1)) ? R_UNSET : R_ARG1;
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(in)
-/*
-***********************************************************************/
+//
+//  in: native [
+//  
+//  "Returns the word or block in the object's context."
+//  
+//      object [any-object! block!]
+//      word [any-word! block! paren!] "(modified if series)"
+//  ]
+//
+REBNATIVE(in)
 {
 	REBVAL *val  = D_ARG(1); // object, error, port, block
 	REBVAL *word = D_ARG(2);
@@ -498,11 +550,16 @@ static int Check_Char_Range(REBVAL *val, REBINT limit)
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(andq)
-/*
-***********************************************************************/
+//
+//  and?: native [
+//  
+//  {Returns true if both values are conditionally true (no "short-circuit")}
+//  
+//      value1
+//      value2
+//  ]
+//
+REBNATIVE(andq)
 {
 	if (IS_CONDITIONAL_TRUE(D_ARG(1)) && IS_CONDITIONAL_TRUE(D_ARG(2)))
 		return R_TRUE;
@@ -511,21 +568,30 @@ static int Check_Char_Range(REBVAL *val, REBINT limit)
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(notq)
-/*
-***********************************************************************/
+//
+//  not?: native [
+//  
+//  "Returns the logic complement."
+//  
+//      value "(Only FALSE and NONE return TRUE)"
+//  ]
+//
+REBNATIVE(notq)
 {
 	return IS_CONDITIONAL_FALSE(D_ARG(1)) ? R_TRUE : R_FALSE;
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(orq)
-/*
-***********************************************************************/
+//
+//  or?: native [
+//  
+//  {Returns true if either value is conditionally true (no "short-circuit")}
+//  
+//      value1
+//      value2
+//  ]
+//
+REBNATIVE(orq)
 {
 	if (IS_CONDITIONAL_TRUE(D_ARG(1)) || IS_CONDITIONAL_TRUE(D_ARG(2)))
 		return R_TRUE;
@@ -534,11 +600,16 @@ static int Check_Char_Range(REBVAL *val, REBINT limit)
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(xorq)
-/*
-***********************************************************************/
+//
+//  xor?: native [
+//  
+//  {Returns true if only one of the two values is conditionally true.}
+//  
+//      value1
+//      value2
+//  ]
+//
+REBNATIVE(xorq)
 {
 	// Note: no boolean ^^ in C; normalize to booleans and check unequal
 	if (!IS_CONDITIONAL_TRUE(D_ARG(1)) != !IS_CONDITIONAL_TRUE(D_ARG(2)))
@@ -548,16 +619,21 @@ static int Check_Char_Range(REBVAL *val, REBINT limit)
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(resolve)
-/*
-**		3 /only
-**		4 from
-**		5 /all
-**		6 /expand
-**
-***********************************************************************/
+//
+//  resolve: native [
+//  
+//  {Copy context by setting values in the target from those in the source.}
+//  
+//      target [any-object!] "(modified)"
+//      source [any-object!]
+//      /only from [block! integer!] 
+//      {Only specific words (exports) or new words in target (index to tail)}
+//      /all 
+//      {Set all words, even those in the target that already have a value}
+//      /extend "Add source words to the target if necessary"
+//  ]
+//
+REBNATIVE(resolve)
 {
 	REBSER *target = VAL_OBJ_FRAME(D_ARG(1));
 	REBSER *source = VAL_OBJ_FRAME(D_ARG(2));
@@ -567,16 +643,25 @@ static int Check_Char_Range(REBVAL *val, REBINT limit)
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(set)
-/*
-**		word [any-word! block! object!] {Word or words to set}
-**		value [any-value!] {Value or block of values}
-**		/any {Allows setting words to any value.}
-**		/pad {For objects, if block is too short, remaining words are set to NONE.}
-**
-***********************************************************************/
+//
+//  set: native [
+//  
+//  {Sets a word, path, block of words, or object to specified value(s).}
+//  
+//      word [any-word! any-path! block! object!] 
+//      {Word, block of words, path, or object to be set (modified)}
+//      value [any-value!] "Value or block of values"
+//      /any "Allows setting words to any value, including unset"
+//      /pad 
+//      {For objects, if block is too short, remaining words are set to NONE}
+//  ]
+//
+REBNATIVE(set)
+//
+// word [any-word! block! object!] {Word or words to set}
+// value [any-value!] {Value or block of values}
+// /any {Allows setting words to any value.}
+// /pad {For objects, if block is too short, remaining words are set to NONE.}
 {
 	const REBVAL *word = D_ARG(1);
 	REBVAL *val    = D_ARG(2);
@@ -675,11 +760,15 @@ static int Check_Char_Range(REBVAL *val, REBINT limit)
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(type_of)
-/*
-***********************************************************************/
+//
+//  type-of: native [
+//  
+//  "Returns the datatype of a value."
+//  
+//      value [any-value!]
+//  ]
+//
+REBNATIVE(type_of)
 {
 	REBCNT type = VAL_TYPE(D_ARG(1));
 	Val_Init_Datatype(D_OUT, type);
@@ -687,11 +776,15 @@ static int Check_Char_Range(REBVAL *val, REBINT limit)
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(unset)
-/*
-***********************************************************************/
+//
+//  unset: native [
+//  
+//  {Unsets the value of a word (in its current context.)}
+//  
+//      word [any-word! block!] "Word or block of words"
+//  ]
+//
+REBNATIVE(unset)
 {
 	REBVAL * const value = D_ARG(1);
 	REBVAL *var;
@@ -722,11 +815,15 @@ static int Check_Char_Range(REBVAL *val, REBINT limit)
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(infixq)
-/*
-***********************************************************************/
+//
+//  infix?: native [
+//  
+//  {Returns TRUE if the function gets its first argument prior to the call}
+//  
+//      value [any-function!]
+//  ]
+//
+REBNATIVE(infixq)
 {
 	REBVAL *func = D_ARG(1);
 
@@ -738,11 +835,15 @@ static int Check_Char_Range(REBVAL *val, REBINT limit)
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(valueq)
-/*
-***********************************************************************/
+//
+//  value?: native [
+//  
+//  "Returns TRUE if the word has a value."
+//  
+//      value
+//  ]
+//
+REBNATIVE(valueq)
 {
 	const REBVAL *value = D_ARG(1);
 
@@ -756,11 +857,12 @@ static int Check_Char_Range(REBVAL *val, REBINT limit)
 //** SERIES ************************************************************
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(dump)
-/*
-***********************************************************************/
+//
+//  dump: native [
+//  "Temporary debug dump"
+//   v]
+//
+REBNATIVE(dump)
 {
 #ifdef _DEBUG
 	REBVAL *arg = D_ARG(1);
@@ -774,14 +876,13 @@ static int Check_Char_Range(REBVAL *val, REBINT limit)
 }
 
 
-/***********************************************************************
-**
-*/	static REBGOB *Map_Gob_Inner(REBGOB *gob, REBXYF *offset)
-/*
-**		Map a higher level gob coordinate to a lower level.
-**		Returns GOB and sets new offset pair.
-**
-***********************************************************************/
+//
+//  Map_Gob_Inner: C
+// 
+// Map a higher level gob coordinate to a lower level.
+// Returns GOB and sets new offset pair.
+//
+static REBGOB *Map_Gob_Inner(REBGOB *gob, REBXYF *offset)
 {
 	REBD32 xo = offset->x;
 	REBD32 yo = offset->y;
@@ -818,11 +919,15 @@ static int Check_Char_Range(REBVAL *val, REBINT limit)
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(map_event)
-/*
-***********************************************************************/
+//
+//  map-event: native [
+//  
+//  {Returns event with inner-most graphical object and coordinate.}
+//  
+//      event [event!]
+//  ]
+//
+REBNATIVE(map_event)
 {
 	REBVAL *val = D_ARG(1);
 	REBGOB *gob = cast(REBGOB*, VAL_EVENT_SER(val));
@@ -838,11 +943,10 @@ static int Check_Char_Range(REBVAL *val, REBINT limit)
 }
 
 
-/***********************************************************************
-**
-*/	static void Return_Gob_Pair(REBVAL *out, REBGOB *gob, REBD32 x, REBD32 y)
-/*
-***********************************************************************/
+//
+//  Return_Gob_Pair: C
+//
+static void Return_Gob_Pair(REBVAL *out, REBGOB *gob, REBD32 x, REBD32 y)
 {
 	REBSER *blk;
 	REBVAL *val;
@@ -858,11 +962,17 @@ static int Check_Char_Range(REBVAL *val, REBINT limit)
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(map_gob_offset)
-/*
-***********************************************************************/
+//
+//  map-gob-offset: native [
+//  
+//  {Translates a gob and offset to the deepest gob and offset in it, returned as a block.}
+//  
+//      gob [gob!] "Starting object"
+//      xy [pair!] "Staring offset"
+//      /reverse "Translate from deeper gob to top gob."
+//  ]
+//
+REBNATIVE(map_gob_offset)
 {
 	REBGOB *gob = VAL_GOB(D_ARG(1));
 	REBD32 xo = VAL_PAIR_X(D_ARG(2));

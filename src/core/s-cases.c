@@ -902,14 +902,13 @@ static const REBUNI Char_Cases[] = {
 };
 
 
-/***********************************************************************
-**
-*/	void Init_Char_Cases(void)
-/*
-**		Initialize the Unicode character casing tables.
-**		These tables support simple 1-to-1 casing methods.
-**
-***********************************************************************/
+//
+//  Init_Char_Cases: C
+// 
+// Initialize the Unicode character casing tables.
+// These tables support simple 1-to-1 casing methods.
+//
+void Init_Char_Cases(void)
 {
 	const REBUNI *up;
 	int n;
@@ -939,11 +938,10 @@ static const REBUNI Char_Cases[] = {
 }
 
 
-/***********************************************************************
-**
-*/	void Shutdown_Char_Cases(void)
-/*
-***********************************************************************/
+//
+//  Shutdown_Char_Cases: C
+//
+void Shutdown_Char_Cases(void)
 {
 	FREE_ARRAY(REBUNI, UNICODE_CASES, Upper_Cases);
 	FREE_ARRAY(REBUNI, UNICODE_CASES, Lower_Cases);

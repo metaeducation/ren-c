@@ -86,13 +86,12 @@ const struct arg_chr arg_chars2[] = {
 };
 
 
-/***********************************************************************
-**
-*/	static int find_option_word(REBCHR *word)
-/*
-**		Scan options, return flag bits, else zero.
-**
-***********************************************************************/
+//
+//  find_option_word: C
+// 
+// Scan options, return flag bits, else zero.
+//
+static int find_option_word(REBCHR *word)
 {
 	int n;
 	int i;
@@ -112,13 +111,12 @@ const struct arg_chr arg_chars2[] = {
 }
 
 
-/***********************************************************************
-**
-*/	static int find_option_char(REBCHR chr, const struct arg_chr list[])
-/*
-**		Scan option char flags, return flag bits, else zero.
-**
-***********************************************************************/
+//
+//  find_option_char: C
+// 
+// Scan option char flags, return flag bits, else zero.
+//
+static int find_option_char(REBCHR chr, const struct arg_chr list[])
 {
 	int i;
 
@@ -133,13 +131,12 @@ const struct arg_chr arg_chars2[] = {
 }
 
 
-/***********************************************************************
-**
-*/	static int Get_Ext_Arg(int flag, REBARGS *rargs, REBCHR *arg)
-/*
-**		Get extended argument field.
-**
-***********************************************************************/
+//
+//  Get_Ext_Arg: C
+// 
+// Get extended argument field.
+//
+static int Get_Ext_Arg(int flag, REBARGS *rargs, REBCHR *arg)
 {
 	flag &= ~RO_EXT;
 
@@ -174,14 +171,13 @@ const struct arg_chr arg_chars2[] = {
 }
 
 
-/***********************************************************************
-**
-*/	void Parse_Args(int argc, REBCHR **argv, REBARGS *rargs)
-/*
-**		Parse REBOL's command line arguments, setting options
-**		and values in the provided args structure.
-**
-***********************************************************************/
+//
+//  Parse_Args: C
+// 
+// Parse REBOL's command line arguments, setting options
+// and values in the provided args structure.
+//
+void Parse_Args(int argc, REBCHR **argv, REBARGS *rargs)
 {
 	REBCHR *arg;
 	int flag;

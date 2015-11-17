@@ -33,11 +33,10 @@
 
 #define BITS_NOT(s) ((s)->extra.size)
 
-/***********************************************************************
-**
-*/	REBINT CT_Bitset(REBVAL *a, REBVAL *b, REBINT mode)
-/*
-***********************************************************************/
+//
+//  CT_Bitset: C
+//
+REBINT CT_Bitset(REBVAL *a, REBVAL *b, REBINT mode)
 {
 	if (mode == 3) return VAL_SERIES(a) == VAL_SERIES(b);
 	if (mode >= 0) return (
@@ -49,15 +48,14 @@
 }
 
 
-/***********************************************************************
-**
-*/	REBSER *Make_Bitset(REBCNT len)
-/*
-**		Return a bitset series (binary.
-**
-**		len: the # of bits in the bitset.
-**
-***********************************************************************/
+//
+//  Make_Bitset: C
+// 
+// Return a bitset series (binary.
+// 
+// len: the # of bits in the bitset.
+//
+REBSER *Make_Bitset(REBCNT len)
 {
 	REBSER *ser;
 
@@ -71,11 +69,10 @@
 }
 
 
-/***********************************************************************
-**
-*/	void Mold_Bitset(const REBVAL *value, REB_MOLD *mold)
-/*
-***********************************************************************/
+//
+//  Mold_Bitset: C
+//
+void Mold_Bitset(const REBVAL *value, REB_MOLD *mold)
 {
 	REBSER *ser = VAL_SERIES(value);
 
@@ -85,11 +82,10 @@
 }
 
 
-/***********************************************************************
-**
-*/	REBFLG MT_Bitset(REBVAL *out, REBVAL *data, enum Reb_Kind type)
-/*
-***********************************************************************/
+//
+//  MT_Bitset: C
+//
+REBFLG MT_Bitset(REBVAL *out, REBVAL *data, enum Reb_Kind type)
 {
 	REBFLG is_not = 0;
 
@@ -110,14 +106,13 @@
 }
 
 
-/***********************************************************************
-**
-*/	REBINT Find_Max_Bit(REBVAL *val)
-/*
-**		Return integer number for the maximum bit number defined by
-**		the value. Used to determine how much space to allocate.
-**
-***********************************************************************/
+//
+//  Find_Max_Bit: C
+// 
+// Return integer number for the maximum bit number defined by
+// the value. Used to determine how much space to allocate.
+//
+REBINT Find_Max_Bit(REBVAL *val)
 {
 	REBINT maxi = 0;
 	REBINT n;
@@ -177,14 +172,13 @@
 }
 
 
-/***********************************************************************
-**
-*/	REBFLG Check_Bit(REBSER *bset, REBCNT c, REBFLG uncased)
-/*
-**		Check bit indicated. Returns TRUE if set.
-**		If uncased is TRUE, try to match either upper or lower case.
-**
-***********************************************************************/
+//
+//  Check_Bit: C
+// 
+// Check bit indicated. Returns TRUE if set.
+// If uncased is TRUE, try to match either upper or lower case.
+//
+REBFLG Check_Bit(REBSER *bset, REBCNT c, REBFLG uncased)
 {
 	REBCNT i, n = c;
 	REBCNT tail = SERIES_TAIL(bset);
@@ -212,13 +206,12 @@ retry:
 }
 
 
-/***********************************************************************
-**
-*/	REBFLG Check_Bit_Str(REBSER *bset, REBVAL *val, REBFLG uncased)
-/*
-**		If uncased is TRUE, try to match either upper or lower case.
-**
-***********************************************************************/
+//
+//  Check_Bit_Str: C
+// 
+// If uncased is TRUE, try to match either upper or lower case.
+//
+REBFLG Check_Bit_Str(REBSER *bset, REBVAL *val, REBFLG uncased)
 {
 	REBCNT n = VAL_INDEX(val);
 
@@ -236,13 +229,12 @@ retry:
 }
 
 
-/***********************************************************************
-**
-*/	void Set_Bit(REBSER *bset, REBCNT n, REBOOL set)
-/*
-**		Set/clear a single bit. Expand if needed.
-**
-***********************************************************************/
+//
+//  Set_Bit: C
+// 
+// Set/clear a single bit. Expand if needed.
+//
+void Set_Bit(REBSER *bset, REBCNT n, REBOOL set)
 {
 	REBCNT i = n >> 3;
 	REBCNT tail = SERIES_TAIL(bset);
@@ -263,11 +255,10 @@ retry:
 }
 
 
-/***********************************************************************
-**
-*/	void Set_Bit_Str(REBSER *bset, REBVAL *val, REBOOL set)
-/*
-***********************************************************************/
+//
+//  Set_Bit_Str: C
+//
+void Set_Bit_Str(REBSER *bset, REBVAL *val, REBOOL set)
 {
 	REBCNT n = VAL_INDEX(val);
 
@@ -284,13 +275,12 @@ retry:
 }
 
 
-/***********************************************************************
-**
-*/	REBFLG Set_Bits(REBSER *bset, REBVAL *val, REBOOL set)
-/*
-**		Set/clear bits indicated by strings and chars and ranges.
-**
-***********************************************************************/
+//
+//  Set_Bits: C
+// 
+// Set/clear bits indicated by strings and chars and ranges.
+//
+REBFLG Set_Bits(REBSER *bset, REBVAL *val, REBOOL set)
 {
 	REBCNT n;
 	REBCNT c;
@@ -390,14 +380,13 @@ span_bits:
 }
 
 
-/***********************************************************************
-**
-*/	REBFLG Check_Bits(REBSER *bset, REBVAL *val, REBFLG uncased)
-/*
-**		Check bits indicated by strings and chars and ranges.
-**		If uncased is TRUE, try to match either upper or lower case.
-**
-***********************************************************************/
+//
+//  Check_Bits: C
+// 
+// Check bits indicated by strings and chars and ranges.
+// If uncased is TRUE, try to match either upper or lower case.
+//
+REBFLG Check_Bits(REBSER *bset, REBVAL *val, REBFLG uncased)
 {
 	REBCNT n;
 	REBUNI c;
@@ -474,11 +463,10 @@ found:
 }
 
 
-/***********************************************************************
-**
-*/	REBINT PD_Bitset(REBPVS *pvs)
-/*
-***********************************************************************/
+//
+//  PD_Bitset: C
+//
+REBINT PD_Bitset(REBPVS *pvs)
 {
 	REBVAL *data = pvs->value;
 	REBVAL *val = pvs->setval;
@@ -502,13 +490,12 @@ found:
 }
 
 
-/***********************************************************************
-**
-*/	void Trim_Tail_Zeros(REBSER *ser)
-/*
-**		Remove extra zero bytes from end of byte string.
-**
-***********************************************************************/
+//
+//  Trim_Tail_Zeros: C
+// 
+// Remove extra zero bytes from end of byte string.
+//
+void Trim_Tail_Zeros(REBSER *ser)
 {
 	REBCNT tail = SERIES_TAIL(ser);
 	REBYTE *bp = BIN_HEAD(ser);
@@ -520,11 +507,10 @@ found:
 }
 
 
-/***********************************************************************
-**
-*/	REBTYPE(Bitset)
-/*
-***********************************************************************/
+//
+//  REBTYPE: C
+//
+REBTYPE(Bitset)
 {
 	REBVAL *value = D_ARG(1);
 	REBVAL *arg = DS_ARGC > 1 ? D_ARG(2) : NULL;

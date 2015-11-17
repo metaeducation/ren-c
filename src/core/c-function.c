@@ -51,14 +51,13 @@
 
 #include "sys-core.h"
 
-/***********************************************************************
-**
-*/	REBSER *List_Func_Words(const REBVAL *func)
-/*
-**		Return a block of function words, unbound.
-**		Note: skips 0th entry.
-**
-***********************************************************************/
+//
+//  List_Func_Words: C
+// 
+// Return a block of function words, unbound.
+// Note: skips 0th entry.
+//
+REBSER *List_Func_Words(const REBVAL *func)
 {
 	REBSER *series = VAL_FUNC_PARAMLIST(func);
 	REBVAL *typeset = BLK_SKIP(series, 1);
@@ -99,14 +98,13 @@
 }
 
 
-/***********************************************************************
-**
-*/	REBSER *List_Func_Typesets(REBVAL *func)
-/*
-**		Return a block of function arg typesets.
-**		Note: skips 0th entry.
-**
-***********************************************************************/
+//
+//  List_Func_Typesets: C
+// 
+// Return a block of function arg typesets.
+// Note: skips 0th entry.
+//
+REBSER *List_Func_Typesets(REBVAL *func)
 {
 	REBSER *series = VAL_FUNC_PARAMLIST(func);
 	REBVAL *typeset = BLK_SKIP(series, 1);
@@ -129,17 +127,16 @@
 }
 
 
-/***********************************************************************
-**
-*/	REBSER *Check_Func_Spec(REBSER *spec)
-/*
-**		Check function spec of the form:
-**
-**		["description" arg "notes" [type! type2! ...] /ref ...]
-**
-**		Throw an error for invalid values.
-**
-***********************************************************************/
+//
+//  Check_Func_Spec: C
+// 
+// Check function spec of the form:
+// 
+// ["description" arg "notes" [type! type2! ...] /ref ...]
+// 
+// Throw an error for invalid values.
+//
+REBSER *Check_Func_Spec(REBSER *spec)
 {
 	REBVAL *item;
 	REBSER *keylist;
@@ -311,11 +308,10 @@ REBNATIVE(return);
 REBNATIVE(exit);
 
 
-/***********************************************************************
-**
-*/	void Make_Native(REBVAL *out, REBSER *spec, REBFUN func, REBINT type)
-/*
-***********************************************************************/
+//
+//  Make_Native: C
+//
+void Make_Native(REBVAL *out, REBSER *spec, REBFUN func, REBINT type)
 {
 	//Print("Make_Native: %s spec %d", Get_Sym_Name(type+1), SERIES_TAIL(spec));
 	ENSURE_SERIES_MANAGED(spec);
@@ -350,20 +346,19 @@ REBNATIVE(exit);
 }
 
 
-/***********************************************************************
-**
-*/	REBSER *Get_Maybe_Fake_Func_Body(REBFLG *is_fake, const REBVAL *func)
-/*
-**	The EXT_FUNC_HAS_RETURN tricks used for definitional scoping acceleration
-**	make it seem like a generator authored more code in the function's
-**	body...but the code isn't *actually* there and an optimized internal
-**	trick is used.
-**
-**	If the body is fake, it needs to be freed by the caller with
-**	Free_Series.  This means that the body must currently be shallow
-**	copied, and the splicing slot must be in the topmost series.
-**
-***********************************************************************/
+//
+//  Get_Maybe_Fake_Func_Body: C
+// 
+// The EXT_FUNC_HAS_RETURN tricks used for definitional scoping acceleration
+// make it seem like a generator authored more code in the function's
+// body...but the code isn't *actually* there and an optimized internal
+// trick is used.
+// 
+// If the body is fake, it needs to be freed by the caller with
+// Free_Series.  This means that the body must currently be shallow
+// copied, and the splicing slot must be in the topmost series.
+//
+REBSER *Get_Maybe_Fake_Func_Body(REBFLG *is_fake, const REBVAL *func)
 {
 	REBSER *fake_body;
 
@@ -396,67 +391,66 @@ REBNATIVE(exit);
 }
 
 
-/***********************************************************************
-**
-*/	void Make_Function(REBVAL *out, enum Reb_Kind type, const REBVAL *spec, const REBVAL *body, REBFLG has_return)
-/*
-**	This is the support routine behind `MAKE FUNCTION!` (or CLOSURE!), the
-**	basic building block of creating functions in Rebol.
-**
-**	If `has_return` is passed in as TRUE, then is also the optimized native
-**	implementation for the function generators FUNC and CLOS.  Ren/C's
-**	schematic for these generators is *very* different from R3-Alpha, whose
-**	definition of FUNC was simply:
-**
-**	    make function! copy/deep reduce [spec body]
-**
-**	Not only does Ren/C's `make function!` already copy the spec and body,
-**	but FUNC and CLOS "use the internals to cheat".  They analyze and edit
-**	the spec, then potentially build an entity whose full "body" acts like:
-**
-**	    return: make function! [
-**	        [{Returns a value from a function.} value [any-value!]]
-**	        [throw/name :value bind-of 'return]
-**	    ]
-**	    catch/name (body) bind-of 'return
-**
-**	This pattern addresses "Definitional Return" in a way that does not
-**	technically require building RETURN in as a language keyword in any
-**	specific form.  FUNC and CLOS optimize by not internally building
-**	or executing the equivalent body, but giving it back from BODY-OF.
-**
-**	NOTES:
-**
-**	The spec and body are copied--even for MAKE FUNCTION!--because:
-**
-**     (a) It prevents tampering with the spec after it has been analyzed
-**         by Check_Func_Spec().  Such changes to the spec will not be
-**         reflected in the actual behavior of the function.
-**
-**     (b) The BLOCK! values inside the make-spec may actually be imaging
-**         series at an index position besides the series head.  However,
-**         the REBVAL for a FUNCTION! contains only three REBSER slots--
-**         all in use, with no space for offsets.  A copy must be made
-**         to truncate to the intended spec and body start (unless one
-**         is willing to raise errors on non-head position series :-/)
-**
-**     (c) Copying the root of the series into a series the user cannot
-**         access makes it possible to "lie" about what the body "above"
-**         is.  This gives FUNC and CLOS the edge to pretend to add
-**         containing code and simulate its effects, while really only
-**         holding onto the body the caller provided.  This trick may
-**         prove useful for other optimizing generators.
-**
-**	While MAKE FUNCTION! has no RETURN, all functions still have EXIT as a
-**	non-definitional alternative.  Ren/C adds a /WITH refinement so it can
-**	behave equivalently to old-non-definitonal return.  While not ideal, it
-**	could help in code which needed to be <transparent>.
-**
-**	This function will either successfully place a function value into
-**	`out` or not return...as a failed check on a function spec is
-**	raised as an error.
-**
-***********************************************************************/
+//
+//  Make_Function: C
+// 
+// This is the support routine behind `MAKE FUNCTION!` (or CLOSURE!), the
+// basic building block of creating functions in Rebol.
+// 
+// If `has_return` is passed in as TRUE, then is also the optimized native
+// implementation for the function generators FUNC and CLOS.  Ren/C's
+// schematic for these generators is *very* different from R3-Alpha, whose
+// definition of FUNC was simply:
+// 
+//     make function! copy/deep reduce [spec body]
+// 
+// Not only does Ren/C's `make function!` already copy the spec and body,
+// but FUNC and CLOS "use the internals to cheat".  They analyze and edit
+// the spec, then potentially build an entity whose full "body" acts like:
+// 
+//     return: make function! [
+//         [{Returns a value from a function.} value [any-value!]]
+//         [throw/name :value bind-of 'return]
+//     ]
+//     catch/name (body) bind-of 'return
+// 
+// This pattern addresses "Definitional Return" in a way that does not
+// technically require building RETURN in as a language keyword in any
+// specific form.  FUNC and CLOS optimize by not internally building
+// or executing the equivalent body, but giving it back from BODY-OF.
+// 
+// NOTES:
+// 
+// The spec and body are copied--even for MAKE FUNCTION!--because:
+// 
+//    (a) It prevents tampering with the spec after it has been analyzed
+//        by Check_Func_Spec().  Such changes to the spec will not be
+//        reflected in the actual behavior of the function.
+// 
+//    (b) The BLOCK! values inside the make-spec may actually be imaging
+//        series at an index position besides the series head.  However,
+//        the REBVAL for a FUNCTION! contains only three REBSER slots--
+//        all in use, with no space for offsets.  A copy must be made
+//        to truncate to the intended spec and body start (unless one
+//        is willing to raise errors on non-head position series :-/)
+// 
+//    (c) Copying the root of the series into a series the user cannot
+//        access makes it possible to "lie" about what the body "above"
+//        is.  This gives FUNC and CLOS the edge to pretend to add
+//        containing code and simulate its effects, while really only
+//        holding onto the body the caller provided.  This trick may
+//        prove useful for other optimizing generators.
+// 
+// While MAKE FUNCTION! has no RETURN, all functions still have EXIT as a
+// non-definitional alternative.  Ren/C adds a /WITH refinement so it can
+// behave equivalently to old-non-definitonal return.  While not ideal, it
+// could help in code which needed to be <transparent>.
+// 
+// This function will either successfully place a function value into
+// `out` or not return...as a failed check on a function spec is
+// raised as an error.
+//
+void Make_Function(REBVAL *out, enum Reb_Kind type, const REBVAL *spec, const REBVAL *body, REBFLG has_return)
 {
 	REBYTE func_flags = 0; // 8-bits in header, reserved type-specific flags
 
@@ -714,17 +708,16 @@ REBNATIVE(exit);
 }
 
 
-/***********************************************************************
-**
-*/	void Clonify_Function(REBVAL *value)
-/*
-**	The "Clonify" interface takes in a raw duplicate value that one
-**	wishes to mutate in-place into a full-fledged copy of the value
-**	it is a clone of.  This interface can be more efficient than a
-**	"source in, dest out" copy...and clarifies the dangers when the
-**	source and destination are the same.
-**
-***********************************************************************/
+//
+//  Clonify_Function: C
+// 
+// The "Clonify" interface takes in a raw duplicate value that one
+// wishes to mutate in-place into a full-fledged copy of the value
+// it is a clone of.  This interface can be more efficient than a
+// "source in, dest out" copy...and clarifies the dangers when the
+// source and destination are the same.
+//
+void Clonify_Function(REBVAL *value)
 {
 	REBSER *paramlist_orig;
 
@@ -789,11 +782,10 @@ REBNATIVE(exit);
 }
 
 
-/***********************************************************************
-**
-*/	REBFLG Do_Native_Throws(const REBVAL *func)
-/*
-***********************************************************************/
+//
+//  Do_Native_Throws: C
+//
+REBFLG Do_Native_Throws(const REBVAL *func)
 {
 	REBVAL *out = DSF_OUT(DSF);
 	REB_R ret;
@@ -893,11 +885,10 @@ REBNATIVE(exit);
 }
 
 
-/***********************************************************************
-**
-*/	REBFLG Do_Action_Throws(const REBVAL *func)
-/*
-***********************************************************************/
+//
+//  Do_Action_Throws: C
+//
+REBFLG Do_Action_Throws(const REBVAL *func)
 {
 	REBVAL *out = DSF_OUT(DSF);
 	REBCNT type = VAL_TYPE(DSF_ARG(DSF, 1));
@@ -955,11 +946,10 @@ REBNATIVE(exit);
 }
 
 
-/***********************************************************************
-**
-*/	REBFLG Do_Function_Throws(const REBVAL *func)
-/*
-***********************************************************************/
+//
+//  Do_Function_Throws: C
+//
+REBFLG Do_Function_Throws(const REBVAL *func)
 {
 	REBVAL *out = DSF_OUT(DSF);
 
@@ -996,14 +986,13 @@ REBNATIVE(exit);
 }
 
 
-/***********************************************************************
-**
-*/	REBFLG Do_Closure_Throws(const REBVAL *func)
-/*
-**		Do a closure by cloning its body and rebinding it to
-**		a new frame of words/values.
-**
-***********************************************************************/
+//
+//  Do_Closure_Throws: C
+// 
+// Do a closure by cloning its body and rebinding it to
+// a new frame of words/values.
+//
+REBFLG Do_Closure_Throws(const REBVAL *func)
 {
 	REBSER *body;
 	REBSER *frame;
@@ -1120,11 +1109,10 @@ REBNATIVE(exit);
 }
 
 
-/***********************************************************************
-**
-*/	REBFLG Do_Routine_Throws(const REBVAL *routine)
-/*
-***********************************************************************/
+//
+//  Do_Routine_Throws: C
+//
+REBFLG Do_Routine_Throws(const REBVAL *routine)
 {
 	REBSER *args = Copy_Values_Len_Shallow(
 		DSF_NUM_ARGS(DSF) > 0 ? DSF_ARG(DSF, 1) : NULL,
@@ -1140,18 +1128,24 @@ REBNATIVE(exit);
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(func)
-/*
-**	Native optimized implementation of a "definitional return" function
-**	generator.  FUNC uses "stack-relative binding" for optimization,
-**	which leads to less desirable behaviors than CLOS...while more
-**	performant.
-**
-**	See comments on Make_Function for full notes.
-**
-***********************************************************************/
+//
+//  func: native [
+//  
+//  "Defines a user function with given spec and body."
+//  
+//      spec [block!] 
+//      {Help string (opt) followed by arg words (and opt type and string)}
+//      body [block!] "The body block of the function"
+//  ]
+//
+REBNATIVE(func)
+//
+// Native optimized implementation of a "definitional return" function
+// generator.  FUNC uses "stack-relative binding" for optimization,
+// which leads to less desirable behaviors than CLOS...while more
+// performant.
+// 
+// See comments on Make_Function for full notes.
 {
 	REBVAL * const spec = D_ARG(1);
 	REBVAL * const body = D_ARG(2);
@@ -1164,27 +1158,33 @@ REBNATIVE(exit);
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(clos)
-/*
-**	Native optimized implementation of a "definitional return" "closure"
-**	generator.  Each time a CLOS-created function is called, it makes
-**	a copy of its body and binds all the local words in that copied
-**	body into a uniquely persistable object.  This provides desirable
-**	behaviors of "leaked" bound variables surviving the end of the
-**	closure's call on the stack... as well as recursive instances
-**	being able to uniquely identify their bound variables from each
-**	other.  Yet this uses more memory and puts more strain on the
-**	garbage collector than FUNC.
-**
-**	A solution that can accomplish closure's user-facing effects with
-**	enough efficiency to justify replacing FUNC's implementation
-**	with it is sought, but no adequate tradeoff has been found.
-**
-**	See comments on Make_Function for full notes.
-**
-***********************************************************************/
+//
+//  clos: native [
+//  
+//  "Defines a closure function."
+//  
+//      spec [block!] 
+//      {Help string (opt) followed by arg words (and opt type and string)}
+//      body [block!] "The body block of the function"
+//  ]
+//
+REBNATIVE(clos)
+//
+// Native optimized implementation of a "definitional return" "closure"
+// generator.  Each time a CLOS-created function is called, it makes
+// a copy of its body and binds all the local words in that copied
+// body into a uniquely persistable object.  This provides desirable
+// behaviors of "leaked" bound variables surviving the end of the
+// closure's call on the stack... as well as recursive instances
+// being able to uniquely identify their bound variables from each
+// other.  Yet this uses more memory and puts more strain on the
+// garbage collector than FUNC.
+// 
+// A solution that can accomplish closure's user-facing effects with
+// enough efficiency to justify replacing FUNC's implementation
+// with it is sought, but no adequate tradeoff has been found.
+// 
+// See comments on Make_Function for full notes.
 {
 	REBVAL * const spec = D_ARG(1);
 	REBVAL * const body = D_ARG(2);

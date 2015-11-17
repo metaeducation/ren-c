@@ -37,14 +37,13 @@ enum {
 };
 
 
-/***********************************************************************
-**
-*/	static REBSER *Make_Set_Operation_Series(const REBVAL *val1, const REBVAL *val2, REBCNT flags, REBCNT cased, REBCNT skip)
-/*
-**	Do set operations on a series.  Case-sensitive if `cased` is TRUE.
-**	`skip` is the record size.
-**
-***********************************************************************/
+//
+//  Make_Set_Operation_Series: C
+// 
+// Do set operations on a series.  Case-sensitive if `cased` is TRUE.
+// `skip` is the record size.
+//
+static REBSER *Make_Set_Operation_Series(const REBVAL *val1, const REBVAL *val2, REBCNT flags, REBCNT cased, REBCNT skip)
 {
 	REBSER *buffer;		// buffer for building the return series
 	REBCNT i;
@@ -210,11 +209,21 @@ enum {
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(difference)
-/*
-***********************************************************************/
+//
+//  difference: native [
+//  
+//  "Returns the special difference of two values."
+//  
+//      set1 [any-array! any-string! binary! bitset! date! typeset!] 
+//      "First data set"
+//      set2 [any-array! any-string! binary! bitset! date! typeset!] 
+//      "Second data set"
+//      /case "Uses case-sensitive comparison"
+//      /skip "Treat the series as records of fixed size"
+//      size [integer!]
+//  ]
+//
+REBNATIVE(difference)
 {
 	REBVAL *val1 = D_ARG(1);
 	REBVAL *val2 = D_ARG(2);
@@ -265,11 +274,21 @@ enum {
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(exclude)
-/*
-***********************************************************************/
+//
+//  exclude: native [
+//  
+//  {Returns the first data set less the second data set.}
+//  
+//      set1 [any-array! any-string! binary! bitset! typeset!] "First data set"
+//      
+//      set2 [any-array! any-string! binary! bitset! typeset!] 
+//      "Second data set"
+//      /case "Uses case-sensitive comparison"
+//      /skip "Treat the series as records of fixed size"
+//      size [integer!]
+//  ]
+//
+REBNATIVE(exclude)
 {
 	REBVAL *val1 = D_ARG(1);
 	REBVAL *val2 = D_ARG(2);
@@ -306,11 +325,19 @@ enum {
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(intersect)
-/*
-***********************************************************************/
+//
+//  intersect: native [
+//  
+//  "Returns the intersection of two data sets."
+//  
+//      set1 [any-array! any-string! binary! bitset! typeset!] "first set"
+//      set2 [any-array! any-string! binary! bitset! typeset!] "second set"
+//      /case "Uses case-sensitive comparison"
+//      /skip "Treat the series as records of fixed size"
+//      size [integer!]
+//  ]
+//
+REBNATIVE(intersect)
 {
 	REBVAL *val1 = D_ARG(1);
 	REBVAL *val2 = D_ARG(2);
@@ -346,11 +373,19 @@ enum {
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(union)
-/*
-***********************************************************************/
+//
+//  union: native [
+//  
+//  "Returns the union of two data sets."
+//  
+//      set1 [any-array! any-string! binary! bitset! typeset!] "first set"
+//      set2 [any-array! any-string! binary! bitset! typeset!] "second set"
+//      /case "Use case-sensitive comparison"
+//      /skip "Treat the series as records of fixed size"
+//      size [integer!]
+//  ]
+//
+REBNATIVE(union)
 {
 	REBVAL *val1 = D_ARG(1);
 	REBVAL *val2 = D_ARG(2);
@@ -386,11 +421,18 @@ enum {
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(unique)
-/*
-***********************************************************************/
+//
+//  unique: native [
+//  
+//  "Returns the data set with duplicates removed."
+//  
+//      set1 [any-array! any-string! binary! bitset! typeset!]
+//      /case "Use case-sensitive comparison (except bitsets)"
+//      /skip "Treat the series as records of fixed size"
+//      size [integer!]
+//  ]
+//
+REBNATIVE(unique)
 {
 	REBVAL *val1 = D_ARG(1);
 

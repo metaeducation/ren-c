@@ -39,11 +39,10 @@
 #define MAKE_OS_BUFFER Make_Binary
 #endif
 
-/***********************************************************************
-**
-*/	static REB_R Console_Actor(struct Reb_Call *call_, REBSER *port, REBCNT action)
-/*
-***********************************************************************/
+//
+//  Console_Actor: C
+//
+static REB_R Console_Actor(struct Reb_Call *call_, REBSER *port, REBCNT action)
 {
 	REBREQ *req;
 	REBINT result;
@@ -135,11 +134,10 @@
 }
 
 
-/***********************************************************************
-**
-*/	void Init_Console_Scheme(void)
-/*
-***********************************************************************/
+//
+//  Init_Console_Scheme: C
+//
+void Init_Console_Scheme(void)
 {
 	Register_Scheme(SYM_CONSOLE, 0, Console_Actor);
 }

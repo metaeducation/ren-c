@@ -56,137 +56,126 @@
 //** OSAL Library Functions ********************************************
 //**********************************************************************
 
-/***********************************************************************
-**
-*/	void OS_Init_Graphics(REBGOB *gob)
-/*
-**  Initialize graphics subsystem. Store Gob_Root.
-**
-***********************************************************************/
+//
+//  OS_Init_Graphics: C
+// 
+// Initialize graphics subsystem. Store Gob_Root.
+//
+void OS_Init_Graphics(REBGOB *gob)
 {
 }
 
 
-/***********************************************************************
-**
-*/  void OS_GUI_Metrics(REBOL_OS_METRICS *met)
-/*
-**      Provide info about the hosting GUI.
-**
-***********************************************************************/
+//
+//  OS_GUI_Metrics: C
+// 
+// Provide info about the hosting GUI.
+//
+void OS_GUI_Metrics(REBOL_OS_METRICS *met)
 {
 }
 
 
-/***********************************************************************
-**
-*/  REBINT OS_Show_Gob(REBGOB *gob)
-/*
-**	Notes:
-**		1.	Can be called with NONE (0), Gob_Root (All), or a
-**			specific gob to open, close, or refresh.
-**
-**		2.	A new window will be in Gob_Root/pane but will not
-**			have GOBF_WINDOW set.
-**
-**		3.	A closed window will have no PARENT and will not be
-**			in the Gob_Root/pane but will have GOBF_WINDOW set.
-**
-***********************************************************************/
+//
+//  OS_Show_Gob: C
+// 
+// Notes:
+//     1.    Can be called with NONE (0), Gob_Root (All), or a
+//         specific gob to open, close, or refresh.
+// 
+//     2.    A new window will be in Gob_Root/pane but will not
+//         have GOBF_WINDOW set.
+// 
+//     3.    A closed window will have no PARENT and will not be
+//         in the Gob_Root/pane but will have GOBF_WINDOW set.
+//
+REBINT OS_Show_Gob(REBGOB *gob)
 {
 	return 0;
 }
 
 
-/***********************************************************************
-**
-*/  void OS_Map_Gob(REBGOB **gob, REBPAR *xy, REBOOL inner)
-/*
-**      Map GOB and offset to inner or outer GOB and offset.
-**
-***********************************************************************/
+//
+//  OS_Map_Gob: C
+// 
+// Map GOB and offset to inner or outer GOB and offset.
+//
+void OS_Map_Gob(REBGOB **gob, REBPAR *xy, REBOOL inner)
 {
 }
 
 
-/***********************************************************************
-**
-*/  REBINT OS_Size_Text(REBGOB *gob, REBPAR *size)
-/*
-**      Return the area size of the text.
-**
-***********************************************************************/
+//
+//  OS_Size_Text: C
+// 
+// Return the area size of the text.
+//
+REBINT OS_Size_Text(REBGOB *gob, REBPAR *size)
 {
 	return 0;
 }
 
 
-/***********************************************************************
-**
-*/  REBINT OS_Offset_To_Caret(REBGOB *gob, REBPAR xy, REBINT *element, REBINT *position)
-/*
-**      Return the element and position for a given offset pair.
-**
-***********************************************************************/
+//
+//  OS_Offset_To_Caret: C
+// 
+// Return the element and position for a given offset pair.
+//
+REBINT OS_Offset_To_Caret(REBGOB *gob, REBPAR xy, REBINT *element, REBINT *position)
 {
 	return 0;
 }
 
 
-/***********************************************************************
-**
-*/  REBINT OS_Caret_To_Offset(REBGOB *gob, REBPAR *xy, REBINT element, REBINT position)
-/*
-**      Return the offset pair for a given element and position.
-**
-***********************************************************************/
+//
+//  OS_Caret_To_Offset: C
+// 
+// Return the offset pair for a given element and position.
+//
+REBINT OS_Caret_To_Offset(REBGOB *gob, REBPAR *xy, REBINT element, REBINT position)
 {
 	return 0;
 }
 
 
-/***********************************************************************
-**
-*/  REBINT OS_Gob_To_Image(REBSER *image, REBGOB *gob)
-/*
-**      Render gob into an image.
-**		Clip to keep render inside the image provided.
-**
-***********************************************************************/
+//
+//  OS_Gob_To_Image: C
+// 
+// Render gob into an image.
+// Clip to keep render inside the image provided.
+//
+REBINT OS_Gob_To_Image(REBSER *image, REBGOB *gob)
 {
 	return 0;
 }
 
 
-/***********************************************************************
-**
-*/  REBINT OS_Draw_Image(REBSER *image, REBSER *block)
-/*
-**      Render DRAW dialect into an image.
-**		Clip to keep render inside the image provided.
-**
-***********************************************************************/
+//
+//  OS_Draw_Image: C
+// 
+// Render DRAW dialect into an image.
+// Clip to keep render inside the image provided.
+//
+REBINT OS_Draw_Image(REBSER *image, REBSER *block)
 {
 	return 0;
 }
 
 
-/***********************************************************************
-**
-*/  REBINT OS_Effect_Image(REBSER *image, REBSER *block)
-/*
-**      Render EFFECT dialect into an image.
-**		Clip to keep render inside the image provided.
-**
-***********************************************************************/
+//
+//  OS_Effect_Image: C
+// 
+// Render EFFECT dialect into an image.
+// Clip to keep render inside the image provided.
+//
+REBINT OS_Effect_Image(REBSER *image, REBSER *block)
 {
 	return 0;
 }
 
-/***********************************************************************
-**
-*/  void OS_Cursor_Image(REBINT n, REBSER *image)
-/*
-***********************************************************************/
+//
+//  OS_Cursor_Image: C
+//
+void OS_Cursor_Image(REBINT n, REBSER *image)
 {
 }

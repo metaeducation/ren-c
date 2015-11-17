@@ -68,16 +68,15 @@ int os_init_gtk(void *libgtk);
 void OS_Destroy_Graphics(void);
 
 
-/***********************************************************************
-**
-*/	int OS_Get_Current_Dir(REBCHR **path)
-/*
-**		Return the current directory path as a string and
-**		its length in chars (not bytes).
-**
-**		The result should be freed after copy/conversion.
-**
-***********************************************************************/
+//
+//  OS_Get_Current_Dir: C
+// 
+// Return the current directory path as a string and
+// its length in chars (not bytes).
+// 
+// The result should be freed after copy/conversion.
+//
+int OS_Get_Current_Dir(REBCHR **path)
 {
 	*path = OS_ALLOC_ARRAY(char, PATH_MAX);
 	if (!getcwd(*path, PATH_MAX-1)) *path[0] = 0;
@@ -85,24 +84,22 @@ void OS_Destroy_Graphics(void);
 }
 
 
-/***********************************************************************
-**
-*/	REBOOL OS_Set_Current_Dir(REBCHR *path)
-/*
-**		Set the current directory to local path. Return FALSE
-**		on failure.
-**
-***********************************************************************/
+//
+//  OS_Set_Current_Dir: C
+// 
+// Set the current directory to local path. Return FALSE
+// on failure.
+//
+REBOOL OS_Set_Current_Dir(REBCHR *path)
 {
 	return chdir(path) == 0;
 }
 
 
-/***********************************************************************
-**
-*/	REBOOL OS_Request_File(REBRFR *fr)
-/*
-***********************************************************************/
+//
+//  OS_Request_File: C
+//
+REBOOL OS_Request_File(REBRFR *fr)
 {
 	REBOOL ret = FALSE;
 #ifdef USE_GTK_FILECHOOSER
@@ -148,14 +145,13 @@ void OS_Destroy_Graphics(void);
 }
 
 
-/***********************************************************************
-**
-*/	REBOOL OS_Request_Dir(REBCHR* title, REBCHR** folder, REBCHR* path)
-/*
-**	WARNING: TEMPORARY implementation! Used only by host-core.c
-**  Will be most probably changed in future.
-**
-***********************************************************************/
+//
+//  OS_Request_Dir: C
+// 
+// WARNING: TEMPORARY implementation! Used only by host-core.c
+// Will be most probably changed in future.
+//
+REBOOL OS_Request_Dir(REBCHR* title, REBCHR** folder, REBCHR* path)
 {
 	return FALSE;
 }
@@ -192,11 +188,10 @@ static int Try_Browser(const char *browser, const REBCHR *url)
 							INHERIT_TYPE, NULL, NULL); /* u32 err_type, void **err, u32 *err_len */
 }
 
-/***********************************************************************
-**
-*/	int OS_Browse(const REBCHR *url, int reserved)
-/*
-***********************************************************************/
+//
+//  OS_Browse: C
+//
+int OS_Browse(const REBCHR *url, int reserved)
 {
 	return Try_Browser("xdg-open", url) && Try_Browser("x-www-browser", url);
 }

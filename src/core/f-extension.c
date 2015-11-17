@@ -250,13 +250,17 @@ x*/	REBRXT Do_Callback(REBSER *obj, u32 name, RXIARG *rxis, RXIARG *result)
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(do_callback)
-/*
-**		object word arg1 arg2
-**
-***********************************************************************/
+//
+//  do-callback: native [
+//  
+//  "Internal function to process callback events."
+//  
+//      event [event!] "Callback event"
+//  ]
+//
+REBNATIVE(do_callback)
+//
+// object word arg1 arg2
 {
 	RXICBI *cbi;
 	REBVAL *event = D_ARG(1);
@@ -286,30 +290,32 @@ x*/	REBRXT Do_Callback(REBSER *obj, u32 name, RXIARG *rxis, RXIARG *result)
 typedef REBYTE *(INFO_FUNC)(REBINT opts, void *lib);
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(load_extension)
-/*
-**		arg 1: filename | body binary string (UTF-8)
-**		arg 2: dispatch
-**		arg 3: function handle
-**
-**	Low level extension loader:
-**
-**		1. Opens the DLL for the extension
-**		2. Calls its Info() command to get its definition header (REBOL)
-**		3. Inits an extension structure (dll, Call() function)
-**		4. Creates a extension object and returns it
-**		5. REBOL code then uses that object to define the extension module
-**		   including commands, functions, data, exports, etc.
-**
-**	Each extension is defined as DLL with:
-**
-**		init() - init anything needed
-**		quit() - cleanup anything needed
-**		call() - dispatch a native
-**
-***********************************************************************/
+//
+//  load-extension: native [
+//  
+//  "Low level extension module loader (for DLLs)."
+//  
+//      name [file! binary!] "DLL file or UTF-8 source"
+//      /dispatch {Specify native command dispatch (from hosted extensions)}
+//      function [handle!] "Command dispatcher (native)"
+//  ]
+//
+REBNATIVE(load_extension)
+//
+// Low level extension loader:
+// 
+// 1. Opens the DLL for the extension
+// 2. Calls its Info() command to get its definition header (REBOL)
+// 3. Inits an extension structure (dll, Call() function)
+// 4. Creates a extension object and returns it
+// 5. REBOL code then uses that object to define the extension module
+//    including commands, functions, data, exports, etc.
+// 
+// Each extension is defined as DLL with:
+// 
+// init() - init anything needed
+// quit() - cleanup anything needed
+// call() - dispatch a native
 {
 	REBCHR *name;
 	void *dll;
@@ -385,36 +391,35 @@ typedef REBYTE *(INFO_FUNC)(REBINT opts, void *lib);
 }
 
 
-/***********************************************************************
-**
-*/	void Make_Command(REBVAL *out, const REBVAL *spec, const REBVAL *extension, const REBVAL *command_num)
-/*
-**	A REB_COMMAND is used to connect a Rebol function spec to implementation
-**	inside of a C DLL.  That implementation uses a set of APIs (RXIARG, etc.)
-**	which were developed prior to Rebol becoming open source.  It was
-**	intended that C developers could use an API that was a parallel subset
-**	of Rebol's internal code, that would be binary stable to survive any
-**	reorganizations.
-**
-**	`extension` is an object or module that represents the properties of the
-**	DLL or shared library (including its DLL handle, load or unload status,
-**	etc.)  `command-num` is a numbered function inside of that DLL, which
-**	(one hopes) has a binary interface able to serve the spec which was
-**	provided.  Though the same spec format is used as for ordinary functions
-**	in Rebol, the allowed datatypes are more limited...as not all Rebol types
-**	had a parallel interface under this conception.
-**
-**	Subsequent to the open-sourcing, the Ren/C initiative is not focusing on
-**	the REB_COMMAND model--preferring to connect the Rebol core directly as
-**	a library to bindings.  However, as it was the only extension model
-**	available under closed-source Rebol3, several pieces of code were built
-**	to depend upon it for functionality.  This included the cryptography
-**	extensions needed for secure sockets and a large part of the GUI.
-**
-**	Being able to quarantine the REB_COMMAND machinery to only builds that
-**	need it is a working objective.
-**
-***********************************************************************/
+//
+//  Make_Command: C
+// 
+// A REB_COMMAND is used to connect a Rebol function spec to implementation
+// inside of a C DLL.  That implementation uses a set of APIs (RXIARG, etc.)
+// which were developed prior to Rebol becoming open source.  It was
+// intended that C developers could use an API that was a parallel subset
+// of Rebol's internal code, that would be binary stable to survive any
+// reorganizations.
+// 
+// `extension` is an object or module that represents the properties of the
+// DLL or shared library (including its DLL handle, load or unload status,
+// etc.)  `command-num` is a numbered function inside of that DLL, which
+// (one hopes) has a binary interface able to serve the spec which was
+// provided.  Though the same spec format is used as for ordinary functions
+// in Rebol, the allowed datatypes are more limited...as not all Rebol types
+// had a parallel interface under this conception.
+// 
+// Subsequent to the open-sourcing, the Ren/C initiative is not focusing on
+// the REB_COMMAND model--preferring to connect the Rebol core directly as
+// a library to bindings.  However, as it was the only extension model
+// available under closed-source Rebol3, several pieces of code were built
+// to depend upon it for functionality.  This included the cryptography
+// extensions needed for secure sockets and a large part of the GUI.
+// 
+// Being able to quarantine the REB_COMMAND machinery to only builds that
+// need it is a working objective.
+//
+void Make_Command(REBVAL *out, const REBVAL *spec, const REBVAL *extension, const REBVAL *command_num)
 {
 	if (!IS_MODULE(extension) && !IS_OBJECT(extension)) goto bad_func_def;
 
@@ -486,19 +491,18 @@ bad_func_def:
 }
 
 
-/***********************************************************************
-**
-*/	REBFLG Do_Command_Throws(const REBVAL *value)
-/*
-**	Evaluates the arguments for a command function and creates
-**	a resulting stack frame (struct or object) for command processing.
-**
-**	A command value consists of:
-**		args - same as other funcs
-**		spec - same as other funcs
-**		body - [ext-obj func-index]
-**
-***********************************************************************/
+//
+//  Do_Command_Throws: C
+// 
+// Evaluates the arguments for a command function and creates
+// a resulting stack frame (struct or object) for command processing.
+// 
+// A command value consists of:
+//     args - same as other funcs
+//     spec - same as other funcs
+//     body - [ext-obj func-index]
+//
+REBFLG Do_Command_Throws(const REBVAL *value)
 {
 	// All of these were checked above on definition:
 	REBVAL *val = BLK_HEAD(VAL_FUNC_BODY(value));
@@ -561,17 +565,16 @@ bad_func_def:
 }
 
 
-/***********************************************************************
-**
-*/	void Do_Commands(REBVAL *out, REBSER *cmds, void *context)
-/*
-**		Evaluate a block of commands as efficiently as possible.
-**		The arguments to each command must already be reduced or
-**		use only variable lookup.
-**
-**		Returns the last evaluated value, if provided.
-**
-***********************************************************************/
+//
+//  Do_Commands: C
+// 
+// Evaluate a block of commands as efficiently as possible.
+// The arguments to each command must already be reduced or
+// use only variable lookup.
+// 
+// Returns the last evaluated value, if provided.
+//
+void Do_Commands(REBVAL *out, REBSER *cmds, void *context)
 {
 	REBVAL *blk;
 	REBCNT index = 0;
@@ -719,11 +722,15 @@ bad_func_def:
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(do_commands)
-/*
-***********************************************************************/
+//
+//  do-commands: native [
+//  
+//  {Evaluate a block of extension module command functions (special evaluation rules.)}
+//  
+//      commands [block!] "Series of commands and their arguments"
+//  ]
+//
+REBNATIVE(do_commands)
 {
 	REBCEC ctx;
 

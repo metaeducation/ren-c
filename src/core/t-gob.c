@@ -48,24 +48,22 @@ const REBCNT Gob_Flag_Words[] = {
 };
 
 
-/***********************************************************************
-**
-*/	REBINT CT_Gob(REBVAL *a, REBVAL *b, REBINT mode)
-/*
-***********************************************************************/
+//
+//  CT_Gob: C
+//
+REBINT CT_Gob(REBVAL *a, REBVAL *b, REBINT mode)
 {
 	if (mode >= 0)
 		return VAL_GOB(a) == VAL_GOB(b) && VAL_GOB_INDEX(a) == VAL_GOB_INDEX(b);
 	return -1;
 }
 
-/***********************************************************************
-**
-*/  REBGOB *Make_Gob(void)
-/*
-**      Allocate a new GOB.
-**
-***********************************************************************/
+//
+//  Make_Gob: C
+// 
+// Allocate a new GOB.
+//
+REBGOB *Make_Gob(void)
 {
 	REBGOB *gob = cast(REBGOB*, Make_Node(GOB_POOL));
 	CLEAR(gob, sizeof(REBGOB));
@@ -78,11 +76,10 @@ const REBCNT Gob_Flag_Words[] = {
 }
 
 
-/***********************************************************************
-**
-*/  REBINT Cmp_Gob(const REBVAL *g1, const REBVAL *g2)
-/*
-***********************************************************************/
+//
+//  Cmp_Gob: C
+//
+REBINT Cmp_Gob(const REBVAL *g1, const REBVAL *g2)
 {
 	REBINT n;
 
@@ -94,11 +91,10 @@ const REBCNT Gob_Flag_Words[] = {
 }
 
 
-/***********************************************************************
-**
-*/	static REBFLG Set_Pair(REBXYF *pair, const REBVAL *val)
-/*
-***********************************************************************/
+//
+//  Set_Pair: C
+//
+static REBFLG Set_Pair(REBXYF *pair, const REBVAL *val)
 {
 	if (IS_PAIR(val)) {
 		pair->x = VAL_PAIR_X(val);
@@ -117,14 +113,13 @@ const REBCNT Gob_Flag_Words[] = {
 }
 
 
-/***********************************************************************
-**
-*/	static REBCNT Find_Gob(REBGOB *gob, REBGOB *target)
-/*
-**		Find a target GOB within the pane of another gob.
-**		Return the index, or a -1 if not found.
-**
-***********************************************************************/
+//
+//  Find_Gob: C
+// 
+// Find a target GOB within the pane of another gob.
+// Return the index, or a -1 if not found.
+//
+static REBCNT Find_Gob(REBGOB *gob, REBGOB *target)
 {
 	REBCNT len;
 	REBCNT n;
@@ -140,14 +135,13 @@ const REBCNT Gob_Flag_Words[] = {
 }
 
 
-/***********************************************************************
-**
-*/	static void Detach_Gob(REBGOB *gob)
-/*
-**		Remove a gob value from its parent.
-**		Done normally in advance of inserting gobs into new parent.
-**
-***********************************************************************/
+//
+//  Detach_Gob: C
+// 
+// Remove a gob value from its parent.
+// Done normally in advance of inserting gobs into new parent.
+//
+static void Detach_Gob(REBGOB *gob)
 {
 	REBGOB *par;
 	REBCNT i;
@@ -160,15 +154,14 @@ const REBCNT Gob_Flag_Words[] = {
 }
 
 
-/***********************************************************************
-**
-*/	static void Insert_Gobs(REBGOB *gob, const REBVAL *arg, REBCNT index, REBCNT len, REBFLG change)
-/*
-**		Insert one or more gobs into a pane at the given index.
-**		If index >= tail, an append occurs. Each gob has its parent
-**		gob field set. (Call Detach_Gobs() before inserting.)
-**
-***********************************************************************/
+//
+//  Insert_Gobs: C
+// 
+// Insert one or more gobs into a pane at the given index.
+// If index >= tail, an append occurs. Each gob has its parent
+// gob field set. (Call Detach_Gobs() before inserting.)
+//
+static void Insert_Gobs(REBGOB *gob, const REBVAL *arg, REBCNT index, REBCNT len, REBFLG change)
 {
 	REBGOB **ptr;
 	REBCNT n, count;
@@ -240,13 +233,12 @@ const REBCNT Gob_Flag_Words[] = {
 }
 
 
-/***********************************************************************
-**
-*/	static void Remove_Gobs(REBGOB *gob, REBCNT index, REBCNT len)
-/*
-**		Remove one or more gobs from a pane at the given index.
-**
-***********************************************************************/
+//
+//  Remove_Gobs: C
+// 
+// Remove one or more gobs from a pane at the given index.
+//
+static void Remove_Gobs(REBGOB *gob, REBCNT index, REBCNT len)
 {
 	REBGOB **ptr;
 	REBCNT n;
@@ -260,13 +252,12 @@ const REBCNT Gob_Flag_Words[] = {
 }
 
 
-/***********************************************************************
-**
-*/	static REBSER *Pane_To_Block(REBGOB *gob, REBCNT index, REBINT len)
-/*
-**		Convert pane list of gob pointers to a block of GOB!s.
-**
-***********************************************************************/
+//
+//  Pane_To_Block: C
+// 
+// Convert pane list of gob pointers to a block of GOB!s.
+//
+static REBSER *Pane_To_Block(REBGOB *gob, REBCNT index, REBINT len)
 {
 	REBSER *ser;
 	REBGOB **gp;
@@ -288,11 +279,10 @@ const REBCNT Gob_Flag_Words[] = {
 }
 
 
-/***********************************************************************
-**
-*/	static REBSER *Flags_To_Block(REBGOB *gob)
-/*
-***********************************************************************/
+//
+//  Flags_To_Block: C
+//
+static REBSER *Flags_To_Block(REBGOB *gob)
 {
 	REBSER *ser;
 	REBVAL *val;
@@ -311,11 +301,10 @@ const REBCNT Gob_Flag_Words[] = {
 }
 
 
-/***********************************************************************
-**
-*/	static void Set_Gob_Flag(REBGOB *gob, const REBVAL *word)
-/*
-***********************************************************************/
+//
+//  Set_Gob_Flag: C
+//
+static void Set_Gob_Flag(REBGOB *gob, const REBVAL *word)
 {
 	REBINT i;
 
@@ -349,11 +338,10 @@ const REBCNT Gob_Flag_Words[] = {
 }
 
 
-/***********************************************************************
-**
-*/	static REBFLG Set_GOB_Var(REBGOB *gob, const REBVAL *word, const REBVAL *val)
-/*
-***********************************************************************/
+//
+//  Set_GOB_Var: C
+//
+static REBFLG Set_GOB_Var(REBGOB *gob, const REBVAL *word, const REBVAL *val)
 {
 	switch (VAL_WORD_CANON(word)) {
 	case SYM_OFFSET:
@@ -490,11 +478,10 @@ const REBCNT Gob_Flag_Words[] = {
 }
 
 
-/***********************************************************************
-**
-*/	static REBFLG Get_GOB_Var(REBGOB *gob, const REBVAL *word, REBVAL *val)
-/*
-***********************************************************************/
+//
+//  Get_GOB_Var: C
+//
+static REBFLG Get_GOB_Var(REBGOB *gob, const REBVAL *word, REBVAL *val)
 {
 	switch (VAL_WORD_CANON(word)) {
 
@@ -595,11 +582,10 @@ is_none:
 }
 
 
-/***********************************************************************
-**
-*/	static void Set_GOB_Vars(REBGOB *gob, const REBVAL *blk)
-/*
-***********************************************************************/
+//
+//  Set_GOB_Vars: C
+//
+static void Set_GOB_Vars(REBGOB *gob, const REBVAL *blk)
 {
 	const REBVAL *var;
 	const REBVAL *val;
@@ -619,13 +605,12 @@ is_none:
 }
 
 
-/***********************************************************************
-**
-*/	REBSER *Gob_To_Block(REBGOB *gob)
-/*
-**		Used by MOLD to create a block.
-**
-***********************************************************************/
+//
+//  Gob_To_Block: C
+// 
+// Used by MOLD to create a block.
+//
+REBSER *Gob_To_Block(REBGOB *gob)
 {
 	REBSER *ser = Make_Array(10);
 	REBVAL *val;
@@ -677,11 +662,10 @@ is_none:
 }
 
 
-/***********************************************************************
-**
-*/	REBFLG MT_Gob(REBVAL *out, REBVAL *data, enum Reb_Kind type)
-/*
-***********************************************************************/
+//
+//  MT_Gob: C
+//
+REBFLG MT_Gob(REBVAL *out, REBVAL *data, enum Reb_Kind type)
 {
 	REBGOB *ngob;
 
@@ -696,11 +680,10 @@ is_none:
 }
 
 
-/***********************************************************************
-**
-*/	REBINT PD_Gob(REBPVS *pvs)
-/*
-***********************************************************************/
+//
+//  PD_Gob: C
+//
+REBINT PD_Gob(REBPVS *pvs)
 {
 	REBGOB *gob = VAL_GOB(pvs->value);
 	REBCNT index;
@@ -746,11 +729,10 @@ is_none:
 }
 
 
-/***********************************************************************
-**
-*/	REBTYPE(Gob)
-/*
-***********************************************************************/
+//
+//  REBTYPE: C
+//
+REBTYPE(Gob)
 {
 	REBVAL *val = D_ARG(1);
 	REBVAL *arg = DS_ARGC > 1 ? D_ARG(2) : NULL;

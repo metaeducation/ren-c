@@ -54,14 +54,13 @@
 #endif
 
 
-/***********************************************************************
-**
-*/	void *OS_Open_Library(const REBCHR *path, REBCNT *error)
-/*
-**		Load a DLL library and return the handle to it.
-**		If zero is returned, error indicates the reason.
-**
-***********************************************************************/
+//
+//  OS_Open_Library: C
+// 
+// Load a DLL library and return the handle to it.
+// If zero is returned, error indicates the reason.
+//
+void *OS_Open_Library(const REBCHR *path, REBCNT *error)
 {
 #ifndef NO_DL_LIB
 	void *dll = dlopen(path, RTLD_LAZY/*|RTLD_GLOBAL*/);
@@ -76,13 +75,12 @@
 }
 
 
-/***********************************************************************
-**
-*/	void OS_Close_Library(void *dll)
-/*
-**		Free a DLL library opened earlier.
-**
-***********************************************************************/
+//
+//  OS_Close_Library: C
+// 
+// Free a DLL library opened earlier.
+//
+void OS_Close_Library(void *dll)
 {
 #ifndef NO_DL_LIB
 	dlclose(dll);
@@ -90,13 +88,12 @@
 }
 
 
-/***********************************************************************
-**
-*/	CFUNC *OS_Find_Function(void *dll, const char *funcname)
-/*
-**		Get a DLL function address from its string name.
-**
-***********************************************************************/
+//
+//  OS_Find_Function: C
+// 
+// Get a DLL function address from its string name.
+//
+CFUNC *OS_Find_Function(void *dll, const char *funcname)
 {
 #ifndef NO_DL_LIB
 	// !!! See notes about data pointers vs. function pointers in the

@@ -32,11 +32,10 @@
 #include "sys-int-funcs.h"
 
 
-/***********************************************************************
-**
-*/	REBINT CT_String(REBVAL *a, REBVAL *b, REBINT mode)
-/*
-***********************************************************************/
+//
+//  CT_String: C
+//
+REBINT CT_String(REBVAL *a, REBVAL *b, REBINT mode)
 {
 	REBINT num;
 
@@ -274,11 +273,10 @@ static REBSER *make_binary(REBVAL *arg, REBOOL make)
 	return ser;
 }
 
-/***********************************************************************
-**
-*/	REBFLG MT_String(REBVAL *out, REBVAL *data, enum Reb_Kind type)
-/*
-***********************************************************************/
+//
+//  MT_String: C
+//
+REBFLG MT_String(REBVAL *out, REBVAL *data, enum Reb_Kind type)
 {
 	REBCNT i;
 
@@ -299,16 +297,15 @@ enum COMPARE_CHR_FLAGS {
 };
 
 
-/***********************************************************************
-**
-*/	static int Compare_Chr(void *thunk, const void *v1, const void *v2)
-/*
-**	This function is called by qsort_r, on behalf of the string sort
-**	function.  The `thunk` is an argument passed through from the caller
-**	and given to us by the sort routine, which tells us about the string
-**	and the kind of sort that was requested.
-**
-***********************************************************************/
+//
+//  Compare_Chr: C
+// 
+// This function is called by qsort_r, on behalf of the string sort
+// function.  The `thunk` is an argument passed through from the caller
+// and given to us by the sort routine, which tells us about the string
+// and the kind of sort that was requested.
+//
+static int Compare_Chr(void *thunk, const void *v1, const void *v2)
 {
 	REBCNT * const flags = cast(REBCNT*, thunk);
 
@@ -348,11 +345,10 @@ enum COMPARE_CHR_FLAGS {
 }
 
 
-/***********************************************************************
-**
-*/	static void Sort_String(REBVAL *string, REBFLG ccase, REBVAL *skipv, REBVAL *compv, REBVAL *part, REBFLG all, REBFLG rev)
-/*
-***********************************************************************/
+//
+//  Sort_String: C
+//
+static void Sort_String(REBVAL *string, REBFLG ccase, REBVAL *skipv, REBVAL *compv, REBVAL *part, REBFLG all, REBFLG rev)
 {
 	REBCNT len;
 	REBCNT skip = 1;
@@ -388,11 +384,10 @@ enum COMPARE_CHR_FLAGS {
 }
 
 
-/***********************************************************************
-**
-*/	REBINT PD_String(REBPVS *pvs)
-/*
-***********************************************************************/
+//
+//  PD_String: C
+//
+REBINT PD_String(REBPVS *pvs)
 {
 	REBVAL *data = pvs->value;
 	REBVAL *val = pvs->setval;
@@ -448,11 +443,10 @@ enum COMPARE_CHR_FLAGS {
 }
 
 
-/***********************************************************************
-**
-*/	REBINT PD_File(REBPVS *pvs)
-/*
-***********************************************************************/
+//
+//  PD_File: C
+//
+REBINT PD_File(REBPVS *pvs)
 {
 	REBSER *ser;
 	REBCNT n;
@@ -487,11 +481,10 @@ enum COMPARE_CHR_FLAGS {
 }
 
 
-/***********************************************************************
-**
-*/	REBTYPE(String)
-/*
-***********************************************************************/
+//
+//  REBTYPE: C
+//
+REBTYPE(String)
 {
 	REBVAL	*value = D_ARG(1);
 	REBVAL  *arg = DS_ARGC > 1 ? D_ARG(2) : NULL;

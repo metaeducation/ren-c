@@ -32,23 +32,22 @@
 #define FN_PAD 2	// pad file name len for adding /, /*, and /?
 
 
-/***********************************************************************
-**
-*/	REBSER *To_REBOL_Path(const void *p, REBCNT len, REBINT uni, REBFLG dir)
-/*
-**		Convert local filename to a REBOL filename.
-**
-**		Allocate and return a new series with the converted path.
-**		Return 0 on error.
-**
-**		Reduces width when possible.
-**		Adds extra space at end for appending a dir /(star)
-**			(Note: don't put actual star, as "/" "*" ends this comment)
-**
-**		REBDIFF: No longer appends current dir to volume when no
-**		root slash is provided (that odd MSDOS c:file case).
-**
-***********************************************************************/
+//
+//  To_REBOL_Path: C
+// 
+// Convert local filename to a REBOL filename.
+// 
+// Allocate and return a new series with the converted path.
+// Return 0 on error.
+// 
+// Reduces width when possible.
+// Adds extra space at end for appending a dir /(star)
+//     (Note: don't put actual star, as "/" "*" ends this comment)
+// 
+// REBDIFF: No longer appends current dir to volume when no
+// root slash is provided (that odd MSDOS c:file case).
+//
+REBSER *To_REBOL_Path(const void *p, REBCNT len, REBINT uni, REBFLG dir)
 {
 	REBOOL colon = 0;  // have we hit a ':' yet?
 	REBOOL slash = 0; // have we hit a '/' yet?
@@ -105,34 +104,32 @@
 }
 
 
-/***********************************************************************
-**
-*/	REBSER *Value_To_REBOL_Path(REBVAL *val, REBOOL dir)
-/*
-**		Helper to above function.
-**
-***********************************************************************/
+//
+//  Value_To_REBOL_Path: C
+// 
+// Helper to above function.
+//
+REBSER *Value_To_REBOL_Path(REBVAL *val, REBOOL dir)
 {
 	assert(ANY_BINSTR(val));
 	return To_REBOL_Path(VAL_DATA(val), VAL_LEN(val), (REBOOL)!VAL_BYTE_SIZE(val), dir);
 }
 
 
-/***********************************************************************
-**
-*/	REBSER *To_Local_Path(const void *p, REBCNT len, REBOOL uni, REBFLG full)
-/*
-**		Convert REBOL filename to a local filename.
-**
-**		Allocate and return a new series with the converted path.
-**		Return 0 on error.
-**
-**		Adds extra space at end for appending a dir /(star)
-**			(Note: don't put actual star, as "/" "*" ends this comment)
-**
-**		Expands width for OS's that require it.
-**
-***********************************************************************/
+//
+//  To_Local_Path: C
+// 
+// Convert REBOL filename to a local filename.
+// 
+// Allocate and return a new series with the converted path.
+// Return 0 on error.
+// 
+// Adds extra space at end for appending a dir /(star)
+//     (Note: don't put actual star, as "/" "*" ends this comment)
+// 
+// Expands width for OS's that require it.
+//
+REBSER *To_Local_Path(const void *p, REBCNT len, REBOOL uni, REBFLG full)
 {
 	REBUNI c, d;
 	REBSER *dst;
@@ -245,26 +242,24 @@
 }
 
 
-/***********************************************************************
-**
-*/	REBSER *Value_To_Local_Path(REBVAL *val, REBFLG full)
-/*
-**		Helper to above function.
-**
-***********************************************************************/
+//
+//  Value_To_Local_Path: C
+// 
+// Helper to above function.
+//
+REBSER *Value_To_Local_Path(REBVAL *val, REBFLG full)
 {
 	assert(ANY_BINSTR(val));
 	return To_Local_Path(VAL_DATA(val), VAL_LEN(val), (REBOOL)!VAL_BYTE_SIZE(val), full);
 }
 
 
-/***********************************************************************
-**
-*/	REBSER *Value_To_OS_Path(REBVAL *val, REBFLG full)
-/*
-**		Helper to above function.
-**
-***********************************************************************/
+//
+//  Value_To_OS_Path: C
+// 
+// Helper to above function.
+//
+REBSER *Value_To_OS_Path(REBVAL *val, REBFLG full)
 {
 	REBSER *ser; // will be unicode size
 #ifndef TO_WINDOWS

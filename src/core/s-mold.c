@@ -70,11 +70,10 @@ enum {
 ************************************************************************
 ***********************************************************************/
 
-/***********************************************************************
-**
-*/  REBSER *Emit(REB_MOLD *mold, const char *fmt, ...)
-/*
-***********************************************************************/
+//
+//  Emit: C
+//
+REBSER *Emit(REB_MOLD *mold, const char *fmt, ...)
 {
 	va_list args;
 	REBYTE ender = 0;
@@ -147,15 +146,14 @@ enum {
 }
 
 
-/***********************************************************************
-**
-*/  REBSER *Prep_String(REBSER *series, REBYTE **str, REBCNT len)
-/*
-**		Helper function for the string related Mold functions below.
-**		Creates or expands the series and provides the location to
-**		copy text into.
-**
-***********************************************************************/
+//
+//  Prep_String: C
+// 
+// Helper function for the string related Mold functions below.
+// Creates or expands the series and provides the location to
+// copy text into.
+//
+REBSER *Prep_String(REBSER *series, REBYTE **str, REBCNT len)
 {
 	REBCNT tail;
 
@@ -173,11 +171,10 @@ enum {
 }
 
 
-/***********************************************************************
-**
-*/  REBUNI *Prep_Uni_Series(REB_MOLD *mold, REBCNT len)
-/*
-***********************************************************************/
+//
+//  Prep_Uni_Series: C
+//
+REBUNI *Prep_Uni_Series(REB_MOLD *mold, REBCNT len)
 {
 	REBCNT tail = SERIES_TAIL(mold->series);
 
@@ -195,38 +192,35 @@ enum {
 ************************************************************************
 ***********************************************************************/
 
-/***********************************************************************
-**
-*/  void Pre_Mold(const REBVAL *value, REB_MOLD *mold)
-/*
-**		Emit the initial datatype function, depending on /ALL option
-**
-***********************************************************************/
+//
+//  Pre_Mold: C
+// 
+// Emit the initial datatype function, depending on /ALL option
+//
+void Pre_Mold(const REBVAL *value, REB_MOLD *mold)
 {
 	Emit(mold, GET_MOPT(mold, MOPT_MOLD_ALL) ? "#[T " : "make T ", value);
 }
 
 
-/***********************************************************************
-**
-*/  void End_Mold(REB_MOLD *mold)
-/*
-**		Finish the mold, depending on /ALL with close block.
-**
-***********************************************************************/
+//
+//  End_Mold: C
+// 
+// Finish the mold, depending on /ALL with close block.
+//
+void End_Mold(REB_MOLD *mold)
 {
 	if (GET_MOPT(mold, MOPT_MOLD_ALL)) Append_Codepoint_Raw(mold->series, ']');
 }
 
 
-/***********************************************************************
-**
-*/  void Post_Mold(const REBVAL *value, REB_MOLD *mold)
-/*
-**		For series that has an index, add the index for mold/all.
-**		Add closing block.
-**
-***********************************************************************/
+//
+//  Post_Mold: C
+// 
+// For series that has an index, add the index for mold/all.
+// Add closing block.
+//
+void Post_Mold(const REBVAL *value, REB_MOLD *mold)
 {
 	if (VAL_INDEX(value)) {
 		Append_Codepoint_Raw(mold->series, ' ');
@@ -236,13 +230,12 @@ enum {
 }
 
 
-/***********************************************************************
-**
-*/  void New_Indented_Line(REB_MOLD *mold)
-/*
-**		Create a newline with auto-indent on next line if needed.
-**
-***********************************************************************/
+//
+//  New_Indented_Line: C
+// 
+// Create a newline with auto-indent on next line if needed.
+//
+void New_Indented_Line(REB_MOLD *mold)
 {
 	REBINT n;
 	REBUNI *cp = 0;
@@ -510,11 +503,10 @@ static void Mold_Tag(const REBVAL *value, REB_MOLD *mold)
 
 }
 
-/***********************************************************************
-**
-*/	void Mold_Binary(const REBVAL *value, REB_MOLD *mold)
-/*
-***********************************************************************/
+//
+//  Mold_Binary: C
+//
+void Mold_Binary(const REBVAL *value, REB_MOLD *mold)
 {
 	REBCNT len = VAL_LEN(value);
 	REBSER *out;
@@ -978,13 +970,12 @@ static void Mold_Error(const REBVAL *value, REB_MOLD *mold, REBFLG molded)
 ************************************************************************
 ***********************************************************************/
 
-/***********************************************************************
-**
-*/  void Mold_Value(REB_MOLD *mold, const REBVAL *value, REBFLG molded)
-/*
-**		Mold or form any value to string series tail.
-**
-***********************************************************************/
+//
+//  Mold_Value: C
+// 
+// Mold or form any value to string series tail.
+//
+void Mold_Value(REB_MOLD *mold, const REBVAL *value, REBFLG molded)
 {
 	REBYTE buf[60];
 	REBINT len;
@@ -1280,13 +1271,12 @@ append:
 }
 
 
-/***********************************************************************
-**
-*/  REBSER *Copy_Form_Value(const REBVAL *value, REBCNT opts)
-/*
-**		Form a value based on the mold opts provided.
-**
-***********************************************************************/
+//
+//  Copy_Form_Value: C
+// 
+// Form a value based on the mold opts provided.
+//
+REBSER *Copy_Form_Value(const REBVAL *value, REBCNT opts)
 {
 	REB_MOLD mo;
 	CLEARS(&mo);
@@ -1298,13 +1288,12 @@ append:
 }
 
 
-/***********************************************************************
-**
-*/  REBSER *Copy_Mold_Value(const REBVAL *value, REBCNT opts)
-/*
-**		Form a value based on the mold opts provided.
-**
-***********************************************************************/
+//
+//  Copy_Mold_Value: C
+// 
+// Form a value based on the mold opts provided.
+//
+REBSER *Copy_Mold_Value(const REBVAL *value, REBCNT opts)
 {
 	REB_MOLD mo;
 	CLEARS(&mo);
@@ -1316,13 +1305,12 @@ append:
 }
 
 
-/***********************************************************************
-**
-*/	REBFLG Form_Reduce_Throws(REBVAL *out, REBSER *block, REBCNT index)
-/*
-**		Reduce a block and then form each value into a string REBVAL.
-**
-***********************************************************************/
+//
+//  Form_Reduce_Throws: C
+// 
+// Reduce a block and then form each value into a string REBVAL.
+//
+REBFLG Form_Reduce_Throws(REBVAL *out, REBSER *block, REBCNT index)
 {
 	REBINT start = DSP;
 	REBINT n;
@@ -1360,11 +1348,10 @@ append:
 }
 
 
-/***********************************************************************
-**
-*/  REBSER *Form_Tight_Block(const REBVAL *blk)
-/*
-***********************************************************************/
+//
+//  Form_Tight_Block: C
+//
+REBSER *Form_Tight_Block(const REBVAL *blk)
 {
 	REBVAL *val;
 
@@ -1378,11 +1365,10 @@ append:
 }
 
 
-/***********************************************************************
-**
-*/  void Reset_Mold(REB_MOLD *mold)
-/*
-***********************************************************************/
+//
+//  Reset_Mold: C
+//
+void Reset_Mold(REB_MOLD *mold)
 {
 	REBSER *buf = BUF_MOLD;
 	REBINT len;
@@ -1415,15 +1401,14 @@ append:
 }
 
 
-/***********************************************************************
-**
-*/	REBSER *Mold_Print_Value(const REBVAL *value, REBCNT limit, REBFLG mold)
-/*
-**		Basis function for print.  Can do a form or a mold based
-**		on the mold flag setting.  Can limit string output to a
-**		specified size to prevent long console garbage output.
-**
-***********************************************************************/
+//
+//  Mold_Print_Value: C
+// 
+// Basis function for print.  Can do a form or a mold based
+// on the mold flag setting.  Can limit string output to a
+// specified size to prevent long console garbage output.
+//
+REBSER *Mold_Print_Value(const REBVAL *value, REBCNT limit, REBFLG mold)
 {
 	REB_MOLD mo;
 	CLEARS(&mo);
@@ -1440,11 +1425,10 @@ append:
 }
 
 
-/***********************************************************************
-**
-*/  void Init_Mold(REBCNT size)
-/*
-***********************************************************************/
+//
+//  Init_Mold: C
+//
+void Init_Mold(REBCNT size)
 {
 	REBYTE *cp;
 	REBYTE c;
@@ -1469,11 +1453,10 @@ append:
 }
 
 
-/***********************************************************************
-**
-*/  void Shutdown_Mold(void)
-/*
-***********************************************************************/
+//
+//  Shutdown_Mold: C
+//
+void Shutdown_Mold(void)
 {
 	FREE_ARRAY(REBYTE, MAX_ESC_CHAR + 1, Char_Escapes);
 	FREE_ARRAY(REBYTE, MAX_URL_CHAR + 1, URL_Escapes);

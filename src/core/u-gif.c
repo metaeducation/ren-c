@@ -71,13 +71,12 @@ void Chrom_Key_Alpha(REBVAL *v,REBCNT col,REBINT blitmode) {
 }
 #endif
 
-/***********************************************************************
-**
-*/	void Decode_LZW(REBCNT *data, REBYTE **cpp, REBYTE *colortab, REBINT w, REBINT h, REBOOL interlaced)
-/*
-**	Perform LZW decompression.
-**
-***********************************************************************/
+//
+//  Decode_LZW: C
+// 
+// Perform LZW decompression.
+//
+void Decode_LZW(REBCNT *data, REBYTE **cpp, REBYTE *colortab, REBINT w, REBINT h, REBOOL interlaced)
 {
 	REBYTE	*cp = *cpp;
 	REBYTE	*rp;
@@ -201,16 +200,15 @@ void Chrom_Key_Alpha(REBVAL *v,REBCNT col,REBINT blitmode) {
 }
 
 
-/***********************************************************************
-**
-*/	void Decode_GIF_Image(REBCDI *codi)
-/*
-**		Input:  GIF encoded image (codi->data, len)
-**		Output: Image bits (codi->extra.bits, w, h)
-**		Error:  Code in codi->error
-**		Return: Success as TRUE or FALSE
-**
-***********************************************************************/
+//
+//  Decode_GIF_Image: C
+// 
+// Input:  GIF encoded image (codi->data, len)
+// Output: Image bits (codi->extra.bits, w, h)
+// Error:  Code in codi->error
+// Return: Success as TRUE or FALSE
+//
+void Decode_GIF_Image(REBCDI *codi)
 {
 	REBINT	w, h;
 	REBINT	transparency_index;
@@ -322,11 +320,10 @@ void Chrom_Key_Alpha(REBVAL *v,REBCNT col,REBINT blitmode) {
 }
 
 
-/***********************************************************************
-**
-*/	REBINT Codec_GIF_Image(REBCDI *codi)
-/*
-***********************************************************************/
+//
+//  Codec_GIF_Image: C
+//
+REBINT Codec_GIF_Image(REBCDI *codi)
 {
 	codi->error = 0;
 
@@ -345,11 +342,10 @@ void Chrom_Key_Alpha(REBVAL *v,REBCNT col,REBINT blitmode) {
 }
 
 
-/***********************************************************************
-**
-*/	void Init_GIF_Codec(void)
-/*
-***********************************************************************/
+//
+//  Init_GIF_Codec: C
+//
+void Init_GIF_Codec(void)
 {
 	Register_Codec(cb_cast("gif"), Codec_GIF_Image);
 }

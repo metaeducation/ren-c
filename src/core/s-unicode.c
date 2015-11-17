@@ -703,13 +703,12 @@ ConversionResult ConvertUTF8toUTF32 (
 ************************************************************************
 ***********************************************************************/
 
-/***********************************************************************
-**
-*/	REBINT What_UTF(REBYTE *bp, REBCNT len)
-/*
-**		Tell us what UTF encoding the string has. Negative for LE.
-**
-***********************************************************************/
+//
+//  What_UTF: C
+// 
+// Tell us what UTF encoding the string has. Negative for LE.
+//
+REBINT What_UTF(REBYTE *bp, REBCNT len)
 {
 	// UTF8:
 	if (len >= 3 && bp[0] == 0xef && bp[1] == 0xbb && bp[2] == 0xbf) return 8;
@@ -734,25 +733,23 @@ ConversionResult ConvertUTF8toUTF32 (
 	return 0;
 }
 
-/***********************************************************************
-**
-*/	REBFLG Legal_UTF8_Char(const REBYTE *str, REBCNT len)
-/*
-**		Returns TRUE if char is legal.
-**
-***********************************************************************/
+//
+//  Legal_UTF8_Char: C
+// 
+// Returns TRUE if char is legal.
+//
+REBFLG Legal_UTF8_Char(const REBYTE *str, REBCNT len)
 {
 	return isLegalUTF8Sequence(str, str + len);
 }
 
 
-/***********************************************************************
-**
-*/	REBYTE *Check_UTF8(REBYTE *str, REBCNT len)
-/*
-**		Returns 0 for success, else str where error occurred.
-**
-***********************************************************************/
+//
+//  Check_UTF8: C
+// 
+// Returns 0 for success, else str where error occurred.
+//
+REBYTE *Check_UTF8(REBYTE *str, REBCNT len)
 {
 	REBINT n;
 	REBYTE *end = str + len;
@@ -766,48 +763,47 @@ ConversionResult ConvertUTF8toUTF32 (
 }
 
 
-/***********************************************************************
-**
-*/	const REBYTE *Back_Scan_UTF8_Char(REBUNI *out, const REBYTE *bp, REBCNT *len)
-/*
-**	Converts a single UTF8 code-point and returns the position *at the
-**	the last byte of the character's data*.  (This differs from the usual
-**	`Scan_XXX` interface of returning the position after the scanned
-**	element, ready to read the next one.)
-**
-**	The peculiar interface is useful in loops that are processing
-**	ordinary ASCII chars directly -as well- as UTF8 ones.  The loop can
-**	do a single byte pointer increment after both kinds of
-**	elements, avoiding the need to call any kind of `Scan_Ascii()`:
-**
-**		for (; len > 0; bp++, len--) {
-**			if (*bp < 0x80) {
-**				// do ASCII stuff...
-**			}
-**			else {
-**				REBUNI uni;
-**				bp = Back_Scan_UTF8_Char(&uni, bp, &len);
-**				// do UNICODE stuff...
-**			}
-**		}
-**
-**	The third parameter is an optional length that will be decremented by
-**	the number of "extra" bytes the UTF8 has beyond a single byte character.
-**	This allows for decrement-style loops such as the above.
-**
-**	Though the machinery can decode a UTF32 32-bit codepoint, the interface
-**	uses a 16-bit REBUNI (due to that being all that Rebol supports at this
-**	time).  If a codepoint that won't fit in 16-bits is found, it will raise
-**	an error vs. return NULL.  This makes it clear that the problem is not
-**	with the data itself being malformed (the usual assumption of callers)
-**	but rather a limit of the implementation.
-**
-**	Prescans source for null, and will not return code point 0.
-**
-**	If failure due to insufficient data or malformed bytes, then NULL is
-**	returned (len is not advanced).
-**
-***********************************************************************/
+//
+//  Back_Scan_UTF8_Char: C
+// 
+// Converts a single UTF8 code-point and returns the position *at the
+// the last byte of the character's data*.  (This differs from the usual
+// `Scan_XXX` interface of returning the position after the scanned
+// element, ready to read the next one.)
+// 
+// The peculiar interface is useful in loops that are processing
+// ordinary ASCII chars directly -as well- as UTF8 ones.  The loop can
+// do a single byte pointer increment after both kinds of
+// elements, avoiding the need to call any kind of `Scan_Ascii()`:
+// 
+//     for (; len > 0; bp++, len--) {
+//         if (*bp < 0x80) {
+//             // do ASCII stuff...
+//         }
+//         else {
+//             REBUNI uni;
+//             bp = Back_Scan_UTF8_Char(&uni, bp, &len);
+//             // do UNICODE stuff...
+//         }
+//     }
+// 
+// The third parameter is an optional length that will be decremented by
+// the number of "extra" bytes the UTF8 has beyond a single byte character.
+// This allows for decrement-style loops such as the above.
+// 
+// Though the machinery can decode a UTF32 32-bit codepoint, the interface
+// uses a 16-bit REBUNI (due to that being all that Rebol supports at this
+// time).  If a codepoint that won't fit in 16-bits is found, it will raise
+// an error vs. return NULL.  This makes it clear that the problem is not
+// with the data itself being malformed (the usual assumption of callers)
+// but rather a limit of the implementation.
+// 
+// Prescans source for null, and will not return code point 0.
+// 
+// If failure due to insufficient data or malformed bytes, then NULL is
+// returned (len is not advanced).
+//
+const REBYTE *Back_Scan_UTF8_Char(REBUNI *out, const REBYTE *bp, REBCNT *len)
 {
 	const UTF8 *source = bp;
 	UTF32 ch = 0;
@@ -864,21 +860,20 @@ ConversionResult ConvertUTF8toUTF32 (
 }
 
 
-/***********************************************************************
-**
-*/	int Decode_UTF8(REBUNI *dst, const REBYTE *src, REBCNT len, REBFLG ccr)
-/*
-**		Decode UTF8 byte string into a 16 bit preallocated array.
-**
-**		dst: the desination array, must always be large enough!
-**		src: source binary data
-**		len: byte-length of source (not number of chars)
-**		ccr: convert CRLF/CR to LF
-**
-**		Returns length in chars (negative if all chars are latin-1).
-**		No terminator is added.
-**
-***********************************************************************/
+//
+//  Decode_UTF8: C
+// 
+// Decode UTF8 byte string into a 16 bit preallocated array.
+// 
+// dst: the desination array, must always be large enough!
+// src: source binary data
+// len: byte-length of source (not number of chars)
+// ccr: convert CRLF/CR to LF
+// 
+// Returns length in chars (negative if all chars are latin-1).
+// No terminator is added.
+//
+int Decode_UTF8(REBUNI *dst, const REBYTE *src, REBCNT len, REBFLG ccr)
 {
 	int flag = -1;
 	REBUNI ch;
@@ -901,20 +896,19 @@ ConversionResult ConvertUTF8toUTF32 (
 }
 
 
-/***********************************************************************
-**
-*/	int Decode_UTF16(REBUNI *dst, REBYTE *src, REBCNT len, REBFLG lee, REBFLG ccr)
-/*
-**		dst: the desination array, must always be large enough!
-**		src: source binary data
-**		len: byte-length of source (not number of chars)
-**		lee: little endian encoded
-**		ccr: convert CRLF/CR to LF
-**
-**		Returns length in chars (negative if all chars are latin-1).
-**		No terminator is added.
-**
-***********************************************************************/
+//
+//  Decode_UTF16: C
+// 
+// dst: the desination array, must always be large enough!
+// src: source binary data
+// len: byte-length of source (not number of chars)
+// lee: little endian encoded
+// ccr: convert CRLF/CR to LF
+// 
+// Returns length in chars (negative if all chars are latin-1).
+// No terminator is added.
+//
+int Decode_UTF16(REBUNI *dst, REBYTE *src, REBCNT len, REBFLG lee, REBFLG ccr)
 {
 #define EXPECT_LF 2
 	int flag = -1;
@@ -955,18 +949,17 @@ ConversionResult ConvertUTF8toUTF32 (
 }
 
 
-/***********************************************************************
-**
-*/	REBSER *Decode_UTF_String(REBYTE *bp, REBCNT len, REBINT utf)
-/*
-**		Do all the details to decode a string.
-**		Input is a byte series. Len is len of input.
-**		The utf is 0, 8, +/-16
-**		A special -1 means use the BOM, if present, or UTF-8 otherwise.
-**
-**		Returns the decoded string or NULL for unsupported encodings.
-**
-***********************************************************************/
+//
+//  Decode_UTF_String: C
+// 
+// Do all the details to decode a string.
+// Input is a byte series. Len is len of input.
+// The utf is 0, 8, +/-16
+// A special -1 means use the BOM, if present, or UTF-8 otherwise.
+// 
+// Returns the decoded string or NULL for unsupported encodings.
+//
+REBSER *Decode_UTF_String(REBYTE *bp, REBCNT len, REBINT utf)
 {
 	REBSER *ser = BUF_UTF8; // buffer is Unicode width
 	REBSER *dst;
@@ -1007,13 +1000,12 @@ ConversionResult ConvertUTF8toUTF32 (
 }
 
 
-/***********************************************************************
-**
-*/	REBCNT Length_As_UTF8(const void *p, REBCNT len, REBFLG opts)
-/*
-**		Returns how long the UTF8 encoded string would be.
-**
-***********************************************************************/
+//
+//  Length_As_UTF8: C
+// 
+// Returns how long the UTF8 encoded string would be.
+//
+REBCNT Length_As_UTF8(const void *p, REBCNT len, REBFLG opts)
 {
 	REBCNT size = 0;
 	REBCNT c;
@@ -1040,15 +1032,14 @@ ConversionResult ConvertUTF8toUTF32 (
 }
 
 
-/***********************************************************************
-**
-*/	REBCNT Encode_UTF8_Char(REBYTE *dst, REBCNT src)
-/*
-**		Converts a single char to UTF8 code-point.
-**		Returns length of char stored in dst.
-**		Be sure dst has at least 4 bytes available.
-**
-***********************************************************************/
+//
+//  Encode_UTF8_Char: C
+// 
+// Converts a single char to UTF8 code-point.
+// Returns length of char stored in dst.
+// Be sure dst has at least 4 bytes available.
+//
+REBCNT Encode_UTF8_Char(REBYTE *dst, REBCNT src)
 {
 	int len = 0;
 	const UTF32 mask = 0xBF;
@@ -1076,19 +1067,18 @@ ConversionResult ConvertUTF8toUTF32 (
 }
 
 
-/***********************************************************************
-**
-*/	REBCNT Encode_UTF8(REBYTE *dst, REBCNT max, const void *src, REBCNT *len, REBFLG opts)
-/*
-**		Encode the unicode into UTF8 byte string.
-**
-**		Source string can be byte or unichar sized (OPT_ENC_UNISRC);
-**		Max is the maximum size of the result (UTF8).
-**		Returns number of dst bytes used.
-**		Updates len for source chars used.
-**		Does not add a terminator.
-**
-***********************************************************************/
+//
+//  Encode_UTF8: C
+// 
+// Encode the unicode into UTF8 byte string.
+// 
+// Source string can be byte or unichar sized (OPT_ENC_UNISRC);
+// Max is the maximum size of the result (UTF8).
+// Returns number of dst bytes used.
+// Updates len for source chars used.
+// Does not add a terminator.
+//
+REBCNT Encode_UTF8(REBYTE *dst, REBCNT max, const void *src, REBCNT *len, REBFLG opts)
 {
 	REBUNI c;
 	REBINT n;
@@ -1133,15 +1123,14 @@ ConversionResult ConvertUTF8toUTF32 (
 }
 
 
-/***********************************************************************
-**
-*/  int Encode_UTF8_Line(REBSER *dst, REBSER *src, REBCNT idx)
-/*
-**		Encode a unicode source buffer into a binary line of UTF8.
-**		Include the LF terminator in the result.
-**		Return the length of the line buffer.
-**
-***********************************************************************/
+//
+//  Encode_UTF8_Line: C
+// 
+// Encode a unicode source buffer into a binary line of UTF8.
+// Include the LF terminator in the result.
+// Return the length of the line buffer.
+//
+int Encode_UTF8_Line(REBSER *dst, REBSER *src, REBCNT idx)
 {
 	REBUNI *up = UNI_HEAD(src);
 	REBCNT len  = SERIES_TAIL(src);
@@ -1173,15 +1162,14 @@ ConversionResult ConvertUTF8toUTF32 (
 }
 
 
-/***********************************************************************
-**
-*/	REBSER *Make_UTF8_Binary(const void *data, REBCNT len, REBCNT extra, REBFLG opts)
-/*
-**		Convert byte- or REBUNI-sized data to UTF8-encoded
-**		null-terminated series. Can reserve extra bytes of space.
-**		Resulting series must be either freed or handed to the GC.
-**
-***********************************************************************/
+//
+//  Make_UTF8_Binary: C
+// 
+// Convert byte- or REBUNI-sized data to UTF8-encoded
+// null-terminated series. Can reserve extra bytes of space.
+// Resulting series must be either freed or handed to the GC.
+//
+REBSER *Make_UTF8_Binary(const void *data, REBCNT len, REBCNT extra, REBFLG opts)
 {
 	REBCNT size = Length_As_UTF8(data, len, opts);
 	REBSER *series = Make_Binary(size + extra);
@@ -1194,15 +1182,14 @@ ConversionResult ConvertUTF8toUTF32 (
 }
 
 
-/***********************************************************************
-**
-*/	REBSER *Make_UTF8_From_Any_String(const REBVAL *value, REBCNT len, REBFLG opts)
-/*
-**		Do all the details to encode either a byte-sized or REBUNI
-**		size ANY-STRING! value to a UTF8-encoded series.  Resulting
-**		series must be either freed or handed to the GC.
-**
-***********************************************************************/
+//
+//  Make_UTF8_From_Any_String: C
+// 
+// Do all the details to encode either a byte-sized or REBUNI
+// size ANY-STRING! value to a UTF8-encoded series.  Resulting
+// series must be either freed or handed to the GC.
+//
+REBSER *Make_UTF8_From_Any_String(const REBVAL *value, REBCNT len, REBFLG opts)
 {
 	assert(ANY_STR(value));
 
@@ -1226,22 +1213,21 @@ ConversionResult ConvertUTF8toUTF32 (
 }
 
 
-/***********************************************************************
-**
-*/	REBCNT Strlen_Uni(const REBUNI *up)
-/*
-**		Rebol's current choice is to use UCS-2 internally, such that
-**		a REBUNI is an unsigned 16-bit number.  This means that you
-**		cannot use wcslen() to determine a REBUNI* string size, as
-**		wchar_t is not guaranteed to be 2 bytes on every platform.
-**
-**		Note: ideally this would use a routine like memmem() to look
-**		for two sequential zero bytes and then match only those aligned
-**		on an even byte boundary (to prevent spanning characters).  But
-**		memmem() is not POSIX and only on GNU.  So this uses a simple
-**		byte-by-byte search.
-**
-***********************************************************************/
+//
+//  Strlen_Uni: C
+// 
+// Rebol's current choice is to use UCS-2 internally, such that
+// a REBUNI is an unsigned 16-bit number.  This means that you
+// cannot use wcslen() to determine a REBUNI* string size, as
+// wchar_t is not guaranteed to be 2 bytes on every platform.
+// 
+// Note: ideally this would use a routine like memmem() to look
+// for two sequential zero bytes and then match only those aligned
+// on an even byte boundary (to prevent spanning characters).  But
+// memmem() is not POSIX and only on GNU.  So this uses a simple
+// byte-by-byte search.
+//
+REBCNT Strlen_Uni(const REBUNI *up)
 {
 	REBCNT len;
 	const char *cp = cast(const char *, up) + 1; // "C"har vs. "U"nicode

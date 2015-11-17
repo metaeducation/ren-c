@@ -102,17 +102,16 @@ static int Fetch_Buf()
 }
 
 
-/***********************************************************************
-**
-*/	void Open_StdIO(void)
-/*
-**		Open REBOL's standard IO device. This same device is used
-**		by both the host code and the R3 DLL itself.
-**
-**		This must be done before any other initialization is done
-**		in order to output banners or errors.
-**
-***********************************************************************/
+//
+//  Open_StdIO: C
+// 
+// Open REBOL's standard IO device. This same device is used
+// by both the host code and the R3 DLL itself.
+// 
+// This must be done before any other initialization is done
+// in order to output banners or errors.
+//
+void Open_StdIO(void)
 {
 	CLEARS(&Std_IO_Req);
 	Std_IO_Req.clen = sizeof(Std_IO_Req);
@@ -127,28 +126,26 @@ static int Fetch_Buf()
 }
 
 
-/***********************************************************************
-**
-*/	void Close_StdIO(void)
-/*
-**		Complement to Open_StdIO()
-**
-***********************************************************************/
+//
+//  Close_StdIO: C
+// 
+// Complement to Open_StdIO()
+//
+void Close_StdIO(void)
 {
 	OS_FREE(inbuf);
 }
 
 
-/***********************************************************************
-**
-*/	REBYTE *Get_Str()
-/*
-**		Get input of a null terminated UTF-8 string.
-**		Divides the input into lines.
-**		Buffers multiple lines if needed.
-**		Returns NULL on end of stream.
-**
-***********************************************************************/
+//
+//  Get_Str: C
+// 
+// Get input of a null terminated UTF-8 string.
+// Divides the input into lines.
+// Buffers multiple lines if needed.
+// Returns NULL on end of stream.
+//
+REBYTE *Get_Str()
 {
 	REBYTE *line;
 
@@ -160,15 +157,14 @@ static int Fetch_Buf()
 }
 
 
-/***********************************************************************
-**
-*/	void Put_Str(const REBYTE *buf)
-/*
-**		Outputs a null terminated UTF-8 string.
-**		If buf is larger than StdIO Device allows, error out.
-**		OS dependent line termination must be done prior to call.
-**
-***********************************************************************/
+//
+//  Put_Str: C
+// 
+// Outputs a null terminated UTF-8 string.
+// If buf is larger than StdIO Device allows, error out.
+// OS dependent line termination must be done prior to call.
+//
+void Put_Str(const REBYTE *buf)
 {
 	/* This function could be called by signal handler and inside of Fetch_Buf */
 	REBREQ req;

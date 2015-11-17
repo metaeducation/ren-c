@@ -39,14 +39,13 @@
 #include "reb-host.h"
 
 
-/***********************************************************************
-**
-*/	void OS_Exit(int code)
-/*
-**		Called in cases where REBOL needs to quit immediately
-**		without returning from the main() function.
-**
-***********************************************************************/
+//
+//  OS_Exit: C
+// 
+// Called in cases where REBOL needs to quit immediately
+// without returning from the main() function.
+//
+void OS_Exit(int code)
 {
 	//OS_Call_Device(RDI_STDIO, RDC_CLOSE); // close echo
 	OS_Quit_Devices(0);
@@ -56,22 +55,23 @@
 	exit(code);
 }
 
-/***********************************************************************
-**
+//
+//  OS_Crash: C
+// 
+// Tell user that REBOL has crashed. This function must use
+// the most obvious and reliable method of displaying the
+// crash message.
+// 
+// If the title is NULL, then REBOL is running in a server mode.
+// In that case, we do not want the crash message to appear on
+// the screen, because the system may be unattended.
+// 
+// On some systems, the error may be recorded in the system log.
+//
+/***
 ** coverity[+kill]
-*/	void OS_Crash(const REBYTE *title, const REBYTE *content)
-/*
-**		Tell user that REBOL has crashed. This function must use
-**		the most obvious and reliable method of displaying the
-**		crash message.
-**
-**		If the title is NULL, then REBOL is running in a server mode.
-**		In that case, we do not want the crash message to appear on
-**		the screen, because the system may be unattended.
-**
-**		On some systems, the error may be recorded in the system log.
-**
-***********************************************************************/
+*/
+void OS_Crash(const REBYTE *title, const REBYTE *content)
 {
 	// Echo crash message if echo file is open:
 	///PUTE(content);
@@ -98,14 +98,13 @@
 }
 
 
-/***********************************************************************
-**
-*/	REBCHR *OS_Form_Error(int errnum, REBCHR *str, int len)
-/*
-**		Translate OS error into a string. The str is the string
-**		buffer and the len is the length of the buffer.
-**
-***********************************************************************/
+//
+//  OS_Form_Error: C
+// 
+// Translate OS error into a string. The str is the string
+// buffer and the len is the length of the buffer.
+//
+REBCHR *OS_Form_Error(int errnum, REBCHR *str, int len)
 {
 	// strerror() is not thread-safe, but strerror_r is. Unfortunately, at
 	// least in glibc, there are two different protocols for strerror_r(),

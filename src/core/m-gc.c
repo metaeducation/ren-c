@@ -131,25 +131,24 @@ static void Push_Array_Marked_Deep(REBSER *series);
 static void Mark_Series_Only_Debug(REBSER *ser);
 #endif
 
-/***********************************************************************
-**
-*/	static void Push_Array_Marked_Deep(REBSER *series)
-/*
-**		Note: Call MARK_ARRAY_DEEP or QUEUE_MARK_ARRAY_DEEP instead!
-**
-**		Submits the block into the deferred stack to be processed later
-**		with Propagate_All_GC_Marks().  We have already set this series
-**		mark as it's now "spoken for".  (Though we haven't marked its
-**		dependencies yet, we want to prevent it from being wastefully
-**		submitted multiple times by another reference that would still
-**		see it as "unmarked".)
-**
-**		The data structure used for this processing is a stack and not
-**		a queue (for performance reasons).  But when you use 'queue'
-**		as a verb it has more leeway than as the CS noun, and can just
-**		mean "put into a list for later processing", hence macro names.
-**
-***********************************************************************/
+//
+//  Push_Array_Marked_Deep: C
+// 
+// Note: Call MARK_ARRAY_DEEP or QUEUE_MARK_ARRAY_DEEP instead!
+// 
+// Submits the block into the deferred stack to be processed later
+// with Propagate_All_GC_Marks().  We have already set this series
+// mark as it's now "spoken for".  (Though we haven't marked its
+// dependencies yet, we want to prevent it from being wastefully
+// submitted multiple times by another reference that would still
+// see it as "unmarked".)
+// 
+// The data structure used for this processing is a stack and not
+// a queue (for performance reasons).  But when you use 'queue'
+// as a verb it has more leeway than as the CS noun, and can just
+// mean "put into a list for later processing", hence macro names.
+//
+static void Push_Array_Marked_Deep(REBSER *series)
 {
 	if (!SERIES_GET_FLAG(series, SER_MANAGED)) {
 		Debug_Fmt("Link to non-MANAGED item reached by GC");
@@ -218,13 +217,12 @@ static void Propagate_All_GC_Marks(void);
 
 
 #if !defined(NDEBUG)
-/***********************************************************************
-**
-*/	static void Mark_Series_Only_Debug(REBSER *series)
-/*
-**		Hook point for marking and tracing a single series mark.
-**
-***********************************************************************/
+//
+//  Mark_Series_Only_Debug: C
+// 
+// Hook point for marking and tracing a single series mark.
+//
+static void Mark_Series_Only_Debug(REBSER *series)
 {
 	if (!SERIES_GET_FLAG(series, SER_MANAGED)) {
 		Debug_Fmt("Link to non-MANAGED item reached by GC");
@@ -236,19 +234,18 @@ static void Propagate_All_GC_Marks(void);
 #endif
 
 
-/***********************************************************************
-**
-*/	static void Queue_Mark_Gob_Deep(REBGOB *gob)
-/*
-**		'Queue' refers to the fact that after calling this routine,
-**		one will have to call Propagate_All_GC_Marks() to have the
-**		deep transitive closure be guaranteed fully marked.
-**
-**		Note: only referenced blocks are queued, the GOB structure
-**		itself is processed via recursion.  Deeply nested GOBs could
-**		in theory overflow the C stack.
-**
-***********************************************************************/
+//
+//  Queue_Mark_Gob_Deep: C
+// 
+// 'Queue' refers to the fact that after calling this routine,
+// one will have to call Propagate_All_GC_Marks() to have the
+// deep transitive closure be guaranteed fully marked.
+// 
+// Note: only referenced blocks are queued, the GOB structure
+// itself is processed via recursion.  Deeply nested GOBs could
+// in theory overflow the C stack.
+//
+static void Queue_Mark_Gob_Deep(REBGOB *gob)
 {
 	REBGOB **pane;
 	REBCNT i;
@@ -278,19 +275,18 @@ static void Propagate_All_GC_Marks(void);
 }
 
 
-/***********************************************************************
-**
-*/	static void Queue_Mark_Field_Deep(const REBSTU *stu, struct Struct_Field *field)
-/*
-**		'Queue' refers to the fact that after calling this routine,
-**		one will have to call Propagate_All_GC_Marks() to have the
-**		deep transitive closure be guaranteed fully marked.
-**
-**		Note: only referenced blocks are queued, fields that are structs
-**		will be processed via recursion.  Deeply nested structs could
-**		in theory overflow the C stack.
-**
-***********************************************************************/
+//
+//  Queue_Mark_Field_Deep: C
+// 
+// 'Queue' refers to the fact that after calling this routine,
+// one will have to call Propagate_All_GC_Marks() to have the
+// deep transitive closure be guaranteed fully marked.
+// 
+// Note: only referenced blocks are queued, fields that are structs
+// will be processed via recursion.  Deeply nested structs could
+// in theory overflow the C stack.
+//
+static void Queue_Mark_Field_Deep(const REBSTU *stu, struct Struct_Field *field)
 {
 	if (field->type == STRUCT_TYPE_STRUCT) {
 		unsigned int len = 0;
@@ -327,19 +323,18 @@ static void Propagate_All_GC_Marks(void);
 }
 
 
-/***********************************************************************
-**
-*/	static void Queue_Mark_Struct_Deep(const REBSTU *stu)
-/*
-**		'Queue' refers to the fact that after calling this routine,
-**		one will have to call Propagate_All_GC_Marks() to have the
-**		deep transitive closure be guaranteed fully marked.
-**
-**		Note: only referenced blocks are queued, the actual struct
-**		itself is processed via recursion.  Deeply nested structs could
-**		in theory overflow the C stack.
-**
-***********************************************************************/
+//
+//  Queue_Mark_Struct_Deep: C
+// 
+// 'Queue' refers to the fact that after calling this routine,
+// one will have to call Propagate_All_GC_Marks() to have the
+// deep transitive closure be guaranteed fully marked.
+// 
+// Note: only referenced blocks are queued, the actual struct
+// itself is processed via recursion.  Deeply nested structs could
+// in theory overflow the C stack.
+//
+static void Queue_Mark_Struct_Deep(const REBSTU *stu)
 {
 	unsigned int len = 0;
 	REBSER *series = NULL;
@@ -365,19 +360,18 @@ static void Propagate_All_GC_Marks(void);
 }
 
 
-/***********************************************************************
-**
-*/	static void Queue_Mark_Routine_Deep(const REBROT *rot)
-/*
-**		'Queue' refers to the fact that after calling this routine,
-**		one will have to call Propagate_All_GC_Marks() to have the
-**		deep transitive closure completely marked.
-**
-**		Note: only referenced blocks are queued, the routine's RValue
-**		is processed via recursion.  Deeply nested RValue structs could
-**		in theory overflow the C stack.
-**
-***********************************************************************/
+//
+//  Queue_Mark_Routine_Deep: C
+// 
+// 'Queue' refers to the fact that after calling this routine,
+// one will have to call Propagate_All_GC_Marks() to have the
+// deep transitive closure completely marked.
+// 
+// Note: only referenced blocks are queued, the routine's RValue
+// is processed via recursion.  Deeply nested RValue structs could
+// in theory overflow the C stack.
+//
+static void Queue_Mark_Routine_Deep(const REBROT *rot)
 {
 	QUEUE_MARK_ARRAY_DEEP(ROUTINE_SPEC(rot));
 	ROUTINE_SET_FLAG(ROUTINE_INFO(rot), ROUTINE_MARK);
@@ -413,15 +407,14 @@ static void Propagate_All_GC_Marks(void);
 }
 
 
-/***********************************************************************
-**
-*/	static void Queue_Mark_Event_Deep(const REBVAL *value)
-/*
-**		'Queue' refers to the fact that after calling this routine,
-**		one will have to call Propagate_All_GC_Marks() to have the
-**		deep transitive closure completely marked.
-**
-***********************************************************************/
+//
+//  Queue_Mark_Event_Deep: C
+// 
+// 'Queue' refers to the fact that after calling this routine,
+// one will have to call Propagate_All_GC_Marks() to have the
+// deep transitive closure completely marked.
+//
+static void Queue_Mark_Event_Deep(const REBVAL *value)
 {
 	REBREQ *req;
 
@@ -456,16 +449,15 @@ static void Propagate_All_GC_Marks(void);
 }
 
 
-/***********************************************************************
-**
-*/ static void Mark_Devices_Deep(void)
-/*
-**		Mark all devices. Search for pending requests.
-**
-**		This should be called at the top level, and as it is not
-**		'Queued' it guarantees that the marks have been propagated.
-**
-***********************************************************************/
+//
+//  Mark_Devices_Deep: C
+// 
+// Mark all devices. Search for pending requests.
+// 
+// This should be called at the top level, and as it is not
+// 'Queued' it guarantees that the marks have been propagated.
+//
+static void Mark_Devices_Deep(void)
 {
 	REBDEV **devices = Host_Lib->devices;
 
@@ -483,29 +475,28 @@ static void Propagate_All_GC_Marks(void);
 }
 
 
-/***********************************************************************
-**
-*/ static void Mark_Call_Frames_Deep(void)
-/*
-**		Mark all function call frames.  In addition to containing the
-**		arguments that are referred to by pointer during a function
-**		invocation (acquired via D_ARG(N) calls), it is able to point
-**		to an arbitrary stable memory location for D_OUT.  This may
-**		be giving awareness to the GC of a variable on the C stack
-**		(for example).  This also keeps the function value itself
-**		live, as well as the "label" word and "where" block value.
-**
-**		Note that prior to a function invocation, the output value
-**		slot is written with "safe" TRASH.  This helps the evaluator
-**		catch cases of when a function dispatch doesn't consciously
-**		write any value into the output in debug builds.  The GC is
-**		willing to overlook this safe trash, however, and it will just
-**		be an UNSET! in the release build.
-**
-**		This should be called at the top level, and not from inside a
-**		Propagate_All_GC_Marks().  All marks will be propagated.
-**
-***********************************************************************/
+//
+//  Mark_Call_Frames_Deep: C
+// 
+// Mark all function call frames.  In addition to containing the
+// arguments that are referred to by pointer during a function
+// invocation (acquired via D_ARG(N) calls), it is able to point
+// to an arbitrary stable memory location for D_OUT.  This may
+// be giving awareness to the GC of a variable on the C stack
+// (for example).  This also keeps the function value itself
+// live, as well as the "label" word and "where" block value.
+// 
+// Note that prior to a function invocation, the output value
+// slot is written with "safe" TRASH.  This helps the evaluator
+// catch cases of when a function dispatch doesn't consciously
+// write any value into the output in debug builds.  The GC is
+// willing to overlook this safe trash, however, and it will just
+// be an UNSET! in the release build.
+// 
+// This should be called at the top level, and not from inside a
+// Propagate_All_GC_Marks().  All marks will be propagated.
+//
+static void Mark_Call_Frames_Deep(void)
 {
 	struct Reb_Call *call = CS_Top;
 
@@ -527,14 +518,13 @@ static void Propagate_All_GC_Marks(void);
 }
 
 
-/***********************************************************************
-**
-*/	void Queue_Mark_Value_Deep(const REBVAL *val)
-/*
-**		This routine is not marked `static` because it is needed by
-**		Ren/C++ in order to implement its GC_Mark_Hook.
-**
-***********************************************************************/
+//
+//  Queue_Mark_Value_Deep: C
+// 
+// This routine is not marked `static` because it is needed by
+// Ren/C++ in order to implement its GC_Mark_Hook.
+//
+void Queue_Mark_Value_Deep(const REBVAL *val)
 {
 	REBSER *ser = NULL;
 
@@ -746,13 +736,12 @@ static void Propagate_All_GC_Marks(void);
 }
 
 
-/***********************************************************************
-**
-*/	static void Mark_Array_Deep_Core(REBSER *array)
-/*
-**		Mark all series reachable from the array.
-**
-***********************************************************************/
+//
+//  Mark_Array_Deep_Core: C
+// 
+// Mark all series reachable from the array.
+//
+static void Mark_Array_Deep_Core(REBSER *array)
 {
 	REBCNT len;
 
@@ -804,29 +793,28 @@ static void Propagate_All_GC_Marks(void);
 }
 
 
-/***********************************************************************
-**
-*/	ATTRIBUTE_NO_SANITIZE_ADDRESS static REBCNT Sweep_Series(REBOOL shutdown)
-/*
-**		Scans all series in all segments that are part of the
-**		SERIES_POOL.  If a series had its lifetime management
-**		delegated to the garbage collector with MANAGE_SERIES(),
-**		then if it didn't get "marked" as live during the marking
-**		phase then free it.
-**
-**		The current exception is that any GC-managed series that has
-**		been marked with the SER_KEEP flag will not be freed--unless
-**		this sweep call is during shutdown.  During shutdown, those
-**		kept series will be freed as well.
-**
-**		!!! Review the idea of SER_KEEP, as it is a lot like
-**		Guard_Series (which was deleted).  Although SER_KEEP offers a
-**		less inefficient way to flag a series as protected from the
-**		garbage collector, it can be put on and left for an arbitrary
-**		amount of time...making it seem contentious with the idea of
-**		delegating it to the garbage collector in the first place.
-**
-***********************************************************************/
+//
+//  Sweep_Series: C
+// 
+// Scans all series in all segments that are part of the
+// SERIES_POOL.  If a series had its lifetime management
+// delegated to the garbage collector with MANAGE_SERIES(),
+// then if it didn't get "marked" as live during the marking
+// phase then free it.
+// 
+// The current exception is that any GC-managed series that has
+// been marked with the SER_KEEP flag will not be freed--unless
+// this sweep call is during shutdown.  During shutdown, those
+// kept series will be freed as well.
+// 
+// !!! Review the idea of SER_KEEP, as it is a lot like
+// Guard_Series (which was deleted).  Although SER_KEEP offers a
+// less inefficient way to flag a series as protected from the
+// garbage collector, it can be put on and left for an arbitrary
+// amount of time...making it seem contentious with the idea of
+// delegating it to the garbage collector in the first place.
+//
+ATTRIBUTE_NO_SANITIZE_ADDRESS static REBCNT Sweep_Series(REBOOL shutdown)
 {
 	REBSEG *seg;
 	REBCNT count = 0;
@@ -858,16 +846,15 @@ static void Propagate_All_GC_Marks(void);
 }
 
 
-/***********************************************************************
-**
-*/	ATTRIBUTE_NO_SANITIZE_ADDRESS static REBCNT Sweep_Gobs(void)
-/*
-**		Free all unmarked gobs.
-**
-**		Scans all gobs in all segments that are part of the
-**		GOB_POOL. Free gobs that have not been marked.
-**
-***********************************************************************/
+//
+//  Sweep_Gobs: C
+// 
+// Free all unmarked gobs.
+// 
+// Scans all gobs in all segments that are part of the
+// GOB_POOL. Free gobs that have not been marked.
+//
+ATTRIBUTE_NO_SANITIZE_ADDRESS static REBCNT Sweep_Gobs(void)
 {
 	REBSEG	*seg;
 	REBGOB	*gob;
@@ -893,16 +880,15 @@ static void Propagate_All_GC_Marks(void);
 }
 
 
-/***********************************************************************
-**
-*/	ATTRIBUTE_NO_SANITIZE_ADDRESS static REBCNT Sweep_Libs(void)
-/*
-**		Free all unmarked libs.
-**
-**		Scans all libs in all segments that are part of the
-**		LIB_POOL. Free libs that have not been marked.
-**
-***********************************************************************/
+//
+//  Sweep_Libs: C
+// 
+// Free all unmarked libs.
+// 
+// Scans all libs in all segments that are part of the
+// LIB_POOL. Free libs that have not been marked.
+//
+ATTRIBUTE_NO_SANITIZE_ADDRESS static REBCNT Sweep_Libs(void)
 {
 	REBSEG	*seg;
 	REBLHL	*lib;
@@ -929,16 +915,15 @@ static void Propagate_All_GC_Marks(void);
 }
 
 
-/***********************************************************************
-**
-*/	ATTRIBUTE_NO_SANITIZE_ADDRESS static REBCNT Sweep_Routines(void)
-/*
-**		Free all unmarked routines.
-**
-**		Scans all routines in all segments that are part of the
-**		RIN_POOL. Free routines that have not been marked.
-**
-***********************************************************************/
+//
+//  Sweep_Routines: C
+// 
+// Free all unmarked routines.
+// 
+// Scans all routines in all segments that are part of the
+// RIN_POOL. Free routines that have not been marked.
+//
+ATTRIBUTE_NO_SANITIZE_ADDRESS static REBCNT Sweep_Routines(void)
 {
 	REBSEG	*seg;
 	REBRIN	*info;
@@ -965,19 +950,18 @@ static void Propagate_All_GC_Marks(void);
 }
 
 
-/***********************************************************************
-**
-*/	static void Propagate_All_GC_Marks(void)
-/*
-**		The Mark Stack is a series containing series pointers.  They
-**		have already had their SER_MARK set to prevent being added
-**		to the stack multiple times, but the items they can reach
-**		are not necessarily marked yet.
-**
-**		Processing continues until all reachable items from the mark
-**		stack are known to be marked.
-**
-***********************************************************************/
+//
+//  Propagate_All_GC_Marks: C
+// 
+// The Mark Stack is a series containing series pointers.  They
+// have already had their SER_MARK set to prevent being added
+// to the stack multiple times, but the items they can reach
+// are not necessarily marked yet.
+// 
+// Processing continues until all reachable items from the mark
+// stack are known to be marked.
+//
+static void Propagate_All_GC_Marks(void)
 {
 	assert(!in_mark);
 	while (GC_Mark_Stack->tail != 0) {
@@ -995,13 +979,12 @@ static void Propagate_All_GC_Marks(void);
 }
 
 
-/***********************************************************************
-**
-*/	REBCNT Recycle_Core(REBOOL shutdown)
-/*
-**		Recycle memory no longer needed.
-**
-***********************************************************************/
+//
+//  Recycle_Core: C
+// 
+// Recycle memory no longer needed.
+//
+REBCNT Recycle_Core(REBOOL shutdown)
 {
 	REBINT n;
 	REBCNT count;
@@ -1126,24 +1109,22 @@ static void Propagate_All_GC_Marks(void);
 }
 
 
-/***********************************************************************
-**
-*/	REBCNT Recycle(void)
-/*
-**		Recycle memory no longer needed.
-**
-***********************************************************************/
+//
+//  Recycle: C
+// 
+// Recycle memory no longer needed.
+//
+REBCNT Recycle(void)
 {
 	// Default to not passing the `shutdown` flag.
 	return Recycle_Core(FALSE);
 }
 
 
-/***********************************************************************
-**
-*/	void Guard_Series_Core(REBSER *series)
-/*
-***********************************************************************/
+//
+//  Guard_Series_Core: C
+//
+void Guard_Series_Core(REBSER *series)
 {
 	// It would seem there isn't any reason to save a series from being
 	// garbage collected if it is already invisible to the garbage
@@ -1161,11 +1142,10 @@ static void Propagate_All_GC_Marks(void);
 }
 
 
-/***********************************************************************
-**
-*/	void Guard_Value_Core(const REBVAL *value)
-/*
-***********************************************************************/
+//
+//  Guard_Value_Core: C
+//
+void Guard_Value_Core(const REBVAL *value)
 {
 	// Cheap check; we don't want you to save any values that wouldn't
 	// be safe if the GC saw them.  We exclude REB_END to catch zero
@@ -1188,13 +1168,12 @@ static void Propagate_All_GC_Marks(void);
 }
 
 
-/***********************************************************************
-**
-*/	void Init_GC(void)
-/*
-**		Initialize garbage collector.
-**
-***********************************************************************/
+//
+//  Init_GC: C
+// 
+// Initialize garbage collector.
+//
+void Init_GC(void)
 {
 	GC_Active = 0;			// TRUE when recycle is enabled (set by RECYCLE func)
 	GC_Disabled = 0;		// GC disabled counter for critical sections.
@@ -1216,11 +1195,10 @@ static void Propagate_All_GC_Marks(void);
 }
 
 
-/***********************************************************************
-**
-*/	void Shutdown_GC(void)
-/*
-***********************************************************************/
+//
+//  Shutdown_GC: C
+//
+void Shutdown_GC(void)
 {
 	Free_Series(GC_Series_Guard);
 	Free_Series(GC_Value_Guard);

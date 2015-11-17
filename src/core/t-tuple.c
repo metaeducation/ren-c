@@ -30,11 +30,10 @@
 #include "sys-core.h"
 
 
-/***********************************************************************
-**
-*/	REBINT CT_Tuple(REBVAL *a, REBVAL *b, REBINT mode)
-/*
-***********************************************************************/
+//
+//  CT_Tuple: C
+//
+REBINT CT_Tuple(REBVAL *a, REBVAL *b, REBINT mode)
 {
 	REBINT num = Cmp_Tuple(a, b);
 	if (mode > 1) return (num == 0 && VAL_TUPLE_LEN(a) == VAL_TUPLE_LEN(b));
@@ -44,11 +43,10 @@
 }
 
 
-/***********************************************************************
-**
-*/	REBFLG MT_Tuple(REBVAL *out, REBVAL *data, enum Reb_Kind type)
-/*
-***********************************************************************/
+//
+//  MT_Tuple: C
+//
+REBFLG MT_Tuple(REBVAL *out, REBVAL *data, enum Reb_Kind type)
 {
 	REBYTE	*vp;
 	REBINT len = 0;
@@ -77,13 +75,12 @@
 }
 
 
-/***********************************************************************
-**
-*/	REBINT Cmp_Tuple(const REBVAL *t1, const REBVAL *t2)
-/*
-**	Given two tuples, compare them.
-**
-***********************************************************************/
+//
+//  Cmp_Tuple: C
+// 
+// Given two tuples, compare them.
+//
+REBINT Cmp_Tuple(const REBVAL *t1, const REBVAL *t2)
 {
 	REBCNT	len;
 	const REBYTE *vp1, *vp2;
@@ -102,14 +99,13 @@
 }
 
 
-/***********************************************************************
-**
-*/	REBINT PD_Tuple(REBPVS *pvs)
-/*
-**		Implements PATH and SET_PATH for tuple.
-**		Sets DS_TOP if found. Always returns 0.
-**
-***********************************************************************/
+//
+//  PD_Tuple: C
+// 
+// Implements PATH and SET_PATH for tuple.
+// Sets DS_TOP if found. Always returns 0.
+//
+REBINT PD_Tuple(REBPVS *pvs)
 {
 	REBVAL *val;
 	REBINT n;
@@ -147,14 +143,13 @@
 }
 
 
-/***********************************************************************
-**
-*/  REBINT Emit_Tuple(const REBVAL *value, REBYTE *out)
-/*
-**		The out array must be large enough to hold longest tuple.
-**		Longest is: (3 digits + '.') * 11 nums + 1 term => 45
-**
-***********************************************************************/
+//
+//  Emit_Tuple: C
+// 
+// The out array must be large enough to hold longest tuple.
+// Longest is: (3 digits + '.') * 11 nums + 1 term => 45
+//
+REBINT Emit_Tuple(const REBVAL *value, REBYTE *out)
 {
 	REBCNT len = VAL_TUPLE_LEN(value);
 	const REBYTE *tp = cast(const REBYTE *, VAL_TUPLE(value));
@@ -176,11 +171,10 @@
 }
 
 
-/***********************************************************************
-**
-*/	REBTYPE(Tuple)
-/*
-***********************************************************************/
+//
+//  REBTYPE: C
+//
+REBTYPE(Tuple)
 {
 	REBVAL *value = D_ARG(1);
 	REBVAL *arg = DS_ARGC > 1 ? D_ARG(2) : NULL;

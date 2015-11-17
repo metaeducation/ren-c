@@ -32,11 +32,10 @@
 #include "sys-int-funcs.h"
 
 
-/***********************************************************************
-**
-*/	REBINT CT_Integer(REBVAL *a, REBVAL *b, REBINT mode)
-/*
-***********************************************************************/
+//
+//  CT_Integer: C
+//
+REBINT CT_Integer(REBVAL *a, REBVAL *b, REBINT mode)
 {
 	if (mode >= 0)  return (VAL_INT64(a) == VAL_INT64(b));
 	if (mode == -1) return (VAL_INT64(a) >= VAL_INT64(b));
@@ -44,25 +43,24 @@
 }
 
 
-/***********************************************************************
-**
-*/	void Value_To_Int64(REBI64 *out, const REBVAL *value, REBOOL no_sign)
-/*
-**	Interpret `value` as a 64-bit integer and return it in `out`.
-**
-**	If `no_sign` is TRUE then use that to inform an ambiguous conversion
-**	(e.g. TO-INTEGER/UNSIGNED #{FF} is 255 instead of -1).  However, it
-**	won't contradict the sign of unambiguous source.  So the string "-1"
-**	will raise an error if you try to convert it unsigned.  (For this,
-**	use `abs to-integer "-1"` and not `to-integer/unsigned "-1"`.)
-**
-**	Because Rebol's INTEGER! uses a signed REBI64 and not an unsigned
-**	REBU64, a request for unsigned interpretation is limited to using
-**	63 of those bits.  A range error will be thrown otherwise.
-**
-**	If a type is added or removed, update REBNATIVE(to_integer)'s spec
-**
-***********************************************************************/
+//
+//  Value_To_Int64: C
+// 
+// Interpret `value` as a 64-bit integer and return it in `out`.
+// 
+// If `no_sign` is TRUE then use that to inform an ambiguous conversion
+// (e.g. TO-INTEGER/UNSIGNED #{FF} is 255 instead of -1).  However, it
+// won't contradict the sign of unambiguous source.  So the string "-1"
+// will raise an error if you try to convert it unsigned.  (For this,
+// use `abs to-integer "-1"` and not `to-integer/unsigned "-1"`.)
+// 
+// Because Rebol's INTEGER! uses a signed REBI64 and not an unsigned
+// REBU64, a request for unsigned interpretation is limited to using
+// 63 of those bits.  A range error will be thrown otherwise.
+// 
+// If a type is added or removed, update REBNATIVE(to_integer)'s spec
+//
+void Value_To_Int64(REBI64 *out, const REBVAL *value, REBOOL no_sign)
 {
 	// !!! Code extracted from REBTYPE(Integer)'s A_MAKE and A_TO cases
 	// Use SWITCH instead of IF chain? (was written w/ANY_STR test)
@@ -256,11 +254,20 @@ check_sign:
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(to_integer)
-/*
-***********************************************************************/
+//
+//  to-integer: native [
+//  
+//  {Synonym of TO INTEGER! when used without refinements, adds /UNSIGNED.}
+//  
+//      value [
+//      integer! decimal! percent! money! char! time!
+//      issue! binary! any-string!
+//      ]
+//      /unsigned 
+//      {For BINARY! interpret as unsigned, otherwise error if signed.}
+//  ]
+//
+REBNATIVE(to_integer)
 {
 	REBVAL * const value = D_ARG(1);
 	REBOOL no_sign = D_REF(2);
@@ -272,11 +279,10 @@ check_sign:
 }
 
 
-/***********************************************************************
-**
-*/	REBTYPE(Integer)
-/*
-***********************************************************************/
+//
+//  REBTYPE: C
+//
+REBTYPE(Integer)
 {
 	REBVAL *val = D_ARG(1);
 	REBVAL *val2 = DS_ARGC > 1 ? D_ARG(2) : NULL;

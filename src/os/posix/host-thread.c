@@ -33,20 +33,19 @@
 static void *Task_Ready;
 
 
-/***********************************************************************
-**
-*/	REBINT OS_Create_Thread(THREADFUNC *init, void *arg, REBCNT stack_size)
-/*
-**		Creates a new thread for a REBOL task datatype.
-**
-**	NOTE:
-**		For this to work, the multithreaded library option is
-**		needed in the C/C++ code generation settings.
-**
-**		The Task_Ready stops return until the new task has been
-**		initialized (to avoid unknown new thread state).
-**
-***********************************************************************/
+//
+//  OS_Create_Thread: C
+// 
+// Creates a new thread for a REBOL task datatype.
+// 
+// NOTE:
+// For this to work, the multithreaded library option is
+// needed in the C/C++ code generation settings.
+// 
+// The Task_Ready stops return until the new task has been
+// initialized (to avoid unknown new thread state).
+//
+REBINT OS_Create_Thread(THREADFUNC *init, void *arg, REBCNT stack_size)
 {
 	REBINT thread;
 /*
@@ -62,26 +61,24 @@ static void *Task_Ready;
 }
 
 
-/***********************************************************************
-**
-*/	void OS_Delete_Thread(void)
-/*
-**		Can be called by a REBOL task to terminate its thread.
-**
-***********************************************************************/
+//
+//  OS_Delete_Thread: C
+// 
+// Can be called by a REBOL task to terminate its thread.
+//
+void OS_Delete_Thread(void)
 {
 	//_endthread();
 }
 
 
-/***********************************************************************
-**
-*/	void OS_Task_Ready(REBINT tid)
-/*
-**		Used for new task startup to resume the thread that
-**		launched the new task.
-**
-***********************************************************************/
+//
+//  OS_Task_Ready: C
+// 
+// Used for new task startup to resume the thread that
+// launched the new task.
+//
+void OS_Task_Ready(REBINT tid)
 {
 	//SetEvent(Task_Ready);
 }

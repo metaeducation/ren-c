@@ -45,11 +45,10 @@ enum Reb_Param_Mode {
 };
 
 
-/***********************************************************************
-**
-*/  REBINT Eval_Depth(void)
-/*
-***********************************************************************/
+//
+//  Eval_Depth: C
+//
+REBINT Eval_Depth(void)
 {
 	REBINT depth = 0;
 	struct Reb_Call *call;
@@ -59,11 +58,10 @@ enum Reb_Param_Mode {
 }
 
 
-/***********************************************************************
-**
-*/	struct Reb_Call *Stack_Frame(REBCNT n)
-/*
-***********************************************************************/
+//
+//  Stack_Frame: C
+//
+struct Reb_Call *Stack_Frame(REBCNT n)
 {
 	struct Reb_Call *call = DSF;
 
@@ -78,11 +76,17 @@ enum Reb_Param_Mode {
 }
 
 
-/***********************************************************************
-**
-*/  REBNATIVE(trace)
-/*
-***********************************************************************/
+//
+//  trace: native [
+//  
+//  {Enables and disables evaluation tracing and backtrace.}
+//  
+//      mode [integer! logic!]
+//      /back {Set mode ON to enable or integer for lines to display}
+//      /function "Traces functions only (less output)"
+//  ]
+//
+REBNATIVE(trace)
 {
 	REBVAL *arg = D_ARG(1);
 
@@ -197,22 +201,20 @@ void Trace_Arg(REBINT num, const REBVAL *arg, const REBVAL *path)
 }
 
 
-/***********************************************************************
-**
-*/	void Trace_Value(REBINT n, const REBVAL *value)
-/*
-***********************************************************************/
+//
+//  Trace_Value: C
+//
+void Trace_Value(REBINT n, const REBVAL *value)
 {
 	int depth;
 	CHECK_DEPTH(depth);
 	Debug_Fmt(cs_cast(BOOT_STR(RS_TRACE,n)), value);
 }
 
-/***********************************************************************
-**
-*/	void Trace_String(REBINT n, const REBYTE *str, REBINT limit)
-/*
-***********************************************************************/
+//
+//  Trace_String: C
+//
+void Trace_String(REBINT n, const REBYTE *str, REBINT limit)
 {
 	static char tracebuf[64];
 	int depth;
@@ -224,11 +226,10 @@ void Trace_Arg(REBINT num, const REBVAL *arg, const REBVAL *path)
 }
 
 
-/***********************************************************************
-**
-*/	void Trace_Error(const REBVAL *value)
-/*
-***********************************************************************/
+//
+//  Trace_Error: C
+//
+void Trace_Error(const REBVAL *value)
 {
 	int depth;
 	CHECK_DEPTH(depth);
@@ -236,13 +237,12 @@ void Trace_Arg(REBINT num, const REBVAL *arg, const REBVAL *path)
 }
 
 
-/***********************************************************************
-**
-*/	REBFLG Next_Path_Throws(REBPVS *pvs)
-/*
-**		Evaluate next part of a path.
-**
-***********************************************************************/
+//
+//  Next_Path_Throws: C
+// 
+// Evaluate next part of a path.
+//
+REBFLG Next_Path_Throws(REBPVS *pvs)
 {
 	REBVAL *path;
 	REBPEF func;
@@ -314,17 +314,16 @@ void Trace_Arg(REBINT num, const REBVAL *arg, const REBVAL *path)
 }
 
 
-/***********************************************************************
-**
-*/	REBVAL *Do_Path(REBVAL *out, const REBVAL **path_val, REBVAL *val)
-/*
-**		Evaluate a path value. Path_val is updated so
-**		result can be used for function refinements.
-**		If val is not zero, then this is a SET-PATH.
-**		Returns value only if result is a function,
-**		otherwise the result is on TOS.
-**
-***********************************************************************/
+//
+//  Do_Path: C
+// 
+// Evaluate a path value. Path_val is updated so
+// result can be used for function refinements.
+// If val is not zero, then this is a SET-PATH.
+// Returns value only if result is a function,
+// otherwise the result is on TOS.
+//
+REBVAL *Do_Path(REBVAL *out, const REBVAL **path_val, REBVAL *val)
 {
 	REBPVS pvs;
 
@@ -404,14 +403,13 @@ void Trace_Arg(REBINT num, const REBVAL *arg, const REBVAL *path)
 }
 
 
-/***********************************************************************
-**
-*/	void Pick_Path(REBVAL *out, REBVAL *value, REBVAL *selector, REBVAL *val)
-/*
-**		Lightweight version of Do_Path used for A_PICK actions.
-**		Does not do paren evaluation, hence not designed to throw.
-**
-***********************************************************************/
+//
+//  Pick_Path: C
+// 
+// Lightweight version of Do_Path used for A_PICK actions.
+// Does not do paren evaluation, hence not designed to throw.
+//
+void Pick_Path(REBVAL *out, REBVAL *value, REBVAL *selector, REBVAL *val)
 {
 	REBPVS pvs;
 	REBPEF func;
@@ -447,14 +445,13 @@ void Trace_Arg(REBINT num, const REBVAL *arg, const REBVAL *path)
 }
 
 
-/***********************************************************************
-**
-*/	void Do_Signals(void)
-/*
-**		Special events to process during evaluation.
-**		Search for SET_SIGNAL to find them.
-**
-***********************************************************************/
+//
+//  Do_Signals: C
+// 
+// Special events to process during evaluation.
+// Search for SET_SIGNAL to find them.
+//
+void Do_Signals(void)
 {
 	REBCNT sigs;
 	REBCNT mask;
@@ -499,13 +496,12 @@ void Trace_Arg(REBINT num, const REBVAL *arg, const REBVAL *path)
 }
 
 
-/***********************************************************************
-**
-*/	REBFLG Dispatch_Call_Throws(struct Reb_Call *call)
-/*
-**		Expects call frame to be ready with all arguments fulfilled.
-**
-***********************************************************************/
+//
+//  Dispatch_Call_Throws: C
+// 
+// Expects call frame to be ready with all arguments fulfilled.
+//
+REBFLG Dispatch_Call_Throws(struct Reb_Call *call)
 {
 #if !defined(NDEBUG)
 	REBINT dsp_precall = DSP;
@@ -599,31 +595,30 @@ void Trace_Arg(REBINT num, const REBVAL *arg, const REBVAL *path)
 }
 
 
-/***********************************************************************
-**
-*/	REBCNT Do_Core(REBVAL * const out, REBFLG next, REBSER *block, REBCNT index, REBFLG lookahead)
-/*
-**		Evaluate the code block until we have:
-**			1. An irreducible value (return next index)
-**			2. Reached the end of the block (return END_FLAG)
-**			3. Encountered an error
-**
-**		Index is a zero-based index into the block.
-**		Op indicates infix operator is being evaluated (precedence);
-**		The value (or error) is placed on top of the data stack.
-**
-**		LOOKAHEAD:
-**		When we're in mid-dispatch of an infix function, the precedence
-**		is such that we don't want to do further infix lookahead while
-**		getting the arguments.  (e.g. with `1 + 2 * 3` we don't want
-**		infix `+` to look ahead past the 2 to see the infix `*`)
-**
-**	!!! IMPORTANT NOTE !!! => Changing the behavior of the function calling
-**	conventions and parameter fulfillment generally needs to mean changes to
-**	two other closely-related routines: Apply_Block_Throws() and
-**	Redo_Func_Throws().
-**
-***********************************************************************/
+//
+//  Do_Core: C
+// 
+// Evaluate the code block until we have:
+//     1. An irreducible value (return next index)
+//     2. Reached the end of the block (return END_FLAG)
+//     3. Encountered an error
+// 
+// Index is a zero-based index into the block.
+// Op indicates infix operator is being evaluated (precedence);
+// The value (or error) is placed on top of the data stack.
+// 
+// LOOKAHEAD:
+// When we're in mid-dispatch of an infix function, the precedence
+// is such that we don't want to do further infix lookahead while
+// getting the arguments.  (e.g. with `1 + 2 * 3` we don't want
+// infix `+` to look ahead past the 2 to see the infix `*`)
+// 
+// !!! IMPORTANT NOTE !!! => Changing the behavior of the function calling
+// conventions and parameter fulfillment generally needs to mean changes to
+// two other closely-related routines: Apply_Block_Throws() and
+// Redo_Func_Throws().
+//
+REBCNT Do_Core(REBVAL * const out, REBFLG next, REBSER *block, REBCNT index, REBFLG lookahead)
 {
 	REBINT dsp_orig = DSP;
 
@@ -1522,14 +1517,13 @@ return_index:
 }
 
 
-/***********************************************************************
-**
-*/	REBFLG Reduce_Block_Throws(REBVAL *out, REBSER *block, REBCNT index, REBOOL into)
-/*
-**		Reduce block from the index position specified in the value.
-**		Collect all values from stack and make them a block.
-**
-***********************************************************************/
+//
+//  Reduce_Block_Throws: C
+// 
+// Reduce block from the index position specified in the value.
+// Collect all values from stack and make them a block.
+//
+REBFLG Reduce_Block_Throws(REBVAL *out, REBSER *block, REBCNT index, REBOOL into)
 {
 	REBINT dsp_orig = DSP;
 
@@ -1549,13 +1543,12 @@ return_index:
 }
 
 
-/***********************************************************************
-**
-*/	void Reduce_Only(REBVAL *out, REBSER *block, REBCNT index, REBVAL *words, REBOOL into)
-/*
-**		Reduce only words and paths not found in word list.
-**
-***********************************************************************/
+//
+//  Reduce_Only: C
+// 
+// Reduce only words and paths not found in word list.
+//
+void Reduce_Only(REBVAL *out, REBSER *block, REBCNT index, REBVAL *words, REBOOL into)
 {
 	REBINT dsp_orig = DSP;
 	REBVAL *val;
@@ -1609,11 +1602,10 @@ return_index:
 }
 
 
-/***********************************************************************
-**
-*/	REBFLG Reduce_Block_No_Set_Throws(REBVAL *out, REBSER *block, REBCNT index, REBOOL into)
-/*
-***********************************************************************/
+//
+//  Reduce_Block_No_Set_Throws: C
+//
+REBFLG Reduce_Block_No_Set_Throws(REBVAL *out, REBSER *block, REBCNT index, REBOOL into)
 {
 	REBINT dsp_orig = DSP;
 
@@ -1641,21 +1633,20 @@ return_index:
 }
 
 
-/***********************************************************************
-**
-*/	REBFLG Compose_Block_Throws(REBVAL *out, REBVAL *block, REBFLG deep, REBFLG only, REBOOL into)
-/*
-**		Compose a block from a block of un-evaluated values and
-**		paren blocks that are evaluated.  Performs evaluations, so
-**		if 'into' is provided, then its series must be protected from
-**		garbage collection.
-**
-**			deep - recurse into sub-blocks
-**			only - parens that return blocks are kept as blocks
-**
-**		Writes result value at address pointed to by out.
-**
-***********************************************************************/
+//
+//  Compose_Block_Throws: C
+// 
+// Compose a block from a block of un-evaluated values and
+// paren blocks that are evaluated.  Performs evaluations, so
+// if 'into' is provided, then its series must be protected from
+// garbage collection.
+// 
+//     deep - recurse into sub-blocks
+//     only - parens that return blocks are kept as blocks
+// 
+// Writes result value at address pointed to by out.
+//
+REBFLG Compose_Block_Throws(REBVAL *out, REBVAL *block, REBFLG deep, REBFLG only, REBOOL into)
 {
 	REBVAL *value;
 	REBINT dsp_orig = DSP;
@@ -1721,71 +1712,70 @@ return_index:
 }
 
 
-/***********************************************************************
-**
-*/	REBFLG Apply_Block_Throws(REBVAL *out, const REBVAL *func, REBSER *block, REBCNT index, REBFLG reduce, va_list *varargs)
-/*
-**		Invoke a function with arguments, either from a C va_list if
-**		varargs is non-NULL...or sourced from a block at a certain index.
-**		(If using varargs, then the block and the index passed in are
-**		used for backtrace purposes only.)  Type checking is performed.
-**
-**		This is the mechanism for calling Rebol functions from C (such as
-**		system support functions), and to implement the APPLY native:
-**
-**			>> apply :append [[a b c] [d e]]
-**			== [a b c d e]
-**
-**		Refinements are processed according to the positions in which they
-**		were defined in the function spec.  So for instance, /ONLY is in
-**		the 5th spot of APPEND (after /PART and its LIMIT):
-**
-**			>> use-only: true
-**			>> apply :append [[a b c] [d e] none none use-only]
-**			== [a b c [d e]]
-**
-**		(Note: This is brittle, so it's better to use path dispatch
-**		when it's an option, e.g. `append/:use-only [a b c] [d e]`)
-**
-**		Any conditionally true value in a refinement position means the
-**		refinement will be considered present, while conditional
-**		falsehood means absent.  When the function runs, a present
-**		refinement's variable will hold its WORD! name unbound
-**		(for chaining, while still testing as TRUE?).  Absent refinements
-**		will be seen as NONE! from within the function body.
-**
-**		If 'reduce' (the default behavior of the native) then the block
-**		will be evaluated in steps via Do_Next_May_Throw, and the results
-**		passed as the arguments.  Otherwise it will be taken as literal
-**		values--which is the behavior of the native when /ONLY is used.
-**		(Using reduce is not allowed when input is coming from the
-**		va_list, as that would require copying them into a series first.)
-**
-**		* Arguments to an unused refinement will still be evaluated if
-**		'reduce' is set, with the result discarded and passed as NONE!.
-**
-**		* The input block or varargs must fulfill the required args, and
-**		cannot cut off in the middle of refinement args to anything it
-**		has started.  But it may stop supplying arguments at the boundary
-**		of any transition to another refinement.
-**
-**		* If there are more processed values in the block than arguments,
-**		that will trigger an error.
-**
-**		* Infix functions are allowed, with the first item in the block
-**		presumed to be the left-hand side of the call.
-**
-**		The boolean result will be TRUE if an argument eval or the call
-**		created a THROWN() value, with the thrown value in `out`.
-**		Otheriwse it returns FALSE and `out` will hold the evaluation.
-**
-**		!!! NOTE: This code currently does not process revoking of
-**		refinements via unset as the path-based dispatch does in the
-**		Do_Core evaluator.  It probably should--though perhaps there
-**		should be a better sharing of implementations of the function
-**		dispatch in Do_Core and Apply_Block_Throws.
-**
-***********************************************************************/
+//
+//  Apply_Block_Throws: C
+// 
+// Invoke a function with arguments, either from a C va_list if
+// varargs is non-NULL...or sourced from a block at a certain index.
+// (If using varargs, then the block and the index passed in are
+// used for backtrace purposes only.)  Type checking is performed.
+// 
+// This is the mechanism for calling Rebol functions from C (such as
+// system support functions), and to implement the APPLY native:
+// 
+//     >> apply :append [[a b c] [d e]]
+//     == [a b c d e]
+// 
+// Refinements are processed according to the positions in which they
+// were defined in the function spec.  So for instance, /ONLY is in
+// the 5th spot of APPEND (after /PART and its LIMIT):
+// 
+//     >> use-only: true
+//     >> apply :append [[a b c] [d e] none none use-only]
+//     == [a b c [d e]]
+// 
+// (Note: This is brittle, so it's better to use path dispatch
+// when it's an option, e.g. `append/:use-only [a b c] [d e]`)
+// 
+// Any conditionally true value in a refinement position means the
+// refinement will be considered present, while conditional
+// falsehood means absent.  When the function runs, a present
+// refinement's variable will hold its WORD! name unbound
+// (for chaining, while still testing as TRUE?).  Absent refinements
+// will be seen as NONE! from within the function body.
+// 
+// If 'reduce' (the default behavior of the native) then the block
+// will be evaluated in steps via Do_Next_May_Throw, and the results
+// passed as the arguments.  Otherwise it will be taken as literal
+// values--which is the behavior of the native when /ONLY is used.
+// (Using reduce is not allowed when input is coming from the
+// va_list, as that would require copying them into a series first.)
+// 
+// * Arguments to an unused refinement will still be evaluated if
+// 'reduce' is set, with the result discarded and passed as NONE!.
+// 
+// * The input block or varargs must fulfill the required args, and
+// cannot cut off in the middle of refinement args to anything it
+// has started.  But it may stop supplying arguments at the boundary
+// of any transition to another refinement.
+// 
+// * If there are more processed values in the block than arguments,
+// that will trigger an error.
+// 
+// * Infix functions are allowed, with the first item in the block
+// presumed to be the left-hand side of the call.
+// 
+// The boolean result will be TRUE if an argument eval or the call
+// created a THROWN() value, with the thrown value in `out`.
+// Otheriwse it returns FALSE and `out` will hold the evaluation.
+// 
+// !!! NOTE: This code currently does not process revoking of
+// refinements via unset as the path-based dispatch does in the
+// Do_Core evaluator.  It probably should--though perhaps there
+// should be a better sharing of implementations of the function
+// dispatch in Do_Core and Apply_Block_Throws.
+//
+REBFLG Apply_Block_Throws(REBVAL *out, const REBVAL *func, REBSER *block, REBCNT index, REBFLG reduce, va_list *varargs)
 {
 	struct Reb_Call *call;
 
@@ -2032,21 +2022,20 @@ return_index:
 }
 
 
-/***********************************************************************
-**
-*/	REBFLG Apply_Function_Throws(REBVAL *out, const REBVAL *func, va_list *varargs)
-/*
-**		(va_list by pointer: http://stackoverflow.com/a/3369762/211160)
-**
-**		Applies function from args provided by C call.  Although the
-**		function knows how many total args + refinements + refinement
-**		args it takes, it's desirable to be able to pass fewer and
-**		have the remainder padded with NONE!, so the convention used
-**		is that the varargs must be NULL-terminated.
-**
-**		returns TRUE if out is THROWN()
-**
-***********************************************************************/
+//
+//  Apply_Function_Throws: C
+// 
+// (va_list by pointer: http://stackoverflow.com/a/3369762/211160)
+// 
+// Applies function from args provided by C call.  Although the
+// function knows how many total args + refinements + refinement
+// args it takes, it's desirable to be able to pass fewer and
+// have the remainder padded with NONE!, so the convention used
+// is that the varargs must be NULL-terminated.
+// 
+// returns TRUE if out is THROWN()
+//
+REBFLG Apply_Function_Throws(REBVAL *out, const REBVAL *func, va_list *varargs)
 {
 	REBSER *block;
 	REBCNT index;
@@ -2085,15 +2074,14 @@ return_index:
 }
 
 
-/***********************************************************************
-**
-*/	REBFLG Apply_Func_Throws(REBVAL *out, REBVAL *func, ...)
-/*
-**		Applies function from args provided by C call. Zero terminated.
-**
-**		returns TRUE if out is THROWN()
-**
-***********************************************************************/
+//
+//  Apply_Func_Throws: C
+// 
+// Applies function from args provided by C call. Zero terminated.
+// 
+// returns TRUE if out is THROWN()
+//
+REBFLG Apply_Func_Throws(REBVAL *out, REBVAL *func, ...)
 {
 	REBFLG result;
 	va_list args;
@@ -2126,13 +2114,12 @@ return_index:
 }
 
 
-/***********************************************************************
-**
-*/	REBFLG Do_Sys_Func_Throws(REBVAL *out, REBCNT inum, ...)
-/*
-**		Evaluates a SYS function and out contains the result.
-**
-***********************************************************************/
+//
+//  Do_Sys_Func_Throws: C
+// 
+// Evaluates a SYS function and out contains the result.
+//
+REBFLG Do_Sys_Func_Throws(REBVAL *out, REBCNT inum, ...)
 {
 	REBFLG result;
 	va_list args;
@@ -2150,17 +2137,16 @@ return_index:
 }
 
 
-/***********************************************************************
-**
-*/	void Do_Construct(REBVAL value[])
-/*
-**		Do a block with minimal evaluation and no evaluation of
-**		functions. Used for things like script headers where security
-**		is important.
-**
-**		Handles cascading set words:  word1: word2: value
-**
-***********************************************************************/
+//
+//  Do_Construct: C
+// 
+// Do a block with minimal evaluation and no evaluation of
+// functions. Used for things like script headers where security
+// is important.
+// 
+// Handles cascading set words:  word1: word2: value
+//
+void Do_Construct(REBVAL value[])
 {
 	REBVAL *temp;
 	REBINT ssp;  // starting stack pointer
@@ -2221,13 +2207,12 @@ return_index:
 }
 
 
-/***********************************************************************
-**
-*/	void Do_Min_Construct(REBVAL value[])
-/*
-**		Do no evaluation of the set values.
-**
-***********************************************************************/
+//
+//  Do_Min_Construct: C
+// 
+// Do no evaluation of the set values.
+//
+void Do_Min_Construct(REBVAL value[])
 {
 	REBVAL *temp;
 	REBINT ssp;  // starting stack pointer
@@ -2255,28 +2240,27 @@ return_index:
 }
 
 
-/***********************************************************************
-**
-*/	REBFLG Redo_Func_Throws(REBVAL *func_val)
-/*
-**	This code takes a call frame that has been built for one function and
-**	then uses it to build a call frame to call another.  (The source call
-**	frame is implicitly the currently running one.)
-**
-**	This function is currently used only by Do_Port_Action, where ACTION! (an
-**	archetypal function spec with no implementation) is "bounced out" of
-**	the C code into user code.  All the other ACTION!-handling code is
-**	implemented in C with switch statements.
-**
-**	The archetypal frame cannot be used directly, because it can be different.
-**	That difference could be as simple as `foo: action [port [port!]]` vs.
-**	`foo-impl: func [port [port!] /local x y z]`.  However, other tricks
-**	are allowed--such as for the implementation to offer refinements which
-**	were not present in the archetype.
-**
-**	Returns TRUE if result is THROWN()
-**
-***********************************************************************/
+//
+//  Redo_Func_Throws: C
+// 
+// This code takes a call frame that has been built for one function and
+// then uses it to build a call frame to call another.  (The source call
+// frame is implicitly the currently running one.)
+// 
+// This function is currently used only by Do_Port_Action, where ACTION! (an
+// archetypal function spec with no implementation) is "bounced out" of
+// the C code into user code.  All the other ACTION!-handling code is
+// implemented in C with switch statements.
+// 
+// The archetypal frame cannot be used directly, because it can be different.
+// That difference could be as simple as `foo: action [port [port!]]` vs.
+// `foo-impl: func [port [port!] /local x y z]`.  However, other tricks
+// are allowed--such as for the implementation to offer refinements which
+// were not present in the archetype.
+// 
+// Returns TRUE if result is THROWN()
+//
+REBFLG Redo_Func_Throws(REBVAL *func_val)
 {
 	REBSER *paramlist_src = VAL_FUNC_PARAMLIST(DSF_FUNC(DSF));
 	REBSER *paramlist_new = VAL_FUNC_PARAMLIST(func_val);
@@ -2401,13 +2385,12 @@ return_index:
 }
 
 
-/***********************************************************************
-**
-*/	void Get_Simple_Value_Into(REBVAL *out, const REBVAL *val)
-/*
-**		Does easy lookup, else just returns the value as is.
-**
-***********************************************************************/
+//
+//  Get_Simple_Value_Into: C
+// 
+// Does easy lookup, else just returns the value as is.
+//
+void Get_Simple_Value_Into(REBVAL *out, const REBVAL *val)
 {
 	if (IS_WORD(val) || IS_GET_WORD(val)) {
 		GET_VAR_INTO(out, val);
@@ -2424,13 +2407,12 @@ return_index:
 }
 
 
-/***********************************************************************
-**
-*/	REBSER *Resolve_Path(REBVAL *path, REBCNT *index)
-/*
-**		Given a path, return a context and index for its terminal.
-**
-***********************************************************************/
+//
+//  Resolve_Path: C
+// 
+// Given a path, return a context and index for its terminal.
+//
+REBSER *Resolve_Path(REBVAL *path, REBCNT *index)
 {
 	REBVAL *sel; // selector
 	const REBVAL *val;

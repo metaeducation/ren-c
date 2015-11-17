@@ -48,11 +48,10 @@
 
 extern void Signal_Device(REBREQ *req, REBINT type);
 
-/***********************************************************************
-**
-*/	DEVICE_CMD Open_Signal(REBREQ *req)
-/*
-***********************************************************************/
+//
+//  Open_Signal: C
+//
+DEVICE_CMD Open_Signal(REBREQ *req)
 {
 	//RL_Print("Open_Signal\n");
 
@@ -86,11 +85,10 @@ error:
 	return DR_ERROR;
 }
 
-/***********************************************************************
-**
-*/	DEVICE_CMD Close_Signal(REBREQ *req)
-/*
-***********************************************************************/
+//
+//  Close_Signal: C
+//
+DEVICE_CMD Close_Signal(REBREQ *req)
 {
 	//RL_Print("Close_Signal\n");
 	if (sigprocmask(SIG_UNBLOCK, &req->special.signal.mask, NULL) < 0) {
@@ -104,10 +102,10 @@ error:
 	return DR_ERROR;
 }
 
-/***********************************************************************
-*/	DEVICE_CMD Read_Signal(REBREQ *req)
-/*
-***********************************************************************/
+//
+//  Read_Signal: C
+//
+DEVICE_CMD Read_Signal(REBREQ *req)
 {
 	struct timespec timeout = {0, 0};
 	unsigned int i = 0;

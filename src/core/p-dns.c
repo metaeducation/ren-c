@@ -31,11 +31,10 @@
 #include "reb-net.h"
 
 
-/***********************************************************************
-**
-*/	static REB_R DNS_Actor(struct Reb_Call *call_, REBSER *port, REBCNT action)
-/*
-***********************************************************************/
+//
+//  DNS_Actor: C
+//
+static REB_R DNS_Actor(struct Reb_Call *call_, REBSER *port, REBCNT action)
 {
 	REBVAL *spec;
 	REBREQ *sock;
@@ -142,11 +141,10 @@ pick:
 }
 
 
-/***********************************************************************
-**
-*/	void Init_DNS_Scheme(void)
-/*
-***********************************************************************/
+//
+//  Init_DNS_Scheme: C
+//
+void Init_DNS_Scheme(void)
 {
 	Register_Scheme(SYM_DNS, 0, DNS_Actor);
 }

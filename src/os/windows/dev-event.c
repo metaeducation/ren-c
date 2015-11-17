@@ -53,13 +53,12 @@ static int Timer_Id = 0;		// The timer we are using
 extern HINSTANCE App_Instance;	// From Main module.
 
 
-/***********************************************************************
-**
-*/	LRESULT CALLBACK REBOL_Event_Proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
-/*
-**		The minimal default event handler.
-**
-***********************************************************************/
+//
+//  REBOL_Event_Proc: C
+// 
+// The minimal default event handler.
+//
+LRESULT CALLBACK REBOL_Event_Proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
 	switch(msg) {
 		case WM_CLOSE:
@@ -76,16 +75,15 @@ extern HINSTANCE App_Instance;	// From Main module.
 }
 
 
-/***********************************************************************
-**
-*/	DEVICE_CMD Init_Events(REBREQ *dr)
-/*
-**		Initialize the event device.
-**
-**		Create a hidden window to handle special events,
-**		such as timers and async DNS.
-**
-***********************************************************************/
+//
+//  Init_Events: C
+// 
+// Initialize the event device.
+// 
+// Create a hidden window to handle special events,
+// such as timers and async DNS.
+//
+DEVICE_CMD Init_Events(REBREQ *dr)
 {
 	REBDEV *dev = (REBDEV*)dr; // just to keep compiler happy
     WNDCLASSEX wc;
@@ -116,20 +114,19 @@ extern HINSTANCE App_Instance;	// From Main module.
 }
 
 
-/***********************************************************************
-**
-*/	DEVICE_CMD Poll_Events(REBREQ *req)
-/*
-**		Poll for events and process them.
-**		Returns 1 if event found, else 0.
-**
-**	MS Notes:
-**
-**		"The PeekMessage function normally does not remove WM_PAINT
-**		messages from the queue. WM_PAINT messages remain in the queue
-**		until they are processed."
-**
-***********************************************************************/
+//
+//  Poll_Events: C
+// 
+// Poll for events and process them.
+// Returns 1 if event found, else 0.
+// 
+// MS Notes:
+// 
+// "The PeekMessage function normally does not remove WM_PAINT
+// messages from the queue. WM_PAINT messages remain in the queue
+// until they are processed."
+//
+DEVICE_CMD Poll_Events(REBREQ *req)
 {
 	MSG msg;
 	int flag = DR_DONE;
@@ -151,15 +148,14 @@ extern HINSTANCE App_Instance;	// From Main module.
 }
 
 
-/***********************************************************************
-**
-*/	DEVICE_CMD Query_Events(REBREQ *req)
-/*
-**		Wait for an event, or a timeout (in milliseconds) specified by
-**		req->length. The latter is used by WAIT as the main timing
-**		method.
-**
-***********************************************************************/
+//
+//  Query_Events: C
+// 
+// Wait for an event, or a timeout (in milliseconds) specified by
+// req->length. The latter is used by WAIT as the main timing
+// method.
+//
+DEVICE_CMD Query_Events(REBREQ *req)
 {
 	MSG msg;
 
@@ -184,14 +180,13 @@ extern HINSTANCE App_Instance;	// From Main module.
 }
 
 
-/***********************************************************************
-**
-*/	DEVICE_CMD Connect_Events(REBREQ *req)
-/*
-**		Simply keeps the request pending for polling purposes.
-**		Use Abort_Device to remove it.
-**
-***********************************************************************/
+//
+//  Connect_Events: C
+// 
+// Simply keeps the request pending for polling purposes.
+// Use Abort_Device to remove it.
+//
+DEVICE_CMD Connect_Events(REBREQ *req)
 {
 	return DR_PEND;	// keep pending
 }

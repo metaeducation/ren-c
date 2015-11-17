@@ -30,32 +30,29 @@
 #include "sys-core.h"
 
 
-/***********************************************************************
-**
-*/	REBINT CT_Port(REBVAL *a, REBVAL *b, REBINT mode)
-/*
-***********************************************************************/
+//
+//  CT_Port: C
+//
+REBINT CT_Port(REBVAL *a, REBVAL *b, REBINT mode)
 {
 	if (mode < 0) return -1;
 	return VAL_OBJ_FRAME(a) == VAL_OBJ_FRAME(b);
 }
 
 
-/***********************************************************************
-**
-*/	REBFLG MT_Port(REBVAL *out, REBVAL *data, enum Reb_Kind type)
-/*
-***********************************************************************/
+//
+//  MT_Port: C
+//
+REBFLG MT_Port(REBVAL *out, REBVAL *data, enum Reb_Kind type)
 {
 	return FALSE;
 }
 
 
-/***********************************************************************
-**
-*/	REBTYPE(Port)
-/*
-***********************************************************************/
+//
+//  REBTYPE: C
+//
+REBTYPE(Port)
 {
 	REBVAL *value = D_ARG(1);
 	REBVAL *arg = DS_ARGC > 1 ? D_ARG(2) : NULL;

@@ -34,19 +34,18 @@
 #define	PANIC_MESSAGE_SIZE 512
 
 
-/***********************************************************************
-**
-*/	ATTRIBUTE_NO_RETURN void Panic_Core(REBCNT id, REBSER *maybe_frame, va_list *args)
-/*
-**		(va_list by pointer: http://stackoverflow.com/a/3369762/211160)
-**
-**		Print a failure message and abort.  The code adapts to several
-**		different load stages of the system, and uses simpler ways to
-**		report the error when the boot has not progressed enough to
-**		use the more advanced modes.  This allows the same interface
-**		to be used for `panic Error_XXX(...)` and `fail (Error_XXX(...))`.
-**
-***********************************************************************/
+//
+//  Panic_Core: C
+// 
+// (va_list by pointer: http://stackoverflow.com/a/3369762/211160)
+// 
+// Print a failure message and abort.  The code adapts to several
+// different load stages of the system, and uses simpler ways to
+// report the error when the boot has not progressed enough to
+// use the more advanced modes.  This allows the same interface
+// to be used for `panic Error_XXX(...)` and `fail (Error_XXX(...))`.
+//
+ATTRIBUTE_NO_RETURN void Panic_Core(REBCNT id, REBSER *maybe_frame, va_list *args)
 {
 	char title[PANIC_TITLE_SIZE];
 	char message[PANIC_MESSAGE_SIZE];

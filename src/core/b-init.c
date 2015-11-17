@@ -49,11 +49,10 @@ static	BOOT_BLK *Boot_Block;
 #endif
 
 
-/***********************************************************************
-**
-*/	static void Assert_Basics(void)
-/*
-***********************************************************************/
+//
+//  Assert_Basics: C
+//
+static void Assert_Basics(void)
 {
 	REBVAL val;
 
@@ -133,11 +132,10 @@ static	BOOT_BLK *Boot_Block;
 }
 
 
-/***********************************************************************
-**
-*/	static void Print_Banner(REBARGS *rargs)
-/*
-***********************************************************************/
+//
+//  Print_Banner: C
+//
+static void Print_Banner(REBARGS *rargs)
 {
 	if (rargs->options & RO_VERS) {
 		Debug_Fmt(Str_Banner, REBOL_VER, REBOL_REV, REBOL_UPD, REBOL_SYS, REBOL_VAR);
@@ -146,20 +144,19 @@ static	BOOT_BLK *Boot_Block;
 }
 
 
-/***********************************************************************
-**
-*/	static void Do_Global_Block(REBSER *block, REBINT rebind)
-/*
-**		Bind and evaluate a global block.
-**		Rebind:
-**			0: bind set into sys or lib
-**		   -1: bind shallow into sys (for NATIVE and ACTION)
-**			1: add new words to LIB, bind/deep to LIB
-**			2: add new words to SYS, bind/deep to LIB
-**
-**		Expects result to be UNSET!
-**
-***********************************************************************/
+//
+//  Do_Global_Block: C
+// 
+// Bind and evaluate a global block.
+// Rebind:
+//     0: bind set into sys or lib
+//    -1: bind shallow into sys (for NATIVE and ACTION)
+//     1: add new words to LIB, bind/deep to LIB
+//     2: add new words to SYS, bind/deep to LIB
+// 
+// Expects result to be UNSET!
+//
+static void Do_Global_Block(REBSER *block, REBINT rebind)
 {
 	REBVAL result;
 
@@ -179,15 +176,14 @@ static	BOOT_BLK *Boot_Block;
 }
 
 
-/***********************************************************************
-**
-*/	static void Load_Boot(void)
-/*
-**		Decompress and scan in the boot block structure.  Can
-**		only be called at the correct point because it will
-**		create new symbols.
-**
-***********************************************************************/
+//
+//  Load_Boot: C
+// 
+// Decompress and scan in the boot block structure.  Can
+// only be called at the correct point because it will
+// create new symbols.
+//
+static void Load_Boot(void)
 {
 	REBSER *boot;
 	REBSER *text;
@@ -239,13 +235,12 @@ static	BOOT_BLK *Boot_Block;
 }
 
 
-/***********************************************************************
-**
-*/	static void Init_Datatypes(void)
-/*
-**		Create the datatypes.
-**
-***********************************************************************/
+//
+//  Init_Datatypes: C
+// 
+// Create the datatypes.
+//
+static void Init_Datatypes(void)
 {
 	REBVAL *word = VAL_BLK_HEAD(&Boot_Block->types);
 	REBSER *specs = VAL_SERIES(&Boot_Block->typespecs);
@@ -262,15 +257,14 @@ static	BOOT_BLK *Boot_Block;
 }
 
 
-/***********************************************************************
-**
-*/	static void Init_Datatype_Checks(void)
-/*
-**		Create datatype test functions (e.g. integer?, time?, etc)
-**		Must be done after typesets are initialized, so this cannot
-**		be merged with the above.
-**
-***********************************************************************/
+//
+//  Init_Datatype_Checks: C
+// 
+// Create datatype test functions (e.g. integer?, time?, etc)
+// Must be done after typesets are initialized, so this cannot
+// be merged with the above.
+//
+static void Init_Datatype_Checks(void)
 {
 	REBVAL *word = VAL_BLK_HEAD(&Boot_Block->types);
 	REBVAL *value;
@@ -302,16 +296,15 @@ static	BOOT_BLK *Boot_Block;
 }
 
 
-/***********************************************************************
-**
-*/	static void Init_Constants(void)
-/*
-**		Init constant words.
-**
-**		WARNING: Do not create direct pointers into the Lib_Context
-**		because it may get expanded and the pointers will be invalid.
-**
-***********************************************************************/
+//
+//  Init_Constants: C
+// 
+// Init constant words.
+// 
+// WARNING: Do not create direct pointers into the Lib_Context
+// because it may get expanded and the pointers will be invalid.
+//
+static void Init_Constants(void)
 {
 	REBVAL *value;
 	extern const double pi1;
@@ -330,14 +323,13 @@ static	BOOT_BLK *Boot_Block;
 }
 
 
-/***********************************************************************
-**
-*/	void Use_Natives(const REBFUN *funcs, REBCNT limit)
-/*
-**		Setup to use NATIVE function. If limit == 0, then the
-**		native function table will be zero terminated (N_native).
-**
-***********************************************************************/
+//
+//  Use_Natives: C
+// 
+// Setup to use NATIVE function. If limit == 0, then the
+// native function table will be zero terminated (N_native).
+//
+void Use_Natives(const REBFUN *funcs, REBCNT limit)
 {
 	Native_Count = 0;
 	Native_Limit = limit;
@@ -345,11 +337,10 @@ static	BOOT_BLK *Boot_Block;
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(native)
-/*
-***********************************************************************/
+//
+//  native: native none
+//
+REBNATIVE(native)
 {
 	if ((Native_Limit == 0 && *Native_Functions) || (Native_Count < Native_Limit))
 		Make_Native(D_OUT, VAL_SERIES(D_ARG(1)), *Native_Functions++, REB_NATIVE);
@@ -360,11 +351,10 @@ static	BOOT_BLK *Boot_Block;
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(action)
-/*
-***********************************************************************/
+//
+//  action: native none
+//
+REBNATIVE(action)
 {
 	Action_Count++;
 	if (Action_Count >= A_MAX_ACTION) panic (Error(RE_ACTION_OVERFLOW));
@@ -378,16 +368,20 @@ static	BOOT_BLK *Boot_Block;
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(context)
-/*
-**		The spec block has already been bound to Lib_Context, to
-**		allow any embedded values and functions to evaluate.
-**
-**		Note: Overlaps MAKE OBJECT! code (REBTYPE(Object)'s A_MAKE)
-**
-***********************************************************************/
+//
+//  context: native [
+//  
+//  "Defines a unique object."
+//  
+//      spec [block!] "Object words and values (modified)"
+//  ]
+//
+REBNATIVE(context)
+//
+// The spec block has already been bound to Lib_Context, to
+// allow any embedded values and functions to evaluate.
+// 
+// Note: Overlaps MAKE OBJECT! code (REBTYPE(Object)'s A_MAKE)
 {
 	REBVAL *spec = D_ARG(1);
 	REBVAL evaluated;
@@ -405,11 +399,10 @@ static	BOOT_BLK *Boot_Block;
 }
 
 
-/***********************************************************************
-**
-*/	static void Init_Ops(void)
-/*
-***********************************************************************/
+//
+//  Init_Ops: C
+//
+static void Init_Ops(void)
 {
 	REBVAL *word;
 	REBVAL *val;
@@ -424,13 +417,12 @@ static	BOOT_BLK *Boot_Block;
 }
 
 
-/***********************************************************************
-**
-*/	static void Init_Natives(void)
-/*
-**		Create native functions.
-**
-***********************************************************************/
+//
+//  Init_Natives: C
+// 
+// Create native functions.
+//
+static void Init_Natives(void)
 {
 	REBVAL *word;
 	REBVAL *val;
@@ -460,42 +452,39 @@ static	BOOT_BLK *Boot_Block;
 }
 
 
-/***********************************************************************
-**
-*/	REBCNT Get_Action_Sym(REBCNT action)
-/*
-**		Return the word symbol for a given Action number.
-**
-***********************************************************************/
+//
+//  Get_Action_Sym: C
+// 
+// Return the word symbol for a given Action number.
+//
+REBCNT Get_Action_Sym(REBCNT action)
 {
 	return FRM_KEY_SYM(Lib_Context, Action_Marker + action);
 }
 
 
-/***********************************************************************
-**
-*/	REBVAL *Get_Action_Value(REBCNT action)
-/*
-**		Return the value (function) for a given Action number.
-**
-***********************************************************************/
+//
+//  Get_Action_Value: C
+// 
+// Return the value (function) for a given Action number.
+//
+REBVAL *Get_Action_Value(REBCNT action)
 {
 	return FRM_VALUE(Lib_Context, Action_Marker+action);
 }
 
 
-/***********************************************************************
-**
-*/	static void Init_Root_Context(void)
-/*
-**		Hand-build the root context where special REBOL values are
-**		stored. Called early, so it cannot depend on any other
-**		system structures or values.
-**
-**		Note that the Root_Context's word table is unset!
-**		None of its values are exported.
-**
-***********************************************************************/
+//
+//  Init_Root_Context: C
+// 
+// Hand-build the root context where special REBOL values are
+// stored. Called early, so it cannot depend on any other
+// system structures or values.
+// 
+// Note that the Root_Context's word table is unset!
+// None of its values are exported.
+//
+static void Init_Root_Context(void)
 {
 	REBVAL *value;
 	REBINT n;
@@ -553,13 +542,12 @@ static	BOOT_BLK *Boot_Block;
 }
 
 
-/***********************************************************************
-**
-*/	void Set_Root_Series(REBVAL *value, REBSER *ser, const char *label)
-/*
-**		Used to set block and string values in the ROOT context.
-**
-***********************************************************************/
+//
+//  Set_Root_Series: C
+// 
+// Used to set block and string values in the ROOT context.
+//
+void Set_Root_Series(REBVAL *value, REBSER *ser, const char *label)
 {
 	LABEL_SERIES(ser, label);
 
@@ -576,13 +564,12 @@ static	BOOT_BLK *Boot_Block;
 }
 
 
-/***********************************************************************
-**
-*/	static void Init_Task_Context(void)
-/*
-**		See above notes (same as root context, except for tasks)
-**
-***********************************************************************/
+//
+//  Init_Task_Context: C
+// 
+// See above notes (same as root context, except for tasks)
+//
+static void Init_Task_Context(void)
 {
 	REBVAL *value;
 	REBINT n;
@@ -618,13 +605,12 @@ static	BOOT_BLK *Boot_Block;
 }
 
 
-/***********************************************************************
-**
-*/	static void Init_System_Object(void)
-/*
-**		The system object is defined in boot.r.
-**
-***********************************************************************/
+//
+//  Init_System_Object: C
+// 
+// The system object is defined in boot.r.
+//
+static void Init_System_Object(void)
 {
 	REBSER *frame;
 	REBVAL *value;
@@ -688,11 +674,10 @@ static	BOOT_BLK *Boot_Block;
 }
 
 
-/***********************************************************************
-**
-*/	static void Init_Contexts_Object(void)
-/*
-***********************************************************************/
+//
+//  Init_Contexts_Object: C
+//
+static void Init_Contexts_Object(void)
 {
 	REBVAL *value;
 //	REBSER *frame;
@@ -713,11 +698,10 @@ static	BOOT_BLK *Boot_Block;
 //	Val_Init_Object(value, frame);
 }
 
-/***********************************************************************
-**
-*/	REBINT Codec_Text(REBCDI *codi)
-/*
-***********************************************************************/
+//
+//  Codec_Text: C
+//
+REBINT Codec_Text(REBCDI *codi)
 {
 	codi->error = 0;
 
@@ -827,29 +811,26 @@ static	BOOT_BLK *Boot_Block;
 	return CODI_ERROR;
 }
 
-/***********************************************************************
-**
-*/	REBINT Codec_UTF16LE(REBCDI *codi)
-/*
-***********************************************************************/
+//
+//  Codec_UTF16LE: C
+//
+REBINT Codec_UTF16LE(REBCDI *codi)
 {
 	return Codec_UTF16(codi, TRUE);
 }
 
-/***********************************************************************
-**
-*/	REBINT Codec_UTF16BE(REBCDI *codi)
-/*
-***********************************************************************/
+//
+//  Codec_UTF16BE: C
+//
+REBINT Codec_UTF16BE(REBCDI *codi)
 {
 	return Codec_UTF16(codi, FALSE);
 }
 
-/***********************************************************************
-**
-*/	REBINT Codec_Markup(REBCDI *codi)
-/*
-***********************************************************************/
+//
+//  Codec_Markup: C
+//
+REBINT Codec_Markup(REBCDI *codi)
 {
 	codi->error = 0;
 
@@ -867,13 +848,12 @@ static	BOOT_BLK *Boot_Block;
 }
 
 
-/***********************************************************************
-**
-*/	void Register_Codec(const REBYTE *name, codo dispatcher)
-/*
-**		Internal function for adding a codec.
-**
-***********************************************************************/
+//
+//  Register_Codec: C
+// 
+// Internal function for adding a codec.
+//
+void Register_Codec(const REBYTE *name, codo dispatcher)
 {
 	REBVAL *value = Get_System(SYS_CODECS, 0);
 	REBCNT sym = Make_Word(name, LEN_BYTES(name));
@@ -883,11 +863,10 @@ static	BOOT_BLK *Boot_Block;
 }
 
 
-/***********************************************************************
-**
-*/	static void Init_Codecs(void)
-/*
-***********************************************************************/
+//
+//  Init_Codecs: C
+//
+static void Init_Codecs(void)
 {
 	Register_Codec(cb_cast("text"), Codec_Text);
 	Register_Codec(cb_cast("utf-16le"), Codec_UTF16LE);
@@ -928,13 +907,12 @@ static REBCNT Set_Option_Word(REBCHR *str, REBCNT field)
 	return n;
 }
 
-/***********************************************************************
-**
-*/	static void Init_Main_Args(REBARGS *rargs)
-/*
-**		The system object is defined in boot.r.
-**
-***********************************************************************/
+//
+//  Init_Main_Args: C
+// 
+// The system object is defined in boot.r.
+//
+static void Init_Main_Args(REBARGS *rargs)
 {
 	REBVAL *val;
 	REBSER *ser;
@@ -1040,11 +1018,10 @@ static REBCNT Set_Option_Word(REBCHR *str, REBCNT field)
 }
 
 
-/***********************************************************************
-**
-*/	void Init_Task(void)
-/*
-***********************************************************************/
+//
+//  Init_Task: C
+//
+void Init_Task(void)
 {
 	// Thread locals:
 	Trace_Level = 0;
@@ -1073,11 +1050,10 @@ static REBCNT Set_Option_Word(REBCHR *str, REBCNT field)
 }
 
 
-/***********************************************************************
-**
-*/	void Init_Year(void)
-/*
-***********************************************************************/
+//
+//  Init_Year: C
+//
+void Init_Year(void)
 {
 	REBOL_DAT dat;
 
@@ -1086,36 +1062,35 @@ static REBCNT Set_Option_Word(REBCHR *str, REBCNT field)
 }
 
 
-/***********************************************************************
-**
-*/	void Init_Core(REBARGS *rargs)
-/*
-**		Initialize the interpreter core.  The initialization will
-**		either succeed or "panic".
-**
-**		!!! Panic currently triggers an exit to the OS.  Offering a
-**		hook to cleanly fail would be ideal--but the code is not
-**		currently written to be able to cleanly shut down from a
-**		partial initialization.
-**
-**		The phases of initialization are tracked by PG_Boot_Phase.
-**		Some system functions are unavailable at certain phases.
-**
-**		Though most of the initialization is run as C code, some
-**		portions are run in Rebol.  Small bits are run during the
-**		loading of natives and actions (for instance, NATIVE and
-**		ACTION are functions that are registered very early on in
-**		the booting process, which are run during boot to register
-**		each of the natives and actions).
-**
-**		At the tail of the initialization, `finish_init_core` is run.
-**		This Rebol function lives in %sys-start.r, and it should be
-**		"host agnostic".  Hence it should not assume things about
-**		command-line switches (or even that there is a command line!)
-**		Converting the code that made such assumptions is an
-**		ongoing process.
-**
-***********************************************************************/
+//
+//  Init_Core: C
+// 
+// Initialize the interpreter core.  The initialization will
+// either succeed or "panic".
+// 
+// !!! Panic currently triggers an exit to the OS.  Offering a
+// hook to cleanly fail would be ideal--but the code is not
+// currently written to be able to cleanly shut down from a
+// partial initialization.
+// 
+// The phases of initialization are tracked by PG_Boot_Phase.
+// Some system functions are unavailable at certain phases.
+// 
+// Though most of the initialization is run as C code, some
+// portions are run in Rebol.  Small bits are run during the
+// loading of natives and actions (for instance, NATIVE and
+// ACTION are functions that are registered very early on in
+// the booting process, which are run during boot to register
+// each of the natives and actions).
+// 
+// At the tail of the initialization, `finish_init_core` is run.
+// This Rebol function lives in %sys-start.r, and it should be
+// "host agnostic".  Hence it should not assume things about
+// command-line switches (or even that there is a command line!)
+// Converting the code that made such assumptions is an
+// ongoing process.
+//
+void Init_Core(REBARGS *rargs)
 {
 	REBSER *error_frame;
 	REBOL_STATE state;
@@ -1332,26 +1307,25 @@ static REBCNT Set_Option_Word(REBCHR *str, REBCNT field)
 }
 
 
-/***********************************************************************
-**
-*/	void Shutdown_Core(void)
-/*
-**		The goal of Shutdown_Core() is to release all memory and
-**		resources that the interpreter has accrued since Init_Core().
-**
-**		Clients may wish to force an exit to the OS instead of calling
-**		Shutdown_Core in a release build, in order to save time.  It
-**		should be noted that when used as a library this doesn't
-**		necessarily work, because Rebol may be initialized and shut
-**		down multiple times during a program run.
-**
-**		Using a tool like Valgrind or Leak Sanitizer, it is possible
-**		to verify that all the allocations have indeed been freed.
-**		Being able to have a report that they have is a good sanity
-**		check on not just the memory lost by leaks, but the semantic
-**		errors and bugs that such leaks may indicate.
-**
-***********************************************************************/
+//
+//  Shutdown_Core: C
+// 
+// The goal of Shutdown_Core() is to release all memory and
+// resources that the interpreter has accrued since Init_Core().
+// 
+// Clients may wish to force an exit to the OS instead of calling
+// Shutdown_Core in a release build, in order to save time.  It
+// should be noted that when used as a library this doesn't
+// necessarily work, because Rebol may be initialized and shut
+// down multiple times during a program run.
+// 
+// Using a tool like Valgrind or Leak Sanitizer, it is possible
+// to verify that all the allocations have indeed been freed.
+// Being able to have a report that they have is a good sanity
+// check on not just the memory lost by leaks, but the semantic
+// errors and bugs that such leaks may indicate.
+//
+void Shutdown_Core(void)
 {
 	assert(!Saved_State);
 

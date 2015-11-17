@@ -33,11 +33,15 @@
 /** Helper Functions **************************************************/
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(echo)
-/*
-***********************************************************************/
+//
+//  echo: native [
+//  
+//  "Copies console output to a file."
+//  
+//      target [file! none! logic!]
+//  ]
+//
+REBNATIVE(echo)
 {
 	REBVAL *val = D_ARG(1);
 	REBSER *ser = 0;
@@ -58,34 +62,33 @@
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(form)
-/*
-**		Converts a value to a REBOL readable string.
-**		value	"The value to mold"
-**		/only   "For a block value, give only contents, no outer [ ]"
-**		/all	"Mold in serialized format"
-**		/flat	"No line indentation"
-**
-***********************************************************************/
+//
+//  form: native [
+//  
+//  "Converts a value to a human-readable string."
+//  
+//      value [any-value!] "The value to form"
+//  ]
+//
+REBNATIVE(form)
 {
 	Val_Init_String(D_OUT, Copy_Form_Value(D_ARG(1), 0));
 	return R_OUT;
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(mold)
-/*
-**		Converts a value to a REBOL readable string.
-**		value	"The value to mold"
-**		/only   "For a block value, give only contents, no outer [ ]"
-**		/all	"Mold in serialized format"
-**		/flat	"No line indentation"
-**
-***********************************************************************/
+//
+//  mold: native [
+//  
+//  "Converts a value to a REBOL-readable string."
+//  
+//      value [any-value!] "The value to mold"
+//      /only {For a block value, mold only its contents, no outer []}
+//      /all "Use construction syntax"
+//      /flat "No indentation"
+//  ]
+//
+REBNATIVE(mold)
 {
 	REBVAL *val = D_ARG(1);
 
@@ -185,11 +188,15 @@ static REBFLG Print_Native_Modifying_Throws(
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(print)
-/*
-***********************************************************************/
+//
+//  print: native [
+//  
+//  "Outputs a value followed by a line break."
+//  
+//      value [any-value!] "The value to print"
+//  ]
+//
+REBNATIVE(print)
 {
 	// Note: value is safe from GC due to being in arg slot
 	REBVAL *value = D_ARG(1);
@@ -203,19 +210,23 @@ static REBFLG Print_Native_Modifying_Throws(
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(prin)
-/*
-**	!!! PRIN is considered as a "poor word" and is pending decisions
-**	about a better solution to newline management in output.  The
-**	following idea has been proposed as giving necessary coverage:
-**
-**		`print x` (no newline if x is not a block)
-**		`print [x]` (newline for all x, no extra one if x is block)
-**		`print form x` (guarantee no newline, even if x is block)
-**
-***********************************************************************/
+//
+//  prin: native [
+//  
+//  "Outputs a value with no line break."
+//  
+//      value [any-value!]
+//  ]
+//
+REBNATIVE(prin)
+//
+// !!! PRIN is considered as a "poor word" and is pending decisions
+// about a better solution to newline management in output.  The
+// following idea has been proposed as giving necessary coverage:
+// 
+//     `print x` (no newline if x is not a block)
+//     `print [x]` (newline for all x, no extra one if x is block)
+//     `print form x` (guarantee no newline, even if x is block)
 {
 	// Note: value is safe from GC due to being in arg slot
 	REBVAL *value = D_ARG(1);
@@ -229,11 +240,19 @@ static REBFLG Print_Native_Modifying_Throws(
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(new_line)
-/*
-***********************************************************************/
+//
+//  new-line: native [
+//  
+//  {Sets or clears the new-line marker within a block or paren.}
+//  
+//      position [block! paren!] "Position to change marker (modified)"
+//      value "Set TRUE for newline"
+//      /all "Set/clear marker to end of series"
+//      /skip {Set/clear marker periodically to the end of the series}
+//      size [integer!]
+//  ]
+//
+REBNATIVE(new_line)
 {
 	REBVAL *value = D_ARG(1);
 	REBVAL *val;
@@ -259,35 +278,41 @@ static REBFLG Print_Native_Modifying_Throws(
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(new_lineq)
-/*
-***********************************************************************/
+//
+//  new-line?: native [
+//  
+//  {Returns the state of the new-line marker within a block or paren.}
+//  
+//      position [block! paren!] "Position to check marker"
+//  ]
+//
+REBNATIVE(new_lineq)
 {
 	if VAL_GET_OPT(VAL_BLK_DATA(D_ARG(1)), OPT_VALUE_LINE) return R_TRUE;
 	return R_FALSE;
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(now)
-/*
-**  Return the current date and time with timezone adjustment.
-**
-**		1  /year {Returns year only.}
-**		2  /month {Returns month only.}
-**		3  /day {Returns day of the month only.}
-**		4  /time {Returns time only.}
-**		5  /zone {Returns time zone offset from GMT only.}
-**		6  /date {Returns date only.}
-**		7  /weekday {Returns day of the week as integer (Monday is day 1).}
-**		8  /yearday {Returns day of the year (Julian)}
-**		9  /precise {Higher precision}
-**		10 /utc {Universal time (no zone)}
-**
-***********************************************************************/
+//
+//  now: native [
+//  
+//  "Returns date and time."
+//  
+//      /year "Returns year only"
+//      /month "Returns month only"
+//      /day "Returns day of the month only"
+//      /time "Returns time only"
+//      /zone "Returns time zone offset from UCT (GMT) only"
+//      /date "Returns date only"
+//      /weekday {Returns day of the week as integer (Monday is day 1)}
+//      /yearday "Returns day of the year (Julian)"
+//      /precise "High precision time"
+//      /utc "Universal time (no zone)"
+//  ]
+//
+REBNATIVE(now)
+//
+// Return the current date and time with timezone adjustment.
 {
 	REBOL_DAT dat;
 	REBINT n = -1;
@@ -332,11 +357,17 @@ static REBFLG Print_Native_Modifying_Throws(
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(wait)
-/*
-***********************************************************************/
+//
+//  wait: native [
+//  
+//  "Waits for a duration, port, or both."
+//  
+//      value [any-number! time! port! block! none!]
+//      /all "Returns all in a block"
+//      /only {only check for ports given in the block to this function}
+//  ]
+//
+REBNATIVE(wait)
 {
 	REBVAL *val = D_ARG(1);
 	REBINT timeout = 0;	// in milliseconds
@@ -418,14 +449,19 @@ chk_neg:
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(wake_up)
-/*
-**		Calls port update for native actors.
-**		Calls port awake function.
-**
-***********************************************************************/
+//
+//  wake-up: native [
+//  
+//  "Awake and update a port with event."
+//  
+//      port [port!]
+//      event [event!]
+//  ]
+//
+REBNATIVE(wake_up)
+//
+// Calls port update for native actors.
+// Calls port awake function.
 {
 	REBVAL *val = D_ARG(1);
 	REBSER *port = VAL_PORT(val);
@@ -450,11 +486,15 @@ chk_neg:
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(to_rebol_file)
-/*
-***********************************************************************/
+//
+//  to-rebol-file: native [
+//  
+//  {Converts a local system file path to a REBOL file path.}
+//  
+//      path [file! string!]
+//  ]
+//
+REBNATIVE(to_rebol_file)
 {
 	REBVAL *arg = D_ARG(1);
 	REBSER *ser;
@@ -467,11 +507,16 @@ chk_neg:
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(to_local_file)
-/*
-***********************************************************************/
+//
+//  to-local-file: native [
+//  
+//  {Converts a REBOL file path to the local system file path.}
+//  
+//      path [file! string!]
+//      /full {Prepends current dir for full path (for relative paths only)}
+//  ]
+//
+REBNATIVE(to_local_file)
 {
 	REBVAL *arg = D_ARG(1);
 	REBSER *ser;
@@ -484,11 +529,13 @@ chk_neg:
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(what_dir)
-/*
-***********************************************************************/
+//
+//  what-dir: native [
+//  "Returns the current directory path."
+//      ; No arguments
+//  ]
+//
+REBNATIVE(what_dir)
 {
 	REBSER *ser;
 	REBCHR *lpath;
@@ -527,11 +574,15 @@ chk_neg:
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(change_dir)
-/*
-***********************************************************************/
+//
+//  change-dir: native [
+//  
+//  {Changes the current path (where scripts with relative paths will be run).}
+//  
+//      path [file! url!]
+//  ]
+//
+REBNATIVE(change_dir)
 {
 	REBVAL *arg = D_ARG(1);
 	REBSER *ser;
@@ -566,11 +617,15 @@ chk_neg:
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(browse)
-/*
-***********************************************************************/
+//
+//  browse: native [
+//  
+//  "Open web browser to a URL or local file."
+//  
+//      url [url! file! none!]
+//  ]
+//
+REBNATIVE(browse)
 {
 	REBINT r;
 	REBCHR *url = 0;
@@ -597,18 +652,24 @@ chk_neg:
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(call)
-/*
-**	/wait "Wait for command to terminate before returning"
-**	/console "Runs command with I/O redirected to console"
-**	/shell "Forces command to be run from shell"
-**	/info "Return process information object"
-**	/input in [string! file! none] "Redirects stdin to in"
-**	/output out [string! file! none] "Redirects stdout to out"
-**	/error err [string! file! none] "Redirects stderr to err"
-***********************************************************************/
+//
+//  call: native [
+//  
+//  "Run another program; return immediately."
+//  
+//      command [string! block! file!] 
+//      {An OS-local command line (quoted as necessary), a block with arguments, or an executable file}
+//      
+//      /wait "Wait for command to terminate before returning"
+//      /console "Runs command with I/O redirected to console"
+//      /shell "Forces command to be run from shell"
+//      /info "Returns process information object"
+//      /input in [string! binary! file! none!] "Redirects stdin to in"
+//      /output out [string! binary! file! none!] "Redirects stdout to out"
+//      /error err [string! binary! file! none!] "Redirects stderr to err"
+//  ]
+//
+REBNATIVE(call)
 {
 #define INHERIT_TYPE 0
 #define NONE_TYPE 1
@@ -966,14 +1027,13 @@ chk_neg:
 }
 
 
-/***********************************************************************
-**
-*/	static REBSER *String_List_To_Block(REBCHR *str)
-/*
-**		Convert a series of null terminated strings to
-**		a block of strings separated with '='.
-**
-***********************************************************************/
+//
+//  String_List_To_Block: C
+// 
+// Convert a series of null terminated strings to
+// a block of strings separated with '='.
+//
+static REBSER *String_List_To_Block(REBCHR *str)
 {
 	REBCNT n;
 	REBCNT len = 0;
@@ -1003,15 +1063,14 @@ chk_neg:
 }
 
 
-/***********************************************************************
-**
-*/	REBSER *Block_To_String_List(REBVAL *blk)
-/*
-**		Convert block of values to a string that holds
-**		a series of null terminated strings, followed
-**		by a final terminating string.
-**
-***********************************************************************/
+//
+//  Block_To_String_List: C
+// 
+// Convert block of values to a string that holds
+// a series of null terminated strings, followed
+// by a final terminating string.
+//
+REBSER *Block_To_String_List(REBVAL *blk)
 {
 	REBVAL *value;
 
@@ -1029,13 +1088,12 @@ chk_neg:
 }
 
 
-/***********************************************************************
-**
-*/	static REBSER *File_List_To_Block(const REBCHR *str)
-/*
-**		Convert file directory and file name list to block.
-**
-***********************************************************************/
+//
+//  File_List_To_Block: C
+// 
+// Convert file directory and file name list to block.
+//
+static REBSER *File_List_To_Block(const REBCHR *str)
 {
 	REBCNT n;
 	REBCNT len = 0;
@@ -1084,11 +1142,19 @@ chk_neg:
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(request_file)
-/*
-***********************************************************************/
+//
+//  request-file: native [
+//  
+//  {Asks user to select a file and returns full file path (or block of paths).}
+//  
+//      /save "File save mode"
+//      /multi {Allows multiple file selection, returned as a block}
+//      /file name [file!] "Default file name or directory"
+//      /title text [string!] "Window title"
+//      /filter list [block!] "Block of filters (filter-name filter)"
+//  ]
+//
+REBNATIVE(request_file)
 {
 	REBSER *ser;
 	REBINT n;
@@ -1148,11 +1214,15 @@ chk_neg:
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(get_env)
-/*
-***********************************************************************/
+//
+//  get-env: native [
+//  
+//  {Returns the value of an OS environment variable (for current process).}
+//  
+//      var [any-string! any-word!]
+//  ]
+//
+REBNATIVE(get_env)
 {
 	REBCHR *cmd;
 	REBINT lenplus;
@@ -1180,11 +1250,16 @@ chk_neg:
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(set_env)
-/*
-***********************************************************************/
+//
+//  set-env: native [
+//  
+//  {Sets the value of an operating system environment variable (for current process).}
+//  
+//      var [any-string! any-word!] "Variable to set"
+//      value [string! none!] "Value to set, or NONE to unset it"
+//  ]
+//
+REBNATIVE(set_env)
 {
 	REBCHR *cmd;
 	REBVAL *arg1 = D_ARG(1);
@@ -1224,11 +1299,15 @@ chk_neg:
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(list_env)
-/*
-***********************************************************************/
+//
+//  list-env: native [
+//  
+//  {Returns a map of OS environment variables (for current process).}
+//  
+//      ; No arguments
+//  ]
+//
+REBNATIVE(list_env)
 {
 	REBCHR *result = OS_LIST_ENV();
 
@@ -1237,13 +1316,21 @@ chk_neg:
 	return R_OUT;
 }
 
-/***********************************************************************
-**
-*/	REBNATIVE(access_os)
-/*
-**	access-os word
-**	/set value
-***********************************************************************/
+//
+//  access-os: native [
+//  
+//  {Access to various operating system functions (getuid, setuid, getpid, kill, etc.)}
+//  
+//      field [word!] "uid, euid, gid, egid, pid"
+//      /set "To set or kill pid (sig 15)"
+//      value [integer! block!] 
+//      {Argument, such as uid, gid, or pid (in which case, it could be a block with the signal no)}
+//  ]
+//
+REBNATIVE(access_os)
+//
+// access-os word
+// /set value
 {
 #define OS_ENA	 -1
 #define OS_EINVAL -2

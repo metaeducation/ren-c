@@ -123,11 +123,10 @@ static REBOOL get_scalar(const REBSTU *stu,
 	return TRUE;
 }
 
-/***********************************************************************
-**
-*/	static REBFLG Get_Struct_Var(REBSTU *stu, REBVAL *word, REBVAL *val)
-/*
-***********************************************************************/
+//
+//  Get_Struct_Var: C
+//
+static REBFLG Get_Struct_Var(REBSTU *stu, REBVAL *word, REBVAL *val)
 {
 	struct Struct_Field *field = NULL;
 	REBCNT i = 0;
@@ -154,23 +153,21 @@ static REBOOL get_scalar(const REBSTU *stu,
 
 
 #ifdef NEED_SET_STRUCT_VARS
-/***********************************************************************
-**
-*/	static void Set_Struct_Vars(REBSTU *strut, REBVAL *blk)
-/*
-***********************************************************************/
+//
+//  Set_Struct_Vars: C
+//
+static void Set_Struct_Vars(REBSTU *strut, REBVAL *blk)
 {
 }
 #endif
 
 
-/***********************************************************************
-**
-*/	REBSER *Struct_To_Block(const REBSTU *stu)
-/*
-**		Used by MOLD to create a block.
-**
-***********************************************************************/
+//
+//  Struct_To_Block: C
+// 
+// Used by MOLD to create a block.
+//
+REBSER *Struct_To_Block(const REBSTU *stu)
 {
 	REBSER *ser = Make_Array(10);
 	struct Struct_Field *field = (struct Struct_Field*) SERIES_DATA(stu->fields);
@@ -358,11 +355,10 @@ static REBOOL assign_scalar(REBSTU *stu,
 	return TRUE;
 }
 
-/***********************************************************************
-**
-*/	static REBFLG Set_Struct_Var(REBSTU *stu, REBVAL *word, REBVAL *elem, REBVAL *val)
-/*
-***********************************************************************/
+//
+//  Set_Struct_Var: C
+//
+static REBFLG Set_Struct_Var(REBSTU *stu, REBVAL *word, REBVAL *elem, REBVAL *val)
 {
 	struct Struct_Field *field = NULL;
 	REBCNT i = 0;
@@ -851,11 +847,10 @@ failed:
 }
 
 
-/***********************************************************************
-**
-*/	REBINT PD_Struct(REBPVS *pvs)
-/*
-***********************************************************************/
+//
+//  PD_Struct: C
+//
+REBINT PD_Struct(REBPVS *pvs)
 {
 	struct Struct_Field *field = NULL;
 	REBCNT i = 0;
@@ -901,11 +896,10 @@ failed:
 }
 
 
-/***********************************************************************
-**
-*/	REBINT Cmp_Struct(const REBVAL *s, const REBVAL *t)
-/*
-***********************************************************************/
+//
+//  Cmp_Struct: C
+//
+REBINT Cmp_Struct(const REBVAL *s, const REBVAL *t)
 {
 	REBINT n = VAL_STRUCT_FIELDS(s) - VAL_STRUCT_FIELDS(t);
 	if (n != 0) {
@@ -916,11 +910,10 @@ failed:
 }
 
 
-/***********************************************************************
-**
-*/	REBINT CT_Struct(REBVAL *a, REBVAL *b, REBINT mode)
-/*
-***********************************************************************/
+//
+//  CT_Struct: C
+//
+REBINT CT_Struct(REBVAL *a, REBVAL *b, REBINT mode)
 {
 	//printf("comparing struct a (%p) with b (%p), mode: %d\n", a, b, mode);
 	switch (mode) {
@@ -942,11 +935,10 @@ failed:
 	return -1;
 }
 
-/***********************************************************************
-**
-*/	void Copy_Struct(const REBSTU *src, REBSTU *dst)
-/*
-***********************************************************************/
+//
+//  Copy_Struct: C
+//
+void Copy_Struct(const REBSTU *src, REBSTU *dst)
 {
 	/* Read only fields */
 	dst->spec = src->spec;
@@ -959,11 +951,10 @@ failed:
 	MANAGE_SERIES(STRUCT_DATA_BIN(dst));
 }
 
-/***********************************************************************
-**
-*/	void Copy_Struct_Val(const REBVAL *src, REBVAL *dst)
-/*
-***********************************************************************/
+//
+//  Copy_Struct_Val: C
+//
+void Copy_Struct_Val(const REBVAL *src, REBVAL *dst)
 {
 	SET_TYPE(dst, REB_STRUCT);
 	Copy_Struct(&VAL_STRUCT(src), &VAL_STRUCT(dst));
@@ -1039,11 +1030,10 @@ static void init_fields(REBVAL *ret, REBVAL *spec)
 	}
 }
 
-/***********************************************************************
-**
-*/	REBTYPE(Struct)
-/*
-***********************************************************************/
+//
+//  REBTYPE: C
+//
+REBTYPE(Struct)
 {
 	REBVAL *val;
 	REBVAL *arg;

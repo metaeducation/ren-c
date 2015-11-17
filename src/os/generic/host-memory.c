@@ -31,16 +31,15 @@
 #include "reb-host.h"
 
 
-/***********************************************************************
-**
-*/	void *OS_Alloc_Mem(size_t size)
-/*
-**		Allocate memory of given size.
-**
-**		This is necessary because some environments may use their
-**		own specific memory allocation (e.g. private heaps).
-**
-***********************************************************************/
+//
+//  OS_Alloc_Mem: C
+// 
+// Allocate memory of given size.
+// 
+// This is necessary because some environments may use their
+// own specific memory allocation (e.g. private heaps).
+//
+void *OS_Alloc_Mem(size_t size)
 {
 #ifdef NDEBUG
 	return malloc(size);
@@ -63,13 +62,12 @@
 }
 
 
-/***********************************************************************
-**
-*/	void OS_Free_Mem(void *mem)
-/*
-**		Free memory allocated in this OS environment. (See OS_Alloc_Mem)
-**
-***********************************************************************/
+//
+//  OS_Free_Mem: C
+// 
+// Free memory allocated in this OS environment. (See OS_Alloc_Mem)
+//
+void OS_Free_Mem(void *mem)
 {
 #ifdef NDEBUG
 	free(mem);

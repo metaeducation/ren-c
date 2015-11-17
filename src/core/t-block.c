@@ -30,20 +30,19 @@
 #include "sys-core.h"
 
 
-/***********************************************************************
-**
-*/	REBINT CT_Array(REBVAL *a, REBVAL *b, REBINT mode)
-/*
-**	"Compare Type" dispatcher for the following types:
-**
-**		CT_Block(REBVAL *a, REBVAL *b, REBINT mode)
-**		CT_Paren(REBVAL *a, REBVAL *b, REBINT mode)
-**		CT_Path(REBVAL *a, REBVAL *b, REBINT mode)
-**		CT_Set_Path(REBVAL *a, REBVAL *b, REBINT mode)
-**		CT_Get_Path(REBVAL *a, REBVAL *b, REBINT mode)
-**		CT_Lit_Path(REBVAL *a, REBVAL *b, REBINT mode)
-**
-***********************************************************************/
+//
+//  CT_Array: C
+// 
+// "Compare Type" dispatcher for the following types:
+// 
+//     CT_Block(REBVAL *a, REBVAL *b, REBINT mode)
+//     CT_Paren(REBVAL *a, REBVAL *b, REBINT mode)
+//     CT_Path(REBVAL *a, REBVAL *b, REBINT mode)
+//     CT_Set_Path(REBVAL *a, REBVAL *b, REBINT mode)
+//     CT_Get_Path(REBVAL *a, REBVAL *b, REBINT mode)
+//     CT_Lit_Path(REBVAL *a, REBVAL *b, REBINT mode)
+//
+REBINT CT_Array(REBVAL *a, REBVAL *b, REBINT mode)
 {
 	REBINT num;
 
@@ -63,20 +62,19 @@ static void No_Nones(REBVAL *arg) {
 	}
 }
 
-/***********************************************************************
-**
-*/	REBFLG MT_Array(REBVAL *out, REBVAL *data, enum Reb_Kind type)
-/*
-**	"Make Type" dispatcher for the following subtypes:
-**
-**		MT_Block
-**		MT_Paren
-**		MT_Path
-**		MT_Set_Path
-**		MT_Get_Path
-**		MT_Lit_Path
-**
-***********************************************************************/
+//
+//  MT_Array: C
+// 
+// "Make Type" dispatcher for the following subtypes:
+// 
+//     MT_Block
+//     MT_Paren
+//     MT_Path
+//     MT_Set_Path
+//     MT_Get_Path
+//     MT_Lit_Path
+//
+REBFLG MT_Array(REBVAL *out, REBVAL *data, enum Reb_Kind type)
 {
 	REBCNT i;
 
@@ -93,29 +91,28 @@ static void No_Nones(REBVAL *arg) {
 }
 
 
-/***********************************************************************
-**
-*/	REBCNT Find_Block(REBSER *series, REBCNT index, REBCNT end, const REBVAL *target, REBCNT len, REBCNT flags, REBINT skip)
-/*
-**		Flags are set according to: ALL_FIND_REFS
-**
-**	Main Parameters:
-**		start - index to start search
-**		end   - ending position
-**		len   - length of target
-**		skip  - skip factor
-**		dir   - direction
-**
-**	Comparison Parameters:
-**		case  - case sensitivity
-**		wild  - wild cards/keys
-**
-**	Final Parmameters:
-**		tail  - tail position
-**		match - sequence
-**		SELECT - (value that follows)
-**
-***********************************************************************/
+//
+//  Find_Block: C
+// 
+// Flags are set according to: ALL_FIND_REFS
+// 
+// Main Parameters:
+// start - index to start search
+// end   - ending position
+// len   - length of target
+// skip  - skip factor
+// dir   - direction
+// 
+// Comparison Parameters:
+// case  - case sensitivity
+// wild  - wild cards/keys
+// 
+// Final Parmameters:
+// tail  - tail position
+// match - sequence
+// SELECT - (value that follows)
+//
+REBCNT Find_Block(REBSER *series, REBCNT index, REBCNT end, const REBVAL *target, REBCNT len, REBCNT flags, REBINT skip)
 {
 	REBVAL *value;
 	REBVAL *val;
@@ -193,20 +190,19 @@ static void No_Nones(REBVAL *arg) {
 }
 
 
-/***********************************************************************
-**
-*/	void Make_Block_Type(REBFLG make, REBVAL *value, REBVAL *arg)
-/*
-**		Value can be:
-**			1. a datatype (e.g. BLOCK!)
-**			2. a value (e.g. [...])
-**
-**		Arg can be:
-**			1. integer (length of block)
-**			2. block (copy it)
-**			3. value (convert to a block)
-**
-***********************************************************************/
+//
+//  Make_Block_Type: C
+// 
+// Value can be:
+//     1. a datatype (e.g. BLOCK!)
+//     2. a value (e.g. [...])
+// 
+// Arg can be:
+//     1. integer (length of block)
+//     2. block (copy it)
+//     3. value (convert to a block)
+//
+void Make_Block_Type(REBFLG make, REBVAL *value, REBVAL *arg)
 {
 	enum Reb_Kind type;
 	REBCNT len;
@@ -291,11 +287,10 @@ static struct {
 	REBVAL *compare;
 } sort_flags;
 
-/***********************************************************************
-**
-*/	static int Compare_Val(void *thunk, const void *v1, const void *v2)
-/*
-***********************************************************************/
+//
+//  Compare_Val: C
+//
+static int Compare_Val(void *thunk, const void *v1, const void *v2)
 {
 	// !!!! BE SURE that 64 bit large difference comparisons work
 
@@ -321,11 +316,10 @@ static struct {
 }
 
 
-/***********************************************************************
-**
-*/	static int Compare_Call(void *thunk, const void *v1, const void *v2)
-/*
-***********************************************************************/
+//
+//  Compare_Call: C
+//
+static int Compare_Call(void *thunk, const void *v1, const void *v2)
 {
 	REBVAL *args = NULL;
 	REBVAL out;
@@ -379,22 +373,21 @@ static struct {
 }
 
 
-/***********************************************************************
-**
-*/	static void Sort_Block(REBVAL *block, REBFLG ccase, REBVAL *skipv, REBVAL *compv, REBVAL *part, REBFLG all, REBFLG rev)
-/*
-**		series [any-series!]
-**		/case {Case sensitive sort}
-**		/skip {Treat the series as records of fixed size}
-**		size [integer!] {Size of each record}
-**		/compare  {Comparator offset, block or function}
-**		comparator [integer! block! function!]
-**		/part {Sort only part of a series}
-**		limit [any-number! any-series!] {Length of series to sort}
-**		/all {Compare all fields}
-**		/reverse {Reverse sort order}
-**
-***********************************************************************/
+//
+//  Sort_Block: C
+// 
+// series [any-series!]
+// /case {Case sensitive sort}
+// /skip {Treat the series as records of fixed size}
+// size [integer!] {Size of each record}
+// /compare  {Comparator offset, block or function}
+// comparator [integer! block! function!]
+// /part {Sort only part of a series}
+// limit [any-number! any-series!] {Length of series to sort}
+// /all {Compare all fields}
+// /reverse {Reverse sort order}
+//
+static void Sort_Block(REBVAL *block, REBFLG ccase, REBVAL *skipv, REBVAL *compv, REBVAL *part, REBFLG all, REBFLG rev)
 {
 	REBCNT len;
 	REBCNT skip = 1;
@@ -431,13 +424,12 @@ static struct {
 }
 
 
-/***********************************************************************
-**
-*/	static void Trim_Block(REBSER *ser, REBCNT index, REBCNT flags)
-/*
-**		See Trim_String().
-**
-***********************************************************************/
+//
+//  Trim_Block: C
+// 
+// See Trim_String().
+//
+static void Trim_Block(REBSER *ser, REBCNT index, REBCNT flags)
 {
 	REBVAL *blk = BLK_HEAD(ser);
 	REBCNT out = index;
@@ -470,11 +462,10 @@ static struct {
 }
 
 
-/***********************************************************************
-**
-*/	void Shuffle_Block(REBVAL *value, REBFLG secure)
-/*
-***********************************************************************/
+//
+//  Shuffle_Block: C
+//
+void Shuffle_Block(REBVAL *value, REBFLG secure)
 {
 	REBCNT n;
 	REBCNT k;
@@ -492,20 +483,19 @@ static struct {
 }
 
 
-/***********************************************************************
-**
-*/	REBINT PD_Array(REBPVS *pvs)
-/*
-**	Path dispatch for the following types:
-**
-**		PD_Block(REBPVS *pvs)
-**		PD_Paren(REBPVS *pvs)
-**		PD_Path(REBPVS *pvs)
-**		PD_Get_Path(REBPVS *pvs)
-**		PD_Set_Path(REBPVS *pvs)
-**		PD_Lit_Path(REBPVS *pvs)
-**
-***********************************************************************/
+//
+//  PD_Array: C
+// 
+// Path dispatch for the following types:
+// 
+//     PD_Block(REBPVS *pvs)
+//     PD_Paren(REBPVS *pvs)
+//     PD_Path(REBPVS *pvs)
+//     PD_Get_Path(REBPVS *pvs)
+//     PD_Set_Path(REBPVS *pvs)
+//     PD_Lit_Path(REBPVS *pvs)
+//
+REBINT PD_Array(REBPVS *pvs)
 {
 	REBINT n = 0;
 
@@ -540,11 +530,10 @@ static struct {
 }
 
 
-/***********************************************************************
-**
-*/	REBVAL *Pick_Block(REBVAL *block, REBVAL *selector)
-/*
-***********************************************************************/
+//
+//  Pick_Block: C
+//
+REBVAL *Pick_Block(REBVAL *block, REBVAL *selector)
 {
 	REBINT n = 0;
 
@@ -555,20 +544,19 @@ static struct {
 }
 
 
-/***********************************************************************
-**
-*/	REBTYPE(Array)
-/*
-**	Implementation of type dispatch of the following:
-**
-**		REBTYPE(Block)
-**		REBTYPE(Paren)
-**		REBTYPE(Path)
-**		REBTYPE(Get_Path)
-**		REBTYPE(Set_Path)
-**		REBTYPE(Lit_Path)
-**
-***********************************************************************/
+//
+//  REBTYPE: C
+// 
+// Implementation of type dispatch of the following:
+// 
+//     REBTYPE(Block)
+//     REBTYPE(Paren)
+//     REBTYPE(Path)
+//     REBTYPE(Get_Path)
+//     REBTYPE(Set_Path)
+//     REBTYPE(Lit_Path)
+//
+REBTYPE(Array)
 {
 	REBVAL	*value = D_ARG(1);
 	REBVAL  *arg = DS_ARGC > 1 ? D_ARG(2) : NULL;
@@ -847,11 +835,10 @@ is_none:
 
 
 #if !defined(NDEBUG)
-/***********************************************************************
-**
-*/	void Assert_Array_Core(const REBSER *series)
-/*
-***********************************************************************/
+//
+//  Assert_Array_Core: C
+//
+void Assert_Array_Core(const REBSER *series)
 {
 	REBCNT len;
 	REBVAL *value;

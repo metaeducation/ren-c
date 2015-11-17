@@ -93,11 +93,10 @@ static void Close_Stdio(void)
 }
 
 
-/***********************************************************************
-**
-*/	DEVICE_CMD Quit_IO(REBREQ *dr)
-/*
-***********************************************************************/
+//
+//  Quit_IO: C
+//
+DEVICE_CMD Quit_IO(REBREQ *dr)
 {
 	REBDEV *dev = (REBDEV*)dr; // just to keep compiler happy above
 
@@ -108,11 +107,10 @@ static void Close_Stdio(void)
 }
 
 
-/***********************************************************************
-**
-*/	DEVICE_CMD Open_IO(REBREQ *req)
-/*
-***********************************************************************/
+//
+//  Open_IO: C
+//
+DEVICE_CMD Open_IO(REBREQ *req)
 {
 	REBDEV *dev;
 
@@ -161,11 +159,10 @@ static void Close_Stdio(void)
 }
 
 
-/***********************************************************************
-**
-*/	DEVICE_CMD Close_IO(REBREQ *req)
-/*
- ***********************************************************************/
+//
+//  Close_IO: C
+//
+DEVICE_CMD Close_IO(REBREQ *req)
 {
 	REBDEV *dev = Devices[req->device];
 
@@ -177,17 +174,16 @@ static void Close_Stdio(void)
 }
 
 
-/***********************************************************************
-**
-*/	DEVICE_CMD Write_IO(REBREQ *req)
-/*
-**		Low level "raw" standard output function.
-**
-**		Allowed to restrict the write to a max OS buffer size.
-**
-**		Returns the number of chars written.
-**
-***********************************************************************/
+//
+//  Write_IO: C
+// 
+// Low level "raw" standard output function.
+// 
+// Allowed to restrict the write to a max OS buffer size.
+// 
+// Returns the number of chars written.
+//
+DEVICE_CMD Write_IO(REBREQ *req)
 {
 	DWORD len;
 	DWORD total = 0;
@@ -235,17 +231,16 @@ static void Close_Stdio(void)
 }
 
 
-/***********************************************************************
-**
-*/	DEVICE_CMD Read_IO(REBREQ *req)
-/*
-**		Low level "raw" standard input function.
-**
-**		The request buffer must be long enough to hold result.
-**
-**		Result is NOT terminated (the actual field has length.)
-**
-***********************************************************************/
+//
+//  Read_IO: C
+// 
+// Low level "raw" standard input function.
+// 
+// The request buffer must be long enough to hold result.
+// 
+// Result is NOT terminated (the actual field has length.)
+//
+DEVICE_CMD Read_IO(REBREQ *req)
 {
 	DWORD total = 0;
 	DWORD len;
@@ -284,13 +279,12 @@ static void Close_Stdio(void)
 }
 
 
-/***********************************************************************
-**
-*/	DEVICE_CMD Open_Echo(REBREQ *req)
-/*
-**		Open a file for low-level console echo (output).
-**
-***********************************************************************/
+//
+//  Open_Echo: C
+// 
+// Open a file for low-level console echo (output).
+//
+DEVICE_CMD Open_Echo(REBREQ *req)
 {
 	if (Std_Echo) {
 		CloseHandle(Std_Echo);

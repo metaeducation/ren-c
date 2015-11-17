@@ -30,22 +30,20 @@
 #include "sys-core.h"
 
 
-/***********************************************************************
-**
-*/	REBINT CT_Datatype(REBVAL *a, REBVAL *b, REBINT mode)
-/*
-***********************************************************************/
+//
+//  CT_Datatype: C
+//
+REBINT CT_Datatype(REBVAL *a, REBVAL *b, REBINT mode)
 {
 	if (mode >= 0) return (VAL_TYPE_KIND(a) == VAL_TYPE_KIND(b));
 	return -1;
 }
 
 
-/***********************************************************************
-**
-*/	REBFLG MT_Datatype(REBVAL *out, REBVAL *data, enum Reb_Kind type)
-/*
-***********************************************************************/
+//
+//  MT_Datatype: C
+//
+REBFLG MT_Datatype(REBVAL *out, REBVAL *data, enum Reb_Kind type)
 {
 	REBCNT sym;
 	if (!IS_WORD(data)) return FALSE;
@@ -58,11 +56,10 @@
 }
 
 
-/***********************************************************************
-**
-*/	REBTYPE(Datatype)
-/*
-***********************************************************************/
+//
+//  REBTYPE: C
+//
+REBTYPE(Datatype)
 {
 	REBVAL *value = D_ARG(1);
 	REBVAL *arg = D_ARG(2);

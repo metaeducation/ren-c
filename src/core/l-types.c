@@ -36,20 +36,19 @@ typedef REBFLG (*MAKE_FUNC)(REBVAL *, REBVAL *, enum Reb_Kind);
 #include "tmp-maketypes.h"
 
 
-/***********************************************************************
-**
-*/  const REBYTE *Scan_Hex(REBI64 *out, const REBYTE *cp, REBCNT minlen, REBCNT maxlen)
-/*
-**		Scans hex while it is valid and does not exceed the maxlen.
-**		If the hex string is longer than maxlen - it's an error.
-**		If a bad char is found less than the minlen - it's an error.
-**		String must not include # - ~ or other invalid chars.
-**		If minlen is zero, and no string, that's a valid zero value.
-**
-**		Note, this function relies on LEX_WORD lex values having a LEX_VALUE
-**		field of zero, except for hex values.
-**
-***********************************************************************/
+//
+//  Scan_Hex: C
+// 
+// Scans hex while it is valid and does not exceed the maxlen.
+// If the hex string is longer than maxlen - it's an error.
+// If a bad char is found less than the minlen - it's an error.
+// String must not include # - ~ or other invalid chars.
+// If minlen is zero, and no string, that's a valid zero value.
+// 
+// Note, this function relies on LEX_WORD lex values having a LEX_VALUE
+// field of zero, except for hex values.
+//
+const REBYTE *Scan_Hex(REBI64 *out, const REBYTE *cp, REBCNT minlen, REBCNT maxlen)
 {
 	REBYTE lex;
 	REBCNT cnt = 0;
@@ -73,18 +72,17 @@ typedef REBFLG (*MAKE_FUNC)(REBVAL *, REBVAL *, enum Reb_Kind);
 }
 
 
-/***********************************************************************
-**
-*/	REBOOL Scan_Hex2(const REBYTE *bp, REBUNI *n, REBFLG uni)
-/*
-**		Decode a %xx hex encoded byte into a char.
-**
-**		The % should already be removed before calling this.
-**
-**		We don't allow a %00 in files, urls, email, etc... so
-**		a return of 0 is used to indicate an error.
-**
-***********************************************************************/
+//
+//  Scan_Hex2: C
+// 
+// Decode a %xx hex encoded byte into a char.
+// 
+// The % should already be removed before calling this.
+// 
+// We don't allow a %00 in files, urls, email, etc... so
+// a return of 0 is used to indicate an error.
+//
+REBOOL Scan_Hex2(const REBYTE *bp, REBUNI *n, REBFLG uni)
 {
 	REBUNI c1, c2;
 	REBYTE d1, d2;
@@ -113,14 +111,13 @@ typedef REBFLG (*MAKE_FUNC)(REBVAL *, REBVAL *, enum Reb_Kind);
 }
 
 
-/***********************************************************************
-**
-*/  REBINT Scan_Hex_Bytes(REBVAL *val, REBCNT maxlen, REBYTE *out)
-/*
-**		Low level conversion of hex chars into binary bytes.
-**		Returns the number of bytes in binary.
-**
-***********************************************************************/
+//
+//  Scan_Hex_Bytes: C
+// 
+// Low level conversion of hex chars into binary bytes.
+// Returns the number of bytes in binary.
+//
+REBINT Scan_Hex_Bytes(REBVAL *val, REBCNT maxlen, REBYTE *out)
 {
 	REBYTE b, n = 0;
 	REBCNT cnt;
@@ -146,15 +143,14 @@ typedef REBFLG (*MAKE_FUNC)(REBVAL *, REBVAL *, enum Reb_Kind);
 }
 
 
-/***********************************************************************
-**
-*/	REBCNT Scan_Hex_Value(const void *p, REBCNT len, REBOOL uni)
-/*
-**		Given a string, scan it as hex. Chars can be 8 or 16 bit.
-**		Result is 32 bits max.
-**		Throw errors.
-**
-***********************************************************************/
+//
+//  Scan_Hex_Value: C
+// 
+// Given a string, scan it as hex. Chars can be 8 or 16 bit.
+// Result is 32 bits max.
+// Throw errors.
+//
+REBCNT Scan_Hex_Value(const void *p, REBCNT len, REBOOL uni)
 {
 	REBUNI c;
 	REBCNT n;
@@ -184,18 +180,17 @@ bad_hex:
 }
 
 
-/***********************************************************************
-**
-*/	const REBYTE *Scan_Dec_Buf(const REBYTE *cp, REBCNT len, REBYTE *buf)
-/*
-**		Validate a decimal number. Return on first invalid char
-**		(or end). Return zero if not valid.
-**
-**		len: max size of buffer (must be MAX_NUM_LEN or larger).
-**
-**		Scan is valid for 1 1.2 1,2 1'234.5 1x 1.2x 1% 1.2% etc.
-**
-***********************************************************************/
+//
+//  Scan_Dec_Buf: C
+// 
+// Validate a decimal number. Return on first invalid char
+// (or end). Return zero if not valid.
+// 
+// len: max size of buffer (must be MAX_NUM_LEN or larger).
+// 
+// Scan is valid for 1 1.2 1,2 1'234.5 1x 1.2x 1% 1.2% etc.
+//
+const REBYTE *Scan_Dec_Buf(const REBYTE *cp, REBCNT len, REBYTE *buf)
 {
 	REBYTE *bp = buf;
 	REBYTE *be = bp + len - 1;
@@ -240,13 +235,12 @@ bad_hex:
 }
 
 
-/***********************************************************************
-**
-*/	const REBYTE *Scan_Decimal(REBDEC *out, const REBYTE *cp, REBCNT len, REBFLG dec_only)
-/*
-**		Scan and convert a decimal value.  Return zero if error.
-**
-***********************************************************************/
+//
+//  Scan_Decimal: C
+// 
+// Scan and convert a decimal value.  Return zero if error.
+//
+const REBYTE *Scan_Decimal(REBDEC *out, const REBYTE *cp, REBCNT len, REBFLG dec_only)
 {
 	const REBYTE *bp = cp;
 	REBYTE buf[MAX_NUM_LEN+4];
@@ -289,14 +283,13 @@ bad_hex:
 }
 
 
-/***********************************************************************
-**
-*/  const REBYTE *Scan_Integer(REBI64 *out, const REBYTE *cp, REBCNT len)
-/*
-**		Scan and convert an integer value.  Return zero if error.
-**		Allow preceding + - and any combination of ' marks.
-**
-***********************************************************************/
+//
+//  Scan_Integer: C
+// 
+// Scan and convert an integer value.  Return zero if error.
+// Allow preceding + - and any combination of ' marks.
+//
+const REBYTE *Scan_Integer(REBI64 *out, const REBYTE *cp, REBCNT len)
 {
 	REBINT num = (REBINT)len;
 	REBYTE buf[MAX_NUM_LEN+4];
@@ -348,13 +341,12 @@ bad_hex:
 }
 
 
-/***********************************************************************
-**
-*/	const REBYTE *Scan_Money(const REBYTE *cp, REBCNT len, REBVAL *value)
-/*
-**		Scan and convert money.  Return zero if error.
-**
-***********************************************************************/
+//
+//  Scan_Money: C
+// 
+// Scan and convert money.  Return zero if error.
+//
+const REBYTE *Scan_Money(const REBYTE *cp, REBCNT len, REBVAL *value)
 {
 	const REBYTE *end;
 
@@ -406,13 +398,12 @@ bad_hex:
 }
 
 
-/***********************************************************************
-**
-*/	const REBYTE *Scan_Date(const REBYTE *cp, REBCNT len, REBVAL *value)
-/*
-**		Scan and convert a date. Also can include a time and zone.
-**
-***********************************************************************/
+//
+//  Scan_Date: C
+// 
+// Scan and convert a date. Also can include a time and zone.
+//
+const REBYTE *Scan_Date(const REBYTE *cp, REBCNT len, REBVAL *value)
 {
 	const REBYTE *ep;
 	const REBYTE *end = cp + len;
@@ -555,13 +546,12 @@ end_date:
 }
 
 
-/***********************************************************************
-**
-*/	const REBYTE *Scan_File(const REBYTE *cp, REBCNT len, REBVAL *value)
-/*
-**		Scan and convert a file name.
-**
-***********************************************************************/
+//
+//  Scan_File: C
+// 
+// Scan and convert a file name.
+//
+const REBYTE *Scan_File(const REBYTE *cp, REBCNT len, REBVAL *value)
 {
 	REBUNI term = 0;
 	const REBYTE *invalid = cb_cast(":;()[]\"");
@@ -580,13 +570,12 @@ end_date:
 }
 
 
-/***********************************************************************
-**
-*/	const REBYTE *Scan_Email(const REBYTE *cp, REBCNT len, REBVAL *value)
-/*
-**		Scan and convert email.
-**
-***********************************************************************/
+//
+//  Scan_Email: C
+// 
+// Scan and convert email.
+//
+const REBYTE *Scan_Email(const REBYTE *cp, REBCNT len, REBVAL *value)
 {
 	REBYTE *str;
 	REBOOL at = FALSE;
@@ -620,13 +609,12 @@ end_date:
 }
 
 
-/***********************************************************************
-**
-*/	const REBYTE *Scan_URL(const REBYTE *cp, REBCNT len, REBVAL *value)
-/*
-**		Scan and convert a URL.
-**
-***********************************************************************/
+//
+//  Scan_URL: C
+// 
+// Scan and convert a URL.
+//
+const REBYTE *Scan_URL(const REBYTE *cp, REBCNT len, REBVAL *value)
 {
 	REBYTE *str;
 	REBUNI n;
@@ -663,13 +651,12 @@ end_date:
 }
 
 
-/***********************************************************************
-**
-*/	const REBYTE *Scan_Pair(const REBYTE *cp, REBCNT len, REBVAL *value)
-/*
-**		Scan and convert a pair
-**
-***********************************************************************/
+//
+//  Scan_Pair: C
+// 
+// Scan and convert a pair
+//
+const REBYTE *Scan_Pair(const REBYTE *cp, REBCNT len, REBVAL *value)
 {
 	REBYTE buf[MAX_NUM_LEN+4];
 	const REBYTE *ep = Scan_Dec_Buf(cp, MAX_NUM_LEN, &buf[0]);
@@ -690,13 +677,12 @@ end_date:
 }
 
 
-/***********************************************************************
-**
-*/	const REBYTE *Scan_Tuple(const REBYTE *cp, REBCNT len, REBVAL *value)
-/*
-**		Scan and convert a tuple.
-**
-***********************************************************************/
+//
+//  Scan_Tuple: C
+// 
+// Scan and convert a tuple.
+//
+const REBYTE *Scan_Tuple(const REBYTE *cp, REBCNT len, REBVAL *value)
 {
 	const REBYTE *ep;
 	REBYTE *tp;
@@ -723,13 +709,12 @@ end_date:
 }
 
 
-/***********************************************************************
-**
-*/	const REBYTE *Scan_Binary(const REBYTE *cp, REBCNT len, REBVAL *value)
-/*
-**		Scan and convert binary strings.
-**
-***********************************************************************/
+//
+//  Scan_Binary: C
+// 
+// Scan and convert binary strings.
+//
+const REBYTE *Scan_Binary(const REBYTE *cp, REBCNT len, REBVAL *value)
 {
 	const REBYTE *ep;
 	REBINT base = 16;
@@ -754,13 +739,12 @@ end_date:
 }
 
 
-/***********************************************************************
-**
-*/	const REBYTE *Scan_Any(const REBYTE *cp, REBCNT len, REBVAL *value, REBYTE type)
-/*
-**		Scan any string that does not require special decoding.
-**
-***********************************************************************/
+//
+//  Scan_Any: C
+// 
+// Scan any string that does not require special decoding.
+//
+const REBYTE *Scan_Any(const REBYTE *cp, REBCNT len, REBVAL *value, REBYTE type)
 {
 	REBCNT n;
 
@@ -783,13 +767,12 @@ end_date:
 }
 
 
-/***********************************************************************
-**
-*/	static void Append_Markup(REBSER *series, enum Reb_Kind type, const REBYTE *bp, REBINT len)
-/*
-**		Add a new string or tag to a markup block, advancing the tail.
-**
-***********************************************************************/
+//
+//  Append_Markup: C
+// 
+// Add a new string or tag to a markup block, advancing the tail.
+//
+static void Append_Markup(REBSER *series, enum Reb_Kind type, const REBYTE *bp, REBINT len)
 {
 	REBVAL *val;
 	if (SERIES_FULL(series)) Extend_Series(series, 8);
@@ -801,14 +784,13 @@ end_date:
 }
 
 
-/***********************************************************************
-**
-*/	REBSER *Load_Markup(const REBYTE *cp, REBINT len)
-/*
-**		Scan a string as HTML or XML and convert it to a block
-**		of strings and tags.  Return the block as a series.
-**
-***********************************************************************/
+//
+//  Load_Markup: C
+// 
+// Scan a string as HTML or XML and convert it to a block
+// of strings and tags.  Return the block as a series.
+//
+REBSER *Load_Markup(const REBYTE *cp, REBINT len)
 {
 	const REBYTE *bp = cp;
 	REBSER *series;
@@ -854,28 +836,27 @@ end_date:
 }
 
 
-/***********************************************************************
-**
-*/	REBFLG Construct_Value(REBVAL *out, REBSER *spec)
-/*
-**		Lexical datatype constructor. Return TRUE on success.
-**
-**		!!! `out` slot *must* be gc safe !!!
-**
-**		This function makes datatypes that are not normally expressible
-**		in unevaluated source code format. The format of the datatype
-**		constructor is:
-**
-**			#[datatype! | keyword spec]
-**
-**		The first item is a datatype word or NONE, FALSE or TRUE. The
-**		second part is a specification for the datatype, as a basic
-**		type (such as a string) or a block.
-**
-**		Keep in mind that this function is being called as part of the
-**		scanner, so optimal performance is critical.
-**
-***********************************************************************/
+//
+//  Construct_Value: C
+// 
+// Lexical datatype constructor. Return TRUE on success.
+// 
+// !!! `out` slot *must* be gc safe !!!
+// 
+// This function makes datatypes that are not normally expressible
+// in unevaluated source code format. The format of the datatype
+// constructor is:
+// 
+//     #[datatype! | keyword spec]
+// 
+// The first item is a datatype word or NONE, FALSE or TRUE. The
+// second part is a specification for the datatype, as a basic
+// type (such as a string) or a block.
+// 
+// Keep in mind that this function is being called as part of the
+// scanner, so optimal performance is critical.
+//
+REBFLG Construct_Value(REBVAL *out, REBSER *spec)
 {
 	REBVAL *val;
 	REBCNT sym;
@@ -944,14 +925,13 @@ end_date:
 }
 
 
-/***********************************************************************
-**
-*/  REBSER *Scan_Net_Header(REBSER *blk, REBYTE *str)
-/*
-**		Scan an Internet-style header (HTTP, SMTP).
-**		Fields with duplicate words will be merged into a block.
-**
-***********************************************************************/
+//
+//  Scan_Net_Header: C
+// 
+// Scan an Internet-style header (HTTP, SMTP).
+// Fields with duplicate words will be merged into a block.
+//
+REBSER *Scan_Net_Header(REBSER *blk, REBYTE *str)
 {
 	REBYTE *cp = str;
 	REBYTE *start;

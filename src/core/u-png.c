@@ -699,15 +699,14 @@ static void emitchunk(unsigned char **cpp,const char *type,const char *data,int 
 	*cpp=cp;
 }
 
-/***********************************************************************
-**
-*/	void Encode_PNG_Image(REBCDI *codi)
-/*
-**		Input:  Image bits (codi->extra.bits, w, h)
-**		Output: PNG encoded image (codi->data, len)
-**		Error:  Code in codi->error
-**
-***********************************************************************/
+//
+//  Encode_PNG_Image: C
+// 
+// Input:  Image bits (codi->extra.bits, w, h)
+// Output: PNG encoded image (codi->data, len)
+// Error:  Code in codi->error
+//
+void Encode_PNG_Image(REBCDI *codi)
 {
 	REBINT w = codi->w;
 	REBINT h = codi->h;
@@ -814,15 +813,14 @@ error:
 }
 
 
-/***********************************************************************
-**
-*/	void Decode_PNG_Image(REBCDI *codi)
-/*
-**		Input:  PNG encoded image (codi->data, len)
-**		Output: Image bits (codi->extra.bits, w, h)
-**		Error:  Code in codi->error
-**
-***********************************************************************/
+//
+//  Decode_PNG_Image: C
+// 
+// Input:  PNG encoded image (codi->data, len)
+// Output: Image bits (codi->extra.bits, w, h)
+// Error:  Code in codi->error
+//
+void Decode_PNG_Image(REBCDI *codi)
 {
 	int w, h;
 	REBOOL alpha = 0;
@@ -837,11 +835,10 @@ error:
 }
 
 
-/***********************************************************************
-**
-*/	REBINT Codec_PNG_Image(REBCDI *codi)
-/*
-***********************************************************************/
+//
+//  Codec_PNG_Image: C
+//
+REBINT Codec_PNG_Image(REBCDI *codi)
 {
 	codi->error = 0;
 
@@ -872,11 +869,10 @@ error:
 }
 
 
-/***********************************************************************
-**
-*/	void Init_PNG_Codec(void)
-/*
-***********************************************************************/
+//
+//  Init_PNG_Codec: C
+//
+void Init_PNG_Codec(void)
 {
 	Register_Codec(cb_cast("png"), Codec_PNG_Image);
 }

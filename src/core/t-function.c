@@ -39,22 +39,20 @@ static REBOOL Same_Func(REBVAL *val, REBVAL *arg)
 }
 
 
-/***********************************************************************
-**
-*/	REBINT CT_Function(REBVAL *a, REBVAL *b, REBINT mode)
-/*
-***********************************************************************/
+//
+//  CT_Function: C
+//
+REBINT CT_Function(REBVAL *a, REBVAL *b, REBINT mode)
 {
 	if (mode >= 0) return Same_Func(a, b);
 	return -1;
 }
 
 
-/***********************************************************************
-**
-*/	REBSER *As_Typesets(REBSER *types)
-/*
-***********************************************************************/
+//
+//  As_Typesets: C
+//
+REBSER *As_Typesets(REBSER *types)
 {
 	REBVAL *val;
 
@@ -66,24 +64,23 @@ static REBOOL Same_Func(REBVAL *val, REBVAL *arg)
 }
 
 
-/***********************************************************************
-**
-*/	REBFLG MT_Function(REBVAL *out, REBVAL *def, enum Reb_Kind type)
-/*
-**	For REB_FUNCTION and REB_CLOSURE "make spec", there is a function spec
-**	block and then a block of Rebol code implementing that function.  In that
-**	case we expect that `def` should be:
-**
-**		[[spec] [body]]
-**
-**	With REB_COMMAND, the code is implemented via a C DLL, under a system of
-**	APIs that pre-date Rebol's open sourcing and hence Ren/C:
-**
-**		[[spec] extension command-num]
-**
-**	See notes in Make_Command() regarding that mechanism and meaning.
-**
-***********************************************************************/
+//
+//  MT_Function: C
+// 
+// For REB_FUNCTION and REB_CLOSURE "make spec", there is a function spec
+// block and then a block of Rebol code implementing that function.  In that
+// case we expect that `def` should be:
+// 
+//     [[spec] [body]]
+// 
+// With REB_COMMAND, the code is implemented via a C DLL, under a system of
+// APIs that pre-date Rebol's open sourcing and hence Ren/C:
+// 
+//     [[spec] extension command-num]
+// 
+// See notes in Make_Command() regarding that mechanism and meaning.
+//
+REBFLG MT_Function(REBVAL *out, REBVAL *def, enum Reb_Kind type)
 {
 	REBVAL *spec;
 	REBCNT len;
@@ -127,11 +124,10 @@ static REBOOL Same_Func(REBVAL *val, REBVAL *arg)
 }
 
 
-/***********************************************************************
-**
-*/	REBTYPE(Function)
-/*
-***********************************************************************/
+//
+//  REBTYPE: C
+//
+REBTYPE(Function)
 {
 	REBVAL *value = D_ARG(1);
 	REBVAL *arg = DS_ARGC > 1 ? D_ARG(2) : NULL;

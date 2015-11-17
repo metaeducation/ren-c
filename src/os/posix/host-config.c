@@ -36,13 +36,12 @@
 extern char **environ;
 
 
-/***********************************************************************
-**
-*/	REBINT OS_Config(int id, REBYTE *result)
-/*
-**		Return a specific runtime configuration parameter.
-**
-***********************************************************************/
+//
+//  OS_Config: C
+// 
+// Return a specific runtime configuration parameter.
+//
+REBINT OS_Config(int id, REBYTE *result)
 {
 #define OCID_STACK_SIZE 1  // needs to move to .h file
 
@@ -55,30 +54,28 @@ extern char **environ;
 }
 
 
-/***********************************************************************
-**
-*/	REBOOL OS_Get_Boot_Path(REBCHR *name)
-/*
-**		Used to determine the program file path for REBOL.
-**		This is the path stored in system->options->boot and
-**		it is used for finding default boot files.
-**
-***********************************************************************/
+//
+//  OS_Get_Boot_Path: C
+// 
+// Used to determine the program file path for REBOL.
+// This is the path stored in system->options->boot and
+// it is used for finding default boot files.
+//
+REBOOL OS_Get_Boot_Path(REBCHR *name)
 {
 	return FALSE; // not yet used
 }
 
 
-/***********************************************************************
-**
-*/	REBINT OS_Get_Env(REBCHR *envname, REBCHR* envval, REBINT valsize)
-/*
-**		Get a value from the environment.
-**		Returns size of retrieved value for success or zero if missing.
-**		If return size is greater than valsize then value contents
-**		are undefined, and size includes null terminator of needed buf
-**
-***********************************************************************/
+//
+//  OS_Get_Env: C
+// 
+// Get a value from the environment.
+// Returns size of retrieved value for success or zero if missing.
+// If return size is greater than valsize then value contents
+// are undefined, and size includes null terminator of needed buf
+//
+REBINT OS_Get_Env(REBCHR *envname, REBCHR* envval, REBINT valsize)
 {
 	// Note: The Posix variant of this API is case-sensitive
 
@@ -98,14 +95,13 @@ extern char **environ;
 }
 
 
-/***********************************************************************
-**
-*/	REBOOL OS_Set_Env(REBCHR *envname, REBCHR *envval)
-/*
-**		Set a value from the environment.
-**		Returns >0 for success and 0 for errors.
-**
-***********************************************************************/
+//
+//  OS_Set_Env: C
+// 
+// Set a value from the environment.
+// Returns >0 for success and 0 for errors.
+//
+REBOOL OS_Set_Env(REBCHR *envname, REBCHR *envval)
 {
 	if (envval) {
 #ifdef setenv
@@ -166,11 +162,10 @@ extern char **environ;
 }
 
 
-/***********************************************************************
-**
-*/	REBCHR *OS_List_Env(void)
-/*
-***********************************************************************/
+//
+//  OS_List_Env: C
+//
+REBCHR *OS_List_Env(void)
 {
 	int n, len = 0;
 	char *str, *cp;

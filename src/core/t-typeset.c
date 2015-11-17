@@ -65,26 +65,24 @@ const struct {
 };
 
 
-/***********************************************************************
-**
-*/	REBINT CT_Typeset(REBVAL *a, REBVAL *b, REBINT mode)
-/*
-***********************************************************************/
+//
+//  CT_Typeset: C
+//
+REBINT CT_Typeset(REBVAL *a, REBVAL *b, REBINT mode)
 {
 	if (mode < 0) return -1;
 	return EQUAL_TYPESET(a, b);
 }
 
 
-/***********************************************************************
-**
-*/	void Init_Typesets(void)
-/*
-**		Create typeset variables that are defined above.
-**		For example: NUMBER is both integer and decimal.
-**		Add the new variables to the system context.
-**
-***********************************************************************/
+//
+//  Init_Typesets: C
+// 
+// Create typeset variables that are defined above.
+// For example: NUMBER is both integer and decimal.
+// Add the new variables to the system context.
+//
+void Init_Typesets(void)
 {
 	REBVAL *value;
 	REBINT n;
@@ -101,13 +99,12 @@ const struct {
 }
 
 
-/***********************************************************************
-**
-*/	void Val_Init_Typeset(REBVAL *value, REBU64 bits, REBCNT sym)
-/*
-**		Note: sym is optional, and can be SYM_0
-**
-***********************************************************************/
+//
+//  Val_Init_Typeset: C
+// 
+// Note: sym is optional, and can be SYM_0
+//
+void Val_Init_Typeset(REBVAL *value, REBU64 bits, REBCNT sym)
 {
 	VAL_SET(value, REB_TYPESET);
 	VAL_TYPESET_SYM(value) = sym;
@@ -115,14 +112,13 @@ const struct {
 }
 
 
-/***********************************************************************
-**
-*/	REBCNT *Val_Typeset_Sym_Ptr_Debug(const REBVAL *typeset)
-/*
-**		!!! Needed temporarily due to reorganization (though it should
-**		be checked via C++ build's static typing eventually...)
-**
-***********************************************************************/
+//
+//  Val_Typeset_Sym_Ptr_Debug: C
+// 
+// !!! Needed temporarily due to reorganization (though it should
+// be checked via C++ build's static typing eventually...)
+//
+REBCNT *Val_Typeset_Sym_Ptr_Debug(const REBVAL *typeset)
 {
 	assert(IS_TYPESET(typeset));
 	// loses constness, but that's not the particular concern needed
@@ -131,14 +127,13 @@ const struct {
 }
 
 
-/***********************************************************************
-**
-*/	REBFLG Make_Typeset(REBVAL *block, REBVAL *value, REBFLG load)
-/*
-**		block - block of datatypes (datatype words ok too)
-**		value - value to hold result (can be word-spec type too)
-**
-***********************************************************************/
+//
+//  Make_Typeset: C
+// 
+// block - block of datatypes (datatype words ok too)
+// value - value to hold result (can be word-spec type too)
+//
+REBFLG Make_Typeset(REBVAL *block, REBVAL *value, REBFLG load)
 {
 	const REBVAL *val;
 	REBCNT sym;
@@ -175,11 +170,10 @@ const struct {
 }
 
 
-/***********************************************************************
-**
-*/	REBFLG MT_Typeset(REBVAL *out, REBVAL *data, enum Reb_Kind type)
-/*
-***********************************************************************/
+//
+//  MT_Typeset: C
+//
+REBFLG MT_Typeset(REBVAL *out, REBVAL *data, enum Reb_Kind type)
 {
 	if (!IS_BLOCK(data)) return FALSE;
 
@@ -190,11 +184,10 @@ const struct {
 }
 
 
-/***********************************************************************
-**
-*/	REBINT Find_Typeset(REBVAL *block)
-/*
-***********************************************************************/
+//
+//  Find_Typeset: C
+//
+REBINT Find_Typeset(REBVAL *block)
 {
 	REBVAL value;
 	REBVAL *val;
@@ -218,14 +211,13 @@ const struct {
 }
 
 
-/***********************************************************************
-**
-*/	REBSER *Typeset_To_Block(REBVAL *tset)
-/*
-**		Converts typeset value to a block of datatypes.
-**		No order is specified.
-**
-***********************************************************************/
+//
+//  Typeset_To_Block: C
+// 
+// Converts typeset value to a block of datatypes.
+// No order is specified.
+//
+REBSER *Typeset_To_Block(REBVAL *tset)
 {
 	REBSER *block;
 	REBVAL *value;
@@ -249,11 +241,10 @@ const struct {
 }
 
 
-/***********************************************************************
-**
-*/	REBTYPE(Typeset)
-/*
-***********************************************************************/
+//
+//  REBTYPE: C
+//
+REBTYPE(Typeset)
 {
 	REBVAL *val = D_ARG(1);
 	REBVAL *arg = DS_ARGC > 1 ? D_ARG(2) : NULL;

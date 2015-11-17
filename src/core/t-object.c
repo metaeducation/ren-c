@@ -214,11 +214,10 @@ static REBSER *Trim_Object(REBSER *obj)
 }
 
 
-/***********************************************************************
-**
-*/	REBINT CT_Object(REBVAL *a, REBVAL *b, REBINT mode)
-/*
-***********************************************************************/
+//
+//  CT_Object: C
+//
+REBINT CT_Object(REBVAL *a, REBVAL *b, REBINT mode)
 {
 	if (mode < 0) return -1;
 	if (mode == 3) return Same_Object(a, b);
@@ -226,11 +225,10 @@ static REBSER *Trim_Object(REBSER *obj)
 }
 
 
-/***********************************************************************
-**
-*/	REBINT CT_Frame(REBVAL *a, REBVAL *b, REBINT mode)
-/*
-***********************************************************************/
+//
+//  CT_Frame: C
+//
+REBINT CT_Frame(REBVAL *a, REBVAL *b, REBINT mode)
 {
 	if (mode < 0) return -1;
 	return VAL_SERIES(a) == VAL_SERIES(b);
@@ -238,11 +236,10 @@ static REBSER *Trim_Object(REBSER *obj)
 
 
 
-/***********************************************************************
-**
-*/	REBFLG MT_Object(REBVAL *out, REBVAL *data, enum Reb_Kind type)
-/*
-***********************************************************************/
+//
+//  MT_Object: C
+//
+REBFLG MT_Object(REBVAL *out, REBVAL *data, enum Reb_Kind type)
 {
 	if (!IS_BLOCK(data)) return FALSE;
 	VAL_OBJ_FRAME(out) = Construct_Object(NULL, VAL_BLK_DATA(data), FALSE);
@@ -260,11 +257,10 @@ static REBSER *Trim_Object(REBSER *obj)
 }
 
 
-/***********************************************************************
-**
-*/	REBINT PD_Object(REBPVS *pvs)
-/*
-***********************************************************************/
+//
+//  PD_Object: C
+//
+REBINT PD_Object(REBPVS *pvs)
 {
 	REBINT n = 0;
 
@@ -298,13 +294,12 @@ static REBSER *Trim_Object(REBSER *obj)
 }
 
 
-/***********************************************************************
-**
-*/	REBTYPE(Object)
-/*
-**		Handles object! and error! datatypes.
-**
-***********************************************************************/
+//
+//  REBTYPE: C
+// 
+// Handles object! and error! datatypes.
+//
+REBTYPE(Object)
 {
 	REBVAL *value = D_ARG(1);
 	REBVAL *arg = DS_ARGC > 1 ? D_ARG(2) : NULL;
@@ -574,13 +569,12 @@ is_true:
 }
 
 
-/***********************************************************************
-**
-*/	REBINT PD_Frame(REBPVS *pvs)
-/*
-**		pvs->value points to the first value in frame (SELF).
-**
-***********************************************************************/
+//
+//  PD_Frame: C
+// 
+// pvs->value points to the first value in frame (SELF).
+//
+REBINT PD_Frame(REBPVS *pvs)
 {
 	REBCNT sym;
 	REBCNT canon;
@@ -614,11 +608,10 @@ is_true:
 }
 
 
-/***********************************************************************
-**
-*/	REBTYPE(Frame)
-/*
-***********************************************************************/
+//
+//  REBTYPE: C
+//
+REBTYPE(Frame)
 {
 	switch (action) {
 	case A_MAKE:

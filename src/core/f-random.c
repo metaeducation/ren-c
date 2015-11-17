@@ -82,11 +82,10 @@ static REBI64 *ran_arr_ptr=&ran_arr_dummy;	/* the next random number, or -1 */
 #define TT	70		/* guaranteed separation between streams */
 #define is_odd(x)	((x)&1)			/* units bit of x */
 
-/***********************************************************************
-**
-*/	void Set_Random(REBI64 seed)
-/*
-***********************************************************************/
+//
+//  Set_Random: C
+//
+void Set_Random(REBI64 seed)
 {
 	int t,j;
 	REBI64 x[KK+KK-1];					/* the preparation buffer */
@@ -125,13 +124,12 @@ static REBI64 ran_arr_cycle()
 	return ran_arr_buf[0];
 }
 
-/***********************************************************************
-**
-*/	REBI64 Random_Int(REBFLG secure)
-/*
-**		Return random integer. Secure uses SHA1 for better safety.
-**
-***********************************************************************/
+//
+//  Random_Int: C
+// 
+// Return random integer. Secure uses SHA1 for better safety.
+//
+REBI64 Random_Int(REBFLG secure)
 {
 	REBI64 tmp;
 	tmp = ran_arr_next();
@@ -149,11 +147,10 @@ static REBI64 ran_arr_cycle()
 	return tmp;
 }
 
-/***********************************************************************
-**
-*/	REBI64 Random_Range(REBI64 r, REBFLG secure)
-/*
-***********************************************************************/
+//
+//  Random_Range: C
+//
+REBI64 Random_Range(REBI64 r, REBFLG secure)
 {
 	REBU64 s, m, u;
 	if (r == 0) return 0;
@@ -165,11 +162,10 @@ static REBI64 ran_arr_cycle()
 	return (r > 0) ? cast(REBI64, u) : -cast(REBI64, u);
 }
 
-/***********************************************************************
-**
-*/	REBDEC Random_Dec(REBDEC r, REBFLG secure)
-/*
-***********************************************************************/
+//
+//  Random_Dec: C
+//
+REBDEC Random_Dec(REBDEC r, REBFLG secure)
 {
 	REBDEC t, s;
 	t = secure ? 5.4210108624275222e-20 /* 2^-64 */ :  2.1684043449710089e-19 /* 2^-62 */;

@@ -34,11 +34,10 @@
 #define snprintf _snprintf
 #endif
 
-/***********************************************************************
-**
-*/	void Dump_Series(REBSER *series, const char *memo)
-/*
-***********************************************************************/
+//
+//  Dump_Series: C
+//
+void Dump_Series(REBSER *series, const char *memo)
 {
 	if (!series) return;
 	Debug_Fmt(
@@ -59,11 +58,10 @@
 		Dump_Bytes(series->data, (SERIES_TAIL(series)+1) * SERIES_WIDE(series));
 }
 
-/***********************************************************************
-**
-*/	void Dump_Bytes(REBYTE *bp, REBCNT limit)
-/*
-***********************************************************************/
+//
+//  Dump_Bytes: C
+//
+void Dump_Bytes(REBYTE *bp, REBCNT limit)
 {
 	const REBCNT max_lines = 120;
 	REBYTE buf[2048];
@@ -109,14 +107,13 @@
 	}
 }
 
-/***********************************************************************
-**
-*/	void Dump_Values(REBVAL *vp, REBCNT count)
-/*
-**		Print out values in raw hex; If memory is corrupted
-**		this function still needs to work.
-**
-***********************************************************************/
+//
+//  Dump_Values: C
+// 
+// Print out values in raw hex; If memory is corrupted
+// this function still needs to work.
+//
+void Dump_Values(REBVAL *vp, REBCNT count)
 {
 	REBYTE buf[2048];
 	REBYTE *cp;
@@ -155,11 +152,10 @@
 }
 
 
-/***********************************************************************
-**
-*/  void Dump_Info(void)
-/*
-***********************************************************************/
+//
+//  Dump_Info: C
+//
+void Dump_Info(void)
 {
 	REBINT n;
 
@@ -185,11 +181,10 @@
 }
 
 
-/***********************************************************************
-**
-*/  void Dump_Stack(struct Reb_Call *call, REBINT dsp)
-/*
-***********************************************************************/
+//
+//  Dump_Stack: C
+//
+void Dump_Stack(struct Reb_Call *call, REBINT dsp)
 {
 	REBINT n;
 	REBINT m;

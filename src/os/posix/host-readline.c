@@ -111,14 +111,13 @@ static struct termios Term_Attrs;	// Initial settings, restored on exit
 
 extern STD_TERM *Init_Terminal(void);
 
-/***********************************************************************
-**
-*/	STD_TERM *Init_Terminal(void)
-/*
-**		Change the terminal modes to those required for proper
-**		REBOL console handling. Return TRUE on success.
-**
-***********************************************************************/
+//
+//  Init_Terminal: C
+// 
+// Change the terminal modes to those required for proper
+// REBOL console handling. Return TRUE on success.
+//
+STD_TERM *Init_Terminal(void)
 {
 	STD_TERM *term;
 	const char empty_line[] = "";
@@ -166,14 +165,13 @@ extern STD_TERM *Init_Terminal(void);
 
 extern void Quit_Terminal(STD_TERM *term);
 
-/***********************************************************************
-**
-*/	void Quit_Terminal(STD_TERM *term)
-/*
-**		Restore the terminal modes original entry settings,
-**		in preparation for exit from program.
-**
-***********************************************************************/
+//
+//  Quit_Terminal: C
+// 
+// Restore the terminal modes original entry settings,
+// in preparation for exit from program.
+//
+void Quit_Terminal(STD_TERM *term)
 {
 	int n;
 
@@ -192,14 +190,13 @@ extern void Quit_Terminal(STD_TERM *term);
 }
 
 
-/***********************************************************************
-**
-*/	static void Write_Char(char c, int n)
-/*
-**		Write out repeated number of chars.
-**		Unicode: not used
-**
-***********************************************************************/
+//
+//  Write_Char: C
+// 
+// Write out repeated number of chars.
+// Unicode: not used
+//
+static void Write_Char(char c, int n)
 {
 	char buf[4];
 
@@ -208,14 +205,13 @@ extern void Quit_Terminal(STD_TERM *term);
 }
 
 
-/***********************************************************************
-**
-*/	static void Store_Line(STD_TERM *term)
-/*
-**		Makes a copy of the current buffer and store it in the
-**		history list. Returns the copied string.
-**
-***********************************************************************/
+//
+//  Store_Line: C
+// 
+// Makes a copy of the current buffer and store it in the
+// history list. Returns the copied string.
+//
+static void Store_Line(STD_TERM *term)
 {
 	term->buffer[term->end] = 0;
 	term->out = OS_ALLOC_ARRAY(char, term->end + 1);
@@ -232,16 +228,15 @@ extern void Quit_Terminal(STD_TERM *term);
 }
 
 
-/***********************************************************************
-**
-*/	static void Recall_Line(STD_TERM *term)
-/*
-**		Set the current buffer to the contents of the history
-**		list at its current position. Clip at the ends.
-**		Return the history line index number.
-**		Unicode: ok
-**
-***********************************************************************/
+//
+//  Recall_Line: C
+// 
+// Set the current buffer to the contents of the history
+// list at its current position. Clip at the ends.
+// Return the history line index number.
+// Unicode: ok
+//
+static void Recall_Line(STD_TERM *term)
 {
 	if (term->hist < 0) term->hist = 0;
 
@@ -262,43 +257,40 @@ extern void Quit_Terminal(STD_TERM *term);
 }
 
 
-/***********************************************************************
-**
-*/	static void Clear_Line(STD_TERM *term)
-/*
-**		Clear all the chars from the current position to the end.
-**		Reset cursor to current position.
-**		Unicode: not used
-**
-***********************************************************************/
+//
+//  Clear_Line: C
+// 
+// Clear all the chars from the current position to the end.
+// Reset cursor to current position.
+// Unicode: not used
+//
+static void Clear_Line(STD_TERM *term)
 {
 	Write_Char(' ', term->end - term->pos); // wipe prior line
 	Write_Char(BS, term->end - term->pos); // return to position
 }
 
 
-/***********************************************************************
-**
-*/	static void Home_Line(STD_TERM *term)
-/*
-**		Reset cursor to home position.
-**		Unicode: not used
-**
-***********************************************************************/
+//
+//  Home_Line: C
+// 
+// Reset cursor to home position.
+// Unicode: not used
+//
+static void Home_Line(STD_TERM *term)
 {
 	Write_Char(BS, term->pos);
 	term->pos = 0;
 }
 
 
-/***********************************************************************
-**
-*/	static void End_Line(STD_TERM *term)
-/*
-**		Move cursor to end position.
-**		Unicode: not used
-**
-***********************************************************************/
+//
+//  End_Line: C
+// 
+// Move cursor to end position.
+// Unicode: not used
+//
+static void End_Line(STD_TERM *term)
 {
 	int len = term->end - term->pos;
 
@@ -309,17 +301,16 @@ extern void Quit_Terminal(STD_TERM *term);
 }
 
 
-/***********************************************************************
-**
-*/	static void Show_Line(STD_TERM *term, int blanks)
-/*
-**		Refresh a line from the current position to the end.
-**		Extra blanks can be specified to erase chars off end.
-**		If blanks is negative, stay at end of line.
-**		Reset the cursor back to current position.
-**		Unicode: ok
-**
-***********************************************************************/
+//
+//  Show_Line: C
+// 
+// Refresh a line from the current position to the end.
+// Extra blanks can be specified to erase chars off end.
+// If blanks is negative, stay at end of line.
+// Reset the cursor back to current position.
+// Unicode: ok
+//
+static void Show_Line(STD_TERM *term, int blanks)
 {
 	int len;
 
@@ -344,15 +335,14 @@ extern void Quit_Terminal(STD_TERM *term);
 }
 
 
-/***********************************************************************
-**
-*/	static char *Insert_Char(STD_TERM *term, char *cp)
-/*
-**		Insert a char at the current position. Adjust end position.
-**		Redisplay the line.
-**		Unicode: not yet supported!
-**
-***********************************************************************/
+//
+//  Insert_Char: C
+// 
+// Insert a char at the current position. Adjust end position.
+// Redisplay the line.
+// Unicode: not yet supported!
+//
+static char *Insert_Char(STD_TERM *term, char *cp)
 {
 	//printf("\r\nins pos: %d end: %d ==", term->pos, term->end);
 	if (term->end < TERM_BUF_LEN-1) { // avoid buffer overrun
@@ -371,15 +361,14 @@ extern void Quit_Terminal(STD_TERM *term);
 }
 
 
-/***********************************************************************
-**
-*/	static void Delete_Char(STD_TERM *term, int back)
-/*
-**		Delete a char at the current position. Adjust end position.
-**		Redisplay the line. Blank out extra char at end.
-**		Unicode: not yet supported!
-**
-***********************************************************************/
+//
+//  Delete_Char: C
+// 
+// Delete a char at the current position. Adjust end position.
+// Redisplay the line. Blank out extra char at end.
+// Unicode: not yet supported!
+//
+static void Delete_Char(STD_TERM *term, int back)
 {
 	int len;
 
@@ -399,14 +388,13 @@ extern void Quit_Terminal(STD_TERM *term);
 }
 
 
-/***********************************************************************
-**
-*/	static void Move_Cursor(STD_TERM *term, int count)
-/*
-**		Move cursor right or left by one char.
-**		Unicode: not yet supported!
-**
-***********************************************************************/
+//
+//  Move_Cursor: C
+// 
+// Move cursor right or left by one char.
+// Unicode: not yet supported!
+//
+static void Move_Cursor(STD_TERM *term, int count)
 {
 	if (count < 0) {
 		if (term->pos > 0) {
@@ -423,15 +411,14 @@ extern void Quit_Terminal(STD_TERM *term);
 }
 
 
-/***********************************************************************
-**
-*/	static char *Process_Key(STD_TERM *term, char *cp)
-/*
-**		Process the next key. If it's an edit key, perform the
-**		necessary editing action. Return position of next char.
-**		Unicode: not yet supported!
-**
-***********************************************************************/
+//
+//  Process_Key: C
+// 
+// Process the next key. If it's an edit key, perform the
+// necessary editing action. Return position of next char.
+// Unicode: not yet supported!
+//
+static char *Process_Key(STD_TERM *term, char *cp)
 {
 	int len;
 
@@ -555,13 +542,12 @@ extern void Quit_Terminal(STD_TERM *term);
 }
 
 
-/***********************************************************************
-**
-*/	static int Read_Bytes(STD_TERM *term, char *buf, int len)
-/*
-**		Read the next "chunk" of data into the terminal buffer.
-**
-***********************************************************************/
+//
+//  Read_Bytes: C
+// 
+// Read the next "chunk" of data into the terminal buffer.
+//
+static int Read_Bytes(STD_TERM *term, char *buf, int len)
 {
 	int end;
 
@@ -596,15 +582,14 @@ extern void Quit_Terminal(STD_TERM *term);
 
 extern int Read_Line(STD_TERM *term, char *result, int limit);
 
-/***********************************************************************
-**
-*/	int Read_Line(STD_TERM *term, char *result, int limit)
-/*
-**		Read a line (as a sequence of bytes) from the terminal.
-**		Handles line editing and line history recall.
-**		Returns number of bytes in line.
-**
-***********************************************************************/
+//
+//  Read_Line: C
+// 
+// Read a line (as a sequence of bytes) from the terminal.
+// Handles line editing and line history recall.
+// Returns number of bytes in line.
+//
+int Read_Line(STD_TERM *term, char *result, int limit)
 {
 	char buf[READ_BUF_LEN];
 	char *cp;

@@ -31,13 +31,12 @@
 
 #define THE_SIGN(v) ((v < 0) ? -1 : (v > 0) ? 1 : 0)
 
-/***********************************************************************
-**
-*/	REBINT Do_Series_Action(struct Reb_Call *call_, REBCNT action, REBVAL *value, REBVAL *arg)
-/*
-**		Common series functions.
-**
-***********************************************************************/
+//
+//  Do_Series_Action: C
+// 
+// Common series functions.
+//
+REBINT Do_Series_Action(struct Reb_Call *call_, REBCNT action, REBVAL *value, REBVAL *arg)
 {
 	REBINT	index;
 	REBINT	tail;
@@ -146,14 +145,13 @@ is_true:
 }
 
 
-/***********************************************************************
-**
-*/	REBINT Cmp_Block(const REBVAL *sval, const REBVAL *tval, REBFLG is_case)
-/*
-**		Compare two blocks and return the difference of the first
-**		non-matching value.
-**
-***********************************************************************/
+//
+//  Cmp_Block: C
+// 
+// Compare two blocks and return the difference of the first
+// non-matching value.
+//
+REBINT Cmp_Block(const REBVAL *sval, const REBVAL *tval, REBFLG is_case)
 {
 	REBVAL	*s = VAL_BLK_DATA(sval);
 	REBVAL	*t = VAL_BLK_DATA(tval);
@@ -175,15 +173,14 @@ is_true:
 }
 
 
-/***********************************************************************
-**
-*/	REBINT Cmp_Value(const REBVAL *s, const REBVAL *t, REBFLG is_case)
-/*
-**		Compare two values and return the difference.
-**
-**		is_case TRUE for case sensitive compare
-**
-***********************************************************************/
+//
+//  Cmp_Value: C
+// 
+// Compare two values and return the difference.
+// 
+// is_case TRUE for case sensitive compare
+//
+REBINT Cmp_Value(const REBVAL *s, const REBVAL *t, REBFLG is_case)
 {
 	REBDEC	d1, d2;
 
@@ -311,14 +308,13 @@ chkDecimal:
 }
 
 
-/***********************************************************************
-**
-*/	REBCNT Find_Block_Simple(REBSER *series, REBCNT index, REBVAL *target)
-/*
-**		Simple search for a value in a block. Return the index of
-**		the value or the TAIL index if not found.
-**
-***********************************************************************/
+//
+//  Find_Block_Simple: C
+// 
+// Simple search for a value in a block. Return the index of
+// the value or the TAIL index if not found.
+//
+REBCNT Find_Block_Simple(REBSER *series, REBCNT index, REBVAL *target)
 {
 	REBVAL *value = BLK_HEAD(series);
 

@@ -50,14 +50,13 @@ const double pi2 = 2.0 * 3.14159265358979323846;
 enum {SINE, COSINE, TANGENT};
 
 
-/***********************************************************************
-**
-*/	static REBDEC Trig_Value(const REBVAL *value, REBOOL degrees, REBCNT which)
-/*
-**	Convert integer arg, if present, to decimal and convert to radians
-**	if necessary.  Clip ranges for correct REBOL behavior.
-**
-***********************************************************************/
+//
+//  Trig_Value: C
+// 
+// Convert integer arg, if present, to decimal and convert to radians
+// if necessary.  Clip ranges for correct REBOL behavior.
+//
+static REBDEC Trig_Value(const REBVAL *value, REBOOL degrees, REBCNT which)
 {
 	REBDEC dval = AS_DECIMAL(value);
 
@@ -81,11 +80,10 @@ enum {SINE, COSINE, TANGENT};
 }
 
 
-/***********************************************************************
-**
-*/	static void Arc_Trans(REBVAL *out, const REBVAL *value, REBOOL degrees, REBCNT kind)
-/*
-***********************************************************************/
+//
+//  Arc_Trans: C
+//
+static void Arc_Trans(REBVAL *out, const REBVAL *value, REBOOL degrees, REBCNT kind)
 {
 	REBDEC dval = AS_DECIMAL(value);
 	if (kind != TANGENT && (dval < -1 || dval > 1)) fail (Error(RE_OVERFLOW));
@@ -100,11 +98,16 @@ enum {SINE, COSINE, TANGENT};
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(cosine)
-/*
-***********************************************************************/
+//
+//  cosine: native [
+//  
+//  "Returns the trigonometric cosine."
+//  
+//      value [any-number!] "In degrees by default"
+//      /radians "Value is specified in radians"
+//  ]
+//
+REBNATIVE(cosine)
 {
 	REBDEC dval = cos(Trig_Value(D_ARG(1), !D_REF(2), COSINE));
 	if (fabs(dval) < DBL_EPSILON) dval = 0.0;
@@ -113,11 +116,16 @@ enum {SINE, COSINE, TANGENT};
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(sine)
-/*
-***********************************************************************/
+//
+//  sine: native [
+//  
+//  "Returns the trigonometric sine."
+//  
+//      value [any-number!] "In degrees by default"
+//      /radians "Value is specified in radians"
+//  ]
+//
+REBNATIVE(sine)
 {
 	REBDEC dval = sin(Trig_Value(D_ARG(1), !D_REF(2), SINE));
 	if (fabs(dval) < DBL_EPSILON) dval = 0.0;
@@ -126,11 +134,16 @@ enum {SINE, COSINE, TANGENT};
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(tangent)
-/*
-***********************************************************************/
+//
+//  tangent: native [
+//  
+//  "Returns the trigonometric tangent."
+//  
+//      value [any-number!] "In degrees by default"
+//      /radians "Value is specified in radians"
+//  ]
+//
+REBNATIVE(tangent)
 {
 	REBDEC dval = Trig_Value(D_ARG(1), !D_REF(2), TANGENT);
 	if (Eq_Decimal(fabs(dval), pi1 / 2.0)) fail (Error(RE_OVERFLOW));
@@ -139,44 +152,63 @@ enum {SINE, COSINE, TANGENT};
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(arccosine)
-/*
-***********************************************************************/
+//
+//  arccosine: native [
+//  
+//  {Returns the trigonometric arccosine (in degrees by default).}
+//  
+//      value [any-number!]
+//      /radians "Returns result in radians"
+//  ]
+//
+REBNATIVE(arccosine)
 {
 	Arc_Trans(D_OUT, D_ARG(1), !D_REF(2), COSINE);
 	return R_OUT;
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(arcsine)
-/*
-***********************************************************************/
+//
+//  arcsine: native [
+//  
+//  {Returns the trigonometric arcsine (in degrees by default).}
+//  
+//      value [any-number!]
+//      /radians "Returns result in radians"
+//  ]
+//
+REBNATIVE(arcsine)
 {
 	Arc_Trans(D_OUT, D_ARG(1), !D_REF(2), SINE);
 	return R_OUT;
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(arctangent)
-/*
-***********************************************************************/
+//
+//  arctangent: native [
+//  
+//  {Returns the trigonometric arctangent (in degrees by default).}
+//  
+//      value [any-number!]
+//      /radians "Returns result in radians"
+//  ]
+//
+REBNATIVE(arctangent)
 {
 	Arc_Trans(D_OUT, D_ARG(1), !D_REF(2), TANGENT);
 	return R_OUT;
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(exp)
-/*
-***********************************************************************/
+//
+//  exp: native [
+//  
+//  {Raises E (the base of natural logarithm) to the power specified}
+//  
+//      power [any-number!]
+//  ]
+//
+REBNATIVE(exp)
 {
 	REBDEC	dval = AS_DECIMAL(D_ARG(1));
 	static REBDEC eps = EPS;
@@ -188,11 +220,15 @@ enum {SINE, COSINE, TANGENT};
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(log_10)
-/*
-***********************************************************************/
+//
+//  log-10: native [
+//  
+//  "Returns the base-10 logarithm."
+//  
+//      value [any-number!]
+//  ]
+//
+REBNATIVE(log_10)
 {
 	REBDEC dval = AS_DECIMAL(D_ARG(1));
 	if (dval <= 0) fail (Error(RE_POSITIVE));
@@ -201,11 +237,15 @@ enum {SINE, COSINE, TANGENT};
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(log_2)
-/*
-***********************************************************************/
+//
+//  log-2: native [
+//  
+//  "Return the base-2 logarithm."
+//  
+//      value [any-number!]
+//  ]
+//
+REBNATIVE(log_2)
 {
 	REBDEC dval = AS_DECIMAL(D_ARG(1));
 	if (dval <= 0) fail (Error(RE_POSITIVE));
@@ -214,11 +254,15 @@ enum {SINE, COSINE, TANGENT};
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(log_e)
-/*
-***********************************************************************/
+//
+//  log-e: native [
+//  
+//  {Returns the natural (base-E) logarithm of the given value}
+//  
+//      value [any-number!]
+//  ]
+//
+REBNATIVE(log_e)
 {
 	REBDEC dval = AS_DECIMAL(D_ARG(1));
 	if (dval <= 0) fail (Error(RE_POSITIVE));
@@ -227,11 +271,15 @@ enum {SINE, COSINE, TANGENT};
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(square_root)
-/*
-***********************************************************************/
+//
+//  square-root: native [
+//  
+//  "Returns the square root of a number."
+//  
+//      value [any-number!]
+//  ]
+//
+REBNATIVE(square_root)
 {
 	REBDEC dval = AS_DECIMAL(D_ARG(1));
 	if (dval < 0) fail (Error(RE_POSITIVE));
@@ -240,13 +288,19 @@ enum {SINE, COSINE, TANGENT};
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(shift)
-/*
-**		shift int bits arithmetic or logical
-**
-***********************************************************************/
+//
+//  shift: native [
+//  
+//  {Shifts an integer left or right by a number of bits.}
+//  
+//      value [integer!]
+//      bits [integer!] "Positive for left shift, negative for right shift"
+//      /logical "Logical shift (sign bit ignored)"
+//  ]
+//
+REBNATIVE(shift)
+//
+// shift int bits arithmetic or logical
 {
 	REBI64 b = VAL_INT64(D_ARG(2));
 	REBVAL *a = D_ARG(1);
@@ -285,31 +339,30 @@ enum {SINE, COSINE, TANGENT};
 }
 
 
-/***********************************************************************
-**
-*/	REBINT Compare_Modify_Values(REBVAL *a, REBVAL *b, REBINT strictness)
-/*
-**		Compare 2 values depending on level of strictness.  It leans
-**		upon the per-type comparison functions (that have a more typical
-**		interface of returning [1, 0, -1] and taking a CASE parameter)
-**		but adds a layer of being able to check for specific types
-**		of equality...which those comparison functions do not discern.
-**
-**		Strictness:
-**			0 - coersed equality
-**			1 - equivalence
-**			2 - strict equality
-**			3 - same (identical bits)
-**
-**		   -1 - greater or equal
-**		   -2 - greater
-**
-**		!!! This routine (may) modify the value cells for 'a' and 'b' in
-**		order to coerce them for easier comparison.  Most usages are
-**		in native code that can overwrite its argument values without
-**		that being a problem, so it doesn't matter.
-**
-***********************************************************************/
+//
+//  Compare_Modify_Values: C
+// 
+// Compare 2 values depending on level of strictness.  It leans
+// upon the per-type comparison functions (that have a more typical
+// interface of returning [1, 0, -1] and taking a CASE parameter)
+// but adds a layer of being able to check for specific types
+// of equality...which those comparison functions do not discern.
+// 
+// Strictness:
+//     0 - coersed equality
+//     1 - equivalence
+//     2 - strict equality
+//     3 - same (identical bits)
+// 
+//    -1 - greater or equal
+//    -2 - greater
+// 
+// !!! This routine (may) modify the value cells for 'a' and 'b' in
+// order to coerce them for easier comparison.  Most usages are
+// in native code that can overwrite its argument values without
+// that being a problem, so it doesn't matter.
+//
+REBINT Compare_Modify_Values(REBVAL *a, REBVAL *b, REBINT strictness)
 {
 	REBCNT ta = VAL_TYPE(a);
 	REBCNT tb = VAL_TYPE(b);
@@ -390,121 +443,177 @@ compare:
 
 //	EQUAL? < EQUIV? < STRICT-EQUAL? < SAME?
 
-/***********************************************************************
-**
-*/	REBNATIVE(equalq)
-/*
-***********************************************************************/
+//
+//  equal?: native [
+//  
+//  "Returns TRUE if the values are equal."
+//  
+//      value1 [any-value!]
+//      value2 [any-value!]
+//  ]
+//
+REBNATIVE(equalq)
 {
 	if (Compare_Modify_Values(D_ARG(1), D_ARG(2), 0)) return R_TRUE;
 	return R_FALSE;
 }
 
-/***********************************************************************
-**
-*/	REBNATIVE(not_equalq)
-/*
-***********************************************************************/
+//
+//  not-equal?: native [
+//  
+//  "Returns TRUE if the values are not equal."
+//  
+//      value1 [any-value!]
+//      value2 [any-value!]
+//  ]
+//
+REBNATIVE(not_equalq)
 {
 	if (Compare_Modify_Values(D_ARG(1), D_ARG(2), 0)) return R_FALSE;
 	return R_TRUE;
 }
 
-/***********************************************************************
-**
-*/	REBNATIVE(equivq)
-/*
-***********************************************************************/
+//
+//  equiv?: native [
+//  
+//  "Returns TRUE if the values are equivalent."
+//  
+//      value1 [any-value!]
+//      value2 [any-value!]
+//  ]
+//
+REBNATIVE(equivq)
 {
 	if (Compare_Modify_Values(D_ARG(1), D_ARG(2), 1)) return R_TRUE;
 	return R_FALSE;
 }
 
-/***********************************************************************
-**
-*/	REBNATIVE(not_equivq)
-/*
-***********************************************************************/
+//
+//  not-equiv?: native [
+//  
+//  "Returns TRUE if the values are not equivalent."
+//  
+//      value1 [any-value!]
+//      value2 [any-value!]
+//  ]
+//
+REBNATIVE(not_equivq)
 {
 	if (Compare_Modify_Values(D_ARG(1), D_ARG(2), 1)) return R_FALSE;
 	return R_TRUE;
 }
 
-/***********************************************************************
-**
-*/	REBNATIVE(strict_equalq)
-/*
-***********************************************************************/
+//
+//  strict-equal?: native [
+//  
+//  "Returns TRUE if the values are strictly equal."
+//  
+//      value1 [any-value!]
+//      value2 [any-value!]
+//  ]
+//
+REBNATIVE(strict_equalq)
 {
 	if (Compare_Modify_Values(D_ARG(1), D_ARG(2), 2)) return R_TRUE;
 	return R_FALSE;
 }
 
-/***********************************************************************
-**
-*/	REBNATIVE(strict_not_equalq)
-/*
-***********************************************************************/
+//
+//  strict-not-equal?: native [
+//  
+//  "Returns TRUE if the values are not strictly equal."
+//  
+//      value1 [any-value!]
+//      value2 [any-value!]
+//  ]
+//
+REBNATIVE(strict_not_equalq)
 {
 	if (Compare_Modify_Values(D_ARG(1), D_ARG(2), 2)) return R_FALSE;
 	return R_TRUE;
 }
 
-/***********************************************************************
-**
-*/	REBNATIVE(sameq)
-/*
-***********************************************************************/
+//
+//  same?: native [
+//  
+//  "Returns TRUE if the values are identical."
+//  
+//      value1 [any-value!]
+//      value2 [any-value!]
+//  ]
+//
+REBNATIVE(sameq)
 {
 	if (Compare_Modify_Values(D_ARG(1), D_ARG(2), 3)) return R_TRUE;
 	return R_FALSE;
 }
 
-/***********************************************************************
-**
-*/	REBNATIVE(lesserq)
-/*
-***********************************************************************/
+//
+//  lesser?: native [
+//  
+//  {Returns TRUE if the first value is less than the second value.}
+//  
+//      value1 value2
+//  ]
+//
+REBNATIVE(lesserq)
 {
 	if (Compare_Modify_Values(D_ARG(1), D_ARG(2), -1)) return R_FALSE;
 	return R_TRUE;
 }
 
-/***********************************************************************
-**
-*/	REBNATIVE(lesser_or_equalq)
-/*
-***********************************************************************/
+//
+//  lesser-or-equal?: native [
+//  
+//  {Returns TRUE if the first value is less than or equal to the second value.}
+//  
+//      value1 value2
+//  ]
+//
+REBNATIVE(lesser_or_equalq)
 {
 	if (Compare_Modify_Values(D_ARG(1), D_ARG(2), -2)) return R_FALSE;
 	return R_TRUE;
 }
 
-/***********************************************************************
-**
-*/	REBNATIVE(greaterq)
-/*
-***********************************************************************/
+//
+//  greater?: native [
+//  
+//  {Returns TRUE if the first value is greater than the second value.}
+//  
+//      value1 value2
+//  ]
+//
+REBNATIVE(greaterq)
 {
 	if (Compare_Modify_Values(D_ARG(1), D_ARG(2), -2)) return R_TRUE;
 	return R_FALSE;
 }
 
-/***********************************************************************
-**
-*/	REBNATIVE(greater_or_equalq)
-/*
-***********************************************************************/
+//
+//  greater-or-equal?: native [
+//  
+//  {Returns TRUE if the first value is greater than or equal to the second value.}
+//  
+//      value1 value2
+//  ]
+//
+REBNATIVE(greater_or_equalq)
 {
 	if (Compare_Modify_Values(D_ARG(1), D_ARG(2), -1)) return R_TRUE;
 	return R_FALSE;
 }
 
-/***********************************************************************
-**
-*/	REBNATIVE(maximum)
-/*
-***********************************************************************/
+//
+//  maximum: native [
+//  
+//  "Returns the greater of the two values."
+//  
+//      value1 [any-scalar! date! any-series!]
+//      value2 [any-scalar! date! any-series!]
+//  ]
+//
+REBNATIVE(maximum)
 {
 	REBVAL a, b;
 
@@ -519,11 +628,16 @@ compare:
 	return R_ARG2;
 }
 
-/***********************************************************************
-**
-*/	REBNATIVE(minimum)
-/*
-***********************************************************************/
+//
+//  minimum: native [
+//  
+//  "Returns the lesser of the two values."
+//  
+//      value1 [any-scalar! date! any-series!]
+//      value2 [any-scalar! date! any-series!]
+//  ]
+//
+REBNATIVE(minimum)
 {
 	REBVAL a, b;
 
@@ -539,11 +653,15 @@ compare:
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(negativeq)
-/*
-***********************************************************************/
+//
+//  negative?: native [
+//  
+//  "Returns TRUE if the number is negative."
+//  
+//      number [any-number! money! time! pair!]
+//  ]
+//
+REBNATIVE(negativeq)
 {
 	REBVAL zero;
 	VAL_SET_ZEROED(&zero, VAL_TYPE(D_ARG(1)));
@@ -553,11 +671,15 @@ compare:
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(positiveq)
-/*
-***********************************************************************/
+//
+//  positive?: native [
+//  
+//  "Returns TRUE if the value is positive."
+//  
+//      number [any-number! money! time! pair!]
+//  ]
+//
+REBNATIVE(positiveq)
 {
 	REBVAL zero;
 	VAL_SET_ZEROED(&zero, VAL_TYPE(D_ARG(1)));
@@ -568,11 +690,15 @@ compare:
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(zeroq)
-/*
-***********************************************************************/
+//
+//  zero?: native [
+//  
+//  {Returns TRUE if the value is zero (for its datatype).}
+//  
+//      value
+//  ]
+//
+REBNATIVE(zeroq)
 {
 	REBCNT type = VAL_TYPE(D_ARG(1));
 

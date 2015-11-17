@@ -29,11 +29,10 @@
 
 #include "sys-core.h"
 
-/***********************************************************************
-**
-*/	REBINT CT_Library(REBVAL *a, REBVAL *b, REBINT mode)
-/*
-***********************************************************************/
+//
+//  CT_Library: C
+//
+REBINT CT_Library(REBVAL *a, REBVAL *b, REBINT mode)
 {
 	//RL_Print("%s, %d\n", __func__, __LINE__);
 	if (mode >= 0) {
@@ -42,11 +41,10 @@
 	return -1;
 }
 
-/***********************************************************************
-**
-*/	REBTYPE(Library)
-/*
-***********************************************************************/
+//
+//  REBTYPE: C
+//
+REBTYPE(Library)
 {
 	REBVAL *val = D_ARG(1);
 	REBVAL *arg = DS_ARGC > 1 ? D_ARG(2) : NULL;

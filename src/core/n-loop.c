@@ -38,18 +38,17 @@ typedef enum {
 } LOOP_MODE;
 
 
-/***********************************************************************
-**
-*/	REBFLG Catching_Break_Or_Continue(REBVAL *val, REBFLG *stop)
-/*
-**	Determines if a thrown value is either a break or continue.  If so,
-**	modifies `val` to be the throw's argument, sets `stop` flag if it
-**	was a BREAK or BREAK/WITH, and returns TRUE.
-**
-**	If FALSE is returned then the throw name `val` was not a break
-**	or continue, and needs to be bubbled up or handled another way.
-**
-***********************************************************************/
+//
+//  Catching_Break_Or_Continue: C
+// 
+// Determines if a thrown value is either a break or continue.  If so,
+// modifies `val` to be the throw's argument, sets `stop` flag if it
+// was a BREAK or BREAK/WITH, and returns TRUE.
+// 
+// If FALSE is returned then the throw name `val` was not a break
+// or continue, and needs to be bubbled up or handled another way.
+//
+REBFLG Catching_Break_Or_Continue(REBVAL *val, REBFLG *stop)
 {
 	assert(THROWN(val));
 
@@ -75,19 +74,18 @@ typedef enum {
 }
 
 
-/***********************************************************************
-**
-*/	static REBSER *Init_Loop(const REBVAL *spec, REBVAL *body_blk, REBSER **fram)
-/*
-**		Initialize standard for loops (copy block, make frame, bind).
-**		Spec: WORD or [WORD ...]
-**
-**		Note that because we are copying the block in order to rebind it, the
-**		ensuing loop code will `Do_At_Throws(out, body, 0);`.  Starting at
-**		zero is correct because the duplicate body has already had the
-**		items before its VAL_INDEX() omitted.
-**
-***********************************************************************/
+//
+//  Init_Loop: C
+// 
+// Initialize standard for loops (copy block, make frame, bind).
+// Spec: WORD or [WORD ...]
+// 
+// Note that because we are copying the block in order to rebind it, the
+// ensuing loop code will `Do_At_Throws(out, body, 0);`.  Starting at
+// zero is correct because the duplicate body has already had the
+// items before its VAL_INDEX() omitted.
+//
+static REBSER *Init_Loop(const REBVAL *spec, REBVAL *body_blk, REBSER **fram)
 {
 	REBSER *frame;
 	REBINT len;
@@ -138,11 +136,10 @@ typedef enum {
 }
 
 
-/***********************************************************************
-**
-*/	static REBFLG Loop_Series_Throws(REBVAL *out, REBVAL *var, REBSER* body, REBVAL *start, REBINT ei, REBINT ii)
-/*
-***********************************************************************/
+//
+//  Loop_Series_Throws: C
+//
+static REBFLG Loop_Series_Throws(REBVAL *out, REBVAL *var, REBSER* body, REBVAL *start, REBINT ei, REBINT ii)
 {
 	REBINT si = VAL_INDEX(start);
 	REBCNT type = VAL_TYPE(start);
@@ -177,11 +174,10 @@ typedef enum {
 }
 
 
-/***********************************************************************
-**
-*/	static REBFLG Loop_Integer_Throws(REBVAL *out, REBVAL *var, REBSER* body, REBI64 start, REBI64 end, REBI64 incr)
-/*
-***********************************************************************/
+//
+//  Loop_Integer_Throws: C
+//
+static REBFLG Loop_Integer_Throws(REBVAL *out, REBVAL *var, REBSER* body, REBI64 start, REBI64 end, REBI64 incr)
 {
 	VAL_SET(var, REB_INTEGER);
 
@@ -211,11 +207,10 @@ typedef enum {
 }
 
 
-/***********************************************************************
-**
-*/	static REBFLG Loop_Number_Throws(REBVAL *out, REBVAL *var, REBSER* body, REBVAL *start, REBVAL *end, REBVAL *incr)
-/*
-***********************************************************************/
+//
+//  Loop_Number_Throws: C
+//
+static REBFLG Loop_Number_Throws(REBVAL *out, REBVAL *var, REBSER* body, REBVAL *start, REBVAL *end, REBVAL *incr)
 {
 	REBDEC s;
 	REBDEC e;
@@ -267,14 +262,13 @@ typedef enum {
 }
 
 
-/***********************************************************************
-**
-*/	static REB_R Loop_All(struct Reb_Call *call_, REBINT mode)
-/*
-**		0: forall
-**		1: forskip
-**
-***********************************************************************/
+//
+//  Loop_All: C
+// 
+// 0: forall
+// 1: forskip
+//
+static REB_R Loop_All(struct Reb_Call *call_, REBINT mode)
 {
 	REBVAL *var;
 	REBSER *body;
@@ -351,14 +345,13 @@ typedef enum {
 }
 
 
-/***********************************************************************
-**
-*/	static REB_R Loop_Each(struct Reb_Call *call_, LOOP_MODE mode)
-/*
-**		Common implementation code of FOR-EACH, REMOVE-EACH, MAP-EACH,
-**		and EVERY.
-**
-***********************************************************************/
+//
+//  Loop_Each: C
+// 
+// Common implementation code of FOR-EACH, REMOVE-EACH, MAP-EACH,
+// and EVERY.
+//
+static REB_R Loop_Each(struct Reb_Call *call_, LOOP_MODE mode)
 {
 	REBSER *body;
 	REBVAL *vars;
@@ -657,13 +650,21 @@ skip_hidden: ;
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(for)
-/*
-**		FOR var start end bump [ body ]
-**
-***********************************************************************/
+//
+//  for: native [
+//  
+//  {Evaluate a block over a range of values. (See also: REPEAT)}
+//  
+//      'word [word!] "Variable to hold current value"
+//      start [any-series! any-number!] "Starting value"
+//      end [any-series! any-number!] "Ending value"
+//      bump [any-number!] "Amount to skip each time"
+//      body [block!] "Block to evaluate"
+//  ]
+//
+REBNATIVE(for)
+//
+// FOR var start end bump [ body ]
 {
 	REBSER *body;
 	REBSER *frame;
@@ -715,31 +716,48 @@ skip_hidden: ;
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(forall)
-/*
-***********************************************************************/
+//
+//  forall: native [
+//  
+//  "Evaluates a block for every value in a series."
+//  
+//      'word [word!] 
+//      {Word that refers to the series, set to each position in series}
+//      body [block!] "Block to evaluate each time"
+//  ]
+//
+REBNATIVE(forall)
 {
 	return Loop_All(call_, 0);
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(forskip)
-/*
-***********************************************************************/
+//
+//  forskip: native [
+//  
+//  "Evaluates a block for periodic values in a series."
+//  
+//      'word [word!] 
+//      {Word that refers to the series, set to each position in series}
+//      size [integer! decimal!] "Number of positions to skip each time"
+//      body [block!] "Block to evaluate each time"
+//  ]
+//
+REBNATIVE(forskip)
 {
 	return Loop_All(call_, 1);
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(forever)
-/*
-***********************************************************************/
+//
+//  forever: native [
+//  
+//  "Evaluates a block endlessly."
+//  
+//      body [block!] "Block to evaluate each time"
+//  ]
+//
+REBNATIVE(forever)
 {
 	REBVAL * const block = D_ARG(1);
 
@@ -758,68 +776,80 @@ skip_hidden: ;
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(for_each)
-/*
-**		{Evaluates a block for each value(s) in a series.}
-**		'word [get-word! word! block!] {Word or block of words}
-**		data [any-series!] {The series to traverse}
-**		body [block!] {Block to evaluate each time}
-**
-***********************************************************************/
+//
+//  for-each: native [
+//  
+//  "Evaluates a block for each value(s) in a series."
+//  
+//      'word [word! block!] "Word or block of words to set each time (local)"
+//      data [any-series! any-object! map! none!] "The series to traverse"
+//      body [block!] "Block to evaluate each time"
+//  ]
+//
+REBNATIVE(for_each)
 {
 	return Loop_Each(call_, LOOP_FOR_EACH);
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(remove_each)
-/*
-**		'word [get-word! word! block!] {Word or block of words}
-**		data [any-series!] {The series to traverse}
-**		body [block!] {Block to evaluate each time}
-**
-***********************************************************************/
+//
+//  remove-each: native [
+//  
+//  {Removes values for each block that returns true; returns removal count.}
+//  
+//      'word [word! block!] "Word or block of words to set each time (local)"
+//      data [any-series!] "The series to traverse (modified)"
+//      body [block!] "Block to evaluate (return TRUE to remove)"
+//  ]
+//
+REBNATIVE(remove_each)
 {
 	return Loop_Each(call_, LOOP_REMOVE_EACH);
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(map_each)
-/*
-**		'word [get-word! word! block!] {Word or block of words}
-**		data [any-series!] {The series to traverse}
-**		body [block!] {Block to evaluate each time}
-**
-***********************************************************************/
+//
+//  map-each: native [
+//  
+//  {Evaluates a block for each value(s) in a series and returns them as a block.}
+//  
+//      'word [word! block!] "Word or block of words to set each time (local)"
+//      data [block! vector!] "The series to traverse"
+//      body [block!] "Block to evaluate each time"
+//  ]
+//
+REBNATIVE(map_each)
 {
 	return Loop_Each(call_, LOOP_MAP_EACH);
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(every)
-/*
-**		'word [get-word! word! block!] {Word or block of words}
-**		data [any-series!] {The series to traverse}
-**		body [block!] {Block to evaluate each time}
-**
-***********************************************************************/
+//
+//  every: native [
+//  
+//  {Returns last TRUE? value if evaluating a block over a series is all TRUE?}
+//  
+//      'word [word! block!] "Word or block of words to set each time (local)"
+//      data [any-series! any-object! map! none!] "The series to traverse"
+//      body [block!] "Block to evaluate each time"
+//  ]
+//
+REBNATIVE(every)
 {
 	return Loop_Each(call_, LOOP_EVERY);
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(loop)
-/*
-***********************************************************************/
+//
+//  loop: native [
+//  
+//  "Evaluates a block a specified number of times."
+//  
+//      count [any-number!] "Number of repetitions"
+//      block [block!] "Block to evaluate"
+//  ]
+//
+REBNATIVE(loop)
 {
 	REBI64 count = Int64(D_ARG(1));
 	REBVAL * const block = D_ARG(2);
@@ -842,13 +872,20 @@ skip_hidden: ;
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(repeat)
-/*
-**		REPEAT var 123 [ body ]
-**
-***********************************************************************/
+//
+//  repeat: native [
+//  
+//  {Evaluates a block a number of times or over a series.}
+//  
+//      'word [word!] "Word to set each time"
+//      value [any-number! any-series! none!] 
+//      "Maximum number or series to traverse"
+//      body [block!] "Block to evaluate each time"
+//  ]
+//
+REBNATIVE(repeat)
+//
+// REPEAT var 123 [ body ]
 {
 	REBSER *body;
 	REBSER *frame;
@@ -891,11 +928,15 @@ skip_hidden: ;
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(until)
-/*
-***********************************************************************/
+//
+//  until: native [
+//  
+//  "Evaluates a block until it is TRUE. "
+//  
+//      block [block!]
+//  ]
+//
+REBNATIVE(until)
 {
 	REBVAL * const block = D_ARG(1);
 
@@ -917,11 +958,16 @@ skip_hidden: ;
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(while)
-/*
-***********************************************************************/
+//
+//  while: native [
+//  
+//  {While a condition block is TRUE, evaluates another block.}
+//  
+//      cond-block [block!]
+//      body-block [block!]
+//  ]
+//
+REBNATIVE(while)
 {
 	REBVAL * const condition = D_ARG(1);
 	REBVAL * const body = D_ARG(2);

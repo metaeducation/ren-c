@@ -37,22 +37,20 @@
 #include "sys-deci-funcs.h"
 
 
-/***********************************************************************
-**
-*/	REBINT CT_Logic(REBVAL *a, REBVAL *b, REBINT mode)
-/*
-***********************************************************************/
+//
+//  CT_Logic: C
+//
+REBINT CT_Logic(REBVAL *a, REBVAL *b, REBINT mode)
 {
 	if (mode >= 0)  return (VAL_LOGIC(a) == VAL_LOGIC(b));
 	return -1;
 }
 
 
-/***********************************************************************
-**
-*/	REBFLG MT_Logic(REBVAL *out, REBVAL *data, enum Reb_Kind type)
-/*
-***********************************************************************/
+//
+//  MT_Logic: C
+//
+REBFLG MT_Logic(REBVAL *out, REBVAL *data, enum Reb_Kind type)
 {
 	if (!IS_INTEGER(data)) return FALSE;
 	SET_LOGIC(out, VAL_INT64(data) != 0);
@@ -60,11 +58,10 @@
 }
 
 
-/***********************************************************************
-**
-*/	REBTYPE(Logic)
-/*
-***********************************************************************/
+//
+//  REBTYPE: C
+//
+REBTYPE(Logic)
 {
 	REBCNT val1 = VAL_LOGIC(D_ARG(1));
 	REBCNT val2;

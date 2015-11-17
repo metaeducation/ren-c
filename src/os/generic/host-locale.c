@@ -38,14 +38,13 @@ const char ** iso639_find_entry_by_2_code(const char* code);
 const char ** iso3166_find_entry_by_2_code(const char* code);
 
 
-/***********************************************************************
-**
-*/	REBCHR *OS_Get_Locale(int what)
-/*
-**		Used to obtain locale information from the system.
-**		The returned value must be freed with OS_FREE_MEM.
-**
-***********************************************************************/
+//
+//  OS_Get_Locale: C
+// 
+// Used to obtain locale information from the system.
+// The returned value must be freed with OS_FREE_MEM.
+//
+REBCHR *OS_Get_Locale(int what)
 {
 	// Must be compile-time const for '= {...}' style init (-Wc99-extensions)
 	const char *ret[4];

@@ -46,16 +46,15 @@
 
 extern void Done_Device(REBUPT handle, int error);
 
-/***********************************************************************
-**
-*/	DEVICE_CMD Init_Events(REBREQ *dr)
-/*
-**		Initialize the event device.
-**
-**		Create a hidden window to handle special events,
-**		such as timers and async DNS.
-**
-***********************************************************************/
+//
+//  Init_Events: C
+// 
+// Initialize the event device.
+// 
+// Create a hidden window to handle special events,
+// such as timers and async DNS.
+//
+DEVICE_CMD Init_Events(REBREQ *dr)
 {
 	REBDEV *dev = (REBDEV*)dr; // just to keep compiler happy
 	SET_FLAG(dev->flags, RDF_INIT);
@@ -63,29 +62,27 @@ extern void Done_Device(REBUPT handle, int error);
 }
 
 
-/***********************************************************************
-**
-*/	DEVICE_CMD Poll_Events(REBREQ *req)
-/*
-**		Poll for events and process them.
-**		Returns 1 if event found, else 0.
-**
-***********************************************************************/
+//
+//  Poll_Events: C
+// 
+// Poll for events and process them.
+// Returns 1 if event found, else 0.
+//
+DEVICE_CMD Poll_Events(REBREQ *req)
 {
 	int flag = DR_DONE;
 	return flag;	// different meaning compared to most commands
 }
 
 
-/***********************************************************************
-**
-*/	DEVICE_CMD Query_Events(REBREQ *req)
-/*
-**		Wait for an event, or a timeout (in milliseconds) specified by
-**		req->length. The latter is used by WAIT as the main timing
-**		method.
-**
-***********************************************************************/
+//
+//  Query_Events: C
+// 
+// Wait for an event, or a timeout (in milliseconds) specified by
+// req->length. The latter is used by WAIT as the main timing
+// method.
+//
+DEVICE_CMD Query_Events(REBREQ *req)
 {
 	struct timeval tv;
 	int result;
@@ -105,14 +102,13 @@ extern void Done_Device(REBUPT handle, int error);
 }
 
 
-/***********************************************************************
-**
-*/	DEVICE_CMD Connect_Events(REBREQ *req)
-/*
-**		Simply keeps the request pending for polling purposes.
-**		Use Abort_Device to remove it.
-**
-***********************************************************************/
+//
+//  Connect_Events: C
+// 
+// Simply keeps the request pending for polling purposes.
+// Use Abort_Device to remove it.
+//
+DEVICE_CMD Connect_Events(REBREQ *req)
 {
 	return DR_PEND;	// keep pending
 }

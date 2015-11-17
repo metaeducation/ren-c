@@ -30,11 +30,10 @@
 #include "sys-core.h"
 #include "sys-deci-funcs.h"
 
-/***********************************************************************
-**
-*/	void REBCNT_To_Bytes(REBYTE *out, REBCNT in)
-/*
-***********************************************************************/
+//
+//  REBCNT_To_Bytes: C
+//
+void REBCNT_To_Bytes(REBYTE *out, REBCNT in)
 {
 	assert(sizeof(REBCNT) == 4);
 	out[0] = (REBYTE) in;
@@ -44,11 +43,10 @@
 }
 
 
-/***********************************************************************
-**
-*/	REBCNT Bytes_To_REBCNT(const REBYTE * const in)
-/*
-***********************************************************************/
+//
+//  Bytes_To_REBCNT: C
+//
+REBCNT Bytes_To_REBCNT(const REBYTE * const in)
 {
 	assert(sizeof(REBCNT) == 4);
 	return (REBCNT) in[0]          // & 0xFF
@@ -58,11 +56,10 @@
 }
 
 
-/***********************************************************************
-**
-*/	REBCNT Find_Int(REBINT *array, REBINT num)
-/*
-***********************************************************************/
+//
+//  Find_Int: C
+//
+REBCNT Find_Int(REBINT *array, REBINT num)
 {
 	REBCNT n;
 
@@ -72,15 +69,14 @@
 }
 
 
-/***********************************************************************
-**
-*/	REBINT Get_Num_Arg(REBVAL *val)
-/*
-**		Get the amount to skip or pick.
-**		Allow multiple types. Throw error if not valid.
-**		Note that the result is one-based.
-**
-***********************************************************************/
+//
+//  Get_Num_Arg: C
+// 
+// Get the amount to skip or pick.
+// Allow multiple types. Throw error if not valid.
+// Note that the result is one-based.
+//
+REBINT Get_Num_Arg(REBVAL *val)
 {
 	REBINT n;
 
@@ -103,11 +99,10 @@
 }
 
 
-/***********************************************************************
-**
-*/	REBINT Float_Int16(REBD32 f)
-/*
-***********************************************************************/
+//
+//  Float_Int16: C
+//
+REBINT Float_Int16(REBD32 f)
 {
 	if (fabs(f) > (REBD32)(0x7FFF)) {
 		DS_PUSH_DECIMAL(f);
@@ -117,11 +112,10 @@
 }
 
 
-/***********************************************************************
-**
-*/	REBINT Int32(const REBVAL *val)
-/*
-***********************************************************************/
+//
+//  Int32: C
+//
+REBINT Int32(const REBVAL *val)
 {
 	REBINT n = 0;
 
@@ -139,17 +133,16 @@
 }
 
 
-/***********************************************************************
-**
-*/	REBINT Int32s(const REBVAL *val, REBINT sign)
-/*
-**		Get integer as positive, negative 32 bit value.
-**		Sign field can be
-**			0: >= 0
-**			1: >  0
-**		   -1: <  0
-**
-***********************************************************************/
+//
+//  Int32s: C
+// 
+// Get integer as positive, negative 32 bit value.
+// Sign field can be
+//     0: >= 0
+//     1: >  0
+//    -1: <  0
+//
+REBINT Int32s(const REBVAL *val, REBINT sign)
 {
 	REBINT n = 0;
 
@@ -177,11 +170,10 @@
 }
 
 
-/***********************************************************************
-**
-*/	REBI64 Int64(const REBVAL *val)
-/*
-***********************************************************************/
+//
+//  Int64: C
+//
+REBI64 Int64(const REBVAL *val)
 {
 	if (IS_INTEGER(val))
 		return VAL_INT64(val);
@@ -194,11 +186,10 @@
 }
 
 
-/***********************************************************************
-**
-*/	REBDEC Dec64(const REBVAL *val)
-/*
-***********************************************************************/
+//
+//  Dec64: C
+//
+REBDEC Dec64(const REBVAL *val)
 {
 	if (IS_DECIMAL(val) || IS_PERCENT(val))
 		return VAL_DECIMAL(val);
@@ -211,17 +202,16 @@
 }
 
 
-/***********************************************************************
-**
-*/	REBI64 Int64s(const REBVAL *val, REBINT sign)
-/*
-**		Get integer as positive, negative 64 bit value.
-**		Sign field can be
-**			0: >= 0
-**			1: >  0
-**		   -1: <  0
-**
-***********************************************************************/
+//
+//  Int64s: C
+// 
+// Get integer as positive, negative 64 bit value.
+// Sign field can be
+//     0: >= 0
+//     1: >  0
+//    -1: <  0
+//
+REBI64 Int64s(const REBVAL *val, REBINT sign)
 {
 	REBI64 n;
 
@@ -245,11 +235,10 @@
 }
 
 
-/***********************************************************************
-**
-*/	REBINT Int8u(const REBVAL *val)
-/*
-***********************************************************************/
+//
+//  Int8u: C
+//
+REBINT Int8u(const REBVAL *val)
 {
 	if (VAL_INT64(val) > cast(i64, 255) || VAL_INT64(val) < cast(i64, 0))
 		fail (Error_Out_Of_Range(val));
@@ -258,14 +247,13 @@
 }
 
 
-/***********************************************************************
-**
-*/	REBCNT Find_Refines(struct Reb_Call *call_, REBCNT mask)
-/*
-**		Scans the stack for function refinements that have been
-**		specified in the mask (each as a bit) and are being used.
-**
-***********************************************************************/
+//
+//  Find_Refines: C
+// 
+// Scans the stack for function refinements that have been
+// specified in the mask (each as a bit) and are being used.
+//
+REBCNT Find_Refines(struct Reb_Call *call_, REBCNT mask)
 {
 	REBINT n;
 	REBCNT result = 0;
@@ -280,88 +268,81 @@
 }
 
 
-/***********************************************************************
-**
-*/	void Val_Init_Datatype(REBVAL *value, REBINT n)
-/*
-***********************************************************************/
+//
+//  Val_Init_Datatype: C
+//
+void Val_Init_Datatype(REBVAL *value, REBINT n)
 {
 	*value = *BLK_SKIP(Lib_Context, n+1);
 }
 
 
-/***********************************************************************
-**
-*/  REBVAL *Get_Type(REBCNT index)
-/*
-**      Returns the specified datatype value from the system context.
-**		The datatypes are all at the head of the context.
-**
-***********************************************************************/
+//
+//  Get_Type: C
+// 
+// Returns the specified datatype value from the system context.
+// The datatypes are all at the head of the context.
+//
+REBVAL *Get_Type(REBCNT index)
 {
 	assert(index < SERIES_TAIL(Lib_Context));
 	return FRM_VALUES(Lib_Context) + index + 1;
 }
 
 
-/***********************************************************************
-**
-*/  REBVAL *Type_Of(const REBVAL *value)
-/*
-**      Returns the datatype value for the given value.
-**		The datatypes are all at the head of the context.
-**
-***********************************************************************/
+//
+//  Type_Of: C
+// 
+// Returns the datatype value for the given value.
+// The datatypes are all at the head of the context.
+//
+REBVAL *Type_Of(const REBVAL *value)
 {
 	return FRM_VALUES(Lib_Context) + VAL_TYPE(value) + 1;
 }
 
 
-/***********************************************************************
-**
-*/  REBINT Get_Type_Sym(REBCNT type)
-/*
-**      Returns the datatype word for the given type number.
-**
-***********************************************************************/
+//
+//  Get_Type_Sym: C
+// 
+// Returns the datatype word for the given type number.
+//
+REBINT Get_Type_Sym(REBCNT type)
 {
 	return FRM_KEY_SYM(Lib_Context, type + 1);
 }
 
 
-/***********************************************************************
-**
-*/  const REBYTE *Get_Field_Name(REBSER *obj, REBCNT index)
-/*
-**      Get the name of a field of an object.
-**
-***********************************************************************/
+//
+//  Get_Field_Name: C
+// 
+// Get the name of a field of an object.
+//
+const REBYTE *Get_Field_Name(REBSER *obj, REBCNT index)
 {
 	assert(index < SERIES_TAIL(obj));
 	return Get_Sym_Name(FRM_KEY_SYM(obj, index));
 }
 
 
-/***********************************************************************
-**
-*/  REBVAL *Get_Field(REBSER *obj, REBCNT index)
-/*
-**      Get an instance variable from an object series.
-**
-***********************************************************************/
+//
+//  Get_Field: C
+// 
+// Get an instance variable from an object series.
+//
+REBVAL *Get_Field(REBSER *obj, REBCNT index)
 {
 	assert(index < SERIES_TAIL(obj));
 	return FRM_VALUES(obj) + index;
 }
 
 
-/***********************************************************************
-**
-*/  REBVAL *Get_Object(const REBVAL *objval, REBCNT index)
-/*
-**      Get an instance variable from an object value.
-**
-***********************************************************************/
+//
+//  Get_Object: C
+// 
+// Get an instance variable from an object value.
+//
+REBVAL *Get_Object(const REBVAL *objval, REBCNT index)
 {
 	REBSER *obj = VAL_OBJ_FRAME(objval);
 	assert(IS_FRAME(BLK_HEAD(obj)));
@@ -370,14 +351,13 @@
 }
 
 
-/***********************************************************************
-**
-*/  REBVAL *In_Object(REBSER *base, ...)
-/*
-**      Get value from nested list of objects. List is null terminated.
-**		Returns object value, else returns 0 if not found.
-**
-***********************************************************************/
+//
+//  In_Object: C
+// 
+// Get value from nested list of objects. List is null terminated.
+// Returns object value, else returns 0 if not found.
+//
+REBVAL *In_Object(REBSER *base, ...)
 {
 	REBVAL *obj = 0;
 	REBCNT n;
@@ -402,13 +382,12 @@
 }
 
 
-/***********************************************************************
-**
-*/  REBVAL *Get_System(REBCNT i1, REBCNT i2)
-/*
-**      Return a second level object field of the system object.
-**
-***********************************************************************/
+//
+//  Get_System: C
+// 
+// Return a second level object field of the system object.
+//
+REBVAL *Get_System(REBCNT i1, REBCNT i2)
 {
 	REBVAL *obj;
 
@@ -419,13 +398,12 @@
 }
 
 
-/***********************************************************************
-**
-*/  REBINT Get_System_Int(REBCNT i1, REBCNT i2, REBINT default_int)
-/*
-**      Get an integer from system object.
-**
-***********************************************************************/
+//
+//  Get_System_Int: C
+// 
+// Get an integer from system object.
+//
+REBINT Get_System_Int(REBCNT i1, REBCNT i2, REBINT default_int)
 {
 	REBVAL *val = Get_System(i1, i2);
 	if (IS_INTEGER(val)) return VAL_INT32(val);
@@ -433,11 +411,10 @@
 }
 
 
-/***********************************************************************
-**
-*/  REBSER *Make_Std_Object_Managed(REBCNT index)
-/*
-***********************************************************************/
+//
+//  Make_Std_Object_Managed: C
+//
+REBSER *Make_Std_Object_Managed(REBCNT index)
 {
 	REBSER *result = Copy_Array_Shallow(
 		VAL_OBJ_FRAME(Get_System(SYS_STANDARD, index))
@@ -450,11 +427,10 @@
 }
 
 
-/***********************************************************************
-**
-*/  void Set_Object_Values(REBSER *obj, REBVAL *vals)
-/*
-***********************************************************************/
+//
+//  Set_Object_Values: C
+//
+void Set_Object_Values(REBSER *obj, REBVAL *vals)
 {
 	REBVAL *value;
 
@@ -465,13 +441,12 @@
 }
 
 
-/***********************************************************************
-**
-*/	void Val_Init_Series_Index_Core(REBVAL *value, enum Reb_Kind type, REBSER *series, REBCNT index)
-/*
-**		Common function.
-**
-***********************************************************************/
+//
+//  Val_Init_Series_Index_Core: C
+// 
+// Common function.
+//
+void Val_Init_Series_Index_Core(REBVAL *value, enum Reb_Kind type, REBSER *series, REBCNT index)
 {
 	ENSURE_SERIES_MANAGED(series);
 
@@ -498,11 +473,10 @@
 }
 
 
-/***********************************************************************
-**
-*/	void Set_Tuple(REBVAL *value, REBYTE *bytes, REBCNT len)
-/*
-***********************************************************************/
+//
+//  Set_Tuple: C
+//
+void Set_Tuple(REBVAL *value, REBYTE *bytes, REBCNT len)
 {
 	REBYTE *bp;
 
@@ -513,11 +487,10 @@
 }
 
 
-/***********************************************************************
-**
-*/	void Val_Init_Object(REBVAL *value, REBSER *series)
-/*
-***********************************************************************/
+//
+//  Val_Init_Object: C
+//
+void Val_Init_Object(REBVAL *value, REBSER *series)
 {
 	ENSURE_FRAME_MANAGED(series);
 
@@ -526,11 +499,10 @@
 }
 
 
-/***********************************************************************
-**
-*/	void Val_Init_Port(REBVAL *value, REBSER *series)
-/*
-***********************************************************************/
+//
+//  Val_Init_Port: C
+//
+void Val_Init_Port(REBVAL *value, REBSER *series)
 {
 	ENSURE_FRAME_MANAGED(series);
 
@@ -538,37 +510,34 @@
 	VAL_OBJ_FRAME(value) = series;
 }
 
-/***********************************************************************
-**
-*/	REBCNT Val_Series_Len(const REBVAL *value)
-/*
-**		Get length of series, but avoid negative values.
-**
-***********************************************************************/
+//
+//  Val_Series_Len: C
+// 
+// Get length of series, but avoid negative values.
+//
+REBCNT Val_Series_Len(const REBVAL *value)
 {
 	if (VAL_INDEX(value) >= VAL_TAIL(value)) return 0;
 	return VAL_TAIL(value) - VAL_INDEX(value);
 }
 
 
-/***********************************************************************
-**
-*/	REBCNT Val_Byte_Len(const REBVAL *value)
-/*
-**		Get length of series in bytes.
-**
-***********************************************************************/
+//
+//  Val_Byte_Len: C
+// 
+// Get length of series in bytes.
+//
+REBCNT Val_Byte_Len(const REBVAL *value)
 {
 	if (VAL_INDEX(value) >= VAL_TAIL(value)) return 0;
 	return (VAL_TAIL(value) - VAL_INDEX(value)) * SERIES_WIDE(VAL_SERIES(value));
 }
 
 
-/***********************************************************************
-**
-*/	REBFLG Get_Logic_Arg(REBVAL *arg)
-/*
-***********************************************************************/
+//
+//  Get_Logic_Arg: C
+//
+REBFLG Get_Logic_Arg(REBVAL *arg)
 {
 	if (IS_NONE(arg))
 		return 0;
@@ -583,14 +552,13 @@
 }
 
 
-/***********************************************************************
-**
-*/	 REBINT Partial1(REBVAL *sval, REBVAL *lval)
-/*
-**		Process the /part (or /skip) and other length modifying
-**		arguments.
-**
-***********************************************************************/
+//
+//  Partial1: C
+// 
+// Process the /part (or /skip) and other length modifying
+// arguments.
+//
+REBINT Partial1(REBVAL *sval, REBVAL *lval)
 {
 	REBI64 len;
 	REBINT maxlen;
@@ -626,27 +594,26 @@
 }
 
 
-/***********************************************************************
-**
-*/	 REBINT Partial(REBVAL *aval, REBVAL *bval, REBVAL *lval, REBFLG flag)
-/*
-**		Args:
-**			aval: target value
-**			bval: argument to modify target (optional)
-**			lval: length value (or none)
-**
-**		Determine the length of a /PART value. It can be:
-**			1. integer or decimal
-**			2. relative to A value (bval is null)
-**			3. relative to B value
-**
-**		Flag: indicates special treatment for CHANGE. As in:
-**			CHANGE/part "abcde" "xy" 3 => "xyde"
-**
-**		NOTE: Can modify the value's index!
-**		The result can be negative. ???
-**
-***********************************************************************/
+//
+//  Partial: C
+// 
+// Args:
+//     aval: target value
+//     bval: argument to modify target (optional)
+//     lval: length value (or none)
+// 
+// Determine the length of a /PART value. It can be:
+//     1. integer or decimal
+//     2. relative to A value (bval is null)
+//     3. relative to B value
+// 
+// Flag: indicates special treatment for CHANGE. As in:
+//     CHANGE/part "abcde" "xy" 3 => "xyde"
+// 
+// NOTE: Can modify the value's index!
+// The result can be negative. ???
+//
+REBINT Partial(REBVAL *aval, REBVAL *bval, REBVAL *lval, REBFLG flag)
 {
 	REBVAL *val;
 	REBINT len;
@@ -698,25 +665,23 @@
 }
 
 
-/***********************************************************************
-**
-*/	int Clip_Int(int val, int mini, int maxi)
-/*
-***********************************************************************/
+//
+//  Clip_Int: C
+//
+int Clip_Int(int val, int mini, int maxi)
 {
 	if (val < mini) val = mini;
 	else if (val > maxi) val = maxi;
 	return val;
 }
 
-/***********************************************************************
-**
-*/	void memswapl(void *m1, void *m2, size_t len)
-/*
-**		For long integer memory units, not chars. It is assumed that
-**		the len is an exact modulo of long.
-**
-***********************************************************************/
+//
+//  memswapl: C
+// 
+// For long integer memory units, not chars. It is assumed that
+// the len is an exact modulo of long.
+//
+void memswapl(void *m1, void *m2, size_t len)
 {
 	long t, *a, *b;
 
@@ -731,11 +696,10 @@
 }
 
 
-/***********************************************************************
-**
-*/	i64 Add_Max(int type, i64 n, i64 m, i64 maxi)
-/*
-***********************************************************************/
+//
+//  Add_Max: C
+//
+i64 Add_Max(int type, i64 n, i64 m, i64 maxi)
 {
 	i64 r = n + m;
 	if (r < -maxi || r > maxi) {
@@ -746,11 +710,10 @@
 }
 
 
-/***********************************************************************
-**
-*/	int Mul_Max(int type, i64 n, i64 m, i64 maxi)
-/*
-***********************************************************************/
+//
+//  Mul_Max: C
+//
+int Mul_Max(int type, i64 n, i64 m, i64 maxi)
 {
 	i64 r = n * m;
 	if (r < -maxi || r > maxi) fail (Error(RE_TYPE_LIMIT, Get_Type(type)));
@@ -758,11 +721,10 @@
 }
 
 
-/***********************************************************************
-**
-*/	void Make_OS_Error(REBVAL *out, int errnum)
-/*
-***********************************************************************/
+//
+//  Make_OS_Error: C
+//
+void Make_OS_Error(REBVAL *out, int errnum)
 {
 	REBCHR str[100];
 
@@ -771,15 +733,14 @@
 }
 
 
-/***********************************************************************
-**
-*/	REBSER *At_Head(REBVAL *value)
-/*
-**		Return the series for a value, but if it has an index
-**		offset, return a copy of the series from that position.
-**		Useful for functions that do not accept index offsets.
-**
-***********************************************************************/
+//
+//  At_Head: C
+// 
+// Return the series for a value, but if it has an index
+// offset, return a copy of the series from that position.
+// Useful for functions that do not accept index offsets.
+//
+REBSER *At_Head(REBVAL *value)
 {
 	REBCNT len;
 	REBSER *ser;
@@ -799,13 +760,12 @@
 }
 
 
-/***********************************************************************
-**
-*/	REBSER *Collect_Set_Words(REBVAL *val)
-/*
-**		Scan a block, collecting all of its SET words as a block.
-**
-***********************************************************************/
+//
+//  Collect_Set_Words: C
+// 
+// Scan a block, collecting all of its SET words as a block.
+//
+REBSER *Collect_Set_Words(REBVAL *val)
 {
 	REBCNT cnt = 0;
 	REBVAL *val2 = val;
@@ -827,11 +787,10 @@
 }
 
 
-/***********************************************************************
-**
-*/	REBINT What_Reflector(REBVAL *word)
-/*
-***********************************************************************/
+//
+//  What_Reflector: C
+//
+REBINT What_Reflector(REBVAL *word)
 {
 	if (IS_WORD(word)) {
 		switch (VAL_WORD_SYM(word)) {

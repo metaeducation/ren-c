@@ -61,18 +61,17 @@ REBREQ *req;		//!!! move this global
 #define EVENTS_LIMIT 0xFFFF //64k
 #define EVENTS_CHUNK 128
 
-/***********************************************************************
-**
-*/	REBVAL *Append_Event(void)
-/*
-**		Append an event to the end of the current event port queue.
-**		Return a pointer to the event value.
-**
-**		Note: this function may be called from out of environment,
-**		so do NOT extend the event queue here. If it does not have
-**		space, return 0. (Should it overwrite or wrap???)
-**
-***********************************************************************/
+//
+//  Append_Event: C
+// 
+// Append an event to the end of the current event port queue.
+// Return a pointer to the event value.
+// 
+// Note: this function may be called from out of environment,
+// so do NOT extend the event queue here. If it does not have
+// space, return 0. (Should it overwrite or wrap???)
+//
+REBVAL *Append_Event(void)
 {
 	REBVAL *port;
 	REBVAL *value;
@@ -140,13 +139,12 @@ REBREQ *req;		//!!! move this global
 	return NULL;
 }
 
-/***********************************************************************
-**
-*/	static REB_R Event_Actor(struct Reb_Call *call_, REBSER *port, REBCNT action)
-/*
-**		Internal port handler for events.
-**
-***********************************************************************/
+//
+//  Event_Actor: C
+// 
+// Internal port handler for events.
+//
+static REB_R Event_Actor(struct Reb_Call *call_, REBSER *port, REBCNT action)
 {
 	REBVAL *spec;
 	REBVAL *state;
@@ -231,11 +229,10 @@ act_blk:
 }
 
 
-/***********************************************************************
-**
-*/	void Init_Event_Scheme(void)
-/*
-***********************************************************************/
+//
+//  Init_Event_Scheme: C
+//
+void Init_Event_Scheme(void)
 {
 	req = 0; // move to port struct
 	Register_Scheme(SYM_SYSTEM, 0, Event_Actor);
@@ -244,11 +241,10 @@ act_blk:
 }
 
 
-/***********************************************************************
-**
-*/	void Shutdown_Event_Scheme(void)
-/*
-***********************************************************************/
+//
+//  Shutdown_Event_Scheme: C
+//
+void Shutdown_Event_Scheme(void)
 {
 	if (req) {
 		OS_FREE(req);

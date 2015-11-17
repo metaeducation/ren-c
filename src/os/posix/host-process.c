@@ -83,35 +83,32 @@
 #define OS_EPERM -3
 #define OS_ESRCH -4
 
-/***********************************************************************
-**
-*/	REBINT OS_Get_PID()
-/*
-**		Return the current process ID
-**
-***********************************************************************/
+//
+//  OS_Get_PID: C
+// 
+// Return the current process ID
+//
+REBINT OS_Get_PID()
 {
 	return getpid();
 }
 
-/***********************************************************************
-**
-*/	REBINT OS_Get_UID()
-/*
-**		Return the real user ID
-**
-***********************************************************************/
+//
+//  OS_Get_UID: C
+// 
+// Return the real user ID
+//
+REBINT OS_Get_UID()
 {
 	return getuid();
 }
 
-/***********************************************************************
-**
-*/	REBINT OS_Set_UID(REBINT uid)
-/*
-**		Set the user ID, see setuid manual for its semantics
-**
-***********************************************************************/
+//
+//  OS_Set_UID: C
+// 
+// Set the user ID, see setuid manual for its semantics
+//
+REBINT OS_Set_UID(REBINT uid)
 {
 	if (setuid(uid) < 0) {
 		switch (errno) {
@@ -127,24 +124,22 @@
 	}
 }
 
-/***********************************************************************
-**
-*/	REBINT OS_Get_GID()
-/*
-**		Return the real group ID
-**
-***********************************************************************/
+//
+//  OS_Get_GID: C
+// 
+// Return the real group ID
+//
+REBINT OS_Get_GID()
 {
 	return getgid();
 }
 
-/***********************************************************************
-**
-*/	REBINT OS_Set_GID(REBINT gid)
-/*
-**		Set the group ID, see setgid manual for its semantics
-**
-***********************************************************************/
+//
+//  OS_Set_GID: C
+// 
+// Set the group ID, see setgid manual for its semantics
+//
+REBINT OS_Set_GID(REBINT gid)
 {
 	if (setgid(gid) < 0) {
 		switch (errno) {
@@ -160,24 +155,22 @@
 	}
 }
 
-/***********************************************************************
-**
-*/	REBINT OS_Get_EUID()
-/*
-**		Return the effective user ID
-**
-***********************************************************************/
+//
+//  OS_Get_EUID: C
+// 
+// Return the effective user ID
+//
+REBINT OS_Get_EUID()
 {
 	return geteuid();
 }
 
-/***********************************************************************
-**
-*/	REBINT OS_Set_EUID(REBINT uid)
-/*
-**		Set the effective user ID
-**
-***********************************************************************/
+//
+//  OS_Set_EUID: C
+// 
+// Set the effective user ID
+//
+REBINT OS_Set_EUID(REBINT uid)
 {
 	if (seteuid(uid) < 0) {
 		switch (errno) {
@@ -193,24 +186,22 @@
 	}
 }
 
-/***********************************************************************
-**
-*/	REBINT OS_Get_EGID()
-/*
-**		Return the effective group ID
-**
-***********************************************************************/
+//
+//  OS_Get_EGID: C
+// 
+// Return the effective group ID
+//
+REBINT OS_Get_EGID()
 {
 	return getegid();
 }
 
-/***********************************************************************
-**
-*/	REBINT OS_Set_EGID(REBINT gid)
-/*
-**		Set the effective group ID
-**
-***********************************************************************/
+//
+//  OS_Set_EGID: C
+// 
+// Set the effective group ID
+//
+REBINT OS_Set_EGID(REBINT gid)
 {
 	if (setegid(gid) < 0) {
 		switch (errno) {
@@ -226,13 +217,12 @@
 	}
 }
 
-/***********************************************************************
-**
-*/	REBINT OS_Send_Signal(REBINT pid, REBINT signal)
-/*
-**		Send signal to a process
-**
-***********************************************************************/
+//
+//  OS_Send_Signal: C
+// 
+// Send signal to a process
+//
+REBINT OS_Send_Signal(REBINT pid, REBINT signal)
 {
 	if (kill(pid, signal) < 0) {
 		switch (errno) {
@@ -250,13 +240,12 @@
 	}
 }
 
-/***********************************************************************
-**
-*/	REBINT OS_Kill(REBINT pid)
-/*
-**		Try to kill the process
-**
-***********************************************************************/
+//
+//  OS_Kill: C
+// 
+// Try to kill the process
+//
+REBINT OS_Kill(REBINT pid)
 {
 	return OS_Send_Signal(pid, SIGTERM);
 }
@@ -278,28 +267,27 @@
 #define FLAG_INFO 8
 
 
-/***********************************************************************
-**
-*/	int OS_Create_Process(const REBCHR *call, int argc, const REBCHR* argv[], u32 flags, u64 *pid, int *exit_code, u32 input_type, char *input, u32 input_len, u32 output_type, char **output, u32 *output_len, u32 err_type, char **err, u32 *err_len)
-/*
-**		flags:
-**			1: wait, is implied when I/O redirection is enabled
-**			2: console
-**			4: shell
-**			8: info
-**			16: show
-**
-**		input_type/output_type/err_type:
-**			0: none
-**			1: string
-**			2: file
-**
-**		Return -1 on error, otherwise the process return code.
-**
-**	POSIX previous simple version was just 'return system(call);'
-**	This uses 'execvp' which is "POSIX.1 conforming, UNIX compatible"
-**
-***********************************************************************/
+//
+//  OS_Create_Process: C
+// 
+// flags:
+//     1: wait, is implied when I/O redirection is enabled
+//     2: console
+//     4: shell
+//     8: info
+//     16: show
+// 
+// input_type/output_type/err_type:
+//     0: none
+//     1: string
+//     2: file
+// 
+// Return -1 on error, otherwise the process return code.
+// 
+// POSIX previous simple version was just 'return system(call);'
+// This uses 'execvp' which is "POSIX.1 conforming, UNIX compatible"
+//
+int OS_Create_Process(const REBCHR *call, int argc, const REBCHR* argv[], u32 flags, u64 *pid, int *exit_code, u32 input_type, char *input, u32 input_len, u32 output_type, char **output, u32 *output_len, u32 err_type, char **err, u32 *err_len)
 {
 	unsigned char flag_wait = FALSE;
 	unsigned char flag_console = FALSE;
@@ -796,19 +784,19 @@ stdin_pipe_err:
 }
 
 
-/***********************************************************************
-**
-*/	int OS_Reap_Process(int pid, int *status, int flags)
-/*
-**		pid:
-**			> 0, a signle process
-**			-1, any child process
-**
-**		flags:
-**			0: return immediately
-**
-**		Return -1 on error
-***********************************************************************/
+//
+//  OS_Reap_Process: C
+// 
+// pid:
+//     > 0, a signle process
+//     -1, any child process
+// 
+// flags:
+//     0: return immediately
+// 
+// Return -1 on error
+//
+int OS_Reap_Process(int pid, int *status, int flags)
 {
 	return waitpid(pid, status, flags == 0? WNOHANG : 0);
 }

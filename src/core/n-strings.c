@@ -118,11 +118,15 @@ static struct digest {
 };
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(ajoin)
-/*
-***********************************************************************/
+//
+//  ajoin: native [
+//  
+//  {Reduces and joins a block of values into a new string.}
+//  
+//      block [block!]
+//  ]
+//
+REBNATIVE(ajoin)
 {
 	if (Form_Reduce_Throws(D_OUT, VAL_SERIES(D_ARG(1)), VAL_INDEX(D_ARG(1))))
 		return R_OUT_IS_THROWN;
@@ -131,13 +135,17 @@ static struct digest {
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(spelling_of)
-/*
-**	This is a native implementation of SPELLING-OF from rebol-proposals.
-**
-***********************************************************************/
+//
+//  spelling-of: native [
+//  
+//  {Gives the delimiter-less spelling of words or strings}
+//  
+//      value [any-word! any-string!]
+//  ]
+//
+REBNATIVE(spelling_of)
+//
+// This is a native implementation of SPELLING-OF from rebol-proposals.
 {
 	REBVAL * const value = D_ARG(1);
 	REBSER *series;
@@ -164,28 +172,24 @@ static struct digest {
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(checksum)
-/*
-**		Computes checksum or hash value.
-**
-**		Note: Currently BINARY only.
-**
-**	Args:
-**
-**		data [any-string!] {Data to checksum}
-**		/part limit
-**		/tcp {Returns an Internet TCP 16-bit checksum.}
-**		/secure {Returns a cryptographically secure checksum.}
-**		/hash {Returns a hash value}
-**		size [integer!] {Size of the hash table}
-**		/method {Method to use}
-**		word [word!] {Method: SHA1 MD5}
-**		/key {Returns keyed HMAC value}
-**		key-value [any-string!] {Key to use}
-**
-***********************************************************************/
+//
+//  checksum: native [
+//  
+//  "Computes a checksum, CRC, or hash."
+//  
+//      data [binary!] "Bytes to checksum"
+//      /part limit "Length of data"
+//      /tcp "Returns an Internet TCP 16-bit checksum"
+//      /secure "Returns a cryptographically secure checksum"
+//      /hash "Returns a hash value"
+//      size [integer!] "Size of the hash table"
+//      /method "Method to use"
+//      word [word!] "Methods: SHA1 MD5 CRC32"
+//      /key "Returns keyed HMAC value"
+//      key-value [any-string!] "Key to use"
+//  ]
+//
+REBNATIVE(checksum)
 {
 	REBVAL *arg = D_ARG(ARG_CHECKSUM_DATA);
 	REBYTE *data = VAL_BIN_DATA(arg);
@@ -306,13 +310,20 @@ static struct digest {
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(compress)
-/*
-**		Binary and string (gets UTF8 converted).
-**
-***********************************************************************/
+//
+//  compress: native [
+//  
+//  "Compresses a string series and returns it."
+//  
+//      data [binary! string!] "If string, it will be UTF8 encoded"
+//      /part limit "Length of data (elements)"
+//      /gzip "Use GZIP checksum"
+//      /only {Do not store header or envelope information ("raw")}
+//  ]
+//
+REBNATIVE(compress)
+//
+// Binary and string (gets UTF8 converted).
 {
 	const REBOOL gzip = D_REF(4);
 	const REBOOL only = D_REF(5);
@@ -330,13 +341,21 @@ static struct digest {
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(decompress)
-/*
-**		Binary only.
-**
-***********************************************************************/
+//
+//  decompress: native [
+//  
+//  "Decompresses data. Result is binary."
+//  
+//      data [binary!] "Data to decompress"
+//      /part lim "Length of compressed data (must match end marker)"
+//      /gzip "Use GZIP checksum"
+//      /limit size "Error out if result is larger than this"
+//      /only {Do not look for header or envelope information ("raw")}
+//  ]
+//
+REBNATIVE(decompress)
+//
+// Binary only.
 {
 	REBVAL *arg = D_ARG(1);
 	REBCNT len;
@@ -363,11 +382,17 @@ static struct digest {
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(construct)
-/*
-***********************************************************************/
+//
+//  construct: native [
+//  
+//  "Creates an object with scant (safe) evaluation."
+//  
+//      block [block! string! binary!] "Specification (modified)"
+//      /with "Default object" object [object!]
+//      /only "Values are kept as-is"
+//  ]
+//
+REBNATIVE(construct)
 {
 	REBVAL *value = D_ARG(1);
 	REBSER *parent = 0;
@@ -397,15 +422,21 @@ static struct digest {
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(debase)
-/*
-**		Converts a binary base representation string to binary.
-**		Input is a STRING, but BINARY is also accepted.
-**		BINARY is returned. We don't know the encoding.
-**
-***********************************************************************/
+//
+//  debase: native [
+//  
+//  {Decodes binary-coded string (BASE-64 default) to binary value.}
+//  
+//      value [binary! string!] "The string to decode"
+//      /base "Binary base to use"
+//      base-value [integer!] "The base to convert from: 64, 16, or 2"
+//  ]
+//
+REBNATIVE(debase)
+//
+// Converts a binary base representation string to binary.
+// Input is a STRING, but BINARY is also accepted.
+// BINARY is returned. We don't know the encoding.
 {
 	REBINT base = 64;
 	REBSER *ser;
@@ -423,14 +454,20 @@ static struct digest {
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(enbase)
-/*
-**		Converts a binary to a binary base representation STRING.
-**		Input is BINARY or STRING (UTF8 encoded).
-**
-***********************************************************************/
+//
+//  enbase: native [
+//  
+//  {Encodes a string into a binary-coded string (BASE-64 default).}
+//  
+//      value [binary! string!] "If string, will be UTF8 encoded"
+//      /base "Binary base to use"
+//      base-value [integer!] "The base to convert to: 64, 16, or 2"
+//  ]
+//
+REBNATIVE(enbase)
+//
+// Converts a binary to a binary base representation STRING.
+// Input is BINARY or STRING (UTF8 encoded).
 {
 	REBINT base = 64;
 	REBSER *ser;
@@ -462,13 +499,19 @@ static struct digest {
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(decloak)
-/*
-**		Input is BINARY only. Modifies input.
-**
-***********************************************************************/
+//
+//  decloak: native [
+//  
+//  {Decodes a binary string scrambled previously by encloak.}
+//  
+//      data [binary!] "Binary series to descramble (modified)"
+//      key [string! binary! integer!] "Encryption key or pass phrase"
+//      /with "Use a string! key as-is (do not generate hash)"
+//  ]
+//
+REBNATIVE(decloak)
+//
+// Input is BINARY only. Modifies input.
 {
 	REBVAL *data = D_ARG(1);
 	REBVAL *key  = D_ARG(2);
@@ -480,13 +523,19 @@ static struct digest {
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(encloak)
-/*
-**		Input is BINARY only. Modifies input.
-**
-***********************************************************************/
+//
+//  encloak: native [
+//  
+//  "Scrambles a binary string based on a key."
+//  
+//      data [binary!] "Binary series to scramble (modified)"
+//      key [string! binary! integer!] "Encryption key or pass phrase"
+//      /with "Use a string! key as-is (do not generate hash)"
+//  ]
+//
+REBNATIVE(encloak)
+//
+// Input is BINARY only. Modifies input.
 {
 	REBVAL *data = D_ARG(1);
 	REBVAL *key  = D_ARG(2);
@@ -498,13 +547,17 @@ static struct digest {
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(dehex)
-/*
-**		Works for any string.
-**
-***********************************************************************/
+//
+//  dehex: native [
+//  
+//  "Converts URL-style hex encoded (%xx) strings."
+//  
+//      value [any-string!] "The string to dehex"
+//  ]
+//
+REBNATIVE(dehex)
+//
+// Works for any string.
 {
 	REBVAL *arg = D_ARG(1);
 	REBINT len = (REBINT)VAL_LEN(arg); // due to len -= 2 below
@@ -550,13 +603,19 @@ static struct digest {
 }
 
 
-/***********************************************************************
-**
-*/  REBNATIVE(deline)
-/*
-**		Convert CR or CRLF strings to just LF strings.
-**
-***********************************************************************/
+//
+//  deline: native [
+//  
+//  {Converts string terminators to standard format, e.g. CRLF to LF.}
+//  
+//      string [any-string!] "(modified)"
+//      /lines 
+//      {Return block of lines (works for LF, CR, CR-LF endings) (no modify)}
+//  ]
+//
+REBNATIVE(deline)
+//
+// Convert CR or CRLF strings to just LF strings.
 {
 	REBVAL *val = D_ARG(1);
 	REBINT len = VAL_LEN(val);
@@ -581,13 +640,17 @@ static struct digest {
 }
 
 
-/***********************************************************************
-**
-*/  REBNATIVE(enline)
-/*
-**		Convert LF to CRLF or native format.
-**
-***********************************************************************/
+//
+//  enline: native [
+//  
+//  {Converts string terminators to native OS format, e.g. LF to CRLF.}
+//  
+//      series [any-string! block!] "(modified)"
+//  ]
+//
+REBNATIVE(enline)
+//
+// Convert LF to CRLF or native format.
 {
 	REBVAL *val = D_ARG(1);
 	REBSER *ser = VAL_SERIES(val);
@@ -603,13 +666,19 @@ static struct digest {
 }
 
 
-/***********************************************************************
-**
-*/  REBNATIVE(entab)
-/*
-**		Modifies input.
-**
-***********************************************************************/
+//
+//  entab: native [
+//  
+//  "Converts spaces to tabs (default tab size is 4)."
+//  
+//      string [any-string!] "(modified)"
+//      /size "Specifies the number of spaces per tab"
+//      number [integer!]
+//  ]
+//
+REBNATIVE(entab)
+//
+// Modifies input.
 {
 	REBVAL *val = D_ARG(1);
 	REBINT tabsize = TAB_SIZE;
@@ -630,11 +699,17 @@ static struct digest {
 }
 
 
-/***********************************************************************
-**
-*/  REBNATIVE(detab)
-/*
-***********************************************************************/
+//
+//  detab: native [
+//  
+//  "Converts tabs to spaces (default tab size is 4)."
+//  
+//      string [any-string!] "(modified)"
+//      /size "Specifies the number of spaces per tab"
+//      number [integer!]
+//  ]
+//
+REBNATIVE(detab)
 {
 	REBVAL *val = D_ARG(1);
 	REBINT tabsize = TAB_SIZE;
@@ -655,33 +730,51 @@ static struct digest {
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(lowercase)
-/*
-***********************************************************************/
+//
+//  lowercase: native [
+//  
+//  "Converts string of characters to lowercase."
+//  
+//      string [any-string! char!] "(modified if series)"
+//      /part "Limits to a given length or position"
+//      limit [any-number! any-string!]
+//  ]
+//
+REBNATIVE(lowercase)
 {
 	Change_Case(D_OUT, D_ARG(1), D_ARG(3), FALSE);
 	return R_OUT;
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(uppercase)
-/*
-***********************************************************************/
+//
+//  uppercase: native [
+//  
+//  "Converts string of characters to uppercase."
+//  
+//      string [any-string! char!] "(modified if series)"
+//      /part "Limits to a given length or position"
+//      limit [any-number! any-string!]
+//  ]
+//
+REBNATIVE(uppercase)
 {
 	Change_Case(D_OUT, D_ARG(1), D_ARG(3), TRUE);
 	return R_OUT;
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(to_hex)
-/*
-***********************************************************************/
+//
+//  to-hex: native [
+//  
+//  {Converts numeric value to a hex issue! datatype (with leading # and 0's).}
+//  
+//      value [integer! tuple!] "Value to be converted"
+//      /size "Specify number of hex digits in result"
+//      len [integer!]
+//  ]
+//
+REBNATIVE(to_hex)
 {
 	REBVAL *arg = D_ARG(1);
 	REBINT len;
@@ -721,11 +814,15 @@ static struct digest {
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(find_script)
-/*
-***********************************************************************/
+//
+//  find-script: native [
+//  
+//  {Find a script header within a binary string. Returns starting position.}
+//  
+//      script [binary!]
+//  ]
+//
+REBNATIVE(find_script)
 {
 	REBVAL *arg = D_ARG(1);
 	REBINT n;
@@ -746,11 +843,15 @@ static struct digest {
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(utfq)
-/*
-***********************************************************************/
+//
+//  utf?: native [
+//  
+//  {Returns UTF BOM (byte order marker) encoding; + for BE, - for LE.}
+//  
+//      data [binary!]
+//  ]
+//
+REBNATIVE(utfq)
 {
 	REBINT utf = What_UTF(VAL_BIN_DATA(D_ARG(1)), VAL_LEN(D_ARG(1)));
 	SET_INTEGER(D_OUT, utf);
@@ -758,11 +859,17 @@ static struct digest {
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(invalid_utfq)
-/*
-***********************************************************************/
+//
+//  invalid-utf?: native [
+//  
+//  {Checks UTF encoding; if correct, returns none else position of error.}
+//  
+//      data [binary!]
+//      /utf "Check encodings other than UTF-8"
+//      num [integer!] "Bit size - positive for BE negative for LE"
+//  ]
+//
+REBNATIVE(invalid_utfq)
 {
 	REBVAL *arg = D_ARG(1);
 	REBYTE *bp;
@@ -776,106 +883,98 @@ static struct digest {
 
 
 #ifndef NDEBUG
-/***********************************************************************
-**
-*/	REBYTE *b_cast_(char *s)
-/*
-**		Debug-only version of b_cast() that does type checking.
-**		If you get a complaint you probably meant to use cb_cast().
-**
-***********************************************************************/
+//
+//  b_cast_: C
+// 
+// Debug-only version of b_cast() that does type checking.
+// If you get a complaint you probably meant to use cb_cast().
+//
+REBYTE *b_cast_(char *s)
 {
 	return cast(REBYTE *, s);
 }
 
 
-/***********************************************************************
-**
-*/	const REBYTE *cb_cast_(const char *s)
-/*
-**		Debug-only version of cb_cast() that does type checking.
-**		If you get a complaint you probably meant to use b_cast().
-**
-***********************************************************************/
+//
+//  cb_cast_: C
+// 
+// Debug-only version of cb_cast() that does type checking.
+// If you get a complaint you probably meant to use b_cast().
+//
+const REBYTE *cb_cast_(const char *s)
 {
 	return cast(const REBYTE *, s);
 }
 
 
-/***********************************************************************
-**
-*/	char *s_cast_(REBYTE *s)
-/*
-**		Debug-only version of s_cast() that does type checking.
-**		If you get a complaint you probably meant to use cs_cast().
-**
-***********************************************************************/
+//
+//  s_cast_: C
+// 
+// Debug-only version of s_cast() that does type checking.
+// If you get a complaint you probably meant to use cs_cast().
+//
+char *s_cast_(REBYTE *s)
 {
 	return cast(char*, s);
 }
 
 
-/***********************************************************************
-**
-*/	const char *cs_cast_(const REBYTE *s)
-/*
-**		Debug-only version of cs_cast() that does type checking.
-**		If you get a complaint you probably meant to use s_cast().
-**
-***********************************************************************/
+//
+//  cs_cast_: C
+// 
+// Debug-only version of cs_cast() that does type checking.
+// If you get a complaint you probably meant to use s_cast().
+//
+const char *cs_cast_(const REBYTE *s)
 {
 	return cast(const char *, s);
 }
 
 
-/***********************************************************************
-**
-*/	REBYTE *COPY_BYTES_(REBYTE *dest, const REBYTE *src, size_t count)
-/*
-**		Debug-only REBYTE-checked substitute for COPY_BYTES macro
-**		If you meant characters, consider if you wanted strncpy()
-**
-***********************************************************************/
+//
+//  COPY_BYTES_: C
+// 
+// Debug-only REBYTE-checked substitute for COPY_BYTES macro
+// If you meant characters, consider if you wanted strncpy()
+//
+REBYTE *COPY_BYTES_(REBYTE *dest, const REBYTE *src, size_t count)
 {
 	return b_cast(strncpy(s_cast(dest), cs_cast(src), count));
 }
 
 
-/***********************************************************************
-**
-*/	size_t LEN_BYTES_(const REBYTE *str)
-/*
-**		Debug-only REBYTE-checked substitute for LEN_BYTES macro
-**		If you meant characters, consider if you wanted strlen()
-**
-***********************************************************************/
+//
+//  LEN_BYTES_: C
+// 
+// Debug-only REBYTE-checked substitute for LEN_BYTES macro
+// If you meant characters, consider if you wanted strlen()
+//
+size_t LEN_BYTES_(const REBYTE *str)
 {
 	return strlen(cs_cast(str));
 }
 
 
-/***********************************************************************
-**
-*/	int COMPARE_BYTES_(const REBYTE *lhs, const REBYTE *rhs)
-/*
-**		Debug-only REBYTE-checked function for COMPARE_BYTES macro
-**		If you meant characters, consider if you wanted strcmp()
-**
-***********************************************************************/
+//
+//  COMPARE_BYTES_: C
+// 
+// Debug-only REBYTE-checked function for COMPARE_BYTES macro
+// If you meant characters, consider if you wanted strcmp()
+//
+int COMPARE_BYTES_(const REBYTE *lhs, const REBYTE *rhs)
 {
 	return strcmp(cs_cast(lhs), cs_cast(rhs));
 }
 
 
-/***********************************************************************
-**
-*/	REBYTE *APPEND_BYTES_LIMIT_(REBYTE *dest, const REBYTE *src, size_t max)
-/*
-**		REBYTE-checked function for APPEND_BYTES_LIMIT macro in Debug
-**		If you meant characters, you'll have to use strncat()/strlen()
-**		(there's no single <string.h> entry point for this purpose)
-**
-***********************************************************************/
+//
+//  APPEND_BYTES_LIMIT_: C
+// 
+// REBYTE-checked function for APPEND_BYTES_LIMIT macro in Debug
+// If you meant characters, you'll have to use strncat()/strlen()
+// (there's no single <string.h> entry point for this purpose)
+//
+REBYTE *APPEND_BYTES_LIMIT_(REBYTE *dest, const REBYTE *src, size_t max)
 {
 	return b_cast(strncat(
 		s_cast(dest), cs_cast(src), MAX(max - LEN_BYTES(dest) - 1, 0)
@@ -883,13 +982,12 @@ static struct digest {
 }
 
 
-/***********************************************************************
-**
-*/	REBCHR *OS_STRNCPY_(REBCHR *dest, const REBCHR *src, size_t count)
-/*
-**		Debug-only REBCHR-checked substitute for OS_STRNCPY macro
-**
-***********************************************************************/
+//
+//  OS_STRNCPY_: C
+// 
+// Debug-only REBCHR-checked substitute for OS_STRNCPY macro
+//
+REBCHR *OS_STRNCPY_(REBCHR *dest, const REBCHR *src, size_t count)
 {
 #ifdef OS_WIDE_CHAR
 	return cast(REBCHR*,
@@ -909,13 +1007,12 @@ static struct digest {
 }
 
 
-/***********************************************************************
-**
-*/	REBCHR *OS_STRNCAT_(REBCHR *dest, const REBCHR *src, size_t max)
-/*
-**		Debug-only REBCHR-checked function for OS_STRNCAT macro
-**
-***********************************************************************/
+//
+//  OS_STRNCAT_: C
+// 
+// Debug-only REBCHR-checked function for OS_STRNCAT macro
+//
+REBCHR *OS_STRNCAT_(REBCHR *dest, const REBCHR *src, size_t max)
 {
 #ifdef OS_WIDE_CHAR
 	return cast(REBCHR*,
@@ -935,13 +1032,12 @@ static struct digest {
 }
 
 
-/***********************************************************************
-**
-*/	int OS_STRNCMP_(const REBCHR *lhs, const REBCHR *rhs, size_t max)
-/*
-**		Debug-only REBCHR-checked substitute for OS_STRNCMP macro
-**
-***********************************************************************/
+//
+//  OS_STRNCMP_: C
+// 
+// Debug-only REBCHR-checked substitute for OS_STRNCMP macro
+//
+int OS_STRNCMP_(const REBCHR *lhs, const REBCHR *rhs, size_t max)
 {
 #ifdef OS_WIDE_CHAR
 	return wcsncmp(cast(const wchar_t*, lhs), cast(const wchar_t*, rhs), max);
@@ -951,13 +1047,12 @@ static struct digest {
 }
 
 
-/***********************************************************************
-**
-*/	size_t OS_STRLEN_(const REBCHR *str)
-/*
-**		Debug-only REBCHR-checked substitute for OS_STRLEN macro
-**
-***********************************************************************/
+//
+//  OS_STRLEN_: C
+// 
+// Debug-only REBCHR-checked substitute for OS_STRLEN macro
+//
+size_t OS_STRLEN_(const REBCHR *str)
 {
 #ifdef OS_WIDE_CHAR
 	return wcslen(cast(const wchar_t*, str));
@@ -967,13 +1062,12 @@ static struct digest {
 }
 
 
-/***********************************************************************
-**
-*/	REBCHR *OS_STRCHR_(const REBCHR *str, REBCNT ch)
-/*
-**		Debug-only REBCHR-checked function for OS_STRCHR macro
-**
-***********************************************************************/
+//
+//  OS_STRCHR_: C
+// 
+// Debug-only REBCHR-checked function for OS_STRCHR macro
+//
+REBCHR *OS_STRCHR_(const REBCHR *str, REBCNT ch)
 {
 	// We have to m_cast because C++ actually has a separate overloads of
 	// wcschr and strchr which will return a const pointer if the in pointer
@@ -990,13 +1084,12 @@ static struct digest {
 }
 
 
-/***********************************************************************
-**
-*/	REBCHR OS_MAKE_CH_(REBCNT ch)
-/*
-**		Debug-only REBCHR-checked function for OS_MAKE_CH macro
-**
-***********************************************************************/
+//
+//  OS_MAKE_CH_: C
+// 
+// Debug-only REBCHR-checked function for OS_MAKE_CH macro
+//
+REBCHR OS_MAKE_CH_(REBCNT ch)
 {
 	REBCHR result;
 	result.num = ch;

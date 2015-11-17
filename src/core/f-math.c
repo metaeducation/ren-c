@@ -35,21 +35,20 @@
 #include "sys-dec-to-char.h"
 
 
-/***********************************************************************
-**
-*/	const REBYTE *Grab_Int(const REBYTE *cp, REBINT *val)
-/*
-**		Grab an integer value from the string.
-**
-**		Return the character position just after the integer and return
-**		the integer via a pointer to it.
-**
-**		Notes:
-**			1. Stops at the first non-digit.
-**			2. If no integer found, pointer doesn't change position.
-**			3. Integers may contain REBOL tick (') marks.
-**
-***********************************************************************/
+//
+//  Grab_Int: C
+// 
+// Grab an integer value from the string.
+// 
+// Return the character position just after the integer and return
+// the integer via a pointer to it.
+// 
+// Notes:
+//     1. Stops at the first non-digit.
+//     2. If no integer found, pointer doesn't change position.
+//     3. Integers may contain REBOL tick (') marks.
+//
+const REBYTE *Grab_Int(const REBYTE *cp, REBINT *val)
 {
 	REBINT value = 0;
 	REBINT neg = FALSE;
@@ -68,14 +67,13 @@
 }
 
 
-/***********************************************************************
-**
-*/	const REBYTE *Grab_Int_Scale(const REBYTE *cp, REBINT *val, REBCNT scale)
-/*
-**		Return integer scaled to the number of digits specified.
-**		Used for the decimal part of numbers (e.g. times).
-**
-***********************************************************************/
+//
+//  Grab_Int_Scale: C
+// 
+// Return integer scaled to the number of digits specified.
+// Used for the decimal part of numbers (e.g. times).
+//
+const REBYTE *Grab_Int_Scale(const REBYTE *cp, REBINT *val, REBCNT scale)
 {
 	REBI64 value = 0;
 
@@ -98,20 +96,19 @@
 }
 
 
-/***********************************************************************
-**
-*/	REBINT Form_Int_Len(REBYTE *buf, REBI64 val, REBINT maxl)
-/*
-**		Form an integer string into the given buffer. Result will
-**		not exceed maxl length, including terminator.
-**
-**		Returns the length of the string.
-**
-**		Notes:
-**			1. If result is longer than maxl, returns 0 length.
-**			2. Make sure you have room in your buffer!
-**
-***********************************************************************/
+//
+//  Form_Int_Len: C
+// 
+// Form an integer string into the given buffer. Result will
+// not exceed maxl length, including terminator.
+// 
+// Returns the length of the string.
+// 
+// Notes:
+//     1. If result is longer than maxl, returns 0 length.
+//     2. Make sure you have room in your buffer!
+//
+REBINT Form_Int_Len(REBYTE *buf, REBI64 val, REBINT maxl)
 {
 	REBYTE tmp[MAX_NUM_LEN];
 	REBYTE *tp = tmp;
@@ -166,18 +163,17 @@
 }
 
 
-/***********************************************************************
-**
-*/	REBYTE *Form_Int_Pad(REBYTE *buf, REBI64 val, REBINT max, REBINT len, REBYTE pad)
-/*
-**		Form an integer string in the given buffer with a min
-**		width padded out with the given character. Len > 0 left
-**		aligned. Len < 0 is right aligned.
-**
-**		If len = 0 and val = 0, a null string is formed.
-**		Make sure you have room in your buffer before calling this!
-**
-***********************************************************************/
+//
+//  Form_Int_Pad: C
+// 
+// Form an integer string in the given buffer with a min
+// width padded out with the given character. Len > 0 left
+// aligned. Len < 0 is right aligned.
+// 
+// If len = 0 and val = 0, a null string is formed.
+// Make sure you have room in your buffer before calling this!
+//
+REBYTE *Form_Int_Pad(REBYTE *buf, REBI64 val, REBINT max, REBINT len, REBYTE pad)
 {
 	REBYTE tmp[MAX_NUM_LEN];
 	REBINT n;
@@ -204,39 +200,36 @@
 }
 
 
-/***********************************************************************
-**
-*/	REBYTE *Form_Int(REBYTE *buf, REBINT val)
-/*
-**		Form 32 bit integer string in the given buffer.
-**		Make sure you have room in your buffer before calling this!
-**
-***********************************************************************/
+//
+//  Form_Int: C
+// 
+// Form 32 bit integer string in the given buffer.
+// Make sure you have room in your buffer before calling this!
+//
+REBYTE *Form_Int(REBYTE *buf, REBINT val)
 {
 	REBINT len = Form_Int_Len(buf, val, MAX_NUM_LEN);
 	return buf + len;
 }
 
 
-/***********************************************************************
-**
-*/	REBYTE *Form_Integer(REBYTE *buf, REBI64 val)
-/*
-**		Form standard REBOL integer value (32 or 64).
-**		Make sure you have room in your buffer before calling this!
-**
-***********************************************************************/
+//
+//  Form_Integer: C
+// 
+// Form standard REBOL integer value (32 or 64).
+// Make sure you have room in your buffer before calling this!
+//
+REBYTE *Form_Integer(REBYTE *buf, REBI64 val)
 {
 	INT_TO_STR(val, buf);
 	return buf+LEN_BYTES(buf);
 }
 
 
-/***********************************************************************
-**
-*/	REBINT Emit_Integer(REBYTE *buf, REBI64 val)
-/*
-***********************************************************************/
+//
+//  Emit_Integer: C
+//
+REBINT Emit_Integer(REBYTE *buf, REBI64 val)
 {
 	INT_TO_STR(val, buf);
 	return LEN_BYTES(buf);
@@ -248,11 +241,10 @@
 /* this is appropriate for 64-bit IEEE754 binary floating point format */
 #define MAX_DIGITS 17
 
-/***********************************************************************
-**
-*/	REBINT Emit_Decimal(REBYTE *cp, REBDEC d, REBFLG trim, REBYTE point, REBINT decimal_digits)
-/*
-***********************************************************************/
+//
+//  Emit_Decimal: C
+//
+REBINT Emit_Decimal(REBYTE *cp, REBDEC d, REBFLG trim, REBYTE point, REBINT decimal_digits)
 {
 	REBYTE *start = cp, *sig, *rve;
 	int e, sgn;

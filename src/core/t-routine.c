@@ -275,11 +275,10 @@ static void init_type_map()
 	struct_type_to_ffi[STRUCT_TYPE_POINTER] = &ffi_type_pointer;
 }
 
-/***********************************************************************
-**
-*/	REBINT CT_Routine(REBVAL *a, REBVAL *b, REBINT mode)
-/*
-***********************************************************************/
+//
+//  CT_Routine: C
+//
+REBINT CT_Routine(REBVAL *a, REBVAL *b, REBINT mode)
 {
 	//RL_Print("%s, %d\n", __func__, __LINE__);
 	if (mode >= 0) {
@@ -288,11 +287,10 @@ static void init_type_map()
 	return -1;
 }
 
-/***********************************************************************
-**
-*/	REBINT CT_Callback(REBVAL *a, REBVAL *b, REBINT mode)
-/*
-***********************************************************************/
+//
+//  CT_Callback: C
+//
+REBINT CT_Callback(REBVAL *a, REBVAL *b, REBINT mode)
 {
 	//RL_Print("%s, %d\n", __func__, __LINE__);
 	return -1;
@@ -699,11 +697,10 @@ static void ffi_to_rebol(REBRIN *rin,
 	}
 }
 
-/***********************************************************************
-**
-*/	void Call_Routine(const REBVAL *rot, REBSER *args, REBVAL *ret)
-/*
-***********************************************************************/
+//
+//  Call_Routine: C
+//
+void Call_Routine(const REBVAL *rot, REBSER *args, REBVAL *ret)
 {
 	REBCNT i = 0;
 	void *rvalue = NULL;
@@ -842,11 +839,10 @@ static void ffi_to_rebol(REBRIN *rin,
 	GC_Series_Guard->tail = series_guard_tail;
 }
 
-/***********************************************************************
-**
-*/	void Free_Routine(REBRIN *rin)
-/*
-***********************************************************************/
+//
+//  Free_Routine: C
+//
+void Free_Routine(REBRIN *rin)
 {
 	REBCNT n = 0;
 	for (n = 0; n < SERIES_TAIL(rin->extra_mem); n ++) {
@@ -1028,22 +1024,21 @@ static void callback_dispatcher(ffi_cif *cif, void *ret, void **args, void *user
 	DROP_TRAP_SAME_STACKLEVEL_AS_PUSH(&state);
 }
 
-/***********************************************************************
-**
-*/	REBFLG MT_Routine(REBVAL *out, REBVAL *data, enum Reb_Kind type)
-/*
-** format:
-** make routine! [[
-** 	"document"
-** 	arg1 [type1 type2] "note"
-** 	arg2 [type3] "note"
-** 	...
-** 	argn [typen] "note"
-** 	return: [type] "note"
-** 	abi: word "note"
-** ] lib "name"]
-**
-***********************************************************************/
+//
+//  MT_Routine: C
+// 
+// format:
+// make routine! [[
+//     "document"
+//     arg1 [type1 type2] "note"
+//     arg2 [type3] "note"
+//     ...
+//     argn [typen] "note"
+//     return: [type] "note"
+//     abi: word "note"
+// ] lib "name"]
+//
+REBFLG MT_Routine(REBVAL *out, REBVAL *data, enum Reb_Kind type)
 {
 	//RL_Print("%s, %d\n", __func__, __LINE__);
 	ffi_type ** args = NULL;
@@ -1352,11 +1347,10 @@ static void callback_dispatcher(ffi_cif *cif, void *ret, void **args, void *user
 	return ret;
 }
 
-/***********************************************************************
-**
-*/	REBTYPE(Routine)
-/*
-***********************************************************************/
+//
+//  REBTYPE: C
+//
+REBTYPE(Routine)
 {
 	REBVAL *val;
 	REBVAL *arg;
@@ -1402,11 +1396,10 @@ static void callback_dispatcher(ffi_cif *cif, void *ret, void **args, void *user
 	return R_OUT;
 }
 
-/***********************************************************************
-**
-*/	REBTYPE(Callback)
-/*
-***********************************************************************/
+//
+//  REBTYPE: C
+//
+REBTYPE(Callback)
 {
 	REBVAL *val;
 	REBVAL *arg;

@@ -669,11 +669,10 @@ int SHA1_CtxSize(void) {
 	return sizeof(SHA_CTX);
 }
 
-/***********************************************************************
-**
-*/	REBYTE *SHA1(REBYTE *d, REBCNT n, REBYTE *md)
-/*
-***********************************************************************/
+//
+//  SHA1: C
+//
+REBYTE *SHA1(REBYTE *d, REBCNT n, REBYTE *md)
 {
 	// d is data, n is length
 	SHA_CTX c;

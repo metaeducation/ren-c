@@ -80,36 +80,35 @@
 #define ASAN_UNPOISON_MEMORY_REGION(reg, mem_size)
 #endif
 
-/***********************************************************************
-**
-*/	void *Alloc_Mem(size_t size)
-/*
-**		NOTE: Instead of Alloc_Mem, use the ALLOC and ALLOC_ARRAY
-**		wrapper macros to ensure the memory block being freed matches
-**		the appropriate size for the type.
-**
-*************************************************************************
-**
-**		Alloc_Mem is an interface for a basic memory allocator.
-**		It is coupled with a Free_Mem function that clients must
-**		call with the correct size of the memory block to be freed.
-**		It is thus lower-level than malloc()... whose memory blocks
-**		remember the size of the allocation so you don't need to
-**		pass it into free().
-**
-**		One motivation behind using such an allocator in Rebol
-**		is to allow it to keep knowledge of how much memory the
-**		system is using.  This means it can decide when to trigger a
-**		garbage collection, or raise an out-of-memory error before
-**		the operating system would, e.g. via 'ulimit':
-**
-**			http://stackoverflow.com/questions/1229241/
-**
-**		Finer-grained allocations are done with memory pooling.  But
-**		the blocks of memory used by the pools are still acquired
-**		using ALLOC_ARRAY and FREE_ARRAY.
-**
-***********************************************************************/
+//
+//  Alloc_Mem: C
+// 
+// NOTE: Instead of Alloc_Mem, use the ALLOC and ALLOC_ARRAY
+// wrapper macros to ensure the memory block being freed matches
+// the appropriate size for the type.
+// 
+// ***********************************************************************
+// 
+// Alloc_Mem is an interface for a basic memory allocator.
+// It is coupled with a Free_Mem function that clients must
+// call with the correct size of the memory block to be freed.
+// It is thus lower-level than malloc()... whose memory blocks
+// remember the size of the allocation so you don't need to
+// pass it into free().
+// 
+// One motivation behind using such an allocator in Rebol
+// is to allow it to keep knowledge of how much memory the
+// system is using.  This means it can decide when to trigger a
+// garbage collection, or raise an out-of-memory error before
+// the operating system would, e.g. via 'ulimit':
+// 
+//     http://stackoverflow.com/questions/1229241/
+// 
+// Finer-grained allocations are done with memory pooling.  But
+// the blocks of memory used by the pools are still acquired
+// using ALLOC_ARRAY and FREE_ARRAY.
+//
+void *Alloc_Mem(size_t size)
 {
 	// Trap memory usage limit *before* the allocation is performed
 
@@ -137,15 +136,14 @@
 }
 
 
-/***********************************************************************
-**
-*/	void Free_Mem(void *mem, size_t size)
-/*
-**		NOTE: Instead of Free_Mem, use the FREE and FREE_ARRAY
-**		wrapper macros to ensure the memory block being freed matches
-**		the appropriate size for the type.
-**
-***********************************************************************/
+//
+//  Free_Mem: C
+// 
+// NOTE: Instead of Free_Mem, use the FREE and FREE_ARRAY
+// wrapper macros to ensure the memory block being freed matches
+// the appropriate size for the type.
+//
+void Free_Mem(void *mem, size_t size)
 {
 #ifdef NDEBUG
 	free(mem);
@@ -246,13 +244,12 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 };
 
 
-/***********************************************************************
-**
-*/	void Init_Pools(REBINT scale)
-/*
-**		Initialize memory pool array.
-**
-***********************************************************************/
+//
+//  Init_Pools: C
+// 
+// Initialize memory pool array.
+//
+void Init_Pools(REBINT scale)
 {
 	REBCNT n;
 	REBINT unscale = 1;
@@ -312,13 +309,12 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 }
 
 
-/***********************************************************************
-**
-*/	void Shutdown_Pools(void)
-/*
-**		Release all segments in all pools, and the pools themselves.
-**
-***********************************************************************/
+//
+//  Shutdown_Pools: C
+// 
+// Release all segments in all pools, and the pools themselves.
+//
+void Shutdown_Pools(void)
 {
 	REBCNT n;
 
@@ -370,13 +366,12 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 
 
 #ifndef POOL_MAP
-/***********************************************************************
-**
-*/	static REBCNT Find_Pool(REBCNT size)
-/*
-**		Given a size, tell us what pool it belongs to.
-**
-***********************************************************************/
+//
+//  Find_Pool: C
+// 
+// Given a size, tell us what pool it belongs to.
+//
+static REBCNT Find_Pool(REBCNT size)
 {
 	if (size <= 8) return 0;  // Note: 0 - 8 (and size change for proper modulus)
 	size--;
@@ -403,16 +398,15 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 #endif
 
 
-/***********************************************************************
-**
-*/	static void Fill_Pool(REBPOL *pool)
-/*
-**		Allocate memory for a pool.  The amount allocated will be
-**		determined from the size and units specified when the
-**		pool header was created.  The nodes of the pool are linked
-**		to the free list.
-**
-***********************************************************************/
+//
+//  Fill_Pool: C
+// 
+// Allocate memory for a pool.  The amount allocated will be
+// determined from the size and units specified when the
+// pool header was created.  The nodes of the pool are linked
+// to the free list.
+//
+static void Fill_Pool(REBPOL *pool)
 {
 	REBSEG	*seg;
 	REBNOD	*node;
@@ -478,48 +472,47 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 }
 
 
-/***********************************************************************
-**
-*/	void *Make_Node(REBCNT pool_id)
-/*
-**		Allocate a node from a pool.  If the pool has run out of
-**		nodes, it will be refilled.
-**
-**		Note that the node you get back will not be zero-filled
-**		in the general case.  BUT *at least one bit of the node
-**		will be zero*, and that one bit will *not be in the first
-**		pointer-sized object of your node*.  This results from the
-**		way that the pools and the node types must cooperate in
-**		order to indicate that a node is in a free state when all
-**		the nodes of a certain type--freed or not--are being
-**		enumerated (e.g. by the garbage collector).
-**
-**		Here's how:
-**
-**		When a pool segment is allocated, it will initialize all
-**		the units (which will become REBSERs, REBGOBs, etc.) to
-**		zero bytes, *except* for the first pointer-sized thing in
-**		each unit.  That is used whenever a unit is in the freed
-**		state to indicate the next free unit.  Because the unit
-**		has the rest of the bits zero, it can pick the zeroness
-**		any one of those bits to signify a free state.  However,
-**		when it frees the node then it must set the bit it chose
-**		back to zero before freeing.  Except for changes to the
-**		first pointer-size slot, a reused unit being handed out
-**		via Make_Node will have all the same bits it had when it
-**		was freed.
-**
-**		!!! Should a stricter contract be established between the
-**		pool and the node type about what location will be used
-**		to indicate the free state?  For instance, there's already
-**		a prescriptiveness that the first pointer-sized thing can't
-**		be used to indicate anything in the free state...why not
-**		push that to two and say that freed things always have the
-**		second pointer-sized thing be 0?  That would prevent the
-**		need for a full zero-fill, at the cost of dictating the
-**		layout of the node type's struct a little more.
-**
-***********************************************************************/
+//
+//  Make_Node: C
+// 
+// Allocate a node from a pool.  If the pool has run out of
+// nodes, it will be refilled.
+// 
+// Note that the node you get back will not be zero-filled
+// in the general case.  BUT *at least one bit of the node
+// will be zero*, and that one bit will *not be in the first
+// pointer-sized object of your node*.  This results from the
+// way that the pools and the node types must cooperate in
+// order to indicate that a node is in a free state when all
+// the nodes of a certain type--freed or not--are being
+// enumerated (e.g. by the garbage collector).
+// 
+// Here's how:
+// 
+// When a pool segment is allocated, it will initialize all
+// the units (which will become REBSERs, REBGOBs, etc.) to
+// zero bytes, *except* for the first pointer-sized thing in
+// each unit.  That is used whenever a unit is in the freed
+// state to indicate the next free unit.  Because the unit
+// has the rest of the bits zero, it can pick the zeroness
+// any one of those bits to signify a free state.  However,
+// when it frees the node then it must set the bit it chose
+// back to zero before freeing.  Except for changes to the
+// first pointer-size slot, a reused unit being handed out
+// via Make_Node will have all the same bits it had when it
+// was freed.
+// 
+// !!! Should a stricter contract be established between the
+// pool and the node type about what location will be used
+// to indicate the free state?  For instance, there's already
+// a prescriptiveness that the first pointer-sized thing can't
+// be used to indicate anything in the free state...why not
+// push that to two and say that freed things always have the
+// second pointer-sized thing be 0?  That would prevent the
+// need for a full zero-fill, at the cost of dictating the
+// layout of the node type's struct a little more.
+//
+void *Make_Node(REBCNT pool_id)
 {
 	REBNOD *node;
 	REBPOL *pool;
@@ -539,17 +532,16 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 }
 
 
-/***********************************************************************
-**
-*/	void Free_Node(REBCNT pool_id, REBNOD *node)
-/*
-**		Free a node, returning it to its pool.  If the nodelist for
-**		this pool_id is going to be enumerated, then some bit of
-**		the data must be set to 0 prior to freeing in order to
-**		distinguish the allocated from free state.  (See notes on
-**		Make_Node.)
-**
-***********************************************************************/
+//
+//  Free_Node: C
+// 
+// Free a node, returning it to its pool.  If the nodelist for
+// this pool_id is going to be enumerated, then some bit of
+// the data must be set to 0 prior to freeing in order to
+// distinguish the allocated from free state.  (See notes on
+// Make_Node.)
+//
+void Free_Node(REBCNT pool_id, REBNOD *node)
 {
 	REBPOL *pool = &Mem_Pools[pool_id];
 
@@ -568,20 +560,19 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 }
 
 
-/***********************************************************************
-**
-*/	static REBOOL Series_Data_Alloc(REBSER *series, REBCNT length, REBYTE wide, REBCNT flags)
-/*
-**		Allocates element array for an already allocated REBSER header
-**		structure.  Resets the bias and tail to zero, and sets the new
-**		width.  Flags like SER_PROTECT are left as they were, and other
-**		fields in the series structure are untouched.
-**
-**		This routine can thus be used for an initial construction
-**		or an operation like expansion.  Currently not exported
-**		from this file.
-**
-***********************************************************************/
+//
+//  Series_Data_Alloc: C
+// 
+// Allocates element array for an already allocated REBSER header
+// structure.  Resets the bias and tail to zero, and sets the new
+// width.  Flags like SER_PROTECT are left as they were, and other
+// fields in the series structure are untouched.
+// 
+// This routine can thus be used for an initial construction
+// or an operation like expansion.  Currently not exported
+// from this file.
+//
+static REBOOL Series_Data_Alloc(REBSER *series, REBCNT length, REBYTE wide, REBCNT flags)
 {
 	REBCNT size; // size of allocation (possibly bigger than we need)
 
@@ -673,11 +664,10 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 
 #if !defined(NDEBUG)
 
-/***********************************************************************
-**
-*/	void Assert_Not_In_Series_Data_Debug(const void *pointer)
-/*
-***********************************************************************/
+//
+//  Assert_Not_In_Series_Data_Debug: C
+//
+void Assert_Not_In_Series_Data_Debug(const void *pointer)
 {
 	REBSEG *seg;
 
@@ -703,29 +693,28 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 #endif
 
 
-/***********************************************************************
-**
-*/	REBCNT Series_Allocated_Size(REBSER *series)
-/*
-**		When we want the actual memory accounting for a series, the
-**		whole story may not be told by the element size multiplied
-**		by the capacity.  The series may have been allocated from
-**		a pool where it was rounded up to the pool size, and the
-**		elements may not fit evenly in that space.  Or it may have
-**		been allocated from the "system pool" via Alloc_Mem, but
-**		rounded up to a power of 2.
-**
-**		(Note: It's necessary to know the size because Free_Mem
-**		requires it, as Rebol's allocator doesn't remember the size
-**		of system pool allocations for you.  It also needs it in
-**		order to keep track of GC boundaries and memory use quotas.)
-**
-**		Rather than pay for the cost on every series of an "actual
-**		allocation size", the optimization choice is to only pay
-**		for a "rounded up to power of 2" bit.  (Since there are a
-**		LOT of series created in Rebol, each byte is scrutinized.)
-**
-***********************************************************************/
+//
+//  Series_Allocated_Size: C
+// 
+// When we want the actual memory accounting for a series, the
+// whole story may not be told by the element size multiplied
+// by the capacity.  The series may have been allocated from
+// a pool where it was rounded up to the pool size, and the
+// elements may not fit evenly in that space.  Or it may have
+// been allocated from the "system pool" via Alloc_Mem, but
+// rounded up to a power of 2.
+// 
+// (Note: It's necessary to know the size because Free_Mem
+// requires it, as Rebol's allocator doesn't remember the size
+// of system pool allocations for you.  It also needs it in
+// order to keep track of GC boundaries and memory use quotas.)
+// 
+// Rather than pay for the cost on every series of an "actual
+// allocation size", the optimization choice is to only pay
+// for a "rounded up to power of 2" bit.  (Since there are a
+// LOT of series created in Rebol, each byte is scrutinized.)
+//
+REBCNT Series_Allocated_Size(REBSER *series)
 {
 	REBCNT total = SERIES_TOTAL(series);
 	REBCNT pool_num = FIND_POOL(total);
@@ -747,16 +736,15 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 }
 
 
-/***********************************************************************
-**
-*/	REBSER *Make_Series(REBCNT length, REBYTE wide, REBCNT flags)
-/*
-**		Make a series of a given length and width (unit size).
-**		Small series will be allocated from a REBOL pool.
-**		Large series will be allocated from system memory.
-**		A width of zero is not allowed.
-**
-***********************************************************************/
+//
+//  Make_Series: C
+// 
+// Make a series of a given length and width (unit size).
+// Small series will be allocated from a REBOL pool.
+// Large series will be allocated from system memory.
+// A width of zero is not allowed.
+//
+REBSER *Make_Series(REBCNT length, REBYTE wide, REBCNT flags)
 {
 	REBSER *series;
 
@@ -836,18 +824,17 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 }
 
 
-/***********************************************************************
-**
-*/	static void Free_Unbiased_Series_Data(REBYTE *unbiased, REBCNT size)
-/*
-**		Routines that are part of the core series implementation
-**		call this, including Expand_Series.  It requires a low-level
-**		awareness that the series data pointer cannot be freed
-**		without subtracting out the "biasing" which skips the pointer
-**		ahead to account for unused capacity at the head of the
-**		allocation.  They also must know the total allocation size.
-**
-***********************************************************************/
+//
+//  Free_Unbiased_Series_Data: C
+// 
+// Routines that are part of the core series implementation
+// call this, including Expand_Series.  It requires a low-level
+// awareness that the series data pointer cannot be freed
+// without subtracting out the "biasing" which skips the pointer
+// ahead to account for unused capacity at the head of the
+// allocation.  They also must know the total allocation size.
+//
+static void Free_Unbiased_Series_Data(REBYTE *unbiased, REBCNT size)
 {
 	REBCNT pool_num = FIND_POOL(size);
 	REBPOL *pool;
@@ -880,51 +867,50 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 }
 
 
-/***********************************************************************
-**
-*/	void Expand_Series(REBSER *series, REBCNT index, REBCNT delta)
-/*
-**		Expand a series at a particular index point by the number
-**		number of units specified by delta.
-**
-**			index - where space is expanded (but not cleared)
-**			delta - number of UNITS to expand (keeping terminator)
-**			tail  - will be updated
-**
-**			        |<---rest--->|
-**			<-bias->|<-tail->|   |
-**			+--------------------+
-**			|       abcdefghi    |
-**			+--------------------+
-**			        |    |
-**			        data index
-**
-**		If the series has enough space within it, then it will be used,
-**		otherwise the series data will be reallocated.
-**
-**		When expanded at the head, if bias space is available, it will
-**		be used (if it provides enough space).
-**
-**		!!! It seems the original intent of this routine was
-**		to be used with a group of other routines that were "Noterm"
-**		and do not terminate.  However, Expand_Series assumed that
-**		the capacity of the original series was at least (tail + 1)
-**		elements, and would include the terminator when "sliding"
-**		the data in the update.  This makes the other Noterm routines
-**		seem a bit high cost for their benefit.  If this were to be
-**		changed to Expand_Series_Noterm it would put more burden
-**		on the clients...for a *potential* benefit in being able to
-**		write just a REB_END byte into the terminal REBVAL vs. copying
-**		the entire value cell.  (Of course, with a good memcpy it
-**		might be an irrelevant difference.)  For the moment we reverse
-**		the burden by enforcing the assumption that the incoming series
-**		was already terminated.  That way our "slide" of the data via
-**		memcpy will keep it terminated.
-**
-**		WARNING: never use direct pointers into the series data, as the
-**		series data can be relocated in memory.
-**
-***********************************************************************/
+//
+//  Expand_Series: C
+// 
+// Expand a series at a particular index point by the number
+// number of units specified by delta.
+// 
+//     index - where space is expanded (but not cleared)
+//     delta - number of UNITS to expand (keeping terminator)
+//     tail  - will be updated
+// 
+//             |<---rest--->|
+//     <-bias->|<-tail->|   |
+//     +--------------------+
+//     |       abcdefghi    |
+//     +--------------------+
+//             |    |
+//             data index
+// 
+// If the series has enough space within it, then it will be used,
+// otherwise the series data will be reallocated.
+// 
+// When expanded at the head, if bias space is available, it will
+// be used (if it provides enough space).
+// 
+// !!! It seems the original intent of this routine was
+// to be used with a group of other routines that were "Noterm"
+// and do not terminate.  However, Expand_Series assumed that
+// the capacity of the original series was at least (tail + 1)
+// elements, and would include the terminator when "sliding"
+// the data in the update.  This makes the other Noterm routines
+// seem a bit high cost for their benefit.  If this were to be
+// changed to Expand_Series_Noterm it would put more burden
+// on the clients...for a *potential* benefit in being able to
+// write just a REB_END byte into the terminal REBVAL vs. copying
+// the entire value cell.  (Of course, with a good memcpy it
+// might be an irrelevant difference.)  For the moment we reverse
+// the burden by enforcing the assumption that the incoming series
+// was already terminated.  That way our "slide" of the data via
+// memcpy will keep it terminated.
+// 
+// WARNING: never use direct pointers into the series data, as the
+// series data can be relocated in memory.
+//
+void Expand_Series(REBSER *series, REBCNT index, REBCNT delta)
 {
 	REBYTE wide = SERIES_WIDE(series);
 	REBOOL any_block = Is_Array_Series(series);
@@ -1049,16 +1035,15 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 }
 
 
-/***********************************************************************
-**
-*/	void Remake_Series(REBSER *series, REBCNT units, REBYTE wide, REBCNT flags)
-/*
-**		Reallocate a series as a given maximum size. Content in the
-**		retained portion of the length may be kept as-is if the
-**		MKS_PRESERVE is passed in the flags.  The other flags are
-**		handled the same as when passed to Make_Series.
-**
-***********************************************************************/
+//
+//  Remake_Series: C
+// 
+// Reallocate a series as a given maximum size. Content in the
+// retained portion of the length may be kept as-is if the
+// MKS_PRESERVE is passed in the flags.  The other flags are
+// handled the same as when passed to Make_Series.
+//
+void Remake_Series(REBSER *series, REBCNT units, REBYTE wide, REBCNT flags)
 {
 	REBINT bias_old = SERIES_BIAS(series);
 	REBINT size_old = Series_Allocated_Size(series);
@@ -1115,15 +1100,14 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 }
 
 
-/***********************************************************************
-**
-*/	void GC_Kill_Series(REBSER *series)
-/*
-**		Only the garbage collector should be calling this routine.
-**		It frees a series even though it is under GC management,
-**		because the GC has figured out no references exist.
-**
-***********************************************************************/
+//
+//  GC_Kill_Series: C
+// 
+// Only the garbage collector should be calling this routine.
+// It frees a series even though it is under GC management,
+// because the GC has figured out no references exist.
+//
+void GC_Kill_Series(REBSER *series)
 {
 	REBCNT n;
 	REBCNT size = SERIES_TOTAL(series);
@@ -1169,14 +1153,13 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 }
 
 
-/***********************************************************************
-**
-*/	void Free_Series(REBSER *series)
-/*
-**		Free a series, returning its memory for reuse.  You can only
-**		call this on series that are not managed by the GC.
-**
-***********************************************************************/
+//
+//  Free_Series: C
+// 
+// Free a series, returning its memory for reuse.  You can only
+// call this on series that are not managed by the GC.
+//
+void Free_Series(REBSER *series)
 {
 	REBSER ** const last_ptr
 		= &cast(REBSER**, GC_Manuals->data)[GC_Manuals->tail - 1];
@@ -1219,15 +1202,14 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 }
 
 
-/***********************************************************************
-**
-*/	void Widen_String(REBSER *series, REBOOL preserve)
-/*
-**		Widen string from 1 byte to 2 bytes.
-**
-**		NOTE: allocates new memory. Cached pointers are invalid.
-**
-***********************************************************************/
+//
+//  Widen_String: C
+// 
+// Widen string from 1 byte to 2 bytes.
+// 
+// NOTE: allocates new memory. Cached pointers are invalid.
+//
+void Widen_String(REBSER *series, REBOOL preserve)
 {
 	REBINT bias_old = SERIES_BIAS(series);
 	REBINT size_old = Series_Allocated_Size(series);
@@ -1277,23 +1259,22 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 }
 
 
-/***********************************************************************
-**
-*/	void Manage_Series(REBSER *series)
-/*
-**		When a series is first created, it is in a state of being
-**		manually memory managed.  Thus, you can call Free_Series on
-**		it if you are sure you do not need it.  This will transition
-**		a manually managed series to be one managed by the GC.  There
-**		is no way to transition it back--once a series has become
-**		managed, only the GC can free it.
-**
-**		All series that wind up in user-visible values *must* be
-**		managed, because the user can make copies of values
-**		containing that series.  When these copies are made, it's
-**		no longer safe to assume it's okay to free the original.
-**
-***********************************************************************/
+//
+//  Manage_Series: C
+// 
+// When a series is first created, it is in a state of being
+// manually memory managed.  Thus, you can call Free_Series on
+// it if you are sure you do not need it.  This will transition
+// a manually managed series to be one managed by the GC.  There
+// is no way to transition it back--once a series has become
+// managed, only the GC can free it.
+// 
+// All series that wind up in user-visible values *must* be
+// managed, because the user can make copies of values
+// containing that series.  When these copies are made, it's
+// no longer safe to assume it's okay to free the original.
+//
+void Manage_Series(REBSER *series)
 {
 	REBSER ** const last_ptr
 		= &cast(REBSER**, GC_Manuals->data)[GC_Manuals->tail - 1];
@@ -1321,15 +1302,14 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 
 #if !defined(NDEBUG)
 
-/***********************************************************************
-**
-*/	void Manage_Frame_Debug(REBSER *frame)
-/*
-**      Special handler for making sure frames are managed by the GC,
-**		specifically.  If you've poked in a wordlist from somewhere
-**		else you might not be able to use this.
-**
-***********************************************************************/
+//
+//  Manage_Frame_Debug: C
+// 
+// Special handler for making sure frames are managed by the GC,
+// specifically.  If you've poked in a wordlist from somewhere
+// else you might not be able to use this.
+//
+void Manage_Frame_Debug(REBSER *frame)
 {
 	if (
 		SERIES_GET_FLAG(frame, SER_MANAGED)
@@ -1345,16 +1325,15 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 }
 
 
-/***********************************************************************
-**
-*/	void Manuals_Leak_Check_Debug(REBCNT manuals_tail, const char *label_str)
-/*
-**		Routine for checking that the pointer passed in is the
-**		same as the head of the series that the GC is not tracking,
-**		which is used to check for leaks relative to an initial
-**		status of outstanding series.
-**
-***********************************************************************/
+//
+//  Manuals_Leak_Check_Debug: C
+// 
+// Routine for checking that the pointer passed in is the
+// same as the head of the series that the GC is not tracking,
+// which is used to check for leaks relative to an initial
+// status of outstanding series.
+//
+void Manuals_Leak_Check_Debug(REBCNT manuals_tail, const char *label_str)
 {
 	if (SERIES_TAIL(GC_Manuals) > manuals_tail) {
 		REBSER* most_recent =
@@ -1379,16 +1358,15 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 }
 
 
-/***********************************************************************
-**
-*/	void Assert_Value_Managed_Debug(const REBVAL *value)
-/*
-**		Routine for checking that the pointer passed in is the
-**		same as the head of the series that the GC is not tracking,
-**		which is used to check for leaks relative to an initial
-**		status of outstanding series.
-**
-***********************************************************************/
+//
+//  Assert_Value_Managed_Debug: C
+// 
+// Routine for checking that the pointer passed in is the
+// same as the head of the series that the GC is not tracking,
+// which is used to check for leaks relative to an initial
+// status of outstanding series.
+//
+void Assert_Value_Managed_Debug(const REBVAL *value)
 {
 	if (ANY_OBJECT(value)) {
 		REBSER *frame = VAL_OBJ_FRAME(value);
@@ -1403,13 +1381,12 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 #endif
 
 
-/***********************************************************************
-**
-*/	void Free_Gob(REBGOB *gob)
-/*
-**		Free a gob, returning its memory for reuse.
-**
-***********************************************************************/
+//
+//  Free_Gob: C
+// 
+// Free a gob, returning its memory for reuse.
+//
+void Free_Gob(REBGOB *gob)
 {
 	FREE_GOB(gob);
 
@@ -1423,13 +1400,12 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 }
 
 
-/***********************************************************************
-**
-*/	REBFLG Series_In_Pool(REBSER *series)
-/*
-**		Confirm that the series value is in the series pool.
-**
-***********************************************************************/
+//
+//  Series_In_Pool: C
+// 
+// Confirm that the series value is in the series pool.
+//
+REBFLG Series_In_Pool(REBSER *series)
 {
 	REBSEG	*seg;
 	REBSER *start;
@@ -1445,17 +1421,16 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 }
 
 
-/***********************************************************************
-**
-*/	REBCNT Check_Memory(void)
-/*
-**		FOR DEBUGGING ONLY:
-**		Traverse the free lists of all pools -- just to prove we can.
-**		This is useful for finding corruption from bad memory writes,
-**		because a write past the end of a node will destory the pointer
-**		for the next free area.
-**
-***********************************************************************/
+//
+//  Check_Memory: C
+// 
+// FOR DEBUGGING ONLY:
+// Traverse the free lists of all pools -- just to prove we can.
+// This is useful for finding corruption from bad memory writes,
+// because a write past the end of a node will destory the pointer
+// for the next free area.
+//
+REBCNT Check_Memory(void)
 {
 	REBCNT pool_num;
 	REBNOD *node;
@@ -1509,13 +1484,12 @@ crash:
 }
 
 
-/***********************************************************************
-**
-*/	void Dump_All(REBINT size)
-/*
-**		Dump all series of a given size.
-**
-***********************************************************************/
+//
+//  Dump_All: C
+// 
+// Dump all series of a given size.
+//
+void Dump_All(REBINT size)
 {
 	REBSEG	*seg;
 	REBSER *series;
@@ -1536,13 +1510,12 @@ crash:
 	}
 }
 
-/***********************************************************************
-**
-*/	void Dump_Series_In_Pool(REBCNT pool_id)
-/*
-**		Dump all series in pool @pool_id, UNKNOWN (-1) for all pools
-**
-***********************************************************************/
+//
+//  Dump_Series_In_Pool: C
+// 
+// Dump all series in pool @pool_id, UNKNOWN (-1) for all pools
+//
+void Dump_Series_In_Pool(REBCNT pool_id)
 {
 	REBSEG	*seg;
 	REBSER *series;
@@ -1583,13 +1556,12 @@ crash:
 }
 
 
-/***********************************************************************
-**
-*/	static void Dump_Pools(void)
-/*
-**		Print statistics about all memory pools.
-**
-***********************************************************************/
+//
+//  Dump_Pools: C
+// 
+// Print statistics about all memory pools.
+//
+static void Dump_Pools(void)
 {
 	REBSEG	*seg;
 	REBCNT	segs;
@@ -1626,11 +1598,10 @@ crash:
 }
 
 
-/***********************************************************************
-**
-*/	REBU64 Inspect_Series(REBCNT flags)
-/*
-***********************************************************************/
+//
+//  Inspect_Series: C
+//
+REBU64 Inspect_Series(REBCNT flags)
 {
 	REBSEG	*seg;
 	REBSER	*series;

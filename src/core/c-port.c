@@ -33,14 +33,13 @@
 
 #define MAX_WAIT_MS 64 // Maximum millsec to sleep
 
-/***********************************************************************
-**
-*/	void Make_Port(REBVAL *out, const REBVAL *spec)
-/*
-**		Create a new port. This is done by calling the MAKE_PORT
-**		function stored in the system/intrinsic object.
-**
-***********************************************************************/
+//
+//  Make_Port: C
+// 
+// Create a new port. This is done by calling the MAKE_PORT
+// function stored in the system/intrinsic object.
+//
+void Make_Port(REBVAL *out, const REBVAL *spec)
 {
 	if (Do_Sys_Func_Throws(out, SYS_CTX_MAKE_PORT_P, spec, 0)) {
 		// Gave back an unhandled RETURN, BREAK, CONTINUE, etc...
@@ -52,14 +51,13 @@
 }
 
 
-/***********************************************************************
-**
-*/	REBFLG Is_Port_Open(REBSER *port)
-/*
-**		Standard method for checking if port is open.
-**		A convention. Not all ports use this method.
-**
-***********************************************************************/
+//
+//  Is_Port_Open: C
+// 
+// Standard method for checking if port is open.
+// A convention. Not all ports use this method.
+//
+REBFLG Is_Port_Open(REBSER *port)
 {
 	REBVAL *state = BLK_SKIP(port, STD_PORT_STATE);
 	if (!IS_BINARY(state)) return FALSE;
@@ -67,14 +65,13 @@
 }
 
 
-/***********************************************************************
-**
-*/	void Set_Port_Open(REBSER *port, REBFLG flag)
-/*
-**		Standard method for setting a port open/closed.
-**		A convention. Not all ports use this method.
-**
-***********************************************************************/
+//
+//  Set_Port_Open: C
+// 
+// Standard method for setting a port open/closed.
+// A convention. Not all ports use this method.
+//
+void Set_Port_Open(REBSER *port, REBFLG flag)
 {
 	REBVAL *state = BLK_SKIP(port, STD_PORT_STATE);
 	if (IS_BINARY(state)) {
@@ -84,15 +81,14 @@
 }
 
 
-/***********************************************************************
-**
-*/	void *Use_Port_State(REBSER *port, REBCNT device, REBCNT size)
-/*
-**		Use private state area in a port. Create if necessary.
-**		The size is that of a binary structure used by
-**		the port for storing internal information.
-**
-***********************************************************************/
+//
+//  Use_Port_State: C
+// 
+// Use private state area in a port. Create if necessary.
+// The size is that of a binary structure used by
+// the port for storing internal information.
+//
+void *Use_Port_State(REBSER *port, REBCNT device, REBCNT size)
 {
 	REBVAL *state = BLK_SKIP(port, STD_PORT_STATE);
 
@@ -113,14 +109,13 @@
 }
 
 
-/***********************************************************************
-**
-*/	REBFLG Pending_Port(REBVAL *port)
-/*
-**		Return TRUE if port value is pending a signal.
-**		Not valid for all ports - requires request struct!!!
-**
-***********************************************************************/
+//
+//  Pending_Port: C
+// 
+// Return TRUE if port value is pending a signal.
+// Not valid for all ports - requires request struct!!!
+//
+REBFLG Pending_Port(REBVAL *port)
 {
 	REBVAL *state;
 	REBREQ *req;
@@ -136,16 +131,15 @@
 }
 
 
-/***********************************************************************
-**
-*/	REBINT Awake_System(REBSER *ports, REBINT only)
-/*
-**	Returns:
-**		-1 for errors
-**		 0 for nothing to do
-**		 1 for wait is satisifed
-**
-***********************************************************************/
+//
+//  Awake_System: C
+// 
+// Returns:
+//     -1 for errors
+//      0 for nothing to do
+//      1 for wait is satisifed
+//
+REBINT Awake_System(REBSER *ports, REBINT only)
 {
 	REBVAL *port;
 	REBVAL *state;
@@ -192,18 +186,17 @@
 }
 
 
-/***********************************************************************
-**
-*/	REBINT Wait_Ports(REBSER *ports, REBCNT timeout, REBINT only)
-/*
-**	Inputs:
-**		Ports: a block of ports or zero (on stack to avoid GC).
-**		Timeout: milliseconds to wait
-**
-**	Returns:
-**		TRUE when port action happened, or FALSE for timeout.
-**
-***********************************************************************/
+//
+//  Wait_Ports: C
+// 
+// Inputs:
+//     Ports: a block of ports or zero (on stack to avoid GC).
+//     Timeout: milliseconds to wait
+// 
+// Returns:
+//     TRUE when port action happened, or FALSE for timeout.
+//
+REBINT Wait_Ports(REBSER *ports, REBCNT timeout, REBINT only)
 {
 	REBI64 base = OS_DELTA_TIME(0, 0);
 	REBCNT time;
@@ -249,14 +242,13 @@
 }
 
 
-/***********************************************************************
-**
-*/	void Sieve_Ports(REBSER *ports)
-/*
-**		Remove all ports not found in the WAKE list.
-**		ports could be NULL, in which case the WAKE list is cleared.
-**
-***********************************************************************/
+//
+//  Sieve_Ports: C
+// 
+// Remove all ports not found in the WAKE list.
+// ports could be NULL, in which case the WAKE list is cleared.
+//
+void Sieve_Ports(REBSER *ports)
 {
 	REBVAL *port;
 	REBVAL *waked;
@@ -284,14 +276,13 @@
 }
 
 
-/***********************************************************************
-**
-*/	REBCNT Find_Action(REBVAL *object, REBCNT action)
-/*
-**		Given an action number, return the action's index in
-**		the specified object. If not found, a zero is returned.
-**
-***********************************************************************/
+//
+//  Find_Action: C
+// 
+// Given an action number, return the action's index in
+// the specified object. If not found, a zero is returned.
+//
+REBCNT Find_Action(REBVAL *object, REBCNT action)
 {
 	return Find_Word_Index(
 		VAL_OBJ_FRAME(object), Get_Action_Sym(action), FALSE
@@ -299,17 +290,16 @@
 }
 
 
-/***********************************************************************
-**
-*/	int Do_Port_Action(struct Reb_Call *call_, REBSER *port, REBCNT action)
-/*
-**		Call a PORT actor (action) value. Search PORT actor
-**		first. If not found, search the PORT scheme actor.
-**
-**		NOTE: stack must already be setup correctly for action, and
-**		the caller must cleanup the stack.
-**
-***********************************************************************/
+//
+//  Do_Port_Action: C
+// 
+// Call a PORT actor (action) value. Search PORT actor
+// first. If not found, search the PORT scheme actor.
+// 
+// NOTE: stack must already be setup correctly for action, and
+// the caller must cleanup the stack.
+//
+int Do_Port_Action(struct Reb_Call *call_, REBSER *port, REBCNT action)
 {
 	REBVAL *actor;
 	REBCNT n = 0;
@@ -372,16 +362,15 @@
 }
 
 
-/***********************************************************************
-**
-*/	void Secure_Port(REBCNT kind, REBREQ *req, REBVAL *name, REBSER *path)
-/*
-**		kind: word that represents the type (e.g. 'file)
-**		req:  I/O request
-**		name: value that holds the original user spec
-**		path: the local path to compare with
-**
-***********************************************************************/
+//
+//  Secure_Port: C
+// 
+// kind: word that represents the type (e.g. 'file)
+// req:  I/O request
+// name: value that holds the original user spec
+// path: the local path to compare with
+//
+void Secure_Port(REBCNT kind, REBREQ *req, REBVAL *name, REBSER *path)
 {
 	REBYTE *flags;
 	REBVAL val;
@@ -396,14 +385,13 @@
 }
 
 
-/***********************************************************************
-**
-*/	void Validate_Port(REBSER *port, REBCNT action)
-/*
-**		Because port actors are exposed to the user level, we must
-**		prevent them from being called with invalid values.
-**
-***********************************************************************/
+//
+//  Validate_Port: C
+// 
+// Because port actors are exposed to the user level, we must
+// prevent them from being called with invalid values.
+//
+void Validate_Port(REBSER *port, REBCNT action)
 {
 	if (
 		action >= A_MAX_ACTION
@@ -455,14 +443,13 @@ typedef struct rebol_scheme_actions {
 SCHEME_ACTIONS *Scheme_Actions;	// Initial Global (not threaded)
 
 
-/***********************************************************************
-**
-*/	void Register_Scheme(REBCNT sym, const PORT_ACTION *map, REBPAF fun)
-/*
-**		Associate a scheme word (e.g. FILE) with a set of native
-**		scheme actions. This will be used by the Set_Scheme native
-**
-***********************************************************************/
+//
+//  Register_Scheme: C
+// 
+// Associate a scheme word (e.g. FILE) with a set of native
+// scheme actions. This will be used by the Set_Scheme native
+//
+void Register_Scheme(REBCNT sym, const PORT_ACTION *map, REBPAF fun)
 {
 	REBINT n;
 
@@ -475,11 +462,15 @@ SCHEME_ACTIONS *Scheme_Actions;	// Initial Global (not threaded)
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(set_scheme)
-/*
-***********************************************************************/
+//
+//  set-scheme: native [
+//  
+//  "Low-level port scheme actor initialization."
+//  
+//      scheme [object!]
+//  ]
+//
+REBNATIVE(set_scheme)
 {
 	REBVAL *scheme;
 	REBVAL *actor;
@@ -551,19 +542,18 @@ SCHEME_ACTIONS *Scheme_Actions;	// Initial Global (not threaded)
 }
 
 
-/***********************************************************************
-**
-*/	void Init_Ports(void)
-/*
-**		Initialize port scheme related subsystems.
-**
-**	In order to add a port scheme:
-**
-**		In mezz-ports.r add a make-scheme.
-**		Add an Init_*_Scheme() here.
-**		Be sure host-devices.c has the device enabled.
-**
-***********************************************************************/
+//
+//  Init_Ports: C
+// 
+// Initialize port scheme related subsystems.
+// 
+// In order to add a port scheme:
+// 
+// In mezz-ports.r add a make-scheme.
+// Add an Init_*_Scheme() here.
+// Be sure host-devices.c has the device enabled.
+//
+void Init_Ports(void)
 {
 	Scheme_Actions = ALLOC_ARRAY(SCHEME_ACTIONS, MAX_SCHEMES);
 	CLEAR(Scheme_Actions, MAX_SCHEMES * sizeof(SCHEME_ACTIONS));
@@ -590,11 +580,10 @@ SCHEME_ACTIONS *Scheme_Actions;	// Initial Global (not threaded)
 }
 
 
-/***********************************************************************
-**
-*/	void Shutdown_Ports(void)
-/*
-***********************************************************************/
+//
+//  Shutdown_Ports: C
+//
+void Shutdown_Ports(void)
 {
 	FREE_ARRAY(SCHEME_ACTIONS, MAX_SCHEMES, Scheme_Actions);
 }

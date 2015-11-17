@@ -56,33 +56,30 @@
 extern void Signal_Device(REBREQ *req, REBINT type);
 
 
-/***********************************************************************
-**
-*/	DEVICE_CMD Open_Clipboard(REBREQ *req)
-/*
-***********************************************************************/
+//
+//  Open_Clipboard: C
+//
+DEVICE_CMD Open_Clipboard(REBREQ *req)
 {
 	SET_OPEN(req);
 	return DR_DONE;
 }
 
 
-/***********************************************************************
-**
-*/	DEVICE_CMD Close_Clipboard(REBREQ *req)
-/*
-***********************************************************************/
+//
+//  Close_Clipboard: C
+//
+DEVICE_CMD Close_Clipboard(REBREQ *req)
 {
 	SET_CLOSED(req);
 	return DR_DONE;
 }
 
 
-/***********************************************************************
-**
-*/	DEVICE_CMD Read_Clipboard(REBREQ *req)
-/*
-***********************************************************************/
+//
+//  Read_Clipboard: C
+//
+DEVICE_CMD Read_Clipboard(REBREQ *req)
 {
 	HANDLE data;
     wchar_t *cp;
@@ -133,14 +130,13 @@ extern void Signal_Device(REBREQ *req, REBINT type);
 }
 
 
-/***********************************************************************
-**
-*/	DEVICE_CMD Write_Clipboard(REBREQ *req)
-/*
-**		Works for Unicode and ASCII strings.
-**		Length is number of bytes passed (not number of chars).
-**
-***********************************************************************/
+//
+//  Write_Clipboard: C
+// 
+// Works for Unicode and ASCII strings.
+// Length is number of bytes passed (not number of chars).
+//
+DEVICE_CMD Write_Clipboard(REBREQ *req)
 {
 	HANDLE data;
 	REBYTE *bin;
@@ -188,11 +184,10 @@ extern void Signal_Device(REBREQ *req, REBINT type);
 }
 
 
-/***********************************************************************
-**
-*/	DEVICE_CMD Poll_Clipboard(REBREQ *req)
-/*
-***********************************************************************/
+//
+//  Poll_Clipboard: C
+//
+DEVICE_CMD Poll_Clipboard(REBREQ *req)
 {
 	return DR_DONE;
 }

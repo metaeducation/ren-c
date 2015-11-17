@@ -60,13 +60,12 @@ extern void Init_Core_Ext(void);
 RL_LIB *RL; // Link back to reb-lib from embedded extensions
 static u32 *core_ext_words;
 
-/***********************************************************************
-**
-*/	RXIEXT int RXD_Core(int cmd, RXIFRM *frm, REBCEC *data)
-/*
-**		Core command extension dispatcher.
-**
-***********************************************************************/
+//
+//  RXD_Core: C
+// 
+// Core command extension dispatcher.
+//
+RXIEXT int RXD_Core(int cmd, RXIFRM *frm, REBCEC *data)
 {
     switch (cmd) {
 
@@ -639,15 +638,13 @@ static u32 *core_ext_words;
     return RXR_UNSET;
 }
 
-/***********************************************************************
-**
-*/	void Init_Core_Ext(void)
-/*
-**	Initialize special variables of the core extension.
-**
-***********************************************************************/
+//
+//  Init_Core_Ext: C
+// 
+// Initialize special variables of the core extension.
+//
+void Init_Core_Ext(void)
 {
-// Initialize random number services (used by https protocol)
 #ifdef TO_WINDOWS
 	if (!CryptAcquireContextW(
 		&gCryptProv, 0, 0, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT | CRYPT_SILENT
@@ -672,11 +669,10 @@ static u32 *core_ext_words;
 }
 
 
-/***********************************************************************
-**
-*/	void Shutdown_Core_Ext(void)
-/*
-***********************************************************************/
+//
+//  Shutdown_Core_Ext: C
+//
+void Shutdown_Core_Ext(void)
 {
 #ifdef TO_WINDOWS
 	if (gCryptProv != 0)

@@ -29,35 +29,32 @@
 
 #include "sys-core.h"
 
-/***********************************************************************
-**
-*/	REBINT CT_None(REBVAL *a, REBVAL *b, REBINT mode)
-/*
-***********************************************************************/
+//
+//  CT_None: C
+//
+REBINT CT_None(REBVAL *a, REBVAL *b, REBINT mode)
 {
 	if (mode >= 0) return (VAL_TYPE(a) == VAL_TYPE(b));
 	return -1;
 }
 
 
-/***********************************************************************
-**
-*/	REBFLG MT_None(REBVAL *out, REBVAL *data, enum Reb_Kind type)
-/*
-***********************************************************************/
+//
+//  MT_None: C
+//
+REBFLG MT_None(REBVAL *out, REBVAL *data, enum Reb_Kind type)
 {
 	VAL_SET(out, type);
 	return TRUE;
 }
 
 
-/***********************************************************************
-**
-*/	REBTYPE(None)
-/*
-**		ALSO used for unset!
-**
-***********************************************************************/
+//
+//  REBTYPE: C
+// 
+// ALSO used for unset!
+//
+REBTYPE(None)
 {
 	REBVAL *val = D_ARG(1);
 

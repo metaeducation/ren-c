@@ -36,15 +36,14 @@ static REBFLG find_in_uni(REBUNI *up, REBINT len, REBUNI c)
 }
 
 
-/***********************************************************************
-**
-*/	static void replace_with(REBSER *ser, REBCNT index, REBCNT tail, REBVAL *with)
-/*
-**		Replace whitespace chars that match WITH string.
-**
-**		Resulting string is always smaller than it was to start.
-**
-***********************************************************************/
+//
+//  replace_with: C
+// 
+// Replace whitespace chars that match WITH string.
+// 
+// Resulting string is always smaller than it was to start.
+//
+static void replace_with(REBSER *ser, REBCNT index, REBCNT tail, REBVAL *with)
 {
 	#define MAX_WITH 32
 	REBCNT wlen;
@@ -97,17 +96,16 @@ static REBFLG find_in_uni(REBUNI *up, REBINT len, REBUNI c)
 }
 
 
-/***********************************************************************
-**
-*/	static void trim_auto(REBSER *ser, REBCNT index, REBCNT tail)
-/*
-**		Skip any blank lines and then determine indent of
-**		first line and make the rest align with it.
-**
-**		BUG!!! If the indentation uses TABS, then it could
-**		fill past the source pointer!
-**
-***********************************************************************/
+//
+//  trim_auto: C
+// 
+// Skip any blank lines and then determine indent of
+// first line and make the rest align with it.
+// 
+// BUG!!! If the indentation uses TABS, then it could
+// fill past the source pointer!
+//
+static void trim_auto(REBSER *ser, REBCNT index, REBCNT tail)
 {
 	REBCNT out = index;
 	REBCNT line;
@@ -159,13 +157,12 @@ static REBFLG find_in_uni(REBUNI *up, REBINT len, REBUNI c)
 }
 
 
-/***********************************************************************
-**
-*/	static void trim_lines(REBSER *ser, REBCNT index, REBCNT tail)
-/*
-**		Remove all newlines and extra space.
-**
-***********************************************************************/
+//
+//  trim_lines: C
+// 
+// Remove all newlines and extra space.
+//
+static void trim_lines(REBSER *ser, REBCNT index, REBCNT tail)
 {
 	REBINT pad = 1; // used to allow a single space
 	REBUNI uc;
@@ -196,14 +193,13 @@ static REBFLG find_in_uni(REBUNI *up, REBINT len, REBUNI c)
 }
 
 
-/***********************************************************************
-**
-*/	static void trim_head_tail(REBSER *ser, REBCNT index, REBCNT tail, REBFLG h, REBFLG t)
-/*
-**		Trim from head and tail of each line, trim any leading or
-**		trailing lines as well, leaving one at the end if present
-**
-***********************************************************************/
+//
+//  trim_head_tail: C
+// 
+// Trim from head and tail of each line, trim any leading or
+// trailing lines as well, leaving one at the end if present
+//
+static void trim_head_tail(REBSER *ser, REBCNT index, REBCNT tail, REBFLG h, REBFLG t)
 {
 	REBCNT out = index;
 	REBOOL append_line_feed = FALSE;
@@ -273,11 +269,10 @@ static REBFLG find_in_uni(REBUNI *up, REBINT len, REBUNI c)
 }
 
 
-/***********************************************************************
-**
-*/	void Trim_String(REBSER *ser, REBCNT index, REBCNT len, REBCNT flags, REBVAL *with)
-/*
-***********************************************************************/
+//
+//  Trim_String: C
+//
+void Trim_String(REBSER *ser, REBCNT index, REBCNT len, REBCNT flags, REBVAL *with)
 {
 	REBCNT tail = index + len;
 

@@ -40,11 +40,10 @@ enum {
 };
 
 
-/***********************************************************************
-**
-*/	static void Protect_Key(REBVAL *key, REBCNT flags)
-/*
-***********************************************************************/
+//
+//  Protect_Key: C
+//
+static void Protect_Key(REBVAL *key, REBCNT flags)
 {
 	if (GET_FLAG(flags, PROT_WORD)) {
 		if (GET_FLAG(flags, PROT_SET)) VAL_SET_EXT(key, EXT_WORD_LOCK);
@@ -58,13 +57,12 @@ enum {
 }
 
 
-/***********************************************************************
-**
-*/	static void Protect_Value(REBVAL *value, REBCNT flags)
-/*
-**		Anything that calls this must call Unmark() when done.
-**
-***********************************************************************/
+//
+//  Protect_Value: C
+// 
+// Anything that calls this must call Unmark() when done.
+//
+static void Protect_Value(REBVAL *value, REBCNT flags)
 {
 	if (ANY_SERIES(value) || IS_MAP(value))
 		Protect_Series(value, flags);
@@ -73,13 +71,12 @@ enum {
 }
 
 
-/***********************************************************************
-**
-*/	void Protect_Series(REBVAL *val, REBCNT flags)
-/*
-**		Anything that calls this must call Unmark() when done.
-**
-***********************************************************************/
+//
+//  Protect_Series: C
+// 
+// Anything that calls this must call Unmark() when done.
+//
+void Protect_Series(REBVAL *val, REBCNT flags)
 {
 	REBSER *series = VAL_SERIES(val);
 
@@ -100,13 +97,12 @@ enum {
 }
 
 
-/***********************************************************************
-**
-*/	void Protect_Object(REBVAL *value, REBCNT flags)
-/*
-**		Anything that calls this must call Unmark() when done.
-**
-***********************************************************************/
+//
+//  Protect_Object: C
+// 
+// Anything that calls this must call Unmark() when done.
+//
+void Protect_Object(REBVAL *value, REBCNT flags)
 {
 	REBSER *series = VAL_OBJ_FRAME(value);
 
@@ -129,11 +125,10 @@ enum {
 }
 
 
-/***********************************************************************
-**
-*/	static void Protect_Word_Value(REBVAL *word, REBCNT flags)
-/*
-***********************************************************************/
+//
+//  Protect_Word_Value: C
+//
+static void Protect_Word_Value(REBVAL *word, REBCNT flags)
 {
 	REBVAL *key;
 	REBVAL *val;
@@ -164,20 +159,19 @@ enum {
 }
 
 
-/***********************************************************************
-**
-*/	static int Protect(struct Reb_Call *call_, REBCNT flags)
-/*
-**	Common arguments between protect and unprotect:
-**
-**		1: value
-**		2: /deep  - recursive
-**		3: /words  - list of words
-**		4: /values - list of values
-**
-**	Protect takes a HIDE parameter as #5.
-**
-***********************************************************************/
+//
+//  Protect: C
+// 
+// Common arguments between protect and unprotect:
+// 
+//     1: value
+//     2: /deep  - recursive
+//     3: /words  - list of words
+//     4: /values - list of values
+// 
+// Protect takes a HIDE parameter as #5.
+//
+static int Protect(struct Reb_Call *call_, REBCNT flags)
 {
 	REBVAL *val = D_ARG(1);
 
@@ -237,38 +231,47 @@ enum {
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(also)
-/*
-***********************************************************************/
+//
+//  also: native [
+//  
+//  {Returns the first value, but also evaluates the second.}
+//  
+//      value1 [any-value!]
+//      value2 [any-value!]
+//  ]
+//
+REBNATIVE(also)
 {
 	return R_ARG1;
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(all)
-/*
-**	ALL is effectively Rebol's "short-circuit AND".  Unsets do not vote either
-**	true or false...they are ignored.
-**
-**	To offer a more generically useful result than just TRUE or FALSE, it will
-**	use as a "truthy" value whatever the last evaluation in the chain was.  If
-**	there was no last value, but no conditionally false instance hit to break
-**	the chain, as in `all []` or `all [1 2 ()]`...it will return TRUE.
-**
-**	(Note: It would become a more costly operation to retain the last truthy
-**	value to return 2 in the case of `all [1 2 ()`]`, just to say it could.
-**	The overhead would undermine the raw efficiency of the operation.)
-**
-**	For the "falsy" value, ALL uses a NONE! rather than logic FALSE.  It's a
-**	historical design decision which has some benefits, but perhaps some
-**	drawbacks to those wishing to use it on logic values and stay in the
-**	logic domain.  (`all [true true]` => true, `all [false true]` is NONE!).
-**
-***********************************************************************/
+//
+//  all: native [
+//  
+//  {Shortcut AND. Returns NONE vs. TRUE (or last evaluation if it was TRUE?)}
+//  
+//      block [block!] "Block of expressions"
+//  ]
+//
+REBNATIVE(all)
+//
+// ALL is effectively Rebol's "short-circuit AND".  Unsets do not vote either
+// true or false...they are ignored.
+// 
+// To offer a more generically useful result than just TRUE or FALSE, it will
+// use as a "truthy" value whatever the last evaluation in the chain was.  If
+// there was no last value, but no conditionally false instance hit to break
+// the chain, as in `all []` or `all [1 2 ()]`...it will return TRUE.
+// 
+// (Note: It would become a more costly operation to retain the last truthy
+// value to return 2 in the case of `all [1 2 ()`]`, just to say it could.
+// The overhead would undermine the raw efficiency of the operation.)
+// 
+// For the "falsy" value, ALL uses a NONE! rather than logic FALSE.  It's a
+// historical design decision which has some benefits, but perhaps some
+// drawbacks to those wishing to use it on logic values and stay in the
+// logic domain.  (`all [true true]` => true, `all [false true]` is NONE!).
 {
 	REBSER *block = VAL_SERIES(D_ARG(1));
 	REBCNT index = VAL_INDEX(D_ARG(1));
@@ -288,23 +291,27 @@ enum {
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(any)
-/*
-**	ANY is effectively Rebol's "short-circuit OR".  Unsets do not vote either
-**	true or false...they are ignored.
-**
-**	See ALL's notes about returning the last truthy value or NONE! (vs. FALSE)
-**
-**	The base case of `any []` is NONE! and not TRUE.  This might seem strange
-**	given that `all []` is TRUE.  But this ties more into what the questions
-**	they are used to ask about in practice: "Were all of these things not
-**	false?" as opposed to "Were any of these things true?"  It is also the
-**	case that `FALSE OR X OR Y` matches with `TRUE AND X AND Y` as the
-**	"seed" for not affecting the chain.
-**
-***********************************************************************/
+//
+//  any: native [
+//  
+//  {Shortcut OR, ignores unsets. Returns the first TRUE? result, or NONE.}
+//  
+//      block [block!] "Block of expressions"
+//  ]
+//
+REBNATIVE(any)
+//
+// ANY is effectively Rebol's "short-circuit OR".  Unsets do not vote either
+// true or false...they are ignored.
+// 
+// See ALL's notes about returning the last truthy value or NONE! (vs. FALSE)
+// 
+// The base case of `any []` is NONE! and not TRUE.  This might seem strange
+// given that `all []` is TRUE.  But this ties more into what the questions
+// they are used to ask about in practice: "Were all of these things not
+// false?" as opposed to "Were any of these things true?"  It is also the
+// case that `FALSE OR X OR Y` matches with `TRUE AND X AND Y` as the
+// "seed" for not affecting the chain.
 {
 	REBSER *block = VAL_SERIES(D_ARG(1));
 	REBCNT index = VAL_INDEX(D_ARG(1));
@@ -320,15 +327,17 @@ enum {
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(apply)
-/*
-**		1: func
-**		2: block
-**		3: /only
-**
-***********************************************************************/
+//
+//  apply: native [
+//  
+//  "Apply a function to a reduced block of arguments."
+//  
+//      func [any-function!] "Function value to apply"
+//      block [block!] "Block of args, reduced first (unless /only)"
+//      /only "Use arg values as-is, do not reduce the block"
+//  ]
+//
+REBNATIVE(apply)
 {
 	REBVAL * func = D_ARG(1);
 	REBVAL * block = D_ARG(2);
@@ -344,11 +353,15 @@ enum {
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(attempt)
-/*
-***********************************************************************/
+//
+//  attempt: native [
+//  
+//  {Tries to evaluate a block and returns result or NONE on error.}
+//  
+//      block [block!]
+//  ]
+//
+REBNATIVE(attempt)
 {
 	REBVAL * const block = D_ARG(1);
 
@@ -375,20 +388,27 @@ enum {
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(break)
-/*
-**		1: /with
-**		2: value
-**		3: /return (deprecated)
-**		4: return-value
-**
-**	BREAK is implemented via a THROWN() value that bubbles up through
-**	the stack.  It uses the value of its own native function as the
-**	name of the throw, like `throw/name value :break`.
-**
-***********************************************************************/
+//
+//  break: native [
+//  
+//  {Breaks out of a loop, while, until, repeat, for-each, etc.}
+//  
+//      /with "Forces the loop function to return a value"
+//      value [any-value!]
+//      /return {(deprecated: mostly /WITH synonym, use THROW+CATCH if not)}
+//      return-value [any-value!]
+//  ]
+//
+REBNATIVE(break)
+//
+// 1: /with
+// 2: value
+// 3: /return (deprecated)
+// 4: return-value
+// 
+// BREAK is implemented via a THROWN() value that bubbles up through
+// the stack.  It uses the value of its own native function as the
+// name of the throw, like `throw/name value :break`.
 {
 	REBVAL *value = D_REF(1) ? D_ARG(2) : (D_REF(3) ? D_ARG(4) : UNSET_VALUE);
 
@@ -400,14 +420,19 @@ enum {
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(case)
-/*
-**	1: block
-**	2: /all
-**
-***********************************************************************/
+//
+//  case: native [
+//  
+//  {Evaluates each condition, and when true, evaluates what follows it.}
+//  
+//      block [block!] "Block of cases (conditions followed by values)"
+//      /all {Evaluate all cases (do not stop at first TRUE? case)}
+//  ]
+//
+REBNATIVE(case)
+//
+// 1: block
+// 2: /all
 {
 	// We leave D_ARG(1) alone, it is holding 'block' alive from GC
 	REBSER *block = VAL_SERIES(D_ARG(1));
@@ -548,25 +573,29 @@ enum {
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(catch)
-/*
-**	1 block
-**	2 /name
-**	3 name-list
-**	4 /quit
-**	5 /any
-**	6 /with
-**	7 handler
-**
-**	There's a refinement for catching quits, and CATCH/ANY will not
-**	alone catch it (you have to CATCH/ANY/QUIT).  The use of the
-**	WORD! QUIT is pending review, and when full label values are
-**	available it will likely be changed to at least get the native
-**	(e.g. equal to THROW with /NAME :QUIT instead of /NAME 'QUIT)
-**
-***********************************************************************/
+//
+//  catch: native [
+//  
+//  {Catches a throw from a block and returns its value.}
+//  
+//      block [block!] "Block to evaluate"
+//      /name "Catches a named throw"
+//      name-list [block! word! any-function! object!] 
+//      "Names to catch (single name if not block)"
+//      /quit "Special catch for QUIT native"
+//      /any {Catch all throws except QUIT (can be used with /QUIT)}
+//      /with "Handle thrown case with code"
+//      handler [block! any-function!] 
+//      "If FUNCTION!, spec matches [value name]"
+//  ]
+//
+REBNATIVE(catch)
+//
+// There's a refinement for catching quits, and CATCH/ANY will not
+// alone catch it (you have to CATCH/ANY/QUIT).  The use of the
+// WORD! QUIT is pending review, and when full label values are
+// available it will likely be changed to at least get the native
+// (e.g. equal to THROW with /NAME :QUIT instead of /NAME 'QUIT)
 {
 	REBVAL * const block = D_ARG(1);
 
@@ -708,11 +737,17 @@ was_caught:
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(throw)
-/*
-***********************************************************************/
+//
+//  throw: native [
+//  
+//  "Throws control back to a previous catch."
+//  
+//      value [any-value!] "Value returned from catch"
+//      /name "Throws to a named catch"
+//      name-value [word! any-function! object!]
+//  ]
+//
+REBNATIVE(throw)
 {
 	REBVAL * const value = D_ARG(1);
 	REBOOL named = D_REF(2);
@@ -753,31 +788,37 @@ was_caught:
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(comment)
-/*
-***********************************************************************/
+//
+//  comment: native [
+//  
+//  {Ignores the argument value and returns nothing (no evaluations performed).}
+//  
+//      :value [block! any-string! any-scalar!] "Literal value to be ignored."
+//  ]
+//
+REBNATIVE(comment)
 {
 	return R_UNSET;
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(compose)
-/*
-**		{Evaluates a block of expressions, only evaluating parens, and returns a block.}
-**		1: value "Block to compose"
-**		2: /deep "Compose nested blocks"
-**		3: /only "Inserts a block value as a block"
-**		4: /into "Output results into a block with no intermediate storage"
-**		5: target
-**
-**		!!! Should 'compose quote (a (1 + 2) b)' give back '(a 3 b)' ?
-**		!!! What about 'compose quote a/(1 + 2)/b' ?
-**
-***********************************************************************/
+//
+//  compose: native [
+//  
+//  {Evaluates a block of expressions, only evaluating parens, and returns a block.}
+//  
+//      value "Block to compose"
+//      /deep "Compose nested blocks"
+//      /only 
+//      {Insert a block as a single value (not the contents of the block)}
+//      /into {Output results into a series with no intermediate storage}
+//      out [any-array! any-string! binary!]
+//  ]
+//
+REBNATIVE(compose)
+//
+// !!! Should 'compose quote (a (1 + 2) b)' give back '(a 3 b)' ?
+// !!! What about 'compose quote a/(1 + 2)/b' ?
 {
 	REBVAL *value = D_ARG(1);
 	REBOOL into = D_REF(4);
@@ -795,15 +836,20 @@ was_caught:
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(continue)
-/*
-**	CONTINUE is implemented via a THROWN() value that bubbles up through
-**	the stack.  It uses the value of its own native function as the
-**	name of the throw, like `throw/name value :continue`.
-**
-***********************************************************************/
+//
+//  continue: native [
+//  
+//  "Throws control back to top of loop."
+//  
+//      /with {Act as if loop body finished current evaluation with a value}
+//      value [any-value!]
+//  ]
+//
+REBNATIVE(continue)
+//
+// CONTINUE is implemented via a THROWN() value that bubbles up through
+// the stack.  It uses the value of its own native function as the
+// name of the throw, like `throw/name value :continue`.
 {
 	REBVAL *value = D_REF(1) ? D_ARG(2) : UNSET_VALUE;
 
@@ -815,11 +861,20 @@ was_caught:
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(do)
-/*
-***********************************************************************/
+//
+//  do: native [
+//  
+//  {Evaluates a block of source code (directly or fetched according to type)}
+//  
+//      source [unset! none! block! paren! string! binary! url! file! tag! 
+//      error! any-function!]
+//      /args {If value is a script, this will set its system/script/args}
+//      arg "Args passed to a script (normally a string)"
+//      /next {Do next expression only, return it, update block variable}
+//      var [word!] "Variable updated with new block position"
+//  ]
+//
+REBNATIVE(do)
 {
 	REBVAL * const value = D_ARG(1);
 	REBVAL * const args_ref = D_ARG(2);
@@ -926,11 +981,17 @@ was_caught:
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(either)
-/*
-***********************************************************************/
+//
+//  either: native [
+//  
+//  {If TRUE? condition return 1st branch, else 2nd--evaluate blocks as code.}
+//  
+//      condition
+//      true-branch [any-value!]
+//      false-branch [any-value!]
+//  ]
+//
+REBNATIVE(either)
 {
 	REBVAL * const condition = D_ARG(1);
 	REBVAL * const branch = IS_CONDITIONAL_TRUE(condition)
@@ -947,11 +1008,16 @@ was_caught:
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(eval)
-/*
-***********************************************************************/
+//
+//  eval: native [
+//  
+//  {(Special) Process received value *inline* as the evaluator loop would.}
+//  
+//      value [any-value!] 
+//      {BLOCK! passes-thru, FUNCTION! runs, SET-WORD! assigns...}
+//  ]
+//
+REBNATIVE(eval)
 {
 	REBVAL * const value = D_ARG(1);
 
@@ -989,18 +1055,23 @@ was_caught:
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(exit)
-/*
-**	1: /with
-**	2: value
-**
-**	EXIT is implemented via a THROWN() value that bubbles up through
-**	the stack.  It uses the value of its own native function as the
-**	name of the throw, like `throw/name value :exit`.
-**
-***********************************************************************/
+//
+//  exit: native [
+//  
+//  {Leave whatever enclosing Rebol state EXIT's block *actually* runs in.}
+//  
+//      /with "Result for enclosing state (default is UNSET!)"
+//      value [any-value!]
+//  ]
+//
+REBNATIVE(exit)
+//
+// 1: /with
+// 2: value
+// 
+// EXIT is implemented via a THROWN() value that bubbles up through
+// the stack.  It uses the value of its own native function as the
+// name of the throw, like `throw/name value :exit`.
 {
 	*D_OUT = *ROOT_EXIT_NATIVE;
 
@@ -1010,11 +1081,16 @@ was_caught:
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(fail)
-/*
-***********************************************************************/
+//
+//  fail: native [
+//  
+//  {Interrupts execution by reporting an error (a TRAP can intercept it).}
+//  
+//      reason [error! string! block!] 
+//      "ERROR! value, message string, or failure spec"
+//  ]
+//
+REBNATIVE(fail)
 {
 	REBVAL * const reason = D_ARG(1);
 
@@ -1088,11 +1164,16 @@ was_caught:
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(if)
-/*
-***********************************************************************/
+//
+//  if: native [
+//  
+//  {If TRUE? condition, return the branch--with blocks evaluated as code.}
+//  
+//      condition
+//      true-branch [any-value!]
+//  ]
+//
+REBNATIVE(if)
 {
 	REBVAL * const condition = D_ARG(1);
 	REBVAL * const branch = D_ARG(2);
@@ -1110,11 +1191,19 @@ was_caught:
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(protect)
-/*
-***********************************************************************/
+//
+//  protect: native [
+//  
+//  {Protect a series or a variable from being modified.}
+//  
+//      value [word! any-series! bitset! map! object! module!]
+//      /deep "Protect all sub-series/objects as well"
+//      /words "Process list as words (and path words)"
+//      /values "Process list of values (implied GET)"
+//      /hide "Hide variables (avoid binding and lookup)"
+//  ]
+//
+REBNATIVE(protect)
 {
 	REBCNT flags = FLAGIT(PROT_SET);
 
@@ -1126,22 +1215,39 @@ was_caught:
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(unprotect)
-/*
-***********************************************************************/
+//
+//  unprotect: native [
+//  
+//  {Unprotect a series or a variable (it can again be modified).}
+//  
+//      value [word! any-series! bitset! map! object! module!]
+//      /deep "Protect all sub-series as well"
+//      /words "Block is a list of words"
+//      /values "Process list of values (implied GET)"
+//  ]
+//
+REBNATIVE(unprotect)
 {
 	// accesses arguments 1 - 4
 	return Protect(call_, FLAGIT(PROT_WORD));
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(reduce)
-/*
-***********************************************************************/
+//
+//  reduce: native [
+//  
+//  {Evaluates expressions and returns multiple results.}
+//  
+//      value
+//      /no-set "Keep set-words as-is. Do not set them."
+//      /only "Only evaluate words and paths, not functions"
+//      words [block! none!] "Optional words that are not evaluated (keywords)"
+//      
+//      /into {Output results into a series with no intermediate storage}
+//      out [any-array! any-string! binary!]
+//  ]
+//
+REBNATIVE(reduce)
 {
 	if (IS_BLOCK(D_ARG(1))) {
 		REBSER *ser = VAL_SERIES(D_ARG(1));
@@ -1169,20 +1275,24 @@ was_caught:
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(return)
-/*
-**	There is a RETURN native defined, and its native function spec is
-**	utilized to create the appropriate help and calling protocol
-**	information for values that have overridden its VAL_FUNC_CODE
-**	slot with a VAL_FUNC_RETURN_TO spec.
-**
-**	However: this native is unset and its actual code body should
-**	never be able to be called.  The non-definitional return construct
-**	that people should use if they need it would be EXIT and EXIT/WITH
-**
-***********************************************************************/
+//
+//  return: native [
+//  
+//  "Returns a value from a function."
+//  
+//      value [any-value!]
+//  ]
+//
+REBNATIVE(return)
+//
+// There is a RETURN native defined, and its native function spec is
+// utilized to create the appropriate help and calling protocol
+// information for values that have overridden its VAL_FUNC_CODE
+// slot with a VAL_FUNC_RETURN_TO spec.
+// 
+// However: this native is unset and its actual code body should
+// never be able to be called.  The non-definitional return construct
+// that people should use if they need it would be EXIT and EXIT/WITH
 {
 	panic (Error(RE_MISC));
 
@@ -1190,18 +1300,19 @@ was_caught:
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(switch)
-/*
-**		value
-**		cases [block!]
-**		/default
-**		case
-**      /all {Check all cases}
-**      /strict
-**
-***********************************************************************/
+//
+//  switch: native [
+//  
+//  {Selects a choice and evaluates the block that follows it.}
+//  
+//      value "Target value"
+//      cases [block!] "Block of cases to check"
+//      /default case "Default case if no others found"
+//      /all "Evaluate all matches (not just first one)"
+//      /strict {Use STRICT-EQUAL? when comparing cases instead of EQUAL?}
+//  ]
+//
+REBNATIVE(switch)
 {
 	REBVAL * const value = D_ARG(1);
 	REBVAL * const cases = D_ARG(2);
@@ -1345,15 +1456,18 @@ was_caught:
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(trap)
-/*
-**		1: block
-**		2: /with
-**		3: handler
-**
-***********************************************************************/
+//
+//  trap: native [
+//  
+//  {Tries to DO a block, trapping error as return value (if one is raised).}
+//  
+//      block [block!]
+//      /with "Handle error case with code"
+//      handler [block! any-function!] 
+//      "If FUNCTION!, spec allows [error [error!]]"
+//  ]
+//
+REBNATIVE(trap)
 {
 	REBVAL * const block = D_ARG(1);
 	const REBFLG with = D_REF(2);
@@ -1431,11 +1545,16 @@ was_caught:
 }
 
 
-/***********************************************************************
-**
-*/	REBNATIVE(unless)
-/*
-***********************************************************************/
+//
+//  unless: native [
+//  
+//  {If FALSE? condition, return the branch--with blocks evaluated as code.}
+//  
+//      condition
+//      false-branch [any-value!]
+//  ]
+//
+REBNATIVE(unless)
 {
 	REBVAL * const condition = D_ARG(1);
 	REBVAL * const branch = D_ARG(2);

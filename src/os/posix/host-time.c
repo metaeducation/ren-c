@@ -52,18 +52,17 @@
 #include <sys/time.h>
 #endif
 
-/***********************************************************************
-**
-*/	static int Get_Timezone(struct tm *local_tm)
-/*
-**		Get the time zone in minutes from GMT.
-**		NOT consistently supported in Posix OSes!
-**		We have to use a few different methods.
-**
-**		!!! "local_tm->tm_gmtoff / 60 would make the most sense,
-**		but is no longer used" (said a comment)
-**
-***********************************************************************/
+//
+//  Get_Timezone: C
+// 
+// Get the time zone in minutes from GMT.
+// NOT consistently supported in Posix OSes!
+// We have to use a few different methods.
+// 
+// !!! "local_tm->tm_gmtoff / 60 would make the most sense,
+// but is no longer used" (said a comment)
+//
+static int Get_Timezone(struct tm *local_tm)
 {
 #ifdef HAS_SMART_TIMEZONE
 	time_t rightnow;
@@ -82,14 +81,13 @@
 }
 
 
-/***********************************************************************
-**
-*/	void Convert_Date(time_t *stime, REBOL_DAT *dat, long zone)
-/*
-**		Convert local format of system time into standard date
-**		and time structure (for date/time and file timestamps).
-**
-***********************************************************************/
+//
+//  Convert_Date: C
+// 
+// Convert local format of system time into standard date
+// and time structure (for date/time and file timestamps).
+//
+void Convert_Date(time_t *stime, REBOL_DAT *dat, long zone)
 {
 	struct tm *time;
 
@@ -106,13 +104,12 @@
 }
 
 
-/***********************************************************************
-**
-*/	void OS_Get_Time(REBOL_DAT *dat)
-/*
-**		Get the current system date/time in UTC plus zone offset (mins).
-**
-***********************************************************************/
+//
+//  OS_Get_Time: C
+// 
+// Get the current system date/time in UTC plus zone offset (mins).
+//
+void OS_Get_Time(REBOL_DAT *dat)
 {
 	struct timeval tv;
 	time_t stime;
@@ -124,18 +121,17 @@
 }
 
 
-/***********************************************************************
-**
-*/	i64 OS_Delta_Time(i64 base, int flags)
-/*
-**		Return time difference in microseconds. If base = 0, then
-**		return the counter. If base != 0, compute the time difference.
-**
-**		NOTE: This needs to be precise, but many OSes do not
-**		provide a precise time sampling method. So, if the target
-**		posix OS does, add the ifdef code in here.
-**
-***********************************************************************/
+//
+//  OS_Delta_Time: C
+// 
+// Return time difference in microseconds. If base = 0, then
+// return the counter. If base != 0, compute the time difference.
+// 
+// NOTE: This needs to be precise, but many OSes do not
+// provide a precise time sampling method. So, if the target
+// posix OS does, add the ifdef code in here.
+//
+i64 OS_Delta_Time(i64 base, int flags)
 {
 	struct timeval tv;
 	i64 time;
@@ -150,14 +146,13 @@
 }
 
 
-/***********************************************************************
-**
-*/	void OS_File_Time(REBREQ *file, REBOL_DAT *dat)
-/*
-**		Convert file.time to REBOL date/time format.
-**		Time zone is UTC.
-**
-***********************************************************************/
+//
+//  OS_File_Time: C
+// 
+// Convert file.time to REBOL date/time format.
+// Time zone is UTC.
+//
+void OS_File_Time(REBREQ *file, REBOL_DAT *dat)
 {
 	if (sizeof(time_t) > sizeof(file->special.file.time.l)) {
 		REBI64 t = file->special.file.time.l;

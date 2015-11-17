@@ -270,16 +270,15 @@ void Unmap_Bytes(void *srcp, REBYTE **dstp, const char *map) {
 }
 
 
-/***********************************************************************
-**
-*/	static void Decode_BMP_Image(REBCDI *codi)
-/*
-**		Input:  BMP encoded image (codi->data, len)
-**		Output: Image bits (codi->extra.bits, w, h)
-**		Error:  Code in codi->error
-**		Return: Success as TRUE or FALSE
-**
-***********************************************************************/
+//
+//  Decode_BMP_Image: C
+// 
+// Input:  BMP encoded image (codi->data, len)
+// Output: Image bits (codi->extra.bits, w, h)
+// Error:  Code in codi->error
+// Return: Success as TRUE or FALSE
+//
+static void Decode_BMP_Image(REBCDI *codi)
 {
 	REBINT				i, j, x, y, c;
 	REBINT				colors, compression, bitcount;
@@ -505,16 +504,15 @@ error:
 }
 
 
-/***********************************************************************
-**
-*/	static void Encode_BMP_Image(REBCDI *codi)
-/*
-**		Input:  Image bits (codi->extra.bits, w, h)
-**		Output: BMP encoded image (codi->data, len)
-**		Error:  Code in codi->error
-**		Return: Success as TRUE or FALSE
-**
-***********************************************************************/
+//
+//  Encode_BMP_Image: C
+// 
+// Input:  Image bits (codi->extra.bits, w, h)
+// Output: BMP encoded image (codi->data, len)
+// Error:  Code in codi->error
+// Return: Success as TRUE or FALSE
+//
+static void Encode_BMP_Image(REBCDI *codi)
 {
 	REBINT i, y;
 	REBINT w, h;
@@ -570,11 +568,10 @@ error:
 }
 
 
-/***********************************************************************
-**
-*/	REBINT Codec_BMP_Image(REBCDI *codi)
-/*
-***********************************************************************/
+//
+//  Codec_BMP_Image: C
+//
+REBINT Codec_BMP_Image(REBCDI *codi)
 {
 	codi->error = 0;
 
@@ -598,11 +595,10 @@ error:
 }
 
 
-/***********************************************************************
-**
-*/	void Init_BMP_Codec(void)
-/*
-***********************************************************************/
+//
+//  Init_BMP_Codec: C
+//
+void Init_BMP_Codec(void)
 {
 	Register_Codec(cb_cast("bmp"), Codec_BMP_Image);
 }

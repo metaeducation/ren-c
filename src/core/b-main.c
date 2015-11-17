@@ -30,11 +30,10 @@
 
 static REBARGS Main_Args;	// Not multi-threaded
 
-/***********************************************************************
-**
-*/	char *Prompt_User(void)
-/*
-***********************************************************************/
+//
+//  Prompt_User: C
+//
+char *Prompt_User(void)
 {
 	char *text;
 
@@ -45,11 +44,10 @@ static REBARGS Main_Args;	// Not multi-threaded
 }
 
 
-/***********************************************************************
-**
-*/	int main(int argc, char **argv)
-/*
-***********************************************************************/
+//
+//  main: C
+//
+int main(int argc, char **argv)
 {
 	char *cmd;
 

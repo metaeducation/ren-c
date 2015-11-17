@@ -30,11 +30,10 @@
 #include "sys-core.h"
 
 
-/***********************************************************************
-**
-*/	REBINT CT_Pair(REBVAL *a, REBVAL *b, REBINT mode)
-/*
-***********************************************************************/
+//
+//  CT_Pair: C
+//
+REBINT CT_Pair(REBVAL *a, REBVAL *b, REBINT mode)
 {
 	if (mode >= 0) return Cmp_Pair(a, b) == 0; // works for INTEGER=0 too (spans x y)
 	if (IS_PAIR(b) && 0 == VAL_INT64(b)) { // for negative? and positive?
@@ -46,11 +45,10 @@
 }
 
 
-/***********************************************************************
-**
-*/	REBFLG MT_Pair(REBVAL *out, REBVAL *data, enum Reb_Kind type)
-/*
-***********************************************************************/
+//
+//  MT_Pair: C
+//
+REBFLG MT_Pair(REBVAL *out, REBVAL *data, enum Reb_Kind type)
 {
 	REBD32 x;
 	REBD32 y;
@@ -80,13 +78,12 @@
 }
 
 
-/***********************************************************************
-**
-*/	REBINT Cmp_Pair(const REBVAL *t1, const REBVAL *t2)
-/*
-**	Given two pairs, compare them.
-**
-***********************************************************************/
+//
+//  Cmp_Pair: C
+// 
+// Given two pairs, compare them.
+//
+REBINT Cmp_Pair(const REBVAL *t1, const REBVAL *t2)
 {
 	REBD32	diff;
 
@@ -96,11 +93,10 @@
 }
 
 
-/***********************************************************************
-**
-*/	void Min_Max_Pair(REBVAL *out, const REBVAL *a, const REBVAL *b, REBFLG maxed)
-/*
-***********************************************************************/
+//
+//  Min_Max_Pair: C
+//
+void Min_Max_Pair(REBVAL *out, const REBVAL *a, const REBVAL *b, REBFLG maxed)
 {
 	REBXYF aa;
 	REBXYF bb;
@@ -133,11 +129,10 @@
 }
 
 
-/***********************************************************************
-**
-*/	REBINT PD_Pair(REBPVS *pvs)
-/*
-***********************************************************************/
+//
+//  PD_Pair: C
+//
+REBINT PD_Pair(REBPVS *pvs)
 {
 	REBVAL *sel;
 	REBVAL *val;
@@ -171,11 +166,10 @@
 	return PE_OK;
 }
 
-/***********************************************************************
-**
-*/	REBTYPE(Pair)
-/*
-***********************************************************************/
+//
+//  REBTYPE: C
+//
+REBTYPE(Pair)
 {
 	REBVAL *val = NULL;
 	REBVAL *arg = NULL;

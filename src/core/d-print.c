@@ -47,11 +47,10 @@ static REBREQ *Req_SIO;
 **
 ***********************************************************************/
 
-/***********************************************************************
-**
-*/	void Init_StdIO(void)
-/*
-***********************************************************************/
+//
+//  Init_StdIO: C
+//
+void Init_StdIO(void)
 {
 	//OS_CALL_DEVICE(RDI_STDIO, RDC_INIT);
 	Req_SIO = OS_MAKE_DEVREQ(RDI_STDIO);
@@ -63,11 +62,10 @@ static REBREQ *Req_SIO;
 }
 
 
-/***********************************************************************
-**
-*/	void Shutdown_StdIO(void)
-/*
-***********************************************************************/
+//
+//  Shutdown_StdIO: C
+//
+void Shutdown_StdIO(void)
 {
 	// !!! There is no OS_FREE_DEVREQ.  Should there be?  Should this
 	// include an OS_ABORT_DEVICE?
@@ -75,13 +73,12 @@ static REBREQ *Req_SIO;
 }
 
 
-/***********************************************************************
-**
-*/	void Print_OS_Line(void)
-/*
-**		Print a new line.
-**
-***********************************************************************/
+//
+//  Print_OS_Line: C
+// 
+// Print a new line.
+//
+void Print_OS_Line(void)
 {
 	// !!! Don't put const literal directly into mutable Req_SIO->data
 	static REBYTE newline[] = "\n";
@@ -96,15 +93,14 @@ static REBREQ *Req_SIO;
 }
 
 
-/***********************************************************************
-**
-*/	void Prin_OS_String(const void *p, REBCNT len, REBFLG opts)
-/*
-**	Print a string (with no line terminator).
-**
-**	The encoding options are OPT_ENC_XXX flags OR'd together.
-**
-***********************************************************************/
+//
+//  Prin_OS_String: C
+// 
+// Print a string (with no line terminator).
+// 
+// The encoding options are OPT_ENC_XXX flags OR'd together.
+//
+void Prin_OS_String(const void *p, REBCNT len, REBFLG opts)
 {
 	#define BUF_SIZE 1024
 	REBYTE buffer[BUF_SIZE]; // on stack
@@ -162,22 +158,20 @@ static REBREQ *Req_SIO;
 }
 
 
-/***********************************************************************
-**
-*/  void Out_Value(const REBVAL *value, REBCNT limit, REBOOL mold, REBINT lines)
-/*
-***********************************************************************/
+//
+//  Out_Value: C
+//
+void Out_Value(const REBVAL *value, REBCNT limit, REBOOL mold, REBINT lines)
 {
 	Print_Value(value, limit, mold); // higher level!
 	for (; lines > 0; lines--) Print_OS_Line();
 }
 
 
-/***********************************************************************
-**
-*/	void Out_Str(const REBYTE *bp, REBINT lines)
-/*
-***********************************************************************/
+//
+//  Out_Str: C
+//
+void Out_Str(const REBYTE *bp, REBINT lines)
 {
 	Prin_OS_String(bp, UNKNOWN, OPT_ENC_CRLF_MAYBE);
 	for (; lines > 0; lines--) Print_OS_Line();
@@ -194,11 +188,10 @@ static REBREQ *Req_SIO;
 ***********************************************************************/
 
 
-/***********************************************************************
-**
-*/	void Enable_Backtrace(REBFLG on)
-/*
-***********************************************************************/
+//
+//  Enable_Backtrace: C
+//
+void Enable_Backtrace(REBFLG on)
 {
 	if (on) {
 		if (Trace_Limit == 0) {
@@ -215,11 +208,10 @@ static REBREQ *Req_SIO;
 }
 
 
-/***********************************************************************
-**
-*/	void Display_Backtrace(REBCNT lines)
-/*
-***********************************************************************/
+//
+//  Display_Backtrace: C
+//
+void Display_Backtrace(REBCNT lines)
 {
 	REBCNT tail;
 	REBCNT i;
@@ -245,11 +237,10 @@ static REBREQ *Req_SIO;
 }
 
 
-/***********************************************************************
-**
-*/	void Debug_String(const void *p, REBCNT len, REBOOL uni, REBINT lines)
-/*
-***********************************************************************/
+//
+//  Debug_String: C
+//
+void Debug_String(const void *p, REBCNT len, REBOOL uni, REBINT lines)
 {
 	REBUNI uc;
 	const REBYTE *bp = uni ? NULL : cast(const REBYTE *, p);
@@ -282,35 +273,32 @@ static REBREQ *Req_SIO;
 }
 
 
-/***********************************************************************
-**
-*/	void Debug_Line(void)
-/*
-***********************************************************************/
+//
+//  Debug_Line: C
+//
+void Debug_Line(void)
 {
 	Debug_String(cb_cast(""), UNKNOWN, 0, 1);
 }
 
 
-/***********************************************************************
-**
-*/	void Debug_Str(const char *str)
-/*
-**		Print a string followed by a newline.
-**
-***********************************************************************/
+//
+//  Debug_Str: C
+// 
+// Print a string followed by a newline.
+//
+void Debug_Str(const char *str)
 {
 	Debug_String(cb_cast(str), UNKNOWN, 0, 1);
 }
 
 
-/***********************************************************************
-**
-*/	void Debug_Uni(const REBSER *ser)
-/*
-**		Print debug unicode string followed by a newline.
-**
-***********************************************************************/
+//
+//  Debug_Uni: C
+// 
+// Print debug unicode string followed by a newline.
+//
+void Debug_Uni(const REBSER *ser)
 {
 	const REBFLG encopts = OPT_ENC_UNISRC | OPT_ENC_CRLF_MAYBE;
 	REBCNT ul;
@@ -337,11 +325,10 @@ static REBREQ *Req_SIO;
 }
 
 
-/***********************************************************************
-**
-*/	void Debug_Series(REBSER *ser)
-/*
-***********************************************************************/
+//
+//  Debug_Series: C
+//
+void Debug_Series(REBSER *ser)
 {
 	REBINT disabled = GC_Disabled;
 	GC_Disabled = 1;
@@ -392,13 +379,12 @@ static REBREQ *Req_SIO;
 }
 
 
-/***********************************************************************
-**
-*/	void Debug_Num(const REBYTE *str, REBINT num)
-/*
-**		Print a string followed by a number.
-**
-***********************************************************************/
+//
+//  Debug_Num: C
+// 
+// Print a string followed by a number.
+//
+void Debug_Num(const REBYTE *str, REBINT num)
 {
 	REBYTE buf[40];
 
@@ -409,13 +395,12 @@ static REBREQ *Req_SIO;
 }
 
 
-/***********************************************************************
-**
-*/	void Debug_Chars(REBYTE chr, REBCNT num)
-/*
-**		Print a number of spaces.
-**
-***********************************************************************/
+//
+//  Debug_Chars: C
+// 
+// Print a number of spaces.
+//
+void Debug_Chars(REBYTE chr, REBCNT num)
 {
 	REBYTE spaces[100];
 
@@ -425,58 +410,53 @@ static REBREQ *Req_SIO;
 }
 
 
-/***********************************************************************
-**
-*/	void Debug_Space(REBCNT num)
-/*
-**		Print a number of spaces.
-**
-***********************************************************************/
+//
+//  Debug_Space: C
+// 
+// Print a number of spaces.
+//
+void Debug_Space(REBCNT num)
 {
 	if (num > 0) Debug_Chars(' ', num);
 }
 
 
-/***********************************************************************
-**
-*/	void Debug_Word(const REBVAL *word)
-/*
-**		Print a REBOL word.
-**
-***********************************************************************/
+//
+//  Debug_Word: C
+// 
+// Print a REBOL word.
+//
+void Debug_Word(const REBVAL *word)
 {
 	Debug_Str(cs_cast(Get_Word_Name(word)));
 }
 
 
-/***********************************************************************
-**
-*/	void Debug_Type(const REBVAL *value)
-/*
-**		Print a REBOL datatype name.
-**
-***********************************************************************/
+//
+//  Debug_Type: C
+// 
+// Print a REBOL datatype name.
+//
+void Debug_Type(const REBVAL *value)
 {
 	if (VAL_TYPE(value) < REB_MAX) Debug_Str(cs_cast(Get_Type_Name(value)));
 	else Debug_Str("TYPE?!");
 }
 
 
-/***********************************************************************
-**
-*/  void Debug_Value(const REBVAL *value, REBCNT limit, REBOOL mold)
-/*
-***********************************************************************/
+//
+//  Debug_Value: C
+//
+void Debug_Value(const REBVAL *value, REBCNT limit, REBOOL mold)
 {
 	Print_Value(value, limit, mold); // higher level!
 }
 
 
-/***********************************************************************
-**
-*/  void Debug_Values(const REBVAL *value, REBCNT count, REBCNT limit)
-/*
-***********************************************************************/
+//
+//  Debug_Values: C
+//
+void Debug_Values(const REBVAL *value, REBCNT count, REBCNT limit)
 {
 	REBSER *out;
 	REBCNT i1;
@@ -503,27 +483,26 @@ static REBREQ *Req_SIO;
 }
 
 
-/***********************************************************************
-**
-*/	void Debug_Buf(const char *fmt, va_list *args)
-/*
-**		(va_list by pointer: http://stackoverflow.com/a/3369762/211160)
-**
-**		Lower level formatted print for debugging purposes.
-**
-**		1. Does not support UNICODE.
-**		2. Does not auto-expand the output buffer.
-**		3. No termination buffering (limited length).
-**
-**		Print using a format string and variable number
-**		of arguments.  All args must be long word aligned
-**		(no short or char sized values unless recast to long).
-**
-**		Output will be held in series print buffer and
-**		will not exceed its max size.  No line termination
-**		is supplied after the print.
-**
-***********************************************************************/
+//
+//  Debug_Buf: C
+// 
+// (va_list by pointer: http://stackoverflow.com/a/3369762/211160)
+// 
+// Lower level formatted print for debugging purposes.
+// 
+// 1. Does not support UNICODE.
+// 2. Does not auto-expand the output buffer.
+// 3. No termination buffering (limited length).
+// 
+// Print using a format string and variable number
+// of arguments.  All args must be long word aligned
+// (no short or char sized values unless recast to long).
+// 
+// Output will be held in series print buffer and
+// will not exceed its max size.  No line termination
+// is supplied after the print.
+//
+void Debug_Buf(const char *fmt, va_list *args)
 {
 	REBSER *buf = BUF_PRINT;
 	REBCNT len;
@@ -553,18 +532,17 @@ static REBREQ *Req_SIO;
 }
 
 
-/***********************************************************************
-**
-*/	void Debug_Fmt_(const char *fmt, ...)
-/*
-**		Print using a format string and variable number
-**		of arguments.  All args must be long word aligned
-**		(no short or char sized values unless recast to long).
-**		Output will be held in series print buffer and
-**		will not exceed its max size.  No line termination
-**		is supplied after the print.
-**
-***********************************************************************/
+//
+//  Debug_Fmt_: C
+// 
+// Print using a format string and variable number
+// of arguments.  All args must be long word aligned
+// (no short or char sized values unless recast to long).
+// Output will be held in series print buffer and
+// will not exceed its max size.  No line termination
+// is supplied after the print.
+//
+void Debug_Fmt_(const char *fmt, ...)
 {
 	va_list args;
 	va_start(args, fmt);
@@ -573,18 +551,17 @@ static REBREQ *Req_SIO;
 }
 
 
-/***********************************************************************
-**
-*/	void Debug_Fmt(const char *fmt, ...)
-/*
-**		Print using a formatted string and variable number
-**		of arguments.  All args must be long word aligned
-**		(no short or char sized values unless recast to long).
-**		Output will be held in a series print buffer and
-**		will not exceed its max size.  A line termination
-**		is supplied after the print.
-**
-***********************************************************************/
+//
+//  Debug_Fmt: C
+// 
+// Print using a formatted string and variable number
+// of arguments.  All args must be long word aligned
+// (no short or char sized values unless recast to long).
+// Output will be held in a series print buffer and
+// will not exceed its max size.  A line termination
+// is supplied after the print.
+//
+void Debug_Fmt(const char *fmt, ...)
 {
 	va_list args;
 	va_start(args, fmt);
@@ -596,15 +573,14 @@ static REBREQ *Req_SIO;
 
 #if !defined(NDEBUG)
 
-/***********************************************************************
-**
-*/	void Probe_Core_Debug(const char *msg, const char *file, int line, const REBVAL *val)
-/*
-**		Debug function for outputting a value.  Done as a function
-**		instead of just a macro due to how easy it is with varargs
-**		to order the types of the parameters wrong.  :-/
-**
-***********************************************************************/
+//
+//  Probe_Core_Debug: C
+// 
+// Debug function for outputting a value.  Done as a function
+// instead of just a macro due to how easy it is with varargs
+// to order the types of the parameters wrong.  :-/
+//
+void Probe_Core_Debug(const char *msg, const char *file, int line, const REBVAL *val)
 {
 	if (msg)
 		Debug_Fmt("\n** PROBE_MSG(\"%s\") %s:%d\n%r\n", msg, file, line, val);
@@ -615,28 +591,26 @@ static REBREQ *Req_SIO;
 #endif
 
 
-/***********************************************************************
-**
-*/	REBFLG Echo_File(REBCHR *file)
-/*
-***********************************************************************/
+//
+//  Echo_File: C
+//
+REBFLG Echo_File(REBCHR *file)
 {
 	Req_SIO->special.file.path = file;
 	return (DR_ERROR != OS_DO_DEVICE(Req_SIO, RDC_CREATE));
 }
 
 
-/***********************************************************************
-**
-*/	REBYTE *Form_Hex_Pad(REBYTE *buf, REBI64 val, REBINT len)
-/*
-**		Form an integer hex string in the given buffer with a
-**		width padded out with zeros.
-**		If len = 0 and val = 0, a null string is formed.
-**		Does not insert a #.
-**		Make sure you have room in your buffer before calling this!
-**
-***********************************************************************/
+//
+//  Form_Hex_Pad: C
+// 
+// Form an integer hex string in the given buffer with a
+// width padded out with zeros.
+// If len = 0 and val = 0, a null string is formed.
+// Does not insert a #.
+// Make sure you have room in your buffer before calling this!
+//
+REBYTE *Form_Hex_Pad(REBYTE *buf, REBI64 val, REBINT len)
 {
 	REBYTE buffer[MAX_HEX_LEN+4];
 	REBYTE *bp = buffer + MAX_HEX_LEN + 1;
@@ -660,13 +634,12 @@ static REBREQ *Req_SIO;
 }
 
 
-/***********************************************************************
-**
-*/	REBYTE *Form_Hex2(REBYTE *bp, REBCNT val)
-/*
-**		Convert byte-sized int to xx format. Very fast.
-**
-***********************************************************************/
+//
+//  Form_Hex2: C
+// 
+// Convert byte-sized int to xx format. Very fast.
+//
+REBYTE *Form_Hex2(REBYTE *bp, REBCNT val)
 {
 	bp[0] = Hex_Digits[(val & 0xf0) >> 4];
 	bp[1] = Hex_Digits[val & 0xf];
@@ -675,13 +648,12 @@ static REBREQ *Req_SIO;
 }
 
 
-/***********************************************************************
-**
-*/	REBUNI *Form_Hex2_Uni(REBUNI *up, REBCNT val)
-/*
-**		Convert byte-sized int to unicode xx format. Very fast.
-**
-***********************************************************************/
+//
+//  Form_Hex2_Uni: C
+// 
+// Convert byte-sized int to unicode xx format. Very fast.
+//
+REBUNI *Form_Hex2_Uni(REBUNI *up, REBCNT val)
 {
 	up[0] = Hex_Digits[(val & 0xf0) >> 4];
 	up[1] = Hex_Digits[val & 0xf];
@@ -690,13 +662,12 @@ static REBREQ *Req_SIO;
 }
 
 
-/***********************************************************************
-**
-*/	REBUNI *Form_Hex_Esc_Uni(REBUNI *up, REBUNI c)
-/*
-**		Convert byte int to %xx format (in unicode destination)
-**
-***********************************************************************/
+//
+//  Form_Hex_Esc_Uni: C
+// 
+// Convert byte int to %xx format (in unicode destination)
+//
+REBUNI *Form_Hex_Esc_Uni(REBUNI *up, REBUNI c)
 {
 	up[0] = '%';
 	up[1] = Hex_Digits[(c & 0xf0) >> 4];
@@ -706,13 +677,12 @@ static REBREQ *Req_SIO;
 }
 
 
-/***********************************************************************
-**
-*/	REBUNI *Form_RGB_Uni(REBUNI *up, REBCNT val)
-/*
-**		Convert 24 bit RGB to xxxxxx format.
-**
-***********************************************************************/
+//
+//  Form_RGB_Uni: C
+// 
+// Convert 24 bit RGB to xxxxxx format.
+//
+REBUNI *Form_RGB_Uni(REBUNI *up, REBCNT val)
 {
 #ifdef ENDIAN_LITTLE
 	up[0] = Hex_Digits[(val >>  4) & 0xf];
@@ -735,14 +705,13 @@ static REBREQ *Req_SIO;
 }
 
 
-/***********************************************************************
-**
-*/	REBUNI *Form_Uni_Hex(REBUNI *out, REBCNT n)
-/*
-**		Fast var-length hex output for uni-chars.
-**		Returns next position (just past the insert).
-**
-***********************************************************************/
+//
+//  Form_Uni_Hex: C
+// 
+// Fast var-length hex output for uni-chars.
+// Returns next position (just past the insert).
+//
+REBUNI *Form_Uni_Hex(REBUNI *out, REBCNT n)
 {
 	REBUNI buffer[10];
 	REBUNI *up = &buffer[10];
@@ -758,16 +727,15 @@ static REBREQ *Req_SIO;
 }
 
 
-/***********************************************************************
-**
-*/	REBYTE *Form_Args_Core(REBYTE *bp, REBCNT max, const char *fmt, va_list *args)
-/*
-**		(va_list by pointer: http://stackoverflow.com/a/3369762/211160)
-**
-**		Lower level (debugging) value formatter.
-**		Can restrict to max char size.
-**
-***********************************************************************/
+//
+//  Form_Args_Core: C
+// 
+// (va_list by pointer: http://stackoverflow.com/a/3369762/211160)
+// 
+// Lower level (debugging) value formatter.
+// Can restrict to max char size.
+//
+REBYTE *Form_Args_Core(REBYTE *bp, REBCNT max, const char *fmt, va_list *args)
 {
 	REBYTE *cp;
 	REBCNT len = 0;
@@ -892,11 +860,10 @@ mold_value:
 }
 
 
-/***********************************************************************
-**
-*/	REBYTE *Form_Args(REBYTE *bp, REBCNT max, const char *fmt, ...)
-/*
-***********************************************************************/
+//
+//  Form_Args: C
+//
+REBYTE *Form_Args(REBYTE *bp, REBCNT max, const char *fmt, ...)
 {
 	REBYTE *result;
 	va_list args;
@@ -915,41 +882,38 @@ mold_value:
 **
 ***********************************************************************/
 
-/***********************************************************************
-**
-*/  void Prin_Value(const REBVAL *value, REBCNT limit, REBOOL mold)
-/*
-**		Print a value or block's contents for user viewing.
-**		Can limit output to a given size. Set limit to 0 for full size.
-**
-***********************************************************************/
+//
+//  Prin_Value: C
+// 
+// Print a value or block's contents for user viewing.
+// Can limit output to a given size. Set limit to 0 for full size.
+//
+void Prin_Value(const REBVAL *value, REBCNT limit, REBOOL mold)
 {
 	REBSER *out = Mold_Print_Value(value, limit, mold);
 	Prin_OS_String(out->data, out->tail, OPT_ENC_UNISRC | OPT_ENC_CRLF_MAYBE);
 }
 
 
-/***********************************************************************
-**
-*/  void Print_Value(const REBVAL *value, REBCNT limit, REBOOL mold)
-/*
-**		Print a value or block's contents for user viewing.
-**		Can limit output to a given size. Set limit to 0 for full size.
-**
-***********************************************************************/
+//
+//  Print_Value: C
+// 
+// Print a value or block's contents for user viewing.
+// Can limit output to a given size. Set limit to 0 for full size.
+//
+void Print_Value(const REBVAL *value, REBCNT limit, REBOOL mold)
 {
 	Prin_Value(value, limit, mold);
 	Print_OS_Line();
 }
 
 
-/***********************************************************************
-**
-*/	void Init_Raw_Print(void)
-/*
-**		Initialize print module.
-**
-***********************************************************************/
+//
+//  Init_Raw_Print: C
+// 
+// Initialize print module.
+//
+void Init_Raw_Print(void)
 {
 	Set_Root_Series(TASK_BUF_PRINT, Make_Binary(1000), "print buffer");
 	Set_Root_Series(TASK_BUF_FORM,  Make_Binary(64), "form buffer");

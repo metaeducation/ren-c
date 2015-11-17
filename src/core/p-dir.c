@@ -33,15 +33,14 @@
 #define REMOVE_TAIL_SLASH (1<<10)
 
 
-/***********************************************************************
-**
-*/	static int Read_Dir(REBREQ *dir, REBSER *files)
-/*
-**		Provide option to get file info too.
-**		Provide option to prepend dir path.
-**		Provide option to use wildcards.
-**
-***********************************************************************/
+//
+//  Read_Dir: C
+// 
+// Provide option to get file info too.
+// Provide option to prepend dir path.
+// Provide option to use wildcards.
+//
+static int Read_Dir(REBREQ *dir, REBSER *files)
 {
 	REBINT result;
 	REBCNT len;
@@ -82,20 +81,19 @@
 }
 
 
-/***********************************************************************
-**
-*/	static void Init_Dir_Path(REBREQ *dir, REBVAL *path, REBINT wild, REBCNT policy)
-/*
-**		Convert REBOL dir path to file system path.
-**		On Windows, we will also need to append a * if necessary.
-**
-**	ARGS:
-**		Wild:
-**			0 - no wild cards, path must end in / else error
-**			1 - accept wild cards * and ?, and * if need
-**		   -1 - not wild, if path does not end in /, add it
-**
-***********************************************************************/
+//
+//  Init_Dir_Path: C
+// 
+// Convert REBOL dir path to file system path.
+// On Windows, we will also need to append a * if necessary.
+// 
+// ARGS:
+// Wild:
+//     0 - no wild cards, path must end in / else error
+//     1 - accept wild cards * and ?, and * if need
+//    -1 - not wild, if path does not end in /, add it
+//
+static void Init_Dir_Path(REBREQ *dir, REBVAL *path, REBINT wild, REBCNT policy)
 {
 	REBINT len;
 	REBSER *ser;
@@ -156,13 +154,12 @@
 }
 
 
-/***********************************************************************
-**
-*/	static REB_R Dir_Actor(struct Reb_Call *call_, REBSER *port, REBCNT action)
-/*
-**		Internal port handler for file directories.
-**
-***********************************************************************/
+//
+//  Dir_Actor: C
+// 
+// Internal port handler for file directories.
+//
+static REB_R Dir_Actor(struct Reb_Call *call_, REBSER *port, REBCNT action)
 {
 	REBVAL *spec;
 	REBVAL *path;
@@ -315,11 +312,10 @@ create:
 }
 
 
-/***********************************************************************
-**
-*/	void Init_Dir_Scheme(void)
-/*
-***********************************************************************/
+//
+//  Init_Dir_Scheme: C
+//
+void Init_Dir_Scheme(void)
 {
 	Register_Scheme(SYM_DIR, 0, Dir_Actor);
 }

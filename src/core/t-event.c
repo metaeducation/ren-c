@@ -35,11 +35,10 @@
 #include "reb-net.h"
 
 
-/***********************************************************************
-**
-*/	REBINT CT_Event(REBVAL *a, REBVAL *b, REBINT mode)
-/*
-***********************************************************************/
+//
+//  CT_Event: C
+//
+REBINT CT_Event(REBVAL *a, REBVAL *b, REBINT mode)
 {
 	REBINT diff = Cmp_Event(a, b);
 	if (mode >=0) return diff == 0;
@@ -47,13 +46,12 @@
 }
 
 
-/***********************************************************************
-**
-*/	REBINT Cmp_Event(const REBVAL *t1, const REBVAL *t2)
-/*
-**	Given two events, compare them.
-**
-***********************************************************************/
+//
+//  Cmp_Event: C
+// 
+// Given two events, compare them.
+//
+REBINT Cmp_Event(const REBVAL *t1, const REBVAL *t2)
 {
 	REBINT	diff;
 
@@ -67,11 +65,10 @@
 }
 
 
-/***********************************************************************
-**
-*/	static REBFLG Set_Event_Var(REBVAL *value, const REBVAL *word, const REBVAL *val)
-/*
-***********************************************************************/
+//
+//  Set_Event_Var: C
+//
+static REBFLG Set_Event_Var(REBVAL *value, const REBVAL *word, const REBVAL *val)
 {
 	REBVAL *arg;
 	REBINT n;
@@ -183,11 +180,10 @@
 }
 
 
-/***********************************************************************
-**
-*/	static void Set_Event_Vars(REBVAL *evt, REBVAL *blk)
-/*
-***********************************************************************/
+//
+//  Set_Event_Vars: C
+//
+static void Set_Event_Vars(REBVAL *evt, REBVAL *blk)
 {
 	REBVAL *var;
 	const REBVAL *val;
@@ -208,11 +204,10 @@
 }
 
 
-/***********************************************************************
-**
-*/	static REBFLG Get_Event_Var(const REBVAL *value, REBCNT sym, REBVAL *val)
-/*
-***********************************************************************/
+//
+//  Get_Event_Var: C
+//
+static REBFLG Get_Event_Var(const REBVAL *value, REBCNT sym, REBVAL *val)
 {
 	REBVAL *arg;
 	REBREQ *req;
@@ -349,11 +344,10 @@ is_none:
 }
 
 
-/***********************************************************************
-**
-*/	REBFLG MT_Event(REBVAL *out, REBVAL *data, enum Reb_Kind type)
-/*
-***********************************************************************/
+//
+//  MT_Event: C
+//
+REBFLG MT_Event(REBVAL *out, REBVAL *data, enum Reb_Kind type)
 {
 	if (IS_BLOCK(data)) {
 		CLEARS(out);
@@ -366,11 +360,10 @@ is_none:
 }
 
 
-/***********************************************************************
-**
-*/	REBINT PD_Event(REBPVS *pvs)
-/*
-***********************************************************************/
+//
+//  PD_Event: C
+//
+REBINT PD_Event(REBPVS *pvs)
 {
 	if (IS_WORD(pvs->select)) {
 		if (pvs->setval == 0 || NOT_END(pvs->path+1)) {
@@ -385,11 +378,10 @@ is_none:
 }
 
 
-/***********************************************************************
-**
-*/	REBTYPE(Event)
-/*
-***********************************************************************/
+//
+//  REBTYPE: C
+//
+REBTYPE(Event)
 {
 	REBVAL *value;
 	REBVAL *arg;
@@ -539,11 +531,10 @@ enum rebol_event_fields {
 #endif
 
 
-/***********************************************************************
-**
-*/	 void Mold_Event(const REBVAL *value, REB_MOLD *mold)
-/*
-***********************************************************************/
+//
+//  Mold_Event: C
+//
+void Mold_Event(const REBVAL *value, REB_MOLD *mold)
 {
 	REBVAL val;
 	REBCNT field;
