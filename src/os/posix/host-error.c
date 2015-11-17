@@ -68,9 +68,8 @@ void OS_Exit(int code)
 // 
 // On some systems, the error may be recorded in the system log.
 //
-/***
-** coverity[+kill]
-*/
+// coverity[+kill]
+//
 void OS_Crash(const REBYTE *title, const REBYTE *content)
 {
 	// Echo crash message if echo file is open:
