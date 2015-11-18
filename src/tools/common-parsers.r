@@ -205,6 +205,7 @@ proto-parser: context [
             proto-prefix copy proto to newline newline
             opt ["/*" newline copy notes to "*/" "*/"]
             (
+                print [{Warning: FORMAT2012 detected for prototype: } mold proto]
                 style: 'format2012
                 emit-proto proto
             )
