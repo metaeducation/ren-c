@@ -1115,7 +1115,7 @@ emit {
 
 externs: make string! 2000
 boot-booters: load %booters.r
-boot-natives: load %natives.r
+boot-natives: load %tmp-natives.r
 
 nats: append copy boot-booters boot-natives
 

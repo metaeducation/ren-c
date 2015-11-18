@@ -196,7 +196,7 @@ for-each word [
     write
 ] [make-arg-enums word]
 
-action-list: load %../boot/natives.r
+action-list: load %../boot/tmp-natives.r
 
 for-each word [
     checksum
