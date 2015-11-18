@@ -401,11 +401,6 @@ REBNATIVE(attempt)
 //
 REBNATIVE(break)
 //
-// 1: /with
-// 2: value
-// 3: /return (deprecated)
-// 4: return-value
-// 
 // BREAK is implemented via a THROWN() value that bubbles up through
 // the stack.  It uses the value of its own native function as the
 // name of the throw, like `throw/name value :break`.
@@ -430,9 +425,6 @@ REBNATIVE(break)
 //  ]
 //
 REBNATIVE(case)
-//
-// 1: block
-// 2: /all
 {
     // We leave D_ARG(1) alone, it is holding 'block' alive from GC
     REBSER *block = VAL_SERIES(D_ARG(1));
@@ -1066,9 +1058,6 @@ REBNATIVE(eval)
 //
 REBNATIVE(exit)
 //
-// 1: /with
-// 2: value
-// 
 // EXIT is implemented via a THROWN() value that bubbles up through
 // the stack.  It uses the value of its own native function as the
 // name of the throw, like `throw/name value :exit`.

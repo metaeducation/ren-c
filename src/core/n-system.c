@@ -57,11 +57,6 @@ REBNATIVE(halt)
 //
 REBNATIVE(quit)
 //
-// 1: /with
-// 2: value
-// 3: /return (deprecated)
-// 4: /return-value (deprecated)
-// 
 // QUIT is implemented via a THROWN() value that bubbles up through
 // the stack.  It uses the value of its own native function as the
 // name of the throw, like `throw/name value :quit`.
@@ -440,14 +435,6 @@ REBNATIVE(ds)
 //  ]
 //
 REBNATIVE(do_codec)
-//
-// Calls a codec handle with specific data:
-// 
-// Args:
-// 1: codec:  handle!
-// 2: action: word! (identify, decode, encode)
-// 3: data:   binary! image! sound!
-// 4: option: (optional)
 {
     REBCDI codi;
     REBVAL *val;
