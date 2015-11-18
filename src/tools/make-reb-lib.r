@@ -146,7 +146,7 @@ emit-proto: func [
         emit-mlib/nol ["#define " fn.name.upper args]
         emit-mlib [pads mlib.tail 35 " RL->" fn.name.lower args]
 
-        comment-text: proto-parser/notes.post
+        comment-text: proto-parser/notes
         if proto-parser/style = 'format2012 [
             if position: find comment-text "****" [clear position]
             decode-lines comment-text {**} {}

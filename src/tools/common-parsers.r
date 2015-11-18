@@ -126,7 +126,7 @@ proto-parser: context [
 
     emit-proto: none
     proto-prefix: none
-    notes.post: none
+    notes: none
     lines: none
     data: none
     style: none
@@ -161,7 +161,7 @@ proto-parser: context [
                 data: load-until-blank lines
                 data: attempt [
                     either set-word? first data/1 [
-                        notes.post: data/2
+                        notes: data/2
                         data/1
                     ][
                         none
@@ -179,7 +179,7 @@ proto-parser: context [
             some ["^/**" any [#" " | #"^-"] to newline]
             "^/*/" any [#" " | #"^-"]
             proto-prefix copy proto to newline newline
-            opt ["/*" newline copy notes.post to "*/" "*/"]
+            opt ["/*" newline copy notes to "*/" "*/"]
             (
                 style: 'format2012
                 emit-proto proto
