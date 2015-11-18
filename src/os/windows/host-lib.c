@@ -1158,18 +1158,17 @@ input_error:
     return ret;  // meaning depends on flags
 }
 
-/***********************************************************************
-**
-*/  int OS_Reap_Process(int pid, int *status, int flags)
-/*
- * pid:
- *      > 0, a signle process
- *      -1, any child process
- * flags:
- *      0: return immediately
- *
-**      Return -1 on error
-***********************************************************************/
+//
+//  OS_Reap_Process: C
+//
+// pid:
+//      > 0, a signle process
+//      -1, any child process
+// flags:
+//      0: return immediately
+//
+//      Return -1 on error
+int OS_Reap_Process(int pid, int *status, int flags)
 {
     /* It seems that process doesn't need to be reaped on Windows */
     return 0;
@@ -1364,12 +1363,12 @@ REBOOL As_OS_Str(REBSER *series, REBCHR **string)
     return FALSE;
 }
 
-/***********************************************************************
-**
-**  Read embedded rebol script from the executable
-*/  REBYTE * OS_Read_Embedded (REBI64 *script_size)
-/*
-***********************************************************************/
+//
+//  OS_Read_Embedded: C
+//
+// Read embedded rebol script from the executable
+//
+REBYTE * OS_Read_Embedded (REBI64 *script_size)
 {
 #define PAYLOAD_NAME L"EMBEDDEDREBOL"
 

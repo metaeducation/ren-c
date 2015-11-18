@@ -32,11 +32,10 @@
 #include "reb-host.h"
 
 
-/***********************************************************************
-**
-*/  REBYTE * OS_Read_Embedded (REBI64 *script_size)
-/*
-***********************************************************************/
+//
+//  OS_Read_Embedded: C
+//
+REBYTE * OS_Read_Embedded (REBI64 *script_size)
 {
     return NULL;
 }
