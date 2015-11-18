@@ -682,19 +682,18 @@ RL_API int RL_Update_Event(REBEVT *evt)
 }
 
 
-/***********************************************************************
-**
-*/ RL_API REBEVT *RL_Find_Event (REBINT model, REBINT type)
-/*
-**  Find an application event (e.g. GUI) to the event port.
-**
-**  Returns:
-**      A pointer to the find event
-**  Arguments:
-**      model - event model
-**      type - event type
-**
-***********************************************************************/
+//
+//  RL_Find_Event: C
+// 
+// Find an application event (e.g. GUI) to the event port.
+//
+// Returns:
+//     A pointer to the find event
+// Arguments:
+//     model - event model
+//     type - event type
+//
+RL_API REBEVT *RL_Find_Event (REBINT model, REBINT type)
 {
     REBVAL * val = Find_Last_Event(model, type);
     if (val != NULL) {
@@ -815,26 +814,25 @@ RL_API void RL_Protect_GC(REBSER *series, u32 flags)
 }
 
 
-/***********************************************************************
-**
-*/ RL_API int RL_Get_String(REBSER *series, u32 index, void **str)
-/*
-**  Obtain a pointer into a string (bytes or unicode).
-**
-**  Returns:
-**      The length and type of string. When len > 0, string is unicode.
-**      When len < 0, string is bytes.
-**  Arguments:
-**      series - string series pointer
-**      index - index from beginning (zero-based)
-**      str   - pointer to first character
-**  Notes:
-**      If the len is less than zero, then the string is optimized to
-**      codepoints (chars) 255 or less for ASCII and LATIN-1 charsets.
-**      Strings are allowed to move in memory. Therefore, you will want
-**      to make a copy of the string if needed.
-**
-***********************************************************************/
+//
+//  RL_Get_String: C
+// 
+// Obtain a pointer into a string (bytes or unicode).
+//
+// Returns:
+//     The length and type of string. When len > 0, string is unicode.
+//     When len < 0, string is bytes.
+// Arguments:
+//     series - string series pointer
+//     index - index from beginning (zero-based)
+//     str   - pointer to first character
+// Notes:
+//     If the len is less than zero, then the string is optimized to
+//     codepoints (chars) 255 or less for ASCII and LATIN-1 charsets.
+//     Strings are allowed to move in memory. Therefore, you will want
+//     to make a copy of the string if needed.
+//
+RL_API int RL_Get_String(REBSER *series, u32 index, void **str)
 {   // ret: len or -len
     int len = (index >= series->tail) ? 0 : series->tail - index;
 

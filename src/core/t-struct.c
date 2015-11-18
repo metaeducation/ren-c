@@ -628,19 +628,18 @@ static REBOOL parse_field_type(struct Struct_Field *field, REBVAL *spec, REBVAL 
     return TRUE;
 }
 
-/***********************************************************************
-**
-*/  REBFLG MT_Struct(REBVAL *out, REBVAL *data, enum Reb_Kind type)
-/*
- * Format:
- * make struct! [
- *     field1 [type1]
- *     field2: [type2] field2-init-value
- *     field3: [struct [field1 [type1]]]
- *     field4: [type1[3]]
- *     ...
- * ]
-***********************************************************************/
+//
+//  MT_Struct: C
+// 
+// Format:
+//     make struct! [
+//         field1 [type1]
+//         field2: [type2] field2-init-value
+//         field3: [struct [field1 [type1]]]
+//         field4: [type1[3]]
+//         ...
+//     ]
+REBFLG MT_Struct(REBVAL *out, REBVAL *data, enum Reb_Kind type)
 {
     //RL_Print("%s\n", __func__);
     REBINT max_fields = 16;

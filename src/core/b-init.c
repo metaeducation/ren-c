@@ -721,12 +721,12 @@ REBINT Codec_Text(REBCDI *codi)
     return CODI_ERROR;
 }
 
-/***********************************************************************
-**
-*/  REBINT Codec_UTF16(REBCDI *codi, int le)
-/*
- * le: little endian
-***********************************************************************/
+//
+//  Codec_UTF16: C
+//
+// le: little endian
+//
+REBINT Codec_UTF16(REBCDI *codi, int le)
 {
     codi->error = 0;
 

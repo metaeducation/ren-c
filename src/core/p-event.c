@@ -104,15 +104,14 @@ REBVAL *Append_Event(void)
 
     return value;
 }
-/***********************************************************************
-**
-*/  REBVAL *Find_Last_Event (REBINT model, REBINT type)
-/*
-**      Find the last event in the queue by the model
-**      Check its type, if it matches, then return the event or NULL
-**
-**
-***********************************************************************/
+
+//
+//  Append_Event: C
+// 
+// Find the last event in the queue by the model
+// Check its type, if it matches, then return the event or NULL
+//
+REBVAL *Find_Last_Event (REBINT model, REBINT type)
 {
     REBVAL *port;
     REBVAL *value;

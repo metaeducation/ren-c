@@ -382,11 +382,10 @@ static REBCNT Find_Pool(REBCNT size)
 }
 
 
-/***********************************************************************
-**
-*/  void Check_Pool_Map(void)
-**
-************************************************************************
+//
+//  Check_Pool_Map: C
+// 
+void Check_Pool_Map(void)
 {
     int n;
 
