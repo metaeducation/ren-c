@@ -47,14 +47,11 @@
 #define WORD_TABLE_SIZE 1024  // initial size in words
 
 
-/***********************************************************************
-**
-*/  static REBCNT const Primes[] =
-/*
-**      Prime numbers used for hash table sizes. Divide by 2 for
-**      number of words that can be held in the symbol table.
-**
-***********************************************************************/
+//
+// Prime numbers used for hash table sizes. Divide by 2 for
+// number of words that can be held in the symbol table.
+//
+static REBCNT const Primes[] =
 {
     251,
     509,

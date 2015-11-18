@@ -40,16 +40,13 @@
 #define LEX_UTFE LEX_WORD
 #endif
 
-/***********************************************************************
-**
-*/  const REBYTE Lex_Map[256] =
-/*
-**      Maps each character to its lexical attributes, using
-**      a frequency optimized encoding.
-**
-**      UTF8: The values C0, C1, F5 to FF never appear.
-**
-***********************************************************************/
+//
+// Maps each character to its lexical attributes, using
+// a frequency optimized encoding.
+//
+// UTF8: The values C0, C1, F5 to FF never appear.
+//
+const REBYTE Lex_Map[256] =
 {
     /* 00 EOF */    LEX_DELIMIT|LEX_DELIMIT_END,
     /* 01     */    LEX_DEFAULT,
@@ -235,14 +232,11 @@
 };
 
 #ifdef LOWER_CASE_BYTE
-/***********************************************************************
-**
-*/  const REBYTE Upper_Case[256] =
-/*
-**      Maps each character to its upper case value.  Done this
-**      way for speed.  Note the odd cases in last block.
-**
-***********************************************************************/
+//
+// Maps each character to its upper case value.  Done this
+// way for speed.  Note the odd cases in last block.
+//
+const REBYTE Upper_Case[256] =
 {
       0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15,
      16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31,
@@ -267,14 +261,11 @@
 };
 
 
-/***********************************************************************
-**
-*/  const REBYTE Lower_Case[256] =
-/*
-**      Maps each character to its lower case value.  Done this
-**      way for speed.  Note the odd cases in last block.
-**
-***********************************************************************/
+//
+// Maps each character to its lower case value.  Done this
+// way for speed.  Note the odd cases in last block.
+//
+const REBYTE Lower_Case[256] =
 {
       0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15,
      16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31,

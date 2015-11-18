@@ -30,13 +30,10 @@
 #include "sys-core.h"
 
 
-/***********************************************************************
-**
-*/  static const REBYTE Debase64[128] =
-/*
-**      Base-64 binary decoder table.
-**
-***********************************************************************/
+//
+// Base-64 binary decoder table.
+//
+static const REBYTE Debase64[128] =
 {
     #define BIN_ERROR   (REBYTE)0x80
     #define BIN_SPACE   (REBYTE)0x40
@@ -157,18 +154,14 @@
 };
 
 
-/***********************************************************************
-**
-*/  static const REBYTE Enbase64[64] =
-/*
-**      Base-64 binary encoder table.
-**
-**      NOTE: Entered one-character-at-a-time in array initialization
-**      format to avoid the length of 65 which would be needed if
-**      a string literal were used.  This helps memory tools trap
-**      errant accesses to Enbase64[64] if there's an algorithm bug.
-**
-***********************************************************************/
+// Base-64 binary encoder table.
+//
+// NOTE: Entered one-character-at-a-time in array initialization
+// format to avoid the length of 65 which would be needed if
+// a string literal were used.  This helps memory tools trap
+// errant accesses to Enbase64[64] if there's an algorithm bug.
+//
+static const REBYTE Enbase64[64] =
 {
     'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
     'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
