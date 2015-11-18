@@ -64,6 +64,27 @@ encode-lines: func [
     text
 ]
 
+
+line-of: function [
+    {Returns line number of position within text.}
+    text [string!]
+    position [string! integer!]
+] [
+
+    if integer? position [
+        position: at text position
+    ]
+
+    count-line: [(line: 1 + any [line 0])]
+
+    parse/all copy/part text next position [
+        any [to newline skip count-line] skip count-line
+    ]
+
+    line
+]
+
+
 load-next: function [
     {Load the next value. Return block with value and new position.}
     string [string!]
@@ -126,6 +147,7 @@ proto-parser: context [
 
     emit-proto: none
     proto-prefix: none
+    parse.position: none
     notes: none
     lines: none
     data: none
@@ -135,7 +157,9 @@ proto-parser: context [
 
     grammar: context [
 
-        rule: [any segment]
+        rule: [
+            any [parse.position: segment]
+        ]
 
         segment: [
             format2015-func-header

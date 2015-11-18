@@ -47,6 +47,7 @@ make-*
 
 src/boot/boot-code.r
 src/boot/host-init.r
+src/boot/tmp-*
 
 src/core/b-boot.c
 
