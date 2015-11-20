@@ -1179,7 +1179,7 @@ REBSER *Error_Arg_Type(const struct Reb_Call *call, const REBVAL *param, const R
     Val_Init_Word_Unbound(&param_word, REB_WORD, VAL_TYPESET_SYM(param));
 
     assert(IS_DATATYPE(arg_type));
-    return Error(RE_EXPECT_ARG, DSF_LABEL(call), &param_word, arg_type, NULL);
+    return Error(RE_EXPECT_ARG, DSF_LABEL(call), arg_type, &param_word, NULL);
 }
 
 
