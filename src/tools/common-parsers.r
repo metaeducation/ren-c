@@ -178,6 +178,7 @@ proto-parser: context [
             doubleslashed-lines
             and is-format2015-intro
             function-proto some white-space
+            #"{"
             (
                 style: 'format2015
                 emit-proto proto
@@ -220,9 +221,8 @@ proto-parser: context [
 
         function-proto: [
             proto-prefix copy proto [
-                some [
-                    not #"(" not eol [copy proto.id identifier | skip]
-                ] #"(" any white-space
+                some [not #"(" not #"=" [white-space | copy proto.id identifier | skip]] #"("
+                any white-space
                 opt [not #")" copy proto.arg.1 identifier]
                 any [not #")" [white-space | skip]] #")"
             ]
