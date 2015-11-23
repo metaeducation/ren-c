@@ -210,7 +210,7 @@ proto-parser: context [
             "/******" to newline
             some ["^/**" any [#" " | #"^-"] to newline]
             "^/*/" any [#" " | #"^-"]
-            function-proto newline
+            proto-prefix copy proto to newline newline
             opt ["/*" newline copy notes to "*/" "*/"]
             (
                 print [{Warning: FORMAT2012 detected for prototype: } mold proto]
