@@ -168,9 +168,8 @@ proto-parser: context [
         ]
 
         segment: [
-            (proto.id: proto.arg.1: none)
+            (style: proto.id: proto.arg.1: none)
             format2015-func-header
-            | format2012-func-header
             | thru newline
         ]
 
@@ -204,19 +203,6 @@ proto-parser: context [
             ][
                 none
             ]
-        ]
-
-        format2012-func-header: [
-            "/******" to newline
-            some ["^/**" any [#" " | #"^-"] to newline]
-            "^/*/" any [#" " | #"^-"]
-            proto-prefix copy proto to newline newline
-            opt ["/*" newline copy notes to "*/" "*/"]
-            (
-                print [{Warning: FORMAT2012 detected for prototype: } mold proto]
-                style: 'format2012
-                emit-proto proto
-            )
         ]
 
         function-proto: [

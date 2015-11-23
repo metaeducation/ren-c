@@ -147,11 +147,6 @@ emit-proto: func [
         emit-mlib [pads mlib.tail 35 " RL->" fn.name.lower args]
 
         comment-text: proto-parser/notes
-        if proto-parser/style = 'format2012 [
-            if position: find comment-text "****" [clear position]
-            decode-lines comment-text {**} {}
-            trim/auto comment-text
-        ]
         encode-lines comment-text {**} { }
 
         emit-mlib ["/*^/**^-" proto "^/**^/" comment-text "*/" newline]
