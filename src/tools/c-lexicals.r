@@ -1,7 +1,7 @@
 REBOL [
     Title: "C Programming Language Lexical Definitions"
     Rights: {
-		Copyright 2015 Brett Handley
+        Copyright 2015 Brett Handley
     }
     License: {
         Licensed under the Apache License, Version 2.0

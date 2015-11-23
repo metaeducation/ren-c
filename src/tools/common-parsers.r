@@ -154,8 +154,8 @@ proto-parser: context [
     parse.position: none
     notes: none
     lines: none
-	proto.id: none
-	proto.arg.1: none
+    proto.id: none
+    proto.arg.1: none
     data: none
     style: none
 
@@ -168,7 +168,7 @@ proto-parser: context [
         ]
 
         segment: [
-			(proto.id: proto.arg.1: none)
+            (proto.id: proto.arg.1: none)
             format2015-func-header
             | format2012-func-header
             | thru newline
@@ -220,10 +220,10 @@ proto-parser: context [
 
         function-proto: [
             proto-prefix copy proto [
-				some [
-					not #"(" not eol [copy proto.id identifier | skip]
-				] #"(" any white-space
-				opt [not #")" copy proto.arg.1 identifier]
+                some [
+                    not #"(" not eol [copy proto.id identifier | skip]
+                ] #"(" any white-space
+                opt [not #")" copy proto.arg.1 identifier]
                 any [not #")" [white-space | skip]] #")"
             ]
         ]
