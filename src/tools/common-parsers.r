@@ -20,6 +20,8 @@ REBOL [
     }
 ]
 
+do %c-lexicals.r
+
 decode-lines: function [
     {Decode text previously encoded using a line prefix e.g. comments (modifies).}
     text [string!]
@@ -152,18 +154,21 @@ proto-parser: context [
     parse.position: none
     notes: none
     lines: none
+	proto.id: none
+	proto.arg.1: none
     data: none
     style: none
 
     process: func [data] [parse data grammar/rule]
 
-    grammar: context [
+    grammar: context bind [
 
         rule: [
             any [parse.position: segment]
         ]
 
         segment: [
+			(proto.id: proto.arg.1: none)
             format2015-func-header
             | format2012-func-header
             | thru newline
@@ -172,7 +177,7 @@ proto-parser: context [
         format2015-func-header: [
             doubleslashed-lines
             and is-format2015-intro
-            proto-prefix copy proto to newline newline
+            function-proto some white-space
             (
                 style: 'format2015
                 emit-proto proto
@@ -204,7 +209,7 @@ proto-parser: context [
             "/******" to newline
             some ["^/**" any [#" " | #"^-"] to newline]
             "^/*/" any [#" " | #"^-"]
-            proto-prefix copy proto to newline newline
+            function-proto newline
             opt ["/*" newline copy notes to "*/" "*/"]
             (
                 print [{Warning: FORMAT2012 detected for prototype: } mold proto]
@@ -212,5 +217,16 @@ proto-parser: context [
                 emit-proto proto
             )
         ]
-    ]
+
+        function-proto: [
+            proto-prefix copy proto [
+				some [
+					not #"(" not eol [copy proto.id identifier | skip]
+				] #"(" any white-space
+				opt [not #")" copy proto.arg.1 identifier]
+                any [not #")" [white-space | skip]] #")"
+            ]
+        ]
+
+    ] c.lexical/grammar
 ]
