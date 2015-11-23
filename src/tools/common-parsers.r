@@ -207,6 +207,7 @@ proto-parser: context [
 
         function-proto: [
             proto-prefix copy proto [
+                not white-space
                 some [not #"(" not #"=" [white-space | copy proto.id identifier | skip]] #"("
                 any white-space
                 opt [not #")" copy proto.arg.1 identifier]
