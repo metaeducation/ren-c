@@ -153,8 +153,13 @@ void Expand_Stack(REBCNT amount)
 // it, because we need to fulfill its arguments in the caller's
 // frame before we actually invoke the function.
 //
-struct Reb_Call *Make_Call(REBVAL *out, REBSER *block, REBCNT index, const REBVAL *label, const REBVAL *func)
-{
+struct Reb_Call *Make_Call(
+    REBVAL *out,
+    REBSER *block,
+    REBCNT index,
+    const REBVAL *label,
+    const REBVAL *func
+) {
     REBCNT num_vars = VAL_FUNC_NUM_PARAMS(func);
 
     REBCNT size = (
