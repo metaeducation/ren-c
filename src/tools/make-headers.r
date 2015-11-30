@@ -33,6 +33,9 @@ emit-out: func [d] [append repend output-buffer d newline]
 emit-rlib: func [d] [append repend rlib d newline]
 emit-header: func [t f] [emit-out form-header/gen t f %make-headers]
 
+collapse-whitespace: [some [change some white-space #" " | skip]]
+bind collapse-whitespace c.lexical/grammar
+
 emit-proto: func [proto] [
 
     if find proto "()" [
@@ -58,7 +61,10 @@ emit-proto: func [proto] [
 
         find proto #"("
     ][
+
+        parse proto collapse-whitespace
         proto: trim proto
+
         either all [
             check-duplicates
             find prototypes proto
