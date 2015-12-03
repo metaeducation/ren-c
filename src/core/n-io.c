@@ -90,19 +90,23 @@ REBNATIVE(form)
 //
 REBNATIVE(mold)
 {
-    REBVAL *val = D_ARG(1);
+    PARAM(1, value);
+    REFINE(2, only);
+    REFINE(3, all);
+    REFINE(4, flat);
 
     REB_MOLD mo;
     CLEARS(&mo);
-    if (D_REF(3)) SET_FLAG(mo.opts, MOPT_MOLD_ALL);
-    if (D_REF(4)) SET_FLAG(mo.opts, MOPT_INDENT);
-    Reset_Mold(&mo);
+    if (REF(all)) SET_FLAG(mo.opts, MOPT_MOLD_ALL);
+    if (REF(flat)) SET_FLAG(mo.opts, MOPT_INDENT);
 
-    if (D_REF(2) && IS_BLOCK(val)) SET_FLAG(mo.opts, MOPT_ONLY);
+    Push_Mold(&mo);
 
-    Mold_Value(&mo, val, TRUE);
+    if (REF(only) && IS_BLOCK(ARG(value))) SET_FLAG(mo.opts, MOPT_ONLY);
 
-    Val_Init_String(D_OUT, Copy_String(mo.series, 0, -1));
+    Mold_Value(&mo, ARG(value), TRUE);
+
+    Val_Init_String(D_OUT, Pop_Molded_String(&mo));
 
     return R_OUT;
 }
@@ -1101,15 +1105,16 @@ REBSER *Block_To_String_List(REBVAL *blk)
 
     REB_MOLD mo;
     CLEARS(&mo);
-    Reset_Mold(&mo);
+
+    Push_Mold(&mo);
 
     for (value = VAL_ARRAY_AT(blk); NOT_END(value); value++) {
         Mold_Value(&mo, value, FALSE);
-        Append_Codepoint_Raw(mo.series, 0);
+        Append_Codepoint_Raw(mo.series, '\0');
     }
-    Append_Codepoint_Raw(mo.series, 0);
+    Append_Codepoint_Raw(mo.series, '\0');
 
-    return Copy_Sequence(mo.series); // Unicode
+    return Pop_Molded_String(&mo);
 }
 
 

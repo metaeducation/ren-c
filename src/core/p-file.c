@@ -243,13 +243,13 @@ static void Write_File_Port(REBREQ *file, REBVAL *data, REBCNT len, REBCNT args)
         // into 32K chunks for writing.
         REB_MOLD mo;
         CLEARS(&mo);
-        Reset_Mold(&mo);
+        Push_Mold(&mo);
         if (args & AM_WRITE_LINES) {
             mo.opts = 1 << MOPT_LINES;
         }
         Mold_Value(&mo, data, FALSE);
-        Val_Init_String(data, mo.series); // fall into next section
-        len = SERIES_LEN(mo.series);
+        Val_Init_String(data, Pop_Molded_String(&mo)); // fall to next section
+        len = VAL_LEN_HEAD(data);
     }
 
     // Auto convert string to UTF-8

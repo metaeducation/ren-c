@@ -566,45 +566,67 @@ REBNATIVE(encloak)
 //
 REBNATIVE(dehex)
 {
-    REBVAL *arg = D_ARG(1);
-    REBCNT len = VAL_LEN_AT(arg);
-    REBUNI n;
+    PARAM(1, value);
+
+    REBCNT len = VAL_LEN_AT(ARG(value));
+    REBUNI uni;
     REBSER *ser;
 
-    if (VAL_BYTE_SIZE(arg)) {
-        REBYTE *bp = VAL_BIN_AT(arg);
-        REBYTE *dp = Reset_Buffer(BUF_FORM, len);
+    if (VAL_BYTE_SIZE(ARG(value))) {
+        REBYTE *bp = VAL_BIN_AT(ARG(value));
+        REBYTE *dp = Reset_Buffer(BYTE_BUF, len);
 
         for (; len > 0; len--) {
-            if (*bp == '%' && len > 2 && Scan_Hex2(bp+1, &n, FALSE)) {
-                *dp++ = (REBYTE)n;
+            if (*bp == '%' && len > 2 && Scan_Hex2(bp + 1, &uni, FALSE)) {
+                *dp++ = cast(REBYTE, uni);
                 bp += 3;
                 len -= 2;
             }
             else *dp++ = *bp++;
         }
 
-        *dp = 0;
-        ser = Copy_String(BUF_FORM, 0, dp - BIN_HEAD(BUF_FORM));
+        *dp = '\0';
+        ser = Copy_String(BYTE_BUF, 0, dp - BIN_HEAD(BYTE_BUF));
     }
     else {
-        REBUNI *up = VAL_UNI_AT(arg);
-        REBUNI *dp = (REBUNI*)Reset_Buffer(BUF_MOLD, len);
+        REBUNI *up = VAL_UNI_AT(ARG(value));
+        REBUNI *dp;
+        REB_MOLD mo;
+        CLEARS(&mo);
+
+        Push_Mold(&mo);
+
+        // Do a conservative expansion, assuming there are no %NNs in the
+        // series and the output string will be the same length as input
+        //
+        Expand_Series(mo.series, mo.start, len);
+
+        dp = UNI_AT(mo.series, mo.start); // Expand_Series may change pointer
 
         for (; len > 0; len--) {
-            if (*up == '%' && len > 2 && Scan_Hex2((REBYTE*)(up+1), &n, TRUE)) {
-                *dp++ = (REBUNI)n;
+            if (
+                *up == '%'
+                && len > 2
+                && Scan_Hex2(cast(REBYTE*, up + 1), dp, TRUE)
+            ) {
+                dp++;
                 up += 3;
                 len -= 2;
             }
             else *dp++ = *up++;
         }
 
-        *dp = 0;
-        ser = Copy_String(BUF_MOLD, 0, dp - UNI_HEAD(BUF_MOLD));
+        *dp = '\0';
+
+        // The delta in dp from the original pointer position tells us the
+        // actual size after the %NNs have been accounted for.
+        //
+        ser = Pop_Molded_String_Len(
+            &mo, cast(REBCNT, dp - UNI_AT(mo.series, mo.start))
+        );
     }
 
-    Val_Init_Series(D_OUT, VAL_TYPE(arg), ser);
+    Val_Init_Series(D_OUT, VAL_TYPE(ARG(value)), ser);
 
     return R_OUT;
 }

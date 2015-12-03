@@ -147,13 +147,28 @@ typedef struct rebol_port_action_map {
 
 typedef struct rebol_mold {
     REBSER *series;     // destination series (uni)
+    REBCNT start;       // index where this mold starts within series
     REBFLGS opts;        // special option flags
+    REBCNT limit;       // how many characters before cutting off with "..."
+    REBCNT reserve;     // how much capacity to reserve at the outset
     REBINT indent;      // indentation amount
-//  REBYTE space;       // ?
     REBYTE period;      // for decimal point
     REBYTE dash;        // for date fields
     REBYTE digits;      // decimal digits
 } REB_MOLD;
+
+#define Drop_Mold_If_Pushed(mo) \
+    Drop_Mold_Core((mo), TRUE)
+
+#define Drop_Mold(mo) \
+    Drop_Mold_Core((mo), FALSE)
+
+#define Pop_Molded_String(mo) \
+    Pop_Molded_String_Core((mo), END_FLAG)
+
+#define Pop_Molded_String_Len(mo,len) \
+    Pop_Molded_String_Core((mo), (len))
+
 
 /***********************************************************************
 **
@@ -252,14 +267,15 @@ enum REB_Mold_Opts {
     MOPT_MOLD_ALL,      // Output lexical types in #[type...] format
     MOPT_COMMA_PT,      // Decimal point is a comma.
     MOPT_SLASH_DATE,    // Date as 1/1/2000
-//  MOPT_MOLD_VALS,     // Value parts are molded (strings are kept as is)
     MOPT_FILE,          // Molding %file
     MOPT_INDENT,        // Indentation
     MOPT_TIGHT,         // No space between block values
     MOPT_NO_NONE,       // Do not output UNSET or NONE object vars
-    MOPT_EMAIL,
+    MOPT_EMAIL,         // ?
     MOPT_ONLY,          // Mold/only - no outer block []
     MOPT_LINES,         // add a linefeed between each value
+    MOPT_LIMIT,         // Limit length of mold to mold->limit, then "..."
+    MOPT_RESERVE,       // At outset, reserve space for buffer (with length 0)
     MOPT_MAX
 };
 
@@ -597,18 +613,17 @@ enum encoding_opts {
 
 #define BUF_EMIT        VAL_ARRAY(TASK_BUF_EMIT)
 #define BUF_COLLECT     VAL_ARRAY(TASK_BUF_COLLECT)
-#define MOLD_LOOP       VAL_ARRAY(TASK_MOLD_LOOP)
+#define MOLD_STACK       VAL_ARRAY(TASK_MOLD_STACK)
 
-#define BUF_PRINT       VAL_SERIES(TASK_BUF_PRINT)
-#define BUF_FORM        VAL_SERIES(TASK_BUF_FORM)
-#define BUF_MOLD        VAL_SERIES(TASK_BUF_MOLD)
+#define BYTE_BUF        VAL_SERIES(TASK_BYTE_BUF)
+#define UNI_BUF        VAL_SERIES(TASK_UNI_BUF)
 #define BUF_UTF8        VAL_SERIES(TASK_BUF_UTF8)
 
 
 #ifdef OS_WIDE_CHAR
-#define BUF_OS_STR BUF_MOLD
+#define BUF_OS_STR UNI_BUF
 #else
-#define BUF_OS_STR BUF_FORM
+#define BUF_OS_STR BYTE_BUF
 #endif
 
 

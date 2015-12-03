@@ -132,6 +132,8 @@ struct Reb_State {
     REBINT gc_disable;      // Count of GC_Disables at time of Push
 
     REBCNT manuals_len;    // Where GC_Manuals was when state started
+    REBCNT uni_buf_len;
+    REBCNT mold_loop_tail;
 
 #ifdef HAS_POSIX_SIGNAL
     sigjmp_buf cpu_state;

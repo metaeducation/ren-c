@@ -482,7 +482,6 @@ void Debug_Value(const REBVAL *value, REBCNT limit, REBOOL mold)
 //
 void Debug_Values(const REBVAL *value, REBCNT count, REBCNT limit)
 {
-    REBSER *out;
     REBCNT i1;
     REBCNT i2;
     REBUNI uc, pc = ' ';
@@ -492,15 +491,30 @@ void Debug_Values(const REBVAL *value, REBCNT count, REBCNT limit)
         Debug_Space(1);
         if (n > 0 && VAL_TYPE(value) <= REB_NONE) Debug_Chars('.', 1);
         else {
-            out = Mold_Print_Value(value, limit, TRUE); // shared mold buffer
-            for (i1 = i2 = 0; i1 < SERIES_LEN(out); i1++) {
-                uc = GET_ANY_CHAR(out, i1);
+            REB_MOLD mo;
+            CLEARS(&mo);
+            mo.opts = MOPT_LIMIT;
+            mo.limit = limit;
+            Push_Mold(&mo);
+
+            Mold_Value(&mo, value, TRUE);
+
+            for (i1 = i2 = mo.start; i1 < SERIES_LEN(mo.series); i1++) {
+                uc = GET_ANY_CHAR(mo.series, i1);
                 if (uc < ' ') uc = ' ';
-                if (uc > ' ' || pc > ' ') SET_ANY_CHAR(out, i2++, uc);
+                if (uc > ' ' || pc > ' ') SET_ANY_CHAR(mo.series, i2++, uc);
                 pc = uc;
             }
-            SET_ANY_CHAR(out, i2, 0);
-            Debug_String(SERIES_DATA(out), i2, TRUE, 0);
+            SET_ANY_CHAR(mo.series, i2, '\0');
+            assert(SERIES_WIDE(mo.series) == sizeof(REBUNI));
+            Debug_String(
+                UNI_AT(mo.series, mo.start),
+                i2 - mo.start,
+                TRUE,
+                0
+            );
+
+            Drop_Mold(&mo);
         }
     }
     Debug_Line();
@@ -528,28 +542,35 @@ void Debug_Values(const REBVAL *value, REBCNT count, REBCNT limit)
 //
 void Debug_Buf(const char *fmt, va_list *args)
 {
-    REBSER *buf = BUF_PRINT;
     REBCNT len;
+    REBCNT sub;
     REBCNT n;
-    REBYTE *bp;
-    REBCNT tail;
+    REBSER *bytes;
     REBINT disabled = GC_Disabled;
-
-    if (!buf) panic (Error(RE_NO_BUFFER));
+    REB_MOLD mo;
+    CLEARS(&mo);
 
     GC_Disabled = 1;
 
-    RESET_SERIES(buf);
+    Push_Mold(&mo);
 
-    // Limits output to size of buffer, will not expand it:
-    bp = Form_Args_Core(BIN_HEAD(buf), SERIES_REST(buf) - 1, fmt, args);
-    tail = bp - BIN_HEAD(buf);
+    Form_Args_Core(&mo, fmt, args);
 
-    for (n = 0; n < tail; n += len) {
-        len = LEN_BYTES(BIN_AT(buf, n));
-        if (len > 1024) len = 1024;
-        Debug_String(BIN_AT(buf, n), len, FALSE, 0);
+    bytes = Pop_Molded_UTF8(&mo);
+
+    // Don't send the Debug_String routine more than 1024 bytes at a time,
+    // but chunk it to 1024 byte sections.
+    //
+    // !!! What's the rationale for this?
+    //
+    len = SERIES_LEN(bytes);
+    for (n = 0; n < len; n += sub) {
+        sub = len - n;
+        if (sub > 1024) sub = 1024;
+        Debug_String(BIN_AT(bytes, n), sub, FALSE, 0);
     }
+
+    Free_Series(bytes);
 
     assert(GC_Disabled == 1);
     GC_Disabled = disabled;
@@ -755,31 +776,43 @@ REBUNI *Form_Uni_Hex(REBUNI *out, REBCNT n)
 //  Form_Args_Core: C
 // 
 // (va_list by pointer: http://stackoverflow.com/a/3369762/211160)
-// 
-// Lower level (debugging) value formatter.
-// Can restrict to max char size.
 //
-REBYTE *Form_Args_Core(REBYTE *bp, REBCNT max, const char *fmt, va_list *args)
+// This is an internal routine used for debugging, which is something like
+// `printf` (it understands %d, %s, %c) but stripped down in features.
+// It also knows how to show REBVAL* values FORMed (%v) or MOLDed (%r),
+// as well as REBSER* or REBARR* series molded (%m).
+//
+// Initially it was considered to be for low-level debug output only.  It
+// was strictly ASCII, and it only supported a fixed-size output destination
+// buffer.  The buffer that it used was reused by other routines, and
+// nested calls would erase the content.  The choice was made to use the
+// implementation techniques of MOLD and the "mold stack"...allowing nested
+// calls and unicode support.  It simplified the code, at the cost of
+// becoming slightly more "bootstrapped".
+//
+void Form_Args_Core(REB_MOLD *mo, const char *fmt, va_list *args)
 {
     REBYTE *cp;
-    REBCNT len = 0;
     REBINT pad;
-    REBVAL *vp;
     REBYTE desc;
-    REBSER *ser;
     REBVAL value;
     REBYTE padding;
-    REBINT l;
-    REBCNT ul;
+    REBSER *ser = mo->series;
+    REBYTE buf[MAX_SCAN_DECIMAL];
 
-    max--; // adjust for the fact that it adds a NULL at the end.
+    // buffer used for making byte-oriented renderings to add to the REBUNI
+    // mold series.  Should be more formally checked as it's used for
+    // integers, hex, eventually perhaps other things.
+    //
+    assert(MAX_SCAN_DECIMAL >= MAX_HEX_LEN);
 
-    //*bp++ = '!'; len++;
+    for (; *fmt != '\0'; fmt++) {
 
-    for (; *fmt && len < max; fmt++) {
+        // Copy format string until next % escape
+        //
+        while ((*fmt != '\0') && (*fmt != '%'))
+            Append_Codepoint_Raw(ser, *fmt++);
 
-        // Copy string until next % escape:
-        for (; *fmt && *fmt != '%' && len < max; len++) *bp++ = *fmt++;
         if (*fmt != '%') break;
 
         pad = 1;
@@ -797,22 +830,18 @@ pick:
             fmt = cs_cast(Grab_Int(cb_cast(fmt), &pad));
             goto pick;
 
+        case 'D':
+            assert(FALSE); // !!! was identical code to "d"...why "D"?
         case 'd':
             // All va_arg integer arguments will be coerced to platform 'int'
             cp = Form_Int_Pad(
-                bp, cast(REBI64, va_arg(*args, int)), max-len, pad, padding
+                buf,
+                cast(REBI64, va_arg(*args, int)),
+                MAX_SCAN_DECIMAL,
+                pad,
+                padding
             );
-            len += (REBCNT)(cp - bp);
-            bp = cp;
-            break;
-
-        case 'D':
-            // All va_arg integer arguments will be coerced to platform 'int'
-            cp = Form_Int_Pad(
-                bp, cast(REBI64, va_arg(*args, int)), max-len, pad, padding
-            );
-            len += (REBCNT)(cp - bp);
-            bp = cp;
+            Append_Unencoded_Len(ser, s_cast(buf), cast(REBCNT, cp - buf));
             break;
 
         case 's':
@@ -821,82 +850,74 @@ pick:
             if (pad < 0) {
                 pad = -pad;
                 pad -= LEN_BYTES(cp);
-                for (; pad > 0 && len < max; len++, pad--) *bp++ = ' ';
+                for (; pad > 0; pad--) Append_Codepoint_Raw(ser, ' ');
             }
-            for (; *cp && len < max && pad > 0; pad--, len++) *bp++ = *cp++;
-            for (; pad > 0 && len < max; len++, pad--) *bp++ = ' ';
+            Append_Unencoded(ser, s_cast(cp));
+
+            // !!! see R3-Alpha for original pad logic, this is an attempt
+            // to make the output somewhat match without worrying heavily
+            // about the padding features of this debug routine.
+            //
+            pad -= LEN_BYTES(cp);
+
+            for (; pad > 0; pad--) Append_Codepoint_Raw(ser, ' ');
             break;
 
         case 'r':   // use Mold
         case 'v':   // use Form
-            vp = va_arg(*args, REBVAL *);
-mold_value:
-            // Form the REBOL value into a reused buffer:
-            ser = Mold_Print_Value(vp, 0, LOGICAL(desc != 'v'));
+            Mold_Value(mo, va_arg(*args, REBVAL *), LOGICAL(desc != 'v'));
 
-            l = max - len - 1;
-            if (pad != 1 && l > pad) l = pad;
-
-            ul = SERIES_LEN(ser);
-            l = Encode_UTF8(bp, l, UNI_HEAD(ser), &ul, OPT_ENC_UNISRC);
-            len += l;
-
-            // Filter out CTRL chars:
-            for (; l > 0; l--, bp++) if (*bp < ' ') *bp = ' ';
+            // !!! This used to "filter out ctrl chars", which isn't a bad
+            // idea as a mold option (MOPT_FILTER_CTRL) but it would involve
+            // some doing, as molding doesn't have a real "moment" that
+            // it can always filter...since sometimes the buffer is examined
+            // directly by clients vs. getting handed back.
+            //
+            /* for (; l > 0; l--, bp++) if (*bp < ' ') *bp = ' '; */
             break;
 
         case 'm':  // Mold a series
-            ser = va_arg(*args, REBSER *);
             // Val_Init_Block would Ensure_Series_Managed, we use a raw
             // VAL_SET instead
             VAL_RESET_HEADER(&value, REB_BLOCK);
-            VAL_SERIES(&value) = ser;
+            VAL_SERIES(&value) = va_arg(*args, REBSER *);
             VAL_INDEX(&value) = 0;
-            vp = &value;
-            goto mold_value;
+            Mold_Value(mo, &value, TRUE);
+            break;
 
         case 'c':
-            if (len < max) {
-                *bp++ = cast(REBYTE, va_arg(*args, REBINT));
-                len++;
-            }
+            Append_Codepoint_Raw(ser, cast(REBYTE, va_arg(*args, REBINT)));
             break;
 
         case 'x':
-            if (len + MAX_HEX_LEN + 1 < max) { // A cheat, but it is safe.
-                *bp++ = '#';
-                if (pad == 1) pad = 8;
-                cp = Form_Hex_Pad(
-                    bp, cast(REBU64, cast(REBUPT, va_arg(*args, REBYTE*))), pad
-                );
-                len += 1 + (REBCNT)(cp - bp);
-                bp = cp;
-            }
+            Append_Codepoint_Raw(ser, '#');
+            if (pad == 1) pad = 8;
+            cp = Form_Hex_Pad(
+                buf, cast(REBU64, cast(REBUPT, va_arg(*args, REBYTE*))), pad
+            );
+            Append_Unencoded_Len(ser, s_cast(buf), cp - buf);
             break;
 
         default:
-            *bp++ = *fmt;
-            len++;
+            Append_Codepoint_Raw(ser, *fmt);
         }
     }
-    *bp = 0;
-    return bp;
+
+    TERM_SERIES(ser);
 }
 
 
 //
 //  Form_Args: C
 //
-REBYTE *Form_Args(REBYTE *bp, REBCNT max, const char *fmt, ...)
+void Form_Args(REB_MOLD *mo, const char *fmt, ...)
 {
     REBYTE *result;
     va_list args;
 
     va_start(args, fmt);
-    result = Form_Args_Core(bp, max, fmt, &args);
+    Form_Args_Core(mo, fmt, &args);
     va_end(args);
-
-    return result;
 }
 
 
@@ -914,12 +935,22 @@ REBYTE *Form_Args(REBYTE *bp, REBCNT max, const char *fmt, ...)
 //
 void Prin_Value(const REBVAL *value, REBCNT limit, REBOOL mold)
 {
-    REBSER *out = Mold_Print_Value(value, limit, mold);
+    REB_MOLD mo;
+    CLEARS(&mo);
+    mo.opts = MOPT_LIMIT;
+    mo.limit = limit;
+    Push_Mold(&mo);
+
+    Mold_Value(&mo, value, mold);
+
+    assert(SERIES_WIDE(mo.series) == sizeof(REBUNI));
     Prin_OS_String(
-        SERIES_DATA(out),
-        SERIES_LEN(out),
+        UNI_AT(mo.series, mo.start),
+        SERIES_LEN(mo.series) - mo.start,
         OPT_ENC_UNISRC | OPT_ENC_CRLF_MAYBE
     );
+
+    Drop_Mold(&mo);
 }
 
 
@@ -943,6 +974,5 @@ void Print_Value(const REBVAL *value, REBCNT limit, REBOOL mold)
 //
 void Init_Raw_Print(void)
 {
-    Set_Root_Series(TASK_BUF_PRINT, Make_Binary(1000), "print buffer");
-    Set_Root_Series(TASK_BUF_FORM,  Make_Binary(64), "form buffer");
+    Set_Root_Series(TASK_BYTE_BUF,  Make_Binary(1000), "form buffer");
 }

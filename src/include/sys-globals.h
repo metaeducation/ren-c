@@ -175,6 +175,8 @@ TVAR struct Reb_State *Saved_State; // Saved state for Catch (CPU state, etc.)
     // line number of instantiation so any Make_Error can pick it up.
     TVAR const char *TG_Erroring_C_File;
     TVAR int TG_Erroring_C_Line;
+
+    TVAR REBFLGS TG_Pushing_Mold; // Push_Mold should not directly recurse
 #endif
 
 //-- Evaluation variables:

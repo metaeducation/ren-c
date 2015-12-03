@@ -98,8 +98,8 @@ REBYTE *Temp_Byte_Chars_May_Fail(
 
     if (index > tail) fail (Error(RE_PAST_END));
 
-    Resize_Series(BUF_FORM, max_len+1);
-    bp = BIN_HEAD(BUF_FORM);
+    Resize_Series(BYTE_BUF, max_len+1);
+    bp = BIN_HEAD(BYTE_BUF);
 
     // Skip leading whitespace:
     for (; index < tail; index++) {
@@ -134,12 +134,12 @@ REBYTE *Temp_Byte_Chars_May_Fail(
 
     *bp = '\0';
 
-    len = bp - BIN_HEAD(BUF_FORM);
+    len = bp - BIN_HEAD(BYTE_BUF);
     if (len == 0) fail (Error(RE_TOO_SHORT));
 
     if (length) *length = len;
 
-    return BIN_HEAD(BUF_FORM);
+    return BIN_HEAD(BYTE_BUF);
 }
 
 
@@ -547,7 +547,7 @@ REBSER *Entab_Bytes(REBYTE *bp, REBCNT index, REBCNT len, REBINT tabsize)
     REBYTE *dp;
     REBYTE c;
 
-    dp = Reset_Buffer(BUF_FORM, len);
+    dp = Reset_Buffer(BYTE_BUF, len);
 
     for (; index < len; index++) {
 
@@ -578,7 +578,7 @@ REBSER *Entab_Bytes(REBYTE *bp, REBCNT index, REBCNT len, REBINT tabsize)
         }
     }
 
-    return Copy_Buffer(BUF_FORM, dp);
+    return Copy_Buffer(BYTE_BUF, 0, dp);
 }
 
 
@@ -593,7 +593,13 @@ REBSER *Entab_Unicode(REBUNI *bp, REBCNT index, REBCNT len, REBINT tabsize)
     REBUNI *dp;
     REBUNI c;
 
-    dp = (REBUNI *)Reset_Buffer(BUF_MOLD, len);
+    REB_MOLD mo;
+    CLEARS(&mo);
+    mo.opts = MOPT_RESERVE;
+    mo.reserve = len;
+
+    Push_Mold(&mo);
+    dp = UNI_HEAD(mo.series);
 
     for (; index < len; index++) {
 
@@ -624,7 +630,10 @@ REBSER *Entab_Unicode(REBUNI *bp, REBCNT index, REBCNT len, REBINT tabsize)
         }
     }
 
-    return Copy_Buffer(BUF_MOLD, dp);
+    SET_SERIES_LEN(mo.series, mo.start + len);
+    UNI_TERM(mo.series);
+
+    return Pop_Molded_String(&mo);
 }
 
 
@@ -644,7 +653,7 @@ REBSER *Detab_Bytes(REBYTE *bp, REBCNT index, REBCNT len, REBINT tabsize)
     for (n = index; n < len; n++)
         if (bp[n] == TAB) cnt++;
 
-    dp = Reset_Buffer(BUF_FORM, len + (cnt * (tabsize-1)));
+    dp = Reset_Buffer(BYTE_BUF, len + (cnt * (tabsize-1)));
 
     n = 0;
     while (index < len) {
@@ -664,7 +673,7 @@ REBSER *Detab_Bytes(REBYTE *bp, REBCNT index, REBCNT len, REBINT tabsize)
         *dp++ = c;
     }
 
-    return Copy_Buffer(BUF_FORM, dp);
+    return Copy_Buffer(BYTE_BUF, 0, dp);
 }
 
 
@@ -680,11 +689,18 @@ REBSER *Detab_Unicode(REBUNI *bp, REBCNT index, REBCNT len, REBINT tabsize)
     REBUNI *dp;
     REBUNI c;
 
+    REB_MOLD mo;
+    CLEARS(&mo);
+
     // Estimate new length based on tab expansion:
     for (n = index; n < len; n++)
         if (bp[n] == TAB) cnt++;
 
-    dp = (REBUNI *)Reset_Buffer(BUF_MOLD, len + (cnt * (tabsize-1)));
+    mo.opts = MOPT_RESERVE;
+    mo.reserve = len + (cnt * (tabsize - 1));
+
+    Push_Mold(&mo);
+    dp = UNI_HEAD(mo.series);
 
     n = 0;
     while (index < len) {
@@ -704,7 +720,11 @@ REBSER *Detab_Unicode(REBUNI *bp, REBCNT index, REBCNT len, REBINT tabsize)
         *dp++ = c;
     }
 
-    return Copy_Buffer(BUF_MOLD, dp);
+    *dp = '\0';
+
+    return Pop_Molded_String_Len(
+        &mo, cast(REBCNT, dp - UNI_AT(mo.series, mo.start))
+    );
 }
 
 

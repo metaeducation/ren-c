@@ -50,7 +50,6 @@ static REBSER *Make_Set_Operation_Series(
     REBOOL cased,
     REBCNT skip
 ) {
-    REBSER *buffer;     // buffer for building the return series
     REBCNT i;
     REBINT h = 1; // used for both logic true/false and hash check
     REBOOL first_pass = TRUE; // are we in the first pass over the series?
@@ -101,7 +100,14 @@ static REBSER *Make_Set_Operation_Series(
         REBSER *hser = 0;   // hash table for series
         REBSER *hret;       // hash table for return series
 
-        buffer = ARRAY_SERIES(BUF_EMIT); // use preallocated shared block
+        // The buffer used for building the return series.  Currently it
+        // reuses BUF_EMIT, because that buffer is not likely to be in
+        // use (emit doesn't call set operations, nor vice versa).  However,
+        // other routines may get the same idea and start recursing so it
+        // may be better to use something more similar to the mold stack
+        // approach of marking off successive ranges in the array.
+        //
+        REBSER *buffer = ARRAY_SERIES(BUF_EMIT);
         Resize_Series(buffer, i);
         hret = Make_Hash_Sequence(i);   // allocated
 
@@ -168,6 +174,9 @@ static REBSER *Make_Set_Operation_Series(
         RESET_TAIL(buffer); // required - allow reuse
     }
     else {
+        REB_MOLD mo;
+        CLEARS(&mo);
+
         if (IS_BINARY(val1)) {
             //
             // All binaries use "case-sensitive" comparison (e.g. each byte
@@ -176,9 +185,11 @@ static REBSER *Make_Set_Operation_Series(
             cased = TRUE;
         }
 
-        buffer = BUF_MOLD;
-        Reset_Buffer(buffer, i);
-        RESET_TAIL(buffer);
+        // ask mo.series to have at least `i` capacity beyond mo.start
+        //
+        mo.opts = MOPT_RESERVE;
+        mo.reserve = i;
+        Push_Mold(&mo);
 
         do {
             REBSER *ser = VAL_SERIES(val1); // val1 and val2 swapped 2nd pass!
@@ -207,16 +218,16 @@ static REBSER *Make_Set_Operation_Series(
 
                 if (
                     NOT_FOUND == Find_Str_Char(
-                        uc,
-                        buffer,
-                        0,
-                        0,
-                        SERIES_LEN(buffer),
-                        skip,
-                        cased ? AM_FIND_CASE : 0
-                    )
+                        uc, // c2 (the character to find)
+                        mo.series, // ser
+                        mo.start, // head
+                        mo.start, // index
+                        SERIES_LEN(mo.series), // tail
+                        skip, // skip
+                        cased ? AM_FIND_CASE : 0 // flags
+	    )
                 ) {
-                    Append_String(buffer, ser, i, skip);
+                    Append_String(mo.series, ser, i, skip);
                 }
             }
 
@@ -232,7 +243,7 @@ static REBSER *Make_Set_Operation_Series(
             }
         } while (i);
 
-        out_ser = Copy_String(buffer, 0, -1);
+        out_ser = Pop_Molded_String(&mo);
     }
 
     return out_ser;

@@ -999,6 +999,11 @@ static REBCNT Do_Evaluation_Preamble_Debug(struct Reb_Call *c) {
 //
 void Do_Core(struct Reb_Call * const c)
 {
+#if !defined(NDEBUG)
+    REBCNT uni_buf_len = SERIES_LEN(UNI_BUF);
+    REBCNT mold_stack_len = ARRAY_LEN(MOLD_STACK);
+#endif
+
     // See notes below on reference for why this is needed to implement eval.
     //
     REBVAL eval;
@@ -1120,6 +1125,11 @@ do_at_index:
     // for error reporting.
     //
     c->expr_index = c->index;
+
+#if !defined(NDEBUG)
+    assert(uni_buf_len == SERIES_LEN(UNI_BUF));
+    assert(mold_stack_len == ARRAY_LEN(MOLD_STACK));
+#endif
 
     // Make sure `eval` is trash in debug build if not doing a `reevaluate`.
     //
@@ -2222,6 +2232,10 @@ reevaluate:
     // we should be back where we started in terms of the data stack, the
     // mold buffer position, the outstanding manual series allocations, etc.
     //
+#if !defined(NDEBUG)
+    assert(uni_buf_len == SERIES_LEN(UNI_BUF));
+    assert(mold_stack_len == ARRAY_LEN(MOLD_STACK));
+#endif
     ASSERT_STATE_BALANCED(&state);
 
     if (c->index >= ARRAY_LEN(c->array)) {

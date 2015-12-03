@@ -591,12 +591,12 @@ static void Mold_Array_At(
     }
 
     // Recursion check:
-    if (Find_Same_Array(MOLD_LOOP, value) != NOT_FOUND) {
+    if (Find_Same_Array(MOLD_STACK, value) != NOT_FOUND) {
         Emit(mold, "C...C", sep[0], sep[1]);
         return;
     }
 
-    value = Alloc_Tail_Array(MOLD_LOOP);
+    value = Alloc_Tail_Array(MOLD_STACK);
 
     // We don't want to use Val_Init_Block because it will create an implicit
     // managed value, and the incoming series may be from an unmanaged source
@@ -631,7 +631,7 @@ static void Mold_Array_At(
         Append_Codepoint_Raw(out, sep[1]);
     }
 
-    Remove_Array_Last(MOLD_LOOP);
+    Remove_Array_Last(MOLD_STACK);
 }
 
 
@@ -861,11 +861,11 @@ static void Mold_Map(const REBVAL *value, REB_MOLD *mold, REBOOL molded)
     REBVAL *val;
 
     // Prevent endless mold loop:
-    if (Find_Same_Array(MOLD_LOOP, value) != NOT_FOUND) {
+    if (Find_Same_Array(MOLD_STACK, value) != NOT_FOUND) {
         Append_Unencoded(mold->series, "...]");
         return;
     }
-    Append_Value(MOLD_LOOP, value);
+    Append_Value(MOLD_STACK, value);
 
     if (molded) {
         Pre_Mold(value, mold);
@@ -889,7 +889,7 @@ static void Mold_Map(const REBVAL *value, REB_MOLD *mold, REBOOL molded)
     }
 
     End_Mold(mold);
-    Remove_Array_Last(MOLD_LOOP);
+    Remove_Array_Last(MOLD_STACK);
 }
 
 
@@ -900,12 +900,12 @@ static void Form_Object(const REBVAL *value, REB_MOLD *mold)
     REBOOL had_output = FALSE;
 
     // Prevent endless mold loop:
-    if (Find_Same_Array(MOLD_LOOP, value) != NOT_FOUND) {
+    if (Find_Same_Array(MOLD_STACK, value) != NOT_FOUND) {
         Append_Unencoded(mold->series, "...]");
         return;
     }
 
-    Append_Value(MOLD_LOOP, value);
+    Append_Value(MOLD_STACK, value);
 
     // Mold all words and their values:
     for (; !IS_END(key); key++, var++) {
@@ -919,7 +919,7 @@ static void Form_Object(const REBVAL *value, REB_MOLD *mold)
     if (had_output)
         Remove_Sequence_Last(mold->series);
 
-    Remove_Array_Last(MOLD_LOOP);
+    Remove_Array_Last(MOLD_STACK);
 }
 
 
@@ -933,12 +933,12 @@ static void Mold_Object(const REBVAL *value, REB_MOLD *mold)
     Append_Codepoint_Raw(mold->series, '[');
 
     // Prevent infinite looping:
-    if (Find_Same_Array(MOLD_LOOP, value) != NOT_FOUND) {
+    if (Find_Same_Array(MOLD_STACK, value) != NOT_FOUND) {
         Append_Unencoded(mold->series, "...]");
         return;
     }
 
-    Append_Value(MOLD_LOOP, value);
+    Append_Value(MOLD_STACK, value);
 
     mold->indent++;
     for (; !IS_END(key); key++, var++) {
@@ -961,7 +961,7 @@ static void Mold_Object(const REBVAL *value, REB_MOLD *mold)
     Append_Codepoint_Raw(mold->series, ']');
 
     End_Mold(mold);
-    Remove_Array_Last(MOLD_LOOP);
+    Remove_Array_Last(MOLD_STACK);
 }
 
 
@@ -1033,8 +1033,23 @@ void Mold_Value(REB_MOLD *mold, const REBVAL *value, REBOOL molded)
 
     if (C_STACK_OVERFLOWING(&len)) Trap_Stack_Overflow();
 
-    assert(SERIES_WIDE(mold->series) == sizeof(REBUNI));
-    assert(ser);
+    assert(SERIES_WIDE(ser) == sizeof(REBUNI));
+    ASSERT_SERIES_TERM(ser);
+
+    if (GET_MOPT(mold, MOPT_LIMIT)) {
+        assert(SERIES_LEN(mold->series) <= mold->limit);
+        if (SERIES_LEN(mold->series) == mold->limit) {
+            //
+            // We've already exceeded the limit and added our "...", so don't
+            // do that again.
+            //
+            // !!! Should debug builds keep molding anyway and just ignore the
+            // results, to increase the chance of finding bugs in mold or the
+            // large data structures?
+            //
+            return;
+        }
+    }
 
     if (THROWN(value)) {
         // !!! You do not want to see THROWN values leak into user awareness,
@@ -1327,10 +1342,18 @@ void Mold_Value(REB_MOLD *mold, const REBVAL *value, REBOOL molded)
     default:
         panic (Error_Invalid_Datatype(VAL_TYPE(value)));
     }
-    return;
+    goto check_limit;
 
 append:
     Append_Unencoded_Len(ser, s_cast(buf), len);
+
+check_limit:
+    if (GET_MOPT(mold, MOPT_LIMIT) && SERIES_LEN(mold->series) > mold->limit) {
+        SET_SERIES_LEN(mold->series, mold->limit - 3); // account for ellipsis
+        Append_Unencoded(mold->series, "..."); // adds a null at the tail
+    }
+
+    ASSERT_SERIES_TERM(ser);
 }
 
 
@@ -1344,10 +1367,10 @@ REBSER *Copy_Form_Value(const REBVAL *value, REBFLGS opts)
     REB_MOLD mo;
     CLEARS(&mo);
     mo.opts = opts;
-    Reset_Mold(&mo);
 
+    Push_Mold(&mo);
     Mold_Value(&mo, value, FALSE);
-    return Copy_String(mo.series, 0, -1);
+    return Pop_Molded_String(&mo);
 }
 
 
@@ -1361,10 +1384,10 @@ REBSER *Copy_Mold_Value(const REBVAL *value, REBFLGS opts)
     REB_MOLD mo;
     CLEARS(&mo);
     mo.opts = opts;
-    Reset_Mold(&mo);
 
+    Push_Mold(&mo);
     Mold_Value(&mo, value, TRUE);
-    return Copy_String(mo.series, 0, -1);
+    return Pop_Molded_String(&mo);
 }
 
 
@@ -1379,34 +1402,25 @@ REBOOL Form_Reduce_Throws(REBVAL *out, REBARR *block, REBCNT index)
     REBINT n;
 
     REB_MOLD mo;
+    CLEARS(&mo);
 
-    // Reducing all the items to the data stack before molding is necessary
-    // in order to use the single task-local mold buffer.  Initializing the
-    // mold buffer here and calling it on each evaluation might overwrite it
-    // if the called function does any molding.
-    //
-    // !!! Should the mold buffer be treated as a "mold stack?" to avoid
-    // this problem, while still not needing to allocate more than one buffer
-    // per thread?
+    Push_Mold(&mo);
 
     while (index < ARRAY_LEN(block)) {
         DO_NEXT_MAY_THROW(index, out, block, index);
-        if (index == THROWN_FLAG) {
-            DS_DROP_TO(start);
+        if (index == THROWN_FLAG)
             return TRUE;
-        }
-        DS_PUSH(out);
+
+        // Note: Form_Reduce was one of the motivators for a "mold stack"
+        // (as opposed to mold assuming it could write at the beginning of
+        // the UNI_BUF each time).  Without a mold stack, all the values
+        // had to be reduced into a side structure before any molding started.
+        //
+        Mold_Value(&mo, out, FALSE);
     }
 
-    CLEARS(&mo);
-    Reset_Mold(&mo);
+    Val_Init_String(out, Pop_Molded_String(&mo));
 
-    for (n = start + 1; n <= DSP; n++)
-        Mold_Value(&mo, DS_AT(n), FALSE);
-
-    DS_DROP_TO(start);
-
-    Val_Init_String(out, Copy_String(mo.series, 0, -1));
     return FALSE;
 }
 
@@ -1420,71 +1434,236 @@ REBSER *Form_Tight_Block(const REBVAL *blk)
 
     REB_MOLD mo;
     CLEARS(&mo);
-    Reset_Mold(&mo);
 
+    Push_Mold(&mo);
     for (val = VAL_ARRAY_AT(blk); NOT_END(val); val++)
         Mold_Value(&mo, val, FALSE);
-    return Copy_String(mo.series, 0, -1);
+
+    return Pop_Molded_String(&mo);
 }
 
 
 //
-//  Reset_Mold: C
+//  Push_Mold: C
 //
-void Reset_Mold(REB_MOLD *mold)
+void Push_Mold(REB_MOLD *mold)
 {
-    REBSER *buf = BUF_MOLD;
-    REBINT len;
+#if !defined(NDEBUG)
+    //
+    // If some kind of Debug_Fmt() happens while this Push_Mold is happening,
+    // it will lead to a recursion.  It's necessary to look at the stack in
+    // the debugger and figure it out manually.  (e.g. any failures in this
+    // function will break the very mechanism by which failure messages
+    // are reported.)
+    //
+    // !!! This isn't ideal.  So if all the routines below guaranteed to
+    // use some kind of assert reporting mechanism "lower than mold"
+    // (hence "lower than Debug_Fmt") that would be an improvement.
+    //
+    assert(!TG_Pushing_Mold);
+    TG_Pushing_Mold = TRUE;
+#endif
 
-    if (!buf) panic (Error(RE_NO_BUFFER));
+    // Series is nulled out on Pop in debug builds to make sure you don't
+    // Push the same mold tracker twice (without a Pop)
+    //
+    assert(!mold->series);
 
-    if (SERIES_REST(buf) > MAX_COMMON)
-        Remake_Series(buf, MIN_COMMON, SERIES_WIDE(buf), MKS_NONE);
+#if !defined(NDEBUG)
+    // Sanity check that if they set a limit it wasn't 0.  (Perhaps over the
+    // long term it would be okay, but for now we'll consider it a mistake.)
+    //
+    if (GET_MOPT(mold, MOPT_LIMIT))
+        assert(mold->limit != 0);
+#endif
 
-    RESET_ARRAY(MOLD_LOOP);
-    RESET_SERIES(buf);
-    mold->series = buf;
+    mold->series = UNI_BUF;
+    mold->start = SERIES_LEN(mold->series);
 
-    // This is not needed every time, but w/o a functional way to set the option,
-    // it must be done like this and each time.
-    if (GET_MOPT(mold, MOPT_MOLD_ALL)) len = MAX_DIGITS;
+    ASSERT_SERIES_TERM(mold->series);
+
+    if (
+        GET_MOPT(mold, MOPT_RESERVE)
+        && SERIES_REST(mold->series) < mold->reserve
+    ) {
+        // Expand will add to the series length, so we set it back.
+        //
+        // !!! Should reserve actually leave the length expanded?  Some cases
+        // definitely don't want this, others do.  The protocol most
+        // compatible with the appending mold is to come back with an
+        // empty buffer after a push.
+        //
+        Expand_Series(mold->series, mold->start, mold->reserve);
+        SET_SERIES_LEN(mold->series, mold->start);
+    }
+    else if (SERIES_REST(mold->series) > MAX_COMMON) {
+        //
+        // If the "extra" space in the series has gotten to be excessive (due
+        // to some particularly large mold), back off the space.  But preserve
+        // the contents, as there may be important mold data behind the
+        // ->start index in the stack!
+        //
+        Remake_Series(
+            mold->series, MIN_COMMON, SERIES_WIDE(mold->series), MKS_PRESERVE
+        );
+    }
+
+    if (GET_MOPT(mold, MOPT_MOLD_ALL))
+        mold->digits = MAX_DIGITS;
     else {
+        // If there is no notification when the option is changed, this
+        // must be retrieved each time.
+        //
         // !!! It may be necessary to mold out values before the options
         // block is loaded, and this 'Get_System_Int' is a bottleneck which
         // crashes that in early debugging.  BOOT_ERRORS is sufficient.
-        if (PG_Boot_Phase >= BOOT_ERRORS)
-            len = Get_System_Int(SYS_OPTIONS, OPTIONS_DECIMAL_DIGITS, MAX_DIGITS);
+        //
+        if (PG_Boot_Phase >= BOOT_ERRORS) {
+            REBINT idigits = Get_System_Int(
+                SYS_OPTIONS, OPTIONS_DECIMAL_DIGITS, MAX_DIGITS
+            );
+            if (idigits < 0)
+                mold->digits = 0;
+            else if (idigits > MAX_DIGITS)
+                mold->digits = cast(REBCNT, idigits);
+            else
+                mold->digits = MAX_DIGITS;
+        }
         else
-            len = MAX_DIGITS;
-
-        if (len > MAX_DIGITS) len = MAX_DIGITS;
-        else if (len < 0) len = 0;
+            mold->digits = MAX_DIGITS;
     }
-    mold->digits = len;
+
+#if !defined(NDEBUG)
+    TG_Pushing_Mold = FALSE;
+#endif
 }
 
 
 //
-//  Mold_Print_Value: C
-// 
-// Basis function for print.  Can do a form or a mold based
-// on the mold flag setting.  Can limit string output to a
-// specified size to prevent long console garbage output.
+//  Pop_Molded_String_Core: C
 //
-REBSER *Mold_Print_Value(const REBVAL *value, REBCNT limit, REBOOL mold)
+// When a Push_Mold is started, then string data for the mold is accumulated
+// at the tail of the task-global unicode buffer.  Once the molding is done,
+// this allows extraction of the string, and resets the buffer to its length
+// at the time when the last push began.
+//
+// Can limit string output to a specified size to prevent long console
+// garbage output if MOPT_LIMIT was set in Push_Mold().
+//
+// If len is END_FLAG then all the string content will be copied, otherwise
+// it will be copied up to `len`.  If there are not enough characters then
+// the debug build will assert.
+//
+REBSER *Pop_Molded_String_Core(REB_MOLD *mold, REBCNT len)
 {
-    REB_MOLD mo;
-    CLEARS(&mo);
-    Reset_Mold(&mo);
+    REBSER *string;
 
-    Mold_Value(&mo, value, mold);
+    assert(mold->series); // if NULL there was no Push_Mold()
 
-    if (limit != 0 && SERIES_LEN(mo.series) > limit) {
-        SET_SERIES_LEN(mo.series, limit);
-        Append_Unencoded(mo.series, "..."); // adds a null at the tail
-    }
+    ASSERT_SERIES_TERM(mold->series);
 
-    return mo.series;
+    assert(
+        (len == END_FLAG) || (len <= SERIES_LEN(mold->series) - mold->start)
+    );
+
+    string = Copy_Sequence_At_Len(
+        mold->series,
+        mold->start,
+        (len == END_FLAG)
+            ? SERIES_LEN(mold->series) - mold->start
+            : len
+    );
+
+    // The buffer is unicode, so the string will also be unicode.
+    //
+    // !!! Should be able to generate a string with byte chars if only byte
+    // chars are in the buffer.  Investigate.
+    //
+    assert(SERIES_WIDE(string) == sizeof(REBUNI));
+
+    SET_SERIES_LEN(mold->series, mold->start);
+
+    // Though the protocol of Mold_Value does terminate, it only does so if
+    // it adds content to the buffer.  If we did not terminate when we
+    // reset the size, then these no-op molds (e.g. mold of "") would leave
+    // whatever value in the terminator spot was there.  This could be
+    // addressed by making no-op molds terminate.
+    //
+    UNI_TERM(mold->series);
+
+    mold->series = NULL;
+
+    return string;
+}
+
+
+//
+//  Pop_Molded_UTF8: C
+//
+// Same as Pop_Molded_String() except gives back the data in UTF8 byte-size
+// series form.
+//
+REBSER *Pop_Molded_UTF8(REB_MOLD *mold)
+{
+    REBSER *bytes;
+
+    assert(mold->series);
+
+    ASSERT_SERIES_TERM(mold->series);
+
+    bytes = Make_UTF8_Binary(
+        UNI_AT(mold->series, mold->start),
+        SERIES_LEN(mold->series) - mold->start,
+        0,
+        OPT_ENC_UNISRC
+    );
+    assert(BYTE_SIZE(bytes));
+
+    SET_SERIES_LEN(mold->series, mold->start);
+    UNI_TERM(mold->series);
+
+    mold->series = NULL;
+    return bytes;
+}
+
+
+//
+//  Drop_Mold_Core: C
+//
+// When generating a molded string, sometimes it's enough to have access to
+// the molded data without actually creating a new series out of it.  If the
+// information in the mold has done its job and Pop_Molded_String() is not
+// required, just call this to drop back to the state of the last push.
+//
+void Drop_Mold_Core(REB_MOLD *mold, REBFLGS not_pushed_ok)
+{
+    // The tokenizer can often identify tokens to load by their start and end
+    // pointers in the UTF8 data it is loading alone.  However, scanning
+    // string escapes is a process that requires converting the actual
+    // characters to unicode.  To avoid redoing this work later in the scan,
+    // it uses the unicode buffer as a storage space from the tokenization
+    // that did UTF-8 decoding of string contents to reuse.
+    //
+    // Despite this usage, it's desirable to be able to do things like output
+    // debug strings or do basic molding in that code.  So to reuse the
+    // allocated unicode buffer, it has to properly participate in the mold
+    // stack protocol.
+    //
+    // However, only a few token types use the buffer.  Rather than burden
+    // the tokenizer with an additional flag, having a modality to be willing
+    // to "drop" a mold that hasn't ever been pushed is the easiest way to
+    // avoid intervening.  Drop_Mold_If_Pushed(&mo) macro makes this clearer.
+    //
+    if (not_pushed_ok && !mold->series) return;
+
+    assert(mold->series); // if NULL there was no Push_Mold
+
+    ASSERT_SERIES_TERM(mold->series);
+
+    SET_SERIES_LEN(mold->series, mold->start);
+    UNI_TERM(mold->series); // see remarks in Pop_Molded_String
+
+    mold->series = NULL;
 }
 
 
@@ -1498,10 +1677,10 @@ void Init_Mold(REBCNT size)
     const REBYTE *dc;
 
     Set_Root_Series(
-        TASK_MOLD_LOOP, ARRAY_SERIES(Make_Array(size/10)), "mold loop"
+        TASK_MOLD_STACK, ARRAY_SERIES(Make_Array(size/10)), "mold loop"
     );
     Set_Root_Series(
-        TASK_BUF_MOLD, Make_Unicode(size), "mold buffer"
+        TASK_UNI_BUF, Make_Unicode(size), "mold buffer"
     );
 
     // Create quoted char escape table:

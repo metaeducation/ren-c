@@ -58,6 +58,8 @@ void Snap_State_Core(struct Reb_State *s)
     s->gc_disable = GC_Disabled;
 
     s->manuals_len = SERIES_LEN(GC_Manuals);
+    s->uni_buf_len = SERIES_LEN(UNI_BUF);
+    s->mold_loop_tail = ARRAY_LEN(MOLD_STACK);
 
     // !!! Is this initialization necessary?
     s->error = NULL;
@@ -232,6 +234,20 @@ REBOOL Trapped_Helper_Halted(struct Reb_State *s)
     SET_SERIES_LEN(GC_Series_Guard, s->series_guard_len);
     SET_SERIES_LEN(GC_Value_Guard, s->value_guard_len);
     SET_SERIES_LEN(TG_Do_Stack, s->do_stack_len);
+    SET_SERIES_LEN(UNI_BUF, s->uni_buf_len);
+    TERM_SERIES(UNI_BUF); // see remarks on termination in Pop/Drop Molds
+
+#if !defined(NDEBUG)
+    //
+    // Because reporting errors in the actual Push_Mold process leads to
+    // recursion, this debug flag helps make it clearer what happens if
+    // that does happen... and can land on the right comment.  But if there's
+    // a fail of some kind, the flag for the warning needs to be cleared.
+    //
+    TG_Pushing_Mold = FALSE;
+#endif
+
+    SET_ARRAY_LEN(MOLD_STACK, s->mold_loop_tail);
 
     GC_Disabled = s->gc_disable;
 

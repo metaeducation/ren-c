@@ -438,9 +438,9 @@ REBYTE *Reset_Buffer(REBSER *buf, REBCNT len)
 //
 //  Copy_Buffer: C
 // 
-// Copy a shared buffer. Set tail and termination.
+// Copy a shared buffer, starting at index. Set tail and termination.
 //
-REBSER *Copy_Buffer(REBSER *buf, void *end)
+REBSER *Copy_Buffer(REBSER *buf, REBCNT index, void *end)
 {
     REBSER *ser;
     REBCNT len;
@@ -450,11 +450,13 @@ REBSER *Copy_Buffer(REBSER *buf, void *end)
     len = BYTE_SIZE(buf) ? ((REBYTE *)end) - BIN_HEAD(buf)
         : ((REBUNI *)end) - UNI_HEAD(buf);
 
+    if (index) len -= index;
+
     ser = Make_Series(len + 1, SERIES_WIDE(buf), MKS_NONE);
 
     memcpy(
         ser->content.dynamic.data,
-        buf->content.dynamic.data,
+        buf->content.dynamic.data + index * SERIES_WIDE(buf),
         SERIES_WIDE(buf) * len
     );
     ser->content.dynamic.len = len;

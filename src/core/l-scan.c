@@ -408,18 +408,23 @@ static const REBYTE *Scan_UTF8_Char_Escapable(REBUNI *out, const REBYTE *bp)
 
 
 //
-//  Scan_Quote: C
+//  Scan_Quote_Push_Mold: C
 // 
 // Scan a quoted string, handling all the escape characters.
 // 
 // The result will be put into the temporary unistring mold buffer.
 //
-static const REBYTE *Scan_Quote(REBSER *buf, const REBYTE *src, SCAN_STATE *scan_state)
-{
+static const REBYTE *Scan_Quote_Push_Mold(
+    REB_MOLD *mo,
+    const REBYTE *src,
+    SCAN_STATE *scan_state
+) {
     REBINT nest = 0;
     REBUNI term;
     REBUNI chr;
     REBCNT lines = 0;
+
+    Push_Mold(mo);
 
     term = (*src++ == '{') ? '}' : '"'; // pick termination
 
@@ -463,26 +468,26 @@ static const REBYTE *Scan_Quote(REBSER *buf, const REBYTE *src, SCAN_STATE *scan
 
         src++;
 
-        if (SERIES_LEN(buf) + 1 >= SERIES_REST(buf)) // include term.
-            Extend_Series(buf, 1);
+        if (SERIES_LEN(mo->series) + 1 >= SERIES_REST(mo->series)) // incl term
+            Extend_Series(mo->series, 1);
 
-        *UNI_TAIL(buf) = chr;
+        *UNI_TAIL(mo->series) = chr;
 
-        SET_SERIES_LEN(buf, SERIES_LEN(buf) + 1);
+        SET_SERIES_LEN(mo->series, SERIES_LEN(mo->series) + 1);
     }
 
     src++; // Skip ending quote or brace.
 
     if (scan_state) scan_state->line_count += lines;
 
-    UNI_TERM(buf);
+    UNI_TERM(mo->series);
 
     return src;
 }
 
 
 //
-//  Scan_Item: C
+//  Scan_Item_Push_Mold: C
 // 
 // Scan as UTF8 an item like a file or URL.
 // 
@@ -490,13 +495,16 @@ static const REBYTE *Scan_Quote(REBSER *buf, const REBYTE *src, SCAN_STATE *scan
 // 
 // Put result into the temporary mold buffer as uni-chars.
 //
-const REBYTE *Scan_Item(const REBYTE *src, const REBYTE *end, REBUNI term, const REBYTE *invalid)
-{
+const REBYTE *Scan_Item_Push_Mold(
+    REB_MOLD *mo,
+    const REBYTE *src,
+    const REBYTE *end,
+    REBUNI term,
+    const REBYTE *invalid
+) {
     REBUNI c;
-    REBSER *buf;
 
-    buf = BUF_MOLD;
-    RESET_TAIL(buf);
+    Push_Mold(mo);
 
     while (src < end && *src != term) {
 
@@ -537,17 +545,17 @@ const REBYTE *Scan_Item(const REBYTE *src, const REBYTE *end, REBUNI term, const
 
         src++;
 
-        *UNI_TAIL(buf) = c; // not affected by Extend_Series
+        *UNI_TAIL(mo->series) = c; // not affected by Extend_Series
 
-        SET_SERIES_LEN(buf, SERIES_LEN(buf) + 1);
+        SET_SERIES_LEN(mo->series, SERIES_LEN(mo->series) + 1);
 
-        if (SERIES_LEN(buf) >= SERIES_REST(buf))
-            Extend_Series(buf, 1);
+        if (SERIES_LEN(mo->series) >= SERIES_REST(mo->series))
+            Extend_Series(mo->series, 1);
     }
 
     if (*src && *src == term) src++;
 
-    UNI_TERM(buf);
+    UNI_TERM(mo->series);
 
     return src;
 }
@@ -686,8 +694,8 @@ static REBCNT Prescan_Token(SCAN_STATE *scan_state)
 
                 // Note: We'd liked to have excluded LEX_DELIMIT_END, but
                 // would require a GET_LEX_VALUE() call to know to do so.
-                // Locate_Token() does a `switch` on that already, so it
-                // can subtract this addition back out itself.
+                // Locate_Token_May_Push_Mold() does a `switch` on that,
+                // so it can subtract this addition back out itself.
             }
             else
                 scan_state->end = cp;
@@ -717,7 +725,7 @@ static REBCNT Prescan_Token(SCAN_STATE *scan_state)
 
 
 //
-//  Locate_Token: C
+//  Locate_Token_May_Push_Mold: C
 // 
 // Find the beginning and end character pointers for the next
 // TOKEN_ in the scanner state.  The TOKEN_ type returned will
@@ -746,14 +754,14 @@ static REBCNT Prescan_Token(SCAN_STATE *scan_state)
 // Determining the end point of token types that need escaping
 // requires processing (for instance `{a^}b}` can't see the first
 // close brace as ending the string).  To avoid double processing,
-// the routine decodes the string's content into BUF_MOLD for any
+// the routine decodes the string's content into UNI_BUF for any
 // quoted form to be used by the caller.  This is overwritten in
 // successive calls, and is only done for quoted forms (e.g. %"foo"
-// will have data in BUF_MOLD but %foo will not.)
+// will have data in UNI_BUF but %foo will not.)
 // 
 // !!! This is a somewhat weird separation of responsibilities,
 // that seems to arise from a desire to make "Scan_XXX" functions
-// independent of the "Locate_Token" function.  But if the work of
+// independent of the "Locate_Token_May_Push_Mold" function.  But if the work of
 // locating the value means you have to basically do what you'd
 // do to read it into a REBVAL anyway, why split it up?  --HF
 // 
@@ -784,17 +792,17 @@ static REBCNT Prescan_Token(SCAN_STATE *scan_state)
 //       $10AE.20 sent => -TOKEN_MONEY (negative, malformed)
 //       B       E
 // 
-//       {line1\nline2}  => TOKEN_STRING (content in BUF_MOLD)
+//       {line1\nline2}  => TOKEN_STRING (content in UNI_BUF)
 //       B             E
 // 
 //     \n{line2} => TOKEN_NEWLINE (newline is external)
 //     BB
 //       E
 // 
-//     %"a ^"b^" c" d => TOKEN_FILE (content in BUF_MOLD)
+//     %"a ^"b^" c" d => TOKEN_FILE (content in UNI_BUF)
 //     B           E
 // 
-//     %a-b.c d => TOKEN_FILE (content *not* in BUF_MOLD)
+//     %a-b.c d => TOKEN_FILE (content *not* in UNI_BUF)
 //     B     E
 // 
 //     \0 => TOKEN_END
@@ -805,7 +813,7 @@ static REBCNT Prescan_Token(SCAN_STATE *scan_state)
 // over UTF-8 encoded source is because all the characters
 // that dictate the tokenization are ASCII (< 128).
 //
-static REBINT Locate_Token(SCAN_STATE *scan_state)
+static REBINT Locate_Token_May_Push_Mold(REB_MOLD *mo, SCAN_STATE *scan_state)
 {
     REBCNT flags = Prescan_Token(scan_state);
 
@@ -858,13 +866,11 @@ static REBINT Locate_Token(SCAN_STATE *scan_state)
         // "QUOTES" and {BRACES}
 
         case LEX_DELIMIT_DOUBLE_QUOTE:
-            RESET_TAIL(BUF_MOLD);
-            cp = Scan_Quote(BUF_MOLD, cp, scan_state);
+            cp = Scan_Quote_Push_Mold(mo, cp, scan_state);
             goto check_str;
 
         case LEX_DELIMIT_LEFT_BRACE:
-            RESET_TAIL(BUF_MOLD);
-            cp = Scan_Quote(BUF_MOLD, cp, scan_state);
+            cp = Scan_Quote_Push_Mold(mo, cp, scan_state);
         check_str:
             if (cp) {
                 scan_state->end = cp;
@@ -935,8 +941,7 @@ static REBINT Locate_Token(SCAN_STATE *scan_state)
         case LEX_SPECIAL_PERCENT:       /* %filename */
             cp = scan_state->end;
             if (*cp == '"') {
-                RESET_TAIL(BUF_MOLD);
-                cp = Scan_Quote(BUF_MOLD, cp, scan_state);
+                cp = Scan_Quote_Push_Mold(mo, cp, scan_state);
                 if (!cp) return -TOKEN_FILE;
                 scan_state->end = cp;
                 return TOKEN_FILE;
@@ -1064,8 +1069,7 @@ static REBINT Locate_Token(SCAN_STATE *scan_state)
             if (*cp == '{') { /* BINARY #{12343132023902902302938290382} */
                 scan_state->end = scan_state->begin;  /* save start */
                 scan_state->begin = cp;
-                RESET_TAIL(BUF_MOLD);
-                cp = Scan_Quote(BUF_MOLD, cp, scan_state);
+                cp = Scan_Quote_Push_Mold(mo, cp, scan_state);
                 scan_state->begin = scan_state->end;  /* restore start */
                 if (cp) {
                     scan_state->end = cp;
@@ -1338,6 +1342,9 @@ static REBARR *Scan_Block(SCAN_STATE *scan_state, REBYTE mode_char)
     const REBYTE *start_line = scan_state->head_line;
     // just_once for load/next see Load_Script for more info.
     REBOOL just_once = GET_FLAG(scan_state->opts, SCAN_NEXT);
+    REB_MOLD mo;
+
+    CLEARS(&mo);
 
     if (C_STACK_OVERFLOWING(&token)) Trap_Stack_Overflow();
 
@@ -1348,7 +1355,8 @@ static REBARR *Scan_Block(SCAN_STATE *scan_state, REBYTE mode_char)
 #ifdef COMP_LINES
         linenum=scan_state->line_count,
 #endif
-        ((token = Locate_Token(scan_state)) != TOKEN_END)
+        Drop_Mold_If_Pushed(&mo),
+        ((token = Locate_Token_May_Push_Mold(&mo, scan_state)) != TOKEN_END)
     ) {
 
         bp = scan_state->begin;
@@ -1576,8 +1584,8 @@ static REBARR *Scan_Block(SCAN_STATE *scan_state, REBYTE mode_char)
             break;
 
         case TOKEN_STRING:
-            // During scan above, string was stored in BUF_MOLD (with Uni width)
-            Val_Init_String(value, Copy_String(BUF_MOLD, 0, -1));
+            // During scan above, string was stored in UNI_BUF (with Uni width)
+            Val_Init_String(value, Pop_Molded_String(&mo));
             LABEL_SERIES(VAL_SERIES(value), "scan string");
             break;
 
@@ -1712,6 +1720,8 @@ static REBARR *Scan_Block(SCAN_STATE *scan_state, REBYTE mode_char)
     if (mode_char == ']' || mode_char == ')') goto missing_error;
 
 exit_block:
+    Drop_Mold_If_Pushed(&mo);
+
     if (line && value) VAL_SET_OPT(value, OPT_VALUE_LINE);
 
 #ifdef TEST_SCAN
@@ -1728,6 +1738,7 @@ exit_block:
     // All scanned code is expected to be managed by the GC (because walking
     // the tree after constructing it to add the "manage GC" bit would be
     // too expensive, and we don't load source and free it manually anyway)
+    //
     MANAGE_ARRAY(block);
     return block;
 }
@@ -1871,12 +1882,17 @@ REBNATIVE(transcode)
 REBCNT Scan_Word(const REBYTE *cp, REBCNT len)
 {
     SCAN_STATE scan_state;
+    REBCNT sym = 0;
+    REB_MOLD mo;
+    CLEARS(&mo);
 
     Init_Scan_State(&scan_state, cp, len);
 
-    if (TOKEN_WORD == Locate_Token(&scan_state)) return Make_Word(cp, len);
+    if (TOKEN_WORD == Locate_Token_May_Push_Mold(&mo, &scan_state))
+        sym = Make_Word(cp, len);
 
-    return 0;
+    Drop_Mold_If_Pushed(&mo);
+    return sym;
 }
 
 

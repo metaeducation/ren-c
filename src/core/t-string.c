@@ -532,34 +532,71 @@ REBINT PD_String(REBPVS *pvs)
 //
 //  PD_File: C
 //
+// Path dispatch when the left hand side has evaluated to a FILE!.  This
+// must be done through evaluations, because a literal file consumes
+// slashes as its literal form:
+//
+//     >> type-of quote %foo/bar
+//     == file!
+//
+//     >> x: %foo
+//     >> type-of quote x/bar
+//     == path!
+//
+//     >> x/bar
+//     == %foo/bar ;-- a FILE!
+//
 REBINT PD_File(REBPVS *pvs)
 {
     REBSER *ser;
-    REBCNT n;
+    REBCNT skip;
+    REBCNT len;
     REBUNI c;
-    REBSER *arg;
+    REB_MOLD mo;
+    CLEARS(&mo);
 
     if (pvs->setval) return PE_BAD_SET;
 
     ser = Copy_Sequence_At_Position(pvs->value);
 
-    n = SERIES_LEN(ser);
-    if (n > 0) c = GET_ANY_CHAR(ser, n-1);
-    if (n == 0 || c != '/') Append_Codepoint_Raw(ser, '/');
+    // This makes sure there's always a "/" at the end of the file before
+    // appending new material via a selector:
+    //
+    //     >> x: %foo
+    //     >> (x)/("bar")
+    //     == %foo/bar
+    //
+    len = SERIES_LEN(ser);
+    if (len > 0) c = GET_ANY_CHAR(ser, len - 1);
+    if (len == 0 || c != '/') Append_Codepoint_Raw(ser, '/');
 
-    if (ANY_STR(pvs->select))
-        arg = VAL_SERIES(pvs->select);
-    else {
-        REB_MOLD mo;
-        CLEARS(&mo);
-        Reset_Mold(&mo);
-        Mold_Value(&mo, pvs->select, FALSE);
-        arg = mo.series;
-    }
+    Push_Mold(&mo);
+    Mold_Value(&mo, pvs->select, 0);
 
-    c = GET_ANY_CHAR(arg, 0);
-    n = (c == '/' || c == '\\') ? 1 : 0;
-    Append_String(ser, arg, n, SERIES_LEN(arg) - n);
+    // The `skip` logic here regarding slashes and backslashes is apparently
+    // for an exception to the rule of appending the molded content.  It
+    // doesn't want two slashes in a row:
+    //
+    //     >> x/("/bar")
+    //     == %foo/bar
+    //
+    // !!! Review if this makes sense under a larger philosophy of string
+    // path composition.
+    //
+    c = GET_ANY_CHAR(mo.series, mo.start);
+    skip = (c == '/' || c == '\\') ? 1 : 0;
+
+    // !!! Would be nice if there was a better way of doing this that didn't
+    // involve reaching into mo.start and mo.series.
+    //
+    Append_String(
+        ser, // dst
+        mo.series, // src
+        mo.start + skip, // i
+        SERIES_LEN(mo.series) - mo.start - skip // len
+    );
+
+    Drop_Mold(&mo);
 
     Val_Init_Series(pvs->store, VAL_TYPE(pvs->value), ser);
 

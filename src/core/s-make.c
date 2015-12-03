@@ -578,11 +578,11 @@ REBSER *Append_UTF8(REBSER *dst, const REBYTE *src, REBINT len)
 // limit: maximum number of values to process
 // limit < 0 means no limit
 // 
-// WARNING: returns BUF_FORM, not a copy!
+// WARNING: returns BYTE_BUF, not a copy!
 //
 REBSER *Join_Binary(const REBVAL *blk, REBINT limit)
 {
-    REBSER *series = BUF_FORM;
+    REBSER *series = BYTE_BUF;
     REBVAL *val;
     REBCNT tail = 0;
     REBCNT len;

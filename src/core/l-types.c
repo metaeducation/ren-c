@@ -565,6 +565,8 @@ const REBYTE *Scan_File(const REBYTE *cp, REBCNT len, REBVAL *value)
 {
     REBUNI term = 0;
     const REBYTE *invalid = cb_cast(":;()[]\"");
+    REB_MOLD mo;
+    CLEARS(&mo);
 
     if (*cp == '%') cp++, len--;
     if (*cp == '"') {
@@ -573,9 +575,12 @@ const REBYTE *Scan_File(const REBYTE *cp, REBCNT len, REBVAL *value)
         term = '"';
         invalid = cb_cast(":;\"");
     }
-    cp = Scan_Item(cp, cp+len, term, invalid);
+    cp = Scan_Item_Push_Mold(&mo, cp, cp+len, term, invalid);
     if (cp)
-        Val_Init_File(value, Copy_String(BUF_MOLD, 0, -1));
+        Val_Init_File(value, Pop_Molded_String(&mo));
+    else
+        Drop_Mold(&mo);
+
     return cp;
 }
 

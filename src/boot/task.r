@@ -25,7 +25,7 @@ buf-emit        ; temporary emit output block
 buf-collect     ; temporary cache for collecting object keys or words
 buf-utf8        ; UTF8 reused buffer
 buf-print       ; temporary print output - used by raw print
-buf-form        ; temporary form buffer - used by raw print
-buf-mold        ; temporary mold buffer - used by mold
-mold-loop       ; mold loop detection
+byte-buf        ; temporary byte buffer - used mainly by raw print
+uni-buf         ; temporary unicode buffer - used mainly by mold 
+mold-stack      ; mold loop detection
 

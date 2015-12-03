@@ -30,8 +30,8 @@
 #include "sys-core.h"
 
 // Size of crash buffers
-#define PANIC_TITLE_SIZE 80
-#define PANIC_MESSAGE_SIZE 512
+#define PANIC_TITLE_BUF_SIZE 80
+#define PANIC_BUF_SIZE 512
 
 
 //
@@ -50,8 +50,8 @@ ATTRIBUTE_NO_RETURN void Panic_Core(
     REBFRM *maybe_frame,
     va_list *args
 ) {
-    char title[PANIC_TITLE_SIZE];
-    char message[PANIC_MESSAGE_SIZE];
+    char title[PANIC_TITLE_BUF_SIZE + 1]; // account for null terminator
+    char message[PANIC_BUF_SIZE + 1]; // "
 
     title[0] = '\0';
     message[0] = '\0';
@@ -65,6 +65,7 @@ ATTRIBUTE_NO_RETURN void Panic_Core(
 
     // We are crashing, so a legitimate time to be disabling the garbage
     // collector.  (It won't be turned back on.)
+    //
     GC_Disabled++;
 
     if (Reb_Opts && Reb_Opts->crash_dump) {
@@ -72,10 +73,10 @@ ATTRIBUTE_NO_RETURN void Panic_Core(
         Dump_Stack(0, 0);
     }
 
-    strncat(title, "PANIC #", PANIC_TITLE_SIZE - 1);
+    strncat(title, "PANIC #", PANIC_TITLE_BUF_SIZE - 0);
     Form_Int(b_cast(title + strlen(title)), id); // !!! no bounding...
 
-    strncat(message, Str_Panic_Directions, PANIC_MESSAGE_SIZE - 1);
+    strncat(message, Str_Panic_Directions, PANIC_BUF_SIZE - 0);
 
 #if !defined(NDEBUG)
     // In debug builds, we may have the file and line number to report if
@@ -84,50 +85,51 @@ ATTRIBUTE_NO_RETURN void Panic_Core(
     // is earlier than errors can be made...
 
     if (TG_Erroring_C_File) {
-        Form_Args(
-            b_cast(message + strlen(message)),
-            PANIC_MESSAGE_SIZE - 1 - strlen(message),
-            "C Source File %s, Line %d\n",
-            TG_Erroring_C_File,
-            TG_Erroring_C_Line,
-            NULL
-        );
+        strncat(message, "C Source File ", PANIC_BUF_SIZE - strlen(message));
+        strncat(message, TG_Erroring_C_File, PANIC_BUF_SIZE - strlen(message));
+        strncat(message, ", Line ", PANIC_BUF_SIZE - strlen(message));
+        Form_Int(b_cast(message + strlen(message)), TG_Erroring_C_Line); // !
+        strncat(message, "\n", PANIC_BUF_SIZE - strlen(message));
     }
 #endif
 
     if (PG_Boot_Phase < BOOT_LOADED) {
-        strncat(message, title, PANIC_MESSAGE_SIZE - 1);
+        strncat(message, title, PANIC_BUF_SIZE - strlen(message));
         strncat(
             message,
             "\n** Boot Error: (string table not decompressed yet)",
-            PANIC_MESSAGE_SIZE - 1
+            PANIC_BUF_SIZE - strlen(message)
         );
     }
     else if (PG_Boot_Phase < BOOT_ERRORS && id < RE_INTERNAL_MAX) {
+        //
         // We are panic'ing on one of the errors that can occur during
         // boot (e.g. before Make_Error() be assured to run).  So we use
         // the C string constant that was formed by %make-boot.r and
         // compressed in the boot block.
         //
-        // Note: These strings currently do not allow arguments.
-
         const char *format =
             cs_cast(BOOT_STR(RS_ERROR, id - RE_INTERNAL_FIRST));
+
+        // !!! These strings currently do not heed arguments, so if they
+        // use a format specifier it will be ignored.  Technically it
+        // *may* be possible at some levels of boot to use `args`.  If it
+        // becomes a priority then find a way to safely report them
+        // (perhaps a subset like integer!, otherwise just print type #?)
+        //
         assert(args && !maybe_frame);
-        strncat(message, "\n** Boot Error: ", PANIC_MESSAGE_SIZE - 1);
-        Form_Args_Core(
-            b_cast(message + strlen(message)),
-            PANIC_MESSAGE_SIZE - 1 - strlen(message),
-            format,
-            args
+
+        strncat(
+            message, "\n** Boot Error: ", PANIC_BUF_SIZE - strlen(message)
         );
+        strncat(message, format, PANIC_BUF_SIZE - strlen(message));
     }
     else if (PG_Boot_Phase < BOOT_ERRORS && id >= RE_INTERNAL_MAX) {
-        strncat(message, title, PANIC_MESSAGE_SIZE - 1);
+        strncat(message, title, PANIC_BUF_SIZE - strlen(message));
         strncat(
             message,
             "\n** Boot Error: (error object table not initialized yet)",
-            PANIC_MESSAGE_SIZE - 1
+            PANIC_BUF_SIZE - strlen(message)
         );
     }
     else {
@@ -136,8 +138,24 @@ ATTRIBUTE_NO_RETURN void Panic_Core(
         // !!! If you're trying to panic *during* error molding this
         // is obviously not going to not work.  All errors pertaining to
         // molding errors should audited to be in the Boot: category.
+        //
+        // !!! As a bigger question, whether a `panic` means "stop the
+        // system right now for fear of data corruption` or "stop running"
+        // would guide whether this should effectively "blue-screen" or
+        // continue trying to use series and other mechanisms in the
+        // report.  The stronger meaning of panic would indicate that this
+        // *not* try to decode series or values in the report, for fear
+        // of tripping over a cascading bug that might do bad things.
+        // In which case, this branch would be removed.
 
         REBVAL error;
+        REB_MOLD mo;
+        REBSER *bytes;
+        CLEARS(&mo);
+        mo.opts = MOPT_LIMIT;
+        mo.limit = PANIC_BUF_SIZE - strlen(message); // codepoints, not bytes
+
+        Push_Mold(&mo);
 
         if (maybe_frame) {
             assert(!args);
@@ -150,13 +168,14 @@ ATTRIBUTE_NO_RETURN void Panic_Core(
             Val_Init_Error(&error, Make_Error_Core(id, FALSE, args));
         }
 
-        Form_Args(
-            b_cast(message + strlen(message)),
-            PANIC_MESSAGE_SIZE - 1 - strlen(message),
-            "%v",
-            &error,
-            NULL
+        Mold_Value(&mo, &error, FALSE);
+        bytes = Pop_Molded_UTF8(&mo);
+
+        strncat(
+            message, s_cast(BIN_HEAD(bytes)), PANIC_BUF_SIZE - strlen(message)
         );
+
+        Free_Series(bytes);
     }
 
     OS_CRASH(cb_cast(Str_Panic_Title), cb_cast(message));
@@ -168,4 +187,3 @@ ATTRIBUTE_NO_RETURN void Panic_Core(
 
     DEAD_END;
 }
-
