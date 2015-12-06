@@ -43,25 +43,26 @@ static REBOOL Same_Object(REBVAL *val, REBVAL *arg)
 
 static REBOOL Equal_Object(REBVAL *val, REBVAL *arg)
 {
-    REBSER *f1;
-    REBSER *f2;
+    REBFRM *f1;
+    REBFRM *f2;
     REBSER *k1;
     REBSER *k2;
-    REBINT n;
+    REBCNT n;
 
     if (VAL_TYPE(arg) != VAL_TYPE(val)) return FALSE;
 
     f1 = VAL_FRAME(val);
     f2 = VAL_FRAME(arg);
     if (f1 == f2) return TRUE;
-    if (f1->tail != f2->tail) return FALSE;
+    if (FRAME_LEN(f1) != FRAME_LEN(f2)) return FALSE;
 
-    k1 = FRM_KEYLIST(f1);
-    k2 = FRM_KEYLIST(f2);
-    if (k1->tail != k2->tail) return FALSE;
+    k1 = FRAME_KEYLIST(f1);
+    k2 = FRAME_KEYLIST(f2);
+
+    assert((k1->tail == FRAME_LEN(f1) + 1) && (k2->tail == FRAME_LEN(f2) + 1));
 
     // Compare each entry:
-    for (n = 1; n < (REBINT)(f1->tail); n++) {
+    for (n = 1; n < k1->tail; n++) {
         // Do ordinary comparison of the typesets
         if (Cmp_Value(BLK_SKIP(k1, n), BLK_SKIP(k2, n), FALSE) != 0)
             return FALSE;
@@ -78,27 +79,29 @@ static REBOOL Equal_Object(REBVAL *val, REBVAL *arg)
 
         // !!! A comment here said "Use Compare_Modify_Values();"...but it
         // doesn't... it calls Cmp_Value (?)
-        if (Cmp_Value(BLK_SKIP(f1, n), BLK_SKIP(f2, n), FALSE) != 0)
+        if (Cmp_Value(FRAME_VAR(f1, n), FRAME_VAR(f2, n), FALSE) != 0)
             return FALSE;
     }
 
     return TRUE;
 }
 
-static void Append_Obj(REBSER *obj, REBVAL *arg)
+
+static void Append_To_Context(REBFRM *frame, REBVAL *arg)
 {
     REBCNT i, len;
-    REBVAL *word, *val;
+    REBVAL *word;
+    REBVAL *typeset;
     REBINT *binds; // for binding table
 
     // Can be a word:
     if (ANY_WORD(arg)) {
-        if (!Find_Word_Index(obj, VAL_WORD_SYM(arg), TRUE)) {
+        if (!Find_Word_Index(frame, VAL_WORD_SYM(arg), TRUE)) {
             // bug fix, 'self is protected only in selfish frames
-            if ((VAL_WORD_CANON(arg) == SYM_SELF) && !IS_SELFLESS(obj))
+            if ((VAL_WORD_CANON(arg) == SYM_SELF) && !IS_SELFLESS(frame))
                 fail (Error(RE_SELF_PROTECTED));
-            Expand_Frame(obj, 1, 1); // copy word table also
-            Append_Frame(obj, 0, VAL_WORD_SYM(arg));
+            Expand_Frame(frame, 1, 1); // copy word table also
+            Append_Frame(frame, 0, VAL_WORD_SYM(arg));
             // val is UNSET
         }
         return;
@@ -111,10 +114,14 @@ static void Append_Obj(REBSER *obj, REBVAL *arg)
 
     // Use binding table
     binds = WORDS_HEAD(Bind_Table);
+
     // Handle selfless
-    Collect_Keys_Start(IS_SELFLESS(obj) ? BIND_NO_SELF | BIND_ALL : BIND_ALL);
+    Collect_Keys_Start(
+        IS_SELFLESS(frame) ? BIND_NO_SELF | BIND_ALL : BIND_ALL
+    );
+
     // Setup binding table with obj words:
-    Collect_Object(obj);
+    Collect_Context_Keys(frame);
 
     // Examine word/value argument block
     for (word = arg; NOT_END(word); word += 2) {
@@ -122,24 +129,25 @@ static void Append_Obj(REBSER *obj, REBVAL *arg)
         if (!IS_WORD(word) && !IS_SET_WORD(word)) {
             // release binding table
             TERM_ARRAY(BUF_COLLECT);
-            Collect_Keys_End(obj);
+            Collect_Keys_End(frame);
             fail (Error_Invalid_Arg(word));
         }
 
         if ((i = binds[VAL_WORD_CANON(word)])) {
             // bug fix, 'self is protected only in selfish frames:
-            if ((VAL_WORD_CANON(word) == SYM_SELF) && !IS_SELFLESS(obj)) {
+            if ((VAL_WORD_CANON(word) == SYM_SELF) && !IS_SELFLESS(frame)) {
                 // release binding table
                 TERM_ARRAY(BUF_COLLECT);
-                Collect_Keys_End(obj);
+                Collect_Keys_End(frame);
                 fail (Error(RE_SELF_PROTECTED));
             }
         } else {
-            // collect the word
+            // collect the symbol
             binds[VAL_WORD_CANON(word)] = SERIES_TAIL(BUF_COLLECT);
             EXPAND_SERIES_TAIL(BUF_COLLECT, 1);
-            val = BLK_LAST(BUF_COLLECT);
-            Val_Init_Typeset(val, ALL_64, VAL_WORD_SYM(word));
+            Val_Init_Typeset(
+                BLK_LAST(BUF_COLLECT), ALL_64, VAL_WORD_SYM(word)
+            );
         }
         if (IS_END(word + 1)) break; // fix bug#708
     }
@@ -147,70 +155,87 @@ static void Append_Obj(REBSER *obj, REBVAL *arg)
     TERM_ARRAY(BUF_COLLECT);
 
     // Append new words to obj
-    len = SERIES_TAIL(obj);
-    Expand_Frame(obj, SERIES_TAIL(BUF_COLLECT) - len, 1);
-    for (val = BLK_SKIP(BUF_COLLECT, len); NOT_END(val); val++)
-        Append_Frame(obj, 0, VAL_TYPESET_SYM(val));
+    len = FRAME_LEN(frame) + 1;
+    Expand_Frame(frame, SERIES_TAIL(BUF_COLLECT) - len, 1);
+    for (typeset = BLK_SKIP(BUF_COLLECT, len); NOT_END(typeset); typeset++)
+        Append_Frame(frame, NULL, VAL_TYPESET_SYM(typeset));
 
     // Set new values to obj words
     for (word = arg; NOT_END(word); word += 2) {
         REBVAL *key;
+        REBVAL *var;
 
         i = binds[VAL_WORD_CANON(word)];
-        val = FRM_VALUE(obj, i);
-        key = FRM_KEY(obj, i);
+        var = FRAME_VAR(frame, i);
+        key = FRAME_KEY(frame, i);
 
         if (VAL_GET_EXT(key, EXT_WORD_LOCK)) {
-            Collect_Keys_End(obj);
+            Collect_Keys_End(frame);
             fail (Error_Protected_Key(key));
         }
 
         if (VAL_GET_EXT(key, EXT_WORD_HIDE)) {
-            Collect_Keys_End(obj);
+            Collect_Keys_End(frame);
             fail (Error(RE_HIDDEN));
         }
 
-        if (IS_END(word + 1)) SET_NONE(val);
-        else *val = word[1];
+        if (IS_END(word + 1)) SET_NONE(var);
+        else *var = word[1];
 
         if (IS_END(word + 1)) break; // fix bug#708
     }
 
     // release binding table
-    Collect_Keys_End(obj);
+    Collect_Keys_End(frame);
 }
 
-static REBSER *Trim_Frame(REBSER *obj)
-{
-    REBVAL *val;
-    REBINT cnt = 0;
-    REBSER *nobj;
-    REBVAL *nval;
-    REBVAL *key;
-    REBVAL *nkey;
 
-    key = FRM_KEYS(obj) + 1;
-    for (val = FRM_VALUES(obj) + 1; NOT_END(val); val++, key++) {
-        if (VAL_TYPE(val) > REB_NONE && !VAL_GET_EXT(key, EXT_WORD_HIDE))
-            cnt++;
+static REBFRM *Trim_Frame(REBFRM *frame)
+{
+    REBVAL *var;
+    REBCNT copy_count = 0;
+    REBFRM *frame_new;
+    REBVAL *var_new;
+    REBVAL *key;
+    REBVAL *key_new;
+
+    // First pass: determine size of new frame to create by subtracting out
+    // any UNSET!, NONE!, or hidden fields
+    //
+    key = FRAME_KEYS_HEAD(frame);
+    var = FRAME_VARS_HEAD(frame);
+    for (; NOT_END(var); var++, key++) {
+        if (VAL_TYPE(var) > REB_NONE && !VAL_GET_EXT(key, EXT_WORD_HIDE))
+            copy_count++;
     }
 
-    nobj = Alloc_Frame(cnt, TRUE);
-    nval = FRM_VALUES(nobj)+1;
-    key = FRM_KEYS(obj) + 1;
-    nkey = FRM_KEYS(nobj) + 1;
-    for (val = FRM_VALUES(obj) + 1; NOT_END(val); val++, key++) {
-        if (VAL_TYPE(val) > REB_NONE && !VAL_GET_EXT(key, EXT_WORD_HIDE)) {
-            *nval++ = *val;
-            *nkey++ = *key;
+    // Create new frame based on the size found
+    //
+    frame_new = Alloc_Frame(copy_count, TRUE);
+    VAL_CONTEXT_SPEC(FRAME_CONTEXT(frame_new)) = NULL;
+    VAL_CONTEXT_BODY(FRAME_CONTEXT(frame_new)) = NULL;
+
+    // Second pass: copy the values that were not skipped in the first pass
+    //
+    key = FRAME_KEYS_HEAD(frame);
+    var = FRAME_VARS_HEAD(frame);
+    var_new = FRAME_VARS_HEAD(frame_new);
+    key_new = FRAME_KEYS_HEAD(frame_new);
+    for (; NOT_END(var); var++, key++) {
+        if (VAL_TYPE(var) > REB_NONE && !VAL_GET_EXT(key, EXT_WORD_HIDE)) {
+            *var_new++ = *var;
+            *key_new++ = *key;
         }
     }
-    SET_END(nval);
-    SET_END(nkey);
-    SERIES_TAIL(nobj) = cnt+1;
-    SERIES_TAIL(FRM_KEYLIST(nobj)) = cnt+1;
 
-    return nobj;
+    // Terminate the new frame
+    //
+    SET_END(var_new);
+    SET_END(key_new);
+    SERIES_TAIL(FRAME_VARLIST(frame_new)) = copy_count + 1;
+    SERIES_TAIL(FRAME_KEYLIST(frame_new)) = copy_count + 1;
+
+    return frame_new;
 }
 
 
@@ -241,9 +266,13 @@ REBINT CT_Frame(REBVAL *a, REBVAL *b, REBINT mode)
 //
 REBFLG MT_Object(REBVAL *out, REBVAL *data, enum Reb_Kind type)
 {
+    REBFRM *frame;
     if (!IS_BLOCK(data)) return FALSE;
-    VAL_FRAME(out) = Construct_Object(VAL_BLK_DATA(data), FALSE, NULL);
-    VAL_SET(out, type);
+
+    frame = Construct_Frame(type, VAL_BLK_DATA(data), FALSE, NULL);
+
+    Val_Init_Context(out, type, frame, NULL, NULL);
+
     if (type == REB_ERROR) {
         REBVAL result;
         if (Make_Error_Object_Throws(&result, out)) {
@@ -262,10 +291,8 @@ REBFLG MT_Object(REBVAL *out, REBVAL *data, enum Reb_Kind type)
 //
 REBINT PD_Object(REBPVS *pvs)
 {
-    REBINT n = 0;
-    REBSER *frame = VAL_FRAME(pvs->value);
-
-    assert(frame);
+    REBCNT n;
+    REBFRM *frame = VAL_FRAME(pvs->value);
 
     if (IS_WORD(pvs->select)) {
         n = Find_Word_Index(frame, VAL_WORD_SYM(pvs->select), FALSE);
@@ -273,18 +300,22 @@ REBINT PD_Object(REBPVS *pvs)
     else
         return PE_BAD_SELECT;
 
-    if (n <= 0 || cast(REBCNT, n) >= SERIES_TAIL(frame))
+    // !!! Can Find_Word_Index give back an index longer than the frame?!
+    // There was a check here.  Adding a test for now, look into it.
+    //
+    assert(n <= FRAME_LEN(frame));
+    if (n == 0 || n > FRAME_LEN(frame))
         return PE_BAD_SELECT;
 
     if (
         pvs->setval
         && IS_END(pvs->path + 1)
-        && VAL_GET_EXT(FRM_KEY(frame, n), EXT_WORD_LOCK)
+        && VAL_GET_EXT(FRAME_KEY(frame, n), EXT_WORD_LOCK)
     ) {
         fail (Error(RE_LOCKED_WORD, pvs->select));
     }
 
-    pvs->value = FRM_VALUE(frame, n);
+    pvs->value = FRAME_VAR(frame, n);
     return PE_SET;
 }
 
@@ -298,8 +329,8 @@ REBTYPE(Object)
 {
     REBVAL *value = D_ARG(1);
     REBVAL *arg = D_ARGC > 1 ? D_ARG(2) : NULL;
-    REBSER *frame;
-    REBSER *src_frame;
+    REBFRM *frame;
+    REBFRM *src_frame;
     enum Reb_Kind target;
 
     switch (action) {
@@ -322,7 +353,7 @@ REBTYPE(Object)
                     //
                     frame = Make_Frame_Detect(
                         REB_OBJECT, // type
-                        EMPTY_ARRAY, // spec
+                        NULL, // spec
                         NULL, // body
                         VAL_BLK_DATA(arg), // scan for toplevel set-words
                         NULL // parent
@@ -382,17 +413,17 @@ REBTYPE(Object)
             if (IS_NUMBER(arg)) {
                 REBINT n = Int32s(arg, 0);
                 frame = Alloc_Frame(n, TRUE);
-                VAL_SET(FRM_CONTEXT(frame), target);
-                FRM_SPEC(frame) = EMPTY_ARRAY;
-                FRM_BODY(frame) = NULL;
-                Val_Init_Context(D_OUT, target, frame, EMPTY_ARRAY, NULL);
+                VAL_SET(FRAME_CONTEXT(frame), target);
+                FRAME_SPEC(frame) = NULL;
+                FRAME_BODY(frame) = NULL;
+                Val_Init_Context(D_OUT, target, frame, NULL, NULL);
                 return R_OUT;
             }
 
             // make object! map!
             if (IS_MAP(arg)) {
                 frame = Map_To_Object(VAL_SERIES(arg));
-                Val_Init_Context(D_OUT, target, frame, EMPTY_ARRAY, NULL);
+                Val_Init_Context(D_OUT, target, frame, NULL, NULL);
                 return R_OUT;
             }
 
@@ -405,18 +436,18 @@ REBTYPE(Object)
 
             // make parent none | []
             if (IS_NONE(arg) || (IS_BLOCK(arg) && IS_EMPTY(arg))) {
-                frame = Copy_Array_Core_Managed(
-                    src_frame,
+                frame = AS_FRAME(Copy_Array_Core_Managed(
+                    FRAME_VARLIST(src_frame),
                     0, // at
-                    SERIES_TAIL(src_frame), // tail
+                    FRAME_LEN(src_frame) + 1, // tail (+1 for context/rootkey)
                     0, // extra
                     TRUE, // deep
                     TS_CLONE // types
-                );
-                SERIES_SET_FLAG(frame, SER_FRAME);
-                FRM_KEYLIST(frame) = FRM_KEYLIST(src_frame);
-                VAL_FRAME(FRM_CONTEXT(frame)) = frame;
-                Rebind_Frame(src_frame, frame);
+                ));
+                SERIES_SET_FLAG(FRAME_VARLIST(frame), SER_FRAME);
+                FRAME_KEYLIST(frame) = FRAME_KEYLIST(src_frame);
+                VAL_FRAME(FRAME_CONTEXT(frame)) = frame;
+                Rebind_Frame_Deep(src_frame, frame, REBIND_FUNC);
                 Val_Init_Object(D_OUT, frame);
                 return R_OUT;
             }
@@ -425,12 +456,12 @@ REBTYPE(Object)
             if (IS_BLOCK(arg)) {
                 frame = Make_Frame_Detect(
                     REB_OBJECT, // type
-                    EMPTY_ARRAY, // spec
+                    NULL, // spec
                     NULL, // body
                     VAL_BLK_DATA(arg), // values to scan for toplevel set-words
                     src_frame // parent
                 );
-                Rebind_Frame(src_frame, frame);
+                Rebind_Frame_Deep(src_frame, frame, REBIND_FUNC);
                 Val_Init_Object(D_OUT, frame);
                 Bind_Values_Deep(VAL_BLK_DATA(arg), frame);
 
@@ -500,14 +531,10 @@ REBTYPE(Object)
             // is no way to change the frame type to module without wrecking
             // the object passed in.
 
-            frame = Copy_Array_Shallow(VAL_FRAME(item + 1));
-            SERIES_SET_FLAG(frame, SER_FRAME);
-            FRM_KEYLIST(frame) = FRM_KEYLIST(VAL_FRAME(item + 1));
-            MANAGE_SERIES(frame);
-            VAL_SET(FRM_CONTEXT(frame), REB_MODULE);
-            VAL_FRAME(FRM_CONTEXT(frame)) = frame;
-            FRM_SPEC(frame) = VAL_FRAME(item);
-            FRM_BODY(frame) = NULL;
+            frame = Copy_Frame_Shallow_Managed(VAL_FRAME(item + 1));
+            VAL_SET(FRAME_CONTEXT(frame), REB_MODULE);
+            VAL_CONTEXT_SPEC(FRAME_CONTEXT(frame)) = VAL_FRAME(item);
+            assert(VAL_CONTEXT_BODY(FRAME_CONTEXT(frame)) == NULL);
 
             Val_Init_Module(
                 D_OUT,
@@ -520,16 +547,16 @@ REBTYPE(Object)
         fail (Error_Bad_Make(target, arg));
 
     case A_APPEND:
-        FAIL_IF_PROTECTED(VAL_FRAME(value));
+        FAIL_IF_PROTECTED_FRAME(VAL_FRAME(value));
         if (!IS_OBJECT(value))
             fail (Error_Illegal_Action(VAL_TYPE(value), action));
-        Append_Obj(VAL_FRAME(value), arg);
+        Append_To_Context(VAL_FRAME(value), arg);
         return R_ARG1;
 
     case A_LENGTH:
         if (!IS_OBJECT(value))
             fail (Error_Illegal_Action(VAL_TYPE(value), action));
-        SET_INTEGER(D_OUT, SERIES_TAIL(VAL_FRAME(value)) - 1);
+        SET_INTEGER(D_OUT, FRAME_LEN(VAL_FRAME(value)));
         return R_OUT;
 
     case A_COPY:
@@ -545,15 +572,15 @@ REBTYPE(Object)
             if (IS_DATATYPE(arg)) types |= FLAGIT_64(VAL_TYPE_KIND(arg));
             else types |= VAL_TYPESET_BITS(arg);
         }
-        frame = Copy_Array_Shallow(VAL_FRAME(value));
-        FRM_KEYLIST(frame) = FRM_KEYLIST(VAL_FRAME(value));
-        MANAGE_SERIES(frame);
-        SERIES_SET_FLAG(frame, SER_FRAME);
-        VAL_FRAME(FRM_CONTEXT(frame)) = frame;
+        frame = AS_FRAME(Copy_Array_Shallow(FRAME_VARLIST(VAL_FRAME(value))));
+        FRAME_KEYLIST(frame) = FRAME_KEYLIST(VAL_FRAME(value));
+        MANAGE_SERIES(FRAME_VARLIST(frame));
+        SERIES_SET_FLAG(FRAME_VARLIST(frame), SER_FRAME);
+        VAL_FRAME(FRAME_CONTEXT(frame)) = frame;
         if (types != 0) {
             Clonify_Values_Len_Managed(
-                BLK_SKIP(frame, 1),
-                SERIES_TAIL(frame) - 1,
+                FRAME_VARS_HEAD(frame),
+                FRAME_LEN(frame),
                 D_REF(ARG_COPY_DEEP),
                 types
             );
@@ -580,12 +607,12 @@ REBTYPE(Object)
         if (n <= 0)
             return R_NONE;
 
-        if (cast(REBCNT, n) >= SERIES_TAIL(VAL_FRAME(value)))
+        if (cast(REBCNT, n) > FRAME_LEN(VAL_FRAME(value)))
             return R_NONE;
 
         if (action == A_FIND) return R_TRUE;
 
-        *D_OUT = *(VAL_CONTEXT_VALUES(value) + n);
+        *D_OUT = *FRAME_VAR(VAL_FRAME(value), n);
         return R_OUT;
     }
 
@@ -629,7 +656,7 @@ REBTYPE(Object)
 
     case A_TAIL_Q:
         if (IS_OBJECT(value)) {
-            SET_LOGIC(D_OUT, SERIES_TAIL(VAL_FRAME(value)) <= 1);
+            SET_LOGIC(D_OUT, FRAME_LEN(VAL_FRAME(value)) == 0);
             return R_OUT;
         }
         fail (Error_Illegal_Action(VAL_TYPE(value), action));

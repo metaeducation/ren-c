@@ -618,8 +618,11 @@ enum {
 #define IS_LOCK_SERIES(s) SERIES_GET_FLAG(s, SER_LOCK)
 #define Is_Array_Series(s) SERIES_GET_FLAG((s), SER_ARRAY)
 
-#define FAIL_IF_PROTECTED(s) \
+#define FAIL_IF_PROTECTED_SERIES(s) \
     if (SERIES_GET_FLAG(s, SER_PROTECT)) fail (Error(RE_PROTECTED))
+
+#define FAIL_IF_PROTECTED_FRAME(f) \
+    FAIL_IF_PROTECTED_SERIES(FRAME_VARLIST(f))
 
 #ifdef SERIES_LABELS
 #define LABEL_SERIES(s,l) s->label = (l)
@@ -670,7 +673,11 @@ struct Reb_Position
     REBCNT  index;
 };
 
-#define VAL_SERIES(v)       ((v)->data.position.series)
+#ifdef NDEBUG
+    #define VAL_SERIES(v)   ((v)->data.position.series)
+#else
+    #define VAL_SERIES(v)   (*VAL_SERIES_Ptr_Debug(v))
+#endif
 #define VAL_INDEX(v)        ((v)->data.position.index)
 #define VAL_TAIL(v)         (VAL_SERIES(v)->tail)
 #define VAL_LEN(v)          (Val_Series_Len(v))
@@ -1000,7 +1007,7 @@ struct Reb_Symbol {
 ***********************************************************************/
 
 struct Reb_Word {
-    REBSER *frame;  // Frame (or VAL_FUNC_PARAMLIST) where word is defined
+    REBSER *target; // Frame (or VAL_FUNC_PARAMLIST) where word is defined
     REBINT index;   // Index of word in frame (if it's not NULL)
     REBCNT sym;     // Index of the word's symbol
 };
@@ -1017,24 +1024,24 @@ struct Reb_Word {
 #endif
 
 #define VAL_WORD_INDEX(v)       ((v)->data.word.index)
-#define VAL_WORD_FRAME(v)       ((v)->data.word.frame)
-#define HAS_FRAME(v)            VAL_WORD_FRAME(v)
+#define VAL_WORD_TARGET(v)      ((v)->data.word.target)
+#define HAS_TARGET(v)            (VAL_WORD_TARGET(v) != NULL)
 
 #ifdef NDEBUG
     #define UNBIND_WORD(v) \
-        (VAL_WORD_FRAME(v)=NULL)
+        (VAL_WORD_TARGET(v)=NULL)
 #else
     #define WORD_INDEX_UNBOUND MIN_I32
     #define UNBIND_WORD(v) \
-        (VAL_WORD_FRAME(v)=NULL, VAL_WORD_INDEX(v)=WORD_INDEX_UNBOUND)
+        (VAL_WORD_TARGET(v)=NULL, VAL_WORD_INDEX(v)=WORD_INDEX_UNBOUND)
 #endif
 
 #define VAL_WORD_CANON(v)       VAL_SYM_CANON(BLK_SKIP(PG_Word_Table.series, VAL_WORD_SYM(v)))
 #define VAL_WORD_NAME(v)        VAL_SYM_NAME(BLK_SKIP(PG_Word_Table.series, VAL_WORD_SYM(v)))
 #define VAL_WORD_NAME_STR(v)    STR_HEAD(VAL_WORD_NAME(v))
 
-#define VAL_WORD_FRAME_WORDS(v) VAL_WORD_FRAME(v)->words
-#define VAL_WORD_FRAME_VALUES(v) VAL_WORD_FRAME(v)->values
+#define VAL_WORD_TARGET_WORDS(v) VAL_WORD_TARGET(v)->words
+#define VAL_WORD_TARGET_VALUES(v) VAL_WORD_TARGET(v)->values
 
 // Is it the same symbol? Quick check, then canon check:
 #define SAME_SYM(s1,s2) \
@@ -1078,55 +1085,14 @@ struct Reb_Word {
 **
 **	Because a REBSER which contains an object at its head is uniquely capable
 **	of retrieving the keylist by digging into its implicit first OBJECT!
-**	value, it is often considered a unique type called a frame.
+**	value, it is often considered a unique type called a "frame", and
+**  passed around as a type that checks differently known as a REBFRM.
 **
 ***********************************************************************/
 
-struct Reb_Context {
-    REBSER *frame; // keylist is held in REBSER.misc.series
-    REBSER *spec; // optional (currently only used by modules)
-    REBSER *body; // optional (currently only used by modules)
-};
-
-// Context components
-//
-#define VAL_FRAME(v)                ((v)->data.context.frame)
-#define VAL_CONTEXT_SPEC(v)         ((v)->data.context.spec)
-#define VAL_CONTEXT_BODY(v)         ((v)->data.context.body)
-
-// Special property: keylist pointer is stored in the misc field of REBSER
-//
-#define FRM_KEYLIST(f)              ((f)->misc.series)
-#define VAL_CONTEXT_KEYLIST(v)      FRM_KEYLIST(VAL_FRAME(v))
-
-// Navigate from frame series to frame components
-//
-#define FRM_CONTEXT(f)      BLK_HEAD(f)
-#define FRM_TYPE(f)         VAL_TYPE(FRM_CONTEXT(f))
-#define FRM_SPEC(f)         VAL_CONTEXT_SPEC(FRM_CONTEXT(f))
-#define FRM_BODY(f)         VAL_CONTEXT_BODY(FRM_CONTEXT(f))
-#define FRM_KEYS(f)         BLK_HEAD(FRM_KEYLIST(f))
-#define FRM_KEY(c,n)        BLK_SKIP(FRM_KEYLIST(c),(n))
-#define FRM_KEY_SYM(c,n)    VAL_TYPESET_SYM(FRM_KEY(c,n))
-#define FRM_VALUES(f)       BLK_HEAD(f)
-#define FRM_VALUE(f,n)      BLK_SKIP((f),(n))
-
-// !!! A frame must be able to reconstitute the object it is a frame for
-// from a single pointer.  Because this information is available and because
-// there is a free keylist[0] slot aligning with the position in the value
-// array for that location, the original R3-Alpha decision was to make use
-// of that by putting the word "SELF" in the keylist position...so that a
-// lookup of something bound to index 0 would be able to generate the
-// object.
-//
-// This notion of SELF as a system keyword is deprecated in Ren-C, believing
-// that `bind-of` a known member is a sufficient way for a generator to
-// bootstrap a SELF term at the user level if it needed one.  Other ideas
-// are mitigating the need for SELF, such as `/member/submember` access via
-// path, integrated with dispatch.
-//
-#define IS_SELFLESS(f) \
-    (IS_CLOSURE(FRM_KEYS(f)) || VAL_TYPESET_SYM(FRM_KEYS(f)) == SYM_0)
+typedef struct Reb_Frame {
+    REBSER series; // keylist is held in REBSER.misc.series
+} REBFRM;
 
 #ifdef NDEBUG
     #define ASSERT_FRAME(f) cast(void, 0)
@@ -1134,20 +1100,114 @@ struct Reb_Context {
     #define ASSERT_FRAME(f) Assert_Frame_Core(f)
 #endif
 
+// Series-to-Frame cocercion
+//
+// !!! This cast is of a pointer to a type to a pointer to a struct with
+// just that type in it may not technically be legal in the standard w.r.t.
+// strict aliasing.  Review this mechanic.  There's probably a legal way
+// of working around it.  But if worst comes to worst, it can be disabled
+// and the two can be made equivalent--except when doing a build for
+// type checking purposes.
+//
+#ifdef NDEBUG
+    #define AS_FRAME(s)     cast(REBFRM*, (s))
+#else
+    // Put a debug version here that asserts.
+    #define AS_FRAME(s)     cast(REBFRM*, (s))
+#endif
+
+struct Reb_Context {
+    REBFRM *frame;
+    REBFRM *spec; // optional (currently only used by modules)
+    REBSER *body; // optional (currently not used at all)
+};
+
+// Context components
+//
+#ifdef NDEBUG
+    #define VAL_FRAME(v)            ((v)->data.context.frame)
+#else
+    #define VAL_FRAME(v)            (*VAL_FRAME_Ptr_Debug(v))
+#endif
+#define VAL_CONTEXT_SPEC(v)         ((v)->data.context.spec)
+#define VAL_CONTEXT_BODY(v)         ((v)->data.context.body)
+
+// Special property: keylist pointer is stored in the misc field of REBSER
+//
+#define FRAME_VARLIST(f)            (&(f)->series)
+#define FRAME_KEYLIST(f)            ((f)->series.misc.series)
+
+// The keys and vars are accessed by positive integers starting at 1.  If
+// indexed access is used then the debug build will check to be sure that
+// the indexing is legal.  To get a pointer to the first key or value
+// regardless of length (e.g. will be an END if 0 keys/vars) use HEAD
+//
+#define FRAME_KEYS_HEAD(f)          BLK_SKIP(FRAME_KEYLIST(f), 1)
+#define FRAME_VARS_HEAD(f)          BLK_SKIP(FRAME_VARLIST(f), 1)
+#ifdef NDEBUG
+    #define FRAME_KEY(f,n)          BLK_SKIP(FRAME_KEYLIST(f), (n))
+    #define FRAME_VAR(f,n)          BLK_SKIP(FRAME_VARLIST(f), (n))
+#else
+    #define FRAME_KEY(f,n)          FRAME_KEY_Debug((f), (n))
+    #define FRAME_VAR(f,n)          FRAME_VAR_Debug((f), (n))
+#endif
+#define FRAME_KEY_SYM(f,n)          VAL_TYPESET_SYM(FRAME_KEY((f), (n)))
+
+// Navigate from frame series to context components.  Note that the frame's
+// "length" does not count the [0] cell of either the varlist or the keylist.
+// Hence it must subtract 1.  Internally to the frame building code, the
+// real length of the two series must be accounted for...so the 1 gets put
+// back in, but most clients are only interested in the number of keys/values
+// (and getting an answer for the length back that was the same as the length
+// requested in frame creation).
+//
+#define FRAME_LEN(f)                (SERIES_LEN(FRAME_VARLIST(f)) - 1)
+#define FRAME_CONTEXT(f)            BLK_HEAD(FRAME_VARLIST(f))
+#define FRAME_ROOTKEY(f)            BLK_HEAD(FRAME_KEYLIST(f))
+#define FRAME_TYPE(f)               VAL_TYPE(FRAME_CONTEXT(f))
+#define FRAME_SPEC(f)               VAL_CONTEXT_SPEC(FRAME_CONTEXT(f))
+#define FRAME_BODY(f)               VAL_CONTEXT_BODY(FRAME_CONTEXT(f))
+
+// A fully constructed frames can reconstitute the context REBVAL that it is
+// a frame for from a single pointer...the REBVAL sitting in the 0 slot
+// of the frame's varlist.  In a debug build we check to make sure the
+// type of the embedded value matches the type of what is intended (so
+// someone who thinks they are initializing a REB_OBJECT from a FRAME does
+// not accidentally get a REB_ERROR, for instance.)
+//
+#if FALSE && defined(NDEBUG)
+    //
+    // !!! Currently Val_Init_Context_Core does not require the passed in
+    // frame to already be managed.  If it did, then it could be this
+    // simple and not be a "bad macro".  Review if it's worthwhile to change
+    // the prerequisite that this is only called on managed frames.
+    //
+    #define Val_Init_Context(o,t,f,s,b) \
+        (*(o) = *FRAME_CONTEXT(f))
+#else
+    #define Val_Init_Context(o,t,f,s,b) \
+        Val_Init_Context_Core((o), (t), (f), (s), (b))
+#endif
+
+// Because information regarding reconstituting an object from a frame
+// existed (albeit partially) in a FRAME! in R3-Alpha, the choice was made
+// to have the keylist[0] hold a word that would let you refer to the
+// object itself.  This "SELF" keyword concept is deprecated, and the
+// slot will likely be used for another purpose after a "definitional self"
+// solution (like "definitional return") removes the need for it.
+//
+#define IS_SELFLESS(f) \
+    (IS_CLOSURE(FRAME_ROOTKEY(f)) \
+        || VAL_TYPESET_SYM(FRAME_ROOTKEY(f)) == SYM_0)
+
 // Convenience macros to speak in terms of object values instead of the frame
 //
-#define VAL_CONTEXT_VALUES(v)       FRM_VALUES(VAL_FRAME(v))
-#define VAL_CONTEXT_VALUE(v,n)      FRM_VALUE(VAL_FRAME(v), (n))
-#define VAL_CONTEXT_KEYS(v)         FRM_KEYS(VAL_FRAME(v))
-#define VAL_CONTEXT_KEY(v,n)        FRM_KEY(VAL_FRAME(v), (n))
-#define VAL_CONTEXT_KEY_SYM(v,n)    FRM_KEY_SYM(VAL_FRAME(v), (n))
-
-// Object field (series, index):
-#define OFV(s,n)            BLK_SKIP(s,n)
-
+#define VAL_CONTEXT_VALUE(v,n)      FRAME_VAR(VAL_FRAME(v), (n))
+#define VAL_CONTEXT_KEY(v,n)        FRAME_KEY(VAL_FRAME(v), (n))
+#define VAL_CONTEXT_KEY_SYM(v,n)    FRAME_KEY_SYM(VAL_FRAME(v), (n))
 
 #define Val_Init_Object(v,f) \
-    Val_Init_Context((v), REB_OBJECT, (f), EMPTY_ARRAY, NULL)
+    Val_Init_Context((v), REB_OBJECT, (f), NULL, NULL)
 
 
 /***********************************************************************
@@ -1172,7 +1232,7 @@ struct Reb_Context {
 ***********************************************************************/
 
 #define Val_Init_Port(v,f) \
-    Val_Init_Context((v), REB_PORT, (f), EMPTY_ARRAY, NULL)
+    Val_Init_Context((v), REB_PORT, (f), NULL, NULL)
 
 
 /***********************************************************************
@@ -1196,21 +1256,14 @@ struct Reb_Context {
 **
 ***********************************************************************/
 
-#define ERR_VALUES(frame)   cast(ERROR_OBJ*, FRM_VALUES(frame))
+#define ERR_VALUES(frame)   cast(ERROR_OBJ*, BLK_HEAD(FRAME_VARLIST(frame)))
 #define ERR_NUM(frame)      cast(REBCNT, VAL_INT32(&ERR_VALUES(frame)->code))
 
 #define VAL_ERR_VALUES(v)   ERR_VALUES(VAL_FRAME(v))
 #define VAL_ERR_NUM(v)      ERR_NUM(VAL_FRAME(v))
 
-#ifdef NDEBUG
-    #define ASSERT_ERROR(e) (cast(void, 0))
-#else
-    #define ASSERT_ERROR(e) \
-        Assert_Error_Debug(e)
-#endif
-
-#define Val_Init_Error(v,f) \
-    Val_Init_Context((v), REB_ERROR, (f), EMPTY_ARRAY, NULL)
+#define Val_Init_Error(o,f) \
+    Val_Init_Context((o), REB_ERROR, (f), NULL, NULL)
 
 
 
@@ -1363,7 +1416,7 @@ typedef REB_R (*REBACT)(struct Reb_Call *call_, REBCNT a);
     REB_R T_##n(struct Reb_Call *call_, REBCNT action)
 
 // PORT!-action function
-typedef REB_R (*REBPAF)(struct Reb_Call *call_, REBSER *p, REBCNT a);
+typedef REB_R (*REBPAF)(struct Reb_Call *call_, REBFRM *p, REBCNT a);
 
 // COMMAND! function
 typedef REB_R (*CMD_FUNC)(REBCNT n, REBSER *args);

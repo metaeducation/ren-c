@@ -58,7 +58,7 @@ static int window_bits_gzip_raw = -(MAX_WBITS | 16); // is "raw gzip" a thing?
 // Zlib gives back string error messages.  We use them or fall
 // back on the integer code if there is no message.
 //
-static REBSER *Error_Compression(const z_stream *strm, int ret)
+static REBFRM *Error_Compression(const z_stream *strm, int ret)
 {
     REBVAL arg;
 
@@ -191,7 +191,7 @@ REBSER *Compress(REBSER *input, REBINT index, REBCNT len, REBFLG gzip, REBFLG ra
 REBSER *Decompress(const REBYTE *input, REBCNT len, REBINT max, REBFLG gzip, REBFLG raw)
 {
     REBOL_STATE state;
-    REBSER *error_frame;
+    REBFRM *error;
 
     REBCNT buf_size;
     REBSER *output;
@@ -274,15 +274,15 @@ REBSER *Decompress(const REBYTE *input, REBCNT len, REBINT max, REBFLG gzip, REB
     // Since we do the trap anyway, this is the way we handle explicit errors
     // called in the code below also.
 
-    PUSH_UNHALTABLE_TRAP(&error_frame, &state);
+    PUSH_UNHALTABLE_TRAP(&error, &state);
 
-// The first time through the following code 'error_frame' will be NULL, but...
-// `fail` can longjmp here, so 'error_frame' won't be NULL *if* that happens!
+// The first time through the following code 'error' will be NULL, but...
+// `fail` can longjmp here, so 'error' won't be NULL *if* that happens!
 
-    if (error_frame) {
+    if (error) {
         // output will already have been freed
         inflateEnd(&strm);
-        fail (error_frame);
+        fail (error);
     }
 
     // Since the initialization succeeded, go ahead and make the output buffer

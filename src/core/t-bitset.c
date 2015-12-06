@@ -524,7 +524,7 @@ REBTYPE(Bitset)
 
     // Check must be in this order (to avoid checking a non-series value);
     if (action >= A_TAKE && action <= A_SORT)
-        FAIL_IF_PROTECTED(VAL_SERIES(value));
+        FAIL_IF_PROTECTED_SERIES(VAL_SERIES(value));
 
     switch (action) {
 

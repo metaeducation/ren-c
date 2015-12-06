@@ -158,7 +158,7 @@ void Trace_Line(REBSER *block, REBINT index, const REBVAL *value)
     /*if (ANY_WORD(value)) {
         word = value;
         if (IS_WORD(value)) value = GET_VAR(word);
-        Debug_Fmt_(cs_cast(BOOT_STR(RS_TRACE,2)), VAL_WORD_FRAME(word), VAL_WORD_INDEX(word), Get_Type_Name(value));
+        Debug_Fmt_(cs_cast(BOOT_STR(RS_TRACE,2)), VAL_WORD_TARGET(word), VAL_WORD_INDEX(word), Get_Type_Name(value));
     }
     if (Trace_Stack) Debug_Fmt(cs_cast(BOOT_STR(RS_TRACE,3)), DSP, DSF);
     else
@@ -680,10 +680,16 @@ REBFLG Dispatch_Call_Throws(struct Reb_Call *call_)
     SET_TRASH_SAFE(D_CELL); // !!! maybe unnecessary, does arg filling use it?
 
     // We cache the arglist's data pointer in `arg` for ARG() and PARAM().
-    // Note that indexing starts at 1, so we have to step back to the function
-    // slot location vs. the actual first arg.
+    // If it's a closure we can't do this, and we must clear out arg and
+    // refine so they don't linger pointing to a frame that may be GC'd
+    // during the call.  The param in the keylist should still be okay.
     //
-    call_->arg = DSF_ARG_HEAD(call_) - 1;
+    assert(IS_END(call_->param));
+    call_->refine = NULL;
+    if (IS_CLOSURE(&call_->func))
+        call_->arg = NULL;
+    else
+        call_->arg = &call_->arglist.chunk[0];
 
     if (Trace_Flags) Trace_Func(D_LABEL_SYM, D_FUNC);
 
@@ -1039,7 +1045,7 @@ reevaluate:
                 fail (Error(RE_NEED_VALUE, c->value));
         #endif
 
-            if (!HAS_FRAME(c->value)) fail (Error(RE_NOT_BOUND, c->value));
+            if (!HAS_TARGET(c->value)) fail (Error(RE_NOT_BOUND, c->value));
 
             var = GET_MUTABLE_VAR(c->value);
             SET_UNSET(var);
@@ -1245,24 +1251,27 @@ reevaluate:
         //
         Push_New_Arglist_For_Call(c);
 
-        if (VAL_FUNC_NUM_PARAMS(&c->func) == 0) {
-            //
-            // There are no arguments, so just skip the next section.
-            // However--prevent GC from choking on helpful temporaries
-            //
-            c->param = NULL;
-            c->refine = NULL;
-            goto function_ready_to_call;
-        }
-
         // We assume you can enumerate both the formal parameters (in the
         // spec) and the actual arguments (in the call frame) using pointer
         // incrementation, that they are both terminated by END, and
         // that there are an equal number of values in both.
         //
-        // We also seed `refine` with NULL so the GC won't choke.
-        //
         c->param = DSF_PARAM_HEAD(c);
+
+        if (IS_END(c->param)) {
+            //
+            // There are no arguments, so just skip the next section.  We
+            // know that `param` contains an END marker so the GC
+            // won't crash on it.  The Dispatch_Call() will ovewrite both
+            // `arg` and `refine`.
+            //
+            goto function_ready_to_call;
+        }
+
+        // Since we know we're not going to just overwrite it, go ahead and
+        // grab the arg head.  While fulfilling arguments the GC might be
+        // invoked, so we have to initialize `refine` to something too...
+        //
         c->arg = DSF_ARG_HEAD(c);
         c->refine = NULL;
 
@@ -2597,7 +2606,7 @@ REBFLG Do_Sys_Func_Throws(REBVAL *out, REBCNT inum, ...)
 {
     REBFLG result;
     va_list args;
-    REBVAL *value = FRM_VALUE(Sys_Context, inum);
+    REBVAL *value = FRAME_VAR(Sys_Context, inum);
 
     if (!ANY_FUNC(value)) fail (Error(RE_BAD_SYS_FUNC, value));
 
@@ -2632,7 +2641,7 @@ void Do_Construct(REBVAL value[])
     for (; NOT_END(value); value++) {
         if (IS_SET_WORD(value)) {
             // Next line not needed, because SET words are ALWAYS in frame.
-            //if (VAL_WORD_INDEX(value) > 0 && VAL_WORD_FRAME(value) == frame)
+            //if (VAL_WORD_INDEX(value) > 0 && VAL_WORD_TARGET(value) == frame)
                 DS_PUSH(value);
         } else {
             // Get value:
@@ -2698,7 +2707,7 @@ void Do_Min_Construct(REBVAL value[])
     for (; NOT_END(value); value++) {
         if (IS_SET_WORD(value)) {
             // Next line not needed, because SET words are ALWAYS in frame.
-            //if (VAL_WORD_INDEX(value) > 0 && VAL_WORD_FRAME(value) == frame)
+            //if (VAL_WORD_INDEX(value) > 0 && VAL_WORD_TARGET(value) == frame)
                 DS_PUSH(value);
         } else {
             // Get value:
@@ -2887,7 +2896,7 @@ void Get_Simple_Value_Into(REBVAL *out, const REBVAL *val)
 // 
 // Given a path, return a context and index for its terminal.
 //
-REBSER *Resolve_Path(REBVAL *path, REBCNT *index)
+REBFRM *Resolve_Path(REBVAL *path, REBCNT *index)
 {
     REBVAL *sel; // selector
     const REBVAL *val;

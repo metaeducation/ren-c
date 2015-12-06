@@ -1325,19 +1325,19 @@ void Manage_Series(REBSER *series)
 // specifically.  If you've poked in a wordlist from somewhere
 // else you might not be able to use this.
 //
-void Manage_Frame_Debug(REBSER *frame)
+void Manage_Frame_Debug(REBFRM *frame)
 {
     if (
-        SERIES_GET_FLAG(frame, SER_MANAGED)
-        != SERIES_GET_FLAG(FRM_KEYLIST(frame), SER_MANAGED)
+        SERIES_GET_FLAG(FRAME_VARLIST(frame), SER_MANAGED)
+        != SERIES_GET_FLAG(FRAME_KEYLIST(frame), SER_MANAGED)
     ) {
         // Only one of these will trip...
-        ASSERT_SERIES_MANAGED(frame);
-        ASSERT_SERIES_MANAGED(FRM_KEYLIST(frame));
+        ASSERT_SERIES_MANAGED(FRAME_VARLIST(frame));
+        ASSERT_SERIES_MANAGED(FRAME_KEYLIST(frame));
     }
 
-    MANAGE_SERIES(FRM_KEYLIST(frame));
-    MANAGE_SERIES(frame);
+    MANAGE_SERIES(FRAME_KEYLIST(frame));
+    MANAGE_SERIES(FRAME_VARLIST(frame));
 }
 
 
@@ -1413,12 +1413,12 @@ REBFLG Is_Value_Managed(const REBVAL *value, REBFLG thrown_or_end_ok)
 #endif
 
     if (ANY_CONTEXT(value)) {
-        REBSER *frame = VAL_FRAME(value);
-        if (SERIES_GET_FLAG(frame, SER_MANAGED)) {
-            ASSERT_SERIES_MANAGED(FRM_KEYLIST(frame));
+        REBFRM *frame = VAL_FRAME(value);
+        if (SERIES_GET_FLAG(FRAME_VARLIST(frame), SER_MANAGED)) {
+            ASSERT_SERIES_MANAGED(FRAME_KEYLIST(frame));
             return TRUE;
         }
-        assert(!SERIES_GET_FLAG(FRM_KEYLIST(frame), SER_MANAGED));
+        assert(!SERIES_GET_FLAG(FRAME_KEYLIST(frame), SER_MANAGED));
         return FALSE;
     }
 

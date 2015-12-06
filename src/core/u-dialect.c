@@ -31,7 +31,7 @@
 #include "reb-dialect.h"
 
 typedef struct Reb_Dialect_Parse {
-    REBSER *dialect;    // dialect object
+    REBFRM *dialect;    // dialect object
     REBSER *fargs;      // formal arg block
     REBCNT fargi;       // start index in fargs
     REBSER *args;       // argument block
@@ -95,21 +95,25 @@ REBVAL *Find_Mutable_In_Contexts(REBCNT sym, REBVAL *where)
 // Given a word, check to see if it is in the dialect object.
 // If so, return its index. If not, return 0.
 //
-static int Find_Command(REBSER *dialect, REBVAL *word)
+static int Find_Command(REBFRM *dialect, REBVAL *word)
 {
     REBINT n;
 
-    if (dialect == VAL_WORD_FRAME(word)) n = VAL_WORD_INDEX(word);
+    if (VAL_WORD_INDEX(word) <= 0)
+        return 0;
+
+    if (dialect == AS_FRAME(VAL_WORD_TARGET(word)))
+        n = VAL_WORD_INDEX(word);
     else {
         if ((n = Find_Word_Index(dialect, VAL_WORD_SYM(word), FALSE))) {
-            VAL_WORD_FRAME(word) = dialect;
+            VAL_WORD_TARGET(word) = FRAME_VARLIST(dialect);
             VAL_WORD_INDEX(word) = n;
         }
         else return 0;
     }
 
     // If keyword (not command) return negated index:
-    if (IS_NONE(FRM_VALUES(dialect) + n)) return -n;
+    if (IS_NONE(FRAME_VAR(dialect, n))) return -n;
     return n;
 }
 
@@ -369,7 +373,7 @@ static REBINT Do_Cmd(REBDIA *dia)
     REBINT n;
 
     // Get formal arguments block for this command:
-    fargs = FRM_VALUES(dia->dialect) + dia->cmd;
+    fargs = FRAME_VAR(dia->dialect, dia->cmd);
     if (!IS_BLOCK(fargs)) return -REB_DIALECT_BAD_SPEC;
     dia->fargs = VAL_SERIES(fargs);
     fargs = VAL_BLK_DATA(fargs);
@@ -391,7 +395,7 @@ static REBINT Do_Cmd(REBDIA *dia)
         Val_Init_Word(
             val,
             GET_FLAG(dia->flags, RDIA_LIT_CMD) ? REB_LIT_WORD : REB_WORD,
-            FRM_KEY_SYM(dia->dialect, dia->cmd),
+            FRAME_KEY_SYM(dia->dialect, dia->cmd),
             dia->dialect,
             dia->cmd
         );
@@ -492,7 +496,7 @@ static REBINT Do_Dia(REBDIA *dia)
 //     3. Encountering a new CMD
 //     4. End of the dialect block
 //
-REBINT Do_Dialect(REBSER *dialect, REBSER *block, REBCNT *index, REBSER **out)
+REBINT Do_Dialect(REBFRM *dialect, REBSER *block, REBCNT *index, REBSER **out)
 {
     REBDIA dia;
     REBINT n;

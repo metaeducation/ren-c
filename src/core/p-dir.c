@@ -159,7 +159,7 @@ static void Init_Dir_Path(REBREQ *dir, REBVAL *path, REBINT wild, REBCNT policy)
 // 
 // Internal port handler for file directories.
 //
-static REB_R Dir_Actor(struct Reb_Call *call_, REBSER *port, REBCNT action)
+static REB_R Dir_Actor(struct Reb_Call *call_, REBFRM *port, REBCNT action)
 {
     REBVAL *spec;
     REBVAL *path;
@@ -176,7 +176,7 @@ static REB_R Dir_Actor(struct Reb_Call *call_, REBSER *port, REBCNT action)
     CLEARS(&dir);
 
     // Validate and fetch relevant PORT fields:
-    spec  = BLK_SKIP(port, STD_PORT_SPEC);
+    spec = FRAME_VAR(port, STD_PORT_SPEC);
     if (!IS_OBJECT(spec)) fail (Error(RE_INVALID_SPEC, spec));
     path = Obj_Value(spec, STD_PORT_SPEC_HEAD_REF);
     if (!path) fail (Error(RE_INVALID_SPEC, spec));
@@ -184,7 +184,7 @@ static REB_R Dir_Actor(struct Reb_Call *call_, REBSER *port, REBCNT action)
     if (IS_URL(path)) path = Obj_Value(spec, STD_PORT_SPEC_HEAD_PATH);
     else if (!IS_FILE(path)) fail (Error(RE_INVALID_SPEC, path));
 
-    state = BLK_SKIP(port, STD_PORT_STATE); // if block, then port is open.
+    state = FRAME_VAR(port, STD_PORT_STATE); // if block, then port is open.
 
     //flags = Security_Policy(SYM_FILE, path);
 

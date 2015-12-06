@@ -371,7 +371,7 @@ REBNATIVE(wait)
 {
     REBVAL *val = D_ARG(1);
     REBINT timeout = 0; // in milliseconds
-    REBSER *ports = 0;
+    REBSER *ports = NULL;
     REBINT n = 0;
 
     SET_NONE(D_OUT);
@@ -468,25 +468,33 @@ REBNATIVE(wake_up)
 // Calls port update for native actors.
 // Calls port awake function.
 {
-    REBVAL *val = D_ARG(1);
-    REBSER *port = VAL_FRAME(val);
+    PARAM(1, port);
+    PARAM(2, event);
+
+    REBFRM *frame = VAL_FRAME(ARG(port));
     REBOOL awakened = TRUE; // start by assuming success
+    REBVAL *value;
 
-    if (SERIES_TAIL(port) < STD_PORT_MAX) panic (Error(RE_MISC));
+    if (FRAME_LEN(frame) < STD_PORT_MAX - 1) panic (Error(RE_MISC));
 
-    val = OFV(port, STD_PORT_ACTOR);
-    if (IS_NATIVE(val)) {
-        Do_Port_Action(call_, port, A_UPDATE); // uses current stack frame
+    value = FRAME_VAR(frame, STD_PORT_ACTOR);
+    if (IS_NATIVE(value)) {
+        //
+        // We don't pass `value` or `event` in, because we just pass the
+        // current call info.  The port action can re-read the arguments.
+        //
+        Do_Port_Action(call_, frame, A_UPDATE);
     }
 
-    val = OFV(port, STD_PORT_AWAKE);
-    if (ANY_FUNC(val)) {
-        if (Apply_Func_Throws(D_OUT, val, D_ARG(2), 0))
+    value = FRAME_VAR(frame, STD_PORT_AWAKE);
+    if (ANY_FUNC(value)) {
+        if (Apply_Func_Throws(D_OUT, value, ARG(event), 0))
             fail (Error_No_Catch_For_Throw(D_OUT));
 
         if (!(IS_LOGIC(D_OUT) && VAL_LOGIC(D_OUT))) awakened = FALSE;
         SET_TRASH_SAFE(D_OUT);
     }
+
     return awakened ? R_TRUE : R_FALSE;
 }
 
@@ -1003,16 +1011,16 @@ REBNATIVE(call)
     if (input_ser) DROP_GUARD_SERIES(input_ser);
 
     if (flag_info) {
-        REBSER *obj = Alloc_Frame(2, TRUE);
-        REBVAL *val = Append_Frame(obj, NULL, SYM_ID);
+        REBFRM *frame = Alloc_Frame(2, TRUE);
+        REBVAL *val = Append_Frame(frame, NULL, SYM_ID);
         SET_INTEGER(val, pid);
 
         if (flag_wait) {
-            val = Append_Frame(obj, NULL, SYM_EXIT_CODE);
+            val = Append_Frame(frame, NULL, SYM_EXIT_CODE);
             SET_INTEGER(val, exit_code);
         }
 
-        Val_Init_Object(D_OUT, obj);
+        Val_Init_Object(D_OUT, frame);
         return R_OUT;
     }
 

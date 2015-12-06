@@ -571,13 +571,12 @@ static void Mold_Block_Series(REB_MOLD *mold, REBSER *series, REBCNT index, cons
         return;
     }
 
-    // Recursion check: (variation of: Find_Same_Block(MOLD_LOOP, value))
-    for (value = BLK_HEAD(MOLD_LOOP); NOT_END(value); value++) {
-        if (VAL_SERIES(value) == series) {
-            Emit(mold, "C...C", sep[0], sep[1]);
-            return;
-        }
+    // Recursion check:
+    if (Find_Same_Array(MOLD_LOOP, value) != NOT_FOUND) {
+        Emit(mold, "C...C", sep[0], sep[1]);
+        return;
     }
+
     value = Alloc_Tail_Array(MOLD_LOOP);
 
     // We don't want to use Val_Init_Block because it will create an implicit
@@ -709,7 +708,7 @@ static void Mold_Simple_Block(REB_MOLD *mold, REBVAL *block, REBCNT len)
     }
 }
 
-static void Form_Block_Series(REBSER *blk, REBCNT index, REB_MOLD *mold, REBSER *frame)
+static void Form_Block_Series(REBSER *blk, REBCNT index, REB_MOLD *mold, REBFRM *frame)
 {
     // Form a series (part_mold means mold non-string values):
     REBINT n;
@@ -807,7 +806,7 @@ static void Mold_Map(const REBVAL *value, REB_MOLD *mold, REBFLG molded)
     REBVAL *val;
 
     // Prevent endless mold loop:
-    if (Find_Same_Block(MOLD_LOOP, value) > 0) {
+    if (Find_Same_Array(MOLD_LOOP, value) != NOT_FOUND) {
         Append_Unencoded(mold->series, "...]");
         return;
     }
@@ -838,26 +837,26 @@ static void Mold_Map(const REBVAL *value, REB_MOLD *mold, REBFLG molded)
     Remove_Array_Last(MOLD_LOOP);
 }
 
+
 static void Form_Object(const REBVAL *value, REB_MOLD *mold)
 {
-    REBSER *keylist = VAL_CONTEXT_KEYLIST(value);
-    REBVAL *keys = BLK_HEAD(keylist);
-    REBVAL *vals  = VAL_CONTEXT_VALUES(value); // first value is context
-    REBCNT n;
+    REBVAL *key = FRAME_KEYS_HEAD(VAL_FRAME(value));
+    REBVAL *var = FRAME_VARS_HEAD(VAL_FRAME(value));
     REBFLG had_output = FALSE;
 
     // Prevent endless mold loop:
-    if (Find_Same_Block(MOLD_LOOP, value) > 0) {
+    if (Find_Same_Array(MOLD_LOOP, value) != NOT_FOUND) {
         Append_Unencoded(mold->series, "...]");
         return;
     }
+
     Append_Value(MOLD_LOOP, value);
 
     // Mold all words and their values:
-    for (n = 1; n < SERIES_TAIL(keylist); n++) {
-        if (!VAL_GET_EXT(keys + n, EXT_WORD_HIDE)) {
+    for (; !IS_END(key); key++, var++) {
+        if (!VAL_GET_EXT(key, EXT_WORD_HIDE)) {
             had_output = TRUE;
-            Emit(mold, "N: V\n", VAL_TYPESET_SYM(keys + n), vals + n);
+            Emit(mold, "N: V\n", VAL_TYPESET_SYM(key), var);
         }
     }
 
@@ -868,41 +867,38 @@ static void Form_Object(const REBVAL *value, REB_MOLD *mold)
     Remove_Array_Last(MOLD_LOOP);
 }
 
+
 static void Mold_Object(const REBVAL *value, REB_MOLD *mold)
 {
-    REBSER *keylist = VAL_CONTEXT_KEYLIST(value);
-    REBVAL *keys = BLK_HEAD(keylist);
-    REBVAL *vals = VAL_CONTEXT_VALUES(value); // first value is context
-    REBCNT n;
-
-    assert(VAL_FRAME(value));
+    REBVAL *key = FRAME_KEYS_HEAD(VAL_FRAME(value));
+    REBVAL *var = FRAME_VARS_HEAD(VAL_FRAME(value));
 
     Pre_Mold(value, mold);
 
     Append_Codepoint_Raw(mold->series, '[');
 
     // Prevent infinite looping:
-    if (Find_Same_Block(MOLD_LOOP, value) > 0) {
+    if (Find_Same_Array(MOLD_LOOP, value) != NOT_FOUND) {
         Append_Unencoded(mold->series, "...]");
         return;
     }
+
     Append_Value(MOLD_LOOP, value);
 
     mold->indent++;
-    for (n = 1; n < SERIES_TAIL(keylist); n++) {
+    for (; !IS_END(key); key++, var++) {
         if (
-            !VAL_GET_EXT(keys + n, EXT_WORD_HIDE) &&
-            ((VAL_TYPE(vals+n) > REB_NONE) || !GET_MOPT(mold, MOPT_NO_NONE))
+            !VAL_GET_EXT(key, EXT_WORD_HIDE) &&
+            ((VAL_TYPE(var) > REB_NONE) || !GET_MOPT(mold, MOPT_NO_NONE))
         ){
             New_Indented_Line(mold);
             Append_UTF8(
-                mold->series, Get_Sym_Name(VAL_TYPESET_SYM(keys + n)), -1
+                mold->series, Get_Sym_Name(VAL_TYPESET_SYM(key)), -1
             );
-            //Print("Slot: %s", Get_Sym_Name(VAL_WORD_SYM(words+n)));
             Append_Unencoded(mold->series, ": ");
-            if (IS_WORD(vals+n) && !GET_MOPT(mold, MOPT_MOLD_ALL))
+            if (IS_WORD(var) && !GET_MOPT(mold, MOPT_MOLD_ALL))
                 Append_Codepoint_Raw(mold->series, '\'');
-            Mold_Value(mold, vals+n, TRUE);
+            Mold_Value(mold, var, TRUE);
         }
     }
     mold->indent--;
@@ -913,15 +909,15 @@ static void Mold_Object(const REBVAL *value, REB_MOLD *mold)
     Remove_Array_Last(MOLD_LOOP);
 }
 
+
 static void Mold_Error(const REBVAL *value, REB_MOLD *mold, REBFLG molded)
 {
     ERROR_OBJ *err;
-    REBSER *frame;
+    REBFRM *frame;
 
     // Protect against recursion. !!!!
 
     if (molded) {
-        ASSERT_FRAME(VAL_FRAME(value));
         Mold_Object(value, mold);
         return;
     }

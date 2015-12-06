@@ -142,7 +142,7 @@ x*/ void RXI_To_Value(REBVAL *val, RXIARG arg, REBCNT type)
         break;
     case RXX_SYM:
         VAL_WORD_SYM(val) = arg.i2.int32a;
-        VAL_WORD_FRAME(val) = 0;
+        VAL_WORD_TARGET(val) = 0;
         VAL_WORD_INDEX(val) = 0;
         break;
     case RXX_IMAGE:
@@ -196,7 +196,7 @@ x*/ REBRXT Do_Callback(REBSER *obj, u32 name, RXIARG *rxis, RXIARG *result)
     REBVAL out;
 
     // Find word in object, verify it is a function.
-    if (!(val = Find_Word_Value(obj, name))) {
+    if (!(val = Find_Word_Value(AS_FRAME(obj), name))) {
         SET_EXT_ERROR(result, RXE_NO_WORD);
         return 0;
     }
@@ -323,7 +323,7 @@ REBNATIVE(load_extension)
     REBCNT error;
     REBYTE *code;
     CFUNC *info; // INFO_FUNC
-    REBSER *frame;
+    REBFRM *frame;
     REBVAL *val = D_ARG(1);
     REBEXT *ext;
     CFUNC *call; // RXICAL
@@ -373,26 +373,17 @@ REBNATIVE(load_extension)
     ext->index = Ext_Next++;
 
     // Extension return: dll, info, filename
-    frame = Copy_Array_Shallow(
+    frame = Copy_Frame_Shallow_Managed(
         VAL_FRAME(Get_System(SYS_STANDARD, STD_EXTENSION))
     );
-    SERIES_SET_FLAG(frame, SER_FRAME);
-    FRM_KEYLIST(frame) = FRM_KEYLIST(
-        VAL_FRAME(Get_System(SYS_STANDARD, STD_EXTENSION))
-    );
-    VAL_FRAME(FRM_CONTEXT(frame)) = frame;
-
-    // Shallow copy means we reuse STD_EXTENSION's word list, which is
-    // already managed.  We manage our copy to match.
-    MANAGE_SERIES(frame);
     Val_Init_Object(D_OUT, frame);
 
     // Set extension fields needed:
-    val = FRM_VALUE(frame, STD_EXTENSION_LIB_BASE);
+    val = FRAME_VAR(frame, STD_EXTENSION_LIB_BASE);
     VAL_SET(val, REB_HANDLE);
     VAL_I32(val) = ext->index;
-    if (!D_REF(2)) *FRM_VALUE(frame, STD_EXTENSION_LIB_FILE) = *D_ARG(1);
-    Val_Init_Binary(FRM_VALUE(frame, STD_EXTENSION_LIB_BOOT), src);
+    if (!D_REF(2)) *FRAME_VAR(frame, STD_EXTENSION_LIB_FILE) = *D_ARG(1);
+    Val_Init_Binary(FRAME_VAR(frame, STD_EXTENSION_LIB_BOOT), src);
 
     return R_OUT;
 }
@@ -612,7 +603,7 @@ void Do_Commands(REBVAL *out, REBSER *cmds, void *context)
             cmd_sym = VAL_WORD_SYM(blk);
             // Optimized var fetch:
             n = VAL_WORD_INDEX(blk);
-            if (n > 0) func = FRM_VALUES(VAL_WORD_FRAME(blk)) + n;
+            if (n > 0) func = FRAME_VAR(AS_FRAME(VAL_WORD_TARGET(blk)), n);
             else func = GET_VAR(blk); // fallback
         } else func = blk;
 

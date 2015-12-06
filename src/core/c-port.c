@@ -57,9 +57,9 @@ void Make_Port(REBVAL *out, const REBVAL *spec)
 // Standard method for checking if port is open.
 // A convention. Not all ports use this method.
 //
-REBFLG Is_Port_Open(REBSER *port)
+REBFLG Is_Port_Open(REBFRM *port)
 {
-    REBVAL *state = BLK_SKIP(port, STD_PORT_STATE);
+    REBVAL *state = FRAME_VAR(port, STD_PORT_STATE);
     if (!IS_BINARY(state)) return FALSE;
     return IS_OPEN(VAL_BIN_DATA(state));
 }
@@ -71,9 +71,9 @@ REBFLG Is_Port_Open(REBSER *port)
 // Standard method for setting a port open/closed.
 // A convention. Not all ports use this method.
 //
-void Set_Port_Open(REBSER *port, REBFLG flag)
+void Set_Port_Open(REBFRM *port, REBFLG flag)
 {
-    REBVAL *state = BLK_SKIP(port, STD_PORT_STATE);
+    REBVAL *state = FRAME_VAR(port, STD_PORT_STATE);
     if (IS_BINARY(state)) {
         if (flag) SET_OPEN(VAL_BIN_DATA(state));
         else SET_CLOSED(VAL_BIN_DATA(state));
@@ -88,9 +88,9 @@ void Set_Port_Open(REBSER *port, REBFLG flag)
 // The size is that of a binary structure used by
 // the port for storing internal information.
 //
-void *Use_Port_State(REBSER *port, REBCNT device, REBCNT size)
+void *Use_Port_State(REBFRM *port, REBCNT device, REBCNT size)
 {
-    REBVAL *state = BLK_SKIP(port, STD_PORT_STATE);
+    REBVAL *state = FRAME_VAR(port, STD_PORT_STATE);
 
     // If state is not a binary structure, create it:
     if (!IS_BINARY(state)) {
@@ -121,7 +121,7 @@ REBFLG Pending_Port(REBVAL *port)
     REBREQ *req;
 
     if (IS_PORT(port)) {
-        state = BLK_SKIP(VAL_FRAME(port), STD_PORT_STATE);
+        state = FRAME_VAR(VAL_FRAME(port), STD_PORT_STATE);
         if (IS_BINARY(state)) {
             req = (REBREQ*)VAL_BIN(state);
             if (!GET_FLAG(req->flags, RRF_PENDING)) return FALSE;
@@ -299,27 +299,27 @@ REBCNT Find_Action(REBVAL *object, REBCNT action)
 // NOTE: stack must already be setup correctly for action, and
 // the caller must cleanup the stack.
 //
-int Do_Port_Action(struct Reb_Call *call_, REBSER *port, REBCNT action)
+int Do_Port_Action(struct Reb_Call *call_, REBFRM *port, REBCNT action)
 {
     REBVAL *actor;
     REBCNT n = 0;
 
     assert(action < A_MAX_ACTION);
 
-    assert(SERIES_GET_FLAG(port, SER_FRAME));
+    assert(SERIES_GET_FLAG(FRAME_VARLIST(port), SER_FRAME));
 
     // Verify valid port (all of these must be false):
     if (
         // Must be = or larger than std port:
-        (SERIES_TAIL(port) < STD_PORT_MAX) ||
+        (FRAME_LEN(port) < STD_PORT_MAX - 1) ||
         // Must have a spec object:
-        !IS_OBJECT(BLK_SKIP(port, STD_PORT_SPEC))
+        !IS_OBJECT(FRAME_VAR(port, STD_PORT_SPEC))
     ) {
         fail (Error(RE_INVALID_PORT));
     }
 
     // Get actor for port, if it has one:
-    actor = BLK_SKIP(port, STD_PORT_ACTOR);
+    actor = FRAME_VAR(port, STD_PORT_ACTOR);
 
     if (IS_NONE(actor)) return R_NONE;
 
@@ -391,15 +391,13 @@ void Secure_Port(REBCNT kind, REBREQ *req, REBVAL *name, REBSER *path)
 // Because port actors are exposed to the user level, we must
 // prevent them from being called with invalid values.
 //
-void Validate_Port(REBSER *port, REBCNT action)
+void Validate_Port(REBFRM *port, REBCNT action)
 {
-    assert(SERIES_GET_FLAG(port, SER_FRAME));
-
     if (
         action >= A_MAX_ACTION
-        || port->tail > 50
-        || SERIES_WIDE(port) != sizeof(REBVAL)
-        || !IS_OBJECT(BLK_SKIP(port, STD_PORT_SPEC))
+        || FRAME_LEN(port) > 50 // !!! ?? why 50 ??
+        || !SERIES_GET_FLAG(FRAME_VARLIST(port), SER_FRAME)
+        || !IS_OBJECT(FRAME_VAR(port, STD_PORT_SPEC))
     ) {
         fail (Error(RE_INVALID_PORT));
     }

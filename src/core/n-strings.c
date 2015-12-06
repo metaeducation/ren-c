@@ -387,36 +387,52 @@ REBNATIVE(decompress)
 //  
 //  "Creates an object with scant (safe) evaluation."
 //  
-//      block [block! string! binary!] "Specification (modified)"
-//      /with "Default object" object [object!]
-//      /only "Values are kept as-is"
+//      spec [block! string! binary!]
+//          "Specification (modified)"
+//      /with
+//          "Create from a default object"
+//      object [object!]
+//          "Default object"
+//      /only
+//          "Values are kept as-is"
 //  ]
 //
 REBNATIVE(construct)
 {
-    REBVAL *value = D_ARG(1);
-    REBSER *parent = 0;
-    REBSER *frame;
+    PARAM(1, spec);
+    REFINE(2, with);
+    PARAM(3, object);
+    REFINE(4, only);
 
-    if (IS_STRING(value) || IS_BINARY(value)) {
+    REBVAL *spec_value = ARG(spec);
+    REBFRM *parent = NULL;
+
+    // !!! What is this?
+    //
+    if (IS_STRING(spec_value) || IS_BINARY(spec_value)) {
         REBCNT index;
+        REBSER *array;
 
         // Just a guess at size:
-        frame = Make_Array(10);     // Use a std BUF_?
-        Val_Init_Block(D_OUT, frame); // Keep safe
+        array = Make_Array(10);     // Use a std BUF_?
+        Val_Init_Block(D_OUT, array); // Keep safe
 
         // Convert string if necessary. Store back for safety.
-        VAL_SERIES(value) = Temp_Bin_Str_Managed(value, &index, 0);
+        VAL_SERIES(spec_value) = Temp_Bin_Str_Managed(spec_value, &index, 0);
 
         // !issue! Is this what we really want here?
-        Scan_Net_Header(frame, VAL_BIN(value) + index);
-        value = D_OUT;
+        Scan_Net_Header(array, VAL_BIN(spec_value) + index);
+        spec_value = D_OUT;
     }
 
-    if (D_REF(2)) parent = VAL_FRAME(D_ARG(3));
+    if (REF(with)) parent = VAL_FRAME(ARG(object));
 
-    frame = Construct_Object(VAL_BLK_DATA(value), D_REF(4), parent);
-    Val_Init_Object(D_OUT, frame);
+    Val_Init_Object(
+        D_OUT,
+        Construct_Frame(
+            REB_OBJECT, VAL_BLK_DATA(spec_value), REF(only), parent
+        )
+    );
 
     return R_OUT;
 }

@@ -104,22 +104,25 @@ void Protect_Series(REBVAL *val, REBCNT flags)
 //
 void Protect_Object(REBVAL *value, REBCNT flags)
 {
-    REBSER *series = VAL_FRAME(value);
+    REBFRM *frame = VAL_FRAME(value);
 
-    if (SERIES_GET_FLAG(series, SER_MARK)) return; // avoid loop
+    if (SERIES_GET_FLAG(FRAME_VARLIST(frame), SER_MARK))
+        return; // avoid loop
 
-    if (GET_FLAG(flags, PROT_SET)) SERIES_SET_FLAG(series, SER_PROTECT);
-    else SERIES_CLR_FLAG(series, SER_PROTECT);
+    if (GET_FLAG(flags, PROT_SET))
+        SERIES_SET_FLAG(FRAME_VARLIST(frame), SER_PROTECT);
+    else
+        SERIES_CLR_FLAG(FRAME_VARLIST(frame), SER_PROTECT);
 
-    for (value = FRM_KEYS(series)+1; NOT_END(value); value++) {
+    for (value = FRAME_KEY(frame, 1); NOT_END(value); value++) {
         Protect_Key(value, flags);
     }
 
     if (!GET_FLAG(flags, PROT_DEEP)) return;
 
-    SERIES_SET_FLAG(series, SER_MARK); // recursion protection
+    SERIES_SET_FLAG(FRAME_VARLIST(frame), SER_MARK); // recursion protection
 
-    for (value = FRM_VALUES(series)+1; NOT_END(value); value++) {
+    for (value = FRAME_VAR(frame, 1); NOT_END(value); value++) {
         Protect_Value(value, flags);
     }
 }
@@ -133,8 +136,8 @@ static void Protect_Word_Value(REBVAL *word, REBCNT flags)
     REBVAL *key;
     REBVAL *val;
 
-    if (ANY_WORD(word) && HAS_FRAME(word) && VAL_WORD_INDEX(word) > 0) {
-        key = FRM_KEYS(VAL_WORD_FRAME(word)) + VAL_WORD_INDEX(word);
+    if (ANY_WORD(word) && HAS_TARGET(word) && VAL_WORD_INDEX(word) > 0) {
+        key = FRAME_KEY(AS_FRAME(VAL_WORD_TARGET(word)), VAL_WORD_INDEX(word));
         Protect_Key(key, flags);
         if (GET_FLAG(flags, PROT_DEEP)) {
             // Ignore existing mutability state, by casting away the const.
@@ -146,12 +149,13 @@ static void Protect_Word_Value(REBVAL *word, REBCNT flags)
     }
     else if (ANY_PATH(word)) {
         REBCNT index;
-        REBSER *obj;
-        if ((obj = Resolve_Path(word, &index))) {
-            key = FRM_KEY(obj, index);
+        REBFRM *frame;
+        if ((frame = Resolve_Path(word, &index))) {
+            key = FRAME_KEY(frame, index);
             Protect_Key(key, flags);
             if (GET_FLAG(flags, PROT_DEEP)) {
-                Protect_Value(val = FRM_VALUE(obj, index), flags);
+                val = FRAME_VAR(frame, index);
+                Protect_Value(val, flags);
                 Unmark(val);
             }
         }
@@ -342,14 +346,14 @@ REBNATIVE(attempt)
     REBVAL * const block = D_ARG(1);
 
     REBOL_STATE state;
-    REBSER *error_frame;
+    REBFRM *error;
 
-    PUSH_TRAP(&error_frame, &state);
+    PUSH_TRAP(&error, &state);
 
-// The first time through the following code 'error_frame' will be NULL, but...
-// `fail` can longjmp here, so 'error_frame' won't be NULL *if* that happens!
+// The first time through the following code 'error' will be NULL, but...
+// `fail` can longjmp here, so 'error' won't be NULL *if* that happens!
 
-    if (error_frame) return R_NONE;
+    if (error) return R_NONE;
 
     if (DO_ARRAY_THROWS(D_OUT, block)) {
         DROP_TRAP_SAME_STACKLEVEL_AS_PUSH(&state);
@@ -559,11 +563,9 @@ REBNATIVE(case)
 //
 REBNATIVE(catch)
 //
-// There's a refinement for catching quits, and CATCH/ANY will not
-// alone catch it (you have to CATCH/ANY/QUIT).  The use of the
-// WORD! QUIT is pending review, and when full label values are
-// available it will likely be changed to at least get the native
-// (e.g. equal to THROW with /NAME :QUIT instead of /NAME 'QUIT)
+// There's a refinement for catching quits, and CATCH/ANY will not alone catch
+// it (you have to CATCH/ANY/QUIT).  Currently the label for quitting is the
+// NATIVE! function value for QUIT.
 {
     REBVAL * const block = D_ARG(1);
 
@@ -1640,47 +1642,47 @@ REBNATIVE(switch)
 //
 REBNATIVE(trap)
 {
-    REBVAL * const block = D_ARG(1);
-    const REBFLG with = D_REF(2);
-    REBVAL * const handler = D_ARG(3);
+    PARAM(1, block);
+    REFINE(2, with);
+    PARAM(3, handler);
 
     REBOL_STATE state;
-    REBSER *error_frame;
+    REBFRM *error;
 
-    PUSH_TRAP(&error_frame, &state);
+    PUSH_TRAP(&error, &state);
 
-// The first time through the following code 'error_frame' will be NULL, but...
-// `fail` can longjmp here, so 'error_frame' won't be NULL *if* that happens!
+// The first time through the following code 'error' will be NULL, but...
+// `fail` can longjmp here, so 'error' won't be NULL *if* that happens!
 
-    if (error_frame) {
-        if (with) {
-            if (IS_BLOCK(handler)) {
+    if (error) {
+        if (REF(with)) {
+            if (IS_BLOCK(ARG(handler))) {
                 // There's no way to pass 'error' to a block (so just DO it)
-                if (DO_ARRAY_THROWS(D_OUT, handler))
+                if (DO_ARRAY_THROWS(D_OUT, ARG(handler)))
                     return R_OUT_IS_THROWN;
 
                 return R_OUT;
             }
-            else if (ANY_FUNC(handler)) {
+            else if (ANY_FUNC(ARG(handler))) {
                 if (
-                    (VAL_FUNC_NUM_PARAMS(handler) == 0)
-                    || IS_REFINEMENT(VAL_FUNC_PARAM(handler, 1))
+                    (VAL_FUNC_NUM_PARAMS(ARG(handler)) == 0)
+                    || IS_REFINEMENT(VAL_FUNC_PARAM(ARG(handler), 1))
                 ) {
                     // Arity zero handlers (or handlers whose first
                     // parameter is a refinement) we call without the ERROR!
                     //
-                    if (Apply_Func_Throws(D_OUT, handler, NULL))
+                    if (Apply_Func_Throws(D_OUT, ARG(handler), NULL))
                         return R_OUT_IS_THROWN;
                 }
                 else {
-                    REBVAL error;
-                    Val_Init_Error(&error, error_frame);
+                    REBVAL arg;
+                    Val_Init_Error(&arg, error);
 
                     // If the handler takes at least one parameter that
                     // isn't a refinement, try passing it the ERROR! we
                     // trapped.  Apply will do argument checking.
                     //
-                    if (Apply_Func_Throws(D_OUT, handler, &error, NULL))
+                    if (Apply_Func_Throws(D_OUT, ARG(handler), &arg, NULL))
                         return R_OUT_IS_THROWN;
                 }
 
@@ -1690,11 +1692,11 @@ REBNATIVE(trap)
             panic (Error(RE_MISC)); // should not be possible (type-checking)
         }
 
-        Val_Init_Error(D_OUT, error_frame);
+        Val_Init_Error(D_OUT, error);
         return R_OUT;
     }
 
-    if (DO_ARRAY_THROWS(D_OUT, block)) {
+    if (DO_ARRAY_THROWS(D_OUT, ARG(block))) {
         // Note that we are interested in when errors are raised, which
         // causes a tricky C longjmp() to the code above.  Yet a THROW
         // is different from that, and offers an opportunity to each

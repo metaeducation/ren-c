@@ -94,11 +94,11 @@ static REBFLG Set_Event_Var(REBVAL *value, const REBVAL *word, const REBVAL *val
     case SYM_PORT:
         if (IS_PORT(val)) {
             VAL_EVENT_MODEL(value) = EVM_PORT;
-            VAL_EVENT_SER(value) = VAL_FRAME(val);
+            VAL_EVENT_SER(value) = FRAME_VARLIST(VAL_FRAME(val));
         }
         else if (IS_OBJECT(val)) {
             VAL_EVENT_MODEL(value) = EVM_OBJECT;
-            VAL_EVENT_SER(value) = VAL_FRAME(val);
+            VAL_EVENT_SER(value) = FRAME_VARLIST(VAL_FRAME(val));
         }
         else if (IS_NONE(val)) {
             VAL_EVENT_MODEL(value) = EVM_GUI;
@@ -232,11 +232,15 @@ static REBFLG Get_Event_Var(const REBVAL *value, REBCNT sym, REBVAL *val)
         }
         // Event holds a port:
         else if (IS_EVENT_MODEL(value, EVM_PORT)) {
-            Val_Init_Port(val, VAL_EVENT_SER(m_cast(REBVAL*, value)));
+            Val_Init_Port(
+                val, AS_FRAME(VAL_EVENT_SER(m_cast(REBVAL*, value)))
+            );
         }
         // Event holds an object:
         else if (IS_EVENT_MODEL(value, EVM_OBJECT)) {
-            Val_Init_Object(val, VAL_EVENT_SER(m_cast(REBVAL*, value)));
+            Val_Init_Object(
+                val, AS_FRAME(VAL_EVENT_SER(m_cast(REBVAL*, value)))
+            );
         }
         else if (IS_EVENT_MODEL(value, EVM_CALLBACK)) {
             *val = *Get_System(SYS_PORTS, PORTS_CALLBACK);
@@ -246,7 +250,7 @@ static REBFLG Get_Event_Var(const REBVAL *value, REBCNT sym, REBVAL *val)
             // Event holds the IO-Request, which has the PORT:
             req = VAL_EVENT_REQ(value);
             if (!req || !req->port) goto is_none;
-            Val_Init_Port(val, cast(REBSER*, req->port));
+            Val_Init_Port(val, AS_FRAME(cast(REBSER*, req->port)));
         }
         break;
 

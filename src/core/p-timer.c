@@ -44,7 +44,7 @@
 //
 //  Event_Actor: C
 //
-static REB_R Event_Actor(struct Reb_Call *call_, REBSER *port, REBCNT action)
+static REB_R Event_Actor(struct Reb_Call *call_, REBFRM *port, REBCNT action)
 {
     REBVAL *spec;
     REBVAL *state;
@@ -58,8 +58,8 @@ static REB_R Event_Actor(struct Reb_Call *call_, REBSER *port, REBCNT action)
     *D_OUT = *D_ARG(1);
 
     // Validate and fetch relevant PORT fields:
-    state = BLK_SKIP(port, STD_PORT_STATE);
-    spec  = BLK_SKIP(port, STD_PORT_SPEC);
+    state = FRAME_VAR(port, STD_PORT_STATE);
+    spec  = FRAME_VAR(port, STD_PORT_SPEC);
     if (!IS_OBJECT(spec)) fail (Error(RE_INVALID_SPEC, spec));
 
     // Get or setup internal state data:

@@ -98,7 +98,7 @@ typedef struct Rebol_State {
     struct Reb_Call *call;
     REBCNT series_guard_tail;
     REBCNT value_guard_tail;
-    REBSER *error_frame;
+    REBFRM *error;
     REBINT gc_disable;      // Count of GC_Disables at time of Push
 
     REBCNT manuals_tail;    // Where GC_Manuals was when state started
@@ -146,9 +146,9 @@ typedef struct Rebol_State {
         } else { \
             /* this runs if before the DROP_TRAP a longjmp() happens */ \
             if (Trapped_Helper_Halted(s)) \
-                fail ((s)->error_frame); /* proxy the halt up the stack */ \
+                fail ((s)->error); /* proxy the halt up the stack */ \
             else \
-                *(e) = (s)->error_frame; \
+                *(e) = (s)->error; \
         } \
     } while (0)
 
@@ -178,7 +178,7 @@ typedef struct Rebol_State {
         } else { \
             /* this runs if before the DROP_TRAP a longjmp() happens */ \
             cast(void, Trapped_Helper_Halted(s)); \
-            *(e) = (s)->error_frame; \
+            *(e) = (s)->error; \
         } \
     } while (0)
 
@@ -203,6 +203,6 @@ typedef struct Rebol_State {
 //
 #define DROP_TRAP_SAME_STACKLEVEL_AS_PUSH(s) \
     do { \
-        assert(!(s)->error_frame); \
+        assert(!(s)->error); \
         Saved_State = (s)->last_state; \
     } while (0)

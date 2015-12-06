@@ -33,7 +33,7 @@
 //
 //  Clipboard_Actor: C
 //
-static REB_R Clipboard_Actor(struct Reb_Call *call_, REBSER *port, REBCNT action)
+static REB_R Clipboard_Actor(struct Reb_Call *call_, REBFRM *port, REBCNT action)
 {
     REBREQ *req;
     REBINT result;
@@ -52,7 +52,7 @@ static REB_R Clipboard_Actor(struct Reb_Call *call_, REBSER *port, REBCNT action
     case A_UPDATE:
         // Update the port object after a READ or WRITE operation.
         // This is normally called by the WAKE-UP function.
-        arg = OFV(port, STD_PORT_DATA);
+        arg = FRAME_VAR(port, STD_PORT_DATA);
         if (req->command == RDC_READ) {
             // this could be executed twice:
             // once for an event READ, once for the CLOSE following the READ
@@ -94,7 +94,7 @@ static REB_R Clipboard_Actor(struct Reb_Call *call_, REBSER *port, REBCNT action
         if (result > 0) return R_NONE; /* pending */
 
         // Copy and set the string result:
-        arg = OFV(port, STD_PORT_DATA);
+        arg = FRAME_VAR(port, STD_PORT_DATA);
 
         len = req->actual;
         if (GET_FLAG(req->flags, RRF_WIDE)) {
@@ -163,14 +163,14 @@ static REB_R Clipboard_Actor(struct Reb_Call *call_, REBSER *port, REBCNT action
         req->length = len * sizeof(REBUNI);
 
         // Setup the write:
-        *OFV(port, STD_PORT_DATA) = *arg;   // keep it GC safe
+        *FRAME_VAR(port, STD_PORT_DATA) = *arg;   // keep it GC safe
         req->actual = 0;
 
         result = OS_DO_DEVICE(req, RDC_WRITE);
-        SET_NONE(OFV(port, STD_PORT_DATA)); // GC can collect it
+        SET_NONE(FRAME_VAR(port, STD_PORT_DATA)); // GC can collect it
 
         if (result < 0) fail (Error_On_Port(RE_WRITE_ERROR, port, req->error));
-        //if (result == DR_DONE) SET_NONE(OFV(port, STD_PORT_DATA));
+        //if (result == DR_DONE) SET_NONE(FRAME_VAR(port, STD_PORT_DATA));
         break;
 
     case A_OPEN:

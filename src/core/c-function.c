@@ -677,6 +677,17 @@ void Make_Function(REBVAL *out, enum Reb_Kind type, const REBVAL *spec, const RE
             VAL_SET_OPT(BLK_HEAD(VAL_FUNC_BODY(out)), OPT_VALUE_LINE);
     }
 
+    assert(type == REB_FUNCTION || type == REB_CLOSURE);
+    VAL_SET(out, type); // clears value opts and exts in header...
+    VAL_EXTS_DATA(out) = func_flags; // ...so we set this after that point
+
+    // Now that we've created the function's fields, we pull a trick.  It
+    // would be useful to be able to navigate to a full function value
+    // given just its identifying series, but where to put it?  We use
+    // slot 0 (a trick learned from FRAME! in R3-Alpha's frame series)
+
+    *BLK_HEAD(VAL_FUNC_PARAMLIST(out)) = *out;
+
     // The argument and local symbols have been arranged in the function's
     // "frame" and are now in index order.  These numbers are put
     // into the binding as *negative* versions of the index, in order
@@ -687,20 +698,7 @@ void Make_Function(REBVAL *out, enum Reb_Kind type, const REBVAL *spec, const RE
     // body of the closure...it is copied each time and the real numbers
     // filled in.  Having the indexes already done speeds the copying.)
 
-    Bind_Relative(
-        VAL_FUNC_PARAMLIST(out), VAL_FUNC_PARAMLIST(out), VAL_FUNC_BODY(out)
-    );
-
-    assert(type == REB_FUNCTION || type == REB_CLOSURE);
-    VAL_SET(out, type); // clears value opts and exts in header...
-    VAL_EXTS_DATA(out) = func_flags; // ...so we set this after that point
-
-    // Now that we've fully created the function, we pull a trick.  It
-    // would be useful to be able to navigate to a full function value
-    // given just its identifying series, but where to put it?  We use
-    // slot 0 (a trick learned from FRAME! in R3-Alpha's frame series)
-
-    *BLK_HEAD(VAL_FUNC_PARAMLIST(out)) = *out;
+    Bind_Relative(VAL_FUNC_PARAMLIST(out), VAL_FUNC_BODY(out));
 }
 
 
@@ -755,7 +753,7 @@ void Clonify_Function(REBVAL *value)
     // Remap references in the body from paramlist_orig to our new copied
     // word list we saved in VAL_FUNC_PARAMLIST(value)
 
-    Rebind_Block(
+    Rebind_Values_Deep(
         paramlist_orig,
         VAL_FUNC_PARAMLIST(value),
         BLK_HEAD(VAL_FUNC_BODY(value)),
@@ -796,9 +794,10 @@ REBFLG Do_Native_Throws(struct Reb_Call *call_)
 
         assert(D_ARGC == 1);
 
-        // The originating `Push_New_Arglist_For_Call()` that produced this return native
-        // should have overwritten its code pointer with the identifying
-        // series of the function--or closure frame--it wants to jump to.
+        // The originating `Push_New_Arglist_For_Call()` that produced this
+        // return native should have overwritten its code pointer with the
+        // identifying series of the function--or closure frame--it wants
+        // to jump to.
 
         assert(VAL_FUNC_CODE(D_FUNC) != VAL_FUNC_CODE(ROOT_RETURN_NATIVE));
         ASSERT_SERIES(VAL_FUNC_RETURN_TO(D_FUNC));
@@ -813,21 +812,15 @@ REBFLG Do_Native_Throws(struct Reb_Call *call_)
             // get that object to use as the throw name just by putting the
             // frame with a REB_OBJECT.
 
-            Val_Init_Object(D_OUT, VAL_FUNC_RETURN_TO(D_FUNC));
+            Val_Init_Object(D_OUT, AS_FRAME(VAL_FUNC_RETURN_TO(D_FUNC)));
         }
         else {
             // It was a stack-relative FUNCTION!, and what we have is more
-            // akin to an object's keylist than it is to the valuelist.
+            // akin to an object's keylist than it is to the varlist.
             // Since there was no good WORD! ("unword" in those days) to
             // put in the 0 slot, it was left empty.  Ren/C uses this value
             // sized slot to hold the full function value just for cases
             // like this...
-
-            // !!! Note: This is the longer term plan when the FRAME! type
-            // is eliminated for objects too.  The REBSER's "extra" on a
-            // frame series would be used to hold the keylist.  This will
-            // ensure that if Reb_Object is more than just one series all the
-            // fields can be reconstituted.
 
             *D_OUT = *BLK_HEAD(VAL_FUNC_RETURN_TO(D_FUNC));
             assert(IS_FUNCTION(D_OUT));
@@ -994,7 +987,7 @@ REBFLG Do_Function_Throws(struct Reb_Call *call_)
 REBFLG Do_Closure_Throws(struct Reb_Call *call_)
 {
     REBSER *body;
-    REBSER *frame;
+    REBFRM *frame;
 
     Eval_Functions++;
 
@@ -1013,18 +1006,24 @@ REBFLG Do_Closure_Throws(struct Reb_Call *call_)
 
     // We will extract the arglist from ownership and manual memory management
     // by the call, to be used in a GC-managed object frame by the closure.
-
-    frame = call_->arglist.array;
+    // Since it's not GC protected by the call, it should not be inspected
+    // as it could go bad at any point...set call field to junk in debug.
+    //
+    frame = AS_FRAME(call_->arglist.array);
+#if !defined(NDEBUG)
+    call_->arglist.array = cast(REBSER*, 0xDECAFBAD);
+#endif
 
     // Formerly the arglist's 0 slot had a CLOSURE! value in it, but we now
     // are going to be switching it to an OBJECT!.
 
-    SERIES_SET_FLAG(frame, SER_FRAME);
-    VAL_SET(FRM_CONTEXT(frame), REB_OBJECT);
-    VAL_FRAME(FRM_CONTEXT(frame)) = frame;
-    FRM_KEYLIST(frame) = VAL_FUNC_PARAMLIST(D_FUNC);
-    FRM_SPEC(frame) = EMPTY_ARRAY;
-    FRM_BODY(frame) = NULL;
+    SERIES_SET_FLAG(FRAME_VARLIST(frame), SER_FRAME);
+    VAL_SET(FRAME_CONTEXT(frame), REB_OBJECT);
+    VAL_FRAME(FRAME_CONTEXT(frame)) = frame;
+    FRAME_KEYLIST(frame) = VAL_FUNC_PARAMLIST(D_FUNC);
+    FRAME_SPEC(frame) = NULL;
+    FRAME_BODY(frame) = NULL;
+    ASSERT_FRAME(frame);
 
 #if !defined(NDEBUG)
     // !!! A second sweep for the definitional return used to be necessary in
@@ -1035,34 +1034,35 @@ REBFLG Do_Closure_Throws(struct Reb_Call *call_)
     // with aparanoid check to make sure, but delete this eventually.
 
     if (VAL_GET_EXT(D_FUNC, EXT_FUNC_HAS_RETURN)) {
-        REBVAL *key = BLK_SKIP(VAL_FUNC_PARAMLIST(D_FUNC), 1);
-        REBVAL *value = BLK_SKIP(frame, 1);
+        REBVAL *key = VAL_FUNC_PARAM(D_FUNC, 1);
+        REBVAL *value = FRAME_VAR(frame, 1);
 
         for (; NOT_END(key); key++, value++) {
             if (SAME_SYM(VAL_TYPESET_SYM(key), SYM_RETURN)) {
                 assert(IS_NATIVE(value));
                 assert(PG_Return_Paramlist == VAL_FUNC_PARAMLIST(value));
-                assert(VAL_FUNC_RETURN_TO(value) == frame);
+                assert(VAL_FUNC_RETURN_TO(value) == FRAME_VARLIST(frame));
             }
         }
     }
 #endif
 
-    ASSERT_FRAME(frame);
-
     // We do not Manage_Frame, because we are reusing a word series here
     // that has already been managed...only extract and manage the arglist
     //
-    ASSERT_SERIES_MANAGED(FRM_KEYLIST(frame));
-    MANAGE_SERIES(frame);
+    ASSERT_SERIES_MANAGED(FRAME_KEYLIST(frame));
+    MANAGE_SERIES(FRAME_VARLIST(frame));
 
     // Clone the body of the closure to allow us to rebind words inside
     // of it so that they point specifically to the instances for this
     // invocation.  (Costly, but that is the mechanics of words.)
     //
     body = Copy_Array_Deep_Managed(VAL_FUNC_BODY(D_FUNC));
-    Rebind_Block(
-        VAL_FUNC_PARAMLIST(D_FUNC), frame, BLK_HEAD(body), REBIND_TYPE
+    Rebind_Values_Deep(
+        VAL_FUNC_PARAMLIST(D_FUNC),
+        FRAME_VARLIST(frame),
+        BLK_HEAD(body),
+        REBIND_TYPE
     );
 
     // Protect the body from garbage collection during the course of the

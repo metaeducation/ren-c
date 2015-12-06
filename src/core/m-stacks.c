@@ -119,7 +119,7 @@ void Pop_Stack_Values(REBVAL *out, REBINT dsp_start, REBOOL into)
         assert(ANY_ARRAY(out));
         series = VAL_SERIES(out);
 
-        FAIL_IF_PROTECTED(series);
+        FAIL_IF_PROTECTED_SERIES(series);
 
         VAL_INDEX(out) = Insert_Series(
             series, VAL_INDEX(out), cast(REBYTE*, values), len
@@ -450,11 +450,14 @@ void Drop_Call_Arglist(struct Reb_Call* c)
 
     if (IS_CLOSURE(&c->func)) {
         //
-        // CLOSURE! should have converted the array to managed.  It will live
-        // on as an object frame as long as any lingering references that were
-        // bound into it are held alive from GC
+        // CLOSURE! should have converted the arglist array to be managed,
+        // and it may have been GC'd by this point (Mark_Call_Frame() does
+        // not keep the arglist alive if it's not needed).  So it sets it
+        // to trash in the debug build, but doesn't in release.
         //
-        ASSERT_SERIES_MANAGED(c->arglist.array);
+    #if !defined(NDEBUG)
+        assert(c->arglist.array == cast(REBSER*, 0xDECAFBAD));
+    #endif
     }
     else {
         // For other function types we drop the chunk.  This is not dangerous
