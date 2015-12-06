@@ -578,9 +578,14 @@ static const REBYTE *Skip_Tag(const REBYTE *cp)
 // 
 // Scanner error handler
 //
-static REBSER *Error_Bad_Scan(REBCNT errnum, SCAN_STATE *ss, REBCNT tkn, const REBYTE *arg, REBCNT size)
-{
-    REBSER *frame;
+static REBFRM *Error_Bad_Scan(
+    REBCNT errnum,
+    SCAN_STATE *ss,
+    REBCNT tkn,
+    const REBYTE *arg,
+    REBCNT size
+) {
+    REBFRM *frame;
 
     ERROR_OBJ *err_obj;
     REBVAL arg1;
@@ -621,7 +626,7 @@ static REBSER *Error_Bad_Scan(REBCNT errnum, SCAN_STATE *ss, REBCNT tkn, const R
     frame = Error(errnum, &arg1, &arg2, NULL);
 
     // Write the NEAREST: information (`Error()` gets it from DSF)
-    err_obj = cast(ERROR_OBJ*, FRM_VALUES(frame));
+    err_obj = cast(ERROR_OBJ*, BLK_HEAD(FRAME_VARLIST(frame)));
     Val_Init_String(&err_obj->nearest, ser);
 
     return frame;
@@ -1388,13 +1393,13 @@ static REBSER *Scan_Block(SCAN_STATE *scan_state, REBYTE mode_char)
             if (token == TOKEN_LIT) {
                 token = REB_LIT_PATH;
                 VAL_SET(BLK_HEAD(block), REB_WORD);
-                assert(!VAL_WORD_FRAME(BLK_HEAD(block)));
+                assert(!VAL_WORD_TARGET(BLK_HEAD(block)));
             }
             else if (IS_GET_WORD(BLK_HEAD(block))) {
                 if (*scan_state->end == ':') goto syntax_error;
                 token = REB_GET_PATH;
                 VAL_SET(BLK_HEAD(block), REB_WORD);
-                assert(!VAL_WORD_FRAME(BLK_HEAD(block)));
+                assert(!VAL_WORD_TARGET(BLK_HEAD(block)));
             }
             else {
                 if (*scan_state->end == ':') {
@@ -1638,9 +1643,9 @@ static REBSER *Scan_Block(SCAN_STATE *scan_state, REBYTE mode_char)
 #endif
         if (!IS_END(value)) emitbuf->tail++;
         else {
-            REBSER *error_frame;
+            REBFRM *error;
         syntax_error:
-            error_frame = Error_Bad_Scan(
+            error = Error_Bad_Scan(
                 RE_INVALID,
                 scan_state,
                 cast(REBCNT, token),
@@ -1648,11 +1653,11 @@ static REBSER *Scan_Block(SCAN_STATE *scan_state, REBYTE mode_char)
                 cast(REBCNT, ep - bp)
             );
             if (GET_FLAG(scan_state->opts, SCAN_RELAX)) {
-                Val_Init_Error(BLK_TAIL(emitbuf), error_frame);
+                Val_Init_Error(BLK_TAIL(emitbuf), error);
                 emitbuf->tail++;
                 goto exit_block;
             }
-            fail (error_frame);
+            fail (error);
 
         missing_error:
             scan_state->line_count = start; // where block started
@@ -1661,7 +1666,7 @@ static REBSER *Scan_Block(SCAN_STATE *scan_state, REBYTE mode_char)
                 REBYTE tmp_buf[4];  // Temporary error string
                 tmp_buf[0] = mode_char;
                 tmp_buf[1] = 0;
-                error_frame = Error_Bad_Scan(
+                error = Error_Bad_Scan(
                     RE_MISSING,
                     scan_state,
                     cast(REBCNT, token),
@@ -1669,11 +1674,11 @@ static REBSER *Scan_Block(SCAN_STATE *scan_state, REBYTE mode_char)
                     1
                 );
                 if (GET_FLAG(scan_state->opts, SCAN_RELAX)) {
-                    Val_Init_Error(BLK_TAIL(emitbuf), error_frame);
+                    Val_Init_Error(BLK_TAIL(emitbuf), error);
                     emitbuf->tail++;
                     goto exit_block;
                 }
-                fail (error_frame);
+                fail (error);
             }
         }
 

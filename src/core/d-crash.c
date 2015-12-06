@@ -45,8 +45,11 @@
 // use the more advanced modes.  This allows the same interface
 // to be used for `panic Error_XXX(...)` and `fail (Error_XXX(...))`.
 //
-ATTRIBUTE_NO_RETURN void Panic_Core(REBCNT id, REBSER *maybe_frame, va_list *args)
-{
+ATTRIBUTE_NO_RETURN void Panic_Core(
+    REBCNT id,
+    REBFRM *maybe_frame,
+    va_list *args
+) {
     char title[PANIC_TITLE_SIZE];
     char message[PANIC_MESSAGE_SIZE];
 
@@ -54,6 +57,8 @@ ATTRIBUTE_NO_RETURN void Panic_Core(REBCNT id, REBSER *maybe_frame, va_list *arg
     message[0] = '\0';
 
     if (maybe_frame) {
+        ASSERT_FRAME(maybe_frame);
+        assert(VAL_TYPE(maybe_frame) == REB_ERROR);
         assert(id == 0);
         id = ERR_NUM(maybe_frame);
     }

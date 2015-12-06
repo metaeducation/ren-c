@@ -53,8 +53,8 @@ PVAR WORD_TABLE PG_Word_Table; // Symbol values accessed by hash
 
 //-- Main contexts:
 PVAR ROOT_CTX *Root_Context; // System root variables
-PVAR REBSER   *Lib_Context;
-PVAR REBSER   *Sys_Context;
+PVAR REBFRM *Lib_Context;
+PVAR REBFRM *Sys_Context;
 
 //-- Various char tables:
 PVAR REBYTE *White_Chars;
@@ -97,7 +97,7 @@ PVAR REBSER *PG_Return_Paramlist; // RETURN native's paramlist (never GC'd)
 ***********************************************************************/
 
 TVAR TASK_CTX *Task_Context; // Main per-task variables
-TVAR REBSER *Task_Series;   // Series that holds Task_Context
+TVAR REBFRM *Task_Frame;    // Frame that holds Task_Context
 TVAR REBSER *TG_Task_Words; // word list for task frame
 
 TVAR REBVAL TG_Thrown_Arg;  // Non-GC protected argument to THROW

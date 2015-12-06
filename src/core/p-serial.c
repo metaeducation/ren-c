@@ -36,7 +36,7 @@
 //
 //  Serial_Actor: C
 //
-static REB_R Serial_Actor(struct Reb_Call *call_, REBSER *port, REBCNT action)
+static REB_R Serial_Actor(struct Reb_Call *call_, REBFRM *port, REBCNT action)
 {
     REBREQ *req;    // IO request
     REBVAL *spec;   // port spec
@@ -53,7 +53,7 @@ static REB_R Serial_Actor(struct Reb_Call *call_, REBSER *port, REBCNT action)
     *D_OUT = *D_ARG(1);
 
     // Validate PORT fields:
-    spec = OFV(port, STD_PORT_SPEC);
+    spec = FRAME_VAR(port, STD_PORT_SPEC);
     if (!IS_OBJECT(spec)) fail (Error(RE_INVALID_PORT));
     path = Obj_Value(spec, STD_PORT_SPEC_HEAD_REF);
     if (!path) fail (Error(RE_INVALID_SPEC, spec));
@@ -165,7 +165,7 @@ static REB_R Serial_Actor(struct Reb_Call *call_, REBSER *port, REBCNT action)
         refs = Find_Refines(call_, ALL_READ_REFS);
 
         // Setup the read buffer (allocate a buffer if needed):
-        arg = OFV(port, STD_PORT_DATA);
+        arg = FRAME_VAR(port, STD_PORT_DATA);
         if (!IS_STRING(arg) && !IS_BINARY(arg)) {
             Val_Init_Binary(arg, Make_Binary(32000));
         }
@@ -203,7 +203,7 @@ static REB_R Serial_Actor(struct Reb_Call *call_, REBSER *port, REBCNT action)
         }
 
         // Setup the write:
-        *OFV(port, STD_PORT_DATA) = *spec;  // keep it GC safe
+        *FRAME_VAR(port, STD_PORT_DATA) = *spec;  // keep it GC safe
         req->length = len;
         req->common.data = VAL_BIN_DATA(spec);
         req->actual = 0;
@@ -216,7 +216,7 @@ static REB_R Serial_Actor(struct Reb_Call *call_, REBSER *port, REBCNT action)
     case A_UPDATE:
         // Update the port object after a READ or WRITE operation.
         // This is normally called by the WAKE-UP function.
-        arg = OFV(port, STD_PORT_DATA);
+        arg = FRAME_VAR(port, STD_PORT_DATA);
         if (req->command == RDC_READ) {
             if (ANY_BINSTR(arg)) VAL_TAIL(arg) += req->actual;
         }

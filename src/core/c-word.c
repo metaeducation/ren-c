@@ -281,13 +281,18 @@ REBCNT Last_Word_Num(void)
 // 
 // Initialize an ANY-WORD! type with a binding to a context.
 //
-void Val_Init_Word(REBVAL *value, REBCNT type, REBINT sym, REBSER *frame, REBCNT index)
-{
+void Val_Init_Word(
+    REBVAL *value,
+    enum Reb_Kind type,
+    REBINT sym,
+    REBFRM *frame,
+    REBCNT index
+) {
     VAL_SET(value, type);
     assert(sym != SYM_0);
     VAL_WORD_SYM(value) = sym;
     assert(frame);
-    VAL_WORD_FRAME(value) = frame;
+    VAL_WORD_TARGET(value) = FRAME_VARLIST(frame);
     VAL_WORD_INDEX(value) = index;
     assert(ANY_WORD(value));
 }
@@ -301,7 +306,7 @@ void Val_Init_Word(REBVAL *value, REBCNT type, REBINT sym, REBSER *frame, REBCNT
 void Val_Init_Word_Unbound(REBVAL *value, REBCNT type, REBCNT sym)
 {
     VAL_SET(value, type);
-    VAL_WORD_FRAME(value) = NULL;
+    VAL_WORD_TARGET(value) = NULL;
     assert(sym != SYM_0);
     VAL_WORD_SYM(value) = sym;
 #ifndef NDEBUG

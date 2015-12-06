@@ -152,7 +152,7 @@ RL_API int RL_Start(REBYTE *bin, REBINT len, REBYTE *script, REBINT script_len, 
     REBSER *ser;
 
     REBOL_STATE state;
-    REBSER *error_frame;
+    REBFRM *error;
 
     REBVAL start_result;
 
@@ -163,7 +163,7 @@ RL_API int RL_Start(REBYTE *bin, REBINT len, REBYTE *script, REBINT script_len, 
         ser = Decompress(bin, len, -1, FALSE, FALSE);
         if (!ser) return 1;
 
-        val = BLK_SKIP(Sys_Context, SYS_CTX_BOOT_HOST);
+        val = FRAME_VAR(Sys_Context, SYS_CTX_BOOT_HOST);
         Val_Init_Binary(val, ser);
     }
 
@@ -187,21 +187,21 @@ RL_API int RL_Start(REBYTE *bin, REBINT len, REBYTE *script, REBINT script_len, 
         }
         OS_FREE(script);
 
-        val = BLK_SKIP(Sys_Context, SYS_CTX_BOOT_EMBEDDED);
+        val = FRAME_VAR(Sys_Context, SYS_CTX_BOOT_EMBEDDED);
         Val_Init_Binary(val, ser);
     }
 
-    PUSH_UNHALTABLE_TRAP(&error_frame, &state);
+    PUSH_UNHALTABLE_TRAP(&error, &state);
 
-// The first time through the following code 'error_frame' will be NULL, but...
-// `fail` can longjmp here, so 'error_frame' won't be NULL *if* that happens!
+// The first time through the following code 'error' will be NULL, but...
+// `fail` can longjmp here, so 'error' won't be NULL *if* that happens!
 
-    if (error_frame) {
+    if (error) {
         // Save error for WHY?
-        REBVAL *error = Get_System(SYS_STATE, STATE_LAST_ERROR);
-        Val_Init_Error(error, error_frame);
+        REBVAL *last = Get_System(SYS_STATE, STATE_LAST_ERROR);
+        Val_Init_Error(last, error);
 
-        Print_Value(error, 1024, FALSE);
+        Print_Value(last, 1024, FALSE);
 
         // !!! When running in a script, whether or not the Rebol interpreter
         // just exits in an error case with a bad error code or breaks you
@@ -213,7 +213,7 @@ RL_API int RL_Start(REBYTE *bin, REBINT len, REBYTE *script, REBINT script_len, 
         // For RE_HALT and all other errors we return the error
         // number.  Error numbers are not set in stone (currently), but
         // are never zero...which is why we can use 0 for success.
-        return ERR_NUM(error_frame);
+        return ERR_NUM(error);
     }
 
     if (Do_Sys_Func_Throws(&out, SYS_CTX_FINISH_RL_START, 0)) {
@@ -318,7 +318,7 @@ RL_API void *RL_Extend(const REBYTE *source, RXICAL call)
     REBVAL *value;
     REBSER *ser;
 
-    value = BLK_SKIP(Sys_Context, SYS_CTX_BOOT_EXTS);
+    value = FRAME_VAR(Sys_Context, SYS_CTX_BOOT_EXTS);
     if (IS_BLOCK(value)) ser = VAL_SERIES(value);
     else {
         ser = Make_Array(2);
@@ -385,31 +385,31 @@ RL_API int RL_Do_String(int *exit_status, const REBYTE *text, REBCNT flags, RXIA
     REBVAL out;
 
     REBOL_STATE state;
-    REBSER *error_frame;
+    REBFRM *error;
 
     // assumes it can only be run at the topmost level where
     // the data stack is completely empty.
     assert(DSP == -1);
 
-    PUSH_UNHALTABLE_TRAP(&error_frame, &state);
+    PUSH_UNHALTABLE_TRAP(&error, &state);
 
-// The first time through the following code 'error_frame' will be NULL, but...
-// `fail` can longjmp here, so 'error_frame' won't be NULL *if* that happens!
+// The first time through the following code 'error' will be NULL, but...
+// `fail` can longjmp here, so 'error' won't be NULL *if* that happens!
 
-    if (error_frame) {
+    if (error) {
         // Save error for WHY?
-        REBVAL *error = Get_System(SYS_STATE, STATE_LAST_ERROR);
-        Val_Init_Error(error, error_frame);
+        REBVAL *last = Get_System(SYS_STATE, STATE_LAST_ERROR);
+        Val_Init_Error(last, error);
 
-        if (ERR_NUM(error_frame) == RE_HALT)
+        if (ERR_NUM(error) == RE_HALT)
             return -1; // !!! Revisit hardcoded #
 
         if (result)
-            *result = Value_To_RXI(error);
+            *result = Value_To_RXI(last);
         else
-            DS_PUSH(error);
+            DS_PUSH(last);
 
-        return -ERR_NUM(error_frame);
+        return -ERR_NUM(error);
     }
 
     code = Scan_Source(text, LEN_BYTES(text));
@@ -423,8 +423,8 @@ RL_API int RL_Do_String(int *exit_status, const REBYTE *text, REBCNT flags, RXIA
     } else {
         REBCNT len;
         REBVAL vali;
-        REBSER *user = VAL_FRAME(Get_System(SYS_CONTEXTS, CTX_USER));
-        len = user->tail;
+        REBFRM *user = VAL_FRAME(Get_System(SYS_CONTEXTS, CTX_USER));
+        len = FRAME_LEN(user) + 1;
         Bind_Values_All_Deep(BLK_HEAD(code), user);
         SET_INTEGER(&vali, len);
         Resolve_Context(user, Lib_Context, &vali, FALSE, 0);
@@ -1096,14 +1096,17 @@ RL_API u32 *RL_Words_Of_Object(REBSER *obj)
     REBCNT index;
     u32 *syms;
     REBVAL *keys;
+    REBFRM *frame = AS_FRAME(obj);
 
-    keys = FRM_KEY(obj, 1);
-    // One less, because SELF not included.
-    syms = OS_ALLOC_ARRAY(u32, obj->tail);
-    for (index = 0; index < (obj->tail - 1); keys++, index++) {
+    keys = FRAME_KEY(frame, 1);
+
+    // SELF not included, but terminated by 0.
+    syms = OS_ALLOC_ARRAY(u32, FRAME_LEN(frame) + 1);
+
+    for (index = 0; index < FRAME_LEN(frame); keys++, index++) {
         syms[index] = VAL_TYPESET_CANON(keys);
     }
-    syms[index] = 0;
+    syms[index] = SYM_0;
     return syms;
 }
 
@@ -1122,9 +1125,10 @@ RL_API u32 *RL_Words_Of_Object(REBSER *obj)
 //
 RL_API int RL_Get_Field(REBSER *obj, u32 word, RXIARG *result)
 {
+    REBFRM *frame = AS_FRAME(obj);
     REBVAL *value;
-    if (!(word = Find_Word_Index(obj, word, FALSE))) return 0;
-    value = BLK_SKIP(obj, word);
+    if (!(word = Find_Word_Index(frame, word, FALSE))) return 0;
+    value = FRAME_VAR(frame, word);
     *result = Value_To_RXI(value);
     return Reb_To_RXT[VAL_TYPE(value)];
 }
@@ -1139,17 +1143,19 @@ RL_API int RL_Get_Field(REBSER *obj, u32 word, RXIARG *result)
 //     The type arg, or zero if word not found in object or if field is protected.
 // Arguments:
 //     obj  - object pointer (e.g. from RXA_OBJECT)
-//     word - global word identifier (integer)
+//     word_id - global word identifier (integer)
 //     val  - new value for field
 //     type - datatype of value
 //
-RL_API int RL_Set_Field(REBSER *obj, u32 word, RXIARG val, int type)
+RL_API int RL_Set_Field(REBSER *obj, u32 word_id, RXIARG val, int type)
 {
+    REBFRM *frame = AS_FRAME(obj);
     REBVAL value;
     CLEARS(&value);
-    if (!(word = Find_Word_Index(obj, word, FALSE))) return 0;
-    if (VAL_GET_EXT(FRM_KEYS(obj) + word, EXT_WORD_LOCK)) return 0;
-    RXI_To_Value(FRM_VALUES(obj)+word, val, type);
+    word_id = Find_Word_Index(frame, word_id, FALSE);
+    if (word_id == 0) return 0;
+    if (VAL_GET_EXT(FRAME_KEY(frame, word_id), EXT_WORD_LOCK)) return 0;
+    RXI_To_Value(FRAME_VAR(frame, word_id), val, type);
     return type;
 }
 

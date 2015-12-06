@@ -184,6 +184,14 @@ static void Propagate_All_GC_Marks(void);
     } while (0)
 
 
+#define QUEUE_MARK_FRAME_DEEP(f) \
+    do { \
+        assert(SERIES_GET_FLAG(FRAME_VARLIST(f), SER_FRAME)); \
+        QUEUE_MARK_ARRAY_DEEP(FRAME_KEYLIST(f)); \
+        QUEUE_MARK_ARRAY_DEEP(FRAME_VARLIST(f)); \
+    } while (0)
+
+
 // Non-Queued form for marking blocks.  Used for marking a *root set item*,
 // don't recurse from within Mark_Value/Mark_Gob/Mark_Array_Deep/etc.
 
@@ -191,6 +199,13 @@ static void Propagate_All_GC_Marks(void);
     do { \
         assert(!in_mark); \
         QUEUE_MARK_ARRAY_DEEP(s); \
+        Propagate_All_GC_Marks(); \
+    } while (0)
+
+#define MARK_FRAME_DEEP(f) \
+    do { \
+        assert(!in_mark); \
+        QUEUE_MARK_FRAME_DEEP(f); \
         Propagate_All_GC_Marks(); \
     } while (0)
 
@@ -517,7 +532,7 @@ static void Mark_Call_Frames_Deep(void)
         // need to keep the label sym alive!
         /* Mark_Symbol_Still_In_Use?(call->label_sym); */
 
-        // We do not have to GC-protect the arglist.  If it is a closure then
+        // We don't have to GC-protect the arglist.  If it is a closure then
         // the args are held alive if there are any references from the body.
         // If not, then args live in the chunk stack and is protected there.
 
@@ -592,33 +607,44 @@ void Queue_Mark_Value_Deep(const REBVAL *val)
                 QUEUE_MARK_ARRAY_DEEP(VAL_TYPE_SPEC(val));
             break;
 
-            QUEUE_MARK_ARRAY_DEEP(VAL_FRAME(val));
-            break;
-
         case REB_TASK: // not yet implemented
-            break;
+            fail (Error(RE_MISC));
 
         case REB_OBJECT:
         case REB_MODULE:
         case REB_PORT:
         case REB_ERROR: {
-            REBSER *frame = VAL_FRAME(val);
+            REBFRM *frame = VAL_FRAME(val);
 
-            assert(FRM_TYPE(frame) == VAL_TYPE(val));
-            assert(FRM_KEYLIST(frame) == VAL_CONTEXT_KEYLIST(val));
-            assert(VAL_FRAME(FRM_CONTEXT(frame)) == frame);
+            assert(FRAME_TYPE(frame) == VAL_TYPE(val));
+            assert(VAL_FRAME(FRAME_CONTEXT(frame)) == frame);
+            assert(
+                VAL_CONTEXT_SPEC(val)
+                == VAL_CONTEXT_SPEC(FRAME_CONTEXT(frame))
+            );
+            assert(
+                VAL_CONTEXT_BODY(val)
+                == VAL_CONTEXT_BODY(FRAME_CONTEXT(frame))
+            );
 
-            QUEUE_MARK_ARRAY_DEEP(frame);
+            QUEUE_MARK_FRAME_DEEP(frame);
 
-        #if !defined(NDEBUG)
-            if (!FRM_KEYLIST(frame)) Panic_Series(frame);
-        #endif
-
-            QUEUE_MARK_ARRAY_DEEP(FRM_KEYLIST(frame));
+            if (VAL_CONTEXT_SPEC(val)) {
+                //
+                // !!! Under the module system, the spec is actually another
+                // frame of an object constructed with the various pieces
+                // of module information.  This idea is being reviewed to
+                // see if what is called the "object spec" should be
+                // something more like a function spec, with the module
+                // information going in something called a "meta"
+                //
+                QUEUE_MARK_FRAME_DEEP(VAL_CONTEXT_SPEC(val));
+            }
 
             if (VAL_CONTEXT_BODY(val)) {
-                // Currently only modules hold onto their bodies, so that they
-                // can be reloaded.
+                //
+                // !!! The feature of holding onto bodies is currently not
+                // implemented.
                 //
                 QUEUE_MARK_ARRAY_DEEP(VAL_CONTEXT_BODY(val));
             }
@@ -641,7 +667,7 @@ void Queue_Mark_Value_Deep(const REBVAL *val)
         case REB_LIT_WORD:
         case REB_REFINEMENT:
         case REB_ISSUE:
-            ser = VAL_WORD_FRAME(val);
+            ser = VAL_WORD_TARGET(val);
             if (ser) {
                 // Word is bound, so mark its context (which may be a "frame"
                 // series or an identifying function word series).  All
@@ -1064,8 +1090,8 @@ REBCNT Recycle_Core(REBOOL shutdown)
         }
 
         // Mark all root series:
-        MARK_ARRAY_DEEP(VAL_SERIES(ROOT_ROOT));
-        MARK_ARRAY_DEEP(Task_Series);
+        MARK_FRAME_DEEP(VAL_FRAME(ROOT_ROOT));
+        MARK_FRAME_DEEP(Task_Frame);
 
         // Mark potential error object from callback!
         Queue_Mark_Value_Deep(&Callback_Error);

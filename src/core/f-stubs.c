@@ -273,7 +273,7 @@ REBCNT Find_Refines(struct Reb_Call *call_, REBCNT mask)
 //
 void Val_Init_Datatype(REBVAL *value, REBINT n)
 {
-    *value = *BLK_SKIP(Lib_Context, n+1);
+    *value = *FRAME_VAR(Lib_Context, n + 1);
 }
 
 
@@ -285,8 +285,8 @@ void Val_Init_Datatype(REBVAL *value, REBINT n)
 //
 REBVAL *Get_Type(REBCNT index)
 {
-    assert(index < SERIES_TAIL(Lib_Context));
-    return FRM_VALUES(Lib_Context) + index + 1;
+    assert(index <= FRAME_LEN(Lib_Context));
+    return FRAME_VAR(Lib_Context, index + 1);
 }
 
 
@@ -298,7 +298,7 @@ REBVAL *Get_Type(REBCNT index)
 //
 REBVAL *Type_Of(const REBVAL *value)
 {
-    return FRM_VALUES(Lib_Context) + VAL_TYPE(value) + 1;
+    return FRAME_VAR(Lib_Context, VAL_TYPE(value) + 1);
 }
 
 
@@ -309,7 +309,7 @@ REBVAL *Type_Of(const REBVAL *value)
 //
 REBINT Get_Type_Sym(REBCNT type)
 {
-    return FRM_KEY_SYM(Lib_Context, type + 1);
+    return FRAME_KEY_SYM(Lib_Context, type + 1);
 }
 
 
@@ -318,10 +318,10 @@ REBINT Get_Type_Sym(REBCNT type)
 // 
 // Get the name of a field of an object.
 //
-const REBYTE *Get_Field_Name(REBSER *obj, REBCNT index)
+const REBYTE *Get_Field_Name(REBFRM *frame, REBCNT index)
 {
-    assert(index < SERIES_TAIL(obj));
-    return Get_Sym_Name(FRM_KEY_SYM(obj, index));
+    assert(index <= FRAME_LEN(frame));
+    return Get_Sym_Name(FRAME_KEY_SYM(frame, index));
 }
 
 
@@ -330,24 +330,24 @@ const REBYTE *Get_Field_Name(REBSER *obj, REBCNT index)
 // 
 // Get an instance variable from an object series.
 //
-REBVAL *Get_Field(REBSER *obj, REBCNT index)
+REBVAL *Get_Field(REBFRM *frame, REBCNT index)
 {
-    assert(index < SERIES_TAIL(obj));
-    return FRM_VALUES(obj) + index;
+    assert(index <= FRAME_LEN(frame));
+    return FRAME_VAR(frame, index);
 }
 
 
 //
 //  Get_Object: C
 // 
-// Get an instance variable from an object value.
+// Get an instance variable from an ANY-CONTEXT! value.
 //
-REBVAL *Get_Object(const REBVAL *objval, REBCNT index)
+REBVAL *Get_Object(const REBVAL *context, REBCNT index)
 {
-    REBSER *obj = VAL_FRAME(objval);
-    assert(SERIES_GET_FLAG(obj, SER_FRAME));
-    assert(index < SERIES_TAIL(obj));
-    return FRM_VALUES(obj) + index;
+    REBFRM *frame = VAL_FRAME(context);
+    assert(SERIES_GET_FLAG(FRAME_VARLIST(frame), SER_FRAME));
+    assert(index <= FRAME_LEN(frame));
+    return FRAME_VAR(frame, index);
 }
 
 
@@ -357,28 +357,28 @@ REBVAL *Get_Object(const REBVAL *objval, REBCNT index)
 // Get value from nested list of objects. List is null terminated.
 // Returns object value, else returns 0 if not found.
 //
-REBVAL *In_Object(REBSER *base, ...)
+REBVAL *In_Object(REBFRM *base, ...)
 {
-    REBVAL *obj = 0;
+    REBVAL *context = NULL;
     REBCNT n;
     va_list args;
 
     va_start(args, base);
     while ((n = va_arg(args, REBCNT))) {
-        if (n >= SERIES_TAIL(base)) {
+        if (n > FRAME_LEN(base)) {
             va_end(args);
-            return 0;
+            return NULL;
         }
-        obj = OFV(base, n);
-        if (!IS_OBJECT(obj)) {
+        context = FRAME_VAR(base, n);
+        if (!ANY_CONTEXT(context)) {
             va_end(args);
-            return 0;
+            return NULL;
         }
-        base = VAL_FRAME(obj);
+        base = VAL_FRAME(context);
     }
     va_end(args);
 
-    return obj;
+    return context;
 }
 
 
@@ -391,8 +391,8 @@ REBVAL *Get_System(REBCNT i1, REBCNT i2)
 {
     REBVAL *obj;
 
-    obj = VAL_CONTEXT_VALUES(ROOT_SYSTEM) + i1;
-    if (!i2) return obj;
+    obj = FRAME_VAR(VAL_FRAME(ROOT_SYSTEM), i1);
+    if (i2 == 0) return obj;
     assert(IS_OBJECT(obj));
     return Get_Field(VAL_FRAME(obj), i2);
 }
@@ -414,29 +414,32 @@ REBINT Get_System_Int(REBCNT i1, REBCNT i2, REBINT default_int)
 //
 //  Make_Std_Object_Managed: C
 //
-REBSER *Make_Std_Object_Managed(REBCNT index)
+REBFRM *Make_Std_Object_Managed(REBCNT index)
 {
-    REBSER *result = Copy_Array_Shallow(
+    REBFRM *frame = Copy_Frame_Shallow_Managed(
         VAL_FRAME(Get_System(SYS_STANDARD, index))
     );
-    // The system object is accessible by the user, and all of its
-    // content is managed already.  We copy the frame shallowly,
-    // but the word series inside it is managed.
-    MANAGE_SERIES(result);
-    return result;
+
+    //
+    // !!! Shallow copy... values are all the same and modifications of
+    // series in one will modify all...is this right (?)
+    //
+
+    return frame;
 }
 
 
 //
 //  Set_Object_Values: C
 //
-void Set_Object_Values(REBSER *obj, REBVAL *vals)
+void Set_Object_Values(REBFRM *frame, REBVAL value[])
 {
-    REBVAL *value;
+    REBVAL *var;
 
-    for (value = FRM_VALUES(obj) + 1; NOT_END(value); value++) { // skip self
-        if (IS_END(vals)) SET_NONE(value);
-        else *value = *vals++;
+    var = FRAME_VARS_HEAD(frame);
+    for (; NOT_END(var); var++) {
+        if (IS_END(value)) SET_NONE(var);
+        else *var = *value++;
     }
 }
 
@@ -446,8 +449,12 @@ void Set_Object_Values(REBSER *obj, REBVAL *vals)
 // 
 // Common function.
 //
-void Val_Init_Series_Index_Core(REBVAL *value, enum Reb_Kind type, REBSER *series, REBCNT index)
-{
+void Val_Init_Series_Index_Core(
+    REBVAL *value,
+    enum Reb_Kind type,
+    REBSER *series,
+    REBCNT index
+) {
     assert(series);
     ENSURE_SERIES_MANAGED(series);
 
@@ -489,39 +496,46 @@ void Set_Tuple(REBVAL *value, REBYTE *bytes, REBCNT len)
 
 
 //
-//  Val_Init_Context: C
+//  Val_Init_Context_Core: C
 //
 // Common routine for initializing OBJECT, MODULE!, PORT!, and ERROR!
+// Only needed in debug build, as
 //
-void Val_Init_Context(
-    REBVAL *value,
+void Val_Init_Context_Core(
+    REBVAL *out,
     enum Reb_Kind kind,
-    REBSER *frame,
-    REBSER *spec,
+    REBFRM *frame,
+    REBFRM *spec,
     REBSER *body
 ) {
 #if !defined(NDEBUG)
-    if (!FRM_KEYLIST(frame)) {
+    if (!FRAME_KEYLIST(frame)) {
         Debug_Fmt("Frame found with no keylist set");
-        Panic_Series(frame);
+        Panic_Frame(frame);
     }
 #endif
 
     ENSURE_FRAME_MANAGED(frame);
 
-    assert(SERIES_GET_FLAG(frame, SER_FRAME));
+    assert(SERIES_GET_FLAG(FRAME_VARLIST(frame), SER_FRAME));
 
-    assert(FRM_TYPE(frame) == kind);
-    assert(VAL_FRAME(FRM_CONTEXT(frame)) == frame);
-    assert(VAL_CONTEXT_SPEC(FRM_CONTEXT(frame)) == spec);
-    assert(VAL_CONTEXT_BODY(FRM_CONTEXT(frame)) == body);
+    assert(FRAME_TYPE(frame) == kind);
+    assert(VAL_FRAME(FRAME_CONTEXT(frame)) == frame);
+    assert(VAL_CONTEXT_SPEC(FRAME_CONTEXT(frame)) == spec);
+    assert(VAL_CONTEXT_BODY(FRAME_CONTEXT(frame)) == body);
 
-    VAL_SET(value, kind);
-    VAL_FRAME(value) = frame;
-    VAL_CONTEXT_SPEC(value) = spec;
-    VAL_CONTEXT_BODY(value) = body;
+    // !!! Historically spec is a frame of an object for a "module spec",
+    // may want to use another word of that and make a block "spec"
+    //
+    assert(!spec || SERIES_GET_FLAG(FRAME_VARLIST(spec), SER_FRAME));
 
-    assert(ANY_CONTEXT(value));
+    // !!! Nothing was using the body field yet.
+    //
+    assert(!body);
+
+    *out = *FRAME_CONTEXT(frame);
+
+    assert(ANY_CONTEXT(out));
 }
 
 

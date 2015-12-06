@@ -326,7 +326,7 @@ REBINT PD_Map(REBPVS *pvs)
 
     if (!n) return PE_NONE;
 
-    FAIL_IF_PROTECTED(VAL_SERIES(data));
+    FAIL_IF_PROTECTED_SERIES(VAL_SERIES(data));
     pvs->value = VAL_BLK_SKIP(data, ((n-1)*2)+1);
     return PE_OK;
 }
@@ -425,13 +425,14 @@ void Block_As_Map(REBSER *blk)
 //
 //  Map_To_Object: C
 //
-REBSER *Map_To_Object(REBSER *mapser)
+REBFRM *Map_To_Object(REBSER *mapser)
 {
-    REBVAL *val;
     REBCNT cnt = 0;
-    REBSER *frame;
-    REBVAL *key;
     REBVAL *mval;
+
+    REBFRM *frame;
+    REBVAL *key;
+    REBVAL *var;
 
     // Count number of set entries:
     for (mval = BLK_HEAD(mapser); NOT_END(mval) && NOT_END(mval+1); mval += 2) {
@@ -440,11 +441,13 @@ REBSER *Map_To_Object(REBSER *mapser)
 
     // See Alloc_Frame() - cannot use it directly because no Collect_Words
     frame = Alloc_Frame(cnt, TRUE);
+    key = FRAME_KEY(frame, 1);
+    var = FRAME_VAR(frame, 1);
 
-    key = FRM_KEY(frame, 1);
-    val  = FRM_VALUE(frame, 1);
-    for (mval = BLK_HEAD(mapser); NOT_END(mval) && NOT_END(mval+1); mval += 2) {
-        if (ANY_WORD(mval) && !IS_NONE(mval+1)) {
+    mval = BLK_HEAD(mapser);
+
+    for (; NOT_END(mval) && NOT_END(mval + 1); mval += 2) {
+        if (ANY_WORD(mval) && !IS_NONE(mval + 1)) {
             // !!! Used to leave SET_WORD typed values here... but why?
             // (Objects did not make use of the set-word vs. other distinctions
             // that function specs did.)
@@ -455,13 +458,13 @@ REBSER *Map_To_Object(REBSER *mapser)
                 VAL_WORD_SYM(mval)
             );
             key++;
-            *val++ = mval[1];
+            *var++ = mval[1];
         }
     }
 
     SET_END(key);
-    SET_END(val);
-    FRM_KEYLIST(frame)->tail = frame->tail = cnt + 1;
+    SET_END(var);
+    FRAME_KEYLIST(frame)->tail = FRAME_VARLIST(frame)->tail = cnt + 1;
 
     return frame;
 }
@@ -482,7 +485,7 @@ REBTYPE(Map)
 
     // Check must be in this order (to avoid checking a non-series value);
     if (action >= A_TAKE && action <= A_SORT)
-        FAIL_IF_PROTECTED(series);
+        FAIL_IF_PROTECTED_SERIES(series);
 
     switch (action) {
 

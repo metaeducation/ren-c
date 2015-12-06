@@ -42,30 +42,37 @@ enum Transport_Types {
 //
 //  Ret_Query_Net: C
 //
-static void Ret_Query_Net(REBSER *port, REBREQ *sock, REBVAL *ret)
+static void Ret_Query_Net(REBFRM *port, REBREQ *sock, REBVAL *ret)
 {
     REBVAL *info = In_Object(port, STD_PORT_SCHEME, STD_SCHEME_INFO, 0);
-    REBSER *obj;
+    REBFRM *frame;
 
     if (!info || !IS_OBJECT(info))
         fail (Error_On_Port(RE_INVALID_SPEC, port, -10));
 
-    obj = Copy_Array_Shallow(VAL_FRAME(info));
-    MANAGE_SERIES(obj);
+    frame = Copy_Frame_Shallow_Managed(VAL_FRAME(info));
 
-    Val_Init_Object(ret, obj);
+    Val_Init_Object(ret, frame);
+
     Set_Tuple(
-        OFV(obj, STD_NET_INFO_LOCAL_IP),
+        FRAME_VAR(frame, STD_NET_INFO_LOCAL_IP),
         cast(REBYTE*, &sock->special.net.local_ip),
         4
     );
+    SET_INTEGER(
+        FRAME_VAR(frame, STD_NET_INFO_LOCAL_PORT),
+        sock->special.net.local_port
+    );
+
     Set_Tuple(
-        OFV(obj, STD_NET_INFO_REMOTE_IP),
+        FRAME_VAR(frame, STD_NET_INFO_REMOTE_IP),
         cast(REBYTE*, &sock->special.net.remote_ip),
         4
     );
-    SET_INTEGER(OFV(obj, STD_NET_INFO_LOCAL_PORT), sock->special.net.local_port);
-    SET_INTEGER(OFV(obj, STD_NET_INFO_REMOTE_PORT), sock->special.net.remote_port);
+    SET_INTEGER(
+        FRAME_VAR(frame, STD_NET_INFO_REMOTE_PORT),
+        sock->special.net.remote_port
+    );
 }
 
 
@@ -74,7 +81,7 @@ static void Ret_Query_Net(REBSER *port, REBREQ *sock, REBVAL *ret)
 // 
 // Clone a listening port as a new accept port.
 //
-static void Accept_New_Port(REBVAL *out, REBSER *port, REBREQ *sock)
+static void Accept_New_Port(REBVAL *out, REBFRM *port, REBREQ *sock)
 {
     REBREQ *nsock;
 
@@ -86,11 +93,11 @@ static void Accept_New_Port(REBVAL *out, REBSER *port, REBREQ *sock)
     nsock->next = 0;
 
     // Create a new port using ACCEPT request passed by sock->common.sock:
-    port = Copy_Array_Shallow(port);
-    MANAGE_SERIES(port);
+    port = Copy_Frame_Shallow_Managed(port);
     Val_Init_Port(out, port); // Also for GC protect
-    SET_NONE(OFV(port, STD_PORT_DATA)); // just to be sure.
-    SET_NONE(OFV(port, STD_PORT_STATE)); // just to be sure.
+
+    SET_NONE(FRAME_VAR(port, STD_PORT_DATA)); // just to be sure.
+    SET_NONE(FRAME_VAR(port, STD_PORT_STATE)); // just to be sure.
 
     // Copy over the new sock data:
     sock = cast(REBREQ*, Use_Port_State(port, RDI_NET, sizeof(*sock)));
@@ -103,8 +110,12 @@ static void Accept_New_Port(REBVAL *out, REBSER *port, REBREQ *sock)
 //
 //  Transport_Actor: C
 //
-static REB_R Transport_Actor(struct Reb_Call *call_, REBSER *port, REBCNT action, enum Transport_Types proto)
-{
+static REB_R Transport_Actor(
+    struct Reb_Call *call_,
+    REBFRM *port,
+    REBCNT action,
+    enum Transport_Types proto
+) {
     REBREQ *sock;   // IO request
     REBVAL *spec;   // port spec
     REBVAL *arg;    // action argument value
@@ -124,7 +135,7 @@ static REB_R Transport_Actor(struct Reb_Call *call_, REBSER *port, REBCNT action
         SET_FLAG(sock->modes, RST_UDP);
     }
     //Debug_Fmt("Sock: %x", sock);
-    spec = OFV(port, STD_PORT_SPEC);
+    spec = FRAME_VAR(port, STD_PORT_SPEC);
     if (!IS_OBJECT(spec)) fail (Error(RE_INVALID_PORT));
 
     // sock->timeout = 4000; // where does this go? !!!
@@ -193,7 +204,7 @@ static REB_R Transport_Actor(struct Reb_Call *call_, REBSER *port, REBCNT action
     case A_UPDATE:
         // Update the port object after a READ or WRITE operation.
         // This is normally called by the WAKE-UP function.
-        arg = OFV(port, STD_PORT_DATA);
+        arg = FRAME_VAR(port, STD_PORT_DATA);
         if (sock->command == RDC_READ) {
             if (ANY_BINSTR(arg)) VAL_TAIL(arg) += sock->actual;
         }
@@ -214,7 +225,7 @@ static REB_R Transport_Actor(struct Reb_Call *call_, REBSER *port, REBCNT action
         }
 
         // Setup the read buffer (allocate a buffer if needed):
-        arg = OFV(port, STD_PORT_DATA);
+        arg = FRAME_VAR(port, STD_PORT_DATA);
         if (!IS_STRING(arg) && !IS_BINARY(arg)) {
             Val_Init_Binary(arg, Make_Binary(NET_BUF_SIZE));
         }
@@ -249,7 +260,7 @@ static REB_R Transport_Actor(struct Reb_Call *call_, REBSER *port, REBCNT action
         }
 
         // Setup the write:
-        *OFV(port, STD_PORT_DATA) = *spec;  // keep it GC safe
+        *FRAME_VAR(port, STD_PORT_DATA) = *spec;  // keep it GC safe
         sock->length = len;
         sock->common.data = VAL_BIN_DATA(spec);
         sock->actual = 0;
@@ -257,7 +268,7 @@ static REB_R Transport_Actor(struct Reb_Call *call_, REBSER *port, REBCNT action
         //Print("(write length %d)", len);
         result = OS_DO_DEVICE(sock, RDC_WRITE); // send can happen immediately
         if (result < 0) fail (Error_On_Port(RE_WRITE_ERROR, port, sock->error));
-        if (result == DR_DONE) SET_NONE(OFV(port, STD_PORT_DATA));
+        if (result == DR_DONE) SET_NONE(FRAME_VAR(port, STD_PORT_DATA));
         break;
 
     case A_PICK:
@@ -288,7 +299,7 @@ static REB_R Transport_Actor(struct Reb_Call *call_, REBSER *port, REBCNT action
         break;
 
     case A_LENGTH:
-        arg = OFV(port, STD_PORT_DATA);
+        arg = FRAME_VAR(port, STD_PORT_DATA);
         len = ANY_SERIES(arg) ? VAL_TAIL(arg) : 0;
         SET_INTEGER(D_OUT, len);
         break;
@@ -319,7 +330,7 @@ static REB_R Transport_Actor(struct Reb_Call *call_, REBSER *port, REBCNT action
 //
 //  TCP_Actor: C
 //
-static REB_R TCP_Actor(struct Reb_Call *call_, REBSER *port, REBCNT action)
+static REB_R TCP_Actor(struct Reb_Call *call_, REBFRM *port, REBCNT action)
 {
     return Transport_Actor(call_, port, action, TRANSPORT_TCP);
 }
@@ -327,7 +338,7 @@ static REB_R TCP_Actor(struct Reb_Call *call_, REBSER *port, REBCNT action)
 //
 //  UDP_Actor: C
 //
-static REB_R UDP_Actor(struct Reb_Call *call_, REBSER *port, REBCNT action)
+static REB_R UDP_Actor(struct Reb_Call *call_, REBFRM *port, REBCNT action)
 {
     return Transport_Actor(call_, port, action, TRANSPORT_UDP);
 }

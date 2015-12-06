@@ -527,7 +527,7 @@ REBINT PD_Array(REBPVS *pvs)
         return PE_NONE;
     }
 
-    if (pvs->setval) FAIL_IF_PROTECTED(VAL_SERIES(pvs->value));
+    if (pvs->setval) FAIL_IF_PROTECTED_SERIES(VAL_SERIES(pvs->value));
     pvs->value = VAL_BLK_SKIP(pvs->value, n);
     // if valset - check PROTECT on block
     //if (NOT_END(pvs->path+1)) Next_Path(pvs); return PE_OK;
@@ -602,7 +602,7 @@ REBTYPE(Array)
 
     // Check must be in this order (to avoid checking a non-series value);
     if (action >= A_TAKE && action <= A_SORT)
-        FAIL_IF_PROTECTED(ser);
+        FAIL_IF_PROTECTED_SERIES(ser);
 
     switch (action) {
 
@@ -777,7 +777,7 @@ zero_blk:
     case A_SWAP:
         if (SERIES_WIDE(ser) != SERIES_WIDE(VAL_SERIES(arg)))
             fail (Error_Invalid_Arg(arg));
-        FAIL_IF_PROTECTED(VAL_SERIES(arg));
+        FAIL_IF_PROTECTED_SERIES(VAL_SERIES(arg));
         if (index < tail && VAL_INDEX(arg) < VAL_TAIL(arg)) {
             val = *VAL_BLK_DATA(value);
             *VAL_BLK_DATA(value) = *VAL_BLK_DATA(arg);

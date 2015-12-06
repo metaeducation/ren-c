@@ -931,17 +931,17 @@ static void callback_dispatcher(ffi_cif *cif, void *ret, void **args, void *user
     REBVAL safe;
 
     REBOL_STATE state;
-    REBSER *error_frame;
+    REBFRM *error;
 
     if (IS_ERROR(&Callback_Error)) return;
 
-    PUSH_TRAP(&error_frame, &state);
+    PUSH_TRAP(&error, &state);
 
-// The first time through the following code 'error_frame' will be NULL, but...
-// `fail` can longjmp here, so 'error_frame' won't be NULL *if* that happens!
+// The first time through the following code 'error' will be NULL, but...
+// `fail` can longjmp here, so 'error' won't be NULL *if* that happens!
 
-    if (error_frame) {
-        Val_Init_Error(&Callback_Error, error_frame);
+    if (error) {
+        Val_Init_Error(&Callback_Error, error);
         return;
     }
 

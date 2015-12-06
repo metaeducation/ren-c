@@ -85,13 +85,18 @@ REBFLG Catching_Break_Or_Continue(REBVAL *val, REBFLG *stop)
 // zero is correct because the duplicate body has already had the
 // items before its VAL_INDEX() omitted.
 //
-static REBSER *Init_Loop(const REBVAL *spec, REBVAL *body_blk, REBSER **fram)
-{
-    REBSER *frame;
+static REBSER *Init_Loop(
+    REBFRM **frame_out,
+    const REBVAL *spec,
+    REBVAL *body
+) {
+    REBFRM *frame;
     REBINT len;
-    REBVAL *word;
-    REBVAL *vals;
-    REBSER *body;
+    REBVAL *key;
+    REBVAL *var;
+    REBSER *body_out;
+
+    assert(IS_BLOCK(body));
 
     // For :WORD format, get the var's value:
     if (IS_GET_WORD(spec)) spec = GET_VAR(spec);
@@ -100,45 +105,49 @@ static REBSER *Init_Loop(const REBVAL *spec, REBVAL *body_blk, REBSER **fram)
     len = IS_BLOCK(spec) ? VAL_LEN(spec) : 1;
     if (len == 0) fail (Error_Invalid_Arg(spec));
     frame = Alloc_Frame(len, FALSE);
-    SERIES_TAIL(frame) = len + 1;
-    SERIES_TAIL(FRM_KEYLIST(frame)) = len + 1;
+    SERIES_TAIL(FRAME_VARLIST(frame)) = len + 1;
+    SERIES_TAIL(FRAME_KEYLIST(frame)) = len + 1;
 
-    VAL_SET(FRM_CONTEXT(frame), REB_OBJECT);
-    FRM_SPEC(frame) = EMPTY_ARRAY;
-    FRM_BODY(frame) = NULL;
+    VAL_SET(FRAME_CONTEXT(frame), REB_OBJECT);
+    FRAME_SPEC(frame) = NULL;
+    FRAME_BODY(frame) = NULL;
 
     // Setup for loop:
-    word = FRM_KEY(frame, 1); // skip SELF
-    vals = BLK_SKIP(frame, 1);
+    key = FRAME_KEY(frame, 1); // skip SELF
+    var = FRAME_VAR(frame, 1);
     if (IS_BLOCK(spec)) spec = VAL_BLK_DATA(spec);
 
     // Optimally create the FOREACH frame:
     while (len-- > 0) {
         if (!IS_WORD(spec) && !IS_SET_WORD(spec)) {
-            // Prevent inconsistent GC state:
-            Free_Series(FRM_KEYLIST(frame));
-            Free_Series(frame);
+            Free_Series(FRAME_KEYLIST(frame));
+            Free_Series(FRAME_VARLIST(frame));
             fail (Error_Invalid_Arg(spec));
         }
-        Val_Init_Typeset(word, ALL_64, VAL_WORD_SYM(spec));
-        word++;
-        SET_NONE(vals);
-        vals++;
+
+        Val_Init_Typeset(key, ALL_64, VAL_WORD_SYM(spec));
+        key++;
+
+        // !!! This should likely use the unset-defaulting in Ren-C with the
+        // legacy fallback to NONE!
+        //
+        SET_NONE(var);
+        var++;
+
         spec++;
     }
-    SET_END(word);
-    SET_END(vals);
 
-    body = Copy_Array_At_Deep_Managed(
-        VAL_SERIES(body_blk), VAL_INDEX(body_blk)
+    SET_END(key);
+    SET_END(var);
+
+    body_out = Copy_Array_At_Deep_Managed(
+        VAL_SERIES(body), VAL_INDEX(body)
     );
-    Bind_Values_Deep(BLK_HEAD(body), frame);
+    Bind_Values_Deep(BLK_HEAD(body_out), frame);
 
-    *fram = frame;
+    *frame_out = frame;
 
-    ASSERT_FRAME(frame);
-
-    return body;
+    return body_out;
 }
 
 
@@ -359,25 +368,31 @@ static REB_R Loop_All(struct Reb_Call *call_, REBINT mode)
 //
 static REB_R Loop_Each(struct Reb_Call *call_, LOOP_MODE mode)
 {
-    REBSER *body;
-    REBVAL *vars;
-    REBVAL *keys;
-    REBSER *frame;
+    PARAM(1, vars);
+    PARAM(2, data);
+    PARAM(3, body);
 
-    // `data` is the series/object/map/etc. being iterated over
-    // Note: `data_is_object` flag is optimized out, but hints static analyzer
-    REBVAL *data = D_ARG(2);
+    // `vars` frame (plus var and key for iterating over it)
+    //
+    REBFRM *frame;
+
+    // `data` series and index (where data is the series/object/map/etc. that
+    // the loop is iterating over)
+    //
+    REBVAL *data_value = ARG(data);
     REBSER *series;
-    const REBOOL data_is_object = ANY_CONTEXT(data);
+    REBINT index;   // !!!! should this be REBCNT?
+
+    // The body block must be bound to the loop variables, and the loops do
+    // not mutate them directly.
+    //
+    REBSER *body_copy;
 
     REBSER *out;    // output block (needed for MAP-EACH)
 
-    REBINT index;   // !!!! should these be REBCNT?
     REBINT tail;
     REBINT windex;  // write
     REBINT rindex;  // read
-    REBCNT i;
-    REBCNT j;
     REBVAL *ds;
 
     REBFLG stop = FALSE;
@@ -389,11 +404,11 @@ static REB_R Loop_Each(struct Reb_Call *call_, LOOP_MODE mode)
     else
         SET_UNSET_UNLESS_LEGACY_NONE(D_OUT); // Default if loop does not run
 
-    if (IS_NONE(data) || IS_UNSET(data)) return R_OUT;
+    if (IS_NONE(data_value) || IS_UNSET(data_value)) return R_OUT;
 
-    body = Init_Loop(D_ARG(1), D_ARG(3), &frame); // vars, body
-    Val_Init_Object(D_ARG(1), frame); // keep GC safe
-    Val_Init_Block(D_ARG(3), body); // keep GC safe
+    body_copy = Init_Loop(&frame, ARG(vars), ARG(body));
+    Val_Init_Object(ARG(vars), frame); // keep GC safe
+    Val_Init_Block(ARG(body), body_copy); // keep GC safe
 
     if (mode == LOOP_MAP_EACH) {
         // Must be managed *and* saved...because we are accumulating results
@@ -404,26 +419,26 @@ static REB_R Loop_Each(struct Reb_Call *call_, LOOP_MODE mode)
         // to allow inserting the managed values into a single-deep
         // unmanaged series if we *promise* not to go deeper?
 
-        out = Make_Array(VAL_LEN(data));
+        out = Make_Array(VAL_LEN(data_value));
         MANAGE_SERIES(out);
         PUSH_GUARD_SERIES(out);
     }
 
     // Get series info:
-    if (data_is_object) {
-        series = VAL_FRAME(data);
-        out = FRM_KEYLIST(series); // words (the out local reused)
+    if (ANY_CONTEXT(data_value)) {
+        series = FRAME_VARLIST(VAL_FRAME(data_value));
+        out = FRAME_KEYLIST(VAL_FRAME(data_value)); // words (out local reused)
         index = 1;
-        //if (frame->tail > 3) fail (Error_Invalid_Arg(FRM_KEY(frame, 3)));
+        //if (frame->tail > 3) fail (Error_Invalid_Arg(FRAME_KEY(frame, 3)));
     }
-    else if (IS_MAP(data)) {
-        series = VAL_SERIES(data);
+    else if (IS_MAP(data_value)) {
+        series = VAL_SERIES(data_value);
         index = 0;
-        //if (frame->tail > 3) fail (Error_Invalid_Arg(FRM_KEY(frame, 3)));
+        //if (frame->tail > 3) fail (Error_Invalid_Arg(FRAME_KEY(frame, 3)));
     }
     else {
-        series = VAL_SERIES(data);
-        index  = VAL_INDEX(data);
+        series = VAL_SERIES(data_value);
+        index  = VAL_INDEX(data_value);
         if (index >= cast(REBINT, SERIES_TAIL(series))) {
             if (mode == LOOP_REMOVE_EACH) {
                 SET_INTEGER(D_OUT, 0);
@@ -440,37 +455,38 @@ static REB_R Loop_Each(struct Reb_Call *call_, LOOP_MODE mode)
 
     // Iterate over each value in the data series block:
     while (index < (tail = SERIES_TAIL(series))) {
+        REBCNT i;
+        REBCNT j = 0;
+
+        REBVAL *key = FRAME_KEY(frame, 1);
+        REBVAL *var = FRAME_VAR(frame, 1);
 
         rindex = index;  // remember starting spot
-        j = 0;
 
         // Set the FOREACH loop variables from the series:
-        for (i = 1; i < frame->tail; i++) {
-
-            vars = FRM_VALUE(frame, i);
-            keys = FRM_KEY(frame, i);
+        for (i = 1; !IS_END(key); i++, key++, var++) {
 
             if (TRUE) { // was IS_WORD but no longer applicable...
 
                 if (index < tail) {
 
-                    if (ANY_ARRAY(data)) {
-                        *vars = *BLK_SKIP(series, index);
+                    if (ANY_ARRAY(data_value)) {
+                        *var = *BLK_SKIP(series, index);
                     }
-                    else if (data_is_object) {
+                    else if (ANY_CONTEXT(data_value)) {
                         if (!VAL_GET_EXT(BLK_SKIP(out, index), EXT_WORD_HIDE)) {
                             // Alternate between word and value parts of object:
                             if (j == 0) {
-                                Val_Init_Word(vars, REB_WORD, VAL_TYPESET_SYM(BLK_SKIP(out, index)), series, index);
-                                if (NOT_END(vars+1)) index--; // reset index for the value part
+                                Val_Init_Word(var, REB_WORD, VAL_TYPESET_SYM(BLK_SKIP(out, index)), AS_FRAME(series), index);
+                                if (NOT_END(var + 1)) index--; // reset index for the value part
                             }
                             else if (j == 1)
-                                *vars = *BLK_SKIP(series, index);
+                                *var = *BLK_SKIP(series, index);
                             else {
                                 // !!! Review this error (and this routine...)
                                 REBVAL key_name;
                                 Val_Init_Word_Unbound(
-                                    &key_name, REB_WORD, VAL_TYPESET_SYM(keys)
+                                    &key_name, REB_WORD, VAL_TYPESET_SYM(key)
                                 );
                                 fail (Error_Invalid_Arg(&key_name));
                             }
@@ -482,23 +498,23 @@ static REB_R Loop_Each(struct Reb_Call *call_, LOOP_MODE mode)
                             goto skip_hidden;
                         }
                     }
-                    else if (IS_VECTOR(data)) {
-                        Set_Vector_Value(vars, series, index);
+                    else if (IS_VECTOR(data_value)) {
+                        Set_Vector_Value(var, series, index);
                     }
-                    else if (IS_MAP(data)) {
+                    else if (IS_MAP(data_value)) {
                         REBVAL *val = BLK_SKIP(series, index | 1);
                         if (!IS_NONE(val)) {
                             if (j == 0) {
-                                *vars = *BLK_SKIP(series, index & ~1);
-                                if (IS_END(vars+1)) index++; // only words
+                                *var = *BLK_SKIP(series, index & ~1);
+                                if (IS_END(var + 1)) index++; // only words
                             }
                             else if (j == 1)
-                                *vars = *BLK_SKIP(series, index);
+                                *var = *BLK_SKIP(series, index);
                             else {
                                 // !!! Review this error (and this routine...)
                                 REBVAL key_name;
                                 Val_Init_Word_Unbound(
-                                    &key_name, REB_WORD, VAL_TYPESET_SYM(keys)
+                                    &key_name, REB_WORD, VAL_TYPESET_SYM(key)
                                 );
                                 fail (Error_Invalid_Arg(&key_name));
                             }
@@ -510,37 +526,39 @@ static REB_R Loop_Each(struct Reb_Call *call_, LOOP_MODE mode)
                         }
                     }
                     else { // A string or binary
-                        if (IS_BINARY(data)) {
-                            SET_INTEGER(vars, (REBI64)(BIN_HEAD(series)[index]));
+                        if (IS_BINARY(data_value)) {
+                            SET_INTEGER(var, (REBI64)(BIN_HEAD(series)[index]));
                         }
-                        else if (IS_IMAGE(data)) {
-                            Set_Tuple_Pixel(BIN_SKIP(series, index), vars);
+                        else if (IS_IMAGE(data_value)) {
+                            Set_Tuple_Pixel(BIN_SKIP(series, index), var);
                         }
                         else {
-                            VAL_SET(vars, REB_CHAR);
-                            VAL_CHAR(vars) = GET_ANY_CHAR(series, index);
+                            VAL_SET(var, REB_CHAR);
+                            VAL_CHAR(var) = GET_ANY_CHAR(series, index);
                         }
                     }
                     index++;
                 }
-                else SET_NONE(vars);
+                else SET_NONE(var);
             }
             else if (FALSE) { // !!! was IS_SET_WORD(keys), what was that for?
-                if (ANY_CONTEXT(data) || IS_MAP(data))
-                    *vars = *data;
+                if (ANY_CONTEXT(data_value) || IS_MAP(data_value))
+                    *var = *data_value;
                 else
-                    Val_Init_Block_Index(vars, series, index);
+                    Val_Init_Block_Index(var, series, index);
 
                 //if (index < tail) index++; // do not increment block.
             }
         }
+
+        assert(IS_END(key) && IS_END(var));
 
         if (index == rindex) {
             // the word block has only set-words: for-each [a:] [1 2 3][]
             index++;
         }
 
-        if (Do_At_Throws(D_OUT, body, 0)) {
+        if (Do_At_Throws(D_OUT, body_copy, 0)) {
             if (!Catching_Break_Or_Continue(D_OUT, &stop)) {
                 // A non-loop throw, we should be bubbling up
                 threw = TRUE;
@@ -681,12 +699,12 @@ REBNATIVE(for)
     PARAM(5, body);
 
     REBSER *body_copy;
-    REBSER *frame;
+    REBFRM *frame;
     REBVAL *var;
 
     // Copy body block, make a frame, bind loop var to it:
-    body_copy = Init_Loop(ARG(word), ARG(body), &frame);
-    var = FRM_VALUE(frame, 1); // safe: not on stack
+    body_copy = Init_Loop(&frame, ARG(word), ARG(body));
+    var = FRAME_VAR(frame, 1); // safe: not on stack
     Val_Init_Object(ARG(word), frame); // keep GC safe
     Val_Init_Block(ARG(body), body_copy); // keep GC safe
 
@@ -924,7 +942,7 @@ REBNATIVE(repeat)
 // REPEAT var 123 [ body ]
 {
     REBSER *body;
-    REBSER *frame;
+    REBFRM *frame;
     REBVAL *var;
     REBVAL *count = D_ARG(2);
 
@@ -938,8 +956,8 @@ REBNATIVE(repeat)
         VAL_SET(count, REB_INTEGER);
     }
 
-    body = Init_Loop(D_ARG(1), D_ARG(3), &frame);
-    var = FRM_VALUE(frame, 1); // safe: not on stack
+    body = Init_Loop(&frame, D_ARG(1), D_ARG(3));
+    var = FRAME_VAR(frame, 1); // safe: not on stack
     Val_Init_Object(D_ARG(1), frame); // keep GC safe
     Val_Init_Block(D_ARG(3), body); // keep GC safe
 

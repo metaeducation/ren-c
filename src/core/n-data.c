@@ -229,12 +229,12 @@ REBNATIVE(as_pair)
 //
 //  bind: native [
 //  
-//  "Binds words to the specified context."
+//  "Binds words or words in arrays to the specified context."
 //  
-//      word [block! any-word!]
-//          "A word or block (modified) (returned)"
-//      context [any-word! any-context!]
-//          "A reference to the target context"
+//      value [any-array! any-word!]
+//          "A word or array (modified) (returned)"
+//      target [any-word! any-context!]
+//          "The target context or a word whose binding should be the target"
 //      /copy
 //          "Bind and return a deep copy of a block, don't modify original"
 //      /only
@@ -247,56 +247,82 @@ REBNATIVE(as_pair)
 //
 REBNATIVE(bind)
 {
-    REBVAL *arg;
-    REBSER *blk;
-    REBSER *frame;
+    PARAM(1, value);
+    PARAM(2, target);
+    REFINE(3, copy);
+    REFINE(4, only);
+    REFINE(5, new);
+    REFINE(6, set);
+
+    REBSER *target_series;
+    REBSER *array;
     REBCNT flags;
-    REBFLG rel = FALSE;
+    REBFLG is_relative;
 
-    flags = D_REF(4) ? 0 : BIND_DEEP;
-    if (D_REF(5)) flags |= BIND_ALL;
-    if (D_REF(6)) flags |= BIND_SET;
+    flags = REF(only) ? 0 : BIND_DEEP;
+    if (REF(new)) flags |= BIND_ALL;
+    if (REF(set)) flags |= BIND_SET;
 
-    // Get context from a word, object (or port);
-    arg = D_ARG(2);
-    if (ANY_CONTEXT(arg))
-        frame = VAL_FRAME(arg);
+    if (ANY_CONTEXT(ARG(target))) {
+        //
+        // Get target from an OBJECT!, ERROR!, PORT!, MODULE!
+        //
+        target_series = FRAME_VARLIST(VAL_FRAME(ARG(target)));
+        is_relative = FALSE;
+    }
     else {
-        assert(ANY_WORD(arg));
-        rel = (VAL_WORD_INDEX(arg) < 0);
-        frame = VAL_WORD_FRAME(arg);
-        if (!frame) fail (Error(RE_NOT_BOUND, arg));
+        //
+        // Extract target from whatever word we were given
+        //
+        // !!! Should we allow binding into FUNCTION! paramlists?  If not,
+        // why not?  Were it a closure, it would be legal because a closure's
+        // frame is just an object frame (at the moment).
+        //
+        assert(ANY_WORD(ARG(target)));
+        is_relative = (VAL_WORD_INDEX(ARG(target)) < 0);
+        target_series = VAL_WORD_TARGET(ARG(target));
+        if (!target_series) fail (Error(RE_NOT_BOUND, ARG(target)));
     }
 
-    // Block or word to bind:
-    arg = D_ARG(1);
-
     // Bind single word:
-    if (ANY_WORD(arg)) {
-        if (rel) {
-            Bind_Stack_Word(frame, arg);
+    if (ANY_WORD(ARG(value))) {
+        if (is_relative) {
+            Bind_Stack_Word(target_series, ARG(value));
             return R_ARG1;
         }
-        if (!Bind_Word(frame, arg)) {
-            if (flags & BIND_ALL)
-                Append_Frame(frame, arg, 0); // not in context, so add it.
+        if (!Bind_Word(AS_FRAME(target_series), ARG(value))) {
+            if (flags & BIND_ALL) {
+                //
+                // not in context, BIND_ALL means add it if it's not.
+                //
+                Append_Frame(AS_FRAME(target_series), ARG(value), 0);
+            }
             else
-                fail (Error(RE_NOT_IN_CONTEXT, arg));
+                fail (Error(RE_NOT_IN_CONTEXT, ARG(value)));
         }
         return R_ARG1;
     }
 
     // Copy block if necessary (/copy):
-    blk = D_REF(3)
-        ? Copy_Array_At_Deep_Managed(VAL_SERIES(arg), VAL_INDEX(arg))
-        : VAL_SERIES(arg);
+    if (REF(copy)) {
+        array = Copy_Array_At_Deep_Managed(
+            VAL_SERIES(ARG(value)), VAL_INDEX(ARG(value))
+        );
+        Val_Init_Series_Index(
+            D_OUT, VAL_TYPE(ARG(value)), array, 0
+        );
+    }
+    else {
+        array = VAL_SERIES(ARG(value));
+        Val_Init_Series_Index(
+            D_OUT, VAL_TYPE(ARG(value)), array, VAL_INDEX(ARG(value))
+        );
+    }
 
-    Val_Init_Block_Index(D_OUT, blk, D_REF(3) ? 0 : VAL_INDEX(arg));
-
-    if (rel)
-        Bind_Stack_Block(frame, blk); //!! needs deep
+    if (is_relative)
+        Bind_Relative(target_series, array); //!! needs deep
     else
-        Bind_Values_Core(BLK_HEAD(blk), frame, flags);
+        Bind_Values_Core(BLK_HEAD(array), AS_FRAME(target_series), flags);
 
     return R_OUT;
 }
@@ -314,7 +340,7 @@ REBNATIVE(bound_q)
 {
     REBVAL *word = D_ARG(1);
 
-    if (!HAS_FRAME(word)) return R_NONE;
+    if (!HAS_TARGET(word)) return R_NONE;
 
     if (VAL_WORD_INDEX(word) < 0) {
         // Function frames use negative numbers to indicate they are
@@ -328,7 +354,7 @@ REBNATIVE(bound_q)
         // params start at 1) was converted to hold the value of the
         // function the params belong to.  This returns that stored value.
 
-        *D_OUT = *BLK_HEAD(VAL_WORD_FRAME(word));
+        *D_OUT = *BLK_HEAD(VAL_WORD_TARGET(word));
 
         // You should never get a way to a stack relative binding of a
         // closure.  They make an object on each call.
@@ -336,13 +362,13 @@ REBNATIVE(bound_q)
         assert(IS_FUNCTION(D_OUT));
     }
     else {
-        // It's just an object.  Note that if objects were adapted to use
-        // the same technique (they will be) then it would be possible to
-        // get a "full value"-sized objects (if an object were not entirely
-        // recoverable from a series value alone, which for instance a
-        // MODULE! would not be.)
+        // It's an OBJECT!, ERROR!, MODULE!, PORT...we're not creating it
+        // so we have to take its word on its canon value (which lives in
+        // [0] of the varlist)
+        //
+        *D_OUT = *FRAME_CONTEXT(AS_FRAME(VAL_WORD_TARGET(word)));
 
-        Val_Init_Object(D_OUT, VAL_WORD_FRAME(word));
+        assert(ANY_CONTEXT(D_OUT));
     }
 
     return R_OUT;
@@ -419,7 +445,7 @@ REBNATIVE(collect_words)
     if (D_REF(4)) {
         obj = D_ARG(5);
         if (ANY_CONTEXT(obj))
-            prior_values = BLK_SKIP(VAL_CONTEXT_KEYLIST(obj), 1);
+            prior_values = BLK_SKIP(FRAME_KEYLIST(VAL_FRAME(obj)), 1);
         else if (IS_BLOCK(obj))
             prior_values = VAL_BLK_DATA(obj);
         // else stays 0
@@ -457,7 +483,18 @@ REBNATIVE(get)
     }
     else if (IS_OBJECT(word)) {
         Assert_Public_Object(word);
-        Val_Init_Block(D_OUT, Copy_Array_At_Shallow(VAL_FRAME(word), 1));
+
+        // !!! This is a questionable feature, e.g.
+        //
+        //     >> get object [a: 10 b: 20]
+        //     == [10 20]
+        //
+        // Certainly an oddity for GET.  Should either be turned into a
+        // VALUES-OF reflector or otherwise gotten rid of.
+        //
+        Val_Init_Block(
+            D_OUT, Copy_Array_At_Shallow(FRAME_VARLIST(VAL_FRAME(word)), 1)
+        );
     }
     else *D_OUT = *word; // all other values
 
@@ -507,7 +544,7 @@ REBNATIVE(in)
     REBVAL *val  = D_ARG(1); // object, error, port, block
     REBVAL *word = D_ARG(2);
     REBCNT index;
-    REBSER *frame;
+    REBFRM *frame;
 
     if (IS_BLOCK(val) || IS_PAREN(val)) {
         if (IS_WORD(word)) {
@@ -522,8 +559,8 @@ REBNATIVE(in)
                     frame = VAL_FRAME(v);
                     index = Find_Word_Index(frame, VAL_WORD_SYM(word), FALSE);
                     if (index > 0) {
-                        VAL_WORD_INDEX(word) = (REBCNT)index;
-                        VAL_WORD_FRAME(word) = frame;
+                        VAL_WORD_INDEX(word) = index;
+                        VAL_WORD_TARGET(word) = FRAME_VARLIST(frame);
                         *D_OUT = *word;
                         return R_OUT;
                     }
@@ -546,8 +583,8 @@ REBNATIVE(in)
     index = Find_Word_Index(frame, VAL_WORD_SYM(word), FALSE);
 
     if (index > 0) {
-        VAL_WORD_INDEX(word) = (REBCNT)index;
-        VAL_WORD_FRAME(word) = frame;
+        VAL_WORD_INDEX(word) = index;
+        VAL_WORD_TARGET(word) = FRAME_VARLIST(frame);
         *D_OUT = *word;
     } else
         return R_NONE;
@@ -643,10 +680,26 @@ REBNATIVE(xor_q)
 //
 REBNATIVE(resolve)
 {
-    REBSER *target = VAL_FRAME(D_ARG(1));
-    REBSER *source = VAL_FRAME(D_ARG(2));
-    if (IS_INTEGER(D_ARG(4))) Int32s(D_ARG(4), 1); // check range and sign
-    Resolve_Context(target, source, D_ARG(4), D_REF(5), D_REF(6)); // /from /all /expand
+    PARAM(1, target);
+    PARAM(2, source);
+    REFINE(3, only);
+    PARAM(4, from);
+    REFINE(5, all);
+    REFINE(6, extend);
+
+    if (IS_INTEGER(ARG(from))) {
+        // check range and sign
+        Int32s(ARG(from), 1);
+    }
+
+    Resolve_Context(
+        VAL_FRAME(ARG(target)),
+        VAL_FRAME(ARG(source)),
+        ARG(from),
+        REF(all),
+        REF(extend)
+    );
+
     return R_ARG1;
 }
 
@@ -654,114 +707,238 @@ REBNATIVE(resolve)
 //
 //  set: native [
 //  
-//  {Sets a word, path, block of words, or object to specified value(s).}
+//  {Sets a word, path, block of words, or context to specified value(s).}
 //  
-//      word [any-word! any-path! block! object!] 
-//      {Word, block of words, path, or object to be set (modified)}
-//      value [any-value!] "Value or block of values"
-//      /any "Allows setting words to any value, including unset"
-//      /pad 
-//      {For objects, if block is too short, remaining words are set to NONE}
+//      target [any-word! any-path! block! any-context!]
+//          {Word, block of words, path, or object to be set (modified)}
+//      value [any-value!]
+//          "Value or block of values"
+//      /any
+//          "Allows setting words to any value, including unset"
+//      /pad
+//          {For objects, set remaining words to NONE if block is too short}
 //  ]
 //
 REBNATIVE(set)
-//
-// word [any-word! block! object!] {Word or words to set}
-// value [any-value!] {Value or block of values}
-// /any {Allows setting words to any value.}
-// /pad {For objects, if block is too short, remaining words are set to NONE.}
 {
-    const REBVAL *word = D_ARG(1);
-    REBVAL *val    = D_ARG(2);
-    REBVAL *tmp    = NULL;
-    REBOOL not_any = !D_REF(3);
-    REBOOL is_blk  = FALSE;
+    PARAM(1, target);
+    PARAM(2, value);
+    REFINE(3, any);
+    REFINE(4, pad);
 
-    if (not_any && !IS_SET(val))
-        fail (Error(RE_NEED_VALUE, word));
+    // Pointers independent from the arguments.  If we change them, they can
+    // be reset to point at the original argument again.
+    //
+    REBVAL *target = ARG(target);
+    REBVAL *value = ARG(value);
+    REBOOL set_with_block;
 
-    if (ANY_WORD(word)) {
-        Set_Var(word, val);
+    // Though Ren-C permits `x: ()`, you still have to say `set/any x ()` to
+    // keep from getting an error.
+    //
+    // !!! This would likely be more clear as `set/opt`
+    //
+    if (!REF(any) && !IS_SET(value))
+        fail (Error(RE_NEED_VALUE, target));
+
+    // Simple request to set a word variable.  Allows ANY-WORD, which means
+    // for instance that `set quote x: (expression)` would mean that the
+    // locals gathering facility of FUNCTION would still gather x.
+    //
+    if (ANY_WORD(target)) {
+        Set_Var(target, value);
         return R_ARG2;
     }
 
-    if (ANY_PATH(word)) {
+    if (ANY_PATH(target)) {
         REBVAL dummy;
-        if (Do_Path_Throws(&dummy, NULL, word, val))
+        if (Do_Path_Throws(&dummy, NULL, target, value))
             fail (Error_No_Catch_For_Throw(&dummy));
 
-        // !!! ignores results?
+        // If not a throw, then there is no result out of a setting a path,
+        // we should return the value we passed in to set with.
+        //
         return R_ARG2;
     }
 
-    // Is value a block?
-    if (IS_BLOCK(val)) {
-        val = VAL_BLK_DATA(val);
-        if (IS_END(val)) val = NONE_VALUE;
-        else is_blk = TRUE;
+    // If the target is either a context or a block, and the value used
+    // to set with is ablock, then we want to do the assignments in
+    // corresponding order to the elements:
+    //
+    //     >> set [a b] [1 2]
+    //     >> print a
+    //     1
+    //     >> print b
+    //     2
+    //
+    // Extract the value from the block at its index position.  (It may
+    // be recovered again with `value = VAL_BLK_DATA(ARG(value))` if
+    // it is changed.)
+    //
+    if ((set_with_block = IS_BLOCK(value))) {
+        value = VAL_BLK_DATA(value);
+
+        // If it's an empty block it's just going to be a no-op, so go ahead
+        // and return now so the later code doesn't have to check for it.
+        //
+        if (IS_END(value))
+            return R_ARG2;
     }
 
-    // Is target an object?
-    if (IS_OBJECT(word)) {
-        REBVAL *key = VAL_CONTEXT_KEY(word, 1); // skip self
-        REBVAL *obj_value = VAL_CONTEXT_VALUES(D_ARG(1)) + 1;
+    if (ANY_CONTEXT(target)) {
+        //
+        // !!! The functionality of using a block to set ordered arguments
+        // in an object depends on a notion of the object retaining a
+        // guaranteed ordering of keys.  This is a somewhat restrictive
+        // model which might need review.  Also, the idea that something
+        // like `set object [a: 0 b: 0 c: 0] 1020` will set all the fields
+        // to 1020 is a bit of a strange feature for the primitive.
 
-        Assert_Public_Object(word);
-        // Check for protected or unset before setting anything.
-        tmp = val;
+        REBVAL *key = FRAME_KEYS_HEAD(VAL_FRAME(target));
+        REBVAL *var;
+
+        // To make SET somewhat atomic, before setting any of the object's
+        // vars we make sure none of them are protected...and if we're not
+        // tolerating unsets we check that the value being assigned is set.
+        //
         for (; NOT_END(key); key++) {
+            //
+            // Hidden words are not shown in the WORDS-OF, and should not
+            // count for consideration in positional setting.  Just skip.
+            //
+            if (VAL_GET_EXT(key, EXT_WORD_HIDE))
+                continue;
+
+            // Locked words cannot be modified, so a SET should error instead
+            // of going ahead and changing them
+            //
             if (VAL_GET_EXT(key, EXT_WORD_LOCK))
                 fail (Error_Protected_Key(key));
-            if (not_any && is_blk && NOT_END(tmp) && IS_UNSET(tmp++)) {
-                // (Loop won't advance past end)
+
+            // If we're setting to a single value and not a block, then
+            // we only need to check protect status (have to check all the
+            // keys because all of them are set to the value).  We also
+            // have to check all keys if we are going to pad the object.
+            //
+            if (!set_with_block) continue;
+
+            if (!REF(any) && IS_UNSET(value)) {
                 REBVAL key_name;
                 Val_Init_Word_Unbound(
                     &key_name, REB_WORD, VAL_TYPESET_SYM(key)
                 );
                 fail (Error(RE_NEED_VALUE, &key_name));
             }
-        }
 
-        for (; NOT_END(obj_value); obj_value++) { // skip self
-            // WARNING: Unwinds that make it here are assigned. All unwinds
-            // should be screened earlier (as is done in e.g. REDUCE, or for
-            // function arguments) so they don't even get into this function.
-            *obj_value = *val;
-            if (is_blk) {
-                val++;
-                if (IS_END(val)) {
-                    if (!D_REF(4)) break; // /pad not provided
-                    is_blk = FALSE;
-                    val = NONE_VALUE;
-                }
+            // We knew it wasn't an end from the earlier check, but when we
+            // increment it then it may become one.
+            //
+            value++;
+            if (IS_END(value)) {
+                if (REF(pad)) continue;
+                break;
             }
         }
-    } else { // Set block of words:
-        if (not_any && is_blk) { // Check for unset before setting anything.
-            for (tmp = val, word = VAL_BLK_DATA(word); NOT_END(word) && NOT_END(tmp); word++, tmp++) {
-                switch (VAL_TYPE(word)) {
-                case REB_WORD:
-                case REB_SET_WORD:
-                case REB_LIT_WORD:
-                    if (!IS_SET(tmp)) fail (Error(RE_NEED_VALUE, word));
-                    break;
-                case REB_GET_WORD:
-                    if (!IS_SET(IS_WORD(tmp) ? GET_VAR(tmp) : tmp))
-                        fail (Error(RE_NEED_VALUE, word));
-                }
-            }
-        }
-        for (word = VAL_BLK_DATA(D_ARG(1)); NOT_END(word); word++) {
-            if (IS_WORD(word) || IS_SET_WORD(word) || IS_LIT_WORD(word))
-                Set_Var(word, val);
-            else if (IS_GET_WORD(word))
-                Set_Var(word, IS_WORD(val) ? GET_VAR(val) : val);
-            else
-                fail (Error_Invalid_Arg(word));
 
-            if (is_blk) {
-                val++;
-                if (IS_END(val)) is_blk = FALSE, val = NONE_VALUE;
+        // Refresh value from the arg data if we changed it during checking
+        //
+        if (set_with_block)
+            value = VAL_BLK_DATA(ARG(value));
+        else
+            assert(value == VAL_BLK_DATA(ARG(value))); // didn't change
+
+        // Refresh the key so we can check and skip hidden fields
+        //
+        key = FRAME_KEYS_HEAD(VAL_FRAME(target));
+        var = FRAME_VARS_HEAD(VAL_FRAME(target));
+
+        // With the assignments validated, set the variables in the object,
+        // padding to NONE if requested
+        //
+        for (; NOT_END(key); key++, var++) {
+            if (VAL_GET_EXT(key, EXT_WORD_HIDE))
+                continue;
+
+            if (IS_END(value)) {
+                if (!REF(pad)) break;
+                SET_NONE(var);
+                continue;
+            }
+            *var = *value;
+            if (set_with_block) value++;
+        }
+
+        return R_ARG2;
+    }
+
+    // Otherwise, it must be a BLOCK!... extract the value at index position
+    //
+    assert(IS_BLOCK(target));
+    target = VAL_BLK_DATA(target);
+
+    // SET should be somewhat atomic.  So if we're setting a block of
+    // words and giving an alert on unsets, check for any unsets before
+    // setting half the values and interrupting.
+    //
+    if (!REF(any)) {
+        for (; NOT_END(target) && NOT_END(value); target++) {
+            switch (VAL_TYPE(target)) {
+            case REB_WORD:
+            case REB_SET_WORD:
+            case REB_LIT_WORD:
+                if (!IS_SET(value)) {
+                    assert(set_with_block); // if not, caught earlier...!
+                    fail (Error(RE_NEED_VALUE, target));
+                }
+                break;
+
+            case REB_GET_WORD:
+                //
+                // In this case, even if we're setting all the block
+                // elements to the same value, it makes a difference if
+                // it's a get-word for the !set_with_block too.
+                //
+                if (!IS_SET(IS_WORD(value) ? GET_VAR(value) : value))
+                    fail (Error(RE_NEED_VALUE, target));
+                break;
+            }
+
+            if (set_with_block)
+                value++;
+        }
+
+        // Refresh the target and data pointers from the function args
+        //
+        target = VAL_BLK_DATA(ARG(target));
+        if (set_with_block)
+            value = VAL_BLK_DATA(ARG(value));
+        else
+            assert(value == VAL_BLK_DATA(ARG(value))); // didn't change
+    }
+
+    // With the assignments checked, do them
+    //
+    for (; NOT_END(target); target++) {
+        if (IS_WORD(target) || IS_SET_WORD(target) || IS_LIT_WORD(target))
+            Set_Var(target, value);
+        else if (IS_GET_WORD(target)) {
+            //
+            // !!! Does a get of a WORD!, but what about of a PATH!?
+            // Should parens be evaluated?  (They are in the function
+            // arg handling of get-words as "hard quotes", for instance)
+            // Not exactly the same thing, but worth contemplating.
+            //
+            Set_Var(target, IS_WORD(value) ? GET_VAR(value) : value);
+        }
+        else
+            fail (Error_Invalid_Arg(target));
+
+        if (set_with_block) {
+            value++;
+            if (IS_END(value)) {
+                if (!REF(pad)) break;
+                set_with_block = FALSE;
+                value = NONE_VALUE;
             }
         }
     }
@@ -803,7 +980,7 @@ REBNATIVE(unset)
     if (ANY_WORD(value)) {
         word = value;
 
-        if (!HAS_FRAME(word)) fail (Error(RE_NOT_BOUND, word));
+        if (!HAS_TARGET(word)) fail (Error(RE_NOT_BOUND, word));
 
         var = GET_MUTABLE_VAR(word);
         SET_UNSET(var);
@@ -815,7 +992,7 @@ REBNATIVE(unset)
             if (!ANY_WORD(word))
                 fail (Error_Invalid_Arg(word));
 
-            if (!HAS_FRAME(word)) fail (Error(RE_NOT_BOUND, word));
+            if (!HAS_TARGET(word)) fail (Error(RE_NOT_BOUND, word));
 
             var = GET_MUTABLE_VAR(word);
             SET_UNSET(var);
@@ -1024,6 +1201,33 @@ enum Reb_Kind VAL_TYPE_Debug(const REBVAL *v) {
     assert(NOT_END(v));
     assert(!IS_TRASH_DEBUG(v)); // REB_TRASH is not a valid type to check for
     return cast(enum Reb_Kind, (v)->flags.bitfields.type);
+}
+
+
+//
+//  VAL_SERIES_Ptr_Debug: C
+//
+// Variant of VAL_SERIES() macro for the debug build which checks to ensure
+// that you have an ANY-SERIES! value you're calling it on (or one of the
+// exception types that use REBSERs)
+//
+REBSER **VAL_SERIES_Ptr_Debug(const REBVAL *v) {
+    assert(ANY_SERIES(v) || IS_MAP(v) || IS_VECTOR(v) || IS_IMAGE(v));
+    return &(m_cast(REBVAL *, v))->data.position.series;
+}
+
+
+//
+//  VAL_FRAME_Ptr_Debug: C
+//
+// Variant of VAL_FRAME() macro for the debug build which checks to ensure
+// that you have an ANY-CONTEXT! value you're calling it on.
+//
+// !!! Unfortunately this loses const correctness; fix in C++ build.
+//
+REBFRM **VAL_FRAME_Ptr_Debug(const REBVAL *v) {
+    assert(ANY_CONTEXT(v));
+    return &(m_cast(REBVAL *, v))->data.context.frame;
 }
 
 

@@ -142,11 +142,15 @@ void Clonify_Values_Len_Managed(REBVAL value[], REBCNT len, REBOOL deep, REBU64 
         ASSERT_VALUE_MANAGED(value);
 
         if (types & FLAGIT_64(VAL_TYPE(value)) & TS_SERIES_OBJ) {
+            //
+            // Objects and series get shallow copied at minimum
+            //
             REBSER *series;
-
             if (ANY_CONTEXT(value)) {
-                series = Copy_Array_Shallow(VAL_FRAME(value));
-                VAL_FRAME(value) = series;
+                VAL_FRAME(value) = Copy_Frame_Shallow_Managed(
+                    VAL_FRAME(value)
+                );
+                series = FRAME_VARLIST(VAL_FRAME(value));
             }
             else {
                 if (Is_Array_Series(VAL_SERIES(value)))
@@ -160,6 +164,9 @@ void Clonify_Values_Len_Managed(REBVAL value[], REBCNT len, REBOOL deep, REBU64 
 
             if (!deep) continue;
 
+            // If we're going to copy deeply, we go back over the shallow
+            // copied series and "clonify" the values in it.
+            //
             if (types & FLAGIT_64(VAL_TYPE(value)) & TS_ARRAYS_OBJ) {
                 Clonify_Values_Len_Managed(
                      BLK_HEAD(series), VAL_TAIL(value), deep, types
@@ -270,7 +277,7 @@ void Copy_Stack_Values(REBINT start, REBVAL *into)
     if (into) {
         series = VAL_SERIES(into);
 
-        FAIL_IF_PROTECTED(series);
+        FAIL_IF_PROTECTED_SERIES(series);
 
         if (ANY_ARRAY(into)) {
             // When the target is an any-block, we can do an ordinary
@@ -358,45 +365,50 @@ REBVAL *Alloc_Tail_Array(REBSER *block)
 
 
 //
-//  Find_Same_Block: C
+//  Find_Same_Array: C
 // 
 // Scan a block for any values that reference blocks related
 // to the value provided.
 // 
-// Defect: only checks certain kinds of values.
+// !!! This was used for detection of cycles during MOLD.  The idea is that
+// while it is outputting a series, it doesn't want to see that series
+// again.  For the moment the only places to worry about with that are
+// context frames and block series or maps.  (Though a function contains
+// series for the spec, body, and paramlist...the spec and body are blocks,
+// and so recursion would be found when the blocks were output.)
 //
-REBINT Find_Same_Block(REBSER *blk, const REBVAL *val)
+REBCNT Find_Same_Array(REBSER *search_values, const REBVAL *value)
 {
-    REBVAL *bp;
-    REBINT index = 0;
+    REBCNT index = 0;
+    REBSER *array;
+    REBVAL *other;
 
-    REBSER *compare;
+    assert(Is_Array_Series(search_values));
 
-    if (VAL_TYPE(val) >= REB_BLOCK && VAL_TYPE(val) <= REB_MAP)
-        compare = VAL_SERIES(val);
-    else if (VAL_TYPE(val) >= REB_BLOCK && VAL_TYPE(val) <= REB_PORT)
-        compare = VAL_FRAME(val);
+    if (ANY_ARRAY(value) || IS_MAP(value))
+        array = VAL_SERIES(value);
+    else if (ANY_CONTEXT(value))
+        array = FRAME_VARLIST(VAL_FRAME(value));
     else {
-        assert(FALSE);
-        DEAD_END;
+        // Value being worked with is not a candidate for containing an
+        // array that could form a loop with one of the search_list values
+        //
+        return NOT_FOUND;
     }
 
-    for (bp = BLK_HEAD(blk); NOT_END(bp); bp++, index++) {
-
-        if (VAL_TYPE(bp) >= REB_BLOCK &&
-            VAL_TYPE(bp) <= REB_MAP &&
-            VAL_SERIES(bp) == compare
-        ) return index+1;
-
-        if (
-            VAL_TYPE(bp) >= REB_OBJECT &&
-            VAL_TYPE(bp) <= REB_PORT &&
-            VAL_FRAME(bp) == compare
-        ) return index+1;
+    for (other = BLK_HEAD(search_values); NOT_END(other); other++, index++) {
+        if (ANY_ARRAY(other) || IS_MAP(other)) {
+            if (array == VAL_SERIES(other))
+                return index;
+        }
+        else if (ANY_CONTEXT(other)) {
+            if (array == FRAME_VARLIST(VAL_FRAME(other)))
+                return index;
+        }
     }
-    return -1;
+
+    return NOT_FOUND;
 }
-
 
 
 //
@@ -412,8 +424,8 @@ void Unmark(REBVAL *val)
     REBSER *series;
     if (ANY_SERIES(val))
         series = VAL_SERIES(val);
-    else if (IS_OBJECT(val) || IS_MODULE(val) || IS_ERROR(val) || IS_PORT(val))
-        series = VAL_FRAME(val);
+    else if (ANY_CONTEXT(val))
+        series = FRAME_VARLIST(VAL_FRAME(val));
     else
         return;
 

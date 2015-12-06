@@ -428,7 +428,7 @@ static REBFLG Set_GOB_Var(REBGOB *gob, const REBVAL *word, const REBVAL *val)
         SET_GOB_DTYPE(gob, GOBD_NONE);
         if (IS_OBJECT(val)) {
             SET_GOB_DTYPE(gob, GOBD_OBJECT);
-            SET_GOB_DATA(gob, VAL_FRAME(val));
+            SET_GOB_DATA(gob, FRAME_VARLIST(VAL_FRAME(val)));
         }
         else if (IS_BLOCK(val)) {
             SET_GOB_DTYPE(gob, GOBD_BLOCK);
@@ -554,7 +554,7 @@ is_none:
 
     case SYM_DATA:
         if (GOB_DTYPE(gob) == GOBD_OBJECT) {
-            Val_Init_Object(val, GOB_DATA(gob));
+            Val_Init_Object(val, AS_FRAME(GOB_DATA(gob)));
         }
         else if (GOB_DTYPE(gob) == GOBD_BLOCK) {
             Val_Init_Block(val, GOB_DATA(gob));

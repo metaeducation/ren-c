@@ -467,7 +467,7 @@ REBNATIVE(context)
         D_OUT,
         Make_Frame_Detect(
             REB_OBJECT, // kind
-            EMPTY_ARRAY, // spec
+            NULL, // spec
             NULL, // body
             VAL_BLK_HEAD(ARG(spec)), // values to scan for toplevel SET_WORDs
             NULL // parent
@@ -563,7 +563,7 @@ static void Init_Natives(void)
     // to subtract tone to account for our skipped TRASH? which should not be
     // exposed to the user.
     //
-    Action_Marker = SERIES_TAIL(Lib_Context) - 1;
+    Action_Marker = FRAME_LEN(Lib_Context);
     Do_Global_Block(VAL_SERIES(&Boot_Block->actions), 0, -1);
 
     // Sanity check the symbol transformation
@@ -589,7 +589,7 @@ static void Init_Natives(void)
 //
 REBCNT Get_Action_Sym(REBCNT action)
 {
-    return FRM_KEY_SYM(Lib_Context, Action_Marker + action);
+    return FRAME_KEY_SYM(Lib_Context, Action_Marker + action);
 }
 
 
@@ -600,7 +600,7 @@ REBCNT Get_Action_Sym(REBCNT action)
 //
 REBVAL *Get_Action_Value(REBCNT action)
 {
-    return FRM_VALUE(Lib_Context, Action_Marker+action);
+    return FRAME_VAR(Lib_Context, Action_Marker+action);
 }
 
 
@@ -618,15 +618,17 @@ static void Init_Root_Context(void)
 {
     REBVAL *value;
     REBINT n;
-    REBSER *frame;
+    REBFRM *frame;
 
     // Only half the context! (No words)
-    frame = Make_Series(ROOT_MAX + 1, sizeof(REBVAL), MKS_ARRAY | MKS_FRAME);
-    SET_END(BLK_HEAD(frame)); // !!! Need since we're using Make_Series?
+    frame = AS_FRAME(Make_Series(
+        ROOT_MAX + 1, sizeof(REBVAL), MKS_ARRAY | MKS_FRAME
+    ));
+    SET_END(BLK_HEAD(&frame->series)); // !!! Need since using Make_Series?
 
     LABEL_SERIES(frame, "root context");
-    LOCK_SERIES(frame);
-    Root_Context = (ROOT_CTX*)(frame->data);
+    LOCK_SERIES(FRAME_VARLIST(frame));
+    Root_Context = cast(ROOT_CTX*, BLK_HEAD(FRAME_VARLIST(frame)));
 
     // Get first value (the SELF for the context):
     value = ROOT_SELF;
@@ -634,14 +636,14 @@ static void Init_Root_Context(void)
     // No keylist of words (at first)
     // !!! Also no `body` (or `spec`, not yet implemented); revisit
     VAL_SET(value, REB_OBJECT);
-    VAL_FRAME(value) = frame;
-    VAL_CONTEXT_KEYLIST(value) = NULL;
+    FRAME_CONTEXT(frame)->data.context.frame = frame; // VAL_FRAME() asserts
+    VAL_CONTEXT_SPEC(value) = NULL;
     VAL_CONTEXT_BODY(value) = NULL;
 
     // Set all other values to NONE:
     for (n = 1; n < ROOT_MAX; n++) SET_NONE(value + n);
     SET_END(value + ROOT_MAX);
-    SERIES_TAIL(frame) = ROOT_MAX;
+    SERIES_TAIL(FRAME_VARLIST(frame)) = ROOT_MAX;
 
     // Set the UNSET_VAL to UNSET!, so we have a sample UNSET! value
     // to pass as an arg if we need an UNSET but don't want to pay for making
@@ -676,8 +678,10 @@ static void Init_Root_Context(void)
     SET_END(PG_End_Val);
     assert(IS_END(END_VALUE));
 
-    // Initialize a few fields:
-    Val_Init_Block(ROOT_ROOT, frame);
+    // Initially the root context is a series but has no keylist to officially
+    // make it an object.  Start it out as a block (change it later in boot)
+    //
+    Val_Init_Block(ROOT_ROOT, FRAME_VARLIST(frame));
 }
 
 
@@ -712,19 +716,21 @@ static void Init_Task_Context(void)
 {
     REBVAL *value;
     REBINT n;
-    REBSER *frame;
+    REBFRM *frame;
     REBSER *task_words;
 
     //Print_Str("Task Context");
 
-    frame = Make_Series(TASK_MAX + 1, sizeof(REBVAL), MKS_ARRAY | MKS_FRAME);
-    SET_END(BLK_HEAD(frame)); // !!! Needed since we're using Make_Series?
-    Task_Series = frame;
+    frame = AS_FRAME(
+        Make_Series(TASK_MAX + 1, sizeof(REBVAL), MKS_ARRAY | MKS_FRAME)
+    );
+    SET_END(BLK_HEAD(&frame->series)); // !!! Needed since using Make_Series?
+    Task_Frame = frame;
 
     LABEL_SERIES(frame, "task context");
-    LOCK_SERIES(frame);
-    MANAGE_SERIES(frame);
-    Task_Context = (TASK_CTX*)(frame->data);
+    LOCK_SERIES(FRAME_VARLIST(frame));
+    MANAGE_SERIES(FRAME_VARLIST(frame));
+    Task_Context = cast(TASK_CTX*, BLK_HEAD(FRAME_VARLIST(frame)));
 
     // Get first value (the SELF for the context):
     value = TASK_SELF;
@@ -732,14 +738,14 @@ static void Init_Task_Context(void)
     // No keylist of words (at first)
     // !!! Also no `body` (or `spec`, not yet implemented); revisit
     VAL_SET(value, REB_OBJECT);
-    VAL_FRAME(value) = frame;
-    VAL_CONTEXT_KEYLIST(value) = NULL;
+    FRAME_CONTEXT(frame)->data.context.frame = frame; // VAL_FRAME() asserts
+    VAL_CONTEXT_SPEC(value) = NULL;
     VAL_CONTEXT_BODY(value) = NULL;
 
     // Set all other values to NONE:
     for (n = 1; n < TASK_MAX; n++) SET_NONE(value+n);
     SET_END(value+TASK_MAX);
-    SERIES_TAIL(frame) = TASK_MAX;
+    SERIES_TAIL(FRAME_VARLIST(frame)) = TASK_MAX;
 
     // Initialize a few fields:
     SET_INTEGER(TASK_BALLAST, MEM_BALLAST);
@@ -759,7 +765,8 @@ static void Init_Task_Context(void)
 //
 static void Init_System_Object(void)
 {
-    REBSER *frame;
+    REBFRM *frame;
+    REBSER *series;
     REBVAL *value;
     REBCNT n;
     REBVAL result;
@@ -772,7 +779,7 @@ static void Init_System_Object(void)
     // Create the system object from the sysobj block and bind its fields:
     frame = Make_Frame_Detect(
         REB_OBJECT, // type
-        EMPTY_ARRAY, // spec
+        NULL, // spec
         NULL, // body
         VAL_BLK_HEAD(&Boot_Block->sysobj), // scan for toplevel set-words
         NULL // parent
@@ -799,10 +806,10 @@ static void Init_System_Object(void)
     // Create system/datatypes block:
 //  value = Get_System(SYS_DATATYPES, 0);
     value = Get_System(SYS_CATALOG, CAT_DATATYPES);
-    frame = VAL_SERIES(value);
-    Extend_Series(frame, REB_MAX-1);
+    series = VAL_SERIES(value);
+    Extend_Series(series, REB_MAX - 1);
     for (n = 1; n <= REB_MAX; n++) {
-        Append_Value(frame, FRM_VALUES(Lib_Context) + n);
+        Append_Value(series, FRAME_VAR(Lib_Context, n));
     }
 
     // Create system/catalog/datatypes block:
@@ -820,9 +827,9 @@ static void Init_System_Object(void)
     // Create system/codecs object:
     value = Get_System(SYS_CODECS, 0);
     frame = Alloc_Frame(10, TRUE);
-    VAL_SET(FRM_CONTEXT(frame), REB_OBJECT);
-    FRM_SPEC(frame) = EMPTY_ARRAY;
-    FRM_BODY(frame) = NULL;
+    VAL_SET(FRAME_CONTEXT(frame), REB_OBJECT);
+    FRAME_SPEC(frame) = NULL;
+    FRAME_BODY(frame) = NULL;
     Val_Init_Object(value, frame);
 
     // Set system/words to be the main context:
@@ -837,7 +844,7 @@ static void Init_System_Object(void)
 static void Init_Contexts_Object(void)
 {
     REBVAL *value;
-//  REBSER *frame;
+//  REBFRM *frame;
 
     value = Get_System(SYS_CONTEXTS, CTX_SYS);
     Val_Init_Object(value, Sys_Context);
@@ -1249,7 +1256,7 @@ void Init_Year(void)
 //
 void Init_Core(REBARGS *rargs)
 {
-    REBSER *error_frame;
+    REBFRM *error;
     REBOL_STATE state;
     REBVAL out;
 
@@ -1317,13 +1324,13 @@ void Init_Core(REBARGS *rargs)
     // !!! Have MAKE-BOOT compute # of words
     //
     Lib_Context = Alloc_Frame(600, TRUE);
-    VAL_SET(FRM_CONTEXT(Lib_Context), REB_OBJECT);
-    FRM_SPEC(Lib_Context) = EMPTY_ARRAY;
-    FRM_BODY(Lib_Context) = NULL;
+    VAL_SET(FRAME_CONTEXT(Lib_Context), REB_OBJECT);
+    FRAME_SPEC(Lib_Context) = NULL;
+    FRAME_BODY(Lib_Context) = NULL;
     Sys_Context = Alloc_Frame(50, TRUE);
-    VAL_SET(FRM_CONTEXT(Sys_Context), REB_OBJECT);
-    FRM_SPEC(Sys_Context) = EMPTY_ARRAY;
-    FRM_BODY(Sys_Context) = NULL;
+    VAL_SET(FRAME_CONTEXT(Sys_Context), REB_OBJECT);
+    FRAME_SPEC(Sys_Context) = NULL;
+    FRAME_BODY(Sys_Context) = NULL;
 
     DOUT("Level 2");
     Load_Boot();            // Protected strings now available
@@ -1331,26 +1338,27 @@ void Init_Core(REBARGS *rargs)
     //Debug_Str(BOOT_STR(RS_INFO,0)); // Booting...
 
     // Get the words of the ROOT context (to avoid it being an exception case)
-    // and convert ROOT_ROOT from a BLOCK! to an OBJECT!
     PG_Root_Words = Collect_Frame(
         NULL, VAL_BLK_HEAD(&Boot_Block->root), BIND_ALL
     );
     LABEL_SERIES(PG_Root_Words, "root words");
     MANAGE_SERIES(PG_Root_Words);
-    VAL_CONTEXT_KEYLIST(ROOT_SELF) = PG_Root_Words;
-    VAL_CONTEXT_SPEC(ROOT_SELF) = EMPTY_ARRAY;
-    VAL_CONTEXT_KEYLIST(FRM_CONTEXT(VAL_FRAME(ROOT_SELF))) = PG_Root_Words;
-    Val_Init_Object(ROOT_ROOT, VAL_SERIES(ROOT_ROOT));
+    FRAME_KEYLIST(VAL_FRAME(ROOT_SELF)) = PG_Root_Words;
+    VAL_CONTEXT_SPEC(ROOT_SELF) = NULL;
+    VAL_CONTEXT_BODY(ROOT_SELF) = NULL;
+
+    // and convert ROOT_ROOT from a BLOCK! to an OBJECT!
+    Val_Init_Object(ROOT_ROOT, AS_FRAME(VAL_SERIES(ROOT_ROOT)));
 
     // Get the words of the TASK context (to avoid it being an exception case)
     TG_Task_Words = Collect_Frame(
         NULL, VAL_BLK_HEAD(&Boot_Block->task), BIND_ALL
     );
-    LABEL_SERIES(TG_Task_Words, "task words");
+    LABEL_SERIES(ds, "task words");
     MANAGE_SERIES(TG_Task_Words);
-    VAL_CONTEXT_KEYLIST(TASK_SELF) = TG_Task_Words;
-    VAL_CONTEXT_SPEC(TASK_SELF) = EMPTY_ARRAY;
-    VAL_CONTEXT_KEYLIST(FRM_CONTEXT(VAL_FRAME(TASK_SELF))) = TG_Task_Words;
+    FRAME_KEYLIST(VAL_FRAME(TASK_SELF)) = TG_Task_Words;
+    VAL_CONTEXT_SPEC(TASK_SELF) = NULL;
+    VAL_CONTEXT_BODY(TASK_SELF) = NULL;
 
     // Is it necessary to put the above into an object like for ROOT?
     /*Val_Init_Object(ROOT_ROOT, VAL_SERIES(ROOT_ROOT));*/
@@ -1421,23 +1429,23 @@ void Init_Core(REBARGS *rargs)
     Val_Init_Error(TASK_HALT_ERROR, Error(RE_HALT));
 
     // With error trapping enabled, set up to catch them if they happen.
-    PUSH_UNHALTABLE_TRAP(&error_frame, &state);
+    PUSH_UNHALTABLE_TRAP(&error, &state);
 
-// The first time through the following code 'error_frame' will be NULL, but...
-// `fail` can longjmp here, so 'error_frame' won't be NULL *if* that happens!
+// The first time through the following code 'error' will be NULL, but...
+// `fail` can longjmp here, so 'error' won't be NULL *if* that happens!
 
-    if (error_frame) {
-        REBVAL error;
-        Val_Init_Error(&error, error_frame);
+    if (error) {
+        REBVAL temp;
+        Val_Init_Error(&temp, error);
 
         // You shouldn't be able to halt during Init_Core() startup.
         // The only way you should be able to stop Init_Core() is by raising
         // an error, at which point the system will Panic out.
         // !!! TBD: Enforce not being *able* to trigger HALT
-        assert(ERR_NUM(error_frame) != RE_HALT);
+        assert(ERR_NUM(error) != RE_HALT);
 
         // If an error was raised during startup, print it and crash.
-        Print_Value(&error, 1024, FALSE);
+        Print_Value(&temp, 1024, FALSE);
         panic (Error(RE_MISC));
     }
 
@@ -1450,8 +1458,8 @@ void Init_Core(REBARGS *rargs)
         Do_Global_Block(VAL_SERIES(&Boot_Block->sys), 0, 2);
     }
 
-    *FRM_VALUE(Sys_Context, SYS_CTX_BOOT_MEZZ) = Boot_Block->mezz;
-    *FRM_VALUE(Sys_Context, SYS_CTX_BOOT_PROT) = Boot_Block->protocols;
+    *FRAME_VAR(Sys_Context, SYS_CTX_BOOT_MEZZ) = Boot_Block->mezz;
+    *FRAME_VAR(Sys_Context, SYS_CTX_BOOT_PROT) = Boot_Block->protocols;
 
     // No longer needs protecting:
     SET_NONE(ROOT_BOOT);

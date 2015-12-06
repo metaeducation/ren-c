@@ -146,7 +146,7 @@ REBFLG Make_Typeset(REBVAL *block, REBVAL *value, REBFLG load)
         if (IS_WORD(block)) {
             //Print("word: %s", Get_Word_Name(block));
             sym = VAL_WORD_SYM(block);
-            if (VAL_WORD_FRAME(block)) { // Get word value
+            if (VAL_WORD_TARGET(block)) { // Get word value
                 val = GET_VAR(block);
             } else if (IS_KIND_SYM(sym)) { // Accept datatype word
                 TYPE_SET(value, KIND_FROM_SYM(sym));

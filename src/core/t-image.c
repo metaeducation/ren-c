@@ -701,9 +701,8 @@ REBVAL *Find_Image(struct Reb_Call *call_)
     if (!len) goto find_none;
 
     for (n = 0; n < 8; n++) // (zero based)
-        if (D_REF((REBINT)no_refs[n]))
+        if (D_REF(no_refs[n]))
             fail (Error(RE_BAD_REFINE));
-//          fail (Error(RE_CANNOT_USE, FRM_KEYS(me, (REBINT)no_refs[n]), Get_Global(REB_IMAGE)));
 
     if (IS_TUPLE(arg)) {
         only = (REBOOL)(VAL_TUPLE_LEN(arg) < 4);
@@ -827,7 +826,7 @@ REBTYPE(Image)
 
     // Check must be in this order (to avoid checking a non-series value);
     if (action >= A_TAKE && action <= A_SORT)
-        FAIL_IF_PROTECTED(series);
+        FAIL_IF_PROTECTED_SERIES(series);
 
     // Dispatch action:
     switch (action) {
@@ -1215,7 +1214,7 @@ REBINT PD_Image(REBPVS *pvs)
     index += n;
     if (n > 0) index--;
 
-    FAIL_IF_PROTECTED(series);
+    FAIL_IF_PROTECTED_SERIES(series);
 
     // Out of range:
     if (n == 0 || index < 0 || index >= (REBINT)series->tail) {

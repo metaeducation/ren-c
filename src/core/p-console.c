@@ -42,7 +42,7 @@
 //
 //  Console_Actor: C
 //
-static REB_R Console_Actor(struct Reb_Call *call_, REBSER *port, REBCNT action)
+static REB_R Console_Actor(struct Reb_Call *call_, REBFRM *port, REBCNT action)
 {
     REBREQ *req;
     REBINT result;
@@ -67,7 +67,7 @@ static REB_R Console_Actor(struct Reb_Call *call_, REBSER *port, REBCNT action)
         }
 
         // If no buffer, create a buffer:
-        arg = OFV(port, STD_PORT_DATA);
+        arg = FRAME_VAR(port, STD_PORT_DATA);
         if (!IS_STRING(arg) && !IS_BINARY(arg)) {
             Val_Init_Binary(arg, MAKE_OS_BUFFER(OUT_BUF_SIZE));
         }

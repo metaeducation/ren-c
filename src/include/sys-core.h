@@ -234,7 +234,7 @@ enum {
     BIND_NO_SELF = 64   // Do not bind SELF (in closures)
 };
 
-// Modes for Rebind_Block:
+// Modes for Rebind_Values:
 enum {
     REBIND_TYPE = 1,    // Change frame type when rebinding
     REBIND_FUNC = 2,    // Rebind function and closure bodies
@@ -792,24 +792,24 @@ struct Reb_Call {
     // the files and line numbers for all the places that originate
     // errors...
 
-    #define panic(error_frame) \
-        Panic_Core(0, (error_frame), NULL)
+    #define panic(error) \
+        Panic_Core(0, (error), NULL)
 
-    #define fail(error_frame) \
-        Fail_Core(error_frame)
+    #define fail(error) \
+        Fail_Core(error)
 #else
-    #define panic(error_frame) \
+    #define panic(error) \
         do { \
             TG_Erroring_C_File = __FILE__; \
             TG_Erroring_C_Line = __LINE__; \
-            Panic_Core(0, (error_frame), NULL); \
+            Panic_Core(0, (error), NULL); \
         } while (0)
 
-    #define fail(error_frame) \
+    #define fail(error) \
         do { \
             TG_Erroring_C_File = __FILE__; \
             TG_Erroring_C_Line = __LINE__; \
-            Fail_Core(error_frame); \
+            Fail_Core(error); \
         } while (0)
 #endif
 
@@ -830,6 +830,8 @@ struct Reb_Call {
     #define Panic_Series(s) \
         Panic_Series_Debug((s), __FILE__, __LINE__);
 
+    #define Panic_Frame(f) \
+        Panic_Series(FRAME_VARLIST(f))
 #endif
 
 
@@ -875,10 +877,11 @@ struct Reb_Call {
 //
 #ifdef NDEBUG
     #define MANAGE_FRAME(frame) \
-        (MANAGE_SERIES(frame), MANAGE_SERIES(FRM_KEYLIST(frame)))
+        (MANAGE_SERIES(FRAME_VARLIST(frame)), \
+            MANAGE_SERIES(FRAME_KEYLIST(frame)))
 
     #define ENSURE_FRAME_MANAGED(frame) \
-        (SERIES_GET_FLAG((frame), SER_MANAGED) \
+        (SERIES_GET_FLAG(FRAME_VARLIST(frame), SER_MANAGED) \
             ? NOOP \
             : MANAGE_FRAME(frame))
 
@@ -895,8 +898,8 @@ struct Reb_Call {
         Manage_Frame_Debug(frame)
 
     #define ENSURE_FRAME_MANAGED(frame) \
-        ((SERIES_GET_FLAG((frame), SER_MANAGED) \
-        && SERIES_GET_FLAG(FRM_KEYLIST(frame), SER_MANAGED)) \
+        ((SERIES_GET_FLAG(FRAME_VARLIST(frame), SER_MANAGED) \
+        && SERIES_GET_FLAG(FRAME_KEYLIST(frame), SER_MANAGED)) \
             ? NOOP \
             : MANAGE_FRAME(frame))
 
@@ -998,6 +1001,12 @@ struct Reb_Call {
             GC_Series_Guard->tail \
         ]); \
     } while (0)
+
+#define PUSH_GUARD_FRAME(f) \
+    PUSH_GUARD_SERIES(FRAME_VARLIST(f)) // varlist points to/guards keylist
+
+#define DROP_GUARD_FRAME(f) \
+    DROP_GUARD_SERIES(FRAME_VARLIST(f))
 
 #ifdef NDEBUG
     #define ASSERT_NOT_IN_SERIES_DATA(p) NOOP

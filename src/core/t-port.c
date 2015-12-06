@@ -56,7 +56,7 @@ REBTYPE(Port)
 {
     REBVAL *value = D_ARG(1);
     REBVAL *arg = D_ARGC > 1 ? D_ARG(2) : NULL;
-    REBSER *frame;
+    REBFRM *frame;
 
     switch (action) {
 
@@ -98,14 +98,8 @@ REBTYPE(Port)
         // vs. making it as a port to begin with (?)  Look into why
         // system/standard/port is made with CONTEXT and not with MAKE PORT!
         //
-        frame = Copy_Array_Shallow(VAL_FRAME(arg));
-        MANAGE_SERIES(frame);
-        SERIES_SET_FLAG(frame, SER_FRAME);
-        FRM_KEYLIST(frame) = VAL_CONTEXT_KEYLIST(arg);
-        VAL_SET(FRM_CONTEXT(frame), REB_PORT);
-        VAL_FRAME(FRM_CONTEXT(frame)) = frame;
-        FRM_SPEC(frame) = EMPTY_ARRAY;
-        FRM_BODY(frame) = NULL;
+        frame = Copy_Frame_Shallow_Managed(VAL_FRAME(arg));
+        VAL_SET(FRAME_CONTEXT(frame), REB_PORT);
         Val_Init_Port(D_OUT, frame);
         return R_OUT;
     }
