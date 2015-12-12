@@ -91,6 +91,7 @@ offset?: :offset-of
 
 sign?: :sign-of
 
+suffix?: :suffix-of
 
 ; While `foreach` may have been comfortable for some as a word, its hard
 ; not to see the word `reach` inside of it.  Once you recognize that it's
@@ -184,7 +185,6 @@ bind-of: :bound?
 ;encoding?
 ;file-type?
 ;speed?
-;suffix?
 ;why?
 ;info?
 ;exists?

@@ -50,11 +50,11 @@ modified?: func [
     ]
 ]
 
-suffix?: func [
+suffix-of: func [
     "Return the file suffix of a filename or url. Else, NONE."
     path [file! url! string!]
 ][
-    if all [
+    to-value if all [
         path: find/last path #"."
         not find path #"/"
     ][to file! path]
@@ -155,7 +155,7 @@ file-type?: func [
     "Return the identifying word for a specific file type (or NONE)."
     file [file! url!]
 ][
-    to-value if file: find find system/options/file-types suffix? file word! [
+    to-value if file: find find system/options/file-types suffix-of file word! [
         first file
     ]
 ]
