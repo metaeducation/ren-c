@@ -122,7 +122,7 @@ REBARR *List_Func_Typesets(REBVAL *func)
 
 
 //
-//  Check_Func_Spec: C
+//  Make_Paramlist_Managed: C
 // 
 // Check function spec of the form:
 // 
@@ -130,14 +130,17 @@ REBARR *List_Func_Typesets(REBVAL *func)
 // 
 // Throw an error for invalid values.
 //
-REBARR *Check_Func_Spec(REBARR *spec)
+REBARR *Make_Paramlist_Managed(REBARR *spec)
 {
     REBVAL *item;
     REBARR *paramlist;
     REBVAL *typeset;
 
-    paramlist = Collect_Frame(
-        NULL, ARRAY_HEAD(spec), BIND_ALL | BIND_NO_DUP | BIND_NO_SELF
+    // Start by reusing the code that makes keylists out of Rebol-structured
+    // data.  Scan for words (BIND_ALL) and error on duplicates (BIND_NO_DUP)
+    //
+    paramlist = Collect_Keylist_Managed(
+        NULL, ARRAY_HEAD(spec), NULL, BIND_ALL | BIND_NO_DUP
     );
 
     // Whatever function is being made, it must fill in the paramlist slot 0
@@ -281,7 +284,6 @@ REBARR *Check_Func_Spec(REBARR *spec)
         }
     }
 
-    MANAGE_ARRAY(paramlist);
     return paramlist;
 }
 
@@ -309,7 +311,7 @@ void Make_Native(
     VAL_FUNC_CODE(out) = code;
     VAL_FUNC_SPEC(out) = spec;
 
-    out->payload.any_function.func = AS_FUNC(Check_Func_Spec(spec));
+    out->payload.any_function.func = AS_FUNC(Make_Paramlist_Managed(spec));
 
     // Save the function value in slot 0 of the paramlist so that having
     // just the paramlist REBARR can get you the full REBVAL of the function
@@ -425,7 +427,7 @@ REBARR *Get_Maybe_Fake_Func_Body(REBFLG *is_fake, const REBVAL *func)
 // The spec and body are copied--even for MAKE FUNCTION!--because:
 // 
 //    (a) It prevents tampering with the spec after it has been analyzed
-//        by Check_Func_Spec().  Such changes to the spec will not be
+//        by Make_Paramlist_Managed().  Such changes to the spec will not be
 //        reflected in the actual behavior of the function.
 // 
 //    (b) The BLOCK! values inside the make-spec may actually be imaging
@@ -656,7 +658,7 @@ void Make_Function(
     // Spec checking will longjmp out with an error if the spec is bad
     //
     out->payload.any_function.func
-        = AS_FUNC(Check_Func_Spec(VAL_FUNC_SPEC(out)));
+        = AS_FUNC(Make_Paramlist_Managed(VAL_FUNC_SPEC(out)));
 
     // We copy the body or do the empty body optimization to not copy and
     // use the EMPTY_ARRAY (which probably doesn't happen often...)

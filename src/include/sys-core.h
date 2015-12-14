@@ -235,7 +235,7 @@ enum {
     BIND_GET = 8,       // Lookup :word and use its word value
     BIND_NO_DUP = 16,   // Do not allow dups during word collection (for specs)
     BIND_FUNC = 32,     // Recurse into functions.
-    BIND_NO_SELF = 64   // Do not bind SELF (in closures)
+    BIND_SELF = 64      // !!! Ensure SYM_SELF in context (transitional flag)
 };
 
 // Modes for Rebind_Values:

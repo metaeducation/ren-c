@@ -559,34 +559,3 @@ REBNATIVE(do_codec)
 
     return R_OUT;
 }
-
-
-//
-//  selfless?: native [
-//  
-//  "Returns true if the context doesn't bind 'self."
-//  
-//      value [any-word! any-context!]
-//          "Context or example word bound to the target context"
-//  ]
-//
-REBNATIVE(selfless_q)
-{
-    PARAM(1, value);
-
-    REBFRM *frame;
-
-    if (ANY_WORD(ARG(value))) {
-        if (VAL_WORD_INDEX(ARG(value)) < 0)
-            return R_TRUE;
-
-        frame = AS_FRAME(VAL_WORD_TARGET(ARG(value)));
-
-        if (!frame)
-            fail (Error(RE_NOT_BOUND, ARG(value)));
-    }
-    else
-        frame = VAL_FRAME(ARG(value));
-
-    return IS_SELFLESS(frame) ? R_TRUE : R_FALSE;
-}

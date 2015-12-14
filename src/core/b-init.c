@@ -511,7 +511,7 @@ REBNATIVE(context)
 
     Val_Init_Object(
         D_OUT,
-        Make_Frame_Detect(
+        Make_Selfish_Frame_Detect(
             REB_OBJECT, // kind
             NULL, // spec
             NULL, // body
@@ -662,10 +662,7 @@ REBVAL *Get_Action_Value(REBCNT action)
 //
 static void Init_Root_Context(void)
 {
-    REBFRM *frame;
-
-    // Only half the context! (No words)
-    frame = Alloc_Frame(ROOT_MAX - 1, TRUE);
+    REBFRM *frame = Alloc_Frame(ROOT_MAX - 1);
     PG_Root_Frame = frame;
 
     LABEL_SERIES(FRAME_VARLIST(frame), "root context");
@@ -673,10 +670,12 @@ static void Init_Root_Context(void)
     Root_Context = cast(ROOT_CTX*, ARRAY_HEAD(FRAME_VARLIST(frame)));
 
     // Get rid of the keylist, we will make another one later in the boot.
-    // (You can't ASSERT_FRAME(PG_Root_Frame) until that happens.)
+    // (You can't ASSERT_FRAME(PG_Root_Frame) until that happens.)  The
+    // new keylist will be managed so we manage the varlist to match.
     //
     Free_Array(FRAME_KEYLIST(frame));
     FRAME_KEYLIST(frame) = NULL;
+    MANAGE_ARRAY(FRAME_VARLIST(frame));
 
     // !!! Also no `body` (or `spec`, not yet implemented); revisit
     //
@@ -760,11 +759,8 @@ void Set_Root_Series(REBVAL *value, REBSER *ser, const char *label)
 //
 static void Init_Task_Context(void)
 {
-    REBFRM *frame;
-
-    //Print_Str("Task Context");
-
-    frame = Alloc_Frame(TASK_MAX - 1, TRUE);
+    REBFRM *frame = Alloc_Frame(TASK_MAX - 1);
+    frame = Alloc_Frame(TASK_MAX - 1);
     TG_Task_Frame = frame;
 
     LABEL_SERIES(FRAME_VARLIST(frame), "task context");
@@ -772,10 +768,12 @@ static void Init_Task_Context(void)
     Task_Context = cast(TASK_CTX*, ARRAY_HEAD(FRAME_VARLIST(frame)));
 
     // Get rid of the keylist, we will make another one later in the boot.
-    // (You can't ASSERT_FRAME(TG_Task_Frame) until that happens.)
+    // (You can't ASSERT_FRAME(TG_Task_Frame) until that happens.)  The
+    // new keylist will be managed so we manage the varlist to match.
     //
     Free_Array(FRAME_KEYLIST(frame));
     FRAME_KEYLIST(frame) = NULL;
+    MANAGE_ARRAY(FRAME_VARLIST(frame));
 
     // !!! Also no `body` (or `spec`, not yet implemented); revisit
     //
@@ -824,7 +822,7 @@ static void Init_System_Object(void)
     // subobjects of the system object.
 
     // Create the system object from the sysobj block and bind its fields:
-    frame = Make_Frame_Detect(
+    frame = Make_Selfish_Frame_Detect(
         REB_OBJECT, // type
         NULL, // spec
         NULL, // body
@@ -887,7 +885,7 @@ static void Init_System_Object(void)
 
     // Create system/codecs object:
     value = Get_System(SYS_CODECS, 0);
-    frame = Alloc_Frame(10, TRUE);
+    frame = Alloc_Frame(10);
     VAL_RESET_HEADER(FRAME_CONTEXT(frame), REB_OBJECT);
     FRAME_SPEC(frame) = NULL;
     FRAME_BODY(frame) = NULL;
@@ -1383,11 +1381,11 @@ void Init_Core(REBARGS *rargs)
 
     // !!! Have MAKE-BOOT compute # of words
     //
-    Lib_Context = Alloc_Frame(600, TRUE);
+    Lib_Context = Alloc_Frame(600);
     VAL_RESET_HEADER(FRAME_CONTEXT(Lib_Context), REB_OBJECT);
     FRAME_SPEC(Lib_Context) = NULL;
     FRAME_BODY(Lib_Context) = NULL;
-    Sys_Context = Alloc_Frame(50, TRUE);
+    Sys_Context = Alloc_Frame(50);
     VAL_RESET_HEADER(FRAME_CONTEXT(Sys_Context), REB_OBJECT);
     FRAME_SPEC(Sys_Context) = NULL;
     FRAME_BODY(Sys_Context) = NULL;
@@ -1399,18 +1397,16 @@ void Init_Core(REBARGS *rargs)
 
     // Get the words of the ROOT context (to avoid it being an exception case)
     //
-    FRAME_KEYLIST(PG_Root_Frame) = Collect_Frame(
-        NULL, VAL_ARRAY_HEAD(&Boot_Block->root), BIND_ALL
+    FRAME_KEYLIST(PG_Root_Frame) = Collect_Keylist_Managed(
+        NULL, VAL_ARRAY_HEAD(&Boot_Block->root), NULL, BIND_ALL
     );
-    MANAGE_FRAME(PG_Root_Frame);
     ASSERT_FRAME(PG_Root_Frame);
 
     // Get the words of the TASK context (to avoid it being an exception case)
     //
-    FRAME_KEYLIST(TG_Task_Frame) = Collect_Frame(
-        NULL, VAL_ARRAY_HEAD(&Boot_Block->task), BIND_ALL
+    FRAME_KEYLIST(TG_Task_Frame) = Collect_Keylist_Managed(
+        NULL, VAL_ARRAY_HEAD(&Boot_Block->task), NULL, BIND_ALL
     );
-    MANAGE_FRAME(TG_Task_Frame);
     ASSERT_FRAME(TG_Task_Frame);
 
     // Create main values:

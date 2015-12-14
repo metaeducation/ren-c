@@ -15,7 +15,6 @@ REBOL [
     }
 ]
 
-self
 stack           ; data stack
 ballast         ; current memory ballast (used for GC)
 max-ballast     ; ballast reset value

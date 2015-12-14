@@ -499,7 +499,7 @@ REBFRM *Map_To_Object(REBMAP *map)
     }
 
     // See Alloc_Frame() - cannot use it directly because no Collect_Words
-    frame = Alloc_Frame(cnt, TRUE);
+    frame = Alloc_Frame(cnt);
     key = FRAME_KEY(frame, 1);
     var = FRAME_VAR(frame, 1);
 

@@ -280,6 +280,11 @@ load-ext-module: function [
     ; Define default extension initialization if needed:
     ; It is overridden when extension provides it's own COMMAND func.
     unless :ext/command [
+        ;
+        ; This is appending raw material to a block that will be used to
+        ; make a MODULE!, so the function body will be bound first by the
+        ; module and then by the FUNC.
+        ;
         append tmp [
             cmd-index: 0
             command: func [
@@ -288,6 +293,11 @@ load-ext-module: function [
             ][
                 ; (contains module-local variables)
                 make command! reduce [
+                    ;
+                    ; `self` isn't the self in effect for load-ext-module
+                    ; (we're in the `sys` context, which doesn't have self).
+                    ; It will be bound in the context of the module.
+                    ;
                     args self also cmd-index (cmd-index: cmd-index + 1)
                 ]
             ]

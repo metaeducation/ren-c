@@ -45,7 +45,7 @@ static void update(REBREQ *req, REBINT len, REBVAL *arg)
     Extend_Series(VAL_SERIES(arg), len);
 
     for (i = 0; i < len; i ++) {
-        REBFRM *obj = Alloc_Frame(2, TRUE);
+        REBFRM *obj = Alloc_Frame(2);
         REBVAL *val = Append_Frame(
             obj, NULL, Make_Word(signal_no, LEN_BYTES(signal_no))
         );
