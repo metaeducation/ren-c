@@ -104,7 +104,7 @@ static REBARR *Init_Loop(
     // Hand-make a FRAME (done for for speed):
     len = IS_BLOCK(spec) ? VAL_LEN_AT(spec) : 1;
     if (len == 0) fail (Error_Invalid_Arg(spec));
-    frame = Alloc_Frame(len, FALSE);
+    frame = Alloc_Frame(len);
     SET_ARRAY_LEN(FRAME_VARLIST(frame), len + 1);
     SET_ARRAY_LEN(FRAME_KEYLIST(frame), len + 1);
 

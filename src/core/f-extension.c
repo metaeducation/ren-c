@@ -428,7 +428,7 @@ void Make_Command(
     // Check that handle and extension are somewhat valid (not used)
     {
         REBEXT *rebext;
-        REBVAL *handle = VAL_CONTEXT_VAR(extension, 1);
+        REBVAL *handle = VAL_CONTEXT_VAR(extension, SELFISH(1));
         if (!IS_HANDLE(handle)) goto bad_func_def;
         rebext = &Ext_List[VAL_I32(handle)];
         if (!rebext || !rebext->call) goto bad_func_def;
@@ -446,7 +446,7 @@ void Make_Command(
         Copy_Array_At_Deep_Managed(VAL_ARRAY(spec), VAL_INDEX(spec));
 
     out->payload.any_function.func
-        = AS_FUNC(Check_Func_Spec(VAL_FUNC_SPEC(spec)));
+        = AS_FUNC(Make_Paramlist_Managed(VAL_FUNC_SPEC(spec)));
 
     // There is no "body", but we want to save `extension` and `command_num`
     // and the only place there is to put it is in the place where a function
@@ -509,7 +509,8 @@ REBFLG Do_Command_Throws(struct Reb_Call *call_)
 {
     // All of these were checked above on definition:
     REBVAL *val = ARRAY_HEAD(FUNC_BODY(D_FUNC));
-    REBEXT *ext = &Ext_List[VAL_I32(VAL_CONTEXT_VAR(val, 1))]; // Handler
+    // Handler
+    REBEXT *ext = &Ext_List[VAL_I32(VAL_CONTEXT_VAR(val, SELFISH(1)))];
     REBCNT cmd = cast(REBCNT, Int32(val + 1));
 
     REBCNT n;
@@ -676,7 +677,7 @@ void Do_Commands(REBVAL *out, REBARR *cmds, void *context)
         // Call the command (also supports different extension modules):
         func  = ARRAY_HEAD(VAL_FUNC_BODY(func));
         n = (REBCNT)VAL_INT64(func + 1);
-        ext = &Ext_List[VAL_I32(VAL_CONTEXT_VAR(func, 1))]; // Handler
+        ext = &Ext_List[VAL_I32(VAL_CONTEXT_VAR(func, SELFISH(1)))]; // Handler
         n = ext->call(n, &frm, ctx);
         val = out;
         switch (n) {

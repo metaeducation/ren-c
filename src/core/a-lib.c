@@ -1102,18 +1102,27 @@ RL_API u32 *RL_Words_Of_Object(REBSER *obj)
 {
     REBCNT index;
     u32 *syms;
-    REBVAL *keys;
+    REBVAL *key;
     REBFRM *frame = AS_FRAME(obj);
 
-    keys = FRAME_KEY(frame, 1);
+    key = FRAME_KEYS_HEAD(frame);
 
-    // SELF not included, but terminated by 0.
+    // We don't include hidden keys (e.g. SELF), but terminate by 0.
+    // Conservative estimate that there are no hidden keys, add one.
+    //
     syms = OS_ALLOC_N(u32, FRAME_LEN(frame) + 1);
 
-    for (index = 0; index < FRAME_LEN(frame); keys++, index++) {
-        syms[index] = VAL_TYPESET_CANON(keys);
+    index = 0;
+    for (; NOT_END(key); key++) {
+        if (VAL_GET_EXT(key, EXT_WORD_HIDE))
+            continue;
+
+        syms[index] = VAL_TYPESET_CANON(key);
+        index++;
     }
-    syms[index] = SYM_0;
+
+    syms[index] = SYM_0; // Null terminate
+
     return syms;
 }
 

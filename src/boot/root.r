@@ -17,7 +17,6 @@ REBOL [
     Note: "See Task Context for per-task globals"
 ]
 
-self            ; (hand-built CONTEXT! value - but, has no WORD table!)
 system          ; system object
 errobj          ; error object template
 strings         ; low-level strings accessed via Boot_Strs[] (GC protection)

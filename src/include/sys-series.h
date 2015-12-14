@@ -759,6 +759,7 @@ struct Reb_Frame {
     #define FRAME_VAR(f,n)      FRAME_VAR_Debug((f), (n))
 #endif
 #define FRAME_KEY_SYM(f,n)      VAL_TYPESET_SYM(FRAME_KEY((f), (n)))
+#define FRAME_KEY_CANON(f,n)    VAL_TYPESET_CANON(FRAME_KEY((f), (n)))
 
 // Navigate from frame series to context components.  Note that the frame's
 // "length" does not count the [0] cell of either the varlist or the keylist.

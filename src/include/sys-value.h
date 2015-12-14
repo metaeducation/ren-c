@@ -1347,22 +1347,27 @@ struct Reb_Any_Context {
         Val_Init_Context_Core((o), (t), (f), (s), (b))
 #endif
 
-// Because information regarding reconstituting an object from a frame
-// existed (albeit partially) in a FRAME! in R3-Alpha, the choice was made
-// to have the keylist[0] hold a word that would let you refer to the
-// object itself.  This "SELF" keyword concept is deprecated, and the
-// slot will likely be used for another purpose after a "definitional self"
-// solution (like "definitional return") removes the need for it.
-//
-#define IS_SELFLESS(f) \
-    (IS_CLOSURE(FRAME_ROOTKEY(f)) \
-        || VAL_TYPESET_SYM(FRAME_ROOTKEY(f)) == SYM_0)
-
 // Convenience macros to speak in terms of object values instead of the frame
 //
 #define VAL_CONTEXT_VAR(v,n)        FRAME_VAR(VAL_FRAME(v), (n))
 #define VAL_CONTEXT_KEY(v,n)        FRAME_KEY(VAL_FRAME(v), (n))
 #define VAL_CONTEXT_KEY_SYM(v,n)    FRAME_KEY_SYM(VAL_FRAME(v), (n))
+
+// The movement of the SELF word into the domain of the object generators
+// means that an object may wind up having a hidden SELF key (and it may not).
+// Ultimately this key may well occur at any position.  While user code is
+// discouraged from accessing object members by integer index (`pick obj 1`
+// is an error), system code has historically relied upon this.
+//
+// During a transitional period where all MAKE OBJECT! constructs have a
+// "real" SELF key/var in the first position, there needs to be an adjustment
+// to the indexing of some of this system code.  Some of these will be
+// temporary, because not all objects will need a definitional SELF (just as
+// not all functions need a definitional RETURN).  Exactly which require it
+// and which do not remains to be seen, so this macro helps review the + 1
+// more easily than if it were left as just + 1.
+//
+#define SELFISH(n) (n + 1)
 
 #define Val_Init_Object(v,f) \
     Val_Init_Context((v), REB_OBJECT, (f), NULL, NULL)

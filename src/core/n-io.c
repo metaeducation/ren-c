@@ -1012,7 +1012,7 @@ REBNATIVE(call)
     if (input_ser) DROP_GUARD_SERIES(input_ser);
 
     if (flag_info) {
-        REBFRM *frame = Alloc_Frame(2, TRUE);
+        REBFRM *frame = Alloc_Frame(2);
         REBVAL *val = Append_Frame(frame, NULL, SYM_ID);
         SET_INTEGER(val, pid);
 
