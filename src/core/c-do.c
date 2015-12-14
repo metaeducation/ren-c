@@ -433,19 +433,28 @@ REBFLG Do_Path_Throws(REBVAL *out, REBCNT *label_sym, const REBVAL *path, REBVAL
     if (label_sym) {
         REBVAL refinement;
 
-        // When a function is hit, path processing stops with it sitting on
-        // the position of what function to dispatch, usually a word.
-
+        // When a function is hit, path processing stops as soon as the
+        // processed sub-path resolves to a function. The path is still sitting
+        // on the position of the last component of that sub-path. Usually,
+        // this last component in the sub-path is a word naming the function.
+        //
         if (IS_WORD(pvs.path)) {
             *label_sym = VAL_WORD_SYM(pvs.path);
         }
-        else if (ANY_FUNC(pvs.path)) {
-            // You can get an actual function value as a label if you use it
-            // literally with a refinement.  Tricky to make it, but possible:
+        else {
+            // In rarer cases, the final component (completing the sub-path to
+            // the function to call) is not a word. Such as when you use a path
+            // to pick by index out of a block of functions:
             //
-            // do reduce [
-            //     to-path reduce [:append 'only] [a] [b]
-            // ]
+            //      functions: reduce [:add :subtract]
+            //      functions/1 10 20
+            //
+            // Or when you have an immediate function value in a path with a
+            // refinement. Tricky to make, but possible:
+            //
+            //      do reduce [
+            //          to-path reduce [:append 'only] [a] [b]
+            //      ]
             //
 
             // !!! When a function was not invoked through looking up a word
@@ -454,10 +463,8 @@ REBFLG Do_Path_Throws(REBVAL *out, REBCNT *label_sym, const REBVAL *path, REBVAL
             // was ROOT_NONAME, and another was to be the type of the function
             // being executed.  None are fantastic, we do the type for now.
 
-            *label_sym = SYM_FROM_KIND(VAL_TYPE(pvs.path));
+            *label_sym = SYM_FROM_KIND(VAL_TYPE(pvs.value));
         }
-        else
-            fail (Error(RE_BAD_REFINE, pvs.path)); // CC#2226
 
         // Move on to the refinements (if any)
         pvs.path = pvs.path + 1;
