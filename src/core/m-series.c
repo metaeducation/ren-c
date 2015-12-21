@@ -478,7 +478,11 @@ void Assert_Series_Term_Core(REBSER *series)
         // END values aren't canonized to zero bytes, check IS_END explicitly
         //
         if (NOT_END(ARRAY_AT(AS_ARRAY(series), SERIES_LEN(series)))) {
-            Debug_Fmt("Unterminated blocklike series detected");
+            Debug_String(
+               "Unterminated blocklike series detected",
+               38, // ^--- leng
+               FALSE, 1
+            );
             Panic_Series(series);
         }
     }
@@ -492,7 +496,11 @@ void Assert_Series_Term_Core(REBSER *series)
             if (0 != series->content.dynamic.data[
                 series->content.dynamic.len * SERIES_WIDE(series) + n
             ]) {
-                Debug_Fmt("Non-zero byte in terminator of non-block series");
+                Debug_String(
+                   "Non-zero byte in terminator of non-block series",
+                   47, // ^--- length of this
+                   FALSE, 1
+                );
                 Panic_Series(series);
             }
         }
@@ -508,7 +516,16 @@ void Assert_Series_Term_Core(REBSER *series)
 //
 void Panic_Series_Debug(const REBSER *series, const char *file, int line)
 {
-    Debug_Fmt("Panic_Series() in %s at line %d", file, line);
+    if (TG_Pushing_Mold) { // cannot call Debug_Fmt !
+        Debug_String(
+            "Panic_Series() while pushing_mold",
+            33, // ^--- length of this!
+            FALSE, 1
+        );
+    }
+    else {
+        Debug_Fmt("Panic_Series() in %s at line %d", file, line);
+    }
     if (*series->guard == 1020) // should make valgrind or asan alert
         panic (Error(RE_MISC));
     panic (Error(RE_MISC)); // just in case it didn't crash
