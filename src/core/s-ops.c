@@ -599,7 +599,7 @@ REBSER *Entab_Unicode(REBUNI *bp, REBCNT index, REBCNT len, REBINT tabsize)
     mo.reserve = len;
 
     Push_Mold(&mo);
-    dp = UNI_HEAD(mo.series);
+    dp = UNI_AT(mo.series, mo.start);
 
     for (; index < len; index++) {
 
@@ -630,7 +630,7 @@ REBSER *Entab_Unicode(REBUNI *bp, REBCNT index, REBCNT len, REBINT tabsize)
         }
     }
 
-    SET_SERIES_LEN(mo.series, mo.start + len);
+    SET_SERIES_LEN(mo.series, mo.start + cast(REBCNT, dp - UNI_AT(mo.series, mo.start)));
     UNI_TERM(mo.series);
 
     return Pop_Molded_String(&mo);
@@ -700,8 +700,7 @@ REBSER *Detab_Unicode(REBUNI *bp, REBCNT index, REBCNT len, REBINT tabsize)
     mo.reserve = len + (cnt * (tabsize - 1));
 
     Push_Mold(&mo);
-    dp = UNI_HEAD(mo.series);
-
+    dp = UNI_AT(mo.series, mo.start);
     n = 0;
     while (index < len) {
 
@@ -720,11 +719,10 @@ REBSER *Detab_Unicode(REBUNI *bp, REBCNT index, REBCNT len, REBINT tabsize)
         *dp++ = c;
     }
 
-    *dp = '\0';
+    SET_SERIES_LEN(mo.series, mo.start + cast(REBCNT, dp - UNI_AT(mo.series, mo.start)));
+    UNI_TERM(mo.series);
 
-    return Pop_Molded_String_Len(
-        &mo, cast(REBCNT, dp - UNI_AT(mo.series, mo.start))
-    );
+    return Pop_Molded_String(&mo);
 }
 
 
