@@ -52,6 +52,11 @@
 //
 static REBCNT const Primes[] =
 {
+    7,
+    13,
+    31,
+    61,
+    127,
     251,
     509,
     1021,
@@ -73,7 +78,12 @@ static REBCNT const Primes[] =
     67108859,
     134217689,
     268435399,
+    536870909,
+    1073741789,
+    2147483647,
+    0xFFFFFFFB, // 4294967291 = 2^32 - 5 (C89)
     0
+// see https://primes.utm.edu/lists/2small/0bit.html
 };
 
 
