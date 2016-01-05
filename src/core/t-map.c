@@ -155,9 +155,7 @@ REBINT Find_Key_Hashed(
             val = ARRAY_AT(array, (n - 1) * wide);
             if (
                 VAL_TYPE(val) == VAL_TYPE(key)
-                && 0 == Compare_String_Vals(
-                    key, val, LOGICAL(!IS_BINARY(key) && !cased)
-                )
+                && 0 == Compare_String_Vals(val, key, NOT(IS_BINARY(key)) && !cased)
             ) {
                 return hash;
             }
@@ -294,9 +292,12 @@ REBINT PD_Map(REBPVS *pvs)
     if (IS_END(pvs->path+1)) val = pvs->setval;
     if (IS_NONE(pvs->select)) return PE_NONE;
 
-    if (!ANY_WORD(pvs->select) && !ANY_BINSTR(pvs->select) &&
-        !IS_INTEGER(pvs->select) && !IS_CHAR(pvs->select))
-        return PE_BAD_SELECT;
+    if (!ANY_WORD(pvs->select)
+        && !ANY_BINSTR(pvs->select)
+        && !IS_SCALAR(pvs->select)
+        && !IS_OBJECT(pvs->select)
+        && !IS_DATATYPE(pvs->select)
+    ) return PE_BAD_SELECT;
 
     n = Find_Map_Entry(VAL_MAP(data), pvs->select, val, (val ? TRUE : FALSE)); // case-sensitive only when setting value
 

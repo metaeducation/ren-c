@@ -207,6 +207,7 @@ REBINT Hash_Value(const REBVAL *val, REBCNT hash_size)
         break;
 
     case REB_INTEGER:
+    case REB_PERCENT:
     case REB_DECIMAL: // depends on INT64 sharing the DEC64 bits
         ret = (REBCNT)(VAL_INT64(val) >> 32) ^ ((REBCNT)VAL_INT64(val));
         break;
