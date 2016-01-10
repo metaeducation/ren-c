@@ -140,8 +140,9 @@ REBINT Find_Key_Hashed(
             val = ARRAY_AT(array, (n - 1) * wide);
             if (
                 ANY_WORD(val) &&
-                (VAL_WORD_SYM(key) == VAL_WORD_SYM(val) ||
-                (!cased && VAL_WORD_CANON(key) == VAL_WORD_CANON(val)))
+                (VAL_WORD_SYM(key) == VAL_WORD_SYM(val)
+                || (!cased && VAL_WORD_CANON(key) == VAL_WORD_CANON(val))
+                )
             ) {
                 return hash;
             }
@@ -168,7 +169,7 @@ REBINT Find_Key_Hashed(
             val = ARRAY_AT(array, (n - 1) * wide);
             if (
                 VAL_TYPE(val) == VAL_TYPE(key)
-                && 0 == Cmp_Value(key, val, NOT(cased))
+                && 0 == Cmp_Value(key, val, cased)
             ) {
                 return hash;
             }
@@ -202,13 +203,12 @@ static void Rehash_Map(REBMAP *map)
 
     if (!hashlist) return;
 
-    hashes = SERIES_HEAD(REBCNT, MAP_HASHLIST(map));
+    hashes = SERIES_HEAD(REBCNT, hashlist);
     pairlist = MAP_PAIRLIST(map);
 
     key = ARRAY_HEAD(pairlist);
     for (n = 0; n < ARRAY_LEN(pairlist); n += 2, key += 2) {
-        const REBOOL cased = FALSE; // !!! Always false? How to look up cased?
-        REBCNT hash = Find_Key_Hashed(pairlist, hashlist, key, 2, cased, 0);
+        REBCNT hash = Find_Key_Hashed(pairlist, hashlist, key, 2, TRUE, 0); // cased=TRUE is always fine
         hashes[hash] = n / 2 + 1;
     }
 }
@@ -220,10 +220,11 @@ static void Rehash_Map(REBMAP *map)
 // Try to find the entry in the map. If not found
 // and val is SET, create the entry and store the key and
 // val.
-// 
+// Case-sensitive if cased is TRUE.
+//
 // RETURNS: the index to the VALUE or zero if there is none.
 //
-static REBCNT Find_Map_Entry(REBMAP *map, REBVAL *key, REBVAL *val)
+static REBCNT Find_Map_Entry(REBMAP *map, REBVAL *key, REBVAL *val, REBOOL cased)
 {
     REBSER *hashlist = MAP_HASHLIST(map); // can be null
     REBARR *pairlist = MAP_PAIRLIST(map);
@@ -231,7 +232,6 @@ static REBCNT Find_Map_Entry(REBMAP *map, REBVAL *key, REBVAL *val)
     REBCNT hash;
     REBVAL *v;
     REBCNT n;
-    const REBOOL cased = FALSE; // !!! Always false? How to look up cased?
 
     if (IS_NONE(key)) return 0;
 
@@ -298,7 +298,7 @@ REBINT PD_Map(REBPVS *pvs)
         !IS_INTEGER(pvs->select) && !IS_CHAR(pvs->select))
         return PE_BAD_SELECT;
 
-    n = Find_Map_Entry(VAL_MAP(data), pvs->select, val);
+    n = Find_Map_Entry(VAL_MAP(data), pvs->select, val, (val ? TRUE : FALSE)); // case-sensitive only when setting value
 
     if (!n) return PE_NONE;
 
@@ -317,7 +317,7 @@ static void Append_Map(REBMAP *map, REBVAL *any_array, REBCNT len)
     REBCNT n = 0;
 
     while (n < len && NOT_END(value) && NOT_END(value + 1)) {
-        Find_Map_Entry(map, value, value + 1);
+        Find_Map_Entry(map, value, value + 1, TRUE);
         value += 2;
         n += 2;
     }
@@ -472,6 +472,7 @@ REBTYPE(Map)
     REBVAL *arg = D_ARGC > 1 ? D_ARG(2) : NULL;
     REBINT n;
     REBMAP *map;
+    REBCNT  args;
 
     if (action != A_MAKE && action != A_TO)
         map = VAL_MAP(val);
@@ -484,7 +485,8 @@ REBTYPE(Map)
 
     case A_PICK:        // same as SELECT for MAP! datatype
     case A_SELECT:
-        n = Find_Map_Entry(map, arg, 0);
+        args = Find_Refines(call_, ALL_FIND_REFS);
+        n = Find_Map_Entry(map, arg, 0, (args & AM_FIND_CASE));
         if (!n) return R_NONE;
         *D_OUT = *VAL_ARRAY_AT_HEAD(val, ((n-1)*2)+1);
         return R_OUT;
@@ -501,7 +503,7 @@ REBTYPE(Map)
         return R_OUT;
 
     case A_POKE:  // CHECK all pokes!!! to be sure they check args now !!!
-        n = Find_Map_Entry(map, arg, D_ARG(3));
+        n = Find_Map_Entry(map, arg, D_ARG(3), TRUE);
         *D_OUT = *D_ARG(3);
         return R_OUT;
 
