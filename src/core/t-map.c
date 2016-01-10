@@ -112,8 +112,8 @@ REBINT Find_Key_Hashed(
 
     // Compute hash for value:
     len = SERIES_LEN(hashlist);
-    hash = Hash_Value(key, len);
-    if (!hash) fail (Error_Has_Bad_Type(key));
+    assert(len > 0);
+    hash = Hash_Value(key);
 
     // The REBCNT[] hash array size is chosen to try and make a large enough
     // table relative to the data that collisions will be hopefully not
@@ -128,11 +128,10 @@ REBINT Find_Key_Hashed(
     // overwriting the same buckets could only in a worst case scenario force
     // one another to visit all the positions.  Review to make sure this
     // method actually does have a coherent logic behind it.
-    //
-    skip  = (len == 0) ? 0 : (hash & 0x0000FFFF) % len;
-    if (skip == 0) skip = 1;
-    hash = (len == 0) ? 0 : (hash & 0x00FFFF00) % len;
-
+    // EDIT: if len and skip are co-primes is guaranteed that repeatedly adding skip (and subtracting len when needed) all positions are visited. -- @giuliolunati
+    skip = hash % (len - 1) + 1;
+    // 1 <= skip < len, and len is prime, so skip and len are co-prime.
+    hash = hash % len;
     // Scan hash table for match:
     hashes = SERIES_HEAD(REBCNT, hashlist);
     if (ANY_WORD(key)) {

@@ -168,29 +168,67 @@ REBINT Hash_Word(const REBYTE *str, REBCNT len)
     return hash;
 }
 
+static u32 *crc32_table = 0;
+
+static void Make_CRC32_Table(void);
+
 
 //
 //  Hash_Value: C
 // 
 // Return a case insensitive hash value for any value.
 // 
-// Result will be > 0 and < hash_size, except if
-// datatype cannot be hashed, a 0 is returned.
+// Fails if datatype cannot be hashed.
 //
-REBINT Hash_Value(const REBVAL *val, REBCNT hash_size)
+REBCNT Hash_Value(const REBVAL *val)
 {
     REBCNT ret;
     const REBYTE *name;
 
     switch(VAL_TYPE(val)) {
 
-    case REB_WORD:
-    case REB_SET_WORD:
-    case REB_GET_WORD:
-    case REB_LIT_WORD:
-    case REB_REFINEMENT:
-    case REB_ISSUE:
-        ret = VAL_WORD_CANON(val);
+    case REB_UNSET:
+        ret = 0;
+        break;
+
+    case REB_NONE:
+        ret = 1;
+        break;
+
+    case REB_LOGIC:
+        ret = VAL_LOGIC(val) ? 1 : 0;
+        break;
+
+    case REB_INTEGER:
+        ret = VAL_INT64(val);
+
+    case REB_DECIMAL:
+    case REB_PERCENT:
+        // depends on INT64 sharing the DEC64 bits
+        ret = (VAL_INT64(val) >> 32) ^ (VAL_INT64(val));
+        break;
+
+    case REB_MONEY:
+        ret = VAL_ALL_BITS(val)[0] ^ VAL_ALL_BITS(val)[1] ^ VAL_ALL_BITS(val)[2];
+        break;
+
+    case REB_CHAR:
+        ret = VAL_CHAR(val);
+        break;
+
+    case REB_PAIR:
+        ret = (VAL_ALL_BITS(val)[0] << 16) ^ (VAL_ALL_BITS(val)[0] >> 16) ^ (VAL_ALL_BITS(val)[1]);
+        break;
+
+    case REB_TUPLE:
+        ret = Hash_String(VAL_TUPLE(val), VAL_TUPLE_LEN(val), 1);
+        break;
+
+    case REB_TIME:
+    case REB_DATE:
+        ret = (REBCNT)(VAL_TIME(val) ^ (VAL_TIME(val) / SEC_SEC));
+        if (IS_DATE(val)) ret ^= VAL_DATE(val).bits;
+        ret ;
         break;
 
     case REB_BINARY:
@@ -202,37 +240,42 @@ REBINT Hash_Value(const REBVAL *val, REBCNT hash_size)
         ret = Hash_String(VAL_RAW_DATA_AT(val), VAL_LEN_HEAD(val), SERIES_WIDE(VAL_SERIES(val)));
         break;
 
-    case REB_LOGIC:
-        ret = VAL_LOGIC(val) ? (hash_size/5) : (2*hash_size/5);
+    // NOT ALLOWED:
+    // REB_BITSET
+    // REB_IMAGE
+    // REB_VECTOR
+    // REB_BLOCK
+    // REB_GROUP
+    // REB_PATH
+    // REB_SET_PATH
+    // REB_GET_PATH
+    // REB_LIT_PATH
+    // REB_MAP
+
+    case REB_DATATYPE:
+        name = Get_Sym_Name(VAL_TYPE_SYM(val));
+        ret = Hash_Word(name, LEN_BYTES(name));
         break;
 
-    case REB_INTEGER:
-    case REB_PERCENT:
-    case REB_DECIMAL: // depends on INT64 sharing the DEC64 bits
-        ret = (REBCNT)(VAL_INT64(val) >> 32) ^ ((REBCNT)VAL_INT64(val));
+    // NOT ALLOWED:
+    // REB_TYPESET
+
+    case REB_WORD:
+    case REB_SET_WORD:
+    case REB_GET_WORD:
+    case REB_LIT_WORD:
+    case REB_REFINEMENT:
+    case REB_ISSUE:
+        ret = VAL_WORD_CANON(val);
         break;
 
-    case REB_CHAR:
-        ret = VAL_CHAR(val) << 15; // avoid running into WORD hashes
-        break;
-
-    case REB_MONEY:
-        ret = VAL_ALL_BITS(val)[0] ^ VAL_ALL_BITS(val)[1] ^ VAL_ALL_BITS(val)[2];
-        break;
-
-    case REB_TIME:
-    case REB_DATE:
-        ret = (REBCNT)(VAL_TIME(val) ^ (VAL_TIME(val) / SEC_SEC));
-        if (IS_DATE(val)) ret ^= VAL_DATE(val).bits;
-        break;
-
-    case REB_TUPLE:
-        ret = Hash_String(VAL_TUPLE(val), VAL_TUPLE_LEN(val), 1);
-        break;
-
-    case REB_PAIR:
-        ret = VAL_ALL_BITS(val)[0] ^ VAL_ALL_BITS(val)[1];
-        break;
+    // NOT ALLOWED:
+    // REB_NATIVE
+    // REB_ACTION
+    // REB_ROUTINE
+    // REB_COMMAND
+    // REB_CLOSURE
+    // REB_FUNCTION
 
     case REB_OBJECT:
         //
@@ -241,24 +284,26 @@ REBINT Hash_Value(const REBVAL *val, REBCNT hash_size)
         ret = cast(REBCNT, cast(REBUPT, VAL_CONTEXT(val)) >> 4);
         break;
 
-    case REB_DATATYPE:
-        name = Get_Sym_Name(VAL_TYPE_SYM(val));
-        ret = Hash_Word(name, LEN_BYTES(name));
-        break;
-
-    case REB_NONE:
-        ret = 1;
-        break;
-
-    case REB_UNSET:
-        ret = 0;
-        break;
+    // NOT ALLOWED:
+    // REB_FRAME
+    // REB_MODULE
+    // REB_ERROR
+    // REB_TASK
+    // REB_PORT
+    // REB_GOB
+    // REB_EVENT
+    // REB_CALLBACK
+    // REB_HANDLE
+    // REB_STRUCT
+    // REB_LIBRARY
 
     default:
-        return 0;  //ret = 3 * (hash_size/5);
+        fail (Error_Has_Bad_Type(val));
     }
 
-    return 1 + ((hash_size-1) & ret);
+    if(!crc32_table) Make_CRC32_Table();
+
+    return ret ^ crc32_table[VAL_TYPE(val) && 0xFF];
 }
 
 
@@ -392,10 +437,6 @@ REBINT Compute_IPC(REBYTE *data, REBCNT length)
     return (REBINT)( (~lSum) & 0xffff);     // 1's complement, then truncate
 }
 
-
-
-
-static u32 *crc32_table = 0;
 
 static void Make_CRC32_Table(void) {
     u32 c;
