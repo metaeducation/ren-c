@@ -1671,7 +1671,7 @@ void Drop_Mold_Core(REB_MOLD *mold, REBFLGS not_pushed_ok)
 
     assert(mold->series); // if NULL there was no Push_Mold
 
-    ASSERT_SERIES_TERM(mold->series);
+    // ASSERT_SERIES_TERM(mold->series); !!! Wrong assertion: if pushed data are to be discarded, mold->series may be unterminated. Indeed that happens when Scan_Item_Push_Mold returns NULL/0.
 
     SET_SERIES_LEN(mold->series, mold->start);
     UNI_TERM(mold->series); // see remarks in Pop_Molded_String
