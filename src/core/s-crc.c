@@ -199,7 +199,7 @@ REBINT Hash_Value(const REBVAL *val, REBCNT hash_size)
     case REB_EMAIL:
     case REB_URL:
     case REB_TAG:
-        ret = Hash_String(VAL_BIN_AT(val), Val_Byte_Len(val));
+        ret = Hash_String(VAL_RAW_DATA_AT(val), VAL_LEN_HEAD(val), SERIES_WIDE(VAL_SERIES(val)));
         break;
 
     case REB_LOGIC:
@@ -226,7 +226,7 @@ REBINT Hash_Value(const REBVAL *val, REBCNT hash_size)
         break;
 
     case REB_TUPLE:
-        ret = Hash_String(VAL_TUPLE(val), VAL_TUPLE_LEN(val));
+        ret = Hash_String(VAL_TUPLE(val), VAL_TUPLE_LEN(val), 1);
         break;
 
     case REB_PAIR:
@@ -440,16 +440,30 @@ REBCNT CRC32(REBYTE *buf, REBCNT len)
 // Return a 32-bit case insensitive hash value for the string.  The
 // string does not have to be zero terminated and UTF8 is ok.
 //
-REBINT Hash_String(const REBYTE *str, REBCNT len)
-{
+REBINT Hash_String(
+        const void *data, // REBYTE* or REBUNI*
+        REBCNT len, // chars, not bytes
+        REBCNT wide // 1=byte, 2=Unicode
+) {
     u32 c = 0x00000000;
+    u32 c2 = 0x00000000; // don't change, see below *
     int n;
+    const REBYTE *b = data;
+    const REBUNI *u = data;
 
     if(!crc32_table) Make_CRC32_Table();
 
-    for(n = 0; n < len; n++)
-        c = crc32_table[(c^LO_CASE(str[n]))&0xff]^(c>>8);
-
+    if (wide == 1) for(n = 0; n < len; n++) {
+        c = crc32_table[(c^LO_CASE(b[n]))&0xff]^(c>>8);
+    } else if (wide == 2) for(n = 0; n < len; n++) {
+        c = crc32_table[(c^LO_CASE(u[n]))&0xff]^(c>>8);
+        c2 = crc32_table[
+            (c2^(LO_CASE(u[n])>>8))&0xff
+        ]^(c2>>8);
+    } else assert(wide == 1 || wide == 2);
+    // * if wide = 2 but all chars <= 0xFF
+    // then c2 = 0 and c is thd same as wide = 1
+    c ^= c2;
     return cast(REBINT,~c);
 }
 
