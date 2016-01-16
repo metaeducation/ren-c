@@ -53,9 +53,6 @@
 
 #include "sys-core.h"
 
-#define MIN_DICT 8 // size to switch to hashing
-
-
 //
 //  CT_Map: C
 //
@@ -72,17 +69,14 @@ REBINT CT_Map(const REBVAL *a, const REBVAL *b, REBINT mode)
 // 
 // Makes a MAP block (that holds both keys and values).
 // Size is the number of key-value pairs.
-// If size >= MIN_DICT, then a hash series is also created.
+// A hash series is also created.
 //
 static REBMAP *Make_Map(REBINT size)
 {
     REBARR *array = Make_Array(size * 2);
     REBMAP *map = AS_MAP(array);
 
-    if (size >= MIN_DICT)
-        MAP_HASHLIST(map) = Make_Hash_Sequence(size);
-    else
-        MAP_HASHLIST(map) = NULL;
+    MAP_HASHLIST(map) = Make_Hash_Sequence(size);
 
     return map;
 }
@@ -241,68 +235,7 @@ static REBCNT Find_Map_Entry(REBMAP *map, REBVAL *key, REBVAL *val)
 
     if (IS_NONE(key)) return 0;
 
-    // We may not be large enough yet for the hash table to
-    // be worthwhile, so just do a linear search:
-    if (!hashlist) {
-        if (ARRAY_LEN(pairlist) < MIN_DICT * 2) {
-            v = ARRAY_HEAD(pairlist);
-            if (ANY_WORD(key)) {
-                for (n = 0; n < ARRAY_LEN(pairlist); n += 2, v += 2) {
-                    if (
-                        ANY_WORD(v)
-                        && SAME_SYM(VAL_WORD_SYM(key), VAL_WORD_SYM(v))
-                    ) {
-                        if (val) *++v = *val;
-                        return n/2+1;
-                    }
-                }
-            }
-            else if (ANY_BINSTR(key)) {
-                for (n = 0; n < ARRAY_LEN(pairlist); n += 2, v += 2) {
-                    if (
-                        VAL_TYPE(key) == VAL_TYPE(v)
-                        && 0 == Compare_String_Vals(key, v, NOT(IS_BINARY(v)))
-                    ) {
-                        if (val)
-                            *++v = *val;
-
-                        return n/2+1;
-                    }
-                }
-            }
-            else if (IS_INTEGER(key)) {
-                for (n = 0; n < ARRAY_LEN(pairlist); n += 2, v += 2) {
-                    if (IS_INTEGER(v) && VAL_INT64(key) == VAL_INT64(v)) {
-                        if (val) *++v = *val;
-                        return n/2+1;
-                    }
-                }
-            }
-            else if (IS_CHAR(key)) {
-                for (n = 0; n < ARRAY_LEN(pairlist); n += 2, v += 2) {
-                    if (IS_CHAR(v) && VAL_CHAR(key) == VAL_CHAR(v)) {
-                        if (val) *++v = *val;
-                        return n/2+1;
-                    }
-                }
-            }
-            else
-                fail (Error_Has_Bad_Type(key));
-
-            if (!val) return 0;
-
-            Append_Value(pairlist, key);
-            Append_Value(pairlist, val); // does not copy value, e.g. if string
-
-            return ARRAY_LEN(pairlist) / 2;
-        }
-
-        // Create hash table:
-        hashlist = Make_Hash_Sequence(ARRAY_LEN(pairlist));
-        MAP_HASHLIST(map) = hashlist;
-        MANAGE_SERIES(hashlist);
-        Rehash_Map(map);
-    }
+    assert(hashlist);
 
     // Get hash table, expand it if needed:
     if (ARRAY_LEN(pairlist) > SERIES_LEN(hashlist) / 2) {
@@ -472,10 +405,7 @@ REBMAP *Mutate_Array_Into_Map(REBARR *array)
 
     map = AS_MAP(array);
 
-    if (size >= MIN_DICT)
-        MAP_HASHLIST(map) = Make_Hash_Sequence(size);
-    else
-        MAP_HASHLIST(map) = NULL;
+    MAP_HASHLIST(map) = Make_Hash_Sequence(size);
 
     Rehash_Map(map);
     return map;
