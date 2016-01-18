@@ -106,6 +106,8 @@ REBINT Find_Key_Hashed(
     REBCNT *hashes;
     REBCNT skip;
     REBCNT hash;
+    // a 'zombie' is a key with value NONE, that may be overwritten
+    REBCNT zombie;
     REBCNT len;
     REBCNT n;
     REBVAL *val;
@@ -132,6 +134,7 @@ REBINT Find_Key_Hashed(
     skip = hash % (len - 1) + 1;
     // 1 <= skip < len, and len is prime, so skip and len are co-prime.
     hash = hash % len;
+    zombie = len; // zombie not yet encountered
     // Scan hash table for match:
     hashes = SERIES_HEAD(REBCNT, hashlist);
     if (ANY_WORD(key)) {
@@ -145,6 +148,7 @@ REBINT Find_Key_Hashed(
             ) {
                 return hash;
             }
+            if (IS_NONE(++val)) zombie = hash;
             hash += skip;
             if (hash >= len) hash -= len;
         }
@@ -158,6 +162,7 @@ REBINT Find_Key_Hashed(
             ) {
                 return hash;
             }
+            if (IS_NONE(++val)) zombie = hash;
             hash += skip;
             if (hash >= len) hash -= len;
         }
@@ -170,11 +175,19 @@ REBINT Find_Key_Hashed(
             ) {
                 return hash;
             }
+            if (IS_NONE(++val)) zombie = hash;
             hash += skip;
             if (hash >= len) hash -= len;
         }
     }
 
+    if (zombie < len) { // zombie encountered!
+        assert(mode == 0);
+        hash = zombie;
+        n = hashes[hash];
+        // new key overwrite zombie
+        *ARRAY_AT(array, (n - 1) * wide) = *key;
+    }
     // Append new value the target series:
     if (mode > 1) {
         hashes[hash] = (ARRAY_LEN(array) / wide) + 1;
@@ -205,8 +218,19 @@ static void Rehash_Map(REBMAP *map)
 
     key = ARRAY_HEAD(pairlist);
     for (n = 0; n < ARRAY_LEN(pairlist); n += 2, key += 2) {
+        if (IS_NONE(key + 1)) { // zombie
+            // move last key over zombie
+            *key = *ARRAY_AT(pairlist, ARRAY_LEN(pairlist) - 2);
+            *(key + 1) = *ARRAY_AT(pairlist, ARRAY_LEN(pairlist) - 1);
+            SET_ARRAY_LEN(pairlist, ARRAY_LEN(pairlist) - 2);
+        }
         REBCNT hash = Find_Key_Hashed(pairlist, hashlist, key, 2, TRUE, 0); // cased=TRUE is always fine
         hashes[hash] = n / 2 + 1;
+
+        // discard zombies at end of pairlist
+        while (IS_NONE(ARRAY_AT(pairlist, ARRAY_LEN(pairlist) - 1))) {
+            SET_ARRAY_LEN(pairlist, ARRAY_LEN(pairlist) - 2);
+        }
     }
 }
 
@@ -252,6 +276,8 @@ static REBCNT Find_Map_Entry(REBMAP *map, REBVAL *key, REBVAL *val, REBOOL cased
         *ARRAY_AT(pairlist, ((n - 1) * 2) + 1) = *val; // set it
         return n;
     }
+
+    if (IS_NONE(val)) return 0; // trying to remove non-existing key
 
     // Create new entry:
     Append_Value(pairlist, key);
