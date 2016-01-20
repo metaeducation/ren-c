@@ -523,12 +523,15 @@ REBTYPE(Map)
 
     switch (action) {
 
+    case A_FIND:
     case A_PICK:        // same as SELECT for MAP! datatype
     case A_SELECT:
         args = Find_Refines(call_, ALL_FIND_REFS);
         n = Find_Map_Entry(map, arg, 0, LOGICAL(args & AM_FIND_CASE));
         if (!n) return R_NONE;
-        *D_OUT = *VAL_ARRAY_AT_HEAD(val, ((n-1)*2)+1);
+        *D_OUT = *VAL_ARRAY_AT_HEAD(val, ((n - 1) * 2) + 1);
+        if (IS_UNSET(D_OUT)) return R_NONE;
+        if (action == A_FIND) *D_OUT = *val;
         return R_OUT;
 
     case A_INSERT:
