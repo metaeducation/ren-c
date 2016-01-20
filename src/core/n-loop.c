@@ -528,7 +528,7 @@ static REB_R Loop_Each(struct Reb_Call *call_, LOOP_MODE mode)
             }
             else if (IS_MAP(data_value)) {
                 REBVAL *val = ARRAY_AT(AS_ARRAY(series), index | 1);
-                if (!IS_NONE(val)) {
+                if (!IS_UNSET(val)) {
                     if (j == 0) {
                         *var = *ARRAY_AT(AS_ARRAY(series), index & ~1);
                         if (IS_END(var + 1)) index++; // only words
