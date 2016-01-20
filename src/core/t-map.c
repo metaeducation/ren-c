@@ -542,6 +542,14 @@ REBTYPE(Map)
         Append_Map(map, arg, Partial1(arg, D_ARG(AN_LIMIT)));
         return R_OUT;
 
+    case A_REMOVE:
+        if (!D_REF(4)) { // /MAP
+            fail (Error_Illegal_Action(REB_MAP, action));
+        }
+        *D_OUT = *val;
+        Find_Map_Entry(map, D_ARG(5), UNSET_VALUE, TRUE);
+        return R_OUT;
+
     case A_POKE:  // CHECK all pokes!!! to be sure they check args now !!!
         n = Find_Map_Entry(map, arg, D_ARG(3), TRUE);
         *D_OUT = *D_ARG(3);

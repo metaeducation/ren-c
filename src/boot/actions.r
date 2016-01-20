@@ -292,9 +292,11 @@ append: action [
 
 remove: action [
     {Removes element(s); returns same position.}
-    series [any-series! gob! port! bitset! none!] {At position (modified)}
+    series [any-series! map! gob! port! bitset! none!] {At position (modified)}
     /part {Removes multiple elements or to a given position}
     limit [any-number! any-series! pair! char!]
+    /map {Remove key from map}
+    key
 ]
 
 change: action [
