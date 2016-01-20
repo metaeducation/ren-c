@@ -200,7 +200,13 @@ REBCNT Hash_Value(const REBVAL *val)
         break;
 
     case REB_INTEGER:
-        ret = VAL_INT64(val);
+        //
+        // R3-Alpha XOR'd with (VAL_INT64(val) >> 32).  But: "XOR with high
+        // bits collapses -1 with 0 etc.  (If your key k is |k| < 2^32 high
+        // bits are 0-informative." -Giulio
+        //
+        ret = cast(REBCNT, VAL_INT64(val));
+        break;
 
     case REB_DECIMAL:
     case REB_PERCENT:
@@ -228,7 +234,6 @@ REBCNT Hash_Value(const REBVAL *val)
     case REB_DATE:
         ret = (REBCNT)(VAL_TIME(val) ^ (VAL_TIME(val) / SEC_SEC));
         if (IS_DATE(val)) ret ^= VAL_DATE(val).bits;
-        ret ;
         break;
 
     case REB_BINARY:
@@ -244,21 +249,36 @@ REBCNT Hash_Value(const REBVAL *val)
     // REB_BITSET
     // REB_IMAGE
     // REB_VECTOR
-    // REB_BLOCK
-    // REB_GROUP
-    // REB_PATH
-    // REB_SET_PATH
-    // REB_GET_PATH
-    // REB_LIT_PATH
-    // REB_MAP
+
+    case REB_BLOCK:
+    case REB_GROUP:
+    case REB_PATH:
+    case REB_SET_PATH:
+    case REB_GET_PATH:
+    case REB_LIT_PATH:
+        //
+        // Using an array in a map if it is mutable, and then comparing by
+        // value (vs. comparing identity with SAME?), would require making
+        // a deep copy of that array.  This has been considered too expensive.
+        //
+        // !!! There could be ways to make this work...such as allowing
+        // a PROTECT/DEEP array to be locked and stay locked as the key...
+        // and then have a lightweight hash of it.  Review if needed.
+        //
+        fail (Error_Has_Bad_Type(val));
 
     case REB_DATATYPE:
         name = Get_Sym_Name(VAL_TYPE_SYM(val));
         ret = Hash_Word(name, LEN_BYTES(name));
         break;
 
-    // NOT ALLOWED:
-    // REB_TYPESET
+    case REB_TYPESET:
+        //
+        // Typeset is currently not supported.
+        //
+        // !!! Why not?
+        //
+        fail (Error_Has_Bad_Type(val));
 
     case REB_WORD:
     case REB_SET_WORD:
@@ -269,41 +289,69 @@ REBCNT Hash_Value(const REBVAL *val)
         ret = VAL_WORD_CANON(val);
         break;
 
-    // NOT ALLOWED:
-    // REB_NATIVE
-    // REB_ACTION
-    // REB_ROUTINE
-    // REB_COMMAND
-    // REB_CLOSURE
-    // REB_FUNCTION
+    case REB_NATIVE:
+    case REB_ACTION:
+    case REB_ROUTINE:
+    case REB_COMMAND:
+    case REB_CLOSURE:
+    case REB_FUNCTION:
+        //
+        // ANY-FUNCTION has a uniquely identifying "func" pointer for that
+        // function.  Because function equality is by identity only and they
+        // are immutable once created, it is legal to put them in hashes.
+        //
+        ret = cast(REBCNT, cast(REBUPT, VAL_FUNC(val)) >> 4);
+        break;
 
+    case REB_FRAME:
+    case REB_MODULE:
+    case REB_ERROR:
+    case REB_PORT:
     case REB_OBJECT:
         //
-        // !!! http://stackoverflow.com/a/33577210/211160
+        // !!! ANY-CONTEXT has a uniquely identifying context pointer for that
+        // context.  However, this does not help with "natural =" comparison
+        // as the hashing will be for SAME? contexts only:
+        //
+        // http://stackoverflow.com/a/33577210/211160
+        //
+        // Allowing object keys to be OBJECT! and then comparing by field
+        // values creates problems for hashing if that object is mutable.
+        // However, since it was historically allowed it is allowed for
+        // all ANY-CONTEXT! types at the moment.
         //
         ret = cast(REBCNT, cast(REBUPT, VAL_CONTEXT(val)) >> 4);
         break;
 
-    // NOT ALLOWED:
-    // REB_FRAME
-    // REB_MODULE
-    // REB_ERROR
-    // REB_TASK
-    // REB_PORT
-    // REB_GOB
-    // REB_EVENT
-    // REB_CALLBACK
-    // REB_HANDLE
-    // REB_STRUCT
-    // REB_LIBRARY
+    case REB_MAP:
+        //
+        // Looking up a map in a map is fairly analogous to looking up an
+        // object in a map.  If one is permitted, so should the other be.
+        // (Again this will just find the map by identity, not by comparing
+        // the values of one against the values of the other...)
+        //
+        ret = cast(REBCNT, cast(REBUPT, VAL_MAP(val)) >> 4);
+        break;
+
+    case REB_TASK:
+    case REB_GOB:
+    case REB_EVENT:
+    case REB_CALLBACK:
+    case REB_HANDLE:
+    case REB_STRUCT:
+    case REB_LIBRARY:
+        //
+        // !!! Review hashing behavior or needs of these types if necessary.
+        //
+        fail (Error_Has_Bad_Type(val));
 
     default:
-        fail (Error_Has_Bad_Type(val));
+        assert(FALSE); // the list above should be comprehensive
     }
 
     if(!crc32_table) Make_CRC32_Table();
 
-    return ret ^ crc32_table[VAL_TYPE(val) && 0xFF];
+    return ret ^ crc32_table[VAL_TYPE(val)];
 }
 
 
@@ -456,6 +504,7 @@ static void Make_CRC32_Table(void) {
     }
 }
 
+
 REBCNT Update_CRC32(u32 crc, REBYTE *buf, int len) {
     u32 c = ~crc;
     int n;
@@ -468,6 +517,7 @@ REBCNT Update_CRC32(u32 crc, REBYTE *buf, int len) {
     return ~c;
 }
 
+
 //
 //  CRC32: C
 //
@@ -475,6 +525,7 @@ REBCNT CRC32(REBYTE *buf, REBCNT len)
 {
     return Update_CRC32(U32_C(0x00000000), buf, len);
 }
+
 
 //
 //  Hash_String: C
@@ -485,29 +536,40 @@ REBCNT CRC32(REBYTE *buf, REBCNT len)
 REBINT Hash_String(
         const void *data, // REBYTE* or REBUNI*
         REBCNT len, // chars, not bytes
-        REBCNT wide // 1=byte, 2=Unicode
+        REBCNT wide // 1 = byte-sized, 2 = Unicode
 ) {
     u32 c = 0x00000000;
-    u32 c2 = 0x00000000; // don't change, see below *
-    int n;
-    const REBYTE *b = data;
-    const REBUNI *u = data;
+    u32 c2 = 0x00000000; // don't change, see [1] below
+    REBCNT n;
+    const REBYTE *b = cast(REBYTE*, data);
+    const REBUNI *u = cast(REBUNI*, data);
 
     if(!crc32_table) Make_CRC32_Table();
 
-    if (wide == 1) for(n = 0; n < len; n++) {
-        c = crc32_table[(c^LO_CASE(b[n]))&0xff]^(c>>8);
-    } else if (wide == 2) for(n = 0; n < len; n++) {
-        c = crc32_table[(c^LO_CASE(u[n]))&0xff]^(c>>8);
-        c2 = crc32_table[
-            (c2^(LO_CASE(u[n])>>8))&0xff
-        ]^(c2>>8);
-    } else assert(wide == 1 || wide == 2);
-    // * if wide = 2 but all chars <= 0xFF
-    // then c2 = 0 and c is thd same as wide = 1
+    if (wide == 1) {
+        for(n = 0; n < len; n++) {
+            c = (c >> 8) ^ crc32_table[(c ^ LO_CASE(b[n])) & 0xff];
+        }
+    } else if (wide == 2) {
+        for(n = 0; n < len; n++) {
+            c = (c >> 8) ^ crc32_table[(c ^ LO_CASE(u[n])) & 0xff];
+
+            c2 = (c2 >> 8) ^ crc32_table[
+                (c2 ^ (LO_CASE(u[n]) >> 8)) & 0xff
+            ];
+        }
+    }
+    else
+        assert(wide == 1 || wide == 2);
+
+    // [1] If wide = 2 but all chars <= 0xFF then c2 = 0, and c is the same
+    // as wide = 1
+    //
     c ^= c2;
+
     return cast(REBINT,~c);
 }
+
 
 //
 //  Init_CRC: C

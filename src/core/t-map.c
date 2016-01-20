@@ -106,7 +106,7 @@ REBINT Find_Key_Hashed(
     REBCNT *hashes;
     REBCNT skip;
     REBCNT hash;
-    // a 'zombie' is a key with value NONE, that may be overwritten
+    // a 'zombie' is a key with UNSET! value, that may be overwritten
     REBCNT zombie;
     REBCNT len;
     REBCNT n;
@@ -148,7 +148,7 @@ REBINT Find_Key_Hashed(
             ) {
                 return hash;
             }
-            if (IS_NONE(++val)) zombie = hash;
+            if (IS_UNSET(++val)) zombie = hash;
             hash += skip;
             if (hash >= len) hash -= len;
         }
@@ -158,11 +158,13 @@ REBINT Find_Key_Hashed(
             val = ARRAY_AT(array, (n - 1) * wide);
             if (
                 VAL_TYPE(val) == VAL_TYPE(key)
-                && 0 == Compare_String_Vals(val, key, NOT(IS_BINARY(key)) && !cased)
+                && 0 == Compare_String_Vals(
+                    val, key, LOGICAL(!IS_BINARY(key) && !cased)
+                )
             ) {
                 return hash;
             }
-            if (IS_NONE(++val)) zombie = hash;
+            if (IS_UNSET(++val)) zombie = hash;
             hash += skip;
             if (hash >= len) hash -= len;
         }
@@ -175,7 +177,7 @@ REBINT Find_Key_Hashed(
             ) {
                 return hash;
             }
-            if (IS_NONE(++val)) zombie = hash;
+            if (IS_UNSET(++val)) zombie = hash;
             hash += skip;
             if (hash >= len) hash -= len;
         }
@@ -218,17 +220,24 @@ static void Rehash_Map(REBMAP *map)
 
     key = ARRAY_HEAD(pairlist);
     for (n = 0; n < ARRAY_LEN(pairlist); n += 2, key += 2) {
-        if (IS_NONE(key + 1)) { // zombie
-            // move last key over zombie
+        REBCNT hash;
+        const REBOOL cased = TRUE; // cased=TRUE is always fine
+
+        if (IS_UNSET(key + 1)) {
+            //
+            // It's a "zombie", move last key to overwrite it
+            //
             *key = *ARRAY_AT(pairlist, ARRAY_LEN(pairlist) - 2);
             *(key + 1) = *ARRAY_AT(pairlist, ARRAY_LEN(pairlist) - 1);
             SET_ARRAY_LEN(pairlist, ARRAY_LEN(pairlist) - 2);
         }
-        REBCNT hash = Find_Key_Hashed(pairlist, hashlist, key, 2, TRUE, 0); // cased=TRUE is always fine
+
+        hash = Find_Key_Hashed(pairlist, hashlist, key, 2, cased, 0);
         hashes[hash] = n / 2 + 1;
 
         // discard zombies at end of pairlist
-        while (IS_NONE(ARRAY_AT(pairlist, ARRAY_LEN(pairlist) - 1))) {
+        //
+        while (IS_UNSET(ARRAY_AT(pairlist, ARRAY_LEN(pairlist) - 1))) {
             SET_ARRAY_LEN(pairlist, ARRAY_LEN(pairlist) - 2);
         }
     }
@@ -238,15 +247,17 @@ static void Rehash_Map(REBMAP *map)
 //
 //  Find_Map_Entry: C
 // 
-// Try to find the entry in the map. If not found
-// and val is SET, create the entry and store the key and
-// val.
-// Case-sensitive if cased is TRUE.
+// Try to find the entry in the map. If not found and val IS_SET(), create the
+// entry and store the key and val.
 //
 // RETURNS: the index to the VALUE or zero if there is none.
 //
-static REBCNT Find_Map_Entry(REBMAP *map, REBVAL *key, REBVAL *val, REBOOL cased)
-{
+static REBCNT Find_Map_Entry(
+    REBMAP *map,
+    REBVAL *key,
+    REBVAL *val,
+    REBOOL cased // case-sensitive if true
+) {
     REBSER *hashlist = MAP_HASHLIST(map); // can be null
     REBARR *pairlist = MAP_PAIRLIST(map);
     REBCNT *hashes;
@@ -283,7 +294,7 @@ static REBCNT Find_Map_Entry(REBMAP *map, REBVAL *key, REBVAL *val, REBOOL cased
     Append_Value(pairlist, key);
     Append_Value(pairlist, val);  // does not copy value, e.g. if string
 
-    return (hashes[hash] = ARRAY_LEN(pairlist) / 2);
+    return (hashes[hash] = (ARRAY_LEN(pairlist) / 2));
 }
 
 
@@ -324,12 +335,15 @@ REBINT PD_Map(REBPVS *pvs)
         && !IS_DATATYPE(pvs->select)
     ) return PE_BAD_SELECT;
 
-    n = Find_Map_Entry(VAL_MAP(data), pvs->select, val, (val ? TRUE : FALSE)); // case-sensitive only when setting value
+    {
+        const REBOOL cased = (val ? TRUE : FALSE); // cased when *setting*
+        n = Find_Map_Entry(VAL_MAP(data), pvs->select, val, cased);
+    }
 
     if (!n) return PE_NONE;
 
     FAIL_IF_LOCKED_SERIES(VAL_SERIES(data));
-    pvs->value = VAL_ARRAY_AT_HEAD(data, ((n-1)*2)+1);
+    pvs->value = VAL_ARRAY_AT_HEAD(data, ((n - 1) * 2) + 1);
     return PE_OK;
 }
 
@@ -512,7 +526,7 @@ REBTYPE(Map)
     case A_PICK:        // same as SELECT for MAP! datatype
     case A_SELECT:
         args = Find_Refines(call_, ALL_FIND_REFS);
-        n = Find_Map_Entry(map, arg, 0, (args & AM_FIND_CASE));
+        n = Find_Map_Entry(map, arg, 0, LOGICAL(args & AM_FIND_CASE));
         if (!n) return R_NONE;
         *D_OUT = *VAL_ARRAY_AT_HEAD(val, ((n-1)*2)+1);
         return R_OUT;
@@ -564,7 +578,16 @@ REBTYPE(Map)
 
     case A_CLEAR:
         Reset_Array(MAP_PAIRLIST(map));
-        if (MAP_HASHLIST(map)) Clear_Series(MAP_HASHLIST(map));
+
+        // !!! Review: should the space for the hashlist be reclaimed?  This
+        // clears all the indices but doesn't scale back the size.
+        //
+        CLEAR(
+            MAP_HASHLIST(map)->content.dynamic.data,
+            SERIES_SPACE(MAP_HASHLIST(map))
+        );
+        TERM_SERIES(MAP_HASHLIST(map));
+
         Val_Init_Map(D_OUT, map);
         return R_OUT;
 
