@@ -219,7 +219,7 @@ REBCNT Hash_Value(const REBVAL *val)
         break;
 
     case REB_CHAR:
-        ret = VAL_CHAR(val);
+        ret = LO_CASE(VAL_CHAR(val));
         break;
 
     case REB_PAIR:
