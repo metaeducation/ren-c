@@ -516,8 +516,13 @@ REBTYPE(Map)
 
     switch (action) {
 
+    case A_PICK:
+        val = Pick_Block(val, arg);
+        if (!val) return R_NONE;
+        *D_OUT = *val;
+        return R_OUT;
+
     case A_FIND:
-    case A_PICK:        // same as SELECT for MAP! datatype
     case A_SELECT:
         args = Find_Refines(call_, ALL_FIND_REFS);
         n = Find_Map_Entry(map, arg, 0, LOGICAL(args & AM_FIND_CASE));
