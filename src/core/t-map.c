@@ -183,6 +183,7 @@ REBINT Find_Key_Hashed(
         }
     }
 
+    //assert(n == 0);
     if (zombie < len) { // zombie encountered!
         assert(mode == 0);
         hash = zombie;
@@ -278,6 +279,7 @@ static REBCNT Find_Map_Entry(
     hash = Find_Key_Hashed(pairlist, hashlist, key, 2, cased, 0);
     hashes = SERIES_HEAD(REBCNT, hashlist);
     n = hashes[hash];
+    // n==0 or pairlist[(n-1)*]=~key
 
     // Just a GET of value:
     if (!val) return n;
@@ -288,7 +290,7 @@ static REBCNT Find_Map_Entry(
         return n;
     }
 
-    if (IS_NONE(val)) return 0; // trying to remove non-existing key
+    if (IS_UNSET(val)) return 0; // trying to remove non-existing key
 
     // Create new entry:
     Append_Value(pairlist, key);
