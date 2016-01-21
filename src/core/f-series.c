@@ -302,16 +302,13 @@ chkDecimal:
         return VAL_CONTEXT(s) - VAL_CONTEXT(t);
 
     case REB_NATIVE:
-        return VAL_FUNC_CODE(s) - VAL_FUNC_CODE(t);
-
     case REB_ACTION:
     case REB_COMMAND:
     case REB_FUNCTION:
-        return VAL_FUNC_BODY(s) - VAL_FUNC_BODY(t);
-
+    case REB_CLOSURE:
     case REB_ROUTINE:
     case REB_CALLBACK:
-        return VAL_ROUTINE_INFO(s) - VAL_ROUTINE_INFO(t);
+        return VAL_FUNC_PARAMLIST(s) - VAL_FUNC_PARAMLIST(t);
 
     case REB_LIBRARY:
         return VAL_LIB_HANDLE(s) - VAL_LIB_HANDLE(t);
