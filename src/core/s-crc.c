@@ -245,11 +245,6 @@ REBCNT Hash_Value(const REBVAL *val)
         ret = Hash_String(VAL_RAW_DATA_AT(val), VAL_LEN_HEAD(val), SERIES_WIDE(VAL_SERIES(val)));
         break;
 
-    // NOT ALLOWED:
-    // REB_BITSET
-    // REB_IMAGE
-    // REB_VECTOR
-
     case REB_BLOCK:
     case REB_GROUP:
     case REB_PATH:
@@ -272,9 +267,12 @@ REBCNT Hash_Value(const REBVAL *val)
         ret = Hash_Word(name, LEN_BYTES(name));
         break;
 
+    case REB_BITSET:
+    case REB_IMAGE:
+    case REB_VECTOR:
     case REB_TYPESET:
         //
-        // Typeset is currently not supported.
+        // These types are currently not supported.
         //
         // !!! Why not?
         //

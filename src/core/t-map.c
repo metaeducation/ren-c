@@ -328,13 +328,6 @@ REBINT PD_Map(REBPVS *pvs)
     if (IS_END(pvs->path+1)) val = pvs->setval;
     if (IS_NONE(pvs->select)) return PE_NONE;
 
-    if (!ANY_WORD(pvs->select)
-        && !ANY_BINSTR(pvs->select)
-        && !IS_SCALAR(pvs->select)
-        && !IS_OBJECT(pvs->select)
-        && !IS_DATATYPE(pvs->select)
-    ) return PE_BAD_SELECT;
-
     {
         const REBOOL cased = (val ? TRUE : FALSE); // cased when *setting*
         n = Find_Map_Entry(VAL_MAP(data), pvs->select, val, cased);
