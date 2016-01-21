@@ -25,18 +25,15 @@ do %c-lexicals.r
 decode-lines: function [
     {Decode text previously encoded using a line prefix e.g. comments (modifies).}
     text [string!]
-    line-prefix [string!] {Usually "**" or "//".}
-    indent [string!] {Usually "  ".}
+    line-prefix [string! block!] {Usually "**" or "//". Matched using parse.}
+    indent [string! block!] {Usually "  ". Matched using parse.}
 ] [
-    if not parse/all text [any [line-prefix thru newline]] [
-        fail [{decode-lines expects each line to begin with} (mold line-prefix) { and finish with a newline.}]
+    pattern: compose/only [(line-prefix)]
+    if not empty? indent [append pattern compose/only [opt (indent)]]
+    line: [pos: pattern rest: (rest: remove/part pos rest) :rest thru newline]
+    if not parse/all text [any line] [
+        fail [{Expected line} (line-of text pos) {to begin with} (mold line-prefix) {and end with newline.}]
     ]
-    insert text newline
-    replace/all text join newline line-prefix newline
-    if not empty? indent [
-        replace/all text join newline indent newline
-    ]
-    remove text
     remove back tail text
     text
 ]
