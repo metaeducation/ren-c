@@ -335,10 +335,13 @@ REBINT PD_Map(REBPVS *pvs)
         n = Find_Map_Entry(VAL_MAP(data), pvs->select, val, cased);
     }
 
-    if (!n) return PE_NONE;
-
-    FAIL_IF_LOCKED_SERIES(VAL_SERIES(data));
-    pvs->value = VAL_ARRAY_AT_HEAD(data, ((n - 1) * 2) + 1);
+    if (!n) val = UNSET_VALUE;
+    else {
+        FAIL_IF_LOCKED_SERIES(VAL_SERIES(data));
+        val = VAL_ARRAY_AT_HEAD(data, ((n - 1) * 2) + 1);
+    }
+    if (IS_UNSET(val) && !IS_GET_PATH(pvs->orig)) return PE_NONE;
+    pvs->value = val;
     return PE_OK;
 }
 
