@@ -190,6 +190,7 @@ parsing-at: func [
 
 proto-parser: context [
 
+    emit-fileheader: none
     emit-proto: none
     proto-prefix: none
     parse.position: none
@@ -200,12 +201,23 @@ proto-parser: context [
     data: none
     style: none
 
-    process: func [data] [parse data grammar/rule]
+    process: func [text] [parse text grammar/rule]
 
     grammar: context bind [
 
         rule: [
+            parse.position: opt fileheader
             any [parse.position: segment]
+        ]
+
+        fileheader: [
+            (style: data: none)
+            doubleslashed-lines
+            and is-format2016-fileheader
+            (
+                style: 'format2016
+                emit-fileheader
+            )
         ]
 
         segment: [
@@ -231,6 +243,19 @@ proto-parser: context [
 
         doubleslashed-lines: [copy lines some ["//" thru newline]]
 
+        is-format2016-fileheader: parsing-at position [
+            either all [
+                lines: attempt [decode-lines lines {//} { }]
+                data: attempt [
+                    decode-key-value-text trim/auto second split lines [{=///} thru {=//}]
+                ]
+            ][
+                position ; Success.
+            ][
+                none
+            ]
+        ]
+
         is-format2015-intro: parsing-at position [
             either all [
                 lines: attempt [decode-lines lines {//} { }]
@@ -243,7 +268,7 @@ proto-parser: context [
                         none
                     ]
                 ]
-            ] [
+            ][
                 position ; Success.
             ][
                 none
