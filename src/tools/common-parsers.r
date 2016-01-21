@@ -22,6 +22,50 @@ REBOL [
 
 do %c-lexicals.r
 
+decode-key-value-text: function [
+    {Decode key value formatted text.}
+    text [string!]
+][
+    
+    data-fields: [
+        any [
+            position:
+            data-field
+            | newline
+        ]
+    ]
+            
+    data-field: [
+        data-field-name eof: [
+            #" " to newline any [
+                newline not data-field-name not newline to newline
+            ]
+            | any [1 2 newline 2 20 #" " to newline]
+        ] eol: (emit-meta) newline
+    ]
+
+    data-field-char: charset [#"A" - #"Z" #"a" - #"z"]
+    data-field-name: [some data-field-char any [#" " some data-field-char] #":"]
+
+    emit-meta: func [/local key] [
+        key: replace/all copy/part position eof #" " #"-"
+        remove back tail key
+        append meta reduce [
+            to word! key
+            trim/auto copy/part eof eol
+        ]
+    ]
+
+    meta: make block! []
+    
+    if not parse/all text data-fields [
+        fail [{Expected key value format on line} (line-of text position) {and lines must end with newline.}]
+    ]
+
+    new-line/all/skip meta true 2
+]
+
+
 decode-lines: function [
     {Decode text previously encoded using a line prefix e.g. comments (modifies).}
     text [string!]
