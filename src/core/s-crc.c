@@ -187,12 +187,11 @@ REBCNT Hash_Value(const REBVAL *val)
 
     switch(VAL_TYPE(val)) {
 
+    case REB_BAR:
+    case REB_LIT_BAR:
+    case REB_NONE:
     case REB_UNSET:
         ret = 0;
-        break;
-
-    case REB_NONE:
-        ret = 1;
         break;
 
     case REB_LOGIC:

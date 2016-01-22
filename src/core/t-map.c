@@ -352,10 +352,23 @@ REBINT PD_Map(REBPVS *pvs)
 static void Append_Map(REBMAP *map, REBVAL *any_array, REBCNT len)
 {
     REBVAL *value = VAL_ARRAY_AT(any_array);
+    REBVAL *key, *val;
+    REBVAL bar;
+    VAL_INIT_WRITABLE_DEBUG(&bar);
+    SET_BAR(&bar);
     REBCNT n = 0;
 
-    while (n < len && NOT_END(value) && NOT_END(value + 1)) {
-        Find_Map_Entry(map, value, value + 1, TRUE);
+    while (n < len && NOT_END(value)) {
+        if (IS_BAR(value)) {value++; n++; continue;}
+        key = IS_LIT_BAR(value) ? &bar : value;
+
+        if (IS_END(value + 1) || IS_BAR(value + 1)) val = NONE_VALUE;
+        else if (IS_LIT_BAR(value + 1)) val = &bar;
+        else val = value + 1;
+
+        Find_Map_Entry(map, key, val, TRUE);
+        if (IS_END(value + 1)) break;
+
         value += 2;
         n += 2;
     }
@@ -373,9 +386,8 @@ REBOOL MT_Map(REBVAL *out, REBVAL *data, enum Reb_Kind type)
     if (!IS_BLOCK(data) && !IS_MAP(data)) return FALSE;
 
     n = VAL_ARRAY_LEN_AT(data);
-    if (n & 1) return FALSE;
 
-    map = Make_Map(n / 2);
+    map = Make_Map(1 + n / 3); // prudential allocation, think at BARs: map[1 2 | 3 4 | ...]
 
     Append_Map(map, data, UNKNOWN);
 
