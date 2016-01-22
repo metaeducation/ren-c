@@ -507,12 +507,15 @@ REBNATIVE(get)
     REFINE(2, opt);
 
     REBVAL *source = ARG(source);
+    REBVAL out;
+    VAL_INIT_WRITABLE_DEBUG(&out);
 
     if (ANY_WORD(source)) {
         *D_OUT = *GET_OPT_VAR_MAY_FAIL(source);
     }
     else if (ANY_PATH(source)) {
-        if (Do_Path_Throws(D_OUT, NULL, source, NULL))
+        Make_Block_Type(&out, REB_GET_PATH, FALSE, source);
+        if (Do_Path_Throws(D_OUT, NULL, &out, NULL))
             return R_OUT_IS_THROWN;
     }
     else if (ANY_CONTEXT(source)) {
