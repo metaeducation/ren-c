@@ -148,7 +148,7 @@ REBINT Find_Key_Hashed(
             ) {
                 return hash;
             }
-            if (IS_UNSET(++val)) zombie = hash;
+            if (wide > 1 && IS_UNSET(++val) && zombie == len) zombie = hash;
             hash += skip;
             if (hash >= len) hash -= len;
         }
@@ -164,7 +164,7 @@ REBINT Find_Key_Hashed(
             ) {
                 return hash;
             }
-            if (IS_UNSET(++val)) zombie = hash;
+            if (wide > 1 && IS_UNSET(++val) && zombie == len) zombie = hash;
             hash += skip;
             if (hash >= len) hash -= len;
         }
@@ -177,7 +177,7 @@ REBINT Find_Key_Hashed(
             ) {
                 return hash;
             }
-            if (IS_UNSET(++val)) zombie = hash;
+            if (wide > 1 && IS_UNSET(++val) && zombie == len) zombie = hash;
             hash += skip;
             if (hash >= len) hash -= len;
         }
