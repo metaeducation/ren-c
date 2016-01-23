@@ -198,7 +198,8 @@ REBNATIVE(spelling_of)
 REBNATIVE(checksum)
 {
     REBVAL *arg = D_ARG(ARG_CHECKSUM_DATA);
-    REBYTE *data = VAL_BIN_AT(arg);
+    REBYTE *data = VAL_RAW_DATA_AT(arg);
+    REBCNT wide = SERIES_WIDE(VAL_SERIES(arg));
     REBCNT len = Partial1(arg, D_ARG(ARG_CHECKSUM_SIZE));
     REBINT sym = SYM_SHA1;
 
@@ -302,7 +303,7 @@ REBNATIVE(checksum)
         REBINT hash;
         REBINT sum = VAL_INT32(D_ARG(ARG_CHECKSUM_SIZE)); // /size
         if (sum <= 1) sum = 1;
-        hash = Hash_String(data, len) % sum;
+        hash = Hash_String(data, len, wide) % sum;
         SET_INTEGER(D_OUT, hash);
     }
     else {
