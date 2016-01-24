@@ -50,7 +50,7 @@ enum {
 struct Struct_Field {
     REBARR* spec; /* for nested struct */
     REBSER* fields; /* for nested struct */
-    REBCNT sym;
+    REBSYM sym;
 
     REBINT type; /* rebol type */
 
@@ -78,10 +78,10 @@ struct Struct_Data {
     REBFLGS flags;
 };
 
-#define STRUCT_DATA_BIN(v) (SERIES_HEAD(struct Struct_Data, (v)->data)->data)
-#define STRUCT_OFFSET(v) (SERIES_HEAD(struct Struct_Data, (v)->data)->offset)
-#define STRUCT_LEN(v) (SERIES_HEAD(struct Struct_Data, (v)->data)->len)
-#define STRUCT_FLAGS(v) (SERIES_HEAD(struct Struct_Data, (v)->data)->flags)
+#define STRUCT_DATA_BIN(v) (SER_HEAD(struct Struct_Data, (v)->data)->data)
+#define STRUCT_OFFSET(v) (SER_HEAD(struct Struct_Data, (v)->data)->offset)
+#define STRUCT_LEN(v) (SER_HEAD(struct Struct_Data, (v)->data)->len)
+#define STRUCT_FLAGS(v) (SER_HEAD(struct Struct_Data, (v)->data)->flags)
 
 #define VAL_STRUCT_DATA_BIN(v) STRUCT_DATA_BIN(&VAL_STRUCT(v))
 #define VAL_STRUCT_OFFSET(v) STRUCT_OFFSET(&VAL_STRUCT(v))

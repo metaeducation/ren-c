@@ -269,7 +269,7 @@ static REBARR *Pane_To_Array(REBGOB *gob, REBCNT index, REBINT len)
 
     array = Make_Array(len);
     SET_ARRAY_LEN(array, len);
-    val = ARRAY_HEAD(array);
+    val = ARR_HEAD(array);
     gp = GOB_HEAD(gob);
     for (; len > 0; len--, val++, gp++) {
         SET_GOB(val, *gp);
@@ -431,7 +431,7 @@ static REBOOL Set_GOB_Var(REBGOB *gob, const REBVAL *word, const REBVAL *val)
         SET_GOB_DTYPE(gob, GOBD_NONE);
         if (IS_OBJECT(val)) {
             SET_GOB_DTYPE(gob, GOBD_OBJECT);
-            SET_GOB_DATA(gob, ARRAY_SERIES(CONTEXT_VARLIST(VAL_CONTEXT(val))));
+            SET_GOB_DATA(gob, ARR_SERIES(CTX_VARLIST(VAL_CONTEXT(val))));
         }
         else if (IS_BLOCK(val)) {
             SET_GOB_DTYPE(gob, GOBD_BLOCK);
@@ -623,7 +623,7 @@ REBARR *Gob_To_Array(REBGOB *gob)
     REBVAL *vals[6];
     REBINT n = 0;
     REBVAL *val1;
-    REBCNT sym;
+    REBSYM sym;
 
     for (n = 0; words[n]; n++) {
         val = Alloc_Tail_Array(array);

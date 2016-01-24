@@ -114,7 +114,7 @@ REBTYPE(Word)
     REBVAL *arg = D_ARGC > 1 ? D_ARG(2) : NULL;
     enum Reb_Kind type = VAL_TYPE(val);
     REBINT diff;
-    REBCNT sym;
+    REBSYM sym;
 
     switch (action) {
     case A_MAKE:

@@ -86,11 +86,11 @@ REBOOL Catching_Break_Or_Continue(REBVAL *val, REBOOL *stop)
 // items before its VAL_INDEX() omitted.
 //
 static REBARR *Init_Loop(
-    REBCON **context_out,
+    REBCTX **context_out,
     const REBVAL *spec,
     REBVAL *body
 ) {
-    REBCON *context;
+    REBCTX *context;
     REBINT len;
     REBVAL *key;
     REBVAL *var;
@@ -106,16 +106,16 @@ static REBARR *Init_Loop(
     if (len == 0) fail (Error_Invalid_Arg(spec));
 
     context = Alloc_Context(len);
-    SET_ARRAY_LEN(CONTEXT_VARLIST(context), len + 1);
-    SET_ARRAY_LEN(CONTEXT_KEYLIST(context), len + 1);
+    SET_ARRAY_LEN(CTX_VARLIST(context), len + 1);
+    SET_ARRAY_LEN(CTX_KEYLIST(context), len + 1);
 
-    VAL_RESET_HEADER(CONTEXT_VALUE(context), REB_OBJECT);
+    VAL_RESET_HEADER(CTX_VALUE(context), REB_OBJECT);
     INIT_CONTEXT_SPEC(context, NULL);
-    CONTEXT_STACKVARS(context) = NULL;
+    CTX_STACKVARS(context) = NULL;
 
     // Setup for loop:
-    key = CONTEXT_KEYS_HEAD(context);
-    var = CONTEXT_VARS_HEAD(context);
+    key = CTX_KEYS_HEAD(context);
+    var = CTX_VARS_HEAD(context);
 
     if (IS_BLOCK(spec)) spec = VAL_ARRAY_AT(spec);
 
@@ -144,7 +144,7 @@ static REBARR *Init_Loop(
     body_out = Copy_Array_At_Deep_Managed(
         VAL_ARRAY(body), VAL_INDEX(body)
     );
-    Bind_Values_Deep(ARRAY_HEAD(body_out), context);
+    Bind_Values_Deep(ARR_HEAD(body_out), context);
 
     *context_out = context;
 
@@ -387,7 +387,7 @@ static REB_R Loop_Each(struct Reb_Call *call_, LOOP_MODE mode)
 
     // `vars` context (plus var and key for iterating over it)
     //
-    REBCON *context;
+    REBCTX *context;
 
     // `data` series and index (where data is the series/object/map/etc. that
     // the loop is iterating over)
@@ -439,21 +439,21 @@ static REB_R Loop_Each(struct Reb_Call *call_, LOOP_MODE mode)
 
     // Get series info:
     if (ANY_CONTEXT(data_value)) {
-        series = ARRAY_SERIES(CONTEXT_VARLIST(VAL_CONTEXT(data_value)));
+        series = ARR_SERIES(CTX_VARLIST(VAL_CONTEXT(data_value)));
         index = 1;
         //if (context->tail > 3)
-        //  fail (Error_Invalid_Arg(CONTEXT_KEY(context, 3)));
+        //  fail (Error_Invalid_Arg(CTX_KEY(context, 3)));
     }
     else if (IS_MAP(data_value)) {
         series = VAL_SERIES(data_value);
         index = 0;
         //if (context->tail > 3)
-        //  fail (Error_Invalid_Arg(CONTEXT_KEY(context, 3)));
+        //  fail (Error_Invalid_Arg(CTX_KEY(context, 3)));
     }
     else {
         series = VAL_SERIES(data_value);
         index  = VAL_INDEX(data_value);
-        if (index >= cast(REBINT, SERIES_LEN(series))) {
+        if (index >= cast(REBINT, SER_LEN(series))) {
             if (mode == LOOP_REMOVE_EACH) {
                 SET_INTEGER(D_OUT, 0);
             }
@@ -468,12 +468,12 @@ static REB_R Loop_Each(struct Reb_Call *call_, LOOP_MODE mode)
     write_index = index;
 
     // Iterate over each value in the data series block:
-    while (index < (tail = SERIES_LEN(series))) {
+    while (index < (tail = SER_LEN(series))) {
         REBCNT i;
         REBCNT j = 0;
 
-        REBVAL *key = CONTEXT_KEY(context, 1);
-        REBVAL *var = CONTEXT_VAR(context, 1);
+        REBVAL *key = CTX_KEY(context, 1);
+        REBVAL *var = CTX_VAR(context, 1);
 
         read_index = index;  // remember starting spot
 
@@ -486,7 +486,7 @@ static REB_R Loop_Each(struct Reb_Call *call_, LOOP_MODE mode)
             }
 
             if (ANY_ARRAY(data_value)) {
-                *var = *ARRAY_AT(AS_ARRAY(series), index);
+                *var = *ARR_AT(AS_ARRAY(series), index);
             }
             else if (ANY_CONTEXT(data_value)) {
                 if (GET_VAL_FLAG(
@@ -512,7 +512,7 @@ static REB_R Loop_Each(struct Reb_Call *call_, LOOP_MODE mode)
                     }
                 }
                 else if (j == 1)
-                    *var = *ARRAY_AT(AS_ARRAY(series), index);
+                    *var = *ARR_AT(AS_ARRAY(series), index);
                 else {
                     // !!! Review this error (and this routine...)
                     REBVAL key_name;
@@ -527,14 +527,14 @@ static REB_R Loop_Each(struct Reb_Call *call_, LOOP_MODE mode)
                 Set_Vector_Value(var, series, index);
             }
             else if (IS_MAP(data_value)) {
-                REBVAL *val = ARRAY_AT(AS_ARRAY(series), index | 1);
+                REBVAL *val = ARR_AT(AS_ARRAY(series), index | 1);
                 if (!IS_UNSET(val)) {
                     if (j == 0) {
-                        *var = *ARRAY_AT(AS_ARRAY(series), index & ~1);
+                        *var = *ARR_AT(AS_ARRAY(series), index & ~1);
                         if (IS_END(var + 1)) index++; // only words
                     }
                     else if (j == 1)
-                        *var = *ARRAY_AT(AS_ARRAY(series), index);
+                        *var = *ARR_AT(AS_ARRAY(series), index);
                     else {
                         // !!! Review this error (and this routine...)
                         REBVAL key_name;
@@ -600,9 +600,9 @@ static REB_R Loop_Each(struct Reb_Call *call_, LOOP_MODE mode)
                 // be in a good state for the next iteration of the body. :-/
                 //
                 memmove(
-                    SERIES_AT_RAW(series, write_index),
-                    SERIES_AT_RAW(series, read_index),
-                    (index - read_index) * SERIES_WIDE(series)
+                    SER_AT_RAW(series, write_index),
+                    SER_AT_RAW(series, read_index),
+                    (index - read_index) * SER_WIDE(series)
                 );
                 write_index += index - read_index;
             }
@@ -717,12 +717,12 @@ REBNATIVE(for)
     PARAM(5, body);
 
     REBARR *body_copy;
-    REBCON *context;
+    REBCTX *context;
     REBVAL *var;
 
     // Copy body block, make a context, bind loop var to it:
     body_copy = Init_Loop(&context, ARG(word), ARG(body));
-    var = CONTEXT_VAR(context, 1); // safe: not on stack
+    var = CTX_VAR(context, 1); // safe: not on stack
     Val_Init_Object(ARG(word), context); // keep GC safe
     Val_Init_Block(ARG(body), body_copy); // keep GC safe
 
@@ -1021,7 +1021,7 @@ REBNATIVE(loop)
 REBNATIVE(repeat)
 {
     REBARR *body;
-    REBCON *context;
+    REBCTX *context;
     REBVAL *var;
     REBVAL *count = D_ARG(2);
 
@@ -1036,7 +1036,7 @@ REBNATIVE(repeat)
     }
 
     body = Init_Loop(&context, D_ARG(1), D_ARG(3));
-    var = CONTEXT_VAR(context, 1); // safe: not on stack
+    var = CTX_VAR(context, 1); // safe: not on stack
     Val_Init_Object(D_ARG(1), context); // keep GC safe
     Val_Init_Block(D_ARG(3), body); // keep GC safe
 

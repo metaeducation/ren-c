@@ -214,7 +214,7 @@ REBSER *To_Local_Path(const void *p, REBCNT len, REBOOL unicode, REBOOL full)
             OS_FREE(lpath);
         }
         out = UNI_HEAD(dst);
-        n = SERIES_LEN(dst);
+        n = SER_LEN(dst);
     }
 
     // Prescan each file segment for: . .. directory names:
@@ -301,7 +301,7 @@ REBSER *Value_To_OS_Path(REBVAL *val, REBOOL full)
 #ifndef TO_WINDOWS
     // Posix needs UTF8 conversion:
     bin = Make_UTF8_Binary(
-        UNI_HEAD(ser), SERIES_LEN(ser), FN_PAD, OPT_ENC_UNISRC
+        UNI_HEAD(ser), SER_LEN(ser), FN_PAD, OPT_ENC_UNISRC
     );
     Free_Series(ser);
     ser = bin;

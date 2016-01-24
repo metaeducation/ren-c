@@ -145,7 +145,7 @@ REBCNT Find_In_Array(
     // Optimized find word in block:
     if (ANY_WORD(target)) {
         for (; index >= start && index < end; index += skip) {
-            value = ARRAY_AT(array, index);
+            value = ARR_AT(array, index);
             if (ANY_WORD(value)) {
                 cnt = (VAL_WORD_SYM(value) == VAL_WORD_SYM(target));
                 if (flags & AM_FIND_CASE) {
@@ -165,7 +165,7 @@ REBCNT Find_In_Array(
     else if (ANY_ARRAY(target) && !(flags & AM_FIND_ONLY)) {
         for (; index >= start && index < end; index += skip) {
             cnt = 0;
-            value = ARRAY_AT(array, index);
+            value = ARR_AT(array, index);
             for (val = VAL_ARRAY_AT(target); NOT_END(val); val++, value++) {
                 if (0 != Cmp_Value(value, val, LOGICAL(flags & AM_FIND_CASE)))
                     break;
@@ -180,7 +180,7 @@ REBCNT Find_In_Array(
     // Find a datatype in block:
     else if (IS_DATATYPE(target) || IS_TYPESET(target)) {
         for (; index >= start && index < end; index += skip) {
-            value = ARRAY_AT(array, index);
+            value = ARR_AT(array, index);
             // Used if's so we can trace it...
             if (IS_DATATYPE(target)) {
                 if (VAL_TYPE(value) == VAL_TYPE_KIND(target)) return index;
@@ -198,7 +198,7 @@ REBCNT Find_In_Array(
     // All other cases:
     else {
         for (; index >= start && index < end; index += skip) {
-            value = ARRAY_AT(array, index);
+            value = ARR_AT(array, index);
             if (0 == Cmp_Value(value, target, LOGICAL(flags & AM_FIND_CASE)))
                 return index;
             if (flags & AM_FIND_MATCH) break;
@@ -343,7 +343,7 @@ static int Compare_Call(void *thunk, const void *v1, const void *v2)
         v2 = tmp;
     }
 
-    args = ARRAY_AT(VAL_FUNC_PARAMLIST(sort_flags.compare), 1);
+    args = ARR_AT(VAL_FUNC_PARAMLIST(sort_flags.compare), 1);
     if (NOT_END(args) && !TYPE_CHECK(args, VAL_TYPE(cast(const REBVAL*, v1)))) {
         fail (Error(
             RE_EXPECT_ARG,
@@ -454,15 +454,15 @@ static void Sort_Block(
 //
 static void Trim_Array(REBARR *array, REBCNT index, REBCNT flags)
 {
-    REBVAL *head = ARRAY_HEAD(array);
+    REBVAL *head = ARR_HEAD(array);
     REBCNT out = index;
-    REBCNT end = ARRAY_LEN(array);
+    REBCNT end = ARR_LEN(array);
 
     if (flags & AM_TRIM_TAIL) {
         for (; end >= (index + 1); end--) {
             if (VAL_TYPE(head + end - 1) > REB_NONE) break;
         }
-        Remove_Series(ARRAY_SERIES(array), end, ARRAY_LEN(array) - end);
+        Remove_Series(ARR_SERIES(array), end, ARR_LEN(array) - end);
         if (!(flags & AM_TRIM_HEAD) || index >= end) return;
     }
 
@@ -470,17 +470,17 @@ static void Trim_Array(REBARR *array, REBCNT index, REBCNT flags)
         for (; index < end; index++) {
             if (VAL_TYPE(head + index) > REB_NONE) break;
         }
-        Remove_Series(ARRAY_SERIES(array), out, index - out);
+        Remove_Series(ARR_SERIES(array), out, index - out);
     }
 
     if (flags == 0) {
         for (; index < end; index++) {
             if (VAL_TYPE(head + index) > REB_NONE) {
-                *ARRAY_AT(array, out) = head[index];
+                *ARR_AT(array, out) = head[index];
                 out++;
             }
         }
-        Remove_Series(ARRAY_SERIES(array), out, end - out);
+        Remove_Series(ARR_SERIES(array), out, end - out);
     }
 }
 
@@ -690,12 +690,12 @@ repick:
         }
         if (action == A_PICK) {
 pick_it:
-            *D_OUT = ARRAY_HEAD(array)[index];
+            *D_OUT = ARR_HEAD(array)[index];
             return R_OUT;
         }
         arg = D_ARG(3);
         *D_OUT = *arg;
-        ARRAY_HEAD(array)[index] = *arg;
+        ARR_HEAD(array)[index] = *arg;
         return R_OUT;
 */
 
@@ -721,12 +721,12 @@ zero_blk:
 
         // if no /part, just return value, else return block:
         if (!D_REF(2))
-            *D_OUT = ARRAY_HEAD(array)[index];
+            *D_OUT = ARR_HEAD(array)[index];
         else
             Val_Init_Block(
                 D_OUT, Copy_Array_At_Max_Shallow(array, index, len)
             );
-        Remove_Series(ARRAY_SERIES(array), index, len);
+        Remove_Series(ARR_SERIES(array), index, len);
         return R_OUT;
 
     //-- Search:
@@ -750,7 +750,7 @@ zero_blk:
         else {
             ret += len;
             if (ret >= (REBCNT)tail) goto is_none;
-            value = ARRAY_AT(array, ret);
+            value = ARR_AT(array, ret);
         }
         break;
 
@@ -780,7 +780,7 @@ zero_blk:
         if (index < tail) {
             if (index == 0) Reset_Array(array);
             else {
-                SET_END(ARRAY_AT(array, index));
+                SET_END(ARR_AT(array, index));
                 SET_SERIES_LEN(VAL_SERIES(value), cast(REBCNT, index));
             }
         }
@@ -908,13 +908,13 @@ void Assert_Array_Core(REBARR *array)
     // we don't use ASSERT_SERIES the macro here, because that checks to
     // see if the series is an array...and if so, would call this routine!
     //
-    Assert_Series_Core(ARRAY_SERIES(array));
+    Assert_Series_Core(ARR_SERIES(array));
 
-    if (!Is_Array_Series(ARRAY_SERIES(array)))
+    if (!Is_Array_Series(ARR_SERIES(array)))
         Panic_Array(array);
 
-    for (len = 0; len < ARRAY_LEN(array); len++) {
-        REBVAL *value = ARRAY_AT(array, len);
+    for (len = 0; len < ARR_LEN(array); len++) {
+        REBVAL *value = ARR_AT(array, len);
 
         if (IS_END(value)) {
             // Premature end
@@ -922,7 +922,7 @@ void Assert_Array_Core(REBARR *array)
         }
     }
 
-    if (NOT_END(ARRAY_AT(array, ARRAY_LEN(array)))) {
+    if (NOT_END(ARR_AT(array, ARR_LEN(array)))) {
         // Not legal to not have an END! at all
         Panic_Array(array);
     }

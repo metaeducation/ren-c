@@ -96,7 +96,7 @@ static struct digest {
     void (*update)(void *, REBYTE *, REBCNT);
     void (*final)(REBYTE *, void *);
     int (*ctxsize)(void);
-    REBINT index;
+    REBSYM index;
     REBINT len;
     REBINT hmacblock;
 } digests[] = {
@@ -199,12 +199,13 @@ REBNATIVE(checksum)
 {
     REBVAL *arg = D_ARG(ARG_CHECKSUM_DATA);
     REBYTE *data = VAL_RAW_DATA_AT(arg);
-    REBCNT wide = SERIES_WIDE(VAL_SERIES(arg));
+    REBCNT wide = SER_WIDE(VAL_SERIES(arg));
     REBCNT len = Partial1(arg, D_ARG(ARG_CHECKSUM_SIZE));
-    REBINT sym = SYM_SHA1;
+    REBSYM sym = SYM_SHA1;
 
     // Method word:
-    if (D_REF(ARG_CHECKSUM_METHOD)) sym = VAL_WORD_CANON(D_ARG(ARG_CHECKSUM_WORD));
+    if (D_REF(ARG_CHECKSUM_METHOD))
+        sym = VAL_WORD_CANON(D_ARG(ARG_CHECKSUM_WORD));
 
     // If method, secure, or key... find matching digest:
     if (D_REF(ARG_CHECKSUM_METHOD) || D_REF(ARG_CHECKSUM_SECURE) || D_REF(ARG_CHECKSUM_KEY)) {
@@ -406,7 +407,7 @@ REBNATIVE(construct)
     REFINE(4, only);
 
     REBVAL *spec_value = ARG(spec);
-    REBCON *parent = NULL;
+    REBCTX *parent = NULL;
 
     // !!! What is this?
     //
@@ -708,7 +709,7 @@ REBNATIVE(enline)
     REBVAL *val = ARG(series);
     REBSER *ser = VAL_SERIES(val);
 
-    if (SERIES_LEN(ser)) {
+    if (SER_LEN(ser)) {
         if (VAL_BYTE_SIZE(val))
             Enline_Bytes(ser, VAL_INDEX(val), VAL_LEN_AT(val));
         else
@@ -860,7 +861,7 @@ REBNATIVE(to_hex)
     else
         fail (Error_Invalid_Arg(arg));
 
-//  SERIES_LEN(series) = len;
+//  SER_LEN(series) = len;
 //  Val_Init_Series(D_OUT, REB_ISSUE, series);
     Val_Init_Word(D_OUT, REB_ISSUE, Scan_Issue(&buffer[0], len));
 

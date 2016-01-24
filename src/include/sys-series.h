@@ -60,7 +60,7 @@
 // originally given by the allocator.
 //
 // The element size in a REBSER is known as the "width".  It is designed
-// to support widths of elements up to 255 bytes.  (See note on SERIES_FREED
+// to support widths of elements up to 255 bytes.  (See note on SER_FREED
 // about accomodating 256-byte elements.)
 //
 // REBSERs may be either manually memory managed or delegated to the garbage
@@ -110,31 +110,31 @@
 // Series Flags
 //
 enum {
-    // `OPT_SER_0_IS_FALSE` represents the lowest bit and should always be
+    // `SERIES_FLAG_0_IS_FALSE` represents the lowest bit and should always be
     // set to zero.  This is because it means that when the REBSER's
     // contents are interpreted as value data, then the info bits can do
     // double-duty serving as an END marker.  For a description of the
     // method see notes on NOT_END_MASK.
     //
-    OPT_SER_0_IS_FALSE = 1 << 0,
+    SERIES_FLAG_0_IS_FALSE = 1 << 0,
 
-    // `OPT_SER_1_IS_FALSE` is the second lowest bit, and it is set to zero
+    // `SERIES_FLAG_1_IS_FALSE` is the second lowest bit, and it is set to zero
     // as a safety precaution.  In the debug build this is checked by value
     // writes to ensure that when the info flags are serving double duty
     // as an END marker, they do not get overwritten by rogue code that
     // thought a REBVAL* pointing at the memory had a full value's worth
     // of memory to write into.  See WRITABLE_MASK_DEBUG.
     //
-    OPT_SER_1_IS_FALSE = 1 << 1,
+    SERIES_FLAG_1_IS_FALSE = 1 << 1,
 
-    // `OPT_SER_HAS_DYNAMIC` indicates that this series has a dynamically
+    // `SERIES_FLAG_HAS_DYNAMIC` indicates that this series has a dynamically
     // allocated portion.  If it does not, then its data pointer is the
     // address of the embedded value inside of it (marked terminated by
-    // the OPT_SER_0_IS_ZERO if it has an element in it)
+    // the SERIES_FLAG_0_IS_ZERO if it has an element in it)
     //
-    OPT_SER_HAS_DYNAMIC = 1 << 2,
+    SERIES_FLAG_HAS_DYNAMIC = 1 << 2,
 
-    // `OPT_SER_MARK` is used in the "mark and sweep" method of garbage
+    // `SERIES_FLAG_MARK` is used in the "mark and sweep" method of garbage
     // collection.  It is also used for other purposes which need to go
     // through and set a generic bit, e.g. to protect against loops in
     // the transitive closure ("if you hit a SER_MARK, then you've already
@@ -151,9 +151,9 @@ enum {
     // that should be reexamined--so long as bits are free, why reuse if it
     // creates more risk?
     //
-    OPT_SER_MARK = 1 << 3,
+    SERIES_FLAG_MARK = 1 << 3,
 
-    // `OPT_SER_MANAGED` indicates that a series is managed by garbage
+    // `SERIES_FLAG_MANAGED` indicates that a series is managed by garbage
     // collection.  If this bit is not set, then during the GC's sweeping
     // phase the simple fact that it hasn't been SER_MARK'd won't be enough
     // to let it be considered for freeing.
@@ -162,10 +162,10 @@ enum {
     // starts out manually managed, and then must either become managed or be
     // freed before the evaluation that created it ends).
     //
-    OPT_SER_MANAGED = 1 << 4,
+    SERIES_FLAG_MANAGED = 1 << 4,
 
-    // `OPT_SER_ARRAY` indicates that this is a series of REBVAL values, and
-    // is suitable for using as the payload of an ANY-ARRAY! value.  When a
+    // `SERIES_FLAG_ARRAY` indicates that this is a series of REBVAL values,
+    // and suitable for using as the payload of an ANY-ARRAY! value.  When a
     // series carries this bit, that means that if it is also SER_MANAGED
     // then the garbage collector will process its transitive closure to
     // make sure all the values it contains (and the values its references
@@ -176,18 +176,18 @@ enum {
     // creation of series that contain items that incidentally happen to be
     // the same size as a REBVAL, while not actually being REBVALs.)
     //
-    OPT_SER_ARRAY = 1 << 5,
+    SERIES_FLAG_ARRAY = 1 << 5,
 
-    // `OPT_SER_CONTEXT` indicates that this series represents the "varlist"
+    // `SERIES_FLAG_CONTEXT` indicates this series represents the "varlist"
     // of a context.  A second series can be reached from it via the `->misc`
     // field in the series node, which is a second array known as a "keylist".
     //
-    // See notes on REBCON for further details about what a context is.
+    // See notes on REBCTX for further details about what a context is.
     //
-    OPT_SER_CONTEXT = 1 << 6,
+    SERIES_FLAG_CONTEXT = 1 << 6,
 
-    // `OPT_SER_LOCKED` indicates that the series size or values cannot be
-    // modified.  This check is honored by some layers of abstraction, but
+    // `SERIES_FLAG_LOCKED` indicates that the series size or values cannot
+    // be modified.  This check is honored by some layers of abstraction, but
     // if one manages to get a raw pointer into a value in the series data
     // then by that point it cannot be enforced.
     //
@@ -200,11 +200,11 @@ enum {
     // it is distinct as it's a protection on a series itself--which ends
     // up affecting all variable content with that series in the payload.
     //
-    OPT_SER_LOCKED = 1 << 7,
+    SERIES_FLAG_LOCKED = 1 << 7,
 
-    // `OPT_SER_FIXED_SIZE` indicates that the size is fixed, and the series
+    // `SERIES_FLAG_FIXED_SIZE` indicates the size is fixed, and the series
     // cannot be expanded or contracted.  Values within the series are still
-    // writable, assuming OPT_SER_LOCKED isn't set.
+    // writable, assuming SERIES_FLAG_LOCKED isn't set.
     //
     // !!! Is there checking in all paths?  Do series contractions check this?
     //
@@ -213,13 +213,13 @@ enum {
     // code to ignore the usual rule that it is unsafe to hold a pointer to
     // a value inside the series data.
     //
-    // !!! Strictly speaking, OPT_SER_NO_RELOCATE could be a different thing
+    // !!! Strictly speaking, SERIES_FLAG_NO_RELOCATE could be different
     // from fixed size... if there would be a reason to reallocate besides
     // changing size (such as memory compaction).
     //
-    OPT_SER_FIXED_SIZE  = 1 << 8,
+    SERIES_FLAG_FIXED_SIZE  = 1 << 8,
 
-    // `OPT_SER_POWER_OF_2` is flagged when an allocation size was rounded to
+    // `SERIES_FLAG_POWER_OF_2` is set when an allocation size was rounded to
     // a power of 2.  This flag was introduced in Ren-C when accounting was
     // added to make sure the system's notion of how much memory allocation
     // was outstanding would balance out to zero by the time of exiting the
@@ -240,9 +240,9 @@ enum {
     //
     // http://stackoverflow.com/questions/3190146/
     //
-    OPT_SER_POWER_OF_2  = 1 << 9,
+    SERIES_FLAG_POWER_OF_2  = 1 << 9,
 
-    // `OPT_SER_EXTERNAL` indicates that when the series was created, the
+    // `SERIES_FLAG_EXTERNAL` indicates that when the series was created, the
     // `->data` pointer was poked in by the creator.  It takes responsibility
     // for freeing it, so don't free() on GC.
     //
@@ -253,18 +253,18 @@ enum {
     // Ren-Cpp, but by relatively old extensions...so there may be no good
     // answer in the case of those clients (likely either leaks or crashes).
     //
-    OPT_SER_EXTERNAL = 1 << 10,
+    SERIES_FLAG_EXTERNAL = 1 << 10,
 
-    // `OPT_SER_ACCESSIBLE` indicates that the external memory pointed by
+    // `SERIES_FLAG_ACCESSIBLE` indicates that the external memory pointed by
     // `->data` is accessible. This is not checked at every access to the
     // `->data` for the performance consideration, only on those that are
     // known to have possible external memory storage.  Currently this is
-    // used for STRUCT! and to note when an OPT_SER_STACK series has had its
+    // used for STRUCT! and to note when an SERIES_FLAG_STACK series has its
     // stack level popped (there's no data to lookup for words bound to it)
     //
-    OPT_SER_ACCESSIBLE = 1 << 11,
+    SERIES_FLAG_ACCESSIBLE = 1 << 11,
 
-    // `OPT_SER_STACK` indicates that this series data lives on the stack.
+    // `SERIES_FLAG_STACK` indicates that this series data lives on the stack.
     // This is a work in progress to unify objects and function call frames
     // as a prelude to unifying FUNCTION! and CLOSURE!.
     //
@@ -275,7 +275,7 @@ enum {
     // of mapping index numbers in the function paramlist into either the
     // stack array or the dynamic array during binding in an efficient way.
     //
-    OPT_SER_STACK = 1 << 12
+    SERIES_FLAG_STACK = 1 << 12
 };
 
 struct Reb_Series_Dynamic {
@@ -328,15 +328,15 @@ struct Reb_Series {
         //
         struct Reb_Series_Dynamic dynamic;
 
-        // If not OPT_SER_HAS_DYNAMIC, 0 or 1 length arrays can be held
-        // directly in the series node.  The OPT_SER_0_IS_FALSE bit is set to
-        // zero and signals an IS_END().
+        // If not SERIES_FLAG_HAS_DYNAMIC, 0 or 1 length arrays can be held
+        // directly in the series node.  The SERIES_FLAG_0_IS_FALSE bit is set
+        // to zero and signals an IS_END().
         //
         // It is thus an "array" of effectively up to length two.  Either the
         // [0] full element is IS_END(), or the [0] element is another value
         // and the [1] element is read-only and passes IS_END() to terminate
         // (but can't have any other value written, as the info bits are
-        // marked as unwritable by OPT_SER_1_IS_FALSE...this protects the
+        // marked as unwritable by SERIES_FLAG_1_IS_FALSE...this protects the
         // rest of the bits in the debug build as it is checked whenver a
         // REBVAL tries to write a new header.)
         //
@@ -350,8 +350,8 @@ struct Reb_Series {
     // node or not!
     //
     // The lowest 2 bits of info are required to be 0 when used with the trick
-    // of implicitly terminating series data.  See OPT_SER_0_IS_FALSE and
-    // OPT_SER_1_IS_FALSE for more information.
+    // of implicitly terminating series data.  See SERIES_FLAG_0_IS_FALSE and
+    // SERIES_FLAG_1_IS_FALSE for more information.
     //
     // !!! Only the low 32-bits are used on 64-bit platforms.  There could
     // be some interesting added caching feature or otherwise that would use
@@ -360,7 +360,7 @@ struct Reb_Series {
     struct Reb_Value_Header info;
 
     union {
-        REBCNT len; // length of non-arrays/strings when !OPT_SER_HAS_DYNAMIC
+        REBCNT len; // length of non-arrays when !SERIES_FLAG_HAS_DYNAMIC
         REBCNT size;    // used for vectors and bitsets
         REBSER *hashlist; // MAP datatype uses this
         REBARR *keylist; // used by CONTEXT
@@ -388,24 +388,24 @@ struct Reb_Series {
         Panic_Series_Debug((s), __FILE__, __LINE__);
 #endif
 
-#define SERIES_REST(s)   ((s)->content.dynamic.rest)
+#define SER_REST(s)   ((s)->content.dynamic.rest)
 
-#define SERIES_WIDE(s) \
+#define SER_WIDE(s) \
     cast(REBYTE, ((s)->info.bits >> 16) & 0xff)
 
 //
 // Series flags
 //
-// !!! These should be renamed to the more readable SET_SERIES_FLAG, etc.
+// !!! These should be renamed to the more readable SET_SER_FLAG, etc.
 //
 
-#define SERIES_SET_FLAG(s,f) \
+#define SET_SER_FLAG(s,f) \
     cast(void, ((s)->info.bits |= (f)))
 
-#define SERIES_CLR_FLAG(s,f) \
+#define CLEAR_SER_FLAG(s,f) \
     cast(void, ((s)->info.bits &= ~(f)))
 
-#define SERIES_GET_FLAG(s,f) \
+#define GET_SER_FLAG(s,f) \
     LOGICAL((s)->info.bits & (f))
 
 //
@@ -424,18 +424,18 @@ struct Reb_Series {
 // the presence or absence of an END marker in the first slot.
 //
 
-#define SERIES_LEN(s) \
-    (SERIES_GET_FLAG((s), OPT_SER_HAS_DYNAMIC) \
+#define SER_LEN(s) \
+    (GET_SER_FLAG((s), SERIES_FLAG_HAS_DYNAMIC) \
         ? ((s)->content.dynamic.len + 0) \
-        : SERIES_GET_FLAG((s), OPT_SER_ARRAY) \
+        : GET_SER_FLAG((s), SERIES_FLAG_ARRAY) \
             ? (IS_END(&(s)->content.values[0]) ? 0 : 1) \
             : (s)->misc.len)
 
 #define SET_SERIES_LEN(s,l) \
-    (assert(!SERIES_GET_FLAG((s), OPT_SER_STACK)), \
-        SERIES_GET_FLAG((s), OPT_SER_HAS_DYNAMIC) \
+    (assert(!GET_SER_FLAG((s), SERIES_FLAG_STACK)), \
+        GET_SER_FLAG((s), SERIES_FLAG_HAS_DYNAMIC) \
         ? ((s)->content.dynamic.len = (l)) \
-        : SERIES_GET_FLAG((s), OPT_SER_ARRAY) \
+        : GET_SER_FLAG((s), SERIES_FLAG_ARRAY) \
             ? 1337 /* trust the END marker? */ \
             : ((s)->misc.len = (l)))
 
@@ -443,15 +443,15 @@ struct Reb_Series {
 // for instance a generic debugging routine might just want a byte pointer
 // but have no element type pointer to pass in.
 //
-#define SERIES_DATA_RAW(s) \
-    (SERIES_GET_FLAG((s), OPT_SER_HAS_DYNAMIC) \
+#define SER_DATA_RAW(s) \
+    (GET_SER_FLAG((s), SERIES_FLAG_HAS_DYNAMIC) \
         ? ((s)->content.dynamic.data + 0) /* Lvalue! */ \
         : cast(REBYTE*, &(s)->content.values[0]))
 
-#define SERIES_AT_RAW(s,i)      (SERIES_DATA_RAW(s) + (SERIES_WIDE(s) * (i)))
+#define SER_AT_RAW(s,i)      (SER_DATA_RAW(s) + (SER_WIDE(s) * (i)))
 
-#define SERIES_SET_EXTERNAL_DATA(s,p) \
-    (SERIES_SET_FLAG((s), OPT_SER_HAS_DYNAMIC), \
+#define SER_SET_EXTERNAL_DATA(s,p) \
+    (SET_SER_FLAG((s), SERIES_FLAG_HAS_DYNAMIC), \
         (s)->content.dynamic.data = cast(REBYTE*, (p)))
 
 //
@@ -460,73 +460,73 @@ struct Reb_Series {
 // to that type.
 //
 // Note that series indexing in C is zero based.  So as far as SERIES is
-// concerned, `SERIES_HEAD(t, s)` is the same as `SERIES_AT(t, s, 0)`
+// concerned, `SER_HEAD(t, s)` is the same as `SER_AT(t, s, 0)`
 //
 // !!! C++11 note: can't use cast helper here and have the const of an
 // incoming REBVAL be ignored... must use `(old_cast)casting_style`
 //
 
-#define SERIES_AT(t,s,i) \
-    (assert(SERIES_WIDE(s) == sizeof(t)), \
-        (t*)(SERIES_DATA_RAW(s) + (sizeof(t) * (i))))
+#define SER_AT(t,s,i) \
+    (assert(SER_WIDE(s) == sizeof(t)), \
+        (t*)(SER_DATA_RAW(s) + (sizeof(t) * (i))))
 
-#define SERIES_HEAD(t,s) \
-    SERIES_AT(t, (s), 0)
+#define SER_HEAD(t,s) \
+    SER_AT(t, (s), 0)
 
-#define SERIES_TAIL(t,s) \
-    SERIES_AT(t, (s), SERIES_LEN(s))
+#define SER_TAIL(t,s) \
+    SER_AT(t, (s), SER_LEN(s))
 
-#define SERIES_LAST(t,s) \
-    (assert(SERIES_LEN(s) != 0), SERIES_AT(t, (s), SERIES_LEN(s) - 1))
+#define SER_LAST(t,s) \
+    (assert(SER_LEN(s) != 0), SER_AT(t, (s), SER_LEN(s) - 1))
 
 //
 // Series size measurements:
 //
-// SERIES_TOTAL - bytes of memory allocated (including bias area)
-// SERIES_SPACE - bytes of series (not including bias area)
-// SERIES_USED - bytes being used, including terminator
+// SER_TOTAL - bytes of memory allocated (including bias area)
+// SER_SPACE - bytes of series (not including bias area)
+// SER_USED - bytes being used, including terminator
 //
 
-#define SERIES_TOTAL(s) \
-    ((SERIES_REST(s) + SERIES_BIAS(s)) * SERIES_WIDE(s))
+#define SER_TOTAL(s) \
+    ((SER_REST(s) + SER_BIAS(s)) * SER_WIDE(s))
 
-#define SERIES_SPACE(s) \
-    (SERIES_REST(s) * SERIES_WIDE(s))
+#define SER_SPACE(s) \
+    (SER_REST(s) * SER_WIDE(s))
 
-#define SERIES_USED(s) \
-    ((SERIES_LEN(s) + 1) * SERIES_WIDE(s))
+#define SER_USED(s) \
+    ((SER_LEN(s) + 1) * SER_WIDE(s))
 
 // Returns space that a series has available (less terminator):
-#define SERIES_FULL(s) (SERIES_LEN(s) + 1 >= SERIES_REST(s))
-#define SERIES_AVAIL(s) (SERIES_REST(s) - (SERIES_LEN(s) + 1))
-#define SERIES_FITS(s,n) ((SERIES_LEN(s) + (n) + 1) <= SERIES_REST(s))
+#define SER_FULL(s) (SER_LEN(s) + 1 >= SER_REST(s))
+#define SER_AVAIL(s) (SER_REST(s) - (SER_LEN(s) + 1))
+#define SER_FITS(s,n) ((SER_LEN(s) + (n) + 1) <= SER_REST(s))
 
 
-#define Is_Array_Series(s) SERIES_GET_FLAG((s), OPT_SER_ARRAY)
+#define Is_Array_Series(s) GET_SER_FLAG((s), SERIES_FLAG_ARRAY)
 
 #define FAIL_IF_LOCKED_SERIES(s) \
-    if (SERIES_GET_FLAG(s, OPT_SER_LOCKED)) fail (Error(RE_LOCKED))
+    if (GET_SER_FLAG(s, SERIES_FLAG_LOCKED)) fail (Error(RE_LOCKED))
 
 //
 // Series external data accessible
 //
-#define SERIES_DATA_NOT_ACCESSIBLE(s) \
-    (SERIES_GET_FLAG(s, OPT_SER_EXTERNAL) \
-     && !SERIES_GET_FLAG(s, OPT_SER_ACCESSIBLE))
+#define SER_DATA_NOT_ACCESSIBLE(s) \
+    (GET_SER_FLAG(s, SERIES_FLAG_EXTERNAL) \
+     && !GET_SER_FLAG(s, SERIES_FLAG_ACCESSIBLE))
 //
 // Optimized expand when at tail (but, does not reterminate)
 //
 
 #define EXPAND_SERIES_TAIL(s,l) \
     do { \
-        if (SERIES_FITS((s), (l))) (s)->content.dynamic.len += (l); \
-        else Expand_Series((s), SERIES_LEN(s), (l)); \
+        if (SER_FITS((s), (l))) (s)->content.dynamic.len += (l); \
+        else Expand_Series((s), SER_LEN(s), (l)); \
     } while (0)
 
 #define RESIZE_SERIES(s,l) \
     do { \
         (s)->content.dynamic.len = 0; \
-        if (!SERIES_FITS((s), (l))) Expand_Series((s), SERIES_LEN(s), (l)); \
+        if (!SER_FITS((s), (l))) Expand_Series((s), SER_LEN(s), (l)); \
         (s)->content.dynamic.len = 0; \
     } while (0)
 
@@ -545,13 +545,13 @@ struct Reb_Series {
 #define CLEAR_SEQUENCE(s) \
     do { \
         assert(!Is_Array_Series(s)); \
-        CLEAR(SERIES_DATA_RAW(s), SERIES_SPACE(s)); \
+        CLEAR(SER_DATA_RAW(s), SER_SPACE(s)); \
     } while (0)
 
 #define TERM_SEQUENCE(s) \
     do { \
         assert(!Is_Array_Series(s)); \
-        memset(SERIES_AT_RAW((s), SERIES_LEN(s)), 0, SERIES_WIDE(s)); \
+        memset(SER_AT_RAW((s), SER_LEN(s)), 0, SER_WIDE(s)); \
     } while (0)
 
 #ifdef NDEBUG
@@ -621,7 +621,7 @@ struct Reb_Series {
     Manage_Series(s)
 
 #define ENSURE_SERIES_MANAGED(s) \
-    (SERIES_GET_FLAG((s), OPT_SER_MANAGED) \
+    (GET_SER_FLAG((s), SERIES_FLAG_MANAGED) \
         ? NOOP \
         : MANAGE_SERIES(s))
 
@@ -634,7 +634,7 @@ struct Reb_Series {
 #else
     #define ASSERT_SERIES_MANAGED(s) \
         do { \
-            if (!SERIES_GET_FLAG((s), OPT_SER_MANAGED)) \
+            if (!GET_SER_FLAG((s), SERIES_FLAG_MANAGED)) \
                 Panic_Series(s); \
         } while (0)
 
@@ -675,7 +675,7 @@ struct Reb_Series {
     do { \
         GC_Series_Guard->content.dynamic.len--; \
         assert((s) == \
-            *SERIES_AT(REBSER*, GC_Series_Guard, SERIES_LEN(GC_Series_Guard)) \
+            *SER_AT(REBSER*, GC_Series_Guard, SER_LEN(GC_Series_Guard)) \
         ); \
     } while (0)
 
@@ -716,7 +716,7 @@ struct Reb_Series {
 // For easier type-correctness, the series macros are given with names BIN_XXX
 // and UNI_XXX.  There aren't distinct data types for the series themselves,
 // just REBSER* is used.  Hence BIN_LEN() and UNI_LEN() aren't needed as you
-// could just use SERIES_LEN(), but it helps a bit for readability...and an
+// could just use SER_LEN(), but it helps a bit for readability...and an
 // assert is included to ensure the size matches up.
 //
 
@@ -733,12 +733,12 @@ struct Reb_Series {
 // BIN_XXX: Binary or byte-size string seres macros
 //
 
-#define BIN_AT(s,n)     SERIES_AT(REBYTE, (s), (n))
-#define BIN_HEAD(s)     SERIES_HEAD(REBYTE, (s))
-#define BIN_TAIL(s)     SERIES_TAIL(REBYTE, (s))
-#define BIN_LAST(s)     SERIES_LAST(REBYTE, (s))
+#define BIN_AT(s,n)     SER_AT(REBYTE, (s), (n))
+#define BIN_HEAD(s)     SER_HEAD(REBYTE, (s))
+#define BIN_TAIL(s)     SER_TAIL(REBYTE, (s))
+#define BIN_LAST(s)     SER_LAST(REBYTE, (s))
 
-#define BIN_LEN(s)      (assert(BYTE_SIZE(s)), SERIES_LEN(s))
+#define BIN_LEN(s)      (assert(BYTE_SIZE(s)), SER_LEN(s))
 
 #define SET_BIN_END(s,n) (*BIN_AT(s,n) = 0)
 
@@ -747,15 +747,15 @@ struct Reb_Series {
 //
 
 #define UNI_LEN(s) \
-    (assert(SERIES_WIDE(s) == sizeof(REBUNI), SERIES_LEN(s))
+    (assert(SER_WIDE(s) == sizeof(REBUNI), SER_LEN(s))
 
 #define SET_UNI_LEN(s,l) \
-    (assert(SERIES_WIDE(s) == sizeof(REBUNI), SET_SERIES_LEN((s), (l)))
+    (assert(SER_WIDE(s) == sizeof(REBUNI), SET_SERIES_LEN((s), (l)))
 
-#define UNI_AT(s,n)     SERIES_AT(REBUNI, (s), (n))
-#define UNI_HEAD(s)     SERIES_HEAD(REBUNI, (s))
-#define UNI_TAIL(s)     SERIES_TAIL(REBUNI, (s))
-#define UNI_LAST(s)     SERIES_LAST(REBUNI, (s))
+#define UNI_AT(s,n)     SER_AT(REBUNI, (s), (n))
+#define UNI_HEAD(s)     SER_HEAD(REBUNI, (s))
+#define UNI_TAIL(s)     SER_TAIL(REBUNI, (s))
+#define UNI_LAST(s)     SER_LAST(REBUNI, (s))
 
 #define UNI_TERM(s)     (*UNI_TAIL(s) = 0)
 #define UNI_RESET(s)    (UNI_HEAD(s)[(s)->tail = 0] = 0)
@@ -782,7 +782,7 @@ struct Reb_Series {
 //
 // A "Rebol Array" is a series of REBVAL values which is terminated by an
 // END marker.  While many operations are shared in common with REBSER, the
-// (deliberate) type incompatibility requires either a cast with ARRAY_SERIES
+// (deliberate) type incompatibility requires either a cast with ARR_SERIES
 // or use of a wrapper macro from this list.
 //
 // !!! Write more about the special concerns of arrays here.
@@ -801,38 +801,38 @@ struct Reb_Array {
 // disabled by making arrays and series synonyms in "non-type-check" builds.
 //
 #define AS_ARRAY(s)         (cast(REBARR*, (s)))
-#define ARRAY_SERIES(a)     (&(a)->series)
+#define ARR_SERIES(a)     (&(a)->series)
 
 // HEAD, TAIL, and LAST refer to specific value pointers in the array.  An
 // empty array should have an END marker in its head slot, and since it has
-// no last value then ARRAY_LAST should not be called (this is checked in
+// no last value then ARR_LAST should not be called (this is checked in
 // debug builds).  A fully constructed array should always have an END
 // marker in its last slot, which is one past the last position that is
 // valid for writing a full REBVAL.
 //
 
-#define ARRAY_AT(a, n)      SERIES_AT(REBVAL, ARRAY_SERIES(a), (n))
-#define ARRAY_HEAD(a)       SERIES_HEAD(REBVAL, ARRAY_SERIES(a))
-#define ARRAY_TAIL(a)       SERIES_TAIL(REBVAL, ARRAY_SERIES(a))
-#define ARRAY_LAST(a)       SERIES_LAST(REBVAL, ARRAY_SERIES(a))
+#define ARR_AT(a, n)      SER_AT(REBVAL, ARR_SERIES(a), (n))
+#define ARR_HEAD(a)       SER_HEAD(REBVAL, ARR_SERIES(a))
+#define ARR_TAIL(a)       SER_TAIL(REBVAL, ARR_SERIES(a))
+#define ARR_LAST(a)       SER_LAST(REBVAL, ARR_SERIES(a))
 
 // As with an ordinary REBSER, a REBARR has separate management of its length
 // and its terminator.  Many routines seek to control these independently for
 // performance reasons (for better or worse).
 //
-#define ARRAY_LEN(a) \
-    (assert(Is_Array_Series(ARRAY_SERIES(a))), SERIES_LEN(ARRAY_SERIES(a)))
+#define ARR_LEN(a) \
+    (assert(Is_Array_Series(ARR_SERIES(a))), SER_LEN(ARR_SERIES(a)))
 
 #define SET_ARRAY_LEN(a,l) \
-    (assert(Is_Array_Series(ARRAY_SERIES(a))), \
-        SET_SERIES_LEN(ARRAY_SERIES(a), (l)))
+    (assert(Is_Array_Series(ARR_SERIES(a))), \
+        SET_SERIES_LEN(ARR_SERIES(a), (l)))
 
 //
 // !!! Write more about termination in series documentation.
 //
 
 #define TERM_ARRAY(a) \
-    SET_END(ARRAY_TAIL(a))
+    SET_END(ARR_TAIL(a))
 
 #define RESET_ARRAY(a) \
     (SET_ARRAY_LEN((a), 0), TERM_ARRAY(a))
@@ -840,29 +840,29 @@ struct Reb_Array {
 #define TERM_SERIES(s) \
     Is_Array_Series(s) \
         ? (void)TERM_ARRAY(AS_ARRAY(s)) \
-        : (void)memset(SERIES_AT_RAW(s, SERIES_LEN(s)), 0, SERIES_WIDE(s))
+        : (void)memset(SER_AT_RAW(s, SER_LEN(s)), 0, SER_WIDE(s))
 
 // Setting and getting array flags is common enough to want a macro for it
-// vs. having to extract the ARRAY_SERIES to do it each time.
+// vs. having to extract the ARR_SERIES to do it each time.
 //
-#define ARRAY_SET_FLAG(a,f)     SERIES_SET_FLAG(ARRAY_SERIES(a), (f))
-#define ARRAY_CLR_FLAG(a,f)     SERIES_CLR_FLAG(ARRAY_SERIES(a), (f))
-#define ARRAY_GET_FLAG(a,f)     SERIES_GET_FLAG(ARRAY_SERIES(a), (f))
+#define SET_ARR_FLAG(a,f)     SET_SER_FLAG(ARR_SERIES(a), (f))
+#define CLEAR_ARR_FLAG(a,f)     CLEAR_SER_FLAG(ARR_SERIES(a), (f))
+#define GET_ARR_FLAG(a,f)     GET_SER_FLAG(ARR_SERIES(a), (f))
 
 #define FAIL_IF_LOCKED_ARRAY(a) \
-    FAIL_IF_LOCKED_SERIES(ARRAY_SERIES(a))
+    FAIL_IF_LOCKED_SERIES(ARR_SERIES(a))
 
 #define PUSH_GUARD_ARRAY(a) \
-    PUSH_GUARD_SERIES(ARRAY_SERIES(a))
+    PUSH_GUARD_SERIES(ARR_SERIES(a))
 
 #define DROP_GUARD_ARRAY(a) \
-    DROP_GUARD_SERIES(ARRAY_SERIES(a))
+    DROP_GUARD_SERIES(ARR_SERIES(a))
 
 #define MANAGE_ARRAY(array) \
-    MANAGE_SERIES(ARRAY_SERIES(array))
+    MANAGE_SERIES(ARR_SERIES(array))
 
 #define ENSURE_ARRAY_MANAGED(array) \
-    ENSURE_SERIES_MANAGED(ARRAY_SERIES(array))
+    ENSURE_SERIES_MANAGED(ARR_SERIES(array))
 
 #define Append_Value(a,v) \
     (*Alloc_Tail_Array((a)) = *(v), NOOP)
@@ -886,7 +886,7 @@ struct Reb_Array {
     Copy_Array_At_Extra_Shallow((a), 0, (e))
 
 #define Free_Array(a) \
-    Free_Series(ARRAY_SERIES(a))
+    Free_Series(ARR_SERIES(a))
 
 #ifdef NDEBUG
     #define ASSERT_ARRAY(s) cast(void, 0)
@@ -897,19 +897,19 @@ struct Reb_Array {
     #define ASSERT_ARRAY(s) Assert_Array_Core(s)
 
     #define ASSERT_ARRAY_MANAGED(array) \
-        ASSERT_SERIES_MANAGED(ARRAY_SERIES(array))
+        ASSERT_SERIES_MANAGED(ARR_SERIES(array))
 
     #define Panic_Array(a) \
-        Panic_Series(ARRAY_SERIES(a))
+        Panic_Series(ARR_SERIES(a))
 
     #define Debug_Array(a) \
-        Debug_Series(ARRAY_SERIES(a))
+        Debug_Series(ARR_SERIES(a))
 #endif
 
 
 //=////////////////////////////////////////////////////////////////////////=//
 //
-//  REBCON (a.k.a. "Context")
+//  REBCTX (a.k.a. "Context")
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
@@ -947,62 +947,62 @@ struct Reb_Context {
 // type checking purposes.
 //
 #ifdef NDEBUG
-    #define AS_CONTEXT(s)       cast(REBCON*, (s))
+    #define AS_CONTEXT(s)       cast(REBCTX*, (s))
 #else
     // Put a debug version here that asserts.
-    #define AS_CONTEXT(s)       cast(REBCON*, (s))
+    #define AS_CONTEXT(s)       cast(REBCTX*, (s))
 #endif
 
-#define CONTEXT_VARLIST(c) \
+#define CTX_VARLIST(c) \
     (&(c)->varlist)
 
 // If you want to talk generically about a context just for the purposes of
 // setting its series flags (for instance) and not to access the "varlist"
-// data, then use CONTEXT_SERIES(), as actual var access is hybridized
+// data, then use CTX_SERIES(), as actual var access is hybridized
 // between stack vars and dynamic vars...so there's not always a "varlist"
 //
-#define CONTEXT_SERIES(c) \
-    ARRAY_SERIES(CONTEXT_VARLIST(c))
+#define CTX_SERIES(c) \
+    ARR_SERIES(CTX_VARLIST(c))
 
 //
 // Special property: keylist pointer is stored in the misc field of REBSER
 //
 
-#define CONTEXT_KEYLIST(c) \
-    (ARRAY_SERIES(CONTEXT_VARLIST(c))->misc.keylist)
+#define CTX_KEYLIST(c) \
+    (ARR_SERIES(CTX_VARLIST(c))->misc.keylist)
 
 #define INIT_CONTEXT_KEYLIST(c,k) \
-    (ARRAY_SERIES(CONTEXT_VARLIST(c))->misc.keylist = (k))
+    (ARR_SERIES(CTX_VARLIST(c))->misc.keylist = (k))
 
 // The keys and vars are accessed by positive integers starting at 1.  If
 // indexed access is used then the debug build will check to be sure that
 // the indexing is legal.  To get a pointer to the first key or value
 // regardless of length (e.g. will be an END if 0 keys/vars) use HEAD
 //
-#define CONTEXT_KEYS_HEAD(c)    ARRAY_AT(CONTEXT_KEYLIST(c), 1)
-#define CONTEXT_VARS_HEAD(c) \
-    (ARRAY_GET_FLAG(CONTEXT_VARLIST(c), OPT_SER_STACK) \
-        ? VAL_CONTEXT_STACKVARS(CONTEXT_VALUE(c)) \
-        : ARRAY_AT(CONTEXT_VARLIST(c), 1))
+#define CTX_KEYS_HEAD(c)    ARR_AT(CTX_KEYLIST(c), 1)
+#define CTX_VARS_HEAD(c) \
+    (GET_ARR_FLAG(CTX_VARLIST(c), SERIES_FLAG_STACK) \
+        ? VAL_CONTEXT_STACKVARS(CTX_VALUE(c)) \
+        : ARR_AT(CTX_VARLIST(c), 1))
 
 #ifdef NDEBUG
-    #define CONTEXT_KEY(c,n)    (CONTEXT_KEYS_HEAD(c) + (n) - 1)
-    #define CONTEXT_VAR(c,n)    (CONTEXT_VARS_HEAD(c) + (n) - 1)
+    #define CTX_KEY(c,n)    (CTX_KEYS_HEAD(c) + (n) - 1)
+    #define CTX_VAR(c,n)    (CTX_VARS_HEAD(c) + (n) - 1)
 #else
-    #define CONTEXT_KEY(c,n)    CONTEXT_KEY_Debug((c), (n))
-    #define CONTEXT_VAR(c,n)    CONTEXT_VAR_Debug((c), (n))
+    #define CTX_KEY(c,n)    CTX_KEY_Debug((c), (n))
+    #define CTX_VAR(c,n)    CTX_VAR_Debug((c), (n))
 #endif
-#define CONTEXT_KEY_SYM(c,n)    VAL_TYPESET_SYM(CONTEXT_KEY((c), (n)))
-#define CONTEXT_KEY_CANON(c,n)  VAL_TYPESET_CANON(CONTEXT_KEY((c), (n)))
+#define CTX_KEY_SYM(c,n)    VAL_TYPESET_SYM(CTX_KEY((c), (n)))
+#define CTX_KEY_CANON(c,n)  VAL_TYPESET_CANON(CTX_KEY((c), (n)))
 
 // There may not be any dynamic or stack allocation available for a stack
 // allocated context, and in that case it will have to come out of the
 // REBSER node data itself.
 //
-#define CONTEXT_VALUE(c) \
-    (ARRAY_GET_FLAG(CONTEXT_VARLIST(c), OPT_SER_STACK) \
-        ? &ARRAY_SERIES(CONTEXT_VARLIST(c))->content.values[0] \
-        : ARRAY_HEAD(CONTEXT_VARLIST(c)))
+#define CTX_VALUE(c) \
+    (GET_ARR_FLAG(CTX_VARLIST(c), SERIES_FLAG_STACK) \
+        ? &ARR_SERIES(CTX_VARLIST(c))->content.values[0] \
+        : ARR_HEAD(CTX_VARLIST(c)))
 
 // Navigate from context to context components.  Note that the context's
 // "length" does not count the [0] cell of either the varlist or the keylist.
@@ -1012,44 +1012,44 @@ struct Reb_Context {
 // (and getting an answer for the length back that was the same as the length
 // requested in context creation).
 //
-#define CONTEXT_LEN(c)          (ARRAY_LEN(CONTEXT_KEYLIST(c)) - 1)
-#define CONTEXT_ROOTKEY(c)      ARRAY_HEAD(CONTEXT_KEYLIST(c))
-#define CONTEXT_TYPE(c)         VAL_TYPE(CONTEXT_VALUE(c))
+#define CTX_LEN(c)          (ARR_LEN(CTX_KEYLIST(c)) - 1)
+#define CTX_ROOTKEY(c)      ARR_HEAD(CTX_KEYLIST(c))
+#define CTX_TYPE(c)         VAL_TYPE(CTX_VALUE(c))
 
 #define INIT_CONTEXT_SPEC(c,s) \
-    (assert(!IS_FRAME(CONTEXT_VALUE(c))), \
-        VAL_CONTEXT_SPEC(CONTEXT_VALUE(c)) = (s))
+    (assert(!IS_FRAME(CTX_VALUE(c))), \
+        VAL_CONTEXT_SPEC(CTX_VALUE(c)) = (s))
 
-#define CONTEXT_SPEC(c) \
-    (VAL_CONTEXT_SPEC(CONTEXT_VALUE(c)) + 0)
+#define CTX_SPEC(c) \
+    (VAL_CONTEXT_SPEC(CTX_VALUE(c)) + 0)
 
 #define INIT_CONTEXT_FUNC(c,f) \
-    (assert(IS_FRAME(CONTEXT_VALUE(c))), \
-        VAL_CONTEXT_FUNC(CONTEXT_VALUE(c)) = (f))
+    (assert(IS_FRAME(CTX_VALUE(c))), \
+        VAL_CONTEXT_FUNC(CTX_VALUE(c)) = (f))
 
-#define CONTEXT_FUNC(c) \
-    (VAL_CONTEXT_FUNC(CONTEXT_VALUE(c)) + 0)
+#define CTX_FUNC(c) \
+    (VAL_CONTEXT_FUNC(CTX_VALUE(c)) + 0)
 
-#define CONTEXT_STACKVARS(c)    VAL_CONTEXT_STACKVARS(CONTEXT_VALUE(c))
+#define CTX_STACKVARS(c)    VAL_CONTEXT_STACKVARS(CTX_VALUE(c))
 
 #define FAIL_IF_LOCKED_CONTEXT(c) \
-    FAIL_IF_LOCKED_ARRAY(CONTEXT_VARLIST(c))
+    FAIL_IF_LOCKED_ARRAY(CTX_VARLIST(c))
 
 #define FREE_CONTEXT(c) \
     do { \
-        Free_Array(CONTEXT_KEYLIST(c)); \
-        Free_Array(CONTEXT_VARLIST(c)); \
+        Free_Array(CTX_KEYLIST(c)); \
+        Free_Array(CTX_VARLIST(c)); \
     } while (0)
 
 #define PUSH_GUARD_CONTEXT(c) \
-    PUSH_GUARD_ARRAY(CONTEXT_VARLIST(c)) // varlist points to/guards keylist
+    PUSH_GUARD_ARRAY(CTX_VARLIST(c)) // varlist points to/guards keylist
 
 #define DROP_GUARD_CONTEXT(c) \
-    DROP_GUARD_ARRAY(CONTEXT_VARLIST(c))
+    DROP_GUARD_ARRAY(CTX_VARLIST(c))
 
 #if! defined(NDEBUG)
     #define Panic_Context(c) \
-        Panic_Array(CONTEXT_VARLIST(c))
+        Panic_Array(CTX_VARLIST(c))
 #endif
 
 
@@ -1079,16 +1079,16 @@ struct Reb_Func {
 
 #define FUNC_PARAMLIST(f)       (&(f)->paramlist)
 
-#define FUNC_NUM_PARAMS(f)      (ARRAY_LEN(FUNC_PARAMLIST(f)) - 1)
-#define FUNC_PARAMS_HEAD(f)     ARRAY_AT(FUNC_PARAMLIST(f), 1)
+#define FUNC_NUM_PARAMS(f)      (ARR_LEN(FUNC_PARAMLIST(f)) - 1)
+#define FUNC_PARAMS_HEAD(f)     ARR_AT(FUNC_PARAMLIST(f), 1)
 #ifdef NDEBUG
-    #define FUNC_PARAM(f,n)     ARRAY_AT(FUNC_PARAMLIST(f), (n))
+    #define FUNC_PARAM(f,n)     ARR_AT(FUNC_PARAMLIST(f), (n))
 #else
     #define FUNC_PARAM(f,n)     FUNC_PARAM_Debug((f), (n))
 #endif
 #define FUNC_PARAM_SYM(f,n)     VAL_TYPESET_SYM(FUNC_PARAM((f), (n)))
 
-#define FUNC_VALUE(f)           ARRAY_HEAD(FUNC_PARAMLIST(f))
+#define FUNC_VALUE(f)           ARR_HEAD(FUNC_PARAMLIST(f))
 #define FUNC_SPEC(f)            (FUNC_VALUE(f)->payload.any_function.spec)
 #define FUNC_CODE(f)            (FUNC_VALUE(f)->payload.any_function.impl.code)
 #define FUNC_BODY(f)            (FUNC_VALUE(f)->payload.any_function.impl.body)
@@ -1120,8 +1120,8 @@ struct Reb_Map {
 };
 
 #define MAP_PAIRLIST(m)         (&(m)->pairlist)
-#define MAP_HASHLIST(m)         (ARRAY_SERIES(&(m)->pairlist)->misc.hashlist)
-#define MAP_HASHES(m)           SERIES_HEAD(MAP_HASHLIST(m))
+#define MAP_HASHLIST(m)         (ARR_SERIES(&(m)->pairlist)->misc.hashlist)
+#define MAP_HASHES(m)           SER_HEAD(MAP_HASHLIST(m))
 
 // !!! Should there be a MAP_LEN()?  Current implementation has NONE in
 // slots that are unused, so can give a deceptive number.  But so can

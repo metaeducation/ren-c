@@ -43,8 +43,8 @@ static REBOOL Same_Context(const REBVAL *val, const REBVAL *arg)
 
 static REBOOL Equal_Context(const REBVAL *val, const REBVAL *arg)
 {
-    REBCON *f1;
-    REBCON *f2;
+    REBCTX *f1;
+    REBCTX *f2;
     REBVAL *key1;
     REBVAL *key2;
     REBVAL *var1;
@@ -66,10 +66,10 @@ static REBOOL Equal_Context(const REBVAL *val, const REBVAL *arg)
     // fields of objects (notably `self`) do not figure into the `equal?`
     // of their public portions.
 
-    key1 = CONTEXT_KEYS_HEAD(f1);
-    key2 = CONTEXT_KEYS_HEAD(f2);
-    var1 = CONTEXT_VARS_HEAD(f1);
-    var2 = CONTEXT_VARS_HEAD(f2);
+    key1 = CTX_KEYS_HEAD(f1);
+    key2 = CTX_KEYS_HEAD(f2);
+    var1 = CTX_VARS_HEAD(f1);
+    var2 = CTX_VARS_HEAD(f2);
 
     // Compare each entry, in order.  This order dependence suggests that
     // an object made with `make object! [a: 1 b: 2]` will not compare equal
@@ -130,7 +130,7 @@ static REBOOL Equal_Context(const REBVAL *val, const REBVAL *arg)
 }
 
 
-static void Append_To_Context(REBCON *context, REBVAL *arg)
+static void Append_To_Context(REBCTX *context, REBVAL *arg)
 {
     REBCNT i, len;
     REBVAL *word;
@@ -175,10 +175,10 @@ static void Append_To_Context(REBCON *context, REBVAL *arg)
             //
             // Not already collected, so add it...
             //
-            binds[canon] = ARRAY_LEN(BUF_COLLECT);
-            EXPAND_SERIES_TAIL(ARRAY_SERIES(BUF_COLLECT), 1);
+            binds[canon] = ARR_LEN(BUF_COLLECT);
+            EXPAND_SERIES_TAIL(ARR_SERIES(BUF_COLLECT), 1);
             Val_Init_Typeset(
-                ARRAY_LAST(BUF_COLLECT), ALL_64, VAL_WORD_SYM(word)
+                ARR_LAST(BUF_COLLECT), ALL_64, VAL_WORD_SYM(word)
             );
         }
         if (IS_END(word + 1)) break; // fix bug#708
@@ -188,9 +188,9 @@ static void Append_To_Context(REBCON *context, REBVAL *arg)
 
     // Append new words to obj
     //
-    len = CONTEXT_LEN(context) + 1;
-    Expand_Context(context, ARRAY_LEN(BUF_COLLECT) - len, 1);
-    for (key = ARRAY_AT(BUF_COLLECT, len); NOT_END(key); key++) {
+    len = CTX_LEN(context) + 1;
+    Expand_Context(context, ARR_LEN(BUF_COLLECT) - len, 1);
+    for (key = ARR_AT(BUF_COLLECT, len); NOT_END(key); key++) {
         assert(IS_TYPESET(key));
         Append_Context(context, NULL, VAL_TYPESET_SYM(key));
     }
@@ -201,8 +201,8 @@ static void Append_To_Context(REBCON *context, REBVAL *arg)
         REBVAL *var;
 
         i = binds[VAL_WORD_CANON(word)];
-        var = CONTEXT_VAR(context, i);
-        key = CONTEXT_KEY(context, i);
+        var = CTX_VAR(context, i);
+        key = CTX_KEY(context, i);
 
         if (GET_VAL_FLAG(key, TYPESET_FLAG_LOCKED))
             fail (Error_Protected_Key(key));
@@ -221,11 +221,11 @@ static void Append_To_Context(REBCON *context, REBVAL *arg)
 }
 
 
-static REBCON *Trim_Context(REBCON *context)
+static REBCTX *Trim_Context(REBCTX *context)
 {
     REBVAL *var;
     REBCNT copy_count = 0;
-    REBCON *context_new;
+    REBCTX *context_new;
     REBVAL *var_new;
     REBVAL *key;
     REBVAL *key_new;
@@ -233,8 +233,8 @@ static REBCON *Trim_Context(REBCON *context)
     // First pass: determine size of new context to create by subtracting out
     // any UNSET!, NONE!, or hidden fields
     //
-    key = CONTEXT_KEYS_HEAD(context);
-    var = CONTEXT_VARS_HEAD(context);
+    key = CTX_KEYS_HEAD(context);
+    var = CTX_VARS_HEAD(context);
     for (; NOT_END(var); var++, key++) {
         if (VAL_TYPE(var) > REB_NONE && !GET_VAL_FLAG(key, TYPESET_FLAG_HIDDEN))
             copy_count++;
@@ -243,15 +243,15 @@ static REBCON *Trim_Context(REBCON *context)
     // Create new context based on the size found
     //
     context_new = Alloc_Context(copy_count);
-    VAL_CONTEXT_SPEC(CONTEXT_VALUE(context_new)) = NULL;
-    VAL_CONTEXT_STACKVARS(CONTEXT_VALUE(context_new)) = NULL;
+    VAL_CONTEXT_SPEC(CTX_VALUE(context_new)) = NULL;
+    VAL_CONTEXT_STACKVARS(CTX_VALUE(context_new)) = NULL;
 
     // Second pass: copy the values that were not skipped in the first pass
     //
-    key = CONTEXT_KEYS_HEAD(context);
-    var = CONTEXT_VARS_HEAD(context);
-    var_new = CONTEXT_VARS_HEAD(context_new);
-    key_new = CONTEXT_KEYS_HEAD(context_new);
+    key = CTX_KEYS_HEAD(context);
+    var = CTX_VARS_HEAD(context);
+    var_new = CTX_VARS_HEAD(context_new);
+    key_new = CTX_KEYS_HEAD(context_new);
     for (; NOT_END(var); var++, key++) {
         if (VAL_TYPE(var) > REB_NONE && !GET_VAL_FLAG(key, TYPESET_FLAG_HIDDEN)) {
             *var_new++ = *var;
@@ -263,8 +263,8 @@ static REBCON *Trim_Context(REBCON *context)
     //
     SET_END(var_new);
     SET_END(key_new);
-    SET_ARRAY_LEN(CONTEXT_VARLIST(context_new), copy_count + 1);
-    SET_ARRAY_LEN(CONTEXT_KEYLIST(context_new), copy_count + 1);
+    SET_ARRAY_LEN(CTX_VARLIST(context_new), copy_count + 1);
+    SET_ARRAY_LEN(CTX_KEYLIST(context_new), copy_count + 1);
 
     return context_new;
 }
@@ -286,7 +286,7 @@ REBINT CT_Context(const REBVAL *a, const REBVAL *b, REBINT mode)
 //
 REBOOL MT_Context(REBVAL *out, REBVAL *data, enum Reb_Kind type)
 {
-    REBCON *context;
+    REBCTX *context;
     if (!IS_BLOCK(data)) return FALSE;
 
     context = Construct_Context(type, VAL_ARRAY_AT(data), FALSE, NULL);
@@ -314,7 +314,7 @@ REBOOL MT_Context(REBVAL *out, REBVAL *data, enum Reb_Kind type)
 REBINT PD_Context(REBPVS *pvs)
 {
     REBCNT n;
-    REBCON *context = VAL_CONTEXT(pvs->value);
+    REBCTX *context = VAL_CONTEXT(pvs->value);
 
     if (IS_WORD(pvs->select)) {
         n = Find_Word_In_Context(context, VAL_WORD_SYM(pvs->select), FALSE);
@@ -325,19 +325,19 @@ REBINT PD_Context(REBPVS *pvs)
     // !!! Can Find_Word_In_Context give back an index longer than the context?!
     // There was a check here.  Adding a test for now, look into it.
     //
-    assert(n <= CONTEXT_LEN(context));
-    if (n == 0 || n > CONTEXT_LEN(context))
+    assert(n <= CTX_LEN(context));
+    if (n == 0 || n > CTX_LEN(context))
         return PE_BAD_SELECT;
 
     if (
         pvs->setval
         && IS_END(pvs->path + 1)
-        && GET_VAL_FLAG(CONTEXT_KEY(context, n), TYPESET_FLAG_LOCKED)
+        && GET_VAL_FLAG(CTX_KEY(context, n), TYPESET_FLAG_LOCKED)
     ) {
         fail (Error(RE_LOCKED_WORD, pvs->select));
     }
 
-    pvs->value = CONTEXT_VAR(context, n);
+    pvs->value = CTX_VAR(context, n);
     return PE_SET;
 }
 
@@ -351,8 +351,8 @@ REBTYPE(Context)
 {
     REBVAL *value = D_ARG(1);
     REBVAL *arg = D_ARGC > 1 ? D_ARG(2) : NULL;
-    REBCON *context;
-    REBCON *src_context;
+    REBCTX *context;
+    REBCTX *src_context;
     enum Reb_Kind target;
 
     switch (action) {
@@ -395,19 +395,19 @@ REBTYPE(Context)
             // returned to the user it can't be stack allocated, because it
             // would immediately become useless.  Allocate dynamically.
             //
-            varlist = Make_Array(ARRAY_LEN(VAL_FUNC_PARAMLIST(arg)));
-            ARRAY_SET_FLAG(varlist, OPT_SER_CONTEXT);
-            ARRAY_SET_FLAG(varlist, OPT_SER_FIXED_SIZE);
+            varlist = Make_Array(ARR_LEN(VAL_FUNC_PARAMLIST(arg)));
+            SET_ARR_FLAG(varlist, SERIES_FLAG_CONTEXT);
+            SET_ARR_FLAG(varlist, SERIES_FLAG_FIXED_SIZE);
 
             // Fill in the rootvar information for the context canon REBVAL
             //
-            var = ARRAY_HEAD(varlist);
+            var = ARR_HEAD(varlist);
             VAL_RESET_HEADER(var, REB_FRAME);
             INIT_VAL_CONTEXT(var, AS_CONTEXT(varlist));
             INIT_CONTEXT_KEYLIST(AS_CONTEXT(varlist), VAL_FUNC_PARAMLIST(arg));
-            ASSERT_ARRAY_MANAGED(CONTEXT_KEYLIST(AS_CONTEXT(varlist)));
+            ASSERT_ARRAY_MANAGED(CTX_KEYLIST(AS_CONTEXT(varlist)));
             INIT_CONTEXT_FUNC(AS_CONTEXT(varlist), VAL_FUNC(arg));
-            CONTEXT_STACKVARS(AS_CONTEXT(varlist)) = NULL;
+            CTX_STACKVARS(AS_CONTEXT(varlist)) = NULL;
             ++var;
 
             // !!! This is a current experiment for choosing that the value
@@ -423,7 +423,7 @@ REBTYPE(Context)
                 SET_BAR(var);
 
             SET_END(var);
-            SET_ARRAY_LEN(varlist, ARRAY_LEN(VAL_FUNC_PARAMLIST(arg)));
+            SET_ARRAY_LEN(varlist, ARR_LEN(VAL_FUNC_PARAMLIST(arg)));
 
             ASSERT_CONTEXT(AS_CONTEXT(varlist));
             Val_Init_Context(D_OUT, REB_FRAME, AS_CONTEXT(varlist));
@@ -516,9 +516,9 @@ REBTYPE(Context)
             // will be more basic and look like this.
             //
             /* context = Alloc_Context(n);
-            VAL_RESET_HEADER(CONTEXT_VALUE(context), target);
-            CONTEXT_SPEC(context) = NULL;
-            CONTEXT_BODY(context) = NULL; */
+            VAL_RESET_HEADER(CTX_VALUE(context), target);
+            CTX_SPEC(context) = NULL;
+            CTX_BODY(context) = NULL; */
             Val_Init_Context(D_OUT, target, context);
             return R_OUT;
         }
@@ -576,9 +576,9 @@ REBTYPE(Context)
             // the object passed in.
 
             context = Copy_Context_Shallow(VAL_CONTEXT(item + 1));
-            VAL_CONTEXT_SPEC(CONTEXT_VALUE(context)) = VAL_CONTEXT(item);
-            assert(VAL_CONTEXT_STACKVARS(CONTEXT_VALUE(context)) == NULL);
-            VAL_RESET_HEADER(CONTEXT_VALUE(context), REB_MODULE);
+            VAL_CONTEXT_SPEC(CTX_VALUE(context)) = VAL_CONTEXT(item);
+            assert(VAL_CONTEXT_STACKVARS(CTX_VALUE(context)) == NULL);
+            VAL_RESET_HEADER(CTX_VALUE(context), REB_MODULE);
 
             // !!! Again, not how this should be done but... if there is a
             // self we set it to the module we just made.  (Here we tolerate
@@ -587,8 +587,8 @@ REBTYPE(Context)
             {
                 REBCNT self_index = Find_Word_In_Context(context, SYM_SELF, TRUE);
                 if (self_index != 0) {
-                    assert(CONTEXT_KEY_CANON(context, self_index) == SYM_SELF);
-                    *CONTEXT_VAR(context, self_index) = *CONTEXT_VALUE(context);
+                    assert(CTX_KEY_CANON(context, self_index) == SYM_SELF);
+                    *CTX_VAR(context, self_index) = *CTX_VALUE(context);
                 }
             }
 
@@ -608,7 +608,7 @@ REBTYPE(Context)
     case A_LENGTH:
         if (!IS_OBJECT(value))
             fail (Error_Illegal_Action(VAL_TYPE(value), action));
-        SET_INTEGER(D_OUT, CONTEXT_LEN(VAL_CONTEXT(value)));
+        SET_INTEGER(D_OUT, CTX_LEN(VAL_CONTEXT(value)));
         return R_OUT;
 
     case A_COPY:
@@ -625,15 +625,15 @@ REBTYPE(Context)
             else types |= VAL_TYPESET_BITS(arg);
         }
         context = AS_CONTEXT(
-            Copy_Array_Shallow(CONTEXT_VARLIST(VAL_CONTEXT(value)))
+            Copy_Array_Shallow(CTX_VARLIST(VAL_CONTEXT(value)))
         );
-        INIT_CONTEXT_KEYLIST(context, CONTEXT_KEYLIST(VAL_CONTEXT(value)));
-        ARRAY_SET_FLAG(CONTEXT_VARLIST(context), OPT_SER_CONTEXT);
-        INIT_VAL_CONTEXT(CONTEXT_VALUE(context), context);
+        INIT_CONTEXT_KEYLIST(context, CTX_KEYLIST(VAL_CONTEXT(value)));
+        SET_ARR_FLAG(CTX_VARLIST(context), SERIES_FLAG_CONTEXT);
+        INIT_VAL_CONTEXT(CTX_VALUE(context), context);
         if (types != 0) {
             Clonify_Values_Len_Managed(
-                CONTEXT_VARS_HEAD(context),
-                CONTEXT_LEN(context),
+                CTX_VARS_HEAD(context),
+                CTX_LEN(context),
                 D_REF(ARG_COPY_DEEP),
                 types
             );
@@ -654,12 +654,12 @@ REBTYPE(Context)
         if (n <= 0)
             return R_NONE;
 
-        if (cast(REBCNT, n) > CONTEXT_LEN(VAL_CONTEXT(value)))
+        if (cast(REBCNT, n) > CTX_LEN(VAL_CONTEXT(value)))
             return R_NONE;
 
         if (action == A_FIND) return R_TRUE;
 
-        *D_OUT = *CONTEXT_VAR(VAL_CONTEXT(value), n);
+        *D_OUT = *CTX_VAR(VAL_CONTEXT(value), n);
         return R_OUT;
     }
 
@@ -701,7 +701,7 @@ REBTYPE(Context)
 
     case A_TAIL_Q:
         if (IS_OBJECT(value)) {
-            SET_LOGIC(D_OUT, CONTEXT_LEN(VAL_CONTEXT(value)) == 0);
+            SET_LOGIC(D_OUT, CTX_LEN(VAL_CONTEXT(value)) == 0);
             return R_OUT;
         }
         fail (Error_Illegal_Action(VAL_TYPE(value), action));

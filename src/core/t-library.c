@@ -67,7 +67,7 @@ REBTYPE(Library)
                 void *lib = NULL;
                 REBCNT error = 0;
                 REBSER *path = Value_To_OS_Path(arg, FALSE);
-                lib = OS_OPEN_LIBRARY(SERIES_HEAD(REBCHR, path), &error);
+                lib = OS_OPEN_LIBRARY(SER_HEAD(REBCHR, path), &error);
                 Free_Series(path);
                 if (!lib)
                     fail (Error_Bad_Make(REB_LIBRARY, arg));

@@ -94,7 +94,6 @@ native      (function)  *       -       -       *       function
 action      (function)  *       -       -       *       function
 routine     (routine)   *       -       -       *       function
 command     (function)  -       -       -       *       function
-closure     (function)  *       -       -       *       function
 function    (function)  *       -       -       *       function
 
 object      context     *       f*      *       *       context

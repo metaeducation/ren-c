@@ -241,7 +241,7 @@ REBCNT Hash_Value(const REBVAL *val)
     case REB_EMAIL:
     case REB_URL:
     case REB_TAG:
-        ret = Hash_String(VAL_RAW_DATA_AT(val), VAL_LEN_HEAD(val), SERIES_WIDE(VAL_SERIES(val)));
+        ret = Hash_String(VAL_RAW_DATA_AT(val), VAL_LEN_HEAD(val), SER_WIDE(VAL_SERIES(val)));
         break;
 
     case REB_BLOCK:
@@ -290,7 +290,6 @@ REBCNT Hash_Value(const REBVAL *val)
     case REB_ACTION:
     case REB_ROUTINE:
     case REB_COMMAND:
-    case REB_CLOSURE:
     case REB_FUNCTION:
         //
         // ANY-FUNCTION has a uniquely identifying "func" pointer for that
@@ -410,7 +409,7 @@ REBSER *Hash_Block(const REBVAL *block, REBCNT skip, REBOOL cased)
 
     // Create the hash array (integer indexes):
     hashlist = Make_Hash_Sequence(VAL_LEN_AT(block));
-    hashes = SERIES_HEAD(REBCNT, hashlist);
+    hashes = SER_HEAD(REBCNT, hashlist);
 
     value = VAL_ARRAY_AT(block);
     if (IS_END(value))

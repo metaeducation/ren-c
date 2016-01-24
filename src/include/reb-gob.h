@@ -185,10 +185,10 @@ typedef struct gob_window {             // Maps gob to window
 
 // Control dependencies on series structures:
 #ifdef REB_DEF
-#define GOB_STRING(g)       SERIES_HEAD(GOB_CONTENT(g))
-#define GOB_LEN(g)          SERIES_LEN((g)->pane)
+#define GOB_STRING(g)       SER_HEAD(GOB_CONTENT(g))
+#define GOB_LEN(g)          SER_LEN((g)->pane)
 #define SET_GOB_LEN(g,l)    SET_SERIES_LEN((g)->pane, (l))
-#define GOB_HEAD(g)         SERIES_HEAD(REBGOB*, GOB_PANE(g))
+#define GOB_HEAD(g)         SER_HEAD(REBGOB*, GOB_PANE(g))
 #else
 #define GOB_STRING(g)   ((REBYTE *)RL_Series(GOB_CONTENT(g), (REBCNT)RXI_SER_DATA))
 #define GOB_LEN(g)     ((REBCNT)RL_Series(GOB_PANE(g), (REBCNT)RXI_SER_TAIL))

@@ -41,7 +41,7 @@ REBARR *Make_Array(REBCNT capacity)
 {
     REBSER *series = Make_Series(capacity + 1, sizeof(REBVAL), MKS_ARRAY);
     REBARR *array = AS_ARRAY(series);
-    SET_END(ARRAY_HEAD(array));
+    SET_END(ARR_HEAD(array));
 
     return array;
 }
@@ -59,7 +59,7 @@ REBARR *Copy_Array_At_Extra_Shallow(
     REBCNT index,
     REBCNT extra
 ) {
-    REBCNT len = ARRAY_LEN(original);
+    REBCNT len = ARR_LEN(original);
     REBARR *copy;
 
     if (index > len) return Make_Array(extra);
@@ -67,7 +67,7 @@ REBARR *Copy_Array_At_Extra_Shallow(
     len -= index;
     copy = Make_Array(len + extra + 1);
 
-    memcpy(ARRAY_HEAD(copy), ARRAY_AT(original, index), len * sizeof(REBVAL));
+    memcpy(ARR_HEAD(copy), ARR_AT(original, index), len * sizeof(REBVAL));
 
     SET_ARRAY_LEN(copy, len);
     TERM_ARRAY(copy);
@@ -86,15 +86,15 @@ REBARR *Copy_Array_At_Max_Shallow(REBARR *original, REBCNT index, REBCNT max)
 {
     REBARR *copy;
 
-    if (index > ARRAY_LEN(original))
+    if (index > ARR_LEN(original))
         return Make_Array(0);
 
-    if (index + max > ARRAY_LEN(original))
-        max = ARRAY_LEN(original) - index;
+    if (index + max > ARR_LEN(original))
+        max = ARR_LEN(original) - index;
 
     copy = Make_Array(max + 1);
 
-    memcpy(ARRAY_HEAD(copy), ARRAY_AT(original, index), max * sizeof(REBVAL));
+    memcpy(ARR_HEAD(copy), ARR_AT(original, index), max * sizeof(REBVAL));
 
     SET_ARRAY_LEN(copy, max);
     TERM_ARRAY(copy);
@@ -115,7 +115,7 @@ REBARR *Copy_Values_Len_Extra_Shallow(REBVAL value[], REBCNT len, REBCNT extra)
 
     array = Make_Array(len + extra + 1);
 
-    memcpy(ARRAY_HEAD(array), &value[0], len * sizeof(REBVAL));
+    memcpy(ARR_HEAD(array), &value[0], len * sizeof(REBVAL));
 
     SET_ARRAY_LEN(array, len);
     TERM_ARRAY(array);
@@ -168,11 +168,11 @@ void Clonify_Values_Len_Managed(
                     value,
                     Copy_Context_Shallow(VAL_CONTEXT(value))
                 );
-                series = ARRAY_SERIES(CONTEXT_VARLIST(VAL_CONTEXT(value)));
+                series = ARR_SERIES(CTX_VARLIST(VAL_CONTEXT(value)));
             }
             else {
                 if (Is_Array_Series(VAL_SERIES(value))) {
-                    series = ARRAY_SERIES(
+                    series = ARR_SERIES(
                         Copy_Array_Shallow(VAL_ARRAY(value))
                     );
                 }
@@ -190,14 +190,16 @@ void Clonify_Values_Len_Managed(
             //
             if (types & FLAGIT_KIND(VAL_TYPE(value)) & TS_ARRAYS_OBJ) {
                 Clonify_Values_Len_Managed(
-                     ARRAY_HEAD(AS_ARRAY(series)),
+                     ARR_HEAD(AS_ARRAY(series)),
                      VAL_LEN_HEAD(value),
                      deep,
                      types
                 );
             }
         }
-        else if (types & FLAGIT_KIND(VAL_TYPE(value)) & TS_FUNCLOS) {
+        else if (
+            types & FLAGIT_KIND(VAL_TYPE(value)) & FLAGIT_KIND(REB_FUNCTION)
+        ) {
             Clonify_Function(value);
         }
         else {
@@ -228,19 +230,19 @@ REBARR *Copy_Array_Core_Managed(
 
     if (index > tail) index = tail;
 
-    if (index > ARRAY_LEN(original)) {
+    if (index > ARR_LEN(original)) {
         copy = Make_Array(extra);
         MANAGE_ARRAY(copy);
     }
     else {
         copy = Copy_Values_Len_Extra_Shallow(
-            ARRAY_AT(original, index), tail - index, extra
+            ARR_AT(original, index), tail - index, extra
         );
         MANAGE_ARRAY(copy);
 
         if (types != 0)
             Clonify_Values_Len_Managed(
-                ARRAY_HEAD(copy), ARRAY_LEN(copy), deep, types
+                ARR_HEAD(copy), ARR_LEN(copy), deep, types
             );
     }
 
@@ -270,7 +272,7 @@ REBARR *Copy_Array_At_Extra_Deep_Managed(
     return Copy_Array_Core_Managed(
         original,
         index, // at
-        ARRAY_LEN(original), // tail
+        ARR_LEN(original), // tail
         extra, // extra
         TRUE, // deep
         TS_SERIES & ~TS_NOT_COPIED // types
@@ -292,8 +294,8 @@ REBVAL *Alloc_Tail_Array(REBARR *array)
 {
     REBVAL *tail;
 
-    EXPAND_SERIES_TAIL(ARRAY_SERIES(array), 1);
-    tail = ARRAY_TAIL(array);
+    EXPAND_SERIES_TAIL(ARR_SERIES(array), 1);
+    tail = ARR_TAIL(array);
     SET_END(tail);
 
     SET_TRASH_IF_DEBUG(tail - 1); // No-op in release builds
@@ -323,7 +325,7 @@ REBCNT Find_Same_Array(REBARR *search_values, const REBVAL *value)
     if (ANY_ARRAY(value) || IS_MAP(value))
         array = VAL_ARRAY(value);
     else if (ANY_CONTEXT(value))
-        array = CONTEXT_VARLIST(VAL_CONTEXT(value));
+        array = CTX_VARLIST(VAL_CONTEXT(value));
     else {
         // Value being worked with is not a candidate for containing an
         // array that could form a loop with one of the search_list values
@@ -331,14 +333,14 @@ REBCNT Find_Same_Array(REBARR *search_values, const REBVAL *value)
         return NOT_FOUND;
     }
 
-    other = ARRAY_HEAD(search_values);
+    other = ARR_HEAD(search_values);
     for (; NOT_END(other); other++, index++) {
         if (ANY_ARRAY(other) || IS_MAP(other)) {
             if (array == VAL_ARRAY(other))
                 return index;
         }
         else if (ANY_CONTEXT(other)) {
-            if (array == CONTEXT_VARLIST(VAL_CONTEXT(other)))
+            if (array == CTX_VARLIST(VAL_CONTEXT(other)))
                 return index;
         }
     }
@@ -362,21 +364,21 @@ void Unmark(REBVAL *val)
     if (ANY_ARRAY(val))
         array = VAL_ARRAY(val);
     else if (ANY_CONTEXT(val))
-        array = CONTEXT_VARLIST(VAL_CONTEXT(val));
+        array = CTX_VARLIST(VAL_CONTEXT(val));
     else {
         // Shouldn't have marked recursively any non-array series (no need)
         //
         assert(
             !ANY_SERIES(val)
-            || !SERIES_GET_FLAG(VAL_SERIES(val), OPT_SER_MARK)
+            || !GET_SER_FLAG(VAL_SERIES(val), SERIES_FLAG_MARK)
         );
         return;
     }
 
-    if (!ARRAY_GET_FLAG(array, OPT_SER_MARK)) return; // avoid loop
+    if (!GET_ARR_FLAG(array, SERIES_FLAG_MARK)) return; // avoid loop
 
-    ARRAY_CLR_FLAG(array, OPT_SER_MARK);
+    CLEAR_ARR_FLAG(array, SERIES_FLAG_MARK);
 
-    for (val = ARRAY_HEAD(array); NOT_END(val); val++)
+    for (val = ARR_HEAD(array); NOT_END(val); val++)
         Unmark(val);
 }

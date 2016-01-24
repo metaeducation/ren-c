@@ -273,7 +273,7 @@ REBCNT Find_Refines(struct Reb_Call *call_, REBCNT mask)
 //
 void Val_Init_Datatype(REBVAL *value, enum Reb_Kind kind)
 {
-    *value = *CONTEXT_VAR(Lib_Context, SYM_FROM_KIND(kind));
+    *value = *CTX_VAR(Lib_Context, SYM_FROM_KIND(kind));
 }
 
 
@@ -285,7 +285,7 @@ void Val_Init_Datatype(REBVAL *value, enum Reb_Kind kind)
 //
 REBVAL *Get_Type(enum Reb_Kind kind)
 {
-    return CONTEXT_VAR(Lib_Context, SYM_FROM_KIND(kind));
+    return CTX_VAR(Lib_Context, SYM_FROM_KIND(kind));
 }
 
 
@@ -297,7 +297,7 @@ REBVAL *Get_Type(enum Reb_Kind kind)
 //
 REBVAL *Type_Of(const REBVAL *value)
 {
-    return CONTEXT_VAR(Lib_Context, SYM_FROM_KIND(VAL_TYPE(value)));
+    return CTX_VAR(Lib_Context, SYM_FROM_KIND(VAL_TYPE(value)));
 }
 
 
@@ -306,10 +306,10 @@ REBVAL *Type_Of(const REBVAL *value)
 // 
 // Get the name of a field of an object.
 //
-const REBYTE *Get_Field_Name(REBCON *context, REBCNT index)
+const REBYTE *Get_Field_Name(REBCTX *context, REBCNT index)
 {
-    assert(index <= CONTEXT_LEN(context));
-    return Get_Sym_Name(CONTEXT_KEY_SYM(context, index));
+    assert(index <= CTX_LEN(context));
+    return Get_Sym_Name(CTX_KEY_SYM(context, index));
 }
 
 
@@ -318,10 +318,10 @@ const REBYTE *Get_Field_Name(REBCON *context, REBCNT index)
 // 
 // Get an instance variable from an object series.
 //
-REBVAL *Get_Field(REBCON *context, REBCNT index)
+REBVAL *Get_Field(REBCTX *context, REBCNT index)
 {
-    assert(index <= CONTEXT_LEN(context));
-    return CONTEXT_VAR(context, index);
+    assert(index <= CTX_LEN(context));
+    return CTX_VAR(context, index);
 }
 
 
@@ -332,11 +332,11 @@ REBVAL *Get_Field(REBCON *context, REBCNT index)
 //
 REBVAL *Get_Object(const REBVAL *any_context, REBCNT index)
 {
-    REBCON *context = VAL_CONTEXT(any_context);
+    REBCTX *context = VAL_CONTEXT(any_context);
 
-    assert(ARRAY_GET_FLAG(CONTEXT_VARLIST(context), OPT_SER_CONTEXT));
-    assert(index <= CONTEXT_LEN(context));
-    return CONTEXT_VAR(context, index);
+    assert(GET_ARR_FLAG(CTX_VARLIST(context), SERIES_FLAG_CONTEXT));
+    assert(index <= CTX_LEN(context));
+    return CTX_VAR(context, index);
 }
 
 
@@ -346,7 +346,7 @@ REBVAL *Get_Object(const REBVAL *any_context, REBCNT index)
 // Get value from nested list of objects. List is null terminated.
 // Returns object value, else returns 0 if not found.
 //
-REBVAL *In_Object(REBCON *base, ...)
+REBVAL *In_Object(REBCTX *base, ...)
 {
     REBVAL *context = NULL;
     REBCNT n;
@@ -354,11 +354,11 @@ REBVAL *In_Object(REBCON *base, ...)
 
     va_start(varargs, base);
     while ((n = va_arg(varargs, REBCNT))) {
-        if (n > CONTEXT_LEN(base)) {
+        if (n > CTX_LEN(base)) {
             va_end(varargs);
             return NULL;
         }
-        context = CONTEXT_VAR(base, n);
+        context = CTX_VAR(base, n);
         if (!ANY_CONTEXT(context)) {
             va_end(varargs);
             return NULL;
@@ -380,7 +380,7 @@ REBVAL *Get_System(REBCNT i1, REBCNT i2)
 {
     REBVAL *obj;
 
-    obj = CONTEXT_VAR(VAL_CONTEXT(ROOT_SYSTEM), i1);
+    obj = CTX_VAR(VAL_CONTEXT(ROOT_SYSTEM), i1);
     if (i2 == 0) return obj;
     assert(IS_OBJECT(obj));
     return Get_Field(VAL_CONTEXT(obj), i2);
@@ -403,12 +403,12 @@ REBINT Get_System_Int(REBCNT i1, REBCNT i2, REBINT default_int)
 //
 //  Make_Std_Object_Managed: C
 //
-REBCON *Make_Std_Object_Managed(REBCNT index)
+REBCTX *Make_Std_Object_Managed(REBCNT index)
 {
-    REBCON *context = Copy_Context_Shallow(
+    REBCTX *context = Copy_Context_Shallow(
         VAL_CONTEXT(Get_System(SYS_STANDARD, index))
     );
-    MANAGE_ARRAY(CONTEXT_VARLIST(context));
+    MANAGE_ARRAY(CTX_VARLIST(context));
 
     //
     // !!! Shallow copy... values are all the same and modifications of
@@ -422,11 +422,11 @@ REBCON *Make_Std_Object_Managed(REBCNT index)
 //
 //  Set_Object_Values: C
 //
-void Set_Object_Values(REBCON *context, REBVAL value[])
+void Set_Object_Values(REBCTX *context, REBVAL value[])
 {
     REBVAL *var;
 
-    var = CONTEXT_VARS_HEAD(context);
+    var = CTX_VARS_HEAD(context);
     for (; NOT_END(var); var++) {
         if (IS_END(value)) SET_NONE(var);
         else *var = *value++;
@@ -494,7 +494,7 @@ void Set_Tuple(REBVAL *value, REBYTE *bytes, REBCNT len)
 // is its canon form from a single pointer...the REBVAL sitting in the 0 slot
 // of the context's varlist.
 //
-void Val_Init_Context(REBVAL *out, enum Reb_Kind kind, REBCON *context) {
+void Val_Init_Context(REBVAL *out, enum Reb_Kind kind, REBCTX *context) {
     //
     // In a debug build we check to make sure the type of the embedded value
     // matches the type of what is intended (so someone who thinks they are
@@ -503,29 +503,29 @@ void Val_Init_Context(REBVAL *out, enum Reb_Kind kind, REBCON *context) {
     // checks as well.
     //
 #if !defined(NDEBUG)
-    REBVAL *value = CONTEXT_VALUE(context);
+    REBVAL *value = CTX_VALUE(context);
 
     assert(ANY_CONTEXT(value));
-    assert(CONTEXT_TYPE(context) == kind);
+    assert(CTX_TYPE(context) == kind);
 
     assert(VAL_CONTEXT(value) == context);
 
-    if (!CONTEXT_KEYLIST(context)) {
+    if (!CTX_KEYLIST(context)) {
         Debug_Fmt("Context found with no keylist set");
         Panic_Context(context);
     }
 
-    assert(ARRAY_GET_FLAG(CONTEXT_VARLIST(context), OPT_SER_CONTEXT));
+    assert(GET_ARR_FLAG(CTX_VARLIST(context), SERIES_FLAG_CONTEXT));
 
     // !!! Historically spec is a frame of an object for a "module spec",
     // may want to use another word of that and make a block "spec"
     //
-    if (IS_FRAME(CONTEXT_VALUE(context)))
-        assert(ANY_FUNC(FUNC_VALUE(CONTEXT_FUNC(context))));
+    if (IS_FRAME(CTX_VALUE(context)))
+        assert(ANY_FUNC(FUNC_VALUE(CTX_FUNC(context))));
     else
         assert(
-            NOT(CONTEXT_SPEC(context))
-            || ANY_CONTEXT(CONTEXT_VALUE(CONTEXT_SPEC(context)))
+            NOT(CTX_SPEC(context))
+            || ANY_CONTEXT(CTX_VALUE(CTX_SPEC(context)))
         );
 #endif
 
@@ -540,16 +540,16 @@ void Val_Init_Context(REBVAL *out, enum Reb_Kind kind, REBCON *context) {
     // set before they are GC'd.  For another case, see INIT_WORD_SPECIFIC(),
     // where an ANY-WORD! can mark a context as in use.
     //
-    ENSURE_ARRAY_MANAGED(CONTEXT_VARLIST(context));
+    ENSURE_ARRAY_MANAGED(CTX_VARLIST(context));
 
     // Keylists are different, because they may-or-may-not-be-reused by some
     // operations.  There needs to be a uniform policy on their management,
     // or certain routines would return "sometimes managed, sometimes not"
     // keylist series...a bad invariant.
     //
-    ASSERT_ARRAY_MANAGED(CONTEXT_KEYLIST(context));
+    ASSERT_ARRAY_MANAGED(CTX_KEYLIST(context));
 
-    *out = *CONTEXT_VALUE(context);
+    *out = *CTX_VALUE(context);
 }
 
 
@@ -574,7 +574,7 @@ REBCNT Val_Series_Len_At(const REBVAL *value)
 REBCNT Val_Byte_Len(const REBVAL *value)
 {
     if (VAL_INDEX(value) >= VAL_LEN_HEAD(value)) return 0;
-    return (VAL_LEN_HEAD(value) - VAL_INDEX(value)) * SERIES_WIDE(VAL_SERIES(value));
+    return (VAL_LEN_HEAD(value) - VAL_INDEX(value)) * SER_WIDE(VAL_SERIES(value));
 }
 
 
@@ -727,11 +727,11 @@ void memswapl(void *m1, void *m2, size_t len)
 //
 //  Add_Max: C
 //
-i64 Add_Max(int type, i64 n, i64 m, i64 maxi)
+i64 Add_Max(enum Reb_Kind type, i64 n, i64 m, i64 maxi)
 {
     i64 r = n + m;
     if (r < -maxi || r > maxi) {
-        if (type) fail (Error(RE_TYPE_LIMIT, Get_Type(type)));
+        if (type != REB_TRASH) fail (Error(RE_TYPE_LIMIT, Get_Type(type)));
         r = r > 0 ? maxi : -maxi;
     }
     return r;
@@ -741,7 +741,7 @@ i64 Add_Max(int type, i64 n, i64 m, i64 maxi)
 //
 //  Mul_Max: C
 //
-int Mul_Max(int type, i64 n, i64 m, i64 maxi)
+int Mul_Max(enum Reb_Kind type, i64 n, i64 m, i64 maxi)
 {
     i64 r = n * m;
     if (r < -maxi || r > maxi) fail (Error(RE_TYPE_LIMIT, Get_Type(type)));
@@ -776,7 +776,7 @@ REBARR *Collect_Set_Words(REBVAL *val)
     val = val2;
 
     array = Make_Array(count);
-    val2 = ARRAY_HEAD(array);
+    val2 = ARR_HEAD(array);
     for (; NOT_END(val); val++) {
         if (IS_SET_WORD(val))
             Val_Init_Word(val2++, REB_WORD, VAL_WORD_SYM(val));

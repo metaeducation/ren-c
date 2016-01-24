@@ -68,7 +68,7 @@ static void Setup_File(REBREQ *file, REBCNT args, REBVAL *path)
     //
     MANAGE_SERIES(ser);
 
-    file->special.file.path = SERIES_HEAD(REBCHR, ser);
+    file->special.file.path = SER_HEAD(REBCHR, ser);
 
     SET_FLAG(file->modes, RFM_NAME_MEM);
 
@@ -109,10 +109,10 @@ static void Set_File_Date(REBREQ *file, REBVAL *val)
 // 
 // Query file and set RET value to resulting STD_FILE_INFO object.
 //
-void Ret_Query_File(REBCON *port, REBREQ *file, REBVAL *ret)
+void Ret_Query_File(REBCTX *port, REBREQ *file, REBVAL *ret)
 {
     REBVAL *info = In_Object(port, STD_PORT_SCHEME, STD_SCHEME_INFO, 0);
-    REBCON *context;
+    REBCTX *context;
     REBSER *ser;
 
     if (!info || !IS_OBJECT(info))
@@ -122,20 +122,20 @@ void Ret_Query_File(REBCON *port, REBREQ *file, REBVAL *ret)
 
     Val_Init_Object(ret, context);
     Val_Init_Word(
-        CONTEXT_VAR(context, STD_FILE_INFO_TYPE),
+        CTX_VAR(context, STD_FILE_INFO_TYPE),
         REB_WORD,
         GET_FLAG(file->modes, RFM_DIR) ? SYM_DIR : SYM_FILE
     );
     SET_INTEGER(
-        CONTEXT_VAR(context, STD_FILE_INFO_SIZE), file->special.file.size
+        CTX_VAR(context, STD_FILE_INFO_SIZE), file->special.file.size
     );
-    Set_File_Date(file, CONTEXT_VAR(context, STD_FILE_INFO_DATE));
+    Set_File_Date(file, CTX_VAR(context, STD_FILE_INFO_DATE));
 
     ser = To_REBOL_Path(
         file->special.file.path, 0, (OS_WIDE ? PATH_OPT_UNI_SRC : 0)
     );
 
-    Val_Init_File(CONTEXT_VAR(context, STD_FILE_INFO_NAME), ser);
+    Val_Init_File(CTX_VAR(context, STD_FILE_INFO_NAME), ser);
 }
 
 
@@ -144,7 +144,7 @@ void Ret_Query_File(REBCON *port, REBREQ *file, REBVAL *ret)
 // 
 // Open a file port.
 //
-static void Open_File_Port(REBCON *port, REBREQ *file, REBVAL *path)
+static void Open_File_Port(REBCTX *port, REBREQ *file, REBVAL *path)
 {
     if (Is_Port_Open(port))
         fail (Error(RE_ALREADY_OPEN, path));
@@ -200,7 +200,7 @@ static REBCNT Set_Mode_Value(REBREQ *file, REBCNT mode, REBVAL *val)
 //
 static void Read_File_Port(
     REBVAL *out,
-    REBCON *port,
+    REBCTX *port,
     REBREQ *file,
     REBVAL *path,
     REBCNT args,
@@ -259,7 +259,7 @@ static void Write_File_Port(REBREQ *file, REBVAL *data, REBCNT len, REBCNT args)
         ser = Make_UTF8_From_Any_String(data, len, OPT_ENC_CRLF_MAYBE);
         MANAGE_SERIES(ser);
         file->common.data = BIN_HEAD(ser);
-        len = SERIES_LEN(ser);
+        len = SER_LEN(ser);
     }
     else {
         file->common.data = VAL_BIN_AT(data);
@@ -319,7 +319,7 @@ static void Set_Seek(REBREQ *file, REBVAL *arg)
 // 
 // Internal port handler for files.
 //
-static REB_R File_Actor(struct Reb_Call *call_, REBCON *port, REBCNT action)
+static REB_R File_Actor(struct Reb_Call *call_, REBCTX *port, REBCNT action)
 {
     REBVAL *spec;
     REBVAL *path;
@@ -335,7 +335,7 @@ static REB_R File_Actor(struct Reb_Call *call_, REBCON *port, REBCNT action)
     *D_OUT = *D_ARG(1);
 
     // Validate PORT fields:
-    spec = CONTEXT_VAR(port, STD_PORT_SPEC);
+    spec = CTX_VAR(port, STD_PORT_SPEC);
     if (!IS_OBJECT(spec)) fail (Error(RE_INVALID_SPEC, spec));
     path = Obj_Value(spec, STD_PORT_SPEC_HEAD_REF);
     if (!path) fail (Error(RE_INVALID_SPEC, spec));

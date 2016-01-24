@@ -94,11 +94,11 @@ static REBOOL Set_Event_Var(REBVAL *value, const REBVAL *word, const REBVAL *val
     case SYM_PORT:
         if (IS_PORT(val)) {
             VAL_EVENT_MODEL(value) = EVM_PORT;
-            VAL_EVENT_SER(value) = ARRAY_SERIES(CONTEXT_VARLIST(VAL_CONTEXT(val)));
+            VAL_EVENT_SER(value) = ARR_SERIES(CTX_VARLIST(VAL_CONTEXT(val)));
         }
         else if (IS_OBJECT(val)) {
             VAL_EVENT_MODEL(value) = EVM_OBJECT;
-            VAL_EVENT_SER(value) = ARRAY_SERIES(CONTEXT_VARLIST(VAL_CONTEXT(val)));
+            VAL_EVENT_SER(value) = ARR_SERIES(CTX_VARLIST(VAL_CONTEXT(val)));
         }
         else if (IS_NONE(val)) {
             VAL_EVENT_MODEL(value) = EVM_GUI;
@@ -209,7 +209,7 @@ static void Set_Event_Vars(REBVAL *evt, REBVAL *blk)
 //
 //  Get_Event_Var: C
 //
-static REBOOL Get_Event_Var(const REBVAL *value, REBCNT sym, REBVAL *val)
+static REBOOL Get_Event_Var(const REBVAL *value, REBSYM sym, REBVAL *val)
 {
     REBVAL *arg;
     REBREQ *req;
@@ -520,8 +520,8 @@ pick_it:
                 // commented out code it's not possible to determine what that
                 // exactly was supposed to have done.
 
-                if (!IS_BLOCK(ARRAY_HEAD(Windows) + VAL_EVENT_WIN(value))) return R_OUT;
-                wp = cast(REBWIN *, VAL_ARRAY_HEAD(ARRAY_HEAD(Windows) + VAL_EVENT_WIN(value)));
+                if (!IS_BLOCK(ARR_HEAD(Windows) + VAL_EVENT_WIN(value))) return R_OUT;
+                wp = cast(REBWIN *, VAL_ARRAY_HEAD(ARR_HEAD(Windows) + VAL_EVENT_WIN(value)));
                 *D_OUT = wp->masterFace;
                 return R_OUT;
             }

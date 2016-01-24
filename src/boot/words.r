@@ -127,6 +127,7 @@ exit
 quit
 ;break ;-- covered by parse below
 ;return ;-- covered by parse below
+leave ;-- for PROC
 continue
 
 ; PARSE - These words must not be reserved above!!  The range of consecutive

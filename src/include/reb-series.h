@@ -47,11 +47,11 @@ struct rebol_series {
 // macros internal to Rebol, or become a formal Ren-C client and use the
 // same definitions that the core does.
 //
-// #define SERIES_LEN(s) ((s)->tail)
-// #define SERIES_DATA(s) ((s)->data)
+// #define SER_LEN(s) ((s)->tail)
+// #define SER_DATA(s) ((s)->data)
 
-#define ARRAY_HEAD(s) ((REBVAL *)SERIES_DATA(s))
-#define STR_HEAD(s) ((REBYTE *)SERIES_DATA(s))
+#define ARR_HEAD(s) ((REBVAL *)SER_DATA(s))
+#define STR_HEAD(s) ((REBYTE *)SER_DATA(s))
 
 #define IMG_SIZE(s) ((s)->size)
 #define IMG_WIDE(s) ((s)->size & 0xffff)

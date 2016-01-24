@@ -49,19 +49,19 @@ void Dump_Series(REBSER *series, const char *memo)
         memo,
         series,
         "-", // !label
-        SERIES_WIDE(series),
-        SERIES_TOTAL(series),
-        SERIES_BIAS(series),
-        SERIES_LEN(series),
-        SERIES_REST(series),
+        SER_WIDE(series),
+        SER_TOTAL(series),
+        SER_BIAS(series),
+        SER_LEN(series),
+        SER_REST(series),
         series->info.bits // flags + width
     );
     if (Is_Array_Series(series)) {
-        Dump_Values(ARRAY_HEAD(AS_ARRAY(series)), SERIES_LEN(series));
+        Dump_Values(ARR_HEAD(AS_ARRAY(series)), SER_LEN(series));
     } else
         Dump_Bytes(
-            SERIES_DATA_RAW(series),
-            (SERIES_LEN(series) + 1) * SERIES_WIDE(series)
+            SER_DATA_RAW(series),
+            (SER_LEN(series) + 1) * SER_WIDE(series)
         );
 }
 
@@ -181,8 +181,8 @@ void Dump_Info(void)
     nums[9] = 0;
     nums[10] = GC_Ballast;
     nums[11] = GC_Disabled;
-    nums[12] = SERIES_LEN(GC_Series_Guard);
-    nums[13] = SERIES_LEN(GC_Value_Guard);
+    nums[12] = SER_LEN(GC_Series_Guard);
+    nums[13] = SER_LEN(GC_Value_Guard);
 
     for (n = 0; n < 14; n++) Debug_Fmt(cs_cast(BOOT_STR(RS_DUMP, n)), nums[n]);
 }

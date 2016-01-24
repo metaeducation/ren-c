@@ -67,7 +67,36 @@ void Init_Stacks(REBCNT size)
 
     CS_Running = NULL;
 
-    DS_Array = Make_Array(size);
+    // Start the data stack out with just one element in it, and make it an
+    // unwritable trash for the debug build.  This helps avoid both accidental
+    // reads and writes of an empty stack, as well as meaning that indices
+    // into the data stack can be unsigned (no need for -1 to mean empty,
+    // because 0 can)
+    {
+        DS_Array = Make_Array(1);
+        DS_Movable_Base = ARR_HEAD(DS_Array);
+
+        SET_TRASH_SAFE(ARR_HEAD(DS_Array));
+
+    #if !defined(NDEBUG)
+        MARK_VAL_READ_ONLY_DEBUG(ARR_HEAD(DS_Array));
+    #endif
+
+        // The END marker will signal DS_PUSH that it has run out of space,
+        // and it will perform the allocation at that time.
+        //
+        SET_ARRAY_LEN(DS_Array, 1);
+        SET_END(ARR_TAIL(DS_Array));
+        ASSERT_ARRAY(DS_Array);
+
+        // Reuse the expansion logic that happens on a DS_PUSH to get the
+        // initial stack size.  It requires you to be on an END to run.  Then
+        // drop the hypothetical thing pushed.
+        //
+        DS_Index = 1;
+        Expand_Data_Stack_May_Fail(size);
+        DS_DROP;
+    }
 
     // !!! Historically the data stack used a "special GC" because it was
     // not always terminated with an END marker.  It also had some fixed
@@ -77,7 +106,7 @@ void Init_Stacks(REBCNT size)
     // other things down first, but there may be some optimizations that
     // get added back in--hopefully that will benefit all series.
     //
-    Set_Root_Series(TASK_STACK, ARRAY_SERIES(DS_Array));
+    Set_Root_Series(TASK_STACK, ARR_SERIES(DS_Array));
 
     // Call stack (includes pending functions, parens...anything that sets
     // up a `struct Reb_Call` and calls Do_Core())  Singly linked.
@@ -108,7 +137,75 @@ void Shutdown_Stacks(void)
 
     assert(!CS_Running);
 
-    assert(DSP == -1);
+    // !!! Why not free data stack here?
+    //
+    assert(DSP == 0);
+}
+
+
+//
+//  Expand_Data_Stack_May_Fail: C
+//
+// The data stack maintains an invariant that you may never push an END to it.
+// So each push looks to see if it's pushing to a cell that contains an END
+// and if so requests an expansion.
+//
+// WARNING: This will invalidate any extant pointers to REBVALs living in
+// the stack.  It is for this reason that stack access should be done by
+// REBDSP "data stack pointers" and not by REBVAL* across *any* operation
+// which could do a push or pop.  (Currently stable w.r.t. pop but there may
+// be compaction at some point.)
+//
+void Expand_Data_Stack_May_Fail(REBCNT amount)
+{
+    REBCNT len_old = ARR_LEN(DS_Array);
+    REBCNT len_new;
+    REBCNT n;
+    REBVAL *value;
+
+    // The current requests for expansion should only happen when the stack
+    // is at its end.  Sanity check that.
+    //
+    assert(IS_END(DS_TOP));
+    assert(DS_TOP == ARR_TAIL(DS_Array));
+    assert(DS_TOP - ARR_HEAD(DS_Array) == len_old);
+
+    // If adding in the requested amount would overflow the stack limit, then
+    // give a data stack overflow error.
+    //
+    if (SER_REST(ARR_SERIES(DS_Array)) + amount >= STACK_LIMIT)
+        Trap_Stack_Overflow();
+
+    Extend_Series(ARR_SERIES(DS_Array), amount);
+    // DS_Base = BLK_HEAD(DS_Array);
+    // Debug_Fmt(BOOT_STR(RS_STACK, 0), DSP, SER_REST(DS_Array));
+
+    // Update the global pointer representing the base of the stack that
+    // likely was moved by the above allocation.  (It's not necessarily a
+    // huge win to cache it, but it turns data stack access from a double
+    // dereference into a single dereference in the common case, and it was
+    // how R3-Alpha did it).
+    //
+    DS_Movable_Base = ARR_HEAD(DS_Array); // must do before using DS_TOP
+
+    // We fill in the data stack with "GC safe trash" (which is unset it the
+    // release build, but will raise an alarm if VAL_TYPE() called on it in
+    // the debug build).  In order to serve as a marker for the stack slot
+    // being available, it merely must not be IS_END()...
+    //
+    value = DS_TOP;
+    len_new = len_old + amount;
+    for (n = len_old; n < len_new; ++n) {
+        SET_TRASH_SAFE(value);
+        ++value;
+    }
+
+    // Update the end marker to serve as the indicator for when the next
+    // stack push would need to expand.
+    //
+    SET_END(value);
+    SET_ARRAY_LEN(DS_Array, len_new);
+    ASSERT_ARRAY(DS_Array);
 }
 
 
@@ -122,11 +219,11 @@ void Shutdown_Stacks(void)
 // 
 // Protocol for /INTO is to set the position to the tail.
 //
-void Pop_Stack_Values(REBVAL *out, REBINT dsp_start, REBOOL into)
+void Pop_Stack_Values(REBVAL *out, REBDSP dsp_start, REBOOL into)
 {
     REBARR *array;
     REBCNT len = DSP - dsp_start;
-    REBVAL *values = ARRAY_AT(DS_Array, dsp_start + 1);
+    REBVAL *values = ARR_AT(DS_Array, dsp_start + 1);
 
     if (into) {
         assert(ANY_ARRAY(out));
@@ -135,7 +232,7 @@ void Pop_Stack_Values(REBVAL *out, REBINT dsp_start, REBOOL into)
         FAIL_IF_LOCKED_ARRAY(array);
 
         VAL_INDEX(out) = Insert_Series(
-            ARRAY_SERIES(array),
+            ARR_SERIES(array),
             VAL_INDEX(out),
             cast(REBYTE*, values),
             len // multiplied by width (sizeof(REBVAL)) in Insert_Series
@@ -159,13 +256,13 @@ void Pop_Stack_Values(REBVAL *out, REBINT dsp_start, REBOOL into)
 //
 void Expand_Stack(REBCNT amount)
 {
-    if (SERIES_REST(ARRAY_SERIES(DS_Array)) >= STACK_LIMIT)
+    if (SER_REST(ARR_SERIES(DS_Array)) >= STACK_LIMIT)
         Trap_Stack_Overflow();
-    Extend_Series(ARRAY_SERIES(DS_Array), amount);
+    Extend_Series(ARR_SERIES(DS_Array), amount);
     Debug_Fmt(
         cs_cast(BOOT_STR(RS_STACK, 0)),
         DSP,
-        SERIES_REST(ARRAY_SERIES(DS_Array))
+        SER_REST(ARR_SERIES(DS_Array))
     );
 }
 
@@ -333,17 +430,17 @@ void Drop_Chunk(REBVAL values[])
     assert(!values || CHUNK_FROM_VALUES(values) == chunk);
 
     if (chunk->opt_context) {
-        REBARR *varlist = CONTEXT_VARLIST(chunk->opt_context);
+        REBARR *varlist = CTX_VARLIST(chunk->opt_context);
         assert(
-            ARRAY_GET_FLAG(varlist, OPT_SER_EXTERNAL)
-            && ARRAY_GET_FLAG(varlist, OPT_SER_STACK)
-            && ARRAY_GET_FLAG(varlist, OPT_SER_ARRAY)
+            GET_ARR_FLAG(varlist, SERIES_FLAG_EXTERNAL)
+            && GET_ARR_FLAG(varlist, SERIES_FLAG_STACK)
+            && GET_ARR_FLAG(varlist, SERIES_FLAG_ARRAY)
         );
-        assert(ARRAY_GET_FLAG(varlist, OPT_SER_ACCESSIBLE));
+        assert(GET_ARR_FLAG(varlist, SERIES_FLAG_ACCESSIBLE));
         assert(
-            CONTEXT_STACKVARS(chunk->opt_context) == &TG_Top_Chunk->values[0]
+            CTX_STACKVARS(chunk->opt_context) == &TG_Top_Chunk->values[0]
         );
-        ARRAY_CLR_FLAG(varlist, OPT_SER_ACCESSIBLE);
+        CLEAR_ARR_FLAG(varlist, SERIES_FLAG_ACCESSIBLE);
 
     #if !defined(NDEBUG)
         //
@@ -351,14 +448,14 @@ void Drop_Chunk(REBVAL values[])
         // and ANY-FUNCTION! at their slot [0] positions of varlist and
         // paramlist respectively was that all REBVAL instances of that
         // context or object would mirror those bits.  Because we have
-        // OPT_SER_ACCESSIBLE then it's possible to keep this invariant
+        // SERIES_FLAG_ACCESSIBLE then it's possible to keep this invariant
         // and let a stale stackvars pointer be bad inside the context to
         // match any extant REBVALs, but debugging will be more obvious if
         // the bits are deliberately set to bad--even if this is incongruous
         // with those values.  Thus there is no check that these bits line
         // up and we turn the ones in the context itself to garbage here.
         //
-        CONTEXT_STACKVARS(chunk->opt_context) = cast(REBVAL*, 0xDECAFBAD);
+        CTX_STACKVARS(chunk->opt_context) = cast(REBVAL*, 0xDECAFBAD);
     #endif
     }
 
@@ -445,7 +542,7 @@ void Push_New_Arglist_For_Call(struct Reb_Call *c) {
     // slot long, because function frames start with the value of the
     // function in slot 0.
     //
-    if (IS_CLOSURE(FUNC_VALUE(c->func))) {
+    if (IS_FUNC_DURABLE(FUNC_VALUE(c->func))) {
         //
         // !!! In the near term, it's hoped that CLOSURE! will go away and
         // that stack frames can be "hybrids" with some pooled allocated
@@ -457,12 +554,12 @@ void Push_New_Arglist_For_Call(struct Reb_Call *c) {
         //
         varlist = Make_Array(num_slots + 1);
         SET_ARRAY_LEN(varlist, num_slots + 1);
-        SET_END(ARRAY_AT(varlist, num_slots + 1));
-        ARRAY_SET_FLAG(varlist, OPT_SER_FIXED_SIZE);
+        SET_END(ARR_AT(varlist, num_slots + 1));
+        SET_ARR_FLAG(varlist, SERIES_FLAG_FIXED_SIZE);
 
-        // Skip the [0] slot which will be filled with the CONTEXT_VALUE
+        // Skip the [0] slot which will be filled with the CTX_VALUE
         //
-        slot = ARRAY_AT(varlist, 1);
+        slot = ARR_AT(varlist, 1);
 
         // The NULL stackvars will be picked up by the reification; reuse the
         // work that function does vs. duplicating it here.
@@ -539,12 +636,12 @@ void Push_New_Arglist_For_Call(struct Reb_Call *c) {
 //
 // If there's already a frame this will return it, otherwise create it.
 //
-REBCON *Frame_For_Call_May_Reify(
+REBCTX *Frame_For_Call_May_Reify(
     struct Reb_Call *c,
     REBARR *opt_varlist, // if a CLOSURE! and varlist is preallocated
     REBOOL ensure_managed
 ) {
-    REBCON *context;
+    REBCTX *context;
     struct Reb_Chunk *chunk;
 
     if (c->flags & DO_FLAG_FRAME_CONTEXT)
@@ -557,7 +654,7 @@ REBCON *Frame_For_Call_May_Reify(
         //
         assert(c->mode == CALL_MODE_GUARD_ARRAY_ONLY);
         context = AS_CONTEXT(opt_varlist);
-        assert(ARRAY_GET_FLAG(AS_ARRAY(context), OPT_SER_HAS_DYNAMIC));
+        assert(GET_ARR_FLAG(AS_ARRAY(context), SERIES_FLAG_HAS_DYNAMIC));
     }
     else {
         assert(c->mode == CALL_MODE_FUNCTION);
@@ -576,11 +673,11 @@ REBCON *Frame_For_Call_May_Reify(
             MKS_EXTERNAL // don't alloc (or free) any data, trust us to do it
         ));
 
-        assert(!ARRAY_GET_FLAG(AS_ARRAY(context), OPT_SER_HAS_DYNAMIC));
+        assert(!GET_ARR_FLAG(AS_ARRAY(context), SERIES_FLAG_HAS_DYNAMIC));
     }
 
-    ARRAY_SET_FLAG(AS_ARRAY(context), OPT_SER_ARRAY);
-    ARRAY_SET_FLAG(CONTEXT_VARLIST(context), OPT_SER_CONTEXT);
+    SET_ARR_FLAG(AS_ARRAY(context), SERIES_FLAG_ARRAY);
+    SET_ARR_FLAG(CTX_VARLIST(context), SERIES_FLAG_CONTEXT);
 
     // We have to set the lock flag on the series as long as it is on
     // the stack.  This means that no matter what cleverness the GC
@@ -591,14 +688,14 @@ REBCON *Frame_For_Call_May_Reify(
     // functions/closures to grow.  It is very likely a good idea, but
     // there may be reasons to introduce some kind of flexibility.
     //
-    ARRAY_SET_FLAG(CONTEXT_VARLIST(context), OPT_SER_FIXED_SIZE);
+    SET_ARR_FLAG(CTX_VARLIST(context), SERIES_FLAG_FIXED_SIZE);
 
     // We do not Manage_Context, because we are reusing a word series here
     // that has already been managed.  The arglist array was managed when
     // created and kept alive by Mark_Call_Frames
     //
     INIT_CONTEXT_KEYLIST(context, FUNC_PARAMLIST(c->func));
-    ASSERT_ARRAY_MANAGED(CONTEXT_KEYLIST(context));
+    ASSERT_ARRAY_MANAGED(CTX_KEYLIST(context));
 
     // We do not manage the varlist, because we'd like to be able to free
     // it *if* nothing happens that causes it to be managed.  Note that
@@ -606,13 +703,13 @@ REBCON *Frame_For_Call_May_Reify(
     // managedness, as will creating a REBVAL for it.
     //
     if (ensure_managed)
-        ENSURE_ARRAY_MANAGED(CONTEXT_VARLIST(context));
+        ENSURE_ARRAY_MANAGED(CTX_VARLIST(context));
     else {
         // Might there be a version that doesn't ensure but also accepts if
         // it happens to be managed?  (Current non-ensuring client assumes
         // it's not managed...
         //
-        assert(!ARRAY_GET_FLAG(CONTEXT_VARLIST(context), OPT_SER_MANAGED));
+        assert(!GET_ARR_FLAG(CTX_VARLIST(context), SERIES_FLAG_MANAGED));
     }
 
     // When in CALL_MODE_PENDING or CALL_MODE_FUNCTION, the arglist will
@@ -625,8 +722,8 @@ REBCON *Frame_For_Call_May_Reify(
     // able to access this information.  GC protection for pending
     // frames could be issued on demand by the debugger, however.
     //
-    VAL_RESET_HEADER(CONTEXT_VALUE(context), REB_FRAME);
-    INIT_VAL_CONTEXT(CONTEXT_VALUE(context), context);
+    VAL_RESET_HEADER(CTX_VALUE(context), REB_FRAME);
+    INIT_VAL_CONTEXT(CTX_VALUE(context), context);
     INIT_CONTEXT_FUNC(context, c->func);
 
     // Give this series the data from what was in the chunk, and make note
@@ -634,7 +731,7 @@ REBCON *Frame_For_Call_May_Reify(
     // when that chunk gets freed (could happen during a fail() or when
     // the stack frame finishes normally)
     //
-    CONTEXT_STACKVARS(context) = c->frame.stackvars;
+    CTX_STACKVARS(context) = c->frame.stackvars;
     if (c->frame.stackvars) {
         assert(!opt_varlist);
 
@@ -642,8 +739,8 @@ REBCON *Frame_For_Call_May_Reify(
         assert(!chunk->opt_context);
         chunk->opt_context = context;
 
-        ARRAY_SET_FLAG(AS_ARRAY(context), OPT_SER_STACK);
-        ARRAY_SET_FLAG(AS_ARRAY(context), OPT_SER_ACCESSIBLE);
+        SET_ARR_FLAG(AS_ARRAY(context), SERIES_FLAG_STACK);
+        SET_ARR_FLAG(AS_ARRAY(context), SERIES_FLAG_ACCESSIBLE);
     }
     else
         assert(opt_varlist);
@@ -654,8 +751,8 @@ REBCON *Frame_For_Call_May_Reify(
     // possible in the debugger anyway.)  For now, protect unless it's a
     // user function.
     //
-    if (!IS_FUNCTION(FUNC_VALUE(c->func)) && !IS_CLOSURE(FUNC_VALUE(c->func)))
-        ARRAY_SET_FLAG(AS_ARRAY(context), OPT_SER_LOCKED);
+    if (!IS_FUNCTION(FUNC_VALUE(c->func)))
+        SET_ARR_FLAG(AS_ARRAY(context), SERIES_FLAG_LOCKED);
 
     // Finally we mark the flags to say this contains a valid frame, so that
     // future calls to this routine will return it instead of making another.

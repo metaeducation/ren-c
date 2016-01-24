@@ -20,7 +20,7 @@
 ************************************************************************
 **
 **  Module:  c-function.c
-**  Summary: support for functions, actions, closures and routines
+**  Summary: support for functions, actions, and routines
 **  Section: core
 **  Author:  Carl Sassenrath, Shixin Zeng
 **  Notes:
@@ -151,7 +151,7 @@ REBARR *Make_Paramlist_Managed(REBARR *spec, REBCNT opt_sym_last)
     // data.  Scan for words (BIND_ALL) and error on duplicates (BIND_NO_DUP)
     //
     paramlist = Collect_Keylist_Managed(
-        NULL, ARRAY_HEAD(spec), NULL, BIND_ALL | BIND_NO_DUP
+        NULL, ARR_HEAD(spec), NULL, BIND_ALL | BIND_NO_DUP
     );
 
     // Whatever function is being made, it must fill in the paramlist slot 0
@@ -159,11 +159,11 @@ REBARR *Make_Paramlist_Managed(REBARR *spec, REBCNT opt_sym_last)
     // the paramlist of.  Use SET_TRASH so that the debug build will leave
     // an alarm if that value isn't thrown in (the GC would complain...)
 
-    typeset = ARRAY_HEAD(paramlist);
+    typeset = ARR_HEAD(paramlist);
     SET_TRASH_IF_DEBUG(typeset);
 
     // !!! needs more checks
-    for (item = ARRAY_HEAD(spec); NOT_END(item); item++) {
+    for (item = ARR_HEAD(spec); NOT_END(item); item++) {
 
         if (ANY_BINSTR(item)) {
             // A goal of the Ren-C design is that core generators like
@@ -193,7 +193,7 @@ REBARR *Make_Paramlist_Managed(REBARR *spec, REBCNT opt_sym_last)
         if (IS_BLOCK(item)) {
             REBVAL *attribute;
 
-            if (typeset != ARRAY_HEAD(paramlist)) {
+            if (typeset != ARR_HEAD(paramlist)) {
                 //
                 // Turn block into typeset for parameter at current index
                 // Note: Make_Typeset leaves VAL_TYPESET_SYM as-is
@@ -311,6 +311,13 @@ REBARR *Make_Paramlist_Managed(REBARR *spec, REBCNT opt_sym_last)
     if (opt_sym_last != SYM_0) {
         assert(NOT_END(&bubble));
         *typeset = bubble;
+
+        // !!! For now we set the typeset of the element to ALL_64, because
+        // this is where the definitional return will hide its type info.
+        // Until a notation is picked for the spec this capability isn't
+        // enabled, but will be.
+        //
+        VAL_TYPESET_BITS(typeset) = ALL_64;
     }
 
     // Make sure the parameter list does not expand.
@@ -319,7 +326,7 @@ REBARR *Make_Paramlist_Managed(REBARR *spec, REBCNT opt_sym_last)
     // protecting the whole array?  (It will be changed more by the caller,
     // but after that.)
     //
-    ARRAY_SET_FLAG(paramlist, OPT_SER_FIXED_SIZE);
+    SET_ARR_FLAG(paramlist, SERIES_FLAG_FIXED_SIZE);
 
     return paramlist;
 }
@@ -335,7 +342,7 @@ void Make_Native(
     enum Reb_Kind type,
     REBOOL frameless
 ) {
-    //Print("Make_Native: %s spec %d", Get_Sym_Name(type+1), SERIES_LEN(spec));
+    //Print("Make_Native: %s spec %d", Get_Sym_Name(type+1), SER_LEN(spec));
 
     ENSURE_ARRAY_MANAGED(spec);
 
@@ -363,7 +370,7 @@ void Make_Native(
 
     // These native routines want to be recognized by paramlist, not by their
     // VAL_FUNC_CODE pointers.  (RETURN because the code pointer is swapped
-    // out for VAL_FUNC_RETURN_FROM, and EVAL for 1 test vs. 2 in the eval loop.)
+    // out for VAL_FUNC_EXIT_FROM, and EVAL for 1 test vs. 2 in the eval loop.)
     //
     // PARSE wants to throw its value from nested code to itself, and doesn't
     // want to thread its known D_FUNC value through the call stack.
@@ -387,6 +394,14 @@ void Make_Native(
         //
         assert(SYM_RETURN == SYMBOL_TO_CANON(SYM_RETURN));
     }
+    else if (code == &N_leave) {
+        //
+        // See remarks on return above.
+        //
+        *ROOT_LEAVE_NATIVE = *out;
+        PG_Leave_Func = VAL_FUNC(out);
+        assert(SYM_LEAVE == SYMBOL_TO_CANON(SYM_LEAVE));
+    }
     else if (code == &N_parse)
         *ROOT_PARSE_NATIVE = *out;
     else if (code == &N_eval) {
@@ -408,7 +423,7 @@ void Make_Native(
 //
 //  Get_Maybe_Fake_Func_Body: C
 // 
-// The FUNC_FLAG_HAS_RETURN tricks used for definitional scoping acceleration
+// The FUNC_FLAG_LEAVE_OR_RETURN tricks used for definitional scoping
 // make it seem like a generator authored more code in the function's
 // body...but the code isn't *actually* there and an optimized internal
 // trick is used.
@@ -420,30 +435,41 @@ void Make_Native(
 REBARR *Get_Maybe_Fake_Func_Body(REBOOL *is_fake, const REBVAL *func)
 {
     REBARR *fake_body;
+    REBVAL *example = NULL;
 
-    assert(IS_CLOSURE(func) || IS_FUNCTION(func));
+    assert(IS_FUNCTION(func));
 
-    if (!GET_VAL_FLAG(func, FUNC_FLAG_HAS_RETURN)) {
+    if (GET_VAL_FLAG(func, FUNC_FLAG_LEAVE_OR_RETURN)) {
+        REBVAL *last_param = VAL_FUNC_PARAM(func, VAL_FUNC_NUM_PARAMS(func));
+
+        if (SYM_RETURN == VAL_TYPESET_CANON(last_param))
+            example = Get_System(SYS_STANDARD, STD_FUNC_BODY);
+        else {
+            assert(SYM_LEAVE == VAL_TYPESET_CANON(last_param));
+            example = Get_System(SYS_STANDARD, STD_PROC_BODY);
+        }
+        *is_fake = TRUE;
+    }
+    else {
         *is_fake = FALSE;
         return VAL_FUNC_BODY(func);
     }
 
-    *is_fake = TRUE;
-
-    // See comments in sysobj.r on standard/func-body.
-    fake_body = Copy_Array_Shallow(
-        VAL_ARRAY(Get_System(SYS_STANDARD, STD_FUNC_BODY))
-    );
+    // See comments in sysobj.r on standard/func-body and standard/proc-body
+    //
+    fake_body = Copy_Array_Shallow(VAL_ARRAY(example));
 
     // Index 5 (or 4 in zero-based C) should be #BODY, a "real" body
-    assert(IS_ISSUE(ARRAY_AT(fake_body, 4))); // #BODY
-    Val_Init_Array(ARRAY_AT(fake_body, 4), REB_GROUP, VAL_FUNC_BODY(func));
-    SET_VAL_FLAG(ARRAY_AT(fake_body, 4), VALUE_FLAG_LINE);
-
-    // !!! This should not be necessary as there is a line break in the
-    // template...look into why the line didn't make it to the body.
     //
-    SET_VAL_FLAG(ARRAY_AT(fake_body, 0), VALUE_FLAG_LINE);
+    assert(IS_ISSUE(ARR_AT(fake_body, 4))); // #BODY
+    Val_Init_Array(ARR_AT(fake_body, 4), REB_GROUP, VAL_FUNC_BODY(func));
+    SET_VAL_FLAG(ARR_AT(fake_body, 4), VALUE_FLAG_LINE);
+
+    // !!! Neither of these should be necessary as there is a line break in
+    // the template...look into why the line didn't make it to the body.
+    //
+    SET_VAL_FLAG(ARR_AT(fake_body, 0), VALUE_FLAG_LINE);
+    SET_VAL_FLAG(ARR_AT(fake_body, 5), VALUE_FLAG_LINE);
 
     return fake_body;
 }
@@ -512,23 +538,24 @@ REBARR *Get_Maybe_Fake_Func_Body(REBOOL *is_fake, const REBVAL *func)
 //
 void Make_Function(
     REBVAL *out,
-    enum Reb_Kind type,
+    REBOOL returns_unset,
     const REBVAL *spec,
     const REBVAL *body,
     REBOOL has_return
 ) {
-    assert(type == REB_FUNCTION || type == REB_CLOSURE);
-    VAL_RESET_HEADER(out, type); // clears value opts and exts in header...
+    REBOOL durable = FALSE;
+
+    VAL_RESET_HEADER(out, REB_FUNCTION); // clears value flags in header...
 
     if (!IS_BLOCK(spec) || !IS_BLOCK(body))
         fail (Error_Bad_Func_Def(spec, body));
 
     if (!has_return) {
         //
-        // Simpler case: if `make function!` or `make closure!` are used
-        // then the function is "effectively <transparent>".   There is no
-        // definitional return automatically added.  Non-definitional EXIT
-        // and EXIT/WITH will still be available.
+        // Simpler case: if `make function!` is used then the function is
+        // "effectively <transparent>".  There is no definitional return
+        // automatically added.  Non-definitional EXIT and EXIT/WITH will
+        // still be available.
         //
         // A small optimization will reuse the global empty array for an
         // empty spec instead of copying (as the spec need not be unique)
@@ -643,6 +670,21 @@ void Make_Function(
                     // doesn't mind...it might be useful for HELP...and it's
                     // cheaper not to.
                 }
+                else if (
+                    0 == Compare_String_Vals(item, ROOT_DURABLE_TAG, TRUE)
+                ) {
+                    // <durable> is currently a lesser version of what it
+                    // hopes to be, but signals what R3-Alpha called CLOSURE!
+                    // semantics.  Indicating that a typeset is durable in
+                    // the low-level will need to be done with some notation
+                    // that doesn't use "keywords"--perhaps a #[true] or a
+                    // #[false] picked up on by the typeset.
+                    //
+                    // !!! Enforce only at the head, if it's going to be
+                    // applying to everything??
+                    //
+                    durable = TRUE;
+                }
                 else
                     fail (Error(RE_BAD_FUNC_DEF, item));
             }
@@ -710,13 +752,20 @@ void Make_Function(
                 // (e.g. what DOES would manufacture).  Re-use a global
                 // instance of that series as an optimization.
                 //
-                VAL_FUNC_SPEC(out) = VAL_ARRAY(ROOT_RETURN_BLOCK);
+                VAL_FUNC_SPEC(out) = returns_unset
+                    ? VAL_ARRAY(ROOT_LEAVE_BLOCK)
+                    : VAL_ARRAY(ROOT_RETURN_BLOCK);
             }
             else {
                 VAL_FUNC_SPEC(out) = Copy_Array_At_Extra_Deep_Managed(
                     VAL_ARRAY(spec), VAL_INDEX(spec), 1 // +1 capacity hint
                 );
-                Append_Value(VAL_FUNC_SPEC(out), ROOT_RETURN_SET_WORD);
+                Append_Value(
+                    VAL_FUNC_SPEC(out),
+                    returns_unset
+                        ? ROOT_LEAVE_SET_WORD
+                        : ROOT_RETURN_SET_WORD
+                    );
             }
         }
     }
@@ -729,7 +778,7 @@ void Make_Function(
     out->payload.any_function.func = AS_FUNC(
         Make_Paramlist_Managed(
             VAL_FUNC_SPEC(out),
-            has_return ? SYM_RETURN : SYM_0
+            has_return ? (returns_unset ? SYM_LEAVE : SYM_RETURN) : SYM_0
         )
     );
 
@@ -752,8 +801,12 @@ void Make_Function(
         // Make_Paramlist above should have ensured it's in the last slot.
         //
     #if !defined(NDEBUG)
-        REBVAL *param = ARRAY_LAST(AS_ARRAY(out->payload.any_function.func));
-        assert(VAL_TYPESET_CANON(param) == SYM_RETURN);
+        REBVAL *param = ARR_LAST(AS_ARRAY(out->payload.any_function.func));
+
+        assert(returns_unset
+            ? VAL_TYPESET_CANON(param) == SYM_LEAVE
+            : VAL_TYPESET_CANON(param) == SYM_RETURN);
+
         assert(GET_VAL_FLAG(param, TYPESET_FLAG_HIDDEN));
     #endif
 
@@ -761,7 +814,7 @@ void Make_Function(
         // knows to write the "hacked" function in that final local.  (Arg
         // fulfillment should leave the hidden parameter unset)
         //
-        SET_VAL_FLAG(out, FUNC_FLAG_HAS_RETURN);
+        SET_VAL_FLAG(out, FUNC_FLAG_LEAVE_OR_RETURN);
     }
 
 #if !defined(NDEBUG)
@@ -782,14 +835,26 @@ void Make_Function(
     //
     *FUNC_VALUE(out->payload.any_function.func) = *out;
 
+    // !!! This is a lame way of setting the durability, because it means
+    // that there's no way a user with just `make function!` could do it.
+    // However, it's a step closer to the solution and eliminating the
+    // FUNCTION!/CLOSURE! distinction.
+    //
+    if (durable) {
+        REBVAL *param;
+        param = VAL_FUNC_PARAMS_HEAD(out);
+        for (; NOT_END(param); ++param)
+            SET_VAL_FLAG(param, TYPESET_FLAG_DURABLE);
+    }
+
     // The argument and local symbols have been arranged in the function's
     // "frame" and are now in index order.  These numbers are put
     // into the binding as *negative* versions of the index, in order
     // to indicate that they are in a function and not an object frame.
     //
-    // (This is done for the closure body even though each call is associated
+    // (This is done for durables body even though each call is associated
     // with an object frame.  The reason is that this is only the "archetype"
-    // body of the closure...it is copied each time and the real numbers
+    // body of the durable...it is copied each time and the real numbers
     // filled in.  Having the indexes already done speeds the copying.)
     //
     Bind_Relative_Deep(VAL_FUNC(out), VAL_FUNC_BODY(out));
@@ -822,14 +887,14 @@ void Clonify_Function(REBVAL *value)
     // by `clos [a] [print a]`) never operates on its body directly... it
     // is copied each time.  And there is no way at present to get a
     // reference to a closure "instance" (an ANY-FUNCTION value with the
-    // copied body in it).  Until such time as there's a way
+    // copied body in it).  This has carried over to <durable> for now.
 
     // !!! This leaves only one function type that is mechanically
-    // clonable at all... the FUNCTION!.  While the behavior is questionable,
-    // for now we will suspend disbelief and preserve what R3-Alpha did
-    // until a clear resolution.
+    // clonable at all... the non-durable FUNCTION!.  While the behavior is
+    // questionable, for now we will suspend disbelief and preserve what
+    // R3-Alpha did until a clear resolution.
 
-    if (!IS_FUNCTION(value))
+    if (!IS_FUNCTION(value) || IS_FUNC_DURABLE(value))
         return;
 
     // No need to modify the spec or header.  But we do need to copy the
@@ -851,7 +916,7 @@ void Clonify_Function(REBVAL *value)
     Rebind_Values_Relative_Deep(
         func_orig,
         value->payload.any_function.func,
-        ARRAY_HEAD(VAL_FUNC_BODY(value))
+        ARR_HEAD(VAL_FUNC_BODY(value))
     );
 
     // The above phrasing came from deep cloning code, while the below was
@@ -915,7 +980,7 @@ void Do_Native_Core(struct Reb_Call *c)
 //
 void Do_Action_Core(struct Reb_Call *c)
 {
-    REBCNT type = VAL_TYPE(DSF_ARG(c, 1));
+    enum Reb_Kind type = VAL_TYPE(DSF_ARG(c, 1));
     REBACT action;
     REB_R ret;
 
@@ -972,50 +1037,48 @@ void Do_Function_Core(struct Reb_Call *c)
 {
     Eval_Functions++;
 
-    // Functions have a body series pointer, but no VAL_INDEX, so use 0
-    //
-    if (Do_At_Throws(c->out, FUNC_BODY(c->func), 0))
-        c->mode = CALL_MODE_THROW_PENDING;
-}
+    if (!IS_FUNC_DURABLE(FUNC_VALUE(c->func))) {
+        //
+        // Simple model with no deep copying or rebinding of the body on
+        // a per-call basis.  Long-term this is planned to be able to handle
+        // specific binding and durability as well, but for now it means
+        // that words embedded in the shared blocks may only look up relative
+        // to the currently running function.
+        //
+        if (Do_At_Throws(c->out, FUNC_BODY(c->func), 0))
+            c->mode = CALL_MODE_THROW_PENDING;
+    }
+    else {
+        REBCTX *frame = c->frame.context;
 
+        REBVAL body;
+        VAL_INIT_WRITABLE_DEBUG(&body);
 
-//
-//  Do_Closure_Core: C
-// 
-// Do a closure by cloning its body and rebinding it to
-// a new frame of words/values.
-//
-void Do_Closure_Core(struct Reb_Call *c)
-{
-    REBCON *context = Frame_For_Call_May_Reify(c, NULL, FALSE);
+        assert(c->flags & DO_FLAG_FRAME_CONTEXT);
 
-    REBVAL body;
-    VAL_INIT_WRITABLE_DEBUG(&body);
+        // Clone the body of the closure to allow us to rebind words inside
+        // of it so that they point specifically to the instances for this
+        // invocation.  (Costly, but that is the mechanics of words at the
+        // present time, until true relative binding is implemented.)
+        //
+        VAL_RESET_HEADER(&body, REB_BLOCK);
+        VAL_ARRAY(&body) = Copy_Array_Deep_Managed(FUNC_BODY(c->func));
+        VAL_INDEX(&body) = 0;
 
-    Eval_Functions++;
+        Rebind_Values_Specifically_Deep(c->func, frame, VAL_ARRAY_AT(&body));
 
-    // Clone the body of the closure to allow us to rebind words inside
-    // of it so that they point specifically to the instances for this
-    // invocation.  (Costly, but that is the mechanics of words at the
-    // present time, until true relative binding is implemented.)
-    //
-    VAL_RESET_HEADER(&body, REB_BLOCK);
-    VAL_ARRAY(&body) = Copy_Array_Deep_Managed(FUNC_BODY(c->func));
-    VAL_INDEX(&body) = 0;
+        // Protect the body from garbage collection during the course of the
+        // execution.  (This is inexpensive...it just points `c->param` to it.)
+        //
+        DSF_PROTECT_X(c, &body);
 
-    Rebind_Values_Closure_Deep(c->func, c->frame.context, VAL_ARRAY_AT(&body));
+        if (DO_ARRAY_THROWS(c->out, &body))
+            c->mode = CALL_MODE_THROW_PENDING;
 
-    // Protect the body from garbage collection during the course of the
-    // execution.  (This is inexpensive...it just points `c->param` to it.)
-    //
-    DSF_PROTECT_X(c, &body);
-
-    if (DO_ARRAY_THROWS(c->out, &body))
-        c->mode = CALL_MODE_THROW_PENDING;
-
-    // References to parts of the closure's copied body may still be
-    // extant, but we no longer need to hold it from GC.  Fortunately the
-    // DSF_PROTECT_X will be implicitly dropped when the call ends.
+        // References to parts of this function's copied body may still be
+        // extant, but we no longer need to hold it from GC.  Fortunately the
+        // DSF_PROTECT_X will be implicitly dropped when the call ends.
+    }
 }
 
 
@@ -1044,64 +1107,53 @@ void Do_Routine_Core(struct Reb_Call *c)
 //  "Defines a user function with given spec and body."
 //  
 //      spec [block!] 
-//      {Help string (opt) followed by arg words (and opt type and string)}
-//      body [block!] "The body block of the function"
+//          {Help string (opt) followed by arg words (and opt type + string)}
+//      body [block!]
+//          "The body block of the function"
 //  ]
 //
 REBNATIVE(func)
 //
 // Native optimized implementation of a "definitional return" function
-// generator.  FUNC uses "stack-relative binding" for optimization,
-// which leads to less desirable behaviors than CLOS...while more
-// performant.
-// 
-// See comments on Make_Function for full notes.
+// generator.  See comments on Make_Function for full notes.
 {
     PARAM(1, spec);
     PARAM(2, body);
 
     const REBOOL has_return = TRUE;
+    const REBOOL returns_unset = FALSE;
 
-    Make_Function(D_OUT, REB_FUNCTION, ARG(spec), ARG(body), has_return);
+    Make_Function(D_OUT, returns_unset, ARG(spec), ARG(body), has_return);
 
     return R_OUT;
 }
 
 
 //
-//  clos: native [
-//  
-//  "Defines a closure function."
-//  
-//      spec [block!] 
-//      {Help string (opt) followed by arg words (and opt type and string)}
-//      body [block!] "The body block of the function"
+//  proc: native [
+//
+//  "Defines a user function with given spec and body and no return result."
+//
+//      spec [block!]
+//          {Help string (opt) followed by arg words (and opt type + string)}
+//      body [block!]
+//          "The body block of the function, use LEAVE to exit"
 //  ]
 //
-REBNATIVE(clos)
+REBNATIVE(proc)
 //
-// Native optimized implementation of a "definitional return" "closure"
-// generator.  Each time a CLOS-created function is called, it makes
-// a copy of its body and binds all the local words in that copied
-// body into a uniquely persistable object.  This provides desirable
-// behaviors of "leaked" bound variables surviving the end of the
-// closure's call on the stack... as well as recursive instances
-// being able to uniquely identify their bound variables from each
-// other.  Yet this uses more memory and puts more strain on the
-// garbage collector than FUNC.
-// 
-// A solution that can accomplish closure's user-facing effects with
-// enough efficiency to justify replacing FUNC's implementation
-// with it is sought, but no adequate tradeoff has been found.
-// 
-// See comments on Make_Function for full notes.
+// Short for "PROCedure"; inspired by the Pascal language's discernment in
+// terminology of a routine that returns a value vs. one that does not.
+// Provides convenient interface similar to FUNC that will not accidentally
+// leak values to the caller.
 {
     PARAM(1, spec);
     PARAM(2, body);
 
     const REBOOL has_return = TRUE;
+    const REBOOL returns_unset = TRUE;
 
-    Make_Function(D_OUT, REB_CLOSURE, ARG(spec), ARG(body), has_return);
+    Make_Function(D_OUT, returns_unset, ARG(spec), ARG(body), has_return);
 
     return R_OUT;
 }
@@ -1113,8 +1165,8 @@ REBNATIVE(clos)
 //  FUNC_PARAM_Debug: C
 //
 REBVAL *FUNC_PARAM_Debug(REBFUN *f, REBCNT n) {
-    assert(n != 0 && n < ARRAY_LEN(FUNC_PARAMLIST(f)));
-    return ARRAY_AT(FUNC_PARAMLIST(f), (n));
+    assert(n != 0 && n < ARR_LEN(FUNC_PARAMLIST(f)));
+    return ARR_AT(FUNC_PARAMLIST(f), (n));
 }
 
 
@@ -1127,16 +1179,17 @@ REBFUN *VAL_FUNC_Debug(const REBVAL *v) {
     struct Reb_Value_Header func_header = FUNC_VALUE(func)->header;
 
     assert(func == FUNC_VALUE(func)->payload.any_function.func);
-    assert(ARRAY_GET_FLAG(FUNC_PARAMLIST(func), OPT_SER_ARRAY));
-    assert(ARRAY_GET_FLAG(v->payload.any_function.spec, OPT_SER_ARRAY));
+    assert(GET_ARR_FLAG(FUNC_PARAMLIST(func), SERIES_FLAG_ARRAY));
+    assert(GET_ARR_FLAG(v->payload.any_function.spec, SERIES_FLAG_ARRAY));
 
     switch (VAL_TYPE(v)) {
     case REB_NATIVE:
         //
-        // Only the definitional return is allowed to lie and put a differing
-        // field in besides
+        // Only the definitional returns are allowed to lie on a per-value
+        // basis and put a differing field in besides the canon FUNC_CODE
+        // which lives in the [0] cell of the paramlist.
         //
-        if (func != PG_Return_Func) {
+        if (func != PG_Return_Func && func != PG_Leave_Func) {
             assert(
                 v->payload.any_function.impl.code == FUNC_CODE(func)
             );
@@ -1149,7 +1202,7 @@ REBFUN *VAL_FUNC_Debug(const REBVAL *v) {
             // don't know if it has a valid code field or not.
             //
             /*assert(
-                ARRAY_GET_FLAG(v->payload.any_function.impl.body, OPT_SER_ARRAY)
+                GET_ARR_FLAG(v->payload.any_function.impl.body, SERIES_FLAG_ARRAY)
             );*/
         }
         break;
@@ -1162,7 +1215,6 @@ REBFUN *VAL_FUNC_Debug(const REBVAL *v) {
 
     case REB_COMMAND:
     case REB_FUNCTION:
-    case REB_CLOSURE:
         assert(
             v->payload.any_function.impl.body == FUNC_BODY(func)
         );
@@ -1212,9 +1264,9 @@ REBFUN *VAL_FUNC_Debug(const REBVAL *v) {
         REBOOL frameless_func
             = GET_VAL_FLAG(func_value, FUNC_FLAG_FRAMELESS);
         REBOOL has_return_value
-            = GET_VAL_FLAG(v, FUNC_FLAG_HAS_RETURN);
+            = GET_VAL_FLAG(v, FUNC_FLAG_LEAVE_OR_RETURN);
         REBOOL has_return_func
-            = GET_VAL_FLAG(func_value, FUNC_FLAG_HAS_RETURN);
+            = GET_VAL_FLAG(func_value, FUNC_FLAG_LEAVE_OR_RETURN);
         REBOOL infix_value
             = GET_VAL_FLAG(v, FUNC_FLAG_INFIX);
         REBOOL infix_func

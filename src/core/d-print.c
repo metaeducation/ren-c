@@ -238,7 +238,7 @@ void Display_Backtrace(REBCNT lines)
     REBCNT i;
 
     if (Trace_Limit > 0) {
-        tail = SERIES_LEN(Trace_Buffer);
+        tail = SER_LEN(Trace_Buffer);
         i = tail - 1;
         for (lines++ ;lines > 0; lines--, i--) {
             i = Find_Str_Char(LF, Trace_Buffer, 0, i, tail, -1, 0);
@@ -271,7 +271,7 @@ void Debug_String(const void *p, REBCNT len, REBOOL unicode, REBINT lines)
     GC_Disabled = 1;
 
     if (Trace_Limit > 0) {
-        if (SERIES_LEN(Trace_Buffer) >= Trace_Limit)
+        if (SER_LEN(Trace_Buffer) >= Trace_Limit)
             Remove_Series(Trace_Buffer, 0, 2000);
 
         if (len == UNKNOWN) len = unicode ? Strlen_Uni(up) : LEN_BYTES(bp);
@@ -328,7 +328,7 @@ void Debug_Uni(REBSER *ser)
     REBCNT bl;
     REBYTE buf[1024];
     REBUNI *up = UNI_HEAD(ser);
-    REBCNT size = SERIES_LEN(ser);
+    REBCNT size = SER_LEN(ser);
 
     REBINT disabled = GC_Disabled;
     GC_Disabled = 1;
@@ -386,7 +386,7 @@ void Debug_Series(REBSER *ser)
 
         Debug_Fmt("%r", &value);
     }
-    else if (SERIES_WIDE(ser) == sizeof(REBUNI))
+    else if (SER_WIDE(ser) == sizeof(REBUNI))
         Debug_Uni(ser);
     else if (ser == Bind_Table) {
         // Dump bind table somehow?
@@ -510,14 +510,14 @@ void Debug_Values(const REBVAL *value, REBCNT count, REBCNT limit)
             Mold_Value(&mo, value, TRUE);
             Throttle_Mold(&mo); // not using Pop_Mold(), must do explicitly
 
-            for (i1 = i2 = mo.start; i1 < SERIES_LEN(mo.series); i1++) {
+            for (i1 = i2 = mo.start; i1 < SER_LEN(mo.series); i1++) {
                 uc = GET_ANY_CHAR(mo.series, i1);
                 if (uc < ' ') uc = ' ';
                 if (uc > ' ' || pc > ' ') SET_ANY_CHAR(mo.series, i2++, uc);
                 pc = uc;
             }
             SET_ANY_CHAR(mo.series, i2, '\0');
-            assert(SERIES_WIDE(mo.series) == sizeof(REBUNI));
+            assert(SER_WIDE(mo.series) == sizeof(REBUNI));
             Debug_String(
                 UNI_AT(mo.series, mo.start),
                 i2 - mo.start,
@@ -574,7 +574,7 @@ void Debug_Buf(const char *fmt, va_list *varargs_ptr)
     //
     // !!! What's the rationale for this?
     //
-    len = SERIES_LEN(bytes);
+    len = SER_LEN(bytes);
     for (n = 0; n < len; n += sub) {
         sub = len - n;
         if (sub > 1024) sub = 1024;
@@ -970,10 +970,10 @@ void Prin_Value(const REBVAL *value, REBCNT limit, REBOOL mold)
     Mold_Value(&mo, value, mold);
     Throttle_Mold(&mo); // not using Pop_Mold(), must do explicitly
 
-    assert(SERIES_WIDE(mo.series) == sizeof(REBUNI));
+    assert(SER_WIDE(mo.series) == sizeof(REBUNI));
     Prin_OS_String(
         UNI_AT(mo.series, mo.start),
-        SERIES_LEN(mo.series) - mo.start,
+        SER_LEN(mo.series) - mo.start,
         OPT_ENC_UNISRC | OPT_ENC_CRLF_MAYBE
     );
 

@@ -54,7 +54,7 @@ REBNATIVE(echo)
         ser = To_Local_Path("output.txt", 10, FALSE, TRUE);
 
     if (ser) {
-        if (!Echo_File(SERIES_HEAD(REBCHR, ser)))
+        if (!Echo_File(SER_HEAD(REBCHR, ser)))
             fail (Error(RE_CANNOT_OPEN, val));
     }
 
@@ -408,7 +408,7 @@ REBNATIVE(wait)
         }
 
         ports = VAL_ARRAY(&unsafe);
-        for (val = ARRAY_HEAD(ports); NOT_END(val); val++) { // find timeout
+        for (val = ARR_HEAD(ports); NOT_END(val); val++) { // find timeout
             if (Pending_Port(val)) n++;
             if (IS_INTEGER(val) || IS_DECIMAL(val)) break;
         }
@@ -464,7 +464,7 @@ REBNATIVE(wait)
     Sieve_Ports(ports);
 
     if (!D_REF(2)) { // not /all ports
-        val = ARRAY_HEAD(ports);
+        val = ARR_HEAD(ports);
         if (IS_PORT(val)) *D_OUT = *val;
         else SET_NONE(D_OUT);
     }
@@ -490,13 +490,13 @@ REBNATIVE(wake_up)
     PARAM(1, port);
     PARAM(2, event);
 
-    REBCON *port = VAL_CONTEXT(ARG(port));
+    REBCTX *port = VAL_CONTEXT(ARG(port));
     REBOOL awakened = TRUE; // start by assuming success
     REBVAL *value;
 
-    if (CONTEXT_LEN(port) < STD_PORT_MAX - 1) panic (Error(RE_MISC));
+    if (CTX_LEN(port) < STD_PORT_MAX - 1) panic (Error(RE_MISC));
 
-    value = CONTEXT_VAR(port, STD_PORT_ACTOR);
+    value = CTX_VAR(port, STD_PORT_ACTOR);
     if (IS_NATIVE(value)) {
         //
         // We don't pass `value` or `event` in, because we just pass the
@@ -505,7 +505,7 @@ REBNATIVE(wake_up)
         Do_Port_Action(call_, port, A_UPDATE);
     }
 
-    value = CONTEXT_VAR(port, STD_PORT_AWAKE);
+    value = CTX_VAR(port, STD_PORT_AWAKE);
     if (ANY_FUNC(value)) {
         if (Apply_Only_Throws(D_OUT, value, ARG(event), END_VALUE))
             fail (Error_No_Catch_For_Throw(D_OUT));
@@ -645,7 +645,7 @@ REBNATIVE(change_dir)
         Val_Init_String(&val, ser); // may be unicode or utf-8
         Check_Security(SYM_FILE, POL_EXEC, &val);
 
-        if (!OS_SET_CURRENT_DIR(SERIES_HEAD(REBCHR, ser)))
+        if (!OS_SET_CURRENT_DIR(SER_HEAD(REBCHR, ser)))
             fail (Error_Invalid_Arg(arg)); // !!! ERROR MSG
     }
 
@@ -810,8 +810,8 @@ REBNATIVE(call)
             input_ser = Value_To_OS_Path(param, FALSE);
             MANAGE_SERIES(input_ser);
             PUSH_GUARD_SERIES(input_ser);
-            os_input = SERIES_HEAD(char, input_ser);
-            input_len = SERIES_LEN(input_ser);
+            os_input = SER_HEAD(char, input_ser);
+            input_len = SER_LEN(input_ser);
         }
         else if (IS_NONE(param)) {
             input_type = NONE_TYPE;
@@ -840,8 +840,8 @@ REBNATIVE(call)
             output_ser = Value_To_OS_Path(param, FALSE);
             MANAGE_SERIES(output_ser);
             PUSH_GUARD_SERIES(output_ser);
-            os_output = SERIES_HEAD(char, output_ser);
-            output_len = SERIES_LEN(output_ser);
+            os_output = SER_HEAD(char, output_ser);
+            output_len = SER_LEN(output_ser);
         }
         else if (IS_NONE(param)) {
             output_type = NONE_TYPE;
@@ -867,8 +867,8 @@ REBNATIVE(call)
             err_ser = Value_To_OS_Path(param, FALSE);
             MANAGE_SERIES(err_ser);
             PUSH_GUARD_SERIES(err_ser);
-            os_err = SERIES_HEAD(char, err_ser);
-            err_len = SERIES_LEN(err_ser);
+            os_err = SER_HEAD(char, err_ser);
+            err_len = SER_LEN(err_ser);
         }
         else if (IS_NONE(param)) {
             err_type = NONE_TYPE;
@@ -908,7 +908,7 @@ REBNATIVE(call)
 
         argc = 1;
         argv_ser = Make_Series(argc + 1, sizeof(REBCHR*), MKS_NONE);
-        argv = SERIES_HEAD(const REBCHR*, argv_ser);
+        argv = SER_HEAD(const REBCHR*, argv_ser);
 
         argv[0] = cmd;
         // Already implicitly SAVEd by cmd_ser, no need for argv_saved_sers
@@ -927,22 +927,22 @@ REBNATIVE(call)
 
         argv_ser = Make_Series(argc + 1, sizeof(REBCHR*), MKS_NONE);
         argv_saved_sers = Make_Series(argc, sizeof(REBSER*), MKS_NONE);
-        argv = SERIES_HEAD(const REBCHR*, argv_ser);
+        argv = SER_HEAD(const REBCHR*, argv_ser);
         for (i = 0; i < argc; i ++) {
             REBVAL *param = VAL_ARRAY_AT_HEAD(arg, i);
             if (IS_STRING(param)) {
                 REBSER *ser;
                 argv[i] = Val_Str_To_OS_Managed(&ser, param);
                 PUSH_GUARD_SERIES(ser);
-                SERIES_HEAD(REBSER*, argv_saved_sers)[i] = ser;
+                SER_HEAD(REBSER*, argv_saved_sers)[i] = ser;
             }
             else if (IS_FILE(param)) {
                 REBSER *path = Value_To_OS_Path(param, FALSE);
-                argv[i] = SERIES_HEAD(REBCHR, path);
+                argv[i] = SER_HEAD(REBCHR, path);
 
                 MANAGE_SERIES(path);
                 PUSH_GUARD_SERIES(path);
-                SERIES_HEAD(REBSER*, argv_saved_sers)[i] = path;
+                SER_HEAD(REBSER*, argv_saved_sers)[i] = path;
             }
             else
                 fail (Error_Invalid_Arg(param));
@@ -959,11 +959,11 @@ REBNATIVE(call)
         argv_ser = Make_Series(argc + 1, sizeof(REBCHR*), MKS_NONE);
         argv_saved_sers = Make_Series(argc, sizeof(REBSER*), MKS_NONE);
 
-        argv = SERIES_HEAD(const REBCHR*, argv_ser);
+        argv = SER_HEAD(const REBCHR*, argv_ser);
 
-        argv[0] = SERIES_HEAD(REBCHR, path);
+        argv[0] = SER_HEAD(REBCHR, path);
         PUSH_GUARD_SERIES(path);
-        SERIES_HEAD(REBSER*, argv_saved_sers)[0] = path;
+        SER_HEAD(REBSER*, argv_saved_sers)[0] = path;
 
         argv[argc] = NULL;
     }
@@ -986,7 +986,7 @@ REBNATIVE(call)
         assert(argc > 0);
         do {
             // Count down: must unsave the most recently saved series first!
-            DROP_GUARD_SERIES(*SERIES_AT(REBSER*, argv_saved_sers, i - 1));
+            DROP_GUARD_SERIES(*SER_AT(REBSER*, argv_saved_sers, i - 1));
             --i;
         } while (i != 0);
         Free_Series(argv_saved_sers);
@@ -999,7 +999,7 @@ REBNATIVE(call)
             && output_len > 0) {
             // !!! Somewhat inefficient: should there be Append_OS_Str?
             REBSER *ser = Copy_OS_Str(os_output, output_len);
-            Append_String(VAL_SERIES(output), ser, 0, SERIES_LEN(ser));
+            Append_String(VAL_SERIES(output), ser, 0, SER_LEN(ser));
             OS_FREE(os_output);
             Free_Series(ser);
         }
@@ -1016,7 +1016,7 @@ REBNATIVE(call)
             && err_len > 0) {
             // !!! Somewhat inefficient: should there be Append_OS_Str?
             REBSER *ser = Copy_OS_Str(os_err, err_len);
-            Append_String(VAL_SERIES(err), ser, 0, SERIES_LEN(ser));
+            Append_String(VAL_SERIES(err), ser, 0, SER_LEN(ser));
             OS_FREE(os_err);
             Free_Series(ser);
         }
@@ -1037,7 +1037,7 @@ REBNATIVE(call)
     if (input_ser) DROP_GUARD_SERIES(input_ser);
 
     if (flag_info) {
-        REBCON *info = Alloc_Context(2);
+        REBCTX *info = Alloc_Context(2);
 
         SET_INTEGER(Append_Context(info, NULL, SYM_ID), pid);
         if (flag_wait)
@@ -1160,7 +1160,7 @@ static REBARR *File_List_To_Array(const REBCHR *str)
             PATH_OPT_UNI_SRC | PATH_OPT_FORCE_UNI_DEST | PATH_OPT_SRC_IS_DIR
         );
         str += n + 1; // next
-        len = SERIES_LEN(dir);
+        len = SER_LEN(dir);
         while ((n = OS_STRLEN(str))) {
             SET_SERIES_LEN(dir, len);
             Append_Uni_Uni(dir, cast(const REBUNI*, str), n);
@@ -1213,15 +1213,15 @@ REBNATIVE(request_file)
 
     if (D_REF(ARG_REQUEST_FILE_FILE)) {
         REBSER *ser = Value_To_OS_Path(D_ARG(ARG_REQUEST_FILE_NAME), TRUE);
-        REBINT n = SERIES_LEN(ser);
+        REBINT n = SER_LEN(ser);
 
-        fr.dir = SERIES_HEAD(REBCHR, ser);
+        fr.dir = SER_HEAD(REBCHR, ser);
 
         if (OS_CH_VALUE(fr.dir[n-1]) != OS_DIR_SEP) {
             if (n+2 > fr.len) n = fr.len - 2;
             OS_STRNCPY(
                 cast(REBCHR*, fr.files),
-                SERIES_HEAD(REBCHR, ser),
+                SER_HEAD(REBCHR, ser),
                 n
             );
             fr.files[n] = OS_MAKE_CH('\0');
@@ -1230,7 +1230,7 @@ REBNATIVE(request_file)
 
     if (D_REF(ARG_REQUEST_FILE_FILTER)) {
         REBSER *ser = Block_To_String_List(D_ARG(ARG_REQUEST_FILE_LIST));
-        fr.filter = SERIES_HEAD(REBCHR, ser);
+        fr.filter = SER_HEAD(REBCHR, ser);
     }
 
     if (D_REF(ARG_REQUEST_FILE_TITLE)) {

@@ -222,7 +222,7 @@ REBSER *Temp_Bin_Str_Managed(REBVAL *val, REBCNT *index, REBCNT *length)
         if (index)
             *index = 0;
         if (length)
-            *length = SERIES_LEN(series);
+            *length = SER_LEN(series);
     }
 
     assert(BYTE_SIZE(series));
@@ -433,7 +433,7 @@ void Trim_Tail(REBSER *src, REBYTE chr)
 
     assert(!Is_Array_Series(src));
 
-    for (tail = SERIES_LEN(src); tail > 0; tail--) {
+    for (tail = SER_LEN(src); tail > 0; tail--) {
         c = unicode ? *UNI_AT(src, tail - 1) : *BIN_AT(src, tail - 1);
         if (c != chr) break;
     }
@@ -514,9 +514,9 @@ void Enline_Bytes(REBSER *ser, REBCNT idx, REBCNT len)
     if (cnt == 0) return;
 
     // Extend series:
-    len = SERIES_LEN(ser); // before expansion
+    len = SER_LEN(ser); // before expansion
     EXPAND_SERIES_TAIL(ser, cnt);
-    tail = SERIES_LEN(ser); // after expansion
+    tail = SER_LEN(ser); // after expansion
     bp = BIN_HEAD(ser); // expand may change it
 
     // Add missing CRs:
@@ -551,9 +551,9 @@ void Enline_Uni(REBSER *ser, REBCNT idx, REBCNT len)
     if (cnt == 0) return;
 
     // Extend series:
-    len = SERIES_LEN(ser); // before expansion
+    len = SER_LEN(ser); // before expansion
     EXPAND_SERIES_TAIL(ser, cnt);
-    tail = SERIES_LEN(ser); // after expansion
+    tail = SER_LEN(ser); // after expansion
     bp = UNI_HEAD(ser); // expand may change it
 
     // Add missing CRs:

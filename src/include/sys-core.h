@@ -33,7 +33,7 @@
 
 // Internal configuration:
 #define REB_DEF                 // kernel definitions and structs
-//#define SERIES_LABELS         // enable identifier labels for series
+//#define SER_LABELS         // enable identifier labels for series
 #define STACK_MIN   4000        // data stack increment size
 #define STACK_LIMIT 400000      // data stack max (6.4MB)
 #define MIN_COMMON 10000        // min size of common buffer
@@ -255,8 +255,7 @@ enum {
 #define TS_SERIES_OBJ ((TS_SERIES | TS_CONTEXT) & ~TS_NOT_COPIED)
 #define TS_ARRAYS_OBJ ((TS_ARRAY | TS_CONTEXT) & ~TS_NOT_COPIED)
 
-#define TS_FUNCLOS (FLAGIT_KIND(REB_FUNCTION) | FLAGIT_KIND(REB_CLOSURE))
-#define TS_CLONE ((TS_SERIES | TS_FUNCLOS) & ~TS_NOT_COPIED)
+#define TS_CLONE ((TS_SERIES | FLAGIT_KIND(REB_FUNCTION)) & ~TS_NOT_COPIED)
 
 // These are the types which have no need to be seen by the GC.  Note that
 // this list may change--for instance if garbage collection is added for

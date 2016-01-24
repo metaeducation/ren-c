@@ -59,9 +59,9 @@ void Make_Port(REBVAL *out, const REBVAL *spec)
 // Standard method for checking if port is open.
 // A convention. Not all ports use this method.
 //
-REBOOL Is_Port_Open(REBCON *port)
+REBOOL Is_Port_Open(REBCTX *port)
 {
-    REBVAL *state = CONTEXT_VAR(port, STD_PORT_STATE);
+    REBVAL *state = CTX_VAR(port, STD_PORT_STATE);
     if (!IS_BINARY(state)) return FALSE;
     return IS_OPEN(VAL_BIN_AT(state));
 }
@@ -73,9 +73,9 @@ REBOOL Is_Port_Open(REBCON *port)
 // Standard method for setting a port open/closed.
 // A convention. Not all ports use this method.
 //
-void Set_Port_Open(REBCON *port, REBOOL open)
+void Set_Port_Open(REBCTX *port, REBOOL open)
 {
-    REBVAL *state = CONTEXT_VAR(port, STD_PORT_STATE);
+    REBVAL *state = CTX_VAR(port, STD_PORT_STATE);
     if (IS_BINARY(state)) {
         if (open) SET_OPEN(VAL_BIN_AT(state));
         else SET_CLOSED(VAL_BIN_AT(state));
@@ -90,9 +90,9 @@ void Set_Port_Open(REBCON *port, REBOOL open)
 // The size is that of a binary structure used by
 // the port for storing internal information.
 //
-void *Use_Port_State(REBCON *port, REBCNT device, REBCNT size)
+void *Use_Port_State(REBCTX *port, REBCNT device, REBCNT size)
 {
-    REBVAL *state = CONTEXT_VAR(port, STD_PORT_STATE);
+    REBVAL *state = CTX_VAR(port, STD_PORT_STATE);
 
     // If state is not a binary structure, create it:
     if (!IS_BINARY(state)) {
@@ -123,7 +123,7 @@ REBOOL Pending_Port(REBVAL *port)
     REBREQ *req;
 
     if (IS_PORT(port)) {
-        state = CONTEXT_VAR(VAL_CONTEXT(port), STD_PORT_STATE);
+        state = CTX_VAR(VAL_CONTEXT(port), STD_PORT_STATE);
         if (IS_BINARY(state)) {
             req = (REBREQ*)VAL_BIN(state);
             if (!GET_FLAG(req->flags, RRF_PENDING)) return FALSE;
@@ -311,12 +311,12 @@ void Sieve_Ports(REBARR *ports)
     waked = VAL_CONTEXT_VAR(port, STD_PORT_DATA);
     if (!IS_BLOCK(waked)) return;
 
-    for (n = 0; ports && n < ARRAY_LEN(ports);) {
-        val = ARRAY_AT(ports, n);
+    for (n = 0; ports && n < ARR_LEN(ports);) {
+        val = ARR_AT(ports, n);
         if (IS_PORT(val)) {
             assert(VAL_LEN_HEAD(waked) != 0);
             if (VAL_LEN_HEAD(waked) == Find_In_Array_Simple(VAL_ARRAY(waked), 0, val)) {//not found
-                Remove_Series(ARRAY_SERIES(ports), n, 1);
+                Remove_Series(ARR_SERIES(ports), n, 1);
                 continue;
             }
         }
@@ -350,27 +350,27 @@ REBCNT Find_Action(REBVAL *object, REBCNT action)
 // NOTE: stack must already be setup correctly for action, and
 // the caller must cleanup the stack.
 //
-int Do_Port_Action(struct Reb_Call *call_, REBCON *port, REBCNT action)
+int Do_Port_Action(struct Reb_Call *call_, REBCTX *port, REBCNT action)
 {
     REBVAL *actor;
     REBCNT n = 0;
 
     assert(action < A_MAX_ACTION);
 
-    assert(ARRAY_GET_FLAG(CONTEXT_VARLIST(port), OPT_SER_CONTEXT));
+    assert(GET_ARR_FLAG(CTX_VARLIST(port), SERIES_FLAG_CONTEXT));
 
     // Verify valid port (all of these must be false):
     if (
         // Must be = or larger than std port:
-        (CONTEXT_LEN(port) < STD_PORT_MAX - 1) ||
+        (CTX_LEN(port) < STD_PORT_MAX - 1) ||
         // Must have a spec object:
-        !IS_OBJECT(CONTEXT_VAR(port, STD_PORT_SPEC))
+        !IS_OBJECT(CTX_VAR(port, STD_PORT_SPEC))
     ) {
         fail (Error(RE_INVALID_PORT));
     }
 
     // Get actor for port, if it has one:
-    actor = CONTEXT_VAR(port, STD_PORT_ACTOR);
+    actor = CTX_VAR(port, STD_PORT_ACTOR);
 
     if (IS_NONE(actor)) return R_NONE;
 
@@ -445,13 +445,13 @@ void Secure_Port(REBCNT kind, REBREQ *req, REBVAL *name, REBSER *path)
 // Because port actors are exposed to the user level, we must
 // prevent them from being called with invalid values.
 //
-void Validate_Port(REBCON *port, REBCNT action)
+void Validate_Port(REBCTX *port, REBCNT action)
 {
     if (
         action >= A_MAX_ACTION
-        || CONTEXT_LEN(port) > 50 // !!! ?? why 50 ??
-        || !ARRAY_GET_FLAG(CONTEXT_VARLIST(port), OPT_SER_CONTEXT)
-        || !IS_OBJECT(CONTEXT_VAR(port, STD_PORT_SPEC))
+        || CTX_LEN(port) > 50 // !!! ?? why 50 ??
+        || !GET_ARR_FLAG(CTX_VARLIST(port), SERIES_FLAG_CONTEXT)
+        || !IS_OBJECT(CTX_VAR(port, STD_PORT_SPEC))
     ) {
         fail (Error(RE_INVALID_PORT));
     }
@@ -488,7 +488,7 @@ void Validate_Port(REBCON *port, REBCNT action)
 #endif
 
 typedef struct rebol_scheme_actions {
-    REBCNT sym;
+    REBSYM sym;
     const PORT_ACTION *map;
     REBPAF fun;
 } SCHEME_ACTIONS;
@@ -502,7 +502,7 @@ SCHEME_ACTIONS *Scheme_Actions; // Initial Global (not threaded)
 // Associate a scheme word (e.g. FILE) with a set of native
 // scheme actions. This will be used by the Set_Scheme native
 //
-void Register_Scheme(REBCNT sym, const PORT_ACTION *map, REBPAF fun)
+void Register_Scheme(REBSYM sym, const PORT_ACTION *map, REBPAF fun)
 {
     REBINT n;
 

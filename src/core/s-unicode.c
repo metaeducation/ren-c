@@ -1156,7 +1156,7 @@ REBCNT Encode_UTF8(
 int Encode_UTF8_Line(REBSER *dst, REBSER *src, REBCNT idx)
 {
     REBUNI *up = UNI_HEAD(src);
-    REBCNT len  = SERIES_LEN(src);
+    REBCNT len  = SER_LEN(src);
     REBCNT tail;
     REBUNI c;
     REBINT n;
@@ -1203,7 +1203,7 @@ REBSER *Make_UTF8_Binary(
     SET_SERIES_LEN(series, Encode_UTF8(
         BIN_HEAD(series), size, data, &len, opts
     ));
-    assert(SERIES_LEN(series) == size);
+    assert(SER_LEN(series) == size);
     TERM_SEQUENCE(series);
     return series;
 }

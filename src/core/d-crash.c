@@ -47,7 +47,7 @@
 //
 ATTRIBUTE_NO_RETURN void Panic_Core(
     REBCNT id,
-    REBCON *opt_error,
+    REBCTX *opt_error,
     va_list *varargs_ptr
 ) {
     char title[PANIC_TITLE_BUF_SIZE + 1]; // account for null terminator
@@ -58,7 +58,7 @@ ATTRIBUTE_NO_RETURN void Panic_Core(
 
     if (opt_error) {
         ASSERT_CONTEXT(opt_error);
-        assert(CONTEXT_TYPE(opt_error) == REB_ERROR);
+        assert(CTX_TYPE(opt_error) == REB_ERROR);
         assert(id == 0);
         id = ERR_NUM(opt_error);
     }

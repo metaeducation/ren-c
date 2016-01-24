@@ -396,7 +396,7 @@ apply: func [
 
     ; This does not work with infix operations.  It *could* be adapted to
     ; work, but as a legacy concept it's easier just to say don't do it.
-    func [function! closure! action! native! routine! command!]
+    func [function! action! native! routine! command!]
         "Function value to apply"
     block [block!]
         "Block of args, reduced first (unless /only)"
@@ -477,6 +477,59 @@ apply: func [
         fail "Too many arguments passed in APPLY block for function."
     ]
 ]
+
+
+; CLOSURE has been unified with FUNCTION by attacking the two facets that it
+; offers separately.  One is the ability for its arguments and locals to
+; survive the call, which has been recast using the tag `<durable>`.  The
+; other is the specific binding of words in the body to the frame of origin
+; vs to whichever call to the function is on the stack.  That is desired to
+; be pushed as a feature of FUNCTION! that runs at acceptable cost and one
+; never has to ask for.
+;
+; For the moment, the acceptable-cost version is in mid-design, so `<durable>`
+; in the function spec indicates a request for both properties.
+;
+closure: func [
+    {Defines a closure function with all set-words as locals.}
+    spec [block!]
+        {Help string (opt) followed by arg words (and opt type and string)}
+    body [block!]
+        {The body block of the function}
+    /with
+        {Define or use a persistent object (self)}
+    object [object! block! map!]
+        {The object or spec}
+    /extern
+        {These words are not local}
+    words [block!]
+
+    frame: ;-- local
+][
+    frame: make frame! :function
+
+    frame/spec: compose [<durable> (spec)]
+    frame/body: body
+    frame/with: with
+    set/opt 'frame/object :object
+    frame/extern: extern
+    set/opt 'frame/words :words
+
+    eval frame
+]
+
+clos: func [
+    "Defines a closure function."
+    spec [block!]
+        {Help string (opt) followed by arg words (and opt type and string)}
+    body [block!]
+        "The body block of the function"
+][
+    func compose [<durable> (spec)] body
+]
+
+closure!: :function!
+closure?: :function?
 
 
 ; To invoke this function, use `do <r3-legacy>` instead of calling it

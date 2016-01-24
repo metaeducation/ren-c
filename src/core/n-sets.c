@@ -107,7 +107,7 @@ static REBSER *Make_Set_Operation_Series(
         // may be better to use something more similar to the mold stack
         // approach of marking off successive ranges in the array.
         //
-        REBSER *buffer = ARRAY_SERIES(BUF_EMIT);
+        REBSER *buffer = ARR_SERIES(BUF_EMIT);
         Resize_Series(buffer, i);
         hret = Make_Hash_Sequence(i);   // allocated
 
@@ -126,8 +126,8 @@ static REBSER *Make_Set_Operation_Series(
             // Iterate over first series
             //
             i = VAL_INDEX(val1);
-            for (; i < SERIES_LEN(ser); i += skip) {
-                REBVAL *item = ARRAY_AT(AS_ARRAY(ser), i);
+            for (; i < SER_LEN(ser); i += skip) {
+                REBVAL *item = ARR_AT(AS_ARRAY(ser), i);
                 if (flags & SOP_FLAG_CHECK) {
                     h = Find_Key_Hashed(
                         VAL_ARRAY(val2), hser, item, skip, cased, 1
@@ -142,7 +142,7 @@ static REBSER *Make_Set_Operation_Series(
                 }
             }
 
-            if (i != SERIES_LEN(ser)) {
+            if (i != SER_LEN(ser)) {
                 //
                 // In the current philosophy, the semantics of what to do
                 // with things like `intersect/skip [1 2 3] [7] 2` is too
@@ -170,7 +170,7 @@ static REBSER *Make_Set_Operation_Series(
         if (hret)
             Free_Series(hret);
 
-        out_ser = ARRAY_SERIES(Copy_Array_Shallow(AS_ARRAY(buffer)));
+        out_ser = ARR_SERIES(Copy_Array_Shallow(AS_ARRAY(buffer)));
         RESET_TAIL(buffer); // required - allow reuse
     }
     else {
@@ -198,7 +198,7 @@ static REBSER *Make_Set_Operation_Series(
             // Iterate over first series
             //
             i = VAL_INDEX(val1);
-            for (; i < SERIES_LEN(ser); i += skip) {
+            for (; i < SER_LEN(ser); i += skip) {
                 uc = GET_ANY_CHAR(ser, i);
                 if (flags & SOP_FLAG_CHECK) {
                     h = (NOT_FOUND != Find_Str_Char(
@@ -222,7 +222,7 @@ static REBSER *Make_Set_Operation_Series(
                         mo.series, // ser
                         mo.start, // head
                         mo.start, // index
-                        SERIES_LEN(mo.series), // tail
+                        SER_LEN(mo.series), // tail
                         skip, // skip
                         cased ? AM_FIND_CASE : 0 // flags
 	    )

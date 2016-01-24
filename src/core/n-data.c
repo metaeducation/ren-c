@@ -265,7 +265,7 @@ REBNATIVE(bind)
     REFINE(5, new);
     REFINE(6, set);
 
-    REBCON *context = NULL;
+    REBCTX *context = NULL;
     REBFUN *func = NULL;
 
     REBARR *array;
@@ -351,7 +351,7 @@ REBNATIVE(bind)
         array = VAL_ARRAY(ARG(value));
 
     if (context)
-        Bind_Values_Core(ARRAY_HEAD(array), context, flags);
+        Bind_Values_Core(ARR_HEAD(array), context, flags);
     else {
         // This code is temporary, but it doesn't have any non-deep option
         // at this time...
@@ -386,7 +386,7 @@ REBNATIVE(context_of)
     // !!! Mechanically it is likely that in the future, all FRAME!s for
     // user functions will be reified from the moment of invocation.
     //
-    *D_OUT = *CONTEXT_VALUE(VAL_WORD_CONTEXT_MAY_REIFY(ARG(word)));
+    *D_OUT = *CTX_VALUE(VAL_WORD_CONTEXT_MAY_REIFY(ARG(word)));
 
     return R_OUT;
 }
@@ -471,7 +471,7 @@ REBNATIVE(collect_words)
             // !!! These are typesets and not words.  Is Collect_Words able
             // to handle that?
             //
-            prior_values = CONTEXT_KEYS_HEAD(VAL_CONTEXT(ARG(hidden)));
+            prior_values = CTX_KEYS_HEAD(VAL_CONTEXT(ARG(hidden)));
         }
         else {
             assert(IS_BLOCK(ARG(hidden)));
@@ -512,8 +512,21 @@ REBNATIVE(get)
         *D_OUT = *GET_OPT_VAR_MAY_FAIL(source);
     }
     else if (ANY_PATH(source)) {
+        //
+        // Since `source` is in the local frame, it is a copy of the user's
+        // value so it's okay to tweak its path type to ensure it's GET-PATH!
+        //
+        VAL_SET_TYPE_BITS(source, REB_GET_PATH);
+
+        // Here we DO it, which means that `get 'foo/bar` will act the same
+        // as `:foo/bar` for all types.
+        //
         if (Do_Path_Throws(D_OUT, NULL, source, NULL))
             return R_OUT_IS_THROWN;
+
+        // !!! Should this prohibit GROUP! evaluations?  Failure to do so
+        // could make a GET able to have side-effects, which may not be
+        // desirable, at least without a refinement.
     }
     else if (ANY_CONTEXT(source)) {
         //
@@ -531,11 +544,11 @@ REBNATIVE(get)
         // !!! The array we create may have extra unused capacity, due to
         // the LEN including hidden fields which aren't going to be copied.
         //
-        REBARR *array = Make_Array(CONTEXT_LEN(VAL_CONTEXT(source)));
-        REBVAL *dest = ARRAY_HEAD(array);
+        REBARR *array = Make_Array(CTX_LEN(VAL_CONTEXT(source)));
+        REBVAL *dest = ARR_HEAD(array);
 
-        REBVAL *key = CONTEXT_KEYS_HEAD(VAL_CONTEXT(source));
-        REBVAL *var = CONTEXT_VARS_HEAD(VAL_CONTEXT(source));
+        REBVAL *key = CTX_KEYS_HEAD(VAL_CONTEXT(source));
+        REBVAL *var = CTX_VARS_HEAD(VAL_CONTEXT(source));
 
         for (; NOT_END(key); key++, var++) {
             if (GET_VAL_FLAG(key, TYPESET_FLAG_HIDDEN))
@@ -548,7 +561,7 @@ REBNATIVE(get)
         }
 
         SET_END(dest);
-        SET_ARRAY_LEN(array, dest - ARRAY_HEAD(array));
+        SET_ARRAY_LEN(array, dest - ARR_HEAD(array));
         Val_Init_Block(D_OUT, array);
     }
     else {
@@ -624,7 +637,7 @@ REBNATIVE(in)
     REBVAL *word = ARG(word);
 
     REBCNT index;
-    REBCON *context;
+    REBCTX *context;
 
     if (IS_BLOCK(val) || IS_GROUP(val)) {
         if (IS_WORD(word)) {
@@ -879,7 +892,7 @@ REBNATIVE(set)
         // like `set object [a: 0 b: 0 c: 0] 1020` will set all the fields
         // to 1020 is a bit of a strange feature for the primitive.
 
-        REBVAL *key = CONTEXT_KEYS_HEAD(VAL_CONTEXT(target));
+        REBVAL *key = CTX_KEYS_HEAD(VAL_CONTEXT(target));
         REBVAL *var;
 
         // To make SET somewhat atomic, before setting any of the object's
@@ -934,8 +947,8 @@ REBNATIVE(set)
 
         // Refresh the key so we can check and skip hidden fields
         //
-        key = CONTEXT_KEYS_HEAD(VAL_CONTEXT(target));
-        var = CONTEXT_VARS_HEAD(VAL_CONTEXT(target));
+        key = CTX_KEYS_HEAD(VAL_CONTEXT(target));
+        var = CTX_VARS_HEAD(VAL_CONTEXT(target));
 
         // With the assignments validated, set the variables in the object,
         // padding to NONE if requested
@@ -1047,7 +1060,7 @@ return_value_arg:
 //
 REBNATIVE(type_of)
 {
-    REBCNT type = VAL_TYPE(D_ARG(1));
+    enum Reb_Kind type = VAL_TYPE(D_ARG(1));
     Val_Init_Datatype(D_OUT, type);
     return R_OUT;
 }

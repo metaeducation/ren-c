@@ -283,7 +283,7 @@ int Do_String(
     REBARR *code;
 
     struct Reb_State state;
-    REBCON *error;
+    REBCTX *error;
 
     // Breakpoint REPLs are nested, and we may wish to jump out of them to
     // the topmost level via a HALT.  However, all other errors need to be
@@ -331,14 +331,14 @@ int Do_String(
         // R3-Alpha.  It comes from RL_Do_String, but should receive a modern
         // review of why it's written exactly this way.
         //
-        REBCON *user = VAL_CONTEXT(Get_System(SYS_CONTEXTS, CTX_USER));
+        REBCTX *user = VAL_CONTEXT(Get_System(SYS_CONTEXTS, CTX_USER));
 
         REBVAL vali;
         VAL_INIT_WRITABLE_DEBUG(&vali);
 
-        SET_INTEGER(&vali, CONTEXT_LEN(user) + 1);
+        SET_INTEGER(&vali, CTX_LEN(user) + 1);
 
-        Bind_Values_All_Deep(ARRAY_HEAD(code), user);
+        Bind_Values_All_Deep(ARR_HEAD(code), user);
         Resolve_Context(user, Lib_Context, &vali, FALSE, FALSE);
 
         // If we're stopped at a breakpoint, the REPL should have a concept
@@ -348,7 +348,7 @@ int Do_String(
         //
         if (at_breakpoint) {
             struct Reb_Call *call;
-            REBCON *frame;
+            REBCTX *frame;
 
             REBVAL level;
             VAL_INIT_WRITABLE_DEBUG(&level);
@@ -363,7 +363,7 @@ int Do_String(
             //
             frame = Frame_For_Call_May_Reify(call, NULL, TRUE);
 
-            Bind_Values_Deep(ARRAY_HEAD(code), frame);
+            Bind_Values_Deep(ARR_HEAD(code), frame);
         }
 
         // !!! This was unused code that used to be in Do_String from
@@ -371,8 +371,8 @@ int Do_String(
         // "Bind into lib or user spaces?" and then "Top words will be
         // added to lib".  Is it relevant in any way?
         //
-        /* Bind_Values_Set_Forward_Shallow(ARRAY_HEAD(code), Lib_Context);
-        Bind_Values_Deep(ARRAY_HEAD(code), Lib_Context); */
+        /* Bind_Values_Set_Forward_Shallow(ARR_HEAD(code), Lib_Context);
+        Bind_Values_Deep(ARR_HEAD(code), Lib_Context); */
     }
 
     if (Do_At_Throws(out, code, 0)) {
@@ -444,7 +444,7 @@ REBOOL Host_Start_Exiting(int *exit_status, int argc, REBCHR **argv) {
 
     const REBYTE debug_str[] = "debug";
     REBCNT debug_sym;
-    REBCON *user_context;
+    REBCTX *user_context;
 
     Host_Lib = &Host_Lib_Init;
 
@@ -592,7 +592,7 @@ REBOOL Host_Start_Exiting(int *exit_status, int argc, REBCHR **argv) {
         int do_result;
 
         struct Reb_State state;
-        REBCON *error;
+        REBCTX *error;
 
         REBVAL result;
         VAL_INIT_WRITABLE_DEBUG(&result);
@@ -1066,7 +1066,7 @@ int main(int argc, char **argv_ansi)
         )
     ) {
         struct Reb_State state;
-        REBCON *error;
+        REBCTX *error;
 
         REBVAL value;
         VAL_INIT_WRITABLE_DEBUG(&value);

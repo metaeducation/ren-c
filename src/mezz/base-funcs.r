@@ -23,13 +23,18 @@ does: func [
     func [] body
 ]
 
-; We do use the RETURN native spec (for now) to provide the prototype for
-; the fake definitional return.  But the only way you should be able to get
-; at *that* return is through the FUNC and CLOS generators (when they hack
-; out its function pointer to do implement the FUNC_FLAG_HAS_RETURN)
+; The RETURN and LEAVE native specs are used to provide the prototype for
+; the fake definitional returns.  But the only way you should be able to get
+; at these natives is through the FUNC and CLOS generators (when they hack
+; out its function pointer to do implement the FUNC_FLAG_LEAVE_OR_RETURN).
+; Should the native code itself somehow get called, it would error.
 ;
 return: does [
     fail "RETURN called--but no function generator providing it in use"
+]
+
+leave: does [
+    fail "LEAVE called--but no function generator providing it in use"
 ]
 
 function: func [
@@ -74,14 +79,18 @@ use: func [
     vars [block! word!] {Local word(s) to the block}
     body [block!] {Block to evaluate}
 ][
-    ; We are building a CLOS out of the body that was passed to us, and that
+    ; We are building a FUNC out of the body that was passed to us, and that
     ; body may have RETURN words with bindings in them already that we do
     ; not want to disturb with the definitional bindings in the new code.
-    ; So that means either using MAKE CLOSURE! (which wouldn't disrupt
-    ; RETURN bindings) or using the more friendly CLOS with <transparent>
-    ; (they do the same thing, just CLOS is arity-2)
+    ; So that means either using MAKE FUNCTION! (which wouldn't disrupt
+    ; RETURN bindings) or using the more friendly FUNC with <transparent>
+    ; (they do the same thing, just FUNC is arity-2)
     ;
-    eval clos compose [<transparent> /local (vars)] body
+    ; <durable> is used so that the data for the locals will still be
+    ; available if any of the words leak out and are accessed after the
+    ; execution is finished.
+    ;
+    eval func compose [<durable> <transparent> /local (vars)] body
 ]
 
 object: func [

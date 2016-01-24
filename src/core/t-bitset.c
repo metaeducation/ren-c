@@ -181,7 +181,7 @@ REBINT Find_Max_Bit(REBVAL *val)
 REBOOL Check_Bit(REBSER *bset, REBCNT c, REBOOL uncased)
 {
     REBCNT i, n = c;
-    REBCNT tail = SERIES_LEN(bset);
+    REBCNT tail = SER_LEN(bset);
     REBOOL flag = FALSE;
 
     if (uncased) {
@@ -237,7 +237,7 @@ REBOOL Check_Bit_Str(REBSER *bset, REBVAL *val, REBOOL uncased)
 void Set_Bit(REBSER *bset, REBCNT n, REBOOL set)
 {
     REBCNT i = n >> 3;
-    REBCNT tail = SERIES_LEN(bset);
+    REBCNT tail = SER_LEN(bset);
     REBYTE bit;
 
     // Expand if not enough room:
@@ -367,7 +367,7 @@ span_bits:
             val++;
             if (!IS_BINARY(val)) return FALSE;
             n = VAL_LEN_AT(val);
-            c = SERIES_LEN(bset);
+            c = SER_LEN(bset);
             if (n >= c) {
                 Expand_Series(bset, c, (n - c));
                 CLEAR(BIN_AT(bset, c), (n - c));
@@ -503,7 +503,7 @@ REBINT PD_Bitset(REBPVS *pvs)
 //
 void Trim_Tail_Zeros(REBSER *ser)
 {
-    REBCNT len = SERIES_LEN(ser);
+    REBCNT len = SER_LEN(ser);
     REBYTE *bp = BIN_HEAD(ser);
 
     while (len > 0 && bp[len] == 0)

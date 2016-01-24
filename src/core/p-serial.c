@@ -36,7 +36,7 @@
 //
 //  Serial_Actor: C
 //
-static REB_R Serial_Actor(struct Reb_Call *call_, REBCON *port, REBCNT action)
+static REB_R Serial_Actor(struct Reb_Call *call_, REBCTX *port, REBCNT action)
 {
     REBREQ *req;    // IO request
     REBVAL *spec;   // port spec
@@ -53,7 +53,7 @@ static REB_R Serial_Actor(struct Reb_Call *call_, REBCON *port, REBCNT action)
     *D_OUT = *D_ARG(1);
 
     // Validate PORT fields:
-    spec = CONTEXT_VAR(port, STD_PORT_SPEC);
+    spec = CTX_VAR(port, STD_PORT_SPEC);
     if (!IS_OBJECT(spec)) fail (Error(RE_INVALID_PORT));
     path = Obj_Value(spec, STD_PORT_SPEC_HEAD_REF);
     if (!path) fail (Error(RE_INVALID_SPEC, spec));
@@ -79,7 +79,7 @@ static REB_R Serial_Actor(struct Reb_Call *call_, REBCON *port, REBCNT action)
                 // !!! This is assuming VAL_DATA contains native chars.
                 // Should it? (2 bytes on windows, 1 byte on linux/mac)
                 //
-                SERIES_AT(REBCHR, VAL_SERIES(arg), VAL_INDEX(arg)),
+                SER_AT(REBCHR, VAL_SERIES(arg), VAL_INDEX(arg)),
                 MAX_SERIAL_DEV_PATH
             );
             arg = Obj_Value(spec, STD_PORT_SPEC_SERIAL_SPEED);
@@ -167,21 +167,21 @@ static REB_R Serial_Actor(struct Reb_Call *call_, REBCON *port, REBCNT action)
         refs = Find_Refines(call_, ALL_READ_REFS);
 
         // Setup the read buffer (allocate a buffer if needed):
-        arg = CONTEXT_VAR(port, STD_PORT_DATA);
+        arg = CTX_VAR(port, STD_PORT_DATA);
         if (!IS_STRING(arg) && !IS_BINARY(arg)) {
             Val_Init_Binary(arg, Make_Binary(32000));
         }
         ser = VAL_SERIES(arg);
-        req->length = SERIES_AVAIL(ser); // space available
+        req->length = SER_AVAIL(ser); // space available
         if (req->length < 32000/2) Extend_Series(ser, 32000);
-        req->length = SERIES_AVAIL(ser);
+        req->length = SER_AVAIL(ser);
 
         // This used STR_TAIL (obsolete, equivalent to BIN_TAIL) but was it
         // sure the series was byte sized?  Added in a check.
         assert(BYTE_SIZE(ser));
         req->common.data = BIN_TAIL(ser); // write at tail
 
-        //if (SERIES_LEN(ser) == 0)
+        //if (SER_LEN(ser) == 0)
         req->actual = 0;  // Actual for THIS read, not for total.
 #ifdef DEBUG_SERIAL
         printf("(max read length %d)", req->length);
@@ -210,7 +210,7 @@ static REB_R Serial_Actor(struct Reb_Call *call_, REBCON *port, REBCNT action)
         }
 
         // Setup the write:
-        *CONTEXT_VAR(port, STD_PORT_DATA) = *spec;  // keep it GC safe
+        *CTX_VAR(port, STD_PORT_DATA) = *spec;  // keep it GC safe
         req->length = len;
         req->common.data = VAL_BIN_AT(spec);
         req->actual = 0;
@@ -223,7 +223,7 @@ static REB_R Serial_Actor(struct Reb_Call *call_, REBCON *port, REBCNT action)
     case A_UPDATE:
         // Update the port object after a READ or WRITE operation.
         // This is normally called by the WAKE-UP function.
-        arg = CONTEXT_VAR(port, STD_PORT_DATA);
+        arg = CTX_VAR(port, STD_PORT_DATA);
         if (req->command == RDC_READ) {
             if (ANY_BINSTR(arg)) {
                 SET_SERIES_LEN(

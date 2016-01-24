@@ -50,16 +50,16 @@ void Snap_State_Core(struct Reb_State *s)
     // length of the collect buffer to tell if a later fail() happens in
     // the middle of a Collect_Keys.)
     //
-    assert(ARRAY_LEN(BUF_COLLECT) == 0);
+    assert(ARR_LEN(BUF_COLLECT) == 0);
 
-    s->series_guard_len = SERIES_LEN(GC_Series_Guard);
-    s->value_guard_len = SERIES_LEN(GC_Value_Guard);
+    s->series_guard_len = SER_LEN(GC_Series_Guard);
+    s->value_guard_len = SER_LEN(GC_Value_Guard);
     s->do_stack = TG_Do_Stack;
     s->gc_disable = GC_Disabled;
 
-    s->manuals_len = SERIES_LEN(GC_Manuals);
-    s->uni_buf_len = SERIES_LEN(UNI_BUF);
-    s->mold_loop_tail = ARRAY_LEN(MOLD_STACK);
+    s->manuals_len = SER_LEN(GC_Manuals);
+    s->uni_buf_len = SER_LEN(UNI_BUF);
+    s->mold_loop_tail = ARR_LEN(MOLD_STACK);
 
     // !!! Is this initialization necessary?
     s->error = NULL;
@@ -93,30 +93,30 @@ void Assert_State_Balanced_Debug(
 
     assert(s->call == DSF);
 
-    assert(ARRAY_LEN(BUF_COLLECT) == 0);
+    assert(ARR_LEN(BUF_COLLECT) == 0);
 
-    if (s->series_guard_len != SERIES_LEN(GC_Series_Guard)) {
+    if (s->series_guard_len != SER_LEN(GC_Series_Guard)) {
         Debug_Fmt(
             "PUSH_GUARD_SERIES()x%d without DROP_GUARD_SERIES",
-            SERIES_LEN(GC_Series_Guard) - s->series_guard_len
+            SER_LEN(GC_Series_Guard) - s->series_guard_len
         );
-        panic = *SERIES_AT(
+        panic = *SER_AT(
             REBSER*,
             GC_Series_Guard,
-            SERIES_LEN(GC_Series_Guard) - 1
+            SER_LEN(GC_Series_Guard) - 1
         );
         goto problem_found;
     }
 
-    if (s->value_guard_len != SERIES_LEN(GC_Value_Guard)) {
+    if (s->value_guard_len != SER_LEN(GC_Value_Guard)) {
         Debug_Fmt(
             "PUSH_GUARD_VALUE()x%d without DROP_GUARD_VALUE",
-            SERIES_LEN(GC_Value_Guard) - s->value_guard_len
+            SER_LEN(GC_Value_Guard) - s->value_guard_len
         );
-        PROBE(*SERIES_AT(
+        PROBE(*SER_AT(
             REBVAL*,
             GC_Value_Guard,
-            SERIES_LEN(GC_Value_Guard) - 1
+            SER_LEN(GC_Value_Guard) - 1
         ));
         goto problem_found;
     }
@@ -125,13 +125,13 @@ void Assert_State_Balanced_Debug(
     assert(s->gc_disable == GC_Disabled);
 
     // !!! Note that this inherits a test that uses GC_Manuals->content.xxx
-    // instead of SERIES_LEN().  The idea being that although some series
+    // instead of SER_LEN().  The idea being that although some series
     // are able to fit in the series node, the GC_Manuals wouldn't ever
     // pay for that check because it would always be known not to.  Review
     // this in general for things that may not need "series" overhead,
     // e.g. a contiguous pointer stack.
     //
-    if (GC_Manuals->content.dynamic.len > SERIES_LEN(GC_Manuals)) {
+    if (GC_Manuals->content.dynamic.len > SER_LEN(GC_Manuals)) {
         Debug_Fmt("!!! Manual series freed from outside of checkpoint !!!");
 
         // Note: Should this ever actually happen, a Panic_Series won't do
@@ -141,21 +141,21 @@ void Assert_State_Balanced_Debug(
         //
         goto problem_found;
     }
-    else if (s->manuals_len < SERIES_LEN(GC_Manuals)) {
+    else if (s->manuals_len < SER_LEN(GC_Manuals)) {
         Debug_Fmt(
             "Make_Series()x%d without Free_Series or MANAGE_SERIES",
-            SERIES_LEN(GC_Manuals) - s->manuals_len
+            SER_LEN(GC_Manuals) - s->manuals_len
         );
-        panic = *(SERIES_AT(
+        panic = *(SER_AT(
             REBSER*,
             GC_Manuals,
-            SERIES_LEN(GC_Manuals) - 1
+            SER_LEN(GC_Manuals) - 1
         ));
         goto problem_found;
     }
 
-    assert(s->uni_buf_len == SERIES_LEN(UNI_BUF));
-    assert(s->mold_loop_tail == ARRAY_LEN(MOLD_STACK));
+    assert(s->uni_buf_len == SER_LEN(UNI_BUF));
+    assert(s->mold_loop_tail == ARR_LEN(MOLD_STACK));
 
     assert(s->error == NULL); // !!! necessary?
 
@@ -199,7 +199,7 @@ REBOOL Trapped_Helper_Halted(struct Reb_State *s)
 
     // Check for more "error frame validity"?
     ASSERT_CONTEXT(s->error);
-    assert(CONTEXT_TYPE(s->error) == REB_ERROR);
+    assert(CTX_TYPE(s->error) == REB_ERROR);
 
     halted = LOGICAL(ERR_NUM(s->error) == RE_HALT);
 
@@ -221,7 +221,7 @@ REBOOL Trapped_Helper_Halted(struct Reb_State *s)
     // to be zeroed out.  We can tell if that's necessary by whether there
     // is anything accumulated in the collect buffer.
     //
-    if (ARRAY_LEN(BUF_COLLECT) != 0)
+    if (ARR_LEN(BUF_COLLECT) != 0)
         Collect_Keys_End();
 
     // Free any manual series that were extant at the time of the error
@@ -229,11 +229,11 @@ REBOOL Trapped_Helper_Halted(struct Reb_State *s)
     // any arglist series in call frames that have been wiped off the stack.
     // (Closure series will be managed.)
     //
-    assert(SERIES_LEN(GC_Manuals) >= s->manuals_len);
-    while (SERIES_LEN(GC_Manuals) != s->manuals_len) {
+    assert(SER_LEN(GC_Manuals) >= s->manuals_len);
+    while (SER_LEN(GC_Manuals) != s->manuals_len) {
         // Freeing the series will update the tail...
         Free_Series(
-            *SERIES_AT(REBSER*, GC_Manuals, SERIES_LEN(GC_Manuals) - 1)
+            *SER_AT(REBSER*, GC_Manuals, SER_LEN(GC_Manuals) - 1)
         );
     }
 
@@ -319,10 +319,10 @@ void Catch_Thrown_Debug(REBVAL *out, REBVAL *thrown)
 // passed to this routine then it has not been caught by its
 // intended recipient, and is being treated as an error.
 //
-ATTRIBUTE_NO_RETURN void Fail_Core(REBCON *error)
+ATTRIBUTE_NO_RETURN void Fail_Core(REBCTX *error)
 {
     ASSERT_CONTEXT(error);
-    assert(CONTEXT_TYPE(error) == REB_ERROR);
+    assert(CTX_TYPE(error) == REB_ERROR);
 
 #if !defined(NDEBUG)
     // All calls to Fail_Core should originate from the `fail` macro,
@@ -444,8 +444,8 @@ REBCNT Stack_Depth(void)
 //
 REBVAL *Find_Error_For_Code(REBVAL *id_out, REBVAL *type_out, REBCNT code)
 {
-    REBCON *categories;
-    REBCON *category;
+    REBCTX *categories;
+    REBCTX *category;
     REBCNT n;
     REBVAL *message;
 
@@ -453,44 +453,44 @@ REBVAL *Find_Error_For_Code(REBVAL *id_out, REBVAL *type_out, REBCNT code)
     // file as objects for the "error catalog"
     //
     categories = VAL_CONTEXT(Get_System(SYS_CATALOG, CAT_ERRORS));
-    assert(CONTEXT_KEY_CANON(categories, 1) == SYM_SELF);
+    assert(CTX_KEY_CANON(categories, 1) == SYM_SELF);
 
     // Find the correct catalog category
     n = code / 100; // 0 for Special, 1 for Internal...
-    if (SELFISH(n + 1) > CONTEXT_LEN(categories)) // 1-based, not 0 based
+    if (SELFISH(n + 1) > CTX_LEN(categories)) // 1-based, not 0 based
         return NULL;
 
     // Get context of object representing the elements of the category itself
-    if (!IS_OBJECT(CONTEXT_VAR(categories, SELFISH(n + 1)))) {
+    if (!IS_OBJECT(CTX_VAR(categories, SELFISH(n + 1)))) {
         assert(FALSE);
         return NULL;
     }
-    category = VAL_CONTEXT(CONTEXT_VAR(categories, SELFISH(n + 1)));
-    assert(CONTEXT_KEY_CANON(category, 1) == SYM_SELF);
+    category = VAL_CONTEXT(CTX_VAR(categories, SELFISH(n + 1)));
+    assert(CTX_KEY_CANON(category, 1) == SYM_SELF);
 
     // Find the correct template in the catalog category (see %errors.r)
     n = code % 100; // 0-based order within category
-    if (SELFISH(n + 2) > CONTEXT_LEN(category)) // 1-based (CODE: TYPE:)
+    if (SELFISH(n + 2) > CTX_LEN(category)) // 1-based (CODE: TYPE:)
         return NULL;
 
     // Sanity check CODE: field of category object
-    if (!IS_INTEGER(CONTEXT_VAR(category, SELFISH(1)))) {
+    if (!IS_INTEGER(CTX_VAR(category, SELFISH(1)))) {
         assert(FALSE);
         return NULL;
     }
     assert(
         (code / 100) * 100
-        == cast(REBCNT, VAL_INT32(CONTEXT_VAR(category, SELFISH(1))))
+        == cast(REBCNT, VAL_INT32(CTX_VAR(category, SELFISH(1))))
     );
 
     // Sanity check TYPE: field of category object
     // !!! Same spelling as what we set in VAL_WORD_SYM(type_out))?
-    if (!IS_STRING(CONTEXT_VAR(category, SELFISH(2)))) {
+    if (!IS_STRING(CTX_VAR(category, SELFISH(2)))) {
         assert(FALSE);
         return NULL;
     }
 
-    message = CONTEXT_VAR(category, SELFISH(n + 3));
+    message = CTX_VAR(category, SELFISH(n + 3));
 
     // Error message template must be string or block
     assert(IS_BLOCK(message) || IS_STRING(message));
@@ -501,12 +501,12 @@ REBVAL *Find_Error_For_Code(REBVAL *id_out, REBVAL *type_out, REBCNT code)
     Val_Init_Word(
         type_out,
         REB_WORD,
-        CONTEXT_KEY_SYM(categories, SELFISH((code / 100) + 1))
+        CTX_KEY_SYM(categories, SELFISH((code / 100) + 1))
     );
     Val_Init_Word(
         id_out,
         REB_WORD,
-        CONTEXT_KEY_SYM(category, SELFISH((code % 100) + 3))
+        CTX_KEY_SYM(category, SELFISH((code % 100) + 3))
     );
 
     return message;
@@ -539,22 +539,22 @@ REBVAL *Find_Error_For_Code(REBVAL *id_out, REBVAL *type_out, REBCNT code)
 // This is a bit inefficient but it's for legacy mode only, so best
 // to bend to the expectations of the non-legacy code.
 //
-static REBCON *Make_Guarded_Arg123_Error(void)
+static REBCTX *Make_Guarded_Arg123_Error(void)
 {
-    REBCON *root_error = VAL_CONTEXT(ROOT_ERROBJ);
-    REBCON *error = Copy_Context_Shallow_Extra(root_error, 3);
+    REBCTX *root_error = VAL_CONTEXT(ROOT_ERROBJ);
+    REBCTX *error = Copy_Context_Shallow_Extra(root_error, 3);
     REBVAL *key;
     REBVAL *var;
     REBCNT n;
-    REBCNT root_len = ARRAY_LEN(CONTEXT_VARLIST(root_error));
+    REBCNT root_len = ARR_LEN(CTX_VARLIST(root_error));
 
-    // Update the length to suppress out of bounds assert from CONTEXT_KEY/VAL
+    // Update the length to suppress out of bounds assert from CTX_KEY/VAL
     //
-    SET_ARRAY_LEN(CONTEXT_VARLIST(error), root_len + 3);
-    SET_ARRAY_LEN(CONTEXT_KEYLIST(error), root_len + 3);
+    SET_ARRAY_LEN(CTX_VARLIST(error), root_len + 3);
+    SET_ARRAY_LEN(CTX_KEYLIST(error), root_len + 3);
 
-    key = CONTEXT_KEY(error, CONTEXT_LEN(root_error) + 1);
-    var = CONTEXT_VAR(error, CONTEXT_LEN(root_error) + 1);
+    key = CTX_KEY(error, CTX_LEN(root_error) + 1);
+    var = CTX_VAR(error, CTX_LEN(root_error) + 1);
 
     for (n = 0; n < 3; n++, key++, var++) {
         Val_Init_Typeset(key, ALL_64, SYM_ARG1 + n);
@@ -564,7 +564,7 @@ static REBCON *Make_Guarded_Arg123_Error(void)
     SET_END(key);
     SET_END(var);
 
-    MANAGE_ARRAY(CONTEXT_VARLIST(error));
+    MANAGE_ARRAY(CTX_VARLIST(error));
     PUSH_GUARD_CONTEXT(error);
     return error;
 }
@@ -597,9 +597,9 @@ REBOOL Make_Error_Object_Throws(
 ) {
     // Frame from the error object template defined in %sysobj.r
     //
-    REBCON *root_error = VAL_CONTEXT(ROOT_ERROBJ); // !!! actually an OBJECT!
+    REBCTX *root_error = VAL_CONTEXT(ROOT_ERROBJ); // !!! actually an OBJECT!
 
-    REBCON *error;
+    REBCTX *error;
     ERROR_OBJ *error_obj;
 
 #if !defined(NDEBUG)
@@ -678,7 +678,7 @@ REBOOL Make_Error_Object_Throws(
 
         // !!! fix in Init_Errors()?
         //
-        VAL_RESET_HEADER(CONTEXT_VALUE(error), REB_ERROR);
+        VAL_RESET_HEADER(CTX_VALUE(error), REB_ERROR);
 
         error_obj = ERR_VALUES(error);
         assert(IS_NONE(&error_obj->code));
@@ -762,7 +762,7 @@ REBOOL Make_Error_Object_Throws(
         // this may overlap a combination used by Rebol where we wish to
         // fill in the code.  (No fast lookup for this, must search.)
 
-        REBCON *categories = VAL_CONTEXT(Get_System(SYS_CATALOG, CAT_ERRORS));
+        REBCTX *categories = VAL_CONTEXT(Get_System(SYS_CATALOG, CAT_ERRORS));
         REBVAL *category;
 
         assert(IS_NONE(&error_obj->code));
@@ -909,7 +909,7 @@ REBOOL Make_Error_Object_Throws(
 //
 // !!! Result is managed.  See notes at end for why.
 //
-REBCON *Make_Error_Core(REBCNT code, REBOOL up_stack, va_list *varargs_ptr)
+REBCTX *Make_Error_Core(REBCNT code, REBOOL up_stack, va_list *varargs_ptr)
 {
 #if !defined(NDEBUG)
     // The legacy error mechanism expects us to have exactly three fields
@@ -919,9 +919,9 @@ REBCON *Make_Error_Core(REBCNT code, REBOOL up_stack, va_list *varargs_ptr)
     const REBCNT *arg1_arg2_arg3 = legacy_data;
 #endif
 
-    REBCON *root_error;
+    REBCTX *root_error;
 
-    REBCON *error;
+    REBCTX *error;
     ERROR_OBJ *error_obj; // Error object values
     REBCNT expected_args;
 
@@ -994,10 +994,10 @@ REBCON *Make_Error_Core(REBCNT code, REBOOL up_stack, va_list *varargs_ptr)
         // !!! Should tweak root error during boot so it actually is an ERROR!
         // (or use literal error construction syntax, if it worked?)
         //
-        VAL_RESET_HEADER(CONTEXT_VALUE(error), REB_ERROR);
+        VAL_RESET_HEADER(CTX_VALUE(error), REB_ERROR);
     }
     else {
-        REBCNT root_len = CONTEXT_LEN(root_error);
+        REBCNT root_len = CTX_LEN(root_error);
         REBVAL *key;
         REBVAL *value;
         REBVAL *temp;
@@ -1011,16 +1011,16 @@ REBCON *Make_Error_Core(REBCNT code, REBOOL up_stack, va_list *varargs_ptr)
         // !!! Should tweak root error during boot so it actually is an ERROR!
         // (or use literal error construction syntax, if it worked?)
         //
-        VAL_RESET_HEADER(CONTEXT_VALUE(error), REB_ERROR);
+        VAL_RESET_HEADER(CTX_VALUE(error), REB_ERROR);
 
-        // Fix up the tail first so CONTEXT_KEY and CONTEXT_VAR don't complain
+        // Fix up the tail first so CTX_KEY and CTX_VAR don't complain
         // in the debug build that they're accessing beyond the error length
         //
-        SET_ARRAY_LEN(CONTEXT_VARLIST(error), root_len + expected_args + 1);
-        SET_ARRAY_LEN(CONTEXT_KEYLIST(error), root_len + expected_args + 1);
+        SET_ARRAY_LEN(CTX_VARLIST(error), root_len + expected_args + 1);
+        SET_ARRAY_LEN(CTX_KEYLIST(error), root_len + expected_args + 1);
 
-        key = CONTEXT_KEY(error, root_len + 1);
-        value = CONTEXT_VAR(error, root_len + 1);
+        key = CTX_KEY(error, root_len + 1);
+        value = CTX_VAR(error, root_len + 1);
 
     #ifdef NDEBUG
         temp = VAL_ARRAY_HEAD(message);
@@ -1204,7 +1204,7 @@ REBCON *Make_Error_Core(REBCNT code, REBOOL up_stack, va_list *varargs_ptr)
     // but the cleanup does, so for now manage the error in the hopes it
     // will be used up quickly.
     //
-    MANAGE_ARRAY(CONTEXT_VARLIST(error));
+    MANAGE_ARRAY(CTX_VARLIST(error));
     return error;
 }
 
@@ -1233,10 +1233,10 @@ REBCON *Make_Error_Core(REBCNT code, REBOOL up_stack, va_list *varargs_ptr)
 // call stack, because if they were not frameless then they wouldn't have
 // been invoked yet.
 //
-REBCON *Error(REBINT num, ... /* REBVAL *arg1, REBVAL *arg2, ... */)
+REBCTX *Error(REBINT num, ... /* REBVAL *arg1, REBVAL *arg2, ... */)
 {
     va_list varargs;
-    REBCON *error;
+    REBCTX *error;
 
     va_start(varargs, num);
     error = Make_Error_Core(
@@ -1253,7 +1253,7 @@ REBCON *Error(REBINT num, ... /* REBVAL *arg1, REBVAL *arg2, ... */)
 //
 //  Error_Bad_Func_Def: C
 //
-REBCON *Error_Bad_Func_Def(const REBVAL *spec, const REBVAL *body)
+REBCTX *Error_Bad_Func_Def(const REBVAL *spec, const REBVAL *body)
 {
     // !!! Improve this error; it's simply a direct emulation of arity-1
     // error that existed before refactoring code out of MT_Function().
@@ -1272,7 +1272,7 @@ REBCON *Error_Bad_Func_Def(const REBVAL *spec, const REBVAL *body)
 //
 //  Error_No_Arg: C
 //
-REBCON *Error_No_Arg(REBCNT label_sym, const REBVAL *key)
+REBCTX *Error_No_Arg(REBCNT label_sym, const REBVAL *key)
 {
     REBVAL key_word;
     REBVAL label;
@@ -1293,7 +1293,7 @@ REBCON *Error_No_Arg(REBCNT label_sym, const REBVAL *key)
 //
 //  Error_Invalid_Datatype: C
 //
-REBCON *Error_Invalid_Datatype(REBCNT id)
+REBCTX *Error_Invalid_Datatype(REBCNT id)
 {
     REBVAL id_value;
     VAL_INIT_WRITABLE_DEBUG(&id_value);
@@ -1306,7 +1306,7 @@ REBCON *Error_Invalid_Datatype(REBCNT id)
 //
 //  Error_No_Memory: C
 //
-REBCON *Error_No_Memory(REBCNT bytes)
+REBCTX *Error_No_Memory(REBCNT bytes)
 {
     REBVAL bytes_value;
     VAL_INIT_WRITABLE_DEBUG(&bytes_value);
@@ -1324,7 +1324,7 @@ REBCON *Error_No_Memory(REBCNT bytes)
 // becomes a catch all for "unexpected input" when a more
 // specific error would be more useful.
 //
-REBCON *Error_Invalid_Arg(const REBVAL *value)
+REBCTX *Error_Invalid_Arg(const REBVAL *value)
 {
     return Error(RE_INVALID_ARG, value, NULL);
 }
@@ -1333,7 +1333,7 @@ REBCON *Error_Invalid_Arg(const REBVAL *value)
 //
 //  Error_No_Catch_For_Throw: C
 //
-REBCON *Error_No_Catch_For_Throw(REBVAL *thrown)
+REBCTX *Error_No_Catch_For_Throw(REBVAL *thrown)
 {
     REBVAL arg;
     VAL_INIT_WRITABLE_DEBUG(&arg);
@@ -1353,7 +1353,7 @@ REBCON *Error_No_Catch_For_Throw(REBVAL *thrown)
 // 
 // <type> type is not allowed here
 //
-REBCON *Error_Has_Bad_Type(const REBVAL *value)
+REBCTX *Error_Has_Bad_Type(const REBVAL *value)
 {
     return Error(RE_INVALID_TYPE, Type_Of(value), NULL);
 }
@@ -1364,7 +1364,7 @@ REBCON *Error_Has_Bad_Type(const REBVAL *value)
 // 
 // value out of range: <value>
 //
-REBCON *Error_Out_Of_Range(const REBVAL *arg)
+REBCTX *Error_Out_Of_Range(const REBVAL *arg)
 {
     return Error(RE_OUT_OF_RANGE, arg, NULL);
 }
@@ -1373,7 +1373,7 @@ REBCON *Error_Out_Of_Range(const REBVAL *arg)
 //
 //  Error_Protected_Key: C
 //
-REBCON *Error_Protected_Key(REBVAL *key)
+REBCTX *Error_Protected_Key(REBVAL *key)
 {
     REBVAL key_name;
     VAL_INIT_WRITABLE_DEBUG(&key_name);
@@ -1388,7 +1388,7 @@ REBCON *Error_Protected_Key(REBVAL *key)
 //
 //  Error_Illegal_Action: C
 //
-REBCON *Error_Illegal_Action(REBCNT type, REBCNT action)
+REBCTX *Error_Illegal_Action(enum Reb_Kind type, REBCNT action)
 {
     REBVAL action_word;
     VAL_INIT_WRITABLE_DEBUG(&action_word);
@@ -1402,7 +1402,7 @@ REBCON *Error_Illegal_Action(REBCNT type, REBCNT action)
 //
 //  Error_Math_Args: C
 //
-REBCON *Error_Math_Args(enum Reb_Kind type, REBCNT action)
+REBCTX *Error_Math_Args(enum Reb_Kind type, REBCNT action)
 {
     REBVAL action_word;
     VAL_INIT_WRITABLE_DEBUG(&action_word);
@@ -1416,7 +1416,7 @@ REBCON *Error_Math_Args(enum Reb_Kind type, REBCNT action)
 //
 //  Error_Unexpected_Type: C
 //
-REBCON *Error_Unexpected_Type(enum Reb_Kind expected, enum Reb_Kind actual)
+REBCTX *Error_Unexpected_Type(enum Reb_Kind expected, enum Reb_Kind actual)
 {
     assert(expected < REB_MAX);
     assert(actual < REB_MAX);
@@ -1431,7 +1431,7 @@ REBCON *Error_Unexpected_Type(enum Reb_Kind expected, enum Reb_Kind actual)
 // Function in frame of `call` expected parameter `param` to be
 // a type different than the arg given (which had `arg_type`)
 //
-REBCON *Error_Arg_Type(
+REBCTX *Error_Arg_Type(
     REBCNT label_sym,
     const REBVAL *param,
     const REBVAL *arg_type
@@ -1463,7 +1463,7 @@ REBCON *Error_Arg_Type(
 // calling a function to directly use that frame.  The operational invariant
 // of a function when it starts is that locals are unset.
 //
-REBCON *Error_Local_Injection(
+REBCTX *Error_Local_Injection(
     REBCNT label_sym,
     const REBVAL *param
 ) {
@@ -1488,7 +1488,7 @@ REBCON *Error_Local_Injection(
 //
 //  Error_Bad_Make: C
 //
-REBCON *Error_Bad_Make(REBCNT type, const REBVAL *spec)
+REBCTX *Error_Bad_Make(enum Reb_Kind type, const REBVAL *spec)
 {
     return Error(RE_BAD_MAKE_ARG, Get_Type(type), spec, NULL);
 }
@@ -1497,7 +1497,7 @@ REBCON *Error_Bad_Make(REBCNT type, const REBVAL *spec)
 //
 //  Error_Cannot_Reflect: C
 //
-REBCON *Error_Cannot_Reflect(REBCNT type, const REBVAL *arg)
+REBCTX *Error_Cannot_Reflect(enum Reb_Kind type, const REBVAL *arg)
 {
     return Error(RE_CANNOT_USE, arg, Get_Type(type), NULL);
 }
@@ -1506,9 +1506,9 @@ REBCON *Error_Cannot_Reflect(REBCNT type, const REBVAL *arg)
 //
 //  Error_On_Port: C
 //
-REBCON *Error_On_Port(REBCNT errnum, REBCON *port, REBINT err_code)
+REBCTX *Error_On_Port(REBCNT errnum, REBCTX *port, REBINT err_code)
 {
-    REBVAL *spec = CONTEXT_VAR(port, STD_PORT_SPEC);
+    REBVAL *spec = CTX_VAR(port, STD_PORT_SPEC);
     REBVAL *val;
 
     REBVAL err_code_value;
@@ -1574,7 +1574,7 @@ int Exit_Status_From_Value(REBVAL *value)
 //
 void Init_Errors(REBVAL *errors)
 {
-    REBCON *errs;
+    REBCTX *errs;
     REBVAL *val;
 
     // Create error objects and error type objects:
@@ -1586,7 +1586,7 @@ void Init_Errors(REBVAL *errors)
     // Create objects for all error types (CAT_ERRORS is "selfish", currently
     // so self is in slot 1 and the actual errors start at context slot 2)
     //
-    for (val = CONTEXT_VAR(errs, SELFISH(1)); NOT_END(val); val++) {
+    for (val = CTX_VAR(errs, SELFISH(1)); NOT_END(val); val++) {
         errs = Construct_Context(REB_OBJECT, VAL_ARRAY_HEAD(val), FALSE, NULL);
         Val_Init_Object(val, errs);
     }
@@ -1625,7 +1625,7 @@ void Init_Errors(REBVAL *errors)
 //         eval:  integer (limit)
 //     ]
 //
-REBYTE *Security_Policy(REBCNT sym, REBVAL *name)
+REBYTE *Security_Policy(REBSYM sym, REBVAL *name)
 {
     REBVAL *policy = Get_System(SYS_STATE, STATE_POLICIES);
     REBYTE *flags;
@@ -1695,7 +1695,7 @@ error:
 // Take action on the policy flags provided. The sym and value
 // are provided for error message purposes only.
 //
-void Trap_Security(REBCNT flag, REBCNT sym, REBVAL *value)
+void Trap_Security(REBCNT flag, REBSYM sym, REBVAL *value)
 {
     if (flag == SEC_THROW) {
         if (!value) {
@@ -1715,7 +1715,7 @@ void Trap_Security(REBCNT flag, REBCNT sym, REBVAL *value)
 // a given symbol (FILE) and value (path), and then tests
 // that they are allowed.
 //
-void Check_Security(REBCNT sym, REBCNT policy, REBVAL *value)
+void Check_Security(REBSYM sym, REBCNT policy, REBVAL *value)
 {
     REBYTE *flags;
 

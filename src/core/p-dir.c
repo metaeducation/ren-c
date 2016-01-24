@@ -54,7 +54,7 @@ static int Read_Dir(REBREQ *dir, REBARR *files)
     // Temporary filename storage; native OS API character size (REBCHR) varies
     //
     fname = Make_Series(MAX_FILE_NAME, sizeof(REBCHR), MKS_NONE);
-    file.special.file.path = SERIES_HEAD(REBCHR, fname);
+    file.special.file.path = SER_HEAD(REBCHR, fname);
 
     SET_FLAG(dir->modes, RFM_DIR);
 
@@ -68,7 +68,7 @@ static int Read_Dir(REBREQ *dir, REBARR *files)
         if (GET_FLAG(file.modes, RFM_DIR)) len++;
         name = Copy_OS_Str(file.special.file.path, len);
         if (GET_FLAG(file.modes, RFM_DIR))
-            SET_ANY_CHAR(name, SERIES_LEN(name) - 1, '/');
+            SET_ANY_CHAR(name, SER_LEN(name) - 1, '/');
         Val_Init_File(Alloc_Tail_Array(files), name);
     }
 
@@ -109,8 +109,8 @@ static void Init_Dir_Path(REBREQ *dir, REBVAL *path, REBINT wild, REBCNT policy)
 
     // We depend on To_Local_Path giving us 2 extra chars for / and *
     ser = Value_To_OS_Path(path, TRUE);
-    len = SERIES_LEN(ser);
-    dir->special.file.path = SERIES_HEAD(REBCHR, ser);
+    len = SER_LEN(ser);
+    dir->special.file.path = SER_HEAD(REBCHR, ser);
 
     Secure_Port(SYM_FILE, dir, path, ser);
 
@@ -165,7 +165,7 @@ static void Init_Dir_Path(REBREQ *dir, REBVAL *path, REBINT wild, REBCNT policy)
 // 
 // Internal port handler for file directories.
 //
-static REB_R Dir_Actor(struct Reb_Call *call_, REBCON *port, REBCNT action)
+static REB_R Dir_Actor(struct Reb_Call *call_, REBCTX *port, REBCNT action)
 {
     REBVAL *spec;
     REBVAL *path;
@@ -182,7 +182,7 @@ static REB_R Dir_Actor(struct Reb_Call *call_, REBCON *port, REBCNT action)
     CLEARS(&dir);
 
     // Validate and fetch relevant PORT fields:
-    spec = CONTEXT_VAR(port, STD_PORT_SPEC);
+    spec = CTX_VAR(port, STD_PORT_SPEC);
     if (!IS_OBJECT(spec)) fail (Error(RE_INVALID_SPEC, spec));
     path = Obj_Value(spec, STD_PORT_SPEC_HEAD_REF);
     if (!path) fail (Error(RE_INVALID_SPEC, spec));
@@ -190,7 +190,7 @@ static REB_R Dir_Actor(struct Reb_Call *call_, REBCON *port, REBCNT action)
     if (IS_URL(path)) path = Obj_Value(spec, STD_PORT_SPEC_HEAD_PATH);
     else if (!IS_FILE(path)) fail (Error(RE_INVALID_SPEC, path));
 
-    state = CONTEXT_VAR(port, STD_PORT_STATE); // if block, then port is open.
+    state = CTX_VAR(port, STD_PORT_STATE); // if block, then port is open.
 
     //flags = Security_Policy(SYM_FILE, path);
 

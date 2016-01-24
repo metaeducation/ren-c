@@ -128,7 +128,7 @@ struct Reb_State {
     REBCNT series_guard_len;
     REBCNT value_guard_len;
     struct Reb_Call *do_stack; // is it necessary to keep this *and* DSF?
-    REBCON *error;
+    REBCTX *error;
     REBINT gc_disable;      // Count of GC_Disables at time of Push
 
     REBCNT manuals_len;    // Where GC_Manuals was when state started
@@ -159,7 +159,7 @@ struct Reb_State {
 // passed which it will write into--which is a black box that clients
 // shouldn't inspect.
 //
-// The routine also takes a pointer-to-a-REBCON-pointer which represents
+// The routine also takes a pointer-to-a-REBCTX-pointer which represents
 // an error.  Using the tricky mechanisms of setjmp/longjmp, there will
 // be a first pass of execution where the line of code after the PUSH_TRAP
 // will see the error pointer as being NULL.  If a trap occurs during
@@ -205,7 +205,7 @@ struct Reb_State {
 //
 #define PUSH_TRAP_CORE(e,s,haltable) \
     do { \
-        assert(Saved_State || (DSP == -1 && !DSF)); \
+        assert(Saved_State || (DSP == 0 && !DSF)); \
         Snap_State_Core(s); \
         (s)->last_state = Saved_State; \
         Saved_State = (s); \

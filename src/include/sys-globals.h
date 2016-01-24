@@ -52,11 +52,11 @@ PVAR REBSER *PG_Word_Names; // Holds all word strings. Never removed.
 PVAR WORD_TABLE PG_Word_Table; // Symbol values accessed by hash
 
 //-- Main contexts:
-PVAR REBCON *PG_Root_Context; // Frame that holds Root_Vars
+PVAR REBCTX *PG_Root_Context; // Frame that holds Root_Vars
 PVAR ROOT_VARS *Root_Vars; // VARLIST of PG_Root_Context as a C structure
 
-PVAR REBCON *Lib_Context;
-PVAR REBCON *Sys_Context;
+PVAR REBCTX *Lib_Context;
+PVAR REBCTX *Sys_Context;
 
 //-- Various char tables:
 PVAR REBYTE *White_Chars;
@@ -100,6 +100,7 @@ PVAR REBCNT Eval_Signals;   // Signal flags
 
 PVAR REBFUN *PG_Eval_Func; // EVAL native func (never GC'd)
 PVAR REBFUN *PG_Return_Func; // RETURN native func (never GC'd)
+PVAR REBFUN *PG_Leave_Func; // LEAVE native func (never GC'd)
 
 // Hook called when BREAKPOINT is hit.  It will return TRUE if the breakpoint
 // is quitting, or FALSE if it is continuing.  (Note that if one is HALTing,
@@ -114,7 +115,7 @@ PVAR REBBRK PG_Breakpoint_Quitting_Hook;
 **
 ***********************************************************************/
 
-TVAR REBCON *TG_Task_Context; // Frame that holds Task_Vars
+TVAR REBCTX *TG_Task_Context; // Frame that holds Task_Vars
 TVAR TASK_VARS *Task_Vars; // VARLIST of Task_Vars as a C structure
 
 TVAR REBVAL TG_Thrown_Arg;  // Non-GC protected argument to THROW
@@ -157,6 +158,9 @@ TVAR struct Reb_Call *TG_Do_Stack;
 
 //-- Evaluation stack:
 TVAR REBARR *DS_Array;
+TVAR REBDSP DS_Index;
+TVAR REBVAL *DS_Movable_Base;
+
 TVAR struct Reb_Call *CS_Running;   // Call frame if *running* function
 
 // We store the head chunk of the current chunker even though it could be

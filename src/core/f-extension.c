@@ -218,7 +218,7 @@ x*/ REBRXT Do_Callback(RXIARG *out, REBFUN *func, REBCNT label_sym, RXIARG *rxis
     // refinements or locals).
     //
     REBARR *code_array = Make_Array(FUNC_NUM_PARAMS(func));
-    REBVAL *code = ARRAY_HEAD(code_array);
+    REBVAL *code = ARR_HEAD(code_array);
 
     // The first element of our path will be the function, followed by its
     // refinements.  It has an upper bound on length that is to consider the
@@ -226,7 +226,7 @@ x*/ REBRXT Do_Callback(RXIARG *out, REBFUN *func, REBCNT label_sym, RXIARG *rxis
     // at the head...
     //
     REBARR *path_array = Make_Array(FUNC_NUM_PARAMS(func) + 1);
-    REBVAL *path = ARRAY_HEAD(path_array);
+    REBVAL *path = ARR_HEAD(path_array);
     REBVAL first;
 
     // We'll walk through the original functions params, assuming that the
@@ -283,11 +283,11 @@ x*/ REBRXT Do_Callback(RXIARG *out, REBFUN *func, REBCNT label_sym, RXIARG *rxis
     }
 
     SET_END(code);
-    SET_ARRAY_LEN(code_array, code - ARRAY_HEAD(code_array));
+    SET_ARRAY_LEN(code_array, code - ARR_HEAD(code_array));
     MANAGE_ARRAY(code_array);
 
     SET_END(path);
-    SET_ARRAY_LEN(path_array, path - ARRAY_HEAD(path_array));
+    SET_ARRAY_LEN(path_array, path - ARR_HEAD(path_array));
     Val_Init_Array(&first, REB_PATH, path_array); // manages
 
     // Invoke DO with the special mode requesting non-evaluation on all
@@ -423,7 +423,7 @@ REBNATIVE(load_extension)
     REBCNT error;
     REBYTE *code;
     CFUNC *info; // INFO_FUNC
-    REBCON *context;
+    REBCTX *context;
     REBVAL *val = D_ARG(1);
     REBEXT *ext;
     CFUNC *call; // RXICAL
@@ -479,14 +479,14 @@ REBNATIVE(load_extension)
     Val_Init_Object(D_OUT, context);
 
     // Set extension fields needed:
-    val = CONTEXT_VAR(context, STD_EXTENSION_LIB_BASE);
+    val = CTX_VAR(context, STD_EXTENSION_LIB_BASE);
     VAL_RESET_HEADER(val, REB_HANDLE);
     VAL_I32(val) = ext->index;
 
     if (!D_REF(2))
-        *CONTEXT_VAR(context, STD_EXTENSION_LIB_FILE) = *D_ARG(1);
+        *CTX_VAR(context, STD_EXTENSION_LIB_FILE) = *D_ARG(1);
 
-    Val_Init_Binary(CONTEXT_VAR(context, STD_EXTENSION_LIB_BOOT), src);
+    Val_Init_Binary(CTX_VAR(context, STD_EXTENSION_LIB_BOOT), src);
 
     return R_OUT;
 }
@@ -611,7 +611,7 @@ bad_func_def:
 void Do_Command_Core(struct Reb_Call *call_)
 {
     // All of these were checked above on definition:
-    REBVAL *val = ARRAY_HEAD(FUNC_BODY(D_FUNC));
+    REBVAL *val = ARR_HEAD(FUNC_BODY(D_FUNC));
     // Handler
     REBEXT *ext = &Ext_List[VAL_I32(VAL_CONTEXT_VAR(val, SELFISH(1)))];
     REBCNT cmd = cast(REBCNT, Int32(val + 1));
@@ -699,7 +699,7 @@ void Do_Commands(REBVAL *out, REBARR *cmds, void *context)
     VAL_INIT_WRITABLE_DEBUG(&save);
 
     if (ctx) ctx->block = cmds;
-    blk = ARRAY_HEAD(cmds);
+    blk = ARR_HEAD(cmds);
 
     while (NOT_END(blk)) {
 
@@ -780,7 +780,7 @@ void Do_Commands(REBVAL *out, REBARR *cmds, void *context)
         }
 
         // Call the command (also supports different extension modules):
-        func  = ARRAY_HEAD(VAL_FUNC_BODY(func));
+        func  = ARR_HEAD(VAL_FUNC_BODY(func));
         n = (REBCNT)VAL_INT64(func + 1);
         ext = &Ext_List[VAL_I32(VAL_CONTEXT_VAR(func, SELFISH(1)))]; // Handler
         n = ext->call(n, &frm, ctx);

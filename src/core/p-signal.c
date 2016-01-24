@@ -45,7 +45,7 @@ static void update(REBREQ *req, REBINT len, REBVAL *arg)
     Extend_Series(VAL_SERIES(arg), len);
 
     for (i = 0; i < len; i ++) {
-        REBCON *obj = Alloc_Context(2);
+        REBCTX *obj = Alloc_Context(2);
         REBVAL *val = Append_Context(
             obj, NULL, Make_Word(signal_no, LEN_BYTES(signal_no))
         );
@@ -143,7 +143,7 @@ static int sig_word_num(REBVAL *word)
 //
 //  Signal_Actor: C
 //
-static REB_R Signal_Actor(struct Reb_Call *call_, REBCON *port, REBCNT action)
+static REB_R Signal_Actor(struct Reb_Call *call_, REBCTX *port, REBCNT action)
 {
     REBREQ *req;
     REBINT result;
@@ -157,7 +157,7 @@ static REB_R Signal_Actor(struct Reb_Call *call_, REBCON *port, REBCNT action)
     Validate_Port(port, action);
 
     req = cast(REBREQ*, Use_Port_State(port, RDI_SIGNAL, sizeof(REBREQ)));
-    spec = CONTEXT_VAR(port, STD_PORT_SPEC);
+    spec = CTX_VAR(port, STD_PORT_SPEC);
 
     if (!IS_OPEN(req)) {
         switch (action) {
@@ -212,7 +212,7 @@ static REB_R Signal_Actor(struct Reb_Call *call_, REBCON *port, REBCNT action)
         case A_UPDATE:
             // Update the port object after a READ or WRITE operation.
             // This is normally called by the WAKE-UP function.
-            arg = CONTEXT_VAR(port, STD_PORT_DATA);
+            arg = CTX_VAR(port, STD_PORT_DATA);
             if (req->command == RDC_READ) {
                 len = req->actual;
                 if (len > 0) {
@@ -224,7 +224,7 @@ static REB_R Signal_Actor(struct Reb_Call *call_, REBCON *port, REBCNT action)
         case A_READ:
             // This device is opened on the READ:
             // Issue the read request:
-            arg = CONTEXT_VAR(port, STD_PORT_DATA);
+            arg = CTX_VAR(port, STD_PORT_DATA);
 
             len = req->length = 8;
             ser = Make_Binary(len * sizeof(siginfo_t));
@@ -232,7 +232,7 @@ static REB_R Signal_Actor(struct Reb_Call *call_, REBCON *port, REBCNT action)
             result = OS_DO_DEVICE(req, RDC_READ);
             if (result < 0) fail (Error_On_Port(RE_READ_ERROR, port, req->error));
 
-            arg = CONTEXT_VAR(port, STD_PORT_DATA);
+            arg = CTX_VAR(port, STD_PORT_DATA);
             if (!IS_BLOCK(arg)) {
                 Val_Init_Block(arg, Make_Array(len));
             }

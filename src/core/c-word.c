@@ -111,15 +111,15 @@ REBINT Get_Hash_Prime(REBCNT size)
 //
 void Expand_Hash(REBSER *ser)
 {
-    REBINT pnum = Get_Hash_Prime(SERIES_LEN(ser) + 1);
+    REBINT pnum = Get_Hash_Prime(SER_LEN(ser) + 1);
     if (!pnum) {
         REBVAL temp;
-        SET_INTEGER(&temp, SERIES_LEN(ser) + 1);
+        SET_INTEGER(&temp, SER_LEN(ser) + 1);
         fail (Error(RE_SIZE_LIMIT, &temp));
     }
 
     assert(!Is_Array_Series(ser));
-    Remake_Series(ser, pnum + 1, SERIES_WIDE(ser), MKS_POWER_OF_2);
+    Remake_Series(ser, pnum + 1, SER_WIDE(ser), MKS_POWER_OF_2);
 
     Clear_Series(ser);
     SET_SERIES_LEN(ser, pnum);
@@ -147,10 +147,10 @@ static void Expand_Word_Table(void)
     // Debug_Fmt("WORD-TABLE: expanded (%d symbols, %d slots)", PG_Word_Table.array->tail, PG_Word_Table.hashes->tail);
 
     // Rehash all the symbols:
-    word = ARRAY_AT(PG_Word_Table.array, 1);
-    hashes = SERIES_HEAD(REBCNT, PG_Word_Table.hashes);
-    size = SERIES_LEN(PG_Word_Table.hashes);
-    for (n = 1; n < ARRAY_LEN(PG_Word_Table.array); n++, word++) {
+    word = ARR_AT(PG_Word_Table.array, 1);
+    hashes = SER_HEAD(REBCNT, PG_Word_Table.hashes);
+    size = SER_LEN(PG_Word_Table.hashes);
+    for (n = 1; n < ARR_LEN(PG_Word_Table.array); n++, word++) {
         const REBYTE *name = VAL_SYM_NAME(word);
         hash = Hash_Word(name, LEN_BYTES(name));
         skip  = (hash & 0x0000FFFF) % size;
@@ -172,12 +172,12 @@ static void Expand_Word_Table(void)
 //
 static REBCNT Make_Word_Name(const REBYTE *str, REBCNT len)
 {
-    REBCNT pos = SERIES_LEN(PG_Word_Names);
+    REBCNT pos = SER_LEN(PG_Word_Names);
 
     Append_Mem_Extra(PG_Word_Names, str, len, 1); // so we can do next line...
 
     // keep terminator for each string
-    SET_SERIES_LEN(PG_Word_Names, SERIES_LEN(PG_Word_Names) + 1);
+    SET_SERIES_LEN(PG_Word_Names, SER_LEN(PG_Word_Names) + 1);
 
     return pos;
 }
@@ -212,25 +212,25 @@ REBCNT Make_Word(const REBYTE *str, REBCNT len)
 
     // If hash part of word table is too dense, expand it:
     if (
-        ARRAY_LEN(PG_Word_Table.array) > SERIES_LEN(PG_Word_Table.hashes) / 2
+        ARR_LEN(PG_Word_Table.array) > SER_LEN(PG_Word_Table.hashes) / 2
     ) {
         Expand_Word_Table();
     }
 
-    assert(ARRAY_LEN(PG_Word_Table.array) == SERIES_LEN(Bind_Table));
+    assert(ARR_LEN(PG_Word_Table.array) == SER_LEN(Bind_Table));
 
     // If word symbol part of word table is full, expand it:
-    if (SERIES_FULL(ARRAY_SERIES(PG_Word_Table.array))) {
-        Extend_Series(ARRAY_SERIES(PG_Word_Table.array), 256);
+    if (SER_FULL(ARR_SERIES(PG_Word_Table.array))) {
+        Extend_Series(ARR_SERIES(PG_Word_Table.array), 256);
     }
-    if (SERIES_FULL(Bind_Table)) {
+    if (SER_FULL(Bind_Table)) {
         Extend_Series(Bind_Table, 256);
         CLEAR_SEQUENCE(Bind_Table);
     }
 
-    size = cast(REBINT, SERIES_LEN(PG_Word_Table.hashes));
-    words = ARRAY_HEAD(PG_Word_Table.array);
-    hashes = SERIES_HEAD(REBCNT, PG_Word_Table.hashes);
+    size = cast(REBINT, SER_LEN(PG_Word_Table.hashes));
+    words = ARR_HEAD(PG_Word_Table.array);
+    hashes = SER_HEAD(REBCNT, PG_Word_Table.hashes);
 
     // Hash the word, including a skip factor for lookup:
     hash  = Hash_Word(str, len);
@@ -253,7 +253,7 @@ REBCNT Make_Word(const REBYTE *str, REBCNT len)
     }
 
 make_sym:
-    n = ARRAY_LEN(PG_Word_Table.array);
+    n = ARR_LEN(PG_Word_Table.array);
     w = words + n;
     if (h) {
         // Alias word (h = canon word)
@@ -268,11 +268,11 @@ make_sym:
     VAL_SYM_NINDEX(w) = Make_Word_Name(str, len);
     VAL_RESET_HEADER(w, REB_HANDLE);
 
-    // These are allowed because of the SERIES_FULL checks above which
+    // These are allowed because of the SER_FULL checks above which
     // add one extra to the TAIL check comparision. However, their
     // termination values (nulls) will be missing.
-    SET_ARRAY_LEN(PG_Word_Table.array, ARRAY_LEN(PG_Word_Table.array) + 1);
-    SET_SERIES_LEN(Bind_Table, SERIES_LEN(Bind_Table) + 1);
+    SET_ARRAY_LEN(PG_Word_Table.array, ARR_LEN(PG_Word_Table.array) + 1);
+    SET_SERIES_LEN(Bind_Table, SER_LEN(Bind_Table) + 1);
 
     assert(n != SYM_0);
     return n;
@@ -287,7 +287,7 @@ make_sym:
 //
 REBCNT Last_Word_Num(void)
 {
-    return ARRAY_LEN(PG_Word_Table.array) - 1;
+    return ARR_LEN(PG_Word_Table.array) - 1;
 }
 
 
@@ -299,8 +299,8 @@ REBCNT Last_Word_Num(void)
 void Val_Init_Word_Bound(
     REBVAL *out,
     enum Reb_Kind type,
-    REBCNT sym,
-    REBCON *context,
+    REBSYM sym,
+    REBCTX *context,
     REBCNT index
 ) {
     assert(sym != SYM_0);
@@ -325,7 +325,7 @@ void Val_Init_Word_Bound(
 // Initialize a value as a word. Set frame as unbound--no context.  (See
 // also Val_Init_Word_Bound)
 //
-void Val_Init_Word(REBVAL *out, enum Reb_Kind type, REBCNT sym)
+void Val_Init_Word(REBVAL *out, enum Reb_Kind type, REBSYM sym)
 {
     assert(sym != SYM_0);
 
@@ -346,10 +346,10 @@ void Val_Init_Word(REBVAL *out, enum Reb_Kind type, REBCNT sym)
 //
 const REBYTE *Get_Sym_Name(REBCNT num)
 {
-    if (num == 0 || num >= ARRAY_LEN(PG_Word_Table.array))
+    if (num == 0 || num >= ARR_LEN(PG_Word_Table.array))
         return cb_cast("???");
 
-    return VAL_SYM_NAME(ARRAY_AT(PG_Word_Table.array, num));
+    return VAL_SYM_NAME(ARR_AT(PG_Word_Table.array, num));
 }
 
 
@@ -419,7 +419,7 @@ void Init_Words(REBOOL only)
         // which it cannot do.  Changed to a typeset with symbol 0--which
         // seems to work as intended, but review what the intent is.
         //
-        Val_Init_Typeset(ARRAY_HEAD(PG_Word_Table.array), ALL_64, SYM_0);
+        Val_Init_Typeset(ARR_HEAD(PG_Word_Table.array), ALL_64, SYM_0);
 
         SET_ARRAY_LEN(PG_Word_Table.array, 1);  // prevent the zero case
 
@@ -429,10 +429,10 @@ void Init_Words(REBOOL only)
 
     // The bind table. Used to cache context indexes for given symbols.
     Bind_Table = Make_Series(
-        SERIES_REST(ARRAY_SERIES(PG_Word_Table.array)),
+        SER_REST(ARR_SERIES(PG_Word_Table.array)),
         sizeof(REBCNT),
         MKS_NONE
     );
     CLEAR_SEQUENCE(Bind_Table);
-    SET_SERIES_LEN(Bind_Table, ARRAY_LEN(PG_Word_Table.array));
+    SET_SERIES_LEN(Bind_Table, ARR_LEN(PG_Word_Table.array));
 }

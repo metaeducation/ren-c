@@ -74,16 +74,16 @@ void Protect_Series(REBVAL *val, REBCNT flags)
 {
     REBSER *series = VAL_SERIES(val);
 
-    if (SERIES_GET_FLAG(series, OPT_SER_MARK)) return; // avoid loop
+    if (GET_SER_FLAG(series, SERIES_FLAG_MARK)) return; // avoid loop
 
     if (GET_FLAG(flags, PROT_SET))
-        SERIES_SET_FLAG(series, OPT_SER_LOCKED);
+        SET_SER_FLAG(series, SERIES_FLAG_LOCKED);
     else
-        SERIES_CLR_FLAG(series, OPT_SER_LOCKED);
+        CLEAR_SER_FLAG(series, SERIES_FLAG_LOCKED);
 
     if (!ANY_ARRAY(val) || !GET_FLAG(flags, PROT_DEEP)) return;
 
-    SERIES_SET_FLAG(series, OPT_SER_MARK); // recursion protection
+    SET_SER_FLAG(series, SERIES_FLAG_MARK); // recursion protection
 
     for (val = VAL_ARRAY_AT(val); NOT_END(val); val++) {
         Protect_Value(val, flags);
@@ -98,25 +98,25 @@ void Protect_Series(REBVAL *val, REBCNT flags)
 //
 void Protect_Object(REBVAL *value, REBCNT flags)
 {
-    REBCON *context = VAL_CONTEXT(value);
+    REBCTX *context = VAL_CONTEXT(value);
 
-    if (ARRAY_GET_FLAG(CONTEXT_VARLIST(context), OPT_SER_MARK))
+    if (GET_ARR_FLAG(CTX_VARLIST(context), SERIES_FLAG_MARK))
         return; // avoid loop
 
     if (GET_FLAG(flags, PROT_SET))
-        ARRAY_SET_FLAG(CONTEXT_VARLIST(context), OPT_SER_LOCKED);
+        SET_ARR_FLAG(CTX_VARLIST(context), SERIES_FLAG_LOCKED);
     else
-        ARRAY_CLR_FLAG(CONTEXT_VARLIST(context), OPT_SER_LOCKED);
+        CLEAR_ARR_FLAG(CTX_VARLIST(context), SERIES_FLAG_LOCKED);
 
-    for (value = CONTEXT_KEY(context, 1); NOT_END(value); value++) {
+    for (value = CTX_KEY(context, 1); NOT_END(value); value++) {
         Protect_Key(value, flags);
     }
 
     if (!GET_FLAG(flags, PROT_DEEP)) return;
 
-    ARRAY_SET_FLAG(CONTEXT_VARLIST(context), OPT_SER_MARK); // recursion protection
+    SET_ARR_FLAG(CTX_VARLIST(context), SERIES_FLAG_MARK); // recursion protection
 
-    value = CONTEXT_VARS_HEAD(context);
+    value = CTX_VARS_HEAD(context);
     for (; NOT_END(value); value++) {
         Protect_Value(value, flags);
     }
@@ -132,7 +132,7 @@ static void Protect_Word_Value(REBVAL *word, REBCNT flags)
     REBVAL *val;
 
     if (ANY_WORD(word) && IS_WORD_BOUND(word)) {
-        key = CONTEXT_KEY(VAL_WORD_CONTEXT(word), VAL_WORD_INDEX(word));
+        key = CTX_KEY(VAL_WORD_CONTEXT(word), VAL_WORD_INDEX(word));
         Protect_Key(key, flags);
         if (GET_FLAG(flags, PROT_DEEP)) {
             // Ignore existing mutability state, by casting away the const.
@@ -144,12 +144,12 @@ static void Protect_Word_Value(REBVAL *word, REBCNT flags)
     }
     else if (ANY_PATH(word)) {
         REBCNT index;
-        REBCON *context;
+        REBCTX *context;
         if ((context = Resolve_Path(word, &index))) {
-            key = CONTEXT_KEY(context, index);
+            key = CTX_KEY(context, index);
             Protect_Key(key, flags);
             if (GET_FLAG(flags, PROT_DEEP)) {
-                val = CONTEXT_VAR(context, index);
+                val = CTX_VAR(context, index);
                 Protect_Value(val, flags);
                 Unmark(val);
             }
@@ -355,7 +355,7 @@ REBNATIVE(attempt)
     REBVAL * const block = D_ARG(1);
 
     struct Reb_State state;
-    REBCON *error;
+    REBCTX *error;
 
     PUSH_TRAP(&error, &state);
 
@@ -1156,17 +1156,13 @@ REBNATIVE(exit)
     // Though the Ren-C default is to allow exiting from natives (and not
     // to provide the poor invariant of different behavior based on whether
     // the containing function is native or not), the legacy switch lets
-    // EXIT skip consideration of non-FUNCTION and non-CLOSUREs.
+    // EXIT skip consideration of non-FUNCTIONs.
     //
     if (LEGACY(OPTIONS_DONT_EXIT_NATIVES)) {
         struct Reb_Call *call = call_->prior;
-        while (
-            call != NULL
-            && !IS_FUNCTION(FUNC_VALUE(call->func))
-            && !IS_CLOSURE(FUNC_VALUE(call->func))
-        ) {
+
+        while (call != NULL && !IS_FUNCTION(FUNC_VALUE(call->func)))
             call = call->prior;
-        }
 
         if (call == NULL)
             fail (Error(RE_INVALID_EXIT));
@@ -1672,15 +1668,28 @@ REBNATIVE(return)
 // There is a RETURN native defined, and its native function spec is
 // utilized to create the appropriate help and calling protocol
 // information for values that have overridden its VAL_FUNC_CODE
-// slot with a VAL_FUNC_RETURN_FROM spec.
+// slot with a VAL_FUNC_EXIT_FROM spec.
 // 
 // However: this native is unset and its actual code body should
 // never be able to be called.  The non-definitional return construct
 // that people should use if they need it would be EXIT and EXIT/WITH
 {
     panic (Error(RE_MISC));
+}
 
-    return R_NONE;
+
+//
+//  leave: native [
+//
+//  "Leaves a procedure, giving no result to the caller."
+//
+//  ]
+//
+REBNATIVE(leave)
+//
+// See notes on REBNATIVE(return)
+{
+    panic (Error(RE_MISC));
 }
 
 
@@ -1856,7 +1865,7 @@ REBNATIVE(trap)
     PARAM(3, handler);
 
     struct Reb_State state;
-    REBCON *error;
+    REBCTX *error;
 
     PUSH_TRAP(&error, &state);
 

@@ -157,7 +157,7 @@ RL_API int RL_Start(REBYTE *bin, REBINT len, REBYTE *script, REBINT script_len, 
     REBSER *ser;
 
     struct Reb_State state;
-    REBCON *error;
+    REBCTX *error;
     int error_num;
 
     REBVAL result;
@@ -167,7 +167,7 @@ RL_API int RL_Start(REBYTE *bin, REBINT len, REBYTE *script, REBINT script_len, 
         ser = Decompress(bin, len, -1, FALSE, FALSE);
         if (!ser) return 1;
 
-        val = CONTEXT_VAR(Sys_Context, SYS_CTX_BOOT_HOST);
+        val = CTX_VAR(Sys_Context, SYS_CTX_BOOT_HOST);
         Val_Init_Binary(val, ser);
     }
 
@@ -191,7 +191,7 @@ RL_API int RL_Start(REBYTE *bin, REBINT len, REBYTE *script, REBINT script_len, 
         }
         OS_FREE(script);
 
-        val = CONTEXT_VAR(Sys_Context, SYS_CTX_BOOT_EMBEDDED);
+        val = CTX_VAR(Sys_Context, SYS_CTX_BOOT_EMBEDDED);
         Val_Init_Binary(val, ser);
     }
 
@@ -207,7 +207,7 @@ RL_API int RL_Start(REBYTE *bin, REBINT len, REBYTE *script, REBINT script_len, 
         // but here we are wanting to print an error.  If you're printing
         // out an error and get a halt, it won't print the halt.
         //
-        REBCON *halt_error;
+        REBCTX *halt_error;
 
         // Save error for WHY?
         //
@@ -346,7 +346,7 @@ RL_API void *RL_Extend(const REBYTE *source, RXICAL call)
     REBVAL *value;
     REBARR *array;
 
-    value = CONTEXT_VAR(Sys_Context, SYS_CTX_BOOT_EXTS);
+    value = CTX_VAR(Sys_Context, SYS_CTX_BOOT_EXTS);
     if (IS_BLOCK(value))
         array = VAL_ARRAY(value);
     else {
@@ -423,14 +423,15 @@ RL_API int RL_Do_String(
     REBARR *code;
 
     struct Reb_State state;
-    REBCON *error;
+    REBCTX *error;
 
     REBVAL result;
     VAL_INIT_WRITABLE_DEBUG(&result);
 
     // assumes it can only be run at the topmost level where
     // the data stack is completely empty.
-    assert(DSP == -1);
+    //
+    assert(DSP == 0);
 
     PUSH_UNHALTABLE_TRAP(&error, &state);
 
@@ -459,17 +460,17 @@ RL_API int RL_Do_String(
     // Bind into lib or user spaces?
     if (flags) {
         // Top words will be added to lib:
-        Bind_Values_Set_Forward_Shallow(ARRAY_HEAD(code), Lib_Context);
-        Bind_Values_Deep(ARRAY_HEAD(code), Lib_Context);
+        Bind_Values_Set_Forward_Shallow(ARR_HEAD(code), Lib_Context);
+        Bind_Values_Deep(ARR_HEAD(code), Lib_Context);
     }
     else {
-        REBCON *user = VAL_CONTEXT(Get_System(SYS_CONTEXTS, CTX_USER));
+        REBCTX *user = VAL_CONTEXT(Get_System(SYS_CONTEXTS, CTX_USER));
 
         REBVAL vali;
         VAL_INIT_WRITABLE_DEBUG(&vali);
-        SET_INTEGER(&vali, CONTEXT_LEN(user) + 1);
+        SET_INTEGER(&vali, CTX_LEN(user) + 1);
 
-        Bind_Values_All_Deep(ARRAY_HEAD(code), user);
+        Bind_Values_All_Deep(ARR_HEAD(code), user);
         Resolve_Context(user, Lib_Context, &vali, FALSE, FALSE);
     }
 
@@ -790,7 +791,7 @@ RL_API void RL_Protect_GC(REBSER *series, u32 flags)
 {
     // !!! With series flags in short supply, this undesirable routine
     // was removed along with SER_KEEP.  (Note that it is not possible
-    // to simply flip off the OPT_SER_MANAGED bit, because there is more
+    // to simply flip off the SERIES_FLAG_MANAGED bit, because there is more
     // involved in tracking the managed state than just that bit.)
     //
     // For the purpose intended by this routine, use the GC_Mark_Hook (or
@@ -822,10 +823,10 @@ RL_API int RL_Get_String(REBSER *series, u32 index, void **str)
 {   // ret: len or -len
     int len;
 
-    if (index >= SERIES_LEN(series))
+    if (index >= SER_LEN(series))
         len = 0;
     else
-        len = SERIES_LEN(series) - index;
+        len = SER_LEN(series) - index;
 
     if (BYTE_SIZE(series)) {
         *str = BIN_AT(series, index);
@@ -878,9 +879,9 @@ RL_API u32 *RL_Map_Words(REBARR *array)
 {
     REBCNT i = 1;
     u32 *words;
-    REBVAL *val = ARRAY_HEAD(array);
+    REBVAL *val = ARR_HEAD(array);
 
-    words = OS_ALLOC_N(u32, ARRAY_LEN(array) + 2);
+    words = OS_ALLOC_N(u32, ARR_LEN(array) + 2);
 
     for (; NOT_END(val); val++) {
         if (ANY_WORD(val)) words[i++] = VAL_WORD_CANON(val);
@@ -913,8 +914,8 @@ RL_API REBYTE *RL_Word_String(u32 word)
 {
     REBYTE *s1, *s2;
     // !!This code should use a function from c-words.c (but nothing perfect yet.)
-    if (word == 0 || word >= ARRAY_LEN(PG_Word_Table.array)) return 0;
-    s1 = VAL_SYM_NAME(ARRAY_AT(PG_Word_Table.array, word));
+    if (word == 0 || word >= ARR_LEN(PG_Word_Table.array)) return 0;
+    s1 = VAL_SYM_NAME(ARR_AT(PG_Word_Table.array, word));
     s2 = OS_ALLOC_N(REBYTE, LEN_BYTES(s1) + 1);
     COPY_BYTES(s2, s1, LEN_BYTES(s1) + 1);
     return s2;
@@ -963,11 +964,11 @@ RL_API u32 RL_Find_Word(u32 *words, u32 word)
 RL_API REBUPT RL_Series(REBSER *series, REBCNT what)
 {
     switch (what) {
-    case RXI_SER_DATA: return cast(REBUPT, SERIES_DATA_RAW(series));
-    case RXI_SER_TAIL: return SERIES_LEN(series);
-    case RXI_SER_LEFT: return SERIES_AVAIL(series);
-    case RXI_SER_SIZE: return SERIES_REST(series);
-    case RXI_SER_WIDE: return SERIES_WIDE(series);
+    case RXI_SER_DATA: return cast(REBUPT, SER_DATA_RAW(series));
+    case RXI_SER_TAIL: return SER_LEN(series);
+    case RXI_SER_LEFT: return SER_AVAIL(series);
+    case RXI_SER_SIZE: return SER_REST(series);
+    case RXI_SER_WIDE: return SER_WIDE(series);
     }
     return 0;
 }
@@ -991,7 +992,7 @@ RL_API REBUPT RL_Series(REBSER *series, REBCNT what)
 //
 RL_API int RL_Get_Char(REBSER *series, u32 index)
 {
-    if (index >= SERIES_LEN(series)) return -1;
+    if (index >= SER_LEN(series)) return -1;
     return GET_ANY_CHAR(series, index);
 }
 
@@ -1011,8 +1012,8 @@ RL_API int RL_Get_Char(REBSER *series, u32 index)
 //
 RL_API u32 RL_Set_Char(REBSER *series, u32 index, u32 chr)
 {
-    if (index >= SERIES_LEN(series)) {
-        index = SERIES_LEN(series);
+    if (index >= SER_LEN(series)) {
+        index = SER_LEN(series);
         EXPAND_SERIES_TAIL(series, 1);
     }
     SET_ANY_CHAR(series, index, chr);
@@ -1035,8 +1036,8 @@ RL_API u32 RL_Set_Char(REBSER *series, u32 index, u32 chr)
 RL_API int RL_Get_Value(REBARR *array, u32 index, RXIARG *result)
 {
     REBVAL *value;
-    if (index >= ARRAY_LEN(array)) return 0;
-    value = ARRAY_AT(array, index);
+    if (index >= ARR_LEN(array)) return 0;
+    value = ARR_AT(array, index);
     *result = Value_To_RXI(value);
     return Reb_To_RXT[VAL_TYPE_0(value)];
 }
@@ -1061,12 +1062,12 @@ RL_API REBOOL RL_Set_Value(REBARR *array, u32 index, RXIARG val, int type)
     VAL_INIT_WRITABLE_DEBUG(&value);
     RXI_To_Value(&value, val, type);
 
-    if (index >= ARRAY_LEN(array)) {
+    if (index >= ARR_LEN(array)) {
         Append_Value(array, &value);
         return TRUE;
     }
 
-    *ARRAY_AT(array, index) = value;
+    *ARR_AT(array, index) = value;
 
     return FALSE;
 }
@@ -1090,14 +1091,14 @@ RL_API u32 *RL_Words_Of_Object(REBSER *obj)
     REBCNT index;
     u32 *syms;
     REBVAL *key;
-    REBCON *context = AS_CONTEXT(obj);
+    REBCTX *context = AS_CONTEXT(obj);
 
-    key = CONTEXT_KEYS_HEAD(context);
+    key = CTX_KEYS_HEAD(context);
 
     // We don't include hidden keys (e.g. SELF), but terminate by 0.
     // Conservative estimate that there are no hidden keys, add one.
     //
-    syms = OS_ALLOC_N(u32, CONTEXT_LEN(context) + 1);
+    syms = OS_ALLOC_N(u32, CTX_LEN(context) + 1);
 
     index = 0;
     for (; NOT_END(key); key++) {
@@ -1128,10 +1129,10 @@ RL_API u32 *RL_Words_Of_Object(REBSER *obj)
 //
 RL_API int RL_Get_Field(REBSER *obj, u32 word, RXIARG *result)
 {
-    REBCON *context = AS_CONTEXT(obj);
+    REBCTX *context = AS_CONTEXT(obj);
     REBVAL *value;
     if (!(word = Find_Word_In_Context(context, word, FALSE))) return 0;
-    value = CONTEXT_VAR(context, word);
+    value = CTX_VAR(context, word);
     *result = Value_To_RXI(value);
     return Reb_To_RXT[VAL_TYPE_0(value)];
 }
@@ -1152,15 +1153,15 @@ RL_API int RL_Get_Field(REBSER *obj, u32 word, RXIARG *result)
 //
 RL_API int RL_Set_Field(REBSER *obj, u32 word_id, RXIARG val, int type)
 {
-    REBCON *context = AS_CONTEXT(obj);
+    REBCTX *context = AS_CONTEXT(obj);
 
     word_id = Find_Word_In_Context(context, word_id, FALSE);
     if (word_id == 0) return 0;
 
-    if (GET_VAL_FLAG(CONTEXT_KEY(context, word_id), TYPESET_FLAG_LOCKED))
+    if (GET_VAL_FLAG(CTX_KEY(context, word_id), TYPESET_FLAG_LOCKED))
         return 0;
 
-    RXI_To_Value(CONTEXT_VAR(context, word_id), val, type);
+    RXI_To_Value(CTX_VAR(context, word_id), val, type);
 
     return type;
 }

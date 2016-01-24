@@ -42,7 +42,7 @@
 //
 //  Console_Actor: C
 //
-static REB_R Console_Actor(struct Reb_Call *call_, REBCON *port, REBCNT action)
+static REB_R Console_Actor(struct Reb_Call *call_, REBCTX *port, REBCNT action)
 {
     REBREQ *req;
     REBINT result;
@@ -67,7 +67,7 @@ static REB_R Console_Actor(struct Reb_Call *call_, REBCON *port, REBCNT action)
         }
 
         // If no buffer, create a buffer:
-        arg = CONTEXT_VAR(port, STD_PORT_DATA);
+        arg = CTX_VAR(port, STD_PORT_DATA);
         if (!IS_STRING(arg) && !IS_BINARY(arg)) {
             Val_Init_Binary(arg, MAKE_OS_BUFFER(OUT_BUF_SIZE));
         }
@@ -75,18 +75,18 @@ static REB_R Console_Actor(struct Reb_Call *call_, REBCON *port, REBCNT action)
         RESET_SERIES(ser);
 
         req->common.data = BIN_HEAD(ser);
-        req->length = SERIES_AVAIL(ser);
+        req->length = SER_AVAIL(ser);
 
 #ifdef nono
         // Is the buffer large enough?
-        req->length = SERIES_AVAIL(ser); // space available
+        req->length = SER_AVAIL(ser); // space available
         if (req->length < OUT_BUF_SIZE/2) Extend_Series(ser, OUT_BUF_SIZE);
-        req->length = SERIES_AVAIL(ser);
+        req->length = SER_AVAIL(ser);
 
         // Don't make buffer too large:  Bug #174   ?????
         if (req->length > 1024) req->length = 1024;  //???
         req->common.data = BIN_TAIL(ser); // write at tail  //???
-        if (SERIES_LEN(ser) == 0) req->actual = 0;  //???
+        if (SER_LEN(ser) == 0) req->actual = 0;  //???
 #endif
 
         result = OS_DO_DEVICE(req, RDC_READ);

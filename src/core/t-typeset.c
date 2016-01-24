@@ -46,7 +46,7 @@
 // their own reduce before trying to make a typeset out of a block?
 //
 const struct {
-    REBCNT sym;
+    REBSYM sym;
     REBU64 bits;
 } Typesets[] = {
     {SYM_ANY_NOTHING_X, TS_NOTHING},
@@ -89,7 +89,7 @@ void Init_Typesets(void)
     REBVAL *value;
     REBINT n;
 
-    Set_Root_Series(ROOT_TYPESETS, ARRAY_SERIES(Make_Array(40)));
+    Set_Root_Series(ROOT_TYPESETS, ARR_SERIES(Make_Array(40)));
 
     for (n = 0; Typesets[n].sym != SYM_0; n++) {
         value = Alloc_Tail_Array(VAL_ARRAY(ROOT_TYPESETS));
@@ -110,7 +110,7 @@ void Init_Typesets(void)
 // 
 // Note: sym is optional, and can be SYM_0
 //
-void Val_Init_Typeset(REBVAL *value, REBU64 bits, REBCNT sym)
+void Val_Init_Typeset(REBVAL *value, REBU64 bits, REBSYM sym)
 {
     VAL_RESET_HEADER(value, REB_TYPESET);
     VAL_TYPESET_SYM(value) = sym;
@@ -150,14 +150,14 @@ REBOOL Make_Typeset(REBVAL *block, REBVAL *value, REBOOL load)
         val = NULL;
         if (IS_WORD(block) && !(val = TRY_GET_OPT_VAR(block))) {
             //Print("word: %s", Get_Word_Name(block));
-            REBCNT sym = VAL_WORD_SYM(block);
+            REBSYM sym = VAL_WORD_SYM(block);
 
             if (IS_KIND_SYM(sym)) { // Accept datatype word
                 TYPE_SET(value, KIND_FROM_SYM(sym));
                 continue;
             } // Special typeset symbols:
             else if (sym >= SYM_ANY_NOTHING_X && sym < SYM_DATATYPES)
-                val = ARRAY_AT(types, sym - SYM_ANY_NOTHING_X);
+                val = ARR_AT(types, sym - SYM_ANY_NOTHING_X);
         }
         if (!val) val = block;
         if (IS_DATATYPE(val)) {
@@ -239,7 +239,7 @@ REBARR *Typeset_To_Array(REBVAL *tset)
     for (n = 0; n < REB_MAX_0; n++) {
         if (TYPE_CHECK(tset, KIND_FROM_0(n))) {
             value = Alloc_Tail_Array(block);
-            Val_Init_Datatype(value, n);
+            Val_Init_Datatype(value, KIND_FROM_0(n));
         }
     }
     return block;

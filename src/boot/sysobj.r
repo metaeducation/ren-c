@@ -177,7 +177,7 @@ script: context [
 
 standard: context [
 
-    ; FUNC+CLOS implement a native-optimized variant of a function generator.
+    ; FUNC+PROC implement a native-optimized variant of a function generator.
     ; This is the body template that it provides as the code *equivalent* of
     ; what it is doing (via a more specialized/internal method).  Though
     ; the only "real" body stored and used is the one the user provided
@@ -193,6 +193,15 @@ standard: context [
             [exit/from/with (context-of 'return) :value]
         ]
         #BODY
+    ]
+
+    proc-body: [
+        leave: make function! [
+            [{Leaves a procedure, giving no result to the caller.}]
+            [exit/from (context-of 'leave)]
+        ]
+        #BODY
+        comment {No return value.}
     ]
 
     error: context [ ; Template used for all errors:

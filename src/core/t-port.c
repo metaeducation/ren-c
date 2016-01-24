@@ -56,7 +56,7 @@ REBTYPE(Port)
 {
     REBVAL *value = D_ARG(1);
     REBVAL *arg = D_ARGC > 1 ? D_ARG(2) : NULL;
-    REBCON *context;
+    REBCTX *context;
 
     switch (action) {
 
@@ -99,7 +99,7 @@ REBTYPE(Port)
         // system/standard/port is made with CONTEXT and not with MAKE PORT!
         //
         context = Copy_Context_Shallow(VAL_CONTEXT(arg));
-        VAL_RESET_HEADER(CONTEXT_VALUE(context), REB_PORT);
+        VAL_RESET_HEADER(CTX_VALUE(context), REB_PORT);
         Val_Init_Port(D_OUT, context);
         return R_OUT;
     }

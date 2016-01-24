@@ -468,12 +468,12 @@ static const REBYTE *Scan_Quote_Push_Mold(
 
         src++;
 
-        if (SERIES_LEN(mo->series) + 1 >= SERIES_REST(mo->series)) // incl term
+        if (SER_LEN(mo->series) + 1 >= SER_REST(mo->series)) // incl term
             Extend_Series(mo->series, 1);
 
         *UNI_TAIL(mo->series) = chr;
 
-        SET_SERIES_LEN(mo->series, SERIES_LEN(mo->series) + 1);
+        SET_SERIES_LEN(mo->series, SER_LEN(mo->series) + 1);
     }
 
     src++; // Skip ending quote or brace.
@@ -547,9 +547,9 @@ const REBYTE *Scan_Item_Push_Mold(
 
         *UNI_TAIL(mo->series) = c; // not affected by Extend_Series
 
-        SET_SERIES_LEN(mo->series, SERIES_LEN(mo->series) + 1);
+        SET_SERIES_LEN(mo->series, SER_LEN(mo->series) + 1);
 
-        if (SERIES_LEN(mo->series) >= SERIES_REST(mo->series))
+        if (SER_LEN(mo->series) >= SER_REST(mo->series))
             Extend_Series(mo->series, 1);
     }
 
@@ -589,14 +589,14 @@ static const REBYTE *Skip_Tag(const REBYTE *cp)
 // 
 // Scanner error handler
 //
-static REBCON *Error_Bad_Scan(
+static REBCTX *Error_Bad_Scan(
     REBCNT errnum,
     SCAN_STATE *ss,
     REBCNT tkn,
     const REBYTE *arg,
     REBCNT size
 ) {
-    REBCON *error;
+    REBCTX *error;
 
     const REBYTE *name;
     const REBYTE *cp;
@@ -640,7 +640,7 @@ static REBCON *Error_Bad_Scan(
 
     // Write the NEAR information (`Error()` gets it from DSF)
     //
-    err_obj = cast(ERROR_OBJ*, ARRAY_HEAD(CONTEXT_VARLIST(error)));
+    err_obj = cast(ERROR_OBJ*, ARR_HEAD(CTX_VARLIST(error)));
     Val_Init_String(&err_obj->nearest, ser);
 
     return error;
@@ -1353,7 +1353,7 @@ static REBARR *Scan_Block(SCAN_STATE *scan_state, REBYTE mode_char)
     REBVAL *value = 0;
     REBARR *emitbuf = BUF_EMIT;
     REBARR *block;
-    REBCNT begin = ARRAY_LEN(emitbuf);   // starting point in block buffer
+    REBCNT begin = ARR_LEN(emitbuf);   // starting point in block buffer
     REBOOL line = FALSE;
 #ifdef COMP_LINES
     REBINT linenum;
@@ -1390,16 +1390,16 @@ static REBARR *Scan_Block(SCAN_STATE *scan_state, REBYTE mode_char)
         }
 
         // Is output block buffer large enough?
-        if (token >= TOKEN_WORD && SERIES_FULL(ARRAY_SERIES(emitbuf)))
-            Extend_Series(ARRAY_SERIES(emitbuf), 1024);
+        if (token >= TOKEN_WORD && SER_FULL(ARR_SERIES(emitbuf)))
+            Extend_Series(ARR_SERIES(emitbuf), 1024);
 
-        value = ARRAY_TAIL(emitbuf);
+        value = ARR_TAIL(emitbuf);
         SET_END(value);
 
         // If in a path, handle start of path /word or word//word cases:
         if (mode_char == '/' && *bp == '/') {
             SET_NONE(value);
-            SET_ARRAY_LEN(emitbuf, ARRAY_LEN(emitbuf) + 1);
+            SET_ARRAY_LEN(emitbuf, ARR_LEN(emitbuf) + 1);
             scan_state->begin = bp + 1;
             continue;
         }
@@ -1420,17 +1420,17 @@ static REBARR *Scan_Block(SCAN_STATE *scan_state, REBYTE mode_char)
             && mode_char != '/'
         ) {
             block = Scan_Block(scan_state, '/');  // (could realloc emitbuf)
-            value = ARRAY_TAIL(emitbuf);
+            value = ARR_TAIL(emitbuf);
             if (token == TOKEN_LIT) {
                 token = REB_LIT_PATH;
-                VAL_RESET_HEADER(ARRAY_HEAD(block), REB_WORD);
-                assert(IS_WORD_UNBOUND(ARRAY_HEAD(block)));
+                VAL_RESET_HEADER(ARR_HEAD(block), REB_WORD);
+                assert(IS_WORD_UNBOUND(ARR_HEAD(block)));
             }
-            else if (IS_GET_WORD(ARRAY_HEAD(block))) {
+            else if (IS_GET_WORD(ARR_HEAD(block))) {
                 if (*scan_state->end == ':') goto syntax_error;
                 token = REB_GET_PATH;
-                VAL_RESET_HEADER(ARRAY_HEAD(block), REB_WORD);
-                assert(IS_WORD_UNBOUND(ARRAY_HEAD(block)));
+                VAL_RESET_HEADER(ARR_HEAD(block), REB_WORD);
+                assert(IS_WORD_UNBOUND(ARR_HEAD(block)));
             }
             else {
                 if (*scan_state->end == ':') {
@@ -1502,7 +1502,7 @@ static REBARR *Scan_Block(SCAN_STATE *scan_state, REBYTE mode_char)
                 SET_NONE(value);  // A single # means NONE
             }
             else {
-                REBCNT sym = Scan_Issue(bp + 1, len - 1);
+                REBSYM sym = Scan_Issue(bp + 1, len - 1);
                 if (sym == SYM_0)
                     goto syntax_error;
                 Val_Init_Word(value, REB_ISSUE, sym);
@@ -1516,10 +1516,10 @@ static REBARR *Scan_Block(SCAN_STATE *scan_state, REBYTE mode_char)
             );
             // (above line could have realloced emitbuf)
             ep = scan_state->end;
-            value = ARRAY_TAIL(emitbuf);
+            value = ARR_TAIL(emitbuf);
             if (scan_state->errors) {
-                *value = *ARRAY_LAST(block); // Copy the error
-                SET_ARRAY_LEN(emitbuf, ARRAY_LEN(emitbuf) + 1);
+                *value = *ARR_LAST(block); // Copy the error
+                SET_ARRAY_LEN(emitbuf, ARR_LEN(emitbuf) + 1);
                 goto exit_block;
             }
             Val_Init_Array(
@@ -1646,14 +1646,14 @@ static REBARR *Scan_Block(SCAN_STATE *scan_state, REBYTE mode_char)
 
         case TOKEN_CONSTRUCT:
             block = Scan_Full_Block(scan_state, ']');
-            value = ARRAY_TAIL(emitbuf);
-            SET_ARRAY_LEN(emitbuf, ARRAY_LEN(emitbuf) + 1); // Protect from GC
-            Bind_Values_All_Deep(ARRAY_HEAD(block), Lib_Context);
+            value = ARR_TAIL(emitbuf);
+            SET_ARRAY_LEN(emitbuf, ARR_LEN(emitbuf) + 1); // Protect from GC
+            Bind_Values_All_Deep(ARR_HEAD(block), Lib_Context);
             if (!Construct_Value(value, block)) {
                 if (IS_END(value)) Val_Init_Block(value, block);
                 fail (Error(RE_MALCONSTRUCT, value));
             }
-            SET_ARRAY_LEN(emitbuf, ARRAY_LEN(emitbuf) - 1); // Unprotect
+            SET_ARRAY_LEN(emitbuf, ARR_LEN(emitbuf) - 1); // Unprotect
             break;
 
         case TOKEN_END:
@@ -1680,9 +1680,9 @@ static REBARR *Scan_Block(SCAN_STATE *scan_state, REBYTE mode_char)
         VAL_FLAGS(value)|=FLAGS_LINE;
 #endif
         if (!IS_END(value))
-            SET_ARRAY_LEN(emitbuf, ARRAY_LEN(emitbuf) + 1);
+            SET_ARRAY_LEN(emitbuf, ARR_LEN(emitbuf) + 1);
         else {
-            REBCON *error;
+            REBCTX *error;
         syntax_error:
             error = Error_Bad_Scan(
                 RE_INVALID,
@@ -1692,8 +1692,8 @@ static REBARR *Scan_Block(SCAN_STATE *scan_state, REBYTE mode_char)
                 cast(REBCNT, ep - bp)
             );
             if (GET_FLAG(scan_state->opts, SCAN_RELAX)) {
-                Val_Init_Error(ARRAY_TAIL(emitbuf), error);
-                SET_ARRAY_LEN(emitbuf, ARRAY_LEN(emitbuf) + 1);
+                Val_Init_Error(ARR_TAIL(emitbuf), error);
+                SET_ARRAY_LEN(emitbuf, ARR_LEN(emitbuf) + 1);
                 goto exit_block;
             }
             fail (error);
@@ -1713,8 +1713,8 @@ static REBARR *Scan_Block(SCAN_STATE *scan_state, REBYTE mode_char)
                     1
                 );
                 if (GET_FLAG(scan_state->opts, SCAN_RELAX)) {
-                    Val_Init_Error(ARRAY_TAIL(emitbuf), error);
-                    SET_ARRAY_LEN(emitbuf, ARRAY_LEN(emitbuf) + 1);
+                    Val_Init_Error(ARR_TAIL(emitbuf), error);
+                    SET_ARRAY_LEN(emitbuf, ARR_LEN(emitbuf) + 1);
                     goto exit_block;
                 }
                 fail (error);
@@ -1750,9 +1750,9 @@ exit_block:
     Print((REBYTE*)"block of %d values ", emitbuf->tail - begin);
 #endif
 
-    len = ARRAY_LEN(emitbuf);
-    block = Copy_Values_Len_Shallow(ARRAY_AT(emitbuf, begin), len - begin);
-    ASSERT_SERIES_TERM(ARRAY_SERIES(block));
+    len = ARR_LEN(emitbuf);
+    block = Copy_Values_Len_Shallow(ARR_AT(emitbuf, begin), len - begin);
+    ASSERT_SERIES_TERM(ARR_SERIES(block));
 
     SET_ARRAY_LEN(emitbuf, begin);
 
@@ -1827,7 +1827,7 @@ REBINT Scan_Header(const REBYTE *src, REBCNT len)
 //
 void Init_Scanner(void)
 {
-    Set_Root_Series(TASK_BUF_EMIT, ARRAY_SERIES(Make_Array(511)));
+    Set_Root_Series(TASK_BUF_EMIT, ARR_SERIES(Make_Array(511)));
     Set_Root_Series(TASK_BUF_UTF8, Make_Unicode(1020));
 }
 
@@ -1901,7 +1901,7 @@ REBNATIVE(transcode)
 REBCNT Scan_Word(const REBYTE *cp, REBCNT len)
 {
     SCAN_STATE scan_state;
-    REBCNT sym = 0;
+    REBSYM sym = 0;
     REB_MOLD mo;
     CLEARS(&mo);
 

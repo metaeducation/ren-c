@@ -12,7 +12,7 @@ REBOL [
 ]
 
 
-closure: func [
+procedure: func [
     ; !!! Should have a unified constructor with FUNCTION
     {Defines a closure function with all set-words as locals.}
     spec [block!] {Help string (opt) followed by arg words (and opt type and string)}
@@ -45,7 +45,7 @@ closure: func [
         either extern [append copy spec words] [spec]
     ]
 
-    clos spec body
+    proc spec body
 ]
 
 map: func [

@@ -175,7 +175,7 @@ REBSER *Copy_OS_Str(void *src, REBINT len)
 //
 void Insert_Char(REBSER *dst, REBCNT index, REBCNT chr)
 {
-    if (index > SERIES_LEN(dst)) index = SERIES_LEN(dst);
+    if (index > SER_LEN(dst)) index = SER_LEN(dst);
     if (chr > 0xFF && BYTE_SIZE(dst)) Widen_String(dst, TRUE);
     Expand_Series(dst, index, 1);
     SET_ANY_CHAR(dst, index, chr);
@@ -201,12 +201,12 @@ void Insert_String(
     REBYTE *bp;
     REBCNT n;
 
-    assert(idx <= SERIES_LEN(dst));
+    assert(idx <= SER_LEN(dst));
 
     if (!no_expand) Expand_Series(dst, idx, len); // tail changed too
 
     // Src and dst have same width (8 or 16):
-    if (SERIES_WIDE(dst) == SERIES_WIDE(src)) {
+    if (SER_WIDE(dst) == SER_WIDE(src)) {
 cp_same:
         if (BYTE_SIZE(dst))
             memcpy(BIN_AT(dst, idx), BIN_AT(src, pos), len);
@@ -256,7 +256,7 @@ REBSER *Copy_String_Slimming(REBSER *src, REBCNT index, REBINT length)
     REBSER *dst;
     REBINT n;
 
-    if (length < 0) length = SERIES_LEN(src) - index;
+    if (length < 0) length = SER_LEN(src) - index;
 
     // Can it be slimmed down?
     if (!BYTE_SIZE(src)) {
@@ -361,7 +361,7 @@ REBSER *Append_Unencoded_Len(REBSER *dst, const char *src, REBCNT len)
         dst = Make_Binary(len);
         tail = 0;
     } else {
-        tail = SERIES_LEN(dst);
+        tail = SER_LEN(dst);
         EXPAND_SERIES_TAIL(dst, len);
     }
 
@@ -401,7 +401,7 @@ REBSER *Append_Unencoded(REBSER *dst, const char *src)
 //
 REBSER *Append_Codepoint_Raw(REBSER *dst, REBCNT codepoint)
 {
-    REBCNT tail = SERIES_LEN(dst);
+    REBCNT tail = SER_LEN(dst);
 
     EXPAND_SERIES_TAIL(dst, 1);
 
@@ -453,7 +453,7 @@ REBSER *Make_Series_Codepoint(REBCNT codepoint)
 void Append_Uni_Bytes(REBSER *dst, const REBUNI *src, REBCNT len)
 {
     REBYTE *bp;
-    REBCNT tail = SERIES_LEN(dst);
+    REBCNT tail = SER_LEN(dst);
 
     EXPAND_SERIES_TAIL(dst, len);
 
@@ -474,7 +474,7 @@ void Append_Uni_Bytes(REBSER *dst, const REBUNI *src, REBCNT len)
 void Append_Uni_Uni(REBSER *dst, const REBUNI *src, REBCNT len)
 {
     REBUNI *up;
-    REBCNT tail = SERIES_LEN(dst);
+    REBCNT tail = SER_LEN(dst);
 
     EXPAND_SERIES_TAIL(dst, len);
 
@@ -494,7 +494,7 @@ void Append_Uni_Uni(REBSER *dst, const REBUNI *src, REBCNT len)
 //
 void Append_String(REBSER *dst, REBSER *src, REBCNT i, REBCNT len)
 {
-    Insert_String(dst, SERIES_LEN(dst), src, i, len, FALSE);
+    Insert_String(dst, SER_LEN(dst), src, i, len, FALSE);
 }
 
 
@@ -647,7 +647,7 @@ REBSER *Join_Binary(const REBVAL *blk, REBINT limit)
             fail (Error_Invalid_Arg(val));
         }
 
-        tail = SERIES_LEN(series);
+        tail = SER_LEN(series);
     }
 
     SET_BIN_END(series, tail);

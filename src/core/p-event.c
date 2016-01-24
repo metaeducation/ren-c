@@ -85,12 +85,12 @@ REBVAL *Append_Event(void)
     if (!IS_BLOCK(state)) return 0;
 
     // Append to tail if room:
-    if (SERIES_FULL(VAL_SERIES(state))) {
+    if (SER_FULL(VAL_SERIES(state))) {
         if (VAL_LEN_HEAD(state) > EVENTS_LIMIT) {
             panic (Error(RE_MAX_EVENTS));
         } else {
             Extend_Series(VAL_SERIES(state), EVENTS_CHUNK);
-            //RL_Print("event queue increased to :%d\n", SERIES_REST(VAL_SERIES(state)));
+            //RL_Print("event queue increased to :%d\n", SER_REST(VAL_SERIES(state)));
         }
     }
     SET_SERIES_LEN(VAL_SERIES(state), VAL_LEN_HEAD(state) + 1);
@@ -143,7 +143,7 @@ REBVAL *Find_Last_Event(REBINT model, REBINT type)
 // 
 // Internal port handler for events.
 //
-static REB_R Event_Actor(struct Reb_Call *call_, REBCON *port, REBCNT action)
+static REB_R Event_Actor(struct Reb_Call *call_, REBCTX *port, REBCNT action)
 {
     REBVAL *spec;
     REBVAL *state;
@@ -157,8 +157,8 @@ static REB_R Event_Actor(struct Reb_Call *call_, REBCON *port, REBCNT action)
     *D_OUT = *D_ARG(1);
 
     // Validate and fetch relevant PORT fields:
-    state = CONTEXT_VAR(port, STD_PORT_STATE);
-    spec = CONTEXT_VAR(port, STD_PORT_SPEC);
+    state = CTX_VAR(port, STD_PORT_STATE);
+    spec = CTX_VAR(port, STD_PORT_SPEC);
     if (!IS_OBJECT(spec)) fail (Error(RE_INVALID_SPEC, spec));
 
     // Get or setup internal state data:

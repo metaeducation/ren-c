@@ -33,7 +33,7 @@
 //
 //  Clipboard_Actor: C
 //
-static REB_R Clipboard_Actor(struct Reb_Call *call_, REBCON *port, REBCNT action)
+static REB_R Clipboard_Actor(struct Reb_Call *call_, REBCTX *port, REBCNT action)
 {
     REBREQ *req;
     REBINT result;
@@ -52,7 +52,7 @@ static REB_R Clipboard_Actor(struct Reb_Call *call_, REBCON *port, REBCNT action
     case A_UPDATE:
         // Update the port object after a READ or WRITE operation.
         // This is normally called by the WAKE-UP function.
-        arg = CONTEXT_VAR(port, STD_PORT_DATA);
+        arg = CTX_VAR(port, STD_PORT_DATA);
         if (req->command == RDC_READ) {
             // this could be executed twice:
             // once for an event READ, once for the CLOSE following the READ
@@ -94,7 +94,7 @@ static REB_R Clipboard_Actor(struct Reb_Call *call_, REBCON *port, REBCNT action
         if (result > 0) return R_NONE; /* pending */
 
         // Copy and set the string result:
-        arg = CONTEXT_VAR(port, STD_PORT_DATA);
+        arg = CTX_VAR(port, STD_PORT_DATA);
 
         len = req->actual;
         if (GET_FLAG(req->flags, RRF_WIDE)) {
@@ -133,7 +133,7 @@ static REB_R Clipboard_Actor(struct Reb_Call *call_, REBCON *port, REBCNT action
             len = VAL_INT32(D_ARG(ARG_WRITE_LIMIT));
 
         // If bytes, see if we can fit it:
-        if (SERIES_WIDE(VAL_SERIES(arg)) == 1) {
+        if (SER_WIDE(VAL_SERIES(arg)) == 1) {
 #ifdef ARG_STRINGS_ALLOWED
             if (!All_Bytes_ASCII(VAL_BIN_AT(arg), len)) {
                 Val_Init_String(
@@ -155,7 +155,7 @@ static REB_R Clipboard_Actor(struct Reb_Call *call_, REBCON *port, REBCNT action
         }
         else
         // If unicode (may be from above conversion), handle it:
-        if (SERIES_WIDE(VAL_SERIES(arg)) == sizeof(REBUNI)) {
+        if (SER_WIDE(VAL_SERIES(arg)) == sizeof(REBUNI)) {
             req->common.data = cast(REBYTE *, VAL_UNI_AT(arg));
             SET_FLAG(req->flags, RRF_WIDE);
         }
@@ -164,14 +164,14 @@ static REB_R Clipboard_Actor(struct Reb_Call *call_, REBCON *port, REBCNT action
         req->length = len * sizeof(REBUNI);
 
         // Setup the write:
-        *CONTEXT_VAR(port, STD_PORT_DATA) = *arg;   // keep it GC safe
+        *CTX_VAR(port, STD_PORT_DATA) = *arg;   // keep it GC safe
         req->actual = 0;
 
         result = OS_DO_DEVICE(req, RDC_WRITE);
-        SET_NONE(CONTEXT_VAR(port, STD_PORT_DATA)); // GC can collect it
+        SET_NONE(CTX_VAR(port, STD_PORT_DATA)); // GC can collect it
 
         if (result < 0) fail (Error_On_Port(RE_WRITE_ERROR, port, req->error));
-        //if (result == DR_DONE) SET_NONE(CONTEXT_VAR(port, STD_PORT_DATA));
+        //if (result == DR_DONE) SET_NONE(CTX_VAR(port, STD_PORT_DATA));
         break;
 
     case A_OPEN:

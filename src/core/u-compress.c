@@ -58,7 +58,7 @@ static int window_bits_gzip_raw = -(MAX_WBITS | 16); // is "raw gzip" a thing?
 // Zlib gives back string error messages.  We use them or fall
 // back on the integer code if there is no message.
 //
-static REBCON *Error_Compression(const z_stream *strm, int ret)
+static REBCTX *Error_Compression(const z_stream *strm, int ret)
 {
     REBVAL arg;
 
@@ -159,7 +159,7 @@ REBSER *Compress(
         // same format that R3-Alpha and Rebol2 used.
 
         REBCNT gzip_len = Bytes_To_REBCNT(
-            SERIES_DATA_RAW(output)
+            SER_DATA_RAW(output)
             + buf_size
             - strm.avail_out
             - sizeof(REBCNT)
@@ -184,7 +184,7 @@ REBSER *Compress(
 
     // !!! Trim if more than 1K extra capacity, review logic
     //
-    if (SERIES_AVAIL(output) > 1024) {
+    if (SER_AVAIL(output) > 1024) {
         REBSER *smaller = Copy_Sequence(output);
         Free_Series(output);
         output = smaller;
@@ -209,7 +209,7 @@ REBSER *Decompress(
     REBOOL raw
 ) {
     struct Reb_State state;
-    REBCON *error;
+    REBCTX *error;
 
     REBCNT buf_size;
     REBSER *output;
@@ -375,7 +375,7 @@ REBSER *Decompress(
 
     // !!! Trim if more than 1K extra capacity, review logic
     //
-    if (SERIES_AVAIL(output) > 1024) {
+    if (SER_AVAIL(output) > 1024) {
         REBSER *smaller = Copy_Sequence(output);
         Free_Series(output);
         output = smaller;

@@ -42,10 +42,10 @@ enum Transport_Types {
 //
 //  Ret_Query_Net: C
 //
-static void Ret_Query_Net(REBCON *port, REBREQ *sock, REBVAL *out)
+static void Ret_Query_Net(REBCTX *port, REBREQ *sock, REBVAL *out)
 {
     REBVAL *std_info = In_Object(port, STD_PORT_SCHEME, STD_SCHEME_INFO, 0);
-    REBCON *info;
+    REBCTX *info;
 
     if (!std_info || !IS_OBJECT(std_info))
         fail (Error_On_Port(RE_INVALID_SPEC, port, -10));
@@ -53,22 +53,22 @@ static void Ret_Query_Net(REBCON *port, REBREQ *sock, REBVAL *out)
     info = Copy_Context_Shallow(VAL_CONTEXT(std_info));
 
     Set_Tuple(
-        CONTEXT_VAR(info, STD_NET_INFO_LOCAL_IP),
+        CTX_VAR(info, STD_NET_INFO_LOCAL_IP),
         cast(REBYTE*, &sock->special.net.local_ip),
         4
     );
     SET_INTEGER(
-        CONTEXT_VAR(info, STD_NET_INFO_LOCAL_PORT),
+        CTX_VAR(info, STD_NET_INFO_LOCAL_PORT),
         sock->special.net.local_port
     );
 
     Set_Tuple(
-        CONTEXT_VAR(info, STD_NET_INFO_REMOTE_IP),
+        CTX_VAR(info, STD_NET_INFO_REMOTE_IP),
         cast(REBYTE*, &sock->special.net.remote_ip),
         4
     );
     SET_INTEGER(
-        CONTEXT_VAR(info, STD_NET_INFO_REMOTE_PORT),
+        CTX_VAR(info, STD_NET_INFO_REMOTE_PORT),
         sock->special.net.remote_port
     );
 
@@ -81,7 +81,7 @@ static void Ret_Query_Net(REBCON *port, REBREQ *sock, REBVAL *out)
 // 
 // Clone a listening port as a new accept port.
 //
-static void Accept_New_Port(REBVAL *out, REBCON *port, REBREQ *sock)
+static void Accept_New_Port(REBVAL *out, REBCTX *port, REBREQ *sock)
 {
     REBREQ *nsock;
 
@@ -96,8 +96,8 @@ static void Accept_New_Port(REBVAL *out, REBCON *port, REBREQ *sock)
     port = Copy_Context_Shallow(port);
     Val_Init_Port(out, port); // Also for GC protect
 
-    SET_NONE(CONTEXT_VAR(port, STD_PORT_DATA)); // just to be sure.
-    SET_NONE(CONTEXT_VAR(port, STD_PORT_STATE)); // just to be sure.
+    SET_NONE(CTX_VAR(port, STD_PORT_DATA)); // just to be sure.
+    SET_NONE(CTX_VAR(port, STD_PORT_STATE)); // just to be sure.
 
     // Copy over the new sock data:
     sock = cast(REBREQ*, Use_Port_State(port, RDI_NET, sizeof(*sock)));
@@ -112,7 +112,7 @@ static void Accept_New_Port(REBVAL *out, REBCON *port, REBREQ *sock)
 //
 static REB_R Transport_Actor(
     struct Reb_Call *call_,
-    REBCON *port,
+    REBCTX *port,
     REBCNT action,
     enum Transport_Types proto
 ) {
@@ -135,7 +135,7 @@ static REB_R Transport_Actor(
         SET_FLAG(sock->modes, RST_UDP);
     }
     //Debug_Fmt("Sock: %x", sock);
-    spec = CONTEXT_VAR(port, STD_PORT_SPEC);
+    spec = CTX_VAR(port, STD_PORT_SPEC);
     if (!IS_OBJECT(spec)) fail (Error(RE_INVALID_PORT));
 
     // sock->timeout = 4000; // where does this go? !!!
@@ -204,7 +204,7 @@ static REB_R Transport_Actor(
     case A_UPDATE:
         // Update the port object after a READ or WRITE operation.
         // This is normally called by the WAKE-UP function.
-        arg = CONTEXT_VAR(port, STD_PORT_DATA);
+        arg = CTX_VAR(port, STD_PORT_DATA);
         if (sock->command == RDC_READ) {
             if (ANY_BINSTR(arg)) {
                 SET_SERIES_LEN(
@@ -230,21 +230,21 @@ static REB_R Transport_Actor(
         }
 
         // Setup the read buffer (allocate a buffer if needed):
-        arg = CONTEXT_VAR(port, STD_PORT_DATA);
+        arg = CTX_VAR(port, STD_PORT_DATA);
         if (!IS_STRING(arg) && !IS_BINARY(arg)) {
             Val_Init_Binary(arg, Make_Binary(NET_BUF_SIZE));
         }
         ser = VAL_SERIES(arg);
-        sock->length = SERIES_AVAIL(ser); // space available
+        sock->length = SER_AVAIL(ser); // space available
         if (sock->length < NET_BUF_SIZE/2) Extend_Series(ser, NET_BUF_SIZE);
-        sock->length = SERIES_AVAIL(ser);
+        sock->length = SER_AVAIL(ser);
 
         // This used STR_TAIL (obsolete, equivalent to BIN_TAIL) but was it
         // sure the series was byte sized?  Added in a check.
         assert(BYTE_SIZE(ser));
         sock->common.data = BIN_TAIL(ser); // write at tail
 
-        //if (SERIES_LEN(ser) == 0)
+        //if (SER_LEN(ser) == 0)
         sock->actual = 0;  // Actual for THIS read, not for total.
 
         //Print("(max read length %d)", sock->length);
@@ -270,7 +270,7 @@ static REB_R Transport_Actor(
         }
 
         // Setup the write:
-        *CONTEXT_VAR(port, STD_PORT_DATA) = *spec;  // keep it GC safe
+        *CTX_VAR(port, STD_PORT_DATA) = *spec;  // keep it GC safe
         sock->length = len;
         sock->common.data = VAL_BIN_AT(spec);
         sock->actual = 0;
@@ -278,7 +278,7 @@ static REB_R Transport_Actor(
         //Print("(write length %d)", len);
         result = OS_DO_DEVICE(sock, RDC_WRITE); // send can happen immediately
         if (result < 0) fail (Error_On_Port(RE_WRITE_ERROR, port, sock->error));
-        if (result == DR_DONE) SET_NONE(CONTEXT_VAR(port, STD_PORT_DATA));
+        if (result == DR_DONE) SET_NONE(CTX_VAR(port, STD_PORT_DATA));
         break;
 
     case A_PICK:
@@ -309,7 +309,7 @@ static REB_R Transport_Actor(
         break;
 
     case A_LENGTH:
-        arg = CONTEXT_VAR(port, STD_PORT_DATA);
+        arg = CTX_VAR(port, STD_PORT_DATA);
         len = ANY_SERIES(arg) ? VAL_LEN_HEAD(arg) : 0;
         SET_INTEGER(D_OUT, len);
         break;
@@ -340,7 +340,7 @@ static REB_R Transport_Actor(
 //
 //  TCP_Actor: C
 //
-static REB_R TCP_Actor(struct Reb_Call *call_, REBCON *port, REBCNT action)
+static REB_R TCP_Actor(struct Reb_Call *call_, REBCTX *port, REBCNT action)
 {
     return Transport_Actor(call_, port, action, TRANSPORT_TCP);
 }
@@ -348,7 +348,7 @@ static REB_R TCP_Actor(struct Reb_Call *call_, REBCON *port, REBCNT action)
 //
 //  UDP_Actor: C
 //
-static REB_R UDP_Actor(struct Reb_Call *call_, REBCON *port, REBCNT action)
+static REB_R UDP_Actor(struct Reb_Call *call_, REBCTX *port, REBCNT action)
 {
     return Transport_Actor(call_, port, action, TRANSPORT_UDP);
 }

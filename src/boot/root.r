@@ -29,6 +29,7 @@ empty-block     ; a value that is an empty BLOCK!
 transparent-tag ; func w/o definitional return, ignores non-definitional ones
 infix-tag       ; func is treated as "infix" (first parameter comes before it)
 local-tag       ; marks the beginning of a list of "pure locals"
+durable-tag     ; !!! In progress - argument word lookup survives call ending
 
 ;; Natives can usually be identified by their code pointers and addresses
 ;; (e.g. `VAL_FUNC_CODE(native) == &N_parse`) and know their own values via
@@ -38,6 +39,7 @@ local-tag       ; marks the beginning of a list of "pure locals"
 ;; (PARSE just wants access to its D_FUNC more convenient from a nested call)
 
 return-native
+leave-native
 parse-native
 
 ;; The BREAKPOINT instruction needs to be able to re-transmit a RESUME
@@ -49,14 +51,16 @@ parse-native
 resume-native
 quit-native
 
-;; The FUNC and CLOS function generators are native code, and quick access
-;; to a block containing [RETURN:] is useful to share across all of the
+;; The FUNC and PROC function generators are native code, and quick access
+;; to a block of [RETURN:] or [LEAVE:] is useful to share across all of the
 ;; instances of functions like those created by DOES.  Having a filled
 ;; REBVAL of the word alone saves a call to Val_Init_Word_Unbound with
 ;; the symbol as well.
 
 return-set-word
 return-block
+leave-set-word
+leave-block
 
 boot            ; boot block defined in boot.r (GC'd after boot is done)
 

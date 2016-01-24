@@ -31,7 +31,7 @@
 #include "reb-dialect.h"
 
 typedef struct Reb_Dialect_Parse {
-    REBCON *dialect;    // dialect object
+    REBCTX *dialect;    // dialect object
     REBARR *fargs;      // formal arg block
     REBCNT fargi;       // start index in fargs
     REBARR *args;       // argument block
@@ -64,7 +64,7 @@ static const char *Dia_Fmt = "DELECT - cmd: %s length: %d missed: %d total: %d";
 // Search a block of objects for a given word symbol and
 // return the value for the word. NULL if not found.
 //
-REBVAL *Find_Mutable_In_Contexts(REBCNT sym, REBVAL *where)
+REBVAL *Find_Mutable_In_Contexts(REBSYM sym, REBVAL *where)
 {
     REBVAL *val;
 
@@ -98,7 +98,7 @@ REBVAL *Find_Mutable_In_Contexts(REBCNT sym, REBVAL *where)
 // Given a word, check to see if it is in the dialect object.
 // If so, return its index. If not, return 0.
 //
-static int Find_Command(REBCON *dialect, REBVAL *word)
+static int Find_Command(REBCTX *dialect, REBVAL *word)
 {
     REBINT n;
 
@@ -114,7 +114,7 @@ static int Find_Command(REBCON *dialect, REBVAL *word)
     }
 
     // If keyword (not command) return negated index:
-    if (IS_NONE(CONTEXT_VAR(dialect, n))) return -n;
+    if (IS_NONE(CTX_VAR(dialect, n))) return -n;
     return n;
 }
 
@@ -154,7 +154,7 @@ static int Count_Dia_Args(REBVAL *args)
 //
 static REBVAL *Eval_Arg(REBDIA *dia)
 {
-    REBVAL *value = ARRAY_AT(dia->args, dia->argi);
+    REBVAL *value = ARR_AT(dia->args, dia->argi);
 
     REBVAL safe;
     VAL_INIT_WRITABLE_DEBUG(&safe);
@@ -226,14 +226,14 @@ static REBINT Add_Arg(REBDIA *dia, REBVAL *value)
     REBVAL *outp;
     REBINT rept = 0;
 
-    outp = ARRAY_AT(dia->out, dia->outi);
+    outp = ARR_AT(dia->out, dia->outi);
 
     // Scan all formal args, looking for one that matches given value:
     for (fargi = dia->fargi;; fargi++) {
 
         //Debug_Fmt("Add_Arg fargi: %d outi: %d", fargi, outi);
 
-        if (IS_END(fargs = ARRAY_AT(dia->fargs, fargi))) return 0;
+        if (IS_END(fargs = ARR_AT(dia->fargs, fargi))) return 0;
 
 again:
         // Formal arg can be a word (type or refinement), datatype, or * (repeater):
@@ -343,8 +343,8 @@ again:
         break;
 
     case 4: // refinement:
-        dia->fargi = fargs - ARRAY_HEAD(dia->fargs) + 1;
-        dia->outi = outp - ARRAY_HEAD(dia->out) + 1;
+        dia->fargi = fargs - ARR_HEAD(dia->fargs) + 1;
+        dia->outi = outp - ARR_HEAD(dia->out) + 1;
         *outp = *value;
         return 1;
 
@@ -377,13 +377,13 @@ static REBINT Do_Cmd(REBDIA *dia)
     REBSER *ser;
 
     // Get formal arguments block for this command:
-    fargs = CONTEXT_VAR(dia->dialect, dia->cmd);
+    fargs = CTX_VAR(dia->dialect, dia->cmd);
     if (!IS_BLOCK(fargs)) return -REB_DIALECT_BAD_SPEC;
     dia->fargs = VAL_ARRAY(fargs);
     fargs = VAL_ARRAY_AT(fargs);
     size = Count_Dia_Args(fargs); // approximate
 
-    ser = ARRAY_SERIES(dia->out);
+    ser = ARR_SERIES(dia->out);
     // Preallocate output block (optimize for large blocks):
     if (dia->len > size) size = dia->len;
     if (GET_FLAG(dia->flags, RDIA_ALL)) {
@@ -399,7 +399,7 @@ static REBINT Do_Cmd(REBDIA *dia)
         Val_Init_Word_Bound(
             val,
             GET_FLAG(dia->flags, RDIA_LIT_CMD) ? REB_LIT_WORD : REB_WORD,
-            CONTEXT_KEY_SYM(dia->dialect, dia->cmd),
+            CTX_KEY_SYM(dia->dialect, dia->cmd),
             dia->dialect,
             dia->cmd
         );
@@ -424,13 +424,13 @@ static REBINT Do_Cmd(REBDIA *dia)
 
     // If not enough args, pad with NONE values:
     if (dia->cmd > dia->default_cmd) {
-        for (n = ARRAY_LEN(dia->out); n < size; n++) {
+        for (n = ARR_LEN(dia->out); n < size; n++) {
             REBVAL *temp = Alloc_Tail_Array(dia->out);
             SET_NONE(temp);
         }
     }
 
-    dia->outi = ARRAY_LEN(dia->out);
+    dia->outi = ARR_LEN(dia->out);
 
     return 0;
 }
@@ -447,7 +447,7 @@ static REBINT Do_Cmd(REBDIA *dia)
 //
 static REBINT Do_Dia(REBDIA *dia)
 {
-    REBVAL *next = ARRAY_AT(dia->args, dia->argi);
+    REBVAL *next = ARR_AT(dia->args, dia->argi);
     REBVAL *head;
     REBINT err;
 
@@ -500,7 +500,7 @@ static REBINT Do_Dia(REBDIA *dia)
 //     3. Encountering a new CMD
 //     4. End of the dialect block
 //
-REBINT Do_Dialect(REBCON *dialect, REBARR *block, REBCNT *index, REBARR **out)
+REBINT Do_Dialect(REBCTX *dialect, REBARR *block, REBCNT *index, REBARR **out)
 {
     REBDIA dia;
     REBINT n;
@@ -509,7 +509,7 @@ REBINT Do_Dialect(REBCON *dialect, REBARR *block, REBCNT *index, REBARR **out)
 
     CLEARS(&dia);
 
-    if (*index >= ARRAY_LEN(block)) return 0; // end of block
+    if (*index >= ARR_LEN(block)) return 0; // end of block
 
     // !!! This used to say "Avoid GC during Dialect (prevents unknown
     // crash problem)".  To the extent DELECT is still used, this unknown
@@ -526,7 +526,7 @@ REBINT Do_Dialect(REBCON *dialect, REBARR *block, REBCNT *index, REBARR **out)
     self_index = Find_Word_In_Context(dialect, SYM_SELF, TRUE);
     dia.default_cmd = self_index == 0 ? 1 : SELFISH(1);
 
-    //Print("DSP: %d Dinp: %r - %m", DSP, ARRAY_AT(block, *index), block);
+    //Print("DSP: %d Dinp: %r - %m", DSP, ARR_AT(block, *index), block);
     n = Do_Dia(&dia);
     //Print("DSP: %d Dout: CMD: %d %m", DSP, dia.cmd, *out);
     DS_DROP_TO(dsp_orig); // pop any temp values used above
@@ -538,7 +538,7 @@ REBINT Do_Dialect(REBCON *dialect, REBARR *block, REBCNT *index, REBARR **out)
             Debug_Fmt(
                 Dia_Fmt,
                 Get_Field_Name(dia.dialect, dia.cmd),
-                ARRAY_LEN(dia.out),
+                ARR_LEN(dia.out),
                 dia.missed,
                 Total_Missed
             );
@@ -593,7 +593,7 @@ REBNATIVE(delect)
     dia.out = VAL_ARRAY(ARG(output));
     dia.outi = VAL_INDEX(ARG(output));
 
-    if (dia.argi >= ARRAY_LEN(dia.args)) return R_NONE; // end of block
+    if (dia.argi >= ARR_LEN(dia.args)) return R_NONE; // end of block
 
     self_index = Find_Word_In_Context(dia.dialect, SYM_SELF, TRUE);
     dia.default_cmd = self_index == 0 ? 1 : SELFISH(1);
@@ -609,13 +609,13 @@ REBNATIVE(delect)
 
     if (REF(all)) {
         SET_FLAG(dia.flags, RDIA_ALL);
-        Resize_Series(ARRAY_SERIES(dia.out), VAL_LEN_AT(ARG(input)));
+        Resize_Series(ARR_SERIES(dia.out), VAL_LEN_AT(ARG(input)));
         while (TRUE) {
             dia.cmd = 0;
             dia.len = 0;
             dia.fargi = 0;
             err = Do_Dia(&dia);
-            if (err < 0 || IS_END(ARRAY_AT(dia.args, dia.argi))) break;
+            if (err < 0 || IS_END(ARR_AT(dia.args, dia.argi))) break;
         }
     }
     else
@@ -623,7 +623,7 @@ REBNATIVE(delect)
 
     DS_DROP_TO(dsp_orig);
 
-    VAL_INDEX(ARG(input)) = MIN(dia.argi, ARRAY_LEN(dia.args));
+    VAL_INDEX(ARG(input)) = MIN(dia.argi, ARR_LEN(dia.args));
 
     if (Delect_Debug > 0) {
         Total_Missed += dia.missed;
@@ -631,7 +631,7 @@ REBNATIVE(delect)
             Debug_Fmt(
                 Dia_Fmt,
                 Get_Field_Name(dia.dialect, dia.cmd),
-                ARRAY_LEN(dia.out),
+                ARR_LEN(dia.out),
                 dia.missed,
                 Total_Missed
             );

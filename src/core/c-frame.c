@@ -96,8 +96,8 @@ void Check_Bind_Table(void)
     REBCNT  n;
     REBINT *binds = WORDS_HEAD(Bind_Table);
 
-    //Debug_Fmt("Bind Table (Size: %d)", SERIES_LEN(Bind_Table));
-    for (n = 0; n < SERIES_LEN(Bind_Table); n++) {
+    //Debug_Fmt("Bind Table (Size: %d)", SER_LEN(Bind_Table));
+    for (n = 0; n < SER_LEN(Bind_Table); n++) {
         if (binds[n]) {
             Debug_Fmt("Bind table fault: %3d to %3d (%s)", n, binds[n], Get_Sym_Name(n));
         }
@@ -114,22 +114,22 @@ void Check_Bind_Table(void)
 // configured, hence this is an "Alloc" instead of a "Make" (because there
 // is still work to be done before it will pass ASSERT_CONTEXT).
 //
-REBCON *Alloc_Context(REBCNT len)
+REBCTX *Alloc_Context(REBCNT len)
 {
-    REBCON *context;
+    REBCTX *context;
     REBARR *keylist;
     REBVAL *value;
 
     keylist = Make_Array(len + 1); // size + room for ROOTKEY (SYM_0)
     context = AS_CONTEXT(Make_Array(len + 1));
-    ARRAY_SET_FLAG(CONTEXT_VARLIST(context), OPT_SER_CONTEXT);
+    SET_ARR_FLAG(CTX_VARLIST(context), SERIES_FLAG_CONTEXT);
 
     // Note: cannot use Append_Frame for first word.
 
     // context[0] is a value instance of the OBJECT!/MODULE!/PORT!/ERROR! we
     // are building which contains this context
     //
-    CONTEXT_VALUE(context)->payload.any_context.context = context;
+    CTX_VALUE(context)->payload.any_context.context = context;
     INIT_CONTEXT_KEYLIST(context, keylist);
     MANAGE_ARRAY(keylist);
 
@@ -139,25 +139,25 @@ REBCON *Alloc_Context(REBCNT len)
     // REB_PORT, or REB_ERROR.  This information will be mirrored in instances
     // of an object initialized with this context.
     //
-    VAL_RESET_HEADER(CONTEXT_VALUE(context), REB_TRASH);
+    VAL_RESET_HEADER(CTX_VALUE(context), REB_TRASH);
 
     // !!! Modules seemed to be using a CONTEXT-style series for a spec, as
     // opposed to a simple array.  This is contentious with the plan for what
     // an object spec will wind up looking like, and may end up being the
     // "meta" information.
     //
-    // !!! This should likely corrupt the data for the CONTEXT_FUNC as well
+    // !!! This should likely corrupt the data for the CTX_FUNC as well
     //
-    CONTEXT_VALUE(context)->payload.any_context.more.spec
-        =  cast(REBCON*, 0xBAADF00D);
+    CTX_VALUE(context)->payload.any_context.more.spec
+        =  cast(REBCTX*, 0xBAADF00D);
 
     // Allowed to be set to NULL, but must be done so explicitly
     //
-    CONTEXT_STACKVARS(context) = cast(REBVAL*, 0xBAADF00D);
+    CTX_STACKVARS(context) = cast(REBVAL*, 0xBAADF00D);
 #endif
 
-    SET_END(CONTEXT_VARS_HEAD(context));
-    SET_ARRAY_LEN(CONTEXT_VARLIST(context), 1);
+    SET_END(CTX_VARS_HEAD(context));
+    SET_ARRAY_LEN(CTX_VARLIST(context), 1);
 
     // keylist[0] is the "rootkey" which we currently initialize to SYM_0
     //
@@ -173,23 +173,23 @@ REBCON *Alloc_Context(REBCNT len)
 // 
 // Expand a context. Copy words if flagged.
 //
-void Expand_Context(REBCON *context, REBCNT delta, REBCNT copy)
+void Expand_Context(REBCTX *context, REBCNT delta, REBCNT copy)
 {
-    REBARR *keylist = CONTEXT_KEYLIST(context);
+    REBARR *keylist = CTX_KEYLIST(context);
 
-    Extend_Series(ARRAY_SERIES(CONTEXT_VARLIST(context)), delta);
-    TERM_ARRAY(CONTEXT_VARLIST(context));
+    Extend_Series(ARR_SERIES(CTX_VARLIST(context)), delta);
+    TERM_ARRAY(CTX_VARLIST(context));
 
     // Expand or copy WORDS block:
     if (copy) {
-        REBOOL managed = ARRAY_GET_FLAG(keylist, OPT_SER_MANAGED);
+        REBOOL managed = GET_ARR_FLAG(keylist, SERIES_FLAG_MANAGED);
         INIT_CONTEXT_KEYLIST(
             context, Copy_Array_Extra_Shallow(keylist, delta)
         );
-        if (managed) MANAGE_ARRAY(CONTEXT_KEYLIST(context));
+        if (managed) MANAGE_ARRAY(CTX_KEYLIST(context));
     }
     else {
-        Extend_Series(ARRAY_SERIES(keylist), delta);
+        Extend_Series(ARR_SERIES(keylist), delta);
         TERM_ARRAY(keylist);
     }
 }
@@ -205,27 +205,27 @@ void Expand_Context(REBCON *context, REBCNT delta, REBCNT copy)
 // If word is not NULL, use the word sym and bind the word value,
 // otherwise use sym.
 //
-REBVAL *Append_Context(REBCON *context, REBVAL *word, REBCNT sym)
+REBVAL *Append_Context(REBCTX *context, REBVAL *word, REBSYM sym)
 {
-    REBARR *keylist = CONTEXT_KEYLIST(context);
+    REBARR *keylist = CTX_KEYLIST(context);
     REBVAL *value;
 
     // Add the key to key list
     //
-    EXPAND_SERIES_TAIL(ARRAY_SERIES(keylist), 1);
-    value = ARRAY_LAST(keylist);
+    EXPAND_SERIES_TAIL(ARR_SERIES(keylist), 1);
+    value = ARR_LAST(keylist);
     Val_Init_Typeset(value, ALL_64, word ? VAL_WORD_SYM(word) : sym);
     TERM_ARRAY(keylist);
 
     // Add an unset value to var list
     //
-    EXPAND_SERIES_TAIL(ARRAY_SERIES(CONTEXT_VARLIST(context)), 1);
-    value = ARRAY_LAST(CONTEXT_VARLIST(context));
+    EXPAND_SERIES_TAIL(ARR_SERIES(CTX_VARLIST(context)), 1);
+    value = ARR_LAST(CTX_VARLIST(context));
     SET_UNSET(value);
-    TERM_ARRAY(CONTEXT_VARLIST(context));
+    TERM_ARRAY(CTX_VARLIST(context));
 
     if (word) {
-        REBCNT len = CONTEXT_LEN(context);
+        REBCNT len = CTX_LEN(context);
 
         //
         // We want to not just add a key/value pairing to the context, but we
@@ -255,28 +255,28 @@ REBVAL *Append_Context(REBCON *context, REBVAL *word, REBCNT sym)
 // Makes a copy of a context.  If no extra storage space is requested, then
 // the same keylist will be used.
 //
-REBCON *Copy_Context_Shallow_Extra(REBCON *src, REBCNT extra) {
-    REBCON *dest;
+REBCTX *Copy_Context_Shallow_Extra(REBCTX *src, REBCNT extra) {
+    REBCTX *dest;
 
-    assert(ARRAY_GET_FLAG(CONTEXT_VARLIST(src), OPT_SER_CONTEXT));
-    assert(ARRAY_GET_FLAG(CONTEXT_KEYLIST(src), OPT_SER_MANAGED));
+    assert(GET_ARR_FLAG(CTX_VARLIST(src), SERIES_FLAG_CONTEXT));
+    assert(GET_ARR_FLAG(CTX_KEYLIST(src), SERIES_FLAG_MANAGED));
 
     if (extra == 0) {
-        dest = AS_CONTEXT(Copy_Array_Shallow(CONTEXT_VARLIST(src)));
-        INIT_CONTEXT_KEYLIST(dest, CONTEXT_KEYLIST(src));
+        dest = AS_CONTEXT(Copy_Array_Shallow(CTX_VARLIST(src)));
+        INIT_CONTEXT_KEYLIST(dest, CTX_KEYLIST(src));
     }
     else {
-        dest = AS_CONTEXT(Copy_Array_Extra_Shallow(CONTEXT_VARLIST(src), extra));
+        dest = AS_CONTEXT(Copy_Array_Extra_Shallow(CTX_VARLIST(src), extra));
         INIT_CONTEXT_KEYLIST(
             dest,
-            Copy_Array_Extra_Shallow(CONTEXT_KEYLIST(src), extra)
+            Copy_Array_Extra_Shallow(CTX_KEYLIST(src), extra)
         );
-        MANAGE_ARRAY(CONTEXT_KEYLIST(dest));
+        MANAGE_ARRAY(CTX_KEYLIST(dest));
     }
 
-    ARRAY_SET_FLAG(CONTEXT_VARLIST(dest), OPT_SER_CONTEXT);
+    SET_ARR_FLAG(CTX_VARLIST(dest), SERIES_FLAG_CONTEXT);
 
-    INIT_VAL_CONTEXT(CONTEXT_VALUE(dest), dest);
+    INIT_VAL_CONTEXT(CTX_VALUE(dest), dest);
 
     return dest;
 }
@@ -287,7 +287,7 @@ REBCON *Copy_Context_Shallow_Extra(REBCON *src, REBCNT extra) {
 //
 // !!! Make this a macro when there's a place to put it.
 //
-REBCON *Copy_Context_Shallow(REBCON *src) {
+REBCTX *Copy_Context_Shallow(REBCTX *src) {
     return Copy_Context_Shallow_Extra(src, 0);
 }
 
@@ -308,12 +308,12 @@ void Collect_Keys_Start(REBCNT modes)
 {
     CHECK_BIND_TABLE;
 
-    assert(ARRAY_LEN(BUF_COLLECT) == 0); // should be empty
+    assert(ARR_LEN(BUF_COLLECT) == 0); // should be empty
 
     // Add a key to slot zero.  When the keys are copied out to be the
-    // keylist for a context it will be the CONTEXT_ROOTKEY in the [0] slot.
+    // keylist for a context it will be the CTX_ROOTKEY in the [0] slot.
     //
-    Val_Init_Typeset(ARRAY_HEAD(BUF_COLLECT), ALL_64, SYM_0);
+    Val_Init_Typeset(ARR_HEAD(BUF_COLLECT), ALL_64, SYM_0);
 
     SET_ARRAY_LEN(BUF_COLLECT, 1);
 }
@@ -329,13 +329,13 @@ void Collect_Keys_Start(REBCNT modes)
 // !!! "Grab" is used because "Copy_Or_Reuse" is long, and is picked to draw
 // attention to look at the meaning.  Better short communicative name?
 //
-REBARR *Grab_Collected_Keylist_Managed(REBCON *prior)
+REBARR *Grab_Collected_Keylist_Managed(REBCTX *prior)
 {
     REBARR *keylist;
 
     // We didn't terminate as we were collecting, so terminate now.
     //
-    assert(ARRAY_LEN(BUF_COLLECT) >= 1); // always at least [0] for rootkey
+    assert(ARR_LEN(BUF_COLLECT) >= 1); // always at least [0] for rootkey
     TERM_ARRAY(BUF_COLLECT);
 
 #if !defined(NDEBUG)
@@ -345,15 +345,15 @@ REBARR *Grab_Collected_Keylist_Managed(REBCON *prior)
     // be handed back.  The array handed back will always be managed, so if
     // we create it then it will be, and if we reuse the prior it will be.
     //
-    if (prior) ASSERT_ARRAY_MANAGED(CONTEXT_KEYLIST(prior));
+    if (prior) ASSERT_ARRAY_MANAGED(CTX_KEYLIST(prior));
 #endif
 
     // If no new words, prior context.  Note length must include the slot
     // for the rootkey...and note also this means the rootkey cell *may*
     // be shared between all keylists when you pass in a prior.
     //
-    if (prior && ARRAY_LEN(BUF_COLLECT) == CONTEXT_LEN(prior) + 1) {
-        keylist = CONTEXT_KEYLIST(prior);
+    if (prior && ARR_LEN(BUF_COLLECT) == CTX_LEN(prior) + 1) {
+        keylist = CTX_KEYLIST(prior);
     }
     else {
         keylist = Copy_Array_Shallow(BUF_COLLECT);
@@ -376,12 +376,12 @@ void Collect_Keys_End(void)
 
     // We didn't terminate as we were collecting, so terminate now.
     //
-    assert(ARRAY_LEN(BUF_COLLECT) >= 1); // always at least [0] for rootkey
+    assert(ARR_LEN(BUF_COLLECT) >= 1); // always at least [0] for rootkey
     TERM_ARRAY(BUF_COLLECT);
 
     // Reset binding table (note BUF_COLLECT may have expanded)
     //
-    for (key = ARRAY_HEAD(BUF_COLLECT); NOT_END(key); key++) {
+    for (key = ARR_HEAD(BUF_COLLECT); NOT_END(key); key++) {
         assert(IS_TYPESET(key));
         binds[VAL_TYPESET_CANON(key)] = 0;
     }
@@ -399,11 +399,11 @@ void Collect_Keys_End(void)
 // there is a check for duplciates, otherwise the keys are assumed to
 // be unique and copied in using `memcpy` as an optimization.
 //
-void Collect_Context_Keys(REBCON *context, REBOOL check_dups)
+void Collect_Context_Keys(REBCTX *context, REBOOL check_dups)
 {
-    REBVAL *key = CONTEXT_KEYS_HEAD(context);
+    REBVAL *key = CTX_KEYS_HEAD(context);
     REBINT *binds = WORDS_HEAD(Bind_Table);
-    REBINT bind_index = ARRAY_LEN(BUF_COLLECT);
+    REBINT bind_index = ARR_LEN(BUF_COLLECT);
     REBVAL *collect; // can't set until after potential expansion...
 
     // The BUF_COLLECT buffer should at least have the SYM_0 in its first slot
@@ -418,15 +418,15 @@ void Collect_Context_Keys(REBCON *context, REBOOL check_dups)
     // if duplicates are found, but the actual buffer length will be set
     // correctly by the end.)
     //
-    EXPAND_SERIES_TAIL(ARRAY_SERIES(BUF_COLLECT), CONTEXT_LEN(context));
+    EXPAND_SERIES_TAIL(ARR_SERIES(BUF_COLLECT), CTX_LEN(context));
 
-    // EXPAND_SERIES_TAIL will increase the ARRAY_LEN, even though we intend
+    // EXPAND_SERIES_TAIL will increase the ARR_LEN, even though we intend
     // to overwrite it with a possibly shorter length.  Put the length back
     // and now that the expansion is done, get the pointer to where we want
     // to start collecting new typesets.
     //
-    SET_SERIES_LEN(ARRAY_SERIES(BUF_COLLECT), bind_index);
-    collect = ARRAY_TAIL(BUF_COLLECT);
+    SET_SERIES_LEN(ARR_SERIES(BUF_COLLECT), bind_index);
+    collect = ARR_TAIL(BUF_COLLECT);
 
     if (check_dups) {
         // We're adding onto the end of the collect buffer and need to
@@ -457,7 +457,7 @@ void Collect_Context_Keys(REBCON *context, REBOOL check_dups)
         //
         SET_ARRAY_LEN(
             BUF_COLLECT,
-            ARRAY_LEN(BUF_COLLECT) + (collect - ARRAY_TAIL(BUF_COLLECT))
+            ARR_LEN(BUF_COLLECT) + (collect - ARR_TAIL(BUF_COLLECT))
         );
     }
     else {
@@ -469,9 +469,9 @@ void Collect_Context_Keys(REBCON *context, REBOOL check_dups)
         // (prior to that, the tail should be on the END marker of
         // the existing content--if any)
         //
-        memcpy(collect, key, CONTEXT_LEN(context) * sizeof(REBVAL));
+        memcpy(collect, key, CTX_LEN(context) * sizeof(REBVAL));
         SET_ARRAY_LEN(
-            BUF_COLLECT, ARRAY_LEN(BUF_COLLECT) + CONTEXT_LEN(context)
+            BUF_COLLECT, ARR_LEN(BUF_COLLECT) + CTX_LEN(context)
         );
 
         for (; NOT_END(key); key++) {
@@ -500,9 +500,9 @@ static void Collect_Context_Inner_Loop(
             if (!binds[VAL_WORD_CANON(value)]) {  // only once per word
                 if (IS_SET_WORD(value) || modes & BIND_ALL) {
                     REBVAL *typeset;
-                    binds[VAL_WORD_CANON(value)] = ARRAY_LEN(BUF_COLLECT);
-                    EXPAND_SERIES_TAIL(ARRAY_SERIES(BUF_COLLECT), 1);
-                    typeset = ARRAY_LAST(BUF_COLLECT);
+                    binds[VAL_WORD_CANON(value)] = ARR_LEN(BUF_COLLECT);
+                    EXPAND_SERIES_TAIL(ARR_SERIES(BUF_COLLECT), 1);
+                    typeset = ARR_LAST(BUF_COLLECT);
                     Val_Init_Typeset(
                         typeset,
                         // Allow all datatypes but UNSET (initially):
@@ -514,7 +514,7 @@ static void Collect_Context_Inner_Loop(
                 // If word duplicated:
                 if (modes & BIND_NO_DUP) {
                     // Reset binding table (note BUF_COLLECT may have expanded):
-                    REBVAL *key = ARRAY_HEAD(BUF_COLLECT);
+                    REBVAL *key = ARR_HEAD(BUF_COLLECT);
                     for (; NOT_END(key); key++)
                         binds[VAL_TYPESET_CANON(key)] = 0;
                     SET_ARRAY_LEN(BUF_COLLECT, 0);  // allow reuse
@@ -558,7 +558,7 @@ static void Collect_Context_Inner_Loop(
 REBARR *Collect_Keylist_Managed(
     REBCNT *self_index_out, // which context index SELF is in (if BIND_SELF)
     REBVAL value[],
-    REBCON *prior,
+    REBCTX *prior,
     REBCNT modes
 ) {
     REBINT *binds = WORDS_HEAD(Bind_Table);
@@ -573,7 +573,7 @@ REBARR *Collect_Keylist_Managed(
         ) {
             // No prior or no SELF in prior, so we'll add it as the first key
             //
-            REBVAL *self_key = ARRAY_AT(BUF_COLLECT, 1);
+            REBVAL *self_key = ARR_AT(BUF_COLLECT, 1);
             Val_Init_Typeset(self_key, ALL_64, SYM_SELF);
 
             // !!! See notes on the flags about why SELF is set hidden but
@@ -648,21 +648,21 @@ REBARR *Collect_Words(REBVAL value[], REBVAL prior_value[], REBCNT modes)
     REBINT *binds = WORDS_HEAD(Bind_Table); // GC safe to do here
     CHECK_BIND_TABLE;
 
-    assert(ARRAY_LEN(BUF_COLLECT) == 0); // should be empty
+    assert(ARR_LEN(BUF_COLLECT) == 0); // should be empty
 
     if (prior_value)
         Collect_Words_Inner_Loop(binds, &prior_value[0], BIND_ALL);
 
-    start = ARRAY_LEN(BUF_COLLECT);
+    start = ARR_LEN(BUF_COLLECT);
     Collect_Words_Inner_Loop(binds, &value[0], modes);
     TERM_ARRAY(BUF_COLLECT);
 
     // Reset word markers:
-    for (value = ARRAY_HEAD(BUF_COLLECT); NOT_END(value); value++)
+    for (value = ARR_HEAD(BUF_COLLECT); NOT_END(value); value++)
         binds[VAL_WORD_CANON(value)] = 0;
 
     array = Copy_Array_At_Max_Shallow(
-        BUF_COLLECT, start, ARRAY_LEN(BUF_COLLECT) - start
+        BUF_COLLECT, start, ARR_LEN(BUF_COLLECT) - start
     );
     SET_ARRAY_LEN(BUF_COLLECT, 0);  // allow reuse
 
@@ -677,9 +677,9 @@ REBARR *Collect_Words(REBVAL value[], REBVAL prior_value[], REBCNT modes)
 // Clone old context to new context knowing
 // which types of values need to be copied, deep copied, and rebound.
 //
-void Rebind_Context_Deep(REBCON *src, REBCON *dst, REBINT *opt_binds)
+void Rebind_Context_Deep(REBCTX *src, REBCTX *dst, REBINT *opt_binds)
 {
-    Rebind_Values_Deep(src, dst, CONTEXT_VARS_HEAD(dst), opt_binds);
+    Rebind_Values_Deep(src, dst, CTX_VARS_HEAD(dst), opt_binds);
 }
 
 
@@ -705,15 +705,15 @@ void Rebind_Context_Deep(REBCON *src, REBCON *dst, REBINT *opt_binds)
 // nuance that is expected of the generators, which will have an equivalent
 // to <transparent>.
 //
-REBCON *Make_Selfish_Context_Detect(
+REBCTX *Make_Selfish_Context_Detect(
     enum Reb_Kind kind,
-    REBCON *spec,
+    REBCTX *spec,
     REBVAL *stackvars,
     REBVAL value[],
-    REBCON *opt_parent
+    REBCTX *opt_parent
 ) {
     REBARR *keylist;
-    REBCON *context;
+    REBCTX *context;
     REBCNT self_index;
 
 #if !defined(NDEBUG)
@@ -725,14 +725,14 @@ REBCON *Make_Selfish_Context_Detect(
             self_index = Find_Word_In_Context(opt_parent, SYM_SELF, TRUE);
 
             context = AS_CONTEXT(Copy_Array_Core_Managed(
-                CONTEXT_VARLIST(opt_parent),
+                CTX_VARLIST(opt_parent),
                 0, // at
-                CONTEXT_LEN(opt_parent) + 1, // tail (+1 for rootvar)
+                CTX_LEN(opt_parent) + 1, // tail (+1 for rootvar)
                 (self_index == 0) ? 1 : 0, // one extra slot if self needed
                 TRUE, // deep
                 TS_CLONE // types
             ));
-            ARRAY_SET_FLAG(CONTEXT_VARLIST(context), OPT_SER_CONTEXT);
+            SET_ARR_FLAG(CTX_VARLIST(context), SERIES_FLAG_CONTEXT);
 
             if (self_index == 0) {
                 //
@@ -742,50 +742,50 @@ REBCON *Make_Selfish_Context_Detect(
                 INIT_CONTEXT_KEYLIST(
                     context,
                     Copy_Array_Core_Managed(
-                        CONTEXT_KEYLIST(opt_parent),
+                        CTX_KEYLIST(opt_parent),
                         0, // at
-                        CONTEXT_LEN(opt_parent) + 1, // tail (+1 for rootkey)
+                        CTX_LEN(opt_parent) + 1, // tail (+1 for rootkey)
                         1, // one extra for self
                         FALSE, // !deep (keylists shouldn't need it...)
                         TS_CLONE // types (overkill for a keylist?)
                     )
                 );
 
-                self_index = CONTEXT_LEN(opt_parent) + 1;
+                self_index = CTX_LEN(opt_parent) + 1;
                 Val_Init_Typeset(
-                    CONTEXT_KEY(context, self_index), ALL_64, SYM_SELF
+                    CTX_KEY(context, self_index), ALL_64, SYM_SELF
                 );
 
                 // !!! See notes on the flags about why SELF is set hidden but
                 // not unbindable with TYPESET_FLAG_UNBINDABLE.
                 //
                 SET_VAL_FLAG(
-                    CONTEXT_KEY(context, self_index), TYPESET_FLAG_HIDDEN
+                    CTX_KEY(context, self_index), TYPESET_FLAG_HIDDEN
                 );
             }
             else {
                 // The parent had a SELF already, so we can reuse its keylist
                 //
-                INIT_CONTEXT_KEYLIST(context, CONTEXT_KEYLIST(opt_parent));
+                INIT_CONTEXT_KEYLIST(context, CTX_KEYLIST(opt_parent));
             }
 
-            INIT_VAL_CONTEXT(CONTEXT_VALUE(context), context);
+            INIT_VAL_CONTEXT(CTX_VALUE(context), context);
         }
         else {
             context = Alloc_Context(1); // just a self
             self_index = 1;
             Val_Init_Typeset(
-                Alloc_Tail_Array(CONTEXT_KEYLIST(context)), ALL_64, SYM_SELF
+                Alloc_Tail_Array(CTX_KEYLIST(context)), ALL_64, SYM_SELF
             );
 
             // !!! See notes on the flags about why SELF is set hidden but
             // not unbindable with TYPESET_FLAG_UNBINDABLE.
             //
             SET_VAL_FLAG(
-                CONTEXT_KEY(context, self_index), TYPESET_FLAG_HIDDEN
+                CTX_KEY(context, self_index), TYPESET_FLAG_HIDDEN
             );
 
-            Alloc_Tail_Array(CONTEXT_VARLIST(context));
+            Alloc_Tail_Array(CTX_VARLIST(context));
         }
     }
     else {
@@ -795,27 +795,27 @@ REBCON *Make_Selfish_Context_Detect(
         keylist = Collect_Keylist_Managed(
             &self_index, &value[0], opt_parent, BIND_ONLY | BIND_SELF
         );
-        len = ARRAY_LEN(keylist);
+        len = ARR_LEN(keylist);
 
         // Make a context of same size as keylist (END already accounted for)
         //
         context = AS_CONTEXT(Make_Array(len));
-        ARRAY_SET_FLAG(CONTEXT_VARLIST(context), OPT_SER_CONTEXT);
+        SET_ARR_FLAG(CTX_VARLIST(context), SERIES_FLAG_CONTEXT);
         INIT_CONTEXT_KEYLIST(context, keylist);
 
         // context[0] is an instance value of the OBJECT!/PORT!/ERROR!/MODULE!
         //
-        CONTEXT_VALUE(context)->payload.any_context.context = context;
-        VAL_CONTEXT_SPEC(CONTEXT_VALUE(context)) = NULL;
-        VAL_CONTEXT_STACKVARS(CONTEXT_VALUE(context)) = NULL;
+        CTX_VALUE(context)->payload.any_context.context = context;
+        VAL_CONTEXT_SPEC(CTX_VALUE(context)) = NULL;
+        VAL_CONTEXT_STACKVARS(CTX_VALUE(context)) = NULL;
 
         // !!! This code was inlined from Create_Frame() because it was only
         // used once here, and it filled the context vars with NONE!.  For
         // Ren-C we probably want to go with UNSET!, and also the filling
         // of parent vars will overwrite the work here.  Review.
         //
-        SET_ARRAY_LEN(CONTEXT_VARLIST(context), len);
-        var = CONTEXT_VARS_HEAD(context);
+        SET_ARRAY_LEN(CTX_VARLIST(context), len);
+        var = CTX_VARS_HEAD(context);
         for (; len > 1; len--, var++) // 1 is rootvar (context), already done
             SET_NONE(var);
         SET_END(var);
@@ -824,40 +824,40 @@ REBCON *Make_Selfish_Context_Detect(
             if (Reb_Opts->watch_obj_copy)
                 Debug_Fmt(
                     cs_cast(BOOT_STR(RS_WATCH, 2)),
-                    CONTEXT_LEN(opt_parent),
-                    CONTEXT_KEYLIST(context)
+                    CTX_LEN(opt_parent),
+                    CTX_KEYLIST(context)
                 );
 
             // Bitwise copy parent values (will have bits fixed by Clonify)
             //
             memcpy(
-                CONTEXT_VARS_HEAD(context),
-                CONTEXT_VARS_HEAD(opt_parent),
-                (CONTEXT_LEN(opt_parent)) * sizeof(REBVAL)
+                CTX_VARS_HEAD(context),
+                CTX_VARS_HEAD(opt_parent),
+                (CTX_LEN(opt_parent)) * sizeof(REBVAL)
             );
 
             // For values we copied that were blocks and strings, replace
             // their series components with deep copies of themselves:
             //
             Clonify_Values_Len_Managed(
-                CONTEXT_VAR(context, 1), CONTEXT_LEN(context), TRUE, TS_CLONE
+                CTX_VAR(context, 1), CTX_LEN(context), TRUE, TS_CLONE
             );
         }
     }
 
-    VAL_RESET_HEADER(CONTEXT_VALUE(context), kind);
-    assert(CONTEXT_TYPE(context) == kind);
+    VAL_RESET_HEADER(CTX_VALUE(context), kind);
+    assert(CTX_TYPE(context) == kind);
 
     INIT_CONTEXT_SPEC(context, spec);
-    CONTEXT_STACKVARS(context) = stackvars;
+    CTX_STACKVARS(context) = stackvars;
 
     // We should have a SELF key in all cases here.  Set it to be a copy of
     // the object we just created.  (It is indeed a copy of the [0] element,
     // but it doesn't need to be protected because the user overwriting it
     // won't destroy the integrity of the context.)
     //
-    assert(CONTEXT_KEY_CANON(context, self_index) == SYM_SELF);
-    *CONTEXT_VAR(context, self_index) = *CONTEXT_VALUE(context);
+    assert(CTX_KEY_CANON(context, self_index) == SYM_SELF);
+    *CTX_VAR(context, self_index) = *CTX_VALUE(context);
 
     // !!! In Ren-C, the idea that functions are rebound when a context is
     // inherited is being deprecated.  It simply isn't viable for objects
@@ -885,13 +885,13 @@ REBCON *Make_Selfish_Context_Detect(
 // Construct an object (partial evaluation of block).
 // Parent can be null. Values are rebound.
 //
-REBCON *Construct_Context(
+REBCTX *Construct_Context(
     enum Reb_Kind kind,
     REBVAL value[],
     REBOOL as_is,
-    REBCON *opt_parent
+    REBCTX *opt_parent
 ) {
-    REBCON *context = Make_Selfish_Context_Detect(
+    REBCTX *context = Make_Selfish_Context_Detect(
         kind, // type
         NULL, // spec
         NULL, // body
@@ -920,16 +920,16 @@ REBCON *Construct_Context(
 //     2 for value
 //     3 for words and values
 //
-REBARR *Context_To_Array(REBCON *context, REBINT mode)
+REBARR *Context_To_Array(REBCTX *context, REBINT mode)
 {
-    REBVAL *key = CONTEXT_KEYS_HEAD(context);
-    REBVAL *var = CONTEXT_VARS_HEAD(context);
+    REBVAL *key = CTX_KEYS_HEAD(context);
+    REBVAL *var = CTX_VARS_HEAD(context);
     REBARR *block;
     REBVAL *value;
     REBCNT n;
 
     assert(!(mode & 4));
-    block = Make_Array(CONTEXT_LEN(context) * (mode == 3 ? 2 : 1));
+    block = Make_Array(CTX_LEN(context) * (mode == 3 ? 2 : 1));
 
     n = 1;
     for (; !IS_END(key); n++, key++, var++) {
@@ -964,16 +964,16 @@ REBARR *Context_To_Array(REBCON *context, REBINT mode)
 // 
 // Deep copy and rebind the child.
 //
-REBCON *Merge_Contexts_Selfish(REBCON *parent1, REBCON *parent2)
+REBCTX *Merge_Contexts_Selfish(REBCTX *parent1, REBCTX *parent2)
 {
     REBARR *keylist;
-    REBCON *child;
+    REBCTX *child;
     REBVAL *key;
     REBVAL *value;
     REBCNT n;
     REBINT *binds = WORDS_HEAD(Bind_Table);
 
-    assert(CONTEXT_TYPE(parent1) == CONTEXT_TYPE(parent2));
+    assert(CTX_TYPE(parent1) == CTX_TYPE(parent2));
 
     // Merge parent1 and parent2 words.
     // Keep the binding table.
@@ -998,17 +998,17 @@ REBCON *Merge_Contexts_Selfish(REBCON *parent1, REBCON *parent2)
     //
     keylist = Copy_Array_Shallow(BUF_COLLECT);
     MANAGE_ARRAY(keylist);
-    child = AS_CONTEXT(Make_Array(ARRAY_LEN(keylist)));
-    ARRAY_SET_FLAG(CONTEXT_VARLIST(child), OPT_SER_CONTEXT);
+    child = AS_CONTEXT(Make_Array(ARR_LEN(keylist)));
+    SET_ARR_FLAG(CTX_VARLIST(child), SERIES_FLAG_CONTEXT);
 
-    value = Alloc_Tail_Array(CONTEXT_VARLIST(child));
+    value = Alloc_Tail_Array(CTX_VARLIST(child));
 
     // !!! Currently we assume the child will be of the same type as the
     // parent...so if the parent was an OBJECT! so will the child be, if
     // the parent was an ERROR! so will the child be.  This is a new idea,
     // so review consequences.
     //
-    VAL_RESET_HEADER(value, CONTEXT_TYPE(parent1));
+    VAL_RESET_HEADER(value, CTX_TYPE(parent1));
     INIT_CONTEXT_KEYLIST(child, keylist);
     INIT_VAL_CONTEXT(value, child);
     VAL_CONTEXT_SPEC(value) = NULL;
@@ -1016,31 +1016,31 @@ REBCON *Merge_Contexts_Selfish(REBCON *parent1, REBCON *parent2)
 
     // Copy parent1 values:
     memcpy(
-        CONTEXT_VARS_HEAD(child),
-        CONTEXT_VARS_HEAD(parent1),
-        CONTEXT_LEN(parent1) * sizeof(REBVAL)
+        CTX_VARS_HEAD(child),
+        CTX_VARS_HEAD(parent1),
+        CTX_LEN(parent1) * sizeof(REBVAL)
     );
 
-    // Update the child tail before making calls to CONTEXT_VAR(), because the
+    // Update the child tail before making calls to CTX_VAR(), because the
     // debug build does a length check.
     //
-    SET_ARRAY_LEN(CONTEXT_VARLIST(child), ARRAY_LEN(keylist));
+    SET_ARRAY_LEN(CTX_VARLIST(child), ARR_LEN(keylist));
 
     // Copy parent2 values:
-    key = CONTEXT_KEYS_HEAD(parent2);
-    value = CONTEXT_VARS_HEAD(parent2);
+    key = CTX_KEYS_HEAD(parent2);
+    value = CTX_VARS_HEAD(parent2);
     for (; NOT_END(key); key++, value++) {
         // no need to search when the binding table is available
         n = binds[VAL_TYPESET_CANON(key)];
-        *CONTEXT_VAR(child, n) = *value;
+        *CTX_VAR(child, n) = *value;
     }
 
     // Terminate the child context:
-    TERM_ARRAY(CONTEXT_VARLIST(child));
+    TERM_ARRAY(CTX_VARLIST(child));
 
     // Deep copy the child
     Clonify_Values_Len_Managed(
-        CONTEXT_VARS_HEAD(child), CONTEXT_LEN(child), TRUE, TS_CLONE
+        CTX_VARS_HEAD(child), CTX_LEN(child), TRUE, TS_CLONE
     );
 
     // Rebind the child
@@ -1054,8 +1054,8 @@ REBCON *Merge_Contexts_Selfish(REBCON *parent1, REBCON *parent2)
     {
         REBCNT self_index = Find_Word_In_Context(child, SYM_SELF, TRUE);
         assert(self_index != 0);
-        assert(CONTEXT_KEY_CANON(child, self_index) == SYM_SELF);
-        *CONTEXT_VAR(child, self_index) = *CONTEXT_VALUE(child);
+        assert(CTX_KEY_CANON(child, self_index) == SYM_SELF);
+        *CTX_VAR(child, self_index) = *CTX_VALUE(child);
     }
 
     return child;
@@ -1069,8 +1069,8 @@ REBCON *Merge_Contexts_Selfish(REBCON *parent1, REBCON *parent2)
 // (for new words).
 //
 void Resolve_Context(
-    REBCON *target,
-    REBCON *source,
+    REBCTX *target,
+    REBCTX *source,
     REBVAL *only_words,
     REBOOL all,
     REBOOL expand
@@ -1089,7 +1089,7 @@ void Resolve_Context(
     if (IS_INTEGER(only_words)) { // Must be: 0 < i <= tail
         i = VAL_INT32(only_words); // never <= 0
         if (i == 0) i = 1;
-        if (i > CONTEXT_LEN(target)) return;
+        if (i > CTX_LEN(target)) return;
     }
 
     // !!! This function does its own version of resetting the bind table
@@ -1106,9 +1106,9 @@ void Resolve_Context(
     // If limited resolve, tag the word ids that need to be copied:
     if (i != 0) {
         // Only the new words of the target:
-        for (key = CONTEXT_KEY(target, i); NOT_END(key); key++)
+        for (key = CTX_KEY(target, i); NOT_END(key); key++)
             binds[VAL_TYPESET_CANON(key)] = -1;
-        n = CONTEXT_LEN(target);
+        n = CTX_LEN(target);
     }
     else if (IS_BLOCK(only_words)) {
         // Limit exports to only these words:
@@ -1124,7 +1124,7 @@ void Resolve_Context(
     // Expand target as needed:
     if (expand && n > 0) {
         // Determine how many new words to add:
-        for (key = CONTEXT_KEYS_HEAD(target); NOT_END(key); key++)
+        for (key = CTX_KEYS_HEAD(target); NOT_END(key); key++)
             if (binds[VAL_TYPESET_CANON(key)]) n--;
 
         // Expand context by the amount required:
@@ -1134,7 +1134,7 @@ void Resolve_Context(
 
     // Maps a word to its value index in the source context.
     // Done by marking all source words (in bind table):
-    key = CONTEXT_KEYS_HEAD(source);
+    key = CTX_KEYS_HEAD(source);
     for (n = 1; NOT_END(key); n++, key++) {
         if (IS_UNSET(only_words) || binds[VAL_TYPESET_CANON(key)])
             binds[VAL_TYPESET_CANON(key)] = n;
@@ -1142,8 +1142,8 @@ void Resolve_Context(
 
     // Foreach word in target, copy the correct value from source:
     //
-    var = i != 0 ? CONTEXT_VAR(target, i) : CONTEXT_VARS_HEAD(target);
-    key = i != 0 ? CONTEXT_KEY(target, i) : CONTEXT_KEYS_HEAD(target);
+    var = i != 0 ? CTX_VAR(target, i) : CTX_VARS_HEAD(target);
+    key = i != 0 ? CTX_KEY(target, i) : CTX_KEYS_HEAD(target);
     for (; NOT_END(key); key++, var++) {
         if ((m = binds[VAL_TYPESET_CANON(key)])) {
             binds[VAL_TYPESET_CANON(key)] = 0; // mark it as set
@@ -1152,7 +1152,7 @@ void Resolve_Context(
                 && (all || IS_UNSET(var))
             ) {
                 if (m < 0) SET_UNSET(var); // no value in source context
-                else *var = *CONTEXT_VAR(source, m);
+                else *var = *CTX_VAR(source, m);
                 //Debug_Num("type:", VAL_TYPE(vals));
                 //Debug_Str(Get_Word_Name(words));
             }
@@ -1161,20 +1161,20 @@ void Resolve_Context(
 
     // Add any new words and values:
     if (expand) {
-        key = CONTEXT_KEYS_HEAD(source);
+        key = CTX_KEYS_HEAD(source);
         for (n = 1; NOT_END(key); n++, key++) {
             if (binds[VAL_TYPESET_CANON(key)]) {
                 // Note: no protect check is needed here
                 binds[VAL_TYPESET_CANON(key)] = 0;
                 var = Append_Context(target, 0, VAL_TYPESET_CANON(key));
-                *var = *CONTEXT_VAR(source, n);
+                *var = *CTX_VAR(source, n);
             }
         }
     }
     else {
         // Reset bind table (do not use Collect_End):
         if (i != 0) {
-            for (key = CONTEXT_KEY(target, i); NOT_END(key); key++)
+            for (key = CTX_KEY(target, i); NOT_END(key); key++)
                 binds[VAL_TYPESET_CANON(key)] = 0;
         }
         else if (IS_BLOCK(only_words)) {
@@ -1185,7 +1185,7 @@ void Resolve_Context(
             }
         }
         else {
-            for (key = CONTEXT_KEYS_HEAD(source); NOT_END(key); key++)
+            for (key = CTX_KEYS_HEAD(source); NOT_END(key); key++)
                 binds[VAL_TYPESET_CANON(key)] = 0;
         }
     }
@@ -1208,7 +1208,7 @@ void Resolve_Context(
 static void Bind_Values_Inner_Loop(
     REBINT *binds,
     REBVAL value[],
-    REBCON *context,
+    REBCTX *context,
     REBCNT mode
 ) {
     for (; NOT_END(value); value++) {
@@ -1221,7 +1221,7 @@ static void Bind_Values_Inner_Loop(
                 // initialize the header while also needing the type.
                 //
                 enum Reb_Kind kind = VAL_TYPE(value);
-                assert(n <= CONTEXT_LEN(context));
+                assert(n <= CTX_LEN(context));
                 VAL_RESET_HEADER(value, kind);
                 SET_VAL_FLAG(value, WORD_FLAG_BOUND_SPECIFIC);
                 INIT_WORD_SPECIFIC(value, context);
@@ -1245,11 +1245,9 @@ static void Bind_Values_Inner_Loop(
                 binds, VAL_ARRAY_AT(value), context, mode
             );
         }
-        else if (
-            (IS_FUNCTION(value) || IS_CLOSURE(value)) && (mode & BIND_FUNC)
-        ) {
+        else if (IS_FUNCTION(value) && (mode & BIND_FUNC)) {
             Bind_Values_Inner_Loop(
-                binds, ARRAY_HEAD(VAL_FUNC_BODY(value)), context, mode
+                binds, ARR_HEAD(VAL_FUNC_BODY(value)), context, mode
             );
         }
     }
@@ -1275,7 +1273,7 @@ static void Bind_Values_Inner_Loop(
 // bind prior instances of the word before the set-word. That is
 // to say that forward references are not allowed.
 //
-void Bind_Values_Core(REBVAL value[], REBCON *context, REBCNT mode)
+void Bind_Values_Core(REBVAL value[], REBCTX *context, REBCNT mode)
 {
     REBVAL *key;
     REBCNT index;
@@ -1289,8 +1287,8 @@ void Bind_Values_Core(REBVAL value[], REBCON *context, REBCNT mode)
 
     // Setup binding table
     index = 1;
-    key = CONTEXT_KEYS_HEAD(context);
-    for (; index <= CONTEXT_LEN(context); key++, index++) {
+    key = CTX_KEYS_HEAD(context);
+    for (; index <= CTX_LEN(context); key++, index++) {
         if (!GET_VAL_FLAG(key, TYPESET_FLAG_UNBINDABLE))
             binds[VAL_TYPESET_CANON(key)] = index;
     }
@@ -1298,7 +1296,7 @@ void Bind_Values_Core(REBVAL value[], REBCON *context, REBCNT mode)
     Bind_Values_Inner_Loop(binds, &value[0], context, mode);
 
     // Reset binding table:
-    key = CONTEXT_KEYS_HEAD(context);
+    key = CTX_KEYS_HEAD(context);
     for (; NOT_END(key); key++)
         binds[VAL_TYPESET_CANON(key)] = 0;
 
@@ -1313,7 +1311,7 @@ void Bind_Values_Core(REBVAL value[], REBCON *context, REBCNT mode)
 // bound to a particular target (if target is NULL, then all
 // words will be unbound regardless of their VAL_WORD_CONTEXT).
 //
-void Unbind_Values_Core(REBVAL value[], REBCON *context, REBOOL deep)
+void Unbind_Values_Core(REBVAL value[], REBCTX *context, REBOOL deep)
 {
     for (; NOT_END(value); value++) {
         if (
@@ -1339,7 +1337,7 @@ void Unbind_Values_Core(REBVAL value[], REBCON *context, REBOOL deep)
 // 
 // Binds a word to a context. If word is not part of the context.
 //
-REBCNT Try_Bind_Word(REBCON *context, REBVAL *word)
+REBCNT Try_Bind_Word(REBCTX *context, REBVAL *word)
 {
     REBCNT n;
 
@@ -1364,7 +1362,7 @@ static void Bind_Relative_Inner_Loop(
     REBFUN *func,
     REBARR *block
 ) {
-    REBVAL *value = ARRAY_HEAD(block);
+    REBVAL *value = ARR_HEAD(block);
 
     for (; NOT_END(value); value++) {
         if (ANY_WORD(value)) {
@@ -1414,7 +1412,7 @@ void Bind_Relative_Deep(REBFUN *func, REBARR *block)
     // frameless if it's to be introspected.
     //
     /*assert(
-        IS_FUNCTION(ARRAY_HEAD(paramlist)) || IS_CLOSURE(ARRAY_HEAD(paramlist))
+        IS_FUNCTION(ARR_HEAD(paramlist)) || IS_CLOSURE(ARR_HEAD(paramlist))
     );*/
 
     CHECK_BIND_TABLE;
@@ -1467,8 +1465,8 @@ void Bind_Stack_Word(REBFUN *func, REBVAL *word)
 // Rebind is always deep.
 //
 void Rebind_Values_Deep(
-    REBCON *src,
-    REBCON *dst,
+    REBCTX *src,
+    REBCTX *dst,
     REBVAL value[],
     REBINT *opt_binds
 ) {
@@ -1488,7 +1486,7 @@ void Rebind_Values_Deep(
                 INIT_WORD_INDEX(value, opt_binds[canon]);
             }
         }
-        else if (IS_FUNCTION(value) || IS_CLOSURE(value)) {
+        else if (IS_FUNCTION(value)) {
             //
             // !!! Extremely questionable feature--walking into function
             // bodies and changing them.  This R3-Alpha concept was largely
@@ -1498,7 +1496,7 @@ void Rebind_Values_Deep(
             // Ren-C has a different idea in the works.
             //
             Rebind_Values_Deep(
-                src, dst, ARRAY_HEAD(VAL_FUNC_BODY(value)), opt_binds
+                src, dst, ARR_HEAD(VAL_FUNC_BODY(value)), opt_binds
             );
         }
     }
@@ -1535,7 +1533,7 @@ void Rebind_Values_Relative_Deep(
 
 
 //
-//  Rebind_Values_Closure_Deep: C
+//  Rebind_Values_Specifically_Deep: C
 //
 // Rebind all words that reference src target to dst target.
 // Rebind is always deep.
@@ -1543,10 +1541,10 @@ void Rebind_Values_Relative_Deep(
 // !!! This function is temporary and should not be necessary after the FRAME!
 // is implemented.
 //
-void Rebind_Values_Closure_Deep(REBFUN *src, REBCON *dst, REBVAL value[]) {
+void Rebind_Values_Specifically_Deep(REBFUN *src, REBCTX *dst, REBVAL value[]) {
     for (; NOT_END(value); value++) {
         if (ANY_ARRAY(value)) {
-            Rebind_Values_Closure_Deep(src, dst, VAL_ARRAY_AT(value));
+            Rebind_Values_Specifically_Deep(src, dst, VAL_ARRAY_AT(value));
         }
         else if (
             ANY_WORD(value)
@@ -1574,10 +1572,10 @@ void Rebind_Values_Closure_Deep(REBFUN *src, REBCON *dst, REBVAL value[]) {
 // !!! This is semi-redundant with similar functions for Find_Word_In_Array
 // and key finding for objects, review...
 //
-REBCNT Find_Param_Index(REBARR *paramlist, REBCNT sym)
+REBCNT Find_Param_Index(REBARR *paramlist, REBSYM sym)
 {
-    REBVAL *params = ARRAY_AT(paramlist, 1);
-    REBCNT len = ARRAY_LEN(paramlist);
+    REBVAL *params = ARR_AT(paramlist, 1);
+    REBCNT len = ARR_LEN(paramlist);
 
     REBCNT canon = SYMBOL_TO_CANON(sym); // don't recalculate each time
 
@@ -1602,10 +1600,10 @@ REBCNT Find_Param_Index(REBARR *paramlist, REBCNT sym)
 // Return the context index for a word. Locate it by matching
 // the canon word identifiers. Return 0 if not found.
 //
-REBCNT Find_Word_In_Context(REBCON *context, REBCNT sym, REBOOL always)
+REBCNT Find_Word_In_Context(REBCTX *context, REBSYM sym, REBOOL always)
 {
-    REBVAL *key = CONTEXT_KEYS_HEAD(context);
-    REBCNT len = CONTEXT_LEN(context);
+    REBVAL *key = CTX_KEYS_HEAD(context);
+    REBCNT len = CTX_LEN(context);
 
     REBCNT canon = SYMBOL_TO_CANON(sym); // always compare to CANON sym
 
@@ -1631,14 +1629,14 @@ REBCNT Find_Word_In_Context(REBCON *context, REBCNT sym, REBOOL always)
 // return the value for the word. Locate it by matching
 // the canon word identifiers. Return NULL if not found.
 //
-REBVAL *Find_Word_Value(REBCON *context, REBCNT sym)
+REBVAL *Find_Word_Value(REBCTX *context, REBSYM sym)
 {
     REBINT n;
 
     if (!context) return 0;
     n = Find_Word_In_Context(context, sym, FALSE);
     if (n == 0) return 0;
-    return CONTEXT_VAR(context, n);
+    return CTX_VAR(context, n);
 }
 
 
@@ -1647,12 +1645,12 @@ REBVAL *Find_Word_Value(REBCON *context, REBCNT sym)
 // 
 // Find word (of any type) in an array of values with linear search.
 //
-REBCNT Find_Word_In_Array(REBARR *array, REBCNT index, REBCNT sym)
+REBCNT Find_Word_In_Array(REBARR *array, REBCNT index, REBSYM sym)
 {
     REBVAL *value;
 
-    for (; index < ARRAY_LEN(array); index++) {
-        value = ARRAY_AT(array, index);
+    for (; index < ARR_LEN(array); index++) {
+        value = ARR_AT(array, index);
         if (ANY_WORD(value) && sym == VAL_WORD_CANON(value))
             return index;
     }
@@ -1717,10 +1715,10 @@ struct Reb_Call *Call_For_Relative_Word(const REBVAL *any_word, REBOOL trap) {
             )
         );
 
-        // Shouldn't be doing relative word lookups for closures...they
-        // copied their bodies.
+        // Shouldn't be doing relative word lookups in durables ATM...they
+        // copied their bodies in the current implementation.
         //
-        assert(!IS_CLOSURE(FUNC_VALUE(DSF_FUNC(call))));
+        assert(!IS_FUNC_DURABLE(FUNC_VALUE(DSF_FUNC(call))));
 
         return call;
     }
@@ -1761,19 +1759,19 @@ REBVAL *Get_Var_Core(const REBVAL *any_word, REBOOL trap, REBOOL writable)
         //
         // (Including e.g. looking up 'append' in the user context.)
 
-        REBCON *context = VAL_WORD_CONTEXT(any_word);
+        REBCTX *context = VAL_WORD_CONTEXT(any_word);
         REBCNT index = VAL_WORD_INDEX(any_word);
         REBVAL *value;
 
         assert(
             SAME_SYM(
-                VAL_WORD_SYM(any_word), CONTEXT_KEY_SYM(context, index)
+                VAL_WORD_SYM(any_word), CTX_KEY_SYM(context, index)
             )
         );
 
         if (
-            ARRAY_GET_FLAG(CONTEXT_VARLIST(context), OPT_SER_STACK)
-            && !ARRAY_GET_FLAG(CONTEXT_VARLIST(context), OPT_SER_ACCESSIBLE)
+            GET_ARR_FLAG(CTX_VARLIST(context), SERIES_FLAG_STACK)
+            && !GET_ARR_FLAG(CTX_VARLIST(context), SERIES_FLAG_ACCESSIBLE)
         ) {
             // In R3-Alpha, the closure construct created a persistent object
             // which would keep all of its args, refinements, and locals
@@ -1792,14 +1790,14 @@ REBVAL *Get_Var_Core(const REBVAL *any_word, REBOOL trap, REBOOL writable)
 
         if (
             writable &&
-            GET_VAL_FLAG(CONTEXT_KEY(context, index), TYPESET_FLAG_LOCKED)
+            GET_VAL_FLAG(CTX_KEY(context, index), TYPESET_FLAG_LOCKED)
         ) {
             if (trap) return NULL;
 
             fail (Error(RE_LOCKED_WORD, any_word));
         }
 
-        value = CONTEXT_VAR(context, index);
+        value = CTX_VAR(context, index);
         assert(!THROWN(value));
         return value;
     }
@@ -1861,8 +1859,8 @@ REBVAL *Get_Var_Core(const REBVAL *any_word, REBOOL trap, REBOOL writable)
 //
 REBVAL *Obj_Word(const REBVAL *value, REBCNT index)
 {
-    REBARR *keylist = CONTEXT_KEYLIST(VAL_CONTEXT(value));
-    return ARRAY_AT(keylist, index);
+    REBARR *keylist = CTX_KEYLIST(VAL_CONTEXT(value));
+    return ARR_AT(keylist, index);
 }
 
 
@@ -1874,17 +1872,17 @@ REBVAL *Obj_Word(const REBVAL *value, REBCNT index)
 //
 REBVAL *Obj_Value(REBVAL *value, REBCNT index)
 {
-    REBCON *context = VAL_CONTEXT(value);
+    REBCTX *context = VAL_CONTEXT(value);
 
-    if (index > CONTEXT_LEN(context)) return 0;
-    return CONTEXT_VAR(context, index);
+    if (index > CTX_LEN(context)) return 0;
+    return CTX_VAR(context, index);
 }
 
 
 //
 //  Init_Obj_Value: C
 //
-void Init_Obj_Value(REBVAL *value, REBCON *context)
+void Init_Obj_Value(REBVAL *value, REBCTX *context)
 {
     assert(context);
     CLEARS(value);
@@ -1905,34 +1903,34 @@ void Init_Collector(void)
     // least 2 long to hold the rootkey (SYM_0) and a possible SYM_SELF
     // hidden actual key.
     //
-    Set_Root_Series(TASK_BUF_COLLECT, ARRAY_SERIES(Make_Array(2 + 98)));
+    Set_Root_Series(TASK_BUF_COLLECT, ARR_SERIES(Make_Array(2 + 98)));
 }
 
 
 #ifndef NDEBUG
 
 //
-//  CONTEXT_KEY_Debug: C
+//  CTX_KEY_Debug: C
 //
-REBVAL *CONTEXT_KEY_Debug(REBCON *c, REBCNT n) {
-    assert(n != 0 && n <= CONTEXT_LEN(c));
-    return CONTEXT_KEYS_HEAD(c) + (n) - 1;
+REBVAL *CTX_KEY_Debug(REBCTX *c, REBCNT n) {
+    assert(n != 0 && n <= CTX_LEN(c));
+    return CTX_KEYS_HEAD(c) + (n) - 1;
 }
 
 
 //
-//  CONTEXT_VAR_Debug: C
+//  CTX_VAR_Debug: C
 //
-REBVAL *CONTEXT_VAR_Debug(REBCON *c, REBCNT n) {
-    assert(n != 0 && n <= CONTEXT_LEN(c));
-    return CONTEXT_VARS_HEAD(c) + (n) - 1;
+REBVAL *CTX_VAR_Debug(REBCTX *c, REBCNT n) {
+    assert(n != 0 && n <= CTX_LEN(c));
+    return CTX_VARS_HEAD(c) + (n) - 1;
 }
 
 
 //
 //  Assert_Context_Core: C
 //
-void Assert_Context_Core(REBCON *context)
+void Assert_Context_Core(REBCTX *context)
 {
     REBCNT n;
     REBVAL *key;
@@ -1941,30 +1939,30 @@ void Assert_Context_Core(REBCON *context)
     REBCNT keys_len;
     REBCNT vars_len;
 
-    if (!ARRAY_GET_FLAG(CONTEXT_VARLIST(context), OPT_SER_CONTEXT)) {
-        Debug_Fmt("Frame series does not have OPT_SER_CONTEXT flag set");
+    if (!GET_ARR_FLAG(CTX_VARLIST(context), SERIES_FLAG_CONTEXT)) {
+        Debug_Fmt("Frame series does not have SERIES_FLAG_CONTEXT flag set");
         Panic_Context(context);
     }
 
-    if (!ANY_CONTEXT(CONTEXT_VALUE(context))) {
+    if (!ANY_CONTEXT(CTX_VALUE(context))) {
         Debug_Fmt("Element at head of frame is not an ANY_CONTEXT");
         Panic_Context(context);
     }
 
-    if (!CONTEXT_KEYLIST(context)) {
+    if (!CTX_KEYLIST(context)) {
         Debug_Fmt("Null keylist found in frame");
         Panic_Context(context);
     }
 
-    vars_len = ARRAY_LEN(CONTEXT_VARLIST(context));
-    keys_len = ARRAY_LEN(CONTEXT_KEYLIST(context));
+    vars_len = ARR_LEN(CTX_VARLIST(context));
+    keys_len = ARR_LEN(CTX_KEYLIST(context));
 
     if (keys_len < 1) {
         Debug_Fmt("Keylist length less than one--cannot hold rootkey");
         Panic_Context(context);
     }
 
-    if (ARRAY_GET_FLAG(CONTEXT_VARLIST(context), OPT_SER_STACK)) {
+    if (GET_ARR_FLAG(CTX_VARLIST(context), SERIES_FLAG_STACK)) {
         assert(vars_len == 1);
     }
     else {
@@ -1974,11 +1972,11 @@ void Assert_Context_Core(REBCON *context)
         }
     }
 
-    // The 0th key and var are special and can't be accessed with CONTEXT_VAR
-    // or CONTEXT_KEY
+    // The 0th key and var are special and can't be accessed with CTX_VAR
+    // or CTX_KEY
     //
-    key = CONTEXT_ROOTKEY(context);
-    var = CONTEXT_VALUE(context);
+    key = CTX_ROOTKEY(context);
+    var = CTX_VALUE(context);
 
     if (
         (IS_TYPESET(key) && VAL_TYPESET_SYM(key) == SYM_0) || ANY_FUNC(key)
@@ -2001,8 +1999,8 @@ void Assert_Context_Core(REBCON *context)
         Panic_Context(context);
     }
 
-    key = CONTEXT_KEYS_HEAD(context);
-    var = CONTEXT_VARS_HEAD(context);
+    key = CTX_KEYS_HEAD(context);
+    var = CTX_VARS_HEAD(context);
 
     for (n = 1; n < keys_len; n++, var++, key++) {
         if (IS_END(key) || IS_END(var)) {

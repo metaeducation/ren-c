@@ -641,7 +641,7 @@ void Pick_Path(REBVAL *out, REBVAL *value, REBVAL *selector, REBVAL *val)
 REBOOL Do_Signals_Throws(REBVAL *out)
 {
     struct Reb_State state;
-    REBCON *error;
+    REBCTX *error;
 
     REBCNT sigs;
     REBCNT mask;
@@ -991,7 +991,7 @@ void Do_Core(struct Reb_Call * const c)
     // Reb_Call only stores the FUNC so we must extract this body from the
     // value if it represents a exit_from
     //
-    REBARR *exit_from = NULL;
+    REBARR *exit_from;
 
     // See notes below on reference for why this is needed to implement eval.
     //
@@ -1139,6 +1139,8 @@ reevaluate:
 #if !defined(NDEBUG)
     do_count = Do_Evaluation_Preamble_Debug(c);
     cast(void, do_count); // suppress unused warning
+
+    exit_from = cast(REBARR*, 0xDECAFBAD);
 #endif
 
     switch (VAL_TYPE(c->value)) {
@@ -1197,8 +1199,14 @@ reevaluate:
             // and if it's a definitional return we extract its target
             //
             c->func = VAL_FUNC(c->out);
+            if (c->func == PG_Leave_Func) {
+                exit_from = VAL_FUNC_EXIT_FROM(c->out);
+                goto do_definitional_exit_from;
+            }
             if (c->func == PG_Return_Func)
-                exit_from = VAL_FUNC_RETURN_FROM(c->out);
+                exit_from = VAL_FUNC_EXIT_FROM(c->out);
+            else
+                exit_from = NULL;
 
             if (Trace_Flags) Trace_Line(c->source, c->indexor, c->value);
 
@@ -1262,7 +1270,6 @@ reevaluate:
     case REB_NATIVE:
     case REB_ACTION:
     case REB_COMMAND:
-    case REB_CLOSURE:
     case REB_FUNCTION:
         //
         // Note: Because this is a function value being hit literally in
@@ -1283,8 +1290,14 @@ reevaluate:
         // because the user can compose it into a block like any function.
         //
         c->func = VAL_FUNC(c->value);
+        if (c->func == PG_Leave_Func) {
+            exit_from = VAL_FUNC_EXIT_FROM(c->value);
+            goto do_definitional_exit_from;
+        }
         if (c->func == PG_Return_Func)
-            exit_from = VAL_FUNC_RETURN_FROM(c->value);
+            exit_from = VAL_FUNC_EXIT_FROM(c->value);
+        else
+            exit_from = NULL;
 
         FETCH_NEXT_ONLY_MAYBE_END(c);
 
@@ -1698,7 +1711,7 @@ reevaluate:
                 // because you don't have to go find /local (!), you can
                 // really put it wherever is convenient--no position rule.
                 //
-                // A special trick for functions marked FUNC_FLAG_HAS_RETURN
+                // A trick for functions marked FUNC_FLAG_LEAVE_OR_RETURN
                 // puts a "magic" REBNATIVE(return) value into the arg slot
                 // for pure locals named RETURN: ....used by FUNC and CLOS
                 //
@@ -2137,28 +2150,38 @@ reevaluate:
     #endif
 
         if (exit_from) {
+        do_definitional_exit_from:
             //
             // If it's a definitional return, then we need to do the throw
             // for the return, named by the value in the exit_from.  This
             // should be the RETURN native with 1 arg as the function, and
             // the native code pointer should have been replaced by a
-            // REBFUN (if function) or REBCON (if closure) to jump to.
+            // REBFUN (if function) or REBCTX (if durable) to jump to.
             //
-            assert(FUNC_NUM_PARAMS(c->func) == 1);
+            // !!! Long term there will always be frames for user functions
+            // where definitional returns are possible, but for now they
+            // still only make them by default if <durable> requested)
+            //
+            // LEAVE jumps directly here, because it doesn't need to go
+            // through any parameter evaluation.  (Note that RETURN can't
+            // simply evaluate the next item without inserting an opportunity
+            // for the debugger, e.g. `return (breakpoint)`...)
+            //
             ASSERT_ARRAY(exit_from);
 
-            // We only have a REBSER*, but want to actually THROW a full
-            // REBVAL (FUNCTION! or OBJECT! if it's a closure) which matches
+            // We only have a REBARR*, but want to actually THROW a full
+            // REBVAL (FUNCTION! or FRAME! if it has a context) which matches
             // the paramlist.  In either case, the value comes from slot [0]
             // of the RETURN_FROM array, but in the debug build do an added
             // sanity check.
             //
-            if (ARRAY_GET_FLAG(exit_from, OPT_SER_CONTEXT)) {
+            if (GET_ARR_FLAG(exit_from, SERIES_FLAG_CONTEXT)) {
                 //
                 // Request to exit from a specific FRAME!
                 //
-                *c->out = *CONTEXT_VALUE(AS_CONTEXT(exit_from));
+                *c->out = *CTX_VALUE(AS_CONTEXT(exit_from));
                 assert(IS_FRAME(c->out));
+                assert(CTX_VARLIST(VAL_CONTEXT(c->out)) == exit_from);
             }
             else {
                 // Request to dynamically exit from first ANY-FUNCTION! found
@@ -2169,9 +2192,22 @@ reevaluate:
                 assert(VAL_FUNC_PARAMLIST(c->out) == exit_from);
             }
 
-            CONVERT_NAME_TO_THROWN(c->out, DSF_ARGS_HEAD(c), TRUE);
-
             c->indexor = THROWN_FLAG;
+
+            if (c->func == PG_Leave_Func) {
+                //
+                // LEAVE never created an arglist, so it doesn't have to
+                // free one.  Also, it wants to just return UNSET!
+                //
+                CONVERT_NAME_TO_THROWN(c->out, UNSET_VALUE, TRUE);
+                NOTE_THROWING(goto return_indexor);
+            }
+
+            // On the other hand, RETURN did make an arglist that has to be
+            // dropped from the chunk stack.
+            //
+            assert(FUNC_NUM_PARAMS(c->func) == 1);
+            CONVERT_NAME_TO_THROWN(c->out, DSF_ARGS_HEAD(c), TRUE);
             NOTE_THROWING(goto drop_call_and_return_thrown);
         }
 
@@ -2201,14 +2237,6 @@ reevaluate:
         assert(IS_END(c->param));
         c->refine = NULL;
 
-    #if !defined(NDEBUG)
-        if (GET_VAL_FLAG(FUNC_VALUE(c->func), FUNC_FLAG_HAS_RETURN)) {
-            REBVAL *last_param = FUNC_PARAM(c->func, FUNC_NUM_PARAMS(c->func));
-            assert(VAL_TYPESET_CANON(last_param) == SYM_RETURN);
-            assert(GET_VAL_FLAG(last_param, TYPESET_FLAG_HIDDEN));
-        }
-    #endif
-
         if (c->flags & DO_FLAG_FRAME_CONTEXT) {
             //
             // !!! For the moment we cache the series data pointer in arg.
@@ -2219,10 +2247,10 @@ reevaluate:
             // locked series in order to more freely rearrange memory, so
             // this is a tradeoff.
             //
-            assert(ARRAY_GET_FLAG(
-                AS_ARRAY(c->frame.context), OPT_SER_FIXED_SIZE
+            assert(GET_ARR_FLAG(
+                AS_ARRAY(c->frame.context), SERIES_FLAG_FIXED_SIZE
             ));
-            c->arg = CONTEXT_VARS_HEAD(c->frame.context);
+            c->arg = CTX_VARS_HEAD(c->frame.context);
 
             // If the function has a native-optimized version of definitional
             // return, the local for this return should so far have just been
@@ -2232,15 +2260,32 @@ reevaluate:
             // Note that FUNCTION! uses its PARAMLIST as the RETURN_FROM
             // usually, but not if it's reusing a frame.
             //
-            if (GET_VAL_FLAG(FUNC_VALUE(c->func), FUNC_FLAG_HAS_RETURN)) {
-                REBVAL *last_arg = CONTEXT_VAR(
+            if (GET_VAL_FLAG(FUNC_VALUE(c->func), FUNC_FLAG_LEAVE_OR_RETURN)) {
+                REBVAL *last_arg = CTX_VAR(
                     c->frame.context,
-                    CONTEXT_LEN(c->frame.context)
+                    CTX_LEN(c->frame.context)
                 );
-                assert(IS_UNSET(last_arg));
-                *last_arg = *ROOT_RETURN_NATIVE;
-                VAL_FUNC_RETURN_FROM(last_arg)
-                    = CONTEXT_VARLIST(c->frame.context);
+                REBVAL *last_param
+                    = FUNC_PARAM(c->func, FUNC_NUM_PARAMS(c->func));
+
+                assert(GET_VAL_FLAG(last_param, TYPESET_FLAG_HIDDEN));
+
+            #if !defined(NDEBUG)
+                if (GET_VAL_FLAG(FUNC_VALUE(c->func), FUNC_FLAG_LEGACY))
+                    assert(IS_NONE(last_arg));
+                else
+                    assert(IS_UNSET(last_arg));
+            #endif
+
+                if (VAL_TYPESET_CANON(last_param) == SYM_RETURN)
+                    *last_arg = *ROOT_RETURN_NATIVE;
+                else {
+                    assert(VAL_TYPESET_CANON(last_param) == SYM_LEAVE);
+                    *last_arg = *ROOT_LEAVE_NATIVE;
+                }
+
+                VAL_FUNC_EXIT_FROM(last_arg)
+                    = CTX_VARLIST(c->frame.context);
             }
         }
         else {
@@ -2250,11 +2295,28 @@ reevaluate:
             //
             c->arg = &c->frame.stackvars[0];
 
-            if (GET_VAL_FLAG(FUNC_VALUE(c->func), FUNC_FLAG_HAS_RETURN)) {
+            if (GET_VAL_FLAG(FUNC_VALUE(c->func), FUNC_FLAG_LEAVE_OR_RETURN)) {
                 REBVAL *last_arg = &c->arg[FUNC_NUM_PARAMS(c->func) - 1];
-                assert(IS_UNSET(last_arg));
-                *last_arg = *ROOT_RETURN_NATIVE;
-                VAL_FUNC_RETURN_FROM(last_arg) = FUNC_PARAMLIST(c->func);
+                REBVAL *last_param
+                    = FUNC_PARAM(c->func, FUNC_NUM_PARAMS(c->func));
+
+                assert(GET_VAL_FLAG(last_param, TYPESET_FLAG_HIDDEN));
+
+            #if !defined(NDEBUG)
+                if (GET_VAL_FLAG(FUNC_VALUE(c->func), FUNC_FLAG_LEGACY))
+                    assert(IS_NONE(last_arg));
+                else
+                    assert(IS_UNSET(last_arg));
+            #endif
+
+                if (VAL_TYPESET_CANON(last_param) == SYM_RETURN)
+                    *last_arg = *ROOT_RETURN_NATIVE;
+                else {
+                    assert(VAL_TYPESET_CANON(last_param) == SYM_LEAVE);
+                    *last_arg = *ROOT_LEAVE_NATIVE;
+                }
+
+                VAL_FUNC_EXIT_FROM(last_arg) = FUNC_PARAMLIST(c->func);
             }
         }
 
@@ -2287,10 +2349,6 @@ reevaluate:
 
         case REB_COMMAND:
             Do_Command_Core(c);
-            break;
-
-        case REB_CLOSURE:
-            Do_Closure_Core(c);
             break;
 
         case REB_FUNCTION:
@@ -2328,19 +2386,19 @@ reevaluate:
         // which happens depends on whether eval_fetched is NULL or not
         //
         if (c->flags & DO_FLAG_FRAME_CONTEXT) {
-            if (CONTEXT_STACKVARS(c->frame.context) != NULL)
-                Drop_Chunk(CONTEXT_STACKVARS(c->frame.context));
+            if (CTX_STACKVARS(c->frame.context) != NULL)
+                Drop_Chunk(CTX_STACKVARS(c->frame.context));
 
-            if (ARRAY_GET_FLAG(
-                CONTEXT_VARLIST(c->frame.context), OPT_SER_MANAGED
+            if (GET_ARR_FLAG(
+                CTX_VARLIST(c->frame.context), SERIES_FLAG_MANAGED
             )) {
                 // Context at some point became managed and hence may still
                 // have outstanding references.  The accessible flag should
                 // have been cleared by the drop chunk above.
                 //
                 assert(
-                    !ARRAY_GET_FLAG(
-                        CONTEXT_VARLIST(c->frame.context), OPT_SER_ACCESSIBLE
+                    !GET_ARR_FLAG(
+                        CTX_VARLIST(c->frame.context), SERIES_FLAG_ACCESSIBLE
                     )
                 );
             }
@@ -2350,7 +2408,7 @@ reevaluate:
                 // Val_Init_Object() for the frame) then the varlist can just
                 // go away...
                 //
-                Free_Array(CONTEXT_VARLIST(c->frame.context));
+                Free_Array(CTX_VARLIST(c->frame.context));
                 //
                 // NOTE: Even though we've freed the pointer, we still compare
                 // it for identity below when checking to see if this was the
@@ -2420,6 +2478,31 @@ reevaluate:
             }
             else {
                 assert(FALSE); // no other low-level EXIT/FROM supported
+            }
+        }
+
+        // Here we know the function finished.  If it has a definitional
+        // return we need to type check it--and if it has a leave we have
+        // to squash whatever the last evaluative result was and replace it
+        // with an UNSET!
+        //
+        if (GET_VAL_FLAG(FUNC_VALUE(c->func), FUNC_FLAG_LEAVE_OR_RETURN)) {
+            REBVAL *last_param = FUNC_PARAM(c->func, FUNC_NUM_PARAMS(c->func));
+            if (VAL_TYPESET_CANON(last_param) == SYM_LEAVE) {
+                SET_UNSET(c->out);
+            }
+            else {
+                // The type bits of the definitional return are not applicable
+                // to the `return` word being associated with a FUNCTION!
+                // vs. an INTEGER! (for instance).  It is where the type
+                // information for the non-existent return function specific
+                // to this call is hidden.
+                //
+                assert(VAL_TYPESET_CANON(last_param) == SYM_RETURN);
+                if (!TYPE_CHECK(last_param, VAL_TYPE(c->out)))
+                    fail (Error_Arg_Type(
+                        SYM_RETURN, last_param, Type_Of(c->out))
+                    );
             }
         }
 
@@ -2495,18 +2578,20 @@ reevaluate:
         c->frame.context = VAL_CONTEXT(c->value);
         c->func = VAL_CONTEXT_FUNC(c->value);
 
-        if (ARRAY_GET_FLAG(
-            CONTEXT_VARLIST(VAL_CONTEXT(c->value)), OPT_SER_STACK)
+        if (GET_ARR_FLAG(
+            CTX_VARLIST(VAL_CONTEXT(c->value)), SERIES_FLAG_STACK)
         ) {
             c->arg = VAL_CONTEXT_STACKVARS(c->value);
         }
         else
-            c->arg = CONTEXT_VARS_HEAD(VAL_CONTEXT(c->value));
+            c->arg = CTX_VARS_HEAD(VAL_CONTEXT(c->value));
 
-        c->param = CONTEXT_KEYS_HEAD(VAL_CONTEXT(c->value));
+        c->param = CTX_KEYS_HEAD(VAL_CONTEXT(c->value));
 
         c->flags |= DO_FLAG_FRAME_CONTEXT | DO_FLAG_EXECUTE_FRAME;
+
         FETCH_NEXT_ONLY_MAYBE_END(c);
+        exit_from = NULL;
         goto do_function_arglist_in_progress;
 
     // [PATH!]
@@ -2539,8 +2624,14 @@ reevaluate:
             // and if a definitional return, we need to extract its target.
             //
             c->func = VAL_FUNC(c->out);
+            if (c->func == PG_Leave_Func) {
+                exit_from = VAL_FUNC_EXIT_FROM(c->out);
+                goto do_definitional_exit_from;
+            }
             if (c->func == PG_Return_Func)
-                exit_from = VAL_FUNC_RETURN_FROM(c->out);
+                exit_from = VAL_FUNC_EXIT_FROM(c->out);
+            else
+                exit_from = NULL;
 
             FETCH_NEXT_ONLY_MAYBE_END(c);
             goto do_function_maybe_end_ok;
@@ -2732,7 +2823,14 @@ reevaluate:
             #endif
 
                 c->func = VAL_FUNC(c->param);
-                assert(c->func != PG_Return_Func); // return wouldn't be infix
+
+                // The warped function values used for definitional return
+                // usually need their EXIT_FROMs extracted, but here we should
+                // not worry about it as neither RETURN nor LEAVE are infix
+                //
+                assert(c->func != PG_Leave_Func);
+                assert(c->func != PG_Return_Func);
+                exit_from = NULL;
 
                 if (Trace_Flags) Trace_Line(c->source, c->indexor, c->param);
 
@@ -2832,7 +2930,7 @@ static void Do_Exit_Checks_Debug(struct Reb_Call *c) {
         // last value for processing (and not signaled end) but on the
         // next fetch we *will* signal an end.
         //
-        assert(c->indexor <= ARRAY_LEN(c->source.array));
+        assert(c->indexor <= ARR_LEN(c->source.array));
     }
 
     if (c->flags & DO_FLAG_TO_END)
@@ -2882,7 +2980,7 @@ REBIXO Do_Array_At_Core(
     else {
         // Do_Core() requires caller pre-seed first value, always
         //
-        c.value = ARRAY_AT(array, index);
+        c.value = ARR_AT(array, index);
         c.indexor = index + 1;
     }
 
@@ -3041,7 +3139,7 @@ REBIXO Do_Values_At_Core(
 //
 REBVAL *Sys_Func(REBCNT inum)
 {
-    REBVAL *value = CONTEXT_VAR(Sys_Context, inum);
+    REBVAL *value = CTX_VAR(Sys_Context, inum);
 
     if (!ANY_FUNC(value)) fail (Error(RE_BAD_SYS_FUNC, value));
 
@@ -3071,7 +3169,7 @@ REBOOL Apply_Only_Throws(REBVAL *out, const REBVAL *applicand, ...)
 
 #ifdef VA_END_IS_MANDATORY
     struct Reb_State state;
-    REBCON *error;
+    REBCTX *error;
 #endif
 
     va_start(varargs, applicand); // must mention last param before the "..."
@@ -3173,7 +3271,7 @@ REBOOL Redo_Func_Throws(struct Reb_Call *c, REBFUN *func_new)
     // invocation (if it had no refinements or locals).
     //
     REBARR *code_array = Make_Array(FUNC_NUM_PARAMS(c->func));
-    REBVAL *code = ARRAY_HEAD(code_array);
+    REBVAL *code = ARR_HEAD(code_array);
 
     // We'll walk through the original functions param and arglist only, and
     // accept the error-checking the evaluator provides at this time (types,
@@ -3191,7 +3289,7 @@ REBOOL Redo_Func_Throws(struct Reb_Call *c, REBFUN *func_new)
     // at the head...
     //
     REBARR *path_array = Make_Array(FUNC_NUM_PARAMS(c->func) + 1);
-    REBVAL *path = ARRAY_HEAD(path_array);
+    REBVAL *path = ARR_HEAD(path_array);
 
     REBVAL first;
     VAL_INIT_WRITABLE_DEBUG(&first);
@@ -3234,11 +3332,11 @@ REBOOL Redo_Func_Throws(struct Reb_Call *c, REBFUN *func_new)
     }
 
     SET_END(code);
-    SET_ARRAY_LEN(code_array, code - ARRAY_HEAD(code_array));
+    SET_ARRAY_LEN(code_array, code - ARR_HEAD(code_array));
     MANAGE_ARRAY(code_array);
 
     SET_END(path);
-    SET_ARRAY_LEN(path_array, path - ARRAY_HEAD(path_array));
+    SET_ARRAY_LEN(path_array, path - ARR_HEAD(path_array));
     Val_Init_Array(&first, REB_PATH, path_array); // manages
 
     // Invoke DO with the special mode requesting non-evaluation on all
@@ -3299,7 +3397,7 @@ REBOOL Reduce_Array_Throws(
     // We'd like REDUCE to treat `reduce []` and `reduce [#[unset!]]` in
     // a different way, so must do a special check to handle the former.
     //
-    if (IS_END(ARRAY_AT(array, index))) {
+    if (IS_END(ARR_AT(array, index))) {
         if (into)
             return FALSE;
 
@@ -3350,7 +3448,7 @@ void Reduce_Only(
         idx = VAL_INDEX(words);
     }
 
-    for (val = ARRAY_AT(block, index); NOT_END(val); val++) {
+    for (val = ARR_AT(block, index); NOT_END(val); val++) {
         if (IS_WORD(val)) {
             // Check for keyword:
             if (arr && NOT_FOUND != Find_Word_In_Array(arr, idx, VAL_WORD_CANON(val))) {
@@ -3400,8 +3498,8 @@ REBOOL Reduce_Array_No_Set_Throws(
     REBDSP dsp_orig = DSP;
     REBIXO indexor = index;
 
-    while (index < ARRAY_LEN(block)) {
-        REBVAL *value = ARRAY_AT(block, index);
+    while (index < ARR_LEN(block)) {
+        REBVAL *value = ARR_AT(block, index);
         if (IS_SET_WORD(value)) {
             DS_PUSH(value);
             index++;
@@ -3699,7 +3797,7 @@ void Get_Simple_Value_Into(REBVAL *out, const REBVAL *val)
 // 
 // Given a path, return a context and index for its terminal.
 //
-REBCON *Resolve_Path(REBVAL *path, REBCNT *index)
+REBCTX *Resolve_Path(REBVAL *path, REBCNT *index)
 {
     REBVAL *sel; // selector
     const REBVAL *val;
@@ -3708,11 +3806,11 @@ REBCON *Resolve_Path(REBVAL *path, REBCNT *index)
 
     if (VAL_LEN_HEAD(path) < 2) return 0;
     blk = VAL_ARRAY(path);
-    sel = ARRAY_HEAD(blk);
+    sel = ARR_HEAD(blk);
     if (!ANY_WORD(sel)) return 0;
     val = GET_OPT_VAR_MAY_FAIL(sel);
 
-    sel = ARRAY_AT(blk, 1);
+    sel = ARR_AT(blk, 1);
     while (TRUE) {
         if (!ANY_CONTEXT(val) || !IS_WORD(sel)) return 0;
         i = Find_Word_In_Context(VAL_CONTEXT(val), VAL_WORD_SYM(sel), FALSE);

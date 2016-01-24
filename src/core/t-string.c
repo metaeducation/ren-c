@@ -463,7 +463,7 @@ static void Sort_String(
     reb_qsort_r(
         VAL_RAW_DATA_AT(string),
         len,
-        size * SERIES_WIDE(VAL_SERIES(string)),
+        size * SER_WIDE(VAL_SERIES(string)),
         &thunk,
         Compare_Chr
     );
@@ -488,7 +488,7 @@ REBINT PD_String(REBPVS *pvs)
     else return PE_BAD_SELECT;
 
     if (val == 0) {
-        if (n < 0 || (REBCNT)n >= SERIES_LEN(ser)) return PE_NONE;
+        if (n < 0 || (REBCNT)n >= SER_LEN(ser)) return PE_NONE;
         if (IS_BINARY(data)) {
             SET_INTEGER(pvs->store, *BIN_AT(ser, n));
         } else {
@@ -497,7 +497,7 @@ REBINT PD_String(REBPVS *pvs)
         return PE_USE;
     }
 
-    if (n < 0 || (REBCNT)n >= SERIES_LEN(ser)) return PE_BAD_RANGE;
+    if (n < 0 || (REBCNT)n >= SER_LEN(ser)) return PE_BAD_RANGE;
 
     if (IS_CHAR(val)) {
         c = VAL_CHAR(val);
@@ -566,7 +566,7 @@ REBINT PD_File(REBPVS *pvs)
     //     >> (x)/("bar")
     //     == %foo/bar
     //
-    len = SERIES_LEN(ser);
+    len = SER_LEN(ser);
     if (len > 0) c = GET_ANY_CHAR(ser, len - 1);
     if (len == 0 || c != '/') Append_Codepoint_Raw(ser, '/');
 
@@ -593,7 +593,7 @@ REBINT PD_File(REBPVS *pvs)
         ser, // dst
         mo.series, // src
         mo.start + skip, // i
-        SERIES_LEN(mo.series) - mo.start - skip // len
+        SER_LEN(mo.series) - mo.start - skip // len
     );
 
     Drop_Mold(&mo);
@@ -892,8 +892,8 @@ zero_str:
             //
             Set_Random(
                 Compute_CRC(
-                    SERIES_AT_RAW(VAL_SERIES(value), VAL_INDEX(value)),
-                    VAL_LEN_AT(value) * SERIES_WIDE(VAL_SERIES(value))
+                    SER_AT_RAW(VAL_SERIES(value), VAL_INDEX(value)),
+                    VAL_LEN_AT(value) * SER_WIDE(VAL_SERIES(value))
                 )
             );
             return R_UNSET;

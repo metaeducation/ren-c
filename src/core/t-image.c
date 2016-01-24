@@ -416,7 +416,7 @@ REBSER *Make_Image(REBCNT w, REBCNT h, REBOOL error)
 
     img = Make_Series(w * h + 1, sizeof(u32), MKS_NONE);
     SET_SERIES_LEN(img, w * h);
-    RESET_IMAGE(SERIES_DATA_RAW(img), SERIES_LEN(img)); //length in 'pixels'
+    RESET_IMAGE(SER_DATA_RAW(img), SER_LEN(img)); //length in 'pixels'
     IMG_WIDE(img) = w;
     IMG_HIGH(img) = h;
     return img;
@@ -846,7 +846,7 @@ REBTYPE(Image)
     if (action != A_MAKE && action != A_TO) {
         series = VAL_SERIES(value);
         index = VAL_INDEX(value);
-        tail = (REBINT)SERIES_LEN(series);
+        tail = (REBINT)SER_LEN(series);
         if (index > tail) index = tail;
     }
 
@@ -1260,7 +1260,7 @@ REBINT PD_Image(REBPVS *pvs)
     FAIL_IF_LOCKED_SERIES(series);
 
     // Out of range:
-    if (n == 0 || index < 0 || index >= cast(REBINT, SERIES_LEN(series))) {
+    if (n == 0 || index < 0 || index >= cast(REBINT, SER_LEN(series))) {
         if (val) return PE_BAD_SET;
         return PE_NONE;
     }

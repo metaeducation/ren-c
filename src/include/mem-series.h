@@ -43,10 +43,10 @@
 // of this is that it means the sizes range from 1-255, whereas if 0 was
 // available the width could always be incremented by 1 and range 1-256.
 //
-#define SERIES_FREED(s)  (0 == SERIES_WIDE(s))
+#define SER_FREED(s)  (0 == SER_WIDE(s))
 
 //
-// Non-series-internal code needs to read SERIES_WIDE but should not be
+// Non-series-internal code needs to read SER_WIDE but should not be
 // needing to set it directly.
 //
 // !!! Can't `assert((w) < MAX_SERIES_WIDE)` without triggering "range of
@@ -56,7 +56,7 @@
 
 #define MAX_SERIES_WIDE 0x100 \
 
-#define SERIES_SET_WIDE(s,w) \
+#define SER_SET_WIDE(s,w) \
     ((s)->info.bits = ((s)->info.bits & 0xffff) | (w << 16))
 
 
@@ -64,17 +64,17 @@
 // Bias is empty space in front of head:
 //
 
-#define SERIES_BIAS(s) \
+#define SER_BIAS(s) \
     cast(REBCNT, ((s)->content.dynamic.bias >> 16) & 0xffff)
 
 #define MAX_SERIES_BIAS 0x1000 \
 
-#define SERIES_SET_BIAS(s,b) \
+#define SER_SET_BIAS(s,b) \
     ((s)->content.dynamic.bias = \
         ((s)->content.dynamic.bias & 0xffff) | (b << 16))
 
-#define SERIES_ADD_BIAS(s,b) \
+#define SER_ADD_BIAS(s,b) \
     ((s)->content.dynamic.bias += (b << 16))
 
-#define SERIES_SUB_BIAS(s,b) \
+#define SER_SUB_BIAS(s,b) \
     ((s)->content.dynamic.bias -= (b << 16))

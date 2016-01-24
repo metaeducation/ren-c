@@ -278,7 +278,7 @@ struct Reb_Call {
     // something to compare against to find out how many is needed.  At this
     // position to sync alignment with same-sized `flags`.
     //
-    int dsp_orig; // type is REBDSP, but enforce alignment here
+    unsigned int dsp_orig; // type is REBDSP, but enforce alignment here
 
     // `flags` [INPUT, READ-ONLY (unless FRAMELESS signaling error)]
     //
@@ -417,7 +417,7 @@ struct Reb_Call {
     // the frame by the debugger.
     //
     union {
-        REBCON *context;
+        REBCTX *context;
         REBVAL *stackvars;
     } frame;
 
@@ -434,7 +434,7 @@ struct Reb_Call {
     //
     const REBVAL *param;
 
-    // `arg` [INTERNAL, also CACHE of `ARRAY_HEAD(arglist)`]
+    // `arg` [INTERNAL, also CACHE of `ARR_HEAD(arglist)`]
     //
     // "arg" is the "actual argument"...which holds the pointer to the
     // REBVAL slot in the `arglist` for that corresponding `param`.  These
@@ -632,10 +632,10 @@ struct Reb_Call {
             break; \
         } \
         if ((c)->indexor != VARARGS_FLAG) { \
-            if ((c)->indexor < ARRAY_LEN((c)->source.array)) { \
+            if ((c)->indexor < ARR_LEN((c)->source.array)) { \
                 assert((c)->value != \
-                    ARRAY_AT((c)->source.array, (c)->indexor)); \
-                (c)->value = ARRAY_AT((c)->source.array, (c)->indexor); \
+                    ARR_AT((c)->source.array, (c)->indexor)); \
+                (c)->value = ARR_AT((c)->source.array, (c)->indexor); \
                 (c)->indexor = (c)->indexor + 1; \
             } \
             else { \
@@ -694,7 +694,7 @@ struct Reb_Call {
                     assert(!IS_TRASH_DEBUG(value_in)); \
                     *(out_) = *(value_in); \
                     assert(!IS_TRASH_DEBUG(out_)); \
-                    (value_out) = ARRAY_AT((source_).array, (indexor_in)); \
+                    (value_out) = ARR_AT((source_).array, (indexor_in)); \
                     if (IS_END(value_out)) { \
                         (indexor_out) = END_FLAG; \
                         (value_out) = NULL; /* this could be debug only */ \
@@ -807,7 +807,7 @@ struct Reb_Call {
     do { \
         union Reb_Call_Source source; \
         REBIXO indexor_ = index + 1; \
-        REBVAL *value_ = ARRAY_AT((array_in), (index)); \
+        REBVAL *value_ = ARR_AT((array_in), (index)); \
         const REBVAL *dummy; /* need for varargs continuation, not array */ \
         if (IS_END(value_)) { \
             SET_UNSET(out); \
@@ -1019,7 +1019,7 @@ struct Native_Refine {
 
 #define DSF_INDEX(c) \
     (assert(!DSF_IS_VARARGS(c)), (c)->indexor == END_FLAG \
-        ? ARRAY_LEN((c)->source.array) : (c)->indexor - 1)
+        ? ARR_LEN((c)->source.array) : (c)->indexor - 1)
 
 #define DSF_OUT(c)          cast(REBVAL * const, (c)->out) // writable Lvalue
 #define PRIOR_DSF(c)        ((c)->prior)
@@ -1054,7 +1054,7 @@ struct Native_Refine {
 //
 #define DSF_ARGS_HEAD(c) \
     (((c)->flags & DO_FLAG_FRAME_CONTEXT) \
-        ? CONTEXT_VARS_HEAD((c)->frame.context) \
+        ? CTX_VARS_HEAD((c)->frame.context) \
         : &(c)->frame.stackvars[0])
 
 // ARGS is the parameters and refinements

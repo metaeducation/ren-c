@@ -78,48 +78,43 @@
 // necessary to balance the stack in the case of calling a `fail`--because
 // it will be automatically restored to where it was at the PUSH_TRAP().
 //
-// At the moment, the data stack is *mostly* implemented as a typical series.
-// When Rebol was first open-sourced, there were some deviations from being
-// a normal series.  It was not terminated with an END, so you would be
-// required to call a special DS_TERMINATE() routine to put the terminator
-// in place before using the data stack with a routine that expected
-// termination.  It also had to be expanded manually, so a DS_PUSH was not
-// guaranteed to trigger a potential growth of the stack..  If expansion
-// hadn't been anticipated with a large enough space for that push (an
-// arbitrary 20 slots was chosen per function call, for instance) it would
-// corrupt memory.
-//
-// Overall, optimizing the stack structure should be easier now that it has
-// a more dedicated purpose.  So those tricks are not being used *for the
-// moment*.  Future profiling can try those and other approaches when a stable
-// and complete system has been achieved.
+// To speed pushes and pops to the stack while also making sure that each
+// push is tested to see if an expansion is needed, a trick is used.  This
+// trick is to grow the stack in blocks, and always maintain that the block
+// has an END marker at its point of capacity--and ensure that there are no
+// end markers between the DSP and that capacity.  This way, if a push runs
+// up against an END it knows to do an expansion.
 //
 
-// A signed integer is currently used to represent the data stack pointer.
-// It is an `int` instead of a `REBINT` in order to leverage the native
+// A standard integer is currently used to represent the data stack pointer.
+// `unsigned int` instead of a `REBCNT` in order to leverage the native
 // performance of the integer type unconstrained by bit size, as data stack
 // pointers are not stored in REBVALs or similar, and performance in comparing
 // and manipulation is more important than hte size.
 //
-typedef int REBDSP;
+// Note that a value of 0 indicates an empty stack; the [0] entry is made to
+// be alerting trash to trap invalid reads or writes of empty stacks.
+//
+typedef unsigned int REBDSP;
 
 // (D)ata (S)tack "(P)ointer" is an integer index into Rebol's data stack
-#define DSP \
-    cast(REBDSP, ARRAY_LEN(DS_Array) - 1)
+//
+#define DSP DS_Index
 
 // Access value at given stack location
-#define DS_AT(d) \
-    ARRAY_AT(DS_Array, (d))
+//
+#define DS_AT(d) (DS_Movable_Base + (d))
 
 // Most recently pushed item
-#define DS_TOP \
-    ARRAY_LAST(DS_Array)
+//
+#define DS_TOP DS_AT(DS_Index)
 
 #if !defined(NDEBUG)
     #define IN_DATA_STACK(p) \
-        (ARRAY_LEN(DS_Array) != 0 && (p) >= DS_AT(0) && (p) <= DS_TOP)
+        (ARR_LEN(DS_Array) != 0 && (p) >= DS_AT(0) && (p) <= DS_TOP)
 #endif
 
+//
 // PUSHING: Note the DS_PUSH macros inherit the property of SET_XXX that
 // they use their parameters multiple times.  Don't use with the result of
 // a function call because that function could be called multiple times.
@@ -128,12 +123,18 @@ typedef int REBDSP;
 // nothing extra in a release build for setting the value (as it is just
 // left uninitialized).  But you must make sure that a GC can't run before
 // you have put a valid value into the slot you pushed.
+//
+// If the stack runs out of capacity then it will be expanded by the basis
+// defined below.  The number is arbitrary and should be tuned.  Note the
+// number of bytes will be sizeof(REBVAL) * STACK_EXPAND_BASIS
+//
+
+#define STACK_EXPAND_BASIS 100
 
 #define DS_PUSH_TRASH \
-    (SERIES_REST(ARRAY_SERIES(DS_Array)) >= STACK_LIMIT \
-        ? Trap_Stack_Overflow() \
-        : cast(void, cast(REBUPT, Alloc_Tail_Array(DS_Array))), \
-    SET_TRASH_IF_DEBUG(DS_TOP))
+    (++DSP, IS_END(DS_TOP) \
+        ? Expand_Data_Stack_May_Fail(100) \
+        : SET_TRASH_IF_DEBUG(DS_TOP))
 
 #define DS_PUSH_TRASH_SAFE \
     (DS_PUSH_TRASH, SET_TRASH_SAFE(DS_TOP), NOOP)
@@ -158,9 +159,12 @@ typedef int REBDSP;
 
 // POPPING AND "DROPPING"
 
-#define DS_DROP \
-    (--ARRAY_SERIES(DS_Array)->content.dynamic.len, \
-        SET_END(ARRAY_TAIL(DS_Array)), NOOP)
+#ifdef NDEBUG
+    #define DS_DROP (--DS_Index, NOOP)
+#else
+    #define DS_DROP \
+        (SET_TRASH_SAFE(DS_TOP), --DS_Index, NOOP)
+#endif
 
 #define DS_POP_INTO(v) \
     do { \
@@ -171,8 +175,7 @@ typedef int REBDSP;
 
 #ifdef NDEBUG
     #define DS_DROP_TO(dsp) \
-        (SET_ARRAY_LEN(DS_Array, (dsp) + 1), \
-            SET_END(ARRAY_TAIL(DS_Array)), NOOP)
+        (DS_Index = dsp, NOOP)
 #else
     #define DS_DROP_TO(dsp) \
         do { \
@@ -263,7 +266,7 @@ struct Reb_Chunk {
     // client, because a fail() can longjmp...and the chunk stack needs enough
     // information stored to find that series to mark.
     //
-    REBCON *opt_context;
+    REBCTX *opt_context;
 
     // Pointer to the previous chunk.
     //

@@ -45,7 +45,7 @@ REBINT CT_Datatype(const REBVAL *a, const REBVAL *b, REBINT mode)
 //
 REBOOL MT_Datatype(REBVAL *out, REBVAL *data, enum Reb_Kind type)
 {
-    REBCNT sym;
+    REBSYM sym;
     if (!IS_WORD(data)) return FALSE;
     sym = VAL_WORD_CANON(data);
     if (sym > REB_MAX_0) return FALSE;
@@ -65,7 +65,7 @@ REBTYPE(Datatype)
     REBVAL *arg = D_ARG(2);
     REBACT act;
     enum Reb_Kind kind = VAL_TYPE_KIND(value);
-    REBCON *obj;
+    REBCTX *obj;
     REBINT n;
 
     switch (action) {
@@ -76,8 +76,8 @@ REBTYPE(Datatype)
             obj = Make_Std_Object_Managed(STD_TYPE_SPEC);
             Set_Object_Values(
                 obj,
-                ARRAY_HEAD(
-                    VAL_TYPE_SPEC(CONTEXT_VAR(Lib_Context, SYM_FROM_KIND(kind)))
+                ARR_HEAD(
+                    VAL_TYPE_SPEC(CTX_VAR(Lib_Context, SYM_FROM_KIND(kind)))
                 )
             );
             Val_Init_Object(D_OUT, obj);
@@ -85,8 +85,8 @@ REBTYPE(Datatype)
         else if (n == OF_TITLE) {
             Val_Init_String(
                 D_OUT,
-                Copy_Sequence(VAL_SERIES(ARRAY_HEAD(
-                    VAL_TYPE_SPEC(CONTEXT_VAR(Lib_Context, SYM_FROM_KIND(kind)))
+                Copy_Sequence(VAL_SERIES(ARR_HEAD(
+                    VAL_TYPE_SPEC(CTX_VAR(Lib_Context, SYM_FROM_KIND(kind)))
                 )))
             );
         }

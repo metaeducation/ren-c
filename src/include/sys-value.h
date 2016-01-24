@@ -51,7 +51,7 @@
 // they become arbitrary precision) but it's not enough for a generic BLOCK!
 // or a FUNCTION! (for instance).  So those pointers are used to point to
 // things, and often they will point to one or more Rebol Series (see
-// %sys-series.h for an explanation of REBSER, REBARR, REBCON, and REBMAP.)
+// %sys-series.h for an explanation of REBSER, REBARR, REBCTX, and REBMAP.)
 //
 // While some REBVALs are in C stack variables, most reside in the allocated
 // memory block for a Rebol series.  The memory block for a series can be
@@ -99,7 +99,7 @@ struct Reb_Array;
 typedef struct Reb_Array REBARR; // REBSER containing REBVALs ("Rebol Array")
 
 struct Reb_Context;
-typedef struct Reb_Context REBCON; // parallel REBARR key/var arrays, +2 values
+typedef struct Reb_Context REBCTX; // parallel REBARR key/var arrays, +2 values
 
 struct Reb_Func;
 typedef struct Reb_Func REBFUN; // function parameters plus function REBVAL
@@ -468,8 +468,8 @@ enum {
 // needs to be done.  If that's required these defines adjust for the shift.
 // See also REB_MAX_0
 //
-#define KIND_FROM_0(z) ((z) << 2)
-#define TO_0_FROM_KIND(k) ((k) >> 2)
+#define KIND_FROM_0(z) cast(enum Reb_Kind, (z) << 2)
+#define TO_0_FROM_KIND(k) (cast(REBCNT, (k)) >> 2)
 #define VAL_TYPE_0(v) TO_0_FROM_KIND(VAL_TYPE(v))
 
 // SET_TYPE_BITS only sets the type, with other header bits intact.  This
@@ -864,6 +864,18 @@ enum {
 #define TRUE_VALUE (&PG_True_Value[0])
 
 
+//
+// Rebol Symbol
+//
+// !!! Historically Rebol used an unsigned 32-bit integer as a "symbol ID".
+// These symbols did not participate in garbage collection and had to be
+// looked up in a table to get their values.  Ren-C is moving toward adapting
+// REBSERs to be able to store words and canon words, as well as GC them.
+// This starts moving the types to be the size of a platform pointer.
+//
+
+typedef REBUPT REBSYM;
+
 
 /***********************************************************************
 **
@@ -895,7 +907,7 @@ struct Reb_Datatype {
 #define IS_KIND_SYM(s)      ((s) < REB_MAX_0 + 1)
 #define KIND_FROM_SYM(s)    cast(enum Reb_Kind, KIND_FROM_0((s) - 1))
 #define SYM_FROM_KIND(k) \
-    (assert(cast(REBCNT, (k)) < REB_MAX), cast(REBCNT, TO_0_FROM_KIND(k) + 1))
+    (assert((k) < REB_MAX), cast(REBSYM, TO_0_FROM_KIND(k) + 1))
 #define VAL_TYPE_SYM(v)     SYM_FROM_KIND((v)->payload.datatype.kind)
 
 //#define   VAL_MIN_TYPE(v) ((v)->payload.datatype.min_type)
@@ -1076,13 +1088,13 @@ struct Reb_Any_Series
     #define VAL_SERIES(v)   (*VAL_SERIES_Ptr_Debug(v))
 #endif
 #define VAL_INDEX(v)        ((v)->payload.any_series.index)
-#define VAL_LEN_HEAD(v)     SERIES_LEN(VAL_SERIES(v))
+#define VAL_LEN_HEAD(v)     SER_LEN(VAL_SERIES(v))
 #define VAL_LEN_AT(v)       (Val_Series_Len_At(v))
 
 #define IS_EMPTY(v)         (VAL_INDEX(v) >= VAL_LEN_HEAD(v))
 
 #define VAL_RAW_DATA_AT(v) \
-    SERIES_AT_RAW(VAL_SERIES(v), VAL_INDEX(v))
+    SER_AT_RAW(VAL_SERIES(v), VAL_INDEX(v))
 
 
 // Note: These macros represent things that used to sometimes be functions,
@@ -1172,14 +1184,14 @@ struct Reb_Any_Series
 // constness in the process, e.g. a series extracted from a const REBVAL.
 //
 #define VAL_ARRAY(v)            (*(REBARR**)(&VAL_SERIES(v)))
-#define VAL_ARRAY_HEAD(v)       ARRAY_HEAD(VAL_ARRAY(v))
-#define VAL_ARRAY_TAIL(v)       ARRAY_AT(VAL_ARRAY(v), VAL_ARRAY_LEN_AT(v))
+#define VAL_ARRAY_HEAD(v)       ARR_HEAD(VAL_ARRAY(v))
+#define VAL_ARRAY_TAIL(v)       ARR_AT(VAL_ARRAY(v), VAL_ARRAY_LEN_AT(v))
 
 // These array operations take the index position into account.  The use
 // of the word AT with a missing index is a hint that the index is coming
 // from the VAL_INDEX() of the value itself.
 //
-#define VAL_ARRAY_AT(v)         ARRAY_AT(VAL_ARRAY(v), VAL_INDEX(v))
+#define VAL_ARRAY_AT(v)         ARR_AT(VAL_ARRAY(v), VAL_INDEX(v))
 #define VAL_ARRAY_LEN_AT(v)     VAL_LEN_AT(v)
 
 // !!! VAL_ARRAY_AT_HEAD() is a leftover from the old definition of
@@ -1194,12 +1206,12 @@ struct Reb_Any_Series
 // looking here for what the story is.
 //
 #define VAL_ARRAY_AT_HEAD(v,n) \
-    ARRAY_AT(VAL_ARRAY(v), (n))
+    ARR_AT(VAL_ARRAY(v), (n))
 
 #define VAL_TERM_ARRAY(v)       TERM_ARRAY(VAL_ARRAY(v))
 
 #define Val_Init_Array_Index(v,t,a,i) \
-    Val_Init_Series_Index((v), (t), ARRAY_SERIES(a), (i))
+    Val_Init_Series_Index((v), (t), ARR_SERIES(a), (i))
 
 #define Val_Init_Array(v,t,a) \
     Val_Init_Array_Index((v), (t), (a), 0)
@@ -1220,16 +1232,16 @@ struct Reb_Any_Series
 **
 ***********************************************************************/
 
-#define QUAD_LEN(s)         SERIES_LEN(s)
+#define QUAD_LEN(s)         SER_LEN(s)
 
-#define QUAD_HEAD(s)        SERIES_DATA_RAW(s)
+#define QUAD_HEAD(s)        SER_DATA_RAW(s)
 #define QUAD_SKIP(s,n)      (QUAD_HEAD(s) + ((n) * 4))
 #define QUAD_TAIL(s)        (QUAD_HEAD(s) + (QUAD_LEN(s) * 4))
 
 #define IMG_SIZE(s)         ((s)->misc.size)
 #define IMG_WIDE(s)         ((s)->misc.area.wide)
 #define IMG_HIGH(s)         ((s)->misc.area.high)
-#define IMG_DATA(s)         SERIES_DATA_RAW(s)
+#define IMG_DATA(s)         SER_DATA_RAW(s)
 
 #define VAL_IMAGE_HEAD(v)   QUAD_HEAD(VAL_SERIES(v))
 #define VAL_IMAGE_TAIL(v)   QUAD_SKIP(VAL_SERIES(v), VAL_LEN_HEAD(v))
@@ -1291,18 +1303,18 @@ struct Reb_Symbol {
 
 // Return the CANON value for a symbol number:
 #define SYMBOL_TO_CANON(sym) \
-    VAL_SYM_CANON(ARRAY_AT(PG_Word_Table.array, sym))
+    VAL_SYM_CANON(ARR_AT(PG_Word_Table.array, sym))
 
 // Return the CANON value for a word value:
 #define WORD_TO_CANON(w) \
-    VAL_SYM_CANON(ARRAY_AT(PG_Word_Table.array, VAL_WORD_SYM(w)))
+    VAL_SYM_CANON(ARR_AT(PG_Word_Table.array, VAL_WORD_SYM(w)))
 
 // Is it the same symbol? Quick check, then canon check:
 #define SAME_SYM(s1,s2) \
     ((s1) == (s2) \
     || ( \
-        VAL_SYM_CANON(ARRAY_AT(PG_Word_Table.array, (s1))) \
-        == VAL_SYM_CANON(ARRAY_AT(PG_Word_Table.array, (s2))) \
+        VAL_SYM_CANON(ARR_AT(PG_Word_Table.array, (s1))) \
+        == VAL_SYM_CANON(ARR_AT(PG_Word_Table.array, (s2))) \
     ))
 
 
@@ -1346,7 +1358,7 @@ struct Reb_Any_Word {
     // walked to find the required frame.
     //
     union {
-        REBCON *specific; // for WORD_FLAG_BOUND_SPECIFIC
+        REBCTX *specific; // for WORD_FLAG_BOUND_SPECIFIC
         REBFUN *relative; // for WORD_FLAG_BOUND_RELATIVE
     } binding;
 
@@ -1355,7 +1367,7 @@ struct Reb_Any_Word {
     // !!! Intended logic is that if the index is positive, then the word
     // is looked for in the context's pooled memory data pointer.  If the
     // index is negative or 0, then it's assumed to be a stack variable,
-    // and looked up in the CONTEXT_STACKVARS data.
+    // and looked up in the CTX_STACKVARS data.
     //
     // But or now there are no examples of contexts which have both pooled
     // and stack memory, and the general issue of mapping the numbers has
@@ -1371,7 +1383,7 @@ struct Reb_Any_Word {
     // pointer and garbage collected, likely as series nodes.  A full pointer
     // sized value is required here.
     //
-    REBCNT sym;
+    REBSYM sym;
 };
 
 #define IS_WORD_BOUND(v) \
@@ -1397,7 +1409,7 @@ struct Reb_Any_Word {
 #define INIT_WORD_INDEX(v,i) \
     (assert(GET_VAL_FLAG((v), WORD_FLAG_BOUND_SPECIFIC) \
         ? (i) >= 1 && SAME_SYM( \
-            VAL_WORD_SYM(v), CONTEXT_KEY_SYM(VAL_WORD_CONTEXT(v), (i)) \
+            VAL_WORD_SYM(v), CTX_KEY_SYM(VAL_WORD_CONTEXT(v), (i)) \
         ) : (i) >= 1), \
         (v)->payload.any_word.index = (i))
 
@@ -1414,8 +1426,8 @@ struct Reb_Any_Word {
 #define INIT_WORD_SPECIFIC(v,context) \
     (assert(GET_VAL_FLAG((v), WORD_FLAG_BOUND_SPECIFIC) \
         && !GET_VAL_FLAG((v), WORD_FLAG_BOUND_RELATIVE)), \
-        ENSURE_SERIES_MANAGED(CONTEXT_SERIES(context)), \
-        assert(ARRAY_GET_FLAG(CONTEXT_KEYLIST(context), OPT_SER_MANAGED)), \
+        ENSURE_SERIES_MANAGED(CTX_SERIES(context)), \
+        assert(GET_ARR_FLAG(CTX_KEYLIST(context), SERIES_FLAG_MANAGED)), \
         (v)->payload.any_word.binding.specific = (context))
 
 #define INIT_WORD_RELATIVE(v,func) \
@@ -1438,10 +1450,10 @@ struct Reb_Any_Word {
 #endif
 
 #define VAL_WORD_CANON(v) \
-    VAL_SYM_CANON(ARRAY_AT(PG_Word_Table.array, VAL_WORD_SYM(v)))
+    VAL_SYM_CANON(ARR_AT(PG_Word_Table.array, VAL_WORD_SYM(v)))
 
 #define VAL_WORD_NAME(v) \
-    VAL_SYM_NAME(ARRAY_AT(PG_Word_Table.array, VAL_WORD_SYM(v)))
+    VAL_SYM_NAME(ARR_AT(PG_Word_Table.array, VAL_WORD_SYM(v)))
 
 #define VAL_WORD_NAME_STR(v)    BIN_HEAD(VAL_WORD_NAME(v))
 
@@ -1516,11 +1528,23 @@ enum {
     // solution to separate the property of bindability from visibility, as
     // the SELF solution shakes out--so that SELF may be hidden but bind.
     //
-    TYPESET_FLAG_UNBINDABLE = (1 << (TYPE_SPECIFIC_BIT + 5)) | TYPESET_FLAG
+    TYPESET_FLAG_UNBINDABLE = (1 << (TYPE_SPECIFIC_BIT + 5)) | TYPESET_FLAG,
+
+    // !!! <durable> is the working name for the property of a function
+    // argument or local to have its data survive after the call is over.
+    // Much of the groundwork has been laid to allow this to be specified
+    // individually for each argument, but the feature currently is "all
+    // or nothing"--and implementation-wise corresponds to what R3-Alpha
+    // called CLOSURE!, with the deep-copy-per-call that entails.
+    //
+    // Hence if this property is applied, it will be applied to *all* of
+    // a function's arguments.
+    //
+    TYPESET_FLAG_DURABLE = (1 << (TYPE_SPECIFIC_BIT + 6)) | TYPESET_FLAG
 };
 
 struct Reb_Typeset {
-    REBCNT sym;         // Symbol (if a key of object or function param)
+    REBSYM sym;         // Symbol (if a key of object or function param)
 
     // Note: `sym` is first so that the value's 32-bit Reb_Flags header plus
     // the 32-bit REBCNT will pad `bits` to a REBU64 alignment boundary
@@ -1554,14 +1578,14 @@ struct Reb_Typeset {
 #endif
 
 #define VAL_TYPESET_CANON(v) \
-    VAL_SYM_CANON(ARRAY_AT(PG_Word_Table.array, VAL_TYPESET_SYM(v)))
+    VAL_SYM_CANON(ARR_AT(PG_Word_Table.array, VAL_TYPESET_SYM(v)))
 
 // Word number array (used by Bind_Table):
 #define WORDS_HEAD(w) \
-    SERIES_HEAD(REBINT, (w))
+    SER_HEAD(REBINT, (w))
 
 #define WORDS_LAST(w) \
-    (WORDS_HEAD(w) + SERIES_LEN(w) - 1) // (tail never zero)
+    (WORDS_HEAD(w) + SER_LEN(w) - 1) // (tail never zero)
 
 // Useful variation of FLAGIT_64 for marking a type, as they now involve
 // shifting and possible abstraction vs. simply being 0..63
@@ -1576,7 +1600,7 @@ struct Reb_Typeset {
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // The Reb_Any_Context is the basic struct used currently for OBJECT!,
-// MODULE!, ERROR!, and PORT!.  It builds upon the context datatype REBCON,
+// MODULE!, ERROR!, and PORT!.  It builds upon the context datatype REBCTX,
 // which permits the storage of associated KEYS and VARS.  (See the comments
 // on `struct Reb_Context` that are in %sys-series.h).
 //
@@ -1605,11 +1629,11 @@ struct Reb_Typeset {
 //
 
 struct Reb_Any_Context {
-    REBCON *context;
+    REBCTX *context;
     REBVAL *stackvars;
 
     union {
-        REBCON *spec; // used by REB_MODULE
+        REBCTX *spec; // used by REB_MODULE
         REBFUN *func; // used by REB_FRAME
     } more;
 };
@@ -1632,9 +1656,9 @@ struct Reb_Any_Context {
 
 // Convenience macros to speak in terms of object values instead of the context
 //
-#define VAL_CONTEXT_VAR(v,n)        CONTEXT_VAR(VAL_CONTEXT(v), (n))
-#define VAL_CONTEXT_KEY(v,n)        CONTEXT_KEY(VAL_CONTEXT(v), (n))
-#define VAL_CONTEXT_KEY_SYM(v,n)    CONTEXT_KEY_SYM(VAL_CONTEXT(v), (n))
+#define VAL_CONTEXT_VAR(v,n)        CTX_VAR(VAL_CONTEXT(v), (n))
+#define VAL_CONTEXT_KEY(v,n)        CTX_KEY(VAL_CONTEXT(v), (n))
+#define VAL_CONTEXT_KEY_SYM(v,n)    CTX_KEY_SYM(VAL_CONTEXT(v), (n))
 
 // The movement of the SELF word into the domain of the object generators
 // means that an object may wind up having a hidden SELF key (and it may not).
@@ -1702,7 +1726,7 @@ struct Reb_Any_Context {
 // `fail()` C macro inside the source, and the various routines in %c-error.c
 //
 
-#define ERR_VALUES(e)   cast(ERROR_OBJ*, ARRAY_HEAD(CONTEXT_VARLIST(e)))
+#define ERR_VALUES(e)   cast(ERROR_OBJ*, ARR_HEAD(CTX_VARLIST(e)))
 #define ERR_NUM(e)      cast(REBCNT, VAL_INT32(&ERR_VALUES(e)->code))
 
 #define VAL_ERR_VALUES(v)   ERR_VALUES(VAL_CONTEXT(v))
@@ -1732,9 +1756,10 @@ enum {
     //
     FUNC_FLAG_INFIX = (1 << (TYPE_SPECIFIC_BIT + 0)) | FUNC_FLAG,
 
-    // function "fakes" a definitionally scoped return
+    // function "fakes" a definitionally scoped return (or a "LEAVE"...which
+    // word is determined by the symbol of the *last* parameter)
     //
-    FUNC_FLAG_HAS_RETURN = (1 << (TYPE_SPECIFIC_BIT + 1)) | FUNC_FLAG,
+    FUNC_FLAG_LEAVE_OR_RETURN = (1 << (TYPE_SPECIFIC_BIT + 1)) | FUNC_FLAG,
 
     // native hooks into DO state and does own arg eval
     //
@@ -1797,7 +1822,7 @@ typedef REB_R (*REBACT)(struct Reb_Call *call_, REBCNT a);
     REB_R T_##n(struct Reb_Call *call_, REBCNT action)
 
 // PORT!-action function
-typedef REB_R (*REBPAF)(struct Reb_Call *call_, REBCON *p, REBCNT a);
+typedef REB_R (*REBPAF)(struct Reb_Call *call_, REBCTX *p, REBCNT a);
 
 // COMMAND! function
 typedef REB_R (*CMD_FUNC)(REBCNT n, REBSER *args);
@@ -1844,20 +1869,30 @@ struct Reb_Any_Function {
 #define VAL_FUNC_ACT(v)       ((v)->payload.any_function.impl.act)
 #define VAL_FUNC_INFO(v)      ((v)->payload.any_function.impl.info)
 
-// FUNC_FLAG_HAS_RETURN functions use the RETURN native's function value to give
-// the definitional return its prototype, but overwrite its code pointer to
-// hold the paramlist of the target.
+// FUNC_FLAG_LEAVE_OR_RETURN functions use RETURN or LEAVE native's function
+// value to give the definitional return its prototype, but overwrite its
+// code pointer to hold the paramlist of the target.
 //
 // Do_Native_Throws() sees when someone tries to execute one of these "native
 // returns"...and instead interprets it as a THROW whose /NAME is the function
-// value.  The paramlist has that value (it's the REBVAL in slot #0)
+// value.  The paramlist has that value (it's the REBVAL in slot #0)  In this
+// way the illusion of a "new function being created on each call" is given.
 //
 // This is a special case: the body value of the hacked REBVAL of the return
 // is allowed to be inconsistent with the content of the ROOT_RETURN_NATIVE's
 // actual FUNC.  (In the general case, the [0] element of the FUNC must be
 // consistent with the fields of the value holding it.)
 //
-#define VAL_FUNC_RETURN_FROM(v) VAL_FUNC_BODY(v)
+#define VAL_FUNC_EXIT_FROM(v) VAL_FUNC_BODY(v)
+
+// !!! At the moment functions are "all durable" or "none durable" w.r.t. the
+// survival of their arguments and locals after the call.  This corresponds
+// to the CLOSURE! and FUNCTION! distinction for the moment, and brings
+// about two things: specific binding *and* durability.
+//
+#define IS_FUNC_DURABLE(f) \
+    LOGICAL(VAL_FUNC_NUM_PARAMS(f) != 0 \
+        && GET_VAL_FLAG(VAL_FUNC_PARAM((f), 1), TYPESET_FLAG_DURABLE))
 
 
 /***********************************************************************
@@ -2013,7 +2048,7 @@ enum {
 #define ROUTINE_FFI_ARG_STRUCTS(v)  (ROUTINE_INFO(v)->arg_structs)
 #define ROUTINE_EXTRA_MEM(v)        (ROUTINE_INFO(v)->extra_mem)
 #define ROUTINE_CIF(v)              (ROUTINE_INFO(v)->cif)
-#define ROUTINE_RVALUE(v)           VAL_STRUCT(ARRAY_HEAD(ROUTINE_FFI_ARG_STRUCTS(v)))
+#define ROUTINE_RVALUE(v)           VAL_STRUCT(ARR_HEAD(ROUTINE_FFI_ARG_STRUCTS(v)))
 #define ROUTINE_CLOSURE(v)          (ROUTINE_INFO(v)->info.cb.closure)
 #define ROUTINE_DISPATCHER(v)       (ROUTINE_INFO(v)->info.cb.dispatcher)
 #define CALLBACK_FUNC(v)            (ROUTINE_INFO(v)->info.cb.func)
@@ -2025,7 +2060,7 @@ enum {
 #define RIN_CLOSURE(v)              ((v)->info.cb.closure)
 #define RIN_FUNC(v)                 ((v)->info.cb.func)
 #define RIN_ARGS_STRUCTS(v)         ((v)->arg_structs)
-#define RIN_RVALUE(v)               VAL_STRUCT(ARRAY_HEAD(RIN_ARGS_STRUCTS(v)))
+#define RIN_RVALUE(v)               VAL_STRUCT(ARR_HEAD(RIN_ARGS_STRUCTS(v)))
 
 #define ROUTINE_FLAGS(s)       ((s)->flags)
 #define ROUTINE_SET_FLAG(s, f) (ROUTINE_FLAGS(s) |= (f))
@@ -2050,7 +2085,7 @@ enum {
 #define VAL_ROUTINE_CIF(v)          (VAL_ROUTINE_INFO(v)->cif)
 
 #define VAL_ROUTINE_RVALUE(v) \
-    VAL_STRUCT(ARRAY_HEAD(VAL_ROUTINE_INFO(v)->arg_structs))
+    VAL_STRUCT(ARR_HEAD(VAL_ROUTINE_INFO(v)->arg_structs))
 
 #define VAL_ROUTINE_CLOSURE(v)      (VAL_ROUTINE_INFO(v)->info.cb.closure)
 #define VAL_ROUTINE_DISPATCHER(v)   (VAL_ROUTINE_INFO(v)->info.cb.dispatcher)

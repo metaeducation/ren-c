@@ -53,8 +53,8 @@ REBINT Compare_Binary_Vals(const REBVAL *v1, const REBVAL *v2)
     // that asserts BYTE_SIZE().
     //
     n = memcmp(
-        SERIES_AT_RAW(VAL_SERIES(v1), VAL_INDEX(v1)),
-        SERIES_AT_RAW(VAL_SERIES(v2), VAL_INDEX(v2)),
+        SER_AT_RAW(VAL_SERIES(v1), VAL_INDEX(v1)),
+        SER_AT_RAW(VAL_SERIES(v2), VAL_INDEX(v2)),
         len
     );
 
@@ -116,7 +116,7 @@ const REBYTE *Match_Bytes(const REBYTE *src, const REBYTE *pat)
 //
 REBOOL Match_Sub_Path(REBSER *s1, REBSER *s2)
 {
-    REBCNT len = SERIES_LEN(s1);
+    REBCNT len = SER_LEN(s1);
     REBCNT n;
     REBUNI c1 = 0;
     REBUNI c2;
@@ -125,7 +125,7 @@ REBOOL Match_Sub_Path(REBSER *s1, REBSER *s2)
 //  Debug_Series(s2);
 
     // s1 len must be <= s2 len
-    if (len > SERIES_LEN(s2)) return FALSE;
+    if (len > SER_LEN(s2)) return FALSE;
 
     for (n = 0; n < len; n++) { // includes terminator
 
@@ -317,10 +317,10 @@ REBCNT Find_Byte_Str(REBSER *series, REBCNT index, REBYTE *b2, REBCNT l2, REBOOL
     REBCNT n;
 
     // The pattern empty or is longer than the target:
-    if (l2 == 0 || (l2 + index) > SERIES_LEN(series)) return NOT_FOUND;
+    if (l2 == 0 || (l2 + index) > SER_LEN(series)) return NOT_FOUND;
 
     b1 = BIN_AT(series, index);
-    l1 = SERIES_LEN(series) - index;
+    l1 = SER_LEN(series) - index;
 
     e1 = b1 + (match ? 1 : l1 - (l2 - 1));
 
@@ -477,7 +477,7 @@ REBCNT Find_Str_Char(
     REBSER *series,     // series with width sizeof(REBYTE) or sizeof(REBUNI)
     REBCNT lowest,      // lowest return index
     REBCNT index_orig,  // first index to examine (if out of range, NOT_FOUND)
-    REBCNT highest,     // *one past* highest return result (e.g. SERIES_LEN)
+    REBCNT highest,     // *one past* highest return result (e.g. SER_LEN)
     REBINT skip,        // step amount while searching, can be negative!
     REBFLGS flags       // AM_FIND_CASE, AM_FIND_MATCH
 ) {
@@ -503,9 +503,9 @@ REBCNT Find_Str_Char(
         casings[1] = uni < UNICODE_CASES ? UP_CASE(uni) : uni;
     }
 
-    assert(lowest <= SERIES_LEN(series));
-    assert(index_orig <= SERIES_LEN(series));
-    assert(highest <= SERIES_LEN(series));
+    assert(lowest <= SER_LEN(series));
+    assert(index_orig <= SER_LEN(series));
+    assert(highest <= SER_LEN(series));
 
     // !!! Would skip = 0 be a clearer expression of /MATCH, as in "there
     // is no skip count"?  Perhaps in the interface as /SKIP NONE and then
@@ -599,7 +599,7 @@ REBCNT Find_Str_Char(
             //
             if (
                 skip == 1
-                && (SERIES_LEN(series) - highest) < ((highest - lowest) / 2)
+                && (SER_LEN(series) - highest) < ((highest - lowest) / 2)
                 && uni != '\0'
             ) {
                 // The `strcspn()` optimized routine can be used to check for

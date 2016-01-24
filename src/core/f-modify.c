@@ -44,7 +44,7 @@ REBCNT Modify_Array(
     REBINT dst_len,         // length to remove
     REBINT dups             // dup count
 ) {
-    REBCNT tail = ARRAY_LEN(dst_arr);
+    REBCNT tail = ARR_LEN(dst_arr);
 
     REBINT ilen = 1; // length to be inserted
 
@@ -77,7 +77,7 @@ REBCNT Modify_Array(
             REBARR *copy = Copy_Array_At_Shallow(
                 VAL_ARRAY(src_val), VAL_INDEX(src_val)
             );
-            src_val = ARRAY_HEAD(copy);
+            src_val = ARR_HEAD(copy);
         }
         else
             src_val = VAL_ARRAY_AT(src_val); // skips by VAL_INDEX values
@@ -88,15 +88,15 @@ REBCNT Modify_Array(
 
     if (action != A_CHANGE) {
         // Always expand dst_arr for INSERT and APPEND actions:
-        Expand_Series(ARRAY_SERIES(dst_arr), dst_idx, size);
+        Expand_Series(ARR_SERIES(dst_arr), dst_idx, size);
     }
     else {
         if (size > dst_len)
-            Expand_Series(ARRAY_SERIES(dst_arr), dst_idx, size-dst_len);
+            Expand_Series(ARR_SERIES(dst_arr), dst_idx, size-dst_len);
         else if (size < dst_len && GET_FLAG(flags, AN_PART))
-            Remove_Series(ARRAY_SERIES(dst_arr), dst_idx, dst_len-size);
+            Remove_Series(ARR_SERIES(dst_arr), dst_idx, dst_len-size);
         else if (size + dst_idx > tail) {
-            EXPAND_SERIES_TAIL(ARRAY_SERIES(dst_arr), size - (tail - dst_idx));
+            EXPAND_SERIES_TAIL(ARR_SERIES(dst_arr), size - (tail - dst_idx));
         }
     }
 
@@ -104,13 +104,13 @@ REBCNT Modify_Array(
 
 #if !defined(NDEBUG)
     for (index = 0; index < ilen; index++) {
-        if (ARRAY_GET_FLAG(dst_arr, OPT_SER_MANAGED))
+        if (GET_ARR_FLAG(dst_arr, SERIES_FLAG_MANAGED))
             ASSERT_VALUE_MANAGED(&src_val[index]);
     }
 #endif
 
     for (; dups > 0; dups--) {
-        memcpy(ARRAY_HEAD(dst_arr) + dst_idx, src_val, ilen * sizeof(REBVAL));
+        memcpy(ARR_HEAD(dst_arr) + dst_idx, src_val, ilen * sizeof(REBVAL));
         dst_idx += ilen;
     }
     TERM_ARRAY(dst_arr);
@@ -136,7 +136,7 @@ REBCNT Modify_String(
     REBSER *src_ser = 0;
     REBCNT src_idx = 0;
     REBCNT src_len;
-    REBCNT tail  = SERIES_LEN(dst_ser);
+    REBCNT tail  = SER_LEN(dst_ser);
     REBINT size;        // total to insert
     REBOOL needs_free;
     REBINT limit;
@@ -203,7 +203,7 @@ REBCNT Modify_String(
 
     // Use either new src or the one that was passed:
     if (src_ser) {
-        src_len = SERIES_LEN(src_ser);
+        src_len = SER_LEN(src_ser);
     }
     else {
         src_ser = VAL_SERIES(src_val);

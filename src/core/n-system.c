@@ -312,7 +312,7 @@ REBNATIVE(evoke)
 //
 REBNATIVE(limit_usage)
 {
-    REBCNT sym;
+    REBSYM sym;
 
     sym = VAL_WORD_CANON(D_ARG(1));
 
@@ -376,8 +376,8 @@ REBARR *Where_For_Call(struct Reb_Call *call)
 
     // WARNING: MIN is a C macro and repeats its arguments.
     //
-    start = MIN(ARRAY_LEN(DSF_ARRAY(call)), cast(REBCNT, call->expr_index));
-    end = MIN(ARRAY_LEN(DSF_ARRAY(call)), DSF_INDEX(call));
+    start = MIN(ARR_LEN(DSF_ARRAY(call)), cast(REBCNT, call->expr_index));
+    end = MIN(ARR_LEN(DSF_ARRAY(call)), DSF_INDEX(call));
 
     assert(end >= start);
     assert(call->mode != CALL_MODE_GUARD_ARRAY_ONLY);
@@ -403,11 +403,11 @@ REBARR *Where_For_Call(struct Reb_Call *call)
         // If the execution were a path or anything other than a word, this
         // will lose it.
         //
-        Val_Init_Word(ARRAY_AT(where, n), REB_WORD, call->label_sym);
+        Val_Init_Word(ARR_AT(where, n), REB_WORD, call->label_sym);
         ++n;
 
         for (n = 1; n < len; ++n)
-            *ARRAY_AT(where, n) = *ARRAY_AT(DSF_ARRAY(call), start + n - 1);
+            *ARR_AT(where, n) = *ARR_AT(DSF_ARRAY(call), start + n - 1);
 
         SET_ARRAY_LEN(where, len);
         TERM_ARRAY(where);
@@ -418,7 +418,7 @@ REBARR *Where_For_Call(struct Reb_Call *call)
     // that would visually disrupt the backtrace for no reason.
     //
     if (end - start > 0)
-        CLEAR_VAL_FLAG(ARRAY_HEAD(where), VALUE_FLAG_LINE);
+        CLEAR_VAL_FLAG(ARR_HEAD(where), VALUE_FLAG_LINE);
 
     // We add an ellipsis to a pending frame to make it a little bit
     // clearer what is going on.  If someone sees a where that looks
@@ -715,7 +715,7 @@ REBNATIVE(backtrace)
                 // If there's more stack levels to be shown than we were asked
                 // to show, then put an `+ ...` in the list and break.
                 //
-                temp = ARRAY_AT(backtrace, --index);
+                temp = ARR_AT(backtrace, --index);
                 Val_Init_Word(temp, REB_WORD, SYM_PLUS);
                 if (!REF(brief)) {
                     //
@@ -726,7 +726,7 @@ REBNATIVE(backtrace)
                     //
                     // !!! Review arbitrary symbolic choices.
                     //
-                    temp = ARRAY_AT(backtrace, --index);
+                    temp = ARR_AT(backtrace, --index);
                     Val_Init_Word(temp, REB_WORD, SYM_ASTERISK);
                     SET_VAL_FLAG(temp, VALUE_FLAG_LINE); // put on own line
                 }
@@ -752,7 +752,7 @@ REBNATIVE(backtrace)
         // !!! Should /BRIEF omit pending frames?  Should it have a less
         // "loaded" name for the refinement?
         //
-        temp = ARRAY_AT(backtrace, --index);
+        temp = ARR_AT(backtrace, --index);
         if (REF(brief)) {
             Val_Init_Word(temp, REB_WORD, DSF_LABEL_SYM(call));
             continue;
@@ -768,7 +768,7 @@ REBNATIVE(backtrace)
         // add it after the props so it will show up before, and give it
         // the newline break marker.
         //
-        temp = ARRAY_AT(backtrace, --index);
+        temp = ARR_AT(backtrace, --index);
         if (pending) {
             //
             // You cannot (or should not) switch to inspect a pending frame,
@@ -997,7 +997,7 @@ REBOOL Do_Breakpoint_Throws(
     //
     while (TRUE) {
         struct Reb_State state;
-        REBCON *error;
+        REBCTX *error;
 
     push_trap:
         PUSH_TRAP(&error, &state);
@@ -1021,7 +1021,7 @@ REBOOL Do_Breakpoint_Throws(
 
             Val_Init_Error(&error_value, error);
             PROBE_MSG(&error_value, "Error not trapped during breakpoint:");
-            Panic_Array(CONTEXT_VARLIST(error));
+            Panic_Array(CTX_VARLIST(error));
         #endif
 
             // In release builds, if an error managed to leak out of the
@@ -1100,8 +1100,8 @@ REBOOL Do_Breakpoint_Throws(
                         return TRUE; // TRUE = thrown
                     }
 
-                    if (IS_OBJECT(target)) {
-                        if (VAL_TYPE(FUNC_VALUE(call->func)) != REB_CLOSURE)
+                    if (IS_FRAME(target)) {
+                        if (NOT(call->flags & DO_FLAG_FRAME_CONTEXT))
                             continue;
                         if (
                             VAL_CONTEXT(target)
@@ -1118,7 +1118,7 @@ REBOOL Do_Breakpoint_Throws(
                     }
                     else {
                         assert(ANY_FUNC(target));
-                        if (VAL_TYPE(FUNC_VALUE(call->func)) == REB_CLOSURE)
+                        if (call->flags & DO_FLAG_FRAME_CONTEXT)
                             continue;
                         if (VAL_FUNC(target) == call->func) {
                             //
@@ -1343,15 +1343,15 @@ REBNATIVE(resume)
     instruction = Make_Array(RESUME_INST_MAX);
 
     if (REF(with)) {
-        SET_FALSE(ARRAY_AT(instruction, RESUME_INST_MODE)); // don't DO value
-        *ARRAY_AT(instruction, RESUME_INST_PAYLOAD) = *ARG(value);
+        SET_FALSE(ARR_AT(instruction, RESUME_INST_MODE)); // don't DO value
+        *ARR_AT(instruction, RESUME_INST_PAYLOAD) = *ARG(value);
     }
     else if (REF(do)) {
-        SET_TRUE(ARRAY_AT(instruction, RESUME_INST_MODE)); // DO the value
-        *ARRAY_AT(instruction, RESUME_INST_PAYLOAD) = *ARG(code);
+        SET_TRUE(ARR_AT(instruction, RESUME_INST_MODE)); // DO the value
+        *ARR_AT(instruction, RESUME_INST_PAYLOAD) = *ARG(code);
     }
     else
-        SET_NONE(ARRAY_AT(instruction, RESUME_INST_MODE)); // use default
+        SET_NONE(ARR_AT(instruction, RESUME_INST_MODE)); // use default
 
     if (REF(at)) {
         //
@@ -1372,7 +1372,7 @@ REBNATIVE(resume)
             // identified by its frame, as it is a unique object.
             //
             Val_Init_Object(
-                ARRAY_AT(instruction, RESUME_INST_TARGET),
+                ARR_AT(instruction, RESUME_INST_TARGET),
                 AS_CONTEXT(target->frame.context)
             );
         }
@@ -1381,14 +1381,14 @@ REBNATIVE(resume)
             // non-CLOSURE!s and their present inability to target arbitrary
             // frames.
             //
-            *ARRAY_AT(instruction, RESUME_INST_TARGET)
+            *ARR_AT(instruction, RESUME_INST_TARGET)
                 = *FUNC_VALUE(target->func);
         }
     }
     else {
         // We just want BREAKPOINT itself to return, indicated by NONE target.
         //
-        SET_NONE(ARRAY_AT(instruction, RESUME_INST_TARGET));
+        SET_NONE(ARR_AT(instruction, RESUME_INST_TARGET));
     }
 
     SET_ARRAY_LEN(instruction, RESUME_INST_MAX);
@@ -1446,14 +1446,12 @@ REBNATIVE(check)
     else if (ANY_FUNC(value)) {
         ASSERT_ARRAY(VAL_FUNC_SPEC(value));
         ASSERT_ARRAY(VAL_FUNC_PARAMLIST(value));
-        if (IS_FUNCTION(value) || IS_CLOSURE(value)) {
+        if (IS_FUNCTION(value))
             ASSERT_ARRAY(VAL_FUNC_BODY(value));
-        }
     }
 
     return R_TRUE;
 #endif
-
 }
 
 
@@ -1499,7 +1497,7 @@ REBNATIVE(do_codec)
             codi.has_alpha = Image_Has_Alpha(val, FALSE) ? 1 : 0;
         }
         else if (IS_STRING(val)) {
-            codi.w = SERIES_WIDE(VAL_SERIES(val));
+            codi.w = SER_WIDE(VAL_SERIES(val));
             codi.len = VAL_LEN_AT(val);
             codi.extra.other = VAL_BIN_AT(val);
         }

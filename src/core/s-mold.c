@@ -79,7 +79,7 @@ REBSER *Emit(REB_MOLD *mold, const char *fmt, ...)
     REBYTE ender = 0;
     REBSER *series = mold->series;
 
-    assert(SERIES_WIDE(series) == 2);
+    assert(SER_WIDE(series) == 2);
 
     va_start(varargs, fmt);
 
@@ -104,7 +104,7 @@ REBSER *Emit(REB_MOLD *mold, const char *fmt, ...)
         case 'E': {  // Series (byte or uni)
             REBSER *src = va_arg(varargs, REBSER*);
             Insert_String(
-                series, SERIES_LEN(series), src, 0, SERIES_LEN(src), FALSE
+                series, SER_LEN(series), src, 0, SER_LEN(src), FALSE
             );
             break;
         }
@@ -174,7 +174,7 @@ REBSER *Prep_String(REBSER *series, REBYTE **str, REBCNT len)
         //
         assert(BYTE_SIZE(series));
 
-        tail = SERIES_LEN(series);
+        tail = SER_LEN(series);
         EXPAND_SERIES_TAIL(series, len);
         *str = BIN_AT(series, tail);
     }
@@ -187,7 +187,7 @@ REBSER *Prep_String(REBSER *series, REBYTE **str, REBCNT len)
 //
 REBUNI *Prep_Uni_Series(REB_MOLD *mold, REBCNT len)
 {
-    REBCNT tail = SERIES_LEN(mold->series);
+    REBCNT tail = SER_LEN(mold->series);
 
     EXPAND_SERIES_TAIL(mold->series, len);
 
@@ -252,7 +252,7 @@ void New_Indented_Line(REB_MOLD *mold)
     REBUNI *cp = 0;
 
     // Check output string has content already but no terminator:
-    if (SERIES_LEN(mold->series)) {
+    if (SER_LEN(mold->series)) {
         cp = UNI_LAST(mold->series);
         if (*cp == ' ' || *cp == '\t') *cp = '\n';
         else cp = 0;
@@ -292,12 +292,12 @@ typedef struct REB_Str_Flags {
 static void Sniff_String(REBSER *ser, REBCNT idx, REB_STRF *sf)
 {
     // Scan to find out what special chars the string contains?
-    REBYTE *bp = SERIES_DATA_RAW(ser);
+    REBYTE *bp = SER_DATA_RAW(ser);
     REBUNI *up = cast(REBUNI*, bp);
     REBUNI c;
     REBCNT n;
 
-    for (n = idx; n < SERIES_LEN(ser); n++) {
+    for (n = idx; n < SER_LEN(ser); n++) {
         c = BYTE_SIZE(ser) ? cast(REBUNI, bp[n]) : up[n];
         switch (c) {
         case '{':
@@ -347,7 +347,7 @@ static REBUNI *Emit_Uni_Char(REBUNI *up, REBUNI chr, REBOOL parened)
 
 static void Mold_Uni_Char(REBSER *dst, REBUNI chr, REBOOL molded, REBOOL parened)
 {
-    REBCNT tail = SERIES_LEN(dst);
+    REBCNT tail = SER_LEN(dst);
     REBUNI *up;
 
     if (!molded) {
@@ -512,7 +512,7 @@ static void Mold_Tag(const REBVAL *value, REB_MOLD *mold)
     Append_Codepoint_Raw(mold->series, '<');
     Insert_String(
         mold->series,
-        SERIES_LEN(mold->series), // "insert" at tail (append)
+        SER_LEN(mold->series), // "insert" at tail (append)
         VAL_SERIES(value),
         VAL_INDEX(value),
         VAL_LEN_AT(value),
@@ -585,7 +585,7 @@ static void Mold_Array_At(
     REBSER *out = mold->series;
     REBOOL line_flag = FALSE; // newline was part of block
     REBOOL had_lines = FALSE;
-    REBVAL *value = ARRAY_AT(array, index);
+    REBVAL *value = ARR_AT(array, index);
 
     if (!sep) sep = "[]";
 
@@ -615,7 +615,7 @@ static void Mold_Array_At(
     }
 //  else out->tail--;  // why?????
 
-    value = ARRAY_AT(array, index);
+    value = ARR_AT(array, index);
     while (NOT_END(value)) {
         if (GET_VAL_FLAG(value, VALUE_FLAG_LINE)) {
             if (sep[1] || line_flag) New_Indented_Line(mold);
@@ -647,7 +647,7 @@ static void Mold_Block(const REBVAL *value, REB_MOLD *mold)
     REBOOL over = FALSE;
 
 #if !defined(NDEBUG)
-    if (SERIES_WIDE(VAL_SERIES(value)) == 0) {
+    if (SER_WIDE(VAL_SERIES(value)) == 0) {
         Debug_Fmt("** Mold_Block() zero series wide, t=%d", VAL_TYPE(value));
         Panic_Series(VAL_SERIES(value));
     }
@@ -716,17 +716,17 @@ static void Mold_Simple_Block(REB_MOLD *mold, REBVAL *block, REBCNT len)
 {
     // Simple molder for error locations. Series must be valid.
     // Max length in chars must be provided.
-    REBCNT start = SERIES_LEN(mold->series);
+    REBCNT start = SER_LEN(mold->series);
 
     while (NOT_END(block)) {
-        if ((SERIES_LEN(mold->series) - start) > len) break;
+        if ((SER_LEN(mold->series) - start) > len) break;
         Mold_Value(mold, block, TRUE);
         block++;
         if (NOT_END(block)) Append_Codepoint_Raw(mold->series, ' ');
     }
 
     // If it's too large, truncate it:
-    if ((SERIES_LEN(mold->series) - start) > len) {
+    if ((SER_LEN(mold->series) - start) > len) {
         SET_SERIES_LEN(mold->series, start + len);
         Append_Unencoded(mold->series, "...");
     }
@@ -737,18 +737,18 @@ static void Form_Array_At(
     REBARR *array,
     REBCNT index,
     REB_MOLD *mold,
-    REBCON *context
+    REBCTX *context
 ) {
     // Form a series (part_mold means mold non-string values):
     REBINT n;
-    REBINT len = ARRAY_LEN(array) - index;
+    REBINT len = ARR_LEN(array) - index;
     REBVAL *val;
     REBVAL *wval;
 
     if (len < 0) len = 0;
 
     for (n = 0; n < len;) {
-        val = ARRAY_AT(array, index + n);
+        val = ARR_AT(array, index + n);
         wval = 0;
         if (context && (IS_WORD(val) || IS_GET_WORD(val))) {
             wval = Find_Word_Value(context, VAL_WORD_SYM(val));
@@ -761,7 +761,7 @@ static void Form_Array_At(
         }
         else {
             // Add a space if needed:
-            if (n < len && SERIES_LEN(mold->series)
+            if (n < len && SER_LEN(mold->series)
                 && *UNI_LAST(mold->series) != LF
                 && !GET_MOPT(mold, MOPT_TIGHT)
             )
@@ -840,7 +840,7 @@ static void Mold_Function(const REBVAL *value, REB_MOLD *mold)
     /* "& ~(1<<MOPT_MOLD_ALL)); // Never literalize it (/all)." */
     Mold_Array_At(mold, VAL_FUNC_SPEC(value), 0, 0);
 
-    if (IS_FUNCTION(value) || IS_CLOSURE(value)) {
+    if (IS_FUNCTION(value)) {
         //
         // MOLD is an example of user-facing code that needs to be complicit
         // in the "lie" about the effective bodies of the functions made
@@ -878,7 +878,7 @@ static void Mold_Map(const REBVAL *value, REB_MOLD *mold, REBOOL molded)
 
     // Mold all non-UNSET! entries
     mold->indent++;
-    for (val = ARRAY_HEAD(mapser); NOT_END(val) && NOT_END(val+1); val += 2) {
+    for (val = ARR_HEAD(mapser); NOT_END(val) && NOT_END(val+1); val += 2) {
         if (!IS_UNSET(val + 1)) {
             if (molded) New_Indented_Line(mold);
             Emit(mold,
@@ -906,8 +906,8 @@ static void Mold_Map(const REBVAL *value, REB_MOLD *mold, REBOOL molded)
 
 static void Form_Object(const REBVAL *value, REB_MOLD *mold)
 {
-    REBVAL *key = CONTEXT_KEYS_HEAD(VAL_CONTEXT(value));
-    REBVAL *var = CONTEXT_VARS_HEAD(VAL_CONTEXT(value));
+    REBVAL *key = CTX_KEYS_HEAD(VAL_CONTEXT(value));
+    REBVAL *var = CTX_VARS_HEAD(VAL_CONTEXT(value));
     REBOOL had_output = FALSE;
 
     // Prevent endless mold loop:
@@ -936,14 +936,14 @@ static void Form_Object(const REBVAL *value, REB_MOLD *mold)
 
 static void Mold_Object(const REBVAL *value, REB_MOLD *mold)
 {
-    REBVAL *key = CONTEXT_KEYS_HEAD(VAL_CONTEXT(value));
+    REBVAL *key = CTX_KEYS_HEAD(VAL_CONTEXT(value));
     REBVAL *var;
 
     if (
-        !ARRAY_GET_FLAG(CONTEXT_VARLIST(VAL_CONTEXT(value)), OPT_SER_STACK) ||
-        ARRAY_GET_FLAG(CONTEXT_VARLIST(VAL_CONTEXT(value)), OPT_SER_ACCESSIBLE)
+        !GET_ARR_FLAG(CTX_VARLIST(VAL_CONTEXT(value)), SERIES_FLAG_STACK) ||
+        GET_ARR_FLAG(CTX_VARLIST(VAL_CONTEXT(value)), SERIES_FLAG_ACCESSIBLE)
     ) {
-        var = CONTEXT_VARS_HEAD(VAL_CONTEXT(value));
+        var = CTX_VARS_HEAD(VAL_CONTEXT(value));
     }
     else {
         // If something like a function call has gone of the stack, the data
@@ -1003,7 +1003,7 @@ static void Mold_Object(const REBVAL *value, REB_MOLD *mold)
 static void Mold_Error(const REBVAL *value, REB_MOLD *mold, REBOOL molded)
 {
     ERROR_OBJ *err;
-    REBCON *context;
+    REBCTX *context;
 
     // Protect against recursion. !!!!
 
@@ -1068,7 +1068,7 @@ void Mold_Value(REB_MOLD *mold, const REBVAL *value, REBOOL molded)
 
     if (C_STACK_OVERFLOWING(&len)) Trap_Stack_Overflow();
 
-    assert(SERIES_WIDE(ser) == sizeof(REBUNI));
+    assert(SER_WIDE(ser) == sizeof(REBUNI));
     ASSERT_SERIES_TERM(ser);
 
     if (GET_MOPT(mold, MOPT_LIMIT)) {
@@ -1081,7 +1081,7 @@ void Mold_Value(REB_MOLD *mold, const REBVAL *value, REBOOL molded)
         // the debug build keep going to exercise mold on the data.)
         //
         #ifdef NDEBUG
-            if (SERIES_LEN(mold->series) >= mold->limit)
+            if (SER_LEN(mold->series) >= mold->limit)
                 return;
         #endif
     }
@@ -1101,7 +1101,7 @@ void Mold_Value(REB_MOLD *mold, const REBVAL *value, REBOOL molded)
         if (!molded) {
             Insert_String(
                 ser,
-                SERIES_LEN(ser), // "insert" at tail (append)
+                SER_LEN(ser), // "insert" at tail (append)
                 VAL_SERIES(value),
                 VAL_INDEX(value),
                 VAL_LEN_AT(value),
@@ -1261,7 +1261,7 @@ void Mold_Value(REB_MOLD *mold, const REBVAL *value, REBOOL molded)
         break;
 
     case REB_DATATYPE: {
-        REBCNT sym = VAL_TYPE_SYM(value);
+        REBSYM sym = VAL_TYPE_SYM(value);
     #if !defined(NDEBUG)
         if (LEGACY(OPTIONS_PAREN_INSTEAD_OF_GROUP)) {
             if (VAL_TYPE_KIND(value) == REB_GROUP)
@@ -1304,7 +1304,6 @@ void Mold_Value(REB_MOLD *mold, const REBVAL *value, REBOOL molded)
         Emit(mold, "#W", value);
         break;
 
-    case REB_CLOSURE:
     case REB_FUNCTION:
     case REB_NATIVE:
     case REB_ACTION:
@@ -1367,7 +1366,7 @@ void Mold_Value(REB_MOLD *mold, const REBVAL *value, REBOOL molded)
         Pre_Mold(value, mold);
 
         DS_PUSH_NONE;
-        *DS_TOP = *ARRAY_HEAD(VAL_LIB_SPEC(value));
+        *DS_TOP = *ARR_HEAD(VAL_LIB_SPEC(value));
         Mold_File(DS_TOP, mold);
         DS_DROP;
 
@@ -1518,13 +1517,13 @@ void Push_Mold(REB_MOLD *mold)
 #endif
 
     mold->series = UNI_BUF;
-    mold->start = SERIES_LEN(mold->series);
+    mold->start = SER_LEN(mold->series);
 
     ASSERT_SERIES_TERM(mold->series);
 
     if (
         GET_MOPT(mold, MOPT_RESERVE)
-        && SERIES_REST(mold->series) < mold->reserve
+        && SER_REST(mold->series) < mold->reserve
     ) {
         // Expand will add to the series length, so we set it back.
         //
@@ -1536,7 +1535,7 @@ void Push_Mold(REB_MOLD *mold)
         Expand_Series(mold->series, mold->start, mold->reserve);
         SET_SERIES_LEN(mold->series, mold->start);
     }
-    else if (SERIES_REST(mold->series) > MAX_COMMON) {
+    else if (SER_REST(mold->series) > MAX_COMMON) {
         //
         // If the "extra" space in the series has gotten to be excessive (due
         // to some particularly large mold), back off the space.  But preserve
@@ -1544,7 +1543,7 @@ void Push_Mold(REB_MOLD *mold)
         // ->start index in the stack!
         //
         Remake_Series(
-            mold->series, MIN_COMMON, SERIES_WIDE(mold->series), MKS_PRESERVE
+            mold->series, MIN_COMMON, SER_WIDE(mold->series), MKS_PRESERVE
         );
     }
 
@@ -1585,7 +1584,7 @@ void Push_Mold(REB_MOLD *mold)
 // Contain a mold's series to its limit (if it has one).
 //
 void Throttle_Mold(REB_MOLD *mold) {
-    if (GET_MOPT(mold, MOPT_LIMIT) && SERIES_LEN(mold->series) > mold->limit) {
+    if (GET_MOPT(mold, MOPT_LIMIT) && SER_LEN(mold->series) > mold->limit) {
         SET_SERIES_LEN(mold->series, mold->limit - 3); // account for ellipsis
         Append_Unencoded(mold->series, "..."); // adds a null at the tail
     }
@@ -1617,7 +1616,7 @@ REBSER *Pop_Molded_String_Core(REB_MOLD *mold, REBCNT len)
     Throttle_Mold(mold);
 
     assert(
-        (len == END_FLAG) || (len <= SERIES_LEN(mold->series) - mold->start)
+        (len == END_FLAG) || (len <= SER_LEN(mold->series) - mold->start)
     );
 
     // The copy process looks at the characters in range and will make a
@@ -1627,7 +1626,7 @@ REBSER *Pop_Molded_String_Core(REB_MOLD *mold, REBCNT len)
         mold->series,
         mold->start,
         (len == END_FLAG)
-            ? SERIES_LEN(mold->series) - mold->start
+            ? SER_LEN(mold->series) - mold->start
             : len
     );
 
@@ -1664,7 +1663,7 @@ REBSER *Pop_Molded_UTF8(REB_MOLD *mold)
 
     bytes = Make_UTF8_Binary(
         UNI_AT(mold->series, mold->start),
-        SERIES_LEN(mold->series) - mold->start,
+        SER_LEN(mold->series) - mold->start,
         0,
         OPT_ENC_UNISRC
     );
@@ -1730,7 +1729,7 @@ void Init_Mold(REBCNT size)
     REBYTE c;
     const REBYTE *dc;
 
-    Set_Root_Series(TASK_MOLD_STACK, ARRAY_SERIES(Make_Array(size/10)));
+    Set_Root_Series(TASK_MOLD_STACK, ARR_SERIES(Make_Array(size/10)));
     Set_Root_Series(TASK_UNI_BUF, Make_Unicode(size));
 
     // Create quoted char escape table:
