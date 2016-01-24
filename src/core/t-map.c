@@ -108,6 +108,7 @@ REBINT Find_Key_Hashed(
     REBCNT hash;
     // a 'zombie' is a key with UNSET! value, that may be overwritten
     REBCNT zombie;
+    REBCNT uncased;
     REBCNT len;
     REBCNT n;
     REBVAL *val;
@@ -136,19 +137,23 @@ REBINT Find_Key_Hashed(
     hash = hash % len;
     zombie = len; // zombie not yet encountered
     // Scan hash table for match:
+    uncased = len; // uncased match not yet encountered
     hashes = SER_HEAD(REBCNT, hashlist);
     if (ANY_WORD(key)) {
         while ((n = hashes[hash])) {
             val = ARR_AT(array, (n - 1) * wide);
             if (
                 ANY_WORD(val) &&
-                (VAL_WORD_SYM(key) == VAL_WORD_SYM(val)
-                || (!cased && VAL_WORD_CANON(key) == VAL_WORD_CANON(val))
-                )
+                (VAL_WORD_SYM(key) == VAL_WORD_SYM(val))
             ) {
                 return hash;
             }
-            if (wide > 1 && IS_UNSET(++val) && zombie == len) zombie = hash;
+            if (!cased && VAL_WORD_CANON(key) == VAL_WORD_CANON(val) && uncased == len) {
+                uncased = hash;
+            }
+            else if (wide > 1 && IS_UNSET(++val) && zombie == len) {
+                zombie = hash;
+            }
             hash += skip;
             if (hash >= len) hash -= len;
         }
@@ -156,26 +161,37 @@ REBINT Find_Key_Hashed(
     else if (ANY_BINSTR(key)) {
         while ((n = hashes[hash])) {
             val = ARR_AT(array, (n - 1) * wide);
-            if (
-                VAL_TYPE(val) == VAL_TYPE(key)
-                && 0 == Compare_String_Vals(
-                    val, key, LOGICAL(!IS_BINARY(key) && !cased)
-                )
-            ) {
-                return hash;
+            if (VAL_TYPE(val) == VAL_TYPE(key)) {
+                if (0 == Compare_String_Vals(val, key, FALSE)) return hash;
+                if (
+                    !cased && uncased == len
+                    && 0 == Compare_String_Vals(
+                        val, key, LOGICAL(!IS_BINARY(key))
+                    )
+                ) {
+                    uncased = hash;
+                }
             }
-            if (wide > 1 && IS_UNSET(++val) && zombie == len) zombie = hash;
+            if (wide > 1 && IS_UNSET(++val) && zombie == len)  {
+                zombie = hash;
+            }
             hash += skip;
             if (hash >= len) hash -= len;
         }
     } else {
         while ((n = hashes[hash])) {
             val = ARR_AT(array, (n - 1) * wide);
-            if (
-                VAL_TYPE(val) == VAL_TYPE(key)
-                && 0 == Cmp_Value(key, val, cased)
-            ) {
-                return hash;
+            if (VAL_TYPE(val) == VAL_TYPE(key)) {
+                if (0 == Cmp_Value(key, val, TRUE)) {
+                    return hash;
+                }
+                if (
+                    !cased && uncased == len
+                    && REB_CHAR == VAL_TYPE(val)
+                    && 0 == Cmp_Value(key, val, FALSE)
+                ) {
+                    uncased = hash;
+                }
             }
             if (wide > 1 && IS_UNSET(++val) && zombie == len) zombie = hash;
             hash += skip;
@@ -184,7 +200,8 @@ REBINT Find_Key_Hashed(
     }
 
     //assert(n == 0);
-    if (zombie < len) { // zombie encountered!
+    if (!cased && uncased < len) hash = uncased; // uncased< match 
+    else if (zombie < len) { // zombie encountered!
         assert(mode == 0);
         hash = zombie;
         n = hashes[hash];
