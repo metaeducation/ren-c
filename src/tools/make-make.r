@@ -279,10 +279,12 @@ if tail? next plat-id [insert plat-id #"0"]
 append plat-id config/id/3
 
 ; Collect OS-specific host files:
-unless os-specific-objs: select file-base to word! join "os-" config/os-base [
-	fail rejoin [
-		"make-make.r requires os-specific obj list in file-base.r" newline
-		"none was provided for os-" config/os-base
+unless (
+    os-specific-objs: select file-base to word! rejoin ["os-" config/os-base]
+) [
+	fail [
+		"make-make.r requires os-specific obj list in file-base.r"
+		"none was provided for" rejoin ["os-" config/os-base]
 	]
 ]
 
@@ -312,7 +314,7 @@ macro+: func [
 	value
 	/local n a
 ][
-	n: join newline name
+	n: rejoin [newline name]
 	value: form value
 	unless parse makefile-head [
 		any [
