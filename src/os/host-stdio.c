@@ -134,26 +134,6 @@ void Close_StdIO(void)
 
 
 //
-//  Get_Str: C
-//
-// Get input of a null terminated UTF-8 string.
-// Divides the input into lines.
-// Buffers multiple lines if needed.
-// Returns NULL on end of stream.
-//
-REBYTE *Get_Str()
-{
-    REBYTE *line;
-
-    if ((line = Get_Next_Line())) return line;
-
-    if (Fetch_Buf()) return Get_Next_Line();
-
-    return 0;
-}
-
-
-//
 //  Put_Str: C
 //
 // Outputs a null terminated UTF-8 string.

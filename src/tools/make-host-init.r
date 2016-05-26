@@ -106,7 +106,16 @@ load-files: function [
     data
 ]
 
-host-start: load-files [%host-start.r]
+host-start: load-files [
+    %host-repl.r
+    %host-start.r
+]
+
+; script evaluates to the startup function, which will in turn evaluate
+; to either an exit status code or a REPL function.
+;
+append host-start [:host-start]
+
 
 file-base: has load %../tools/file-base.r
 

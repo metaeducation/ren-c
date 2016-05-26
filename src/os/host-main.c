@@ -122,8 +122,6 @@ extern "C" {
 
 
 const REBYTE halt_str[] = "[escape]";
-const REBYTE prompt_str[] = ">> ";
-const REBYTE result_str[] = "== ";
 const REBYTE why_str[] = "** Note: use WHY? for more error information\n";
 const REBYTE breakpoint_str[] =
     "** Breakpoint Hit (see BACKTRACE, DEBUG, and RESUME)\n";
@@ -158,7 +156,6 @@ extern void Init_Ext_Test(void);    // see: host-ext-test.c
 extern void Open_StdIO(void);
 extern void Close_StdIO(void);
 extern void Put_Str(const REBYTE *buf);
-extern REBYTE *Get_Str();
 
 
 /* coverity[+kill] */
@@ -175,6 +172,8 @@ void Host_Crash(const char *reason) {
 //
 extern REBCNT HG_Stack_Level;
 REBCNT HG_Stack_Level = 1;
+
+REBVAL HG_Host_Repl;
 
 
 // The DEBUG command is a host-specific "native", which modifies state that
@@ -250,7 +249,7 @@ modify_with_confidence:
 
 
 //
-//  Do_String()
+//  Do_Code()
 //
 // This is a version of a routine that was offered by the RL_Api, which has
 // been expanded here in order to permit the necessary customizations for
@@ -261,12 +260,14 @@ modify_with_confidence:
 // integer-return-scheme can be eliminated and the code integrated more
 // clearly into the surrounding calls.
 //
-int Do_String(
+int Do_Code(
     int *exit_status,
     REBVAL *out,
-    const REBYTE *text,
+    const REBVAL *code,
     REBOOL at_breakpoint
 ) {
+    assert(IS_BLOCK(code));
+
     struct Reb_State state;
     REBCTX *error;
 
@@ -301,70 +302,7 @@ int Do_String(
         return -cast(REBINT, ERR_NUM(error));
     }
 
-    REBARR *code = Scan_UTF8_Managed(text, LEN_BYTES(text));
-
-    // Where code ends up being bound when loaded at the REPL prompt should
-    // be more generally configurable.  (It may be, for instance, that one
-    // wants to run something with it not bound at all.)  Such choices
-    // must come from this REPL host...not from the interpreter itself.
-    {
-        // First the scanned code is bound into the user context with a
-        // fallback to the lib context.
-        //
-        // !!! This code is very old, and is how the REPL has bound since
-        // R3-Alpha.  It comes from RL_Do_String, but should receive a modern
-        // review of why it's written exactly this way.
-        //
-        REBCTX *user_ctx = VAL_CONTEXT(Get_System(SYS_CONTEXTS, CTX_USER));
-
-        REBVAL vali;
-        SET_INTEGER(&vali, CTX_LEN(user_ctx) + 1);
-
-        Bind_Values_All_Deep(ARR_HEAD(code), user_ctx);
-        Resolve_Context(user_ctx, Lib_Context, &vali, FALSE, FALSE);
-
-        // If we're stopped at a breakpoint, the REPL should have a concept
-        // of what stack level it is inspecting (conveyed by the |#|>> in the
-        // prompt).  This does a binding pass using the function for that
-        // stack level, just the way a body is bound during Make_Function()
-        //
-        if (at_breakpoint) {
-            REBVAL level;
-            SET_INTEGER(&level, HG_Stack_Level);
-
-            REBFRM *frame = Frame_For_Stack_Level(NULL, &level, FALSE);
-            assert(frame);
-
-            // Need to manage because it may be no words get bound into it,
-            // and we're not putting it into a FRAME! value, so it might leak
-            // otherwise if it's reified.
-            //
-            REBCTX *frame_ctx = Context_For_Frame_May_Reify_Managed(frame);
-
-            Bind_Values_Deep(ARR_HEAD(code), frame_ctx);
-        }
-
-        // !!! This was unused code that used to be in Do_String from
-        // RL_Api.  It was an alternative path under `flags` which said
-        // "Bind into lib or user spaces?" and then "Top words will be
-        // added to lib".  Is it relevant in any way?
-        //
-        /* Bind_Values_Set_Midstream_Shallow(ARR_HEAD(code), Lib_Context);
-        Bind_Values_Deep(ARR_HEAD(code), Lib_Context); */
-    }
-
-    // The new policy for source code in Ren-C is that it loads read only.
-    // This didn't go through the LOAD Rebol function (should it?  it never
-    // did before.  :-/)  For now, stick with simple binding but lock it.
-    //
-#if defined(NDEBUG)
-    Deep_Freeze_Array(code);
-#else
-    if (!LEGACY(OPTIONS_UNLOCKED_SOURCE))
-        Deep_Freeze_Array(code);
-#endif
-
-    if (Do_At_Throws(out, code, 0, SPECIFIED)) { // array gets GC protected
+    if (Do_At_Throws(out, VAL_ARRAY(code), VAL_INDEX(code), SPECIFIED)) {
         if (at_breakpoint) {
             if (
                 IS_FUNCTION(out)
@@ -425,144 +363,70 @@ int Do_String(
 }
 
 
-void Host_Repl(int *exit_status, REBVAL *out, REBOOL at_breakpoint) {
+void Host_Repl(
+    int *exit_status,
+    REBVAL *out,
+    REBOOL at_breakpoint
+) {
     REBOOL why_alert = TRUE;
 
-    #define MAX_CONT_LEVEL 80
-    REBYTE cont_str[] = "    ";
-    int cont_level = 0;
-    REBYTE cont_stack[MAX_CONT_LEVEL] = {0};
+    SET_VOID(out);
 
-    int input_max = 32768;
-    int input_len = 0;
-    REBYTE *input = OS_ALLOC_N(REBYTE, input_max);
+    REBVAL level;
+    REBVAL frame;
+    SET_BLANK(&level);
+    SET_BLANK(&frame);
 
-    REBYTE *line;
-    int line_len;
-
-    REBYTE *utf8byte;
-    REBOOL inside_short_str = FALSE;
-    int long_str_level = 0;
+    PUSH_GUARD_VALUE(&frame);
 
     while (TRUE) {
         int do_result;
 
-        if (cont_level > 0) {
-            int level;
+        if (at_breakpoint) {
+            //
+            // If we're stopped at a breakpoint, then the REPL has a
+            // modality to it of "which stack level you are examining".
+            // The DEBUG command can change this, so at the moment it
+            // has to be refreshed each time an evaluation is performed.
 
-            cont_str[0] = cont_stack[cont_level - 1];
-            Put_Str(cont_str);
+            SET_INTEGER(&level, HG_Stack_Level);
 
-            cont_str[0] = ' ';
-            for (level = 1; level < cont_level; level++) {
-                Put_Str(cont_str);
-            }
-        }
-        else {
-            Put_Str(cb_cast("\n"));
-            if (at_breakpoint) {
-                //
-                // If we're stopped at a breakpoint, then the REPL has a
-                // modality to it of "which stack level you are examining".
-                // This is conveyed through an integer of the stack depth,
-                // which is put into the prompt:
-                //
-                //     |3|>> ...
-                //
-                REBYTE buf_int[MAX_INT_LEN];
-                Put_Str(cb_cast("|"));
-                Form_Int(&buf_int[0], HG_Stack_Level);
-                Put_Str(buf_int);
-                Put_Str(cb_cast("|"));
-            }
-            Put_Str(prompt_str);
+            REBFRM *f = Frame_For_Stack_Level(NULL, &level, FALSE);
+            assert(f);
+
+            Init_Any_Context(
+                &frame,
+                REB_FRAME,
+                Context_For_Frame_May_Reify_Managed(f)
+            );
         }
 
-        line = Get_Str();
-
-        if (!line) {
-            // !!! "end of stream"...is this a normal exit result or
-            // should we be returning some error here?  0 status for now
-            *exit_status = 0;
-            goto cleanup_and_return;
+        REBVAL code_or_error;
+        if (Apply_Only_Throws(
+            &code_or_error, // where return value of HOST-REPL is saved
+            TRUE, // error if not all arguments before END_CELL are consumed
+            &HG_Host_Repl, // HOST-REPL function to run
+            out, // last-result (always void first run through loop)
+            &level, // focus-level
+            &frame, // focus-frame
+            END_CELL
+        )) {
+            // The REPL should not execute anything that should throw.
+            // Determine graceful way of handling if it does.
+            //
+            panic (&code_or_error);
         }
 
-        line_len = 0;
-        for (utf8byte = line; *utf8byte; utf8byte++) {
-            line_len++;
-            switch (*utf8byte) {
-                case '"':
-                    if (long_str_level == 0) {
-                        inside_short_str = NOT(inside_short_str);
-                    }
-                    break;
-                case '[':
-                case '(':
-                    if (!inside_short_str && long_str_level == 0) {
-                        cont_stack[cont_level++] = *utf8byte;
-                        if (cont_level >= MAX_CONT_LEVEL) {
-                            OS_FREE(input);
-                            Host_Crash("Maximum console continuation level exceeded!");
-                        }
-                    }
-                    break;
-                case ']':
-                case ')':
-                    if (!inside_short_str && long_str_level == 0) {
-                        if (cont_level > 0) {
-                            cont_stack[--cont_level] = 0;
-                        }
-                    }
-                    break;
-                case '{':
-                    if (!inside_short_str) {
-                        cont_stack[cont_level++] = *utf8byte;
-                        if (cont_level >= MAX_CONT_LEVEL) {
-                            OS_FREE(input);
-                            Host_Crash("Maximum console continuation level exceeded!");
-                        }
-                        long_str_level++;
-                    }
-                    break;
-                case '}':
-                    if (!inside_short_str) {
-                        if (cont_level > 0) {
-                            cont_stack[--cont_level] = 0;
-                        }
-                        if (long_str_level > 0) {
-                            long_str_level--;
-                        }
-                    }
-                    break;
-            }
+        if (IS_ERROR(&code_or_error)) {
+            do_result = -cast(int, ERR_NUM(VAL_CONTEXT(&code_or_error)));
+            *out = code_or_error;
         }
-        inside_short_str = FALSE;
-
-        if (input_len + line_len > input_max) {
-            REBYTE *tmp = OS_ALLOC_N(REBYTE, 2 * input_max);
-            if (!tmp) {
-                OS_FREE(input);
-                Host_Crash("Growing console input buffer failed!");
-            }
-            memcpy(tmp, input, input_len);
-            OS_FREE(input);
-            input = tmp;
-            input_max *= 2;
-        }
-
-        memcpy(&input[input_len], line, line_len);
-        input_len += line_len;
-        input[input_len] = 0;
-
-        OS_FREE(line);
-
-        if (cont_level > 0)
-            continue;
-
-        input_len = 0;
-        cont_level = 0;
-
-        do_result = Do_String(exit_status, out, input, at_breakpoint);
+        else if (IS_BLOCK(&code_or_error))
+            do_result = Do_Code(
+                exit_status, out, &code_or_error, at_breakpoint
+            );
+        else
+            panic (&code_or_error);
 
         // NOTE: Although the operation has finished at this point, it may
         // be that a Ctrl-C set up a pending FAIL, which will be triggered
@@ -571,7 +435,7 @@ void Host_Repl(int *exit_status, REBVAL *out, REBOOL at_breakpoint) {
         if (do_result == -1) {
             //
             // If we're inside a breakpoint, this actually means "resume",
-            // because Do_String doesn't do any error trapping if we pass
+            // because Do_Code doesn't do any error trapping if we pass
             // in `at_breakpoint = TRUE`.  Hence any HALT longjmp would
             // have bypassed this, so the -1 signal is reused (for now).
             //
@@ -586,36 +450,36 @@ void Host_Repl(int *exit_status, REBVAL *out, REBOOL at_breakpoint) {
             Put_Str(halt_str);
         }
         else if (do_result == -2) {
+            //
             // Command issued a purposeful QUIT or EXIT, exit_status
             // contains status.  Assume nothing was pushed on stack
+            //
             goto cleanup_and_return;
         }
         else if (do_result < -2) {
+            //
             // Error occurred, print it without molding (formed)
             //
             Out_Value(out, 500, FALSE, 1);
 
             // Tell them about why on the first error only
+            //
             if (why_alert) {
                 Put_Str(why_str);
                 why_alert = FALSE;
             }
+
+            SET_VOID(out);
         }
         else {
-            assert(do_result >= 0);
-
-            // There was no error.  If the value on top of stack is an unset
-            // then nothing will be printed, otherwise print it out.
+            // Result will be printed by next loop
             //
-            if (!IS_VOID(out)) {
-                Out_Str(result_str, 0); // "=="
-                Out_Value(out, 500, TRUE, 1);
-            }
+            assert(do_result == 0);
         }
     }
 
 cleanup_and_return:
-    OS_FREE(input);
+    DROP_GUARD_VALUE(&frame);
     return;
 }
 
@@ -892,6 +756,8 @@ int main(int argc, char **argv_ansi)
     int exit_status;
     REBOOL finished;
 
+    SET_BLANK(&HG_Host_Repl);
+
     if (error == NULL) {
         REBSER *startup = Decompress(
             &Reb_Init_Code[0],
@@ -903,9 +769,37 @@ int main(int argc, char **argv_ansi)
         if (startup == NULL)
             panic ("Can't decompress %host-start.r linked into executable");
 
+        REBARR *array = Scan_UTF8_Managed(
+            BIN_HEAD(startup), BIN_LEN(startup)
+        );
+
+        // First the scanned code is bound into the user context with a
+        // fallback to the lib context.
+        //
+        // !!! This code is very old, and is how the REPL has bound since
+        // R3-Alpha.  It comes from RL_Do_String, but should receive a modern
+        // review of why it's written exactly this way.
+        //
+        REBCTX *user_ctx = VAL_CONTEXT(Get_System(SYS_CONTEXTS, CTX_USER));
+
+        REBVAL vali;
+        SET_INTEGER(&vali, CTX_LEN(user_ctx) + 1);
+
+        Bind_Values_All_Deep(ARR_HEAD(array), user_ctx);
+        Resolve_Context(user_ctx, Lib_Context, &vali, FALSE, FALSE);
+
+        // The new policy for source code in Ren-C is that it loads read only.
+        // This didn't go through the LOAD Rebol function (should it?  it
+        // never did before.)  For now, use simple binding but lock it.
+        //
+        Deep_Freeze_Array(array);
+
+        REBVAL code;
+        Init_Block(&code, array);
+
         REBVAL host_start;
         if (
-            Do_String(&exit_status, &host_start, BIN_HEAD(startup), FALSE)
+            Do_Code(&exit_status, &host_start, &code, FALSE)
             != 0
         ){
             panic (startup); // just loads functions, shouldn't QUIT or error
@@ -981,8 +875,10 @@ int main(int argc, char **argv_ansi)
         // HOST-START returns either an integer exit code or a blank if the
         // behavior should be to fall back to the REPL.
         //
-        if (IS_BLANK(&result))
+        if (IS_FUNCTION(&result)) {
             finished = FALSE;
+            HG_Host_Repl = result;
+        }
         else if (IS_INTEGER(&result)) {
             finished = TRUE;
             exit_status = VAL_INT32(&result);
@@ -1027,6 +923,8 @@ int main(int argc, char **argv_ansi)
 
     DROP_GUARD_VALUE(&argv_value);
 
+    PUSH_GUARD_VALUE(&HG_Host_Repl); // might be blank
+
     // Although the REPL routine does a PUSH_UNHALTABLE_TRAP in order to
     // catch any errors or halts, it then has to report those errors when
     // that trap is engaged.  So imagine it's in the process of trapping an
@@ -1067,6 +965,8 @@ int main(int argc, char **argv_ansi)
 
         finished = TRUE;
     }
+
+    DROP_GUARD_VALUE(&HG_Host_Repl);
 
     OS_QUIT_DEVICES(0);
 

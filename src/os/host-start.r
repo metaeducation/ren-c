@@ -342,8 +342,8 @@ host-script-pre-load: procedure [
 
 host-start: function [
     "Loads extras, handles args, security, scripts."
-    return: [integer! blank!]
-        {If integer, host should exit with that status code vs. spawn a REPL}
+    return: [integer! function!]
+        {If integer, host should exit with that status; else a REPL FUNCTION!}
     argv [block!]
         {Raw command line argument block received by main() as STRING!s}
     boot-embedded [binary! string! blank!]
@@ -630,23 +630,23 @@ host-start: function [
 
     host-start: 'done
 
-    return either quit-when-done [0] [
-        if any [
-            o/verbose
-            not any [o/quiet o/script]
-        ][
-            ;-- print fancy boot banner
-            ;
-            boot-print make-banner boot-banner
-        ]
+    if quit-when-done [return 0]
 
-        boot-print boot-help
-
-        blank
+    if any [
+        o/verbose
+        not any [o/quiet o/script]
+    ][
+        ;-- print fancy boot banner
+        ;
+        boot-print make-banner boot-banner
     ]
+
+    boot-print boot-help
+
+    ; Rather than have the host C code look up the REPL function by name, it
+    ; is returned as a function value from calling the start.  It's a bit of
+    ; a hack, and might be better with something like the SYS_FUNC table that
+    ; lets the core call Rebol code.
+    ;
+    return :host-repl
 ]
-
-
-;-- running this script expects the startup function to be the returned value
-
-:host-start
