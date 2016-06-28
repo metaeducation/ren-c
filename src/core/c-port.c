@@ -166,7 +166,7 @@ REBINT Awake_System(REBARR *ports, REBOOL only)
         //
         REBARR *array = Make_Array(2);
         Append_Value(array, awake);
-        Val_Init_Word(Alloc_Tail_Array(array), REB_WORD, SYM_ONLY);
+        Val_Init_Word(Alloc_Tail_Array(array), REB_WORD, Canon(SYM_ONLY));
 
         Val_Init_Array(&awake_only, REB_PATH, array);
     }
@@ -315,9 +315,9 @@ void Sieve_Ports(REBARR *ports)
 // Given an action number, return the action's index in
 // the specified object. If not found, a zero is returned.
 //
-REBCNT Find_Action(REBVAL *object, REBCNT action)
+REBCNT Find_Action(REBVAL *object, REBSYM action)
 {
-    return Find_Word_In_Context(VAL_CONTEXT(object), action, FALSE);
+    return Find_Canon_In_Context(VAL_CONTEXT(object), Canon(action), FALSE);
 }
 
 
@@ -415,7 +415,7 @@ REBOOL Redo_Func_Throws(struct Reb_Frame *f, REBFUN *func_new)
             // In use--and used refinements must be added to the PATH!
             //
             ignoring = FALSE;
-            Val_Init_Word(path, REB_WORD, VAL_TYPESET_SYM(param));
+            Val_Init_Word(path, REB_WORD, VAL_PARAM_CASED(param));
             ++path;
             continue;
         }
@@ -472,7 +472,7 @@ REBOOL Redo_Func_Throws(struct Reb_Frame *f, REBFUN *func_new)
 // NOTE: stack must already be setup correctly for action, and
 // the caller must cleanup the stack.
 //
-int Do_Port_Action(struct Reb_Frame *frame_, REBCTX *port, REBCNT action)
+int Do_Port_Action(struct Reb_Frame *frame_, REBCTX *port, REBSYM action)
 {
     assert(GET_ARR_FLAG(CTX_VARLIST(port), ARRAY_FLAG_CONTEXT_VARLIST));
 
@@ -505,7 +505,7 @@ int Do_Port_Action(struct Reb_Frame *frame_, REBCTX *port, REBCNT action)
     actor = Obj_Value(actor, n);
     if (!n || !actor || !IS_FUNCTION(actor)) {
         REBVAL action_word;
-        Val_Init_Word(&action_word, REB_WORD, action);
+        Val_Init_Word(&action_word, REB_WORD, Canon(action));
 
         fail (Error(RE_NO_PORT_ACTION, &action_word));
     }
@@ -527,19 +527,20 @@ int Do_Port_Action(struct Reb_Frame *frame_, REBCTX *port, REBCNT action)
 // name: value that holds the original user spec
 // path: the local path to compare with
 //
-void Secure_Port(REBCNT kind, REBREQ *req, REBVAL *name, REBSER *path)
+void Secure_Port(REBSYM sym_kind, REBREQ *req, REBVAL *name, REBSER *path)
 {
-    REBYTE *flags;
-
     REBVAL val;
     Val_Init_String(&val, path);
 
-    flags = Security_Policy(kind, &val); // policy flags
+    REBYTE *flags = Security_Policy(Canon(sym_kind), &val); // policy flags
 
     // Check policy integer:
     // Mask is [xxxx wwww rrrr] - each holds the action
-    if (GET_FLAG(req->modes, RFM_READ))  Trap_Security(flags[POL_READ], kind, name);
-    if (GET_FLAG(req->modes, RFM_WRITE)) Trap_Security(flags[POL_WRITE], kind, name);
+    if (GET_FLAG(req->modes, RFM_READ))
+        Trap_Security(flags[POL_READ], Canon(sym_kind), name);
+
+    if (GET_FLAG(req->modes, RFM_WRITE))
+        Trap_Security(flags[POL_WRITE], Canon(sym_kind), name);
 }
 
 
@@ -590,7 +591,7 @@ void Validate_Port(REBCTX *port, REBCNT action)
 #endif
 
 typedef struct rebol_scheme_actions {
-    REBSYM sym;
+    REBSTR *name;
     const PORT_ACTION *map;
     REBPAF fun;
 } SCHEME_ACTIONS;
@@ -604,14 +605,14 @@ SCHEME_ACTIONS *Scheme_Actions; // Initial Global (not threaded)
 // Associate a scheme word (e.g. FILE) with a set of native
 // scheme actions. This will be used by the Set_Scheme native
 //
-void Register_Scheme(REBSYM sym, const PORT_ACTION *map, REBPAF fun)
+void Register_Scheme(REBSTR *name, const PORT_ACTION *map, REBPAF fun)
 {
     REBINT n;
 
-    for (n = 0; n < MAX_SCHEMES && Scheme_Actions[n].sym; n++);
+    for (n = 0; n < MAX_SCHEMES && Scheme_Actions[n].name != NULL; n++);
     assert(n < MAX_SCHEMES);
 
-    Scheme_Actions[n].sym = sym;
+    Scheme_Actions[n].name = name;
     Scheme_Actions[n].map = map;
     Scheme_Actions[n].fun = fun;
 }
@@ -682,10 +683,12 @@ REBNATIVE(set_scheme)
 
     REBCNT n;
     // Does this scheme have native actor or actions?
-    for (n = 0; n < MAX_SCHEMES && Scheme_Actions[n].sym; n++) {
-        if (Scheme_Actions[n].sym == VAL_WORD_SYM(name)) break;
+    for (n = 0; n < MAX_SCHEMES && Scheme_Actions[n].name != NULL; n++) {
+        if (SAME_STR(Scheme_Actions[n].name, VAL_WORD_CASED(name))) break;
     }
-    if (n == MAX_SCHEMES || !Scheme_Actions[n].sym) return R_BLANK;
+
+    if (n == MAX_SCHEMES || Scheme_Actions[n].name == NULL)
+        return R_BLANK;
 
     // The scheme uses a native actor:
     if (Scheme_Actions[n].fun) {

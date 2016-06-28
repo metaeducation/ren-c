@@ -85,21 +85,19 @@ REBINT CT_Typeset(const RELVAL *a, const RELVAL *b, REBINT mode)
 //
 void Init_Typesets(void)
 {
-    REBVAL *value;
-    REBINT n;
-
     Set_Root_Series(ROOT_TYPESETS, ARR_SERIES(Make_Array(40)));
 
-    for (n = 0; Typesets[n].sym != SYM_0; n++) {
-        value = Alloc_Tail_Array(VAL_ARRAY(ROOT_TYPESETS));
+    REBINT n;
+    for (n = 0; Typesets[n].sym != 0; n++) {
+        REBVAL *value = Alloc_Tail_Array(VAL_ARRAY(ROOT_TYPESETS));
 
         // Note: the symbol in the typeset is not the symbol of a word holding
         // the typesets, rather an extra data field used when the typeset is
         // in a context key slot to identify that field's name
         //
-        Val_Init_Typeset(value, Typesets[n].bits, SYM_0);
+        Val_Init_Typeset(value, Typesets[n].bits, NULL);
 
-        *Append_Context(Lib_Context, NULL, Typesets[n].sym) = *value;
+        *Append_Context(Lib_Context, NULL, Canon(Typesets[n].sym)) = *value;
     }
 }
 
@@ -107,12 +105,13 @@ void Init_Typesets(void)
 //
 //  Val_Init_Typeset: C
 // 
-// Note: sym is optional, and can be SYM_0
+// Name should be set when a typeset is being used as a function parameter
+// specifier, or as a key in an object.
 //
-void Val_Init_Typeset(RELVAL *value, REBU64 bits, REBSYM sym)
+void Val_Init_Typeset(RELVAL *value, REBU64 bits, REBSTR *opt_name)
 {
     VAL_RESET_HEADER(value, REB_TYPESET);
-    VAL_TYPESET_SYM_INIT(value, sym);
+    INIT_TYPESET_NAME(value, opt_name);
     VAL_TYPESET_BITS(value) = bits;
 }
 
@@ -252,7 +251,7 @@ void MAKE_Typeset(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 
     if (!IS_BLOCK(arg)) goto bad_make;
 
-    Val_Init_Typeset(out, 0, SYM_0);
+    Val_Init_Typeset(out, 0, NULL);
     Update_Typeset_Bits_Core(
         out,
         VAL_ARRAY_AT(arg),

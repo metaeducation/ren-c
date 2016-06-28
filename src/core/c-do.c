@@ -152,7 +152,7 @@ void Reify_Va_To_Array_In_Frame(struct Reb_Frame *f, REBOOL truncated)
 
     if (truncated) {
         REBVAL temp;
-        Val_Init_Word(&temp, REB_WORD, SYM___OPTIMIZED_OUT__);
+        Val_Init_Word(&temp, REB_WORD, Canon(SYM___OPTIMIZED_OUT__));
 
         DS_PUSH(&temp);
     }

@@ -70,7 +70,7 @@ REBIXO Do_Vararg_Op_Core(
     REBARR *feed, // may be varlist or 1-element-long array w/shared value
     const RELVAL *param,
     REBVAL *arg, // for updating VALUE_FLAG_EVALUATED
-    REBSYM sym_func, // symbol of the function invocation param belongs to
+    REBSTR *opt_label, // symbol of the function invocation param belongs to
     enum Reb_Vararg_Op op
 ) {
     struct Reb_Frame *f;
@@ -108,16 +108,16 @@ REBIXO Do_Vararg_Op_Core(
 
         // Take label symbol from context if it hasn't been set yet.
         //
-        if (sym_func == SYM_0)
-            sym_func = FRM_LABEL(f);
+        if (opt_label == NULL)
+            opt_label = FRM_LABEL(f);
     }
     else {
         // If the request was to capture a symbol and the first level wasn't
         // a frame, go ahead and fill in with something so a nested frame
         // doesn't falsely claim to label the function with the parameter.
         //
-        if (sym_func == SYM_0)
-            sym_func = SYM_NATIVE; // !!! pick something better
+        if (opt_label == NULL)
+            opt_label = Canon(SYM_NATIVE); // !!! pick something better
     }
 
     // We may be in a state where we aren't fetching values from the varargs
@@ -143,7 +143,7 @@ handle_subfeed:
             *subfeed_addr,
             param,
             arg,
-            sym_func,
+            opt_label,
             op
         );
 
@@ -206,7 +206,7 @@ handle_subfeed:
         temp_frame.index = VAL_INDEX(shared) + 1;
         temp_frame.out = out;
         temp_frame.pending = NULL;
-        temp_frame.label_sym = SYM_NATIVE; // !!! lie, shouldn't be used
+        temp_frame.label = Canon(SYM_NATIVE); // !!! lie, shouldn't be used
 
         f = &temp_frame;
     }
@@ -215,7 +215,7 @@ handle_subfeed:
     // and has at least one value in it.
     //
     assert(NOT_END(f->value));
-    assert(sym_func != SYM_0);
+    assert(opt_label != NULL);
     assert(op != VARARG_OP_FIRST);
 
     if (IS_BAR(f->value))
@@ -331,7 +331,7 @@ handle_subfeed:
     }
 
     if (!TYPE_CHECK(param, VAL_TYPE(out)))
-        fail (Error_Arg_Type(sym_func, param, VAL_TYPE(out)));
+        fail (Error_Arg_Type(opt_label, param, VAL_TYPE(out)));
 
     return VA_LIST_FLAG; // may be at end now, but reflect that at *next* call
 
@@ -364,7 +364,7 @@ REBIXO Do_Vararg_Op_May_Throw(
         // require a named symbol.  However, we name it `...` anyway.
 
         REBVAL fake_param;
-        Val_Init_Typeset(&fake_param, ALL_64, SYM_ELLIPSIS); // any type
+        Val_Init_Typeset(&fake_param, ALL_64, Canon(SYM_ELLIPSIS)); // any type
         SET_VAL_FLAG(&fake_param, TYPESET_FLAG_VARIADIC); // pretend <...> tag
         INIT_VAL_PARAM_CLASS(&fake_param, PARAM_CLASS_HARD_QUOTE);
 
@@ -373,7 +373,7 @@ REBIXO Do_Vararg_Op_May_Throw(
             VAL_VARARGS_ARRAY1(varargs), // single-element array w/shared value
             &fake_param,
             &fake_param, // just need dummy place to write VALUE_FLAG_EVALUATED
-            SYM_0, // should never be used, as no errors possible (?)
+            NULL, // should never be used, as no errors possible (?)
             op
         );
 
@@ -390,7 +390,7 @@ REBIXO Do_Vararg_Op_May_Throw(
         CTX_VARLIST(VAL_VARARGS_FRAME_CTX(varargs)),
         VAL_VARARGS_PARAM(varargs), // distinct from the frame->param!
         VAL_VARARGS_ARG(varargs), // may have changed since function started
-        SYM_0, // have it fetch symbol from frame if call is active
+        NULL, // have it fetch symbol from frame if call is active
         op
     );
 }
@@ -626,7 +626,7 @@ void Mold_Varargs(const REBVAL *value, REB_MOLD *mold) {
 
             // Note varargs_param is distinct from f->param!
             REBVAL param_word;
-            Val_Init_Word(&param_word, kind, VAL_TYPESET_SYM(varargs_param));
+            Val_Init_Word(&param_word, kind, VAL_PARAM_CASED(varargs_param));
 
             Mold_Value(mold, &param_word, TRUE);
 

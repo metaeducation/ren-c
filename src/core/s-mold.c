@@ -90,7 +90,7 @@ REBSER *Emit(REB_MOLD *mold, const char *fmt, ...)
             const REBVAL *any_word = va_arg(va, const REBVAL*);
             Append_UTF8_May_Fail(
                 series,
-                Get_Sym_Name(VAL_WORD_SYM(any_word)),
+                STR_HEAD(VAL_WORD_CASED(any_word)),
                 -1
             );
             break;
@@ -128,7 +128,9 @@ REBSER *Emit(REB_MOLD *mold, const char *fmt, ...)
             );
             break;
         case 'N':   // Symbol name
-            Append_UTF8_May_Fail(series, Get_Sym_Name(va_arg(va, REBCNT)), -1);
+            Append_UTF8_May_Fail(
+                series, STR_HEAD(va_arg(va, REBSTR*)), -1
+            );
             break;
         case '+':   // Add #[ if mold/all
             if (GET_MOPT(mold, MOPT_MOLD_ALL)) {
@@ -139,7 +141,7 @@ REBSER *Emit(REB_MOLD *mold, const char *fmt, ...)
         case 'D':   // Datatype symbol: #[type
             if (ender) {
                 Append_UTF8_May_Fail(
-                    series, Get_Sym_Name(va_arg(va, REBCNT)), -1
+                    series, STR_HEAD(Canon(cast(REBSYM, va_arg(va, int)))), -1
                 );
                 Append_Codepoint_Raw(series, ' ');
             }
@@ -758,16 +760,14 @@ static void Form_Array_At(
     // Form a series (part_mold means mold non-string values):
     REBINT n;
     REBINT len = ARR_LEN(array) - index;
-    RELVAL *val;
-    REBVAL *wval;
 
     if (len < 0) len = 0;
 
     for (n = 0; n < len;) {
-        val = ARR_AT(array, index + n);
-        wval = 0;
+        RELVAL *val = ARR_AT(array, index + n);
+        REBVAL *wval = NULL;
         if (context && (IS_WORD(val) || IS_GET_WORD(val))) {
-            wval = Find_Word_Value(context, VAL_WORD_SYM(val));
+            wval = Select_Canon_In_Context(context, VAL_WORD_CANON(val));
             if (wval) val = wval;
         }
         Mold_Value(mold, val, LOGICAL(wval != NULL));
@@ -780,8 +780,9 @@ static void Form_Array_At(
             if (n < len && SER_LEN(mold->series)
                 && *UNI_LAST(mold->series) != LF
                 && !GET_MOPT(mold, MOPT_TIGHT)
-            )
+            ){
                 Append_Codepoint_Raw(mold->series, ' ');
+            }
         }
     }
 }
@@ -806,14 +807,14 @@ static void Mold_Typeset(const REBVAL *value, REB_MOLD *mold, REBOOL molded)
     }
 
 #if !defined(NDEBUG)
-    if (VAL_TYPESET_SYM(value) != SYM_0) {
+    if (VAL_KEY_CASED(value) != NULL) {
         //
         // In debug builds we're probably more interested in the symbol than
         // the typesets, if we are looking at a PARAMLIST or KEYLIST.
         //
         Append_Unencoded(mold->series, "(");
         Append_UTF8_May_Fail(
-            mold->series, Get_Sym_Name(VAL_TYPESET_SYM(value)), -1 // LEN_BYTES
+            mold->series, STR_HEAD(VAL_KEY_CASED(value)), -1 // LEN_BYTES
         );
         Append_Unencoded(mold->series, ") ");
 
@@ -830,7 +831,7 @@ static void Mold_Typeset(const REBVAL *value, REB_MOLD *mold, REBOOL molded)
     // Convert bits to types (we can make this more efficient !!)
     for (n = 0; n < REB_MAX_0; n++) {
         if (TYPE_CHECK(value, KIND_FROM_0(n))) {
-            Emit(mold, "+DN ", SYM_DATATYPE_X, n + 1);
+            Emit(mold, "+DN ", SYM_DATATYPE_X, Canon(cast(REBSYM, n + 1)));
         }
     }
     Trim_Tail(mold->series, ' ');
@@ -952,7 +953,7 @@ static void Form_Object(const REBVAL *value, REB_MOLD *mold)
     for (; !IS_END(key); key++, var++) {
         if (!GET_VAL_FLAG(key, TYPESET_FLAG_HIDDEN)) {
             had_output = TRUE;
-            Emit(mold, "N: V\n", VAL_TYPESET_SYM(key), var);
+            Emit(mold, "N: V\n", VAL_KEY_CASED(key), var);
         }
     }
 
@@ -1028,7 +1029,7 @@ static void Mold_Object(const REBVAL *value, REB_MOLD *mold)
         Val_Init_Word(
             &any_word,
             GET_VAL_FLAG(key, TYPESET_FLAG_HIDDEN) ? REB_SET_WORD : REB_WORD,
-            VAL_TYPESET_SYM(key)
+            VAL_KEY_CASED(key)
         );
         Mold_Value(mold, &any_word, TRUE);
     }
@@ -1073,7 +1074,7 @@ static void Mold_Object(const REBVAL *value, REB_MOLD *mold)
         New_Indented_Line(mold);
 
         Append_UTF8_May_Fail(
-            mold->series, Get_Sym_Name(VAL_TYPESET_SYM(key)), -1
+            mold->series, STR_HEAD(VAL_KEY_CASED(key)), -1
         );
 
         Append_Unencoded(mold->series, ": ");
@@ -1232,10 +1233,7 @@ void Mold_Value(REB_MOLD *mold, const RELVAL *value, REBOOL molded)
         break;
 
     case REB_LOGIC:
-//      if (!molded || !VAL_LOGIC_WORDS(value) || !GET_MOPT(mold, MOPT_MOLD_ALL))
-            Emit(mold, "+N", VAL_LOGIC(value) ? SYM_TRUE : SYM_FALSE);
-//      else
-//          Mold_Logic(mold, value);
+        Emit(mold, "+N", VAL_LOGIC(value) ? Canon(SYM_TRUE) : Canon(SYM_FALSE));
         break;
 
     case REB_INTEGER:
@@ -1359,19 +1357,18 @@ void Mold_Value(REB_MOLD *mold, const RELVAL *value, REBOOL molded)
         break;
 
     case REB_DATATYPE: {
-        REBSYM sym = VAL_TYPE_SYM(value);
+        REBSTR *name = Canon(VAL_TYPE_SYM(value));
     #if !defined(NDEBUG)
         if (LEGACY(OPTIONS_PAREN_INSTEAD_OF_GROUP)) {
             if (VAL_TYPE_KIND(value) == REB_GROUP)
-                sym = SYM_PAREN_X; // e_Xclamation point (GROUP!)
+                name = Canon(SYM_PAREN_X); // e_Xclamation point (GROUP!)
         }
     #endif
         if (!molded)
-            Emit(mold, "N", sym);
+            Emit(mold, "N", name);
         else
-            Emit(mold, "+DN", SYM_DATATYPE_X, sym);
-        break;
-    }
+            Emit(mold, "+DN", SYM_DATATYPE_X, name);
+        break; }
 
     case REB_TYPESET:
         Mold_Typeset(const_KNOWN(value), mold, molded);
@@ -1379,7 +1376,7 @@ void Mold_Value(REB_MOLD *mold, const RELVAL *value, REBOOL molded)
 
     case REB_WORD:
         // This is a high frequency function, so it is optimized.
-        Append_UTF8_May_Fail(ser, Get_Sym_Name(VAL_WORD_SYM(value)), -1);
+        Append_UTF8_May_Fail(ser, STR_HEAD(VAL_WORD_CASED(value)), -1);
         break;
 
     case REB_SET_WORD:

@@ -102,18 +102,18 @@ inline static REBOOL Is_Function_Frame_Fulfilling(struct Reb_Frame *f)
 // and see a cached string for the function it's running (if there is one).
 // The release build only considers the frame symbol valid if ET_FUNCTION
 //
-inline static void SET_FRAME_SYM(struct Reb_Frame *f, REBSYM sym) {
+inline static void SET_FRAME_LABEL(struct Reb_Frame *f, REBSTR *label) {
     assert(Is_Any_Function_Frame(f));
+    f->label = label;
 #if !defined(NDEBUG)
-    f->label_sym = sym;
-    f->label_str = cast(const char*, Get_Sym_Name(sym));
+    f->label_debug = cast(const char*, STR_HEAD(label));
 #endif
 }
 
-inline static void CLEAR_FRAME_SYM(struct Reb_Frame *f) {
+inline static void CLEAR_FRAME_LABEL(struct Reb_Frame *f) {
 #if !defined(NDEBUG)
-    f->label_sym = SYM_0;
-    f->label_str = NULL;
+    f->label = NULL;
+    f->label_debug = NULL;
 #endif
 }
 
@@ -842,7 +842,7 @@ struct Native_Refine {
 
 #define FRM_OUT(f)          cast(REBVAL * const, (f)->out) // writable Lvalue
 #define FRM_PRIOR(f)        ((f)->prior)
-#define FRM_LABEL(f)        ((f)->label_sym)
+#define FRM_LABEL(f)        ((f)->label)
 
 #define FRM_FUNC(f)         ((f)->func)
 #define FRM_DSP_ORIG(f)     ((f)->dsp_orig + 0) // Lvalue

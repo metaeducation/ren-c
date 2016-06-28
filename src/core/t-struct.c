@@ -47,63 +47,63 @@
 // Having a `switch` is worth not creating a mirror enum, however.
 //
 void *Get_FFType_Enum_Info_Core(
-    REBSYM *sym_out,
+    REBSTR **name_out,
     enum Reb_Kind *kind_out,
     unsigned short type
 ) {
     switch (type) {
     case FFI_TYPE_UINT8:
-        *sym_out = SYM_UINT8;
+        *name_out = Canon(SYM_UINT8);
         *kind_out = REB_INTEGER;
         return &ffi_type_uint8;
 
     case FFI_TYPE_SINT8:
-        *sym_out = SYM_INT8;
+        *name_out = Canon(SYM_INT8);
         *kind_out = REB_INTEGER;
         return &ffi_type_sint8;
 
     case FFI_TYPE_UINT16:
-        *sym_out = SYM_UINT16;
+        *name_out = Canon(SYM_UINT16);
         *kind_out = REB_INTEGER;
         return &ffi_type_uint16;
 
     case FFI_TYPE_SINT16:
-        *sym_out = SYM_INT16;
+        *name_out = Canon(SYM_INT16);
         *kind_out = REB_INTEGER;
         return &ffi_type_sint16;
 
     case FFI_TYPE_UINT32:
-        *sym_out = SYM_UINT32;
+        *name_out = Canon(SYM_UINT32);
         *kind_out = REB_INTEGER;
         return &ffi_type_uint32;
 
     case FFI_TYPE_SINT32:
-        *sym_out = SYM_INT32;
+        *name_out = Canon(SYM_INT32);
         *kind_out = REB_INTEGER;
         return &ffi_type_sint32;
 
     case FFI_TYPE_UINT64:
-        *sym_out = SYM_INT64;
+        *name_out = Canon(SYM_INT64);
         *kind_out = REB_INTEGER;
         return &ffi_type_uint64;
 
     case FFI_TYPE_SINT64:
-        *sym_out = SYM_INT64;
+        *name_out = Canon(SYM_INT64);
         *kind_out = REB_INTEGER;
         return &ffi_type_sint64;
 
     case FFI_TYPE_FLOAT:
-        *sym_out = SYM_FLOAT;
+        *name_out = Canon(SYM_FLOAT);
         *kind_out = REB_DECIMAL;
         return &ffi_type_float;
 
     case FFI_TYPE_DOUBLE:
-        *sym_out = SYM_DOUBLE;
+        *name_out = Canon(SYM_DOUBLE);
         *kind_out = REB_DECIMAL;
         return &ffi_type_double;
 
     case FFI_TYPE_POINTER:
-        *sym_out = SYM_POINTER;
+        *name_out = Canon(SYM_POINTER);
         *kind_out = REB_0;
         return &ffi_type_pointer;
 
@@ -111,7 +111,7 @@ void *Get_FFType_Enum_Info_Core(
 
     default:
         assert(FALSE);
-        *sym_out = SYM_0;
+        *name_out = NULL;
         *kind_out = REB_0;
         return NULL;
     }
@@ -257,10 +257,7 @@ static REBOOL Get_Struct_Var(REBSTU *stu, const REBVAL *word, REBVAL *val)
 
     REBCNT i;
     for (i = 0; i < SER_LEN(fieldlist); ++i, ++field) {
-        if (
-            VAL_SYM_CANON(ARR_AT(PG_Word_Table.array, field->sym))
-            == VAL_WORD_CANON(word)
-        ){
+        if (STR_CANON(field->name) == VAL_WORD_CANON(word)) {
             if (field->is_array) {
                 //
                 // Structs contain packed data for the field type in an array.
@@ -332,7 +329,7 @@ REBARR *Struct_To_Array(REBSTU *stu)
 
         /* required field name */
         val = Alloc_Tail_Array(array);
-        Val_Init_Word(val, REB_SET_WORD, field->sym);
+        Val_Init_Word(val, REB_SET_WORD, field->name);
 
         /* required type */
         type_blk = Alloc_Tail_Array(array);
@@ -344,7 +341,7 @@ REBARR *Struct_To_Array(REBSTU *stu)
             DS_PUSH_TRASH_SAFE;
             nested = DS_TOP;
 
-            Val_Init_Word(val, REB_WORD, SYM_STRUCT_X);
+            Val_Init_Word(val, REB_WORD, Canon(SYM_STRUCT_X));
             get_scalar(stu, field, 0, nested);
             val = Alloc_Tail_Array(VAL_ARRAY(type_blk));
             Val_Init_Block(val, Struct_To_Array(VAL_STRUCT(nested)));
@@ -352,11 +349,11 @@ REBARR *Struct_To_Array(REBSTU *stu)
             DS_DROP;
         }
         else {
-            REBSYM sym;
+            REBSTR *name;
             enum Reb_Kind kind; // dummy
-            Get_FFType_Enum_Info(&sym, &kind, field->type);
-            assert(sym != SYM_0); // !!! was not previously asserted (?)
-            Val_Init_Word(val, REB_WORD, sym);
+            Get_FFType_Enum_Info(&name, &kind, field->type);
+            assert(name != NULL); // !!! was not previously asserted (?)
+            Val_Init_Word(val, REB_WORD, name);
         }
 
         /* optional dimension */
@@ -393,18 +390,16 @@ static REBOOL same_fields(REBSER *tgt, REBSER *src)
 {
     struct Struct_Field *tgt_fields = SER_HEAD(struct Struct_Field, tgt);
     struct Struct_Field *src_fields = SER_HEAD(struct Struct_Field, src);
-    REBCNT n;
 
-    if (SER_LEN(tgt) != SER_LEN(src)) {
+    if (SER_LEN(tgt) != SER_LEN(src))
         return FALSE;
-    }
 
+    REBCNT n;
     for(n = 0; n < SER_LEN(src); n ++) {
         if (tgt_fields[n].type != src_fields[n].type) {
             return FALSE;
         }
-        if (VAL_SYM_CANON(ARR_AT(PG_Word_Table.array, tgt_fields[n].sym))
-            != VAL_SYM_CANON(ARR_AT(PG_Word_Table.array, src_fields[n].sym))
+        if (!SAME_STR(tgt_fields[n].name, src_fields[n].name)
             || tgt_fields[n].offset != src_fields[n].offset
             || tgt_fields[n].dimension != src_fields[n].dimension
             || tgt_fields[n].size != src_fields[n].size) {
@@ -447,7 +442,7 @@ static REBOOL assign_scalar_core(
         return TRUE;
     }
 
-    REBSYM sym; // dummy
+    REBSTR *sym; // dummy
     enum Reb_Kind kind;
     Get_FFType_Enum_Info(&sym, &kind, field->type);
 
@@ -561,10 +556,7 @@ static REBOOL Set_Struct_Var(
     REBCNT i;
 
     for (i = 0; i < SER_LEN(fieldlist); i ++, field ++) {
-        if (
-            VAL_WORD_CANON(word)
-            == VAL_SYM_CANON(ARR_AT(PG_Word_Table.array, field->sym))
-        ) {
+        if (VAL_WORD_CANON(word) == STR_CANON(field->name)) {
             if (field->is_array) {
                 if (elem == NULL) { //set the whole array
                     REBCNT n = 0;
@@ -613,7 +605,7 @@ static void parse_attr (REBVAL *blk, REBINT *raw_size, REBUPT *raw_addr)
 
     while (NOT_END(attr)) {
         if (IS_SET_WORD(attr)) {
-            switch (VAL_WORD_CANON(attr)) {
+            switch (VAL_WORD_SYM(attr)) {
                 case SYM_RAW_SIZE:
                     ++ attr;
                     if (NOT_END(attr) && IS_INTEGER(attr)) {
@@ -763,7 +755,7 @@ static void Parse_Field_Type_May_Fail(
 
     if (IS_WORD(val)) {
 
-        switch (VAL_WORD_CANON(val)) {
+        switch (VAL_WORD_SYM(val)) {
         case SYM_UINT8:
             field->type = FFI_TYPE_UINT8;
             field->size = 1;
@@ -964,7 +956,7 @@ void Init_Struct_Fields(REBVAL *ret, REBVAL *spec)
             struct Struct_Field *fld
                 = SER_AT(struct Struct_Field, fieldlist, i);
 
-            if (fld->sym == VAL_WORD_CANON(word)) {
+            if (STR_CANON(fld->name) == VAL_WORD_CANON(word)) {
                 if (fld->dimension > 1) {
                     REBCNT n = 0;
                     if (IS_BLOCK(fld_val)) {
@@ -1049,7 +1041,7 @@ void MAKE_Struct(REBVAL *out, enum Reb_Kind type, const REBVAL *arg) {
     schema->type = FFI_TYPE_STRUCT;
     schema->is_array = FALSE;
     schema->is_rebval = FALSE;
-    schema->sym = SYM_0; // no symbol for the struct itself
+    schema->name = NULL; // no symbol for the struct itself
     schema->offset = 999999; // shouldn't be used
     schema->fields = Make_Series(
         max_fields, sizeof(struct Struct_Field), MKS_NONE
@@ -1118,7 +1110,7 @@ void MAKE_Struct(REBVAL *out, enum Reb_Kind type, const REBVAL *arg) {
         else
             fail (Error_Invalid_Type(VAL_TYPE(item)));
 
-        field->sym = VAL_WORD_SYM(item);
+        field->name = VAL_WORD_CASED(item);
 
         ++item;
         if (IS_END(item) || !IS_BLOCK(item))
@@ -1332,7 +1324,7 @@ void MAKE_Struct(REBVAL *out, enum Reb_Kind type, const REBVAL *arg) {
             }
         }
         else {
-            REBSYM sym; // dummy
+            REBSTR *sym; // dummy
             enum Reb_Kind kind; // dummy
             ffi_type* field_fftype
                 = Get_FFType_Enum_Info(&sym, &kind, field->type);
@@ -1584,10 +1576,8 @@ REBTYPE(Struct)
 
         case SYM_REFLECT:
             {
-                REBINT n;
                 arg = D_ARG(2);
-                n = VAL_WORD_CANON(arg); // zero on error
-                switch (n) {
+                switch (VAL_WORD_SYM(arg)) {
                     case SYM_VALUES:
                         fail_if_non_accessible(val);
                         Val_Init_Binary(ret, Copy_Sequence_At_Len(VAL_STRUCT_DATA_BIN(val), VAL_STRUCT_OFFSET(val), VAL_STRUCT_SIZE(val)));

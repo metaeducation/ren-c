@@ -269,7 +269,7 @@ REBCNT Hash_Value(const RELVAL *val, REBCTX *specifier)
         fail (Error_Invalid_Type(VAL_TYPE(val)));
 
     case REB_DATATYPE:
-        name = Get_Sym_Name(VAL_TYPE_SYM(val));
+        name = STR_HEAD(Canon(VAL_TYPE_SYM(val)));
         ret = Hash_Word(name, LEN_BYTES(name));
         break;
 
@@ -290,7 +290,8 @@ REBCNT Hash_Value(const RELVAL *val, REBCTX *specifier)
     case REB_LIT_WORD:
     case REB_REFINEMENT:
     case REB_ISSUE:
-        ret = VAL_WORD_CANON(val);
+        // !!! Review
+        ret = cast(REBCNT, cast(REBUPT, VAL_WORD_CANON(val)) >> 4);
         break;
 
     case REB_FUNCTION:

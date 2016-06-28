@@ -350,6 +350,9 @@ static void Queue_Mark_Field_Deep(
     else {
         // ignore primitive datatypes
     }
+
+    if (field->name != NULL)
+        MARK_SERIES_ONLY(field->name);
 }
 
 
@@ -590,6 +593,7 @@ static void Mark_Frame_Stack_Deep(void)
         }
 
         QUEUE_MARK_ARRAY_DEEP(FUNC_PARAMLIST(f->func)); // never NULL
+        MARK_SERIES_ONLY(f->label); // also never NULL
 
         if (f->func == NAT_FUNC(eval)) {
             //
@@ -697,14 +701,12 @@ void Queue_Mark_Value_Deep(const RELVAL *val)
             panic (Error(RE_MISC));
 
         case REB_TYPESET:
-            // As long as typeset is encoded as 64 bits, there's no issue
-            // of having to keep alive "user types" or other things...but
-            // that might be needed in the future.
             //
-            // The symbol stored for typesets in contexts is effectively
-            // unbound, and hence has no context to be preserved (until
-            // such time as symbols are GC'd and this needs to be noted...)
+            // Not all typesets have symbols--only those that serve as the
+            // keys of objects (or parameters of functions)
             //
+            if (val->extra.key_spelling != NULL)
+                MARK_SERIES_ONLY(val->extra.key_spelling);
             break;
 
         case REB_HANDLE:
@@ -819,8 +821,26 @@ void Queue_Mark_Value_Deep(const RELVAL *val)
         case REB_GET_WORD:
         case REB_LIT_WORD:
         case REB_REFINEMENT:
-        case REB_ISSUE:
+        case REB_ISSUE: {
+            REBSTR *spelling = val->payload.any_word.spelling;
+
+            // A word marks the specific spelling it uses, but not the canon
+            // value.  That's because if the canon value gets GC'd, then
+            // another value might become the new canon during that sweep.
             //
+            MARK_SERIES_ONLY(spelling);
+
+            // A GC cannot run during a binding process--which is the only
+            // time a canon word's "index" field is allowed to be nonzero.
+            //
+            assert(
+                !GET_SER_FLAG(spelling, STRING_FLAG_CANON)
+                || (
+                    spelling->misc.bind_index.high == 0
+                    && spelling->misc.bind_index.low == 0
+                )
+            );
+
             // All bound words should keep their contexts from being GC'd...
             // even stack-relative contexts for functions.
             //
@@ -864,7 +884,7 @@ void Queue_Mark_Value_Deep(const RELVAL *val)
                 assert(val->payload.any_word.index == 0);
             #endif
             }
-            break;
+            break; }
 
         case REB_BLANK:
         case REB_BAR:
@@ -964,6 +984,10 @@ void Queue_Mark_Value_Deep(const RELVAL *val)
             // a "slice" out of.
             //
             MARK_SERIES_ONLY(VAL_STRUCT_DATA_BIN(val));
+
+            // The symbol needs to be GC protected, but only fields have them
+
+            assert(VAL_STRUCT_SCHEMA(val)->name == NULL);
 
             // These series are backing stores for the `ffi_type` data that
             // is needed to use the struct with the FFI api.
@@ -1298,10 +1322,26 @@ REBCNT Recycle_Core(REBOOL shutdown)
     // (or deadness) of a series.  If we are shutting down, we are freeing
     // *all* of the series that are managed by the garbage collector, so
     // we don't mark anything as live.
+    //
+    // !!! Should a root set be "frozen" that's not cleaned out until shutdown
+    // time?  There used to be a SERIES_FLAG_KEEP, which was removed due
+    // to its usages being bad (and having few flags at the time).  It could
+    // be reintroduced in a more limited fashion for this purpose.
 
     if (!shutdown) {
         REBSER **sp;
         REBVAL **vp;
+
+        // Mark symbol series.  These canon words for SYM_XXX are the only ones
+        // that are never candidates for GC.  All other symbol series may
+        // go away if no words, parameters, object keys, etc. refer to them.
+        {
+            REBSTR **canon = SER_HEAD(REBSTR*, PG_Symbol_Canons);
+            assert(*canon == NULL); // SYM_0 is for all non-builtin words
+            ++canon;
+            for (; *canon != NULL; ++canon)
+                MARK_SERIES_ONLY(*canon);
+        }
 
         // Mark all natives
         {

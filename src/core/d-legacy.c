@@ -163,9 +163,7 @@ REBCTX *Make_Guarded_Arg123_Error(void)
 {
     REBCTX *root_error = VAL_CONTEXT(ROOT_ERROBJ);
     REBCTX *error = Copy_Context_Shallow_Extra(root_error, 3);
-    REBVAL *key;
-    REBVAL *var;
-    REBCNT n;
+
     REBCNT root_len = ARR_LEN(CTX_VARLIST(root_error));
 
     // Update the length to suppress out of bounds assert from CTX_KEY/VAL
@@ -173,11 +171,16 @@ REBCTX *Make_Guarded_Arg123_Error(void)
     SET_ARRAY_LEN(CTX_VARLIST(error), root_len + 3);
     SET_ARRAY_LEN(CTX_KEYLIST(error), root_len + 3);
 
-    key = CTX_KEY(error, CTX_LEN(root_error)) + 1;
-    var = CTX_VAR(error, CTX_LEN(root_error)) + 1;
+    REBVAL *key = CTX_KEY(error, CTX_LEN(root_error)) + 1;
+    REBVAL *var = CTX_VAR(error, CTX_LEN(root_error)) + 1;
 
+    REBCNT n;
     for (n = 0; n < 3; n++, key++, var++) {
-        Val_Init_Typeset(key, ALL_64, SYM_ARG1 + n);
+        Val_Init_Typeset(
+            key,
+            ALL_64,
+            Canon(cast(REBSYM, cast(REBCNT, SYM_ARG1) + n))
+        );
         SET_BLANK(var);
     }
 

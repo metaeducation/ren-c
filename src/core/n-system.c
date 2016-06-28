@@ -263,7 +263,7 @@ REBNATIVE(evoke)
     RELVAL *arg = ARG(chant);
     REBCNT len;
 
-    Check_Security(SYM_DEBUG, POL_READ, 0);
+    Check_Security(Canon(SYM_DEBUG), POL_READ, 0);
 
     if (IS_BLOCK(arg)) {
         len = VAL_LEN_AT(arg);
@@ -273,7 +273,7 @@ REBNATIVE(evoke)
 
     for (; len > 0; len--, arg++) {
         if (IS_WORD(arg)) {
-            switch (VAL_WORD_CANON(arg)) {
+            switch (VAL_WORD_SYM(arg)) {
             case SYM_DELECT:
                 Trace_Delect(1);
                 break;
@@ -293,16 +293,12 @@ REBNATIVE(evoke)
             switch (Int32(KNOWN(arg))) {
             case 0:
                 Check_Memory();
-                Assert_Bind_Table_Empty();
                 break;
             case 1:
                 Reb_Opts->watch_expand = TRUE;
                 break;
             case 2:
                 Check_Memory();
-                break;
-            case 3:
-                Assert_Bind_Table_Empty();
                 break;
             default:
                 Out_Str(cb_cast(evoke_help), 1);
@@ -326,9 +322,7 @@ REBNATIVE(evoke)
 //
 REBNATIVE(limit_usage)
 {
-    REBSYM sym;
-
-    sym = VAL_WORD_CANON(D_ARG(1));
+    REBSYM sym = VAL_WORD_SYM(D_ARG(1));
 
     // Only gets set once:
     if (sym == SYM_EVAL) {

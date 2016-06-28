@@ -71,9 +71,9 @@ enum parse_flags {
     PF_WHILE = 1 << 10
 };
 
-// Returns SYMBOL or 0 if not a command:
-#define GET_CMD(n) (((n) >= SYM_SET && (n) <= SYM_END) ? (n) : 0)
-#define VAL_CMD(v) GET_CMD(VAL_WORD_CANON(v))
+// Returns SYMBOL or SYM_0 if not a command:
+#define GET_CMD(n) (((n) >= SYM_SET && (n) <= SYM_END) ? (n) : SYM_0)
+#define VAL_CMD(v) GET_CMD(VAL_WORD_SYM(v))
 
 
 // Subparse_Throws is a helper that sets up a call frame and invokes Subparse.
@@ -141,7 +141,7 @@ static REBOOL Subparse_Throws(
     SET_INTEGER(&f->stackvars[1], find_flags);
 
     f->arg = f->stackvars;
-    f->label_sym = SYM_SUBPARSE;
+    f->label = Canon(SYM_SUBPARSE);
     f->eval_type = ET_FUNCTION;
     f->func = NAT_FUNC(subparse);
     f->flags = 0;
@@ -901,7 +901,7 @@ static REBCNT Parse_To(
         if (i > SER_LEN(P_INPUT))
             i = SER_LEN(P_INPUT);
     }
-    else if (IS_WORD(rule) && VAL_WORD_CANON(rule) == SYM_END) {
+    else if (IS_WORD(rule) && VAL_WORD_SYM(rule) == SYM_END) {
         i = SER_LEN(P_INPUT);
     }
     else if (IS_BLOCK(rule)) {
@@ -1688,7 +1688,7 @@ REBNATIVE(subparse)
             }
             if (IS_WORD(rule)) {
 
-                switch (cmd = VAL_WORD_CANON(rule)) {
+                switch (cmd = VAL_WORD_SYM(rule)) {
 
                 case SYM_SKIP:
                     i = (P_POS < SER_LEN(P_INPUT))

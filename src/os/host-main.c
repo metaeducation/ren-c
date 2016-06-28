@@ -451,10 +451,6 @@ REBOOL Host_Start_Exiting(int *exit_status, int argc, REBCHR **argv) {
     REBYTE *embedded_script = NULL;
     REBI64 embedded_size = 0;
 
-    const REBYTE debug_str[] = "debug";
-    REBCNT debug_sym;
-    REBCTX *user_context;
-
     Host_Lib = &Host_Lib_Init;
 
     embedded_script = OS_READ_EMBEDDED(&embedded_size);
@@ -531,11 +527,13 @@ REBOOL Host_Start_Exiting(int *exit_status, int argc, REBCHR **argv) {
     // notes on N_debug regarding why the C code implementing DEBUG is in
     // the host and not part of Rebol Core.)
     //
-    debug_sym = Make_Word(debug_str, LEN_BYTES(debug_str));
-    user_context = VAL_CONTEXT(Get_System(SYS_CONTEXTS, CTX_USER));
+    const REBYTE debug_utf8[] = "debug";
+    REBSTR *debug_name = Intern_UTF8_Managed(debug_utf8, LEN_BYTES(debug_utf8));
+
+    REBCTX *user_context = VAL_CONTEXT(Get_System(SYS_CONTEXTS, CTX_USER));
     if (
-        !Find_Word_In_Context(Lib_Context, debug_sym, TRUE)
-        && !Find_Word_In_Context(user_context, debug_sym, TRUE)
+        0 == Find_Canon_In_Context(Lib_Context, STR_CANON(debug_name), TRUE) &&
+        0 == Find_Canon_In_Context(user_context, STR_CANON(debug_name), TRUE)
     ) {
         REBARR *spec_array = Scan_Source(N_debug_spec, LEN_BYTES(N_debug_spec));
         REBVAL spec;
@@ -547,8 +545,8 @@ REBOOL Host_Start_Exiting(int *exit_status, int argc, REBCHR **argv) {
             NULL // no underlying function, this is fundamental
         );
 
-        *Append_Context(Lib_Context, 0, debug_sym) = *FUNC_VALUE(debug_native);
-        *Append_Context(user_context, 0, debug_sym) = *FUNC_VALUE(debug_native);
+        *Append_Context(Lib_Context, 0, debug_name) = *FUNC_VALUE(debug_native);
+        *Append_Context(user_context, 0, debug_name) = *FUNC_VALUE(debug_native);
     }
     else {
         // It's already there--e.g. someone added REBNATIVE(debug).  Assert

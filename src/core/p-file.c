@@ -125,7 +125,7 @@ void Ret_Query_File(REBCTX *port, REBREQ *file, REBVAL *ret)
     Val_Init_Word(
         CTX_VAR(context, STD_FILE_INFO_TYPE),
         REB_WORD,
-        GET_FLAG(file->modes, RFM_DIR) ? SYM_DIR : SYM_FILE
+        GET_FLAG(file->modes, RFM_DIR) ? Canon(SYM_DIR) : Canon(SYM_FILE)
     );
     SET_INTEGER(
         CTX_VAR(context, STD_FILE_INFO_SIZE), file->special.file.size
@@ -178,7 +178,7 @@ static REBCNT Get_Mode_Id(REBVAL *word)
 {
     REBCNT id = 0;
     if (IS_WORD(word)) {
-        id = Find_Int(&Mode_Syms[0], VAL_WORD_CANON(word));
+        id = Find_Int(&Mode_Syms[0], VAL_WORD_SYM(word));
         if (id == NOT_FOUND) fail (Error_Invalid_Arg(word));
     }
     return id;
@@ -594,5 +594,5 @@ seeked:
 //
 void Init_File_Scheme(void)
 {
-    Register_Scheme(SYM_FILE, 0, File_Actor);
+    Register_Scheme(Canon(SYM_FILE), 0, File_Actor);
 }

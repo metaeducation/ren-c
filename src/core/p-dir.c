@@ -328,5 +328,5 @@ create:
 //
 void Init_Dir_Scheme(void)
 {
-    Register_Scheme(SYM_DIR, 0, Dir_Actor);
+    Register_Scheme(Canon(SYM_DIR), 0, Dir_Actor);
 }

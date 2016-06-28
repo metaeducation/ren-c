@@ -138,9 +138,9 @@ REBTYPE(Function)
         return R_OUT;
 
     case SYM_REFLECT: {
-        REBSYM canon = VAL_WORD_CANON(arg);
+        REBSYM sym = VAL_WORD_SYM(arg);
 
-        switch (canon) {
+        switch (sym) {
         case SYM_ADDR:
             if (
                 IS_FUNCTION_RIN(value)
@@ -225,9 +225,9 @@ REBTYPE(Function)
             param = VAL_FUNC_PARAMS_HEAD(value);
             typeset = SINK(ARR_HEAD(copy));
             for (; NOT_END(param); param++, typeset++) {
-                assert(VAL_TYPESET_SYM(param) != SYM_0);
+                assert(VAL_PARAM_CASED(param) != NULL);
                 *typeset = *param;
-                VAL_TYPESET_SYM_INIT(typeset, SYM_0);
+                INIT_TYPESET_NAME(typeset, NULL);
             }
             SET_END(typeset);
             SET_ARRAY_LEN(copy, VAL_FUNC_NUM_PARAMS(value));

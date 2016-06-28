@@ -152,9 +152,8 @@ static inline void UNMARK_REBSER(REBSER *rebser) {
 // the presence or absence of an END marker in the first slot.
 //
 
-inline static REBYTE SER_WIDE(REBSER *s) {
-    return cast(REBYTE, (s->info.bits >> 16) & 0xff);
-}
+#define SER_WIDE(s) \
+    ((REBYTE)((s)->info.bits >> 16) & 0xff) // no use to inline in debug build
 
 inline static REBCNT SER_LEN(REBSER *s) {
     if (GET_SER_FLAG(s, SERIES_FLAG_HAS_DYNAMIC))
@@ -163,7 +162,8 @@ inline static REBCNT SER_LEN(REBSER *s) {
     if (GET_SER_FLAG(s, SERIES_FLAG_ARRAY))
         return IS_END(&s->content.values[0]) ? 0 : 1;
 
-    return s->misc.len;
+    assert(FALSE); // !!! currently not supported, length must be implicit
+    return 0;
 }
 
 inline static void SET_SERIES_LEN(REBSER *s, REBCNT len) {
@@ -172,10 +172,8 @@ inline static void SET_SERIES_LEN(REBSER *s, REBCNT len) {
     if (GET_SER_FLAG(s, SERIES_FLAG_HAS_DYNAMIC)) {
         s->content.dynamic.len = len;
     }
-    else if (GET_SER_FLAG(s, SERIES_FLAG_ARRAY))
-        assert(FALSE);
     else {
-        s->misc.len = len;
+        assert(FALSE); // currently not supported, length must be implicit
     }
 }
 
@@ -544,6 +542,55 @@ inline static void SET_ANY_CHAR(REBSER *s, REBCNT n, REBYTE c) {
 
 //=////////////////////////////////////////////////////////////////////////=//
 //
+//  REBSTR series for UTF-8 strings
+//
+//=////////////////////////////////////////////////////////////////////////=//
+//
+// R3-Alpha and Red would work with strings in their decoded form, in
+// series of varying widths.  Ren-C's goal is to replace this with the idea
+// of "UTF-8 everywhere", working with the strings as UTF-8 and only
+// converting if the platform requires it for I/O (e.g. Windows):
+//
+// http://utf8everywhere.org/
+//
+// As a first step toward this goal, one place where strings were kept in
+// UTF-8 form has been converted into series...the word table.  So for now,
+// all REBSTR instances are for ANY-WORD!.
+//
+// The concept is that a SYM refers to one of the built-in words and can
+// be used in C switch statements.  A canon STR is used to identify everything
+// else.
+//
+
+inline static const REBYTE *STR_HEAD(REBSTR *str) {
+    return BIN_HEAD(str);
+}
+
+inline static REBSTR *STR_CANON(REBSTR *str) {
+    if (GET_SER_FLAG(str, STRING_FLAG_CANON))
+        return str;
+    return str->misc.canon;
+}
+
+inline static OPT_REBSYM STR_SYMBOL(REBSTR *str) {
+    assert(STR_CANON(str)->header.bits == str->header.bits);
+    return cast(REBSYM, str->header.bits >> 16);
+}
+
+inline static REBSTR *Canon(REBSYM sym) {
+    assert(cast(REBCNT, sym) != 0);
+    assert(cast(REBCNT, sym) < SER_LEN(PG_Symbol_Canons));
+    return *SER_AT(REBSTR*, PG_Symbol_Canons, cast(REBCNT, sym));
+}
+
+inline static REBOOL SAME_STR(REBSTR *s1, REBSTR *s2) {
+    if (s1 == s2) return TRUE; // !!! does this check speed things up or not?
+    return LOGICAL(STR_CANON(s1) == STR_CANON(s2)); // canon check, quite fast
+}
+
+
+//=////////////////////////////////////////////////////////////////////////=//
+//
 //  REBARR (a.k.a. "Rebol Array")
 //
 //=////////////////////////////////////////////////////////////////////////=//
@@ -873,7 +920,9 @@ inline static REBVAL *CTX_VARS_HEAD(REBCTX *c) {
 
 inline static REBVAL *CTX_KEY(REBCTX *c, REBCNT n) {
     assert(n != 0 && n <= CTX_LEN(c));
-    return CTX_KEYS_HEAD(c) + (n) - 1;
+    REBVAL *key = CTX_KEYS_HEAD(c) + (n) - 1;
+    assert(key->extra.key_spelling != NULL);
+    return key;
 }
 
 inline static REBVAL *CTX_VAR(REBCTX *c, REBCNT n) {
@@ -888,11 +937,17 @@ inline static REBVAL *CTX_VAR(REBCTX *c, REBCNT n) {
     return var;
 }
 
-#define CTX_KEY_SYM(c,n) \
-    VAL_TYPESET_SYM(CTX_KEY((c), (n)))
+inline static REBSTR *CTX_KEY_CASED(REBCTX *c, REBCNT n) {
+    return CTX_KEY(c, n)->extra.key_spelling;
+}
 
-#define CTX_KEY_CANON(c,n) \
-    VAL_TYPESET_CANON(CTX_KEY((c), (n)))
+inline static REBSTR *CTX_KEY_CANON(REBCTX *c, REBCNT n) {
+    return STR_CANON(CTX_KEY_CASED(c, n));
+}
+
+inline static REBSYM CTX_KEY_SYM(REBCTX *c, REBCNT n) {
+    return STR_SYMBOL(CTX_KEY_CASED(c, n)); // should be same as canon
+}
 
 inline static REBCTX *CTX_META(REBCTX *c) {
     return ARR_SERIES(CTX_KEYLIST(c))->link.meta;
@@ -991,8 +1046,8 @@ inline static REBVAL *FUNC_PARAMS_HEAD(REBFUN *f) {
     return SER_AT(REBVAL, ARR_SERIES(FUNC_PARAMLIST(f)), 1);
 }
 
-inline static REBSYM FUNC_PARAM_SYM(REBFUN *f, REBCNT n) {
-    return FUNC_PARAM((f), (n))->extra.typeset_sym;
+inline static REBSTR *FUNC_PARAM_CASED(REBFUN *f, REBCNT n) {
+    return FUNC_PARAM((f), (n))->extra.key_spelling;
 }
 
 inline static REBRIN *FUNC_ROUTINE(REBFUN *f) {

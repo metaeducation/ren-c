@@ -302,7 +302,7 @@ REBINT PD_Time(REBPVS *pvs)
     REB_TIMEF tf;
 
     if (IS_WORD(sel)) {
-        switch (VAL_WORD_CANON(sel)) {
+        switch (VAL_WORD_SYM(sel)) {
         case SYM_HOUR:   i = 0; break;
         case SYM_MINUTE: i = 1; break;
         case SYM_SECOND: i = 2; break;

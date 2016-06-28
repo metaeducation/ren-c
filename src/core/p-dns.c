@@ -153,5 +153,5 @@ pick:
 //
 void Init_DNS_Scheme(void)
 {
-    Register_Scheme(SYM_DNS, 0, DNS_Actor);
+    Register_Scheme(Canon(SYM_DNS), 0, DNS_Actor);
 }

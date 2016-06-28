@@ -189,7 +189,7 @@ static int Protect(struct Reb_Frame *frame_, REBFLGS flags)
 
     // flags has PROT_SET bit (set or not)
 
-    Check_Security(SYM_PROTECT, POL_WRITE, value);
+    Check_Security(Canon(SYM_PROTECT), POL_WRITE, value);
 
     if (REF(deep)) SET_FLAG(flags, PROT_DEEP);
     //if (REF(words)) SET_FLAG(flags, PROT_WORD);
@@ -1066,7 +1066,7 @@ REBNATIVE(do)
 
         f->varlist = CTX_VARLIST(VAL_CONTEXT(value)); // need w/NULL def
 
-        return Apply_Frame_Core(f, SYM___ANONYMOUS__, NULL);
+        return Apply_Frame_Core(f, Canon(SYM___ANONYMOUS__), NULL);
     }
 
     case REB_TASK:

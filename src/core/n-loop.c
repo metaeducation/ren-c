@@ -137,7 +137,7 @@ static REBARR *Init_Loop(
             fail (Error_Invalid_Arg_Core(item, specifier));
         }
 
-        Val_Init_Typeset(key, ALL_64, VAL_WORD_SYM(item));
+        Val_Init_Typeset(key, ALL_64, VAL_WORD_CASED(item));
         key++;
 
         // !!! This should likely use the unset-defaulting in Ren-C with the
@@ -518,7 +518,7 @@ static REB_R Loop_Each(struct Reb_Frame *frame_, LOOP_MODE mode)
                     Val_Init_Word_Bound(
                         var,
                         REB_WORD,
-                        VAL_TYPESET_SYM(VAL_CONTEXT_KEY(data_value, index)),
+                        CTX_KEY_CASED(VAL_CONTEXT(data_value), index),
                         AS_CONTEXT(series),
                         index
                     );
@@ -537,7 +537,7 @@ static REB_R Loop_Each(struct Reb_Frame *frame_, LOOP_MODE mode)
                 else {
                     // !!! Review this error (and this routine...)
                     REBVAL key_name;
-                    Val_Init_Word(&key_name, REB_WORD, VAL_TYPESET_SYM(key));
+                    Val_Init_Word(&key_name, REB_WORD, VAL_KEY_CASED(key));
 
                     fail (Error_Invalid_Arg(&key_name));
                 }
@@ -571,9 +571,7 @@ static REB_R Loop_Each(struct Reb_Frame *frame_, LOOP_MODE mode)
                     else {
                         // !!! Review this error (and this routine...)
                         REBVAL key_name;
-                        Val_Init_Word(
-                            &key_name, REB_WORD, VAL_TYPESET_SYM(key)
-                        );
+                        Val_Init_Word(&key_name, REB_WORD, VAL_KEY_CASED(key));
 
                         fail (Error_Invalid_Arg(&key_name));
                     }

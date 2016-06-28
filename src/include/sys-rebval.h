@@ -404,24 +404,6 @@ typedef struct Reb_Tuple {
 } REBTUP;
 
 
-//
-// Rebol Symbol
-//
-// !!! Historically Rebol used an unsigned 32-bit integer as a "symbol ID".
-// These symbols did not participate in garbage collection and had to be
-// looked up in a table to get their values.  Ren-C is moving toward adapting
-// REBSERs to be able to store words and canon words, as well as GC them.
-// This starts moving the types to be the size of a platform pointer.
-//
-
-typedef REBUPT REBSYM;
-
-struct Reb_Symbol {
-    REBCNT alias; // Index to next alias form
-    REBCNT name; // Index into PG_Word_Names string
-};
-
-
 struct Reb_Any_Series {
     //
     // `series` represents the actual physical underlying data, which is
@@ -453,13 +435,9 @@ struct Reb_Typeset {
 
 struct Reb_Any_Word {
     //
-    // Index of the word's symbol
+    // This is the word's non-canonized spelling.  It is a UTF-8 string.
     //
-    // Note: Future expansion plans are to have symbol entries tracked by
-    // pointer and garbage collected, likely as series nodes.  A full pointer
-    // sized value is required here.
-    //
-    REBSYM sym;
+    REBSTR *spelling;
 
     // Index of word in context (if word is bound, e.g. `binding` is not NULL)
     //
@@ -706,9 +684,8 @@ union Reb_Value_Extra {
     // 64-bit alignment, then that gets the priority for being in the payload,
     // with the "Extra" pointer-sized item here.
 
-    REBSYM typeset_sym; // if typeset is key of object or function parameter
+    REBSTR *key_spelling; // if typeset is key of object or function parameter
     REBDAT date; // time's payload holds the nanoseconds, this is the date
-    REBSYM symbol_canon; // if Reb_Symbol, index of the canonical (first) word
     REBCNT struct_offset; // offset for struct in the possibly shared series
 
     // !!! Biasing Ren-C to helping solve its technical problems led the
@@ -752,8 +729,6 @@ union Reb_Value_Payload {
 
     struct Reb_Event event;
     struct Reb_Gob gob;
-
-    struct Reb_Symbol symbol; // internal
 
     // These use `specific` or `relative` in `binding`, based on IS_RELATIVE()
 

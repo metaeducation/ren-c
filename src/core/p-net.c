@@ -114,7 +114,7 @@ static void Accept_New_Port(REBVAL *out, REBCTX *port, REBREQ *sock)
 static REB_R Transport_Actor(
     struct Reb_Frame *frame_,
     REBCTX *port,
-    REBCNT action,
+    REBSYM action,
     enum Transport_Types proto
 ) {
     REBREQ *sock;   // IO request
@@ -359,12 +359,13 @@ static REB_R UDP_Actor(struct Reb_Frame *frame_, REBCTX *port, REBSYM action)
 //
 void Init_TCP_Scheme(void)
 {
-    Register_Scheme(SYM_TCP, 0, TCP_Actor);
+    Register_Scheme(Canon(SYM_TCP), 0, TCP_Actor);
 }
+
 //
 //  Init_UDP_Scheme: C
 //
 void Init_UDP_Scheme(void)
 {
-    Register_Scheme(SYM_UDP, 0, UDP_Actor);
+    Register_Scheme(Canon(SYM_UDP), 0, UDP_Actor);
 }

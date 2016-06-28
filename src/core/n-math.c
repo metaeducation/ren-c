@@ -626,7 +626,7 @@ REBNATIVE(same_q)
         //
         // ANY-WORD! must match in binding as well as be otherwise equal.
         //
-        if (VAL_WORD_SYM(value1) != VAL_WORD_SYM(value2))
+        if (VAL_WORD_CASED(value1) != VAL_WORD_CASED(value2))
             return R_FALSE;
         if (IS_WORD_BOUND(value1) != IS_WORD_BOUND(value2))
             return R_FALSE;

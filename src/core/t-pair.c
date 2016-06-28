@@ -185,9 +185,9 @@ REBINT PD_Pair(REBPVS *pvs)
     REBD32 dec;
 
     if (IS_WORD(sel)) {
-        if (VAL_WORD_CANON(sel) == SYM_X)
+        if (VAL_WORD_SYM(sel) == SYM_X)
             n = 1;
-        else if (VAL_WORD_CANON(sel) == SYM_Y)
+        else if (VAL_WORD_SYM(sel) == SYM_Y)
             n = 2;
         else
             fail (Error_Bad_Path_Select(pvs));
@@ -338,9 +338,9 @@ REBTYPE(Pair)
         REBVAL *arg = D_ARG(2);
         REBINT n;
         if (IS_WORD(arg)) {
-            if (VAL_WORD_CANON(arg) == SYM_X)
+            if (VAL_WORD_SYM(arg) == SYM_X)
                 n = 0;
-            else if (VAL_WORD_CANON(arg) == SYM_Y)
+            else if (VAL_WORD_SYM(arg) == SYM_Y)
                 n = 1;
             else
                 fail (Error_Invalid_Arg(arg));

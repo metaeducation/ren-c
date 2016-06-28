@@ -188,7 +188,7 @@ REBOOL Next_Path_Throws(REBPVS *pvs)
 //
 REBOOL Do_Path_Throws_Core(
     REBVAL *out,
-    REBSYM *label_sym,
+    REBSTR **label_out,
     const RELVAL *path,
     REBCTX *specifier,
     REBVAL *opt_setval
@@ -326,7 +326,7 @@ REBOOL Do_Path_Throws_Core(
         return FALSE;
     }
 
-    if (label_sym) {
+    if (label_out) {
         REBVAL refinement;
 
         // When a function is hit, path processing stops as soon as the
@@ -335,7 +335,7 @@ REBOOL Do_Path_Throws_Core(
         // this last component in the sub-path is a word naming the function.
         //
         if (IS_WORD(pvs.item)) {
-            *label_sym = VAL_WORD_SYM(pvs.item);
+            *label_out = VAL_WORD_CASED(pvs.item);
         }
         else {
             // In rarer cases, the final component (completing the sub-path to
@@ -359,7 +359,7 @@ REBOOL Do_Path_Throws_Core(
             // was ROOT_NONAME, and another was to be the type of the function
             // being executed.  None are fantastic, we do the type for now.
 
-            *label_sym = SYM_FROM_KIND(VAL_TYPE(pvs.value));
+            *label_out = Canon(SYM_FROM_KIND(VAL_TYPE(pvs.value)));
         }
 
         // Move on to the refinements (if any)
@@ -430,7 +430,7 @@ REBOOL Do_Path_Throws_Core(
             // Go ahead and canonize the word symbol so we don't have to
             // do it each time in order to get a case-insenstive compare
             //
-            INIT_WORD_SYM(DS_TOP, SYMBOL_TO_CANON(VAL_WORD_SYM(DS_TOP)));
+            INIT_WORD_SPELLING(DS_TOP, VAL_WORD_CANON(DS_TOP));
         }
 
         // To make things easier for processing, reverse the refinements on
@@ -623,8 +623,8 @@ REBCTX *Resolve_Path(const REBVAL *path, REBCNT *index_out)
         return NULL; // !!! does not handle single-element paths
 
     while (ANY_CONTEXT(var) && IS_WORD(selector)) {
-        i = Find_Word_In_Context(
-            VAL_CONTEXT(var), VAL_WORD_SYM(selector), FALSE
+        i = Find_Canon_In_Context(
+            VAL_CONTEXT(var), VAL_WORD_CANON(selector), FALSE
         );
         ++selector;
         if (IS_END(selector)) {

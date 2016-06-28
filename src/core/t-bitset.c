@@ -309,7 +309,6 @@ REBOOL Set_Bits(REBSER *bset, const REBVAL *val, REBOOL set)
 
     REBCNT n;
     REBCNT c;
-    RELVAL *item;
 
     if (IS_CHAR(val)) {
         Set_Bit(bset, VAL_CHAR(val), set);
@@ -331,8 +330,13 @@ REBOOL Set_Bits(REBSER *bset, const REBVAL *val, REBOOL set)
     if (!ANY_ARRAY(val))
         fail (Error_Invalid_Type(VAL_TYPE(val)));
 
-    item = VAL_ARRAY_AT(val);
-    if (NOT_END(item) && IS_WORD(item) && VAL_WORD_CANON(item) == SYM_NOT) {
+    RELVAL *item = VAL_ARRAY_AT(val);
+
+    if (
+        NOT_END(item)
+        && IS_WORD(item)
+        && VAL_WORD_SYM(item) == SYM_NOT
+    ){
         INIT_BITS_NOT(bset, TRUE);
         item++;
     }
@@ -341,17 +345,13 @@ REBOOL Set_Bits(REBSER *bset, const REBVAL *val, REBOOL set)
     for (; NOT_END(item); item++) {
 
         switch (VAL_TYPE(item)) {
-
         case REB_CHAR:
             c = VAL_CHAR(item);
-
-            // !!! Modified to check for END, is the `else` actually correct?
-            //
             if (
                 NOT_END(item + 1)
                 && IS_WORD(item + 1)
-                && VAL_WORD_CANON(item + 1) == SYM_HYPHEN
-            ) {
+                && VAL_WORD_SYM(item + 1) == SYM_HYPHEN
+            ){
                 item += 2;
                 if (IS_CHAR(item)) {
                     n = VAL_CHAR(item);
@@ -368,7 +368,7 @@ span_bits:
         case REB_INTEGER:
             n = Int32s(KNOWN(item), 0);
             if (n > MAX_BITSET) return FALSE;
-            if (IS_WORD(item + 1) && VAL_WORD_CANON(item + 1) == SYM_HYPHEN) {
+            if (IS_WORD(item + 1) && VAL_WORD_SYM(item + 1) == SYM_HYPHEN) {
                 c = n;
                 item += 2;
                 if (IS_INTEGER(item)) {
@@ -393,7 +393,7 @@ span_bits:
 
         case REB_WORD:
             // Special: BITS #{000...}
-            if (!IS_WORD(item) || VAL_WORD_CANON(item) != SYM_BITS)
+            if (!IS_WORD(item) || VAL_WORD_SYM(item) != SYM_BITS)
                 return FALSE;
             item++;
             if (!IS_BINARY(item)) return FALSE;
@@ -446,7 +446,7 @@ REBOOL Check_Bits(REBSER *bset, const REBVAL *val, REBOOL uncased)
 
         case REB_CHAR:
             c = VAL_CHAR(item);
-            if (IS_WORD(item + 1) && VAL_WORD_CANON(item + 1) == SYM_HYPHEN) {
+            if (IS_WORD(item + 1) && VAL_WORD_SYM(item + 1) == SYM_HYPHEN) {
                 item += 2;
                 if (IS_CHAR(item)) {
                     n = VAL_CHAR(item);
@@ -465,7 +465,7 @@ scan_bits:
         case REB_INTEGER:
             n = Int32s(KNOWN(item), 0);
             if (n > 0xffff) return FALSE;
-            if (IS_WORD(item + 1) && VAL_WORD_CANON(item + 1) == SYM_HYPHEN) {
+            if (IS_WORD(item + 1) && VAL_WORD_SYM(item + 1) == SYM_HYPHEN) {
                 c = n;
                 item += 2;
                 if (IS_INTEGER(item)) {

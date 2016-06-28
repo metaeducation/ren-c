@@ -443,9 +443,9 @@ REBTYPE(Decimal)
         case SYM_EVEN_Q:
         case SYM_ODD_Q:
             d1 = fabs(fmod(d1, 2.0));
-            return ((action != SYM_EVEN_Q) != ((d1 < 0.5) || (d1 >= 1.5)))
-                ? R_TRUE
-                : R_FALSE;
+            if ((action == SYM_ODD_Q) != ((d1 < 0.5) || (d1 >= 1.5)))
+                return R_TRUE;
+            return R_FALSE;
 
         case SYM_ROUND:
             arg = D_ARG(3);

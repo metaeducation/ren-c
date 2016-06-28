@@ -32,22 +32,25 @@
 
 #include "mem-pools.h" // low-level memory pool access
 
-const REBCNT Gob_Flag_Words[] = {
-    SYM_RESIZE,      GOBF_RESIZE,
-    SYM_NO_TITLE,    GOBF_NO_TITLE,
-    SYM_NO_BORDER,   GOBF_NO_BORDER,
-    SYM_DROPABLE,    GOBF_DROPABLE,
-    SYM_TRANSPARENT, GOBF_TRANSPARENT,
-    SYM_POPUP,       GOBF_POPUP,
-    SYM_MODAL,       GOBF_MODAL,
-    SYM_ON_TOP,      GOBF_ON_TOP,
-    SYM_HIDDEN,      GOBF_HIDDEN,
-    SYM_ACTIVE,      GOBF_ACTIVE,
-    SYM_MINIMIZE,    GOBF_MINIMIZE,
-    SYM_MAXIMIZE,    GOBF_MAXIMIZE,
-    SYM_RESTORE,     GOBF_RESTORE,
-    SYM_FULLSCREEN,  GOBF_FULLSCREEN,
-    0, 0
+const struct {
+    REBSYM sym;
+    REBFLGS flags;
+} Gob_Flag_Words[] = {
+    {SYM_RESIZE,      GOBF_RESIZE},
+    {SYM_NO_TITLE,    GOBF_NO_TITLE},
+    {SYM_NO_BORDER,   GOBF_NO_BORDER},
+    {SYM_DROPABLE,    GOBF_DROPABLE},
+    {SYM_TRANSPARENT, GOBF_TRANSPARENT},
+    {SYM_POPUP,       GOBF_POPUP},
+    {SYM_MODAL,       GOBF_MODAL},
+    {SYM_ON_TOP,      GOBF_ON_TOP},
+    {SYM_HIDDEN,      GOBF_HIDDEN},
+    {SYM_ACTIVE,      GOBF_ACTIVE},
+    {SYM_MINIMIZE,    GOBF_MINIMIZE},
+    {SYM_MAXIMIZE,    GOBF_MAXIMIZE},
+    {SYM_RESTORE,     GOBF_RESTORE},
+    {SYM_FULLSCREEN,  GOBF_FULLSCREEN},
+    {SYM_0, 0}
 };
 
 
@@ -302,16 +305,13 @@ static REBARR *Pane_To_Array(REBGOB *gob, REBCNT index, REBINT len)
 //
 static REBARR *Gob_Flags_To_Array(REBGOB *gob)
 {
-    REBARR *array;
-    REBVAL *val;
+    REBARR *array = Make_Array(3);
+
     REBINT i;
-
-    array = Make_Array(3);
-
-    for (i = 0; Gob_Flag_Words[i]; i += 2) {
-        if (GET_GOB_FLAG(gob, Gob_Flag_Words[i+1])) {
-            val = Alloc_Tail_Array(array);
-            Val_Init_Word(val, REB_WORD, Gob_Flag_Words[i]);
+    for (i = 0; Gob_Flag_Words[i].sym != SYM_0; ++i) {
+        if (GET_GOB_FLAG(gob, Gob_Flag_Words[i].flags)) {
+            REBVAL *val = Alloc_Tail_Array(array);
+            Val_Init_Word(val, REB_WORD, Canon(Gob_Flag_Words[i].sym));
         }
     }
 
@@ -322,13 +322,15 @@ static REBARR *Gob_Flags_To_Array(REBGOB *gob)
 //
 //  Set_Gob_Flag: C
 //
-static void Set_Gob_Flag(REBGOB *gob, REBSYM canon)
+static void Set_Gob_Flag(REBGOB *gob, REBSTR *name)
 {
-    REBINT i;
+    REBSYM sym = STR_SYMBOL(name);
+    if (sym == SYM_0) return; // !!! fail?
 
-    for (i = 0; Gob_Flag_Words[i]; i += 2) {
-        if (canon == Gob_Flag_Words[i]) {
-            REBCNT flag = Gob_Flag_Words[i+1];
+    REBINT i;
+    for (i = 0; Gob_Flag_Words[i].sym != SYM_0; ++i) {
+        if (SAME_SYM_NONZERO(sym, Gob_Flag_Words[i].sym)) {
+            REBCNT flag = Gob_Flag_Words[i].flags;
             SET_GOB_FLAG(gob, flag);
             //handle mutual exclusive states
             switch (flag) {
@@ -361,7 +363,7 @@ static void Set_Gob_Flag(REBGOB *gob, REBSYM canon)
 //
 static REBOOL Set_GOB_Var(REBGOB *gob, const REBVAL *word, const REBVAL *val)
 {
-    switch (VAL_WORD_CANON(word)) {
+    switch (VAL_WORD_SYM(word)) {
     case SYM_OFFSET:
         return Set_Pair(&(gob->offset), val);
 
@@ -472,15 +474,14 @@ static REBOOL Set_GOB_Var(REBGOB *gob, const REBVAL *word, const REBVAL *val)
         break;
 
     case SYM_FLAGS:
-        if (IS_WORD(val)) Set_Gob_Flag(gob, VAL_WORD_CANON(val));
+        if (IS_WORD(val)) Set_Gob_Flag(gob, VAL_WORD_CASED(val));
         else if (IS_BLOCK(val)) {
-            REBINT i;
-            RELVAL* item;
-
             //clear only flags defined by words
-            for (i = 0; Gob_Flag_Words[i]; i += 2)
-                CLR_FLAG(gob->flags, Gob_Flag_Words[i+1]);
+            REBINT i;
+            for (i = 0; Gob_Flag_Words[i].sym != 0; ++i)
+                CLR_FLAG(gob->flags, Gob_Flag_Words[i].flags);
 
+            RELVAL* item;
             for (item = VAL_ARRAY_HEAD(val); NOT_END(item); item++)
                 if (IS_WORD(item)) Set_Gob_Flag(gob, VAL_WORD_CANON(item));
         }
@@ -505,7 +506,7 @@ static REBOOL Set_GOB_Var(REBGOB *gob, const REBVAL *word, const REBVAL *val)
 //
 static REBOOL Get_GOB_Var(REBGOB *gob, const REBVAL *word, REBVAL *val)
 {
-    switch (VAL_WORD_CANON(word)) {
+    switch (VAL_WORD_SYM(word)) {
 
     case SYM_OFFSET:
         SET_PAIR(val, GOB_X(gob), GOB_Y(gob));
@@ -644,15 +645,14 @@ REBARR *Gob_To_Array(REBGOB *gob)
 {
     REBARR *array = Make_Array(10);
     REBVAL *val;
-    REBINT words[6] = {SYM_OFFSET, SYM_SIZE, SYM_ALPHA, 0};
+    REBSYM words[] = {SYM_OFFSET, SYM_SIZE, SYM_ALPHA, SYM_0};
     REBVAL *vals[6];
     REBINT n = 0;
     REBVAL *val1;
-    REBSYM sym;
 
-    for (n = 0; words[n]; n++) {
+    for (n = 0; words[n] != SYM_0; ++n) {
         val = Alloc_Tail_Array(array);
-        Val_Init_Word(val, REB_SET_WORD, words[n]);
+        Val_Init_Word(val, REB_SET_WORD, Canon(words[n]));
         vals[n] = Alloc_Tail_Array(array);
         SET_BLANK(vals[n]);
     }
@@ -667,6 +667,7 @@ REBARR *Gob_To_Array(REBGOB *gob)
         val1 = Alloc_Tail_Array(array);
         val = Alloc_Tail_Array(array);
 
+        REBSYM sym;
         switch (GOB_TYPE(gob)) {
         case GOBT_COLOR:
             sym = SYM_COLOR;
@@ -685,7 +686,7 @@ REBARR *Gob_To_Array(REBGOB *gob)
             sym = SYM_EFFECT;
             break;
         }
-        Val_Init_Word(val1, REB_SET_WORD, sym);
+        Val_Init_Word(val1, REB_SET_WORD, Canon(sym));
         Get_GOB_Var(gob, val1, val);
     }
 

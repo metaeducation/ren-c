@@ -365,16 +365,18 @@ REBVAL *Make_Vector_Spec(RELVAL *bp, REBCTX *specifier, REBVAL *value)
     REBVAL *iblk = 0;
 
     // UNSIGNED
-    if (IS_WORD(bp) && VAL_WORD_CANON(bp) == SYM_UNSIGNED) {
+    if (IS_WORD(bp) && VAL_WORD_SYM(bp) == SYM_UNSIGNED) {
         sign = 1;
         bp++;
     }
 
     // INTEGER! or DECIMAL!
     if (IS_WORD(bp)) {
-        if (VAL_WORD_CANON(bp) == SYM_FROM_KIND(REB_INTEGER))
+        if (SAME_SYM_NONZERO(VAL_WORD_SYM(bp), SYM_FROM_KIND(REB_INTEGER)))
             type = 0;
-        else if (VAL_WORD_CANON(bp) == SYM_FROM_KIND(REB_DECIMAL)) {
+        else if (
+            SAME_SYM_NONZERO(VAL_WORD_SYM(bp), SYM_FROM_KIND(REB_DECIMAL))
+        ){
             type = 1;
             if (sign > 0) return 0;
         }
@@ -644,12 +646,21 @@ void Mold_Vector(const REBVAL *value, REB_MOLD *mold, REBOOL molded)
     }
 
     if (molded) {
-        REBCNT type = (bits >= VTSF08) ? REB_DECIMAL : REB_INTEGER;
+        enum Reb_Kind kind = (bits >= VTSF08) ? REB_DECIMAL : REB_INTEGER;
         Pre_Mold(value, mold);
-        if (!GET_MOPT(mold, MOPT_MOLD_ALL)) Append_Codepoint_Raw(mold->series, '[');
-        if (bits >= VTUI08 && bits <= VTUI64) Append_Unencoded(mold->series, "unsigned ");
-        Emit(mold, "N I I [", type+1, bit_sizes[bits & 3], len);
-        if (len) New_Indented_Line(mold);
+        if (!GET_MOPT(mold, MOPT_MOLD_ALL))
+            Append_Codepoint_Raw(mold->series, '[');
+        if (bits >= VTUI08 && bits <= VTUI64)
+            Append_Unencoded(mold->series, "unsigned ");
+        Emit(
+            mold,
+            "N I I [",
+            Canon(SYM_FROM_KIND(kind)),
+            bit_sizes[bits & 3],
+            len
+        );
+        if (len)
+            New_Indented_Line(mold);
     }
 
     c = 0;

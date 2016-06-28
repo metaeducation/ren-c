@@ -97,7 +97,7 @@ REBARR *List_Func_Words(const REBVAL *func, REBOOL pure_locals)
             DEAD_END;
         }
 
-        Val_Init_Word(Alloc_Tail_Array(array), kind, VAL_TYPESET_SYM(param));
+        Val_Init_Word(Alloc_Tail_Array(array), kind, VAL_PARAM_CASED(param));
     }
 
     return array;
@@ -183,11 +183,11 @@ REBARR *Make_Paramlist_Managed_May_Fail(
 
     REBOOL durable = FALSE;
 
-    // We want to be able to notice when words are duplicated, and the bind
-    // table can be used for that purpose.
+    // We want to be able to notice when words are duplicated, and a binder
+    // can be used for that purpose.
     //
-    REBINT *binds = WORDS_HEAD(Bind_Table);
-    ASSERT_BIND_TABLE_EMPTY;
+    struct Reb_Binder binder;
+    INIT_BINDER(&binder);
 
     REBDSP dsp_orig = DSP;
     assert(DS_TOP == DS_AT(dsp_orig));
@@ -204,7 +204,7 @@ REBARR *Make_Paramlist_Managed_May_Fail(
     // it is turned into a rootkey for param_notes.
     //
     DS_PUSH_TRASH; // paramlist[0] (will become FUNCTION! canon value)
-    Val_Init_Typeset(DS_TOP, 0, REB_0);
+    SET_TRASH_SAFE(DS_TOP);
     DS_PUSH(EMPTY_BLOCK); // param_types[0] (to be OBJECT! canon value, if any)
     DS_PUSH(EMPTY_STRING); // param_notes[0] (holds description, then canon)
 
@@ -315,9 +315,8 @@ REBARR *Make_Paramlist_Managed_May_Fail(
                     if (IS_WORD(attribute)) {
                         if (VAL_WORD_SYM(attribute) == SYM_CATCH)
                             continue; // ignore it
-                        if (VAL_WORD_SYM(attribute) == SYM_THROW) {
+                        if (VAL_WORD_SYM(attribute) == SYM_THROW)
                             continue; // ignore it
-                        }
                     }
                     fail (Error(RE_BAD_FUNC_DEF, item));
                 }
@@ -382,7 +381,7 @@ REBARR *Make_Paramlist_Managed_May_Fail(
                 if (TYPE_CHECK(typeset, REB_0)) {
                     REBVAL param_name;
                     Val_Init_Word(
-                        &param_name, REB_WORD, VAL_TYPESET_SYM(typeset)
+                        &param_name, REB_WORD, VAL_PARAM_CASED(typeset)
                     );
                     fail (Error(RE_HARD_QUOTE_VOID, &param_name));
                 }
@@ -407,10 +406,9 @@ REBARR *Make_Paramlist_Managed_May_Fail(
         // Make sure symbol not already in the parameter list, and then mark
         // in the hash table that it is present.  Any non-zero value is ok.
         //
-        REBSYM canon = VAL_WORD_CANON(item);
-        if (binds[canon] != 0)
+        REBSTR *canon = VAL_WORD_CANON(item);
+        if (NOT(Try_Add_Binder_Index(&binder, canon, 1020)))
             fail (Error(RE_DUP_VARS, item));
-        binds[canon] = 1020;
 
         // In rhythm of TYPESET! BLOCK! STRING! we want to be on a string spot
         // at the time of the push of each new typeset.
@@ -427,7 +425,7 @@ REBARR *Make_Paramlist_Managed_May_Fail(
         //
         DS_PUSH_TRASH;
         REBVAL *typeset = DS_TOP;
-        Val_Init_Typeset(typeset, ~FLAGIT_KIND(REB_0), VAL_WORD_SYM(item));
+        Val_Init_Typeset(typeset, ~FLAGIT_KIND(REB_0), VAL_WORD_CASED(item));
 
         // All these would cancel a definitional return (leave has same idea):
         //
@@ -438,14 +436,14 @@ REBARR *Make_Paramlist_Managed_May_Fail(
         // ...although `return:` is explicitly tolerated ATM for compatibility
         // (despite violating the "pure locals are NULL" premise)
 
-        if (canon == SYM_RETURN) {
+        if (STR_SYMBOL(canon) == SYM_RETURN) {
             assert(definitional_return == NULL);
             if (IS_SET_WORD(item))
                 definitional_return = typeset; // RETURN: explicitly tolerated
             else
                 flags &= ~MKF_RETURN;
         }
-        else if (canon == SYM_LEAVE) {
+        else if (STR_SYMBOL(canon) == SYM_LEAVE) {
             assert(definitional_leave == NULL);
             if (IS_SET_WORD(item))
                 definitional_leave = typeset; // LEAVE: is explicitly tolerated
@@ -539,9 +537,12 @@ REBARR *Make_Paramlist_Managed_May_Fail(
 
     if (flags & MKF_LEAVE) {
         if (definitional_leave == NULL) { // no LEAVE: pure local explicit
+            REBSTR *canon_leave = Canon(SYM_LEAVE);
+            Add_Binder_Index(&binder, canon_leave, 1020);
+
             DS_PUSH_TRASH;
             definitional_leave = DS_TOP;
-            Val_Init_Typeset(DS_TOP, FLAGIT_64(REB_0), SYM_LEAVE);
+            Val_Init_Typeset(DS_TOP, FLAGIT_64(REB_0), canon_leave);
             INIT_VAL_PARAM_CLASS(DS_TOP, PARAM_CLASS_LEAVE);
             DS_PUSH(EMPTY_BLOCK);
             DS_PUSH(EMPTY_STRING);
@@ -555,9 +556,12 @@ REBARR *Make_Paramlist_Managed_May_Fail(
 
     if (flags & MKF_RETURN) {
         if (definitional_return == NULL) { // no RETURN: pure local explicit
+            REBSTR *canon_return = Canon(SYM_RETURN);
+            Add_Binder_Index(&binder, canon_return, 1020);
+
             DS_PUSH_TRASH;
             definitional_return = DS_TOP;
-            Val_Init_Typeset(DS_TOP, ALL_64, SYM_RETURN);
+            Val_Init_Typeset(DS_TOP, ALL_64, canon_return);
             INIT_VAL_PARAM_CLASS(definitional_return, PARAM_CLASS_RETURN);
             DS_PUSH(EMPTY_BLOCK);
             DS_PUSH(EMPTY_STRING);
@@ -594,7 +598,7 @@ REBARR *Make_Paramlist_Managed_May_Fail(
         for (; src <= DS_TOP; src += 3, ++dest) {
             assert(IS_TYPESET(src));
             *dest = *src;
-            binds[VAL_TYPESET_CANON(dest)] = 0;
+            Remove_Binder_Index(&binder, VAL_PARAM_CANON(dest));
         }
         SET_END(dest);
 
@@ -610,7 +614,7 @@ REBARR *Make_Paramlist_Managed_May_Fail(
         SET_ARR_FLAG(paramlist, SERIES_FLAG_FIXED_SIZE);
     }
 
-    ASSERT_BIND_TABLE_EMPTY;
+    SHUTDOWN_BINDER(&binder);
 
     //=///////////////////////////////////////////////////////////////////=//
     //
@@ -721,18 +725,18 @@ REBARR *Make_Paramlist_Managed_May_Fail(
 // !!! This is semi-redundant with similar functions for Find_Word_In_Array
 // and key finding for objects, review...
 //
-REBCNT Find_Param_Index(REBARR *paramlist, REBSYM sym)
+REBCNT Find_Param_Index(REBARR *paramlist, REBSTR *name)
 {
+    REBSTR *canon = STR_CANON(name); // don't recalculate each time
+
     RELVAL *param = ARR_AT(paramlist, 1);
     REBCNT len = ARR_LEN(paramlist);
-
-    REBCNT canon = SYMBOL_TO_CANON(sym); // don't recalculate each time
 
     REBCNT n;
     for (n = 1; n < len; ++n, ++param) {
         if (
-            sym == VAL_TYPESET_SYM(param)
-            || canon == VAL_TYPESET_CANON(param)
+            name == VAL_PARAM_CASED(param)
+            || canon == VAL_PARAM_CANON(param)
         ) {
             return n;
         }
@@ -1127,7 +1131,7 @@ REBCTX *Make_Frame_For_Function(const REBVAL *value) {
 REBOOL Specialize_Function_Throws(
     REBVAL *out,
     REBVAL *specializee,
-    REBSYM opt_specializee_sym, // can be SYM_0
+    REBSTR *opt_specializee_name,
     REBVAL *block // !!! REVIEW: gets binding modified directly (not copied)
 ) {
     assert(out != specializee);
@@ -1239,8 +1243,8 @@ REBOOL Specialize_Function_Throws(
 
     assert(IS_VOID(CTX_VAR(meta, 1))); // no description by default
     *CTX_VAR(meta, 2) = *specializee;
-    if (opt_specializee_sym != SYM_0)
-        Val_Init_Word(CTX_VAR(meta, 3), REB_WORD, opt_specializee_sym);
+    if (opt_specializee_name != NULL)
+        Val_Init_Word(CTX_VAR(meta, 3), REB_WORD, opt_specializee_name);
 
     MANAGE_ARRAY(CTX_VARLIST(meta));
     ARR_SERIES(paramlist)->link.meta = meta;
@@ -1364,9 +1368,11 @@ REB_R Action_Dispatcher(struct Reb_Frame *f)
 
     REBACT subdispatch = Value_Dispatch[TO_0_FROM_KIND(type)];
     if (subdispatch == NULL)
-        fail (Error_Illegal_Action(type, VAL_WORD_CANON(FUNC_BODY(f->func))));
+        fail (Error_Illegal_Action(
+            type, STR_SYMBOL(VAL_WORD_CANON(FUNC_BODY(f->func)))
+        ));
 
-    return subdispatch(f, VAL_WORD_CANON(FUNC_BODY(f->func)));
+    return subdispatch(f, STR_SYMBOL(VAL_WORD_CANON(FUNC_BODY(f->func))));
 }
 
 
@@ -1494,8 +1500,11 @@ REB_R Adapter_Dispatcher(struct Reb_Frame *f)
     REBVAL *adaptee_param = FUNC_PARAMS_HEAD(VAL_FUNC(adaptee));
 
     for (; NOT_END(f->param); ++f->arg, ++f->param) {
-        while (VAL_TYPESET_SYM(adaptee_param) != VAL_TYPESET_SYM(f->param))
+        while (!SAME_STR(
+            VAL_PARAM_CASED(adaptee_param), VAL_PARAM_CASED(f->param)
+        )){
             ++adaptee_param;
+        }
 
         // !!! In the future, it may be possible for adaptations to take
         // different types than the function they adapt (or perhaps just a
@@ -1512,7 +1521,7 @@ REB_R Adapter_Dispatcher(struct Reb_Frame *f)
             break;
 
         case PARAM_CLASS_RETURN:
-            assert(VAL_TYPESET_CANON(f->param) == SYM_RETURN);
+            assert(VAL_PARAM_SYM(f->param) == SYM_RETURN);
 
             if (!GET_VAL_FLAG(adaptee, FUNC_FLAG_RETURN)) {
                 SET_VOID(f->arg); // may be another adapter, filled in later
@@ -1528,7 +1537,7 @@ REB_R Adapter_Dispatcher(struct Reb_Frame *f)
             break;
 
         case PARAM_CLASS_LEAVE:
-            assert(VAL_TYPESET_CANON(f->param) == SYM_LEAVE);
+            assert(VAL_PARAM_SYM(f->param) == SYM_LEAVE);
 
             if (!GET_VAL_FLAG(FUNC_VALUE(f->func), FUNC_FLAG_LEAVE)) {
                 SET_VOID(f->arg); // may be adapter, and filled in later
@@ -1669,13 +1678,13 @@ REBNATIVE(proc)
 //
 void Get_If_Word_Or_Path_Arg(
     REBVAL *out,
-    REBSYM *opt_sym, // may return SYM_0
+    REBSTR **opt_name_out,
     const REBVAL *value
 ) {
     REBVAL adjusted = *value;
 
     if (ANY_WORD(value)) {
-        *opt_sym = VAL_WORD_SYM(value);
+        *opt_name_out = VAL_WORD_CASED(value);
         VAL_SET_TYPE_BITS(&adjusted, REB_GET_WORD);
     }
     else if (ANY_PATH(value)) {
@@ -1683,11 +1692,11 @@ void Get_If_Word_Or_Path_Arg(
         // In theory we could get a symbol here, assuming we only do non
         // evaluated GETs.  Not implemented at the moment.
         //
-        *opt_sym = SYM_0;
+        *opt_name_out = NULL;
         VAL_SET_TYPE_BITS(&adjusted, REB_GET_PATH);
     }
     else {
-        *opt_sym = SYM_0;
+        *opt_name_out = NULL;
         *out = *value;
         return;
     }
@@ -1718,19 +1727,19 @@ REBNATIVE(specialize)
     PARAM(1, value);
     PARAM(2, def);
 
-    REBSYM opt_sym; // may be SYM_0
+    REBSTR *opt_name;
 
     // We don't limit to taking a FUNCTION! value directly, because that loses
     // the symbol (for debugging, errors, etc.)  If caller passes a WORD!
     // then we lookup the variable to get the function, but save the symbol.
     //
     REBVAL specializee;
-    Get_If_Word_Or_Path_Arg(&specializee, &opt_sym, ARG(value));
+    Get_If_Word_Or_Path_Arg(&specializee, &opt_name, ARG(value));
 
     if (!IS_FUNCTION(&specializee))
         fail (Error(RE_APPLY_NON_FUNCTION, ARG(value))); // for APPLY too
 
-    if (Specialize_Function_Throws(D_OUT, &specializee, opt_sym, ARG(def)))
+    if (Specialize_Function_Throws(D_OUT, &specializee, opt_name, ARG(def)))
         return R_OUT_IS_THROWN;
 
     return R_OUT;
@@ -1853,8 +1862,8 @@ REBNATIVE(adapt)
 
     REBVAL *adaptee = ARG(adaptee);
 
-    REBSYM opt_adaptee_sym;
-    Get_If_Word_Or_Path_Arg(D_OUT, &opt_adaptee_sym, adaptee);
+    REBSTR *opt_adaptee_name;
+    Get_If_Word_Or_Path_Arg(D_OUT, &opt_adaptee_name, adaptee);
     if (!IS_FUNCTION(D_OUT))
         fail (Error(RE_APPLY_NON_FUNCTION, adaptee));
 
@@ -1929,8 +1938,8 @@ REBNATIVE(adapt)
     REBCTX *meta = Copy_Context_Shallow(VAL_CONTEXT(example));
     assert(IS_VOID(CTX_VAR(meta, SELFISH(1)))); // no description by default
     *CTX_VAR(meta, SELFISH(2)) = *adaptee;
-    if (opt_adaptee_sym != SYM_0)
-        Val_Init_Word(CTX_VAR(meta, SELFISH(3)), REB_WORD, opt_adaptee_sym);
+    if (opt_adaptee_name != NULL)
+        Val_Init_Word(CTX_VAR(meta, SELFISH(3)), REB_WORD, opt_adaptee_name);
 
     MANAGE_ARRAY(CTX_VARLIST(meta));
     ARR_SERIES(paramlist)->link.meta = meta;
@@ -1966,18 +1975,18 @@ REBNATIVE(hijack)
     PARAM(2, hijacker);
 
     REBVAL victim_value;
-    REBSYM victim_sym;
+    REBSTR *opt_victim_name;
     Get_If_Word_Or_Path_Arg(
-        &victim_value, &victim_sym, ARG(victim)
+        &victim_value, &opt_victim_name, ARG(victim)
     );
     REBVAL *victim = &victim_value;
     if (!IS_FUNCTION(victim))
         fail (Error(RE_MISC));
 
     REBVAL hijacker_value;
-    REBSYM hijacker_sym;
+    REBSTR *opt_hijacker_name;
     Get_If_Word_Or_Path_Arg(
-        &hijacker_value, &hijacker_sym, ARG(hijacker)
+        &hijacker_value, &opt_hijacker_name, ARG(hijacker)
     );
     REBVAL *hijacker = &hijacker_value;
     if (!IS_FUNCTION(hijacker) && !IS_BLANK(hijacker))
@@ -2070,8 +2079,8 @@ REBNATIVE(hijack)
 
     assert(IS_VOID(CTX_VAR(meta, SELFISH(1)))); // no description by default
     *CTX_VAR(meta, SELFISH(2)) = *D_OUT;
-    if (victim_sym != SYM_0)
-        Val_Init_Word(CTX_VAR(meta, SELFISH(3)), REB_WORD, victim_sym);
+    if (opt_victim_name != NULL)
+        Val_Init_Word(CTX_VAR(meta, SELFISH(3)), REB_WORD, opt_victim_name);
 
     MANAGE_ARRAY(CTX_VARLIST(meta));
     ARR_SERIES(VAL_FUNC_PARAMLIST(victim))->link.meta = meta;
@@ -2109,12 +2118,12 @@ REBNATIVE(hijack)
 // experiment with for other reasons (e.g. continuations), so that is what
 // is used here.
 //
-REB_R Apply_Frame_Core(struct Reb_Frame *f, REBSYM sym, REBVAL *opt_def)
+REB_R Apply_Frame_Core(struct Reb_Frame *f, REBSTR *label, REBVAL *opt_def)
 {
     assert(IS_FUNCTION(f->gotten));
 
     f->eval_type = ET_FUNCTION;
-    SET_FRAME_SYM(f, sym);
+    SET_FRAME_LABEL(f, label);
 
     // We pretend our "input source" has ended.
     //
@@ -2223,7 +2232,6 @@ REBNATIVE(apply)
     PARAM(2, def);
 
     REBVAL *def = ARG(def);
-    REBSYM sym;
 
     struct Reb_Frame frame;
     struct Reb_Frame *f = &frame;
@@ -2246,9 +2254,10 @@ REBNATIVE(apply)
     // the symbol (for debugging, errors, etc.)  If caller passes a WORD!
     // then we lookup the variable to get the function, but save the symbol.
     //
-    Get_If_Word_Or_Path_Arg(D_OUT, &sym, ARG(value));
-    if (sym == SYM_0)
-        sym = SYM___ANONYMOUS__; // Do_Core requires *some* non SYM_0 symbol
+    REBSTR *name;
+    Get_If_Word_Or_Path_Arg(D_OUT, &name, ARG(value));
+    if (name == NULL)
+        name = Canon(SYM___ANONYMOUS__); // Do_Core requires non-NULL symbol
 
     if (!IS_FUNCTION(D_OUT))
         fail (Error(RE_APPLY_NON_FUNCTION, ARG(value))); // for SPECIALIZE too
@@ -2256,7 +2265,7 @@ REBNATIVE(apply)
     f->gotten = D_OUT;
     f->out = D_OUT;
 
-    return Apply_Frame_Core(f, sym, def);
+    return Apply_Frame_Core(f, name, def);
 }
 
 

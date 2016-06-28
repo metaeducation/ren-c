@@ -149,7 +149,7 @@ void Dump_Values(RELVAL *vp, REBCNT count)
         }
         n = 0;
         if (IS_WORD(val) || IS_GET_WORD(val) || IS_SET_WORD(val)) {
-            const REBYTE *name = Get_Sym_Name(VAL_WORD_SYM(val));
+            const REBYTE *name = STR_HEAD(VAL_WORD_CASED(val));
             n = snprintf(
                 s_cast(cp), sizeof(buf) - (cp - buf), " (%s)", cs_cast(name)
             );
@@ -235,7 +235,7 @@ void Dump_Stack(struct Reb_Frame *f, REBCNT level)
     Debug_Fmt(
         "STACK[%d](%s) - %s",
         level,
-        Get_Sym_Name(FRM_LABEL(f)),
+        STR_HEAD(FRM_LABEL(f)),
         mode_strings[f->eval_type]
     );
 
@@ -251,7 +251,7 @@ void Dump_Stack(struct Reb_Frame *f, REBCNT level)
     for (; NOT_END(param); ++param, ++arg, ++n) {
         Debug_Fmt(
             "    %s: %72r",
-            Get_Sym_Name(VAL_TYPESET_SYM(param)),
+            STR_HEAD(VAL_PARAM_CASED(param)),
             arg
         );
     }

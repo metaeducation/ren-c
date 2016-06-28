@@ -88,7 +88,11 @@ act_blk:
         *D_ARG(1) = *state;
         result = T_Block(ds, action);
         SET_FLAG(Eval_Signals, SIG_EVENT_PORT);
-        if (action == A_INSERT || action == A_APPEND || action == A_REMOVE) {
+        if (
+            action == SYM_INSERT
+            || action == SYM_APPEND
+            || action == SYM_REMOVE
+        ){
             *D_OUT = save_port;
             break;
         }

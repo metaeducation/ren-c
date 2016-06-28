@@ -114,7 +114,7 @@ static REB_R Serial_Actor(struct Reb_Frame *frame_, REBCTX *port, REBSYM action)
                 if (!IS_WORD(arg))
                     fail (Error(RE_INVALID_PORT_ARG, arg));
 
-                switch (VAL_WORD_CANON(arg)) {
+                switch (VAL_WORD_SYM(arg)) {
                     case SYM_ODD:
                         req->special.serial.parity = SERIAL_PARITY_ODD;
                         break;
@@ -133,7 +133,7 @@ static REB_R Serial_Actor(struct Reb_Frame *frame_, REBCTX *port, REBSYM action)
                 if (!IS_WORD(arg))
                     fail (Error(RE_INVALID_PORT_ARG, arg));
 
-                switch (VAL_WORD_CANON(arg)) {
+                switch (VAL_WORD_SYM(arg)) {
                     case SYM_HARDWARE:
                         req->special.serial.flow_control = SERIAL_FLOW_CONTROL_HARDWARE;
                         break;
@@ -261,5 +261,5 @@ static REB_R Serial_Actor(struct Reb_Frame *frame_, REBCTX *port, REBSYM action)
 //
 void Init_Serial_Scheme(void)
 {
-    Register_Scheme(SYM_SERIAL, 0, Serial_Actor);
+    Register_Scheme(Canon(SYM_SERIAL), 0, Serial_Actor);
 }

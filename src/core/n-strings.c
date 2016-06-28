@@ -97,7 +97,7 @@ static struct digest {
     void (*update)(void *, REBYTE *, REBCNT);
     void (*final)(REBYTE *, void *);
     int (*ctxsize)(void);
-    REBSYM index;
+    REBSYM sym;
     REBINT len;
     REBINT hmacblock;
 } digests[] = {
@@ -209,8 +209,11 @@ REBNATIVE(checksum)
     REBSYM sym = SYM_SHA1;
 
     // Method word:
-    if (D_REF(ARG_CHECKSUM_METHOD))
-        sym = VAL_WORD_CANON(D_ARG(ARG_CHECKSUM_WORD));
+    if (D_REF(ARG_CHECKSUM_METHOD)) {
+        sym = VAL_WORD_SYM(D_ARG(ARG_CHECKSUM_WORD));
+        if (sym == SYM_0) // not in %words.r, no SYM_XXX constant
+            fail (Error_Invalid_Arg(D_ARG(ARG_CHECKSUM_WORD)));
+    }
 
     // If method, secure, or key... find matching digest:
     if (D_REF(ARG_CHECKSUM_METHOD) || D_REF(ARG_CHECKSUM_SECURE) || D_REF(ARG_CHECKSUM_KEY)) {
@@ -245,7 +248,7 @@ REBNATIVE(checksum)
 
         for (i = 0; i < sizeof(digests) / sizeof(digests[0]); i++) {
 
-            if (digests[i].index == sym) {
+            if (SAME_SYM_NONZERO(digests[i].sym, sym)) {
                 REBSER *digest = Make_Series(
                     digests[i].len + 1, sizeof(char), MKS_NONE
                 );

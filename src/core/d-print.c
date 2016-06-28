@@ -387,10 +387,7 @@ void Debug_Series(REBSER *ser)
     }
     else if (SER_WIDE(ser) == sizeof(REBUNI))
         Debug_Uni(ser);
-    else if (ser == Bind_Table) {
-        // Dump bind table somehow?
-        Panic_Series(ser);
-    } else if (ser == PG_Word_Table.hashes) {
+    else if (ser == PG_Canons_By_Hash) {
         // Dump hashes somehow?
         Panic_Series(ser);
     } else if (ser == GC_Series_Guard) {
@@ -459,7 +456,7 @@ void Debug_Space(REBCNT num)
 //
 void Debug_Word(const REBVAL *word)
 {
-    Debug_Str(cs_cast(Get_Sym_Name(VAL_WORD_SYM(word))));
+    Debug_Str(cs_cast(STR_HEAD(VAL_WORD_CASED(word))));
 }
 
 

@@ -438,13 +438,13 @@ struct Reb_Frame {
     //
     REBARR *binding; // either a varlist of a FRAME! or function paramlist
 
-    // `label_sym`
+    // `label`
     //
     // Functions don't have "names", though they can be assigned to words.
     // The evaluator only enforces that the symbol be set during function
     // calls--in the release build, it is allowed to be garbage otherwise.
     //
-    REBUPT label_sym; // actually REBSYM
+    REBSTR *label;
 
     // `stackvars`
     //
@@ -534,13 +534,13 @@ struct Reb_Frame {
 
 #if !defined(NDEBUG)
     //
-    // `label_str` [DEBUG]
+    // `label_debug` [DEBUG]
     //
     // Knowing the label symbol is not as handy as knowing the actual string
     // of the function this call represents (if any).  It is in UTF8 format,
     // and cast to `char*` to help debuggers that have trouble with REBYTE.
     //
-    const char *label_str;
+    const char *label_debug;
 
     // `value_type`
     //

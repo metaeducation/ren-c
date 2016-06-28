@@ -46,7 +46,7 @@
 REBOOL Series_Common_Action_Returns(
     REB_R *r, // `r_out` would be slightly confusing, considering R_OUT
     struct Reb_Frame *frame_,
-    REBCNT action
+    REBSYM action
 ) {
     REBVAL *value = D_ARG(1);
     REBVAL *arg = D_ARGC > 1 ? D_ARG(2) : NULL;

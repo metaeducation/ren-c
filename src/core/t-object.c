@@ -94,7 +94,7 @@ static REBOOL Equal_Context(const RELVAL *val, const RELVAL *arg)
         // objects to consider themselves to be equal (but which do not
         // count in comparison of the typesets)
         //
-        if (VAL_TYPESET_CANON(key1) != VAL_TYPESET_CANON(key2))
+        if (VAL_KEY_CANON(key1) != VAL_KEY_CANON(key2))
             return FALSE;
 
         // !!! A comment here said "Use Compare_Modify_Values();"...but it
@@ -123,17 +123,11 @@ static REBOOL Equal_Context(const RELVAL *val, const RELVAL *arg)
 
 static void Append_To_Context(REBCTX *context, REBVAL *arg)
 {
-    REBCNT i, len;
-    RELVAL *word;
-    RELVAL *key;
-    REBINT *binds; // for binding table
-    RELVAL *item;
-
     // Can be a word:
     if (ANY_WORD(arg)) {
-        if (!Find_Word_In_Context(context, VAL_WORD_SYM(arg), TRUE)) {
+        if (0 == Find_Canon_In_Context(context, VAL_WORD_CANON(arg), TRUE)) {
             Expand_Context(context, 1); // copy word table also
-            Append_Context(context, 0, VAL_WORD_SYM(arg));
+            Append_Context(context, 0, VAL_WORD_CASED(arg));
             // default of Append_Context is that arg's value is void
         }
         return;
@@ -142,35 +136,35 @@ static void Append_To_Context(REBCTX *context, REBVAL *arg)
     if (!IS_BLOCK(arg)) fail (Error_Invalid_Arg(arg));
 
     // Process word/value argument block:
-    item = VAL_ARRAY_AT(arg);
 
-    // Use binding table
-    binds = WORDS_HEAD(Bind_Table);
+    RELVAL *item = VAL_ARRAY_AT(arg);
+
+    struct Reb_Binder binder;
+    INIT_BINDER(&binder);
 
     Collect_Keys_Start(COLLECT_ANY_WORD);
 
     // Setup binding table with obj words.  Binding table is empty so don't
     // bother checking for duplicates.
     //
-    Collect_Context_Keys(context, FALSE);
+    Collect_Context_Keys(&binder, context, FALSE);
 
     // Examine word/value argument block
-    for (word = item; NOT_END(word); word += 2) {
-        REBCNT canon;
 
+    RELVAL *word;
+    for (word = item; NOT_END(word); word += 2) {
         if (!IS_WORD(word) && !IS_SET_WORD(word))
             fail (Error_Invalid_Arg_Core(word, VAL_SPECIFIER(arg)));
 
-        canon = VAL_WORD_CANON(word);
+        REBSTR *canon = VAL_WORD_CANON(word);
 
-        if (binds[canon] == 0) {
+        if (Try_Add_Binder_Index(&binder, canon, ARR_LEN(BUF_COLLECT))) {
             //
-            // Not already collected, so add it...
+            // Wasn't already collected...so we added it...
             //
-            binds[canon] = ARR_LEN(BUF_COLLECT);
             EXPAND_SERIES_TAIL(ARR_SERIES(BUF_COLLECT), 1);
             Val_Init_Typeset(
-                ARR_LAST(BUF_COLLECT), ALL_64, VAL_WORD_SYM(word)
+                ARR_LAST(BUF_COLLECT), ALL_64, VAL_WORD_CASED(word)
             );
         }
         if (IS_END(word + 1)) break; // fix bug#708
@@ -180,26 +174,27 @@ static void Append_To_Context(REBCTX *context, REBVAL *arg)
 
     // Append new words to obj
     //
-    len = CTX_LEN(context) + 1;
+    REBCNT len = CTX_LEN(context) + 1;
     Expand_Context(context, ARR_LEN(BUF_COLLECT) - len);
+
+    RELVAL *key;
     for (key = ARR_AT(BUF_COLLECT, len); NOT_END(key); key++) {
         assert(IS_TYPESET(key));
         Append_Context_Core(
             context,
             NULL,
-            VAL_TYPESET_SYM(key),
+            VAL_KEY_CASED(key),
             GET_VAL_FLAG(key, TYPESET_FLAG_LOOKBACK) // !!! needed?  others?
         );
     }
 
     // Set new values to obj words
     for (word = item; NOT_END(word); word += 2) {
-        REBVAL *key;
-        REBVAL *var;
+        REBCNT i = Try_Get_Binder_Index(&binder, VAL_WORD_CANON(word));
+        assert(i != 0);
 
-        i = binds[VAL_WORD_CANON(word)];
-        var = CTX_VAR(context, i);
-        key = CTX_KEY(context, i);
+        REBVAL *key = CTX_KEY(context, i);
+        REBVAL *var = CTX_VAR(context, i);
 
         if (GET_VAL_FLAG(key, TYPESET_FLAG_LOCKED))
             fail (Error_Protected_Key(key));
@@ -207,16 +202,19 @@ static void Append_To_Context(REBCTX *context, REBVAL *arg)
         if (GET_VAL_FLAG(key, TYPESET_FLAG_HIDDEN))
             fail (Error(RE_HIDDEN));
 
-        if (IS_END(word + 1))
+        if (IS_END(word + 1)) {
             SET_BLANK(var);
+            break; // fix bug#708
+        }
         else
             COPY_VALUE(var, &word[1], VAL_SPECIFIER(arg));
 
-        if (IS_END(word + 1)) break; // fix bug#708
     }
 
     // release binding table
-    Collect_Keys_End();
+    Collect_Keys_End(&binder);
+
+    SHUTDOWN_BINDER(&binder);
 }
 
 
@@ -383,7 +381,6 @@ void MAKE_Context(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
         //
         REBCTX *context = Make_Selfish_Context_Detect(
             kind, // type
-            NULL, // spec
             NULL, // body
             END_CELL, // scan for toplevel set-words, empty
             NULL // parent
@@ -452,7 +449,7 @@ REBINT PD_Context(REBPVS *pvs)
     REBCTX *context = VAL_CONTEXT(pvs->value);
 
     if (IS_WORD(pvs->selector)) {
-        n = Find_Word_In_Context(context, VAL_WORD_SYM(pvs->selector), FALSE);
+        n = Find_Canon_In_Context(context, VAL_WORD_CANON(pvs->selector), FALSE);
     }
     else fail (Error_Bad_Path_Select(pvs));
 
@@ -630,14 +627,14 @@ REBTYPE(Context)
 
     case SYM_SELECT:
     case SYM_FIND: {
-        REBINT n;
-
         if (!IS_WORD(arg))
             return R_BLANK;
 
-        n = Find_Word_In_Context(VAL_CONTEXT(value), VAL_WORD_SYM(arg), FALSE);
+        REBCNT n = Find_Canon_In_Context(
+            VAL_CONTEXT(value), VAL_WORD_CANON(arg), FALSE
+        );
 
-        if (n <= 0)
+        if (n == 0)
             return R_BLANK;
 
         if (cast(REBCNT, n) > CTX_LEN(VAL_CONTEXT(value)))
@@ -650,17 +647,18 @@ REBTYPE(Context)
     }
 
     case SYM_REFLECT: {
-        REBSYM canon = VAL_WORD_CANON(arg);
+        REBSYM sym = VAL_WORD_SYM(arg);
+        REBCNT reflector;
 
-        switch (canon) {
-        case SYM_WORDS: action = 1; break;
-        case SYM_VALUES: action = 2; break;
-        case SYM_BODY: action = 3; break;
+        switch (sym) {
+        case SYM_WORDS: reflector = 1; break;
+        case SYM_VALUES: reflector = 2; break;
+        case SYM_BODY: reflector = 3; break;
         default:
             fail (Error_Cannot_Reflect(VAL_TYPE(value), arg));
         }
 
-        Val_Init_Block(D_OUT, Context_To_Array(VAL_CONTEXT(value), action));
+        Val_Init_Block(D_OUT, Context_To_Array(VAL_CONTEXT(value), reflector));
         return R_OUT; }
 
     case SYM_TRIM:
@@ -828,7 +826,6 @@ REBNATIVE(construct)
         //
         context = Make_Selfish_Context_Detect(
             target, // type
-            NULL, // spec
             NULL, // body
             // scan for toplevel set-words
             IS_BLANK(body) ? END_CELL : VAL_ARRAY_AT(body),

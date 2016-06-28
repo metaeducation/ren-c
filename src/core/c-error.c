@@ -209,12 +209,12 @@ REBOOL Trapped_Helper_Halted(struct Reb_State *s)
         Drop_Chunk(NULL);
 
     // If we were in the middle of a Collect_Keys and an error occurs, then
-    // the thread-global binding lookup table has entries in it that need
-    // to be zeroed out.  We can tell if that's necessary by whether there
-    // is anything accumulated in the collect buffer.
+    // the binding lookup table has entries in it that need to be zeroed out.
+    // We can tell if that's necessary by whether there is anything
+    // accumulated in the collect buffer.
     //
     if (ARR_LEN(BUF_COLLECT) != 0)
-        Collect_Keys_End();
+        Collect_Keys_End(NULL); // !!! No binder, review implications
 
     // Free any manual series that were extant at the time of the error
     // (that were created since this PUSH_TRAP started).  This includes
@@ -395,7 +395,7 @@ REBVAL *Find_Error_For_Code(REBVAL *id_out, REBVAL *type_out, REBCNT code)
     // file as objects for the "error catalog"
     //
     categories = VAL_CONTEXT(Get_System(SYS_CATALOG, CAT_ERRORS));
-    assert(CTX_KEY_CANON(categories, 1) == SYM_SELF);
+    assert(CTX_KEY_SYM(categories, 1) == SYM_SELF);
 
     // Find the correct catalog category
     n = code / 100; // 0 for Special, 1 for Internal...
@@ -408,7 +408,7 @@ REBVAL *Find_Error_For_Code(REBVAL *id_out, REBVAL *type_out, REBCNT code)
         return NULL;
     }
     category = VAL_CONTEXT(CTX_VAR(categories, SELFISH(n + 1)));
-    assert(CTX_KEY_CANON(category, 1) == SYM_SELF);
+    assert(CTX_KEY_SYM(category, 1) == SYM_SELF);
 
     // Find the correct template in the catalog category (see %errors.r)
     n = code % 100; // 0-based order within category
@@ -443,12 +443,12 @@ REBVAL *Find_Error_For_Code(REBVAL *id_out, REBVAL *type_out, REBCNT code)
     Val_Init_Word(
         type_out,
         REB_WORD,
-        CTX_KEY_SYM(categories, SELFISH((code / 100) + 1))
+        CTX_KEY_CASED(categories, SELFISH((code / 100) + 1))
     );
     Val_Init_Word(
         id_out,
         REB_WORD,
-        CTX_KEY_SYM(category, SELFISH((code % 100) + 3))
+        CTX_KEY_CASED(category, SELFISH((code % 100) + 3))
     );
 
     return message;
@@ -511,7 +511,6 @@ REBOOL Make_Error_Object_Throws(
 
         error = Make_Selfish_Context_Detect(
             REB_ERROR, // type
-            NULL, // spec
             NULL, // body
             VAL_ARRAY_AT(arg), // values to scan for toplevel set-words
             root_error // parent
@@ -522,7 +521,7 @@ REBOOL Make_Error_Object_Throws(
         //
         Val_Init_Error(out, error);
 
-        Rebind_Context_Deep(root_error, error, NULL);
+        Rebind_Context_Deep(root_error, error, NULL); // NULL=>no more binds
         Bind_Values_Deep(VAL_ARRAY_AT(arg), error);
 
         if (DO_VAL_ARRAY_AT_THROWS(&evaluated, arg)) {
@@ -611,8 +610,8 @@ REBOOL Make_Error_Object_Throws(
             if (!IS_BLANK(&vars->id)) {
                 if (
                     !IS_WORD(&vars->id)
-                    || !SAME_SYM(
-                        VAL_WORD_SYM(&vars->id), VAL_WORD_SYM(&id)
+                    || !SAME_STR(
+                        VAL_WORD_CASED(&vars->id), VAL_WORD_CASED(&id)
                     )
                 ) {
                     fail (Error(RE_INVALID_ERROR, arg));
@@ -623,8 +622,8 @@ REBOOL Make_Error_Object_Throws(
             if (!IS_BLANK(&vars->type)) {
                 if (
                     !IS_WORD(&vars->id)
-                    || !SAME_SYM(
-                        VAL_WORD_SYM(&vars->type), VAL_WORD_SYM(&type)
+                    || !SAME_STR(
+                        VAL_WORD_CASED(&vars->type), VAL_WORD_CASED(&type)
                     )
                 ) {
                     fail (Error(RE_INVALID_ERROR, arg));
@@ -641,36 +640,30 @@ REBOOL Make_Error_Object_Throws(
         // fill in the code.  (No fast lookup for this, must search.)
 
         REBCTX *categories = VAL_CONTEXT(Get_System(SYS_CATALOG, CAT_ERRORS));
-        REBVAL *category;
 
         assert(IS_BLANK(&vars->code));
 
         // Find correct category for TYPE: (if any)
-        category = Find_Word_Value(categories, VAL_WORD_SYM(&vars->type));
+        REBVAL *category
+            = Select_Canon_In_Context(categories, VAL_WORD_CANON(&vars->type));
+
         if (category) {
-            REBCNT code;
-            REBVAL *message;
-
             assert(IS_OBJECT(category));
-
             assert(VAL_CONTEXT_KEY_SYM(category, 1) == SYM_SELF);
-
-            assert(
-                SAME_SYM(VAL_CONTEXT_KEY_SYM(category, SELFISH(1)), SYM_CODE)
-            );
+            assert(VAL_CONTEXT_KEY_SYM(category, SELFISH(1)) == SYM_CODE);
             assert(IS_INTEGER(VAL_CONTEXT_VAR(category, SELFISH(1))));
-            code = cast(REBCNT,
+
+            REBCNT code = cast(REBCNT,
                 VAL_INT32(VAL_CONTEXT_VAR(category, SELFISH(1)))
             );
 
-            assert(
-                SAME_SYM(VAL_CONTEXT_KEY_SYM(category, SELFISH(2)), SYM_TYPE)
-            );
+            assert(VAL_CONTEXT_KEY_SYM(category, SELFISH(2)) == SYM_TYPE);
             assert(IS_STRING(VAL_CONTEXT_VAR(category, SELFISH(2))));
 
             // Find correct message for ID: (if any)
-            message = Find_Word_Value(
-                VAL_CONTEXT(category), VAL_WORD_SYM(&vars->id)
+
+            REBVAL *message = Select_Canon_In_Context(
+                VAL_CONTEXT(category), VAL_WORD_CANON(&vars->id)
             );
 
             if (message) {
@@ -683,10 +676,10 @@ REBOOL Make_Error_Object_Throws(
 
                 SET_INTEGER(&vars->code,
                     code
-                    + Find_Word_In_Context(
-                        error, VAL_WORD_SYM(&vars->id), FALSE
+                    + Find_Canon_In_Context(
+                        error, VAL_WORD_CANON(&vars->id), FALSE
                     )
-                    - Find_Word_In_Context(error, SYM_TYPE, FALSE)
+                    - Find_Canon_In_Context(error, Canon(SYM_TYPE), FALSE)
                     - 1
                 );
             }
@@ -790,11 +783,13 @@ REBOOL Make_Error_Object_Throws(
 REBCTX *Make_Error_Core(REBCNT code, va_list *vaptr)
 {
 #if !defined(NDEBUG)
+    //
     // The legacy error mechanism expects us to have exactly three fields
     // in each error generated by the C code with names arg1: arg2: arg3.
     // Track how many of those we've gone through if we need to.
-    static const REBCNT legacy_data[] = {SYM_ARG1, SYM_ARG2, SYM_ARG3, SYM_0};
-    const REBCNT *arg1_arg2_arg3 = legacy_data;
+    //
+    static const REBSYM legacy_data[] = {SYM_ARG1, SYM_ARG2, SYM_ARG3, SYM_0};
+    const REBSYM *arg1_arg2_arg3 = legacy_data;
 #endif
 
     REBCTX *root_error;
@@ -968,12 +963,12 @@ REBCTX *Make_Error_Core(REBCNT code, va_list *vaptr)
                         Debug_Fmt("Legacy arg1_arg2_arg3 error with > 3 args");
                         panic (Error(RE_MISC));
                     }
-                    Val_Init_Typeset(key, ALL_64, *arg1_arg2_arg3);
+                    Val_Init_Typeset(key, ALL_64, Canon(*arg1_arg2_arg3));
                     arg1_arg2_arg3++;
                 }
                 else
             #endif
-                    Val_Init_Typeset(key, ALL_64, VAL_WORD_SYM(temp));
+                    Val_Init_Typeset(key, ALL_64, VAL_WORD_CASED(temp));
 
                 *value = *arg;
 
@@ -987,7 +982,7 @@ REBCTX *Make_Error_Core(REBCNT code, va_list *vaptr)
         if (LEGACY(OPTIONS_ARG1_ARG2_ARG3_ERROR)) {
             // Need to fill in blanks for any remaining args.
             while (*arg1_arg2_arg3 != SYM_0) {
-                Val_Init_Typeset(key, ALL_64, *arg1_arg2_arg3);
+                Val_Init_Typeset(key, ALL_64, Canon(*arg1_arg2_arg3));
                 arg1_arg2_arg3++;
                 key++;
                 SET_BLANK(value);
@@ -999,7 +994,7 @@ REBCTX *Make_Error_Core(REBCNT code, va_list *vaptr)
             // (two extra fields accounted for above in creation)
 
             // error/__FILE__ (a FILE! value)
-            Val_Init_Typeset(key, ALL_64, SYM___FILE__);
+            Val_Init_Typeset(key, ALL_64, Canon(SYM___FILE__));
             key++;
             Val_Init_File(
                 value,
@@ -1012,7 +1007,7 @@ REBCTX *Make_Error_Core(REBCNT code, va_list *vaptr)
             value++;
 
             // error/__LINE__ (an INTEGER! value)
-            Val_Init_Typeset(key, ALL_64, SYM___LINE__);
+            Val_Init_Typeset(key, ALL_64, Canon(SYM___LINE__));
             key++;
             SET_INTEGER(value, TG_Erroring_C_Line);
             value++;
@@ -1089,10 +1084,10 @@ REBCTX *Make_Error_Core(REBCNT code, va_list *vaptr)
             RELVAL *item;
 
             REBVAL marker;
-            Val_Init_Word(&marker, REB_WORD, SYM__Q_Q);
+            Val_Init_Word(&marker, REB_WORD, Canon(SYM__Q_Q));
 
             REBVAL ellipsis;
-            Val_Init_Word(&ellipsis, REB_WORD, SYM_ELLIPSIS);
+            Val_Init_Word(&ellipsis, REB_WORD, Canon(SYM_ELLIPSIS));
 
             if (start < 0) {
                 DS_PUSH(&ellipsis);
@@ -1163,7 +1158,7 @@ REBCTX *Error(REBCNT num, ... /* REBVAL *arg1, REBVAL *arg2, ... */)
 //
 REBCTX *Error_Punctuator_Hit(struct Reb_Frame *f) {
     REBVAL punctuator_name;
-    Val_Init_Word(&punctuator_name, REB_WORD, f->label_sym);
+    Val_Init_Word(&punctuator_name, REB_WORD, f->label);
     fail (Error(RE_PUNCTUATOR_HIT, &punctuator_name));
 }
 
@@ -1210,7 +1205,7 @@ REBCTX *Error_Lookback_Quote_Set_Soft(struct Reb_Frame *f) {
 //
 REBCTX *Error_Infix_Left_Arg_Prohibited(struct Reb_Frame *f) {
     REBVAL infix_name;
-    Val_Init_Word(&infix_name, REB_WORD, f->label_sym);
+    Val_Init_Word(&infix_name, REB_WORD, f->label);
     fail (Error(RE_NO_INFIX_LEFT_ARG, &infix_name, END_CELL));
 }
 
@@ -1225,7 +1220,7 @@ REBCTX *Error_Infix_Left_Arg_Prohibited(struct Reb_Frame *f) {
 //
 REBCTX *Error_Non_Logic_Refinement(struct Reb_Frame *f) {
     REBVAL word;
-    Val_Init_Word(&word, REB_WORD, VAL_TYPESET_SYM(f->param));
+    Val_Init_Word(&word, REB_WORD, VAL_PARAM_CASED(f->param));
     fail (Error(RE_NON_LOGIC_REFINE, &word, Type_Of(f->arg)));
 }
 
@@ -1251,17 +1246,17 @@ REBCTX *Error_Bad_Func_Def(const REBVAL *spec, const REBVAL *body)
 //
 //  Error_No_Arg: C
 //
-REBCTX *Error_No_Arg(REBCNT label_sym, const RELVAL *key)
+REBCTX *Error_No_Arg(REBSTR *label, const RELVAL *param)
 {
-    assert(IS_TYPESET(key));
+    assert(IS_TYPESET(param));
 
-    REBVAL key_word;
-    Val_Init_Word(&key_word, REB_WORD, VAL_TYPESET_SYM(key));
+    REBVAL param_word;
+    Val_Init_Word(&param_word, REB_WORD, VAL_PARAM_CASED(param));
 
-    REBVAL label;
-    Val_Init_Word(&label, REB_WORD, label_sym);
+    REBVAL label_word;
+    Val_Init_Word(&label_word, REB_WORD, label);
 
-    return Error(RE_NO_ARG, &label, &key_word, END_CELL);
+    return Error(RE_NO_ARG, &label_word, &param_word, END_CELL);
 }
 
 
@@ -1329,13 +1324,13 @@ REBCTX *Error_Bad_Refine_Revoke(struct Reb_Frame *f)
     assert(IS_TYPESET(f->param));
 
     REBVAL param_name;
-    Val_Init_Word(&param_name, REB_WORD, VAL_TYPESET_SYM(f->param));
+    Val_Init_Word(&param_name, REB_WORD, VAL_PARAM_CASED(f->param));
 
     while (VAL_PARAM_CLASS(f->param) != PARAM_CLASS_REFINEMENT)
         --f->param;
 
     REBVAL refine_name;
-    Val_Init_Word(&refine_name, REB_REFINEMENT, VAL_TYPESET_SYM(f->param));
+    Val_Init_Word(&refine_name, REB_REFINEMENT, VAL_PARAM_CASED(f->param));
 
     if (IS_VOID(f->arg)) // was void and shouldn't have been
         return Error(RE_BAD_REFINE_REVOKE, &refine_name, &param_name, END_CELL);
@@ -1412,7 +1407,7 @@ REBCTX *Error_Protected_Key(REBVAL *key)
     assert(IS_TYPESET(key));
 
     REBVAL key_name;
-    Val_Init_Word(&key_name, REB_WORD, VAL_TYPESET_SYM(key));
+    Val_Init_Word(&key_name, REB_WORD, VAL_KEY_CASED(key));
 
     return Error(RE_LOCKED_WORD, &key_name, END_CELL);
 }
@@ -1424,7 +1419,7 @@ REBCTX *Error_Protected_Key(REBVAL *key)
 REBCTX *Error_Illegal_Action(enum Reb_Kind type, REBSYM action)
 {
     REBVAL action_word;
-    Val_Init_Word(&action_word, REB_WORD, action);
+    Val_Init_Word(&action_word, REB_WORD, Canon(action));
 
     return Error(RE_CANNOT_USE, &action_word, Get_Type(type), END_CELL);
 }
@@ -1436,7 +1431,7 @@ REBCTX *Error_Illegal_Action(enum Reb_Kind type, REBSYM action)
 REBCTX *Error_Math_Args(enum Reb_Kind type, REBSYM action)
 {
     REBVAL action_word;
-    Val_Init_Word(&action_word, REB_WORD, action);
+    Val_Init_Word(&action_word, REB_WORD, Canon(action));
 
     return Error(RE_NOT_RELATED, &action_word, Get_Type(type), END_CELL);
 }
@@ -1466,17 +1461,17 @@ REBCTX *Error_Unexpected_Type(enum Reb_Kind expected, enum Reb_Kind actual)
 // a type different than the arg given (which had `arg_type`)
 //
 REBCTX *Error_Arg_Type(
-    REBCNT label_sym,
+    REBSTR *label,
     const RELVAL *param,
     enum Reb_Kind kind
 ) {
     assert(IS_TYPESET(param));
 
     REBVAL param_word;
-    Val_Init_Word(&param_word, REB_WORD, VAL_TYPESET_SYM(param));
+    Val_Init_Word(&param_word, REB_WORD, VAL_PARAM_CASED(param));
 
     REBVAL label_word;
-    Val_Init_Word(&label_word, REB_WORD, label_sym);
+    Val_Init_Word(&label_word, REB_WORD, label);
 
     if (kind != REB_0) {
         REBVAL *datatype = Get_Type(kind);
@@ -1651,7 +1646,7 @@ void Init_Errors(REBVAL *errors)
 //         eval:  integer (limit)
 //     ]
 //
-REBYTE *Security_Policy(REBSYM sym, REBVAL *name)
+REBYTE *Security_Policy(REBSTR *spelling, REBVAL *name)
 {
     REBVAL *policy = Get_System(SYS_STATE, STATE_POLICIES);
     REBYTE *flags;
@@ -1661,7 +1656,7 @@ REBYTE *Security_Policy(REBSYM sym, REBVAL *name)
     if (!IS_OBJECT(policy)) goto error;
 
     // Find the security class in the block: (file net call...)
-    policy = Find_Word_Value(VAL_CONTEXT(policy), sym);
+    policy = Select_Canon_In_Context(VAL_CONTEXT(policy), STR_CANON(spelling));
     if (!policy) goto error;
 
     // Obtain the policies for it:
@@ -1711,7 +1706,7 @@ REBYTE *Security_Policy(REBSYM sym, REBVAL *name)
         ; // need statement
         REBVAL temp;
         if (!policy) {
-            Val_Init_Word(&temp, REB_WORD, sym);
+            Val_Init_Word(&temp, REB_WORD, spelling);
             policy = &temp;
         }
         fail (Error(errcode, policy));
@@ -1727,7 +1722,7 @@ REBYTE *Security_Policy(REBSYM sym, REBVAL *name)
 // Take action on the policy flags provided. The sym and value
 // are provided for error message purposes only.
 //
-void Trap_Security(REBCNT flag, REBSYM sym, REBVAL *value)
+void Trap_Security(REBCNT flag, REBSTR *sym, REBVAL *value)
 {
     if (flag == SEC_THROW) {
         if (!value) {
@@ -1747,7 +1742,7 @@ void Trap_Security(REBCNT flag, REBSYM sym, REBVAL *value)
 // a given symbol (FILE) and value (path), and then tests
 // that they are allowed.
 //
-void Check_Security(REBSYM sym, REBCNT policy, REBVAL *value)
+void Check_Security(REBSTR *sym, REBCNT policy, REBVAL *value)
 {
     REBYTE *flags;
 

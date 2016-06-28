@@ -242,8 +242,8 @@ static void Do_Global_Block(
                 RELVAL *path_item = VAL_ARRAY_HEAD(item);
                 if (
                     IS_WORD(path_item) && (
-                        VAL_WORD_SYM(path_item)
-                        == VAL_WORD_SYM(opt_toplevel_word)
+                        VAL_WORD_CASED(path_item)
+                        == VAL_WORD_CASED(opt_toplevel_word)
                     )
                 ) {
                     // Steal binding, but keep the same word type
@@ -306,29 +306,30 @@ static void Load_Boot(void)
     if (VAL_LEN_HEAD(&Boot_Block->types) != REB_MAX_0 - 1)
         panic (Error(RE_BAD_BOOT_TYPE_BLOCK));
 
-    // First type should be BLANK! ("!" turned to "_X" to be a legal C symbol)
+    // First type should be BLANK! (Note: Init_Symbols() hasn't run yet, so
+    // cannot check this via VAL_WORD_SYM())
     //
-    if (VAL_WORD_SYM(VAL_ARRAY_HEAD(&Boot_Block->types)) != SYM_BLANK_X)
+    if (0 != COMPARE_BYTES(
+        cb_cast("blank!"),
+        STR_HEAD(VAL_WORD_CASED(VAL_ARRAY_HEAD(&Boot_Block->types)))
+    )){
+        Debug_Fmt(cs_cast(STR_HEAD(VAL_WORD_CASED(VAL_ARRAY_HEAD(&Boot_Block->types)))));
         panic (Error(RE_BAD_BOOT_TYPE_BLOCK));
+    }
 
     // Create low-level string pointers (used by RS_ constants):
     {
-        REBYTE *cp;
-        REBINT i;
-
         PG_Boot_Strs = ALLOC_N(REBYTE *, RS_MAX);
         *ROOT_STRINGS = Boot_Block->strings;
-        cp = VAL_BIN(ROOT_STRINGS);
+
+        REBYTE *cp = VAL_BIN(ROOT_STRINGS);
+        REBINT i;
         for (i = 0; i < RS_MAX; i++) {
             PG_Boot_Strs[i] = cp;
             while (*cp++);
         }
     }
 
-    if (COMPARE_BYTES(cb_cast("blank!"), Get_Sym_Name(SYM_BLANK_X)) != 0)
-        panic (Error(RE_BAD_BOOT_STRING));
-    if (COMPARE_BYTES(cb_cast("true"), Get_Sym_Name(SYM_TRUE)) != 0)
-        panic (Error(RE_BAD_BOOT_STRING));
     if (COMPARE_BYTES(cb_cast("newline"), BOOT_STR(RS_SCAN, 1)) != 0)
         panic (Error(RE_BAD_BOOT_STRING));
 }
@@ -343,12 +344,13 @@ static void Init_Datatypes(void)
 {
     RELVAL *word = VAL_ARRAY_HEAD(&Boot_Block->types);
     REBARR *specs = VAL_ARRAY(&Boot_Block->typespecs);
-    REBVAL *value;
+
     REBINT n;
 
     for (n = 1; NOT_END(word); word++, n++) {
         assert(n < REB_MAX_0);
-        value = Append_Context(Lib_Context, KNOWN(word), SYM_0);
+
+        REBVAL *value = Append_Context(Lib_Context, KNOWN(word), NULL);
         VAL_RESET_HEADER(value, REB_DATATYPE);
         VAL_TYPE_KIND(value) = KIND_FROM_0(n);
         VAL_TYPE_SPEC(value) = VAL_ARRAY(ARR_AT(specs, n - 1));
@@ -383,22 +385,22 @@ static void Init_Constants(void)
     REBVAL *value;
     extern const double pi1;
 
-    value = Append_Context(Lib_Context, 0, SYM_BLANK);
+    value = Append_Context(Lib_Context, 0, Canon(SYM_BLANK));
     SET_BLANK(value);
     assert(IS_BLANK(value));
     assert(IS_CONDITIONAL_FALSE(value));
 
-    value = Append_Context(Lib_Context, 0, SYM_TRUE);
+    value = Append_Context(Lib_Context, 0, Canon(SYM_TRUE));
     SET_TRUE(value);
     assert(VAL_LOGIC(value));
     assert(IS_CONDITIONAL_TRUE(value));
 
-    value = Append_Context(Lib_Context, 0, SYM_FALSE);
+    value = Append_Context(Lib_Context, 0, Canon(SYM_FALSE));
     SET_FALSE(value);
     assert(!VAL_LOGIC(value));
     assert(IS_CONDITIONAL_FALSE(value));
 
-    value = Append_Context(Lib_Context, 0, SYM_PI);
+    value = Append_Context(Lib_Context, 0, Canon(SYM_PI));
     SET_DECIMAL(value, pi1);
     assert(IS_DECIMAL(value));
     assert(IS_CONDITIONAL_TRUE(value));
@@ -503,10 +505,10 @@ static void Init_Ops(void)
 
     REBINT i = 0;
     while (names[i]) {
-        REBSYM sym = Make_Word(cb_cast(names[i]), strlen(names[i]));
+        REBSTR *str = Intern_UTF8_Managed(cb_cast(names[i]), strlen(names[i]));
 
         // Append the operator name to the lib frame:
-        REBVAL *val = Append_Context(Lib_Context, NULL, sym);
+        REBVAL *val = Append_Context(Lib_Context, NULL, str);
 
         // leave void, functions will be filled in later...
         cast(void, cast(REBUPT, val));
@@ -540,9 +542,9 @@ static void Init_Natives(void)
     // !!! See notes on FUNCTION-META in %sysobj.r
     {
         REBCTX *function_meta = Alloc_Context(3);
-        Append_Context(function_meta, NULL, SYM_DESCRIPTION);
-        Append_Context(function_meta, NULL, SYM_PARAMETER_TYPES);
-        Append_Context(function_meta, NULL, SYM_PARAMETER_NOTES);
+        Append_Context(function_meta, NULL, Canon(SYM_DESCRIPTION));
+        Append_Context(function_meta, NULL, Canon(SYM_PARAMETER_TYPES));
+        Append_Context(function_meta, NULL, Canon(SYM_PARAMETER_NOTES));
         REBVAL *rootvar = CTX_VALUE(function_meta);
         VAL_RESET_HEADER(rootvar, REB_OBJECT);
         rootvar->extra.binding = NULL;
@@ -552,9 +554,9 @@ static void Init_Natives(void)
     // !!! Same, we want to have SPECIALIZE before %sysobj.r loaded
     {
         REBCTX *specialized_meta = Alloc_Context(3);
-        Append_Context(specialized_meta, NULL, SYM_DESCRIPTION);
-        Append_Context(specialized_meta, NULL, SYM_SPECIALIZEE);
-        Append_Context(specialized_meta, NULL, SYM_SPECIALIZEE_NAME);
+        Append_Context(specialized_meta, NULL, Canon(SYM_DESCRIPTION));
+        Append_Context(specialized_meta, NULL, Canon(SYM_SPECIALIZEE));
+        Append_Context(specialized_meta, NULL, Canon(SYM_SPECIALIZEE_NAME));
         REBVAL *rootvar = CTX_VALUE(specialized_meta);
         VAL_RESET_HEADER(rootvar, REB_OBJECT);
         rootvar->extra.binding = NULL;
@@ -664,15 +666,6 @@ static void Init_Natives(void)
     if (n != NUM_NATIVES)
         fail (Error(RE_NATIVE_BOOT));
 
-    // The definitional return code canonizes symbols to see if they are
-    // return or not, but doesn't canonize SYM_RETURN.  Double-check it
-    // does not have to.
-    //
-    // !!! Is there a better point in the bootstrap for this check, where
-    // it's late enough to not fail the word table lookup?
-    //
-    assert(SYM_RETURN == SYMBOL_TO_CANON(SYM_RETURN));
-
     // Should have found and bound `action:` among the natives
     //
     if (!action_word)
@@ -690,7 +683,7 @@ static void Init_Natives(void)
 
     // Sanity check the symbol transformation
     //
-    if (0 != strcmp("open", cs_cast(Get_Sym_Name(SYM_OPEN))))
+    if (0 != strcmp("open", cs_cast(STR_HEAD(Canon(SYM_OPEN)))))
         panic (Error(RE_NATIVE_BOOT));
 }
 
@@ -700,9 +693,9 @@ static void Init_Natives(void)
 // 
 // Return the value (function) for a given Action number.
 //
-REBVAL *Get_Action_Value(REBCNT action)
+REBVAL *Get_Action_Value(REBSYM action)
 {
-    return CTX_VAR(Lib_Context, Action_Marker + action);
+    return CTX_VAR(Lib_Context, Action_Marker + cast(REBCNT, action));
 }
 
 
@@ -904,7 +897,6 @@ static void Init_System_Object(void)
     //
     system = Make_Selfish_Context_Detect(
         REB_OBJECT, // type
-        NULL, // spec
         NULL, // body
         VAL_ARRAY_HEAD(&Boot_Block->sysobj), // scan for toplevel set-words
         NULL // parent
@@ -926,7 +918,7 @@ static void Init_System_Object(void)
     // Create a global value for it.  (This is why we are able to say `system`
     // and have it bound in lines like `sys: system/contexts/sys`)
     //
-    value = Append_Context(Lib_Context, 0, SYM_SYSTEM);
+    value = Append_Context(Lib_Context, 0, Canon(SYM_SYSTEM));
     Val_Init_Object(value, system);
 
     // We also add the system object under the root, to ensure it can't be
@@ -968,6 +960,7 @@ static void Init_System_Object(void)
         REBCTX *codecs = Alloc_Context(10);
 
         value = Get_System(SYS_CODECS, 0);
+        SET_BLANK(CTX_ROOTKEY(codecs));
         VAL_RESET_HEADER(CTX_VALUE(codecs), REB_OBJECT);
         CTX_VALUE(codecs)->extra.binding = NULL;
         Val_Init_Object(value, codecs);
@@ -1132,7 +1125,7 @@ REBINT Codec_UTF16BE(REBCDI *codi)
 void Register_Codec(const REBYTE *name, codo dispatcher)
 {
     REBVAL *value = Get_System(SYS_CODECS, 0);
-    REBSYM sym = Make_Word(name, LEN_BYTES(name));
+    REBSTR *sym = Intern_UTF8_Managed(name, LEN_BYTES(name));
 
     value = Append_Context(VAL_CONTEXT(value), 0, sym);
     SET_HANDLE_CODE(value, cast(CFUNC*, dispatcher));
@@ -1164,23 +1157,24 @@ static void Set_Option_String(REBCHR *str, REBCNT field)
 }
 
 
-static REBCNT Set_Option_Word(REBCHR *str, REBCNT field)
+static REBSTR *Set_Option_Word(REBCHR *str, REBCNT field)
 {
-    REBVAL *val;
-    REBYTE *bp;
-    REBYTE buf[40]; // option words always short ASCII strings
-    REBCNT n = 0;
+    if (!str) return NULL;
 
-    if (str) {
-        n = OS_STRLEN(str); // WC correct
-        if (n > 38) return 0;
-        bp = &buf[0];
-        while ((*bp++ = cast(REBYTE, OS_CH_VALUE(*(str++))))); // clips unicode
-        n = Make_Word(buf, n);
-        val = Get_System(SYS_OPTIONS, field);
-        Val_Init_Word(val, REB_WORD, n);
-    }
-    return n;
+    REBYTE buf[40]; // option words always short ASCII strings
+
+    REBCNT len = OS_STRLEN(str); // WC correct
+    assert(len <= 38);
+
+    REBYTE *bp = &buf[0];
+    while ((*bp++ = cast(REBYTE, OS_CH_VALUE(*(str++))))); // clips unicode
+
+    REBSTR *name = Intern_UTF8_Managed(buf, len);
+
+    REBVAL *val = Get_System(SYS_OPTIONS, field);
+    Val_Init_Word(val, REB_WORD, name);
+
+    return name;
 }
 
 
@@ -1245,7 +1239,11 @@ static void Init_Main_Args(REBARGS *rargs)
         Val_Init_File(val, ser);
     }
 
-    n = Set_Option_Word(rargs->boot, OPTIONS_BOOT_LEVEL);
+    REBSTR *name = Set_Option_Word(rargs->boot, OPTIONS_BOOT_LEVEL);
+    if (name != NULL)
+        n = cast(REBCNT, STR_SYMBOL(name));
+    else
+        n = 0;
     if (n >= SYM_BASE && n <= SYM_MODS)
         PG_Boot_Level = n - SYM_BASE; // 0 - 3
 
@@ -1326,7 +1324,6 @@ void Init_Task(void)
     Init_Task_Context();    // Special REBOL values per task
 
     Init_Raw_Print();
-    Init_Words(TRUE);
     Init_Stacks(STACK_MIN/4);
     Init_Scanner();
     Init_Mold(MIN_COMMON/4);
@@ -1440,7 +1437,7 @@ void Init_Core(REBARGS *rargs)
     Init_Char_Cases();
     Init_CRC();             // For word hashing
     Set_Random(0);
-    Init_Words(FALSE);      // Symbol table
+    Init_Words();
     Init_Stacks(STACK_MIN * 4);
     Init_Scanner();
     Init_Mold(MIN_COMMON);  // Output buffer
@@ -1465,7 +1462,16 @@ void Init_Core(REBARGS *rargs)
     CTX_VALUE(Sys_Context)->extra.binding = NULL;
 
     DOUT("Level 2");
-    Load_Boot();            // Protected strings now available
+
+    Load_Boot();
+
+    // Data in %boot-code.r now available as Boot_Block.  This includes the
+    // type list, word list, error message templates, system object, etc.
+
+    Init_Symbols(VAL_ARRAY(&Boot_Block->words));
+
+    // STR_SYMBOL(), VAL_WORD_SYM() and Canon(SYM_XXX) now available
+
     PG_Boot_Phase = BOOT_LOADED;
     //Debug_Str(BOOT_STR(RS_INFO,0)); // Booting...
 
@@ -1704,6 +1710,11 @@ void Shutdown_Core(void)
     Shutdown_Mold();
     Shutdown_Scanner();
     Shutdown_Char_Cases();
+
+    assert(PG_Num_Canon_Slots_In_Use - PG_Num_Canon_Deleteds == 0);
+    Free_Series(PG_Canons_By_Hash);
+    Free_Series(PG_Symbol_Canons);
+
     Shutdown_GC();
 
     // !!! Need to review the relationship between Open_StdIO (which the host

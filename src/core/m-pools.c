@@ -114,7 +114,7 @@ void *Alloc_Mem(size_t size)
 
     PG_Mem_Usage += size;
     if ((PG_Mem_Limit != 0) && (PG_Mem_Usage > PG_Mem_Limit))
-        Check_Security(SYM_MEMORY, POL_EXEC, 0);
+        Check_Security(Canon(SYM_MEMORY), POL_EXEC, 0);
 
     // While conceptually a simpler interface than malloc(), the
     // current implementations on all C platforms just pass through to
@@ -1449,6 +1449,13 @@ void GC_Kill_Series(REBSER *series)
 #if !defined(NDEBUG)
     PG_Reb_Stats->Series_Freed++;
 #endif
+
+    // Special handling for adjusting canons.  (REVIEW: do this by keeping the
+    // symbol REBSERs in their own pools, and letting that pool's sweeper
+    // do it instead of checking all series for it)
+    //
+    if (GET_SER_FLAG(series, SERIES_FLAG_STRING))
+        GC_Kill_Interning(series);
 
     // Remove series from expansion list, if found:
     for (n = 1; n < MAX_EXPAND_LIST; n++) {

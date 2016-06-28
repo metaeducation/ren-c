@@ -125,7 +125,7 @@ REBVAL *Get_Var_Core(
     // !!! Review if the symbol not matching could be used as a "cache miss"
     // and a way of being able to delete key/val pairs from objects.
     //
-    assert(SAME_SYM(VAL_WORD_SYM(any_word), VAL_TYPESET_SYM(key)));
+    assert(SAME_STR(VAL_WORD_CASED(any_word), VAL_KEY_CASED(key)));
 
     REBVAL *var;
 
@@ -146,7 +146,7 @@ REBVAL *Get_Var_Core(
             Val_Init_Word(
                 &unbound,
                 VAL_TYPE(any_word),
-                VAL_WORD_SYM(any_word)
+                VAL_WORD_CASED(any_word)
             );
 
             fail (Error(RE_NO_RELATIVE, &unbound));
@@ -233,7 +233,7 @@ REBVAL *Get_Var_Core(
 // this recursive routine to do the actual binding.
 //
 static void Bind_Values_Inner_Loop(
-    REBINT *binds,
+    struct Reb_Binder *binder,
     RELVAL *head,
     REBCTX *context,
     REBU64 bind_types, // !!! REVIEW: force word types low enough for 32-bit?
@@ -245,9 +245,9 @@ static void Bind_Values_Inner_Loop(
         REBU64 type_bit = FLAGIT_KIND(VAL_TYPE(value));
 
         if (type_bit & bind_types) {
-            REBCNT n = binds[VAL_WORD_CANON(value)];
+            REBSTR *canon = VAL_WORD_CANON(value);
+            REBCNT n = Try_Get_Binder_Index(binder, canon);
             if (n != 0) {
-                assert(ANY_WORD(value));
                 assert(n <= CTX_LEN(context));
 
                 // We're overwriting any previous binding, which may have
@@ -265,12 +265,12 @@ static void Bind_Values_Inner_Loop(
                 //
                 Expand_Context(context, 1);
                 Append_Context(context, value, 0);
-                binds[VAL_WORD_CANON(value)] = VAL_WORD_INDEX(value);
+                Add_Binder_Index(binder, canon, VAL_WORD_INDEX(value));
             }
         }
         else if (ANY_ARRAY(value) && (flags & BIND_DEEP)) {
             Bind_Values_Inner_Loop(
-                binds,
+                binder,
                 VAL_ARRAY_AT(value),
                 context,
                 bind_types,
@@ -287,7 +287,7 @@ static void Bind_Values_Inner_Loop(
             // content of an already formed function.  :-/
             //
             Bind_Values_Inner_Loop(
-                binds,
+                binder,
                 VAL_FUNC_BODY(value),
                 context,
                 bind_types,
@@ -316,34 +316,30 @@ void Bind_Values_Core(
     REBU64 add_midstream_types,
     REBFLGS flags // see %sys-core.h for BIND_DEEP, etc.
 ) {
-    REBVAL *key;
-    REBCNT index;
-    REBINT *binds = WORDS_HEAD(Bind_Table); // GC safe to do here
+    struct Reb_Binder binder;
+    INIT_BINDER(&binder);
 
-    ASSERT_BIND_TABLE_EMPTY;
+    // Via the global hash table, each spelling of the word can find the
+    // canon form of the word.  Associate that with an index number to signal
+    // a binding should be created to this context (at that index.)
 
-    // Note about optimization: it's not a big win to avoid the
-    // binding table for short blocks (size < 4), because testing
-    // every block for the rare case adds up.
-
-    // Setup binding table
-    index = 1;
-    key = CTX_KEYS_HEAD(context);
-    for (; index <= CTX_LEN(context); key++, index++) {
+    REBCNT index = 1;
+    REBVAL *key = CTX_KEYS_HEAD(context);
+    for (; index <= CTX_LEN(context); key++, index++)
         if (!GET_VAL_FLAG(key, TYPESET_FLAG_UNBINDABLE))
-            binds[VAL_TYPESET_CANON(key)] = index;
-    }
+            Add_Binder_Index(&binder, VAL_KEY_CANON(key), index);
 
     Bind_Values_Inner_Loop(
-        binds, head, context, bind_types, add_midstream_types, flags
+        &binder, head, context, bind_types, add_midstream_types, flags
     );
 
-    // Reset binding table:
+    // Reset all the binder indices to zero, balancing out what was added.
+
     key = CTX_KEYS_HEAD(context);
     for (; NOT_END(key); key++)
-        binds[VAL_TYPESET_CANON(key)] = 0;
+        Remove_Binder_Index(&binder, VAL_KEY_CANON(key));
 
-    ASSERT_BIND_TABLE_EMPTY;
+    SHUTDOWN_BINDER(&binder);
 }
 
 
@@ -384,9 +380,7 @@ void Unbind_Values_Core(RELVAL *head, REBCTX *context, REBOOL deep)
 //
 REBCNT Try_Bind_Word(REBCTX *context, REBVAL *word)
 {
-    REBCNT n;
-
-    n = Find_Word_In_Context(context, VAL_WORD_SYM(word), FALSE);
+    REBCNT n = Find_Canon_In_Context(context, VAL_WORD_CANON(word), FALSE);
     if (n != 0) {
         //
         // Previously may have been bound relative, remove flag.
@@ -408,9 +402,9 @@ REBCNT Try_Bind_Word(REBCTX *context, REBVAL *word)
 // any relative bindings were made.
 //
 static void Bind_Relative_Inner_Loop(
+    struct Reb_Binder *binder,
     RELVAL *head,
     REBARR *paramlist,
-    REBINT *binds,
     REBU64 bind_types
 ) {
     RELVAL *value = head;
@@ -428,10 +422,8 @@ static void Bind_Relative_Inner_Loop(
         assert(!IS_RELATIVE(value));
 
         if (type_bit & bind_types) {
-            REBINT n;
-            assert(ANY_WORD(value));
-
-            if ((n = binds[VAL_WORD_CANON(value)]) != 0) {
+            REBINT n = Try_Get_Binder_Index(binder, VAL_WORD_CANON(value));
+            if (n != 0) {
                 //
                 // Word's canon symbol is in frame.  Relatively bind it.
                 // (clear out existing header flags first).
@@ -444,7 +436,7 @@ static void Bind_Relative_Inner_Loop(
         }
         else if (ANY_ARRAY(value)) {
             Bind_Relative_Inner_Loop(
-                VAL_ARRAY_AT(value), paramlist, binds, bind_types
+                binder, VAL_ARRAY_AT(value), paramlist, bind_types
             );
 
             // Set the bits in the ANY-ARRAY! REBVAL to indicate that it is
@@ -479,40 +471,32 @@ REBARR *Copy_And_Bind_Relative_Deep_Managed(
     REBARR *paramlist, // body of function is not actually ready yet
     REBU64 bind_types
 ) {
-    RELVAL *param;
-    REBCNT index;
-    REBARR *copy;
-    REBINT *binds = WORDS_HEAD(Bind_Table); // GC safe to do here
-
-
     // !!! Currently this is done in two phases, because the historical code
     // would use the generic copying code and then do a bind phase afterward.
     // Both phases are folded into this routine to make it easier to make
     // a one-pass version when time permits.
     //
-    copy = COPY_ANY_ARRAY_AT_DEEP_MANAGED(body);
+    REBARR *copy = COPY_ANY_ARRAY_AT_DEEP_MANAGED(body);
 
-    ASSERT_BIND_TABLE_EMPTY;
-
-    //Dump_Block(words);
+    struct Reb_Binder binder;
+    INIT_BINDER(&binder);
 
     // Setup binding table from the argument word list
     //
-    index = 1;
-    param = ARR_AT(paramlist, 1); // [0] is FUNCTION! value
+    REBCNT index = 1;
+    RELVAL *param = ARR_AT(paramlist, 1); // [0] is FUNCTION! value
     for (; NOT_END(param); param++, index++)
-        binds[VAL_TYPESET_CANON(param)] = index;
+        Add_Binder_Index(&binder, VAL_KEY_CANON(param), index);
 
-    Bind_Relative_Inner_Loop(ARR_HEAD(copy), paramlist, binds, bind_types);
+    Bind_Relative_Inner_Loop(&binder, ARR_HEAD(copy), paramlist, bind_types);
 
     // Reset binding table
     //
     param = ARR_AT(paramlist, 1); // [0] is FUNCTION! value
     for (; NOT_END(param); param++)
-        binds[VAL_TYPESET_CANON(param)] = 0;
+        Remove_Binder_Index(&binder, VAL_KEY_CANON(param));
 
-    ASSERT_BIND_TABLE_EMPTY;
-
+    SHUTDOWN_BINDER(&binder);
     return copy;
 }
 
@@ -522,15 +506,11 @@ REBARR *Copy_And_Bind_Relative_Deep_Managed(
 //
 void Bind_Stack_Word(REBFUN *func, REBVAL *word)
 {
-    REBINT index;
-    enum Reb_Kind kind;
-
-    index = Find_Param_Index(FUNC_PARAMLIST(func), VAL_WORD_SYM(word));
+    REBINT index = Find_Param_Index(FUNC_PARAMLIST(func), VAL_WORD_CANON(word));
     if (index == 0)
         fail (Error(RE_NOT_IN_CONTEXT, word));
 
-    kind = VAL_TYPE(word); // safe--can't pass VAL_TYPE(value) while resetting
-    VAL_RESET_HEADER(word, kind);
+    VAL_RESET_HEADER(word, VAL_TYPE(word));
     SET_VAL_FLAGS(word, WORD_FLAG_BOUND | VALUE_FLAG_RELATIVE);
     INIT_WORD_FUNC(word, func);
     INIT_WORD_INDEX(word, index);
@@ -547,12 +527,12 @@ void Rebind_Values_Deep(
     REBCTX *src,
     REBCTX *dst,
     RELVAL *head,
-    REBINT *opt_binds
+    struct Reb_Binder *opt_binder
 ) {
     RELVAL *value = head;
     for (; NOT_END(value); value++) {
         if (ANY_ARRAY(value)) {
-            Rebind_Values_Deep(src, dst, VAL_ARRAY_AT(value), opt_binds);
+            Rebind_Values_Deep(src, dst, VAL_ARRAY_AT(value), opt_binder);
         }
         else if (
             ANY_WORD(value)
@@ -562,9 +542,11 @@ void Rebind_Values_Deep(
         ) {
             INIT_WORD_CONTEXT(value, dst);
 
-            if (opt_binds) {
-                REBCNT canon = VAL_WORD_CANON(value);
-                INIT_WORD_INDEX(value, opt_binds[canon]);
+            if (opt_binder != NULL) {
+                INIT_WORD_INDEX(
+                    value,
+                    Try_Get_Binder_Index(opt_binder, VAL_WORD_CANON(value))
+                );
             }
         }
         else if (IS_FUNCTION(value) && IS_FUNCTION_PLAIN(value)) {
@@ -577,34 +559,8 @@ void Rebind_Values_Deep(
             // Ren-C has a different idea in the works.
             //
             Rebind_Values_Deep(
-                src, dst, VAL_FUNC_BODY(value), opt_binds
+                src, dst, VAL_FUNC_BODY(value), opt_binder
             );
         }
     }
 }
-
-
-#if !defined(NDEBUG)
-
-//
-//  Assert_Bind_Table_Empty: C
-//
-void Assert_Bind_Table_Empty(void)
-{
-    REBCNT n;
-    REBINT *binds = WORDS_HEAD(Bind_Table);
-
-    //Debug_Fmt("Bind Table (Size: %d)", SER_LEN(Bind_Table));
-    for (n = 0; n < SER_LEN(Bind_Table); n++) {
-        if (binds[n]) {
-            Debug_Fmt(
-                "Bind table fault: %3d to %3d (%s)",
-                n,
-                binds[n],
-                Get_Sym_Name(n)
-            );
-        }
-    }
-}
-
-#endif

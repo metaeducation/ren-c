@@ -113,7 +113,7 @@
 // and MAKE-CALLBACK natives take as an option via refinement
 //
 static ffi_abi Abi_From_Word(const REBVAL *word) {
-    switch (VAL_WORD_CANON(word)) {
+    switch (VAL_WORD_SYM(word)) {
     case SYM_DEFAULT:
         return FFI_DEFAULT_ABI;
 
@@ -195,11 +195,11 @@ static void Schema_From_Block_May_Fail(
     if (VAL_LEN_AT(blk) == 0)
         fail (Error_Invalid_Arg(blk));
 
-    Val_Init_Typeset(param_out, 0, SYM_0);
+    Val_Init_Typeset(param_out, 0, NULL);
 
     RELVAL *item = VAL_ARRAY_AT(blk);
 
-    if (IS_WORD(item) && VAL_WORD_CANON(item) == SYM_STRUCT_X) {
+    if (IS_WORD(item) && VAL_WORD_SYM(item) == SYM_STRUCT_X) {
         //
         // [struct! [...struct definition...]]
 
@@ -245,7 +245,7 @@ static void Schema_From_Block_May_Fail(
         fail (Error_Invalid_Arg(blk));
 
     if (IS_WORD(item)) {
-        switch (VAL_WORD_CANON(item)) {
+        switch (VAL_WORD_SYM(item)) {
         case SYM_VOID:
             SET_BLANK(schema_out); // only valid for return types
             break;
@@ -764,7 +764,7 @@ REB_R Routine_Dispatcher(struct Reb_Frame *f)
         REBARR *feed = CTX_VARLIST(VAL_VARARGS_FRAME_CTX(vararg));
         do {
             REBIXO indexor = Do_Vararg_Op_Core(
-                f->out, feed, varparam, vararg, SYM_0, VARARG_OP_TAKE
+                f->out, feed, varparam, vararg, NULL, VARARG_OP_TAKE
             );
             if (indexor == THROWN_FLAG) {
                 assert(THROWN(f->out));
@@ -897,7 +897,7 @@ REB_R Routine_Dispatcher(struct Reb_Frame *f)
 
             *SER_AT(ffi_type*, args_fftypes, i) = SCHEMA_FFTYPE(&schema);
 
-            VAL_TYPESET_SYM_INIT(&param, SYM_ELLIPSIS);
+            INIT_TYPESET_NAME(&param, Canon(SYM_ELLIPSIS));
 
             *SER_AT(void*, arg_offsets, i) = cast(void*, arg_to_ffi(
                 store, // data appended to store
@@ -1065,7 +1065,7 @@ static void callback_dispatcher(
         assert(IS_BLANK(RIN_RET_SCHEMA(rin)));
     else {
         REBVAL param;
-        Val_Init_Typeset(&param, 0, SYM_RETURN);
+        Val_Init_Typeset(&param, 0, Canon(SYM_RETURN));
         arg_to_ffi(
             NULL, // store must be NULL if dest is non-NULL,
             ret, // destination pointer
@@ -1149,9 +1149,9 @@ REBFUN *Alloc_Ffi_Function_For_Spec(REBVAL *ffi_spec) {
         switch (VAL_TYPE(item)) {
         case REB_WORD:{
             REBVAL *v = NULL;
-            REBSYM sym = VAL_WORD_SYM(item);
+            REBSTR *name = VAL_WORD_CASED(item);
 
-            if (SAME_SYM(sym, SYM_ELLIPSIS)) { // variadic
+            if (SAME_STR(name, Canon(SYM_ELLIPSIS))) { // variadic
                 if (GET_RIN_FLAG(r, ROUTINE_FLAG_VARIADIC))
                     fail (Error_Invalid_Arg(KNOWN(item))); // duplicate "..."
 
@@ -1167,7 +1167,7 @@ REBFUN *Alloc_Ffi_Function_For_Spec(REBVAL *ffi_spec) {
                 Val_Init_Typeset(
                     param,
                     ALL_64 & ~FLAGIT_KIND(REB_VARARGS),
-                    SYM_VARARGS
+                    Canon(SYM_VARARGS)
                 );
                 SET_VAL_FLAG(param, TYPESET_FLAG_VARIADIC);
                 INIT_VAL_PARAM_CLASS(param, PARAM_CLASS_NORMAL);
@@ -1189,14 +1189,14 @@ REBFUN *Alloc_Ffi_Function_For_Spec(REBVAL *ffi_spec) {
                     &block // block (in)
                 );
 
-                VAL_TYPESET_SYM_INIT(param, sym);
+                INIT_TYPESET_NAME(param, name);
                 INIT_VAL_PARAM_CLASS(param, PARAM_CLASS_NORMAL);
                 ++num_fixed;
             }
             break;}
 
         case REB_SET_WORD:
-            switch (VAL_WORD_CANON(item)) {
+            switch (VAL_WORD_SYM(item)) {
             case SYM_RETURN:{
                 if (!IS_BLANK(RIN_RET_SCHEMA(r)))
                     fail (Error_Invalid_Arg(KNOWN(item))); // already a RETURN:

@@ -1184,8 +1184,7 @@ REBINT PD_Image(REBPVS *pvs)
     else if (IS_LOGIC(sel))   n = (VAL_LOGIC(sel) ? 1 : 2);
     else if (IS_WORD(sel)) {
         if (!pvs->opt_setval) {
-            switch (VAL_WORD_CANON(sel)) {
-
+            switch (VAL_WORD_SYM(sel)) {
             case SYM_SIZE:
                 VAL_RESET_HEADER(pvs->store, REB_PAIR);
                 VAL_PAIR_X(pvs->store) = (REBD32)VAL_IMAGE_WIDE(data);
@@ -1215,8 +1214,7 @@ REBINT PD_Image(REBPVS *pvs)
             FAIL_IF_LOCKED_SERIES(series);
             setval = pvs->opt_setval;
 
-            switch (VAL_WORD_CANON(sel)) {
-
+            switch (VAL_WORD_SYM(sel)) {
             case SYM_SIZE:
                 if (!IS_PAIR(setval) || !VAL_PAIR_X(setval))
                     fail (Error_Bad_Path_Set(pvs));

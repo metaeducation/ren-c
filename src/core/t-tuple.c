@@ -107,7 +107,7 @@ void MAKE_Tuple(REBVAL *out, enum Reb_Kind type, const REBVAL *arg)
 
     if (IS_ISSUE(arg)) {
         REBUNI c;
-        const REBYTE *ap = Get_Sym_Name(VAL_WORD_SYM(arg));
+        const REBYTE *ap = STR_HEAD(VAL_WORD_CASED(arg));
         REBCNT len = LEN_BYTES(ap);  // UTF-8 len
         if (len & 1) goto bad_arg; // must have even # of chars
         len /= 2;

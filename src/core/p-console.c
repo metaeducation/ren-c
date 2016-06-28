@@ -140,5 +140,5 @@ static REB_R Console_Actor(struct Reb_Frame *frame_, REBCTX *port, REBSYM action
 //
 void Init_Console_Scheme(void)
 {
-    Register_Scheme(SYM_CONSOLE, 0, Console_Actor);
+    Register_Scheme(Canon(SYM_CONSOLE), 0, Console_Actor);
 }

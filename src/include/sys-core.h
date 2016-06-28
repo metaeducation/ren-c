@@ -156,6 +156,8 @@ typedef struct rebol_mem_pool REBPOL;
 
 #include "sys-deci.h"
 
+#include "tmp-bootdefs.h"
+
 #include "sys-rebval.h" // REBVAL structure definition
 #include "sys-action.h"
 #include "sys-rebser.h" // REBSER series definition (embeds REBVAL definition)
@@ -206,14 +208,6 @@ typedef struct rebol_mold {
 **  Structures
 **
 ***********************************************************************/
-
-// Word Table Structure - used to manage hashed word tables (symbol tables).
-typedef struct rebol_word_table
-{
-    REBARR  *array;     // Global block of words
-    REBSER  *hashes;    // Hash table
-//  REBCNT  count;      // Number of units used in hash table
-} WORD_TABLE;
 
 //-- Measurement Variables:
 typedef struct rebol_stats {
@@ -349,37 +343,6 @@ typedef void (*REBMRK)(void);
 // Breakpoint hook callback
 typedef REBOOL (*REBBRK)(REBVAL *instruction_out, REBOOL interrupted);
 
-// Modes allowed by Bind related functions:
-enum {
-    BIND_0 = 0, // Only bind the words found in the context.
-    BIND_DEEP = 1 << 1, // Recurse into sub-blocks.
-    BIND_FUNC = 1 << 2 // Recurse into functions.
-};
-
-// The bind table is sparsely hashed, so when it is in use only a few
-// entries get set.  It's cheaper to go through the entries that were
-// made nonzero and zero them out than to reset it.  So after every wave
-// of binding, the binds that were given non-zero values should have been
-// zeroed back out.  This can be enabled to check that invariant.
-//
-#ifdef NDEBUG
-    #define ASSERT_BIND_TABLE_EMPTY
-#else
-    #if 0
-        #define ASSERT_BIND_TABLE_EMPTY Assert_Bind_Table_Empty()
-    #else
-        #define ASSERT_BIND_TABLE_EMPTY
-    #endif
-#endif
-
-// Modes allowed by Collect keys functions:
-enum {
-    COLLECT_ONLY_SET_WORDS = 0,
-    COLLECT_ANY_WORD = 1 << 1,
-    COLLECT_DEEP = 1 << 2,
-    COLLECT_NO_DUP = 1 << 3, // Do not allow dups during collection (for specs)
-    COLLECT_ENSURE_SELF = 1 << 4 // !!! Ensure SYM_SELF in context (temp)
-};
 
 // Flags used for Protect functions
 //
@@ -643,7 +606,6 @@ enum Reb_Vararg_Op {
 //#include "reb-net.h"
 #include "tmp-strings.h"
 #include "tmp-funcargs.h"
-#include "tmp-bootdefs.h"
 #include "tmp-boot.h"
 #include "tmp-errnums.h"
 #include "tmp-sysobj.h"
@@ -669,6 +631,8 @@ enum Reb_Vararg_Op {
 #include "sys-series.h" // Series accessor routines (used by value accessors)
 
 #include "sys-value.h" // Value accessors
+
+#include "sys-bind.h"
 
 #include "reb-struct.h"
 

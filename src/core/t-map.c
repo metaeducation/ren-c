@@ -143,12 +143,9 @@ REBINT Find_Key_Hashed(
     if (ANY_WORD(key)) {
         while ((n = hashes[hash])) {
             val = ARR_AT(array, (n - 1) * wide);
-            if (
-                ANY_WORD(val) &&
-                (VAL_WORD_SYM(key) == VAL_WORD_SYM(val))
-            ) {
+            if (ANY_WORD(val) && VAL_WORD_CASED(key) == VAL_WORD_CASED(val))
                 return hash;
-            }
+
             if (!cased && VAL_WORD_CANON(key) == VAL_WORD_CANON(val) && uncased == len) {
                 uncased = hash;
             }
@@ -269,6 +266,28 @@ static void Rehash_Map(REBMAP *map)
             SET_ARRAY_LEN(pairlist, ARR_LEN(pairlist) - 2);
         }
     }
+}
+
+
+//
+//  Expand_Hash: C
+//
+// Expand hash series. Clear it but set its tail.
+//
+void Expand_Hash(REBSER *ser)
+{
+    REBINT pnum = Get_Hash_Prime(SER_LEN(ser) + 1);
+    if (!pnum) {
+        REBVAL temp;
+        SET_INTEGER(&temp, SER_LEN(ser) + 1);
+        fail (Error(RE_SIZE_LIMIT, &temp));
+    }
+
+    assert(!Is_Array_Series(ser));
+    Remake_Series(ser, pnum + 1, SER_WIDE(ser), MKS_POWER_OF_2);
+
+    Clear_Series(ser);
+    SET_SERIES_LEN(ser, pnum);
 }
 
 
@@ -590,7 +609,7 @@ REBCTX *Alloc_Context_From_Map(REBMAP *map)
                 key,
                 // all types except void
                 ~FLAGIT_KIND(REB_0),
-                VAL_WORD_SYM(mval)
+                VAL_WORD_CASED(mval)
             );
             key++;
             *var++ = mval[1];
@@ -712,13 +731,13 @@ REBTYPE(Map)
         return R_OUT;
 
     case SYM_REFLECT: {
-        REBCNT canon = VAL_WORD_CANON(arg);
+        REBSYM sym = VAL_WORD_SYM(arg);
 
-        if (canon == SYM_VALUES)
+        if (sym == SYM_VALUES)
             n = 1;
-        else if (canon == SYM_WORDS)
+        else if (sym == SYM_WORDS)
             n = -1;
-        else if (canon == SYM_BODY)
+        else if (sym == SYM_BODY)
             n = 0;
         else
             fail (Error_Cannot_Reflect(REB_MAP, arg));

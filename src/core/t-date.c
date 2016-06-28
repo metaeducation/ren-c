@@ -506,35 +506,27 @@ void TO_Date(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg) {
 //
 REBINT PD_Date(REBPVS *pvs)
 {
-    const REBVAL *sel = pvs->selector;
     REBVAL *value = KNOWN(pvs->value);
-    const REBVAL *setval;
-
-    REBINT i;
-    REBINT n;
-    REBI64 secs;
-    REBINT tz;
-    REBDAT date;
-    REBCNT day, month, year;
-    REBINT num;
-    REB_TIMEF time;
-
     assert(IS_DATE(value));
 
     // Extract the components of the input
     //
-    date = VAL_DATE(value);
-    day = VAL_DAY(value) - 1;
-    month = VAL_MONTH(value) - 1;
-    year = VAL_YEAR(value);
-    secs = VAL_TIME(value);
-    tz = VAL_ZONE(value);
+    REBDAT date = VAL_DATE(value);
+    REBCNT day = VAL_DAY(value) - 1;
+    REBCNT month = VAL_MONTH(value) - 1;
+    REBCNT year = VAL_YEAR(value);
 
+    REBI64 secs = VAL_TIME(value);
+    REBINT tz = VAL_ZONE(value);
+
+    REBINT i;
+
+    const REBVAL *sel = pvs->selector;
     if (IS_WORD(sel)) {
         //
         // !!! Wouldn't it be clearer if this turned indices into symbols?
         //
-        switch (VAL_WORD_CANON(sel)) {
+        switch (VAL_WORD_SYM(sel)) {
         case SYM_YEAR:  i = 0; break;
         case SYM_MONTH: i = 1; break;
         case SYM_DAY:   i = 2; break;
@@ -559,9 +551,11 @@ REBINT PD_Date(REBPVS *pvs)
     }
     else fail (Error_Bad_Path_Select(pvs));
 
+    REB_TIMEF time;
     if (i > 8) Split_Time(secs, &time);
 
-    if (!(setval = pvs->opt_setval)) {
+    const REBVAL *setval = pvs->opt_setval;
+    if (setval == NULL) {
         //
         // Adapt the date value that came in to get the return result.  Put
         // the existing value in the store, and adjust its time zone if
@@ -573,6 +567,7 @@ REBINT PD_Date(REBPVS *pvs)
 
         if (i != 8) Adjust_Date_Zone(store, FALSE);
 
+        REBINT num;
         switch(i) {
         case 0:
             num = year;
@@ -634,6 +629,8 @@ REBINT PD_Date(REBPVS *pvs)
         // Here the desire is to modify the incoming date directly.  This is
         // done by changing the components that need to change which were
         // extracted, and building a new date out of the parts.
+
+        REBINT n;
 
         if (IS_INTEGER(setval) || IS_DECIMAL(setval))
             n = Int32s(setval, 0);

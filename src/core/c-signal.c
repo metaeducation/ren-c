@@ -76,7 +76,7 @@ REBOOL Do_Signals_Throws(REBVAL *out)
         Eval_Cycles += Eval_Dose - Eval_Count;
         Eval_Count = Eval_Dose;
         if (Eval_Limit != 0 && Eval_Cycles > Eval_Limit)
-            Check_Security(SYM_EVAL, POL_EXEC, 0);
+            Check_Security(Canon(SYM_EVAL), POL_EXEC, 0);
     }
 
     if (!(Eval_Signals & Eval_Sigmask)) {

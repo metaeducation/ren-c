@@ -47,20 +47,20 @@ static void update(REBREQ *req, REBINT len, REBVAL *arg)
     for (i = 0; i < len; i ++) {
         REBCTX *obj = Alloc_Context(8);
         REBVAL *val = Append_Context(
-            obj, NULL, Make_Word(signal_no, LEN_BYTES(signal_no))
+            obj, NULL, Intern_UTF8_Managed(signal_no, LEN_BYTES(signal_no))
         );
         SET_INTEGER(val, sig[i].si_signo);
 
         val = Append_Context(
-            obj, NULL, Make_Word(code, LEN_BYTES(code))
+            obj, NULL, Intern_UTF8_Managed(code, LEN_BYTES(code))
         );
         SET_INTEGER(val, sig[i].si_code);
         val = Append_Context(
-            obj, NULL, Make_Word(source_pid, LEN_BYTES(source_pid))
+            obj, NULL, Intern_UTF8_Managed(source_pid, LEN_BYTES(source_pid))
         );
         SET_INTEGER(val, sig[i].si_pid);
         val = Append_Context(
-            obj, NULL, Make_Word(source_uid, LEN_BYTES(source_uid))
+            obj, NULL, Intern_UTF8_Managed(source_uid, LEN_BYTES(source_uid))
         );
         SET_INTEGER(val, sig[i].si_uid);
 
@@ -77,9 +77,9 @@ static void update(REBREQ *req, REBINT len, REBVAL *arg)
     req->actual = 0; /* avoid duplicate updates */
 }
 
-static int sig_word_num(REBSYM canon)
+static int sig_word_num(REBSTR *canon)
 {
-    switch (canon) {
+    switch (STR_SYMBOL(canon)) {
         case SYM_SIGALRM:
             return SIGALRM;
         case SYM_SIGABRT:
@@ -180,7 +180,7 @@ static REB_R Signal_Actor(struct Reb_Frame *frame_, REBCTX *port, REBSYM action)
                 for(sig = VAL_ARRAY_AT_HEAD(val, 0); NOT_END(sig); sig ++) {
                     if (IS_WORD(sig)) {
                         /* handle the special word "ALL" */
-                        if (VAL_WORD_CANON(sig) == SYM_ALL) {
+                        if (VAL_WORD_SYM(sig) == SYM_ALL) {
                             if (sigfillset(&req->special.signal.mask) < 0) {
                                 // !!! Needs better error
                                 fail (Error(RE_INVALID_SPEC, sig));
@@ -291,7 +291,7 @@ static REB_R Signal_Actor(struct Reb_Frame *frame_, REBCTX *port, REBSYM action)
 //
 void Init_Signal_Scheme(void)
 {
-    Register_Scheme(SYM_SIGNAL, 0, Signal_Actor);
+    Register_Scheme(Canon(SYM_SIGNAL), 0, Signal_Actor);
 }
 
 #endif //HAS_POSIX_SIGNAL

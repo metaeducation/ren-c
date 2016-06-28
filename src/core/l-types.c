@@ -134,7 +134,7 @@ REBNATIVE(make)
             // settings available.  Make a fake parameter that hard quotes
             // and takes any type (it will be type checked if in a chain).
             //
-            Val_Init_Typeset(&fake_param, ALL_64, SYM_ELLIPSIS);
+            Val_Init_Typeset(&fake_param, ALL_64, Canon(SYM_ELLIPSIS));
             INIT_VAL_PARAM_CLASS(&fake_param, PARAM_CLASS_HARD_QUOTE);
             vararg_param = &fake_param;
             vararg_arg = &fake_param; // doesn't matter, just gets flag set
@@ -149,7 +149,7 @@ REBNATIVE(make)
 
         do {
             REBIXO indexor = Do_Vararg_Op_Core(
-                D_OUT, feed, vararg_param, vararg_arg, SYM_0, VARARG_OP_TAKE
+                D_OUT, feed, vararg_param, vararg_arg, NULL, VARARG_OP_TAKE
             );
 
             if (indexor == THROWN_FLAG) {
@@ -1043,12 +1043,12 @@ REBNATIVE(scan_net_header)
         else break;
 
         if (*cp == ':') {
-            REBSYM sym = Make_Word(start, cp-start);
+            REBSTR *name = Intern_UTF8_Managed(start, cp-start);
             RELVAL *item;
             cp++;
             // Search if word already present:
             for (item = ARR_HEAD(result); NOT_END(item); item += 2) {
-                if (VAL_WORD_SYM(item) == sym) {
+                if (SAME_STR(VAL_WORD_CASED(item), name)) {
                     // Does it already use a block?
                     if (IS_BLOCK(item + 1)) {
                         // Block of values already exists:
@@ -1070,7 +1070,7 @@ REBNATIVE(scan_net_header)
             }
             if (IS_END(item)) {
                 val = Alloc_Tail_Array(result); // add new word
-                Val_Init_Word(val, REB_SET_WORD, sym);
+                Val_Init_Word(val, REB_SET_WORD, name);
                 val = Alloc_Tail_Array(result); // for new value
                 SET_BLANK(val);
             }

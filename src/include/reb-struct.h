@@ -130,7 +130,7 @@
 struct Struct_Field {
     REBARR* spec; /* for nested struct */
     REBSER* fields; /* for nested struct */
-    REBSYM sym;
+    REBSTR *name;
 
     unsigned short type; // e.g. FFI_TYPE_XXX constants
 
@@ -372,8 +372,8 @@ inline static void* SCHEMA_FFTYPE_CORE(const RELVAL *schema) {
     assert(IS_INTEGER(schema));
 
     enum Reb_Kind kind; // dummy
-    REBSYM sym; // dummy
-    return Get_FFType_Enum_Info(&sym, &kind, VAL_INT32(schema));
+    REBSTR *name; // dummy
+    return Get_FFType_Enum_Info(&name, &kind, VAL_INT32(schema));
 }
 
 #define SCHEMA_FFTYPE(schema) \

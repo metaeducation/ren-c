@@ -110,8 +110,8 @@ void Value_To_RXI(RXIARG *arg, const REBVAL *val)
     case REB_LIT_WORD:
     case REB_REFINEMENT:
     case REB_ISSUE:
-        arg->i2.int32a = VAL_WORD_CANON(val);
-        arg->i2.int32b = 0;
+        arg->sri.series = VAL_WORD_CANON(val);
+        arg->sri.index = 0;
         break;
 
     case REB_STRING:
@@ -211,27 +211,27 @@ void RXI_To_Value(REBVAL *val, const RXIARG *arg, REBRXT type)
         break;
 
     case RXT_WORD:
-        Val_Init_Word(val, REB_WORD, arg->i2.int32a);
+        Val_Init_Word(val, REB_WORD, arg->sri.series);
         break;
 
     case RXT_SET_WORD:
-        Val_Init_Word(val, REB_SET_WORD, arg->i2.int32a);
+        Val_Init_Word(val, REB_SET_WORD, arg->sri.series);
         break;
 
     case RXT_GET_WORD:
-        Val_Init_Word(val, REB_GET_WORD, arg->i2.int32a);
+        Val_Init_Word(val, REB_GET_WORD, arg->sri.series);
         break;
 
     case RXT_LIT_WORD:
-        Val_Init_Word(val, REB_LIT_WORD, arg->i2.int32a);
+        Val_Init_Word(val, REB_LIT_WORD, arg->sri.series);
         break;
 
     case RXT_REFINEMENT:
-        Val_Init_Word(val, REB_REFINEMENT, arg->i2.int32a);
+        Val_Init_Word(val, REB_REFINEMENT, arg->sri.series);
         break;
 
     case RXT_ISSUE:
-        Val_Init_Word(val, REB_ISSUE, arg->i2.int32a);
+        Val_Init_Word(val, REB_ISSUE, arg->sri.series);
         break;
 
     case RXT_BINARY:

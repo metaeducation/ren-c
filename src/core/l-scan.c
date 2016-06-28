@@ -1529,12 +1529,14 @@ static REBARR *Scan_Block(SCAN_STATE *scan_state, REBYTE mode_char)
             Val_Init_Word(
                 value,
                 KIND_OF_WORD_FROM_TOKEN(token),
-                Make_Word(bp, len)
+                Intern_UTF8_Managed(bp, len)
             );
             break;
 
         case TOKEN_REFINE:
-            Val_Init_Word(value, REB_REFINEMENT, Make_Word(bp + 1, len - 1));
+            Val_Init_Word(
+                value, REB_REFINEMENT, Intern_UTF8_Managed(bp + 1, len - 1)
+            );
             break;
 
         case TOKEN_ISSUE:
@@ -1546,10 +1548,10 @@ static REBARR *Scan_Block(SCAN_STATE *scan_state, REBYTE mode_char)
                 SET_BLANK(value);  // A single # means NONE
             }
             else {
-                REBSYM sym = Scan_Issue(bp + 1, len - 1);
-                if (sym == SYM_0)
+                REBSTR *name = Scan_Issue(bp + 1, len - 1);
+                if (name == NULL)
                     goto syntax_error;
-                Val_Init_Word(value, REB_ISSUE, sym);
+                Val_Init_Word(value, REB_ISSUE, name);
             }
             break;
 
@@ -1717,7 +1719,7 @@ static REBARR *Scan_Block(SCAN_STATE *scan_state, REBYTE mode_char)
                 fail (Error(RE_MALCONSTRUCT, &temp));
             }
 
-            REBSYM sym = VAL_WORD_CANON(ARR_AT(block, 0));
+            REBSYM sym = VAL_WORD_SYM(ARR_AT(block, 0));
             if (IS_KIND_SYM(sym)) {
                 enum Reb_Kind kind = KIND_FROM_SYM(sym);
 
@@ -2049,20 +2051,22 @@ REBNATIVE(transcode)
 // This method gets exactly the same results as scanner.
 // Returns symbol number, or zero for errors.
 //
-REBCNT Scan_Word(const REBYTE *cp, REBCNT len)
+REBSTR *Scan_Word(const REBYTE *cp, REBCNT len)
 {
     SCAN_STATE scan_state;
-    REBSYM sym = 0;
+    Init_Scan_State(&scan_state, cp, len);
+
     REB_MOLD mo;
     CLEARS(&mo);
 
-    Init_Scan_State(&scan_state, cp, len);
-
+    REBSTR *name;
     if (TOKEN_WORD == Locate_Token_May_Push_Mold(&mo, &scan_state))
-        sym = Make_Word(cp, len);
+        name = Intern_UTF8_Managed(cp, len);
+    else
+        name = NULL;
 
     Drop_Mold_If_Pushed(&mo);
-    return sym;
+    return name;
 }
 
 
@@ -2071,26 +2075,23 @@ REBCNT Scan_Word(const REBYTE *cp, REBCNT len)
 // 
 // Scan an issue word, allowing special characters.
 //
-REBCNT Scan_Issue(const REBYTE *cp, REBCNT len)
+REBSTR *Scan_Issue(const REBYTE *cp, REBCNT len)
 {
-    const REBYTE *bp;
-    REBCNT l = len;
-    REBCNT c;
-
-    if (len == 0) return SYM_0; // will trigger error
+    if (len == 0) return NULL; // will trigger error
 
     while (IS_LEX_SPACE(*cp)) cp++; /* skip white space */
 
-    bp = cp;
+    const REBYTE *bp = cp;
 
+    REBCNT l = len;
     while (l > 0) {
         switch (GET_LEX_CLASS(*bp)) {
 
         case LEX_CLASS_DELIMIT:
-            return SYM_0; // will trigger error
+            return NULL; // will trigger error
 
-        case LEX_CLASS_SPECIAL:     /* Flag all but first special char: */
-            c = GET_LEX_VALUE(*bp);
+        case LEX_CLASS_SPECIAL: { // Flag all but first special char
+            REBCNT c = GET_LEX_VALUE(*bp);
             if (!(LEX_SPECIAL_APOSTROPHE == c
                 || LEX_SPECIAL_COMMA  == c
                 || LEX_SPECIAL_PERIOD == c
@@ -2100,8 +2101,8 @@ REBCNT Scan_Issue(const REBYTE *cp, REBCNT len)
                 || LEX_SPECIAL_BAR == c
                 || LEX_SPECIAL_BLANK == c
             )) {
-                return SYM_0; // will trigger error
-            }
+                return NULL; // will trigger error
+            }}
             // fallthrough
         case LEX_CLASS_WORD:
         case LEX_CLASS_NUMBER:
@@ -2111,5 +2112,5 @@ REBCNT Scan_Issue(const REBYTE *cp, REBCNT len)
         }
     }
 
-    return Make_Word(cp, len);
+    return Intern_UTF8_Managed(cp, len);
 }

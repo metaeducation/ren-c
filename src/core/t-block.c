@@ -269,7 +269,7 @@ REBCNT Find_In_Array(
         for (; index >= start && index < end; index += skip) {
             value = ARR_AT(array, index);
             if (ANY_WORD(value)) {
-                cnt = (VAL_WORD_SYM(value) == VAL_WORD_SYM(target));
+                cnt = (VAL_WORD_CASED(value) == VAL_WORD_CASED(target));
                 if (flags & AM_FIND_CASE) {
                     // Must be same type and spelling:
                     if (cnt && VAL_TYPE(value) == VAL_TYPE(target)) return index;

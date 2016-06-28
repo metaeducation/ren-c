@@ -48,9 +48,21 @@ PVAR REBYTE **PG_Boot_Strs; // Special strings in boot.r (RS_ constants)
 PVAR REBU64 PG_Mem_Usage;   // Overall memory used
 PVAR REBU64 PG_Mem_Limit;   // Memory limit set by SECURE
 
-//-- Symbol Table:
-PVAR REBSER *PG_Word_Names; // Holds all word strings. Never removed.
-PVAR WORD_TABLE PG_Word_Table; // Symbol values accessed by hash
+// In Ren-C, words are REBSER nodes (REBSTR subtype).  They may be GC'd (unless
+// they are in the %words.r list, in which case their canon forms are
+// protected in order to do SYM_XXX switch statements in the C source, etc.)
+//
+// There is a global hash table which accelerates finding a word's REBSER
+// node from a UTF-8 source string.  Entries are added to it when new canon
+// forms of words are created, and removed when they are GC'd.  It is scaled
+// according to the total number of canons in the system.
+//
+PVAR REBSTR *PG_Symbol_Canons; // Canon symbol pointers for words in %words.r
+PVAR REBSTR *PG_Canons_By_Hash; // Canon REBSER pointers indexed by hash
+PVAR REBCNT PG_Num_Canon_Slots_In_Use; // Total canon hash slots (+ deleteds)
+#if !defined(NDEBUG)
+    PVAR REBCNT PG_Num_Canon_Deleteds; // Deleted canon hash slots "in use"
+#endif
 
 //-- Main contexts:
 PVAR REBCTX *PG_Root_Context; // Frame that holds Root_Vars
@@ -199,8 +211,5 @@ TVAR REBSER *Trace_Buffer;  // Holds backtrace lines
 
 TVAR REBI64 Eval_Natives;
 TVAR REBI64 Eval_Functions;
-
-//-- Other per thread globals:
-TVAR REBSER *Bind_Table;    // Used to quickly bind words to contexts
 
 TVAR REBVAL Callback_Error; //Error produced by callback!, note it's not callback://

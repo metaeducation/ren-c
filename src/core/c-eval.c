@@ -352,7 +352,7 @@ reevaluate:
 
         if (IS_FUNCTION(f->gotten)) { // before IS_VOID() speeds common case
 
-            SET_FRAME_SYM(f, VAL_WORD_SYM(f->value));
+            SET_FRAME_LABEL(f, VAL_WORD_CASED(f->value));
 
             if (f->eval_type != ET_LOOKBACK) { // ordinary "prefix" call
                 assert(f->eval_type == ET_FUNCTION);
@@ -499,10 +499,10 @@ reevaluate:
 //==//////////////////////////////////////////////////////////////////////==//
 
     case ET_PATH: {
-        REBSYM sym;
+        REBSTR *label;
         if (Do_Path_Throws_Core(
             f->out,
-            &sym, // requesting symbol says we process refinements
+            &label, // requesting label says we run functions (not GET-PATH!)
             f->value,
             f->specifier,
             NULL // `setval`: null means don't treat as SET-PATH!
@@ -515,7 +515,7 @@ reevaluate:
 
         if (IS_FUNCTION(f->out)) {
             f->eval_type = ET_FUNCTION; // paths are never ET_LOOKBACK
-            SET_FRAME_SYM(f, sym);
+            SET_FRAME_LABEL(f, label);
 
             // object/func or func/refinements or object/func/refinement
             //
@@ -689,26 +689,26 @@ reevaluate:
 //==//////////////////////////////////////////////////////////////////////==//
 
     case ET_LOOKBACK:
-        SET_FRAME_SYM(f, VAL_WORD_SYM(f->value)); // failed WORD! optimize
+        SET_FRAME_LABEL(f, VAL_WORD_CASED(f->value)); // failed WORD! optimize
         assert(NOT_END(f->out)); // must be the infix's left-hand-side arg
         goto do_function_in_gotten;
 
     case ET_FUNCTION:
         if (f->gotten == NULL) { // literal function in a block
             f->gotten = const_KNOWN(f->value);
-            SET_FRAME_SYM(f, SYM___ANONYMOUS__); // literal functions nameless
+            SET_FRAME_LABEL(f, Canon(SYM___ANONYMOUS__)); // nameless literal
         }
         else
-            SET_FRAME_SYM(f, VAL_WORD_SYM(f->value)); // failed WORD! optimize
+            SET_FRAME_LABEL(f, VAL_WORD_CASED(f->value)); // failed optimization
 
         SET_END(f->out); // needs GC-safe data
 
     do_function_in_gotten:
         assert(IS_FUNCTION(f->gotten));
 
-        assert(f->label_sym != SYM_0); // must be something (even "anonymous")
+        assert(f->label != NULL); // must be something (even "anonymous")
     #if !defined(NDEBUG)
-        assert(f->label_str != NULL); // SET_FRAME_SYM sets (for C debugging)
+        assert(f->label_debug != NULL); // SET_FRAME_LABEL sets (C debugging)
     #endif
 
         // There may be refinements pushed to the data stack to process, if
@@ -767,14 +767,14 @@ reevaluate:
             //
             if (DSP > f->dsp_orig) {
                 assert(DSP == f->dsp_orig + 1);
-                assert(VAL_WORD_SYM(DS_TOP) == SYM_ONLY); // canonized on push
+                assert(VAL_WORD_SYM(DS_TOP) == SYM_ONLY);
                 DS_DROP;
                 args_evaluate = FALSE;
             }
             else
                 args_evaluate = TRUE;
 
-            CLEAR_FRAME_SYM(f);
+            CLEAR_FRAME_LABEL(f);
 
             // Jumping to the `reevaluate:` label will skip the fetch from the
             // array to get the next `value`.  So seed it with the address of
@@ -957,9 +957,8 @@ reevaluate:
                     f->refine = DS_TOP;
 
                     if (
-                        IS_WORD(f->refine)
-                        && VAL_WORD_SYM(f->refine)
-                        == SYMBOL_TO_CANON(VAL_TYPESET_SYM(f->param)) // #2258
+                        IS_WORD(f->refine) && // canonized when pushed, #2258
+                        VAL_WORD_CASED(f->refine) == VAL_PARAM_CANON(f->param)
                     ) {
                         DS_DROP; // we're lucky: this was next refinement used
 
@@ -973,10 +972,8 @@ reevaluate:
                     for (; f->refine > DS_AT(f->dsp_orig); --f->refine) {
                         if (IS_VARARGS(f->refine)) continue; // a pickup
                         if (
-                            VAL_WORD_SYM(f->refine) // canonized when pushed
-                            == SYMBOL_TO_CANON(
-                                VAL_TYPESET_SYM(f->param) // #2258
-                            )
+                            VAL_WORD_CASED(f->refine) // canonized when pushed
+                            == VAL_PARAM_CANON(f->param) // #2258
                         ) {
                             // The call uses this refinement but we'll have to
                             // come back to it when the expression index to
@@ -1054,7 +1051,7 @@ reevaluate:
                 goto continue_arg_loop;
 
             case PARAM_CLASS_RETURN:
-                assert(VAL_TYPESET_CANON(f->param) == SYM_RETURN);
+                assert(VAL_PARAM_SYM(f->param) == SYM_RETURN);
 
                 if (!GET_VAL_FLAG(FUNC_VALUE(f->func), FUNC_FLAG_RETURN)) {
                     SET_VOID(f->arg);
@@ -1070,7 +1067,7 @@ reevaluate:
                 goto continue_arg_loop;
 
             case PARAM_CLASS_LEAVE:
-                assert(VAL_TYPESET_CANON(f->param) == SYM_LEAVE);
+                assert(VAL_PARAM_SYM(f->param) == SYM_LEAVE);
 
                 if (!GET_VAL_FLAG(FUNC_VALUE(f->func), FUNC_FLAG_LEAVE)) {
                     SET_VOID(f->arg);
@@ -1123,7 +1120,7 @@ reevaluate:
                         Val_Init_Typeset(
                             &honest_param,
                             FLAGIT_KIND(REB_VARARGS), // *actually* expected...
-                            VAL_TYPESET_SYM(f->param)
+                            VAL_PARAM_CASED(f->param)
                         );
 
                         fail (Error_Arg_Type(
@@ -1580,7 +1577,7 @@ reevaluate:
         }
         else if (GET_VAL_FLAG(FUNC_VALUE(f->func), FUNC_FLAG_RETURN)) {
             f->param = FUNC_PARAM(f->func, FUNC_NUM_PARAMS(f->func));
-            assert(VAL_TYPESET_CANON(f->param) == SYM_RETURN);
+            assert(VAL_PARAM_SYM(f->param) == SYM_RETURN);
 
             // The type bits of the definitional return are not applicable
             // to the `return` word being associated with a FUNCTION!
@@ -1590,7 +1587,7 @@ reevaluate:
             //
             if (!TYPE_CHECK(f->param, VAL_TYPE(f->out)))
                 fail (Error_Arg_Type(
-                    SYM_RETURN, f->param, VAL_TYPE(f->out))
+                    VAL_PARAM_CASED(f->param), f->param, VAL_TYPE(f->out))
                 );
         }
 
@@ -1624,7 +1621,7 @@ reevaluate:
         if (Trace_Flags)
             Trace_Return(FRM_LABEL(f), f->out);
 
-        CLEAR_FRAME_SYM(f);
+        CLEAR_FRAME_LABEL(f);
         break;
 
 //==//////////////////////////////////////////////////////////////////////==//
@@ -1693,7 +1690,7 @@ reevaluate:
         if (!IS_FUNCTION(f->gotten)) // <-- DO_COUNT_BREAKPOINT landing spot
             goto do_word_in_value_with_gotten;
 
-        SET_FRAME_SYM(f, VAL_WORD_SYM(f->value));
+        SET_FRAME_LABEL(f, VAL_WORD_CASED(f->value));
 
         // If a previous "infix" call had 0 arguments and didn't consume
         // the value before it, assume that means it's a 0-arg barrier

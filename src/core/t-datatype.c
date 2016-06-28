@@ -48,8 +48,8 @@ void MAKE_Datatype(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg) {
     if (!IS_WORD(arg))
         fail (Error_Bad_Make(kind, arg));
 
-    REBSYM sym = VAL_WORD_CANON(arg);
-    if (sym > REB_MAX_0)
+    REBSYM sym = VAL_WORD_SYM(arg);
+    if (sym == SYM_0 || sym > SYM_FROM_KIND(REB_MAX))
         fail (Error_Bad_Make(kind, arg));
 
     VAL_RESET_HEADER(out, REB_DATATYPE);
@@ -80,18 +80,13 @@ REBTYPE(Datatype)
     switch (action) {
 
     case SYM_REFLECT: {
-        REBSYM canon = VAL_WORD_CANON(arg);
-        if (canon == SYM_SPEC) {
+        REBSYM sym = VAL_WORD_SYM(arg);
+        if (sym == SYM_SPEC) {
             //
             // The "type specs" were loaded as an array, but this reflector
             // wants to give back an object.  Combine the array with the
             // standard object that mirrors its field order.
             //
-            REBVAL *var;
-            REBVAL *key;
-
-            RELVAL *value;
-
             REBCTX *context = Copy_Context_Shallow(
                 VAL_CONTEXT(Get_System(SYS_STANDARD, STD_TYPE_SPEC))
             );
@@ -99,16 +94,16 @@ REBTYPE(Datatype)
 
             assert(CTX_TYPE(context) == REB_OBJECT);
 
-            key = CTX_KEYS_HEAD(context);
-            var = CTX_VARS_HEAD(context);
+            REBVAL *var = CTX_VARS_HEAD(context);
+            REBVAL *key = CTX_KEYS_HEAD(context);
 
             // !!! Account for the "invisible" self key in the current
             // stop-gap implementation of self, still default on MAKE OBJECT!s
             //
-            assert(VAL_TYPESET_SYM(key) == SYM_SELF);
+            assert(VAL_KEY_SYM(key) == SYM_SELF);
             ++key; ++var;
 
-            value = ARR_HEAD(
+            RELVAL *value = ARR_HEAD(
                 VAL_TYPE_SPEC(CTX_VAR(Lib_Context, SYM_FROM_KIND(kind)))
             );
 

@@ -324,7 +324,7 @@ REBVAL *Type_Of_Core(const RELVAL *value)
 const REBYTE *Get_Field_Name(REBCTX *context, REBCNT index)
 {
     assert(index <= CTX_LEN(context));
-    return Get_Sym_Name(CTX_KEY_SYM(context, index));
+    return STR_HEAD(CTX_KEY_CASED(context, index));
 }
 
 
@@ -740,16 +740,15 @@ REBARR *Collect_Set_Words(RELVAL *val)
 {
     REBCNT count = 0;
     RELVAL *val2 = val;
-    REBARR *array;
 
     for (; NOT_END(val); val++) if (IS_SET_WORD(val)) count++;
     val = val2;
 
-    array = Make_Array(count);
+    REBARR *array = Make_Array(count);
     val2 = ARR_HEAD(array);
     for (; NOT_END(val); val++) {
         if (IS_SET_WORD(val))
-            Val_Init_Word(val2++, REB_WORD, VAL_WORD_SYM(val));
+            Val_Init_Word(val2++, REB_WORD, VAL_WORD_CASED(val));
     }
     SET_END(val2);
     SET_ARRAY_LEN(array, count);

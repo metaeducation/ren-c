@@ -871,7 +871,10 @@ add-word: func [word /skip-if-duplicate /type] [
     ; The types make a SYM_XXX entry, but they're kept in a separate block
     ; in the boot object (see `boot-types` in `sections`)
     ;
-    unless type [append boot-words word]
+    ; !!! Update--temporarily to make word numbering easier, they are
+    ; duplicated.  Consider a better way longer term.
+    ;
+    append boot-words word ;-- was `unless type [...]`
 ]
 
 for-each-record-NO-RETURN type boot-types [

@@ -204,5 +204,5 @@ static REB_R Clipboard_Actor(struct Reb_Frame *frame_, REBCTX *port, REBSYM acti
 //
 void Init_Clipboard_Scheme(void)
 {
-    Register_Scheme(SYM_CLIPBOARD, 0, Clipboard_Actor);
+    Register_Scheme(Canon(SYM_CLIPBOARD), 0, Clipboard_Actor);
 }

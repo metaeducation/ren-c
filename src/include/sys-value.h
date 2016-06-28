@@ -1314,40 +1314,6 @@ inline static RELVAL *VAL_ARRAY_TAIL(const RELVAL *v) {
     Val_Init_Block_Index((v), (s), 0)
 
 
-//=////////////////////////////////////////////////////////////////////////=//
-//
-//  SYMBOLS (Used only for symbol tables)
-//
-//=////////////////////////////////////////////////////////////////////////=//
-
-#define VAL_SYM_NINDEX(v) \
-    ((v)->payload.symbol.name)
-
-#define VAL_SYM_NAME(v) \
-    (BIN_HEAD(PG_Word_Names) + VAL_SYM_NINDEX(v))
-
-#define VAL_SYM_CANON(v) \
-    ((v)->extra.symbol_canon)
-
-#define VAL_SYM_ALIAS(v) \
-    ((v)->payload.symbol.alias)
-
-#define SYMBOL_TO_CANON(sym) \
-    VAL_SYM_CANON(ARR_AT(PG_Word_Table.array, sym))
-
-#define WORD_TO_CANON(w) \
-    VAL_SYM_CANON(ARR_AT(PG_Word_Table.array, VAL_WORD_SYM(w)))
-
-inline static REBOOL SAME_SYM(REBSYM s1, REBSYM s2) {
-    if (s1 == s2)
-        return TRUE; // quick check
-
-    return LOGICAL(
-        VAL_SYM_CANON(ARR_AT(PG_Word_Table.array, s1))
-        == VAL_SYM_CANON(ARR_AT(PG_Word_Table.array, (s2)))
-    ); // canon check
-}
-
 
 //=////////////////////////////////////////////////////////////////////////=//
 //
@@ -1553,27 +1519,29 @@ enum {
     (VAL_TYPESET_BITS(v) == VAL_TYPESET_BITS(w))
 
 
-// Symbol is SYM_0 unless typeset in object keylist or func paramlist
+// Name should be NULL unless typeset in object keylist or func paramlist
 
-inline static REBSYM VAL_TYPESET_SYM(const RELVAL *typeset) {
+inline static void INIT_TYPESET_NAME(RELVAL *typeset, REBSTR *str) {
     assert(IS_TYPESET(typeset));
-    return typeset->extra.typeset_sym;
+    typeset->extra.key_spelling = str;
 }
 
-inline static void VAL_TYPESET_SYM_INIT(RELVAL *typeset, REBSYM sym) {
+inline static REBSTR *VAL_KEY_CASED(const RELVAL *typeset) {
     assert(IS_TYPESET(typeset));
-    typeset->extra.typeset_sym = sym;
+    return typeset->extra.key_spelling;
 }
 
-#define VAL_TYPESET_CANON(v) \
-    VAL_SYM_CANON(ARR_AT(PG_Word_Table.array, VAL_TYPESET_SYM(v)))
+inline static REBSTR *VAL_KEY_CANON(const RELVAL *typeset) {
+    return STR_CANON(VAL_KEY_CASED(typeset));
+}
 
-// Word number array (used by Bind_Table):
-#define WORDS_HEAD(w) \
-    SER_HEAD(REBINT, (w))
+inline static OPT_REBSYM VAL_KEY_SYM(const RELVAL *typeset) {
+    return STR_SYMBOL(VAL_KEY_CASED(typeset)); // mirrors canon's symbol
+}
 
-#define WORDS_LAST(w) \
-    (WORDS_HEAD(w) + SER_LEN(w) - 1) // (tail never zero)
+#define VAL_PARAM_CASED(p) VAL_KEY_CASED(p)
+#define VAL_PARAM_CANON(p) VAL_KEY_CANON(p)
+#define VAL_PARAM_SYM(p) VAL_KEY_SYM(p)
 
 inline static enum Reb_Param_Class VAL_PARAM_CLASS(const RELVAL *v) {
     assert(IS_TYPESET(v));
@@ -1626,14 +1594,23 @@ enum {
 #define IS_WORD_UNBOUND(v) \
     NOT(IS_WORD_BOUND(v))
 
-inline static REBSYM VAL_WORD_SYM(const RELVAL *v) {
+inline static void INIT_WORD_SPELLING(RELVAL *v, REBSTR *s) {
     assert(ANY_WORD(v));
-    return v->payload.any_word.sym;
+    v->payload.any_word.spelling = s;
 }
 
-inline static void INIT_WORD_SYM(RELVAL *v, REBSYM sym) {
+inline static REBSTR *VAL_WORD_CASED(const RELVAL *v) {
     assert(ANY_WORD(v));
-    v->payload.any_word.sym = sym;
+    return v->payload.any_word.spelling;
+}
+
+inline static REBSTR *VAL_WORD_CANON(const RELVAL *v) {
+    assert(ANY_WORD(v));
+    return STR_CANON(v->payload.any_word.spelling);
+}
+
+inline static OPT_REBSYM VAL_WORD_SYM(const RELVAL *v) {
+    return STR_SYMBOL(v->payload.any_word.spelling);
 }
 
 inline static void INIT_WORD_CONTEXT(RELVAL *v, REBCTX *context) {
@@ -1661,11 +1638,11 @@ inline static REBFUN *VAL_WORD_FUNC(const RELVAL *v) {
 inline static void INIT_WORD_INDEX(RELVAL *v, REBCNT i) {
     assert(ANY_WORD(v));
     assert(GET_VAL_FLAG((v), WORD_FLAG_BOUND));
-    assert(SAME_SYM(
-        VAL_WORD_SYM(v),
+    assert(SAME_STR(
+        VAL_WORD_CASED(v),
         IS_RELATIVE(v)
-            ? VAL_TYPESET_SYM(FUNC_PARAM(VAL_WORD_FUNC(v), i))
-            : CTX_KEY_SYM(VAL_WORD_CONTEXT(KNOWN(v)), i)
+            ? VAL_KEY_CASED(FUNC_PARAM(VAL_WORD_FUNC(v), i))
+            : CTX_KEY_CASED(VAL_WORD_CONTEXT(KNOWN(v)), i)
     ));
     v->payload.any_word.index = cast(REBINT, i);
 }
@@ -1684,17 +1661,22 @@ inline static void UNBIND_WORD(RELVAL *v) {
 #endif
 }
 
-#define VAL_WORD_CANON(v) \
-    VAL_SYM_CANON(ARR_AT(PG_Word_Table.array, VAL_WORD_SYM(v)))
+inline static void Val_Init_Word(
+    RELVAL *out,
+    enum Reb_Kind kind,
+    REBSTR *spelling
+) {
+    VAL_RESET_HEADER(out, kind);
+    ASSERT_SERIES_MANAGED(spelling); // for now, all words are interned/shared
+    INIT_WORD_SPELLING(out, spelling);
 
-#define VAL_WORD_NAME(v) \
-    VAL_SYM_NAME(ARR_AT(PG_Word_Table.array, VAL_WORD_SYM(v)))
+#if !defined(NDEBUG)
+    out->payload.any_word.index = 0;
+#endif
 
-#define VAL_WORD_NAME_STR(v) \
-    BIN_HEAD(VAL_WORD_NAME(v))
-
-#define Val_Init_Word(out,kind,sym) \
-    Val_Init_Word_Core((out), (kind), (sym))
+    assert(ANY_WORD(out));
+    assert(IS_WORD_UNBOUND(out));
+}
 
 
 //=////////////////////////////////////////////////////////////////////////=//

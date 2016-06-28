@@ -932,9 +932,9 @@ RL_API int RL_Get_String(REBSER *series, u32 index, void **str)
 //     If the word is new (not found in master symbol table)
 //     it will be added and the new word identifier is returned.
 //
-RL_API u32 RL_Map_Word(REBYTE *string)
+RL_API REBSTR *RL_Map_Word(REBYTE *string)
 {
-    return Make_Word(string, LEN_BYTES(string));
+    return Intern_UTF8_Managed(string, LEN_BYTES(string));
 }
 
 
@@ -953,20 +953,18 @@ RL_API u32 RL_Map_Word(REBYTE *string)
 //     If the input block contains non-words, they will be skipped.
 //     The array is allocated with OS_ALLOC and you can OS_FREE it any time.
 //
-RL_API u32 *RL_Map_Words(REBARR *array)
+RL_API REBSTR* *RL_Map_Words(REBARR *array)
 {
-    REBCNT i = 1;
-    u32 *words;
     RELVAL *val = ARR_HEAD(array);
+    REBSTR* *words = OS_ALLOC_N(REBSTR*, ARR_LEN(array) + 2);
 
-    words = OS_ALLOC_N(u32, ARR_LEN(array) + 2);
-
+    REBCNT i = 1;
     for (; NOT_END(val); val++) {
-        if (ANY_WORD(val)) words[i++] = VAL_WORD_CANON(val);
+        if (ANY_WORD(val)) words[i++] = VAL_WORD_CASED(val);
     }
 
-    words[0] = i;
-    words[i] = 0;
+    words[0] = cast(REBSTR*, cast(REBUPT, i));
+    words[i] = NULL;
 
     return words;
 }
@@ -988,13 +986,10 @@ RL_API u32 *RL_Map_Words(REBARR *array)
 //     the returned string may have different spelling/casing than expected.
 //     The string is allocated with OS_ALLOC and you can OS_FREE it any time.
 //
-RL_API REBYTE *RL_Word_String(u32 word)
+RL_API REBYTE *RL_Word_String(REBSTR *word)
 {
-    REBYTE *s1, *s2;
-    // !!This code should use a function from c-words.c (but nothing perfect yet.)
-    if (word == 0 || word >= ARR_LEN(PG_Word_Table.array)) return 0;
-    s1 = VAL_SYM_NAME(ARR_AT(PG_Word_Table.array, word));
-    s2 = OS_ALLOC_N(REBYTE, LEN_BYTES(s1) + 1);
+    const REBYTE *s1 = STR_HEAD(word);
+    REBYTE *s2 = OS_ALLOC_N(REBYTE, LEN_BYTES(s1) + 1);
     COPY_BYTES(s2, s1, LEN_BYTES(s1) + 1);
     return s2;
 }
@@ -1013,13 +1008,13 @@ RL_API REBYTE *RL_Word_String(u32 word)
 // Notes:
 //     The first element of the word array is the length of the array.
 //
-RL_API u32 RL_Find_Word(u32 *words, u32 word)
+RL_API u32 RL_Find_Word(REBSTR* *words, REBSTR *word)
 {
     REBCNT n = 0;
 
     if (words == 0) return 0;
 
-    for (n = 1; n < words[0]; n++) {
+    for (n = 1; n < cast(REBUPT, words[0]); n++) {
         if (words[n] == word) return n;
     }
     return 0;
@@ -1163,30 +1158,26 @@ RL_API REBOOL RL_Set_Value(REBARR *array, u32 index, RXIARG val, int type)
 //     Returns a word array similar to MAP_WORDS().
 //     The array is allocated with OS_ALLOC. You can OS_FREE it any time.
 //
-RL_API u32 *RL_Words_Of_Object(REBSER *obj)
+RL_API REBSTR* *RL_Words_Of_Object(REBSER *obj)
 {
-    REBCNT index;
-    u32 *syms;
-    REBVAL *key;
     REBCTX *context = AS_CONTEXT(obj);
-
-    key = CTX_KEYS_HEAD(context);
 
     // We don't include hidden keys (e.g. SELF), but terminate by 0.
     // Conservative estimate that there are no hidden keys, add one.
     //
-    syms = OS_ALLOC_N(u32, CTX_LEN(context) + 1);
+    REBSTR* *syms = OS_ALLOC_N(REBSTR*, CTX_LEN(context) + 1);
 
-    index = 0;
+    REBCNT index = 0;
+    REBVAL *key = CTX_KEYS_HEAD(context);
     for (; NOT_END(key); key++) {
         if (GET_VAL_FLAG(key, TYPESET_FLAG_HIDDEN))
             continue;
 
-        syms[index] = VAL_TYPESET_CANON(key);
+        syms[index] = VAL_KEY_CANON(key);
         index++;
     }
 
-    syms[index] = SYM_0; // Null terminate
+    syms[index] = NULL; // Null terminate
 
     return syms;
 }
@@ -1204,14 +1195,16 @@ RL_API u32 *RL_Words_Of_Object(REBSER *obj)
 //     word - global word identifier (integer)
 //     result - gets set to the value of the field
 //
-RL_API int RL_Get_Field(REBSER *obj, u32 word, RXIARG *result)
+RL_API int RL_Get_Field(REBSER *obj, REBSTR *word, RXIARG *result)
 {
+    if (word == NULL) return 0; // used to react to SYM_0 by returning 0
+
     REBCTX *context = AS_CONTEXT(obj);
-    REBVAL *value;
 
-    if (!(word = Find_Word_In_Context(context, word, FALSE))) return 0;
+    REBCNT index = Find_Canon_In_Context(context, STR_CANON(word), FALSE);
+    if (index == 0) return 0;
 
-    value = CTX_VAR(context, word);
+    REBVAL *value = CTX_VAR(context, index);
     Value_To_RXI(result, value);
 
     return Reb_To_RXT[VAL_TYPE_0(value)];
@@ -1231,17 +1224,17 @@ RL_API int RL_Get_Field(REBSER *obj, u32 word, RXIARG *result)
 //     val  - new value for field
 //     type - datatype of value
 //
-RL_API int RL_Set_Field(REBSER *obj, u32 word_id, RXIARG val, int type)
+RL_API int RL_Set_Field(REBSER *obj, REBSTR *word_id, RXIARG val, int type)
 {
     REBCTX *context = AS_CONTEXT(obj);
 
-    word_id = Find_Word_In_Context(context, word_id, FALSE);
-    if (word_id == 0) return 0;
+    REBCNT index = Find_Canon_In_Context(context, STR_CANON(word_id), FALSE);
+    if (index == 0) return 0;
 
-    if (GET_VAL_FLAG(CTX_KEY(context, word_id), TYPESET_FLAG_LOCKED))
+    if (GET_VAL_FLAG(CTX_KEY(context, index), TYPESET_FLAG_LOCKED))
         return 0;
 
-    RXI_To_Value(CTX_VAR(context, word_id), &val, type);
+    RXI_To_Value(CTX_VAR(context, index), &val, type);
 
     return type;
 }

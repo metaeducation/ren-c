@@ -67,7 +67,7 @@ extern "C" {
 //REBYTE *encapBuffer = NULL;
 //REBINT encapBufferLen;
 RL_LIB *RL; // Link back to reb-lib from embedded extensions
-static u32 *core_ext_words;
+static REBSTR* *core_ext_words;
 
 //
 //  RXD_Core: C
@@ -381,7 +381,8 @@ RXIEXT int RXD_Core(int cmd, RXIFRM *frm, REBCEC *data)
         case CMD_CORE_RSA:
         {
             RXIARG val;
-            u32 *words,*w;
+            REBSTR* *words;
+            REBSTR* *w;
             REBCNT type;
             REBSER *data = RXA_SERIES(frm, 1);
             REBYTE *dataBuffer = (REBYTE *)RL_SERIES(data, RXI_SER_DATA) + RXA_INDEX(frm,1);
@@ -529,7 +530,7 @@ RXIEXT int RXD_Core(int cmd, RXIFRM *frm, REBCEC *data)
             RXIARG val, priv_key, pub_key;
             REBCNT type;
             REBSER *obj = RXA_OBJECT(frm, 1);
-            u32 *words = RL_WORDS_OF_OBJECT(obj);
+            REBSTR* *words = RL_WORDS_OF_OBJECT(obj);
             REBYTE *objData;
 
             memset(&dh_ctx, 0, sizeof(dh_ctx));
@@ -603,7 +604,7 @@ RXIEXT int RXD_Core(int cmd, RXIFRM *frm, REBCEC *data)
             REBCNT type;
             REBSER *obj = RXA_OBJECT(frm, 1);
             REBSER *pub_key = RXA_SERIES(frm, 2);
-            u32 *words = RL_WORDS_OF_OBJECT(obj);
+            REBSTR* *words = RL_WORDS_OF_OBJECT(obj);
             REBYTE *objData;
             REBSER *binary;
             REBYTE *binaryBuffer;

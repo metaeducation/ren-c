@@ -144,11 +144,11 @@ void Trace_Line(struct Reb_Frame *f)
 //
 //  Trace_Func: C
 //
-void Trace_Func(REBCNT label_sym, const REBVAL *value)
+void Trace_Func(REBSTR *label, const REBVAL *value)
 {
     int depth;
     CHECK_DEPTH(depth);
-    Debug_Fmt_("--> %s", Get_Sym_Name(label_sym) /* Get_Type_Name(value) */);
+    Debug_Fmt_("--> %s", STR_HEAD(label));
     if (GET_FLAG(Trace_Flags, 1))
         Debug_Values(FRM_ARG(FS_TOP, 1), FRM_NUM_ARGS(FS_TOP), 20);
     else Debug_Line();
@@ -158,11 +158,11 @@ void Trace_Func(REBCNT label_sym, const REBVAL *value)
 //
 //  Trace_Return: C
 //
-void Trace_Return(REBCNT label_sym, const REBVAL *value)
+void Trace_Return(REBSTR *label, const REBVAL *value)
 {
     int depth;
     CHECK_DEPTH(depth);
-    Debug_Fmt_("<-- %s ==", Get_Sym_Name(label_sym));
+    Debug_Fmt_("<-- %s ==", STR_HEAD(label));
     Debug_Values(value, 1, 50);
 }
 
@@ -224,7 +224,7 @@ REBNATIVE(trace)
 {
     REBVAL *arg = D_ARG(1);
 
-    Check_Security(SYM_DEBUG, POL_READ, 0);
+    Check_Security(Canon(SYM_DEBUG), POL_READ, 0);
 
     // The /back option: ON and OFF, or INTEGER! for # of lines:
     if (D_REF(2)) { // /back

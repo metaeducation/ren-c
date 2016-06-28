@@ -90,6 +90,67 @@ inline static REB_R R_OUT_Q(REBOOL q) {
     return R_OUT_VOID_IF_UNWRITTEN;
 }
 
+// R3-Alpha's concept was that all words got persistent integer values, which
+// prevented garbage collection.  Ren-C only gives built-in words integer
+// values--or SYMs--while others must be compared by pointers to their
+// name or canon-name pointers.  A non-built-in symbol will return SYM_0 as
+// its symbol, allowing it to fall through to defaults in case statements.
+//
+// Though it works fine for switch statements, it creates a problem if someone
+// writes `VAL_WORD_SYM(a) == VAL_WORD_SYM(b)`, because all non-built-ins
+// will appear to be equal.  It's a tricky enough bug to catch to warrant an
+// extra check in C++ that disallows comparing SYMs with ==
+//
+#ifdef __cplusplus
+    struct REBSYM;
+
+    struct OPT_REBSYM { // can only be converted to REBSYM, no comparisons
+        enum REBOL_Symbols n;
+        OPT_REBSYM (const REBSYM& sym);
+        REBOOL operator==(enum REBOL_Symbols other) const {
+            return LOGICAL(n == other);
+        }
+        REBOOL operator!=(enum REBOL_Symbols other) const {
+            return LOGICAL(n != other);
+        }
+        REBOOL operator==(OPT_REBSYM &&other) const;
+        REBOOL operator!=(OPT_REBSYM &&other) const;
+        operator unsigned int() const {
+            return cast(unsigned int, n);
+        }
+    };
+
+    struct REBSYM { // acts like a REBOL_Symbol with no OPT_REBSYM compares
+        enum REBOL_Symbols n;
+        REBSYM () {}
+        REBSYM (int n) : n (cast(enum REBOL_Symbols, n)) {}
+        REBSYM (OPT_REBSYM opt_sym) : n (opt_sym.n) {}
+        operator unsigned int() const {
+            return cast(unsigned int, n);
+        }
+        REBOOL operator==(enum REBOL_Symbols other) const {
+            return LOGICAL(n == other);
+        }
+        REBOOL operator!=(enum REBOL_Symbols other) const {
+            return LOGICAL(n != other);
+        }
+        REBOOL operator==(REBSYM &other) const; // could be SYM_0!
+        void operator!=(REBSYM &other) const; // could be SYM_0!
+        REBOOL operator==(const OPT_REBSYM &other) const; // could be SYM_0!
+        void operator!=(const OPT_REBSYM &other) const; // could be SYM_0!
+    };
+
+    inline OPT_REBSYM::OPT_REBSYM(const REBSYM &sym) : n (sym.n) {}
+#else
+    typedef enum REBOL_Symbols REBSYM;
+    typedef enum REBOL_Symbols OPT_REBSYM; // act sameas REBSYM in C build
+#endif
+
+inline static REBOOL SAME_SYM_NONZERO(REBSYM a, REBSYM b) {
+    assert(a != SYM_0 && b != SYM_0);
+    return LOGICAL(cast(REBCNT, a) == cast(REBCNT, b));
+}
+
 // NATIVE! function
 typedef REB_R (*REBNAT)(struct Reb_Frame *frame_);
 #define REBNATIVE(n) \

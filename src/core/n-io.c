@@ -641,7 +641,7 @@ REBNATIVE(change_dir)
 
         REBVAL val;
         Val_Init_String(&val, ser); // may be unicode or utf-8
-        Check_Security(SYM_FILE, POL_EXEC, &val);
+        Check_Security(Canon(SYM_FILE), POL_EXEC, &val);
 
         if (!OS_SET_CURRENT_DIR(SER_HEAD(REBCHR, ser)))
             fail (Error_Invalid_Arg(arg)); // !!! ERROR MSG
@@ -668,7 +668,7 @@ REBNATIVE(browse)
     REBCHR *url = 0;
     REBVAL *arg = D_ARG(1);
 
-    Check_Security(SYM_BROWSE, POL_EXEC, arg);
+    Check_Security(Canon(SYM_BROWSE), POL_EXEC, arg);
 
     if (IS_BLANK(arg))
         return R_VOID;
@@ -784,7 +784,7 @@ REBNATIVE(call)
 
     int exit_code = 0;
 
-    Check_Security(SYM_CALL, POL_EXEC, arg);
+    Check_Security(Canon(SYM_CALL), POL_EXEC, arg);
 
     if (D_REF(2)) flag_wait = TRUE;
     if (D_REF(3)) flag_console = TRUE;
@@ -1040,9 +1040,12 @@ REBNATIVE(call)
     if (flag_info) {
         REBCTX *info = Alloc_Context(2);
 
-        SET_INTEGER(Append_Context(info, NULL, SYM_ID), pid);
+        SET_INTEGER(Append_Context(info, NULL, Canon(SYM_ID)), pid);
         if (flag_wait)
-            SET_INTEGER(Append_Context(info, NULL, SYM_EXIT_CODE), exit_code);
+            SET_INTEGER(
+                Append_Context(info, NULL, Canon(SYM_EXIT_CODE)),
+                exit_code
+            );
 
         Val_Init_Object(D_OUT, info);
         return R_OUT;
@@ -1274,7 +1277,7 @@ REBNATIVE(get_env)
     REBCHR *buf;
     REBVAL *arg = D_ARG(1);
 
-    Check_Security(SYM_ENVR, POL_READ, arg);
+    Check_Security(Canon(SYM_ENVR), POL_READ, arg);
 
     if (ANY_WORD(arg)) Val_Init_String(arg, Copy_Form_Value(arg, 0));
 
@@ -1311,7 +1314,7 @@ REBNATIVE(set_env)
     REBVAL *arg2 = D_ARG(2);
     REBOOL success;
 
-    Check_Security(SYM_ENVR, POL_WRITE, arg1);
+    Check_Security(Canon(SYM_ENVR), POL_WRITE, arg1);
 
     if (ANY_WORD(arg1)) Val_Init_String(arg1, Copy_Form_Value(arg1, 0));
 
@@ -1383,7 +1386,7 @@ REBNATIVE(access_os)
     REBOOL set = D_REF(2);
     REBVAL *val = D_ARG(3);
 
-    switch (VAL_WORD_CANON(field)) {
+    switch (VAL_WORD_SYM(field)) {
         case SYM_UID:
             if (set) {
                 if (IS_INTEGER(val)) {

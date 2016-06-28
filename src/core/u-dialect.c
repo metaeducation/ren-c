@@ -65,7 +65,7 @@ static const char *Dia_Fmt = "DELECT - cmd: %s length: %d missed: %d total: %d";
 // Search a block of objects for a given word symbol and
 // return the value for the word. NULL if not found.
 //
-REBVAL *Find_Mutable_In_Contexts(REBSYM sym, REBVAL *where)
+REBVAL *Find_Mutable_In_Contexts(REBSTR *sym, REBVAL *where)
 {
     REBVAL *val;
 
@@ -84,7 +84,7 @@ REBVAL *Find_Mutable_In_Contexts(REBSYM sym, REBVAL *where)
             val = where;
 
         if (IS_OBJECT(val)) {
-            val = Find_Word_Value(VAL_CONTEXT(val), sym);
+            val = Select_Canon_In_Context(VAL_CONTEXT(val), STR_CANON(sym));
             if (val) return val;
         }
     }
@@ -105,7 +105,8 @@ static int Find_Command(REBCTX *dialect, REBVAL *word)
     if (IS_WORD_BOUND(word) && dialect == VAL_WORD_CONTEXT(word))
         n = VAL_WORD_INDEX(word);
     else {
-        if ((n = Find_Word_In_Context(dialect, VAL_WORD_SYM(word), FALSE))) {
+        n = Find_Canon_In_Context(dialect, VAL_WORD_CANON(word), FALSE);
+        if (n != 0) {
             CLEAR_VAL_FLAG(word, VALUE_FLAG_RELATIVE);
             SET_VAL_FLAG(word, WORD_FLAG_BOUND);
             INIT_WORD_CONTEXT(word, dialect);
@@ -243,7 +244,7 @@ again:
         if (IS_WORD(fargs)) {
 
             // If word is a datatype name:
-            type = VAL_WORD_CANON(fargs);
+            type = VAL_WORD_SYM(fargs);
             if (type < REB_MAX) {
                 type--; // the type id
             }
@@ -403,7 +404,7 @@ static REBINT Do_Cmd(REBDIA *dia)
         Val_Init_Word_Bound(
             val,
             GET_FLAG(dia->flags, RDIA_LIT_CMD) ? REB_LIT_WORD : REB_WORD,
-            CTX_KEY_SYM(dia->dialect, dia->cmd),
+            CTX_KEY_CASED(dia->dialect, dia->cmd),
             dia->dialect,
             dia->cmd
         );
@@ -527,7 +528,7 @@ REBINT Do_Dialect(REBCTX *dialect, REBARR *block, REBCNT *index, REBARR **out)
     dia.out  = *out;
     SET_FLAG(dia.flags, RDIA_NO_CMD);
 
-    self_index = Find_Word_In_Context(dialect, SYM_SELF, TRUE);
+    self_index = Find_Canon_In_Context(dialect, Canon(SYM_SELF), TRUE);
     dia.default_cmd = self_index == 0 ? 1 : SELFISH(1);
 
     //Print("DSP: %d Dinp: %r - %m", DSP, ARR_AT(block, *index), block);
@@ -541,7 +542,7 @@ REBINT Do_Dialect(REBCTX *dialect, REBARR *block, REBCNT *index, REBARR **out)
         if (dia.missed) {
             Debug_Fmt(
                 Dia_Fmt,
-                Get_Sym_Name(CTX_KEY_SYM(dia.dialect, dia.cmd)),
+                STR_HEAD(CTX_KEY_CASED(dia.dialect, dia.cmd)),
                 ARR_LEN(dia.out),
                 dia.missed,
                 Total_Missed
@@ -599,7 +600,7 @@ REBNATIVE(delect)
 
     if (dia.argi >= ARR_LEN(dia.args)) return R_BLANK; // end of block
 
-    self_index = Find_Word_In_Context(dia.dialect, SYM_SELF, TRUE);
+    self_index = Find_Canon_In_Context(dia.dialect, Canon(SYM_SELF), TRUE);
     dia.default_cmd = self_index == 0 ? 1 : SELFISH(1);
 
     if (REF(in)) {
@@ -634,7 +635,7 @@ REBNATIVE(delect)
         if (dia.missed) {
             Debug_Fmt(
                 Dia_Fmt,
-                Get_Sym_Name(CTX_KEY_SYM(dia.dialect, dia.cmd)),
+                STR_HEAD(CTX_KEY_CASED(dia.dialect, dia.cmd)),
                 ARR_LEN(dia.out),
                 dia.missed,
                 Total_Missed

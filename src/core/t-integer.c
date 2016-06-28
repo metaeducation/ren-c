@@ -233,7 +233,7 @@ void Value_To_Int64(REBI64 *out, const REBVAL *value, REBOOL no_sign)
         // more sense as these would be hexes likely typed in by users,
         // who rarely do 2s-complement math in their head.
 
-        const REBYTE *bp = Get_Sym_Name(VAL_WORD_SYM(value));
+        const REBYTE *bp = STR_HEAD(VAL_WORD_CASED(value));
         REBCNT len = LEN_BYTES(bp);
 
         if (len > MAX_HEX_LEN) {

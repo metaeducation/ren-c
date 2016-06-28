@@ -57,7 +57,7 @@ void Collapsify_Array(REBARR *array, REBCTX *specifier, REBCNT limit)
                 limit + 1
             );
 
-            Val_Init_Word(ARR_AT(copy, limit), REB_WORD, SYM_ELLIPSIS);
+            Val_Init_Word(ARR_AT(copy, limit), REB_WORD, Canon(SYM_ELLIPSIS));
 
             Collapsify_Array(
                 copy,
@@ -168,7 +168,7 @@ REBARR *Make_Where_For_Frame(struct Reb_Frame *f)
     //
     if (pending) {
         DS_PUSH_TRASH;
-        Val_Init_Word(DS_TOP, REB_WORD, SYM_ELLIPSIS);
+        Val_Init_Word(DS_TOP, REB_WORD, Canon(SYM_ELLIPSIS));
     }
 
     where = Pop_Stack_Values(dsp_start);
@@ -339,7 +339,7 @@ REBNATIVE(backtrace)
     REBARR *backtrace;
     struct Reb_Frame *frame;
 
-    Check_Security(SYM_DEBUG, POL_READ, 0);
+    Check_Security(Canon(SYM_DEBUG), POL_READ, 0);
 
     if (get_frame && (REF(limit) || REF(brief))) {
         //
@@ -491,7 +491,7 @@ REBNATIVE(backtrace)
                 // to show, then put an `+ ...` in the list and break.
                 //
                 temp = ARR_AT(backtrace, --index);
-                Val_Init_Word(temp, REB_WORD, SYM_PLUS);
+                Val_Init_Word(temp, REB_WORD, Canon(SYM_PLUS));
                 if (!REF(brief)) {
                     //
                     // In the non-/ONLY backtrace, the pairing of the ellipsis
@@ -502,7 +502,7 @@ REBNATIVE(backtrace)
                     // !!! Review arbitrary symbolic choices.
                     //
                     temp = ARR_AT(backtrace, --index);
-                    Val_Init_Word(temp, REB_WORD, SYM_ASTERISK);
+                    Val_Init_Word(temp, REB_WORD, Canon(SYM_ASTERISK));
                     SET_VAL_FLAG(temp, VALUE_FLAG_LINE); // put on own line
                 }
                 break;
@@ -560,7 +560,7 @@ REBNATIVE(backtrace)
             // dealings with the arguments, however (for instance: not having
             // to initialize not-yet-filled args could be one thing).
             //
-            Val_Init_Word(temp, REB_WORD, SYM_ASTERISK);
+            Val_Init_Word(temp, REB_WORD, Canon(SYM_ASTERISK));
         }
         else
             SET_INTEGER(temp, number);

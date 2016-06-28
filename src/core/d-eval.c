@@ -145,8 +145,8 @@ void Do_Core_Entry_Checks_Debug(struct Reb_Frame *f)
     //
     assert(f->value);
 
-    f->label_sym = SYM_0;
-    f->label_str = NULL;
+    f->label = NULL;
+    f->label_debug = NULL;
 
     // All callers should ensure that the type isn't an END marker before
     // bothering to invoke Do_Core().
@@ -262,7 +262,7 @@ REBUPT Do_Core_Expression_Checks_Debug(struct Reb_Frame *f) {
     //
     assert(IS_TRASH_DEBUG(&TG_Thrown_Arg));
 
-    assert(f->label_sym == SYM_0 && f->label_str == NULL);
+    assert(f->label == NULL && f->label_debug == NULL);
 
     // Make sure `eval` is trash in debug build if not doing a `reevaluate`.
     // It does not have to be GC safe (for reasons explained below).  We
@@ -351,7 +351,7 @@ void Do_Core_Exit_Checks_Debug(struct Reb_Frame *f) {
     assert(VAL_TYPE(f->out) < REB_MAX); // cheap check
 
     if (NOT(THROWN(f->out))) {
-        assert(f->label_sym == SYM_0);
+        assert(f->label == NULL);
         ASSERT_VALUE_MANAGED(f->out);
     }
 }

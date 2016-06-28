@@ -385,6 +385,7 @@ struct Reb_Series {
         REBARR *subfeed; // for *non-frame* VARARGS! ("array1") shared feed
         REBSER *schema; // STRUCT uses this (parallels object's keylist)
         REBCTX *meta; // paramlists and keylists can store a "meta" object
+        REBSTR *synonym; // circularly linked list of othEr-CaSed string forms
     } link;
 
     // The `misc` field is an extra pointer-sized piece of data which is
@@ -393,7 +394,6 @@ struct Reb_Series {
     //
     union {
         REBNAT dispatcher; // native dispatcher code, see Reb_Function's body
-        REBCNT len; // length of non-arrays when !SERIES_FLAG_HAS_DYNAMIC
         REBCNT size;    // used for vectors and bitsets
         struct {
             REBCNT wide:16;
@@ -403,6 +403,11 @@ struct Reb_Series {
         REBFUN *underlying; // specialization -or- final underlying function
         struct Reb_Frame *f; // for a FRAME! series, the call frame (or NULL)
         void *fd; // file descriptor for library
+        REBSTR *canon; // canon cased form of this symbol (if not canon)
+        struct {
+            REBINT high:16;
+            REBINT low:16;
+        } bind_index; // canon words hold index for binding--demo sharing 2
     } misc;
 
 #if !defined(NDEBUG)

@@ -74,15 +74,13 @@ static REBOOL Set_Event_Var(REBVAL *value, const REBVAL *word, const REBVAL *val
 {
     RELVAL *arg;
     REBINT n;
-    REBCNT w;
 
-    switch (VAL_WORD_CANON(word)) {
-
+    switch (VAL_WORD_SYM(word)) {
     case SYM_TYPE:
         if (!IS_WORD(val) && !IS_LIT_WORD(val)) return FALSE;
         arg = Get_System(SYS_VIEW, VIEW_EVENT_TYPES);
         if (IS_BLOCK(arg)) {
-            w = VAL_WORD_CANON(val);
+            REBSTR *w = VAL_WORD_CANON(val);
             for (n = 0, arg = VAL_ARRAY_HEAD(arg); NOT_END(arg); arg++, n++) {
                 if (IS_WORD(arg) && VAL_WORD_CANON(arg) == w) {
                     VAL_EVENT_TYPE(value) = n;
@@ -159,7 +157,7 @@ static REBOOL Set_Event_Var(REBVAL *value, const REBVAL *word, const REBVAL *val
             VAL_EVENT_FLAGS(value) &= ~(1<<EVF_DOUBLE | 1<<EVF_CONTROL | 1<<EVF_SHIFT);
             for (arg = VAL_ARRAY_HEAD(val); NOT_END(arg); arg++)
                 if (IS_WORD(arg))
-                    switch (VAL_WORD_CANON(arg)) {
+                    switch (VAL_WORD_SYM(arg)) {
                         case SYM_CONTROL:
                             SET_FLAG(VAL_EVENT_FLAGS(value), EVF_CONTROL);
                             break;
@@ -209,14 +207,13 @@ void Set_Event_Vars(REBVAL *evt, RELVAL *blk, REBCTX *specifier)
 //
 //  Get_Event_Var: C
 //
-static REBOOL Get_Event_Var(const REBVAL *value, REBSYM sym, REBVAL *val)
+static REBOOL Get_Event_Var(const REBVAL *value, REBSTR *name, REBVAL *val)
 {
     REBVAL *arg;
     REBREQ *req;
     REBINT n;
 
-    switch (sym) {
-
+    switch (STR_SYMBOL(name)) {
     case SYM_TYPE:
         if (VAL_EVENT_TYPE(value) == 0) goto is_blank;
         arg = Get_System(SYS_VIEW, VIEW_EVENT_TYPES);
@@ -301,13 +298,25 @@ static REBOOL Get_Event_Var(const REBVAL *value, REBSYM sym, REBVAL *val)
             REBARR *array = Make_Array(3);
 
             if (GET_FLAG(VAL_EVENT_FLAGS(value), EVF_DOUBLE))
-                Val_Init_Word(Alloc_Tail_Array(array), REB_WORD, SYM_DOUBLE);
+                Val_Init_Word(
+                    Alloc_Tail_Array(array),
+                    REB_WORD,
+                    Canon(SYM_DOUBLE)
+                );
 
             if (GET_FLAG(VAL_EVENT_FLAGS(value), EVF_CONTROL))
-                Val_Init_Word(Alloc_Tail_Array(array), REB_WORD, SYM_CONTROL);
+                Val_Init_Word(
+                    Alloc_Tail_Array(array),
+                    REB_WORD,
+                    Canon(SYM_CONTROL)
+                );
 
             if (GET_FLAG(VAL_EVENT_FLAGS(value), EVF_SHIFT))
-                Val_Init_Word(Alloc_Tail_Array(array), REB_WORD, SYM_SHIFT);
+                Val_Init_Word(
+                    Alloc_Tail_Array(array),
+                    REB_WORD,
+                    Canon(SYM_SHIFT)
+                );
 
             Val_Init_Block(val, array);
         }
@@ -550,21 +559,21 @@ void Mold_Event(const REBVAL *value, REB_MOLD *mold)
 {
     REBVAL val;
     REBCNT field;
-    REBCNT fields[] = {
+    REBSYM fields[] = {
         SYM_TYPE, SYM_PORT, SYM_GOB, SYM_OFFSET, SYM_KEY,
-        SYM_FLAGS, SYM_CODE, SYM_DATA, 0
+        SYM_FLAGS, SYM_CODE, SYM_DATA, SYM_0
     };
 
     Pre_Mold(value, mold);
     Append_Codepoint_Raw(mold->series, '[');
     mold->indent++;
 
-    for (field = 0; fields[field]; field++) {
-        Get_Event_Var(value, fields[field], &val);
+    for (field = 0; fields[field] != SYM_0; field++) {
+        Get_Event_Var(value, Canon(fields[field]), &val);
         if (!IS_BLANK(&val)) {
             New_Indented_Line(mold);
             Append_UTF8_May_Fail(
-                mold->series, Get_Sym_Name(fields[field]), -1
+                mold->series, STR_HEAD(Canon(fields[field])), -1
             );
             Append_Unencoded(mold->series, ": ");
             if (IS_WORD(&val)) Append_Codepoint_Raw(mold->series, '\'');

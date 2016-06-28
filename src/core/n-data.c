@@ -332,7 +332,7 @@ REBNATIVE(bind)
         // not in context, bind/new means add it if it's not.
         //
         if (REF(new) || (IS_SET_WORD(value) && REF(set))) {
-            Append_Context(context, value, SYM_0);
+            Append_Context(context, value, NULL);
             *D_OUT = *value;
             return R_OUT;
         }
@@ -664,8 +664,8 @@ REBNATIVE(in)
                 v = &safe;
                 if (IS_OBJECT(v)) {
                     context = VAL_CONTEXT(v);
-                    index = Find_Word_In_Context(
-                        context, VAL_WORD_SYM(word), FALSE
+                    index = Find_Canon_In_Context(
+                        context, VAL_WORD_CANON(word), FALSE
                     );
                     if (index != 0) {
                         CLEAR_VAL_FLAG(word, VALUE_FLAG_RELATIVE);
@@ -692,12 +692,12 @@ REBNATIVE(in)
         return R_OUT;
     }
 
-    index = Find_Word_In_Context(context, VAL_WORD_SYM(word), FALSE);
+    index = Find_Canon_In_Context(context, VAL_WORD_CANON(word), FALSE);
     if (index == 0)
         return R_BLANK;
 
     VAL_RESET_HEADER(D_OUT, VAL_TYPE(word));
-    INIT_WORD_SYM(D_OUT, VAL_WORD_SYM(word));
+    INIT_WORD_SPELLING(D_OUT, VAL_WORD_CASED(word));
     SET_VAL_FLAG(D_OUT, WORD_FLAG_BOUND); // header reset, so not relative
     INIT_WORD_CONTEXT(D_OUT, context);
     INIT_WORD_INDEX(D_OUT, index);
@@ -1015,7 +1015,7 @@ REBNATIVE(set)
 
             if (!REF(opt) && IS_VOID(value)) {
                 REBVAL key_name;
-                Val_Init_Word(&key_name, REB_WORD, VAL_TYPESET_SYM(key));
+                Val_Init_Word(&key_name, REB_WORD, VAL_KEY_CASED(key));
 
                 fail (Error(RE_NEED_VALUE, &key_name));
             }
@@ -1322,7 +1322,7 @@ REBNATIVE(punctuates_q)
 {
     PARAM(1, value);
 
-    REBSYM sym; // unused here
+    REBSTR *sym; // unused here
     Get_If_Word_Or_Path_Arg(D_OUT, &sym, ARG(value));
 
     if (!IS_FUNCTION(D_OUT))
