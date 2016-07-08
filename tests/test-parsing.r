@@ -72,8 +72,10 @@ make object! [
             append collected-tests reduce [
                 test-file 'dialect {^/"failed, cannot read the file"^/}
             ]
+            change-dir current-dir
             return ()
         ] [
+            change-dir current-dir
             append collected-tests test-file
         ]
 
