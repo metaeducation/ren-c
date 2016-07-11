@@ -335,6 +335,7 @@ about: func [
     "Information about REBOL"
 ][
     print make-banner sys/boot-banner
+    exit
 ]
 
 ;       --cgi (-c)       Load CGI utiliy module and modes
