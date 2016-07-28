@@ -88,7 +88,6 @@ REBTYPE(Port)
 {
     REBVAL *value = D_ARG(1);
     REBVAL *arg = D_ARGC > 1 ? D_ARG(2) : NULL;
-    REBCTX *context;
 
     switch (action) {
 

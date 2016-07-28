@@ -244,22 +244,21 @@ inline static void FREE_CONTEXT(REBCTX *c) {
 //
 
 #ifdef NDEBUG
-    #define ANY_CONTEXT_FLAG_X 0
+    #define ANY_CONTEXT_FLAG(n) \
+        (1 << (TYPE_SPECIFIC_BIT + (n)))
 #else
-    #define ANY_CONTEXT_FLAG_X \
-        TYPE_SHIFT_LEFT_FOR_HEADER(REB_OBJECT) // interpreted as ANY-CONTEXT!
+    #define ANY_CONTEXT_FLAG(n) \
+        ((1 << (TYPE_SPECIFIC_BIT + (n))) \
+            | TYPE_SHIFT_LEFT_FOR_HEADER(REB_OBJECT)) // means ANY-CONTEXT!
 #endif
 
-enum {
-    // `ANY_CONTEXT_FLAG_OWNS_PAIRED` is particular to the idea of a "Paired"
-    // REBSER, which is actually just two REBVALs.  For purposes of the API,
-    // it is possible for one of those values to be used to manage the
-    // lifetime of the pair.  One technique is to tie the value's lifetime
-    // to that of a particular FRAME!
-    //
-    ANY_CONTEXT_FLAG_OWNS_PAIRED
-        = (1 << (TYPE_SPECIFIC_BIT + 0)) | ANY_CONTEXT_FLAG_X
-};
+// `ANY_CONTEXT_FLAG_OWNS_PAIRED` is particular to the idea of a "Paired"
+// REBSER, which is actually just two REBVALs.  For purposes of the API,
+// it is possible for one of those values to be used to manage the
+// lifetime of the pair.  One technique is to tie the value's lifetime
+// to that of a particular FRAME!
+//
+#define ANY_CONTEXT_FLAG_OWNS_PAIRED ANY_CONTEXT_FLAG(0)
 
 
 inline static REBCTX *VAL_CONTEXT(const RELVAL *v) {

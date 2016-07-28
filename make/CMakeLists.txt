@@ -1,9 +1,39 @@
 # vim: ts=2 shiftwidth=2 filetype=CMAKE
+
+#
+# Sample command lines:
+#
+#     cd make
+#     mkdir build
+#     cd build
+#     CMake .. -G "Visual Studio 14 Win64" -DR3_OS_ID=0.3.40
+#          -DR3_EXTERNAL_FFI=yes -DR3_CPP=no
+#
+
 cmake_minimum_required (VERSION 2.8)
 
 set (CMAKE_OSX_DEPLOYMENT_TARGET 10.7)
 
 project (Rebol3 C CXX)
+
+
+# Simplify appending flags to the C build settings, C++ settings, or both
+
+macro(add_cxx_flags flags)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${flags}")
+endmacro()
+
+macro(add_c_flags flags)
+    set(CMAKE_C_FLAGS "${CMAKE_CXX_FLAGS} ${flags}")
+endmacro()
+
+macro(add_c_and_cxx_flags flags)
+    set(CMAKE_C_FLAGS "${CMAKE_CXX_FLAGS} ${flags}")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${flags}")
+endmacro()
+
+
+
 set (TOP_SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../src")
 set (CORE_DIR "${TOP_SRC_DIR}/core")
 set (OS_DIR "${TOP_SRC_DIR}/os")
@@ -18,6 +48,7 @@ else()
 endif()
 
 option(R3_EXTERNAL_FFI "Build with external FFI" OFF)
+option(R3_CPP "Build C files as C++" OFF)
 
 if (NOT EXISTS ${REBOL})
     message(FATAL_ERROR "${REBOL} doesn't exist, an executable r3 is required")
@@ -102,6 +133,22 @@ endif ()
 
 if (MSVC)
     set (LINK_FLAGS /STACK:4194304)
+
+    # !!! At the moment, there are many places where in the 64-bit build, a
+    # 64-bit integer is used in places where a 32-bit integer is expected.
+    # Ren-C intends to use 64-bit series indices in 64-bit builds, but that
+    # just hasn't been done yet.
+    #
+    # (Note: /WD is "Warning Disable")
+    #
+    add_c_and_cxx_flags(/wd4244) # possible data loss in argument conversion
+    add_c_and_cxx_flags(/wd4267) # possible data loss in initialization
+
+    # MSVC complains if you use old-style functions like `strcpy` instead of
+    # `strcpy_s`.  There should be a review of these cases, but for now they
+    # are allowed as-is
+    #
+    add_c_and_cxx_flags(-D_CRT_SECURE_NO_WARNINGS)
 endif()
 
 if (WIN32 OR CYGWIN)
@@ -529,7 +576,18 @@ if (WIN32)
 else ()
     target_compile_definitions(r3-core PUBLIC REB_CORE REB_EXE ${COMMON_MACROS})
 endif ()
-set_target_properties(r3-core PROPERTIES LINKER_LANGUAGE C)
+
+# Build as C by default, but there are extra checks if you build as C++
+# NOTE: The library code will not be binary compatible in -debug- builds as
+# C++, so a C++ debug client cannot be used with a C built debug Rebol
+#
+if (R3_CPP)
+    set_property(SOURCE ${CORE_SOURCE} PROPERTY LANGUAGE CXX)
+    set_property(SOURCE ${OS_SOURCE} PROPERTY LANGUAGE CXX)
+    set_property(SOURCE {GENERATED_OS_SOURCE} PROPERTY LANGUAGE CXX)
+    set_target_properties(r3-core PROPERTIES LINKER_LANGUAGE CXX)
+endif()
+
 if (DEFINED LINK_FLAGS)
     set_target_properties(r3-core PROPERTIES LINK_FLAGS ${LINK_FLAGS})
 endif()

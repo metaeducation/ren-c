@@ -46,19 +46,20 @@
 //
 
 #ifdef NDEBUG
-    #define VARARGS_FLAG_X 0
+    #define VARARGS_FLAG(n) \
+        (cast(REBUPT, 1) << (TYPE_SPECIFIC_BIT + (n))) 
 #else
-    #define VARARGS_FLAG_X \
-        TYPE_SHIFT_LEFT_FOR_HEADER(REB_VARARGS)
+    #define VARARGS_FLAG(n) \
+        ((cast(REBUPT, 1) << (TYPE_SPECIFIC_BIT + (n))) \
+            | TYPE_SHIFT_LEFT_FOR_HEADER(REB_VARARGS))
 #endif
 
-enum {
-    // Was made with a call to MAKE VARARGS! with data from an ANY-ARRAY!
-    // If that is the case, it does not use the varargs payload at all,
-    // rather it uses the Reb_Any_Series payload.
-    //
-    VARARGS_FLAG_NO_FRAME = (1 << (TYPE_SPECIFIC_BIT + 0)) | VARARGS_FLAG_X
-};
+// Was made with a call to MAKE VARARGS! with data from an ANY-ARRAY!
+// If that is the case, it does not use the varargs payload at all,
+// rather it uses the Reb_Any_Series payload.
+//
+#define VARARGS_FLAG_NO_FRAME VARARGS_FLAG(0)
+
 
 inline static const REBVAL *VAL_VARARGS_PARAM(const RELVAL *v)
     { return v->payload.varargs.param; }

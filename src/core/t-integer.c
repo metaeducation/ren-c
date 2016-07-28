@@ -339,9 +339,6 @@ REBTYPE(Integer)
     REBCNT n;
 
     REBI64 p;
-    REBU64 a, b; // for overflow detection
-    REBCNT a1, a0, b1, b0;
-    REBOOL sgn;
     REBI64 anum;
 
     num = VAL_INT64(val);

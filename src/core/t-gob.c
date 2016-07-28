@@ -34,7 +34,7 @@
 
 const struct {
     REBSYM sym;
-    REBFLGS flags;
+    REBUPT flags;
 } Gob_Flag_Words[] = {
     {SYM_RESIZE,      GOBF_RESIZE},
     {SYM_NO_TITLE,    GOBF_NO_TITLE},
@@ -335,21 +335,25 @@ static void Set_Gob_Flag(REBGOB *gob, REBSTR *name)
             //handle mutual exclusive states
             switch (flag) {
                 case GOBF_RESTORE:
-                    CLR_GOB_FLAGS(gob, GOBF_MINIMIZE, GOBF_MAXIMIZE);
+                    CLR_GOB_FLAG(gob, GOBF_MINIMIZE);
+                    CLR_GOB_FLAG(gob, GOBF_MAXIMIZE);
                     CLR_GOB_FLAG(gob, GOBF_FULLSCREEN);
                     break;
                 case GOBF_MINIMIZE:
-                    CLR_GOB_FLAGS(gob, GOBF_MAXIMIZE, GOBF_RESTORE);
+                    CLR_GOB_FLAG(gob, GOBF_MAXIMIZE);
+                    CLR_GOB_FLAG(gob, GOBF_RESTORE);
                     CLR_GOB_FLAG(gob, GOBF_FULLSCREEN);
                     break;
                 case GOBF_MAXIMIZE:
-                    CLR_GOB_FLAGS(gob, GOBF_MINIMIZE, GOBF_RESTORE);
+                    CLR_GOB_FLAG(gob, GOBF_MINIMIZE);
+                    CLR_GOB_FLAG(gob, GOBF_RESTORE);
                     CLR_GOB_FLAG(gob, GOBF_FULLSCREEN);
                     break;
                 case GOBF_FULLSCREEN:
                     SET_GOB_FLAG(gob, GOBF_NO_TITLE);
                     SET_GOB_FLAG(gob, GOBF_NO_BORDER);
-                    CLR_GOB_FLAGS(gob, GOBF_MINIMIZE, GOBF_RESTORE);
+                    CLR_GOB_FLAG(gob, GOBF_MINIMIZE);
+                    CLR_GOB_FLAG(gob, GOBF_RESTORE);
                     CLR_GOB_FLAG(gob, GOBF_MAXIMIZE);
             }
             break;
@@ -479,7 +483,7 @@ static REBOOL Set_GOB_Var(REBGOB *gob, const REBVAL *word, const REBVAL *val)
             //clear only flags defined by words
             REBINT i;
             for (i = 0; Gob_Flag_Words[i].sym != 0; ++i)
-                CLR_FLAG(gob->header.bits, Gob_Flag_Words[i].flags);
+                CLR_GOB_FLAG(gob, Gob_Flag_Words[i].flags);
 
             RELVAL* item;
             for (item = VAL_ARRAY_HEAD(val); NOT_END(item); item++)

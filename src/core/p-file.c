@@ -285,7 +285,6 @@ static void Write_File_Port(REBREQ *file, REBVAL *data, REBCNT len, REBCNT args)
 static REBCNT Set_Length(const REBREQ *file, REBI64 limit)
 {
     REBI64 len;
-    int what_if_it_changed;
 
     // Compute and bound bytes remaining:
     len = file->special.file.size - file->special.file.index; // already read

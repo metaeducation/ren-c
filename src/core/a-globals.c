@@ -42,6 +42,6 @@
 #undef TVAR
 
 #define PVAR
-#define TVAR THREAD
+#define TVAR
 
 #include "sys-globals.h"

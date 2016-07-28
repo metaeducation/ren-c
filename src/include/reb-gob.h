@@ -169,14 +169,19 @@ typedef struct gob_window {             // Maps gob to window
 
 #define CLEAR_GOB_STATE(g) ((g)->state = 0)
 
-#define SET_GOB_FLAG(g,f)       SET_FLAG((g)->header.bits, f)
-#define GET_GOB_FLAG(g,f)       GET_FLAG((g)->header.bits, f)
-#define CLR_GOB_FLAG(g,f)       CLR_FLAG((g)->header.bits, f)
-#define CLR_GOB_FLAGS(g,f,h)    CLR_FLAGS((g)->header.bits, f, h)
-#define SET_GOB_STATE(g,f)      SET_FLAG((g)->header.bits, f)
-#define GET_GOB_STATE(g,f)      GET_FLAG((g)->header.bits, f)
-#define CLR_GOB_STATE(g,f)      CLR_FLAG((g)->header.bits, f)
-#define CLR_GOB_STATES(g,f,h)   CLR_FLAGS((g)->header.bits, f, h)
+#define SET_GOB_FLAG(g,f) \
+    cast(void, (g)->header.bits |= (cast(REBUPT, 1) << (f)))
+
+#define GET_GOB_FLAG(g,f) \
+    LOGICAL((g)->header.bits & (cast(REBUPT, 1) << (f)))
+
+#define CLR_GOB_FLAG(g,f) \
+    cast(void, (g)->header.bits &= ~(cast(REBUPT, 1) << (f)))
+
+
+#define SET_GOB_STATE(g,f)      SET_FLAG((g)->state, f)
+#define GET_GOB_STATE(g,f)      GET_FLAG((g)->state, f)
+#define CLR_GOB_STATE(g,f)      CLR_FLAG((g)->state, f)
 
 #define GOB_ALPHA(g)        ((g)->alpha)
 #define GOB_TYPE(g)         ((g)->ctype)

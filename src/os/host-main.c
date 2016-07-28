@@ -80,6 +80,8 @@
     // when Rebol redefines it.  (Rebol defines IS_XXX for all datatypes.)
     //
     #undef IS_ERROR
+    #undef max
+    #undef min
 #endif
 
 
@@ -152,10 +154,6 @@ const REBYTE breakpoint_str[] =
 const REBYTE interrupted_str[] =
     "** Execution Interrupted (see BACKTRACE, DEBUG, and RESUME)\n\n";
 
-#ifdef TO_WINDOWS
-HINSTANCE App_Instance = 0;
-#endif
-
 #ifndef REB_CORE
 extern void Init_Windows(void);
 extern void OS_Init_Graphics(void);
@@ -165,8 +163,14 @@ extern void OS_Destroy_Graphics(void);
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#ifdef TO_WINDOWS
+    HINSTANCE App_Instance = 0;
+#endif
+
     extern void Init_Core_Ext();
     extern void Shutdown_Core_Ext(void);
+
 #ifdef __cplusplus
 }
 #endif
@@ -320,7 +324,7 @@ int Do_String(
 
         Val_Init_Error(out, error);
         *last = *out;
-        return -ERR_NUM(error);
+        return -cast(REBINT, ERR_NUM(error));
     }
 
     REBARR *code = Scan_UTF8_Managed(text, LEN_BYTES(text));
@@ -444,7 +448,6 @@ int Do_String(
 
 
 REBOOL Host_Start_Exiting(int *exit_status, int argc, REBCHR **argv) {
-    REBYTE vers[8];
     REBINT startup_rc;
     REBYTE *embedded_script = NULL;
     REBI64 embedded_size = 0;
@@ -1033,7 +1036,6 @@ int main(int argc, char **argv_ansi)
 {
     int exit_status;
 
-    REBINT startup_rc;
     REBCHR **argv;
 
     //

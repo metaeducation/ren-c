@@ -1511,7 +1511,6 @@ REB_R Plain_Dispatcher(REBFRM *f)
     RELVAL *body = FUNC_BODY(f->func);
     assert(IS_BLOCK(body) && IS_RELATIVE(body) && VAL_INDEX(body) == 0);
 
-    REB_R r;
     if (Do_At_Throws(
         f->out,
         VAL_ARRAY(body),
@@ -1537,7 +1536,6 @@ REB_R Voider_Dispatcher(REBFRM *f)
     RELVAL *body = FUNC_BODY(f->func);
     assert(IS_BLOCK(body) && IS_RELATIVE(body) && VAL_INDEX(body) == 0);
 
-    REB_R r;
     if (Do_At_Throws(
         f->out,
         VAL_ARRAY(body),
@@ -1563,7 +1561,6 @@ REB_R Returner_Dispatcher(REBFRM *f)
     RELVAL *body = FUNC_BODY(f->func);
     assert(IS_BLOCK(body) && IS_RELATIVE(body) && VAL_INDEX(body) == 0);
 
-    REB_R r;
     if (Do_At_Throws(
         f->out,
         VAL_ARRAY(body),

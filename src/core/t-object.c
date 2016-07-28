@@ -577,8 +577,6 @@ REBTYPE(Context)
     REBVAL *arg = D_ARGC > 1 ? D_ARG(2) : NULL;
     REBCTX *context;
 
-    enum Reb_Kind target;
-
     switch (action) {
     case SYM_APPEND:
         FAIL_IF_LOCKED_CONTEXT(VAL_CONTEXT(value));

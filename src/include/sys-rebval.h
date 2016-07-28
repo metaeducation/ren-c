@@ -906,12 +906,7 @@ inline static RELVAL *REL(REBVAL *v) {
     return cast(RELVAL*, v); // cast w/input restricted to REBVAL
 }
 
-#ifdef NDEBUG
-    #define SPECIFIED NULL
-#else
-    #define SPECIFIED \
-        cast(REBCTX*, 0xF10F10F1) // helps catch uninitialized locations
-#endif
+#define SPECIFIED NULL
 
 
 // This can be used to turn a RELVAL into a REBVAL.  If the RELVAL is

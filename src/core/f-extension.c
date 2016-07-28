@@ -382,7 +382,7 @@ REBNATIVE(load_extension)
     REBEXT *ext;
     CFUNC *call; // RXICAL
     REBSER *src;
-    int Remove_after_first_run;
+
     //Check_Security(SYM_EXTENSION, POL_EXEC, val);
 
     if (!REF(dispatch)) { // No /dispatch, use the DLL file:

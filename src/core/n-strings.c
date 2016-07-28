@@ -91,7 +91,7 @@
 
 
 // Table of has functions and parameters:
-static struct digest {
+static struct {
     REBYTE *(*digest)(REBYTE *, REBCNT, REBYTE *);
     void (*init)(void *);
     void (*update)(void *, REBYTE *, REBCNT);

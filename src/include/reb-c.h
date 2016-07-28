@@ -692,12 +692,19 @@ typedef u16 REBUNI;
     #define ATTRIBUTE_NO_RETURN __attribute__ ((noreturn))
 #elif defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L
     #define ATTRIBUTE_NO_RETURN _Noreturn
+#elif defined(_MSC_VER)
+    #define ATTRIBUTE_NO_RETURN __declspec(noreturn)
 #else
     #define ATTRIBUTE_NO_RETURN
 #endif
 
 #if __has_builtin(__builtin_unreachable) || GCC_VERSION_AT_LEAST(4, 5)
     #define DEAD_END __builtin_unreachable()
+#elif defined(_MSC_VER)
+    __declspec(noreturn) static inline void msvc_unreachable() {
+        while (TRUE) { }
+    }
+    #define DEAD_END msvc_unreachable()
 #else
     #define DEAD_END
 #endif

@@ -636,10 +636,8 @@ inline static void Drop_Function_Args_For_Frame_Core(
 
 finished:
 
-#if !defined(NDEBUG)
-    f->args_head = cast(REBVAL*, 0xDECAFBAD);
-    f->varlist = cast(REBARR*, 0xDECAFBAD);
-#endif
+    TRASH_POINTER_IF_DEBUG(f->args_head);
+    TRASH_POINTER_IF_DEBUG(f->varlist);
 
     return; // needed for release build so `finished:` labels a statement
 }

@@ -1453,19 +1453,16 @@ REBNATIVE(make_callback)
     if (RIN_CLOSURE(r) == NULL)
         fail (Error(RE_MISC)); // couldn't allocate closure
 
-    ffi_status status;
+    ffi_status status = ffi_prep_closure_loc(
+        RIN_CLOSURE(r),
+        SER_HEAD(ffi_cif, r->cif),
+        callback_dispatcher,
+        r,
+        RIN_DISPATCHER(r)
+    );
 
-    if (
-        FFI_OK != ffi_prep_closure_loc(
-            RIN_CLOSURE(r),
-            SER_HEAD(ffi_cif, r->cif),
-            callback_dispatcher,
-            r,
-            RIN_DISPATCHER(r)
-        )
-    ){
+    if (status != FFI_OK) 
         fail (Error(RE_MISC)); // couldn't prep closure
-    }
 
     SET_RIN_FLAG(r, ROUTINE_FLAG_CALLBACK);
 

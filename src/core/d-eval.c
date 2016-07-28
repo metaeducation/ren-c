@@ -291,19 +291,17 @@ REBUPT Do_Core_Expression_Checks_Debug(REBFRM *f) {
     // chained in via a function execution, so it's okay to put "non-GC safe"
     // trash in at this point...though by the time of that call, they must
     // hold valid values.
-    //
-    f->func = NULL;
+    
+    TRASH_POINTER_IF_DEBUG(f->param);
+    TRASH_POINTER_IF_DEBUG(f->arg);
+    TRASH_POINTER_IF_DEBUG(f->refine);
 
-    f->param = cast(const RELVAL*, 0xDECAFBAD);
-    f->arg = cast(REBVAL*, 0xDECAFBAD);
-    f->refine = cast(REBVAL*, 0xDECAFBAD);
-
-    f->args_head = cast(REBVAL*, 0xDECAFBAD);
-    f->varlist = cast(REBARR*, 0xDECAFBAD);
-
-    f->func = cast(REBFUN*, 0xDECAFBAD);
-    f->binding = cast(REBARR*, 0xDECAFBAD);
-    f->underlying = cast(REBFUN*, 0xDECAFBAD);
+    TRASH_POINTER_IF_DEBUG(f->args_head);
+    TRASH_POINTER_IF_DEBUG(f->varlist);
+  
+    TRASH_POINTER_IF_DEBUG(f->func);
+    TRASH_POINTER_IF_DEBUG(f->binding);
+    TRASH_POINTER_IF_DEBUG(f->underlying);
 
     // Mutate va_list sources into arrays at fairly random moments in the
     // debug build.  It should be able to handle it at any time.

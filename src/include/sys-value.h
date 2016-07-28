@@ -254,7 +254,7 @@ inline static void VAL_SET_TYPE_BITS(RELVAL *v, enum Reb_Kind kind) {
 
     inline static void SET_VAL_FLAG(RELVAL *v, REBUPT f) {
         CHECK_VALUE_FLAG_EVIL_MACRO_DEBUG;
-        assert(f && f == (f & -f)); // checks that only one bit is set
+        assert(f && (f & (f - 1)) == 0); // checks that only one bit is set
         v->header.bits |= f;
     }
 
@@ -270,7 +270,7 @@ inline static void VAL_SET_TYPE_BITS(RELVAL *v, enum Reb_Kind kind) {
 
     inline static void CLEAR_VAL_FLAG(RELVAL *v, REBUPT f) {
         CHECK_VALUE_FLAG_EVIL_MACRO_DEBUG;
-        assert(f && f == (f & -f)); // checks that only one bit is set
+        assert(f && (f & (f - 1)) == 0); // checks that only one bit is set
         v->header.bits &= ~f;
     }
 #endif

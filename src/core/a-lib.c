@@ -49,7 +49,14 @@ REBOL_HOST_LIB *Host_Lib;
 // the burden of keeping these in sync manually is for the best.
 //
 #include "reb-lib.h"
+
+#if defined(__cplusplus)
+extern "C" {
+#endif
 extern const REBRXT Reb_To_RXT[REB_MAX];
+#if defined(__cplusplus)
+}
+#endif
 extern void Value_To_RXI(RXIARG *arg, const REBVAL *val); // f-extension.c
 extern void RXI_To_Value(REBVAL *val, const RXIARG *arg, REBRXT type); // f-extension.c
 extern void RXI_To_Block(RXIFRM *frm, REBVAL *out); // f-extension.c
@@ -440,7 +447,7 @@ RL_API int RL_Do_String(
         else
             DS_PUSH(last);
 
-        return -ERR_NUM(error);
+        return -cast(int, ERR_NUM(error));
     }
 
     REBARR *code = Scan_UTF8_Managed(text, LEN_BYTES(text));

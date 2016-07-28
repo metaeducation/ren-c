@@ -81,9 +81,6 @@ REBOOL Do_Signals_Throws(REBVAL *out)
     REBOOL thrown = FALSE;
     SET_VOID(out);
 
-    struct Reb_State state;
-    REBCTX *error;
-
 #if !defined(NDEBUG)
     if (!Saved_State && PG_Boot_Phase >= BOOT_MEZZ) {
         printf(

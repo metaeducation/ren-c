@@ -102,39 +102,40 @@ inline static REBRIN *FUNC_ROUTINE(REBFUN *f) {
 //=////////////////////////////////////////////////////////////////////////=//
 
 #ifdef NDEBUG
-    #define FUNC_FLAG_X 0
+    #define FUNC_FLAG(n) \
+        (1 << (TYPE_SPECIFIC_BIT + (n)))
 #else
-    #define FUNC_FLAG_X \
-        TYPE_SHIFT_LEFT_FOR_HEADER(REB_FUNCTION)
+    #define FUNC_FLAG(n) \
+        ((1 << (TYPE_SPECIFIC_BIT + (n))) \
+            | TYPE_SHIFT_LEFT_FOR_HEADER(REB_FUNCTION))
 #endif
 
-enum {
-    // RETURN will always be in the last paramlist slot (if present)
-    //
-    FUNC_FLAG_RETURN = (1 << (TYPE_SPECIFIC_BIT + 0)) | FUNC_FLAG_X,
+// RETURN will always be in the last paramlist slot (if present)
+//
+#define FUNC_FLAG_RETURN FUNC_FLAG(0)
 
-    // LEAVE will always be in the last paramlist slot (if present)
-    //
-    FUNC_FLAG_LEAVE = (1 << (TYPE_SPECIFIC_BIT + 1)) | FUNC_FLAG_X,
+// LEAVE will always be in the last paramlist slot (if present)
+//
+#define FUNC_FLAG_LEAVE FUNC_FLAG(1)
 
-    // A function may act as a barrier on its left (so that it cannot act
-    // as an input argument to another function).
-    //
-    // Given the "greedy" nature of infix, a function with arguments cannot
-    // be stopped from infix consumption on its right--because the arguments
-    // would consume them.  Only a function with no arguments is able to
-    // trigger an error when used as a left argument.  This is the ability
-    // given to lookback 0 arity functions, known as "punctuators".
-    //
-    FUNC_FLAG_PUNCTUATES = (1 << (TYPE_SPECIFIC_BIT + 2)) | FUNC_FLAG_X,
+// A function may act as a barrier on its left (so that it cannot act
+// as an input argument to another function).
+//
+// Given the "greedy" nature of infix, a function with arguments cannot
+// be stopped from infix consumption on its right--because the arguments
+// would consume them.  Only a function with no arguments is able to
+// trigger an error when used as a left argument.  This is the ability
+// given to lookback 0 arity functions, known as "punctuators".
+//
+#define FUNC_FLAG_PUNCTUATES FUNC_FLAG(2)
 
-    // A "brancher" is a single arity function that is capable of taking a
-    // LOGIC! value.  Currently testing for this requires a bit of processing
-    // so it is done when the function is made, and then this flag is checked.
-    // It's set even if the function might not take logic or need more
-    // parameters, so that it can be called and cause an error if needed.
-    //
-    FUNC_FLAG_MAYBE_BRANCHER = (1 << (TYPE_SPECIFIC_BIT + 3)) | FUNC_FLAG_X,
+// A "brancher" is a single arity function that is capable of taking a
+// LOGIC! value.  Currently testing for this requires a bit of processing
+// so it is done when the function is made, and then this flag is checked.
+// It's set even if the function might not take logic or need more
+// parameters, so that it can be called and cause an error if needed.
+//
+#define FUNC_FLAG_MAYBE_BRANCHER FUNC_FLAG(3)
 
 #if !defined(NDEBUG)
     //
@@ -144,16 +145,14 @@ enum {
     // function implementation after digging through the layers...because
     // proxies must have new (cloned) paramlists but use the original bodies.
     //
-    FUNC_FLAG_PROXY_DEBUG = (1 << (TYPE_SPECIFIC_BIT + 3)) | FUNC_FLAG_X,
+    #define FUNC_FLAG_PROXY_DEBUG FUNC_FLAG(4)
 
     // BLANK! ("none!") for unused refinements instead of FALSE
     // Also, BLANK! for args of unused refinements instead of not set
     //
-    FUNC_FLAG_LEGACY_DEBUG = (1 << (TYPE_SPECIFIC_BIT + 4)) | FUNC_FLAG_X,
+    #define FUNC_FLAG_LEGACY_DEBUG FUNC_FLAG(5)
 #endif
 
-    FUNC_FLAG_NO_COMMA // needed for proper comma termination of this list
-};
 
 inline static REBFUN *VAL_FUNC(const RELVAL *v) {
     assert(IS_FUNCTION(v));

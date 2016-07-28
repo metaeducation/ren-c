@@ -73,9 +73,7 @@ REBTYPE(Datatype)
 {
     REBVAL *value = D_ARG(1);
     REBVAL *arg = D_ARG(2);
-    REBACT act;
     enum Reb_Kind kind = VAL_TYPE_KIND(value);
-    REBINT n;
 
     switch (action) {
 

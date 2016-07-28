@@ -332,8 +332,6 @@ REBCTX *Context_For_Frame_May_Reify_Core(REBFRM *f) {
     assert(Is_Any_Function_Frame(f)); // varargs reifies while still pending
 
     REBCTX *context;
-    struct Reb_Chunk *chunk;
-
     if (f->varlist != NULL) {
         if (GET_ARR_FLAG(f->varlist, ARRAY_FLAG_VARLIST))
             return AS_CONTEXT(f->varlist); // already a context!

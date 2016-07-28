@@ -99,6 +99,9 @@
     #ifdef TO_WINDOWS
     #include <windows.h>
     #undef IS_ERROR
+    #undef max
+    #undef min
+
     #endif
     //#error The target platform must be specified (TO_* define)
 #endif
@@ -109,6 +112,22 @@
 // !!! Is there a more ideal location for these prototypes?
 typedef int cmp_t(void *, const void *, const void *);
 extern void reb_qsort_r(void *a, size_t n, size_t es, void *thunk, cmp_t *cmp);
+
+
+#if defined(NDEBUG)
+    #define TRASH_POINTER_IF_DEBUG(p) \
+        NOOP
+#else
+    #if defined(__cplusplus)
+        template<class T>
+        inline static void TRASH_POINTER_IF_DEBUG(T* &p) {
+            p = reinterpret_cast<T*>(static_cast<REBUPT>(0xDECAFBAD));
+        }
+    #else
+        #define TRASH_POINTER_IF_DEBUG(p) \
+            (p) = cast(void*, 0xDECAFBAD)
+    #endif 
+#endif
 
 
 // Must be defined at the end of reb-c.h, but not *in* reb-c.h so that
@@ -632,12 +651,24 @@ enum Reb_Vararg_Op {
 **
 ***********************************************************************/
 
+// !!! In the R3-Alpha open source release, there had apparently been a switch
+// from the use of global variables to the classification of all globals as
+// being either per-thread (TVAR) or for the whole program (PVAR).  This
+// was apparently intended to use the "thread-local-variable" feature of the
+// compiler.  It used the non-standard `__declspec(thread)`, which as of C11
+// and C++11 is standardized as `thread_local`.
+//
+// Despite this basic work for threading, greater issues were not hammered
+// out.  And so this separation really just caused problems when two different
+// threads wanted to work with the same data (at different times).  Such a
+// feature is better implemented as in the V8 JavaScript engine as "isolates"  
+
 #ifdef __cplusplus
     #define PVAR extern "C"
-    #define TVAR extern "C" THREAD
+    #define TVAR extern "C"
 #else
     #define PVAR extern
-    #define TVAR extern THREAD
+    #define TVAR extern
 #endif
 
 #include "sys-globals.h"

@@ -42,30 +42,34 @@
 //
 
 #ifdef NDEBUG
-    #define WORD_FLAG_X 0
+    #define WORD_FLAG(n) \
+        (1 << (TYPE_SPECIFIC_BIT + (n)))
 #else
-    #define WORD_FLAG_X \
-        TYPE_SHIFT_LEFT_FOR_HEADER(REB_WORD) // interpreted as ANY-WORD!
+    #define WORD_FLAG(n) \
+        ((1 << (TYPE_SPECIFIC_BIT + (n))) \
+            | TYPE_SHIFT_LEFT_FOR_HEADER(REB_WORD)) // interpreted as ANY-WORD!
 #endif
 
-enum {
-    // `WORD_FLAG_BOUND` answers whether a word is bound, but it may be
-    // relatively bound if `VALUE_FLAG_RELATIVE` is set.  In that case, it
-    // does not have a context pointer but rather a function pointer, that
-    // must be combined with more information to get the FRAME! where the
-    // word should actually be looked up.
-    //
-    // If VALUE_FLAG_RELATIVE is set, then WORD_FLAG_BOUND must also be set.
-    //
-    WORD_FLAG_BOUND = (1 << (TYPE_SPECIFIC_BIT + 0)) | WORD_FLAG_X,
+// `WORD_FLAG_BOUND` answers whether a word is bound, but it may be
+// relatively bound if `VALUE_FLAG_RELATIVE` is set.  In that case, it
+// does not have a context pointer but rather a function pointer, that
+// must be combined with more information to get the FRAME! where the
+// word should actually be looked up.
+//
+// If VALUE_FLAG_RELATIVE is set, then WORD_FLAG_BOUND must also be set.
+//
+#define WORD_FLAG_BOUND WORD_FLAG(0)
 
-    // A special kind of word is used during argument fulfillment to hold
-    // a refinement's word on the data stack, augmented with its param
-    // and argument location.  This helps fulfill "out-of-order" refinement
-    // usages more quickly without having to do two full arglist walks.
-    //
-    WORD_FLAG_PICKUP = (1 << (TYPE_SPECIFIC_BIT + 1)) | WORD_FLAG_X
-};
+// A special kind of word is used during argument fulfillment to hold
+// a refinement's word on the data stack, augmented with its param
+// and argument location.  This helps fulfill "out-of-order" refinement
+// usages more quickly without having to do two full arglist walks.
+//
+// !!! Currently this is being done with a VARARGS! though this may not be
+// the best idea, and pickup words may be brought back.
+//
+#define WORD_FLAG_PICKUP WORD_FLAG(1)
+
 
 #define IS_WORD_BOUND(v) \
     GET_VAL_FLAG((v), WORD_FLAG_BOUND)

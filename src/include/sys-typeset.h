@@ -136,82 +136,84 @@ enum Reb_Param_Class {
 
 
 #ifdef NDEBUG
-    #define TYPESET_FLAG_X 0
+    #define TYPESET_FLAG(n) \
+        (cast(REBUPT, 1) << (TYPE_SPECIFIC_BIT + (n)))
 #else
-    #define TYPESET_FLAG_X \
-        TYPE_SHIFT_LEFT_FOR_HEADER(REB_TYPESET)
+    #define TYPESET_FLAG(n) \
+        ((cast(REBUPT, 1) << (TYPE_SPECIFIC_BIT + (n))) \
+            | TYPE_SHIFT_LEFT_FOR_HEADER(REB_TYPESET))
 #endif
 
 // Option flags used with GET_VAL_FLAG().  These describe properties of
 // a value slot when it's constrained to the types in the typeset
 //
-enum {
-    // Can't be changed (set with PROTECT)
-    //
-    TYPESET_FLAG_LOCKED = (1 << (TYPE_SPECIFIC_BIT + 3)) | TYPESET_FLAG_X,
 
-    // Can't be reflected (set with PROTECT/HIDE) or local in spec as `foo:`
-    //
-    TYPESET_FLAG_HIDDEN = (1 << (TYPE_SPECIFIC_BIT + 4)) | TYPESET_FLAG_X,
+// Can't be changed (set with PROTECT)
+//
+#define TYPESET_FLAG_LOCKED TYPESET_FLAG(3)
 
-    // Can't be bound to beyond the current bindings.
-    //
-    // !!! This flag was implied in R3-Alpha by TYPESET_FLAG_HIDDEN.  However,
-    // the movement of SELF out of being a hardcoded keyword in the binding
-    // machinery made it start to be considered as being a by-product of the
-    // generator, and hence a "userspace" word (like definitional return).
-    // To avoid disrupting all object instances with a visible SELF, it was
-    // made hidden...which worked until a bugfix restored the functionality
-    // of checking to not bind to hidden things.  UNBINDABLE is an interim
-    // solution to separate the property of bindability from visibility, as
-    // the SELF solution shakes out--so that SELF may be hidden but bind.
-    //
-    TYPESET_FLAG_UNBINDABLE = (1 << (TYPE_SPECIFIC_BIT + 5)) | TYPESET_FLAG_X,
+// Can't be reflected (set with PROTECT/HIDE) or local in spec as `foo:`
+//
+#define TYPESET_FLAG_HIDDEN TYPESET_FLAG(4)
 
-    // !!! <durable> is the working name for the property of a function
-    // argument or local to have its data survive after the call is over.
-    // Much of the groundwork has been laid to allow this to be specified
-    // individually for each argument, but the feature currently is "all
-    // or nothing"--and implementation-wise corresponds to what R3-Alpha
-    // called CLOSURE!, with the deep-copy-per-call that entails.
-    //
-    // Hence if this property is applied, it will be applied to *all* of
-    // a function's arguments.
-    //
-    TYPESET_FLAG_DURABLE = (1 << (TYPE_SPECIFIC_BIT + 6)) | TYPESET_FLAG_X,
+// Can't be bound to beyond the current bindings.
+//
+// !!! This flag was implied in R3-Alpha by TYPESET_FLAG_HIDDEN.  However,
+// the movement of SELF out of being a hardcoded keyword in the binding
+// machinery made it start to be considered as being a by-product of the
+// generator, and hence a "userspace" word (like definitional return).
+// To avoid disrupting all object instances with a visible SELF, it was
+// made hidden...which worked until a bugfix restored the functionality
+// of checking to not bind to hidden things.  UNBINDABLE is an interim
+// solution to separate the property of bindability from visibility, as
+// the SELF solution shakes out--so that SELF may be hidden but bind.
+//
+#define TYPESET_FLAG_UNBINDABLE TYPESET_FLAG(5)
 
-    // !!! This does not need to be on the typeset necessarily.  See the
-    // VARARGS! type for what this is, which is a representation of the
-    // capture of an evaluation position. The type will also be checked but
-    // the value will not be consumed.
-    //
-    // Note the important distinction, that a variadic parameter and taking
-    // a VARARGS! type are different things.  (A function may accept a
-    // variadic number of VARARGS! values, for instance.)
-    //
-    TYPESET_FLAG_VARIADIC = (1 << (TYPE_SPECIFIC_BIT + 7)) | TYPESET_FLAG_X,
+// !!! <durable> is the working name for the property of a function
+// argument or local to have its data survive after the call is over.
+// Much of the groundwork has been laid to allow this to be specified
+// individually for each argument, but the feature currently is "all
+// or nothing"--and implementation-wise corresponds to what R3-Alpha
+// called CLOSURE!, with the deep-copy-per-call that entails.
+//
+// Hence if this property is applied, it will be applied to *all* of
+// a function's arguments.
+//
+#define TYPESET_FLAG_DURABLE TYPESET_FLAG(6)
 
-    // !!! In R3-Alpha, there were only 8 type-specific bits...with the
-    // remaining bits "reserved for future use".  This goes over the line
-    // with a 9th type-specific bit, which may or may not need review.
-    // It could just be that more type-specific bits is the future use.
+// !!! This does not need to be on the typeset necessarily.  See the
+// VARARGS! type for what this is, which is a representation of the
+// capture of an evaluation position. The type will also be checked but
+// the value will not be consumed.
+//
+// Note the important distinction, that a variadic parameter and taking
+// a VARARGS! type are different things.  (A function may accept a
+// variadic number of VARARGS! values, for instance.)
+//
+#define TYPESET_FLAG_VARIADIC TYPESET_FLAG(7)
 
-    // Endability is distinct from optional, and it means that a parameter is
-    // willing to accept being at the end of the input.  This means either
-    // an infix dispatch's left argument is missing (e.g. `do [+ 5]`) or an
-    // ordinary argument hit the end (e.g. the trick used for `>> help` when
-    // the arity is 1 usually as `>> help foo`)
-    //
-    TYPESET_FLAG_ENDABLE = (1 << (TYPE_SPECIFIC_BIT + 8)) | TYPESET_FLAG_X,
+// !!! In R3-Alpha, there were only 8 type-specific bits...with the
+// remaining bits "reserved for future use".  This goes over the line
+// with a 9th type-specific bit, which may or may not need review.
+// It could just be that more type-specific bits is the future use.
 
-    // For performance, a cached PROTECTED_OR_LOOKBACK or'd flag could make
-    // it so that each SET doesn't have to clear out the flag.  See
-    // notes on that in variable setting.  The negative sense is chosen
-    // so that the TRUE value can mean REB_FUNCTION (chosen at type #1) and
-    // the FALSE value occupies non-value-type REB_0, alias REB_0_LOOKBACK
-    //
-    TYPESET_FLAG_NO_LOOKBACK = (1 << (TYPE_SPECIFIC_BIT + 9)) | TYPESET_FLAG_X
-};
+// Endability is distinct from optional, and it means that a parameter is
+// willing to accept being at the end of the input.  This means either
+// an infix dispatch's left argument is missing (e.g. `do [+ 5]`) or an
+// ordinary argument hit the end (e.g. the trick used for `>> help` when
+// the arity is 1 usually as `>> help foo`)
+//
+#define TYPESET_FLAG_ENDABLE TYPESET_FLAG(8)
+
+// For performance, a cached PROTECTED_OR_LOOKBACK or'd flag could make
+// it so that each SET doesn't have to clear out the flag.  See
+// notes on that in variable setting.  The negative sense is chosen
+// so that the TRUE value can mean REB_FUNCTION (chosen at type #1) and
+// the FALSE value occupies non-value-type REB_0, alias REB_0_LOOKBACK
+//
+#define TYPESET_FLAG_NO_LOOKBACK TYPESET_FLAG(9)
+
 
 // Operations when typeset is done with a bitset (currently all typesets)
 

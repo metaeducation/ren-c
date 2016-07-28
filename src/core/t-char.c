@@ -150,9 +150,8 @@ static REBINT Math_Arg_For_Char(REBVAL *arg, REBSYM action)
 //
 REBTYPE(Char)
 {
-    REBUNI chr = VAL_CHAR(D_ARG(1));
-    REBINT  arg;
-    REBVAL  *val;
+    REBCNT chr = VAL_CHAR(D_ARG(1)); // !!! Larger than REBCHR for math ops?
+    REBINT arg;
 
     switch (action) {
 
@@ -200,11 +199,6 @@ REBTYPE(Char)
     case SYM_XOR_T:
         arg = Math_Arg_For_Char(D_ARG(2), action);
         chr ^= cast(REBUNI, arg);
-        break;
-
-    case SYM_NEGATE:
-        arg = Math_Arg_For_Char(D_ARG(2), action);
-        chr = cast(REBUNI, -chr);
         break;
 
     case SYM_COMPLEMENT:

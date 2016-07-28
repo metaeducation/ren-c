@@ -76,7 +76,11 @@ static REB_R Console_Actor(REBFRM *frame_, REBCTX *port, REBSYM action)
         SET_SERIES_LEN(ser, 0);
         TERM_SERIES(ser);
 
-        req->common.data = BIN_HEAD(ser);
+        // !!! May be a 2-byte wide series on Windows for wide chars, in
+        // which case the length is not bytes??  (Can't use BIN_DATA here
+        // because that asserts width is 1...)
+        //
+        req->common.data = SER_DATA_RAW(ser);
         req->length = SER_AVAIL(ser);
 
 #ifdef nono

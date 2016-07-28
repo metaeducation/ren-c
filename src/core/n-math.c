@@ -309,14 +309,32 @@ REBNATIVE(square_root)
 }
 
 
+
+//
+// The SHIFT native uses negation of an unsigned number.  Although the
+// operation is well-defined in the C language, it is usually a mistake.
+// MSVC warns about it, so temporarily disable that. 
+//
+// !!! The usage of negation of unsigned in SHIFT is from R3-Alpha.  Should it
+// be rewritten another way?
+//
+// http://stackoverflow.com/a/36349666/211160
+//
+#if defined(_MSC_VER) && _MSC_VER > 1800
+    #pragma warning (disable : 4146)
+#endif
+
+
 //
 //  shift: native [
 //  
 //  {Shifts an integer left or right by a number of bits.}
 //  
 //      value [integer!]
-//      bits [integer!] "Positive for left shift, negative for right shift"
-//      /logical "Logical shift (sign bit ignored)"
+//      bits [integer!]
+//          "Positive for left shift, negative for right shift"
+//      /logical
+//          "Logical shift (sign bit ignored)"
 //  ]
 //
 REBNATIVE(shift)
@@ -327,31 +345,36 @@ REBNATIVE(shift)
 
     REBI64 b = VAL_INT64(ARG(bits));
     REBVAL *a = ARG(value);
-    REBU64 c, d;
 
     if (b < 0) {
-        // this is defined:
-        c = - cast(REBU64, b);
+        REBU64 c = - cast(REBU64, b); // defined, see note on #pragma above
         if (c >= 64) {
-            if (REF(logical)) VAL_INT64(a) = 0;
-            else VAL_INT64(a) >>= 63;
-        } else {
+            if (REF(logical))
+                VAL_INT64(a) = 0;
+            else
+                VAL_INT64(a) >>= 63;
+        }
+        else {
             if (REF(logical))
                 VAL_INT64(a) = cast(REBU64, VAL_INT64(a)) >> c;
             else
                 VAL_INT64(a) >>= cast(REBI64, c);
         }
-    } else {
+    }
+    else {
         if (b >= 64) {
-            if (REF(logical)) VAL_INT64(a) = 0;
-            else if (VAL_INT64(a)) fail (Error(RE_OVERFLOW));
-        } else
+            if (REF(logical))
+                VAL_INT64(a) = 0;
+            else if (VAL_INT64(a) != 0)
+                fail (Error(RE_OVERFLOW));
+        }
+        else {
             if (REF(logical))
                 VAL_INT64(a) = cast(REBU64, VAL_INT64(a)) << b;
             else {
-                c = cast(REBU64, MIN_I64) >> b;
-                d = VAL_INT64(a) < 0
-                    ? - cast(REBU64, VAL_INT64(a))
+                REBU64 c = cast(REBU64, MIN_I64) >> b;
+                REBU64 d = VAL_INT64(a) < 0
+                    ? - cast(REBU64, VAL_INT64(a)) // again, see #pragma
                     : cast(REBU64, VAL_INT64(a));
                 if (c <= d) {
                     if ((c < d) || (VAL_INT64(a) >= 0))
@@ -362,11 +385,19 @@ REBNATIVE(shift)
                 else
                     VAL_INT64(a) <<= b;
             }
+        }
     }
 
     *D_OUT = *ARG(value);
     return R_OUT;
 }
+
+
+// See above for the temporary disablement and reasoning.
+//
+#if defined(_MSC_VER) && _MSC_VER > 1800
+    #pragma warning (default : 4146)
+#endif
 
 
 //

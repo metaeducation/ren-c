@@ -567,8 +567,6 @@ REBTYPE(Vector)
 {
     REBVAL *value = D_ARG(1);
     REBVAL *arg = D_ARGC > 1 ? D_ARG(2) : NULL;
-    REBINT type;
-    REBINT size;
     REBSER *ser;
 
     // Common operations for any series type (length, head, etc.)

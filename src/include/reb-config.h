@@ -84,11 +84,6 @@ Special internal defines used by RT, not Host-Kit developers:
 
 //* Common *************************************************************
 
-// !!! Threading support is largely unimplemented, but this switch was
-// to enable threads.
-#define THREADED
-#define THREAD
-
 
 #ifdef REB_EXE
     // standalone exe from RT
@@ -134,13 +129,6 @@ Special internal defines used by RT, not Host-Kit developers:
     #define HAS_ASYNC_DNS           // supports it
 
     #define NO_TTY_ATTRIBUTES       // used in read-line.c
-
-    #ifdef THREADED
-        #ifndef __MINGW32__
-            #undef THREAD
-            #define THREAD __declspec(thread)
-        #endif
-    #endif
 
     // Used when we build REBOL as a DLL:
     #define API_EXPORT __declspec(dllexport)

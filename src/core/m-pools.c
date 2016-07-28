@@ -174,8 +174,6 @@ void Free_Mem(void *mem, size_t size)
 
 #define POOL_MAP
 
-#define BAD_MEM_PTR ((REBYTE *)0xBAD1BAD1)
-
 #ifdef POOL_MAP
     #ifdef NDEBUG
         #define FIND_POOL(n) \
@@ -877,8 +875,8 @@ REBSER *Make_Series(REBCNT length, REBYTE wide, REBCNT flags)
     s->guard = cast(int*, malloc(sizeof(*s->guard)));
     free(s->guard);
 
-    s->link.keylist = cast(REBARR*, 0xBAD3BAD3);
-    s->misc.canon = cast(REBSTR*, 0xBAD4BAD4);
+    TRASH_POINTER_IF_DEBUG(s->link.keylist);
+    TRASH_POINTER_IF_DEBUG(s->misc.canon);
 
     // It's necessary to have another value in order to round out the size of
     // the pool node so pointer-aligned entries are given out, so might as well
@@ -1470,9 +1468,7 @@ void GC_Kill_Series(REBSER *s)
 
     s->info.bits = 0; // includes width
 
-#if !defined(NDEBUG)
-    s->link.keylist = cast(REBARR*, 0xBAD3BAD3);
-#endif
+    TRASH_POINTER_IF_DEBUG(s->link.keylist);
 
     Free_Node(SER_POOL, s);
 
@@ -1859,8 +1855,6 @@ void Dump_All(REBCNT size)
 //
 void Dump_Series_In_Pool(REBCNT pool_id)
 {
-    REBCNT count;
-
     REBSEG *seg;
     for (seg = Mem_Pools[SER_POOL].segs; seg; seg = seg->next) {
         REBSER *s = cast(REBSER*, seg + 1);

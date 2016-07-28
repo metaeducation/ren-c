@@ -918,7 +918,6 @@ pick:
 //
 void Form_Args(REB_MOLD *mo, const char *fmt, ...)
 {
-    REBYTE *result;
     va_list args;
 
     va_start(args, fmt);

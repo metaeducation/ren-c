@@ -459,7 +459,7 @@ void Assert_Series_Term_Core(REBSER *series)
         REBCNT len = SER_LEN(series);
         REBCNT wide = SER_WIDE(series);
         REBCNT n;
-        for (n = 0; n < SER_WIDE(series); n++) {
+        for (n = 0; n < wide; n++) {
             if (0 != SER_DATA_RAW(series)[(len * wide) + n]) {
                 printf("Non-zero byte in terminator of non-block series\n");
                 fflush(stdout);

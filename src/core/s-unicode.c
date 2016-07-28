@@ -1272,7 +1272,6 @@ REBSER *Make_UTF8_From_Any_String(
 //
 REBCNT Strlen_Uni(const REBUNI *up)
 {
-    REBCNT len;
     const char *cp = cast(const char *, up) + 1; // "C"har vs. "U"nicode
     assert(sizeof(REBUNI) == 2);
     assert(cast(REBUPT, up) % 2 == 0);

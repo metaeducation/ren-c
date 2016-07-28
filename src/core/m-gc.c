@@ -1062,9 +1062,6 @@ void Queue_Mark_Value_Deep(const RELVAL *val)
 //
 static void Mark_Array_Deep_Core(REBARR *array)
 {
-    REBCNT len;
-    RELVAL *value;
-
 #if !defined(NDEBUG)
     //
     // We should have marked this series at queueing time to keep it from
@@ -1096,7 +1093,7 @@ static void Mark_Array_Deep_Core(REBARR *array)
     assert(!IS_FREE_NODE(ARR_SERIES(array)));
 #endif
 
-    value = ARR_HEAD(array);
+    RELVAL *value = ARR_HEAD(array);
     for (; NOT_END(value); value++) {
         if (IS_VOID_OR_SAFE_TRASH(value)) {
             //

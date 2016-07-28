@@ -486,7 +486,6 @@ static void Sort_String(
     REBCNT skip = 1;
     REBCNT size = 1;
     REBCNT thunk = 0;
-    int (*sfunc)(const void *v1, const void *v2);
 
     // Determine length of sort:
     len = Partial(string, 0, part);

@@ -147,14 +147,30 @@ void TO_Word(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 //
 //  REBTYPE: C
 //
+// The future plan for WORD! types is that they will be unified somewhat with
+// strings...but that bound words will have read-only data.  Under such a
+// plan, string-converting words would not be necessary for basic textual
+// operations.
+//
 REBTYPE(Word)
 {
     REBVAL *val = D_ARG(1);
     REBVAL *arg = D_ARGC > 1 ? D_ARG(2) : NULL;
-    REBINT diff;
-    REBSTR *sym;
 
     switch (action) {
+    case SYM_LENGTH: {
+        const REBYTE *bp = STR_HEAD(VAL_WORD_SPELLING(val));
+        REBCNT len = 0;
+        while (TRUE) {
+            REBUNI ch;
+            if (!(bp = Back_Scan_UTF8_Char(&ch, bp, &len)))
+                fail(Error(RE_BAD_UTF8));
+            if (ch == 0)
+                break;
+        }
+        SET_INTEGER(D_OUT, len);
+        return R_OUT; }
+
     default:
         assert(ANY_WORD(val));
         fail (Error_Illegal_Action(VAL_TYPE(val), action));
