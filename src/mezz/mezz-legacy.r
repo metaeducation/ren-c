@@ -151,11 +151,15 @@ series?: :any-series?
 ; ANY-TYPE! is ambiguous with ANY-DATATYPE!
 ; https://trello.com/c/1jTJXB0d
 ;
-; !!! For compatibility to mean "typeset including void", this uses an
-; undocumented internal feature of MAKE TYPESET! which lets voids be put in
-; the set.  This may not wind up being a user-visible feature.
+; It is not legal for user-facing typesets to include the idea of containing
+; a void type or optionality.  Hence, ANY-TYPE! cannot include void.  The
+; notion of tolerating optionality must be encoded outside a typeset (Note
+; that `find any-type! ()` didn't work in R3-Alpha, either.)
 ;
-any-type!: make typeset! [_ any-value!]
+; The r3-legacy mode FUNC and FUNCTION explicitly look for ANY-TYPE! and
+; replaces it with <opt> any-value! in the function spec.
+;
+any-type!: any-value!
 
 
 ; BIND? and BOUND? didn't fit the naming convention of returning LOGIC! if
@@ -1065,6 +1069,9 @@ set 'r3-legacy* func [<local> if-flags] [
         ; say if one returns functions or void in Ren-C--there was no such
         ; requirement in R3-Alpha.
         ;
+        ; Also, ANY-TYPE! must be expressed as <OPT> ANY-VALUE! in Ren-C,
+        ; since typesets cannot contain no-type.
+        ;
         func: (func [
             {FUNC <r3-legacy>}
             return: [function!]
@@ -1072,6 +1079,11 @@ set 'r3-legacy* func [<local> if-flags] [
             body [block!]
         ][
             if block? first spec [spec: next spec]
+
+            if find spec [[any-type!]] [
+                spec: copy/deep spec
+                replace/all spec [[any-type!]] [[<opt> any-value!]] 
+            ]
 
             lib/func compose [
                 return: [<opt> any-value!]
@@ -1098,6 +1110,11 @@ set 'r3-legacy* func [<local> if-flags] [
                 {These words are not local.}
         ][
             if block? first spec [spec: next spec]
+
+            if find spec [[any-type!]] [
+                spec: copy/deep spec
+                replace/all spec [[any-type!]] [[<opt> any-value!]] 
+            ]
 
             if block? :object [object: has object]
 

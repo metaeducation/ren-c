@@ -830,8 +830,14 @@ static void Mold_Typeset(const REBVAL *value, REB_MOLD *mold, REBOOL molded)
     }
 #endif
 
-    // Convert bits to types (we can make this more efficient !!)
-    for (n = 0; n < REB_MAX; n++) {
+    // Convert bits to types.  Note that although REB_0 is used as an
+    // implementation detail for the special typesets in function paramlists
+    // or context keys to indicate <opt>-style optionality, the "absence of
+    // a type" is not generally legal to encode in ordinary typesets.
+    //
+    assert(!TYPE_CHECK(value, REB_0) || VAL_KEY_SPELLING(value) != NULL);
+
+    for (n = REB_0 + 1; n < REB_MAX; n++) {
         if (TYPE_CHECK(value, cast(enum Reb_Kind, n))) {
             Emit(mold, "+DN ", SYM_DATATYPE_X, Canon(cast(REBSYM, n)));
         }
