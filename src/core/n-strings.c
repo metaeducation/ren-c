@@ -438,8 +438,10 @@ REBNATIVE(enbase)
     REBSER *ser;
     REBCNT index;
     REBVAL *arg = D_ARG(1);
+		REBSER *temp;
 
-    Val_Init_Binary(arg, Temp_Bin_Str_Managed(arg, &index, NULL));
+    temp = Temp_Bin_Str_Managed(arg, &index, NULL);
+    Val_Init_Binary(arg, temp);
     VAL_INDEX(arg) = index;
 
     if (D_REF(2)) base = VAL_INT32(D_ARG(3));

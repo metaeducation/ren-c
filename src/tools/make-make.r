@@ -326,6 +326,7 @@ macro+: func [
 	][
 		print ajoin ["Cannot find " name "= definition"]
 	]
+	true ;; for ren-c compatibility: func must return value
 ]
 
 macro++: func ['name obj [object!] /local out] [
@@ -367,7 +368,7 @@ emit-obj-files: func [
 	for-each file files [
 		file: to-obj file
 		emit [%objs/ file " "]
-		if cnt // 4 = 0 [emit "\^/^-"]
+		if (cnt // 4) = 0 [emit "\^/^-"]
 		cnt: cnt + 1
 	]
 	if tab = last output [clear skip tail output -3]
