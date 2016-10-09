@@ -507,6 +507,7 @@ about: procedure [
     "Information about REBOL"
 ][
     print make-banner sys/boot-banner
+    exit
 ]
 
 
