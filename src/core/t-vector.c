@@ -707,6 +707,8 @@ void Mold_Vector(const REBVAL *value, REB_MOLD *mold, REBOOL molded)
         // remove final space
         //
         SET_SERIES_LEN(mold->series, SER_LEN(mold->series) - 1);
+        Append_Codepoint_Raw(mold->series, '\0');
+        SET_SERIES_LEN(mold->series, SER_LEN(mold->series) - 1);
     }
 
     if (molded) {
