@@ -806,3 +806,106 @@ REBNATIVE(variadic_q)
 
     return R_FALSE;
 }
+
+
+//
+//  tighten: native [
+//
+//  {Returns alias of a function whose args are gathered <tight>ly}
+//
+//      return: [function!]
+//      action [function!]
+//  ]
+//
+REBNATIVE(tighten)
+//
+// !!! The <tight> annotation was introduced while trying to define a bridge
+// for compatibility with R3-Alpha's OP!.  That code made use of "lookahead
+// suppression" on the right hand side of infix operators, in order to give
+// a left-to-right evaluation ordering in pure infix expressions.  After some
+// experimentation, Ren-C came up with a more uniform rule across both
+// "enfixed" expressions (of arbitrary arity) and ordinary prefix expressions,
+// which still gave a left-to-right effect for binary infix ops.
+//
+// Hence <tight> is likely to be phased out; but it exists for compatibility.
+// This routine exists to avoid the overhead of a user-function stub where
+// all the parameters are <tight>, e.g. the behavior of R3-Alpha's OP!s.
+// So `+: enfix tighten :add` is a faster equivalent of:
+//
+//     +: enfix func [arg1 [<tight> any-value!] arg2 [<tight> any-value!] [
+//         add :arg1 :arg2
+//     ]
+//
+// But also, the parameter types and help notes are kept in sync.
+{
+    PARAM(1, action);
+
+    REBFUN *original = VAL_FUNC(ARG(action));
+
+    // !!! With specializations and chaining, functions can be a stack of
+    // entities which must have consistent defintions and point to each other.
+    // The identity comes from the top-most function, while the functionality
+    // often comes from the lowest one...and the pointers must be consistent.
+    // This means that tweaking function copies gets somewhat involved.  :-/
+    //
+    // For now this only supports tightening native or interpreted functions,
+    // to avoid walking the function chain and adjusting each level.  The
+    // option is still currently available to manually create a new user
+    // function that explicitly calls chained/specialized/adapted functions
+    // but has <tight> parameters...it will just not be as fast.
+    //
+    REBFUN *specializer;
+    REBFUN *underlying = Underlying_Function(&specializer, ARG(action));
+    if (underlying != original)
+        fail (Error(RE_INVALID_TIGHTEN));
+
+    // Copy the paramlist, which serves as the function's unique identity (the
+    // body can be reused as-is)
+    //
+    REBARR *paramlist = Copy_Array_Shallow(
+        FUNC_PARAMLIST(original),
+        SPECIFIED // no relative values in parameter lists
+    );
+    SET_ARR_FLAG(paramlist, ARRAY_FLAG_PARAMLIST); // flags not auto-copied
+
+    // Now set the tight flag on all the parameters.
+    //
+    RELVAL *param = ARR_AT(paramlist, 1); // first parameter (0 is FUNCTION!)
+    for (; NOT_END(param); ++param)
+        SET_VAL_FLAG(param, TYPESET_FLAG_TIGHT);
+
+    // !!! This does not make a unique copy of the meta information context.
+    // Hence updates to the title/parameter-descriptions/etc. of the tightened
+    // function will affect the original, and vice-versa.  Because this is
+    // a legacy support issue that's probably a feature and not a bug, but
+    // other function-copying abstractions should do it.
+    //    
+    ARR_SERIES(paramlist)->link.meta = FUNC_META(original);
+
+    // Update the underlying function (we should know it was equal to the
+    // original function from the test at the start)
+    //
+    ARR_SERIES(paramlist)->misc.underlying = AS_FUNC(paramlist);
+
+    assert(IS_FUNCTION(ARR_AT(paramlist, 0))); // canon value, must update
+    ARR_AT(paramlist, 0)->payload.function.paramlist = paramlist;
+    MANAGE_ARRAY(paramlist);
+
+    // The function should not indicate any longer that it defers lookback
+    // arguments (this flag is calculated from <tight> annotations in
+    // Make_Function())
+    //
+    CLEAR_VAL_FLAG(ARR_AT(paramlist, 0), FUNC_FLAG_DEFERS_LOOKBACK_ARG);
+
+    *D_OUT = *KNOWN(ARR_AT(paramlist, 0)); // canon value we just updated
+
+    // Currently esoteric case if someone chose to tighten a definitional
+    // return, so `return 1 + 2` would return 1 instead of 3.  Would need to
+    // preserve the binding of the incoming value, which is never present in
+    // the canon value of the function.
+    //
+    assert(D_OUT->extra.binding == NULL);
+    D_OUT->extra.binding = ARG(action)->extra.binding;
+
+    return R_OUT;
+}

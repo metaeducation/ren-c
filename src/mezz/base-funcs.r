@@ -355,9 +355,8 @@ redescribe: function [
 
     ; For efficiency, objects are only created on demand by hitting the
     ; required point in the PARSE.  Hence `redescribe [] :foo` will not tamper
-    ; with the meta information at all, while `reescribe [{stuff}] :foo` will
-    ; only manipulate the description.not created unless they are needed by
-    ; hitting the required point in the PARSE of the spec.
+    ; with the meta information at all, while `redescribe [{stuff}] :foo` will
+    ; only manipulate the description.
 
     on-demand-meta: does [
         case/all [
