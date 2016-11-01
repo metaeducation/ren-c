@@ -81,155 +81,38 @@ right-flag: bind (pick make block! "|>" 1) context-of 'lambda
 ; feature is theorized to be unnecessary.
 ;
 
-+: enfix func [arg1 [<tight> any-value!] arg2 [<tight> any-value!]] [
-    add :arg1 :arg2
-]
++: enfix tighten :add
+-: enfix tighten :subtract
+*: enfix tighten :multiply
+**: enfix tighten :power
 
--: enfix func [arg1 [<tight> any-value!] arg2 [<tight> any-value!]] [
-    subtract :arg1 :arg2
-]
+set/lookback dv tighten :divide
+set/lookback dvdv tighten :remainder
 
-*: enfix func [arg1 [<tight> any-value!] arg2 [<tight> any-value!]] [
-    multiply :arg1 :arg2
-]
+=: enfix tighten :equal?
+=?: enfix tighten :same?
 
-**: enfix func [arg1 [<tight> any-value!] arg2 [<tight> any-value!]] [
-    power :arg1 :arg2
-]
+==: enfix tighten :strict-equal?
+!=: enfix tighten :not-equal?
+!==: enfix tighten :strict-not-equal?
 
-set/lookback dv func [arg1 [<tight> any-value!] arg2 [<tight> any-value!]] [
-    divide :arg1 :arg2
-]
+set/lookback should-be-empty-tag tighten :not-equal?
 
-set/lookback dvdv func [arg1 [<tight> any-value!] arg2 [<tight> any-value!]] [
-    remainder :arg1 :arg2
-]
+set/lookback lt tighten :lesser?
+set/lookback lteq tighten :lesser-or-equal?
 
-=: enfix func [
-    arg1 [<tight> <opt> any-value!]
-    arg2 [<tight> <opt> any-value!]
-][
-    equal? :arg1 :arg2
-]
+set/lookback gt tighten :greater?
+set/lookback gteq tighten :greater-or-equal?
 
-=?: enfix func [
-    arg1 [<tight> <opt> any-value!]
-    arg2 [<tight> <opt> any-value!]
-][
-    same? :arg1 :arg2
-]
+and: enfix tighten :and?
+or: enfix tighten :or?
+xor: enfix tighten :xor?
+nor: enfix tighten :nor?
 
-==: enfix func [
-    arg1 [<tight> <opt> any-value!]
-    arg2 [<tight> <opt> any-value!]
-][
-    strict-equal? :arg1 :arg2
-]
-
-!=: enfix func [
-    arg1 [<tight> <opt> any-value!]
-    arg2 [<tight> <opt> any-value!]
-][
-    not-equal? :arg1 :arg2
-]
-
-!==: enfix func [
-    arg1 [<tight> <opt> any-value!]
-    arg2 [<tight> <opt> any-value!]
-][
-    strict-not-equal? :arg1 :arg2
-]
-
-set/lookback should-be-empty-tag func [
-    arg1 [<tight> <opt> any-value!]
-    arg2 [<tight> <opt> any-value!]
-][
-    not-equal? :arg1 :arg2
-]
-
-set/lookback lt func [
-    arg1 [<tight> any-value!]
-    arg2 [<tight> any-value!]
-][
-    lesser? :arg1 :arg2
-]
-
-set/lookback lteq func [
-    arg1 [<tight> any-value!]
-    arg2 [<tight> any-value!]
-][
-    lesser-or-equal? :arg1 :arg2
-]
-
-set/lookback gt func [
-    arg1 [<tight> any-value!]
-    arg2 [<tight> any-value!]
-][
-    greater? :arg1 :arg2
-]
-
-set/lookback gteq func [
-    arg1 [<tight> any-value!]
-    arg2 [<tight> any-value!]
-][
-    greater-or-equal? :arg1 :arg2
-]
-
-and: enfix func [
-    arg1 [<tight> any-value!]
-    arg2 [<tight> any-value!]
-][
-    and? :arg1 :arg2
-]
-
-or: enfix func [
-    arg1 [<tight> any-value!]
-    arg2 [<tight> any-value!]
-][
-    or? :arg1 :arg2
-]
-
-xor: enfix func [
-    arg1 [<tight> any-value!]
-    arg2 [<tight> any-value!]
-][
-    xor? :arg1 :arg2
-]
-
-nor: enfix func [
-    arg1 [<tight> any-value!]
-    arg2 [<tight> any-value!]
-][
-    nor? :arg1 :arg2
-]
-
-nand: enfix func [
-    arg1 [<tight> any-value!]
-    arg2 [<tight> any-value!]
-][
-    nand? :arg1 :arg2
-]
-
-and*: enfix func [
-    arg1 [<tight> any-value!]
-    arg2 [<tight> any-value!]
-][
-    and~ :arg1 :arg2
-]
-
-or+: enfix func [
-    arg1 [<tight> any-value!]
-    arg2 [<tight> any-value!]
-][
-    or~ :arg1 :arg2
-]
-
-xor+: enfix func [
-    arg1 [<tight> any-value!]
-    arg2 [<tight> any-value!]
-][
-    xor~ :arg1 :arg2
-]
+nand: enfix tighten :nand?
+and*: enfix tighten :and~
+or+: enfix tighten :or~
+xor+: enfix tighten :xor~
 
 
 ; Postfix operator for asking the most existential question of Rebol...is it
