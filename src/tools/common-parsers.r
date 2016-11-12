@@ -233,7 +233,20 @@ proto-parser: context [
         segment: [
             (style: proto.id: proto.arg.1: _)
             format2015-func-section
+            | span-comment
+            | line-comment any [newline line-comment] newline
+            | opt wsp directive
             | other-segment
+        ]
+
+        directive: [
+            copy data [
+                ["#ifndef" | "#ifdef" | "#if" | "#else" | "#elif" | "#endif"]
+                any [not newline c-pp-token]
+            ] eol
+            (
+                emit-directive data
+            )
         ]
 
         other-segment: [thru newline]
@@ -326,4 +339,25 @@ proto-parser: context [
         ]
 
     ] c.lexical/grammar
+]
+
+rewrite-if-directives: func [
+    {Bottom up rewrite of conditional directives to remove unnecessary sections.}
+    position
+    /local rewritten
+][
+    until [
+        parse position [
+            (rewritten: false)
+            some [
+                [
+                    change ["#if" thru newline "#endif" thru newline] ""
+                    | change ["#elif" thru newline "#endif"] "#endif"
+                    | change ["#else" thru newline "#endif"] "#endif"
+                ] (rewritten: true) :position
+                | thru newline
+            ]
+        ]
+        not rewritten
+    ]
 ]

@@ -35,6 +35,7 @@ change-dir %../core/
 emit-out: func [d] [append repend output-buffer d newline]
 emit-rlib: func [d] [append repend rlib d newline]
 emit-header: func [t f] [emit-out form-header/gen t f %make-headers]
+emit-fsymb: func [x] [append repend fsymbol-buffer x newline]
 
 collapse-whitespace: [some [change some white-space #" " | skip]]
 bind collapse-whitespace c.lexical/grammar
@@ -81,8 +82,42 @@ emit-proto: proc [proto] [
             emit-rlib ["extern " proto "; // " the-file]
         ][
             emit-out ["extern " proto "; // " the-file]
+            either "REBTYPE" = proto-parser/proto.id [
+               emit-fsymb ["    SYM_FUNC(" proto-parser/proto.arg.1 "), // " the-file]
+            ][
+               emit-fsymb ["    SYM_FUNC(" proto-parser/proto.id "), // " the-file]
+            ]
         ]
         proto-count: proto-count + 1
+    ]
+]
+
+emit-directive: func [
+    directive
+    /local position
+][
+    process-conditional directive proto-parser/parse.position :emit-out output-buffer
+    process-conditional directive proto-parser/parse.position :emit-fsymb fsymbol-buffer
+]
+
+process-conditional: func [
+    directive
+    dir-position
+    emit [function!]
+    buffer
+    /local position
+][
+    emit [
+        directive
+        ;;; " // " the-file " #" line-of head dir-position dir-position
+    ]
+
+    ; Minimise conditionals for the reader - unnecessary for compilation.
+    if all [
+        find/match directive "#endif"
+        position: find/last tail buffer "#if"
+    ][
+        rewrite-if-directives position
     ]
 ]
 
@@ -104,8 +139,18 @@ append rlib newline
 
 proto-count: 0
 output-buffer: make string! 20000
+fsymbol-buffer: make string! 20000
+fsymbol-file: %tmp-symbols.c
 
 emit-header "Function Prototypes" %funcs.h
+
+emit-fsymb form-header/gen "Function Symbols" fsymbol-file %make-headers.r
+emit-fsymb {#include "sys-core.h"
+
+#define SYM_FUNC(x) #x, cast(void*, x)
+#define SYM_DATA(x) #x, &x
+
+const void *rebol_symbols [] = ^{}
 
 emit-out {
 // When building as C++, the linkage on these functions should be done without
@@ -177,6 +222,64 @@ write output-dir/include/tmp-funcs.h output-buffer
 
 print [proto-count "function prototypes"]
 ;wait 1
+
+;-------------------------------------------------------------------------
+
+sys-globals.parser: context [
+
+    emit-directive: _
+    emit-identifier: _
+    parse.position: _
+    id: _
+
+    process: func [text] [parse text grammar/rule]
+
+    grammar: context bind [
+
+        rule: [
+            any [
+                parse.position:
+                segment
+            ]
+        ]
+
+        segment: [
+            (id: _)
+            span-comment
+            | line-comment any [newline line-comment] newline
+            | opt wsp directive
+            | declaration
+            | other-segment
+        ]
+
+        declaration: [
+            some [opt wsp [copy id identifier | not #";" punctuator] ] #";" thru newline (
+                emit-fsymb ["    SYM_DATA(" id "),"]
+            )
+        ]
+
+        directive: [
+            copy data [
+                ["#ifndef" | "#ifdef" | "#if" | "#else" | "#elif" | "#endif"]
+                any [not newline c-pp-token]
+            ] eol
+            (
+                process-conditional data parse.position :emit-fsymb fsymbol-buffer
+            )
+        ]
+
+        other-segment: [thru newline]
+
+    ] c.lexical/grammar
+
+]
+
+emit-fsymb "^/// Globals from sys-globals.h^/"
+the-file: %sys-globals.h
+sys-globals.parser/process read/string %../include/sys-globals.h
+
+emit-fsymb "^/    NULL, NULL //Terminator^/};"
+write output-dir/core/:fsymbol-file fsymbol-buffer
 
 ;-------------------------------------------------------------------------
 
