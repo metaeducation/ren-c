@@ -51,6 +51,7 @@ src/boot/host-init.r
 src/boot/tmp-*
 
 src/core/b-boot.c
+src/core/tmp-*
 
 src/include/host-ext-*
 src/include/host-init.h

@@ -279,7 +279,7 @@ set (CORE_SOURCE
     ${CORE_DIR}/d-print.c
     ${CORE_DIR}/d-stack.c
     ${CORE_DIR}/d-trace.c
-    ${CORE_DIR}/e-func-symbols.c
+    ${CORE_DIR}/tmp-symbols.c
     ${CORE_DIR}/f-blocks.c
     ${CORE_DIR}/f-deci.c
     ${CORE_DIR}/f-dtoa.c
