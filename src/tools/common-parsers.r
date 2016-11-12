@@ -200,6 +200,7 @@ proto-parser: context [
 
     emit-fileheader: _
     emit-proto: _
+    emit-directive: _
     proto-prefix: _
     parse.position: _
     notes: _
