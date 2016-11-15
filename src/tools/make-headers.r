@@ -20,6 +20,7 @@ print "------ Building headers"
 args: parse-args system/options/args
 output-dir: fix-win32-path to file! any [args/OUTDIR %../]
 mkdir/deep output-dir/include
+mkdir/deep output-dir/core
 
 r3: system/version > 2.100.0
 
