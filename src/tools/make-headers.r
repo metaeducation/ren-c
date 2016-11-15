@@ -83,7 +83,7 @@ emit-proto: proc [proto] [
         ][
             emit-out ["extern " proto "; // " the-file]
             either "REBTYPE" = proto-parser/proto.id [
-               emit-fsymb ["    SYM_FUNC(" proto-parser/proto.arg.1 "), // " the-file]
+               emit-fsymb ["    SYM_FUNC(T_" proto-parser/proto.arg.1 "), // " the-file]
             ][
                emit-fsymb ["    SYM_FUNC(" proto-parser/proto.id "), // " the-file]
             ]
@@ -126,6 +126,7 @@ process: func [file] [
     data: read the-file: file
     if r3 [data: deline to-string data]
     proto-parser/emit-proto: :emit-proto
+    proto-parser/emit-directive: :emit-directive
     proto-parser/process data
 ]
 
@@ -195,7 +196,10 @@ emit-out {
 //
 }
 
-files: sort read %./
+file-base: has load %../tools/file-base.r
+files: map-each file file-base/core [
+    either not find/match form file {../} [to file! form file][()]
+]
 
 ;do
 [
