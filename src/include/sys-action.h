@@ -59,6 +59,17 @@ enum Reb_Result {
     //
     R_OUT,
 
+    // By default, all return results will not have the VALUE_FLAG_UNEVALUATED
+    // bit when they come back from a function.  To override that, this asks
+    // the dispatch to clear the bit instead.  It should be noted that since
+    // there is no meaningful way to carry the bit when copying values around
+    // internally, this is only a useful bit to read on things that were
+    // known to go directly through an evaluation step...e.g. arguments to
+    // functions on their initial fulfillment.  So this is returned by the
+    // QUOTE native (for instance).
+    //
+    R_OUT_UNEVALUATED,
+
     // See comments on OPT_VALUE_THROWN about the migration of "thrownness"
     // from being a property signaled to the evaluator.
     //

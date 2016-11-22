@@ -275,7 +275,7 @@ inline static void Lookback_For_Set_Word_Or_Set_Path(REBVAL *out, REBFRM *f)
     enum Reb_Kind kind = VAL_TYPE(DS_TOP);
     if (kind == REB_SET_WORD) {
         *out = *DS_TOP;
-        CLEAR_VAL_FLAG(out, VALUE_FLAG_EVALUATED);
+        SET_VAL_FLAG(out, VALUE_FLAG_UNEVALUATED);
         VAL_SET_TYPE_BITS(DS_TOP, REB_GET_WORD); // See Do_Core/ET_SET_WORD
     }
     else if (kind == REB_SET_PATH) {
@@ -293,7 +293,7 @@ inline static void Lookback_For_Set_Word_Or_Set_Path(REBVAL *out, REBFRM *f)
                 fail (Error(RE_INFIX_PATH_GROUP, temp));
 
         *out = *DS_TOP;
-        CLEAR_VAL_FLAG(out, VALUE_FLAG_EVALUATED);
+        SET_VAL_FLAG(out, VALUE_FLAG_UNEVALUATED);
         VAL_SET_TYPE_BITS(DS_TOP, REB_GET_PATH); // See Do_Core/ET_SET_PATH
     }
     else {
@@ -359,7 +359,7 @@ inline static void Do_Pending_Sets_May_Invalidate_Gotten(
             //
             f->gotten = NULL;
 
-            // leave VALUE_FLAG_EVALUATED as is
+            // leave VALUE_FLAG_UNEVALUATED as is
             break; }
 
         case REB_GET_PATH: {
@@ -379,7 +379,7 @@ inline static void Do_Pending_Sets_May_Invalidate_Gotten(
                 fail (Error_No_Catch_For_Throw(out));
             }
 
-            // leave VALUE_FLAG_EVALUATED as is
+            // leave VALUE_FLAG_UNEVALUATED as is
 
             // We did not pass in a symbol, so not a call... hence we cannot
             // process refinements.  Should not get any back.
@@ -608,7 +608,7 @@ inline static void DO_NEXT_REFETCH_MAY_THROW(
     //
     if (IS_KIND_INERT(child->eval_type)) {
         COPY_VALUE(out, parent->value, parent->specifier);
-        CLEAR_VAL_FLAG(out, VALUE_FLAG_EVALUATED);
+        SET_VAL_FLAG(out, VALUE_FLAG_UNEVALUATED);
     }
     else {
         switch (child->eval_type) {
@@ -641,7 +641,7 @@ inline static void DO_NEXT_REFETCH_MAY_THROW(
                 fail (Error_No_Value_Core(parent->value, parent->specifier));
 
             *out = *child->gotten;
-            SET_VAL_FLAG(out, VALUE_FLAG_EVALUATED);
+            CLEAR_VAL_FLAG(out, VALUE_FLAG_UNEVALUATED);
 
         #if !defined(NDEBUG)
             if (LEGACY(OPTIONS_LIT_WORD_DECAY) && IS_LIT_WORD(out))
@@ -657,7 +657,7 @@ inline static void DO_NEXT_REFETCH_MAY_THROW(
                 parent->specifier,
                 GETVAR_READ_ONLY
             );
-            SET_VAL_FLAG(out, VALUE_FLAG_EVALUATED);
+            CLEAR_VAL_FLAG(out, VALUE_FLAG_UNEVALUATED);
             }
             break;
 
@@ -750,7 +750,7 @@ no_optimization:
 inline static void QUOTE_NEXT_REFETCH(REBVAL *dest, REBFRM *f) {
     TRACE_FETCH_DEBUG("QUOTE_NEXT_REFETCH", f, FALSE);
     COPY_VALUE(dest, f->value, f->specifier);
-    CLEAR_VAL_FLAG(dest, VALUE_FLAG_EVALUATED);
+    SET_VAL_FLAG(dest, VALUE_FLAG_UNEVALUATED);
     f->gotten = NULL;
     FETCH_NEXT_ONLY_MAYBE_END(f);
     TRACE_FETCH_DEBUG("QUOTE_NEXT_REFETCH", (f), TRUE);

@@ -1164,8 +1164,8 @@ REBCTX *Error(REBCNT num, ... /* REBVAL *arg1, REBVAL *arg2, ... */)
 //  Error_Lookback_Quote_Too_Late: C
 //
 // You can't have infix operators as `(1 + 2) infix-op 3 4 5` which quote
-// their left-hand sides, because they have been evaluated.  However, the
-// VALUE_FLAG_EVALUATED permits the determination of inerts that would have
+// their left-hand sides, because they have been evaluated.  However,
+// VALUE_FLAG_UNEVALUATED permits the determination of inerts that would have
 // been okay to quote, e.g. `<a tag> infix-op 3 4 5`.
 //
 REBCTX *Error_Lookback_Quote_Too_Late(REBFRM *f) {

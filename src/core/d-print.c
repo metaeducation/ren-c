@@ -1037,7 +1037,7 @@ REBOOL Form_Value_Throws(
             if (IS_VOID(out) || IS_BLANK(out))
                 continue; // no output, don't disrupt pending delimiter
 
-            literal = NOT(GET_VAL_FLAG(out, VALUE_FLAG_EVALUATED));
+            literal = GET_VAL_FLAG(out, VALUE_FLAG_UNEVALUATED);
 
             item = out;
             // The DO_NEXT already refetched...
@@ -1045,7 +1045,7 @@ REBOOL Form_Value_Throws(
         else {
             assert(!IS_VOID(item)); // should not be possible, no literal voids
 
-            // do not use VALUE_FLAG_EVALUATED, because since this isn't the
+            // don't clear VALUE_FLAG_UNEVALUATED, because since this isn't the
             // direct product of an evaluation it might get the evaluated flag
             // from a COMPOSE or whatever made the block.
             //

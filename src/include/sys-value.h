@@ -722,10 +722,10 @@ inline static void SET_FALSE_COMMON(RELVAL *v) {
 //
 inline static REBOOL IS_CONDITIONAL_TRUE_SAFE(const REBVAL *v) {
     if (IS_BLOCK(v)) {
-        if (GET_VAL_FLAG(v, VALUE_FLAG_EVALUATED))
-            return TRUE;
-
-        fail (Error(RE_BLOCK_CONDITIONAL, v));
+        if (GET_VAL_FLAG(v, VALUE_FLAG_UNEVALUATED))
+            fail (Error(RE_BLOCK_CONDITIONAL, v));
+            
+        return TRUE;
     }
     return IS_CONDITIONAL_TRUE(v);
 }

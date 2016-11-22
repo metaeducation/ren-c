@@ -207,7 +207,7 @@ REBNATIVE(print)
     //
     if (
         IS_BLOCK(value)
-        && GET_VAL_FLAG(value, VALUE_FLAG_EVALUATED)
+        && NOT(GET_VAL_FLAG(value, VALUE_FLAG_UNEVALUATED))
         && NOT(REF(eval))
     ){
         fail (Error(RE_PRINT_NEEDS_EVAL));

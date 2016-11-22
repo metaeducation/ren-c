@@ -266,14 +266,17 @@ enum {
     //
     VALUE_FLAG_RELATIVE = 1 << (GENERAL_VALUE_BIT + 3),
 
-    // `VALUE_FLAG_EVALUATED` is a somewhat dodgy-yet-important concept.
+    // `VALUE_FLAG_UNEVALUATED` is a somewhat dodgy-yet-important concept.
     // This is that some functions wish to be sensitive to whether or not
     // their argument came as a literal in source or as a product of an
     // evaluation.  While all values carry the bit, it is only guaranteed
     // to be meaningful on arguments in function frames...though it is
-    // valid on any result at the moment of taking it from Do_Core().
+    // valid on any result at the moment of taking it from Do_Core().  It
+    // is in the negative sense because the act of requesting it is
+    // uncommon, e.g. from the QUOTE operator, so an arbitrary SET_BLANK()
+    // or other assignment should default to being "evaluative".
     //
-    VALUE_FLAG_EVALUATED = 1 << (GENERAL_VALUE_BIT + 4),
+    VALUE_FLAG_UNEVALUATED = 1 << (GENERAL_VALUE_BIT + 4),
 
     // v-- BEGIN TYPE SPECIFIC BITS HERE
 };
@@ -523,7 +526,7 @@ struct Reb_Varargs {
     // Similar to the param, the arg is only good for the lifetime of the
     // FRAME!...but even less so, because VARARGS! can (currently) be
     // overwritten with another value in the function frame at any point.
-    // Despite this, we proxy the VALUE_FLAG_EVALUATED from the last TAKE
+    // Despite this, we proxy the VALUE_FLAG_UNEVALUATED from the last TAKE
     // onto the argument to reflect its *argument* status.
     //
     REBVAL *arg;

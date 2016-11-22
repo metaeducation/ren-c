@@ -481,7 +481,7 @@ REBNATIVE(switch)
     // For safety, notice if someone wrote `switch [x] [...]` with a literal
     // block in source, as that is likely a mistake.
     //
-    if (IS_BLOCK(value) && !GET_VAL_FLAG(value, VALUE_FLAG_EVALUATED))
+    if (IS_BLOCK(value) && GET_VAL_FLAG(value, VALUE_FLAG_UNEVALUATED))
         fail (Error(RE_BLOCK_SWITCH, value));
 
     // Frame's extra D_CELL is free since the function has > 1 arg.  Reuse it

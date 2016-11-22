@@ -75,7 +75,7 @@ REBIXO Do_Vararg_Op_May_Throw(
     enum Reb_Param_Class pclass;
 
     const RELVAL *param; // for type checking
-    REBVAL *arg; // for updating VALUE_FLAG_EVALUATED
+    REBVAL *arg; // for updating VALUE_FLAG_UNEVALUATED
 
     REBVAL *shared;
 
@@ -232,10 +232,10 @@ REBIXO Do_Vararg_Op_May_Throw(
             return THROWN_FLAG;
 
         if (arg) {
-            if (GET_VAL_FLAG(out, VALUE_FLAG_EVALUATED))
-                SET_VAL_FLAG(arg, VALUE_FLAG_EVALUATED);
+            if (GET_VAL_FLAG(out, VALUE_FLAG_UNEVALUATED))
+                SET_VAL_FLAG(arg, VALUE_FLAG_UNEVALUATED);
             else
-                CLEAR_VAL_FLAG(arg, VALUE_FLAG_EVALUATED);
+                CLEAR_VAL_FLAG(arg, VALUE_FLAG_UNEVALUATED);
         }
         break;
 
@@ -244,7 +244,7 @@ REBIXO Do_Vararg_Op_May_Throw(
 
         QUOTE_NEXT_REFETCH(out, f);
         if (arg)
-            CLEAR_VAL_FLAG(arg, VALUE_FLAG_EVALUATED);
+            SET_VAL_FLAG(arg, VALUE_FLAG_UNEVALUATED);
         break;
 
     case PARAM_CLASS_SOFT_QUOTE:
@@ -259,10 +259,10 @@ REBIXO Do_Vararg_Op_May_Throw(
                 return THROWN_FLAG;
 
             if (arg) {
-                if (GET_VAL_FLAG(out, VALUE_FLAG_EVALUATED))
-                    SET_VAL_FLAG(arg, VALUE_FLAG_EVALUATED);
+                if (GET_VAL_FLAG(out, VALUE_FLAG_UNEVALUATED))
+                    SET_VAL_FLAG(arg, VALUE_FLAG_UNEVALUATED);
                 else
-                    CLEAR_VAL_FLAG(arg, VALUE_FLAG_EVALUATED);
+                    CLEAR_VAL_FLAG(arg, VALUE_FLAG_UNEVALUATED);
             }
             FETCH_NEXT_ONLY_MAYBE_END(f);
         }
@@ -272,7 +272,7 @@ REBIXO Do_Vararg_Op_May_Throw(
             QUOTE_NEXT_REFETCH(out, f);
 
             if (arg)
-                CLEAR_VAL_FLAG(arg, VALUE_FLAG_EVALUATED);
+                SET_VAL_FLAG(arg, VALUE_FLAG_UNEVALUATED);
         }
         break;
 

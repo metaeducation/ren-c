@@ -1196,7 +1196,7 @@ REBNATIVE(semiquoted_q)
     const REBVAL *var = Get_Var_Core( // may fail
         &eval_type, ARG(parameter), SPECIFIED, GETVAR_READ_ONLY
     );
-    return GET_VAL_FLAG(var, VALUE_FLAG_EVALUATED) ? R_FALSE : R_TRUE;
+    return GET_VAL_FLAG(var, VALUE_FLAG_UNEVALUATED) ? R_TRUE : R_FALSE;
 }
 
 
@@ -1214,12 +1214,11 @@ REBNATIVE(semiquote)
 
     *D_OUT = *ARG(value);
 
-    // We cannot clear the VALUE_FLAG_EVALUATED bit here and make it stick,
-    // because the bit would just get added back on by Do_Core when the
-    // function finished.  So instead Do_Core recognizes this native
-    // specificially and clears the bit there.
+    // We cannot set the VALUE_FLAG_UNEVALUATED bit here and make it stick,
+    // because the bit would just get cleared off by Do_Core when the
+    // function finished.  So ask the evaluator to set the bit for us.
 
-    return R_OUT;
+    return R_OUT_UNEVALUATED;
 }
 
 
@@ -1427,7 +1426,7 @@ REBNATIVE(false_q)
 //      return: [any-value!]
 //      :value [any-value!]
 //  ][
-//      :value
+//      :value ;-- actually also sets unevaluated bit, how could a user do so?
 //  ]
 //
 REBNATIVE(quote)
@@ -1436,12 +1435,11 @@ REBNATIVE(quote)
 
     *D_OUT = *ARG(value);
 
-    // We cannot clear the VALUE_FLAG_EVALUATED bit here and make it stick,
-    // because the bit would just get added back on by Do_Core when the
-    // function finished.  So instead Do_Core recognizes this native
-    // specificially and clears the bit there.
+    // We cannot set the VALUE_FLAG_UNEVALUATED bit here and make it stick,
+    // because the bit would just get cleared off by Do_Core when the
+    // function finished.  Ask evaluator to add the bit for us.
 
-    return R_OUT;
+    return R_OUT_UNEVALUATED;
 }
 
 

@@ -744,12 +744,12 @@ reevaluate:;
                     break;
 
                 case PARAM_CLASS_HARD_QUOTE:
-                    if (GET_VAL_FLAG(f->out, VALUE_FLAG_EVALUATED))
+                    if (NOT(GET_VAL_FLAG(f->out, VALUE_FLAG_UNEVALUATED)))
                         fail (Error_Lookback_Quote_Too_Late(f));
                     break;
 
                 case PARAM_CLASS_SOFT_QUOTE:
-                    if (GET_VAL_FLAG(f->out, VALUE_FLAG_EVALUATED))
+                    if (NOT(GET_VAL_FLAG(f->out, VALUE_FLAG_UNEVALUATED)))
                         fail (Error_Lookback_Quote_Too_Late(f));
                     if (IS_SET_WORD(f->out) || IS_SET_PATH(f->out))
                         fail (Error_Lookback_Quote_Set_Soft(f));
@@ -836,7 +836,7 @@ reevaluate:;
    //=//// IF EVAL/ONLY SEMANTICS, TAKE NEXT ARG WITHOUT EVALUATION //////=//
 
             if (!args_evaluate) {
-                QUOTE_NEXT_REFETCH(f->arg, f); // non-VALUE_FLAG_EVALUATED
+                QUOTE_NEXT_REFETCH(f->arg, f); // has VALUE_FLAG_UNEVALUATED
                 goto check_arg;
             }
 
@@ -871,14 +871,14 @@ reevaluate:;
     //=//// HARD QUOTED ARG-OR-REFINEMENT-ARG /////////////////////////////=//
 
             case PARAM_CLASS_HARD_QUOTE:
-                QUOTE_NEXT_REFETCH(f->arg, f); // non-VALUE_FLAG_EVALUATED
+                QUOTE_NEXT_REFETCH(f->arg, f); // has VALUE_FLAG_UNEVALUATED
                 break;
 
     //=//// SOFT QUOTED ARG-OR-REFINEMENT-ARG  ////////////////////////////=//
 
             case PARAM_CLASS_SOFT_QUOTE:
                 if (!IS_QUOTABLY_SOFT(f->value)) {
-                    QUOTE_NEXT_REFETCH(f->arg, f); // non-VALUE_FLAG_EVALUATED
+                    QUOTE_NEXT_REFETCH(f->arg, f); // VALUE_FLAG_UNEVALUATED
                     goto check_arg;
                 }
 
@@ -1060,23 +1060,28 @@ reevaluate:;
         dispatcher = FUNC_DISPATCHER(f->func);
         switch (dispatcher(f)) {
         case R_FALSE:
-            SET_FALSE(f->out);
+            SET_FALSE(f->out); // no VALUE_FLAG_UNEVALUATED
             break;
 
         case R_TRUE:
-            SET_TRUE(f->out);
+            SET_TRUE(f->out); // no VALUE_FLAG_UNEVALUATED
             break;
 
         case R_VOID:
-            SET_VOID(f->out);
+            SET_VOID(f->out); // no VALUE_FLAG_UNEVALUATED
             break;
 
         case R_BLANK:
-            SET_BLANK(f->out);
+            SET_BLANK(f->out); // no VALUE_FLAG_UNEVALUATED
             break;
 
         case R_OUT:
+            CLEAR_VAL_FLAG(f->out, VALUE_FLAG_UNEVALUATED);
             break; // checked as NOT_END() after switch()
+
+        case R_OUT_UNEVALUATED: // returned by QUOTE and SEMIQUOTE
+            SET_VAL_FLAG(f->out, VALUE_FLAG_UNEVALUATED);
+            break;
 
         case R_OUT_IS_THROWN: {
             assert(THROWN(f->out));
@@ -1110,18 +1115,21 @@ reevaluate:;
                 Abort_Function_Args_For_Frame(f);
                 goto finished; // stay THROWN and try to exit frames above...
             }
+            CLEAR_VAL_FLAG(f->out, VALUE_FLAG_UNEVALUATED);
             break; }
 
         case R_OUT_TRUE_IF_WRITTEN:
             if (IS_END(f->out))
-                SET_FALSE(f->out);
+                SET_FALSE(f->out); // no VALUE_FLAG_UNEVALUATED
             else
-                SET_TRUE(f->out);
+                SET_TRUE(f->out); // no VALUE_FLAG_UNEVALUATED
             break;
 
         case R_OUT_VOID_IF_UNWRITTEN:
             if (IS_END(f->out))
-                SET_VOID(f->out);
+                SET_VOID(f->out); // no VALUE_FLAG_UNEVALUATED
+            else
+                CLEAR_VAL_FLAG(f->out, VALUE_FLAG_UNEVALUATED);
             break;
 
         case R_REDO_CHECKED:
@@ -1194,14 +1202,6 @@ reevaluate:;
     //
     //==////////////////////////////////////////////////////////////////==//
 
-        // Calling a function counts as an evaluation *unless* it's quote or
-        // semiquote (the generic means for fooling the semiquote? test)
-        //
-        if (f->func == NAT_FUNC(semiquote) || f->func == NAT_FUNC(quote))
-            CLEAR_VAL_FLAG(f->out, VALUE_FLAG_EVALUATED);
-        else
-            SET_VAL_FLAG(f->out, VALUE_FLAG_EVALUATED);
-
         // If we have functions pending to run on the outputs, then do so.
         //
         while (DSP != f->dsp_orig) {
@@ -1264,8 +1264,7 @@ reevaluate:;
             goto do_next; // quickly process next item, no infix test needed
         }
 
-        SET_VOID(f->out);
-        SET_VAL_FLAG(f->out, VALUE_FLAG_EVALUATED);
+        SET_VOID(f->out); // no VALUE_FLAG_UNEVALUATED
         break;
 
 //==//////////////////////////////////////////////////////////////////////==//
@@ -1280,8 +1279,7 @@ reevaluate:;
 //==//////////////////////////////////////////////////////////////////////==//
 
     case REB_LIT_BAR:
-        SET_BAR(f->out);
-        SET_VAL_FLAG(f->out, VALUE_FLAG_EVALUATED);
+        SET_BAR(f->out); // no VALUE_FLAG_UNEVALUATED
         FETCH_NEXT_ONLY_MAYBE_END(f);
         break;
 
@@ -1327,7 +1325,7 @@ reevaluate:;
         }
 
         *f->out = *f->gotten;
-        SET_VAL_FLAG(f->out, VALUE_FLAG_EVALUATED);
+        CLEAR_VAL_FLAG(f->out, VALUE_FLAG_UNEVALUATED);
         f->gotten = NULL;
         FETCH_NEXT_ONLY_MAYBE_END(f);
 
@@ -1392,7 +1390,7 @@ reevaluate:;
 
     case REB_GET_WORD:
         *f->out = *GET_OPT_VAR_MAY_FAIL(f->value, f->specifier);
-        SET_VAL_FLAG(f->out, VALUE_FLAG_EVALUATED);
+        CLEAR_VAL_FLAG(f->out, VALUE_FLAG_UNEVALUATED);
         FETCH_NEXT_ONLY_MAYBE_END(f);
         break;
 
@@ -1406,9 +1404,9 @@ reevaluate:;
 //==//////////////////////////////////////////////////////////////////////==//
 
     case REB_LIT_WORD:
-        QUOTE_NEXT_REFETCH(f->out, f); // we're adding VALUE_FLAG_EVALUATED
+        QUOTE_NEXT_REFETCH(f->out, f); // we clear VALUE_FLAG_UNEVALUATED
         VAL_SET_TYPE_BITS(f->out, REB_WORD);
-        SET_VAL_FLAG(f->out, VALUE_FLAG_EVALUATED);
+        CLEAR_VAL_FLAG(f->out, VALUE_FLAG_UNEVALUATED);
         break;
 
 //==//// INERT WORD AND STRING TYPES /////////////////////////////////////==//
@@ -1445,7 +1443,7 @@ reevaluate:;
             goto finished;
         }
 
-        SET_VAL_FLAG(f->out, VALUE_FLAG_EVALUATED);
+        CLEAR_VAL_FLAG(f->out, VALUE_FLAG_UNEVALUATED);
         FETCH_NEXT_ONLY_MAYBE_END(f);
         break;
 
@@ -1489,7 +1487,7 @@ reevaluate:;
             goto do_function_in_gotten;
         }
 
-        SET_VAL_FLAG(f->out, VALUE_FLAG_EVALUATED);
+        CLEAR_VAL_FLAG(f->out, VALUE_FLAG_UNEVALUATED);
         FETCH_NEXT_ONLY_MAYBE_END(f);
         break;
     }
@@ -1562,7 +1560,7 @@ reevaluate:;
             goto finished;
         }
 
-        SET_VAL_FLAG(f->out, VALUE_FLAG_EVALUATED);
+        CLEAR_VAL_FLAG(f->out, VALUE_FLAG_UNEVALUATED);
         FETCH_NEXT_ONLY_MAYBE_END(f);
         break;
 
@@ -1580,7 +1578,7 @@ reevaluate:;
     case REB_LIT_PATH:
         QUOTE_NEXT_REFETCH(f->out, f);
         VAL_SET_TYPE_BITS(f->out, REB_PATH);
-        SET_VAL_FLAG(f->out, VALUE_FLAG_EVALUATED);
+        CLEAR_VAL_FLAG(f->out, VALUE_FLAG_UNEVALUATED);
         break;
 
 //==//////////////////////////////////////////////////////////////////////==//
@@ -1592,7 +1590,7 @@ reevaluate:;
     default:
     inert:
         assert(f->eval_type < REB_MAX);
-        QUOTE_NEXT_REFETCH(f->out, f); // clears VALUE_FLAG_EVALUATED
+        QUOTE_NEXT_REFETCH(f->out, f); // has VALUE_FLAG_UNEVALUATED
         break;
     }
 
