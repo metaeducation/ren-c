@@ -18,6 +18,8 @@
     true
 ]
 [not find source-analysis 'eol-wsp]
+[not find source-analysis 'eof-eol-missing]
+[not find source-analysis 'tabbed]
 [not find source-analysis 'id-mismatch]
 ;; Currently failing. Uncomment, to work on cleaning this up.
 ;[not find source-analysis [line-exceeds 127]]
