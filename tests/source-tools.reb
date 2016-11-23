@@ -128,7 +128,9 @@ rebsource: context [
             ]
 
             wsp-not-eol: exclude c.lexical/charsets/ws-char charset {^/}
-            eol-wsp: malloc: _
+            wsp-not-tabeol: exclude wsp-not-eol charset {^-}
+
+            eol-wsp: malloc: tabbed: _
             file-text: text
 
             do bind [
@@ -140,13 +142,15 @@ rebsource: context [
                 trimmed-comment: [{//} some [not eol not wsp-eol skip]]
 
                 eol-wsp-check: [
-                    wsp-eol
-                    (add-line 'eol-wsp)
+                    wsp-eol (add-line 'eol-wsp)
                 ]
 
                 malloc-check: [
-                    is-identifier "malloc"
-                    (add-line 'malloc)
+                    is-identifier "malloc" (add-line 'malloc)
+                ]
+
+                tab-check: [
+                    #"^-" (add-line 'tabbed)
                 ]
 
                 parse/case file-text [
@@ -155,13 +159,14 @@ rebsource: context [
                         malloc-check
                         | trimmed-comment
                         | eol-wsp-check
+                        | some wsp-not-tabeol | tab-check
                         | c-pp-token
                     ]
                 ]
 
             ] c.lexical/grammar
 
-            foreach list [eol-wsp malloc][
+            foreach list [eol-wsp malloc tabbed][
                 if not blank? get list [
                     emit [(list) (file) (get list)]
                 ]
