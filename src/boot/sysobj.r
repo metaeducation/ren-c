@@ -146,7 +146,6 @@ options: construct [] [  ; Options supplied to REBOL during startup
 
     lit-word-decay: false
     exit-functions-only: false
-    mutable-function-bodies: false
     broken-case-semantics: false
     refinements-blank: false
     forever-64-bit-ints: false
@@ -159,6 +158,7 @@ options: construct [] [  ; Options supplied to REBOL during startup
     no-reduce-nested-print: false
     arg1-arg2-arg3-error: false
     sets-unsuppress-lookahead: false
+    unlocked-source: false
 
     ; These option will only apply if the function which is currently executing
     ; was created after legacy mode was enabled, and if refinements-blank is

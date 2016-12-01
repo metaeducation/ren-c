@@ -132,7 +132,7 @@ REBNATIVE(reduce)
 
     REBVAL *into = ARG(target);
     assert(ANY_ARRAY(into));
-    FAIL_IF_LOCKED_ARRAY(VAL_ARRAY(into));
+    FAIL_IF_READ_ONLY_ARRAY(VAL_ARRAY(into));
 
     // Insert the single item into the target array at its current position,
     // and return the position after the insertion (the /INTO convention)

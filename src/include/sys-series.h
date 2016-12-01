@@ -248,10 +248,6 @@ inline static REBYTE *SER_LAST_RAW(size_t w, REBSER *s) {
 #define Is_Array_Series(s) \
     GET_SER_FLAG((s), SERIES_FLAG_ARRAY)
 
-inline static void FAIL_IF_LOCKED_SERIES(REBSER *s) {
-    if (GET_SER_FLAG(s, SERIES_FLAG_LOCKED))
-        fail (Error(RE_LOCKED));
-}
 
 //
 // Optimized expand when at tail (but, does not reterminate)
@@ -396,6 +392,51 @@ static inline void Flip_Series_To_White(REBSER *s) {
 #if !defined(NDEBUG)
     --TG_Num_Black_Series;
 #endif
+}
+
+
+//
+// Freezing and Locking
+//
+
+inline static void Freeze_Sequence(REBSER *s) { // there is no unfreeze!
+    assert(!Is_Array_Series(s)); // Must use Deep_Freeze_Array()
+    s->header.bits |= REBSER_REBVAL_FLAG_FROZEN;
+}
+
+inline static REBOOL Is_Series_Frozen(REBSER *s) {
+    assert(!Is_Array_Series(s)); // Must use Is_Array_Deeply_Frozen()
+    return LOGICAL(s->header.bits & REBSER_REBVAL_FLAG_FROZEN);
+}
+
+inline static REBOOL Is_Series_Read_Only(REBSER *s) { // may be temporary...
+    return LOGICAL(
+        s->header.bits & (
+            REBSER_REBVAL_FLAG_FROZEN
+            | REBSER_FLAG_RUNNING
+            | REBSER_FLAG_PROTECTED
+        )
+    );
+}
+
+// Gives the appropriate kind of error message for the reason the series is
+// read only (frozen, running, protected).
+//
+// !!! Should probably report if more than one form of locking is in effect,
+// but if only one error is to be reported then this is probably the right
+// priority ordering.
+//
+inline static void FAIL_IF_READ_ONLY_SERIES(REBSER *s) {
+    if (Is_Series_Read_Only(s)) {
+        if (s->header.bits & REBSER_FLAG_RUNNING)
+            fail (Error(RE_SERIES_RUNNING));
+
+        if (s->header.bits & REBSER_REBVAL_FLAG_FROZEN)
+            fail (Error(RE_SERIES_FROZEN));
+
+        assert(s->header.bits & REBSER_FLAG_PROTECTED);
+        fail (Error(RE_SERIES_PROTECTED));
+    }
 }
 
 

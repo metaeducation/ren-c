@@ -179,10 +179,43 @@ enum {
     //
     REBSER_REBVAL_FLAG_ROOT = 1 << (REBSER_REBVAL_BIT + 2),
 
-    // v-- BEGIN GENERAL VALUE BITS HERE
+    // `REBSER_REBVAL_FLAG_FROZEN` on series indicates that the length or
+    // values cannot be modified...ever.  It has been locked and will never
+    // be released from that state for its lifetime, and if it's an array
+    // then everything referenced beneath it is also frozen.  This means that
+    // if a read-only copy of it is required, then no copy needs to be made.
+    //
+    // (Contrast this with the temporary condition like caused by something
+    // like REBSER_FLAG_RUNNING or REBSER_FLAG_PROTECTED.)
+    //
+    // The same runtime check does not exist for REBVALs, because it would
+    // be costly to maintain, and would also need to be cleared every time
+    // one REBVAL cell was assigned to another.  But the bit is used in the
+    // C++ debug build for some special checks.
+    //
+    // (see VALUE_FLAG_WRITABLE_CPP_DEBUG, which aliases this.)
+    //
+    REBSER_REBVAL_FLAG_FROZEN = 1 << (REBSER_REBVAL_BIT + 3),
+
+    // v-- BEGIN GENERAL VALUE OR SERIES BITS HERE
 };
 
-#define GENERAL_VALUE_BIT (REBSER_REBVAL_BIT + 3)
+#define GENERAL_REBVAL_BIT (REBSER_REBVAL_BIT + 4)
+#define GENERAL_REBSER_BIT (REBSER_REBVAL_BIT + 4)
+
+// In debug builds, there's an additional property checked on cell writes
+// where values can be marked as unwritable.  There would be cost to
+// checking this in the release build, so it is not currently a "feature".
+// It's just to help avoid damaging things like the global BLANK_VALUE.
+//
+// This is only checkable under C++, because stack REBVALs would not get
+// the flag implicitly in C...and manual initialization would clutter the
+// code.
+//
+#if !defined(NDEBUG) && defined(__cplusplus)
+    #define VALUE_FLAG_WRITABLE_CPP_DEBUG \
+        REBSER_REBVAL_FLAG_FROZEN
+#endif
 
 
 
@@ -205,7 +238,7 @@ enum {
     // does not need to store any data in its payload... its data of being
     // true or false is already covered by this header bit.
     //
-    VALUE_FLAG_FALSE = 1 << (GENERAL_VALUE_BIT + 0),
+    VALUE_FLAG_FALSE = 1 << (GENERAL_REBVAL_BIT + 0),
 
     // `VALUE_FLAG_LINE`
     //
@@ -218,7 +251,7 @@ enum {
     // !!! The native `new-line` is used set this, which has a somewhat
     // poor name considering its similarity to `newline` the line feed char.
     //
-    VALUE_FLAG_LINE = 1 << (GENERAL_VALUE_BIT + 1),
+    VALUE_FLAG_LINE = 1 << (GENERAL_REBVAL_BIT + 1),
 
     // `VALUE_FLAG_THROWN`
     //
@@ -248,7 +281,7 @@ enum {
     //        /* handling code */
     //     }
     //
-    VALUE_FLAG_THROWN = 1 << (GENERAL_VALUE_BIT + 2),
+    VALUE_FLAG_THROWN = 1 << (GENERAL_REBVAL_BIT + 2),
 
     // `VALUE_FLAG_RELATIVE` is used to indicate a value that needs to have
     // a specific context added into it before it can have its bits copied
@@ -258,7 +291,7 @@ enum {
     // of a function body must be relative also to the same function if
     // it contains any instances of such relative words.
     //
-    VALUE_FLAG_RELATIVE = 1 << (GENERAL_VALUE_BIT + 3),
+    VALUE_FLAG_RELATIVE = 1 << (GENERAL_REBVAL_BIT + 3),
 
     // `VALUE_FLAG_UNEVALUATED` is a somewhat dodgy-yet-important concept.
     // This is that some functions wish to be sensitive to whether or not
@@ -270,26 +303,12 @@ enum {
     // uncommon, e.g. from the QUOTE operator, so an arbitrary SET_BLANK()
     // or other assignment should default to being "evaluative".
     //
-    VALUE_FLAG_UNEVALUATED = 1 << (GENERAL_VALUE_BIT + 4),
+    VALUE_FLAG_UNEVALUATED = 1 << (GENERAL_REBVAL_BIT + 4),
 
     // v-- BEGIN TYPE SPECIFIC BITS HERE
 };
 
-// In debug builds, there's an additional property checked on cell writes
-// where values can be marked as unwritable.  There would be cost to checking
-// this in the release build, so it is not intended as a "feature"--just to
-// help avoid damaging things like the global BLANK_VALUE.
-//
-// This is only checkable under C++, because stack REBVALs would not get the
-// flag implicitly in C...and manual initialization would clutter the code.
-//
-#if !defined(NDEBUG) && defined(__cplusplus)
-    #define VALUE_FLAG_WRITABLE_CPP_DEBUG \
-        ((REBUPT)(1 << (GENERAL_VALUE_BIT + 5)))
-#endif
-
-
-#define TYPE_SPECIFIC_BIT (GENERAL_VALUE_BIT + 6)
+#define TYPE_SPECIFIC_BIT (GENERAL_REBVAL_BIT + 5)
 
 // The type is stored in the highest bits so that a single right shift
 // operation (which zero fills from the left) can get the 6-bit type.

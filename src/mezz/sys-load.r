@@ -260,7 +260,9 @@ load-header: function [
     ensure [binary! blank!] hdr/checksum
     ensure [block! blank!] hdr/options
 
-    reduce [
+    ; Return a BLOCK! with 3 elements in it
+    ;
+    return reduce [
         ensure object! hdr
         ensure [binary! block!] rest
         ensure binary! end

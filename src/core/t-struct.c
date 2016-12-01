@@ -801,7 +801,7 @@ static void Parse_Field_Type_May_Fail(
         // be overwritten in the struct cases).
         //
         Val_Init_Word(FLD_AT(field, IDX_FIELD_TYPE), REB_WORD, Canon(sym));
-         
+
         switch (sym) {
         case SYM_UINT8:
             SET_INTEGER(FLD_AT(field, IDX_FIELD_WIDE), 1);

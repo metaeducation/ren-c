@@ -152,7 +152,7 @@ enum Reb_Param_Class {
 
 // Can't be changed (set with PROTECT)
 //
-#define TYPESET_FLAG_LOCKED TYPESET_FLAG(3)
+#define TYPESET_FLAG_PROTECTED TYPESET_FLAG(3)
 
 // Can't be reflected (set with PROTECT/HIDE) or local in spec as `foo:`
 //

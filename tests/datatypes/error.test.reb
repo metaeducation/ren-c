@@ -88,8 +88,7 @@
 [error? make error! [type: 'math id: 'size-limit]]
 [error? make error! [type: 'math id: 'out-of-range]]
 
-[error? make error! [type: 'access id: 'locked-word]]
-[error? make error! [type: 'access id: 'locked]]
+[error? make error! [type: 'access id: 'protected-word]]
 [error? make error! [type: 'access id: 'hidden]]
 [error? make error! [type: 'access id: 'cannot-open]]
 [error? make error! [type: 'access id: 'not-open]]

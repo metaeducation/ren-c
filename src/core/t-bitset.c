@@ -305,7 +305,7 @@ void Set_Bit_Str(REBSER *bset, const REBVAL *val, REBOOL set)
 //
 REBOOL Set_Bits(REBSER *bset, const REBVAL *val, REBOOL set)
 {
-    FAIL_IF_LOCKED_SERIES(bset);
+    FAIL_IF_READ_ONLY_SERIES(bset);
 
     REBCNT n;
     REBCNT c;
@@ -630,7 +630,7 @@ set_bits:
         return (VAL_LEN_HEAD(value) == 0) ? R_TRUE : R_FALSE;
 
     case SYM_CLEAR:
-        FAIL_IF_LOCKED_SERIES(VAL_SERIES(value));
+        FAIL_IF_READ_ONLY_SERIES(VAL_SERIES(value));
         Clear_Series(VAL_SERIES(value));
         break;
 

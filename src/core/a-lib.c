@@ -550,6 +550,17 @@ RL_API int RL_Do_String(
         Resolve_Context(user, Lib_Context, &vali, FALSE, FALSE);
     }
 
+    // The new policy for source code in Ren-C is that it loads read only.
+    // This didn't go through the LOAD Rebol function (should it?  it never
+    // did before.  :-/)  For now, stick with simple binding but lock it.
+    //
+#if defined(NDEBUG)
+    Deep_Freeze_Array(code);
+#else
+    if (!LEGACY(OPTIONS_UNLOCKED_SOURCE))
+        Deep_Freeze_Array(code);
+#endif
+
     REBVAL result;
     if (Do_At_Throws(&result, code, 0, SPECIFIED)) { // implicitly guarded
         if (
@@ -1262,7 +1273,7 @@ RL_API int RL_Set_Field(REBSER *obj, REBSTR *word_id, REBVAL val, int type)
     REBCNT index = Find_Canon_In_Context(context, STR_CANON(word_id), FALSE);
     if (index == 0) return 0;
 
-    if (GET_VAL_FLAG(CTX_KEY(context, index), TYPESET_FLAG_LOCKED))
+    if (GET_VAL_FLAG(CTX_KEY(context, index), TYPESET_FLAG_PROTECTED))
         return 0;
 
     *CTX_VAR(context, index) = val;

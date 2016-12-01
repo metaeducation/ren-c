@@ -1234,11 +1234,6 @@ REBFUN *Make_Interpreted_Function_May_Fail(
     }
 #endif
 
-#if !defined(NDEBUG)
-    if (LEGACY(OPTIONS_MUTABLE_FUNCTION_BODIES))
-        return fun; // don't run protection code below
-#endif
-
     // All the series inside of a function body are "relatively bound".  This
     // means that there's only one copy of the body, but the series handle
     // is "viewed" differently based on which call it represents.  Though
@@ -1246,16 +1241,12 @@ REBFUN *Make_Interpreted_Function_May_Fail(
     // it...hence the series must be read only to keep modifying a view
     // that seems to have one identity but then affecting another.
     //
-    // !!! This protection needs to be system level, as the user is able to
-    // unprotect conventional protection via UNPROTECT.
-    //
-    Protect_Series(
-        ARR_SERIES(VAL_ARRAY(body)),
-        0, // start protection at index 0
-        FLAGIT(PROT_DEEP) | FLAGIT(PROT_SET)
-    );
-    assert(GET_ARR_FLAG(VAL_ARRAY(body), SERIES_FLAG_LOCKED));
-    Uncolor_Array(VAL_ARRAY(body));
+#if defined(NDEBUG)
+    Deep_Freeze_Array(VAL_ARRAY(body));
+#else
+    if (!LEGACY(OPTIONS_UNLOCKED_SOURCE))
+        Deep_Freeze_Array(VAL_ARRAY(body));
+#endif
 
     return fun;
 }

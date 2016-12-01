@@ -212,8 +212,8 @@ inline static REBVAL *CTX_STACKVARS(REBCTX *c) {
     return CTX_FRAME(c)->args_head;
 }
 
-#define FAIL_IF_LOCKED_CONTEXT(c) \
-    FAIL_IF_LOCKED_ARRAY(CTX_VARLIST(c))
+#define FAIL_IF_READ_ONLY_CONTEXT(c) \
+    FAIL_IF_READ_ONLY_ARRAY(CTX_VARLIST(c))
 
 inline static void FREE_CONTEXT(REBCTX *c) {
     Free_Array(CTX_KEYLIST(c));
@@ -361,6 +361,27 @@ inline static REBVAL *Append_Context(
     REBSTR *name
 ) {
     return Append_Context_Core(context, any_word, name, FALSE);
+}
+
+
+//=////////////////////////////////////////////////////////////////////////=//
+//
+// LOCKING
+//
+//=////////////////////////////////////////////////////////////////////////=//
+
+inline static void Deep_Freeze_Context(REBCTX *c) {
+    Protect_Context(
+        c,
+        FLAGIT(PROT_SET) | FLAGIT(PROT_DEEP) | FLAGIT(PROT_FREEZE)
+    );
+    Uncolor_Array(CTX_VARLIST(c));
+}
+
+inline static REBOOL Is_Context_Deeply_Frozen(REBCTX *c) {
+    return LOGICAL(
+        ARR_SERIES(CTX_VARLIST(c))->header.bits & REBSER_REBVAL_FLAG_FROZEN
+    );
 }
 
 

@@ -160,6 +160,13 @@ join-of: redescribe [
     ]
 )
 
+append-of: redescribe [
+    "APPEND variation that copies the input series first."
+](
+    adapt 'append [
+        series: copy series
+    ]
+)
 
 reform: redescribe [
     "Forms a reduced block and returns a string."

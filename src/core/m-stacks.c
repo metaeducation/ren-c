@@ -245,7 +245,7 @@ void Pop_Stack_Values_Into(REBVAL *into, REBDSP dsp_start) {
     REBVAL *values = KNOWN(ARR_AT(DS_Array, dsp_start + 1));
 
     assert(ANY_ARRAY(into));
-    FAIL_IF_LOCKED_ARRAY(VAL_ARRAY(into));
+    FAIL_IF_READ_ONLY_ARRAY(VAL_ARRAY(into));
 
     VAL_INDEX(into) = Insert_Series(
         ARR_SERIES(VAL_ARRAY(into)),
@@ -407,11 +407,12 @@ REBCTX *Context_For_Frame_May_Reify_Core(REBFRM *f) {
     // A reification of a frame for native code should not allow changing
     // the values out from under it, because that could cause it to crash
     // the interpreter.  (Generally speaking, modification should only be
-    // possible in the debugger anyway.)  For now, protect unless it's a
-    // user function.
+    // possible in the debugger anyway.)  For now, mark the array as
+    // running...which should not stop FRM_ARG from working in the native
+    // itself, but should stop modifications from user code.
     //
     if (NOT(IS_FUNCTION_INTERPRETED(FUNC_VALUE(f->func))))
-        SET_ARR_FLAG(CTX_VARLIST(context), SERIES_FLAG_LOCKED);
+        ARR_SERIES(CTX_VARLIST(context))->header.bits |= REBSER_FLAG_RUNNING;
 
     return context;
 }

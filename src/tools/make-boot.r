@@ -382,8 +382,8 @@ emit {
 #define IS_ANY_VALUE(v) \
     LOGICAL(VAL_TYPE(v) != REB_MAX_VOID)
 
-#define IS_SCALAR(v) \
-    LOGICAL(VAL_TYPE(v) <= REB_DATE)
+#define ANY_SCALAR(v) \
+    LOGICAL(VAL_TYPE(v) >= REB_LOGIC && VAL_TYPE(v) <= REB_DATE)
 
 #define ANY_SERIES(v) \
     LOGICAL(VAL_TYPE(v) >= REB_PATH && VAL_TYPE(v) <= REB_VECTOR)
