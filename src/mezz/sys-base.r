@@ -26,10 +26,16 @@ REBOL [
 native: _ ; for boot only
 action: _ ; for boot only
 
+; DO of functions, blocks, paths, and other do-able types is done directly by
+; C code in REBNATIVE(do).  But that code delegates to this Rebol function
+; for ANY-STRING! and BINARY! types (presumably because it would be laborious
+; to express as C).
+;
 do*: function [
     {SYS: Called by system for DO on datatypes that require special handling.}
     return: [<opt> any-value!]
-    value [file! url! string! binary! tag!]
+    source [file! url! string! binary! tag!]
+        {Files, urls and modules evaluate as scripts, other strings don't.}
     args [logic!]
         "Positional workaround of /ARGS"
     arg [any-value!]
@@ -39,40 +45,36 @@ do*: function [
     var [blank! word!]
         "If do next expression only, variable updated with new block position"
 ][
+    next_DO*: next
+    next: :lib/next
+
     ; !!! These were refinements on the original DO* which were called from
     ; the system using positional order.  Under the Ren-C model you cannot
-    ; select refinements positionally, nor can you pass "void" cells.  It
-    ; would be *possible* to keep these going as refinements and have the
-    ; system build a path to make a call, but this is easier.  Revisit this
-    ; (also revisit the use of the word "next")
+    ; select refinements positionally, nor can you pass "void" cells in
+    ; a variadic invocation (because variadics may be reified to blocks which
+    ; are user-exposed, and arrays with voids in them are only allowed for
+    ; cases like the internal varlist of objects).
     ;
-    arg: either args [arg] [void]
-    var: either next [var] [void]
-
-    ; This code is only called for urls, files, strings, and tags.
-    ; DO of functions, blocks, paths, and other do-able types is done in the
-    ; native, and this code is not called.
-    ; Note that DO of file path evaluates in the directory of the target file.
-    ; Files, urls and modules evaluate as scripts, other strings don't.
-    ; Note: LOAD/header returns a block with the header object in the first
-    ;       position, or will cause an error. No exceptions, not even for
-    ;       directories or media.
-    ;       Currently, load of URL has no special block forms.
+    ; It would be *possible* to keep these going as refinements and have the
+    ; system build a path to make a call, but this is easier.
+    ;
+    if not args [unset 'args]
+    if not next_DO* [unset 'var]
 
     ; !!! DEMONSTRATION OF CONCEPT... this translates a tag into a URL!, but
     ; it should be using a more "official" URL instead of on individuals
     ; websites.  There should also be some kind of local caching facility.
     ;
-    if tag? value [
-        if value = <r3-legacy> [
+    if tag? source [
+        if source = <r3-legacy> [
             ; Special compatibility tag... Rebol2 and R3-Alpha will ignore the
             ; DO of a <tag>, so this is a no-op in them.
             ;
-            return r3-legacy* ;-- defined in %mezz-legacy.r
+            return r3-legacy* ;-- calls function defined in %mezz-legacy.r
         ]
 
         ; Convert value into a URL!
-        value: switch/default value [
+        source: switch/default source [
             ; Encodings and data formats
             <json> [http://reb4.me/r3/json.reb]
             <xml> [http://reb4.me/r3/altxml.reb]
@@ -86,37 +88,59 @@ do*: function [
             <rebmu> [https://raw.githubusercontent.com/hostilefork/rebmu/master/rebmu.reb]
         ][
             fail [
-                {Module} value {not in "rebol.org index" (hardcoded for now)}
+                {Module} source {not in "rebol.org index" (hardcoded for now)}
             ]
         ]
     ]
 
+    ; Note that DO of file path evaluates in the directory of the target file.
+    ;
     original-path: what-dir
 
     ; If a file is being mentioned as a DO location and the "current path"
-    ; is a URL!, then adjust the value to be a URL! based from that path.
-    if all [url? original-path  file? value] [
-         value: join-of original-path value
+    ; is a URL!, then adjust the source to be a URL! based from that path.
+    ;
+    if all [url? original-path | file? source] [
+         source: join-of original-path source
     ]
 
-    ; Load the data, first so it will error before change-dir
-    data: load/header/type value 'unbound ; unbound so DO-NEEDS runs before INTERN
-    ; Get the header and advance 'data to the code position
-    hdr: first+ data  ; object or blank
-    ; data is a block! here, with the header object in the first position back
+    ; Load the code (do this before CHANGE-DIR so if there's an error in the
+    ; LOAD it will trigger before the failure of changing the working dir)
+    ; It is loaded as UNBOUND so that DO-NEEDS runs before INTERN.
+    ;
+    code: ensure block! (load/header/type source 'unbound)
+
+    ; LOAD/header returns a block with the header object in the first
+    ; position, or will cause an error.  No exceptions, not even for
+    ; directories or media.  "Load of URL has no special block forms." <-- ???
+    ;
+    ; !!! Should the header always be locked by LOAD?
+    ;
+    hdr: lock ensure [object! blank!] first code
     is-module: 'module = select hdr 'type
+    code: next code
 
-    either all [string? value  not is-module] [
-        ; Return result without script overhead
+    either all [string? source | not is-module] [
+        ;
+        ; Return result without "script overhead" (e.g. don't change the
+        ; working directory to the base of the file path supplied)
+        ;
         do-needs hdr  ; Load the script requirements
-        if empty? data [if next [set var data] return ()]
-        intern data   ; Bind the user script
-        catch/quit [do/next data :var]
-    ][ ; Otherwise we are in script mode
-
-        ; When we run a script, the "current" directory is changed to the
-        ; directory of that script.  This way, relative path lookups to
-        ; find dependent files will look relative to the script.
+        intern code   ; Bind the user script
+        result: catch/quit [
+            ;
+            ; The source string may have been mutable or immutable, but the
+            ; loaded code is not locked for this case.  So this works:
+            ;
+            ;     do "append {abc} {de}"
+            ;
+            do/next code :var ;-- If var is void, /NEXT is revoked
+        ]
+    ][
+        ; Otherwise we are in script mode.  When we run a script, the
+        ; "current" directory is changed to the directory of that script.
+        ; This way, relative path lookups to find dependent files will look
+        ; relative to the script.
         ;
         ; We want this behavior for both FILE! and for URL!, which means
         ; that the "current" path may become a URL!.  This can be processed
@@ -125,11 +149,18 @@ do*: function [
         ; define a standard for that)
         ;
         if all [
-            any [file? value  url? value]
-            file: find/last/tail value slash
+            maybe? [file! url!] source
+            file: find/last/tail source slash
         ][
-            change-dir copy/part value file
+            change-dir copy/part source file
         ]
+
+        ; Also in script mode, the code is immutable by default.
+        ;
+        ; !!! Note that this does not currently protect the code from binding
+        ; changes, and it gets INTERNed below, or by "module/mixin" (?!)
+        ;
+        lock code
 
         ; Make the new script object
         scr: system/script  ; and save old one
@@ -144,31 +175,30 @@ do*: function [
         ; Print out the script info
         boot-print [
             (either is-module "Module:" "Script:") select hdr 'title
-                "Version:" opt select hdr 'version
-                "Date:" opt select hdr 'date
+                "Version:" select hdr 'version
+                "Date:" select hdr 'date
         ]
 
-        also (
-            ; Eval the block or make the module, returned
-            either is-module [ ; Import the module and set the var
-                also (
-                    import catch/quit [
-                        module/mixin hdr data (opt do-needs/no-user hdr)
-                    ]
-                )(
-                    if next [set var tail data]
-                )
-            ][
-                do-needs hdr  ; Load the script requirements
-                intern data   ; Bind the user script
-                catch/quit [do/next data :var]
+        ; Eval the block or make the module, returned
+        either is-module [ ; Import the module and set the var
+            result: import catch/quit [
+                module/mixin hdr code (opt do-needs/no-user hdr)
             ]
-        )(
-            ; Restore system/script and the dir
-            system/script: :scr
-            if original-path [change-dir original-path]
-        )
+            if next_DO* [set var tail code]
+        ][
+            do-needs hdr  ; Load the script requirements
+            intern code   ; Bind the user script
+            result: catch/quit [
+                do/next code :var ;-- If var is void, /NEXT is revoked
+            ]
+        ]
+
+        ; Restore system/script and the dir
+        system/script: :scr
+        if original-path [change-dir original-path]
     ]
+
+    :result
 ]
 
 ; MOVE some of these to SYSTEM?

@@ -391,6 +391,7 @@ enum {
     PROT_DEEP,
     PROT_HIDE,
     PROT_WORD,
+    PROT_FREEZE,
     PROT_MAX
 };
 

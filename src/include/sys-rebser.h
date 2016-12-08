@@ -182,21 +182,10 @@ enum {
     //
     ARRAY_FLAG_VARLIST = 1 << 6,
 
-    // `SERIES_FLAG_LOCKED` indicates that the series size or values cannot
-    // be modified.  This check is honored by some layers of abstraction, but
-    // if one manages to get a raw pointer into a value in the series data
-    // then by that point it cannot be enforced.
+    // `ARRAY_FLAG_RESERVED` will be adapted to tell when an array is a MAP's
+    // pairlist, in a subsequent commit.
     //
-    // !!! Could the 'writable' flag be used for this in the debug build,
-    // if the locking process went through and cleared writability...then
-    // put it back if the series were unlocked?
-    //
-    // This is related to the feature in PROTECT (OPT_TYPESET_LOCKED) which
-    // protects a certain variable in a context from being changed.  Yet
-    // it is distinct as it's a protection on a series itself--which ends
-    // up affecting all variable content with that series in the payload.
-    //
-    SERIES_FLAG_LOCKED = 1 << 7,
+    ARRAY_FLAG_RESERVED = 1 << 7,
 
     // `SERIES_FLAG_FIXED_SIZE` indicates the size is fixed, and the series
     // cannot be expanded or contracted.  Values within the series are still
@@ -374,12 +363,27 @@ union Reb_Series_Content {
 
 
 enum {
+    // `REBSER_FLAG_RUNNING` is set in the header while a DO is happening on
+    // (or a PARSE, etc.) and gives it a temporarily protected state.  It
+    // will be released when the execution is finished, which distinguishes
+    // it from REBSER_REBVAL_FLAG_FROZEN (a state from which a series will
+    // never come back, as long as it lives)
+    //
+    REBSER_FLAG_RUNNING = 1 << (GENERAL_REBSER_BIT + 0),
+
+    // `REBSER_FLAG_PROTECTED` is set in the header by a user's desire to
+    // temporarily protect a series.  It is the usermode analogue of
+    // REBSER_REBVAL_FLAG_FROZEN, but can be reversed.
+    //
+    REBSER_FLAG_PROTECTED = 1 << (GENERAL_REBSER_BIT + 1),
+
     // `REBSER_FLAG_BLACK` is a generic bit for Is_Series_Black()/White().
     // These let native routines engage in marking and unmarking nodes
     // without potentially wrecking the garbage collector.  :-/
     //
-    REBSER_FLAG_BLACK = 1 << (GENERAL_VALUE_BIT + 0)
+    REBSER_FLAG_BLACK = 1 << (GENERAL_REBSER_BIT + 2)
 };
+
 
 struct Reb_Series {
 
@@ -389,12 +393,25 @@ struct Reb_Series {
     // As long as there aren't two of those REBSERs sequentially in the pool,
     // an unused node or a used ordinary one can terminate it.
     //
-    // The other bit that is checked in the header is the USED bit, which is
-    // bit #9.  This is set on all REBVALs and also in END marking headers,
-    // and should be set in used series nodes.
+    // The next four bits are MANAGED, MARK, ROOT, and FROZEN.  As REBVALs
+    // also respect these bits, they can be manipulated in the pairing series
+    // when this header is actually the header of a REBVAL seated in the
+    // first half of the series node.
     //
-    // The remaining bits are free, and used to hold SYM values for those
-    // words that have them.
+    // The next two bits are for RUNNING and PROTECTED, which apply only to
+    // series.
+    //
+    // The next 8 bits could be considered another "8 bit grouping" with
+    // a particular application.  But for now first bit is REBSER_FLAG_BLACK
+    // and the other 7 are available.
+    //
+    // The next 16 bits are used to hold SYM values for those words that have
+    // them (so they only apply to SERIES_FLAG_STRING).  Usages for non-string
+    // series are not yet considered.
+    //
+    // In 64-bit builds, the high 32-bits are unused.  They shouldn't have
+    // any functionality depending on them, but there could be a bonus
+    // diagnostic feature
     //
     struct Reb_Header header;
 

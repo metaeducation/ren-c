@@ -917,10 +917,10 @@ REBNATIVE(set)
             if (GET_VAL_FLAG(key, TYPESET_FLAG_HIDDEN))
                 continue;
 
-            // Locked words cannot be modified, so a SET should error instead
-            // of going ahead and changing them
+            // Protected words cannot be modified, so a SET should error
+            // instead of going ahead and changing them
             //
-            if (GET_VAL_FLAG(key, TYPESET_FLAG_LOCKED))
+            if (GET_VAL_FLAG(key, TYPESET_FLAG_PROTECTED))
                 fail (Error_Protected_Key(key));
 
             // If we're setting to a single value and not a block, then

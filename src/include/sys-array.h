@@ -143,9 +143,6 @@ inline static void TERM_SERIES(REBSER *s) {
 #define GET_ARR_FLAG(a,f) \
     GET_SER_FLAG(ARR_SERIES(a), (f))
 
-#define FAIL_IF_LOCKED_ARRAY(a) \
-    FAIL_IF_LOCKED_SERIES(ARR_SERIES(a))
-
 #define IS_ARRAY_MANAGED(array) \
     IS_SERIES_MANAGED(ARR_SERIES(array))
 
@@ -178,6 +175,32 @@ inline static void DROP_GUARD_ARRAY_CONTENTS(REBARR *a) {
 #endif
     DROP_GUARD_SERIES(ARR_SERIES(a));
 }
+
+
+//
+// Locking
+//
+
+inline static REBOOL Is_Array_Deeply_Frozen(REBARR *a) {
+    return LOGICAL(
+        ARR_SERIES(a)->header.bits & REBSER_REBVAL_FLAG_FROZEN
+    ); // should be frozen all the way down (can only freeze arrays deeply)
+}
+
+inline static void Deep_Freeze_Array(REBARR *a) {
+    Protect_Series(
+        ARR_SERIES(a),
+        0, // start protection at index 0
+        FLAGIT(PROT_DEEP) | FLAGIT(PROT_SET) | FLAGIT(PROT_FREEZE)
+    );
+    Uncolor_Array(a);
+}
+
+#define Is_Array_Shallow_Read_Only(a) \
+    Is_Series_Read_Only(a)
+
+#define FAIL_IF_READ_ONLY_ARRAY(a) \
+    FAIL_IF_READ_ONLY_SERIES(ARR_SERIES(a))
 
 
 // Make a series that is the right size to store REBVALs (and

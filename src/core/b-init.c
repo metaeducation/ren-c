@@ -347,7 +347,7 @@ static void Init_Datatypes(void)
         // which appears to copy this subset out from the Lib_Context.)
         //
         assert(value == Get_Type(cast(enum Reb_Kind, n)));
-        SET_VAL_FLAG(CTX_KEY(Lib_Context, 1), TYPESET_FLAG_LOCKED);
+        SET_VAL_FLAG(CTX_KEY(Lib_Context, 1), TYPESET_FLAG_PROTECTED);
     }
 }
 
@@ -508,8 +508,7 @@ static void Init_Function_Tag(const char *name, REBVAL *slot)
         slot,
         Append_UTF8_May_Fail(NULL, cb_cast(name), strlen(name))
     );
-    SET_SER_FLAG(VAL_SERIES(slot), SERIES_FLAG_FIXED_SIZE);
-    SET_SER_FLAG(VAL_SERIES(slot), SERIES_FLAG_LOCKED);
+    Freeze_Sequence(VAL_SERIES(slot));
 }
 
 
@@ -794,14 +793,12 @@ static void Init_Root_Context(void)
     // The EMPTY_BLOCK provides EMPTY_ARRAY.  It is locked for protection.
     //
     Val_Init_Block(ROOT_EMPTY_BLOCK, Make_Array(0));
-    SET_SER_FLAG(VAL_SERIES(ROOT_EMPTY_BLOCK), SERIES_FLAG_LOCKED);
-    SET_SER_FLAG(VAL_SERIES(ROOT_EMPTY_BLOCK), SERIES_FLAG_FIXED_SIZE);
+    Deep_Freeze_Array(VAL_ARRAY(ROOT_EMPTY_BLOCK));
 
     REBSER *empty_series = Make_Binary(1);
     *BIN_AT(empty_series, 0) = '\0';
     Val_Init_String(ROOT_EMPTY_STRING, empty_series);
-    SET_SER_FLAG(VAL_SERIES(ROOT_EMPTY_STRING), SERIES_FLAG_LOCKED);
-    SET_SER_FLAG(VAL_SERIES(ROOT_EMPTY_STRING), SERIES_FLAG_FIXED_SIZE);
+    Freeze_Sequence(VAL_SERIES(ROOT_EMPTY_STRING));
 
     // Used by REBNATIVE(print)
     //

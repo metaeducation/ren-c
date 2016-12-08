@@ -398,13 +398,13 @@ REBSER *Make_Hash_Sequence(REBCNT len)
 
 
 //
-//  Val_Init_Map: C
+//  Init_Map: C
 //
 // A map has an additional hash element hidden in the ->extra
 // field of the REBSER which needs to be given to memory
 // management as well.
 //
-void Val_Init_Map(REBVAL *out, REBMAP *map)
+void Init_Map(REBVAL *out, REBMAP *map)
 {
     if (MAP_HASHLIST(map))
         ENSURE_SERIES_MANAGED(MAP_HASHLIST(map));

@@ -1421,7 +1421,7 @@ REBNATIVE(list_env)
 {
     REBARR *array = String_List_To_Array(OS_LIST_ENV());
     REBMAP *map = Mutate_Array_Into_Map(array);
-    Val_Init_Map(D_OUT, map);
+    Init_Map(D_OUT, map);
 
     return R_OUT;
 }

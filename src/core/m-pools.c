@@ -539,14 +539,13 @@ void Free_Node(REBCNT pool_id, void *pv)
 //
 //  Series_Data_Alloc: C
 //
-// Allocates element array for an already allocated REBSER header
-// structure.  Resets the bias and tail to zero, and sets the new
-// width.  Flags like SERIES_FLAG_LOCKED are left as they were, and other
-// fields in the series structure are untouched.
+// Allocates element array for an already allocated REBSER node structure.
+// Resets the bias and tail to zero, and sets the new width.  Flags like
+// SERIES_FLAG_FIXED_SIZE are left as they were, and other fields in the
+// series structure are untouched.
 //
-// This routine can thus be used for an initial construction
-// or an operation like expansion.  Currently not exported
-// from this file.
+// This routine can thus be used for an initial construction or an operation
+// like expansion.  Currently not exported from this file.
 //
 static REBOOL Series_Data_Alloc(
     REBSER *s,
@@ -613,7 +612,7 @@ static REBOOL Series_Data_Alloc(
         Mem_Pools[SYSTEM_POOL].free++;
     }
 
-    // Keep tflags like SERIES_FLAG_LOCKED, but use new width and bias to 0
+    // Keep flags like SERIES_FLAG_FIXED_SIZE, but use new width and bias to 0
     //
     SER_SET_WIDE(s, wide);
 

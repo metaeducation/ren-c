@@ -303,7 +303,12 @@ static REBCNT Find_Map_Entry(
     // Just a GET of value:
     if (!val) return n;
 
-    if (ANY_ARRAY(key) && !GET_ARR_FLAG(VAL_ARRAY(key), SERIES_FLAG_LOCKED))
+    // If not just a GET, it may try to set the value in the map.  Which means
+    // the key may need to be stored.  Since copies of keys are never made,
+    // a SET must always be done with an immutable key...because if it were
+    // changed, there'd be no notification to rehash the map.
+    //
+    if (!Is_Value_Immutable(key))
         fail (Error(RE_MAP_KEY_UNLOCKED, key));
 
     // Must set the value:
@@ -315,7 +320,7 @@ static REBCNT Find_Map_Entry(
     if (IS_VOID(val)) return 0; // trying to remove non-existing key
 
     // Create new entry.  Note that it does not copy underlying series (e.g.
-    // the data of a string)
+    // the data of a string), which is why the immutability test is necessary
     //
     Append_Value_Core(pairlist, key, key_specifier);
     Append_Value_Core(pairlist, val, val_specifier);
@@ -334,7 +339,7 @@ REBINT PD_Map(REBPVS *pvs)
     assert(IS_MAP(pvs->value));
 
     if (setting)
-        FAIL_IF_LOCKED_SERIES(VAL_SERIES(pvs->value));
+        FAIL_IF_READ_ONLY_SERIES(VAL_SERIES(pvs->value));
 
     if (IS_BLANK(pvs->selector))
         return PE_NONE;
@@ -407,7 +412,7 @@ void MAKE_Map(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 {
     if (ANY_NUMBER(arg)) {
         REBMAP *map = Make_Map(Int32s(arg, 0));
-        Val_Init_Map(out, map);
+        Init_Map(out, map);
     }
     else {
         // !!! R3-Alpha TO of MAP! was like MAKE but wouldn't accept just
@@ -449,7 +454,7 @@ void TO_Map(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
     REBMAP *map = Make_Map(len / 2); // [key value key value...] + END
     Append_Map(map, array, index, specifier, len);
     Rehash_Map(map);
-    Val_Init_Map(out, map);
+    Init_Map(out, map);
 }
 
 
@@ -607,7 +612,7 @@ REBTYPE(Map)
     case SYM_APPEND: {
         INCLUDE_PARAMS_OF_INSERT;
 
-        FAIL_IF_LOCKED_ARRAY(MAP_PAIRLIST(map));
+        FAIL_IF_READ_ONLY_ARRAY(MAP_PAIRLIST(map));
 
         if (!IS_BLOCK(arg))
             fail (Error_Invalid_Arg(val));
@@ -629,7 +634,7 @@ REBTYPE(Map)
     case SYM_REMOVE: {
         INCLUDE_PARAMS_OF_REMOVE;
 
-        FAIL_IF_LOCKED_ARRAY(MAP_PAIRLIST(map));
+        FAIL_IF_READ_ONLY_ARRAY(MAP_PAIRLIST(map));
 
         if (NOT(REF(map)))
             fail (Error_Illegal_Action(REB_MAP, action));
@@ -641,7 +646,7 @@ REBTYPE(Map)
         return R_OUT; }
 
     case SYM_POKE:  // CHECK all pokes!!! to be sure they check args now !!!
-        FAIL_IF_LOCKED_ARRAY(MAP_PAIRLIST(map));
+        FAIL_IF_READ_ONLY_ARRAY(MAP_PAIRLIST(map));
 
         n = Find_Map_Entry(
             map, arg, SPECIFIED, D_ARG(3), SPECIFIED, TRUE
@@ -663,7 +668,7 @@ REBTYPE(Map)
         return R_OUT; }
 
     case SYM_CLEAR:
-        FAIL_IF_LOCKED_ARRAY(MAP_PAIRLIST(map));
+        FAIL_IF_READ_ONLY_ARRAY(MAP_PAIRLIST(map));
 
         Reset_Array(MAP_PAIRLIST(map));
 
@@ -672,7 +677,7 @@ REBTYPE(Map)
         //
         Clear_Series(MAP_HASHLIST(map));
 
-        Val_Init_Map(D_OUT, map);
+        Init_Map(D_OUT, map);
         return R_OUT;
 
     case SYM_REFLECT: {

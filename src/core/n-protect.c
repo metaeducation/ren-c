@@ -37,8 +37,10 @@
 static void Protect_Key(RELVAL *key, REBFLGS flags)
 {
     if (GET_FLAG(flags, PROT_WORD)) {
-        if (GET_FLAG(flags, PROT_SET)) SET_VAL_FLAG(key, TYPESET_FLAG_LOCKED);
-        else CLEAR_VAL_FLAG(key, TYPESET_FLAG_LOCKED);
+        if (GET_FLAG(flags, PROT_SET))
+            SET_VAL_FLAG(key, TYPESET_FLAG_PROTECTED);
+        else
+            CLEAR_VAL_FLAG(key, TYPESET_FLAG_PROTECTED);
     }
 
     if (GET_FLAG(flags, PROT_HIDE)) {
@@ -61,8 +63,8 @@ void Protect_Value(RELVAL *value, REBFLGS flags)
 {
     if (ANY_SERIES(value) || IS_MAP(value))
         Protect_Series(VAL_SERIES(value), VAL_INDEX(value), flags);
-    else if (IS_OBJECT(value) || IS_MODULE(value))
-        Protect_Object(value, flags);
+    else if (ANY_CONTEXT(value))
+        Protect_Context(VAL_CONTEXT(value), flags);
 }
 
 
@@ -71,56 +73,77 @@ void Protect_Value(RELVAL *value, REBFLGS flags)
 //
 // Anything that calls this must call Uncolor() when done.
 //
-void Protect_Series(REBSER *series, REBCNT index, REBFLGS flags)
+void Protect_Series(REBSER *s, REBCNT index, REBFLGS flags)
 {
-    if (Is_Series_Black(series))
+    if (Is_Series_Black(s))
         return; // avoid loop
 
-    if (GET_FLAG(flags, PROT_SET))
-        SET_SER_FLAG(series, SERIES_FLAG_LOCKED);
-    else
-        CLEAR_SER_FLAG(series, SERIES_FLAG_LOCKED);
-
-    if (!Is_Array_Series(series) || !GET_FLAG(flags, PROT_DEEP)) return;
-
-    Flip_Series_To_Black(series); // recursion protection
-
-    RELVAL *val = ARR_AT(AS_ARRAY(series), index);
-    for (; NOT_END(val); val++) {
-        Protect_Value(val, flags);
+    if (GET_FLAG(flags, PROT_SET)) {
+        if (GET_FLAG(flags, PROT_FREEZE)) {
+            assert(GET_FLAG(flags, PROT_DEEP));
+            s->header.bits |= REBSER_REBVAL_FLAG_FROZEN;
+        }
+        else
+            s->header.bits |= REBSER_FLAG_PROTECTED;
     }
+    else {
+        assert(!GET_FLAG(flags, PROT_FREEZE));
+        s->header.bits &= ~cast(REBUPT, REBSER_FLAG_PROTECTED);
+    }
+
+    if (!Is_Array_Series(s) || !GET_FLAG(flags, PROT_DEEP))
+        return;
+
+    Flip_Series_To_Black(s); // recursion protection
+
+    RELVAL *val = ARR_AT(AS_ARRAY(s), index);
+    for (; NOT_END(val); val++)
+        Protect_Value(val, flags);
 }
 
 
 //
-//  Protect_Object: C
+//  Protect_Context: C
 //
 // Anything that calls this must call Uncolor() when done.
 //
-void Protect_Object(RELVAL *value, REBFLGS flags)
+void Protect_Context(REBCTX *c, REBFLGS flags)
 {
-    REBCTX *context = VAL_CONTEXT(value);
-
-    if (Is_Series_Black(ARR_SERIES(CTX_VARLIST(context))))
+    if (Is_Series_Black(ARR_SERIES(CTX_VARLIST(c))))
         return; // avoid loop
 
-    if (GET_FLAG(flags, PROT_SET))
-        SET_ARR_FLAG(CTX_VARLIST(context), SERIES_FLAG_LOCKED);
-    else
-        CLEAR_ARR_FLAG(CTX_VARLIST(context), SERIES_FLAG_LOCKED);
-
-    for (value = CTX_KEY(context, 1); NOT_END(value); value++) {
-        Protect_Key(KNOWN(value), flags);
+    if (GET_FLAG(flags, PROT_SET)) {
+        if (GET_FLAG(flags, PROT_FREEZE)) {
+            assert(GET_FLAG(flags, PROT_DEEP));
+            ARR_SERIES(CTX_VARLIST(c))->header.bits
+                |= REBSER_REBVAL_FLAG_FROZEN;
+        }
+        else {
+            ARR_SERIES(CTX_VARLIST(c))->header.bits
+                |= REBSER_FLAG_PROTECTED;
+        }
     }
+    else {
+        assert(!GET_FLAG(flags, PROT_FREEZE));
+        ARR_SERIES(CTX_VARLIST(c))->header.bits
+            &= ~cast(REBUPT, REBSER_FLAG_PROTECTED);
+    }
+
+    // !!! Keylist may be shared!  R3-Alpha did not account for this, but
+    // if you don't want a protect of one object to protect its instances
+    // there will be a problem.
+    //
+    REBVAL *key = CTX_KEYS_HEAD(c);
+    for (; NOT_END(key); ++key)
+        Protect_Key(key, flags);
 
     if (!GET_FLAG(flags, PROT_DEEP)) return;
 
-    Flip_Series_To_Black(ARR_SERIES(CTX_VARLIST(context))); // for recursion
+    Flip_Series_To_Black(ARR_SERIES(CTX_VARLIST(c))); // for recursion
 
-    value = CTX_VARS_HEAD(context);
-    for (; NOT_END(value); value++) {
-        Protect_Value(value, flags);
-    }
+    REBVAL *var = CTX_VARS_HEAD(c);
+    for (; NOT_END(var); ++var)
+        Protect_Value(var, flags);
 }
 
 
@@ -309,4 +332,139 @@ REBNATIVE(unprotect)
         fail (Error(RE_MISC));
 
     return Protect_Unprotect_Core(frame_, FLAGIT(PROT_WORD));
+}
+
+
+//
+//  Is_Value_Immutable: C
+//
+REBOOL Is_Value_Immutable(const RELVAL *v) {
+    if (
+        IS_BLANK(v)
+        || IS_BAR(v)
+        || IS_LIT_BAR(v)
+        || ANY_SCALAR(v)
+        || ANY_WORD(v)
+    ){
+        return TRUE;
+    }
+
+    if (ANY_ARRAY(v) && Is_Array_Deeply_Frozen(VAL_ARRAY(v)))
+        return TRUE;
+
+    if (ANY_CONTEXT(v) && Is_Context_Deeply_Frozen(VAL_CONTEXT(v)))
+        return TRUE;
+
+    if (ANY_SERIES(v) && Is_Series_Frozen(VAL_SERIES(v)))
+        return TRUE;
+
+    return FALSE;
+}
+
+
+//
+//  locked?: native [
+//
+//  {Determine if the value is locked (deeply and permanently immutable)}
+//
+//      return: [logic!]
+//      value [any-value!]
+//  ]
+//
+REBNATIVE(locked_q)
+{
+    INCLUDE_PARAMS_OF_LOCKED_Q;
+
+    return R_FROM_BOOL(Is_Value_Immutable(ARG(value)));
+}
+
+
+//
+//  lock: native [
+//
+//  {Permanently lock values (if applicable) so they can be immutably shared.}
+//
+//      value [any-value!]
+//          {Value to lock (will be locked deeply if an ANY-ARRAY!)}
+//      /clone
+//          {Will lock a clone of the original (if not already immutable)}
+//  ]
+//
+REBNATIVE(lock)
+//
+// !!! COPY in Rebol truncates before the index.  You can't `y: copy next x`
+// and then `first back y` to get at a copy of the the original `first x`.
+//
+// This locking operation is opportunistic in terms of whether it actually
+// copies the data or not.  But if it did just a normal COPY, it'd truncate,
+// while if it just passes the value through it does not truncate.  So
+// `lock/copy x` wouldn't be semantically equivalent to `lock copy x` :-/
+//
+// So the strategy here is to go with a different option, CLONE.  CLONE was
+// already being considered as an operation due to complaints about backward
+// compatibility if COPY were changed to /DEEP by default.
+//
+// The "freezing" bit can only be used on deep copies, so it would not make
+// sense to use with a shallow one.  However, a truncating COPY/DEEP could
+// be made to have a version operating on read only data that reused a
+// subset of the data.  This would use a "slice"; letting one series refer
+// into another, with a different starting point.  That would complicate the
+// garbage collector because multiple REBSER would be referring into the same
+// data.  So that's a possibility.
+{
+    INCLUDE_PARAMS_OF_LOCK;
+
+    REBVAL *value = ARG(value);
+
+    if (Is_Value_Immutable){
+        *D_OUT = *value;
+        return R_OUT;
+    }
+
+    if (!REF(clone))
+        *D_OUT = *value;
+    else {
+        if (ANY_ARRAY(value)) {
+            Val_Init_Array_Index(
+                D_OUT,
+                VAL_TYPE(value),
+                Copy_Array_Deep_Managed(
+                    VAL_ARRAY(value),
+                    VAL_SPECIFIER(value)
+                ),
+                VAL_INDEX(value)
+            );
+        }
+        else if (ANY_CONTEXT(value)) {
+            const REBOOL deep = TRUE;
+            const REBU64 types = TS_STD_SERIES;
+
+            Val_Init_Context(
+                D_OUT,
+                VAL_TYPE(value),
+                Copy_Context_Core(VAL_CONTEXT(value), deep, types)
+            );
+        }
+        else if (ANY_SERIES(value)) {
+            Val_Init_Series_Index(
+                D_OUT,
+                VAL_TYPE(value),
+                Copy_Sequence(VAL_SERIES(value)),
+                VAL_INDEX(value)
+            );
+        }
+        else
+            fail (Error_Invalid_Type(VAL_TYPE(value))); // not yet implemented
+    }
+
+    if (ANY_ARRAY(D_OUT))
+        Deep_Freeze_Array(VAL_ARRAY(D_OUT));
+    else if (ANY_CONTEXT(D_OUT))
+        Deep_Freeze_Context(VAL_CONTEXT(D_OUT));
+    else if (ANY_SERIES(D_OUT))
+        Freeze_Sequence(VAL_SERIES(D_OUT));
+    else
+        fail (Error_Invalid_Type(VAL_TYPE(D_OUT))); // not yet implemented
+
+    return R_OUT;
 }

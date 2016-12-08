@@ -174,7 +174,7 @@ REBNATIVE(fail)
         // we accept (reserving room for future dialect expansion)
         //
         for (; NOT_END(item); item++) {
-            if (IS_STRING(item) || IS_SCALAR(item))
+            if (IS_STRING(item) || ANY_SCALAR(item))
                 continue;
 
             // Leave the group in and let the reduce take care of it

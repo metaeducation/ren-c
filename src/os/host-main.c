@@ -372,7 +372,18 @@ int Do_String(
         Bind_Values_Deep(ARR_HEAD(code), Lib_Context); */
     }
 
-    if (Do_At_Throws(out, code, 0, SPECIFIED)) { // `code` will be GC protected
+    // The new policy for source code in Ren-C is that it loads read only.
+    // This didn't go through the LOAD Rebol function (should it?  it never
+    // did before.  :-/)  For now, stick with simple binding but lock it.
+    //
+#if defined(NDEBUG)
+    Deep_Freeze_Array(code);
+#else
+    if (!LEGACY(OPTIONS_UNLOCKED_SOURCE))
+        Deep_Freeze_Array(code);
+#endif
+
+    if (Do_At_Throws(out, code, 0, SPECIFIED)) { // array gets GC protected
         if (at_breakpoint) {
             if (
                 IS_FUNCTION(out)

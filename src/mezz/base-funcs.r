@@ -595,6 +595,12 @@ for-back: redescribe [
     specialize 'for-skip [skip: -1]
 )
 
+lock-of: redescribe [
+    "If value is already locked, return it...otherwise CLONE it and LOCK it."
+](
+    specialize 'lock [clone: true]
+)
+
 
 ; To help for discoverability, there is SET-INFIX and INFIX?.  However, the
 ; term can be a misnomer if the function is more advanced, and using the

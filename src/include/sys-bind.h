@@ -334,7 +334,7 @@ inline static REBVAL *Get_Var_Core(
     else {
         assert(*eval_type == REB_FUNCTION || *eval_type == REB_0_LOOKBACK);
 
-        if (GET_VAL_FLAG(key, TYPESET_FLAG_LOCKED)) {
+        if (GET_VAL_FLAG(key, TYPESET_FLAG_PROTECTED)) {
             //
             // The key corresponding to the var being looked up contains
             // some flags, including one of whether or not the variable is
@@ -343,7 +343,7 @@ inline static REBVAL *Get_Var_Core(
 
             if (flags & GETVAR_UNBOUND_OK) return NULL;
 
-            fail (Error(RE_LOCKED_WORD, any_word));
+            fail (Error(RE_PROTECTED_WORD, any_word));
         }
 
         // If we are writing, then we write the state of the lookback boolean

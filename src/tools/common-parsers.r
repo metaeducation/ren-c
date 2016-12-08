@@ -250,9 +250,15 @@ proto-parser: context [
             )
         ]
 
-        other-segment: [thru newline]
+        ; We COPY/DEEP here because this part gets invasively modified by
+        ; the source analysis tools.
+        ;
+        other-segment: copy/deep [thru newline]
 
-        format2015-func-section: [
+        ; we COPY/DEEP here because this part gets invasively modified by
+        ; the source analysis tools.
+        ;
+        format2015-func-section: copy/deep [
             doubleslashed-lines
             and is-format2015-intro
             function-proto some white-space

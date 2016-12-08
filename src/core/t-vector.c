@@ -520,15 +520,15 @@ void Pick_Vector(REBVAL *out, const REBVAL *value, const REBVAL *picker) {
 
 
 //
-//  Poke_Vector_Fail_If_Locked: C
+//  Poke_Vector_Fail_If_Read_Only: C
 //
-void Poke_Vector_Fail_If_Locked(
+void Poke_Vector_Fail_If_Read_Only(
     REBVAL *value,
     const REBVAL *picker,
     const REBVAL *poke
 ) {
     REBSER *vect = VAL_SERIES(value);
-    FAIL_IF_LOCKED_SERIES(vect);
+    FAIL_IF_READ_ONLY_SERIES(vect);
 
     REBINT n;
     if (IS_INTEGER(picker) || IS_DECIMAL(picker))
@@ -576,7 +576,7 @@ void Poke_Vector_Fail_If_Locked(
 REBINT PD_Vector(REBPVS *pvs)
 {
     if (pvs->opt_setval) {
-        Poke_Vector_Fail_If_Locked(
+        Poke_Vector_Fail_If_Read_Only(
             KNOWN(pvs->value), pvs->selector, pvs->opt_setval
         );
         return PE_OK;
@@ -612,7 +612,7 @@ REBTYPE(Vector)
         return R_OUT;
 
     case SYM_POKE:
-        Poke_Vector_Fail_If_Locked(value, arg, D_ARG(3));
+        Poke_Vector_Fail_If_Read_Only(value, arg, D_ARG(3));
         *D_OUT = *D_ARG(3);
         return R_OUT;
 
@@ -631,7 +631,7 @@ REBTYPE(Vector)
     case SYM_RANDOM: {
         INCLUDE_PARAMS_OF_RANDOM;
 
-        FAIL_IF_LOCKED_SERIES(vect);
+        FAIL_IF_READ_ONLY_SERIES(vect);
 
         if (REF(seed) || REF(only))
             fail (Error(RE_BAD_REFINES));

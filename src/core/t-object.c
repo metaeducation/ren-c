@@ -196,7 +196,7 @@ static void Append_To_Context(REBCTX *context, REBVAL *arg)
         REBVAL *key = CTX_KEY(context, i);
         REBVAL *var = CTX_VAR(context, i);
 
-        if (GET_VAL_FLAG(key, TYPESET_FLAG_LOCKED))
+        if (GET_VAL_FLAG(key, TYPESET_FLAG_PROTECTED))
             fail (Error_Protected_Key(key));
 
         if (GET_VAL_FLAG(key, TYPESET_FLAG_HIDDEN))
@@ -470,9 +470,9 @@ REBINT PD_Context(REBPVS *pvs)
     if (
         pvs->opt_setval
         && IS_END(pvs->item + 1)
-        && GET_VAL_FLAG(CTX_KEY(context, n), TYPESET_FLAG_LOCKED)
+        && GET_VAL_FLAG(CTX_KEY(context, n), TYPESET_FLAG_PROTECTED)
     ) {
-        fail (Error(RE_LOCKED_WORD, pvs->selector));
+        fail (Error(RE_PROTECTED_WORD, pvs->selector));
     }
 
     pvs->value = CTX_VAR(context, n);
@@ -567,6 +567,45 @@ REBNATIVE(set_meta)
 
 
 //
+//  Copy_Context_Core: C
+//
+// R3-Alpha hadn't factored out a routine to copy objects, it was just in the
+// COPY action.  This is a basic factoring of that, which had the ability to
+// specify what types would be copied and whether they would be done deeply.
+//
+REBCTX *Copy_Context_Core(REBCTX *original, REBOOL deep, REBU64 types)
+{
+    REBARR *varlist = Copy_Array_Shallow(CTX_VARLIST(original), SPECIFIED);
+    SET_ARR_FLAG(varlist, ARRAY_FLAG_VARLIST);
+
+    // The type information and fields in the rootvar (at head of the varlist)
+    // are filled in because it's a copy, but the varlist needs to be updated
+    // in the copy to the one just created.
+    //
+    ARR_HEAD(varlist)->payload.any_context.varlist = varlist;
+
+    REBCTX *copy = AS_CONTEXT(varlist); // now a well-formed context
+
+    // Reuse the keylist of the original.  (If the context of the source or
+    // the copy are expanded, the sharing is unlinked and a copy is made).
+    //
+    INIT_CTX_KEYLIST_SHARED(copy, CTX_KEYLIST(original));
+
+    if (types != 0) {
+        Clonify_Values_Len_Managed(
+            CTX_VARS_HEAD(copy),
+            SPECIFIED,
+            CTX_LEN(copy),
+            deep,
+            types
+        );
+    }
+
+    return copy;
+}
+
+
+//
 //  REBTYPE: C
 //
 // Handles object!, module!, and error! datatypes.
@@ -579,7 +618,7 @@ REBTYPE(Context)
 
     switch (action) {
     case SYM_APPEND:
-        FAIL_IF_LOCKED_CONTEXT(VAL_CONTEXT(value));
+        FAIL_IF_READ_ONLY_CONTEXT(VAL_CONTEXT(value));
         if (!IS_OBJECT(value) && !IS_MODULE(value))
             fail (Error_Illegal_Action(VAL_TYPE(value), action));
         Append_To_Context(VAL_CONTEXT(value), arg);
@@ -598,33 +637,23 @@ REBTYPE(Context)
         if (REF(part))
             fail (Error(RE_BAD_REFINES));
 
-        REBU64 types = 0;
-        if (REF(deep))
-            types |= REF(types) ? 0 : TS_STD_SERIES;
+        REBU64 types;
         if (REF(types)) {
             if (IS_DATATYPE(ARG(kinds)))
-                types |= FLAGIT_KIND(VAL_TYPE_KIND(ARG(kinds)));
+                types = FLAGIT_KIND(VAL_TYPE_KIND(ARG(kinds)));
             else
-                types |= VAL_TYPESET_BITS(ARG(kinds));
+                types = VAL_TYPESET_BITS(ARG(kinds));
         }
+        else if (REF(deep))
+            types = TS_STD_SERIES;
+        else
+            types = 0;
 
-        context = AS_CONTEXT(
-            Copy_Array_Shallow(CTX_VARLIST(VAL_CONTEXT(value)), SPECIFIED)
+        Val_Init_Context(
+            D_OUT,
+            VAL_TYPE(value),
+            Copy_Context_Core(VAL_CONTEXT(value), REF(deep), types)
         );
-        INIT_CTX_KEYLIST_SHARED(context, CTX_KEYLIST(VAL_CONTEXT(value)));
-        SET_ARR_FLAG(CTX_VARLIST(context), ARRAY_FLAG_VARLIST);
-        CTX_VALUE(context)->payload.any_context.varlist = CTX_VARLIST(context);
-
-        if (types != 0) {
-            Clonify_Values_Len_Managed(
-                CTX_VARS_HEAD(context),
-                SPECIFIED,
-                CTX_LEN(context),
-                REF(deep),
-                types
-            );
-        }
-        Val_Init_Context(D_OUT, VAL_TYPE(value), context);
         return R_OUT; }
 
     case SYM_SELECT:

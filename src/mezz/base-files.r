@@ -187,9 +187,14 @@ intern: function [
 
 load: function [
     {Simple load of a file, URL, or string/binary - minimal boot version.}
+
     source [file! url! string! binary!]
-    /header  {Includes REBOL header object if present}
-    /all     {Load all values, including header (as block)}
+    /header
+        {Includes REBOL header object if present}
+    /all
+        {Load all values, including header (as block)}
+    /unlocked
+        {Do not lock the source from modification.}
     ;/unbound {Do not bind the block}
 ][
     load_ALL: all
@@ -224,7 +229,12 @@ load: function [
         ][data: first data]
     ]
 
-    :data
+    ; This is the low-level LOAD code.  It seems to work all right when it
+    ; assumes it locks things, so keep that as a default.  (User-level LOAD
+    ; does not lock by default, but code that uses it to load code to run
+    ; locks it, e.g. DO %filename.reb)
+    ;
+    either unlocked [:data] [lock :data]
 ]
 
 ; Reserve these slots near LOAD:

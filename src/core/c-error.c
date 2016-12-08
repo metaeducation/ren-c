@@ -1389,7 +1389,7 @@ REBCTX *Error_Protected_Key(REBVAL *key)
     REBVAL key_name;
     Val_Init_Word(&key_name, REB_WORD, VAL_KEY_SPELLING(key));
 
-    return Error(RE_LOCKED_WORD, &key_name, END_CELL);
+    return Error(RE_PROTECTED_WORD, &key_name, END_CELL);
 }
 
 

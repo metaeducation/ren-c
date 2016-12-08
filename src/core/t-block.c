@@ -576,7 +576,7 @@ REBINT PD_Array(REBPVS *pvs)
     }
 
     if (pvs->opt_setval)
-        FAIL_IF_LOCKED_SERIES(VAL_SERIES(pvs->value));
+        FAIL_IF_READ_ONLY_SERIES(VAL_SERIES(pvs->value));
 
     pvs->value_specifier = IS_SPECIFIC(pvs->value)
         ? VAL_SPECIFIER(const_KNOWN(pvs->value))
@@ -662,7 +662,7 @@ REBTYPE(Array)
                 return R_VOID;
             }
         } else {
-            FAIL_IF_LOCKED_ARRAY(array);
+            FAIL_IF_READ_ONLY_ARRAY(array);
             if (IS_VOID(D_OUT)) {
                 assert(!slot);
                 fail (Error_Out_Of_Range(arg));
@@ -679,7 +679,7 @@ REBTYPE(Array)
 
         REBCNT len;
 
-        FAIL_IF_LOCKED_ARRAY(array);
+        FAIL_IF_READ_ONLY_ARRAY(array);
 
         if (REF(part)) {
             Partial1(value, ARG(limit), &len);
@@ -782,7 +782,7 @@ REBTYPE(Array)
             &len
         );
 
-        FAIL_IF_LOCKED_ARRAY(array);
+        FAIL_IF_READ_ONLY_ARRAY(array);
         index = VAL_INDEX(value);
 
         REBFLGS flags = 0;
@@ -806,7 +806,7 @@ REBTYPE(Array)
     }
 
     case SYM_CLEAR: {
-        FAIL_IF_LOCKED_ARRAY(array);
+        FAIL_IF_READ_ONLY_ARRAY(array);
         if (index < cast(REBINT, VAL_LEN_HEAD(value))) {
             if (index == 0) Reset_Array(array);
             else {
@@ -856,7 +856,7 @@ REBTYPE(Array)
 
     case SYM_TRIM: {
         INCLUDE_PARAMS_OF_TRIM;
-        FAIL_IF_LOCKED_ARRAY(array);
+        FAIL_IF_READ_ONLY_ARRAY(array);
 
         if (REF(auto) || REF(with) || REF(all) || REF(lines))
             fail (Error(RE_BAD_REFINES));
@@ -904,8 +904,8 @@ REBTYPE(Array)
         if (!ANY_ARRAY(arg))
             fail (Error_Invalid_Arg(arg));
 
-        FAIL_IF_LOCKED_ARRAY(array);
-        FAIL_IF_LOCKED_ARRAY(VAL_ARRAY(arg));
+        FAIL_IF_READ_ONLY_ARRAY(array);
+        FAIL_IF_READ_ONLY_ARRAY(VAL_ARRAY(arg));
 
         if (
             index < cast(REBINT, VAL_LEN_HEAD(value))
@@ -925,7 +925,7 @@ REBTYPE(Array)
         REBCNT len;
         Partial1(value, D_ARG(3), &len);
 
-        FAIL_IF_LOCKED_ARRAY(array);
+        FAIL_IF_READ_ONLY_ARRAY(array);
 
         if (len != 0) {
             //
@@ -946,7 +946,7 @@ REBTYPE(Array)
     case SYM_SORT: {
         INCLUDE_PARAMS_OF_SORT;
 
-        FAIL_IF_LOCKED_ARRAY(array);
+        FAIL_IF_READ_ONLY_ARRAY(array);
         Sort_Block(
             value,
             REF(case),

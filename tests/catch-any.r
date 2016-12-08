@@ -14,12 +14,11 @@ Rebol [
 ]
 
 make object! [
-    do-block: func [
+    do-block: function [
         ; helper for catching BREAK, CONTINUE, THROW or QUIT
         return: [<opt> any-value!]
         block [block!]
         exception [word!]
-        /local result
     ] [
         ; TRY wraps CATCH/QUIT to circumvent bug#851
         try [
@@ -29,7 +28,7 @@ make object! [
                         try [
                             set exception 'return
                             print mold block ;-- !!! make this an option
-                            set/opt 'result do block
+                            result: do block
                             set exception blank
                             return :result
                         ]

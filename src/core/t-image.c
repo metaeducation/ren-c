@@ -951,7 +951,7 @@ REBTYPE(Image)
 
     // Check must be in this order (to avoid checking a non-series value);
     if (action >= SYM_TAKE && action <= SYM_SORT)
-        FAIL_IF_LOCKED_SERIES(series);
+        FAIL_IF_READ_ONLY_SERIES(series);
 
     // Dispatch action:
     switch (action) {
@@ -1008,7 +1008,7 @@ REBTYPE(Image)
         return R_OUT;
 
     case SYM_POKE:
-        Poke_Image_Fail_If_Locked(value, arg, D_ARG(3));
+        Poke_Image_Fail_If_Read_Only(value, arg, D_ARG(3));
         *D_OUT = *D_ARG(3);
         return R_OUT;
 
@@ -1261,15 +1261,15 @@ void Pick_Image(REBVAL *out, const REBVAL *value, const REBVAL *picker)
 
 
 //
-//  Poke_Image_Fail_If_Locked: C
+//  Poke_Image_Fail_If_Read_Only: C
 //
-void Poke_Image_Fail_If_Locked(
+void Poke_Image_Fail_If_Read_Only(
     REBVAL *value,
     const REBVAL *picker,
     const REBVAL *poke
 ) {
     REBSER *series = VAL_SERIES(value);
-    FAIL_IF_LOCKED_SERIES(series);
+    FAIL_IF_READ_ONLY_SERIES(series);
 
     REBINT index = cast(REBINT, VAL_INDEX(value));
     REBINT len = VAL_LEN_HEAD(value) - index;
@@ -1379,7 +1379,7 @@ void Poke_Image_Fail_If_Locked(
 REBINT PD_Image(REBPVS *pvs)
 {
     if (pvs->opt_setval) {
-        Poke_Image_Fail_If_Locked(
+        Poke_Image_Fail_If_Read_Only(
             KNOWN(pvs->value), pvs->selector, pvs->opt_setval
         );
         return PE_OK;

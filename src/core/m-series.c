@@ -348,7 +348,7 @@ void Reset_Array(REBARR *a)
 //
 void Clear_Series(REBSER *s)
 {
-    assert(!GET_SER_FLAG(s, SERIES_FLAG_LOCKED));
+    assert(!Is_Series_Read_Only(s));
 
     if (GET_SER_FLAG(s, SERIES_FLAG_HAS_DYNAMIC)) {
         Unbias_Series(s, FALSE);
