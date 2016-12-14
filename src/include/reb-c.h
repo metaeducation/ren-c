@@ -831,7 +831,7 @@ typedef REBUPT REBFLGS;
     #define FLAGIT_LEFT(n) \
         ((REBUPT)1 << PLATFORM_BITS - (n) - 1) // 63,62,61.. or 32,31,30..
 
-    #define FLAGVAL_FIRST(n) \
+    #define FLAGVAL_FIRST(val) \
         ((REBUPT)val << PLATFORM_BITS - 8) // val <= 255
 
     #define FLAGVAL_RIGHT(val) \
@@ -845,7 +845,7 @@ typedef REBUPT REBFLGS;
     #define FLAGIT_LEFT(n) \
         ((REBUPT)1 << 7 + ((n) / 8) * 8 - (n) % 8) // 7,6,5..0,15,14..8,23..
 
-    #define FLAGVAL_FIRST(n) \
+    #define FLAGVAL_FIRST(val) \
         ((REBUPT)val) // val <= 255
 
     #define FLAGVAL_RIGHT(val) \

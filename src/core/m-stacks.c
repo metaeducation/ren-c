@@ -56,13 +56,13 @@ void Init_Stacks(REBCNT size)
 
     // Zero values for initial chunk, also sets offset to 0
     //
-    Init_Header_Aliased(&TG_Top_Chunk->header, 0);
+    Init_Endlike_Header(&TG_Top_Chunk->header, 0);
     TG_Top_Chunk->offset = 0;
     TG_Top_Chunk->size = BASE_CHUNK_SIZE;
 
-    // Implicit termination trick--see VALUE_FLAG_NOT_END and related notes
+    // Implicit termination trick--see CELL_MASK, END_FLAG and related notes
     //
-    Init_Header_Aliased(
+    Init_Endlike_Header(
         &cast(
             struct Reb_Chunk*, cast(REBYTE*, TG_Top_Chunk) + BASE_CHUNK_SIZE
         )->header,

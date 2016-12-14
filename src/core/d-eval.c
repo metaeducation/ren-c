@@ -170,6 +170,8 @@ void Do_Core_Entry_Checks_Debug(REBFRM *f)
     //
     assert(f->value);
 
+    assert((f->flags.bits & END_MASK) && NOT(f->flags.bits & CELL_MASK));
+
     f->label = NULL;
     f->label_debug = NULL;
 
@@ -217,7 +219,10 @@ static void Do_Core_Shared_Checks_Debug(REBFRM *f) {
 
     //=//// ^-- ABOVE CHECKS *ALWAYS* APPLY ///////////////////////////////=//
 
-    if (IS_END(f->value) || THROWN(f->out))
+    if (IS_END(f->value))
+        return;
+
+    if (NOT_END(f->out) && THROWN(f->out))
         return;
 
     assert(f->value_type == VAL_TYPE(f->value));

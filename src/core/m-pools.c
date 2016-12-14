@@ -717,7 +717,7 @@ static REBOOL Series_Data_Alloc(
         // avoids writing the unwritable locations by checking for END first.
         //
         RELVAL *ultimate = ARR_AT(AS_ARRAY(s), s->content.dynamic.rest - 1);
-        ultimate->header.bits = 0;
+        ultimate->header.bits = END_MASK;
     #if !defined(NDEBUG)
         Set_Track_Payload_Debug(ultimate, __FILE__, __LINE__);
     #endif
@@ -873,7 +873,9 @@ REBSER *Make_Series(REBCNT capacity, REBYTE wide, REBCNT flags)
     REBSER *s = cast(REBSER*, Make_Node(SER_POOL));
 
     // Header bits can't be zero.  The NOT_FREE_MASK is sufficient to identify
-    // this as a REBSER node that is not GC managed.
+    // this as a REBSER node that is not GC managed.  (Because END_MASK is
+    // not set, it cannot act as an implicit END marker; there has not
+    // yet been a pressing need for a REBSER* to be able to do so.)
     //
     s->header.bits = NOT_FREE_MASK;
 
@@ -902,7 +904,7 @@ REBSER *Make_Series(REBCNT capacity, REBYTE wide, REBCNT flags)
     // so that if a REBVAL is in slot [0] then it would appear terminated
     // if the [1] slot was read.
     //
-    Init_Header_Aliased(&s->info, 0); // will act as unwritable END marker
+    Init_Endlike_Header(&s->info, 0); // acts as unwritable END marker
     assert(IS_END(&s->content.values[1])); // test by using Reb_Value pointer
 
     s->content.dynamic.data = NULL;
@@ -976,7 +978,7 @@ REBSER *Make_Series(REBCNT capacity, REBYTE wide, REBCNT flags)
 
     CHECK_MEMORY(2);
 
-    assert(NOT(s->info.bits & NOT_END_MASK));
+    assert(s->info.bits & END_MASK);
     assert(NOT(s->info.bits & CELL_MASK));
     assert(SER_LEN(s) == 0);
     return s;
@@ -1526,7 +1528,7 @@ void GC_Kill_Series(REBSER *s)
         }
     }
 
-    s->info.bits = 0; // includes width
+    s->info.bits = SERIES_FLAG_1_IS_TRUE; // includes width
 
     TRASH_POINTER_IF_DEBUG(s->link.keylist);
 

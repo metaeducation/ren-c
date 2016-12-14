@@ -115,44 +115,39 @@
 #define NOT_FREE_MASK \
     HEADERFLAG(0)
 
-// `NOT_END_MASK`
+// `END_MASK`
 //
-// If set, it means this is *not* an end marker.  The bit has been picked
-// strategically to be in the negative sense, and in the lowest bit position.
-// This means that any even-valued unsigned integer REBUPT value can be used
-// to implicitly signal an end.
+// If set, it means this header should signal the termination of an array
+// of REBVAL, as in `for (; NOT_END(value); ++value) {}` loops.  In this
+// sense it means the header is functioning much like a null-terminator for
+// C strings.
 //
-// If this bit is 0, it means that *no other header bits are valid*, as it
-// may contain arbitrary data used for non-REBVAL purposes.
+// *** This bit being set does not necessarily mean the header is sitting at
+// the head of a full REBVAL-sized slot! ***  
 //
-// Note that the value doing double duty as a number for one purpose and an
-// END marker as another *must* be another REBUPT.  It cannot be a pointer
-// (despite being guaranteed-REBUPT-sized, and despite having a value that
-// is 0 when you mod it by 2.  So-called "type-punning" is unsafe with a
-// likelihood of invoking "undefined behavior", while it's the compiler's
-// responsibility to guarantee that pointers to memory of the same type of
-// data be compatibly read-and-written.
+// Some data structures punctuate arrays of REBVALs with a Reb_Header that
+// has the END_MASK bit set, and the CELL_MASK bit clear.   While this
+// functions fine as the terminator for a finite number of REBVAL cells, it
+// can only be read with IS_END() with no other operations legal.  It's
+// only valid to overwrite end markers when CELL_MASK is set.
 //
-#define NOT_END_MASK \
+#define END_MASK \
     HEADERFLAG(1)
 
 // `CELL_MASK`
 //
-// This is for the debug build, to make it safer to use the implementation
-// trick of NOT_END_MASK.  It indicates the slot is "REBVAL sized", and can
-// be written into--including to be written with SET_END().
+// If this bit is set in the header, it indicates the slot the header is for
+// is `sizeof(REBVAL)`.
 //
 // Originally it was just for the debug build, to make it safer to use the
-// implementation trick of NOT_END_MASK (so that clients would not try to write
-// a full REBVAL onto a "double-duty" END marker.)  Then it became useful for
-// the release build as well, to distinguish "doubular" REBSER nodes (holders
-// for two REBVALs in the same pool as ordinary REBSERs) from an ordinary
-// REBSER node, as they will have the cell mask clear in their node header.
+// implementation trick of "implicit END markers".  Checking for CELL_MASK
+// before allowing an operation like Val_Init_Word() to write a location
+// avoided clobbering END_MASK signals which were only sizeof(Reb_Header).
 //
-// It's again a strategic choice--the 2nd lowest bit and in the negative.
-// This means any REBUPT value whose % 4 within a container doing
-// double-duty as an implicit terminator for the contained values can
-// trigger an alert if the values try to overwrite it.
+// However, in the release build it became used to distinguish "pairing"
+// REBSER nodes (holders for two REBVALs in the same pool as ordinary REBSERs)
+// from an ordinary REBSER node.  Plain REBSERs have the cell mask clear,
+// while paring values have it set.
 //
 #define CELL_MASK \
     HEADERFLAG(2)
@@ -759,22 +754,14 @@ struct Reb_Value
 // content, and this final slot was used for a special REBVAL called END!.
 // Like a null terminator in a C string, it was possible to start from one
 // point in the series and traverse to find the end marker without needing
-// to maintain a count.  Rebol series store their length also--but it's
-// faster and more general to use the terminator.
+// to maintain a count.  (Rebol series store their length also--but it's
+// faster and more general to do traversals using the terminator.)
 //
-// Ren-C changed this so that end is not a data type, but rather seeing a
-// header slot with the lowest bit set to 0.  (See NOT_END_MASK for
-// an explanation of this choice.)  The upshot is that a data structure
-// designed to hold Rebol arrays is able to terminate an array at full
-// capacity with a pointer-sized integer with the lowest 2 bits clear, and
-// use the rest of the bits for other purposes.  (See WRITABLE_MASK_DEBUG
-// for why it's the low 2 bits and not just the lowest bit.)
-//
-// This means not only is a full REBVAL not needed to terminate, the sunk cost
-// of an existing 32-bit or 64-bit number (depending on platform) can be used
-// to avoid needing even 1/4 of a REBVAL for a header to terminate.  (See the
-// `size` field in `struct Reb_Chunk` from %sys-stack.h for a simple example
-// of the technique.)
+// Ren-C changed this so that end is not a data type, but a header bit.
+// (See END_MASK for an explanation of this choice.)  This means not only is
+// a full REBVAL not needed to terminate, the sunk cost of an existing 32-bit
+// or 64-bit number (depending on platform) can be used to avoid needing even
+// 1/4 of a REBVAL for a header to terminate.
 //
 // !!! Because Rebol Arrays (REBARR) have both a length and a terminator, it
 // is important to keep these in sync.  R3-Alpha sought to give code the
@@ -794,14 +781,19 @@ struct Reb_Value
     c_cast(const REBVAL*, &PG_End_Cell)
 
 #define IS_END_MACRO(v) \
-    NOT((v)->header.bits & NOT_END_MASK)
+    LOGICAL((v)->header.bits & END_MASK)
 
 #ifdef NDEBUG
     #define IS_END(v) \
         IS_END_MACRO(v)
 
     inline static void SET_END(RELVAL *v) {
-        v->header.bits = 0;
+        //
+        // Invalid UTF-8 byte, but also END_MASK and CELL_MASK set.  Other
+        // flags are set (e.g. REBSER_REBVAL_FLAG_MANAGED) which should not
+        // be of concern or looked at due to the IS_END() status.
+        //
+        v->header.bits = FLAGVAL_FIRST(255);
     }
 #else
     // Note: These must be macros (that don't need IS_END_Debug or
@@ -819,6 +811,57 @@ struct Reb_Value
 
 #define NOT_END(v) \
     NOT(IS_END(v))
+
+//
+// With these definitions:
+//
+//     struct Foo_Type { struct Reb_Header header; int x; }
+//     struct Foo_Type *foo = ...;
+//
+//     struct Bar_Type { struct Reb_Header header; float x; }
+//     struct Bar_Type *bar = ...;
+//
+// This C code:
+//
+//     foo->header.bits = 1020;
+//
+// ...is actually different *semantically* from this code:
+//
+//     struct Reb_Header *alias = &foo->header;
+//     alias->bits = 1020;
+//
+// The first is considered as not possibly able to affect the header in a
+// Bar_Type.  It only is seen as being able to influence the header in other
+// Foo_Type instances.
+//
+// The second case, by forcing access through a generic aliasing pointer,
+// will cause the optimizer to realize all bets are off for any type which
+// might contain a `struct Reb_Header`.
+//
+// This is an important point to know, with certain optimizations of writing
+// headers through one type and then reading them through another.  That
+// trick is used for "implicit termination", see documentation of IS_END().
+//
+// (Note that this "feature" of writing through pointers actually slows
+// things down.  Desire to control this behavior is why the `restrict`
+// keyword exists in C99: https://en.wikipedia.org/wiki/Restrict )
+//
+inline static void Init_Endlike_Header(struct Reb_Header *alias, REBUPT bits)
+{
+    // It's not strictly necessary to assert NOT_FREE_MASK isn't set.  If
+    // END_MASK is set and it's not all `11111111` are set anyway, then this
+    // won't be generally distinguishable from a UTF-8 character either way.
+    //
+    assert(NOT(bits & (END_MASK | CELL_MASK)));
+
+    // Write from generic pointer to `struct Reb_Header`.  Make it look like
+    // a "terminating non-cell".  This means it will stop REBVAL* traversals
+    // that bump into it, as well as stop value cell initializations in the
+    // debug build from thinking it's a cell-sized slot that could be
+    // overwritten with a non-END.
+    //
+    alias->bits = bits | END_MASK;
+}
 
 
 //=////////////////////////////////////////////////////////////////////////=//

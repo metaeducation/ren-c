@@ -212,7 +212,7 @@ static REBOOL Subparse_Throws(
     f->func = NAT_FUNC(subparse);
     f->underlying = NAT_FUNC(subparse);
 
-    Init_Header_Aliased(&f->flags, 0); // will implicitly terminate f->cell
+    Init_Endlike_Header(&f->flags, 0); // implicitly terminate f->cell
     SET_END(&f->cell); // cell must have some form of initialization, though
 
     f->param = END_CELL; // informs infix lookahead

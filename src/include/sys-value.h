@@ -339,7 +339,7 @@ inline static void VAL_SET_TYPE_BITS(RELVAL *v, enum Reb_Kind kind) {
 
 #define VAL_RESET_HEADER_COMMON(v,kind) \
     ((v)->header.bits = \
-        HEADERIZE_KIND(kind) | NOT_FREE_MASK | NOT_END_MASK | CELL_MASK)
+        HEADERIZE_KIND(kind) | NOT_FREE_MASK | CELL_MASK)
 
 #ifdef NDEBUG
     #define ASSERT_CELL_WRITABLE_IF_CPP_DEBUG(v,file,line) \
@@ -551,7 +551,7 @@ inline static REBOOL IS_VOID(const RELVAL *v)
 
 inline static void SET_BLANK_COMMON(RELVAL *v) {
     v->header.bits = HEADERIZE_KIND(REB_BLANK) \
-        | NOT_FREE_MASK | VALUE_FLAG_FALSE | NOT_END_MASK | CELL_MASK;
+        | NOT_FREE_MASK | VALUE_FLAG_FALSE | CELL_MASK;
 }
 
 #ifdef NDEBUG
@@ -644,12 +644,12 @@ inline static void SET_BLANK_COMMON(RELVAL *v) {
 
 inline static void SET_TRUE_COMMON(RELVAL *v) {
     v->header.bits = HEADERIZE_KIND(REB_LOGIC) \
-        | NOT_FREE_MASK | NOT_END_MASK | CELL_MASK;
+        | NOT_FREE_MASK | CELL_MASK;
 }
 
 inline static void SET_FALSE_COMMON(RELVAL *v) {
     v->header.bits = HEADERIZE_KIND(REB_LOGIC) \
-        | NOT_FREE_MASK | NOT_END_MASK | CELL_MASK | VALUE_FLAG_FALSE;
+        | NOT_FREE_MASK | CELL_MASK | VALUE_FLAG_FALSE;
 }
 
 #define IS_CONDITIONAL_FALSE_COMMON(v) \

@@ -333,7 +333,7 @@ inline static REBVAL* Push_Value_Chunk_Of_Length(REBCNT num_values) {
             cast(REBYTE*, TG_Top_Chunk) + CHUNK_SIZE(TG_Top_Chunk)
         );
 
-        Init_Header_Aliased(&chunk->header, 0);
+        Init_Endlike_Header(&chunk->header, 0);
         chunk->size = size;
 
         // top's offset accounted for previous chunk, account for ours
@@ -368,7 +368,7 @@ inline static REBVAL* Push_Value_Chunk_Of_Length(REBCNT num_values) {
 
         chunk = cast(struct Reb_Chunk*, &chunker->next->payload);
 
-        Init_Header_Aliased(&chunk->header, 0);
+        Init_Endlike_Header(&chunk->header, 0);
         chunk->size = size;
         chunk->offset = 0;
     }
@@ -377,7 +377,7 @@ inline static REBVAL* Push_Value_Chunk_Of_Length(REBCNT num_values) {
     // Set header in next element to 0, so it can serve as a terminator
     // for the data range of this until it gets instantiated (if ever)
     //
-    Init_Header_Aliased(
+    Init_Endlike_Header(
         &cast(struct Reb_Chunk*, cast(REBYTE*, chunk) + size)->header,
         0
     );

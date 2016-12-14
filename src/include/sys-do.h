@@ -185,7 +185,7 @@ inline static void PUSH_SAFE_ENUMERATOR(
     SET_FRAME_VALUE(f, VAL_ARRAY_AT(v));
     f->source.array = VAL_ARRAY(v);
 
-    Init_Header_Aliased(&f->flags, DO_FLAG_NORMAL);
+    Init_Endlike_Header(&f->flags, 0);
 
     f->gotten = NULL; // tells ET_WORD and ET_GET_WORD they must do a get
     f->index = VAL_INDEX(v) + 1;
@@ -727,7 +727,7 @@ no_optimization:
     SET_FRAME_VALUE(child, parent->value);
     child->index = parent->index;
     child->specifier = parent->specifier;
-    child->flags.bits = flags;
+    Init_Endlike_Header(&child->flags, flags);
     child->pending = parent->pending;
 
     Do_Core(child);
@@ -808,7 +808,7 @@ inline static REBIXO DO_NEXT_MAY_THROW(
     f->specifier = specifier;
     f->index = index + 1;
 
-    Init_Header_Aliased(&f->flags, 0); // ??? is this ever looked at?
+    Init_Endlike_Header(&f->flags, 0); // ??? is this ever looked at?
 
     f->pending = NULL;
     f->gotten = NULL;
@@ -864,7 +864,7 @@ inline static REBIXO Do_Array_At_Core(
     f.source.array = array;
     f.specifier = specifier;
 
-    Init_Header_Aliased(&f.flags, flags); // see notes on definition
+    Init_Endlike_Header(&f.flags, flags); // see notes on definition
 
     f.gotten = NULL; // so ET_WORD and ET_GET_WORD do their own Get_Var
     f.pending = NULL;
@@ -1061,7 +1061,7 @@ inline static REBIXO Do_Va_Core(
     f.specifier = SPECIFIED; // va_list values MUST be full REBVAL* already
     f.pending = VA_LIST_PENDING;
 
-    Init_Header_Aliased(&f.flags, flags | DO_FLAG_VA_LIST); // see notes
+    Init_Endlike_Header(&f.flags, flags | DO_FLAG_VA_LIST); // see notes
 
     f.eval_type = VAL_TYPE(f.value);
 

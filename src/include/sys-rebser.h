@@ -111,7 +111,7 @@ enum {
     // `SERIES_FLAG_HAS_DYNAMIC` indicates that this series has a dynamically
     // allocated portion.  If it does not, then its data pointer is the
     // address of the embedded value inside of it (marked terminated by
-    // the SERIES_FLAG_1_IS_FALSE if it has an element in it)
+    // the SERIES_FLAG_1_IS_TRUE if it has an element in it)
     //
     // The bit position this corresponds to in ordinary headers would be the
     // NOT_FREE_MASK.
@@ -123,11 +123,11 @@ enum {
     //
     SERIES_FLAG_HAS_DYNAMIC = HEADERFLAG(0),
 
-    // `SERIES_FLAG_1_IS_FALSE` corresponds to NOT_END_MASK.  It is set to
-    // zero to denote an END marker if there is a REBVAL sitting inside the
+    // `SERIES_FLAG_1_IS_TRUE` corresponds to END_MASK.  It is set to
+    // one to denote an END marker if there is a REBVAL sitting inside the
     // node which needs to be implicitly terminated.
     //
-    SERIES_FLAG_1_IS_FALSE = HEADERFLAG(1),
+    SERIES_FLAG_1_IS_TRUE = HEADERFLAG(1),
 
     // `SERIES_FLAG_2_IS_FALSE` corresponds to CELL_MASK.  It is checked by
     // value writes to ensure that when the info flags are serving double duty
@@ -370,7 +370,7 @@ union Reb_Series_Content {
     // [0] full element is IS_END(), or the [0] element is another value
     // and the [1] element is read-only and passes IS_END() to terminate
     // (but can't have any other value written, as the info bits are
-    // marked as unwritable by SERIES_FLAG_1_IS_FALSE...this protects the
+    // marked as unwritable by SERIES_FLAG_2_IS_FALSE...this protects the
     // rest of the bits in the debug build as it is checked whenver a
     // REBVAL tries to write a new header.)
     //
@@ -428,7 +428,7 @@ struct Reb_Series {
     //
     // The second-to-left and third-to-left bits of info are required to be 0
     // when used with the trick of implicitly terminating series data.  See
-    // SERIES_FLAG_1_IS_FALSE and SERIES_FLAG_2_IS_FALSE for more information.
+    // SERIES_FLAG_1_IS_TRUE and SERIES_FLAG_2_IS_FALSE for more information.
     //
     // !!! Only 32-bits are used on 64-bit platforms.  There could be some
     // interesting added caching feature or otherwise that would use

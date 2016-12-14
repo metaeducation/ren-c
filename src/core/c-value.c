@@ -134,8 +134,7 @@ void Assert_Cell_Writable(const RELVAL *v, const char *file, int line)
 //
 void SET_END_Debug(RELVAL *v, const char *file, int line) {
     ASSERT_CELL_WRITABLE_IF_CPP_DEBUG(v, file, line);
-    (v)->header.bits =
-        HEADERIZE_KIND(REB_0) | NOT_FREE_MASK | CELL_MASK | NOT_FREE_MASK;
+    (v)->header.bits = HEADERIZE_KIND(REB_0) | FLAGVAL_FIRST(255);
     Set_Track_Payload_Debug(v, file, line);
 }
 
@@ -160,7 +159,13 @@ REBOOL IS_END_Debug(const RELVAL *v, const char *file, int line) {
         Panic_Value_Debug(v, file, line);
     }
 #endif
-    return IS_END_MACRO(v);
+
+    if (IS_END_MACRO(v)) {
+        if (v->header.bits & CELL_MASK)
+            assert(LEFT_N_BITS(v->header.bits, 8) == 255);
+        return TRUE;
+    }
+    return FALSE;
 }
 
 

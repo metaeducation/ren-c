@@ -1053,9 +1053,10 @@ void Assert_Array_Core(REBARR *array)
         }
         assert(value == ARR_AT(array, rest - 1));
 #endif
-        if (ARR_AT(array, rest - 1)->header.bits != 0) {
+        if (ARR_AT(array, rest - 1)->header.bits != END_MASK) {
             printf("Implicit termination/unwritable END missing from array\n");
             fflush(stdout);
+            assert(FALSE);
         }
     }
 

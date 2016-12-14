@@ -125,44 +125,4 @@ struct Reb_Header {
     REBUPT bits;
 };
 
-
-//
-// With these definitions:
-//
-//     struct Foo_Type { struct Reb_Header header; int x; }
-//     struct Foo_Type *foo = ...;
-//
-//     struct Bar_Type { struct Reb_Header header; float x; }
-//     struct Bar_Type *bar = ...;
-//
-// This C code:
-//
-//     foo->header.bits = 1020;
-//
-// ...is actually different *semantically* from this code:
-//
-//     struct Reb_Header *alias = &foo->header;
-//     alias->bits = 1020;
-//
-// The first is considered as not possibly able to affect the header in a
-// Bar_Type.  It only is seen as being able to influence the header in other
-// Foo_Type instances.
-//
-// The second case, by forcing access through a generic aliasing pointer,
-// will cause the optimizer to realize all bets are off for any type which
-// might contain a `struct Reb_Header`.
-//
-// This is an important point to know, with certain optimizations of writing
-// headers through one type and then reading them through another.  That
-// trick is used for "implicit termination", see documentation of IS_END().
-//
-// (Note that this "feature" of writing through pointers actually slows
-// things down.  Desire to control this behavior is why the `restrict`
-// keyword exists in C99: https://en.wikipedia.org/wiki/Restrict )
-//
-inline static void Init_Header_Aliased(struct Reb_Header *alias, REBUPT bits)
-{
-    alias->bits = bits; // write from generic pointer to `struct Reb_Header`
-}
-
 #endif
