@@ -756,8 +756,13 @@ static void Init_Root_Context(void)
     // These values are simple isolated VOID, NONE, TRUE, and FALSE values
     // that can be used in lieu of initializing them.  They are initialized
     // as two-element series in order to ensure that their address is not
-    // treated as an array.  They are unsettable (in debug builds), to avoid
-    // their values becoming overwritten.
+    // treated as an array.
+    //
+    // They should only be accessed by macros which retrieve their values
+    // as `const`, to avoid the risk of accidentally changing them.  (This
+    // rule is broken by some special system code which `m_cast`s them for
+    // the purpose of using them as directly recognizable pointers which
+    // also look like values.)
     //
     // It is presumed that these types will never need to have GC behavior,
     // and thus can be stored safely in program globals without mention in
@@ -766,23 +771,18 @@ static void Init_Root_Context(void)
 
     SET_VOID(&PG_Void_Cell[0]);
     SET_TRASH_IF_DEBUG(&PG_Void_Cell[1]);
-    MARK_CELL_UNWRITABLE_IF_CPP_DEBUG(&PG_Void_Cell[1]);
 
     SET_BLANK(&PG_Blank_Value[0]);
     SET_TRASH_IF_DEBUG(&PG_Blank_Value[1]);
-    MARK_CELL_UNWRITABLE_IF_CPP_DEBUG(&PG_Blank_Value[1]);
 
     SET_BAR(&PG_Bar_Value[0]);
     SET_TRASH_IF_DEBUG(&PG_Bar_Value[1]);
-    MARK_CELL_UNWRITABLE_IF_CPP_DEBUG(&PG_Bar_Value[1]);
 
     SET_FALSE(&PG_False_Value[0]);
     SET_TRASH_IF_DEBUG(&PG_False_Value[1]);
-    MARK_CELL_UNWRITABLE_IF_CPP_DEBUG(&PG_False_Value[1]);
 
     SET_TRUE(&PG_True_Value[0]);
     SET_TRASH_IF_DEBUG(&PG_True_Value[1]);
-    MARK_CELL_UNWRITABLE_IF_CPP_DEBUG(&PG_True_Value[1]);
 
     // We can't actually put an end value in the middle of a block, so we poke
     // this one into a program global.  It is not legal to bit-copy an
@@ -806,7 +806,6 @@ static void Init_Root_Context(void)
     // Used by REBNATIVE(print)
     //
     SET_CHAR(ROOT_SPACE_CHAR, ' ');
-    MARK_CELL_UNWRITABLE_IF_CPP_DEBUG(ROOT_SPACE_CHAR);
 
     // Can't ASSERT_CONTEXT here; no keylist yet...
 }

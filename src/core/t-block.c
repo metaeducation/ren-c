@@ -1045,7 +1045,7 @@ void Assert_Array_Core(REBARR *array)
 #ifdef __cplusplus
         assert(rest > 0 && rest > i);
         for (; i < rest - 1; ++i, ++value) {
-            if (NOT(value->header.bits & VALUE_FLAG_WRITABLE_CPP_DEBUG)) {
+            if (NOT(value->header.bits & NOT_FREE_MASK)) {
                 printf("Unwritable cell found in array rest capacity\n");
                 fflush(stdout);
                 Panic_Array(array);

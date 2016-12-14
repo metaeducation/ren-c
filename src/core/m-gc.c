@@ -1151,9 +1151,10 @@ ATTRIBUTE_NO_SANITIZE_ADDRESS static REBCNT Sweep_Series(void)
     // Optimization here depends on SWITCH of the concrete values of bits.
     //
     static_assert_c(
-        REBSER_REBVAL_FLAG_MANAGED == HEADERFLAG(2) // 0x1 after right shift
-        && (CELL_MASK == HEADERFLAG(1)) // 0x2 after right shift
-        && (NOT_END_MASK == HEADERFLAG(0)) // 0x4 after right shift
+        REBSER_REBVAL_FLAG_MANAGED == HEADERFLAG(3) // 0x1 after right shift
+        && (CELL_MASK == HEADERFLAG(2)) // 0x2 after right shift
+        && (NOT_END_MASK == HEADERFLAG(1)) // 0x4 after right shift
+        && (NOT_FREE_MASK == HEADERFLAG(0)) // 0x8 after right shift
     );
 
     REBSEG *seg;
@@ -1161,54 +1162,50 @@ ATTRIBUTE_NO_SANITIZE_ADDRESS static REBCNT Sweep_Series(void)
         REBSER *s = cast(REBSER*, seg + 1);
         REBCNT n;
         for (n = Mem_Pools[SER_POOL].units; n > 0; --n, ++s) {
-            switch (LEFT_N_BITS(s->header.bits, 3)) {
+            switch (LEFT_N_BITS(s->header.bits, 4)) {
             case 0:
-                // Marked as an end, but not marked as a cell.  Only way this
-                // should be able to happen is if this is a free node with
-                // all header bits set to 0.
+                // NOT_FREE_MASK is clear.  The only way this should be able
+                // to happen is if this is a free node with all header bits
+                // set to 0.  The first 4 bits were all zero, but make sure
+                // that the rest are.
                 //
                 assert(IS_FREE_NODE(s));
                 break;
 
-            case 1:
-                // A managed REBSER which has no cell mask and is marked as
-                // an END.  This currently doesn't happen, because the not end
-                // bit is set on series at creation time so the header isn't
-                // all zero bits (which would be free).  But this could signal
-                // some special condition in the future.
+            case 1: // 0x1
+            case 2: // 0x2
+            case 3: // 0x2 + 0x1
+            case 4: // 0x4
+            case 5: // 0x4 + 0x1
+            case 6: // 0x4 + 0x2
+            case 7: // 0x4 + 0x2 + 0x1
+                //
+                // NOT_FREE_MASK (0x8) is clear...but other bits are set.
+                // This kind of signature is reserved for UTF-8 strings
+                // (corresponding to valid ASCII values in the first byte).
+                // They should never occur in the REBSER pools.
                 //
                 assert(FALSE);
                 break;
 
-            case 2:
-                // CELL_MASK set and it's an END, REBSER_REBVAL_FLAG_MANAGED
-                // is not set.  That's an "unmanaged pairing" whose key is
-                // an END, which occurs in some API tracking cases.  It's a
-                // REBSER node, but *not* a "series".
+            // v-- Everything below this line has NOT_FREE_MASK set (0x8)
+
+            case 8: // 0x8
+                //
+                // It's not a cell and not managed.  This pattern is used by
+                // unmanaged REBSERs.  If it were ever useful, they could
+                // also implicitly act as END markers.
                 //
                 assert(!IS_SERIES_MANAGED(s));
                 break;
 
-            case 3:
-                // The CELL_MASK is set, and it's an END, and it's managed.
-                // Assume this is impossible until a case is found.
+            case 9: // 0x8 + 0x1
                 //
-                assert(FALSE);
-                break;
-
-            case 4:
-                // Doesn't have CELL_MASK set, but not marked as an END.  This
-                // is the state series start out in as unmanaged, where the
-                // not end bit is merely indicating "not free".
+                // It's not a cell and managed.  And again, if it were useful,
+                // this could also implicitly act as an END marker.
                 //
-                assert(!IS_SERIES_MANAGED(s));
-                break;
-
-            case 5:
-                // A managed REBSER which has no cell mask and is marked as
-                // *not* an END.  This is the typical signature of what one
-                // would call an "ordinary managed REBSER".  If it's marked,
-                // leave it alone...else kill it.
+                // This pattern is one used by managed REBSERs.  So if it's
+                // marked, leave it alone...else kill it.
                 //
                 assert(IS_SERIES_MANAGED(s));
                 if (Is_Rebser_Marked(s))
@@ -1219,17 +1216,68 @@ ATTRIBUTE_NO_SANITIZE_ADDRESS static REBCNT Sweep_Series(void)
                 }
                 break;
 
-            case 6:
-                // CELL_MASK set and it's not an end, and also not managed.
-                // So this is a pairing with some value key that is not
-                // GC managed.  Skip it.
+            case 10: // 0x8 + 0x2
+                //
+                // It's a cell and unmanaged.  But it's also an END marker.
+                // That's an "unmanaged pairing" whose key is an END, which
+                // occurs in some non-fully-initialized cases.
+                //
+                // !!! It is a REBNOD, but *not* a "series".
                 //
                 assert(!IS_SERIES_MANAGED(s));
                 break;
 
-            case 7:
-                // CELL_MASK is set, so it's a pairing...and the key is not
-                // an END, and it's managed.  Mark bit should be heeded.
+            case 11: // 0x8 + 0x2 + 0x1
+                //
+                // It's a managed cell which is also an END.  This would
+                // indicate a pairing that was initialized to the point that
+                // it was managed--yet doesn't actually hold two values
+                // (since the key is an END).  Disallow this until a good
+                // motivating reason to allow it is found.
+                //
+                assert(FALSE);
+                break;
+
+            // v-- Everything below this line has the two leftmost bits set
+            // in the header, which may correspond to a legal UTF-8 character
+            // and hence not be distinguishable from a REBVAL.
+
+            case 12: // 0x8 + 0x4
+                //
+                // An unmanaged non-cell.  This could be swapped to be the
+                // signature of unmanaged series, but this version is marked
+                // as "not an end".  For now the unmanaged series signature
+                // goes with the can-act-as-an-end form.
+                //
+                assert(FALSE);
+                break;
+
+            case 13: // 0x8 + 0x4 + 0x1
+                //
+                // A managed non-cell, which again could be swapped with the
+                // signature of managed series...except the can-act-as-an-end
+                // form is preferred for the moment.
+                //
+                assert(FALSE);
+                break;
+
+            case 14: // 0x8 + 0x4 + 0x2
+                //
+                // It's a cell which is not managed and not an end.  Hence
+                // this is a pairing with some value key that is not an END
+                // and not GC managed.  Skip it.
+                //
+                // !!! It is a REBNOD, but *not* a "series".
+                //
+                assert(!IS_SERIES_MANAGED(s));
+                break;
+
+            case 15: // 0x8 + 0x4 + 0x2 + 0x1
+                //
+                // It's a cell which is managed where the key is not an END.
+                // This is a managed pairing, so mark bit should be heeded.
+                //
+                // !!! It is a REBNOD, but *not* a "series".
                 //
                 assert(IS_SERIES_MANAGED(s));
                 if (Is_Rebser_Marked(s))

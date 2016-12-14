@@ -698,7 +698,6 @@ static REBOOL Series_Data_Alloc(
         //
         for(; n < s->content.dynamic.rest - 1; n++) {
             INIT_CELL_IF_DEBUG(ARR_AT(AS_ARRAY(s), n));
-          /*MARK_CELL_UNWRITABLE_IF_CPP_DEBUG(ARR_AT(AS_ARRAY(s), n);*/
         }
     #endif
 
@@ -873,10 +872,10 @@ REBSER *Make_Series(REBCNT capacity, REBYTE wide, REBCNT flags)
 
     REBSER *s = cast(REBSER*, Make_Node(SER_POOL));
 
-    // Header bits can't be zero.  For now, set the NOT_END_MASK always (the
-    // CELL_MASK is used by "Paireds").
+    // Header bits can't be zero.  The NOT_FREE_MASK is sufficient to identify
+    // this as a REBSER node that is not GC managed.
     //
-    s->header.bits = NOT_END_MASK;
+    s->header.bits = NOT_FREE_MASK;
 
     if ((GC_Ballast -= sizeof(REBSER)) <= 0) SET_SIGNAL(SIG_RECYCLE);
 
@@ -1045,10 +1044,12 @@ REBVAL *Alloc_Pairing(REBCTX *opt_owning_frame) {
 // Switching to managed mode means the key can no longer be changed--only
 // the value.
 //
+// !!! a const_Pairing_Key() accessor should help enforce the rule, only
+// allowing const access if managed.
+//
 void Manage_Pairing(REBVAL *paired) {
     REBVAL *key = PAIRING_KEY(paired);
     SET_VAL_FLAG(key, REBSER_REBVAL_FLAG_MANAGED);
-    MARK_CELL_UNWRITABLE_IF_CPP_DEBUG(key);
 }
 
 

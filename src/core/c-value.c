@@ -114,7 +114,7 @@ void Assert_Cell_Writable(const RELVAL *v, const char *file, int line)
         fflush(stdout);
         Panic_Value_Debug(v, file, line);
     }
-    if (NOT((v)->header.bits & VALUE_FLAG_WRITABLE_CPP_DEBUG)) {
+    if (NOT((v)->header.bits & NOT_FREE_MASK)) {
         printf("Non-writable value passed to writing routine\n");
         fflush(stdout);
         Panic_Value_Debug(v, file, line);
@@ -134,8 +134,8 @@ void Assert_Cell_Writable(const RELVAL *v, const char *file, int line)
 //
 void SET_END_Debug(RELVAL *v, const char *file, int line) {
     ASSERT_CELL_WRITABLE_IF_CPP_DEBUG(v, file, line);
-    (v)->header.bits = HEADERIZE_KIND(REB_0) | CELL_MASK;
-    MARK_CELL_WRITABLE_IF_CPP_DEBUG(v);
+    (v)->header.bits =
+        HEADERIZE_KIND(REB_0) | NOT_FREE_MASK | CELL_MASK | NOT_FREE_MASK;
     Set_Track_Payload_Debug(v, file, line);
 }
 

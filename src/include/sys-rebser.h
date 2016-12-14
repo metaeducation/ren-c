@@ -108,29 +108,34 @@
 // Series Flags
 //
 enum {
-    // `SERIES_FLAG_0_IS_FALSE` represents the lowest bit and should always
-    // be set to zero.  This is because it means that when Reb_Series_Content
-    // is interpreted as a REBVAL's worth of data, then the info bits are in
-    // a location where they do double-duty serving as an END marker.  For a
-    // description of the method see notes on NOT_END_MASK.
-    //
-    SERIES_FLAG_0_IS_FALSE = HEADERFLAG(0),
-
-    // `SERIES_FLAG_1_IS_FALSE` is the second lowest bit, and is set to zero
-    // as a safety precaution.  In the debug build this is checked by value
-    // writes to ensure that when the info flags are serving double duty
-    // as an END marker, they do not get overwritten by rogue code that
-    // thought a REBVAL* pointing at the memory had a full value's worth
-    // of memory to write into.  See WRITABLE_MASK_DEBUG.
-    //
-    SERIES_FLAG_1_IS_FALSE = HEADERFLAG(1),
-
     // `SERIES_FLAG_HAS_DYNAMIC` indicates that this series has a dynamically
     // allocated portion.  If it does not, then its data pointer is the
     // address of the embedded value inside of it (marked terminated by
-    // the SERIES_FLAG_0_IS_ZERO if it has an element in it)
+    // the SERIES_FLAG_1_IS_FALSE if it has an element in it)
     //
-    SERIES_FLAG_HAS_DYNAMIC = HEADERFLAG(2),
+    // The bit position this corresponds to in ordinary headers would be the
+    // NOT_FREE_MASK.
+    //
+    // !!! All things being equal, this bit would ideally always be zero just
+    // to make it clearer that this is not the start of a REBSER (signaled by
+    // 10).  If the requirements for the number of bits can be brought down,
+    // then make that change.
+    //
+    SERIES_FLAG_HAS_DYNAMIC = HEADERFLAG(0),
+
+    // `SERIES_FLAG_1_IS_FALSE` corresponds to NOT_END_MASK.  It is set to
+    // zero to denote an END marker if there is a REBVAL sitting inside the
+    // node which needs to be implicitly terminated.
+    //
+    SERIES_FLAG_1_IS_FALSE = HEADERFLAG(1),
+
+    // `SERIES_FLAG_2_IS_FALSE` corresponds to CELL_MASK.  It is checked by
+    // value writes to ensure that when the info flags are serving double duty
+    // as an END marker, they do not get overwritten by rogue code that
+    // thought a REBVAL* pointing at the memory had a full value's worth
+    // of memory to write into.
+    //
+    SERIES_FLAG_2_IS_FALSE = HEADERFLAG(2),
 
     // `SERIES_FLAG_STRING` identifies that this series holds a string, which
     // is important to the GC in order to successfully
@@ -421,12 +426,12 @@ struct Reb_Series {
     // `info` is the information about the series which needs to be known
     // even if it is not using a dynamic allocation.
     //
-    // The lowest 2 bits of info are required to be 0 when used with the trick
-    // of implicitly terminating series data.  See SERIES_FLAG_0_IS_FALSE and
-    // SERIES_FLAG_1_IS_FALSE for more information.
+    // The second-to-left and third-to-left bits of info are required to be 0
+    // when used with the trick of implicitly terminating series data.  See
+    // SERIES_FLAG_1_IS_FALSE and SERIES_FLAG_2_IS_FALSE for more information.
     //
-    // !!! Only the low 32-bits are used on 64-bit platforms.  There could
-    // be some interesting added caching feature or otherwise that would use
+    // !!! Only 32-bits are used on 64-bit platforms.  There could be some
+    // interesting added caching feature or otherwise that would use
     // it, while not making any feature specifically require a 64-bit CPU.
     //
     struct Reb_Header info;

@@ -80,7 +80,6 @@ void Init_Stacks(REBCNT size)
         DS_Movable_Base = KNOWN(ARR_HEAD(DS_Array)); // can't push RELVALs
 
         SET_UNREADABLE_BLANK(ARR_HEAD(DS_Array));
-        MARK_CELL_UNWRITABLE_IF_CPP_DEBUG(ARR_HEAD(DS_Array));
 
         // The END marker will signal DS_PUSH that it has run out of space,
         // and it will perform the allocation at that time.
@@ -116,8 +115,9 @@ void Init_Stacks(REBCNT size)
 void Shutdown_Stacks(void)
 {
     assert(FS_TOP == NULL);
-
     assert(DSP == 0);
+    assert(IS_UNREADABLE_IF_DEBUG(ARR_HEAD(DS_Array)));
+
     Free_Array(DS_Array);
 
     assert(TG_Top_Chunk == cast(struct Reb_Chunk*, &TG_Root_Chunker->payload));

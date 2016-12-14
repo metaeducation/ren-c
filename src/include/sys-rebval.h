@@ -72,20 +72,48 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Due to a desire to be able to assign all the header bits in one go
-// with a native-platform-sized int, this is done with bit masking.
-// Using bitfields would bring in questions of how smart the
-// optimizer is, as well as the endianness of the underlyling machine.
+// Assignments to bits and fields in the header are done through a native
+// platform-sized integer...while still being able to control the underlying
+// ordering of those bits in memory.  See FLAGIT_LEFT() in %reb-c.h for how
+// this is achieved.
 //
-// We use REBUPT (Rebol's pre-C99 compatibility type for uintptr_t,
-// which is just uintptr_t from C99 on).  Only the low 32 bits are used
-// on 64-bit machines in order to make sure all the features work on
-// 32-bit machines...but could be used for some optimization or caching
-// purpose to enhance the 64-bit build.  No such uses implemented yet.
+// This control allows the leftmost byte of a Rebol header (the one you'd
+// get by casting REBVAL* to an unsigned char*) to always start with the bit
+// pattern `10`.  This pattern corresponds to what UTF-8 calls "continuation
+// bytes", which may never legally start a UTF-8 string:
+//
+// https://en.wikipedia.org/wiki/UTF-8#Codepage_layout
+//
+// Only 32 bits total are currently used, in order to make sure that all
+// features work on 64-bit machines.  Note the numbers and layout in the
+// headers will not be directly comparable across architectures.
+//
+// !!! A clever future application of the 32 unused header bits on 64-bit
+// architectures might be able to add bonus optimization or instrumentation
+// abilities.
 //
 
 #define HEADERFLAG(n) \
     FLAGIT_LEFT(n)
+
+// `NOT_FREE_MASK`
+//
+// The first bit will be 1 for all Reb_Header in the system that are not free.
+// Freed nodes actually have *all* 0 bits in the header.
+//
+// The C++ debug build is actually able to enforce that a 0 in this position
+// makes a cell unwritable by routines like VAL_RESET_HEADER().  It can do
+// this because constructors provide a hook point to ensure valid REBVAL
+// cells on the stack have the bit pre-initialized to 1.
+//
+// !!! UTF-8 empty strings (just a 0 terminator byte) are indistingushable,
+// since only one byte may be valid to examine without crashing.  But in a
+// working state, the system should never be in a position of needing to
+// distinguish a freed node from an empty string.  Debug builds can use
+// heuristics to guess which it is when providing diagnostics.
+//
+#define NOT_FREE_MASK \
+    HEADERFLAG(0)
 
 // `NOT_END_MASK`
 //
@@ -106,7 +134,7 @@
 // data be compatibly read-and-written.
 //
 #define NOT_END_MASK \
-    HEADERFLAG(0)
+    HEADERFLAG(1)
 
 // `CELL_MASK`
 //
@@ -127,10 +155,10 @@
 // trigger an alert if the values try to overwrite it.
 //
 #define CELL_MASK \
-    HEADERFLAG(1)
+    HEADERFLAG(2)
 
 // v-- BEGIN REBSER AND REBVAL SHARED BITS HERE
-#define REBSER_REBVAL_BIT 2
+#define REBSER_REBVAL_BIT 3
 
 
 //=////////////////////////////////////////////////////////////////////////=//
@@ -284,22 +312,8 @@ enum {
     // v-- BEGIN TYPE SPECIFIC BITS HERE
 };
 
-// In debug builds, there's an additional property checked on cell writes
-// where values can be marked as unwritable.  There would be cost to checking
-// this in the release build, so it is not intended as a "feature"--just to
-// help avoid damaging things like the global BLANK_VALUE.
-//
-// This is only checkable under C++, because stack REBVALs would not get the
-// flag implicitly in C...and manual initialization would clutter the code.
-//
-#if !defined(NDEBUG) && defined(__cplusplus)
-    #define VALUE_FLAG_WRITABLE_CPP_DEBUG \
-        HEADERFLAG(GENERAL_VALUE_BIT + 5)
-#endif
-
-
 #define TYPE_SPECIFIC_BIT \
-    (GENERAL_VALUE_BIT + 6)
+    (GENERAL_VALUE_BIT + 5)
 
 // The type is stored in the "rightmost" bits of the header, so that it can
 // be efficiently extracted (on big endian, little endian, 64-bit or 32-bit
@@ -844,16 +858,20 @@ struct Reb_Value
         //
         //     http://stackoverflow.com/a/7189821/211160
         //
-        // In the debug C++ build there is an extra check of writability. This
-        // makes sure that stack variables holding REBVAL are marked with that.
-        // It also means that the check can only be performed by the C++ build,
+        // In the debug C++ build there is an extra check of "writability",
+        // because the NOT_FREE_MASK must be set on cells.  All stack
+        // variables holding REBVAL are given this mark in this constructor,
+        // and all array cells are given the mark when the array is built.
+        //
+        // It also means that the check is only be performed in the C++ build,
         // otherwise there would need to be a manual set of this bit on every
         // stack variable.
         //
         Reb_Specific_Value () {
+            //
             // doesn't set VOID_FLAG_NOT_TRASH, so this is a trash cell
-            header.bits
-                = REB_MAX_VOID | CELL_MASK | VALUE_FLAG_WRITABLE_CPP_DEBUG;
+            //
+            header.bits = REB_MAX_VOID | CELL_MASK | NOT_FREE_MASK;
         }
     #endif
     };
