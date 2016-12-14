@@ -245,11 +245,10 @@ inline static void FREE_CONTEXT(REBCTX *c) {
 
 #ifdef NDEBUG
     #define ANY_CONTEXT_FLAG(n) \
-        (1 << (TYPE_SPECIFIC_BIT + (n)))
+        HEADERFLAG(TYPE_SPECIFIC_BIT + (n))
 #else
     #define ANY_CONTEXT_FLAG(n) \
-        ((1 << (TYPE_SPECIFIC_BIT + (n))) \
-            | TYPE_SHIFT_LEFT_FOR_HEADER(REB_OBJECT)) // means ANY-CONTEXT!
+        (HEADERFLAG(TYPE_SPECIFIC_BIT + (n)) | HEADERIZE_KIND(REB_OBJECT))
 #endif
 
 // `ANY_CONTEXT_FLAG_OWNS_PAIRED` is particular to the idea of a "Paired"

@@ -72,6 +72,8 @@ enum {
     // The default for a DO operation is just a single DO/NEXT, where args
     // to functions are evaluated (vs. quoted), and lookahead is enabled.
     //
+    // (This should also make headers based on it pass the IS_END() test)
+    //
     DO_FLAG_NORMAL = 0,
 
     // As exposed by the DO native and its /NEXT refinement, a call to the
@@ -86,7 +88,7 @@ enum {
     // achieve equivalent results.  There are nuances to preserve this
     // invariant and especially in light of interaction with lookahead.
     //
-    DO_FLAG_TO_END = 1 << (REBSER_REBVAL_BIT + 1),
+    DO_FLAG_TO_END = HEADERFLAG(REBSER_REBVAL_BIT + 1),
 
     // When we're in mid-dispatch of an infix function, the precedence is such
     // that we don't want to do further infix lookahead while getting the
@@ -97,7 +99,7 @@ enum {
     // to evaluate a form of source input that cannot be backtracked (e.g.
     // a C variable argument list) then it will not be possible to resume.
     //
-    DO_FLAG_NO_LOOKAHEAD = 1 << (REBSER_REBVAL_BIT + 2),
+    DO_FLAG_NO_LOOKAHEAD = HEADERFLAG(REBSER_REBVAL_BIT + 2),
 
     // Sometimes a DO operation has already calculated values, and does not
     // want to interpret them again.  e.g. the call to the function wishes
@@ -105,13 +107,13 @@ enum {
     // variable.  This is common when calling Rebol functions from C code
     // when the parameters are known, or what R3-Alpha called "APPLY/ONLY"
     //
-    DO_FLAG_NO_ARGS_EVALUATE = 1 << (REBSER_REBVAL_BIT + 3),
+    DO_FLAG_NO_ARGS_EVALUATE = HEADERFLAG(REBSER_REBVAL_BIT + 3),
 
     // A pre-built frame can be executed "in-place" without a new allocation.
     // It will be type checked, and also any BAR! parameters will indicate
     // a desire to acquire that argument (permitting partial specialization).
     //
-    DO_FLAG_EXECUTE_FRAME = 1 << (REBSER_REBVAL_BIT + 4),
+    DO_FLAG_EXECUTE_FRAME = HEADERFLAG(REBSER_REBVAL_BIT + 4),
 
     // Usually VA_LIST_FLAG is enough to tell when there is a source array to
     // examine or not.  However, when the end is reached it is written over
@@ -121,25 +123,25 @@ enum {
     // expression evaluation is complete.  Review to see if they actually
     // would rather know something else, but this is a cheap flag for now.
     //
-    DO_FLAG_VA_LIST = 1 << (REBSER_REBVAL_BIT + 5),
+    DO_FLAG_VA_LIST = HEADERFLAG(REBSER_REBVAL_BIT + 5),
 
     // While R3-Alpha permitted modifications of an array while it was being
     // executed, Ren-C does not.  It takes a lock if the source is not already
     // read only, and sets it back when Do_Core is finished (or on errors)
     //
-    DO_FLAG_TOOK_FRAME_LOCK = 1 << (REBSER_REBVAL_BIT + 6),
+    DO_FLAG_TOOK_FRAME_LOCK = HEADERFLAG(REBSER_REBVAL_BIT + 6),
 
     // DO_FLAG_APPLYING is used to indicate that the Do_Core code is entering
     // a situation where the frame was already set up.
     //
-    DO_FLAG_APPLYING = 1 << (REBSER_REBVAL_BIT + 7),
+    DO_FLAG_APPLYING = HEADERFLAG(REBSER_REBVAL_BIT + 7),
 
     // When a variadic operation is on the left hand side of a deferred
     // lookback operation, it needs to inform the evaluator that the take is
     // variadic, so it knows to defer.  Consider `summation 1 2 3 |> 100`
     // should be `(summation 1 2 3) |> 100` and not `summation 1 2 (3 |> 100)`
     //
-    DO_FLAG_VARIADIC_TAKE = 1 << (REBSER_REBVAL_BIT + 8)
+    DO_FLAG_VARIADIC_TAKE = HEADERFLAG(REBSER_REBVAL_BIT + 8)
 };
 
 

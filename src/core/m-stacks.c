@@ -54,17 +54,18 @@ void Init_Stacks(REBCNT size)
     TG_Top_Chunk = cast(struct Reb_Chunk*, &TG_Root_Chunker->payload);
     TG_Top_Chunk->prev = NULL;
 
-    // Zero values for initial chunk, also sets offset to 0 as high bits
+    // Zero values for initial chunk, also sets offset to 0
     //
-    Init_Header_Aliased(&TG_Top_Chunk->size_and_offset, BASE_CHUNK_SIZE);
-    assert(CHUNK_OFFSET(TG_Top_Chunk) == 0);
+    Init_Header_Aliased(&TG_Top_Chunk->header, 0);
+    TG_Top_Chunk->offset = 0;
+    TG_Top_Chunk->size = BASE_CHUNK_SIZE;
 
     // Implicit termination trick--see VALUE_FLAG_NOT_END and related notes
     //
     Init_Header_Aliased(
         &cast(
             struct Reb_Chunk*, cast(REBYTE*, TG_Top_Chunk) + BASE_CHUNK_SIZE
-        )->size_and_offset,
+        )->header,
         0
     );
     assert(IS_END(&TG_Top_Chunk->values[0]));

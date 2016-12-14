@@ -1151,9 +1151,9 @@ ATTRIBUTE_NO_SANITIZE_ADDRESS static REBCNT Sweep_Series(void)
     // Optimization here depends on SWITCH of the concrete values of bits.
     //
     static_assert_c(
-        (NOT_END_MASK == 0x1)
-        && (CELL_MASK == 0x2)
-        && (REBSER_REBVAL_FLAG_MANAGED == 0x4)
+        REBSER_REBVAL_FLAG_MANAGED == HEADERFLAG(2) // 0x1 after right shift
+        && (CELL_MASK == HEADERFLAG(1)) // 0x2 after right shift
+        && (NOT_END_MASK == HEADERFLAG(0)) // 0x4 after right shift
     );
 
     REBSEG *seg;
@@ -1161,7 +1161,7 @@ ATTRIBUTE_NO_SANITIZE_ADDRESS static REBCNT Sweep_Series(void)
         REBSER *s = cast(REBSER*, seg + 1);
         REBCNT n;
         for (n = Mem_Pools[SER_POOL].units; n > 0; --n, ++s) {
-            switch (s->header.bits & 0x7) {
+            switch (LEFT_N_BITS(s->header.bits, 3)) {
             case 0:
                 // Marked as an end, but not marked as a cell.  Only way this
                 // should be able to happen is if this is a free node with
@@ -1171,11 +1171,13 @@ ATTRIBUTE_NO_SANITIZE_ADDRESS static REBCNT Sweep_Series(void)
                 break;
 
             case 1:
-                // Doesn't have CELL_MASK set, but not marked as an END.  This
-                // is the state series start out in as unmanaged, where the
-                // not end bit is merely indicating "not free".
+                // A managed REBSER which has no cell mask and is marked as
+                // an END.  This currently doesn't happen, because the not end
+                // bit is set on series at creation time so the header isn't
+                // all zero bits (which would be free).  But this could signal
+                // some special condition in the future.
                 //
-                assert(!IS_SERIES_MANAGED(s));
+                assert(FALSE);
                 break;
 
             case 2:
@@ -1188,21 +1190,18 @@ ATTRIBUTE_NO_SANITIZE_ADDRESS static REBCNT Sweep_Series(void)
                 break;
 
             case 3:
-                // CELL_MASK set and it's not an end, and also not managed.
-                // So this is a pairing with some value key that is not
-                // GC managed.  Skip it.
+                // The CELL_MASK is set, and it's an END, and it's managed.
+                // Assume this is impossible until a case is found.
                 //
-                assert(!IS_SERIES_MANAGED(s));
+                assert(FALSE);
                 break;
 
             case 4:
-                // A managed REBSER which has no cell mask and is marked as
-                // an END.  This currently doesn't happen, because the not end
-                // bit is set on series at creation time so the header isn't
-                // all zero bits (which would be free).  But this could signal
-                // some special condition in the future.
+                // Doesn't have CELL_MASK set, but not marked as an END.  This
+                // is the state series start out in as unmanaged, where the
+                // not end bit is merely indicating "not free".
                 //
-                assert(FALSE);
+                assert(!IS_SERIES_MANAGED(s));
                 break;
 
             case 5:
@@ -1221,10 +1220,11 @@ ATTRIBUTE_NO_SANITIZE_ADDRESS static REBCNT Sweep_Series(void)
                 break;
 
             case 6:
-                // The CELL_MASK is set, and it's an END, and it's managed.
-                // Assume this is impossible until a case is found.
+                // CELL_MASK set and it's not an end, and also not managed.
+                // So this is a pairing with some value key that is not
+                // GC managed.  Skip it.
                 //
-                assert(FALSE);
+                assert(!IS_SERIES_MANAGED(s));
                 break;
 
             case 7:

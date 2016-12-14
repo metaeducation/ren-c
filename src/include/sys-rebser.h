@@ -114,7 +114,7 @@ enum {
     // a location where they do double-duty serving as an END marker.  For a
     // description of the method see notes on NOT_END_MASK.
     //
-    SERIES_FLAG_0_IS_FALSE = 1 << 0,
+    SERIES_FLAG_0_IS_FALSE = HEADERFLAG(0),
 
     // `SERIES_FLAG_1_IS_FALSE` is the second lowest bit, and is set to zero
     // as a safety precaution.  In the debug build this is checked by value
@@ -123,14 +123,14 @@ enum {
     // thought a REBVAL* pointing at the memory had a full value's worth
     // of memory to write into.  See WRITABLE_MASK_DEBUG.
     //
-    SERIES_FLAG_1_IS_FALSE = 1 << 1,
+    SERIES_FLAG_1_IS_FALSE = HEADERFLAG(1),
 
     // `SERIES_FLAG_HAS_DYNAMIC` indicates that this series has a dynamically
     // allocated portion.  If it does not, then its data pointer is the
     // address of the embedded value inside of it (marked terminated by
     // the SERIES_FLAG_0_IS_ZERO if it has an element in it)
     //
-    SERIES_FLAG_HAS_DYNAMIC = 1 << 2,
+    SERIES_FLAG_HAS_DYNAMIC = HEADERFLAG(2),
 
     // `SERIES_FLAG_STRING` identifies that this series holds a string, which
     // is important to the GC in order to successfully
@@ -141,7 +141,7 @@ enum {
     // knowing the series is a string is important at GC time...to clean up
     // aliases and adjust canons.
     //
-    SERIES_FLAG_STRING = 1 << 3,
+    SERIES_FLAG_STRING = HEADERFLAG(3),
 
     // `STRING_FLAG_CANON` is used to indicate when a REBSTR series represents
     // the canon form of a word.  This doesn't mean anything special about
@@ -150,14 +150,14 @@ enum {
     // canon form, so it can use the REBSER.misc field for the purpose of
     // holding an index during binding.
     //
-    STRING_FLAG_CANON = 1 << 4,
+    STRING_FLAG_CANON = HEADERFLAG(4),
 
     // `ARRAY_FLAG_PARAMLIST` uses the same bit as STRING_FLAG_CANON, so the
     // meaning depends on whether the SERIES_FLAG_ARRAY or SERIES_FLAG_STRING
     // bit is set.  This indicates the array is the parameter list of a
     // FUNCTION! (the first element will be a canon value of the function)
     //
-    ARRAY_FLAG_PARAMLIST = 1 << 4,
+    ARRAY_FLAG_PARAMLIST = HEADERFLAG(4),
 
     // `SERIES_FLAG_ARRAY` indicates that this is a series of REBVAL values,
     // and suitable for using as the payload of an ANY-ARRAY! value.  When a
@@ -171,7 +171,7 @@ enum {
     // creation of series that contain items that incidentally happen to be
     // the same size as a REBVAL, while not actually being REBVALs.)
     //
-    SERIES_FLAG_ARRAY = 1 << 5,
+    SERIES_FLAG_ARRAY = HEADERFLAG(5),
 
     // `ARRAY_FLAG_VARLIST` indicates this series represents the
     // "varlist" of a context.  A second series can be reached from it via
@@ -180,7 +180,7 @@ enum {
     //
     // See notes on REBCTX for further details about what a context is.
     //
-    ARRAY_FLAG_VARLIST = 1 << 6,
+    ARRAY_FLAG_VARLIST = HEADERFLAG(6),
 
     // `SERIES_FLAG_LOCKED` indicates that the series size or values cannot
     // be modified.  This check is honored by some layers of abstraction, but
@@ -196,7 +196,7 @@ enum {
     // it is distinct as it's a protection on a series itself--which ends
     // up affecting all variable content with that series in the payload.
     //
-    SERIES_FLAG_LOCKED = 1 << 7,
+    SERIES_FLAG_LOCKED = HEADERFLAG(7),
 
     // `SERIES_FLAG_FIXED_SIZE` indicates the size is fixed, and the series
     // cannot be expanded or contracted.  Values within the series are still
@@ -213,7 +213,7 @@ enum {
     // from fixed size... if there would be a reason to reallocate besides
     // changing size (such as memory compaction).
     //
-    SERIES_FLAG_FIXED_SIZE  = 1 << 8,
+    SERIES_FLAG_FIXED_SIZE = HEADERFLAG(8),
 
     // `SERIES_FLAG_POWER_OF_2` is set when an allocation size was rounded to
     // a power of 2.  This flag was introduced in Ren-C when accounting was
@@ -236,7 +236,7 @@ enum {
     //
     // http://stackoverflow.com/questions/3190146/
     //
-    SERIES_FLAG_POWER_OF_2  = 1 << 9,
+    SERIES_FLAG_POWER_OF_2 = HEADERFLAG(9),
 
     // `SERIES_FLAG_EXTERNAL` indicates that when the series was created, the
     // `->data` pointer was poked in by the creator.  It takes responsibility
@@ -249,7 +249,7 @@ enum {
     // Ren-Cpp, but by relatively old extensions...so there may be no good
     // answer in the case of those clients (likely either leaks or crashes).
     //
-    SERIES_FLAG_EXTERNAL = 1 << 10,
+    SERIES_FLAG_EXTERNAL = HEADERFLAG(10),
 
     // `SERIES_FLAG_INACCESSIBLE` indicates that the external memory pointed by
     // `->data` has "gone bad". This is not checked at every access to the
@@ -258,7 +258,7 @@ enum {
     // used for STRUCT! and to note when a CONTEXT_FLAG_STACK series has its
     // stack level popped (there's no data to lookup for words bound to it)
     //
-    SERIES_FLAG_INACCESSIBLE = 1 << 11,
+    SERIES_FLAG_INACCESSIBLE = HEADERFLAG(11),
 
     // `CONTEXT_FLAG_STACK` indicates that varlist data lives on the stack.
     // This is a work in progress to unify objects and function call frames
@@ -271,7 +271,7 @@ enum {
     // of mapping index numbers in the function paramlist into either the
     // stack array or the dynamic array during binding in an efficient way.
     //
-    CONTEXT_FLAG_STACK = 1 << 12,
+    CONTEXT_FLAG_STACK = HEADERFLAG(12),
 
     // `KEYLIST_FLAG_SHARED` is indicated on the keylist array of a context
     // when that same array is the keylist for another object.  If this flag
@@ -283,7 +283,7 @@ enum {
     // sharing of the keylist.  That would make 100 copies of an arbitrary
     // long keylist that the GC would have to clean up.)
     //
-    KEYLIST_FLAG_SHARED = 1 << 13,
+    KEYLIST_FLAG_SHARED = HEADERFLAG(13),
 
     // `ARRAY_FLAG_VOIDS_LEGAL` identifies arrays in which it is legal to
     // have void elements.  This is used for instance on reified C va_list()s
@@ -294,7 +294,7 @@ enum {
     // Note: ARRAY_FLAG_VARLIST also implies legality of voids, which
     // are used to represent unset variables.
     //
-    ARRAY_FLAG_VOIDS_LEGAL = 1 << 14,
+    ARRAY_FLAG_VOIDS_LEGAL = HEADERFLAG(14),
 
     // `SERIES_FLAG_LEGACY` is a flag which is marked at the root set of the
     // body of legacy functions.  It can be used in a dynamic examination of
@@ -304,7 +304,7 @@ enum {
     // But it's good enough for casual compatibility in many cases.
     //
 #if !defined NDEBUG
-    SERIES_FLAG_LEGACY = 1 << 15,
+    SERIES_FLAG_LEGACY = HEADERFLAG(15),
 #endif
 
     SERIES_FLAG_NO_COMMA_NEEDED = 0 // solves dangling comma from above
@@ -378,7 +378,7 @@ enum {
     // These let native routines engage in marking and unmarking nodes
     // without potentially wrecking the garbage collector.  :-/
     //
-    REBSER_FLAG_BLACK = 1 << (GENERAL_VALUE_BIT + 0)
+    REBSER_FLAG_BLACK = HEADERFLAG(GENERAL_VALUE_BIT + 0)
 };
 
 struct Reb_Series {

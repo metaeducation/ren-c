@@ -84,6 +84,9 @@
 // purpose to enhance the 64-bit build.  No such uses implemented yet.
 //
 
+#define HEADERFLAG(n) \
+    FLAGIT_LEFT(n)
+
 // `NOT_END_MASK`
 //
 // If set, it means this is *not* an end marker.  The bit has been picked
@@ -103,7 +106,7 @@
 // data be compatibly read-and-written.
 //
 #define NOT_END_MASK \
-    ((REBUPT)0x01) // <-- don't use `cast()`...superfluous here, slows debug
+    HEADERFLAG(0)
 
 // `CELL_MASK`
 //
@@ -124,7 +127,7 @@
 // trigger an alert if the values try to overwrite it.
 //
 #define CELL_MASK \
-    ((REBUPT)0x02) // <-- don't use `cast()`...superfluous here, slows debug
+    HEADERFLAG(1)
 
 // v-- BEGIN REBSER AND REBVAL SHARED BITS HERE
 #define REBSER_REBVAL_BIT 2
@@ -161,7 +164,7 @@ enum {
     // starts out manually managed, and then must either become managed or be
     // freed before the evaluation that created it ends).
     //
-    REBSER_REBVAL_FLAG_MANAGED = 1 << (REBSER_REBVAL_BIT + 0),
+    REBSER_REBVAL_FLAG_MANAGED = HEADERFLAG(REBSER_REBVAL_BIT + 0),
 
     // `REBSER_REBVAL_FLAG_MARK` is used by the mark-and-sweep of the garbage
     // collector, and should not be referenced outside of %m-gc.c.
@@ -170,19 +173,20 @@ enum {
     // that wish to have an arbitrary marker on series (for things like
     // recursion avoidance in algorithms).
     //
-    REBSER_REBVAL_FLAG_MARK = 1 << (REBSER_REBVAL_BIT + 1),
+    REBSER_REBVAL_FLAG_MARK = HEADERFLAG(REBSER_REBVAL_BIT + 1),
 
     // `REBSER_REBVAL_FLAG_ROOT` indicates this should be treated as a
     // root for GC purposes.  It only means anything on a REBVAL if that
     // REBVAL happens to live in the key slot of a paired REBSER--it should
     // not generally be set otherwise.
     //
-    REBSER_REBVAL_FLAG_ROOT = 1 << (REBSER_REBVAL_BIT + 2),
+    REBSER_REBVAL_FLAG_ROOT = HEADERFLAG(REBSER_REBVAL_BIT + 2),
 
     // v-- BEGIN GENERAL VALUE BITS HERE
 };
 
-#define GENERAL_VALUE_BIT (REBSER_REBVAL_BIT + 3)
+#define GENERAL_VALUE_BIT \
+    (REBSER_REBVAL_BIT + 3)
 
 
 
@@ -197,33 +201,38 @@ enum {
 //
 
 enum {
-    // `VALUE_FLAG_FALSE`
+    // `VALUE_FLAG_FALSE` is used as a quick cache on values that are NONE!
+    // or LOGIC! false.  These are the only two values that are FALSE?
+    // (a.k.a. "conditionally false").  All other types are TRUE?.
     //
-    // Both NONE! and LOGIC!'s false state are FALSE? ("conditionally false").
-    // All other types are TRUE?.  To make checking FALSE? and TRUE? faster,
-    // this bit is set when creating NONE! or FALSE.  As a result, LOGIC!
-    // does not need to store any data in its payload... its data of being
-    // true or false is already covered by this header bit.
+    // Because of this cached bit, LOGIC! does not need to store any data in
+    // its payload... its data of being true or false is already covered by
+    // this header bit.
     //
-    VALUE_FLAG_FALSE = 1 << (GENERAL_VALUE_BIT + 0),
+    // !!! Since tests for conditional truth or falsehood are extremely common
+    // (not just in IF and EITHER, but in CASE and ANY and many other
+    // constructs), it seems like a good optimization.  But it is a cache
+    // and could be done with a slightly more expensive test.  Given the
+    // scarcity of header bits in the modern codebase, this optimization may
+    // need to be sacrificed to reclaim the bit for a "higher purpose".
+    //
+    VALUE_FLAG_FALSE = HEADERFLAG(GENERAL_VALUE_BIT + 0),
 
-    // `VALUE_FLAG_LINE`
+    // `VALUE_FLAG_LINE` is a line marker bit, such that when the value is
+    // molded it will put a newline before the value.  (The logic is a bit
+    // more subtle than that, because an ANY-PATH! could not be LOADed back
+    // if this were allowed.)
     //
-    // If the line marker bit is 1, then when the value is molded it will put
-    // a newline before the value.  The logic is a bit more subtle than that,
-    // because an ANY-PATH! could not be LOADed back if this were allowed.
     // The bit is set initially by what the scanner detects, and then left
     // to the user's control after that.
     //
     // !!! The native `new-line` is used set this, which has a somewhat
     // poor name considering its similarity to `newline` the line feed char.
     //
-    VALUE_FLAG_LINE = 1 << (GENERAL_VALUE_BIT + 1),
+    VALUE_FLAG_LINE = HEADERFLAG(GENERAL_VALUE_BIT + 1),
 
-    // `VALUE_FLAG_THROWN`
-    //
-    // When a REBVAL slot wishes to signal that it is a "throw" (e.g. a
-    // RETURN, BREAK, CONTINUE or generic THROW signal), this bit is set on
+    // `VALUE_FLAG_THROWN` is how a REBVAL signals that it is a "throw" (e.g.
+    // a RETURN, BREAK, CONTINUE or generic THROW signal), this bit is set on
     // that cell.
     //
     // The bit being set does not mean the cell contains the thrown quantity
@@ -248,7 +257,7 @@ enum {
     //        /* handling code */
     //     }
     //
-    VALUE_FLAG_THROWN = 1 << (GENERAL_VALUE_BIT + 2),
+    VALUE_FLAG_THROWN = HEADERFLAG(GENERAL_VALUE_BIT + 2),
 
     // `VALUE_FLAG_RELATIVE` is used to indicate a value that needs to have
     // a specific context added into it before it can have its bits copied
@@ -258,7 +267,7 @@ enum {
     // of a function body must be relative also to the same function if
     // it contains any instances of such relative words.
     //
-    VALUE_FLAG_RELATIVE = 1 << (GENERAL_VALUE_BIT + 3),
+    VALUE_FLAG_RELATIVE = HEADERFLAG(GENERAL_VALUE_BIT + 3),
 
     // `VALUE_FLAG_UNEVALUATED` is a somewhat dodgy-yet-important concept.
     // This is that some functions wish to be sensitive to whether or not
@@ -270,7 +279,7 @@ enum {
     // uncommon, e.g. from the QUOTE operator, so an arbitrary SET_BLANK()
     // or other assignment should default to being "evaluative".
     //
-    VALUE_FLAG_UNEVALUATED = 1 << (GENERAL_VALUE_BIT + 4),
+    VALUE_FLAG_UNEVALUATED = HEADERFLAG(GENERAL_VALUE_BIT + 4),
 
     // v-- BEGIN TYPE SPECIFIC BITS HERE
 };
@@ -285,25 +294,22 @@ enum {
 //
 #if !defined(NDEBUG) && defined(__cplusplus)
     #define VALUE_FLAG_WRITABLE_CPP_DEBUG \
-        ((REBUPT)(1 << (GENERAL_VALUE_BIT + 5)))
+        HEADERFLAG(GENERAL_VALUE_BIT + 5)
 #endif
 
 
-#define TYPE_SPECIFIC_BIT (GENERAL_VALUE_BIT + 6)
+#define TYPE_SPECIFIC_BIT \
+    (GENERAL_VALUE_BIT + 6)
 
-// The type is stored in the highest bits so that a single right shift
-// operation (which zero fills from the left) can get the 6-bit type.
+// The type is stored in the "rightmost" bits of the header, so that it can
+// be efficiently extracted (on big endian, little endian, 64-bit or 32-bit
+// machines).
 //
-// !!! The 64-bit build would need to use a larger number if it wanted to
-// find a use for its extra 32-bits, which would have to be both masked and
-// shifted (the way types used to be...)
-//
-#define HEADER_TYPE_SHIFT 26
+#define NUM_KIND_BITS 6
 
-#define TYPE_SHIFT_LEFT_FOR_HEADER(kind) \
-    (((REBUPT)kind) << HEADER_TYPE_SHIFT) // need cast! see also VAL_TYPE_RAW
+#define HEADERIZE_KIND(kind) \
+    FLAGVAL_RIGHT(kind)
 
-#define HEADER_TYPE_MASK ((REBUPT)(0x3F) << HEADER_TYPE_SHIFT)
 
 
 //=////////////////////////////////////////////////////////////////////////=//
@@ -774,7 +780,7 @@ struct Reb_Value
     c_cast(const REBVAL*, &PG_End_Cell)
 
 #define IS_END_MACRO(v) \
-    LOGICAL((v)->header.bits % 2 == 0) // == NOT(bits & NOT_END_MASK)
+    NOT((v)->header.bits & NOT_END_MASK)
 
 #ifdef NDEBUG
     #define IS_END(v) \

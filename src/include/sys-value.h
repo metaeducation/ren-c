@@ -133,16 +133,16 @@
 // Also, don't bother checking using the `cast()` template in C++.
 //
 #define VAL_TYPE_RAW(v) \
-    ((enum Reb_Kind)((v)->header.bits >> HEADER_TYPE_SHIFT))
+    ((enum Reb_Kind)(RIGHT_N_BITS((v)->header.bits, NUM_KIND_BITS)))
 
 #ifdef NDEBUG
     #define VAL_TYPE(v) \
         VAL_TYPE_RAW(v)
 #else
     enum {
-        VOID_FLAG_NOT_TRASH = (1 << TYPE_SPECIFIC_BIT),
-        VOID_FLAG_SAFE_TRASH = (2 << TYPE_SPECIFIC_BIT) // "unreadable blank"
-    };
+        VOID_FLAG_NOT_TRASH = HEADERFLAG(TYPE_SPECIFIC_BIT + 0),
+        VOID_FLAG_SAFE_TRASH = HEADERFLAG(TYPE_SPECIFIC_BIT + 1)
+    }; // ^-- safe trash is better thought of as "unreadable blank"
 
     inline static REBOOL IS_TRASH_DEBUG(const RELVAL *v) {
         // note this is directly inlined into VAL_TYPE_Debug() below
@@ -187,8 +187,8 @@ inline static void VAL_SET_TYPE_BITS(RELVAL *v, enum Reb_Kind kind) {
     // Use VAL_RESET_HEADER() to set the type AND initialize the flags to 0.
     //
     assert(!IS_TRASH_DEBUG(v));
-    (v)->header.bits &= ~HEADER_TYPE_MASK;
-    (v)->header.bits |= TYPE_SHIFT_LEFT_FOR_HEADER(kind);
+    CLEAR_N_RIGHT_BITS((v)->header.bits, NUM_KIND_BITS);
+    (v)->header.bits |= HEADERIZE_KIND(kind);
 }
 
 
@@ -233,7 +233,7 @@ inline static void VAL_SET_TYPE_BITS(RELVAL *v, enum Reb_Kind kind) {
     //
     #define CHECK_VALUE_FLAG_EVIL_MACRO_DEBUG \
         assert(NOT(IS_END_MACRO(v))); \
-        REBUPT category = f >> HEADER_TYPE_SHIFT; \
+        REBUPT category = RIGHT_N_BITS(f, NUM_KIND_BITS); \
         if (category != REB_0) { \
             enum Reb_Kind kind = VAL_TYPE(v); \
             if (kind != category) { \
@@ -244,7 +244,7 @@ inline static void VAL_SET_TYPE_BITS(RELVAL *v, enum Reb_Kind kind) {
                 else \
                     assert(FALSE); \
             } \
-            f &= ~HEADER_TYPE_MASK; \
+            CLEAR_N_RIGHT_BITS(f, NUM_KIND_BITS); \
         } \
 
 
@@ -338,8 +338,7 @@ inline static void VAL_SET_TYPE_BITS(RELVAL *v, enum Reb_Kind kind) {
 //
 
 #define VAL_RESET_HEADER_COMMON(v,kind) \
-    ((v)->header.bits = TYPE_SHIFT_LEFT_FOR_HEADER(kind) \
-        | NOT_END_MASK | CELL_MASK)
+    ((v)->header.bits = HEADERIZE_KIND(kind) | NOT_END_MASK | CELL_MASK)
 
 #ifdef NDEBUG
     #define ASSERT_CELL_WRITABLE_IF_CPP_DEBUG(v,file,line) \
@@ -571,7 +570,7 @@ inline static REBOOL IS_VOID(const RELVAL *v)
 //
 
 inline static void SET_BLANK_COMMON(RELVAL *v) {
-    v->header.bits = TYPE_SHIFT_LEFT_FOR_HEADER(REB_BLANK) \
+    v->header.bits = HEADERIZE_KIND(REB_BLANK) \
         | VALUE_FLAG_FALSE | NOT_END_MASK | CELL_MASK;
 }
 
@@ -665,12 +664,12 @@ inline static void SET_BLANK_COMMON(RELVAL *v) {
     c_cast(const REBVAL*, &PG_True_Value[0])
 
 inline static void SET_TRUE_COMMON(RELVAL *v) {
-    v->header.bits = TYPE_SHIFT_LEFT_FOR_HEADER(REB_LOGIC) \
+    v->header.bits = HEADERIZE_KIND(REB_LOGIC) \
         | NOT_END_MASK | CELL_MASK;
 }
 
 inline static void SET_FALSE_COMMON(RELVAL *v) {
-    v->header.bits = TYPE_SHIFT_LEFT_FOR_HEADER(REB_LOGIC) \
+    v->header.bits = HEADERIZE_KIND(REB_LOGIC) \
         | NOT_END_MASK | CELL_MASK | VALUE_FLAG_FALSE;
 }
 

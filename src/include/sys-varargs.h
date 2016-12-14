@@ -47,11 +47,10 @@
 
 #ifdef NDEBUG
     #define VARARGS_FLAG(n) \
-        (cast(REBUPT, 1) << (TYPE_SPECIFIC_BIT + (n))) 
+        HEADERFLAG(TYPE_SPECIFIC_BIT + (n))
 #else
     #define VARARGS_FLAG(n) \
-        ((cast(REBUPT, 1) << (TYPE_SPECIFIC_BIT + (n))) \
-            | TYPE_SHIFT_LEFT_FOR_HEADER(REB_VARARGS))
+        (HEADERFLAG(TYPE_SPECIFIC_BIT + (n)) | HEADERIZE_KIND(REB_VARARGS))
 #endif
 
 // Was made with a call to MAKE VARARGS! with data from an ANY-ARRAY!

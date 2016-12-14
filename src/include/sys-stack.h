@@ -216,14 +216,20 @@ struct Reb_Chunk {
     //
     // We start the chunk with a Reb_Header, which has as its `bits`
     // field a REBUPT (unsigned integer size of a pointer).  We are relying
-    // on the fact that the low 2 bits of this value is always 0 in order
+    // on the fact that the high 2 bits of this value is always 0 in order
     // for it to be an implicit END for the value array of the previous chunk.
     //
-    // (REBVALs are multiples of 4 bytes in size on all platforms Rebol
-    // will run on, hence the low two bits of a byte size of N REBVALs will
-    // always have the two lowest bits clear.)
+    // !!! Previously this was used to store arbitrary numbers that ended
+    // with the low 2 bits 0, e.g. the size.  New endianness-dependent
+    // features restrict this somewhat, so it's really just a free set of
+    // flags and byte-sized quantities...currently not used except in this
+    // termination role.  But available if needed...
     //
-    struct Reb_Header size_and_offset;
+    struct Reb_Header header;
+
+    REBUPT size;
+
+    REBUPT offset;
 
     // Pointer to the previous chunk.  As the second pointer in this chunk,
     // with the chunk 64-bit aligned to start with, it means the values will
@@ -248,15 +254,14 @@ struct Reb_Chunk {
 };
 
 inline static REBCNT CHUNK_SIZE(struct Reb_Chunk *chunk) {
-    return chunk->size_and_offset.bits & 0x000FFFFF; // top 12 bits are offset
+    return chunk->size;
 }
 
 // The offset of this chunk in the memory chunker this chunk lives in
-// (its own size has already been subtracted from the amount).  It gets
-// 12 bits, which accomodates offsets within 4096 bytes.
+// (its own size has already been subtracted from the amount).
 //
 inline static REBCNT CHUNK_OFFSET(struct Reb_Chunk *chunk) {
-    return chunk->size_and_offset.bits >> 20; // bottom 20 bits are size
+    return chunk->offset;
 }
 
 // If we do a sizeof(struct Reb_Chunk) then it includes a value in it that we
@@ -328,14 +333,12 @@ inline static REBVAL* Push_Value_Chunk_Of_Length(REBCNT num_values) {
             cast(REBYTE*, TG_Top_Chunk) + CHUNK_SIZE(TG_Top_Chunk)
         );
 
+        Init_Header_Aliased(&chunk->header, 0);
+        chunk->size = size;
+
         // top's offset accounted for previous chunk, account for ours
         //
-        REBCNT offset = CHUNK_OFFSET(TG_Top_Chunk) + CHUNK_SIZE(TG_Top_Chunk);
-
-        Init_Header_Aliased(
-            &chunk->size_and_offset,
-            size | (cast(REBUPT, offset) << 20)
-        );
+        chunk->offset = CHUNK_OFFSET(TG_Top_Chunk) + CHUNK_SIZE(TG_Top_Chunk);
     }
     else { // Topmost chunker has insufficient space
         REBOOL need_alloc = TRUE;
@@ -365,16 +368,17 @@ inline static REBVAL* Push_Value_Chunk_Of_Length(REBCNT num_values) {
 
         chunk = cast(struct Reb_Chunk*, &chunker->next->payload);
 
-        Init_Header_Aliased(&chunk->size_and_offset, size);
-        assert(CHUNK_OFFSET(chunk) == 0);
+        Init_Header_Aliased(&chunk->header, 0);
+        chunk->size = size;
+        chunk->offset = 0;
     }
 
 
-    // Set size also in next element to 0, so it can serve as a terminator
-    // for the data range of this until it gets its real size (if ever)
+    // Set header in next element to 0, so it can serve as a terminator
+    // for the data range of this until it gets instantiated (if ever)
     //
     Init_Header_Aliased(
-        &cast(struct Reb_Chunk*, cast(REBYTE*, chunk) + size)->size_and_offset,
+        &cast(struct Reb_Chunk*, cast(REBYTE*, chunk) + size)->header,
         0
     );
     assert(IS_END(&chunk->values[num_values]));

@@ -107,11 +107,10 @@ inline static REBRIN *FUNC_ROUTINE(REBFUN *f) {
 
 #ifdef NDEBUG
     #define FUNC_FLAG(n) \
-        (1 << (TYPE_SPECIFIC_BIT + (n)))
+        HEADERFLAG(TYPE_SPECIFIC_BIT + (n))
 #else
     #define FUNC_FLAG(n) \
-        ((1 << (TYPE_SPECIFIC_BIT + (n))) \
-            | TYPE_SHIFT_LEFT_FOR_HEADER(REB_FUNCTION))
+        (HEADERFLAG(TYPE_SPECIFIC_BIT + (n)) | HEADERIZE_KIND(REB_FUNCTION))
 #endif
 
 // RETURN will always be in the last paramlist slot (if present)

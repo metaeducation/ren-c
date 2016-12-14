@@ -140,7 +140,7 @@ inline static REBCNT SER_LEN(REBSER *s) {
     // "type" bits were it a value.  The same optimization is available in
     // that it can just be shifted out.
 
-    return s->header.bits >> HEADER_TYPE_SHIFT;
+    return RIGHT_N_BITS(s->header.bits, NUM_KIND_BITS); // !!! NUM_LEN_BITS
 }
 
 inline static void SET_SERIES_LEN(REBSER *s, REBCNT len) {
@@ -151,8 +151,8 @@ inline static void SET_SERIES_LEN(REBSER *s, REBCNT len) {
     }
     else {
         assert(len < sizeof(s->content));
-        s->header.bits &= ~HEADER_TYPE_MASK;
-        s->header.bits |= cast(REBUPT, len) << HEADER_TYPE_SHIFT;
+        CLEAR_N_RIGHT_BITS(s->header.bits, NUM_KIND_BITS); // !!! NUM_LEN_BITS
+        s->header.bits |= FLAGVAL_RIGHT(len);
         assert(SER_LEN(s) == len);
     }
 }

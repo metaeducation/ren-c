@@ -134,7 +134,7 @@ void Assert_Cell_Writable(const RELVAL *v, const char *file, int line)
 //
 void SET_END_Debug(RELVAL *v, const char *file, int line) {
     ASSERT_CELL_WRITABLE_IF_CPP_DEBUG(v, file, line);
-    (v)->header.bits = TYPE_SHIFT_LEFT_FOR_HEADER(REB_0) | CELL_MASK;
+    (v)->header.bits = HEADERIZE_KIND(REB_0) | CELL_MASK;
     MARK_CELL_WRITABLE_IF_CPP_DEBUG(v);
     Set_Track_Payload_Debug(v, file, line);
 }

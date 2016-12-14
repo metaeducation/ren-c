@@ -745,6 +745,150 @@ typedef u16 REBUNI;
 #endif
 
 
+
+//=////////////////////////////////////////////////////////////////////////=//
+//
+// BIT FLAGS & MASKING
+//
+//=////////////////////////////////////////////////////////////////////////=//
+//
+// When flags are needed, the platform-natural unsigned integer is used
+// (REBUPT, a `uintptr_t` equivalent).
+//
+// The 64-bit macro is used to get a 64-bit flag even on 32-bit platforms.
+// Hence it should be stored in a REBU64 and not in a REBFLGS.
+//
+
+typedef REBUPT REBFLGS;
+
+#define FLAGIT(f) \
+    ((REBUPT)1 << (f))
+
+#define FLAGIT_64(n) \
+    ((REBU64)1 << (n))
+
+ // !!! These are leftovers from old code which used integers instead of
+// masks to indicate flags.  Using masks then it's easy enough to read using
+// C's plain bit masking operators.
+//
+#define GET_FLAG(v,f)       LOGICAL((v) & (1u << (f)))
+#define GET_FLAGS(v,f,g)    LOGICAL((v) & ((1u << (f)) | (1u << (g))))
+#define SET_FLAG(v,f)       cast(void, (v) |= (1u << (f)))
+#define CLR_FLAG(v,f)       cast(void, (v) &= ~(1u << (f)))
+#define CLR_FLAGS(v,f,g)    cast(void, (v) &= ~((1u << (f)) | (1u << (g))))
+
+
+//=////////////////////////////////////////////////////////////////////////=//
+//
+// BYTE-ORDER SENSITIVE BIT FLAGS & MASKING
+//
+//=////////////////////////////////////////////////////////////////////////=//
+//
+// These macros are for purposefully arranging bit flags with respect to the
+// "leftmost" and "rightmost" bytes of the underlying platform:
+//
+//     REBFLGS flags = FLAGIT_LEFT(0);
+//     unsigned char *ch = (unsigned char*)&flags;
+//
+// In the code above, the leftmost bit of the flags has been set to 1,
+// resulting in `ch == 128` on all supported platforms.
+//
+// Quantities smaller than a byte can be mixed in on the right with flags
+// from the left.  These form single optimized constants, which can be
+// assigned to an integer.  They can be masked or shifted out efficiently:
+//
+//    REBFLGS flags = FLAGIT_LEFT(0) | FLAGIT_LEFT(1) | FLAGVAL_RIGHT(13);
+//
+//    REBCNT left = LEFT_N_BITS(flags, 3); // == 6 (binary `110`)
+//    REBCNT right = RIGHT_N_BITS(flags, 3); // == 5 (binary `101`)
+//
+// `left` gets `110` because it asked for the left 3 bits, of which only
+// the first and the second had been set.
+//
+// `right` gets `101` because 13 was binary `1101` that was added into the
+// value.  Yet only the rightmost 3 bits were requested.
+//
+//=////////////////////////////////////////////////////////////////////////=//
+//
+// Note: It is simpler to not worry about the underlying bytes and just use
+// ordinary bit masking.  But this is used for an important feature (the
+// discernment of a `void*` to a REBVAL from that of a valid UTF-8 string).
+// Other tools that might be tried with this all have downsides:
+//
+// * bitfields arranged in a `union` with integers have no layout guarantee
+// * `#pragma pack` is not standard C98 or C99...nor is any #pragma
+// * `char[4]` or `char[8]` can't generally be assigned in one instruction
+//
+
+#if defined(__LP64__) || defined(__LLP64__)
+    #define PLATFORM_BITS 64
+#else
+    #define PLATFORM_BITS 32
+#endif
+
+#if defined(ENDIAN_BIG) // Byte w/most significant bit first
+
+    #define FLAGIT_LEFT(n) \
+        ((REBUPT)1 << PLATFORM_BITS - (n) - 1) // 63,62,61.. or 32,31,30..
+
+    #define FLAGVAL_RIGHT(val) \
+        ((REBUPT)val) // little endian needs val <= 255
+
+    #define FLAGVAL_MID(val) \
+        (((REBUPT)val) << 8) // little endian needs val <= 255
+
+#elif defined(ENDIAN_LITTLE) // Byte w/least significant bit first (e.g. x86)
+
+    #define FLAGIT_LEFT(n) \
+        ((REBUPT)1 << 7 + ((n) / 8) * 8 - (n) % 8) // 7,6,5..0,15,14..8,23..
+
+    #define FLAGVAL_RIGHT(val) \
+        ((REBUPT)(val) << (PLATFORM_BITS - 8)) // val <= 255
+
+    #define FLAGVAL_MID(val) \
+        ((REBUPT)(val) << (PLATFORM_BITS - 16)) // val <= 255
+#else
+    // !!! There are macro hacks which can actually make reasonable guesses
+    // at endianness, and should probably be used in the config if nothing is
+    // specified explicitly.
+    //
+    // http://stackoverflow.com/a/2100549/211160
+    //
+    #error "ENDIAN_BIG or ENDIAN_LITTLE must be defined"
+#endif
+
+// These specialized extractions of N bits out of the leftmost, rightmost,
+// or "middle" byte (one step to the left of rightmost) can be expressed in
+// a platform-agnostic way.  The constructions by integer to establish these
+// positions are where the the difference is.
+//
+// !!! It would be possible to do this with integer shifting on big endian
+// in a "simpler" way, e.g.:
+//
+//    #define LEFT_N_BITS(flags,n) \
+//      ((flags) >> PLATFORM_BITS - (n))
+//
+// But in addition to big endian platforms being kind of rare, it's not clear
+// that would be faster than a byte operation, especially with optimization.
+//
+
+#define LEFT_N_BITS(flags,n) \
+    (((REBYTE*)&flags)[0] >> 8 - (n)) // n <= 8
+
+#define RIGHT_N_BITS(flags,n) \
+    (((REBYTE*)&flags)[sizeof(REBUPT) - 1] & ((1 << (n)) - 1)) // n <= 8
+
+#define CLEAR_N_RIGHT_BITS(flags,n) \
+    (((REBYTE*)&flags)[sizeof(REBUPT) - 1] &= ~((1 << (n)) - 1)) // n <= 8
+
+#define MID_N_BITS(flags,n) \
+    (((REBYTE*)&flags)[sizeof(REBUPT) - 2] & ((1 << (n)) - 1)) // n <= 8
+
+#define CLEAR_N_MID_BITS(flags,n) \
+    (((REBYTE*)&flags)[sizeof(REBUPT) - 2] &= ~((1 << (n)) - 1)) // n <= 8      
+
+
+
 /***********************************************************************
 **
 **  Useful Macros
@@ -763,16 +907,6 @@ inline static const REBYTE *Skip_To_Byte(
     if (*cp == b) return cp;
     return 0;
 }
-
-typedef unsigned int REBFLGS; // Collection of bit flags, CPU optimized
-
-#define FLAGIT(f)           (1u << (f))
-#define FLAGIT_64(n)        (cast(REBU64, 1) << (n))
-#define GET_FLAG(v,f)       LOGICAL((v) & (1u << (f)))
-#define GET_FLAGS(v,f,g)    LOGICAL((v) & ((1u << (f)) | (1u << (g))))
-#define SET_FLAG(v,f)       cast(void, (v) |= (1u << (f)))
-#define CLR_FLAG(v,f)       cast(void, (v) &= ~(1u << (f)))
-#define CLR_FLAGS(v,f,g)    cast(void, (v) &= ~((1u << (f)) | (1u << (g))))
 
 
 // It is common for MIN and MAX to be defined in C to macros; and equally

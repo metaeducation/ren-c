@@ -133,17 +133,15 @@ enum Reb_Param_Class {
 
 #define PCLASS_ANY_QUOTE_MASK 0x02
 
-#define PCLASS_MASK \
-    (cast(REBUPT, 0x07) << TYPE_SPECIFIC_BIT)
+#define PCLASS_NUM_BITS 3
 
 
 #ifdef NDEBUG
     #define TYPESET_FLAG(n) \
-        (cast(REBUPT, 1) << (TYPE_SPECIFIC_BIT + (n)))
+        HEADERFLAG(TYPE_SPECIFIC_BIT + (n))
 #else
     #define TYPESET_FLAG(n) \
-        ((cast(REBUPT, 1) << (TYPE_SPECIFIC_BIT + (n))) \
-            | TYPE_SHIFT_LEFT_FOR_HEADER(REB_TYPESET))
+        (HEADERFLAG(TYPE_SPECIFIC_BIT + (n)) | HEADERIZE_KIND(REB_TYPESET))
 #endif
 
 // Option flags used with GET_VAL_FLAG().  These describe properties of
@@ -152,11 +150,11 @@ enum Reb_Param_Class {
 
 // Can't be changed (set with PROTECT)
 //
-#define TYPESET_FLAG_LOCKED TYPESET_FLAG(3)
+#define TYPESET_FLAG_LOCKED TYPESET_FLAG(0)
 
 // Can't be reflected (set with PROTECT/HIDE) or local in spec as `foo:`
 //
-#define TYPESET_FLAG_HIDDEN TYPESET_FLAG(4)
+#define TYPESET_FLAG_HIDDEN TYPESET_FLAG(1)
 
 // Can't be bound to beyond the current bindings.
 //
@@ -170,7 +168,7 @@ enum Reb_Param_Class {
 // solution to separate the property of bindability from visibility, as
 // the SELF solution shakes out--so that SELF may be hidden but bind.
 //
-#define TYPESET_FLAG_UNBINDABLE TYPESET_FLAG(5)
+#define TYPESET_FLAG_UNBINDABLE TYPESET_FLAG(2)
 
 // !!! <durable> is the working name for the property of a function
 // argument or local to have its data survive after the call is over.
@@ -182,7 +180,7 @@ enum Reb_Param_Class {
 // Hence if this property is applied, it will be applied to *all* of
 // a function's arguments.
 //
-#define TYPESET_FLAG_DURABLE TYPESET_FLAG(6)
+#define TYPESET_FLAG_DURABLE TYPESET_FLAG(3)
 
 // !!! This does not need to be on the typeset necessarily.  See the
 // VARARGS! type for what this is, which is a representation of the
@@ -193,7 +191,7 @@ enum Reb_Param_Class {
 // a VARARGS! type are different things.  (A function may accept a
 // variadic number of VARARGS! values, for instance.)
 //
-#define TYPESET_FLAG_VARIADIC TYPESET_FLAG(7)
+#define TYPESET_FLAG_VARIADIC TYPESET_FLAG(4)
 
 // !!! In R3-Alpha, there were only 8 type-specific bits...with the
 // remaining bits "reserved for future use".  This goes over the line
@@ -206,7 +204,7 @@ enum Reb_Param_Class {
 // ordinary argument hit the end (e.g. the trick used for `>> help` when
 // the arity is 1 usually as `>> help foo`)
 //
-#define TYPESET_FLAG_ENDABLE TYPESET_FLAG(8)
+#define TYPESET_FLAG_ENDABLE TYPESET_FLAG(5)
 
 // For performance, a cached PROTECTED_OR_LOOKBACK or'd flag could make
 // it so that each SET doesn't have to clear out the flag.  See
@@ -214,7 +212,7 @@ enum Reb_Param_Class {
 // so that the TRUE value can mean REB_FUNCTION (chosen at type #1) and
 // the FALSE value occupies non-value-type REB_0, alias REB_0_LOOKBACK
 //
-#define TYPESET_FLAG_NO_LOOKBACK TYPESET_FLAG(9)
+#define TYPESET_FLAG_NO_LOOKBACK TYPESET_FLAG(6)
 
 // R3-Alpha's notion of infix OP!s changed the way parameters were gathered.
 // On the right hand side, the argument was evaluated in a special mode in
@@ -230,7 +228,7 @@ enum Reb_Param_Class {
 // far as they can be on both the left and right hand side of enfixed
 // expressions.
 //
-#define TYPESET_FLAG_TIGHT TYPESET_FLAG(10)
+#define TYPESET_FLAG_TIGHT TYPESET_FLAG(7)
 
 
 // Operations when typeset is done with a bitset (currently all typesets)
@@ -275,13 +273,13 @@ inline static enum Reb_Param_Class VAL_PARAM_CLASS(const RELVAL *v) {
     assert(IS_TYPESET(v));
     return cast(
         enum Reb_Param_Class,
-        (v->header.bits & PCLASS_MASK) >> TYPE_SPECIFIC_BIT
+        MID_N_BITS(v->header.bits, PCLASS_NUM_BITS)
     );
 }
 
 inline static void INIT_VAL_PARAM_CLASS(RELVAL *v, enum Reb_Param_Class c) {
-    v->header.bits &= ~PCLASS_MASK;
-    v->header.bits |= cast(REBUPT, c << TYPE_SPECIFIC_BIT);
+    CLEAR_N_MID_BITS(v->header.bits, PCLASS_NUM_BITS);
+    v->header.bits |= FLAGVAL_MID(c);
 
     // !!! The "<tight>" mechanism is likely to be ultimately deprecated,
     // and quoting will replace it.  For now, though, the only kinds of
