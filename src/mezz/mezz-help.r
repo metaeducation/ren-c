@@ -29,7 +29,7 @@ dump-obj: function [
         str
     ]
 
-    form-val: func [val] [
+    form-val: func [val [any-type!]] [
         ; Form a limited string from the value provided.
         if any-block? :val [return reform ["length:" length val]]
         if image? :val [return reform ["size:" val/size]]
@@ -52,46 +52,47 @@ dump-obj: function [
     ]
 
     ; Search for matching strings:
-    out: copy []
-    wild: all [set? 'pat | string? pat | find pat "*"]
+    collect [
+        wild: all [set? 'pat | string? pat | find pat "*"]
 
-    for-each [word val] obj [
-        type: type-of :val
+        for-each [word val] obj [
+            type: type-of :val
 
-        str: either any [function? :type object? :type] [
-            reform [word mold spec-of :val words-of :val]
-        ][
-            form word
-        ]
-        if any [
-            not match
-            all [
-                not void? :val
-                either string? :pat [
-                    either wild [
-                        tail? any [find/any/match str pat pat]
+            str: either any [function? :type object? :type] [
+                reform [word mold spec-of :val words-of :val]
+            ][
+                form word
+            ]
+
+            if any [
+                not match
+                all [
+                    not void? :val
+                    either string? :pat [
+                        either wild [
+                            tail? any [find/any/match str pat pat]
+                        ][
+                            find str pat
+                        ]
                     ][
-                        find str pat
-                    ]
-                ][
-                    all [
-                        datatype? get :pat
-                        type = :pat
+                        all [
+                            datatype? get :pat
+                            type = :pat
+                        ]
                     ]
                 ]
-            ]
-        ][
-            str: form-pad word 15
-            append str #" "
-            append str form-pad type 10 - ((length str) - 15)
-            append out reform [
-                "  " str
-                if type [form-val :val]
-                newline
+            ][
+                str: form-pad word 15
+                append str #" "
+                append str form-pad type 10 - ((length str) - 15)
+                keep reform [
+                    "  " str
+                    if type [form-val :val]
+                    newline
+                ]
             ]
         ]
     ]
-    out
 ]
 
 
@@ -349,9 +350,17 @@ help: procedure [
         lookback: lookback? :word
         value: get :word
     ]
+
     unless function? :value [
         prin [uppercase mold word "is" type-name :value "of value: "]
-        print either any [object? value port? value]  [print "" dump-obj value][mold :value]
+        print rejoin collect [
+            either any [object? value port? value] [
+                keep newline
+                keep dump-obj value
+            ][
+                keep mold :value
+            ]
+        ]
         leave
     ]
 
