@@ -603,7 +603,12 @@ host-start: function [
         ]
 
         boot-print ["Evaluating:" o/script]
-        code: load/header/type second script-path 'unbound
+        trap/with [
+            code: load/header/type second script-path 'unbound
+        ] func [error <with> return] [
+            print error
+            return 1
+        ]
         ; update system/script (Make into a function?)
         system/script: construct system/standard/script [
             title: select first code 'title
