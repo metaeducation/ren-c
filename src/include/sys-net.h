@@ -38,6 +38,8 @@
 
 #ifdef TO_WINDOWS
     #include <winsock.h>
+    #include <ws2tcpip.h> // needed for ip_mreq definition for multicast
+
 
     #define GET_ERROR       WSAGetLastError()
     #define IOCTL           ioctlsocket

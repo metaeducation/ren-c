@@ -427,3 +427,101 @@ void Init_UDP_Scheme(void)
 {
     Register_Scheme(Canon(SYM_UDP), UDP_Actor);
 }
+
+
+//
+//  set-udp-multicast: native [
+//
+//  {Join (or leave) an IPv4 multicast group}
+//
+//      return: [<opt>]
+//      port [port!]
+//          {An open UDP port}
+//      group [tuple!]
+//          {Multicast group to join (224.0.0.0 to 239.255.255.255)}
+//      member [tuple!]
+//          {Member to add to multicast group (use 0.0.0.0 for INADDR_ANY)}
+//      /drop
+//          {Leave the group (default is to add)}
+//  ]
+//
+REBNATIVE(set_udp_multicast)
+//
+// !!! SET-MODES was never standardized or implemented for R3-Alpha, so there
+// was no RDC_MODIFY written.  While it is tempting to just go ahead and
+// start writing `setsockopt` calls right here in this file, that would mean
+// adding platform-sensitive network includes into the core.
+//
+// Ultimately, the desire is that ports would be modules--consisting of some
+// Rebol code, and some C code (possibly with platform-conditional libs).
+// This is the direction for the extension model, where the artificial limit
+// of having "native port actors" that can't just do the OS calls they want
+// will disappear.
+//
+// Until that happens, we want to pass this through to the Reb_Device layer
+// somehow.  It's not easy to see how to modify this "REBREQ" which is
+// actually *the port's state* to pass it the necessary information for this
+// request.  Hence the cheat is just to pass it the frame, and then let
+// Reb_Device implementations go ahead and use the extension API to pick
+// that frame apart.
+{
+    INCLUDE_PARAMS_OF_SET_UDP_MULTICAST;
+
+    REBCTX *port = VAL_CONTEXT(ARG(port));
+    REBREQ *sock = Ensure_Port_State(port, RDI_NET);
+
+    sock->common.data = cast(REBYTE*, frame_);
+
+    // sock->command is going to just be RDC_MODIFY, so all there is to go
+    // by is the data and flags.  Since RFC3171 specifies IPv4 multicast
+    // address space...how about that?
+    //
+    sock->flags = 3171;
+
+    UNUSED(ARG(group));
+    UNUSED(ARG(member));
+    UNUSED(REF(drop));
+
+    REBINT result = OS_DO_DEVICE(sock, RDC_MODIFY);
+    if (result < 0)
+        fail (Error(RE_MISC)); // should device layer just fail()?
+
+    return R_VOID;
+}
+
+
+//
+//  set-udp-ttl: native [
+//
+//  {Set the TTL of a UDP port}
+//
+//      return: [<opt>]
+//      port [port!]
+//          {An open UDP port}
+//      ttl [integer!]
+//          {0 = local machine only, 1 = subnet (default), or up to 255}
+//  ]
+//
+REBNATIVE(set_udp_ttl)
+{
+    INCLUDE_PARAMS_OF_SET_UDP_TTL;
+
+    REBCTX *port = VAL_CONTEXT(ARG(port));
+    REBREQ *sock = Ensure_Port_State(port, RDI_NET);
+
+    sock->common.data = cast(REBYTE*, frame_);
+
+    // sock->command is going to just be RDC_MODIFY, so all there is to go
+    // by is the data and flags.  Since RFC2365 specifies IPv4 multicast
+    // administrative boundaries...how about that?
+    //
+    sock->flags = 2365;
+
+    UNUSED(ARG(ttl));
+
+    REBINT result = OS_DO_DEVICE(sock, RDC_MODIFY);
+    if (result < 0)
+        fail (Error(RE_MISC)); // should device layer just fail()?
+
+    return R_VOID;
+}

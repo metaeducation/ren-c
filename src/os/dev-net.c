@@ -35,18 +35,25 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "reb-host.h"
 #include "sys-net.h"
+
+#ifdef IS_ERROR
+#undef IS_ERROR //winerror.h defines this, so undef it to avoid the warning
+#endif
+#include "sys-core.h"
+#include "sys-ext.h"
+
 #include "reb-net.h"
+#include "reb-evtypes.h"
 
 #if (0)
-#define WATCH1(s,a) printf(s, a)
-#define WATCH2(s,a,b) printf(s, a, b)
-#define WATCH4(s,a,b,c,d) printf(s, a, b, c, d)
+    #define WATCH1(s,a) printf(s, a)
+    #define WATCH2(s,a,b) printf(s, a, b)
+    #define WATCH4(s,a,b,c,d) printf(s, a, b, c, d)
 #else
-#define WATCH1(s,a)
-#define WATCH2(s,a,b)
-#define WATCH4(s,a,b,c,d)
+    #define WATCH1(s,a)
+    #define WATCH2(s,a,b)
+    #define WATCH4(s,a,b,c,d)
 #endif
 
 void Signal_Device(REBREQ *req, REBINT type);
@@ -552,6 +559,78 @@ lserr:
 }
 
 
+
+//
+//  Modify_Socket: C
+//
+// !!! R3-Alpha had no RDC_MODIFY commands.  Some way was needed to get
+// multicast setting through to the platform-specific port code, and this
+// method was chosen.  Eventually, the ports *themselves* should be extension
+// modules instead of in core, and then there won't be concern about the
+// mixture of port dispatch code with platform code.
+//
+DEVICE_CMD Modify_Socket(REBREQ *sock)
+{
+    assert(sock->command == RDC_MODIFY);
+
+    REBFRM *frame_ = cast(REBFRM*, sock->common.data);
+    int result = 0;
+
+    switch (sock->flags) {
+    case 3171: {
+        INCLUDE_PARAMS_OF_SET_UDP_MULTICAST;
+
+        if (!GET_FLAG(sock->modes, RST_UDP)) { // !!! other checks?
+            sock->error = -18;
+            return DR_ERROR;
+        }
+
+        struct ip_mreq mreq;
+        memcpy(&mreq.imr_multiaddr.s_addr, VAL_TUPLE(ARG(group)), 4);
+        memcpy(&mreq.imr_interface.s_addr, VAL_TUPLE(ARG(member)), 4);
+
+        result = setsockopt(
+            sock->requestee.socket,
+            IPPROTO_IP,
+            REF(drop) ? IP_DROP_MEMBERSHIP : IP_ADD_MEMBERSHIP,
+            cast(char*, &mreq),
+            sizeof(mreq)
+        );
+
+        break; }
+
+    case 2365: {
+        INCLUDE_PARAMS_OF_SET_UDP_TTL;
+
+        if (!GET_FLAG(sock->modes, RST_UDP)) { // !!! other checks?
+            sock->error = -18;
+            return DR_ERROR;
+        }
+
+        int ttl = VAL_INT32(ARG(ttl));
+        result = setsockopt(
+            sock->requestee.socket,
+            IPPROTO_IP,
+            IP_TTL,
+            cast(char*, &ttl),
+            sizeof(ttl)
+        );
+
+        break; }
+
+    default:
+        fail (Error(RE_MISC)); // not return DR_ERROR?  Is failing here ok?
+    }
+
+    if (result < 0) {
+        sock->error = result;
+        return DR_ERROR;
+    }
+
+    return DR_DONE;
+}
+
+
 //
 //  Accept_Socket: C
 //
@@ -629,7 +708,7 @@ static DEVICE_CMD_FUNC Dev_Cmds[RDC_MAX] = {
     0,  // poll
     Connect_Socket,
     0,  // query
-    0,  // modify
+    Modify_Socket,          // modify
     Accept_Socket,          // Create
     0,  // delete
     0,  // rename
