@@ -164,6 +164,7 @@ modules: [
         ../codecs/dh/dh.c
         ../codecs/rc4/rc4.c
         ../codecs/rsa/rsa.c
+        ../codecs/sha256/sha256.c
     ]
 
     LodePNG ../extensions/mod-lodepng.c [../codecs/png/lodepng.c]

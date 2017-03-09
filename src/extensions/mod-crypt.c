@@ -48,6 +48,8 @@
 #include "sys-core.h"
 #include "sys-ext.h"
 
+#include "sha256/sha256.h" // depends on Reb-C for REBCNT, REBYTE
+
 #include "tmp-mod-crypt-first.h"
 
 //
@@ -626,6 +628,49 @@ static REBNATIVE(aes)
     }
 
     fail (Error(RE_EXT_CRYPT_KEY_OR_STREAM_REQUIRED));
+}
+
+
+//
+//  sha256: native/export [
+//
+//  {Calculate a SHA256 hash value from binary data.}
+//
+//      return: [binary!]
+//          {32-byte binary hash}
+//      data [binary! string!]
+//          {Data to hash, STRING! will be converted to UTF-8}
+//  ]
+//
+REBNATIVE(sha256)
+{
+    INCLUDE_PARAMS_OF_SHA256;
+
+    REBCNT index;
+    REBCNT len;
+    REBSER *series;
+    if (NOT(VAL_BYTE_SIZE(ARG(data)))) { // wide string
+        series = Temp_Bin_Str_Managed(ARG(data), &index, &len);
+    }
+    else {
+        series = VAL_SERIES(ARG(data));
+        index = VAL_INDEX(ARG(data));
+        len = VAL_LEN_AT(ARG(data));
+    }
+
+    REBYTE *data = BIN_AT(series, index);
+
+    SHA256_CTX ctx;
+
+    sha256_init(&ctx);
+    sha256_update(&ctx, data, len);
+
+    REBSER *buf = Make_Binary(SHA256_BLOCK_SIZE);
+    sha256_final(&ctx, BIN_HEAD(buf));
+    TERM_BIN_LEN(buf, SHA256_BLOCK_SIZE);
+
+    Init_Binary(D_OUT, buf);
+    return R_OUT;
 }
 
 

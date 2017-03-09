@@ -379,6 +379,7 @@ set (CODECS_SOURCE
     ${CORE_DIR}/../codecs/dh/dh.c
     ${CORE_DIR}/../codecs/rc4/rc4.c
     ${CORE_DIR}/../codecs/rsa/rsa.c
+    ${CORE_DIR}/../codecs/sha256/sha256.c
 )
 
 file(GLOB CORE_C_FILES ${CORE_DIR}/*.c)

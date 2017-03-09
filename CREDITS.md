@@ -150,6 +150,11 @@ not be complete.  Please amend with any corrections.
 - Copyright 1995-1998 Eric Young
 - `%src/core/u-sha1.c`
 
+**sha256**
+- Copyright 2006-2012 (?) Brad Conte
+- `%src/codecs/sha256.c`
+- `%src/codecs/sha256.h`
+
 **Unicode**
 - Copyright 2001-2004 Unicode, Inc.
 - `%src/core/s-unicode.c`
