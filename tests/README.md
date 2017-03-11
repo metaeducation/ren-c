@@ -18,7 +18,7 @@
 
 # Running the Tests
 
-The test cases are listed in `core-tests.r` and the script for running them is called `run-recover.r`.  Executing it on Kubuntu might look like:
+The test cases are listed in `tests/core-tests.r` and the script for running them is called `tests/run-recover.r`.  Executing it on Kubuntu might look like:
 
     ladislav@lkub64:/rebol-test$ /r3/make/r3 run-recover.r
 
