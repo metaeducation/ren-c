@@ -38,6 +38,23 @@ static const char script_bytes[] =
     "version: 1.0.0\n"
     "license: {Apache 2.0}\n"
 "]\n"
+"hmac-sha256: function [{computes the hmac-sha256 for message m using key k}\n"
+"    k [binary!] m [binary!]][\n"
+"    key: copy k\n"
+"    message: copy m\n"
+"    blocksize: 64\n"
+"    if (length key) > blocksize [\n"
+"        key: sha256 key\n"
+"    ]\n"
+"    if (length key) < blocksize [\n"
+"        insert/dup tail key #{00} (blocksize - length key)\n"
+"    ]\n"
+"    insert/dup opad: copy #{} #{5C} blocksize\n"
+"    insert/dup ipad: copy #{} #{36} blocksize\n"
+"    o_key_pad: XOR~ opad key\n"
+"    i_key_pad: XOR~ ipad key\n"
+"    sha256 join-of o_key_pad sha256 join-of i_key_pad message\n"
+"]\n"
 ;
 
 void Init_Crypto(void);
@@ -62,4 +79,3 @@ DEFINE_EXT_QUIT(Crypt,
     return CALL_MODULE_QUIT(Crypt);
 }
 )
-
