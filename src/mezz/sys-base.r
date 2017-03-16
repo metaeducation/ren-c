@@ -86,14 +86,15 @@ do*: function [
         ; Convert value into a URL!
         source: switch source [
             ; Encodings and data formats
-            <json> [http://reb4.me/r3/json.reb]
+            <json> [https://raw.githubusercontent.com/rgchris/Scripts/master/ren-c/altjson.reb]
             <xml> [http://reb4.me/r3/altxml.reb]
 
             ; Web services
             <amazon-s3> [http://reb4.me/r3/s3.reb]
-            <upgrade> [https://raw.githubusercontent.com/gchiu/rebol-misc/master/upgrade.reb]
+            <httpd> [https://raw.githubusercontent.com/rgchris/Scripts/master/ren-c/httpd.reb]
             <twitter> [https://raw.githubusercontent.com/gchiu/rebolbot/master/twitter.r3]
             <trello> [http://codeconscious.com/rebol-scripts/trello.r]
+            <upgrade> [https://raw.githubusercontent.com/gchiu/rebol-misc/master/upgrade.reb]
 
             ; Dialects
             <rebmu> [https://raw.githubusercontent.com/hostilefork/rebmu/master/rebmu.reb]
