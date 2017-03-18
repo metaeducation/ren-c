@@ -578,10 +578,7 @@ at-value: func ['field] [next find boot-sysobj to-set-word field]
 
 boot-sysobj: load %sysobj.r
 change at-value version version
-when: now
-when: when - when/zone
-when/zone: 0:00
-change at-value build when
+change at-value build now/utc
 change at-value product to lit-word! product
 
 
