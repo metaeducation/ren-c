@@ -202,8 +202,11 @@ static void Do_Core_Shared_Checks_Debug(REBFRM *f) {
     // Because this check is a bit expensive it is lightened up and used in
     // the exit case only.  But re-enable it to help narrowing down an
     // imbalanced state discovered on an exit.
+    //
+#ifdef BALANCE_CHECK_EVERY_EVALUATION_STEP
+    ASSERT_STATE_BALANCED(&f->state);
+#endif
 
-    /* ASSERT_STATE_BALANCED(&f->state);*/
     assert(f == FS_TOP);
     assert(f->state.top_chunk == TG_Top_Chunk);
     /* assert(DSP == f->dsp_orig); */ // !!! not true now with push SET-WORD!

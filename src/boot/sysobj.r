@@ -144,7 +144,6 @@ options: construct [] [  ; Options supplied to REBOL during startup
     get-will-get-anything: false
     no-reduce-nested-print: false
     arg1-arg2-arg3-error: false
-    sets-unsuppress-lookahead: false
     unlocked-source: false
 
     ; These option will only apply if the function which is currently executing

@@ -675,7 +675,6 @@ set 'r3-legacy* func [<local> if-flags] [
         paren-instead-of-group: true
         get-will-get-anything: true
         no-reduce-nested-print: true
-        sets-unsuppress-lookahead: true
         unlocked-source: true
     ]
 

@@ -321,7 +321,7 @@ inline static REBVAL *Get_Var_Core(
     return var;
 }
 
-static inline const RELVAL *Get_Opt_Var_May_Fail(
+static inline const REBVAL *Get_Opt_Var_May_Fail(
     const RELVAL *any_word,
     REBSPC *specifier
 ) {

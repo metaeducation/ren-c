@@ -141,7 +141,7 @@ script:
     - |
       if [[ "${CC}" = "g++" ]]; then
           CPLUSPLUS=1;
-          LIBC_FLAG="-static-libgcc -static-libstdc++"
+          LIBC_FLAG="-static-libgcc -static-libstdc++ --std=c++11"
       else
           unset CPLUSPLUS;
           LIBC_FLAG=""

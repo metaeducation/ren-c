@@ -979,25 +979,26 @@ REBFUN *Make_Function(
             //
             goto done_caching;
 
-        case PARAM_CLASS_NORMAL: {
+        case PARAM_CLASS_NORMAL:
             //
-            // At least one argument.  Call it a brancher even if it might
-            // error on LOGIC! or have greater arity, so that the error can
-            // be delivered by the moment of attempted application.
+            // First argument is not tight, cache flag to report it.
             //
             SET_VAL_FLAG(rootparam, FUNC_FLAG_DEFERS_LOOKBACK_ARG);
+            goto done_caching;
 
-            goto done_caching; }
+        // Otherwise, at least one argument but not one that requires the
+        // deferring of lookback.
 
         case PARAM_CLASS_TIGHT:
-        case PARAM_CLASS_HARD_QUOTE:
-        case PARAM_CLASS_SOFT_QUOTE: {
             //
-            // At least one argument but not one that requires the deferring
-            // of lookback.
+            // First argument is tight, no flag needed
             //
             goto done_caching;
-        }
+
+        case PARAM_CLASS_HARD_QUOTE:
+        case PARAM_CLASS_SOFT_QUOTE:
+            SET_VAL_FLAG(rootparam, FUNC_FLAG_QUOTES_FIRST_ARG);
+            goto done_caching;
 
         default:
             assert(FALSE);
@@ -2022,7 +2023,7 @@ REB_R Apply_Frame_Core(REBFRM *f, REBSTR *label, REBVAL *opt_def)
     f->refine = m_cast(REBVAL*, END);
 
     if (opt_def)
-        Push_Or_Alloc_Args_For_Underlying_Func(f);
+        Push_Or_Alloc_Args_For_Underlying_Func(f, f->gotten);
     else {
         ASSERT_CONTEXT(AS_CONTEXT(f->varlist)); // underlying must be set
 
