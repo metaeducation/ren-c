@@ -190,20 +190,30 @@ inline static REBRIN *FUNC_ROUTINE(REBFUN *f) {
 //
 #define FUNC_FLAG_DEFERS_LOOKBACK_ARG FUNC_FLAG(2)
 
+// This is another cached property, needed because lookahead/lookback is done
+// so frequently, and it's quicker to check a bit on the function than to
+// walk the parameter list every time that function is called.
+//
+#define FUNC_FLAG_QUOTES_FIRST_ARG FUNC_FLAG(3)
+
 // The COMPILE-NATIVES command wants to operate on user natives, and be able
 // to recompile unchanged natives as part of a unit even after they were
 // initially compiled.  But since that replaces their dispatcher with an
 // arbitrary function, they can't be recognized to know they have the specific
 // body structure of a user native.  So this flag is used.
 //
-#define FUNC_FLAG_USER_NATIVE FUNC_FLAG(3)
+#define FUNC_FLAG_USER_NATIVE FUNC_FLAG(4)
+
+// This flag is set when the native (e.g. extensions) can be unloaded
+//
+#define FUNC_FLAG_UNLOADABLE_NATIVE FUNC_FLAG(5)
 
 #if !defined(NDEBUG)
     //
     // BLANK! ("none!") for unused refinements instead of FALSE
     // Also, BLANK! for args of unused refinements instead of not set
     //
-    #define FUNC_FLAG_LEGACY_DEBUG FUNC_FLAG(4)
+    #define FUNC_FLAG_LEGACY_DEBUG FUNC_FLAG(6)
 
     // If a function is a native then it may provide return information as
     // documentation, but not want to pay for the run-time check of whether
@@ -211,17 +221,13 @@ inline static REBRIN *FUNC_ROUTINE(REBFUN *f) {
     // to double-check.  So when MKF_FAKE_RETURN is used in a debug build,
     // it leaves this flag on the function.
     //
-    #define FUNC_FLAG_RETURN_DEBUG FUNC_FLAG(5)
+    #define FUNC_FLAG_RETURN_DEBUG FUNC_FLAG(7)
 #endif
-
-// This flag is set when the native (e.g. extensions) can be unloaded
-//
-#define FUNC_FLAG_UNLOADABLE_NATIVE FUNC_FLAG(7)
 
 // These are the flags which are scanned for and set during Make_Function
 //
 #define FUNC_FLAG_CACHED_MASK \
-    (FUNC_FLAG_DEFERS_LOOKBACK_ARG)
+    (FUNC_FLAG_DEFERS_LOOKBACK_ARG | FUNC_FLAG_QUOTES_FIRST_ARG)
 
 
 inline static REBFUN *VAL_FUNC(const RELVAL *v) {

@@ -273,57 +273,73 @@ inline static void Fetch_Next_In_Frame(REBFRM *f) {
 }
 
 
-// Things like the `case ET_WORD` run at the start of a new evaluation cycle.
-// It could be the very first element evaluated, hence it might seem not
-// meaningful to say it has a "left hand side" in f->out to give an infix
-// (prefix, etc.) lookback function.
+// This is a very light wrapper over Do_Core(), which is used with
+// Push_Frame_At() for operations like ANY or REDUCE that wish to perform
+// several successive operations on an array, without creating a new frame
+// each time.
 //
-// However...it can look at the frame stack and peek to find SET-WORD! or
-// SET-PATH!s in progress.  They are not products of an evaluation--hence are
-// safe to quote, allowing constructs like `x: ++ 1`
-//
-inline static void Lookback_For_Set_Word_Or_Set_Path(
+inline static REBOOL Do_Next_In_Frame_Throws(
     REBVAL *out,
-    REBFRM *child
+    REBFRM *f
 ){
-    REBFRM *parent = child->prior;
+    assert(f->eval_type == REB_0); // see notes in Push_Frame_At()
+    assert(NOT(f->flags.bits & DO_FLAG_TO_END));
 
-    if (parent == NULL) {
-        SET_END(out); // some <end> args are able to tolerate absences
-        return;
-    }
+    SET_END(out);
+    f->out = out;
+    Do_Core(f); // should already be pushed
 
-    switch (parent->eval_type) {
-    case REB_SET_WORD: {
-        Derelativize(out, parent->param, parent->specifier);
-        SET_VAL_FLAG(out, VALUE_FLAG_UNEVALUATED);
-        parent->eval_type = REB_GET_WORD;
-        break; }
-
-    case REB_SET_PATH: {
-        //
-        // The purpose of capturing a SET-PATH! on the left of a lookback
-        // operation is to set it.  Currently the guarantee required is that
-        // `x: x/y: z: m/n/o: whatever` will give all values the same thing,
-        // and to assure that a GET is run after the operation.  But if there
-        // are GROUP!s in the path, then it would evaluate twice.  Avoid it
-        // by disallowing lookback capture of paths containing GROUP!
-        //
-        RELVAL *temp = VAL_ARRAY_AT(parent->param);
-        for (; NOT_END(temp); ++temp)
-            if (IS_GROUP(temp))
-                fail (Error(RE_INFIX_PATH_GROUP, temp));
-
-        Derelativize(out, parent->param, parent->specifier);
-        SET_VAL_FLAG(out, VALUE_FLAG_UNEVALUATED);
-        parent->eval_type = REB_GET_PATH;
-        break; }
-
-    default:
-        SET_END(out);
-    }
+    // Since Do_Core() currently makes no guarantees about the state of
+    // f->eval_type when an operation is over, restore it to a benign REB_0
+    // so that a GC between calls to Do_Next_In_Frame_Throws() doesn't think
+    // it has to protect the frame as another running type.
+    //
+    f->eval_type = REB_0;
+    return THROWN(out);
 }
 
+
+// Slightly heavier wrapper over Do_Core() than Do_Next_In_Frame_Throws().
+// It also reuses the frame...but has to clear and restore the frame's
+// flags.  It is currently used only by SET-WORD! and SET-PATH!.
+//
+// Note: Consider pathological case `x: eval quote y: eval eval quote z: ...`
+// This can be done without making a new frame, but the eval cell which holds
+// the SET-WORD! needs to be put back in place before returning, so that the
+// set knows where to write.  The caller handles this with the data stack.
+//
+// !!! Review how much cheaper this actually is than making a new frame.
+//
+inline static REBOOL Do_Next_Mid_Frame_Throws(REBFRM *f) {
+    assert(f->eval_type == REB_SET_WORD || f->eval_type == REB_SET_PATH);
+
+    REBFLGS prior_flags = f->flags.bits;
+    Init_Endlike_Header(&f->flags, DO_FLAG_NORMAL); // e.g. no DO_FLAG_TO_END
+
+    REBDSP prior_dsp_orig = f->dsp_orig;
+#if !defined(NDEBUG)
+    assert(f->state.dsp == f->dsp_orig);
+#endif
+
+    SET_END(f->out);
+    Do_Core(f); // should already be pushed
+
+    // The & on the following line is purposeful.  See Init_Endlike_Header.
+    //
+    (&f->flags)->bits = prior_flags; // e.g. restore DO_FLAG_TO_END
+    
+    f->dsp_orig = prior_dsp_orig;
+#if !defined(NDEBUG)
+    f->state.dsp = prior_dsp_orig;
+#endif
+
+    // Note: f->eval_type will have changed, but it should not matter to
+    // REB_SET_WORD or REB_SET_PATH, which will either continue executing
+    // the frame and fetch a new eval_type (if DO_FLAG_TO_END) else return
+    // with no guarantee about f->eval_type.
+
+    return THROWN(f->out);
+}
 
 //
 // !!! This operation used to provide some optimization beyond setting up
@@ -397,22 +413,6 @@ inline static REBOOL Do_Next_In_Subframe_Throws(
     parent->index = child->index;
     parent->gotten = child->gotten;
 
-    return THROWN(out);
-}
-
-
-inline static REBOOL Do_Next_In_Frame_Throws(
-    REBVAL *out,
-    REBFRM *f
-){
-    assert(f->eval_type == REB_0); // see notes in Push_Frame_At()
-    assert(NOT(f->flags.bits & DO_FLAG_TO_END));
-
-    SET_END(out);
-    f->out = out;
-    Do_Core(f); // should already be pushed
-
-    f->eval_type = REB_0;
     return THROWN(out);
 }
 

@@ -383,7 +383,13 @@ inline static void SET_FRAME_VALUE(REBFRM *f, const RELVAL *value) {
 // then a reified frame will be locked or a non-reified frame will be flagged
 // in such a way as to indicate that it should be locked when reified.  This
 // prevents a FRAME! generated for a native from being able to get write
-// access to 
+// access to the variables, which could cause crashes, as raw C code is not
+// insulated against having bit patterns for types in cells that aren't
+// expected.
+//
+// !!! Debug injection of bad types into usermode code may cause havoc as
+// well, and should be considered a security/permissions issue.  It just won't
+// (or shouldn't) crash the evaluator itself.
 //
 // This is automatically injected by the INCLUDE_PARAMS_OF_XXX macros.  The
 // reason this is done with code inlined into the native itself instead of
@@ -411,24 +417,27 @@ inline static void Enter_Native(REBFRM *f) {
 // Yet if there are specialized values, they must be filled in from the
 // exemplar frame.
 //
-// So adaptations must "dig" in order to find a specialization, to use an
-// "exemplar" frame.
+// Rather than "dig" through layers of functions to find the underlying
+// function or the specialization's exemplar frame, those properties are
+// cached during the creation process.
 //
-// Specializations must "dig" in order to find the underlying function.
-//
-inline static void Push_Or_Alloc_Args_For_Underlying_Func(REBFRM *f) {
-    //
+inline static void Push_Or_Alloc_Args_For_Underlying_Func(
+    REBFRM *f,
+    const REBVAL *gotten
+){
+    assert(IS_FUNCTION(gotten));
+
     // We need the actual REBVAL of the function here, and not just the REBFUN.
     // This is true even though you can get an archetype REBVAL from a function
     // pointer with FUNC_VALUE().  That archetype--as with RETURN and LEAVE--
     // will not carry the specific `binding` information of a value.
     //
-    f->func = VAL_FUNC(f->gotten);
-    f->binding = VAL_BINDING(f->gotten);
+    f->func = VAL_FUNC(gotten);
+    f->binding = VAL_BINDING(gotten);
 
     // The underlying function is whose parameter list must be enumerated.
     // Even though this underlying function can have more arguments than the
-    // "interface" function being called from f->gotten, any parameters more
+    // "interface" function being called from gotten, any parameters more
     // than in that interface won't be gathered at the callsite because they
     // will not contain END markers.
     //
@@ -447,7 +456,7 @@ inline static void Push_Or_Alloc_Args_For_Underlying_Func(REBFRM *f) {
     // the push and drop side, and made that cell unavailable for 1-argument
     // functions to use as a temporary.  So the optimization was removed.
 
-    if (IS_FUNC_DURABLE(VAL_FUNC(f->gotten))) { // !!! Who decides durability?
+    if (IS_FUNC_DURABLE(VAL_FUNC(gotten))) { // !!! Who decides durability?
         //
         // !!! It's hoped that stack frames can be "hybrids" with some pooled
         // allocated vars that survive a call, and some that go away when the

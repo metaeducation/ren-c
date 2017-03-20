@@ -111,10 +111,10 @@ Script: [
 
     expression-barrier: {Expression barrier hit while processing arguments}
     bar-hit-mid-case:   {Expression barrier hit in middle of CASE pairing}
-    infix-quote-late:   [:arg1 {was evaluated and can't be lookback quoted}]
-    infix-quote-set:    [:arg1 {can only be hard-quoted with lookback}]
+    enfix-quote-late:   [:arg1 {can't left quote a forward quoted value}]
+    partial-lookback:   [:arg1 {can't complete} :arg2 {expression on left}]
 
-    infix-path-group:   [:arg1 {GROUP! can't be in a lookback quoted PATH!}]
+    enfix-path-group:   [:arg1 {GROUP! can't be in a lookback quoted PATH!}]
 
     hard-quote-void:    [:arg1 {is hard quoted and can't be optionally void}]
 

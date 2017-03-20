@@ -529,11 +529,11 @@ inline static void FAIL_IF_READ_ONLY_SERIES(REBSER *s) {
 
 inline static void PUSH_GUARD_SERIES(REBSER *s) {
     ASSERT_SERIES_MANAGED(s); // see PUSH_GUARD_ARRAY_CONTENTS if you need it
-    Guard_Node_Core(cast(REBNOD*, s));
+    Guard_Node_Core(cast(const REBNOD*, s));
 }
 
-inline static void PUSH_GUARD_VALUE(RELVAL *v) {
-    Guard_Node_Core(cast(REBNOD*, v));
+inline static void PUSH_GUARD_VALUE(const RELVAL *v) {
+    Guard_Node_Core(cast(const REBNOD*, v));
 }
 
 inline static void Drop_Guard_Series_Common(REBSER *s) {

@@ -252,13 +252,16 @@ static inline void Link_Vararg_Param_To_Frame(REBFRM *f, REBOOL make) {
 // Comments on the definition of Reb_Frame are a good place to start looking
 // to understand what's going on.  See %sys-rebfrm.h for full details.
 //
-// To summarize, these fields are required upon initialization:
+// These fields are required upon initialization:
+//
+//     f->out*
+//     REBVAL pointer to which the evaluation's result should be written,
+//     must point to initialized bits, and that needs to be an END marker,
+//     unless it's in lookback mode, in which case it must be the REBVAL to
+//     use as first argument (infix/postfix/"enfixed" functions)
 //
 //     f->value
-//     Fetched first value to execute (may not be an END marker)
-//
-//     f->eval_type
-//     Kind of execution requested (should line up with f->value)
+//     Fetched first value to execute (cannot be an END marker)
 //
 //     f->source
 //     Contains the REBARR* or C va_list of subsequent values to fetch
@@ -267,16 +270,10 @@ static inline void Link_Vararg_Param_To_Frame(REBFRM *f, REBOOL make) {
 //     Needed if f->source is an array (can be garbage if it's a C va_list)
 //
 //     f->pending
-//     Must be VA_LIST_PENDING if source is a va_list, else NULL
+//     Must be VA_LIST_PENDING if source is a va_list, else starts out NULL
 //
 //     f->specifier
-//     Context where to look up relative values in f->source, else NULL
-//
-//     f->out*
-//     REBVAL pointer to which the evaluation's result should be written
-//     Must point to initialized bits, and that needs to be an END marker,
-//     unless it's in lookback mode, in which case it must be the REBVAL to
-//     use as first argument (infix/postfix/"enfixed" functions)
+//     Resolver for bindings of values in f->source, SPECIFIED if all resolved
 //
 //     f->gotten
 //     Must be either be the Get_Var() lookup of f->value, or NULL
@@ -295,7 +292,6 @@ void Do_Core(REBFRM * const f)
     // APPLY and a DO of a FRAME! both use this same code path.
     //
     if (f->flags.bits & DO_FLAG_APPLYING) {
-        assert(f->label != NULL);
         f->eval_type = REB_FUNCTION;
         args_evaluate = NOT(f->flags.bits & DO_FLAG_NO_ARGS_EVALUATE);
         f->refine = ORDINARY_ARG; // "APPLY infix" not supported
@@ -329,20 +325,6 @@ void Do_Core(REBFRM * const f)
     //
     f->dsp_orig = DSP;
 
-    //==////////////////////////////////////////////////////////////////==//
-    //
-    // BEGIN MAIN SWITCH STATEMENT
-    //
-    //==////////////////////////////////////////////////////////////////==//
-
-    // This switch is done via contiguous REB_XXX values, in order to
-    // facilitate use of a "jump table optimization":
-    //
-    // http://stackoverflow.com/questions/17061967/c-switch-and-jump-tables
-    //
-    // Note that infix ("lookback") functions are dispatched *after* the
-    // switch...unless DO_FLAG_NO_LOOKAHEAD is set.
-
 do_next:;
 
     START_NEW_EXPRESSION_MAY_THROW(f, goto finished);
@@ -353,7 +335,145 @@ reevaluate:;
     // ^-- doesn't advance expression index, so `eval x` starts with `eval`
     // also EVAL/ONLY may change args_evaluate to FALSE for a cycle
 
-    switch (f->eval_type) { // <-- DO_COUNT_BREAKPOINT landing spot
+    //==////////////////////////////////////////////////////////////////==//
+    //
+    // LOOKAHEAD TO ENABLE ENFIXED FUNCTIONS THAT QUOTE THEIR LEFT ARG
+    //
+    //==////////////////////////////////////////////////////////////////==//
+
+    // Ren-C has an additional lookahead step *before* an evaluation in order
+    // to take care of this scenario.  To do this, it pre-emptively feeds the
+    // frame one unit that f->value is the *next* value, and a local variable
+    // called "current" holds the current head of the expression that the
+    // switch will be processing.
+    //
+    // Additionally, it attempts to reuse any lookahead fetching done with
+    // Get_Var.  In the general case, this is not going to be possible, e.g.:
+    //
+    //     obj: make object! [x: 10]
+    //     foo: does [append obj [y: 20]]
+    //     do in obj [foo x]
+    //
+    // Consider the lookahead fetch for `foo x`.  It will get x to f->gotten,
+    // and see that it is not a lookback function.  But then when it runs foo,
+    // the memory location where x had been found before may have moved due
+    // to expansion.  Basically any function call invalidates f->gotten, as
+    // does obviously any Fetch_Next_In_Frame (because the position changes)
+    // 
+    // !!! Review how often gotten has hits vs. misses, and what the benefit
+    // of the feature actually is.
+
+    const RELVAL *current;
+    const REBVAL *current_gotten;
+
+    current = f->value; // <-- DO_COUNT_BREAKPOINT landing spot
+    current_gotten = f->gotten;
+    f->gotten = NULL;
+    Fetch_Next_In_Frame(f);
+
+    // VAL_TYPE_RAW is used to avoid a separate check for IS_END().
+    //
+    if (VAL_TYPE_RAW(f->value) == REB_WORD && IS_WORD_BOUND(f->value)) {
+        //
+        // While the next item may be a WORD! that looks up to an enfixed
+        // function, and it may want to quote what's on its left...there
+        // could be a conflict.  This happens if the current item is also
+        // a WORD!, but one that looks up to a prefix function that wants
+        // to quote what's on its right!
+        //
+        if (f->eval_type == REB_WORD && IS_WORD_BOUND(current)) {
+            if (current_gotten == NULL)
+                current_gotten = Get_Opt_Var_May_Fail(current, f->specifier);
+            else
+                assert(
+                    current_gotten
+                    == Get_Opt_Var_May_Fail(current, f->specifier)
+                );
+
+            if (
+                IS_FUNCTION(current_gotten)
+                && NOT_VAL_FLAG(current_gotten, VALUE_FLAG_ENFIXED)
+                && GET_VAL_FLAG(current_gotten, FUNC_FLAG_QUOTES_FIRST_ARG)
+            ){
+                // Yup, it quotes.  We could look for a conflict and call
+                // it an error, but instead give the left hand side precedence
+                // over the right.  This means something like:
+                //
+                //     foo: quote -> [print quote]
+                //
+                // Would be interpreted as:
+                //
+                //     foo: (quote ->) [print quote]
+                //
+                // This is a good argument for not making enfixed operations
+                // that hard-quote things that can dispatch functions.  A
+                // soft-quote would give more flexibility to override the
+                // left hand side's precedence, e.g. the user writes:
+                //
+                //     foo: ('quote) -> [print quote]
+                //
+                f->eval_type = REB_FUNCTION;
+                SET_FRAME_LABEL(f, VAL_WORD_SPELLING(current));
+                f->refine = ORDINARY_ARG;
+                goto do_function_in_current_gotten;
+            }
+        }
+
+        f->gotten = Get_Opt_Var_May_Fail(f->value, f->specifier);
+
+        if (
+            IS_FUNCTION(f->gotten)
+            && ALL_VAL_FLAGS(
+                f->gotten, VALUE_FLAG_ENFIXED | FUNC_FLAG_QUOTES_FIRST_ARG
+            )
+        ){
+            f->eval_type = REB_FUNCTION;
+            SET_FRAME_LABEL(f, VAL_WORD_SPELLING(f->value));
+
+            // The protocol for lookback is that the lookback argument is
+            // consumed from the f->out slot.  It will ultimately wind up
+            // moved into the frame, so having the quoting cases get
+            // it there by way of the f->out is *slightly* inefficient.  But
+            // since evaluative cases do wind up with the value in f->out,
+            // and are much more common, it's not worth worrying about.
+            //
+            f->refine = LOOKBACK_ARG;
+            Derelativize(f->out, current, f->specifier);
+
+        #if !defined(NDEBUG)
+            //
+            // Since the value is going to be copied into an arg slot anyway,
+            // setting the unevaluated flag here isn't necessary.  However,
+            // it allows for an added debug check that if an enfixed parameter
+            // is hard or soft quoted, it *probably* came from here.
+            //
+            SET_VAL_FLAG(f->out, VALUE_FLAG_UNEVALUATED);
+        #endif
+
+            current_gotten = f->gotten; // the function
+
+            // We don't want the WORD! that invoked the function to act like
+            // an argument, so we have to advance the frame once more.
+            //
+            f->gotten = NULL;
+            Fetch_Next_In_Frame(f);
+
+            goto do_function_in_current_gotten;
+        }
+    }
+
+    //==////////////////////////////////////////////////////////////////==//
+    //
+    // BEGIN MAIN SWITCH STATEMENT
+    //
+    //==////////////////////////////////////////////////////////////////==//
+
+    // This switch is done via contiguous REB_XXX values, in order to
+    // facilitate use of a "jump table optimization":
+    //
+    // http://stackoverflow.com/questions/17061967/c-switch-and-jump-tables
+
+    switch (f->eval_type) {
 
 //==//////////////////////////////////////////////////////////////////////==//
 //
@@ -364,7 +484,7 @@ reevaluate:;
 // being retriggered via EVAL
 //
 // Most function evaluations are triggered from a SWITCH on a WORD! or PATH!,
-// which jumps in at the `do_function_in_gotten` label.
+// which jumps in at the `do_function_in_current_gotten` label.
 //
 //==//////////////////////////////////////////////////////////////////////==//
 
@@ -372,23 +492,14 @@ reevaluate:;
         assert(FALSE); // internal type.
         break;
 
-    case REB_FUNCTION:
-        if (f->gotten == NULL) { // literal function in a block
-            f->gotten = const_KNOWN(f->value);
-            SET_FRAME_LABEL(f, Canon(SYM___ANONYMOUS__)); // nameless literal
-        }
-        else
-            SET_FRAME_LABEL(f, VAL_WORD_SPELLING(f->value));
+    case REB_FUNCTION: // literal function in a block
+        current_gotten = const_KNOWN(current);
+        SET_FRAME_LABEL(f, Canon(SYM___ANONYMOUS__)); // nameless literal
 
-    do_function_in_gotten:
-        assert(IS_FUNCTION(f->gotten));
-        assert(f->eval_type == REB_FUNCTION);
-
-        if (GET_VAL_FLAG(f->gotten, VALUE_FLAG_ENFIXED)) {
-            if (GET_VAL_FLAG(f->gotten, FUNC_FLAG_DEFERS_LOOKBACK_ARG))
-                if (f->flags.bits & DO_FLAG_FULFILLING_ARG)
-                    fail (Error(RE_EXPRESSION_BARRIER)); // !!! better error?
-
+        if (GET_VAL_FLAG(current_gotten, VALUE_FLAG_ENFIXED)) {
+            //
+            // f->out can't be trash, but it can be an END.
+            //
             f->refine = LOOKBACK_ARG;
         }
         else {
@@ -396,10 +507,10 @@ reevaluate:;
             f->refine = ORDINARY_ARG;
         }
 
-        assert(f->label != NULL); // must be something (even "anonymous")
-    #if !defined(NDEBUG)
-        assert(f->label_debug != NULL); // SET_FRAME_LABEL sets (C debugging)
-    #endif
+    do_function_in_current_gotten:
+        assert(IS_FUNCTION(current_gotten));
+        assert(f->eval_type == REB_FUNCTION);
+        TRASH_POINTER_IF_DEBUG(current); // shouldn't be used below
 
         // There may be refinements pushed to the data stack to process, if
         // the call originated from a path dispatch.
@@ -416,20 +527,25 @@ reevaluate:;
         // spec) and the actual arguments (in the call frame) using pointer
         // incrementation, that they are both terminated by END, and
         // that there are an equal number of values in both.
-
-        Push_Or_Alloc_Args_For_Underlying_Func(f); // sets f's func+param+arg
-
-        f->gotten = NULL;
-        Fetch_Next_In_Frame(f); // overwrites f->value
+        //
+        // Push_Or_Alloc_Args sets the frame's function, sets args_head...
+        //
+        Push_Or_Alloc_Args_For_Underlying_Func(f, current_gotten);
 
     do_function_arglist_in_progress:
+
+        assert(f->label != NULL); // must be something (even "anonymous")
+    #if !defined(NDEBUG)
+        assert(f->label_debug != NULL); // SET_FRAME_LABEL sets (C debugging)
+    #endif
 
         Eval_Functions++; // this isn't free...is it worth tracking?
 
         // Now that we have extracted f->func, we do not have to worry that
         // f->value might have lived in f->cell.eval.  We can't overwrite
-        // f->out in case that is holding the first argument to an infix
-        // function, so f->cell.eval gets used for temporary evaluations.
+        // f->out during the argument evaluations, in case that is holding the
+        // first argument to an infix function, so f->cell gets used for
+        // temporary evaluations up until the point the function gets called.
 
         assert(f->refine == ORDINARY_ARG || f->refine == LOOKBACK_ARG);
 
@@ -578,7 +694,7 @@ reevaluate:;
                     if (
                         VAL_WORD_SPELLING(f->refine) // canon when pushed
                         == VAL_PARAM_CANON(f->param) // #2258
-                    ) {
+                    ){
                         // The call uses this refinement but we'll have to
                         // come back to it when the expression index to
                         // consume lines up.  Make a note of the param
@@ -726,38 +842,96 @@ reevaluate:;
 
             if (f->refine == LOOKBACK_ARG) {
                 //
-                // It is not possible to gather variadic lookback arguments.
-                // SET/LOOKBACK should prohibit functions w/variadic 1st args.
+                // !!! Can a variadic lookback argument be meaningful?
+                // Arguably, if you have an arity-1 function which is variadic
+                // and you enfix it, then giving it a feed of either 0 or 1
+                // values and only letting it take from the left would make
+                // sense.  But if it's arity-2 (e.g. multiple variadic taps)
+                // does that make any sense?
+                //
+                // It may be too wacky to worry about, and SET/LOOKBACK should
+                // just prohibit it.
                 //
                 assert(NOT_VAL_FLAG(f->param, TYPESET_FLAG_VARIADIC));
 
                 if (IS_END(f->out)) {
+                    //
+                    // Seeing an END in the output slot could mean that there was
+                    // really "nothing" to the left, or it could be a consequence of
+                    // a frame being in an argument gathering mode, e.g.
+                    //
+                    //     if 1 then [2] ;-- error, THEN cannot complete `if 1`
+                    //
+                    // The difference can be told by the frame flag.
+
+                    if (f->flags.bits & DO_FLAG_FULFILLING_ARG)
+                        fail (Error_Partial_Lookback(f));
+
                     if (NOT_VAL_FLAG(f->param, TYPESET_FLAG_ENDABLE))
                         fail (Error_No_Arg(FRM_LABEL(f), f->param));
+
                     SET_VOID(f->arg);
                     goto continue_arg_loop;
                 }
 
+                // Note: for lookback, the distinction between NORMAL and
+                // TIGHT needs to have already been handled by this point.
+                //
                 switch (pclass) {
                 case PARAM_CLASS_NORMAL:
+                    //
+                    // e.g. FUNC_FLAG_DEFERS_LOOKBACK_ARG
+                    //
+                    // !!! Should this error include the IS_END() case above?
+                    //
+                    if (f->flags.bits & DO_FLAG_FULFILLING_ARG)
+                        fail (Error(RE_EXPRESSION_BARRIER)); // !!! message?
+                    Move_Value(f->arg, f->out);
+                    break;
+
                 case PARAM_CLASS_TIGHT:
-                    //
-                    // For lookback, the distinction between NORMAL and TIGHT
-                    // needs to have already been handled by this point.
-                    // Either way, the value is in f->out.
-                    //
+                    Move_Value(f->arg, f->out);
                     break;
 
                 case PARAM_CLASS_HARD_QUOTE:
-                    if (NOT_VAL_FLAG(f->out, VALUE_FLAG_UNEVALUATED))
-                        fail (Error_Lookback_Quote_Too_Late(f));
+                #if !defined(NDEBUG)
+                    //
+                    // Only in debug builds, the before-switch lookahead sets
+                    // this flag to help indicate that's where it came from.
+                    //
+                    assert(GET_VAL_FLAG(f->out, VALUE_FLAG_UNEVALUATED));
+                #endif
+
+                    Move_Value(f->arg, f->out);
+                    SET_VAL_FLAG(f->arg, VALUE_FLAG_UNEVALUATED);
+
+                    if (IS_SET_WORD(f->out) || IS_GET_WORD(f->out))
+                        DS_PUSH(f->out); // signal refetch after operation
                     break;
 
                 case PARAM_CLASS_SOFT_QUOTE:
-                    if (NOT_VAL_FLAG(f->out, VALUE_FLAG_UNEVALUATED))
-                        fail (Error_Lookback_Quote_Too_Late(f));
-                    if (IS_SET_WORD(f->out) || IS_SET_PATH(f->out))
-                        fail (Error_Lookback_Quote_Set_Soft(f));
+                #if !defined(NDEBUG)
+                    //
+                    // Only in debug builds, the before-switch lookahead sets
+                    // this flag to help indicate that's where it came from.
+                    //
+                    assert(GET_VAL_FLAG(f->out, VALUE_FLAG_UNEVALUATED));
+                #endif
+
+                    if (IS_QUOTABLY_SOFT(f->out)) {
+                        if (Eval_Value_Throws(f->arg, f->out)) {
+                            Move_Value(f->out, f->arg);
+                            Abort_Function_Args_For_Frame(f);
+                            goto finished;
+                        }
+                    }
+                    else {
+                        Move_Value(f->arg, f->out);
+                        SET_VAL_FLAG(f->arg, VALUE_FLAG_UNEVALUATED);
+                    }
+
+                    if (IS_SET_WORD(f->out) || IS_GET_WORD(f->out))
+                        DS_PUSH(f->out); // signal refetch after operation
                     break;
 
                 default:
@@ -765,8 +939,6 @@ reevaluate:;
                 }
 
                 f->refine = ORDINARY_ARG;
-
-                Move_Value(f->arg, f->out);
                 SET_END(f->out);
                 goto check_arg;
             }
@@ -846,7 +1018,7 @@ reevaluate:;
                 // argument to square is declared #tight, it will act as
                 // `(square 1) + 2`, by not applying lookahead to
                 // see the + during the argument evaluation.
-                //                
+                //
                 if (Do_Next_In_Subframe_Throws(
                     f->arg,
                     f,
@@ -860,9 +1032,9 @@ reevaluate:;
 
     //=//// HARD QUOTED ARG-OR-REFINEMENT-ARG /////////////////////////////=//
 
-            case PARAM_CLASS_HARD_QUOTE:
+            case PARAM_CLASS_HARD_QUOTE: {
                 Quote_Next_In_Frame(f->arg, f); // has VALUE_FLAG_UNEVALUATED
-                break;
+                break; }
 
     //=//// SOFT QUOTED ARG-OR-REFINEMENT-ARG  ////////////////////////////=//
 
@@ -949,8 +1121,8 @@ reevaluate:;
                     fail (Error_Bad_Refine_Revoke(f));
             }
 
-            if (NOT(GET_VAL_FLAG(f->param, TYPESET_FLAG_VARIADIC))) {
-                if (!TYPE_CHECK(f->param, VAL_TYPE(f->arg)))
+            if (NOT_VAL_FLAG(f->param, TYPESET_FLAG_VARIADIC)) {
+                if (NOT(TYPE_CHECK(f->param, VAL_TYPE(f->arg))))
                     fail (Error_Arg_Type(
                         FRM_LABEL(f), f->param, VAL_TYPE(f->arg))
                     );
@@ -1033,9 +1205,11 @@ reevaluate:;
                 goto continue_arg_loop; // leaves refine, but bumps param+arg
             }
 
-            // chains push some number of FUNCTION!s, then call R_REDO_CHECKED
-            //
-            assert(IS_FUNCTION(DS_TOP));
+            assert(
+                IS_FUNCTION(DS_TOP) // chains push these, and R_REDO_CHECKED
+                || IS_SET_WORD(DS_TOP) // request for refetch after enfix
+                || IS_SET_PATH(DS_TOP) // request for refetch after enfix
+            );
         }
 
     #if !defined(NDEBUG)
@@ -1070,6 +1244,13 @@ reevaluate:;
         // has written the out slot yet or not (e.g. WHILE/? refinement).
         //
         assert(IS_END(f->out));
+
+        // Running arbitrary native code can manipulate the bindings or cache
+        // of a variable.  It's very conservative to say this, but any word
+        // fetches that were done for lookahead are potentially invalidated
+        // by every function call.
+        //
+        f->gotten = NULL;
 
         // Cases should be in enum order for jump-table optimization
         // (R_FALSE first, R_TRUE second, etc.)
@@ -1251,17 +1432,35 @@ reevaluate:;
         // If we have functions pending to run on the outputs, then do so.
         //
         while (DSP != f->dsp_orig) {
-            if (NOT(IS_FUNCTION(DS_TOP)))
-                break; // pending sets/gets
+            if (IS_FUNCTION(DS_TOP)) {
 
-            Move_Value(&f->cell, f->out);
+                Move_Value(&f->cell, f->out);
 
-            if (Apply_Only_Throws(f->out, TRUE, DS_TOP, &f->cell, END)) {
-                Abort_Function_Args_For_Frame(f);
-                goto finished;
+                if (Apply_Only_Throws(f->out, TRUE, DS_TOP, &f->cell, END)) {
+                    Abort_Function_Args_For_Frame(f);
+                    goto finished;
+                }
+
+                DS_DROP;
             }
-
-            DS_DROP;
+            else if (IS_SET_WORD(DS_TOP)) {
+                Move_Value(f->out, Get_Opt_Var_May_Fail(DS_TOP, SPECIFIED));
+                DS_DROP;
+                assert(DSP == f->dsp_orig); // should be last push
+            }
+            else if (IS_SET_PATH(DS_TOP)) {
+                //
+                // !!! Handling of SET-PATH! in the "refetch" adds questions
+                // regarding possible double-evaluations of GROUP!s in the
+                // path, among other things.  Review in light of decisions
+                // on if this refetch is a good idea in the first place.
+                //
+                assert(FALSE);
+                DS_DROP;
+                assert(DSP == f->dsp_orig);
+            }
+            else
+                assert(FALSE);
         }
 
         if (Trace_Flags)
@@ -1304,8 +1503,10 @@ reevaluate:;
 //==//////////////////////////////////////////////////////////////////////==//
 
     case REB_BAR:
-        Fetch_Next_In_Frame(f);
+        assert(IS_BAR(current));
+
         if (NOT_END(f->value)) {
+            SET_END(f->out); // skipping the post loop where this is done
             f->eval_type = VAL_TYPE(f->value);
             goto do_next; // quickly process next item, no infix test needed
         }
@@ -1325,8 +1526,9 @@ reevaluate:;
 //==//////////////////////////////////////////////////////////////////////==//
 
     case REB_LIT_BAR:
+        assert(IS_LIT_BAR(current));
+
         SET_BAR(f->out); // no VALUE_FLAG_UNEVALUATED
-        Fetch_Next_In_Frame(f);
         break;
 
 //==//////////////////////////////////////////////////////////////////////==//
@@ -1341,33 +1543,33 @@ reevaluate:;
 //==//////////////////////////////////////////////////////////////////////==//
 
     case REB_WORD:
-    do_word_in_value:
-        if (f->gotten == NULL) // no work to reuse from failed optimization
-            f->gotten = Get_Var_Core(
-                f->value, f->specifier, GETVAR_READ_ONLY
-            );
+        if (current_gotten == NULL) {
+            current_gotten = Get_Opt_Var_May_Fail(current, f->specifier);
+            goto do_word_in_current_unchecked;
+        }
 
-        if (IS_FUNCTION(f->gotten)) { // before IS_VOID() speeds common case
+    do_word_in_current:
+        assert(current_gotten == Get_Opt_Var_May_Fail(current, f->specifier));
+
+    do_word_in_current_unchecked:
+        if (IS_FUNCTION(current_gotten)) { // before IS_VOID() is common case
             f->eval_type = REB_FUNCTION;
-            SET_FRAME_LABEL(f, VAL_WORD_SPELLING(f->value));
+            SET_FRAME_LABEL(f, VAL_WORD_SPELLING(current));
 
-            if (GET_VAL_FLAG(f->gotten, VALUE_FLAG_ENFIXED)) {
-                Lookback_For_Set_Word_Or_Set_Path(f->out, f);
+            if (GET_VAL_FLAG(current_gotten, VALUE_FLAG_ENFIXED)) {
                 f->refine = LOOKBACK_ARG;
-                goto do_function_in_gotten;
+                goto do_function_in_current_gotten;
             }
 
             SET_END(f->out);
             f->refine = ORDINARY_ARG;
-            goto do_function_in_gotten;
+            goto do_function_in_current_gotten;
         }
 
-        if (IS_VOID(f->gotten)) // need `:x` if `x` is unset
-            fail (Error_No_Value_Core(f->value, f->specifier));
+        if (IS_VOID(current_gotten)) // need `:x` if `x` is unset
+            fail (Error_No_Value_Core(current, f->specifier));
 
-        Move_Value(f->out, f->gotten); // doesn't copy VALUE_FLAG_UNEVALUATED
-        f->gotten = NULL;
-        Fetch_Next_In_Frame(f);
+        Move_Value(f->out, current_gotten); // no copy VALUE_FLAG_UNEVALUATED
 
     #if !defined(NDEBUG)
         if (LEGACY(OPTIONS_LIT_WORD_DECAY) && IS_LIT_WORD(f->out))
@@ -1383,13 +1585,9 @@ reevaluate:;
 // SET-WORD!s before the value to assign is found.  Some kind of list needs to
 // be maintained.
 //
-// Recursion is one way to do it--but setting up another frame is expensive.
-// Instead, push the SET-WORD! to the data stack and stay in this frame.  Then
-// handle it via popping when a result is actually found to be stored.
-//
-// Note that nested infix function evaluation might convert the pushed
-// SET-WORD! into a GET-WORD!, e.g. `+: enfix :add` will let ENFIX set `+`
-// however it needs to, and fetch it afterward.
+// Recursion into Do_Core() is used, but a new frame is not created.  Instead
+// it reuses `f` with a lighter-weight approach.  Do_Next_Mid_Frame_Throws()
+// has remarks on how this is done.
 //
 // !!! Note that `10 = 5 + 5` would be an error due to lookahead suppression
 // from `=`, so it reads as `(10 = 5) + 5`.  However `10 = x: 5 + 5` will not
@@ -1400,28 +1598,29 @@ reevaluate:;
 //==//////////////////////////////////////////////////////////////////////==//
 
     case REB_SET_WORD:
-        assert(IS_SET_WORD(f->value));
-        f->param = f->value;
+        assert(IS_SET_WORD(current));
 
-        Fetch_Next_In_Frame(f);
         if (IS_END(f->value)) {
             DECLARE_LOCAL (specific);
-            Derelativize(specific, f->param, f->specifier);
+            Derelativize(specific, current, f->specifier);
             fail (Error(RE_NEED_VALUE, specific)); // `do [a:]` is illegal
         }
 
-        if (Do_Next_In_Subframe_Throws(f->out, f, DO_FLAG_NORMAL))
-            goto finished;
-
-        // The eval_type is altered by lookbacks to be a REB_GET_WORD, this
-        // indicates a need for a refetch.
+        // f->value is guarded implicitly by the frame, but `current` is a
+        // transient local pointer that might be to a va_list REBVAL* that
+        // has already been fetched.  The bits will stay live until va_end(),
+        // but a GC wouldn't see it.
         //
-        if (f->eval_type == REB_GET_WORD)
-            Move_Value(f->out, Get_Opt_Var_May_Fail(f->param, f->specifier));
-        else {
-            assert(f->eval_type == REB_SET_WORD);
-            Move_Value(Sink_Var_May_Fail(f->param, f->specifier), f->out);
+        DS_PUSH_RELVAL(current, f->specifier);
+
+        if (Do_Next_Mid_Frame_Throws(f)) { // lightweight reuse of `f`
+            DS_DROP;
+            goto finished;
         }
+
+        Move_Value(Sink_Var_May_Fail(DS_TOP, SPECIFIED), f->out);
+
+        DS_DROP;
         break;
 
 //==//////////////////////////////////////////////////////////////////////==//
@@ -1437,8 +1636,7 @@ reevaluate:;
         //
         // Note: copying values does not copy VALUE_FLAG_UNEVALUATED
         //
-        Copy_Opt_Var_May_Fail(f->out, f->value, f->specifier);
-        Fetch_Next_In_Frame(f);
+        Copy_Opt_Var_May_Fail(f->out, current, f->specifier);
         break;
 
 //==/////////////////////////////////////////////////////////////////////==//
@@ -1451,9 +1649,11 @@ reevaluate:;
 //==//////////////////////////////////////////////////////////////////////==//
 
     case REB_LIT_WORD:
-        Quote_Next_In_Frame(f->out, f); // we clear VALUE_FLAG_UNEVALUATED
+        //
+        // Derelativize will clear VALUE_FLAG_UNEVALUATED
+        //  
+        Derelativize(f->out, current, f->specifier);
         VAL_SET_TYPE_BITS(f->out, REB_WORD);
-        CLEAR_VAL_FLAG(f->out, VALUE_FLAG_UNEVALUATED);
         break;
 
 //==//// INERT WORD AND STRING TYPES /////////////////////////////////////==//
@@ -1479,18 +1679,17 @@ reevaluate:;
         // GROUP! is a "relative ANY-ARRAY!" that needs the specifier to
         // resolve the relative any-words and other any-arrays inside it...
         //
-        REBSPC *derived = Derive_Specifier(f->specifier, f->value);
+        REBSPC *derived = Derive_Specifier(f->specifier, current);
         if (Do_At_Throws(
             f->out,
-            VAL_ARRAY(f->value), // the GROUP!'s array
-            VAL_INDEX(f->value), // index in group's REBVAL (may not be head)
+            VAL_ARRAY(current), // the GROUP!'s array
+            VAL_INDEX(current), // index in group's REBVAL (may not be head)
             derived
-        )) {
+        )){
             goto finished;
         }
 
         CLEAR_VAL_FLAG(f->out, VALUE_FLAG_UNEVALUATED);
-        Fetch_Next_In_Frame(f);
         break; }
 
 //==//////////////////////////////////////////////////////////////////////==//
@@ -1504,15 +1703,15 @@ reevaluate:;
         if (Do_Path_Throws_Core(
             f->out,
             &label, // requesting label says we run functions (not GET-PATH!)
-            f->value,
+            current,
             f->specifier,
             NULL // `setval`: null means don't treat as SET-PATH!
-        )) {
+        )){
             goto finished;
         }
 
         if (IS_VOID(f->out)) // need `:x/y` if `y` is unset
-            fail (Error_No_Value_Core(f->value, f->specifier));
+            fail (Error_No_Value_Core(current, f->specifier));
 
         if (IS_FUNCTION(f->out)) {
             f->eval_type = REB_FUNCTION;
@@ -1530,14 +1729,13 @@ reevaluate:;
             assert(DSP >= f->dsp_orig);
 
             Move_Value(&f->cell, f->out);
-            f->gotten = &f->cell;
+            current_gotten = &f->cell;
             SET_END(f->out);
             f->refine = ORDINARY_ARG; // paths are never enfixed (for now)
-            goto do_function_in_gotten;
+            goto do_function_in_current_gotten;
         }
 
         CLEAR_VAL_FLAG(f->out, VALUE_FLAG_UNEVALUATED);
-        Fetch_Next_In_Frame(f);
         break;
     }
 
@@ -1545,9 +1743,9 @@ reevaluate:;
 //
 // [SET-PATH!]
 //
-// See notes on ET_SET_WORD.  SET-PATH!s are handled in a similar way, by
-// pushing them to the stack, continuing the evaluation in the current frame.
-// This avoids the need to recurse.
+// See notes on SET-WORD!  SET-PATH!s are handled in a similar way, by
+// pushing them to the stack, continuing the evaluation via a lightweight
+// reuse of the current frame.
 //
 // !!! The evaluation ordering is dictated by the fact that there isn't a
 // separate "evaluate path to target location" and "set target' step.  This
@@ -1565,55 +1763,51 @@ reevaluate:;
 //
 //==//////////////////////////////////////////////////////////////////////==//
 
-    case REB_SET_PATH:
-        assert(IS_SET_PATH(f->value));
-        f->param = f->value;
+    case REB_SET_PATH: {
+        assert(IS_SET_PATH(current));
 
-        Fetch_Next_In_Frame(f);
         if (IS_END(f->value)) {
             DECLARE_LOCAL (specific);
-            Derelativize(specific, f->param, f->specifier);
+            Derelativize(specific, current, f->specifier);
             fail (Error(RE_NEED_VALUE, specific)); // `do [a/b:]` is illegal
         }
 
-        if (Do_Next_In_Subframe_Throws(f->out, f, DO_FLAG_NORMAL))
-            goto finished;
-
-        // The lookback mechanic for the frames can see this SET-PATH!.  This
-        // is the way it works currently but is being reviewed.
+        // f->value is guarded implicitly by the frame, but `current` is a
+        // transient local pointer that might be to a va_list REBVAL* that
+        // has already been fetched.  The bits will stay live until va_end(),
+        // but a GC wouldn't see it.
         //
-        if (f->eval_type == REB_GET_PATH) {
-            if (Do_Path_Throws_Core(
-                f->out,
-                NULL, // not requesting symbol means refinements not allowed
-                f->param,
-                f->specifier,
-                NULL // `setval`: null means don't treat as SET-PATH!
-            )) {
-                goto finished;
-            }
+        DS_PUSH_RELVAL(current, f->specifier);
+        
+        if (Do_Next_Mid_Frame_Throws(f)) { // lighweight reuse of `f`
+            DS_DROP;
+            goto finished;
         }
-        else {
-            assert(f->eval_type == REB_SET_PATH);
 
-            // !!! EVAL might have the path value itself resident in the frame
-            // cell.  Due to the way this is currently designed, throws need to be
-            // written to a location distinct from the path and also distinct from
-            // the value being set.  Review.
-            //
-            DECLARE_LOCAL (temp);
+        // The path cannot be executed directly from the data stack, so
+        // it has to be popped.  This could be changed by making the core
+        // Do_Path_Throws take a VAL_ARRAY, index, and kind.  By moving
+        // it into the f->cell, it is guaranteed garbage collected.
+        //
+        Move_Value(&f->cell, DS_TOP);
+        DS_DROP;
 
-            if (Do_Path_Throws_Core(
-                temp, // output location if thrown
-                NULL, // not requesting symbol means refinements not allowed
-                f->param, // param is currently holding SET-PATH! we got in
-                f->specifier, // needed to resolve relative array in path
-                f->out // value to set (already in f->out)
-            )) {
-                fail (Error_No_Catch_For_Throw(temp));
-            }
+        // !!! Due to the way this is currently designed, throws need to be
+        // written to a location distinct from the path and also distinct from
+        // the value being set.  Review.
+        //
+        DECLARE_LOCAL (temp);
+
+        if (Do_Path_Throws_Core(
+            temp, // output location if thrown
+            NULL, // not requesting symbol means refinements not allowed
+            &f->cell, // still holding SET-PATH! we got in
+            SPECIFIED, // current derelativized when pushed to DS_TOP
+            f->out // value to set (already in f->out)
+        )) {
+            fail (Error_No_Catch_For_Throw(temp));
         }
-        break;
+        break; }
 
 //==//////////////////////////////////////////////////////////////////////==//
 //
@@ -1632,15 +1826,14 @@ reevaluate:;
         if (Do_Path_Throws_Core(
             f->out,
             NULL, // not requesting symbol means refinements not allowed
-            f->value,
+            current,
             f->specifier,
             NULL // `setval`: null means don't treat as SET-PATH!
-        )) {
+        )){
             goto finished;
         }
 
         CLEAR_VAL_FLAG(f->out, VALUE_FLAG_UNEVALUATED);
-        Fetch_Next_In_Frame(f);
         break;
 
 //==//////////////////////////////////////////////////////////////////////==//
@@ -1655,9 +1848,11 @@ reevaluate:;
 //==//////////////////////////////////////////////////////////////////////==//
 
     case REB_LIT_PATH:
-        Quote_Next_In_Frame(f->out, f);
+        //
+        // Derelativize will leave VALUE_FLAG_UNEVALUATED clear
+        //
+        Derelativize(f->out, current, f->specifier);
         VAL_SET_TYPE_BITS(f->out, REB_PATH);
-        CLEAR_VAL_FLAG(f->out, VALUE_FLAG_UNEVALUATED);
         break;
 
 //==//////////////////////////////////////////////////////////////////////==//
@@ -1669,7 +1864,8 @@ reevaluate:;
     default:
     inert:
         assert(f->eval_type < REB_MAX);
-        Quote_Next_In_Frame(f->out, f); // has VALUE_FLAG_UNEVALUATED
+        Derelativize(f->out, current, f->specifier);
+        SET_VAL_FLAG(f->out, VALUE_FLAG_UNEVALUATED);
         break;
     }
 
@@ -1681,14 +1877,6 @@ reevaluate:;
 
     assert(!THROWN(f->out)); // should have jumped to exit sooner
 
-    // SET-WORD! and SET-PATH! jump to `do_next:`, so they don't fall through
-    // to this point.  We'll only get here if an expression completed to
-    // assign -or- if the left hand side of an infix is ready.
-    //
-    // `x: 1 + 2` does not want to push the X:, then get a 1, then assign the
-    // 1...it needs to wait.  The pending sets are not flushed until the
-    // infix operation has finished.
-
     if (IS_END(f->value))
         goto finished;
 
@@ -1696,20 +1884,17 @@ reevaluate:;
 
     if (f->flags.bits & DO_FLAG_NO_LOOKAHEAD) {
         //
-        // Don't do infix lookahead if asked *not* to look.  See also: <tight>
-    }
-    else if (f->eval_type == REB_WORD) {
-
-        // Don't overwrite f->value (if this just a DO/NEXT and it's not
-        // infix, we might need to hold it at its position.)
+        // Don't do infix lookahead if asked *not* to look.  See the
+        // PARAM_CLASS_TIGHT parameter convention for the use of this
         //
-        if (IS_WORD_BOUND(f->value))
-            f->gotten = Get_Var_Core(f->value, f->specifier, GETVAR_READ_ONLY);
-        else {
-            DECLARE_LOCAL (specific);
-            Derelativize(specific, f->value, f->specifier);
-            fail (Error(RE_NOT_BOUND, specific));
-         }
+        assert(NOT(f->flags.bits & DO_FLAG_TO_END));
+    }
+    else if (f->eval_type == REB_WORD && IS_WORD_BOUND(f->value)) {
+
+        if (f->gotten == NULL)
+            f->gotten = Get_Opt_Var_May_Fail(f->value, f->specifier);
+        else
+            assert(f->gotten == Get_Opt_Var_May_Fail(f->value, f->specifier));
 
     //=//// DO/NEXT WON'T RUN MORE CODE UNLESS IT'S AN INFIX FUNCTION /////=//
 
@@ -1725,8 +1910,13 @@ reevaluate:;
         START_NEW_EXPRESSION_MAY_THROW(f, goto finished);
         // ^-- sets args_evaluate, do_count, Ctrl-C may abort
 
-        if (!IS_FUNCTION(f->gotten))
-            goto do_word_in_value; // may need to refetch, lookbacks see end
+        if (NOT(IS_FUNCTION(f->gotten))) {
+            current = f->value;
+            current_gotten = f->gotten;
+            f->gotten = NULL;
+            Fetch_Next_In_Frame(f);
+            goto do_word_in_current;
+        }
 
         f->eval_type = REB_FUNCTION;
 
@@ -1741,22 +1931,46 @@ reevaluate:;
                 // some function.  Skip the "lookahead" and let whoever
                 // is gathering arguments (or whoever's above them) finish
                 // the expression before taking the pending operation.
+                //
+                assert(NOT(f->flags.bits & DO_FLAG_TO_END));
+            }
+            else if (GET_VAL_FLAG(f->gotten, FUNC_FLAG_QUOTES_FIRST_ARG)) {
+                //
+                // Left-quoting by enfix needs to be done in the lookahead
+                // before an evaluation, not this one that's after.  This
+                // error happens in cases like:
+                //
+                //     left-quote: enfix func [:value] [:value]
+                //     quote <something> left-quote
+                //
+                // !!! Is this the ideal place to be delivering the error?
+                //
+                fail (Error_Lookback_Quote_Too_Late(f->value, f->specifier));
             }
             else {
-                // Don't defer and don't flush the sets... we want to set any
-                // pending SET-WORD!s or SET-PATH!s to the *result* of this
-                // lookback expression.
+                // This is a case for an evaluative lookback argument we
+                // don't want to defer, e.g. a #tight argument or a normal
+                // one which is not being requested in the context of
+                // parameter fulfillment.  We want to reuse the f->out
                 //
                 SET_FRAME_LABEL(f, VAL_WORD_SPELLING(f->value));
                 f->refine = LOOKBACK_ARG;
-                goto do_function_in_gotten;
+                current = f->value;
+                current_gotten = f->gotten;
+                f->gotten = NULL;
+                Fetch_Next_In_Frame(f);
+                goto do_function_in_current_gotten;
             }
         }
         else {
             SET_END(f->out);
             SET_FRAME_LABEL(f, VAL_WORD_SPELLING(f->value));
             f->refine = ORDINARY_ARG;
-            goto do_function_in_gotten;
+            current = f->value;
+            current_gotten = f->gotten;
+            f->gotten = NULL;
+            Fetch_Next_In_Frame(f);
+            goto do_function_in_current_gotten;
         }
     }
 
