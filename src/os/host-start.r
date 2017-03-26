@@ -105,6 +105,7 @@ boot-banner: [
     = Version:  system/version
     = Platform: system/platform
     = Build:    system/build
+    = Commit:   system/commit 
     -
     = Language: system/locale/language*
     = Locale:   system/locale/locale*
