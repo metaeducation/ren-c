@@ -125,7 +125,7 @@ void Init_Decimal_Bits(REBVAL *out, const REBYTE *bp)
     REBCNT n;
     for (n = 0; n < 8; ++n)
         dp[n] = bp[7 - n];
-#elif ENDIAN_BIG
+#elif defined(ENDIAN_BIG)
     REBCNT n;
     for (n = 0; n < 8; ++n)
         dp[n] = bp[n];
@@ -497,7 +497,11 @@ REBTYPE(Decimal)
                 fail (Error_Bad_Refines_Raw());
 
             if (REF(seed)) {
-                Set_Random(*cast(REBI64*, &VAL_DECIMAL(val))); // use IEEE bits
+                REBDEC d = VAL_DECIMAL(val);
+                REBI64 i;
+                assert(sizeof(d) == sizeof(i));
+                memcpy(&i, &d, sizeof(d));
+                Set_Random(i); // use IEEE bits
                 return R_VOID;
             }
             d1 = Random_Dec(d1, REF(secure));

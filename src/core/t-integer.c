@@ -357,14 +357,10 @@ REBTYPE(Integer)
 {
     REBVAL *val = D_ARG(1);
     REBVAL *val2 = D_ARGC > 1 ? D_ARG(2) : NULL;
-    REBI64 num;
+    
     REBI64 arg;
-    REBCNT n;
 
-    REBI64 p;
-    REBI64 anum;
-
-    num = VAL_INT64(val);
+    REBI64 num = VAL_INT64(val);
 
     // !!! This used to rely on IS_BINARY_ACT, which is no longer available
     // in the symbol based dispatch.  Consider doing another way.
@@ -380,11 +376,13 @@ REBTYPE(Integer)
         || action == SYM_XOR_T
         || action == SYM_REMAINDER
     ){
-        if (IS_INTEGER(val2)) arg = VAL_INT64(val2);
-        else if (IS_CHAR(val2)) arg = VAL_CHAR(val2);
+        if (IS_INTEGER(val2))
+            arg = VAL_INT64(val2);
+        else if (IS_CHAR(val2))
+            arg = VAL_CHAR(val2);
         else {
             // Decimal or other numeric second argument:
-            n = 0; // use to flag special case
+            REBCNT n = 0; // use to flag special case
             switch(action) {
             // Anything added to an integer is same as adding the integer:
             case SYM_ADD:
@@ -416,7 +414,8 @@ REBTYPE(Integer)
                         VAL_SET_TYPE_BITS(val, REB_TIME);
                         return T_Time(frame_, action);
                     }
-                    if (IS_DATE(val2)) return T_Date(frame_, action);
+                    if (IS_DATE(val2))
+                        return T_Date(frame_, action);
                 }
 
             default:
@@ -425,6 +424,8 @@ REBTYPE(Integer)
             fail (Error_Math_Args(REB_INTEGER, action));
         }
     }
+    else
+        arg = 0xDECAFBAD; // wasteful, but avoid maybe unassigned warning
 
     switch (action) {
 
@@ -432,20 +433,26 @@ REBTYPE(Integer)
         Move_Value(D_OUT, val);
         return R_OUT;
 
-    case SYM_ADD:
-        if (REB_I64_ADD_OF(num, arg, &anum)) fail (Error_Overflow_Raw());
+    case SYM_ADD: {
+        REBI64 anum;
+        if (REB_I64_ADD_OF(num, arg, &anum))
+            fail (Error_Overflow_Raw());
         num = anum;
-        break;
+        break; }
 
-    case SYM_SUBTRACT:
-        if (REB_I64_SUB_OF(num, arg, &anum)) fail (Error_Overflow_Raw());
+    case SYM_SUBTRACT: {
+        REBI64 anum;
+        if (REB_I64_SUB_OF(num, arg, &anum))
+            fail (Error_Overflow_Raw());
         num = anum;
-        break;
+        break; }
 
-    case SYM_MULTIPLY:
-        if (REB_I64_MUL_OF(num, arg, &p)) fail (Error_Overflow_Raw());
+    case SYM_MULTIPLY: {
+        REBI64 p;
+        if (REB_I64_MUL_OF(num, arg, &p))
+            fail (Error_Overflow_Raw());
         num = p;
-        break;
+        break; }
 
     case SYM_DIVIDE:
         if (arg == 0)
@@ -457,14 +464,14 @@ REBTYPE(Integer)
             break;
         }
         // Fall thru
-
     case SYM_POWER:
         SET_DECIMAL(val, (REBDEC)num);
         SET_DECIMAL(val2, (REBDEC)arg);
         return T_Decimal(frame_, action);
 
     case SYM_REMAINDER:
-        if (arg == 0) fail (Error_Zero_Divide_Raw());
+        if (arg == 0)
+            fail (Error_Zero_Divide_Raw());
         num = (arg != -1) ? (num % arg) : 0; // !!! was macro called REM2 (?)
         break;
 
@@ -481,7 +488,8 @@ REBTYPE(Integer)
         break;
 
     case SYM_NEGATE:
-        if (num == MIN_I64) fail (Error_Overflow_Raw());
+        if (num == MIN_I64)
+            fail (Error_Overflow_Raw());
         num = -num;
         break;
 
@@ -490,8 +498,10 @@ REBTYPE(Integer)
         break;
 
     case SYM_ABSOLUTE:
-        if (num == MIN_I64) fail (Error_Overflow_Raw());
-        if (num < 0) num = -num;
+        if (num == MIN_I64)
+            fail (Error_Overflow_Raw());
+        if (num < 0)
+            num = -num;
         break;
 
     case SYM_EVEN_Q:

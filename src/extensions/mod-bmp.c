@@ -172,7 +172,7 @@ void Map_Bytes(void *dstp, const REBYTE **srcp, const char *map) {
             break;
 
         case 's':
-            *((short *)dst) = *((short *)src);
+            *((short *)dst) = *((const short *)src);
             dst += sizeof(short);
             src += 2;
             break;
@@ -182,7 +182,7 @@ void Map_Bytes(void *dstp, const REBYTE **srcp, const char *map) {
                 while(((REBUPT)dst)&3)
                     dst++;
             }
-            *((REBCNT *)dst) = *((REBCNT *)src);
+            *((REBCNT *)dst) = *((const REBCNT *)src);
             dst += sizeof(REBCNT);
             src += 4;
             break;
@@ -399,6 +399,9 @@ REBNATIVE(decode_bmp)
     REBCNT *dp = cast(REBCNT *, IMG_DATA(ser));
     
     dp += w * h - w;
+
+    c = 0xDECAFBAD; // should be overwritten, but avoid uninitialized warning
+    x = 0xDECAFBAD; // should be overwritten, but avoid uninitialized warning
 
     for (y = 0; y<h; y++) {
         switch(compression) {

@@ -570,6 +570,8 @@ void Poke_Vector_Fail_If_Read_Only(
         f = VAL_DECIMAL(poke);
         if (bits <= VTUI64)
             i = cast(REBINT, f);
+        else
+            i = 0xDECAFBAD; // not used, but avoid maybe uninitalized warning
     }
     else fail (Error_Invalid_Arg(poke));
 

@@ -249,7 +249,7 @@ static unsigned int calc_color(unsigned int color,unsigned short alpha) {
 
 static void process_row_0_1(unsigned char *p,int width,int r,int hoff,int hskip) {
     int c;
-    unsigned char m;
+    unsigned char m = 0xAE; // overwritten, but avoid uninitialized warning 
     unsigned int v,*imgp;
     imgp=img_output+r*png_ihdr.width+hoff;
     for(c=0;c<width;c++) {
@@ -270,7 +270,7 @@ static void process_row_0_1(unsigned char *p,int width,int r,int hoff,int hskip)
 
 static void process_row_0_2(unsigned char *p,int width,int r,int hoff,int hskip) {
     int c;
-    unsigned char m;
+    unsigned char m = 0xAE; // overwritten, but avoid uninitialized warning 
     unsigned int v,*imgp;
 
     imgp=img_output+r*png_ihdr.width+hoff;
@@ -292,7 +292,7 @@ static void process_row_0_2(unsigned char *p,int width,int r,int hoff,int hskip)
 
 static void process_row_0_4(unsigned char *p,int width,int r,int hoff,int hskip) {
     int c;
-    unsigned char m;
+    unsigned char m = 0xAE; // overwritten, but avoid uninitialized warning 
     unsigned int v,*imgp;
 
     imgp=img_output+r*png_ihdr.width+hoff;
@@ -388,7 +388,7 @@ static void process_row_2_16(unsigned char *p,int width,int r,int hoff,int hskip
 
 static void process_row_3_1(unsigned char *p,int width,int r,int hoff,int hskip) {
     int c;
-    unsigned char m;
+    unsigned char m = 0xAE; // overwritten, but avoid uninitialized warning 
     unsigned int v,*imgp;
 
     imgp=img_output+r*png_ihdr.width+hoff;
@@ -404,7 +404,7 @@ static void process_row_3_1(unsigned char *p,int width,int r,int hoff,int hskip)
 
 static void process_row_3_2(unsigned char *p,int width,int r,int hoff,int hskip) {
     int c;
-    unsigned char m;
+    unsigned char m = 0xAE; // overwritten, but avoid uninitialized warning 
     unsigned int v,*imgp;
 
     imgp=img_output+r*png_ihdr.width+hoff;
@@ -420,7 +420,7 @@ static void process_row_3_2(unsigned char *p,int width,int r,int hoff,int hskip)
 
 static void process_row_3_4(unsigned char *p,int width,int r,int hoff,int hskip) {
     int c;
-    unsigned char m;
+    unsigned char m = 0xAE; // overwritten, but avoid uninitialized warning 
     unsigned int v,*imgp;
 
     imgp=img_output+r*png_ihdr.width+hoff;

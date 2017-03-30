@@ -19,7 +19,7 @@ matrix:
         - os: linux
           sudo: false #Force new container-based infrastructure.
           language: c
-          env: OS_ID=0.4.4 DEBUG=none STANDARD=c RIGOROUS=yes STATIC=yes
+          env: OS_ID=0.4.4 DEBUG=none STANDARD=gnu89 RIGOROUS=yes STATIC=yes
 
         # Linux x64, debug, gcc
         #
@@ -82,7 +82,7 @@ matrix:
         - os: osx
           osx_image: xcode8.2
           language: c
-          env: OS_ID=0.2.40 DEBUG=asserts STANDARD=c RIGOROUS=yes STATIC=no
+          env: OS_ID=0.2.40 DEBUG=asserts STANDARD=c99 RIGOROUS=no STATIC=no
 
         # OSX x64, debug, g++
         #
@@ -101,7 +101,7 @@ matrix:
         #
         - os: osx
           language: c
-          env: OS_ID=0.2.40 DEBUG=none STANDARD=c RIGOROUS=yes STATIC=no
+          env: OS_ID=0.2.40 DEBUG=none STANDARD=c RIGOROUS=no STATIC=no
 
 env:
     global:

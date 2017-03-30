@@ -725,7 +725,7 @@ inline static REBOOL VAL_LOGIC(const RELVAL *v) {
     ((v)->payload.datatype.spec)
 
 #define IS_KIND_SYM(s) \
-    ((s) < REB_MAX)
+    ((s) < cast(REBSYM, REB_MAX))
 
 inline static enum Reb_Kind KIND_FROM_SYM(REBSYM s) {
     assert(IS_KIND_SYM(s));

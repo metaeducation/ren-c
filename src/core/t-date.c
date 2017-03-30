@@ -486,6 +486,16 @@ void TO_Date(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg) {
 }
 
 
+static REBINT Int_From_Date_Arg(const REBVAL *opt_poke) {
+    if (IS_INTEGER(opt_poke) || IS_DECIMAL(opt_poke))
+        return Int32s(opt_poke, 0);
+    else if (IS_BLANK(opt_poke))
+        return 0;
+    else
+        fail (Error_Invalid_Arg(opt_poke));
+}
+
+
 //
 //  Pick_Or_Poke_Date: C
 //
@@ -611,28 +621,17 @@ void Pick_Or_Poke_Date(
         // done by changing the components that need to change which were
         // extracted, and building a new date out of the parts.
 
-        REBINT n;
-        if (IS_INTEGER(opt_poke) || IS_DECIMAL(opt_poke))
-            n = Int32s(opt_poke, 0);
-        else if (IS_BLANK(opt_poke))
-            n = 0;
-        else if (IS_TIME(opt_poke) && (sym == SYM_TIME || sym == SYM_ZONE))
-            NOOP;
-        else if (IS_DATE(opt_poke) && (sym == SYM_TIME || sym == SYM_ZONE))
-            NOOP;
-        else fail (Error_Invalid_Arg(opt_poke));
-
         switch (sym) {
         case SYM_YEAR:
-            year = n;
+            year = Int_From_Date_Arg(opt_poke);
             break;
 
         case SYM_MONTH:
-            month = n - 1;
+            month = Int_From_Date_Arg(opt_poke) - 1;
             break;
 
         case SYM_DAY:
-            day = n - 1;
+            day = Int_From_Date_Arg(opt_poke) - 1;
             break;
 
         case SYM_TIME:
@@ -644,7 +643,7 @@ void Pick_Or_Poke_Date(
             else if (IS_TIME(opt_poke) || IS_DATE(opt_poke))
                 secs = VAL_TIME(opt_poke);
             else if (IS_INTEGER(opt_poke))
-                secs = n * SEC_SEC;
+                secs = Int_From_Date_Arg(opt_poke) * SEC_SEC;
             else if (IS_DECIMAL(opt_poke))
                 secs = DEC_TO_SECS(VAL_DECIMAL(opt_poke));
             else
@@ -656,7 +655,7 @@ void Pick_Or_Poke_Date(
                 tz = cast(REBINT, VAL_TIME(opt_poke) / (ZONE_MINS * MIN_SEC));
             else if (IS_DATE(opt_poke))
                 tz = VAL_ZONE(opt_poke);
-            else tz = n * (60 / ZONE_MINS);
+            else tz = Int_From_Date_Arg(opt_poke) * (60 / ZONE_MINS);
             if (tz > MAX_ZONE || tz < -MAX_ZONE)
                 fail (Error_Out_Of_Range(opt_poke));
             break;
@@ -674,20 +673,20 @@ void Pick_Or_Poke_Date(
 
         case SYM_HOUR:
             Split_Time(secs, &time);
-            time.h = n;
+            time.h = Int_From_Date_Arg(opt_poke);
             secs = Join_Time(&time, FALSE);
             break;
 
         case SYM_MINUTE:
             Split_Time(secs, &time);
-            time.m = n;
+            time.m = Int_From_Date_Arg(opt_poke);
             secs = Join_Time(&time, FALSE);
             break;
 
         case SYM_SECOND:
             Split_Time(secs, &time);
             if (IS_INTEGER(opt_poke)) {
-                time.s = n;
+                time.s = Int_From_Date_Arg(opt_poke);
                 time.n = 0;
             }
             else {

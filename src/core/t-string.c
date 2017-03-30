@@ -274,7 +274,7 @@ static REBSER *Make_Binary_BE64(const REBVAL *arg)
     REBCNT n;
     for (n = 0; n < 8; ++n)
         bp[n] = cp[7 - n];
-#elif ENDIAN_BIG
+#elif defined(ENDIAN_BIG)
     REBCNT n;
     for (n = 0; n < 8; ++n)
         bp[n] = cp[n];

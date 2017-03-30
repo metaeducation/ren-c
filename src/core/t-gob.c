@@ -691,6 +691,8 @@ REBARR *Gob_To_Array(REBGOB *gob)
         case GOBT_EFFECT:
             sym = SYM_EFFECT;
             break;
+        default:
+            fail (Error_Misc_Raw());
         }
         Init_Set_Word(val1, Canon(sym));
         Get_GOB_Var(gob, val1, val);

@@ -179,6 +179,8 @@ REBIXO Do_Vararg_Op_May_Throw(
             Derelativize(out, f->value, f->specifier);
             return VA_LIST_FLAG;
         }
+
+        shared = NULL; // not used but avoid maybe uninitialized warning
     }
 
     // The invariant here is that `f` has been prepared for fetching/doing

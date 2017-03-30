@@ -91,7 +91,7 @@ PVAR REB_OPTS *Reb_Opts;
 // arrays--they are singular values, and the second element is set to
 // be trash to trap any unwanted access.
 //
-PVAR REBNOD PG_End_Node;
+PVAR RELVAL PG_End_Node;
 PVAR REBVAL PG_Void_Cell[2];
 
 PVAR REBVAL PG_Blank_Value[2];

@@ -190,7 +190,6 @@ newline
     ][
         ; http://stackoverflow.com/questions/9229978/
         ;
-        print "WTF mate"
         "-DNDEBUG -O2"
     ]
 ) newline
@@ -219,7 +218,7 @@ newline
         cplusplus: false
         ""
     ]
-    find ["c99" "gnu99"] args/STANDARD [
+    find ["gnu89" "c99" "gnu99" "c11"] args/STANDARD [
         cplusplus: false
         unspaced ["--std=" args/STANDARD]
     ]
@@ -227,13 +226,13 @@ newline
         cplusplus: true
         "-x c++"
     ]
-    find ["c++0x" "c++11" "c++14" "c++17"] args/STANDARD [
+    find ["c++98" "c++0x" "c++11" "c++14" "c++17"] args/STANDARD [
         cplusplus: true
         unspaced ["-x c++" space "--std=" args/STANDARD]
     ]
     true [
         fail [
-            "STANDARD needs to be c, c99, gnu99, c++, c++11, c++14, c++17,"
+            "STANDARD should be [c gnu89 gnu99 c99 c11 c++ c++11 c++14 c++17]"
             "not" (args/STANDARD)
         ]
     ]
@@ -263,14 +262,58 @@ newline
             spaced [
                 "-Werror" ;-- convert warnings to errors
 
-                ; !!! Coming soon, need to vet the source for max warnings
+                ; If you use pedantic in a C build on an older GNU compiler,
+                ; (that defaults to thinking it's a C89 compiler), it will
+                ; complain about using `//` style comments.  There is no
+                ; way to turn this complaint off.  So don't use pedantic
+                ; warnings unless you're at c99 or higher, or C++.
+                ;
+                (
+                    either any [
+                        cplusplus | not find ["c" "gnu89"] args/STANDARD
+                    ][
+                        "--pedantic"
+                    ][
+                        ""
+                    ]
+                )
 
-                ;"--pedantic" "-Wextra" "-Wall" "-Wchar-subscripts"
-                ;"-Wwrite-strings" "-Wundef" "-Wformat=2"
-                ;"-Wdisabled-optimization" "-Wcast-qual"
-                ;"-Wlogical-op" "-Wstrict-overflow=5" "-Wredundant-decls"
-                ;"-Woverflow" "-Wpointer-arith" "-Wparentheses" "-Wmain"
-                ;"-Wsign-compare" "-Wtype-limits"
+                "-Wextra"
+                "-Wall"
+                
+                "-Wchar-subscripts"
+                "-Wwrite-strings"
+                "-Wundef"
+                "-Wformat=2"
+                "-Wdisabled-optimization"
+                "-Wlogical-op"
+                "-Wredundant-decls"
+                "-Woverflow"
+                "-Wpointer-arith"
+                "-Wparentheses"
+                "-Wmain"
+                "-Wsign-compare"
+                "-Wtype-limits"
+                "-Wclobbered"
+
+                ; When constness is being deliberately cast away, `m_cast` is
+                ; used (for "m"utability).  However, this is just a plain cast
+                ; in C as it has no const_cast.  Since the C language has no
+                ; way to say you're doing a mutability cast on purpose, the
+                ; warning can't be used... but assume the C++ build covers it.
+                ;
+                (either cplusplus ["-Wcast-qual"] ["-Wno-cast-qual"])
+
+                ; The majority of Rebol's C code was written with little
+                ; attention to overflow in arithmetic.  Frequently REBUPT
+                ; is assigned to REBCNT, size_t to REBYTE, etc.  The issue
+                ; needs systemic review, but will be most easy to do so when
+                ; the core is broken out fully from less critical code
+                ; in optional extensions.
+                ;
+                ;"-Wstrict-overflow=5"
+                "-Wno-conversion"
+                "-Wno-strict-overflow"
             ]
 
         ]
@@ -405,7 +448,8 @@ emit newline
 ;
 
 emit [
-    {HOST_FLAGS= $(LANGUAGE_FLAGS) $(DEBUG_FLAGS) $(SANITIZE_FLAGS) -DREB_EXE}
+    {HOST_FLAGS= $(LANGUAGE_FLAGS) $(DEBUG_FLAGS) $(SANITIZE_FLAGS)}
+        space {$(RIGOROUS_FLAGS) -DREB_EXE}
 ]
 
 for-each [flag switches] compiler-flags [
@@ -717,7 +761,12 @@ emit-file-deps: function [
     /dir path  ; from path
 ][
     for-each item file-list [
+        ;
+        ; Item may be like foo.c, or [foo.c <option1> <option2>]
+        ; Make sure it's a block so it can be uniformly searched for options
+        ;
         unless block? item [item: reduce [item]]
+        
         file: first item
 
         obj: unspaced [%objs/ (to-obj file)]
@@ -731,12 +780,18 @@ emit-file-deps: function [
         emit-line [obj ":" space src]
 
         file-specific-flags: copy ""
-        case/all [
-            all [rigorous | find item <no-uninitialized>] [
+        if rigorous [
+            for-each [setting switches] [
+                <no-uninitialized> "-Wno-uninitialized"
+                <no-unused-parameter> "-Wno-unused-parameter"
+                <no-shift-negative-value> "-Wno-shift-negative-value"
+            ][
+                if not find item setting [continue]
+
                 if not empty? file-specific-flags [
                     append file-specific-flags space
                 ]
-                append file-specific-flags "-Wno-uninitialized"
+                append file-specific-flags switches
             ]
         ]
 
