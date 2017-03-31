@@ -61,9 +61,6 @@ REBSER* Gob_To_Image(REBGOB *gob);
 //used to detect non-modal OS dialogs
 BOOL osDialogOpen = FALSE;
 
-// Semaphore lock to sync sub-task launch:
-static void *Task_Ready;
-
 
 //
 //  Convert_Date: C
@@ -163,6 +160,7 @@ REBINT OS_Get_UID()
 //
 REBINT OS_Set_UID(REBINT uid)
 {
+    UNUSED(uid);
     return OS_ENA;
 }
 
@@ -183,6 +181,7 @@ REBINT OS_Get_GID()
 //
 REBINT OS_Set_GID(REBINT gid)
 {
+    UNUSED(gid);
     return OS_ENA;
 }
 
@@ -203,6 +202,7 @@ REBINT OS_Get_EUID()
 //
 REBINT OS_Set_EUID(REBINT uid)
 {
+    UNUSED(uid);
     return OS_ENA;
 }
 
@@ -223,6 +223,7 @@ REBINT OS_Get_EGID()
 //
 REBINT OS_Set_EGID(REBINT gid)
 {
+    UNUSED(gid);
     return OS_ENA;
 }
 
@@ -233,6 +234,8 @@ REBINT OS_Set_EGID(REBINT gid)
 //
 REBINT OS_Send_Signal(REBINT pid, REBINT signal)
 {
+    UNUSED(pid);
+    UNUSED(signal);
     return OS_ENA;
 }
 
@@ -277,6 +280,8 @@ REBINT OS_Kill(REBINT pid)
 //
 REBINT OS_Config(int id, REBYTE *result)
 {
+    UNUSED(result);
+
 #define OCID_STACK_SIZE 1  // needs to move to .h file
 
     switch (id) {
@@ -504,6 +509,8 @@ void OS_Get_Time(REBVAL *out)
 //
 i64 OS_Delta_Time(i64 base, int flags)
 {
+    UNUSED(flags);
+
     LARGE_INTEGER freq;
     LARGE_INTEGER time;
 
@@ -625,8 +632,25 @@ CFUNC *OS_Find_Function(void *dll, const char *funcname)
 // Return -1 on error.
 // For right now, set flags to 1 for /wait.
 //
-int OS_Create_Process(const REBCHR *call, int argc, const REBCHR* argv[], u32 flags, u64 *pid, int *exit_code, u32 input_type, char *input, u32 input_len, u32 output_type, char **output, u32 *output_len, u32 err_type, char **err, u32 *err_len)
-{
+int OS_Create_Process(
+    const REBCHR *call,
+    int argc,
+    const REBCHR* argv[],
+    u32 flags, u64 *pid,
+    int *exit_code,
+    u32 input_type,
+    char *input,
+    u32 input_len,
+    u32 output_type,
+    char **output,
+    u32 *output_len,
+    u32 err_type,
+    char **err,
+    u32 *err_len
+) {
+    UNUSED(argc);
+    UNUSED(argv);
+
 #define INHERIT_TYPE 0
 #define NONE_TYPE 1
 #define STRING_TYPE 2
@@ -1105,15 +1129,20 @@ input_error:
 //  OS_Reap_Process: C
 //
 // pid:
-//      > 0, a signle process
+//      > 0, a single process
 //      -1, any child process
 // flags:
 //      0: return immediately
 //
 //      Return -1 on error
+//
 int OS_Reap_Process(int pid, int *status, int flags)
 {
-    /* It seems that process doesn't need to be reaped on Windows */
+    UNUSED(pid);
+    UNUSED(status);
+    UNUSED(flags);
+
+    // !!! It seems that process doesn't need to be reaped on Windows
     return 0;
 }
 
@@ -1122,13 +1151,14 @@ int OS_Reap_Process(int pid, int *status, int flags)
 //
 int OS_Browse(const REBCHR *url, int reserved)
 {
+    UNUSED(reserved);
+
     #define MAX_BRW_PATH 2044
     DWORD flag;
     DWORD len;
     DWORD type;
     HKEY key;
     wchar_t *path;
-    HWND hWnd = GetFocus();
     int exit_code = 0;
 
     if (RegOpenKeyEx(HKEY_CLASSES_ROOT, L"http\\shell\\open\\command", 0, KEY_READ, &key) != ERROR_SUCCESS)
@@ -1208,6 +1238,8 @@ REBOOL OS_Request_File(REBRFR *fr)
 
 int CALLBACK ReqDirCallbackProc( HWND hWnd, UINT uMsg, LPARAM lParam, LPARAM lpData )
 {
+    UNUSED(lParam);
+
     static REBOOL inited = FALSE;
     switch (uMsg) {
         case BFFM_INITIALIZED:
