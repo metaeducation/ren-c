@@ -182,6 +182,7 @@ DEVICE_CMD Write_Clipboard(REBREQ *req)
 //
 DEVICE_CMD Poll_Clipboard(REBREQ *req)
 {
+    UNUSED(req);
     return DR_DONE;
 }
 
