@@ -131,9 +131,9 @@ void Dump_Series(REBSER *s, const char *memo)
     printf(" wide: %d\n", SER_WIDE(s));
     printf(" size: %ld\n", cast(unsigned long, SER_TOTAL_IF_DYNAMIC(s)));
     if (GET_SER_INFO(s, SERIES_INFO_HAS_DYNAMIC))
-        printf(" bias: %d\n", SER_BIAS(s));
-    printf(" tail: %d\n", SER_LEN(s));
-    printf(" rest: %d\n", SER_REST(s));
+        printf(" bias: %d\n", cast(int, SER_BIAS(s)));
+    printf(" tail: %d\n", cast(int, SER_LEN(s)));
+    printf(" rest: %d\n", cast(int, SER_REST(s)));
 
     // flags includes len if non-dynamic
     printf(" flags: %lx\n", cast(unsigned long, s->header.bits));
@@ -214,18 +214,18 @@ void Dump_Info(void)
     printf("^/--REBOL Kernel Dump--\n");
 
     printf("Evaluator:\n");
-    printf("    Cycles:  %d\n", cast(REBINT, Eval_Cycles));
-    printf("    Counter: %d\n", Eval_Count);
-    printf("    Dose:    %d\n", Eval_Dose);
+    printf("    Cycles:  %lu\n", Eval_Cycles);
+    printf("    Counter: %d\n", cast(int, Eval_Count));
+    printf("    Dose:    %d\n", cast(int, Eval_Dose));
     printf("    Signals: %lx\n", cast(unsigned long, Eval_Signals));
     printf("    Sigmask: %lx\n", cast(unsigned long, Eval_Sigmask));
     printf("    DSP:     %d\n", DSP);
 
     printf("Memory/GC:\n");
 
-    printf("    Ballast: %d\n", GC_Ballast);
-    printf("    Disable: %d\n", GC_Disabled);
-    printf("    Guarded Nodes: %d\n", SER_LEN(GC_Guarded));
+    printf("    Ballast: %d\n", cast(int, GC_Ballast));
+    printf("    Disable: %s\n", GC_Disabled ? "yes" : "no");
+    printf("    Guarded Nodes: %d\n", cast(int, SER_LEN(GC_Guarded)));
     fflush(stdout);
 }
 
@@ -250,7 +250,7 @@ void Dump_Stack(REBFRM *f, REBCNT level)
 
    printf(
         "STACK[%d](%s) - %d\n",
-        level,
+        cast(int, level),
         STR_HEAD(FRM_LABEL(f)),
         f->eval_type // note: this is now an ordinary Reb_Kind, stringify it
     );
