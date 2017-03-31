@@ -84,13 +84,13 @@ REBNATIVE(decode_jpeg)
 {
     INCLUDE_PARAMS_OF_DECODE_JPEG;
 
-    REBYTE *data = VAL_BIN_AT(ARG(data));
-    REBCNT len = VAL_LEN_AT(ARG(data));
-
     // Handle JPEG error throw:
     if (setjmp(jpeg_state)) {
         fail (Error_Bad_Media_Raw()); // generic
     }
+
+    REBYTE *data = VAL_BIN_AT(ARG(data));
+    REBCNT len = VAL_LEN_AT(ARG(data));
 
     int w, h;
     jpeg_info(s_cast(data), len, &w, &h); // may longjmp above
