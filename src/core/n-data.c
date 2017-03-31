@@ -216,7 +216,7 @@ REBNATIVE(maybe)
         // !!! What should the behavior for `MAYBE [] ...` be?  Should that be
         // an error?  People wouldn't write it literally, but could wind up
         // with an empty array as the product of a COMPOSE or something.
-        // Consider it ambiguous for now and give back void.
+        // Consider it ambiguous for now and give back void...
         //
         r = R_VOID;
 
