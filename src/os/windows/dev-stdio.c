@@ -56,11 +56,6 @@ static wchar_t *Std_Buf = NULL; // Used for UTF-8 conversion of stdin/stdout.
 static BOOL Redir_Out = 0;
 static BOOL Redir_Inp = 0;
 
-static BOOL Con_Out = 1;        //controls the console text output
-
-// Special access:
-extern REBDEV *Devices[];
-
 extern i32 Request_Size_Rebreq(REBREQ *);
 
 //**********************************************************************
