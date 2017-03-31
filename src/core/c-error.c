@@ -836,7 +836,8 @@ REBCTX *Make_Error_Managed_Core(REBCNT code, va_list *vaptr)
     if (PG_Boot_Phase < BOOT_ERRORS) {
     #if !defined(NDEBUG)
         printf(
-            "fail() before object table initialized, code = %d\n", code
+            "fail() before object table initialized, code = %d\n",
+            cast(int, code)
         );
     #endif
 
