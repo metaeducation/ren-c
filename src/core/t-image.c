@@ -209,7 +209,11 @@ bad_make:
 //
 void TO_Image(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 {
+#ifdef NDEBUG
+    UNUSED(kind);
+#else
     assert(kind == REB_IMAGE);
+#endif
 
     if (IS_IMAGE(arg)) {
         Copy_Image_Value(out, arg, VAL_IMAGE_LEN(arg));
@@ -1091,7 +1095,7 @@ REBTYPE(Image)
         UNUSED(PAR(series));
 
         if (REF(map)) {
-            assert(!IS_VOID(ARG(key)));
+            UNUSED(ARG(key));
             fail (Error_Bad_Refines_Raw());
         }
 
@@ -1136,7 +1140,7 @@ REBTYPE(Image)
             fail (Error_Bad_Refines_Raw());
 
         if (REF(types)) {
-            assert(!IS_VOID(ARG(kinds)));
+            UNUSED(ARG(kinds));
             fail (Error_Bad_Refines_Raw());
         }
 

@@ -57,7 +57,11 @@ REBINT CT_Char(const RELVAL *a, const RELVAL *b, REBINT mode)
 //
 void MAKE_Char(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 {
+#ifdef NDEBUG
+    UNUSED(kind);
+#else
     assert(kind == REB_CHAR);
+#endif
 
     REBUNI uni;
 

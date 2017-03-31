@@ -349,7 +349,7 @@ static REBCNT Milliseconds_From_Value(const RELVAL *v) {
         break;
 
     default:
-        assert(FALSE);
+        panic (NULL); // avoid uninitialized msec warning
     }
 
     if (msec < 0)

@@ -292,9 +292,13 @@ REBI64 Make_Time(const REBVAL *val)
 //
 //  MAKE_Time: C
 //
-void MAKE_Time(REBVAL *out, enum Reb_Kind type, const REBVAL *arg)
+void MAKE_Time(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 {
-    assert(type == REB_TIME);
+#ifdef NDEBUG
+    UNUSED(kind);
+#else
+    assert(kind == REB_TIME);
+#endif
 
     REBI64 secs = Make_Time(arg);
     if (secs == NO_TIME)

@@ -637,13 +637,13 @@ REBTYPE(Vector)
 
         UNUSED(PAR(value));
         if (REF(part)) {
-            assert(!IS_VOID(ARG(limit)));
+            UNUSED(ARG(limit));
             fail (Error_Bad_Refines_Raw());
         }
         if (REF(deep))
             fail (Error_Bad_Refines_Raw());
         if (REF(types)) {
-            assert(!IS_VOID(ARG(kinds)));
+            UNUSED(ARG(kinds));
             fail (Error_Bad_Refines_Raw());
         }
 
@@ -654,7 +654,7 @@ REBTYPE(Vector)
 
     case SYM_RANDOM: {
         INCLUDE_PARAMS_OF_RANDOM;
-        assert(PAR(value) != NULL);
+        UNUSED(PAR(value));
 
         FAIL_IF_READ_ONLY_SERIES(vect);
 

@@ -41,7 +41,7 @@
 //
 REBNATIVE(halt)
 {
-    assert(frame_ != NULL); // avoid unused parameter warning
+    UNUSED(frame_);
     fail (VAL_CONTEXT(TASK_HALT_ERROR));
 }
 
@@ -222,6 +222,11 @@ REBNATIVE(stats)
     }
 
 #ifdef NDEBUG
+    UNUSED(REF(show));
+    UNUSED(REF(profile));
+    UNUSED(REF(dump_series));
+    UNUSED(ARG(pool_id));
+
     fail (Error_Debug_Only_Raw());
 #else
     if (REF(profile)) {
@@ -291,6 +296,8 @@ REBNATIVE(evoke)
     INCLUDE_PARAMS_OF_EVOKE;
 
 #ifdef NDEBUG
+    UNUSED(ARG(chant));
+
     fail (Error_Debug_Only_Raw());
 #else
     RELVAL *arg = ARG(chant);
@@ -397,6 +404,8 @@ REBNATIVE(check)
     INCLUDE_PARAMS_OF_CHECK;
 
 #ifdef NDEBUG
+    UNUSED(ARG(value));
+
     fail (Error_Debug_Only_Raw());
 #else
     REBVAL *value = ARG(value);

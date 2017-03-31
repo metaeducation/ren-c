@@ -1019,7 +1019,7 @@ REBTYPE(String)
         if (REF(deep))
             fail (Error_Bad_Refines_Raw());
         if (REF(types)) {
-            assert(!IS_VOID(ARG(kinds)));
+            UNUSED(ARG(kinds));
             fail (Error_Bad_Refines_Raw());
         }
 

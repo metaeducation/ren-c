@@ -49,7 +49,11 @@ REBINT CT_Integer(const RELVAL *a, const RELVAL *b, REBINT mode)
 //
 void MAKE_Integer(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 {
+#ifdef NDEBUG
+    UNUSED(kind);
+#else
     assert(kind == REB_INTEGER);
+#endif
 
     if (IS_LOGIC(arg)) {
         //
@@ -85,7 +89,11 @@ void MAKE_Integer(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 //
 void TO_Integer(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 {
+#ifdef NDEBUG
+    UNUSED(kind);
+#else
     assert(kind == REB_INTEGER);
+#endif
 
     // use signed logic by default (use TO-INTEGER/UNSIGNED to force
     // unsigned interpretation or error if that doesn't make sense)

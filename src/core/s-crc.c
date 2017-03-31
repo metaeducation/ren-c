@@ -192,8 +192,7 @@ REBCNT Hash_Value(const RELVAL *v)
         // While a void might technically be hashed, it can't be a value *or*
         // a key in a map.
         //
-        assert(FALSE);
-        break;
+        panic (NULL);
 
     case REB_BAR:
     case REB_LIT_BAR:
@@ -365,10 +364,14 @@ REBCNT Hash_Value(const RELVAL *v)
         fail (Error_Invalid_Type(VAL_TYPE(v)));
 
     default:
-        assert(FALSE); // the list above should be comprehensive
+        // The list above should be comprehensive.  panic in order to keep
+        // there from being an uninitialized ret warning.
+        //
+        panic (NULL);
     }
 
-    if(!crc32_table) Make_CRC32_Table();
+    if (crc32_table == NULL)
+        Make_CRC32_Table();
 
     return ret ^ crc32_table[VAL_TYPE(v)];
 }

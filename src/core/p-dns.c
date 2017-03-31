@@ -61,12 +61,12 @@ static REB_R DNS_Actor(REBFRM *frame_, REBCTX *port, REBSYM action)
 
         UNUSED(PAR(source));
         if (REF(part)) {
-            assert(!IS_VOID(ARG(limit)));
+            UNUSED(ARG(limit));
             fail (Error_Bad_Refines_Raw());
         }
 
         if (REF(seek)) {
-            assert(!IS_VOID(ARG(index)));
+            UNUSED(ARG(index));
             fail (Error_Bad_Refines_Raw());
         }
 
@@ -153,7 +153,7 @@ pick:
         if (REF(seek))
             fail (Error_Bad_Refines_Raw());
         if (REF(allow)) {
-            assert(!IS_VOID(ARG(access)));
+            UNUSED(ARG(access));
             fail (Error_Bad_Refines_Raw());
         }
 

@@ -102,7 +102,7 @@ REB_R Series_Common_Action_Maybe_Unhandled(
         UNUSED(PAR(series)); // already accounted for
 
         if (REF(map)) {
-            assert(!IS_VOID(ARG(key)));
+            UNUSED(ARG(key));
             fail (Error_Bad_Refines_Raw());
         }
 

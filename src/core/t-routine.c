@@ -852,7 +852,13 @@ REB_R Routine_Dispatcher(REBFRM *f)
             RIN_RET_SCHEMA(rin),
             NULL // param: none (it's a return value/output)
         ));
-    };
+    }
+    else {
+        // Shouldn't be used (assigned to NULL later) but avoid maybe
+        // uninitialized warning.
+        //
+        ret_offset = cast(void*, cast(REBUPT, 0xDECAFBAD)); 
+    }
 
     REBSER *arg_offsets;
     if (num_args == 0)

@@ -1567,7 +1567,7 @@ REBNATIVE(void_q)
 //
 REBNATIVE(void)
 {
-    assert(frame_ != NULL); // avoid unused parameter warning
+    UNUSED(frame_);
     return R_VOID;
 }
 

@@ -371,7 +371,11 @@ is_blank:
 //  MAKE_Event: C
 //
 void MAKE_Event(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg) {
+#ifdef NDEBUG
+    UNUSED(kind);
+#else
     assert(kind == REB_EVENT);
+#endif
 
     if (IS_BLOCK(arg)) {
         CLEARS(out);
@@ -393,8 +397,13 @@ void MAKE_Event(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg) {
 //
 void TO_Event(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 {
-    SET_TRASH_IF_DEBUG(out);
+#ifdef NDEBUG
+    UNUSED(kind);
+#else
     assert(kind == REB_EVENT);
+#endif
+
+    UNUSED(out);
     fail (Error_Invalid_Arg(arg));
 }
 
@@ -434,7 +443,8 @@ REBINT PD_Event(REBPVS *pvs)
 //
 REBTYPE(Event)
 {
-    assert(frame_ != NULL); // avoid unused parameter warning
+    UNUSED(frame_);
+
     fail (Error_Illegal_Action(REB_EVENT, action));
 }
 

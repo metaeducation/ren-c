@@ -196,6 +196,7 @@ REBSER *Compress(
     TERM_BIN_LEN(output, buf_size - strm.avail_out);
 
     if (gzip) {
+    #if !defined(NDEBUG)
         //
         // GZIP contains its own CRC.  It also has a 32-bit uncompressed
         // length, conveniently (and perhaps confusingly) at the tail in the
@@ -208,6 +209,7 @@ REBSER *Compress(
             - sizeof(REBCNT)
         );
         assert(len == gzip_len);
+    #endif
     }
     else if (!raw) {
         //

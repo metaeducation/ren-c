@@ -357,8 +357,14 @@ void MAKE_Varargs(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 //
 void TO_Varargs(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 {
-    SET_TRASH_IF_DEBUG(out);
+#ifdef NDEBUG
+    UNUSED(kind);
+#else
     assert(kind == REB_VARARGS);
+#endif
+
+    UNUSED(out);
+
     fail (Error_Invalid_Arg(arg));
 }
 
@@ -402,7 +408,6 @@ REBTYPE(Varargs)
         INCLUDE_PARAMS_OF_TAKE;
 
         REBDSP dsp_orig = DSP;
-        REBINT limit;
 
         UNUSED(PAR(series));
         if (REF(deep))
@@ -421,13 +426,17 @@ REBTYPE(Varargs)
             return R_OUT;
         }
 
+        REBINT limit;
         if (IS_INTEGER(ARG(limit))) {
             limit = VAL_INT32(ARG(limit));
-            if (limit < 0) limit = 0;
+            if (limit < 0)
+                limit = 0;
         }
-        else if (!IS_BAR(ARG(limit))) {
+        else if (IS_BAR(ARG(limit))) {
+            limit = 0; // not used, but avoid maybe uninitalized warning
+        }
+        else
             fail (Error_Invalid_Arg(ARG(limit)));
-        }
 
         while (IS_BAR(ARG(limit)) || limit-- > 0) {
             indexor = Do_Vararg_Op_May_Throw(D_OUT, value, VARARG_OP_TAKE);
@@ -512,14 +521,21 @@ void Mold_Varargs(const REBVAL *v, REB_MOLD *mold) {
                 case PARAM_CLASS_NORMAL:
                     kind = REB_WORD;
                     break;
+
+                case PARAM_CLASS_TIGHT:
+                    kind = REB_ISSUE;
+                    break;
+
                 case PARAM_CLASS_HARD_QUOTE:
                     kind = REB_GET_WORD;
                     break;
+
                 case PARAM_CLASS_SOFT_QUOTE:
                     kind = REB_LIT_WORD;
                     break;
+
                 default:
-                    assert(FALSE);
+                    panic (NULL);
             };
 
             // Note varargs_param is distinct from f->param!

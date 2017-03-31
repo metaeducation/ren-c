@@ -438,7 +438,11 @@ void MAKE_Map(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 //
 void TO_Map(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 {
+#ifdef NDEBUG
+    UNUSED(kind);
+#else
     assert(kind == REB_MAP);
+#endif
 
     REBARR* array;
     REBCNT len;
@@ -614,13 +618,13 @@ REBTYPE(Map)
         UNUSED(PAR(value)); // handled as `arg`
 
         if (REF(part)) {
-            assert(!IS_VOID(ARG(limit)));
+            UNUSED(ARG(limit));
             fail (Error_Bad_Refines_Raw());
         }
         if (REF(only))
             fail (Error_Bad_Refines_Raw());
         if (REF(skip)) {
-            assert(!IS_VOID(ARG(size)));
+            UNUSED(ARG(size));
             fail (Error_Bad_Refines_Raw());
         }
         if (REF(last))
@@ -692,7 +696,7 @@ REBTYPE(Map)
         UNUSED(PAR(series));
 
         if (REF(part)) {
-            assert(!IS_VOID(ARG(limit)));
+            UNUSED(ARG(limit));
             fail (Error_Bad_Refines_Raw());
         }
         if (NOT(REF(map)))
@@ -733,13 +737,13 @@ REBTYPE(Map)
 
         UNUSED(PAR(value));
         if (REF(part)) {
-            assert(!IS_VOID(ARG(limit)));
+            UNUSED(ARG(limit));
             fail (Error_Bad_Refines_Raw());
         }
         if (REF(deep))
             fail (Error_Bad_Refines_Raw());
         if (REF(types)) {
-            assert(!IS_VOID(ARG(kinds)));
+            UNUSED(ARG(kinds));
             fail (Error_Bad_Refines_Raw());
         }
 

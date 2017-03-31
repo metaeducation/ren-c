@@ -112,13 +112,21 @@ void MAKE_Function(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 //
 //  TO_Function: C
 //
+// `to function! 'x` might be an interesting optimized 0-arity function
+// generator, which made a function that returned that value every time you
+// called it.  Generalized alternative would be like `does [quote x]`,
+// which would be slower to generate the function and slower to run.
+//
 void TO_Function(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 {
-    // `to function! foo` is meaningless (and should not be given meaning,
-    // because `to function! [print "DOES exists for this, for instance"]`
-    //
-    SET_TRASH_IF_DEBUG(out);
+#ifdef NDEBUG
+    UNUSED(kind);
+#else
     assert(kind == REB_FUNCTION);
+#endif
+
+    UNUSED(out);
+
     fail (Error_Invalid_Arg(arg));
 }
 
@@ -137,11 +145,11 @@ REBTYPE(Function)
 
         UNUSED(PAR(value));
         if (REF(part)) {
-            assert(!IS_VOID(ARG(limit)));
+            UNUSED(ARG(limit));
             fail (Error_Bad_Refines_Raw());
         }
         if (REF(types)) {
-            assert(!IS_VOID(ARG(kinds)));
+            UNUSED(ARG(kinds));
             fail (Error_Bad_Refines_Raw());
         }
         if (REF(deep)) {

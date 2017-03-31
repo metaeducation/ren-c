@@ -395,7 +395,7 @@ REBNATIVE(decompress)
         max = -1;
 
     REBCNT len;
-    assert(PAR(part) != NULL);
+    UNUSED(REF(part)); // implied by non-void lim
     Partial1(data, ARG(lim), &len);
 
     // This truncation rule used to be in Decompress, which passed len
