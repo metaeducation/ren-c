@@ -505,7 +505,7 @@ ATTRIBUTE_NO_RETURN void Panic_Series_Debug(REBSER *s)
         printf("freed");
     else
         printf("created");
-    printf(" during evaluator tick: %d\n", cast(REBCNT, s->do_count));
+    printf(" during evaluator tick: %lu\n", cast(unsigned long, s->do_count));
 
     fflush(stdout);
 
