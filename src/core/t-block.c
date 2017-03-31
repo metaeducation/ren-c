@@ -1038,7 +1038,7 @@ void Assert_Array_Core(REBARR *a)
     REBCNT i;
     for (i = 0; i < ARR_LEN(a); ++i, ++item) {
         if (IS_END(item)) {
-            printf("Premature array end at index %d\n", i);
+            printf("Premature array end at index %d\n", cast(int, i));
             panic (a);
         }
     }
