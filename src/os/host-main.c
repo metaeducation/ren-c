@@ -732,6 +732,8 @@ int main(int argc, char **argv_ansi)
     REBARR *argv = Make_Array(argc);
 
 #ifdef TO_WINDOWS
+    UNUSED(argv_ansi);
+
     //
     // Were we using WinMain we'd be getting our arguments in Unicode, but
     // since we're using an ordinary main() we do not.  However, this call

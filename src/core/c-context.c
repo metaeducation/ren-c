@@ -1423,7 +1423,7 @@ void Assert_Context_Core(REBCTX *c)
     REBCNT n;
     for (n = 1; n < keys_len; n++, var++, key++) {
         if (IS_END(key)) {
-            printf("** Early key end at index: %d\n", n);
+            printf("** Early key end at index: %d\n", cast(int, n));
             panic (c);
         }
 
@@ -1431,18 +1431,18 @@ void Assert_Context_Core(REBCTX *c)
             panic (key);
 
         if (IS_END(var)) {
-            printf("** Early var end at index: %d\n", n);
+            printf("** Early var end at index: %d\n", cast(int, n));
             panic (c);
         }
     }
 
     if (NOT_END(key)) {
-        printf("** Missing key end at index: %d\n", n);
+        printf("** Missing key end at index: %d\n", cast(int, n));
         panic (key);
     }
 
     if (NOT_END(var)) {
-        printf("** Missing var end at index: %d\n", n);
+        printf("** Missing var end at index: %d\n", cast(int, n));
         panic (var);
     }
 }
