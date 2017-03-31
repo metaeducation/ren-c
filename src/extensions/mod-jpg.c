@@ -57,13 +57,13 @@ REBNATIVE(identify_jpeg_q)
 {
     INCLUDE_PARAMS_OF_IDENTIFY_JPEG_Q;
 
-    REBYTE *data = VAL_BIN_AT(ARG(data));
-    REBCNT len = VAL_LEN_AT(ARG(data));
-
     // Handle JPEG error throw:
     if (setjmp(jpeg_state)) {
         return R_FALSE;
     }
+
+    REBYTE *data = VAL_BIN_AT(ARG(data));
+    REBCNT len = VAL_LEN_AT(ARG(data));
 
     int w, h;
     jpeg_info(s_cast(data), len, &w, &h); // may longjmp above
