@@ -686,12 +686,14 @@ REBSER *File_Or_Url_Path_Dispatch(REBPVS *pvs)
     //     >> (x)/("bar")
     //     == %foo/bar
     //
-    REBUNI ch_last;
     REBCNT len = SER_LEN(ser);
-    if (len > 0)
-        ch_last = GET_ANY_CHAR(ser, len - 1);
-    if (len == 0 || ch_last != '/')
+    if (len == 0)
         Append_Codepoint_Raw(ser, '/');
+    else {
+        REBUNI ch_last = GET_ANY_CHAR(ser, len - 1);
+        if (ch_last != '/')
+            Append_Codepoint_Raw(ser, '/');
+    }
 
     REB_MOLD mo;
     CLEARS(&mo);
