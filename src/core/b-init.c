@@ -1343,28 +1343,78 @@ void Init_Core(void)
     Init_Error(TASK_STACK_ERROR, Error_Stack_Overflow_Raw());
     Init_Error(TASK_HALT_ERROR, Error_Halt_Raw());
 
+
 //==//////////////////////////////////////////////////////////////////////==//
 //
 // RUN MEZZANINE CODE NOW THAT ERROR HANDLING IS INITIALIZED
 //
 //==//////////////////////////////////////////////////////////////////////==//
 
+    PG_Boot_Phase = BOOT_MEZZ;
+
+    assert(DSP == 0 && FS_TOP == NULL);
+
+    REBCTX *error = Finalize_Mezzanine(&boot->base, &boot->sys, &boot->mezz);
+    if (error != NULL) {
+        //
+        // There is theoretically some level of error recovery that could
+        // be done here.  e.g. the evaluator works, it just doesn't have
+        // many functions you would expect.  How bad it is depends on
+        // whether base and sys ran, so perhaps only errors running "mezz"
+        // should be returned.
+        //
+        // For now, assume any failure to declare the functions in those
+        // sections is a critical one.
+        //
+        panic (error);
+    }
+
+    assert(DSP == 0 && FS_TOP == NULL);
+
+    DROP_GUARD_ARRAY(boot_array);
+
+    PG_Boot_Phase = BOOT_DONE;
+
+#if !defined(NDEBUG)
+    //
+    // This memory check from R3-Alpha is somewhat superfluous, but include a
+    // call to it during Init in the debug build, because otherwise no one
+    // will think to keep it up to date and working.
+    //
+    Check_Memory_Debug();
+
+    // We can only do a check of the pointer detection service after the
+    // system is somewhat initialized.
+    //
+    Assert_Pointer_Detection_Working();
+#endif
+
+    Recycle(); // necessary?
+}
+
+
+//
+//  Finalize_Mezzanine: C
+//
+// For boring technical reasons, the `boot` variable might be "clobbered"
+// by a longjmp in Init_Core().  The easiest way to work around this is
+// by taking the code that setjmp/longjmps (e.g. PUSH_TRAP, fail()) and
+// putting it into a separate function.
+//
+// http://stackoverflow.com/a/2105840/211160
+//
+// Returns error from finalizing or NULL.
+//
+REBCTX *Finalize_Mezzanine(
+    REBVAL *base_block,
+    REBVAL *sys_block,
+    REBVAL *mezz_block
+) {
     REBCTX *error;
     struct Reb_State state;
 
-    // Older compilers at high warning levels may not realize that boot->base
-    // and boot->sys do not change, e.g. the level of indirection confuses
-    // them.  This can result in warnings about "clobbering" variables via
-    // longjmp.  Extract into locals to avoid that.
-
-    REBARR *base_array = VAL_ARRAY(&boot->base);
-    REBARR *sys_array = VAL_ARRAY(&boot->sys);
-    REBVAL *mezz_block = &boot->mezz;
-
     // With error trapping enabled, set up to catch them if they happen.
     PUSH_UNHALTABLE_TRAP(&error, &state);
-
-    boot = NULL;
 
 // The first time through the following code 'error' will be NULL, but...
 // `fail` can longjmp here, so 'error' won't be NULL *if* that happens!
@@ -1378,16 +1428,12 @@ void Init_Core(void)
         // !!! TBD: Enforce not being *able* to trigger HALT
         //
         assert(ERR_NUM(error) != RE_HALT);
-        panic (error);
+        return error;
     }
 
-    Init_Base(base_array);
+    Init_Base(VAL_ARRAY(base_block));
 
-    Init_Sys(sys_array);
-
-    PG_Boot_Phase = BOOT_MEZZ;
-
-    assert(DSP == 0 && FS_TOP == NULL);
+    Init_Sys(VAL_ARRAY(sys_block));
 
     // The FINISH-INIT-CORE function should likely do very little.  But right
     // now it is where the user context is created from the lib context (a
@@ -1421,29 +1467,9 @@ void Init_Core(void)
         panic (result);
     }
 
-    DROP_GUARD_ARRAY(boot_array);
-
-    assert(DSP == 0 && FS_TOP == NULL);
-
     DROP_TRAP_SAME_STACKLEVEL_AS_PUSH(&state);
 
-    PG_Boot_Phase = BOOT_DONE;
-
-#if !defined(NDEBUG)
-    //
-    // This memory check from R3-Alpha is somewhat superfluous, but include a
-    // call to it during Init in the debug build, because otherwise no one
-    // will think to keep it up to date and working.
-    //
-    Check_Memory_Debug();
-
-    // We can only do a check of the pointer detection service after the
-    // system is somewhat initialized.
-    //
-    Assert_Pointer_Detection_Working();
-#endif
-
-    Recycle(); // necessary?
+    return NULL;
 }
 
 
