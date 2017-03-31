@@ -414,7 +414,9 @@ REBNATIVE(backtrace)
                 || temp_num != number
             ) {
                 printf(
-                    "%d != Frame_For_Stack_Level %d", number, temp_num
+                    "%d != Frame_For_Stack_Level %d",
+                    cast(int, number),
+                    cast(int, temp_num)
                 );
                 fflush(stdout);
                 assert(FALSE);
