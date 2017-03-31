@@ -301,6 +301,8 @@ REBNATIVE(get_signal_actor_handle)
 // disabled #ifdef, so a definition for this has to be provided... even if
 // it's not a build where it should be available.
 {
+    UNUSED(frame_);
+
 #ifdef HAS_POSIX_SIGNAL
     Make_Port_Actor_Handle(D_OUT, &Signal_Actor);
     return R_OUT;
