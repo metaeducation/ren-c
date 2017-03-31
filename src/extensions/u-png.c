@@ -870,17 +870,17 @@ REBNATIVE(identify_png_q)
 {
     INCLUDE_PARAMS_OF_IDENTIFY_PNG_Q;
 
-    REBYTE *data = VAL_BIN_AT(ARG(data));
-    REBCNT len = VAL_LEN_AT(ARG(data));
-
     // Error hook in the PNG decoder from R3-Alpha is done via longjmp.
     //
     if (setjmp(png_state)) {
         return R_FALSE;
     }
 
+    REBYTE *data = VAL_BIN_AT(ARG(data));
+    REBCNT len = VAL_LEN_AT(ARG(data));
+
     // !!! Should codec identifiers return any optional information they just
-    // happen to get?  Intsead of passing NULL for the addresses of the width
+    // happen to get?  Instead of passing NULL for the addresses of the width
     // and the height, this could incidentally get that information back
     // to return it.  Then any non-FALSE result could be "identified" while
     // still being potentially more informative about what was found out.
@@ -904,14 +904,14 @@ REBNATIVE(decode_png)
 {
     INCLUDE_PARAMS_OF_DECODE_PNG;
 
-    REBYTE *data = VAL_BIN_AT(ARG(data));
-    REBCNT len = VAL_LEN_AT(ARG(data));
-
     // Error hook in the PNG decoder from R3-Alpha is done via longjmp.
     //
     if (setjmp(png_state)) {
         fail (Error_Bad_Media_Raw()); // can the error be more specific?
     }
+
+    REBYTE *data = VAL_BIN_AT(ARG(data));
+    REBCNT len = VAL_LEN_AT(ARG(data));
 
     int w, h;
     if (0 == png_info(data, len, &w, &h))
