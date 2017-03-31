@@ -1364,8 +1364,22 @@ void Init_Core(void)
         // should be returned.
         //
         // For now, assume any failure to declare the functions in those
-        // sections is a critical one.
+        // sections is a critical one.  It may be desirable to tell the
+        // caller that the user halted (quitting may not be appropriate if
+        // the app is more than just the interpreter)
         //
+        // !!! If halt cannot be handled cleanly, it should be set up so
+        // that the user isn't even *able* to request a halt at this boot
+        // phase.
+
+    #ifdef RETURN_ERRORS_FROM_INIT_CORE
+        REBCNT err_num = ERR_NUM(error);
+        Shutdown_Core(); // In good enough state to shutdown cleanly by now
+        return err_num;
+    #endif
+
+        assert(ERR_NUM(error) != RE_HALT);
+
         panic (error);
     }
 
@@ -1419,17 +1433,8 @@ REBCTX *Finalize_Mezzanine(
 // The first time through the following code 'error' will be NULL, but...
 // `fail` can longjmp here, so 'error' won't be NULL *if* that happens!
 
-    if (error) {
-        //
-        // You shouldn't be able to halt during Init_Core() startup.
-        // The only way you should be able to stop Init_Core() is by raising
-        // an error, at which point the system will Panic out.
-        //
-        // !!! TBD: Enforce not being *able* to trigger HALT
-        //
-        assert(ERR_NUM(error) != RE_HALT);
+    if (error)
         return error;
-    }
 
     Init_Base(VAL_ARRAY(base_block));
 
@@ -1448,12 +1453,7 @@ REBCTX *Finalize_Mezzanine(
         mezz_block, // boot-mezz argument
         END
     )) {
-        // You shouldn't be able to throw any uncaught values during
-        // Init_Core() startup, including throws implementing QUIT or EXIT.
-        // A fail() would just jump up to the error delivery above, so a
-        // panic here more clearly indicates the moment of the problem.
-        //
-        panic (result);
+        return Error_No_Catch_For_Throw(result);
     }
 
     if (!IS_VOID(result)) {
