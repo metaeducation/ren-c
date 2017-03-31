@@ -105,8 +105,8 @@ static void Assert_Basics(void)
 
     flags = FLAGIT_LEFT(0) | FLAGIT_LEFT(1) | FLAGBYTE_RIGHT(13);
 
-    REBCNT left = LEFT_N_BITS(flags, 3); // == 6 (binary `110`)
-    REBCNT right = RIGHT_N_BITS(flags, 3); // == 5 (binary `101`)
+    unsigned int left = LEFT_N_BITS(flags, 3); // == 6 (binary `110`)
+    unsigned int right = RIGHT_N_BITS(flags, 3); // == 5 (binary `101`)
     if (left != 6 || right != 5) {
         printf("Expected 6 and 5, got %u and %u\n", left, right);
         panic ("Bad composed integer assignment for byte-ordering macro.");
