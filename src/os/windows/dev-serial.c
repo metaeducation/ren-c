@@ -268,7 +268,7 @@ DEVICE_CMD Query_Serial(REBREQ *req)
 //
 static i32 Request_Size_Serial(REBREQ *req)
 {
-    (void)req; //unused
+    UNUSED(req);
     return sizeof(struct devreq_serial);
 }
 

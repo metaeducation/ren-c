@@ -290,7 +290,7 @@ DEVICE_CMD Open_Echo(REBREQ *req)
 //
 static i32 Request_Size_IO(REBREQ *req)
 {
-    (void)req; //unused
+    UNUSED(req);
     return sizeof(struct devreq_file);
 }
 

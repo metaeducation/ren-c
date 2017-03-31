@@ -687,7 +687,7 @@ DEVICE_CMD Accept_Socket(REBREQ *req)
 
 i32 Request_Size_Net(REBREQ *sock)
 {
-    (void)(sock);
+    UNUSED(sock);
     return sizeof(struct devreq_net);
 }
 

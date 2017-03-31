@@ -531,6 +531,6 @@ REBINT OS_Wait(REBCNT millisec, REBCNT res)
 //
 i32 Request_Size_Rebreq(REBREQ *req)
 {
-    (void)req; //unused
+    UNUSED(req);
     return sizeof(REBREQ); //no special fields
 }

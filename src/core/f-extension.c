@@ -405,7 +405,8 @@ REBNATIVE(load_native)
 //
 static REB_R Unloaded_Dispatcher(REBFRM *f)
 {
-    assert(f != NULL); // unused argument warning otherwise
+    UNUSED(f);
+
     fail (Error_Native_Unloaded_Raw(FUNC_VALUE(f->func)));
 }
 

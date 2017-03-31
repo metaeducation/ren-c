@@ -452,6 +452,7 @@ DEVICE_CMD Rename_File(REBREQ *req)
 //
 DEVICE_CMD Poll_File(REBREQ *file)
 {
+    UNUSED(file);
     return DR_DONE;     // files are synchronous (currently)
 }
 
@@ -460,7 +461,7 @@ DEVICE_CMD Poll_File(REBREQ *file)
 //
 static i32 Request_Size_File(REBREQ *req)
 {
-    (void)req; //unused
+    UNUSED(req);
     return sizeof(struct devreq_file);
 }
 
