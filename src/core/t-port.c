@@ -49,7 +49,11 @@ REBINT CT_Port(const RELVAL *a, const RELVAL *b, REBINT mode)
 //
 void MAKE_Port(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 {
+#ifdef NDEBUG
+    UNUSED(kind);
+#else
     assert(kind == REB_PORT);
+#endif
 
     const REBOOL fully = TRUE; // error if not all arguments consumed
 
@@ -71,7 +75,11 @@ void MAKE_Port(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 //
 void TO_Port(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 {
+#ifdef NDEBUG
+    UNUSED(kind);
+#else
     assert(kind == REB_PORT);
+#endif
 
     if (!IS_OBJECT(arg))
         fail (Error_Bad_Make(REB_PORT, arg));

@@ -49,9 +49,13 @@ REBINT CT_Pair(const RELVAL *a, const RELVAL *b, REBINT mode)
 //
 //  MAKE_Pair: C
 //
-void MAKE_Pair(REBVAL *out, enum Reb_Kind type, const REBVAL *arg)
+void MAKE_Pair(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 {
-    assert(type == REB_PAIR);
+#ifdef NDEBUG
+    UNUSED(kind);
+#else
+    assert(kind == REB_PAIR);
+#endif
 
     if (IS_PAIR(arg)) {
         Move_Value(out, arg);

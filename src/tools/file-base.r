@@ -178,7 +178,13 @@ modules: [
 
     GIF ../extensions/mod-gif.c []
 
-    JPG ../extensions/mod-jpg.c [../extensions/u-jpg.c]
+    JPG ../extensions/mod-jpg.c [
+        ;
+        ; The JPG sources come from elsewhere; invasive maintenance for
+        ; compiler rigor is not worthwhile to be out of sync with original.
+        ;
+        [../extensions/u-jpg.c <no-unused-parameter> <no-shift-negative-value>]
+    ]
 
     BMP ../extensions/mod-bmp.c []
 ]

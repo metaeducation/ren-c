@@ -76,7 +76,7 @@ void Set_Port_Open(REBCTX *port, REBOOL open)
 REBREQ *Ensure_Port_State(REBCTX *port, REBCNT device)
 {
     REBVAL *state = CTX_VAR(port, STD_PORT_STATE);
-    i32 req_size = OS_DEVREQ_SIZE(device);
+    REBCNT req_size = OS_DEVREQ_SIZE(device);
 
     if (!IS_BINARY(state)) {
         assert(IS_BLANK(state));

@@ -302,6 +302,7 @@ REBNATIVE(dump)
     INCLUDE_PARAMS_OF_DUMP;
 
 #ifdef NDEBUG
+    UNUSED(ARG(value));
     fail (Error_Debug_Only_Raw());
 #else
     REBVAL *value = ARG(value);

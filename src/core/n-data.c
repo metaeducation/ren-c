@@ -212,6 +212,14 @@ REBNATIVE(maybe)
 
     REB_R r;
     if (IS_BLOCK(test)) {
+        //
+        // !!! What should the behavior for `MAYBE [] ...` be?  Should that be
+        // an error?  People wouldn't write it literally, but could wind up
+        // with an empty array as the product of a COMPOSE or something.
+        // Consider it ambiguous for now and give back void...
+        //
+        r = R_VOID;
+
         const RELVAL *item;
         for (item = VAL_ARRAY_AT(test); NOT_END(item); ++item) {
             r = Do_Test_For_Maybe(
@@ -611,6 +619,7 @@ REBNATIVE(get)
         source = D_CELL;
         specifier = SPECIFIED;
         dest = D_OUT;
+        results = NULL; // wasteful but avoids maybe-used-uninitalized warning
     }
 
     DECLARE_LOCAL (temp);
@@ -1558,7 +1567,7 @@ REBNATIVE(void_q)
 //
 REBNATIVE(void)
 {
-    assert(frame_ != NULL); // avoid unused parameter warning
+    UNUSED(frame_);
     return R_VOID;
 }
 

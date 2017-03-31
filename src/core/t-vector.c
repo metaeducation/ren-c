@@ -570,6 +570,8 @@ void Poke_Vector_Fail_If_Read_Only(
         f = VAL_DECIMAL(poke);
         if (bits <= VTUI64)
             i = cast(REBINT, f);
+        else
+            i = 0xDECAFBAD; // not used, but avoid maybe uninitalized warning
     }
     else fail (Error_Invalid_Arg(poke));
 
@@ -635,13 +637,13 @@ REBTYPE(Vector)
 
         UNUSED(PAR(value));
         if (REF(part)) {
-            assert(!IS_VOID(ARG(limit)));
+            UNUSED(ARG(limit));
             fail (Error_Bad_Refines_Raw());
         }
         if (REF(deep))
             fail (Error_Bad_Refines_Raw());
         if (REF(types)) {
-            assert(!IS_VOID(ARG(kinds)));
+            UNUSED(ARG(kinds));
             fail (Error_Bad_Refines_Raw());
         }
 
@@ -652,7 +654,7 @@ REBTYPE(Vector)
 
     case SYM_RANDOM: {
         INCLUDE_PARAMS_OF_RANDOM;
-        assert(PAR(value) != NULL);
+        UNUSED(PAR(value));
 
         FAIL_IF_READ_ONLY_SERIES(vect);
 

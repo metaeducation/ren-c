@@ -223,11 +223,11 @@ static REB_R Transport_Actor(
         UNUSED(PAR(source));
 
         if (REF(part)) {
-            assert(!IS_VOID(ARG(limit)));
+            UNUSED(ARG(limit));
             fail (Error_Bad_Refines_Raw());
         }
         if (REF(seek)) {
-            assert(!IS_VOID(ARG(index)));
+            UNUSED(ARG(index));
             fail (Error_Bad_Refines_Raw());
         }
         UNUSED(PAR(string)); // handled in dispatcher
@@ -277,13 +277,13 @@ static REB_R Transport_Actor(
         UNUSED(PAR(destination));
 
         if (REF(seek)) {
-            assert(!IS_VOID(ARG(index)));
+            UNUSED(ARG(index));
             fail (Error_Misc_Raw());
         }
         if (REF(append))
             fail (Error_Bad_Refines_Raw());
         if (REF(allow)) {
-            assert(!IS_VOID(ARG(access)));
+            UNUSED(ARG(access));
             fail (Error_Bad_Refines_Raw());
         }
         if (REF(lines))

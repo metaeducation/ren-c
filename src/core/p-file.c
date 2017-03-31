@@ -174,8 +174,12 @@ static void Read_File_Port(
     REBFLGS flags,
     REBCNT len
 ) {
+#ifdef NDEBUG
+    UNUSED(path);
+#else
     assert(IS_FILE(path));
-    assert(flags == 0); // currently not used
+#endif
+    UNUSED(flags);
 
     REBREQ *req = AS_REBREQ(file);
 
@@ -357,7 +361,7 @@ static REB_R File_Actor(REBFRM *frame_, REBCTX *port, REBSYM action)
         UNUSED(PAR(destination));
 
         if (REF(allow)) {
-            assert(!IS_VOID(ARG(access)));
+            UNUSED(ARG(access));
             fail (Error_Bad_Refines_Raw());
         }
 
@@ -419,7 +423,7 @@ static REB_R File_Actor(REBFRM *frame_, REBCTX *port, REBSYM action)
 
         UNUSED(PAR(spec));
         if (REF(allow)) {
-            assert(!IS_VOID(ARG(access)));
+            UNUSED(ARG(access));
             fail (Error_Bad_Refines_Raw());
         }
 
@@ -446,7 +450,7 @@ static REB_R File_Actor(REBFRM *frame_, REBCTX *port, REBSYM action)
         if (REF(deep))
             fail (Error_Bad_Refines_Raw());
         if (REF(types)) {
-            assert(!IS_VOID(ARG(kinds)));
+            UNUSED(ARG(kinds));
             fail (Error_Bad_Refines_Raw());
         }
 
@@ -463,7 +467,7 @@ static REB_R File_Actor(REBFRM *frame_, REBCTX *port, REBSYM action)
 
     case SYM_CLOSE: {
         INCLUDE_PARAMS_OF_CLOSE;
-        assert(PAR(port) != NULL);
+        UNUSED(PAR(port));
 
         if (IS_OPEN(req)) {
             OS_DO_DEVICE(req, RDC_CLOSE);
@@ -525,7 +529,7 @@ static REB_R File_Actor(REBFRM *frame_, REBCTX *port, REBSYM action)
 
         UNUSED(PAR(target));
         if (REF(mode)) {
-            assert(!IS_VOID(ARG(field)));
+            UNUSED(ARG(field));
             fail (Error_Bad_Refines_Raw());
         }
 

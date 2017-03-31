@@ -620,7 +620,6 @@ static void Set_GOB_Vars(REBGOB *gob, const RELVAL *blk, REBSPC *specifier)
     while (NOT_END(blk)) {
         assert(!IS_VOID(blk));
 
-
         Derelativize(var, blk, specifier);
         ++blk;
 
@@ -691,6 +690,8 @@ REBARR *Gob_To_Array(REBGOB *gob)
         case GOBT_EFFECT:
             sym = SYM_EFFECT;
             break;
+        default:
+            fail (Error_Misc_Raw());
         }
         Init_Set_Word(val1, Canon(sym));
         Get_GOB_Var(gob, val1, val);
@@ -868,9 +869,13 @@ void Extend_Gob_Core(REBGOB *gob, const REBVAL *arg) {
 //
 //  MAKE_Gob: C
 //
-void MAKE_Gob(REBVAL *out, enum Reb_Kind type, const REBVAL *arg)
+void MAKE_Gob(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 {
-    assert(type == REB_GOB);
+#ifdef NDEBUG
+    UNUSED(kind);
+#else
+    assert(kind == REB_GOB);
+#endif
 
     REBGOB *gob = Make_Gob();
 
@@ -893,10 +898,16 @@ void MAKE_Gob(REBVAL *out, enum Reb_Kind type, const REBVAL *arg)
 //
 //  TO_Gob: C
 //
-void TO_Gob(REBVAL *out, enum Reb_Kind type, const REBVAL *arg)
+void TO_Gob(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 {
-    SET_TRASH_IF_DEBUG(out);
-    assert(type == REB_GOB);
+#ifdef NDEBUG
+    UNUSED(kind);
+#else
+    assert(kind == REB_GOB);
+#endif
+
+    UNUSED(out);
+
     fail (Error_Invalid_Arg(arg));
 }
 
@@ -1075,7 +1086,7 @@ REBTYPE(Gob)
         UNUSED(PAR(series));
 
         if (REF(map)) {
-            assert(!IS_VOID(ARG(key)));
+            UNUSED(ARG(key));
             fail (Error_Bad_Refines_Raw());
         }
 

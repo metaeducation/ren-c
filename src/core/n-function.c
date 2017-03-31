@@ -185,10 +185,10 @@ REBNATIVE(exit)
 {
     INCLUDE_PARAMS_OF_EXIT;
 
+    UNUSED(REF(with)); // implied by non-void value 
+
     if (NOT(REF(from)))
         SET_INTEGER(ARG(level), 1); // default--exit one function stack level
-
-    assert(REF(with) || IS_VOID(ARG(value)));
 
     Make_Thrown_Exit_Value(D_OUT, ARG(level), ARG(value), frame_);
 

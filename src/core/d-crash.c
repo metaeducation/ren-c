@@ -54,7 +54,10 @@ ATTRIBUTE_NO_RETURN void Panic_Core(
     //
     GC_Disabled = TRUE;
 
-#if !defined(NDEBUG)
+#if defined(NDEBUG)
+    UNUSED(file);
+    UNUSED(line);
+#else
     //
     // First thing's first in the debug build, make sure the file and the
     // line are printed out.
@@ -143,6 +146,7 @@ ATTRIBUTE_NO_RETURN void Panic_Core(
 
         Panic_Series_Debug(cast(REBSER*, s));
     #else
+        UNUSED(s);
         strncat(buf, "valid series", PANIC_BUF_SIZE - strlen(buf));
     #endif
         break; }

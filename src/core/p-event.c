@@ -208,7 +208,7 @@ act_blk:
         if (REF(seek))
             fail (Error_Bad_Refines_Raw());
         if (REF(allow)) {
-            assert(!IS_VOID(ARG(access)));
+            UNUSED(ARG(access));
             fail (Error_Bad_Refines_Raw());
         }
 

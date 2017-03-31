@@ -108,7 +108,7 @@ static void Assert_Basics(void)
     REBCNT left = LEFT_N_BITS(flags, 3); // == 6 (binary `110`)
     REBCNT right = RIGHT_N_BITS(flags, 3); // == 5 (binary `101`)
     if (left != 6 || right != 5) {
-        printf("Expected 6 and 5, got %d and %d\n", left, right);
+        printf("Expected 6 and 5, got %u and %u\n", left, right);
         panic ("Bad composed integer assignment for byte-ordering macro.");
     }
 #endif
@@ -794,7 +794,10 @@ static void Init_Root_Context(void)
     // this one into a program global.  It is not legal to bit-copy an
     // END (you always use SET_END), so we can make it unwritable.
     //
-    Init_Endlike_Header(&PG_End_Node.header, 0); // read-only end
+    Init_Endlike_Header(&PG_End_Node.header, 0); // mutate to read-only end
+#if !defined(NDEBUG)
+    Set_Track_Payload_Debug(&PG_End_Node, __FILE__, __LINE__);
+#endif
     assert(IS_END(END)); // sanity check that it took
     assert(VAL_TYPE_RAW(END) == REB_0); // this implicit END marker has this
 
@@ -1349,8 +1352,19 @@ void Init_Core(void)
     REBCTX *error;
     struct Reb_State state;
 
+    // Older compilers at high warning levels may not realize that boot->base
+    // and boot->sys do not change, e.g. the level of indirection confuses
+    // them.  This can result in warnings about "clobbering" variables via
+    // longjmp.  Extract into locals to avoid that.
+
+    REBARR *base_array = VAL_ARRAY(&boot->base);
+    REBARR *sys_array = VAL_ARRAY(&boot->sys);
+    REBVAL *mezz_block = &boot->mezz;
+
     // With error trapping enabled, set up to catch them if they happen.
     PUSH_UNHALTABLE_TRAP(&error, &state);
+
+    boot = NULL;
 
 // The first time through the following code 'error' will be NULL, but...
 // `fail` can longjmp here, so 'error' won't be NULL *if* that happens!
@@ -1367,9 +1381,9 @@ void Init_Core(void)
         panic (error);
     }
 
-    Init_Base(VAL_ARRAY(&boot->base));
+    Init_Base(base_array);
 
-    Init_Sys(VAL_ARRAY(&boot->sys));
+    Init_Sys(sys_array);
 
     PG_Boot_Phase = BOOT_MEZZ;
 
@@ -1385,7 +1399,7 @@ void Init_Core(void)
         result,
         TRUE, // generate error if all arguments aren't consumed
         Sys_Func(SYS_CTX_FINISH_INIT_CORE), // %sys-start.r function to call
-        &boot->mezz, // boot-mezz argument
+        mezz_block, // boot-mezz argument
         END
     )) {
         // You shouldn't be able to throw any uncaught values during

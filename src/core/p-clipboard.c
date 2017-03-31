@@ -83,11 +83,11 @@ static REB_R Clipboard_Actor(REBFRM *frame_, REBCTX *port, REBSYM action)
 
         UNUSED(PAR(source)); // already accounted for
         if (REF(part)) {
-            assert(!IS_VOID(ARG(limit)));
+            UNUSED(ARG(limit));
             fail (Error_Bad_Refines_Raw());
         }
         if (REF(seek)) {
-            assert(!IS_VOID(ARG(index)));
+            UNUSED(ARG(index));
             fail (Error_Bad_Refines_Raw());
         }
         UNUSED(PAR(string)); // handled in dispatcher
@@ -134,13 +134,13 @@ static REB_R Clipboard_Actor(REBFRM *frame_, REBCTX *port, REBSYM action)
         UNUSED(PAR(data)); // used as arg
 
         if (REF(seek)) {
-            assert(!IS_VOID(ARG(index)));
+            UNUSED(ARG(index));
             fail (Error_Bad_Refines_Raw());
         }
         if (REF(append))
             fail (Error_Bad_Refines_Raw());
         if (REF(allow)) {
-            assert(!IS_VOID(ARG(access)));
+            UNUSED(ARG(access));
             fail (Error_Bad_Refines_Raw());
         }
         if (REF(lines))
@@ -215,7 +215,7 @@ static REB_R Clipboard_Actor(REBFRM *frame_, REBCTX *port, REBSYM action)
         if (REF(seek))
             fail (Error_Bad_Refines_Raw());
         if (REF(allow)) {
-            assert(!IS_VOID(ARG(access)));
+            UNUSED(ARG(access));
             fail (Error_Bad_Refines_Raw());
         }
 

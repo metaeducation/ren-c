@@ -622,7 +622,11 @@ static void parse_attr (REBVAL *blk, REBINT *raw_size, REBUPT *raw_addr)
 // have to test for NULL.
 //
 static void cleanup_noop(const REBVAL *v) {
+#ifdef NDEBUG
+    UNUSED(v);
+#else
     assert(IS_HANDLE(v));
+#endif
 }
 
 
@@ -1045,7 +1049,11 @@ void Init_Struct_Fields(REBVAL *ret, REBVAL *spec)
 //     ]
 //
 void MAKE_Struct(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg) {
+#ifdef NDEBUG
+    UNUSED(kind);
+#else
     assert(kind == REB_STRUCT);
+#endif
 
     if (!IS_BLOCK(arg))
         fail (Error_Invalid_Arg(arg));
@@ -1099,6 +1107,8 @@ void MAKE_Struct(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg) {
     REBSER *data_bin;
     if (raw_addr == 0)
         data_bin = Make_Binary(max_fields << 2);
+    else
+        data_bin = NULL; // not used, but avoid maybe uninitialized warning
 
     REBINT field_idx = 0; // for field index
     REBIXO eval_idx = 0; // for spec block evaluation

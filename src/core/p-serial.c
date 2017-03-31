@@ -164,11 +164,11 @@ static REB_R Serial_Actor(REBFRM *frame_, REBCTX *port, REBSYM action)
 
         UNUSED(PAR(source));
         if (REF(part)) {
-            assert(!IS_VOID(ARG(limit)));
+            UNUSED(ARG(limit));
             fail (Error_Bad_Refines_Raw());
         }
         if (REF(seek)) {
-            assert(!IS_VOID(ARG(index)));
+            UNUSED(ARG(index));
             fail (Error_Bad_Refines_Raw());
         }
         UNUSED(PAR(string)); // handled in dispatcher
@@ -212,13 +212,13 @@ static REB_R Serial_Actor(REBFRM *frame_, REBCTX *port, REBSYM action)
         UNUSED(PAR(destination));
 
         if (REF(seek)) {
-            assert(!IS_VOID(ARG(index)));
+            UNUSED(ARG(index));
             fail (Error_Bad_Refines_Raw());
         }
         if (REF(append))
             fail (Error_Bad_Refines_Raw());
         if (REF(allow)) {
-            assert(!IS_VOID(ARG(access)));
+            UNUSED(ARG(access));
             fail (Error_Bad_Refines_Raw());
         }
         if (REF(lines))

@@ -1233,7 +1233,7 @@ REBNATIVE(scan_net_header)
         if (*cp != ':')
             break;
 
-        REBVAL *val;
+        REBVAL *val = NULL; // rigorous checks worry it could be uninitialized
 
         REBSTR *name = Intern_UTF8_Managed(start, cp - start);
         RELVAL *item;

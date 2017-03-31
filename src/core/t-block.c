@@ -863,7 +863,7 @@ REBTYPE(Array)
             fail (Error_Bad_Refines_Raw());
 
         if (REF(with)) {
-            assert(!IS_VOID(ARG(str)));
+            UNUSED(ARG(str));
             fail (Error_Bad_Refines_Raw());
         }
 

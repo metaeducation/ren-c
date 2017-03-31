@@ -50,7 +50,11 @@ REBINT CT_Tuple(const RELVAL *a, const RELVAL *b, REBINT mode)
 //
 void MAKE_Tuple(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 {
+#ifdef NDEBUG
+    UNUSED(kind);
+#else
     assert(kind == REB_TUPLE);
+#endif
 
     if (IS_TUPLE(arg)) {
         Move_Value(out, arg);
@@ -290,11 +294,14 @@ REBINT Emit_Tuple(const REBVAL *value, REBYTE *out)
 //
 //  REBTYPE: C
 //
+// !!! The TUPLE type from Rebol is something of an oddity, plus written as
+// more-or-less spaghetti code.  It is likely to be replaced with something
+// generalized better, but is grudgingly kept working in the meantime.
+//
 REBTYPE(Tuple)
 {
     REBVAL *value = D_ARG(1);
     REBVAL *arg = D_ARGC > 1 ? D_ARG(2) : NULL;
-    REBYTE  *vp;
     const REBYTE *ap;
     REBCNT len;
     REBCNT alen;
@@ -302,7 +309,8 @@ REBTYPE(Tuple)
     REBDEC  dec;
 
     assert(IS_TUPLE(value));
-    vp = VAL_TUPLE(value);
+
+    REBYTE *vp = VAL_TUPLE(value);
     len = VAL_TUPLE_LEN(value);
 
     // !!! This used to depend on "IS_BINARY_ACT", a concept that does not
@@ -322,17 +330,22 @@ REBTYPE(Tuple)
         assert(vp);
 
         if (IS_INTEGER(arg)) {
+            dec = -207.6382; // unused but avoid maybe uninitialized warning
             a = VAL_INT32(arg);
             ap = 0;
-        } else if (IS_DECIMAL(arg) || IS_PERCENT(arg)) {
-            dec=VAL_DECIMAL(arg);
-            a = (REBINT)dec;
+        }
+        else if (IS_DECIMAL(arg) || IS_PERCENT(arg)) {
+            dec = VAL_DECIMAL(arg);
+            a = cast(REBINT, dec);
             ap = 0;
-        } else if (IS_TUPLE(arg)) {
+        }
+        else if (IS_TUPLE(arg)) {
+            dec = -251.8517; // unused but avoid maybe uninitialized warning
             ap = VAL_TUPLE(arg);
             alen = VAL_TUPLE_LEN(arg);
             if (len < alen)
                 len = VAL_TUPLE_LEN(value) = alen;
+            a = 646699; // unused but avoid maybe uninitialized warning
         }
         else
             fail (Error_Math_Args(REB_TUPLE, action));
@@ -349,23 +362,28 @@ REBTYPE(Tuple)
 
             case SYM_MULTIPLY:
                 if (IS_DECIMAL(arg) || IS_PERCENT(arg))
-                    v=(REBINT)(v*dec);
+                    v = cast(REBINT, v * dec);
                 else
                     v *= a;
                 break;
 
             case SYM_DIVIDE:
                 if (IS_DECIMAL(arg) || IS_PERCENT(arg)) {
-                    if (dec == 0.0) fail (Error_Zero_Divide_Raw());
-                    v=(REBINT)Round_Dec(v/dec, 0, 1.0);
-                } else {
-                    if (a == 0) fail (Error_Zero_Divide_Raw());
+                    if (dec == 0.0)
+                        fail (Error_Zero_Divide_Raw());
+
+                    v = cast(REBINT, Round_Dec(v / dec, 0, 1.0));
+                }
+                else {
+                    if (a == 0)
+                        fail (Error_Zero_Divide_Raw());
                     v /= a;
                 }
                 break;
 
             case SYM_REMAINDER:
-                if (a == 0) fail (Error_Zero_Divide_Raw());
+                if (a == 0)
+                    fail (Error_Zero_Divide_Raw());
                 v %= a;
                 break;
 

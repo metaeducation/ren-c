@@ -94,7 +94,11 @@ void Mold_Bitset(const REBVAL *value, REB_MOLD *mold)
 //  MAKE_Bitset: C
 //
 void MAKE_Bitset(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg) {
+#ifdef NDEBUG
+    UNUSED(kind);
+#else
     assert(kind == REB_BITSET);
+#endif
 
     REBINT len = Find_Max_Bit(arg);
 
@@ -575,13 +579,13 @@ REBTYPE(Bitset)
         UNUSED(PAR(series));
         UNUSED(PAR(value));
         if (REF(part)) {
-            assert(!IS_VOID(ARG(limit)));
+            UNUSED(ARG(limit));
             fail (Error_Bad_Refines_Raw());
         }
         if (REF(only))
             fail (Error_Bad_Refines_Raw());
         if (REF(skip)) {
-            assert(!IS_VOID(ARG(size)));
+            UNUSED(ARG(size));
             fail (Error_Bad_Refines_Raw());
         }
         if (REF(last))
@@ -624,7 +628,7 @@ set_bits:
 
         UNUSED(PAR(series));
         if (REF(map)) {
-            assert(!IS_VOID(ARG(key)));
+            UNUSED(ARG(key));
             fail (Error_Bad_Refines_Raw());
         }
 
@@ -641,13 +645,13 @@ set_bits:
 
         UNUSED(PAR(value));
         if (REF(part)) {
-            assert(!IS_VOID(ARG(limit)));
+            UNUSED(ARG(limit));
             fail (Error_Bad_Refines_Raw());
         }
         if (REF(deep))
             fail (Error_Bad_Refines_Raw());
         if (REF(types)) {
-            assert(!IS_VOID(ARG(kinds)));
+            UNUSED(ARG(kinds));
             fail (Error_Bad_Refines_Raw());
         }
 

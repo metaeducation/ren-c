@@ -48,7 +48,11 @@ REBINT CT_Library(const RELVAL *a, const RELVAL *b, REBINT mode)
 //
 void MAKE_Library(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 {
+#ifdef NDEBUG
+    UNUSED(kind);
+#else
     assert(kind == REB_LIBRARY);
+#endif
 
     if (!IS_FILE(arg))
         fail (Error_Unexpected_Type(REB_FILE, VAL_TYPE(arg)));

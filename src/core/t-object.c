@@ -644,7 +644,7 @@ REBTYPE(Context)
         UNUSED(PAR(value));
 
         if (REF(part)) {
-            assert(!IS_VOID(ARG(limit)));
+            UNUSED(ARG(limit));
             fail (Error_Bad_Refines_Raw());
         }
 
@@ -716,7 +716,7 @@ REBTYPE(Context)
         }
 
         if (REF(with)) {
-            assert(!IS_VOID(ARG(str)));
+            UNUSED(ARG(str));
             fail (Error_Bad_Refines_Raw());
         }
 

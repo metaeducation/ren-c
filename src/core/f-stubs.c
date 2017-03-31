@@ -395,6 +395,9 @@ void Set_Tuple(REBVAL *value, REBYTE *bytes, REBCNT len)
 // of the context's varlist.
 //
 void Init_Any_Context_Core(REBVAL *out, enum Reb_Kind kind, REBCTX *c) {
+#if defined(NDEBUG)
+    UNUSED(kind);
+#else
     //
     // In a debug build we check to make sure the type of the embedded value
     // matches the type of what is intended (so someone who thinks they are
@@ -402,7 +405,6 @@ void Init_Any_Context_Core(REBVAL *out, enum Reb_Kind kind, REBCTX *c) {
     // REB_ERROR, for instance.)  It's a point for several other integrity
     // checks as well.
     //
-#if !defined(NDEBUG)
     REBVAL *archetype = CTX_VALUE(c);
     assert(VAL_CONTEXT(archetype) == c);
 

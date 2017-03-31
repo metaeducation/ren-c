@@ -402,8 +402,14 @@ static void Mold_String_Series(const REBVAL *value, REB_MOLD *mold)
     if (!GET_MOPT(mold, MOPT_NON_ANSI_PARENED)) sf.paren = 0;
 
     // Source can be 8 or 16 bits:
-    if (unicode) up = UNI_HEAD(ser);
-    else bp = BIN_HEAD(ser);
+    if (unicode) {
+        up = UNI_HEAD(ser);
+        bp = NULL; // wasteful, but avoids may be used uninitialized warning
+    }
+    else {
+        up = NULL; // wasteful, but avoids may be used uninitialized warning
+        bp = BIN_HEAD(ser);
+    }
 
     // If it is a short quoted string, emit it as "string":
     if (len <= MAX_QUOTED_STR && sf.quote == 0 && sf.newline < 3) {
