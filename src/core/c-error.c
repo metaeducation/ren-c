@@ -974,7 +974,7 @@ REBCTX *Make_Error_Managed_Core(REBCNT code, va_list *vaptr)
                 #else
                     printf(
                         "too few args passed for error code %d at %s line %d",
-                        code,
+                        cast(int, code),
                         TG_Erroring_C_File ? TG_Erroring_C_File : "<unknown>",
                         TG_Erroring_C_File ? TG_Erroring_C_Line : -1
                     );
