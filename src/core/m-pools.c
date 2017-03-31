@@ -391,15 +391,15 @@ void Shutdown_Pools(void)
 #if !defined(NDEBUG)
     if (PG_Mem_Usage != 0) {
         //
-        // The release build of the core doesn't want to link in printf.
-        // It's used here because all the alloc-dependent outputting code
-        // will not work at this point.  Exit normally instead of asserting
-        // to make it easier for those tools.
+        // If using valgrind or address sanitizer, they can present more
+        // information about leaks than just how much was leaked.  So don't
+        // assert...exit normally so they go through their process of
+        // presenting the leaks at program termination.
         //
-        if (PG_Mem_Usage <= MAX_U32)
-            printf("*** PG_Mem_Usage = %u ***\n", cast(REBCNT, PG_Mem_Usage));
-        else
-            printf("*** PG_Mem_Usage > MAX_U32 ***\n");
+        printf(
+            "*** PG_Mem_Usage = %lu ***\n",
+            cast(unsigned long, PG_Mem_Usage)
+        );
 
         printf(
             "Memory accounting imbalance: Rebol internally tracks how much\n"
@@ -1267,7 +1267,10 @@ void Expand_Series(REBSER *s, REBCNT index, REBCNT delta)
     if (Reb_Opts->watch_expand) {
         printf(
             "Expand %p wide: %d tail: %d delta: %d\n",
-            cast(void*, s), wide, len_old, delta
+            cast(void*, s),
+            cast(int, wide),
+            cast(int, len_old),
+            cast(int, delta)
         );
         fflush(stdout);
     }
@@ -1954,11 +1957,12 @@ void Dump_All_Series_Of_Size(REBCNT size)
                 continue;
 
             if (SER_WIDE(s) == size) {
+                ++count;
                 printf(
                     "%3d %4d %4d\n",
-                    ++count,
-                    SER_LEN(s),
-                    SER_REST(s)
+                    cast(int, count),
+                    cast(int, SER_LEN(s)),
+                    cast(int, SER_REST(s))
                 );
             }
             fflush(stdout);
@@ -2024,21 +2028,28 @@ void Dump_Pools(void)
         REBCNT used = Mem_Pools[n].has - Mem_Pools[n].free;
         printf(
             "Pool[%-2d] %5dB %-5d/%-5d:%-4d (%3d%%) ",
-            n,
-            Mem_Pools[n].wide,
-            used,
-            Mem_Pools[n].has,
-            Mem_Pools[n].units,
-            Mem_Pools[n].has ? ((used * 100) / Mem_Pools[n].has) : 0
+            cast(int, n),
+            cast(int, Mem_Pools[n].wide),
+            cast(int, used),
+            cast(int, Mem_Pools[n].has),
+            cast(int, Mem_Pools[n].units),
+            cast(int,
+                Mem_Pools[n].has != 0 ? ((used * 100) / Mem_Pools[n].has) : 0
+            )
         );
-        printf("%-2d segs, %-7d total\n", segs, size);
+        printf("%-2d segs, %-7d total\n", cast(int, segs), cast(int, size));
 
         tused += used * Mem_Pools[n].wide;
         total += size;
     }
 
-    printf("Pools used %d of %d (%2d%%)\n", tused, total, (tused*100) / total);
-    printf("System pool used %d\n", Mem_Pools[SYSTEM_POOL].has);
+    printf(
+        "Pools used %d of %d (%2d%%)\n",
+        cast(int, tused),
+        cast(int, total),
+        cast(int, (tused * 100) / total)
+    );
+    printf("System pool used %d\n", cast(int, Mem_Pools[SYSTEM_POOL].has));
     printf("Raw allocator reports %lu\n", cast(unsigned long, PG_Mem_Usage));
 
     fflush(stdout);
@@ -2125,14 +2136,35 @@ REBU64 Inspect_Series(REBOOL show)
         printf("Series Memory Info:\n");
         printf("  REBVAL size = %lu\n", cast(unsigned long, sizeof(REBVAL)));
         printf("  REBSER size = %lu\n", cast(unsigned long, sizeof(REBSER)));
-        printf("  %-6d segs = %-7d bytes - headers\n", segs, seg_size);
-        printf("  %-6d blks = %-7d bytes - blocks\n", blks, blk_size);
-        printf("  %-6d strs = %-7d bytes - byte strings\n", strs, str_size);
-        printf("  %-6d unis = %-7d bytes - uni strings\n", unis, uni_size);
-        printf("  %-6d odds = %-7d bytes - odd series\n", odds, odd_size);
+        printf(
+            "  %-6d segs = %-7d bytes - headers\n",
+            cast(int, segs),
+            cast(int, seg_size)
+        );
+        printf(
+            "  %-6d blks = %-7d bytes - blocks\n",
+            cast(int, blks),
+            cast(int, blk_size)
+        );
+        printf(
+            "  %-6d strs = %-7d bytes - byte strings\n",
+            cast(int, strs),
+            cast(int, str_size)
+        );
+        printf(
+            "  %-6d unis = %-7d bytes - uni strings\n",
+            cast(int, unis),
+            cast(int, uni_size)
+        );
+        printf(
+            "  %-6d odds = %-7d bytes - odd series\n",
+            cast(int, odds),
+            cast(int, odd_size)
+        );
         printf(
             "  %-6d used = %lu bytes - total used\n",
-            tot, cast(unsigned long, tot_size)
+            cast(int, tot),
+            cast(unsigned long, tot_size)
         );
         printf("  %lu free headers\n", cast(unsigned long, fre));
         printf("  %lu bytes node-space\n", cast(unsigned long, fre_size));
