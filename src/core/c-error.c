@@ -93,7 +93,7 @@ void Assert_State_Balanced_Debug(
     if (s->guarded_len != SER_LEN(GC_Guarded)) {
         printf(
             "PUSH_GUARD()x%d without DROP_GUARD()\n",
-            SER_LEN(GC_Guarded) - s->guarded_len
+            cast(int, SER_LEN(GC_Guarded) - s->guarded_len)
         );
         REBNOD *guarded = *SER_AT(
             REBNOD*,
@@ -122,7 +122,7 @@ void Assert_State_Balanced_Debug(
     else if (s->manuals_len < SER_LEN(GC_Manuals)) {
         printf(
             "Make_Series()x%d without Free_Series or MANAGE_SERIES\n",
-            SER_LEN(GC_Manuals) - s->manuals_len
+            cast(int, SER_LEN(GC_Manuals) - s->manuals_len)
         );
         REBSER *manual = *(SER_AT(
             REBSER*,
@@ -834,15 +834,16 @@ REBCTX *Make_Error_Managed_Core(REBCNT code, va_list *vaptr)
 #endif
 
     if (PG_Boot_Phase < BOOT_ERRORS) {
-        char buf[1024] = "";
-        strncat(buf, "fail() before object table initialized, code = ", sizeof(buf) - 1);
-        Form_Int(b_cast(buf + strlen(buf)), code); // !!! no bounding...
-
-    #if defined(NDEBUG)
-        panic (buf);
-    #else
-        panic_at (buf, TG_Erroring_C_File, TG_Erroring_C_Line);
+    #if !defined(NDEBUG)
+        printf(
+            "fail() before object table initialized, code = %d\n", code
+        );
     #endif
+
+        DECLARE_LOCAL (code_value);
+        SET_INTEGER(code_value, code);
+
+        panic (code_value);
     }
 
     // Safe to initialize the root error now...
