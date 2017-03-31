@@ -108,7 +108,7 @@ static void Assert_Basics(void)
     REBCNT left = LEFT_N_BITS(flags, 3); // == 6 (binary `110`)
     REBCNT right = RIGHT_N_BITS(flags, 3); // == 5 (binary `101`)
     if (left != 6 || right != 5) {
-        printf("Expected 6 and 5, got %d and %d\n", left, right);
+        printf("Expected 6 and 5, got %u and %u\n", left, right);
         panic ("Bad composed integer assignment for byte-ordering macro.");
     }
 #endif
@@ -1360,6 +1360,8 @@ void Init_Core(void)
     REBARR *base_array = VAL_ARRAY(&boot->base);
     REBARR *sys_array = VAL_ARRAY(&boot->sys);
     REBVAL *mezz_block = &boot->mezz;
+
+    boot = NULL;
 
     // With error trapping enabled, set up to catch them if they happen.
     PUSH_UNHALTABLE_TRAP(&error, &state);
