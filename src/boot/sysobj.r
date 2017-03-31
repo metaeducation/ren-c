@@ -576,18 +576,21 @@ view: construct [] [
 ;           _
 ;   ]
 
-;user: construct [] [
-;   name:           ; User's name
-;   email:          ; User's default email address
-;   home:           ; The HOME environment variable
-;   words: _
-;]
+user: construct [] [
+   name:           ; User's name
+   email:          ; User's default email address
+   home:           ; The HOME environment variable
+   rebol:          ; Users rebol customisations dir.  eg. $HOME/.rebol on *nix
+   words: _
+]
 
 ;network: construct [] [
 ;   host: ""        ; Host name of the user's computer
 ;   host-address: 0.0.0.0 ; Host computer's TCP-IP address
 ;   trace: _
 ;]
+
+repl: _         ;; repl object created in host-start (os/host-start.r)
 
 ;console: construct [] [
 ;   hide-types: _    ; types not to print

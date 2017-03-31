@@ -219,7 +219,6 @@ host-script-pre-load: procedure [
     ]
 ]
 
-
 host-start: function [
     "Loads extras, handles args, security, scripts."
     return: [integer! function!]
@@ -269,6 +268,22 @@ host-start: function [
         :encode-utf16be)
 
     system/product: 'core
+
+    ; Set system/user home & rebol dirs if present
+    ;
+    ; User rebol directory (for local customisations)
+    ;   * default (Linux, MacOS, Unix) - $HOME/.rebol
+    ;   * Windows                      - $HOME/REBOL
+    ;
+    ; TBD - check perms are correct (SECURITY)
+    ;
+    if exists? home: dirize to-file get-env 'HOME [
+        system/user/home: home
+        rebol-dir: join-of home switch/default system/platform/1 [
+            'Windows [%REBOL/]
+        ][%.rebol/]              ;; default *nix (Linux, MacOS & UNIX)
+        if exists? rebol-dir [system/user/rebol: rebol-dir]
+    ]
 
     sys/script-pre-load-hook: :host-script-pre-load
 
@@ -511,7 +526,6 @@ comment [
             return 1
         ]
     ]
-
     host-start: 'done
 
     ; Evaluate the DO string, e.g. `r3 --do "print {Hello}"`
@@ -538,6 +552,84 @@ comment [
 
     boot-print boot-help
 
+    ; set-up repl object
+    system/repl: make object! [
+        ; This object is used in skinning the REPL
+        ; see /os/host-repl.r where this object is called from
+        ; %repl-skin.reb if found in system/user/rebol is loaded on REPL start
+
+        counter: 0
+        last-result: _    ;-- stores last evaluated result (sent by host-repl func)
+
+        ;-- Allowing for multiple skins in future.  For now just user/rebol skin
+        skins: does [reduce [join-of system/user/rebol %repl-skin.reb]]
+
+        cycle: does [
+            ;; this is called on every line of input (by host-repl function in os/host-repl.r)
+            if zero? ++ counter [load-skin]     ;-- only load skin on first cycle
+            counter
+        ]
+
+        load-skin: does [
+            if empty? skins [return false]
+
+            print [newline "REPL skinning:" newline]
+            foreach skin-file skins [
+                trap/with [
+                    print [
+                        space space
+                        either exists? skin-file [
+                            do load skin-file
+                            "Loaded skin"
+                        ]["Skin does not exist"]
+                        "-" skin-file
+                    ]
+                ] func [error] [
+                    print [
+                        "  Error loading skin" "-" skin-file newline newline 
+                        error newline newline
+                        "  Fix error and enter repl/load-skin to reload"
+                    ]
+                ]
+            ]
+
+            print-greeting
+        ]
+
+        ; Below are methods we can override (ie. "skin")
+        ;
+        
+        ;; appearance
+        prompt:   {>> }
+        result:   {== }
+        warning:  {!! }
+        print-greeting: _
+        print-prompt:   proc []  [print/only prompt]
+        print-result:   proc []  [print unspaced [result last-result]]
+        print-warning:  proc [s] [print unspaced [warning reduce s]]
+        print-gap:      proc []  [print-newline]
+
+        ;; behaviour 
+        input-hook:   func [s] [s]  ;-- receives line input, parse/transform, send back to repl eval
+        dialect-hook: func [s] [s]  ;-- receives code block, parse/transform, send back to repl eval
+        shortcuts: make object! [
+            ;; default REPL shortcuts
+            q: [quit]
+            list-shortcuts: [print system/repl/shortcuts]
+        ]
+
+        ;; helpers
+        add-shortcut: proc [
+            {Add/Change REPL shortcut}
+            name  [any-word!]   {shortcut name}
+            block [block!]      {command(s) expanded to}
+        ][
+            extend shortcuts name block
+        ]
+    ]
+
+
+
     ; Rather than have the host C code look up the REPL function by name, it
     ; is returned as a function value from calling the start.  It's a bit of
     ; a hack, and might be better with something like the SYS_FUNC table that
@@ -545,3 +637,4 @@ comment [
     ;
     return :host-repl
 ]
+

@@ -171,6 +171,13 @@ host-repl: function [
     focus-frame [blank! frame!]
         {If at a breakpoint, the function frame where the breakpoint was hit}
 ][
+    ; REPL is an external object for skinning the behaviour & appearance
+    ;
+    ; /cycle - updates internal counter and loads repl-skin on first rotation (ie. once)
+    ;
+    repl: system/repl
+    repl/cycle
+
     source: copy "" ;-- source code potentially built of multiple lines
 
     ; The LOADed and bound code.  It's initialized to empty block so that if
@@ -198,10 +205,11 @@ host-repl: function [
             system/state/last-error: last-result
         ]
     ] else [
-        print ["==" mold :last-result]
+        repl/last-result: mold :last-result 
+        repl/print-result
     ]
 
-    print-newline
+    repl/print-gap
 
     ; If a debug frame is in focus then show it in the prompt, e.g.
     ; as `if:|4|>>` to indicate stack frame 4 is being examined, and
@@ -216,11 +224,11 @@ host-repl: function [
         print/only ["|" focus-level "|"]
     ]
 
-    print/only [">>" space]
+    repl/print-prompt
 
     forever [ ;-- gather potentially multi-line input
 
-        line: input
+        line: repl/input-hook input     ;--  pre-processor hook
         if empty? line [
             ;
             ; if empty line, result is whatever's in `code`, even ERROR!
@@ -263,7 +271,7 @@ host-repl: function [
                 ; could be tailored specifically, e.g. to report
                 ; a depth)
                 ;
-                print/only ["{" space space space]
+                print/only ["^{" space space space]
 
                 append source newline
                 continue ]
@@ -305,25 +313,27 @@ host-repl: function [
         assert [error? code]
     ]
 
-    if code = [q] [
+    if all [1 = length code | shortcut: select repl/shortcuts code/1] [
         ;
-        ; It's possible (and not entirely unlikely) that the user might have
-        ; a variable called Q, and it's bad to have a function defined as "Q"
-        ; which could accidentally trigger a silent exit from scripted code,
-        ; e.g. `append [w x y] q`.  But people have grown used to exiting
-        ; Rebol consoles with it, so detect it specifically in the console.
+        ; One word shortcuts.
+        ; builtin: 
+        ;               q   => quit   
         ;
         if all [bound? code/1 | set? code/1] [
             ;
             ; Help the confused user who might not know about the shortcut not
             ; panic by giving them a message.  Reduce noise for the casual
-            ; quitter by only doing so when there's a bound Q variable.
+            ; shortcut by only doing so when there's a bound SHORTCUT variable.
             ;
-            print "Q interpreted by console as QUIT, use :Q to get variable."
+            repl/print-warning [
+                (uppercase to-string code/1) "interpreted by console as:" form shortcut
+            ]
+            repl/print-warning ["use" form to-get-word code/1 "to get variable."]
         ]
-        code: [quit]
+        code: shortcut
     ]
 
+    code: repl/dialect-hook code
     return code
 ]
 
