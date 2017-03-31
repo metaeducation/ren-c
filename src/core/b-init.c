@@ -1361,10 +1361,10 @@ void Init_Core(void)
     REBARR *sys_array = VAL_ARRAY(&boot->sys);
     REBVAL *mezz_block = &boot->mezz;
 
-    boot = NULL;
-
     // With error trapping enabled, set up to catch them if they happen.
     PUSH_UNHALTABLE_TRAP(&error, &state);
+
+    boot = NULL;
 
 // The first time through the following code 'error' will be NULL, but...
 // `fail` can longjmp here, so 'error' won't be NULL *if* that happens!

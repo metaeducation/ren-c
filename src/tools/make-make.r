@@ -296,6 +296,11 @@ newline
                 "-Wtype-limits"
                 "-Wclobbered"
 
+                ; Neither C++98 nor C89 had "long long" integers, but they
+                ; were fairly pervasive before being present in the standard.
+                ;
+                "-Wno-long-long"
+
                 ; When constness is being deliberately cast away, `m_cast` is
                 ; used (for "m"utability).  However, this is just a plain cast
                 ; in C as it has no const_cast.  Since the C language has no
