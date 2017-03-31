@@ -214,7 +214,7 @@ void Dump_Info(void)
     printf("^/--REBOL Kernel Dump--\n");
 
     printf("Evaluator:\n");
-    printf("    Cycles:  %ld\n", Eval_Cycles);
+    printf("    Cycles:  %ld\n", cast(unsigned long, Eval_Cycles));
     printf("    Counter: %d\n", cast(int, Eval_Count));
     printf("    Dose:    %d\n", cast(int, Eval_Dose));
     printf("    Signals: %lx\n", cast(unsigned long, Eval_Signals));
