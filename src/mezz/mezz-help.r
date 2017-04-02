@@ -25,7 +25,7 @@ dump-obj: function [
     clip-str: func [str] [
         ; Keep string to one line.
         trim/lines str
-        if (length str) > 45 [str: append copy/part str 45 "..."]
+        if (length str) > 48 [str: append copy/part str 45 "..."]
         str
     ]
 
@@ -33,7 +33,7 @@ dump-obj: function [
         ; Form a limited string from the value provided.
         if any-block? :val [return spaced ["length:" length val]]
         if image? :val [return spaced ["size:" val/size]]
-        if datatype? :val [return get in spec-of val 'title]
+        if datatype? :val [return form val] 
         if function? :val [
             return clip-str any [title-of :val mold spec-of :val]
         ]
