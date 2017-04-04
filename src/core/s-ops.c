@@ -362,7 +362,7 @@ void Shuffle_String(REBVAL *value, REBOOL secure)
 //
 void Trim_Tail(REBSER *src, REBYTE chr)
 {
-    assert(NOT_SER_FLAG(src, SERIES_FLAG_ARRAY));
+    assert(Not_Ser_Flag(src, SERIES_FLAG_ARRAY));
 
     REBOOL unicode = NOT(BYTE_SIZE(src));
     REBCNT tail;
@@ -775,7 +775,7 @@ REBARR *Split_Lines(REBVAL *str)
                 DS_TOP,
                 Copy_String_Slimming(s, start, i - start)
             );
-            SET_VAL_FLAG(DS_TOP, VALUE_FLAG_LINE);
+            Set_Val_Flag(DS_TOP, VALUE_FLAG_LINE);
             ++i;
             if (c == CR && GET_ANY_CHAR(s, i) == LF)
                 ++i;
@@ -791,7 +791,7 @@ REBARR *Split_Lines(REBVAL *str)
             DS_TOP,
             Copy_String_Slimming(s, start, i - start)
         );
-        SET_VAL_FLAG(DS_TOP, VALUE_FLAG_LINE);
+        Set_Val_Flag(DS_TOP, VALUE_FLAG_LINE);
     }
 
     return Pop_Stack_Values(dsp_orig);

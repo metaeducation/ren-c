@@ -73,7 +73,7 @@ struct Reb_Context {
 //
 inline static REBCTX *AS_CONTEXT(void *p) {
     REBARR *a = AS_ARRAY(p);
-    assert(GET_SER_FLAG(a, ARRAY_FLAG_VARLIST));
+    assert(Get_Ser_Flag(a, ARRAY_FLAG_VARLIST));
     return cast(REBCTX*, a);
 }
 
@@ -98,12 +98,12 @@ inline static REBARR *CTX_KEYLIST(REBCTX *c) {
 }
 
 static inline void INIT_CTX_KEYLIST_SHARED(REBCTX *c, REBARR *keylist) {
-    SET_SER_INFO(keylist, SERIES_INFO_SHARED_KEYLIST);
+    Set_Ser_Info(keylist, SERIES_INFO_SHARED_KEYLIST);
     AS_SERIES(CTX_VARLIST(c))->link.keylist = keylist;
 }
 
 static inline void INIT_CTX_KEYLIST_UNIQUE(REBCTX *c, REBARR *keylist) {
-    assert(NOT_SER_INFO(keylist, SERIES_INFO_SHARED_KEYLIST));
+    assert(Not_Ser_Info(keylist, SERIES_INFO_SHARED_KEYLIST));
     AS_SERIES(CTX_VARLIST(c))->link.keylist = keylist;
 }
 
@@ -143,7 +143,7 @@ inline static REBVAL *CTX_KEYS_HEAD(REBCTX *c) {
 // REBSER node data itself.
 //
 inline static REBVAL *CTX_VALUE(REBCTX *c) {
-    return GET_SER_FLAG(CTX_VARLIST(c), CONTEXT_FLAG_STACK)
+    return Get_Ser_Flag(CTX_VARLIST(c), CONTEXT_FLAG_STACK)
         ? KNOWN(&AS_SERIES(CTX_VARLIST(c))->content.values[0])
         : KNOWN(ARR_HEAD(CTX_VARLIST(c))); // not a RELVAL
 }
@@ -162,7 +162,7 @@ inline static REBFRM *CTX_FRAME_IF_ON_STACK(REBCTX *c) {
 }
 
 inline static REBVAL *CTX_VARS_HEAD(REBCTX *c) {
-    if (NOT(GET_SER_FLAG(CTX_VARLIST(c), CONTEXT_FLAG_STACK)))
+    if (NOT(Get_Ser_Flag(CTX_VARLIST(c), CONTEXT_FLAG_STACK)))
         return KNOWN(ARR_AT(CTX_VARLIST(c), 1));
 
     REBFRM *f = CTX_FRAME_IF_ON_STACK(c);
@@ -180,7 +180,7 @@ inline static REBVAL *CTX_KEY(REBCTX *c, REBCNT n) {
 inline static REBVAL *CTX_VAR(REBCTX *c, REBCNT n) {
     REBVAL *var;
     assert(n != 0 && n <= CTX_LEN(c));
-    assert(GET_SER_FLAG(CTX_VARLIST(c), ARRAY_FLAG_VARLIST));
+    assert(Get_Ser_Flag(CTX_VARLIST(c), ARRAY_FLAG_VARLIST));
 
     var = CTX_VARS_HEAD(c) + (n) - 1;
 
@@ -225,8 +225,8 @@ inline static REBOOL CTX_VARS_UNAVAILABLE(REBCTX *c) {
     // Mechanically any array can become inaccessible, but really the varlist
     // of a stack context is the only case that should happen today.
     //
-    if (GET_SER_INFO(CTX_VARLIST(c), SERIES_INFO_INACCESSIBLE)) {
-        assert(GET_SER_FLAG(CTX_VARLIST(c), CONTEXT_FLAG_STACK));
+    if (Get_Ser_Info(CTX_VARLIST(c), SERIES_INFO_INACCESSIBLE)) {
+        assert(Get_Ser_Flag(CTX_VARLIST(c), CONTEXT_FLAG_STACK));
         return TRUE;
     }
     return FALSE;
@@ -361,7 +361,7 @@ inline static void Deep_Freeze_Context(REBCTX *c) {
 }
 
 inline static REBOOL Is_Context_Deeply_Frozen(REBCTX *c) {
-    return GET_SER_INFO(CTX_VARLIST(c), SERIES_INFO_FROZEN);
+    return Get_Ser_Info(CTX_VARLIST(c), SERIES_INFO_FROZEN);
 }
 
 
@@ -409,7 +409,7 @@ inline static REBOOL Is_Context_Deeply_Frozen(REBCTX *c) {
 // repeating the code.
 //
 inline static void FAIL_IF_BAD_PORT(REBCTX *port) {
-    assert(GET_SER_FLAG(CTX_VARLIST(port), ARRAY_FLAG_VARLIST));
+    assert(Get_Ser_Flag(CTX_VARLIST(port), ARRAY_FLAG_VARLIST));
 
     if (
         (CTX_LEN(port) < STD_PORT_MAX - 1) ||

@@ -200,7 +200,7 @@ static REBARR *Copy_Body_Deep_Bound_To_New_Context(
         Init_Typeset(key, ALL_64, VAL_WORD_SPELLING(item));
         key++;
 
-        SET_VOID(var);
+        Init_Void(var);
         var++;
 
         ++item;
@@ -281,7 +281,7 @@ static REB_R Loop_Integer_Common(
 ) {
     assert(IS_END(out));
 
-    VAL_RESET_HEADER(var, REB_INTEGER);
+    Reset_Val_Header(var, REB_INTEGER);
 
     while ((incr > 0) ? start <= end : start >= end) {
         VAL_INT64(var) = start;
@@ -347,7 +347,7 @@ static REB_R Loop_Number_Common(
     else
         fail (incr);
 
-    VAL_RESET_HEADER(var, REB_DECIMAL);
+    Reset_Val_Header(var, REB_DECIMAL);
 
     for (; (i > 0.0) ? s <= e : s >= e; s += i) {
         VAL_DECIMAL(var) = s;
@@ -397,7 +397,7 @@ static REB_R Loop_Each(REBFRM *frame_, LOOP_MODE mode)
 
     assert(IS_END(D_OUT));
     if (mode == LOOP_EVERY)
-        SET_END(D_CELL); // Final result is in D_CELL (last TRUE? or a BLANK!)
+        Init_End(D_CELL); // Final result is in D_CELL (last TRUE? or a BLANK!)
 
     REBCTX *context;
     REBARR *body_copy = Copy_Body_Deep_Bound_To_New_Context(
@@ -448,7 +448,7 @@ static REB_R Loop_Each(REBFRM *frame_, LOOP_MODE mode)
         index = VAL_INDEX(data);
         if (index >= SER_LEN(series)) {
             if (mode == LOOP_REMOVE_EACH) {
-                SET_INTEGER(D_OUT, 0);
+                Init_Integer(D_OUT, 0);
                 return R_OUT;
             }
             else if (mode == LOOP_MAP_EACH) {
@@ -479,7 +479,7 @@ static REB_R Loop_Each(REBFRM *frame_, LOOP_MODE mode)
         for (i = 1; NOT_END(key); i++, key++, var++) {
 
             if (index >= tail) {
-                SET_BLANK(var);
+                Init_Blank(var);
                 continue;
             }
 
@@ -498,7 +498,7 @@ static REB_R Loop_Each(REBFRM *frame_, LOOP_MODE mode)
                 );
             }
             else if (ANY_CONTEXT(data)) {
-                if (GET_VAL_FLAG(
+                if (Get_Val_Flag(
                     VAL_CONTEXT_KEY(data, index), TYPESET_FLAG_HIDDEN
                 )) {
                     // Do not evaluate this iteration
@@ -576,14 +576,14 @@ static REB_R Loop_Each(REBFRM *frame_, LOOP_MODE mode)
                 }
             }
             else if (IS_BINARY(data)) {
-                SET_INTEGER(var, (REBI64)(BIN_HEAD(series)[index]));
+                Init_Integer(var, (REBI64)(BIN_HEAD(series)[index]));
             }
             else if (IS_IMAGE(data)) {
                 Set_Tuple_Pixel(BIN_AT(series, index), var);
             }
             else {
                 assert(IS_STRING(data));
-                VAL_RESET_HEADER(var, REB_CHAR);
+                Reset_Val_Header(var, REB_CHAR);
                 VAL_CHAR(var) = GET_ANY_CHAR(series, index);
             }
             index++;
@@ -647,7 +647,7 @@ static REB_R Loop_Each(REBFRM *frame_, LOOP_MODE mode)
                 // Unsets "opt out" of the vote, as with ANY and ALL
             }
             else if (IS_CONDITIONAL_FALSE(D_OUT))
-                SET_BLANK(D_CELL); // at least one false means blank result
+                Init_Blank(D_CELL); // at least one false means blank result
             else if (IS_END(D_CELL) || !IS_BLANK(D_CELL))
                 Move_Value(D_CELL, D_OUT);
             break;
@@ -656,7 +656,7 @@ static REB_R Loop_Each(REBFRM *frame_, LOOP_MODE mode)
         }
 
         if (stop) {
-            SET_BLANK(D_OUT);
+            Init_Blank(D_OUT);
             break;
         }
 
@@ -714,7 +714,7 @@ skip_hidden: ;
         // Remove hole (updates tail):
         if (write_index < index)
             Remove_Series(series, write_index, index - write_index);
-        SET_INTEGER(D_OUT, index - write_index);
+        Init_Integer(D_OUT, index - write_index);
         return R_OUT;
 
     case LOOP_MAP_EACH:
@@ -1112,7 +1112,7 @@ REBNATIVE(repeat)
         return R_VOID;
 
     if (IS_DECIMAL(value) || IS_PERCENT(value))
-        SET_INTEGER(value, Int64(value));
+        Init_Integer(value, Int64(value));
 
     REBCTX *context;
     REBARR *copy = Copy_Body_Deep_Bound_To_New_Context(

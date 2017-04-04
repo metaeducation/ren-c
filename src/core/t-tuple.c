@@ -58,7 +58,7 @@ void MAKE_Tuple(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
         return;
     }
 
-    VAL_RESET_HEADER(out, REB_TUPLE);
+    Reset_Val_Header(out, REB_TUPLE);
     REBYTE *vp = VAL_TUPLE(out);
 
     // !!! Net lookup parses IP addresses out of `tcp://93.184.216.34` or
@@ -192,9 +192,9 @@ void Pick_Tuple(REBVAL *out, const REBVAL *value, const REBVAL *picker)
 
     REBINT n = Get_Num_From_Arg(picker);
     if (n > 0 && n <= len)
-        SET_INTEGER(out, dat[n - 1]);
+        Init_Integer(out, dat[n - 1]);
     else
-        SET_VOID(out);
+        Init_Void(out);
 }
 
 
@@ -436,7 +436,7 @@ REBTYPE(Tuple)
     switch (action) {
     case SYM_LENGTH:
         len = MAX(len, 3);
-        SET_INTEGER(D_OUT, len);
+        Init_Integer(D_OUT, len);
         return R_OUT;
 
     case SYM_PICK_P:
@@ -478,7 +478,7 @@ REBTYPE(Tuple)
             fail (Error_Out_Of_Range(arg));
         }
         if (action == A_PICK) {
-            SET_INTEGER(D_OUT, vp[a-1]);
+            Init_Integer(D_OUT, vp[a-1]);
             return R_OUT;
         }
         // Poke:

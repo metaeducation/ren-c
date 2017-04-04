@@ -47,7 +47,7 @@ void Set_Date_UTC(REBVAL *val, REBINT y, REBINT m, REBINT d, REBI64 t, REBINT z)
     VAL_DAY(val)   = d;
     VAL_TIME(val)  = t;
     VAL_ZONE(val)  = z;
-    VAL_RESET_HEADER(val, REB_DATE);
+    Reset_Val_Header(val, REB_DATE);
     if (z) Adjust_Date_Zone(val, TRUE);
 }
 
@@ -365,7 +365,7 @@ void Subtract_Date(REBVAL *d1, REBVAL *d2, REBVAL *result)
     t2 = VAL_TIME(d2);
     if (t2 == NO_TIME) t2 = 0L;
 
-    VAL_RESET_HEADER(result, REB_TIME);
+    Reset_Val_Header(result, REB_TIME);
     VAL_TIME(result) = (t1 - t2) + ((REBI64)diff * TIME_IN_DAY);
 }
 
@@ -467,7 +467,7 @@ void MAKE_Date(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg) {
         Normalize_Time(&secs, &day);
         date = Normalize_Date(day, month, year, tz);
 
-        VAL_RESET_HEADER(out, REB_DATE);
+        Reset_Val_Header(out, REB_DATE);
         VAL_DATE(out) = date;
         VAL_TIME(out) = secs;
         Adjust_Date_Zone(out, TRUE);
@@ -549,30 +549,30 @@ void Pick_Or_Poke_Date(
 
         switch (sym) {
         case SYM_YEAR:
-            SET_INTEGER(opt_out, year);
+            Init_Integer(opt_out, year);
             break;
 
         case SYM_MONTH:
-            SET_INTEGER(opt_out, month + 1);
+            Init_Integer(opt_out, month + 1);
             break;
 
         case SYM_DAY:
-            SET_INTEGER(opt_out, day + 1);
+            Init_Integer(opt_out, day + 1);
             break;
 
         case SYM_TIME:
             if (secs == NO_TIME)
-                SET_VOID(opt_out);
+                Init_Void(opt_out);
             else
-                VAL_RESET_HEADER(opt_out, REB_TIME);
+                Reset_Val_Header(opt_out, REB_TIME);
             break;
 
         case SYM_ZONE:
             if (secs == NO_TIME)
-                SET_VOID(opt_out);
+                Init_Void(opt_out);
             else {
                 VAL_TIME(opt_out) = cast(i64, tz) * ZONE_MINS * MIN_SEC;
-                VAL_RESET_HEADER(opt_out, REB_TIME);
+                Reset_Val_Header(opt_out, REB_TIME);
             }
             break;
 
@@ -582,12 +582,12 @@ void Pick_Or_Poke_Date(
             break;
 
         case SYM_WEEKDAY:
-            SET_INTEGER(opt_out, Week_Day(date));
+            Init_Integer(opt_out, Week_Day(date));
             break;
 
         case SYM_JULIAN:
         case SYM_YEARDAY:
-            SET_INTEGER(opt_out, cast(REBINT, Julian_Date(date)));
+            Init_Integer(opt_out, cast(REBINT, Julian_Date(date)));
             break;
 
         case SYM_UTC:
@@ -596,24 +596,24 @@ void Pick_Or_Poke_Date(
 
         case SYM_HOUR:
             Split_Time(secs, &time);
-            SET_INTEGER(opt_out, time.h);
+            Init_Integer(opt_out, time.h);
             break;
 
         case SYM_MINUTE:
             Split_Time(secs, &time);
-            SET_INTEGER(opt_out, time.m);
+            Init_Integer(opt_out, time.m);
             break;
 
         case SYM_SECOND:
             Split_Time(secs, &time);
             if (time.n == 0)
-                SET_INTEGER(opt_out, time.s);
+                Init_Integer(opt_out, time.s);
             else
-                SET_DECIMAL(opt_out, cast(REBDEC, time.s) + (time.n * NANO));
+                Init_Decimal(opt_out, cast(REBDEC, time.s) + (time.n * NANO));
             break;
 
         default:
-            SET_VOID(opt_out); // "out of range" PICK semantics
+            Init_Void(opt_out); // "out of range" PICK semantics
         }
     }
     else {
@@ -708,7 +708,7 @@ void Pick_Or_Poke_Date(
         date = Normalize_Date(day, month, year, tz);
 
     set_without_normalize:
-        VAL_RESET_HEADER(value, REB_DATE);
+        Reset_Val_Header(value, REB_DATE);
         VAL_DATE(value) = date;
         VAL_TIME(value) = secs;
         Adjust_Date_Zone(value, TRUE);
@@ -895,12 +895,12 @@ fixDate:
     date = Normalize_Date(day, month, year, tz);
 
 setDate:
-    VAL_RESET_HEADER(D_OUT, REB_DATE);
+    Reset_Val_Header(D_OUT, REB_DATE);
     VAL_DATE(D_OUT) = date;
     VAL_TIME(D_OUT) = secs;
     return R_OUT;
 
 ret_int:
-    SET_INTEGER(D_OUT, num);
+    Init_Integer(D_OUT, num);
     return R_OUT;
 }

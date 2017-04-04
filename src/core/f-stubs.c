@@ -69,7 +69,7 @@ REBINT Float_Int16(REBD32 f)
 {
     if (fabs(f) > cast(REBD32, 0x7FFF)) {
         DECLARE_LOCAL (temp);
-        SET_DECIMAL(temp, f);
+        Init_Decimal(temp, f);
 
         fail (Error_Out_Of_Range(temp));
     }
@@ -348,7 +348,7 @@ void Init_Any_Series_At_Core(
         ASSERT_SERIES_TERM(series); // doesn't apply to image/vector
     }
 
-    VAL_RESET_HEADER(out, type);
+    Reset_Val_Header(out, type);
     out->payload.any_series.series = series;
     VAL_INDEX(out) = index;
     if (specifier == SPECIFIED)
@@ -357,7 +357,7 @@ void Init_Any_Series_At_Core(
         INIT_SPECIFIC(out, AS_CONTEXT(specifier));
 
 #if !defined(NDEBUG)
-    if (GET_SER_FLAG(series, SERIES_FLAG_ARRAY) && specifier == SPECIFIED) {
+    if (Get_Ser_Flag(series, SERIES_FLAG_ARRAY) && specifier == SPECIFIED) {
         //
         // If a SPECIFIED is used for an array, then that top level of the
         // array cannot have any relative values in it.  Catch it here vs.
@@ -378,7 +378,7 @@ void Set_Tuple(REBVAL *value, REBYTE *bytes, REBCNT len)
 {
     REBYTE *bp;
 
-    VAL_RESET_HEADER(value, REB_TUPLE);
+    Reset_Val_Header(value, REB_TUPLE);
     VAL_TUPLE_LEN(value) = (REBYTE)len;
     for (bp = VAL_TUPLE(value); len > 0; len--)
         *bp++ = *bytes++;
@@ -412,10 +412,10 @@ void Init_Any_Context_Core(REBVAL *out, enum Reb_Kind kind, REBCTX *c) {
     if (CTX_KEYLIST(c) == NULL)
         panic (c);
 
-    assert(GET_SER_FLAG(CTX_VARLIST(c), ARRAY_FLAG_VARLIST));
+    assert(Get_Ser_Flag(CTX_VARLIST(c), ARRAY_FLAG_VARLIST));
 
-    assert(NOT_SER_FLAG(CTX_VARLIST(c), SERIES_FLAG_FILE_LINE));
-    assert(NOT_SER_FLAG(CTX_KEYLIST(c), SERIES_FLAG_FILE_LINE));
+    assert(Not_Ser_Flag(CTX_VARLIST(c), SERIES_FLAG_FILE_LINE));
+    assert(Not_Ser_Flag(CTX_KEYLIST(c), SERIES_FLAG_FILE_LINE));
 
     if (IS_FRAME(CTX_VALUE(c)))
         assert(IS_FUNCTION(CTX_FRAME_FUNC_VALUE(c)));

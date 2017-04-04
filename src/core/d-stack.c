@@ -69,7 +69,7 @@ void Collapsify_Array(REBARR *array, REBSPC *specifier, REBCNT limit)
             enum Reb_Kind kind = VAL_TYPE(item);
             Init_Any_Array_At(item, kind, copy, 0); // at 0 now
             assert(IS_SPECIFIC(item));
-            assert(NOT_VAL_FLAG(item, VALUE_FLAG_LINE)); // should be cleared
+            assert(Not_Val_Flag(item, VALUE_FLAG_LINE)); // should be cleared
         }
     }
 }
@@ -147,7 +147,7 @@ REBARR *Make_Where_For_Frame(REBFRM *f)
             // Get rid of any newline marker on the first element,
             // that would visually disrupt the backtrace for no reason.
             //
-            CLEAR_VAL_FLAG(DS_TOP, VALUE_FLAG_LINE);
+            Clear_Val_Flag(DS_TOP, VALUE_FLAG_LINE);
         }
     }
 
@@ -245,7 +245,7 @@ REBNATIVE(file_of)
 
     REBSER *s = VAL_SERIES(ARG(series));
 
-    if (NOT_SER_FLAG(s, SERIES_FLAG_FILE_LINE))
+    if (Not_Ser_Flag(s, SERIES_FLAG_FILE_LINE))
         return R_BLANK;
 
     // !!! How to tell whether it's a URL! or a FILE! ?
@@ -270,10 +270,10 @@ REBNATIVE(line_of)
 
     REBSER *s = VAL_SERIES(ARG(series));
 
-    if (NOT_SER_FLAG(s, SERIES_FLAG_FILE_LINE))
+    if (Not_Ser_Flag(s, SERIES_FLAG_FILE_LINE))
         return R_BLANK;
 
-    SET_INTEGER(D_OUT, s->misc.line);
+    Init_Integer(D_OUT, s->misc.line);
     return R_OUT;
 }
 
@@ -330,7 +330,7 @@ REBNATIVE(backtrace_index)
     REBCNT number;
 
     if (NULL != Frame_For_Stack_Level(&number, ARG(level), TRUE)) {
-        SET_INTEGER(D_OUT, number);
+        Init_Integer(D_OUT, number);
         return R_OUT;
     }
 
@@ -448,7 +448,7 @@ REBNATIVE(backtrace)
         //
         if (!pending) {
             DECLARE_LOCAL (temp_val);
-            SET_INTEGER(temp_val, number);
+            Init_Integer(temp_val, number);
 
             REBCNT temp_num;
             if (
@@ -497,7 +497,7 @@ REBNATIVE(backtrace)
                     //
                     DS_PUSH_TRASH;
                     Init_Word(DS_TOP, Canon(SYM_ASTERISK));
-                    SET_VAL_FLAG(DS_TOP, VALUE_FLAG_LINE); // put on own line
+                    Set_Val_Flag(DS_TOP, VALUE_FLAG_LINE); // put on own line
                 }
                 break;
             }
@@ -555,9 +555,9 @@ REBNATIVE(backtrace)
             Init_Word(DS_TOP, Canon(SYM_ASTERISK));
         }
         else
-            SET_INTEGER(DS_TOP, number);
+            Init_Integer(DS_TOP, number);
 
-        SET_VAL_FLAG(DS_TOP, VALUE_FLAG_LINE);
+        Set_Val_Flag(DS_TOP, VALUE_FLAG_LINE);
     }
 
     // If we ran out of stack levels before finding the single one requested

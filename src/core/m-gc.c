@@ -130,7 +130,7 @@ static inline void Mark_Rebser_Only(REBSER *s)
         panic (s);
     }
 #endif
-    assert(NOT_SER_FLAG(s, SERIES_FLAG_ARRAY));
+    assert(Not_Ser_Flag(s, SERIES_FLAG_ARRAY));
 
     if (s->header.bits & SERIES_FLAG_FILE_LINE)
         s->link.filename->header.bits |= NODE_FLAG_MARKED;
@@ -175,7 +175,7 @@ static void Queue_Mark_Array_Subclass_Deep(REBARR *a)
     if (IS_FREE_NODE(a))
         panic (a);
 
-    if (NOT_SER_FLAG(a, SERIES_FLAG_ARRAY))
+    if (Not_Ser_Flag(a, SERIES_FLAG_ARRAY))
         panic (a);
 
     if (!IS_ARRAY_MANAGED(a))
@@ -204,11 +204,11 @@ static void Queue_Mark_Array_Subclass_Deep(REBARR *a)
 }
 
 inline static void Queue_Mark_Array_Deep(REBARR *a) {
-    assert(NOT_SER_FLAG(a, ARRAY_FLAG_VARLIST));
-    assert(NOT_SER_FLAG(a, ARRAY_FLAG_PARAMLIST));
-    assert(NOT_SER_FLAG(a, ARRAY_FLAG_PAIRLIST));
+    assert(Not_Ser_Flag(a, ARRAY_FLAG_VARLIST));
+    assert(Not_Ser_Flag(a, ARRAY_FLAG_PARAMLIST));
+    assert(Not_Ser_Flag(a, ARRAY_FLAG_PAIRLIST));
 
-    if (GET_SER_FLAG(a, SERIES_FLAG_FILE_LINE))
+    if (Get_Ser_Flag(a, SERIES_FLAG_FILE_LINE))
         AS_SERIES(a)->link.filename->header.bits |= NODE_FLAG_MARKED;
 
     Queue_Mark_Array_Subclass_Deep(a);
@@ -216,10 +216,10 @@ inline static void Queue_Mark_Array_Deep(REBARR *a) {
 
 inline static void Queue_Mark_Context_Deep(REBCTX *c) {
     REBARR *a = CTX_VARLIST(c);
-    assert(GET_SER_FLAG(a, ARRAY_FLAG_VARLIST));
-    assert(NOT_SER_FLAG(a, ARRAY_FLAG_PARAMLIST));
-    assert(NOT_SER_FLAG(a, ARRAY_FLAG_PAIRLIST));
-    assert(NOT_SER_FLAG(a, SERIES_FLAG_FILE_LINE));
+    assert(Get_Ser_Flag(a, ARRAY_FLAG_VARLIST));
+    assert(Not_Ser_Flag(a, ARRAY_FLAG_PARAMLIST));
+    assert(Not_Ser_Flag(a, ARRAY_FLAG_PAIRLIST));
+    assert(Not_Ser_Flag(a, SERIES_FLAG_FILE_LINE));
 
     Queue_Mark_Array_Subclass_Deep(a);
 
@@ -230,10 +230,10 @@ inline static void Queue_Mark_Context_Deep(REBCTX *c) {
 
 inline static void Queue_Mark_Function_Deep(REBFUN *f) {
     REBARR *a = FUNC_PARAMLIST(f);
-    assert(GET_SER_FLAG(a, ARRAY_FLAG_PARAMLIST));
-    assert(NOT_SER_FLAG(a, ARRAY_FLAG_VARLIST));
-    assert(NOT_SER_FLAG(a, ARRAY_FLAG_PAIRLIST));
-    assert(NOT_SER_FLAG(a, SERIES_FLAG_FILE_LINE));
+    assert(Get_Ser_Flag(a, ARRAY_FLAG_PARAMLIST));
+    assert(Not_Ser_Flag(a, ARRAY_FLAG_VARLIST));
+    assert(Not_Ser_Flag(a, ARRAY_FLAG_PAIRLIST));
+    assert(Not_Ser_Flag(a, SERIES_FLAG_FILE_LINE));
 
     Queue_Mark_Array_Subclass_Deep(a);
 
@@ -244,10 +244,10 @@ inline static void Queue_Mark_Function_Deep(REBFUN *f) {
 
 inline static void Queue_Mark_Map_Deep(REBMAP *m) {
     REBARR *a = MAP_PAIRLIST(m);
-    assert(GET_SER_FLAG(a, ARRAY_FLAG_PAIRLIST));
-    assert(NOT_SER_FLAG(a, ARRAY_FLAG_PARAMLIST));
-    assert(NOT_SER_FLAG(a, ARRAY_FLAG_VARLIST));
-    assert(NOT_SER_FLAG(a, SERIES_FLAG_FILE_LINE));
+    assert(Get_Ser_Flag(a, ARRAY_FLAG_PAIRLIST));
+    assert(Not_Ser_Flag(a, ARRAY_FLAG_PARAMLIST));
+    assert(Not_Ser_Flag(a, ARRAY_FLAG_VARLIST));
+    assert(Not_Ser_Flag(a, SERIES_FLAG_FILE_LINE));
 
 
     Queue_Mark_Array_Subclass_Deep(a);
@@ -264,12 +264,12 @@ static void Queue_Mark_Opt_Value_Deep(const RELVAL *v);
 // faster by avoiding a queue step for the array node or walk.
 //
 inline static void Queue_Mark_Singular_Array(REBARR *a) {
-    assert(NOT_SER_FLAG(a, ARRAY_FLAG_PAIRLIST));
-    assert(NOT_SER_FLAG(a, ARRAY_FLAG_PARAMLIST));
-    assert(NOT_SER_FLAG(a, ARRAY_FLAG_VARLIST));
-    assert(NOT_SER_FLAG(a, SERIES_FLAG_FILE_LINE));
+    assert(Not_Ser_Flag(a, ARRAY_FLAG_PAIRLIST));
+    assert(Not_Ser_Flag(a, ARRAY_FLAG_PARAMLIST));
+    assert(Not_Ser_Flag(a, ARRAY_FLAG_VARLIST));
+    assert(Not_Ser_Flag(a, SERIES_FLAG_FILE_LINE));
 
-    assert(NOT_SER_INFO(a, SERIES_INFO_HAS_DYNAMIC));
+    assert(Not_Ser_Info(a, SERIES_INFO_HAS_DYNAMIC));
 
     AS_SERIES(a)->header.bits |= NODE_FLAG_MARKED;
     Queue_Mark_Opt_Value_Deep(ARR_HEAD(a));
@@ -351,17 +351,17 @@ static void Queue_Mark_Opt_Value_Deep(const RELVAL *v)
         // time a canon word's "index" field is allowed to be nonzero.
         //
         assert(
-            NOT_SER_INFO(spelling, STRING_INFO_CANON)
+            Not_Ser_Info(spelling, STRING_INFO_CANON)
             || (
                 spelling->misc.bind_index.high == 0
                 && spelling->misc.bind_index.low == 0
             )
         );
 
-        if (GET_VAL_FLAG(v, WORD_FLAG_BOUND)) {
+        if (Get_Val_Flag(v, WORD_FLAG_BOUND)) {
             assert(v->payload.any_word.index != 0);
 
-            if (GET_VAL_FLAG(v, VALUE_FLAG_RELATIVE)) {
+            if (Get_Val_Flag(v, VALUE_FLAG_RELATIVE)) {
                 // Bound relative to a function, keep that function alive.
                 //
                 // (To turn a relative binding into a specific one, a
@@ -384,7 +384,7 @@ static void Queue_Mark_Opt_Value_Deep(const RELVAL *v)
             // The word is unbound...make sure index is 0 in debug build.
             // (it can be left uninitialized in release builds, for now)
             //
-            assert(!GET_VAL_FLAG(v, VALUE_FLAG_RELATIVE));
+            assert(!Get_Val_Flag(v, VALUE_FLAG_RELATIVE));
         #if !defined(NDEBUG)
             assert(v->payload.any_word.index == 0);
         #endif
@@ -453,7 +453,7 @@ static void Queue_Mark_Opt_Value_Deep(const RELVAL *v)
                 // references at once), the data pointers in all but the
                 // shared singular value are NULL.
                 //
-                if (GET_VAL_FLAG(v, HANDLE_FLAG_CFUNC))
+                if (Get_Val_Flag(v, HANDLE_FLAG_CFUNC))
                     assert(
                         IS_CFUNC_TRASH_DEBUG(v->payload.handle.data.cfunc)
                     );
@@ -542,14 +542,14 @@ static void Queue_Mark_Opt_Value_Deep(const RELVAL *v)
         // holds the shared index among all same varargs into that array.
         //
         REBARR *feed = v->payload.varargs.feed;
-        assert(GET_SER_FLAG(feed, ARRAY_FLAG_VARLIST) || ARR_LEN(feed) == 1);
+        assert(Get_Ser_Flag(feed, ARRAY_FLAG_VARLIST) || ARR_LEN(feed) == 1);
         if (IS_ARRAY_MANAGED(feed))
             Queue_Mark_Array_Subclass_Deep(feed);
         else {
             // !!! Should also assert that this is a frame in mid-fulfillment
             // on the stack.
             // 
-            assert(GET_SER_FLAG(feed, ARRAY_FLAG_VARLIST));
+            assert(Get_Ser_Flag(feed, ARRAY_FLAG_VARLIST));
         }
         break; }
 
@@ -732,13 +732,13 @@ static void Propagate_All_GC_Marks(void)
         // For a lighter check, make sure it's marked as a value-bearing array
         // and that it hasn't been freed.
         //
-        assert(GET_SER_FLAG(a, SERIES_FLAG_ARRAY));
+        assert(Get_Ser_Flag(a, SERIES_FLAG_ARRAY));
         assert(!IS_FREE_NODE(AS_SERIES(a)));
     #endif
 
         RELVAL *v = ARR_HEAD(a);
 
-        if (GET_SER_FLAG(a, ARRAY_FLAG_PARAMLIST)) {
+        if (Get_Ser_Flag(a, ARRAY_FLAG_PARAMLIST)) {
             //
             // These queueings cannot be done in Queue_Mark_Function_Deep
             // because of the potential for overflowing the C stack with calls
@@ -762,7 +762,7 @@ static void Propagate_All_GC_Marks(void)
             assert(v->extra.binding == NULL); // archetypes have no binding
             ++v; // function archetype completely marked by this process
         }
-        else if (GET_SER_FLAG(a, ARRAY_FLAG_VARLIST)) {
+        else if (Get_Ser_Flag(a, ARRAY_FLAG_VARLIST)) {
             //
             // These queueings cannot be done in Queue_Mark_Context_Deep
             // because of the potential for overflowing the C stack with calls
@@ -780,7 +780,7 @@ static void Propagate_All_GC_Marks(void)
             assert(v->extra.binding == NULL); // archetypes have no binding
             ++v; // context archtype completely marked by this process
         }
-        else if (GET_SER_FLAG(a, ARRAY_FLAG_PAIRLIST)) {
+        else if (Get_Ser_Flag(a, ARRAY_FLAG_PAIRLIST)) {
             //
             // There was once a "small map" optimization that wouldn't
             // produce a hashlist for small maps and just did linear search.
@@ -794,15 +794,15 @@ static void Propagate_All_GC_Marks(void)
             Mark_Rebser_Only(hashlist);
         }
 
-        if (GET_SER_INFO(a, SERIES_INFO_INACCESSIBLE)) {
+        if (Get_Ser_Info(a, SERIES_INFO_INACCESSIBLE)) {
             //
             // At present the only inaccessible arrays are expired frames of
             // functions with stack-bound arg and local lifetimes.  They are
             // just singular REBARRs with the FRAME! archetype value.
             //
-            assert(GET_SER_FLAG(a, ARRAY_FLAG_VARLIST));
+            assert(Get_Ser_Flag(a, ARRAY_FLAG_VARLIST));
             assert(IS_FRAME(ARR_HEAD(a)));
-            assert(GET_SER_FLAG(a, CONTEXT_FLAG_STACK));
+            assert(Get_Ser_Flag(a, CONTEXT_FLAG_STACK));
             continue;
         }
 
@@ -817,8 +817,8 @@ static void Propagate_All_GC_Marks(void)
             //
             if (NOT(IS_BLANK_RAW(v)) && IS_VOID(v)) {
                 if(
-                    !GET_SER_FLAG(a, ARRAY_FLAG_VARLIST)
-                    && !GET_SER_FLAG(a, ARRAY_FLAG_VOIDS_LEGAL)
+                    !Get_Ser_Flag(a, ARRAY_FLAG_VARLIST)
+                    && !Get_Ser_Flag(a, ARRAY_FLAG_VOIDS_LEGAL)
                 )
                     panic(a);
             }
@@ -917,7 +917,7 @@ static void Mark_Root_Series(void)
                 REBVAL *paired = key + 1;
                 if (
                     IS_FRAME(key)
-                    && GET_VAL_FLAG(key, ANY_CONTEXT_FLAG_OWNS_PAIRED)
+                    && Get_Val_Flag(key, ANY_CONTEXT_FLAG_OWNS_PAIRED)
                     && !Is_Context_Running_Or_Pending(VAL_CONTEXT(key))
                 ){
                     Free_Pairing(paired); // don't consider a root
@@ -939,7 +939,7 @@ static void Mark_Root_Series(void)
                 // this is.  So if it's a context, we have to get the
                 // keylist...etc.
                 //
-                if (GET_SER_FLAG(s, SERIES_FLAG_ARRAY))
+                if (Get_Ser_Flag(s, SERIES_FLAG_ARRAY))
                     Queue_Mark_Array_Subclass_Deep(AS_ARRAY(s));
                 else
                     Mark_Rebser_Only(s);
@@ -1050,7 +1050,7 @@ static void Mark_Guarded_Nodes(void)
         }
         else { // a series
             REBSER *s = cast(REBSER*, node);
-            if (GET_SER_FLAG(s, SERIES_FLAG_ARRAY))
+            if (Get_Ser_Flag(s, SERIES_FLAG_ARRAY))
                 Queue_Mark_Array_Subclass_Deep(AS_ARRAY(s));
             else
                 Mark_Rebser_Only(s);
@@ -1308,7 +1308,7 @@ static REBCNT Sweep_Series(void)
                 // sounds like what could plausibly be an ordinary END marker
                 // in a cell (as opposed to an implicit END).  However, there
                 // would be no way to distinguish this from legal leading
-                // bytes of multi-byte UTF-8 sequences.  Hence SET_END()
+                // bytes of multi-byte UTF-8 sequences.  Hence Init_End()
                 // uses a different bit pattern (below).
                 //
                 assert(FALSE);
@@ -1319,7 +1319,7 @@ static REBCNT Sweep_Series(void)
                 // While this indicates a "managed" cell that's an END marker,
                 // there is actually only one legal possibility...and the
                 // managed bit is not relevant.  What is relevant is that
-                // SET_END() on a valid cell spot uses the special illegal
+                // Init_End() on a valid cell spot uses the special illegal
                 // UTF-8 pattern of `11111111` (255) to allow distinguishing
                 // it from a valid multi-byte UTF-8 sequence.
                 //
@@ -1463,7 +1463,7 @@ REBCNT Recycle_Core(REBOOL shutdown, REBSER *sweeplist)
 
         // Mark potential error object from callback!
         if (!IS_BLANK_RAW(&Callback_Error)) {
-            assert(NOT_VAL_FLAG(&Callback_Error, VALUE_FLAG_RELATIVE));
+            assert(Not_Val_Flag(&Callback_Error, VALUE_FLAG_RELATIVE));
             Queue_Mark_Value_Deep(&Callback_Error);
         }
         Propagate_All_GC_Marks();
@@ -1653,7 +1653,7 @@ REBARR *Snapshot_All_Functions(void)
                 // of other bits, see Sweep_Series.)
                 //
                 assert(IS_SERIES_MANAGED(s));
-                if (GET_SER_FLAG(s, ARRAY_FLAG_PARAMLIST)) {
+                if (Get_Ser_Flag(s, ARRAY_FLAG_PARAMLIST)) {
                     REBVAL *v = KNOWN(ARR_HEAD(AS_ARRAY(s)));
                     assert(IS_FUNCTION(v));
                     DS_PUSH(v);

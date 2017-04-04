@@ -113,7 +113,7 @@ void Startup_Typesets(void)
 //
 void Init_Typeset(RELVAL *value, REBU64 bits, REBSTR *opt_name)
 {
-    VAL_RESET_HEADER(value, REB_TYPESET);
+    Reset_Val_Header(value, REB_TYPESET);
     INIT_TYPESET_NAME(value, opt_name);
     VAL_TYPESET_BITS(value) = bits;
 }
@@ -146,7 +146,7 @@ REBOOL Update_Typeset_Bits_Core(
             fail ("Invalid double-block in typeset");
 
         item = VAL_ARRAY_AT(item);
-        SET_VAL_FLAG(typeset, TYPESET_FLAG_VARIADIC);
+        Set_Val_Flag(typeset, TYPESET_FLAG_VARIADIC);
     }
 
     for (; NOT_END(item); item++) {
@@ -173,7 +173,7 @@ REBOOL Update_Typeset_Bits_Core(
             // Notational convenience for variadic.
             // func [x [<...> integer!]] => func [x [[integer!]]]
             //
-            SET_VAL_FLAG(typeset, TYPESET_FLAG_VARIADIC);
+            Set_Val_Flag(typeset, TYPESET_FLAG_VARIADIC);
         }
         else if (
             IS_BAR(item) || (keywords && IS_TAG(item) && (
@@ -185,7 +185,7 @@ REBOOL Update_Typeset_Bits_Core(
             //
             // func [x [<end> integer!]] => func [x [| integer!]]
             //
-            SET_VAL_FLAG(typeset, TYPESET_FLAG_ENDABLE);
+            Set_Val_Flag(typeset, TYPESET_FLAG_ENDABLE);
         }
         else if (
             IS_BLANK(item) || (keywords && IS_TAG(item) && (
@@ -284,7 +284,7 @@ REBARR *Typeset_To_Array(const REBVAL *tset)
                 // indicate that they take optional values.  This may wind up
                 // as a feature of MAKE FUNCTION! only.
                 //
-                SET_BLANK(value);
+                Init_Blank(value);
             }
             else
                 Val_Init_Datatype(value, cast(enum Reb_Kind, n));

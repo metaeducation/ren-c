@@ -89,7 +89,7 @@ static inline REBOOL Start_New_Expression_Throws(REBFRM *f) {
         // it may spawn an entire interactive debugging session via
         // breakpoint before it returns.  It may also FAIL and longjmp out.
         //
-        SET_END(&f->cell);
+        Init_End(&f->cell);
         if (Do_Signals_Throws(&f->cell)) {
             Move_Value(f->out, &f->cell);
             return TRUE;
@@ -145,7 +145,7 @@ static inline void Abort_Function_Args_For_Frame(REBFRM *f) {
 }
 
 static inline void Link_Vararg_Param_To_Frame(REBFRM *f, REBOOL make) {
-    assert(GET_VAL_FLAG(f->param, TYPESET_FLAG_VARIADIC));
+    assert(Get_Val_Flag(f->param, TYPESET_FLAG_VARIADIC));
 
     // Note that this varlist is to a context with bad cells in
     // any unfilled arg slots.  Because of this, there needs to
@@ -155,7 +155,7 @@ static inline void Link_Vararg_Param_To_Frame(REBFRM *f, REBOOL make) {
     //
     if (
         f->varlist == NULL
-        || NOT_SER_FLAG(f->varlist, ARRAY_FLAG_VARLIST)
+        || Not_Ser_Flag(f->varlist, ARRAY_FLAG_VARLIST)
     ){
         // Don't use ordinary call to Context_For_Frame_May_Reify
         // because this special case allows reification even
@@ -176,13 +176,13 @@ static inline void Link_Vararg_Param_To_Frame(REBFRM *f, REBOOL make) {
     // an ordinary array.
     //
     if (make) {
-        VAL_RESET_HEADER(f->arg, REB_VARARGS);
+        Reset_Val_Header(f->arg, REB_VARARGS);
         f->arg->payload.varargs.feed = f->varlist;
     }
     else
         assert(VAL_TYPE(f->arg) == REB_VARARGS);
 
-    assert(GET_SER_FLAG(f->arg->payload.varargs.feed, SERIES_FLAG_ARRAY));
+    assert(Get_Ser_Flag(f->arg->payload.varargs.feed, SERIES_FLAG_ARRAY));
 }
 
 
@@ -387,8 +387,8 @@ reevaluate:;
 
             if (
                 VAL_TYPE_RAW(current_gotten) == REB_FUNCTION // fast w/out END
-                && NOT_VAL_FLAG(current_gotten, VALUE_FLAG_ENFIXED)
-                && GET_VAL_FLAG(current_gotten, FUNC_FLAG_QUOTES_FIRST_ARG)
+                && Not_Val_Flag(current_gotten, VALUE_FLAG_ENFIXED)
+                && Get_Val_Flag(current_gotten, FUNC_FLAG_QUOTES_FIRST_ARG)
             ){
                 // Yup, it quotes.  We could look for a conflict and call
                 // it an error, but instead give the left hand side precedence
@@ -418,7 +418,7 @@ reevaluate:;
 
         if (
             VAL_TYPE_RAW(f->gotten) == REB_FUNCTION // faster w/o END check
-            && ALL_VAL_FLAGS(
+            && All_Val_Flags(
                 f->gotten, VALUE_FLAG_ENFIXED | FUNC_FLAG_QUOTES_FIRST_ARG
             )
         ){
@@ -442,7 +442,7 @@ reevaluate:;
             // it allows for an added debug check that if an enfixed parameter
             // is hard or soft quoted, it *probably* came from here.
             //
-            SET_VAL_FLAG(f->out, VALUE_FLAG_UNEVALUATED);
+            Set_Val_Flag(f->out, VALUE_FLAG_UNEVALUATED);
         #endif
 
             current_gotten = f->gotten; // the function
@@ -491,14 +491,14 @@ reevaluate:;
         current_gotten = const_KNOWN(current);
         SET_FRAME_LABEL(f, Canon(SYM___ANONYMOUS__)); // nameless literal
 
-        if (GET_VAL_FLAG(current_gotten, VALUE_FLAG_ENFIXED)) {
+        if (Get_Val_Flag(current_gotten, VALUE_FLAG_ENFIXED)) {
             //
             // f->out can't be trash, but it can be an END.
             //
             f->refine = LOOKBACK_ARG;
         }
         else {
-            SET_END(f->out); // clear out previous result (needs GC-safe data)
+            Init_End(f->out); // clear out previous result (needs GC-safe data)
             f->refine = ORDINARY_ARG;
         }
 
@@ -630,7 +630,7 @@ reevaluate:;
                         // since MAKE FRAME! fills all arg slots with void.
                         //
                         if (IS_VOID(f->arg))
-                            SET_FALSE(f->arg);
+                            Init_False(f->arg);
                     }
                     else {
                         // Voids in specializations mean something different,
@@ -661,7 +661,7 @@ reevaluate:;
             unspecialized_refinement:
 
                 if (f->dsp_orig == DSP) { // no refinements left on stack
-                    SET_FALSE(f->arg);
+                    Init_False(f->arg);
                     f->refine = ARG_TO_UNUSED_REFINEMENT; // "don't consume"
                     goto continue_arg_loop;
                 }
@@ -677,7 +677,7 @@ reevaluate:;
                 ){
                     DS_DROP; // we're lucky: this was next refinement used
 
-                    SET_TRUE(f->arg); // marks refinement used
+                    Init_True(f->arg); // marks refinement used
                     f->refine = f->arg; // "consume args (can be revoked)"
                     goto continue_arg_loop;
                 }
@@ -695,12 +695,12 @@ reevaluate:;
                         // consume lines up.  Make a note of the param
                         // and arg and poke them into the stack value.
                         //
-                        VAL_RESET_HEADER(f->refine, REB_0_PICKUP);
+                        Reset_Val_Header(f->refine, REB_0_PICKUP);
                         f->refine->payload.pickup.param
                             = const_KNOWN(f->param);
                         f->refine->payload.pickup.arg = f->arg;
 
-                        SET_TRUE(f->arg); // marks refinement used
+                        Init_True(f->arg); // marks refinement used
                         // "consume args later" (promise not to change)
                         f->refine = SKIPPING_REFINEMENT_ARGS;
                         goto continue_arg_loop;
@@ -709,7 +709,7 @@ reevaluate:;
 
                 // Wasn't in the path and not specialized, so not present
                 //
-                SET_FALSE(f->arg);
+                Init_False(f->arg);
                 f->refine = ARG_TO_UNUSED_REFINEMENT; // "don't consume"
                 goto continue_arg_loop;
             }
@@ -730,7 +730,7 @@ reevaluate:;
 
             switch (pclass) {
             case PARAM_CLASS_LOCAL:
-                SET_VOID(f->arg); // faster than checking bad specializations
+                Init_Void(f->arg); // faster than checking bad specializations
                 if (f->special != END)
                     ++f->special;
                 goto continue_arg_loop;
@@ -738,8 +738,8 @@ reevaluate:;
             case PARAM_CLASS_RETURN:
                 assert(VAL_PARAM_SYM(f->param) == SYM_RETURN);
 
-                if (NOT_VAL_FLAG(FUNC_VALUE(f->phase), FUNC_FLAG_RETURN)) {
-                    SET_VOID(f->arg);
+                if (Not_Val_Flag(FUNC_VALUE(f->phase), FUNC_FLAG_RETURN)) {
+                    Init_Void(f->arg);
                     goto continue_arg_loop;
                 }
 
@@ -757,8 +757,8 @@ reevaluate:;
             case PARAM_CLASS_LEAVE:
                 assert(VAL_PARAM_SYM(f->param) == SYM_LEAVE);
 
-                if (NOT_VAL_FLAG(FUNC_VALUE(f->phase), FUNC_FLAG_LEAVE)) {
-                    SET_VOID(f->arg);
+                if (Not_Val_Flag(FUNC_VALUE(f->phase), FUNC_FLAG_LEAVE)) {
+                    Init_Void(f->arg);
                     goto continue_arg_loop;
                 }
 
@@ -787,7 +787,7 @@ reevaluate:;
                 // build will be able to tell if we don't come back and
                 // overwrite it correctly during the pickups phase.
                 //
-                SET_UNREADABLE_BLANK(f->arg);
+                Init_Unreadable_Blank(f->arg);
 
                 if (f->special != END)
                     ++f->special;
@@ -827,7 +827,7 @@ reevaluate:;
             // further processing or checking.  void will always be fine.
             //
             if (f->refine == ARG_TO_UNUSED_REFINEMENT) {
-                SET_VOID(f->arg);
+                Init_Void(f->arg);
                 goto continue_arg_loop;
             }
 
@@ -845,7 +845,7 @@ reevaluate:;
                 // It may be too wacky to worry about, and SET/LOOKBACK should
                 // just prohibit it.
                 //
-                assert(NOT_VAL_FLAG(f->param, TYPESET_FLAG_VARIADIC));
+                assert(Not_Val_Flag(f->param, TYPESET_FLAG_VARIADIC));
 
                 if (IS_END(f->out)) {
                     //
@@ -861,10 +861,10 @@ reevaluate:;
                     if (f->flags.bits & DO_FLAG_FULFILLING_ARG)
                         fail (Error_Partial_Lookback(f));
 
-                    if (NOT_VAL_FLAG(f->param, TYPESET_FLAG_ENDABLE))
+                    if (Not_Val_Flag(f->param, TYPESET_FLAG_ENDABLE))
                         fail (Error_No_Arg(FRM_LABEL(f), f->param));
 
-                    SET_VOID(f->arg);
+                    Init_Void(f->arg);
                     goto continue_arg_loop;
                 }
 
@@ -889,11 +889,11 @@ reevaluate:;
                     // Only in debug builds, the before-switch lookahead sets
                     // this flag to help indicate that's where it came from.
                     //
-                    assert(GET_VAL_FLAG(f->out, VALUE_FLAG_UNEVALUATED));
+                    assert(Get_Val_Flag(f->out, VALUE_FLAG_UNEVALUATED));
                 #endif
 
                     Move_Value(f->arg, f->out);
-                    SET_VAL_FLAG(f->arg, VALUE_FLAG_UNEVALUATED);
+                    Set_Val_Flag(f->arg, VALUE_FLAG_UNEVALUATED);
                     break;
 
                 case PARAM_CLASS_SOFT_QUOTE:
@@ -902,7 +902,7 @@ reevaluate:;
                     // Only in debug builds, the before-switch lookahead sets
                     // this flag to help indicate that's where it came from.
                     //
-                    assert(GET_VAL_FLAG(f->out, VALUE_FLAG_UNEVALUATED));
+                    assert(Get_Val_Flag(f->out, VALUE_FLAG_UNEVALUATED));
                 #endif
 
                     if (IS_QUOTABLY_SOFT(f->out)) {
@@ -914,7 +914,7 @@ reevaluate:;
                     }
                     else {
                         Move_Value(f->arg, f->out);
-                        SET_VAL_FLAG(f->arg, VALUE_FLAG_UNEVALUATED);
+                        Set_Val_Flag(f->arg, VALUE_FLAG_UNEVALUATED);
                     }
                     break;
 
@@ -923,7 +923,7 @@ reevaluate:;
                 }
 
                 f->refine = ORDINARY_ARG;
-                SET_END(f->out);
+                Init_End(f->out);
                 goto check_arg;
             }
 
@@ -934,7 +934,7 @@ reevaluate:;
             // back to this call through a reified FRAME!, and are able to
             // consume additional arguments during the function run.
             //
-            if (GET_VAL_FLAG(f->param, TYPESET_FLAG_VARIADIC)) {
+            if (Get_Val_Flag(f->param, TYPESET_FLAG_VARIADIC)) {
                 const REBOOL make = TRUE;
                 Link_Vararg_Param_To_Frame(f, make);
                 goto continue_arg_loop; // new value, type guaranteed correct
@@ -950,10 +950,10 @@ reevaluate:;
     //=//// ERROR ON END MARKER, BAR! IF APPLICABLE //////////////////////=//
 
             if (IS_END(f->value)) {
-                if (NOT_VAL_FLAG(f->param, TYPESET_FLAG_ENDABLE))
+                if (Not_Val_Flag(f->param, TYPESET_FLAG_ENDABLE))
                     fail (Error_No_Arg(FRM_LABEL(f), f->param));
 
-                SET_VOID(f->arg);
+                Init_Void(f->arg);
                 goto continue_arg_loop;
             }
 
@@ -971,10 +971,10 @@ reevaluate:;
                 // Not even legal if arg is quoted.  It must come through
                 // other means (e.g. literal as `'|` or `first [|]`)
 
-                if (NOT_VAL_FLAG(f->param, TYPESET_FLAG_ENDABLE))
+                if (Not_Val_Flag(f->param, TYPESET_FLAG_ENDABLE))
                     fail (Error_Expression_Barrier_Raw());
 
-                SET_VOID(f->arg);
+                Init_Void(f->arg);
                 goto continue_arg_loop;
             }
 
@@ -1076,7 +1076,7 @@ reevaluate:;
                     if (f->refine + 1 != f->arg)
                         fail (Error_Bad_Refine_Revoke(f));
 
-                    SET_FALSE(f->refine); // can't re-enable...
+                    Init_False(f->refine); // can't re-enable...
                     f->refine = ARG_TO_REVOKED_REFINEMENT;
                     goto continue_arg_loop; // don't type check for optionality
                 }
@@ -1105,7 +1105,7 @@ reevaluate:;
                     fail (Error_Bad_Refine_Revoke(f));
             }
 
-            if (NOT_VAL_FLAG(f->param, TYPESET_FLAG_VARIADIC)) {
+            if (Not_Val_Flag(f->param, TYPESET_FLAG_VARIADIC)) {
                 if (NOT(TYPE_CHECK(f->param, VAL_TYPE(f->arg))))
                     fail (Error_Arg_Type(
                         FRM_LABEL(f), f->param, VAL_TYPE(f->arg))
@@ -1194,7 +1194,7 @@ reevaluate:;
         }
 
     #if !defined(NDEBUG)
-        if (GET_VAL_FLAG(FUNC_VALUE(f->phase), FUNC_FLAG_LEGACY_DEBUG))
+        if (Get_Val_Flag(FUNC_VALUE(f->phase), FUNC_FLAG_LEGACY_DEBUG))
             Legacy_Convert_Function_Args(f); // BLANK!+NONE! vs. FALSE+UNSET!
     #endif
 
@@ -1243,19 +1243,19 @@ reevaluate:;
         dispatcher = FUNC_DISPATCHER(f->phase);
         switch (dispatcher(f)) {
         case R_FALSE:
-            SET_FALSE(f->out); // no VALUE_FLAG_UNEVALUATED
+            Init_False(f->out); // no VALUE_FLAG_UNEVALUATED
             break;
 
         case R_TRUE:
-            SET_TRUE(f->out); // no VALUE_FLAG_UNEVALUATED
+            Init_True(f->out); // no VALUE_FLAG_UNEVALUATED
             break;
 
         case R_VOID:
-            SET_VOID(f->out); // no VALUE_FLAG_UNEVALUATED
+            Init_Void(f->out); // no VALUE_FLAG_UNEVALUATED
             break;
 
         case R_BLANK:
-            SET_BLANK(f->out); // no VALUE_FLAG_UNEVALUATED
+            Init_Blank(f->out); // no VALUE_FLAG_UNEVALUATED
             break;
 
         case R_BAR:
@@ -1263,11 +1263,11 @@ reevaluate:;
             break;
 
         case R_OUT:
-            CLEAR_VAL_FLAG(f->out, VALUE_FLAG_UNEVALUATED);
+            Clear_Val_Flag(f->out, VALUE_FLAG_UNEVALUATED);
             break; // checked as NOT_END() after switch()
 
         case R_OUT_UNEVALUATED: // returned by QUOTE and SEMIQUOTE
-            SET_VAL_FLAG(f->out, VALUE_FLAG_UNEVALUATED);
+            Set_Val_Flag(f->out, VALUE_FLAG_UNEVALUATED);
             break;
 
         case R_OUT_IS_THROWN: {
@@ -1289,7 +1289,7 @@ reevaluate:;
                 // any) will catch a FUNCTION! style exit.
                 //
                 CATCH_THROWN(f->out, f->out);
-                assert(NOT_VAL_FLAG(f->out, VALUE_FLAG_UNEVALUATED));
+                assert(Not_Val_Flag(f->out, VALUE_FLAG_UNEVALUATED));
             }
             else if (VAL_BINDING(f->out) == f->varlist) {
                 //
@@ -1303,50 +1303,50 @@ reevaluate:;
                 Abort_Function_Args_For_Frame(f);
                 goto finished; // stay THROWN and try to exit frames above...
             }
-            CLEAR_VAL_FLAG(f->out, VALUE_FLAG_UNEVALUATED);
+            Clear_Val_Flag(f->out, VALUE_FLAG_UNEVALUATED);
             break; }
 
         case R_OUT_TRUE_IF_WRITTEN:
             if (IS_END(f->out))
-                SET_FALSE(f->out); // no VALUE_FLAG_UNEVALUATED
+                Init_False(f->out); // no VALUE_FLAG_UNEVALUATED
             else
-                SET_TRUE(f->out); // no VALUE_FLAG_UNEVALUATED
+                Init_True(f->out); // no VALUE_FLAG_UNEVALUATED
             break;
 
         case R_OUT_VOID_IF_UNWRITTEN:
             if (IS_END(f->out))
-                SET_VOID(f->out); // no VALUE_FLAG_UNEVALUATED
+                Init_Void(f->out); // no VALUE_FLAG_UNEVALUATED
             else
-                CLEAR_VAL_FLAG(f->out, VALUE_FLAG_UNEVALUATED);
+                Clear_Val_Flag(f->out, VALUE_FLAG_UNEVALUATED);
             break;
 
         case R_OUT_VOID_IF_UNWRITTEN_TRUTHIFY:
             if (IS_END(f->out))
-                SET_VOID(f->out);
+                Init_Void(f->out);
             else if (IS_VOID(f->out) || IS_CONDITIONAL_FALSE(f->out))
                 SET_BAR(f->out);
             else
-                CLEAR_VAL_FLAG(f->out, VALUE_FLAG_UNEVALUATED);
+                Clear_Val_Flag(f->out, VALUE_FLAG_UNEVALUATED);
             break;
 
         case R_OUT_BLANK_IF_VOID:
             if (IS_VOID(f->out))
-                SET_BLANK(f->out);
+                Init_Blank(f->out);
             else
-                CLEAR_VAL_FLAG(f->out, VALUE_FLAG_UNEVALUATED);
+                Clear_Val_Flag(f->out, VALUE_FLAG_UNEVALUATED);
             break;
 
         case R_OUT_VOID_IF_UNWRITTEN_BLANK_IF_VOID:
             if (IS_END(f->out))
-                SET_VOID(f->out);
+                Init_Void(f->out);
             else if (IS_VOID(f->out))
-                SET_BLANK(f->out);
+                Init_Blank(f->out);
             else
-                CLEAR_VAL_FLAG(f->out, VALUE_FLAG_UNEVALUATED);
+                Clear_Val_Flag(f->out, VALUE_FLAG_UNEVALUATED);
             break;
 
         case R_REDO_CHECKED:
-            SET_END(f->out);
+            Init_End(f->out);
             f->special = f->args_head;
             f->refine = ORDINARY_ARG; // no gathering, but need for assert
             goto do_function_arglist_in_progress;
@@ -1357,7 +1357,7 @@ reevaluate:;
             // run the f->phase again.  The dispatcher may have changed the
             // value of what f->phase is, for instance.
             //
-            SET_END(f->out);
+            Init_End(f->out);
             goto redo_unchecked;
 
         case R_REEVALUATE:
@@ -1396,7 +1396,7 @@ reevaluate:;
     // double checks any function marked with RETURN in the debug build.
 
 #if !defined(NDEBUG)
-    if (GET_VAL_FLAG(FUNC_VALUE(f->phase), FUNC_FLAG_RETURN)) {
+    if (Get_Val_Flag(FUNC_VALUE(f->phase), FUNC_FLAG_RETURN)) {
         REBVAL *typeset = FUNC_PARAM(f->phase, FUNC_NUM_PARAMS(f->phase));
         assert(VAL_PARAM_SYM(typeset) == SYM_RETURN);
         if (!TYPE_CHECK(typeset, VAL_TYPE(f->out)))
@@ -1475,12 +1475,12 @@ reevaluate:;
         assert(IS_BAR(current));
 
         if (NOT_END(f->value)) {
-            SET_END(f->out); // skipping the post loop where this is done
+            Init_End(f->out); // skipping the post loop where this is done
             f->eval_type = VAL_TYPE(f->value);
             goto do_next; // quickly process next item, no infix test needed
         }
 
-        SET_VOID(f->out); // no VALUE_FLAG_UNEVALUATED
+        Init_Void(f->out); // no VALUE_FLAG_UNEVALUATED
         break;
 
 //==//////////////////////////////////////////////////////////////////////==//
@@ -1525,12 +1525,12 @@ reevaluate:;
             f->eval_type = REB_FUNCTION;
             SET_FRAME_LABEL(f, VAL_WORD_SPELLING(current));
 
-            if (GET_VAL_FLAG(current_gotten, VALUE_FLAG_ENFIXED)) {
+            if (Get_Val_Flag(current_gotten, VALUE_FLAG_ENFIXED)) {
                 f->refine = LOOKBACK_ARG;
                 goto do_function_in_current_gotten;
             }
 
-            SET_END(f->out);
+            Init_End(f->out);
             f->refine = ORDINARY_ARG;
             goto do_function_in_current_gotten;
         }
@@ -1542,7 +1542,7 @@ reevaluate:;
 
     #if !defined(NDEBUG)
         if (LEGACY(OPTIONS_LIT_WORD_DECAY) && IS_LIT_WORD(f->out))
-            VAL_SET_TYPE_BITS(f->out, REB_WORD); // don't reset full header!
+            Reset_Val_Kind(f->out, REB_WORD); // don't reset full header!
     #endif
         break;
 
@@ -1622,7 +1622,7 @@ reevaluate:;
         // Derelativize will clear VALUE_FLAG_UNEVALUATED
         //  
         Derelativize(f->out, current, f->specifier);
-        VAL_SET_TYPE_BITS(f->out, REB_WORD);
+        Reset_Val_Kind(f->out, REB_WORD);
         break;
 
 //==//// INERT WORD AND STRING TYPES /////////////////////////////////////==//
@@ -1658,7 +1658,7 @@ reevaluate:;
             goto finished;
         }
 
-        CLEAR_VAL_FLAG(f->out, VALUE_FLAG_UNEVALUATED);
+        Clear_Val_Flag(f->out, VALUE_FLAG_UNEVALUATED);
         break; }
 
 //==//////////////////////////////////////////////////////////////////////==//
@@ -1699,12 +1699,12 @@ reevaluate:;
 
             Move_Value(&f->cell, f->out);
             current_gotten = &f->cell;
-            SET_END(f->out);
+            Init_End(f->out);
             f->refine = ORDINARY_ARG; // paths are never enfixed (for now)
             goto do_function_in_current_gotten;
         }
 
-        CLEAR_VAL_FLAG(f->out, VALUE_FLAG_UNEVALUATED);
+        Clear_Val_Flag(f->out, VALUE_FLAG_UNEVALUATED);
         break;
     }
 
@@ -1802,7 +1802,7 @@ reevaluate:;
             goto finished;
         }
 
-        CLEAR_VAL_FLAG(f->out, VALUE_FLAG_UNEVALUATED);
+        Clear_Val_Flag(f->out, VALUE_FLAG_UNEVALUATED);
         break;
 
 //==//////////////////////////////////////////////////////////////////////==//
@@ -1821,7 +1821,7 @@ reevaluate:;
         // Derelativize will leave VALUE_FLAG_UNEVALUATED clear
         //
         Derelativize(f->out, current, f->specifier);
-        VAL_SET_TYPE_BITS(f->out, REB_PATH);
+        Reset_Val_Kind(f->out, REB_PATH);
         break;
 
 //==//////////////////////////////////////////////////////////////////////==//
@@ -1834,7 +1834,7 @@ reevaluate:;
     inert:
         assert(f->eval_type < REB_MAX);
         Derelativize(f->out, current, f->specifier);
-        SET_VAL_FLAG(f->out, VALUE_FLAG_UNEVALUATED);
+        Set_Val_Flag(f->out, VALUE_FLAG_UNEVALUATED);
         break;
     }
 
@@ -1873,7 +1873,7 @@ reevaluate:;
             NOT(f->flags.bits & DO_FLAG_TO_END)
             && (
                 f->gotten == END // could fold the END check in with masking
-                || NOT_VAL_FLAG(f->gotten, VALUE_FLAG_ENFIXED)
+                || Not_Val_Flag(f->gotten, VALUE_FLAG_ENFIXED)
             )
         ){
             goto finished;
@@ -1894,9 +1894,9 @@ reevaluate:;
 
         f->eval_type = REB_FUNCTION;
 
-        if (GET_VAL_FLAG(f->gotten, VALUE_FLAG_ENFIXED)) {
+        if (Get_Val_Flag(f->gotten, VALUE_FLAG_ENFIXED)) {
             if (
-                GET_VAL_FLAG(f->gotten, FUNC_FLAG_DEFERS_LOOKBACK_ARG)
+                Get_Val_Flag(f->gotten, FUNC_FLAG_DEFERS_LOOKBACK_ARG)
                 && (f->flags.bits & DO_FLAG_FULFILLING_ARG)
             ){
                 // This is the special case; we have a lookback function
@@ -1908,7 +1908,7 @@ reevaluate:;
                 //
                 assert(NOT(f->flags.bits & DO_FLAG_TO_END));
             }
-            else if (GET_VAL_FLAG(f->gotten, FUNC_FLAG_QUOTES_FIRST_ARG)) {
+            else if (Get_Val_Flag(f->gotten, FUNC_FLAG_QUOTES_FIRST_ARG)) {
                 //
                 // Left-quoting by enfix needs to be done in the lookahead
                 // before an evaluation, not this one that's after.  This
@@ -1937,7 +1937,7 @@ reevaluate:;
             }
         }
         else {
-            SET_END(f->out);
+            Init_End(f->out);
             SET_FRAME_LABEL(f, VAL_WORD_SPELLING(f->value));
             f->refine = ORDINARY_ARG;
             current = f->value;

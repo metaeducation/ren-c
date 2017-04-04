@@ -89,11 +89,11 @@ REB_R Series_Common_Action_Maybe_Unhandled(
         break;
 
     case SYM_INDEX_OF:
-        SET_INTEGER(D_OUT, cast(REBI64, index) + 1);
+        Init_Integer(D_OUT, cast(REBI64, index) + 1);
         return R_OUT; // handled
 
     case SYM_LENGTH:
-        SET_INTEGER(D_OUT, tail > index ? tail - index : 0);
+        Init_Integer(D_OUT, tail > index ? tail - index : 0);
         return R_OUT; // handled
 
     case SYM_REMOVE: {

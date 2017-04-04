@@ -333,7 +333,7 @@ void Startup_Pools(REBINT scale)
     // managed, then sneak the flag off.
     //
     GC_Manuals = Make_Series_Core(15, sizeof(REBSER *), NODE_FLAG_MANAGED);
-    CLEAR_SER_FLAG(GC_Manuals, NODE_FLAG_MANAGED);
+    Clear_Ser_Flag(GC_Manuals, NODE_FLAG_MANAGED);
 
     Prior_Expand = ALLOC_N(REBSER*, MAX_EXPAND_LIST);
     CLEAR(Prior_Expand, sizeof(REBSER*) * MAX_EXPAND_LIST);
@@ -597,7 +597,7 @@ static REBOOL Series_Data_Alloc(REBSER *s, REBCNT length) {
         assert(size >= length * wide);
 
         // We don't round to power of 2 for allocations in memory pools
-        CLEAR_SER_FLAG(s, SERIES_FLAG_POWER_OF_2);
+        Clear_Ser_Flag(s, SERIES_FLAG_POWER_OF_2);
     }
     else {
         // ...the allocation is too big for a pool.  But instead of just
@@ -606,7 +606,7 @@ static REBOOL Series_Data_Alloc(REBSER *s, REBCNT length) {
         // boundaries (or choose a power of 2, if requested).
 
         size = length * wide;
-        if (GET_SER_FLAG(s, SERIES_FLAG_POWER_OF_2)) {
+        if (Get_Ser_Flag(s, SERIES_FLAG_POWER_OF_2)) {
             REBCNT len = 2048;
             while(len < size)
                 len *= 2;
@@ -616,7 +616,7 @@ static REBOOL Series_Data_Alloc(REBSER *s, REBCNT length) {
             // divisibility by the item width.
             //
             if (size % wide == 0)
-                CLEAR_SER_FLAG(s, SERIES_FLAG_POWER_OF_2);
+                Clear_Ser_Flag(s, SERIES_FLAG_POWER_OF_2);
         }
 
         s->content.dynamic.data = ALLOC_N(REBYTE, size);
@@ -648,7 +648,7 @@ static REBOOL Series_Data_Alloc(REBSER *s, REBCNT length) {
     // no shrinking process that will pare it back to fit completely inside
     // the REBSER node.
     //
-    SET_SER_INFO(s, SERIES_INFO_HAS_DYNAMIC);
+    Set_Ser_Info(s, SERIES_INFO_HAS_DYNAMIC);
 
     // See if allocation tripped our need to queue a garbage collection
 
@@ -660,7 +660,7 @@ static REBOOL Series_Data_Alloc(REBSER *s, REBCNT length) {
         assert(Series_Allocation_Unpooled(s) == size);
 #endif
 
-    if (GET_SER_FLAG(s, SERIES_FLAG_ARRAY)) {
+    if (Get_Ser_Flag(s, SERIES_FLAG_ARRAY)) {
         assert(wide == sizeof(REBVAL));
 
         REBCNT n;
@@ -670,7 +670,7 @@ static REBOOL Series_Data_Alloc(REBSER *s, REBCNT length) {
     #endif
 
         // For REBVAL-valued-arrays, we mark as trash to mark the "settable"
-        // bit, heeded by both SET_END() and RESET_HEADER().  See remarks on
+        // bit, heeded by both Init_End() and RESET_HEADER().  See remarks on
         // VALUE_FLAG_CELL for why this is done.
         //
         // Note that the "len" field of the series (its number of valid
@@ -753,7 +753,7 @@ REBSER *Try_Find_Containing_Series_Debug(const void *p)
                 continue;
             }
 
-            if (NOT(GET_SER_INFO(s, SERIES_INFO_HAS_DYNAMIC))) {
+            if (NOT(Get_Ser_Info(s, SERIES_INFO_HAS_DYNAMIC))) {
                 if (
                     p >= cast(void*, &s->content)
                     && p < cast(void*, &s->content + 1)
@@ -832,7 +832,7 @@ REBCNT Series_Allocation_Unpooled(REBSER *series)
 {
     REBCNT total = SER_TOTAL(series);
 
-    if (GET_SER_FLAG(series, SERIES_FLAG_POWER_OF_2)) {
+    if (Get_Ser_Flag(series, SERIES_FLAG_POWER_OF_2)) {
         REBCNT len = 2048;
         while(len < total)
             len *= 2;
@@ -915,11 +915,11 @@ REBSER *Make_Series_Core(REBCNT capacity, REBYTE wide, REBUPT flags)
         // an END, and that the caller must never write it...hence it can
         // be less than a full cell's size.
         //
-        assert(NOT_SER_INFO(s, SERIES_INFO_HAS_DYNAMIC));
+        assert(Not_Ser_Info(s, SERIES_INFO_HAS_DYNAMIC));
         INIT_CELL(&s->content.values[0]);
     }
     else if (capacity * wide <= sizeof(s->content)) {
-        assert(NOT_SER_INFO(s, SERIES_INFO_HAS_DYNAMIC));
+        assert(Not_Ser_Info(s, SERIES_INFO_HAS_DYNAMIC));
     }
     else {
         // Allocate the actual data blob that holds the series elements
@@ -949,7 +949,7 @@ REBSER *Make_Series_Core(REBCNT capacity, REBYTE wide, REBUPT flags)
     // manuals list!  It removes the managed flag after the create.
     //
     if (NOT(flags & NODE_FLAG_MANAGED)) {
-        assert(GET_SER_INFO(GC_Manuals, SERIES_INFO_HAS_DYNAMIC));
+        assert(Get_Ser_Info(GC_Manuals, SERIES_INFO_HAS_DYNAMIC));
 
         if (SER_FULL(GC_Manuals))
             Extend_Series(GC_Manuals, 8);
@@ -972,7 +972,7 @@ REBSER *Make_Series_Core(REBCNT capacity, REBYTE wide, REBUPT flags)
         // s->link.filename = ???
         // s->misc.line = ???;
         //
-        CLEAR_SER_FLAG(s, SERIES_FLAG_FILE_LINE);
+        Clear_Ser_Flag(s, SERIES_FLAG_FILE_LINE);
     }
 
     assert(s->info.bits & NODE_FLAG_END);
@@ -1008,7 +1008,7 @@ REBVAL *Alloc_Pairing(REBCTX *opt_owning_frame) {
     INIT_CELL(key);
     if (opt_owning_frame) {
         Init_Any_Context(key, REB_FRAME, opt_owning_frame);
-        SET_VAL_FLAGS(
+        Set_Val_Flags(
             key, ANY_CONTEXT_FLAG_OWNS_PAIRED | NODE_FLAG_ROOT
         );
     }
@@ -1048,7 +1048,7 @@ REBVAL *Alloc_Pairing(REBCTX *opt_owning_frame) {
 //
 void Manage_Pairing(REBVAL *paired) {
     REBVAL *key = PAIRING_KEY(paired);
-    SET_VAL_FLAG(key, NODE_FLAG_MANAGED);
+    Set_Val_Flag(key, NODE_FLAG_MANAGED);
 }
 
 
@@ -1057,7 +1057,7 @@ void Manage_Pairing(REBVAL *paired) {
 //
 void Free_Pairing(REBVAL *paired) {
     REBVAL *key = PAIRING_KEY(paired);
-    assert(NOT_VAL_FLAG(key, NODE_FLAG_MANAGED));
+    assert(Not_Val_Flag(key, NODE_FLAG_MANAGED));
     REBSER *series = cast(REBSER*, key);
     SET_TRASH_IF_DEBUG(paired);
     Free_Node(SER_POOL, series);
@@ -1075,8 +1075,8 @@ void Swap_Underlying_Series_Data(REBSER *s1, REBSER *s2)
 {
     assert(SER_WIDE(s1) == SER_WIDE(s2));
     assert(
-        GET_SER_FLAG(s1, SERIES_FLAG_ARRAY)
-        == GET_SER_FLAG(s2, SERIES_FLAG_ARRAY)
+        Get_Ser_Flag(s1, SERIES_FLAG_ARRAY)
+        == Get_Ser_Flag(s2, SERIES_FLAG_ARRAY)
     );
 
     REBSER temp = *s1;
@@ -1175,7 +1175,7 @@ void Expand_Series(REBSER *s, REBCNT index, REBCNT delta)
 
     REBYTE wide = SER_WIDE(s);
 
-    const REBOOL was_dynamic = GET_SER_INFO(s, SERIES_INFO_HAS_DYNAMIC);
+    const REBOOL was_dynamic = Get_Ser_Info(s, SERIES_INFO_HAS_DYNAMIC);
 
     if (was_dynamic && index == 0 && SER_BIAS(s) >= delta) {
 
@@ -1187,7 +1187,7 @@ void Expand_Series(REBSER *s, REBCNT index, REBCNT delta)
         SER_SUB_BIAS(s, delta);
 
     #if !defined(NDEBUG)
-        if (GET_SER_FLAG(s, SERIES_FLAG_ARRAY)) {
+        if (Get_Ser_Flag(s, SERIES_FLAG_ARRAY)) {
             //
             // When the bias region was marked, it was made "unsettable" if
             // this was a debug build.  Now that the memory is included in
@@ -1236,7 +1236,7 @@ void Expand_Series(REBSER *s, REBCNT index, REBCNT delta)
         TERM_SERIES(s);
 
     #if !defined(NDEBUG)
-        if (GET_SER_FLAG(s, SERIES_FLAG_ARRAY)) {
+        if (Get_Ser_Flag(s, SERIES_FLAG_ARRAY)) {
             //
             // The opened up area needs to be set to "settable" trash in the
             // debug build.  This takes care of making "unsettable" values
@@ -1259,7 +1259,7 @@ void Expand_Series(REBSER *s, REBCNT index, REBCNT delta)
 
 //=//// INSUFFICIENT CAPACITY, NEW ALLOCATION REQUIRED ////////////////////=//
 
-    if (GET_SER_FLAG(s, SERIES_FLAG_FIXED_SIZE))
+    if (Get_Ser_Flag(s, SERIES_FLAG_FIXED_SIZE))
         fail (Error_Locked_Series_Raw());
 
 #ifndef NDEBUG
@@ -1320,7 +1320,7 @@ void Expand_Series(REBSER *s, REBCNT index, REBCNT delta)
     // expanding if a fixed size allocation was sufficient.
 
     s->content.dynamic.data = NULL;
-    SET_SER_FLAG(s, SERIES_FLAG_POWER_OF_2);
+    Set_Ser_Flag(s, SERIES_FLAG_POWER_OF_2);
     if (!Series_Data_Alloc(s, len_old + delta + x))
         fail (Error_No_Memory((len_old + delta + x) * wide));
 
@@ -1358,7 +1358,7 @@ void Expand_Series(REBSER *s, REBCNT index, REBCNT delta)
     PG_Reb_Stats->Series_Expanded++;
 #endif
 
-    assert(NOT_SER_FLAG(s, NODE_FLAG_MARKED));
+    assert(Not_Ser_Flag(s, NODE_FLAG_MARKED));
 }
 
 
@@ -1389,9 +1389,9 @@ void Remake_Series(REBSER *s, REBCNT units, REBYTE wide, REBUPT flags)
     SER_SET_WIDE(s, wide);
     s->header.bits |= flags;
 
-    assert(NOT_SER_FLAG(s, SERIES_FLAG_FIXED_SIZE));
+    assert(Not_Ser_Flag(s, SERIES_FLAG_FIXED_SIZE));
 
-    REBOOL was_dynamic = GET_SER_INFO(s, SERIES_INFO_HAS_DYNAMIC);
+    REBOOL was_dynamic = Get_Ser_Info(s, SERIES_INFO_HAS_DYNAMIC);
 
     REBINT bias_old;
     REBINT size_old;
@@ -1440,7 +1440,7 @@ void Remake_Series(REBSER *s, REBCNT units, REBYTE wide, REBUPT flags)
     } else
         s->content.dynamic.len = 0;
 
-    if (GET_SER_FLAG(s, SERIES_FLAG_ARRAY))
+    if (Get_Ser_Flag(s, SERIES_FLAG_ARRAY))
         TERM_ARRAY_LEN(AS_ARRAY(s), SER_LEN(s));
     else
         TERM_SEQUENCE(s);
@@ -1462,7 +1462,7 @@ void GC_Kill_Series(REBSER *s)
     assert(!IS_FREE_NODE(s));
     assert(NOT(s->header.bits & NODE_FLAG_CELL)); // use Free_Paired
 
-    if (GET_SER_FLAG(s, SERIES_FLAG_UTF8_STRING))
+    if (Get_Ser_Flag(s, SERIES_FLAG_UTF8_STRING))
         GC_Kill_Interning(s); // needs special handling to adjust canons
 
     // Remove series from expansion list, if found:
@@ -1471,7 +1471,7 @@ void GC_Kill_Series(REBSER *s)
         if (Prior_Expand[n] == s) Prior_Expand[n] = 0;
     }
 
-    if (GET_SER_INFO(s, SERIES_INFO_HAS_DYNAMIC)) {
+    if (Get_Ser_Info(s, SERIES_INFO_HAS_DYNAMIC)) {
         REBCNT size = SER_TOTAL(s);
 
         REBYTE wide = SER_WIDE(s);
@@ -1504,7 +1504,7 @@ void GC_Kill_Series(REBSER *s)
         // singular array that happened to contain a handle, otherwise, as
         // opposed to the specific singular made for the handle's GC awareness)
 
-        if (GET_SER_FLAG(s, SERIES_FLAG_ARRAY)) {
+        if (Get_Ser_Flag(s, SERIES_FLAG_ARRAY)) {
             RELVAL *v = ARR_HEAD(AS_ARRAY(s));
             if (NOT_END(v) && IS_HANDLE(v)) {
                 if (v->extra.singular == AS_ARRAY(s)) {
@@ -1622,7 +1622,7 @@ void Widen_String(REBSER *s, REBOOL preserve)
     REBYTE wide_old = SER_WIDE(s);
     assert(wide_old == 1);
 
-    REBOOL was_dynamic = GET_SER_INFO(s, SERIES_INFO_HAS_DYNAMIC);
+    REBOOL was_dynamic = Get_Ser_Info(s, SERIES_INFO_HAS_DYNAMIC);
 
     REBCNT bias_old;
     REBCNT size_old;
@@ -1838,7 +1838,7 @@ void Assert_Pointer_Detection_Working(void)
     assert(Detect_Rebol_Pointer(BLANK_VALUE) == DETECTED_AS_VALUE);
 
     DECLARE_LOCAL (cell_end);
-    SET_END(cell_end);
+    Init_End(cell_end);
     assert(Detect_Rebol_Pointer(cell_end) == DETECTED_AS_CELL_END);
     assert(Detect_Rebol_Pointer(END) == DETECTED_AS_INTERNAL_END);
 }
@@ -1869,10 +1869,10 @@ REBCNT Check_Memory_Debug(void)
             if (IS_FREE_NODE(s))
                 continue;
 
-            if (GET_SER_FLAG(s, NODE_FLAG_CELL))
+            if (Get_Ser_Flag(s, NODE_FLAG_CELL))
                 continue; // a pairing
 
-            if (NOT(GET_SER_INFO(s, SERIES_INFO_HAS_DYNAMIC)))
+            if (NOT(Get_Ser_Info(s, SERIES_INFO_HAS_DYNAMIC)))
                 continue; // data lives in the series node itself
 
             if (SER_REST(s) == 0)
@@ -1986,13 +1986,13 @@ void Dump_Series_In_Pool(REBCNT pool_id)
             if (IS_FREE_NODE(s))
                 continue;
 
-            if (GET_SER_FLAG(s, NODE_FLAG_CELL))
+            if (Get_Ser_Flag(s, NODE_FLAG_CELL))
                 continue; // pairing
 
             if (
                 pool_id == UNKNOWN
                 || (
-                    GET_SER_INFO(s, SERIES_INFO_HAS_DYNAMIC)
+                    Get_Ser_Info(s, SERIES_INFO_HAS_DYNAMIC)
                     && FIND_POOL(SER_TOTAL(s)) == pool_id
                 )
             ) {
@@ -2098,12 +2098,12 @@ REBU64 Inspect_Series(REBOOL show)
 
             ++tot;
 
-            if (GET_SER_FLAG(s, NODE_FLAG_CELL))
+            if (Get_Ser_Flag(s, NODE_FLAG_CELL))
                 continue;
 
             tot_size += SER_TOTAL_IF_DYNAMIC(s); // else 0
 
-            if (GET_SER_FLAG(s, SERIES_FLAG_ARRAY)) {
+            if (Get_Ser_Flag(s, SERIES_FLAG_ARRAY)) {
                 blks++;
                 blk_size += SER_TOTAL_IF_DYNAMIC(s);
             }

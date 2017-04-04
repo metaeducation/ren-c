@@ -8,8 +8,8 @@ c-fib: make-native [
 ]{
     int n = VAL_INT64(ARG(n));
 
-    if (n < zero) { SET_INTEGER(D_OUT, -1); return R_OUT; }
-    if (n <= one) { SET_INTEGER(D_OUT, n); return R_OUT; }
+    if (n < zero) { Init_Integer(D_OUT, -1); return R_OUT; }
+    if (n <= one) { Init_Integer(D_OUT, n); return R_OUT; }
 
     int i0 = zero;
     int i1 = one;
@@ -19,7 +19,7 @@ c-fib: make-native [
         i0 = t;
         --n;
     }
-    SET_INTEGER(D_OUT, i1);
+    Init_Integer(D_OUT, i1);
     return R_OUT;
 }
 

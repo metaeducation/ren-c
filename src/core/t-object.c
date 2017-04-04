@@ -74,12 +74,12 @@ static REBOOL Equal_Context(const RELVAL *val, const RELVAL *arg)
         //
         // Hidden vars shouldn't affect the comparison.
         //
-        if (GET_VAL_FLAG(key1, TYPESET_FLAG_HIDDEN)) {
+        if (Get_Val_Flag(key1, TYPESET_FLAG_HIDDEN)) {
             key1++; var1++;
             if (IS_END(key1)) break;
             goto no_advance;
         }
-        if (GET_VAL_FLAG(key2, TYPESET_FLAG_HIDDEN)) {
+        if (Get_Val_Flag(key2, TYPESET_FLAG_HIDDEN)) {
             key2++; var2++;
             if (IS_END(key2)) break;
             goto no_advance;
@@ -109,11 +109,11 @@ static REBOOL Equal_Context(const RELVAL *val, const RELVAL *arg)
     // they don't line up.
     //
     for (; NOT_END(key1); key1++, var1++) {
-        if (NOT_VAL_FLAG(key1, TYPESET_FLAG_HIDDEN))
+        if (Not_Val_Flag(key1, TYPESET_FLAG_HIDDEN))
             return FALSE;
     }
     for (; NOT_END(key2); key2++, var2++) {
-        if (NOT_VAL_FLAG(key2, TYPESET_FLAG_HIDDEN))
+        if (Not_Val_Flag(key2, TYPESET_FLAG_HIDDEN))
             return FALSE;
     }
 
@@ -192,14 +192,14 @@ static void Append_To_Context(REBCTX *context, REBVAL *arg)
         REBVAL *key = CTX_KEY(context, i);
         REBVAL *var = CTX_VAR(context, i);
 
-        if (GET_VAL_FLAG(var, VALUE_FLAG_PROTECTED))
+        if (Get_Val_Flag(var, VALUE_FLAG_PROTECTED))
             fail (Error_Protected_Key(key));
 
-        if (GET_VAL_FLAG(key, TYPESET_FLAG_HIDDEN))
+        if (Get_Val_Flag(key, TYPESET_FLAG_HIDDEN))
             fail (Error_Hidden_Raw());
 
         if (IS_END(word + 1)) {
-            SET_BLANK(var);
+            Init_Blank(var);
             break; // fix bug#708
         }
         else {
@@ -207,8 +207,8 @@ static void Append_To_Context(REBCTX *context, REBVAL *arg)
 
             // Should the VALUE_FLAG_ENFIXED be preserved here?
             //
-            if (GET_VAL_FLAG(&word[1], VALUE_FLAG_ENFIXED))
-                SET_VAL_FLAG(var, VALUE_FLAG_ENFIXED);
+            if (Get_Val_Flag(&word[1], VALUE_FLAG_ENFIXED))
+                Set_Val_Flag(var, VALUE_FLAG_ENFIXED);
 
         }
     }
@@ -235,7 +235,7 @@ static REBCTX *Trim_Context(REBCTX *context)
     for (; NOT_END(var); var++, key++) {
         if (VAL_TYPE(var) == REB_BLANK)
             continue;
-        if (GET_VAL_FLAG(key, TYPESET_FLAG_HIDDEN))
+        if (Get_Val_Flag(key, TYPESET_FLAG_HIDDEN))
             continue;
 
         ++copy_count;
@@ -256,7 +256,7 @@ static REBCTX *Trim_Context(REBCTX *context)
     for (; NOT_END(var); var++, key++) {
         if (VAL_TYPE(var) == REB_BLANK)
             continue;
-        if (GET_VAL_FLAG(key, TYPESET_FLAG_HIDDEN))
+        if (Get_Val_Flag(key, TYPESET_FLAG_HIDDEN))
             continue;
 
         Move_Value(var_new, var);
@@ -400,7 +400,7 @@ void MAKE_Context(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
         /*
         REBINT n = Int32s(arg, 0); 
         context = Alloc_Context(kind, n);
-        VAL_RESET_HEADER(CTX_VALUE(context), target);
+        Reset_Val_Header(CTX_VALUE(context), target);
         CTX_SPEC(context) = NULL;
         CTX_BODY(context) = NULL; */
         Init_Any_Context(out, kind, context);
@@ -472,7 +472,7 @@ REBINT PD_Context(REBPVS *pvs)
         // with the behavior of GET-WORD!
         //
         if (IS_GET_PATH(pvs->orig) && IS_END(pvs->item + 1)) {
-            SET_VOID(pvs->store);
+            Init_Void(pvs->store);
             return PE_USE_STORE;
         }
         fail (Error_Bad_Path_Select(pvs));
@@ -484,7 +484,7 @@ REBINT PD_Context(REBPVS *pvs)
     if (pvs->opt_setval && IS_END(pvs->item + 1)) {
         FAIL_IF_READ_ONLY_CONTEXT(c);
 
-        if (GET_VAL_FLAG(CTX_VAR(c, n), VALUE_FLAG_PROTECTED))
+        if (Get_Val_Flag(CTX_VAR(c, n), VALUE_FLAG_PROTECTED))
             fail (Error_Protected_Word_Raw(pvs->selector));
     }
 
@@ -589,7 +589,7 @@ REBNATIVE(set_meta)
 REBCTX *Copy_Context_Core(REBCTX *original, REBOOL deep, REBU64 types)
 {
     REBARR *varlist = Copy_Array_Shallow(CTX_VARLIST(original), SPECIFIED);
-    SET_SER_FLAG(varlist, ARRAY_FLAG_VARLIST);
+    Set_Ser_Flag(varlist, ARRAY_FLAG_VARLIST);
 
     // The type information and fields in the rootvar (at head of the varlist)
     // are filled in because it's a copy, but the varlist needs to be updated
@@ -640,7 +640,7 @@ REBTYPE(Context)
     case SYM_LENGTH:
         if (!IS_OBJECT(value))
             fail (Error_Illegal_Action(VAL_TYPE(value), action));
-        SET_INTEGER(D_OUT, CTX_LEN(VAL_CONTEXT(value)));
+        Init_Integer(D_OUT, CTX_LEN(VAL_CONTEXT(value)));
         return R_OUT;
 
     case SYM_COPY: { // Note: words are not copied and bindings not changed!
@@ -734,7 +734,7 @@ REBTYPE(Context)
 
     case SYM_TAIL_Q:
         if (IS_OBJECT(value)) {
-            SET_LOGIC(D_OUT, LOGICAL(CTX_LEN(VAL_CONTEXT(value)) == 0));
+            Init_Logic(D_OUT, LOGICAL(CTX_LEN(VAL_CONTEXT(value)) == 0));
             return R_OUT;
         }
         fail (Error_Illegal_Action(VAL_TYPE(value), action));

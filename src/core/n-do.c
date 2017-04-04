@@ -312,7 +312,7 @@ REBNATIVE(do_all)
     // Holds either an error value that is raised, or the thrown value.
     //
     DECLARE_LOCAL (arg_or_error);
-    SET_END(arg_or_error);
+    Init_End(arg_or_error);
     PUSH_GUARD_VALUE(arg_or_error);
 
     // If arg_or_error is not end, but thrown_name is an end, a throw tried
@@ -320,7 +320,7 @@ REBNATIVE(do_all)
     // arg_or_error is also not, it is an error which tried to propagate.
     //
     DECLARE_LOCAL (thrown_name);
-    SET_END(thrown_name);
+    Init_End(thrown_name);
     PUSH_GUARD_VALUE(thrown_name);
 
     REBFRM f;
@@ -367,7 +367,7 @@ repush:
         goto repush;
     }
 
-    SET_VOID(D_OUT); // default return result of DO-ALL []
+    Init_Void(D_OUT); // default return result of DO-ALL []
 
     while (NOT_END(f.value)) {
         if (IS_BAR(f.value)) {
@@ -385,7 +385,7 @@ repush:
             // frame--as that's not generically possible unless you skip to
             // the next BAR!, as this routine does.
             //
-            SET_VOID(D_OUT);
+            Init_Void(D_OUT);
             Fetch_Next_In_Frame(&f);
             continue;
         }

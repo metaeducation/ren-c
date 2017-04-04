@@ -52,7 +52,7 @@ void MAKE_Datatype(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg) {
     if (sym == SYM_0 || sym > SYM_FROM_KIND(REB_MAX))
         fail (Error_Bad_Make(kind, arg));
 
-    VAL_RESET_HEADER(out, REB_DATATYPE);
+    Reset_Val_Header(out, REB_DATATYPE);
     VAL_TYPE_KIND(out) = KIND_FROM_SYM(sym);
     VAL_TYPE_SPEC(out) = 0;
 }
@@ -106,7 +106,7 @@ REBTYPE(Datatype)
             );
 
             for (; NOT_END(var); ++var, ++key) {
-                if (IS_END(value)) SET_BLANK(var);
+                if (IS_END(value)) Init_Blank(var);
                 else {
                     // typespec array does not contain relative values
                     //

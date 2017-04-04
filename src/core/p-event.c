@@ -91,7 +91,7 @@ REBVAL *Append_Event(void)
     TERM_ARRAY_LEN(VAL_ARRAY(state), VAL_LEN_HEAD(state) + 1);
 
     REBVAL *value = SINK(ARR_LAST(VAL_ARRAY(state)));
-    SET_BLANK(value);
+    Init_Blank(value);
 
     return value;
 }
@@ -194,7 +194,7 @@ act_blk:
         break;
 
     case SYM_LENGTH:
-        SET_INTEGER(D_OUT, VAL_LEN_HEAD(state));
+        Init_Integer(D_OUT, VAL_LEN_HEAD(state));
         break;
 
     case SYM_OPEN: {

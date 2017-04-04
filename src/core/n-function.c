@@ -188,7 +188,7 @@ REBNATIVE(exit)
     UNUSED(REF(with)); // implied by non-void value
 
     if (NOT(REF(from)))
-        SET_INTEGER(ARG(level), 1); // default--exit one function stack level
+        Init_Integer(ARG(level), 1); // default--exit one function stack level
 
     Make_Thrown_Exit_Value(D_OUT, ARG(level), ARG(value), frame_);
 
@@ -285,7 +285,7 @@ REBNATIVE(typechecker)
     REBARR *paramlist = Make_Array_Core(2, ARRAY_FLAG_PARAMLIST);
 
     REBVAL *archetype = Alloc_Tail_Array(paramlist);
-    VAL_RESET_HEADER(archetype, REB_FUNCTION);
+    Reset_Val_Header(archetype, REB_FUNCTION);
     archetype->payload.function.paramlist = paramlist;
     archetype->extra.binding = NULL;
 
@@ -404,7 +404,7 @@ REBNATIVE(chain)
         VAL_FUNC_PARAMLIST(ARR_HEAD(chainees)), SPECIFIED
     );
     ARR_HEAD(paramlist)->payload.function.paramlist = paramlist;
-    SET_SER_FLAG(paramlist, ARRAY_FLAG_PARAMLIST);
+    Set_Ser_Flag(paramlist, ARRAY_FLAG_PARAMLIST);
     MANAGE_ARRAY(paramlist);
 
     // See %sysobj.r for `chained-meta:` object template
@@ -412,14 +412,14 @@ REBNATIVE(chain)
     REBVAL *std_meta = Get_System(SYS_STANDARD, STD_CHAINED_META);
     REBCTX *meta = Copy_Context_Shallow(VAL_CONTEXT(std_meta));
 
-    SET_VOID(CTX_VAR(meta, STD_CHAINED_META_DESCRIPTION)); // default
+    Init_Void(CTX_VAR(meta, STD_CHAINED_META_DESCRIPTION)); // default
     Init_Block(CTX_VAR(meta, STD_CHAINED_META_CHAINEES), chainees);
     //
     // !!! There could be a system for preserving names in the chain, by
     // accepting lit-words instead of functions--or even by reading the
     // GET-WORD!s in the block.  Consider for the future.
     //
-    SET_VOID(CTX_VAR(meta, STD_CHAINED_META_CHAINEE_NAMES));
+    Init_Void(CTX_VAR(meta, STD_CHAINED_META_CHAINEE_NAMES));
 
     MANAGE_ARRAY(CTX_VARLIST(meta));
     AS_SERIES(paramlist)->link.meta = meta;
@@ -496,7 +496,7 @@ REBNATIVE(adapt)
         VAL_FUNC_PARAMLIST(adaptee), SPECIFIED
     );
     ARR_HEAD(paramlist)->payload.function.paramlist = paramlist;
-    SET_SER_FLAG(paramlist, ARRAY_FLAG_PARAMLIST);
+    Set_Ser_Flag(paramlist, ARRAY_FLAG_PARAMLIST);
     MANAGE_ARRAY(paramlist);
 
     // See %sysobj.r for `adapted-meta:` object template
@@ -504,10 +504,10 @@ REBNATIVE(adapt)
     REBVAL *example = Get_System(SYS_STANDARD, STD_ADAPTED_META);
 
     REBCTX *meta = Copy_Context_Shallow(VAL_CONTEXT(example));
-    SET_VOID(CTX_VAR(meta, STD_ADAPTED_META_DESCRIPTION)); // default
+    Init_Void(CTX_VAR(meta, STD_ADAPTED_META_DESCRIPTION)); // default
     Move_Value(CTX_VAR(meta, STD_ADAPTED_META_ADAPTEE), adaptee);
     if (opt_adaptee_name == NULL)
-        SET_VOID(CTX_VAR(meta, STD_ADAPTED_META_ADAPTEE_NAME));
+        Init_Void(CTX_VAR(meta, STD_ADAPTED_META_ADAPTEE_NAME));
     else
         Init_Word(
             CTX_VAR(meta, STD_ADAPTED_META_ADAPTEE_NAME),
@@ -532,7 +532,7 @@ REBNATIVE(adapt)
     REBARR *adaptation = Make_Array(2);
 
     REBVAL *block = Alloc_Tail_Array(adaptation);
-    VAL_RESET_HEADER_EXTRA(block, REB_BLOCK, VALUE_FLAG_RELATIVE);
+    Reset_Val_Header_Core(block, REB_BLOCK, VALUE_FLAG_RELATIVE);
     INIT_VAL_ARRAY(block, prelude);
     VAL_INDEX(block) = 0;
     INIT_RELATIVE(block, underlying);
@@ -540,7 +540,7 @@ REBNATIVE(adapt)
     Append_Value(adaptation, adaptee);
 
     RELVAL *body = FUNC_BODY(fun);
-    VAL_RESET_HEADER_EXTRA(body, REB_BLOCK, VALUE_FLAG_RELATIVE);
+    Reset_Val_Header_Core(body, REB_BLOCK, VALUE_FLAG_RELATIVE);
     INIT_VAL_ARRAY(body, adaptation);
     VAL_INDEX(body) = 0;
     INIT_RELATIVE(body, underlying);
@@ -669,7 +669,7 @@ REBNATIVE(variadic_q)
 
     REBVAL *param = VAL_FUNC_PARAMS_HEAD(ARG(func));
     for (; NOT_END(param); ++param) {
-        if (GET_VAL_FLAG(param, TYPESET_FLAG_VARIADIC))
+        if (Get_Val_Flag(param, TYPESET_FLAG_VARIADIC))
             return R_TRUE;
     }
 
@@ -710,7 +710,7 @@ REBNATIVE(tighten)
         FUNC_PARAMLIST(original),
         SPECIFIED // no relative values in parameter lists
     );
-    SET_SER_FLAG(paramlist, ARRAY_FLAG_PARAMLIST); // flags not auto-copied
+    Set_Ser_Flag(paramlist, ARRAY_FLAG_PARAMLIST); // flags not auto-copied
 
     RELVAL *param = ARR_AT(paramlist, 1); // first parameter (0 is FUNCTION!)
     for (; NOT_END(param); ++param) {
@@ -720,7 +720,7 @@ REBNATIVE(tighten)
     }
 
     RELVAL *rootparam = ARR_HEAD(paramlist);
-    CLEAR_VAL_FLAGS(rootparam, FUNC_FLAG_CACHED_MASK);
+    Clear_Val_Flags(rootparam, FUNC_FLAG_CACHED_MASK);
     rootparam->payload.function.paramlist = paramlist;
     rootparam->extra.binding = NULL;
 

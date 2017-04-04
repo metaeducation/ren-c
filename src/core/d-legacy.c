@@ -68,7 +68,7 @@ REBOOL In_Legacy_Function_Debug(void)
 
     // Check the flag on the source series
     //
-    if (GET_SER_INFO(frame->source.array, SERIES_INFO_LEGACY_DEBUG))
+    if (Get_Ser_Info(frame->source.array, SERIES_INFO_LEGACY_DEBUG))
         return TRUE;
 
     return FALSE;
@@ -103,7 +103,7 @@ void Legacy_Convert_Function_Args(REBFRM *f)
                 if (VAL_LOGIC(arg))
                     set_blank = FALSE;
                 else {
-                    SET_BLANK(arg);
+                    Init_Blank(arg);
                     set_blank = TRUE;
                 }
             }
@@ -124,7 +124,7 @@ void Legacy_Convert_Function_Args(REBFRM *f)
         case PARAM_CLASS_SOFT_QUOTE:
             if (set_blank) {
                 assert(IS_VOID(arg));
-                SET_BLANK(arg);
+                Init_Blank(arg);
             }
             break;
 
@@ -181,7 +181,7 @@ REBCTX *Make_Guarded_Arg123_Error(void)
             ALL_64,
             Canon(cast(REBSYM, cast(REBCNT, SYM_ARG1) + n))
         );
-        SET_BLANK(var);
+        Init_Blank(var);
     }
 
     MANAGE_ARRAY(CTX_VARLIST(error));

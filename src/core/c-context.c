@@ -87,7 +87,7 @@ REBCTX *Alloc_Context(enum Reb_Kind kind, REBCNT capacity)
     // are building which contains this context.
 
     REBVAL *rootvar = Alloc_Tail_Array(varlist);
-    VAL_RESET_HEADER(rootvar, kind);
+    Reset_Val_Header(rootvar, kind);
     rootvar->payload.any_context.varlist = varlist;
     rootvar->payload.any_context.phase = NULL;
     rootvar->extra.binding = NULL;
@@ -98,7 +98,7 @@ REBCTX *Alloc_Context(enum Reb_Kind kind, REBCNT capacity)
         capacity + 1, // size + room for ROOTKEY
         0 // No keylist flag, but we don't want line numbers
     );
-    SET_BLANK(Alloc_Tail_Array(keylist));
+    Init_Blank(Alloc_Tail_Array(keylist));
     AS_SERIES(keylist)->link.meta = NULL; // GC sees meta object, must init
 
     // varlists link keylists via REBSER.misc field, sharable hence managed
@@ -121,9 +121,9 @@ REBOOL Expand_Context_Keylist_Core(REBCTX *context, REBCNT delta)
 
     // can't expand or unshare a FRAME!'s list
     //
-    assert(NOT_SER_FLAG(keylist, ARRAY_FLAG_PARAMLIST));
+    assert(Not_Ser_Flag(keylist, ARRAY_FLAG_PARAMLIST));
 
-    if (GET_SER_INFO(keylist, SERIES_INFO_SHARED_KEYLIST)) {
+    if (Get_Ser_Info(keylist, SERIES_INFO_SHARED_KEYLIST)) {
         //
         // INIT_CTX_KEYLIST_SHARED was used to set the flag that indicates
         // this keylist is shared with one or more other contexts.  Can't
@@ -215,7 +215,7 @@ REBVAL *Append_Context(
     //
     EXPAND_SERIES_TAIL(AS_SERIES(CTX_VARLIST(context)), 1);
     REBVAL *value = SINK(ARR_LAST(CTX_VARLIST(context)));
-    SET_VOID(value);
+    Init_Void(value);
     TERM_ARRAY_LEN(CTX_VARLIST(context), ARR_LEN(CTX_VARLIST(context)));
 
     if (opt_any_word) {
@@ -231,8 +231,8 @@ REBVAL *Append_Context(
         // for stack-relative bindings, the index will be negative and the
         // target will be a function's PARAMLIST series.
         //
-        assert(NOT_VAL_FLAG(opt_any_word, VALUE_FLAG_RELATIVE));
-        SET_VAL_FLAG(opt_any_word, WORD_FLAG_BOUND);
+        assert(Not_Val_Flag(opt_any_word, VALUE_FLAG_RELATIVE));
+        Set_Val_Flag(opt_any_word, WORD_FLAG_BOUND);
         INIT_WORD_CONTEXT(opt_any_word, context);
         INIT_WORD_INDEX(opt_any_word, len); // length we just bumped
     }
@@ -254,7 +254,7 @@ REBVAL *Append_Context(
 // the same keylist will be used.
 //
 REBCTX *Copy_Context_Shallow_Extra(REBCTX *src, REBCNT extra) {
-    assert(GET_SER_FLAG(CTX_VARLIST(src), ARRAY_FLAG_VARLIST));
+    assert(Get_Ser_Flag(CTX_VARLIST(src), ARRAY_FLAG_VARLIST));
     ASSERT_ARRAY_MANAGED(CTX_KEYLIST(src));
 
     REBCTX *meta = CTX_META(src); // preserve meta object (if any)
@@ -266,7 +266,7 @@ REBCTX *Copy_Context_Shallow_Extra(REBCTX *src, REBCNT extra) {
     REBCTX *dest;
     if (extra == 0) {
         REBARR *varlist = Copy_Array_Shallow(CTX_VARLIST(src), SPECIFIED);
-        SET_SER_FLAG(varlist, ARRAY_FLAG_VARLIST);
+        Set_Ser_Flag(varlist, ARRAY_FLAG_VARLIST);
 
         dest = AS_CONTEXT(varlist);
         INIT_CTX_KEYLIST_SHARED(dest, CTX_KEYLIST(src));
@@ -278,7 +278,7 @@ REBCTX *Copy_Context_Shallow_Extra(REBCTX *src, REBCNT extra) {
         REBARR *varlist = Copy_Array_Extra_Shallow(
             CTX_VARLIST(src), SPECIFIED, extra
         );
-        SET_SER_FLAG(varlist, ARRAY_FLAG_VARLIST);
+        Set_Ser_Flag(varlist, ARRAY_FLAG_VARLIST);
 
         dest = AS_CONTEXT(varlist);
         INIT_CTX_KEYLIST_UNIQUE(dest, keylist);
@@ -597,7 +597,7 @@ REBARR *Collect_Keylist_Managed(
             // !!! See notes on the flags about why SELF is set hidden but
             // not unbindable with TYPESET_FLAG_UNBINDABLE.
             //
-            SET_VAL_FLAG(self_key, TYPESET_FLAG_HIDDEN);
+            Set_Val_Flag(self_key, TYPESET_FLAG_HIDDEN);
 
             Add_Binder_Index(&binder, VAL_KEY_CANON(self_key), 1);
             *self_index_out = 1;
@@ -626,7 +626,7 @@ REBARR *Collect_Keylist_Managed(
     // !!! Usages of the rootkey for non-FRAME! contexts is open for future.
     //
     REBARR *keylist = Grab_Collected_Keylist_Managed(prior);
-    SET_BLANK(ARR_HEAD(keylist));
+    Init_Blank(ARR_HEAD(keylist));
 
     Collect_Keys_End(&binder);
 
@@ -774,7 +774,7 @@ REBCTX *Make_Selfish_Context_Detect(
     // context[0] is an instance value of the OBJECT!/PORT!/ERROR!/MODULE!
     //
     REBVAL *var = KNOWN(ARR_HEAD(varlist));
-    VAL_RESET_HEADER(var, kind);
+    Reset_Val_Header(var, kind);
     var->payload.any_context.varlist = varlist;
     var->payload.any_context.phase = NULL;
     var->extra.binding = binding;
@@ -785,7 +785,7 @@ REBCTX *Make_Selfish_Context_Detect(
     // blanks.  Also the filling of parent vars will overwrite the work here.
     //
     for (; len > 1; --len, ++var) // 1 is rootvar (context), already done
-        SET_BLANK(var);
+        Init_Blank(var);
 
     if (opt_parent) {
         //
@@ -930,11 +930,11 @@ REBARR *Context_To_Array(REBCTX *context, REBINT mode)
     //
     // !!! This should not be done like this...review
     //
-    SET_SER_FLAG(block, ARRAY_FLAG_VOIDS_LEGAL);
+    Set_Ser_Flag(block, ARRAY_FLAG_VOIDS_LEGAL);
 
     n = 1;
     for (; NOT_END(key); n++, key++, var++) {
-        if (NOT_VAL_FLAG(key, TYPESET_FLAG_HIDDEN)) {
+        if (Not_Val_Flag(key, TYPESET_FLAG_HIDDEN)) {
             if (mode & 1) {
                 REBVAL *value = Alloc_Tail_Array(block);
                 Init_Any_Word_Bound(
@@ -945,7 +945,7 @@ REBARR *Context_To_Array(REBCTX *context, REBINT mode)
                     n
                 );
                 if (mode & 2)
-                    SET_VAL_FLAG(value, VALUE_FLAG_LINE);
+                    Set_Val_Flag(value, VALUE_FLAG_LINE);
             }
             if (mode & 2) {
                 Append_Value(block, var);
@@ -999,7 +999,7 @@ REBCTX *Merge_Contexts_Selfish(REBCTX *parent1, REBCTX *parent2)
     //
     REBARR *keylist = Copy_Array_Shallow(BUF_COLLECT, SPECIFIED);
     MANAGE_ARRAY(keylist);
-    SET_BLANK(ARR_HEAD(keylist)); // Currently no rootkey usage
+    Init_Blank(ARR_HEAD(keylist)); // Currently no rootkey usage
     AS_SERIES(keylist)->link.meta = NULL;
 
     REBARR *varlist = Make_Array_Core(ARR_LEN(keylist), ARRAY_FLAG_VARLIST);
@@ -1012,7 +1012,7 @@ REBCTX *Merge_Contexts_Selfish(REBCTX *parent1, REBCTX *parent2)
     // so review consequences.
     //
     REBVAL *rootvar = SINK(ARR_HEAD(varlist));
-    VAL_RESET_HEADER(rootvar, CTX_TYPE(parent1));
+    Reset_Val_Header(rootvar, CTX_TYPE(parent1));
     rootvar->payload.any_context.varlist = varlist;
     rootvar->payload.any_context.phase = NULL;
     rootvar->extra.binding = NULL;
@@ -1171,18 +1171,18 @@ void Resolve_Context(
         if (m != 0) {
             // "the remove succeeded, so it's marked as set now" (old comment)
             if (
-                NOT_VAL_FLAG(var, VALUE_FLAG_PROTECTED)
+                Not_Val_Flag(var, VALUE_FLAG_PROTECTED)
                 && (all || IS_VOID(var))
             ) {
-                if (m < 0) SET_VOID(var); // no value in source context
+                if (m < 0) Init_Void(var); // no value in source context
                 else {
                     Move_Value(var, CTX_VAR(source, m));
 
                     // Need to also copy if the binding is lookahead (e.g.
                     // would be an infix call).
                     //
-                    if (GET_VAL_FLAG(CTX_VAR(source, m), VALUE_FLAG_ENFIXED))
-                        SET_VAL_FLAG(var, VALUE_FLAG_ENFIXED);
+                    if (Get_Val_Flag(CTX_VAR(source, m), VALUE_FLAG_ENFIXED))
+                        Set_Val_Flag(var, VALUE_FLAG_ENFIXED);
                 }
             }
         }
@@ -1203,8 +1203,8 @@ void Resolve_Context(
                 // Need to also copy if the binding is lookahead (e.g.
                 // would be an infix call).
                 //
-                if (GET_VAL_FLAG(CTX_VAR(source, n), VALUE_FLAG_ENFIXED))
-                    SET_VAL_FLAG(var, VALUE_FLAG_ENFIXED);
+                if (Get_Val_Flag(CTX_VAR(source, n), VALUE_FLAG_ENFIXED))
+                    Set_Val_Flag(var, VALUE_FLAG_ENFIXED);
             }
         }
     }
@@ -1244,7 +1244,7 @@ void Resolve_Context(
 //
 REBCNT Find_Canon_In_Context(REBCTX *context, REBSTR *canon, REBOOL always)
 {
-    assert(GET_SER_INFO(canon, STRING_INFO_CANON));
+    assert(Get_Ser_Info(canon, STRING_INFO_CANON));
 
     REBVAL *key = CTX_KEYS_HEAD(context);
     REBCNT len = CTX_LEN(context);
@@ -1252,7 +1252,7 @@ REBCNT Find_Canon_In_Context(REBCTX *context, REBSTR *canon, REBOOL always)
     REBCNT n;
     for (n = 1; n <= len; n++, key++) {
         if (canon == VAL_KEY_CANON(key))
-            return (!always && GET_VAL_FLAG(key, TYPESET_FLAG_HIDDEN)) ? 0 : n;
+            return (!always && Get_Val_Flag(key, TYPESET_FLAG_HIDDEN)) ? 0 : n;
     }
 
     // !!! Should this be changed to NOT_FOUND?
@@ -1336,7 +1336,7 @@ void Assert_Context_Core(REBCTX *c)
 {
     REBARR *varlist = CTX_VARLIST(c);
 
-    if (NOT_SER_FLAG(varlist, ARRAY_FLAG_VARLIST))
+    if (Not_Ser_Flag(varlist, ARRAY_FLAG_VARLIST))
         panic (varlist);
 
     REBARR *keylist = CTX_KEYLIST(c);
@@ -1344,7 +1344,7 @@ void Assert_Context_Core(REBCTX *c)
     if (!CTX_KEYLIST(c))
         panic (c);
 
-    if (GET_SER_FLAG(keylist, CONTEXT_FLAG_STACK))
+    if (Get_Ser_Flag(keylist, CONTEXT_FLAG_STACK))
         panic (keylist);
 
     REBVAL *rootvar = CTX_VALUE(c);
@@ -1357,7 +1357,7 @@ void Assert_Context_Core(REBCTX *c)
     if (keys_len < 1)
         panic (keylist);
 
-    if (GET_SER_FLAG(CTX_VARLIST(c), CONTEXT_FLAG_STACK)) {
+    if (Get_Ser_Flag(CTX_VARLIST(c), CONTEXT_FLAG_STACK)) {
         if (vars_len != 1)
             panic (varlist);
     }

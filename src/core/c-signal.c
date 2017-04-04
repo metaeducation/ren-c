@@ -159,7 +159,7 @@ REBOOL Do_Signals_Throws(REBVAL *out)
         if (NOT(IS_VOID(out)))
             fail ("Interrupt-based debug session used RESUME/WITH");
 
-        SET_END(out);
+        Init_End(out);
         return FALSE;
     }
 

@@ -59,7 +59,7 @@ static void str_to_char(REBVAL *out, REBVAL *val, REBCNT idx)
 {
     // Note: out may equal val, do assignment in two steps
     REBUNI codepoint = GET_ANY_CHAR(VAL_SERIES(val), idx);
-    SET_CHAR(out, codepoint);
+    Init_Char(out, codepoint);
 }
 
 
@@ -606,9 +606,9 @@ REBINT PD_String(REBPVS *pvs)
     if (!pvs->opt_setval) {
         if (n < 0 || (REBCNT)n >= SER_LEN(ser)) return PE_NONE;
         if (IS_BINARY(pvs->value)) {
-            SET_INTEGER(pvs->store, *BIN_AT(ser, n));
+            Init_Integer(pvs->store, *BIN_AT(ser, n));
         } else {
-            SET_CHAR(pvs->store, GET_ANY_CHAR(ser, n));
+            Init_Char(pvs->store, GET_ANY_CHAR(ser, n));
         }
         return PE_USE_STORE;
     }
@@ -895,7 +895,7 @@ REBTYPE(String)
             ret++;
             if (ret >= (REBCNT)tail) return R_BLANK;
             if (IS_BINARY(value)) {
-                SET_INTEGER(value, *BIN_AT(VAL_SERIES(value), ret));
+                Init_Integer(value, *BIN_AT(VAL_SERIES(value), ret));
             }
             else
                 str_to_char(value, value, ret);
@@ -916,7 +916,7 @@ REBTYPE(String)
         }
         if (action == SYM_PICK_P) {
             if (IS_BINARY(value)) {
-                SET_INTEGER(D_OUT, *VAL_BIN_AT_HEAD(value, index));
+                Init_Integer(D_OUT, *VAL_BIN_AT_HEAD(value, index));
             }
             else
                 str_to_char(D_OUT, value, index);
@@ -987,7 +987,7 @@ REBTYPE(String)
         //
         if (NOT(REF(part))) {
             if (IS_BINARY(value)) {
-                SET_INTEGER(value, *VAL_BIN_AT_HEAD(value, index));
+                Init_Integer(value, *VAL_BIN_AT_HEAD(value, index));
             } else
                 str_to_char(value, value, index);
         }
@@ -1248,7 +1248,7 @@ REBTYPE(String)
                 return R_BLANK;
             index += (REBCNT)Random_Int(REF(secure)) % (tail - index);
             if (IS_BINARY(value)) { // same as PICK
-                SET_INTEGER(D_OUT, *VAL_BIN_AT_HEAD(value, index));
+                Init_Integer(D_OUT, *VAL_BIN_AT_HEAD(value, index));
             }
             else
                 str_to_char(D_OUT, value, index);

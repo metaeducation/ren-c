@@ -125,7 +125,7 @@ void MAKE_Array(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg) {
         );
 
         // !!! Previously this code would clear line break options on path
-        // elements, using `CLEAR_VAL_FLAG(..., VALUE_FLAG_LINE)`.  But if
+        // elements, using `Clear_Val_Flag(..., VALUE_FLAG_LINE)`.  But if
         // arrays are allowed to alias each others contents, the aliasing
         // via MAKE shouldn't modify the store.  Line marker filtering out of
         // paths should be part of the MOLDing logic -or- a path with embedded
@@ -593,7 +593,7 @@ RELVAL *Pick_Block(REBVAL *out, const REBVAL *block, const REBVAL *selector)
     n = Get_Num_From_Arg(selector);
     n += VAL_INDEX(block) - 1;
     if (n < 0 || cast(REBCNT, n) >= VAL_LEN_HEAD(block)) {
-        SET_VOID(out);
+        Init_Void(out);
         return NULL;
     }
     else {
@@ -808,7 +808,7 @@ REBTYPE(Array)
         if (index < VAL_LEN_HEAD(value)) {
             if (index == 0) Reset_Array(array);
             else {
-                SET_END(ARR_AT(array, index));
+                Init_End(ARR_AT(array, index));
                 SET_SERIES_LEN(VAL_SERIES(value), cast(REBCNT, index));
             }
         }
@@ -988,7 +988,7 @@ REBTYPE(Array)
             if (index >= VAL_LEN_HEAD(value))
                 return R_BLANK;
 
-            SET_INTEGER(
+            Init_Integer(
                 ARG(seed),
                 1 + (Random_Int(REF(secure)) % (VAL_LEN_HEAD(value) - index))
             );
@@ -1035,7 +1035,7 @@ void Assert_Array_Core(REBARR *a)
     //
     Assert_Series_Core(AS_SERIES(a));
 
-    if (NOT(GET_SER_FLAG(a, SERIES_FLAG_ARRAY)))
+    if (NOT(Get_Ser_Flag(a, SERIES_FLAG_ARRAY)))
         panic (a);
 
     RELVAL *item = ARR_HEAD(a);
@@ -1050,7 +1050,7 @@ void Assert_Array_Core(REBARR *a)
     if (NOT_END(item))
         panic (item);
 
-    if (GET_SER_INFO(a, SERIES_INFO_HAS_DYNAMIC)) {
+    if (Get_Ser_Info(a, SERIES_INFO_HAS_DYNAMIC)) {
         REBCNT rest = SER_REST(AS_SERIES(a));
 
         assert(rest > 0 && rest > i);

@@ -181,7 +181,7 @@ REBNATIVE(recycle)
         count = Recycle();
     }
 
-    SET_INTEGER(D_OUT, count);
+    Init_Integer(D_OUT, count);
     return R_OUT;
 }
 
@@ -211,13 +211,13 @@ REBNATIVE(stats)
 
     if (REF(timer)) {
         VAL_TIME(D_OUT) = OS_DELTA_TIME(PG_Boot_Time, 0) * 1000;
-        VAL_RESET_HEADER(D_OUT, REB_TIME);
+        Reset_Val_Header(D_OUT, REB_TIME);
         return R_OUT;
     }
 
     if (REF(evals)) {
         REBI64 n = Eval_Cycles + Eval_Dose - Eval_Count;
-        SET_INTEGER(D_OUT, n);
+        Init_Integer(D_OUT, n);
         return R_OUT;
     }
 
@@ -235,32 +235,32 @@ REBNATIVE(stats)
             REBVAL *stats = VAL_CONTEXT_VAR(D_OUT, 1);
 
             VAL_TIME(stats) = OS_DELTA_TIME(PG_Boot_Time, 0) * 1000;
-            VAL_RESET_HEADER(stats, REB_TIME);
+            Reset_Val_Header(stats, REB_TIME);
             stats++;
-            SET_INTEGER(stats, Eval_Cycles + Eval_Dose - Eval_Count);
+            Init_Integer(stats, Eval_Cycles + Eval_Dose - Eval_Count);
             stats++;
-            SET_INTEGER(stats, 0); // no such thing as natives, only functions
+            Init_Integer(stats, 0); // no such thing as natives, only functions
             stats++;
-            SET_INTEGER(stats, Eval_Functions);
+            Init_Integer(stats, Eval_Functions);
 
             stats++;
-            SET_INTEGER(stats, PG_Reb_Stats->Series_Made);
+            Init_Integer(stats, PG_Reb_Stats->Series_Made);
             stats++;
-            SET_INTEGER(stats, PG_Reb_Stats->Series_Freed);
+            Init_Integer(stats, PG_Reb_Stats->Series_Freed);
             stats++;
-            SET_INTEGER(stats, PG_Reb_Stats->Series_Expanded);
+            Init_Integer(stats, PG_Reb_Stats->Series_Expanded);
             stats++;
-            SET_INTEGER(stats, PG_Reb_Stats->Series_Memory);
+            Init_Integer(stats, PG_Reb_Stats->Series_Memory);
             stats++;
-            SET_INTEGER(stats, PG_Reb_Stats->Recycle_Series_Total);
+            Init_Integer(stats, PG_Reb_Stats->Recycle_Series_Total);
 
             stats++;
-            SET_INTEGER(stats, PG_Reb_Stats->Blocks);
+            Init_Integer(stats, PG_Reb_Stats->Blocks);
             stats++;
-            SET_INTEGER(stats, PG_Reb_Stats->Objects);
+            Init_Integer(stats, PG_Reb_Stats->Objects);
 
             stats++;
-            SET_INTEGER(stats, PG_Reb_Stats->Recycle_Counter);
+            Init_Integer(stats, PG_Reb_Stats->Recycle_Counter);
         }
 
         return R_OUT;
@@ -272,7 +272,7 @@ REBNATIVE(stats)
         return R_BLANK;
     }
 
-    SET_INTEGER(D_OUT, Inspect_Series(REF(show)));
+    Init_Integer(D_OUT, Inspect_Series(REF(show)));
 
     if (REF(show))
         Dump_Pools();

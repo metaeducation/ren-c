@@ -117,7 +117,7 @@
     inline REBSER *AS_SERIES(void *p) {
         REBNOD *n = cast(REBNOD*, p);
         assert(
-            n->header.bits & NODE_FLAG_VALID // GET_SER_FLAG would recurse!
+            n->header.bits & NODE_FLAG_VALID // Get_Ser_Flag would recurse!
             && NOT(n->header.bits & NODE_FLAG_CELL)
             && NOT(n->header.bits & NODE_FLAG_END)
         );
@@ -127,7 +127,7 @@
     template <>
     inline REBSER *AS_SERIES(REBNOD *n) {
         assert(
-            n->header.bits & NODE_FLAG_VALID // GET_SER_FLAG would recurse!
+            n->header.bits & NODE_FLAG_VALID // Get_Ser_Flag would recurse!
             && NOT(n->header.bits & NODE_FLAG_CELL)
             && NOT(n->header.bits & NODE_FLAG_END)
         );
@@ -155,46 +155,46 @@
 // Series header FLAGs (distinct from INFO bits)
 //
 
-#define SET_SER_FLAG(s,f) \
+#define Set_Ser_Flag(s,f) \
     cast(void, (AS_SERIES(s)->header.bits |= cast(REBUPT, (f))))
 
-#define CLEAR_SER_FLAG(s,f) \
+#define Clear_Ser_Flag(s,f) \
     cast(void, (AS_SERIES(s)->header.bits &= ~cast(REBUPT, (f))))
 
-#define GET_SER_FLAG(s,f) \
+#define Get_Ser_Flag(s,f) \
     LOGICAL(AS_SERIES(s)->header.bits & (f))
 
-#define NOT_SER_FLAG(s,f) \
+#define Not_Ser_Flag(s,f) \
     NOT(AS_SERIES(s)->header.bits & (f))
 
-#define SET_SER_FLAGS(s,f) \
-    SET_SER_FLAG((s), (f))
+#define Set_Ser_Flags(s,f) \
+    Set_Ser_Flag((s), (f))
 
-#define CLEAR_SER_FLAGS(s,f) \
-    CLEAR_SER_FLAG((s), (f))
+#define Clear_Ser_Flags(s,f) \
+    Clear_Ser_Flag((s), (f))
 
 
 //
 // Series INFO bits (distinct from header FLAGs)
 //
 
-#define SET_SER_INFO(s,f) \
+#define Set_Ser_Info(s,f) \
     cast(void, (AS_SERIES(s)->info.bits |= cast(REBUPT, f)))
 
-#define CLEAR_SER_INFO(s,f) \
+#define Clear_Ser_Info(s,f) \
     cast(void, (AS_SERIES(s)->info.bits &= ~cast(REBUPT, f)))
 
-#define GET_SER_INFO(s,f) \
+#define Get_Ser_Info(s,f) \
     LOGICAL(AS_SERIES(s)->info.bits & (f))
 
-#define NOT_SER_INFO(s,f) \
+#define Not_Ser_Info(s,f) \
     NOT(AS_SERIES(s)->info.bits & (f))
 
-#define SET_SER_INFOS(s,f) \
-    SET_SER_INFO((s), (f))
+#define Set_Ser_Infos(s,f) \
+    Set_Ser_Info((s), (f))
 
-#define CLEAR_SER_INFOS(s,f) \
-    CLEAR_SER_INFO((s), (f))
+#define Clear_Ser_Infos(s,f) \
+    Clear_Ser_Info((s), (f))
 
 
 //
@@ -212,15 +212,15 @@
     RIGHT_8_BITS((s)->info.bits) // inlining unnecessary
 
 inline static REBCNT SER_LEN(REBSER *s) {
-    return GET_SER_INFO(s, SERIES_INFO_HAS_DYNAMIC)
+    return Get_Ser_Info(s, SERIES_INFO_HAS_DYNAMIC)
         ? s->content.dynamic.len
         : MID_8_BITS(s->info.bits);
 }
 
 inline static void SET_SERIES_LEN(REBSER *s, REBCNT len) {
-    assert(NOT_SER_FLAG(s, CONTEXT_FLAG_STACK));
+    assert(Not_Ser_Flag(s, CONTEXT_FLAG_STACK));
 
-    if (GET_SER_INFO(s, SERIES_INFO_HAS_DYNAMIC)) {
+    if (Get_Ser_Info(s, SERIES_INFO_HAS_DYNAMIC)) {
         s->content.dynamic.len = len;
     }
     else {
@@ -232,10 +232,10 @@ inline static void SET_SERIES_LEN(REBSER *s, REBCNT len) {
 }
 
 inline static REBCNT SER_REST(REBSER *s) {
-    if (GET_SER_INFO(s, SERIES_INFO_HAS_DYNAMIC))
+    if (Get_Ser_Info(s, SERIES_INFO_HAS_DYNAMIC))
         return s->content.dynamic.rest;
 
-    if (GET_SER_FLAG(s, SERIES_FLAG_ARRAY))
+    if (Get_Ser_Flag(s, SERIES_FLAG_ARRAY))
         return 2; // includes info bits acting as trick "terminator"
 
     assert(sizeof(s->content) % SER_WIDE(s) == 0);
@@ -248,7 +248,7 @@ inline static REBCNT SER_REST(REBSER *s) {
 //
 inline static REBYTE *SER_DATA_RAW(REBSER *s) {
     // if updating, also update manual inlining in SER_AT_RAW
-    return GET_SER_INFO(s, SERIES_INFO_HAS_DYNAMIC)
+    return Get_Ser_Info(s, SERIES_INFO_HAS_DYNAMIC)
         ? s->content.dynamic.data
         : cast(REBYTE*, &s->content);
 }
@@ -267,7 +267,7 @@ inline static REBYTE *SER_AT_RAW(REBYTE w, REBSER *s, REBCNT i) {
 #endif
 
     return ((w) * (i)) + ( // v-- inlining of SER_DATA_RAW
-        GET_SER_INFO(s, SERIES_INFO_HAS_DYNAMIC)
+        Get_Ser_Info(s, SERIES_INFO_HAS_DYNAMIC)
             ? s->content.dynamic.data
             : cast(REBYTE*, &s->content)
         );
@@ -331,7 +331,7 @@ inline static void EXPAND_SERIES_TAIL(REBSER *s, REBCNT delta) {
 //
 
 inline static void TERM_SEQUENCE(REBSER *s) {
-    assert(NOT_SER_FLAG(s, SERIES_FLAG_ARRAY));
+    assert(Not_Ser_Flag(s, SERIES_FLAG_ARRAY));
     memset(SER_AT_RAW(SER_WIDE(s), s, SER_LEN(s)), 0, SER_WIDE(s));
 }
 
@@ -437,24 +437,24 @@ inline static void ENSURE_SERIES_MANAGED(REBSER *s) {
 //
 
 static inline REBOOL Is_Series_Black(REBSER *s) {
-    return GET_SER_INFO(s, SERIES_INFO_BLACK);
+    return Get_Ser_Info(s, SERIES_INFO_BLACK);
 }
 
 static inline REBOOL Is_Series_White(REBSER *s) {
-    return NOT(GET_SER_INFO(s, SERIES_INFO_BLACK));
+    return NOT(Get_Ser_Info(s, SERIES_INFO_BLACK));
 }
 
 static inline void Flip_Series_To_Black(REBSER *s) {
-    assert(NOT_SER_INFO(s, SERIES_INFO_BLACK));
-    SET_SER_INFO(s, SERIES_INFO_BLACK);
+    assert(Not_Ser_Info(s, SERIES_INFO_BLACK));
+    Set_Ser_Info(s, SERIES_INFO_BLACK);
 #if !defined(NDEBUG)
     ++TG_Num_Black_Series;
 #endif
 }
 
 static inline void Flip_Series_To_White(REBSER *s) {
-    assert(GET_SER_INFO(s, SERIES_INFO_BLACK));
-    CLEAR_SER_INFO(s, SERIES_INFO_BLACK);
+    assert(Get_Ser_Info(s, SERIES_INFO_BLACK));
+    Clear_Ser_Info(s, SERIES_INFO_BLACK);
 #if !defined(NDEBUG)
     --TG_Num_Black_Series;
 #endif
@@ -466,13 +466,13 @@ static inline void Flip_Series_To_White(REBSER *s) {
 //
 
 inline static void Freeze_Sequence(REBSER *s) { // there is no unfreeze!
-    assert(NOT_SER_FLAG(s, SERIES_FLAG_ARRAY)); // use Deep_Freeze_Array
-    SET_SER_INFO(s, SERIES_INFO_FROZEN);
+    assert(Not_Ser_Flag(s, SERIES_FLAG_ARRAY)); // use Deep_Freeze_Array
+    Set_Ser_Info(s, SERIES_INFO_FROZEN);
 }
 
 inline static REBOOL Is_Series_Frozen(REBSER *s) {
-    assert(NOT_SER_FLAG(s, SERIES_FLAG_ARRAY)); // use Is_Array_Deeply_Frozen
-    return GET_SER_INFO(s, SERIES_INFO_FROZEN);
+    assert(Not_Ser_Flag(s, SERIES_FLAG_ARRAY)); // use Is_Array_Deeply_Frozen
+    return Get_Ser_Info(s, SERIES_INFO_FROZEN);
 }
 
 inline static REBOOL Is_Series_Read_Only(REBSER *s) { // may be temporary...
@@ -494,13 +494,13 @@ inline static REBOOL Is_Series_Read_Only(REBSER *s) { // may be temporary...
 //
 inline static void FAIL_IF_READ_ONLY_SERIES(REBSER *s) {
     if (Is_Series_Read_Only(s)) {
-        if (GET_SER_INFO(s, SERIES_INFO_RUNNING))
+        if (Get_Ser_Info(s, SERIES_INFO_RUNNING))
             fail (Error_Series_Running_Raw());
 
-        if (GET_SER_INFO(s, SERIES_INFO_FROZEN))
+        if (Get_Ser_Info(s, SERIES_INFO_FROZEN))
             fail (Error_Series_Frozen_Raw());
 
-        assert(GET_SER_INFO(s, SERIES_INFO_PROTECTED));
+        assert(Get_Ser_Info(s, SERIES_INFO_PROTECTED));
         fail (Error_Series_Protected_Raw());
     }
 }
@@ -618,7 +618,7 @@ inline static REBSER *VAL_SERIES(const RELVAL *v) {
 }
 
 inline static void INIT_VAL_SERIES(RELVAL *v, REBSER *s) {
-    assert(NOT_SER_FLAG(s, SERIES_FLAG_ARRAY));
+    assert(Not_Ser_Flag(s, SERIES_FLAG_ARRAY));
     v->payload.any_series.series = s;
 }
 

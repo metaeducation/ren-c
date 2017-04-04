@@ -81,7 +81,7 @@ void Startup_Stacks(REBCNT size)
     // are building a context varlist or similar.
     //
     DS_Array = Make_Array_Core(1, ARRAY_FLAG_VOIDS_LEGAL);
-    SET_UNREADABLE_BLANK(ARR_HEAD(DS_Array));
+    Init_Unreadable_Blank(ARR_HEAD(DS_Array));
 
     // The END marker will signal DS_PUSH that it has run out of space,
     // and it will perform the allocation at that time.
@@ -185,7 +185,7 @@ void Expand_Data_Stack_May_Fail(REBCNT amount)
     REBCNT len_new = len_old + amount;
     REBCNT n;
     for (n = len_old; n < len_new; ++n) {
-        SET_UNREADABLE_BLANK(value);
+        Init_Unreadable_Blank(value);
         ++value;
     }
 
@@ -281,11 +281,11 @@ void Reify_Frame_Context_Maybe_Fulfilling(REBFRM *f) {
         // a context.  !!! Really this cannot reify if we're in arg gathering
         // mode, calling MANAGE_ARRAY is illegal -- need test for that !!!
         //
-        assert(NOT_SER_FLAG(f->varlist, ARRAY_FLAG_VARLIST));
-        SET_SER_FLAG(f->varlist, ARRAY_FLAG_VARLIST);
+        assert(Not_Ser_Flag(f->varlist, ARRAY_FLAG_VARLIST));
+        Set_Ser_Flag(f->varlist, ARRAY_FLAG_VARLIST);
 
         assert(IS_TRASH_DEBUG(ARR_AT(f->varlist, 0))); // we fill this in
-        assert(GET_SER_INFO(f->varlist, SERIES_INFO_HAS_DYNAMIC));
+        assert(Get_Ser_Info(f->varlist, SERIES_INFO_HAS_DYNAMIC));
     }
     else {
         f->varlist = Alloc_Singular_Array_Core(
@@ -312,7 +312,7 @@ void Reify_Frame_Context_Maybe_Fulfilling(REBFRM *f) {
     // might be stopped.
     //
     REBVAL *rootvar = SINK(ARR_HEAD(f->varlist));
-    VAL_RESET_HEADER(rootvar, REB_FRAME);
+    Reset_Val_Header(rootvar, REB_FRAME);
     rootvar->payload.any_context.varlist = f->varlist;
     rootvar->payload.any_context.phase = f->phase;
     rootvar->extra.binding = f->binding;
@@ -327,7 +327,7 @@ void Reify_Frame_Context_Maybe_Fulfilling(REBFRM *f) {
     // itself, but should stop modifications from user code.
     //
     if (f->flags.bits & DO_FLAG_NATIVE_HOLD)
-        SET_SER_INFO(f->varlist, SERIES_INFO_RUNNING);
+        Set_Ser_Info(f->varlist, SERIES_INFO_RUNNING);
 
     MANAGE_ARRAY(f->varlist);
 

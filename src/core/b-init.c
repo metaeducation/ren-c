@@ -253,7 +253,7 @@ static REBARR *Startup_Datatypes(REBARR *boot_types, REBARR *boot_typespecs)
         assert(n < REB_MAX);
 
         REBVAL *value = Append_Context(Lib_Context, KNOWN(word), NULL);
-        VAL_RESET_HEADER(value, REB_DATATYPE);
+        Reset_Val_Header(value, REB_DATATYPE);
         VAL_TYPE_KIND(value) = cast(enum Reb_Kind, n);
         VAL_TYPE_SPEC(value) = VAL_ARRAY(ARR_AT(boot_typespecs, n - 1));
 
@@ -266,7 +266,7 @@ static REBARR *Startup_Datatypes(REBARR *boot_types, REBARR *boot_typespecs)
         // a limited sense.)
         //
         assert(value == Get_Type(cast(enum Reb_Kind, n)));
-        SET_VAL_FLAG(CTX_VAR(Lib_Context, 1), VALUE_FLAG_PROTECTED);
+        Set_Val_Flag(CTX_VAR(Lib_Context, 1), VALUE_FLAG_PROTECTED);
 
         Append_Value(catalog, KNOWN(word));
     }
@@ -291,12 +291,12 @@ static REBARR *Startup_Datatypes(REBARR *boot_types, REBARR *boot_typespecs)
 static void Startup_True_And_False(void)
 {
     REBVAL *true_value = Append_Context(Lib_Context, 0, Canon(SYM_TRUE));
-    SET_TRUE(true_value);
+    Init_True(true_value);
     assert(VAL_LOGIC(true_value) == TRUE);
     assert(IS_CONDITIONAL_TRUE(true_value));
 
     REBVAL *false_value = Append_Context(Lib_Context, 0, Canon(SYM_FALSE));
-    SET_FALSE(false_value);
+    Init_False(false_value);
     assert(VAL_LOGIC(false_value) == FALSE);
     assert(IS_CONDITIONAL_FALSE(false_value));
 }
@@ -406,7 +406,7 @@ static void Add_Lib_Keys_R3Alpha_Cant_Make(void)
     while (names[i]) {
         REBSTR *str = Intern_UTF8_Managed(cb_cast(names[i]), strlen(names[i]));
         REBVAL *val = Append_Context(Lib_Context, NULL, str);
-        SET_VOID(val); // functions will fill in (no-op, since void already)
+        Init_Void(val); // functions will fill in (no-op, since void already)
         ++i;
     }
 }
@@ -472,7 +472,7 @@ static void Init_Function_Meta_Shim(void) {
         // BLANK! is used for the fields instead of void (required for
         // R3-Alpha compatibility to load the object)
         //
-        SET_BLANK(
+        Init_Blank(
             Append_Context(function_meta, NULL, Canon(field_syms[i - 1]))
         );
     }
@@ -620,13 +620,13 @@ static REBARR *Startup_Natives(REBARR *boot_natives)
         // allows ACTION to see the SOME-ACTION symbol, and know to use it.
         //
         if (VAL_WORD_SYM(name) == SYM_ACTION) {
-            SET_VAL_FLAG(var, VALUE_FLAG_ENFIXED);
+            Set_Val_Flag(var, VALUE_FLAG_ENFIXED);
             action_word = name;
         }
 
         REBVAL *catalog_item = Alloc_Tail_Array(catalog);
         Move_Value(catalog_item, name);
-        VAL_SET_TYPE_BITS(catalog_item, REB_WORD);
+        Reset_Val_Kind(catalog_item, REB_WORD);
 
         ++n;
     }
@@ -682,7 +682,7 @@ static REBARR *Startup_Actions(REBARR *boot_actions)
     for (; NOT_END(item); ++item)
         if (IS_SET_WORD(item)) {
             DS_PUSH_RELVAL(item, SPECIFIED);
-            VAL_SET_TYPE_BITS(DS_TOP, REB_WORD); // change pushed to WORD!
+            Reset_Val_Kind(DS_TOP, REB_WORD); // change pushed to WORD!
         }
 
     return Pop_Stack_Values(dsp_orig); // catalog of actions
@@ -728,12 +728,12 @@ static void Init_Root_Vars(void)
 
     Prep_Global_Cell(&PG_Void_Cell[0]);
     Prep_Global_Cell(&PG_Void_Cell[1]);
-    SET_VOID(&PG_Void_Cell[0]);
+    Init_Void(&PG_Void_Cell[0]);
     SET_TRASH_IF_DEBUG(&PG_Void_Cell[1]);
 
     Prep_Global_Cell(&PG_Blank_Value[0]);
     Prep_Global_Cell(&PG_Blank_Value[1]);
-    SET_BLANK(&PG_Blank_Value[0]);
+    Init_Blank(&PG_Blank_Value[0]);
     SET_TRASH_IF_DEBUG(&PG_Blank_Value[1]);
 
     Prep_Global_Cell(&PG_Bar_Value[0]);
@@ -743,19 +743,19 @@ static void Init_Root_Vars(void)
 
     Prep_Global_Cell(&PG_False_Value[0]);
     Prep_Global_Cell(&PG_False_Value[1]);
-    SET_FALSE(&PG_False_Value[0]);
+    Init_False(&PG_False_Value[0]);
     SET_TRASH_IF_DEBUG(&PG_False_Value[1]);
 
     Prep_Global_Cell(&PG_True_Value[0]);
     Prep_Global_Cell(&PG_True_Value[1]);
-    SET_TRUE(&PG_True_Value[0]);
+    Init_True(&PG_True_Value[0]);
     SET_TRASH_IF_DEBUG(&PG_True_Value[1]);
 
     Prep_Global_Cell(&PG_Va_List_Pending);
 
     // We can't actually put an end value in the middle of a block, so we poke
     // this one into a program global.  It is not legal to bit-copy an
-    // END (you always use SET_END), so we can make it unwritable.
+    // END (you always use Init_End), so we can make it unwritable.
     //
     Init_Endlike_Header(&PG_End_Node.header, 0); // mutate to read-only end
 #if !defined(NDEBUG)
@@ -774,31 +774,31 @@ static void Init_Root_Vars(void)
     Init_String(ROOT_EMPTY_STRING, empty_series);
     Freeze_Sequence(VAL_SERIES(ROOT_EMPTY_STRING));
 
-    SET_CHAR(ROOT_SPACE_CHAR, ' ');
-    SET_CHAR(ROOT_NEWLINE_CHAR, '\n');
+    Init_Char(ROOT_SPACE_CHAR, ' ');
+    Init_Char(ROOT_NEWLINE_CHAR, '\n');
 
     // BUF_UTF8 not initialized, can't init function tags yet
     //(at least not how Init_Function_Tags() is written)
     //
-    SET_UNREADABLE_BLANK(ROOT_WITH_TAG);
-    SET_UNREADABLE_BLANK(ROOT_ELLIPSIS_TAG);
-    SET_UNREADABLE_BLANK(ROOT_OPT_TAG);
-    SET_UNREADABLE_BLANK(ROOT_END_TAG);
-    SET_UNREADABLE_BLANK(ROOT_LOCAL_TAG);
-    SET_UNREADABLE_BLANK(ROOT_DURABLE_TAG);
+    Init_Unreadable_Blank(ROOT_WITH_TAG);
+    Init_Unreadable_Blank(ROOT_ELLIPSIS_TAG);
+    Init_Unreadable_Blank(ROOT_OPT_TAG);
+    Init_Unreadable_Blank(ROOT_END_TAG);
+    Init_Unreadable_Blank(ROOT_LOCAL_TAG);
+    Init_Unreadable_Blank(ROOT_DURABLE_TAG);
 
     // Evaluator not initialized, can't do system construction yet
     //
-    SET_UNREADABLE_BLANK(ROOT_SYSTEM);
+    Init_Unreadable_Blank(ROOT_SYSTEM);
 
     // Data stack not initialized, can't do typeset construction yet
     // (at least not how Startup_Typesets() is written)
     //
-    SET_UNREADABLE_BLANK(ROOT_TYPESETS);
+    Init_Unreadable_Blank(ROOT_TYPESETS);
 
     // Symbols system not initialized, can't init the function meta shim yet
     //
-    SET_UNREADABLE_BLANK(ROOT_FUNCTION_META);
+    Init_Unreadable_Blank(ROOT_FUNCTION_META);
 
     TERM_ARRAY_LEN(root, ROOT_MAX);
     ASSERT_ARRAY(root);
@@ -884,7 +884,7 @@ static void Init_System_Object(
     //
     {
         REBCTX *codecs = Alloc_Context(REB_OBJECT, 10);
-        VAL_RESET_HEADER(CTX_VALUE(codecs), REB_OBJECT);
+        Reset_Val_Header(CTX_VALUE(codecs), REB_OBJECT);
         CTX_VALUE(codecs)->extra.binding = NULL;
         CTX_VALUE(codecs)->payload.any_context.phase = NULL;
         Init_Object(Get_System(SYS_CODECS, 0), codecs);
@@ -956,14 +956,14 @@ void Startup_Task(void)
     Startup_Stacks(STACK_MIN/4);
 
     // Initialize a few fields:
-    SET_INTEGER(TASK_BALLAST, MEM_BALLAST);
-    SET_INTEGER(TASK_MAX_BALLAST, MEM_BALLAST);
+    Init_Integer(TASK_BALLAST, MEM_BALLAST);
+    Init_Integer(TASK_MAX_BALLAST, MEM_BALLAST);
 
     // The thrown arg is not intended to ever be around long enough to be
     // seen by the GC.
     //
     Prep_Global_Cell(&TG_Thrown_Arg);
-    SET_UNREADABLE_BLANK(&TG_Thrown_Arg);
+    Init_Unreadable_Blank(&TG_Thrown_Arg);
 
     Startup_Raw_Print();
     Startup_Scanner();
@@ -972,8 +972,8 @@ void Startup_Task(void)
 
     // Symbols system not initialized, can't init the errors just yet
     //
-    SET_UNREADABLE_BLANK(TASK_HALT_ERROR);
-    SET_UNREADABLE_BLANK(TASK_STACK_ERROR);
+    Init_Unreadable_Blank(TASK_HALT_ERROR);
+    Init_Unreadable_Blank(TASK_STACK_ERROR);
 
     TERM_ARRAY_LEN(task, TASK_MAX);
     ASSERT_ARRAY(task);
@@ -1227,7 +1227,7 @@ void Startup_Core(void)
     Add_Lib_Keys_R3Alpha_Cant_Make();
 
     Prep_Global_Cell(&Callback_Error);
-    SET_UNREADABLE_BLANK(&Callback_Error);
+    Init_Unreadable_Blank(&Callback_Error);
 
 //==//////////////////////////////////////////////////////////////////////==//
 //
@@ -1457,8 +1457,8 @@ void Shutdown_Core(void)
     // -however- there may be other roots.  But by this point, the roots
     // created by Alloc_Pairing() with an owning context should be freed.
     //
-    CLEAR_SER_FLAG(PG_Root_Array, NODE_FLAG_ROOT);
-    CLEAR_SER_FLAG(TG_Task_Array, NODE_FLAG_ROOT);
+    Clear_Ser_Flag(PG_Root_Array, NODE_FLAG_ROOT);
+    Clear_Ser_Flag(TG_Task_Array, NODE_FLAG_ROOT);
 
     Recycle_Core(TRUE, NULL);
 

@@ -115,7 +115,7 @@ void Ret_Query_File(REBCTX *port, struct devreq_file *file, REBVAL *ret)
         CTX_VAR(context, STD_FILE_INFO_TYPE),
         GET_FLAG(req->modes, RFM_DIR) ? Canon(SYM_DIR) : Canon(SYM_FILE)
     );
-    SET_INTEGER(
+    Init_Integer(
         CTX_VAR(context, STD_FILE_INFO_SIZE), file->size
     );
     OS_FILE_TIME(CTX_VAR(context, STD_FILE_INFO_DATE), file);
@@ -411,7 +411,7 @@ static REB_R File_Actor(REBFRM *frame_, REBCTX *port, REBSYM action)
 
         if (req->error) {
             DECLARE_LOCAL(i);
-            SET_INTEGER(i, req->error);
+            Init_Integer(i, req->error);
             fail (Error_Write_Error_Raw(path, i));
         }
 
@@ -558,14 +558,14 @@ static REB_R File_Actor(REBFRM *frame_, REBCTX *port, REBSYM action)
         return R_TRUE; }
 
     case SYM_INDEX_OF:
-        SET_INTEGER(D_OUT, file->index + 1);
+        Init_Integer(D_OUT, file->index + 1);
         return R_OUT;
 
     case SYM_LENGTH:
         //
         // Comment said "clip at zero"
         ///
-        SET_INTEGER(D_OUT, file->size - file->index);
+        Init_Integer(D_OUT, file->size - file->index);
         return R_OUT;
 
     case SYM_HEAD: {
@@ -610,7 +610,7 @@ static REB_R File_Actor(REBFRM *frame_, REBCTX *port, REBSYM action)
         req->length = 0;
         if (OS_DO_DEVICE(req, RDC_WRITE) < 0) {
             DECLARE_LOCAL(i);
-            SET_INTEGER(i, req->error);
+            Init_Integer(i, req->error);
             fail (Error_Write_Error_Raw(path, i));
         }
         return R_OUT;

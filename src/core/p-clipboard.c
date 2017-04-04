@@ -74,7 +74,7 @@ static REB_R Clipboard_Actor(REBFRM *frame_, REBCTX *port, REBSYM action)
             req->common.data = 0;
         }
         else if (req->command == RDC_WRITE) {
-            SET_BLANK(arg);  // Write is done.
+            Init_Blank(arg);  // Write is done.
         }
         return R_BLANK;
 
@@ -196,10 +196,10 @@ static REB_R Clipboard_Actor(REBFRM *frame_, REBCTX *port, REBSYM action)
         req->actual = 0;
 
         result = OS_DO_DEVICE(req, RDC_WRITE);
-        SET_BLANK(CTX_VAR(port, STD_PORT_DATA)); // GC can collect it
+        Init_Blank(CTX_VAR(port, STD_PORT_DATA)); // GC can collect it
 
         if (result < 0) fail (Error_On_Port(RE_WRITE_ERROR, port, req->error));
-        //if (result == DR_DONE) SET_BLANK(CTX_VAR(port, STD_PORT_DATA));
+        //if (result == DR_DONE) Init_Blank(CTX_VAR(port, STD_PORT_DATA));
         break; }
 
     case SYM_OPEN: {

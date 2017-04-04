@@ -697,8 +697,8 @@ inline static void SET_SIGNAL(REBFLGS f) {
 ***********************************************************************/
 
 #ifdef NDEBUG
-    #define SET_VOID_UNLESS_LEGACY_NONE(v) \
-        SET_VOID(v) // LEGACY() only available in Debug builds
+    #define Init_Void_UNLESS_LEGACY_NONE(v) \
+        Init_Void(v) // LEGACY() only available in Debug builds
 #else
     #define LEGACY(option) ( \
         (PG_Boot_Phase >= BOOT_ERRORS) \
@@ -713,11 +713,11 @@ inline static void SET_SIGNAL(REBFLGS f) {
     // return a BLANK! value instead of no value.  See implementation notes.
     //
     #ifdef NDEBUG
-        #define SET_VOID_UNLESS_LEGACY_NONE(v) \
-            SET_VOID(v) // LEGACY() only available in Debug builds
+        #define Init_Void_UNLESS_LEGACY_NONE(v) \
+            Init_Void(v) // LEGACY() only available in Debug builds
     #else
-        #define SET_VOID_UNLESS_LEGACY_NONE(v) \
-            SET_VOID_UNLESS_LEGACY_NONE_Debug(v, __FILE__, __LINE__);
+        #define Init_Void_UNLESS_LEGACY_NONE(v) \
+            Init_Void_UNLESS_LEGACY_NONE_Debug(v, __FILE__, __LINE__);
     #endif
 
 #endif

@@ -222,7 +222,7 @@ static REB_R Dir_Actor(REBFRM *frame_, REBCTX *port, REBSYM action)
             if (result < 0)
                 fail (Error_On_Port(RE_CANNOT_OPEN, port, dir.devreq.error));
             Move_Value(D_OUT, state);
-            SET_BLANK(state);
+            Init_Blank(state);
         }
         else {
             // !!! This copies the strings in the block, shallowly.  What is
@@ -256,7 +256,7 @@ static REB_R Dir_Actor(REBFRM *frame_, REBCTX *port, REBSYM action)
             Move_Value(D_OUT, D_ARG(1));
             return R_OUT;
         }
-        SET_BLANK(state);
+        Init_Blank(state);
         break;
 
     case SYM_RENAME:
@@ -277,7 +277,7 @@ static REB_R Dir_Actor(REBFRM *frame_, REBCTX *port, REBSYM action)
 
     case SYM_DELETE:
         //Trap_Security(flags[POL_WRITE], POL_WRITE, path);
-        SET_BLANK(state);
+        Init_Blank(state);
         Init_Dir_Path(&dir, path, 0, POL_WRITE);
         // !!! add *.r deletion
         // !!! add recursive delete (?)
@@ -323,12 +323,12 @@ static REB_R Dir_Actor(REBFRM *frame_, REBCTX *port, REBSYM action)
         return R_FALSE;
 
     case SYM_CLOSE:
-        SET_BLANK(state);
+        Init_Blank(state);
         break;
 
     case SYM_QUERY:
         //Trap_Security(flags[POL_READ], POL_READ, path);
-        SET_BLANK(state);
+        Init_Blank(state);
         Init_Dir_Path(&dir, path, -1, REMOVE_TAIL_SLASH | POL_READ);
         if (OS_DO_DEVICE(&dir.devreq, RDC_QUERY) < 0) return R_BLANK;
         Ret_Query_File(port, &dir, D_OUT);
@@ -339,7 +339,7 @@ static REB_R Dir_Actor(REBFRM *frame_, REBCTX *port, REBSYM action)
 
     case SYM_LENGTH:
         len = IS_BLOCK(state) ? VAL_ARRAY_LEN_AT(state) : 0;
-        SET_INTEGER(D_OUT, len);
+        Init_Integer(D_OUT, len);
         break;
 
     default:

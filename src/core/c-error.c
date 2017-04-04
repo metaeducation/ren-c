@@ -257,7 +257,7 @@ ATTRIBUTE_NO_RETURN void Fail_Core(const void *p)
 
     case DETECTED_AS_SERIES: {
         REBSER *s = m_cast(REBSER*, cast(const REBSER*, p)); // don't mutate
-        if (NOT_SER_FLAG(s, ARRAY_FLAG_VARLIST))
+        if (Not_Ser_Flag(s, ARRAY_FLAG_VARLIST))
             panic (s);
         error = AS_CONTEXT(s);
         break; }
@@ -342,7 +342,7 @@ ATTRIBUTE_NO_RETURN void Fail_Core(const void *p)
         // trash was in the cell.
         //
         if ((f->out->header.bits & NODE_FLAG_VALID) && NOT_END(f->out))
-            SET_END(f->out); // Note: out cells can't be in arrays
+            Init_End(f->out); // Note: out cells can't be in arrays
 
         REBFRM *prior = f->prior;
         Drop_Frame_Core(f);
@@ -357,7 +357,7 @@ ATTRIBUTE_NO_RETURN void Fail_Core(const void *p)
     // raised, then it had the thrown argument set.  Trash it in debug
     // builds.  (The value will not be kept alive, it is not seen by GC)
     //
-    SET_UNREADABLE_BLANK(&TG_Thrown_Arg);
+    Init_Unreadable_Blank(&TG_Thrown_Arg);
 
     LONG_JUMP(Saved_State->cpu_state, 1);
 }
@@ -654,7 +654,7 @@ REBOOL Make_Error_Object_Throws(
 
         // !!! fix in Startup_Errors()?
         //
-        VAL_RESET_HEADER(CTX_VALUE(error), REB_ERROR);
+        Reset_Val_Header(CTX_VALUE(error), REB_ERROR);
 
         vars = ERR_VARS(error);
         assert(IS_BLANK(&vars->code));
@@ -765,7 +765,7 @@ REBOOL Make_Error_Object_Throws(
 
                 Move_Value(&vars->message, message);
 
-                SET_INTEGER(&vars->code,
+                Init_Integer(&vars->code,
                     code
                     + Find_Canon_In_Context(
                         error, VAL_WORD_CANON(&vars->id), FALSE
@@ -793,7 +793,7 @@ REBOOL Make_Error_Object_Throws(
         else {
             // The type and category picked did not overlap any existing one
             // so let it be a user error.
-            SET_INTEGER(&vars->code, RE_USER);
+            Init_Integer(&vars->code, RE_USER);
         }
     }
     else {
@@ -806,7 +806,7 @@ REBOOL Make_Error_Object_Throws(
         // not already there.
 
         if (IS_BLANK(&vars->code))
-            SET_INTEGER(&vars->code, RE_USER);
+            Init_Integer(&vars->code, RE_USER);
         else if (IS_INTEGER(&vars->code)) {
             if (VAL_INT32(&vars->code) != RE_USER)
                 fail (Error_Invalid_Error_Raw(arg));
@@ -888,7 +888,7 @@ REBCTX *Make_Error_Managed_Core(REBCNT code, va_list *vaptr)
     #endif
 
         DECLARE_LOCAL (code_value);
-        SET_INTEGER(code_value, code);
+        Init_Integer(code_value, code);
 
         panic (code_value);
     }
@@ -954,7 +954,7 @@ REBCTX *Make_Error_Managed_Core(REBCNT code, va_list *vaptr)
         // !!! Should tweak root error during boot so it actually is an ERROR!
         // (or use literal error construction syntax, if it worked?)
         //
-        VAL_RESET_HEADER(CTX_VALUE(error), REB_ERROR);
+        Reset_Val_Header(CTX_VALUE(error), REB_ERROR);
     }
     else {
         REBCNT root_len = CTX_LEN(root_error);
@@ -967,7 +967,7 @@ REBCTX *Make_Error_Managed_Core(REBCNT code, va_list *vaptr)
         // !!! Should tweak root error during boot so it actually is an ERROR!
         // (or use literal error construction syntax, if it worked?)
         //
-        VAL_RESET_HEADER(CTX_VALUE(error), REB_ERROR);
+        Reset_Val_Header(CTX_VALUE(error), REB_ERROR);
 
         // Fix up the tail first so CTX_KEY and CTX_VAR don't complain
         // in the debug build that they're accessing beyond the error length
@@ -1032,7 +1032,7 @@ REBCTX *Make_Error_Managed_Core(REBCNT code, va_list *vaptr)
                 }
 
             #if !defined(NDEBUG)
-                if (GET_VAL_FLAG(arg, VALUE_FLAG_RELATIVE)) {
+                if (Get_Val_Flag(arg, VALUE_FLAG_RELATIVE)) {
                     //
                     // Make_Error doesn't have any way to pass in a specifier,
                     // so only specific values should be used.
@@ -1072,7 +1072,7 @@ REBCTX *Make_Error_Managed_Core(REBCNT code, va_list *vaptr)
                 Init_Typeset(key, ALL_64, Canon(*arg1_arg2_arg3));
                 arg1_arg2_arg3++;
                 key++;
-                SET_BLANK(value);
+                Init_Blank(value);
                 value++;
             }
         }
@@ -1092,7 +1092,7 @@ REBCTX *Make_Error_Managed_Core(REBCNT code, va_list *vaptr)
             // error/__LINE__ (an INTEGER! value)
             Init_Typeset(key, ALL_64, Canon(SYM___LINE__));
             key++;
-            SET_INTEGER(value, TG_Erroring_C_Line);
+            Init_Integer(value, TG_Erroring_C_Line);
             value++;
         }
     #endif
@@ -1106,7 +1106,7 @@ REBCTX *Make_Error_Managed_Core(REBCNT code, va_list *vaptr)
     ERROR_VARS *vars = ERR_VARS(error);
 
     // Set error number:
-    SET_INTEGER(&vars->code, code);
+    Init_Integer(&vars->code, code);
 
     Move_Value(&vars->message, message);
     Move_Value(&vars->id, id);
@@ -1241,7 +1241,7 @@ REBCTX *Error_Invalid_Datatype(REBCNT id)
 {
     DECLARE_LOCAL (id_value);
 
-    SET_INTEGER(id_value, id);
+    Init_Integer(id_value, id);
     return Error_Invalid_Datatype_Raw(id_value);
 }
 
@@ -1253,7 +1253,7 @@ REBCTX *Error_No_Memory(REBCNT bytes)
 {
     DECLARE_LOCAL (bytes_value);
 
-    SET_INTEGER(bytes_value, bytes);
+    Init_Integer(bytes_value, bytes);
     return Error_No_Memory_Raw(bytes_value);
 }
 
@@ -1534,7 +1534,7 @@ REBCTX *Error_On_Port(REBCNT errnum, REBCTX *port, REBINT err_code)
         val = VAL_CONTEXT_VAR(spec, STD_PORT_SPEC_HEAD_TITLE); // less info
 
     DECLARE_LOCAL (err_code_value);
-    SET_INTEGER(err_code_value, err_code);
+    Init_Integer(err_code_value, err_code);
 
     return Error(errnum, val, err_code_value, END);
 }

@@ -270,7 +270,7 @@ static void Schema_From_Block_May_Fail(
 
         switch (VAL_WORD_SYM(item)) {
         case SYM_VOID:
-            SET_BLANK(schema_out); // only valid for return types
+            Init_Blank(schema_out); // only valid for return types
             Init_Typeset(param_out, FLAGIT_KIND(REB_MAX_VOID), NULL);
             break;
 
@@ -675,7 +675,7 @@ static void ffi_to_rebol(
         memcpy(SER_HEAD(REBYTE, data), ffi_rvalue, FLD_WIDE(top));
         MANAGE_SERIES(data);
 
-        VAL_RESET_HEADER(out, REB_STRUCT);
+        Reset_Val_Header(out, REB_STRUCT);
         out->payload.structure.stu = stu;
         out->payload.structure.data = data;
         out->extra.struct_offset = 0;
@@ -692,47 +692,47 @@ static void ffi_to_rebol(
 
     switch (VAL_WORD_SYM(schema)) {
     case SYM_UINT8:
-        SET_INTEGER(out, *cast(u8*, ffi_rvalue));
+        Init_Integer(out, *cast(u8*, ffi_rvalue));
         break;
 
     case SYM_INT8:
-        SET_INTEGER(out, *cast(i8*, ffi_rvalue));
+        Init_Integer(out, *cast(i8*, ffi_rvalue));
         break;
 
     case SYM_UINT16:
-        SET_INTEGER(out, *cast(u16*, ffi_rvalue));
+        Init_Integer(out, *cast(u16*, ffi_rvalue));
         break;
 
     case SYM_INT16:
-        SET_INTEGER(out, *cast(i16*, ffi_rvalue));
+        Init_Integer(out, *cast(i16*, ffi_rvalue));
         break;
 
     case SYM_UINT32:
-        SET_INTEGER(out, *cast(u32*, ffi_rvalue));
+        Init_Integer(out, *cast(u32*, ffi_rvalue));
         break;
 
     case SYM_INT32:
-        SET_INTEGER(out, *cast(i32*, ffi_rvalue));
+        Init_Integer(out, *cast(i32*, ffi_rvalue));
         break;
 
     case SYM_UINT64:
-        SET_INTEGER(out, *cast(u64*, ffi_rvalue));
+        Init_Integer(out, *cast(u64*, ffi_rvalue));
         break;
 
     case SYM_INT64:
-        SET_INTEGER(out, *cast(i64*, ffi_rvalue));
+        Init_Integer(out, *cast(i64*, ffi_rvalue));
         break;
 
     case SYM_POINTER:
-        SET_INTEGER(out, cast(REBUPT, *cast(void**, ffi_rvalue)));
+        Init_Integer(out, cast(REBUPT, *cast(void**, ffi_rvalue)));
         break;
 
     case SYM_FLOAT:
-        SET_DECIMAL(out, *cast(float*, ffi_rvalue));
+        Init_Decimal(out, *cast(float*, ffi_rvalue));
         break;
 
     case SYM_DOUBLE:
-        SET_DECIMAL(out, *cast(double*, ffi_rvalue));
+        Init_Decimal(out, *cast(double*, ffi_rvalue));
         break;
 
     case SYM_REBVAL:
@@ -985,7 +985,7 @@ REB_R Routine_Dispatcher(REBFRM *f)
     //
     // Note that the "offsets" are now actually pointers.
     {
-        SET_UNREADABLE_BLANK(&Callback_Error); // !!! is it already?
+        Init_Unreadable_Blank(&Callback_Error); // !!! is it already?
 
         ffi_call(
             cif,
@@ -1001,7 +1001,7 @@ REB_R Routine_Dispatcher(REBFRM *f)
     }
 
     if (IS_BLANK(RIN_RET_SCHEMA(rin)))
-        SET_VOID(f->out);
+        Init_Void(f->out);
     else
         ffi_to_rebol(f->out, RIN_RET_SCHEMA(rin), ret_offset);
 
@@ -1148,15 +1148,15 @@ static REBFUN *Alloc_Ffi_Function_For_Spec(REBVAL *ffi_spec, ffi_abi abi) {
 
     REBRIN *r = Make_Array(IDX_ROUTINE_MAX);
 
-    SET_INTEGER(RIN_AT(r, IDX_ROUTINE_ABI), abi);
+    Init_Integer(RIN_AT(r, IDX_ROUTINE_ABI), abi);
 
     // Caller will update these in the returned function.
     //
-    SET_UNREADABLE_BLANK(RIN_AT(r, IDX_ROUTINE_CFUNC));
-    SET_UNREADABLE_BLANK(RIN_AT(r, IDX_ROUTINE_CLOSURE));
-    SET_UNREADABLE_BLANK(RIN_AT(r, IDX_ROUTINE_ORIGIN)); // LIBRARY!/FUNCTION!
+    Init_Unreadable_Blank(RIN_AT(r, IDX_ROUTINE_CFUNC));
+    Init_Unreadable_Blank(RIN_AT(r, IDX_ROUTINE_CLOSURE));
+    Init_Unreadable_Blank(RIN_AT(r, IDX_ROUTINE_ORIGIN)); // LIBRARY!/FUNCTION!
 
-    SET_BLANK(RIN_AT(r, IDX_ROUTINE_RET_SCHEMA)); // returns void as default
+    Init_Blank(RIN_AT(r, IDX_ROUTINE_RET_SCHEMA)); // returns void as default
 
     const REBCNT capacity_guess = 8; // !!! Magic number...why 8? (can grow)
 
@@ -1212,7 +1212,7 @@ static REBFUN *Alloc_Ffi_Function_For_Spec(REBVAL *ffi_spec, ffi_abi abi) {
                     ALL_64 & ~FLAGIT_KIND(REB_VARARGS),
                     Canon(SYM_VARARGS)
                 );
-                SET_VAL_FLAG(param, TYPESET_FLAG_VARIADIC);
+                Set_Val_Flag(param, TYPESET_FLAG_VARIADIC);
                 INIT_VAL_PARAM_CLASS(param, PARAM_CLASS_NORMAL);
             }
             else { // ordinary argument
@@ -1267,7 +1267,7 @@ static REBFUN *Alloc_Ffi_Function_For_Spec(REBVAL *ffi_spec, ffi_abi abi) {
         }
     }
 
-    SET_LOGIC(RIN_AT(r, IDX_ROUTINE_IS_VARIADIC), is_variadic);
+    Init_Logic(RIN_AT(r, IDX_ROUTINE_IS_VARIADIC), is_variadic);
 
     TERM_ARRAY_LEN(r, IDX_ROUTINE_MAX);
     ASSERT_ARRAY(args_schemas);
@@ -1278,8 +1278,8 @@ static REBFUN *Alloc_Ffi_Function_For_Spec(REBVAL *ffi_spec, ffi_abi abi) {
         // Each individual call needs to use `ffi_prep_cif_var` to make the
         // proper variadic CIF for that call.
         //
-        SET_BLANK(RIN_AT(r, IDX_ROUTINE_CIF));
-        SET_BLANK(RIN_AT(r, IDX_ROUTINE_ARG_FFTYPES));
+        Init_Blank(RIN_AT(r, IDX_ROUTINE_CIF));
+        Init_Blank(RIN_AT(r, IDX_ROUTINE_ARG_FFTYPES));
     }
     else {
         // The same CIF can be used for every call of the routine if it is
@@ -1320,7 +1320,7 @@ static REBFUN *Alloc_Ffi_Function_For_Spec(REBVAL *ffi_spec, ffi_abi abi) {
         );
 
         if (args_fftypes == NULL)
-            SET_BLANK(RIN_AT(r, IDX_ROUTINE_ARG_FFTYPES));
+            Init_Blank(RIN_AT(r, IDX_ROUTINE_ARG_FFTYPES));
         else
             Init_Handle_Managed(
                 RIN_AT(r, IDX_ROUTINE_ARG_FFTYPES),
@@ -1334,11 +1334,11 @@ static REBFUN *Alloc_Ffi_Function_For_Spec(REBVAL *ffi_spec, ffi_abi abi) {
 
     // Now fill in the canon value of the paramlist so it is an actual "REBFUN"
     //
-    VAL_RESET_HEADER(rootparam, REB_FUNCTION);
+    Reset_Val_Header(rootparam, REB_FUNCTION);
     rootparam->payload.function.paramlist = paramlist;
     rootparam->extra.binding = NULL;
 
-    SET_SER_FLAG(paramlist, ARRAY_FLAG_PARAMLIST);
+    Set_Ser_Flag(paramlist, ARRAY_FLAG_PARAMLIST);
     MANAGE_ARRAY(paramlist);
     AS_SERIES(paramlist)->link.meta = NULL;
 
@@ -1466,7 +1466,7 @@ REBNATIVE(make_routine_raw)
     REBRIN *r = FUNC_ROUTINE(fun);
 
     Init_Handle_Cfunc(RIN_AT(r, IDX_ROUTINE_CFUNC), cfunc, 0);
-    SET_BLANK(RIN_AT(r, IDX_ROUTINE_ORIGIN)); // no LIBRARY! in this case.
+    Init_Blank(RIN_AT(r, IDX_ROUTINE_ORIGIN)); // no LIBRARY! in this case.
 
     Move_Value(D_OUT, FUNC_VALUE(fun));
     return R_OUT;

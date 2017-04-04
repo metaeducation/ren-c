@@ -48,7 +48,7 @@ static void fail_if_non_accessible(const REBVAL *val)
 {
     if (VAL_STRUCT_INACCESSIBLE(val)) {
         DECLARE_LOCAL (i);
-        SET_INTEGER(i, cast(REBUPT, VAL_STRUCT_DATA_HEAD(val)));
+        Init_Integer(i, cast(REBUPT, VAL_STRUCT_DATA_HEAD(val)));
         fail (Error_Bad_Memory_Raw(i, val));
     }
 }
@@ -81,7 +81,7 @@ static void get_scalar(
         //
         // Note: The original code allowed this for STU_INACCESSIBLE(stu).
         //
-        VAL_RESET_HEADER(single, REB_STRUCT);
+        Reset_Val_Header(single, REB_STRUCT);
         MANAGE_ARRAY(sub_stu);
         single->payload.structure.stu = sub_stu;
 
@@ -105,7 +105,7 @@ static void get_scalar(
         // !!! This just gets void with no error...that seems like a bad idea,
         // if the data is truly inaccessible.
         //
-        SET_VOID(out);
+        Init_Void(out);
         return;
     }
 
@@ -113,47 +113,47 @@ static void get_scalar(
 
     switch (FLD_TYPE_SYM(field)) {
     case SYM_UINT8:
-        SET_INTEGER(out, *cast(u8*, p));
+        Init_Integer(out, *cast(u8*, p));
         break;
 
     case SYM_INT8:
-        SET_INTEGER(out, *cast(i8*, p));
+        Init_Integer(out, *cast(i8*, p));
         break;
 
     case SYM_UINT16:
-        SET_INTEGER(out, *cast(u16*, p));
+        Init_Integer(out, *cast(u16*, p));
         break;
 
     case SYM_INT16:
-        SET_INTEGER(out, *cast(i8*, p));
+        Init_Integer(out, *cast(i8*, p));
         break;
 
     case SYM_UINT32:
-        SET_INTEGER(out, *cast(u32*, p));
+        Init_Integer(out, *cast(u32*, p));
         break;
 
     case SYM_INT32:
-        SET_INTEGER(out, *cast(i32*, p));
+        Init_Integer(out, *cast(i32*, p));
         break;
 
     case SYM_UINT64:
-        SET_INTEGER(out, *cast(u64*, p));
+        Init_Integer(out, *cast(u64*, p));
         break;
 
     case SYM_INT64:
-        SET_INTEGER(out, *cast(i64*, p));
+        Init_Integer(out, *cast(i64*, p));
         break;
 
     case SYM_FLOAT:
-        SET_DECIMAL(out, *cast(float*, p));
+        Init_Decimal(out, *cast(float*, p));
         break;
 
     case SYM_DOUBLE:
-        SET_DECIMAL(out, *cast(double*, p));
+        Init_Decimal(out, *cast(double*, p));
         break;
 
     case SYM_POINTER:
-        SET_INTEGER(out, cast(REBUPT, *cast(void**, p)));
+        Init_Integer(out, cast(REBUPT, *cast(void**, p)));
         break;
 
     case SYM_REBVAL:
@@ -265,7 +265,7 @@ REBARR *Struct_To_Array(REBSTU *stu)
             //
             REBCNT dimension = FLD_DIMENSION(field);
             REBARR *one_int = Alloc_Singular_Array();
-            SET_INTEGER(ARR_HEAD(one_int), dimension);
+            Init_Integer(ARR_HEAD(one_int), dimension);
             Init_Block(Alloc_Tail_Array(typespec), one_int);
 
             // Initialization seems to be just another block after that (?)
@@ -649,7 +649,7 @@ static REBSER *make_ext_storage(
 ) {
     if (raw_size >= 0 && raw_size != cast(REBINT, len)) {
         DECLARE_LOCAL (i);
-        SET_INTEGER(i, raw_size);
+        Init_Integer(i, raw_size);
         fail (Error_Invalid_Data_Raw(i));
     }
 
@@ -784,57 +784,57 @@ static void Parse_Field_Type_May_Fail(
 
         switch (sym) {
         case SYM_UINT8:
-            SET_INTEGER(FLD_AT(field, IDX_FIELD_WIDE), 1);
+            Init_Integer(FLD_AT(field, IDX_FIELD_WIDE), 1);
             Prepare_Field_For_FFI(field);
             break;
 
         case SYM_INT8:
-            SET_INTEGER(FLD_AT(field, IDX_FIELD_WIDE), 1);
+            Init_Integer(FLD_AT(field, IDX_FIELD_WIDE), 1);
             Prepare_Field_For_FFI(field);
             break;
 
         case SYM_UINT16:
-            SET_INTEGER(FLD_AT(field, IDX_FIELD_WIDE), 2);
+            Init_Integer(FLD_AT(field, IDX_FIELD_WIDE), 2);
             Prepare_Field_For_FFI(field);
             break;
 
         case SYM_INT16:
-            SET_INTEGER(FLD_AT(field, IDX_FIELD_WIDE), 2);
+            Init_Integer(FLD_AT(field, IDX_FIELD_WIDE), 2);
             Prepare_Field_For_FFI(field);
             break;
 
         case SYM_UINT32:
-            SET_INTEGER(FLD_AT(field, IDX_FIELD_WIDE), 4);
+            Init_Integer(FLD_AT(field, IDX_FIELD_WIDE), 4);
             Prepare_Field_For_FFI(field);
             break;
 
         case SYM_INT32:
-            SET_INTEGER(FLD_AT(field, IDX_FIELD_WIDE), 4);
+            Init_Integer(FLD_AT(field, IDX_FIELD_WIDE), 4);
             Prepare_Field_For_FFI(field);
             break;
 
         case SYM_UINT64:
-            SET_INTEGER(FLD_AT(field, IDX_FIELD_WIDE), 8);
+            Init_Integer(FLD_AT(field, IDX_FIELD_WIDE), 8);
             Prepare_Field_For_FFI(field);
             break;
 
         case SYM_INT64:
-            SET_INTEGER(FLD_AT(field, IDX_FIELD_WIDE), 8);
+            Init_Integer(FLD_AT(field, IDX_FIELD_WIDE), 8);
             Prepare_Field_For_FFI(field);
             break;
 
         case SYM_FLOAT:
-            SET_INTEGER(FLD_AT(field, IDX_FIELD_WIDE), 4);
+            Init_Integer(FLD_AT(field, IDX_FIELD_WIDE), 4);
             Prepare_Field_For_FFI(field);
             break;
 
         case SYM_DOUBLE:
-            SET_INTEGER(FLD_AT(field, IDX_FIELD_WIDE), 8);
+            Init_Integer(FLD_AT(field, IDX_FIELD_WIDE), 8);
             Prepare_Field_For_FFI(field);
             break;
 
         case SYM_POINTER:
-            SET_INTEGER(FLD_AT(field, IDX_FIELD_WIDE), sizeof(void*));
+            Init_Integer(FLD_AT(field, IDX_FIELD_WIDE), sizeof(void*));
             Prepare_Field_For_FFI(field);
             break;
 
@@ -847,7 +847,7 @@ static void Parse_Field_Type_May_Fail(
             Derelativize(specified, val, VAL_SPECIFIER(spec));
             MAKE_Struct(inner, REB_STRUCT, specified); // may fail()
 
-            SET_INTEGER(
+            Init_Integer(
                 FLD_AT(field, IDX_FIELD_WIDE),
                 VAL_STRUCT_DATA_LEN(inner)
             );
@@ -882,7 +882,7 @@ static void Parse_Field_Type_May_Fail(
             // to a callback's frame, the lifetime of the REBVAL* should last
             // for the entirety of the routine it was passed to.
             //
-            SET_INTEGER(FLD_AT(field, IDX_FIELD_WIDE), sizeof(REBVAL*));
+            Init_Integer(FLD_AT(field, IDX_FIELD_WIDE), sizeof(REBVAL*));
             Prepare_Field_For_FFI(field);
             break; }
 
@@ -894,7 +894,7 @@ static void Parse_Field_Type_May_Fail(
         //
         // [b: [struct-a] val-a]
         //
-        SET_INTEGER(
+        Init_Integer(
             FLD_AT(field, IDX_FIELD_WIDE),
             VAL_STRUCT_DATA_LEN(val)
         );
@@ -920,7 +920,7 @@ static void Parse_Field_Type_May_Fail(
     // Find out the array dimension (if there is one)
     //
     if (IS_END(val)) {
-        SET_BLANK(FLD_AT(field, IDX_FIELD_DIMENSION)); // scalar
+        Init_Blank(FLD_AT(field, IDX_FIELD_DIMENSION)); // scalar
     }
     else if (IS_BLOCK(val)) {
         //
@@ -941,7 +941,7 @@ static void Parse_Field_Type_May_Fail(
         if (!IS_INTEGER(ret))
             fail (Error_Unexpected_Type(REB_INTEGER, VAL_TYPE(val)));
 
-        SET_INTEGER(FLD_AT(field, IDX_FIELD_DIMENSION), VAL_INT64(ret));
+        Init_Integer(FLD_AT(field, IDX_FIELD_DIMENSION), VAL_INT64(ret));
         ++ val;
     }
     else
@@ -1067,13 +1067,13 @@ void MAKE_Struct(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg) {
     // schema should be shared between common instances of the same struct.
     //
     REBFLD *schema = Make_Array(IDX_FIELD_MAX);
-    SET_BLANK(FLD_AT(schema, IDX_FIELD_NAME)); // no symbol for struct itself
+    Init_Blank(FLD_AT(schema, IDX_FIELD_NAME)); // no symbol for struct itself
     // we'll be filling in the IDX_FIELD_TYPE slot with an array of fields
-    SET_BLANK(FLD_AT(schema, IDX_FIELD_DIMENSION)); // not an array
+    Init_Blank(FLD_AT(schema, IDX_FIELD_DIMENSION)); // not an array
 
-    SET_UNREADABLE_BLANK(FLD_AT(schema, IDX_FIELD_FFTYPE));
+    Init_Unreadable_Blank(FLD_AT(schema, IDX_FIELD_FFTYPE));
 
-    SET_BLANK(FLD_AT(schema, IDX_FIELD_OFFSET)); // the offset is not used
+    Init_Blank(FLD_AT(schema, IDX_FIELD_OFFSET)); // the offset is not used
     // we'll be filling in the IDX_FIELD_WIDE at the end.
 
 
@@ -1123,8 +1123,8 @@ void MAKE_Struct(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg) {
 
         REBFLD *field = Make_Array(IDX_FIELD_MAX);
 
-        SET_UNREADABLE_BLANK(FLD_AT(field, IDX_FIELD_FFTYPE));
-        SET_INTEGER(FLD_AT(field, IDX_FIELD_OFFSET), offset);
+        Init_Unreadable_Blank(FLD_AT(field, IDX_FIELD_FFTYPE));
+        Init_Integer(FLD_AT(field, IDX_FIELD_OFFSET), offset);
 
         // Must be a word or a set-word, with set-words initializing
 
@@ -1291,7 +1291,7 @@ void MAKE_Struct(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg) {
     Init_Block(FLD_AT(schema, IDX_FIELD_TYPE), fieldlist);
     Prepare_Field_For_FFI(schema);
 
-    SET_INTEGER(FLD_AT(schema, IDX_FIELD_WIDE), offset); // total size known
+    Init_Integer(FLD_AT(schema, IDX_FIELD_WIDE), offset); // total size known
 
     TERM_ARRAY_LEN(schema, IDX_FIELD_MAX);
     ASSERT_ARRAY(schema);
@@ -1305,12 +1305,12 @@ void MAKE_Struct(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg) {
     // Set it to blank so the Kill_Series can be called upon in case of error
     // thrown before it is fully constructed.
     //
-    SET_BLANK(ARR_HEAD(stu));
+    Init_Blank(ARR_HEAD(stu));
 
     MANAGE_ARRAY(schema);
     AS_SERIES(stu)->link.schema = schema;
 
-    VAL_RESET_HEADER(out, REB_STRUCT);
+    Reset_Val_Header(out, REB_STRUCT);
     out->payload.structure.stu = stu;
     if (raw_addr) {
         out->payload.structure.data
@@ -1509,7 +1509,7 @@ REBTYPE(Struct)
 
     val = D_ARG(1);
 
-    SET_VOID(D_OUT);
+    Init_Void(D_OUT);
     // unary actions
     switch(action) {
 
@@ -1549,7 +1549,7 @@ REBTYPE(Struct)
             break;
 
         case SYM_ADDR:
-            SET_INTEGER(D_OUT, cast(REBUPT, VAL_STRUCT_DATA_AT(val)));
+            Init_Integer(D_OUT, cast(REBUPT, VAL_STRUCT_DATA_AT(val)));
             break;
 
         default:
@@ -1558,7 +1558,7 @@ REBTYPE(Struct)
         break; }
 
     case SYM_LENGTH:
-        SET_INTEGER(D_OUT, VAL_STRUCT_DATA_LEN(val));
+        Init_Integer(D_OUT, VAL_STRUCT_DATA_LEN(val));
         break;
 
     default:
@@ -1584,13 +1584,13 @@ REBNATIVE(destroy_struct_storage)
     INCLUDE_PARAMS_OF_DESTROY_STRUCT_STORAGE;
 
     REBSER *data = ARG(struct)->payload.structure.data;
-    if (NOT_SER_FLAG(data, SERIES_FLAG_ARRAY))
+    if (Not_Ser_Flag(data, SERIES_FLAG_ARRAY))
         fail (Error_No_External_Storage_Raw());
 
     RELVAL *handle = ARR_HEAD(AS_ARRAY(data));
 
     DECLARE_LOCAL (pointer);
-    SET_INTEGER(pointer, cast(REBUPT, VAL_HANDLE_POINTER(void, handle)));
+    Init_Integer(pointer, cast(REBUPT, VAL_HANDLE_POINTER(void, handle)));
 
     if (VAL_HANDLE_LEN(handle) == 0)
         fail (Error_Already_Destroyed_Raw(pointer));

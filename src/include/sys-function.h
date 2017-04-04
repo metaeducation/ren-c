@@ -50,7 +50,7 @@ struct Reb_Func {
             "AS_FUNC works on: void*, REBNOD*, REBSER*, REBARR*"
         );
         REBARR *paramlist = cast(REBARR*, p);
-        assert(GET_SER_FLAG(paramlist, ARRAY_FLAG_PARAMLIST));
+        assert(Get_Ser_Flag(paramlist, ARRAY_FLAG_PARAMLIST));
         return cast(REBFUN*, paramlist);
     }
 #else
@@ -60,7 +60,7 @@ struct Reb_Func {
 
 
 inline static REBARR *FUNC_PARAMLIST(REBFUN *f) {
-    assert(GET_SER_FLAG(&f->paramlist, ARRAY_FLAG_PARAMLIST));
+    assert(Get_Ser_Flag(&f->paramlist, ARRAY_FLAG_PARAMLIST));
     return &f->paramlist;
 }
 
@@ -104,8 +104,8 @@ inline static REBARR *FUNC_FACADE(REBFUN *f) {
     assert(IS_FUNCTION(ARR_HEAD(facade)));
     REBARR *underlying = ARR_HEAD(facade)->payload.function.paramlist;
     if (underlying != facade) {
-        assert(NOT_SER_FLAG(facade, ARRAY_FLAG_PARAMLIST));
-        assert(GET_SER_FLAG(underlying, ARRAY_FLAG_PARAMLIST));
+        assert(Not_Ser_Flag(facade, ARRAY_FLAG_PARAMLIST));
+        assert(Get_Ser_Flag(underlying, ARRAY_FLAG_PARAMLIST));
         assert(ARR_LEN(facade) == ARR_LEN(underlying));
     }
 #endif
@@ -314,7 +314,7 @@ inline static REBRIN *VAL_FUNC_ROUTINE(const RELVAL *v) {
 inline static REBOOL IS_FUNC_DURABLE(REBFUN *f) {
     return LOGICAL(
         FUNC_NUM_PARAMS(f) != 0
-        && GET_VAL_FLAG(FUNC_PARAM(f, 1), TYPESET_FLAG_DURABLE)
+        && Get_Val_Flag(FUNC_PARAM(f, 1), TYPESET_FLAG_DURABLE)
     );
 }
 

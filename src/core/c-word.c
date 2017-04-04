@@ -127,7 +127,7 @@ static void Expand_Word_Table(void)
     REBCNT new_size = Get_Hash_Prime(old_size + 1);
     if (new_size == 0) {
         DECLARE_LOCAL (temp);
-        SET_INTEGER(temp, old_size + 1);
+        Init_Integer(temp, old_size + 1);
         fail (Error_Size_Limit_Raw(temp));
     }
 
@@ -239,7 +239,7 @@ REBSTR *Intern_UTF8_Managed(const REBYTE *utf8, REBCNT len)
             continue;
         }
 
-        assert(GET_SER_INFO(canon, STRING_INFO_CANON));
+        assert(Get_Ser_Info(canon, STRING_INFO_CANON));
 
         // Compare_UTF8 returns 0 when the spelling is a case-sensitive match,
         // and is the exact interning to return.
@@ -266,7 +266,7 @@ REBSTR *Intern_UTF8_Managed(const REBYTE *utf8, REBCNT len)
         REBSTR *synonym = canon->link.synonym;
         while (synonym != canon) {
             assert(synonym->misc.canon == canon);
-            assert(NOT_SER_INFO(synonym, STRING_INFO_CANON));
+            assert(Not_Ser_Info(synonym, STRING_INFO_CANON));
 
             // Exact match for a synonym also means no new allocation needed.
             //
@@ -304,9 +304,9 @@ new_interning: ; // semicolon needed for statement
 
 #if !defined(NDEBUG)
     if (len + 1 > sizeof(intern->content))
-        assert(GET_SER_INFO(intern, SERIES_INFO_HAS_DYNAMIC));
+        assert(Get_Ser_Info(intern, SERIES_INFO_HAS_DYNAMIC));
     else
-        assert(NOT_SER_INFO(intern, SERIES_INFO_HAS_DYNAMIC));
+        assert(Not_Ser_Info(intern, SERIES_INFO_HAS_DYNAMIC));
 #endif
 
     // The incoming string isn't always null terminated, e.g. if you are
@@ -332,7 +332,7 @@ new_interning: ; // semicolon needed for statement
             ++PG_Num_Canon_Slots_In_Use;
         }
 
-        SET_SER_INFO(intern, STRING_INFO_CANON);
+        Set_Ser_Info(intern, STRING_INFO_CANON);
 
         intern->link.synonym = intern; // circularly linked list, empty state
 
@@ -397,13 +397,13 @@ void GC_Kill_Interning(REBSTR *intern)
     //
     REBSER *temp = synonym;
     while (temp->link.synonym != intern) {
-        if (GET_SER_INFO(intern, STRING_INFO_CANON))
+        if (Get_Ser_Info(intern, STRING_INFO_CANON))
             temp->misc.canon = synonym;
         temp = temp->link.synonym;
     }
     temp->link.synonym = synonym; // cut intern out of chain (or no-op)
 
-    if (NOT_SER_INFO(intern, STRING_INFO_CANON))
+    if (Not_Ser_Info(intern, STRING_INFO_CANON))
         return; // for non-canon forms, removing from chain is all you need
 
     assert(intern->misc.bind_index.high == 0); // shouldn't GC during binds?
@@ -436,7 +436,7 @@ void GC_Kill_Interning(REBSTR *intern)
         //
         /*assert(hash == Hash_Word(STR_HEAD(synonym)));*/
         canons_by_hash[hash] = synonym;
-        SET_SER_INFO(synonym, STRING_INFO_CANON);
+        Set_Ser_Info(synonym, STRING_INFO_CANON);
         synonym->misc.bind_index.low = 0;
         synonym->misc.bind_index.high = 0;
     }
@@ -526,7 +526,7 @@ void Startup_Symbols(REBARR *words)
     RELVAL *word = ARR_HEAD(words);
     for (; NOT_END(word); ++word) {
         REBSTR *canon = VAL_WORD_CANON(word);
-        assert(GET_SER_INFO(canon, STRING_INFO_CANON));
+        assert(Get_Ser_Info(canon, STRING_INFO_CANON));
 
         sym = cast(REBSYM, cast(REBCNT, sym) + 1);
         *SER_AT(REBSTR*, PG_Symbol_Canons, cast(REBCNT, sym)) = canon;

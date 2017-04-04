@@ -91,7 +91,7 @@ inline static REBOOL Try_Add_Binder_Index(
     REBINT index
 ){
     assert(index != 0);
-    assert(GET_SER_INFO(canon, STRING_INFO_CANON));
+    assert(Get_Ser_Info(canon, STRING_INFO_CANON));
     if (binder->high) {
         if (canon->misc.bind_index.high != 0)
             return FALSE;
@@ -129,7 +129,7 @@ inline static REBINT Try_Get_Binder_Index( // 0 if not present
     struct Reb_Binder *binder,
     REBSTR *canon
 ){
-    assert(GET_SER_INFO(canon, STRING_INFO_CANON));
+    assert(Get_Ser_Info(canon, STRING_INFO_CANON));
 
     if (binder->high)
         return canon->misc.bind_index.high;
@@ -142,7 +142,7 @@ inline static REBINT Try_Remove_Binder_Index( // 0 if failure, else old index
     struct Reb_Binder *binder,
     REBSTR *canon
 ){
-    assert(GET_SER_INFO(canon, STRING_INFO_CANON));
+    assert(Get_Ser_Info(canon, STRING_INFO_CANON));
 
     REBINT old_index;
     if (binder->high) {
@@ -245,7 +245,7 @@ inline static REBVAL *Get_Var_Core(
 
     assert(ANY_WORD(any_word));
 
-    if (GET_VAL_FLAG(any_word, VALUE_FLAG_RELATIVE)) {
+    if (Get_Val_Flag(any_word, VALUE_FLAG_RELATIVE)) {
         //
         // RELATIVE BINDING: The word was made during a deep copy of the block
         // that was given as a function's body, and stored a reference to that
@@ -253,7 +253,7 @@ inline static REBVAL *Get_Var_Core(
         // find the right function call on the stack (if any) for the word to
         // refer to (the FRAME!)
         //
-        assert(GET_VAL_FLAG(any_word, WORD_FLAG_BOUND)); // should be set too
+        assert(Get_Val_Flag(any_word, WORD_FLAG_BOUND)); // should be set too
 
     #if !defined(NDEBUG)
         if (specifier == SPECIFIED) {
@@ -268,7 +268,7 @@ inline static REBVAL *Get_Var_Core(
             VAL_WORD_FUNC(any_word) == VAL_FUNC(CTX_FRAME_FUNC_VALUE(context))
         );
     }
-    else if (GET_VAL_FLAG(any_word, WORD_FLAG_BOUND)) {
+    else if (Get_Val_Flag(any_word, WORD_FLAG_BOUND)) {
         //
         // SPECIFIC BINDING: The context the word is bound to is explicitly
         // contained in the `any_word` REBVAL payload.  Just extract it.
@@ -337,7 +337,7 @@ inline static REBVAL *Get_Var_Core(
         // The PROTECT command has a finer-grained granularity for marking
         // not just contexts, but individual fields as protected.
         //
-        if (GET_VAL_FLAG(var, VALUE_FLAG_PROTECTED))
+        if (Get_Val_Flag(var, VALUE_FLAG_PROTECTED))
             fail (Error_Protected_Word_Raw(any_word));
 
     }

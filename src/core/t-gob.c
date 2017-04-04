@@ -560,7 +560,7 @@ static REBOOL Get_GOB_Var(REBGOB *gob, const REBVAL *word, REBVAL *val)
         break;
 
     case SYM_ALPHA:
-        SET_INTEGER(val, GOB_ALPHA(gob));
+        Init_Integer(val, GOB_ALPHA(gob));
         break;
 
     case SYM_PANE:
@@ -576,7 +576,7 @@ static REBOOL Get_GOB_Var(REBGOB *gob, const REBVAL *word, REBVAL *val)
         }
         else
 is_blank:
-            SET_BLANK(val);
+            Init_Blank(val);
         break;
 
     case SYM_DATA:
@@ -593,7 +593,7 @@ is_blank:
             Init_Binary(val, GOB_DATA(gob));
         }
         else if (GOB_DTYPE(gob) == GOBD_INTEGER) {
-            SET_INTEGER(val, (REBIPT)GOB_DATA(gob));
+            Init_Integer(val, (REBIPT)GOB_DATA(gob));
         }
         else goto is_blank;
         break;
@@ -659,12 +659,12 @@ REBARR *Gob_To_Array(REBGOB *gob)
         val = Alloc_Tail_Array(array);
         Init_Set_Word(val, Canon(words[n]));
         vals[n] = Alloc_Tail_Array(array);
-        SET_BLANK(vals[n]);
+        Init_Blank(vals[n]);
     }
 
     SET_PAIR(vals[0], GOB_X(gob), GOB_Y(gob));
     SET_PAIR(vals[1], GOB_W(gob), GOB_H(gob));
-    SET_INTEGER(vals[2], GOB_ALPHA(gob));
+    Init_Integer(vals[2], GOB_ALPHA(gob));
 
     if (!GOB_TYPE(gob)) return array;
 
@@ -712,7 +712,7 @@ static void Return_Gob_Pair(REBVAL *out, REBGOB *gob, REBD32 x, REBD32 y)
     SET_GOB(Alloc_Tail_Array(blk), gob);
 
     REBVAL *val = Alloc_Tail_Array(blk);
-    VAL_RESET_HEADER(val, REB_PAIR);
+    Reset_Val_Header(val, REB_PAIR);
     VAL_PAIR_X(val) = x;
     VAL_PAIR_Y(val) = y;
 }
@@ -971,7 +971,7 @@ REBINT PD_Gob(REBPVS *pvs)
         if (index >= tail) return PE_NONE;
 
         gob = *GOB_AT(gob, index);
-        VAL_RESET_HEADER(pvs->store, REB_GOB);
+        Reset_Val_Header(pvs->store, REB_GOB);
         VAL_GOB(pvs->store) = gob;
         VAL_GOB_INDEX(pvs->store) = 0;
         return PE_USE_STORE;
@@ -1105,7 +1105,7 @@ REBTYPE(Gob)
         if (index + len > tail) len = tail - index;
         if (index >= tail) goto is_blank;
         if (NOT(REF(part))) { // just one value
-            VAL_RESET_HEADER(D_OUT, REB_GOB);
+            Reset_Val_Header(D_OUT, REB_GOB);
             VAL_GOB(D_OUT) = *GOB_AT(gob, index);
             VAL_GOB_INDEX(D_OUT) = 0;
             Remove_Gobs(gob, index, 1);
@@ -1144,12 +1144,12 @@ REBTYPE(Gob)
         goto is_false;
 
     case SYM_INDEX_OF:
-        SET_INTEGER(D_OUT, index + 1);
+        Init_Integer(D_OUT, index + 1);
         break;
 
     case SYM_LENGTH:
         index = (tail > index) ? tail - index : 0;
-        SET_INTEGER(D_OUT, index);
+        Init_Integer(D_OUT, index);
         break;
 
     case SYM_FIND:
@@ -1175,7 +1175,7 @@ REBTYPE(Gob)
     return R_OUT;
 
 set_index:
-    VAL_RESET_HEADER(D_OUT, REB_GOB);
+    Reset_Val_Header(D_OUT, REB_GOB);
     VAL_GOB(D_OUT) = gob;
     VAL_GOB_INDEX(D_OUT) = index;
     return R_OUT;

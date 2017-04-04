@@ -58,7 +58,7 @@ static void Ret_Query_Net(REBCTX *port, struct devreq_net *sock, REBVAL *out)
         cast(REBYTE*, &sock->local_ip),
         4
     );
-    SET_INTEGER(
+    Init_Integer(
         CTX_VAR(info, STD_NET_INFO_LOCAL_PORT),
         sock->local_port
     );
@@ -68,7 +68,7 @@ static void Ret_Query_Net(REBCTX *port, struct devreq_net *sock, REBVAL *out)
         cast(REBYTE*, &sock->remote_ip),
         4
     );
-    SET_INTEGER(
+    Init_Integer(
         CTX_VAR(info, STD_NET_INFO_REMOTE_PORT),
         sock->remote_port
     );
@@ -99,8 +99,8 @@ static void Accept_New_Port(REBVAL *out, REBCTX *port, struct devreq_net *sock)
     port = Copy_Context_Shallow(port);
     Init_Port(out, port); // Also for GC protect
 
-    SET_BLANK(CTX_VAR(port, STD_PORT_DATA)); // just to be sure.
-    SET_BLANK(CTX_VAR(port, STD_PORT_STATE)); // just to be sure.
+    Init_Blank(CTX_VAR(port, STD_PORT_DATA)); // just to be sure.
+    Init_Blank(CTX_VAR(port, STD_PORT_STATE)); // just to be sure.
 
     // Copy over the new sock data:
     sock = cast(struct devreq_net*, Ensure_Port_State(port, RDI_NET));
@@ -213,7 +213,7 @@ static REB_R Transport_Actor(
             }
         }
         else if (sock->command == RDC_WRITE) {
-            SET_BLANK(port_data); // Write is done.
+            Init_Blank(port_data); // Write is done.
         }
         return R_BLANK; }
 
@@ -323,7 +323,7 @@ static REB_R Transport_Actor(
             fail (Error_On_Port(RE_WRITE_ERROR, port, sock->error));
 
         if (result == DR_DONE)
-            SET_BLANK(CTX_VAR(port, STD_PORT_DATA));
+            Init_Blank(CTX_VAR(port, STD_PORT_DATA));
 
         Move_Value(D_OUT, CTX_VALUE(port));
         return R_OUT; }
@@ -367,7 +367,7 @@ static REB_R Transport_Actor(
 
     case SYM_LENGTH: {
         REBVAL *port_data = CTX_VAR(port, STD_PORT_DATA);
-        SET_INTEGER(
+        Init_Integer(
             D_OUT,
             ANY_SERIES(port_data) ? VAL_LEN_HEAD(port_data) : 0
         );
@@ -385,7 +385,7 @@ static REB_R Transport_Actor(
         // !!! Comment said "Temporary to TEST error handler!"
         //
         REBVAL *event = Append_Event(); // sets signal
-        VAL_RESET_HEADER(event, REB_EVENT); // has more space, if needed
+        Reset_Val_Header(event, REB_EVENT); // has more space, if needed
         VAL_EVENT_TYPE(event) = EVT_ERROR;
         VAL_EVENT_DATA(event) = 101;
         VAL_EVENT_REQ(event) = sock;
