@@ -257,7 +257,7 @@ static REB_R Serial_Actor(REBFRM *frame_, REBCTX *port, REBSYM action)
             }
         }
         else if (req->command == RDC_WRITE) {
-            SET_BLANK(arg);  // Write is done.
+            Init_Blank(arg);  // Write is done.
         }
         return R_BLANK;
 

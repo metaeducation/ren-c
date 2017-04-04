@@ -32,7 +32,7 @@
 // when Make_Array() was called.  But this always had to be an END.
 //
 // In Ren-C, there is an implicit END marker just past the last cell in the
-// capacity.  Allowing a SET_END() on this position could corrupt the END
+// capacity.  Allowing a Init_End() on this position could corrupt the END
 // signaling slot, which only uses a bit out of a Reb_Header sized item to
 // signal.  Use TERM_ARRAY_LEN() to safely terminate arrays and respect not
 // writing if it's past capacity.
@@ -71,7 +71,7 @@ struct Reb_Array {
             "AS_ARRAY works on: void*, REBNOD*, REBSER*"
         );
         REBSER *s = cast(REBSER*, p);
-        assert(GET_SER_FLAG(s, SERIES_FLAG_ARRAY));
+        assert(Get_Ser_Flag(s, SERIES_FLAG_ARRAY));
         return cast(REBARR*, s);
     }
 #else
@@ -104,7 +104,7 @@ inline static RELVAL *ARR_LAST(REBARR *a)
 // performance reasons (for better or worse).
 //
 inline static REBCNT ARR_LEN(REBARR *a) {
-    assert(GET_SER_FLAG(a, SERIES_FLAG_ARRAY));
+    assert(Get_Ser_Flag(a, SERIES_FLAG_ARRAY));
     return SER_LEN(AS_SERIES(a));
 }
 
@@ -122,7 +122,7 @@ inline static void TERM_ARRAY_LEN(REBARR *a, REBCNT len) {
     if (len + 1 == rest)
         assert(IS_END(ARR_TAIL(a)));
     else
-        SET_END(ARR_TAIL(a));
+        Init_End(ARR_TAIL(a));
 }
 
 inline static void SET_ARRAY_LEN_NOTERM(REBARR *a, REBCNT len) {
@@ -134,7 +134,7 @@ inline static void RESET_ARRAY(REBARR *a) {
 }
 
 inline static void TERM_SERIES(REBSER *s) {
-    if (GET_SER_FLAG(s, SERIES_FLAG_ARRAY))
+    if (Get_Ser_Flag(s, SERIES_FLAG_ARRAY))
         TERM_ARRAY_LEN(AS_ARRAY(s), SER_LEN(s));
     else
         memset(SER_AT_RAW(SER_WIDE(s), s, SER_LEN(s)), 0, SER_WIDE(s));
@@ -183,7 +183,7 @@ inline static void DROP_GUARD_ARRAY_CONTENTS(REBARR *a) {
 //
 
 inline static REBOOL Is_Array_Deeply_Frozen(REBARR *a) {
-    return GET_SER_INFO(a, SERIES_INFO_FROZEN);
+    return Get_Ser_Info(a, SERIES_INFO_FROZEN);
 
     // should be frozen all the way down (can only freeze arrays deeply)
 }
@@ -218,8 +218,8 @@ inline static REBARR *Make_Array_Core(REBCNT capacity, REBUPT flags)
 
     assert(
         capacity <= 1
-            ? NOT(GET_SER_INFO(s, SERIES_INFO_HAS_DYNAMIC))
-            : GET_SER_INFO(s, SERIES_INFO_HAS_DYNAMIC)
+            ? NOT(Get_Ser_Info(s, SERIES_INFO_HAS_DYNAMIC))
+            : Get_Ser_Info(s, SERIES_INFO_HAS_DYNAMIC)
     );
 
     REBARR *a = AS_ARRAY(s);
@@ -244,7 +244,7 @@ inline static REBARR *Alloc_Singular_Array_Core(REBUPT flags) {
         sizeof(REBVAL),
         SERIES_FLAG_ARRAY | SERIES_FLAG_FIXED_SIZE | flags
     );
-    assert(NOT(GET_SER_INFO(s, SERIES_INFO_HAS_DYNAMIC)));
+    assert(NOT(Get_Ser_Info(s, SERIES_INFO_HAS_DYNAMIC)));
 
     // The length still needs to be set in the header, as it defaults
     // to 0 and we want it to be 1.
@@ -413,7 +413,7 @@ inline static RELVAL *VAL_ARRAY_TAIL(const RELVAL *v) {
         ASSERT_SERIES_MANAGED(AS_SERIES(array))
 
     static inline void ASSERT_SERIES(REBSER *s) {
-        if (GET_SER_FLAG(s, SERIES_FLAG_ARRAY))
+        if (Get_Ser_Flag(s, SERIES_FLAG_ARRAY))
             Assert_Array_Core(AS_ARRAY(s));
         else
             Assert_Series_Core(s);

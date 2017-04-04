@@ -578,7 +578,7 @@ REBNATIVE(get)
         REBVAL *var = CTX_VARS_HEAD(VAL_CONTEXT(source));
 
         for (; NOT_END(key); key++, var++) {
-            if (GET_VAL_FLAG(key, TYPESET_FLAG_HIDDEN))
+            if (Get_Val_Flag(key, TYPESET_FLAG_HIDDEN))
                 continue;
 
             // This only copies the value bits, so this is a "shallow" copy
@@ -643,7 +643,7 @@ REBNATIVE(get)
             // back a void, which avoids an immediate error alert but which
             // is more of a "hot potato" that needs to be handled.
             //
-            SET_VOID(dest);
+            Init_Void(dest);
         }
         else if (ANY_WORD(source)) {
             Copy_Opt_Var_May_Fail(dest, source, specifier);
@@ -656,7 +656,7 @@ REBNATIVE(get)
             // !!! Review making a more efficient method of doing this.
             //
             Derelativize(temp, source, specifier);
-            VAL_SET_TYPE_BITS(temp, REB_GET_PATH);
+            Reset_Val_Kind(temp, REB_GET_PATH);
 
             // Here we DO it, which means that `get 'foo/bar` will act the same
             // as `:foo/bar` for all types.
@@ -762,8 +762,8 @@ REBNATIVE(in)
                         context, VAL_WORD_CANON(word), FALSE
                     );
                     if (index != 0) {
-                        CLEAR_VAL_FLAG(word, VALUE_FLAG_RELATIVE);
-                        SET_VAL_FLAG(word, WORD_FLAG_BOUND);
+                        Clear_Val_Flag(word, VALUE_FLAG_RELATIVE);
+                        Set_Val_Flag(word, WORD_FLAG_BOUND);
                         INIT_WORD_CONTEXT(word, context);
                         INIT_WORD_INDEX(word, index);
                         Move_Value(D_OUT, word);
@@ -890,7 +890,7 @@ REBNATIVE(set)
         REBVAL *var = Get_Var_Core(ARG(target), SPECIFIED, GETVAR_MUTABLE);
         Move_Value(var, ARG(value));
         if (REF(lookback))
-            SET_VAL_FLAG(var, VALUE_FLAG_ENFIXED);
+            Set_Val_Flag(var, VALUE_FLAG_ENFIXED);
 
         goto return_value_arg;
     }
@@ -973,13 +973,13 @@ REBNATIVE(set)
             // Hidden words are not shown in the WORDS-OF, and should not
             // count for consideration in positional setting.  Just skip.
             //
-            if (GET_VAL_FLAG(key, TYPESET_FLAG_HIDDEN))
+            if (Get_Val_Flag(key, TYPESET_FLAG_HIDDEN))
                 continue;
 
             // Protected words cannot be modified, so a SET should error
             // instead of going ahead and changing them
             //
-            if (GET_VAL_FLAG(var, VALUE_FLAG_PROTECTED))
+            if (Get_Val_Flag(var, VALUE_FLAG_PROTECTED))
                 fail (Error_Protected_Key(key));
 
             // If we're setting to a single value and not a block, then
@@ -1022,13 +1022,13 @@ REBNATIVE(set)
         // padding to NONE if requested
         //
         for (; NOT_END(key); key++, var++) {
-            if (GET_VAL_FLAG(key, TYPESET_FLAG_HIDDEN))
+            if (Get_Val_Flag(key, TYPESET_FLAG_HIDDEN))
                 continue;
 
             if (IS_END(value)) {
                 if (NOT(REF(pad)))
                     break;
-                SET_BLANK(var);
+                Init_Blank(var);
                 continue;
             }
             Derelativize(var, value, value_specifier);
@@ -1213,7 +1213,7 @@ REBNATIVE(unset)
 
     if (ANY_WORD(target)) {
         REBVAL *var = Sink_Var_May_Fail(target, SPECIFIED);
-        SET_VOID(var);
+        Init_Void(var);
         return R_VOID;
     }
 
@@ -1225,7 +1225,7 @@ REBNATIVE(unset)
             fail (Error_Invalid_Arg_Core(word, VAL_SPECIFIER(target)));
 
         REBVAL *var = Sink_Var_May_Fail(word, VAL_SPECIFIER(target));
-        SET_VOID(var);
+        Init_Void(var);
     }
 
     return R_VOID;
@@ -1254,7 +1254,7 @@ REBNATIVE(lookback_q)
         if (!IS_FUNCTION(var))
             return R_FALSE;
 
-        return R_FROM_BOOL(GET_VAL_FLAG(var, VALUE_FLAG_ENFIXED));
+        return R_FROM_BOOL(Get_Val_Flag(var, VALUE_FLAG_ENFIXED));
     }
     else {
         assert(ANY_PATH(source));
@@ -1290,7 +1290,7 @@ REBNATIVE(semiquoted_q)
     const REBVAL *var = Get_Var_Core( // may fail
         ARG(parameter), SPECIFIED, GETVAR_READ_ONLY
     );
-    return R_FROM_BOOL(GET_VAL_FLAG(var, VALUE_FLAG_UNEVALUATED));
+    return R_FROM_BOOL(Get_Val_Flag(var, VALUE_FLAG_UNEVALUATED));
 }
 
 
@@ -1364,7 +1364,7 @@ REBNATIVE(as)
         panic(value); // all applicable types should be handled above
     }
 
-    VAL_SET_TYPE_BITS(value, kind);
+    Reset_Val_Kind(value, kind);
     Move_Value(D_OUT, value);
     return R_OUT;
 }
@@ -1414,7 +1414,7 @@ inline static REBOOL Is_Set_Modifies(REBVAL *location)
         // !!! We shouldn't be evaluating but currently the path machinery
         // doesn't "turn off" GROUP! evaluations for GET-PATH!.
         //
-        VAL_SET_TYPE_BITS(location, REB_GET_PATH);
+        Reset_Val_Kind(location, REB_GET_PATH);
 
         DECLARE_LOCAL (temp);
         if (Do_Path_Throws_Core(

@@ -406,19 +406,19 @@ REBNATIVE(resume)
     REBARR *instruction = Make_Array(RESUME_INST_MAX);
 
     if (REF(with)) {
-        SET_FALSE(ARR_AT(instruction, RESUME_INST_MODE)); // don't DO value
+        Init_False(ARR_AT(instruction, RESUME_INST_MODE)); // don't DO value
         Move_Value(
             SINK(ARR_AT(instruction, RESUME_INST_PAYLOAD)), ARG(value)
         );
     }
     else if (REF(do)) {
-        SET_TRUE(ARR_AT(instruction, RESUME_INST_MODE)); // DO the value
+        Init_True(ARR_AT(instruction, RESUME_INST_MODE)); // DO the value
         Move_Value(
             SINK(ARR_AT(instruction, RESUME_INST_PAYLOAD)), ARG(code)
         );
     }
     else {
-        SET_BLANK(ARR_AT(instruction, RESUME_INST_MODE)); // use default
+        Init_Blank(ARR_AT(instruction, RESUME_INST_MODE)); // use default
 
         // Even though this slot should be ignored, use BAR! to try and make
         // any attempts to use it more conspicuous (an unset wouldn't be)

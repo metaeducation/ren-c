@@ -461,14 +461,14 @@ REBNATIVE(switch)
     // For safety, notice if someone wrote `switch [x] [...]` with a literal
     // block in source, as that is likely a mistake.
     //
-    if (IS_BLOCK(value) && GET_VAL_FLAG(value, VALUE_FLAG_UNEVALUATED))
+    if (IS_BLOCK(value) && Get_Val_Flag(value, VALUE_FLAG_UNEVALUATED))
         fail (Error_Block_Switch_Raw(value));
 
     // Frame's extra D_CELL is free since the function has > 1 arg.  Reuse it
     // as a temporary GC-safe location for holding evaluations.  This
     // holds the last test so that `switch 9 [1 ["a"] 2 ["b"] "c"]` is "c".
 
-    SET_VOID(D_CELL); // used for "fallout"
+    Init_Void(D_CELL); // used for "fallout"
 
     while (NOT_END(f.value)) {
 
@@ -477,7 +477,7 @@ REBNATIVE(switch)
         // feature of the last value "falling out" the bottom of the switch
 
         if (IS_BLOCK(f.value)) {
-            SET_VOID(D_CELL);
+            Init_Void(D_CELL);
             goto continue_loop;
         }
 
@@ -782,7 +782,7 @@ REBNATIVE(throw)
     else {
         // Blank values serve as representative of THROWN() means "no name"
         //
-        SET_BLANK(D_OUT);
+        Init_Blank(D_OUT);
     }
 
     CONVERT_NAME_TO_THROWN(D_OUT, value);

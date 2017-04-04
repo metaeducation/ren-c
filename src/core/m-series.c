@@ -89,7 +89,7 @@ void Append_Series(REBSER *s, const REBYTE *data, REBCNT len)
     REBCNT len_old = SER_LEN(s);
     REBYTE wide = SER_WIDE(s);
 
-    assert(NOT_SER_FLAG(s, SERIES_FLAG_ARRAY));
+    assert(Not_Ser_Flag(s, SERIES_FLAG_ARRAY));
 
     EXPAND_SERIES_TAIL(s, len);
     memcpy(SER_DATA_RAW(s) + (wide * len_old), data, wide * len);
@@ -138,7 +138,7 @@ void Append_Values_Len(REBARR *a, const REBVAL *head, REBCNT len)
 //
 REBSER *Copy_Sequence(REBSER *original)
 {
-    assert(NOT_SER_FLAG(original, SERIES_FLAG_ARRAY));
+    assert(Not_Ser_Flag(original, SERIES_FLAG_ARRAY));
 
     REBCNT len = SER_LEN(original);
     REBSER *copy = Make_Series(len + 1, SER_WIDE(original));
@@ -164,7 +164,7 @@ REBSER *Copy_Sequence(REBSER *original)
 //
 REBSER *Copy_Sequence_At_Len(REBSER *original, REBCNT index, REBCNT len)
 {
-    assert(NOT_SER_FLAG(original, SERIES_FLAG_ARRAY));
+    assert(Not_Ser_Flag(original, SERIES_FLAG_ARRAY));
 
     REBSER *copy = Make_Series(len + 1, SER_WIDE(original));
     memcpy(
@@ -201,7 +201,7 @@ void Remove_Series(REBSER *s, REBCNT index, REBINT len)
 {
     if (len <= 0) return;
 
-    REBOOL is_dynamic = GET_SER_INFO(s, SERIES_INFO_HAS_DYNAMIC);
+    REBOOL is_dynamic = Get_Ser_Info(s, SERIES_INFO_HAS_DYNAMIC);
     REBCNT len_old = SER_LEN(s);
 
     REBCNT start = index * SER_WIDE(s);
@@ -314,8 +314,8 @@ void Unbias_Series(REBSER *s, REBOOL keep)
 //
 void Reset_Sequence(REBSER *s)
 {
-    assert(NOT_SER_FLAG(s, SERIES_FLAG_ARRAY));
-    if (GET_SER_INFO(s, SERIES_INFO_HAS_DYNAMIC)) {
+    assert(Not_Ser_Flag(s, SERIES_FLAG_ARRAY));
+    if (Get_Ser_Info(s, SERIES_INFO_HAS_DYNAMIC)) {
         Unbias_Series(s, FALSE);
         s->content.dynamic.len = 0;
         TERM_SEQUENCE(s);
@@ -333,7 +333,7 @@ void Reset_Sequence(REBSER *s)
 //
 void Reset_Array(REBARR *a)
 {
-    if (GET_SER_INFO(a, SERIES_INFO_HAS_DYNAMIC))
+    if (Get_Ser_Info(a, SERIES_INFO_HAS_DYNAMIC))
         Unbias_Series(AS_SERIES(a), FALSE);
     TERM_ARRAY_LEN(a, 0);
 }
@@ -349,7 +349,7 @@ void Clear_Series(REBSER *s)
 {
     assert(!Is_Series_Read_Only(s));
 
-    if (GET_SER_INFO(s, SERIES_INFO_HAS_DYNAMIC)) {
+    if (Get_Ser_Info(s, SERIES_INFO_HAS_DYNAMIC)) {
         Unbias_Series(s, FALSE);
         CLEAR(s->content.dynamic.data, SER_REST(s) * SER_WIDE(s));
     }
@@ -368,7 +368,7 @@ void Clear_Series(REBSER *s)
 //
 void Resize_Series(REBSER *s, REBCNT size)
 {
-    if (GET_SER_INFO(s, SERIES_INFO_HAS_DYNAMIC)) {
+    if (Get_Ser_Info(s, SERIES_INFO_HAS_DYNAMIC)) {
         s->content.dynamic.len = 0;
         Unbias_Series(s, TRUE);
     }
@@ -409,7 +409,7 @@ REBYTE *Reset_Buffer(REBSER *buf, REBCNT len)
 //
 REBSER *Copy_Buffer(REBSER *buf, REBCNT index, void *end)
 {
-    assert(NOT_SER_FLAG(buf, SERIES_FLAG_ARRAY));
+    assert(Not_Ser_Flag(buf, SERIES_FLAG_ARRAY));
 
     REBCNT len = BYTE_SIZE(buf)
         ? cast(REBYTE*, end) - BIN_HEAD(buf)
@@ -437,7 +437,7 @@ REBSER *Copy_Buffer(REBSER *buf, REBCNT index, void *end)
 //
 void Assert_Series_Term_Core(REBSER *s)
 {
-    if (GET_SER_FLAG(s, SERIES_FLAG_ARRAY)) {
+    if (Get_Ser_Flag(s, SERIES_FLAG_ARRAY)) {
         //
         // END values aren't canonized to zero bytes, check IS_END explicitly
         //
@@ -469,10 +469,10 @@ void Assert_Series_Core(REBSER *s)
         panic (s);
 
     assert(
-        GET_SER_INFO(s, SERIES_INFO_0_IS_TRUE)
-        && GET_SER_INFO(s, SERIES_INFO_1_IS_TRUE)
-        && NOT_SER_INFO(s, SERIES_INFO_2_IS_FALSE)
-        && NOT_SER_INFO(s, SERIES_INFO_8_IS_FALSE)
+        Get_Ser_Info(s, SERIES_INFO_0_IS_TRUE)
+        && Get_Ser_Info(s, SERIES_INFO_1_IS_TRUE)
+        && Not_Ser_Info(s, SERIES_INFO_2_IS_FALSE)
+        && Not_Ser_Info(s, SERIES_INFO_8_IS_FALSE)
     );
 
     assert(SER_LEN(s) < SER_REST(s));

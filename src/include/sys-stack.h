@@ -162,7 +162,7 @@ inline static void DS_PUSH(const REBVAL *v) {
 #else
     inline static void DS_DROP_Core() {
         // Note: DS_TOP checks to make sure it's not an END.
-        SET_UNREADABLE_BLANK(DS_TOP); // TRASH would mean ASSERT_ARRAY failing
+        Init_Unreadable_Blank(DS_TOP); // TRASH would mean ASSERT_ARRAY failing
         --DS_Index;
     }
 

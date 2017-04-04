@@ -253,11 +253,11 @@ void Expand_Hash(REBSER *ser)
     REBINT pnum = Get_Hash_Prime(SER_LEN(ser) + 1);
     if (pnum == 0) {
         DECLARE_LOCAL (temp);
-        SET_INTEGER(temp, SER_LEN(ser) + 1);
+        Init_Integer(temp, SER_LEN(ser) + 1);
         fail (Error_Size_Limit_Raw(temp));
     }
 
-    assert(NOT_SER_FLAG(ser, SERIES_FLAG_ARRAY));
+    assert(Not_Ser_Flag(ser, SERIES_FLAG_ARRAY));
     Remake_Series(ser, pnum + 1, SER_WIDE(ser), SERIES_FLAG_POWER_OF_2);
 
     Clear_Series(ser);
@@ -358,7 +358,7 @@ REBINT PD_Map(REBPVS *pvs)
     );
 
     if (n == 0) {
-        SET_VOID(pvs->store);
+        Init_Void(pvs->store);
         return PE_USE_STORE;
     }
 
@@ -366,7 +366,7 @@ REBINT PD_Map(REBPVS *pvs)
         ARR_AT(MAP_PAIRLIST(VAL_MAP(pvs->value)), ((n - 1) * 2) + 1)
     );
     if (IS_VOID(val)) {
-        SET_VOID(pvs->store);
+        Init_Void(pvs->store);
         return PE_USE_STORE;
     }
 
@@ -519,7 +519,7 @@ REBMAP *Mutate_Array_Into_Map(REBARR *a)
     //
     assert(NOT(IS_ARRAY_MANAGED(a)));
 
-    SET_SER_FLAG(a, ARRAY_FLAG_PAIRLIST);
+    Set_Ser_Flag(a, ARRAY_FLAG_PAIRLIST);
 
     REBMAP *map = AS_MAP(a);
     MAP_HASHLIST(map) = Make_Hash_Sequence(size);
@@ -721,7 +721,7 @@ REBTYPE(Map)
         return R_OUT; }
 
     case SYM_LENGTH:
-        SET_INTEGER(D_OUT, Length_Map(map));
+        Init_Integer(D_OUT, Length_Map(map));
         return R_OUT;
 
     case SYM_COPY: {

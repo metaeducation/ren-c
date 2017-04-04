@@ -97,7 +97,7 @@ static void Arc_Trans(REBVAL *out, const REBVAL *value, REBOOL degrees, REBCNT k
     if (degrees)
         dval = dval * 180.0 / PI; // to degrees
 
-    SET_DECIMAL(out, dval);
+    Init_Decimal(out, dval);
 }
 
 
@@ -118,7 +118,7 @@ REBNATIVE(cosine)
 
     REBDEC dval = cos(Trig_Value(ARG(value), NOT(REF(radians)), COSINE));
     if (fabs(dval) < DBL_EPSILON) dval = 0.0;
-    SET_DECIMAL(D_OUT, dval);
+    Init_Decimal(D_OUT, dval);
     return R_OUT;
 }
 
@@ -140,7 +140,7 @@ REBNATIVE(sine)
 
     REBDEC dval = sin(Trig_Value(ARG(value), NOT(REF(radians)), SINE));
     if (fabs(dval) < DBL_EPSILON) dval = 0.0;
-    SET_DECIMAL(D_OUT, dval);
+    Init_Decimal(D_OUT, dval);
     return R_OUT;
 }
 
@@ -164,7 +164,7 @@ REBNATIVE(tangent)
     if (Eq_Decimal(fabs(dval), PI / 2.0))
         fail (Error_Overflow_Raw());
 
-    SET_DECIMAL(D_OUT, tan(dval));
+    Init_Decimal(D_OUT, tan(dval));
     return R_OUT;
 }
 
@@ -243,7 +243,7 @@ REBNATIVE(exp)
 
     dval = pow(eps, dval);
 //!!!!  Check_Overflow(dval);
-    SET_DECIMAL(D_OUT, dval);
+    Init_Decimal(D_OUT, dval);
     return R_OUT;
 }
 
@@ -262,7 +262,7 @@ REBNATIVE(log_10)
 
     REBDEC dval = AS_DECIMAL(ARG(value));
     if (dval <= 0) fail (Error_Positive_Raw());
-    SET_DECIMAL(D_OUT, log10(dval));
+    Init_Decimal(D_OUT, log10(dval));
     return R_OUT;
 }
 
@@ -281,7 +281,7 @@ REBNATIVE(log_2)
 
     REBDEC dval = AS_DECIMAL(ARG(value));
     if (dval <= 0) fail (Error_Positive_Raw());
-    SET_DECIMAL(D_OUT, log(dval) / LOG2);
+    Init_Decimal(D_OUT, log(dval) / LOG2);
     return R_OUT;
 }
 
@@ -300,7 +300,7 @@ REBNATIVE(log_e)
 
     REBDEC dval = AS_DECIMAL(ARG(value));
     if (dval <= 0) fail (Error_Positive_Raw());
-    SET_DECIMAL(D_OUT, log(dval));
+    Init_Decimal(D_OUT, log(dval));
     return R_OUT;
 }
 
@@ -319,7 +319,7 @@ REBNATIVE(square_root)
 
     REBDEC dval = AS_DECIMAL(ARG(value));
     if (dval < 0) fail (Error_Positive_Raw());
-    SET_DECIMAL(D_OUT, sqrt(dval));
+    Init_Decimal(D_OUT, sqrt(dval));
     return R_OUT;
 }
 
@@ -463,12 +463,12 @@ REBINT Compare_Modify_Values(RELVAL *a, RELVAL *b, REBINT strictness)
         case REB_INTEGER:
             if (tb == REB_DECIMAL || tb == REB_PERCENT) {
                 REBDEC dec_a = cast(REBDEC, VAL_INT64(a));
-                SET_DECIMAL(a, dec_a);
+                Init_Decimal(a, dec_a);
                 goto compare;
             }
             else if (tb == REB_MONEY) {
                 deci amount = int_to_deci(VAL_INT64(a));
-                SET_MONEY(a, amount);
+                Init_Money(a, amount);
                 goto compare;
             }
             break;
@@ -477,11 +477,11 @@ REBINT Compare_Modify_Values(RELVAL *a, RELVAL *b, REBINT strictness)
         case REB_PERCENT:
             if (tb == REB_INTEGER) {
                 REBDEC dec_b = cast(REBDEC, VAL_INT64(b));
-                SET_DECIMAL(b, dec_b);
+                Init_Decimal(b, dec_b);
                 goto compare;
             }
             else if (tb == REB_MONEY) {
-                SET_MONEY(a, decimal_to_deci(VAL_DECIMAL(a)));
+                Init_Money(a, decimal_to_deci(VAL_DECIMAL(a)));
                 goto compare;
             }
             else if (tb == REB_DECIMAL || tb == REB_PERCENT) // equivalent types
@@ -490,11 +490,11 @@ REBINT Compare_Modify_Values(RELVAL *a, RELVAL *b, REBINT strictness)
 
         case REB_MONEY:
             if (tb == REB_INTEGER) {
-                SET_MONEY(b, int_to_deci(VAL_INT64(b)));
+                Init_Money(b, int_to_deci(VAL_INT64(b)));
                 goto compare;
             }
             if (tb == REB_DECIMAL || tb == REB_PERCENT) {
-                SET_MONEY(b, decimal_to_deci(VAL_DECIMAL(b)));
+                Init_Money(b, decimal_to_deci(VAL_DECIMAL(b)));
                 goto compare;
             }
             break;

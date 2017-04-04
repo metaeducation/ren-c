@@ -349,12 +349,12 @@ void Host_Repl(
     REBOOL at_breakpoint
 ) {
     REBOOL last_failed = FALSE;
-    SET_VOID(out);
+    Init_Void(out);
 
     DECLARE_LOCAL (level);
     DECLARE_LOCAL (frame);
-    SET_BLANK(level);
-    SET_BLANK(frame);
+    Init_Blank(level);
+    Init_Blank(frame);
 
     PUSH_GUARD_VALUE(frame);
 
@@ -368,7 +368,7 @@ void Host_Repl(
             // The DEBUG command can change this, so at the moment it
             // has to be refreshed each time an evaluation is performed.
 
-            SET_INTEGER(level, HG_Stack_Level);
+            Init_Integer(level, HG_Stack_Level);
 
             REBFRM *f = Frame_For_Stack_Level(NULL, level, FALSE);
             assert(f);
@@ -445,7 +445,7 @@ void Host_Repl(
             // The output value will be an END marker on halt, to signal the
             // unusability of the interrupted result.
             //
-            SET_VOID(out);
+            Init_Void(out);
         }
         else if (do_result == -2) {
             //
@@ -520,7 +520,7 @@ REBOOL Host_Breakpoint_Quitting_Hook(
     REBCNT old_stack_level = HG_Stack_Level;
 
     DECLARE_LOCAL (level);
-    SET_INTEGER(level, 1);
+    Init_Integer(level, 1);
 
     if (Frame_For_Stack_Level(NULL, level, FALSE) != NULL)
         HG_Stack_Level = 1;
@@ -839,7 +839,7 @@ int main(int argc, char **argv_ansi)
     volatile REBOOL finished; // without volatile, gets "clobbered" warning
 
     Prep_Global_Cell(&HG_Host_Repl);
-    SET_BLANK(&HG_Host_Repl);
+    Init_Blank(&HG_Host_Repl);
 
     if (error != NULL) {
         //
@@ -936,12 +936,12 @@ int main(int argc, char **argv_ansi)
 
         DECLARE_LOCAL (embedded_value);
         if (embedded == NULL)
-            SET_BLANK(embedded_value);
+            Init_Blank(embedded_value);
         else
             Init_Block(embedded_value, embedded);
 
         DECLARE_LOCAL (ext_value);
-        SET_BLANK(ext_value);
+        Init_Blank(ext_value);
         LOAD_BOOT_EXTENSIONS(ext_value);
 
         if (!IS_FUNCTION(host_start))
@@ -1010,7 +1010,7 @@ int main(int argc, char **argv_ansi)
     DECLARE_LOCAL (value);
 
     while (NOT(finished)) {
-        SET_END(value);
+        Init_End(value);
         PUSH_GUARD_VALUE(value); // !!! Out_Value expects value to be GC safe
 
         struct Reb_State state;

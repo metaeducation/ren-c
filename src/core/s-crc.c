@@ -385,7 +385,7 @@ REBSER *Make_Hash_Sequence(REBCNT len)
     REBCNT n = Get_Hash_Prime(len * 2); // best when 2X # of keys
     if (n == 0) {
         DECLARE_LOCAL (temp);
-        SET_INTEGER(temp, len);
+        Init_Integer(temp, len);
 
         fail (Error_Size_Limit_Raw(temp));
     }
@@ -412,7 +412,7 @@ void Init_Map(REBVAL *out, REBMAP *map)
 
     ENSURE_ARRAY_MANAGED(MAP_PAIRLIST(map));
 
-    VAL_RESET_HEADER(out, REB_MAP);
+    Reset_Val_Header(out, REB_MAP);
     out->extra.binding = (REBARR*)SPECIFIED; // !!! cast() gripes, investigate
     out->payload.any_series.series = AS_SERIES(MAP_PAIRLIST(map));
     out->payload.any_series.index = 0;

@@ -84,7 +84,7 @@ void TO_Port(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
     // system/standard/port is made with CONTEXT and not with MAKE PORT!
     //
     REBCTX *context = Copy_Context_Shallow(VAL_CONTEXT(arg));
-    VAL_RESET_HEADER(CTX_VALUE(context), REB_PORT);
+    Reset_Val_Header(CTX_VALUE(context), REB_PORT);
     Init_Port(out, context);
 }
 

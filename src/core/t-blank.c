@@ -45,7 +45,7 @@ REBINT CT_Unit(const RELVAL *a, const RELVAL *b, REBINT mode)
 //
 void MAKE_Unit(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg) {
     UNUSED(arg);
-    VAL_RESET_HEADER(out, kind);
+    Reset_Val_Header(out, kind);
 }
 
 
@@ -54,7 +54,7 @@ void MAKE_Unit(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg) {
 //
 void TO_Unit(REBVAL *out, enum Reb_Kind kind, const REBVAL *data) {
     UNUSED(data);
-    VAL_RESET_HEADER(out, kind);
+    Reset_Val_Header(out, kind);
 }
 
 

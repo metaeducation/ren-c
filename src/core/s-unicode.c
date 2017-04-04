@@ -946,7 +946,7 @@ REBOOL Decode_UTF8_Maybe_Astral_Throws(
 
             if (ch > 0xFFFF) { // too big to fit in today's REBUNI
                 if (IS_FUNCTION(handler)) {
-                    SET_INTEGER(astral, ch); // CHAR! only 16-bit for now
+                    Init_Integer(astral, ch); // CHAR! only 16-bit for now
 
                     // Try passing the handler the codepoint value.  Passing
                     // FALSE for `fully` means it will not raise an error if

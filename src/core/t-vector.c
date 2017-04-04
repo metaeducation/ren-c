@@ -213,7 +213,7 @@ REBARR *Vector_To_Array(const REBVAL *vect)
     RELVAL *val = ARR_HEAD(array);
     REBCNT n;
     for (n = VAL_INDEX(vect); n < VAL_LEN_HEAD(vect); n++, val++) {
-        VAL_RESET_HEADER(val, (type >= VTSF08) ? REB_DECIMAL : REB_INTEGER);
+        Reset_Val_Header(val, (type >= VTSF08) ? REB_DECIMAL : REB_INTEGER);
         VAL_INT64(val) = get_vect(type, data, n); // can be int or decimal
     }
 
@@ -293,12 +293,12 @@ void Set_Vector_Value(REBVAL *var, REBSER *series, REBCNT index)
     REBCNT bits = VECT_TYPE(series);
 
     if (bits >= VTSF08) {
-        VAL_RESET_HEADER(var, REB_DECIMAL);
+        Reset_Val_Header(var, REB_DECIMAL);
         REBU64 u =  get_vect(bits, data, index);
         Init_Decimal_Bits(var, cast(REBYTE*, &u));
     }
     else {
-        VAL_RESET_HEADER(var, REB_INTEGER);
+        Reset_Val_Header(var, REB_INTEGER);
         VAL_INT64(var) = get_vect(bits, data, index);
     }
 }
@@ -419,7 +419,7 @@ REBVAL *Make_Vector_Spec(RELVAL *bp, REBSPC *specifier, REBVAL *value)
         bp++;
     }
 
-    VAL_RESET_HEADER(value, REB_VECTOR);
+    Reset_Val_Header(value, REB_VECTOR);
 
     // Index offset:
     if (NOT_END(bp) && IS_INTEGER(bp)) {
@@ -508,7 +508,7 @@ void Pick_Vector(REBVAL *out, const REBVAL *value, const REBVAL *picker) {
     n += VAL_INDEX(value);
 
     if (n <= 0 || cast(REBCNT, n) > SER_LEN(vect)) {
-        SET_VOID(out); // out of range of vector data
+        Init_Void(out); // out of range of vector data
         return;
     }
 
@@ -516,9 +516,9 @@ void Pick_Vector(REBVAL *out, const REBVAL *value, const REBVAL *picker) {
     REBINT bits = VECT_TYPE(vect);
 
     if (bits < VTSF08)
-        SET_INTEGER(out, get_vect(bits, vp, n - 1)); // 64-bit
+        Init_Integer(out, get_vect(bits, vp, n - 1)); // 64-bit
     else {
-        VAL_RESET_HEADER(out, REB_DECIMAL);
+        Reset_Val_Header(out, REB_DECIMAL);
         REBI64 i = get_vect(bits, vp, n - 1);
         Init_Decimal_Bits(out, cast(REBYTE*, &i));
     }
@@ -627,7 +627,7 @@ REBTYPE(Vector)
 
     case SYM_LENGTH:
         //bits = 1 << (vect->size & 3);
-        SET_INTEGER(D_OUT, SER_LEN(vect));
+        Init_Integer(D_OUT, SER_LEN(vect));
         return R_OUT;
 
     case SYM_COPY: {

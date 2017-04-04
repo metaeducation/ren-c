@@ -79,7 +79,7 @@ void MAKE_Word(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
         // stay in sync with the binding state)
         //
         Move_Value(out, arg);
-        VAL_SET_TYPE_BITS(out, kind);
+        Reset_Val_Kind(out, kind);
         return;
     }
 
@@ -157,7 +157,7 @@ REBTYPE(Word)
             if (ch == 0)
                 break;
         }
-        SET_INTEGER(D_OUT, len);
+        Init_Integer(D_OUT, len);
         return R_OUT; }
 
     default:

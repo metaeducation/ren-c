@@ -1502,7 +1502,7 @@ static REBARR *Scan_Array(
         // If in a path, handle start of path /word or word//word cases:
         if (mode_char == '/' && *bp == '/') {
             DS_PUSH_TRASH;
-            SET_BLANK(DS_TOP);
+            Init_Blank(DS_TOP);
             scan_state->begin = bp + 1;
             continue;
         }
@@ -1527,24 +1527,24 @@ static REBARR *Scan_Array(
             DS_PUSH_TRASH;
 
             if (token == TOKEN_LIT) {
-                VAL_RESET_HEADER(DS_TOP, REB_LIT_PATH);
-                VAL_RESET_HEADER(ARR_HEAD(array), REB_WORD);
+                Reset_Val_Header(DS_TOP, REB_LIT_PATH);
+                Reset_Val_Header(ARR_HEAD(array), REB_WORD);
                 assert(IS_WORD_UNBOUND(ARR_HEAD(array)));
             }
             else if (IS_GET_WORD(ARR_HEAD(array))) {
                 if (*scan_state->end == ':')
                     goto syntax_error;
-                VAL_RESET_HEADER(DS_TOP, REB_GET_PATH);
-                VAL_RESET_HEADER(ARR_HEAD(array), REB_WORD);
+                Reset_Val_Header(DS_TOP, REB_GET_PATH);
+                Reset_Val_Header(ARR_HEAD(array), REB_WORD);
                 assert(IS_WORD_UNBOUND(ARR_HEAD(array)));
             }
             else {
                 if (*scan_state->end == ':') {
-                    VAL_RESET_HEADER(DS_TOP, REB_SET_PATH);
+                    Reset_Val_Header(DS_TOP, REB_SET_PATH);
                     scan_state->begin = ++(scan_state->end);
                 }
                 else
-                    VAL_RESET_HEADER(DS_TOP, REB_PATH);
+                    Reset_Val_Header(DS_TOP, REB_PATH);
             }
             INIT_VAL_ARRAY(DS_TOP, array); // copies args
             VAL_INDEX(DS_TOP) = 0;
@@ -1578,7 +1578,7 @@ static REBARR *Scan_Array(
 
         case TOKEN_BLANK:
             DS_PUSH_TRASH;
-            SET_BLANK(DS_TOP);
+            Init_Blank(DS_TOP);
             ++bp;
             break;
 
@@ -1616,7 +1616,7 @@ static REBARR *Scan_Array(
                     goto syntax_error;
                 }
                 DS_PUSH_TRASH;
-                SET_BLANK(DS_TOP);  // A single # means NONE
+                Init_Blank(DS_TOP);  // A single # means NONE
             }
             else {
                 DS_PUSH_TRASH;
@@ -1685,7 +1685,7 @@ static REBARR *Scan_Array(
                 goto syntax_error;
 
             if (bp[len - 1] == '%') {
-                VAL_RESET_HEADER(DS_TOP, REB_PERCENT);
+                Reset_Val_Header(DS_TOP, REB_PERCENT);
                 VAL_DECIMAL(DS_TOP) /= 100.0;
             }
             break;
@@ -1736,7 +1736,7 @@ static REBARR *Scan_Array(
             bp += 2; // skip #", and subtract 1 from ep for "
             if (ep - 1 != Scan_UTF8_Char_Escapable(&VAL_CHAR(DS_TOP), bp))
                 goto syntax_error;
-            VAL_RESET_HEADER(DS_TOP, REB_CHAR);
+            Reset_Val_Header(DS_TOP, REB_CHAR);
             break;
 
         case TOKEN_STRING: {
@@ -1830,7 +1830,7 @@ static REBARR *Scan_Array(
                 //
                 DECLARE_LOCAL (cell);
                 PUSH_GUARD_ARRAY(array);
-                SET_UNREADABLE_BLANK(cell);
+                Init_Unreadable_Blank(cell);
                 PUSH_GUARD_VALUE(cell);
 
                 dispatcher(cell, kind, KNOWN(ARR_AT(array, 1))); // may fail()
@@ -1857,18 +1857,18 @@ static REBARR *Scan_Array(
                 case SYM_NONE:
                     // Should be under a LEGACY flag...
                     DS_PUSH_TRASH;
-                    SET_BLANK(DS_TOP);
+                    Init_Blank(DS_TOP);
                     break;
             #endif
 
                 case SYM_FALSE:
                     DS_PUSH_TRASH;
-                    SET_FALSE(DS_TOP);
+                    Init_False(DS_TOP);
                     break;
 
                 case SYM_TRUE:
                     DS_PUSH_TRASH;
-                    SET_TRUE(DS_TOP);
+                    Init_True(DS_TOP);
                     break;
 
                 default: {
@@ -1911,12 +1911,12 @@ static REBARR *Scan_Array(
             REBSER *s = VAL_SERIES(DS_TOP);
             s->misc.line = scan_state->line_count;
             s->link.filename = scan_state->filename;
-            SET_SER_FLAG(s, SERIES_FLAG_FILE_LINE);
+            Set_Ser_Flag(s, SERIES_FLAG_FILE_LINE);
         }
 
         if (line) {
             line = FALSE;
-            SET_VAL_FLAG(DS_TOP, VALUE_FLAG_LINE);
+            Set_Val_Flag(DS_TOP, VALUE_FLAG_LINE);
         }
 
         // Check for end of path:
@@ -1970,7 +1970,7 @@ exit_block:
     //
 #if !defined(NDEBUG)
     if (LEGACY(OPTIONS_REFINEMENTS_BLANK))
-        SET_SER_INFO(result, SERIES_INFO_LEGACY_DEBUG);
+        Set_Ser_Info(result, SERIES_INFO_LEGACY_DEBUG);
 #endif
 
     return result;

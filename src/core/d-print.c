@@ -128,7 +128,7 @@ void Prin_OS_String(const void *p, REBCNT len, REBFLGS opts)
     buffer[0] = 0; // for debug tracing
 
     DECLARE_LOCAL (result);
-    SET_END(result);
+    Init_End(result);
 
     if (opts & OPT_ENC_RAW) {
         if (Do_Signals_Throws(result))
@@ -731,12 +731,12 @@ pick:
             // !!! Better approach?  Can the series be passed directly?
             //
             REBSER* temp = va_arg(*vaptr, REBSER*);
-            if (GET_SER_FLAG(temp, SERIES_FLAG_ARRAY)) {
-                VAL_RESET_HEADER(value, REB_BLOCK);
+            if (Get_Ser_Flag(temp, SERIES_FLAG_ARRAY)) {
+                Reset_Val_Header(value, REB_BLOCK);
                 INIT_VAL_ARRAY(value, AS_ARRAY(temp)); // careful, macro!
             }
             else {
-                VAL_RESET_HEADER(value, REB_STRING);
+                Reset_Val_Header(value, REB_STRING);
                 INIT_VAL_SERIES(value, temp); // careful, macro!
             }
             VAL_INDEX(value) = 0;

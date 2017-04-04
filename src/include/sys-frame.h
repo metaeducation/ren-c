@@ -44,12 +44,12 @@ inline static REBARR *VAL_BINDING(const RELVAL *v) {
 }
 
 inline static void INIT_RELATIVE(RELVAL *v, REBFUN *func) {
-    assert(GET_VAL_FLAG(v, VALUE_FLAG_RELATIVE));
+    assert(Get_Val_Flag(v, VALUE_FLAG_RELATIVE));
     v->extra.binding = FUNC_PARAMLIST(func);
 }
 
 inline static void INIT_SPECIFIC(RELVAL *v, REBCTX *context) {
-    assert(NOT_VAL_FLAG(v, VALUE_FLAG_RELATIVE));
+    assert(Not_Val_Flag(v, VALUE_FLAG_RELATIVE));
     v->extra.binding = CTX_VARLIST(context);
 }
 
@@ -77,13 +77,13 @@ inline static void INIT_SPECIFIC(RELVAL *v, REBCTX *context) {
 //
 
 #define THROWN(v) \
-    GET_VAL_FLAG((v), VALUE_FLAG_THROWN)
+    Get_Val_Flag((v), VALUE_FLAG_THROWN)
 
 static inline void CONVERT_NAME_TO_THROWN(
     REBVAL *name, const REBVAL *arg
 ){
     assert(!THROWN(name));
-    SET_VAL_FLAG(name, VALUE_FLAG_THROWN);
+    Set_Val_Flag(name, VALUE_FLAG_THROWN);
 
     assert(IS_UNREADABLE_IF_DEBUG(&TG_Thrown_Arg));
     Move_Value(&TG_Thrown_Arg, arg);
@@ -95,11 +95,11 @@ static inline void CATCH_THROWN(REBVAL *arg_out, REBVAL *thrown) {
     //
     assert(NOT_END(thrown));
     assert(THROWN(thrown));
-    CLEAR_VAL_FLAG(thrown, VALUE_FLAG_THROWN);
+    Clear_Val_Flag(thrown, VALUE_FLAG_THROWN);
 
     assert(!IS_UNREADABLE_IF_DEBUG(&TG_Thrown_Arg));
     Move_Value(arg_out, &TG_Thrown_Arg);
-    SET_UNREADABLE_BLANK(&TG_Thrown_Arg);
+    Init_Unreadable_Blank(&TG_Thrown_Arg);
 }
 
 
@@ -203,7 +203,7 @@ inline static REBFUN *FRM_UNDERLYING(REBFRM *f) {
         REBVAL *var = &f->args_head[n - 1];
 
         assert(!THROWN(var));
-        assert(NOT_VAL_FLAG(var, VALUE_FLAG_RELATIVE));
+        assert(Not_Val_Flag(var, VALUE_FLAG_RELATIVE));
         return var;
     }
 #endif
@@ -395,7 +395,7 @@ inline static void SET_FRAME_VALUE(REBFRM *f, const RELVAL *value) {
 inline static void Enter_Native(REBFRM *f) {
     f->flags.bits |= DO_FLAG_NATIVE_HOLD;
     if (f->varlist != NULL)
-        SET_SER_INFO(f->varlist, SERIES_INFO_RUNNING);
+        Set_Ser_Info(f->varlist, SERIES_INFO_RUNNING);
 }
 
 
@@ -504,7 +504,7 @@ inline static void Push_Or_Alloc_Args_For_Underlying_Func(
     // to check.  Note that this can only be done after extracting the function
     // properties, as f->gotten may be f->cell.
     //
-    SET_END(&f->cell);
+    Init_End(&f->cell);
 }
 
 
@@ -549,7 +549,7 @@ inline static void Drop_Function_Args_For_Frame_Core(
             goto finished;
     }
 
-    assert(GET_SER_FLAG(f->varlist, SERIES_FLAG_ARRAY));
+    assert(Get_Ser_Flag(f->varlist, SERIES_FLAG_ARRAY));
 
     if (NOT(IS_ARRAY_MANAGED(f->varlist))) {
         //
@@ -574,24 +574,24 @@ inline static void Drop_Function_Args_For_Frame_Core(
 
     ASSERT_ARRAY_MANAGED(f->varlist);
 
-    if (NOT(GET_SER_FLAG(f->varlist, CONTEXT_FLAG_STACK))) {
+    if (NOT(Get_Ser_Flag(f->varlist, CONTEXT_FLAG_STACK))) {
         //
         // If there's no stack memory being tracked by this context, it
         // has dynamic memory and is being managed by the garbage collector
         // so there's nothing to do.
         //
-        assert(GET_SER_INFO(f->varlist, SERIES_INFO_HAS_DYNAMIC));
+        assert(Get_Ser_Info(f->varlist, SERIES_INFO_HAS_DYNAMIC));
         goto finished;
     }
 
     // It's reified but has its data pointer into the chunk stack, which
     // means we have to free it and mark the array inaccessible.
 
-    assert(GET_SER_FLAG(f->varlist, ARRAY_FLAG_VARLIST));
-    assert(NOT_SER_INFO(f->varlist, SERIES_INFO_HAS_DYNAMIC));
+    assert(Get_Ser_Flag(f->varlist, ARRAY_FLAG_VARLIST));
+    assert(Not_Ser_Info(f->varlist, SERIES_INFO_HAS_DYNAMIC));
 
-    assert(NOT_SER_INFO(f->varlist, SERIES_INFO_INACCESSIBLE));
-    SET_SER_INFO(f->varlist, SERIES_INFO_INACCESSIBLE);
+    assert(Not_Ser_Info(f->varlist, SERIES_INFO_INACCESSIBLE));
+    Set_Ser_Info(f->varlist, SERIES_INFO_INACCESSIBLE);
 
 finished:
 
@@ -609,7 +609,7 @@ inline static REBCTX *Context_For_Frame_May_Reify_Managed(REBFRM *f)
 {
     assert(NOT(Is_Function_Frame_Fulfilling(f)));
 
-    if (f->varlist == NULL || NOT_SER_FLAG(f->varlist, ARRAY_FLAG_VARLIST))
+    if (f->varlist == NULL || Not_Ser_Flag(f->varlist, ARRAY_FLAG_VARLIST))
         Reify_Frame_Context_Maybe_Fulfilling(f); // it's not fulfilling, here
 
     return AS_CONTEXT(f->varlist);

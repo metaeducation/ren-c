@@ -313,7 +313,7 @@ REBNATIVE(make_native)
         Init_String(Alloc_Tail_Array(info), bin);
     }
 
-    SET_BLANK(Alloc_Tail_Array(info)); // no TCC_State, yet...
+    Init_Blank(Alloc_Tail_Array(info)); // no TCC_State, yet...
 
     Init_Block(FUNC_BODY(fun), info);
 
@@ -321,7 +321,7 @@ REBNATIVE(make_native)
     // long run be able to tell it is when the dispatcher is replaced with an
     // arbitrary compiled function pointer!
     //
-    SET_VAL_FLAG(FUNC_VALUE(fun), FUNC_FLAG_USER_NATIVE);
+    Set_Val_Flag(FUNC_VALUE(fun), FUNC_FLAG_USER_NATIVE);
 
     Move_Value(D_OUT, FUNC_VALUE(fun));
     return R_OUT;
@@ -468,7 +468,7 @@ REBNATIVE(compile)
         }
 
         if (IS_FUNCTION(var)) {
-            assert(GET_VAL_FLAG(var, FUNC_FLAG_USER_NATIVE));
+            assert(Get_Val_Flag(var, FUNC_FLAG_USER_NATIVE));
 
             // Remember this function, because we're going to need to come
             // back and fill in its dispatcher and TCC_State after the
@@ -627,7 +627,7 @@ REBNATIVE(compile)
         REBVAL *var = DS_TOP;
 
         assert(IS_FUNCTION(var));
-        assert(GET_VAL_FLAG(var, FUNC_FLAG_USER_NATIVE));
+        assert(Get_Val_Flag(var, FUNC_FLAG_USER_NATIVE));
 
         RELVAL *info = VAL_FUNC_BODY(var);
         RELVAL *name = VAL_ARRAY_AT_HEAD(info, 1);

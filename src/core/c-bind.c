@@ -62,9 +62,9 @@ static void Bind_Values_Inner_Loop(
                 // We're overwriting any previous binding, which may have
                 // been relative.
                 //
-                CLEAR_VAL_FLAG(value, VALUE_FLAG_RELATIVE);
+                Clear_Val_Flag(value, VALUE_FLAG_RELATIVE);
 
-                SET_VAL_FLAG(value, WORD_FLAG_BOUND);
+                Set_Val_Flag(value, WORD_FLAG_BOUND);
                 INIT_WORD_CONTEXT(value, context);
                 INIT_WORD_INDEX(value, n);
             }
@@ -135,7 +135,7 @@ void Bind_Values_Core(
     REBCNT index = 1;
     REBVAL *key = CTX_KEYS_HEAD(context);
     for (; index <= CTX_LEN(context); key++, index++)
-        if (NOT_VAL_FLAG(key, TYPESET_FLAG_UNBINDABLE))
+        if (Not_Val_Flag(key, TYPESET_FLAG_UNBINDABLE))
             Add_Binder_Index(&binder, VAL_KEY_CANON(key), index);
 
     Bind_Values_Inner_Loop(
@@ -194,9 +194,9 @@ REBCNT Try_Bind_Word(REBCTX *context, REBVAL *word)
         //
         // Previously may have been bound relative, remove flag.
         //
-        CLEAR_VAL_FLAG(word, VALUE_FLAG_RELATIVE);
+        Clear_Val_Flag(word, VALUE_FLAG_RELATIVE);
 
-        SET_VAL_FLAG(word, WORD_FLAG_BOUND);
+        Set_Val_Flag(word, WORD_FLAG_BOUND);
         INIT_WORD_CONTEXT(word, context);
         INIT_WORD_INDEX(word, n);
     }
@@ -238,7 +238,7 @@ static void Bind_Relative_Inner_Loop(
                 // (clear out existing binding flags first).
                 //
                 Unbind_Any_Word(value);
-                SET_VAL_FLAGS(value, WORD_FLAG_BOUND | VALUE_FLAG_RELATIVE);
+                Set_Val_Flags(value, WORD_FLAG_BOUND | VALUE_FLAG_RELATIVE);
                 INIT_WORD_FUNC(value, AS_FUNC(paramlist)); // incomplete func
                 INIT_WORD_INDEX(value, n);
             }
@@ -257,7 +257,7 @@ static void Bind_Relative_Inner_Loop(
             // easiest to debug if there is a clear mark on arrays that are
             // part of a deep copy of a function body either way.
             //
-            SET_VAL_FLAG(value, VALUE_FLAG_RELATIVE);
+            Set_Val_Flag(value, VALUE_FLAG_RELATIVE);
             INIT_RELATIVE(value, AS_FUNC(paramlist)); // incomplete func
         }
     }
@@ -329,8 +329,8 @@ void Rebind_Values_Deep(
         }
         else if (
             ANY_WORD(value)
-            && GET_VAL_FLAG(value, WORD_FLAG_BOUND)
-            && NOT_VAL_FLAG(value, VALUE_FLAG_RELATIVE)
+            && Get_Val_Flag(value, WORD_FLAG_BOUND)
+            && Not_Val_Flag(value, VALUE_FLAG_RELATIVE)
             && VAL_WORD_CONTEXT(KNOWN(value)) == src
         ) {
             INIT_WORD_CONTEXT(value, dst);

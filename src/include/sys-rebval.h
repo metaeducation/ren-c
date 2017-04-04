@@ -182,7 +182,7 @@
 // it from Do_Core().
 //
 // It is in the negative sense because the act of requesting it is uncommon,
-// e.g. from the QUOTE operator.  So most SET_BLANK() or other assignment
+// e.g. from the QUOTE operator.  So most Init_Blank() or other assignment
 // should default to being "evaluative".
 //
 // !!! This concept is somewhat dodgy and experimental, but it shows promise
@@ -817,7 +817,7 @@ struct Reb_Value
     #define IS_END(v) \
         IS_END_MACRO(v)
 
-    inline static void SET_END(RELVAL *v) {
+    inline static void Init_End(RELVAL *v) {
         //
         // Invalid UTF-8 byte, but also NODE_FLAG_END and NODE_FLAG_CELL set.
         // Other flags are set (e.g. NODE_FLAG_MANAGED) which should not
@@ -828,7 +828,7 @@ struct Reb_Value
     }
 #else
     // Note: These must be macros (that don't need IS_END_Debug or
-    // SET_END_Debug defined until used at a callsite) because %tmp-funcs.h
+    // Init_End_Debug defined until used at a callsite) because %tmp-funcs.h
     // cannot be included until after REBSER and other definitions that
     // depend on %sys-rebval.h have been defined.  (Or they could be manually
     // forward-declared here.)
@@ -836,8 +836,8 @@ struct Reb_Value
     #define IS_END(v) \
         IS_END_Debug((v), __FILE__, __LINE__)
 
-    #define SET_END(v) \
-        SET_END_Debug((v), __FILE__, __LINE__)
+    #define Init_End(v) \
+        Init_End_Debug((v), __FILE__, __LINE__)
 #endif
 
 #define NOT_END(v) \
@@ -1006,7 +1006,7 @@ inline static REBOOL IS_RELATIVE(const RELVAL *v) {
 
 inline static REBFUN *VAL_RELATIVE(const RELVAL *v) {
     assert(IS_RELATIVE(v));
-    //assert(NOT(GET_SER_FLAG(v->extra.binding, ARRAY_FLAG_VARLIST)));
+    //assert(NOT(Get_Ser_Flag(v->extra.binding, ARRAY_FLAG_VARLIST)));
     return cast(REBFUN*, v->extra.binding);
 }
 
@@ -1014,7 +1014,7 @@ inline static REBCTX *VAL_SPECIFIC_COMMON(const RELVAL *v) {
     assert(IS_SPECIFIC(v));
     //assert(
     //    v->extra.binding == SPECIFIED
-    //    || GET_SER_FLAG(v->extra.binding, ARRAY_FLAG_VARLIST)
+    //    || Get_Ser_Flag(v->extra.binding, ARRAY_FLAG_VARLIST)
     //);
     return cast(REBCTX*, v->extra.binding);
 }

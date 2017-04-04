@@ -125,7 +125,7 @@ static REBCTX *Error_Compression(const z_stream *strm, int ret)
     if (strm->msg != NULL)
         Init_String(arg, Make_UTF8_May_Fail(strm->msg));
     else
-        SET_INTEGER(arg, ret);
+        Init_Integer(arg, ret);
 
     return Error_Bad_Compression_Raw(arg);
 }
@@ -275,7 +275,7 @@ REBSER *Decompress(
         //
         if (max >= 0 && buf_size > cast(REBCNT, max)) {
             DECLARE_LOCAL (temp);
-            SET_INTEGER(temp, max);
+            Init_Integer(temp, max);
 
             // NOTE: You can hit this if you 'make prep' without doing a full
             // rebuild.  'make clean' and build again, it should go away.
@@ -379,7 +379,7 @@ REBSER *Decompress(
 
         if (max >= 0 && buf_size >= cast(REBCNT, max)) {
             DECLARE_LOCAL (temp);
-            SET_INTEGER(temp, max);
+            Init_Integer(temp, max);
 
             // NOTE: You can hit this on 'make prep' without doing a full
             // rebuild.  'make clean' and build again, it should go away.

@@ -145,7 +145,7 @@ const REBYTE *Scan_Time(REBVAL *out, const REBYTE *cp, REBCNT len)
     else
         merid = '\0';
 
-    VAL_RESET_HEADER(out, REB_TIME);
+    Reset_Val_Header(out, REB_TIME);
 
     if (part3 >= 0 || part4 < 0) { // HH:MM mode
         if (merid != '\0') {
@@ -301,7 +301,7 @@ void MAKE_Time(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
     if (secs == NO_TIME)
         fail (Error_Bad_Make(REB_TIME, arg));
 
-    VAL_RESET_HEADER(out, REB_TIME);
+    Reset_Val_Header(out, REB_TIME);
     VAL_TIME(out) = secs;
     VAL_DATE(out).bits = 0;
 }
@@ -359,19 +359,19 @@ void Pick_Time(REBVAL *out, const REBVAL *value, const REBVAL *picker)
 
     switch(i) {
     case 0: // hours
-        SET_INTEGER(out, tf.h);
+        Init_Integer(out, tf.h);
         break;
     case 1: // minutes
-        SET_INTEGER(out, tf.m);
+        Init_Integer(out, tf.m);
         break;
     case 2: // seconds
         if (tf.n == 0)
-            SET_INTEGER(out, tf.s);
+            Init_Integer(out, tf.s);
         else
-            SET_DECIMAL(out, cast(REBDEC, tf.s) + (tf.n * NANO));
+            Init_Decimal(out, cast(REBDEC, tf.s) + (tf.n * NANO));
         break;
     default:
-        SET_VOID(out); // "out of range" behavior for pick
+        Init_Void(out); // "out of range" behavior for pick
     }
 }
 
@@ -506,7 +506,7 @@ REBTYPE(Time)
             case SYM_DIVIDE:
                 if (secs2 == 0) fail (Error_Zero_Divide_Raw());
                 //secs /= secs2;
-                VAL_RESET_HEADER(D_OUT, REB_DECIMAL);
+                Reset_Val_Header(D_OUT, REB_DECIMAL);
                 VAL_DECIMAL(D_OUT) = (REBDEC)secs / (REBDEC)secs2;
                 return R_OUT;
 
@@ -541,7 +541,7 @@ REBTYPE(Time)
             case SYM_DIVIDE:
                 if (num == 0) fail (Error_Zero_Divide_Raw());
                 secs /= num;
-                SET_INTEGER(D_OUT, secs);
+                Init_Integer(D_OUT, secs);
                 goto setTime;
 
             case SYM_REMAINDER:
@@ -636,13 +636,13 @@ REBTYPE(Time)
                         Dec64(arg) * SEC_SEC
                     );
                     VAL_DECIMAL(arg) /= SEC_SEC;
-                    VAL_RESET_HEADER(arg, REB_DECIMAL);
+                    Reset_Val_Header(arg, REB_DECIMAL);
                     Move_Value(D_OUT, ARG(scale));
                     return R_OUT;
                 }
                 else if (IS_INTEGER(arg)) {
                     VAL_INT64(arg) = Round_Int(secs, 1, Int32(arg) * SEC_SEC) / SEC_SEC;
-                    VAL_RESET_HEADER(arg, REB_INTEGER);
+                    Reset_Val_Header(arg, REB_INTEGER);
                     Move_Value(D_OUT, ARG(scale));
                     return R_OUT;
                 }
@@ -691,6 +691,6 @@ REBTYPE(Time)
 fixTime:
 setTime:
     VAL_TIME(D_OUT) = secs;
-    VAL_RESET_HEADER(D_OUT, REB_TIME);
+    Reset_Val_Header(D_OUT, REB_TIME);
     return R_OUT;
 }

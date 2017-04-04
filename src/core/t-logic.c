@@ -180,10 +180,10 @@ void MAKE_Logic(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg) {
         )
         || (IS_MONEY(arg) && deci_is_zero(VAL_MONEY_AMOUNT(arg)))
     ) {
-        SET_FALSE(out);
+        Init_False(out);
     }
     else
-        SET_TRUE(out);
+        Init_True(out);
 }
 
 
@@ -199,9 +199,9 @@ void TO_Logic(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg) {
     // considered effectively "truth".
     //
     if (IS_CONDITIONAL_TRUE(arg))
-        SET_TRUE(out);
+        Init_True(out);
     else
-        SET_FALSE(out);
+        Init_False(out);
 }
 
 

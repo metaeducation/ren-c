@@ -163,7 +163,7 @@ enum Reb_Param_Class {
         (FLAGIT_LEFT(TYPE_SPECIFIC_BIT + (n)) | HEADERIZE_KIND(REB_TYPESET))
 #endif
 
-// Option flags used with GET_VAL_FLAG().  These describe properties of
+// Option flags used with Get_Val_Flag().  These describe properties of
 // a value slot when it's constrained to the types in the typeset
 //
 

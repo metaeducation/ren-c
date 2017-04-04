@@ -161,13 +161,13 @@
         VAL_TYPE_Debug((v), __FILE__, __LINE__)
 #endif
 
-inline static void VAL_SET_TYPE_BITS(RELVAL *v, enum Reb_Kind kind) {
+inline static void Reset_Val_Kind(RELVAL *v, enum Reb_Kind kind) {
     //
     // Note: Only use if you are sure the new type payload is in sync with
     // the type and bits (e.g. changing ANY-WORD! to another ANY-WORD!).
     // Otherwise the value-specific flags might be misinterpreted.
     //
-    // Use VAL_RESET_HEADER() to set the type AND initialize the flags to 0.
+    // Use Reset_Val_Header() to set the type AND initialize the flags to 0.
     //
     assert(
         (v->header.bits & NODE_FLAG_CELL)
@@ -190,31 +190,31 @@ inline static void VAL_SET_TYPE_BITS(RELVAL *v, enum Reb_Kind kind) {
 //
 
 #ifdef NDEBUG
-    inline static void SET_VAL_FLAGS(RELVAL *v, REBUPT f) {
+    inline static void Set_Val_Flags(RELVAL *v, REBUPT f) {
         v->header.bits |= f;
     }
 
-    #define SET_VAL_FLAG(v,f) \
-        SET_VAL_FLAGS((v), (f))
+    #define Set_Val_Flag(v,f) \
+        Set_Val_Flags((v), (f))
 
-    inline static REBOOL GET_VAL_FLAG(const RELVAL *v, REBUPT f) {
+    inline static REBOOL Get_Val_Flag(const RELVAL *v, REBUPT f) {
         return LOGICAL(v->header.bits & f);
     }
 
-    inline static REBOOL ANY_VAL_FLAGS(const RELVAL *v, REBUPT f) {
+    inline static REBOOL Any_Val_Flags(const RELVAL *v, REBUPT f) {
         return LOGICAL((v->header.bits & f) != 0);
     }
 
-    inline static REBOOL ALL_VAL_FLAGS(const RELVAL *v, REBUPT f) {
+    inline static REBOOL All_Val_Flags(const RELVAL *v, REBUPT f) {
         return LOGICAL((v->header.bits & f) == f);
     }
 
-    inline static void CLEAR_VAL_FLAGS(RELVAL *v, REBUPT f) {
+    inline static void Clear_Val_Flags(RELVAL *v, REBUPT f) {
         v->header.bits &= ~f;
     }
 
-    #define CLEAR_VAL_FLAG(v,f) \
-        CLEAR_VAL_FLAGS((v), (f))
+    #define Clear_Val_Flag(v,f) \
+        Clear_Val_Flags((v), (f))
 #else
     // For safety in the debug build, all the type-specific flags include a
     // type (or type representing a category) as part of the flag.  This type
@@ -239,45 +239,45 @@ inline static void VAL_SET_TYPE_BITS(RELVAL *v, enum Reb_Kind kind) {
             CLEAR_8_RIGHT_BITS(flags); \
         } \
 
-    inline static void SET_VAL_FLAGS(RELVAL *v, REBUPT f) {
+    inline static void Set_Val_Flags(RELVAL *v, REBUPT f) {
         enum Reb_Kind kind = VAL_TYPE(v);
         CHECK_VALUE_FLAGS_EVIL_MACRO_DEBUG(f);
         v->header.bits |= f;
     }
 
-    inline static void SET_VAL_FLAG(RELVAL *v, REBUPT f) {
+    inline static void Set_Val_Flag(RELVAL *v, REBUPT f) {
         enum Reb_Kind kind = VAL_TYPE(v);
         CHECK_VALUE_FLAGS_EVIL_MACRO_DEBUG(f);
         assert(f && (f & (f - 1)) == 0); // checks that only one bit is set
         v->header.bits |= f;
     }
 
-    inline static REBOOL GET_VAL_FLAG(const RELVAL *v, REBUPT f) {
+    inline static REBOOL Get_Val_Flag(const RELVAL *v, REBUPT f) {
         enum Reb_Kind kind = VAL_TYPE(v);
         CHECK_VALUE_FLAGS_EVIL_MACRO_DEBUG(f);
         assert(f && (f & (f - 1)) == 0); // checks that only one bit is set
         return LOGICAL(v->header.bits & f);
     }
 
-    inline static REBOOL ANY_VAL_FLAGS(const RELVAL *v, REBUPT f) {
+    inline static REBOOL Any_Val_Flags(const RELVAL *v, REBUPT f) {
         enum Reb_Kind kind = VAL_TYPE(v);
         CHECK_VALUE_FLAGS_EVIL_MACRO_DEBUG(f);
         return LOGICAL((v->header.bits & f) != 0);
     }
 
-    inline static REBOOL ALL_VAL_FLAGS(const RELVAL *v, REBUPT f) {
+    inline static REBOOL All_Val_Flags(const RELVAL *v, REBUPT f) {
         enum Reb_Kind kind = VAL_TYPE(v);
         CHECK_VALUE_FLAGS_EVIL_MACRO_DEBUG(f);
         return LOGICAL((v->header.bits & f) == f);
     }
 
-    inline static void CLEAR_VAL_FLAGS(RELVAL *v, REBUPT f) {
+    inline static void Clear_Val_Flags(RELVAL *v, REBUPT f) {
         enum Reb_Kind kind = VAL_TYPE(v);
         CHECK_VALUE_FLAGS_EVIL_MACRO_DEBUG(f);
         v->header.bits &= ~f;
     }
 
-    inline static void CLEAR_VAL_FLAG(RELVAL *v, REBUPT f) {
+    inline static void Clear_Val_Flag(RELVAL *v, REBUPT f) {
         enum Reb_Kind kind = VAL_TYPE(v);
         CHECK_VALUE_FLAGS_EVIL_MACRO_DEBUG(f);
         assert(f && (f & (f - 1)) == 0); // checks that only one bit is set
@@ -285,8 +285,8 @@ inline static void VAL_SET_TYPE_BITS(RELVAL *v, enum Reb_Kind kind) {
     }
 #endif
 
-#define NOT_VAL_FLAG(v,f) \
-    NOT(GET_VAL_FLAG((v), (f)))
+#define Not_Val_Flag(v,f) \
+    NOT(Get_Val_Flag((v), (f)))
 
 
 //=////////////////////////////////////////////////////////////////////////=//
@@ -332,7 +332,7 @@ inline static void VAL_SET_TYPE_BITS(RELVAL *v, enum Reb_Kind kind) {
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// VAL_RESET_HEADER clears out the header of *most* bits, setting it to a
+// Reset_Val_Header clears out the header of *most* bits, setting it to a
 // new type.
 //
 // The value is expected to already be "pre-formatted" with the NODE_FLAG_CELL
@@ -341,7 +341,7 @@ inline static void VAL_SET_TYPE_BITS(RELVAL *v, enum Reb_Kind kind) {
 // so that is left as-is also.
 //
 
-inline static void VAL_RESET_HEADER_common( // don't call directly
+inline static void Reset_Val_Header_common( // don't call directly
     RELVAL *v,
     enum Reb_Kind kind,
     REBUPT extra_flags
@@ -356,8 +356,8 @@ inline static void VAL_RESET_HEADER_common( // don't call directly
 }
 
 #ifdef NDEBUG
-    #define VAL_RESET_HEADER_EXTRA(v,kind,extra) \
-        VAL_RESET_HEADER_common((v), (kind), (extra))
+    #define Reset_Val_Header_Core(v,kind,extra) \
+        Reset_Val_Header_common((v), (kind), (extra))
 
     #define ASSERT_CELL_WRITABLE(v,file,line) \
         NOOP
@@ -368,7 +368,7 @@ inline static void VAL_RESET_HEADER_common( // don't call directly
     #define ASSERT_CELL_WRITABLE(v,file,line) \
         Assert_Cell_Writable((v), (file), (line))
 
-    inline static void VAL_RESET_HEADER_EXTRA_Debug(
+    inline static void Reset_Val_Header_Core_Debug(
         RELVAL *v,
         enum Reb_Kind kind,
         REBUPT extra,
@@ -384,11 +384,11 @@ inline static void VAL_RESET_HEADER_common( // don't call directly
         //
         CHECK_VALUE_FLAGS_EVIL_MACRO_DEBUG(extra);
         
-        VAL_RESET_HEADER_common(v, kind, extra);
+        Reset_Val_Header_common(v, kind, extra);
     }
 
-    #define VAL_RESET_HEADER_EXTRA(v,kind,extra) \
-        VAL_RESET_HEADER_EXTRA_Debug((v), (kind), (extra), __FILE__, __LINE__)
+    #define Reset_Val_Header_Core(v,kind,extra) \
+        Reset_Val_Header_Core_Debug((v), (kind), (extra), __FILE__, __LINE__)
 
     inline static void INIT_CELL_Debug(
         RELVAL *v, const char *file, int line
@@ -401,8 +401,8 @@ inline static void VAL_RESET_HEADER_common( // don't call directly
         INIT_CELL_Debug((v), __FILE__, __LINE__)
 #endif
 
-#define VAL_RESET_HEADER(v,t) \
-    VAL_RESET_HEADER_EXTRA((v), (t), 0)
+#define Reset_Val_Header(v,t) \
+    Reset_Val_Header_Core((v), (t), 0)
 
 
 //=////////////////////////////////////////////////////////////////////////=//
@@ -475,8 +475,8 @@ inline static void VAL_RESET_HEADER_common( // don't call directly
 #define IS_VOID(v) \
     LOGICAL(VAL_TYPE(v) == REB_MAX_VOID)
 
-#define SET_VOID(v) \
-    VAL_RESET_HEADER(v, REB_MAX_VOID)
+#define Init_Void(v) \
+    Reset_Val_Header(v, REB_MAX_VOID)
 
 
 //=////////////////////////////////////////////////////////////////////////=//
@@ -503,10 +503,10 @@ inline static void VAL_RESET_HEADER_common( // don't call directly
     c_cast(const REBVAL*, &PG_Bar_Value[0])
 
 #define SET_BAR(v) \
-    VAL_RESET_HEADER((v), REB_BAR)
+    Reset_Val_Header((v), REB_BAR)
 
 #define SET_LIT_BAR(v) \
-    VAL_RESET_HEADER((v), REB_LIT_BAR)
+    Reset_Val_Header((v), REB_LIT_BAR)
 
 
 //=////////////////////////////////////////////////////////////////////////=//
@@ -543,12 +543,12 @@ inline static void VAL_RESET_HEADER_common( // don't call directly
 #define BLANK_VALUE \
     c_cast(const REBVAL*, &PG_Blank_Value[0])
 
-#define SET_BLANK(v) \
-    VAL_RESET_HEADER_EXTRA((v), REB_BLANK, VALUE_FLAG_CONDITIONAL_FALSE)
+#define Init_Blank(v) \
+    Reset_Val_Header_Core((v), REB_BLANK, VALUE_FLAG_CONDITIONAL_FALSE)
 
 #ifdef NDEBUG
-    #define SET_UNREADABLE_BLANK(v) \
-        SET_BLANK(v)
+    #define Init_Unreadable_Blank(v) \
+        Init_Blank(v)
 
     #define IS_BLANK_RAW(v) \
         IS_BLANK(v)
@@ -559,8 +559,8 @@ inline static void VAL_RESET_HEADER_common( // don't call directly
     #define SINK(v) \
         cast(REBVAL*, (v))
 #else
-    #define SET_UNREADABLE_BLANK(v) \
-        VAL_RESET_HEADER_EXTRA((v), REB_BLANK, \
+    #define Init_Unreadable_Blank(v) \
+        Reset_Val_Header_Core((v), REB_BLANK, \
             VALUE_FLAG_CONDITIONAL_FALSE | BLANK_FLAG_UNREADABLE_DEBUG)
 
     inline static REBOOL IS_BLANK_RAW(const RELVAL *v) {
@@ -593,7 +593,7 @@ inline static void VAL_RESET_HEADER_common( // don't call directly
         ASSERT_CELL_WRITABLE(v, file, line);
 
         if (v->header.bits & NODE_FLAG_VALID) {
-            VAL_RESET_HEADER_EXTRA_Debug(
+            Reset_Val_Header_Core_Debug(
                 v,
                 REB_BLANK,
                 VALUE_FLAG_CONDITIONAL_FALSE | BLANK_FLAG_UNREADABLE_DEBUG,
@@ -644,19 +644,19 @@ inline static void VAL_RESET_HEADER_common( // don't call directly
 #define TRUE_VALUE \
     c_cast(const REBVAL*, &PG_True_Value[0])
 
-#define SET_TRUE(v) \
-    VAL_RESET_HEADER_EXTRA((v), REB_LOGIC, 0)
+#define Init_True(v) \
+    Reset_Val_Header_Core((v), REB_LOGIC, 0)
 
-#define SET_FALSE(v) \
-    VAL_RESET_HEADER_EXTRA((v), REB_LOGIC, VALUE_FLAG_CONDITIONAL_FALSE)
+#define Init_False(v) \
+    Reset_Val_Header_Core((v), REB_LOGIC, VALUE_FLAG_CONDITIONAL_FALSE)
 
-#define SET_LOGIC(v,b) \
-    VAL_RESET_HEADER_EXTRA((v), REB_LOGIC, \
+#define Init_Logic(v,b) \
+    Reset_Val_Header_Core((v), REB_LOGIC, \
         (b) ? 0 : VALUE_FLAG_CONDITIONAL_FALSE)
 
 #ifdef NDEBUG
     #define IS_CONDITIONAL_FALSE(v) \
-        GET_VAL_FLAG((v), VALUE_FLAG_CONDITIONAL_FALSE)
+        Get_Val_Flag((v), VALUE_FLAG_CONDITIONAL_FALSE)
 #else
     inline static REBOOL IS_CONDITIONAL_FALSE_Debug(
         const RELVAL *v, const char *file, int line
@@ -665,7 +665,7 @@ inline static void VAL_RESET_HEADER_common( // don't call directly
             printf("Conditional true/false test on void\n");
             panic_at (v, file, line);
         }
-        return GET_VAL_FLAG(v, VALUE_FLAG_CONDITIONAL_FALSE);
+        return Get_Val_Flag(v, VALUE_FLAG_CONDITIONAL_FALSE);
     }
 
     #define IS_CONDITIONAL_FALSE(v) \
@@ -682,7 +682,7 @@ inline static void VAL_RESET_HEADER_common( // don't call directly
 //
 inline static REBOOL IS_CONDITIONAL_TRUE_SAFE(const REBVAL *v) {
     if (IS_BLOCK(v)) {
-        if (GET_VAL_FLAG(v, VALUE_FLAG_UNEVALUATED))
+        if (Get_Val_Flag(v, VALUE_FLAG_UNEVALUATED))
             fail (Error_Block_Conditional_Raw(v));
             
         return TRUE;
@@ -692,7 +692,7 @@ inline static REBOOL IS_CONDITIONAL_TRUE_SAFE(const REBVAL *v) {
 
 inline static REBOOL VAL_LOGIC(const RELVAL *v) {
     assert(IS_LOGIC(v));
-    return NOT_VAL_FLAG((v), VALUE_FLAG_CONDITIONAL_FALSE);
+    return Not_Val_Flag((v), VALUE_FLAG_CONDITIONAL_FALSE);
 }
 
 
@@ -750,8 +750,8 @@ inline static enum Reb_Kind KIND_FROM_SYM(REBSYM s) {
 #define VAL_CHAR(v) \
     ((v)->payload.character)
 
-inline static void SET_CHAR(RELVAL *v, REBUNI uni) {
-    VAL_RESET_HEADER(v, REB_CHAR);
+inline static void Init_Char(RELVAL *v, REBUNI uni) {
+    Reset_Val_Header(v, REB_CHAR);
     VAL_CHAR(v) = uni;
 }
 
@@ -795,8 +795,8 @@ inline static void SET_CHAR(RELVAL *v, REBUNI uni) {
     }
 #endif
 
-inline static void SET_INTEGER(RELVAL *v, REBI64 i64) {
-    VAL_RESET_HEADER(v, REB_INTEGER);
+inline static void Init_Integer(RELVAL *v, REBI64 i64) {
+    Reset_Val_Header(v, REB_INTEGER);
     v->payload.integer = i64;
 }
 
@@ -840,13 +840,13 @@ inline static void SET_INTEGER(RELVAL *v, REBI64 i64) {
     }
 #endif
 
-inline static void SET_DECIMAL(RELVAL *v, REBDEC d) {
-    VAL_RESET_HEADER(v, REB_DECIMAL);
+inline static void Init_Decimal(RELVAL *v, REBDEC d) {
+    Reset_Val_Header(v, REB_DECIMAL);
     v->payload.decimal = d;
 }
 
 inline static void SET_PERCENT(RELVAL *v, REBDEC d) {
-    VAL_RESET_HEADER(v, REB_PERCENT);
+    Reset_Val_Header(v, REB_PERCENT);
     v->payload.decimal = d;
 }
 
@@ -895,8 +895,8 @@ inline static deci VAL_MONEY_AMOUNT(const RELVAL *v) {
     return amount;
 }
 
-inline static void SET_MONEY(RELVAL *v, deci amount) {
-    VAL_RESET_HEADER(v, REB_MONEY);
+inline static void Init_Money(RELVAL *v, deci amount) {
+    Reset_Val_Header(v, REB_MONEY);
     v->extra.m0 = amount.m0;
     v->payload.money.m1 = amount.m1;
     v->payload.money.m2 = amount.m2;
@@ -962,8 +962,8 @@ inline static void SET_MONEY(RELVAL *v, deci amount) {
 
 #define NO_TIME MIN_I64
 
-inline static void SET_TIME(RELVAL *v, REBI64 nanoseconds) {
-    VAL_RESET_HEADER(v, REB_TIME);
+inline static void Init_Time(RELVAL *v, REBI64 nanoseconds) {
+    Reset_Val_Header(v, REB_TIME);
     VAL_TIME(v) = nanoseconds;
 }
 
@@ -1032,7 +1032,7 @@ inline static void SET_TIME(RELVAL *v, REBI64 nanoseconds) {
     ((v)->payload.tuple.tuple)
 
 inline static void SET_TUPLE(RELVAL *v, const void *data) {
-    VAL_RESET_HEADER(v, REB_TUPLE);
+    Reset_Val_Header(v, REB_TUPLE);
     memcpy(VAL_TUPLE_DATA(v), data, sizeof(VAL_TUPLE_DATA(v)));
 }
 
@@ -1217,7 +1217,7 @@ inline static void SET_EVENT_KEY(RELVAL *v, REBCNT k, REBCNT c) {
     ((v)->payload.gob.index)
 
 inline static void SET_GOB(RELVAL *v, REBGOB *g) {
-    VAL_RESET_HEADER(v, REB_GOB);
+    Reset_Val_Header(v, REB_GOB);
     VAL_GOB(v) = g;
     VAL_GOB_INDEX(v) = 0;
 }
@@ -1237,8 +1237,8 @@ inline static void SET_GOB(RELVAL *v, REBGOB *g) {
 inline static REBVAL *Move_Value(RELVAL *out, const REBVAL *v)
 {
     assert(
-        GET_VAL_FLAG(v, NODE_FLAG_CELL)
-        && GET_VAL_FLAG(v, NODE_FLAG_VALID)
+        Get_Val_Flag(v, NODE_FLAG_CELL)
+        && Get_Val_Flag(v, NODE_FLAG_VALID)
     );
     assert(NOT_END(v));
     ASSERT_CELL_WRITABLE(out, __FILE__, __LINE__);

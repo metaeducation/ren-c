@@ -69,7 +69,7 @@ REBIXO Do_Vararg_Op_May_Throw(
     if (op == VARARG_OP_TAIL_Q)
         assert(out == NULL); // not expecting return result
     else
-        SET_END(out); // don't want trash in frame output on FAIL
+        Init_End(out); // don't want trash in frame output on FAIL
 #endif
 
     const RELVAL *param; // for type checking
@@ -118,7 +118,7 @@ REBIXO Do_Vararg_Op_May_Throw(
 
     REBFRM *f;
 
-    if (NOT_SER_FLAG(vararg->payload.varargs.feed, ARRAY_FLAG_VARLIST)) {
+    if (Not_Ser_Flag(vararg->payload.varargs.feed, ARRAY_FLAG_VARLIST)) {
         REBARR *array1 = vararg->payload.varargs.feed;
 
         // We are processing an ANY-ARRAY!-based varargs, which came from
@@ -137,7 +137,7 @@ REBIXO Do_Vararg_Op_May_Throw(
         // its index will be updated (or set to END when exhausted)
 
         if (VAL_INDEX(shared) >= ARR_LEN(VAL_ARRAY(shared))) {
-            SET_END(shared); // input now exhausted, mark for shared instances
+            Init_End(shared); // input now exhausted, mark for shared instances
             return END_FLAG;
         }
 
@@ -217,10 +217,10 @@ REBIXO Do_Vararg_Op_May_Throw(
         );
 
         if (IS_FUNCTION(child_gotten)) {
-            if (GET_VAL_FLAG(child_gotten, VALUE_FLAG_ENFIXED)) {
+            if (Get_Val_Flag(child_gotten, VALUE_FLAG_ENFIXED)) {
                 if (pclass == PARAM_CLASS_TIGHT)
                     return END_FLAG;
-                if (GET_VAL_FLAG(child_gotten, FUNC_FLAG_DEFERS_LOOKBACK_ARG))
+                if (Get_Val_Flag(child_gotten, FUNC_FLAG_DEFERS_LOOKBACK_ARG))
                     return END_FLAG;
             }
         }
@@ -282,10 +282,10 @@ REBIXO Do_Vararg_Op_May_Throw(
     }
 
     if (arg) {
-        if (GET_VAL_FLAG(out, VALUE_FLAG_UNEVALUATED))
-            SET_VAL_FLAG(arg, VALUE_FLAG_UNEVALUATED);
+        if (Get_Val_Flag(out, VALUE_FLAG_UNEVALUATED))
+            Set_Val_Flag(arg, VALUE_FLAG_UNEVALUATED);
         else
-            CLEAR_VAL_FLAG(arg, VALUE_FLAG_UNEVALUATED);
+            Clear_Val_Flag(arg, VALUE_FLAG_UNEVALUATED);
     }
 
     assert(NOT(THROWN(out))); // should have returned above
@@ -297,7 +297,7 @@ REBIXO Do_Vararg_Op_May_Throw(
     if (f == &temp_frame) {
         assert(ANY_ARRAY(shared));
         if (IS_END(f->value))
-            SET_END(shared); // signal no more to all varargs sharing value
+            Init_End(shared); // signal no more to all varargs sharing value
         else {
             // The indexor is "prefetched", so although the temp_frame would
             // be ready to use again we're throwing it away, and need to
@@ -337,7 +337,7 @@ void MAKE_Varargs(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
         Move_Value(ARR_HEAD(array1), arg);
         MANAGE_ARRAY(array1);
 
-        VAL_RESET_HEADER(out, REB_VARARGS);
+        Reset_Val_Header(out, REB_VARARGS);
         out->extra.binding = NULL;
     #if !defined(NDEBUG)
         out->payload.varargs.param_offset = -1020;
@@ -391,7 +391,7 @@ REBTYPE(Varargs)
         indexor = Do_Vararg_Op_May_Throw(D_OUT, value, VARARG_OP_FIRST);
         assert(indexor == VA_LIST_FLAG || indexor == END_FLAG); // no throw
         if (indexor == END_FLAG)
-            SET_BLANK(D_OUT); // want to be consistent with TAKE
+            Init_Blank(D_OUT); // want to be consistent with TAKE
 
         return R_OUT;
     }
@@ -419,7 +419,7 @@ REBTYPE(Varargs)
                 return R_OUT_IS_THROWN;
 
             if (indexor == END_FLAG)
-                SET_VOID(D_OUT); // currently allowed even without an /OPT
+                Init_Void(D_OUT); // currently allowed even without an /OPT
 
             return R_OUT;
         }
@@ -550,7 +550,7 @@ void Mold_Varargs(const REBVAL *v, REB_MOLD *mold) {
 
     REBARR *feed = v->payload.varargs.feed;
 
-    if (NOT_SER_FLAG(feed, ARRAY_FLAG_VARLIST)) {
+    if (Not_Ser_Flag(feed, ARRAY_FLAG_VARLIST)) {
         REBARR *array1 = feed;
 
         { // Just [...] for now

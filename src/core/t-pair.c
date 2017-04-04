@@ -221,7 +221,7 @@ REBINT PD_Pair(REBPVS *pvs)
     }
     else {
         dec = (n == 1 ? VAL_PAIR_X(pvs->value) : VAL_PAIR_Y(pvs->value));
-        SET_DECIMAL(pvs->store, dec);
+        Init_Decimal(pvs->store, dec);
         return PE_USE_STORE;
     }
 
@@ -393,7 +393,7 @@ REBTYPE(Pair)
 ///                 fail (arg);
 ///             goto setPair;
 ///         }
-        SET_DECIMAL(D_OUT, n == 0 ? x1 : y1);
+        Init_Decimal(D_OUT, n == 0 ? x1 : y1);
         return R_OUT; }
 
     default:

@@ -130,7 +130,7 @@ void Dump_Series(REBSER *s, const char *memo)
 
     printf(" wide: %d\n", SER_WIDE(s));
     printf(" size: %ld\n", cast(unsigned long, SER_TOTAL_IF_DYNAMIC(s)));
-    if (GET_SER_INFO(s, SERIES_INFO_HAS_DYNAMIC))
+    if (Get_Ser_Info(s, SERIES_INFO_HAS_DYNAMIC))
         printf(" bias: %d\n", cast(int, SER_BIAS(s)));
     printf(" tail: %d\n", cast(int, SER_LEN(s)));
     printf(" rest: %d\n", cast(int, SER_REST(s)));
@@ -143,7 +143,7 @@ void Dump_Series(REBSER *s, const char *memo)
 
     fflush(stdout);
 
-    if (GET_SER_FLAG(s, SERIES_FLAG_ARRAY))
+    if (Get_Ser_Flag(s, SERIES_FLAG_ARRAY))
         Dump_Values(ARR_HEAD(AS_ARRAY(s)), SER_LEN(s));
     else
         Dump_Bytes(SER_DATA_RAW(s), (SER_LEN(s) + 1) * SER_WIDE(s));

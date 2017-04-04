@@ -112,15 +112,15 @@ void Assert_Cell_Writable(const RELVAL *v, const char *file, int line)
 
 
 //
-//  SET_END_Debug: C
+//  Init_End_Debug: C
 //
 // Uses REB_0 for the type, to help cue debugging.
 //
-// When SET_END is used, it uses the whole cell.  Implicit termination is
+// When Init_End is used, it uses the whole cell.  Implicit termination is
 // done by the raw creation of a Reb_Header in the containing structure,
 // see Init_Endlike_Header().
 //
-void SET_END_Debug(RELVAL *v, const char *file, int line) {
+void Init_End_Debug(RELVAL *v, const char *file, int line) {
     ASSERT_CELL_WRITABLE(v, file, line);
     v->header.bits &= CELL_MASK_RESET;
     v->header.bits |= NODE_FLAG_VALID | FLAGBYTE_FIRST(255);
@@ -151,7 +151,7 @@ REBOOL IS_END_Debug(const RELVAL *v, const char *file, int line) {
 //
 REBCTX *VAL_SPECIFIC_Debug(const REBVAL *v)
 {
-    assert(NOT_VAL_FLAG(v, VALUE_FLAG_RELATIVE));
+    assert(Not_Val_Flag(v, VALUE_FLAG_RELATIVE));
     assert(
         ANY_WORD(v)
         || ANY_ARRAY(v)
@@ -166,7 +166,7 @@ REBCTX *VAL_SPECIFIC_Debug(const REBVAL *v)
         //
         // Basic sanity check: make sure it's a context at all
         //
-        if (NOT_SER_FLAG(CTX_VARLIST(specific), ARRAY_FLAG_VARLIST)) {
+        if (Not_Ser_Flag(CTX_VARLIST(specific), ARRAY_FLAG_VARLIST)) {
             printf("Non-CONTEXT found as specifier in specific value\n");
             panic (specific); // may not be a series, either
         }
@@ -239,14 +239,14 @@ void Probe_Core_Debug(
         //
         ASSERT_SERIES(s);
 
-        if (GET_SER_FLAG(s, ARRAY_FLAG_VARLIST)) {
+        if (Get_Ser_Flag(s, ARRAY_FLAG_VARLIST)) {
             REBCTX *c = AS_CONTEXT(s);
 
             // Don't use Init_Any_Context, because that can implicitly manage
             // the context...which we don't want a debug dump routine to do.
             //
             DECLARE_LOCAL (temp);
-            VAL_RESET_HEADER(temp, CTX_TYPE(c));
+            Reset_Val_Header(temp, CTX_TYPE(c));
             temp->extra.binding = NULL;
             temp->payload.any_context.varlist = CTX_VARLIST(c);
             temp->payload.any_context.phase = NULL;
@@ -261,7 +261,7 @@ void Probe_Core_Debug(
 
             if (BYTE_SIZE(s))
                 Debug_Str(s_cast(BIN_HEAD(s)));
-            else if (GET_SER_FLAG(s, SERIES_FLAG_ARRAY)) {
+            else if (Get_Ser_Flag(s, SERIES_FLAG_ARRAY)) {
                 //
                 // May not actually be a REB_BLOCK, but we put it in a value
                 // container for now saying it is so we can output it.  May
@@ -269,7 +269,7 @@ void Probe_Core_Debug(
                 // initialization instead of Init_Block.
                 //
                 DECLARE_LOCAL (value);
-                VAL_RESET_HEADER(value, REB_BLOCK);
+                Reset_Val_Header(value, REB_BLOCK);
                 INIT_VAL_ARRAY(value, AS_ARRAY(s));
                 VAL_INDEX(value) = 0;
 

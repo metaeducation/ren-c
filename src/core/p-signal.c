@@ -50,20 +50,20 @@ static void update(struct devreq_posix_signal *signal, REBINT len, REBVAL *arg)
         REBVAL *val = Append_Context(
             obj, NULL, Intern_UTF8_Managed(signal_no, LEN_BYTES(signal_no))
         );
-        SET_INTEGER(val, sig[i].si_signo);
+        Init_Integer(val, sig[i].si_signo);
 
         val = Append_Context(
             obj, NULL, Intern_UTF8_Managed(code, LEN_BYTES(code))
         );
-        SET_INTEGER(val, sig[i].si_code);
+        Init_Integer(val, sig[i].si_code);
         val = Append_Context(
             obj, NULL, Intern_UTF8_Managed(source_pid, LEN_BYTES(source_pid))
         );
-        SET_INTEGER(val, sig[i].si_pid);
+        Init_Integer(val, sig[i].si_pid);
         val = Append_Context(
             obj, NULL, Intern_UTF8_Managed(source_uid, LEN_BYTES(source_uid))
         );
-        SET_INTEGER(val, sig[i].si_uid);
+        Init_Integer(val, sig[i].si_uid);
 
         Init_Object(Alloc_Tail_Array(VAL_ARRAY(arg)), obj);
     }

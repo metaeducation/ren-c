@@ -117,7 +117,7 @@ REBOOL almost_equal(REBDEC a, REBDEC b, REBCNT max_diff) {
 //
 void Init_Decimal_Bits(REBVAL *out, const REBYTE *bp)
 {
-    VAL_RESET_HEADER(out, REB_DECIMAL);
+    Reset_Val_Header(out, REB_DECIMAL);
 
     REBYTE *dp = cast(REBYTE*, &VAL_DECIMAL(out));
 
@@ -189,7 +189,7 @@ void MAKE_Decimal(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg) {
             fail (arg);
 
         Init_Decimal_Bits(out, VAL_BIN_AT(arg));
-        VAL_RESET_HEADER(out, kind);
+        Reset_Val_Header(out, kind);
         d = VAL_DECIMAL(out);
         break;
 
@@ -246,7 +246,7 @@ dont_divide_if_percent:
     if (!FINITE(d))
         fail (Error_Overflow_Raw());
 
-    VAL_RESET_HEADER(out, kind);
+    Reset_Val_Header(out, kind);
     VAL_DECIMAL(out) = d;
     return;
 
@@ -372,7 +372,7 @@ REBTYPE(Decimal)
                 if (action == SYM_DIVIDE) type = REB_DECIMAL;
                 else if (!IS_PERCENT(val)) type = VAL_TYPE(val);
             } else if (type == REB_MONEY) {
-                SET_MONEY(val, decimal_to_deci(VAL_DECIMAL(val)));
+                Init_Money(val, decimal_to_deci(VAL_DECIMAL(val)));
                 return T_Money(frame_, action);
             } else if (type == REB_CHAR) {
                 d2 = (REBDEC)VAL_CHAR(arg);
@@ -468,7 +468,7 @@ REBTYPE(Decimal)
             arg = ARG(scale);
             if (REF(to)) {
                 if (IS_MONEY(arg)) {
-                    SET_MONEY(D_OUT, Round_Deci(
+                    Init_Money(D_OUT, Round_Deci(
                         decimal_to_deci(d1), flags, VAL_MONEY_AMOUNT(arg)
                     ));
                     return R_OUT;
@@ -478,7 +478,7 @@ REBTYPE(Decimal)
 
                 d1 = Round_Dec(d1, flags, Dec64(arg));
                 if (IS_INTEGER(arg)) {
-                    VAL_RESET_HEADER(D_OUT, REB_INTEGER);
+                    Reset_Val_Header(D_OUT, REB_INTEGER);
                     VAL_INT64(D_OUT) = cast(REBI64, d1);
                     return R_OUT;
                 }
@@ -509,7 +509,7 @@ REBTYPE(Decimal)
             goto setDec; }
 
         case SYM_COMPLEMENT:
-            SET_INTEGER(D_OUT, ~(REBINT)d1);
+            Init_Integer(D_OUT, ~(REBINT)d1);
             return R_OUT;
 
         default:
@@ -522,7 +522,7 @@ REBTYPE(Decimal)
 setDec:
     if (!FINITE(d1)) fail (Error_Overflow_Raw());
 
-    VAL_RESET_HEADER(D_OUT, type);
+    Reset_Val_Header(D_OUT, type);
     VAL_DECIMAL(D_OUT) = d1;
 
     return R_OUT;

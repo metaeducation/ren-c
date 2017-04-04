@@ -578,7 +578,7 @@ static void Mold_All_String(const REBVAL *value, REB_MOLD *mold)
     if (IS_BINARY(value))
         Mold_Binary(head, mold);
     else {
-        VAL_RESET_HEADER(head, REB_STRING);
+        Reset_Val_Header(head, REB_STRING);
         Mold_String_Series(head, mold);
     }
 
@@ -626,7 +626,7 @@ void Mold_Array_At(
     // !!! Review how to avoid needing to put the series into a value
     {
         REBVAL *temp = Alloc_Tail_Array(MOLD_STACK);
-        VAL_RESET_HEADER(temp, REB_BLOCK);
+        Reset_Val_Header(temp, REB_BLOCK);
         INIT_VAL_ARRAY(temp, array); // copies args
         VAL_INDEX(temp) = 0;
     }
@@ -639,7 +639,7 @@ void Mold_Array_At(
 
     value = ARR_AT(array, index);
     while (NOT_END(value)) {
-        if (GET_VAL_FLAG(value, VALUE_FLAG_LINE)) {
+        if (Get_Val_Flag(value, VALUE_FLAG_LINE)) {
             if (sep[1] || line_flag) New_Indented_Line(mold);
             had_lines = TRUE;
         }
@@ -964,7 +964,7 @@ static void Form_Object(const REBVAL *value, REB_MOLD *mold)
 
     // Mold all words and their values:
     for (; NOT_END(key); key++, var++) {
-        if (NOT_VAL_FLAG(key, TYPESET_FLAG_HIDDEN)) {
+        if (Not_Val_Flag(key, TYPESET_FLAG_HIDDEN)) {
             had_output = TRUE;
             Emit(mold, "N: V\n", VAL_KEY_SPELLING(key), var);
         }
@@ -1038,7 +1038,7 @@ static void Mold_Object(const REBVAL *value, REB_MOLD *mold)
         DECLARE_LOCAL (any_word);
         Init_Any_Word(
             any_word,
-            GET_VAL_FLAG(key, TYPESET_FLAG_HIDDEN) ? REB_SET_WORD : REB_WORD,
+            Get_Val_Flag(key, TYPESET_FLAG_HIDDEN) ? REB_SET_WORD : REB_WORD,
             VAL_KEY_SPELLING(key)
         );
         Mold_Value(mold, any_word, TRUE);
@@ -1054,7 +1054,7 @@ static void Mold_Object(const REBVAL *value, REB_MOLD *mold)
     var = vars_head;
 
     for (; NOT_END(key); var ? (++key, ++var) : ++key) {
-        if (GET_VAL_FLAG(key, TYPESET_FLAG_HIDDEN))
+        if (Get_Val_Flag(key, TYPESET_FLAG_HIDDEN))
             continue; // !!! Should hidden fields be in molded view?
 
         if (var && IS_VOID(value))

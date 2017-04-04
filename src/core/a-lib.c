@@ -276,7 +276,7 @@ RL_API int RL_Event(REBEVT *evt)
     REBVAL *event = Append_Event();     // sets signal
 
     if (event) {                        // null if no room left in series
-        VAL_RESET_HEADER(event, REB_EVENT); // has more space, if needed
+        Reset_Val_Header(event, REB_EVENT); // has more space, if needed
         event->extra.eventee = evt->eventee;
         event->payload.event.type = evt->type;
         event->payload.event.flags = evt->flags;
@@ -490,9 +490,9 @@ RL_API REBRXT RL_Val_Type(const REBVAL *v) {
 //
 RL_API void RL_Val_Update_Header(REBVAL *v, REBRXT rxt) {
     if (rxt == 0)
-        SET_VOID(v);
+        Init_Void(v);
     else
-        VAL_RESET_HEADER(v, RXT_To_Reb[rxt]);
+        Reset_Val_Header(v, RXT_To_Reb[rxt]);
 }
 
 
@@ -642,7 +642,7 @@ RL_API void RL_Init_Date(
     int nano,
     int zone
 ) {
-    VAL_RESET_HEADER(out, REB_DATE);
+    Reset_Val_Header(out, REB_DATE);
     VAL_YEAR(out)  = year;
     VAL_MONTH(out) = month;
     VAL_DAY(out) = day;

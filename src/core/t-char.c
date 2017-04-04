@@ -118,7 +118,7 @@ void MAKE_Char(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
         fail (Error_Bad_Make(REB_CHAR, arg));
     }
 
-    SET_CHAR(out, uni);
+    Init_Char(out, uni);
 }
 
 
@@ -168,7 +168,7 @@ REBTYPE(Char)
         arg = Math_Arg_For_Char(D_ARG(2), action);
         chr -= cast(REBUNI, arg);
         if (IS_CHAR(D_ARG(2))) {
-            SET_INTEGER(D_OUT, chr);
+            Init_Integer(D_OUT, chr);
             return R_OUT;
         }
         break;
@@ -236,7 +236,7 @@ REBTYPE(Char)
 
     if ((chr >> 16) != 0 && (chr >> 16) != 0xffff)
         fail (Error_Type_Limit_Raw(Get_Type(REB_CHAR)));
-    SET_CHAR(D_OUT, chr);
+    Init_Char(D_OUT, chr);
     return R_OUT;
 }
 

@@ -61,7 +61,7 @@
 
 
 #define IS_WORD_BOUND(v) \
-    GET_VAL_FLAG((v), WORD_FLAG_BOUND)
+    Get_Val_Flag((v), WORD_FLAG_BOUND)
 
 #define IS_WORD_UNBOUND(v) \
     NOT(IS_WORD_BOUND(v))
@@ -85,30 +85,30 @@ inline static const REBYTE *VAL_WORD_HEAD(const RELVAL *v) {
 }
 
 inline static void INIT_WORD_CONTEXT(RELVAL *v, REBCTX *context) {
-    assert(GET_VAL_FLAG(v, WORD_FLAG_BOUND) && context != SPECIFIED);
+    assert(Get_Val_Flag(v, WORD_FLAG_BOUND) && context != SPECIFIED);
     ENSURE_SERIES_MANAGED(CTX_SERIES(context));
     ASSERT_ARRAY_MANAGED(CTX_KEYLIST(context));
     v->extra.binding = CTX_VARLIST(context);
 }
 
 inline static REBCTX *VAL_WORD_CONTEXT(const REBVAL *v) {
-    assert(GET_VAL_FLAG((v), WORD_FLAG_BOUND));
+    assert(Get_Val_Flag((v), WORD_FLAG_BOUND));
     return VAL_SPECIFIC(v);
 }
 
 inline static void INIT_WORD_FUNC(RELVAL *v, REBFUN *func) {
-    assert(GET_VAL_FLAG(v, WORD_FLAG_BOUND));
+    assert(Get_Val_Flag(v, WORD_FLAG_BOUND));
     v->extra.binding = FUNC_PARAMLIST(func);
 }
 
 inline static REBFUN *VAL_WORD_FUNC(const RELVAL *v) {
-    assert(GET_VAL_FLAG(v, WORD_FLAG_BOUND));
+    assert(Get_Val_Flag(v, WORD_FLAG_BOUND));
     return VAL_RELATIVE(v);
 }
 
 inline static void INIT_WORD_INDEX(RELVAL *v, REBCNT i) {
     assert(ANY_WORD(v));
-    assert(GET_VAL_FLAG((v), WORD_FLAG_BOUND));
+    assert(Get_Val_Flag((v), WORD_FLAG_BOUND));
     assert(SAME_STR(
         VAL_WORD_SPELLING(v),
         IS_RELATIVE(v)
@@ -126,7 +126,7 @@ inline static REBCNT VAL_WORD_INDEX(const RELVAL *v) {
 }
 
 inline static void Unbind_Any_Word(RELVAL *v) {
-    CLEAR_VAL_FLAGS(v, WORD_FLAG_BOUND | VALUE_FLAG_RELATIVE);
+    Clear_Val_Flags(v, WORD_FLAG_BOUND | VALUE_FLAG_RELATIVE);
 #if !defined(NDEBUG)
     v->payload.any_word.index = 0;
 #endif
@@ -137,7 +137,7 @@ inline static void Init_Any_Word(
     enum Reb_Kind kind,
     REBSTR *spelling
 ) {
-    VAL_RESET_HEADER(out, kind);
+    Reset_Val_Header(out, kind);
 
     assert(spelling != NULL);
     out->payload.any_word.spelling = spelling;
@@ -179,7 +179,7 @@ inline static void Init_Any_Word_Bound(
 ) {
     assert(CTX_KEY_CANON(context, index) == STR_CANON(spelling));
 
-    VAL_RESET_HEADER_EXTRA(out, type, WORD_FLAG_BOUND);
+    Reset_Val_Header_Core(out, type, WORD_FLAG_BOUND);
 
     assert(spelling != NULL);
     out->payload.any_word.spelling = spelling;

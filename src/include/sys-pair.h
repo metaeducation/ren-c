@@ -64,10 +64,10 @@ inline static REBVAL *PAIRING_KEY(REBVAL *pairing) {
     ROUND_TO_INT(VAL_PAIR_Y(v))
 
 inline static void SET_PAIR(RELVAL *v, float x, float y) {
-    VAL_RESET_HEADER(v, REB_PAIR);
+    Reset_Val_Header(v, REB_PAIR);
     v->payload.pair = Alloc_Pairing(NULL);
-    SET_DECIMAL(PAIRING_KEY((v)->payload.pair), x);
-    SET_DECIMAL((v)->payload.pair, y);
+    Init_Decimal(PAIRING_KEY((v)->payload.pair), x);
+    Init_Decimal((v)->payload.pair, y);
     Manage_Pairing((v)->payload.pair);
 }
 
@@ -81,7 +81,7 @@ inline static void SET_ZEROED(RELVAL *v, enum Reb_Kind kind) {
         SET_PAIR(v, 0, 0); // !!! inefficient, performs allocation, review
     }
     else {
-        VAL_RESET_HEADER(v, kind);
+        Reset_Val_Header(v, kind);
         CLEAR(&v->extra, sizeof(union Reb_Value_Extra));
         CLEAR(&v->payload, sizeof(union Reb_Value_Payload));
     }

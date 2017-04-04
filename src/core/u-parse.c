@@ -160,7 +160,7 @@ static REBOOL Subparse_Throws(
     REBFRM frame;
     REBFRM *f = &frame;
 
-    SET_END(out);
+    Init_End(out);
 
     assert(ANY_ARRAY(rules));
     assert(ANY_SERIES(input));
@@ -178,7 +178,7 @@ static REBOOL Subparse_Throws(
     if (VAL_INDEX(rules) >= VAL_LEN_HEAD(rules)) {
         Prep_Global_Cell(&f->cell); // bypass C++ assert on no prep
         *interrupted_out = FALSE;
-        SET_INTEGER(out, VAL_INDEX(input));
+        Init_Integer(out, VAL_INDEX(input));
         return FALSE;
     }
 
@@ -197,7 +197,7 @@ static REBOOL Subparse_Throws(
     f->args_head = Push_Value_Chunk_Of_Length(2);
 #else
     f->args_head = Push_Value_Chunk_Of_Length(3); // real RETURN: for natives
-    SET_VOID(&f->args_head[2]);
+    Init_Void(&f->args_head[2]);
 #endif
 
     f->varlist = NULL;
@@ -207,7 +207,7 @@ static REBOOL Subparse_Throws(
     // We always want "case-sensitivity" on binary bytes, vs. treating as
     // case-insensitive bytes for ASCII characters.
     //
-    SET_INTEGER(&f->args_head[1], find_flags);
+    Init_Integer(&f->args_head[1], find_flags);
 
     f->label = Canon(SYM_SUBPARSE);
     f->eval_type = REB_FUNCTION;
@@ -222,7 +222,7 @@ static REBOOL Subparse_Throws(
 
     Push_Frame_Core(f); // checks for C stack overflow
 
-    SET_END(&f->cell); // GC requires some initialization of cell
+    Init_End(&f->cell); // GC requires some initialization of cell
 
     REB_R r = N_subparse(f);
 
@@ -298,7 +298,7 @@ static void Print_Parse_Index(REBFRM *f) {
         P_TYPE,
         P_INPUT,
         P_POS,
-        GET_SER_FLAG(P_INPUT, SERIES_FLAG_ARRAY)
+        Get_Ser_Flag(P_INPUT, SERIES_FLAG_ARRAY)
             ? P_INPUT_SPECIFIER
             : SPECIFIED
     );
@@ -994,7 +994,7 @@ static REBIXO To_Thru_Non_Block_Rule(
         return SER_LEN(P_INPUT);
     }
 
-    if (GET_SER_FLAG(P_INPUT, SERIES_FLAG_ARRAY)) {
+    if (Get_Ser_Flag(P_INPUT, SERIES_FLAG_ARRAY)) {
         //
         // FOR ARRAY INPUT WITH NON-BLOCK RULES, USE Find_In_Array()
         //
@@ -1004,7 +1004,7 @@ static REBIXO To_Thru_Non_Block_Rule(
         DECLARE_LOCAL (word);
         if (IS_LIT_WORD(rule)) {
             Derelativize(word, rule, P_RULE_SPECIFIER);
-            VAL_SET_TYPE_BITS(word, REB_WORD);
+            Reset_Val_Kind(word, REB_WORD);
             rule = word;
         }
 
@@ -1164,7 +1164,7 @@ static REBIXO To_Thru_Non_Block_Rule(
 //
 static REBIXO Do_Eval_Rule(REBFRM *f)
 {
-    if (NOT_SER_FLAG(P_INPUT, SERIES_FLAG_ARRAY)) // can't be an ANY-STRING!
+    if (Not_Ser_Flag(P_INPUT, SERIES_FLAG_ARRAY)) // can't be an ANY-STRING!
         fail (Error_Parse_Rule());
 
     if (IS_END(P_RULE))
@@ -1380,7 +1380,7 @@ REBNATIVE(subparse)
 
         assert(Eval_Count >= 0);
         if (--Eval_Count == 0) {
-            SET_END(P_CELL);
+            Init_End(P_CELL);
 
             if (Do_Signals_Throws(P_CELL))
                 fail (Error_No_Catch_For_Throw(P_CELL));
@@ -1407,7 +1407,7 @@ REBNATIVE(subparse)
             //
             // (Note this means `[| ...anything...]` is a "no-op" match)
             //
-            SET_INTEGER(P_OUT, P_POS);
+            Init_Integer(P_OUT, P_POS);
             return R_OUT;
         }
 
@@ -1528,7 +1528,7 @@ REBNATIVE(subparse)
                         // up and affects an enclosing parse loop.
                         //
                         DECLARE_LOCAL (thrown_arg);
-                        SET_INTEGER(thrown_arg, P_POS);
+                        Init_Integer(thrown_arg, P_POS);
                         Move_Value(P_OUT, NAT_VALUE(parse_accept));
                         CONVERT_NAME_TO_THROWN(P_OUT, thrown_arg);
                         return R_OUT_IS_THROWN;
@@ -1814,7 +1814,7 @@ REBNATIVE(subparse)
                     break; }
 
                 case SYM_QUOTE: {
-                    if (NOT_SER_FLAG(P_INPUT, SERIES_FLAG_ARRAY))
+                    if (Not_Ser_Flag(P_INPUT, SERIES_FLAG_ARRAY))
                         fail (Error_Parse_Rule()); // see #2253
 
                     if (IS_END(P_RULE))
@@ -1948,7 +1948,7 @@ REBNATIVE(subparse)
             else {
                 // Parse according to datatype
 
-                if (GET_SER_FLAG(P_INPUT, SERIES_FLAG_ARRAY))
+                if (Get_Ser_Flag(P_INPUT, SERIES_FLAG_ARRAY))
                     i = Parse_Array_One_Rule(f, rule);
                 else
                     i = Parse_String_One_Rule(f, rule);
@@ -2036,7 +2036,7 @@ REBNATIVE(subparse)
                     Init_Any_Series(
                         temp,
                         P_TYPE,
-                        GET_SER_FLAG(P_INPUT, SERIES_FLAG_ARRAY)
+                        Get_Ser_Flag(P_INPUT, SERIES_FLAG_ARRAY)
                             ? AS_SERIES(Copy_Array_At_Max_Shallow(
                                 AS_ARRAY(P_INPUT),
                                 begin,
@@ -2052,7 +2052,7 @@ REBNATIVE(subparse)
                     );
                 }
                 else if (flags & PF_SET) {
-                    if (GET_SER_FLAG(P_INPUT, SERIES_FLAG_ARRAY)) {
+                    if (Get_Ser_Flag(P_INPUT, SERIES_FLAG_ARRAY)) {
                         if (count != 0)
                             Derelativize(
                                 Sink_Var_May_Fail(
@@ -2071,9 +2071,9 @@ REBNATIVE(subparse)
                             );
                             REBUNI ch = GET_ANY_CHAR(P_INPUT, begin);
                             if (P_TYPE == REB_BINARY)
-                                SET_INTEGER(var, ch);
+                                Init_Integer(var, ch);
                             else
-                                SET_CHAR(var, ch);
+                                Init_Char(var, ch);
                         }
                         else
                             NOOP; // !!! leave as-is on 0 count?
@@ -2088,7 +2088,7 @@ REBNATIVE(subparse)
                     Init_Any_Series(
                         captured,
                         P_TYPE,
-                        GET_SER_FLAG(P_INPUT, SERIES_FLAG_ARRAY)
+                        Get_Ser_Flag(P_INPUT, SERIES_FLAG_ARRAY)
                             ? AS_SERIES(Copy_Array_At_Max_Shallow(
                                 AS_ARRAY(P_INPUT),
                                 begin,
@@ -2137,7 +2137,7 @@ REBNATIVE(subparse)
                     rule = Get_Parse_Value(save, P_RULE, P_RULE_SPECIFIER);
                     FETCH_NEXT_RULE_MAYBE_END(f);
 
-                    if (GET_SER_FLAG(P_INPUT, SERIES_FLAG_ARRAY)) {
+                    if (Get_Ser_Flag(P_INPUT, SERIES_FLAG_ARRAY)) {
                         DECLARE_LOCAL (specified);
                         Derelativize(specified, rule, P_RULE_SPECIFIER);
 
@@ -2152,7 +2152,7 @@ REBNATIVE(subparse)
                         );
 
                         if (IS_LIT_WORD(rule))
-                            VAL_SET_TYPE_BITS( // keeps binding flags
+                            Reset_Val_Kind( // keeps binding flags
                                 ARR_AT(AS_ARRAY(P_INPUT), P_POS - 1),
                                 REB_WORD
                             );
@@ -2190,7 +2190,7 @@ REBNATIVE(subparse)
 
             FETCH_TO_BAR_MAYBE_END(f);
             if (IS_END(P_RULE)) { // no alternate rule
-                SET_BLANK(P_OUT);
+                Init_Blank(P_OUT);
                 return R_OUT;
             }
 
@@ -2204,7 +2204,7 @@ REBNATIVE(subparse)
         mincount = maxcount = 1;
     }
 
-    SET_INTEGER(P_OUT, P_POS); // !!! return switched input series??
+    Init_Integer(P_OUT, P_POS); // !!! return switched input series??
     return R_OUT;
 }
 

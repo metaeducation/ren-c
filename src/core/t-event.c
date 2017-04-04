@@ -207,7 +207,7 @@ void Set_Event_Vars(REBVAL *evt, RELVAL *blk, REBSPC *specifier)
         ++blk;
 
         if (IS_END(blk))
-            SET_BLANK(val);
+            Init_Blank(val);
         else
             Get_Simple_Value_Into(val, blk, specifier);
 
@@ -300,7 +300,7 @@ static REBOOL Get_Event_Var(const REBVAL *value, REBSTR *name, REBVAL *val)
             }
             return FALSE;
         }
-        SET_CHAR(val, n);
+        Init_Char(val, n);
         break;
 
     case SYM_FLAGS:
@@ -322,14 +322,14 @@ static REBOOL Get_Event_Var(const REBVAL *value, REBSTR *name, REBVAL *val)
             Init_Block(val, array);
         }
         else
-            SET_BLANK(val);
+            Init_Blank(val);
         break;
 
     case SYM_CODE:
         if (VAL_EVENT_TYPE(value) != EVT_KEY && VAL_EVENT_TYPE(value) != EVT_KEY_UP)
             goto is_blank;
         n = VAL_EVENT_DATA(value); // key-words in top 16, chars in lower 16
-        SET_INTEGER(val, n);
+        Init_Integer(val, n);
         break;
 
     case SYM_DATA:
@@ -362,7 +362,7 @@ static REBOOL Get_Event_Var(const REBVAL *value, REBSTR *name, REBVAL *val)
     return TRUE;
 
 is_blank:
-    SET_BLANK(val);
+    Init_Blank(val);
     return TRUE;
 }
 
@@ -377,7 +377,7 @@ void MAKE_Event(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg) {
     if (IS_BLOCK(arg)) {
         CLEARS(out);
         INIT_CELL(out);
-        VAL_RESET_HEADER(out, REB_EVENT);
+        Reset_Val_Header(out, REB_EVENT);
         Set_Event_Vars(
             out,
             VAL_ARRAY_AT(arg),

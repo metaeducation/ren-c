@@ -153,10 +153,10 @@ inline static void Push_Frame_Core(REBFRM *f)
     f->prior = TG_Frame_Stack;
     TG_Frame_Stack = f;
     if (NOT(f->flags.bits & DO_FLAG_VA_LIST)) {
-        if (GET_SER_INFO(f->source.array, SERIES_INFO_RUNNING))
+        if (Get_Ser_Info(f->source.array, SERIES_INFO_RUNNING))
             NOOP; // already temp-locked
         else {
-            SET_SER_INFO(f->source.array, SERIES_INFO_RUNNING);
+            Set_Ser_Info(f->source.array, SERIES_INFO_RUNNING);
             f->flags.bits |= DO_FLAG_TOOK_FRAME_LOCK;
         }
     }
@@ -168,8 +168,8 @@ inline static void UPDATE_EXPRESSION_START(REBFRM *f) {
 
 inline static void Drop_Frame_Core(REBFRM *f) {
     if (f->flags.bits & DO_FLAG_TOOK_FRAME_LOCK) {
-        assert(GET_SER_INFO(f->source.array, SERIES_INFO_RUNNING));
-        CLEAR_SER_INFO(f->source.array, SERIES_INFO_RUNNING);
+        assert(Get_Ser_Info(f->source.array, SERIES_INFO_RUNNING));
+        Clear_Ser_Info(f->source.array, SERIES_INFO_RUNNING);
     }
     assert(TG_Frame_Stack == f);
     TG_Frame_Stack = f->prior;
@@ -286,7 +286,7 @@ inline static REBOOL Do_Next_In_Frame_Throws(
     assert(f->eval_type == REB_0); // see notes in Push_Frame_At()
     assert(NOT(f->flags.bits & DO_FLAG_TO_END));
 
-    SET_END(out);
+    Init_End(out);
     f->out = out;
     Do_Core(f); // should already be pushed
 
@@ -322,7 +322,7 @@ inline static REBOOL Do_Next_Mid_Frame_Throws(REBFRM *f) {
     assert(f->state.dsp == f->dsp_orig);
 #endif
 
-    SET_END(f->out);
+    Init_End(f->out);
     Do_Core(f); // should already be pushed
 
     // The & on the following line is purposeful.  See Init_Endlike_Header.
@@ -387,7 +387,7 @@ inline static REBOOL Do_Next_In_Subframe_Throws(
 
     child->gotten = parent->gotten;
 
-    SET_END(out);
+    Init_End(out);
     child->out = out;
 
     child->source = parent->source;
@@ -420,7 +420,7 @@ inline static REBOOL Do_Next_In_Subframe_Throws(
 
 inline static void Quote_Next_In_Frame(REBVAL *dest, REBFRM *f) {
     Derelativize(dest, f->value, f->specifier);
-    SET_VAL_FLAG(dest, VALUE_FLAG_UNEVALUATED);
+    Set_Val_Flag(dest, VALUE_FLAG_UNEVALUATED);
     f->gotten = END;
     Fetch_Next_In_Frame(f);
 }
@@ -466,7 +466,7 @@ inline static REBIXO DO_NEXT_MAY_THROW(
 
     SET_FRAME_VALUE(f, ARR_AT(array, index));
     if (IS_END(f->value)) {
-        SET_VOID(out);
+        Init_Void(out);
         return END_FLAG;
     }
 
@@ -479,7 +479,7 @@ inline static REBIXO DO_NEXT_MAY_THROW(
     f->pending = NULL;
     f->gotten = END;
 
-    SET_END(out);
+    Init_End(out);
     f->out = out;
 
     Push_Frame_Core(f);    
@@ -525,11 +525,11 @@ inline static REBIXO Do_Array_At_Core(
     }
 
     if (IS_END(f.value)) {
-        SET_VOID(out);
+        Init_Void(out);
         return END_FLAG;
     }
 
-    SET_END(out);
+    Init_End(out);
     f.out = out;
 
     f.source.array = array;
@@ -646,14 +646,14 @@ inline static void Reify_Va_To_Array_In_Frame(
 
     f->source.array = Pop_Stack_Values(dsp_orig); // may contain voids
     MANAGE_ARRAY(f->source.array); // held alive while frame running
-    SET_SER_FLAG(f->source.array, ARRAY_FLAG_VOIDS_LEGAL);
+    Set_Ser_Flag(f->source.array, ARRAY_FLAG_VOIDS_LEGAL);
 
     // The array just popped into existence, and it's tied to a running
     // frame...so safe to say we locked it.  (This would be more complex if
     // we reused the empty array if dsp_orig == DSP, since someone else
     // might have it locked...not worth the complexity.) 
     //
-    SET_SER_INFO(f->source.array, SERIES_INFO_RUNNING);
+    Set_Ser_Info(f->source.array, SERIES_INFO_RUNNING);
     f->flags.bits |= DO_FLAG_TOOK_FRAME_LOCK;
 
     if (truncated)
@@ -724,11 +724,11 @@ inline static REBIXO Do_Va_Core(
     }
 
     if (IS_END(f.value)) {
-        SET_VOID(out);
+        Init_Void(out);
         return END_FLAG;
     }
 
-    SET_END(out);
+    Init_End(out);
     f.out = out;
 
 #if !defined(NDEBUG)

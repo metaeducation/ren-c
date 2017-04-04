@@ -46,9 +46,9 @@ static void Protect_Key(REBCTX *context, REBCNT index, REBFLGS flags)
     //
     if (GET_FLAG(flags, PROT_WORD)) {
         if (GET_FLAG(flags, PROT_SET))
-            SET_VAL_FLAG(var, VALUE_FLAG_PROTECTED);
+            Set_Val_Flag(var, VALUE_FLAG_PROTECTED);
         else
-            CLEAR_VAL_FLAG(var, VALUE_FLAG_PROTECTED);
+            Clear_Val_Flag(var, VALUE_FLAG_PROTECTED);
     }
 
     if (GET_FLAG(flags, PROT_HIDE)) {
@@ -63,9 +63,9 @@ static void Protect_Key(REBCTX *context, REBCNT index, REBFLGS flags)
         REBVAL *key = CTX_KEY(context, index);
 
         if (GET_FLAG(flags, PROT_SET))
-            SET_VAL_FLAGS(key, TYPESET_FLAG_HIDDEN | TYPESET_FLAG_UNBINDABLE);
+            Set_Val_Flags(key, TYPESET_FLAG_HIDDEN | TYPESET_FLAG_UNBINDABLE);
         else
-            CLEAR_VAL_FLAGS(
+            Clear_Val_Flags(
                 key, TYPESET_FLAG_HIDDEN | TYPESET_FLAG_UNBINDABLE
             );
     }
@@ -99,17 +99,17 @@ void Protect_Series(REBSER *s, REBCNT index, REBFLGS flags)
     if (GET_FLAG(flags, PROT_SET)) {
         if (GET_FLAG(flags, PROT_FREEZE)) {
             assert(GET_FLAG(flags, PROT_DEEP));
-            SET_SER_INFO(s, SERIES_INFO_FROZEN);
+            Set_Ser_Info(s, SERIES_INFO_FROZEN);
         }
         else
-            SET_SER_INFO(s, SERIES_INFO_PROTECTED);
+            Set_Ser_Info(s, SERIES_INFO_PROTECTED);
     }
     else {
         assert(!GET_FLAG(flags, PROT_FREEZE));
-        CLEAR_SER_INFO(s, SERIES_INFO_PROTECTED);
+        Clear_Ser_Info(s, SERIES_INFO_PROTECTED);
     }
 
-    if (NOT_SER_FLAG(s, SERIES_FLAG_ARRAY) || !GET_FLAG(flags, PROT_DEEP))
+    if (Not_Ser_Flag(s, SERIES_FLAG_ARRAY) || !GET_FLAG(flags, PROT_DEEP))
         return;
 
     Flip_Series_To_Black(s); // recursion protection
@@ -133,14 +133,14 @@ void Protect_Context(REBCTX *c, REBFLGS flags)
     if (GET_FLAG(flags, PROT_SET)) {
         if (GET_FLAG(flags, PROT_FREEZE)) {
             assert(GET_FLAG(flags, PROT_DEEP));
-            SET_SER_INFO(CTX_VARLIST(c), SERIES_INFO_FROZEN);
+            Set_Ser_Info(CTX_VARLIST(c), SERIES_INFO_FROZEN);
         }
         else
-            SET_SER_INFO(CTX_VARLIST(c), SERIES_INFO_PROTECTED);
+            Set_Ser_Info(CTX_VARLIST(c), SERIES_INFO_PROTECTED);
     }
     else {
         assert(!GET_FLAG(flags, PROT_FREEZE));
-        CLEAR_SER_INFO(CTX_VARLIST(c), SERIES_INFO_PROTECTED);
+        Clear_Ser_Info(CTX_VARLIST(c), SERIES_INFO_PROTECTED);
     }
 
     if (!GET_FLAG(flags, PROT_DEEP)) return;

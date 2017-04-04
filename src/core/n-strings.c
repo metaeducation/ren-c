@@ -156,7 +156,7 @@ REBNATIVE(spelling_of)
         // during the FORMing process.  Use SET_TYPE and not reset header
         // because the binding bits need to stay consistent
         //
-        VAL_SET_TYPE_BITS(value, REB_WORD);
+        Reset_Val_Kind(value, REB_WORD);
         series = Copy_Mold_Value(value, 0 /* opts... MOPT_0? */);
     }
 
@@ -227,7 +227,7 @@ REBNATIVE(checksum)
             // signed INTEGER! available.
             //
             REBINT crc32 = cast(REBINT, CRC32(data, len));
-            SET_INTEGER(D_OUT, crc32);
+            Init_Integer(D_OUT, crc32);
             return R_OUT;
         }
 
@@ -240,7 +240,7 @@ REBNATIVE(checksum)
             // of the adler calculation to a signed integer.
             //
             uLong adler = z_adler32(0L, data, len);
-            SET_INTEGER(D_OUT, adler);
+            Init_Integer(D_OUT, adler);
             return R_OUT;
         }
 
@@ -304,7 +304,7 @@ REBNATIVE(checksum)
     }
     else if (REF(tcp)) {
         REBINT ipc = Compute_IPC(data, len);
-        SET_INTEGER(D_OUT, ipc);
+        Init_Integer(D_OUT, ipc);
     }
     else if (REF(hash)) {
         REBINT sum = VAL_INT32(ARG(size));
@@ -312,11 +312,11 @@ REBNATIVE(checksum)
             sum = 1;
 
         REBINT hash = Hash_String(data, len, wide) % sum;
-        SET_INTEGER(D_OUT, hash);
+        Init_Integer(D_OUT, hash);
     }
     else {
         REBINT crc = Compute_CRC(data, len);
-        SET_INTEGER(D_OUT, crc);
+        Init_Integer(D_OUT, crc);
     }
 
     return R_OUT;
@@ -878,7 +878,7 @@ REBNATIVE(utf_q)
     INCLUDE_PARAMS_OF_UTF_Q;
 
     REBINT utf = What_UTF(VAL_BIN_AT(ARG(data)), VAL_LEN_AT(ARG(data)));
-    SET_INTEGER(D_OUT, utf);
+    Init_Integer(D_OUT, utf);
     return R_OUT;
 }
 

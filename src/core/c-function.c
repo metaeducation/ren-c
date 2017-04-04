@@ -109,7 +109,7 @@ REBARR *List_Func_Typesets(REBVAL *func)
         // bits.  This may not be desirable over the long run (what if
         // a typeset wishes to encode hiddenness, protectedness, etc?)
         //
-        VAL_RESET_HEADER(value, REB_TYPESET);
+        Reset_Val_Header(value, REB_TYPESET);
     }
 
     return array;
@@ -195,7 +195,7 @@ REBARR *Make_Paramlist_Managed_May_Fail(
     // it is turned into a rootkey for param_notes.
     //
     DS_PUSH_TRASH; // paramlist[0] (will become FUNCTION! canon value)
-    SET_UNREADABLE_BLANK(DS_TOP);
+    Init_Unreadable_Blank(DS_TOP);
     DS_PUSH(EMPTY_BLOCK); // param_types[0] (to be OBJECT! canon value, if any)
     DS_PUSH(EMPTY_STRING); // param_notes[0] (holds description, then canon)
 
@@ -536,7 +536,7 @@ REBARR *Make_Paramlist_Managed_May_Fail(
         // FUNCTION!/CLOSURE! distinction.
         //
         if (durable)
-            SET_VAL_FLAG(typeset, TYPESET_FLAG_DURABLE);
+            Set_Val_Flag(typeset, TYPESET_FLAG_DURABLE);
     }
 
     Drop_Frame(&f);
@@ -665,8 +665,8 @@ REBARR *Make_Paramlist_Managed_May_Fail(
 
     if (TRUE) {
         RELVAL *dest = ARR_HEAD(paramlist); // canon function value
-        VAL_RESET_HEADER(dest, REB_FUNCTION);
-        SET_VAL_FLAGS(dest, header_bits);
+        Reset_Val_Header(dest, REB_FUNCTION);
+        Set_Val_Flags(dest, header_bits);
         dest->payload.function.paramlist = paramlist;
         dest->extra.binding = NULL;
         ++dest;
@@ -764,14 +764,14 @@ REBARR *Make_Paramlist_Managed_May_Fail(
         );
     }
     else if (meta)
-        SET_VOID(CTX_VAR(meta, STD_FUNCTION_META_DESCRIPTION));
+        Init_Void(CTX_VAR(meta, STD_FUNCTION_META_DESCRIPTION));
 
     // Only make `parameter-types` if there were blocks in the spec
     //
     if (NOT(has_types)) {
         if (meta) {
-            SET_VOID(CTX_VAR(meta, STD_FUNCTION_META_PARAMETER_TYPES));
-            SET_VOID(CTX_VAR(meta, STD_FUNCTION_META_RETURN_TYPE));
+            Init_Void(CTX_VAR(meta, STD_FUNCTION_META_PARAMETER_TYPES));
+            Init_Void(CTX_VAR(meta, STD_FUNCTION_META_RETURN_TYPE));
         }
     }
     else {
@@ -781,7 +781,7 @@ REBARR *Make_Paramlist_Managed_May_Fail(
         INIT_CTX_KEYLIST_SHARED(AS_CONTEXT(types_varlist), paramlist);
 
         REBVAL *dest = SINK(ARR_HEAD(types_varlist)); // "rootvar"
-        VAL_RESET_HEADER(dest, REB_FRAME);
+        Reset_Val_Header(dest, REB_FRAME);
         dest->payload.any_context.varlist = types_varlist; // canon FRAME!
         dest->payload.any_context.phase = AS_FUNC(paramlist);
         dest->extra.binding = NULL;
@@ -795,7 +795,7 @@ REBARR *Make_Paramlist_Managed_May_Fail(
                 continue;
 
             if (VAL_ARRAY_LEN_AT(src) == 0)
-                SET_VOID(dest);
+                Init_Void(dest);
             else
                 Move_Value(dest, src);
             ++dest;
@@ -811,7 +811,7 @@ REBARR *Make_Paramlist_Managed_May_Fail(
             // the function.)
             //
             if (VAL_ARRAY_LEN_AT(definitional_return + 1) == 0)
-                SET_VOID(CTX_VAR(meta, STD_FUNCTION_META_RETURN_TYPE));
+                Init_Void(CTX_VAR(meta, STD_FUNCTION_META_RETURN_TYPE));
             else {
                 Move_Value(
                     CTX_VAR(meta, STD_FUNCTION_META_RETURN_TYPE),
@@ -820,7 +820,7 @@ REBARR *Make_Paramlist_Managed_May_Fail(
             }
 
             if (NOT(flags & MKF_FAKE_RETURN)) {
-                SET_VOID(dest); // clear the local RETURN: var's description
+                Init_Void(dest); // clear the local RETURN: var's description
                 ++dest;
             }
         }
@@ -839,8 +839,8 @@ REBARR *Make_Paramlist_Managed_May_Fail(
     //
     if (NOT(has_notes)) {
         if (meta) {
-            SET_VOID(CTX_VAR(meta, STD_FUNCTION_META_PARAMETER_NOTES));
-            SET_VOID(CTX_VAR(meta, STD_FUNCTION_META_RETURN_NOTE));
+            Init_Void(CTX_VAR(meta, STD_FUNCTION_META_PARAMETER_NOTES));
+            Init_Void(CTX_VAR(meta, STD_FUNCTION_META_RETURN_NOTE));
         }
     }
     else {
@@ -850,7 +850,7 @@ REBARR *Make_Paramlist_Managed_May_Fail(
         INIT_CTX_KEYLIST_SHARED(AS_CONTEXT(notes_varlist), paramlist);
 
         REBVAL *dest = SINK(ARR_HEAD(notes_varlist)); // "rootvar"
-        VAL_RESET_HEADER(dest, REB_FRAME);
+        Reset_Val_Header(dest, REB_FRAME);
         dest->payload.any_context.varlist = notes_varlist; // canon FRAME!
         dest->payload.any_context.phase = AS_FUNC(paramlist);
         dest->extra.binding = NULL;
@@ -864,7 +864,7 @@ REBARR *Make_Paramlist_Managed_May_Fail(
                 continue;
 
             if (SER_LEN(VAL_SERIES(src)) == 0)
-                SET_VOID(dest);
+                Init_Void(dest);
             else
                 Move_Value(dest, src);
             ++dest;
@@ -877,7 +877,7 @@ REBARR *Make_Paramlist_Managed_May_Fail(
             // parameter in the list
             //
             if (SER_LEN(VAL_SERIES(definitional_return + 2)) == 0)
-                SET_VOID(CTX_VAR(meta, STD_FUNCTION_META_RETURN_NOTE));
+                Init_Void(CTX_VAR(meta, STD_FUNCTION_META_RETURN_NOTE));
             else {
                 Move_Value(
                     CTX_VAR(meta, STD_FUNCTION_META_RETURN_NOTE),
@@ -886,7 +886,7 @@ REBARR *Make_Paramlist_Managed_May_Fail(
             }
 
             if (NOT(flags & MKF_FAKE_RETURN)) {
-                SET_VOID(dest);
+                Init_Void(dest);
                 ++dest;
             }
         }
@@ -999,7 +999,7 @@ REBFUN *Make_Function(
             //
             // First argument is not tight, cache flag to report it.
             //
-            SET_VAL_FLAG(rootparam, FUNC_FLAG_DEFERS_LOOKBACK_ARG);
+            Set_Val_Flag(rootparam, FUNC_FLAG_DEFERS_LOOKBACK_ARG);
             goto done_caching;
 
         // Otherwise, at least one argument but not one that requires the
@@ -1013,7 +1013,7 @@ REBFUN *Make_Function(
 
         case PARAM_CLASS_HARD_QUOTE:
         case PARAM_CLASS_SOFT_QUOTE:
-            SET_VAL_FLAG(rootparam, FUNC_FLAG_QUOTES_FIRST_ARG);
+            Set_Val_Flag(rootparam, FUNC_FLAG_QUOTES_FIRST_ARG);
             goto done_caching;
 
         default:
@@ -1027,7 +1027,7 @@ done_caching:;
     // a block--it's anything that the dispatcher might wish to interpret.
 
     REBARR *body_holder = Alloc_Singular_Array();
-    SET_BLANK(ARR_HEAD(body_holder));
+    Init_Blank(ARR_HEAD(body_holder));
     MANAGE_ARRAY(body_holder);
 
     rootparam->payload.function.body_holder = body_holder;
@@ -1082,7 +1082,7 @@ done_caching:;
     //
     assert(
         AS_SERIES(paramlist)->link.meta == NULL
-        || GET_SER_FLAG(
+        || Get_Ser_Flag(
             CTX_VARLIST(AS_SERIES(paramlist)->link.meta), ARRAY_FLAG_VARLIST
         )
     );
@@ -1093,8 +1093,8 @@ done_caching:;
     // error).  That protection is now done to the frame series on reification
     // in order to be able to MAKE FRAME! and reuse the native's paramlist.
 
-    assert(NOT_SER_FLAG(paramlist, SERIES_FLAG_FILE_LINE));
-    assert(NOT_SER_FLAG(body_holder, SERIES_FLAG_FILE_LINE));
+    assert(Not_Ser_Flag(paramlist, SERIES_FLAG_FILE_LINE));
+    assert(Not_Ser_Flag(body_holder, SERIES_FLAG_FILE_LINE));
 
     return AS_FUNC(paramlist);
 }
@@ -1124,10 +1124,10 @@ REBCTX *Make_Expired_Frame_Ctx_Managed(REBFUN *func)
     REBARR *varlist = Alloc_Singular_Array_Core(
         ARRAY_FLAG_VARLIST | CONTEXT_FLAG_STACK
     );
-    SET_BLANK(ARR_HEAD(varlist));
+    Init_Blank(ARR_HEAD(varlist));
     MANAGE_ARRAY(varlist);
 
-    SET_SER_INFO(varlist, SERIES_INFO_INACCESSIBLE);
+    Set_Ser_Info(varlist, SERIES_INFO_INACCESSIBLE);
 
     REBCTX *expired = AS_CONTEXT(varlist);
 
@@ -1165,8 +1165,8 @@ REBARR *Get_Maybe_Fake_Func_Body(REBOOL *is_fake, const REBVAL *func)
     assert(IS_FUNCTION(func) && IS_FUNCTION_INTERPRETED(func));
 
     REBCNT body_index;
-    if (GET_VAL_FLAG(func, FUNC_FLAG_RETURN)) {
-        if (GET_VAL_FLAG(func, FUNC_FLAG_LEAVE)) {
+    if (Get_Val_Flag(func, FUNC_FLAG_RETURN)) {
+        if (Get_Val_Flag(func, FUNC_FLAG_LEAVE)) {
             example = Get_System(SYS_STANDARD, STD_FUNC_BODY);
             body_index = 8;
         }
@@ -1176,7 +1176,7 @@ REBARR *Get_Maybe_Fake_Func_Body(REBOOL *is_fake, const REBVAL *func)
         }
         *is_fake = TRUE;
     }
-    else if (GET_VAL_FLAG(func, FUNC_FLAG_LEAVE)) {
+    else if (Get_Val_Flag(func, FUNC_FLAG_LEAVE)) {
         example = Get_System(SYS_STANDARD, STD_PROC_BODY);
         body_index = 4;
         *is_fake = TRUE;
@@ -1198,8 +1198,8 @@ REBARR *Get_Maybe_Fake_Func_Body(REBOOL *is_fake, const REBVAL *func)
         RELVAL *slot = ARR_AT(fake_body, body_index); // #BODY
         assert(IS_ISSUE(slot));
 
-        VAL_RESET_HEADER(slot, REB_GROUP);
-        SET_VAL_FLAGS(slot, VALUE_FLAG_RELATIVE | VALUE_FLAG_LINE);
+        Reset_Val_Header(slot, REB_GROUP);
+        Set_Val_Flags(slot, VALUE_FLAG_RELATIVE | VALUE_FLAG_LINE);
         INIT_VAL_ARRAY(slot, VAL_ARRAY(VAL_FUNC_BODY(func)));
         VAL_INDEX(slot) = 0;
         INIT_RELATIVE(slot, VAL_FUNC(func));
@@ -1273,7 +1273,7 @@ REBFUN *Make_Interpreted_Function_May_Fail(
 
     REBARR *body_array;
     if (VAL_ARRAY_LEN_AT(code) == 0) {
-        if (GET_VAL_FLAG(value, FUNC_FLAG_RETURN)) {
+        if (Get_Val_Flag(value, FUNC_FLAG_RETURN)) {
             //
             // Since we're bypassing type checking in the dispatcher for
             // speed, we need to make sure that the return type allows void
@@ -1293,9 +1293,9 @@ REBFUN *Make_Interpreted_Function_May_Fail(
         // Body is not empty, so we need to pick the right dispatcher based
         // on how the output value is to be handled.
         //
-        if (GET_VAL_FLAG(value, FUNC_FLAG_RETURN))
+        if (Get_Val_Flag(value, FUNC_FLAG_RETURN))
             FUNC_DISPATCHER(fun) = &Returner_Dispatcher; // type checks f->out
-        else if (GET_VAL_FLAG(value, FUNC_FLAG_LEAVE))
+        else if (Get_Val_Flag(value, FUNC_FLAG_LEAVE))
             FUNC_DISPATCHER(fun) = &Voider_Dispatcher; // forces f->out void
         else
             FUNC_DISPATCHER(fun) = &Unchecked_Dispatcher; // leaves f->out
@@ -1316,7 +1316,7 @@ REBFUN *Make_Interpreted_Function_May_Fail(
     // relative to a function.  (Init_Block assumes all specific values)
     //
     RELVAL *body = FUNC_BODY(fun);
-    VAL_RESET_HEADER_EXTRA(body, REB_BLOCK, VALUE_FLAG_RELATIVE);
+    Reset_Val_Header_Core(body, REB_BLOCK, VALUE_FLAG_RELATIVE);
     INIT_VAL_ARRAY(body, body_array);
     VAL_INDEX(body) = 0;
     INIT_RELATIVE(body, fun);
@@ -1331,10 +1331,10 @@ REBFUN *Make_Interpreted_Function_May_Fail(
     //
     if (
         LEGACY_RUNNING(OPTIONS_REFINEMENTS_BLANK)
-        || GET_SER_INFO(VAL_ARRAY(spec), SERIES_INFO_LEGACY_DEBUG)
-        || GET_SER_INFO(VAL_ARRAY(code), SERIES_INFO_LEGACY_DEBUG)
+        || Get_Ser_Info(VAL_ARRAY(spec), SERIES_INFO_LEGACY_DEBUG)
+        || Get_Ser_Info(VAL_ARRAY(code), SERIES_INFO_LEGACY_DEBUG)
     ) {
-        SET_VAL_FLAG(FUNC_VALUE(fun), FUNC_FLAG_LEGACY_DEBUG);
+        Set_Val_Flag(FUNC_VALUE(fun), FUNC_FLAG_LEGACY_DEBUG);
     }
 #endif
 
@@ -1382,7 +1382,7 @@ REBCTX *Make_Frame_For_Function(const REBVAL *value) {
     // Fill in the rootvar information for the context canon REBVAL
     //
     REBVAL *var = SINK(ARR_HEAD(varlist));
-    VAL_RESET_HEADER(var, REB_FRAME);
+    Reset_Val_Header(var, REB_FRAME);
     var->payload.any_context.varlist = varlist;
     var->extra.binding = value->extra.binding;
     var->payload.any_context.phase = func;
@@ -1411,7 +1411,7 @@ REBCTX *Make_Frame_For_Function(const REBVAL *value) {
     //
     REBCNT n;
     for (n = 1; n <= FUNC_NUM_PARAMS(func); ++n, ++var)
-        SET_VOID(var);
+        Init_Void(var);
 
     TERM_ARRAY_LEN(varlist, ARR_LEN(FUNC_PARAMLIST(func)));
 
@@ -1456,7 +1456,7 @@ REBOOL Specialize_Function_Throws(
         REBARR *varlist = Copy_Array_Deep_Managed(
             CTX_VARLIST(exemplar), SPECIFIED
         );
-        SET_SER_FLAG(varlist, ARRAY_FLAG_VARLIST);
+        Set_Ser_Flag(varlist, ARRAY_FLAG_VARLIST);
         INIT_CTX_KEYLIST_SHARED(AS_CONTEXT(varlist), CTX_KEYLIST(exemplar));
 
         exemplar = AS_CONTEXT(varlist); // okay, now make exemplar our copy
@@ -1527,13 +1527,13 @@ REBOOL Specialize_Function_Throws(
 
     REBCTX *meta = Copy_Context_Shallow(VAL_CONTEXT(example));
 
-    SET_VOID(CTX_VAR(meta, STD_SPECIALIZED_META_DESCRIPTION)); // default
+    Init_Void(CTX_VAR(meta, STD_SPECIALIZED_META_DESCRIPTION)); // default
     Move_Value(
         CTX_VAR(meta, STD_SPECIALIZED_META_SPECIALIZEE),
         specializee
     );
     if (opt_specializee_name == NULL)
-        SET_VOID(CTX_VAR(meta, STD_SPECIALIZED_META_SPECIALIZEE_NAME));
+        Init_Void(CTX_VAR(meta, STD_SPECIALIZED_META_SPECIALIZEE_NAME));
     else
         Init_Word(
             CTX_VAR(meta, STD_SPECIALIZED_META_SPECIALIZEE_NAME),
@@ -1622,7 +1622,7 @@ void Clonify_Function(REBVAL *value)
         FUNC_PARAMLIST(original_fun),
         SPECIFIED
     );
-    SET_SER_FLAG(paramlist, ARRAY_FLAG_PARAMLIST);
+    Set_Ser_Flag(paramlist, ARRAY_FLAG_PARAMLIST);
     MANAGE_ARRAY(paramlist);
     ARR_HEAD(paramlist)->payload.function.paramlist = paramlist;
 
@@ -1643,7 +1643,7 @@ void Clonify_Function(REBVAL *value)
     // that it's o.k. to tell the frame lookup that it can find variables
     // under the "new paramlist".
     //
-    VAL_RESET_HEADER_EXTRA(body, REB_BLOCK, VALUE_FLAG_RELATIVE);
+    Reset_Val_Header_Core(body, REB_BLOCK, VALUE_FLAG_RELATIVE);
     INIT_VAL_ARRAY(
         body,
         Copy_Rerelativized_Array_Deep_Managed(
@@ -1972,7 +1972,7 @@ void Get_If_Word_Or_Path_Arg(
 
     if (ANY_WORD(value)) {
         *opt_name_out = VAL_WORD_SPELLING(value);
-        VAL_SET_TYPE_BITS(adjusted, REB_GET_WORD);
+        Reset_Val_Kind(adjusted, REB_GET_WORD);
     }
     else if (ANY_PATH(value)) {
         //
@@ -1980,7 +1980,7 @@ void Get_If_Word_Or_Path_Arg(
         // evaluated GETs.  Not implemented at the moment.
         //
         *opt_name_out = NULL;
-        VAL_SET_TYPE_BITS(adjusted, REB_GET_PATH);
+        Reset_Val_Kind(adjusted, REB_GET_PATH);
     }
     else {
         *opt_name_out = NULL;
@@ -2073,7 +2073,7 @@ REB_R Apply_Frame_Core(REBFRM *f, REBSTR *label, REBVAL *opt_def)
         else
             f->special = m_cast(REBVAL*, END); // literal pointer tested
 
-        SET_END(&f->cell); // needed for GC safety
+        Init_End(&f->cell); // needed for GC safety
     }
 
     // Ordinary function dispatch does not pre-fill the arguments; they
@@ -2103,7 +2103,7 @@ REB_R Apply_Frame_Core(REBFRM *f, REBSTR *label, REBVAL *opt_def)
             ++f->special;
         }
         else if (opt_def)
-            SET_VOID(f->arg);
+            Init_Void(f->arg);
         else {
             // just leave it alone
         }
@@ -2149,7 +2149,7 @@ REB_R Apply_Frame_Core(REBFRM *f, REBSTR *label, REBVAL *opt_def)
 
     f->special = f->args_head; // do type/refinement checks on existing data
 
-    SET_END(f->out);
+    Init_End(f->out);
 
     Do_Core(f);
 

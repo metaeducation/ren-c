@@ -42,7 +42,7 @@
 //
 
 #define return_NULL \
-    do { SET_UNREADABLE_BLANK(out); return NULL; } while (TRUE)
+    do { Init_Unreadable_Blank(out); return NULL; } while (TRUE)
 
 
 //
@@ -264,7 +264,7 @@ const REBYTE *Scan_Hex(
     if (cnt < minlen)
         return_NULL;
 
-    SET_INTEGER(out, i);
+    Init_Integer(out, i);
     return cp;
 }
 
@@ -509,7 +509,7 @@ const REBYTE *Scan_Decimal(
     if (cast(REBCNT, cp - bp) != len)
         return_NULL;
 
-    VAL_RESET_HEADER(out, REB_DECIMAL);
+    Reset_Val_Header(out, REB_DECIMAL);
 
     const char *se;
     VAL_DECIMAL(out) = STRTOD(s_cast(buf), &se);
@@ -539,11 +539,11 @@ const REBYTE *Scan_Integer(
     // Super-fast conversion of zero and one (most common cases):
     if (len == 1) {
         if (*cp == '0') {
-            SET_INTEGER(out, 0);
+            Init_Integer(out, 0);
             return cp + 1;
         }
         if (*cp == '1') {
-            SET_INTEGER(out, 1);
+            Init_Integer(out, 1);
             return cp + 1;
          }
     }
@@ -579,7 +579,7 @@ const REBYTE *Scan_Integer(
 
     if (num == 0) { // all zeros or '
         // return early to avoid platform dependant error handling in CHR_TO_INT
-        SET_INTEGER(out, 0);
+        Init_Integer(out, 0);
         return cp;
     }
 
@@ -606,7 +606,7 @@ const REBYTE *Scan_Integer(
     // Convert, check, and return:
     errno = 0;
 
-    VAL_RESET_HEADER(out, REB_INTEGER);
+    Reset_Val_Header(out, REB_INTEGER);
 
     VAL_INT64(out) = CHR_TO_INT(buf);
     if (errno != 0)
@@ -640,7 +640,7 @@ const REBYTE *Scan_Money(
     if (len == 0)
         return_NULL;
 
-    SET_MONEY(out, string_to_deci(cp, &end));
+    Init_Money(out, string_to_deci(cp, &end));
     if (end != cp + len)
         return_NULL;
 
@@ -1024,10 +1024,10 @@ const REBYTE *Scan_Pair(
     if (*ep != 'x' && *ep != 'X')
         return_NULL;
 
-    VAL_RESET_HEADER(out, REB_PAIR);
+    Reset_Val_Header(out, REB_PAIR);
     out->payload.pair = Alloc_Pairing(NULL);
-    VAL_RESET_HEADER(out->payload.pair, REB_DECIMAL);
-    VAL_RESET_HEADER(PAIRING_KEY(out->payload.pair), REB_DECIMAL);
+    Reset_Val_Header(out->payload.pair, REB_DECIMAL);
+    Reset_Val_Header(PAIRING_KEY(out->payload.pair), REB_DECIMAL);
 
     VAL_PAIR_X(out) = cast(float, atof(cast(char*, &buf[0]))); //n;
     ep++;
@@ -1079,7 +1079,7 @@ const REBYTE *Scan_Tuple(
     if (size < 3)
         size = 3;
 
-    VAL_RESET_HEADER(out, REB_TUPLE);
+    Reset_Val_Header(out, REB_TUPLE);
     VAL_TUPLE_LEN(out) = cast(REBYTE, size);
 
     REBYTE *tp = VAL_TUPLE(out);
@@ -1257,7 +1257,7 @@ REBNATIVE(scan_net_header)
                         SPECIFIED // no relative values added
                     );
                     val = Alloc_Tail_Array(array);
-                    SET_UNREADABLE_BLANK(val); // for Init_Block
+                    Init_Unreadable_Blank(val); // for Init_Block
                     Init_Block(item + 1, array);
                 }
                 break;

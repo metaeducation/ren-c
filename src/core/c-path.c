@@ -118,7 +118,7 @@ REBOOL Next_Path_Throws(REBPVS *pvs)
         break;
 
     case PE_NONE:
-        SET_BLANK(pvs->store);
+        Init_Blank(pvs->store);
     case PE_USE_STORE:
         pvs->value = pvs->store;
         pvs->value_specifier = SPECIFIED;
@@ -175,7 +175,7 @@ REBOOL Do_Path_Throws_Core(
     //
     REBPVS pvs;
     Prep_Global_Cell(&pvs.selector_cell);
-    SET_END(&pvs.selector_cell);
+    Init_End(&pvs.selector_cell);
     PUSH_GUARD_VALUE(&pvs.selector_cell);
     pvs.selector = &pvs.selector_cell;
 
@@ -196,7 +196,7 @@ REBOOL Do_Path_Throws_Core(
     // will do, which is unset in release builds.
     //
     if (opt_setval)
-        SET_UNREADABLE_BLANK(out);
+        Init_Unreadable_Blank(out);
 
     // None of the values passed in can live on the data stack, because
     // they might be relocated during the path evaluation process.

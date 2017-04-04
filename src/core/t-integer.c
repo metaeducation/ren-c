@@ -63,9 +63,9 @@ void MAKE_Integer(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
         // fewer seeming "rules" than TO would.
 
         if (VAL_LOGIC(arg))
-            SET_INTEGER(out, 1);
+            Init_Integer(out, 1);
         else
-            SET_INTEGER(out, 0);
+            Init_Integer(out, 0);
 
         // !!! The same principle could suggest MAKE is not bound by
         // the "reversibility" requirement and hence could interpret
@@ -126,11 +126,11 @@ void Value_To_Int64(REBVAL *out, const REBVAL *value, REBOOL no_sign)
         if (VAL_DECIMAL(value) < MIN_D64 || VAL_DECIMAL(value) >= MAX_D64)
             fail (Error_Overflow_Raw());
 
-        SET_INTEGER(out, cast(REBI64, VAL_DECIMAL(value)));
+        Init_Integer(out, cast(REBI64, VAL_DECIMAL(value)));
         goto check_sign;
     }
     else if (IS_MONEY(value)) {
-        SET_INTEGER(out, deci_to_int(VAL_MONEY_AMOUNT(value)));
+        Init_Integer(out, deci_to_int(VAL_MONEY_AMOUNT(value)));
         goto check_sign;
     }
     else if (IS_BINARY(value)) { // must be before ANY_STRING() test...
@@ -172,7 +172,7 @@ void Value_To_Int64(REBVAL *out, const REBVAL *value, REBOOL no_sign)
             for (; n; n--, bp++)
                 i = cast(REBI64, (cast(REBU64, i) << 8) | *bp);
 
-            SET_INTEGER(out, i);
+            Init_Integer(out, i);
 
             // There was no TO-INTEGER/UNSIGNED in R3-Alpha, so even if
             // running in compatibility mode we can check the sign if used.
@@ -185,7 +185,7 @@ void Value_To_Int64(REBVAL *out, const REBVAL *value, REBOOL no_sign)
             //
             // !!! Should #{} empty binary be 0 or error?  (Historically, 0)
             //
-            SET_INTEGER(out, 0);
+            Init_Integer(out, 0);
             return;
         }
 
@@ -214,9 +214,9 @@ void Value_To_Int64(REBVAL *out, const REBVAL *value, REBOOL no_sign)
         if (n == 0) {
             if (negative) {
                 assert(!no_sign);
-                SET_INTEGER(out, -1);
+                Init_Integer(out, -1);
             } else
-                SET_INTEGER(out, 0);
+                Init_Integer(out, 0);
             return;
         }
 
@@ -249,7 +249,7 @@ void Value_To_Int64(REBVAL *out, const REBVAL *value, REBOOL no_sign)
             fail (Error_Out_Of_Range_Raw(value));
         }
 
-        SET_INTEGER(out, i);
+        Init_Integer(out, i);
         return;
     }
     else if (IS_ISSUE(value)) {
@@ -292,7 +292,7 @@ void Value_To_Int64(REBVAL *out, const REBVAL *value, REBOOL no_sign)
             DECLARE_LOCAL (d);
             if (Scan_Decimal(d, bp, len, TRUE)) {
                 if (VAL_DECIMAL(d) < MAX_I64 && VAL_DECIMAL(d) >= MIN_I64) {
-                    SET_INTEGER(out, cast(REBI64, VAL_DECIMAL(d)));
+                    Init_Integer(out, cast(REBI64, VAL_DECIMAL(d)));
                     goto check_sign;
                 }
 
@@ -313,11 +313,11 @@ void Value_To_Int64(REBVAL *out, const REBVAL *value, REBOOL no_sign)
         fail (Error_Bad_Make(REB_INTEGER, value));
     }
     else if (IS_CHAR(value)) {
-        SET_INTEGER(out, VAL_CHAR(value)); // always unsigned
+        Init_Integer(out, VAL_CHAR(value)); // always unsigned
         return;
     }
     else if (IS_TIME(value)) {
-        SET_INTEGER(out, SECS_IN(VAL_TIME(value))); // always unsigned
+        Init_Integer(out, SECS_IN(VAL_TIME(value))); // always unsigned
         return;
     }
     else
@@ -403,17 +403,17 @@ REBTYPE(Integer)
             case SYM_REMAINDER:
             case SYM_POWER:
                 if (IS_DECIMAL(val2) || IS_PERCENT(val2)) {
-                    SET_DECIMAL(val, (REBDEC)num); // convert main arg
+                    Init_Decimal(val, (REBDEC)num); // convert main arg
                     return T_Decimal(frame_, action);
                 }
                 if (IS_MONEY(val2)) {
-                    SET_MONEY(val, int_to_deci(VAL_INT64(val)));
+                    Init_Money(val, int_to_deci(VAL_INT64(val)));
                     return T_Money(frame_, action);
                 }
                 if (n > 0) {
                     if (IS_TIME(val2)) {
                         VAL_TIME(val) = SEC_TIME(VAL_INT64(val));
-                        VAL_SET_TYPE_BITS(val, REB_TIME);
+                        Reset_Val_Kind(val, REB_TIME);
                         return T_Time(frame_, action);
                     }
                     if (IS_DATE(val2))
@@ -467,8 +467,8 @@ REBTYPE(Integer)
         }
         // Fall thru
     case SYM_POWER:
-        SET_DECIMAL(val, (REBDEC)num);
-        SET_DECIMAL(val2, (REBDEC)arg);
+        Init_Decimal(val, (REBDEC)num);
+        Init_Decimal(val2, (REBDEC)arg);
         return T_Decimal(frame_, action);
 
     case SYM_REMAINDER:
@@ -531,7 +531,7 @@ REBTYPE(Integer)
         val2 = ARG(scale);
         if (REF(to)) {
             if (IS_MONEY(val2)) {
-                SET_MONEY(D_OUT, Round_Deci(
+                Init_Money(D_OUT, Round_Deci(
                     int_to_deci(num), flags, VAL_MONEY_AMOUNT(val2)
                 ));
                 return R_OUT;
@@ -540,7 +540,7 @@ REBTYPE(Integer)
                 REBDEC dec = Round_Dec(
                     cast(REBDEC, num), flags, VAL_DECIMAL(val2)
                 );
-                VAL_RESET_HEADER(D_OUT, VAL_TYPE(val2));
+                Reset_Val_Header(D_OUT, VAL_TYPE(val2));
                 VAL_DECIMAL(D_OUT) = dec;
                 return R_OUT;
             }
@@ -574,6 +574,6 @@ REBTYPE(Integer)
         fail (Error_Illegal_Action(REB_INTEGER, action));
     }
 
-    SET_INTEGER(D_OUT, num);
+    Init_Integer(D_OUT, num);
     return R_OUT;
 }

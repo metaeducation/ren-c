@@ -159,7 +159,7 @@ REBINT Awake_System(REBARR *ports, REBOOL only)
     if (ports)
         Init_Block(tmp, ports);
     else
-        SET_BLANK(tmp);
+        Init_Blank(tmp);
 
     DECLARE_LOCAL (awake_only);
     if (only) {
