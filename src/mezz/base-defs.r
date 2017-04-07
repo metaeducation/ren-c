@@ -182,20 +182,39 @@ dump: proc [
     {Show the name of a value (or block of expressions) with the value itself}
     :value
     <local>
-        dump-one item
+        dump-one dump-val clip-string item
 ][
+   clip-string: function [str len][
+      either len < length? str [
+         adjoin copy/part str len - 3 "..."
+      ][
+         str
+      ]
+   ]
+   
+   dump-val: function [val][
+      either object? val [
+         unspaced [
+            "make obect! [" |
+            dump-obj val | "]"
+         ]
+      ][
+         clip-string mold val 71
+      ]
+    ]
+
     dump-one: proc [item][
         case [
             string? item [
-                print ["---" item "---"] ;-- label it
+                print ["---" clip-string item 68 "---"] ;-- label it
             ]
 
             word? item [
-                print [to set-word! item "=>" mold get item]
+                print [to set-word! item "=>" dump-val get item]
             ]
 
             path? item [
-                print [to set-path! item "=>" mold get item]
+                print [to set-path! item "=>" dump-val get item]
             ]
 
             group? item [
