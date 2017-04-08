@@ -185,8 +185,8 @@ dump: proc [
         dump-one dump-val clip-string item
 ][
    clip-string: function [str len][
-      either len < length? str [
-         adjoin copy/part str len - 3 "..."
+      either len < length str [
+         delimit [ copy/part str len - 3 "..." ] _
       ][
          str
       ]
