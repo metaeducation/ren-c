@@ -223,13 +223,6 @@ rebsource: context [
                     emit analysis [non-std-func-space (file) (non-std-func-space)]
                 ]
 
-                if all [
-                    not tail? data
-                    not equal? newline last data
-                ] [
-                    emit analysis [eof-eol-missing (file) (reduce [line-of data tail data])]
-                ]
-
                 analysis
             ]
 
@@ -342,6 +335,13 @@ rebsource: context [
 
             if not empty? inconsistent-eol [
                 emit analysis [inconsistent-eol (file) (inconsistent-eol)]
+            ]
+
+            if all [
+                not tail? data
+                not equal? 10 last data ; Check for newline.
+            ] [
+                emit analysis [eof-eol-missing (file) (reduce [line-of data tail data])]
             ]
 
             analysis

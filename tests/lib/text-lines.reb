@@ -108,8 +108,8 @@ lines-exceeding: function [
 
 line-of: function [
     {Returns line number of position within text.}
-    text [string!]
-    position [string! integer!]
+    text [string! binary!]
+    position [string! binary! integer!]
 ] [
 
     if integer? position [
