@@ -43,7 +43,7 @@
 //
 ATTRIBUTE_NO_RETURN void Panic_Core(
     const void *p, // REBSER* (array, context, etc), REBVAL*, or UTF-8 char*
-    const char* file,
+    const char *file,
     int line
 ) {
     if (p == NULL)

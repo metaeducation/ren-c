@@ -779,10 +779,6 @@ int main(int argc, char **argv_ansi)
     Init_Block(argv_value, argv);
     PUSH_GUARD_VALUE(argv_value);
 
-#ifdef TEST_EXTENSIONS
-    Init_Ext_Test();
-#endif
-
 #ifdef TO_WINDOWS
     // no console, we must be the child process
     if (GetStdHandle(STD_OUTPUT_HANDLE) == 0)
@@ -910,36 +906,6 @@ int main(int argc, char **argv_ansi)
 
         Free_Series(startup);
 
-        REBSER *embedded = NULL;
-        REBI64 embedded_size = 0;
-        REBYTE *embedded_utf8 = OS_READ_EMBEDDED(&embedded_size);
-        if (embedded_utf8 != NULL) {
-            if (embedded_size <= 4)
-                panic ("No 4-byte long payload at start of embedded script");
-
-            i32 ptype = 0;
-            REBYTE *data = embedded_utf8 + sizeof(ptype);
-            embedded_size -= sizeof(ptype);
-
-            memcpy(&ptype, embedded_utf8, sizeof(ptype));
-
-            if (ptype == 1) { // COMPRESSed data
-                embedded = Decompress(data, embedded_size, -1, FALSE, FALSE);
-            }
-            else {
-                embedded = Make_Binary(embedded_size);
-                memcpy(BIN_HEAD(embedded), data, embedded_size);
-            }
-
-            OS_FREE(embedded_utf8);
-        }
-
-        DECLARE_LOCAL (embedded_value);
-        if (embedded == NULL)
-            SET_BLANK(embedded_value);
-        else
-            Init_Block(embedded_value, embedded);
-
         DECLARE_LOCAL (ext_value);
         SET_BLANK(ext_value);
         LOAD_BOOT_EXTENSIONS(ext_value);
@@ -955,7 +921,6 @@ int main(int argc, char **argv_ansi)
             fully,
             host_start, // startup function, implicit GC guard
             argv_value, // argv parameter, implicit GC guard
-            embedded_value, // embedded-script parameter, implicit GC guard
             ext_value,
             END
         )) {

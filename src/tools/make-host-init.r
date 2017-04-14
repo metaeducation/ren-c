@@ -110,6 +110,7 @@ load-files: function [
 
 host-start: load-files [
     %host-repl.r
+    %host-encap.r
     %host-start.r
 ]
 

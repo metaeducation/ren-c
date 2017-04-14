@@ -242,8 +242,6 @@ os-posix: [
     generic/iso-3166.c
     + generic/host-gob.c
 
-    + stub/host-encap.c
-
     posix/host-readline.c
     posix/dev-stdio.c
     posix/dev-event.c
@@ -263,8 +261,6 @@ os-osx: [
     generic/iso-639.c
     generic/iso-3166.c
     + generic/host-gob.c
-
-    + stub/host-encap.c
 
     ; OSX uses the POSIX file I/O for now
     posix/host-readline.c
@@ -314,9 +310,6 @@ os-linux: [
     ; dev-serial should work on Linux and posix
     posix/dev-serial.c
 
-    ; Linux has support for ELF format encapping
-    + linux/host-encap.c
-
     ; Linux supports siginfo_t-style signals
     linux/dev-signal.c
 ]
@@ -350,9 +343,6 @@ os-android: [
 
     ; Serial should work on Android too
     posix/dev-serial.c
-
-    ; Android has support for ELF format encapping
-    + linux/host-encap.c
 
     ; Android don't supports siginfo_t-style signals
     ; linux/dev-signal.c

@@ -226,8 +226,6 @@ host-start: function [
         {If integer, host should exit with that status; else a REPL FUNCTION!}
     argv [block!]
         {Raw command line argument block received by main() as STRING!s}
-    boot-embedded [binary! string! blank!]
-        {Embedded user script inside this host instance (e.g. encapping)}
     boot-exts [block! blank!]
         {Extensions (modules) loaded at boot}
     <with> host-prot
@@ -422,6 +420,8 @@ host-start: function [
             "REBOL 3.0 A" system/version/3 space system/build newline
         ]
     ]
+
+    boot-embedded: get-encap system/options/boot
 
     if any [boot-embedded o/script] [o/quiet: true]
 

@@ -238,15 +238,8 @@ else ()
         )
     if (TO_LINUX)
         set (CORE_PLATFORM_SOURCE ${CORE_PLATFORM_SOURCE}
-            # Linux has support for ELF format encapping
-            ${OS_DIR}/linux/host-encap.c
-
             # Linux supports siginfo_t-style signals
             ${OS_DIR}/linux/dev-signal.c
-            )
-    else ()
-        list (APPEND CORE_PLATFORM_SOURCE
-            ${OS_DIR}/stub/host-encap.c
             )
     endif ()
 endif ()
