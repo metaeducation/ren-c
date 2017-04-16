@@ -963,6 +963,21 @@ import: function [
         ]
     ]
 
+    if all [word? module | not mod] [
+    	; IMPORT 'FOO fails, try IMPORT <FOO> 
+        module: first select load rebol/locale/library to tag! module
+	set [name: mod:] apply 'load-module [
+	    source: module
+	    version: version
+	    ver: :ver
+	    check: check
+	    sum: :sum
+	    no-share: no-share
+	    no-lib: no-lib
+	    import: true
+	]
+    ]
+
     unless mod [
         cause-error 'access 'cannot-open reduce [module "module not found"]
     ]
