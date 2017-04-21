@@ -114,6 +114,7 @@ process-conditional: procedure [
     ][
         rewrite-if-directives position
     ]
+    true ;; func must return value
 ]
 
 process: func [file] [
