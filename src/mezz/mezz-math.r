@@ -265,3 +265,24 @@ math: function [
         ret/1
     ]
 ]
+
+; https://github.com/gchiu/rebol-misc/blob/master/hmac-sha256.reb
+hmac-sha256: function [
+    {computes the hmac-sha256 for message using key}
+    k [binary!] m [binary!]]
+[
+    key: copy k
+    message: copy m
+    blocksize: 64
+    if (length key) > blocksize [
+        key: sha256 key
+    ]
+    if (length key) < blocksize [
+        insert/dup tail key #{00} (blocksize - length key)
+    ]
+    insert/dup opad: copy #{} #{5C} blocksize
+    insert/dup ipad: copy #{} #{36} blocksize
+    o_key_pad: XOR~ opad key
+    i_key_pad: XOR~ ipad key
+    lib/sha256 join-of o_key_pad lib/sha256 join-of i_key_pad message
+]
