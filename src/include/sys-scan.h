@@ -27,9 +27,9 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 
-/*
-**  Tokens returned by the scanner.  Keep in sync with boot.r strings area.
-*/
+//
+//  Tokens returned by the scanner.  Keep in sync with Token_Names[].
+//
 enum Reb_Token {
     TOKEN_END = 0,
     TOKEN_NEWLINE,
@@ -210,12 +210,16 @@ typedef struct rebol_scan_state {
     const REBYTE *begin;
     const REBYTE *end;
     const REBYTE *limit;    /* no chars after this point */
-    REBCNT line_count;
+    
+    REBCNT line;
+    const REBYTE *line_head; // head of current line (used for errors)
+    REBCNT start_line;
+    const REBYTE *start_line_head;
+
     REBSTR *filename;
-    const REBYTE *head_line;        // head of current line (used for errors)
+
     REBFLGS opts;
-    REBOOL has_error;
-    REBCNT errors;
+    enum Reb_Token token;
 } SCAN_STATE;
 
 #define ANY_CR_LF_END(c) (!(c) || (c) == CR || (c) == LF)

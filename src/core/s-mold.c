@@ -1828,9 +1828,10 @@ void Drop_Mold_Core(REB_MOLD *mold, REBOOL not_pushed_ok)
     // to "drop" a mold that hasn't ever been pushed is the easiest way to
     // avoid intervening.  Drop_Mold_If_Pushed(&mo) macro makes this clearer.
     //
-    if (not_pushed_ok && !mold->series) return;
+    if (not_pushed_ok && mold->series == NULL)
+        return;
 
-    assert(mold->series); // if NULL there was no Push_Mold
+    assert(mold->series != NULL); // if NULL there was no Push_Mold
 
     // When pushed data are to be discarded, mold->series may be unterminated.
     // (Indeed that happens when Scan_Item_Push_Mold returns NULL/0.)

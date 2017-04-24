@@ -170,6 +170,13 @@ host-repl: function [
 
     focus-frame [blank! frame!]
         {If at a breakpoint, the function frame where the breakpoint was hit}
+
+    <has>
+
+    RE_SCAN_INVALID (2000)
+    RE_SCAN_MISSING (2001)
+    RE_SCAN_EXTRA (2002)
+    RE_SCAN_MISMATCH (2003)
 ][
     ; REPL is an external object for skinning the behaviour & appearance
     ;
@@ -178,7 +185,7 @@ host-repl: function [
     repl: system/repl
     repl/cycle
 
-    source: copy "" ;-- source code potentially built of multiple lines
+    source: copy {} ;-- source code potentially built of multiple lines
 
     ; The LOADed and bound code.  It's initialized to empty block so that if
     ; there is no input text (just newline at a prompt) , it will be treated
@@ -249,9 +256,10 @@ host-repl: function [
         ] func [error] [
             ;
             ; If loading the string gave back an error, check to see if it
-            ; was the kind of error that comes from having partial input.  If
-            ; so, CONTINUE and read more data until it's complete (or until
-            ; an empty line signals to just report the error as-is)
+            ; was the kind of error that comes from having partial input
+            ; (RE_SCAN_MISSING).  If so, CONTINUE and read more data until
+            ; it's complete (or until an empty line signals to just report
+            ; the error as-is)
             ;
             ; Save the error even if it's a "needs continuation" error, in
             ; case the next input is an empty line.  That makes the error get
@@ -265,30 +273,27 @@ host-repl: function [
             ;
             code: error
 
-            switch error/code [
-            2000 [
-                ; Often an invalid string (error isn't perfect but
-                ; could be tailored specifically, e.g. to report
-                ; a depth)
+            if error/code = RE_SCAN_MISSING [
                 ;
-                print/only ["^{" space space space]
-
-                append source newline
-                continue ]
-
-            2001 [
-                ; Often a missing bracket (again, imperfect error
-                ; that could be improved.)
+                ; !!! Error message tells you what's missing, not what's open
+                ; and needs to be closed.  Invert the symbol.
                 ;
-                case [
-                    error/arg1 = "]" [print/only ["[" space space space]]
-                    error/arg1 = ")" [print/only ["(" space space space]]
-                ] else [
-                    break
+                unclosed: switch error/arg1 [
+                    "}" ["{"]
+                    ")" ["("]
+                    "]" ["["]
                 ]
 
-                append source newline
-                continue ]
+                if set? 'unclosed [
+                    print/only [unclosed space space space]
+                    append source newline
+                    continue
+                ] else [
+                    ;
+                    ; Could be an unclosed double quote (unclosed tag?) which
+                    ; more input on a new line cannot legally close ATM
+                    ;
+                ]
             ]
         ]
 

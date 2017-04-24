@@ -298,11 +298,11 @@ static REBCNT Milliseconds_From_Value(const RELVAL *v) {
         break;
 
     case REB_DECIMAL:
-        msec = (REBINT)(1000 * VAL_DECIMAL(v));
+        msec = cast(REBINT, 1000 * VAL_DECIMAL(v));
         break;
 
     case REB_TIME:
-        msec = (REBINT) (VAL_TIME(v) / (SEC_SEC / 1000));
+        msec = cast(REBINT, VAL_TIME(v) / (SEC_SEC / 1000));
         break;
 
     default:

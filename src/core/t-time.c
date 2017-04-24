@@ -283,7 +283,7 @@ REBI64 Make_Time(const REBVAL *val)
 
             if (NOT_END(++item)) {
                 if (IS_INTEGER(item)) {
-                    if ((i = Int32(KNOWN(item))) < 0)
+                    if ((i = Int32(item)) < 0)
                         goto no_time;
 
                     secs += i;

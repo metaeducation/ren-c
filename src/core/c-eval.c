@@ -1917,28 +1917,47 @@ reevaluate:;
         SET_VAL_FLAG(f->out, VALUE_FLAG_UNEVALUATED);
         break;
 
+//==//////////////////////////////////////////////////////////////////////==//
+//
+// [void]
+//
+// Void is not an ANY-VALUE!, and void cells are not allowed in ANY-ARRAY!
+// exposed to the user.  So usually, a DO shouldn't be able to see them,
+// unless they are un-evaluated...e.g. `Apply_Only_Throws()` passes in a
+// VOID_CELL as an evaluation-already-accounted-for parameter to a function.
+//
+// The exception case is something like `eval ()`, which is the user
+// deliberately trying to invoke the evaluator on a void.  (Not to be confused
+// with `eval quote ()`, which is the evaluation of an empty GROUP!, which
+// produces void, and that's fine).  We choose to deliver an error in the void
+// case, which provides a consistency:
+//
+//     :foo/bar => pick* foo 'bar (void if not present)
+//     foo/bar => eval :foo/bar (should be an error if not present)
+//
+//==//////////////////////////////////////////////////////////////////////==//
+
     case REB_MAX_VOID:
         if (NOT(args_evaluate)) {
-            //
-            // This is legal if you do something like Apply_Only_Throws, and
-            // pass a void...non-evaluative, so it's ok.
-            //
             SET_VOID(f->out);
         }
         else {
-            //
-            // Should only be happen if you do something like `eval ()`,
-            // since evaluative voids cannot appear in blocks or va_lists.
+            // must be EVAL, so the value must be living in the frame cell
             //
             assert(current == &f->cell);
-
-            // Although it can happen, voids cannot be meaningfully evaluated.
-            //
             fail (Error_Evaluate_Void_Raw());
         }
+        break;
+
+//==//////////////////////////////////////////////////////////////////////==//
+//
+// If garbage, panic on the value to generate more debug information about
+// its origins (what series it lives in, where the cell was assigned...)
+//
+//==//////////////////////////////////////////////////////////////////////==//
 
     default:
-        panic ("Invalid value kind found in Do_Core");
+        panic (current);
     }
 
     //==////////////////////////////////////////////////////////////////==//

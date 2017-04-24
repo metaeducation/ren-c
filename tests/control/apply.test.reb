@@ -43,7 +43,7 @@
 [
     o: make object! [a: 0]
     b: eval/only (quote o/a:) 1 + 2
-    all [o/a = 3 | b = 3] ;-- above acts as `b: (eval/only (quote o/a:) 1) + 2`
+    all [o/a = 1 | b = 1] ;-- above acts as `b: (eval/only (quote o/a:) 1) + 2`
 ]
 [
     a: func [b c :d] [reduce [b c d]]

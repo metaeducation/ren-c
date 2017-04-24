@@ -23,8 +23,10 @@
 
 ; error types that should be predefined
 
-[error? make error! [type: 'syntax id: 'invalid]]
-[error? make error! [type: 'syntax id: 'missing]]
+[error? make error! [type: 'syntax id: 'scan-invalid]]
+[error? make error! [type: 'syntax id: 'scan-missing]]
+[error? make error! [type: 'syntax id: 'scan-extra]]
+[error? make error! [type: 'syntax id: 'scan-mismatch]]
 [error? make error! [type: 'syntax id: 'no-header]]
 [error? make error! [type: 'syntax id: 'bad-header]]
 [error? make error! [type: 'syntax id: 'bad-checksum]]
