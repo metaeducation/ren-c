@@ -600,12 +600,12 @@ REBINT PD_Vector(REBPVS *pvs)
 {
     if (pvs->opt_setval) {
         Poke_Vector_Fail_If_Read_Only(
-            KNOWN(pvs->value), pvs->selector, pvs->opt_setval
+            KNOWN(pvs->value), pvs->picker, pvs->opt_setval
         );
         return PE_OK;
     }
 
-    Pick_Vector(pvs->store, KNOWN(pvs->value), pvs->selector);
+    Pick_Vector(pvs->store, KNOWN(pvs->value), pvs->picker);
     return PE_USE_STORE;
 }
 
@@ -616,7 +616,6 @@ REBINT PD_Vector(REBPVS *pvs)
 REBTYPE(Vector)
 {
     REBVAL *value = D_ARG(1);
-    REBVAL *arg = D_ARGC > 1 ? D_ARG(2) : NULL;
     REBSER *ser;
 
     // Common operations for any series type (length, head, etc.)
@@ -629,15 +628,6 @@ REBTYPE(Vector)
     REBSER *vect = VAL_SERIES(value);
 
     switch (action) {
-
-    case SYM_PICK_P:
-        Pick_Vector(D_OUT, value, arg);
-        return R_OUT;
-
-    case SYM_POKE:
-        Poke_Vector_Fail_If_Read_Only(value, arg, D_ARG(3));
-        Move_Value(D_OUT, D_ARG(3));
-        return R_OUT;
 
     case SYM_LENGTH_OF:
         //bits = 1 << (vect->size & 3);

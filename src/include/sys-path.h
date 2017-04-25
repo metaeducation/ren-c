@@ -99,14 +99,14 @@ struct Reb_Path_Value_State {
     //
     REBSPC *item_specifier;
 
-    // `selector` is the result of evaluating the current path item if
+    // `picker` is the result of evaluating the current path item if
     // necessary.  So if the path is `a/(1 + 2)` and processing the second
-    // `item`, then the selector would be the computed value `3`.
+    // `item`, then the picker would be the computed value `3`.
     //
     // (This is what the individual path dispatchers should use.)
     //
-    const REBVAL *selector;
-    REBVAL selector_cell; // selector = &selector_cell (GC guarded value)
+    const REBVAL *picker;
+    REBVAL picker_cell; // picker = &picker_cell (GC guarded value)
 
     // `value` holds the path value that should be chained from.  (It is the
     // type of `value` that dictates which dispatcher is given the `selector`

@@ -660,7 +660,7 @@ inline static REBYTE *VAL_RAW_DATA_AT(const RELVAL *v) {
 }
 
 #define Init_Any_Series_At(v,t,s,i) \
-    Init_Any_Series_At_Core(SINK(v), (t), (s), (i), SPECIFIED)
+    Init_Any_Series_At_Core((v), (t), (s), (i), SPECIFIED)
 
 #define Init_Any_Series(v,t,s) \
     Init_Any_Series_At((v), (t), (s), 0)

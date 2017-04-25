@@ -133,20 +133,18 @@ static void Assert_Basics(void)
     // enumerated as an ARRAY.
     //
     if (
-        offsetof(struct Reb_Series, info)
-            - offsetof(struct Reb_Series, content)
-        != sizeof(REBVAL)
+        offsetof(REBSER, info) - offsetof(REBSER, content) != sizeof(REBVAL)
     ){
         panic ("bad structure alignment for internal array termination");
     }
 
-    // The END marker logic currently uses REB_MAX for the type bits.  That's
-    // okay up until the REB_MAX bumps to 256.  If you hit this then some
-    // other value needs to be chosen in the debug build to represent the
-    // type value for END's bits.  (REB_TRASH is just a poor choice, because
-    // you'd like to catch IS_END() tests on trash.)
+    // Void cells currently use REB_MAX for the type bits, and the debug
+    // build uses REB_MAX + 1 for signaling "trash".  At most 64 "Reb_Kind"
+    // types are used at the moment, yet the type is a byte for efficient
+    // reading, so there's little danger of hitting this unless there's
+    // a big change.
     //
-    assert(REB_MAX < 256);
+    assert(REB_MAX + 1 < 256);
 
     // Make sure tricks for "internal END markers" are lined up as expected.
     //

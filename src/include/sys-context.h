@@ -308,7 +308,7 @@ inline static REBVAL *CTX_FRAME_FUNC_VALUE(REBCTX *c) {
     ((n) + 1)
 
 #define Init_Any_Context(out,kind,context) \
-    Init_Any_Context_Core(SINK(out), (kind), (context))
+    Init_Any_Context_Core((out), (kind), (context))
 
 #define Init_Object(v,c) \
     Init_Any_Context((v), REB_OBJECT, (c))

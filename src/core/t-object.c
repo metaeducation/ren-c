@@ -457,11 +457,11 @@ REBINT PD_Context(REBPVS *pvs)
 {
     REBCTX *c = VAL_CONTEXT(pvs->value);
 
-    if (NOT(IS_WORD(pvs->selector)))
+    if (NOT(IS_WORD(pvs->picker)))
         fail (Error_Bad_Path_Select(pvs));
 
     REBCNT n = Find_Canon_In_Context(
-        c, VAL_WORD_CANON(pvs->selector), FALSE
+        c, VAL_WORD_CANON(pvs->picker), FALSE
     );
 
     if (n == 0) {
@@ -478,13 +478,13 @@ REBINT PD_Context(REBPVS *pvs)
     }
 
     if (CTX_VARS_UNAVAILABLE(c))
-        fail (Error_No_Relative_Raw(pvs->selector));
+        fail (Error_No_Relative_Raw(pvs->picker));
 
     if (pvs->opt_setval && IS_END(pvs->item + 1)) {
         FAIL_IF_READ_ONLY_CONTEXT(c);
 
         if (GET_VAL_FLAG(CTX_VAR(c, n), VALUE_FLAG_PROTECTED))
-            fail (Error_Protected_Word_Raw(pvs->selector));
+            fail (Error_Protected_Word_Raw(pvs->picker));
     }
 
     pvs->value = CTX_VAR(c, n);

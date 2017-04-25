@@ -537,23 +537,38 @@ REBINT PD_Array(REBPVS *pvs)
         a/not-followed: 10 error or append?
     */
 
-    if (IS_INTEGER(pvs->selector)) {
-        n = Int32(pvs->selector) + VAL_INDEX(pvs->value) - 1;
+    if (IS_INTEGER(pvs->picker)) {
+        n = Int32(pvs->picker) + VAL_INDEX(pvs->value) - 1;
     }
-    else if (IS_WORD(pvs->selector)) {
+    else if (IS_WORD(pvs->picker)) {
         n = Find_Word_In_Array(
             VAL_ARRAY(pvs->value),
             VAL_INDEX(pvs->value),
-            VAL_WORD_CANON(pvs->selector)
+            VAL_WORD_CANON(pvs->picker)
         );
         if (cast(REBCNT, n) != NOT_FOUND) n++;
+    }
+    else if (IS_LOGIC(pvs->picker)) {
+        //
+        // !!! PICK in R3-Alpha historically would use a logic TRUE to get
+        // the first element in an array, and a logic FALSE to get the second.
+        // It did this regardless of how many elements were in the array.
+        // (For safety, it has been suggested non-binary arrays should fail).
+        // But path picking would act like you had written SELECT and looked
+        // for the item to come after a TRUE.  With the merging of path
+        // picking and PICK, this changes the behavior.
+        //
+        if (VAL_LOGIC(pvs->picker))
+            n = VAL_INDEX(pvs->value);
+        else
+            n = VAL_INDEX(pvs->value) + 1;
     }
     else {
         // other values:
         n = 1 + Find_In_Array_Simple(
             VAL_ARRAY(pvs->value),
             VAL_INDEX(pvs->value),
-            pvs->selector
+            pvs->picker
         );
     }
 
@@ -561,7 +576,8 @@ REBINT PD_Array(REBPVS *pvs)
         if (pvs->opt_setval)
             fail (Error_Bad_Path_Select(pvs));
 
-        return PE_NONE;
+        SET_VOID(pvs->store);
+        return PE_USE_STORE;
     }
 
     if (pvs->opt_setval)
@@ -586,21 +602,18 @@ REBINT PD_Array(REBPVS *pvs)
 //
 // Fills out with void if no pick.
 //
-RELVAL *Pick_Block(REBVAL *out, const REBVAL *block, const REBVAL *selector)
+RELVAL *Pick_Block(REBVAL *out, const REBVAL *block, const REBVAL *picker)
 {
-    REBINT n = 0;
-
-    n = Get_Num_From_Arg(selector);
+    REBINT n = Get_Num_From_Arg(picker);
     n += VAL_INDEX(block) - 1;
     if (n < 0 || cast(REBCNT, n) >= VAL_LEN_HEAD(block)) {
         SET_VOID(out);
         return NULL;
     }
-    else {
-        RELVAL *slot = VAL_ARRAY_AT_HEAD(block, n);
-        Derelativize(out, slot, VAL_SPECIFIER(block));
-        return slot;
-    }
+
+    RELVAL *slot = VAL_ARRAY_AT_HEAD(block, n);
+    Derelativize(out, slot, VAL_SPECIFIER(block));
+    return slot;
 }
 
 
@@ -635,28 +648,6 @@ REBTYPE(Array)
     REBSPC *specifier = VAL_SPECIFIER(value);
 
     switch (action) {
-    case SYM_POKE:
-    case SYM_PICK_P: {
-        RELVAL *slot;
-    pick_using_arg:
-        slot = Pick_Block(D_OUT, value, arg);
-        if (action == SYM_PICK_P) {
-            if (IS_VOID(D_OUT)) {
-                assert(!slot);
-                return R_VOID;
-            }
-        } else {
-            FAIL_IF_READ_ONLY_ARRAY(array);
-            if (IS_VOID(D_OUT)) {
-                assert(!slot);
-                fail (Error_Out_Of_Range(arg));
-            }
-            arg = D_ARG(3);
-            Move_Value(slot, arg);
-            Move_Value(D_OUT, arg);
-        }
-        return R_OUT;
-    }
 
     case SYM_TAKE_P: {
         INCLUDE_PARAMS_OF_TAKE_P;
@@ -991,9 +982,15 @@ REBTYPE(Array)
                 ARG(seed),
                 1 + (Random_Int(REF(secure)) % (VAL_LEN_HEAD(value) - index))
             );
-            arg = ARG(seed); // argument to pick
-            action = SYM_PICK_P;
-            goto pick_using_arg;
+
+            RELVAL *slot = Pick_Block(D_OUT, value, ARG(seed));
+            if (IS_VOID(D_OUT)) {
+                assert(slot == NULL);
+                UNUSED(slot);
+                return R_VOID;
+            }
+            return R_OUT;
+
         }
 
         Shuffle_Block(value, REF(secure));

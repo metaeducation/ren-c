@@ -638,7 +638,7 @@ comment [
         print-gap:      proc []  [print-newline]
 
         ;; BEHAVIOR (can be overridden)
-        
+
         input-hook: func [
             {Receives line input, parse/transform, send back to repl eval}
             s

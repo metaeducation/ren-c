@@ -31,7 +31,7 @@ reb-lib: src-dir/a-lib.c
 ext-lib: src-dir/f-extension.c
 
 args: parse-args system/options/args
-output-dir: to file! any [args/OUTDIR %../]
+output-dir: to file! any [:args/OUTDIR %../]
 output-dir: fix-win32-path output-dir
 out-dir: output-dir/include
 mkdir/deep out-dir

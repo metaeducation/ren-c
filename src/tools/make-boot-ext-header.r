@@ -23,10 +23,10 @@ do %form-header.r
 r3: system/version > 2.100.0
 
 args: parse-args system/options/args
-output-dir: fix-win32-path to file! any [args/OUTDIR %../]
+output-dir: fix-win32-path to file! any [:args/OUTDIR %../]
 mkdir/deep output-dir/include
 
-extensions: either any-string? args/EXTENSIONS [split args/EXTENSIONS #","][[]]
+extensions: either any-string? :args/EXTENSIONS [split args/EXTENSIONS #","][[]]
 
 emit-header "Boot Modules" output-dir/include/tmp-boot-extensions.h
 remove-each ext extensions [empty? ext] ;SPLIT in r3-a111 gives an empty "" at the end

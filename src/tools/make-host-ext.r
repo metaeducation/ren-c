@@ -24,7 +24,7 @@ do %common.r
 
 do %form-header.r
 args: parse-args system/options/args
-output-dir: fix-win32-path to file! any [args/OUTDIR %../]
+output-dir: fix-win32-path to file! any [:args/OUTDIR %../]
 mkdir/deep output-dir/include
 
 ;-- Collect Sources ----------------------------------------------------------

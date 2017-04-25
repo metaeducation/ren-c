@@ -64,9 +64,9 @@ block       array       *       *       [series array]
 ;
 binary      string      *       *       [series]
 string      string      *       *       [series string]
-file        string      file    *       [series string]
+file        string      *       *       [series string]
 email       string      *       *       [series string]
-url         string      url     *       [series string]
+url         string      *       *       [series string]
 tag         string      *       *       [series string]
 
 bitset      bitset      *       *       -
@@ -75,7 +75,7 @@ vector      vector      *       *       [series]
 
 map         map         *       *       -
 
-varargs     varargs     -       *       -
+varargs     varargs     *       *       -
 
 object      context     *       *       context
 frame       context     *       *       context

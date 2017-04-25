@@ -424,6 +424,34 @@ void TO_Varargs(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 
 
 //
+//  PD_Varargs: C
+//
+// Implements the PICK* operation.
+//
+REBINT PD_Varargs(REBPVS *pvs)
+{
+    if (NOT(IS_INTEGER(pvs->picker)))
+        fail (pvs->picker);
+
+    if (VAL_INT32(pvs->picker) != 1)
+        fail (Error_Varargs_No_Look_Raw());
+
+    DECLARE_LOCAL (specific);
+    Derelativize(specific, pvs->value, pvs->value_specifier);
+
+    REB_R r = Do_Vararg_Op_May_Throw(pvs->store, specific, VARARG_OP_FIRST);
+    if (r == R_OUT_IS_THROWN)
+        assert(FALSE); // VARARG_OP_FIRST can't throw
+    else if (r == R_VOID)
+        SET_VOID(pvs->store);
+    else
+        assert(r == R_OUT);
+
+    return PE_USE_STORE;
+}
+
+
+//
 //  REBTYPE: C
 //
 // Handles the very limited set of operations possible on a VARARGS!
@@ -432,18 +460,9 @@ void TO_Varargs(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 REBTYPE(Varargs)
 {
     REBVAL *value = D_ARG(1);
-    REBVAL *arg = D_ARGC > 1 ? D_ARG(2) : NULL;
 
     switch (action) {
-    case SYM_PICK_P: {
-        if (NOT(IS_INTEGER(arg)))
-            fail (arg);
-
-        if (VAL_INT32(arg) != 1)
-            fail (Error_Varargs_No_Look_Raw());
-
-        return Do_Vararg_Op_May_Throw(D_OUT, value, VARARG_OP_FIRST);
-    }
+    // !!! SYM_PICK_P moved into PD_Varargs functionality, which PICK* uses
 
     case SYM_TAIL_Q: {
         REB_R r = Do_Vararg_Op_May_Throw(

@@ -185,7 +185,7 @@ void Min_Max_Pair(REBVAL *out, const REBVAL *a, const REBVAL *b, REBOOL maxed)
 //
 REBINT PD_Pair(REBPVS *pvs)
 {
-    const REBVAL *sel = pvs->selector;
+    const REBVAL *sel = pvs->picker;
     REBINT n = 0;
     REBDEC dec;
 
@@ -362,39 +362,6 @@ REBTYPE(Pair)
         x1 = cast(REBDEC, Random_Range(cast(REBINT, x1), REF(secure)));
         y1 = cast(REBDEC, Random_Range(cast(REBINT, y1), REF(secure)));
         goto setPair; }
-
-    case SYM_PICK_P: {
-        REBVAL *arg = D_ARG(2);
-        REBINT n;
-        if (IS_WORD(arg)) {
-            if (VAL_WORD_SYM(arg) == SYM_X)
-                n = 0;
-            else if (VAL_WORD_SYM(arg) == SYM_Y)
-                n = 1;
-            else
-                fail (arg);
-        }
-        else {
-            n = Get_Num_From_Arg(arg);
-            if (n < 1 || n > 2) fail (Error_Out_Of_Range(arg));
-            n--;
-        }
-///     case SYM_POKE:
-///         if (action == SYM_POKE) {
-///             arg = D_ARG(3);
-///             if (IS_INTEGER(arg)) {
-///                 if (index == 0) x1 = VAL_INT32(arg);
-///                 else y1 = VAL_INT32(arg);
-///             }
-///             else if (IS_DECIMAL(arg)) {
-///                 if (index == 0) x1 = (REBINT)VAL_DECIMAL(arg);
-///                 else y1 = (REBINT)VAL_DECIMAL(arg);
-///             } else
-///                 fail (arg);
-///             goto setPair;
-///         }
-        SET_DECIMAL(D_OUT, n == 0 ? x1 : y1);
-        return R_OUT; }
 
     default:
         break;

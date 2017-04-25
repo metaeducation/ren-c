@@ -728,24 +728,6 @@ void Pick_Or_Poke_Date(
 }
 
 
-inline static void Pick_Date(
-    REBVAL *out,
-    const REBVAL *value,
-    const REBVAL *picker
-) {
-    Pick_Or_Poke_Date(out, m_cast(REBVAL*, value), picker, NULL);
-}
-
-
-inline static void Poke_Date_Immediate(
-    REBVAL *value,
-    const REBVAL *picker,
-    const REBVAL *poke
-) {
-    Pick_Or_Poke_Date(NULL, value, picker, poke);
-}
-
-
 //
 //  PD_Date: C
 //
@@ -758,11 +740,13 @@ REBINT PD_Date(REBPVS *pvs)
         // while not affecting the original (unless it was a literal value
         // in source)
         //
-        Poke_Date_Immediate(KNOWN(pvs->value), pvs->selector, pvs->opt_setval);
+        Pick_Or_Poke_Date(
+            NULL, KNOWN(pvs->value), pvs->picker, pvs->opt_setval
+        );
         return PE_OK;
     }
 
-    Pick_Date(pvs->store, KNOWN(pvs->value), pvs->selector);
+    Pick_Or_Poke_Date(pvs->store, KNOWN(pvs->value), pvs->picker, NULL);
     return PE_USE_STORE;
 }
 
@@ -842,20 +826,6 @@ REBTYPE(Date)
 
         case SYM_ODD_Q:
             return (day & 1) == 0 ? R_TRUE : R_FALSE;
-
-        case SYM_PICK_P:
-            assert(D_ARGC > 1);
-            Pick_Date(D_OUT, val, arg);
-            return R_OUT;
-
-        // !!! Because DATE! is an immediate value, POKE is not offered as it
-        // would not actually modify a variable (just the evaluative temporary
-        // from fetching the variable).  But see SET-PATH! notes in PD_Date.
-
-        /* case SYM_POKE:
-            Poke_Date_Immediate(D_OUT, val, arg, D_ARG(3));
-            Move_Value(D_OUT, D_ARG(3));
-            return R_OUT;*/
 
         case SYM_RANDOM: {
             INCLUDE_PARAMS_OF_RANDOM;

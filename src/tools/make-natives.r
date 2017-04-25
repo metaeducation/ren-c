@@ -23,7 +23,7 @@ print "------ Generate tmp-natives.r"
 r3: system/version > 2.100.0
 
 args: parse-args system/options/args
-output-dir: fix-win32-path to file! any [args/OUTDIR %../]
+output-dir: fix-win32-path to file! any [:args/OUTDIR %../]
 mkdir/deep output-dir/boot
 
 verbose: false

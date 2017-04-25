@@ -407,10 +407,10 @@ void TO_Event(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 //
 REBINT PD_Event(REBPVS *pvs)
 {
-    if (IS_WORD(pvs->selector)) {
+    if (IS_WORD(pvs->picker)) {
         if (!pvs->opt_setval || NOT_END(pvs->item + 1)) {
             if (!Get_Event_Var(
-                KNOWN(pvs->value), VAL_WORD_CANON(pvs->selector), pvs->store
+                KNOWN(pvs->value), VAL_WORD_CANON(pvs->picker), pvs->store
             )) {
                 fail (Error_Bad_Path_Set(pvs));
             }
@@ -419,7 +419,7 @@ REBINT PD_Event(REBPVS *pvs)
         }
         else {
             if (!Set_Event_Var(
-                KNOWN(pvs->value), pvs->selector, pvs->opt_setval
+                KNOWN(pvs->value), pvs->picker, pvs->opt_setval
             )) {
                 fail (Error_Bad_Path_Set(pvs));
             }

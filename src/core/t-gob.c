@@ -915,9 +915,9 @@ REBINT PD_Gob(REBPVS *pvs)
     REBCNT index;
     REBCNT tail;
 
-    if (IS_WORD(pvs->selector)) {
+    if (IS_WORD(pvs->picker)) {
         if (!pvs->opt_setval || NOT_END(pvs->item + 1)) {
-            if (!Get_GOB_Var(gob, pvs->selector, pvs->store))
+            if (!Get_GOB_Var(gob, pvs->picker, pvs->store))
                 fail (Error_Bad_Path_Select(pvs));
 
             // !!! Comment here said: "Check for SIZE/X: types of cases".
@@ -930,43 +930,41 @@ REBINT PD_Gob(REBPVS *pvs)
             //
             if (pvs->opt_setval && IS_PAIR(pvs->store)) {
                 //
-                // !!! Adding to the reasons that this is dodgy, the selector
+                // !!! Adding to the reasons that this is dodgy, the picker
                 // can be pointing to a temporary memory cell, and when
                 // Next_Path_Throws runs arbitrary code it could be GC'd too.
                 // Have to copy -and- protect.
                 //
-                DECLARE_LOCAL (sel_orig);
-                Move_Value(sel_orig, pvs->selector);
-                PUSH_GUARD_VALUE(sel_orig);
+                DECLARE_LOCAL (orig_picker);
+                Move_Value(orig_picker, pvs->picker);
+                PUSH_GUARD_VALUE(orig_picker);
 
                 pvs->value = pvs->store;
                 pvs->value_specifier = SPECIFIED;
 
-                if (Next_Path_Throws(pvs)) { // sets value in pvs->store
-                    DROP_GUARD_VALUE(sel_orig);
+                if (Next_Path_Throws(pvs)) // sets value in pvs->store
                     fail (Error_No_Catch_For_Throw(pvs->store)); // Review
-                }
 
                 // write it back to gob
                 //
-                Set_GOB_Var(gob, sel_orig, pvs->store);
-                DROP_GUARD_VALUE(sel_orig);
+                Set_GOB_Var(gob, orig_picker, pvs->store);
+                DROP_GUARD_VALUE(orig_picker);
             }
             return PE_USE_STORE;
         }
         else {
-            if (!Set_GOB_Var(gob, pvs->selector, pvs->opt_setval))
+            if (!Set_GOB_Var(gob, pvs->picker, pvs->opt_setval))
                 fail (Error_Bad_Path_Set(pvs));
             return PE_OK;
         }
     }
 
-    if (IS_INTEGER(pvs->selector)) {
+    if (IS_INTEGER(pvs->picker)) {
         if (!GOB_PANE(gob)) return PE_NONE;
 
         tail = GOB_PANE(gob) ? GOB_LEN(gob) : 0;
         index = VAL_GOB_INDEX(pvs->value);
-        index += Int32(pvs->selector) - 1;
+        index += Int32(pvs->picker) - 1;
 
         if (index >= tail) return PE_NONE;
 
@@ -1003,6 +1001,14 @@ REBTYPE(Gob)
 
     // unary actions
     switch(action) {
+    //
+    // !!! Note: PICK* and POKE were unified with path dispatch.  The general
+    // goal is to unify these mechanisms.  However, GOB! is tricky in terms
+    // of what it tried to do with a synthesized PAIR!, calling back into
+    // Next_Path_Throws().  A logical overhaul of path dispatch is needed.
+    // This code is left in case there's something to glean from it when
+    // a GOB!-based path dispatch breaks.
+    /*
     case SYM_PICK_P:
         if (NOT(ANY_NUMBER(arg) || IS_BLANK(arg)))
             fail (arg);
@@ -1017,7 +1023,7 @@ REBTYPE(Gob)
     case SYM_POKE:
         index += Get_Num_From_Arg(arg) - 1;
         arg = D_ARG(3);
-        // fallthrough
+        // fallthrough */
     case SYM_CHANGE: {
         INCLUDE_PARAMS_OF_CHANGE;
 
