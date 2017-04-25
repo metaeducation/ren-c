@@ -512,7 +512,7 @@ REBINT PD_Bitset(REBPVS *pvs)
     REBSER *ser = VAL_SERIES(pvs->value);
 
     if (!pvs->opt_setval) {
-        if (Check_Bits(ser, pvs->selector, FALSE)) {
+        if (Check_Bits(ser, pvs->picker, FALSE)) {
             SET_TRUE(pvs->store);
             return PE_USE_STORE;
         }
@@ -521,7 +521,7 @@ REBINT PD_Bitset(REBPVS *pvs)
 
     if (Set_Bits(
         ser,
-        pvs->selector,
+        pvs->picker,
         BITS_NOT(ser)
             ? IS_CONDITIONAL_FALSE(pvs->opt_setval)
             : IS_CONDITIONAL_TRUE(pvs->opt_setval)
@@ -569,12 +569,10 @@ REBTYPE(Bitset)
 
     switch (action) {
 
-    // Define PICK for BITSETS?  PICK's set bits and returns #?
     // Add AND, OR, XOR
 
-    case SYM_PICK_P:
     case SYM_FIND: {
-        INCLUDE_PARAMS_OF_FIND; // is PICK guaranteed to have CASE at same pos
+        INCLUDE_PARAMS_OF_FIND;
 
         UNUSED(PAR(series));
         UNUSED(PAR(value));
@@ -611,17 +609,14 @@ REBTYPE(Bitset)
 
     case SYM_APPEND:  // Accepts: #"a" "abc" [1 - 10] [#"a" - #"z"] etc.
     case SYM_INSERT:
-        diff = TRUE;
-        goto set_bits;
+        if (BITS_NOT(VAL_SERIES(value)))
+            diff = FALSE;
+        else
+            diff = TRUE;
 
-    case SYM_POKE:
-        if (!IS_LOGIC(D_ARG(3)))
-            fail (D_ARG(3));
-        diff = VAL_LOGIC(D_ARG(3));
-set_bits:
-        if (BITS_NOT(VAL_SERIES(value))) diff = NOT(diff);
-        if (Set_Bits(VAL_SERIES(value), arg, diff)) break;
-        fail (arg);
+        if (NOT(Set_Bits(VAL_SERIES(value), arg, diff)))
+            fail (arg);
+        break;
 
     case SYM_REMOVE: {
         INCLUDE_PARAMS_OF_REMOVE;

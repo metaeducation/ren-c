@@ -100,6 +100,8 @@ emit-include-params-macro: procedure [
 
 emit-native-include-params-macro: proc [native-list [block!]][
     for-next native-list [
+        if tail? next native-list [break]
+
         if any [
             'native = native-list/2
             all [path? native-list/2 | 'native = first native-list/2]

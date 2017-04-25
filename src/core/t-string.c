@@ -592,33 +592,136 @@ static void Sort_String(
 //
 REBINT PD_String(REBPVS *pvs)
 {
-    const REBVAL *setval;
-    REBINT n;
-    REBCNT i;
-    REBINT c;
     REBSER *ser = VAL_SERIES(pvs->value);
 
-    if (IS_INTEGER(pvs->selector)) {
-        n = Int32(pvs->selector) + VAL_INDEX(pvs->value) - 1;
-    }
-    else fail (Error_Bad_Path_Select(pvs));
-
-    if (!pvs->opt_setval) {
-        if (n < 0 || (REBCNT)n >= SER_LEN(ser)) return PE_NONE;
-        if (IS_BINARY(pvs->value)) {
-            SET_INTEGER(pvs->store, *BIN_AT(ser, n));
-        } else {
-            SET_CHAR(pvs->store, GET_ANY_CHAR(ser, n));
+    // Note: There was some more careful management of overflow here in the
+    // PICK and POKE actions, before unification.  But otherwise the code
+    // was less thorough.  Consider integrating this bit, though it seems
+    // that a more codebase-wide review should be given to the issue.
+    //
+    /*
+        REBINT len = Get_Num_From_Arg(arg);
+        if (
+            REB_I32_SUB_OF(len, 1, &len)
+            || REB_I32_ADD_OF(index, len, &index)
+            || index < 0 || index >= tail
+        ){
+            fail (Error_Out_Of_Range(arg));
         }
+    */
+
+    if (pvs->opt_setval == NULL) { // PICK-ing
+        if (IS_INTEGER(pvs->picker)) {
+            REBINT n = Int32(pvs->picker) + VAL_INDEX(pvs->value) - 1;
+            if (n < 0 || cast(REBCNT, n) >= SER_LEN(ser)) {
+                SET_VOID(pvs->store);
+                return PE_USE_STORE;
+            }
+
+            if (IS_BINARY(pvs->value))
+                SET_INTEGER(pvs->store, *BIN_AT(ser, n));
+            else
+                SET_CHAR(pvs->store, GET_ANY_CHAR(ser, n));
+
+            return PE_USE_STORE;
+        }
+
+        if (
+            IS_BINARY(pvs->value)
+            || NOT(IS_WORD(pvs->picker) || ANY_STRING(pvs->picker))
+        ){
+            fail (Error_Bad_Path_Select(pvs));
+        }
+
+        // !!! This is a historical and questionable feature, where path
+        // picking a string or word or otherwise out of a FILE! or URL! will
+        // generate a new FILE! or URL! with a slash in it.
+        //
+        //     >> x: %foo
+        //     >> type-of quote x/bar
+        //     == path!
+        //
+        //     >> x/bar
+        //     == %foo/bar ;-- a FILE!
+        //
+        // This can only be done with evaluations, since FILE! and URL! have
+        // slashes in their literal form:
+        //
+        //     >> type-of quote %foo/bar
+        //     == file!
+        //
+        // Because Ren-C unified picking and pathing, this somewhat odd
+        // feature is now part of PICKing a string from another string.
+
+        REBSER *ser = Copy_Sequence_At_Position(KNOWN(pvs->value));
+
+        // This makes sure there's always a "/" at the end of the file before
+        // appending new material via a picker:
+        //
+        //     >> x: %foo
+        //     >> (x)/("bar")
+        //     == %foo/bar
+        //
+        REBCNT len = SER_LEN(ser);
+        if (len == 0)
+            Append_Codepoint_Raw(ser, '/');
+        else {
+            REBUNI ch_last = GET_ANY_CHAR(ser, len - 1);
+            if (ch_last != '/')
+                Append_Codepoint_Raw(ser, '/');
+        }
+
+        REB_MOLD mo;
+        CLEARS(&mo);
+        Push_Mold(&mo);
+
+        Mold_Value(&mo, pvs->picker, FALSE);
+
+        // The `skip` logic here regarding slashes and backslashes apparently
+        // is for an exception to the rule of appending the molded content.
+        // It doesn't want two slashes in a row:
+        //
+        //     >> x/("/bar")
+        //     == %foo/bar
+        //
+        // !!! Review if this makes sense under a larger philosophy of string
+        // path composition.
+        //
+        REBUNI ch_start = GET_ANY_CHAR(mo.series, mo.start);
+        REBCNT skip = (ch_start == '/' || ch_start == '\\') ? 1 : 0;
+
+        // !!! Would be nice if there was a better way of doing this that didn't
+        // involve reaching into mo.start and mo.series.
+        //
+        Append_String(
+            ser, // dst
+            mo.series, // src
+            mo.start + skip, // i
+            SER_LEN(mo.series) - mo.start - skip // len
+        );
+
+        Drop_Mold(&mo);
+
+        // Note: pvs->value may point to pvs->store
+        //
+        Init_Any_Series(pvs->store, VAL_TYPE(pvs->value), ser);
         return PE_USE_STORE;
     }
 
-    FAIL_IF_READ_ONLY_SERIES(ser);
-    setval = pvs->opt_setval;
+    // Otherwise, POKE-ing
 
+    FAIL_IF_READ_ONLY_SERIES(ser);
+
+    if (NOT(IS_INTEGER(pvs->picker)))
+        fail (Error_Bad_Path_Select(pvs));
+
+    REBINT n = Int32(pvs->picker) + VAL_INDEX(pvs->value) - 1;
     if (n < 0 || cast(REBCNT, n) >= SER_LEN(ser))
         fail (Error_Bad_Path_Range(pvs));
 
+    const REBVAL *setval = pvs->opt_setval;
+
+    REBINT c;
     if (IS_CHAR(setval)) {
         c = VAL_CHAR(setval);
         if (c > MAX_CHAR)
@@ -630,13 +733,14 @@ REBINT PD_String(REBPVS *pvs)
             fail (Error_Bad_Path_Set(pvs));
     }
     else if (ANY_BINSTR(setval)) {
-        i = VAL_INDEX(setval);
+        REBCNT i = VAL_INDEX(setval);
         if (i >= VAL_LEN_HEAD(setval))
             fail (Error_Bad_Path_Set(pvs));
 
         c = GET_ANY_CHAR(VAL_SERIES(setval), i);
     }
-    else fail (Error_Bad_Path_Select(pvs));
+    else
+        fail (Error_Bad_Path_Select(pvs));
 
     if (IS_BINARY(pvs->value)) {
         if (c > 0xff)
@@ -652,103 +756,6 @@ REBINT PD_String(REBPVS *pvs)
     SET_ANY_CHAR(ser, n, c);
 
     return PE_OK;
-}
-
-
-//
-//  File_Or_Url_Path_Dispatch: C
-//
-// Path dispatch when the left hand side has evaluated to a FILE! or URL!.
-// This must be done through evaluations, because a literal file consumes
-// slashes as its literal form:
-//
-//     >> type-of quote %foo/bar
-//     == file!
-//
-//     >> x: %foo
-//     >> type-of quote x/bar
-//     == path!
-//
-//     >> x/bar
-//     == %foo/bar ;-- a FILE!
-//
-REBSER *File_Or_Url_Path_Dispatch(REBPVS *pvs)
-{
-    if (pvs->opt_setval)
-        fail (Error_Bad_Path_Set(pvs));
-
-    REBSER *ser = Copy_Sequence_At_Position(KNOWN(pvs->value));
-
-    // This makes sure there's always a "/" at the end of the file before
-    // appending new material via a selector:
-    //
-    //     >> x: %foo
-    //     >> (x)/("bar")
-    //     == %foo/bar
-    //
-    REBCNT len = SER_LEN(ser);
-    if (len == 0)
-        Append_Codepoint_Raw(ser, '/');
-    else {
-        REBUNI ch_last = GET_ANY_CHAR(ser, len - 1);
-        if (ch_last != '/')
-            Append_Codepoint_Raw(ser, '/');
-    }
-
-    REB_MOLD mo;
-    CLEARS(&mo);
-    Push_Mold(&mo);
-
-    Mold_Value(&mo, pvs->selector, FALSE);
-
-    // The `skip` logic here regarding slashes and backslashes is apparently
-    // for an exception to the rule of appending the molded content.  It
-    // doesn't want two slashes in a row:
-    //
-    //     >> x/("/bar")
-    //     == %foo/bar
-    //
-    // !!! Review if this makes sense under a larger philosophy of string
-    // path composition.
-    //
-    REBUNI ch_start = GET_ANY_CHAR(mo.series, mo.start);
-    REBCNT skip = (ch_start == '/' || ch_start == '\\') ? 1 : 0;
-
-    // !!! Would be nice if there was a better way of doing this that didn't
-    // involve reaching into mo.start and mo.series.
-    //
-    Append_String(
-        ser, // dst
-        mo.series, // src
-        mo.start + skip, // i
-        SER_LEN(mo.series) - mo.start - skip // len
-    );
-
-    Drop_Mold(&mo);
-
-    return ser;
-}
-
-
-//
-//  PD_File: C
-//
-REBINT PD_File(REBPVS *pvs) {
-    assert(VAL_TYPE(pvs->value) == REB_FILE);
-    REBSER *ser = File_Or_Url_Path_Dispatch(pvs);
-    Init_File(pvs->store, ser);
-    return PE_USE_STORE;
-}
-
-
-//
-//  PD_Url: C
-//
-REBINT PD_Url(REBPVS *pvs) {
-    assert(VAL_TYPE(pvs->value) == REB_URL);
-    REBSER *ser = File_Or_Url_Path_Dispatch(pvs);
-    Init_Url(pvs->store, ser);
-    return PE_USE_STORE;
 }
 
 
@@ -899,54 +906,6 @@ REBTYPE(String)
             }
             else
                 str_to_char(value, value, ret);
-        }
-        break; }
-
-    //-- Picking:
-    case SYM_POKE:
-        FAIL_IF_READ_ONLY_SERIES(VAL_SERIES(value));
-    case SYM_PICK_P: {
-        REBINT len = Get_Num_From_Arg(arg); // Position
-        //if (len > 0) index--;
-        if (REB_I32_SUB_OF(len, 1, &len)
-            || REB_I32_ADD_OF(index, len, &index)
-            || index < 0 || index >= tail) {
-            if (action == SYM_PICK_P) return R_BLANK;
-            fail (Error_Out_Of_Range(arg));
-        }
-        if (action == SYM_PICK_P) {
-            if (IS_BINARY(value)) {
-                SET_INTEGER(D_OUT, *VAL_BIN_AT_HEAD(value, index));
-            }
-            else
-                str_to_char(D_OUT, value, index);
-            return R_OUT;
-        }
-        else {
-            REBUNI c;
-            arg = D_ARG(3);
-            if (IS_CHAR(arg))
-                c = VAL_CHAR(arg);
-            else if (
-                IS_INTEGER(arg)
-                && VAL_INT32(arg) >= 0
-                && VAL_INT32(arg) <= MAX_CHAR
-            ) {
-                c = VAL_INT32(arg);
-            }
-            else
-                fail (arg);
-
-            ser = VAL_SERIES(value);
-            if (IS_BINARY(value)) {
-                if (c > 0xff) fail (Error_Out_Of_Range(arg));
-                BIN_HEAD(ser)[index] = (REBYTE)c;
-            }
-            else {
-                if (BYTE_SIZE(ser) && c > 0xff) Widen_String(ser, TRUE);
-                SET_ANY_CHAR(ser, index, c);
-            }
-            value = arg;
         }
         break; }
 

@@ -118,7 +118,7 @@ parse-asn: function [
     result: make block! 16
     mode: 'type
 
-    while [d: data/1] [
+    while [not void? d: :data/1] [
         switch mode [
             type [
                 constructed?: not zero? (d and* 32)
@@ -629,7 +629,7 @@ parse-messages: function [
         ]
 
         handshake [
-            while [data/1] [
+            while [not tail? data] [
                 msg-type: select message-types data/1
 
                 update-proto-state ctx either ctx/encrypted? ['encrypted-handshake] [msg-type]
@@ -743,7 +743,7 @@ parse-messages: function [
                             length: len
                             certificates-length: to-integer/unsigned copy/part msg-content 3
                             certificate-list: make block! 4
-                            while [msg-content/1] [
+                            while [not tail? msg-content] [
                                 if 0 < clen: to-integer/unsigned copy/part skip msg-content 3 3 [
                                     append certificate-list copy/part at msg-content 7 clen
                                 ]

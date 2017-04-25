@@ -30,7 +30,7 @@ do %form-header.r
 
 do %systems.r
 args: parse-args system/options/args
-config: config-system to-value args/OS_ID
+config: config-system to-value :args/OS_ID
 
 first-rebol-commit: "19d4f969b4f5c1536f24b023991ec11ee6d5adfb"
 
@@ -60,7 +60,7 @@ either args/GIT_COMMIT = "unknown" [
 
 change-dir %../boot/
 ;dir: %../core/temp/  ; temporary definition
-output-dir: fix-win32-path to file! any [args/OUTDIR %../]
+output-dir: fix-win32-path to file! any [:args/OUTDIR %../]
 mkdir/deep output-dir/include
 mkdir/deep output-dir/boot
 mkdir/deep output-dir/core
@@ -121,7 +121,7 @@ unless args: any [
     fail "No platform specified."
 ]
 
-product: to-word any [args/PRODUCT  "core"]
+product: to-word any [:args/PRODUCT | "core"]
 
 platform-data: context [type: 'windows]
 build: context [features: [help-strings]]

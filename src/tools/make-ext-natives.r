@@ -39,7 +39,7 @@ c-src: fix-win32-path to file! ensure string! args/SRC
 print ["building" m-name "from" c-src]
 
 
-output-dir: fix-win32-path to file! any [args/OUTDIR %../]
+output-dir: fix-win32-path to file! any [:args/OUTDIR %../]
 mkdir/deep output-dir/include
 
 

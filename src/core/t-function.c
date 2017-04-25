@@ -361,7 +361,7 @@ REBNATIVE(func_class_of)
 //
 REBINT PD_Function(REBPVS *pvs)
 {
-    if (IS_BLANK(pvs->selector)) {
+    if (IS_BLANK(pvs->picker)) {
         //
         // Leave the function value as-is, and continue processing.  This
         // enables things like `append/(all [foo 'dup])/only`...
@@ -373,8 +373,8 @@ REBINT PD_Function(REBPVS *pvs)
     // general path mechanic before reaching this dispatch.  So if it's not
     // a word or one of those that evaluated to a word raise an error.
     //
-    if (!IS_WORD(pvs->selector))
-        fail (Error_Bad_Refine_Raw(pvs->selector));
+    if (!IS_WORD(pvs->picker))
+        fail (Error_Bad_Refine_Raw(pvs->picker));
 
     // We could generate a "refined" function variant at each step:
     //
@@ -385,7 +385,7 @@ REBINT PD_Function(REBPVS *pvs)
     // understood to push the canonized word to the data stack in the
     // function case.
     //
-    DS_PUSH(pvs->selector);
+    DS_PUSH(pvs->picker);
 
     // Go ahead and canonize the word symbol so we don't have to do it each
     // time in order to get a case-insensitive compare.  (Note that canons can

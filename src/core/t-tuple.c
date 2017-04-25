@@ -253,12 +253,12 @@ REBINT PD_Tuple(REBPVS *pvs)
         // result in y being 10.20.10, but x is unchanged.
         //
         Poke_Tuple_Immediate(
-            KNOWN(pvs->value), pvs->selector, pvs->opt_setval
+            KNOWN(pvs->value), pvs->picker, pvs->opt_setval
         );
         return PE_OK;
     }
 
-    Pick_Tuple(pvs->store, KNOWN(pvs->value), pvs->selector);
+    Pick_Tuple(pvs->store, KNOWN(pvs->value), pvs->picker);
     return PE_USE_STORE;
 }
 
@@ -438,18 +438,6 @@ REBTYPE(Tuple)
         len = MAX(len, 3);
         SET_INTEGER(D_OUT, len);
         return R_OUT;
-
-    case SYM_PICK_P:
-        Pick_Tuple(D_OUT, value, arg);
-        return R_OUT;
-
-    // !!! TUPLE! is an immediate value at the current time, and does not
-    // support POKE.  But see PD_Tuple for notes on its behavior with SET-PATH!
-    //
-    /*case SYM_POKE:
-        Poke_Tuple_Immediate(value, arg, D_ARG(3));
-        Move_Value(D_OUT, D_ARG(3));
-        return R_OUT;*/
 
     case SYM_REVERSE: {
         INCLUDE_PARAMS_OF_REVERSE;

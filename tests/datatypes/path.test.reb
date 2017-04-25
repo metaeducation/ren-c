@@ -102,10 +102,14 @@
     a-value: 1.2.3
     1 == a-value/1
 ]
+
+; Ren-C changed INTEGER! path picking to act as PICK, only ANY-STRING! and
+; WORD! actually merge with a slash.
 [
     a-value: file://a
-    file://a/1 = a-value/1
+    #"f" = a-value/1
 ]
+
 ; calling functions through paths: function in object
 [
     obj: make object! [fun: func [] [1]]
@@ -138,11 +142,13 @@
     error? try [do path]
     true
 ]
+
 ; bug#71
 [
     a: "abcd"
-    error? try [a/x]
+    "abcd/x" = a/x
 ]
+
 ; bug#1820: Word USER can't be selected with path syntax
 [
     b: [user 1 _user 2]

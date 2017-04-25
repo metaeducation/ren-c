@@ -475,11 +475,11 @@ REBINT PD_Time(REBPVS *pvs)
         // !!! Since TIME! is an immediate value, allowing a SET-PATH! will
         // modify the result of the expression but not the source.
         //
-        Poke_Time_Immediate(KNOWN(pvs->value), pvs->selector, pvs->opt_setval);
+        Poke_Time_Immediate(KNOWN(pvs->value), pvs->picker, pvs->opt_setval);
         return PE_OK;
     }
 
-    Pick_Time(pvs->store, KNOWN(pvs->value), pvs->selector);
+    Pick_Time(pvs->store, KNOWN(pvs->value), pvs->picker);
     return PE_USE_STORE;
 }
 
@@ -694,19 +694,6 @@ REBTYPE(Time)
             }
             secs = Random_Range(secs / SEC_SEC, REF(secure)) * SEC_SEC;
             goto fixTime; }
-
-        case SYM_PICK_P:
-            Pick_Time(D_OUT, val, arg);
-            return R_OUT;
-
-        // !!! TIME! is currently immediate, which means that if you poke
-        // a value it will modify that value directly; this will appear
-        // to have no effect on variables.  But SET-PATH! does it, see PT_Time
-
-        /* case SYM_POKE:
-            Poke_Time_Immediate(val, arg, D_ARG(3));
-            Move_Value(D_OUT, D_ARG(3));
-            return R_OUT;*/
 
         default:
             break;

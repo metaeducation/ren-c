@@ -1344,13 +1344,13 @@ void TO_Struct(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 REBINT PD_Struct(REBPVS *pvs)
 {
     REBSTU *stu = VAL_STRUCT(pvs->value);
-    if (!IS_WORD(pvs->selector))
+    if (!IS_WORD(pvs->picker))
         fail (Error_Bad_Path_Select(pvs));
 
     fail_if_non_accessible(KNOWN(pvs->value));
 
     if (!pvs->opt_setval || NOT_END(pvs->item + 1)) {
-        if (NOT(Get_Struct_Var(pvs->store, stu, pvs->selector)))
+        if (NOT(Get_Struct_Var(pvs->store, stu, pvs->picker)))
             fail (Error_Bad_Path_Select(pvs));
 
         // !!! Comment here said "Setting element to an array in the struct"
@@ -1376,18 +1376,18 @@ REBINT PD_Struct(REBPVS *pvs)
             && IS_BLOCK(pvs->store)
             && IS_END(pvs->item + 2)
         ) {
-            // !!! This is dodgy; it has to copy (as selector is a pointer to
+            // !!! This is dodgy; it has to copy (as picker is a pointer to
             // a memory cell it may not own), has to guard (as the next path
             // evaluation may not protect the result...)
             //
             DECLARE_LOCAL (sel_orig);
-            Move_Value(sel_orig, pvs->selector);
+            Move_Value(sel_orig, pvs->picker);
             PUSH_GUARD_VALUE(sel_orig);
 
             pvs->value = pvs->store;
             pvs->value_specifier = SPECIFIED;
 
-            if (Next_Path_Throws(pvs)) { // updates pvs->store, pvs->selector
+            if (Next_Path_Throws(pvs)) { // updates pvs->store, pvs->picker
                 DROP_GUARD_VALUE(sel_orig);
                 fail (Error_No_Catch_For_Throw(pvs->store)); // !!! Review
             }
@@ -1395,7 +1395,7 @@ REBINT PD_Struct(REBPVS *pvs)
             DECLARE_LOCAL (specific);
             Derelativize(specific, pvs->value, pvs->value_specifier);
 
-            if (!Set_Struct_Var(stu, sel_orig, pvs->selector, specific))
+            if (!Set_Struct_Var(stu, sel_orig, pvs->picker, specific))
                 fail (Error_Bad_Path_Set(pvs));
 
             DROP_GUARD_VALUE(sel_orig);
@@ -1408,7 +1408,7 @@ REBINT PD_Struct(REBPVS *pvs)
     else {
         // setting (because opt_setval is non-NULL, and at end of path)
 
-        if (!Set_Struct_Var(stu, pvs->selector, NULL, pvs->opt_setval))
+        if (!Set_Struct_Var(stu, pvs->picker, NULL, pvs->opt_setval))
             fail (Error_Bad_Path_Set(pvs));
 
         return PE_OK;

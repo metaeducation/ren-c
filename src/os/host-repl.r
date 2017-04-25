@@ -212,7 +212,7 @@ host-repl: function [
             system/state/last-error: last-result
         ]
     ] else [
-        repl/last-result: mold :last-result 
+        repl/last-result: mold :last-result
         repl/print-result
     ]
 

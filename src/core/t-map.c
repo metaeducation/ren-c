@@ -355,7 +355,7 @@ REBINT PD_Map(REBPVS *pvs)
 
     REBINT n = Find_Map_Entry(
         VAL_MAP(pvs->value),
-        pvs->selector,
+        pvs->picker,
         SPECIFIED,
         setting ? pvs->opt_setval : NULL,
         SPECIFIED,
@@ -697,26 +697,6 @@ REBTYPE(Map)
         Find_Map_Entry(
             map, ARG(key), SPECIFIED, VOID_CELL, SPECIFIED, TRUE
         );
-        return R_OUT; }
-
-    case SYM_POKE: { // CHECK all pokes!!! to be sure they check args now !!!
-        INCLUDE_PARAMS_OF_POKE;
-
-        UNUSED(ARG(series)); // map
-        UNUSED(ARG(index)); // arg
-
-        FAIL_IF_READ_ONLY_ARRAY(MAP_PAIRLIST(map));
-
-        const REBOOL cased = TRUE;
-        Find_Map_Entry(
-            map,
-            arg, // key
-            SPECIFIED,
-            ARG(value), // value... since non-void, inserted if not there
-            SPECIFIED,
-            cased
-        );
-        Move_Value(D_OUT, ARG(value));
         return R_OUT; }
 
     case SYM_LENGTH_OF:

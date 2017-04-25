@@ -19,7 +19,7 @@ REBOL [
 first: redescribe [
     {Returns the first value of a series.}
 ](
-    specialize 'pick [index: 1]
+    specialize 'pick [picker: 1]
 )
 
 first+: func [
@@ -34,55 +34,55 @@ first+: func [
 second: redescribe [
     {Returns the second value of a series.}
 ](
-    specialize 'pick [index: 2]
+    specialize 'pick [picker: 2]
 )
 
 third: redescribe [
     {Returns the third value of a series.}
 ](
-    specialize 'pick [index: 3]
+    specialize 'pick [picker: 3]
 )
 
 fourth: redescribe [
     {Returns the fourth value of a series.}
 ](
-    specialize 'pick [index: 4]
+    specialize 'pick [picker: 4]
 )
 
 fifth: redescribe [
     {Returns the fifth value of a series.}
 ](
-    specialize 'pick [index: 5]
+    specialize 'pick [picker: 5]
 )
 
 sixth: redescribe [
     {Returns the sixth value of a series.}
 ](
-    specialize 'pick [index: 6]
+    specialize 'pick [picker: 6]
 )
 
 seventh: redescribe [
     {Returns the seventh value of a series.}
 ](
-    specialize 'pick [index: 7]
+    specialize 'pick [picker: 7]
 )
 
 eighth: redescribe [
     {Returns the eighth value of a series.}
 ](
-    specialize 'pick [index: 8]
+    specialize 'pick [picker: 8]
 )
 
 ninth: redescribe [
     {Returns the ninth value of a series.}
 ](
-    specialize 'pick [index: 9]
+    specialize 'pick [picker: 9]
 )
 
 tenth: redescribe [
     {Returns the tenth value of a series.}
 ](
-    specialize 'pick [index: 10]
+    specialize 'pick [picker: 10]
 )
 
 last: func [

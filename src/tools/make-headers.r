@@ -23,7 +23,7 @@ do %native-emitters.r ;for emit-include-params-macro and emit-native-include-par
 
 print "------ Building headers"
 args: parse-args system/options/args
-output-dir: fix-win32-path to file! any [args/OUTDIR %../]
+output-dir: fix-win32-path to file! any [:args/OUTDIR %../]
 mkdir/deep output-dir/include
 mkdir/deep output-dir/core
 
@@ -320,7 +320,7 @@ action-list: load output-dir/boot/tmp-actions.r
 ; Search file for definition.  Will be `action-name: action [paramlist]`
 ;
 for-next action-list [
-    if 'action = action-list/2 [
+    if 'action = pick action-list 2 [
         assert [set-word? action-list/1]
         emit-include-params-macro (to-word action-list/1) (action-list/3)
         emit newline

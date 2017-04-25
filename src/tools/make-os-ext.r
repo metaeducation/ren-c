@@ -25,8 +25,8 @@ do %common-parsers.r
 do %systems.r
 
 args: parse-args system/options/args
-config: config-system to-value args/OS_ID
-output-dir: fix-win32-path to file! any [args/OUTDIR %../]
+config: config-system to-value :args/OS_ID
+output-dir: fix-win32-path to file! any [:args/OUTDIR %../]
 mkdir/deep output-dir/include
 
 do %form-header.r

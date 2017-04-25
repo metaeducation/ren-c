@@ -1016,15 +1016,6 @@ REBTYPE(Image)
         SET_INTEGER(D_OUT, tail > index ? tail - index : 0);
         return R_OUT;
 
-    case SYM_PICK_P:
-        Pick_Image(D_OUT, value, arg);
-        return R_OUT;
-
-    case SYM_POKE:
-        Poke_Image_Fail_If_Read_Only(value, arg, D_ARG(3));
-        Move_Value(D_OUT, D_ARG(3));
-        return R_OUT;
-
     case SYM_SKIP:
     case SYM_AT:
         // This logic is somewhat complicated by the fact that INTEGER args use
@@ -1410,11 +1401,11 @@ REBINT PD_Image(REBPVS *pvs)
 {
     if (pvs->opt_setval) {
         Poke_Image_Fail_If_Read_Only(
-            KNOWN(pvs->value), pvs->selector, pvs->opt_setval
+            KNOWN(pvs->value), pvs->picker, pvs->opt_setval
         );
         return PE_OK;
     }
 
-    Pick_Image(pvs->store, KNOWN(pvs->value), pvs->selector);
+    Pick_Image(pvs->store, KNOWN(pvs->value), pvs->picker);
     return PE_USE_STORE;
 }

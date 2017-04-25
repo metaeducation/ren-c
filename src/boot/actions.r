@@ -172,19 +172,6 @@ length-of: action [
     series [any-series! port! map! tuple! bitset! object! gob! struct! any-word! blank!]
 ]
 
-;-- Series Extraction
-
-pick*: action [
-    {Returns the value at the specified position.}
-    return: [<opt> any-value!]
-        {Picked value, or void if index not present}
-    aggregate [
-        any-series! map! gob! pair! date! time! tuple! bitset! port! varargs!
-    ]
-    index
-        {Index offset, symbol, or other value to use as index}
-]
-
 ;-- Series Search
 
 find: action [
@@ -300,13 +287,6 @@ change: action [
     /only {Only change a block as a single value (not the contents of the block)}
     /dup {Duplicates the change a specified number of times}
     count [any-number! pair!]
-]
-
-poke: action [
-    {Replaces an element at a given position.}
-    series [any-series! port! map! gob! bitset!] {(modified)}
-    index {Index offset, symbol, or other value to use as index}
-    value [<opt> any-value!] {The new value (returned)}
 ]
 
 clear: action [

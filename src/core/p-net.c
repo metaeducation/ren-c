@@ -330,15 +330,15 @@ static REB_R Transport_Actor(
 
     case SYM_PICK_P: {
         INCLUDE_PARAMS_OF_PICK_P;
-        UNUSED(PAR(aggregate));
+        UNUSED(PAR(location));
 
         // FIRST server-port returns new port connection.
         //
-        REBCNT len = Get_Num_From_Arg(ARG(index));
+        REBCNT len = Get_Num_From_Arg(ARG(picker));
         if (len == 1 && GET_FLAG(sock->modes, RST_LISTEN) && sock->common.data)
             Accept_New_Port(SINK(D_OUT), port, DEVREQ_NET(sock));
         else
-            fail (Error_Out_Of_Range(ARG(index)));
+            fail (Error_Out_Of_Range(ARG(picker)));
         return R_OUT; }
 
     case SYM_QUERY: {

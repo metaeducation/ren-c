@@ -71,39 +71,39 @@ REBOOL Next_Path_Throws(REBPVS *pvs)
 
     pvs->item++;
 
-    // Calculate the "selector" into the GC guarded cell.
+    // Calculate the "picker" into the GC guarded cell.
     //
-    assert(pvs->selector == &pvs->selector_cell);
+    assert(pvs->picker == &pvs->picker_cell);
 
     if (IS_GET_WORD(pvs->item)) { // e.g. object/:field
         Copy_Opt_Var_May_Fail(
-            &pvs->selector_cell, pvs->item, pvs->item_specifier
+            &pvs->picker_cell, pvs->item, pvs->item_specifier
         );
 
-        if (IS_VOID(pvs->selector))
+        if (IS_VOID(pvs->picker))
             fail (Error_No_Value_Core(pvs->item, pvs->item_specifier));
     }
     else if (IS_GROUP(pvs->item)) { // object/(expr) case:
         REBSPC *derived = Derive_Specifier(pvs->item_specifier, pvs->item);
         if (Do_At_Throws(
-            &pvs->selector_cell,
+            &pvs->picker_cell,
             VAL_ARRAY(pvs->item),
             VAL_INDEX(pvs->item),
             derived
         )) {
-            Move_Value(pvs->store, &pvs->selector_cell);
+            Move_Value(pvs->store, &pvs->picker_cell);
             return TRUE;
         }
     }
     else { // object/word and object/value case:
-        Derelativize(&pvs->selector_cell, pvs->item, pvs->item_specifier);
+        Derelativize(&pvs->picker_cell, pvs->item, pvs->item_specifier);
     }
 
     // Disallow voids from being used in path dispatch.  This rule seems like
     // common sense for safety, and also corresponds to voids being illegal
     // to use in SELECT.
     //
-    if (IS_VOID(pvs->selector))
+    if (IS_VOID(pvs->picker))
         fail (Error_No_Value_Core(pvs->item, pvs->item_specifier));
 
     switch (dispatcher(pvs)) {
@@ -163,7 +163,7 @@ REBOOL Do_Path_Throws_Core(
     REBSPC *specifier,
     REBVAL *opt_setval
 ) {
-    // The pvs contains a cell for the selector into which evaluations are
+    // The pvs contains a cell for the picker into which evaluations are
     // done, e.g. `foo/(1 + 2)`.  Because Next_Path() doesn't commit to not
     // performing any evaluations this cell must be guarded.  In the case of
     // a fail() this guard will be released automatically, but to return
@@ -174,10 +174,10 @@ REBOOL Do_Path_Throws_Core(
     // calls, which may still be relevant to why this can't be a C local.
     //
     REBPVS pvs;
-    Prep_Global_Cell(&pvs.selector_cell);
-    SET_END(&pvs.selector_cell);
-    PUSH_GUARD_VALUE(&pvs.selector_cell);
-    pvs.selector = &pvs.selector_cell;
+    Prep_Global_Cell(&pvs.picker_cell);
+    SET_END(&pvs.picker_cell);
+    PUSH_GUARD_VALUE(&pvs.picker_cell);
+    pvs.picker = &pvs.picker_cell;
 
     REBDSP dsp_orig = DSP;
 
@@ -325,11 +325,11 @@ REBOOL Do_Path_Throws_Core(
     }
 
 return_not_thrown:
-    DROP_GUARD_VALUE(&pvs.selector_cell);
+    DROP_GUARD_VALUE(&pvs.picker_cell);
     return FALSE;
 
 return_thrown:
-    DROP_GUARD_VALUE(&pvs.selector_cell);
+    DROP_GUARD_VALUE(&pvs.picker_cell);
     return TRUE;
 }
 
@@ -423,29 +423,24 @@ void Get_Simple_Value_Into(REBVAL *out, const RELVAL *val, REBSPC *specifier)
 //
 REBCTX *Resolve_Path(const REBVAL *path, REBCNT *index_out)
 {
-    RELVAL *selector;
-    const RELVAL *var;
-    REBARR *array;
-    REBCNT i;
+    REBARR *array = VAL_ARRAY(path);
+    RELVAL *picker = ARR_HEAD(array);
 
-    array = VAL_ARRAY(path);
-    selector = ARR_HEAD(array);
-
-    if (IS_END(selector) || !ANY_WORD(selector))
+    if (IS_END(picker) || !ANY_WORD(picker))
         return NULL; // !!! only handles heads of paths that are ANY-WORD!
 
-    var = Get_Opt_Var_May_Fail(selector, VAL_SPECIFIER(path));
+    const RELVAL *var = Get_Opt_Var_May_Fail(picker, VAL_SPECIFIER(path));
 
-    ++selector;
-    if (IS_END(selector))
+    ++picker;
+    if (IS_END(picker))
         return NULL; // !!! does not handle single-element paths
 
-    while (ANY_CONTEXT(var) && IS_WORD(selector)) {
-        i = Find_Canon_In_Context(
-            VAL_CONTEXT(var), VAL_WORD_CANON(selector), FALSE
+    while (ANY_CONTEXT(var) && IS_WORD(picker)) {
+        REBCNT i = Find_Canon_In_Context(
+            VAL_CONTEXT(var), VAL_WORD_CANON(picker), FALSE
         );
-        ++selector;
-        if (IS_END(selector)) {
+        ++picker;
+        if (IS_END(picker)) {
             *index_out = i;
             return VAL_CONTEXT(var);
         }
@@ -453,5 +448,175 @@ REBCTX *Resolve_Path(const REBVAL *path, REBCNT *index_out)
         var = CTX_VAR(VAL_CONTEXT(var), i);
     }
 
-    DEAD_END;
+    return NULL;
+}
+
+
+//
+//  pick*: native [
+//
+//  {Perform a path picking operation, same as `:(:location)/(:picker)`}
+//
+//      return: [<opt> any-value!]
+//          {Picked value, or void if picker can't fulfill the request}
+//      location [any-value!]
+//      picker [any-value!]
+//          {Index offset, symbol, or other value to use as index}
+//  ]
+//
+REBNATIVE(pick_p)
+//
+// In R3-Alpha, PICK was an "action", which dispatched on types through the
+// "action mechanic" for the following types:
+//
+//     [any-series! map! gob! pair! date! time! tuple! bitset! port! varargs!]
+//
+// In Ren-C, PICK is rethought to use the same dispatch mechanic as paths,
+// to cut down on the total number of operations the system has to define.
+{
+    INCLUDE_PARAMS_OF_PICK_P;
+
+    REBVAL *location = ARG(location);
+    REBVAL *picker = ARG(picker);
+
+    // PORT!s are kind of a "user defined type" which historically could
+    // react to PICK and POKE, but which could not override path dispatch.
+    // Use a symbol-based call to bounce the frame to the port, which should
+    // be a compatible frame with the historical "action".
+    //
+    if (IS_PORT(location))
+        return Do_Port_Action(frame_, VAL_CONTEXT(location), SYM_PICK_P);
+
+    REBPVS pvs_decl;
+    REBPVS *pvs = &pvs_decl;
+
+    Prep_Global_Cell(&pvs->picker_cell);
+    SET_TRASH_IF_DEBUG(&pvs->picker_cell); // not used
+    pvs->picker = picker;
+    pvs->store = D_OUT;
+
+    // !!! Sometimes path dispatchers check the item to see if it's at the
+    // end of the path.  The entire thing needs review.  In the meantime,
+    // take advantage of the implicit termination of the frame cell.
+    //
+    Move_Value(D_CELL, picker);
+    assert(IS_END(D_CELL + 1));
+
+    pvs->item = D_CELL;
+    pvs->item_specifier = SPECIFIED;
+    pvs->value = location;
+    pvs->value_specifier = SPECIFIED;
+
+    pvs->label_out = NULL; // applies to e.g. :append/only returning APPEND
+    pvs->orig = location; // expected to be a PATH! for errors, but tolerant
+    pvs->opt_setval = NULL;
+
+    REBPEF dispatcher = Path_Dispatch[VAL_TYPE(location)];
+    assert(dispatcher != NULL); // &PD_Fail is used instead of NULL
+    switch (dispatcher(pvs)) {
+    case PE_OK:
+        break;
+
+    case PE_SET_IF_END:
+        break;
+
+    case PE_NONE:
+        SET_BLANK(pvs->store);
+    case PE_USE_STORE:
+        pvs->value = pvs->store;
+        pvs->value_specifier = SPECIFIED;
+        break;
+
+    default:
+        assert(FALSE);
+    }
+
+    if (pvs->value != pvs->store)
+        Derelativize(D_OUT, pvs->value, pvs->value_specifier);
+
+    return R_OUT;
+}
+
+
+//
+//  poke: native [
+//
+//  {Perform a path poking operation, same as `(:location)/(:picker): :value`}
+//
+//      return: [<opt> any-value!]
+//          {Same as value}
+//      location [any-value!]
+//          {(modified)}
+//      picker
+//          {Index offset, symbol, or other value to use as index}
+//      value [<opt> any-value!]
+//          {The new value}
+//  ]
+//
+REBNATIVE(poke)
+//
+// As with PICK*, POKE is changed in Ren-C from its own action to "whatever
+// path-setting (now path-poking) would do".
+{
+    INCLUDE_PARAMS_OF_POKE;
+
+    REBVAL *location = ARG(location);
+    REBVAL *picker = ARG(picker);
+    REBVAL *value = ARG(value);
+
+    // PORT!s are kind of a "user defined type" which historically could
+    // react to PICK and POKE, but which could not override path dispatch.
+    // Use a symbol-based call to bounce the frame to the port, which should
+    // be a compatible frame with the historical "action".
+    //
+    if (IS_PORT(location))
+        return Do_Port_Action(frame_, VAL_CONTEXT(location), SYM_POKE);
+
+    REBPVS pvs_decl;
+    REBPVS *pvs = &pvs_decl;
+
+    Prep_Global_Cell(&pvs->picker_cell);
+    SET_TRASH_IF_DEBUG(&pvs->picker_cell); // not used
+    pvs->picker = picker;
+    pvs->store = D_OUT;
+
+    // !!! Sometimes the path mechanics do the writes for a poke inside their
+    // dispatcher, vs. delegating via PE_SET_IF_END.  They check to see if
+    // the current pvs->item is at the end.  All of path dispatch was ad hoc
+    // and needs a review.  In the meantime, take advantage of the implicit
+    // termination of the frame cell.
+    //
+    Move_Value(D_CELL, picker);
+    assert(IS_END(D_CELL + 1));
+
+    pvs->item = D_CELL;
+    pvs->item_specifier = SPECIFIED;
+    pvs->value = location;
+    pvs->value_specifier = SPECIFIED;
+
+    pvs->label_out = NULL; // applies to e.g. :append/only returning APPEND
+    pvs->orig = location; // expected to be a PATH! for errors, but tolerant
+    pvs->opt_setval = value;
+
+    REBPEF dispatcher = Path_Dispatch[VAL_TYPE(location)];
+    assert(dispatcher != NULL); // &PD_Fail is used instead of NULL
+    switch (dispatcher(pvs)) {
+    case PE_SET_IF_END:
+        *pvs->value = *pvs->opt_setval;
+        break;
+
+    case PE_OK:
+        // !!! Trust that it wrote?  See above notes about D_CELL.
+        break;
+
+    case PE_NONE:
+    case PE_USE_STORE:
+        fail (picker); // Invalid argument
+
+    default:
+        assert(FALSE);
+    }
+
+    Move_Value(D_OUT, value);
+    return R_OUT;
 }

@@ -139,7 +139,7 @@ assert-debug: function [
             conditions: pos ;-- move expression position and continue
 
             ; including BAR!s in the failure report looks messy
-            while [bar? conditions/1] [conditions: next conditions]
+            while [bar? :conditions/1] [conditions: next conditions]
         ]
     ]
 
