@@ -112,6 +112,7 @@ host-start: load-files [
     %encap.reb
     %unzip.reb
     %host-repl.r
+    %host-encap.r
     %host-start.r
 ]
 
