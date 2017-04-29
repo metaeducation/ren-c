@@ -223,12 +223,12 @@ host-script-pre-load: procedure [
 host-start: function [
     "Loads extras, handles args, security, scripts."
     return: [integer! function!]
-        {If integer, host should exit with that status; else a REPL FUNCTION!}
+        {If integer, host should exit with that status; else a CONSOLE FUNCTION!}
     argv [block!]
         {Raw command line argument block received by main() as STRING!s}
     boot-exts [block! blank!]
         {Extensions (modules) loaded at boot}
-    <with> host-prot repl!
+    <with> host-prot
     <has>
         o (system/options) ;-- shorthand since options are often read/written
 ][
@@ -288,7 +288,7 @@ host-start: function [
 
     do-string: _ ;-- will be set if a string is given with --do
 
-    quit-when-done: _ ;-- by default run REPL
+    quit-when-done: _ ;-- by default run CONSOLE
 
     o/home: what-dir ;-- save the current directory
 
@@ -577,67 +577,82 @@ comment [
     boot-print boot-help
 
 
-    ; REPL skinning:
-    ; Instantiate REPL! object into system/repl
-    ; This object can be updated from %repl-skin.reb (if found in system/user/rebol)
-    ; See /os/host-repl.r where this object is called from
+    ; CONSOLE skinning:
+    ;
+    ; Instantiate console! object into system/console
+    ; This object can be updated from console!/skin-file 
+    ;  - default is  %console-skin.reb
+    ;  - if found in system/user/rebol
+    ;
+    ; See /os/host-console.r where this object is called from
     ;
 
-    proto-skin: []
-    skin-file: if system/user/rebol [join-of system/user/rebol %repl-skin.reb]
+    proto-skin: make console! [
+        skin-file: if system/user/rebol [join-of system/user/rebol %console-skin.reb]
+    ]
 
-    if skin-file [
-        boot-print [newline "REPL skinning:" newline]
+    if skin-file: proto-skin/skin-file [
+        boot-print [newline "CONSOLE skinning:" newline]
         trap/with [
             ;; load & run skin if found
-            if loaded-skin?: exists? skin-file [
+            if exists? skin-file [
                 new-skin: do load skin-file
 
-                ;; if loaded skin returns REPL! object then use as prototype
+                ;; if loaded skin returns console! object then use as prototype
                 if all [
                     object? new-skin
-                    true? select new-skin 'repl    ;; quacks like a REPL!
-                ] [proto-skin: new-skin]
+                    true? select new-skin 'repl    ;; quacks like a REPL so its a console!
+                ][
+                    proto-skin: make new-skin compose [
+                        skin-file: (skin-file)
+                        updated?: true
+                    ]
+                ]
+
+                proto-skin/loaded?: true
             ]
 
             boot-print [
                 space space
-                either/only loaded-skin? {Loaded skin} {Skin does not exist}
+                either/only proto-skin/loaded? {Loaded skin} {Skin does not exist}
                 "-" skin-file
-                unspaced ["(" if/only empty? proto-skin {not } "updated REPL)"]
+                unspaced ["(" unless/only proto-skin/updated? {not } "updated CONSOLE)"]
             ]
         ] func [error] [
             boot-print [
                 {  Error loading skin  -} skin-file | |
                 error | |
-                {  Fix error and restart REPL}
+                {  Fix error and restart CONSOLE}
             ]
         ]
 
         boot-print {}
     ]
 
-    system/repl: make repl! proto-skin
+    system/console: proto-skin
 
 
-    ; Rather than have the host C code look up the REPL function by name, it
+    ; Rather than have the host C code look up the CONSOLE function by name, it
     ; is returned as a function value from calling the start.  It's a bit of
     ; a hack, and might be better with something like the SYS_FUNC table that
     ; lets the core call Rebol code.
     ;
-    return :host-repl
+    return :host-console
 ]
 
 
-; Define REPL! object for skinning - stub for elsewhere?
+; Define console! object for skinning - stub for elsewhere?
 ;
 
-repl!: make object! [
-    repl: true
+console!: make object! [
+    repl: true      ;-- used to identify this as a console! object (quack!)
+    skin-file: _
+    loaded?:  false ;-- if true then this is a loaded (external) skin
+    updated?: false ;-- if true then console! object found in loaded skin
     counter: 0
-    last-result: _ ;-- last evaluated result (sent by HOST-REPL)
+    last-result: _  ;-- last evaluated result (sent by HOST-CONSOLE)
 
-    ; Called on every line of input by HOST-REPL in %os/host-repl.r
+    ; Called on every line of input by HOST-CONSOLE in %os/host-console.r
     ;
     cycle: does [
         if zero? ++ counter [print-greeting] ;-- only load skin on first cycle
@@ -663,14 +678,14 @@ repl!: make object! [
     ;; BEHAVIOR (can be overridden)
     
     input-hook: func [
-        {Receives line input, parse/transform, send back to repl eval}
+        {Receives line input, parse/transform, send back to CONSOLE eval}
         s
     ][
         s
     ]
 
     dialect-hook: func [
-        {Receives code block, parse/transform, send back to repl eval}
+        {Receives code block, parse/transform, send back to CONSOLE eval}
         s
     ][
         s
@@ -678,16 +693,19 @@ repl!: make object! [
 
     shortcuts: make object! [
         q: [quit]
-        list-shortcuts: [print system/repl/shortcuts]
+        list-shortcuts: [print system/console/shortcuts]
     ]
 
     ;; HELPERS (could be overridden!)
 
     add-shortcut: proc [
-        {Add/Change REPL shortcut}
-        name  [any-word!]   {shortcut name}
-        block [block!]      {command(s) expanded to}
+        {Add/Change console shortcut}
+        name  [any-word!]
+            {shortcut name}
+        block [block!]
+            {command(s) expanded to}
     ][
         extend shortcuts name block
     ]
 ]
+

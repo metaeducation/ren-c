@@ -591,8 +591,11 @@ user: construct [] [
 ;   trace: _
 ;]
 
-repl: _         ;; repl object created in host-start (os/host-start.r)
+console: _         ;; console (repl) object created in host-start (os/host-start.r)
 
+; Below is original console construct (unused and comment-out in r3/ren-c)
+; Left here for reference (for future development)
+;
 ;console: construct [] [
 ;   hide-types: _    ; types not to print
 ;   history: _       ; Log of user inputs

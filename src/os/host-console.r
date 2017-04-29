@@ -1,6 +1,6 @@
 REBOL [
     System: "REBOL [R3] Language Interpreter and Run-time Environment"
-    Title: "Host Read-Eval-Print-Loop (REPL)"
+    Title: "Host Console (Rebol's Read-Eval-Print-Loop, ie. REPL)"
     Rights: {
         Copyright 2016-2017 Rebol Open Source Contributors
         REBOL is a trademark of REBOL Technologies
@@ -13,11 +13,11 @@ REBOL [
         This implements a simple interactive command line.  It gathers strings
         to be executed but does not actually run them with DO--instead it
         returns a block to C code which does the actual execution.  The
-        reason it is done this way is to avoid having Rebol REPL stack frames
+        reason it is done this way is to avoid having Rebol CONSOLE stack frames
         hanging around when debug commands are executed (e.g. one does not
         want BACKTRACE to see a FOREVER [] loop of gathering input, or the DO)
 
-        Though not implemented in C as the R3-Alpha REPL was, it still relies
+        Though not implemented in C as the R3-Alpha CONSOLE was, it still relies
         upon INPUT to receive lines.  INPUT reads lines from the "console
         port", which is C code that is linked to STDTERM on POSIX and the
         Win32 Console API on Windows.  Thus, the ability to control the cursor
@@ -36,7 +36,7 @@ REBOL [
 ; https://github.com/red/red/issues/2487
 ;
 ; They are not implemented yet, but ECHO is moved here to signify the known
-; issue that the REPL must collaborate specifically with ECHO to achieve
+; issue that the CONSOLE must collaborate specifically with ECHO to achieve
 ; this.
 ;
 echo: procedure [
@@ -153,14 +153,14 @@ echo: procedure [
 ]
 
 
-host-repl: function [
+host-console: function [
     {Implements one Print-and-Read step of a Read-Eval-Print-Loop (REPL).}
 
     return: [block! error!]
         {Code to run or syntax error in the string input that tried to LOAD}
 
     last-result [<opt> any-value!]
-        {The result from the last time HOST-REPL ran to display (if any)}
+        {The result from the last time HOST-CONSOLE ran to display (if any)}
 
     last-failed [logic!]
         {TRUE if the last-result is an ERROR! that FAILed vs just a result}
@@ -178,11 +178,11 @@ host-repl: function [
     RE_SCAN_EXTRA (2002)
     RE_SCAN_MISMATCH (2003)
 ][
-    ; REPL is an external object for skinning the behaviour & appearance
+    ; CONSOLE is an external object for skinning the behaviour & appearance
     ;
     ; /cycle - updates internal counter and print greeting on first rotation (ie. once)
     ;
-    repl: system/repl
+    repl: system/console
     repl/cycle
 
     source: copy {} ;-- source code potentially built of multiple lines
@@ -269,7 +269,7 @@ host-repl: function [
             ; Ren Garden does (though it takes two lines).  It should not be
             ; applied to input that is pasted as text from another source,
             ; and arguably this could be disruptive to multi-line strings even
-            ; if being entered in the REPL.
+            ; if being entered in the CONSOLE
             ;
             code: error
 
@@ -310,7 +310,7 @@ host-repl: function [
         ]
 
         ; There is a question of how it should be decided whether the code
-        ; in the REPL should be locked as read-only or not.  It may be a
+        ; in the CONSOLE should be locked as read-only or not.  It may be a
         ; configuration switch, as it also may be an option for a module or
         ; a special type of function which does not lock its source.
         ;

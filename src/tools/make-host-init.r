@@ -111,7 +111,7 @@ load-files: function [
 host-start: load-files [
     %encap.reb
     %unzip.reb
-    %host-repl.r
+    %host-console.r
     %host-start.r
 ]
 
