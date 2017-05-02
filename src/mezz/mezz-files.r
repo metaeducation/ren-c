@@ -11,7 +11,6 @@ REBOL [
     }
 ]
 
-
 clean-path: function [
     "Returns new directory path with `//` `.` and `..` processed."
     file [file! url! string!]
@@ -65,7 +64,6 @@ clean-path: function [
     reverse out
 ]
 
-
 input: function [
     {Inputs a string from the console. New-line character is removed.}
     return: [string!]
@@ -84,7 +82,6 @@ input: function [
     line
 ]
 
-
 ask: function [
     "Ask the user for input."
     return: [string!]
@@ -96,7 +93,6 @@ ask: function [
     print/only either block? question [spaced question] [question]
     trim either hide [input/hide] [input]
 ]
-
 
 confirm: function [
     "Confirms a user choice."
@@ -122,7 +118,6 @@ confirm: function [
         find? second choices response [false]
     ]
 ]
-
 
 list-dir: procedure [
     "Print contents of a directory (ls)."
@@ -185,7 +180,6 @@ list-dir: procedure [
     change-dir save-dir
 ]
 
-
 undirize: function [
     {Returns a copy of the path with any trailing "/" removed.}
     return: [file! string! url!]
@@ -195,7 +189,6 @@ undirize: function [
     if #"/" = last path [clear back tail path]
     path
 ]
-
 
 in-dir: function [
     "Evaluate a block while in a directory."
@@ -212,7 +205,6 @@ in-dir: function [
 
     also do block change-dir old-dir
 ]
-
 
 to-relative-file: function [
     "Returns relative portion of a file if in subdirectory, original if not."
@@ -245,4 +237,11 @@ to-relative-file: function [
     unless no-copy [file: copy file]
     
     file
+]
+
+detab-file: procedure [
+    "detabs a disk file"
+    filename [file!]
+][
+    write filename detab to string! read filename
 ]
