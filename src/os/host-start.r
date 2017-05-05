@@ -108,7 +108,7 @@ boot-banner: [
     -
     = Language: system/locale/language*
     = Locale:   system/locale/locale*
-    = Home:     [to-local-file system/options/home]
+    = Home:     system/options/home
     -
     *
 ]
@@ -265,26 +265,52 @@ host-start: function [
 
     system/product: 'core
 
-    ; Set system/user home & rebol dirs if present
     ;
-    ; User rebol directory (for local customisations)
-    ;   * default (Linux, MacOS, Unix) - $HOME/.rebol
-    ;   * Windows                      - $HOME/REBOL
+    ; helper path functions
     ;
-    ; TBD - check perms are correct (SECURITY)
+    to-dir: function [
+        {Convert string path to absolute dir! path.  Return blank! if not found}
+        dir [string!]
+    ][
+        dir: clean-path/dir to-rebol-file dir
+        all [exists? dir | dir]
+    ]
 
-    all [
+    get-home-path: function [
+        {Return users HOME path, for eg. $HOME on *nix. Return blank! if not found}
+    ][
         home: any [
             get-env 'HOME
             get-env 'HOMEPATH
         ]
-        exists? home: dirize to-rebol-file home
-        system/user/home: home
-        rebol-dir: join-of home switch/default system/platform/1 [
+
+        attempt [to-dir home] 
+    ]
+
+    get-resources-path: function [
+        {Return platform specific resources path. Return blank! if not found}
+    ][
+        ;; lives under systems/options/home
+
+        path: join-of o/home switch/default system/platform/1 [
             'Windows [%REBOL/]
-        ][%.rebol/]              ;; default *nix (Linux, MacOS & UNIX)
-        exists? rebol-dir
-        system/user/rebol: rebol-dir
+        ][
+            %.rebol/     ;; default *nix (covers Linux, MacOS (OS X) and Unix)
+        ]  
+
+        all [exists? path | path]    
+    ]
+
+    ; Set system/users/home (users HOME directory)
+    ; Set system/options/home (ditto)
+    ; Set system/options/resources (users Rebol resource directory)
+    ; NB. Above can be overridden by --home switch
+    ; TBD - check perms are correct (SECURITY)
+    all [
+        home-dir: get-home-path             ;; _ if doesn't exist
+        system/user/home: o/home: home-dir
+        resources-dir: get-resources-path   ;; _ if doesn't exist
+        o/resources: resources-dir
      ]
 
     sys/script-pre-load-hook: :host-script-pre-load
@@ -293,14 +319,13 @@ host-start: function [
 
     quit-when-done: _ ;-- by default run CONSOLE
 
-    o/home: what-dir ;-- save the current directory
-
     ; Process the option syntax out of the command line args in order to get
     ; the intended arguments.  TAKEs each option string as it goes so the
     ; array remainder can act as the args.
 
     unless tail? argv [ ;-- on most systems, argv[0] is the exe path
         o/boot: clean-path to-rebol-file take argv
+        o/bin: first split-path o/boot
     ]
 
     until [tail? argv] [
@@ -365,6 +390,15 @@ host-start: function [
                 ;
                 o/quiet: true
                 o/secure: 'allow
+            )
+        |
+            "--resources" end (
+                take argv
+                if resource-dir: to-dir argv/1 [
+                    ;; dir exists so will override earlier automated settings
+                    o/resources: resource-dir
+                ]
+                else [fail "RESOURCES directory not found"]
             )
         |
             "--secure" end (
@@ -445,14 +479,13 @@ host-start: function [
     if any [boot-embedded o/script] [o/quiet: true]
 
     ;-- Set up option/paths for /path, /boot, /home, and script path (for SECURE):
-    o/path: dirize any [o/path o/home]
+    o/path: what-dir  ;dirize any [o/path o/home]
 
     ;-- !!! this was commented out.  Is it important?
     comment [
         if slash <> first o/boot [o/boot: clean-path o/boot]
     ]
 
-    o/home: file: first split-path o/boot
     if file? o/script [ ; Get the path (needed for SECURE setup)
         script-path: split-path o/script
         case [
@@ -476,6 +509,8 @@ host-start: function [
     host-prot: 'done
 
     ;-- Setup SECURE configuration (a NO-OP for min boot)
+    ;; Note: After refactoring `file` was removed from above.
+    ;;       file (below) -> o/bin (would have been same)
 
 comment [
     lib/secure (case [
@@ -491,8 +526,8 @@ comment [
 ]
 
     ;-- Evaluate rebol.r script:
-    loud-print ["Checking for rebol.r file in" file]
-    if exists? file/rebol.r [do file/rebol.r] ; bug#706
+    loud-print ["Checking for rebol.r file in" o/bin]
+    if exists? o/bin/rebol.r [do o/bin/rebol.r] ; bug#706
 
     ;boot-print ["Checking for user.r file in" file]
     ;if exists? file/user.r [do file/user.r]
@@ -584,16 +619,16 @@ comment [
     ; Instantiate console! object into system/console
     ; This object can be updated from console!/skin-file
     ;  - default is  %console-skin.reb
-    ;  - if found in system/user/rebol
+    ;  - if found in system/options/resources
     ;
     ; See /os/host-console.r where this object is called from
     ;
     proto-skin: make console! [
         skin-file: either all [
-            system/user/rebol
-            exists? join-of system/user/rebol %console-skin.reb
+            system/options/resources
+            exists? join-of system/options/resources %console-skin.reb
         ][
-            join-of system/user/rebol %console-skin.reb
+            join-of system/options/resources %console-skin.reb
         ][_]
     ]
 

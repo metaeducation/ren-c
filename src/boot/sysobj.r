@@ -106,8 +106,10 @@ locale: construct [] [
 ]
 
 options: construct [] [  ; Options supplied to REBOL during startup
-    boot: _         ; The path to the executable
+    bin: _          ; Path to directory where Rebol executable binary lives
+    boot: _         ; Path of executable, ie. system/options/bin/r3-exe
     home: _         ; Path of home directory
+    resources: _    ; users resources directory (for %user.r, skins, modules etc)
     path: _         ; Where script was started or the startup dir
 
     current-path: _ ; Current URL! or FILE! path to use for relative lookups
@@ -581,7 +583,6 @@ user: construct [] [
    name:           ; User's name
    email:          ; User's default email address
    home:           ; The HOME environment variable
-   rebol:          ; Users rebol customisations dir.  eg. $HOME/.rebol on *nix
    words: _
 ]
 
