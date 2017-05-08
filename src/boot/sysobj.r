@@ -110,6 +110,8 @@ options: construct [] [  ; Options supplied to REBOL during startup
     boot: _         ; Path of executable, ie. system/options/bin/r3-exe
     home: _         ; Path of home directory
     resources: _    ; users resources directory (for %user.r, skins, modules etc)
+    suppress: _     ; block of user --suppress items, eg [%rebol.r %user.r %console-skin.reb]
+    loaded: []      ; block with full paths to loaded start-up scripts
     path: _         ; Where script was started or the startup dir
 
     current-path: _ ; Current URL! or FILE! path to use for relative lookups

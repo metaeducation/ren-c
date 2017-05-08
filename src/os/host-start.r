@@ -401,6 +401,16 @@ host-start: function [
                 else [fail "RESOURCES directory not found"]
             )
         |
+            "--suppress" end (
+                take argv
+                o/suppress: if argv/1 == "*" [
+                    ;; suppress all known start-up files
+                    [%rebol.r %user.r %console-skin.reb]
+                ] else [
+                    to-block argv/1
+                ]
+            )
+        |
             "--secure" end (
                 take argv
                 o/secure: to word! argv/1
@@ -525,13 +535,43 @@ comment [
     ])
 ]
 
+    ;
+    ; start-up scripts, o/loaded tracks which ones are loaded (with full path)
+    ;
+
     ;-- Evaluate rebol.r script:
-    loud-print ["Checking for rebol.r file in" o/bin]
-    if exists? o/bin/rebol.r [do o/bin/rebol.r] ; bug#706
+    unless find o/suppress %rebol.r [
+        loud-print ["Checking for rebol.r file in" o/bin]
+        if exists? o/bin/rebol.r [ ; bug#706 ??
+            trap/with [
+                do o/bin/rebol.r
+                append o/loaded o/bin/rebol.r
+            ] func [error] [
+                fail "Error in rebol.r script"
+            ]
+        ]
+    ]
 
-    ;boot-print ["Checking for user.r file in" file]
-    ;if exists? file/user.r [do file/user.r]
+    ;-- Evaluate user.r script:
+    if all [
+        o/resources
+        not find o/suppress %user.r 
+    ][
+        loud-print ["Checking for user.r file in" o/resources]
+        if exists? o/resources/user.r [
+            trap/with [
+                ;; ideally I want to query perms to make sure RESOURCES is owner writable only
+                do o/resources/user.r
+                append o/loaded o/resources/user.r
+            ] func [error] [
+                fail "Error in user.r script"
+            ]
+        ]
+    ]
 
+    ;
+    ;
+    ;
     boot-print ""
 
     unless blank? boot-embedded [
@@ -617,40 +657,36 @@ comment [
     ; CONSOLE skinning:
     ;
     ; Instantiate console! object into system/console
-    ; This object can be updated from console!/skin-file
-    ;  - default is  %console-skin.reb
-    ;  - if found in system/options/resources
+    ; This object can be updated %console-skin.reb if found in system/options/resources
     ;
     ; See /os/host-console.r where this object is called from
     ;
-    proto-skin: make console! [
-        skin-file: either all [
-            system/options/resources
-            exists? join-of system/options/resources %console-skin.reb
-        ][
-            join-of system/options/resources %console-skin.reb
-        ][_]
-    ]
 
-    if skin-file: get 'proto-skin/skin-file [
-        boot-print [newline "CONSOLE skinning:" newline]
+    proto-skin: make console! []
+
+    if all [
+        skin-file: %console-skin.reb
+        not find o/suppress skin-file
+        o/resources
+        skin-file: join-of o/resources skin-file
+    ][
         trap/with [
-                ;; load & run skin if found
+            boot-print [newline "CONSOLE skinning:" newline]
+
+            ;; load & run skin if found
             if exists? skin-file [
-                new-skin: do load skin-file
+                proto-skin: do load skin-file
 
                 ;; if loaded skin returns console! object then use as prototype
                 if all [
-                    object? new-skin
-                    true? select new-skin 'repl    ;; quacks like a REPL so its a console!
+                    object? proto-skin
+                    true? select proto-skin 'repl    ;; quacks like a REPL so its a console!
                 ][
-                    proto-skin: make new-skin compose [
-                        skin-file: (skin-file)
-                        updated?: true
-                    ]
+                    proto-skin/updated?: true
                 ]
 
                 proto-skin/loaded?: true
+                append o/loaded skin-file
             ]
 
             boot-print [
@@ -669,7 +705,9 @@ comment [
 
         boot-print {}
     ]
+
     system/console: proto-skin
+
     ; Rather than have the host C code look up the CONSOLE function by name, it
     ; is returned as a function value from calling the start.  It's a bit of
     ; a hack, and might be better with something like the SYS_FUNC table that
@@ -684,7 +722,6 @@ comment [
 
 console!: make object! [
     repl: true      ;-- used to identify this as a console! object (quack!)
-    skin-file: _
     loaded?:  false ;-- if true then this is a loaded (external) skin
     updated?: false ;-- if true then console! object found in loaded skin
     counter: 0
