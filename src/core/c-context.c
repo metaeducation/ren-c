@@ -1300,7 +1300,11 @@ REBCNT Find_Word_In_Array(REBARR *array, REBCNT index, REBSTR *sym)
 //  Obj_Value: C
 //
 // Return pointer to the nth VALUE of an object.
-// Return zero if the index is not valid.
+// Return NULL if the index is not valid.
+//
+// !!! All cases of this should be reviewed...mostly for getting an indexed
+// field out of a port.  If the port doesn't have the index, should it always
+// be an error?
 //
 REBVAL *Obj_Value(REBVAL *value, REBCNT index)
 {
@@ -1308,6 +1312,34 @@ REBVAL *Obj_Value(REBVAL *value, REBCNT index)
 
     if (index > CTX_LEN(context)) return 0;
     return CTX_VAR(context, index);
+}
+
+
+//
+//  Get_Typed_Field: C
+//
+// Convenience routine, see also Get_Field() and Sink_Field().  Could not be
+// made inline in %sys-context.h because of Init_Word() usage.
+//
+REBVAL *Get_Typed_Field(
+    REBCTX *c,
+    REBSTR *spelling, // will be canonized
+    enum Reb_Kind kind // REB_0 to not check the kind
+) {
+    REBCNT n = Find_Canon_In_Context(c, STR_CANON(spelling), FALSE);
+    if (n == 0) {
+        DECLARE_LOCAL (missing);
+        Init_Word(missing, spelling);
+        fail (Error_Not_In_Context_Raw(missing));
+    }
+
+    REBVAL *var = CTX_VAR(c, n);
+    if (kind == REB_0)
+        return var;
+
+    if (kind != VAL_TYPE(var))
+        fail ("Invalid type of field"); // improve error
+    return var;
 }
 
 

@@ -113,7 +113,9 @@ elseif ("${OS_MAJOR}" STREQUAL "3")
         _UNICODE
         ZLIB_DLL #to export symbols in zlib for u-png.c usage
         )
-    set(LIBS wsock32 comdlg32)
+    set(LIBS wsock32 comdlg32
+        odbc32)
+    # !!! odbc32 here because I can't figure out how to have extension add it
 elseif ("${OS_MAJOR}" STREQUAL "4")
     set (TO_LINUX TRUE)
     list (APPEND COMMON_MACROS
@@ -790,6 +792,19 @@ add_module(
 )
 add_extension(
     r3-png PNG TRUE "${EXT_DIR}/png/ext-png.c" "LodePNG;uPNG" ""
+    "${TOP_GENERATED_SRC_DIR}/include;${TOP_SRC_DIR}/include;${FFI_INCLUDE_DIRS};${INC}"
+    "${COMMON_MACROS}"
+)
+
+add_module(ODBC "${EXT_DIR}/odbc/mod-odbc.c" "")
+add_extension(r3-odbc ODBC TRUE "${EXT_DIR}/odbc/ext-odbc.c" "ODBC" "${EXT_DIR}/odbc/ext-odbc-init.reb"
+    "${TOP_GENERATED_SRC_DIR}/include;${TOP_SRC_DIR}/include;${FFI_INCLUDE_DIRS};${INC}"
+    "${COMMON_MACROS}")
+# !!! How to specify module linkage dependencies, based on whether they
+# will be included in the build or not?  we need odbc32.lib
+
+add_module(GIF "${EXT_DIR}/gif/mod-gif.c" "")
+add_extension(r3-gif GIF TRUE "${EXT_DIR}/gif/ext-gif.c" "GIF" ""
     "${TOP_GENERATED_SRC_DIR}/include;${TOP_SRC_DIR}/include;${FFI_INCLUDE_DIRS};${INC}"
     "${COMMON_MACROS}"
 )
