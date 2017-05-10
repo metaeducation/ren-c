@@ -325,7 +325,7 @@ newline
 ) newline
  
 {# For the build toolchain:
-CC=} space (either cplusplus ["$(TOOLS)g++"] ["$(TOOLS)gcc"]) newline
+CC=} space (either cplusplus ["$(TOOLS)g++"] ["$(TOOLS)gcc"]) space "$(TOOLS_CC_FLAGS)" newline
 
 newline
 
