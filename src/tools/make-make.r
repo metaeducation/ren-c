@@ -163,10 +163,14 @@ newline
 #
 #     $TOOLS - should point to bin where gcc is found
 #     $INCL  - should point to the dir for includes
+#     $EXTRA_CC_FLAGS - optional compiler flags (useful for --sysroot)
 #
 # Example make:
 #
 #     make TOOLS=~/amiga/amiga/bin/ppc-amigaos- INCL=/SDK/newlib/include
+#
+#     make TOOLS=/android-ndk/toolchains/.../bin/arm-linux-androideabi- \
+#          EXTRA_CC_FLAGS="--sysroot=/android-ndk/platforms/.../arch-arm"
 #
 # !!! Efforts to be able to have Rebol build itself in absence of a make
 # tool are being considered.  Please come chime in on chat if you are
@@ -325,7 +329,7 @@ newline
 ) newline
  
 {# For the build toolchain:
-CC=} space (either cplusplus ["$(TOOLS)g++"] ["$(TOOLS)gcc"]) space "$(TOOLS_CC_FLAGS)" newline
+CC=} space (either cplusplus ["$(TOOLS)g++"] ["$(TOOLS)gcc"]) space "$(EXTRA_CC_FLAGS)" newline
 
 newline
 
