@@ -13,7 +13,14 @@ language: c
 
 
 matrix:
-    include:
+    include: 
+        # Android5, debug, gcc
+        #
+        - os: linux
+          dist: trusty #gcc on Ubuntu 12.04 does not support sanitizers
+          sudo: false #Force new container-based infrastructure.
+          language: c
+          env: OS_ID=0.13.2 DEBUG=asserts STANDARD=c RIGOROUS=no STATIC=yes HOST=arm-eabi  FFI="no"
         # Linux x86, release, gcc
         #
         - os: linux
@@ -161,6 +168,14 @@ script:
 
     - TOP_DIR=${PWD}
     - |
+      if [[ ${OS_ID} = "0.13.2" || ${OS_ID} = "0.13.1" ]]; then
+          if [ `uname -m` = x86_64 ]; then wget https://github.com/giuliolunati/android-travis/releases/download/v1.0.0/android-ndk-r13.tgz; ANDROID_NDK=$TOP_DIR/android-ndk-r13; else exit 1; fi
+          tar zxf android-ndk-r13.tgz
+          echo $PWD
+          ls -dl $PWD/android-ndk-r13
+          export TOOLS=$ANDROID_NDK/toolchains/arm-linux-androideabi-4.9/prebuilt/linux-x86_64/bin/arm-linux-androideabi-
+          export EXTRA_CC_FLAGS="--sysroot=$ANDROID_NDK/platforms/android-19/arch-arm"
+      fi
       if [[ ${OS_ID} = "0.3.40" || ${OS_ID} = "0.3.1" ]]; then
           # Use prebuilt binaries
           if [[ ${OS_ID} = "0.3.40" ]]; then
@@ -173,7 +188,7 @@ script:
           # check cflags and libs
           ${PKGCONFIG} --cflags libffi
           ${PKGCONFIG} --libs libffi
-      else
+      elif [[ -z ${FFI} || ${FFI} != "no" ]]; then
           # Build libffi
           mkdir build
           cd external/libffi
@@ -312,11 +327,12 @@ script:
     # On the second build of building twice, or just building once, include
     # the GIT_COMMIT
     #
+    -  if [[ -z ${FFI} ]]; then FFI="dynamic"; fi
     - |
       if [[ -z ${TCC} ]]; then
-          make -f makefile.boot REBOL_TOOL=r3-make STANDARD="${STANDARD}" OS_ID="${OS_ID}" DEBUG="${DEBUG}" GIT_COMMIT="${GIT_COMMIT}" RIGOROUS="${RIGOROUS}" STATIC="${STATIC}" WITH_FFI="dynamic" WITH_TCC="no"
+          make -f makefile.boot REBOL_TOOL=r3-make STANDARD="${STANDARD}" OS_ID="${OS_ID}" DEBUG="${DEBUG}" GIT_COMMIT="${GIT_COMMIT}" RIGOROUS="${RIGOROUS}" STATIC="${STATIC}" WITH_FFI=${FFI} WITH_TCC="no"
       else
-          make -f makefile.boot REBOL_TOOL=r3-make STANDARD="${STANDARD}" OS_ID="${OS_ID}" DEBUG="${DEBUG}" GIT_COMMIT="${GIT_COMMIT}" RIGOROUS="${RIGOROUS}" STATIC="${STATIC}" WITH_FFI="dynamic" WITH_TCC="${PWD}/tcc/${TCC}"
+          make -f makefile.boot REBOL_TOOL=r3-make STANDARD="${STANDARD}" OS_ID="${OS_ID}" DEBUG="${DEBUG}" GIT_COMMIT="${GIT_COMMIT}" RIGOROUS="${RIGOROUS}" STATIC="${STATIC}" WITH_FFI=${FFI} WITH_TCC="${PWD}/tcc/${TCC}"
       fi
 
     # take a look at the preprocess header file
@@ -369,6 +385,12 @@ script:
           R3_EXIT_STATUS=0;
       fi
     - echo ${R3_EXIT_STATUS}
+
+    # Clean Android elf executable
+    - |
+      if [[ ${OS_ID} = "0.13.2" || ${OS_ID} = "0.13.1" ]]; then
+          $ANDROID_NDK/android-elf-cleaner r3
+      fi
 
     # Delete the obj file directory so we don't upload those to S3
     #
