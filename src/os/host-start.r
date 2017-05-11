@@ -266,8 +266,24 @@ host-start: function [
     system/product: 'core
 
     ;
-    ; helper path functions
+    ; helper functions
     ;
+    die: func [
+        {A gracefully way to FAIL during startup}
+        reason [string!]
+            {Error message}
+        /error e [error!]
+            {Error object, shown if --verbose switch used}
+        <with> return
+    ][
+        print "Startup encountered an error!"
+        print ["**" reason]
+        if error [
+            print either o/verbose [e] ["!! use --verbose for more detail"]
+        ]
+        return 1
+    ]
+
     to-dir: function [
         {Convert string path to absolute dir! path.  Return blank! if not found}
         dir [string!]
@@ -547,7 +563,7 @@ comment [
                 do o/bin/rebol.reb
                 append o/loaded o/bin/rebol.reb
             ] func [error] [
-                fail "Error in rebol.reb script"
+                die/error "Error found in rebol.reb script" error
             ]
         ]
     ]
@@ -567,7 +583,7 @@ comment [
                 do o/resources/user.reb
                 append o/loaded o/resources/user.reb
             ] func [error] [
-                fail "Error in user.reb script"
+                die/error "Error found in user.reb script" error
             ]
         ]
     ]
