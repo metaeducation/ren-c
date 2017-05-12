@@ -279,7 +279,7 @@ host-console: function [
                 ; and needs to be closed.  Invert the symbol.
                 ;
                 unclosed: switch error/arg1 [
-                    "}" ["^{"]
+                    "}" ["{"]
                     ")" ["("]
                     "]" ["["]
                 ]

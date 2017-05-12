@@ -520,7 +520,6 @@ host-start: function [
 
     ; version, import, secure are all of valid type or blank
 
-    if o/verbose [print o]
 
     load-boot-exts boot-exts
 
@@ -555,6 +554,7 @@ comment [
             trap/with [
                 do o/bin/rebol.reb
                 append o/loaded o/bin/rebol.reb
+                loud-print ["Finished evaluating script:" o/bin/rebol.reb]
             ] func [error] [
                 die/error "Error found in rebol.reb script" error
             ]
@@ -575,6 +575,7 @@ comment [
                 ;
                 do o/resources/user.reb
                 append o/loaded o/resources/user.reb
+                loud-print ["Finished evaluating script:" o/resources/user.reb]
             ] func [error] [
                 die/error "Error found in user.reb script" error
             ]
@@ -658,6 +659,8 @@ comment [
     ; See /os/host-console.r where this object is called from
     ;
 
+    loud-print "Starting console..."
+    loud-print ""
     proto-skin: make console! []
     skin-error: _
 
