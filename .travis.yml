@@ -20,21 +20,22 @@ matrix:
           dist: trusty #gcc on Ubuntu 12.04 does not support sanitizers
           sudo: false #Force new container-based infrastructure.
           language: c
-          env: OS_ID=0.13.2 DEBUG=asserts STANDARD=c RIGOROUS=no STATIC=yes HOST=arm-eabi  FFI="no"
+          env: OS_ID=0.13.2 DEBUG=asserts STANDARD=c RIGOROUS=no STATIC=yes HOST=arm-eabi FFI="no"
+
+        # Android5, release, gcc
+        #
+        - os: linux
+          dist: trusty #gcc on Ubuntu 12.04 does not support sanitizers
+          sudo: false #Force new container-based infrastructure.
+          language: c
+          env: OS_ID=0.13.2 DEBUG=none STANDARD=c RIGOROUS=no STATIC=yes HOST=arm-eabi FFI="no"
+
         # Linux x86, release, gcc
         #
         - os: linux
           sudo: false #Force new container-based infrastructure.
           language: c
           env: OS_ID=0.4.4 DEBUG=none STANDARD=gnu89 RIGOROUS=yes STATIC=yes TCC=i386-tcc ARCH_CFLAGS=-m32
-
-        # Linux x64, debug, gcc
-        #
-        - os: linux
-          dist: trusty #gcc on Ubuntu 12.04 does not support sanitizers
-          sudo: false #Force new container-based infrastructure.
-          language: c
-          env: OS_ID=0.4.40 DEBUG=asserts STANDARD=c RIGOROUS=yes STATIC=yes TCC=tcc
 
         # Linux x64, debug, g++
         #
@@ -77,13 +78,6 @@ matrix:
           language: cpp
           env: OS_ID=0.3.40 DEBUG=asserts TOOLS=x86_64-w64-mingw32- STANDARD=c++ RIGOROUS=yes STATIC=yes TCC=x86_64-win32-tcc TCC_CPP_EXTRA_FLAGS='-I../external/tcc/win32/include -DPVAR=TVAR -DTVAR="extern __attribute__((dllimport))"' HOST=x86_64-w64-mingw32
         
-        # Windows x64, release, gcc
-        #
-        - os: linux
-          sudo: false #Force new container-based infrastructure.
-          language: cpp
-          env: OS_ID=0.3.40 DEBUG=none TOOLS=x86_64-w64-mingw32- STANDARD=c RIGOROUS=yes STATIC=yes TCC=x86_64-win32-tcc TCC_CPP_EXTRA_FLAGS='-I../external/tcc/win32/include -DPVAR=TVAR -DTVAR="extern __attribute__((dllimport))"' HOST=x86_64-w64-mingw32
-
         # OSX x64, debug, gcc
         #
         # TCC currently doesn't quite support OSX yet
