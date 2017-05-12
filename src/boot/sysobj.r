@@ -126,6 +126,7 @@ options: construct [] [  ; Options supplied to REBOL during startup
     dump-size: 68   ; used by dump
 
     quiet: false    ; do not show startup info (compatibility)
+    about: false    ; do not show full banner (about) on start-up
     cgi: false
     no-window: false
     verbose: false

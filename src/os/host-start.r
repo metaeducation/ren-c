@@ -172,16 +172,12 @@ usage: procedure [
     }
 ]
 
-boot-help:
-{Important notes:
+boot-welcome:
+{Welcome to the Rebol console.  For more information please type in the commands below:
 
-  * Sandbox and security are not available.
-  * Direct access to TCP HTTP required (no proxies).
-
-Special functions:
-
-  Help - show built-in help information}
-
+  HELP    - For starting information
+  ABOUT   - Information about your Rebol
+  CHANGES - What's different about this version}
 
 license: procedure [
     "Prints the REBOL/core license agreement."
@@ -363,6 +359,10 @@ host-start: function [
                 take argv
             ) fail
         |
+            "--about" end (
+                o/about: true   ;; show full banner (ABOUT) on startup
+            )
+        |
             ["--cgi" | "-c"] end (
                 o/quiet: true
                 o/cgi: true
@@ -492,16 +492,6 @@ host-start: function [
     ;
     o/args: argv ;-- whatever's left is positional args
 
-    if all [
-        not o/quiet
-        o/verbose
-    ][
-        ; basic boot banner only
-        ;
-        boot-print unspaced [
-            "REBOL 3.0 A" system/version/3 space system/build newline
-        ]
-    ]
 
     boot-embedded: get-encap system/options/boot
 
@@ -590,11 +580,6 @@ comment [
             ]
         ]
     ]
-
-    ;
-    ;
-    ;
-    boot-print ""
 
     unless blank? boot-embedded [
         case [
@@ -711,16 +696,19 @@ comment [
     ;
     ; banner time
     ;
-    if any [
-        o/verbose
-        not any [o/quiet o/script]
-    ][
+    if o/about [
         ;-- print fancy boot banner
         ;
         boot-print make-banner boot-banner
+    ] else [
+        boot-print [
+            "Rebol 3 (Ren/C branch)" 
+            mold compose [version: (system/version) build: (system/build)]
+            newline
+        ]
     ]
 
-    boot-print boot-help
+    boot-print boot-welcome
 
     ; verbose console skinning messages
     loud-print [newline {Console skinning:} newline]
@@ -801,6 +789,7 @@ console!: make object! [
     shortcuts: make object! [
         q: [quit]
         list-shortcuts: [print system/console/shortcuts]
+        changes: [print "Changes: to be implemented"]
     ]
 
     ;; HELPERS (could be overridden!)
