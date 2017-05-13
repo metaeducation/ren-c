@@ -134,26 +134,32 @@ usage: procedure [
     "Prints command-line arguments."
 ][
 ;       --cgi (-c)       Load CGI utiliy module and modes
+;       --version tuple  Script must be this version or greater
+;       Perhaps add --reqired version-tuple for above TBD
 
     print trim/auto copy {
     Command line usage:
 
-        REBOL |options| |script| |arguments|
+        REBOL [options] [script] [arguments]
 
     Standard options:
 
         --do expr        Evaluate expression (quoted)
         --help (-?)      Display this usage information
-        --version tuple  Script must be this version or greater
-        --               End of options
+        --script file    Implicitly provide script to run
+        --version (-v)   Display version only (then quit)
+        --               End of options (not implemented)
 
     Special options:
 
+        --about          Prints full banner of information when console starts
         --debug flags    For user scripts (system/options/debug)
         --halt (-h)      Leave console open when script is done
         --import file    Import a module prior to script
         --quiet (-q)     No startup banners or information
+        --resources dir  Manually set where Rebol resources directory lives
         --secure policy  Can be: none allow ask throw quit
+        --suppress ""    Suppress any found start-up scripts  Use "*" to suppress all.
         --trace (-t)     Enable trace mode during boot
         --verbose        Show detailed startup information
 
@@ -161,14 +167,19 @@ usage: procedure [
 
         -s               No security
         +s               Full security
-        -v               Display version only (then quit)
+        -qs              Quiet and secure (combining other switches not implemented yet)
 
     Examples:
 
-        REBOL script.r
-        REBOL -s script.r
-        REBOL script.r 10:30 test@example.com
-        REBOL --do "watch: on" script.r
+        REBOL script.reb
+        REBOL -s script.reb
+        REBOL script.reb 10:30 test@example.com
+        REBOL --do "print 1 + 1"
+
+    Console (no script/arguments or Standard option used):
+
+        REBOL
+        REBOL -q --about --suppress "%rebol.reb %user.reb"
     }
 ]
 
@@ -271,7 +282,7 @@ host-start: function [
         reason [string!]
             {Error message}
         /error e [error!]
-            {Error object, shown if --verbose switch used}
+            {Error object, shown if --verbose option used}
         <with> return
     ][
         print "Startup encountered an error!"
@@ -319,7 +330,7 @@ host-start: function [
     ; Set system/users/home (users HOME directory)
     ; Set system/options/home (ditto)
     ; Set system/options/resources (users Rebol resource directory)
-    ; NB. Above can be overridden by --home switch
+    ; NB. Above can be overridden by --home option
     ; TBD - check perms are correct (SECURITY)
     all [
         home-dir: get-home-path             ;; _ if doesn't exist
@@ -341,6 +352,17 @@ host-start: function [
     unless tail? argv [ ;-- on most systems, argv[0] is the exe path
         o/boot: clean-path to-rebol-file take argv
         o/bin: first split-path o/boot
+    ]
+
+    param-or-die: func [
+        {Take --option argv and then check if param arg is present, if not die}  
+        switch-arg [string!] {Command-line option (switch) used}
+    ][
+        take argv
+        any [
+            first argv
+            die join-all [switch-arg { parameter missing}]
+        ]
     ]
 
     until [tail? argv] [
@@ -371,14 +393,12 @@ host-start: function [
             "--debug" end (
                 ;-- was coerced to BLOCK! before, but what did this do?
                 ;
-                take argv
-                o/debug: to logic! argv/1
+                o/debug: to logic! param-or-die "DEBUG"
             )
         |
             "--do" end (
                 o/quiet: true ;-- don't print banner, just run code string
-                take argv
-                do-string: argv/1
+                do-string: param-or-die "DO"
                 quit-when-done: default true ;-- override blank, not false
             )
         |
@@ -392,8 +412,7 @@ host-start: function [
             )
         |
             "--import" end (
-                take argv
-                lib/import to-rebol-file argv/1
+                lib/import to-rebol-file param-or-die "IMPORT"
             )
         |
             ["--quiet" | "-q"] end (
@@ -412,29 +431,27 @@ host-start: function [
             )
         |
             "--resources" end (
-                take argv
-                if resource-dir: to-dir argv/1 [
+                if resource-dir: to-dir param-or-die "RESOURCES" [
                     ;; dir exists so will override earlier automated settings
                     o/resources: resource-dir
                 ]
-                else [fail "RESOURCES directory not found"]
+                else [die "RESOURCES directory not found"]
             )
         |
             "--suppress" end (
-                take argv
-                o/suppress: if argv/1 == "*" [
+                param: param-or-die "SUPPRESS"
+                o/suppress: if param == "*" [
                     ;; suppress all known start-up files
                     [%rebol.reb %user.reb %console-skin.reb]
                 ] else [
-                    to-block argv/1
+                    to-block param
                 ]
             )
         |
             "--secure" end (
-                take argv
-                o/secure: to word! argv/1
-                if secure != 'allow [
-                    fail "SECURE is disabled (never finished for R3-Alpha)"
+                o/secure: to word! param-or-die "SECURE"
+                if o/secure != 'allow [
+                    die "SECURE is disabled (never finished for R3-Alpha)"
                 ]
             )
         |
@@ -444,12 +461,11 @@ host-start: function [
         |
             "+s" end (
                 o/secure: 'quit ;-- "secure-max"
-                fail "SECURE is disabled (never finished for R3-Alpha)"
+                die "SECURE is disabled (never finished for R3-Alpha)"
             )
         |
             "--script" end (
-                take argv
-                o/script: argv/1
+                o/script: param-or-die "SCRIPT"
                 quit-when-done: default true ;-- overrides blank, not false
             )
         |
@@ -470,8 +486,11 @@ host-start: function [
                 ;-- No window; not currently applicable
             )
         |
-            [["--" copy option to end] | ["-" copy option to end]] (
-                fail ["Unknown command line option:" option]
+            [copy cli-option: [["--" | "-" | "+"] to end ]] (
+                die join-all [
+                    "Unknown command line option: " cli-option
+                    newline {!! For a full list of command-line options use:  --help}
+                ]
             )
         ]
 
@@ -599,12 +618,12 @@ comment [
 
                 main: select boot-embedded %main.reb
                 unless binary? main [
-                    fail "Could not find %main.reb in encapped zip file"
+                    die "Could not find %main.reb in encapped zip file"
                 ]
                 code: load/header/type main 'unbound
             ]
         ] else [
-            fail "Bad embedded boot data (not a BLOCK! or a BINARY!)"
+            die "Bad embedded boot data (not a BLOCK! or a BINARY!)"
         ]
 
         ;boot-print ["executing embedded script:" mold code]
