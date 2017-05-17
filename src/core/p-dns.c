@@ -107,9 +107,10 @@ static REB_R DNS_Actor(REBFRM *frame_, REBCTX *port, REBSYM action)
         if (result < 0)
             fail (Error_On_Port(RE_READ_ERROR, port, sock->error));
 
-        // Wait for it...
         if (sync && result == DR_PEND) {
-            for (len = 0; GET_FLAG(sock->flags, RRF_PENDING) && len < 10; len++) {
+            assert(FALSE); // asynchronous R3-Alpha DNS code removed
+            len = 0;
+            for (; GET_FLAG(sock->flags, RRF_PENDING) && len < 10; ++len) {
                 OS_WAIT(2000, 0);
             }
             len = 1;
@@ -126,27 +127,32 @@ static REB_R DNS_Actor(REBFRM *frame_, REBCTX *port, REBSYM action)
             fail (Error_On_Port(RE_NOT_OPEN, port, -12));
 
         len = Get_Num_From_Arg(arg); // Position
-pick:
-        if (len == 1) {
-            if (
-                !DEVREQ_NET(sock)->host_info
-                || !GET_FLAG(sock->flags, RRF_DONE
-            )) {
-                return R_VOID;
-            }
-            if (sock->error) {
-                OS_DO_DEVICE(sock, RDC_CLOSE);
-                fail (Error_On_Port(RE_READ_ERROR, port, sock->error));
-            }
-            if (GET_FLAG(sock->modes, RST_REVERSE)) {
-                Init_String(D_OUT, Copy_Bytes(sock->common.data, LEN_BYTES(sock->common.data)));
-            } else {
-                Set_Tuple(D_OUT, cast(REBYTE*, &DEVREQ_NET(sock)->remote_ip), 4);
-            }
-            OS_DO_DEVICE(sock, RDC_CLOSE);
-        }
-        else
+    pick:
+        if (len != 1)
             fail (Error_Out_Of_Range(arg));
+
+        assert(GET_FLAG(sock->flags, RRF_DONE)); // R3-Alpha async DNS removed
+
+        if (sock->error) {
+            OS_DO_DEVICE(sock, RDC_CLOSE);
+            fail (Error_On_Port(RE_READ_ERROR, port, sock->error));
+        }
+
+        if (DEVREQ_NET(sock)->host_info == NULL) {
+            Init_Blank(D_OUT); // HOST_NOT_FOUND or NO_ADDRESS blank vs. error
+            return R_OUT; // READ action currently required to use R_OUTs
+        }
+
+        if (GET_FLAG(sock->modes, RST_REVERSE)) {
+            Init_String(
+                D_OUT,
+                Copy_Bytes(sock->common.data, LEN_BYTES(sock->common.data))
+            );
+        }
+        else {
+            Set_Tuple(D_OUT, cast(REBYTE*, &DEVREQ_NET(sock)->remote_ip), 4);
+        }
+        OS_DO_DEVICE(sock, RDC_CLOSE);
         break;
 
     case SYM_OPEN: {

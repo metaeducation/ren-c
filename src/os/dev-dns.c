@@ -46,10 +46,6 @@ extern i32 Request_Size_Net(REBREQ *); // Share same request struct
 
 extern void Signal_Device(REBREQ *req, REBINT type);
 
-#ifdef HAS_ASYNC_DNS
-// Async DNS requires a window handle to signal completion (WSAASync)
-extern HWND Event_Handle;
-#endif
 
 //
 //  Open_DNS: C
@@ -70,12 +66,7 @@ DEVICE_CMD Close_DNS(REBREQ *req)
 {
     // Terminate a pending request:
     struct devreq_net *sock = DEVREQ_NET(req);
-#ifdef HAS_ASYNC_DNS
-    if (GET_FLAG(req->flags, RRF_PENDING)) {
-        CLR_FLAG(req->flags, RRF_PENDING);
-        if (req->requestee.handle) WSACancelAsyncRequest(req->requestee.handle);
-    }
-#endif
+
     if (sock->host_info) OS_FREE(sock->host_info);
     sock->host_info = 0;
     req->requestee.handle = 0;
@@ -88,38 +79,28 @@ DEVICE_CMD Close_DNS(REBREQ *req)
 //  Read_DNS: C
 //
 // Initiate the GetHost request and return immediately.
-// Note the temporary results buffer (must be freed later).
+// Note the temporary results buffer (must be freed later by the caller).
+//
+// !!! R3-Alpha used WSAAsyncGetHostByName and WSAAsyncGetHostByName to do
+// non-blocking DNS lookup on Windows.  These functions are deprecated, since
+// they do not have IPv6 equivalents...so applications that want asynchronous
+// lookup are expected to use their own threads and call getnameinfo().
+//
+// !!! R3-Alpha was written to use the old non-reentrant form in POSIX, but
+// glibc2 implements _r versions.
 //
 DEVICE_CMD Read_DNS(REBREQ *req)
 {
-    char *host;
-#ifdef HAS_ASYNC_DNS
-    HANDLE handle;
-#else
-    HOSTENT *he;
-#endif
-
     struct devreq_net *sock = DEVREQ_NET(req);
-    host = OS_ALLOC_N(char, MAXGETHOSTSTRUCT); // be sure to free it
+    char *host = OS_ALLOC_N(char, MAXGETHOSTSTRUCT);
 
-#ifdef HAS_ASYNC_DNS
-    if (!GET_FLAG(req->modes, RST_REVERSE)) // hostname lookup
-        handle = WSAAsyncGetHostByName(Event_Handle, WM_DNS, s_cast(req->common.data), host, MAXGETHOSTSTRUCT);
-    else
-        handle = WSAAsyncGetHostByAddr(Event_Handle, WM_DNS, s_cast(&sock->remote_ip), 4, AF_INET, host, MAXGETHOSTSTRUCT);
-
-    if (handle != 0) {
-        sock->host_info = host;
-        req->requestee.handle = handle;
-        return DR_PEND; // keep it on pending list
-    }
-#else
-    // Use old-style blocking DNS (mainly for testing purposes):
+    HOSTENT *he;
     if (GET_FLAG(req->modes, RST_REVERSE)) {
+        // 93.184.216.34 => example.com 
         he = gethostbyaddr(
             cast(char*, &sock->remote_ip), 4, AF_INET
         );
-        if (he) {
+        if (he != NULL) {
             sock->host_info = host; //???
             req->common.data = b_cast(he->h_name);
             SET_FLAG(req->flags, RRF_DONE);
@@ -127,18 +108,36 @@ DEVICE_CMD Read_DNS(REBREQ *req)
         }
     }
     else {
+        // example.com => 93.184.216.34
         he = gethostbyname(s_cast(req->common.data));
-        if (he) {
+        if (he != NULL) {
             sock->host_info = host; // ?? who deallocs?
             memcpy(&sock->remote_ip, *he->h_addr_list, 4); //he->h_length);
             SET_FLAG(req->flags, RRF_DONE);
             return DR_DONE;
         }
     }
-#endif
 
     OS_FREE(host);
-    sock->host_info = 0;
+    sock->host_info = NULL;
+
+    switch (h_errno) {
+        case HOST_NOT_FOUND: // The specified host is unknown
+        case NO_ADDRESS: // (or NO_DATA) name is valid but has no IP
+            //
+            // The READ should return a blank in these cases, vs. raise an
+            // error, for convenience in handling.
+            //
+            SET_FLAG(req->flags, RRF_DONE);
+            return DR_DONE;
+
+        case NO_RECOVERY: // A nonrecoverable name server error occurred
+        case TRY_AGAIN: // Temporary error on authoritative name server
+            break;
+
+        default:
+            assert(FALSE);
+        }
 
     req->error = GET_ERROR;
     //Signal_Device(req, EVT_ERROR);

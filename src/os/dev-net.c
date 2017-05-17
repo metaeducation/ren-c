@@ -218,9 +218,6 @@ DEVICE_CMD Close_Socket(REBREQ *req)
 
         // If DNS pending, abort it:
         if (sock->host_info) {  // indicates DNS phase active
-#ifdef HAS_ASYNC_DNS
-            if (req->requestee.handle) WSACancelAsyncRequest(req->requestee.handle);
-#endif
             OS_FREE(sock->host_info);
             req->requestee.socket = req->length; // Restore TCP socket (see Lookup)
         }
@@ -247,54 +244,20 @@ DEVICE_CMD Close_Socket(REBREQ *req)
 //
 DEVICE_CMD Lookup_Socket(REBREQ *req)
 {
-#ifdef TO_WINDOWS
-    HANDLE handle;
-#endif
-    HOSTENT *host;
-
     struct devreq_net *sock = DEVREQ_NET(req);
+    sock->host_info = NULL; // no allocated data
 
-#ifdef HAS_ASYNC_DNS
-    // Check if we are polling for completion:
-    if ((host = cast(HOSTENT*, sock->host_info))) {
-        // The windows main event handler will change this when it gets WM_DNS event:
-        if (!GET_FLAG(req->flags, RRF_DONE)) return DR_PEND; // still waiting
-        CLR_FLAG(req->flags, RRF_DONE);
-        if (!req->error) { // Success!
-            host = cast(HOSTENT*, sock->host_info);
-            memcpy(&sock->remote_ip, *host->h_addr_list, 4); //he->h_length);
-            Signal_Device(req, EVT_LOOKUP);
-        }
-        else
-            Signal_Device(req, EVT_ERROR);
-        OS_FREE(host);  // free what we allocated earlier
-        req->requestee.socket = req->length; // Restore TCP socket saved below
-        sock->host_info = 0;
-        return DR_DONE;
-    }
+    // !!! R3-Alpha would use asynchronous DNS API on Windows, but that API
+    // was not supported by IPv6, and developers are encouraged to use normal
+    // socket APIs with their own threads.
 
-    // Else, make the lookup request:
-    host = cast(HOSTENT*, OS_ALLOC_N(char, MAXGETHOSTSTRUCT));
-    handle = WSAAsyncGetHostByName(Event_Handle, WM_DNS, s_cast(req->common.data), cast(char*, host), MAXGETHOSTSTRUCT);
-    if (handle != 0) {
-        sock->host_info = host;
-        req->length = req->requestee.socket; // save TCP socket temporarily
-        req->requestee.handle = handle;
-        return DR_PEND; // keep it on pending list
-    }
-    OS_FREE(host);
-#else
-    // Use old-style blocking DNS (mainly for testing purposes):
-    host = gethostbyname(s_cast(req->common.data));
-    sock->host_info = 0; // no allocated data
-
-    if (host) {
+    HOSTENT *host = gethostbyname(s_cast(req->common.data));
+    if (host != NULL) {
         memcpy(&sock->remote_ip, *host->h_addr_list, 4); //he->h_length);
         CLR_FLAG(req->flags, RRF_DONE);
         Signal_Device(req, EVT_LOOKUP);
         return DR_DONE;
     }
-#endif
 
     req->error = GET_ERROR;
     //Signal_Device(req, EVT_ERROR);

@@ -556,10 +556,6 @@ REBNATIVE(get)
     REBVAL *dest;
     REBSPC *specifier;
 
-    // Move the argument into the single cell in the frame if it's not a
-    // block, so the same enumeration-up-to-an-END marker can work on it
-    // as for handling a block of items.
-    //
     REBARR *results;
 
     if (IS_BLOCK(ARG(source))) {
@@ -579,6 +575,10 @@ REBNATIVE(get)
         dest = SINK(ARR_HEAD(results));
     }
     else {
+        // Move the argument into the single cell in the frame if it's not a
+        // block, so the same enumeration-up-to-an-END marker can work on it
+        // as for handling a block of items.
+        //
         Move_Value(D_CELL, ARG(source));
         source = D_CELL;
         specifier = SPECIFIED;
@@ -660,7 +660,7 @@ REBNATIVE(get)
 //
 //  to-value: native [
 //
-//  {Turns unset to NONE, with ANY-VALUE! passing through. (See: OPT)}
+//  {Turns voids into blanks, with ANY-VALUE! passing through. (See: OPT)}
 //
 //      return: [any-value!]
 //      value [<opt> any-value!]
