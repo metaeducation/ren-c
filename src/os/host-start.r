@@ -824,10 +824,15 @@ console!: make object! [
         s
     ]
 
-    shortcuts: make object! [
+    shortcuts: make object! compose/deep [
         q: [quit]
         list-shortcuts: [print system/console/shortcuts]
-        changes: [browse https://github.com/metaeducation/ren-c/blob/master/CHANGES.md]
+        changes: [
+            browse (join-all [
+                https://github.com/metaeducation/ren-c/blob/master/CHANGES.md#
+                join-all ["" system/version/1 "." system/version/2 "." system/version/3]
+            ])
+        ]
     ]
 
     ;; HELPERS (could be overridden!)

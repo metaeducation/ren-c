@@ -1,15 +1,25 @@
-Rebol 3 (Ren/C branch) Changes
-==============================
+# Rebol 3 (Ren/C branch) Changes
 
-This is a stub file for producing a summary of all changes to Rebol since R3-Alpha by version/commit.
+All notable changes to this project will be documented in this file.
 
-For a complete list use these links:
+Alternate ChangeLogs:
 
 * [ChangeLog + pre-built binaries](http://rebolchat.me/t/rebol3-ren-c-branch-change-logs/)
-* [Github commits](https://github.com/metaeducation/ren-c/commits/master)
+* [Complete Github commits](https://github.com/metaeducation/ren-c/commits/master)
 
-Alternatively from Git command-line:
+Alternatively using Git:
 
     git log
 
 
+Below is a stub for summary of changes by version.
+
+## 2.102.0
+### Added
+- Ren/C branch by @hostfilefork
+
+### Changed
+### Fixed
+
+
+## R3-Alpha
