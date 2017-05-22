@@ -830,7 +830,7 @@ console!: make object! [
         changes: [
             browse (join-all [
                 https://github.com/metaeducation/ren-c/blob/master/CHANGES.md#
-                join-all ["" system/version/1 "." system/version/2 "." system/version/3]
+                join-all ["" system/version/1 system/version/2 system/version/3]
             ])
         ]
     ]
