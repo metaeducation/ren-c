@@ -827,7 +827,7 @@ console!: make object! [
     shortcuts: make object! [
         q: [quit]
         list-shortcuts: [print system/console/shortcuts]
-        changes: [print "Changes: to be implemented"]
+        changes: [browse https://github.com/metaeducation/ren-c/blob/master/CHANGES.md]
     ]
 
     ;; HELPERS (could be overridden!)
