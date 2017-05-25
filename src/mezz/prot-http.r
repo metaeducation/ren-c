@@ -235,7 +235,7 @@ make-http-request: func [
 do-request: func [
     "Perform an HTTP request"
     port [port!]
-    /local spec info
+    /local spec info req
 ] [
     spec: port/spec
     info: port/state/info
@@ -253,10 +253,9 @@ do-request: func [
     info/headers: info/response-line: info/response-parsed: port/data:
     info/size: info/date: info/name: blank
     write port/state/connection
-    make-http-request spec/method any [spec/path %/]
-    ; to file! double encodes any % in the url
-    ; make-http-request spec/method to file! any [spec/path %/]
+    req: make-http-request spec/method any [spec/path %/]
     spec/headers spec/content
+    net-log join-of "C: " to string! req
 ]
 parse-write-dialect: func [port block /local spec debug] [
     spec: port/spec
@@ -306,6 +305,10 @@ check-response: func [port /local conn res headers d1 d2 line info state awake s
             info/date: attempt [idate-to-date headers/last-modified]
         ]
         remove/part conn/data d2
+
+        net-log join-of "S: " mold info
+        net-log join-of "S: " to string! conn/data
+
         state/state: 'reading-data
     ]
     unless headers [
