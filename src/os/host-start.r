@@ -296,7 +296,7 @@ host-start: function [
 
     to-dir: function [
         {Convert string path to absolute dir! path}
-        return: [blank! string!]
+        return: [blank! file!]
             {Blank if not found}
         dir [string!]
     ][
@@ -305,23 +305,26 @@ host-start: function [
         all [exists? dir | dir]
     ]
 
-    get-home-path: func [
+    get-home-path: function [
         {Return HOME path (e.g. $HOME on *nix)}
-        return: [blank! string!]
+        return: [blank! file!]
             {Blank if not found}
     ][
-        attempt [ to-dir
+        home: attempt [ 
             any [
                 get-env 'HOME
                 ; join-of could fail because it doesn't accept blank
                 attempt [join-of get-env 'HOMEDRIVE get-env 'HOMEPATH]
             ]
         ]
+
+        if blank? home [return _]
+        to-dir home
     ]
 
     get-resources-path: function [
         {Return platform specific resources path.}
-        return: [blank! string!]
+        return: [blank! file!]
             {Blank if not found}
     ][
         ;; lives under systems/options/home
