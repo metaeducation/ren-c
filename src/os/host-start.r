@@ -726,7 +726,7 @@ comment [
             ;; if loaded skin returns console! object then use as prototype
             if all [
                 object? new-skin
-                function? select new-skin 'repl ;; assume its a console!
+                true? select new-skin 'repl ;; quacks like a REPL so assume its a console!
             ][
                 proto-skin: new-skin
                 proto-skin/updated?: true
