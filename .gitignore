@@ -46,6 +46,7 @@ make/objs/
 #
 make-*
 !tests/**/make-*
+!scripts/**/make-*
 
 # While some generated files are intended to be semi-persistent products
 # (e.g. an API file), many generated files are temporary and not meant to be
