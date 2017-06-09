@@ -213,4 +213,5 @@
 %system/system.test.reb
 %system/file.test.reb
 %system/gc.test.reb
+%call/call.test.reb
 %source/analysis.test.reb
