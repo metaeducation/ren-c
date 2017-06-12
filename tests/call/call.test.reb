@@ -1,21 +1,36 @@
 ; call/call.test.reb
 
+;; CALL/OUTPUT tests
+;; see - https://github.com/metaeducation/ren-c/issues/537
+;; and following fixes
+;; - https://github.com/metaeducation/ren-c/commit/298409f485420ecd03f0be4b465111be4ad829cd
+;; - https://github.com/metaeducation/ren-c/commit/e57c147465f3ed47f297e7a3ce3bb0319635f81f
+
 [
-    ; small - works
+    ; small
     data: copy {}
     call/wait/output [%../make/r3 "--suppress" "*" %call/print.reb "100"] data
     100 == (length-of data)
 ]
 [
-    ; medium - fails test (just under 5000 bytes transferred)
+    ; medium
     data: copy {}
     call/wait/output [%../make/r3 "--suppress" "*" %call/print.reb "9000"] data
     9000 == (length-of data)
 ]
 [
-    ; crashes :(
+    ; large
     data: copy {}
     call/wait/output [%../make/r3 "--suppress" "*" %call/print.reb "80000"] data
     80'000 == (length-of data)
 ]
 
+;; git log issue - crash?
+[
+    ;; extra large (500K+)
+    data: copy {}
+    call/shell/wait/output "git log --pretty=format:'[commit: {%h} author: {%an} email: {%ae} date-string: {%ai} summary: {%s}]'" data
+    and?
+        (length-of data) > 500'000
+        find? data {Initial commit}  ;; bottom of log
+]
