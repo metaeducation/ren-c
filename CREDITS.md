@@ -37,6 +37,11 @@ one-line summary and a link to a landing webpage of their choice:
 - http://rebolsource.net
 - 64-bit and other porting, build farm, core design, core patches, test suite...
 
+**Barry Walsh**
+- [@draegtun](https://github.com/draegtun) on GitHub
+- http://draegtun.com
+- CHANGES.md automation, Console skinner, command-line & other start-up changes.
+
 **Brian Dickens**
 - [@hostilefork](https://github.com/hostilefork) on GitHub
 - http://hostilefork.com

@@ -40,6 +40,12 @@ Using the `r3` binary built (from source) in this repo run the `make-changes-fil
 
 This will now make a new CHANGES.md file with all latest notable changes.
 
+## Requirements
+
+- Git 
+
+NB. Due to bug in `CALL/OUTPUT` a workaround is currently in-place which means it requires a shell for redirection (outputs a %tmp-commit-log file which is then parsed)
+
 
 ## How does it work?
 
