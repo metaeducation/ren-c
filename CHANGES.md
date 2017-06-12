@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 Alternate ChangeLogs:
 
-* [ChangeLog + pre-built binaries](http://rebolchat.me/t/rebol3-ren-c-branch-change-logs/)
+* [ChangeLog + pre-built binaries](https://forum.rebol.info/t/rebol3-ren-c-branch-change-logs/54/10000)
 * [Complete Github commits](https://github.com/metaeducation/ren-c/commits/master)
 
 Alternatively using Git:
