@@ -51,6 +51,11 @@
     #include <signal.h>
     #include <sys/stat.h>
     #include <sys/wait.h>
+    #if !defined(WIFCONTINUED) && defined(TO_ANDROID)
+    // old version of bionic doesn't define WIFCONTINUED
+    // https://android.googlesource.com/platform/bionic/+/c6043f6b27dc8961890fed12ddb5d99622204d6d%5E%21/#F0
+        # define WIFCONTINUED(x) (WIFSTOPPED(x) && WSTOPSIG(x) == 0xffff)
+    #endif
 #endif
 
 #include "sys-core.h"
@@ -741,7 +746,7 @@ int OS_Create_Process(
 
     int status = 0;
     int ret = 0;
-    REBOOL invalid_errno_in_ret = FALSE; // if the "ret" above has an invalid errno
+    int non_errno_ret = 0; // "ret" above should be valid errno
 
     // An "info" pipe is used to send back an error code from the child
     // process back to the parent if there is a problem.  It only writes
@@ -1155,9 +1160,9 @@ child_error: ;
                         /* printf("POLLIN: %d bytes\n", nbytes); */
 
                         *offset += nbytes;
-                        assert(*offset <= *size);
+                        assert(cast(off_t, *offset) <= *size);
 
-                        if (*offset == *size) {
+                        if (cast(off_t, *offset) == *size) {
                             char *larger = cast(
                                 char*,
                                 malloc(*size + BUF_SIZE_CHUNK)
@@ -1169,7 +1174,7 @@ child_error: ;
                             *buffer = larger;
                             *size += BUF_SIZE_CHUNK;
                         }
-                        assert(*offset < *size);
+                        assert(cast(off_t, *offset) < *size);
                     } while (nbytes == to_read);
                 }
                 else if (pfds[i].revents & POLLHUP) {
@@ -1207,7 +1212,7 @@ kill:
 
 error:
     if (ret == 0) {
-        invalid_errno_in_ret = TRUE;
+        non_errno_ret = -1024; //randomly picked
     }
 
 cleanup:
@@ -1239,6 +1244,30 @@ cleanup:
     if (info_pipe[W] > 0)
         close(info_pipe[W]);
 
+    if (info_len == sizeof(int)) {
+        //
+        // exec in child process failed, set to errno for reporting.
+        //
+        ret = *cast(int*, info);
+    }
+    else if (WIFEXITED(status)) {
+        assert(info_len == 0);
+
+       *exit_code = WEXITSTATUS(status);
+       *pid = fpid;
+    }
+    else if (WIFSIGNALED(status)) {
+        non_errno_ret = WTERMSIG(status);
+    }
+    else if (WIFSTOPPED(status)) {
+        // Shouldn't be here, as the current behavior is keeping waiting when child is stopped
+        assert(FALSE);
+        fail (Error(RE_EXT_PROCESS_CHILD_STOPPED, END));
+    }
+    else {
+        non_errno_ret = -2048; //randomly picked
+    }
+
 info_pipe_err:
     if (stderr_pipe[R] > 0)
         close(stderr_pipe[R]);
@@ -1269,36 +1298,15 @@ stdin_pipe_err:
     // be 0.  This is the return value of the host kit function to Rebol, not
     // the process exit code (that's written into the pointer arg 'exit_code')
     //
-    if (info_len == sizeof(int)) {
-        //
-        // exec in child process failed, set to errno for reporting.
-        //
-        ret = *cast(int*, info);
-    }
-    else if (WIFEXITED(status)) {
-        assert(info_len == 0);
 
-       *exit_code = WEXITSTATUS(status);
-       *pid = fpid;
-    }
-    else if (WIFSIGNALED(status)) {
+    if (non_errno_ret > 0) {
         DECLARE_LOCAL(i);
-        Init_Integer(i, WTERMSIG(status));
+        Init_Integer(i, non_errno_ret);
         fail (Error(RE_EXT_PROCESS_CHILD_TERMINATED_BY_SIGNAL, i, END));
     }
-    else if (WIFSTOPPED(status)) {
-        // Shouldn't be here, as the current behavior is keeping waiting when child is stopped
-        assert(FALSE);
-        fail (Error(RE_EXT_PROCESS_CHILD_STOPPED, END));
-    }
-    else {
-        invalid_errno_in_ret = TRUE;
-    }
-
-    if (invalid_errno_in_ret) {
+    else if (non_errno_ret < 0) {
         fail ("Unknown error happened in CALL");
     }
-
     return ret;
 }
 
