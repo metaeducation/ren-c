@@ -38,13 +38,17 @@ Using the `r3` binary built (from source) in this repo run the `make-changes-fil
 
     ../../make/r3 make-changes-file.reb
 
+or from Rebol console:
+
+    >> do %make-changes-file.reb
+
 This will now make a new CHANGES.md file with all latest notable changes.
 
 ## Requirements
 
 - Git 
 
-NB. Due to bug in `CALL/OUTPUT` a workaround is currently in-place which means it requires a shell for redirection (outputs a %tmp-commit-log file which is then parsed)
+NB. Currently only tested on Mac OSX & Linux.
 
 
 ## How does it work?
@@ -60,6 +64,11 @@ One of three things:
 - Commit summary is prefixed with a "\* " (asterix and space)
 - Contains a CureCode reference (CC-1111, CC#1111 or similar)
 - Is flagged in `cherry-pick-map.reb`
+
+Some examples of notable commits:
+
+    * Move BROWSE into userspace, built upon CALL
+    * Make SET have /PAD semantics by default, add SET/SOME refinement
 
 ### How do i flag notable commit in cherry-pick-map?
 
@@ -100,6 +109,12 @@ The Changes file has the following types:
 - Removed (removed feature or deprecation)
 - Security (security fix/change)
 
+Some examples of notable commits (and how they're categorised):
+
+    * Blah blah blah.... ("Changed" type)
+    * Add blah blah...   ("Added" type)
+    * Removed this...    ("Removed" type)
+    * Fix to this bug... ("Fixed" type)
 
 ### So how do i add some example code to a change?  And trello or wiki link?
 

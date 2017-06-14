@@ -6,13 +6,14 @@ Rebol [
     author:  "Barry Walsh (draegtun)"
     date:    12-Jun-2017
     ;; needs:   [2.102.0] ;; Ren/C
-    version: 0.1.4
+    version: 0.1.5
     history: [
         0.1.0  30-May-2017  {Protoype. Created initial cherry-pick-map from commits}
         0.1.1  02-Jun-2017  {Refactored & extra annotations. Edited cherry-picks}
         0.1.2  06-Jun-2017  {Modulised.  CHANGES.md & CREDITS.md now passed as args}
         0.1.3  08-Jun-2017  {More trello links & and adapted for repo under /scripts/changes-file}
-        0.1.4  12-June-2017 {Temp fix for CALL/OUTPUT}
+        0.1.4  12-Jun-2017  {Temp fix for CALL/OUTPUT}
+        0.1.5  14-Jun-2017  {Remove temp fix on CALL/OUTPUT}
     ]
     license: {Apache License 2.0} ;; Same as Rebol 3
     exports: [make-changes-file make-changes-block get-git-log]
@@ -52,13 +53,10 @@ url: [
 get-git-log: function [
     {Return Rebolised block of Ren/C `git log`}
 ][
-    ;git-log: make string! 0
-    ;call/shell/wait/output "GIT_PAGER=cat git log --pretty=format:'[commit: {%h} author: {%an} email: {%ae} date-string: {%ai} summary: {%s}]'" git-log
-    ;split git-log newline
+    git-log: make string! 0
+    call/shell/wait/output "git log --pretty=format:'[commit: {%h} author: {%an} email: {%ae} date-string: {%ai} summary: {%s}]'" git-log
+    split git-log newline
 
-    ;; temp fix for CALL/OUTPUT bug
-    call/shell/wait "git log --pretty=format:'[commit: {%h} author: {%an} email: {%ae} date-string: {%ai} summary: {%s}]' > tmp-commit-log"
-    read/lines %tmp-commit-log
 ]
 
 make-changes-block: function [

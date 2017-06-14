@@ -30,6 +30,16 @@
 ;; https://trello.com/c/KvUZ5zEb/104-set-operations-union-exclude-etc-can-work-with-any-pair-of-any-string-or-any-array-types
 ;; https://trello.com/c/coLzXVju/106-objects-can-have-optional-spec
 
+;; some grouping of CC fixes
+"9cd51ab" [
+    related: ["ac9176a" "be2bd43" "82011e2"]
+    summary: {Fix CC-2068 CC-1748}
+]
+
+;; at moment entered manually but lets try and make use of related: in above for this
+"ac9176a" no
+"be2bd43" no
+"82011e2" no
 
 {c94cc95} [trello: https://trello.com/c/m94GOELw/] ; {Expand possible /NAME types for THROW}]
 
@@ -90,7 +100,7 @@ fail "Simple error"
 "62d137e" [type: 'Changed] ;  Make APPEND on port act as WRITE/APPEND in slightly less hacky way 
 "29ae001" [type: 'Changed trello: https://trello.com/c/4OT7qvdu/] ;  LENGTH-OF, HEAD-OF, TAIL-OF as core names...aliased to shorter 
 "523a890" [type: 'Changed] ;  Check for end of file newline for all text formats. (#471) 
-"46cf8e7" [type: 'Changed] ;  Introduce source checking of Rebol files. 
+"46cf8e7" [type: 'Added] ;  Introduce source checking of Rebol files. 
 "080b9c6" [type: 'Changed] ;  Bring back DUMP changes, move DUMP out of base 
 "b24f1ce" [type: 'Changed] ;  Allow hard-quoting of BAR!, yet still disallow QUOTE | 
 "9232b3b" [type: 'Changed] ;  Disallow PICK on MAP! 
@@ -130,10 +140,13 @@ if 1 = 1 [run-this] else [run-that]
 "1e9621e" [type: 'Changed] ;  Check for END when using a DO rule in PARSE 
 "8b6f1bf" [type: 'Added] ;  Add SHA256 hashing native to cryptography module 
 "0abf2b6" [type: 'Fixed] ;  Fix an undefined behavior regarding to union access 
-"4a89744" [type: 'Changed] ;  Turn BMP code into an extension 
-"97ca06b" [type: 'Changed] ;  Turn JPG codec into an extension 
-"4638e58" [type: 'Changed] ;  Turn GIF codec into an extension 
-"36d9a74" [type: 'Changed] ;  Make png codec an extension 
+
+"4a89744" [
+    type: 'Changed
+    related: ["97ca06b" "4638e58" "36d9a74"]
+    summary: {Turn BMP, JPG, GIF & PNG codec into an extension}
+] ;  Turn BMP code into an extension 
+
 "ef9975e" [type: 'Changed] ;  Support extensions as dynamically linked libraries 
 "4ab24cd" [type: 'Changed] ;  Test @GrahamChiu's s3 upload for travis.yml 
 "489ca6a" [type: 'Changed] ;  Put REPL and host startup code into lib, not user 
@@ -334,7 +347,7 @@ Hello
 "3aa675b" [type: 'Changed] ;  Move variadic DO to r3-legacy, allow 0-arity DO 
 "4797130" [type: 'Removed] ;  Remove Markup Codec 
 "c6171b3" [type: 'Changed] ;  Move TITLE-OF to user mode code 
-"2a7fcbb" [type: 'Changed] ;  Get rid of RM as unix `remove` 
+"2a7fcbb" [type: 'Removed] ;  Get rid of RM as unix `remove` 
 "08dd85d" [type: 'Changed] ;  Implement SPEC-OF and BODY-OF for specializations 
 "c61daa4" [type: 'Changed] ;  OneFunction: Unify functions under FUNCTION! 
 "dd18504" [type: 'Changed] ;  CASE special handling of expression barriers 
@@ -431,7 +444,7 @@ Hello
 "4658148" [type: 'Changed] ;  Adjust DECODE-URL to give back NONE hosts 
 "62d2a5a" [type: 'Changed] ;  Convert canon NONE, UNSET, etc. to globals 
 "c43dd18" [type: 'Changed] ;  Use NOOP so empty loop looks more intentional 
-"6711dc2" [type: 'Changed] ;  Breakpoints + Interactive Debugging 
+"6711dc2" [type: 'Added] ;  Breakpoints + Interactive Debugging 
 "5e9ec3e" [type: 'Changed trello: https://trello.com/c/noiletwM/] ;  EXIT/FROM any stack level, natives 
 "505a7a3" [type: 'Fixed] ;  Fix actor dispatch (read http://, etc.) 
 "2294dce" [type: 'Changed] ;  Programmatic GDB breakpoint support 
@@ -463,7 +476,7 @@ Hello
 "bdd51eb" [type: 'Added] ;  Add CONTINUE/WITH, modify BREAK/WITH, cleanup 
 "a3f249c" [type: 'Changed] ;  Dividing money amounts returns decimal 
 "e9c4fcf" [type: 'Changed trello: https://trello.com/c/I6Y3NWlR/] ;  TO-INTEGER/UNSIGNED and conversion fixes 
-"a25c359" [type: 'Changed] ;  Get rid of UTYPE! stub, datatype=>symbol fix 
+"a25c359" [type: 'Removed] ;  Get rid of UTYPE! stub, datatype=>symbol fix 
 "bb51e94" [type: 'Changed] ;  Move FUNCT to be in <r3-legacy> mode only 
 "46c1d1f" [type: 'Changed] ;  SWITCH uses EQUAL?+STRICT-EQUAL?, more... 
 "f1f516d" [type: 'Changed] ;  Move /WORD off of TYPE-OF and onto TYPE? 
@@ -513,7 +526,7 @@ Hello
 "5f22bc3" [type: 'Added] ;  Add new pseudo-type "TRASH!" 
 "e93a5b4" [type: 'Removed] ;  Remove /NOW refinement from QUIT (CC#1743) 
 "9f6e56e" [type: 'Fixed] ;  Fix LAUNCH to properly work with argv-based CALL 
-"f027870" [type: 'Changed trello: https://trello.com/c/MVLLDYJW/] ;  Get rid of Lit-Word decay (CC#2101, CC#1434) 
+"f027870" [type: 'Removed trello: https://trello.com/c/MVLLDYJW/] ;  Get rid of Lit-Word decay (CC#2101, CC#1434) 
 "5267b00" [type: 'Changed] ;  Interim workaround for CC#2221 
 "89a75c7" [type: 'Changed] ;  Switch version number to 2.102.0, for the time being 
 "5c2c263" [type: 'Fixed] ;  Fix cc-2224 by simply disallowing LENGTH? on ANY-WORD! 
@@ -560,7 +573,7 @@ foo: function [s] [
 "21fb3c2" [type: 'Changed] ;  cc-1748: Guard protected blocks from /INTO target of REDUCE, COMPOSE 
 "e1d8d05" [type: 'Changed] ;  Free intermediate buffers used by do-codec (CC #2068) 
 "75f7320" [type: 'Added] ;  Added support for ESC-O escape sequences in addition to ESC-[ 
-"8da64f8" [type: 'Changed] ;  Get rid of LOAD /next 
+"8da64f8" [type: 'Removed] ;  Get rid of LOAD /next 
 "bdd7523" [type: 'Changed] ;  Copied DELETE-DIR from Rebol 2 (cc#1545) 
 "23673df" [type: 'Removed] ;  Get rid of if/else 
 "ecfcde7" [type: 'Fixed] ;  fix ticket1457 parse to bitset 

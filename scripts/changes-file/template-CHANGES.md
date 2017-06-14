@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-The format is based on [Keep a Changelog](http://keepachangelog.com/) and is auto-generated using `./scripts/build-CHANGES/build-CHANGES.reb`
+The format is based on [Keep a Changelog](http://keepachangelog.com/) and is auto-generated using `./scripts/changes-file/make-changes-file.reb`
 
 Alternate ChangeLogs:
 
