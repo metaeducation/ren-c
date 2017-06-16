@@ -138,7 +138,6 @@ If you had the following changes:
 "922658f" yes   ;; Added REPL object to allow skinning (#475)
 "00def28" yes
 "2955730" yes
-] 
 ```
 
 Then these three changes can be combined into one like so:

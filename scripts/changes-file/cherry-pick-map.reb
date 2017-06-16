@@ -33,6 +33,7 @@
 ;; some grouping of CC fixes
 "9cd51ab" [
     related: ["ac9176a" "be2bd43" "82011e2"]
+    cc: [1748 2068]
     summary: {Fix CC-2068 CC-1748}
 ]
 
@@ -115,8 +116,15 @@ fail "Simple error"
 "a65de09" [type: 'Fixed] ;  Fix HTTPS false alarm error 
 "de46d25" [type: 'Added] ;  Customizable userspace ECHO based on HIJACK 
 "c4e7d04" [type: 'Fixed] ;  Fix some definitional return and definitional leave bugs 
-"177dfdc" [type: 'Added] ;  Add a WITH_FFI option to makefile 
-"50430f1" [type: 'Added] ;  Add Win64 release build 
+
+"177dfdc" [
+    type: 'Added
+    related: ["50430f1"]
+    summary: {Added WITH_FFI to makefile and Win64 release build}
+] ;  Add a WITH_FFI option to makefile 
+
+"50430f1" no;  [type: 'Added] ;  Add Win64 release build 
+
 "ef25751" [type: 'Changed] ;  Simplifying rewrite of REWORD, TO and THRU of BLANK! are no-ops 
 
 "0e0ae9a" [
@@ -199,7 +207,7 @@ foo takes 3 and then 7
 "d1fd3ff" [type: 'Changed] ;  In-place Get of variables in contexts return relative values 
 "da11022" [type: 'Changed trello: https://trello.com/c/DXs6gJNr/] ;  Initial Implementation of Immutable Source 
 "5acc74f" [type: 'Fixed] ;  Fix system/catalog/* and make their initialization more clear 
-"ae5fe8c" [type: 'Changed] ;  Change LIB/USAGE call to just USAGE 
+"ae5fe8c" no ;[type: 'Changed] ;  Change LIB/USAGE call to just USAGE 
 "1df7084" [type: 'Fixed] ;  Fix FIND/LAST refinement when used with BLOCK! 
 "22fcd9c" [type: 'Changed] ;  Disallow `<opt>` on refinement arguments 
 
@@ -211,7 +219,7 @@ foo takes 3 and then 7
 "9b5e025" [type: 'Changed] ;  Make /LINES and /STRING work on non-FILE! ports (e.g. URL!) 
 "d5a216f" [type: 'Changed] ;  Enhance the MATH dialect 
 "cc6d287" [type: 'Changed trello: https://trello.com/c/wyXCkx67/] ;  ANY and ALL chain "opt-outs" (return void)...add ANY? and ALL? 
-"fe9c43f" [type: 'Changed] ;  Simplify mutable variable access 
+"fe9c43f" no ;[type: 'Changed] ;  Simplify mutable variable access 
 "061ca23" [type: 'Changed] ;  Simplify GC disablement, allow GC active during boot 
 "42e20da" [type: 'Changed] ;  Mark UNTIL reserved for future use 
 "a8c0c19" [type: 'Changed] ;  JOIN => JOIN-OF, reserve JOIN, act like R3-Alpha REPEND 
@@ -252,8 +260,23 @@ foo takes 3 and then 7
 "b7fac96" [type: 'Fixed] ;  Fixes for BLANK! and empty block in PARSE handling, tests 
 "49371ea" [type: 'Fixed] ;  Fix DEFAULT of not set bug, add tests 
 "dee59da" [type: 'Fixed] ;  Fix PARSE? (was returning void instead of TRUE/FALSE) 
-"f0304ed" [type: 'Added trello: https://trello.com/c/OvNE3GPM/] ;  Add "ENFIX", and "enfixed" DEFAULT 
-"f09977c" [type: 'Changed] ;  Undo namings /? => BRANCHED?, MATCHED?, RAN?... 
+
+"f0304ed" [
+    example: {
+>> x: enfix func [a b] [a * b]
+
+>> 2 x 3
+== 6
+}
+    type: 'Added 
+    related: ["cfae703"]
+    trello: https://trello.com/c/OvNE3GPM/
+    summary: {Custom ENFIX operators.  Killed OP!}
+] ;  Add "ENFIX", and "enfixed" DEFAULT 
+
+"cfae703" no;   [type: 'Changed] ;  Custom infix operators via <infix> in spec, kill OP! 
+
+"f09977c" no ; [type: 'Changed] ;  Undo namings /? => BRANCHED?, MATCHED?, RAN?... 
 "24fbc6e" [type: 'Changed] ;  Move `func [[catch] x][...]` support to <r3-legacy> 
 "bb49492" [type: 'Fixed] ;  Fix REMOVE copying of implicit terminator, related cleanups 
 "d6f2194" [type: 'Changed] ;  Don't evaluate non-blocks passed to PRINT 
@@ -272,11 +295,11 @@ foo takes 3 and then 7
 ;"554dce6" [type: 'Changed] ;  Partial ENSURE compatibility routine for R3-Alpha/Rebol2 
 
 "603c1d4" [type: 'Added] ;  Add /WHERE feature to FAIL 
-"d549740" [type: 'Changed] ;  REDUCE+COMPOSE use safe enumeration, kill unused refinements 
+"d549740" no ; [type: 'Changed] ;  REDUCE+COMPOSE use safe enumeration, kill unused refinements 
 "2c7d58f" [type: 'Fixed] ;  Fix TUPLE! crash after payload switch, round money 
 "08767f2" [type: 'Fixed] ;  Fix PRIN error message 
 "31327fd" [type: 'Fixed] ;  Fix two SPEC-OF bugs where param and type not being added to the result correctly. 
-"22b7f81" [type: 'Fixed] ;  Fix infix lookback for SET-WORD! and SET-PATH! 
+"22b7f81" no  ;[type: 'Fixed] ;  Fix infix lookback for SET-WORD! and SET-PATH! 
 "c72e8d3" [type: 'Fixed] ;  Fix sequence point problem in `read/lines` 
 "87ffb37" [type: 'Fixed] ;  Fix typeset molding 
 "29fff21" [type: 'Changed] ;  Unify MAKE and construction syntax, MAKE/TO=>native 
@@ -329,10 +352,10 @@ Hello
 "4a14b42" [type: 'Changed] ;  Enhance legacy return-none-instead-of-void feature 
 "e9bbe4f" [type: 'Changed] ;  Make APPLY and SPECIALIZE accept words/paths 
 "3b54770" [type: 'Fixed] ;  fix 2138: parse tag in block 
-"ca3e014" [type: 'Changed] ;  Implement INFIX? as property of binding, not function 
+"ca3e014" no ;[type: 'Changed] ;  Implement INFIX? as property of binding, not function 
 "634c463" [type: 'Changed] ;  Variadic Quoting Infix Lambdas (a.k.a. "short function") 
 "08fc7e5" [type: 'Changed trello: https://trello.com/c/rmsTJueg/] ;  UNSET => VOID name change 
-"bbf615d" [type: 'Changed] ;  Eliminate reified UNSET! and datatype 
+"bbf615d" [type: 'Removed] ;  Eliminate reified UNSET! and datatype 
 "cb9c221" [type: 'Added] ;  Add RUNNING? and PENDING? tests for FRAME! 
 "d51d9f6" [type: 'Changed] ;  make path access fail if not set and not GET-PATH! 
 
@@ -340,10 +363,10 @@ Hello
 ;; https://trello.com/c/rmsTJueg/
 
 "50fd51d" [type: 'Changed] ;  Re-introduce legality of `x: ()` assignments 
-"5ed7c50" [type: 'Changed] ;  Loose the limit on the number of function arguments 
+"5ed7c50" [type: 'Fixed] ;  Loose the limit on the number of function arguments 
 "133200b" [type: 'Changed] ;  Mold fixes for MAP! 
 "1e98be5" [type: 'Removed] ;  Remove use of SPLIT from parser which fails on linux when used with a rule that contains THRU. 
-"15ff282" [type: 'Added trello: https://trello.com/c/rKXTXRtA/] ;  Add PRINT/ONLY, only dialect nested PRINTs if literal 
+"15ff282" no ; [type: 'Added trello: https://trello.com/c/rKXTXRtA/] ;  Add PRINT/ONLY, only dialect nested PRINTs if literal 
 "3aa675b" [type: 'Changed] ;  Move variadic DO to r3-legacy, allow 0-arity DO 
 "4797130" [type: 'Removed] ;  Remove Markup Codec 
 "c6171b3" [type: 'Changed] ;  Move TITLE-OF to user mode code 
@@ -357,7 +380,7 @@ Hello
 "ff8baf9" [type: 'Changed] ;  Allow BAR! to mean "TAKE to END" 
 "a20995a" [type: 'Changed] ;  Move REDUCE and COMPOSE to their own file 
 "82ccc96" [type: 'Changed] ;  Legacy switch: `no-reduce-nested-print` 
-"bdecddd" [type: 'Changed] ;  PRINT/FAIL new design, recursion, |, BINARY! UTF8 
+"bdecddd" no ;[type: 'Changed] ;  PRINT/FAIL new design, recursion, |, BINARY! UTF8 
 "240783a" [
     example: {
  >> foo: procedure [] [leave print "This won't print"]
@@ -422,7 +445,7 @@ Hello
 "d216e30" [type: 'Changed] ;  Dividing money! amount again returns money!, preserving precision 
 "dcae241" [type: 'Fixed] ;  Fix assert/problem with CLOSURE!+THROW 
 "f07ec26" [type: 'Changed] ;  Reword fix, integrate reword tests from @johnk 
-"c78d5a2" [type: 'Changed trello: https://trello.com/c/ANlT44nH/] ;  GROUP! as new default term for PAREN! 
+"c78d5a2" [type: 'Added trello: https://trello.com/c/ANlT44nH/] ;  GROUP! as new default term for PAREN! 
 "41736da" [type: 'Changed trello: https://trello.com/c/3V57JW68/] ;  LOOP accepts logic/none, infinite or no loop 
 "93d2677" [type: 'Added trello: https://trello.com/c/FWFFMz68/] ;  Add COLLECT-WITH mezzanine to specify "keeper" 
 
@@ -466,7 +489,14 @@ Hello
 "e8e30e9" [type: 'Added] ;  Add SET? native, remove x: () disablement from legacy 
 "8680934" [type: 'Changed] ;  OPTIONAL => OPT, RELAX => TO-VALUE 
 "decba66" [type: 'Fixed] ;  Fix apparently longstanding FORM OBJECT! bug 
-"c77b6b4" [type: 'Added trello: https://trello.com/c/WKGaad6F/] ;  Add <local> tag to FUNC + CLOS, move <infix> 
+
+"c77b6b4" [
+    type: 'Added 
+    trello: https://trello.com/c/WKGaad6F/
+    summary: {<local> tag added to FUNC}
+] ;  Add <local> tag to FUNC + CLOS, move <infix> 
+
+
 "894174b" [type: 'Fixed] ;  Fix case-sensitivity in string sort, support unicode, #2170 
 "9888f21" [type: 'Added trello: https://trello.com/c/4Ky7vRCb/] ;  SPELLING-OF as native function 
 "227419a" [type: 'Changed] ;  SET-WORD! in func spec are "true locals", permit RETURN: 
@@ -491,7 +521,7 @@ Hello
 "1a4b541" [type: 'Changed] ;  CHANGE-DIR to URL, relative paths for DO of URL 
 "eab90ce" [type: 'Changed] ;  Make TAIL? spec support all types EMPTY? does 
 "839a3f8" [type: 'Added summary: {New prefix AND? OR? XOR? NOT? functions}] ;  Add AND? OR? XOR? NOT? operations 
-"1bd93b2" [type: 'Changed] ;  RAISE and PANIC psuedo-keywords 
+"1bd93b2" no ;[type: 'Changed] ;  RAISE and PANIC psuedo-keywords 
 "89e23d3" [
     type: 'Added
     trello: https://trello.com/c/cxvHGNha/
@@ -513,7 +543,6 @@ Hello
 "6b017f8" [type: 'Changed] ;  EXIT acts as QUIT if not in function, LEGACY flags 
 "5dc4b48" [type: 'Fixed] ;  Fix out-of-context word in Reword function. 
 "242c1e2" [type: 'Changed] ;  [catch] function spec block exemption 
-"cfae703" [type: 'Changed] ;  Custom infix operators via <infix> in spec, kill OP! 
 "34bb816" [type: 'Changed] ;  CC#2242 fix of RETURN/THROW in SWITCH 
 "85013fe" [type: 'Changed] ;  Enbase fixes for input zero length strings 
 "9b21568" [type: 'Changed] ;  Error handling overhaul, includes CC#1743 
@@ -583,28 +612,28 @@ foo: function [s] [
 "038555b" [type: 'Changed] ;  Support async read from clipboard 
 "4f17ba6" [type: 'Changed] ;  String & binary targets for /INTO in REDUCE+COMPOSE (CC #2081) 
 "dd11362" [type: 'Changed] ;  Use Bentley & McIlroy's qsort for sorting strings and blocks Currently, R3 uses platform-specific code for sorting. This may increase the effort necessary to port the interpreter to new platforms. 
-"16c6867" [type: 'Changed] ;  Update fix of CC#851 and CC#1896 
+"16c6867" [type: 'Fixed] ;  Update fix of CC#851 and CC#1896 
 "ee69898" [type: 'Fixed] ;  Fix CATCH/quit interaction with TRY (cc#851) 
 "7ef62e8" [type: 'Fixed] ;  Fix CATCH/QUIT, CC#851, CC#1896. , the bug causing 3 test-framework crashes. 
 "7372289" [type: 'Changed] ;  Prevent word duplication when appending to an object Fix CC#1979 Optimize the code to not use search 
 "bd83d2b" [type: 'Fixed] ;  Fix circular block compare crash, CC#1049 
 "b68ddee" [type: 'Changed] ;  HTTP: remove auto-decoding of UTF-8 content 
 "264bb4e" [type: 'Changed] ;  Simplify value? change (pull 121, cc 1914) by using existing function. 
-"65a8017" [type: 'Changed] ;  Correct problem with HTTP READ after correcting bug#2025 
-"66876d4" [type: 'Changed] ;  Let BIND bind out-of scope function words. Corrects bug#1983. 
+"65a8017" [type: 'Fixed] ;  Correct problem with HTTP READ after correcting bug#2025 
+"66876d4" [type: 'Fixed] ;  Let BIND bind out-of scope function words. Corrects bug#1983. 
 "1b259d0" [type: 'Changed] ;  Let the VAUE? function yield #[false] for out-of-scope function variables, which is what the documentation describes. Corrects bug#1914 
 "93b05f7" [type: 'Removed] ;  Remove message print when LOAD/NEXT is used. bug#2041 
 "2b4c5f7" [type: 'Added] ;  -added ADLER32 checksum -enhanced RSA for /padding refinement 
 "dac7455" [type: 'Fixed] ;  Fix SET object/block block assuming /any (#1763) 
 "eaf0d94" [type: 'Fixed] ;  Fix PARSE regression: THRU not matching at the end 
-"824aab6" [type: 'Changed] ;  bug#1957 corr, FIRST+ help strings updated 
-"4ac3424" [type: 'Changed] ;  bug#1958, BIND and UNBIND can work on blocks not containing (just) words 
-"5ff6627" [type: 'Changed] ;  bug#1844, modification properties 
-"276eed3" [type: 'Changed] ;  bug#1955, updates of malconstruct error and mold help string 
-"0d68c29" [type: 'Changed] ;  bug#1956 
+"824aab6" [type: 'Fixed] ;  bug#1957 corr, FIRST+ help strings updated 
+"4ac3424" [type: 'Fixed] ;  bug#1958, BIND and UNBIND can work on blocks not containing (just) words 
+"5ff6627" [type: 'Fixed] ;  bug#1844, modification properties 
+"276eed3" [type: 'Fixed] ;  bug#1955, updates of malconstruct error and mold help string 
+;"0d68c29" [type: 'Fixed] ;  bug#1956 
 "f4ce48e" [type: 'Changed] ;  Use David M. Gay's dtoa for molding decimals 
 "631e698" [type: 'Changed] ;  Allow NEW-LINE and NEW-LINE? to accept PAREN! series 
-"b1e845b" [type: 'Changed] ;  bug#1939 
+"b1e845b" [type: 'Fixed] ;  bug#1939 
 "370d942" [type: 'Changed] ;  Allow INDEX? of NONE, returning NONE 
 "d2dce76" [type: 'Fixed] ;  Fix crash when reading dns:// without a hostname 
 "b9426a5" [type: 'Added] ;  add SET-ENV, tweaks to host api for environment string handling 

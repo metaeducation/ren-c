@@ -4,9 +4,9 @@ Rebol [
     name:    changes-file
     file:    %changes-file.reb
     author:  "Barry Walsh (draegtun)"
-    date:    12-Jun-2017
+    date:    16-Jun-2017
     ;; needs:   [2.102.0] ;; Ren/C
-    version: 0.1.5
+    version: 0.1.6
     history: [
         0.1.0  30-May-2017  {Protoype. Created initial cherry-pick-map from commits}
         0.1.1  02-Jun-2017  {Refactored & extra annotations. Edited cherry-picks}
@@ -14,6 +14,7 @@ Rebol [
         0.1.3  08-Jun-2017  {More trello links & and adapted for repo under /scripts/changes-file}
         0.1.4  12-Jun-2017  {Temp fix for CALL/OUTPUT}
         0.1.5  14-Jun-2017  {Remove temp fix on CALL/OUTPUT}
+        0.1.6  16-Jun-2017  {bug#nnnn marked meta with 'Fixed type and cc: accordingly}
     ]
     license: {Apache License 2.0} ;; Same as Rebol 3
     exports: [make-changes-file make-changes-block get-git-log]
@@ -134,6 +135,8 @@ notable?: function [
     <has>
         cherry-pick (load-cherry-pick-map)
 ][
+    numbers: charset "1234567890"
+
     ;; Let try and categorise type of commit (default is 'Changed)
     category: 'Changed
     parse text: c/summary [
@@ -146,14 +149,17 @@ notable?: function [
     ]
     append c compose [type: quote (category)]
 
-    ;; record any CC (CureCode) found
-    numbers: charset "1234567890"
+    ;; record any bug#NNNN or CC (CureCode) found
     cc: make block! 0
     parse text [
         any [
-            ["cc " | "cc"]
-            ["-" | "#"]
-            copy cc-num: some numbers (append cc to-integer cc-num)
+              "bug#" copy cc-num: some numbers (
+                append c [type: 'Fixed]   ;; it's a bug fix!
+                append cc to-integer cc-num
+              )
+            | ["cc " | "cc"]
+              ["-" | "#"]
+              copy cc-num: some numbers (append cc to-integer cc-num)
             | skip
         ]
     ]
