@@ -25,12 +25,16 @@
     80'000 == (length-of data)
 ]
 
-;; git log issue - crash?
+;; git log crash (inconsistent)
+;; fixed by https://github.com/metaeducation/ren-c/commit/c2221bffa2815dd074dc00080e1a29816ad7f5e2
 [
-    ;; extra large (500K+)
-    data: copy {}
-    call/shell/wait/output "git log --pretty=format:'[commit: {%h} author: {%an} email: {%ae} date-string: {%ai} summary: {%s}]'" data
-    and?
-        (length-of data) > 500'000
-        find? data {Initial commit}  ;; bottom of log
+    ;; only going to run if can find git binary
+    if exists? %/usr/bin/git [
+        ;; extra large (500K+)
+        data: copy {}
+        call/wait/output [%/usr/bin/git "log" {--pretty=format:'[commit: {%h} author: {%an} email: {%ae} date-string: {%ai} summary: {%s}]'}] data
+        and?
+            (length-of data) > 500'000
+            find? data "summary: {Initial commit}]"  ;; bottom of log
+    ] else [true] ;; test wasn't run but no way to skip :(
 ]
