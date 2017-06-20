@@ -466,13 +466,13 @@ unless 'Windows = first system/platform [
         letter: charset [#"a" - #"z" #"A" - #"Z"]
         unless parse env-lang [
             copy lang: [some letter]
-            #"_" copy territory: [some letter]
-            to end
+            [#"_" copy territory: [some letter] | #"." (territory: copy "US")]
+            to end (if lang = "C" [lang: copy "en"])
         ][
-            fail spaced ["Malformated env LANG:" env-lang]
+            fail spaced ["Non-standard env LANG:" env-lang]
         ]
 
-        case [
+         case [
             find? [language language*] type [
                 select iso-639 lang
             ]
