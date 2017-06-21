@@ -19,11 +19,11 @@ Alternatively using Git:
 - ``` Add /ONLY refinement to SET, permit single value to block sets ```  *@hostilefork* |  [c1d6173](https://github.com/metaeducation/ren-c/commit/c1d6173)
 - ``` Add just DETAB-FILE from pull request, with note, no line deletions ```  *@hostilefork* |  [25a40c6](https://github.com/metaeducation/ren-c/commit/25a40c6)
 - ``` Add an encapper for Windows PE ```  *@zsx* |  [8ef2488](https://github.com/metaeducation/ren-c/commit/8ef2488)
-- ``` Added CONSOLE! object & skinning ```  *@draegtun* |  [922658f](https://github.com/metaeducation/ren-c/commit/922658f) [922658f](https://github.com/metaeducation/ren-c/commit/922658f)  [922658f](https://github.com/metaeducation/ren-c/commit/922658f) [wiki](https://github.com/r3n/reboldocs/wiki/User-and-Console)
+- ``` Added CONSOLE! object & skinning ```  *@draegtun* |  [922658f](https://github.com/metaeducation/ren-c/commit/922658f) [00def28](https://github.com/metaeducation/ren-c/commit/00def28)  [2955730](https://github.com/metaeducation/ren-c/commit/2955730) [wiki](https://github.com/r3n/reboldocs/wiki/User-and-Console)
 - ``` Introduce source checking of Rebol files. ```  *@codebybrett* |  [46cf8e7](https://github.com/metaeducation/ren-c/commit/46cf8e7)
-- ``` voiding SELECT*, PICK*, TAKE* w/convenience wraps SELECT, PICK, TAKE ```  *@hostilefork* |  [33b8f02](https://github.com/metaeducation/ren-c/commit/33b8f02) [33b8f02](https://github.com/metaeducation/ren-c/commit/33b8f02)  [33b8f02](https://github.com/metaeducation/ren-c/commit/33b8f02)  [33b8f02](https://github.com/metaeducation/ren-c/commit/33b8f02) [trello](https://trello.com/c/pWMjGYl7/)
+- ``` voiding SELECT*, PICK*, TAKE* w/convenience wraps SELECT, PICK, TAKE ```  *@hostilefork* |  [33b8f02](https://github.com/metaeducation/ren-c/commit/33b8f02) [3f3aed1](https://github.com/metaeducation/ren-c/commit/3f3aed1)  [eaa5b28](https://github.com/metaeducation/ren-c/commit/eaa5b28)  [84da205](https://github.com/metaeducation/ren-c/commit/84da205) [trello](https://trello.com/c/pWMjGYl7/)
 - ``` Customizable userspace ECHO based on HIJACK ```  *@hostilefork* |  [de46d25](https://github.com/metaeducation/ren-c/commit/de46d25)
-- ``` Added WITH_FFI to makefile and Win64 release build ```  *@zsx* |  [177dfdc](https://github.com/metaeducation/ren-c/commit/177dfdc) [177dfdc](https://github.com/metaeducation/ren-c/commit/177dfdc)
+- ``` Added WITH_FFI to makefile and Win64 release build ```  *@zsx* |  [177dfdc](https://github.com/metaeducation/ren-c/commit/177dfdc) [50430f1](https://github.com/metaeducation/ren-c/commit/50430f1)
 - ``` Add SHA256 hashing native to cryptography module ```  *@hostilefork* |  [8b6f1bf](https://github.com/metaeducation/ren-c/commit/8b6f1bf)
 - ``` Add experimental DO-ALL native ```  *@hostilefork* |  [afaa179](https://github.com/metaeducation/ren-c/commit/afaa179)
 - ``` Add RECYCLE/VERBOSE to Debug build ```  *@hostilefork* |  [38ce4ee](https://github.com/metaeducation/ren-c/commit/38ce4ee)
@@ -32,16 +32,16 @@ Alternatively using Git:
 - ``` LOOP-WHILE, LOOP-UNTIL, and UNTIL-2 ```  *@hostilefork* |  [0970784](https://github.com/metaeducation/ren-c/commit/0970784) [trello](https://trello.com/c/988j1mjS/)
 - ``` Add /deep to mkdir ```  *@zsx* |  [95841c2](https://github.com/metaeducation/ren-c/commit/95841c2)
 - ``` Add a function to convert windows path to Rebol path ```  *@zsx* |  [8c94d2f](https://github.com/metaeducation/ren-c/commit/8c94d2f)
-- ``` ANY-TYPE! synonym for ANY-VALUE ```  *@hostilefork* |  [6caf195](https://github.com/metaeducation/ren-c/commit/6caf195) [6caf195](https://github.com/metaeducation/ren-c/commit/6caf195) [trello](https://trello.com/c/1jTJXB0d/)
+- ``` ANY-TYPE! synonym for ANY-VALUE ```  *@hostilefork* |  [6caf195](https://github.com/metaeducation/ren-c/commit/6caf195) [61abd10](https://github.com/metaeducation/ren-c/commit/61abd10) [trello](https://trello.com/c/1jTJXB0d/)
 - ``` Add LOGIC! to legal arguments to ASSERT ```  *@hostilefork* |  [4e109a2](https://github.com/metaeducation/ren-c/commit/4e109a2)
-- ``` New ELSE & THEN enfix functions ```  *@hostilefork* |  [c1c5945](https://github.com/metaeducation/ren-c/commit/c1c5945) [c1c5945](https://github.com/metaeducation/ren-c/commit/c1c5945)  [c1c5945](https://github.com/metaeducation/ren-c/commit/c1c5945) [trello](https://trello.com/c/NPivtSdd/)
+- ``` New ELSE & THEN enfix functions ```  *@hostilefork* |  [c1c5945](https://github.com/metaeducation/ren-c/commit/c1c5945) [f3a5bf8](https://github.com/metaeducation/ren-c/commit/f3a5bf8)  [3b3699d](https://github.com/metaeducation/ren-c/commit/3b3699d) [trello](https://trello.com/c/NPivtSdd/)
 ```rebol
 
 if 1 = 1 [run-this] else [run-that]
 
 ```
-- ``` <in>, <with>, <static> / <has> function specs ```  *@hostilefork* |  [0e0ae9a](https://github.com/metaeducation/ren-c/commit/0e0ae9a) [0e0ae9a](https://github.com/metaeducation/ren-c/commit/0e0ae9a)  [0e0ae9a](https://github.com/metaeducation/ren-c/commit/0e0ae9a)  [0e0ae9a](https://github.com/metaeducation/ren-c/commit/0e0ae9a) [trello](https://trello.com/c/IyxPieNa/)
-- ``` Custom ENFIX operators.  Killed OP! ```  *@hostilefork* |  [f0304ed](https://github.com/metaeducation/ren-c/commit/f0304ed) [f0304ed](https://github.com/metaeducation/ren-c/commit/f0304ed) [trello](https://trello.com/c/OvNE3GPM/)
+- ``` <in>, <with>, <static> / <has> function specs ```  *@hostilefork* |  [0e0ae9a](https://github.com/metaeducation/ren-c/commit/0e0ae9a) [47aef8a](https://github.com/metaeducation/ren-c/commit/47aef8a)  [9fb973c](https://github.com/metaeducation/ren-c/commit/9fb973c)  [0dff611](https://github.com/metaeducation/ren-c/commit/0dff611) [trello](https://trello.com/c/IyxPieNa/)
+- ``` Custom ENFIX operators.  Killed OP! ```  *@hostilefork* |  [f0304ed](https://github.com/metaeducation/ren-c/commit/f0304ed) [cfae703](https://github.com/metaeducation/ren-c/commit/cfae703) [trello](https://trello.com/c/OvNE3GPM/)
 ```rebol
 
 >> x: enfix func [a b] [a * b]
@@ -50,7 +50,7 @@ if 1 = 1 [run-this] else [run-that]
 == 6
 
 ```
-- ``` MAYBE, MAYBE? and ENSURE provide convenient inline type checking ```  *@hostilefork* |  [0a28ea5](https://github.com/metaeducation/ren-c/commit/0a28ea5) [0a28ea5](https://github.com/metaeducation/ren-c/commit/0a28ea5)  [0a28ea5](https://github.com/metaeducation/ren-c/commit/0a28ea5)  [0a28ea5](https://github.com/metaeducation/ren-c/commit/0a28ea5)  [0a28ea5](https://github.com/metaeducation/ren-c/commit/0a28ea5)  [0a28ea5](https://github.com/metaeducation/ren-c/commit/0a28ea5)  [0a28ea5](https://github.com/metaeducation/ren-c/commit/0a28ea5) [trello](https://trello.com/c/LR9PzUS3/125)
+- ``` MAYBE, MAYBE? and ENSURE provide convenient inline type checking ```  *@hostilefork* |  [0a28ea5](https://github.com/metaeducation/ren-c/commit/0a28ea5) [de3f9a1](https://github.com/metaeducation/ren-c/commit/de3f9a1)  [19983a9](https://github.com/metaeducation/ren-c/commit/19983a9)  [051f2a9](https://github.com/metaeducation/ren-c/commit/051f2a9)  [4e16471](https://github.com/metaeducation/ren-c/commit/4e16471)  [d5b5b9e](https://github.com/metaeducation/ren-c/commit/d5b5b9e)  [554dce6](https://github.com/metaeducation/ren-c/commit/554dce6) [trello](https://trello.com/c/LR9PzUS3/125)
 - ``` Add /WHERE feature to FAIL ```  *@hostilefork* |  [603c1d4](https://github.com/metaeducation/ren-c/commit/603c1d4)
 - ``` Add AS and ALIASES? natives ```  *@hostilefork* |  [296c3f5](https://github.com/metaeducation/ren-c/commit/296c3f5)
 - ``` Initial experimental HIJACK implementation ```  *@hostilefork* |  [fc7c536](https://github.com/metaeducation/ren-c/commit/fc7c536) [trello](https://trello.com/c/eaumDXoG/)
@@ -89,7 +89,7 @@ Hello
 - ``` Add RUNNING? and PENDING? tests for FRAME! ```  *@hostilefork* |  [cb9c221](https://github.com/metaeducation/ren-c/commit/cb9c221)
 - ``` Make lone underscore literal "BLANK!/NONE!" ```  *@hostilefork* |  [213b804](https://github.com/metaeducation/ren-c/commit/213b804) [trello](https://trello.com/c/vJTaG3w5/)
 - ``` Add VARIADIC?, make EVAL prototype "honest" ```  *@hostilefork* |  [28ec47b](https://github.com/metaeducation/ren-c/commit/28ec47b)
-- ``` *experimental* VARARGS! - highly flexible variadics ```  *@hostilefork* |  [efbaef9](https://github.com/metaeducation/ren-c/commit/efbaef9) [efbaef9](https://github.com/metaeducation/ren-c/commit/efbaef9) [trello](https://trello.com/c/Y17CEywN/)
+- ``` *experimental* VARARGS! - highly flexible variadics ```  *@hostilefork* |  [efbaef9](https://github.com/metaeducation/ren-c/commit/efbaef9) [2aac4ed](https://github.com/metaeducation/ren-c/commit/2aac4ed) [trello](https://trello.com/c/Y17CEywN/)
 ```rebol
 
 >> foo: func [x [integer! <...>]] [
@@ -147,7 +147,7 @@ foo takes 3 and then 7
 - ``` Add COLLECT-WITH mezzanine to specify "keeper" ```  *@hostilefork* |  [93d2677](https://github.com/metaeducation/ren-c/commit/93d2677) [trello](https://trello.com/c/FWFFMz68/)
 - ``` FOR-SKIP synonym for FORSKIP and FOR-NEXT / FOR-BACK for FORALL ```  *@hostilefork* |  [e8419e6](https://github.com/metaeducation/ren-c/commit/e8419e6) [trello](https://trello.com/c/StCADPIB/)
 - ``` Breakpoints + Interactive Debugging ```  *@hostilefork* |  [6711dc2](https://github.com/metaeducation/ren-c/commit/6711dc2)
-- ``` Added SOMETHING? & NOTHING? ```  *@hostilefork* |  [fab1090](https://github.com/metaeducation/ren-c/commit/fab1090) [fab1090](https://github.com/metaeducation/ren-c/commit/fab1090) [trello](https://trello.com/c/QBZGM8GY/)
+- ``` Added SOMETHING? & NOTHING? ```  *@hostilefork* |  [fab1090](https://github.com/metaeducation/ren-c/commit/fab1090) [123be17](https://github.com/metaeducation/ren-c/commit/123be17) [trello](https://trello.com/c/QBZGM8GY/)
 - ``` Add SET? native, remove x: () disablement from legacy ```  *@hostilefork* |  [e8e30e9](https://github.com/metaeducation/ren-c/commit/e8e30e9)
 - ``` <local> tag added to FUNC ```  *@hostilefork* |  [c77b6b4](https://github.com/metaeducation/ren-c/commit/c77b6b4) [trello](https://trello.com/c/WKGaad6F/)
 - ``` SPELLING-OF as native function ```  *@hostilefork* |  [9888f21](https://github.com/metaeducation/ren-c/commit/9888f21) [trello](https://trello.com/c/4Ky7vRCb/)
@@ -162,11 +162,11 @@ fail "Simple error"
 - ``` New prefix AND? OR? XOR? NOT? functions ```  *@hostilefork* |  [839a3f8](https://github.com/metaeducation/ren-c/commit/839a3f8)
 - ``` Added FOR-EACH / EVERY.  Deprecating FOREACH ```  *@hostilefork* |  [89e23d3](https://github.com/metaeducation/ren-c/commit/89e23d3) [trello](https://trello.com/c/cxvHGNha/)
 - ``` ANY-LIST! typeset (and ANY-ARRAY! experiment) ```  *@hostilefork* |  [1ffa861](https://github.com/metaeducation/ren-c/commit/1ffa861) [trello](https://trello.com/c/lCSdxtux/)
-- ``` TRAP, a proposed replacement for TRY. TRY/EXCEPT => TRAP/WITH ```  *@hostilefork* |  [58007df](https://github.com/metaeducation/ren-c/commit/58007df) [58007df](https://github.com/metaeducation/ren-c/commit/58007df) [trello](https://trello.com/c/IbnfBaLI)
+- ``` TRAP, a proposed replacement for TRY. TRY/EXCEPT => TRAP/WITH ```  *@hostilefork* |  [58007df](https://github.com/metaeducation/ren-c/commit/58007df) [f5c003b](https://github.com/metaeducation/ren-c/commit/f5c003b) [trello](https://trello.com/c/IbnfBaLI)
 - ``` Add new pseudo-type "TRASH!" ```  *@hostilefork* |  [5f22bc3](https://github.com/metaeducation/ren-c/commit/5f22bc3)
 - ``` Add UTF-16LE/BE codec for strings ```  *@zsx* |  [d417aa2](https://github.com/metaeducation/ren-c/commit/d417aa2)
 - ``` Add an encapper for Windows and Linux ```  *@zsx* |  [1286ac5](https://github.com/metaeducation/ren-c/commit/1286ac5)
-- ``` FEAT: Windows Serial Implementation and extension of serial functionality ```  *@kealist* |  [3a04abf](https://github.com/metaeducation/ren-c/commit/3a04abf) [3a04abf](https://github.com/metaeducation/ren-c/commit/3a04abf)
+- ``` FEAT: Windows Serial Implementation and extension of serial functionality ```  *@kealist* |  [3a04abf](https://github.com/metaeducation/ren-c/commit/3a04abf) [adeaa40](https://github.com/metaeducation/ren-c/commit/adeaa40)
 - ``` Add submodule libffi and link to static libffi ```  *@zsx* |  [7985d07](https://github.com/metaeducation/ren-c/commit/7985d07)
 - ``` Permit SET-WORD! as the argument to COPY and SET in PARSE (CC #2023) ```  *@hostilefork* |  [66b87c9](https://github.com/metaeducation/ren-c/commit/66b87c9) [#CC-2023](https://github.com/rebol/rebol-issues/issues/2023)
 ```rebol
@@ -213,7 +213,7 @@ foo: function [s] [
 - ``` HELP patches to permit FOR-EACH [key val] lib [help :key] ```  *@hostilefork* |  [92cbbcf](https://github.com/metaeducation/ren-c/commit/92cbbcf)
 - ``` Simplifying rewrite of REWORD, TO and THRU of BLANK! are no-ops ```  *@hostilefork* |  [ef25751](https://github.com/metaeducation/ren-c/commit/ef25751)
 - ``` Check for END when using a DO rule in PARSE ```  *@hostilefork* |  [1e9621e](https://github.com/metaeducation/ren-c/commit/1e9621e)
-- ``` Turn BMP, JPG, GIF & PNG codec into an extension ```  *@zsx* |  [4a89744](https://github.com/metaeducation/ren-c/commit/4a89744) [4a89744](https://github.com/metaeducation/ren-c/commit/4a89744)  [4a89744](https://github.com/metaeducation/ren-c/commit/4a89744)  [4a89744](https://github.com/metaeducation/ren-c/commit/4a89744)
+- ``` Turn BMP, JPG, GIF & PNG codec into an extension ```  *@zsx* |  [4a89744](https://github.com/metaeducation/ren-c/commit/4a89744) [97ca06b](https://github.com/metaeducation/ren-c/commit/97ca06b)  [4638e58](https://github.com/metaeducation/ren-c/commit/4638e58)  [36d9a74](https://github.com/metaeducation/ren-c/commit/36d9a74)
 - ``` Support extensions as dynamically linked libraries ```  *@zsx* |  [ef9975e](https://github.com/metaeducation/ren-c/commit/ef9975e)
 - ``` Test @GrahamChiu's s3 upload for travis.yml ```  *@hostilefork* |  [4ab24cd](https://github.com/metaeducation/ren-c/commit/4ab24cd)
 - ``` Put REPL and host startup code into lib, not user ```  *@hostilefork* |  [489ca6a](https://github.com/metaeducation/ren-c/commit/489ca6a)
@@ -359,7 +359,7 @@ foo: function [s] [
 - ``` Copied DELETE-DIR from Rebol 2 (cc#1545) ```  *Tamas Herman* |  [bdd7523](https://github.com/metaeducation/ren-c/commit/bdd7523) [#CC-1545](https://github.com/rebol/rebol-issues/issues/1545)
 - ``` Implement UDP protocol ```  *@zsx* |  [f929c97](https://github.com/metaeducation/ren-c/commit/f929c97)
 - ``` Incorporate /ONLY option for suppressing conditional block evaluation. ```  *@hostilefork* |  [895c893](https://github.com/metaeducation/ren-c/commit/895c893)
-- ``` Fix CC-2068 CC-1748 ```  *@carls* |  [9cd51ab](https://github.com/metaeducation/ren-c/commit/9cd51ab) [9cd51ab](https://github.com/metaeducation/ren-c/commit/9cd51ab)  [9cd51ab](https://github.com/metaeducation/ren-c/commit/9cd51ab)  [9cd51ab](https://github.com/metaeducation/ren-c/commit/9cd51ab) [#CC-1748](https://github.com/rebol/rebol-issues/issues/1748)  [#CC-2068](https://github.com/rebol/rebol-issues/issues/2068)
+- ``` Fix CC-2068 CC-1748 ```  *@carls* |  [9cd51ab](https://github.com/metaeducation/ren-c/commit/9cd51ab) [ac9176a](https://github.com/metaeducation/ren-c/commit/ac9176a)  [be2bd43](https://github.com/metaeducation/ren-c/commit/be2bd43)  [82011e2](https://github.com/metaeducation/ren-c/commit/82011e2) [#CC-1748](https://github.com/rebol/rebol-issues/issues/1748)  [#CC-2068](https://github.com/rebol/rebol-issues/issues/2068)
 - ``` Support async read from clipboard ```  *@zsx* |  [038555b](https://github.com/metaeducation/ren-c/commit/038555b)
 - ``` String & binary targets for /INTO in REDUCE+COMPOSE (CC #2081) ```  *@hostilefork* |  [4f17ba6](https://github.com/metaeducation/ren-c/commit/4f17ba6) [#CC-2081](https://github.com/rebol/rebol-issues/issues/2081)
 - ``` Make word lists of frames bare as suggested Prevent word duplication when appending to an object Fix CC#1979 Optimize the code to not use search Fix 'self handling described in CC#2076 Fix Collect_Object to not overwrite memory BUF_WORDS does not own. Without this fix, Collect_Object was causing crashes in 64-bit R3 Amend Init_Frame_Word to set OPTS_UNWORD option to the word added to the frame word list as suggested. ```  *@ladislav* |  [5e58496](https://github.com/metaeducation/ren-c/commit/5e58496) [#CC-1979](https://github.com/rebol/rebol-issues/issues/1979)  [#CC-2076](https://github.com/rebol/rebol-issues/issues/2076)
@@ -462,7 +462,7 @@ foo: function [s] [
 - ``` Modify INTEGER! multiplication to not use division for overflow detection. Modify INTEGER! addition and subtraction to not use undefined arithmetic. Modify integer comparison to not use undefined arithmetic. Fix bug#2054 Do not use MAX_NEG_INT in t_integer.c (problematic name). Amend a comment referring to reb-config.h ```  *@ladislav* |  [55001ab](https://github.com/metaeducation/ren-c/commit/55001ab) [#CC-2054](https://github.com/rebol/rebol-issues/issues/2054)
 - ``` Correct object cloning bug#2049 by cloning closures. ```  *@ladislav* |  [7fef89d](https://github.com/metaeducation/ren-c/commit/7fef89d) [#CC-2049](https://github.com/rebol/rebol-issues/issues/2049)
 - ``` Use function args as frame reference of function variables instead of function body. Function body was unsuitable (unsafe) for the purpose since in R3 it is possible to define distinct functions sharing the same body. Corrects bug#2025 ```  *@ladislav* |  [3561c16](https://github.com/metaeducation/ren-c/commit/3561c16) [#CC-2025](https://github.com/rebol/rebol-issues/issues/2025)
-- ``` Multiple bug fixes from Carl, Earl & Ladislav ```  *@carls* |  [8baf6ca](https://github.com/metaeducation/ren-c/commit/8baf6ca) [8baf6ca](https://github.com/metaeducation/ren-c/commit/8baf6ca)  [8baf6ca](https://github.com/metaeducation/ren-c/commit/8baf6ca)  [8baf6ca](https://github.com/metaeducation/ren-c/commit/8baf6ca)  [8baf6ca](https://github.com/metaeducation/ren-c/commit/8baf6ca)  [8baf6ca](https://github.com/metaeducation/ren-c/commit/8baf6ca)  [8baf6ca](https://github.com/metaeducation/ren-c/commit/8baf6ca)  [8baf6ca](https://github.com/metaeducation/ren-c/commit/8baf6ca)  [8baf6ca](https://github.com/metaeducation/ren-c/commit/8baf6ca)  [8baf6ca](https://github.com/metaeducation/ren-c/commit/8baf6ca)  [8baf6ca](https://github.com/metaeducation/ren-c/commit/8baf6ca)  [8baf6ca](https://github.com/metaeducation/ren-c/commit/8baf6ca)  [8baf6ca](https://github.com/metaeducation/ren-c/commit/8baf6ca) [#CC-1989](https://github.com/rebol/rebol-issues/issues/1989)  [#CC-1969](https://github.com/rebol/rebol-issues/issues/1969)  [#CC-1957](https://github.com/rebol/rebol-issues/issues/1957)  [#CC-1958](https://github.com/rebol/rebol-issues/issues/1958)  [#CC-1491](https://github.com/rebol/rebol-issues/issues/1491)
+- ``` Multiple bug fixes from Carl, Earl & Ladislav ```  *@carls* |  [8baf6ca](https://github.com/metaeducation/ren-c/commit/8baf6ca) [19d1111](https://github.com/metaeducation/ren-c/commit/19d1111)  [2b52014](https://github.com/metaeducation/ren-c/commit/2b52014)  [2b2ee73](https://github.com/metaeducation/ren-c/commit/2b2ee73)  [d82b061](https://github.com/metaeducation/ren-c/commit/d82b061)  [24836e6](https://github.com/metaeducation/ren-c/commit/24836e6)  [d566711](https://github.com/metaeducation/ren-c/commit/d566711)  [0ea6b08](https://github.com/metaeducation/ren-c/commit/0ea6b08)  [32a6be5](https://github.com/metaeducation/ren-c/commit/32a6be5)  [740a8c1](https://github.com/metaeducation/ren-c/commit/740a8c1)  [42653da](https://github.com/metaeducation/ren-c/commit/42653da)  [8a0ffb9](https://github.com/metaeducation/ren-c/commit/8a0ffb9)  [c5c40d2](https://github.com/metaeducation/ren-c/commit/c5c40d2) [#CC-1989](https://github.com/rebol/rebol-issues/issues/1989)  [#CC-1969](https://github.com/rebol/rebol-issues/issues/1969)  [#CC-1957](https://github.com/rebol/rebol-issues/issues/1957)  [#CC-1958](https://github.com/rebol/rebol-issues/issues/1958)  [#CC-1491](https://github.com/rebol/rebol-issues/issues/1491)
 - ``` Correct problem with HTTP READ after correcting bug#2025 ```  *@ladislav* |  [65a8017](https://github.com/metaeducation/ren-c/commit/65a8017) [#CC-2025](https://github.com/rebol/rebol-issues/issues/2025)
 - ``` Let BIND bind out-of scope function words. Corrects bug#1983. ```  *@ladislav* |  [66876d4](https://github.com/metaeducation/ren-c/commit/66876d4) [#CC-1983](https://github.com/rebol/rebol-issues/issues/1983)
 - ``` Let Clone_Function copy the args block of the original, letting the args block identify the function and making it suitable for frame reference. Corrects bug#2044. ```  *@ladislav* |  [9bd75a0](https://github.com/metaeducation/ren-c/commit/9bd75a0) [#CC-2044](https://github.com/rebol/rebol-issues/issues/2044)

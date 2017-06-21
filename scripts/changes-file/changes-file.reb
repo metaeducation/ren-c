@@ -6,7 +6,7 @@ Rebol [
     author:  "Barry Walsh (draegtun)"
     date:    21-Jun-2017
     ;; needs:   [2.102.0] ;; Ren/C
-    version: 0.1.7
+    version: 0.1.8
     history: [
         0.1.0  30-May-2017  {Protoype. Created initial cherry-pick-map from commits}
         0.1.1  02-Jun-2017  {Refactored & extra annotations. Edited cherry-picks}
@@ -16,6 +16,7 @@ Rebol [
         0.1.5  14-Jun-2017  {Remove temp fix on CALL/OUTPUT}
         0.1.6  16-Jun-2017  {bug#nnnn marked meta with 'Fixed type and cc: accordingly}
         0.1.7  21-Jun-2017  {related commits are now automatically "not notable"}
+        0.1.8  21-Jun-2017  {Fix related links}
     ]
     license: {Apache License 2.0} ;; Same as Rebol 3
     exports: [make-changes-file make-changes-block get-git-log]
@@ -257,7 +258,7 @@ make-changes-file: procedure [
             ;; any related hash (cherry-pick collated)
             if related: select co 'related [
                 map-each n related [
-                    md-link co/commit join-all [url/ren-c co/commit]
+                    md-link n join-all [url/ren-c n]
                 ]
             ]
 
