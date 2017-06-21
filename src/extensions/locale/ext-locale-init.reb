@@ -6,6 +6,7 @@ REBOL [
     license: {Apache 2.0}
 ]
 
+
 unless 'Windows = first system/platform [
     ; Windows has locale implemented as a native
 
@@ -453,12 +454,15 @@ unless 'Windows = first system/platform [
 ]
 
     hijack 'locale function [
+        {parameter of 'language/language* or 'territory/territory* returns a value from the ISO tables}
         type [word!]
         <has>
         iso-639 (iso-639-table)
         iso-3166 (iso-3166-table)
+        error-msg
     ][
         env-lang: get-env "LANG"
+        error-msg: spaced ["*** Unrecognised env LANG:" env-lang " - defaulting to US English ***"]
         unless env-lang [
             return _
         ]
@@ -466,21 +470,24 @@ unless 'Windows = first system/platform [
         letter: charset [#"a" - #"z" #"A" - #"Z"]
         unless parse env-lang [
             copy lang: [some letter]
-            [#"_" copy territory: [some letter] | #"." (territory: copy "US")]
-            to end (if lang = "C" [lang: copy "en"])
+            #"_" copy territory: [some letter]
+            to end
         ][
-            fail spaced ["Non-standard env LANG:" env-lang]
+            if lang <> "C" [print error-msg]
+            lang: "en" territory: "US"
         ]
 
          case [
             find? [language language*] type [
-                select iso-639 lang
+                unless lang: select iso-639 lang [print error-msg]
+                lang: default "en"
             ]
             find? [territory territory*] type [
-                select iso-3166 territory
+                unless territory: select iso-3166 territory [print error-msg]
+                territory: default "US"
             ]
             true [
-                fail spaced ["Invalid locale type:" type]
+                fail unspaced ["Unrecognised env LANG value" env-lang]
             ]
         ]
     ]
