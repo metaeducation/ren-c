@@ -30,6 +30,16 @@
 ;; https://trello.com/c/KvUZ5zEb/104-set-operations-union-exclude-etc-can-work-with-any-pair-of-any-string-or-any-array-types
 ;; https://trello.com/c/coLzXVju/106-objects-can-have-optional-spec
 
+;; some old bug fixes that need grouping
+"8baf6ca" [
+    related: [
+        "19d1111" "2b52014" "2b2ee73" "d82b061" "24836e6" "d566711" "0ea6b08"
+        "32a6be5" "740a8c1" "42653da" "8a0ffb9" "c5c40d2"
+    ]
+    cc: [1989 1969 1957 1958 1491]
+    summary: {Multiple bug fixes from Carl, Earl & Ladislav}
+]
+
 ;; some grouping of CC fixes
 "9cd51ab" [
     related: ["ac9176a" "be2bd43" "82011e2"]
@@ -38,9 +48,9 @@
 ]
 
 ;; at moment entered manually but lets try and make use of related: in above for this
-"ac9176a" no
-"be2bd43" no
-"82011e2" no
+;"ac9176a" no
+;"be2bd43" no
+;"82011e2" no
 
 {c94cc95} [trello: https://trello.com/c/m94GOELw/] ; {Expand possible /NAME types for THROW}]
 

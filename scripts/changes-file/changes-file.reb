@@ -4,9 +4,9 @@ Rebol [
     name:    changes-file
     file:    %changes-file.reb
     author:  "Barry Walsh (draegtun)"
-    date:    16-Jun-2017
+    date:    21-Jun-2017
     ;; needs:   [2.102.0] ;; Ren/C
-    version: 0.1.6
+    version: 0.1.7
     history: [
         0.1.0  30-May-2017  {Protoype. Created initial cherry-pick-map from commits}
         0.1.1  02-Jun-2017  {Refactored & extra annotations. Edited cherry-picks}
@@ -15,6 +15,7 @@ Rebol [
         0.1.4  12-Jun-2017  {Temp fix for CALL/OUTPUT}
         0.1.5  14-Jun-2017  {Remove temp fix on CALL/OUTPUT}
         0.1.6  16-Jun-2017  {bug#nnnn marked meta with 'Fixed type and cc: accordingly}
+        0.1.7  21-Jun-2017  {related commits are now automatically "not notable"}
     ]
     license: {Apache License 2.0} ;; Same as Rebol 3
     exports: [make-changes-file make-changes-block get-git-log]
@@ -134,7 +135,10 @@ notable?: function [
     c [block!] {Commit-log block}
     <has>
         cherry-pick (load-cherry-pick-map)
+        related (make block! 0)
 ][
+    if find? related c/commit [return false]    ;; related commits are not notable
+
     numbers: charset "1234567890"
 
     ;; Let try and categorise type of commit (default is 'Changed)
@@ -174,6 +178,9 @@ notable?: function [
 
         ;; so must be block?
         unless block? cherry-value [do make error! {Invalid rule in cherry-pick-map.reb}]
+
+        ;; record related commits to force to be not notable later
+        if iggy: select cherry-value 'related [append related iggy]
 
         ;; update commit block with rule info & return true (is notable)
         append c cherry-value
