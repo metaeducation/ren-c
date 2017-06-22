@@ -69,13 +69,9 @@ static REB_R Serial_Actor(REBFRM *frame_, REBCTX *port, REBSYM action)
                 fail (Error_Invalid_Port_Arg_Raw(arg));
 
             serial->path = ALLOC_N(REBCHR, MAX_SERIAL_DEV_PATH);
-            OS_STRNCPY(
+            OS_STR_CONVERT(
                 serial->path,
-                //
-                // !!! This is assuming VAL_DATA contains native chars.
-                // Should it? (2 bytes on windows, 1 byte on linux/mac)
-                //
-                SER_AT(REBCHR, VAL_SERIES(arg), VAL_INDEX(arg)),
+                SER_AT(char, VAL_SERIES(arg), VAL_INDEX(arg)),
                 MAX_SERIAL_DEV_PATH
             );
             arg = Obj_Value(spec, STD_PORT_SPEC_SERIAL_SPEED);

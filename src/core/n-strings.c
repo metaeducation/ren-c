@@ -1109,6 +1109,29 @@ REBCHR *OS_STRCHR_(const REBCHR *str, REBCNT ch)
 #endif
 }
 
+//
+// OS_STR_CONVERT_: C
+//
+// Debug-only REBCHR-checked function for OS_STR_CONVERT macro
+//
+REBCHR *OS_STR_CONVERT_(REBCHR *dest, const char *src, size_t count)
+{
+#ifdef OS_WIDE_CHAR
+    return cast(REBCHR*,
+        mbstowcs(cast(wchar_t*, dest), cast(const char*, src), count)
+    );
+#else
+    #ifdef TO_OPENBSD
+        return cast(REBCHR*,
+            strlcpy(cast(char*, dest), cast(const char*, src), count)
+        );
+    #else
+        return cast(REBCHR*,
+            strncpy(cast(char*, dest), cast(const char*, src), count)
+        );
+    #endif
+#endif
+}
 
 //
 //  OS_MAKE_CH_: C
