@@ -330,6 +330,23 @@ help: procedure [
 ;
 ;           More information: http://www.rebol.com/docs.html
 
+    if issue? :word [
+        if topic: select topics: load https://raw.githubusercontent.com/r3n/renclib/master/topics.MD :word [
+            browse topic
+        ]
+        else [
+            print spaced ["No help topic on" :word "so you might want to create entry for one at https://github.com/r3n/renclib/blob/master/topics.MD"]
+            print "However, topics exist for the following issues"
+            tops: collect [
+                for-each [issue url] topics [
+                    keep issue
+                ]
+            ]
+            print spaced tops
+        ]
+        leave
+    ]
+
     if all [word? :word | blank? context-of word] [
         print [word "is an unbound WORD!"]
         leave
