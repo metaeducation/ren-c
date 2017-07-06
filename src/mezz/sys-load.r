@@ -754,7 +754,7 @@ load-module: function [
             case [
                 word? hdr [cause-error 'syntax hdr source]
                 import blank ; /import overrides 'delay option
-                not delay [delay: true? find hdr/options 'delay]
+                not delay [delay: find? hdr/options 'delay]
             ]
             if hdr/checksum [modsum: copy hdr/checksum]
         ]

@@ -207,6 +207,25 @@ value?: func [dummy:] [
     ] 'dummy
 ]
 
+true?: func [dummy:] [
+    fail/where [
+        {TRUE? is misleading/ambiguous, use either TO-LOGIC or `= TRUE`} |
+        {(TRUTHY? is also provided to see if anyone actually likes it)}
+    ] 'dummy
+]
+
+false?: func [dummy:] [
+    fail/where [
+        {FALSE? is misleading/ambiguous, use either NOT or `= FALSE`} |
+        {(FALSEY? is still provided to see if anyone actually likes it)}
+    ] 'dummy
+]
+
+; Silly names, but someone might like them
+;
+truthy?: :to-logic
+falsey?: :not
+
 none-of: :none ;-- reduce mistakes for now by renaming NONE out of the way
 
 none?: none!: none: func [dummy:] [
@@ -450,7 +469,7 @@ r3-alpha-apply: function [
         ]
 
         either refinement? params/1 [
-            using-args: set (in frame params/1) true? :arg
+            using-args: set (in frame params/1) to-logic :arg
         ][
             if using-args [
                 set* (in frame params/1) :arg

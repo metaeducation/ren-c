@@ -1305,45 +1305,22 @@ REBNATIVE(unset_q)
 
 
 //
-//  true?: native/body [
+//  to-logic: native/body [
 //
-//  "Returns true if a value can be used as true."
+//  "Returns true for all values that would cause IF to take the branch"
 //
+//      return: [logic!]
+//          {true if the supplied value is NOT a LOGIC! false or BLANK!}
 //      value [any-value!] ; Note: No [<opt> any-value!] - void must fail
 //  ][
 //      not not :val
 //  ]
 //
-REBNATIVE(true_q)
+REBNATIVE(to_logic)
 {
-    INCLUDE_PARAMS_OF_TRUE_Q;
+    INCLUDE_PARAMS_OF_TO_LOGIC;
 
     return R_FROM_BOOL(IS_CONDITIONAL_TRUE(ARG(value)));
-}
-
-
-//
-//  false?: native/body [
-//
-//  "Returns false if a value is either LOGIC! false or a NONE!."
-//
-//      value [any-value!] ; Note: No [<opt> any-value!] - void must fail.
-//  ][
-//      either any [
-//          blank? :value
-//          :value = false
-//      ][
-//          true
-//      ][
-//          false
-//      ]
-//  ]
-//
-REBNATIVE(false_q)
-{
-    INCLUDE_PARAMS_OF_FALSE_Q;
-
-    return R_FROM_BOOL(IS_CONDITIONAL_FALSE(ARG(value)));
 }
 
 

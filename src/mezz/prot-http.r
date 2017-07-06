@@ -351,7 +351,7 @@ check-response: func [port /local conn res headers d1 d2 line info state awake s
             | (info/response-parsed: 'version-not-supported)
         ]
     ]
-    if all [logic? spec/debug true? spec/debug]  [
+    if spec/debug = true [
         spec/debug: info
     ]
     switch/all info/response-parsed [

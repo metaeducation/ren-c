@@ -84,7 +84,7 @@ dir?: func [
     {Returns TRUE if the file or url ends with a slash (or backslash).}
     target [file! url!]
 ][
-    true? find "/\" last target
+    find? "/\" last target
 ]
 
 dirize: func [

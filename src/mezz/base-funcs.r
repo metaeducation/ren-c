@@ -578,13 +578,13 @@ catch?: redescribe [
 any?: redescribe [
     {Shortcut OR, ignores voids. Unlike plain ANY, forces result to LOGIC!}
 ](
-    chain [:any | :to-value | :true?]
+    chain [:any | :to-value | :to-logic]
 )
 
 all?: redescribe [
     {Shortcut AND, ignores voids. Unlike plain ALL, forces result to LOGIC!}
 ](
-    chain [:all | :to-value | :true?]
+    chain [:all | :to-value | :to-logic]
 )
 
 maybe?: redescribe [
@@ -598,7 +598,7 @@ maybe?: redescribe [
 find?: redescribe [
     {Variant of FIND that returns TRUE if present and FALSE if not.}
 ](
-    chain [:find | :true?]
+    chain [:find | :to-logic]
 )
 
 select: redescribe [
@@ -1149,7 +1149,7 @@ ensure: function [
 ][
     case* [
         void? temp: maybe test :arg [
-            assert [any [void? :arg | false? :arg]]
+            assert [any [void? :arg | not :arg]]
 
             ; The test passed but we want to avoid an accidental usage like
             ; `if ensure [logic!] some-false-thing [...]` where the test
@@ -1164,7 +1164,7 @@ ensure: function [
             ] 'arg
         ]
         true [
-            assert [all [true? :temp | :arg = :temp]]
+            assert [all [:temp | :arg = :temp]]
             :temp
         ]
     ]

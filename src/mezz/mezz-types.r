@@ -21,16 +21,16 @@ REBOL [
 ; These must be listed explicitly in order for the words to be collected
 ; as legal "globals" for the mezzanine context (otherwise SET would fail)
 
-; Note that TO-INTEGER and TO-STRING are currently their own natives with
-; additional refinements, and thus should not be overwritten here
+; Note that TO-LOGIC, TO-INTEGER and TO-STRING are currently their own natives
+; (even with additional refinements), and thus should not be overwritten here
 
 to-logic: to-decimal: to-percent: to-money: to-char: to-pair:
 to-tuple: to-time: to-date: to-binary: to-file: to-email: to-url: to-tag:
 to-bitset: to-image: to-vector: to-block: to-group:
 to-path: to-set-path: to-get-path: to-lit-path: to-map: to-datatype: to-typeset:
 to-word: to-set-word: to-get-word: to-lit-word: to-refinement: to-issue:
-to-command: to-closure: to-function: to-object: to-module: to-error: to-port: to-gob:
-to-event:
+to-command: to-closure: to-function: to-object: to-module: to-error: to-port:
+to-gob: to-event:
     blank
 
 ; Auto-build the functions for the above TO-* words.

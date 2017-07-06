@@ -79,7 +79,7 @@ to-c-name: function [
         true [ ;-- !!! See notes above, don't change to an ELSE!
             ;
             ; If these symbols occur composite in a longer word, they use a
-            ; shorthand; e.g. `true?` => `true_q`
+            ; shorthand; e.g. `foo?` => `foo_q`
 
             for-each [reb c] [
                 -   "_"

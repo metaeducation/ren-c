@@ -106,7 +106,7 @@ assert-debug: function [
                     |
                 (blank? bad-result) "blank"
                     |
-                (false? bad-result) "false"
+                (bad-result = false) "false"
             ])
             ":"
             expr

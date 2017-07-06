@@ -438,15 +438,15 @@ eval: get 'do
 ; In some cases, the bitwise and will be good enough for logic purposes...
 ;
 and*: get 'and
-and?: func [a b] [true? all [:a :b]]
+and?: func [a b] [to-logic all [:a :b]]
 and: get 'and ; see above
 
 or+: get 'or
-or?: func [a b] [true? any [:a :b]]
+or?: func [a b] [to-logic any [:a :b]]
 or: get 'or ; see above
 
 xor+: get 'xor
-xor?: func [a b] [true? any [all [:a (not :b)] all [(not :a) :b]]]
+xor?: func [a b] [to-logic any [all [:a (not :b)] all [(not :a) :b]]]
 
 
 ; UNSPACED in Ren-C corresponds rougly to AJOIN, and SPACED corresponds very

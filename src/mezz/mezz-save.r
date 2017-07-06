@@ -107,7 +107,7 @@ save: function [
         ]
 
         if length_SAVE [
-            ; any true? value will work, but this uses #[true].  (Notation
+            ; any truthy value will work, but this uses #[true].  (Notation
             ; is to help realize this is a *mention*, not *usage* of length.)
             append header-data reduce [(quote length:) (true)]
         ]
