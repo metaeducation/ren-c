@@ -680,7 +680,7 @@ comment [
     ;
     either file? o/script [
         trap/with [
-            do/only o/script ;-- /ONLY so QUIT/WITH exit code bubbles out
+            do/only/args o/script script-args ;-- /ONLY so QUIT/WITH exit code bubbles out
         ] func [error <with> return] [
             print error
             return 1
