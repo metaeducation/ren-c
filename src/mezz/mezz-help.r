@@ -264,7 +264,11 @@ help: procedure [
 
                 help "insert"
 
-            To browse online web documents:
+            To browse online topics:
+
+                help #compiling
+
+            To browse online documentation:
 
                 help/doc insert
 
@@ -293,13 +297,14 @@ help: procedure [
 
             Other information:
 
-                bugs - open GitHub issues website
-                chat - open GitHub developer forum
                 about - see general product info
-                upgrade - check for newer versions
-                changes - show changelog (TBD)
+                bugs - open GitHub issues website
+                changes - show changelog
+                chat - open GitHub developer forum
                 install - install (when applicable)
                 license - show user license
+                topics - open help topics website
+                upgrade - check for newer versions
                 usage - program cmd line options
         }
         leave
@@ -329,6 +334,15 @@ help: procedure [
 ;               upgrade - updates your copy of REBOL
 ;
 ;           More information: http://www.rebol.com/docs.html
+
+    r3n: https://r3n.github.io/
+
+    ;; help #topic (browse r3n for topic)
+    if issue? :word [
+        say-browser
+        browse join-all [r3n "topics/" next to-string :word]
+        leave
+    ]
 
     if all [word? :word | blank? context-of word] [
         print [word "is an unbound WORD!"]

@@ -843,10 +843,15 @@ console!: make object! [
         q: [quit]
         list-shortcuts: [print system/console/shortcuts]
         changes: [
+            say-browser
             browse (join-all [
                 https://github.com/metaeducation/ren-c/blob/master/CHANGES.md#
                 join-all ["" system/version/1 system/version/2 system/version/3]
             ])
+        ]
+        topics: [
+            say-browser
+            browse https://r3n.github.io/topics/
         ]
     ]
 
