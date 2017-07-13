@@ -98,10 +98,15 @@ dump-obj: function [
 
 dump: proc [
     {Show the name of a value (or block of expressions) with the value itself}
-    :value
+    :value [any-value! <...>]
     <local>
-        dump-one dump-val clip-string item
+        dump-one dump-val clip-string item set-word result
 ][
+    if bar? first value [
+        take value
+        leave
+    ] ;-- treat this DUMP as disabled, `dump | x`
+
     clip-string: function [str len][
        either len < length-of str [
           delimit [ copy/part str len - 3 "..." ] _
@@ -123,8 +128,8 @@ dump: proc [
 
     dump-one: proc [item][
         case [
-            string? item [
-                print ["---" clip-string item system/options/dump-size "---"] ;-- label it
+            string? item [ ;-- allow customized labels
+                print ["---" clip-string item system/options/dump-size "---"]
             ]
 
             word? item [
@@ -149,10 +154,27 @@ dump: proc [
         ]
     ]
 
-    either block? value [
-        for-each item value [dump-one item]
-    ][
-        dump-one value
+    case [
+        ; The reason this function is a quoting variadic is so that you can
+        ; write `dump x: 1 + 2` and get `x: => 3`.  This is just a convenience
+        ; to save typing over `blahblah: 1 + 2 dump blahblah`.
+        ;
+        ; !!! Should also support `dump [x: 1 + 2 y: 3 + 4]` as a syntax...
+        ;
+        set-word? first value [
+            set-word: first value
+            result: do/next value (quote pos:)
+            ;-- Note: don't need to TAKE
+            print [set-word "=>" result]
+        ]
+
+        block? first value [
+            for-each item take value [dump-one item]
+        ]
+        
+        true [
+            dump-one take value
+        ]
     ]
 ]
 
