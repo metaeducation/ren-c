@@ -103,14 +103,14 @@ ask: function [
 
 confirm: function [
     "Confirms a user choice."
-    return: [logic!]
+    return: [logic! blank!]
     question [any-series!]
         "Prompt to user"
     /with
     choices [string! block!]
 ][
     if all [block? :choices | 2 < length-of choices] [
-        cause-error 'script 'invalid-arg adjoin "maximum 2 arguments allowed (true/false) " mold choices
+        cause-error 'script 'invalid-arg join-of "maximum 2 arguments allowed for choices [true false] got: " mold choices
     ]
 
     response: ask question
