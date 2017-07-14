@@ -109,15 +109,15 @@ confirm: function [
     /with
     choices [string! block!]
 ][
-    if all [block? choices | 2 < length-of choices] [
-        cause-error 'script 'invalid-arg mold choices
+    if all [block? :choices | 2 < length-of choices] [
+        cause-error 'script 'invalid-arg adjoin "maximum 2 arguments allowed (true/false) " mold choices
     ]
 
     response: ask question
 
     unless with [choices: [["y" "yes"] ["n" "no"]]]
 
-    case [
+    to-value case [
         empty? choices [true]
         string? choices [find?/match response choices]
         2 > length-of choices [find?/match response first choices]
