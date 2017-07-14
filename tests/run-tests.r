@@ -14,9 +14,6 @@ Rebol [
     Purpose: {Click and run tests in a file or directory.}
 ]
 
-; define the INCLUDE function
-do %include.r
-
 do %test-framework.r
 
 run-tests: function [tests] [
@@ -35,8 +32,7 @@ run-tests: function [tests] [
     log-file-prefix: copy/part tests suffix
 
     print "Testing ..."
-    change-dir first split-path tests
     set [log-file: summary:] do-recover tests [] blank log-file-prefix
 ]
 
-run-tests to-rebol-file system/script/args
+run-tests to-rebol-file first system/options/args

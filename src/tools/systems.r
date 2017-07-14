@@ -47,10 +47,10 @@ systems: [
                 [M]             [HID DYN]
 
     ;-------------------------------------------------------------------------
-    0.3.01      windows-x86     windows [LEN UNI F64 W32]           []
+    0.3.01      windows-x86     windows [LEN UNI F64 W32 NSEC]      [WLOSS]
                 [W32 M]         [CON S4M]
 
-    0.3.40      windows-x64     windows [LEN UNI F64 W32 LLP64]     []
+    0.3.40      windows-x64     windows [LEN UNI F64 W32 LLP64 NSEC] [WLOSS]
                 [W32 M]         [CON S4M]
 
     ;-------------------------------------------------------------------------
@@ -140,6 +140,10 @@ system-definitions: make object! [
     UNI: "UNICODE"                ; win32 wants it
     F64: "_FILE_OFFSET_BITS=64"   ; allow larger files
 
+    ; MSC deprecates all non-*_s version string functions
+    ; As Ren-C has been constantly tested with ASAN, this shouldn't be an issue.
+    NSEC: <msc:_CRT_SECURE_NO_WARNINGS>
+
 
     ; There are variations in what functions different compiler versions will
     ; wind up linking in to support the same standard C functions.  This
@@ -181,6 +185,11 @@ compiler-flags: make object! [
     ; See comments about the glibc version above
     NSP: <gnu:-fno-stack-protector> ; stack protect pulls in glibc 2.4 calls
     PIC: <gnu:-fPIC>                ; Android requires this
+
+    WLOSS: [
+        <msc:/wd4244>               ; conversion' conversion from 'type1' to 'type2', possible loss of data
+        <msc:/wd4267>               ; var' : conversion from 'size_t' to 'type', possible loss of data
+    ]
 ]
 
 system-libraries: make object! [
@@ -236,7 +245,7 @@ use [unknown-flags used-flags build-flags word context] [
                 words-of context
             unless empty? unknown-flags [
                 print mold unknown-flags
-                fail spaced ["Unknown" word "used in %systems.r specification"]
+                fail ["Unknown" word "used in %systems.r specification"]
             ]
             used-flags: union used-flags any [build-flags []]
         ]

@@ -52,3 +52,50 @@
     #define VARARGS_FLAG(n) \
         (FLAGIT_LEFT(TYPE_SPECIFIC_BIT + (n)) | HEADERIZE_KIND(REB_VARARGS))
 #endif
+
+
+inline static REBOOL Is_Block_Style_Varargs(
+    REBVAL **position_out,
+    REBVAL *varargs
+){
+    assert(IS_VARARGS(varargs));
+
+    if (GET_SER_FLAG(varargs->payload.varargs.feed, ARRAY_FLAG_VARLIST)) {
+        assert(varargs->extra.binding != NULL);
+        return FALSE; // it's an ordinary vararg, representing a FRAME!
+    }
+
+    assert(varargs->extra.binding == NULL);
+
+    // Came from MAKE VARARGS! on some random block, hence not implicitly
+    // filled by the evaluator on a <...> parameter.  Should be a singular
+    // array with one BLOCK!, that is the actual array and index to advance.
+    //
+    assert(ARR_LEN(varargs->payload.varargs.feed) == 1);
+    *position_out = KNOWN(ARR_HEAD(varargs->payload.varargs.feed));
+    return TRUE;
+}
+
+
+inline static REBOOL Is_Frame_Style_Varargs_May_Fail(
+    REBFRM **f,
+    REBVAL *varargs
+){
+    assert(IS_VARARGS(varargs));
+
+    if (NOT_SER_FLAG(varargs->payload.varargs.feed, ARRAY_FLAG_VARLIST)) {
+        assert(varargs->extra.binding == NULL);
+        return FALSE; // it's a block varargs, made via MAKE VARARGS!
+    }
+
+    REBCTX *c = CTX(varargs->extra.binding);
+    *f = CTX_FRAME_IF_ON_STACK(c);
+
+    // If the VARARGS! has a call frame, then ensure that the call frame
+    // where the VARARGS! originated is still on the stack.
+    //
+    if (*f == NULL)
+        fail (Error_Varargs_No_Stack_Raw());
+
+    return TRUE;
+}

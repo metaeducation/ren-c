@@ -98,10 +98,15 @@ dump-obj: function [
 
 dump: proc [
     {Show the name of a value (or block of expressions) with the value itself}
-    :value
+    :value [any-value! <...>]
     <local>
-        dump-one dump-val clip-string item
+        dump-one dump-val clip-string item set-word result
 ][
+    if bar? first value [
+        take value
+        leave
+    ] ;-- treat this DUMP as disabled, `dump | x`
+
     clip-string: function [str len][
        either len < length-of str [
           delimit [ copy/part str len - 3 "..." ] _
@@ -123,8 +128,8 @@ dump: proc [
 
     dump-one: proc [item][
         case [
-            string? item [
-                print ["---" clip-string item system/options/dump-size "---"] ;-- label it
+            string? item [ ;-- allow customized labels
+                print ["---" clip-string item system/options/dump-size "---"]
             ]
 
             word? item [
@@ -149,10 +154,27 @@ dump: proc [
         ]
     ]
 
-    either block? value [
-        for-each item value [dump-one item]
-    ][
-        dump-one value
+    case [
+        ; The reason this function is a quoting variadic is so that you can
+        ; write `dump x: 1 + 2` and get `x: => 3`.  This is just a convenience
+        ; to save typing over `blahblah: 1 + 2 dump blahblah`.
+        ;
+        ; !!! Should also support `dump [x: 1 + 2 y: 3 + 4]` as a syntax...
+        ;
+        set-word? first value [
+            set-word: first value
+            result: do/next value (quote pos:)
+            ;-- Note: don't need to TAKE
+            print [set-word "=>" result]
+        ]
+
+        block? first value [
+            for-each item take value [dump-one item]
+        ]
+        
+        true [
+            dump-one take value
+        ]
     ]
 ]
 
@@ -264,7 +286,11 @@ help: procedure [
 
                 help "insert"
 
-            To browse online web documents:
+            To browse online topics:
+
+                help #compiling
+
+            To browse online documentation:
 
                 help/doc insert
 
@@ -293,13 +319,14 @@ help: procedure [
 
             Other information:
 
-                bugs - open GitHub issues website
-                chat - open GitHub developer forum
                 about - see general product info
-                upgrade - check for newer versions
-                changes - show changelog (TBD)
+                bugs - open GitHub issues website
+                changes - show changelog
+                chat - open GitHub developer forum
                 install - install (when applicable)
                 license - show user license
+                topics - open help topics website
+                upgrade - check for newer versions
                 usage - program cmd line options
         }
         leave
@@ -329,6 +356,15 @@ help: procedure [
 ;               upgrade - updates your copy of REBOL
 ;
 ;           More information: http://www.rebol.com/docs.html
+
+    r3n: https://r3n.github.io/
+
+    ;; help #topic (browse r3n for topic)
+    if issue? :word [
+        say-browser
+        browse join-all [r3n "topics/" next to-string :word]
+        leave
+    ]
 
     if all [word? :word | blank? context-of word] [
         print [word "is an unbound WORD!"]

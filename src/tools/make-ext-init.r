@@ -40,7 +40,7 @@ dest: either select args 'DEST [
     ][
         join-of %tmp- head change ext-name ".inc"
     ][
-        fail spaced ["ext-name has to be one of [reb r3 r]:" file-name]
+        fail ["ext-name has to be one of [reb r3 r]:" file-name]
     ]
 ]
 

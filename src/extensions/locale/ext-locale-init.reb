@@ -462,25 +462,30 @@ unless 'Windows = first system/platform [
         unless env-lang [
             return _
         ]
+        territory: _
 
         letter: charset [#"a" - #"z" #"A" - #"Z"]
         unless parse env-lang [
             copy lang: [some letter]
-            #"_" copy territory: [some letter]
+            opt [#"_" copy territory: [some letter]]
             to end
         ][
-            fail spaced ["Malformated env LANG:" env-lang]
+            print ["Malformated env LANG:" env-lang]
+            return _
         ]
 
         case [
             find? [language language*] type [
-                select iso-639 lang
+                any [
+                    all [find? ["C" "POSIX"] lang "English"]
+                    select iso-639 lang
+                ]
             ]
             find? [territory territory*] type [
-                select iso-3166 territory
+                all [territory select iso-3166 territory]
             ]
             true [
-                fail spaced ["Invalid locale type:" type]
+                fail ["Invalid locale type:" type]
             ]
         ]
     ]

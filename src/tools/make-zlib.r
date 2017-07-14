@@ -27,6 +27,7 @@ REBOL [
     ]
 ]
 
+do %c-lexicals.r
 
 ;
 ; Target paths+filenames for the generated include and source file
@@ -43,22 +44,36 @@ file-source: %u-zlib.c
 ; https is in Rebol core, github is not an option; you have to clone
 ; locally and reset this path to wherever you put it.
 ; 
-path-zlib: https://raw.github.com/madler/zlib/master/
+path-zlib: https://raw.githubusercontent.com/madler/zlib/master/
 
 
 ;
 ; Disable #include "foo.h" style inclusions (but not #include <foo.h> style)
 ; Optionally will inline a list of files at the inclusion point
 ;
-disable-user-includes: func [
+disable-user-includes: procedure [
     lines [block!] {Block of strings}
     /inline headers [block!] {Block of filenames to inline if seen}
-    /local name line-iter line pos
+    /stdio {Disable stdio.h}
+    <local> name line-iter line pos
+    <has>
+    open-include (charset {"<"})
+    close-include (charset {">"})
 ] [
     line-iter: lines
+    include-rule: copy [
+        {"} copy name to {"}
+    ]
+
+    if stdio [
+        insert include-rule [
+            open-include copy name "stdio.h" close-include |
+        ]
+    ]
+
     while [line-iter <> tail lines] [
         line: first line-iter
-        if parse line [any space {#} any space {include} some space {"} copy name to {"} to end] [
+        if parse line [any space {#} any space {include} some space include-rule to end][
             either all [
                 inline
                 pos: find headers to file! name
@@ -75,9 +90,11 @@ disable-user-includes: func [
         line-iter: next line-iter
     ]
 
-    ; If we inline a header, it should happen once and only once for each
-    unless empty? headers [
-        fail [{Not all headers inlined by make-zlib:} (mold headers)]
+    if inline [
+        ; If we inline a header, it should happen once and only once for each
+        unless empty? headers [
+            fail [{Not all headers inlined by make-zlib:} (mold headers)]
+        ]
     ]
 ]
 
@@ -88,49 +105,189 @@ disable-user-includes: func [
 
 make-warning-lines: func [name [file!] title [string!]] [
     reduce [
-        {/***********************************************************************}
-        {**}
-        {**  Extraction of ZLIB compression and decompression routines} 
-        {**  for REBOL [R3] Language Interpreter and Run-time Environment}
-        {**  This is a code-generated file.}
-        {**}
-        {**  ZLIB Copyright notice:}
-        {**}
-        {**    (C) 1995-2013 Jean-loup Gailly and Mark Adler}
-        {**}
-        {**    This software is provided 'as-is', without any express or implied}
-        {**    warranty.  In no event will the authors be held liable for any damages}
-        {**    arising from the use of this software.}
-        {**}
-        {**    Permission is granted to anyone to use this software for any purpose,}
-        {**    including commercial applications, and to alter it and redistribute it}
-        {**    freely, subject to the following restrictions:}
-        {**}
-        {**    1. The origin of this software must not be misrepresented; you must not}
-        {**       claim that you wrote the original software. If you use this software}
-        {**       in a product, an acknowledgment in the product documentation would be}
-        {**       appreciated but is not required.}
-        {**    2. Altered source versions must be plainly marked as such, and must not be}
-        {**       misrepresented as being the original software.}
-        {**    3. This notice may not be removed or altered from any source distribution.}
-        {**}
-        {**        Jean-loup Gailly        Mark Adler}
-        {**        jloup@gzip.org          madler@alumni.caltech.edu}
-        {**}
-        {**  REBOL is a trademark of REBOL Technologies}
-        {**  Licensed under the Apache License, Version 2.0}
-        {**}
-        {************************************************************************}
-        {**}
-        unspaced [{**  Title: } title]
-        {**  Build: A0}
-        unspaced [{**  Date:  } now/date]
-        unspaced [{**  File:  } to string! name]
-        {**}
-        {**  AUTO-GENERATED FILE - Do not modify. (From: make-zlib.r)}
-        {**}
-        {***********************************************************************/}
+        {//}
+        {// Extraction of ZLIB compression and decompression routines} 
+        {// for REBOL [R3] Language Interpreter and Run-time Environment}
+        {// This is a code-generated file.}
+        {//}
+        {// ZLIB Copyright notice:}
+        {//}
+        {//   (C) 1995-2013 Jean-loup Gailly and Mark Adler}
+        {//}
+        {//   This software is provided 'as-is', without any express or implied}
+        {//   warranty.  In no event will the authors be held liable for any damages}
+        {//   arising from the use of this software.}
+        {//}
+        {//   Permission is granted to anyone to use this software for any purpose,}
+        {//   including commercial applications, and to alter it and redistribute it}
+        {//   freely, subject to the following restrictions:}
+        {//}
+        {//   1. The origin of this software must not be misrepresented; you must not}
+        {//      claim that you wrote the original software. If you use this software}
+        {//      in a product, an acknowledgment in the product documentation would be}
+        {//      appreciated but is not required.}
+        {//   2. Altered source versions must be plainly marked as such, and must not be}
+        {//      misrepresented as being the original software.}
+        {//   3. This notice may not be removed or altered from any source distribution.}
+        {//}
+        {//       Jean-loup Gailly        Mark Adler}
+        {//       jloup@gzip.org          madler@alumni.caltech.edu}
+        {//}
+        {// REBOL is a trademark of REBOL Technologies}
+        {// Licensed under the Apache License, Version 2.0}
+        {//}
+        {// **********************************************************************}
+        {//}
+        unspaced [{// Title: } title]
+        {// Build: A0}
+        unspaced [{// Date:  } now/date]
+        unspaced [{// File:  } to string! name]
+        {//}
+        {// AUTO-GENERATED FILE - Do not modify. (From: make-zlib.r)}
+        {//}
     ]
+]
+
+fix-kr: function [
+    "Fix K&R style C function defition"
+    source
+][
+    single-param: bind [
+        identifier ;(part of)type
+        some [
+            any white-space
+            any [#"*" any white-space]
+            tmp-start: copy name: ;it could get here even after last identifier, so this tmp-start is not the begining of the name, but the last one is
+            identifier (
+                name-start: tmp-start
+            )
+            any white-space
+            any [#"*" any white-space]
+        ]
+    ] c.lexical/grammar
+
+    parse source bind [
+        while [
+            copy fn: identifier
+            any white-space
+            #"(" open-paren: to #")" close-paren: #")"
+            param-ser: copy param-spec: [
+                some [
+                    some [any white-space any [#"*" any white-space]
+                        identifier any white-space opt #","
+                        any [#"*" any white-space]
+                    ] #";"
+                ]
+                any white-space
+            ]
+            #"^{" check-point: (
+                ;print ["func:" to string! fn]
+                remove/part param-ser length param-spec
+                insert param-ser "^/"
+                length-diff: 1 - (length param-spec)
+
+                param-len: (index-of close-paren) - (index-of open-paren)
+                params: copy/part open-paren param-len
+                remove/part open-paren param-len
+                length-diff: length-diff - param-len
+
+
+                param-block: make block! 8
+                parse params [
+                    any white-space
+                    copy name: identifier (append param-block reduce [name _])
+                    any [
+                        any white-space
+                        #","
+                        any white-space
+                        copy name: identifier (append param-block reduce [name _])
+                    ]
+                ]
+
+                ;dump param-block
+
+                ; a param spec could be in the form of:
+                ; 1) "int i;" or
+                ; 2) "int i, *j, **k;"
+                ;dump param-spec
+                parse param-spec [
+                    any white-space
+                    some [
+                        (typed?: true)
+                       single-param-start: single-param (
+                           spec-type: copy/part single-param-start (index-of name-start) - (index-of single-param-start)
+                           ;dump spec-type
+                       )
+                       any [
+                           any white-space
+                           param-end: #"," (
+                               ; case 2)
+                               ; spec-type should be "int ", and name should be "i"
+                               poke (find/skip param-block name 2) 2
+                                   either typed? [
+                                       copy/part single-param-start (index-of param-end) - (index-of single-param-start)
+                                   ][
+                                       ; handling "j" in case 2)
+                                       unspaced [
+                                           spec-type    ; "int "
+                                           copy/part single-param-start (index-of param-end) - (index-of single-param-start) ; " *j"
+                                       ]
+                                   ]
+                                   typed?: false
+                           )
+                           single-param-start:
+                           any white-space
+                           any [#"*" any white-space]
+                           copy name identifier
+                       ]
+                       any white-space
+                       param-end: #";"
+                       (
+                           poke (find/skip param-block name 2) 2
+                               either typed? [
+                                   copy/part single-param-start (index-of param-end) - (index-of single-param-start)
+                               ][
+                                   ; handling "k" in case 2)
+                                   unspaced [
+                                       spec-type    ; "int "
+                                       copy/part single-param-start (index-of param-end) - (index-of single-param-start) ; " **k"
+                                   ]
+                               ]
+                           )
+                       any white-space
+                    ]
+                ]
+
+                ;dump param-block
+
+                insert open-paren new-param: delimit (extract/index param-block 2 2) ",^/    "
+                insert open-paren "^/    "
+
+                length-diff: length-diff + length new-param
+
+                check-point: skip check-point length-diff
+            )
+            :check-point
+            | skip
+        ]
+    ] c.lexical/grammar
+
+    source
+]
+
+fix-const-char: func [
+    source
+][
+    parse source bind [
+        while [
+            "strm" any white-space "->" any white-space
+            "msg" any white-space "=" any white-space
+            "(" any white-space change "char" "z_const char"
+                any white-space "*" any white-space ")"
+            | skip
+        ]
+    ] c.lexical/grammar
+    source
 ]
 
 do %r2r3-future.r
@@ -155,8 +312,11 @@ disable-user-includes header-lines
 
 insert header-lines [
     {}
+    {// Ren-C}
     {#define NO_DUMMY_DECL 1}
     {#define Z_PREFIX 1}
+    {#define ZLIB_CONST}
+    {// **********************************************************************}
     {}
 ]
 
@@ -202,14 +362,17 @@ for-each c-file [
     append source-lines read/lines join-all [path-zlib c-file]
 ]
 
-disable-user-includes/inline source-lines [%trees.h %inffixed.h %crc32.h]
+disable-user-includes/stdio/inline source-lines copy [%trees.h %inffixed.h %crc32.h]
 
 insert source-lines [
     {}
     {#include "sys-zlib.h" /* REBOL: see make-zlib.r */}
+    {#define local static}
     {}
 ]
 
 insert source-lines make-warning-lines file-source {ZLIB aggregated source file}
 
-write/lines join-all [path-source file-source] source-lines
+all-source: delimit source-lines "^/"
+
+write join-all [path-source file-source] fix-const-char fix-kr all-source

@@ -119,7 +119,6 @@ makefile: $(REBOL_TOOL) .FORCE
 		RIGOROUS="$(RIGOROUS)" WITH_FFI="$(WITH_FFI)" \
 		WITH_TCC="$(WITH_TCC)" STATIC="$(STATIC)" \
 		OPTIMIZE="$(OPTIMIZE)" TARGET=makefile CONFIG="$(CONFIG)"
-		#SYMBOLS="$(SYMBOLS)"
 
 # Synonym for `make -f makefile.boot makefile` which can also be used in the
 # generated makefile (without causing repeated regenerations)

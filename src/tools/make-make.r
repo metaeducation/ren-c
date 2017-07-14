@@ -73,7 +73,7 @@ assert-no-blank-inside: proc [
     for-each e block [
         if blank? e [
             dump block
-            fail "No blank's allowed"
+            fail "No blanks allowed"
         ]
     ]
 ]
@@ -211,7 +211,7 @@ process-module: func [
                 ]
                 true [
                     dump s
-                    fail spaced [type-of s "can't be a dependency of a module"]
+                    fail [type-of s "can't be a dependency of a module"]
                 ]
             ]
         ]
@@ -580,7 +580,7 @@ switch/default user-config/debug [
         append app-config/ldflags <gnu:-fsanitize=address>
     ]
 ][
-    fail spaced ["unrecognized debug setting:" user-config/debug]
+    fail ["unrecognized debug setting:" user-config/debug]
 ]
 
 switch user-config/optimize [
@@ -932,12 +932,12 @@ for-each [action name modules] user-config/extensions [
                         not item/loadable
                         action = '*
                     ][
-                        fail spaced ["Extension" name "is not dynamically loadable"]
+                        fail [{Extension} name {is not dynamically loadable}]
                     ]
                 ]
             ]
             unless item [
-                fail spaced ["unrecognized extension name:" name]
+                fail [{Unrecognized extension name:} name]
             ]
 
             if action = '* [;dynamic extension
@@ -954,14 +954,17 @@ for-each [action name modules] user-config/extensions [
                 ]
 
                 if empty? selected-modules [
-                    fail "No modules are selected, check module names or use '-' to remove"
+                    fail [
+                        {No modules are selected,}
+                        {check module names or use '-' to remove}
+                    ]
                 ]
                 item/modules: selected-modules
                 append dynamic-extensions item
             ]
         ]
     ][
-        fail spaced ["Unrecognized extension action:" mold action]
+        fail ["Unrecognized extension action:" mold action]
     ]
 ]
 
@@ -1330,5 +1333,8 @@ switch/default user-config/target [
         rebmake/vs2015/generate/(all [system-config/os-name = 'Windows-x86 'x86]) %../../make solution
     ]
 ][
-    fail spaced ["Unsupported target (execution, makefile or nmake):" user-config/target]
+    fail [
+        "Unsupported target (execution, makefile or nmake):"
+        user-config/target
+    ]
 ]

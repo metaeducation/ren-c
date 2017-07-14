@@ -33,16 +33,17 @@
 //
 // Title: ZLIB aggregated source file
 // Build: A0
-// Date:  29-Sep-2013
+// Date:  8-Jul-2017
 // File:  u-zlib.c
 //
 // AUTO-GENERATED FILE - Do not modify. (From: make-zlib.r)
 //
 
-#include "sys-zlib.h" // added by make-zlib.r
+#include "sys-zlib.h" /* REBOL: see make-zlib.r */
+#define local static
 
 /* crc32.c -- compute the CRC-32 of a data stream
- * Copyright (C) 1995-2006, 2010, 2011, 2012 Mark Adler
+ * Copyright (C) 1995-2006, 2010, 2011, 2012, 2016 Mark Adler
  * For conditions of distribution and use, see copyright notice in zlib.h
  *
  * Thanks to Rodney Brown <rbrown64@csc.com.au> for his contribution of faster
@@ -65,15 +66,13 @@
  */
 
 #ifdef MAKECRCH
-// #  include <stdio.h> // !!! No <stdio.h> in Ren-C release builds
+// #  include <stdio.h> /* REBOL: see make-zlib.r */
 #  ifndef DYNAMIC_CRC_TABLE
 #    define DYNAMIC_CRC_TABLE
 #  endif /* !DYNAMIC_CRC_TABLE */
 #endif /* MAKECRCH */
 
-// #include "zutil.h"      /* for STDC and FAR definitions */ /* In sys-zlib.h (see make-zlib.r) */
-
-#define local static
+// #include "zutil.h"      /* for STDC and FAR definitions */ /* REBOL: see make-zlib.r */
 
 /* Definitions for doing the crc four data bytes at a time. */
 #if !defined(NOBYFOUR) && defined(Z_U4)
@@ -81,9 +80,9 @@
 #endif
 #ifdef BYFOUR
    local unsigned long crc32_little OF((unsigned long,
-                        const unsigned char FAR *, unsigned));
+                        const unsigned char FAR *, z_size_t));
    local unsigned long crc32_big OF((unsigned long,
-                        const unsigned char FAR *, unsigned));
+                        const unsigned char FAR *, z_size_t));
 #  define TBLS 8
 #else
 #  define TBLS 1
@@ -207,9 +206,9 @@ local void make_crc_table()
 }
 
 #ifdef MAKECRCH
-local void write_table(out, table)
-    FILE *out;
-    const z_crc_t FAR *table;
+local void write_table(
+    FILE *out,
+    const z_crc_t FAR *table)
 {
     int n;
 
@@ -684,11 +683,11 @@ const z_crc_t FAR * ZEXPORT get_crc_table()
 #define DO8 DO1; DO1; DO1; DO1; DO1; DO1; DO1; DO1
 
 /* ========================================================================= */
-unsigned long ZEXPORT crc32(
+unsigned long ZEXPORT crc32_z(
     unsigned long crc,
     const unsigned char FAR *buf,
-    uInt len
-) {
+    z_size_t len)
+{
     if (buf == Z_NULL) return 0UL;
 
 #ifdef DYNAMIC_CRC_TABLE
@@ -718,7 +717,28 @@ unsigned long ZEXPORT crc32(
     return crc ^ 0xffffffffUL;
 }
 
+/* ========================================================================= */
+unsigned long ZEXPORT crc32(
+    unsigned long crc,
+    const unsigned char FAR *buf,
+    uInt len)
+{
+    return crc32_z(crc, buf, len);
+}
+
 #ifdef BYFOUR
+
+/*
+   This BYFOUR code accesses the passed unsigned char * buffer with a 32-bit
+   integer pointer type. This violates the strict aliasing rule, where a
+   compiler can assume, for optimization purposes, that two pointers to
+   fundamentally different types won't ever point to the same memory. This can
+   manifest as a problem only if one of the pointers is written to. This code
+   only reads from those pointers. So long as this code remains isolated in
+   this compilation unit, there won't be a problem. For this reason, this code
+   should not be copied and pasted into a compilation unit in which other code
+   writes to the buffer that is passed to these routines.
+ */
 
 /* ========================================================================= */
 #define DOLIT4 c ^= *buf4++; \
@@ -730,10 +750,10 @@ unsigned long ZEXPORT crc32(
 local unsigned long crc32_little(
     unsigned long crc,
     const unsigned char FAR *buf,
-    unsigned len
-) {
-    z_crc_t c;
-    const z_crc_t FAR *buf4;
+    z_size_t len)
+{
+    register z_crc_t c;
+    register const z_crc_t FAR *buf4;
 
     c = (z_crc_t)crc;
     c = ~c;
@@ -761,7 +781,7 @@ local unsigned long crc32_little(
 }
 
 /* ========================================================================= */
-#define DOBIG4 c ^= *++buf4; \
+#define DOBIG4 c ^= *buf4++; \
         c = crc_table[4][c & 0xff] ^ crc_table[5][(c >> 8) & 0xff] ^ \
             crc_table[6][(c >> 16) & 0xff] ^ crc_table[7][c >> 24]
 #define DOBIG32 DOBIG4; DOBIG4; DOBIG4; DOBIG4; DOBIG4; DOBIG4; DOBIG4; DOBIG4
@@ -770,10 +790,10 @@ local unsigned long crc32_little(
 local unsigned long crc32_big(
     unsigned long crc,
     const unsigned char FAR *buf,
-    unsigned len
-) {
-    z_crc_t c;
-    const z_crc_t FAR *buf4;
+    z_size_t len)
+{
+    register z_crc_t c;
+    register const z_crc_t FAR *buf4;
 
     c = ZSWAP32((z_crc_t)crc);
     c = ~c;
@@ -783,7 +803,6 @@ local unsigned long crc32_big(
     }
 
     buf4 = (const z_crc_t FAR *)(const void FAR *)buf;
-    buf4--;
     while (len >= 32) {
         DOBIG32;
         len -= 32;
@@ -792,7 +811,6 @@ local unsigned long crc32_big(
         DOBIG4;
         len -= 4;
     }
-    buf4++;
     buf = (const unsigned char FAR *)buf4;
 
     if (len) do {
@@ -809,8 +827,8 @@ local unsigned long crc32_big(
 /* ========================================================================= */
 local unsigned long gf2_matrix_times(
     unsigned long *mat,
-    unsigned long vec
-) {
+    unsigned long vec)
+{
     unsigned long sum;
 
     sum = 0;
@@ -826,8 +844,8 @@ local unsigned long gf2_matrix_times(
 /* ========================================================================= */
 local void gf2_matrix_square(
     unsigned long *square,
-    unsigned long *mat
-) {
+    unsigned long *mat)
+{
     int n;
 
     for (n = 0; n < GF2_DIM; n++)
@@ -838,8 +856,8 @@ local void gf2_matrix_square(
 local uLong crc32_combine_(
     uLong crc1,
     uLong crc2,
-    z_off64_t len2
-) {
+    z_off64_t len2)
+{
     int n;
     unsigned long row;
     unsigned long even[GF2_DIM];    /* even-power-of-two zeros operator */
@@ -894,34 +912,32 @@ local uLong crc32_combine_(
 uLong ZEXPORT crc32_combine(
     uLong crc1,
     uLong crc2,
-    z_off_t len2
-) {
+    z_off_t len2)
+{
     return crc32_combine_(crc1, crc2, len2);
 }
 
 uLong ZEXPORT crc32_combine64(
     uLong crc1,
     uLong crc2,
-    z_off64_t len2
-) {
+    z_off64_t len2)
+{
     return crc32_combine_(crc1, crc2, len2);
 }
-#undef DO1 // see make-zlib.r
-#undef DO8 // see make-zlib.r
+#undef DO1 /* REBOL: see make-zlib.r */
+#undef DO8 /* REBOL: see make-zlib.r */
 /* adler32.c -- compute the Adler-32 checksum of a data stream
- * Copyright (C) 1995-2011 Mark Adler
+ * Copyright (C) 1995-2011, 2016 Mark Adler
  * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
 /* @(#) $Id$ */
 
-// #include "zutil.h" /* In sys-zlib.h (see make-zlib.r) */
-
-#define local static
+// #include "zutil.h" /* REBOL: see make-zlib.r */
 
 local uLong adler32_combine_ OF((uLong adler1, uLong adler2, z_off64_t len2));
 
-#define BASE 65521      /* largest prime smaller than 65536 */
+#define BASE 65521U     /* largest prime smaller than 65536 */
 #define NMAX 5552
 /* NMAX is the largest n such that 255n(n+1)/2 + (n+1)(BASE-1) <= 2^32-1 */
 
@@ -972,11 +988,11 @@ local uLong adler32_combine_ OF((uLong adler1, uLong adler2, z_off64_t len2));
 #endif
 
 /* ========================================================================= */
-uLong ZEXPORT adler32(
+uLong ZEXPORT adler32_z(
     uLong adler,
     const Bytef *buf,
-    uInt len
-) {
+    z_size_t len)
+{
     unsigned long sum2;
     unsigned n;
 
@@ -1043,11 +1059,20 @@ uLong ZEXPORT adler32(
 }
 
 /* ========================================================================= */
+uLong ZEXPORT adler32(
+    uLong adler,
+    const Bytef *buf,
+    uInt len)
+{
+    return adler32_z(adler, buf, len);
+}
+
+/* ========================================================================= */
 local uLong adler32_combine_(
     uLong adler1,
     uLong adler2,
-    z_off64_t len2
-) {
+    z_off64_t len2)
+{
     unsigned long sum1;
     unsigned long sum2;
     unsigned rem;
@@ -1066,7 +1091,7 @@ local uLong adler32_combine_(
     sum2 += ((adler1 >> 16) & 0xffff) + ((adler2 >> 16) & 0xffff) + BASE - rem;
     if (sum1 >= BASE) sum1 -= BASE;
     if (sum1 >= BASE) sum1 -= BASE;
-    if (sum2 >= (BASE << 1)) sum2 -= (BASE << 1);
+    if (sum2 >= ((unsigned long)BASE << 1)) sum2 -= ((unsigned long)BASE << 1);
     if (sum2 >= BASE) sum2 -= BASE;
     return sum1 | (sum2 << 16);
 }
@@ -1075,20 +1100,20 @@ local uLong adler32_combine_(
 uLong ZEXPORT adler32_combine(
     uLong adler1,
     uLong adler2,
-    z_off_t len2
-) {
+    z_off_t len2)
+{
     return adler32_combine_(adler1, adler2, len2);
 }
 
 uLong ZEXPORT adler32_combine64(
     uLong adler1,
     uLong adler2,
-    z_off64_t len2
-) {
+    z_off64_t len2)
+{
     return adler32_combine_(adler1, adler2, len2);
 }
 /* deflate.c -- compress data using the deflation algorithm
- * Copyright (C) 1995-2013 Jean-loup Gailly and Mark Adler
+ * Copyright (C) 1995-2017 Jean-loup Gailly and Mark Adler
  * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
@@ -1138,10 +1163,10 @@ uLong ZEXPORT adler32_combine64(
 
 /* @(#) $Id$ */
 
-// #include "deflate.h" /* In sys-zlib.h (see make-zlib.r) */
+// #include "deflate.h" /* REBOL: see make-zlib.r */
 
 const char deflate_copyright[] =
-   " deflate 1.2.8 Copyright 1995-2013 Jean-loup Gailly and Mark Adler ";
+   " deflate 1.2.11 Copyright 1995-2017 Jean-loup Gailly and Mark Adler ";
 /*
   If you use the zlib library in a product, an acknowledgment is welcome
   in the documentation of your product. If for some reason you cannot
@@ -1162,6 +1187,8 @@ typedef enum {
 typedef block_state (*compress_func) OF((deflate_state *s, int flush));
 /* Compression function. Returns the block state after the call. */
 
+local int deflateStateCheck      OF((z_streamp strm));
+local void slide_hash     OF((deflate_state *s));
 local void fill_window    OF((deflate_state *s));
 local block_state deflate_stored OF((deflate_state *s, int flush));
 local block_state deflate_fast   OF((deflate_state *s, int flush));
@@ -1173,15 +1200,16 @@ local block_state deflate_huff   OF((deflate_state *s, int flush));
 local void lm_init        OF((deflate_state *s));
 local void putShortMSB    OF((deflate_state *s, uInt b));
 local void flush_pending  OF((z_streamp strm));
-local int read_buf        OF((z_streamp strm, Bytef *buf, unsigned size));
+local unsigned read_buf   OF((z_streamp strm, Bytef *buf, unsigned size));
 #ifdef ASMV
+#  pragma message("Assembler code may have bugs -- use at your own risk")
       void match_init OF((void)); /* asm code initialization */
       uInt longest_match  OF((deflate_state *s, IPos cur_match));
 #else
 local uInt longest_match  OF((deflate_state *s, IPos cur_match));
 #endif
 
-#ifdef DEBUG
+#ifdef ZLIB_DEBUG
 local  void check_match OF((deflate_state *s, IPos start, IPos match,
                             int length));
 #endif
@@ -1237,21 +1265,14 @@ local const config configuration_table[10] = {
  * meaning.
  */
 
-#define EQUAL 0
-/* result of memcmp for equal strings */
-
-#ifndef NO_DUMMY_DECL
-struct static_tree_desc_s {int dummy;}; /* for buggy compilers */
-#endif
-
 /* rank Z_BLOCK between Z_NO_FLUSH and Z_PARTIAL_FLUSH */
-#define RANK(f) (((f) << 1) - ((f) > 4 ? 9 : 0))
+#define RANK(f) (((f) * 2) - ((f) > 4 ? 9 : 0))
 
 /* ===========================================================================
  * Update a hash value with the given input byte
- * IN  assertion: all calls to to UPDATE_HASH are made with consecutive
- *    input characters, so that a running hash key can be computed from the
- *    previous key instead of complete recalculation each time.
+ * IN  assertion: all calls to UPDATE_HASH are made with consecutive input
+ *    characters, so that a running hash key can be computed from the previous
+ *    key instead of complete recalculation each time.
  */
 #define UPDATE_HASH(s,h,c) (h = (((h)<<s->hash_shift) ^ (c)) & s->hash_mask)
 
@@ -1262,9 +1283,9 @@ struct static_tree_desc_s {int dummy;}; /* for buggy compilers */
  * the previous length of the hash chain.
  * If this file is compiled with -DFASTEST, the compression level is forced
  * to 1, and no hash chains are maintained.
- * IN  assertion: all calls to to INSERT_STRING are made with consecutive
- *    input characters and the first MIN_MATCH bytes of str are valid
- *    (except for the last MIN_MATCH-1 bytes of the input file).
+ * IN  assertion: all calls to INSERT_STRING are made with consecutive input
+ *    characters and the first MIN_MATCH bytes of str are valid (except for
+ *    the last MIN_MATCH-1 bytes of the input file).
  */
 #ifdef FASTEST
 #define INSERT_STRING(s, str, match_head) \
@@ -1286,13 +1307,44 @@ struct static_tree_desc_s {int dummy;}; /* for buggy compilers */
     s->head[s->hash_size-1] = NIL; \
     zmemzero((Bytef *)s->head, (unsigned)(s->hash_size-1)*sizeof(*s->head));
 
+/* ===========================================================================
+ * Slide the hash table when sliding the window down (could be avoided with 32
+ * bit values at the expense of memory usage). We slide even when level == 0 to
+ * keep the hash table consistent if we switch back to level > 0 later.
+ */
+local void slide_hash(
+    deflate_state *s)
+{
+    unsigned n, m;
+    Posf *p;
+    uInt wsize = s->w_size;
+
+    n = s->hash_size;
+    p = &s->head[n];
+    do {
+        m = *--p;
+        *p = (Pos)(m >= wsize ? m - wsize : NIL);
+    } while (--n);
+    n = wsize;
+#ifndef FASTEST
+    p = &s->prev[n];
+    do {
+        m = *--p;
+        *p = (Pos)(m >= wsize ? m - wsize : NIL);
+        /* If n is not on any hash chain, prev[n] is garbage but
+         * its value will never be used.
+         */
+    } while (--n);
+#endif
+}
+
 /* ========================================================================= */
 int ZEXPORT deflateInit_(
     z_streamp strm,
     int level,
     const char *version,
-    int stream_size
-) {
+    int stream_size)
+{
     return deflateInit2_(strm, level, Z_DEFLATED, MAX_WBITS, DEF_MEM_LEVEL,
                          Z_DEFAULT_STRATEGY, version, stream_size);
     /* To do: ignore strm->next_in if we use it as window */
@@ -1307,8 +1359,8 @@ int ZEXPORT deflateInit2_(
     int  memLevel,
     int  strategy,
     const char *version,
-    int stream_size
-) {
+    int stream_size)
+{
     deflate_state *s;
     int wrap = 1;
     static const char my_version[] = ZLIB_VERSION;
@@ -1358,7 +1410,7 @@ int ZEXPORT deflateInit2_(
 #endif
     if (memLevel < 1 || memLevel > MAX_MEM_LEVEL || method != Z_DEFLATED ||
         windowBits < 8 || windowBits > 15 || level < 0 || level > 9 ||
-        strategy < 0 || strategy > Z_FIXED) {
+        strategy < 0 || strategy > Z_FIXED || (windowBits == 8 && wrap != 1)) {
         return Z_STREAM_ERROR;
     }
     if (windowBits == 8) windowBits = 9;  /* until 256-byte window bug fixed */
@@ -1366,14 +1418,15 @@ int ZEXPORT deflateInit2_(
     if (s == Z_NULL) return Z_MEM_ERROR;
     strm->state = (struct internal_state FAR *)s;
     s->strm = strm;
+    s->status = INIT_STATE;     /* to pass state test in deflateReset() */
 
     s->wrap = wrap;
     s->gzhead = Z_NULL;
-    s->w_bits = windowBits;
+    s->w_bits = (uInt)windowBits;
     s->w_size = 1 << s->w_bits;
     s->w_mask = s->w_size - 1;
 
-    s->hash_bits = memLevel + 7;
+    s->hash_bits = (uInt)memLevel + 7;
     s->hash_size = 1 << s->hash_bits;
     s->hash_mask = s->hash_size - 1;
     s->hash_shift =  ((s->hash_bits+MIN_MATCH-1)/MIN_MATCH);
@@ -1407,19 +1460,44 @@ int ZEXPORT deflateInit2_(
     return deflateReset(strm);
 }
 
+/* =========================================================================
+ * Check for a valid deflate stream state. Return 0 if ok, 1 if not.
+ */
+local int deflateStateCheck (
+    z_streamp strm)
+{
+    deflate_state *s;
+    if (strm == Z_NULL ||
+        strm->zalloc == (alloc_func)0 || strm->zfree == (free_func)0)
+        return 1;
+    s = strm->state;
+    if (s == Z_NULL || s->strm != strm || (s->status != INIT_STATE &&
+#ifdef GZIP
+                                           s->status != GZIP_STATE &&
+#endif
+                                           s->status != EXTRA_STATE &&
+                                           s->status != NAME_STATE &&
+                                           s->status != COMMENT_STATE &&
+                                           s->status != HCRC_STATE &&
+                                           s->status != BUSY_STATE &&
+                                           s->status != FINISH_STATE))
+        return 1;
+    return 0;
+}
+
 /* ========================================================================= */
 int ZEXPORT deflateSetDictionary (
     z_streamp strm,
     const Bytef *dictionary,
-    uInt  dictLength
-) {
+    uInt  dictLength)
+{
     deflate_state *s;
     uInt str, n;
     int wrap;
     unsigned avail;
     z_const unsigned char *next;
 
-    if (strm == Z_NULL || strm->state == Z_NULL || dictionary == Z_NULL)
+    if (deflateStateCheck(strm) || dictionary == Z_NULL)
         return Z_STREAM_ERROR;
     s = strm->state;
     wrap = s->wrap;
@@ -1477,13 +1555,34 @@ int ZEXPORT deflateSetDictionary (
 }
 
 /* ========================================================================= */
+int ZEXPORT deflateGetDictionary (
+    z_streamp strm,
+    Bytef *dictionary,
+    uInt  *dictLength)
+{
+    deflate_state *s;
+    uInt len;
+
+    if (deflateStateCheck(strm))
+        return Z_STREAM_ERROR;
+    s = strm->state;
+    len = s->strstart + s->lookahead;
+    if (len > s->w_size)
+        len = s->w_size;
+    if (dictionary != Z_NULL && len)
+        zmemcpy(dictionary, s->window + s->strstart + s->lookahead - len, len);
+    if (dictLength != Z_NULL)
+        *dictLength = len;
+    return Z_OK;
+}
+
+/* ========================================================================= */
 int ZEXPORT deflateResetKeep (
-    z_streamp strm
-) {
+    z_streamp strm)
+{
     deflate_state *s;
 
-    if (strm == Z_NULL || strm->state == Z_NULL ||
-        strm->zalloc == (alloc_func)0 || strm->zfree == (free_func)0) {
+    if (deflateStateCheck(strm)) {
         return Z_STREAM_ERROR;
     }
 
@@ -1498,7 +1597,11 @@ int ZEXPORT deflateResetKeep (
     if (s->wrap < 0) {
         s->wrap = -s->wrap; /* was made negative by deflate(..., Z_FINISH); */
     }
-    s->status = s->wrap ? INIT_STATE : BUSY_STATE;
+    s->status =
+#ifdef GZIP
+        s->wrap == 2 ? GZIP_STATE :
+#endif
+        s->wrap ? INIT_STATE : BUSY_STATE;
     strm->adler =
 #ifdef GZIP
         s->wrap == 2 ? crc32(0L, Z_NULL, 0) :
@@ -1513,8 +1616,8 @@ int ZEXPORT deflateResetKeep (
 
 /* ========================================================================= */
 int ZEXPORT deflateReset (
-    z_streamp strm
-) {
+    z_streamp strm)
+{
     int ret;
 
     ret = deflateResetKeep(strm);
@@ -1526,10 +1629,10 @@ int ZEXPORT deflateReset (
 /* ========================================================================= */
 int ZEXPORT deflateSetHeader (
     z_streamp strm,
-    gz_headerp head
-) {
-    if (strm == Z_NULL || strm->state == Z_NULL) return Z_STREAM_ERROR;
-    if (strm->state->wrap != 2) return Z_STREAM_ERROR;
+    gz_headerp head)
+{
+    if (deflateStateCheck(strm) || strm->state->wrap != 2)
+        return Z_STREAM_ERROR;
     strm->state->gzhead = head;
     return Z_OK;
 }
@@ -1538,9 +1641,9 @@ int ZEXPORT deflateSetHeader (
 int ZEXPORT deflatePending (
     z_streamp strm,
     unsigned *pending,
-    int *bits
-) {
-    if (strm == Z_NULL || strm->state == Z_NULL) return Z_STREAM_ERROR;
+    int *bits)
+{
+    if (deflateStateCheck(strm)) return Z_STREAM_ERROR;
     if (pending != Z_NULL)
         *pending = strm->state->pending;
     if (bits != Z_NULL)
@@ -1552,12 +1655,12 @@ int ZEXPORT deflatePending (
 int ZEXPORT deflatePrime (
     z_streamp strm,
     int bits,
-    int value
-) {
+    int value)
+{
     deflate_state *s;
     int put;
 
-    if (strm == Z_NULL || strm->state == Z_NULL) return Z_STREAM_ERROR;
+    if (deflateStateCheck(strm)) return Z_STREAM_ERROR;
     s = strm->state;
     if ((Bytef *)(s->d_buf) < s->pending_out + ((Buf_size + 7) >> 3))
         return Z_BUF_ERROR;
@@ -1578,13 +1681,12 @@ int ZEXPORT deflatePrime (
 int ZEXPORT deflateParams(
     z_streamp strm,
     int level,
-    int strategy
-) {
+    int strategy)
+{
     deflate_state *s;
     compress_func func;
-    int err = Z_OK;
 
-    if (strm == Z_NULL || strm->state == Z_NULL) return Z_STREAM_ERROR;
+    if (deflateStateCheck(strm)) return Z_STREAM_ERROR;
     s = strm->state;
 
 #ifdef FASTEST
@@ -1598,13 +1700,22 @@ int ZEXPORT deflateParams(
     func = configuration_table[s->level].func;
 
     if ((strategy != s->strategy || func != configuration_table[level].func) &&
-        strm->total_in != 0) {
+        s->high_water) {
         /* Flush the last buffer: */
-        err = deflate(strm, Z_BLOCK);
-        if (err == Z_BUF_ERROR && s->pending == 0)
-            err = Z_OK;
+        int err = deflate(strm, Z_BLOCK);
+        if (err == Z_STREAM_ERROR)
+            return err;
+        if (strm->avail_out == 0)
+            return Z_BUF_ERROR;
     }
     if (s->level != level) {
+        if (s->level == 0 && s->matches != 0) {
+            if (s->matches == 1)
+                slide_hash(s);
+            else
+                CLEAR_HASH(s);
+            s->matches = 0;
+        }
         s->level = level;
         s->max_lazy_match   = configuration_table[level].max_lazy;
         s->good_match       = configuration_table[level].good_length;
@@ -1612,7 +1723,7 @@ int ZEXPORT deflateParams(
         s->max_chain_length = configuration_table[level].max_chain;
     }
     s->strategy = strategy;
-    return err;
+    return Z_OK;
 }
 
 /* ========================================================================= */
@@ -1621,16 +1732,16 @@ int ZEXPORT deflateTune(
     int good_length,
     int max_lazy,
     int nice_length,
-    int max_chain
-) {
+    int max_chain)
+{
     deflate_state *s;
 
-    if (strm == Z_NULL || strm->state == Z_NULL) return Z_STREAM_ERROR;
+    if (deflateStateCheck(strm)) return Z_STREAM_ERROR;
     s = strm->state;
-    s->good_match = good_length;
-    s->max_lazy_match = max_lazy;
+    s->good_match = (uInt)good_length;
+    s->max_lazy_match = (uInt)max_lazy;
     s->nice_match = nice_length;
-    s->max_chain_length = max_chain;
+    s->max_chain_length = (uInt)max_chain;
     return Z_OK;
 }
 
@@ -1653,18 +1764,17 @@ int ZEXPORT deflateTune(
  */
 uLong ZEXPORT deflateBound(
     z_streamp strm,
-    uLong sourceLen
-) {
+    uLong sourceLen)
+{
     deflate_state *s;
     uLong complen, wraplen;
-    Bytef *str;
 
     /* conservative upper bound for compressed data */
     complen = sourceLen +
               ((sourceLen + 7) >> 3) + ((sourceLen + 63) >> 6) + 5;
 
     /* if can't get parameters, return conservative bound plus zlib wrapper */
-    if (strm == Z_NULL || strm->state == Z_NULL)
+    if (deflateStateCheck(strm))
         return complen + 6;
 
     /* compute wrapper length */
@@ -1676,9 +1786,11 @@ uLong ZEXPORT deflateBound(
     case 1:                                 /* zlib wrapper */
         wraplen = 6 + (s->strstart ? 4 : 0);
         break;
+#ifdef GZIP
     case 2:                                 /* gzip wrapper */
         wraplen = 18;
         if (s->gzhead != Z_NULL) {          /* user-supplied gzip header */
+            Bytef *str;
             if (s->gzhead->extra != Z_NULL)
                 wraplen += 2 + s->gzhead->extra_len;
             str = s->gzhead->name;
@@ -1695,6 +1807,7 @@ uLong ZEXPORT deflateBound(
                 wraplen += 2;
         }
         break;
+#endif
     default:                                /* for compiler happiness */
         wraplen = 6;
     }
@@ -1715,21 +1828,21 @@ uLong ZEXPORT deflateBound(
  */
 local void putShortMSB (
     deflate_state *s,
-    uInt b
-) {
+    uInt b)
+{
     put_byte(s, (Byte)(b >> 8));
     put_byte(s, (Byte)(b & 0xff));
 }
 
 /* =========================================================================
- * Flush as much pending output as possible. All deflate() output goes
- * through this function so some applications may wish to modify it
- * to avoid allocating a large strm->next_out buffer and copying into it.
- * (See also read_buf()).
+ * Flush as much pending output as possible. All deflate() output, except for
+ * some deflate_stored() output, goes through this function so some
+ * applications may wish to modify it to avoid allocating a large
+ * strm->next_out buffer and copying into it. (See also read_buf()).
  */
 local void flush_pending(
-    z_streamp strm
-) {
+    z_streamp strm)
+{
     unsigned len;
     deflate_state *s = strm->state;
 
@@ -1742,217 +1855,45 @@ local void flush_pending(
     strm->next_out  += len;
     s->pending_out  += len;
     strm->total_out += len;
-    strm->avail_out  -= len;
-    s->pending -= len;
+    strm->avail_out -= len;
+    s->pending      -= len;
     if (s->pending == 0) {
         s->pending_out = s->pending_buf;
     }
 }
 
+/* ===========================================================================
+ * Update the header CRC with the bytes s->pending_buf[beg..s->pending - 1].
+ */
+#define HCRC_UPDATE(beg) \
+    do { \
+        if (s->gzhead->hcrc && s->pending > (beg)) \
+            strm->adler = crc32(strm->adler, s->pending_buf + (beg), \
+                                s->pending - (beg)); \
+    } while (0)
+
 /* ========================================================================= */
 int ZEXPORT deflate (
     z_streamp strm,
-    int flush
-) {
+    int flush)
+{
     int old_flush; /* value of flush param for previous deflate call */
     deflate_state *s;
 
-    if (strm == Z_NULL || strm->state == Z_NULL ||
-        flush > Z_BLOCK || flush < 0) {
+    if (deflateStateCheck(strm) || flush > Z_BLOCK || flush < 0) {
         return Z_STREAM_ERROR;
     }
     s = strm->state;
 
     if (strm->next_out == Z_NULL ||
-        (strm->next_in == Z_NULL && strm->avail_in != 0) ||
+        (strm->avail_in != 0 && strm->next_in == Z_NULL) ||
         (s->status == FINISH_STATE && flush != Z_FINISH)) {
         ERR_RETURN(strm, Z_STREAM_ERROR);
     }
     if (strm->avail_out == 0) ERR_RETURN(strm, Z_BUF_ERROR);
 
-    s->strm = strm; /* just in case */
     old_flush = s->last_flush;
     s->last_flush = flush;
-
-    /* Write the header */
-    if (s->status == INIT_STATE) {
-#ifdef GZIP
-        if (s->wrap == 2) {
-            strm->adler = crc32(0L, Z_NULL, 0);
-            put_byte(s, 31);
-            put_byte(s, 139);
-            put_byte(s, 8);
-            if (s->gzhead == Z_NULL) {
-                put_byte(s, 0);
-                put_byte(s, 0);
-                put_byte(s, 0);
-                put_byte(s, 0);
-                put_byte(s, 0);
-                put_byte(s, s->level == 9 ? 2 :
-                            (s->strategy >= Z_HUFFMAN_ONLY || s->level < 2 ?
-                             4 : 0));
-                put_byte(s, OS_CODE);
-                s->status = BUSY_STATE;
-            }
-            else {
-                put_byte(s, (s->gzhead->text ? 1 : 0) +
-                            (s->gzhead->hcrc ? 2 : 0) +
-                            (s->gzhead->extra == Z_NULL ? 0 : 4) +
-                            (s->gzhead->name == Z_NULL ? 0 : 8) +
-                            (s->gzhead->comment == Z_NULL ? 0 : 16)
-                        );
-                put_byte(s, (Byte)(s->gzhead->time & 0xff));
-                put_byte(s, (Byte)((s->gzhead->time >> 8) & 0xff));
-                put_byte(s, (Byte)((s->gzhead->time >> 16) & 0xff));
-                put_byte(s, (Byte)((s->gzhead->time >> 24) & 0xff));
-                put_byte(s, s->level == 9 ? 2 :
-                            (s->strategy >= Z_HUFFMAN_ONLY || s->level < 2 ?
-                             4 : 0));
-                put_byte(s, s->gzhead->os & 0xff);
-                if (s->gzhead->extra != Z_NULL) {
-                    put_byte(s, s->gzhead->extra_len & 0xff);
-                    put_byte(s, (s->gzhead->extra_len >> 8) & 0xff);
-                }
-                if (s->gzhead->hcrc)
-                    strm->adler = crc32(strm->adler, s->pending_buf,
-                                        s->pending);
-                s->gzindex = 0;
-                s->status = EXTRA_STATE;
-            }
-        }
-        else
-#endif
-        {
-            uInt header = (Z_DEFLATED + ((s->w_bits-8)<<4)) << 8;
-            uInt level_flags;
-
-            if (s->strategy >= Z_HUFFMAN_ONLY || s->level < 2)
-                level_flags = 0;
-            else if (s->level < 6)
-                level_flags = 1;
-            else if (s->level == 6)
-                level_flags = 2;
-            else
-                level_flags = 3;
-            header |= (level_flags << 6);
-            if (s->strstart != 0) header |= PRESET_DICT;
-            header += 31 - (header % 31);
-
-            s->status = BUSY_STATE;
-            putShortMSB(s, header);
-
-            /* Save the adler32 of the preset dictionary: */
-            if (s->strstart != 0) {
-                putShortMSB(s, (uInt)(strm->adler >> 16));
-                putShortMSB(s, (uInt)(strm->adler & 0xffff));
-            }
-            strm->adler = adler32(0L, Z_NULL, 0);
-        }
-    }
-#ifdef GZIP
-    if (s->status == EXTRA_STATE) {
-        if (s->gzhead->extra != Z_NULL) {
-            uInt beg = s->pending;  /* start of bytes to update crc */
-
-            while (s->gzindex < (s->gzhead->extra_len & 0xffff)) {
-                if (s->pending == s->pending_buf_size) {
-                    if (s->gzhead->hcrc && s->pending > beg)
-                        strm->adler = crc32(strm->adler, s->pending_buf + beg,
-                                            s->pending - beg);
-                    flush_pending(strm);
-                    beg = s->pending;
-                    if (s->pending == s->pending_buf_size)
-                        break;
-                }
-                put_byte(s, s->gzhead->extra[s->gzindex]);
-                s->gzindex++;
-            }
-            if (s->gzhead->hcrc && s->pending > beg)
-                strm->adler = crc32(strm->adler, s->pending_buf + beg,
-                                    s->pending - beg);
-            if (s->gzindex == s->gzhead->extra_len) {
-                s->gzindex = 0;
-                s->status = NAME_STATE;
-            }
-        }
-        else
-            s->status = NAME_STATE;
-    }
-    if (s->status == NAME_STATE) {
-        if (s->gzhead->name != Z_NULL) {
-            uInt beg = s->pending;  /* start of bytes to update crc */
-            int val;
-
-            do {
-                if (s->pending == s->pending_buf_size) {
-                    if (s->gzhead->hcrc && s->pending > beg)
-                        strm->adler = crc32(strm->adler, s->pending_buf + beg,
-                                            s->pending - beg);
-                    flush_pending(strm);
-                    beg = s->pending;
-                    if (s->pending == s->pending_buf_size) {
-                        val = 1;
-                        break;
-                    }
-                }
-                val = s->gzhead->name[s->gzindex++];
-                put_byte(s, val);
-            } while (val != 0);
-            if (s->gzhead->hcrc && s->pending > beg)
-                strm->adler = crc32(strm->adler, s->pending_buf + beg,
-                                    s->pending - beg);
-            if (val == 0) {
-                s->gzindex = 0;
-                s->status = COMMENT_STATE;
-            }
-        }
-        else
-            s->status = COMMENT_STATE;
-    }
-    if (s->status == COMMENT_STATE) {
-        if (s->gzhead->comment != Z_NULL) {
-            uInt beg = s->pending;  /* start of bytes to update crc */
-            int val;
-
-            do {
-                if (s->pending == s->pending_buf_size) {
-                    if (s->gzhead->hcrc && s->pending > beg)
-                        strm->adler = crc32(strm->adler, s->pending_buf + beg,
-                                            s->pending - beg);
-                    flush_pending(strm);
-                    beg = s->pending;
-                    if (s->pending == s->pending_buf_size) {
-                        val = 1;
-                        break;
-                    }
-                }
-                val = s->gzhead->comment[s->gzindex++];
-                put_byte(s, val);
-            } while (val != 0);
-            if (s->gzhead->hcrc && s->pending > beg)
-                strm->adler = crc32(strm->adler, s->pending_buf + beg,
-                                    s->pending - beg);
-            if (val == 0)
-                s->status = HCRC_STATE;
-        }
-        else
-            s->status = HCRC_STATE;
-    }
-    if (s->status == HCRC_STATE) {
-        if (s->gzhead->hcrc) {
-            if (s->pending + 2 > s->pending_buf_size)
-                flush_pending(strm);
-            if (s->pending + 2 <= s->pending_buf_size) {
-                put_byte(s, (Byte)(strm->adler & 0xff));
-                put_byte(s, (Byte)((strm->adler >> 8) & 0xff));
-                strm->adler = crc32(0L, Z_NULL, 0);
-                s->status = BUSY_STATE;
-            }
-        }
-        else
-            s->status = BUSY_STATE;
-    }
-#endif
 
     /* Flush as much pending output as possible */
     if (s->pending != 0) {
@@ -1982,15 +1923,197 @@ int ZEXPORT deflate (
         ERR_RETURN(strm, Z_BUF_ERROR);
     }
 
+    /* Write the header */
+    if (s->status == INIT_STATE) {
+        /* zlib header */
+        uInt header = (Z_DEFLATED + ((s->w_bits-8)<<4)) << 8;
+        uInt level_flags;
+
+        if (s->strategy >= Z_HUFFMAN_ONLY || s->level < 2)
+            level_flags = 0;
+        else if (s->level < 6)
+            level_flags = 1;
+        else if (s->level == 6)
+            level_flags = 2;
+        else
+            level_flags = 3;
+        header |= (level_flags << 6);
+        if (s->strstart != 0) header |= PRESET_DICT;
+        header += 31 - (header % 31);
+
+        putShortMSB(s, header);
+
+        /* Save the adler32 of the preset dictionary: */
+        if (s->strstart != 0) {
+            putShortMSB(s, (uInt)(strm->adler >> 16));
+            putShortMSB(s, (uInt)(strm->adler & 0xffff));
+        }
+        strm->adler = adler32(0L, Z_NULL, 0);
+        s->status = BUSY_STATE;
+
+        /* Compression must start with an empty pending buffer */
+        flush_pending(strm);
+        if (s->pending != 0) {
+            s->last_flush = -1;
+            return Z_OK;
+        }
+    }
+#ifdef GZIP
+    if (s->status == GZIP_STATE) {
+        /* gzip header */
+        strm->adler = crc32(0L, Z_NULL, 0);
+        put_byte(s, 31);
+        put_byte(s, 139);
+        put_byte(s, 8);
+        if (s->gzhead == Z_NULL) {
+            put_byte(s, 0);
+            put_byte(s, 0);
+            put_byte(s, 0);
+            put_byte(s, 0);
+            put_byte(s, 0);
+            put_byte(s, s->level == 9 ? 2 :
+                     (s->strategy >= Z_HUFFMAN_ONLY || s->level < 2 ?
+                      4 : 0));
+            put_byte(s, OS_CODE);
+            s->status = BUSY_STATE;
+
+            /* Compression must start with an empty pending buffer */
+            flush_pending(strm);
+            if (s->pending != 0) {
+                s->last_flush = -1;
+                return Z_OK;
+            }
+        }
+        else {
+            put_byte(s, (s->gzhead->text ? 1 : 0) +
+                     (s->gzhead->hcrc ? 2 : 0) +
+                     (s->gzhead->extra == Z_NULL ? 0 : 4) +
+                     (s->gzhead->name == Z_NULL ? 0 : 8) +
+                     (s->gzhead->comment == Z_NULL ? 0 : 16)
+                     );
+            put_byte(s, (Byte)(s->gzhead->time & 0xff));
+            put_byte(s, (Byte)((s->gzhead->time >> 8) & 0xff));
+            put_byte(s, (Byte)((s->gzhead->time >> 16) & 0xff));
+            put_byte(s, (Byte)((s->gzhead->time >> 24) & 0xff));
+            put_byte(s, s->level == 9 ? 2 :
+                     (s->strategy >= Z_HUFFMAN_ONLY || s->level < 2 ?
+                      4 : 0));
+            put_byte(s, s->gzhead->os & 0xff);
+            if (s->gzhead->extra != Z_NULL) {
+                put_byte(s, s->gzhead->extra_len & 0xff);
+                put_byte(s, (s->gzhead->extra_len >> 8) & 0xff);
+            }
+            if (s->gzhead->hcrc)
+                strm->adler = crc32(strm->adler, s->pending_buf,
+                                    s->pending);
+            s->gzindex = 0;
+            s->status = EXTRA_STATE;
+        }
+    }
+    if (s->status == EXTRA_STATE) {
+        if (s->gzhead->extra != Z_NULL) {
+            ulg beg = s->pending;   /* start of bytes to update crc */
+            uInt left = (s->gzhead->extra_len & 0xffff) - s->gzindex;
+            while (s->pending + left > s->pending_buf_size) {
+                uInt copy = s->pending_buf_size - s->pending;
+                zmemcpy(s->pending_buf + s->pending,
+                        s->gzhead->extra + s->gzindex, copy);
+                s->pending = s->pending_buf_size;
+                HCRC_UPDATE(beg);
+                s->gzindex += copy;
+                flush_pending(strm);
+                if (s->pending != 0) {
+                    s->last_flush = -1;
+                    return Z_OK;
+                }
+                beg = 0;
+                left -= copy;
+            }
+            zmemcpy(s->pending_buf + s->pending,
+                    s->gzhead->extra + s->gzindex, left);
+            s->pending += left;
+            HCRC_UPDATE(beg);
+            s->gzindex = 0;
+        }
+        s->status = NAME_STATE;
+    }
+    if (s->status == NAME_STATE) {
+        if (s->gzhead->name != Z_NULL) {
+            ulg beg = s->pending;   /* start of bytes to update crc */
+            int val;
+            do {
+                if (s->pending == s->pending_buf_size) {
+                    HCRC_UPDATE(beg);
+                    flush_pending(strm);
+                    if (s->pending != 0) {
+                        s->last_flush = -1;
+                        return Z_OK;
+                    }
+                    beg = 0;
+                }
+                val = s->gzhead->name[s->gzindex++];
+                put_byte(s, val);
+            } while (val != 0);
+            HCRC_UPDATE(beg);
+            s->gzindex = 0;
+        }
+        s->status = COMMENT_STATE;
+    }
+    if (s->status == COMMENT_STATE) {
+        if (s->gzhead->comment != Z_NULL) {
+            ulg beg = s->pending;   /* start of bytes to update crc */
+            int val;
+            do {
+                if (s->pending == s->pending_buf_size) {
+                    HCRC_UPDATE(beg);
+                    flush_pending(strm);
+                    if (s->pending != 0) {
+                        s->last_flush = -1;
+                        return Z_OK;
+                    }
+                    beg = 0;
+                }
+                val = s->gzhead->comment[s->gzindex++];
+                put_byte(s, val);
+            } while (val != 0);
+            HCRC_UPDATE(beg);
+        }
+        s->status = HCRC_STATE;
+    }
+    if (s->status == HCRC_STATE) {
+        if (s->gzhead->hcrc) {
+            if (s->pending + 2 > s->pending_buf_size) {
+                flush_pending(strm);
+                if (s->pending != 0) {
+                    s->last_flush = -1;
+                    return Z_OK;
+                }
+            }
+            put_byte(s, (Byte)(strm->adler & 0xff));
+            put_byte(s, (Byte)((strm->adler >> 8) & 0xff));
+            strm->adler = crc32(0L, Z_NULL, 0);
+        }
+        s->status = BUSY_STATE;
+
+        /* Compression must start with an empty pending buffer */
+        flush_pending(strm);
+        if (s->pending != 0) {
+            s->last_flush = -1;
+            return Z_OK;
+        }
+    }
+#endif
+
     /* Start a new block or continue the current one.
      */
     if (strm->avail_in != 0 || s->lookahead != 0 ||
         (flush != Z_NO_FLUSH && s->status != FINISH_STATE)) {
         block_state bstate;
 
-        bstate = s->strategy == Z_HUFFMAN_ONLY ? deflate_huff(s, flush) :
-                    (s->strategy == Z_RLE ? deflate_rle(s, flush) :
-                        (*(configuration_table[s->level].func))(s, flush));
+        bstate = s->level == 0 ? deflate_stored(s, flush) :
+                 s->strategy == Z_HUFFMAN_ONLY ? deflate_huff(s, flush) :
+                 s->strategy == Z_RLE ? deflate_rle(s, flush) :
+                 (*(configuration_table[s->level].func))(s, flush);
 
         if (bstate == finish_started || bstate == finish_done) {
             s->status = FINISH_STATE;
@@ -2032,7 +2155,6 @@ int ZEXPORT deflate (
             }
         }
     }
-    Assert(strm->avail_out > 0, "bug2");
 
     if (flush != Z_FINISH) return Z_OK;
     if (s->wrap <= 0) return Z_STREAM_END;
@@ -2065,22 +2187,13 @@ int ZEXPORT deflate (
 
 /* ========================================================================= */
 int ZEXPORT deflateEnd (
-    z_streamp strm
-) {
+    z_streamp strm)
+{
     int status;
 
-    if (strm == Z_NULL || strm->state == Z_NULL) return Z_STREAM_ERROR;
+    if (deflateStateCheck(strm)) return Z_STREAM_ERROR;
 
     status = strm->state->status;
-    if (status != INIT_STATE &&
-        status != EXTRA_STATE &&
-        status != NAME_STATE &&
-        status != COMMENT_STATE &&
-        status != HCRC_STATE &&
-        status != BUSY_STATE &&
-        status != FINISH_STATE) {
-      return Z_STREAM_ERROR;
-    }
 
     /* Deallocate in reverse order of allocations: */
     TRY_FREE(strm, strm->state->pending_buf);
@@ -2101,8 +2214,8 @@ int ZEXPORT deflateEnd (
  */
 int ZEXPORT deflateCopy (
     z_streamp dest,
-    z_streamp source
-) {
+    z_streamp source)
+{
 #ifdef MAXSEG_64K
     return Z_STREAM_ERROR;
 #else
@@ -2111,7 +2224,7 @@ int ZEXPORT deflateCopy (
     ushf *overlay;
 
 
-    if (source == Z_NULL || dest == Z_NULL || source->state == Z_NULL) {
+    if (deflateStateCheck(source) || dest == Z_NULL) {
         return Z_STREAM_ERROR;
     }
 
@@ -2161,11 +2274,11 @@ int ZEXPORT deflateCopy (
  * allocating a large strm->next_in buffer and copying from it.
  * (See also flush_pending()).
  */
-local int read_buf(
+local unsigned read_buf(
     z_streamp strm,
     Bytef *buf,
-    unsigned size
-) {
+    unsigned size)
+{
     unsigned len = strm->avail_in;
 
     if (len > size) len = size;
@@ -2185,15 +2298,15 @@ local int read_buf(
     strm->next_in  += len;
     strm->total_in += len;
 
-    return (int)len;
+    return len;
 }
 
 /* ===========================================================================
  * Initialize the "longest match" routines for a new zlib stream
  */
 local void lm_init (
-    deflate_state *s
-) {
+    deflate_state *s)
+{
     s->window_size = (ulg)2L*s->w_size;
 
     CLEAR_HASH(s);
@@ -2235,13 +2348,13 @@ local void lm_init (
  */
 local uInt longest_match(
     deflate_state *s,
-    IPos cur_match                              /* current match */
-) {
+    IPos cur_match)
+{
     unsigned chain_length = s->max_chain_length;/* max hash chain length */
-    Bytef *scan = s->window + s->strstart; /* current string */
-    Bytef *match;                       /* matched string */
-    int len;                           /* length of current match */
-    int best_len = s->prev_length;              /* best match length so far */
+    register Bytef *scan = s->window + s->strstart; /* current string */
+    register Bytef *match;                      /* matched string */
+    register int len;                           /* length of current match */
+    int best_len = (int)s->prev_length;         /* best match length so far */
     int nice_match = s->nice_match;             /* stop if match long enough */
     IPos limit = s->strstart > (IPos)MAX_DIST(s) ?
         s->strstart - (IPos)MAX_DIST(s) : NIL;
@@ -2255,13 +2368,13 @@ local uInt longest_match(
     /* Compare two bytes at a time. Note: this is not always beneficial.
      * Try with and without -DUNALIGNED_OK to check.
      */
-    Bytef *strend = s->window + s->strstart + MAX_MATCH - 1;
-    ush scan_start = *(ushf*)scan;
-    ush scan_end   = *(ushf*)(scan+best_len-1);
+    register Bytef *strend = s->window + s->strstart + MAX_MATCH - 1;
+    register ush scan_start = *(ushf*)scan;
+    register ush scan_end   = *(ushf*)(scan+best_len-1);
 #else
-    Bytef *strend = s->window + s->strstart + MAX_MATCH;
-    Byte scan_end1  = scan[best_len-1];
-    Byte scan_end   = scan[best_len];
+    register Bytef *strend = s->window + s->strstart + MAX_MATCH;
+    register Byte scan_end1  = scan[best_len-1];
+    register Byte scan_end   = scan[best_len];
 #endif
 
     /* The code is optimized for HASH_BITS >= 8 and MAX_MATCH-2 multiple of 16.
@@ -2276,7 +2389,7 @@ local uInt longest_match(
     /* Do not look for matches beyond the end of the input. This is necessary
      * to make deflate deterministic.
      */
-    if ((uInt)nice_match > s->lookahead) nice_match = s->lookahead;
+    if ((uInt)nice_match > s->lookahead) nice_match = (int)s->lookahead;
 
     Assert((ulg)s->strstart <= s->window_size-MIN_LOOKAHEAD, "need lookahead");
 
@@ -2384,12 +2497,12 @@ local uInt longest_match(
  */
 local uInt longest_match(
     deflate_state *s,
-    IPos cur_match                              /* current match */
-) {
-    Bytef *scan = s->window + s->strstart; /* current string */
-    Bytef *match;                       /* matched string */
-    int len;                           /* length of current match */
-    Bytef *strend = s->window + s->strstart + MAX_MATCH;
+    IPos cur_match)
+{
+    register Bytef *scan = s->window + s->strstart; /* current string */
+    register Bytef *match;                       /* matched string */
+    register int len;                           /* length of current match */
+    register Bytef *strend = s->window + s->strstart + MAX_MATCH;
 
     /* The code is optimized for HASH_BITS >= 8 and MAX_MATCH-2 multiple of 16.
      * It is easy to get rid of this optimization if necessary.
@@ -2437,14 +2550,19 @@ local uInt longest_match(
 
 #endif /* FASTEST */
 
-#ifdef DEBUG
+#ifdef ZLIB_DEBUG
+
+#define EQUAL 0
+/* result of memcmp for equal strings */
+
 /* ===========================================================================
  * Check that the match at match_start is indeed a match.
  */
-local void check_match(s, start, match, length)
+local void check_match(
     deflate_state *s,
-    IPos start, IPos match,
-    int length
+    IPos start,
+    IPos  match,
+    int length)
 {
     /* check that the match is indeed a match */
     if (zmemcmp(s->window + match,
@@ -2463,7 +2581,7 @@ local void check_match(s, start, match, length)
 }
 #else
 #  define check_match(s, start, match, length)
-#endif /* DEBUG */
+#endif /* ZLIB_DEBUG */
 
 /* ===========================================================================
  * Fill the window when the lookahead becomes insufficient.
@@ -2476,10 +2594,9 @@ local void check_match(s, start, match, length)
  *    option -- not supported here).
  */
 local void fill_window(
-    deflate_state *s
-) {
-    unsigned n, m;
-    Posf *p;
+    deflate_state *s)
+{
+    unsigned n;
     unsigned more;    /* Amount of free space at the end of the window. */
     uInt wsize = s->w_size;
 
@@ -2506,35 +2623,11 @@ local void fill_window(
          */
         if (s->strstart >= wsize+MAX_DIST(s)) {
 
-            zmemcpy(s->window, s->window+wsize, (unsigned)wsize);
+            zmemcpy(s->window, s->window+wsize, (unsigned)wsize - more);
             s->match_start -= wsize;
             s->strstart    -= wsize; /* we now have strstart >= MAX_DIST */
             s->block_start -= (long) wsize;
-
-            /* Slide the hash table (could be avoided with 32 bit values
-               at the expense of memory usage). We slide even when level == 0
-               to keep the hash table consistent if we switch back to level > 0
-               later. (Using level 0 permanently is not an optimal usage of
-               zlib, so we don't care about this pathological case.)
-             */
-            n = s->hash_size;
-            p = &s->head[n];
-            do {
-                m = *--p;
-                *p = (Pos)(m >= wsize ? m-wsize : NIL);
-            } while (--n);
-
-            n = wsize;
-#ifndef FASTEST
-            p = &s->prev[n];
-            do {
-                m = *--p;
-                *p = (Pos)(m >= wsize ? m-wsize : NIL);
-                /* If n is not on any hash chain, prev[n] is garbage but
-                 * its value will never be used.
-                 */
-            } while (--n);
-#endif
+            slide_hash(s);
             more += wsize;
         }
         if (s->strm->avail_in == 0) break;
@@ -2640,70 +2733,199 @@ local void fill_window(
    if (s->strm->avail_out == 0) return (last) ? finish_started : need_more; \
 }
 
+/* Maximum stored block length in deflate format (not including header). */
+#define MAX_STORED 65535
+
+/* Minimum of a and b. */
+#define MIN(a, b) ((a) > (b) ? (b) : (a))
+
 /* ===========================================================================
  * Copy without compression as much as possible from the input stream, return
  * the current block state.
- * This function does not insert new strings in the dictionary since
- * uncompressible data is probably not useful. This function is used
- * only for the level=0 compression option.
- * NOTE: this function should be optimized to avoid extra copying from
- * window to pending_buf.
+ *
+ * In case deflateParams() is used to later switch to a non-zero compression
+ * level, s->matches (otherwise unused when storing) keeps track of the number
+ * of hash table slides to perform. If s->matches is 1, then one hash table
+ * slide will be done when switching. If s->matches is 2, the maximum value
+ * allowed here, then the hash table will be cleared, since two or more slides
+ * is the same as a clear.
+ *
+ * deflate_stored() is written to minimize the number of times an input byte is
+ * copied. It is most efficient with large input and output buffers, which
+ * maximizes the opportunites to have a single copy from next_in to next_out.
  */
 local block_state deflate_stored(
     deflate_state *s,
-    int flush
-) {
-    /* Stored blocks are limited to 0xffff bytes, pending_buf is limited
-     * to pending_buf_size, and each stored block has a 5 byte header:
+    int flush)
+{
+    /* Smallest worthy block size when not flushing or finishing. By default
+     * this is 32K. This can be as small as 507 bytes for memLevel == 1. For
+     * large input and output buffers, the stored block size will be larger.
      */
-    ulg max_block_size = 0xffff;
-    ulg max_start;
+    unsigned min_block = MIN(s->pending_buf_size - 5, s->w_size);
 
-    if (max_block_size > s->pending_buf_size - 5) {
-        max_block_size = s->pending_buf_size - 5;
-    }
-
-    /* Copy as much as possible from input to output: */
-    for (;;) {
-        /* Fill the window as much as possible: */
-        if (s->lookahead <= 1) {
-
-            Assert(s->strstart < s->w_size+MAX_DIST(s) ||
-                   s->block_start >= (long)s->w_size, "slide too late");
-
-            fill_window(s);
-            if (s->lookahead == 0 && flush == Z_NO_FLUSH) return need_more;
-
-            if (s->lookahead == 0) break; /* flush the current block */
-        }
-        Assert(s->block_start >= 0L, "block gone");
-
-        s->strstart += s->lookahead;
-        s->lookahead = 0;
-
-        /* Emit a stored block if pending_buf will be full: */
-        max_start = s->block_start + max_block_size;
-        if (s->strstart == 0 || (ulg)s->strstart >= max_start) {
-            /* strstart == 0 is possible when wraparound on 16-bit machine */
-            s->lookahead = (uInt)(s->strstart - max_start);
-            s->strstart = (uInt)max_start;
-            FLUSH_BLOCK(s, 0);
-        }
-        /* Flush if we may have to slide, otherwise block_start may become
-         * negative and the data will be gone:
+    /* Copy as many min_block or larger stored blocks directly to next_out as
+     * possible. If flushing, copy the remaining available input to next_out as
+     * stored blocks, if there is enough space.
+     */
+    unsigned len, left, have, last = 0;
+    unsigned used = s->strm->avail_in;
+    do {
+        /* Set len to the maximum size block that we can copy directly with the
+         * available input data and output space. Set left to how much of that
+         * would be copied from what's left in the window.
          */
-        if (s->strstart - (uInt)s->block_start >= MAX_DIST(s)) {
-            FLUSH_BLOCK(s, 0);
+        len = MAX_STORED;       /* maximum deflate stored block length */
+        have = (s->bi_valid + 42) >> 3;         /* number of header bytes */
+        if (s->strm->avail_out < have)          /* need room for header */
+            break;
+            /* maximum stored block length that will fit in avail_out: */
+        have = s->strm->avail_out - have;
+        left = s->strstart - s->block_start;    /* bytes left in window */
+        if (len > (ulg)left + s->strm->avail_in)
+            len = left + s->strm->avail_in;     /* limit len to the input */
+        if (len > have)
+            len = have;                         /* limit len to the output */
+
+        /* If the stored block would be less than min_block in length, or if
+         * unable to copy all of the available input when flushing, then try
+         * copying to the window and the pending buffer instead. Also don't
+         * write an empty block when flushing -- deflate() does that.
+         */
+        if (len < min_block && ((len == 0 && flush != Z_FINISH) ||
+                                flush == Z_NO_FLUSH ||
+                                len != left + s->strm->avail_in))
+            break;
+
+        /* Make a dummy stored block in pending to get the header bytes,
+         * including any pending bits. This also updates the debugging counts.
+         */
+        last = flush == Z_FINISH && len == left + s->strm->avail_in ? 1 : 0;
+        _tr_stored_block(s, (char *)0, 0L, last);
+
+        /* Replace the lengths in the dummy stored block with len. */
+        s->pending_buf[s->pending - 4] = len;
+        s->pending_buf[s->pending - 3] = len >> 8;
+        s->pending_buf[s->pending - 2] = ~len;
+        s->pending_buf[s->pending - 1] = ~len >> 8;
+
+        /* Write the stored block header bytes. */
+        flush_pending(s->strm);
+
+#ifdef ZLIB_DEBUG
+        /* Update debugging counts for the data about to be copied. */
+        s->compressed_len += len << 3;
+        s->bits_sent += len << 3;
+#endif
+
+        /* Copy uncompressed bytes from the window to next_out. */
+        if (left) {
+            if (left > len)
+                left = len;
+            zmemcpy(s->strm->next_out, s->window + s->block_start, left);
+            s->strm->next_out += left;
+            s->strm->avail_out -= left;
+            s->strm->total_out += left;
+            s->block_start += left;
+            len -= left;
         }
+
+        /* Copy uncompressed bytes directly from next_in to next_out, updating
+         * the check value.
+         */
+        if (len) {
+            read_buf(s->strm, s->strm->next_out, len);
+            s->strm->next_out += len;
+            s->strm->avail_out -= len;
+            s->strm->total_out += len;
+        }
+    } while (last == 0);
+
+    /* Update the sliding window with the last s->w_size bytes of the copied
+     * data, or append all of the copied data to the existing window if less
+     * than s->w_size bytes were copied. Also update the number of bytes to
+     * insert in the hash tables, in the event that deflateParams() switches to
+     * a non-zero compression level.
+     */
+    used -= s->strm->avail_in;      /* number of input bytes directly copied */
+    if (used) {
+        /* If any input was used, then no unused input remains in the window,
+         * therefore s->block_start == s->strstart.
+         */
+        if (used >= s->w_size) {    /* supplant the previous history */
+            s->matches = 2;         /* clear hash */
+            zmemcpy(s->window, s->strm->next_in - s->w_size, s->w_size);
+            s->strstart = s->w_size;
+        }
+        else {
+            if (s->window_size - s->strstart <= used) {
+                /* Slide the window down. */
+                s->strstart -= s->w_size;
+                zmemcpy(s->window, s->window + s->w_size, s->strstart);
+                if (s->matches < 2)
+                    s->matches++;   /* add a pending slide_hash() */
+            }
+            zmemcpy(s->window + s->strstart, s->strm->next_in - used, used);
+            s->strstart += used;
+        }
+        s->block_start = s->strstart;
+        s->insert += MIN(used, s->w_size - s->insert);
     }
-    s->insert = 0;
-    if (flush == Z_FINISH) {
-        FLUSH_BLOCK(s, 1);
+    if (s->high_water < s->strstart)
+        s->high_water = s->strstart;
+
+    /* If the last block was written to next_out, then done. */
+    if (last)
         return finish_done;
+
+    /* If flushing and all input has been consumed, then done. */
+    if (flush != Z_NO_FLUSH && flush != Z_FINISH &&
+        s->strm->avail_in == 0 && (long)s->strstart == s->block_start)
+        return block_done;
+
+    /* Fill the window with any remaining input. */
+    have = s->window_size - s->strstart - 1;
+    if (s->strm->avail_in > have && s->block_start >= (long)s->w_size) {
+        /* Slide the window down. */
+        s->block_start -= s->w_size;
+        s->strstart -= s->w_size;
+        zmemcpy(s->window, s->window + s->w_size, s->strstart);
+        if (s->matches < 2)
+            s->matches++;           /* add a pending slide_hash() */
+        have += s->w_size;          /* more space now */
     }
-    if ((long)s->strstart > s->block_start)
-        FLUSH_BLOCK(s, 0);
-    return block_done;
+    if (have > s->strm->avail_in)
+        have = s->strm->avail_in;
+    if (have) {
+        read_buf(s->strm, s->window + s->strstart, have);
+        s->strstart += have;
+    }
+    if (s->high_water < s->strstart)
+        s->high_water = s->strstart;
+
+    /* There was not enough avail_out to write a complete worthy or flushed
+     * stored block to next_out. Write a stored block to pending instead, if we
+     * have enough input for a worthy block, or if flushing and there is enough
+     * room for the remaining input as a stored block in the pending buffer.
+     */
+    have = (s->bi_valid + 42) >> 3;         /* number of header bytes */
+        /* maximum stored block length that will fit in pending: */
+    have = MIN(s->pending_buf_size - have, MAX_STORED);
+    min_block = MIN(have, s->w_size);
+    left = s->strstart - s->block_start;
+    if (left >= min_block ||
+        ((left || flush == Z_FINISH) && flush != Z_NO_FLUSH &&
+         s->strm->avail_in == 0 && left <= have)) {
+        len = MIN(left, have);
+        last = flush == Z_FINISH && s->strm->avail_in == 0 &&
+               len == left ? 1 : 0;
+        _tr_stored_block(s, (charf *)s->window + s->block_start, len, last);
+        s->block_start += len;
+        flush_pending(s->strm);
+    }
+
+    /* We've done all we can with the available input and output. */
+    return last ? finish_started : need_more;
 }
 
 /* ===========================================================================
@@ -2715,8 +2937,8 @@ local block_state deflate_stored(
  */
 local block_state deflate_fast(
     deflate_state *s,
-    int flush
-) {
+    int flush)
+{
     IPos hash_head;       /* head of the hash chain */
     int bflush;           /* set if current block must be flushed */
 
@@ -2817,8 +3039,8 @@ local block_state deflate_fast(
  */
 local block_state deflate_slow(
     deflate_state *s,
-    int flush
-) {
+    int flush)
+{
     IPos hash_head;          /* head of hash chain */
     int bflush;              /* set if current block must be flushed */
 
@@ -2948,8 +3170,8 @@ local block_state deflate_slow(
  */
 local block_state deflate_rle(
     deflate_state *s,
-    int flush
-) {
+    int flush)
+{
     int bflush;             /* set if current block must be flushed */
     uInt prev;              /* byte at distance one to match */
     Bytef *scan, *strend;   /* scan goes up to strend for length of run */
@@ -2980,7 +3202,7 @@ local block_state deflate_rle(
                          prev == *++scan && prev == *++scan &&
                          prev == *++scan && prev == *++scan &&
                          scan < strend);
-                s->match_length = MAX_MATCH - (int)(strend - scan);
+                s->match_length = MAX_MATCH - (uInt)(strend - scan);
                 if (s->match_length > s->lookahead)
                     s->match_length = s->lookahead;
             }
@@ -3021,8 +3243,8 @@ local block_state deflate_rle(
  */
 local block_state deflate_huff(
     deflate_state *s,
-    int flush
-) {
+    int flush)
+{
     int bflush;             /* set if current block must be flushed */
 
     for (;;) {
@@ -3054,32 +3276,29 @@ local block_state deflate_huff(
     return block_done;
 }
 /* zutil.c -- target dependent utility functions for the compression library
- * Copyright (C) 1995-2005, 2010, 2011, 2012 Jean-loup Gailly.
+ * Copyright (C) 1995-2017 Jean-loup Gailly
  * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
 /* @(#) $Id$ */
 
-// #include "zutil.h" /* In sys-zlib.h (see make-zlib.r) */
+// #include "zutil.h" /* REBOL: see make-zlib.r */
 #ifndef Z_SOLO
-// #  include "gzguts.h" /* In sys-zlib.h (see make-zlib.r) */
-#endif
-
-#ifndef NO_DUMMY_DECL
-struct internal_state      {int dummy;}; /* for buggy compilers */
+// #  include "gzguts.h" /* REBOL: see make-zlib.r */
 #endif
 
 z_const char * const z_errmsg[10] = {
-"need dictionary",     /* Z_NEED_DICT       2  */
-"stream end",          /* Z_STREAM_END      1  */
-"",                    /* Z_OK              0  */
-"file error",          /* Z_ERRNO         (-1) */
-"stream error",        /* Z_STREAM_ERROR  (-2) */
-"data error",          /* Z_DATA_ERROR    (-3) */
-"insufficient memory", /* Z_MEM_ERROR     (-4) */
-"buffer error",        /* Z_BUF_ERROR     (-5) */
-"incompatible version",/* Z_VERSION_ERROR (-6) */
-""};
+    (z_const char *)"need dictionary",     /* Z_NEED_DICT       2  */
+    (z_const char *)"stream end",          /* Z_STREAM_END      1  */
+    (z_const char *)"",                    /* Z_OK              0  */
+    (z_const char *)"file error",          /* Z_ERRNO         (-1) */
+    (z_const char *)"stream error",        /* Z_STREAM_ERROR  (-2) */
+    (z_const char *)"data error",          /* Z_DATA_ERROR    (-3) */
+    (z_const char *)"insufficient memory", /* Z_MEM_ERROR     (-4) */
+    (z_const char *)"buffer error",        /* Z_BUF_ERROR     (-5) */
+    (z_const char *)"incompatible version",/* Z_VERSION_ERROR (-6) */
+    (z_const char *)""
+};
 
 
 const char * ZEXPORT zlibVersion()
@@ -3116,7 +3335,7 @@ uLong ZEXPORT zlibCompileFlags()
     case 8:     flags += 2 << 6;        break;
     default:    flags += 3 << 6;
     }
-#ifdef DEBUG
+#ifdef ZLIB_DEBUG
     flags += 1 << 8;
 #endif
 #if defined(ASMV) || defined(ASMINF)
@@ -3170,15 +3389,15 @@ uLong ZEXPORT zlibCompileFlags()
     return flags;
 }
 
-#ifdef DEBUG
-
+#ifdef ZLIB_DEBUG
+#include <stdlib.h>
 #  ifndef verbose
 #    define verbose 0
 #  endif
 int ZLIB_INTERNAL z_verbose = verbose;
 
-void ZLIB_INTERNAL z_error (m)
-    char *m;
+void ZLIB_INTERNAL z_error (
+    char *m)
 {
     fprintf(stderr, "%s\n", m);
     exit(1);
@@ -3189,8 +3408,8 @@ void ZLIB_INTERNAL z_error (m)
  * uncompress()
  */
 const char * ZEXPORT zError(
-    int err
-) {
+    int err)
+{
     return ERR_MSG(err);
 }
 
@@ -3204,21 +3423,21 @@ const char * ZEXPORT zError(
 
 #ifndef HAVE_MEMCPY
 
-void ZLIB_INTERNAL zmemcpy(dest, source, len)
-    Bytef* dest;
-    const Bytef* source;
-    uInt  len;
-) {
+void ZLIB_INTERNAL zmemcpy(
+    Bytef* dest,
+    const Bytef* source,
+    uInt  len)
+{
     if (len == 0) return;
     do {
         *dest++ = *source++; /* ??? to be unrolled */
     } while (--len != 0);
 }
 
-int ZLIB_INTERNAL zmemcmp(s1, s2, len)
+int ZLIB_INTERNAL zmemcmp(
     const Bytef* s1,
     const Bytef* s2,
-    uInt  len
+    uInt  len)
 {
     uInt j;
 
@@ -3228,9 +3447,9 @@ int ZLIB_INTERNAL zmemcmp(s1, s2, len)
     return 0;
 }
 
-void ZLIB_INTERNAL zmemzero(dest, len)
+void ZLIB_INTERNAL zmemzero(
     Bytef* dest,
-    uInt  len
+    uInt  len)
 {
     if (len == 0) return;
     do {
@@ -3274,8 +3493,10 @@ local ptr_table table[MAX_PTR];
 
 voidpf ZLIB_INTERNAL zcalloc (voidpf opaque, unsigned items, unsigned size)
 {
-    voidpf buf = opaque; /* just to make some compilers happy */
+    voidpf buf;
     ulg bsize = (ulg)items*size;
+
+    (void)opaque;
 
     /* If we allocate less than 65520 bytes, we assume that farmalloc
      * will return a usable pointer which doesn't have to be normalized.
@@ -3299,6 +3520,9 @@ voidpf ZLIB_INTERNAL zcalloc (voidpf opaque, unsigned items, unsigned size)
 void ZLIB_INTERNAL zcfree (voidpf opaque, voidpf ptr)
 {
     int n;
+
+    (void)opaque;
+
     if (*(ush*)&ptr != 0) { /* object < 64K */
         farfree(ptr);
         return;
@@ -3314,7 +3538,6 @@ void ZLIB_INTERNAL zcfree (voidpf opaque, voidpf ptr)
         next_ptr--;
         return;
     }
-    ptr = opaque; /* just to make some compilers happy */
     Assert(0, "zcfree: ptr not found");
 }
 
@@ -3333,13 +3556,13 @@ void ZLIB_INTERNAL zcfree (voidpf opaque, voidpf ptr)
 
 voidpf ZLIB_INTERNAL zcalloc (voidpf opaque, uInt items, uInt size)
 {
-    if (opaque) opaque = 0; /* to make compiler happy */
+    (void)opaque;
     return _halloc((long)items, size);
 }
 
 void ZLIB_INTERNAL zcfree (voidpf opaque, voidpf ptr)
 {
-    if (opaque) opaque = 0; /* to make compiler happy */
+    (void)opaque;
     _hfree(ptr);
 }
 
@@ -3359,33 +3582,33 @@ extern void   free   OF((voidpf ptr));
 voidpf ZLIB_INTERNAL zcalloc (
     voidpf opaque,
     unsigned items,
-    unsigned size
-) {
-    if (opaque) items += size - size; /* make compiler happy */
+    unsigned size)
+{
+    (void)opaque;
     return sizeof(uInt) > 2 ? (voidpf)malloc(items * size) :
                               (voidpf)calloc(items, size);
 }
 
 void ZLIB_INTERNAL zcfree (
     voidpf opaque,
-    voidpf ptr
-) {
+    voidpf ptr)
+{
+    (void)opaque;
     free(ptr);
-    if (opaque) return; /* make compiler happy */
 }
 
 #endif /* MY_ZCALLOC */
 
 #endif /* !Z_SOLO */
 /* compress.c -- compress a memory buffer
- * Copyright (C) 1995-2005 Jean-loup Gailly.
+ * Copyright (C) 1995-2005, 2014, 2016 Jean-loup Gailly, Mark Adler
  * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
 /* @(#) $Id$ */
 
 #define ZLIB_INTERNAL
-// #include "zlib.h" /* In sys-zlib.h (see make-zlib.r) */
+// #include "zlib.h" /* REBOL: see make-zlib.r */
 
 /* ===========================================================================
      Compresses the source buffer into the destination buffer. The level
@@ -3403,20 +3626,15 @@ int ZEXPORT compress2 (
     uLongf *destLen,
     const Bytef *source,
     uLong sourceLen,
-    int level
-) {
+    int level)
+{
     z_stream stream;
     int err;
+    const uInt max = (uInt)-1;
+    uLong left;
 
-    stream.next_in = (z_const Bytef *)source;
-    stream.avail_in = (uInt)sourceLen;
-#ifdef MAXSEG_64K
-    /* Check for source > 64K on 16-bit machine: */
-    if ((uLong)stream.avail_in != sourceLen) return Z_BUF_ERROR;
-#endif
-    stream.next_out = dest;
-    stream.avail_out = (uInt)*destLen;
-    if ((uLong)stream.avail_out != *destLen) return Z_BUF_ERROR;
+    left = *destLen;
+    *destLen = 0;
 
     stream.zalloc = (alloc_func)0;
     stream.zfree = (free_func)0;
@@ -3425,15 +3643,26 @@ int ZEXPORT compress2 (
     err = deflateInit(&stream, level);
     if (err != Z_OK) return err;
 
-    err = deflate(&stream, Z_FINISH);
-    if (err != Z_STREAM_END) {
-        deflateEnd(&stream);
-        return err == Z_OK ? Z_BUF_ERROR : err;
-    }
-    *destLen = stream.total_out;
+    stream.next_out = dest;
+    stream.avail_out = 0;
+    stream.next_in = (z_const Bytef *)source;
+    stream.avail_in = 0;
 
-    err = deflateEnd(&stream);
-    return err;
+    do {
+        if (stream.avail_out == 0) {
+            stream.avail_out = left > (uLong)max ? max : (uInt)left;
+            left -= stream.avail_out;
+        }
+        if (stream.avail_in == 0) {
+            stream.avail_in = sourceLen > (uLong)max ? max : (uInt)sourceLen;
+            sourceLen -= stream.avail_in;
+        }
+        err = deflate(&stream, sourceLen ? Z_NO_FLUSH : Z_FINISH);
+    } while (err == Z_OK);
+
+    *destLen = stream.total_out;
+    deflateEnd(&stream);
+    return err == Z_STREAM_END ? Z_OK : err;
 }
 
 /* ===========================================================================
@@ -3442,8 +3671,8 @@ int ZEXPORT compress (
     Bytef *dest,
     uLongf *destLen,
     const Bytef *source,
-    uLong sourceLen
-) {
+    uLong sourceLen)
+{
     return compress2(dest, destLen, source, sourceLen, Z_DEFAULT_COMPRESSION);
 }
 
@@ -3452,72 +3681,106 @@ int ZEXPORT compress (
    this function needs to be updated.
  */
 uLong ZEXPORT compressBound (
-    uLong sourceLen
-) {
+    uLong sourceLen)
+{
     return sourceLen + (sourceLen >> 12) + (sourceLen >> 14) +
            (sourceLen >> 25) + 13;
 }
 /* uncompr.c -- decompress a memory buffer
- * Copyright (C) 1995-2003, 2010 Jean-loup Gailly.
+ * Copyright (C) 1995-2003, 2010, 2014, 2016 Jean-loup Gailly, Mark Adler
  * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
 /* @(#) $Id$ */
 
 #define ZLIB_INTERNAL
-// #include "zlib.h" /* In sys-zlib.h (see make-zlib.r) */
+// #include "zlib.h" /* REBOL: see make-zlib.r */
 
 /* ===========================================================================
-     Decompresses the source buffer into the destination buffer.  sourceLen is
-   the byte length of the source buffer. Upon entry, destLen is the total
-   size of the destination buffer, which must be large enough to hold the
-   entire uncompressed data. (The size of the uncompressed data must have
-   been saved previously by the compressor and transmitted to the decompressor
-   by some mechanism outside the scope of this compression library.)
-   Upon exit, destLen is the actual size of the compressed buffer.
+     Decompresses the source buffer into the destination buffer.  *sourceLen is
+   the byte length of the source buffer. Upon entry, *destLen is the total size
+   of the destination buffer, which must be large enough to hold the entire
+   uncompressed data. (The size of the uncompressed data must have been saved
+   previously by the compressor and transmitted to the decompressor by some
+   mechanism outside the scope of this compression library.) Upon exit,
+   *destLen is the size of the decompressed data and *sourceLen is the number
+   of source bytes consumed. Upon return, source + *sourceLen points to the
+   first unused input byte.
 
-     uncompress returns Z_OK if success, Z_MEM_ERROR if there was not
-   enough memory, Z_BUF_ERROR if there was not enough room in the output
-   buffer, or Z_DATA_ERROR if the input data was corrupted.
+     uncompress returns Z_OK if success, Z_MEM_ERROR if there was not enough
+   memory, Z_BUF_ERROR if there was not enough room in the output buffer, or
+   Z_DATA_ERROR if the input data was corrupted, including if the input data is
+   an incomplete zlib stream.
 */
-int ZEXPORT uncompress (
+int ZEXPORT uncompress2 (
     Bytef *dest,
     uLongf *destLen,
     const Bytef *source,
-    uLong sourceLen
-) {
+    uLong *sourceLen)
+{
     z_stream stream;
     int err;
+    const uInt max = (uInt)-1;
+    uLong len, left;
+    Byte buf[1];    /* for detection of incomplete stream when *destLen == 0 */
+
+    len = *sourceLen;
+    if (*destLen) {
+        left = *destLen;
+        *destLen = 0;
+    }
+    else {
+        left = 1;
+        dest = buf;
+    }
 
     stream.next_in = (z_const Bytef *)source;
-    stream.avail_in = (uInt)sourceLen;
-    /* Check for source > 64K on 16-bit machine: */
-    if ((uLong)stream.avail_in != sourceLen) return Z_BUF_ERROR;
-
-    stream.next_out = dest;
-    stream.avail_out = (uInt)*destLen;
-    if ((uLong)stream.avail_out != *destLen) return Z_BUF_ERROR;
-
+    stream.avail_in = 0;
     stream.zalloc = (alloc_func)0;
     stream.zfree = (free_func)0;
+    stream.opaque = (voidpf)0;
 
     err = inflateInit(&stream);
     if (err != Z_OK) return err;
 
-    err = inflate(&stream, Z_FINISH);
-    if (err != Z_STREAM_END) {
-        inflateEnd(&stream);
-        if (err == Z_NEED_DICT || (err == Z_BUF_ERROR && stream.avail_in == 0))
-            return Z_DATA_ERROR;
-        return err;
-    }
-    *destLen = stream.total_out;
+    stream.next_out = dest;
+    stream.avail_out = 0;
 
-    err = inflateEnd(&stream);
-    return err;
+    do {
+        if (stream.avail_out == 0) {
+            stream.avail_out = left > (uLong)max ? max : (uInt)left;
+            left -= stream.avail_out;
+        }
+        if (stream.avail_in == 0) {
+            stream.avail_in = len > (uLong)max ? max : (uInt)len;
+            len -= stream.avail_in;
+        }
+        err = inflate(&stream, Z_NO_FLUSH);
+    } while (err == Z_OK);
+
+    *sourceLen -= len + stream.avail_in;
+    if (dest != buf)
+        *destLen = stream.total_out;
+    else if (stream.total_out && err == Z_BUF_ERROR)
+        left = 1;
+
+    inflateEnd(&stream);
+    return err == Z_STREAM_END ? Z_OK :
+           err == Z_NEED_DICT ? Z_DATA_ERROR  :
+           err == Z_BUF_ERROR && left + stream.avail_out ? Z_DATA_ERROR :
+           err;
+}
+
+int ZEXPORT uncompress (
+    Bytef *dest,
+    uLongf *destLen,
+    const Bytef *source,
+    uLong sourceLen)
+{
+    return uncompress2(dest, destLen, source, &sourceLen);
 }
 /* trees.c -- output deflated data using Huffman coding
- * Copyright (C) 1995-2012 Jean-loup Gailly
+ * Copyright (C) 1995-2017 Jean-loup Gailly
  * detect_data_type() function provided freely by Cosmin Truta, 2006
  * For conditions of distribution and use, see copyright notice in zlib.h
  */
@@ -3552,9 +3815,9 @@ int ZEXPORT uncompress (
 
 /* #define GEN_TREES_H */
 
-// #include "deflate.h" /* In sys-zlib.h (see make-zlib.r) */
+// #include "deflate.h" /* REBOL: see make-zlib.r */
 
-#ifdef DEBUG
+#ifdef ZLIB_DEBUG
 #  include <ctype.h>
 #endif
 
@@ -3767,13 +4030,13 @@ struct static_tree_desc_s {
     int     max_length;          /* max bit length for the codes */
 };
 
-local static_tree_desc  static_l_desc =
+local const static_tree_desc  static_l_desc =
 {static_ltree, extra_lbits, LITERALS+1, L_CODES, MAX_BITS};
 
-local static_tree_desc  static_d_desc =
+local const static_tree_desc  static_d_desc =
 {static_dtree, extra_dbits, 0,          D_CODES, MAX_BITS};
 
-local static_tree_desc  static_bl_desc =
+local const static_tree_desc  static_bl_desc =
 {(const ct_data *)0, extra_blbits, 0,   BL_CODES, MAX_BL_BITS};
 
 /* ===========================================================================
@@ -3797,18 +4060,16 @@ local int  detect_data_type OF((deflate_state *s));
 local unsigned bi_reverse OF((unsigned value, int length));
 local void bi_windup      OF((deflate_state *s));
 local void bi_flush       OF((deflate_state *s));
-local void copy_block     OF((deflate_state *s, charf *buf, unsigned len,
-                              int header));
 
 #ifdef GEN_TREES_H
 local void gen_trees_header OF((void));
 #endif
 
-#ifndef DEBUG
+#ifndef ZLIB_DEBUG
 #  define send_code(s, c, tree) send_bits(s, tree[c].Code, tree[c].Len)
    /* Send a code of the given tree. c and tree must not have side effects */
 
-#else /* DEBUG */
+#else /* !ZLIB_DEBUG */
 #  define send_code(s, c, tree) \
      { if (z_verbose>2) fprintf(stderr,"\ncd %3d ",(c)); \
        send_bits(s, tree[c].Code, tree[c].Len); }
@@ -3827,14 +4088,14 @@ local void gen_trees_header OF((void));
  * Send a value on a given number of bits.
  * IN assertion: length <= 16 and value fits in length bits.
  */
-#ifdef DEBUG
+#ifdef ZLIB_DEBUG
 local void send_bits      OF((deflate_state *s, int value, int length));
 
 local void send_bits(
     deflate_state *s,
-    int value,  /* value to send */
-    int length /* number of bits */
-) {
+    int value,
+    int length)
+{
     Tracevv((stderr," l %2d v %4x ", length, value));
     Assert(length > 0 && length <= 15, "invalid length");
     s->bits_sent += (ulg)length;
@@ -3853,12 +4114,12 @@ local void send_bits(
         s->bi_valid += length;
     }
 }
-#else /* !DEBUG */
+#else /* !ZLIB_DEBUG */
 
 #define send_bits(s, value, length) \
 { int len = length;\
   if (s->bi_valid > (int)Buf_size - len) {\
-    int val = value;\
+    int val = (int)value;\
     s->bi_buf |= (ush)val << s->bi_valid;\
     put_short(s, s->bi_buf);\
     s->bi_buf = (ush)val >> (Buf_size - s->bi_valid);\
@@ -3868,7 +4129,7 @@ local void send_bits(
     s->bi_valid += len;\
   }\
 }
-#endif /* DEBUG */
+#endif /* ZLIB_DEBUG */
 
 
 /* the arguments must not have side effects */
@@ -3962,8 +4223,8 @@ local void tr_static_init()
  * Genererate the file trees.h describing the static trees.
  */
 #ifdef GEN_TREES_H
-#  ifndef DEBUG
-// #    include <stdio.h> // !!! No <stdio.h> in Ren-C release builds
+#  ifndef ZLIB_DEBUG
+// #    include <stdio.h> /* REBOL: see make-zlib.r */
 #  endif
 
 #  define SEPARATOR(i, last, width) \
@@ -4024,8 +4285,8 @@ void gen_trees_header()
  * Initialize the tree data structures for a new zlib stream.
  */
 void ZLIB_INTERNAL _tr_init(
-    deflate_state *s
-) {
+    deflate_state *s)
+{
     tr_static_init();
 
     s->l_desc.dyn_tree = s->dyn_ltree;
@@ -4039,7 +4300,7 @@ void ZLIB_INTERNAL _tr_init(
 
     s->bi_buf = 0;
     s->bi_valid = 0;
-#ifdef DEBUG
+#ifdef ZLIB_DEBUG
     s->compressed_len = 0L;
     s->bits_sent = 0L;
 #endif
@@ -4052,8 +4313,8 @@ void ZLIB_INTERNAL _tr_init(
  * Initialize a new block.
  */
 local void init_block(
-    deflate_state *s
-) {
+    deflate_state *s)
+{
     int n; /* iterates over tree elements */
 
     /* Initialize the trees. */
@@ -4097,9 +4358,9 @@ local void init_block(
  */
 local void pqdownheap(
     deflate_state *s,
-    ct_data *tree,  /* the tree to restore */
-    int k               /* node to move down */
-) {
+    ct_data *tree,
+    int k)
+{
     int v = s->heap[k];
     int j = k << 1;  /* left son of k */
     while (j <= s->heap_len) {
@@ -4132,8 +4393,8 @@ local void pqdownheap(
  */
 local void gen_bitlen(
     deflate_state *s,
-    tree_desc *desc     /* the tree descriptor */
-) {
+    tree_desc *desc)
+{
     ct_data *tree        = desc->dyn_tree;
     int max_code         = desc->max_code;
     const ct_data *stree = desc->stat_desc->static_tree;
@@ -4167,12 +4428,12 @@ local void gen_bitlen(
         xbits = 0;
         if (n >= base) xbits = extra[n-base];
         f = tree[n].Freq;
-        s->opt_len += (ulg)f * (bits + xbits);
-        if (stree) s->static_len += (ulg)f * (stree[n].Len + xbits);
+        s->opt_len += (ulg)f * (unsigned)(bits + xbits);
+        if (stree) s->static_len += (ulg)f * (unsigned)(stree[n].Len + xbits);
     }
     if (overflow == 0) return;
 
-    Trace((stderr,"\nbit length overflow\n"));
+    Tracev((stderr,"\nbit length overflow\n"));
     /* This happens for example on obj2 and pic of the Calgary corpus */
 
     /* Find the first bit length which could increase: */
@@ -4199,9 +4460,8 @@ local void gen_bitlen(
             m = s->heap[--h];
             if (m > max_code) continue;
             if ((unsigned) tree[m].Len != (unsigned) bits) {
-                Trace((stderr,"code %d bits %d->%d\n", m, tree[m].Len, bits));
-                s->opt_len += ((long)bits - (long)tree[m].Len)
-                              *(long)tree[m].Freq;
+                Tracev((stderr,"code %d bits %d->%d\n", m, tree[m].Len, bits));
+                s->opt_len += ((ulg)bits - tree[m].Len) * tree[m].Freq;
                 tree[m].Len = (ush)bits;
             }
             n--;
@@ -4218,12 +4478,12 @@ local void gen_bitlen(
  *     zero code length.
  */
 local void gen_codes (
-    ct_data *tree,             /* the tree to decorate */
-    int max_code,              /* largest code with non zero frequency */
-    ushf *bl_count             /* number of codes at each bit length */
-) {
+    ct_data *tree,
+    int max_code,
+    ushf *bl_count)
+{
     ush next_code[MAX_BITS+1]; /* next code value for each bit length */
-    ush code = 0;              /* running code value */
+    unsigned code = 0;         /* running code value */
     int bits;                  /* bit index */
     int n;                     /* code index */
 
@@ -4231,7 +4491,8 @@ local void gen_codes (
      * without bit reversal.
      */
     for (bits = 1; bits <= MAX_BITS; bits++) {
-        next_code[bits] = code = (code + bl_count[bits-1]) << 1;
+        code = (code + bl_count[bits-1]) << 1;
+        next_code[bits] = (ush)code;
     }
     /* Check that the bit counts in bl_count are consistent. The last code
      * must be all ones.
@@ -4244,7 +4505,7 @@ local void gen_codes (
         int len = tree[n].Len;
         if (len == 0) continue;
         /* Now reverse the bits */
-        tree[n].Code = bi_reverse(next_code[len]++, len);
+        tree[n].Code = (ush)bi_reverse(next_code[len]++, len);
 
         Tracecv(tree != static_ltree, (stderr,"\nn %3d %c l %2d c %4x (%x) ",
              n, (isgraph(n) ? n : ' '), len, tree[n].Code, next_code[len]-1));
@@ -4261,8 +4522,8 @@ local void gen_codes (
  */
 local void build_tree(
     deflate_state *s,
-    tree_desc *desc  /* the tree descriptor */
-) {
+    tree_desc *desc)
+{
     ct_data *tree         = desc->dyn_tree;
     const ct_data *stree  = desc->stat_desc->static_tree;
     int elems             = desc->stat_desc->elems;
@@ -4349,9 +4610,9 @@ local void build_tree(
  */
 local void scan_tree (
     deflate_state *s,
-    ct_data *tree,   /* the tree to be scanned */
-    int max_code     /* and its largest code of non zero frequency */
-) {
+    ct_data *tree,
+    int max_code)
+{
     int n;                     /* iterates over all tree elements */
     int prevlen = -1;          /* last emitted length */
     int curlen;                /* length of current code */
@@ -4394,9 +4655,9 @@ local void scan_tree (
  */
 local void send_tree (
     deflate_state *s,
-    ct_data *tree, /* the tree to be scanned */
-    int max_code        /* and its largest code of non zero frequency */
-) {
+    ct_data *tree,
+    int max_code)
+{
     int n;                     /* iterates over all tree elements */
     int prevlen = -1;          /* last emitted length */
     int curlen;                /* length of current code */
@@ -4444,8 +4705,8 @@ local void send_tree (
  * bl_order of the last bit length code to send.
  */
 local int build_bl_tree(
-    deflate_state *s
-) {
+    deflate_state *s)
+{
     int max_blindex;  /* index of last bit length code of non zero freq */
 
     /* Determine the bit length frequencies for literal and distance trees */
@@ -4466,7 +4727,7 @@ local int build_bl_tree(
         if (s->bl_tree[bl_order[max_blindex]].Len != 0) break;
     }
     /* Update opt_len to include the bit length tree and counts */
-    s->opt_len += 3*(max_blindex+1) + 5+5+4;
+    s->opt_len += 3*((ulg)max_blindex+1) + 5+5+4;
     Tracev((stderr, "\ndyn trees: dyn %ld, stat %ld",
             s->opt_len, s->static_len));
 
@@ -4480,8 +4741,10 @@ local int build_bl_tree(
  */
 local void send_all_trees(
     deflate_state *s,
-    int lcodes, int dcodes, int blcodes /* number of codes for each tree */
-) {
+    int lcodes,
+    int  dcodes,
+    int  blcodes)
+{
     int rank;                    /* index in bl_order */
 
     Assert (lcodes >= 257 && dcodes >= 1 && blcodes >= 4, "not enough codes");
@@ -4509,24 +4772,30 @@ local void send_all_trees(
  */
 void ZLIB_INTERNAL _tr_stored_block(
     deflate_state *s,
-    charf *buf,       /* input block */
-    ulg stored_len,   /* length of input block */
-    int last          /* one if this is the last block for a file */
-) {
+    charf *buf,
+    ulg stored_len,
+    int last)
+{
     send_bits(s, (STORED_BLOCK<<1)+last, 3);    /* send block type */
-#ifdef DEBUG
+    bi_windup(s);        /* align on byte boundary */
+    put_short(s, (ush)stored_len);
+    put_short(s, (ush)~stored_len);
+    zmemcpy(s->pending_buf + s->pending, (Bytef *)buf, stored_len);
+    s->pending += stored_len;
+#ifdef ZLIB_DEBUG
     s->compressed_len = (s->compressed_len + 3 + 7) & (ulg)~7L;
     s->compressed_len += (stored_len + 4) << 3;
+    s->bits_sent += 2*16;
+    s->bits_sent += stored_len<<3;
 #endif
-    copy_block(s, buf, (unsigned)stored_len, 1); /* with header */
 }
 
 /* ===========================================================================
  * Flush the bits in the bit buffer to pending output (leaves at most 7 bits)
  */
 void ZLIB_INTERNAL _tr_flush_bits(
-    deflate_state *s
-) {
+    deflate_state *s)
+{
     bi_flush(s);
 }
 
@@ -4535,11 +4804,11 @@ void ZLIB_INTERNAL _tr_flush_bits(
  * This takes 10 bits, of which 7 may remain in the bit buffer.
  */
 void ZLIB_INTERNAL _tr_align(
-    deflate_state *s
-) {
+    deflate_state *s)
+{
     send_bits(s, STATIC_TREES<<1, 3);
     send_code(s, END_BLOCK, static_ltree);
-#ifdef DEBUG
+#ifdef ZLIB_DEBUG
     s->compressed_len += 10L; /* 3 for block type, 7 for EOB */
 #endif
     bi_flush(s);
@@ -4547,14 +4816,14 @@ void ZLIB_INTERNAL _tr_align(
 
 /* ===========================================================================
  * Determine the best encoding for the current block: dynamic trees, static
- * trees or store, and output the encoded block to the zip file.
+ * trees or store, and write out the encoded block.
  */
 void ZLIB_INTERNAL _tr_flush_block(
     deflate_state *s,
-    charf *buf,       /* input block, or NULL if too old */
-    ulg stored_len,   /* length of input block */
-    int last          /* one if this is the last block for a file */
-) {
+    charf *buf,
+    ulg stored_len,
+    int last)
+{
     ulg opt_lenb, static_lenb; /* opt_len and static_len in bytes */
     int max_blindex = 0;  /* index of last bit length code of non zero freq */
 
@@ -4619,7 +4888,7 @@ void ZLIB_INTERNAL _tr_flush_block(
         send_bits(s, (STATIC_TREES<<1)+last, 3);
         compress_block(s, (const ct_data *)static_ltree,
                        (const ct_data *)static_dtree);
-#ifdef DEBUG
+#ifdef ZLIB_DEBUG
         s->compressed_len += 3 + s->static_len;
 #endif
     } else {
@@ -4628,7 +4897,7 @@ void ZLIB_INTERNAL _tr_flush_block(
                        max_blindex+1);
         compress_block(s, (const ct_data *)s->dyn_ltree,
                        (const ct_data *)s->dyn_dtree);
-#ifdef DEBUG
+#ifdef ZLIB_DEBUG
         s->compressed_len += 3 + s->opt_len;
 #endif
     }
@@ -4640,7 +4909,7 @@ void ZLIB_INTERNAL _tr_flush_block(
 
     if (last) {
         bi_windup(s);
-#ifdef DEBUG
+#ifdef ZLIB_DEBUG
         s->compressed_len += 7;  /* align on byte boundary */
 #endif
     }
@@ -4654,9 +4923,9 @@ void ZLIB_INTERNAL _tr_flush_block(
  */
 int ZLIB_INTERNAL _tr_tally (
     deflate_state *s,
-    unsigned dist,  /* distance of matched string */
-    unsigned lc     /* match length-MIN_MATCH or unmatched char (if dist==0) */
-) {
+    unsigned dist,
+    unsigned lc)
+{
     s->d_buf[s->last_lit] = (ush)dist;
     s->l_buf[s->last_lit++] = (uch)lc;
     if (dist == 0) {
@@ -4704,9 +4973,9 @@ int ZLIB_INTERNAL _tr_tally (
  */
 local void compress_block(
     deflate_state *s,
-    const ct_data *ltree, /* literal tree */
-    const ct_data *dtree  /* distance tree */
-) {
+    const ct_data *ltree,
+    const ct_data *dtree)
+{
     unsigned dist;      /* distance of matched string */
     int lc;             /* match length or unmatched char (if dist == 0) */
     unsigned lx = 0;    /* running index in l_buf */
@@ -4735,7 +5004,7 @@ local void compress_block(
             send_code(s, code, dtree);       /* send the distance code */
             extra = extra_dbits[code];
             if (extra != 0) {
-                dist -= base_dist[code];
+                dist -= (unsigned)base_dist[code];
                 send_bits(s, dist, extra);   /* send the extra distance bits */
             }
         } /* literal or match pair ? */
@@ -4763,8 +5032,8 @@ local void compress_block(
  * IN assertion: the fields Freq of dyn_ltree are set.
  */
 local int detect_data_type(
-    deflate_state *s
-) {
+    deflate_state *s)
+{
     /* black_mask is the bit mask of black-listed bytes
      * set bits 0..6, 14..25, and 28..31
      * 0xf3ffc07f = binary 11110011111111111100000001111111
@@ -4797,10 +5066,10 @@ local int detect_data_type(
  * IN assertion: 1 <= len <= 15
  */
 local unsigned bi_reverse(
-    unsigned code, /* the value to invert */
-    int len        /* its bit length */
-) {
-    unsigned res = 0;
+    unsigned code,
+    int len)
+{
+    register unsigned res = 0;
     do {
         res |= code & 1;
         code >>= 1, res <<= 1;
@@ -4812,8 +5081,8 @@ local unsigned bi_reverse(
  * Flush the bit buffer, keeping at most 7 bits in it.
  */
 local void bi_flush(
-    deflate_state *s
-) {
+    deflate_state *s)
+{
     if (s->bi_valid == 16) {
         put_short(s, s->bi_buf);
         s->bi_buf = 0;
@@ -4829,8 +5098,8 @@ local void bi_flush(
  * Flush the bit buffer and align the output on a byte boundary
  */
 local void bi_windup(
-    deflate_state *s
-) {
+    deflate_state *s)
+{
     if (s->bi_valid > 8) {
         put_short(s, s->bi_buf);
     } else if (s->bi_valid > 0) {
@@ -4838,36 +5107,9 @@ local void bi_windup(
     }
     s->bi_buf = 0;
     s->bi_valid = 0;
-#ifdef DEBUG
+#ifdef ZLIB_DEBUG
     s->bits_sent = (s->bits_sent+7) & ~7;
 #endif
-}
-
-/* ===========================================================================
- * Copy a stored block, storing first the length and its
- * one's complement if requested.
- */
-local void copy_block(
-    deflate_state *s,
-    charf    *buf,    /* the input data */
-    unsigned len,     /* its length */
-    int      header   /* true if block header must be written */
-) {
-    bi_windup(s);        /* align on byte boundary */
-
-    if (header) {
-        put_short(s, (ush)len);
-        put_short(s, (ush)~len);
-#ifdef DEBUG
-        s->bits_sent += 2*16;
-#endif
-    }
-#ifdef DEBUG
-    s->bits_sent += (ulg)len<<3;
-#endif
-    while (len--) {
-        put_byte(s, *buf++);
-    }
 }
 /* inftrees.h -- header to use inftrees.c
  * Copyright (C) 1995-2005, 2010 Mark Adler
@@ -4932,17 +5174,17 @@ int ZLIB_INTERNAL inflate_table OF((codetype type, unsigned short FAR *lens,
                              unsigned codes, code FAR * FAR *table,
                              unsigned FAR *bits, unsigned short FAR *work));
 /* inftrees.c -- generate Huffman trees for efficient decoding
- * Copyright (C) 1995-2013 Mark Adler
+ * Copyright (C) 1995-2017 Mark Adler
  * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
-// #include "zutil.h" /* In sys-zlib.h (see make-zlib.r) */
-// #include "inftrees.h" /* In sys-zlib.h (see make-zlib.r) */
+// #include "zutil.h" /* REBOL: see make-zlib.r */
+// #include "inftrees.h" /* REBOL: see make-zlib.r */
 
 #define MAXBITS 15
 
 const char inflate_copyright[] =
-   " inflate 1.2.8 Copyright 1995-2013 Mark Adler ";
+   " inflate 1.2.11 Copyright 1995-2017 Mark Adler ";
 /*
   If you use the zlib library in a product, an acknowledgment is welcome
   in the documentation of your product. If for some reason you cannot
@@ -4968,8 +5210,8 @@ int ZLIB_INTERNAL inflate_table(
     unsigned codes,
     code FAR * FAR *table,
     unsigned FAR *bits,
-    unsigned short FAR *work
-) {
+    unsigned short FAR *work)
+{
     unsigned len;               /* a code's length in bits */
     unsigned sym;               /* index of code symbols */
     unsigned min, max;          /* minimum and maximum code lengths */
@@ -4987,7 +5229,7 @@ int ZLIB_INTERNAL inflate_table(
     code FAR *next;             /* next available space in table */
     const unsigned short FAR *base;     /* base value table to use */
     const unsigned short FAR *extra;    /* extra bits table to use */
-    int end;                    /* use base and extra for symbol > end */
+    unsigned match;             /* use base and extra for symbol >= match */
     unsigned short count[MAXBITS+1];    /* number of codes of each length */
     unsigned short offs[MAXBITS+1];     /* offsets in table for each length */
     static const unsigned short lbase[31] = { /* Length codes 257..285 base */
@@ -4995,7 +5237,7 @@ int ZLIB_INTERNAL inflate_table(
         35, 43, 51, 59, 67, 83, 99, 115, 131, 163, 195, 227, 258, 0, 0};
     static const unsigned short lext[31] = { /* Length codes 257..285 extra */
         16, 16, 16, 16, 16, 16, 16, 16, 17, 17, 17, 17, 18, 18, 18, 18,
-        19, 19, 19, 19, 20, 20, 20, 20, 21, 21, 21, 21, 16, 72, 78};
+        19, 19, 19, 19, 20, 20, 20, 20, 21, 21, 21, 21, 16, 77, 202};
     static const unsigned short dbase[32] = { /* Distance codes 0..29 base */
         1, 2, 3, 4, 5, 7, 9, 13, 17, 25, 33, 49, 65, 97, 129, 193,
         257, 385, 513, 769, 1025, 1537, 2049, 3073, 4097, 6145,
@@ -5114,19 +5356,17 @@ int ZLIB_INTERNAL inflate_table(
     switch (type) {
     case CODES:
         base = extra = work;    /* dummy value--not used */
-        end = 19;
+        match = 20;
         break;
     case LENS:
         base = lbase;
-        base -= 257;
         extra = lext;
-        extra -= 257;
-        end = 256;
+        match = 257;
         break;
-    default:            /* DISTS */
+    default:    /* DISTS */
         base = dbase;
         extra = dext;
-        end = -1;
+        match = 0;
     }
 
     /* initialize state for loop */
@@ -5149,13 +5389,13 @@ int ZLIB_INTERNAL inflate_table(
     for (;;) {
         /* create table entry */
         here.bits = (unsigned char)(len - drop);
-        if ((int)(work[sym]) < end) {
+        if (work[sym] + 1U < match) {
             here.op = (unsigned char)0;
             here.val = work[sym];
         }
-        else if ((int)(work[sym]) > end) {
-            here.op = (unsigned char)(extra[work[sym]]);
-            here.val = base[work[sym]];
+        else if (work[sym] >= match) {
+            here.op = (unsigned char)(extra[work[sym] - match]);
+            here.val = base[work[sym] - match];
         }
         else {
             here.op = (unsigned char)(32 + 64);         /* end of block */
@@ -5249,7 +5489,7 @@ int ZLIB_INTERNAL inflate_table(
 
 void ZLIB_INTERNAL inflate_fast OF((z_streamp strm, unsigned start));
 /* inflate.h -- internal inflate state definition
- * Copyright (C) 1995-2009 Mark Adler
+ * Copyright (C) 1995-2016 Mark Adler
  * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
@@ -5268,7 +5508,7 @@ void ZLIB_INTERNAL inflate_fast OF((z_streamp strm, unsigned start));
 
 /* Possible inflate modes between inflate() calls */
 typedef enum {
-    HEAD,       /* i: waiting for magic header */
+    HEAD = 16180,   /* i: waiting for magic header */
     FLAGS,      /* i: waiting for method and flags (gzip) */
     TIME,       /* i: waiting for modification time (gzip) */
     OS,         /* i: waiting for extra flags and operating system (gzip) */
@@ -5327,11 +5567,14 @@ typedef enum {
         CHECK -> LENGTH -> DONE
  */
 
-/* state maintained between inflate() calls.  Approximately 10K bytes. */
+/* State maintained between inflate() calls -- approximately 7K bytes, not
+   including the allocated sliding window, which is up to 32K bytes. */
 struct inflate_state {
+    z_streamp strm;             /* pointer back to this zlib stream */
     inflate_mode mode;          /* current inflate mode */
     int last;                   /* true if processing last block */
-    int wrap;                   /* bit 0 true for zlib, bit 1 true for gzip */
+    int wrap;                   /* bit 0 true for zlib, bit 1 true for gzip,
+                                   bit 2 true to validate check value */
     int havedict;               /* true if dictionary provided */
     int flags;                  /* gzip header method and flags (0 if zlib) */
     unsigned dmax;              /* zlib header max distance (INFLATE_STRICT) */
@@ -5371,35 +5614,18 @@ struct inflate_state {
     unsigned was;               /* initial length of match */
 };
 /* inffast.c -- fast decoding
- * Copyright (C) 1995-2008, 2010, 2013 Mark Adler
+ * Copyright (C) 1995-2017 Mark Adler
  * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
-// #include "zutil.h" /* In sys-zlib.h (see make-zlib.r) */
-// #include "inftrees.h" /* In sys-zlib.h (see make-zlib.r) */
-// #include "inflate.h" /* In sys-zlib.h (see make-zlib.r) */
-// #include "inffast.h" /* In sys-zlib.h (see make-zlib.r) */
+// #include "zutil.h" /* REBOL: see make-zlib.r */
+// #include "inftrees.h" /* REBOL: see make-zlib.r */
+// #include "inflate.h" /* REBOL: see make-zlib.r */
+// #include "inffast.h" /* REBOL: see make-zlib.r */
 
-#ifndef ASMINF
-
-/* Allow machine dependent optimization for post-increment or pre-increment.
-   Based on testing to date,
-   Pre-increment preferred for:
-   - PowerPC G3 (Adler)
-   - MIPS R5000 (Randers-Pehrson)
-   Post-increment preferred for:
-   - none
-   No measurable difference:
-   - Pentium III (Anderson)
-   - M68060 (Nikl)
- */
-#ifdef POSTINC
-#  define OFF 0
-#  define PUP(a) *(a)++
+#ifdef ASMINF
+#  pragma message("Assembler code may have bugs -- use at your own risk")
 #else
-#  define OFF 1
-#  define PUP(a) *++(a)
-#endif
 
 /*
    Decode literal, length, and distance codes and write out the resulting
@@ -5438,8 +5664,8 @@ struct inflate_state {
  */
 void ZLIB_INTERNAL inflate_fast(
     z_streamp strm,
-    unsigned start          /* inflate()'s starting value for strm->avail_out */
-) {
+    unsigned start)
+{
     struct inflate_state FAR *state;
     z_const unsigned char FAR *in;      /* local strm->next_in */
     z_const unsigned char FAR *last;    /* have enough input while in < last */
@@ -5468,9 +5694,9 @@ void ZLIB_INTERNAL inflate_fast(
 
     /* copy state to local variables */
     state = (struct inflate_state FAR *)strm->state;
-    in = strm->next_in - OFF;
+    in = strm->next_in;
     last = in + (strm->avail_in - 5);
-    out = strm->next_out - OFF;
+    out = strm->next_out;
     beg = out - (start - strm->avail_out);
     end = out + (strm->avail_out - 257);
 #ifdef INFLATE_STRICT
@@ -5491,9 +5717,9 @@ void ZLIB_INTERNAL inflate_fast(
        input data or output space */
     do {
         if (bits < 15) {
-            hold += (unsigned long)(PUP(in)) << bits;
+            hold += (unsigned long)(*in++) << bits;
             bits += 8;
-            hold += (unsigned long)(PUP(in)) << bits;
+            hold += (unsigned long)(*in++) << bits;
             bits += 8;
         }
         here = lcode[hold & lmask];
@@ -5506,14 +5732,14 @@ void ZLIB_INTERNAL inflate_fast(
             Tracevv((stderr, here.val >= 0x20 && here.val < 0x7f ?
                     "inflate:         literal '%c'\n" :
                     "inflate:         literal 0x%02x\n", here.val));
-            PUP(out) = (unsigned char)(here.val);
+            *out++ = (unsigned char)(here.val);
         }
         else if (op & 16) {                     /* length base */
             len = (unsigned)(here.val);
             op &= 15;                           /* number of extra bits */
             if (op) {
                 if (bits < op) {
-                    hold += (unsigned long)(PUP(in)) << bits;
+                    hold += (unsigned long)(*in++) << bits;
                     bits += 8;
                 }
                 len += (unsigned)hold & ((1U << op) - 1);
@@ -5522,9 +5748,9 @@ void ZLIB_INTERNAL inflate_fast(
             }
             Tracevv((stderr, "inflate:         length %u\n", len));
             if (bits < 15) {
-                hold += (unsigned long)(PUP(in)) << bits;
+                hold += (unsigned long)(*in++) << bits;
                 bits += 8;
-                hold += (unsigned long)(PUP(in)) << bits;
+                hold += (unsigned long)(*in++) << bits;
                 bits += 8;
             }
             here = dcode[hold & dmask];
@@ -5537,17 +5763,17 @@ void ZLIB_INTERNAL inflate_fast(
                 dist = (unsigned)(here.val);
                 op &= 15;                       /* number of extra bits */
                 if (bits < op) {
-                    hold += (unsigned long)(PUP(in)) << bits;
+                    hold += (unsigned long)(*in++) << bits;
                     bits += 8;
                     if (bits < op) {
-                        hold += (unsigned long)(PUP(in)) << bits;
+                        hold += (unsigned long)(*in++) << bits;
                         bits += 8;
                     }
                 }
                 dist += (unsigned)hold & ((1U << op) - 1);
 #ifdef INFLATE_STRICT
                 if (dist > dmax) {
-                    strm->msg = "invalid distance too far back";
+                    strm->msg = (z_const char *)"invalid distance too far back";
                     state->mode = BAD;
                     break;
                 }
@@ -5561,37 +5787,37 @@ void ZLIB_INTERNAL inflate_fast(
                     if (op > whave) {
                         if (state->sane) {
                             strm->msg =
-                                "invalid distance too far back";
+                                (z_const char *)"invalid distance too far back";
                             state->mode = BAD;
                             break;
                         }
 #ifdef INFLATE_ALLOW_INVALID_DISTANCE_TOOFAR_ARRR
                         if (len <= op - whave) {
                             do {
-                                PUP(out) = 0;
+                                *out++ = 0;
                             } while (--len);
                             continue;
                         }
                         len -= op - whave;
                         do {
-                            PUP(out) = 0;
+                            *out++ = 0;
                         } while (--op > whave);
                         if (op == 0) {
                             from = out - dist;
                             do {
-                                PUP(out) = PUP(from);
+                                *out++ = *from++;
                             } while (--len);
                             continue;
                         }
 #endif
                     }
-                    from = window - OFF;
+                    from = window;
                     if (wnext == 0) {           /* very common case */
                         from += wsize - op;
                         if (op < len) {         /* some from window */
                             len -= op;
                             do {
-                                PUP(out) = PUP(from);
+                                *out++ = *from++;
                             } while (--op);
                             from = out - dist;  /* rest from output */
                         }
@@ -5602,14 +5828,14 @@ void ZLIB_INTERNAL inflate_fast(
                         if (op < len) {         /* some from end of window */
                             len -= op;
                             do {
-                                PUP(out) = PUP(from);
+                                *out++ = *from++;
                             } while (--op);
-                            from = window - OFF;
+                            from = window;
                             if (wnext < len) {  /* some from start of window */
                                 op = wnext;
                                 len -= op;
                                 do {
-                                    PUP(out) = PUP(from);
+                                    *out++ = *from++;
                                 } while (--op);
                                 from = out - dist;      /* rest from output */
                             }
@@ -5620,35 +5846,35 @@ void ZLIB_INTERNAL inflate_fast(
                         if (op < len) {         /* some from window */
                             len -= op;
                             do {
-                                PUP(out) = PUP(from);
+                                *out++ = *from++;
                             } while (--op);
                             from = out - dist;  /* rest from output */
                         }
                     }
                     while (len > 2) {
-                        PUP(out) = PUP(from);
-                        PUP(out) = PUP(from);
-                        PUP(out) = PUP(from);
+                        *out++ = *from++;
+                        *out++ = *from++;
+                        *out++ = *from++;
                         len -= 3;
                     }
                     if (len) {
-                        PUP(out) = PUP(from);
+                        *out++ = *from++;
                         if (len > 1)
-                            PUP(out) = PUP(from);
+                            *out++ = *from++;
                     }
                 }
                 else {
                     from = out - dist;          /* copy direct from output */
                     do {                        /* minimum length is three */
-                        PUP(out) = PUP(from);
-                        PUP(out) = PUP(from);
-                        PUP(out) = PUP(from);
+                        *out++ = *from++;
+                        *out++ = *from++;
+                        *out++ = *from++;
                         len -= 3;
                     } while (len > 2);
                     if (len) {
-                        PUP(out) = PUP(from);
+                        *out++ = *from++;
                         if (len > 1)
-                            PUP(out) = PUP(from);
+                            *out++ = *from++;
                     }
                 }
             }
@@ -5657,7 +5883,7 @@ void ZLIB_INTERNAL inflate_fast(
                 goto dodist;
             }
             else {
-                strm->msg = "invalid distance code";
+                strm->msg = (z_const char *)"invalid distance code";
                 state->mode = BAD;
                 break;
             }
@@ -5672,7 +5898,7 @@ void ZLIB_INTERNAL inflate_fast(
             break;
         }
         else {
-            strm->msg = "invalid literal/length code";
+            strm->msg = (z_const char *)"invalid literal/length code";
             state->mode = BAD;
             break;
         }
@@ -5685,8 +5911,8 @@ void ZLIB_INTERNAL inflate_fast(
     hold &= (1U << bits) - 1;
 
     /* update state and return */
-    strm->next_in = in + OFF;
-    strm->next_out = out + OFF;
+    strm->next_in = in;
+    strm->next_out = out;
     strm->avail_in = (unsigned)(in < last ? 5 + (last - in) : 5 - (in - last));
     strm->avail_out = (unsigned)(out < end ?
                                  257 + (end - out) : 257 - (out - end));
@@ -5711,7 +5937,7 @@ void ZLIB_INTERNAL inflate_fast(
 
 #endif /* !ASMINF */
 /* inflate.c -- zlib decompression
- * Copyright (C) 1995-2012 Mark Adler
+ * Copyright (C) 1995-2016 Mark Adler
  * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
@@ -5792,10 +6018,10 @@ void ZLIB_INTERNAL inflate_fast(
  * The history for versions after 1.2.0 are in ChangeLog in zlib distribution.
  */
 
-// #include "zutil.h" /* In sys-zlib.h (see make-zlib.r) */
-// #include "inftrees.h" /* In sys-zlib.h (see make-zlib.r) */
-// #include "inflate.h" /* In sys-zlib.h (see make-zlib.r) */
-// #include "inffast.h" /* In sys-zlib.h (see make-zlib.r) */
+// #include "zutil.h" /* REBOL: see make-zlib.r */
+// #include "inftrees.h" /* REBOL: see make-zlib.r */
+// #include "inflate.h" /* REBOL: see make-zlib.r */
+// #include "inffast.h" /* REBOL: see make-zlib.r */
 
 #ifdef MAKEFIXED
 #  ifndef BUILDFIXED
@@ -5804,6 +6030,7 @@ void ZLIB_INTERNAL inflate_fast(
 #endif
 
 /* function prototypes */
+local int inflateStateCheck OF((z_streamp strm));
 local void fixedtables OF((struct inflate_state FAR *state));
 local int updatewindow OF((z_streamp strm, const unsigned char FAR *end,
                            unsigned copy));
@@ -5813,12 +6040,26 @@ local int updatewindow OF((z_streamp strm, const unsigned char FAR *end,
 local unsigned syncsearch OF((unsigned FAR *have, const unsigned char FAR *buf,
                               unsigned len));
 
+local int inflateStateCheck(
+    z_streamp strm)
+{
+    struct inflate_state FAR *state;
+    if (strm == Z_NULL ||
+        strm->zalloc == (alloc_func)0 || strm->zfree == (free_func)0)
+        return 1;
+    state = (struct inflate_state FAR *)strm->state;
+    if (state == Z_NULL || state->strm != strm ||
+        state->mode < HEAD || state->mode > SYNC)
+        return 1;
+    return 0;
+}
+
 int ZEXPORT inflateResetKeep(
-    z_streamp strm
-) {
+    z_streamp strm)
+{
     struct inflate_state FAR *state;
 
-    if (strm == Z_NULL || strm->state == Z_NULL) return Z_STREAM_ERROR;
+    if (inflateStateCheck(strm)) return Z_STREAM_ERROR;
     state = (struct inflate_state FAR *)strm->state;
     strm->total_in = strm->total_out = state->total = 0;
     strm->msg = Z_NULL;
@@ -5839,11 +6080,11 @@ int ZEXPORT inflateResetKeep(
 }
 
 int ZEXPORT inflateReset(
-    z_streamp strm
-) {
+    z_streamp strm)
+{
     struct inflate_state FAR *state;
 
-    if (strm == Z_NULL || strm->state == Z_NULL) return Z_STREAM_ERROR;
+    if (inflateStateCheck(strm)) return Z_STREAM_ERROR;
     state = (struct inflate_state FAR *)strm->state;
     state->wsize = 0;
     state->whave = 0;
@@ -5853,13 +6094,13 @@ int ZEXPORT inflateReset(
 
 int ZEXPORT inflateReset2(
     z_streamp strm,
-    int windowBits
-) {
+    int windowBits)
+{
     int wrap;
     struct inflate_state FAR *state;
 
     /* get the state */
-    if (strm == Z_NULL || strm->state == Z_NULL) return Z_STREAM_ERROR;
+    if (inflateStateCheck(strm)) return Z_STREAM_ERROR;
     state = (struct inflate_state FAR *)strm->state;
 
     /* extract wrap request from windowBits parameter */
@@ -5868,7 +6109,7 @@ int ZEXPORT inflateReset2(
         windowBits = -windowBits;
     }
     else {
-        wrap = (windowBits >> 4) + 1;
+        wrap = (windowBits >> 4) + 5;
 #ifdef GUNZIP
         if (windowBits < 48)
             windowBits &= 15;
@@ -5893,8 +6134,8 @@ int ZEXPORT inflateInit2_(
     z_streamp strm,
     int windowBits,
     const char *version,
-    int stream_size
-) {
+    int stream_size)
+{
     int ret;
     struct inflate_state FAR *state;
 
@@ -5922,7 +6163,9 @@ int ZEXPORT inflateInit2_(
     if (state == Z_NULL) return Z_MEM_ERROR;
     Tracev((stderr, "inflate: allocated\n"));
     strm->state = (struct internal_state FAR *)state;
+    state->strm = strm;
     state->window = Z_NULL;
+    state->mode = HEAD;     /* to pass state test in inflateReset2() */
     ret = inflateReset2(strm, windowBits);
     if (ret != Z_OK) {
         ZFREE(strm, state);
@@ -5934,29 +6177,29 @@ int ZEXPORT inflateInit2_(
 int ZEXPORT inflateInit_(
     z_streamp strm,
     const char *version,
-    int stream_size
-) {
+    int stream_size)
+{
     return inflateInit2_(strm, DEF_WBITS, version, stream_size);
 }
 
 int ZEXPORT inflatePrime(
     z_streamp strm,
     int bits,
-    int value
-) {
+    int value)
+{
     struct inflate_state FAR *state;
 
-    if (strm == Z_NULL || strm->state == Z_NULL) return Z_STREAM_ERROR;
+    if (inflateStateCheck(strm)) return Z_STREAM_ERROR;
     state = (struct inflate_state FAR *)strm->state;
     if (bits < 0) {
         state->hold = 0;
         state->bits = 0;
         return Z_OK;
     }
-    if (bits > 16 || state->bits + bits > 32) return Z_STREAM_ERROR;
+    if (bits > 16 || state->bits + (uInt)bits > 32) return Z_STREAM_ERROR;
     value &= (1L << bits) - 1;
-    state->hold += value << state->bits;
-    state->bits += bits;
+    state->hold += (unsigned)value << state->bits;
+    state->bits += (uInt)bits;
     return Z_OK;
 }
 
@@ -5971,8 +6214,8 @@ int ZEXPORT inflatePrime(
    may not be thread-safe.
  */
 local void fixedtables(
-    struct inflate_state FAR *state
-) {
+    struct inflate_state FAR *state)
+{
 #ifdef BUILDFIXED
     static int virgin = 1;
     static code *lenfix, *distfix;
@@ -6107,7 +6350,7 @@ local void fixedtables(
 }
 
 #ifdef MAKEFIXED
-// #include <stdio.h> // !!! No <stdio.h> in Ren-C release builds
+// #include <stdio.h> /* REBOL: see make-zlib.r */
 
 /*
    Write out the inffixed.h that is #include'd above.  Defining MAKEFIXED also
@@ -6184,8 +6427,8 @@ void makefixed()
 local int updatewindow(
     z_streamp strm,
     const Bytef *end,
-    unsigned copy
-) {
+    unsigned copy)
+{
     struct inflate_state FAR *state;
     unsigned dist;
 
@@ -6409,8 +6652,8 @@ local int updatewindow(
 
 int ZEXPORT inflate(
     z_streamp strm,
-    int flush
-) {
+    int flush)
+{
     struct inflate_state FAR *state;
     z_const unsigned char FAR *next;    /* next input */
     unsigned char FAR *put;     /* next output */
@@ -6430,7 +6673,7 @@ int ZEXPORT inflate(
     static const unsigned short order[19] = /* permutation of code lengths */
         {16, 17, 18, 0, 8, 7, 9, 6, 10, 5, 11, 4, 12, 3, 13, 2, 14, 1, 15};
 
-    if (strm == Z_NULL || strm->state == Z_NULL || strm->next_out == Z_NULL ||
+    if (inflateStateCheck(strm) || strm->next_out == Z_NULL ||
         (strm->next_in == Z_NULL && strm->avail_in != 0))
         return Z_STREAM_ERROR;
 
@@ -6450,6 +6693,8 @@ int ZEXPORT inflate(
             NEEDBITS(16);
 #ifdef GUNZIP
             if ((state->wrap & 2) && hold == 0x8b1f) {  /* gzip header */
+                if (state->wbits == 0)
+                    state->wbits = 15;
                 state->check = crc32(0L, Z_NULL, 0);
                 CRC2(state->check, hold);
                 INITBITS();
@@ -6464,12 +6709,12 @@ int ZEXPORT inflate(
             if (
 #endif
                 ((BITS(8) << 8) + (hold >> 8)) % 31) {
-                strm->msg = "incorrect header check";
+                strm->msg = (z_const char *)"incorrect header check";
                 state->mode = BAD;
                 break;
             }
             if (BITS(4) != Z_DEFLATED) {
-                strm->msg = "unknown compression method";
+                strm->msg = (z_const char *)"unknown compression method";
                 state->mode = BAD;
                 break;
             }
@@ -6477,8 +6722,8 @@ int ZEXPORT inflate(
             len = BITS(4) + 8;
             if (state->wbits == 0)
                 state->wbits = len;
-            else if (len > state->wbits) {
-                strm->msg = "invalid window size";
+            if (len > 15 || len > state->wbits) {
+                strm->msg = (z_const char *)"invalid window size";
                 state->mode = BAD;
                 break;
             }
@@ -6493,25 +6738,27 @@ int ZEXPORT inflate(
             NEEDBITS(16);
             state->flags = (int)(hold);
             if ((state->flags & 0xff) != Z_DEFLATED) {
-                strm->msg = "unknown compression method";
+                strm->msg = (z_const char *)"unknown compression method";
                 state->mode = BAD;
                 break;
             }
             if (state->flags & 0xe000) {
-                strm->msg = "unknown header flags set";
+                strm->msg = (z_const char *)"unknown header flags set";
                 state->mode = BAD;
                 break;
             }
             if (state->head != Z_NULL)
                 state->head->text = (int)((hold >> 8) & 1);
-            if (state->flags & 0x0200) CRC2(state->check, hold);
+            if ((state->flags & 0x0200) && (state->wrap & 4))
+                CRC2(state->check, hold);
             INITBITS();
             state->mode = TIME;
         case TIME:
             NEEDBITS(32);
             if (state->head != Z_NULL)
                 state->head->time = hold;
-            if (state->flags & 0x0200) CRC4(state->check, hold);
+            if ((state->flags & 0x0200) && (state->wrap & 4))
+                CRC4(state->check, hold);
             INITBITS();
             state->mode = OS;
         case OS:
@@ -6520,7 +6767,8 @@ int ZEXPORT inflate(
                 state->head->xflags = (int)(hold & 0xff);
                 state->head->os = (int)(hold >> 8);
             }
-            if (state->flags & 0x0200) CRC2(state->check, hold);
+            if ((state->flags & 0x0200) && (state->wrap & 4))
+                CRC2(state->check, hold);
             INITBITS();
             state->mode = EXLEN;
         case EXLEN:
@@ -6529,7 +6777,8 @@ int ZEXPORT inflate(
                 state->length = (unsigned)(hold);
                 if (state->head != Z_NULL)
                     state->head->extra_len = (unsigned)hold;
-                if (state->flags & 0x0200) CRC2(state->check, hold);
+                if ((state->flags & 0x0200) && (state->wrap & 4))
+                    CRC2(state->check, hold);
                 INITBITS();
             }
             else if (state->head != Z_NULL)
@@ -6547,7 +6796,7 @@ int ZEXPORT inflate(
                                 len + copy > state->head->extra_max ?
                                 state->head->extra_max - len : copy);
                     }
-                    if (state->flags & 0x0200)
+                    if ((state->flags & 0x0200) && (state->wrap & 4))
                         state->check = crc32(state->check, next, copy);
                     have -= copy;
                     next += copy;
@@ -6566,9 +6815,9 @@ int ZEXPORT inflate(
                     if (state->head != Z_NULL &&
                             state->head->name != Z_NULL &&
                             state->length < state->head->name_max)
-                        state->head->name[state->length++] = len;
+                        state->head->name[state->length++] = (Bytef)len;
                 } while (len && copy < have);
-                if (state->flags & 0x0200)
+                if ((state->flags & 0x0200) && (state->wrap & 4))
                     state->check = crc32(state->check, next, copy);
                 have -= copy;
                 next += copy;
@@ -6587,9 +6836,9 @@ int ZEXPORT inflate(
                     if (state->head != Z_NULL &&
                             state->head->comment != Z_NULL &&
                             state->length < state->head->comm_max)
-                        state->head->comment[state->length++] = len;
+                        state->head->comment[state->length++] = (Bytef)len;
                 } while (len && copy < have);
-                if (state->flags & 0x0200)
+                if ((state->flags & 0x0200) && (state->wrap & 4))
                     state->check = crc32(state->check, next, copy);
                 have -= copy;
                 next += copy;
@@ -6601,8 +6850,8 @@ int ZEXPORT inflate(
         case HCRC:
             if (state->flags & 0x0200) {
                 NEEDBITS(16);
-                if (hold != (state->check & 0xffff)) {
-                    strm->msg = "header crc mismatch";
+                if ((state->wrap & 4) && hold != (state->check & 0xffff)) {
+                    strm->msg = (z_const char *)"header crc mismatch";
                     state->mode = BAD;
                     break;
                 }
@@ -6661,7 +6910,7 @@ int ZEXPORT inflate(
                 state->mode = TABLE;
                 break;
             case 3:
-                strm->msg = "invalid block type";
+                strm->msg = (z_const char *)"invalid block type";
                 state->mode = BAD;
             }
             DROPBITS(2);
@@ -6670,7 +6919,7 @@ int ZEXPORT inflate(
             BYTEBITS();                         /* go to byte boundary */
             NEEDBITS(32);
             if ((hold & 0xffff) != ((hold >> 16) ^ 0xffff)) {
-                strm->msg = "invalid stored block lengths";
+                strm->msg = (z_const char *)"invalid stored block lengths";
                 state->mode = BAD;
                 break;
             }
@@ -6709,7 +6958,7 @@ int ZEXPORT inflate(
             DROPBITS(4);
 #ifndef PKZIP_BUG_WORKAROUND
             if (state->nlen > 286 || state->ndist > 30) {
-                strm->msg = "too many length or distance symbols";
+                strm->msg = (z_const char *)"too many length or distance symbols";
                 state->mode = BAD;
                 break;
             }
@@ -6731,7 +6980,7 @@ int ZEXPORT inflate(
             ret = inflate_table(CODES, state->lens, 19, &(state->next),
                                 &(state->lenbits), state->work);
             if (ret) {
-                strm->msg = "invalid code lengths set";
+                strm->msg = (z_const char *)"invalid code lengths set";
                 state->mode = BAD;
                 break;
             }
@@ -6754,7 +7003,7 @@ int ZEXPORT inflate(
                         NEEDBITS(here.bits + 2);
                         DROPBITS(here.bits);
                         if (state->have == 0) {
-                            strm->msg = "invalid bit length repeat";
+                            strm->msg = (z_const char *)"invalid bit length repeat";
                             state->mode = BAD;
                             break;
                         }
@@ -6777,7 +7026,7 @@ int ZEXPORT inflate(
                         DROPBITS(7);
                     }
                     if (state->have + copy > state->nlen + state->ndist) {
-                        strm->msg = "invalid bit length repeat";
+                        strm->msg = (z_const char *)"invalid bit length repeat";
                         state->mode = BAD;
                         break;
                     }
@@ -6791,7 +7040,7 @@ int ZEXPORT inflate(
 
             /* check for end-of-block code (better have one) */
             if (state->lens[256] == 0) {
-                strm->msg = "invalid code -- missing end-of-block";
+                strm->msg = (z_const char *)"invalid code -- missing end-of-block";
                 state->mode = BAD;
                 break;
             }
@@ -6805,7 +7054,7 @@ int ZEXPORT inflate(
             ret = inflate_table(LENS, state->lens, state->nlen, &(state->next),
                                 &(state->lenbits), state->work);
             if (ret) {
-                strm->msg = "invalid literal/lengths set";
+                strm->msg = (z_const char *)"invalid literal/lengths set";
                 state->mode = BAD;
                 break;
             }
@@ -6814,7 +7063,7 @@ int ZEXPORT inflate(
             ret = inflate_table(DISTS, state->lens + state->nlen, state->ndist,
                             &(state->next), &(state->distbits), state->work);
             if (ret) {
-                strm->msg = "invalid distances set";
+                strm->msg = (z_const char *)"invalid distances set";
                 state->mode = BAD;
                 break;
             }
@@ -6866,7 +7115,7 @@ int ZEXPORT inflate(
                 break;
             }
             if (here.op & 64) {
-                strm->msg = "invalid literal/length code";
+                strm->msg = (z_const char *)"invalid literal/length code";
                 state->mode = BAD;
                 break;
             }
@@ -6902,7 +7151,7 @@ int ZEXPORT inflate(
             DROPBITS(here.bits);
             state->back += here.bits;
             if (here.op & 64) {
-                strm->msg = "invalid distance code";
+                strm->msg = (z_const char *)"invalid distance code";
                 state->mode = BAD;
                 break;
             }
@@ -6918,7 +7167,7 @@ int ZEXPORT inflate(
             }
 #ifdef INFLATE_STRICT
             if (state->offset > state->dmax) {
-                strm->msg = (char *)"invalid distance too far back";
+                strm->msg = (z_const char *)"invalid distance too far back";
                 state->mode = BAD;
                 break;
             }
@@ -6932,7 +7181,7 @@ int ZEXPORT inflate(
                 copy = state->offset - copy;
                 if (copy > state->whave) {
                     if (state->sane) {
-                        strm->msg = "invalid distance too far back";
+                        strm->msg = (z_const char *)"invalid distance too far back";
                         state->mode = BAD;
                         break;
                     }
@@ -6982,16 +7231,16 @@ int ZEXPORT inflate(
                 out -= left;
                 strm->total_out += out;
                 state->total += out;
-                if (out)
+                if ((state->wrap & 4) && out)
                     strm->adler = state->check =
                         UPDATE(state->check, put - out, out);
                 out = left;
-                if ((
+                if ((state->wrap & 4) && (
 #ifdef GUNZIP
                      state->flags ? hold :
 #endif
                      ZSWAP32(hold)) != state->check) {
-                    strm->msg = "incorrect data check";
+                    strm->msg = (z_const char *)"incorrect data check";
                     state->mode = BAD;
                     break;
                 }
@@ -7004,7 +7253,7 @@ int ZEXPORT inflate(
             if (state->wrap && state->flags) {
                 NEEDBITS(32);
                 if (hold != (state->total & 0xffffffffUL)) {
-                    strm->msg = "incorrect length check";
+                    strm->msg = (z_const char *)"incorrect length check";
                     state->mode = BAD;
                     break;
                 }
@@ -7045,10 +7294,10 @@ int ZEXPORT inflate(
     strm->total_in += in;
     strm->total_out += out;
     state->total += out;
-    if (state->wrap && out)
+    if ((state->wrap & 4) && out)
         strm->adler = state->check =
             UPDATE(state->check, strm->next_out - out, out);
-    strm->data_type = state->bits + (state->last ? 64 : 0) +
+    strm->data_type = (int)state->bits + (state->last ? 64 : 0) +
                       (state->mode == TYPE ? 128 : 0) +
                       (state->mode == LEN_ || state->mode == COPY_ ? 256 : 0);
     if (((in == 0 && out == 0) || flush == Z_FINISH) && ret == Z_OK)
@@ -7057,10 +7306,10 @@ int ZEXPORT inflate(
 }
 
 int ZEXPORT inflateEnd(
-    z_streamp strm
-) {
+    z_streamp strm)
+{
     struct inflate_state FAR *state;
-    if (strm == Z_NULL || strm->state == Z_NULL || strm->zfree == (free_func)0)
+    if (inflateStateCheck(strm))
         return Z_STREAM_ERROR;
     state = (struct inflate_state FAR *)strm->state;
     if (state->window != Z_NULL) ZFREE(strm, state->window);
@@ -7073,12 +7322,12 @@ int ZEXPORT inflateEnd(
 int ZEXPORT inflateGetDictionary(
     z_streamp strm,
     Bytef *dictionary,
-    uInt *dictLength
-) {
+    uInt *dictLength)
+{
     struct inflate_state FAR *state;
 
     /* check state */
-    if (strm == Z_NULL || strm->state == Z_NULL) return Z_STREAM_ERROR;
+    if (inflateStateCheck(strm)) return Z_STREAM_ERROR;
     state = (struct inflate_state FAR *)strm->state;
 
     /* copy dictionary */
@@ -7096,14 +7345,14 @@ int ZEXPORT inflateGetDictionary(
 int ZEXPORT inflateSetDictionary(
     z_streamp strm,
     const Bytef *dictionary,
-    uInt dictLength
-) {
+    uInt dictLength)
+{
     struct inflate_state FAR *state;
     unsigned long dictid;
     int ret;
 
     /* check state */
-    if (strm == Z_NULL || strm->state == Z_NULL) return Z_STREAM_ERROR;
+    if (inflateStateCheck(strm)) return Z_STREAM_ERROR;
     state = (struct inflate_state FAR *)strm->state;
     if (state->wrap != 0 && state->mode != DICT)
         return Z_STREAM_ERROR;
@@ -7130,12 +7379,12 @@ int ZEXPORT inflateSetDictionary(
 
 int ZEXPORT inflateGetHeader(
     z_streamp strm,
-    gz_headerp head
-) {
+    gz_headerp head)
+{
     struct inflate_state FAR *state;
 
     /* check state */
-    if (strm == Z_NULL || strm->state == Z_NULL) return Z_STREAM_ERROR;
+    if (inflateStateCheck(strm)) return Z_STREAM_ERROR;
     state = (struct inflate_state FAR *)strm->state;
     if ((state->wrap & 2) == 0) return Z_STREAM_ERROR;
 
@@ -7159,8 +7408,8 @@ int ZEXPORT inflateGetHeader(
 local unsigned syncsearch(
     unsigned FAR *have,
     const unsigned char FAR *buf,
-    unsigned len
-) {
+    unsigned len)
+{
     unsigned got;
     unsigned next;
 
@@ -7180,15 +7429,15 @@ local unsigned syncsearch(
 }
 
 int ZEXPORT inflateSync(
-    z_streamp strm
-) {
+    z_streamp strm)
+{
     unsigned len;               /* number of bytes to look at or looked at */
     unsigned long in, out;      /* temporary to save total_in and total_out */
     unsigned char buf[4];       /* to restore bit buffer to byte string */
     struct inflate_state FAR *state;
 
     /* check parameters */
-    if (strm == Z_NULL || strm->state == Z_NULL) return Z_STREAM_ERROR;
+    if (inflateStateCheck(strm)) return Z_STREAM_ERROR;
     state = (struct inflate_state FAR *)strm->state;
     if (strm->avail_in == 0 && state->bits < 8) return Z_BUF_ERROR;
 
@@ -7231,27 +7480,26 @@ int ZEXPORT inflateSync(
    inflate is waiting for these length bytes.
  */
 int ZEXPORT inflateSyncPoint(
-    z_streamp strm
-) {
+    z_streamp strm)
+{
     struct inflate_state FAR *state;
 
-    if (strm == Z_NULL || strm->state == Z_NULL) return Z_STREAM_ERROR;
+    if (inflateStateCheck(strm)) return Z_STREAM_ERROR;
     state = (struct inflate_state FAR *)strm->state;
     return state->mode == STORED && state->bits == 0;
 }
 
 int ZEXPORT inflateCopy(
     z_streamp dest,
-    z_streamp source
-) {
+    z_streamp source)
+{
     struct inflate_state FAR *state;
     struct inflate_state FAR *copy;
     unsigned char FAR *window;
     unsigned wsize;
 
     /* check input */
-    if (dest == Z_NULL || source == Z_NULL || source->state == Z_NULL ||
-        source->zalloc == (alloc_func)0 || source->zfree == (free_func)0)
+    if (inflateStateCheck(source) || dest == Z_NULL)
         return Z_STREAM_ERROR;
     state = (struct inflate_state FAR *)source->state;
 
@@ -7272,6 +7520,7 @@ int ZEXPORT inflateCopy(
     /* copy state */
     zmemcpy((voidpf)dest, (voidpf)source, sizeof(z_stream));
     zmemcpy((voidpf)copy, (voidpf)state, sizeof(struct inflate_state));
+    copy->strm = dest;
     if (state->lencode >= state->codes &&
         state->lencode <= state->codes + ENOUGH - 1) {
         copy->lencode = copy->codes + (state->lencode - state->codes);
@@ -7289,29 +7538,55 @@ int ZEXPORT inflateCopy(
 
 int ZEXPORT inflateUndermine(
     z_streamp strm,
-    int subvert
-) {
+    int subvert)
+{
     struct inflate_state FAR *state;
 
-    if (strm == Z_NULL || strm->state == Z_NULL) return Z_STREAM_ERROR;
+    if (inflateStateCheck(strm)) return Z_STREAM_ERROR;
     state = (struct inflate_state FAR *)strm->state;
-    state->sane = !subvert;
 #ifdef INFLATE_ALLOW_INVALID_DISTANCE_TOOFAR_ARRR
+    state->sane = !subvert;
     return Z_OK;
 #else
+    (void)subvert;
     state->sane = 1;
     return Z_DATA_ERROR;
 #endif
 }
 
-long ZEXPORT inflateMark(
-    z_streamp strm
-) {
+int ZEXPORT inflateValidate(
+    z_streamp strm,
+    int check)
+{
     struct inflate_state FAR *state;
 
-    if (strm == Z_NULL || strm->state == Z_NULL) return -(1L << 16);
+    if (inflateStateCheck(strm)) return Z_STREAM_ERROR;
     state = (struct inflate_state FAR *)strm->state;
-    return ((long)(state->back) << 16) +
+    if (check)
+        state->wrap |= 4;
+    else
+        state->wrap &= ~4;
+    return Z_OK;
+}
+
+long ZEXPORT inflateMark(
+    z_streamp strm)
+{
+    struct inflate_state FAR *state;
+
+    if (inflateStateCheck(strm))
+        return -(1L << 16);
+    state = (struct inflate_state FAR *)strm->state;
+    return (long)(((unsigned long)((long)state->back)) << 16) +
         (state->mode == COPY ? state->length :
             (state->mode == MATCH ? state->was - state->length : 0));
+}
+
+unsigned long ZEXPORT inflateCodesUsed(
+    z_streamp strm)
+{
+    struct inflate_state FAR *state;
+    if (inflateStateCheck(strm)) return (unsigned long)-1;
+    state = (struct inflate_state FAR *)strm->state;
+    return (unsigned long)(state->next - state->codes);
 }

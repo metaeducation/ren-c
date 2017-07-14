@@ -102,6 +102,7 @@ REBNATIVE(eval)
 //          error! ;-- should use FAIL instead
 //          function! ;-- will only run arity 0 functions (avoids DO variadic)
 //          frame! ;-- acts like APPLY (voids are optionals, not unspecialized)
+//          varargs! ;-- simulates as if frame! or block! is being executed
 //      ]
 //      /args
 //          {If value is a script, this will set its system/script/args}
@@ -130,6 +131,7 @@ REBNATIVE(do)
         // useful for `do all ...` types of scenarios
         return R_BLANK;
 
+    do_block_source:;
     case REB_BLOCK:
     case REB_GROUP:
         if (REF(next)) {
@@ -164,6 +166,11 @@ REBNATIVE(do)
                 // test and similar to FIND.  On the downside, "lossy" in
                 // that after the DOs are finished the var can't be used to
                 // recover the series again...you'd have to save it.
+                //
+                // ***Note:*** While `source` is a local by default, if we
+                // jump here via `goto do_block_source`, it will be a singular
+                // array inside a varargs, whose position being updated is
+                // important.
                 //
                 if (indexor == END_FLAG)
                     VAL_INDEX(source) = VAL_LEN_HEAD(source);
@@ -275,6 +282,35 @@ REBNATIVE(do)
         SER(f->varlist)->misc.f = f;
 
         return Apply_Frame_Core(f, Canon(SYM___ANONYMOUS__), NULL); }
+
+    case REB_VARARGS: {
+        REBVAL *position;
+        if (Is_Block_Style_Varargs(&position, source)) {
+            //
+            // We can execute the array, but we must "consume" elements out
+            // of it (e.g. advance the index shared across all instances)
+            // This is done by the REB_BLOCK case, which we jump to.
+            //
+            // !!! If any VARARGS! op does not honor the "locked" flag on the
+            // array during execution, there will be problems if it is TAKE'n
+            // or DO'd while this operation is in progress.
+            //
+            source = position;
+            goto do_block_source;
+        }
+
+        REBFRM *f;
+        if (NOT(Is_Frame_Style_Varargs_May_Fail(&f, source)))
+            panic(source); // Frame is the only other type
+
+        // Pretty much by definition, we are in the middle of a function call
+        // in the frame the varargs came from.  It's still on the stack, and
+        // we don't want to disrupt its state.  Use a subframe.
+        //
+        if (Do_Next_In_Subframe_Throws(D_OUT, f, DO_FLAG_NORMAL))
+            return R_OUT_IS_THROWN;
+
+        return R_OUT; }
 
     default:
         break;

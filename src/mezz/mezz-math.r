@@ -258,8 +258,9 @@ math: function [
             1 = length-of ret
             any-number? ret/1
         ][
-            fail unspaced [
-                "Cannot be REDUCED to a number(" mold ret ") :" mold res
+            fail [
+                unspaced ["Cannot be REDUCED to a number(" mold ret ")"]
+                ":" mold res
             ]
         ]
         ret/1

@@ -495,7 +495,7 @@ host-start: function [
             )
         |
             "--script" end (
-                o/script: param-or-die "SCRIPT"
+                o/script: to-rebol-file param-or-die "SCRIPT"
                 quit-when-done: default true ;-- overrides blank, not false
             )
         |
@@ -534,7 +534,7 @@ host-start: function [
     ; the first item after the options is implicitly the script.
     ;
     if all [not o/script | not tail? argv] [
-        o/script: to file! take argv
+        o/script: to-rebol-file take argv
         quit-when-done: default true
     ]
 
@@ -680,7 +680,7 @@ comment [
     ;
     either file? o/script [
         trap/with [
-            do/only o/script ;-- /ONLY so QUIT/WITH exit code bubbles out
+            do/only/args o/script script-args ;-- /ONLY so QUIT/WITH exit code bubbles out
         ] func [error <with> return] [
             print error
             return 1
@@ -843,10 +843,15 @@ console!: make object! [
         q: [quit]
         list-shortcuts: [print system/console/shortcuts]
         changes: [
+            say-browser
             browse (join-all [
                 https://github.com/metaeducation/ren-c/blob/master/CHANGES.md#
                 join-all ["" system/version/1 system/version/2 system/version/3]
             ])
+        ]
+        topics: [
+            say-browser
+            browse https://r3n.github.io/topics/
         ]
     ]
 

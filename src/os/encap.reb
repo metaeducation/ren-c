@@ -825,7 +825,7 @@ pe-format: context [
         reset
         parse exe-data exe-rule
         if err [
-            fail unspaced ["err: " err ", at: " copy/part fail-at 16]
+            fail ["err:" err | "at:" copy/part fail-at 16]
         ]
         true
     ]
@@ -862,7 +862,10 @@ pe-format: context [
         ;check if there's section name conflicts
         for-each sec sections [
             if section-name = to string! trim/with sec/name #{00} [
-                fail unspaced ["There is already a section named " section-name ":^/" mold sec]
+                fail [
+                    "There is already a section named" section-name |
+                    mold sec
+                ]
             ]
         ]
 
@@ -969,7 +972,7 @@ pe-format: context [
             ]
         ]
         unless target-sec [
-            ;fail spaced ["Couldn't find the section" section-name]
+            ;fail ["Couldn't find the section" section-name]
             return _
         ]
 

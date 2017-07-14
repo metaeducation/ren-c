@@ -30,6 +30,7 @@
 #ifdef TO_WINDOWS
     #include <windows.h>
 #endif
+#include <locale.h>
 
 // IS_ERROR might be defined in winerror.h and reb-types.h
 #ifdef IS_ERROR
@@ -88,6 +89,95 @@ REBNATIVE(locale)
     fail ("Locale not implemented for non-windows");
 #endif
 
+}
+
+
+//
+//  setlocale: native/export [
+//      {Set/Get current locale, just a simple wrapper around C version}
+//      return: [string! blank!]
+//      category [word!]
+//      value [string!]
+//  ]
+//  new-words: [
+//      all
+//      address
+//      collate
+//      ctype
+//      identification
+//      measurement
+//      messages
+//      monetary
+//      name
+//      numeric
+//      paper
+//      telephone
+//      time
+//  ]
+//  new-errors: [
+//  ]
+//
+REBNATIVE(setlocale)
+{
+    INCLUDE_PARAMS_OF_SETLOCALE;
+
+    REBSTR *w_cat = VAL_WORD_CANON(ARG(category));
+    int cat;
+    struct cat_pair {
+        REBSTR *word;
+        int cat;
+    } ctypes [] = {
+        {LOCALE_WORD_ALL, LC_ALL},
+#if defined(LC_ADDRESS) // GNU extension
+        {LOCALE_WORD_ADDRESS, LC_ADDRESS},
+#endif
+        {LOCALE_WORD_COLLATE, LC_COLLATE},
+        {LOCALE_WORD_CTYPE, LC_CTYPE},
+#if defined(LC_IDENTIFICATION) // GNU extension
+        {LOCALE_WORD_IDENTIFICATION, LC_IDENTIFICATION},
+#endif
+#if defined(LC_MEASUREMENT) // GNU extension
+        {LOCALE_WORD_MEASUREMENT, LC_MEASUREMENT},
+#endif
+#if defined(LC_MESSAGES) // GNU extension
+        {LOCALE_WORD_MESSAGES, LC_MESSAGES},
+#endif
+        {LOCALE_WORD_MONETARY, LC_MONETARY},
+#if defined(LC_NAME) // GNU extension
+        {LOCALE_WORD_NAME, LC_NAME},
+#endif
+        {LOCALE_WORD_NUMERIC, LC_NUMERIC},
+#if defined(LC_TELEPHONE) // GNU extension
+        {LOCALE_WORD_TELEPHONE, LC_TELEPHONE},
+#endif
+#if defined(LC_PAPER) // GNU extension
+        {LOCALE_WORD_PAPER, LC_PAPER},
+#endif
+        {LOCALE_WORD_TIME, LC_TIME}
+    };
+
+    REBCNT i = 0;
+    for (i = 0; i < sizeof (ctypes) / sizeof (ctypes[0]); i ++) {
+        if (ctypes[i].word == w_cat) {
+            cat = ctypes[i].cat;
+            break;
+        }
+    }
+    if (i == sizeof (ctypes) / sizeof (ctypes[0])) {
+        fail (Error(RE_EXT_LOCALE_INVALID_CATEGORY, ARG(category), END));
+    }
+
+    const char *ret = setlocale(cat, cs_cast(VAL_BIN_AT(ARG(value))));
+    if (ret == NULL) {
+        Init_Blank(D_OUT);
+    } else {
+        REBCNT len = strlen(ret);
+        REBSER *ser = Make_Binary(len);
+        Append_Series(ser, cb_cast(ret), len);
+        Init_String(D_OUT, ser);
+    }
+
+    return R_OUT;
 }
 
 #include "tmp-mod-locale-last.h"
