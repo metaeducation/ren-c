@@ -469,7 +469,7 @@ do-needs: function [
         opt [opt 'core set vers tuple! (do-needs vers)]
         any [
             here:
-            set name [word! | file! | url!]
+            set name [word! | file! | url! | tag!]
             set vers opt tuple!
             set hash opt binary!
             (join mods [name vers hash])
