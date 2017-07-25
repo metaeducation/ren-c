@@ -5,8 +5,13 @@ REBOL [
     version: 1.0.0
     license: {Apache 2.0}
 ]
-hmac-sha256: function [{computes the hmac-sha256 for message m using key k}
-    k [binary!] m [binary!]][
+
+hmac-sha256: function [
+    {computes the hmac-sha256 for message m using key k}
+
+    k [binary!] 
+    m [binary!]
+][
     key: copy k
     message: copy m
     blocksize: 64

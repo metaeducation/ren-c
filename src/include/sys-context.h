@@ -350,24 +350,6 @@ inline static REBVAL *CTX_FRAME_FUNC_VALUE(REBCTX *c) {
 // a convenience.
 //
 
-inline static REBVAL *Get_Typed_Field(
-    REBCTX *c,
-    REBSTR *spelling, // will be canonized
-    enum Reb_Kind kind // REB_0 to not check the kind
-) {
-    REBCNT n = Find_Canon_In_Context(c, STR_CANON(spelling), FALSE);
-    if (n == 0)
-        fail ("Field not found"); // improve error
-
-    REBVAL *var = CTX_VAR(c, n);
-    if (kind == REB_0)
-        return var;
-
-    if (kind != VAL_TYPE(var))
-        fail ("Invalid type of field"); // improve error
-    return var;
-}
-
 #define Get_Field(c, spelling) \
     Get_Typed_Field((c), (spelling), REB_0) // will canonize
 

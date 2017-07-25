@@ -56,6 +56,10 @@ one-line summary and a link to a landing webpage of their choice:
 - [@BrianHawley](https://github.com/brianh) on GitHub
 - Mezzanine design and module system, core patches, PARSE design for Rebol3.
 
+**Christian Ensel**
+- [@gurzgri](https://github.com/gurzgri) on GitHub
+- original ODBC driver code for R3-Alpha
+
 **Giulio Lunati**
 - [@giuliolunati](https://github.com/giuliolunati) on GitHub
 - MAP! and hashing updates, Android builds, source serialization improvements.

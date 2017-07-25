@@ -206,6 +206,8 @@ modules: [
     UUID ../extensions/uuid/mod-uuid.c [
         ;if Linux
     ]
+
+    ODBC ../extensions/odbc/mod-odbc.c []
 ]
 
 extensions: [
@@ -218,6 +220,7 @@ extensions: [
     + BMP ../extensions/bmp/ext-bmp.c [BMP] _
     + Locale ../extensions/locale/ext-locale.c [Locale] ../extensions/locale/ext-locale-init.reb
     + UUID ../extensions/uuid/ext-uuid.c [UUID] ../extensions/uuid/ext-uuid-init.reb
+    + ODBC ../extensions/odbc/ext-odbc.c [ODBC] ../extensions/odbc/ext-odbc-init.reb
 ]
 
 made: [
