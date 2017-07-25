@@ -3,10 +3,10 @@
 ; the "result" of throw should not be assignable, bug#1515
 [a: 1 catch [a: throw 2] :a =? 1]
 [a: 1 catch [set 'a throw 2] :a =? 1]
-[a: 1 catch [set/opt 'a throw 2] :a =? 1]
+[a: 1 catch [set/only 'a throw 2] :a =? 1]
 [a: 1 catch/name [a: throw/name 2 'b] 'b :a =? 1]
 [a: 1 catch/name [set 'a throw/name 2 'b] 'b :a =? 1]
-[a: 1 catch/name [set/opt 'a throw/name 2 'b] 'b :a =? 1]
+[a: 1 catch/name [set/only 'a throw/name 2 'b] 'b :a =? 1]
 ; the "result" of throw should not be passable to functions, bug#1509
 [a: 1 catch [a: error? throw 2] :a =? 1]
 ; bug#1535

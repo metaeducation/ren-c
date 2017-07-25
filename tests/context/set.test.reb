@@ -15,7 +15,7 @@
     a: 10
     b: 20
     all? [
-        [x y] = set/only [a b] [x y]
+        [x y] = set/multi [a b] [x y]
         a = [x y]
         b = [x y]
     ]

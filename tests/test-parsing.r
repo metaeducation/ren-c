@@ -102,12 +102,16 @@ make object! [
                                 )
                             ]
                             blank? next-position
-                        ] [stop: [:position]]
-                        issue? get/opt 'value [
+                        ][
+                            stop: [:position]
+                        ]
+
+                        issue? get 'value [
                             append flags value
                             stop: [end skip]
                         ]
-                        file? get/opt 'value [
+
+                        file? get 'value [
                             collect-tests collected-tests value
                             print ["file:" mold test-file]
                             append collected-tests test-file

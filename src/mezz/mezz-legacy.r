@@ -328,99 +328,6 @@ rejoin: chain [
 ]
 
 
-; SET has a refinement called /ANY which doesn't communicate as well in the
-; Ren-C world as OPT.  OPT is the marker on functions to mark parameters as
-; optional...OPT is the function to convert NONE! to UNSET! while passing
-; all else through.  It has a narrower and more communicative focus of purpose
-; than /ANY does (also ANY is a very common function with a very different
-; meaning and sense)
-;
-lib-set: :set ; overwriting lib/set for now
-set: function [
-    {Sets a word, path, block of words, or context to specified value(s).}
-
-    return: [<opt> any-value!]
-        {Just chains the input value (unmodified)}
-    target [blank! any-word! any-path! block! any-context!]
-        {Word, block of words, path, or object to be set (modified)}
-    value [<opt> any-value!]
-        "Value or block of values"
-    /only
-        {If target and value are blocks, set each item to the same value}
-    /opt
-        "Treat void values as unsetting the target instead of an error"
-    /some
-        {Blank values (or values past end of block) are not set.}
-    /enfix
-        {If value is a function, then make the bound word dispatch infix}
-    /any
-        "Deprecated legacy synonym for /opt"
-][
-    set_ANY: any
-    any: :lib/any
-    set_OPT: opt
-    opt: :lib/opt
-    set_SOME: some
-    some: :lib/some
-
-    apply 'lib-set [
-        target: either any-context? target [words-of target] [target]
-        value: :value
-        only: only
-        opt: any? [set_ANY set_OPT]
-        some: set_SOME
-        enfix: enfix
-    ]
-]
-
-
-; This version of get supports the legacy /ANY switch.
-;
-; Historical GET in Rebol allowed any type that wasn't UNSET!.  If you said
-; something like `get 1` this would be passed through as `1`.  Both Ren-C and
-; Red have removed that feature, it is not carried forward in legacy at this
-; time.
-;
-lib-get: :get
-get: function [
-    {Gets the value of a word or path, or values of a context.}
-    return: [<opt> any-value!]
-    source [blank! any-word! any-path! any-context! block!]
-        "Word, path, context to get"
-    /opt
-        "Return void if no value instead of blank"
-    /any
-        "Deprecated legacy synonym for /OPT"
-][
-    any_GET: any
-    any: :lib/any
-    opt_GET: opt
-    opt: :lib/opt
-
-    either* any-context? source [
-        ;
-        ; In R3-Alpha, this was the vars of the context put into a BLOCK!:
-        ;
-        ;     >> get make object! [[a b][a: 10 b: 20]]
-        ;     == [10 20]
-        ;
-        ; Presumes order, and has strange semantics.  Was written as native
-        ; code but is expressible more flexibily in usermode as getting the
-        ; WORDS-OF block, which covers things like hidden fields etc.
-
-        apply 'lib-get [
-            source: words-of source
-            opt: any? [any_GET opt_GET] ;-- will error if voids found
-        ]
-    ][
-        apply 'lib-get [
-            source: source
-            opt: any? [any_GET opt_GET]
-        ]
-    ]
-]
-
-
 ; TRAP makes more sense as parallel-to-CATCH, /WITH makes more sense too
 ; https://trello.com/c/IbnfBaLI
 ;
@@ -728,7 +635,7 @@ set 'r3-legacy* func [<local> if-flags] [
 
         ; The bizarre VALUE? function would look up words, return TRUE if they
         ; were set and FALSE if not.  All other values it returned TRUE.  The
-        ; parameter was not optional, so you couldn't say `value?`.
+        ; parameter was not optional, so you couldn't say `value? ()`.
         ;
         value?: (func [
             {If a word, return whether word is set...otherwise TRUE}
@@ -773,6 +680,92 @@ set 'r3-legacy* func [<local> if-flags] [
         ][
             not blank? :value
         ])
+
+
+        ; SET had a refinement called /ANY which doesn't communicate as well
+        ; in the Ren-C world as ONLY.  ONLY marks an operation as being
+        ; fundamental and not doing "extra" stuff (e.g. APPEND/ONLY is the
+        ; lower-level append that "only appends" and doesn't splice blocks).
+        ;
+        ; Note: R3-Alpha had a /PAD option, which was the inverse of /SOME.
+        ; If someone needs it, they can adapt this routine as needed.
+        ;
+        lib-set: :set ; overwriting lib/set for now
+        set: function [
+            {Sets word, path, words block, or context to specified value(s).}
+
+            return: [<opt> any-value!]
+                {Just chains the input value (unmodified)}
+            target [blank! any-word! any-path! block! any-context!]
+                {Word, block of words, path, or object to be set (modified)}
+            value [<opt> any-value!]
+                "Value or block of values"
+            /only
+                {If target and value are blocks, set each item to same value}
+            /any
+                "Deprecated legacy synonym for /only"
+            /some
+                {Blank values (or values past end of block) are not set.}
+            /enfix
+                {If value is a function, make the bound word dispatch infix}
+        ][
+            set_ANY: any
+            any: :lib/any
+            set_SOME: some
+            some: :lib/some
+
+            apply 'lib-set [
+                target: either any-context? target [words-of target] [target]
+                value: :value
+                only: any? [set_ANY only]
+                some: set_SOME
+                enfix: enfix
+            ]
+        ]
+
+        ; This version of get supports the legacy /ANY switch.
+        ;
+        ; Historical GET in Rebol allowed any type that wasn't UNSET!.  If you
+        ; said something like `get 1` this would be passed through as `1`.
+        ; Both Ren-C and Red have removed that feature, it is not carried
+        ; forward in legacy at this time.
+        ;
+        lib-get: :get
+        get: function [
+            {Gets the value of a word or path, or values of a context.}
+            return: [<opt> any-value!]
+            source [blank! any-word! any-path! any-context! block!]
+                "Word, path, context to get"
+            /only
+                "Return void if no value instead of blank"
+            /any
+                "Deprecated legacy synonym for /ONLY"
+        ][
+            any_GET: any
+            any: :lib/any
+
+            either* any-context? source [
+                ;
+                ; In R3-Alpha, this was vars of the context put into a BLOCK!:
+                ;
+                ;     >> get make object! [[a b][a: 10 b: 20]]
+                ;     == [10 20]
+                ;
+                ; Presumes order, has strange semantics.  Written as native
+                ; code but is expressible more flexibily in usermode getting
+                ; the WORDS-OF block, covering things like hidden fields etc.
+
+                apply 'lib-get [
+                    source: words-of source
+                    opt: any? [any_GET opt_GET] ;-- will error if voids found
+                ]
+            ][
+                apply 'lib-get [
+                    source: source
+                    opt: any? [any_GET opt_GET]
+                ]
+            ]
+        ]
 
         ; These words do NOT inherit the infixed-ness, and you simply cannot
         ; set things infix through a plain set-word.  We have to do this

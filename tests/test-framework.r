@@ -58,7 +58,7 @@ make object! compose [
             leave
         ]
 
-        error? set/opt 'test-block catch-any test-block 'exception
+        error? set* 'test-block catch-any test-block 'exception
 
         test-block: case [
             exception [spaced ["failed," exceptions/:exception]]
@@ -147,8 +147,11 @@ make object! compose [
                     any [
                         any whitespace
                         [
-                            position: "%"
-                            (set/opt [value next-position] transcode/next position)
+                            position: "%" (
+                                set [value next-position]
+                                    transcode/next
+                                    position
+                            )
                             :next-position
                                 |
                             ; dialect failure?

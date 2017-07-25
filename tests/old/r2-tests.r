@@ -247,7 +247,7 @@
 ]
 [strict-equal? 2-Jul-2009 2-Jul-2009/22:20]
 [strict-equal? 2-Jul-2009 2-Jul-2009/00:00:00+00:00]
-[use [a] [unset? get/opt 'a]]
+[use [a] [unset? get/only 'a]]
 [unset? any [()]]
 [unset? any [false ()]]
 [unset? any [() false]]
@@ -316,7 +316,7 @@
     b: head insert copy [] try [1 / 0]
     pokus1: func [[catch] block [block!] /local elem] [
         for i 1 length? block 1 [
-            if error? set/opt 'elem first block [
+            if error? set/only 'elem first block [
                 throw make error! {Dangerous element}
             ]
             block: next block

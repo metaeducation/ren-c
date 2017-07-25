@@ -12,7 +12,7 @@
 ; the "result" of exit should not be assignable, bug#1515
 [a: 1 eval does [a: exit] :a =? 1]
 [a: 1 eval does [set 'a exit] :a =? 1]
-[a: 1 eval does [set/opt 'a exit] :a =? 1]
+[a: 1 eval does [set/only 'a exit] :a =? 1]
 ; the "result" of exit should not be passable to functions, bug#1509
 [a: 1 eval does [a: error? exit] :a =? 1]
 ; bug#1535

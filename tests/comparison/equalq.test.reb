@@ -596,7 +596,7 @@
 ; Evaluates (try [1 / 0]) to get error! value.
 [
     a-value: blank
-    set/opt 'a-value (try [1 / 0])
+    set/only 'a-value (try [1 / 0])
     equal? a-value a-value
 ]
 ; error! structural equivalence

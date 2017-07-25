@@ -20,13 +20,31 @@
 ; the state of variables, that is what NONE! (blank) is for...to serve as
 ; a reified value placeholder when you don't have a value.
 
-[a: 1 set [a] reduce [2 ()] a = 2]
-[x: construct [a: 1] set x reduce [2 ()] x/a = 2]
-[a: 1 set/opt [a] reduce [()] void? get/opt 'a]
-[a: 1 b: 2 set/opt [a b] reduce [3 ()] all [a = 3 void? get/opt 'b]]
-[x: construct [a: 1] set/opt x reduce [()] void? get/opt in x 'a]
-[x: construct [a: 1 b: 2] set/opt x reduce [3 ()] all [a = 3 void? get/opt in x 'b]]
 [
+    a: 1
+    set [a] reduce [2 ()]
+    a = 2
+][
+    x: construct [a: 1]
+    set x reduce [2 ()]
+    x/a = 2
+][
+    a: 1
+    set/only [a] reduce [()]
+    void? get/only 'a
+][
+    a: 1 b: 2
+    set/only [a b] reduce [3 ()]
+    all [a = 3 | void? get/only 'b]
+][
+    x: construct [a: 1]
+    set/only x reduce [()]
+    void? get/only in x 'a
+][
+    x: construct [a: 1 b: 2]
+    set/only x reduce [3 ()]
+    all [a = 3 | void? get/only in x 'b]
+][
     blk: reduce [()]
     blk = compose blk
 ]

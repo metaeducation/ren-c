@@ -36,7 +36,7 @@ pi: 3.14159265358979323846
     return: [any-value!]
         "The new state of the variable"
     'var [set-word! set-path!]
-        "Numeric or series variable to update"
+        "Variable to update"
     n
         "Amount to decrement or skip backwards by"
 ][

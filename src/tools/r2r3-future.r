@@ -243,8 +243,8 @@ construct: func [
 |: does []
 
 
-; SET/OPT is the Ren-C replacement for SET/ANY, with /ANY supported
-; via <r3-legacy>.  But Rebol2 and R3-Alpha do not know /OPT.
+; SET/ONLY is the Ren-C replacement for SET/ANY.  Plain SET will not accept
+; a void assignment, while SET/ONLY will unset the variable if it gets void.
 ;
 lib-set: get 'set ; overwriting lib/set for now
 set: func [
@@ -255,44 +255,30 @@ set: func [
 
     value [<opt> any-value!]
         "Value or block of values"
-    /opt
+    /only
         "Value is optional, and if no value is provided then unset the word"
     /pad
         {For objects, set remaining words to NONE if block is too short}
-    /any
-        "Deprecated legacy synonym for /opt"
 ][
-    set_ANY: any
-    any: :lib/any ;-- in case it needs to be used
-    opt_ANY: opt
-    lib-set/any 'opt () ;-- doesn't exist in R3-Alpha
-
-    apply :lib-set [target :value (any [opt_ANY set_ANY]) pad]
+    apply :lib-set [target :value only pad]
 ]
 
 
-; GET/OPT is the Ren-C replacement for GET/ANY, with /ANY supported
-; via <r3-legacy>.  But Rebol2 and R3-Alpha do not know /OPT.
+; GET/ONLY is the Ren-C replacement for GET/ANY.  Plain GET will return a
+; blank for an unset variable, instead of the void returned by GET/ONLY.
 ;
 lib-get: get 'get
 get: func [
     {Gets the value of a word or path, or values of a context.}
     source
         "Word, path, context to get"
-    /opt
+    /only
         "The source may optionally have no value (allows returning void)"
-    /any
-        "Deprecated legacy synonym for /OPT"
-    <local>
-        set_ANY opt_ANY
-][
-    set_ANY: any
-    any: :lib/any ;-- in case it needs to be used
-    opt_ANY: opt
-    lib-set/any 'opt () ;-- doesn't exist in R3-Alpha
 
-    lib-set/any (quote temp:) lib-get/any source
-    either any [opt_ANY set_ANY] [
+    /local temp
+][
+    lib-set/any 'temp lib-get/any source
+    either only [
         :temp ;-- voids okay
     ][
         either void? :temp [blank] [:temp]
@@ -525,7 +511,7 @@ delimit: func [x delimiter] [
                 x: next x
                 continue
             ]
-            set/opt 'item do/next x 'x
+            set/only 'item do/next x 'x
             case [
                 any [blank? :item | void? :item] [
                     ;-- append nothing

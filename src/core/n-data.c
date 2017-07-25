@@ -420,7 +420,7 @@ REBNATIVE(collect_words)
 //          {If the source looks up to a value, that value--else void}
 //      source [blank! any-word! any-path! block!]
 //          {Word or path to get, or block of words or paths (blank is no-op)}
-//      /opt
+//      /only
 //          {Return void if no value instead of blank}
 //  ]
 //
@@ -428,7 +428,9 @@ REBNATIVE(get)
 //
 // Note: GET* cannot be the fundamental operation, because GET could not be
 // written for blocks (since voids can't be put in blocks, so they couldn't
-// be "blankified")
+// be "blankified").  Well, technically it *could* be fundamental, but GET
+// would have to make multiple calls to GET* in order to process a block and
+// deal with any voids.
 {
     INCLUDE_PARAMS_OF_GET;
 
@@ -441,10 +443,10 @@ REBNATIVE(get)
     if (IS_BLOCK(ARG(source))) {
         //
         // If a BLOCK! of gets are performed, voids cannot be put into the
-        // resulting BLOCK!.  Hence for /OPT to be legal, it would have to
+        // resulting BLOCK!.  Hence for /ONLY to be legal, it would have to
         // give back a BLANK! or other placeholder.  However, since GET-VALUE
-        // is built on GET/OPT, we defer the error until we actually encounter
-        // an unset variable...which produces that error case that could not
+        // is built on GET/ONLY, we defer the error an unset variable is
+        // actually encountered, which produces that error case that could not
         // be done by "checking the block for voids"
 
         source = VAL_ARRAY_AT(ARG(source));
@@ -521,7 +523,7 @@ REBNATIVE(get)
         }
 
         if (IS_VOID(dest)) {
-            if (REF(opt)) {
+            if (REF(only)) {
                 if (IS_BLOCK(ARG(source))) // can't put voids in blocks
                     fail (Error_No_Value_Core(source, specifier));
             }
@@ -710,9 +712,9 @@ REBNATIVE(resolve)
 //      value [<opt> any-value!]
 //          "Value or block of values"
 //      /only
-//          {If target and value are blocks, set each item to the same value}
-//      /opt
 //          {Treat void values as unsetting the target instead of an error}
+//      /multi
+//          {If target and value are blocks, set each item to the same value}
 //      /some
 //          {Blank values (or values past end of block) are not set.}
 //      /enfix
@@ -720,8 +722,6 @@ REBNATIVE(resolve)
 //  ]
 //
 REBNATIVE(set)
-//
-// !!! Note that r3-legacy has a SET which overrides this one at the moment
 //
 // Blocks are supported as:
 //
@@ -739,7 +739,7 @@ REBNATIVE(set)
     const RELVAL *target;
     REBSPC *target_specifier;
 
-    REBOOL only;
+    REBOOL multi;
     if (IS_BLOCK(ARG(target))) {
         //
         // R3-Alpha and Red let you write `set [a b] 10`, since the thing
@@ -749,22 +749,22 @@ REBNATIVE(set)
         // differently, which can bite you if you `set [a b] value` for some
         // generic value.
         //
-        if (IS_BLOCK(ARG(value)) && NOT(REF(only))) {
+        if (IS_BLOCK(ARG(value)) && NOT(REF(multi))) {
             //
             // There is no need to check values for voidness in this case,
             // since arrays cannot contain voids.
             //
             value = VAL_ARRAY_AT(ARG(value));
             value_specifier = VAL_SPECIFIER(ARG(value));
-            only = FALSE;
+            multi = FALSE;
         }
         else {
-            if (IS_VOID(ARG(value)) && NOT(REF(opt)))
+            if (IS_VOID(ARG(value)) && NOT(REF(only)))
                 fail (Error_No_Value(ARG(value)));
 
             value = ARG(value);
             value_specifier = SPECIFIED;
-            only = TRUE;
+            multi = TRUE;
         }
 
         target = VAL_ARRAY_AT(ARG(target));
@@ -784,12 +784,12 @@ REBNATIVE(set)
         target = D_CELL;
         target_specifier = SPECIFIED;
 
-        if (IS_VOID(ARG(value)) && NOT(REF(opt)))
+        if (IS_VOID(ARG(value)) && NOT(REF(only)))
             fail (Error_No_Value(ARG(value)));
 
         value = ARG(value);
         value_specifier = SPECIFIED;
-        only = TRUE;
+        multi = TRUE;
     }
 
     DECLARE_LOCAL (get_path_hack); // runs prep code, don't put inside loop
@@ -797,7 +797,7 @@ REBNATIVE(set)
     for (
         ;
         NOT_END(target);
-        ++target, only || IS_END(value) ? NOOP : (++value, NOOP)
+        ++target, multi || IS_END(value) ? NOOP : (++value, NOOP)
      ){
         if (REF(some)) {
             if (IS_END(value))
@@ -1165,7 +1165,7 @@ inline static REBOOL Is_Set_Modifies(REBVAL *location)
 //
 //      location [any-word! any-path!]
 //  ][
-//      any-value? get/opt location
+//      any-value? get/only location
 //  ]
 //
 REBNATIVE(set_q)
@@ -1183,7 +1183,7 @@ REBNATIVE(set_q)
 //
 //      location [any-word! any-path!]
 //  ][
-//      void? get/opt location
+//      void? get/only location
 //  ]
 //
 REBNATIVE(unset_q)

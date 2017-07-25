@@ -55,7 +55,7 @@
         return: [<opt> any-value!]
         x [<opt> any-value!]
     ][
-        get/opt 'x
+        get/only 'x
     ][
         ()
     ]
@@ -64,7 +64,7 @@
         return: [<opt> any-value!]
         'x [<opt> any-value!]
     ][
-        get/opt 'x
+        get/only 'x
     ][
         ()
     ]
@@ -73,7 +73,7 @@
         return: [<opt> any-value!]
         x [<opt> any-value!]
     ][
-        return get/opt 'x
+        return get/only 'x
     ][
         ()
     ]
@@ -82,29 +82,38 @@
         return: [<opt> any-value!]
         'x [<opt> any-value!]
     ][
-        return get/opt 'x
+        return get/only 'x
     ][
         ()
     ]
 ]
-[error? r3-alpha-apply func ['x [<opt> any-value!]] [return get/opt 'x] [make error! ""]]
 [
+    error? r3-alpha-apply func ['x [<opt> any-value!]] [
+        return get/only 'x
+    ][
+        make error! ""
+    ]
+][
     error? r3-alpha-apply/only func [x [<opt> any-value!]] [
-        return get/opt 'x
+        return get/only 'x
     ] head insert copy [] make error! ""
 ][
     error? r3-alpha-apply/only func ['x [<opt> any-value!]] [
-        return get/opt 'x
+        return get/only 'x
     ] head insert copy [] make error! ""
 ]
 [use [x] [x: 1 strict-equal? 1 r3-alpha-apply func ['x] [:x] [:x]]]
 [use [x] [x: 1 strict-equal? 1 r3-alpha-apply func ['x] [:x] [:x]]]
-[use [x] [x: 1 strict-equal? first [:x] r3-alpha-apply/only func [:x] [:x] [:x]]]
 [
+    use [x] [
+        x: 1
+        strict-equal? first [:x] r3-alpha-apply/only func [:x] [:x] [:x]
+    ]
+][
     use [x] [
         unset 'x
         strict-equal? first [:x] r3-alpha-apply/only func ['x [<opt> any-value!]] [
-            return get/opt 'x
+            return get/only 'x
         ] [:x]
     ]
 ]
@@ -116,7 +125,7 @@
     use [x] [
         unset 'x
         strict-equal? 'x r3-alpha-apply/only func ['x [<opt> any-value!]] [
-            return get/opt 'x
+            return get/only 'x
         ] [x]
     ]
 ]

@@ -3,7 +3,7 @@
 ; the "result" of continue should not be assignable, bug#1515
 [a: 1 loop 1 [a: continue] :a =? 1]
 [a: 1 loop 1 [set 'a continue] :a =? 1]
-[a: 1 loop 1 [set/opt 'a continue] :a =? 1]
+[a: 1 loop 1 [set/only 'a continue] :a =? 1]
 ; the "result" of continue should not be passable to functions, bug#1509
 [a: 1 loop 1 [a: error? continue] :a =? 1]
 ; bug#1535

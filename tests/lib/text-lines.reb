@@ -65,7 +65,7 @@ for-each-line: func [
     /local eol
 ] [
 
-    set/opt 'result while [not tail? text] [
+    set/only 'result while [not tail? text] [
 
         eol: any [
             find text newline
@@ -78,7 +78,7 @@ for-each-line: func [
         do body
     ]
 
-    get/opt 'result
+    get/only 'result
 ]
 
 lines-exceeding: function [

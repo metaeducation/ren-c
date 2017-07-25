@@ -399,7 +399,7 @@ redescribe: function [
                 fail [{archetype META-OF doesn't have DESCRIPTION slot} meta]
             ]
 
-            not notes: to-value :meta/parameter-notes [
+            not notes: get 'meta/parameter-notes [
                 return () ; specialized or adapted, HELP uses original notes
             ]
 
@@ -532,7 +532,7 @@ semiquote: specialize 'identity [quote: true]
 get*: redescribe [
     {Variation of GET which returns void if the source is not set}
 ](
-    specialize 'get [opt: true]
+    specialize 'get [only: true]
 )
 
 get-value: redescribe [
@@ -541,11 +541,10 @@ get-value: redescribe [
     chain [
         :get*
             |
-        func [x [<opt> any-value!]] [
-            unless set? 'x [
+        specialize 'either-test-value [
+            branch: [
                 fail "GET-VALUE requires source variable to be set"
             ]
-            :x
         ]
     ]
 )
@@ -553,7 +552,7 @@ get-value: redescribe [
 set*: redescribe [
     {Variation of SET where voids are tolerated for unsetting variables.}
 ](
-    specialize 'set [opt: true]
+    specialize 'set [only: true]
 )
 
 
