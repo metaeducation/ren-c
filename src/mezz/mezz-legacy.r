@@ -297,49 +297,34 @@ reform: :spaced
 ; aliasing to other string types (`as tag! unspaced [...]` will not create a
 ; copy of the series data the way TO TAG! would).
 ;
-rejoin: chain [
-    adapt 'join-all [
-        ;
-        ; JOIN-ALL demands the first element of the block be a series, else
-        ; it doesn't know whether JOIN-ALL [1 [a]] should be "1a" or [1 a],
-        ; or a BINARY!, etc.  REJOIN would happily assume a non-series meant
-        ; you wanted a string.  People who want such behavior today are
-        ; encouraged to use UNSPACED, but this adaptation accounts for the
-        ; old behavior for compatibility.
-        ;
-        unless tail? block [
-            use [first-value pos] [
-                ;
-                ; REDUCE just the first expression in the block, and if it's
-                ; not a series then convert it to a string.
-                ;
-                first-value: do/next block 'pos
-                unless series? :first-value [
-                    first-value: to string! :first-value
-                ]
+rejoin: function [
+    "Reduces and joins a block of values."
+    return: [any-series!]
+        "Will be the type of the first non-void series produced by evaluation"
+    block [block!]
+        "Values to reduce and join together"
+][
+    ;
+    ; An empty block should result in an empty block.
+    if empty? block [return copy []]
 
-                ; Build a new input with the possibly-stringified first
-                ; expression, and then the remainder of the unreduced block.
-                ; Since the first item is now either a series or a string,
-                ; reducing it again should be a no-op.
-                ;
-                block: compose [(first-value) (pos)]
-            ]
-        ]
-        ; (JOIN-ALL's normal code runs after this point)
+    ;
+    ; Perform a REDUCE of the expression but in which void does not cause an error.
+    values: copy []
+    position: block
+    while [not tail? position][
+        value: do/next position 'position
+        append/only values :value
     ]
-        |
-    specialize 'either-test-value [
-        ;
-        ; (result of JOIN-ALL is piped in here)
-        ;
-        ; While REJOIN is tolerant of cases like `rejoin [() () ()]` producing
-        ; an empty block, this makes a void in JOIN-ALL.  Account for that,
-        ; by passing through the result if it's ANY-VALUE?, otherwise it's
-        ; void so return a copy of the empty block.
-        ;
-        branch: [copy []]
-    ]
+
+    ;
+    ; An empty block of values should result in an empty string.
+    if empty? values [append values {}]
+
+    ;
+    ; Take the type of the first element for the result, or default to string.
+    result: either series? first values [copy first values] [form first values]
+    append result next values
 ]
 
 
