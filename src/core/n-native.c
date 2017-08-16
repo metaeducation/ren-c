@@ -260,8 +260,8 @@ REBNATIVE(make_native)
     REBFUN *fun = Make_Function(
         Make_Paramlist_Managed_May_Fail(ARG(spec), MKF_NONE),
         &Pending_Native_Dispatcher, // will be replaced e.g. by COMPILE
-        NULL, // no underlying function, this is fundamental
-        NULL // not providing a specialization
+        NULL, // no facade (use paramlist)
+        NULL // no specialization exemplar (or inherited exemplar)
     );
 
     REBARR *info = Make_Array(3); // [source name tcc_state]

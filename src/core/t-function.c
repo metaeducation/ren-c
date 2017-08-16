@@ -163,8 +163,6 @@ REBTYPE(Function)
         // code, yet has a distinct identity.  This means it would not be
         // HIJACK'd if the function that it was copied from was.
 
-        REBFUN *underlying = FUNC_UNDERLYING(VAL_FUNC(value));
-
         REBARR *proxy_paramlist = Copy_Array_Deep_Managed(
             VAL_FUNC_PARAMLIST(value),
             SPECIFIED // !!! Note: not actually "deep", just typesets
@@ -183,8 +181,8 @@ REBTYPE(Function)
         REBFUN *proxy = Make_Function(
             proxy_paramlist,
             FUNC_DISPATCHER(VAL_FUNC(value)),
-            underlying,
-            NULL // not changing the specialization
+            FUNC_FACADE(VAL_FUNC(value)), // can reuse the facade
+            FUNC_EXEMPLAR(VAL_FUNC(value)) // not changing the specialization
         );
 
         // A new body_holder was created inside Make_Function().

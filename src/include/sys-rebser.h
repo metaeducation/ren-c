@@ -560,7 +560,8 @@ struct Reb_Series {
 
     // The `link` field is generally used for pointers to something that
     // when updated, all references to this series would want to be able
-    // to see.
+    // to see.  This cannot be done (easily) for properties that are held
+    // in REBVAL cells directly.
     //
     // This field is in the second pointer-sized slot in the REBSER node to
     // push the `content` so it is 64-bit aligned on 32-bit platforms.  This

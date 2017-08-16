@@ -1352,8 +1352,8 @@ static REBFUN *Alloc_Ffi_Function_For_Spec(REBVAL *ffi_spec, ffi_abi abi) {
     REBFUN *fun = Make_Function(
         paramlist,
         &Routine_Dispatcher,
-        NULL, // no underlying function, this is fundamental
-        NULL // not providing a specialization
+        NULL, // no facade (use paramlist)
+        NULL // no specialization exemplar (or inherited exemplar)
     );
 
     // The "body" value of a routine is the routine info array.

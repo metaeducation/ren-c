@@ -1311,6 +1311,8 @@ inline static void SET_GOB(RELVAL *v, REBGOB *g) {
 //
 inline static REBVAL *Move_Value(RELVAL *out, const REBVAL *v)
 {
+    assert(out != v); // usually a sign of a mistake; not worth supporting
+
     assert(
         ALL_VAL_FLAGS(v, NODE_FLAG_CELL | NODE_FLAG_NODE)
         && NOT_VAL_FLAG(v, NODE_FLAG_FREE)

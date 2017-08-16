@@ -1027,7 +1027,7 @@ static void Mold_Or_Form_Map(REB_MOLD *mo, const RELVAL *v, REBOOL form)
 }
 
 
-static void Form_Object(REB_MOLD *mo, const RELVAL *v)
+static void Form_Any_Context(REB_MOLD *mo, const RELVAL *v)
 {
     REBCTX *c = VAL_CONTEXT(v);
 
@@ -1062,7 +1062,7 @@ static void Form_Object(REB_MOLD *mo, const RELVAL *v)
 }
 
 
-static void Mold_Object(REB_MOLD *mo, const RELVAL *v)
+static void Mold_Any_Context(REB_MOLD *mo, const RELVAL *v)
 {
     REBCTX *c = VAL_CONTEXT(v);
 
@@ -1111,18 +1111,14 @@ static void Mold_Object(REB_MOLD *mo, const RELVAL *v)
 
     REBVAL *key = keys_head;
     for (; NOT_END(key); ++key) {
+        if (GET_VAL_FLAG(key, TYPESET_FLAG_HIDDEN))
+            continue;
+
         if (key != keys_head)
             Append_Codepoint_Raw(mo->series, ' ');
 
-        // !!! Feature of hidden words in object specs not yet implemented,
-        // but if it paralleled how function specs work it would be SET-WORD!
-        //
         DECLARE_LOCAL (any_word);
-        Init_Any_Word(
-            any_word,
-            GET_VAL_FLAG(key, TYPESET_FLAG_HIDDEN) ? REB_SET_WORD : REB_WORD,
-            VAL_KEY_SPELLING(key)
-        );
+        Init_Any_Word(any_word, REB_WORD, VAL_KEY_SPELLING(key));
         Mold_Value(mo, any_word);
     }
 
@@ -1179,7 +1175,7 @@ static void Mold_Or_Form_Error(REB_MOLD *mo, const RELVAL *v, REBOOL form)
     // Protect against recursion. !!!!
     //
     if (NOT(form)) {
-        Mold_Object(mo, v);
+        Mold_Any_Context(mo, v);
         return;
     }
 
@@ -1567,9 +1563,9 @@ void Mold_Or_Form_Value(REB_MOLD *mo, const RELVAL *v, REBOOL form)
     case REB_PORT:
     case REB_FRAME:
         if (form)
-            Form_Object(mo, v);
+            Form_Any_Context(mo, v);
         else
-            Mold_Object(mo, v);
+            Mold_Any_Context(mo, v);
         break;
 
     case REB_ERROR:
@@ -1609,7 +1605,7 @@ void Mold_Or_Form_Value(REB_MOLD *mo, const RELVAL *v, REBOOL form)
 
         REBCTX *meta = VAL_LIBRARY_META(v);
         if (meta)
-            Mold_Object(mo, CTX_VALUE(meta));
+            Mold_Any_Context(mo, CTX_VALUE(meta));
 
         End_Mold(mo);
         break; }

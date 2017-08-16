@@ -12,8 +12,7 @@
     f: make frame! :append-10
     f/series: copy [a b c]
     do f
-    f/value: 20
-    [a b c 10 20] = do f
+    [a b c 10 10] = do f
 ][
     foo: does [
         return-5: specialize 'return [value: 5]

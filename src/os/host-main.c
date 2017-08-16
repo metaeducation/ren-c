@@ -580,8 +580,8 @@ void Init_Debug_Extension(void) {
         REBFUN *debug_native = Make_Function(
             Make_Paramlist_Managed_May_Fail(spec, MKF_KEYWORDS),
             &N_debug,
-            NULL, // no underlying function, this is fundamental
-            NULL // not providing a specialization
+            NULL, // no facade (use paramlist)
+            NULL // no specialization exemplar (or inherited exemplar)
         );
 
         Move_Value(

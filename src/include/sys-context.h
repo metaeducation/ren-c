@@ -82,12 +82,42 @@ inline static REBARR *CTX_VARLIST(REBCTX *c) {
 }
 
 
+// There may not be any dynamic or stack allocation available for a stack
+// allocated context, and in that case it will have to come out of the
+// REBSER node data itself.
 //
-// Special property: keylist pointer is stored in the misc field of REBSER
-//
+inline static REBVAL *CTX_VALUE(REBCTX *c) {
+    return GET_SER_INFO(CTX_VARLIST(c), CONTEXT_INFO_STACK)
+        ? KNOWN(&SER(CTX_VARLIST(c))->content.values[0])
+        : KNOWN(ARR_HEAD(CTX_VARLIST(c))); // not a RELVAL
+}
+
+inline static REBARR *CTX_KEYLIST_RAW(REBCTX *c) {
+    return SER(CTX_VARLIST(c))->link.keylist;
+}
 
 inline static REBARR *CTX_KEYLIST(REBCTX *c) {
-    return SER(CTX_VARLIST(c))->link.keylist;
+    RELVAL *v = CTX_VALUE(c);
+
+    if (NOT(IS_FRAME(v))) {
+        //
+        // Ordinarily, we want to use the keylist pointer that is stored in
+        // the misc field of the varlist.
+        //
+        return CTX_KEYLIST_RAW(c);
+    }
+
+    // If the context in question is a FRAME! value, then the ->phase
+    // of the frame presents the "view" of which keys should be visible at
+    // this phase.  So if the phase is a specialization, then it should
+    // not show all the underlying function's keys...just the ones that
+    // are not hidden in the facade that specialization uses.  Since the
+    // phase changes, a fixed value can't be put into the keylist...that is
+    // just the keylist of the underlying function.
+    //
+    // Note: FUNC_FACADE and VAL_FUNC_PARAMLIST macros not defined yet
+    //
+    return cast(REBSER*, v->payload.any_context.phase)->misc.facade;
 }
 
 static inline void INIT_CTX_KEYLIST_SHARED(REBCTX *c, REBARR *keylist) {
@@ -129,16 +159,6 @@ static inline void INIT_CTX_KEYLIST_UNIQUE(REBCTX *c, REBARR *keylist) {
 //
 inline static REBVAL *CTX_KEYS_HEAD(REBCTX *c) {
     return SER_AT(REBVAL, SER(CTX_KEYLIST(c)), 1);
-}
-
-// There may not be any dynamic or stack allocation available for a stack
-// allocated context, and in that case it will have to come out of the
-// REBSER node data itself.
-//
-inline static REBVAL *CTX_VALUE(REBCTX *c) {
-    return GET_SER_INFO(CTX_VARLIST(c), CONTEXT_INFO_STACK)
-        ? KNOWN(&SER(CTX_VARLIST(c))->content.values[0])
-        : KNOWN(ARR_HEAD(CTX_VARLIST(c))); // not a RELVAL
 }
 
 inline static REBFRM *CTX_FRAME_IF_ON_STACK(REBCTX *c) {
@@ -195,7 +215,16 @@ inline static REBSYM CTX_KEY_SYM(REBCTX *c, REBCNT n) {
 }
 
 inline static REBCTX *CTX_META(REBCTX *c) {
-    return SER(CTX_KEYLIST(c))->link.meta;
+    //
+    // !!! CTX_KEYLIST() will return a facade based on the currently running
+    // phase for frames.  At present, facades do not carry information in
+    // their link or misc fields.  Hence this does not use CTX_KEYLIST() but
+    // rather uses the fundamental pointer in the frame.  This should be
+    // reviewed, as how the "meta" linkage works in light of shared keylists
+    // or paramlists is not fully articulated (can every object have a unique
+    // meta pointer?  If so it must be on the varlist.
+    //
+    return SER(CTX_KEYLIST_RAW(c))->link.meta;
 }
 
 #define FAIL_IF_READ_ONLY_CONTEXT(c) \
@@ -274,7 +303,7 @@ inline static void INIT_VAL_CONTEXT(REBVAL *v, REBCTX *c) {
 
 inline static REBCTX *VAL_CONTEXT_META(const RELVAL *v) {
     return SER(
-        CTX_KEYLIST(CTX(v->payload.any_context.varlist))
+        CTX_KEYLIST_RAW(CTX(v->payload.any_context.varlist))
     )->link.meta;
 }
 
@@ -282,7 +311,7 @@ inline static REBCTX *VAL_CONTEXT_META(const RELVAL *v) {
     CTX_KEY_SYM(VAL_CONTEXT(v), (n))
 
 inline static void INIT_CONTEXT_META(REBCTX *c, REBCTX *m) {
-    SER(CTX_KEYLIST(c))->link.meta = m;
+    SER(CTX_KEYLIST_RAW(c))->link.meta = m;
 }
 
 inline static REBVAL *CTX_FRAME_FUNC_VALUE(REBCTX *c) {
