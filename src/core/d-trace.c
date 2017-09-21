@@ -242,7 +242,7 @@ REB_R Apply_Core_Traced(REBFRM * const f)
         // Only show the label if this phase is the first phase.
 
         Debug_Space(cast(REBCNT, 4 * depth));
-        Debug_Fmt_(RM_TRACE_FUNCTION, STR_HEAD(f->label));
+        Debug_Fmt_(RM_TRACE_FUNCTION, Frame_Label_Or_Anonymous_UTF8(f));
         if (GET_FLAG(Trace_Flags, 1))
             Debug_Values(FRM_ARG(FS_TOP, 1), FRM_NUM_ARGS(FS_TOP), 20);
         else
@@ -262,7 +262,7 @@ REB_R Apply_Core_Traced(REBFRM * const f)
         // Only show the return result if this is the last phase.
 
         Debug_Space(cast(REBCNT, 4 * depth));
-        Debug_Fmt_(RM_TRACE_RETURN, STR_HEAD(f->label));
+        Debug_Fmt_(RM_TRACE_RETURN, Frame_Label_Or_Anonymous_UTF8(f));
 
         switch (r) {
         case R_FALSE:

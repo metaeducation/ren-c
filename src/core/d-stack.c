@@ -120,7 +120,7 @@ REBARR *Make_Where_For_Frame(REBFRM *f)
 
     assert(end >= start);
 
-    assert(Is_Any_Function_Frame(f));
+    assert(Is_Function_Frame(f));
     REBOOL pending = Is_Function_Frame_Fulfilling(f);
 
     REBCNT dsp_start = DSP;
@@ -131,7 +131,7 @@ REBARR *Make_Where_For_Frame(REBFRM *f)
     // appear and can be studied.
     /*
         DS_PUSH_TRASH;
-        Init_Word(DS_TOP, FRM_LABEL(f));
+        Init_Word(DS_TOP, ...?)
     */
 
     REBCNT n;
@@ -218,6 +218,7 @@ REBNATIVE(where_of)
 //
 //  "Get word label used to invoke a function call (if still on stack)"
 //
+//      return: [word! blank!]
 //      level [frame! function! integer!]
 //  ]
 //
@@ -225,18 +226,15 @@ REBNATIVE(label_of)
 {
     INCLUDE_PARAMS_OF_LABEL_OF;
 
-    REBFRM *frame = Frame_For_Stack_Level(NULL, ARG(level), TRUE);
+    REBFRM *f = Frame_For_Stack_Level(NULL, ARG(level), TRUE);
 
-    // Make it slightly easier by returning a NONE! instead of giving an
-    // error for a frame that isn't on the stack.
-    //
-    // !!! Should a function that was invoked by something other than a WORD!
-    // return something like TRUE instead of a fake symbol?
-    //
-    if (frame == NULL)
+    if (f == NULL)
+        fail (Error_Frame_Not_On_Stack_Raw());
+
+    if (f->opt_label == NULL)
         return R_BLANK;
 
-    Init_Word(D_OUT, FRM_LABEL(frame));
+    Init_Word(D_OUT, f->opt_label);
     return R_OUT;
 }
 
@@ -430,7 +428,7 @@ REBNATIVE(backtrace)
         // be interesting to see GROUP! stack levels that are being
         // executed as well (as they are something like DO).
         //
-        if (NOT(Is_Any_Function_Frame(f)))
+        if (NOT(Is_Function_Frame(f)))
             continue;
 
         REBOOL pending = Is_Function_Frame_Fulfilling(f);
@@ -540,7 +538,11 @@ REBNATIVE(backtrace)
         //
         if (REF(brief)) {
             DS_PUSH_TRASH;
-            Init_Word(DS_TOP, FRM_LABEL(f));
+
+            // !!! Using a blank here is misleading...but so is any particular
+            // unescaped sequence that doesn't look like a function call...
+
+            Get_Frame_Label_Or_Blank(DS_TOP, f);
             continue;
         }
 
@@ -640,7 +642,7 @@ REBFRM *Frame_For_Stack_Level(
         frame = frame->prior;
 
     for (; frame != NULL; frame = frame->prior) {
-        if (NOT(Is_Any_Function_Frame(frame))) {
+        if (NOT(Is_Function_Frame(frame))) {
             //
             // Don't consider pending calls, or GROUP!, or any non-invoked
             // function as a candidate to target.

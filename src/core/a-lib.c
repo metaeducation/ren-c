@@ -442,7 +442,7 @@ inline static REBFRM *Extract_Live_Rebfrm_May_Fail(const REBVAL *frame) {
     if (f == NULL)
         fail ("FRAME! is no longer on stack.");
 
-    assert(Is_Any_Function_Frame(f));
+    assert(Is_Function_Frame(f));
     assert(NOT(Is_Function_Frame_Fulfilling(f)));
     return f;
 }

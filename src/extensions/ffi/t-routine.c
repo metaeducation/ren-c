@@ -284,10 +284,10 @@ static REBUPT arg_to_ffi(
         // because it couldn't do so in the return case where arg was null)
 
         if (!IS_STRUCT(arg))
-            fail (Error_Arg_Type(D_LABEL_SYM, param, VAL_TYPE(arg)));
+            fail (Error_Arg_Type(D_FRAME, param, VAL_TYPE(arg)));
 
         if (STU_SIZE(VAL_STRUCT(arg)) != FLD_WIDE(top))
-            fail (Error_Arg_Type(D_LABEL_SYM, param, VAL_TYPE(arg)));
+            fail (Error_Arg_Type(D_FRAME, param, VAL_TYPE(arg)));
 
         memcpy(dest, VAL_STRUCT_DATA_AT(arg), STU_SIZE(VAL_STRUCT(arg)));
 
@@ -304,7 +304,7 @@ static REBUPT arg_to_ffi(
         if (!arg) break;
 
         if (!IS_INTEGER(arg))
-            fail (Error_Arg_Type(D_LABEL_SYM, param, VAL_TYPE(arg)));
+            fail (Error_Arg_Type(D_FRAME, param, VAL_TYPE(arg)));
 
         u = cast(u8, VAL_INT64(arg));
         memcpy(dest, &u, sizeof(u));
@@ -317,7 +317,7 @@ static REBUPT arg_to_ffi(
         if (!arg) break;
 
         if (!IS_INTEGER(arg))
-            fail (Error_Arg_Type(D_LABEL_SYM, param, VAL_TYPE(arg)));
+            fail (Error_Arg_Type(D_FRAME, param, VAL_TYPE(arg)));
 
         i = cast(i8, VAL_INT64(arg));
         memcpy(dest, &i, sizeof(i));
@@ -330,7 +330,7 @@ static REBUPT arg_to_ffi(
         if (!arg) break;
 
         if (!IS_INTEGER(arg))
-            fail (Error_Arg_Type(D_LABEL_SYM, param, VAL_TYPE(arg)));
+            fail (Error_Arg_Type(D_FRAME, param, VAL_TYPE(arg)));
 
         u = cast(u16, VAL_INT64(arg));
         memcpy(dest, &u, sizeof(u));
@@ -343,7 +343,7 @@ static REBUPT arg_to_ffi(
         if (!arg) break;
 
         if (!IS_INTEGER(arg))
-            fail (Error_Arg_Type(D_LABEL_SYM, param, VAL_TYPE(arg)));
+            fail (Error_Arg_Type(D_FRAME, param, VAL_TYPE(arg)));
 
         i = cast(i16, VAL_INT64(arg));
         memcpy(dest, &i, sizeof(i));
@@ -356,7 +356,7 @@ static REBUPT arg_to_ffi(
         if (!arg) break;
 
         if (!IS_INTEGER(arg))
-            fail (Error_Arg_Type(D_LABEL_SYM, param, VAL_TYPE(arg)));
+            fail (Error_Arg_Type(D_FRAME, param, VAL_TYPE(arg)));
 
         u = cast(u32, VAL_INT64(arg));
         memcpy(dest, &u, sizeof(u));
@@ -369,7 +369,7 @@ static REBUPT arg_to_ffi(
         if (!arg) break;
 
         if (!IS_INTEGER(arg))
-            fail (Error_Arg_Type(D_LABEL_SYM, param, VAL_TYPE(arg)));
+            fail (Error_Arg_Type(D_FRAME, param, VAL_TYPE(arg)));
 
         i = cast(i32, VAL_INT64(arg));
         memcpy(dest, &i, sizeof(i));
@@ -383,7 +383,7 @@ static REBUPT arg_to_ffi(
         if (!arg) break;
 
         if (!IS_INTEGER(arg))
-            fail (Error_Arg_Type(D_LABEL_SYM, param, VAL_TYPE(arg)));
+            fail (Error_Arg_Type(D_FRAME, param, VAL_TYPE(arg)));
 
         i = VAL_INT64(arg);
         memcpy(dest, &i, sizeof(REBI64));
@@ -431,7 +431,7 @@ static REBUPT arg_to_ffi(
             break;}
 
         default:
-            fail (Error_Arg_Type(D_LABEL_SYM, param, VAL_TYPE(arg)));
+            fail (Error_Arg_Type(D_FRAME, param, VAL_TYPE(arg)));
         }
         break;} // end case FFI_TYPE_POINTER
 
@@ -450,7 +450,7 @@ static REBUPT arg_to_ffi(
         if (!arg) break;
 
         if (!IS_DECIMAL(arg))
-            fail (Error_Arg_Type(D_LABEL_SYM, param, VAL_TYPE(arg)));
+            fail (Error_Arg_Type(D_FRAME, param, VAL_TYPE(arg)));
 
         f = cast(float, VAL_DECIMAL(arg));
         memcpy(dest, &f, sizeof(f));
@@ -463,7 +463,7 @@ static REBUPT arg_to_ffi(
         if (!arg) break;
 
         if (!IS_DECIMAL(arg))
-            fail (Error_Arg_Type(D_LABEL_SYM, param, VAL_TYPE(arg)));
+            fail (Error_Arg_Type(D_FRAME, param, VAL_TYPE(arg)));
 
         d = VAL_DECIMAL(arg);
         memcpy(dest, &d, sizeof(double));

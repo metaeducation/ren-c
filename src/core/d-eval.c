@@ -158,7 +158,7 @@ void Do_Core_Entry_Checks_Debug(REBFRM *f)
     //
     REBFRM *ftemp = FS_TOP->prior;
     for (; ftemp != NULL; ftemp = ftemp->prior) {
-        if (!Is_Any_Function_Frame(ftemp))
+        if (NOT(Is_Function_Frame(ftemp)))
             continue;
         if (Is_Function_Frame_Fulfilling(ftemp))
             continue;
@@ -177,10 +177,10 @@ void Do_Core_Entry_Checks_Debug(REBFRM *f)
     assert(f->flags.bits & NODE_FLAG_END);
     assert(NOT(f->flags.bits & NODE_FLAG_CELL));
 
-    // f->label is set to NULL by Do_Core()
+    TRASH_POINTER_IF_DEBUG(f->opt_label);
 
 #if !defined(NDEBUG)
-    f->label_debug = NULL;
+    TRASH_POINTER_IF_DEBUG(f->label_debug);
 
     if (
         NOT(FRM_IS_VALIST(f))
@@ -246,6 +246,12 @@ static void Do_Core_Shared_Checks_Debug(REBFRM *f) {
         assert(Get_Opt_Var_May_Fail(f->value, f->specifier) == f->gotten);
     }
 
+    // We only have a label if we are in the middle of running a function,
+    // and if we're not running a function then f->phase should be trash.
+    //
+    assert(f->phase == NULL);
+    assert(IS_POINTER_TRASH_DEBUG(f->opt_label));
+
     //=//// ^-- ABOVE CHECKS *ALWAYS* APPLY ///////////////////////////////=//
 
     if (IS_END(f->value))
@@ -300,12 +306,6 @@ REBUPT Do_Core_Expression_Checks_Debug(REBFRM *f) {
     //
     assert(IS_UNREADABLE_IF_DEBUG(&TG_Thrown_Arg));
 
-    assert(f->label == NULL); // release build initializes this
-
-#if !defined(NDEBUG)
-    assert(f->label_debug == NULL); // marked debug to point out debug only
-#endif
-
     // Make sure `cell` is trash in debug build if not doing a `reevaluate`.
     // It does not have to be GC safe (for reasons explained below).  We
     // also need to reset evaluation to normal vs. a kind of "inline quoting"
@@ -330,7 +330,6 @@ REBUPT Do_Core_Expression_Checks_Debug(REBFRM *f) {
     TRASH_POINTER_IF_DEBUG(f->varlist);
 
     TRASH_POINTER_IF_DEBUG(f->original);
-    TRASH_POINTER_IF_DEBUG(f->phase);
     TRASH_POINTER_IF_DEBUG(f->binding);
 
     // Mutate va_list sources into arrays at fairly random moments in the
@@ -387,10 +386,8 @@ void Do_Core_Exit_Checks_Debug(REBFRM *f) {
     //
     assert(VAL_TYPE(f->out) <= REB_MAX_VOID);
 
-    if (NOT(THROWN(f->out))) {
-        assert(f->label == NULL);
+    if (NOT(THROWN(f->out)))
         ASSERT_VALUE_MANAGED(f->out);
-    }
 }
 
 #endif

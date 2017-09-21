@@ -210,7 +210,7 @@ static REBOOL Subparse_Throws(
     Prep_Stack_Cell(&f->args_head[1]);
     Init_Integer(&f->args_head[1], find_flags);
 
-    f->label = Canon(SYM_SUBPARSE);
+    f->opt_label = Canon(SYM_SUBPARSE);
     f->eval_type = REB_FUNCTION;
     f->original = f->phase = NAT_FUNC(subparse);
 

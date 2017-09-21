@@ -126,9 +126,11 @@ void Make_Thrown_Exit_Value(
             if (f == NULL)
                 fail (Error_Invalid_Exit_Raw());
 
-            if (NOT(Is_Any_Function_Frame(f))) continue; // only exit functions
+            if (NOT(Is_Function_Frame(f)))
+                continue; // only exit functions
 
-            if (Is_Function_Frame_Fulfilling(f)) continue; // not ready to exit
+            if (Is_Function_Frame_Fulfilling(f))
+                continue; // not ready to exit
 
             --count;
             if (count == 0) {
@@ -145,9 +147,11 @@ void Make_Thrown_Exit_Value(
             if (f == NULL)
                 fail (Error_Invalid_Exit_Raw());
 
-            if (NOT(Is_Any_Function_Frame(f))) continue; // only exit functions
+            if (NOT(Is_Function_Frame(f)))
+                continue; // only exit functions
 
-            if (Is_Function_Frame_Fulfilling(f)) continue; // not ready to exit
+            if (Is_Function_Frame_Fulfilling(f))
+                continue; // not ready to exit
 
             if (VAL_FUNC(level) == f->original) {
                 INIT_BINDING(out, f);
@@ -238,16 +242,18 @@ REBNATIVE(return)
     REBVAL *typeset = FUNC_PARAM(target, FUNC_NUM_PARAMS(target));
     assert(VAL_PARAM_SYM(typeset) == SYM_RETURN);
 
-    // Check to make sure the types match.  If we deferred this check and
-    // let Do_Core() check the type when it caught it, then the error would
-    // not indicate the callsite where `return badly-typed-value` happened.
+    // Check the type *NOW* instead of waiting and letting Do_Core() check it.
+    // The reasoning is that this way, the error will indicate the callsite,
+    // e.g. the point where `return badly-typed-value` happened.
+    //
+    // !!! In the spirit of the abstraction, it's actually RETURN whose
+    // argument type isn't being fulfilled, not the return type of the
+    // function.  It's just that the RETURN was created with that same
+    // signature.  Review this.
     //
     REBVAL *value = ARG(value);
     if (!TYPE_CHECK(typeset, VAL_TYPE(value)))
-        fail (Error_Bad_Return_Type(
-            f->label, // !!! Should climb stack to get real label?
-            VAL_TYPE(value)
-        ));
+        fail (Error_Bad_Return_Type(f, VAL_TYPE(value)));
 
     Move_Value(D_OUT, NAT_VALUE(exit)); // see also Make_Thrown_Exit_Value
     INIT_BINDING(D_OUT, f->binding);

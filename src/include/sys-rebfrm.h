@@ -415,7 +415,7 @@ struct Reb_Frame {
     // Additionally, the actual dispatch may not have started, so if a fail()
     // or other operation occurs it may not be able to assume that eval_type
     // of REB_FUNCTION implies that the arguments have been pushed yet.
-    // See Is_Any_Function_Frame() for notes on this detection.
+    // See Is_Function_Frame() for notes on this detection.
     //
     enum Reb_Kind eval_type;
 
@@ -473,13 +473,16 @@ struct Reb_Frame {
     //
     REBNOD *binding; // either a varlist of a FRAME! or function paramlist
 
-    // `label`
+    // `opt_label`
     //
     // Functions don't have "names", though they can be assigned to words.
+    // However, not all function invocations are through words or paths, so
+    // the label may not be known.  It is NULL to indicate anonymity.
+    //
     // The evaluator only enforces that the symbol be set during function
     // calls--in the release build, it is allowed to be garbage otherwise.
     //
-    REBSTR *label;
+    REBSTR *opt_label;
 
     // `varlist`
     //

@@ -1844,7 +1844,7 @@ REB_R Returner_Dispatcher(REBFRM *f)
     // to this call is hidden.
     //
     if (!TYPE_CHECK(typeset, VAL_TYPE(f->out)))
-        fail (Error_Bad_Return_Type(f->label, VAL_TYPE(f->out)));
+        fail (Error_Bad_Return_Type(f, VAL_TYPE(f->out)));
 
     return R_OUT;
 }

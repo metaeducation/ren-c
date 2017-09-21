@@ -293,12 +293,12 @@ void Do_Core(REBFRM * const f)
 
     // Some initialized bit pattern is needed to check to see if a
     // function call is actually in progress, or if eval_type is just
-    // REB_FUNCTION but doesn't have valid args/state.  The label is a
+    // REB_FUNCTION but doesn't have valid args/state.  The phase is a
     // good choice because it is only affected by the function call case,
     // see Is_Function_Frame_Fulfilling().
     //
-    f->label = NULL;
     f->eval_type = VAL_TYPE(f->value);
+    f->phase = NULL;
 
 #if !defined(NDEBUG)
     SNAP_STATE(&f->state_debug); // to make sure stack balances, etc.
@@ -529,7 +529,7 @@ reevaluate:;
 
     case REB_FUNCTION: // literal function in a block
         current_gotten = const_KNOWN(current);
-        SET_FRAME_LABEL(f, Canon(SYM___ANONYMOUS__)); // nameless literal
+        SET_FRAME_LABEL(f, NULL); // nameless literal
 
         if (GET_VAL_FLAG(current_gotten, VALUE_FLAG_ENFIXED)) {
             //
@@ -571,7 +571,10 @@ reevaluate:;
 
     do_function_arglist_in_progress:
 
-        assert(f->label != NULL); // must be something (even "anonymous")
+        assert(
+            f->opt_label == NULL
+            || GET_SER_FLAG(f->opt_label, SERIES_FLAG_UTF8_STRING)
+        );
     #if !defined(NDEBUG)
         assert(f->label_debug != NULL); // SET_FRAME_LABEL sets (C debugging)
     #endif
@@ -932,7 +935,7 @@ reevaluate:;
                         fail (Error_Partial_Lookback(f));
 
                     if (NOT_VAL_FLAG(f->param, TYPESET_FLAG_ENDABLE))
-                        fail (Error_No_Arg(FRM_LABEL(f), f->param));
+                        fail (Error_No_Arg(f, f->param));
 
                     Init_Void(f->arg);
                     goto continue_arg_loop;
@@ -1015,7 +1018,7 @@ reevaluate:;
 
             if (IS_END(f->value)) {
                 if (NOT_VAL_FLAG(f->param, TYPESET_FLAG_ENDABLE))
-                    fail (Error_No_Arg(FRM_LABEL(f), f->param));
+                    fail (Error_No_Arg(f, f->param));
 
                 Prep_Stack_Cell(f->arg);
                 Init_Void(f->arg);
@@ -1180,9 +1183,7 @@ reevaluate:;
 
             if (NOT_VAL_FLAG(f->param, TYPESET_FLAG_VARIADIC)) {
                 if (NOT(TYPE_CHECK(f->param, VAL_TYPE(f->arg))))
-                    fail (Error_Arg_Type(
-                        FRM_LABEL(f), f->param, VAL_TYPE(f->arg))
-                    );
+                    fail (Error_Arg_Type(f, f->param, VAL_TYPE(f->arg)));
             }
             else {
                 // Varargs are odd, because the type checking doesn't
@@ -1190,9 +1191,7 @@ reevaluate:;
                 // has to be a VARARGS!.
                 //
                 if (!IS_VARARGS(f->arg))
-                    fail (Error_Not_Varargs(
-                        FRM_LABEL(f), f->param, VAL_TYPE(f->arg)
-                    ));
+                    fail (Error_Not_Varargs(f, f->param, VAL_TYPE(f->arg)));
 
                 // While "checking" the variadic argument we actually re-stamp
                 // it with this parameter and frame's signature.  It reuses
@@ -1419,7 +1418,6 @@ reevaluate:;
             f->gotten = END;
 
             Drop_Function_Args_For_Frame(f);
-            CLEAR_FRAME_LABEL(f);
             goto reevaluate; } // we don't move index!
 
         case R_UNHANDLED: // internal use only, shouldn't be returned
@@ -1455,7 +1453,7 @@ reevaluate:;
         REBVAL *typeset = FUNC_PARAM(f->phase, FUNC_NUM_PARAMS(f->phase));
         assert(VAL_PARAM_SYM(typeset) == SYM_RETURN);
         if (!TYPE_CHECK(typeset, VAL_TYPE(f->out)))
-            fail (Error_Bad_Return_Type(f->label, VAL_TYPE(f->out)));
+            fail (Error_Bad_Return_Type(f, VAL_TYPE(f->out)));
     }
 #endif
 
@@ -1493,8 +1491,6 @@ reevaluate:;
         // original function still on the stack helps make errors clearer.
         //
         Drop_Function_Args_For_Frame(f);
-
-        CLEAR_FRAME_LABEL(f);
         break;
 
 //==//////////////////////////////////////////////////////////////////////==//
@@ -1684,10 +1680,10 @@ reevaluate:;
         //
     do_path_in_current:;
 
-        REBSTR *label;
+        REBSTR *opt_label;
         if (Do_Path_Throws_Core(
             f->out,
-            &label, // requesting label says we run functions (not GET-PATH!)
+            &opt_label, // requesting says we run functions (not GET-PATH!)
             current,
             f->specifier,
             NULL // `setval`: null means don't treat as SET-PATH!
@@ -1700,10 +1696,7 @@ reevaluate:;
 
         if (IS_FUNCTION(f->out)) {
             f->eval_type = REB_FUNCTION;
-            if (label == NULL)
-                SET_FRAME_LABEL(f, Canon(SYM___ANONYMOUS__));
-            else
-                SET_FRAME_LABEL(f, label);
+            SET_FRAME_LABEL(f, opt_label); // NULL label means anonymous
 
             // object/func or func/refinements or object/func/refinement
             //

@@ -177,7 +177,7 @@ REBOOL Do_Breakpoint_Throws(
         //
         REBFRM *frame;
         for (frame = FS_TOP; frame != NULL; frame = frame->prior) {
-            if (NOT(Is_Any_Function_Frame(frame)))
+            if (NOT(Is_Function_Frame(frame)))
                 continue;
             if (Is_Function_Frame_Fulfilling(frame))
                 continue;
@@ -454,8 +454,10 @@ REBNATIVE(resume)
 
         frame = FS_TOP;
         for (; frame != NULL; frame = frame->prior) {
-            if (NOT(Is_Any_Function_Frame(frame))) continue;
-            if (Is_Function_Frame_Fulfilling(frame)) continue;
+            if (NOT(Is_Function_Frame(frame)))
+                continue;
+            if (Is_Function_Frame_Fulfilling(frame))
+                continue;
 
             if (
                 FUNC_DISPATCHER(frame->phase) == &N_pause

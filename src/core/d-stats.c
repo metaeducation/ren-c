@@ -243,8 +243,8 @@ REB_R Apply_Core_Measured(REBFRM * const f)
             // There's no entry yet for this FUNCTION!, initialize one.
 
             REBARR *a = Make_Array(IDX_STATS_MAX);
-            if (STR_SYMBOL(f->label) != SYM___ANONYMOUS__)
-                Init_Word(ARR_AT(a, IDX_STATS_SYMBOL), f->label);
+            if (f->opt_label != NULL)
+                Init_Word(ARR_AT(a, IDX_STATS_SYMBOL), f->opt_label);
             else
                 Init_Blank(ARR_AT(a, IDX_STATS_SYMBOL));
             Init_Integer(ARR_AT(a, IDX_STATS_NUMCALLS), 1);
@@ -279,9 +279,9 @@ REB_R Apply_Core_Measured(REBFRM * const f)
             ){
                 if (
                     IS_BLANK(ARR_AT(a, IDX_STATS_SYMBOL))
-                    && STR_SYMBOL(f->label) != SYM___ANONYMOUS__
+                    && f->opt_label != NULL
                 ){
-                    Init_Word(ARR_AT(a, IDX_STATS_SYMBOL), f->label);
+                    Init_Word(ARR_AT(a, IDX_STATS_SYMBOL), f->opt_label);
                 }
                 Init_Integer(
                     ARR_AT(a, IDX_STATS_NUMCALLS),

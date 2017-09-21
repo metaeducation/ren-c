@@ -166,9 +166,8 @@ inline static REBFRM *CTX_FRAME_IF_ON_STACK(REBCTX *c) {
     assert(
         f == NULL
         || (
-            f->eval_type <= REB_FUNCTION
-            && f->label != NULL
-        ) // Note: inlining of Is_Any_Function_Frame() to break dependency
+            f->eval_type == REB_FUNCTION && f->phase != NULL
+        ) // Note: inlining of Is_Function_Frame() to break dependency
     );
     return f;
 }

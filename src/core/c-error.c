@@ -313,7 +313,7 @@ ATTRIBUTE_NO_RETURN void Fail_Core(const void *p)
     //
     REBFRM *f = FS_TOP;
     while (f != Saved_State->frame) {
-        if (Is_Any_Function_Frame(f))
+        if (Is_Function_Frame(f))
             Drop_Function_Args_For_Frame_Core(f, FALSE); // don't drop chunks
 
         // See notes in Do_Va_Core() about how it is required by C standard
@@ -352,7 +352,7 @@ REBCNT Stack_Depth(void)
 
     REBFRM *f = FS_TOP;
     while (f) {
-        if (Is_Any_Function_Frame(f))
+        if (Is_Function_Frame(f))
             if (NOT(Is_Function_Frame_Fulfilling(f))) {
                 //
                 // We only count invoked functions (not group or path
@@ -479,13 +479,13 @@ void Set_Location_Of_Error(
         //
         // Only invoked functions (not pending functions, groups, etc.)
         //
-        if (NOT(Is_Any_Function_Frame(f)))
+        if (NOT(Is_Function_Frame(f)))
             continue;
         if (Is_Function_Frame_Fulfilling(f))
             continue;
 
         DS_PUSH_TRASH;
-        Init_Word(DS_TOP, FRM_LABEL(f));
+        Get_Frame_Label_Or_Blank(DS_TOP, f);
     }
     Init_Block(&vars->where, Pop_Stack_Values(dsp_orig));
 
@@ -1141,17 +1141,17 @@ REBCTX *Error_Bad_Func_Def(const REBVAL *spec, const REBVAL *body)
 //
 //  Error_No_Arg: C
 //
-REBCTX *Error_No_Arg(REBSTR *label, const RELVAL *param)
+REBCTX *Error_No_Arg(REBFRM *f, const RELVAL *param)
 {
     assert(IS_TYPESET(param));
 
     DECLARE_LOCAL (param_word);
     Init_Word(param_word, VAL_PARAM_SPELLING(param));
 
-    DECLARE_LOCAL (label_word);
-    Init_Word(label_word, label);
+    DECLARE_LOCAL (label);
+    Get_Frame_Label_Or_Blank(label, f);
 
-    return Error_No_Arg_Raw(label_word, param_word);
+    return Error_No_Arg_Raw(label, param_word);
 }
 
 
@@ -1199,7 +1199,7 @@ REBCTX *Error_No_Relative_Core(const RELVAL *any_word)
 //  Error_Not_Varargs: C
 //
 REBCTX *Error_Not_Varargs(
-    REBSTR *label,
+    REBFRM *f,
     const RELVAL *param,
     enum Reb_Kind kind
 ){
@@ -1217,7 +1217,7 @@ REBCTX *Error_Not_Varargs(
         VAL_PARAM_SPELLING(param)
     );
 
-    fail (Error_Arg_Type(label, honest_param, kind));
+    fail (Error_Arg_Type(f, honest_param, kind));
 }
 
 
@@ -1299,7 +1299,7 @@ REBCTX *Error_No_Value_Core(const RELVAL *target, REBSPC *specifier) {
 REBCTX *Error_Partial_Lookback(REBFRM *f)
 {
     DECLARE_LOCAL (label);
-    Init_Word(label, FRM_LABEL(f));
+    Get_Frame_Label_Or_Blank(label, f);
 
     DECLARE_LOCAL (param_name);
     Init_Word(param_name, VAL_PARAM_SPELLING(f->param));
@@ -1415,7 +1415,7 @@ REBCTX *Error_Unexpected_Type(enum Reb_Kind expected, enum Reb_Kind actual)
 // a type different than the arg given (which had `arg_type`)
 //
 REBCTX *Error_Arg_Type(
-    REBSTR *label,
+    REBFRM *f,
     const RELVAL *param,
     enum Reb_Kind kind
 ) {
@@ -1424,8 +1424,8 @@ REBCTX *Error_Arg_Type(
     DECLARE_LOCAL (param_word);
     Init_Word(param_word, VAL_PARAM_SPELLING(param));
 
-    DECLARE_LOCAL (label_word);
-    Init_Word(label_word, label);
+    DECLARE_LOCAL (label);
+    Get_Frame_Label_Or_Blank(label, f);
 
     if (kind != REB_MAX_VOID) {
         assert(kind != REB_0);
@@ -1433,7 +1433,7 @@ REBCTX *Error_Arg_Type(
         assert(IS_DATATYPE(datatype));
 
         return Error_Expect_Arg_Raw(
-            label_word,
+            label,
             datatype,
             param_word
         );
@@ -1443,7 +1443,7 @@ REBCTX *Error_Arg_Type(
     // to check it.  Since Get_Type() will fail, use another error.
     //
     return Error_Arg_Required_Raw(
-        label_word,
+        label,
         param_word
     );
 }
@@ -1452,16 +1452,16 @@ REBCTX *Error_Arg_Type(
 //
 //  Error_Bad_Return_Type: C
 //
-REBCTX *Error_Bad_Return_Type(REBSTR *label, enum Reb_Kind kind) {
-    DECLARE_LOCAL (label_word);
-    Init_Word(label_word, label);
+REBCTX *Error_Bad_Return_Type(REBFRM *f, enum Reb_Kind kind) {
+    DECLARE_LOCAL (label);
+    Get_Frame_Label_Or_Blank(label, f);
 
     if (kind == REB_MAX_VOID)
-        return Error_Needs_Return_Value_Raw(label_word);
+        return Error_Needs_Return_Value_Raw(label);
 
     REBVAL *datatype = Get_Type(kind);
     assert(IS_DATATYPE(datatype));
-    return Error_Bad_Return_Type_Raw(label_word, datatype);
+    return Error_Bad_Return_Type_Raw(label, datatype);
 }
 
 

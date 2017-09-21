@@ -248,14 +248,14 @@ void Dump_Stack(REBFRM *f, REBCNT level)
         return;
     }
 
-   printf(
+    printf(
         "STACK[%d](%s) - %d\n",
         cast(int, level),
-        STR_HEAD(FRM_LABEL(f)),
+        Frame_Label_Or_Anonymous_UTF8(f),
         f->eval_type // note: this is now an ordinary Reb_Kind, stringify it
     );
 
-    if (NOT(Is_Any_Function_Frame(f))) {
+    if (NOT(Is_Function_Frame(f))) {
         printf("(no function call pending or in progress)\n");
         fflush(stdout);
         return;

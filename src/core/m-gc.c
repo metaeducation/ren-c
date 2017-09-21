@@ -1139,7 +1139,7 @@ static void Mark_Frame_Stack_Deep(void)
         if (NOT_END(f->out)) // never NULL, always initialized bit pattern
             Queue_Mark_Opt_Value_Deep(f->out);
 
-        if (NOT(Is_Any_Function_Frame(f))) {
+        if (NOT(Is_Function_Frame(f))) {
             //
             // Consider something like `eval copy quote (recycle)`, because
             // while evaluating the group it has no anchor anywhere in the
@@ -1152,7 +1152,8 @@ static void Mark_Frame_Stack_Deep(void)
             Queue_Mark_Opt_Value_Deep(&f->cell);
 
         Queue_Mark_Function_Deep(f->phase); // never NULL
-        Mark_Rebser_Only(f->label); // also never NULL
+        if (f->opt_label != NULL) // will be NULL if no symbol
+            Mark_Rebser_Only(f->opt_label);
 
         if (!Is_Function_Frame_Fulfilling(f)) {
             assert(IS_END(f->param)); // indicates function is running
@@ -1167,10 +1168,6 @@ static void Mark_Frame_Stack_Deep(void)
             if (NOT_END(f->special) && Is_Value_Managed(f->special))
                 Queue_Mark_Opt_Value_Deep(f->special);
         }
-
-        // Need to keep the label symbol alive for error messages/stacktraces
-        //
-        Mark_Rebser_Only(f->label);
 
         // We need to GC protect the values in the args no matter what,
         // but it might not be managed yet (e.g. could still contain garbage

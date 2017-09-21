@@ -180,7 +180,7 @@ REB_R Do_Vararg_Op_May_Throw(
     }
 
     REB_R r;
-    REBSTR *label;
+    REBFRM *opt_vararg_frame;
 
     REBFRM *f;
     REBVAL *shared;
@@ -191,7 +191,7 @@ REB_R Do_Vararg_Op_May_Throw(
         // MAKE ANY-ARRAY! on a varargs (which reified the varargs into an
         // array during that creation, flattening its entire output).
 
-        label = Canon(SYM___ANONYMOUS__); // no frame label to apply
+        opt_vararg_frame = NULL;
         arg = NULL; // no corresponding varargs argument either
 
         r = Vararg_Op_If_No_Advance(
@@ -271,7 +271,7 @@ REB_R Do_Vararg_Op_May_Throw(
         // "Ordinary" case... use the original frame implied by the VARARGS!
         // (so long as it is still live on the stack)
 
-        label = FRM_LABEL(f); // frame label available
+        opt_vararg_frame = f;
         arg = FRM_ARG(f, vararg->payload.varargs.param_offset + 1);
 
         r = Vararg_Op_If_No_Advance(
@@ -339,8 +339,10 @@ type_check_and_return:
 
     assert(NOT(THROWN(out))); // should have returned above
 
-    if (param && NOT(TYPE_CHECK(param, VAL_TYPE(out))))
-        fail (Error_Arg_Type(label, param, VAL_TYPE(out)));
+    if (param && NOT(TYPE_CHECK(param, VAL_TYPE(out)))) {
+        assert(opt_vararg_frame != NULL); // !!! is this true?
+        fail (Error_Arg_Type(opt_vararg_frame, param, VAL_TYPE(out)));
+    }
 
     if (arg) {
         if (GET_VAL_FLAG(out, VALUE_FLAG_UNEVALUATED))

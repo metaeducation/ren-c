@@ -247,11 +247,12 @@ REBNATIVE(do)
         if (CTX_VARS_UNAVAILABLE(c))
             fail (Error_Do_Expired_Frame_Raw());
 
+        const REBSTR *opt_label = NULL; // no label available
         return Apply_Def_Or_Exemplar(
             D_OUT,
             source->payload.any_context.phase,
             VAL_BINDING(source),
-            Canon(SYM___ANONYMOUS__),
+            opt_label,
             NOD(VAL_CONTEXT(source))
         ); }
 
@@ -489,10 +490,8 @@ REBNATIVE(apply)
     // the symbol (for debugging, errors, etc.)  If caller passes a WORD!
     // then we lookup the variable to get the function, but save the symbol.
     //
-    REBSTR *name;
-    Get_If_Word_Or_Path_Arg(D_OUT, &name, ARG(value));
-    if (name == NULL)
-        name = Canon(SYM___ANONYMOUS__); // Do_Core requires non-NULL symbol
+    REBSTR *opt_label;
+    Get_If_Word_Or_Path_Arg(D_OUT, &opt_label, ARG(value));
 
     if (!IS_FUNCTION(D_OUT))
         fail (Error_Apply_Non_Function_Raw(ARG(value))); // for SPECIALIZE too
@@ -501,7 +500,7 @@ REBNATIVE(apply)
         D_OUT,
         VAL_FUNC(D_OUT),
         VAL_BINDING(D_OUT),
-        name,
+        opt_label,
         NOD(def)
     );
 }

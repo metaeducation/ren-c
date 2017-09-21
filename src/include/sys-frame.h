@@ -116,6 +116,7 @@ inline static REBCNT FRM_EXPR_INDEX(REBFRM *f) {
 #define FRM_OUT(f) \
     cast(REBVAL * const, (f)->out) // writable Lvalue
 
+
 // Note about FRM_NUM_ARGS: A native should generally not detect the arity it
 // was invoked with, (and it doesn't make sense as most implementations get
 // the full list of arguments and refinements).  However, ACTION! dispatch
@@ -139,9 +140,6 @@ inline static REBVAL *FRM_CELL(REBFRM *f) {
 
 #define FRM_PRIOR(f) \
     ((f)->prior)
-
-#define FRM_LABEL(f) \
-    ((f)->label)
 
 inline static REBFUN *FRM_UNDERLYING(REBFRM *f) {
     assert(FUNC_UNDERLYING(f->phase) == FUNC_UNDERLYING(f->original));
@@ -186,25 +184,23 @@ inline static REBFUN *FRM_UNDERLYING(REBFRM *f) {
 // Quick access functions from natives (or compatible functions that name a
 // Reb_Frame pointer `frame_`) to get some of the common public fields.
 //
+#define D_FRAME     frame_
 #define D_OUT       FRM_OUT(frame_)         // GC-safe slot for output value
 #define D_CELL      FRM_CELL(frame_)        // GC-safe cell if > 1 argument
-#define D_ARGC      FRM_NUM_ARGS(frame_)        // count of args+refinements/args
+#define D_ARGC      FRM_NUM_ARGS(frame_)    // count of args+refinements/args
 #define D_ARG(n)    FRM_ARG(frame_, (n))    // pass 1 for first arg
-#define D_FUNC      FRM_FUNC(frame_)        // REBVAL* of running function
-#define D_LABEL_SYM FRM_LABEL(frame_)       // symbol or placeholder for call
-#define D_DSP_ORIG  FRM_DSP_ORIG(frame_)    // Original data stack pointer
 
 #define D_PROTECT_X(v)      PROTECT_FRM_X(frame_, (v))
 
 #define REB_0_PICKUP REB_0
 
-inline static REBOOL Is_Any_Function_Frame(REBFRM *f) {
+inline static REBOOL Is_Function_Frame(REBFRM *f) {
     if (f->eval_type == REB_FUNCTION) {
         //
-        // Do not count as a function frame unless it's gotten to the point
-        // of setting the label.
+        // Do not count as a function frame unless its gotten to the point
+        // of pushing arguments.
         //
-        return LOGICAL(f->label != NULL);
+        return LOGICAL(f->phase != NULL);
     }
     return FALSE;
 }
@@ -216,29 +212,39 @@ inline static REBOOL Is_Any_Function_Frame(REBFRM *f) {
 //
 inline static REBOOL Is_Function_Frame_Fulfilling(REBFRM *f)
 {
-    assert(Is_Any_Function_Frame(f));
+    assert(Is_Function_Frame(f));
     return NOT_END(f->param);
 }
 
+
+inline static void Get_Frame_Label_Or_Blank(REBVAL *out, REBFRM *f) {
+    assert(f->eval_type == REB_FUNCTION);
+    if (f->opt_label != NULL)
+        Init_Word(out, f->opt_label); // invoked via WORD! or PATH!
+    else
+        Init_Blank(out); // anonymous invocation
+}
+
+inline static const REBYTE* Frame_Label_Or_Anonymous_UTF8(REBFRM *f) {
+    assert(f->eval_type == REB_FUNCTION);
+    if (f->opt_label != NULL)
+        return STR_HEAD(f->opt_label);
+    return cb_cast("[anonymous]");
+}
 
 // It's helpful when looking in the debugger to be able to look at a frame
 // and see a cached string for the function it's running (if there is one).
 // The release build only considers the frame symbol valid for FUNCTION!s
 //
-inline static void SET_FRAME_LABEL(REBFRM *f, REBSTR *label) {
+inline static void SET_FRAME_LABEL(REBFRM *f, REBSTR *opt_label) {
     assert(f->eval_type == REB_FUNCTION);
-    f->label = label;
+    f->opt_label = opt_label;
 #if !defined(NDEBUG)
-    f->label_debug = cast(const char*, STR_HEAD(label));
+    f->label_debug =
+        cast(const char*, Frame_Label_Or_Anonymous_UTF8(f));
 #endif
 }
 
-inline static void CLEAR_FRAME_LABEL(REBFRM *f) {
-    f->label = NULL;
-#if !defined(NDEBUG)
-    f->label_debug = NULL;
-#endif
-}
 
 inline static void SET_FRAME_VALUE(REBFRM *f, const RELVAL *value) {
     f->value = value;
@@ -461,6 +467,17 @@ inline static void Drop_Function_Args_For_Frame_Core(
     REBFRM *f,
     REBOOL drop_chunks
 ){
+    assert(
+        f->opt_label == NULL
+        || GET_SER_FLAG(f->opt_label, SERIES_FLAG_UTF8_STRING)
+    );
+    TRASH_POINTER_IF_DEBUG(f->opt_label);
+#if !defined(NDEBUG)
+    TRASH_POINTER_IF_DEBUG(f->label_debug);
+#endif
+
+    f->phase = NULL; // should args_head == NULL be the indicator instead?
+
     // The frame may be reused for another function call, and that function
     // may not start with native code (or use native code at all).
     //

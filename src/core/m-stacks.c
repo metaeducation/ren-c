@@ -280,7 +280,7 @@ void Pop_Stack_Values_Into(REBVAL *into, REBDSP dsp_start) {
 //
 REBCTX *Context_For_Frame_May_Reify_Managed(REBFRM *f)
 {
-    assert(Is_Any_Function_Frame(f));
+    assert(Is_Function_Frame(f));
     assert(NOT(Is_Function_Frame_Fulfilling(f)));
 
     if (f->varlist != NULL) {
