@@ -123,21 +123,29 @@ REBNATIVE(unless)
 //      condition [any-value!]
 //      true-branch [<opt> any-value!]
 //      false-branch [<opt> any-value!]
-//      /only
-//          "If branch runs and returns void, do not convert it to BLANK!"
 //  ]
 //
 REBNATIVE(either)
 {
     INCLUDE_PARAMS_OF_EITHER;
 
+    // Unlike conditional constructs that may decide not to run a branch,
+    // either *always* runs a branch.  Using it with ELSE or THEN is thus
+    // pointless, so interfering with the branch return results through the
+    // "barification" interferes with `result: either x [true] [false]`
+    // for no particular benefit.  Rather than cripple it just for the sake
+    // of making that interchangeable with `result: if x [true] else [false]`
+    // we allow EITHER to be different.
+    //
+    const REBOOL only = TRUE;
+
     if (Run_Branch_Throws(
         D_OUT,
         ARG(condition),
-        IS_CONDITIONAL_TRUE(ARG(condition), REF(only))
+        IS_CONDITIONAL_TRUE(ARG(condition), only)
             ? ARG(true_branch)
             : ARG(false_branch),
-        REF(only)
+        only
     )){
         return R_OUT_IS_THROWN;
     }

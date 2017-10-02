@@ -573,12 +573,6 @@ unless*: redescribe [
     specialize 'unless [only: true]
 )
 
-either*: redescribe [
-    {Same as EITHER/ONLY (void, not blank, if branch evaluates to void)}
-](
-    specialize 'either [only: true]
-)
-
 while?: redescribe [
     {Variation of WHILE which returns TRUE if the body ever runs, FALSE if not}
 ](
@@ -923,7 +917,7 @@ right-bar: func [
     also (
         ; We want to make sure `1 |> | 2 3 4` is void, not BAR!
         ;
-        either* bar? first look [void] [take* right]
+        either bar? first look [void] [take* right]
     )(
         loop-until [
             while [bar? first look] [take look]
