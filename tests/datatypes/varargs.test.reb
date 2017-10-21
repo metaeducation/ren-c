@@ -49,6 +49,82 @@
     blank? apply 'f [look: make varargs! []]
 ]
 
+; !!! Experimental behavior of enfixed variadics, is to act as either 0 or 1
+; items.  0 is parallel to <end>, and 1 is parallel to a single parameter.
+; It's a little wonky because the evaluation of the parameter happens *before*
+; the TAKE is called, but theorized that's still more useful than erroring.
+[
+    foo: function [v [integer! <...>]] [ ;-- normal parameter
+        sum: 0
+        while [not tail? v] [
+            sum: sum + take v
+        ]
+        return sum + 1
+    ]
+
+    bar: enfix :foo
+
+    all? [
+        (bar) = 1
+        (10 bar) = 11
+        (10 20 bar) = 21
+        (x: 30 | y: 'x | 1 2 x bar) = 31
+        (multiply 3 9 bar) = 28 ;-- seen as ((multiply 3 9) bar)
+    ]
+][
+    foo: function [#v [integer! <...>]] [ ;-- "tight" parameter
+        sum: 0
+        while [not tail? v] [
+            sum: sum + take v
+        ]
+        return sum + 1
+    ]
+
+    bar: enfix :foo
+
+    all? [
+        (bar) = 1
+        (10 bar) = 11
+        (10 20 bar) = 21
+        (x: 30 | y: 'x | 1 2 x bar) = 31
+        (multiply 3 9 bar) = 30 ;-- seen as (multiply 3 (9 bar))
+    ]
+][
+    foo: function [:v [any-value! <...>]] [
+        stuff: copy []
+        while [not tail? v] [
+            append/only stuff take v
+        ]
+        return stuff
+    ]
+
+    bar: enfix :foo
+
+    all? [
+        (bar) = []
+        (a bar) = [a]
+        ((1 + 2) (3 + 4) bar) = [(3 + 4)]
+    ]
+][
+    foo: function ['v [any-value! <...>]] [
+        stuff: copy []
+        while [not tail? v] [
+            append/only stuff take v
+        ]
+        return stuff
+    ]
+
+    bar: enfix :foo
+
+    all? [
+        (bar) = []
+        (a bar) = [a]
+        ((1 + 2) (3 + 4) bar) = [7]
+    ]
+]
+
+
+
 ; Testing the variadic behavior of |> and <| is easier than rewriting tests
 ; here to do the same thing.
 
