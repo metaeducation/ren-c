@@ -416,6 +416,8 @@ newline newline (rebol-lib-macros)
                 m_cast(wchar_t*, wcschr(cast(const wchar_t*, (d)), (s))) \
             )
         #define OS_STRLEN(s)            wcslen(cast(const wchar_t*, (s)))
+        #define OS_STR_CONVERT(d,s,m) \
+            mbstowcs(cast(wchar_t*, (d)), cast(const char*, (s)), (m))
     #else
         #ifdef TO_OPENBSD
     // !!! SEE **WARNING** BEFORE EDITING
@@ -423,12 +425,16 @@ newline newline (rebol-lib-macros)
                 strlcpy(cast(char*, (d)), cast(const char*, (s)), (m))
             #define OS_STRNCAT(d,s,m) \
                 strlcat(cast(char*, (d)), cast(const char*, (s)), (m))
+            #define OS_STR_CONVERT(d,s,m) \
+                strlcat(cast(char*, (d)), cast(const char*, (s)), (m))
         #else
     // !!! SEE **WARNING** BEFORE EDITING
             #define OS_STRNCPY(d,s,m) \
                 strncpy(cast(char*, (d)), cast(const char*, (s)), (m))
             #define OS_STRNCAT(d,s,m) \
                 strncat(cast(char*, (d)), cast(const char*, (s)), (m))
+            #define OS_STR_CONVERT(d,s,m) \
+                strncpy(cast(char*, (d)), cast(const char*, (s)), (m))
         #endif
         #define OS_STRNCMP(l,r,m) \
             strncmp(cast(const char*, (l)), cast(const char*, (r)), (m))
@@ -450,6 +456,7 @@ newline newline (rebol-lib-macros)
     #define OS_STRNCMP(l,r,m)           OS_STRNCMP_((l), (r), (m))
     #define OS_STRCHR(d,s)              OS_STRCHR_((d), (s))
     #define OS_STRLEN(s)                OS_STRLEN_(s)
+    #define OS_STR_CONVERT(d,s,m)       OS_STR_CONVERT_((d), (s), (m))
 #endif
 
 #ifdef __cplusplus

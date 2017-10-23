@@ -69,7 +69,7 @@ static REBINT Set_Serial_Settings(HANDLE h, struct devreq_serial *serial)
 
     memset(&dcbSerialParams, '\0', sizeof(dcbSerialParams));
     dcbSerialParams.DCBlength = sizeof(dcbSerialParams);
-    if (GetCommState(h, &dcbSerialParams) == 0) return 1;
+    if (!GetCommState(h, &dcbSerialParams)) return 1;
 
 
     for (n = 0; speeds[n]; n += 2) {
@@ -96,7 +96,7 @@ static REBINT Set_Serial_Settings(HANDLE h, struct devreq_serial *serial)
     }
 
 
-    if(SetCommState(h, &dcbSerialParams) == 0) {
+    if(!SetCommState(h, &dcbSerialParams)) {
         return 1;
     }
 
@@ -134,7 +134,7 @@ DEVICE_CMD Open_Serial(REBREQ *req)
         return DR_ERROR;
     }
 
-    if (Set_Serial_Settings(h, serial)==0) {
+    if (Set_Serial_Settings(h, serial)) {
         CloseHandle(h);
         req->error = -RFE_OPEN_FAIL;
         return DR_ERROR;
