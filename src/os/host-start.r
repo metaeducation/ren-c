@@ -187,9 +187,9 @@ usage: procedure [
 boot-welcome:
 {Welcome to the Rebol console.  For more information please type in the commands below:
 
-  HELP    - For starting information
-  ABOUT   - Information about your Rebol
-  CHANGES - What's different about this version}
+  ^[[1;33;49mHELP    ^[[0m- For starting information
+  ^[[1;33;49mABOUT   ^[[0m- Information about your Rebol
+  ^[[1;33;49mCHANGES ^[[0m- What's different about this version}
 
 license: procedure [
     "Prints the REBOL/core license agreement."
@@ -822,10 +822,10 @@ console!: make object! [
 
     ;; APPEARANCE (can be overridden)
 
-    prompt:   {>> }
-    result:   {== }
-    warning:  {!! }
-    error:    {** }                ;; not used yet
+    prompt:   {^[[1;31;49m>> ^[[0m}
+    result:   {^[[1;37;49m== ^[[0m}
+    warning:  {^[[1;35;49m!! ^[[0m}
+    error:    {^[[1;31;49m** }                ;; not used yet
     info:     to-string #{e29398}  ;; info sign!
     greeting: _
     print-prompt:   proc []  [print/only prompt]
