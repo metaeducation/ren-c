@@ -76,7 +76,7 @@ void OS_Free_Mem(void *mem)
 #else
     char *ptr = cast(char *, mem) - sizeof(REBI64);
     if (*cast(REBI64*, ptr) != -1020) {
-        RL_Panic(
+        rebPanic(
             "OS_Free_Mem() mismatched with allocator!"
             " Did you mean to use FREE() instead of OS_FREE()?"
         );

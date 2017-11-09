@@ -66,7 +66,7 @@ REBSER* Gob_To_Image(REBGOB *gob);
 //
 void Convert_Date(REBVAL *out, long zone, const SYSTEMTIME *stime)
 {
-    RL_Init_Date(
+    rebInitDate(
         out,
         stime->wYear, // year
         stime->wMonth, // month

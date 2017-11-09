@@ -58,14 +58,15 @@ emit-native-proto: proc [
 
 emit-include-params-macro: procedure [
     "Emit macros for a native's parameters"
+
+    e [object!] "where to emit (see %common-emitters.r)"
     word [word!] "name of the native"
     paramlist [block!] "paramlist of the native"
-] [
-    ;
+][
     ; start emitting what will be a multi line macro (backslash as last
     ; character on line is how macros span multiple lines in C).
     ;
-    emit-line [
+    e/emit-line [
         {#define} space "INCLUDE_PARAMS_OF_" (uppercase to-c-name word)
         space "\"
     ]
@@ -78,9 +79,9 @@ emit-include-params-macro: procedure [
         if all [any-word? item | not set-word? item] [
             param-name: to-c-name to-word item
 
-            which: either refinement? item ["REFINE"] ["PARAM"]
-            emit-line/indent [
-                which "(" n "," space param-name ");" space "\"
+            e/emit-line/indent [
+                either refinement? item ["REFINE"] ["PARAM"]
+                    "(" n "," space param-name ");" space "\"
             ]
             n: n + 1
         ]
@@ -88,25 +89,10 @@ emit-include-params-macro: procedure [
 
     comment [
         ; Get rid of trailing \ for multi-line macro continuation.
-        unemit newline
-        unemit #"\"
-        emit newline
+        e/unemit newline
+        e/unemit #"\"
+        e/emit newline
     ]
 
-    emit-line [spaced-tab "Enter_Native(frame_);" space]
-]
-
-emit-native-include-params-macro: proc [native-list [block!]][
-    for-next native-list [
-        if tail? next native-list [break]
-
-        if any [
-            'native = native-list/2
-            all [path? native-list/2 | 'native = first native-list/2]
-        ][
-            assert [set-word? native-list/1]
-            emit-include-params-macro (to-word native-list/1) (native-list/3)
-            emit newline
-        ]
-    ]
+    e/emit-line [spaced-tab "Enter_Native(frame_);"]
 ]

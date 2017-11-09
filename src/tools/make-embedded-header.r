@@ -1,6 +1,7 @@
 REBOL [
     System: "REBOL [R3] Language Interpreter and Run-time Environment"
     Title: "Generate C string for the embedded headers"
+    File: %make-embedded-header.r
     Rights: {
         Copyright 2017 Atronix Engineering
         Copyright 2017 Rebol Open Source Contributors
@@ -15,8 +16,8 @@ REBOL [
 
 do %r2r3-future.r
 do %common.r
+do %common-emitter.r
 do %common-parsers.r
-do %form-header.r
 
 print "------ Building embedded header file"
 args: parse-args system/options/args
@@ -49,14 +50,17 @@ remove-macro "__BASE_FILE__"
 remove/part inp -1 + index? find inp to binary! "#define REN_C_STDIO_OK"
 
 ;write %/tmp/sys-core.i inp
-out: unspaced [
-    form-header/gen "Embedded sys-core.h" %tmp-embedded-header.c %make-embedded-header.r
 
-    {#include "sys-core.h"^/}
-    "extern const REBYTE core_header_source[];^/"
-    "const REBYTE core_header_source[] = {^/"
-    binary-to-c join-of inp #{00}
-    "};^/"
+e-embed: (make-emitter
+    "Embedded sys-core.h" output-dir/core/tmp-embedded-header.c)
+
+e-embed/emit-lines [
+    {#include "sys-core.h"}
+    "extern const REBYTE core_header_source[];"
+    "const REBYTE core_header_source[] = {"
+    [binary-to-c join-of inp #{00}]
+    "};"
 ]
+
 print "------ Writing embedded header file"
-write-if-changed output-dir/core/tmp-embedded-header.c out
+e-embed/write-emitted

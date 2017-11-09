@@ -1,6 +1,6 @@
 //
 //  File: %a-lib.c
-//  Summary: "exported REBOL library functions"
+//  Summary: "Lightweight Export API (REBVAL as opaque type)"
 //  Section: environment
 //  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
 //  Homepage: https://github.com/metaeducation/ren-c/
@@ -27,13 +27,49 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
+// This is the "external" API, and %reb-lib.h contains its exported
+// definitions.  That file (and %make-reb-lib.r which generates it) contains
+// comments and notes which will help understand it.
+//
+// What characterizes the external API is that it is not necessary to #include
+// the extensive definitions of `struct REBSER` or the APIs for dealing with
+// all the internal details (e.g. PUSH_GUARD_SERIES(), which are easy to get
+// wrong).  Not only does this simplify the interface, but it also means that
+// the C code using the library isn't competing as much for definitions in
+// the global namespace.
+//
+// (That was true of the original RL_API in R3-Alpha, but this later iteration
+// speaks in terms of actual REBVAL* cells--vs. creating a new type.  They are
+// just opaque pointers to cells whose lifetime is governed by the core.)
+//
+// Each exported routine here has a name RL_rebXxxYyy.  This is a name by
+// which it can be called internally from the codebase like any other function
+// that is part of the core.  However, macros for calling it from the core
+// are given as `#define rebXxxYyy RL_rebXxxYyy`.  This is a little bit nicer
+// and consistent with the way it looks when an external client calls the
+// functions.
+//
+// Then extension clients use macros which have you call the functions through
+// a struct-based "interface" (similar to the way that interfaces work in
+// something like COM).  Here the macros merely pick the API functions through
+// a table, e.g. `#define rebXxxYyy interface_struct->rebXxxYyy`.  This means
+// paying a slight performance penalty to dereference that API per call, but
+// it keeps API clients from depending on the conventional C linker...so that
+// DLLs can be "linked" against a Rebol EXE.
+//
+// (It is not generically possible to export symbols from an executable, and
+// just in general there's no cross-platform assurances about how linking
+// works, so this provides the most flexibility.)
+//
 
 #include "sys-core.h"
 
-// Linkage back to HOST functions. Needed when we compile as a DLL
-// in order to use the OS_* macro functions.
+
+// "Linkage back to HOST functions. Needed when we compile as a DLL
+// in order to use the OS_* macro functions."
+//
 #ifdef REB_API  // Included by C command line
-REBOL_HOST_LIB *Host_Lib;
+    REBOL_HOST_LIB *Host_Lib;
 #endif
 
 
@@ -42,7 +78,7 @@ static enum Reb_Kind RXT_To_Reb[RXT_MAX];
 
 
 //
-//  RL_Version: C
+//  rebVersion: RL_API
 //
 // Obtain current REBOL interpreter version information.
 //
@@ -64,7 +100,7 @@ static enum Reb_Kind RXT_To_Reb[RXT_MAX];
 //          if (vers[1] != RL_VER || vers[2] != RL_REV)
 //              OS_CRASH(cb_cast("Incompatible reb-lib DLL"));
 //
-RL_API void RL_Version(REBYTE vers[])
+void RL_rebVersion(REBYTE vers[])
 {
     // [0] is length
     vers[1] = REBOL_VER;
@@ -76,7 +112,7 @@ RL_API void RL_Version(REBYTE vers[])
 
 
 //
-//  RL_Init: C
+//  rebInit: RL_API
 //
 // Initialize the REBOL interpreter.
 //
@@ -91,7 +127,7 @@ RL_API void RL_Version(REBYTE vers[])
 //     structures used by the REBOL interpreter. This is an
 //     extensive process that takes time.
 //
-void RL_Init(void *lib)
+void RL_rebInit(void *lib)
 {
     // These tables used to be built by overcomplicated Rebol scripts.  It's
     // less hassle to have them built on initialization.
@@ -177,7 +213,7 @@ void RL_Init(void *lib)
 
 
 //
-//  RL_Shutdown: C
+//  rebShutdown: RL_API
 //
 // Shut down a Rebol interpreter (that was initialized via RL_Init).
 //
@@ -190,7 +226,7 @@ void RL_Init(void *lib)
 //     are planning to exit the process, and hence the OS will
 //     automatically reclaim all memory/handles/etc.)
 //
-RL_API void RL_Shutdown(REBOOL clean)
+void RL_rebShutdown(REBOOL clean)
 {
     // At time of writing, nothing Shutdown_Core() does pertains to
     // committing unfinished data to disk.  So really there is
@@ -214,7 +250,7 @@ RL_API void RL_Shutdown(REBOOL clean)
 
 
 //
-//  RL_Escape: C
+//  rebEscape: RL_API
 //
 // Signal that code evaluation needs to be interrupted.
 //
@@ -226,7 +262,7 @@ RL_API void RL_Shutdown(REBOOL clean)
 //     trap. Note that control must be passed back to REBOL for the
 //     signal to be recognized and handled.
 //
-RL_API void RL_Escape(void)
+void RL_rebEscape(void)
 {
     // How should HALT vs. BREAKPOINT be decided?  When does a Ctrl-C want
     // to quit entirely vs. begin an interactive debugging session?
@@ -239,7 +275,7 @@ RL_API void RL_Escape(void)
 
 
 //
-//  RL_Event: C
+//  rebEvent: RL_API
 //
 // Appends an application event (e.g. GUI) to the event port.
 //
@@ -258,7 +294,7 @@ RL_API void RL_Escape(void)
 // a REB_EVENT REBVAL if there was a way of setting the header bits in the
 // places that generate them.
 //
-RL_API int RL_Event(REBEVT *evt)
+int RL_rebEvent(REBEVT *evt)
 {
     REBVAL *event = Append_Event();     // sets signal
 
@@ -278,7 +314,7 @@ RL_API int RL_Event(REBEVT *evt)
 
 
 //
-//  RL_Update_Event: C
+//  rebUpdateEvent: RL_API
 //
 // Updates an application event (e.g. GUI) to the event port.
 //
@@ -290,7 +326,7 @@ RL_API int RL_Event(REBEVT *evt)
 //          the unhandled event in the queue, when it is found,
 //          it will be replaced with this one
 //
-RL_API int RL_Update_Event(REBEVT *evt)
+int RL_rebUpdateEvent(REBEVT *evt)
 {
     REBVAL *event = Find_Last_Event(evt->model, evt->type);
 
@@ -304,12 +340,12 @@ RL_API int RL_Update_Event(REBEVT *evt)
         return 1;
     }
 
-    return RL_Event(evt) - 1;
+    return rebEvent(evt) - 1;
 }
 
 
 //
-//  RL_Find_Event: C
+//  rebFindEvent: RL_API
 //
 // Find an application event (e.g. GUI) to the event port.
 //
@@ -319,7 +355,7 @@ RL_API int RL_Update_Event(REBEVT *evt)
 //     model - event model
 //     type - event type
 //
-RL_API REBEVT *RL_Find_Event (REBINT model, REBINT type)
+REBEVT *RL_rebFindEvent(REBINT model, REBINT type)
 {
     REBVAL * val = Find_Last_Event(model, type);
     if (val != NULL) {
@@ -330,71 +366,29 @@ RL_API REBEVT *RL_Find_Event (REBINT model, REBINT type)
 
 
 //
-//  RL_Gob_Head: C
+//  rebGobHead: RL_API
 //
-RL_API REBGOB** RL_Gob_Head(REBGOB *gob)
+REBGOB** RL_rebGobHead(REBGOB *gob)
 {
     return SER_HEAD(REBGOB*, GOB_PANE(gob));
 }
 
 
 //
-//  RL_Gob_String: C
+//  rebGobString: RL_API
 //
-RL_API REBYTE* RL_Gob_String(REBGOB *gob)
+REBYTE* RL_rebGobString(REBGOB *gob)
 {
     return BIN_HEAD(GOB_CONTENT(gob));
 }
 
 
 //
-//  RL_Gob_Len: C
+//  rebGobLen: RL_API
 //
-RL_API REBCNT RL_Gob_Len(REBGOB *gob)
+REBCNT RL_rebGobLen(REBGOB *gob)
 {
     return SER_LEN(GOB_PANE(gob));
-}
-
-
-//
-//  RL_Encode_UTF8: C
-//
-// Encode the unicode into UTF8 byte string.
-//
-// Returns:
-// Number of dst bytes used.
-//
-// Arguments:
-// dst - destination for encoded UTF8 bytes
-// max - maximum size of the result in bytes
-// src - source array of bytes or wide characters
-// len - input is source length, updated to reflect src chars used
-// unicode - true if src is in wide character format
-// crlf_to_lf - convert carriage-return + linefeed into just linefeed
-//
-// Notes:
-// Does not add a terminator.
-//
-// !!! Host code is not supposed to call any Rebol routines except
-// for those in the RL_Api.  This exposes Rebol's internal UTF8
-// length routine, as it was being used by the Linux host code by
-// Atronix.  Should be reviewed along with the rest of the RL_Api.
-//
-RL_API REBCNT RL_Encode_UTF8(
-    REBYTE *dst,
-    REBINT max,
-    const void *src,
-    REBCNT *len,
-    REBOOL unicode,
-    REBOOL crlf_to_lf
-) {
-    return Encode_UTF8(
-        dst,
-        max,
-        src,
-        len,
-        (unicode ? OPT_ENC_UNISRC : 0) | (crlf_to_lf ? OPT_ENC_CRLF : 0)
-    );
 }
 
 
@@ -410,14 +404,6 @@ RL_API REBCNT RL_Encode_UTF8(
 // here with "RL_" in front of the name, it's at least understandable--and
 // not really introducing any routines that don't already have to exist and
 // be tested.
-//
-// However, long term the external "C" user API will not speak about REBSERs.
-// It will operate purely on the level of REBVAL*, where those values will
-// either be individually managed (as "pairings" under GC control) or have
-// their lifetime controlled other ways.  That layer of API is of secondary
-// importance to refining the internal API (also used by "user natives")
-// as well as the Ren-Cpp API...although it will use several of the same
-// mechanisms that Ren-Cpp does to achieve its goals.
 //
 
 inline static REBFRM *Extract_Live_Rebfrm_May_Fail(const REBVAL *frame) {
@@ -436,36 +422,36 @@ inline static REBFRM *Extract_Live_Rebfrm_May_Fail(const REBVAL *frame) {
 
 
 //
-//  RL_Frm_Num_Args: C
+//  rebFrmNumArgs: RL_API
 //
-RL_API REBCNT RL_Frm_Num_Args(const REBVAL *frame) {
+REBCNT RL_rebFrmNumArgs(const REBVAL *frame) {
     REBFRM *f = Extract_Live_Rebfrm_May_Fail(frame);
     return FRM_NUM_ARGS(f);
 }
 
 //
-//  RL_Frm_Arg: C
+//  rebFrmArg: RL_API
 //
-RL_API REBVAL *RL_Frm_Arg(const REBVAL *frame, REBCNT n) {
+REBVAL *RL_rebFrmArg(const REBVAL *frame, REBCNT n) {
     REBFRM *f = Extract_Live_Rebfrm_May_Fail(frame);
     return FRM_ARG(f, n);
 }
 
 //
-//  RL_Val_Logic: C
+//  rebValLogic: RL_API
 //
-RL_API REBOOL RL_Val_Logic(const REBVAL *v) {
+REBOOL RL_rebValLogic(const REBVAL *v) {
     return VAL_LOGIC(v);
 }
 
 //
-//  RL_Val_Type: C
+//  rebValType: RL_API
 //
 // !!! Among the few concepts from the original host kit API that may make
 // sense, it could be a good idea to abstract numbers for datatypes from the
 // REB_XXX numbering scheme.  So for the moment, REBRXT is being kept as is.
 //
-RL_API REBRXT RL_Val_Type(const REBVAL *v) {
+REBRXT RL_rebValType(const REBVAL *v) {
     return IS_VOID(v)
         ? 0
         : Reb_To_RXT[VAL_TYPE(v)];
@@ -473,104 +459,93 @@ RL_API REBRXT RL_Val_Type(const REBVAL *v) {
 
 
 //
-//  RL_Val_Update_Header: C
+//  rebValInt64: RL_API
 //
-RL_API void RL_Val_Update_Header(REBVAL *v, REBRXT rxt) {
-    if (rxt == 0)
-        Init_Void(v);
-    else
-        VAL_RESET_HEADER(v, RXT_To_Reb[rxt]);
-}
-
-
-//
-//  RL_Val_Int64: C
-//
-RL_API REBI64 RL_Val_Int64(const REBVAL *v) {
+REBI64 RL_rebValInt64(const REBVAL *v) {
     return VAL_INT64(v);
 }
 
 //
-//  RL_Val_Int32: C
+//  rebValInt32: RL_API
 //
-RL_API REBINT RL_Val_Int32(const REBVAL *v) {
+REBINT RL_rebValInt32(const REBVAL *v) {
     return VAL_INT32(v);
 }
 
 //
-//  RL_Val_Decimal: C
+//  rebValDecimal: RL_API
 //
-RL_API REBDEC RL_Val_Decimal(const REBVAL *v) {
+REBDEC RL_rebValDecimal(const REBVAL *v) {
     return VAL_DECIMAL(v);
 }
 
 //
-//  RL_Val_Char: C
+//  rebValChar: RL_API
 //
-RL_API REBUNI RL_Val_Char(const REBVAL *v) {
+REBUNI RL_rebValChar(const REBVAL *v) {
     return VAL_CHAR(v);
 }
 
 //
-//  RL_Val_Time: C
+//  rebValTime: RL_API
 //
-RL_API REBI64 RL_Val_Time(const REBVAL *v) {
+REBI64 RL_rebValTime(const REBVAL *v) {
     return VAL_NANO(v);
 }
 
 
 //
-//  RL_Val_Tuple_Data: C
+//  rebValTupleData: RL_API
 //
-RL_API REBYTE *RL_Val_Tuple_Data(const REBVAL *v) {
+REBYTE *RL_rebValTupleData(const REBVAL *v) {
     return VAL_TUPLE_DATA(m_cast(REBVAL*, v));
 }
 
 //
-//  RL_Val_Index: C
+//  rebValIndex: RL_API
 //
-RL_API REBCNT RL_Val_Index(const REBVAL *v) {
+REBCNT RL_rebValIndex(const REBVAL *v) {
     return VAL_INDEX(v);
 }
 
 //
-//  RL_Init_Val_Index: C
+//  rebInitValIndex: RL_API
 //
-RL_API void RL_Init_Val_Index(REBVAL *v, REBCNT i) {
+void RL_rebInitValIndex(REBVAL *v, REBCNT i) {
     VAL_INDEX(v) = i;
 }
 
 //
-//  RL_Val_Handle_Pointer: C
+//  rebValHandlePointer: RL_API
 //
-RL_API void *RL_Val_Handle_Pointer(const REBVAL *v) {
+void *RL_rebValHandlePointer(const REBVAL *v) {
     return VAL_HANDLE_POINTER(void, v);
 }
 
 //
-//  RL_Set_Handle_Pointer: C
+//  rebSetHandlePointer: RL_API
 //
-RL_API void RL_Set_Handle_Pointer(REBVAL *v, void *p) {
+void RL_rebSetHandlePointer(REBVAL *v, void *p) {
     v->extra.singular = NULL; // !!! only support "dumb" handles for now
     SET_HANDLE_POINTER(v, p);
 }
 
 //
-//  RL_Val_Image_Wide: C
+//  rebValImageWide: RL_API
 //
-RL_API REBCNT RL_Val_Image_Wide(const REBVAL *v) {
+REBCNT RL_rebValImageWide(const REBVAL *v) {
     return VAL_IMAGE_WIDE(v);
 }
 
 //
-//  RL_Val_Image_High: C
+//  rebValImageHigh: RL_API
 //
-RL_API REBCNT RL_Val_Image_High(const REBVAL *v) {
+REBCNT RL_rebValImageHigh(const REBVAL *v) {
     return VAL_IMAGE_HIGH(v);
 }
 
 //
-//  RL_Val_Pair_X_Float: C
+//  rebValPairXFloat: RL_API
 //
 // !!! Pairs in R3-Alpha were not actually pairs of arbitrary values; but
 // they were pairs of floats.  This meant their precision did not match either
@@ -583,21 +558,21 @@ RL_API REBCNT RL_Val_Image_High(const REBVAL *v) {
 // Yet the R3-Alpha external interface did not make this distinction, so this
 // API is for compatibility with those extracting floats.
 //
-RL_API float RL_Val_Pair_X_Float(const REBVAL *v) {
+float RL_rebValPairXFloat(const REBVAL *v) {
     return VAL_PAIR_X(v);
 }
 
 //
-//  RL_Val_Pair_Y_Float: C
+//  rebValPairYFloat: RL_API
 //
-// !!! See notes on RL_Val_Pair_X_Float
+// !!! See notes on RL_rebValPairXFloat
 //
-RL_API float RL_Val_Pair_Y_Float(const REBVAL *v) {
+float RL_rebValPairYFloat(const REBVAL *v) {
     return VAL_PAIR_Y(v);
 }
 
 //
-//  RL_Init_Date: C
+//  rebInitDate: RL_API
 //
 // There was a data structure called a REBOL_DAT in R3-Alpha which was defined
 // in %reb-defs.h, and it appeared in the host callbacks to be used in
@@ -622,7 +597,7 @@ RL_API float RL_Val_Pair_Y_Float(const REBVAL *v) {
 // the internal API is available for clients who need that performance,
 // who can call date initialization themselves.
 //
-RL_API void RL_Init_Date(
+void RL_rebInitDate(
     REBVAL *out,
     int year,
     int month,
@@ -645,11 +620,11 @@ RL_API void RL_Init_Date(
 
 
 //
-//  RL_Val_UTF8: C
+//  rebValUTF8: RL_API
 //
 // Extract UTF-8 data from an ANY-STRING! or ANY-WORD!.
 //
-RL_API REBCNT RL_Val_UTF8(
+REBCNT RL_rebValUTF8(
     REBYTE *buf,
     REBCNT buf_chars,
     const REBVAL *v
@@ -683,13 +658,13 @@ RL_API REBCNT RL_Val_UTF8(
 
 
 //
-//  RL_Val_UTF8_Alloc: C
+//  rebValUTF8Alloc: RL_API
 //
-RL_API REBYTE *RL_Val_UTF8_Alloc(REBCNT *out_len, const REBVAL *v)
+REBYTE *RL_rebValUTF8Alloc(REBCNT *out_len, const REBVAL *v)
 {
-    REBCNT len = RL_Val_UTF8(NULL, 0, v);
+    REBCNT len = rebValUTF8(NULL, 0, v);
     REBYTE *result = OS_ALLOC_N(REBYTE, len + 1);
-    RL_Val_UTF8(result, len, v);
+    rebValUTF8(result, len, v);
     if (out_len != NULL)
         *out_len = len;
     return result;
@@ -697,13 +672,13 @@ RL_API REBYTE *RL_Val_UTF8_Alloc(REBCNT *out_len, const REBVAL *v)
 
 
 //
-//  RL_Val_Wstring: C
+//  rebValWstring: RL_API
 //
 // Extract wchar_t data from an ANY-STRING! or ANY-WORD!.  Note that while
 // the size of a wchar_t varies on Linux, it is part of the windows platform
 // standard to be two bytes.
 //
-RL_API REBCNT RL_Val_Wstring(
+REBCNT RL_rebValWstring(
     wchar_t *buf,
     REBCNT buf_chars, // characters buffer can hold (not including terminator)
     const REBVAL *v
@@ -768,13 +743,13 @@ RL_API REBCNT RL_Val_Wstring(
 
 
 //
-//  RL_Val_Wstring_Alloc: C
+//  rebValWstringAlloc: RL_API
 //
-RL_API wchar_t *RL_Val_Wstring_Alloc(REBCNT *out_len, const REBVAL *v)
+wchar_t *RL_rebValWstringAlloc(REBCNT *out_len, const REBVAL *v)
 {
-    REBCNT len = RL_Val_Wstring(NULL, 0, v);
+    REBCNT len = rebValWstring(NULL, 0, v);
     wchar_t *result = OS_ALLOC_N(wchar_t, len + 1);
-    RL_Val_Wstring(result, len, v);
+    rebValWstring(result, len, v);
     if (out_len != NULL)
         *out_len = len;
     return result;
@@ -782,9 +757,9 @@ RL_API wchar_t *RL_Val_Wstring_Alloc(REBCNT *out_len, const REBVAL *v)
 
 
 //
-//  RL_String: C
+//  rebString: RL_API
 //
-RL_API REBVAL *RL_String(const char *utf8)
+REBVAL *RL_rebString(const char *utf8)
 {
     // Default the returned handle's lifetime to the currently running FRAME!.
     // The user can unmanage it if they want it to live longer.
@@ -798,9 +773,9 @@ RL_API REBVAL *RL_String(const char *utf8)
 
 
 //
-//  RL_Unmanage: C
+//  rebUnmanage: RL_API
 //
-RL_API REBVAL *RL_Unmanage(REBVAL *v)
+REBVAL *RL_rebUnmanage(REBVAL *v)
 {
     REBVAL *key = PAIRING_KEY(v);
     assert(key->header.bits & NODE_FLAG_MANAGED);
@@ -812,33 +787,38 @@ RL_API REBVAL *RL_Unmanage(REBVAL *v)
 
 
 //
-//  RL_Free: C
+//  rebFree: RL_API
 //
-RL_API void RL_Free(REBVAL *v)
+void RL_rebFree(REBVAL *v)
 {
     REBVAL *key = PAIRING_KEY(v);
     assert(NOT(key->header.bits & NODE_FLAG_MANAGED));
     UNUSED(key);
-    
+
     Free_Pairing(v);
 }
 
 
 //
-//  RL_Panic: C
+//  rebPanic: RL_API
 //
-RL_API void RL_Panic(const void *p)
+void RL_rebPanic(const void *p)
 {
     Panic_Core(p, __FILE__, __LINE__);
 }
 
 
-#include "reb-lib-table.inc"
-
+// We wish to define a table of the above functions to pass to clients.  To
+// save on typing, the declaration of the table is autogenerated as a file we
+// can include here.
 //
-//  Extension_Lib: C
+// It doesn't make a lot of sense to expose this table to clients via an API
+// that returns it, because that's a chicken-and-the-egg problem.  The reason
+// a table is being used in the first place is because extensions can't link
+// to an EXE (in a generic way).  So the table is passed to them, in that
+// extension's DLL initialization function.
 //
-void *Extension_Lib(void)
-{
-    return &Ext_Lib;
-}
+// !!! Note: if Rebol is built as a DLL or LIB, the story is different.
+//
+extern RL_LIB Ext_Lib;
+#include "tmp-reb-lib-table.inc" // declares Ext_Lib

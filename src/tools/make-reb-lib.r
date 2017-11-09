@@ -1,6 +1,7 @@
 REBOL [
     System: "REBOL [R3] Language Interpreter and Run-time Environment"
     Title: "Make Reb-Lib related files"
+    File: %make-reb-lib.r
     Rights: {
         Copyright 2012 REBOL Technologies
         Copyright 2012-2017 Rebol Open Source Contributors
@@ -16,19 +17,13 @@ REBOL [
 do %r2r3-future.r
 do %common.r
 do %common-parsers.r
-do %form-header.r
+do %common-emitter.r
 
 print "--- Make Reb-Lib Headers ---"
-
-verbose: true
 
 lib-ver: 2
 
 preface: "RL_"
-
-src-dir: %../core/
-reb-lib: src-dir/a-lib.c
-ext-lib: src-dir/f-extension.c
 
 args: parse-args system/options/args
 output-dir: to file! any [:args/OUTDIR %../]
@@ -36,193 +31,223 @@ output-dir: fix-win32-path output-dir
 out-dir: output-dir/include
 mkdir/deep out-dir
 
-reb-ext-lib:  out-dir/reb-lib.h   ; for Host usage
-reb-ext-defs: out-dir/tmp-reb-lib-table.inc  ; for REBOL usage
 
 ver: load %../boot/version.r
 
-
-;-----------------------------------------------------------------------------
 ;-----------------------------------------------------------------------------
 
-proto-count: 0
+; These are the blocks of strings that are gathered in the EMIT-PROTO scan of
+; %a-lib.c.  They are later composed along with some boilerplate to produce
+; the %reb-lib.h file.
+;
+lib-struct-fields: make block! 50
+struct-call-macros: make block! 50
+undecorated-prototypes: make block! 50
+direct-call-macros: make block! 50
+table-init-items: make block! 50
 
-xlib-buffer: make string! 20000
-rlib-buffer: make string! 1000
-mlib-buffer: make string! 1000
-dlib-buffer: make string! 1000
-xsum-buffer: make string! 1000
+emit-proto: proc [proto] [
+    header: proto-parser/data
 
-emit: func [d] [append adjoin xlib-buffer d newline]
-emit-rlib: func [d] [append adjoin rlib-buffer d newline]
-emit-dlib: func [d] [append adjoin dlib-buffer d newline]
-emit-mlib: proc [d /nol] [
-    adjoin mlib-buffer d
-    if not nol [append mlib-buffer newline]
-]
-
-count: func [s c /local n] [
-    if find ["()" "(void)"] s [return "()"]
-    out: copy "(a"
-    n: 1
-    while [s: find/tail s c][
-        adjoin out [#"," #"a" + n]
-        n: n + 1
-    ]
-    append out ")"
-]
-
-in-sub: func [text pattern /local position] [
-    all [
-        position: find text pattern ":"
-        insert position "^/:"
-        position: find next position newline
-        remove position
-        insert position " - "
-    ]
-]
-
-pads: func [start col] [
-    str: copy ""
-    col: col - offset-of start tail start
-    head insert/dup str #" " col
-]
-
-emit-proto: proc [
-    proto
-] [
-
-    if all [
-        proto
-        trim proto
-        pos.id: find proto preface
-        find proto #"("
-    ] [
-        emit ["RL_API " proto ";"] ;    // " the-file]
-        append xsum-buffer proto
-        fn.declarations: copy/part proto pos.id
-        pos.lparen: find pos.id #"("
-        fn.name: copy/part pos.id pos.lparen
-        fn.name.upper: uppercase copy fn.name
-        fn.name.lower: lowercase copy find/tail fn.name preface
-
-        emit-dlib [spaced-tab fn.name ","]
-
-        emit-rlib [
-            spaced-tab fn.declarations "(*" fn.name.lower ")" pos.lparen ";"
+    if not all [
+        block? header
+        2 <= length-of header
+        set-word? header/1
+    ][
+        print mold header
+        fail [
+            proto
+            newline
+            "Prototype has bad Rebol function header block in comment"
         ]
+    ]
 
-        args: count pos.lparen #","
-        mlib.tail: tail mlib-buffer
-        emit-mlib/nol ["#define " fn.name.upper args]
-        emit-mlib [pads mlib.tail 35 " RL->" fn.name.lower args]
+    if header/2 != 'RL_API [
+        leave
+    ]
 
-        comment-text: proto-parser/notes
-        encode-lines comment-text {**} { }
+    ; Currently the only part of the comment header for the exports in
+    ; the %a-lib.c file that is paid attention to is the SET-WORD! that
+    ; mirrors the name of the function, and the RL_API word that comes
+    ; after it.  Anything else should just be comments.  But some day,
+    ; it could be a means of exposing documentation for the parameters.
+    ;
+    ; (This was an original intent of the comments in the %a-lib.c file,
+    ; though they parsed a specialized documentation format that did not
+    ; use Rebol syntax...the new idea is to always use Rebol syntax.)
 
-        emit-mlib [
-            "/*" newline
-            "**" space space proto newline
-            "**" newline
-            comment-text
-            "*/" newline
+    api-name: spelling-of header/1
+    unless proto-parser/proto.id = unspaced ["RL_" api-name] [
+        fail [
+            "Name in comment header (" api-name ") isn't function name"
+            "minus RL_ prefix for" proto-parser/proto.id
         ]
+    ]
 
-        proto-count: proto-count + 1
+    pos.id: find proto "RL_"
+    fn.declarations: copy/part proto pos.id
+    pos.lparen: find pos.id "("
+    fn.name: copy/part pos.id pos.lparen
+    fn.name.upper: uppercase copy fn.name
+    fn.name.lower: lowercase copy find/tail fn.name "RL_"
+
+    append lib-struct-fields unspaced [
+        fn.declarations "(*" fn.name.lower ")" pos.lparen ";"
+    ]
+
+    append struct-call-macros unspaced [
+        "#define" space api-name args space "RL->" fn.name.lower args
+    ]
+
+    append undecorated-prototypes unspaced [
+        "RL_API" space proto ";"
+    ]
+
+    append direct-call-macros unspaced [
+        "#define" space api-name args space proto-parser/proto.id
+    ]
+
+    append table-init-items unspaced [
+        fn.name ","
     ]
 ]
 
 process: func [file] [
-    if verbose [probe [file]]
     data: read the-file: file
     data: to-string data
 
-    proto-parser/proto-prefix: "RL_API "
     proto-parser/emit-proto: :emit-proto
     proto-parser/process data
 ]
 
 ;-----------------------------------------------------------------------------
 
-emit-rlib {
-typedef struct rebol_ext_api ^{}
+e-lib: (make-emitter
+    "Lightweight Rebol Interface Library" out-dir/reb-lib.h)
+
+e-lib/emit-lines [
+    {#ifdef __cplusplus}
+    {extern "C" ^{}
+    {#endif}
+    []
+]
+
+; !!! It is probably the case that the interface itself should contain the
+; versioning (in early fields), so it can be checked by anyone it's passed to.
+;
+e-lib/emit-lines [
+    {// These constants are created by the release system and can be used}
+    {// to check for compatiblity with the reb-lib DLL (using RL_Version.)}
+    {//}
+    [{#define RL_VER } ver/1]
+    [{#define RL_REV } ver/2]
+    [{#define RL_UPD } ver/3]
+    {}
+]
+
+;-----------------------------------------------------------------------------
+;
+; Currently only two files are searched for RL_API entries.  This makes it
+; easier to track the order of the API routines and change them sparingly
+; (such as by adding new routines to the end of the list, so as not to break
+; binary compatibility with code built to the old ordered interface).
+
+src-dir: %../core/
+
+e-lib/emit-line [
+    {// Function entry points for reb-lib (used for MACROS below):}
+]
+
+e-lib/emit-line "typedef struct rebol_ext_api {"
+
+process src-dir/a-lib.c
+process src-dir/f-extension.c ; !!! is there a reason to process this file?
+
+for-each field lib-struct-fields [
+    e-lib/emit-line/indent field
+]
+e-lib/emit-line "} RL_LIB;"
+e-lib/emit newline
 
 ;-----------------------------------------------------------------------------
 
-process reb-lib
-process ext-lib
+e-lib/emit-line [
+    {#ifdef REB_EXT // can't direct call into EXE, must go through interface}
+]
 
-;-----------------------------------------------------------------------------
+e-lib/emit-lines/indent [
+    {// The macros below will require this base pointer:}
+    {extern RL_LIB *RL;  // is passed to the RX_Init() function}
+    []
+]
 
-emit-rlib "} RL_LIB;"
+e-lib/emit-line/indent [
+    {// Macros to access reb-lib functions (from non-linked extensions):}
+]
 
-out: to-string reduce [
-form-header/gen "REBOL Host and Extension API" %reb-lib.r %make-reb-lib.r
-{
-// These constants are created by the release system and can be used to check
-// for compatiblity with the reb-lib DLL (using RL_Version.)
-#define RL_VER } ver/1 {
-#define RL_REV } ver/2 {
-#define RL_UPD } ver/3 {
+e-lib/emit newline
+for-each macro struct-call-macros [
+    e-lib/emit-line/indent macro
+]
+e-lib/emit newline
 
+e-lib/emit-line [
+    {#else // ...calling Rebol built as DLL or code built into the EXE itself}
+]
 
-// Function entry points for reb-lib (used for MACROS below):}
-rlib-buffer
-{
-// Extension entry point functions:
+e-lib/emit-line/indent [
+    {// Undecorated prototypes, don't call with this name directly}
+]
+for-each proto undecorated-prototypes [
+    e-lib/emit-line/indent proto
+]
+e-lib/emit newline
+
+e-lib/emit-line/indent [
+    {// Use these macros for consistency with extension code naming}
+]
+for-each macro direct-call-macros [
+    e-lib/emit-line/indent macro
+]
+e-lib/emit-lines [
+    {#endif // REB_EXT}
+    {}
+]
+
+e-lib/emit {
+// Extension entry point functions.  If code is an extension it needs to be
+// implementing instances of these prototypes.  Rebol code itself needs to
+// invoke these prototypes after opening the DLLs.  Client code using a
+// version of Rebol that has been built as a DLL won't have need for this.
+//
 #ifdef TO_WINDOWS
     #define RXIEXT __declspec(dllexport)
 #else
     #define RXIEXT extern
 #endif
 
-#ifdef __cplusplus
-extern "C" ^{
-#endif
-
 RXIEXT const char *RX_Init(int opts, RL_LIB *lib);
 RXIEXT int RX_Quit(int opts);
 RXIEXT int RX_Call(int cmd, const REBVAL *frm, void *data);
-
-// The macros below will require this base pointer:
-extern RL_LIB *RL;  // is passed to the RX_Init() function
-
-// Macros to access reb-lib functions (from non-linked extensions):
-
 }
-mlib-buffer
-{
 
-#define RL_MAKE_BINARY(s) RL_MAKE_STRING(s, FALSE)
+e-lib/emit newline
 
-#ifndef REB_EXT // not extension lib, use direct calls to r3lib
-
-}
-xlib-buffer
-{
-#endif // REB_EXT
-
-#ifdef __cplusplus
-^}
-#endif
-
-}
+e-lib/emit-lines [
+    {#ifdef __cplusplus}
+    "}"
+    {#endif}
 ]
 
-write-if-changed reb-ext-lib out
+e-lib/write-emitted
 
 ;-----------------------------------------------------------------------------
 
-out: to-string reduce [
-form-header/gen "REBOL Host/Extension API" %reb-lib-lib.r %make-reb-lib.r
-{RL_LIB Ext_Lib = ^{
-}
-dlib-buffer
-{^};
-}
-]
+e-table: (make-emitter
+    "REBOL Interface Table Singleton" out-dir/tmp-reb-lib-table.inc)
 
-write-if-changed reb-ext-defs out
+e-table/emit-line "RL_LIB Ext_Lib = {"
+e-table/emit-line/indent table-init-items
+e-table/emit-line "};"
 
-;ask "Done"
-print "   "
+e-table/write-emitted

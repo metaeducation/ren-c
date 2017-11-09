@@ -259,7 +259,7 @@ void Signal_Device(REBREQ *req, REBINT type)
     evt.eventee.req = req;
     if (type == EVT_ERROR) evt.data = req->error;
 
-    RL_Event(&evt); // (returns 0 if queue is full, ignored)
+    rebEvent(&evt); // (returns 0 if queue is full, ignored)
 }
 
 

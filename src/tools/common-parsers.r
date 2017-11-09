@@ -196,12 +196,15 @@ parsing-at: func [
 ]
 
 
+collapse-whitespace: [some [change some white-space space | skip]]
+bind collapse-whitespace c.lexical/grammar
+
+
 proto-parser: context [
 
     emit-fileheader: _
     emit-proto: _
     emit-directive: _
-    proto-prefix: _
     parse.position: _
     notes: _
     lines: _
@@ -262,7 +265,46 @@ proto-parser: context [
             function-proto any white-space
             function-body
             (
-                emit-proto proto
+                ; EMIT-PROTO doesn't want to see extra whitespace (such as
+                ; when individual parameters are on their own lines).
+                ;
+                ; !!! A feature allowing the RL_API to comment the arguments
+                ; to an API with line comments on the individual C parameters
+                ; might be interesting.
+                ;
+                parse proto collapse-whitespace
+                proto: trim proto
+
+                ; !!! Some EMIT-PROTO hooks were checking this themselves and
+                ; then doing nothing if they couldn't find a left paren.  Not
+                ; clear why they were doing that, so assert just in case.
+                ;
+                assert [find proto "("]
+
+                ; Our parsing is all C-based, so EMIT-PROTO clients should not
+                ; be accepting C++-style prototypes for no-argument functions.
+                ;
+                ; !!! Theoretically a prototype could be a zero-argument macro
+                ; that expands into something which did have arguments.  Could
+                ; there be a purpose for that?
+                ;
+                if find proto "()" [
+                    print [
+                        proto
+                        newline
+                        {C-Style no args should be foo(void) and not foo()}
+                        newline
+                        http://stackoverflow.com/q/693788/c-void-arguments
+                    ]
+                    fail "C++ no-arg prototype used instead of C style"
+                ]
+
+                ; Call the EMIT-PROTO hook that the client provided.  They
+                ; receive the stripped prototype as a formal parameter, but
+                ; can also examine state variables of the parser to extract
+                ; other properties--such as the processed intro block.
+                ;
+                emit-proto proto 
             )
         ]
 
@@ -321,7 +363,7 @@ proto-parser: context [
         ]
 
         function-proto: [
-            proto-prefix copy proto [
+            copy proto [
                 not white-space
                 some [
                     typemacro-parentheses

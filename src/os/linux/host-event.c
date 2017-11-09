@@ -125,7 +125,7 @@ static void Add_Event_XY(REBGOB *gob, REBINT id, REBINT xy, REBINT flags)
     evt.data  = xy;
     evt.eventee.ser = gob;
 
-    RL_Event(&evt); // returns 0 if queue is full
+    rebEvent(&evt); // returns 0 if queue is full
 }
 
 static void Update_Event_XY(REBGOB *gob, REBINT id, REBINT xy, REBINT flags)
@@ -139,7 +139,7 @@ static void Update_Event_XY(REBGOB *gob, REBINT id, REBINT xy, REBINT flags)
     evt.data  = xy;
     evt.eventee.ser = gob;
 
-    RL_Update_Event(&evt);
+    rebUpdateEvent(&evt);
 }
 
 static void Add_Event_Key(REBGOB *gob, REBINT id, REBINT key, REBINT flags)
@@ -153,7 +153,7 @@ static void Add_Event_Key(REBGOB *gob, REBINT id, REBINT key, REBINT flags)
     evt.data  = key;
     evt.eventee.ser = gob;
 
-    RL_Event(&evt); // returns 0 if queue is full
+    rebEvent(&evt); // returns 0 if queue is full
 }
 
 static REBINT Check_Modifiers(REBINT flags, unsigned state)

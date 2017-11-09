@@ -2031,7 +2031,7 @@ static REBNATIVE(get_env)
 #ifdef TO_WINDOWS
     // Note: The Windows variant of this API is NOT case-sensitive
 
-    wchar_t *key = RL_Val_Wstring_Alloc(NULL, variable);
+    wchar_t *key = rebValWstringAlloc(NULL, variable);
 
     DWORD val_len_plus_one = GetEnvironmentVariable(key, NULL, 0);
     if (val_len_plus_one == 0) { // some failure...
@@ -2054,7 +2054,7 @@ static REBNATIVE(get_env)
 #else
     // Note: The Posix variant of this API is case-sensitive
 
-    REBYTE *key = RL_Val_UTF8_Alloc(NULL, variable);
+    REBYTE *key = rebValUTF8Alloc(NULL, variable);
 
     const REBYTE* val = cb_cast(getenv(cs_cast(key)));
     if (val == NULL) // key not present in environment
@@ -2109,7 +2109,7 @@ static REBNATIVE(set_env)
     REBCTX *error = NULL;
 
 #ifdef TO_WINDOWS
-    wchar_t *key = RL_Val_Wstring_Alloc(NULL, variable);
+    wchar_t *key = rebValWstringAlloc(NULL, variable);
 
     REBOOL success;
 
@@ -2119,7 +2119,7 @@ static REBNATIVE(set_env)
     else {
         assert(IS_STRING(value));
         
-        wchar_t *val = RL_Val_Wstring_Alloc(NULL, value);
+        wchar_t *val = rebValWstringAlloc(NULL, value);
         success = SetEnvironmentVariable(key, val);
         OS_FREE(val);
     }
@@ -2131,7 +2131,7 @@ static REBNATIVE(set_env)
 #else
 
     REBCNT key_len;
-    REBYTE *key = RL_Val_UTF8_Alloc(&key_len, variable);
+    REBYTE *key = rebValUTF8Alloc(&key_len, variable);
 
     REBOOL success;
 
@@ -2162,7 +2162,7 @@ static REBNATIVE(set_env)
     #ifdef setenv
         UNUSED(key_len);
 
-        REBYTE *val = RL_Val_UTF8_Alloc(NULL, value);
+        REBYTE *val = rebValUTF8Alloc(NULL, value);
 
         // we pass 1 for overwrite (make call to OS_Get_Env if you
         // want to check if already exists)
@@ -2189,15 +2189,15 @@ static REBNATIVE(set_env)
         // each string added in some sort of a map...which is currently deemed
         // not worth the work.
 
-        REBCNT val_len = RL_Val_UTF8(NULL, 0, value);
+        REBCNT val_len = rebValUTF8(NULL, 0, value);
 
         REBYTE *key_equals_val = OS_ALLOC_N(REBYTE,
             key_len + 1 + val_len + 1
         );
 
-        RL_Val_UTF8(key_equals_val, key_len, variable);
+        rebValUTF8(key_equals_val, key_len, variable);
         key_equals_val[key_len] = '=';
-        RL_Val_UTF8(key_equals_val + key_len + 1, val_len, value);
+        rebValUTF8(key_equals_val + key_len + 1, val_len, value);
 
         if (putenv(s_cast(key_equals_val)) == -1) // !!! why mutable?  :-/
             success = FALSE;

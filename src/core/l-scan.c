@@ -842,7 +842,7 @@ static REBCNT Prescan_Token(SCAN_STATE *ss)
 // %"foo" will have data in UNI_BUF but %foo will not.)
 //
 // !!! This is a somewhat weird separation of responsibilities, that seems to
-// arise from a desire to make "Scan_XXX" functions independent of the 
+// arise from a desire to make "Scan_XXX" functions independent of the
 // "Locate_Token_May_Push_Mold" function.  But if the work of locating the
 // value means you have to basically do what you'd do to read it into a REBVAL
 // anyway, why split it?  This is especially true now that the variadic
@@ -938,7 +938,7 @@ acquisition_loop:
             const REBVAL *splice = cast(const REBVAL*, p);
             DS_PUSH_TRASH;
             Move_Value(DS_TOP, splice);
-            
+
             if (ss->newline_pending) {
                 ss->newline_pending = FALSE;
                 SET_VAL_FLAG(DS_TOP, VALUE_FLAG_LINE);
@@ -959,7 +959,7 @@ acquisition_loop:
             //
             if (ss->line_head == NULL) {
                 assert(ss->vaptr != NULL);
-                assert(ss->start_line_head == NULL); 
+                assert(ss->start_line_head == NULL);
                 ss->line_head = ss->start_line_head = ss->begin;
             }
             break; } // fallthrough to "ordinary" scanning

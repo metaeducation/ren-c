@@ -134,7 +134,7 @@ void Convert_Date(REBVAL *out, time_t *stime, long usec)
 
     int zone = Get_Timezone(&utc_tm);
 
-    RL_Init_Date(
+    rebInitDate(
         out,
         utc_tm.tm_year + 1900, // year
         utc_tm.tm_mon + 1, // month

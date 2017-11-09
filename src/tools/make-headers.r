@@ -1,7 +1,7 @@
 REBOL [
     System: "REBOL [R3] Language Interpreter and Run-time Environment"
     Title: "Generate auto headers"
-    File: %make-headers.r ;-- used by EMIT-HEADER to indicate emitting script
+    File: %make-headers.r
     Rights: {
         Copyright 2012 REBOL Technologies
         Copyright 2012-2017 Rebol Open Source Contributors
@@ -18,108 +18,119 @@ do %r2r3-future.r
 do %common.r
 do %common-emitter.r
 do %common-parsers.r
-do %form-header.r
-do %native-emitters.r ;for emit-include-params-macro and emit-native-include-params-macro
+do %native-emitters.r ; for emit-include-params-macro
+
+args: parse-args system/options/args
 
 print "------ Building headers"
-args: parse-args system/options/args
+
 output-dir: fix-win32-path to file! any [:args/OUTDIR %../]
 mkdir/deep output-dir/include
 mkdir/deep output-dir/core
 
-r3: system/version > 2.100.0
+e-funcs: make-emitter "Function Prototypes" output-dir/include/tmp-funcs.h
 
-verbose: false
-check-duplicates: true
-prototypes: make block! 10000 ; get pick [map! hash!] r3 1000
-has-duplicates: false
+e-syms: make-emitter "Function Symbols" output-dir/core/tmp-symbols.c
+
+prototypes: make block! 10000 ; MAP! is buggy in R3-Alpha
 
 change-dir %../core/
 
-collapse-whitespace: [some [change some white-space #" " | skip]]
-bind collapse-whitespace c.lexical/grammar
-
 emit-proto: proc [proto] [
-
-    if find proto "()" [
-        print [
-            proto
-            newline
-            {C-Style void arguments should be foo(void) and not foo()}
-            newline
-            http://stackoverflow.com/questions/693788/c-void-arguments
-        ]
-        fail "C++ no-arg prototype used instead of C style"
-    ]
-
-    ;?? proto
-    assert [proto]
-    if all [
-        not find proto "static"
-        not find proto "REBNATIVE("
+    if any [
+        find proto "static"
+        find proto "REBNATIVE(" ; Natives handled by make-natives.r
 
         ; The REBTYPE macro actually is expanded in the tmp-funcs
         ; Should we allow macro expansion or do the REBTYPE another way?
-        (comment [not find proto "REBTYPE("] true)
-
-        find proto #"("
+        (comment [not find proto "REBTYPE("] false)
     ][
-
-        parse proto collapse-whitespace
-        proto: trim proto
-
-        either all [
-            check-duplicates
-            find prototypes proto
-        ][
-            print ["Duplicate:" the-file ":" proto]
-            has-duplicates: true
-        ][
-            append prototypes proto
-        ]
-        either find proto "RL_API" [
-            emit-rlib ["extern " proto "; // " the-file]
-        ][
-            emit-line ["RL_API " proto "; // " the-file]
-            either "REBTYPE" = proto-parser/proto.id [
-               emit-fsymb ["    SYM_FUNC(T_" proto-parser/proto.arg.1 "), // " the-file]
-            ][
-               emit-fsymb ["    SYM_FUNC(" proto-parser/proto.id "), // " the-file]
-            ]
-        ]
-        proto-count: proto-count + 1
+        leave
     ]
-]
 
-emit-directive: procedure [directive] [
-    process-conditional directive proto-parser/parse.position :emit-line buf-emit
-    process-conditional directive proto-parser/parse.position :emit-fsymb fsymbol-buffer
+    header: proto-parser/data
+
+    if not all [
+        block? header 
+        2 <= length-of header
+        set-word? header/1
+    ][
+        print mold proto-parser/data
+        fail [
+            proto
+            newline
+            "Prototype has bad Rebol function header block in comment"
+        ]
+    ]
+
+    switch/default header/2 [
+        RL_API [
+            ; Currently the RL_API entries should only occur in %a-lib.c, and
+            ; are processed by %make-reb-lib.r.  Their RL_XxxYyy() forms don't
+            ; appear in the %tmp-funcs.h file, but core includes %reb-lib.h
+            ; and considers itself to have "non-extension linkage" to the API,
+            ; so the calls can be directly linked without a struct.
+            ;
+            leave
+        ]
+        C [
+            ; The only accepted type for now
+        ]
+        ; Natives handled by searching for REBNATIVE() currently.  If it
+        ; checked for the word NATIVE it would also have to look for paths
+        ; like NATIVE/BODY
+    ][
+        fail "%make-headers.r only understands C functions"
+    ]
+
+    if find prototypes proto [
+        fail ["Duplicate prototype:" the-file ":" proto]
+    ]
+
+    append prototypes proto
+
+    e-funcs/emit-line ["RL_API " proto "; // " the-file]
+    either "REBTYPE" = proto-parser/proto.id [
+        e-syms/emit-line ["    SYM_FUNC(T_" proto-parser/proto.arg.1 "), // " the-file]
+    ][
+        e-syms/emit-line ["    SYM_FUNC(" proto-parser/proto.id "), // " the-file]
+    ]
 ]
 
 process-conditional: procedure [
     directive
     dir-position
-    emit [function!]
-    buffer
+    emitter [object!]
 ][
-    emit [
+    emitter/emit-line [
         directive
         ;;; " // " the-file " #" line-of head dir-position dir-position
     ]
 
     ; Minimise conditionals for the reader - unnecessary for compilation.
+    ;
+    ; !!! Note this reaches into the emitter and modifies the buffer.
+    ;
     if all [
         find/match directive "#endif"
-        position: find/last tail buffer "#if"
+        position: find/last tail emitter/buf-emit "#if"
     ][
         rewrite-if-directives position
     ]
 ]
 
-process: func [file] [
-    if verbose [probe [file]]
-    data: read the-file: file
-    if r3 [data: deline to-string data]
+emit-directive: procedure [directive] [
+    process-conditional directive proto-parser/parse.position e-funcs
+    process-conditional directive proto-parser/parse.position e-syms
+]
+
+process: function [
+    file
+    <with> the-file ;-- global we set
+][
+    ; !!! is DELINE necessary?
+    data: deline to-string read the-file: file
+
     proto-parser/emit-proto: :emit-proto
     proto-parser/emit-directive: :emit-directive
     proto-parser/process data
@@ -127,23 +138,7 @@ process: func [file] [
 
 ;-------------------------------------------------------------------------
 
-rlib: form-header/gen "REBOL Interface Library" %reb-lib.h %make-headers.r
-append rlib newline
-emit-rlib: func [d] [append adjoin rlib d newline]
-
-
-;-------------------------------------------------------------------------
-
-proto-count: 0
-
-fsymbol-file: %tmp-symbols.c
-fsymbol-buffer: make string! 20000
-emit-fsymb: func [x] [append adjoin fsymbol-buffer x newline]
-
-emit-header "Function Prototypes" %funcs.h
-
-emit-fsymb form-header/gen "Function Symbols" fsymbol-file %make-headers.r
-emit-fsymb {#include "sys-core.h"
+e-syms/emit {#include "sys-core.h"
 
 // Note that cast() macro causes problems here with clang for some reason.
 //
@@ -164,9 +159,10 @@ struct rebol_sym_data_t {
 };
 
 extern const struct rebol_sym_func_t rebol_sym_funcs [];
-const struct rebol_sym_func_t rebol_sym_funcs [] = ^{}
+const struct rebol_sym_func_t rebol_sym_funcs [] = ^{
+}
 
-emit {
+e-funcs/emit {
 // When building as C++, the linkage on these functions should be done without
 // "name mangling" so that library clients will not notice a difference
 // between a C++ build and a C build.
@@ -186,17 +182,17 @@ extern "C" ^{
 //     if (VAL_FUNC_DISPATCHER(native) == &N_parse) { ... }
 //
 }
-emit newline
+e-funcs/emit newline
 
 boot-natives: load output-dir/boot/tmp-natives.r
 
 for-each val boot-natives [
     if set-word? val [
-        emit-line ["REBNATIVE(" to-c-name (to word! val) ");"]
+        e-funcs/emit-line ["REBNATIVE(" to-c-name (to word! val) ");"]
     ]
 ]
 
-emit {
+e-funcs/emit {
 
 //
 // Other Prototypes: These are the functions that are scanned for in the %.c
@@ -206,7 +202,7 @@ emit {
 // by the scan.)
 //
 }
-emit newline
+e-funcs/emit newline
 
 file-base: has load %../tools/file-base.r
 
@@ -238,14 +234,14 @@ for-each item file-base/core [
 ]
 
 
-emit newline
-emit-line "#ifdef __cplusplus"
-emit-line "}"
-emit-line "#endif"
+e-funcs/emit newline
+e-funcs/emit-line "#ifdef __cplusplus"
+e-funcs/emit-line "}"
+e-funcs/emit-line "#endif"
 
-write-emitted output-dir/include/tmp-funcs.h
+e-funcs/write-emitted
 
-print [proto-count "function prototypes"]
+print [length-of prototypes "function prototypes"]
 ;wait 1
 
 ;-------------------------------------------------------------------------
@@ -279,7 +275,7 @@ sys-globals.parser: context [
 
         declaration: [
             some [opt wsp [copy id identifier | not #";" punctuator] ] #";" thru newline (
-                emit-fsymb ["    SYM_DATA(" id "),"]
+                e-syms/emit-line ["    SYM_DATA(" id "),"]
             )
         ]
 
@@ -289,7 +285,7 @@ sys-globals.parser: context [
                 any [not newline c-pp-token]
             ] eol
             (
-                process-conditional data parse.position :emit-fsymb fsymbol-buffer
+                process-conditional data parse.position e-syms
             )
         ]
 
@@ -299,21 +295,25 @@ sys-globals.parser: context [
 
 ]
 
-emit-fsymb "^/    {NULL, NULL} //Terminator^/};"
-emit-fsymb "^/// Globals from sys-globals.h^/"
-emit-fsymb {
+e-syms/emit "^/    {NULL, NULL} //Terminator^/};"
+e-syms/emit "^/// Globals from sys-globals.h^/"
+e-syms/emit {
 extern const struct rebol_sym_data_t rebol_sym_data [];
 const struct rebol_sym_data_t rebol_sym_data [] = ^{^/}
 
 the-file: %sys-globals.h
 sys-globals.parser/process read/string %../include/sys-globals.h
 
-emit-fsymb "^/    {NULL, NULL} //Terminator^/};"
-write output-dir/core/:fsymbol-file fsymbol-buffer
+e-syms/emit "^/    {NULL, NULL} //Terminator^/};"
+e-syms/emit newline
+
+e-syms/write-emitted
 
 ;-------------------------------------------------------------------------
 
-emit-header "PARAM() and REFINE() Automatic Macros" %func-args.h
+e-params: (make-emitter
+    "PARAM() and REFINE() Automatic Macros"
+    output-dir/include/tmp-paramlists.h)
 
 action-list: load output-dir/boot/tmp-actions.r
 
@@ -322,43 +322,47 @@ action-list: load output-dir/boot/tmp-actions.r
 for-next action-list [
     if 'action = pick action-list 2 [
         assert [set-word? action-list/1]
-        emit-include-params-macro (to-word action-list/1) (action-list/3)
-        emit newline
+        (emit-include-params-macro
+            e-params (to-word action-list/1) (action-list/3))
+        e-params/emit newline
     ]
 ]
 
 native-list: load output-dir/boot/tmp-natives.r
+for-next native-list [
+    if tail? next native-list [break]
 
-emit-native-include-params-macro native-list
+    if any [
+        'native = native-list/2
+        all [path? native-list/2 | 'native = first native-list/2]
+    ][
+        assert [set-word? native-list/1]
+        (emit-include-params-macro
+            e-params (to-word native-list/1) (native-list/3)
+        )
+        e-params/emit newline
+    ]
+]
 
-write-emitted output-dir/include/tmp-paramlists.h
-
+e-params/write-emitted
 
 ;-------------------------------------------------------------------------
 
-emit-header "REBOL Constants Strings" %str-consts.h
+e-strings: (make-emitter
+    "REBOL Constants Strings" output-dir/include/tmp-strings.h)
 
-data: to string! read %a-constants.c
-
-parse data [
+parse to string! read %a-constants.c [
     some [
         to "^/const"
         copy constd to "="
         (
             remove constd
-            ;replace constd "const" "extern"
             insert constd "extern "
             append trim/tail constd #";"
-            emit-line constd
+
+            e-strings/emit-line constd
         )
     ]
 ]
 
-write-emitted output-dir/include/tmp-strings.h
-
-if any [has-duplicates verbose] [
-    print "** NOTE ABOVE PROBLEM!"
-    wait 5
-]
-
-print "   "
+e-strings/write-emitted
