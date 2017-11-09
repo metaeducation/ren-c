@@ -26,8 +26,6 @@ do %r2r3-future.r
 do %common.r
 do %common-emitter.r
 
-do %form-header.r
-
 do %systems.r
 args: parse-args system/options/args
 config: config-system to-value :args/OS_ID
@@ -134,154 +132,161 @@ build: context [features: [help-strings]]
 
 boot-types: load %types.r
 
+e-dispatch: make-emitter "Dispatchers" src/tmp-dispatchers.c
+e-dispatch/emit newline
 
-emit-header "Dispatchers" %tmp-dispatchers.c
-emit newline
+e-dispatch/emit-line {#include "sys-core.h"}
+e-dispatch/emit newline
 
-emit-line {#include "sys-core.h"}
-emit newline
-
-emit {
+e-dispatch/emit {
 //=////////////////////////////////////////////////////////////////////////=//
 //
 //  VALUE DISPATCHERS (auto-generated, edit in %make-boot.r)
 //
 ///////////////////////////////////////////////////////////////////////////=//
 }
-emit newline
-emit-line "REBACT Value_Dispatch[REB_MAX] = {"
+e-dispatch/emit newline
+e-dispatch/emit-line "REBACT Value_Dispatch[REB_MAX] = {"
 for-each-record type boot-types [
     switch/default type/class [
         0 [ ; REB_0 should not ever be dispatched, bad news
-            emit-item "NULL"
+            e-dispatch/emit-item "NULL"
         ]
         * [ ; Extension types just fail until registered
-            emit-item "T_Unhooked"
+            e-dispatch/emit-item "T_Unhooked"
         ]
     ][ ; All other types should have handlers
-        emit-item ["T_" propercase-of really word! type/class]
+        e-dispatch/emit-item ["T_" propercase-of really word! type/class]
     ]
-    emit-annotation really [word! integer!] type/name
+    e-dispatch/emit-annotation really [word! integer!] type/name
 ]
-emit-end
+e-dispatch/emit-end
 
 
-emit {
+e-dispatch/emit {
 //=////////////////////////////////////////////////////////////////////////=//
 //
 //  PATH DISPATCHERS (auto-generated, edit in %make-boot.r)
 //
 ///////////////////////////////////////////////////////////////////////////=//
 }
-emit newline
-emit-line "REBPEF Path_Dispatch[REB_MAX] = {"
+e-dispatch/emit newline
+e-dispatch/emit-line "REBPEF Path_Dispatch[REB_MAX] = {"
 for-each-record type boot-types [
     switch/default type/path [
-        - [emit-item "PD_Fail"]
-        + [emit-item ["PD_" propercase-of really word! type/class]]
-        * [emit-item "PD_Unhooked"]
+        - [e-dispatch/emit-item "PD_Fail"]
+        + [e-dispatch/emit-item [
+            "PD_" propercase-of really word! type/class]
+        ]
+        * [e-dispatch/emit-item "PD_Unhooked"]
     ][
         ; !!! Today's PORT! path dispatches through context even though that
         ; isn't its technical "class" for responding to actions.
         ;
-        emit-item ["PD_" propercase-of really word! type/path]
+        e-dispatch/emit-item ["PD_" propercase-of really word! type/path]
     ]
-    emit-annotation really [word! integer!] type/name
+    e-dispatch/emit-annotation really [word! integer!] type/name
 ]
-emit-end
+e-dispatch/emit-end
 
 
-emit {
+e-dispatch/emit {
 //=////////////////////////////////////////////////////////////////////////=//
 //
 //  MAKE DISPATCHERS (auto-generated, edit in %make-boot.r)
 //
 ///////////////////////////////////////////////////////////////////////////=//
 }
-emit newline
-emit-line "MAKE_FUNC Make_Dispatch[REB_MAX] = {"
+e-dispatch/emit newline
+e-dispatch/emit-line "MAKE_FUNC Make_Dispatch[REB_MAX] = {"
 for-each-record type boot-types [
     switch/default type/make [
-        - [emit-item "MAKE_Fail"]
-        + [emit-item ["MAKE_" propercase-of really word! type/class]]
-        * [emit-item "MAKE_Unhooked"]
+        - [e-dispatch/emit-item "MAKE_Fail"]
+        + [e-dispatch/emit-item [
+            "MAKE_" propercase-of really word! type/class]
+        ]
+        * [e-dispatch/emit-item "MAKE_Unhooked"]
     ][
         fail "MAKE in %types.r should be, -, +, or *"
     ]
-    emit-annotation really [word! integer!] type/name
+    e-dispatch/emit-annotation really [word! integer!] type/name
 ]
-emit-end
+e-dispatch/emit-end
 
 
-emit {
+e-dispatch/emit {
 //=////////////////////////////////////////////////////////////////////////=//
 //
 //  TO DISPATCHERS (auto-generated, edit in %make-boot.r)
 //
 ///////////////////////////////////////////////////////////////////////////=//
 }
-emit newline
-emit-line "TO_FUNC To_Dispatch[REB_MAX] = {"
+e-dispatch/emit newline
+e-dispatch/emit-line "TO_FUNC To_Dispatch[REB_MAX] = {"
 for-each-record type boot-types [
     switch/default type/make [
-        - [emit-item "TO_Fail"]
-        + [emit-item ["TO_" propercase-of really word! type/class]]
-        * [emit-item "TO_Unhooked"]
+        - [e-dispatch/emit-item "TO_Fail"]
+        + [e-dispatch/emit-item [
+            "TO_" propercase-of really word! type/class
+        ]]
+        * [e-dispatch/emit-item "TO_Unhooked"]
     ][
         fail "TO in %types.r should be -, +, or *"
     ]
-    emit-annotation really [word! integer!] type/name
+    e-dispatch/emit-annotation really [word! integer!] type/name
 ]
-emit-end
+e-dispatch/emit-end
 
 
-emit {
+e-dispatch/emit {
 //=////////////////////////////////////////////////////////////////////////=//
 //
 //  MOLD DISPATCHERS (auto-generated, edit in %make-boot.r)
 //
 ///////////////////////////////////////////////////////////////////////////=//
 }
-emit newline
-emit-line "MOLD_FUNC Mold_Or_Form_Dispatch[REB_MAX] = {"
+e-dispatch/emit newline
+e-dispatch/emit-line "MOLD_FUNC Mold_Or_Form_Dispatch[REB_MAX] = {"
 for-each-record type boot-types [
     switch/default type/mold [
-        - [emit-item "MF_Fail"]
-        + [emit-item ["MF_" propercase-of really word! type/class]]
-        * [emit-item "MF_Unhooked"]
+        - [e-dispatch/emit-item "MF_Fail"]
+        + [e-dispatch/emit-item [
+            "MF_" propercase-of really word! type/class
+        ]]
+        * [e-dispatch/emit-item "MF_Unhooked"]
     ][
         ; ERROR! may be a context, but it has its own special forming
         ; beyond the class (falls through to ANY-CONTEXT! for mold), and
         ; BINARY! has a different handler than strings
         ;
-        emit-item ["MF_" propercase-of really word! type/mold]
+        e-dispatch/emit-item ["MF_" propercase-of really word! type/mold]
     ]
-    emit-annotation really [word! integer!] type/name
+    e-dispatch/emit-annotation really [word! integer!] type/name
 ]
-emit-end
+e-dispatch/emit-end
 
 
-emit {
+e-dispatch/emit {
 //=////////////////////////////////////////////////////////////////////////=//
 //
 //  COMPARISON DISPATCHERS (auto-generated, edit in %make-boot.r)
 //
 ///////////////////////////////////////////////////////////////////////////=//
 }
-emit newline
-emit-line "REBCTF Compare_Types[REB_MAX] = {"
+e-dispatch/emit newline
+e-dispatch/emit-line "REBCTF Compare_Types[REB_MAX] = {"
 for-each-record type boot-types [
     switch/default type/class [
-        0 [emit-item "NULL"]
-        * [emit-item "CT_Unhooked"]
+        0 [e-dispatch/emit-item "NULL"]
+        * [e-dispatch/emit-item "CT_Unhooked"]
     ][
-        emit-item ["CT_" propercase-of really word! type/class]
+        e-dispatch/emit-item ["CT_" propercase-of really word! type/class]
     ]
-    emit-annotation really [word! integer!] type/name
+    e-dispatch/emit-annotation really [word! integer!] type/name
 ]
-emit-end
+e-dispatch/emit-end
 
-write-emitted src/tmp-dispatchers.c
+e-dispatch/write-emitted
 
 
 ;----------------------------------------------------------------------------
@@ -290,9 +295,9 @@ write-emitted src/tmp-dispatchers.c
 ;
 ;----------------------------------------------------------------------------
 
-emit-header "Datatype Definitions" %reb-types.h
+e-types: make-emitter "Datatype Definitions" inc/reb-types.h
 
-emit {
+e-types/emit {
 /***********************************************************************
 **
 */  enum Reb_Kind
@@ -301,7 +306,7 @@ emit {
 **
 ***********************************************************************/
 }
-emit-line "{"
+e-types/emit-line "{"
 
 datatypes: copy []
 n: 0
@@ -310,20 +315,20 @@ for-each-record type boot-types [
     append datatypes type/name
 
     either type/name = 0 [
-        emit-item/assign "REB_0" 0
+        e-types/emit-item/assign "REB_0" 0
     ][
-        emit-item/assign/upper ["REB_" really word! type/name] n
+        e-types/emit-item/assign/upper ["REB_" really word! type/name] n
     ]
-    emit-annotation n
+    e-types/emit-annotation n
 
     n: n + 1
 ]
 
-emit-item/assign "REB_MAX" n
-emit-annotation n
-emit-end
+e-types/emit-item/assign "REB_MAX" n
+e-types/emit-annotation n
+e-types/emit-end
 
-emit {
+e-types/emit {
 /***********************************************************************
 **
 **  REBOL Type Check Macros
@@ -344,7 +349,7 @@ for-each-record type boot-types [
         ; build guaranteeing all REBOOL are 1 or 0, despite the fact that
         ; there are other values that C considers "truthy".
         ;
-        emit-line [
+        e-types/emit-line [
             {#define IS_} (uppercase to-c-name type/name) "(v)" space
             "LOGICAL(VAL_TYPE(v)==REB_" (uppercase to-c-name type/name) ")"
         ]
@@ -360,10 +365,10 @@ for-each-record type boot-types [
 ; reminded of the importance of adjusting them.
 ;
 types-header: first load/header %types.r
-emit trim/auto copy really string! types-header/macros
+e-types/emit trim/auto copy really string! types-header/macros
 
 
-emit {
+e-types/emit {
 /***********************************************************************
 **
 **  REBOL Typeset Defines
@@ -390,15 +395,15 @@ for-each-record type boot-types [
 remove/part typeset-sets 2 ; the - markers
 
 for-each [ts types] typeset-sets [
-    emit ["#define" space uppercase to-c-name ["TS_" ts] space "("]
+    e-types/emit ["#define" space uppercase to-c-name ["TS_" ts] space "("]
     for-each t types [
-        emit ["FLAGIT_KIND(" uppercase to-c-name ["REB_" t] ")|"]
+        e-types/emit ["FLAGIT_KIND(" uppercase to-c-name ["REB_" t] ")|"]
     ]
-    unemit #"|" ;-- remove the last | added
-    emit [")" newline]
+    e-types/unemit #"|" ;-- remove the last | added
+    e-types/emit [")" newline]
 ]
 
-write-emitted inc/reb-types.h
+e-types/write-emitted
 
 
 ;----------------------------------------------------------------------------
@@ -407,17 +412,17 @@ write-emitted inc/reb-types.h
 ;
 ;----------------------------------------------------------------------------
 
-emit-header "Boot Definitions" %bootdefs.h
+e-bootdefs: make-emitter "Boot Definitions" inc/tmp-bootdefs.h
 
-emit-line [{#define REBOL_VER} space (version/1)]
-emit-line [{#define REBOL_REV} space (version/2)]
-emit-line [{#define REBOL_UPD} space (version/3)]
-emit-line [{#define REBOL_SYS} space (version/4)]
-emit-line [{#define REBOL_VAR} space (version/5)]
+e-bootdefs/emit-line [{#define REBOL_VER} space (version/1)]
+e-bootdefs/emit-line [{#define REBOL_REV} space (version/2)]
+e-bootdefs/emit-line [{#define REBOL_UPD} space (version/3)]
+e-bootdefs/emit-line [{#define REBOL_SYS} space (version/4)]
+e-bootdefs/emit-line [{#define REBOL_VAR} space (version/5)]
 
 ;-- Generate Canonical Words (must follow datatypes above!) ------------------
 
-emit {
+e-bootdefs/emit {
 /***********************************************************************
 **
 */  enum REBOL_Symbols
@@ -426,8 +431,8 @@ emit {
 **
 ***********************************************************************/
 }
-emit-line "{"
-emit-item/assign "SYM_0" 0
+e-bootdefs/emit-line "{"
+e-bootdefs/emit-item/assign "SYM_0" 0
 
 n: 0
 boot-words: copy []
@@ -454,8 +459,8 @@ add-word: func [
     ; individual word first in this case, as opposed to something more generic
     ; which would also turn SYM_.a. into "SYM__DOTA_DOT" (or similar) 
     ;
-    emit-item/upper ["SYM_" (to-c-name word)]
-    emit-annotation spaced [n "-" word]
+    e-bootdefs/emit-item/upper ["SYM_" (to-c-name word)]
+    e-bootdefs/emit-annotation spaced [n "-" word]
     n: n + 1
 
     ; The types make a SYM_XXX entry, but they're kept in a separate block
@@ -486,11 +491,11 @@ for-each item boot-actions [
     ]
 ]
 
-emit-end
+e-bootdefs/emit-end
 
 print [n "words + actions"]
 
-write-emitted inc/tmp-bootdefs.h
+e-bootdefs/write-emitted
 
 ;----------------------------------------------------------------------------
 ;
@@ -498,8 +503,7 @@ write-emitted inc/tmp-bootdefs.h
 ;
 ;----------------------------------------------------------------------------
 
-emit-header "System Object" %sysobj.h
-emit newline
+e-sysobj: make-emitter "System Object" inc/tmp-sysobj.h
 
 at-value: func ['field] [next find boot-sysobj to-set-word field]
 
@@ -516,9 +520,18 @@ change/only at-value platform reduce [
 
 ob: has boot-sysobj
 
-make-obj-defs: procedure [obj prefix depth /selfless] [
+make-obj-defs: procedure [
+    {Given a Rebol OBJECT!, write C structs that can access its raw variables}
+
+    e [object!]
+       {The emitter to write definitions to}
+    obj
+    prefix
+    depth
+    /selfless
+][
     prefix: uppercase-of prefix
-    emit-line ["enum " prefix "object {"]
+    e/emit-line ["enum " prefix "object {"]
 
     either selfless [
         ;
@@ -526,21 +539,21 @@ make-obj-defs: procedure [obj prefix depth /selfless] [
         ; at 1, and if there's no "userspace" self in the 1 slot, the first
         ; key has to be...so we make `SYS_CTX_0 = 0` (for instance)
         ;
-        emit-item/assign [prefix "0"] 0
+        e/emit-item/assign [prefix "0"] 0
     ][
         ; The internal generator currently puts SELF at the start of new
         ; objects in key slot 1, by default.  Eventually MAKE OBJECT! will
         ; have nothing to do with adding SELF, and it will be entirely a
         ; by-product of generators.
         ;
-        emit-item/assign [prefix "SELF"] 1
+        e/emit-item/assign [prefix "SELF"] 1
     ]
 
     for-each field words-of obj [
-        emit-item/upper [prefix field]
+        e/emit-item/upper [prefix field]
     ]
-    emit-item [prefix "MAX"]
-    emit-end
+    e/emit-item [prefix "MAX"]
+    e/emit-end
 
     if depth > 1 [
         for-each field words-of obj [
@@ -549,25 +562,25 @@ make-obj-defs: procedure [obj prefix depth /selfless] [
                 object? get in obj field
             ][
                 extended-prefix: uppercase to-c-name [prefix field "_"]
-                make-obj-defs obj/:field extended-prefix (depth - 1)
+                make-obj-defs e obj/:field extended-prefix (depth - 1)
             ]
         ]
     ]
 ]
 
-make-obj-defs ob "SYS_" 1
-make-obj-defs ob/catalog "CAT_" 4
-make-obj-defs ob/contexts "CTX_" 4
-make-obj-defs ob/standard "STD_" 4
-make-obj-defs ob/state "STATE_" 4
-;make-obj-defs ob/network "NET_" 4
-make-obj-defs ob/ports "PORTS_" 4
-make-obj-defs ob/options "OPTIONS_" 4
-;make-obj-defs ob/intrinsic "INTRINSIC_" 4
-make-obj-defs ob/locale "LOCALE_" 4
-make-obj-defs ob/view "VIEW_" 4
+make-obj-defs e-sysobj ob "SYS_" 1
+make-obj-defs e-sysobj ob/catalog "CAT_" 4
+make-obj-defs e-sysobj ob/contexts "CTX_" 4
+make-obj-defs e-sysobj ob/standard "STD_" 4
+make-obj-defs e-sysobj ob/state "STATE_" 4
+;make-obj-defs e-sysobj ob/network "NET_" 4
+make-obj-defs e-sysobj ob/ports "PORTS_" 4
+make-obj-defs e-sysobj ob/options "OPTIONS_" 4
+;make-obj-defs e-sysobj ob/intrinsic "INTRINSIC_" 4
+make-obj-defs e-sysobj ob/locale "LOCALE_" 4
+make-obj-defs e-sysobj ob/view "VIEW_" 4
 
-write-emitted inc/tmp-sysobj.h
+e-sysobj/write-emitted
 
 
 ;----------------------------------------------------------------------------
@@ -576,25 +589,24 @@ write-emitted inc/tmp-sysobj.h
 ;
 ;----------------------------------------------------------------------------
 
-emit-header "Event Types" %reb-evtypes.h
-emit newline
+e-event: make-emitter "Event Types" inc/reb-evtypes.h
 
-emit-line ["enum event_types {"]
+e-event/emit-line ["enum event_types {"]
 for-each field ob/view/event-types [
-    emit-item/upper ["EVT_" field]
+    e-event/emit-item/upper ["EVT_" field]
 ]
-emit-item "EVT_MAX"
-emit-end
+e-event/emit-item "EVT_MAX"
+e-event/emit-end
 
-emit-line ["enum event_keys {"]
-emit-item "EVK_NONE"
+e-event/emit-line ["enum event_keys {"]
+e-event/emit-item "EVK_NONE"
 for-each field ob/view/event-keys [
-    emit-item/upper ["EVK_" field]
+    e-event/emit-item/upper ["EVK_" field]
 ]
-emit-item "EVK_MAX"
-emit-end
+e-event/emit-item "EVK_MAX"
+e-event/emit-end
 
-write-emitted inc/reb-evtypes.h
+e-event/write-emitted
 
 
 ;----------------------------------------------------------------------------
@@ -605,42 +617,42 @@ write-emitted inc/reb-evtypes.h
 
 ;-- Error Structure ----------------------------------------------------------
 
-emit-header "Error Structure and Constants" %errnums.h
+e-errnums: make-emitter "Error Structure and Constants" inc/tmp-errnums.h
 
-emit {
+e-errnums/emit {
 /***********************************************************************
 **
 */  typedef struct REBOL_Error_Vars
 /*
 ***********************************************************************/
 }
-emit-line "{"
+e-errnums/emit-line "{"
 
 ; Generate ERROR object and append it to bootdefs.h:
-emit-line/indent "RELVAL self;" ;-- C++ build cannot be REBVAL
+e-errnums/emit-line/indent "RELVAL self;" ;-- C++ build cannot be REBVAL
 for-each word words-of ob/standard/error [
     either word = 'near [
-        emit-line/indent [
+        e-errnums/emit-line/indent [
             "RELVAL nearest;" ;-- C++ build cannot be REBVAL
         ]
-        emit-annotation "near/far are non-standard C keywords"
+        e-errnums/emit-annotation "near/far are non-standard C keywords"
     ][
-        emit-line/indent [
+        e-errnums/emit-line/indent [
             "RELVAL" space (to-c-name word) ";" ;-- C++ build cannot be REBVAL
          ]
     ]
     
 ]
-emit-line "} ERROR_VARS;"
+e-errnums/emit-line "} ERROR_VARS;"
 
-emit {
+e-errnums/emit {
 /***********************************************************************
 **
 */  enum REBOL_Errors
 /*
 ***********************************************************************/
 }
-emit-line "{"
+e-errnums/emit-line "{"
 
 boot-errors: load %errors.r
 
@@ -672,36 +684,37 @@ for-each [category info] boot-errors [
         append id-list reduce [id val]
 
         either new-section [
-            emit-item/assign/upper ["RE_" id] code
+            e-errnums/emit-item/assign/upper ["RE_" id] code
             new-section: false
         ][
-            emit-item/upper ["RE_" id]
+            e-errnums/emit-item/upper ["RE_" id]
         ]
-        emit-annotation spaced [code mold val]
+        e-errnums/emit-annotation spaced [code mold val]
 
         code: code + 1
     ]
-    emit-item ["RE_" (uppercase-of to word! category) "_MAX"]
-    emit newline
+    e-errnums/emit-item ["RE_" (uppercase-of to word! category) "_MAX"]
+    e-errnums/emit newline
 ]
 
-emit-end
+e-errnums/emit-end
 
-emit-line {#define RE_USER MAX_I32}
-emit-annotation {Hardcoded, update in %make-boot.r}
+e-errnums/emit-line {#define RE_USER MAX_I32}
+e-errnums/emit-annotation {Hardcoded, update in %make-boot.r}
 
-emit-line {#define RE_CATEGORY_SIZE 1000}
-emit-annotation {Hardcoded, update in %make-boot.r}
+e-errnums/emit-line {#define RE_CATEGORY_SIZE 1000}
+e-errnums/emit-annotation {Hardcoded, update in %make-boot.r}
 
-emit-line {#define RE_INTERNAL_FIRST RE_MISC}
-emit-annotation {GENERATED! update in %make-boot.r}
+e-errnums/emit-line {#define RE_INTERNAL_FIRST RE_MISC}
+e-errnums/emit-annotation {GENERATED! update in %make-boot.r}
 
-emit-line {#define RE_MAX RE_COMMAND_MAX}
-emit-annotation {GENERATED! update in %make-boot.r}
-write-emitted inc/tmp-errnums.h
+e-errnums/emit-line {#define RE_MAX RE_COMMAND_MAX}
+e-errnums/emit-annotation {GENERATED! update in %make-boot.r}
+e-errnums/write-emitted
 
 ;-------------------------------------------------------------------------
-emit-header "Error functions" %error-funcs.h
+
+e-errfuncs: make-emitter "Error functions" inc/tmp-error-funcs.h
 for-each [id val] id-list [
     n-args: 0
     if block? val [
@@ -715,8 +728,8 @@ for-each [id val] id-list [
         ]
     ]
 
-    emit-line []
-    emit-line ["//  " mold val] 
+    e-errfuncs/emit-line []
+    e-errfuncs/emit-line ["//  " mold val] 
     c-id: to-c-name id
     f-name: uppercase/part copy c-id 1
     parse f-name [
@@ -726,21 +739,25 @@ for-each [id val] id-list [
         ]
     ]
     either zero? n-args [
-        emit-line [ {static inline REBCTX *Error_} f-name {_Raw(void)}]
-        emit-line [ "^{" ]
-        emit-line/indent [ "return Error(RE_" uppercase c-id ", END);" ]
-        emit-line [ "^}" ]
+        e-errfuncs/emit-lines [
+            [ {static inline REBCTX *Error_} f-name {_Raw(void)}]
+            [ "^{" ]
+            [ "    return Error(RE_" uppercase c-id ", END);" ]
+            [ "^}" ]
+        ]
     ][
-        emit-line [ {static inline REBCTX *Error_} f-name {_Raw(} ]
+        e-errfuncs/emit-line [
+            {static inline REBCTX *Error_} f-name {_Raw(}
+        ]
         i: 0
         while [i < n-args] [
-            emit-line compose [ {const REBVAL *arg} (i + 1)
+            e-errfuncs/emit-line compose [ {const REBVAL *arg} (i + 1)
                 either i < (n-args - 1) [","] [""]
             ]
             i: i + 1 ; don't use ++, not R3-Alpha compatible 
         ]
-        emit-line [")"]
-        emit-line [ "^{" ]
+        e-errfuncs/emit-line [")"]
+        e-errfuncs/emit-line [ "^{" ]
 
         args: copy ""
         i: 0
@@ -749,27 +766,13 @@ for-each [id val] id-list [
             i: i + 1 ; don't use ++, not R3-Alpha comptible
         ]
 
-        emit-line/indent [ "return Error(RE_" uppercase c-id args ", END);"]
-        emit-line [ "^}" ]
+        e-errfuncs/emit-line/indent [
+            "return Error(RE_" uppercase c-id args ", END);"
+        ]
+        e-errfuncs/emit-line [ "^}" ]
     ]
 ]
-write-emitted inc/tmp-error-funcs.h
-
-;-------------------------------------------------------------------------
-
-emit-header "Port Modes" %port-modes.h
-
-data: load %modes.r
-
-emit newline
-emit-line "enum port_modes {"
-
-for-each word data [
-    emit-item/upper word
-]
-emit-end
-
-write-emitted inc/tmp-portmodes.h
+e-errfuncs/write-emitted
 
 ;----------------------------------------------------------------------------
 ;
@@ -792,7 +795,7 @@ for-each section [boot-base boot-sys boot-mezz] [
     mezz-files: next mezz-files
 ]
 
-emit-header "Sys Context" %sysctx.h
+e-sysctx: make-emitter "Sys Context" inc/tmp-sysctx.h
 
 ; We don't actually want to create the object in the R3-MAKE Rebol, because
 ; the constructs are intended to run in the Rebol being built.  But the list
@@ -815,9 +818,9 @@ sctx: has collect [
 ; it to have a SELF, having some objects that don't helps pave the way
 ; to the userspace choice of self-vs-no-self (as with func's `<with> return`)
 ;
-make-obj-defs/selfless sctx "SYS_CTX_" 1
+make-obj-defs/selfless e-sysctx sctx "SYS_CTX_" 1
 
-write-emitted inc/tmp-sysctx.h
+e-sysctx/write-emitted
 
 
 ;----------------------------------------------------------------------------
@@ -833,10 +836,10 @@ write-emitted inc/tmp-sysctx.h
 ;
 ;----------------------------------------------------------------------------
 
-emit-header "Natives and Bootstrap" %tmp-boot-block.c
-emit newline
-emit-line {#include "sys-core.h"}
-emit newline
+e-bootblock: make-emitter "Natives and Bootstrap" src/tmp-boot-block.c
+
+e-bootblock/emit-line {#include "sys-core.h"}
+e-bootblock/emit newline
 
 externs: make string! 2000
 boot-natives: load boot/tmp-natives.r
@@ -850,19 +853,19 @@ for-each val boot-natives [
 
 print [num-natives "natives"]
 
-emit newline
+e-bootblock/emit newline
 
-emit-line {REBVAL Natives[NUM_NATIVES];}
+e-bootblock/emit-line {REBVAL Natives[NUM_NATIVES];}
 
-emit-line "const REBNAT Native_C_Funcs[NUM_NATIVES] = {"
+e-bootblock/emit-line "const REBNAT Native_C_Funcs[NUM_NATIVES] = {"
 
 for-each val boot-natives [
     if set-word? val [
-        emit-item ["N_" to word! val]
+        e-bootblock/emit-item ["N_" to word! val]
     ]
 ]
-emit-end
-emit newline
+e-bootblock/emit-end
+e-bootblock/emit newline
 
 
 ;-- Build typespecs block (in same order as datatypes table):
@@ -888,22 +891,22 @@ insert tail data make char! 0 ; scanner requires zero termination
 
 comp-data: compress data: to-binary data
 
-emit {
+e-bootblock/emit {
 // Native_Specs contains data which is the DEFLATE-algorithm-compressed
 // representation of the textual function specs for Rebol's native
 // routines.  Though DEFLATE includes the compressed size in the payload,
 // NAT_UNCOMPRESSED_SIZE is also defined to be used as a sanity check
 // on the decompression process.
 }
-emit newline
+e-bootblock/emit newline
 
-emit-line ["const REBYTE Native_Specs[NAT_COMPRESSED_SIZE] = {"]
+e-bootblock/emit-line ["const REBYTE Native_Specs[NAT_COMPRESSED_SIZE] = {"]
 
 ;-- Convert UTF-8 binary to C-encoded string:
-emit binary-to-c comp-data
-emit-line "};" ;-- EMIT-END would erase the last comma, but there's no extra
+e-bootblock/emit binary-to-c comp-data
+e-bootblock/emit-line "};" ;-- EMIT-END erases last comma but there's no extra
 
-write-emitted src/tmp-boot-block.c
+e-bootblock/write-emitted
 
 ;-- Output stats:
 print [
@@ -919,16 +922,16 @@ print [
 ;
 ;----------------------------------------------------------------------------
 
-emit-header "Bootstrap Structure and Root Module" %boot.h
+e-boot: make-emitter "Bootstrap Structure and Root Module" inc/tmp-boot.h
 
-emit newline
+e-boot/emit newline
 
-emit-line ["#define NUM_NATIVES" space num-natives]
-emit-line ["#define NAT_UNCOMPRESSED_SIZE" space (length-of data)]
-emit-line ["#define NAT_COMPRESSED_SIZE" space (length-of comp-data)]
-emit-line ["#define CHECK_TITLE" space (checksum to binary! title)]
+e-boot/emit-line ["#define NUM_NATIVES" space num-natives]
+e-boot/emit-line ["#define NAT_UNCOMPRESSED_SIZE" space (length-of data)]
+e-boot/emit-line ["#define NAT_COMPRESSED_SIZE" space (length-of comp-data)]
+e-boot/emit-line ["#define CHECK_TITLE" space (checksum to binary! title)]
 
-emit {
+e-boot/emit {
 // Compressed data of the native specifications.  This is uncompressed during
 // boot and executed.
 //
@@ -943,83 +946,83 @@ EXTERN_C const REBNAT Native_C_Funcs[NUM_NATIVES];
 EXTERN_C REBVAL Natives[NUM_NATIVES];
 }
 
-emit newline
-emit-line "enum Native_Indices {"
+e-boot/emit newline
+e-boot/emit-line "enum Native_Indices {"
 
 nat-index: 0
 for-each val boot-natives [
     if set-word? val [
-        emit-item/assign ["N_" (to word! val) "_ID"] nat-index
+        e-boot/emit-item/assign ["N_" (to word! val) "_ID"] nat-index
         nat-index: nat-index + 1
     ]
 ]
 
-emit-end
+e-boot/emit-end
 
-emit newline
-emit-line "typedef struct REBOL_Boot_Block {"
+e-boot/emit newline
+e-boot/emit-line "typedef struct REBOL_Boot_Block {"
 
 for-each word sections [
     word: form word
     remove/part word 5 ; boot_
-    emit-line/indent [
+    e-boot/emit-line/indent [
         "RELVAL" space (to-c-name word) ";" ;-- can't be REBVAL in C++ build
     ]
 ]
-emit "} BOOT_BLK;"
+e-boot/emit "} BOOT_BLK;"
 
 ;-------------------
 
-emit [newline newline]
+e-boot/emit [newline newline]
 
-emit-line {//**** ROOT Vars (GC protected special values):}
-emit newline
+e-boot/emit-line {//**** ROOT Vars (GC protected special values):}
+e-boot/emit newline
 
-emit-line "typedef struct REBOL_Root_Vars {"
+e-boot/emit-line "typedef struct REBOL_Root_Vars {"
 
 for-each word boot-root [
-    emit-line/indent [
+    e-boot/emit-line/indent [
         "RELVAL" space (to-c-name word) ";" ;-- Can't be REBVAL in C++ build
     ]
 ]
-emit-line ["} ROOT_VARS;"]
-emit newline
+e-boot/emit-line ["} ROOT_VARS;"]
+e-boot/emit newline
 
 n: 0
 for-each word boot-root [
-    emit-line [
+    e-boot/emit-line [
         "#define" space (uppercase to-c-name ["ROOT_" word]) space
         "KNOWN(&Root_Vars->" (lowercase to-c-name word) ")"
     ]
     n: n + 1
 ]
-emit-line ["#define ROOT_MAX" space n]
+e-boot/emit-line ["#define ROOT_MAX" space n]
 
 ;-------------------
 
-emit [newline newline]
+e-boot/emit [newline newline]
 
-emit-line {//**** TASK Vars (GC protected special values)}
-emit newline
+e-boot/emit-line {//**** TASK Vars (GC protected special values)}
+e-boot/emit newline
 
-emit-line "typedef struct REBOL_Task_Vars {"
+e-boot/emit-line "typedef struct REBOL_Task_Vars {"
 
 for-each word boot-task [
-    emit-line/indent [
+    e-boot/emit-line/indent [
         "RELVAL" space (to-c-name word) ";" ;-- Can't be REBVAL in C++ build
     ]
 ]
-emit-line ["} TASK_VARS;"]
-emit newline
+e-boot/emit-line ["} TASK_VARS;"]
+e-boot/emit newline
 
 n: 0
 for-each word boot-task [
-    emit-line [
+    e-boot/emit-line [
         "#define" space (uppercase to-c-name ["TASK_" word]) space
         "KNOWN(&Task_Vars->" (lowercase to-c-name word) ")"
     ]
     n: n + 1
 ]
-emit-line ["#define TASK_MAX" space n]
+e-boot/emit-line ["#define TASK_MAX" space n]
 
-write-emitted inc/tmp-boot.h
+e-boot/write-emitted

@@ -277,7 +277,7 @@ BOOL WINAPI Handle_Break(DWORD dwCtrlType)
     switch(dwCtrlType) {
     case CTRL_C_EVENT:
     case CTRL_BREAK_EVENT:
-        RL_Escape();
+        rebEscape();
         return TRUE; // TRUE = "we handled it"
 
     case CTRL_CLOSE_EVENT:
@@ -316,7 +316,7 @@ BOOL WINAPI Handle_Nothing(DWORD dwCtrlType)
 static void Handle_Signal(int sig)
 {
     UNUSED(sig);
-    RL_Escape();
+    rebEscape();
 }
 
 #endif
@@ -361,7 +361,7 @@ int main(int argc, char **argv_ansi)
     Open_StdIO();
 
     Host_Lib = &Host_Lib_Init;
-    RL_Init(Host_Lib);
+    rebInit(Host_Lib);
 
     // While running the Rebol initialization code, we don't want any special
     // Ctrl-C handling... leave it to the OS (which would likely terminate
@@ -648,7 +648,8 @@ int main(int argc, char **argv_ansi)
     // No need to do a "clean" shutdown, as we are about to exit the process
     // (Note: The debug build runs through the clean shutdown anyway!)
     //
-    RL_Shutdown(FALSE);
+    REBOOL clean = FALSE;
+    rebShutdown(clean);
 
     return exit_status;
 }

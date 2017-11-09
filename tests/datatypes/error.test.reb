@@ -124,7 +124,6 @@
 [error? make error! [type: 'access id: 'no-extension]]
 [error? make error! [type: 'access id: 'bad-extension]]
 [error? make error! [type: 'access id: 'extension-init]]
-[error? make error! [type: 'access id: 'call-fail]]
 
 [error? make error! [type: 'user id: 'message]]
 

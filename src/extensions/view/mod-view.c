@@ -166,7 +166,7 @@ REBNATIVE(request_file_p)
         //
         DECLARE_LOCAL (hack);
         Init_String(hack, ser);
-        lpstrFilter = RL_Val_Wstring_Alloc(NULL, hack);
+        lpstrFilter = rebValWstringAlloc(NULL, hack);
     }
     else {
         // Currently the implementation of default filters is in usermode,
@@ -230,7 +230,7 @@ REBNATIVE(request_file_p)
             //
             DECLARE_LOCAL (hack);
             Init_String(hack, ser); // manages the series, can't free it
-            lpstrInitialDir = RL_Val_Wstring_Alloc(NULL, hack);
+            lpstrInitialDir = rebValWstringAlloc(NULL, hack);
         }
 
     }
@@ -240,7 +240,7 @@ REBNATIVE(request_file_p)
 
     wchar_t *lpstrTitle;
     if (REF(title))
-        lpstrTitle = RL_Val_Wstring_Alloc(NULL, ARG(text));
+        lpstrTitle = rebValWstringAlloc(NULL, ARG(text));
     else
         lpstrTitle = NULL; // Will use "Save As" or "Open" defaults
     ofn.lpstrTitle = lpstrTitle;
@@ -361,7 +361,7 @@ REBNATIVE(request_file_p)
 
     REBYTE *title;
     if (REF(title))
-        title = RL_Val_UTF8_Alloc(NULL, ARG(text));
+        title = rebValUTF8Alloc(NULL, ARG(text));
     else
         title = NULL;
 
@@ -396,7 +396,7 @@ REBNATIVE(request_file_p)
 
     REBYTE *name;
     if (REF(file)) {
-        name = RL_Val_UTF8_Alloc(NULL, ARG(name));
+        name = rebValUTF8Alloc(NULL, ARG(name));
         gtk_file_chooser_set_current_folder(chooser, cast(gchar*, name));
     }
     else
@@ -595,7 +595,7 @@ REBNATIVE(request_dir_p)
     bi.pszDisplayName = display; // assumed length is MAX_PATH
 
     if (REF(title))
-        bi.lpszTitle = RL_Val_Wstring_Alloc(NULL, ARG(text));
+        bi.lpszTitle = rebValWstringAlloc(NULL, ARG(text));
     else
         bi.lpszTitle = L"Please, select a directory...";
 
@@ -615,7 +615,7 @@ REBNATIVE(request_dir_p)
     //
     bi.lpfn = ReqDirCallbackProc;
     if (REF(path))
-        bi.lParam = cast(LPARAM, RL_Val_Wstring_Alloc(NULL, ARG(dir)));
+        bi.lParam = cast(LPARAM, rebValWstringAlloc(NULL, ARG(dir)));
     else
         bi.lParam = cast(LPARAM, NULL);
 

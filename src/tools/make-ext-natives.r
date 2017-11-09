@@ -25,9 +25,15 @@ REBOL [
 do %r2r3-future.r
 do %common.r
 do %common-emitter.r
-do %form-header.r
 do %systems.r
 
+; The way that the processing code for extracting Rebol information out of
+; C file comments is written is that the PROTO-PARSER has several callback
+; functions that can be registered to receive each item it detects.
+;
+
+do %common-parsers.r
+do %native-emitters.r ; for emit-include-params-macro
 
 args: parse-args system/options/args
 
@@ -41,21 +47,17 @@ c-src: fix-win32-path to file! really string! args/SRC
 
 print ["building" m-name "from" c-src]
 
-
 output-dir: fix-win32-path to file! any [:args/OUTDIR %../]
 mkdir/deep output-dir/include
 
+e-first: (make-emitter "Module C Header File Preface"
+    really file! join-all [output-dir/include/tmp-mod- l-m-name %-first.h])
+
+e-last: (make-emitter "Module C Header File Epilogue"
+    really file! join-all [output-dir/include/tmp-mod- l-m-name %-last.h])
+
 
 verbose: false
-
-
-; The way that the processing code for extracting Rebol information out of
-; C file comments is written is that the PROTO-PARSER has several callback
-; functions that can be registered to receive each item it detects.
-;
-
-do %common-parsers.r
-do %native-emitters.r ;for emit-native-proto and emit-include-params-macro
 
 proto-count: 0
 module-header: _
@@ -109,7 +111,7 @@ errors: _
 platforms: _
 n-name: _
 n-spec: _
-unless parse native-list [
+native-list-rule: [
     while [
         set w set-word! copy spec [
             'native block!
@@ -155,7 +157,9 @@ unless parse native-list [
             quote platforms: set platforms block!
         ]
     ]
-][
+]
+
+unless parse native-list native-list-rule [
     fail [
         "failed to parse" mold native-list ":"
         "current word-list:" mold word-list
@@ -235,8 +239,7 @@ append spec native-list
 comp-data: compress data: to-binary mold spec
 ;print ["buf:" to string! data]
 
-emit-header m-name join-all [%tmp-mod- l-m-name %-last.h]
-emit-lines [
+e-last/emit-lines [
     [{int Module_Init_} m-name {(RELVAL *out);}]
     [{int Module_Quit_} m-name {(void);}]
     ["#if !defined(MODULE_INCLUDE_DECLARATION_ONLY)"]
@@ -249,25 +252,27 @@ emit-lines [
 ]
 
 ;-- Convert UTF-8 binary to C-encoded string:
-emit binary-to-c comp-data
-emit-line "};" ;-- EMIT-END erases the last comma, but there's no extra
+e-last/emit binary-to-c comp-data
+e-last/emit-line "};" ;-- EMIT-END erases last comma, but there's no extra
 
 either num-native > 0 [
-    emit-line [
+    e-last/emit-line [
         "REBNAT Ext_Native_C_Funcs_" m-name
         "[EXT_NUM_NATIVES_" u-m-name "] = {"
     ]
     for-each item native-list [
         if set-word? item [
-            emit-item ["N_" to word! item]
+            e-last/emit-item ["N_" to word! item]
         ]
     ]
-    emit-end
+    e-last/emit-end
 ][
-    emit-line ["REBNAT *Ext_Native_C_Funcs_" m-name space "= NULL;"]
+    e-last/emit-line [
+        "REBNAT *Ext_Native_C_Funcs_" m-name space "= NULL;"
+    ]
 ]
 
-emit-line [ {
+e-last/emit-line [ {
 int Module_Init_} m-name {(RELVAL *out)
 ^{
     INIT_} u-m-name {_WORDS;}
@@ -303,46 +308,53 @@ int Module_Quit_} m-name {(void)
 }
 ]
 
-write-emitted to file! unspaced [
-    output-dir/include/tmp-mod- l-m-name %-last.h
-]
+e-last/write-emitted
 
 ;--------------------------------------------------------------
 ; args
 
-emit-header
-    "PARAM() and REFINE() Automatic Macros"
-    to file! unspaced [%tmp-mod- l-m-name %-first.h]
+for-next native-list [
+    if tail? next native-list [break]
 
-emit-native-include-params-macro native-list
+    if any [
+        'native = native-list/2
+        all [path? native-list/2 | 'native = first native-list/2]
+    ][
+        assert [set-word? native-list/1]
+        (emit-include-params-macro e-first
+            (to-word native-list/1) (native-list/3))
+        e-first/emit newline
+    ]
+]
 
 ;--------------------------------------------------------------
 ; words
-emit-lines [
+
+e-first/emit-lines [
     ["//  Local words"]
     ["#define NUM_EXT_" u-m-name "_WORDS" space length-of word-list]
 ]
 
 either empty? word-list [
-    emit-line ["#define INIT_" u-m-name "_WORDS"]
+    e-first/emit-line ["#define INIT_" u-m-name "_WORDS"]
 ][
-    emit-line [
+    e-first/emit-line [
         "static const char* Ext_Words_" m-name
         "[NUM_EXT_" u-m-name "_WORDS] = {"
     ]
     for-next word-list [
-        emit-line/indent [ {"} to string! word-list/1 {",} ]
+        e-first/emit-line/indent [ {"} to string! word-list/1 {",} ]
     ]
-    emit-end
+    e-first/emit-end
 
-    emit-line [
+    e-first/emit-line [
         "static REBSTR* Ext_Canons_" m-name
         "[NUM_EXT_" u-m-name "_WORDS];"
     ]
 
     word-seq: 0
     for-next word-list [
-        emit-line [
+        e-first/emit-line [
             "#define"
             space
             u-m-name {_WORD_} uppercase to-c-name word-list/1
@@ -351,8 +363,8 @@ either empty? word-list [
         ]
         word-seq: word-seq + 1
     ]
-    emit-line ["#define INIT_" u-m-name "_WORDS" space "\"]
-    emit-line/indent [
+    e-first/emit-line ["#define INIT_" u-m-name "_WORDS" space "\"]
+    e-first/emit-line/indent [
         "Init_Extension_Words("
             "cast(const REBYTE**, Ext_Words_" m-name ")"
             "," space
@@ -366,9 +378,9 @@ either empty? word-list [
 ;--------------------------------------------------------------
 ; errors
 
-emit-line ["//  Local errors"]
+e-first/emit-line ["//  Local errors"]
 unless empty? error-list [
-    emit-line [ {enum Ext_} m-name {_Errors ^{}]
+    e-first/emit-line [ {enum Ext_} m-name {_Errors ^{}]
     error-collected: copy []
     for-each [key val] error-list [
         unless set-word? key [
@@ -378,17 +390,17 @@ unless empty? error-list [
             fail ["Duplicate error key" (to word! key)]
         ]
         append error-collected key
-        emit-item/upper [
+        e-first/emit-item/upper [
             {RE_EXT_ENUM_} u-m-name {_} to-c-name to word! key
         ]
     ]
-    emit-end
-    emit-line ["static REBINT Ext_" m-name "_Error_Base;"]
+    e-first/emit-end
+    e-first/emit-line ["static REBINT Ext_" m-name "_Error_Base;"]
 
-    emit-line []
+    e-first/emit-line []
     for-each [key val] error-list [
         key: uppercase to-c-name to word! key
-        emit-line [
+        e-first/emit-line [
             {#define RE_EXT_} u-m-name {_} key
             space
             {(}
@@ -398,6 +410,4 @@ unless empty? error-list [
     ]
 ]
 
-write-emitted to file! unspaced [
-    output-dir/include/tmp-mod- l-m-name %-first.h
-]
+e-first/write-emitted

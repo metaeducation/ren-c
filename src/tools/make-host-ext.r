@@ -22,7 +22,6 @@ print "--- Make Host Boot Extension ---"
 do %r2r3-future.r
 do %common.r
 
-do %form-header.r
 args: parse-args system/options/args
 output-dir: fix-win32-path to file! any [:args/OUTDIR %../]
 mkdir/deep output-dir/include
@@ -81,10 +80,9 @@ emit-file: function [
     replace/all name "-" "_"
     prefix: uppercase copy name
 
-    clear out
-    emit form-header/gen title second split-path file %make-host-ext.r
+    e: make-emitter title join-all [output-dir/include %/ file %.h]
 
-    emit ["enum " name "_commands {^/"]
+    e/emit-line ["enum " name "_commands {"]
 
     ; Gather exported words if exports field is a block:
     words: make block! 100
@@ -106,35 +104,35 @@ emit-file: function [
     ]
 
     for-each word words [
-        emit [
+        e/emit-line [
             spaced-tab
             "CMD_" prefix #"_" replace/all form-name word "'" "_LIT"  ","
-            newline
         ]
     ]
-    emit [spaced-tab "CMD_MAX" newline]
-    emit ["};" newline newline]
+    e/emit-line [spaced-tab "CMD_MAX"]
+    e/emit-line ["};"]
+    e/emit-newline
 
     if src: select source to-set-word 'words [
-        emit ["enum " name "_words {" newline]
-        emit [spaced-tab "W_" prefix "_0," newline]
+        e/emit-line ["enum " name "_words {"]
+        e/emit-line [spaced-tab "W_" prefix "_0,"]
         for-each word src [
-            emit [spaced-tab "W_" prefix #"_" form-name word "," newline]
+            e/emit-line [spaced-tab "W_" prefix #"_" form-name word ","]
         ]
-        emit [spaced-tab "W_MAX" newline]
-        emit ["};" newline newline]
+        e/emit-line [spaced-tab "W_MAX"]
+        e/emit-line ["};"]
+        e/emit newline
     ]
 
-    emit ["#ifdef INCLUDE_EXT_DATA" newline]
+    e/emit ["#ifdef INCLUDE_EXT_DATA" newline]
     code: append trim/head mold/only/flat source newline
     append code to-char 0 ; null terminator may be required
-    emit [
-        "const unsigned char RX_" name "[] = {" newline
-        binary-to-c to-binary code
-        "};" newline
-        newline
+    e/emit-lines [
+        ["const unsigned char RX_" name "[] = {"]
+        [binary-to-c to-binary code]
+        "};"
     ]
-    emit ["#endif" newline]
+    e/emit ["#endif" newline]
 
-    write-if-changed join-all [output-dir/include %/ file %.h] out
+    e/write-emitted
 ]

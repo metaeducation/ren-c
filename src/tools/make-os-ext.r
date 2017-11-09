@@ -1,6 +1,7 @@
 REBOL [
     System: "REBOL [R3] Language Interpreter and Run-time Environment"
     Title: "Generate OS host API headers"
+    File: %make-os-ext.r
     Rights: {
         Copyright 2012 REBOL Technologies
         REBOL is a trademark of REBOL Technologies
@@ -21,6 +22,7 @@ print ["--- Make OS Ext Lib --- Version:" lib-version]
 
 do %r2r3-future.r
 do %common.r
+do %common-emitter.r
 do %common-parsers.r
 do %systems.r
 
@@ -28,8 +30,6 @@ args: parse-args system/options/args
 config: config-system to-value :args/OS_ID
 output-dir: fix-win32-path to file! any [:args/OUTDIR %../]
 mkdir/deep output-dir/include
-
-do %form-header.r
 
 file-base: has load %file-base.r
 
@@ -169,16 +169,15 @@ append host-lib-struct "} REBOL_HOST_LIB;"
 ; Do a reduce which produces the output string we will write to host-lib.h
 ;
 
-output-buffer: reduce [
+e-lib: make-emitter "Host Access Library" output-dir/include/host-lib.h
 
-form-header/gen "Host Access Library" %host-lib.h %make-os-ext.r
+e-lib/emit-lines [
+    [{#define HOST_LIB_VER} space lib-version]
+    [{#define HOST_LIB_SUM} space checksum/tcp to-binary checksum-source]
+    [{#define HOST_LIB_SIZE} space proto-count]
+]
 
-newline
-
-{#define HOST_LIB_VER} space lib-version newline
-{#define HOST_LIB_SUM} space checksum/tcp to-binary checksum-source newline
-{#define HOST_LIB_SIZE} space proto-count newline
-
+e-lib/emit reduce [
 {
 // !!! SEE **WARNING** BEFORE EDITING
 
@@ -518,15 +517,13 @@ newline newline (rebol-lib-macros)
 }
 ]
 
-;print output-buffer ;halt
-;print ['checksum checksum/tcp checksum-source]
-write-if-changed output-dir/include/host-lib.h output-buffer
+e-lib/write-emitted
 
+e-table: (
+    make-emitter "Host Table Definition" output-dir/include/host-table.inc
+)
 
-output-buffer: unspaced [
-form-header/gen "Host Table Definition" %host-table.inc %make-os-ext.r
-
-{
+e-table/emit {
 /***********************************************************************
 **
 **  HOST LIB TABLE DEFINITION
@@ -543,11 +540,6 @@ form-header/gen "Host Table Definition" %host-table.inc %make-os-ext.r
 **      this, in order to easily call out which object file has the
 **      singular definition of Host_Lib that you need.
 **
-**      !!!
-**      !!! **WARNING!**  DO NOT EDIT THIS! (until you've checked...)
-**      !!! BE SURE YOU ARE EDITING MAKE-OS-EXT.R AND NOT HOST-LIB.H
-**      !!!
-**
 ***********************************************************************/
 
 EXTERN_C REBOL_HOST_LIB Host_Lib_Init;
@@ -559,12 +551,8 @@ REBOL_HOST_LIB Host_Lib_Init = ^{
     (REBDEV**)&Devices,
 }
 
-(host-lib-instance)
+e-table/emit host-lib-instance
 
-"^};" newline
-]
+e-table/emit-line "};"
 
-write-if-changed output-dir/include/host-table.inc output-buffer
-
-;ask "Done"
-print "   "
+e-table/write-emitted

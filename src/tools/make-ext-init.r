@@ -46,25 +46,23 @@ dest: either select args 'DEST [
 
 print unspaced ["--- Make Extension Init Code from " src " ---"]
 
-do %form-header.r
-
 write-c-file: function [
     c-file
     r-file
 ][
-    emit-header "Ext custom init code" c-file
+    e: make-emitter "Ext custom init code" c-file
 
     data: read r-file
 
     comp-data: compress data
     comp-size: length-of comp-data
 
-    emit-line ["static const REBYTE script_bytes[" comp-size "] = {"]
+    e/emit-line ["static const REBYTE script_bytes[" comp-size "] = {"]
 
-    emit binary-to-c comp-data
-    emit-line "};"
+    e/emit binary-to-c comp-data
+    e/emit-line "};"
 
-    write-emitted c-file
+    e/write-emitted
 
     ;-- Output stats:
     print [

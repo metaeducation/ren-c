@@ -27,7 +27,7 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 
-#include <stddef.h> // wchar_t and other definitions
+#include <stddef.h> // size_t, wchar_t and other definitions API use
 
 #include "reb-config.h"
 
@@ -64,14 +64,6 @@
 #include "reb-gob.h"
 
 #include "reb-lib.h"
-
-// !!! None of the above currently include anything that *necessarily* defines
-// size_t.  However the host-lib API currently uses it in defining its
-// allocator.  In order to match the signature of Alloc_Mem() and malloc(),
-// we include it for the moment, but a more formal policy decision on "what
-// parameter types are legal in the host API" would be ideal.
-//
-#include <stdlib.h>
 
 #include "host-lib.h"
 

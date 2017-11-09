@@ -30,8 +30,6 @@ mkdir/deep output-dir/os
 
 print "--- Make Host Init Code ---"
 
-do %form-header.r
-
 ; Output directory for temp files:
 dir: %os/
 
@@ -46,7 +44,7 @@ write-c-file: function [
     c-file
     code
 ][
-    emit-header "Host custom init code" c-file
+    e: make-emitter "Host custom init code" c-file
 
     data: either system/version > 2.7.5 [
         mold/flat/only code ; crashes 2.7
@@ -61,14 +59,14 @@ write-c-file: function [
     comp-data: compress data
     comp-size: length-of comp-data
 
-    emit-line ["#define REB_INIT_SIZE" space comp-size]
+    e/emit-line ["#define REB_INIT_SIZE" space comp-size]
 
-    emit-line "const unsigned char Reb_Init_Code[REB_INIT_SIZE] = {"
+    e/emit-line "const unsigned char Reb_Init_Code[REB_INIT_SIZE] = {"
 
-    emit binary-to-c comp-data
-    emit-line "};"
+    e/emit binary-to-c comp-data
+    e/emit-line "};"
 
-    write-emitted c-file
+    e/write-emitted
 
     ;-- Output stats:
     print [
