@@ -1537,10 +1537,10 @@ REBCTX *Startup_Errors(REBARR *boot_errors)
 //         eval:  integer (limit)
 //     ]
 //
-REBYTE *Security_Policy(REBSTR *spelling, REBVAL *name)
+const REBYTE *Security_Policy(REBSTR *spelling, const REBVAL *name)
 {
-    REBVAL *policy = Get_System(SYS_STATE, STATE_POLICIES);
-    REBYTE *flags;
+    const REBVAL *policy = Get_System(SYS_STATE, STATE_POLICIES);
+    const REBYTE *flags;
     REBCNT len;
     REBCNT errcode = RE_SECURITY_ERROR;
 
@@ -1612,7 +1612,7 @@ REBYTE *Security_Policy(REBSTR *spelling, REBVAL *name)
 // Take action on the policy flags provided. The sym and value
 // are provided for error message purposes only.
 //
-void Trap_Security(REBCNT flag, REBSTR *sym, REBVAL *value)
+void Trap_Security(REBCNT flag, REBSTR *sym, const REBVAL *value)
 {
     if (flag == SEC_THROW) {
         if (!value) {
@@ -1635,9 +1635,7 @@ void Trap_Security(REBCNT flag, REBSTR *sym, REBVAL *value)
 //
 void Check_Security(REBSTR *sym, REBCNT policy, REBVAL *value)
 {
-    REBYTE *flags;
-
-    flags = Security_Policy(sym, value);
+    const REBYTE *flags = Security_Policy(sym, value);
     Trap_Security(flags[policy], sym, value);
 }
 

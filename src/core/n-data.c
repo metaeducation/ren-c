@@ -31,29 +31,21 @@
 #include "sys-core.h"
 
 
-static REBOOL Check_Char_Range(REBVAL *val, REBINT limit)
+static REBOOL Check_Char_Range(const REBVAL *val, REBINT limit)
 {
-    if (IS_CHAR(val)) {
-        if (VAL_CHAR(val) > limit) return FALSE;
-        return TRUE;
-    }
+    if (IS_CHAR(val))
+        return NOT(VAL_CHAR(val) > limit);
 
-    if (IS_INTEGER(val)) {
-        if (VAL_INT64(val) > limit) return FALSE;
-        return TRUE;
-    }
+    if (IS_INTEGER(val))
+        return NOT(VAL_INT64(val) > limit);
+
+    assert(ANY_STRING(val));
 
     REBCNT len = VAL_LEN_AT(val);
-    if (VAL_BYTE_SIZE(val)) {
-        REBYTE *bp = VAL_BIN_AT(val);
-        if (limit == 0xff) return TRUE; // by definition
-        for (; len > 0; len--, bp++)
-            if (*bp > limit) return FALSE;
-    }
-    else {
-        REBUNI *up = VAL_UNI_AT(val);
-        for (; len > 0; len--, up++)
-            if (*up > limit) return FALSE;
+    REBUNI *up = VAL_UNI_AT(val);
+    for (; len > 0; len--, up++) {
+        if (*up > limit)
+            return FALSE;
     }
 
     return TRUE;

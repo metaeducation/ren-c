@@ -146,35 +146,14 @@ REBSER *Copy_Wide_Str(const wchar_t *ws, REBINT len)
 
 
 //
-//  Copy_OS_Str: C
-//
-// Create a REBOL string series from an OS native string.
-//
-// For example, in Win32 with the wide char interface, we must
-// convert wide char strings, minimizing to bytes if possible.
-//
-// For Linux the char string could be UTF-8, so that must be
-// converted to REBOL Unicode or Latin byte strings.
-//
-REBSER *Copy_OS_Str(const void *src, REBINT len)
-{
-#ifdef OS_WIDE_CHAR
-    return Copy_Wide_Str(cast(const wchar_t*, src), len);
-#else
-    return Decode_UTF_String(cast(const REBYTE*, src), len, 8);
-#endif
-}
-
-
-//
 //  Insert_Char: C
 //
-// Insert a Char (byte or unicode) into a string.
+// Insert a unicode char into a string.
 //
 void Insert_Char(REBSER *dst, REBCNT index, REBCNT chr)
 {
-    if (index > SER_LEN(dst)) index = SER_LEN(dst);
-    if (chr > 0xFF && BYTE_SIZE(dst)) Widen_String(dst, TRUE);
+    if (index > SER_LEN(dst))
+        index = SER_LEN(dst);
     Expand_Series(dst, index, 1);
     SET_ANY_CHAR(dst, index, chr);
 }
@@ -194,18 +173,16 @@ void Insert_String(
     REBCNT pos,
     REBCNT len,
     REBOOL no_expand
-) {
-    REBUNI *up;
-    REBYTE *bp;
-    REBCNT n;
-
+){
     assert(idx <= SER_LEN(dst));
 
-    if (!no_expand) Expand_Series(dst, idx, len); // tail changed too
+    if (NOT(no_expand))
+        Expand_Series(dst, idx, len); // tail changed too
 
-    // Src and dst have same width (8 or 16):
+    // Src and dst have same width (8 or 16).  Currently that means BINARY!
+    // inserted in BINARY! or STRING! inserted in STRING!
+    //
     if (SER_WIDE(dst) == SER_WIDE(src)) {
-cp_same:
         if (BYTE_SIZE(dst))
             memcpy(BIN_AT(dst, idx), BIN_AT(src, pos), len);
         else
@@ -213,137 +190,63 @@ cp_same:
         return;
     }
 
-    // Src is 8 and dst is 16:
+    // Src is 8 and dst is 16.  This only happens at the moment when inserting
+    // BINARY! into STRING!  Should this be a UTF8 decoding?  :-/
+    //
+    // !!! Not implemented yet.
+    //
     if (!BYTE_SIZE(dst)) {
-        bp = BIN_AT(src, pos);
-        up = UNI_AT(dst, idx);
-        for (n = 0; n < len; n++) up[n] = (REBUNI)bp[n];
+        REBUNI *up = UNI_AT(dst, idx);
+        REBYTE *bp = BIN_AT(src, pos);
+
+        REBCNT n;
+        for (n = 0; n < len; n++) {
+            if (bp[n] > 127)
+                fail ("BINARY! insert high-bit UTF-8 encoding into STRING!");
+            up[n] = cast(REBUNI, bp[n]);
+        }
         return;
     }
 
-    // Src is 16 and dst is 8:
-    bp = BIN_AT(dst, idx);
-    up = UNI_AT(src, pos);
+    // Src is 16 and dst is 8.  This only happens when inserting strings
+    // into binaries, and needs a UTF8 encoding.
+    //
+    // !!! Not implemented yet.
+    //
+    REBYTE *bp = BIN_AT(dst, idx);
+    REBUNI *up = UNI_AT(src, pos);
+
+    REBCNT n;
     for (n = 0; n < len; n++) {
-        if (up[n] > 0xFF) {
-            // Expand dst and restart:
-            idx += n;
-            pos += n;
-            len -= n;
-            Widen_String(dst, TRUE);
-            goto cp_same;
-        }
-        bp[n] = (REBYTE)up[n];
+        if (up[n] > 127)
+            fail ("Inserting non-ASCII codepoint into BINARY! from STRING!");
+        bp[n] = cast(REBYTE, up[n]);
     }
 }
 
 
 //
-//  Copy_String_Slimming: C
+//  Copy_String_At_Len: C
 //
-// Copies a portion of any string (byte or unicode).  If the input is a
-// wide REBUNI string, the range of copied characters will be examined to
-// see if they could fit in a byte-size series.  The string will be
-// "slimmed" if possible.
+// !!! With UTF-8 Everywhere, copying strings will still be distinct from
+// other series due to the length being counted in characters and not
+// units of the series width.
 //
-REBSER *Copy_String_Slimming(REBSER *src, REBCNT index, REBINT length)
+REBSER *Copy_String_At_Len(REBSER *src, REBCNT index, REBINT length)
 {
-    REBYTE wide = 1;
+#if !defined(NDEBUG)
+    if (SER_WIDE(src) != sizeof(REBUNI))
+        panic (src);
+#endif
 
     if (length < 0)
         length = SER_LEN(src) - index;
 
-    // Can it be slimmed down?
-    if (!BYTE_SIZE(src)) {
-        REBUNI *up = UNI_AT(src, index);
-
-        REBINT n;
-        for (n = 0; n < length; n++)
-            if (up[n] > 0xff)
-                break;
-
-        if (n < length)
-            wide = sizeof(REBUNI);
-    }
-
-    REBSER *dst = Make_Series(length + 1, wide);
+    REBSER *dst = Make_Unicode(length);
     Insert_String(dst, 0, src, index, length, TRUE);
     TERM_SEQUENCE_LEN(dst, length);
 
     return dst;
-}
-
-
-//
-//  Val_Str_To_OS_Managed: C
-//
-// This is used to pass a REBOL value string to an OS API.
-//
-// The REBOL (input) string can be byte or wide sized.
-// The OS (output) string is in the native OS format.
-// On Windows, its a wide-char, but on Linux, its UTF-8.
-//
-// If we know that the string can be used directly as-is,
-// (because it's in the OS size format), we can used it
-// like that.
-//
-// !!! The series is created but just let up to the garbage
-// collector to free.  This is a "leaky" approach.  You may
-// optionally request to have the series returned if it is
-// important for you to protect it from GC, but you cannot
-// currently get a "freeable" series out of this.
-//
-REBCHR *Val_Str_To_OS_Managed(REBSER **out, REBVAL *val)
-{
-#ifdef OS_WIDE_CHAR
-    if (VAL_BYTE_SIZE(val)) {
-        // On windows, we need to convert byte to wide:
-        REBINT n = VAL_LEN_AT(val);
-        REBSER *up = Make_Unicode(n);
-
-        // !!!"Leaks" in the sense that the GC has to take care of this
-        MANAGE_SERIES(up);
-
-        n = Decode_UTF8_Negative_If_Latin1(
-            UNI_HEAD(up),
-            VAL_BIN_AT(val),
-            n,
-            FALSE
-        );
-        TERM_UNI_LEN(up, abs(n));
-
-        if (out) *out = up;
-
-        return cast(REBCHR*, UNI_HEAD(up));
-    }
-    else {
-        // Already wide, we can use it as-is:
-        // !Assumes the OS uses same wide format!
-
-        if (out) *out = VAL_SERIES(val);
-
-        return cast(REBCHR*, VAL_UNI_AT(val));
-    }
-#else
-    if (
-        VAL_BYTE_SIZE(val)
-        && All_Bytes_ASCII(VAL_BIN_AT(val), VAL_LEN_AT(val))
-    ) {
-        if (out) *out = VAL_SERIES(val);
-
-        // On Linux/Unix we can use ASCII directly (it is valid UTF-8):
-        return cast(REBCHR*, VAL_BIN_AT(val));
-    }
-    else {
-        // !!! "Leaks" in the sense that the GC has to take care of this
-        REBSER *ser = Temp_UTF8_At_Managed(val, 0, NULL);
-
-        if (out) *out = ser;
-
-        // NOTE: may return a shared buffer!
-        return cast(REBCHR*, BIN_HEAD(ser));
-    }
-#endif
 }
 
 
@@ -401,25 +304,16 @@ REBSER *Append_Unencoded(REBSER *dst, const char *src)
 //  Append_Codepoint: C
 //
 // Optimized function to append a non-encoded character.
-// Destination can be 1 or 2 bytes wide, but DOES NOT WIDEN.
 //
 REBSER *Append_Codepoint(REBSER *dst, REBCNT codepoint)
 {
+    assert(SER_WIDE(dst) == sizeof(REBUNI)); // invariant for "Latin1 Nowhere"
+    assert(codepoint < (1 << 16)); // not supported...yet
+
     REBCNT tail = SER_LEN(dst);
-
     EXPAND_SERIES_TAIL(dst, 1);
-
-    if (BYTE_SIZE(dst)) {
-        assert(codepoint < (1 << 8));
-        *BIN_AT(dst, tail) = cast(REBYTE, codepoint);
-        TERM_BIN(dst);
-    }
-    else {
-        assert(codepoint < (1 << 16));
-        *UNI_AT(dst, tail) = cast(REBUNI, codepoint);
-        TERM_UNI(dst);
-    }
-
+    *UNI_AT(dst, tail) = cast(REBUNI, codepoint);
+    TERM_UNI_LEN(dst, tail + 1);
     return dst;
 }
 
@@ -436,13 +330,10 @@ REBSER *Append_Codepoint(REBSER *dst, REBCNT codepoint)
 //
 REBSER *Make_Series_Codepoint(REBCNT codepoint)
 {
-    REBSER *out;
-
     assert(codepoint < (1 << 16));
 
-    out = (codepoint > 255) ? Make_Unicode(1) : Make_Binary(1);
+    REBSER *out = Make_Unicode(1);
     TERM_SEQUENCE(out);
-
     Append_Codepoint(out, codepoint);
 
     return out;
@@ -549,26 +440,22 @@ REBSER *Append_UTF8_May_Fail(REBSER *dst, const REBYTE *src, REBCNT num_bytes)
 
     Resize_Series(ser, num_bytes + 1); // needs at most this many unicode chars
 
-    REBINT len = Decode_UTF8_Negative_If_Latin1(
+    REBINT len = Decode_UTF8_Negative_If_ASCII(
         UNI_HEAD(ser),
         src,
         num_bytes,
         FALSE
     );
 
-    if (len < 0) { // All characters being added are Latin1
+    // !!! Previously it was interesting to know if all characters being
+    // added were Latin1.  In the post-UTF8-everywhere world, the interesting
+    // thing will be caching if they're all ASCII (for quick indexing)
+    //
+    if (len < 0)
         len = -len;
-        if (dst == NULL)
-            dst = Make_Binary(len);
-        if (BYTE_SIZE(dst)) {
-            Append_Uni_Bytes(dst, UNI_HEAD(ser), len);
-            return dst;
-        }
-    }
-    else {
-        if (dst == NULL)
-            dst = Make_Unicode(len);
-    }
+
+    if (dst == NULL)
+        dst = Make_Unicode(len);
 
     Append_Uni_Uni(dst, UNI_HEAD(ser), len);
 
@@ -619,14 +506,7 @@ REBSER *Join_Binary(const REBVAL *blk, REBINT limit)
         case REB_URL:
         case REB_TAG: {
             REBCNT len = VAL_LEN_AT(val);
-
-            void *bp = VAL_BYTE_SIZE(val)
-                ? VAL_BIN_AT(val)
-                : (REBYTE*)VAL_UNI_AT(val);
-
-            REBCNT bl = Length_As_UTF8(
-                bp, len, VAL_BYTE_SIZE(val) ? 0 : OPT_ENC_UNISRC
-            );
+            REBCNT bl = Length_As_UTF8(VAL_UNI_AT(val), len, OPT_ENC_0);
 
             EXPAND_SERIES_TAIL(series, bl);
             SET_SERIES_LEN(
@@ -634,9 +514,9 @@ REBSER *Join_Binary(const REBVAL *blk, REBINT limit)
                 tail + Encode_UTF8(
                     BIN_AT(series, tail),
                     bl,
-                    bp,
+                    VAL_UNI_AT(val),
                     &len,
-                    VAL_BYTE_SIZE(val) ? 0 : OPT_ENC_UNISRC
+                    OPT_ENC_0
                 )
             );
             break; }

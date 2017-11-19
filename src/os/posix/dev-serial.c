@@ -200,22 +200,22 @@ static REBINT Set_Serial_Settings(int ttyfd, REBREQ *req)
 //
 DEVICE_CMD Open_Serial(REBREQ *req)
 {
-    char *path;
-    char devpath[MAX_SERIAL_PATH];
-    REBINT h;
     struct devreq_serial *serial = DEVREQ_SERIAL(req);
 
-    if (!(path = serial->path)) {
+    if (serial->path == NULL) {
         req->error = -RFE_BAD_PATH;
         return DR_ERROR;
     }
 
-    if (path[0] != '/') { //relative path
-        strcpy(&devpath[0], "/dev/");
-        strncpy(&devpath[5], path, MAX_SERIAL_PATH-6);
-        path = &devpath[0];
+    char path_utf8[MAX_SERIAL_PATH];
+    REBCNT size = rebSpellingOf(path_utf8, MAX_SERIAL_PATH, serial->path);
+
+    if (path_utf8[0] != '/') { // relative path, insert `/dev` before slash
+        memmove(path_utf8 + 4, path_utf8, size + 1);
+        memcpy(path_utf8, "/dev", 4);
     }
-    h = open(path, O_RDWR | O_NOCTTY | O_NONBLOCK);
+
+    int h = open(path_utf8, O_RDWR | O_NOCTTY | O_NONBLOCK);
     if (h < 0) {
         req->error = -RFE_OPEN_FAIL;
         return DR_ERROR;

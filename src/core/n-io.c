@@ -110,21 +110,19 @@ REBNATIVE(write_stdout)
     REBVAL *v = ARG(value);
 
     if (IS_BINARY(v)) { // raw output
-        Prin_OS_String(VAL_BIN_AT(v), VAL_LEN_AT(v), OPT_ENC_RAW);
+        assert(FALSE); // temporarily disabled
+        Prin_OS_String(NULL, 0, OPT_ENC_RAW);
     }
     else if (IS_CHAR(v)) { // useful for `write-stdout newline`, etc.
-        Prin_OS_String(&VAL_CHAR(v), 1, OPT_ENC_UNISRC | OPT_ENC_CRLF_MAYBE);
+        Prin_OS_String(&VAL_CHAR(v), 1, OPT_ENC_CRLF_MAYBE);
     }
     else { // string output translated to OS format
         assert(IS_STRING(v));
-        if (VAL_BYTE_SIZE(v))
-            Prin_OS_String(VAL_BIN_AT(v), VAL_LEN_AT(v), OPT_ENC_CRLF_MAYBE);
-        else
-            Prin_OS_String(
-                VAL_UNI_AT(v),
-                VAL_LEN_AT(v),
-                OPT_ENC_UNISRC | OPT_ENC_CRLF_MAYBE
-            );
+        Prin_OS_String(
+            VAL_UNI_AT(v),
+            VAL_LEN_AT(v),
+            OPT_ENC_CRLF_MAYBE
+        );
     }
 
     return R_VOID;
@@ -515,27 +513,31 @@ REBNATIVE(local_to_file)
 {
     INCLUDE_PARAMS_OF_LOCAL_TO_FILE;
 
-    REBVAL *arg = ARG(path);
-    if (IS_FILE(arg)) {
+    REBVAL *path = ARG(path);
+    if (IS_FILE(path)) {
         if (NOT(REF(only)))
             fail ("LOCAL-TO-FILE only passes through FILE! if /ONLY used");
 
         Init_File(
             D_OUT,
             Copy_Sequence_At_Len( // Copy (callers frequently modify result)
-                VAL_SERIES(arg),
-                VAL_INDEX(arg),
-                VAL_LEN_AT(arg)
+                VAL_SERIES(path),
+                VAL_INDEX(path),
+                VAL_LEN_AT(path)
             )
         );
         return R_OUT;
     }
 
-    REBSER *ser = Value_To_REBOL_Path(arg, FALSE);
-    if (ser == NULL)
-        fail (arg);
-
-    Init_File(D_OUT, ser);
+    const REBOOL is_dir = FALSE;
+    Init_File(
+        D_OUT,
+        To_REBOL_Path(
+            VAL_UNI_AT(path),
+            VAL_LEN_AT(path),
+            is_dir ? PATH_OPT_SRC_IS_DIR : 0
+        )
+    );
     return R_OUT;
 }
 
@@ -559,27 +561,26 @@ REBNATIVE(file_to_local)
 {
     INCLUDE_PARAMS_OF_FILE_TO_LOCAL;
 
-    REBVAL *arg = ARG(path);
-    if (IS_STRING(arg)) {
+    REBVAL *path = ARG(path);
+    if (IS_STRING(path)) {
         if (NOT(REF(only)))
             fail ("FILE-TO-LOCAL only passes through STRING! if /ONLY used");
 
         Init_String(
             D_OUT,
             Copy_Sequence_At_Len( // Copy (callers frequently modify result)
-                VAL_SERIES(arg),
-                VAL_INDEX(arg),
-                VAL_LEN_AT(arg)
+                VAL_SERIES(path),
+                VAL_INDEX(path),
+                VAL_LEN_AT(path)
             )
         );
         return R_OUT;
     }
 
-    REBSER *ser = Value_To_Local_Path(arg, REF(full));
-    if (ser == NULL)
-        fail (arg);
-
-    Init_String(D_OUT, ser);
+    Init_String(
+        D_OUT,
+        To_Local_Path(VAL_UNI_AT(path), VAL_LEN_AT(path), REF(full))
+    );
     return R_OUT;
 }
 
@@ -604,17 +605,9 @@ REBNATIVE(what_dir)
         // code was already here and it would be more compatible.  But
         // reconsider the duplication.
 
-        REBCHR *lpath;
-        REBINT len = OS_GET_CURRENT_DIR(&lpath);
-
-        // allocates extra for end `/`
-        REBSER *ser = To_REBOL_Path(
-            lpath, len, PATH_OPT_SRC_IS_DIR | (OS_WIDE ? PATH_OPT_UNI_SRC : 0)
-        );
-
-        OS_FREE(lpath);
-
-        Init_File(current_path, ser); // refresh in case they diverged
+        REBVAL *refresh = OS_GET_CURRENT_DIR();
+        Move_Value(current_path, refresh);
+        rebFree(refresh);
     }
     else if (NOT(IS_URL(current_path))) {
         //
@@ -664,15 +657,11 @@ REBNATIVE(change_dir)
     else {
         assert(IS_FILE(arg));
 
-        REBSER *ser = Value_To_OS_Path(arg, TRUE);
-        if (ser == NULL)
-            fail (arg);
+        Check_Security(Canon(SYM_FILE), POL_EXEC, arg);
 
-        DECLARE_LOCAL (val);
-        Init_String(val, ser); // may be unicode or utf-8
-        Check_Security(Canon(SYM_FILE), POL_EXEC, val);
+        REBOOL success = OS_SET_CURRENT_DIR(arg);
 
-        if (!OS_SET_CURRENT_DIR(SER_HEAD(REBCHR, ser)))
+        if (NOT(success))
             fail (arg);
     }
 

@@ -81,18 +81,20 @@ extern
 #endif
 const void *r3_libtcc1_symbols[];
 
-#define CHAR_HEAD(x) cs_cast(BIN_HEAD(x))
 
-
-static void tcc_error_report(void *ignored, const char *msg)
+static void tcc_error_report(void *opaque, const char *msg_utf8)
 {
-    UNUSED(ignored);
+    // When `tcc_set_error_func()` is called, you can pass it a value that
+    // it will pass back.  We pass EMPTY_ARRAY to test it (and explain it).
+    // Note that since the compilation can be delayed after MAKE-NATIVE exits,
+    // pointers to local variables should not be used here.
+    //
+    assert(cast(REBARR*, opaque) == EMPTY_ARRAY);
+    UNUSED(opaque);
 
-    DECLARE_LOCAL (err);
-    REBSER *ser = Make_Binary(strlen(msg) + 2);
-    Append_Series(ser, cb_cast(msg), strlen(msg));
-    Init_String(err, ser);
-    fail (Error_Tcc_Error_Warn_Raw(err));
+    DECLARE_LOCAL (msg);
+    Init_String(msg, Make_UTF8_May_Fail(cb_cast(msg_utf8)));
+    fail (Error_Tcc_Error_Warn_Raw(msg));
 }
 
 
@@ -100,24 +102,20 @@ static int do_add_path(
     TCCState *state,
     const RELVAL *path,
     int (*add)(TCCState *, const char *)
-) {
-    if (!VAL_BYTE_SIZE(path))
-        return -1;
-
+){
     int ret;
     if (IS_FILE(path)) {
-        REBSER *lp = Value_To_Local_Path(KNOWN(m_cast(RELVAL*,path)), TRUE);
-        REBSER *bin = Make_UTF8_Binary(
-            UNI_HEAD(lp), SER_LEN(lp), 2, OPT_ENC_UNISRC
-        );
-        Free_Series(lp);
-        assert(SER_WIDE(bin) == 1);
-        ret = add(state, CHAR_HEAD(bin));
-        Free_Series(bin);
+        const REBOOL full = TRUE;
+        char *local_utf8 = rebFileToLocalAlloc(NULL, const_KNOWN(path), full);
+        ret = add(state, local_utf8);
+        OS_FREE(local_utf8);
     }
     else {
         assert(IS_STRING(path));
-        ret = add(state, CHAR_HEAD(VAL_SERIES(path)));
+
+        char *path_utf8 = rebSpellingOfAlloc(NULL, const_KNOWN(path));
+        ret = add(state, path_utf8);
+        OS_FREE(path_utf8);
     }
     return ret;
 }
@@ -127,23 +125,19 @@ static void do_set_path(
     TCCState *state,
     const RELVAL *path,
     void (*set)(TCCState *, const char *)
-) {
-    if (!VAL_BYTE_SIZE(path))
-        return;
-
+){
     if (IS_FILE(path)) {
-        REBSER *lp = Value_To_Local_Path(KNOWN(m_cast(RELVAL*, path)), TRUE);
-        REBSER *bin = Make_UTF8_Binary(
-            UNI_HEAD(lp), SER_LEN(lp), 2, OPT_ENC_UNISRC
-        );
-        Free_Series(lp);
-        assert(SER_WIDE(bin) == 1);
-        set(state, CHAR_HEAD(bin));
-        Free_Series(bin);
+        const REBOOL full = TRUE;
+        char *local_utf8 = rebFileToLocalAlloc(NULL, const_KNOWN(path), full);
+        set(state, local_utf8);
+        OS_FREE(local_utf8);
     }
     else {
         assert(IS_STRING(path));
-        set(state, CHAR_HEAD(VAL_SERIES(path)));
+
+        char *path_utf8 = rebSpellingOfAlloc(NULL, const_KNOWN(path));
+        set(state, path_utf8);
+        OS_FREE(path_utf8);
     }
 }
 
@@ -273,7 +267,7 @@ REBNATIVE(make_native)
         //
         Init_String(
             Alloc_Tail_Array(info),
-            Copy_String_Slimming(
+            Copy_String_At_Len(
                 VAL_SERIES(source),
                 VAL_INDEX(source),
                 VAL_LEN_AT(source)
@@ -289,7 +283,7 @@ REBNATIVE(make_native)
         else {
             Init_String(
                 Alloc_Tail_Array(info),
-                Copy_String_Slimming(
+                Copy_String_At_Len(
                     VAL_SERIES(name),
                     VAL_INDEX(name),
                     VAL_LEN_AT(name)
@@ -302,11 +296,13 @@ REBNATIVE(make_native)
         // function pointer.  Just "N_" followed by the hexadecimal value.
         // So 2 chars per byte, plus 2 for "N_", and account for the
         // terminator (even though it's set implicitly).
+        //
+        // Note: This repeats some work in ENBASE.
 
-        REBCNT len = 2 + sizeof(REBFUN*) * 2;
-        REBSER *bin = Make_Binary(len + 1);
+        REBCNT len = 2 + (sizeof(REBFUN*) * 2);
+        REBSER *ser = Make_Unicode(len);
         const char *src = cast(const char*, &fun);
-        REBYTE *dest = BIN_HEAD(bin);
+        REBUNI *dest = UNI_HEAD(ser);
 
         *dest ='N';
         ++dest;
@@ -315,14 +311,14 @@ REBNATIVE(make_native)
 
         REBCNT n = 0;
         while (n < sizeof(REBFUN*)) {
-            Form_Hex2(dest, *src); // terminates each time
+            Form_Hex2_Uni(dest, *src); // terminates each time
             ++src;
             dest += 2;
             ++n;
         }
-        TERM_BIN_LEN(bin, len);
+        TERM_UNI_LEN(ser, len);
 
-        Init_String(Alloc_Tail_Array(info), bin);
+        Init_String(Alloc_Tail_Array(info), ser);
     }
 
     Init_Blank(Alloc_Tail_Array(info)); // no TCC_State, yet...
@@ -415,7 +411,7 @@ REBNATIVE(compile)
 
             case SYM_OPTIONS:
                 ++val;
-                if (!ANY_STRING(val) || !VAL_BYTE_SIZE(val)) {
+                if (NOT(IS_STRING(val))) {
                     DECLARE_LOCAL (option);
                     Derelativize(option, val, specifier);
                     fail (Error_Tcc_Invalid_Options_Raw(option));
@@ -591,10 +587,13 @@ REBNATIVE(compile)
     if (!state)
         fail (Error_Tcc_Construction_Raw());
 
-    tcc_set_error_func(state, NULL, tcc_error_report);
+    void* opaque = cast(void*, EMPTY_BLOCK); // can pass data through...
+    tcc_set_error_func(state, opaque, tcc_error_report);
 
-    if (options) {
-        tcc_set_options(state, CHAR_HEAD(VAL_SERIES(options)));
+    if (options != NULL) {
+        char *options_utf8 = rebSpellingOfAlloc(NULL, const_KNOWN(options));
+        tcc_set_options(state, options_utf8);
+        OS_FREE(options_utf8);
     }
 
     REBCTX *err = NULL;
@@ -605,7 +604,7 @@ REBNATIVE(compile)
     if (tcc_set_output_type(state, TCC_OUTPUT_MEMORY) < 0)
         fail (Error_Tcc_Output_Type_Raw());
 
-    if (tcc_compile_string(state, CHAR_HEAD(combined_src)) < 0)
+    if (tcc_compile_string(state, cs_cast(BIN_HEAD(combined_src))) < 0)
         fail (Error_Tcc_Compile_Raw(natives));
 
     Free_Series(combined_src);
@@ -674,12 +673,13 @@ REBNATIVE(compile)
 
         REBVAL *info = KNOWN(VAL_FUNC_BODY(var));
         REBVAL *name = KNOWN(VAL_ARRAY_AT_HEAD(info, 1));
+        assert(IS_STRING(name));
         REBVAL *stored_state = KNOWN(VAL_ARRAY_AT_HEAD(info, 2));
 
-        REBCNT index;
-        REBSER *utf8 = Temp_UTF8_At_Managed(name, &index, 0);
+        char *name_utf8 = rebSpellingOfAlloc(NULL, name);
+        void *sym = tcc_get_symbol(state, name_utf8);
+        OS_FREE(name_utf8);
 
-        void *sym = tcc_get_symbol(state, cs_cast(BIN_AT(utf8, index)));
         if (sym == NULL)
             fail (Error_Tcc_Sym_Not_Found_Raw(name));
 

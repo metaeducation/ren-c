@@ -75,21 +75,13 @@ static REB_R Serial_Actor(REBFRM *frame_, REBCTX *port, REBSYM action)
 
         case SYM_OPEN:
             arg = Obj_Value(spec, STD_PORT_SPEC_SERIAL_PATH);
-            if (! (IS_FILE(arg) || IS_STRING(arg) || IS_BINARY(arg)))
+            if (NOT(IS_FILE(arg) || IS_STRING(arg) || IS_BINARY(arg)))
                 fail (Error_Invalid_Port_Arg_Raw(arg));
 
-            serial->path = ALLOC_N(REBCHR, MAX_SERIAL_DEV_PATH);
-            OS_STRNCPY(
-                serial->path,
-                //
-                // !!! This is assuming VAL_DATA contains native chars.
-                // Should it? (2 bytes on windows, 1 byte on linux/mac)
-                //
-                SER_AT(REBCHR, VAL_SERIES(arg), VAL_INDEX(arg)),
-                MAX_SERIAL_DEV_PATH
-            );
+            serial->path = arg;
+
             arg = Obj_Value(spec, STD_PORT_SPEC_SERIAL_SPEED);
-            if (! IS_INTEGER(arg))
+            if (NOT(IS_INTEGER(arg)))
                 fail (Error_Invalid_Port_Arg_Raw(arg));
 
             serial->baud = VAL_INT32(arg);

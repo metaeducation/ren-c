@@ -436,7 +436,8 @@ void Form_Array_At(
         n++;
         if (GET_MOLD_FLAG(mo, MOLD_FLAG_LINES)) {
             Append_Codepoint(mo->series, LF);
-        } else {
+        }
+        else {
             // Add a space if needed:
             if (n < len && SER_LEN(mo->series)
                 && *UNI_LAST(mo->series) != LF
@@ -821,10 +822,7 @@ REBSER *Pop_Molded_String_Core(REB_MOLD *mo, REBCNT len)
         (len == UNKNOWN) || (len <= SER_LEN(mo->series) - mo->start)
     );
 
-    // The copy process looks at the characters in range and will make a
-    // BYTE_SIZE() target string out of the REBUNIs if possible...
-    //
-    REBSER *result = Copy_String_Slimming(
+    REBSER *result = Copy_String_At_Len(
         mo->series,
         mo->start,
         (len == UNKNOWN)
@@ -902,8 +900,8 @@ REBSER *Pop_Molded_UTF8(REB_MOLD *mo)
     REBSER *bytes = Make_UTF8_Binary(
         UNI_AT(mo->series, mo->start),
         SER_LEN(mo->series) - mo->start,
-        0,
-        OPT_ENC_UNISRC
+        0, // extra
+        OPT_ENC_0
     );
     assert(BYTE_SIZE(bytes));
 

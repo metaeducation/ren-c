@@ -217,10 +217,10 @@ struct devreq_posix_signal {
 
 struct devreq_file {
     struct rebol_devreq devreq;
-    REBCHR *path;           // file string (in OS local format)
-    i64  size;              // file size
-    i64  index;             // file index position
-    I64  time;              // file modification time (struct)
+    REBVAL *path; // file string (in OS local format)
+    i64  size; // file size
+    i64  index; // file index position
+    I64  time; // file modification time (struct)
 };
 
 struct devreq_net {
@@ -234,13 +234,13 @@ struct devreq_net {
 
 struct devreq_serial {
     struct rebol_devreq devreq;
-    REBCHR *path;           //device path string (in OS local format)
-    void *prior_attr;           // termios: retain previous settings to revert on close
-    i32 baud;               // baud rate of serial port
-    u8  data_bits;          // 5, 6, 7 or 8
-    u8  parity;             // odd, even, mark or space
-    u8  stop_bits;          // 1 or 2
-    u8  flow_control;       // hardware or software
+    REBVAL *path; // device path string (in OS local format)
+    void *prior_attr; // termios: retain previous settings to revert on close
+    i32 baud; // baud rate of serial port
+    u8  data_bits; // 5, 6, 7 or 8
+    u8  parity; // odd, even, mark or space
+    u8  stop_bits; // 1 or 2
+    u8  flow_control; // hardware or software
 };
 
 inline static struct devreq_file* DEVREQ_FILE(struct rebol_devreq *req) {

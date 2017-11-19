@@ -129,8 +129,6 @@ static int Read_Directory(struct devreq_file *dir, struct devreq_file *file)
 {
     REBREQ *dir_req = AS_REBREQ(dir);
     REBREQ *file_req = AS_REBREQ(file);
-    HANDLE h = dir_req->requestee.handle;
-    wchar_t *cp = 0;
 
     // !!! This old code from R3-Alpha triggered a warning on info not
     // necessarily being initialized.  Rather than try and fix it, this just
@@ -140,9 +138,17 @@ static int Read_Directory(struct devreq_file *dir, struct devreq_file *file)
     CLEARS(&info); // got_info protects usage if never initialized
     REBOOL got_info = FALSE;
 
-    if (!h) {
+    wchar_t *cp = NULL;
+
+    HANDLE h = dir_req->requestee.handle;
+    if (h == NULL) {
         // Read first file entry:
-        h = FindFirstFile(dir->path, &info);
+
+        REBOOL full = TRUE;
+        wchar_t *dir_wide = rebFileToLocalAllocW(NULL, dir->path, full);
+        h = FindFirstFile(dir_wide, &info);
+        OS_FREE(dir_wide);
+
         got_info = TRUE;
         if (h == INVALID_HANDLE_VALUE) {
             dir_req->error = -RFE_OPEN_FAIL;
@@ -156,7 +162,7 @@ static int Read_Directory(struct devreq_file *dir, struct devreq_file *file)
     // Skip over the . and .. dir cases:
     while (
         cp == 0
-        || (cp[0] == '.' && (cp[1] == 0 || (cp[1] == '.' && cp[2] == 0)))
+        || (cp[0] == '.' && (cp[1] == 0 || (cp[1] == '.' && cp[2] == '\0')))
     ){
         // Read next file_req entry, or error:
         if (!FindNextFile(h, &info)) {
@@ -181,7 +187,9 @@ static int Read_Directory(struct devreq_file *dir, struct devreq_file *file)
     file_req->modes = 0;
     if (info.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
         file_req->modes |= RFM_DIR;
-    wcsncpy(file->path, info.cFileName, MAX_FILE_NAME);
+
+    const REBOOL is_dir = LOGICAL(file_req->modes & RFM_DIR);
+    file->path = rebLocalToFileW(info.cFileName, is_dir);
     file->size =
         (cast(i64, info.nFileSizeHigh) << 32) + info.nFileSizeLow;
 
@@ -209,7 +217,6 @@ DEVICE_CMD Open_File(REBREQ *req)
     DWORD attrib = FILE_ATTRIBUTE_NORMAL;
     DWORD access = 0;
     DWORD create = 0;
-    HANDLE h;
     BY_HANDLE_FILE_INFORMATION info;
     struct devreq_file *file = DEVREQ_FILE(req);
 
@@ -240,12 +247,14 @@ DEVICE_CMD Open_File(REBREQ *req)
 
     if (!access) {
         req->error = -RFE_NO_MODES;
-        goto fail;
+        return DR_ERROR;
     }
 
-    // Open the req (yes, this is how windows does it, the nutty kids):
-    h = CreateFile(
-        file->path,
+    REBOOL full = TRUE;
+    wchar_t *path_wide = rebFileToLocalAllocW(NULL, file->path, full);
+
+    HANDLE h = CreateFile(
+        path_wide,
         access,
         FILE_SHARE_READ | FILE_SHARE_WRITE,
         0,
@@ -253,9 +262,12 @@ DEVICE_CMD Open_File(REBREQ *req)
         attrib,
         0
     );
+
+    OS_FREE(path_wide);
+
     if (h == INVALID_HANDLE_VALUE) {
         req->error = -RFE_OPEN_FAIL;
-        goto fail;
+        return DR_ERROR;
     }
 
     // Confirm that a seek-mode req is actually seekable:
@@ -264,7 +276,7 @@ DEVICE_CMD Open_File(REBREQ *req)
         if (SetFilePointer(h, 0, 0, FILE_BEGIN) == INVALID_SET_FILE_POINTER) {
             CloseHandle(h);
             req->error = -RFE_BAD_SEEK;
-            goto fail;
+            return DR_ERROR;
         }
     }
 
@@ -279,9 +291,6 @@ DEVICE_CMD Open_File(REBREQ *req)
     req->requestee.handle = h;
 
     return DR_DONE;
-
-fail:
-    return DR_ERROR;
 }
 
 
@@ -413,7 +422,16 @@ DEVICE_CMD Query_File(REBREQ *req)
     WIN32_FILE_ATTRIBUTE_DATA info;
     struct devreq_file *file = DEVREQ_FILE(req);
 
-    if (!GetFileAttributesEx(file->path, GetFileExInfoStandard, &info)) {
+    REBOOL full = TRUE;
+    wchar_t *path_wide = rebFileToLocalAllocW(NULL, file->path, full);
+
+    REBOOL success = GetFileAttributesEx(
+        path_wide, GetFileExInfoStandard, &info
+    );
+
+    OS_FREE(path_wide);
+
+    if (NOT(success)) {
         req->error = GetLastError();
         return DR_ERROR;
     }
@@ -438,14 +456,22 @@ DEVICE_CMD Create_File(REBREQ *req)
 {
     struct devreq_file *file = DEVREQ_FILE(req);
 
-    if (req->modes & RFM_DIR) {
-        if (CreateDirectory(file->path, 0))
-            return DR_DONE;
-        req->error = GetLastError();
-        return DR_ERROR;
-    }
+    if (NOT(req->modes & RFM_DIR))
+        return Open_File(req);
 
-    return Open_File(req);
+    const REBOOL full = TRUE;
+    wchar_t *path_wide = rebFileToLocalAllocW(NULL, file->path, full);
+
+    LPSECURITY_ATTRIBUTES lpSecurityAttributes = NULL;
+    REBOOL success = CreateDirectory(path_wide, lpSecurityAttributes);
+
+    OS_FREE(path_wide);
+
+    if (success)
+        return DR_DONE;
+
+    req->error = GetLastError();
+    return DR_ERROR;
 }
 
 
@@ -461,14 +487,18 @@ DEVICE_CMD Create_File(REBREQ *req)
 DEVICE_CMD Delete_File(REBREQ *req)
 {
     struct devreq_file *file = DEVREQ_FILE(req);
-    if (req->modes & RFM_DIR) {
-        if (RemoveDirectory(file->path))
-            return DR_DONE;
-    }
-    else {
-        if (DeleteFile(file->path))
-            return DR_DONE;
-    }
+
+    const REBOOL full = TRUE;
+    wchar_t *path_wide = rebFileToLocalAllocW(NULL, file->path, full);
+
+    REBOOL success;
+    if (req->modes & RFM_DIR)
+        success = RemoveDirectory(path_wide);
+    else
+        success = DeleteFile(path_wide);
+
+    if (success)
+        return DR_DONE;
 
     req->error = GetLastError();
     return DR_ERROR;
@@ -484,8 +514,21 @@ DEVICE_CMD Delete_File(REBREQ *req)
 DEVICE_CMD Rename_File(REBREQ *req)
 {
     struct devreq_file *file = DEVREQ_FILE(req);
-    if (MoveFile(cast(wchar_t*, file->path), cast(wchar_t*, req->common.data)))
+
+    REBVAL *to = cast(REBVAL*, req->common.data); // !!! hack!
+
+    const REBOOL full = TRUE;
+    wchar_t *from_wide = rebFileToLocalAllocW(NULL, file->path, full);
+    wchar_t *to_wide = rebFileToLocalAllocW(NULL, to, full);
+
+    REBOOL success = MoveFile(from_wide, to_wide);
+
+    OS_FREE(to_wide);
+    OS_FREE(from_wide);
+
+    if (success)
         return DR_DONE;
+
     req->error = GetLastError();
     return DR_ERROR;
 }

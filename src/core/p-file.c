@@ -44,7 +44,6 @@
 //
 static void Setup_File(struct devreq_file *file, REBFLGS flags, REBVAL *path)
 {
-    REBSER *ser;
     REBREQ *req = AS_REBREQ(file);
 
     if (flags & AM_OPEN_WRITE)
@@ -60,24 +59,13 @@ static void Setup_File(struct devreq_file *file, REBFLGS flags, REBVAL *path)
             fail (Error_Bad_File_Mode_Raw(path));
     }
 
-    if (!(ser = Value_To_OS_Path(path, TRUE)))
-        fail (Error_Bad_File_Path_Raw(path));
+    file->path = path;
 
-    // !!! Original comment said "Convert file name to OS format, let
-    // it GC later."  Then it grabs the series data from inside of it.
-    // It's not clear what lifetime req->file.path is supposed to have,
-    // and saying "good until whenever the GC runs" is not rigorous.
-    // The series should be kept manual and freed when the data is
-    // no longer used, or the managed series saved in a GC-safe place
-    // as long as the bytes are needed.
-    //
-    MANAGE_SERIES(ser);
+    Secure_Port(SYM_FILE, req, path /* , file->path */);
 
-    file->path = SER_HEAD(REBCHR, ser);
-
-    req->modes |= RFM_NAME_MEM;
-
-    Secure_Port(SYM_FILE, req, path, ser);
+    // !!! For the moment, assume `path` has a lifetime that will exceed
+    // the operation.  This will be easier to ensure once the REQ state is
+    // Rebol-structured data, visible to the GC.
 }
 
 
@@ -87,12 +75,6 @@ static void Setup_File(struct devreq_file *file, REBFLGS flags, REBVAL *path)
 static void Cleanup_File(struct devreq_file *file)
 {
     REBREQ *req = AS_REBREQ(file);
-
-    if (req->modes & RFM_NAME_MEM) {
-        //NOTE: file->path will get GC'd
-        file->path = 0;
-        req->modes &= ~RFM_NAME_MEM;
-    }
     req->flags &= ~RRF_OPEN;
 }
 
@@ -123,11 +105,8 @@ void Ret_Query_File(REBCTX *port, struct devreq_file *file, REBVAL *ret)
     );
     OS_FILE_TIME(CTX_VAR(context, STD_FILE_INFO_DATE), file);
 
-    REBSER *ser = To_REBOL_Path(
-        file->path, 0, (OS_WIDE ? PATH_OPT_UNI_SRC : 0)
-    );
-
-    Init_File(CTX_VAR(context, STD_FILE_INFO_NAME), ser);
+    assert(IS_FILE(file->path));
+    Move_Value(CTX_VAR(context, STD_FILE_INFO_NAME), file->path);
 }
 
 
@@ -549,14 +528,8 @@ static REB_R File_Actor(REBFRM *frame_, REBCTX *port, REBSYM action)
 
         Setup_File(file, 0, path);
 
-        // Convert file name to OS format:
-        //
-        REBSER *target = Value_To_OS_Path(ARG(to), TRUE);
-        if (target == NULL)
-            fail (Error_Bad_File_Path_Raw(ARG(to)));
-        req->common.data = BIN_HEAD(target);
-        OS_DO_DEVICE(req, RDC_RENAME);
-        Free_Series(target);
+        req->common.data = cast(REBYTE*, ARG(to)); // !!! hack!
+
         if (req->error)
             fail (Error_No_Rename_Raw(path));
 

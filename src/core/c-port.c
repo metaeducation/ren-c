@@ -589,14 +589,26 @@ post_process_output:
 // kind: word that represents the type (e.g. 'file)
 // req:  I/O request
 // name: value that holds the original user spec
-// path: the local path to compare with
+// path: the path to compare with
 //
-void Secure_Port(REBSYM sym_kind, REBREQ *req, REBVAL *name, REBSER *path)
-{
-    DECLARE_LOCAL (val);
-    Init_String(val, path);
+// !!! SECURE was not implemented in R3-Alpha.  This routine took a translated
+// local path (as a REBSER) which had been expanded fully.  The concept of
+// "local paths" is not something the core is going to be concerned with (e.g.
+// backslash translation), rather something that the OS-specific extension
+// code does.  If security is going to be implemented at a higher-level, then
+// it may have to be in the PORT! code itself.  As it isn't active, it doesn't
+// matter at the moment--but is a placeholder for finding the right place.
+//
+void Secure_Port(
+    REBSYM sym_kind,
+    REBREQ *req,
+    const REBVAL *name
+    /* , const REBVAL *path */
+){
+    const REBVAL *path = name;
+    assert(IS_FILE(path)); // !!! relative, untranslated
 
-    REBYTE *flags = Security_Policy(Canon(sym_kind), val); // policy flags
+    const REBYTE *flags = Security_Policy(Canon(sym_kind), path);
 
     // Check policy integer:
     // Mask is [xxxx wwww rrrr] - each holds the action

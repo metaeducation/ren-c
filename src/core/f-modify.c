@@ -171,7 +171,13 @@ REBCNT Modify_String(
     REBOOL needs_free;
     if (flags & AM_BINARY_SERIES) {
         if (IS_INTEGER(src_val)) {
-            src_ser = Make_Series_Codepoint(Int8u(src_val));
+            REBI64 i = VAL_INT64(src_val);
+            if (i > 255 || i < 0)
+                fail ("Inserting out-of-range INTEGER! into BINARY!");
+
+            src_ser = Make_Binary(1);
+            *BIN_HEAD(src_ser) = cast(REBYTE, i);
+            TERM_BIN_LEN(src_ser, 1);
             needs_free = TRUE;
             limit = -1;
         }
@@ -199,7 +205,7 @@ REBCNT Modify_String(
             src_len = VAL_LEN_AT(src_val);
             if (limit >= 0 && src_len > cast(REBCNT, limit))
                 src_len = limit;
-            src_ser = Make_UTF8_From_Any_String(src_val, src_len, 0);
+            src_ser = Make_UTF8_From_Any_String(src_val, src_len, OPT_ENC_0);
             needs_free = TRUE;
             limit = -1;
         }

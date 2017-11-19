@@ -36,8 +36,7 @@
 // For something of this relatively simple nature, it would be ideal if the
 // code did not know about REBSER* or other aspects of the internal API.
 // But the external API is not quite polished yet, so some fledgling features
-// are being used here.  As a first goal, this is eliminating the REBCHR* as a
-// unit of currency (which these file pickers used a lot).
+// are being used here.
 //
 
 #ifdef TO_WINDOWS
@@ -195,32 +194,24 @@ REBNATIVE(request_file_p)
 
     wchar_t *lpstrInitialDir;
     if (REF(file)) {
-        //
-        // !!! Ultimately we don't want routines like this using REBSER...
-        // they should be speaking in terms of REBVAL* so they can use the
-        // RL_API (or libRebol, whatever you call it).  For now, contain the
-        // series code to this branch.
-        //
-        REBSER *ser = Value_To_OS_Path(ARG(name), TRUE);
-        assert(SER_WIDE(ser) == sizeof(wchar_t));
-
-        wchar_t *dir = SER_HEAD(wchar_t, ser);
-        REBCNT dir_len = SER_LEN(ser);
+        REBCNT path_len;
+        const REBOOL full = TRUE;
+        wchar_t *path = rebFileToLocalAllocW(&path_len, ARG(name), full);
 
         // If the last character doesn't indicate a directory, that means
         // we are trying to pre-select a file, which we do by copying the
         // content into the ofn.lpstrFile field.
         //
-        if (dir[dir_len - 1] != '\\') {
+        if (path[path_len - 1] != '\\') {
             REBCNT n;
-            if (dir_len + 2 > ofn.nMaxFile)
+            if (path_len + 2 > ofn.nMaxFile)
                 n = ofn.nMaxFile - 2;
             else
-                n = dir_len;
-            wcsncpy(ofn.lpstrFile, dir, n);
+                n = path_len;
+            wcsncpy(ofn.lpstrFile, path, n);
             lpstrFile[n] = '\0';
             lpstrInitialDir = NULL;
-            Free_Series(ser);
+            OS_FREE(path);
         }
         else {
             // Otherwise it's a directory, and we have to put that in the
@@ -228,11 +219,8 @@ REBNATIVE(request_file_p)
             // lpstrFile that it can't hold a directory when your goal is
             // to select a file?
             //
-            DECLARE_LOCAL (hack);
-            Init_String(hack, ser); // manages the series, can't free it
-            lpstrInitialDir = rebSpellingOfAllocW(NULL, hack);
+            lpstrInitialDir = path;
         }
-
     }
     else
         lpstrInitialDir = NULL;
@@ -284,50 +272,62 @@ REBNATIVE(request_file_p)
     }
     else {
         if (NOT(REF(multi))) {
-            REBSER *solo = To_REBOL_Path(
-                ofn.lpstrFile, wcslen(ofn.lpstrFile), PATH_OPT_UNI_SRC
-            );
+            const REBOOL is_dir = FALSE;
+            REBVAL *solo = rebLocalToFileW(ofn.lpstrFile, is_dir);
             DS_PUSH_TRASH;
-            Init_File(DS_TOP, solo);
+            Move_Value(DS_TOP, solo);
+            rebFree(solo);
         }
         else {
             const wchar_t *item = ofn.lpstrFile;
 
-            REBCNT len = wcslen(item);
-            assert(len != 0); // must have at least one item for success
-            if (wcslen(item + len + 1) == 0) {
+            REBCNT item_len = wcslen(item);
+            assert(item_len != 0); // must have at least one item for success
+            if (wcslen(item + item_len + 1) == 0) {
                 //
                 // When there's only one item in a multi-selection scenario,
                 // that item is the filename including path...the lone result.
                 //
-                REBSER *solo = To_REBOL_Path(item, len, PATH_OPT_UNI_SRC);
+                const REBOOL is_dir = FALSE;
+                REBVAL *solo = rebLocalToFileW(item, is_dir);
                 DS_PUSH_TRASH;
-                Init_File(DS_TOP, solo);
+                Move_Value(DS_TOP, solo);
+                rebFree(solo);
             }
             else {
                 // More than one item means the first is a directory, and the
                 // rest are files in that directory.  We want to merge them
                 // together to make fully specified paths.
                 //
-                REBSER *dir = To_REBOL_Path(
-                    item,
-                    len,
-                    PATH_OPT_UNI_SRC
-                        | PATH_OPT_FORCE_UNI_DEST
-                        | PATH_OPT_SRC_IS_DIR
-                );
-                REBCNT dir_len = SER_LEN(dir);
-                item += len + 1; // next
+                const REBOOL is_dir = TRUE;
+                REBVAL *dir = rebLocalToFileW(item, is_dir);
+                
+                item += item_len + 1; // next
 
-                while ((len = wcslen(item)) != 0) {
-                    SET_SERIES_LEN(dir, dir_len);
-                    Append_Uni_Uni(dir, cast(const REBUNI*, item), len);
+                REBCNT dir_len;
+                const REBOOL full = TRUE;
+                wchar_t *dir_wide = rebFileToLocalAllocW(&dir_len, dir, full);
+
+                while ((item_len = wcslen(item)) != 0) {
+                    wchar_t *buffer = OS_ALLOC_N(
+                        wchar_t, dir_len + item_len + 1 // null terminator
+                    );
+
+                    wcscpy(buffer, dir_wide);
+                    wcscat(buffer, item);
+
+                    const REBOOL is_dir = FALSE;
+                    REBVAL *file = rebLocalToFileW(buffer, is_dir);
+                    OS_FREE(buffer);
+
                     DS_PUSH_TRASH;
-                    Init_File(DS_TOP, Copy_String_Slimming(dir, 0, -1));
-                    item += len + 1; // next
+                    Move_Value(DS_TOP, file);
+
+                    item += item_len + 1; // next
                 }
 
-                Free_Series(dir);
+                OS_FREE(dir_wide);
+                rebFree(dir);
             }
         }
     }
@@ -423,15 +423,15 @@ REBNATIVE(request_file_p)
                 GSList *list = gtk_file_chooser_get_filenames(chooser);
                 GSList *item;
                 for (item = list; item != NULL; item = item->next) {
-                    REBYTE *utf8 = cast(REBYTE*, item->data);
-
+                    //
                     // !!! The directory seems to already be included...though
                     // there was code here that tried to add it (?)  If it
                     // becomes relevant, `folder` is available to prepend.
-
-                    REBSER *s = Decode_UTF_String(utf8, LEN_BYTES(utf8), 8);
+                    //
+                    REBVAL *file = rebFile(item->data); // UTF-8 data
                     DS_PUSH_TRASH;
-                    Init_File(DS_TOP, s);
+                    Move_Value(DS_TOP, file);
+                    rebFree(file);
                 }
                 g_slist_free(list);
 
@@ -439,14 +439,11 @@ REBNATIVE(request_file_p)
             }
         }
         else {
-            REBYTE *filename = b_cast(
-                gtk_file_chooser_get_filename(chooser)
-            );
+            // filename is in UTF-8, directory seems to be included.
+            //
+            REBVAL *file = rebFile(gtk_file_chooser_get_filename(chooser));
             DS_PUSH_TRASH;
-            Init_File(
-                DS_TOP,
-                Decode_UTF_String(filename, LEN_BYTES(filename), 8)
-            );
+            Move_Value(DS_TOP, file);
             g_free(filename);
         }
     }
@@ -628,8 +625,11 @@ REBNATIVE(request_dir_p)
         Init_Blank(D_OUT);
     else if (NOT(SHGetPathFromIDList(pFolder, folder)))
         error = Error_User("SHGetPathFromIDList failed");
-    else
-        Init_File(D_OUT, Copy_Wide_Str(folder, wcslen(folder)));
+    else {
+        REBVAL *file = rebFile(folder);
+        Move_Value(D_OUT, file);
+        rebFree(file);
+    }
 
     if (REF(title))
         OS_FREE(cast(wchar_t*, bi.lpszTitle));

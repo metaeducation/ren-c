@@ -54,13 +54,9 @@ void MAKE_Library(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
     if (!IS_FILE(arg))
         fail (Error_Unexpected_Type(REB_FILE, VAL_TYPE(arg)));
 
-    REBCNT error = 0;
+    void *fd = OS_OPEN_LIBRARY(arg);
 
-    REBSER *path = Value_To_OS_Path(arg, FALSE);
-    void *fd = OS_OPEN_LIBRARY(SER_HEAD(REBCHR, path), &error);
-    Free_Series(path);
-
-    if (!fd)
+    if (fd == NULL)
         fail (Error_Bad_Make(REB_LIBRARY, arg));
 
     REBARR *singular = Alloc_Singular_Array();

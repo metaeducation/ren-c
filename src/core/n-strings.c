@@ -149,7 +149,7 @@ REBNATIVE(spelling_of)
         // Grab the data out of all string types, which has no delimiters
         // included (they are added in the forming process)
         //
-        series = Copy_String_Slimming(VAL_SERIES(value), VAL_INDEX(value), -1);
+        series = Copy_String_At_Len(VAL_SERIES(value), VAL_INDEX(value), -1);
     }
     else {
         // turn all words into regular words so they'll have no delimiters
@@ -363,14 +363,20 @@ REBNATIVE(compress)
 {
     INCLUDE_PARAMS_OF_COMPRESS;
 
+    REBVAL *data = ARG(data);
+
     REBCNT len;
     UNUSED(PAR(part)); // checked by if limit is void
-    Partial1(ARG(data), ARG(limit), &len);
+    Partial1(data, ARG(limit), &len);
 
     REBCNT index;
-    REBSER *ser = Temp_UTF8_At_Managed(ARG(data), &index, &len);
-
-    assert(BYTE_SIZE(ser)); // must be BINARY!
+    REBSER *ser;
+    if (IS_BINARY(data)) {
+        ser = VAL_SERIES(data);
+        index = VAL_INDEX(data);
+    }
+    else
+        ser = Temp_UTF8_At_Managed(data, &index, &len);
 
     const REBOOL raw = REF(only); // use /ONLY to signal raw too?
     REBSER *compressed = Deflate_To_Series(
@@ -506,35 +512,42 @@ REBNATIVE(enbase)
     else
         base = 64;
 
-    REBVAL *arg = ARG(value);
+    REBVAL *v = ARG(value);
 
-    // Will convert STRING!s to UTF-8 if necessary.
-    //
     REBCNT index;
-    REBSER *temp = Temp_UTF8_At_Managed(arg, &index, NULL);
-    Init_Any_Series_At(arg, REB_BINARY, temp, index);
+    REBCNT len;
+    REBSER *bin;
+    if (IS_BINARY(v)) {
+        bin = VAL_SERIES(v);
+        index = VAL_INDEX(v);
+        len = VAL_LEN_AT(v);
+    }
+    else { // Convert the string to UTF-8
+        assert(ANY_STRING(v));
+        len = VAL_LEN_AT(v);
+        bin = Temp_UTF8_At_Managed(v, &index, &len);
+    }
 
-    REBSER *ser;
+    REBSER *enbased;
     const REBOOL brk = FALSE;
     switch (base) {
     case 64:
-        ser = Encode_Base64(NULL, arg, brk);
+        enbased = Encode_Base64(BIN_AT(bin, index), len, brk);
         break;
 
     case 16:
-        ser = Encode_Base16(NULL, arg, brk);
+        enbased = Encode_Base16(BIN_AT(bin, index), len, brk);
         break;
 
     case 2:
-        ser = Encode_Base2(NULL, arg, brk);
+        enbased = Encode_Base2(BIN_AT(bin, index), len, brk);
         break;
 
     default:
         fail (ARG(base_value));
     }
 
-    Init_String(D_OUT, ser);
-
+    Init_String(D_OUT, enbased);
     return R_OUT;
 }
 
@@ -551,63 +564,41 @@ REBNATIVE(dehex)
 {
     INCLUDE_PARAMS_OF_DEHEX;
 
+    DECLARE_MOLD (mo);
+    Push_Mold(mo);
+
+    // Do a conservative expansion, assuming there are no %NNs in the
+    // series and the output string will be the same length as input.
+    // Note expand series may change the pointer, so UNI_AT must be after.
+    //
     REBCNT len = VAL_LEN_AT(ARG(value));
-    REBUNI uni;
-    REBSER *ser;
+    Expand_Series(mo->series, mo->start, len);
 
-    if (VAL_BYTE_SIZE(ARG(value))) {
-        REBYTE *bp = VAL_BIN_AT(ARG(value));
-        REBYTE *dp = Reset_Buffer(BYTE_BUF, len);
+    REBUNI *up = VAL_UNI_AT(ARG(value));
+    REBUNI *dp = UNI_AT(mo->series, mo->start);
 
-        for (; len > 0; len--) {
-            if (*bp == '%' && len > 2 && Scan_Hex2(bp + 1, &uni, FALSE)) {
-                *dp++ = cast(REBYTE, uni);
-                bp += 3;
-                len -= 2;
-            }
-            else *dp++ = *bp++;
+    for (; len > 0; len--) {
+        if (
+            *up == '%'
+            && len > 2
+            && Scan_Hex2(cast(REBYTE*, up + 1), dp, TRUE)
+        ){
+            dp++;
+            up += 3;
+            len -= 2;
         }
-
-        *dp = '\0';
-        ser = Copy_String_Slimming(BYTE_BUF, 0, dp - BIN_HEAD(BYTE_BUF));
+        else
+            *dp++ = *up++;
     }
-    else {
-        REBUNI *up = VAL_UNI_AT(ARG(value));
 
-        DECLARE_MOLD (mo);
+    *dp = '\0';
 
-        Push_Mold(mo);
-
-        // Do a conservative expansion, assuming there are no %NNs in the
-        // series and the output string will be the same length as input.
-        // Note expand series may change the pointer, so UNI_AT must be after.
-        //
-        Expand_Series(mo->series, mo->start, len);
-
-        REBUNI *dp = UNI_AT(mo->series, mo->start);
-
-        for (; len > 0; len--) {
-            if (
-                *up == '%'
-                && len > 2
-                && Scan_Hex2(cast(REBYTE*, up + 1), dp, TRUE)
-            ) {
-                dp++;
-                up += 3;
-                len -= 2;
-            }
-            else *dp++ = *up++;
-        }
-
-        *dp = '\0';
-
-        // The delta in dp from the original pointer position tells us the
-        // actual size after the %NNs have been accounted for.
-        //
-        ser = Pop_Molded_String_Len(
-            mo, cast(REBCNT, dp - UNI_AT(mo->series, mo->start))
-        );
-    }
+    // The delta in dp from the original pointer position tells us the
+    // actual size after the %NNs have been accounted for.
+    //
+    REBSER *ser = Pop_Molded_String_Len(
+        mo, cast(REBCNT, dp - UNI_AT(mo->series, mo->start))
+    );
 
     Init_Any_Series(D_OUT, VAL_TYPE(ARG(value)), ser);
 
@@ -638,15 +629,8 @@ REBNATIVE(deline)
     }
 
     REBINT len = VAL_LEN_AT(val);
-
-    REBINT n;
-    if (VAL_BYTE_SIZE(val)) {
-        REBYTE *bp = VAL_BIN_AT(val);
-        n = Deline_Bytes(bp, len);
-    } else {
-        REBUNI *up = VAL_UNI_AT(val);
-        n = Deline_Uni(up, len);
-    }
+    REBUNI *up = VAL_UNI_AT(val);
+    REBINT n = Deline_Uni(up, len);
 
     SET_SERIES_LEN(VAL_SERIES(val), VAL_LEN_HEAD(val) - (len - n));
 
@@ -670,12 +654,8 @@ REBNATIVE(enline)
     REBVAL *val = ARG(series);
     REBSER *ser = VAL_SERIES(val);
 
-    if (SER_LEN(ser)) {
-        if (VAL_BYTE_SIZE(val))
-            Enline_Bytes(ser, VAL_INDEX(val), VAL_LEN_AT(val));
-        else
-            Enline_Uni(ser, VAL_INDEX(val), VAL_LEN_AT(val));
-    }
+    if (SER_LEN(ser) != 0)
+       Enline_Uni(ser, VAL_INDEX(val), VAL_LEN_AT(val));
 
     Move_Value(D_OUT, ARG(series));
     return R_OUT;
@@ -708,12 +688,7 @@ REBNATIVE(entab)
     else
         tabsize = TAB_SIZE;
 
-    REBSER *ser;
-    if (VAL_BYTE_SIZE(val))
-        ser = Entab_Bytes(VAL_BIN(val), VAL_INDEX(val), len, tabsize);
-    else
-        ser = Entab_Unicode(VAL_UNI(val), VAL_INDEX(val), len, tabsize);
-
+    REBSER *ser = Entab_Unicode(VAL_UNI(val), VAL_INDEX(val), len, tabsize);
     Init_Any_Series(D_OUT, VAL_TYPE(val), ser);
 
     return R_OUT;
@@ -746,11 +721,7 @@ REBNATIVE(detab)
     else
         tabsize = TAB_SIZE;
 
-    REBSER *ser;
-    if (VAL_BYTE_SIZE(val))
-        ser = Detab_Bytes(VAL_BIN(val), VAL_INDEX(val), len, tabsize);
-    else
-        ser = Detab_Unicode(VAL_UNI(val), VAL_INDEX(val), len, tabsize);
+    REBSER *ser = Detab_Unicode(VAL_UNI(val), VAL_INDEX(val), len, tabsize);
 
     Init_Any_Series(D_OUT, VAL_TYPE(val), ser);
 
@@ -849,9 +820,9 @@ REBNATIVE(to_hex)
             len = 2 * VAL_TUPLE_LEN(arg);
         }
         for (n = 0; n < VAL_TUPLE_LEN(arg); n++)
-            buf = Form_Hex2(buf, VAL_TUPLE(arg)[n]);
+            buf = Form_Hex2_UTF8(buf, VAL_TUPLE(arg)[n]);
         for (; n < 3; n++)
-            buf = Form_Hex2(buf, 0);
+            buf = Form_Hex2_UTF8(buf, 0);
         *buf = 0;
     }
     else

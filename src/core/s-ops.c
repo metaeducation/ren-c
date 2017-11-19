@@ -147,92 +147,48 @@ REBYTE *Temp_Byte_Chars_May_Fail(
 //
 //  Temp_UTF8_At_Managed: C
 //
-// Determines if UTF8 conversion is needed for a series before it
-// is used with a byte-oriented function.
+// !!! This is a routine that detected whether an R3-Alpha string was ASCII
+// and hence could be reused as-is for UTF-8 purposes.  If it could not, a
+// temporary string would be created for the string (which would either be
+// byte-sized and have codepoints > 128, or wide characters and thus be
+// UTF-8 incompatible).
 //
-// If conversion is needed, a UTF8 series will be created.  Otherwise,
-// the source series is returned as-is.
+// After the UTF-8 Everywhere conversion, this routine will not be necessary
+// because all strings will be usable as UTF-8.  But as an interim step for
+// "Latin1 Nowhere" where all strings are wide, this will *always* involve
+// an allocation.
 //
-// Note: This routine should only be used to generate a value used
-// for temporary purposes, because it has a "surprising variance"
-// regarding its input.  If the value's series can be reused, it is--
-// and this depends on an implementation detail of internal encoding
-// that the user should not be aware of (they need not know if the
-// internal representation of an ASCII string uses 1, 2, or however
-// many bytes).  But copying vs. non-copying means the resulting
-// data might or might not have previous values available to step
-// back into from the originating series!
+// Mutation of the result is not allowed because those mutations will not
+// be reflected in the original string, due to generation.  Once the routine
+// is eliminated, use of the original string will mean getting whatever
+// mutability characteristics the original had.
 //
-// !!! Should performance dictate it, the callsites could be
-// adapted to know whether this produced a new series or not, and
-// instead of managing a created result they could be responsible
-// for freeing it if so.
-//
-REBSER *Temp_UTF8_At_Managed(const RELVAL *val, REBCNT *index, REBCNT *length)
+REBSER *Temp_UTF8_At_Managed(const RELVAL *str, REBCNT *index, REBCNT *length)
 {
-    REBCNT len = (length && *length) ? *length : VAL_LEN_AT(val);
-    REBSER *series;
+#if !defined(NDEBUG)
+    if (NOT(ANY_STRING(str))) {
+        printf("Temp_UTF8_At_Managed() called on non-ANY-STRING!");
+        panic (str);
+    }
+#endif
 
-    assert(IS_BINARY(val) || ANY_STRING(val));
+    REBCNT len = (length != NULL && *length) ? *length : VAL_LEN_AT(str);
 
-    // !!! This used to check `len == 0` and reuse a zero length string.
-    // However, the zero length string could have the wrong width.  We are
-    // expected to be returning a BYTE_SIZE() string, and that confused
-    // things.  It's not a good idea to mutate the source string (e.g.
-    // reallocate under a new width) so consider having an EMPTY_BYTE_STRING
-    // like EMPTY_ARRAY which is protected to hand back.
+    // We do not want the temporary string to use OPT_ENC_CRLF_MAYBE...because
+    // this is used for things like COMPRESS, and the Windows version of
+    // Rebol needs to generate compatible compression with the Linux version.
     //
-    if (
-        IS_BINARY(val)
-        || (
-            VAL_BYTE_SIZE(val)
-            && All_Bytes_ASCII(VAL_BIN_AT(val), VAL_LEN_AT(val))
-        )
-    ){
-        //
-        // It's BINARY!, or an ANY-STRING! whose codepoints are all values in
-        // ASCII (0x00 => 0x7F), hence not needing any UTF-8 encoding.
-        //
-        series = VAL_SERIES(val);
-        ASSERT_SERIES_MANAGED(series);
+    REBSER *s = Make_UTF8_From_Any_String(str, len, OPT_ENC_0);
+    MANAGE_SERIES(s);
+    SET_SER_INFO(s, SERIES_INFO_FROZEN);
 
-        if (index)
-            *index = VAL_INDEX(val);
-        if (length)
-            *length = len;
-    }
-    else {
-        // UTF-8 conversion is required, and we manage the result.
+    if (index != NULL)
+        *index = 0;
+    if (length != NULL)
+        *length = SER_LEN(s);
 
-        series = Make_UTF8_From_Any_String(val, len, OPT_ENC_CRLF_MAYBE);
-        MANAGE_SERIES(series);
-
-    #if !defined(NDEBUG)
-        //
-        // Also, PROTECT the result in the debug build...because since the
-        // caller doesn't know if a new series was created or if the initial
-        // data is being used, they should not be modifying it!  (We don't
-        // want to protect the original data, because we wouldn't know when
-        // we were allowed to unlock it...there's no later call in this
-        // model to clean up the series.)
-        {
-            DECLARE_LOCAL (protect);
-            Init_String(protect, series);
-
-            Protect_Value(protect, PROT_SET);
-
-            // just a string...not /DEEP...shouldn't need to Uncolor()
-        }
-    #endif
-
-        if (index)
-            *index = 0;
-        if (length)
-            *length = SER_LEN(series);
-    }
-
-    assert(BYTE_SIZE(series));
-    return series;
+    assert(BYTE_SIZE(s));
+    return s;
 }
 
 
@@ -378,42 +334,20 @@ void Trim_Tail(REBSER *src, REBYTE chr)
 
 
 //
-//  Deline_Bytes: C
-//
-// This function converts any combination of CR and
-// LF line endings to the internal REBOL line ending.
-// The new length of the buffer is returned.
-//
-REBCNT Deline_Bytes(REBYTE *buf, REBCNT len)
-{
-    REBYTE  c, *cp, *tp;
-
-    cp = tp = buf;
-    while (cp < buf + len) {
-        if ((c = *cp++) == LF) {
-            if (*cp == CR) cp++;
-        }
-        else if (c == CR) {
-            c = LF;
-            if (*cp == LF) cp++;
-        }
-        *tp++ = c;
-    }
-    *tp = 0;
-
-    return (REBCNT)(tp - buf);
-}
-
-
-//
 //  Deline_Uni: C
+//
+// This function converts any combination of CR and LF line endings to the
+// internal REBOL line ending.
+//
+// The new length of the buffer is returned.
 //
 REBCNT Deline_Uni(REBUNI *buf, REBCNT len)
 {
-    REBUNI c, *cp, *tp;
+    REBUNI *cp = buf;
+    REBUNI *tp = buf;
 
-    cp = tp = buf;
     while (cp < buf + len) {
+        REBUNI c;
         if ((c = *cp++) == LF) {
             if (*cp == CR) cp++;
         }
@@ -423,46 +357,9 @@ REBCNT Deline_Uni(REBUNI *buf, REBCNT len)
         }
         *tp++ = c;
     }
-    *tp = 0;
+    *tp = '\0';
 
-    return (REBCNT)(tp - buf);
-}
-
-
-//
-//  Enline_Bytes: C
-//
-void Enline_Bytes(REBSER *ser, REBCNT idx, REBCNT len)
-{
-    REBCNT cnt = 0;
-    REBYTE *bp;
-    REBYTE c = 0;
-    REBCNT tail;
-
-    // Calculate the size difference by counting the number of LF's
-    // that have no CR's in front of them.
-    bp = BIN_AT(ser, idx);
-    for (; len > 0; len--) {
-        if (*bp == LF && c != CR) cnt++;
-        c = *bp++;
-    }
-    if (cnt == 0) return;
-
-    // Extend series:
-    len = SER_LEN(ser); // before expansion
-    EXPAND_SERIES_TAIL(ser, cnt);
-    tail = SER_LEN(ser); // after expansion
-    bp = BIN_HEAD(ser); // expand may change it
-
-    // Add missing CRs:
-    while (cnt > 0) {
-        bp[tail--] = bp[len]; // Copy src to dst.
-        if (bp[len] == LF && (len == 0 || bp[len - 1] != CR)) {
-            bp[tail--] = CR;
-            cnt--;
-        }
-        len--;
-    }
+    return cast(REBCNT, tp - buf);
 }
 
 
@@ -504,58 +401,16 @@ void Enline_Uni(REBSER *ser, REBCNT idx, REBCNT len)
 
 
 //
-//  Entab_Bytes: C
-//
-// Entab a string and return a new series.
-//
-REBSER *Entab_Bytes(REBYTE *bp, REBCNT index, REBCNT len, REBINT tabsize)
-{
-    REBINT n = 0;
-    REBYTE *dp;
-    REBYTE c;
-
-    dp = Reset_Buffer(BYTE_BUF, len);
-
-    for (; index < len; index++) {
-
-        c = bp[index];
-
-        // Count leading spaces, insert TAB for each tabsize:
-        if (c == ' ') {
-            if (++n >= tabsize) {
-                *dp++ = '\t';
-                n = 0;
-            }
-            continue;
-        }
-
-        // Hitting a leading TAB resets space counter:
-        if (c == '\t') {
-            *dp++ = (REBYTE)c;
-            n = 0;
-        }
-        else {
-            // Incomplete tab space, pad with spaces:
-            for (; n > 0; n--) *dp++ = ' ';
-
-            // Copy chars thru end-of-line (or end of buffer):
-            while (index < len) {
-                if ((*dp++ = bp[index++]) == '\n') break;
-            }
-        }
-    }
-
-    return Copy_Buffer(BYTE_BUF, 0, dp);
-}
-
-
-//
 //  Entab_Unicode: C
 //
 // Entab a string and return a new series.
 //
-REBSER *Entab_Unicode(REBUNI *bp, REBCNT index, REBCNT len, REBINT tabsize)
-{
+REBSER *Entab_Unicode(
+    const REBUNI *up,
+    REBCNT index,
+    REBCNT len,
+    REBINT tabsize
+){
     DECLARE_MOLD (mo);
     SET_MOLD_FLAG(mo, MOLD_FLAG_RESERVE);
     mo->reserve = len;
@@ -566,7 +421,7 @@ REBSER *Entab_Unicode(REBUNI *bp, REBCNT index, REBCNT len, REBINT tabsize)
 
     REBINT n = 0;
     for (; index < len; index++) {
-        REBUNI c = bp[index];
+        REBUNI c = up[index];
 
         // Count leading spaces, insert TAB for each tabsize:
         if (c == ' ') {
@@ -589,7 +444,7 @@ REBSER *Entab_Unicode(REBUNI *bp, REBCNT index, REBCNT len, REBINT tabsize)
 
             // Copy chars thru end-of-line (or end of buffer):
             while (index < len) {
-                if ((*dp++ = bp[index++]) == '\n')
+                if ((*dp++ = up[index++]) == '\n')
                     break;
             }
         }
@@ -601,47 +456,6 @@ REBSER *Entab_Unicode(REBUNI *bp, REBCNT index, REBCNT len, REBINT tabsize)
     );
 
     return Pop_Molded_String(mo);
-}
-
-
-//
-//  Detab_Bytes: C
-//
-// Detab a string and return a new series.
-//
-REBSER *Detab_Bytes(REBYTE *bp, REBCNT index, REBCNT len, REBINT tabsize)
-{
-    REBCNT cnt = 0;
-    REBCNT n;
-    REBYTE *dp;
-    REBYTE c;
-
-    // Estimate new length based on tab expansion:
-    for (n = index; n < len; n++)
-        if (bp[n] == '\t') // tab character
-            ++cnt;
-
-    dp = Reset_Buffer(BYTE_BUF, len + (cnt * (tabsize-1)));
-
-    n = 0;
-    while (index < len) {
-
-        c = bp[index++];
-
-        if (c == '\t') {
-            *dp++ = ' ';
-            n++;
-            for (; n % tabsize != 0; n++) *dp++ = ' ';
-            continue;
-        }
-
-        if (c == '\n') n = 0;
-        else n++;
-
-        *dp++ = c;
-    }
-
-    return Copy_Buffer(BYTE_BUF, 0, dp);
 }
 
 
@@ -775,7 +589,7 @@ REBARR *Split_Lines(REBVAL *str)
             DS_PUSH_TRASH;
             Init_String(
                 DS_TOP,
-                Copy_String_Slimming(s, start, i - start)
+                Copy_String_At_Len(s, start, i - start)
             );
             SET_VAL_FLAG(DS_TOP, VALUE_FLAG_LINE);
             ++i;
@@ -791,7 +605,7 @@ REBARR *Split_Lines(REBVAL *str)
         DS_PUSH_TRASH;
         Init_String(
             DS_TOP,
-            Copy_String_Slimming(s, start, i - start)
+            Copy_String_At_Len(s, start, i - start)
         );
         SET_VAL_FLAG(DS_TOP, VALUE_FLAG_LINE);
     }

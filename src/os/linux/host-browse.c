@@ -75,16 +75,24 @@ void OS_Destroy_Graphics(void);
 //
 //  OS_Get_Current_Dir: C
 //
-// Return the current directory path as a string and
-// its length in chars (not bytes).
+// Return the current directory path as a FILE!.  The result should be freed
+// with rebFree()
 //
-// The result should be freed after copy/conversion.
-//
-int OS_Get_Current_Dir(REBCHR **path)
+REBVAL *OS_Get_Current_Dir(void)
 {
-    *path = OS_ALLOC_N(char, PATH_MAX);
-    if (!getcwd(*path, PATH_MAX-1)) *path[0] = 0;
-    return strlen(*path);
+    char *path = OS_ALLOC_N(char, PATH_MAX);
+    if (path == NULL)
+        return rebBlank();
+
+    if (getcwd(path, PATH_MAX - 1) == 0) {
+        OS_FREE(path);
+        return rebBlank();
+    }
+
+    const REBOOL is_dir = TRUE;
+    REBVAL *result = rebLocalToFile(path, is_dir);
+    OS_FREE(path);
+    return result;
 }
 
 
@@ -94,7 +102,14 @@ int OS_Get_Current_Dir(REBCHR **path)
 // Set the current directory to local path. Return FALSE
 // on failure.
 //
-REBOOL OS_Set_Current_Dir(REBCHR *path)
+REBOOL OS_Set_Current_Dir(const REBVAL *path)
 {
-    return LOGICAL(chdir(path) == 0);
+    const REBOOL full = TRUE;
+    char *path_utf8 = rebFileToLocalAlloc(NULL, path, full);
+
+    int chdir_result = chdir(path_utf8);
+
+    OS_FREE(path_utf8);
+
+    return LOGICAL(chdir_result == 0);
 }

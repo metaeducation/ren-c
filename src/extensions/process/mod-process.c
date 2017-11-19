@@ -197,6 +197,53 @@ REBCTX *Error_OS(int errnum)
 }
 
 
+// !!! %mod-process.c is now the last file that uses this REBCHR definition.
+// Excise as soon as possible.
+//
+#ifdef TO_WINDOWS
+    #define REBCHR wchar_t
+#else
+    #define REBCHR char
+#endif
+
+
+//
+//  rebValSpellingAllocOS: C
+//
+// This is used to pass a REBOL value string to an OS API.
+// On Windows, the result is a wide-char pointer, but on Linux, its UTF-8.
+// The returned pointer must be freed with OS_FREE.
+//
+REBCHR *rebValSpellingAllocOS(REBCNT *len_out, REBVAL *any_string)
+{
+#ifdef OS_WIDE_CHAR
+    return rebSpellingOfAllocW(len_out, any_string);
+#else
+    return rebSpellingOfAlloc(len_out, any_string);
+#endif
+}
+
+
+//
+//  Copy_OS_Str: C
+//
+// Create a REBOL string series from an OS native string.
+//
+// For example, in Win32 with the wide char interface, we must
+// convert wide char strings, minimizing to bytes if possible.
+//
+// For Linux the char string could be UTF-8, so that must be
+// converted to REBOL Unicode or Latin byte strings.
+//
+REBSER *Copy_OS_Str(const void *src, REBINT len)
+{
+#ifdef OS_WIDE_CHAR
+    return Copy_Wide_Str(cast(const wchar_t*, src), len);
+#else
+    return Decode_UTF_String(cast(const REBYTE*, src), len, 8);
+#endif
+}
+
 // !!! The original implementation of CALL from Atronix had to communicate
 // between the CALL native (defined in the core) and the host routine
 // OS_Create_Process, which was not designed to operate on Rebol types.
@@ -296,10 +343,11 @@ int OS_Create_Process(
         break;
 
     case REB_FILE: {
-        REBSER *path = Value_To_OS_Path(ARG(in), FALSE);
+        REBOOL full = FALSE;
+        wchar_t *local_wide = rebFileToLocalAllocW(NULL, ARG(in), full);
 
         hInputRead = CreateFile(
-            SER_HEAD(wchar_t, path),
+            local_wide,
             GENERIC_READ, // desired mode
             0, // shared mode
             &sa, // security attributes
@@ -309,7 +357,7 @@ int OS_Create_Process(
         );
         si.hStdInput = hInputRead;
 
-        Free_Series(path);
+        OS_FREE(local_wide);
         break; }
 
     case REB_BLANK:
@@ -343,10 +391,11 @@ int OS_Create_Process(
         break;
 
     case REB_FILE: {
-        REBSER *path = Value_To_OS_Path(ARG(out), FALSE);
+        const REBOOL full = FALSE;
+        wchar_t *local_wide = rebFileToLocalAllocW(NULL, ARG(out), full);
 
         si.hStdOutput = CreateFile(
-            SER_HEAD(wchar_t, path),
+            local_wide,
             GENERIC_WRITE, // desired mode
             0, // shared mode
             &sa, // security attributes
@@ -360,7 +409,7 @@ int OS_Create_Process(
             && GetLastError() == ERROR_FILE_EXISTS
         ){
             si.hStdOutput = CreateFile(
-                SER_HEAD(wchar_t, path),
+                local_wide,
                 GENERIC_WRITE, // desired mode
                 0, // shared mode
                 &sa, // security attributes
@@ -370,7 +419,7 @@ int OS_Create_Process(
             );
         }
 
-        Free_Series(path);
+        OS_FREE(local_wide);
         break; }
 
     case REB_BLANK:
@@ -404,10 +453,11 @@ int OS_Create_Process(
         break;
 
     case REB_FILE: {
-        REBSER *path = Value_To_OS_Path(ARG(out), FALSE);
+        const REBOOL full = FALSE;
+        wchar_t *local_wide = rebFileToLocalAllocW(NULL, ARG(out), full);
 
         si.hStdError = CreateFile(
-            SER_HEAD(wchar_t, path),
+            local_wide,
             GENERIC_WRITE, // desired mode
             0, // shared mode
             &sa, // security attributes
@@ -421,7 +471,7 @@ int OS_Create_Process(
             && GetLastError() == ERROR_FILE_EXISTS
         ){
             si.hStdError = CreateFile(
-                SER_HEAD(wchar_t, path),
+                local_wide,
                 GENERIC_WRITE, // desired mode
                 0, // shared mode
                 &sa, // security attributes
@@ -431,7 +481,7 @@ int OS_Create_Process(
             );
         }
 
-        Free_Series(path);
+        OS_FREE(local_wide);
         break; }
 
     case REB_BLANK:
@@ -940,9 +990,12 @@ int OS_Create_Process(
             close(stdin_pipe[R]);
         }
         else if (IS_FILE(ARG(in))) {
-            REBSER *path = Value_To_OS_Path(ARG(in), FALSE);
-            int fd = open(SER_HEAD(char, path), O_RDONLY);
-            Free_Series(path);
+            const REBOOL full = FALSE;
+            char *local_utf8 = rebFileToLocalAlloc(NULL, ARG(in), full);
+
+            int fd = open(local_utf8, O_RDONLY);
+            
+            OS_FREE(local_utf8);
 
             if (fd < 0)
                 goto child_error;
@@ -970,9 +1023,12 @@ int OS_Create_Process(
             close(stdout_pipe[W]);
         }
         else if (IS_FILE(ARG(out))) {
-            REBSER *path = Value_To_OS_Path(ARG(out), FALSE);
-            int fd = open(SER_HEAD(char, path), O_CREAT | O_WRONLY, 0666);
-            Free_Series(path);
+            const REBOOL full = FALSE;
+            char *local_utf8 = rebFileToLocalAlloc(NULL, ARG(out), full);
+
+            int fd = open(local_utf8, O_CREAT | O_WRONLY, 0666);
+
+            OS_FREE(local_utf8);
 
             if (fd < 0)
                 goto child_error;
@@ -1000,9 +1056,12 @@ int OS_Create_Process(
             close(stderr_pipe[W]);
         }
         else if (IS_FILE(ARG(err))) {
-            REBSER *path = Value_To_OS_Path(ARG(err), FALSE);
-            int fd = open(SER_HEAD(char, path), O_CREAT | O_WRONLY, 0666);
-            Free_Series(path);
+            const REBOOL full = FALSE;
+            char *local_utf8 = rebFileToLocalAlloc(NULL, ARG(err), full);
+
+            int fd = open(local_utf8, O_CREAT | O_WRONLY, 0666);
+            
+            OS_FREE(local_utf8);
 
             if (fd < 0)
                 goto child_error;
@@ -1513,40 +1572,28 @@ REBNATIVE(call)
     if (IS_STRING(ARG(err)) || IS_BINARY(ARG(err)))
         FAIL_IF_READ_ONLY_SERIES(VAL_SERIES(ARG(err)));
 
-    // If input_ser is set, it will be both managed and guarded
-    //
-    REBSER *input_ser;
     char *os_input;
     REBCNT input_len;
 
     UNUSED(REF(input)); // implicit by void ARG(in)
     switch (VAL_TYPE(ARG(in))) {
-    case REB_STRING:
-        input_ser = NULL;
-        os_input = cast(char*, Val_Str_To_OS_Managed(&input_ser, ARG(in)));
-        PUSH_GUARD_SERIES(input_ser);
-        input_len = VAL_LEN_AT(ARG(in));
-        break;
-
-    case REB_BINARY:
-        input_ser = NULL;
-        os_input = s_cast(VAL_BIN_AT(ARG(in)));
-        input_len = VAL_LEN_AT(ARG(in));
-        break;
-        
-    case REB_FILE:
-        input_ser = Value_To_OS_Path(ARG(in), FALSE);
-        MANAGE_SERIES(input_ser);
-        PUSH_GUARD_SERIES(input_ser);
-        os_input = SER_HEAD(char, input_ser);
-        input_len = SER_LEN(input_ser);
-        break;
-
     case REB_BLANK:
-    case REB_MAX_VOID:
-        input_ser = NULL;
+    case REB_MAX_VOID: // no /INPUT, so no argument provided
         os_input = NULL;
         input_len = 0;
+        break;
+
+    case REB_STRING:
+        os_input = rebSpellingOfAlloc(&input_len, ARG(in));
+        break;
+
+    case REB_FILE: {
+        REBOOL full = FALSE;
+        os_input = rebFileToLocalAlloc(&input_len, ARG(in), full);
+        break; }
+
+    case REB_BINARY:
+        os_input = s_cast(rebValBinAlloc(&input_len, ARG(in)));
         break;
 
     default:
@@ -1570,21 +1617,14 @@ REBNATIVE(call)
     else
         flag_wait = FALSE;
         
-    // We synthesize the argc and argv from the "command", and in the
-    // process we may need to do dynamic allocations of argc strings.  In
-    // Rebol this is always done by making a series, and if those series
-    // are managed then we need to keep them SAVEd from the GC for the
-    // duration they will be used.  Due to an artifact of the current
-    // implementation, FILE! and STRING! turned into OS-compatible character
-    // representations must be managed...so we need to save them over
-    // the duration of the call.  We hold the pointers to remember to unsave.
+    // We synthesize the argc and argv from the "command", and in the process
+    // we do dynamic allocations of argc strings through the API.  These need
+    // to be freed before we return.
     //
+    REBCHR *cmd;
     int argc;
     const REBCHR **argv;
-    REBCHR *cmd;
     REBSER *argv_ser;
-    REBSER *argv_saved_sers;
-    REBSER *cmd_ser;
 
     if (IS_STRING(ARG(command))) {
         // `call {foo bar}` => execute %"foo bar"
@@ -1593,52 +1633,44 @@ REBNATIVE(call)
         // "bar" has been requested and seems more suitable.  Question is
         // whether it should go through the shell parsing to do so.
 
-        cmd = Val_Str_To_OS_Managed(&cmd_ser, ARG(command));
-        PUSH_GUARD_SERIES(cmd_ser);
+        cmd = rebValSpellingAllocOS(NULL, ARG(command));
 
         argc = 1;
         argv_ser = Make_Series(argc + 1, sizeof(REBCHR*));
-        argv_saved_sers = NULL;
+
         argv = SER_HEAD(const REBCHR*, argv_ser);
 
-        argv[0] = cmd;
-        // Already implicitly SAVEd by cmd_ser, no need for argv_saved_sers
-
-        argv[argc] = NULL;
+        // !!! Make two copies because it frees cmd and all the argv.  Review.
+        //
+        argv[0] = rebValSpellingAllocOS(NULL, ARG(command));
+        argv[1] = NULL;
     }
     else if (IS_BLOCK(ARG(command))) {
         // `call ["foo" "bar"]` => execute %foo with arg "bar"
 
         cmd = NULL;
-        cmd_ser = NULL;
 
         REBVAL *block = ARG(command);
-
         argc = VAL_LEN_AT(block);
-
         if (argc <= 0)
             fail (Error_Too_Short_Raw());
 
         argv_ser = Make_Series(argc + 1, sizeof(REBCHR*));
-        argv_saved_sers = Make_Series(argc, sizeof(REBSER*));
         argv = SER_HEAD(const REBCHR*, argv_ser);
 
         int i;
         for (i = 0; i < argc; i ++) {
             RELVAL *param = VAL_ARRAY_AT_HEAD(block, i);
             if (IS_STRING(param)) {
-                REBSER *ser;
-                argv[i] = Val_Str_To_OS_Managed(&ser, KNOWN(param));
-                PUSH_GUARD_SERIES(ser);
-                SER_HEAD(REBSER*, argv_saved_sers)[i] = ser;
+                argv[i] = rebValSpellingAllocOS(NULL, KNOWN(param));
             }
             else if (IS_FILE(param)) {
-                REBSER *path = Value_To_OS_Path(KNOWN(param), FALSE);
-                argv[i] = SER_HEAD(REBCHR, path);
-
-                MANAGE_SERIES(path);
-                PUSH_GUARD_SERIES(path);
-                SER_HEAD(REBSER*, argv_saved_sers)[i] = path;
+                REBOOL full = FALSE;
+            #ifdef OS_WIDE_CHAR
+                argv[i] = rebFileToLocalAllocW(NULL, KNOWN(param), full);
+            #else
+                argv[i] = rebFileToLocalAlloc(NULL, KNOWN(param), full);
+            #endif
             }
             else
                 fail (Error_Invalid_Arg_Core(param, VAL_SPECIFIER(block)));
@@ -1649,21 +1681,21 @@ REBNATIVE(call)
         // `call %"foo bar"` => execute %"foo bar"
 
         cmd = NULL;
-        cmd_ser = NULL;
 
         argc = 1;
         argv_ser = Make_Series(argc + 1, sizeof(REBCHR*));
-        argv_saved_sers = Make_Series(argc, sizeof(REBSER*));
 
         argv = SER_HEAD(const REBCHR*, argv_ser);
 
-        REBSER *path = Value_To_OS_Path(ARG(command), FALSE);
-        argv[0] = SER_HEAD(REBCHR, path);
-        MANAGE_SERIES(path);
-        PUSH_GUARD_SERIES(path);
-        SER_HEAD(REBSER*, argv_saved_sers)[0] = path;
+        const REBOOL full = FALSE;
 
-        argv[argc] = NULL;
+    #ifdef OS_WIDE_CHAR
+        argv[0] = rebFileToLocalAllocW(NULL, ARG(command), full);
+    #else
+        argv[0] = rebFileToLocalAlloc(NULL, ARG(command), full);
+    #endif
+
+        argv[1] = NULL;
     }
     else
         fail (ARG(command));
@@ -1689,15 +1721,9 @@ REBNATIVE(call)
 
     REBINT r = OS_Create_Process(
         frame_,
-#ifdef TO_WINDOWS
-        cast(const wchar_t*, cmd),
+        cast(const REBCHR*, cmd),
         argc,
-        cast(const wchar_t**, argv),
-#else
-        cast(const char*, cmd),
-        argc,
-        cast(const char**, argv),
-#endif
+        cast(const REBCHR**, argv),
         flag_wait,
         &pid,
         &exit_code,
@@ -1711,19 +1737,16 @@ REBNATIVE(call)
 
     // Call may not succeed if r != 0, but we still have to run cleanup
     // before reporting any error...
-    //
-    if (argv_saved_sers) {
-        int i = argc;
-        assert(argc > 0);
-        do {
-            // Count down: must unsave the most recently saved series first!
-            DROP_GUARD_SERIES(*SER_AT(REBSER*, argv_saved_sers, i - 1));
-            --i;
-        } while (i != 0);
-        Free_Series(argv_saved_sers);
-    }
-    if (cmd_ser != NULL)
-        DROP_GUARD_SERIES(cmd_ser);
+
+    assert(argc > 0);
+
+    int i;
+    for (i = 0; i < argc; ++i)
+        OS_FREE(m_cast(REBCHR*, argv[i]));
+
+    if (cmd != NULL)
+        OS_FREE(cmd);
+
     Free_Series(argv_ser); // Unmanaged, so we can free it
 
     if (IS_STRING(ARG(out))) {
@@ -1761,8 +1784,8 @@ REBNATIVE(call)
     // was managed and saved from GC.  Unsave it now.  Note backwardsness:
     // must unsave the most recently saved series first!!
     //
-    if (input_ser != NULL)
-        DROP_GUARD_SERIES(input_ser);
+    if (os_input != NULL)
+        OS_FREE(os_input);
 
     if (REF(info)) {
         REBCTX *info = Alloc_Context(REB_OBJECT, 2);
@@ -2021,11 +2044,6 @@ static REBNATIVE(get_env)
 
     Check_Security(Canon(SYM_ENVR), POL_READ, variable);
 
-    if (ANY_WORD(variable)) {
-        REBSER *copy = Copy_Form_Value(variable, 0);
-        Init_String(variable, copy);
-    }
-
     REBCTX *error = NULL;
 
 #ifdef TO_WINDOWS
@@ -2060,11 +2078,11 @@ static REBNATIVE(get_env)
     if (val == NULL) // key not present in environment
         Init_Blank(D_OUT);
     else {
-        REBCNT len_bytes = strlen(val);
+        REBCNT size = strlen(val);
 
-        /* assert(len != 0); */ // Is this true?  Should it return BLANK!?
+        /* assert(size != 0); */ // True?  Should it return BLANK!?
 
-        Init_String(D_OUT, Decode_UTF_String(cb_cast(val), len_bytes, 8));
+        Init_String(D_OUT, Decode_UTF_String(cb_cast(val), size, 8));
     }
 
     OS_FREE(key);
@@ -2101,45 +2119,40 @@ static REBNATIVE(set_env)
 
     Check_Security(Canon(SYM_ENVR), POL_WRITE, variable);
 
-    if (IS_WORD(variable)) {
-        REBSER *copy = Copy_Form_Value(variable, 0);
-        Init_String(variable, copy);
-    }
-
     REBCTX *error = NULL;
 
 #ifdef TO_WINDOWS
-    wchar_t *key = rebSpellingOfAllocW(NULL, variable);
+    wchar_t *key_wide = rebSpellingOfAllocW(NULL, variable);
 
     REBOOL success;
 
     if (IS_BLANK(value)) {
-        success = SetEnvironmentVariable(key, NULL);
+        success = SetEnvironmentVariable(key_wide, NULL);
     }
     else {
-        assert(IS_STRING(value));
+        assert(IS_STRING(value) || IS_WORD(value));
         
-        wchar_t *val = rebSpellingOfAllocW(NULL, value);
-        success = SetEnvironmentVariable(key, val);
-        OS_FREE(val);
+        wchar_t *val_wide = rebSpellingOfAllocW(NULL, value);
+        success = SetEnvironmentVariable(key_wide, val_wide);
+        OS_FREE(val_wide);
     }
 
-    OS_FREE(key);
+    OS_FREE(key_wide);
 
     if (NOT(success)) // make better error with GetLastError + variable name
         error = Error_User("environment variable couldn't be modified");
 #else
 
-    REBCNT key_len;
-    char *key = rebSpellingOfAlloc(&key_len, variable);
+    REBCNT key_size;
+    char *key_utf8 = rebSpellingOfAlloc(&key_size, variable);
 
     REBOOL success;
 
     if (IS_BLANK(value)) {
-        UNUSED(key_len);
+        UNUSED(key_size);
 
     #ifdef unsetenv
-        if (unsetenv(key) == -1)
+        if (unsetenv(key_utf8) == -1)
             success = FALSE;
     #else
         // WARNING: KNOWN PORTABILITY ISSUE
@@ -2152,25 +2165,25 @@ static REBNATIVE(set_env)
         //
         // going to hope this case doesn't hold onto the string...
         //
-        if (putenv(key) == -1) // !!! Why mutable?
+        if (putenv(key_utf8) == -1) // !!! Why mutable?
             success = FALSE;
     #endif
     }
     else {
-        assert(IS_STRING(value));
+        assert(IS_STRING(value) || IS_WORD(value));
 
     #ifdef setenv
-        UNUSED(key_len);
+        UNUSED(key_size);
 
-        char *val = rebSpellingOfAlloc(NULL, value);
+        char *val_utf8 = rebSpellingOfAlloc(NULL, value);
 
         // we pass 1 for overwrite (make call to OS_Get_Env if you
         // want to check if already exists)
 
-        if (setenv(key, val, 1) == -1)
+        if (setenv(key_utf8, val_utf8, 1) == -1)
             success = FALSE;
 
-        OS_FREE(val);
+        OS_FREE(val_utf8);
     #else
         // WARNING: KNOWN MEMORY LEAK!
         //
@@ -2189,24 +2202,28 @@ static REBNATIVE(set_env)
         // each string added in some sort of a map...which is currently deemed
         // not worth the work.
 
-        REBCNT val_len_bytes = rebSpellingOf(NULL, 0, value);
+        REBCNT val_size = rebSpellingOf(NULL, 0, value);
 
-        char *key_equals_val = OS_ALLOC_N(char,
-            key_len + 1 + val_len_bytes + 1
+        char *key_equals_val_utf8 = OS_ALLOC_N(char,
+            key_size + 1 + val_size + 1
         );
 
-        rebSpellingOf(key_equals_val, key_len, variable);
-        key_equals_val[key_len] = '=';
-        rebSpellingOf(key_equals_val + key_len + 1, val_len_bytes, value);
+        rebSpellingOf(key_equals_val_utf8, key_size, variable);
+        key_equals_val_utf8[key_size] = '=';
+        rebSpellingOf(
+            key_equals_val_utf8 + key_size + 1,
+            val_size,
+            value
+        );
 
-        if (putenv(key_equals_val) == -1) // !!! why mutable?  :-/
+        if (putenv(key_equals_val_utf8) == -1) // !!! why mutable?  :-/
             success = FALSE;
 
         /* OS_FREE(key_equals_val); */ // !!! Can't do this, crashes getenv()
 #endif
     }
 
-    OS_FREE(key);
+    OS_FREE(key_utf8);
 
     if (NOT(success)) // make better error if more information is known
         error = Error_User("environment variable couldn't be modified");
@@ -2256,15 +2273,15 @@ static REBNATIVE(list_env)
 
     key_equals_val = env;
     while ((len = wcslen(key_equals_val)) != 0) {
-        const wchar_t *eq = wcschr(key_equals_val, '=');
+        const wchar_t *eq_pos = wcschr(key_equals_val, '=');
 
         Init_String(
             Alloc_Tail_Array(array),
-            Copy_Wide_Str(key_equals_val, eq - key_equals_val)
+            Copy_Wide_Str(key_equals_val, eq_pos - key_equals_val)
         );
         Init_String(
             Alloc_Tail_Array(array),
-            Copy_Wide_Str(eq + 1, len - (eq - key_equals_val) - 1)
+            Copy_Wide_Str(eq_pos + 1, len - (eq_pos - key_equals_val) - 1)
         );
 
         key_equals_val += len + 1; // next
@@ -2298,7 +2315,7 @@ static REBNATIVE(list_env)
         const char *key_equals_val = environ[n];
         const char *eq_pos = strchr(key_equals_val, '=');
 
-        REBCNT len_bytes = strlen(key_equals_val);
+        REBCNT size = strlen(key_equals_val);
         Init_String(
             Alloc_Tail_Array(array),
             Decode_UTF_String(
@@ -2311,7 +2328,7 @@ static REBNATIVE(list_env)
             Alloc_Tail_Array(array),
             Decode_UTF_String(
                 cb_cast(eq_pos + 1),
-                len_bytes - (eq_pos - key_equals_val) - 1,
+                size - (eq_pos - key_equals_val) - 1,
                 8
             )
         );

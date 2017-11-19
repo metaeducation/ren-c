@@ -112,23 +112,42 @@ static REBINT Set_Serial_Settings(HANDLE h, struct devreq_serial *serial)
 //
 DEVICE_CMD Open_Serial(REBREQ *req)
 {
-    HANDLE h;
     COMMTIMEOUTS timeouts; //add in timeouts? Currently unused
     struct devreq_serial *serial = DEVREQ_SERIAL(req);
 
     memset(&timeouts, '\0', sizeof(timeouts));
 
-    // req->special.serial.path should be prefixed with "\\.\" to allow for higher com port numbers
+    // req->special.serial.path should be prefixed with "\\.\" to allow for
+    // higher com port numbers
+    //
     wchar_t fullpath[MAX_SERIAL_DEV_PATH] = L"\\\\.\\";
 
-    if (!serial->path) {
+    if (serial->path == NULL) {
         req->error = -RFE_BAD_PATH;
         return DR_ERROR;
     }
 
-    wcsncat(fullpath, serial->path, MAX_SERIAL_DEV_PATH);
+    // Concatenate the "spelling" of the serial port request by asking it
+    // to be placed at the end of the buffer.
+    //
+    REBCNT buf_left = MAX_SERIAL_DEV_PATH - wcslen(fullpath) - 1;
+    REBCNT chars_appended = rebSpellingOfW(
+        &fullpath[wcslen(fullpath)],
+        buf_left, // space, minus terminator
+        serial->path
+    );
+    if (chars_appended > buf_left)
+        rebFail ("Serial file path too long for MAX_SERIAL_DEV_PATH");
 
-    h = CreateFile(fullpath, GENERIC_READ|GENERIC_WRITE, 0, NULL,OPEN_EXISTING, 0, NULL );
+    HANDLE h = CreateFile(
+        fullpath,
+        GENERIC_READ | GENERIC_WRITE,
+        0,
+        NULL,
+        OPEN_EXISTING,
+        0,
+        NULL
+    );
     if (h == INVALID_HANDLE_VALUE) {
         req->error = -RFE_OPEN_FAIL;
         return DR_ERROR;
@@ -140,13 +159,13 @@ DEVICE_CMD Open_Serial(REBREQ *req)
         return DR_ERROR;
     }
 
-
-    // See: http://msdn.microsoft.com/en-us/library/windows/desktop/aa363190%28v=vs.85%29.aspx
+    // http://msdn.microsoft.com/en-us/library/windows/desktop/aa363190%28v=vs.85%29.aspx
+    //
     timeouts.ReadIntervalTimeout = MAXDWORD;
     timeouts.ReadTotalTimeoutMultiplier = 0;
     timeouts.ReadTotalTimeoutConstant = 0;
-    timeouts.WriteTotalTimeoutMultiplier = 1;   // These two write lines may need to be set to 0.
-    timeouts.WriteTotalTimeoutConstant = 1;
+    timeouts.WriteTotalTimeoutMultiplier = 1; // !!! should this be 0?
+    timeouts.WriteTotalTimeoutConstant = 1; // !!! should this be 0?
     if (!SetCommTimeouts(h, &timeouts)) {
         CloseHandle(h);
         req->error = -RFE_OPEN_FAIL;

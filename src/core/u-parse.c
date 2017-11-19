@@ -2069,18 +2069,32 @@ REBNATIVE(subparse)
 
                 if (flags & PF_COPY) {
                     DECLARE_LOCAL (temp);
-                    Init_Any_Series(
-                        temp,
-                        P_TYPE,
-                        GET_SER_FLAG(P_INPUT, SERIES_FLAG_ARRAY)
-                            ? SER(Copy_Array_At_Max_Shallow(
+                    if (ANY_ARRAY(P_INPUT_VALUE)) {
+                        Init_Any_Array(
+                            temp,
+                            P_TYPE,
+                            Copy_Array_At_Max_Shallow(
                                 ARR(P_INPUT),
                                 begin,
                                 P_INPUT_SPECIFIER,
                                 count
-                            ))
-                            : Copy_String_Slimming(P_INPUT, begin, count)
-                    );
+                            )
+                        );
+                    }
+                    else if (IS_BINARY(P_INPUT_VALUE)) {
+                        Init_Binary(
+                            temp,
+                            Copy_Sequence_At_Len(P_INPUT, begin, count)
+                        );
+                    }
+                    else {
+                        assert(ANY_STRING(P_INPUT_VALUE));
+                        Init_Any_Series(
+                            temp,
+                            P_TYPE,
+                            Copy_String_At_Len(P_INPUT, begin, count)
+                        );
+                    }
 
                     Move_Value(
                         Sink_Var_May_Fail(set_or_copy_word, P_RULE_SPECIFIER),
@@ -2131,7 +2145,7 @@ REBNATIVE(subparse)
                                 P_INPUT_SPECIFIER,
                                 count
                             ))
-                            : Copy_String_Slimming(P_INPUT, begin, count)
+                            : Copy_String_At_Len(P_INPUT, begin, count)
                     );
 
                     Move_Value(P_OUT, NAT_VALUE(parse));

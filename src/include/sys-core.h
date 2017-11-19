@@ -176,32 +176,6 @@
 #include "reb-c.h"
 #include "reb-defs.h"
 
-// Must be defined at the end of reb-defs.h, but not *in* reb-defs.h so that
-// files including sys-core.h and reb-host.h can have differing definitions of
-// REBCHR.  (We want it opaque to the core, but the host to have it compatible
-// with the native character type w/o casting)
-//
-// !!! This should become obsolete when all string exchanges with non-core
-// code are done via STRING! values.
-//
-#ifdef OS_WIDE_CHAR
-    #ifdef NDEBUG
-        typedef REBUNI REBCHR;
-    #else
-        typedef struct tagREBCHR {
-            REBUNI num;
-        } REBCHR;
-    #endif
-#else
-    #ifdef NDEBUG
-        typedef REBYTE REBCHR;
-    #else
-        typedef struct tagREBCHR {
-            REBYTE num;
-        } REBCHR;
-    #endif
-#endif
-
 #include "reb-device.h"
 #include "reb-types.h"
 #include "reb-event.h"
@@ -430,9 +404,7 @@ enum {
 
 // Options for To_REBOL_Path
 enum {
-    PATH_OPT_UNI_SRC            = 1 << 0, // whether the source series is uni
-    PATH_OPT_FORCE_UNI_DEST     = 1 << 1, // even if just latin1 chars, do uni
-    PATH_OPT_SRC_IS_DIR         = 1 << 2
+    PATH_OPT_SRC_IS_DIR = 1 << 0
 };
 
 
@@ -517,14 +489,9 @@ enum {
 
 // Encoding options:
 enum encoding_opts {
-    OPT_ENC_BIG_ENDIAN = 1 << 0, // little is default
-    OPT_ENC_UTF8 = 1 << 1,
-    OPT_ENC_UTF16 = 1 << 2,
-    OPT_ENC_UTF32 = 1 << 3,
-    OPT_ENC_BOM = 1 << 4, // byte order marker
-    OPT_ENC_CRLF = 1 << 5, // CR line termination, see OPT_ENC_CRLF_MAYBE
-    OPT_ENC_UNISRC = 1 << 6, // source is UCS2
-    OPT_ENC_RAW = 1 << 7 // raw binary, no encoding
+    OPT_ENC_0 = 0, // byte order marker
+    OPT_ENC_CRLF = 1 << 1, // CR line termination, see OPT_ENC_CRLF_MAYBE
+    OPT_ENC_RAW = 1 << 2 // raw binary, no encoding
 };
 
 #if OS_CRLF

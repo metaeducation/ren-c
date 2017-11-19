@@ -104,22 +104,19 @@ void Print_OS_Line(void)
 //
 // The encoding options are OPT_ENC_XXX flags OR'd together.
 //
-void Prin_OS_String(const void *p, REBCNT len, REBFLGS opts)
+void Prin_OS_String(const REBUNI *up, REBCNT len, REBFLGS opts)
 {
     #define BUF_SIZE 1024
     REBYTE buffer[BUF_SIZE]; // on stack
     REBYTE *buf = &buffer[0];
     REBCNT len2;
-    const REBOOL unicode = LOGICAL(opts & OPT_ENC_UNISRC);
 
-    const REBYTE *bp = unicode ? NULL : cast(const REBYTE *, p);
-    const REBUNI *up = unicode ? cast(const REBUNI *, p) : NULL;
-
-    if (p == NULL)
+    if (up == NULL)
         fail (Error_No_Print_Ptr_Raw());
 
     // Determine length if not provided:
-    if (len == UNKNOWN) len = unicode ? Strlen_Uni(up) : LEN_BYTES(bp);
+    if (len == UNKNOWN)
+        len = Strlen_Uni(up);
 
     Req_SIO->flags |= RRF_FLUSH;
 
@@ -131,18 +128,19 @@ void Prin_OS_String(const void *p, REBCNT len, REBFLGS opts)
     SET_END(result);
 
     if (opts & OPT_ENC_RAW) {
+        assert(FALSE); // !!! Temporarily disabled
+
         if (Do_Signals_Throws(result))
             fail (Error_No_Catch_For_Throw(result));
 
         assert(IS_END(result));
 
         // Used by verbatim terminal output, e.g. print of a BINARY!
-        assert(!unicode);
         Req_SIO->length = len;
 
         // Mutability cast, but RDC_WRITE should not be modifying the buffer
         // (doing so could yield undefined behavior)
-        Req_SIO->common.data = m_cast(REBYTE *, bp);
+        Req_SIO->common.data = m_cast(REBYTE *, cast(const REBYTE*, up));
 
         OS_DO_DEVICE(Req_SIO, RDC_WRITE);
         if (Req_SIO->error)
@@ -158,12 +156,12 @@ void Prin_OS_String(const void *p, REBCNT len, REBFLGS opts)
             Req_SIO->length = Encode_UTF8(
                 buf,
                 BUF_SIZE - 4,
-                unicode ? cast(const void *, up) : cast(const void *, bp),
+                up,
                 &len2,
                 opts
             );
 
-            if (unicode) up += len2; else bp += len2;
+            up += len2;
             len -= len2;
 
             OS_DO_DEVICE(Req_SIO, RDC_WRITE);
@@ -174,20 +172,16 @@ void Prin_OS_String(const void *p, REBCNT len, REBFLGS opts)
 }
 
 
-
 //
 //  Debug_String: C
 //
-void Debug_String(const void *p, REBCNT len, REBOOL unicode, REBINT lines)
+void Debug_String(const REBUNI *up, REBCNT len)
 {
     REBOOL disabled = GC_Disabled;
     GC_Disabled = TRUE;
 
-    Prin_OS_String(
-        p, len, (unicode ? OPT_ENC_UNISRC : 0) | OPT_ENC_CRLF_MAYBE
-    );
-    for (; lines > 0; lines--)
-        Print_OS_Line();
+    Prin_OS_String(up, len, OPT_ENC_CRLF_MAYBE);
+    Print_OS_Line();
 
     assert(GC_Disabled == TRUE);
     GC_Disabled = disabled;
@@ -199,65 +193,28 @@ void Debug_String(const void *p, REBCNT len, REBOOL unicode, REBINT lines)
 //
 void Debug_Line(void)
 {
-    Debug_String(cb_cast(""), UNKNOWN, FALSE, 1);
-}
-
-
-//
-//  Debug_Str: C
-//
-// Print a string followed by a newline.
-//
-void Debug_Str(const char *str)
-{
-    Debug_String(cb_cast(str), UNKNOWN, FALSE, 1);
-}
-
-
-//
-//  Debug_Uni: C
-//
-// Print debug unicode string followed by a newline.
-//
-void Debug_Uni(REBSER *ser)
-{
-    const REBFLGS encopts = OPT_ENC_UNISRC | OPT_ENC_CRLF_MAYBE;
-    REBCNT ul;
-    REBCNT bl;
-    REBYTE buf[1024];
-    REBUNI *up = UNI_HEAD(ser);
-    REBCNT size = SER_LEN(ser);
-
-    REBOOL disabled = GC_Disabled;
-    GC_Disabled = TRUE;
-
-    while (size > 0) {
-        ul = size;
-        bl = Encode_UTF8(buf, 1020, up, &ul, encopts);
-        Debug_String(buf, bl, FALSE, 0);
-        size -= ul;
-        up += ul;
-    }
-
-    Debug_Line();
-
-    assert(GC_Disabled == TRUE);
-    GC_Disabled = disabled;
+    REBUNI wstr[2];
+    wstr[0] = '\n';
+    wstr[1] = '\0';
+    Debug_String(wstr, 2);
 }
 
 
 //
 //  Debug_Chars: C
 //
-// Print a number of spaces.
+// Print a character out a number of times.
 //
 void Debug_Chars(REBYTE chr, REBCNT num)
 {
-    REBYTE spaces[100];
+    assert(num < 100);
 
-    memset(spaces, chr, MIN(num, 99));
-    spaces[num] = 0;
-    Debug_String(spaces, num, FALSE, 0);
+    REBUNI buffer[100];
+    REBCNT i;
+    for (i = 0; i < num; ++i)
+        buffer[i] = chr;
+    buffer[num] = '\0';
+    Debug_String(buffer, num);
 }
 
 
@@ -305,12 +262,7 @@ void Debug_Values(const RELVAL *value, REBCNT count, REBCNT limit)
             }
             SET_ANY_CHAR(mo->series, i2, '\0');
             assert(SER_WIDE(mo->series) == sizeof(REBUNI));
-            Debug_String(
-                UNI_AT(mo->series, mo->start),
-                i2 - mo->start,
-                TRUE,
-                0
-            );
+            Debug_String(UNI_AT(mo->series, mo->start), i2 - mo->start);
 
             Drop_Mold(mo);
         }
@@ -345,28 +297,14 @@ void Debug_Buf(const char *fmt, va_list *vaptr)
 
     DECLARE_MOLD (mo);
     Push_Mold(mo);
-
     Form_Args_Core(mo, fmt, vaptr);
 
-    REBSER *bytes = Pop_Molded_UTF8(mo);
+    REBSER *ser = Pop_Molded_String_Core(mo, UNKNOWN);
 
-    // Don't send the Debug_String routine more than 1024 bytes at a time,
-    // but chunk it to 1024 byte sections.
-    //
-    // !!! What's the rationale for this?
-    //
-    REBCNT len = SER_LEN(bytes);
+    Debug_String(UNI_HEAD(ser), UNI_LEN(ser));
+    Debug_Line();
 
-    REBCNT n = 0;
-    while (n < len) {
-        REBCNT sub = len - n;
-        if (sub > 1024)
-            sub = 1024;
-        Debug_String(BIN_AT(bytes, n), sub, FALSE, 0);
-        n += sub;
-    }
-
-    Free_Series(bytes);
+    Free_Series(ser);
 
     assert(GC_Disabled == TRUE);
     GC_Disabled = disabled;
@@ -450,45 +388,45 @@ REBYTE *Form_Hex_Pad(REBYTE *buf, REBI64 val, REBINT len)
 
 
 //
-//  Form_Hex2: C
+//  Form_Hex2_UTF8: C
 //
 // Convert byte-sized int to xx format. Very fast.
 //
-REBYTE *Form_Hex2(REBYTE *bp, REBCNT val)
+REBYTE *Form_Hex2_UTF8(REBYTE *bp, REBCNT val)
 {
     bp[0] = Hex_Digits[(val & 0xf0) >> 4];
     bp[1] = Hex_Digits[val & 0xf];
-    bp[2] = 0;
-    return bp+2;
+    bp[2] = '\0';
+    return bp + 2;
 }
 
 
 //
 //  Form_Hex2_Uni: C
 //
-// Convert byte-sized int to unicode xx format. Very fast.
+// Convert byte-sized int to xx format. Very fast.
 //
 REBUNI *Form_Hex2_Uni(REBUNI *up, REBCNT val)
 {
     up[0] = Hex_Digits[(val & 0xf0) >> 4];
     up[1] = Hex_Digits[val & 0xf];
-    up[2] = 0;
-    return up+2;
+    up[2] = '\0';
+    return up + 2;
 }
 
 
 //
-//  Form_Hex_Esc_Uni: C
+//  Form_Hex_Esc: C
 //
-// Convert byte int to %xx format (in unicode destination)
+// Convert byte to %xx format
 //
-REBUNI *Form_Hex_Esc_Uni(REBUNI *up, REBUNI c)
+REBUNI *Form_Hex_Esc(REBUNI *up, REBYTE b)
 {
     up[0] = '%';
-    up[1] = Hex_Digits[(c & 0xf0) >> 4];
-    up[2] = Hex_Digits[c & 0xf];
-    up[3] = 0;
-    return up+3;
+    up[1] = Hex_Digits[(b & 0xf0) >> 4];
+    up[2] = Hex_Digits[b & 0xf];
+    up[3] = '\0';
+    return up + 3;
 }
 
 

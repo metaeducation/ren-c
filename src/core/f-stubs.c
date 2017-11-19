@@ -362,8 +362,13 @@ void Init_Any_Series_At_Core(
         //
         ASSERT_NO_RELATIVE(ARR(series), FALSE);
     }
-    else if (ANY_STRING(out))
-        assert(SER_WIDE(series) == 1 || SER_WIDE(series) == 2);
+    else if (ANY_STRING(out)) {
+        if (SER_WIDE(series) != 2)
+            panic(series);
+    } else if (IS_BINARY(out)) {
+        if (SER_WIDE(series) != 1)
+            panic(series);
+    }
 #endif
 }
 

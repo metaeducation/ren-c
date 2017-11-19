@@ -611,11 +611,17 @@ static void Update_Error_Near_For_Line(
     // !!! This should likely be separated into an integer and a string, so
     // that those processing the error don't have to parse it back out.
     //
-    REBSER *ser = Make_Binary(len + 16);
+    REBSER *ser = Make_Unicode(len + 16);
     Append_Unencoded(ser, "(line ");
     Append_Int(ser, line);
     Append_Unencoded(ser, ") ");
-    Append_Series(ser, bp, len);
+
+    // !!! For the "Latin1 Nowhere" all strings are wide.  We need to turn
+    // the line into a wide string before appending it.
+    //
+    REBSER *bp_wide = Append_UTF8_May_Fail(NULL, bp, len);
+    Append_Series(ser, UNI_HEAD(bp_wide), len); // multiplies len * wide
+    Free_Series(bp_wide);
 
     ERROR_VARS *vars = ERR_VARS(error);
     Init_String(&vars->nearest, ser);
@@ -646,12 +652,17 @@ static REBCTX *Error_Syntax(SCAN_STATE *ss) {
     assert(ss->end >= ss->begin);
 
     DECLARE_LOCAL (token_name);
-    Init_String(token_name, Copy_Bytes(cb_cast(Token_Names[ss->token]), -1));
+    Init_String(
+        token_name,
+        Make_UTF8_May_Fail(cb_cast(Token_Names[ss->token]))
+    );
 
     DECLARE_LOCAL (token_text);
     Init_String(
         token_text,
-        Copy_Bytes(ss->begin, cast(REBCNT, ss->end - ss->begin))
+        Append_UTF8_May_Fail(
+            NULL, ss->begin, cast(REBCNT, ss->end - ss->begin)
+        )
     );
 
     REBCTX *error = Error(RE_SCAN_INVALID, token_name, token_text, END);

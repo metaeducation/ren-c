@@ -229,7 +229,7 @@ REBARR *Make_Paramlist_Managed_May_Fail(
                 DS_PUSH_TRASH;
                 Init_String(
                     DS_TOP,
-                    Copy_String_Slimming(VAL_SERIES(item), VAL_INDEX(item), -1)
+                    Copy_String_At_Len(VAL_SERIES(item), VAL_INDEX(item), -1)
                 );
             }
             else {
@@ -239,7 +239,7 @@ REBARR *Make_Paramlist_Managed_May_Fail(
                 //
                 Init_String(
                     DS_TOP,
-                    Copy_String_Slimming(VAL_SERIES(item), VAL_INDEX(item), -1)
+                    Copy_String_At_Len(VAL_SERIES(item), VAL_INDEX(item), -1)
                 );
             }
 

@@ -84,7 +84,7 @@ REBCNT Insert_Series(
 // The new tail position will be returned as the result.
 // A terminator will be added to the end of the appended data.
 //
-void Append_Series(REBSER *s, const REBYTE *data, REBCNT len)
+void Append_Series(REBSER *s, const void *data, REBCNT len)
 {
     REBCNT len_old = SER_LEN(s);
     REBYTE wide = SER_WIDE(s);
@@ -162,11 +162,15 @@ REBSER *Copy_Sequence(REBSER *original)
 // Use Copy_Array routines (which specify Shallow, Deep, etc.) for
 // greater detail needed when expressing intent for Rebol Arrays.
 //
-REBSER *Copy_Sequence_At_Len(REBSER *original, REBCNT index, REBCNT len)
-{
+REBSER *Copy_Sequence_At_Len_Extra(
+    REBSER *original,
+    REBCNT index,
+    REBCNT len,
+    REBCNT extra
+){
     assert(NOT_SER_FLAG(original, SERIES_FLAG_ARRAY));
 
-    REBSER *copy = Make_Series(len + 1, SER_WIDE(original));
+    REBSER *copy = Make_Series(len + 1 + extra, SER_WIDE(original));
     memcpy(
         SER_DATA_RAW(copy),
         SER_DATA_RAW(original) + index * SER_WIDE(original),
@@ -174,20 +178,6 @@ REBSER *Copy_Sequence_At_Len(REBSER *original, REBCNT index, REBCNT len)
     );
     TERM_SEQUENCE_LEN(copy, len);
     return copy;
-}
-
-
-//
-//  Copy_Sequence_At_Position: C
-//
-// Copy a non-array series from its value structure, using the
-// value's index as the location to start copying the data.
-//
-REBSER *Copy_Sequence_At_Position(const REBVAL *position)
-{
-    return Copy_Sequence_At_Len(
-        VAL_SERIES(position), VAL_INDEX(position), VAL_LEN_AT(position)
-    );
 }
 
 
@@ -399,34 +389,6 @@ REBYTE *Reset_Buffer(REBSER *buf, REBCNT len)
     Expand_Series(buf, 0, len); // sets new tail
 
     return SER_DATA_RAW(buf);
-}
-
-
-//
-//  Copy_Buffer: C
-//
-// Copy a shared buffer, starting at index. Set tail and termination.
-//
-REBSER *Copy_Buffer(REBSER *buf, REBCNT index, void *end)
-{
-    assert(NOT_SER_FLAG(buf, SERIES_FLAG_ARRAY));
-
-    REBCNT len = BYTE_SIZE(buf)
-        ? cast(REBYTE*, end) - BIN_HEAD(buf)
-        : cast(REBUNI*, end) - UNI_HEAD(buf);
-
-    if (index) len -= index;
-
-    REBSER *copy = Make_Series(len + 1, SER_WIDE(buf));
-
-    memcpy(
-        SER_DATA_RAW(copy),
-        SER_DATA_RAW(buf) + index * SER_WIDE(buf),
-        SER_WIDE(buf) * len
-    );
-    TERM_SEQUENCE_LEN(copy, len);
-
-    return copy;
 }
 
 

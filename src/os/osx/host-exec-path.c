@@ -45,51 +45,54 @@ int _NSGetExecutablePath(char* buf, uint32_t* bufsize);
 //
 //  OS_Get_Current_Exec: C
 //
-// Return the current executable path as a string and
-// its length in chars (not bytes).
+// Return the current executable path as a STRING!.  The result should be
+// freed with rebFree()
 //
-// The result should be freed after copy/conversion.
-//
-int OS_Get_Current_Exec(REBCHR **path)
+REBVAL *OS_Get_Current_Exec(void)
 {
-    assert (sizeof(REBCHR) == sizeof(char));
-
     uint32_t path_size = 1024;
 
-    *path = OS_ALLOC_N(REBCHR, path_size);
-    if (*path == NULL) return -1;
-    int r = _NSGetExecutablePath(*path, &path_size);
+    char *path_utf8 = OS_ALLOC_N(char, path_size);
+    if (path_utf8 == NULL)
+        return rebBlank();
+
+    int r = _NSGetExecutablePath(path_utf8, &path_size);
     if (r == -1) {
-        // buffer is too small, path_size is set to the required size
+        // buffer is too small, length is set to the required size
         assert(path_size > 1024);
 
-        OS_FREE(*path);
-        *path = OS_ALLOC_N(REBCHR, path_size);
-        if (*path == NULL) return -1;
-        int r = _NSGetExecutablePath(*path, &path_size);
+        OS_FREE(path_utf8);
+        path_utf8 = OS_ALLOC_N(char, path_size);
+        if (path_utf8 == NULL)
+            return rebBlank();
+
+        int r = _NSGetExecutablePath(path_utf8, &path_size);
         if (r != 0) {
-            OS_FREE(*path);
-            return -1;
+            OS_FREE(path_utf8);
+            return rebBlank();
         }
     }
 
-    // _NSGetExecutablePath returns "a path" not a "real path", and it could be
-    // a symbolic link.
-    REBCHR *resolved_path = realpath(*path, NULL);
-    if (resolved_path != NULL) {
-        // resolved_path needs to be free'd by free, which might be different from OS_FREE,
-        // make a copy using memory from OS_ALLOC_N, such that the caller can call OS_FREE.
-        OS_FREE(*path);
-        REBCNT len = OS_STRLEN(resolved_path);
-        *path = OS_ALLOC_N(REBCHR, len + 1);
-        OS_STRNCPY(*path, resolved_path, len);
-        (*path)[len] = '\0';
-
-        free(resolved_path);
-
-        return len;
-    } else {
+    // _NSGetExecutablePath returns "a path" not a "real path", and it could
+    // be a symbolic link.
+    //
+    const REBOOL is_dir = FALSE;
+    char *resolved_path_utf8 = realpath(path_utf8, NULL);
+    if (resolved_path_utf8 != NULL) {
+        //
+        // resolved_path needs to be free'd by free, which might be different
+        // from OS_FREE.
+        //
+        REBVAL *result = rebLocalToFile(resolved_path_utf8, is_dir);
+        OS_FREE(path_utf8);
+        free(resolved_path_utf8);
+        return result;
+    }
+    else {
         // Failed to resolve, just return the unresolved path.
-        return OS_STRLEN(*path);
+        //
+        REBVAL *result = rebLocalToFile(path_utf8, is_dir);
+        OS_FREE(path_utf8);
+        return result;
     }
 }

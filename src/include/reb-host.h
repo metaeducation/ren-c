@@ -41,19 +41,6 @@
 #include "reb-c.h"
 #include "reb-ext.h"        // includes reb-defs.h
 
-// Must be defined at the end of reb-defs.h, but not *in* reb-defs.h so that
-// files including sys-core.h and reb-host.h can have differing definitions of
-// REBCHR.  (We want it opaque to the core, but the host to have it compatible
-// with the native character type w/o casting)
-//
-// !!! This should become obsolete when all string exchanges with non-core
-// code are done via STRING! values.
-//
-#ifdef OS_WIDE_CHAR
-    typedef wchar_t REBCHR;
-#else
-    typedef char REBCHR;
-#endif
 
 #include "reb-device.h"
 #include "reb-file.h"

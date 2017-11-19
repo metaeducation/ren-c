@@ -770,12 +770,12 @@ void MF_Vector(REB_MOLD *mo, const RELVAL *v, REBOOL form)
     if (NOT(form)) {
         if (len)
             New_Indented_Line(mo);
+
         Append_Codepoint(mo->series, ']');
-        if (NOT_MOLD_FLAG(mo, MOLD_FLAG_ALL)) {
+
+        if (NOT_MOLD_FLAG(mo, MOLD_FLAG_ALL))
             Append_Codepoint(mo->series, ']');
-        }
-        else {
+        else
             Post_Mold(mo, v);
-        }
     }
 }

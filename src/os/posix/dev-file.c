@@ -91,30 +91,36 @@
 // reformatted from: http://ports.haiku-files.org/wiki/CommonProblems
 // this comes from: http://ports.haiku-files.org/wiki/CommonProblems
 // modified for reformatting and to not use a variable-length-array
-static int Is_Dir(const char *path, const char *name)
+//
+static int Is_Dir(const char *path_utf8, const char *name_utf8)
 {
-    int len_path = strlen(path);
-    int len_name = strlen(name);
-    struct stat st;
+    int num_bytes_path = strlen(path_utf8);
+    int num_bytes_name = strlen(name_utf8);
 
     // !!! No clue why + 13 is needed, and not sure I want to know.
     // It was in the original code, not second-guessing ATM.  --@HF
-    char *pathname = OS_ALLOC_N(char, len_path + 1 + len_name + 1 + 13);
+    //
+    char *full_utf8 = OS_ALLOC_N(
+        char, num_bytes_path + 1 + num_bytes_name + 1 + 13
+    );
 
-    strcpy(pathname, path);
+    strncpy(full_utf8, path_utf8, num_bytes_path + 1); // include terminator
 
-    /* Avoid UNC-path "//name" on Cygwin.  */
-    if (len_path > 0 && pathname[len_path - 1] != '/')
-        strcat(pathname, "/");
+    // Avoid UNC-path "//name" on Cygwin.
+    //
+    if (num_bytes_path > 0 && full_utf8[num_bytes_path - 1] != '/')
+        strncat(full_utf8, "/", 1);
 
-    strcat(pathname, name);
+    strncat(full_utf8, name_utf8, num_bytes_name);
 
-    if (stat(pathname, &st)) {
-        OS_FREE(pathname);
-        return 0;
-    }
+    struct stat st;
+    int stat_result = stat(full_utf8, &st);
 
-    OS_FREE(pathname);
+    OS_FREE(full_utf8);
+
+    if (stat_result != 0)
+        return 0; // !!! What's the proper result?
+
     return S_ISDIR(st.st_mode);
 }
 
@@ -149,11 +155,17 @@ static REBOOL Seek_File_64(struct devreq_file *file)
 
 static int Get_File_Info(struct devreq_file *file)
 {
+    const REBOOL full = TRUE;
+    char *path_utf8 = rebFileToLocalAlloc(NULL, file->path, full);
+
     struct stat info;
+    int stat_result = stat(path_utf8, &info);
+
+    OS_FREE(path_utf8);
 
     REBREQ *req = AS_REBREQ(file);
 
-    if (stat(file->path, &info)) {
+    if (stat_result != 0) {
         req->error = errno;
         return DR_ERROR;
     }
@@ -218,23 +230,27 @@ static int Get_File_Info(struct devreq_file *file)
 //
 static int Read_Directory(struct devreq_file *dir, struct devreq_file *file)
 {
-    struct dirent *d;
-    char *cp;
-    DIR *h;
-    int n;
-
     REBREQ *dir_req = AS_REBREQ(dir);
     REBREQ *file_req = AS_REBREQ(file);
 
-    // Remove * from tail, if present. (Allowed because the
-    // path was copied into to-local-path first).
-    n = strlen(cp = dir->path);
-    if (n > 0 && cp[n-1] == '*') cp[n-1] = 0;
+    //
+    // Extract UTF-8 data from the FILE! value into a temporary buffer,
+    // and remove * from tail if present.
+    //
+    REBCNT len_dir;
+    const REBOOL full = TRUE;
+    char *dir_utf8 = rebFileToLocalAlloc(&len_dir, dir->path, full);
+    if (len_dir > 0 && dir_utf8[len_dir - 1] == '*')
+        dir_utf8[len_dir - 1] = '\0';
 
     // If no dir handle, open the dir:
-    if (!(h = cast(DIR*, dir_req->requestee.handle))) {
-        h = opendir(dir->path);
-        if (!h) {
+    //
+    DIR *h;
+    if ((h = cast(DIR*, dir_req->requestee.handle)) == NULL) {
+        h = opendir(dir_utf8); // !!! does opendir() hold pointer?
+
+        if (h == NULL) {
+            OS_FREE(dir_utf8);
             dir_req->error = errno;
             return DR_ERROR;
         }
@@ -243,9 +259,13 @@ static int Read_Directory(struct devreq_file *dir, struct devreq_file *file)
     }
 
     // Get dir entry (skip over the . and .. dir cases):
+    //
+    char *file_utf8;
+    struct dirent *d;
     do {
         // Read next file entry or error:
-        if (!(d = readdir(h))) {
+        if ((d = readdir(h)) == NULL) {
+            OS_FREE(dir_utf8);
             //dir->error = errno;
             closedir(h);
             dir_req->requestee.handle = 0;
@@ -253,11 +273,16 @@ static int Read_Directory(struct devreq_file *dir, struct devreq_file *file)
             dir_req->flags |= RRF_DONE; // no more files
             return DR_DONE;
         }
-        cp = d->d_name;
-    } while (cp[0] == '.' && (cp[1] == 0 || (cp[1] == '.' && cp[2] == 0)));
+        file_utf8 = d->d_name;
+    } while (
+        file_utf8[0] == '.'
+        && (
+            file_utf8[1] == '\0'
+            || (file_utf8[1] == '.' && file_utf8[2] == '\0')
+        )
+    );
 
     file_req->modes = 0;
-    strncpy(file->path, cp, MAX_FILE_NAME);
 
 #if 0
     // NOTE: we do not use d_type even if DT_DIR is #define-d.  First of all,
@@ -274,8 +299,13 @@ static int Read_Directory(struct devreq_file *dir, struct devreq_file *file)
     // directory, although less efficient than DT_DIR (because it requires
     // making an additional filesystem call)
 
-    if (Is_Dir(dir->path, file->path))
+    if (Is_Dir(dir_utf8, file_utf8))
         file_req->modes |= RFM_DIR;
+
+    const REBOOL is_dir = LOGICAL(file_req->modes & RFM_DIR);
+    file->path = rebLocalToFile(file_utf8, is_dir);
+
+    OS_FREE(dir_utf8);
 
     // Line below DOES NOT WORK -- because we need full path.
     //Get_File_Info(file); // updates modes, size, time
@@ -299,14 +329,11 @@ static int Read_Directory(struct devreq_file *dir, struct devreq_file *file)
 //
 DEVICE_CMD Open_File(REBREQ *req)
 {
-    int h;
-    struct stat info;
-
     struct devreq_file *file = DEVREQ_FILE(req);
 
     // Posix file names should be compatible with REBOL file paths:
-    char *path;
-    if (!(path = file->path)) {
+    //
+    if (file->path == NULL) {
         req->error = -RFE_BAD_PATH;
         return DR_ERROR;
     }
@@ -333,10 +360,18 @@ DEVICE_CMD Open_File(REBREQ *req)
 
     // Open the file:
     // printf("Open: %s %d %d\n", path, modes, access);
-    h = open(path, modes, access);
+
+    const REBOOL full = TRUE;
+    char *path_utf8 = rebFileToLocalAlloc(NULL, file->path, full);
+
+    struct stat info;
+    int h = open(path_utf8, modes, access);
+
+    OS_FREE(path_utf8);
+
     if (h < 0) {
         req->error = -RFE_OPEN_FAIL;
-        goto fail;
+        return DR_ERROR;
     }
 
     // Confirm that a seek-mode file is actually seekable:
@@ -344,7 +379,7 @@ DEVICE_CMD Open_File(REBREQ *req)
         if (lseek(h, 0, SEEK_CUR) < 0) {
             close(h);
             req->error = -RFE_BAD_SEEK;
-            goto fail;
+            return DR_ERROR;
         }
     }
 
@@ -357,9 +392,6 @@ DEVICE_CMD Open_File(REBREQ *req)
     req->requestee.id = h;
 
     return DR_DONE;
-
-fail:
-    return DR_ERROR;
 }
 
 
@@ -480,12 +512,20 @@ DEVICE_CMD Query_File(REBREQ *req)
 DEVICE_CMD Create_File(REBREQ *req)
 {
     struct devreq_file *file = DEVREQ_FILE(req);
-    if (req->modes & RFM_DIR) {
-        if (!mkdir(file->path, 0777)) return DR_DONE;
-        req->error = errno;
-        return DR_ERROR;
-    } else
+    if (NOT(req->modes & RFM_DIR))
         return Open_File(req);
+
+    const REBOOL full = TRUE;
+    char *path_utf8 = rebFileToLocalAlloc(NULL, file->path, full);
+
+    int mkdir_result = mkdir(path_utf8, 0777);
+
+    OS_FREE(path_utf8);
+
+    if (mkdir_result == 0)
+        return DR_DONE;
+    req->error = errno;
+    return DR_ERROR;
 }
 
 
@@ -502,14 +542,19 @@ DEVICE_CMD Delete_File(REBREQ *req)
 {
     struct devreq_file *file = DEVREQ_FILE(req);
 
-    if (req->modes & RFM_DIR) {
-        if (!rmdir(file->path))
-            return DR_DONE;
-    }
-    else {
-        if (!remove(file->path))
-            return DR_DONE;
-    }
+    const REBOOL full = TRUE;
+    char *path_utf8 = rebFileToLocalAlloc(NULL, file->path, full);
+
+    int removal_result;
+    if (req->modes & RFM_DIR)
+        removal_result = rmdir(path_utf8);
+    else
+        removal_result = remove(path_utf8);
+
+    OS_FREE(path_utf8);
+
+    if (removal_result == 0)
+        return DR_DONE;
 
     req->error = errno;
     return DR_ERROR;
@@ -526,7 +571,20 @@ DEVICE_CMD Rename_File(REBREQ *req)
 {
     struct devreq_file *file = DEVREQ_FILE(req);
 
-    if (!rename(file->path, s_cast(req->common.data)))
+    REBVAL *to = cast(REBVAL*, req->common.data); // !!! hack!
+
+    // Convert file name to OS format:
+    //
+    const REBOOL full = TRUE;
+    char *from_utf8 = rebFileToLocalAlloc(NULL, file->path, full);
+    char *to_utf8 = rebFileToLocalAlloc(NULL, to, full);
+
+    int rename_result = rename(from_utf8, to_utf8);
+
+    OS_FREE(to_utf8);
+    OS_FREE(from_utf8);
+
+    if (rename_result == 0)
         return DR_DONE;
     req->error = errno;
     return DR_ERROR;

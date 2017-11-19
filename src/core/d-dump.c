@@ -83,7 +83,8 @@ void Dump_Bytes(REBYTE *bp, REBCNT limit)
                 break;
 
             REBYTE c = *bp++;
-            cp = Form_Hex2(cp, c);
+
+            cp = Form_Hex2_UTF8(cp, c);
             if ((n & 3) == 3)
                 *cp++ = ' ';
             if ((c < 32) || (c > 126))
@@ -199,8 +200,9 @@ void Dump_Values(RELVAL *vp, REBCNT count)
             );
         }
 
-        *(cp + n) = 0;
-        Debug_Str(s_cast(buf));
+        *(cp + n) = '\0';
+        printf("%s\n", s_cast(buf));
+        fflush(stdout);
         cp = buf;
     }
 }

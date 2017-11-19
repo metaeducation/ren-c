@@ -212,8 +212,22 @@ void Probe_Core_Debug(
             // This routine is also a little catalog of the outlying series
             // types in terms of sizing, just to know what they are.
 
-            if (BYTE_SIZE(s))
-                Debug_Str(s_cast(BIN_HEAD(s)));
+            if (SER_WIDE(s) == sizeof(REBYTE)) {
+                DECLARE_LOCAL (value);
+                VAL_RESET_HEADER(value, REB_BINARY);
+                INIT_VAL_SERIES(value, s);
+                VAL_INDEX(value) = 0;
+
+                Debug_Fmt("%r", value);
+            }
+            else if (SER_WIDE(s) == sizeof(REBUNI)) {
+                DECLARE_LOCAL (value);
+                VAL_RESET_HEADER(value, REB_STRING);
+                INIT_VAL_SERIES(value, s);
+                VAL_INDEX(value) = 0;
+
+                Debug_Fmt("%r", value);
+            }
             else if (GET_SER_FLAG(s, SERIES_FLAG_ARRAY)) {
                 //
                 // May not actually be a REB_BLOCK, but we put it in a value
@@ -228,8 +242,6 @@ void Probe_Core_Debug(
 
                 Debug_Fmt("%r", value);
             }
-            else if (SER_WIDE(s) == sizeof(REBUNI))
-                Debug_Uni(s);
             else if (s == PG_Canons_By_Hash) {
                 printf("can't probe PG_Canons_By_Hash\n");
                 panic (s);

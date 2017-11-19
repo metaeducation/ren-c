@@ -380,64 +380,30 @@ const REBYTE *Decode_Binary(
 
 
 //
-//  Prep_String: C
-//
-// Creates or expands the series and provides the location to copy text into.
-//
-static REBSER *Prep_String(REBSER *series, REBYTE **str, REBCNT len)
-{
-    if (series == NULL) {
-        series = Make_Binary(len);
-        SET_SERIES_LEN(series, len);
-        *str = BIN_HEAD(series);
-    }
-    else {
-        // This used "STR_AT" (obsolete) but didn't have an explicit case
-        // here that it was byte sized.  Check it, because if you have
-        // unicode characters this would give the wrong pointer.
-        //
-        assert(BYTE_SIZE(series));
-
-        REBCNT tail = SER_LEN(series);
-        EXPAND_SERIES_TAIL(series, len);
-        *str = BIN_AT(series, tail);
-    }
-    return series;
-}
-
-
-//
 //  Encode_Base2: C
 //
 // Base2 encode a given series. Must be BYTES, not UNICODE.
 //
-REBSER *Encode_Base2(REBSER *opt_series, const RELVAL *v, REBOOL brk)
+REBSER *Encode_Base2(const REBYTE *src, REBCNT len, REBOOL brk)
 {
-    assert(IS_BINARY(v) || IS_BITSET(v));
-
-    REBYTE *dest;
-    REBINT len = VAL_LEN_AT(v);
-    REBSER *result = Prep_String(
-        opt_series,
-        &dest,
-        8 * len + 2 * (len / 8) + 4 // Add slop-factor
-    );
+    // Account for binary digits, lines, and extra syntax ("slop factor")
+    //
+    REBSER *s = Make_Unicode(8 * len + 2 * (len / 8) + 4);
+    REBUNI *dest = UNI_HEAD(s);
 
     if (len == 0) { // return empty series if input was zero length
-        TERM_SEQUENCE_LEN(result, 0);
-        return result;
+        TERM_SEQUENCE_LEN(s, 0);
+        return s;
     }
 
     if (len > 8 && brk)
         *dest++ = LF;
 
-    REBYTE *src = VAL_BIN_AT(v);
-
-    REBINT i;
+    REBCNT i;
     for (i = 0; i < len; i++) {
         REBYTE b = src[i];
 
-        REBINT n;
+        REBCNT n;
         for (n = 0x80; n > 0; n = n >> 1)
             *dest++ = (b & n) ? '1' : '0';
 
@@ -449,9 +415,9 @@ REBSER *Encode_Base2(REBSER *opt_series, const RELVAL *v, REBOOL brk)
     if (*(dest - 1) != LF && len > 9 && brk)
         *dest++ = LF;
 
-    SET_SERIES_LEN(result, cast(REBCNT, dest - BIN_HEAD(result)));
-    ASSERT_SERIES_TERM(result);
-    return result;
+    SET_SERIES_LEN(s, cast(REBCNT, dest - UNI_HEAD(s)));
+    ASSERT_SERIES_TERM(s);
+    return s;
 }
 
 
@@ -460,31 +426,24 @@ REBSER *Encode_Base2(REBSER *opt_series, const RELVAL *v, REBOOL brk)
 //
 // Base16 encode a given series. Must be BYTES, not UNICODE.
 //
-REBSER *Encode_Base16(REBSER *opt_series, const RELVAL *v, REBOOL brk)
+REBSER *Encode_Base16(const REBYTE *src, REBCNT len, REBOOL brk)
 {
-    assert(IS_BINARY(v) || IS_BITSET(v));
-
-    REBYTE *dest;
-    REBCNT len = VAL_LEN_AT(v);
-    REBSER *result = Prep_String(
-        opt_series, // if NULL, return result will be new allocation
-        &dest,
-        len * 2 + len / 32 + 32 // Account for hex, lines, and extra syntax
-    );
+    // Account for hex digits, lines, and extra syntax ("slop factor")
+    //
+    REBSER *s = Make_Unicode(len * 2 + len / 32 + 32);
+    REBUNI *dest = UNI_HEAD(s);
 
     if (len == 0) { // return empty series if input was zero length
-        TERM_SEQUENCE_LEN(result, 0);
-        return result;
+        TERM_SEQUENCE_LEN(s, 0);
+        return s;
     }
 
     if (len >= 32 && brk)
         *dest++ = LF;
 
-    REBYTE *src = VAL_BIN_AT(v);
-
     REBCNT count;
     for (count = 1; count <= len; count++) {
-        dest = Form_Hex2(dest, *src++);
+        dest = Form_Hex2_Uni(dest, *src++);
         if (brk && ((count % 32) == 0))
             *dest++ = LF;
     }
@@ -494,9 +453,9 @@ REBSER *Encode_Base16(REBSER *opt_series, const RELVAL *v, REBOOL brk)
 
     *dest = '\0';
 
-    SET_SERIES_LEN(result, cast(REBCNT, dest - BIN_HEAD(result)));
-    ASSERT_SERIES_TERM(result);
-    return result;
+    SET_SERIES_LEN(s, cast(REBCNT, dest - UNI_HEAD(s)));
+    ASSERT_SERIES_TERM(s);
+    return s;
 }
 
 
@@ -505,28 +464,21 @@ REBSER *Encode_Base16(REBSER *opt_series, const RELVAL *v, REBOOL brk)
 //
 // Base64 encode a given series. Must be BYTES, not UNICODE.
 //
-REBSER *Encode_Base64(REBSER *opt_series, const RELVAL *v, REBOOL brk)
+REBSER *Encode_Base64(const REBYTE *src, REBCNT len, REBOOL brk)
 {
-    assert(IS_BINARY(v) || IS_BITSET(v));
-
-    REBYTE *dest;
-    REBCNT len = VAL_LEN_AT(v);
-    REBSER *result = Prep_String(
-        opt_series, // if NULL, return result will be new allcation
-        &dest,
-        4 * len / 3 + 2 * (len / 32) + 5 // "slop-factor"
-    );
+    // Account for base64 digits, lines, and extra syntax ("slop factor")
+    //
+    REBSER *s = Make_Unicode(4 * len / 3 + 2 * (len / 32) + 5);
+    REBUNI *dest = UNI_HEAD(s);
 
     if (len == 0) { // return empty series if input was zero length
-        TERM_SEQUENCE_LEN(result, 0);
-        return result;
+        TERM_SEQUENCE_LEN(s, 0);
+        return s;
     }
 
     REBINT loop = cast(int, len / 3) - 1;
     if (4 * loop > 64 && brk)
         *dest++ = LF;
-
-    REBYTE *src = VAL_BIN(v);
 
     REBINT x;
     for (x = 0; x <= 3 * loop; x += 3) {
@@ -564,9 +516,7 @@ REBSER *Encode_Base64(REBSER *opt_series, const RELVAL *v, REBOOL brk)
 
     *dest = '\0';
 
-    // !!! "4 * (int) (len % 3 ? (len / 3) + 1 : len / 3);" ...?
-    //
-    SET_SERIES_LEN(result, cast(REBCNT, dest - BIN_HEAD(result)));
-    ASSERT_SERIES_TERM(result);
-    return result;
+    SET_SERIES_LEN(s, cast(REBCNT, dest - UNI_HEAD(s)));
+    ASSERT_SERIES_TERM(s);
+    return s;
 }

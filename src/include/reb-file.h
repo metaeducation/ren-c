@@ -37,8 +37,7 @@ enum {
     RFM_READONLY = 1 << 5,
     RFM_TRUNCATE = 1 << 6,
     RFM_RESEEK = 1 << 7, // file index has moved, reseek
-    RFM_NAME_MEM = 1 << 8, // converted name allocated in mem
-    RFM_DIR = 1 << 9
+    RFM_DIR = 1 << 8
 };
 
 // RFE - REBOL File Error

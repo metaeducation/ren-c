@@ -82,7 +82,7 @@ REBNATIVE(decode_text)
     // is to UTF-8 for source code, a .TXT file is a different beast, so
     // having wider format support might be a good thing.
 
-    Init_String(D_OUT, Copy_Sequence_At_Position(ARG(data)));
+    Init_String(D_OUT, Make_UTF8_May_Fail(VAL_BIN_AT(ARG(data))));
     return R_OUT;
 }
 
@@ -116,62 +116,37 @@ REBNATIVE(encode_text)
 
 static void Encode_Utf16_Core(
     REBVAL *out,
-    const void *data, // may be REBYTE* or REBUNI*, depending on width
+    REBUNI *data,
     REBCNT len,
-    REBYTE wide,
     REBOOL little_endian
 ){
     REBSER *bin = Make_Binary(sizeof(u16) * len);
     u16* up = cast(u16*, BIN_HEAD(bin));
 
-    if (wide == 1) { // Latin1
+    // Currently only supports UCS2, which is close to UTF16 :-/
+#ifdef ENDIAN_LITTLE
+    if (little_endian) {
+        memcpy(up, data, len * sizeof(u16));
+    } else {
         REBCNT i = 0;
         for (i = 0; i < len; i ++) {
-        #ifdef ENDIAN_LITTLE
-            if (little_endian) {
-                up[i] = cast(const char*, data)[i];
-            } else {
-                up[i] = cast(const char*, data)[i] << 8;
-            }
-        #elif defined (ENDIAN_BIG)
-            if (little_endian) {
-                up[i] = cast(const char*, data)[i] << 8;
-            } else {
-                up[i] = cast(const char*, data)[i];
-            }
-        #else
-            #error "Unsupported CPU endian"
-        #endif
+            REBUNI c = data[i];
+            up[i] = ((c & 0xff) << 8) | ((c & 0xff00) >> 8);
         }
     }
-    else if (wide == 2) { // UCS2, which is close to UTF16 :-/
-    #ifdef ENDIAN_LITTLE
-        if (little_endian) {
-            memcpy(up, data, len * sizeof(u16));
-        } else {
-            REBCNT i = 0;
-            for (i = 0; i < len; i ++) {
-                REBUNI uni = cast(const REBUNI*, data)[i];
-                up[i] = ((uni & 0xff) << 8) | ((uni & 0xff00) >> 8);
-            }
+#elif defined (ENDIAN_BIG)
+    if (little_endian) {
+        REBCNT i = 0;
+        for (i = 0; i < len; i ++) {
+            REBUNI c = data[i];
+            up[i] = ((c & 0xff) << 8) | ((c & 0xff00) >> 8);
         }
-    #elif defined (ENDIAN_BIG)
-        if (little_endian) {
-            REBCNT i = 0;
-            for (i = 0; i < len; i ++) {
-                REBUNI uni = cast(const REBUNI*, data)[i];
-                up[i] = ((uni & 0xff) << 8) | ((uni & 0xff00) >> 8);
-            }
-        } else {
-            memcpy(up, data, len * sizeof(u16));
-        }
-    #else
-        #error "Unsupported CPU endian"
-    #endif
+    } else {
+        memcpy(up, data, len * sizeof(u16));
     }
-    else {
-        fail ("Unicode width > 2 reserved for future expansion.");
-    }
+#else
+    #error "Unsupported CPU endian"
+#endif
 
     TERM_BIN_LEN(bin, len * sizeof(u16));
     Init_Binary(out, bin);
@@ -186,20 +161,12 @@ static void Decode_Utf16_Core(
 ){
     REBSER *ser = Make_Unicode(len); // 2x too big (?)
 
-    REBINT size = Decode_UTF16(
+    REBINT size = Decode_UTF16_Negative_If_ASCII(
         UNI_HEAD(ser), data, len, little_endian, FALSE
     );
-    SET_SERIES_LEN(ser, size);
-
-    if (size < 0) { // ASCII
+    if (size < 0) // ASCII
         size = -size;
-
-        REBSER *dst = Make_Binary(size);
-        Append_Uni_Bytes(dst, UNI_HEAD(ser), size);
-        Free_Series(ser);
-
-        ser = dst;
-    }
+    SET_SERIES_LEN(ser, size);
 
     Init_String(out, ser);
 }
@@ -260,22 +227,13 @@ REBNATIVE(encode_utf16le)
 {
     INCLUDE_PARAMS_OF_ENCODE_UTF16LE;
 
-    void *data;
-    REBYTE wide;
-    if (VAL_BYTE_SIZE(ARG(string))) {
-        data = VAL_BIN_AT(ARG(string));
-        wide = 1;
-    }
-    else {
-        data = VAL_UNI_AT(ARG(string));
-        wide = 2;
-    }
-
-    REBCNT len = VAL_LEN_AT(ARG(string));
-
     const REBOOL little_endian = TRUE;
-
-    Encode_Utf16_Core(D_OUT, data, len, wide, little_endian);
+    Encode_Utf16_Core(
+        D_OUT,
+        VAL_UNI_AT(ARG(string)),
+        VAL_LEN_AT(ARG(string)),
+        little_endian
+    );
     return R_OUT;
 }
 
@@ -336,21 +294,13 @@ REBNATIVE(encode_utf16be)
 {
     INCLUDE_PARAMS_OF_ENCODE_UTF16BE;
 
-    void *data;
-    REBYTE wide;
-    if (VAL_BYTE_SIZE(ARG(string))) {
-        data = VAL_BIN_AT(ARG(string));
-        wide = 1;
-    }
-    else {
-        data = VAL_UNI_AT(ARG(string));
-        wide = 2;
-    }
-
-    REBCNT len = VAL_LEN_AT(ARG(string));
-
     const REBOOL little_endian = FALSE;
 
-    Encode_Utf16_Core(D_OUT, data, len, wide, little_endian);
+    Encode_Utf16_Core(
+        D_OUT,
+        VAL_UNI_AT(ARG(string)),
+        VAL_LEN_AT(ARG(string)),
+        little_endian
+    );
     return R_OUT;
 }

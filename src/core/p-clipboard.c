@@ -73,10 +73,10 @@ static REB_R Clipboard_Actor(REBFRM *frame_, REBCTX *port, REBSYM action)
             if (req->flags & RRF_WIDE) {
                 // convert to UTF8, so that it can be converted back to string!
                 Init_Binary(arg, Make_UTF8_Binary(
-                    req->common.data,
+                    cast(const REBUNI*, req->common.data),
                     len / sizeof(REBUNI),
-                    0,
-                    OPT_ENC_UNISRC
+                    0, // extra
+                    OPT_ENC_0
                 ));
             }
             else {
@@ -129,10 +129,10 @@ static REB_R Clipboard_Actor(REBFRM *frame_, REBCTX *port, REBSYM action)
         if (req->flags & RRF_WIDE) {
             // convert to UTF8, so that it can be converted back to string!
             Init_Binary(arg, Make_UTF8_Binary(
-                req->common.data,
+                cast(const REBUNI*, req->common.data),
                 len / sizeof(REBUNI),
-                0,
-                OPT_ENC_UNISRC
+                0, // extra
+                OPT_ENC_0
             ));
         }
         else {
@@ -190,7 +190,7 @@ static REB_R Clipboard_Actor(REBFRM *frame_, REBCTX *port, REBSYM action)
 
             // Temp conversion:!!!
             REBSER *ser = Make_Unicode(len);
-            len = Decode_UTF8_Negative_If_Latin1(
+            len = Decode_UTF8_Negative_If_ASCII(
                 UNI_HEAD(ser), VAL_BIN_AT(arg), len, FALSE
             );
             len = abs(len);

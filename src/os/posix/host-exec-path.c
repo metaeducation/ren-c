@@ -59,55 +59,58 @@
 //
 //  OS_Get_Current_Exec: C
 //
-// Return the current executable path as a string and
-// its length in chars (not bytes).
-//
-// The result should be freed after copy/conversion.
+// Return the current executable path as a FILE!
 //
 // https://stackoverflow.com/questions/1023306/
 //
-int OS_Get_Current_Exec(REBCHR **path)
+REBVAL *OS_Get_Current_Exec(void)
 {
-    assert(sizeof(REBCHR) == sizeof(char));
-
 #if !defined(PROC_EXEC_PATH) && !defined(HAVE_PROC_PATHNAME)
-    UNUSED(path);
-    return -1;
+    return rebBlank();
 #else
-#if defined(PROC_EXEC_PATH)
-    const char *self = PROC_EXEC_PATH;
-#else //HAVE_PROC_PATHNAME
-    int mib[4] = {
-        CTL_KERN,
-        KERN_PROC,
-        KERN_PROC_PATHNAME,
-        -1 //current process
-    };
-    char *self = OS_ALLOC_N(REBCHR, PATH_MAX + 1);
-    size_t len = PATH_MAX + 1;
-    if (sysctl(mib, sizeof(mib), self, &len, NULL, 0) != 0) {
-        OS_FREE(self);
-        return -1;
+    char *buffer;
+    const char *self;
+    #if defined(PROC_EXEC_PATH)
+        buffer = NULL;
+        self = PROC_EXEC_PATH;
+    #else //HAVE_PROC_PATHNAME
+        int mib[4] = {
+            CTL_KERN,
+            KERN_PROC,
+            KERN_PROC_PATHNAME,
+            -1 //current process
+        };
+        buffer = OS_ALLOC_N(char, PATH_MAX + 1);
+        size_t len = PATH_MAX + 1;
+        if (sysctl(mib, sizeof(mib), buffer, &len, NULL, 0) != 0) {
+            OS_FREE(buffer);
+            return rebBlank();
+        }
+        self = buffer;
+    #endif
+
+    char *path_utf8 = OS_ALLOC_N(char, PATH_MAX);
+    if (path_utf8 == NULL) {
+        if (buffer != NULL)
+            OS_FREE(buffer);
+        return rebBlank();
     }
-#endif
 
-    *path = NULL;
-    int r = 0;
-    *path = OS_ALLOC_N(REBCHR, PATH_MAX);
-    if (*path == NULL) return -1;
+    int r = readlink(self, path_utf8, PATH_MAX);
 
-    r = readlink(self, *path, PATH_MAX);
-
-#if defined(HAVE_PROC_PATHNAME)
-    OS_FREE(self);
-#endif
+    if (buffer != NULL)
+        OS_FREE(buffer);
 
     if (r < 0) {
-        OS_FREE(*path);
-        return -1;
+        OS_FREE(path_utf8);
+        return rebBlank();
     }
-    (*path)[r] = '\0';
 
-    return r;
+    path_utf8[r] = '\0';
+
+    REBOOL is_dir = FALSE;
+    REBVAL *result = rebLocalToFile(path_utf8, is_dir);
+    OS_FREE(path_utf8);
+    return result;
 #endif
 }

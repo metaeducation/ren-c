@@ -260,12 +260,13 @@ void Startup_Pools(REBINT scale)
     const char *env_always_malloc = NULL;
     env_always_malloc = getenv("R3_ALWAYS_MALLOC");
     if (env_always_malloc != NULL && atoi(env_always_malloc) != 0) {
-        Debug_Str(
+        printf(
             "**\n"
             "** R3_ALWAYS_MALLOC is TRUE in environment variable!\n"
             "** Memory allocations aren't pooled, expect slowness...\n"
             "**\n"
         );
+        fflush(stdout);
         PG_Always_Malloc = TRUE;
     }
 #endif
@@ -1674,72 +1675,6 @@ void Free_Series(REBSER *s)
 
 
 //
-//  Widen_String: C
-//
-// Widen string from 1 byte to 2 bytes.
-//
-// NOTE: allocates new memory. Cached pointers are invalid.
-//
-void Widen_String(REBSER *s, REBOOL preserve)
-{
-    REBCNT len_old = SER_LEN(s);
-
-    REBYTE wide_old = SER_WIDE(s);
-    assert(wide_old == 1);
-
-    REBOOL was_dynamic = GET_SER_INFO(s, SERIES_INFO_HAS_DYNAMIC);
-
-    REBCNT bias_old;
-    REBCNT size_old;
-    REBYTE *data_old;
-    union Reb_Series_Content content_old;
-    if (was_dynamic) {
-        data_old = s->content.dynamic.data;
-        bias_old = SER_BIAS(s);
-        size_old = Series_Allocation_Unpooled(s);
-    }
-    else {
-        content_old = s->content;
-        data_old = cast(REBYTE*, &content_old);
-    }
-
-#if !defined(NDEBUG)
-    // We may be resizing a partially constructed series, or otherwise
-    // not want to preserve the previous contents
-    if (preserve)
-        ASSERT_SERIES(s);
-#endif
-
-    s->content.dynamic.data = NULL;
-
-    SER_SET_WIDE(s, cast(REBYTE, sizeof(REBUNI)));
-    if (!Series_Data_Alloc(s, len_old + 1)) {
-        // Put series back how it was (there may be extant references)
-        s->content.dynamic.data = data_old;
-        fail (Error_No_Memory((len_old + 1) * sizeof(REBUNI)));
-    }
-
-    if (preserve) {
-        REBYTE *bp = data_old;
-        REBUNI *up = UNI_HEAD(s);
-
-        REBCNT n;
-        for (n = 0; n <= len_old; n++) up[n] = bp[n]; // includes terminator
-        s->content.dynamic.len = len_old;
-    }
-    else {
-        s->content.dynamic.len = 0;
-        TERM_SEQUENCE(s);
-    }
-
-    if (was_dynamic)
-        Free_Unbiased_Series_Data(data_old - (wide_old * bias_old), size_old);
-
-    ASSERT_SERIES(s);
-}
-
-
-//
 //  Manage_Series: C
 //
 // When a series is first created, it is in a state of being
@@ -1924,7 +1859,7 @@ void *Rebol_Realloc(void *ptr, size_t new_size)
     UNPOISON_MEMORY(cast(REBSER**, ptr) - 1, sizeof(REBSER*));
 
     REBSER *s = SER(cast(void*, *(cast(REBSER**, ptr) - 1)));
-    assert(BYTE_SIZE(s));
+    assert(SER_WIDE(s) == 1);
     assert(NOT(IS_SERIES_MANAGED(s))); // holds REBSER pointer
 
     // Binary expansion must still account for terminator (hence the 1)
@@ -1957,7 +1892,7 @@ void Rebol_Free(void *ptr)
     UNPOISON_MEMORY(cast(REBSER**, ptr) - 1, sizeof(REBSER*));
 
     REBSER *s = SER(cast(void*, *(cast(REBSER**, ptr) - 1)));
-    assert(BYTE_SIZE(s));
+    assert(SER_WIDE(s) == 1);
     assert(NOT(IS_SERIES_MANAGED(s))); // holds REBSER pointer
     Free_Series(s);
 }
@@ -1979,7 +1914,7 @@ REBSER *Rebserize(void *ptr)
     UNPOISON_MEMORY(cast(REBSER**, ptr) - 1, sizeof(REBSER*));
 
     REBSER *s = SER(cast(void*, *(cast(REBSER**, ptr) - 1)));
-    assert(BYTE_SIZE(s));
+    assert(SER_WIDE(s) == 1);
     assert(NOT(IS_SERIES_MANAGED(s))); // holds REBSER pointer
 
     // Don't allow Rebol_Realloc() or Rebol_Free() of ptr after Rebserize has
@@ -2142,15 +2077,19 @@ REBCNT Check_Memory_Debug(void)
                         < cast(REBUPT, seg) + cast(REBUPT, seg->size)
                     )
                 ){
-                    if (found)
-                        panic ("node belongs to more than one segment");
+                    if (found) {
+                        printf("node belongs to more than one segment\n");
+                        panic (node);
+                    }
 
                     found = TRUE;
                 }
             }
 
-            if (NOT(found))
-                panic ("node does not belong to one of the pool's segments");
+            if (NOT(found)) {
+                printf("node does not belong to one of the pool's segments\n");
+                panic(node);
+            }
         }
 
         if (Mem_Pools[pool_num].free != pool_free_nodes)

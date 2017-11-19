@@ -415,6 +415,16 @@ static REBUPT arg_to_ffi(
             // relocated in memory if any modifications happen during a
             // callback...so the memory is not "stable".
             //
+            // !!! With Latin1-Nowhere, this broke the GTK demo because it
+            // gets wide strings.  UTF8-Everywhere will put it back to being
+            // still broken w.r.t. relocations or modification, but better
+            // in that the series data will always be UTF-8
+            //
+        #if !defined(NDEBUG)
+            printf("Latin1-Nowhere has all wide strings, confuses FFI\n");
+            printf("UTF-8-Everywhere will relieve this problem somewhat.\n");
+            fflush(stdout);
+        #endif
             REBYTE *raw_ptr = VAL_RAW_DATA_AT(arg);
             memcpy(dest, &raw_ptr, sizeof(raw_ptr)); // copies a *pointer*!
             break;}

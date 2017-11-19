@@ -83,48 +83,43 @@ static void str_to_char(REBVAL *out, REBVAL *val, REBCNT idx)
 
 static void swap_chars(REBVAL *val1, REBVAL *val2)
 {
-    REBUNI c1;
-    REBUNI c2;
     REBSER *s1 = VAL_SERIES(val1);
     REBSER *s2 = VAL_SERIES(val2);
 
-    c1 = GET_ANY_CHAR(s1, VAL_INDEX(val1));
-    c2 = GET_ANY_CHAR(s2, VAL_INDEX(val2));
+    REBUNI c1 = GET_ANY_CHAR(s1, VAL_INDEX(val1));
+    REBUNI c2 = GET_ANY_CHAR(s2, VAL_INDEX(val2));
 
-    if (BYTE_SIZE(s1) && c2 > 0xff) Widen_String(s1, TRUE);
     SET_ANY_CHAR(s1, VAL_INDEX(val1), c2);
-
-    if (BYTE_SIZE(s2) && c1 > 0xff) Widen_String(s2, TRUE);
     SET_ANY_CHAR(s2, VAL_INDEX(val2), c1);
 }
 
 
 static void reverse_string(REBVAL *value, REBCNT len)
 {
-    REBCNT n;
-    REBCNT m;
-    REBUNI c;
+    REBUNI *up = VAL_UNI_AT(value);
 
-    if (VAL_BYTE_SIZE(value)) {
-        REBYTE *bp = VAL_BIN_AT(value);
-
-        for (n = 0, m = len-1; n < len / 2; n++, m--) {
-            c = bp[n];
-            bp[n] = bp[m];
-            bp[m] = (REBYTE)c;
-        }
-    }
-    else {
-        REBUNI *up = VAL_UNI_AT(value);
-
-        for (n = 0, m = len-1; n < len / 2; n++, m--) {
-            c = up[n];
-            up[n] = up[m];
-            up[m] = c;
-        }
+    REBCNT n = 0;
+    REBCNT m = len - 1;
+    for (; n < len / 2; n++, m--) {
+        REBUNI c = up[n];
+        up[n] = up[m];
+        up[m] = c;
     }
 }
 
+
+static void reverse_binary(REBVAL *v, REBCNT len)
+{
+    REBYTE *bp = VAL_BIN_AT(v);
+
+    REBCNT n = 0;
+    REBCNT m = len - 1;
+    for (; n < len / 2; n++, m--) {
+        REBYTE b = bp[n];
+        bp[n] = bp[m];
+        bp[m] = b;
+    }
+}
 
 static REBCNT find_string(
     REBSER *series,
@@ -249,8 +244,8 @@ static REBSER *MAKE_TO_String_Common(const REBVAL *arg)
         ser = Decode_UTF_String(bp, len, 8); // UTF-8
     }
     // MAKE/TO <type> <any-string>
-    else if (ANY_BINSTR(arg)) {
-        ser = Copy_String_Slimming(VAL_SERIES(arg), VAL_INDEX(arg), VAL_LEN_AT(arg));
+    else if (ANY_STRING(arg)) {
+        ser = Copy_String_At_Len(VAL_SERIES(arg), VAL_INDEX(arg), VAL_LEN_AT(arg));
     }
     // MAKE/TO <type> <any-word>
     else if (ANY_WORD(arg)) {
@@ -258,8 +253,7 @@ static REBSER *MAKE_TO_String_Common(const REBVAL *arg)
     }
     // MAKE/TO <type> #"A"
     else if (IS_CHAR(arg)) {
-        ser = (VAL_CHAR(arg) > 0xff) ? Make_Unicode(2) : Make_Binary(2);
-        Append_Codepoint(ser, VAL_CHAR(arg));
+        ser = Make_Series_Codepoint(VAL_CHAR(arg));
     }
     else
         ser = Copy_Form_Value(arg, MOLD_FLAG_TIGHT);
@@ -329,7 +323,7 @@ static REBSER *make_binary(const REBVAL *arg, REBOOL make)
     case REB_URL:
     case REB_TAG:
 //  case REB_ISSUE:
-        ser = Make_UTF8_From_Any_String(arg, VAL_LEN_AT(arg), 0);
+        ser = Make_UTF8_From_Any_String(arg, VAL_LEN_AT(arg), OPT_ENC_0);
         break;
 
     case REB_BLOCK:
@@ -383,8 +377,10 @@ void MAKE_String(REBVAL *out, enum Reb_Kind kind, const REBVAL *def) {
         // !!! R3-Alpha tolerated decimal, e.g. `make string! 3.14`, which
         // is semantically nebulous (round up, down?) and generally bad.
         //
-        ser = Make_Binary(Int32s(def, 0));
-        Init_Any_Series(out, kind, ser);
+        if (kind == REB_BINARY)
+            Init_Binary(out, Make_Binary(Int32s(def, 0)));
+        else
+            Init_Any_Series(out, kind, Make_Unicode(Int32s(def, 0)));
         return;
     }
     else if (IS_BLOCK(def)) {
@@ -765,9 +761,6 @@ REB_R PD_String(REBPVS *pvs, const REBVAL *picker, const REBVAL *opt_setval)
         return R_INVISIBLE;
     }
 
-    if (BYTE_SIZE(ser) && c > 0xff)
-        Widen_String(ser, TRUE);
-
     SET_ANY_CHAR(ser, n, c);
 
     return R_INVISIBLE;
@@ -866,18 +859,7 @@ static void Mold_String_Series(REB_MOLD *mo, const RELVAL *v)
     if (NOT_MOLD_FLAG(mo, MOLD_FLAG_NON_ANSI_PARENED))
         sf.paren = 0;
 
-    // Source can be 8 or 16 bits:
-    REBYTE *bp;
-    REBUNI *up;
-    REBOOL unicode = NOT(BYTE_SIZE(series));
-    if (unicode) {
-        up = UNI_HEAD(series);
-        bp = NULL; // wasteful, but avoids may be used uninitialized warning
-    }
-    else {
-        up = NULL; // wasteful, but avoids may be used uninitialized warning
-        bp = BIN_HEAD(series);
-    }
+    REBUNI *up = UNI_HEAD(series);
 
     // If it is a short quoted string, emit it as "string"
     //
@@ -891,14 +873,13 @@ static void Mold_String_Series(REB_MOLD *mo, const RELVAL *v)
 
         REBCNT n;
         for (n = index; n < VAL_LEN_HEAD(v); n++) {
-            REBUNI c = unicode ? up[n] : cast(REBUNI, bp[n]);
             dp = Emit_Uni_Char(
-                dp, c, GET_MOLD_FLAG(mo, MOLD_FLAG_NON_ANSI_PARENED)
+                dp, up[n], GET_MOLD_FLAG(mo, MOLD_FLAG_NON_ANSI_PARENED)
             );
         }
 
         *dp++ = '"';
-        *dp = 0;
+        *dp = '\0';
         return;
     }
 
@@ -915,7 +896,7 @@ static void Mold_String_Series(REB_MOLD *mo, const RELVAL *v)
 
     REBCNT n;
     for (n = index; n < VAL_LEN_HEAD(v); n++) {
-        REBUNI c = unicode ? up[n] : cast(REBUNI, bp[n]);
+        REBUNI c = up[n];
 
         switch (c) {
         case '{':
@@ -993,7 +974,7 @@ static void Mold_File(REB_MOLD *mo, const RELVAL *v)
     for (n = VAL_INDEX(v); n < VAL_LEN_HEAD(v); ++n) {
         REBUNI c = GET_ANY_CHAR(series, n);
         if (IS_FILE_ESC(c))
-            dp = Form_Hex_Esc_Uni(dp, c); // c => %xx
+            dp = Form_Hex_Esc(dp, c); // c => %xx
         else
             *dp++ = c;
     }
@@ -1025,39 +1006,37 @@ void MF_Binary(REB_MOLD *mo, const RELVAL *v, REBOOL form)
 {
     UNUSED(form);
 
-    if (GET_MOLD_FLAG(mo, MOLD_FLAG_ALL) && VAL_INDEX(v) != 0) {
+    if (GET_MOLD_FLAG(mo, MOLD_FLAG_ALL) && VAL_INDEX(v) != 0)
         Pre_Mold(mo, v); // #[binary!
-    }
 
     REBCNT len = VAL_LEN_AT(v);
-    REBSER *out;
 
+    REBSER *enbased;
     switch (Get_System_Int(SYS_OPTIONS, OPTIONS_BINARY_BASE, 16)) {
     default:
     case 16: {
         const REBOOL brk = LOGICAL(len > 32);
-        out = Encode_Base16(NULL, v, brk);
+        enbased = Encode_Base16(VAL_BIN_AT(v), len, brk);
         break; }
 
     case 64: {
         const REBOOL brk = LOGICAL(len > 64);
         Append_Unencoded(mo->series, "64");
-        out = Encode_Base64(NULL, v, brk);
+        enbased = Encode_Base64(VAL_BIN_AT(v), len, brk);
         break; }
 
     case 2: {
         const REBOOL brk = LOGICAL(len > 8);
         Append_Codepoint(mo->series, '2');
-        out = Encode_Base2(NULL, v, brk);
+        enbased = Encode_Base2(VAL_BIN_AT(v), len, brk);
         break; }
     }
 
-    Emit(mo, "#{E}", out);
-    Free_Series(out);
+    Emit(mo, "#{E}", enbased);
+    Free_Series(enbased);
 
-    if (GET_MOLD_FLAG(mo, MOLD_FLAG_ALL) && VAL_INDEX(v) != 0) {
+    if (GET_MOLD_FLAG(mo, MOLD_FLAG_ALL) && VAL_INDEX(v) != 0)
         Post_Mold(mo, v);
-    }
 }
 
 
@@ -1137,13 +1116,19 @@ void MF_String(REB_MOLD *mo, const RELVAL *v, REBOOL form)
 //
 //  REBTYPE: C
 //
+// Common action handler for BINARY! and ANY-STRING!
+//
+// !!! BINARY! seems different enough to warrant its own handler.
+//
 REBTYPE(String)
 {
+    REBVAL *v = D_ARG(1);
+    assert(IS_BINARY(v) || ANY_STRING(v));
+
     REBSER *ser;
     TRASH_POINTER_IF_DEBUG(ser); // `goto return_ser;` will return this
 
-    REBVAL  *value = D_ARG(1);
-    REBVAL  *arg = D_ARGC > 1 ? D_ARG(2) : NULL;
+    REBVAL *arg = D_ARGC > 1 ? D_ARG(2) : NULL;
 
     // Common operations for any series type (length, head, etc.)
     {
@@ -1154,8 +1139,8 @@ REBTYPE(String)
 
     // Common setup code for all actions:
     //
-    REBINT index = cast(REBINT, VAL_INDEX(value));
-    REBINT tail = cast(REBINT, VAL_LEN_HEAD(value));
+    REBINT index = cast(REBINT, VAL_INDEX(v));
+    REBINT tail = cast(REBINT, VAL_LEN_HEAD(v));
 
     switch (action) {
 
@@ -1165,7 +1150,7 @@ REBTYPE(String)
     case SYM_CHANGE: {
         INCLUDE_PARAMS_OF_INSERT;
 
-        FAIL_IF_READ_ONLY_SERIES(VAL_SERIES(value));
+        FAIL_IF_READ_ONLY_SERIES(VAL_SERIES(v));
 
         UNUSED(PAR(series));
         UNUSED(PAR(value));
@@ -1176,28 +1161,28 @@ REBTYPE(String)
 
         REBINT len;
         Partial1(
-            (action == SYM_CHANGE) ? value : arg,
+            (action == SYM_CHANGE) ? v : arg,
             ARG(limit),
             cast(REBCNT*, &len)
         );
-        index = VAL_INDEX(value);
+        index = VAL_INDEX(v);
 
         REBFLGS flags = 0;
-        if (IS_BINARY(value))
+        if (IS_BINARY(v))
             flags |= AM_BINARY_SERIES;
         if (REF(part))
             flags |= AM_PART;
         index = Modify_String(
             action,
-            VAL_SERIES(value),
+            VAL_SERIES(v),
             index,
             arg,
             flags,
             len,
             REF(dup) ? Int32(ARG(count)) : 1
         );
-        ENSURE_SERIES_MANAGED(VAL_SERIES(value));
-        VAL_INDEX(value) = index;
+        ENSURE_SERIES_MANAGED(VAL_SERIES(v));
+        VAL_INDEX(v) = index;
         break; }
 
     //-- Search:
@@ -1218,7 +1203,7 @@ REBTYPE(String)
         );
 
         REBINT len;
-        if (IS_BINARY(value)) {
+        if (IS_BINARY(v)) {
             flags |= AM_FIND_CASE;
 
             if (!IS_BINARY(arg) && !IS_INTEGER(arg) && !IS_BITSET(arg))
@@ -1252,19 +1237,19 @@ REBTYPE(String)
         }
 
         if (REF(part))
-            tail = Partial(value, 0, ARG(limit));
+            tail = Partial(v, 0, ARG(limit));
 
         REBCNT skip;
         if (REF(skip))
-            skip = Partial(value, 0, ARG(size));
+            skip = Partial(v, 0, ARG(size));
         else
             skip = 1;
 
         REBCNT ret = find_string(
-            VAL_SERIES(value), index, tail, arg, len, flags, skip
+            VAL_SERIES(v), index, tail, arg, len, flags, skip
         );
 
-        if (ret >= (REBCNT)tail)
+        if (ret >= cast(REBCNT, tail))
             return R_BLANK;
 
         if (REF(only))
@@ -1273,23 +1258,24 @@ REBTYPE(String)
         if (action == SYM_FIND) {
             if (REF(tail) || REF(match))
                 ret += len;
-            VAL_INDEX(value) = ret;
+            VAL_INDEX(v) = ret;
         }
         else {
             ret++;
-            if (ret >= (REBCNT)tail) return R_BLANK;
-            if (IS_BINARY(value)) {
-                Init_Integer(value, *BIN_AT(VAL_SERIES(value), ret));
+            if (ret >= cast(REBCNT, tail))
+                return R_BLANK;
+            if (IS_BINARY(v)) {
+                Init_Integer(v, *BIN_AT(VAL_SERIES(v), ret));
             }
             else
-                str_to_char(value, value, ret);
+                str_to_char(v, v, ret);
         }
         break; }
 
     case SYM_TAKE_P: {
         INCLUDE_PARAMS_OF_TAKE_P;
 
-        FAIL_IF_READ_ONLY_SERIES(VAL_SERIES(value));
+        FAIL_IF_READ_ONLY_SERIES(VAL_SERIES(v));
 
         UNUSED(PAR(series));
 
@@ -1298,52 +1284,50 @@ REBTYPE(String)
 
         REBINT len;
         if (REF(part)) {
-            len = Partial(value, 0, ARG(limit));
+            len = Partial(v, 0, ARG(limit));
             if (len == 0) {
-                Init_Any_Series(D_OUT, VAL_TYPE(value), Make_Binary(0));
+                Init_Any_Series(D_OUT, VAL_TYPE(v), Make_Binary(0));
                 return R_OUT;
             }
         } else
             len = 1;
 
-        index = VAL_INDEX(value); // /PART can change index
+        index = VAL_INDEX(v); // /PART can change index
 
         if (REF(last))
             index = tail - len;
         if (index < 0 || index >= tail) {
             if (NOT(REF(part)))
                 return R_BLANK;
-            Init_Any_Series(D_OUT, VAL_TYPE(value), Make_Binary(0));
+            Init_Any_Series(D_OUT, VAL_TYPE(v), Make_Binary(0));
             return R_OUT;
         }
 
-        ser = VAL_SERIES(value);
+        ser = VAL_SERIES(v);
 
         // if no /PART, just return value, else return string
         //
         if (NOT(REF(part))) {
-            if (IS_BINARY(value)) {
-                Init_Integer(value, *VAL_BIN_AT_HEAD(value, index));
+            if (IS_BINARY(v)) {
+                Init_Integer(v, *VAL_BIN_AT_HEAD(v, index));
             } else
-                str_to_char(value, value, index);
+                str_to_char(v, v, index);
         }
         else {
-            enum Reb_Kind kind = VAL_TYPE(value);
-            Init_Any_Series(
-                value, kind, Copy_String_Slimming(ser, index, len)
-            );
+            enum Reb_Kind kind = VAL_TYPE(v);
+            Init_Any_Series(v, kind, Copy_String_At_Len(ser, index, len));
         }
         Remove_Series(ser, index, len);
         break; }
 
     case SYM_CLEAR: {
-        FAIL_IF_READ_ONLY_SERIES(VAL_SERIES(value));
+        FAIL_IF_READ_ONLY_SERIES(VAL_SERIES(v));
 
         if (index < tail) {
             if (index == 0)
-                Reset_Sequence(VAL_SERIES(value));
+                Reset_Sequence(VAL_SERIES(v));
             else
-                TERM_SEQUENCE_LEN(VAL_SERIES(value), cast(REBCNT, index));
+                TERM_SEQUENCE_LEN(VAL_SERIES(v), cast(REBCNT, index));
         }
         break; }
 
@@ -1362,8 +1346,12 @@ REBTYPE(String)
         }
 
         UNUSED(REF(part));
-        REBINT len = Partial(value, 0, ARG(limit)); // Can modify value index.
-        ser = Copy_String_Slimming(VAL_SERIES(value), VAL_INDEX(value), len);
+        REBINT len = Partial(v, 0, ARG(limit)); // Can modify value index.
+
+        if (IS_BINARY(v))
+            ser = Copy_Sequence_At_Len(VAL_SERIES(v), VAL_INDEX(v), len);
+        else
+            ser = Copy_String_At_Len(VAL_SERIES(v), VAL_INDEX(v), len);
         goto return_ser; }
 
     //-- Bitwise:
@@ -1374,20 +1362,20 @@ REBTYPE(String)
         if (NOT(IS_BINARY(arg)))
             fail (arg);
 
-        if (VAL_INDEX(value) > VAL_LEN_HEAD(value))
-            VAL_INDEX(value) = VAL_LEN_HEAD(value);
+        if (VAL_INDEX(v) > VAL_LEN_HEAD(v))
+            VAL_INDEX(v) = VAL_LEN_HEAD(v);
 
         if (VAL_INDEX(arg) > VAL_LEN_HEAD(arg))
             VAL_INDEX(arg) = VAL_LEN_HEAD(arg);
 
-        ser = Xandor_Binary(action, value, arg);
+        ser = Xandor_Binary(action, v, arg);
         goto return_ser; }
 
     case SYM_COMPLEMENT: {
-        if (NOT(IS_BINARY(value)))
-            fail (value);
+        if (NOT(IS_BINARY(v)))
+            fail (v);
 
-        ser = Complement_Binary(value);
+        ser = Complement_Binary(v);
         goto return_ser; }
 
     // Arithmetic operations are allowed on BINARY!, because it's too limiting
@@ -1414,10 +1402,10 @@ REBTYPE(String)
 
     case SYM_SUBTRACT:
     case SYM_ADD: {
-        if (NOT(IS_BINARY(value)))
-            fail (value);
+        if (NOT(IS_BINARY(v)))
+            fail (v);
 
-        FAIL_IF_READ_ONLY_SERIES(VAL_SERIES(value));
+        FAIL_IF_READ_ONLY_SERIES(VAL_SERIES(v));
 
         REBINT amount;
         if (IS_INTEGER(arg))
@@ -1431,19 +1419,19 @@ REBTYPE(String)
             amount = -amount;
 
         if (amount == 0) { // adding or subtracting 0 works, even #{} + 0
-            Move_Value(D_OUT, value);
+            Move_Value(D_OUT, v);
             return R_OUT;
         }
-        else if (VAL_LEN_AT(value) == 0) // add/subtract to #{} otherwise
+        else if (VAL_LEN_AT(v) == 0) // add/subtract to #{} otherwise
             fail (Error_Overflow_Raw());
 
         while (amount != 0) {
-            REBCNT wheel = VAL_LEN_HEAD(value) - 1;
+            REBCNT wheel = VAL_LEN_HEAD(v) - 1;
             while (TRUE) {
-                REBYTE *b = VAL_BIN_AT_HEAD(value, wheel);
+                REBYTE *b = VAL_BIN_AT_HEAD(v, wheel);
                 if (amount > 0) {
                     if (*b == 255) {
-                        if (wheel == VAL_INDEX(value))
+                        if (wheel == VAL_INDEX(v))
                             fail (Error_Overflow_Raw());
 
                         *b = 0;
@@ -1456,7 +1444,7 @@ REBTYPE(String)
                 }
                 else {
                     if (*b == 0) {
-                        if (wheel == VAL_INDEX(value))
+                        if (wheel == VAL_INDEX(v))
                             fail (Error_Overflow_Raw());
 
                         *b = 255;
@@ -1469,18 +1457,18 @@ REBTYPE(String)
                 }
             }
         }
-        Move_Value(D_OUT, value);
+        Move_Value(D_OUT, v);
         return R_OUT; }
 
     //-- Special actions:
 
     case SYM_TRIM: {
         INCLUDE_PARAMS_OF_TRIM;
-        FAIL_IF_READ_ONLY_SERIES(VAL_SERIES(value));
+        FAIL_IF_READ_ONLY_SERIES(VAL_SERIES(v));
 
         UNUSED(PAR(series));
 
-        ser = VAL_SERIES(value);
+        ser = VAL_SERIES(v);
 
         if (REF(all) || REF(with)) {
             if (REF(head) || REF(tail) || REF(lines) || REF(auto))
@@ -1509,29 +1497,33 @@ REBTYPE(String)
         break; }
 
     case SYM_SWAP: {
-        FAIL_IF_READ_ONLY_SERIES(VAL_SERIES(value));
+        FAIL_IF_READ_ONLY_SERIES(VAL_SERIES(v));
 
-        if (VAL_TYPE(value) != VAL_TYPE(arg))
+        if (VAL_TYPE(v) != VAL_TYPE(arg))
             fail (Error_Not_Same_Type_Raw());
 
         FAIL_IF_READ_ONLY_SERIES(VAL_SERIES(arg));
 
         if (index < tail && VAL_INDEX(arg) < VAL_LEN_HEAD(arg))
-            swap_chars(value, arg);
+            swap_chars(v, arg);
         break; }
 
     case SYM_REVERSE: {
-        FAIL_IF_READ_ONLY_SERIES(VAL_SERIES(value));
+        FAIL_IF_READ_ONLY_SERIES(VAL_SERIES(v));
 
-        REBINT len = Partial(value, 0, D_ARG(3));
-        if (len > 0)
-            reverse_string(value, len);
+        REBINT len = Partial(v, 0, D_ARG(3));
+        if (len > 0) {
+            if (IS_BINARY(v))
+                reverse_binary(v, len);
+            else
+                reverse_string(v, len);
+        }
         break; }
 
     case SYM_SORT: {
         INCLUDE_PARAMS_OF_SORT;
 
-        FAIL_IF_READ_ONLY_SERIES(VAL_SERIES(value));
+        FAIL_IF_READ_ONLY_SERIES(VAL_SERIES(v));
 
         UNUSED(PAR(series));
         UNUSED(REF(skip));
@@ -1543,7 +1535,7 @@ REBTYPE(String)
         }
 
         Sort_String(
-            value,
+            v,
             REF(case),
             ARG(size), // skip size (void if not /SKIP)
             ARG(comparator), // (void if not /COMPARE)
@@ -1557,7 +1549,7 @@ REBTYPE(String)
 
         UNUSED(PAR(value));
 
-        FAIL_IF_READ_ONLY_SERIES(VAL_SERIES(value));
+        FAIL_IF_READ_ONLY_SERIES(VAL_SERIES(v));
 
         if (REF(seed)) {
             //
@@ -1569,11 +1561,11 @@ REBTYPE(String)
             Set_Random(
                 Compute_CRC(
                     SER_AT_RAW(
-                        SER_WIDE(VAL_SERIES(value)),
-                        VAL_SERIES(value),
-                        VAL_INDEX(value)
+                        SER_WIDE(VAL_SERIES(v)),
+                        VAL_SERIES(v),
+                        VAL_INDEX(v)
                     ),
-                    VAL_LEN_AT(value) * SER_WIDE(VAL_SERIES(value))
+                    VAL_LEN_AT(v) * SER_WIDE(VAL_SERIES(v))
                 )
             );
             return R_VOID;
@@ -1583,30 +1575,30 @@ REBTYPE(String)
             if (index >= tail)
                 return R_BLANK;
             index += (REBCNT)Random_Int(REF(secure)) % (tail - index);
-            if (IS_BINARY(value)) { // same as PICK
-                Init_Integer(D_OUT, *VAL_BIN_AT_HEAD(value, index));
+            if (IS_BINARY(v)) { // same as PICK
+                Init_Integer(D_OUT, *VAL_BIN_AT_HEAD(v, index));
             }
             else
-                str_to_char(D_OUT, value, index);
+                str_to_char(D_OUT, v, index);
             return R_OUT;
         }
-        Shuffle_String(value, REF(secure));
+        Shuffle_String(v, REF(secure));
         break; }
 
     default:
         // Let the port system try the action, e.g. OPEN %foo.txt
         //
-        if ((IS_FILE(value) || IS_URL(value)))
+        if ((IS_FILE(v) || IS_URL(v)))
             return T_Port(frame_, action);
 
-        fail (Error_Illegal_Action(VAL_TYPE(value), action));
+        fail (Error_Illegal_Action(VAL_TYPE(v), action));
     }
 
-    Move_Value(D_OUT, value);
+    Move_Value(D_OUT, v);
     return R_OUT;
 
 return_ser:
-    Init_Any_Series(D_OUT, VAL_TYPE(value), ser);
+    Init_Any_Series(D_OUT, VAL_TYPE(v), ser);
     return R_OUT;
 }
 

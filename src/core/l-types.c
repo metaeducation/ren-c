@@ -1018,34 +1018,35 @@ const REBYTE *Scan_Email(
 ) {
     TRASH_CELL_IF_DEBUG(out);
 
-    REBSER *series = Make_Binary(len);
+    REBSER *s = Make_Unicode(len);
+    REBUNI *up = UNI_HEAD(s);
 
-    REBOOL at = FALSE;
-    REBYTE *str = BIN_HEAD(series);
+    REBOOL found_at = FALSE;
     for (; len > 0; len--) {
         if (*cp == '@') {
-            if (at) return_NULL;
-            at = TRUE;
+            if (found_at)
+                return_NULL;
+            found_at = TRUE;
         }
 
         if (*cp == '%') {
             REBUNI n;
             if (len <= 2 || !Scan_Hex2(cp + 1, &n, FALSE))
                 return_NULL;
-            *str++ = cast(REBYTE, n);
+            *up++ = n;
             cp += 3;
             len -= 2;
         }
         else
-            *str++ = *cp++;
+            *up++ = *cp++;
     }
-    *str = 0;
-    if (NOT(at))
+
+    if (NOT(found_at))
         return_NULL;
 
-    SET_SERIES_LEN(series, cast(REBCNT, str - BIN_HEAD(series)));
+    TERM_UNI_LEN(s, cast(REBCNT, up - UNI_HEAD(s)));
 
-    Init_Email(out, series);
+    Init_Email(out, s);
     return cp;
 }
 
@@ -1235,12 +1236,7 @@ const REBYTE *Scan_Any(
 
     REBSER *s = Append_UTF8_May_Fail(NULL, cp, num_bytes); // NULL means alloc
 
-    REBCNT delined_len;
-    if (BYTE_SIZE(s)) {
-        delined_len = Deline_Bytes(BIN_HEAD(s), SER_LEN(s));
-    } else {
-        delined_len = Deline_Uni(UNI_HEAD(s), SER_LEN(s));
-    }
+    REBCNT delined_len = Deline_Uni(UNI_HEAD(s), SER_LEN(s));
 
     // We hand it over to management by the GC, but don't run the GC before
     // the source has been scanned and put somewhere safe!
@@ -1283,7 +1279,17 @@ REBNATIVE(scan_net_header)
     //
     REBVAL *header = ARG(header);
     REBCNT index;
-    REBSER *utf8 = Temp_UTF8_At_Managed(header, &index, NULL);
+    REBSER *utf8;
+    if (IS_BINARY(header)) {
+        //
+        // If it's a BINARY! then assume it's already in UTF-8.
+        //
+        utf8 = VAL_SERIES(header);
+        index = VAL_INDEX(header);
+    }
+    else
+        utf8 = Temp_UTF8_At_Managed(header, &index, NULL);
+
     INIT_VAL_SERIES(header, utf8); // GC protect, unnecessary?
 
     REBYTE *cp = BIN_HEAD(utf8) + index;
@@ -1369,9 +1375,9 @@ REBNATIVE(scan_net_header)
         }
 
         // Create string value (ignoring lines and indents):
-        REBSER *string = Make_Binary(len);
+        REBSER *string = Make_Unicode(len);
         SET_SERIES_LEN(string, len);
-        REBYTE *str = BIN_HEAD(string);
+        REBUNI *str = UNI_HEAD(string);
         cp = start;
         // Code below *MUST* mirror that above:
         while (!ANY_CR_LF_END(*cp)) *str++ = *cp++;

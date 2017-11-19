@@ -440,11 +440,7 @@ static void Add_Lib_Keys_R3Alpha_Cant_Make(void)
 //
 // Init_Function_Tag: C
 //
-// !!! It didn't seem there was a "compare UTF8 byte array to arbitrary
-// decoded REB_TAG which may or may not be REBUNI" routine, but there was
-// an easy way to compare tags to each other.  So pre-fabricating these was
-// quick, but a better solution should be reviewed in terms of an overall
-// string and UTF8 rethinking.
+// Pre-fabricate a string to use in comparisons.
 //
 static void Init_Function_Tag(RELVAL *slot, const char *name)
 {
@@ -793,8 +789,8 @@ static void Init_Root_Vars(void)
     Deep_Freeze_Array(VAL_ARRAY(ROOT_EMPTY_BLOCK));
     assert(IS_BLOCK(ROOT_EMPTY_BLOCK));
 
-    REBSER *empty_series = Make_Binary(1);
-    *BIN_AT(empty_series, 0) = '\0';
+    REBSER *empty_series = Make_Unicode(1);
+    *UNI_AT(empty_series, 0) = '\0';
     Init_String(ROOT_EMPTY_STRING, empty_series);
     Freeze_Sequence(VAL_SERIES(ROOT_EMPTY_STRING));
 

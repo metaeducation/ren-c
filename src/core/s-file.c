@@ -41,76 +41,52 @@
 // Allocate and return a new series with the converted path.
 // Return NULL on error.
 //
-// Reduces width when possible to byte-size from unicode, unless the flag
-// PATH_OPT_FORCE_UNI_DEST is used.
-//
 // Adds extra space at end for appending a dir /(star)
 //     (Note: don't put actual star, as "/" "*" ends this comment)
 //
-// REBDIFF: No longer appends current dir to volume when no
-// root slash is provided (that odd MSDOS c:file case).
+// Note: This routine apparently once appended the current directory to the
+// volume when no root slash was provided.  It was an odd case to support
+// the MSDOS convention of `c:file`.  That is not done here.
 //
-REBSER *To_REBOL_Path(const void *p, REBCNT len, REBFLGS flags)
+REBSER *To_REBOL_Path(const REBUNI *up, REBCNT len, REBFLGS flags)
 {
 #ifdef TO_WINDOWS
     REBOOL saw_colon = FALSE;  // have we hit a ':' yet?
     REBOOL saw_slash = FALSE; // have we hit a '/' yet?
 #endif
 
-    REBUNI c;
-    REBSER *dst;
-    REBCNT n;
-    REBCNT i;
-    REBOOL unicode = LOGICAL(flags & PATH_OPT_UNI_SRC);
-
-    const REBYTE *bp = unicode ? NULL : cast(const REBYTE *, p);
-
-    const REBUNI *up = unicode ? cast(const REBUNI *, p) : NULL;
-
     if (len == 0)
-        len = unicode ? Strlen_Uni(up) : LEN_BYTES(bp);
+        len = Strlen_Uni(up);
 
-    n = 0;
+    REBSER *dst = Make_Unicode(len + FN_PAD);
 
-    // The default is to scan unicode input to see if it contains any
-    // codepoints over 0xFF, and if not make a byte-sized result string.
-    // But this can be overridden with PATH_OPT_FORCE_UNI_DEST if (for
-    // instance) the target is going to be used as a Win32 native string.
-    //
-    assert(
-        (flags & PATH_OPT_FORCE_UNI_DEST)
-            ? LOGICAL(flags & PATH_OPT_UNI_SRC)
-            : TRUE
-    );
+    REBUNI c = '\0'; // for test after loop (in case loop does not run)
 
-    dst = (
-            (flags & PATH_OPT_FORCE_UNI_DEST)
-            || (unicode && All_Codepoints_Latin1(up, len))
-        )
-        ? Make_Unicode(len + FN_PAD)
-        : Make_Binary(len + FN_PAD);
-
-    c = '\0'; // for test after loop (in case loop does not run)
+    REBCNT i;
+    REBCNT n = 0;
     for (i = 0; i < len;) {
-        c = unicode ? up[i] : bp[i];
+        c = up[i];
         i++;
 #ifdef TO_WINDOWS
         if (c == ':') {
             // Handle the vol:dir/file format:
-            if (saw_colon || saw_slash) return NULL; // no prior : or / allowed
+            if (saw_colon || saw_slash)
+                return NULL; // no prior : or / allowed
             saw_colon = TRUE;
             if (i < len) {
-                c = unicode ? up[i] : bp[i];
+                c = up[i];
                 if (c == '\\' || c == '/') i++; // skip / in foo:/file
             }
             c = '/'; // replace : with a /
         }
         else if (c == '\\' || c== '/') {
-            if (saw_slash) continue;
+            if (saw_slash)
+                continue;
             c = '/';
             saw_slash = TRUE;
         }
-        else saw_slash = FALSE;
+        else
+            saw_slash = FALSE;
 #endif
         SET_ANY_CHAR(dst, n++, c);
     }
@@ -121,29 +97,11 @@ REBSER *To_REBOL_Path(const void *p, REBCNT len, REBFLGS flags)
 
 #ifdef TO_WINDOWS
     // Change C:/ to /C/ (and C:X to /C/X):
-    if (saw_colon) Insert_Char(dst, 0, '/');
+    if (saw_colon)
+        Insert_Char(dst, 0, '/');
 #endif
 
     return dst;
-}
-
-
-//
-//  Value_To_REBOL_Path: C
-//
-// Helper to above function.
-//
-REBSER *Value_To_REBOL_Path(const REBVAL *val, REBOOL is_dir)
-{
-    assert(ANY_BINSTR(val));
-    return To_REBOL_Path(
-        VAL_RAW_DATA_AT(val),
-        VAL_LEN_AT(val),
-        (
-            (VAL_BYTE_SIZE(val) ? 0 : PATH_OPT_UNI_SRC)
-            | (is_dir ? PATH_OPT_SRC_IS_DIR : 0)
-        )
-    );
 }
 
 
@@ -160,38 +118,40 @@ REBSER *Value_To_REBOL_Path(const REBVAL *val, REBOOL is_dir)
 //
 // Expands width for OS's that require it.
 //
-REBSER *To_Local_Path(const void *p, REBCNT len, REBOOL unicode, REBOOL full)
-{
+REBSER *To_Local_Path(
+    const REBUNI *up,
+    REBCNT len,
+    REBOOL full
+){
     REBCNT n = 0;
-    REBCHR *lpath;
-    REBCNT l = 0;
-    const REBYTE *bp = unicode ? NULL : cast(const REBYTE *, p);
-    const REBUNI *up = unicode ? cast(const REBUNI *, p) : NULL;
 
     if (len == 0)
-        len = unicode ? Strlen_Uni(up) : LEN_BYTES(bp);
+        len = Strlen_Uni(up);
 
     // Prescan for: /c/dir = c:/dir, /vol/dir = //vol/dir, //dir = ??
     //
     REBCNT i = 0;
-    REBUNI c = unicode ? up[i] : bp[i];
+    REBUNI c = up[i];
 
-    REBSER *dst;
+    // may be longer (if lpath is encoded)
+    //
+    REBSER *result;
     REBUNI *out;
+
     if (c == '/') {         // %/
-        dst = Make_Unicode(len+FN_PAD);
-        out = UNI_HEAD(dst);
+        result = Make_Unicode(len + FN_PAD);
+        out = UNI_HEAD(result);
     #ifdef TO_WINDOWS
         i++;
         if (i < len) {
-            c = unicode ? up[i] : bp[i];
+            c = up[i];
             i++;
         }
         if (c != '/') {     // %/c or %/c/ but not %/ %// %//c
             // peek ahead for a '/':
             REBUNI d = '/';
             if (i < len)
-                d = unicode ? up[i] : bp[i];
+                d = up[i];
             if (d == '/') { // %/c/ => "c:/"
                 i++;
                 out[n++] = c;
@@ -207,30 +167,34 @@ REBSER *To_Local_Path(const void *p, REBCNT len, REBOOL unicode, REBOOL full)
     }
     else {
         if (full) {
-            l = OS_GET_CURRENT_DIR(&lpath);
+            REBVAL *lpath = OS_GET_CURRENT_DIR();
 
-            // may be longer (if lpath is encoded)
+            // !!! For now the wchar_t routines do not work on POSIX.  Given
+            // that all is going to change with UTF-8 Everywhere, a bit of
+            // inefficiency here going via UTF-8 is not that big a deal.
             //
-            dst = Make_Unicode(l + len + FN_PAD);
-
-        #ifdef TO_WINDOWS
-            assert(sizeof(REBCHR) == sizeof(REBUNI));
-            Append_Uni_Uni(dst, cast(const REBUNI*, lpath), l);
-        #else
-            REBINT clen = Decode_UTF8_Negative_If_Latin1(
-                UNI_HEAD(dst), cast(const REBYTE*, lpath), l, FALSE
+            REBCNT lpath_size;
+            REBOOL full = TRUE;
+            char *lpath_utf8 = rebFileToLocalAlloc(
+                &lpath_size, lpath, full
             );
-            SET_SERIES_LEN(dst, abs(clen));
-            //Append_Unencoded(dst, lpath);
-        #endif
-            Append_Codepoint(dst, OS_DIR_SEP);
-            OS_FREE(lpath);
+
+            // !!! Overestimate: lpath_size is going to be greater than
+            // number of codepoints.
+            //
+            result = Make_Unicode(len + lpath_size + FN_PAD);
+            Append_UTF8_May_Fail(
+                result, cb_cast(lpath_utf8), lpath_size
+            );
+
+            OS_FREE(lpath_utf8);
+            rebFree(lpath);
         }
         else
-            dst = Make_Unicode(l + len + FN_PAD);
+            result = Make_Unicode(len + FN_PAD);
 
-        out = UNI_HEAD(dst);
-        n = SER_LEN(dst);
+        out = UNI_HEAD(result);
+        n = SER_LEN(result);
     }
 
     // Prescan each file segment for: . .. directory names.  (Note the top of
@@ -240,17 +204,18 @@ REBSER *To_Local_Path(const void *p, REBCNT len, REBOOL unicode, REBOOL full)
     while (i < len) {
         if (full) {
             // Peek for: . ..
-            c = unicode ? up[i] : bp[i];
+            c = up[i];
             if (c == '.') {     // .
                 i++;
-                c = unicode ? up[i] : bp[i];
+                c = up[i];
                 if (c == '.') { // ..
-                    c = unicode ? up[i + 1] : bp[i + 1];
+                    c = up[i + 1];
                     if (c == 0 || c == '/') { // ../ or ..
                         i++;
                         // backup a dir
                         n -= (n > 2) ? 2 : n;
-                        for (; n > 0 && out[n] != OS_DIR_SEP; n--);
+                        for (; n > 0 && out[n] != OS_DIR_SEP; n--)
+                            NOOP;
                         c = c ? 0 : OS_DIR_SEP; // add / if necessary
                     }
                     // fall through on invalid ..x combination:
@@ -265,63 +230,19 @@ REBSER *To_Local_Path(const void *p, REBCNT len, REBOOL unicode, REBOOL full)
             }
         }
         for (; i < len; i++) {
-            c = unicode ? up[i] : bp[i];
+            c = up[i];
             if (c == '/') {
-                if (n == 0 || out[n-1] != OS_DIR_SEP) out[n++] = OS_DIR_SEP;
+                if (n == 0 || out[n-1] != OS_DIR_SEP)
+                    out[n++] = OS_DIR_SEP;
                 i++;
                 break;
             }
             out[n++] = c;
         }
     }
-    out[n] = 0;
-    SET_SERIES_LEN(dst, n);
-    ASSERT_SERIES_TERM(dst);
+    out[n] = '\0';
+    SET_SERIES_LEN(result, n);
+    ASSERT_SERIES_TERM(result);
 
-    return dst;
-}
-
-
-//
-//  Value_To_Local_Path: C
-//
-// Helper to above function.
-//
-REBSER *Value_To_Local_Path(const REBVAL *val, REBOOL full)
-{
-    assert(ANY_BINSTR(val));
-    return To_Local_Path(
-        VAL_RAW_DATA_AT(val), VAL_LEN_AT(val), NOT(VAL_BYTE_SIZE(val)), full
-    );
-}
-
-
-//
-//  Value_To_OS_Path: C
-//
-// Helper to above function.
-//
-REBSER *Value_To_OS_Path(const REBVAL *val, REBOOL full)
-{
-    REBSER *ser; // will be unicode size
-#ifndef TO_WINDOWS
-    REBSER *bin;
-#endif
-
-    assert(ANY_BINSTR(val));
-
-    ser = To_Local_Path(
-        VAL_RAW_DATA_AT(val), VAL_LEN_AT(val), NOT(VAL_BYTE_SIZE(val)), full
-    );
-
-#ifndef TO_WINDOWS
-    // Posix needs UTF8 conversion:
-    bin = Make_UTF8_Binary(
-        UNI_HEAD(ser), SER_LEN(ser), FN_PAD, OPT_ENC_UNISRC
-    );
-    Free_Series(ser);
-    ser = bin;
-#endif
-
-    return ser;
+    return result;
 }

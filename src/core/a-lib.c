@@ -1081,23 +1081,25 @@ REBCNT RL_rebSpellingOfW(
 ){
     Enter_Api_Clear_Last_Error();
 
+    REBSER *s;
     REBCNT index;
     REBCNT len;
     if (ANY_STRING(v)) {
+        s = VAL_SERIES(v);
         index = VAL_INDEX(v);
         len = VAL_LEN_AT(v);
     }
     else {
         assert(ANY_WORD(v));
-        panic ("extracting wide characters from WORD! not yet supported");
+        s = Make_UTF8_May_Fail(VAL_WORD_HEAD(v)); // makes REBUNI series
+        index = 0;
+        len = SER_LEN(s);
     }
 
     if (buf == NULL) { // querying for size
         assert(buf_chars == 0);
         return len; // caller must now allocate buffer of len + 1
     }
-
-    REBSER *s = VAL_SERIES(v);
 
     REBCNT limit = MIN(buf_chars, len);
     REBCNT n = 0;
@@ -1252,15 +1254,51 @@ REBVAL *RL_rebUnmanage(REBVAL *v)
 
 
 //
+//  rebCopyExtra: RL_API
+//
+REBVAL *RL_rebCopyExtra(const REBVAL *v, REBCNT extra)
+{
+    // !!! It's actually a little bit harder than one might think to hook
+    // into the COPY code without actually calling the function via the
+    // evaluator, because it is an "action".  Review a good efficient method
+    // for doing it, but for the moment it's just needed for FILE! so do that.
+    //
+    if (NOT(ANY_STRING(v)))
+        fail ("rebCopy() only supports ANY-STRING! for now");
+
+    REBVAL *result = Alloc_Pairing(NULL);
+    Init_Any_Series(
+        result,
+        VAL_TYPE(v),
+        Copy_Sequence_At_Len_Extra(
+            VAL_SERIES(v),
+            VAL_INDEX(v),
+            VAL_LEN_AT(v),
+            extra
+        )
+    );
+    Init_Blank(PAIRING_KEY(result));
+
+    return result;
+}
+
+
+//
 //  rebFree: RL_API
 //
 void RL_rebFree(REBVAL *v)
 {
     Enter_Api_Cant_Error();
 
+    // !!! This check isn't really ideal.  There should be a foolproof way
+    // to tell whether a REBVAL* is an API handle or not, so that series can't
+    // be corrupted.  It's possible, just needs to be done...this covers 99%
+    // of the cases for right now.
+    //
     REBVAL *key = PAIRING_KEY(v);
     assert(NOT(key->header.bits & NODE_FLAG_MANAGED));
-    UNUSED(key);
+    if (NOT(IS_BLANK(key)))
+        fail ("Attempt to rebFree() a non-API handle");
 
     Free_Pairing(v);
 }
@@ -1287,6 +1325,13 @@ REBVAL *RL_rebError(const char *msg)
 void RL_rebFail(const void *p)
 {
     Enter_Api_Cant_Error();
+
+    // !!! Should allow caller to pass these in via macro.
+    //
+#if !defined(NDEBUG)
+    TG_Erroring_C_File = __FILE__;
+    TG_Erroring_C_Line = __LINE__;
+#endif
 
     Fail_Core(p);
 }
@@ -1373,52 +1418,124 @@ void RL_rebPanic(const void *p)
 
 
 //
-//  rebFileToLocal: RL_API
+//  rebFileToLocalAlloc: RL_API
 //
 // This is the API exposure of TO-LOCAL-FILE.  It takes in a FILE! and
-// returns a STRING!...using the data type to help guide whether a file has
-// had the appropriate transformation applied on it or not.
+// returns an allocated UTF-8 buffer.
 //
-REBVAL *RL_rebFileToLocal(const REBVAL *file, REBOOL full)
+// !!! Should MAX_FILE_NAME be taken into account for the OS?
+//
+char *RL_rebFileToLocalAlloc(REBCNT *len_out, const REBVAL *file, REBOOL full)
 {
     Enter_Api_Clear_Last_Error();
 
     if (NOT(IS_FILE(file)))
-        fail ("rebFileToLocal() only works on FILE!");
+        fail ("rebFileToLocalAlloc() only works on FILE!");
 
-    REBVAL *result = Alloc_Pairing(NULL);
+    DECLARE_LOCAL (local);
     Init_String(
-        result,
-        Value_To_Local_Path(file, full)
+        local,
+        To_Local_Path(VAL_UNI_AT(file), VAL_LEN_AT(file), full)
     );
-    Init_Blank(PAIRING_KEY(result));
 
-    return result;
+    return rebSpellingOfAlloc(len_out, local);
+}
+
+
+//
+//  rebFileToLocalAllocW: RL_API
+//
+// This is the API exposure of TO-LOCAL-FILE.  It takes in a FILE! and
+// returns an allocated wchar_t buffer.
+//
+// !!! Should MAX_FILE_NAME be taken into account for the OS?
+//
+wchar_t *RL_rebFileToLocalAllocW(
+    REBCNT *len_out,
+    const REBVAL *file,
+    REBOOL full
+){
+    Enter_Api_Clear_Last_Error();
+
+    if (NOT(IS_FILE(file)))
+        fail ("rebFileToLocalAllocW() only works on FILE!");
+
+    DECLARE_LOCAL (local);
+    Init_String(
+        local,
+        To_Local_Path(VAL_UNI_AT(file), VAL_LEN_AT(file), full)
+    );
+
+    return rebSpellingOfAllocW(len_out, local);
 }
 
 
 //
 //  rebLocalToFile: RL_API
 //
-// This is the API exposure of TO-REBOL-FILE.  It takes in a STRING! and
-// returns a FILE!, as with rebFileToLocal() in order to help cue whether the
-// translations have been done or not.
+// This is the API exposure of TO-REBOL-FILE.  It takes in a UTF-8 buffer and
+// returns a FILE!.
 //
-REBVAL *RL_rebLocalToFile(const REBVAL *string, REBOOL is_dir)
+// !!! Should MAX_FILE_NAME be taken into account for the OS?
+//
+REBVAL *RL_rebLocalToFile(const char *local, REBOOL is_dir)
 {
     Enter_Api_Clear_Last_Error();
 
-    if (NOT(IS_STRING(string)))
-        fail ("rebLocalToFile() only works on STRING!");
+    // !!! Current inefficiency is that the platform-specific code isn't
+    // taking responsibility for doing this...Rebol core is going to be
+    // agnostic on how files are translated within the hosts.  So the version
+    // of the code on non-wide-char systems will be written just for it, and
+    // no intermediate string will need be made.
+    //
+    REBVAL *string = rebString(local);
 
     REBVAL *result = Alloc_Pairing(NULL);
     Init_File(
         result,
-        Value_To_REBOL_Path(string, is_dir)
+        To_REBOL_Path(
+            VAL_UNI_AT(string),
+            VAL_LEN_AT(string),
+            is_dir ? PATH_OPT_SRC_IS_DIR : 0
+        )
     );
     Init_Blank(PAIRING_KEY(result));
 
+    rebFree(string);
     return result;
+}
+
+
+//
+//  rebLocalToFileW: RL_API
+//
+// This is the API exposure of TO-REBOL-FILE.  It takes in a wchar_t buffer and
+// returns a FILE!.
+//
+// !!! Should MAX_FILE_NAME be taken into account for the OS?
+//
+REBVAL *RL_rebLocalToFileW(const wchar_t *local, REBOOL is_dir)
+{
+    Enter_Api_Clear_Last_Error();
+
+#ifdef OS_WIDE_CHAR
+    assert(sizeof(REBUNI) == sizeof(wchar_t));
+    REBVAL *result = Alloc_Pairing(NULL);
+    Init_File(
+        result,
+        To_REBOL_Path(
+            cast(const REBUNI*, local), // C++ demands cast
+            Strlen_Uni(cast(const REBUNI*, local)), // C++ demands cast
+            is_dir ? PATH_OPT_SRC_IS_DIR : 0
+        )
+    );
+    Init_Blank(PAIRING_KEY(result));
+    return result;
+#else
+    UNUSED(local);
+    UNUSED(is_dir);
+    fail ("wchar_t support not available on non-Windows (yet)");
+#endif
 }
 
 

@@ -722,7 +722,7 @@ SQLRETURN ODBC_DescribeResults(
 
         assert(sizeof(REBUNI) == sizeof(SQLWCHAR));
         REBSER *title_utf8 =
-            Make_UTF8_Binary(title, title_length, 0, OPT_ENC_UNISRC);
+            Make_UTF8_Binary(title, title_length, 0, OPT_ENC_0);
         
         column->title =
             Intern_UTF8_Managed(BIN_HEAD(title_utf8), BIN_LEN(title_utf8));

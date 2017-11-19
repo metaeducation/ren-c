@@ -151,21 +151,19 @@ i64 OS_Delta_Time(i64 base)
 //
 //  OS_Get_Current_Dir: C
 //
-// Return the current directory path as a string and
-// its length in chars (not bytes).
+// Return the current directory path as a FILE!.  Result should be freed
+// with rebFree()
 //
-// The result should be freed after copy/conversion.
-//
-int OS_Get_Current_Dir(REBCHR **path)
+REBVAL *OS_Get_Current_Dir(void)
 {
-    int len;
+    DWORD len = GetCurrentDirectory(0, NULL); // length, incl terminator.
+    wchar_t *path = OS_ALLOC_N(wchar_t, len);
+    GetCurrentDirectory(len, path);
 
-    len = GetCurrentDirectory(0, NULL); // length, incl terminator.
-    *path = OS_ALLOC_N(wchar_t, len);
-    GetCurrentDirectory(len, *path);
-    len--; // less terminator
-
-    return len;
+    const REBOOL is_dir = TRUE;
+    REBVAL *result = rebLocalToFileW(path, is_dir);
+    OS_FREE(path);
+    return result;
 }
 
 
@@ -175,9 +173,16 @@ int OS_Get_Current_Dir(REBCHR **path)
 // Set the current directory to local path. Return FALSE
 // on failure.
 //
-REBOOL OS_Set_Current_Dir(REBCHR *path)
+REBOOL OS_Set_Current_Dir(const REBVAL *path)
 {
-    return SetCurrentDirectory(path);
+    const REBOOL full = TRUE;
+    wchar_t *path_wide = rebFileToLocalAllocW(NULL, path, full);
+
+    REBOOL success = SetCurrentDirectory(path_wide);
+
+    OS_FREE(path_wide);
+
+    return success;
 }
 
 
@@ -206,10 +211,26 @@ void OS_File_Time(REBVAL *out, struct devreq_file *file)
 // Load a DLL library and return the handle to it.
 // If zero is returned, error indicates the reason.
 //
-void *OS_Open_Library(const REBCHR *path, REBCNT *error)
+void *OS_Open_Library(const REBVAL *path)
 {
-    void *dll = LoadLibraryW(path);
-    *error = GetLastError();
+    // While often when communicating with the OS, the local path should be
+    // fully resolved, the LoadLibraryW() function searches DLL directories by
+    // default.  So if %foo is passed in, you don't want to prepend the
+    // current dir to make it absolute, because it will only look there.
+    //
+    const REBOOL full = FALSE;
+    wchar_t *path_utf8 = rebFileToLocalAllocW(NULL, path, full);
+
+    void *dll = LoadLibraryW(path_utf8);
+
+    OS_FREE(path_utf8);
+
+    // The OS-specific code for building a Windows error by processing
+    // GetLastError() is currently in mod-process.c, but there's no way to
+    // call it from here.  Possibly it should be factored as a .inc file.
+    //
+    if (dll == NULL)
+        rebFail ("LoadLibrary() failed"); // GetLastError()
 
     return dll;
 }
@@ -290,24 +311,25 @@ REBVAL *OS_GOB_To_Image(REBGOB *gob)
 //
 //  OS_Get_Current_Exec: C
 //
-// Return the current executable path as a string and
-// its length in chars (not bytes).
+// Return the current executable path as a FILE!.  The result should be freed
+// with rebFree()
 //
-// The result should be freed after copy/conversion.
-//
-int OS_Get_Current_Exec(REBCHR **path)
+REBVAL *OS_Get_Current_Exec(void)
 {
-    DWORD r = 0;
-    *path = NULL;
-    *path = OS_ALLOC_N(REBCHR, MAX_PATH);
-    if (*path == NULL) return -1;
+    wchar_t *path = OS_ALLOC_N(wchar_t, MAX_PATH);
+    if (path == NULL)
+        return rebBlank();
 
-    r = GetModuleFileName(NULL, *path, MAX_PATH);
+    DWORD r = GetModuleFileName(NULL, path, MAX_PATH);
     if (r == 0) {
-        OS_FREE(*path);
-        return -1;
+        OS_FREE(path);
+        return rebBlank();
     }
-    (*path)[r] = '\0'; //It might not be NULL-terminated if buffer is not big enough
+    path[r] = '\0'; // May not be NULL-terminated if buffer is not big enough
 
-    return r;
+    REBOOL is_dir = FALSE;
+    REBVAL *result = rebLocalToFileW(path, is_dir);
+    OS_FREE(path);
+
+    return result;
 }

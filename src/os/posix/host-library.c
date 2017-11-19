@@ -64,14 +64,25 @@
 // Load a DLL library and return the handle to it.
 // If zero is returned, error indicates the reason.
 //
-void *OS_Open_Library(const REBCHR *path, REBCNT *error)
+void *OS_Open_Library(const REBVAL *path)
 {
 #ifndef NO_DL_LIB
-    void *dll = dlopen(path, RTLD_LAZY/*|RTLD_GLOBAL*/);
-    if (error) {
-        *error = 0; // dlerror() returns a char* error message, so there's
-    }
-                // no immediate way to return an "error code" in *error
+    //
+    // While often when communicating with the OS, the local path should be
+    // fully resolved, the dlopen() function searches library directories by
+    // default.  So if %foo is passed in, you don't want to prepend the
+    // current dir to make it absolute, because it will only look there.
+    //
+    const REBOOL full = FALSE;
+    char *path_utf8 = rebFileToLocalAlloc(NULL, path, full);
+
+    void *dll = dlopen(path_utf8, RTLD_LAZY/*|RTLD_GLOBAL*/);
+
+    OS_FREE(path_utf8);
+
+    if (dll == NULL)
+        rebFail (dlerror()); // dlerror() returns a const char*
+
     return dll;
 #else
     return 0;

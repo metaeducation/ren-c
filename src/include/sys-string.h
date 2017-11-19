@@ -58,7 +58,7 @@
 // be "widened"--doubling the storage space taken and requiring updating of
 // the character data in memory.  At this time there are no "in-place"
 // cases where a string is reduced from REBUNI to byte sized, but operations
-// like Copy_String_Slimming() will scan a source string to see if a byte-size
+// like Copy_String_At_Len() will scan a source string to see if a byte-size
 // copy can be made from a REBUNI-sized one without loss of information.
 //
 // Byte-sized series are also used by the BINARY! datatype.  There is no
@@ -145,30 +145,38 @@ inline static void SET_UNI_LEN(REBSER *s, REBCNT len) {
     SER_LAST(REBUNI, (s))
 
 inline static void TERM_UNI(REBSER *s) {
-    UNI_HEAD(s)[SER_LEN(s)] = 0;
+    *UNI_AT(s, SER_LEN(s)) = '\0';
 }
 
 inline static void TERM_UNI_LEN(REBSER *s, REBCNT len) {
     SET_SERIES_LEN(s, len);
-    UNI_HEAD(s)[len] = 0;
+    *UNI_AT(s, len) = '\0';
 }
 
 
 //
-// Get a char, from either byte or unicode string:
+// Get or set a unit in a binary series or a string series.  Used by routines
+// that do searching/etc. and want to apply to both BINARY! and ANY-STRING!,
+// so it can't be converted to purely UTF-8 as written.
+//
+// !!! String logic will get more complex with UTF8-Everywhere; it may have to
+// shift bytes out of the way.  Or it may not even be possible to set a
+// character if there aren't characters established before it.  Any
+// algorithm using these should likely instead be using the mold buffer to
+// create new strings, if possible.
 //
 
 inline static REBUNI GET_ANY_CHAR(REBSER *s, REBCNT n) {
-    return BYTE_SIZE(s) ? BIN_HEAD(s)[n] : UNI_HEAD(s)[n];
+    return BYTE_SIZE(s) ? *BIN_AT(s, n) : *UNI_AT(s, n);
 }
 
 inline static void SET_ANY_CHAR(REBSER *s, REBCNT n, REBUNI c) {
     if (BYTE_SIZE(s)) {
         assert(c <= 255);
-        BIN_HEAD(s)[n] = c;
+        *BIN_AT(s, n) = c;
     }
     else
-        UNI_HEAD(s)[n] = c;
+        *UNI_AT(s, n) = c;
 }
 
 
@@ -237,7 +245,8 @@ inline static const REBYTE *Back_Scan_UTF8_Char(
 }
 
 
-// Basic string initialization from UTF8.
+// Basic string initialization from UTF8.  (Most clients should be using the
+// rebStringXXX() APIs for this)
 //
 inline static REBSER *Make_UTF8_May_Fail(const REBYTE *utf8)
 {
@@ -254,4 +263,24 @@ inline static REBSER *Make_UTF16_May_Fail(REBUNI *utf16)
     REBSER *s = Make_Unicode(len);
     Append_Uni_Uni(s, utf16, len);
     return s;
+}
+
+
+//
+// Copy helpers
+//
+
+inline static REBSER *Copy_Sequence_At_Position(const REBVAL *v)
+{
+    return Copy_Sequence_At_Len_Extra(
+        VAL_SERIES(v), VAL_INDEX(v), VAL_LEN_AT(v), 0
+    );
+}
+
+inline static REBSER *Copy_Sequence_At_Len(
+    REBSER *s,
+    REBCNT index,
+    REBCNT len
+){
+    return Copy_Sequence_At_Len_Extra(s, index, len, 0);
 }
