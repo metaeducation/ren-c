@@ -359,7 +359,9 @@ REBTYPE(Function)
 
             // !!! How to tell whether it's a URL! or a FILE! ?
             //
-            Scan_File(D_OUT, STR_HEAD(LINK(s).file), SER_LEN(LINK(s).file));
+            Scan_File(
+                D_OUT, cb_cast(STR_HEAD(LINK(s).file)), SER_LEN(LINK(s).file)
+            );
             return R_OUT; }
 
         case SYM_LINE: {

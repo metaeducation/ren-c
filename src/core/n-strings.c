@@ -330,7 +330,7 @@ REBNATIVE(checksum)
         if (sum <= 1)
             sum = 1;
 
-        REBINT hash = Hash_String(data, len, wide) % sum;
+        REBINT hash = Hash_Bytes_Or_Uni(data, len, wide) % sum;
         Init_Integer(D_OUT, hash);
     }
     else {
@@ -553,7 +553,9 @@ REBNATIVE(enbase)
 
     Init_String(
         D_OUT,
-        Append_UTF8_May_Fail(NULL, BIN_HEAD(enbased), BIN_LEN(enbased))
+        Append_UTF8_May_Fail(
+            NULL, cs_cast(BIN_HEAD(enbased)), BIN_LEN(enbased)
+        )
     );
     Free_Series(enbased);
 

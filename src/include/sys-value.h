@@ -838,7 +838,7 @@ inline static void VAL_SET_TYPE_BITS(RELVAL *v, enum Reb_Kind kind) {
         RELVAL *v,
         const char *file,
         int line
-    ) {
+    ){
         ASSERT_CELL_WRITABLE(v, file, line);
 
         if (NOT(v->header.bits & NODE_FLAG_FREE)) {

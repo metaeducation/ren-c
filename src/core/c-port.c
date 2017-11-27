@@ -562,7 +562,7 @@ post_process_output:
 
             REBSER *decoded = Append_UTF8_May_Fail(
                 NULL,
-                VAL_BIN_AT(D_OUT),
+                cs_cast(VAL_BIN_AT(D_OUT)),
                 VAL_LEN_AT(D_OUT)
             );
             Init_String(D_OUT, decoded);

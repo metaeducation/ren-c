@@ -182,7 +182,7 @@ void Dump_Values(RELVAL *vp, REBCNT count)
         *cp++ = ':';
         *cp++ = ' ';
 
-        type = Get_Type_Name(val);
+        type = cb_cast(STR_HEAD(Get_Type_Name(val)));
         for (n = 0; n < 11; n++) {
             if (*type) *cp++ = *type++;
             else *cp++ = ' ';
@@ -194,9 +194,9 @@ void Dump_Values(RELVAL *vp, REBCNT count)
         }
         n = 0;
         if (IS_WORD(val) || IS_GET_WORD(val) || IS_SET_WORD(val)) {
-            const REBYTE *name = STR_HEAD(VAL_WORD_SPELLING(val));
+            const char *name_utf8 = STR_HEAD(VAL_WORD_SPELLING(val));
             n = snprintf(
-                s_cast(cp), sizeof(buf) - (cp - buf), " (%s)", cs_cast(name)
+                s_cast(cp), sizeof(buf) - (cp - buf), " (%s)", name_utf8
             );
         }
 

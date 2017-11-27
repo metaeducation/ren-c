@@ -181,7 +181,7 @@ void Probe_Core_Debug(
     const void *p,
     const char *file,
     int line
-) {
+){
     const struct Reb_Header *h = cast(const struct Reb_Header*, p);
 
     printf("\n** PROBE() ");

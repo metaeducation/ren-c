@@ -444,7 +444,7 @@ static void Add_Lib_Keys_R3Alpha_Cant_Make(void)
 //
 static void Init_Function_Tag(RELVAL *slot, const char *name)
 {
-    Init_Tag(slot, Make_UTF8_May_Fail(cb_cast(name)));
+    Init_Tag(slot, Make_UTF8_May_Fail(name));
     Freeze_Sequence(VAL_SERIES(slot));
 }
 
@@ -693,7 +693,7 @@ static REBARR *Startup_Actions(REBARR *boot_actions)
 
     // Sanity check the symbol transformation
     //
-    if (0 != strcmp("open", cs_cast(STR_HEAD(Canon(SYM_OPEN)))))
+    if (0 != strcmp("open", STR_HEAD(Canon(SYM_OPEN))))
         panic (Canon(SYM_OPEN));
 
     REBDSP dsp_orig = DSP;

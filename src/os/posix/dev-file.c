@@ -94,24 +94,22 @@
 //
 static int Is_Dir(const char *path_utf8, const char *name_utf8)
 {
-    int num_bytes_path = strlen(path_utf8);
-    int num_bytes_name = strlen(name_utf8);
+    size_t size_path = strsize(path_utf8);
+    size_t size_name = strsize(name_utf8);
 
     // !!! No clue why + 13 is needed, and not sure I want to know.
     // It was in the original code, not second-guessing ATM.  --@HF
     //
-    char *full_utf8 = OS_ALLOC_N(
-        char, num_bytes_path + 1 + num_bytes_name + 1 + 13
-    );
+    char *full_utf8 = OS_ALLOC_N(char, size_path + 1 + size_name + 1 + 13);
 
-    strncpy(full_utf8, path_utf8, num_bytes_path + 1); // include terminator
+    strncpy(full_utf8, path_utf8, size_path + 1); // include terminator
 
     // Avoid UNC-path "//name" on Cygwin.
     //
-    if (num_bytes_path > 0 && full_utf8[num_bytes_path - 1] != '/')
+    if (size_path > 0 && full_utf8[size_path - 1] != '/')
         strncat(full_utf8, "/", 1);
 
-    strncat(full_utf8, name_utf8, num_bytes_name);
+    strncat(full_utf8, name_utf8, size_name);
 
     struct stat st;
     int stat_result = stat(full_utf8, &st);
@@ -237,11 +235,11 @@ static int Read_Directory(struct devreq_file *dir, struct devreq_file *file)
     // Extract UTF-8 data from the FILE! value into a temporary buffer,
     // and remove * from tail if present.
     //
-    REBCNT len_dir;
+    size_t size_dir;
     const REBOOL full = TRUE;
-    char *dir_utf8 = rebFileToLocalAlloc(&len_dir, dir->path, full);
-    if (len_dir > 0 && dir_utf8[len_dir - 1] == '*')
-        dir_utf8[len_dir - 1] = '\0';
+    char *dir_utf8 = rebFileToLocalAlloc(&size_dir, dir->path, full);
+    if (size_dir > 0 && dir_utf8[size_dir - 1] == '*')
+        dir_utf8[size_dir - 1] = '\0';
 
     // If no dir handle, open the dir:
     //

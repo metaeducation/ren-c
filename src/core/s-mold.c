@@ -106,7 +106,7 @@ void Emit(REB_MOLD *mo, const char *fmt, ...)
             const REBVAL *any_word = va_arg(va, const REBVAL*);
             REBSTR *spelling = VAL_WORD_SPELLING(any_word);
             Append_Utf8_Utf8(
-                s, STR_HEAD(spelling), STR_NUM_BYTES(spelling)
+                s, STR_HEAD(spelling), STR_SIZE(spelling)
             );
             break;
         }
@@ -143,15 +143,13 @@ void Emit(REB_MOLD *mo, const char *fmt, ...)
             break;
 
         case 'T': {  // Type name
-            const REBYTE *bytes = Get_Type_Name(va_arg(va, REBVAL*));
-            Append_Utf8_Utf8(s, bytes, LEN_BYTES(bytes));
+            REBSTR *type_name = Get_Type_Name(va_arg(va, REBVAL*));
+            Append_Utf8_Utf8(s, STR_HEAD(type_name), STR_SIZE(type_name));
             break; }
 
         case 'N': {  // Symbol name
             REBSTR *spelling = va_arg(va, REBSTR*);
-            Append_Utf8_Utf8(
-                s, STR_HEAD(spelling), STR_NUM_BYTES(spelling)
-            );
+            Append_Utf8_Utf8(s, STR_HEAD(spelling), STR_SIZE(spelling));
             break; }
 
         case '+': // Add #[ if mold/all
@@ -164,9 +162,7 @@ void Emit(REB_MOLD *mo, const char *fmt, ...)
         case 'D': // Datatype symbol: #[type
             if (ender != '\0') {
                 REBSTR *canon = Canon(cast(REBSYM, va_arg(va, int)));
-                Append_Utf8_Utf8(
-                    s, STR_HEAD(canon), STR_NUM_BYTES(canon)
-                );
+                Append_Utf8_Utf8(s, STR_HEAD(canon), STR_SIZE(canon));
                 Append_Utf8_Codepoint(s, ' ');
             }
             else
@@ -842,7 +838,7 @@ REBSER *Pop_Molded_String_Core(REB_MOLD *mo, REBCNT len)
 
     REBSER *result = Append_UTF8_May_Fail(
         NULL, // make new series
-        BIN_AT(mo->series, mo->start),
+        cs_cast(BIN_AT(mo->series, mo->start)),
         (len == UNKNOWN)
             ? SER_LEN(mo->series) - mo->start
             : len

@@ -219,7 +219,11 @@ REBCHR *rebValSpellingAllocOS(REBCNT *len_out, REBVAL *any_string)
 #ifdef OS_WIDE_CHAR
     return rebSpellingOfAllocW(len_out, any_string);
 #else
-    return rebSpellingOfAlloc(len_out, any_string);
+    size_t size;
+    char *utf8 = rebSpellingOfAlloc(&size, any_string);
+    if (len_out != NULL)
+        *len_out = size;
+    return utf8;
 #endif
 }
 
@@ -240,7 +244,7 @@ REBSER *Copy_OS_Str(const void *src, REBINT len)
 #ifdef OS_WIDE_CHAR
     return Copy_Wide_Str(cast(const wchar_t*, src), len);
 #else
-    return Append_UTF8_May_Fail(NULL, cast(const REBYTE*, src), len);
+    return Append_UTF8_May_Fail(NULL, cast(const char*, src), len);
 #endif
 }
 
@@ -1583,18 +1587,22 @@ REBNATIVE(call)
         input_len = 0;
         break;
 
-    case REB_STRING:
-        os_input = rebSpellingOfAlloc(&input_len, ARG(in));
-        break;
+    case REB_STRING: {
+        size_t size;
+        os_input = rebSpellingOfAlloc(&size, ARG(in));
+        input_len = size;
+        break; }
 
     case REB_FILE: {
         REBOOL full = FALSE;
-        os_input = rebFileToLocalAlloc(&input_len, ARG(in), full);
+        size_t size;
+        os_input = rebFileToLocalAlloc(&size, ARG(in), full);
+        input_len = size;
         break; }
 
-    case REB_BINARY:
+    case REB_BINARY: {
         os_input = s_cast(rebValBinAlloc(&input_len, ARG(in)));
-        break;
+        break; }
 
     default:
         panic(ARG(in));
@@ -1896,16 +1904,16 @@ REBNATIVE(get_os_browsers)
     // Caller should try xdg-open first, then try x-www-browser otherwise
     //
     DS_PUSH_TRASH;
-    Init_String(DS_TOP, Make_UTF8_May_Fail(cb_cast("xdg-open %1")));
+    Init_String(DS_TOP, Make_UTF8_May_Fail("xdg-open %1"));
     DS_PUSH_TRASH;
-    Init_String(DS_TOP, Make_UTF8_May_Fail(cb_cast("x-www-browser %1")));
+    Init_String(DS_TOP, Make_UTF8_May_Fail("x-www-browser %1"));
 
 #else // Just try /usr/bin/open on POSIX, OS X, Haiku, etc.
 
     // Just use /usr/bin/open
     //
     DS_PUSH_TRASH;
-    Init_String(DS_TOP, Make_UTF8_May_Fail(cb_cast("/usr/bin/open %1")));
+    Init_String(DS_TOP, Make_UTF8_May_Fail("/usr/bin/open %1"));
 
 #endif
 
@@ -2078,11 +2086,11 @@ static REBNATIVE(get_env)
     if (val == NULL) // key not present in environment
         Init_Blank(D_OUT);
     else {
-        REBCNT size = strlen(val);
+        size_t size = strsize(val);
 
         /* assert(size != 0); */ // True?  Should it return BLANK!?
 
-        Init_String(D_OUT, Append_UTF8_May_Fail(NULL, cb_cast(val), size));
+        Init_String(D_OUT, Append_UTF8_May_Fail(NULL, val, size));
     }
 
     OS_FREE(key);
@@ -2143,7 +2151,7 @@ static REBNATIVE(set_env)
         error = Error_User("environment variable couldn't be modified");
 #else
 
-    REBCNT key_size;
+    size_t key_size;
     char *key_utf8 = rebSpellingOfAlloc(&key_size, variable);
 
     REBOOL success;
@@ -2320,7 +2328,7 @@ static REBNATIVE(list_env)
             Alloc_Tail_Array(array),
             Append_UTF8_May_Fail(
                 NULL,
-                cb_cast(key_equals_val),
+                key_equals_val,
                 eq_pos - key_equals_val
             )
         );
@@ -2328,7 +2336,7 @@ static REBNATIVE(list_env)
             Alloc_Tail_Array(array),
             Append_UTF8_May_Fail(
                 NULL,
-                cb_cast(eq_pos + 1),
+                eq_pos + 1,
                 size - (eq_pos - key_equals_val) - 1
             )
         );

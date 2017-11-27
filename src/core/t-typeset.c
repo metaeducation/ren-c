@@ -325,9 +325,7 @@ void MF_Typeset(REB_MOLD *mo, const RELVAL *v, REBOOL form)
         //
         Append_Unencoded(mo->series, "(");
 
-        Append_Utf8_Utf8(
-            mo->series, STR_HEAD(spelling), STR_NUM_BYTES(spelling)
-        );
+        Append_Utf8_Utf8(mo->series, STR_HEAD(spelling), STR_SIZE(spelling));
         Append_Unencoded(mo->series, ") ");
 
         // REVIEW: should detect when a lot of types are active and condense

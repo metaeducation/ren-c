@@ -93,7 +93,7 @@ static void tcc_error_report(void *opaque, const char *msg_utf8)
     UNUSED(opaque);
 
     DECLARE_LOCAL (msg);
-    Init_String(msg, Make_UTF8_May_Fail(cb_cast(msg_utf8)));
+    Init_String(msg, Make_UTF8_May_Fail(msg_utf8));
     fail (Error_Tcc_Error_Warn_Raw(msg));
 }
 
@@ -543,7 +543,7 @@ REBNATIVE(compile)
                     Append_Int(mo->series, num);
                     ++num;
                     Append_Unencoded(mo->series, ", ");
-                    Append_Unencoded(mo->series, cs_cast(STR_HEAD(spelling)));
+                    Append_Unencoded(mo->series, STR_HEAD(spelling));
                     Append_Unencoded(mo->series, ");\n");
                     break;
 

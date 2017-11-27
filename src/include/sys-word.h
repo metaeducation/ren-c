@@ -71,10 +71,6 @@ inline static OPT_REBSYM VAL_WORD_SYM(const RELVAL *v) {
     return STR_SYMBOL(v->payload.any_word.spelling);
 }
 
-inline static const REBYTE *VAL_WORD_HEAD(const RELVAL *v) {
-    return STR_HEAD(VAL_WORD_SPELLING(v)); // '\0' terminated UTF-8
-}
-
 inline static void INIT_WORD_CONTEXT(RELVAL *v, REBCTX *context) {
     //
     // !!! Is it a good idea to be willing to do the ENSURE here?

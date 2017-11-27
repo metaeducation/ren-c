@@ -347,22 +347,12 @@ REBSER *Make_Series_Codepoint(REBCNT codepoint)
 //
 // Append a UTF8 byte series to a UTF8 binary.  Terminates.
 //
-// !!! Should this check the bytes to make sure they are actually UTF8 (or
-// should there be a version that does so?)
+// !!! Currently does the same thing as Append_Unencoded_Len.  Should it
+// check the bytes to make sure they're actually UTF8?
 //
-void Append_Utf8_Utf8(REBSER *dst, const REBYTE *src, REBCNT len)
+void Append_Utf8_Utf8(REBSER *dst, const char *utf8, size_t size)
 {
-    REBCNT old_len = SER_LEN(dst);
-
-    EXPAND_SERIES_TAIL(dst, len);
-    SET_SERIES_LEN(dst, old_len + len);
-
-    REBYTE *bp = BIN_AT(dst, old_len);
-
-    for (; len > 0; len--)
-        *bp++ = *src++;
-
-    *bp = '\0';
+    Append_Unencoded_Len(dst, utf8, size);
 }
 
 
@@ -416,18 +406,21 @@ void Append_Int_Pad(REBSER *dst, REBINT num, REBINT digs)
 //
 // dst = null means make a new string.
 //
-REBSER *Append_UTF8_May_Fail(REBSER *dst, const REBYTE *src, REBCNT num_bytes)
+REBSER *Append_UTF8_May_Fail(REBSER *dst, const char *utf8, size_t size)
 {
-    REBSER *ser = BUF_UTF8; // buffer is Unicode width
+    REBSER *temp = BUF_UTF8; // buffer is Unicode width
 
-    Resize_Series(ser, num_bytes + 1); // needs at most this many unicode chars
+    Resize_Series(temp, size + 1); // needs at most this many unicode chars
 
+    const REBOOL crlf_to_lf = FALSE;
     REBINT len = Decode_UTF8_Negative_If_ASCII(
-        UNI_HEAD(ser),
-        src,
-        num_bytes,
-        FALSE
+        UNI_HEAD(temp),
+        cb_cast(utf8),
+        size,
+        crlf_to_lf
     );
+
+    const REBUNI *up = UNI_HEAD(temp);
 
     // !!! Previously it was interesting to know if all characters being
     // added were Latin1.  In the post-UTF8-everywhere world, the interesting
@@ -446,13 +439,13 @@ REBSER *Append_UTF8_May_Fail(REBSER *dst, const REBYTE *src, REBCNT num_bytes)
         EXPAND_SERIES_TAIL(dst, len);
     }
 
-    REBUNI *up = UNI_AT(dst, old_len);
+    REBUNI *dp = UNI_AT(dst, old_len);
     SET_SERIES_LEN(dst, old_len + len); // len is counted down to 0 below
 
     for (; len > 0; len--)
-        *up++ = *src++;
+        *dp++ = *up++;
 
-    *up = '\0';
+    *dp = '\0';
 
     return dst;
 }

@@ -585,7 +585,7 @@ inline static void Drop_Guard_Value_Common(const RELVAL *v) {
         REBSER *s,
         const char *file,
         int line
-    ) {
+    ){
         if (s != *SER_LAST(REBSER*, GC_Guarded))
             panic_at (s, file, line);
         Drop_Guard_Series_Common(s);
@@ -595,7 +595,7 @@ inline static void Drop_Guard_Value_Common(const RELVAL *v) {
         const RELVAL *v,
         const char *file,
         int line
-    ) {
+    ){
         if (v != *SER_LAST(RELVAL*, GC_Guarded))
             panic_at (v, file, line);
         Drop_Guard_Value_Common(v);

@@ -175,8 +175,9 @@ void Do_Core_Traced(REBFRM * const f)
                 }
                 else if (IS_FUNCTION(var)) {
                     const REBOOL locals = FALSE;
+                    const char *type_utf8 = STR_HEAD(Get_Type_Name(var));
                     REBARR *words = List_Func_Words(var, locals);
-                    Debug_Fmt_(" : %s %50m", Get_Type_Name(var), words);
+                    Debug_Fmt_(" : %s %50m", type_utf8, words);
                     Free_Array(words);
                 }
                 else if (
@@ -198,7 +199,8 @@ void Do_Core_Traced(REBFRM * const f)
                 else {
                     // Just print the type if it's a context, GOB!, etc.
                     //
-                    Debug_Fmt_(" : %s", Get_Type_Name(var));
+                    const char *type_utf8 = STR_HEAD(Get_Type_Name(var));
+                    Debug_Fmt_(" : %s", type_utf8);
                 }
             }
             Debug_Line();

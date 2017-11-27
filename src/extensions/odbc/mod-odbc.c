@@ -200,7 +200,7 @@ REBCTX *Error_ODBC(SQLSMALLINT handleType, SQLHANDLE handle) {
     if (rc == SQL_SUCCESS || rc == SQL_SUCCESS_WITH_INFO)
         Init_String(string, Make_String_From_SqlWchar(message));
     else
-        Init_String(string, Make_UTF8_May_Fail(cb_cast("unknown ODBC error")));
+        Init_String(string, Make_UTF8_May_Fail("unknown ODBC error"));
 
     return Error(RE_USER, string, END);
 }

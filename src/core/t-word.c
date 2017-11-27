@@ -140,39 +140,40 @@ void TO_Word(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 void MF_Word(REB_MOLD *mo, const RELVAL *v, REBOOL form) {
     UNUSED(form); // no difference between MOLD and FORM at this time
 
-    const REBYTE *spelling = STR_HEAD(VAL_WORD_SPELLING(v));
-    REBCNT spelling_bytes = STR_NUM_BYTES(VAL_WORD_SPELLING(v));
+    REBSTR *spelling = VAL_WORD_SPELLING(v);
+    const char *head = STR_HEAD(spelling); // UTF-8
+    size_t size = STR_SIZE(spelling); // number of UTF-8 bytes
 
     REBSER *s = mo->series;
 
     switch (VAL_TYPE(v)) {
     case REB_WORD: {
-        Append_Utf8_Utf8(s, spelling, spelling_bytes);
+        Append_Utf8_Utf8(s, head, size);
         break; }
 
     case REB_SET_WORD:
-        Append_Utf8_Utf8(s, spelling, spelling_bytes);
+        Append_Utf8_Utf8(s, head, size);
         Append_Utf8_Codepoint(s, ':');
         break;
 
     case REB_GET_WORD:
         Append_Utf8_Codepoint(s, ':');
-        Append_Utf8_Utf8(s, spelling, spelling_bytes);
+        Append_Utf8_Utf8(s, head, size);
         break;
 
     case REB_LIT_WORD:
         Append_Utf8_Codepoint(s, '\'');
-        Append_Utf8_Utf8(s, spelling, spelling_bytes);
+        Append_Utf8_Utf8(s, head, size);
         break;
 
     case REB_REFINEMENT:
         Append_Utf8_Codepoint(s, '/');
-        Append_Utf8_Utf8(s, spelling, spelling_bytes);
+        Append_Utf8_Utf8(s, head, size);
         break;
 
     case REB_ISSUE:
         Append_Utf8_Codepoint(s, '#');
-        Append_Utf8_Utf8(s, spelling, spelling_bytes);
+        Append_Utf8_Utf8(s, head, size);
         break;
 
     default:
@@ -204,7 +205,8 @@ REBTYPE(Word)
 
         switch (property) {
         case SYM_LENGTH: {
-            const REBYTE *bp = STR_HEAD(VAL_WORD_SPELLING(val));
+            REBSTR *spelling = VAL_WORD_SPELLING(val);
+            const REBYTE *bp = cb_cast(STR_HEAD(spelling));
             REBCNT len = 0;
             while (TRUE) {
                 REBUNI ch;

@@ -790,7 +790,7 @@ void MF_Context(REB_MOLD *mo, const RELVAL *v, REBOOL form)
         New_Indented_Line(mo);
 
         REBSTR *spelling = VAL_KEY_SPELLING(key);
-        Append_Utf8_Utf8(out, STR_HEAD(spelling), STR_NUM_BYTES(spelling));
+        Append_Utf8_Utf8(out, STR_HEAD(spelling), STR_SIZE(spelling));
 
         Append_Unencoded(out, ": ");
 

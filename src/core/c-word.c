@@ -157,7 +157,7 @@ static void Expand_Word_Table(void)
             continue;
         }
 
-        REBINT hash = Hash_Word(STR_HEAD(canon), STR_NUM_BYTES(canon));
+        REBINT hash = Hash_String(canon);
         REBINT skip = (hash & 0x0000FFFF) % new_size;
         if (skip == 0) skip = 1;
         hash = (hash & 0x00FFFF00) % new_size;
@@ -193,7 +193,7 @@ static void Expand_Word_Table(void)
 // including canon forms--in which case the agreed-upon canon for the
 // group will get bumped to one of the other synonyms.
 //
-REBSTR *Intern_UTF8_Managed(const REBYTE *utf8, REBCNT len)
+REBSTR *Intern_UTF8_Managed(const REBYTE *utf8, size_t size)
 {
     // The hashing technique used is called "linear probing":
     //
@@ -204,10 +204,10 @@ REBSTR *Intern_UTF8_Managed(const REBYTE *utf8, REBCNT len)
     // actually kept larger than that, but to be on the right side of theory,
     // the table is always checked for expansion needs *before* the search.)
     //
-    REBCNT size = SER_LEN(PG_Canons_By_Hash);
-    if (PG_Num_Canon_Slots_In_Use > size / 2) {
+    REBCNT num_slots = SER_LEN(PG_Canons_By_Hash);
+    if (PG_Num_Canon_Slots_In_Use > num_slots / 2) {
         Expand_Word_Table();
-        size = SER_LEN(PG_Canons_By_Hash); // got larger
+        num_slots = SER_LEN(PG_Canons_By_Hash); // got larger
     }
 
     REBSTR* *canons_by_hash = SER_HEAD(REBSER*, PG_Canons_By_Hash);
@@ -215,11 +215,11 @@ REBSTR *Intern_UTF8_Managed(const REBYTE *utf8, REBCNT len)
     // Calculate the starting hash slot to try--and the amount to skip to by
     // each time a slot is found that is occupied by a non-match.
     //
-    REBCNT hash = Hash_Word(utf8, len);
-    REBCNT skip = (hash & 0x0000FFFF) % size;
+    REBCNT hash = Hash_UTF8(utf8, size);
+    REBCNT skip = (hash & 0x0000FFFF) % num_slots;
     if (skip == 0)
         skip = 1;
-    hash = (hash & 0x00FFFF00) % size;
+    hash = (hash & 0x00FFFF00) % num_slots;
 
     REBSTR **deleted_slot = NULL;
 
@@ -236,7 +236,8 @@ REBSTR *Intern_UTF8_Managed(const REBYTE *utf8, REBCNT len)
         if (canon == DELETED_CANON) {
             deleted_slot = &canons_by_hash[hash];
             hash += skip;
-            if (hash >= size) hash -= size;
+            if (hash >= num_slots)
+                hash -= num_slots;
             continue;
         }
 
@@ -245,8 +246,9 @@ REBSTR *Intern_UTF8_Managed(const REBYTE *utf8, REBCNT len)
         // Compare_UTF8 returns 0 when the spelling is a case-sensitive match,
         // and is the exact interning to return.
         //
-        REBINT cmp = Compare_UTF8(STR_HEAD(canon), utf8, len);
-        if (cmp == 0) return canon;
+        REBINT cmp = Compare_UTF8(cb_cast(STR_HEAD(canon)), utf8, size);
+        if (cmp == 0)
+            return canon;
 
         if (cmp < 0) {
             //
@@ -255,7 +257,8 @@ REBSTR *Intern_UTF8_Managed(const REBYTE *utf8, REBCNT len)
             // to the next candidate slot--wrapping around if necessary
             //
             hash += skip;
-            if (hash >= size) hash -= size;
+            if (hash >= num_slots)
+                hash -= num_slots;
             continue;
         }
 
@@ -271,8 +274,9 @@ REBSTR *Intern_UTF8_Managed(const REBYTE *utf8, REBCNT len)
 
             // Exact match for a synonym also means no new allocation needed.
             //
-            cmp = Compare_UTF8(STR_HEAD(synonym), utf8, len);
-            if (cmp == 0) return synonym;
+            cmp = Compare_UTF8(cb_cast(STR_HEAD(synonym)), utf8, size);
+            if (cmp == 0)
+                return synonym;
 
             // Comparison should at least be a synonym, if in this list.
             // Keep checking for an exact match until a cycle is found.
@@ -298,13 +302,13 @@ new_interning: ; // semicolon needed for statement
     // feature, double check with an assert that the behavior matches.
     //
     REBSTR *intern = Make_Series_Core(
-        len + 1,
+        size + 1,
         sizeof(REBYTE),
         SERIES_FLAG_UTF8_STRING | SERIES_FLAG_FIXED_SIZE
     );
 
 #if !defined(NDEBUG)
-    if (len + 1 > sizeof(intern->content))
+    if (size + 1 > sizeof(intern->content))
         assert(GET_SER_INFO(intern, SERIES_INFO_HAS_DYNAMIC));
     else
         assert(NOT_SER_INFO(intern, SERIES_INFO_HAS_DYNAMIC));
@@ -313,8 +317,8 @@ new_interning: ; // semicolon needed for statement
     // The incoming string isn't always null terminated, e.g. if you are
     // interning `foo` in `foo: bar + 1` it would be colon-terminated.
     //
-    memcpy(BIN_HEAD(intern), utf8, len);
-    TERM_SEQUENCE_LEN(intern, len);
+    memcpy(BIN_HEAD(intern), utf8, size);
+    TERM_BIN_LEN(intern, size);
 
     if (canon == NULL) {
         //
@@ -411,23 +415,21 @@ void GC_Kill_Interning(REBSTR *intern)
     assert(MISC(intern).bind_index.high == 0); // shouldn't GC during binds?
     assert(MISC(intern).bind_index.low == 0);
 
-    REBCNT size = SER_LEN(PG_Canons_By_Hash);
+    REBCNT num_slots = SER_LEN(PG_Canons_By_Hash);
     REBSTR* *canons_by_hash = SER_HEAD(REBSER*, PG_Canons_By_Hash);
-    assert(canons_by_hash != NULL);
 
-    REBCNT len = STR_NUM_BYTES(intern);
-    assert(len == LEN_BYTES(STR_HEAD(intern)));
-
-    REBCNT hash = Hash_Word(STR_HEAD(intern), len);
-    REBCNT skip = (hash & 0x0000FFFF) % size;
-    if (skip == 0) skip = 1;
-    hash = (hash & 0x00FFFF00) % size;
+    REBCNT hash = Hash_String(intern);
+    REBCNT skip = (hash & 0x0000FFFF) % num_slots;
+    if (skip == 0)
+        skip = 1;
+    hash = (hash & 0x00FFFF00) % num_slots;
 
     // We *will* find the canon form in the hash table.
     //
     while (canons_by_hash[hash] != intern) {
         hash += skip;
-        if (hash >= size) hash -= size;
+        if (hash >= num_slots)
+            hash -= num_slots;
     }
 
     if (synonym != intern) {
@@ -437,7 +439,7 @@ void GC_Kill_Interning(REBSTR *intern)
         // It should hash the same, and be able to take over the hash slot.
         //
     #ifdef SLOW_INTERN_HASH_DOUBLE_CHECK
-        assert(hash == Hash_Word(STR_HEAD(synonym)));
+        assert(hash == Hash_String(synonym));
     #endif
         canons_by_hash[hash] = synonym;
         SET_SER_INFO(synonym, STRING_INFO_CANON);
@@ -451,7 +453,8 @@ void GC_Kill_Interning(REBSTR *intern)
         REBCNT previous_hash = hash;
         while (canons_by_hash[hash] != NULL) {
             hash += skip;
-            if (hash >= size) hash -= size;
+            if (hash >= num_slots)
+                hash -= num_slots;
             canons_by_hash[previous_hash] = canons_by_hash[hash];
         }
 
@@ -471,15 +474,6 @@ void GC_Kill_Interning(REBSTR *intern)
 
 
 //
-//  Get_Type_Name: C
-//
-const REBYTE *Get_Type_Name(const RELVAL *value)
-{
-    return STR_HEAD(Canon(SYM_FROM_KIND(VAL_TYPE(value))));
-}
-
-
-//
 //  Compare_Word: C
 //
 // Compare the names of two words and return the difference.
@@ -488,8 +482,8 @@ const REBYTE *Get_Type_Name(const RELVAL *value)
 //
 REBINT Compare_Word(const RELVAL *s, const RELVAL *t, REBOOL strict)
 {
-    const REBYTE *sp = STR_HEAD(VAL_WORD_SPELLING(s));
-    const REBYTE *tp = STR_HEAD(VAL_WORD_SPELLING(t));
+    const REBYTE *sp = cb_cast(STR_HEAD(VAL_WORD_SPELLING(s)));
+    const REBYTE *tp = cb_cast(STR_HEAD(VAL_WORD_SPELLING(t)));
 
     if (strict)
         return COMPARE_BYTES(sp, tp); // must match byte-for-byte
@@ -613,11 +607,12 @@ void Startup_Symbols(REBARR *words)
     SET_SERIES_LEN(PG_Symbol_Canons, cast(REBCNT, sym));
     assert(SER_LEN(PG_Symbol_Canons) == ARR_LEN(words) + 1);
 
-    // Do some sanity checks
+    // Do some sanity checks.  !!! Fairly critical, is debug-only appropriate?
 
-    if (COMPARE_BYTES(cb_cast("blank!"), STR_HEAD(Canon(SYM_BLANK_X))) != 0)
+    if (0 != strcmp("blank!", STR_HEAD(Canon(SYM_BLANK_X))))
         panic (Canon(SYM_BLANK_X));
-    if (COMPARE_BYTES(cb_cast("true"), STR_HEAD(Canon(SYM_TRUE))) != 0)
+
+    if (0 != strcmp("true", STR_HEAD(Canon(SYM_TRUE))))
         panic (Canon(SYM_TRUE));
 }
 

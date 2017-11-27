@@ -1023,9 +1023,9 @@ REBCTX *Error(REBCNT num, ... /* REBVAL *arg1, REBVAL *arg2, ... */)
 // "user error" since MAKE ERROR! of a STRING! would produce them in usermode
 // without any error template in %errors.r)
 //
-REBCTX *Error_User(const char *str) {
+REBCTX *Error_User(const char *utf8) {
     DECLARE_LOCAL (message);
-    Init_String(message, Make_UTF8_May_Fail(cb_cast(str)));
+    Init_String(message, Make_UTF8_May_Fail(utf8));
     return Error(RE_USER, message, END);
 }
 

@@ -111,15 +111,16 @@ void MAKE_Tuple(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
     REBCNT alen;
 
     if (IS_ISSUE(arg)) {
-        const REBYTE *ap = VAL_WORD_HEAD(arg);
-        REBCNT len = LEN_BYTES(ap);  // UTF-8 len
-        if (len & 1)
+        REBSTR *spelling = VAL_WORD_SPELLING(arg);
+        const REBYTE *ap = cb_cast(STR_HEAD(spelling));
+        size_t size = STR_SIZE(spelling); // UTF-8 len
+        if (size & 1)
             fail (arg); // must have even # of chars
-        len /= 2;
-        if (len > MAX_TUPLE)
+        size /= 2;
+        if (size > MAX_TUPLE)
             fail (arg); // valid even for UTF-8
-        VAL_TUPLE_LEN(out) = len;
-        for (alen = 0; alen < len; alen++) {
+        VAL_TUPLE_LEN(out) = size;
+        for (alen = 0; alen < size; alen++) {
             const REBOOL unicode = FALSE;
             REBUNI ch;
             if (!Scan_Hex2(&ch, ap, unicode))

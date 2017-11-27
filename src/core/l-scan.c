@@ -652,7 +652,7 @@ static void Update_Error_Near_For_Line(
     Append_Unencoded(mo->series, "(line ");
     Append_Int(mo->series, line);
     Append_Unencoded(mo->series, ") ");
-    Append_Utf8_Utf8(mo->series, bp, len);
+    Append_Utf8_Utf8(mo->series, cs_cast(bp), len);
 
     ERROR_VARS *vars = ERR_VARS(error);
     Init_String(&vars->nearest, Pop_Molded_String(mo));
@@ -685,14 +685,14 @@ static REBCTX *Error_Syntax(SCAN_STATE *ss) {
     DECLARE_LOCAL (token_name);
     Init_String(
         token_name,
-        Make_UTF8_May_Fail(cb_cast(Token_Names[ss->token]))
+        Make_UTF8_May_Fail(Token_Names[ss->token])
     );
 
     DECLARE_LOCAL (token_text);
     Init_String(
         token_text,
         Append_UTF8_May_Fail(
-            NULL, ss->begin, cast(REBCNT, ss->end - ss->begin)
+            NULL, cs_cast(ss->begin), cast(REBCNT, ss->end - ss->begin)
         )
     );
 

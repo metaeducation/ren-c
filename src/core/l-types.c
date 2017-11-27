@@ -1237,7 +1237,7 @@ const REBYTE *Scan_Any(
 ) {
     TRASH_CELL_IF_DEBUG(out);
 
-    REBSER *s = Append_UTF8_May_Fail(NULL, cp, num_bytes); // NULL means alloc
+    REBSER *s = Append_UTF8_May_Fail(NULL, cs_cast(cp), num_bytes);
 
     REBCNT delined_len = Deline_Uni(UNI_HEAD(s), SER_LEN(s));
 

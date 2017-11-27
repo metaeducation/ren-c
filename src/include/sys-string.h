@@ -85,8 +85,8 @@
 // everything else.
 //
 
-inline static const REBYTE *STR_HEAD(REBSTR *str) {
-    return BIN_HEAD(str);
+inline static const char *STR_HEAD(REBSTR *str) {
+    return cs_cast(BIN_HEAD(str));
 }
 
 inline static REBSTR *STR_CANON(REBSTR *str) {
@@ -101,7 +101,7 @@ inline static OPT_REBSYM STR_SYMBOL(REBSTR *str) {
     return cast(REBSYM, sym);
 }
 
-inline static REBCNT STR_NUM_BYTES(REBSTR *str) {
+inline static size_t STR_SIZE(REBSTR *str) {
     return SER_LEN(str); // number of bytes in seris is series length, ATM
 }
 
@@ -248,10 +248,17 @@ inline static const REBYTE *Back_Scan_UTF8_Char(
 // Basic string initialization from UTF8.  (Most clients should be using the
 // rebStringXXX() APIs for this)
 //
-inline static REBSER *Make_UTF8_May_Fail(const REBYTE *utf8)
+inline static REBSER *Make_UTF8_May_Fail(const char *utf8)
 {
-    return Append_UTF8_May_Fail(NULL, utf8, LEN_BYTES(utf8));
+    return Append_UTF8_May_Fail(NULL, utf8, strsize(utf8));
 }
+
+
+inline static REBINT Hash_String(REBSTR *str)
+    { return Hash_UTF8(cb_cast(STR_HEAD(str)), STR_SIZE(str)); }
+
+inline static REBSTR *Get_Type_Name(const RELVAL *value)
+    { return Canon(SYM_FROM_KIND(VAL_TYPE(value))); }
 
 
 //
