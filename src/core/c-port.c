@@ -560,13 +560,11 @@ post_process_output:
             if (NOT(IS_BINARY(D_OUT)))
                 fail ("/STRING or /LINES used on a non-BINARY!/STRING! read");
 
-            REBSER *decoded = Decode_UTF_String(
+            REBSER *decoded = Append_UTF8_May_Fail(
+                NULL,
                 VAL_BIN_AT(D_OUT),
-                VAL_LEN_AT(D_OUT),
-                -1
+                VAL_LEN_AT(D_OUT)
             );
-            if (decoded == NULL)
-                fail (Error_Bad_Utf8_Raw());
             Init_String(D_OUT, decoded);
         }
 

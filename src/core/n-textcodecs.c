@@ -32,9 +32,10 @@
 // Rebol values.  Under Ren-C these are done as plain FUNCTION!s, which can
 // be coded in either C as natives or Rebol.
 //
-// A few text codecs were included in R3-Alpha and kept for testing.  They
-// were converted here into groups of native functions, but should be further
-// moved into an extension so they can be optional in the build.
+// A few incomplete text codecs were included in R3-Alpha, and have been
+// kept around for testing.  They were converted here into groups of native
+// functions, but should be further moved into an extension so they can be
+// optional in the build.
 //
 
 #include "sys-core.h"
@@ -166,7 +167,7 @@ static void Decode_Utf16_Core(
     );
     if (size < 0) // ASCII
         size = -size;
-    SET_SERIES_LEN(ser, size);
+    TERM_UNI_LEN(ser, size);
 
     Init_String(out, ser);
 }
@@ -185,7 +186,12 @@ REBNATIVE(identify_utf16le_q)
 {
     INCLUDE_PARAMS_OF_IDENTIFY_UTF16LE_Q;
 
-    UNUSED(ARG(data)); // R3-Alpha just said it matched if extension matched
+    // R3-Alpha just said it matched if extension matched.  It could look for
+    // a byte order mark by default, but perhaps that's the job of the more
+    // general ".txt" codec...because if you ask specifically to decode a
+    // stream as UTF-16-LE, then you may be willing to tolerate no BOM.
+    //
+    UNUSED(ARG(data));
 
     return R_TRUE;
 }
@@ -210,6 +216,12 @@ REBNATIVE(decode_utf16le)
     const REBOOL little_endian = TRUE;
 
     Decode_Utf16_Core(D_OUT, data, len, little_endian);
+
+    // Drop byte-order marker, if present
+    //
+    if (VAL_LEN_AT(D_OUT) > 0 && *VAL_UNI_AT(D_OUT) == 0xFEFF)
+        Remove_Series(VAL_SERIES(D_OUT), VAL_INDEX(D_OUT), 1);
+
     return R_OUT;
 }
 
@@ -226,6 +238,9 @@ REBNATIVE(decode_utf16le)
 REBNATIVE(encode_utf16le)
 {
     INCLUDE_PARAMS_OF_ENCODE_UTF16LE;
+
+    // !!! Should probably by default add a byte order mark, but given this
+    // is weird "userspace" encoding it should be an option to the codec.
 
     const REBOOL little_endian = TRUE;
     Encode_Utf16_Core(
@@ -252,7 +267,12 @@ REBNATIVE(identify_utf16be_q)
 {
     INCLUDE_PARAMS_OF_IDENTIFY_UTF16BE_Q;
 
-    UNUSED(ARG(data)); // R3-Alpha just said it matched if extension matched
+    // R3-Alpha just said it matched if extension matched.  It could look for
+    // a byte order mark by default, but perhaps that's the job of the more
+    // general ".txt" codec...because if you ask specifically to decode a
+    // stream as UTF-16-BE, then you may be willing to tolerate no BOM.
+    //
+    UNUSED(ARG(data));
 
     return R_TRUE;
 }
@@ -277,6 +297,12 @@ REBNATIVE(decode_utf16be)
     const REBOOL little_endian = FALSE;
 
     Decode_Utf16_Core(D_OUT, data, len, little_endian);
+
+    // Drop byte-order marker, if present
+    //
+    if (VAL_LEN_AT(D_OUT) > 0 && *VAL_UNI_AT(D_OUT) == 0xFEFF)
+        Remove_Series(VAL_SERIES(D_OUT), VAL_INDEX(D_OUT), 1);
+
     return R_OUT;
 }
 
@@ -295,6 +321,9 @@ REBNATIVE(encode_utf16be)
     INCLUDE_PARAMS_OF_ENCODE_UTF16BE;
 
     const REBOOL little_endian = FALSE;
+
+    // !!! Should probably by default add a byte order mark, but given this
+    // is weird "userspace" encoding it should be an option to the codec.
 
     Encode_Utf16_Core(
         D_OUT,

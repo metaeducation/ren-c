@@ -225,23 +225,11 @@ static REBCNT find_string(
 
 static REBSER *MAKE_TO_String_Common(const REBVAL *arg)
 {
-    REBSER *ser = 0;
+    REBSER *ser;
 
     // MAKE/TO <type> <binary!>
     if (IS_BINARY(arg)) {
-        REBYTE *bp = VAL_BIN_AT(arg);
-        REBCNT len = VAL_LEN_AT(arg);
-        switch (What_UTF(bp, len)) {
-        case 0:
-            break;
-        case 8: // UTF-8 encoded
-            bp  += 3;
-            len -= 3;
-            break;
-        default:
-            fail (Error_Bad_Utf8_Raw());
-        }
-        ser = Decode_UTF_String(bp, len, 8); // UTF-8
+        ser = Append_UTF8_May_Fail(NULL, VAL_BIN_AT(arg), VAL_LEN_AT(arg));
     }
     // MAKE/TO <type> <any-string>
     else if (ANY_STRING(arg)) {
@@ -445,57 +433,6 @@ void TO_String(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
         fail (arg);
 
     Init_Any_Series(out, kind, ser);
-}
-
-
-//
-//  to-string: native [
-//
-//  {Like TO STRING! but with additional options.}
-//
-//      value [any-value!]
-//          {Value to convert to a string.}
-//      /astral
-//          {Provide special handling for codepoints bigger than 0xFFFF}
-//      handler [function! string! char! blank!]
-//          {If function, receives integer argument of large codepoint value}
-//  ]
-//
-REBNATIVE(to_string)
-{
-    INCLUDE_PARAMS_OF_TO_STRING;
-
-    REBVAL *value = ARG(value);
-
-    if (NOT(REF(astral)) || NOT(IS_BINARY(value))) {
-        TO_String(D_OUT, REB_STRING, value); // just act like TO STRING!
-        return R_OUT;
-    }
-
-    // Ordinarily, UTF8 decoding is done into the unicode buffer.  The number
-    // of unicode codepoints is guaranteed to be <= the number of UTF8 bytes,
-    // so the length is used as a conservative bound.  Since we don't know
-    // how many astral codepoints there are, it's not easy to know the size
-    // in advance.  So the series may be expanded multiple times.
-    //
-    REBSER *ser = Make_Unicode(VAL_LEN_AT(value));
-    if (Decode_UTF8_Maybe_Astral_Throws(
-        D_OUT,
-        ser,
-        VAL_BIN_AT(value),
-        VAL_LEN_AT(value),
-        TRUE, // cr/lf => lf conversion is done by TO_String (review)
-        ARG(handler)
-    )){
-        return R_OUT_IS_THROWN;
-    }
-
-    // !!! Note also that since this conversion does not go through the
-    // unicode buffer, so it's not copied out with "slimming" if it turns out
-    // to not contain wide chars.
-
-    Init_String(D_OUT, ser);
-    return R_OUT;
 }
 
 
@@ -861,8 +798,30 @@ REBYTE *Form_Uni_Hex(REBYTE *out, REBCNT n)
 //
 REBYTE *Emit_Uni_Char(REBYTE *bp, REBUNI chr, REBOOL parened)
 {
-    if (chr >= 0x7f || chr == 0x1e) {  // non ASCII or ^ must be (00) escaped
-        if (parened || chr == 0x1e) { // do not AND with above
+    // !!! The UTF-8 "Byte Order Mark" is an insidious thing which is not
+    // necessary for UTF-8, not recommended by the Unicode standard, and
+    // Rebol should not invisibly be throwing it out of strings or file reads:
+    //
+    // https://stackoverflow.com/q/2223882/
+    //
+    // But the codepoint (U+FEFF, byte sequence #{EF BB BF}) has no printable
+    // representation.  So if it's going to be loaded as-is then it should
+    // give some hint that it's there.
+    //
+    // !!! 0x1e is "record separator" which is handled specially too.  The
+    // following rationale is suggested by @MarkI:
+    //
+    //     "Rebol special-cases RS because traditionally it is escape-^
+    //      but Rebol uses ^ to indicate escaping so it has to do
+    //      something else with that one."
+
+    if (chr >= 0x7F || chr == 0x1E || chr == 0xFEFF) {
+        //
+        // non ASCII, "^" (RS), or byte-order-mark must be ^(00) escaped.
+        //
+        // !!! Comment here said "do not AND with the above"
+        //
+        if (parened || chr == 0x1E || chr == 0xFEFF) {
             *bp++ = '^';
             *bp++ = '(';
             bp = Form_Uni_Hex(bp, chr);

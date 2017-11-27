@@ -431,8 +431,10 @@ static const REBYTE *Scan_Quote_Push_Mold(
             return NULL; // Scan_state shows error location.
 
         case '^':
-            if ((src = Scan_UTF8_Char_Escapable(&chr, src)) == NULL)
+            if ((src = Scan_UTF8_Char_Escapable(&chr, src)) == NULL) {
+                TERM_BIN(mo->series);
                 return NULL;
+            }
             --src;
             break;
 
@@ -450,16 +452,20 @@ static const REBYTE *Scan_Quote_Push_Mold(
             if (src[1] == LF) src++;
             // fall thru
         case LF:
-            if (term == '"')
+            if (term == '"') {
+                TERM_BIN(mo->series);
                 return NULL;
+            }
             lines++;
             chr = LF;
             break;
 
         default:
             if (chr >= 0x80) {
-                if ((src = Back_Scan_UTF8_Char(&chr, src, NULL)) == NULL)
+                if ((src = Back_Scan_UTF8_Char(&chr, src, NULL)) == NULL) {
+                    TERM_BIN(mo->series);
                     return NULL;
+                }
             }
         }
 
@@ -481,7 +487,6 @@ static const REBYTE *Scan_Quote_Push_Mold(
     ss->line += lines;
 
     TERM_BIN(mo->series);
-
     return src;
 }
 
@@ -642,20 +647,15 @@ static void Update_Error_Near_For_Line(
     // !!! This should likely be separated into an integer and a string, so
     // that those processing the error don't have to parse it back out.
     //
-    REBSER *ser = Make_Unicode(len + 16);
-    Append_Unencoded(ser, "(line ");
-    Append_Int(ser, line);
-    Append_Unencoded(ser, ") ");
-
-    // !!! For the "Latin1 Nowhere" all strings are wide.  We need to turn
-    // the line into a wide string before appending it.
-    //
-    REBSER *bp_wide = Append_UTF8_May_Fail(NULL, bp, len);
-    Append_Series(ser, UNI_HEAD(bp_wide), len); // multiplies len * wide
-    Free_Series(bp_wide);
+    DECLARE_MOLD (mo);
+    Push_Mold(mo);
+    Append_Unencoded(mo->series, "(line ");
+    Append_Int(mo->series, line);
+    Append_Unencoded(mo->series, ") ");
+    Append_Utf8_Utf8(mo->series, bp, len);
 
     ERROR_VARS *vars = ERR_VARS(error);
-    Init_String(&vars->nearest, ser);
+    Init_String(&vars->nearest, Pop_Molded_String(mo));
 }
 
 

@@ -254,18 +254,6 @@ inline static REBSER *Make_UTF8_May_Fail(const REBYTE *utf8)
 }
 
 
-// Basic string initialization from UTF16.  Note: This just assumes two byte
-// characters with no decoding at the moment.
-//
-inline static REBSER *Make_UTF16_May_Fail(REBUNI *utf16)
-{
-    REBCNT len = Strlen_Uni(utf16);
-    REBSER *s = Make_Unicode(len);
-    Append_Uni_Uni(s, utf16, len);
-    return s;
-}
-
-
 //
 // Copy helpers
 //

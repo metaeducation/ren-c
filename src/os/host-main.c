@@ -334,12 +334,9 @@ int main(int argc, char **argv_ansi)
         if (argv_utf16[i] == NULL)
             continue; // shell bug
 
-        static_assert_c(sizeof(REBUNI) == sizeof(wchar_t));
-
-        Init_String(
-            Alloc_Tail_Array(argv),
-            Make_UTF16_May_Fail(cast(REBUNI*, argv_utf16[i]))
-        );
+        REBVAL *str = rebStringW(argv_utf16[i]);
+        Append_Value(argv, str);
+        rebFree(str);
     }
 #else
     // Assume no wide character support, and just take the ANSI C args, which
@@ -350,20 +347,12 @@ int main(int argc, char **argv_ansi)
         if (argv_ansi[i] == NULL)
             continue; // shell bug
 
-        Init_String(
-            Alloc_Tail_Array(argv), Make_UTF8_May_Fail(cb_cast(argv_ansi[i]))
-        );
+        REBVAL *str = rebString(argv_ansi[i]);
+        Append_Value(argv, str);
+        rebFree(str);
     }
 #endif
 
-    // !!! Note that the first element of the argv_value block is used to
-    // initialize system/options/boot by the startup code.  The real way to
-    // get the path to the executable varies by OS, and should either be
-    // passed in independently (with no argv[0]) or substituted in the first
-    // element of the array:
-    //
-    // http://stackoverflow.com/a/933996/211160
-    //
     DECLARE_LOCAL (argv_value);
     Init_Block(argv_value, argv);
     PUSH_GUARD_VALUE(argv_value);
@@ -471,7 +460,8 @@ int main(int argc, char **argv_ansi)
     // the running executable, this is not necessarily the case.  The actual
     // method for getting the current executable path is OS-specific:
     //
-    // https://stackoverflow.com/questions/1023306/
+    // https://stackoverflow.com/q/1023306/
+    // http://stackoverflow.com/a/933996/211160
     //
     // It's not foolproof, so BLANK! is passed in if nothing could be found.
     // The console code can then decide if it wants to fall back on argv[0].

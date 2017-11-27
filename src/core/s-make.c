@@ -253,17 +253,15 @@ REBSER *Copy_String_At_Len(REBSER *src, REBCNT index, REBINT length)
 //
 //  Append_Unencoded_Len: C
 //
-// Optimized function to append a non-encoded byte string.
-//
-// If dst is null, it will be created and returned.
-// Such src strings normally come from C code or tables.
-// Destination can be 1 or 2 bytes wide.
+// Append unencoded data to a byte string, using plain memcpy().  If dst is
+// NULL, a new byte-sized series will be created and returned.
 //
 REBSER *Append_Unencoded_Len(REBSER *dst, const char *src, REBCNT len)
 {
-    REBCNT tail;
+    assert(BYTE_SIZE(dst));
 
-    if (!dst) {
+    REBCNT tail;
+    if (dst == NULL) {
         dst = Make_Binary(len);
         tail = 0;
     }
@@ -272,17 +270,8 @@ REBSER *Append_Unencoded_Len(REBSER *dst, const char *src, REBCNT len)
         EXPAND_SERIES_TAIL(dst, len);
     }
 
-    if (BYTE_SIZE(dst)) {
-        memcpy(BIN_AT(dst, tail), src, len);
-        TERM_SEQUENCE(dst);
-    }
-    else {
-        REBUNI *up = UNI_AT(dst, tail);
-        for (; len > 0; len--)
-            *up++ = cast(REBUNI, *src++);
-        *up = '\0';
-    }
-
+    memcpy(BIN_AT(dst, tail), src, len);
+    TERM_SEQUENCE(dst);
     return dst;
 }
 
@@ -290,10 +279,10 @@ REBSER *Append_Unencoded_Len(REBSER *dst, const char *src, REBCNT len)
 //
 //  Append_Unencoded: C
 //
-// Optimized function to append a non-encoded byte string.
-// If dst is null, it will be created and returned.
-// Such src strings normally come from C code or tables.
-// Destination can be 1 or 2 bytes wide.
+// Append_Unencoded_Len() variant that looks for a terminating 0 byte to
+// determine the length.
+//
+// !!! Should be in a header file so it can be inlined.
 //
 REBSER *Append_Unencoded(REBSER *dst, const char *src)
 {
@@ -339,64 +328,17 @@ REBSER *Append_Utf8_Codepoint(REBSER *dst, u32 codepoint)
 //
 //  Make_Series_Codepoint: C
 //
-// Create a series that holds a single codepoint.  If the
-// codepoint will fit into a byte, then it will be a byte
-// series.  If two bytes, it will be a REBUNI series.
-//
-// (Codepoints greater than the size of REBUNI are not
-// currently supported in Rebol3.)
+// Create a string that holds a single codepoint.
 //
 REBSER *Make_Series_Codepoint(REBCNT codepoint)
 {
     assert(codepoint < (1 << 16));
 
     REBSER *out = Make_Unicode(1);
-    TERM_SEQUENCE(out);
-    Append_Codepoint(out, codepoint);
+    *UNI_HEAD(out) = codepoint;
+    TERM_UNI_LEN(out, 1);
 
     return out;
-}
-
-
-//
-//  Append_Uni_Bytes: C
-//
-// Append a unicode string to a byte string. OPTIMZED.
-//
-void Append_Uni_Bytes(REBSER *dst, const REBUNI *src, REBCNT len)
-{
-    REBCNT old_len = SER_LEN(dst);
-
-    EXPAND_SERIES_TAIL(dst, len);
-    SET_SERIES_LEN(dst, old_len + len);
-
-    REBYTE *bp = BIN_AT(dst, old_len);
-
-    for (; len > 0; len--)
-        *bp++ = cast(REBYTE, *src++);
-
-    *bp = 0;
-}
-
-
-//
-//  Append_Uni_Uni: C
-//
-// Append a unicode string to a unicode string.  Terminates.
-//
-void Append_Uni_Uni(REBSER *dst, const REBUNI *src, REBCNT len)
-{
-    REBCNT old_len = SER_LEN(dst);
-
-    EXPAND_SERIES_TAIL(dst, len);
-    SET_SERIES_LEN(dst, old_len + len);
-
-    REBUNI *up = UNI_AT(dst, old_len);
-
-    for (; len > 0; len--)
-        *up++ = *src++;
-
-    *up = '\0';
 }
 
 
@@ -470,9 +412,7 @@ void Append_Int_Pad(REBSER *dst, REBINT num, REBINT digs)
 //
 //  Append_UTF8_May_Fail: C
 //
-// Append (or create) decoded UTF8 to a string. OPTIMIZED.
-//
-// Result can be 8 bits (latin-1 optimized) or 16 bits wide.
+// Append (or create) decoded UTF8 to a string.
 //
 // dst = null means make a new string.
 //
@@ -496,10 +436,23 @@ REBSER *Append_UTF8_May_Fail(REBSER *dst, const REBYTE *src, REBCNT num_bytes)
     if (len < 0)
         len = -len;
 
-    if (dst == NULL)
+    REBCNT old_len;
+    if (dst == NULL) {
         dst = Make_Unicode(len);
+        old_len = 0;
+    }
+    else {
+        old_len = SER_LEN(dst);
+        EXPAND_SERIES_TAIL(dst, len);
+    }
 
-    Append_Uni_Uni(dst, UNI_HEAD(ser), len);
+    REBUNI *up = UNI_AT(dst, old_len);
+    SET_SERIES_LEN(dst, old_len + len); // len is counted down to 0 below
+
+    for (; len > 0; len--)
+        *up++ = *src++;
+
+    *up = '\0';
 
     return dst;
 }

@@ -240,7 +240,7 @@ REBSER *Copy_OS_Str(const void *src, REBINT len)
 #ifdef OS_WIDE_CHAR
     return Copy_Wide_Str(cast(const wchar_t*, src), len);
 #else
-    return Decode_UTF_String(cast(const REBYTE*, src), len, 8);
+    return Append_UTF8_May_Fail(NULL, cast(const REBYTE*, src), len);
 #endif
 }
 
@@ -2082,7 +2082,7 @@ static REBNATIVE(get_env)
 
         /* assert(size != 0); */ // True?  Should it return BLANK!?
 
-        Init_String(D_OUT, Decode_UTF_String(cb_cast(val), size, 8));
+        Init_String(D_OUT, Append_UTF8_May_Fail(NULL, cb_cast(val), size));
     }
 
     OS_FREE(key);
@@ -2318,18 +2318,18 @@ static REBNATIVE(list_env)
         REBCNT size = strlen(key_equals_val);
         Init_String(
             Alloc_Tail_Array(array),
-            Decode_UTF_String(
+            Append_UTF8_May_Fail(
+                NULL,
                 cb_cast(key_equals_val),
-                eq_pos - key_equals_val,
-                8
+                eq_pos - key_equals_val
             )
         );
         Init_String(
             Alloc_Tail_Array(array),
-            Decode_UTF_String(
+            Append_UTF8_May_Fail(
+                NULL,
                 cb_cast(eq_pos + 1),
-                size - (eq_pos - key_equals_val) - 1,
-                8
+                size - (eq_pos - key_equals_val) - 1
             )
         );
     }
