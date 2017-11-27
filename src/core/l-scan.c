@@ -398,9 +398,15 @@ static const REBYTE *Scan_UTF8_Char_Escapable(REBUNI *out, const REBYTE *bp)
 //
 //  Scan_Quote_Push_Mold: C
 //
-// Scan a quoted string, handling all the escape characters.
+// Scan a quoted string, handling all the escape characters.  e.g. an input
+// stream might have "a^(1234)b" and need to turn "^(1234)" into the right
+// UTF-8 bytes for that codepoint in the string.
 //
-// The result will be put into the temporary unistring mold buffer.
+// !!! In R3-Alpha the mold buffer held 16-bit codepoints.  Ren-C uses UTF-8
+// everywhere, and so molding is naturally done into a byte buffer.  This is
+// more compatible with the fact that the incoming stream is UTF-8 bytes, so
+// optimizations will be possible.  As a first try, just getting it working
+// is the goal.
 //
 static const REBYTE *Scan_Quote_Push_Mold(
     REB_MOLD *mo,
@@ -459,19 +465,22 @@ static const REBYTE *Scan_Quote_Push_Mold(
 
         src++;
 
-        if (SER_LEN(mo->series) + 1 >= SER_REST(mo->series)) // incl term
-            Extend_Series(mo->series, 1);
+        // 4 bytes maximum for UTF-8 encoded character (6 is a lie)
+        //
+        // https://stackoverflow.com/a/9533324/211160
+        //
+        if (SER_LEN(mo->series) + 4 >= SER_REST(mo->series)) // incl term
+            Extend_Series(mo->series, 4);
 
-        *UNI_TAIL(mo->series) = chr;
-
-        SET_SERIES_LEN(mo->series, SER_LEN(mo->series) + 1);
+        REBCNT encoded_len = Encode_UTF8_Char(BIN_TAIL(mo->series), chr);
+        SET_SERIES_LEN(mo->series, SER_LEN(mo->series) + encoded_len);
     }
 
     src++; // Skip ending quote or brace.
 
     ss->line += lines;
 
-    TERM_UNI(mo->series);
+    TERM_BIN(mo->series);
 
     return src;
 }
@@ -480,75 +489,97 @@ static const REBYTE *Scan_Quote_Push_Mold(
 //
 //  Scan_Item_Push_Mold: C
 //
-// Scan as UTF8 an item like a file or URL.
+// Scan as UTF8 an item like a file.  Handles *some* forms of escaping, which
+// may not be a great idea (see notes below on how URL! moved away from that)
 //
-// Returns continuation point or zero for error.
+// Returns continuation point or zero for error.  Puts result into the
+// temporary mold buffer as UTF-8.
 //
-// Put result into the temporary mold buffer as uni-chars.
+// !!! See notes on Scan_Quote_Push_Mold about the inefficiency of this
+// interim time of changing the mold buffer from 16-bit codepoints to UTF-8
 //
 const REBYTE *Scan_Item_Push_Mold(
     REB_MOLD *mo,
-    const REBYTE *src,
-    const REBYTE *end,
-    REBUNI term,
-    const REBYTE *invalid
-) {
-    REBUNI c;
+    const REBYTE *bp,
+    const REBYTE *ep,
+    REBYTE opt_term, // '\0' if file like %foo - '"' if file like %"foo bar"
+    const REBYTE *opt_invalids
+){
+    assert(opt_term < 128); // method below doesn't search for high chars
 
     Push_Mold(mo);
 
-    while (src < end && *src != term) {
+    while (bp < ep && *bp != opt_term) {
+        REBUNI c = *bp;
 
-        c = *src;
+        if (c == '\0')
+            break; // End of stream
 
-        // End of stream?
-        if (c == 0) break;
+        if ((opt_term == '\0') && IS_WHITE(c))
+            break; // Unless terminator like '"' %"...", any whitespace ends
 
-        // If no term, then any white will terminate:
-        if (!term && IS_WHITE(c)) break;
+        if (c < ' ')
+            return NULL; // Ctrl characters not valid in filenames, fail
 
-        // Ctrl chars are invalid:
-        if (c < ' ') return 0;  // invalid char
-
-        if (c == '\\') c = '/';
-
-        // Accept %xx encoded char:
-        else if (c == '%') {
-            if (!Scan_Hex2(src+1, &c, FALSE)) return 0;
-            src += 2;
+        // !!! The branches below do things like "forces %\foo\bar to become
+        // %/foo/bar".  But it may be that this kind of lossy scanning is a
+        // poor idea, and it's better to preserve what the user entered then
+        // have FILE-TO-LOCAL complain it's malformed when turning to a
+        // STRING!--or be overridden explicitly to be lax and tolerate it.
+        //
+        // (URL! has already come under scrutiny for these kinds of automatic
+        // translations that affect round-trip copy and paste, and it seems
+        // applicable to FILE! too.)
+        //
+        if (c == '\\') {
+            c = '/';
+        }
+        else if (c == '%') { // Accept %xx encoded char:
+            const REBOOL unicode = FALSE;
+            if (!Scan_Hex2(&c, bp + 1, unicode))
+                return NULL;
+            bp += 2;
+        }
+        else if (c == '^') { // Accept ^X encoded char:
+            if (bp + 1 == ep)
+                return NULL; // error if nothing follows ^
+            if (NULL == (bp = Scan_UTF8_Char_Escapable(&c, bp)))
+                return NULL;
+            if (opt_term == '\0' && IS_WHITE(c))
+                break;
+            bp--;
+        }
+        else if (c >= 0x80) { // Accept UTF8 encoded char:
+            if (NULL == (bp = Back_Scan_UTF8_Char(&c, bp, 0)))
+                return NULL;
+        }
+        else if (opt_invalids && strchr(cs_cast(opt_invalids), c)) {
+            //
+            // Is char as literal valid? (e.g. () [] etc.)
+            // Only searches ASCII characters.
+            //
+            return NULL;
         }
 
-        // Accept ^X encoded char:
-        else if (c == '^') {
-            if (src+1 == end) return 0; // nothing follows ^
-            if (!(src = Scan_UTF8_Char_Escapable(&c, src))) return NULL;
-            if (!term && IS_WHITE(c)) break;
-            src--;
-        }
+        ++bp;
 
-        // Accept UTF8 encoded char:
-        else if (c >= 0x80) {
-            if (!(src = Back_Scan_UTF8_Char(&c, src, 0))) return NULL;
-        }
+        // 4 bytes maximum for UTF-8 encoded character (6 is a lie)
+        //
+        // https://stackoverflow.com/a/9533324/211160
+        //
+        if (SER_LEN(mo->series) + 4 >= SER_REST(mo->series)) // incl term
+            Extend_Series(mo->series, 4);
 
-        // Is char as literal valid? (e.g. () [] etc.)
-        else if (invalid && strchr(cs_cast(invalid), c)) return 0;
-
-        src++;
-
-        *UNI_TAIL(mo->series) = c; // not affected by Extend_Series
-
-        SET_SERIES_LEN(mo->series, SER_LEN(mo->series) + 1);
-
-        if (SER_LEN(mo->series) >= SER_REST(mo->series))
-            Extend_Series(mo->series, 1);
+        REBCNT encoded_len = Encode_UTF8_Char(BIN_TAIL(mo->series), c);
+        SET_SERIES_LEN(mo->series, SER_LEN(mo->series) + encoded_len);
     }
 
-    if (*src && *src == term) src++;
+    if (*bp != '\0' && *bp == opt_term)
+        ++bp;
 
-    TERM_UNI(mo->series);
+    TERM_BIN(mo->series);
 
-    return src;
+    return bp;
 }
 
 
@@ -851,9 +882,9 @@ static REBCNT Prescan_Token(SCAN_STATE *ss)
 // Determining the end point of token types that need escaping requires
 // processing (for instance `{a^}b}` can't see the first close brace as ending
 // the string).  To avoid double processing, the routine decodes the string's
-// content into UNI_BUF for any quoted form to be used by the caller.  This is
+// content into MOLD_BUF for any quoted form to be used by the caller.  It's
 // overwritten in successive calls, and is only done for quoted forms (e.g.
-// %"foo" will have data in UNI_BUF but %foo will not.)
+// %"foo" will have data in MOLD_BUF but %foo will not.)
 //
 // !!! This is a somewhat weird separation of responsibilities, that seems to
 // arise from a desire to make "Scan_XXX" functions independent of the
@@ -882,17 +913,17 @@ static REBCNT Prescan_Token(SCAN_STATE *ss)
 //     $10AE.20 sent => fail()
 //     B       E
 //
-//     {line1\nline2}  => TOKEN_STRING (content in UNI_BUF)
+//     {line1\nline2}  => TOKEN_STRING (content in MOLD_BUF)
 //     B             E
 //
 //     \n{line2} => TOKEN_NEWLINE (newline is external)
 //     BB
 //       E
 //
-//     %"a ^"b^" c" d => TOKEN_FILE (content in UNI_BUF)
+//     %"a ^"b^" c" d => TOKEN_FILE (content in MOLD_BUF)
 //     B           E
 //
-//     %a-b.c d => TOKEN_FILE (content *not* in UNI_BUF)
+//     %a-b.c d => TOKEN_FILE (content *not* in MOLD_BUF)
 //     B     E
 //
 //     \0 => TOKEN_END
@@ -2046,7 +2077,7 @@ REBARR *Scan_Array(
             break;
 
         case TOKEN_STRING: {
-            // During scan above, string was stored in UNI_BUF (with Uni width)
+            // During scan above, string was stored in MOLD_BUF (UTF-8)
             //
             REBSER *s = Pop_Molded_String(&mo);
             DS_PUSH_TRASH;

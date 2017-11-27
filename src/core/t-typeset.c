@@ -303,7 +303,7 @@ void MF_Typeset(REB_MOLD *mo, const RELVAL *v, REBOOL form)
 
     if (NOT(form)) {
         Pre_Mold(mo, v);  // #[typeset! or make typeset!
-        Append_Codepoint(mo->series, '[');
+        Append_Utf8_Codepoint(mo->series, '[');
     }
 
 #if !defined(NDEBUG)
@@ -325,7 +325,7 @@ void MF_Typeset(REB_MOLD *mo, const RELVAL *v, REBOOL form)
         //
         Append_Unencoded(mo->series, "(");
 
-        Append_UTF8_May_Fail(
+        Append_Utf8_Utf8(
             mo->series, STR_HEAD(spelling), STR_NUM_BYTES(spelling)
         );
         Append_Unencoded(mo->series, ") ");
@@ -356,7 +356,7 @@ skip_types:
 #endif
 
     if (NOT(form)) {
-        Append_Codepoint(mo->series, ']');
+        Append_Utf8_Codepoint(mo->series, ']');
         End_Mold(mo);
     }
 }

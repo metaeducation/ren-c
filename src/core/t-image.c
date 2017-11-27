@@ -507,28 +507,31 @@ REBCNT ARGB_To_BGR(REBCNT i)
 }
 #endif
 
+
 //
 //  Mold_Image_Data: C
 //
+// Output RGB image data, and then alpha channel (if it has one)
+//
 void Mold_Image_Data(const REBVAL *value, REB_MOLD *mold)
 {
-    REBUNI *up;
-    REBCNT len;
-    REBCNT size;
-    REBCNT *data;
-    REBYTE* pixel;
+    REBCNT size = VAL_IMAGE_LEN(value); // # pixels (from index to tail)
+    REBCNT *data = cast(REBCNT*, VAL_IMAGE_DATA(value));
 
     Emit(mold, "IxI #{", VAL_IMAGE_WIDE(value), VAL_IMAGE_HIGH(value));
 
-    // Output RGB image:
-    size = VAL_IMAGE_LEN(value); // # pixels (from index to tail)
-    data = (REBCNT *)VAL_IMAGE_DATA(value);
-    up = Prep_Uni_Series(mold, (size * 6) + (size / 10) + 1);
+    // !!! Actually accurate?
+    //
+    REBYTE *bp = Prep_Mold_Overestimated(mold, (size * 6) + (size / 10) + 1);
 
+    REBCNT len;
     for (len = 0; len < size; len++) {
-        pixel = (REBYTE*)data++;
-        if ((len % 10) == 0) *up++ = LF;
-        up = Form_RGB_Uni(up, TO_RGBA_COLOR(pixel[C_R],pixel[C_G],pixel[C_B],pixel[C_A]));
+        REBYTE* pixel = cast(REBYTE*, data++);
+        if ((len % 10) == 0)
+            *bp++ = LF;
+        bp = Form_RGB_Utf8(
+            bp, TO_RGBA_COLOR(pixel[C_R], pixel[C_G], pixel[C_B], pixel[C_A])
+        );
     }
 
     // Output Alpha channel, if it has one:
@@ -536,15 +539,19 @@ void Mold_Image_Data(const REBVAL *value, REB_MOLD *mold)
 
         Append_Unencoded(mold->series, "\n} #{");
 
-        up = Prep_Uni_Series(mold, (size * 2) + (size / 10) + 1);
+        // !!! Actually accurate?
+        //
+        bp = Prep_Mold_Overestimated(mold, (size * 2) + (size / 10) + 1);
 
-        data = (REBCNT *)VAL_IMAGE_DATA(value);
+        data = cast(REBCNT*, VAL_IMAGE_DATA(value));
         for (len = 0; len < size; len++) {
-            if ((len % 10) == 0) *up++ = LF;
-            up = Form_Hex2_Uni(up, *data++ >> 24);
+            if ((len % 10) == 0)
+                *bp++ = LF;
+            bp = Form_Hex2_UTF8(bp, *data++ >> 24);
         }
     }
-    *up = 0; // tail already set from Prep.
+
+    *bp = '\0'; // tail already set from Prep (so it thinks it guessed right)
 
     Append_Unencoded(mold->series, "\n}");
 }
@@ -961,9 +968,9 @@ void MF_Image(REB_MOLD *mo, const RELVAL *v, REBOOL form)
         Post_Mold(mo, v);
     }
     else {
-        Append_Codepoint(mo->series, '[');
+        Append_Utf8_Codepoint(mo->series, '[');
         Mold_Image_Data(const_KNOWN(v), mo);
-        Append_Codepoint(mo->series, ']');
+        Append_Utf8_Codepoint(mo->series, ']');
         End_Mold(mo);
     }
 }

@@ -111,7 +111,6 @@ void MAKE_Tuple(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
     REBCNT alen;
 
     if (IS_ISSUE(arg)) {
-        REBUNI c;
         const REBYTE *ap = VAL_WORD_HEAD(arg);
         REBCNT len = LEN_BYTES(ap);  // UTF-8 len
         if (len & 1)
@@ -122,9 +121,10 @@ void MAKE_Tuple(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
         VAL_TUPLE_LEN(out) = len;
         for (alen = 0; alen < len; alen++) {
             const REBOOL unicode = FALSE;
-            if (!Scan_Hex2(ap, &c, unicode))
+            REBUNI ch;
+            if (!Scan_Hex2(&ch, ap, unicode))
                 fail (arg);
-            *vp++ = cast(REBYTE, c);
+            *vp++ = cast(REBYTE, ch);
             ap += 2;
         }
     }

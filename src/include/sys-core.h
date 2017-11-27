@@ -489,7 +489,7 @@ enum {
 
 // Encoding options:
 enum encoding_opts {
-    OPT_ENC_0 = 0, // byte order marker
+    OPT_ENC_0 = 0,
     OPT_ENC_CRLF = 1 << 1, // CR line termination, see OPT_ENC_CRLF_MAYBE
     OPT_ENC_RAW = 1 << 2 // raw binary, no encoding
 };
@@ -678,7 +678,7 @@ inline static void SET_SIGNAL(REBFLGS f) {
 #define BUF_COLLECT     VAL_ARRAY(TASK_BUF_COLLECT)
 
 #define BYTE_BUF        VAL_SERIES(TASK_BYTE_BUF)
-#define UNI_BUF        VAL_SERIES(TASK_UNI_BUF)
+#define MOLD_BUF        VAL_SERIES(TASK_MOLD_BUF)
 #define BUF_UTF8        VAL_SERIES(TASK_BUF_UTF8)
 
 enum {

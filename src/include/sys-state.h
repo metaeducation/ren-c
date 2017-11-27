@@ -53,6 +53,6 @@ struct Reb_State {
     REBCTX *error;
 
     REBCNT manuals_len; // Where GC_Manuals was when state started
-    REBCNT uni_buf_len;
+    REBCNT mold_buf_len;
     REBCNT mold_loop_tail;
 };

@@ -151,9 +151,9 @@ REBNATIVE(request_file_p)
         RELVAL *item;
         for (item = VAL_ARRAY_AT(ARG(list)); NOT_END(item); ++item) {
             Form_Value(mo, item);
-            Append_Codepoint(mo->series, '\0');
+            Append_Utf8_Codepoint(mo->series, '\0');
         }
-        Append_Codepoint(mo->series, '\0');
+        Append_Utf8_Codepoint(mo->series, '\0');
 
         REBSER *ser = Pop_Molded_String(mo);
 

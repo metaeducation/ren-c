@@ -140,37 +140,39 @@ void TO_Word(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 void MF_Word(REB_MOLD *mo, const RELVAL *v, REBOOL form) {
     UNUSED(form); // no difference between MOLD and FORM at this time
 
-    REBSTR *spelling = VAL_WORD_SPELLING(v);
+    const REBYTE *spelling = STR_HEAD(VAL_WORD_SPELLING(v));
+    REBCNT spelling_bytes = STR_NUM_BYTES(VAL_WORD_SPELLING(v));
+
     REBSER *s = mo->series;
 
     switch (VAL_TYPE(v)) {
     case REB_WORD: {
-        Append_UTF8_May_Fail(s, STR_HEAD(spelling), STR_NUM_BYTES(spelling));
+        Append_Utf8_Utf8(s, spelling, spelling_bytes);
         break; }
 
     case REB_SET_WORD:
-        Append_UTF8_May_Fail(s, STR_HEAD(spelling), STR_NUM_BYTES(spelling));
-        Append_Codepoint(s, ':');
+        Append_Utf8_Utf8(s, spelling, spelling_bytes);
+        Append_Utf8_Codepoint(s, ':');
         break;
 
     case REB_GET_WORD:
-        Append_Codepoint(s, ':');
-        Append_UTF8_May_Fail(s, STR_HEAD(spelling), STR_NUM_BYTES(spelling));
+        Append_Utf8_Codepoint(s, ':');
+        Append_Utf8_Utf8(s, spelling, spelling_bytes);
         break;
 
     case REB_LIT_WORD:
-        Append_Codepoint(s, '\'');
-        Append_UTF8_May_Fail(s, STR_HEAD(spelling), STR_NUM_BYTES(spelling));
+        Append_Utf8_Codepoint(s, '\'');
+        Append_Utf8_Utf8(s, spelling, spelling_bytes);
         break;
 
     case REB_REFINEMENT:
-        Append_Codepoint(s, '/');
-        Append_UTF8_May_Fail(s, STR_HEAD(spelling), STR_NUM_BYTES(spelling));
+        Append_Utf8_Codepoint(s, '/');
+        Append_Utf8_Utf8(s, spelling, spelling_bytes);
         break;
 
     case REB_ISSUE:
-        Append_Codepoint(s, '#');
-        Append_UTF8_May_Fail(s, STR_HEAD(spelling), STR_NUM_BYTES(spelling));
+        Append_Utf8_Codepoint(s, '#');
+        Append_Utf8_Utf8(s, spelling, spelling_bytes);
         break;
 
     default:

@@ -93,7 +93,7 @@
 void Emit(REB_MOLD *mo, const char *fmt, ...)
 {
     REBSER *s = mo->series;
-    assert(SER_WIDE(s) == 2);
+    assert(SER_WIDE(s) == 1);
 
     va_list va;
     va_start(va, fmt);
@@ -105,7 +105,7 @@ void Emit(REB_MOLD *mo, const char *fmt, ...)
         case 'W': { // Word symbol
             const REBVAL *any_word = va_arg(va, const REBVAL*);
             REBSTR *spelling = VAL_WORD_SPELLING(any_word);
-            Append_UTF8_May_Fail(
+            Append_Utf8_Utf8(
                 s, STR_HEAD(spelling), STR_NUM_BYTES(spelling)
             );
             break;
@@ -120,11 +120,12 @@ void Emit(REB_MOLD *mo, const char *fmt, ...)
             break;
 
         case 'C': // Char
-            Append_Codepoint(s, va_arg(va, REBCNT));
+            Append_Utf8_Codepoint(s, va_arg(va, u32));
             break;
 
-        case 'E': { // Series (byte or uni)
+        case 'E': { // Series (used by mold of BINARY!, currently)
             REBSER *src = va_arg(va, REBSER*);
+            assert(SER_WIDE(src) == sizeof(REBYTE));
             Insert_String(s, SER_LEN(s), src, 0, SER_LEN(src), FALSE);
             break; }
 
@@ -143,12 +144,12 @@ void Emit(REB_MOLD *mo, const char *fmt, ...)
 
         case 'T': {  // Type name
             const REBYTE *bytes = Get_Type_Name(va_arg(va, REBVAL*));
-            Append_UTF8_May_Fail(s, bytes, LEN_BYTES(bytes));
+            Append_Utf8_Utf8(s, bytes, LEN_BYTES(bytes));
             break; }
 
         case 'N': {  // Symbol name
             REBSTR *spelling = va_arg(va, REBSTR*);
-            Append_UTF8_May_Fail(
+            Append_Utf8_Utf8(
                 s, STR_HEAD(spelling), STR_NUM_BYTES(spelling)
             );
             break; }
@@ -163,37 +164,54 @@ void Emit(REB_MOLD *mo, const char *fmt, ...)
         case 'D': // Datatype symbol: #[type
             if (ender != '\0') {
                 REBSTR *canon = Canon(cast(REBSYM, va_arg(va, int)));
-                Append_UTF8_May_Fail(
+                Append_Utf8_Utf8(
                     s, STR_HEAD(canon), STR_NUM_BYTES(canon)
                 );
-                Append_Codepoint(s, ' ');
+                Append_Utf8_Codepoint(s, ' ');
             }
             else
                 va_arg(va, REBCNT); // ignore it
             break;
 
         default:
-            Append_Codepoint(s, *fmt);
+            Append_Utf8_Codepoint(s, *fmt);
         }
     }
 
     va_end(va);
 
     if (ender != '\0')
-        Append_Codepoint(s, ender);
+        Append_Utf8_Codepoint(s, ender);
 }
 
 
 //
-//  Prep_Uni_Series: C
+//  Prep_Mold_Overestimated: C
 //
-REBUNI *Prep_Uni_Series(REB_MOLD *mo, REBCNT len)
+// But since R3-Alpha's mold buffer was fixed size at unicode, it could
+// accurately know that one character in a STRING! or URL! or FILE! would only
+// be one unit of mold buffer, unless it was escaped.  So it would prescan
+// for escapes and compensate accordingly.  In the interim period where
+// ANY-STRING! is two-bytes per codepoint and the mold buffer is UTF-8, it's
+// hard to be precise.
+//
+// So this locates places in the code that pass in a potential guess which may
+// (or may not) be right.  (Guesses will tend to involve some multiplication
+// of codepoint counts by 4, since that's the largest a UTF-8 character can
+// end up encoding).  Doing this more precisely is not worth it for this
+// interim mode, as there will be no two-bytes-per-codepoint code eventaully.
+//
+// !!! One premise of the mold buffer is that it will generally be bigger than
+// your output, so you won't expand it often.  This lets one be a little
+// sloppy on expansion and keeping the series length up to date (could use an
+// invalid UTF-8 character as an end-of-buffer signal, much as END markers are
+// used by the data stack)
+//
+REBYTE *Prep_Mold_Overestimated(REB_MOLD *mo, REBCNT num_bytes)
 {
     REBCNT tail = SER_LEN(mo->series);
-
-    EXPAND_SERIES_TAIL(mo->series, len);
-
-    return UNI_AT(mo->series, tail);
+    EXPAND_SERIES_TAIL(mo->series, num_bytes); // terminates, if guessed right
+    return BIN_AT(mo->series, tail);
 }
 
 
@@ -216,7 +234,7 @@ void Pre_Mold(REB_MOLD *mo, const RELVAL *v)
 void End_Mold(REB_MOLD *mo)
 {
     if (GET_MOLD_FLAG(mo, MOLD_FLAG_ALL))
-        Append_Codepoint(mo->series, ']');
+        Append_Utf8_Codepoint(mo->series, ']');
 }
 
 
@@ -229,11 +247,11 @@ void End_Mold(REB_MOLD *mo)
 void Post_Mold(REB_MOLD *mo, const RELVAL *v)
 {
     if (VAL_INDEX(v)) {
-        Append_Codepoint(mo->series, ' ');
+        Append_Utf8_Codepoint(mo->series, ' ');
         Append_Int(mo->series, VAL_INDEX(v) + 1);
     }
     if (GET_MOLD_FLAG(mo, MOLD_FLAG_ALL))
-        Append_Codepoint(mo->series, ']');
+        Append_Utf8_Codepoint(mo->series, ']');
 }
 
 
@@ -246,20 +264,20 @@ void New_Indented_Line(REB_MOLD *mo)
 {
     // Check output string has content already but no terminator:
     //
-    REBUNI *cp;
+    REBYTE *bp;
     if (SER_LEN(mo->series) == 0)
-        cp = NULL;
+        bp = NULL;
     else {
-        cp = UNI_LAST(mo->series);
-        if (*cp == ' ' || *cp == '\t')
-            *cp = '\n';
+        bp = BIN_LAST(mo->series);
+        if (*bp == ' ' || *bp == '\t')
+            *bp = '\n';
         else
-            cp = NULL;
+            bp = NULL;
     }
 
     // Add terminator:
-    if (cp == NULL)
-        Append_Codepoint(mo->series, '\n');
+    if (bp == NULL)
+        Append_Utf8_Codepoint(mo->series, '\n');
 
     // Add proper indentation:
     if (NOT_MOLD_FLAG(mo, MOLD_FLAG_INDENT)) {
@@ -351,7 +369,7 @@ void Mold_Array_At(
     REBOOL had_output = FALSE;
 
     if (sep[1]) {
-        Append_Codepoint(mo->series, sep[0]);
+        Append_Utf8_Codepoint(mo->series, sep[0]);
         had_output = TRUE;
     }
 
@@ -388,7 +406,7 @@ void Mold_Array_At(
 
         item++;
         if (NOT_END(item))
-            Append_Codepoint(mo->series, (sep[0] == '/') ? '/' : ' ');
+            Append_Utf8_Codepoint(mo->series, (sep[0] == '/') ? '/' : ' ');
     }
 
     // The newline markers in arrays are on values, and indicate a newline
@@ -403,7 +421,7 @@ void Mold_Array_At(
     }
 
     if (sep[1])
-        Append_Codepoint(mo->series, sep[1]);
+        Append_Utf8_Codepoint(mo->series, sep[1]);
 
     Drop_Pointer_From_Series(TG_Mold_Stack, a);
 }
@@ -435,15 +453,15 @@ void Form_Array_At(
         Mold_Or_Form_Value(mo, item, LOGICAL(wval == NULL));
         n++;
         if (GET_MOLD_FLAG(mo, MOLD_FLAG_LINES)) {
-            Append_Codepoint(mo->series, LF);
+            Append_Utf8_Codepoint(mo->series, LF);
         }
         else {
             // Add a space if needed:
             if (n < len && SER_LEN(mo->series)
-                && *UNI_LAST(mo->series) != LF
+                && *BIN_LAST(mo->series) != LF
                 && NOT_MOLD_FLAG(mo, MOLD_FLAG_TIGHT)
             ){
-                Append_Codepoint(mo->series, ' ');
+                Append_Utf8_Codepoint(mo->series, ' ');
             }
         }
     }
@@ -499,7 +517,7 @@ void MF_Unhooked(REB_MOLD *mo, const RELVAL *v, REBOOL form)
 void Mold_Or_Form_Value(REB_MOLD *mo, const RELVAL *v, REBOOL form)
 {
     REBSER *s = mo->series;
-    assert(SER_WIDE(s) == sizeof(REBUNI));
+    assert(SER_WIDE(s) == sizeof(REBYTE));
     ASSERT_SERIES_TERM(s);
 
     if (C_STACK_OVERFLOWING(&s))
@@ -623,7 +641,7 @@ REBOOL Form_Reduce_Throws(
         }
 
         if (IS_BAR(f->value)) { // newline
-            Append_Codepoint(mo->series, '\n');
+            Append_Utf8_Codepoint(mo->series, '\n');
             pending = FALSE;
             Fetch_Next_In_Frame(f);
             continue;
@@ -638,13 +656,13 @@ REBOOL Form_Reduce_Throws(
             continue;
 
         if (IS_BAR(out)) { // newline
-            Append_Codepoint(mo->series, '\n');
+            Append_Utf8_Codepoint(mo->series, '\n');
             pending = FALSE;
             continue;
         }
 
         if (IS_CHAR(out)) {
-            Append_Codepoint(mo->series, VAL_CHAR(out));
+            Append_Utf8_Codepoint(mo->series, VAL_CHAR(out));
             pending = FALSE;
         }
         else if (IS_BLANK(delimiter)) // no delimiter
@@ -717,7 +735,7 @@ void Push_Mold(REB_MOLD *mo)
         assert(mo->limit != 0);
 #endif
 
-    REBSER *s = mo->series = UNI_BUF;
+    REBSER *s = mo->series = MOLD_BUF;
     mo->start = SER_LEN(s);
 
     ASSERT_SERIES_TERM(s);
@@ -822,13 +840,14 @@ REBSER *Pop_Molded_String_Core(REB_MOLD *mo, REBCNT len)
         (len == UNKNOWN) || (len <= SER_LEN(mo->series) - mo->start)
     );
 
-    REBSER *result = Copy_String_At_Len(
-        mo->series,
-        mo->start,
+    REBSER *result = Append_UTF8_May_Fail(
+        NULL, // make new series
+        BIN_AT(mo->series, mo->start),
         (len == UNKNOWN)
             ? SER_LEN(mo->series) - mo->start
             : len
     );
+    assert(SER_WIDE(result) == sizeof(REBUNI));
 
     // Though the protocol of Mold_Value does terminate, it only does so if
     // it adds content to the buffer.  If we did not terminate when we
@@ -836,47 +855,7 @@ REBSER *Pop_Molded_String_Core(REB_MOLD *mo, REBCNT len)
     // whatever value in the terminator spot was there.  This could be
     // addressed by making no-op molds terminate.
     //
-    TERM_UNI_LEN(mo->series, mo->start);
-
-    mo->series = NULL;
-
-    return result;
-}
-
-
-//
-//  Pop_Molded_Binary: C
-//
-// Give back a BINARY! series, assuming that only bytes were pushed to the
-// molding stack.
-//
-REBSER *Pop_Molded_Binary(REB_MOLD *mo)
-{
-    assert(mo->series); // if NULL there was no Push_Mold()
-
-    ASSERT_SERIES_TERM(mo->series);
-    Throttle_Mold(mo);
-
-    REBCNT len = SER_LEN(mo->series) - mo->start;
-
-    REBSER *result = Make_Binary(len);
-    REBUNI *src = UNI_AT(mo->series, mo->start);
-    REBYTE *dst = BIN_HEAD(result);
-
-    REBCNT n;
-    for (n = 0; n < len; ++n, ++src, ++dst) {
-        assert(*src <= 255);
-        *dst = cast(REBYTE, *src);
-    }
-    TERM_BIN_LEN(result, len);
-
-    // Though the protocol of Mold_Value does terminate, it only does so if
-    // it adds content to the buffer.  If we did not terminate when we
-    // reset the size, then these no-op molds (e.g. mold of "") would leave
-    // whatever value in the terminator spot was there.  This could be
-    // addressed by making no-op molds terminate.
-    //
-    TERM_UNI_LEN(mo->series, mo->start);
+    TERM_BIN_LEN(mo->series, mo->start);
 
     mo->series = NULL;
 
@@ -897,18 +876,36 @@ REBSER *Pop_Molded_UTF8(REB_MOLD *mo)
     ASSERT_SERIES_TERM(mo->series);
     Throttle_Mold(mo);
 
-    REBSER *bytes = Make_UTF8_Binary(
-        UNI_AT(mo->series, mo->start),
-        SER_LEN(mo->series) - mo->start,
-        0, // extra
-        OPT_ENC_0
+    REBSER *bytes = Copy_Sequence_At_Len(
+        mo->series, mo->start, SER_LEN(mo->series) - mo->start
     );
     assert(BYTE_SIZE(bytes));
 
-    TERM_UNI_LEN(mo->series, mo->start);
+    // Though the protocol of Mold_Value does terminate, it only does so if
+    // it adds content to the buffer.  If we did not terminate when we
+    // reset the size, then these no-op molds (e.g. mold of "") would leave
+    // whatever value in the terminator spot was there.  This could be
+    // addressed by making no-op molds terminate.
+    //
+    TERM_BIN_LEN(mo->series, mo->start);
 
     mo->series = NULL;
     return bytes;
+}
+
+
+//
+//  Pop_Molded_Binary: C
+//
+// !!! This particular use of the mold buffer might undermine tricks which
+// could be used with invalid UTF-8 bytes--for instance.  Review.
+//
+// In its current form, the implementation is not distinguishable from
+// Pop_Molded_UTF8.
+//
+REBSER *Pop_Molded_Binary(REB_MOLD *mo)
+{
+    return Pop_Molded_UTF8(mo);
 }
 
 
@@ -926,13 +923,12 @@ void Drop_Mold_Core(REB_MOLD *mo, REBOOL not_pushed_ok)
     // pointers in the UTF8 data it is loading alone.  However, scanning
     // string escapes is a process that requires converting the actual
     // characters to unicode.  To avoid redoing this work later in the scan,
-    // it uses the unicode buffer as a storage space from the tokenization
+    // it uses the mold buffer as a storage space from the tokenization
     // that did UTF-8 decoding of string contents to reuse.
     //
     // Despite this usage, it's desirable to be able to do things like output
     // debug strings or do basic molding in that code.  So to reuse the
-    // allocated unicode buffer, it has to properly participate in the mold
-    // stack protocol.
+    // buffer, it has to properly participate in the mold stack protocol.
     //
     // However, only a few token types use the buffer.  Rather than burden
     // the tokenizer with an additional flag, having a modality to be willing
@@ -949,7 +945,7 @@ void Drop_Mold_Core(REB_MOLD *mo, REBOOL not_pushed_ok)
     //
     NOTE_SERIES_MAYBE_TERM(mo->series);
 
-    TERM_UNI_LEN(mo->series, mo->start); // see Pop_Molded_String() notes
+    TERM_BIN_LEN(mo->series, mo->start); // see Pop_Molded_String() notes
 
     mo->series = NULL;
 }
@@ -962,7 +958,7 @@ void Startup_Mold(REBCNT size)
 {
     TG_Mold_Stack = Make_Series(10, sizeof(void*));
 
-    Init_String(TASK_UNI_BUF, Make_Unicode(size));
+    Init_Binary(TASK_MOLD_BUF, Make_Binary(size));
 }
 
 

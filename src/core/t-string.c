@@ -782,74 +782,117 @@ typedef struct REB_Str_Flags {
 static void Sniff_String(REBSER *ser, REBCNT idx, REB_STRF *sf)
 {
     // Scan to find out what special chars the string contains?
-    REBYTE *bp = SER_DATA_RAW(ser);
-    REBUNI *up = cast(REBUNI*, bp);
-    REBUNI c;
-    REBCNT n;
 
+    REBUNI *up = UNI_HEAD(ser);
+
+    REBCNT n;
     for (n = idx; n < SER_LEN(ser); n++) {
-        c = BYTE_SIZE(ser) ? cast(REBUNI, bp[n]) : up[n];
+        REBUNI c = up[n];
         switch (c) {
         case '{':
             sf->brace_in++;
             break;
+
         case '}':
             sf->brace_out++;
-            if (sf->brace_out > sf->brace_in) sf->malign++;
+            if (sf->brace_out > sf->brace_in)
+                sf->malign++;
             break;
+
         case '"':
             sf->quote++;
             break;
+
         case '\n':
             sf->newline++;
             break;
+
         default:
-            if (c == 0x1e) sf->chr1e += 4; // special case of ^(1e)
-            else if (IS_CHR_ESC(c)) sf->escape++;
-            else if (c >= 0x1000) sf->paren += 6; // ^(1234)
-            else if (c >= 0x100)  sf->paren += 5; // ^(123)
-            else if (c >= 0x80)   sf->paren += 4; // ^(12)
+            if (c == 0x1e)
+                sf->chr1e += 4; // special case of ^(1e)
+            else if (IS_CHR_ESC(c))
+                sf->escape++;
+            else if (c >= 0x1000)
+                sf->paren += 6; // ^(1234)
+            else if (c >= 0x100)
+                sf->paren += 5; // ^(123)
+            else if (c >= 0x80)
+                sf->paren += 4; // ^(12)
         }
     }
-    if (sf->brace_in != sf->brace_out) sf->malign++;
+
+    if (sf->brace_in != sf->brace_out)
+        sf->malign++;
+}
+
+
+//
+//  Form_Uni_Hex: C
+//
+// Fast var-length hex output for uni-chars.
+// Returns next position (just past the insert).
+//
+REBYTE *Form_Uni_Hex(REBYTE *out, REBCNT n)
+{
+    REBYTE buffer[10];
+    REBYTE *bp = &buffer[10];
+
+    while (n != 0) {
+        *(--bp) = Hex_Digits[n & 0xf];
+        n >>= 4;
+    }
+
+    while (bp < &buffer[10])
+        *out++ = *bp++;
+
+    return out;
 }
 
 
 //
 //  Emit_Uni_Char: C
 //
-REBUNI *Emit_Uni_Char(REBUNI *up, REBUNI chr, REBOOL parened)
+// !!! These heuristics were used in R3-Alpha to decide when to output
+// characters in strings as escape for molding.  It's not clear where to
+// draw the line with it...should most printable characters just be emitted
+// normally in the UTF-8 string with a few exceptions (like newline as ^/)?
+//
+// For now just preserve what was there, but do it as UTF8 bytes.
+//
+REBYTE *Emit_Uni_Char(REBYTE *bp, REBUNI chr, REBOOL parened)
 {
     if (chr >= 0x7f || chr == 0x1e) {  // non ASCII or ^ must be (00) escaped
         if (parened || chr == 0x1e) { // do not AND with above
-            *up++ = '^';
-            *up++ = '(';
-            up = Form_Uni_Hex(up, chr);
-            *up++ = ')';
-            return up;
+            *bp++ = '^';
+            *bp++ = '(';
+            bp = Form_Uni_Hex(bp, chr);
+            *bp++ = ')';
+            return bp;
         }
+
+        // fallthrough...
     }
     else if (IS_CHR_ESC(chr)) {
-        *up++ = '^';
-        *up++ = Char_Escapes[chr];
-        return up;
+        *bp++ = '^';
+        *bp++ = Char_Escapes[chr];
+        return bp;
     }
 
-    *up++ = chr;
-    return up;
+    bp += Encode_UTF8_Char(bp, chr);
+    return bp;
 }
 
 
 static void Mold_String_Series(REB_MOLD *mo, const RELVAL *v)
 {
+    REBSER *out = mo->series;
+
     REBCNT len = VAL_LEN_AT(v);
     REBSER *series = VAL_SERIES(v);
     REBCNT index = VAL_INDEX(v);
 
-    // Empty string:
     if (index >= VAL_LEN_HEAD(v)) {
-        // !!! Comment said `fail (Error_Past_End_Raw());`
-        Append_Unencoded(mo->series, "\"\"");
+        Append_Unencoded(out, "\"\"");
         return;
     }
 
@@ -864,9 +907,10 @@ static void Mold_String_Series(REB_MOLD *mo, const RELVAL *v)
     // If it is a short quoted string, emit it as "string"
     //
     if (len <= MAX_QUOTED_STR && sf.quote == 0 && sf.newline < 3) {
-        REBUNI *dp = Prep_Uni_Series(
+        REBYTE *dp = Prep_Mold_Overestimated( // not accurate, must terminate
             mo,
-            len + sf.newline + sf.escape + sf.paren + sf.chr1e + 2
+            (len * 4) // 4 character max for unicode encoding of 1 char
+                + sf.newline + sf.escape + sf.paren + sf.chr1e + 2
         );
 
         *dp++ = '"';
@@ -880,6 +924,8 @@ static void Mold_String_Series(REB_MOLD *mo, const RELVAL *v)
 
         *dp++ = '"';
         *dp = '\0';
+
+        TERM_BIN_LEN(out, dp - BIN_HEAD(out));
         return;
     }
 
@@ -887,9 +933,12 @@ static void Mold_String_Series(REB_MOLD *mo, const RELVAL *v)
     if (!sf.malign)
         sf.brace_in = sf.brace_out = 0;
 
-    REBUNI *dp = Prep_Uni_Series(
+    REBYTE *dp = Prep_Mold_Overestimated( // not accurate, must terminate
         mo,
-        len + sf.brace_in + sf.brace_out + sf.escape + sf.paren + sf.chr1e + 2
+        (len * 4) // 4 bytes maximum for UTF-8 encoding
+            + sf.brace_in + sf.brace_out
+            + sf.escape + sf.paren + sf.chr1e
+            + 2
     );
 
     *dp++ = '{';
@@ -921,6 +970,8 @@ static void Mold_String_Series(REB_MOLD *mo, const RELVAL *v)
 
     *dp++ = '}';
     *dp = '\0';
+
+    TERM_BIN_LEN(out, dp - BIN_HEAD(out));
 }
 
 
@@ -941,13 +992,15 @@ static void Mold_Url(REB_MOLD *mo, const RELVAL *v)
 {
     REBSER *series = VAL_SERIES(v);
     REBCNT len = VAL_LEN_AT(v);
-    REBUNI *dp = Prep_Uni_Series(mo, len);
+    REBYTE *dp = Prep_Mold_Overestimated(mo, len * 4); // 4 bytes max UTF-8
 
     REBCNT n;
     for (n = VAL_INDEX(v); n < VAL_LEN_HEAD(v); ++n)
         *dp++ = GET_ANY_CHAR(series, n);
 
     *dp = '\0';
+
+    SET_SERIES_LEN(mo->series, dp - BIN_HEAD(mo->series)); // correction
 }
 
 
@@ -956,18 +1009,20 @@ static void Mold_File(REB_MOLD *mo, const RELVAL *v)
     REBSER *series = VAL_SERIES(v);
     REBCNT len = VAL_LEN_AT(v);
 
+    REBCNT estimated_bytes = 4 * len; // UTF-8 characters are max 4 bytes
+
     // Compute extra space needed for hex encoded characters:
     //
     REBCNT n;
     for (n = VAL_INDEX(v); n < VAL_LEN_HEAD(v); ++n) {
         REBUNI c = GET_ANY_CHAR(series, n);
         if (IS_FILE_ESC(c))
-            len += 2; // %xx is 3 characters instead of 1
+            estimated_bytes -= 1; // %xx is 3 characters instead of 4
     }
 
-    ++len; // room for % at start
+    ++estimated_bytes; // room for % at start
 
-    REBUNI *dp = Prep_Uni_Series(mo, len);
+    REBYTE *dp = Prep_Mold_Overestimated(mo, estimated_bytes);
 
     *dp++ = '%';
 
@@ -980,22 +1035,27 @@ static void Mold_File(REB_MOLD *mo, const RELVAL *v)
     }
 
     *dp = '\0';
+
+    SET_SERIES_LEN(mo->series, dp - BIN_HEAD(mo->series)); // correction
 }
 
 
 static void Mold_Tag(REB_MOLD *mo, const RELVAL *v)
 {
-    Append_Codepoint(mo->series, '<');
-    Insert_String(
-        mo->series,
-        SER_LEN(mo->series), // "insert" at tail (append)
-        VAL_SERIES(v),
-        VAL_INDEX(v),
-        VAL_LEN_AT(v),
-        FALSE
-    );
-    Append_Codepoint(mo->series, '>');
+    Append_Utf8_Codepoint(mo->series, '<');
 
+    REBCNT tail = BIN_LEN(mo->series);
+    REBCNT estimate = 4 * VAL_LEN_AT(v);
+    REBYTE *dp = Prep_Mold_Overestimated(mo, estimate);
+
+    REBCNT len = VAL_LEN_AT(v);
+    REBCNT encoded_len = Encode_UTF8(
+        dp, estimate, VAL_UNI_AT(v), &len, OPT_ENC_0
+    );
+    assert(len == VAL_LEN_AT(v)); // should have encoded everything
+    TERM_BIN_LEN(mo->series, tail + encoded_len);
+
+    Append_Utf8_Codepoint(mo->series, '>');
 }
 
 
@@ -1027,7 +1087,7 @@ void MF_Binary(REB_MOLD *mo, const RELVAL *v, REBOOL form)
 
     case 2: {
         const REBOOL brk = LOGICAL(len > 8);
-        Append_Codepoint(mo->series, '2');
+        Append_Utf8_Codepoint(mo->series, '2');
         enbased = Encode_Base2(VAL_BIN_AT(v), len, brk);
         break; }
     }
@@ -1069,19 +1129,16 @@ void MF_String(REB_MOLD *mo, const RELVAL *v, REBOOL form)
     // would form with no delimiters, e.g. `form #foo` is just foo
     //
     if (form && NOT(IS_TAG(v))) {
-        //
-        // Reuse the Insert_String logic here, because although the mold
-        // buffer is guaranteed to be REBUNI, the source string might be
-        // byte-sized.
-        //
-        Insert_String(
-            s,
-            SER_LEN(s), // "insert" at tail (append)
-            VAL_SERIES(v),
-            VAL_INDEX(v),
-            VAL_LEN_AT(v),
-            FALSE
+        REBCNT tail = BIN_LEN(mo->series);
+        REBCNT estimate = 4 * VAL_LEN_AT(v);
+        REBYTE *dp = Prep_Mold_Overestimated(mo, estimate);
+
+        REBCNT len = VAL_LEN_AT(v);
+        REBCNT encoded_len = Encode_UTF8(
+            dp, estimate, VAL_UNI_AT(v), &len, OPT_ENC_0
         );
+        assert(len == VAL_LEN_AT(v)); // should have encoded everything
+        TERM_BIN_LEN(mo->series, tail + encoded_len);
         return;
     }
 

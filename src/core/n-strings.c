@@ -547,7 +547,16 @@ REBNATIVE(enbase)
         fail (ARG(base_value));
     }
 
-    Init_String(D_OUT, enbased);
+    // !!! Enbasing code is common with how a BINARY! molds out.  That needed
+    // the returned series to be UTF-8.  Once STRING! in Rebol is UTF-8 also,
+    // then this conversion won't be necessary.
+
+    Init_String(
+        D_OUT,
+        Append_UTF8_May_Fail(NULL, BIN_HEAD(enbased), BIN_LEN(enbased))
+    );
+    Free_Series(enbased);
+
     return R_OUT;
 }
 
@@ -564,43 +573,41 @@ REBNATIVE(dehex)
 {
     INCLUDE_PARAMS_OF_DEHEX;
 
-    DECLARE_MOLD (mo);
-    Push_Mold(mo);
+    REBCNT len = VAL_LEN_AT(ARG(value));
+    REBUNI *up = VAL_UNI_AT(ARG(value));
 
     // Do a conservative expansion, assuming there are no %NNs in the
     // series and the output string will be the same length as input.
-    // Note expand series may change the pointer, so UNI_AT must be after.
     //
-    REBCNT len = VAL_LEN_AT(ARG(value));
-    Expand_Series(mo->series, mo->start, len);
-
-    REBUNI *up = VAL_UNI_AT(ARG(value));
-    REBUNI *dp = UNI_AT(mo->series, mo->start);
+    DECLARE_MOLD (mo);
+    Push_Mold(mo);
+    REBYTE *dp = Prep_Mold_Overestimated(mo, len * 4);
 
     for (; len > 0; len--) {
+        const REBOOL unicode = TRUE;
+        REBUNI ch;
         if (
             *up == '%'
             && len > 2
-            && Scan_Hex2(cast(REBYTE*, up + 1), dp, TRUE)
+            && Scan_Hex2(&ch, up + 1, unicode)
         ){
-            dp++;
+            dp += Encode_UTF8_Char(dp, ch);
             up += 3;
             len -= 2;
         }
         else
-            *dp++ = *up++;
+            dp += Encode_UTF8_Char(dp, *up++);
     }
 
     *dp = '\0';
 
-    // The delta in dp from the original pointer position tells us the
-    // actual size after the %NNs have been accounted for.
-    //
-    REBSER *ser = Pop_Molded_String_Len(
-        mo, cast(REBCNT, dp - UNI_AT(mo->series, mo->start))
-    );
+    SET_SERIES_LEN(mo->series, dp - BIN_HEAD(mo->series));
 
-    Init_Any_Series(D_OUT, VAL_TYPE(ARG(value)), ser);
+    Init_Any_Series(
+        D_OUT,
+        VAL_TYPE(ARG(value)),
+        Pop_Molded_String(mo)
+    );
 
     return R_OUT;
 }
@@ -688,8 +695,12 @@ REBNATIVE(entab)
     else
         tabsize = TAB_SIZE;
 
-    REBSER *ser = Entab_Unicode(VAL_UNI(val), VAL_INDEX(val), len, tabsize);
-    Init_Any_Series(D_OUT, VAL_TYPE(val), ser);
+    Init_Any_Series(
+        D_OUT,
+        VAL_TYPE(val),
+        Make_Entabbed_String(VAL_UNI(val), VAL_INDEX(val), len, tabsize)
+    );
+
 
     return R_OUT;
 }
@@ -721,9 +732,11 @@ REBNATIVE(detab)
     else
         tabsize = TAB_SIZE;
 
-    REBSER *ser = Detab_Unicode(VAL_UNI(val), VAL_INDEX(val), len, tabsize);
-
-    Init_Any_Series(D_OUT, VAL_TYPE(val), ser);
+    Init_Any_Series(
+        D_OUT,
+        VAL_TYPE(val),
+        Make_Detabbed_String(VAL_UNI(val), VAL_INDEX(val), len, tabsize)
+    );
 
     return R_OUT;
 }

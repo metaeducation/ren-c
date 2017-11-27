@@ -401,23 +401,20 @@ void Enline_Uni(REBSER *ser, REBCNT idx, REBCNT len)
 
 
 //
-//  Entab_Unicode: C
+//  Make_Entabbed_String: C
 //
 // Entab a string and return a new series.
 //
-REBSER *Entab_Unicode(
+REBSER *Make_Entabbed_String(
     const REBUNI *up,
     REBCNT index,
     REBCNT len,
     REBINT tabsize
 ){
     DECLARE_MOLD (mo);
-    SET_MOLD_FLAG(mo, MOLD_FLAG_RESERVE);
-    mo->reserve = len;
-
     Push_Mold(mo);
 
-    REBUNI *dp = UNI_AT(mo->series, mo->start);
+    REBYTE *dp = Prep_Mold_Overestimated(mo, len * 4); // max UTF-8 charsize
 
     REBINT n = 0;
     for (; index < len; index++) {
@@ -443,28 +440,28 @@ REBSER *Entab_Unicode(
                 *dp++ = ' ';
 
             // Copy chars thru end-of-line (or end of buffer):
-            while (index < len) {
-                if ((*dp++ = up[index++]) == '\n')
+            for (; index < len; ++index) {
+                if (up[index] == '\n') {
+                    *dp = '\n';
                     break;
+                }
+                dp += Encode_UTF8_Char(dp, up[index]);
             }
         }
     }
 
-    TERM_UNI_LEN(
-        mo->series,
-        mo->start + cast(REBCNT, dp - UNI_AT(mo->series, mo->start))
-    );
+    TERM_BIN_LEN(mo->series, dp - BIN_HEAD(mo->series));
 
     return Pop_Molded_String(mo);
 }
 
 
 //
-//  Detab_Unicode: C
+//  Make_Detabbed_String: C
 //
 // Detab a unicode string and return a new series.
 //
-REBSER *Detab_Unicode(
+REBSER *Make_Detabbed_String(
     const REBUNI *up,
     REBCNT index,
     REBCNT len,
@@ -479,16 +476,17 @@ REBSER *Detab_Unicode(
         if (up[n] == '\t') // tab character
             ++count;
 
-    SET_MOLD_FLAG(mo, MOLD_FLAG_RESERVE);
-    mo->reserve = len + (count * (tabsize - 1));
-
     Push_Mold(mo);
 
-    REBUNI *dp = UNI_AT(mo->series, mo->start);
+    REBYTE *dp = Prep_Mold_Overestimated(
+        mo,
+        (len * 4) // assume worst case, all characters encode UTF-8 4 bytes
+            + (count * (tabsize - 1)) // expanded tabs add tabsize - 1 to len
+    );
 
     n = 0;
-    while (index < len) {
-        REBUNI c = up[index++];
+    for (; index < len; ++index) {
+        REBUNI c = up[index];
 
         if (c == '\t') {
             *dp++ = ' ';
@@ -503,13 +501,10 @@ REBSER *Detab_Unicode(
         else
             ++n;
 
-        *dp++ = c;
+        dp += Encode_UTF8_Char(dp, c);
     }
 
-    TERM_UNI_LEN(
-        mo->series,
-        mo->start + cast(REBCNT, dp - UNI_AT(mo->series, mo->start))
-    );
+    TERM_BIN_LEN(mo->series, dp - BIN_HEAD(mo->series));
 
     return Pop_Molded_String(mo);
 }

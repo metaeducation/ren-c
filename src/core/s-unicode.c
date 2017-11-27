@@ -1158,28 +1158,39 @@ REBCNT Length_As_UTF8(const REBUNI *up, REBCNT len, REBFLGS opts)
 // Returns length of char stored in dst.
 // Be sure dst has at least 4 bytes available.
 //
-REBCNT Encode_UTF8_Char(REBYTE *dst, REBCNT src)
+REBCNT Encode_UTF8_Char(REBYTE *dst, u32 c)
 {
     int len = 0;
-    const UTF32 mask = 0xBF;
-    const UTF32 mark = 0x80;
+    const u32 mask = 0xBF;
+    const u32 mark = 0x80;
 
-    if (src < (UTF32)0x80) len = 1;
-    else if (src < (UTF32)0x800) len = 2;
-    else if (src < (UTF32)0x10000) len = 3;
-    else if (src <= UNI_MAX_LEGAL_UTF32) len = 4;
-    else {
+    if (c < cast(u32, 0x80))
+        len = 1;
+    else if (c < cast(u32, 0x800))
+        len = 2;
+    else if (c < cast(u32, 0x10000))
         len = 3;
-        src = UNI_REPLACEMENT_CHAR;
+    else if (c <= UNI_MAX_LEGAL_UTF32)
+        len = 4;
+    else { // !!! Should this fail() instead of pick a replacement char?
+        len = 3;
+        c = UNI_REPLACEMENT_CHAR;
     }
 
     dst += len;
 
     switch (len) {
-        case 4: *--dst = (UTF8)((src | mark) & mask); src >>= 6; // falls through
-        case 3: *--dst = (UTF8)((src | mark) & mask); src >>= 6; // falls through
-        case 2: *--dst = (UTF8)((src | mark) & mask); src >>= 6; // falls through
-        case 1: *--dst = (UTF8) (src | firstByteMark[len]);
+    case 4:
+        *--dst = cast(REBYTE, (c | mark) & mask);
+        c >>= 6; // falls through
+    case 3:
+        *--dst = cast(REBYTE, (c | mark) & mask);
+        c >>= 6; // falls through
+    case 2:
+        *--dst = cast(REBYTE, (c | mark) & mask);
+        c >>= 6; // falls through
+    case 1:
+        *--dst = cast(REBYTE, c | firstByteMark[len]);
     }
 
     return len;

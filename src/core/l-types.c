@@ -346,30 +346,32 @@ const REBYTE *Scan_Hex(
 // We don't allow a %00 in files, urls, email, etc... so
 // a return of 0 is used to indicate an error.
 //
-REBOOL Scan_Hex2(const REBYTE *bp, REBUNI *n, REBOOL unicode)
+REBOOL Scan_Hex2(REBUNI *out, const void *p, REBOOL unicode)
 {
-    REBUNI c1, c2;
-    REBYTE d1, d2;
-    REBYTE lex;
-
+    REBUNI c1;
+    REBUNI c2;
     if (unicode) {
-        const REBUNI *up = cast(const REBUNI*, bp);
+        const REBUNI *up = cast(const REBUNI*, p);
         c1 = up[0];
         c2 = up[1];
-    } else {
+    }
+    else {
+        const REBYTE *bp = cast(const REBYTE*, p);
         c1 = bp[0];
         c2 = bp[1];
     }
 
-    lex = Lex_Map[c1];
-    d1 = lex & LEX_VALUE;
-    if (lex < LEX_WORD || (!d1 && lex < LEX_NUMBER)) return FALSE;
+    REBYTE lex1 = Lex_Map[c1];
+    REBYTE d1 = lex1 & LEX_VALUE;
+    if (lex1 < LEX_WORD || (d1 == 0 && lex1 < LEX_NUMBER))
+        return FALSE;
 
-    lex = Lex_Map[c2];
-    d2 = lex & LEX_VALUE;
-    if (lex < LEX_WORD || (!d2 && lex < LEX_NUMBER)) return FALSE;
+    REBYTE lex2 = Lex_Map[c2];
+    REBYTE d2 = lex2 & LEX_VALUE;
+    if (lex2 < LEX_WORD || (d2 == 0 && lex2 < LEX_NUMBER))
+        return FALSE;
 
-    *n = (REBUNI)((d1 << 4) + d2);
+    *out = cast(REBUNI, (d1 << 4) + d2);
 
     return TRUE;
 }
@@ -1030,10 +1032,11 @@ const REBYTE *Scan_Email(
         }
 
         if (*cp == '%') {
-            REBUNI n;
-            if (len <= 2 || !Scan_Hex2(cp + 1, &n, FALSE))
+            const REBOOL unicode = FALSE;
+            REBUNI ch;
+            if (len <= 2 || !Scan_Hex2(&ch, cp + 1, unicode))
                 return_NULL;
-            *up++ = n;
+            *up++ = ch;
             cp += 3;
             len -= 2;
         }

@@ -138,7 +138,7 @@ void MF_Function(REB_MOLD *mo, const RELVAL *v, REBOOL form)
 
     Pre_Mold(mo, v);
 
-    Append_Codepoint(mo->series, '[');
+    Append_Utf8_Codepoint(mo->series, '[');
 
     // !!! The system is no longer keeping the spec of functions, in order
     // to focus on a generalized "meta info object" service.  MOLD of
@@ -178,7 +178,7 @@ void MF_Function(REB_MOLD *mo, const RELVAL *v, REBOOL form)
         Mold_Value(mo, exemplar);
     }
 
-    Append_Codepoint(mo->series, ']');
+    Append_Utf8_Codepoint(mo->series, ']');
     End_Mold(mo);
 }
 

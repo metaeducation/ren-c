@@ -261,13 +261,13 @@ REBSER *Copy_String_At_Len(REBSER *src, REBCNT index, REBINT length)
 //
 REBSER *Append_Unencoded_Len(REBSER *dst, const char *src, REBCNT len)
 {
-    REBUNI *up;
     REBCNT tail;
 
     if (!dst) {
         dst = Make_Binary(len);
         tail = 0;
-    } else {
+    }
+    else {
         tail = SER_LEN(dst);
         EXPAND_SERIES_TAIL(dst, len);
     }
@@ -277,9 +277,10 @@ REBSER *Append_Unencoded_Len(REBSER *dst, const char *src, REBCNT len)
         TERM_SEQUENCE(dst);
     }
     else {
-        up = UNI_AT(dst, tail);
-        for (; len > 0; len--) *up++ = (REBUNI)*src++;
-        *up = 0;
+        REBUNI *up = UNI_AT(dst, tail);
+        for (; len > 0; len--)
+            *up++ = cast(REBUNI, *src++);
+        *up = '\0';
     }
 
     return dst;
@@ -314,6 +315,23 @@ REBSER *Append_Codepoint(REBSER *dst, REBCNT codepoint)
     EXPAND_SERIES_TAIL(dst, 1);
     *UNI_AT(dst, tail) = cast(REBUNI, codepoint);
     TERM_UNI_LEN(dst, tail + 1);
+    return dst;
+}
+
+
+//
+//  Append_Utf8_Codepoint: C
+//
+// Encode a codepoint onto a UTF-8 binary series.
+//
+REBSER *Append_Utf8_Codepoint(REBSER *dst, u32 codepoint)
+{
+    assert(SER_WIDE(dst) == sizeof(REBYTE));
+
+    REBCNT tail = SER_LEN(dst);
+    EXPAND_SERIES_TAIL(dst, 4); // !!! Conservative, assume long codepoint
+    tail += Encode_UTF8_Char(BIN_AT(dst, tail), codepoint); // 1 to 4 bytes
+    TERM_BIN_LEN(dst, tail);
     return dst;
 }
 
@@ -364,7 +382,7 @@ void Append_Uni_Bytes(REBSER *dst, const REBUNI *src, REBCNT len)
 //
 //  Append_Uni_Uni: C
 //
-// Append a unicode string to a unicode string. OPTIMZED.
+// Append a unicode string to a unicode string.  Terminates.
 //
 void Append_Uni_Uni(REBSER *dst, const REBUNI *src, REBCNT len)
 {
@@ -378,7 +396,31 @@ void Append_Uni_Uni(REBSER *dst, const REBUNI *src, REBCNT len)
     for (; len > 0; len--)
         *up++ = *src++;
 
-    *up = 0;
+    *up = '\0';
+}
+
+
+//
+//  Append_Utf8_Utf8: C
+//
+// Append a UTF8 byte series to a UTF8 binary.  Terminates.
+//
+// !!! Should this check the bytes to make sure they are actually UTF8 (or
+// should there be a version that does so?)
+//
+void Append_Utf8_Utf8(REBSER *dst, const REBYTE *src, REBCNT len)
+{
+    REBCNT old_len = SER_LEN(dst);
+
+    EXPAND_SERIES_TAIL(dst, len);
+    SET_SERIES_LEN(dst, old_len + len);
+
+    REBYTE *bp = BIN_AT(dst, old_len);
+
+    for (; len > 0; len--)
+        *bp++ = *src++;
+
+    *bp = '\0';
 }
 
 

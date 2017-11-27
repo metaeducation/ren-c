@@ -124,7 +124,7 @@ void MF_Date(REB_MOLD *mo, const RELVAL *v_orig, REBOOL form)
     Append_Unencoded(mo->series, s_cast(buf));
 
     if (GET_VAL_FLAG(v, DATE_FLAG_HAS_TIME)) {
-        Append_Codepoint(mo->series, '/');
+        Append_Utf8_Codepoint(mo->series, '/');
         MF_Time(mo, v, form);
 
         if (GET_VAL_FLAG(v, DATE_FLAG_HAS_ZONE)) {

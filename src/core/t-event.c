@@ -453,7 +453,7 @@ void MF_Event(REB_MOLD *mo, const RELVAL *v, REBOOL form)
     };
 
     Pre_Mold(mo, v);
-    Append_Codepoint(mo->series, '[');
+    Append_Utf8_Codepoint(mo->series, '[');
     mo->indent++;
 
     DECLARE_LOCAL (var); // declare outside loop (has init code)
@@ -466,18 +466,18 @@ void MF_Event(REB_MOLD *mo, const RELVAL *v, REBOOL form)
         New_Indented_Line(mo);
 
         REBSTR *canon = Canon(fields[field]);
-        Append_UTF8_May_Fail(
+        Append_Utf8_Utf8(
             mo->series, STR_HEAD(canon), STR_NUM_BYTES(canon)
         );
         Append_Unencoded(mo->series, ": ");
         if (IS_WORD(var))
-            Append_Codepoint(mo->series, '\'');
+            Append_Utf8_Codepoint(mo->series, '\'');
         Mold_Value(mo, var);
     }
 
     mo->indent--;
     New_Indented_Line(mo);
-    Append_Codepoint(mo->series, ']');
+    Append_Utf8_Codepoint(mo->series, ']');
 
     End_Mold(mo);
 }

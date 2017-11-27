@@ -382,14 +382,14 @@ const REBYTE *Decode_Binary(
 //
 //  Encode_Base2: C
 //
-// Base2 encode a given series. Must be BYTES, not UNICODE.
+// Base2 encode a range of arbitrary bytes into a byte-sized ASCII series.
 //
 REBSER *Encode_Base2(const REBYTE *src, REBCNT len, REBOOL brk)
 {
     // Account for binary digits, lines, and extra syntax ("slop factor")
     //
-    REBSER *s = Make_Unicode(8 * len + 2 * (len / 8) + 4);
-    REBUNI *dest = UNI_HEAD(s);
+    REBSER *s = Make_Binary(8 * len + 2 * (len / 8) + 4);
+    REBYTE *dest = BIN_HEAD(s);
 
     if (len == 0) { // return empty series if input was zero length
         TERM_SEQUENCE_LEN(s, 0);
@@ -410,12 +410,13 @@ REBSER *Encode_Base2(const REBYTE *src, REBCNT len, REBOOL brk)
         if ((i + 1) % 8 == 0 && brk)
             *dest++ = LF;
     }
-    *dest = '\0';
 
     if (*(dest - 1) != LF && len > 9 && brk)
         *dest++ = LF;
 
-    SET_SERIES_LEN(s, cast(REBCNT, dest - UNI_HEAD(s)));
+    *dest = '\0';
+
+    SET_SERIES_LEN(s, cast(REBCNT, dest - BIN_HEAD(s)));
     ASSERT_SERIES_TERM(s);
     return s;
 }
@@ -424,14 +425,14 @@ REBSER *Encode_Base2(const REBYTE *src, REBCNT len, REBOOL brk)
 //
 //  Encode_Base16: C
 //
-// Base16 encode a given series. Must be BYTES, not UNICODE.
+// Base16 encode a range of arbitrary bytes into a byte-sized ASCII series.
 //
 REBSER *Encode_Base16(const REBYTE *src, REBCNT len, REBOOL brk)
 {
     // Account for hex digits, lines, and extra syntax ("slop factor")
     //
-    REBSER *s = Make_Unicode(len * 2 + len / 32 + 32);
-    REBUNI *dest = UNI_HEAD(s);
+    REBSER *s = Make_Binary(len * 2 + len / 32 + 32);
+    REBYTE *dest = BIN_HEAD(s);
 
     if (len == 0) { // return empty series if input was zero length
         TERM_SEQUENCE_LEN(s, 0);
@@ -443,7 +444,7 @@ REBSER *Encode_Base16(const REBYTE *src, REBCNT len, REBOOL brk)
 
     REBCNT count;
     for (count = 1; count <= len; count++) {
-        dest = Form_Hex2_Uni(dest, *src++);
+        dest = Form_Hex2_UTF8(dest, *src++);
         if (brk && ((count % 32) == 0))
             *dest++ = LF;
     }
@@ -453,7 +454,7 @@ REBSER *Encode_Base16(const REBYTE *src, REBCNT len, REBOOL brk)
 
     *dest = '\0';
 
-    SET_SERIES_LEN(s, cast(REBCNT, dest - UNI_HEAD(s)));
+    SET_SERIES_LEN(s, cast(REBCNT, dest - BIN_HEAD(s)));
     ASSERT_SERIES_TERM(s);
     return s;
 }
@@ -462,14 +463,14 @@ REBSER *Encode_Base16(const REBYTE *src, REBCNT len, REBOOL brk)
 //
 //  Encode_Base64: C
 //
-// Base64 encode a given series. Must be BYTES, not UNICODE.
+// Base64 encode a range of arbitrary bytes into a byte-sized ASCII series.
 //
 REBSER *Encode_Base64(const REBYTE *src, REBCNT len, REBOOL brk)
 {
     // Account for base64 digits, lines, and extra syntax ("slop factor")
     //
-    REBSER *s = Make_Unicode(4 * len / 3 + 2 * (len / 32) + 5);
-    REBUNI *dest = UNI_HEAD(s);
+    REBSER *s = Make_Binary(4 * len / 3 + 2 * (len / 32) + 5);
+    REBYTE *dest = BIN_HEAD(s);
 
     if (len == 0) { // return empty series if input was zero length
         TERM_SEQUENCE_LEN(s, 0);
@@ -516,7 +517,7 @@ REBSER *Encode_Base64(const REBYTE *src, REBCNT len, REBOOL brk)
 
     *dest = '\0';
 
-    SET_SERIES_LEN(s, cast(REBCNT, dest - UNI_HEAD(s)));
+    SET_SERIES_LEN(s, cast(REBCNT, dest - BIN_HEAD(s)));
     ASSERT_SERIES_TERM(s);
     return s;
 }

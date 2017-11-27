@@ -420,13 +420,13 @@ REBUNI *Form_Hex2_Uni(REBUNI *up, REBCNT val)
 //
 // Convert byte to %xx format
 //
-REBUNI *Form_Hex_Esc(REBUNI *up, REBYTE b)
+REBYTE *Form_Hex_Esc(REBYTE *bp, REBYTE b)
 {
-    up[0] = '%';
-    up[1] = Hex_Digits[(b & 0xf0) >> 4];
-    up[2] = Hex_Digits[b & 0xf];
-    up[3] = '\0';
-    return up + 3;
+    bp[0] = '%';
+    bp[1] = Hex_Digits[(b & 0xf0) >> 4];
+    bp[2] = Hex_Digits[b & 0xf];
+    bp[3] = '\0';
+    return bp + 3;
 }
 
 
@@ -435,48 +435,26 @@ REBUNI *Form_Hex_Esc(REBUNI *up, REBYTE b)
 //
 // Convert 24 bit RGB to xxxxxx format.
 //
-REBUNI *Form_RGB_Uni(REBUNI *up, REBCNT val)
+REBYTE *Form_RGB_Utf8(REBYTE *bp, REBCNT val)
 {
 #ifdef ENDIAN_LITTLE
-    up[0] = Hex_Digits[(val >>  4) & 0xf];
-    up[1] = Hex_Digits[val & 0xf];
-    up[2] = Hex_Digits[(val >> 12) & 0xf];
-    up[3] = Hex_Digits[(val >>  8) & 0xf];
-    up[4] = Hex_Digits[(val >> 20) & 0xf];
-    up[5] = Hex_Digits[(val >> 16) & 0xf];
+    bp[0] = Hex_Digits[(val >>  4) & 0xf];
+    bp[1] = Hex_Digits[val & 0xf];
+    bp[2] = Hex_Digits[(val >> 12) & 0xf];
+    bp[3] = Hex_Digits[(val >>  8) & 0xf];
+    bp[4] = Hex_Digits[(val >> 20) & 0xf];
+    bp[5] = Hex_Digits[(val >> 16) & 0xf];
 #else
-    up[0] = Hex_Digits[(val >>  28) & 0xf];
-    up[1] = Hex_Digits[(val >> 24) & 0xf];
-    up[2] = Hex_Digits[(val >> 20) & 0xf];
-    up[3] = Hex_Digits[(val >> 16) & 0xf];
-    up[4] = Hex_Digits[(val >> 12) & 0xf];
-    up[5] = Hex_Digits[(val >>  8) & 0xf];
+    bp[0] = Hex_Digits[(val >>  28) & 0xf];
+    bp[1] = Hex_Digits[(val >> 24) & 0xf];
+    bp[2] = Hex_Digits[(val >> 20) & 0xf];
+    bp[3] = Hex_Digits[(val >> 16) & 0xf];
+    bp[4] = Hex_Digits[(val >> 12) & 0xf];
+    bp[5] = Hex_Digits[(val >>  8) & 0xf];
 #endif
-    up[6] = 0;
+    bp[6] = 0;
 
-    return up+6;
-}
-
-
-//
-//  Form_Uni_Hex: C
-//
-// Fast var-length hex output for uni-chars.
-// Returns next position (just past the insert).
-//
-REBUNI *Form_Uni_Hex(REBUNI *out, REBCNT n)
-{
-    REBUNI buffer[10];
-    REBUNI *up = &buffer[10];
-
-    while (n != 0) {
-        *(--up) = Hex_Digits[n & 0xf];
-        n >>= 4;
-    }
-
-    while (up < &buffer[10]) *out++ = *up++;
-
-    return out;
+    return bp + 6;
 }
 
 
@@ -520,7 +498,7 @@ void Form_Args_Core(REB_MOLD *mo, const char *fmt, va_list *vaptr)
         // Copy format string until next % escape
         //
         while ((*fmt != '\0') && (*fmt != '%'))
-            Append_Codepoint(ser, *fmt++);
+            Append_Utf8_Codepoint(ser, *fmt++);
 
         if (*fmt != '%') break;
 
@@ -561,7 +539,7 @@ pick:
                 pad = -pad;
                 pad -= LEN_BYTES(cp);
                 for (; pad > 0; pad--)
-                    Append_Codepoint(ser, ' ');
+                    Append_Utf8_Codepoint(ser, ' ');
             }
             Append_Unencoded(ser, s_cast(cp));
 
@@ -572,7 +550,7 @@ pick:
             pad -= LEN_BYTES(cp);
 
             for (; pad > 0; pad--)
-                Append_Codepoint(ser, ' ');
+                Append_Utf8_Codepoint(ser, ' ');
             break;
 
         case 'r':   // use Mold
@@ -613,14 +591,14 @@ pick:
         }
 
         case 'c':
-            Append_Codepoint(
+            Append_Utf8_Codepoint(
                 ser,
                 cast(REBYTE, va_arg(*vaptr, REBINT))
             );
             break;
 
         case 'x':
-            Append_Codepoint(ser, '#');
+            Append_Utf8_Codepoint(ser, '#');
             if (pad == 1) pad = 8;
             cp = Form_Hex_Pad(
                 buf,
@@ -631,7 +609,7 @@ pick:
             break;
 
         default:
-            Append_Codepoint(ser, *fmt);
+            Append_Utf8_Codepoint(ser, *fmt);
         }
     }
 

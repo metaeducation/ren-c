@@ -723,7 +723,7 @@ void MF_Vector(REB_MOLD *mo, const RELVAL *v, REBOOL form)
         enum Reb_Kind kind = (bits >= VTSF08) ? REB_DECIMAL : REB_INTEGER;
         Pre_Mold(mo, v);
         if (NOT_MOLD_FLAG(mo, MOLD_FLAG_ALL))
-            Append_Codepoint(mo->series, '[');
+            Append_Utf8_Codepoint(mo->series, '[');
         if (bits >= VTUI08 && bits <= VTUI64)
             Append_Unencoded(mo->series, "unsigned ");
         Emit(
@@ -757,7 +757,7 @@ void MF_Vector(REB_MOLD *mo, const RELVAL *v, REBOOL form)
             c = 0;
         }
         else
-            Append_Codepoint(mo->series, ' ');
+            Append_Utf8_Codepoint(mo->series, ' ');
     }
 
     if (len) {
@@ -771,10 +771,10 @@ void MF_Vector(REB_MOLD *mo, const RELVAL *v, REBOOL form)
         if (len)
             New_Indented_Line(mo);
 
-        Append_Codepoint(mo->series, ']');
+        Append_Utf8_Codepoint(mo->series, ']');
 
         if (NOT_MOLD_FLAG(mo, MOLD_FLAG_ALL))
-            Append_Codepoint(mo->series, ']');
+            Append_Utf8_Codepoint(mo->series, ']');
         else
             Post_Mold(mo, v);
     }

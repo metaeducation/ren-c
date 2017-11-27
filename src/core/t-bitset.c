@@ -94,7 +94,7 @@ void MF_Bitset(REB_MOLD *mo, const RELVAL *v, REBOOL form)
     MF_Binary(mo, v, FALSE); // FALSE = mold, don't form
 
     if (BITS_NOT(s))
-        Append_Codepoint(mo->series, ']');
+        Append_Utf8_Codepoint(mo->series, ']');
 
     End_Mold(mo);
 }

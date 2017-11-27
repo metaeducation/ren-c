@@ -902,15 +902,15 @@ static inline REBCNT Finalize_Remove_Each(struct Remove_Each_State *res)
         //
         REBCNT orig_len = VAL_LEN_HEAD(res->data);
         assert(res->start <= orig_len);
-        for (; res->start != orig_len; ++res->start) {
-            Append_Codepoint(
-                res->mo->series,
-                cast(REBUNI, BIN_HEAD(res->series)[res->start])
-            );
-        }
+        Append_Unencoded_Len(
+            res->mo->series,
+            cs_cast(BIN_AT(res->series, res->start)),
+            orig_len - res->start
+        );
 
-        // We should have only added codepoints between 0x00 and 0xFF
-        // (This checks that.)
+        // !!! We are reusing the mold buffer, but *not putting UTF-8 data*
+        // into it.  Revisit if this inhibits cool UTF-8 based tricks the
+        // mold buffer might do otherwise.
         //
         REBSER *popped = Pop_Molded_Binary(res->mo);
 
@@ -934,7 +934,7 @@ static inline REBCNT Finalize_Remove_Each(struct Remove_Each_State *res)
         assert(res->start <= orig_len);
 
         for (; res->start != orig_len; ++res->start) {
-            Append_Codepoint(
+            Append_Utf8_Codepoint(
                 res->mo->series,
                 GET_ANY_CHAR(res->series, res->start)
             );
@@ -1068,12 +1068,18 @@ static REB_R Remove_Each_Core(REBFRM *frame_, struct Remove_Each_State *res)
 
             do {
                 assert(res->start <= len);
-                Append_Codepoint(
-                   res->mo->series,
-                   IS_BINARY(res->data)
-                       ? cast(REBUNI, BIN_HEAD(res->series)[res->start])
-                       : GET_ANY_CHAR(res->series, res->start)
-                );
+                if (IS_BINARY(res->data)) {
+                    Append_Unencoded_Len(
+                        res->mo->series,
+                        cs_cast(BIN_AT(res->series, res->start)),
+                        1
+                    );
+                }
+                else {
+                    Append_Utf8_Codepoint(
+                        res->mo->series, GET_ANY_CHAR(res->series, res->start)
+                    );
+                }
                 ++res->start;
             } while (res->start != index);
         }

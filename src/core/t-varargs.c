@@ -566,7 +566,7 @@ void MF_Varargs(REB_MOLD *mo, const RELVAL *v, REBOOL form) {
 
     Pre_Mold(mo, v);  // #[varargs! or make varargs!
 
-    Append_Codepoint(mo->series, '[');
+    Append_Utf8_Codepoint(mo->series, '[');
 
     if (v->payload.varargs.facade == NULL) {
         Append_Unencoded(mo->series, "???");
@@ -669,7 +669,7 @@ void MF_Varargs(REB_MOLD *mo, const RELVAL *v, REBOOL form) {
     }
 
 skip_complex_mold_for_now:
-    Append_Codepoint(mo->series, ']');
+    Append_Utf8_Codepoint(mo->series, ']');
 
     End_Mold(mo);
 }

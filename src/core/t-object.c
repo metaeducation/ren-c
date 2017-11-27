@@ -667,6 +667,8 @@ REBCTX *Copy_Context_Core(REBCTX *original, REBU64 types)
 //
 void MF_Context(REB_MOLD *mo, const RELVAL *v, REBOOL form)
 {
+    REBSER *out = mo->series;
+
     REBCTX *c = VAL_CONTEXT(v);
 
     // Prevent endless mold loop:
@@ -674,12 +676,12 @@ void MF_Context(REB_MOLD *mo, const RELVAL *v, REBOOL form)
     if (Find_Pointer_In_Series(TG_Mold_Stack, c) != NOT_FOUND) {
         if (NOT(form)) {
             Pre_Mold(mo, v); // If molding, get #[object! etc.
-            Append_Codepoint(mo->series, '[');
+            Append_Utf8_Codepoint(out, '[');
         }
-        Append_Unencoded(mo->series, "...");
+        Append_Unencoded(out, "...");
 
         if (NOT(form)) {
-            Append_Codepoint(mo->series, ']');
+            Append_Utf8_Codepoint(out, ']');
             End_Mold(mo);
         }
         return;
@@ -703,8 +705,8 @@ void MF_Context(REB_MOLD *mo, const RELVAL *v, REBOOL form)
         // Remove the final newline...but only if WE added to the buffer
         //
         if (had_output) {
-            SET_SERIES_LEN(mo->series, SER_LEN(mo->series) - 1);
-            TERM_SEQUENCE(mo->series);
+            SET_SERIES_LEN(out, SER_LEN(out) - 1);
+            TERM_SEQUENCE(out);
         }
 
         Drop_Pointer_From_Series(TG_Mold_Stack, c);
@@ -715,7 +717,7 @@ void MF_Context(REB_MOLD *mo, const RELVAL *v, REBOOL form)
 
     Pre_Mold(mo, v);
 
-    Append_Codepoint(mo->series, '[');
+    Append_Utf8_Codepoint(out, '[');
 
     mo->indent++;
 
@@ -733,7 +735,7 @@ void MF_Context(REB_MOLD *mo, const RELVAL *v, REBOOL form)
     // with functions, they would "forget" their help strings in MOLDing.
 
     New_Indented_Line(mo);
-    Append_Codepoint(mo->series, '[');
+    Append_Utf8_Codepoint(out, '[');
 
     REBVAL *keys_head = CTX_KEYS_HEAD(c);
     REBVAL *vars_head;
@@ -754,7 +756,7 @@ void MF_Context(REB_MOLD *mo, const RELVAL *v, REBOOL form)
             continue;
 
         if (key != keys_head)
-            Append_Codepoint(mo->series, ' ');
+            Append_Utf8_Codepoint(out, ' ');
 
         // !!! Feature of "private" words in object specs not yet implemented,
         // but if it paralleled how <local> works for functions then it would
@@ -765,9 +767,9 @@ void MF_Context(REB_MOLD *mo, const RELVAL *v, REBOOL form)
         Mold_Value(mo, any_word);
     }
 
-    Append_Codepoint(mo->series, ']');
+    Append_Utf8_Codepoint(out, ']');
     New_Indented_Line(mo);
-    Append_Codepoint(mo->series, '[');
+    Append_Utf8_Codepoint(out, '[');
 
     mo->indent++;
 
@@ -788,24 +790,22 @@ void MF_Context(REB_MOLD *mo, const RELVAL *v, REBOOL form)
         New_Indented_Line(mo);
 
         REBSTR *spelling = VAL_KEY_SPELLING(key);
-        Append_UTF8_May_Fail(
-            mo->series, STR_HEAD(spelling), STR_NUM_BYTES(spelling)
-        );
+        Append_Utf8_Utf8(out, STR_HEAD(spelling), STR_NUM_BYTES(spelling));
 
-        Append_Unencoded(mo->series, ": ");
+        Append_Unencoded(out, ": ");
 
         if (var)
             Mold_Value(mo, var);
         else
-            Append_Unencoded(mo->series, ": --optimized out--");
+            Append_Unencoded(out, ": --optimized out--");
     }
 
     mo->indent--;
     New_Indented_Line(mo);
-    Append_Codepoint(mo->series, ']');
+    Append_Utf8_Codepoint(out, ']');
     mo->indent--;
     New_Indented_Line(mo);
-    Append_Codepoint(mo->series, ']');
+    Append_Utf8_Codepoint(out, ']');
 
     End_Mold(mo);
 

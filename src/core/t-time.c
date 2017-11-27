@@ -200,7 +200,7 @@ void MF_Time(REB_MOLD *mo, const RELVAL *v, REBOOL form)
         fmt = "I:2:2";
 
     if (VAL_NANO(v) < cast(REBI64, 0))
-        Append_Codepoint(mo->series, '-');
+        Append_Utf8_Codepoint(mo->series, '-');
 
     Emit(mo, fmt, tf.h, tf.m, tf.s, 0);
 
