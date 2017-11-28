@@ -1143,16 +1143,18 @@ cause-error: func [
 ]
 
 
-fail: function [
-    {Interrupts execution by reporting an error (a TRAP can intercept it).}
-
-    reason [error! string! block!]
-        "ERROR! value, message string, or failure spec"
-    /where
-        "Specify an originating location other than the FAIL itself"
-    location [frame! any-word!]
-        "Frame or parameter at which to indicate the error originated"
-][
+; In order to be able to call usermode FAIL from the rebFail() API directly,
+; it is a native that can be hijacked with something more sophisticated.
+; A similar strategy is used in PANIC, so see also rebPanic()
+;
+;    reason [error! string! block!]
+;        "ERROR! value, message string, or failure spec"
+;    /where
+;        "Specify an originating location other than the FAIL itself"
+;    location [frame! any-word!]
+;        "Frame or parameter at which to indicate the error originated"
+;
+hijack 'fail copy adapt 'fail [
     ; By default, make the originating frame the FAIL's frame
     ;
     unless where [location: context of 'reason]
@@ -1188,4 +1190,6 @@ fail: function [
     ; Raise error to the nearest TRAP up the stack (if any)
     ;
     do error
+
+    ; Should not fall through to the default FAIL which just panics
 ]

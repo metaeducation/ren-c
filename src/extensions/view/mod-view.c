@@ -276,7 +276,7 @@ REBNATIVE(request_file_p)
             REBVAL *solo = rebLocalToFileW(ofn.lpstrFile, is_dir);
             DS_PUSH_TRASH;
             Move_Value(DS_TOP, solo);
-            rebFree(solo);
+            rebRelease(solo);
         }
         else {
             const wchar_t *item = ofn.lpstrFile;
@@ -292,7 +292,7 @@ REBNATIVE(request_file_p)
                 REBVAL *solo = rebLocalToFileW(item, is_dir);
                 DS_PUSH_TRASH;
                 Move_Value(DS_TOP, solo);
-                rebFree(solo);
+                rebRelease(solo);
             }
             else {
                 // More than one item means the first is a directory, and the
@@ -327,7 +327,7 @@ REBNATIVE(request_file_p)
                 }
 
                 OS_FREE(dir_wide);
-                rebFree(dir);
+                rebRelease(dir);
             }
         }
     }
@@ -431,7 +431,7 @@ REBNATIVE(request_file_p)
                     REBVAL *file = rebFile(item->data); // UTF-8 data
                     DS_PUSH_TRASH;
                     Move_Value(DS_TOP, file);
-                    rebFree(file);
+                    rebRelease(file);
                 }
                 g_slist_free(list);
 
@@ -628,7 +628,7 @@ REBNATIVE(request_dir_p)
     else {
         REBVAL *file = rebFile(folder);
         Move_Value(D_OUT, file);
-        rebFree(file);
+        rebRelease(file);
     }
 
     if (REF(title))

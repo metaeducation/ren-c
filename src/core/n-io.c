@@ -607,7 +607,7 @@ REBNATIVE(what_dir)
 
         REBVAL *refresh = OS_GET_CURRENT_DIR();
         Move_Value(current_path, refresh);
-        rebFree(refresh);
+        rebRelease(refresh);
     }
     else if (NOT(IS_URL(current_path))) {
         //

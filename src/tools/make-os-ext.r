@@ -232,7 +232,7 @@ extern REBDEV *Devices[];
 (host-lib-struct) newline
 
 {
-extern REBOL_HOST_LIB *Host_Lib;
+extern const REBOL_HOST_LIB *Host_Lib;
 
 
 //** Included by HOST *********************************************

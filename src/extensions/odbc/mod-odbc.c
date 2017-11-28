@@ -93,7 +93,7 @@ typedef struct {
 } PARAMETER; // For binding parameters
 
 typedef struct {
-    REBSTR *title;
+    REBVAL *title_word; // a WORD!
     SQLSMALLINT sql_type;
     SQLSMALLINT c_type;
     SQLULEN column_size;
@@ -104,63 +104,6 @@ typedef struct {
     SQLSMALLINT nullable;
     REBOOL is_unsigned;
 } COLUMN; // For describing columns
-
-
-
-//=////////////////////////////////////////////////////////////////////////=//
-//
-// SQLWCHAR TO REBOL STRING CONVERSION
-//
-//=////////////////////////////////////////////////////////////////////////=//
-//
-// Note that ODBC's WSQLCHAR type (wide SQL char) is the same as a REBUNI
-// at time of writing, e.g. it is 16-bit even on platforms where wchar_t is
-// larger.  This makes it convenient to use with today's Rebol strings, but
-// Rebol's underlying string implementation may change.  So conversions are
-// done here with their own routines.
-//
-// !!! We use the generic ALLOC_N so that a generic FREE_N with a buffer size
-// can free the string, while Free_SqlWchar can be used with the wide
-// character count.  This leaves the most options open for the future,
-// considering that it's likely that a Make_Series() with manual management
-// should be used to help avoid memory leaks on failure.
-//
-
-SQLWCHAR *Make_SqlWChar_From_String(
-    SQLSMALLINT *length_out,
-    const RELVAL *string
-) {
-    assert(IS_STRING(string));
-    assert(length_out != NULL);
-
-    SQLSMALLINT length = VAL_LEN_AT(string);
-    SQLWCHAR *sql = cast(SQLWCHAR*, ALLOC_N(char, length * sizeof(SQLWCHAR)));
-    if (sql == NULL)
-        fail ("Couldn't allocate string!");
-
-    int i;
-    for (i = VAL_INDEX(string); i < length; ++i)
-        sql[i] = GET_ANY_CHAR(VAL_SERIES(string), i);
-
-    *length_out = length;
-    return sql;
-}
-
-REBSER* Make_String_From_SqlWchar(SQLWCHAR *sql) {
-    assert(sizeof(SQLWCHAR) == sizeof(REBUNI));
-
-    int length = Strlen_Uni(cast(REBUNI*, sql));
-
-    REBSER *result = Make_Unicode(length);
-    memcpy(UNI_HEAD(result), sql, length * sizeof(REBUNI));
-    TERM_UNI_LEN(result, length);
-
-    return result;
-}
-
-void Free_SqlWChar(SQLWCHAR *sql, SQLSMALLINT length) {
-    FREE_N(char, length * sizeof(SQLWCHAR), cast(char*, sql));
-}
 
 
 //=////////////////////////////////////////////////////////////////////////=//
@@ -197,10 +140,16 @@ REBCTX *Error_ODBC(SQLSMALLINT handleType, SQLHANDLE handle) {
 
     DECLARE_LOCAL (string);
 
-    if (rc == SQL_SUCCESS || rc == SQL_SUCCESS_WITH_INFO)
-        Init_String(string, Make_String_From_SqlWchar(message));
-    else
-        Init_String(string, Make_UTF8_May_Fail("unknown ODBC error"));
+    if (rc == SQL_SUCCESS || rc == SQL_SUCCESS_WITH_INFO) {
+        REBVAL *temp = rebSizedStringUCS2(message, message_len);
+        Move_Value(string, temp);
+        rebRelease(temp);
+    }
+    else {
+        REBVAL *temp = rebString("unknown ODBC error");
+        Move_Value(string, temp);
+        rebRelease(temp);
+    }
 
     return Error(RE_USER, string, END);
 }
@@ -263,6 +212,22 @@ REBNATIVE(open_connection)
 {
     INCLUDE_PARAMS_OF_OPEN_CONNECTION;
 
+    // We treat ODBC's SQLWCHAR type (wide SQL char) as 2 bytes UCS2, even on
+    // platforms where wchar_t is larger.  This gives unixODBC compatibility:
+    //
+    // https://stackoverflow.com/a/7552533/211160
+    //
+    // "unixODBC follows MS ODBC Driver manager and has SQLWCHARs as 2 bytes
+    //  UCS2 encoded. iODBC I believe uses wchar_t (this is based on
+    //  attempting to support iODBC in DBD::ODBC)"
+    //
+    // This requirement meant adding UCS2 support to the API.  There are
+    // wchar_t-based APIs as well, so a motivated individual could make some
+    // shims to allow picking which Rebol string API to use if they wanted
+    // it to work with char_t-based ODBC where sizeof(wchar_t) != sizeof(u32)
+    //
+    assert(sizeof(SQLWCHAR) == sizeof(u32));
+
     SQLRETURN rc;
 
     // Allocate the environment handle, and set its version to ODBC3
@@ -304,21 +269,21 @@ REBNATIVE(open_connection)
 
     // Connect to the Driver, using the converted connection string
     //
-    SQLSMALLINT connect_len;
-    SQLWCHAR *connect = Make_SqlWChar_From_String(&connect_len, ARG(spec));
+    REBCNT connect_len;
+    SQLWCHAR *connect = rebSpellingOfAllocUCS2(&connect_len, ARG(spec));
 
     SQLSMALLINT out_connect_len;
     rc = SQLDriverConnectW(
         hdbc, // ConnectionHandle
         NULL, // WindowHandle
         connect, // InConnectionString
-        connect_len, // StringLength1
+        cast(SQLSMALLINT, connect_len), // StringLength1
         NULL, // OutConnectionString (not interested in this)
         0, // BufferLength (again, not interested)
         &out_connect_len, // StringLength2Ptr (gets returned anyway)
         SQL_DRIVER_NOPROMPT // DriverCompletion
     );
-    Free_SqlWChar(connect, connect_len);
+    OS_FREE(connect);
 
     if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO) {
         REBCTX *error = Error_ODBC_Env(henv);
@@ -396,8 +361,8 @@ SQLRETURN ODBC_BindParameter(
     SQLHSTMT hstmt,
     PARAMETER *p,
     SQLUSMALLINT number, // parameter number
-    const RELVAL *v
-) {
+    const REBVAL *v
+){
     assert(number != 0);
 
     SQLSMALLINT c_type;
@@ -419,7 +384,7 @@ SQLRETURN ODBC_BindParameter(
 
     case REB_LOGIC: {
         p->buffer_size = sizeof(unsigned char);
-        p->buffer = ALLOC_N(char, p->buffer_size);
+        p->buffer = OS_ALLOC_N(char, p->buffer_size);
 
         *cast(unsigned char*, p->buffer) = VAL_LOGIC(v);
 
@@ -429,7 +394,7 @@ SQLRETURN ODBC_BindParameter(
 
     case REB_INTEGER: {
         p->buffer_size = sizeof(REBI64);
-        p->buffer = ALLOC_N(char, p->buffer_size);
+        p->buffer = OS_ALLOC_N(char, p->buffer_size);
 
         *cast(REBI64*, p->buffer) = VAL_INT64(v);
 
@@ -439,7 +404,7 @@ SQLRETURN ODBC_BindParameter(
 
     case REB_DECIMAL: {
         p->buffer_size = sizeof(double);
-        p->buffer = ALLOC_N(char, p->buffer_size);
+        p->buffer = OS_ALLOC_N(char, p->buffer_size);
 
         *cast(double*, p->buffer) = VAL_DECIMAL(v);
 
@@ -449,7 +414,7 @@ SQLRETURN ODBC_BindParameter(
 
     case REB_TIME: {
         p->buffer_size = sizeof(TIME_STRUCT);
-        p->buffer = ALLOC_N(char, p->buffer_size);
+        p->buffer = OS_ALLOC_N(char, p->buffer_size);
 
         TIME_STRUCT *time = cast(TIME_STRUCT*, p->buffer);
 
@@ -469,7 +434,7 @@ SQLRETURN ODBC_BindParameter(
     case REB_DATE: {
         if (NOT_VAL_FLAG(v, DATE_FLAG_HAS_TIME)) {
             p->buffer_size = sizeof(DATE_STRUCT);
-            p->buffer = ALLOC_N(char, p->buffer_size);
+            p->buffer = OS_ALLOC_N(char, p->buffer_size);
 
             DATE_STRUCT *date = cast(DATE_STRUCT*, p->buffer);
 
@@ -484,7 +449,7 @@ SQLRETURN ODBC_BindParameter(
         }
         else {
             p->buffer_size = sizeof(TIMESTAMP_STRUCT);
-            p->buffer = ALLOC_N(char, p->buffer_size);
+            p->buffer = OS_ALLOC_N(char, p->buffer_size);
 
             TIMESTAMP_STRUCT *stamp = cast(TIMESTAMP_STRUCT*, p->buffer);
 
@@ -502,12 +467,12 @@ SQLRETURN ODBC_BindParameter(
         break; }
 
     case REB_STRING: {
-        SQLSMALLINT length;
-        SQLWCHAR *chars = Make_SqlWChar_From_String(&length, v);
+        REBCNT length;
+        SQLWCHAR *chars = rebSpellingOfAllocUCS2(&length, v);
 
         p->buffer_size = sizeof(SQLWCHAR) * length;
         
-        p->length = p->column_size = 2 * length;
+        p->length = p->column_size = cast(SQLSMALLINT, 2 * length);
 
         c_type = SQL_C_WCHAR;
         sql_type = SQL_VARCHAR;
@@ -554,7 +519,7 @@ SQLRETURN ODBC_GetCatalog(
     SQLHSTMT hstmt,
     enum GET_CATALOG which,
     REBVAL *block
-) {
+){
     assert(IS_BLOCK(block)); // !!! Should it ensure exactly 4 items?
 
     SQLSMALLINT length[4];
@@ -566,14 +531,17 @@ SQLRETURN ODBC_GetCatalog(
         // !!! What if not at head?  Original code seems incorrect, because
         // it passed the array at the catalog word, which is not a string.
         //
-        RELVAL *value = VAL_ARRAY_AT_HEAD(block, arg + 1); 
+        REBVAL *value = rebPickIndexed(block, arg + 1);
         if (IS_STRING(value)) {
-            pattern[arg] = Make_SqlWChar_From_String(&length[arg], value);
+            REBCNT len;
+            pattern[arg] = rebSpellingOfAllocUCS2(&len, KNOWN(value));
+            length[arg] = len;
         }
         else {
             length[arg] = 0;
             pattern[arg] = NULL;
         }
+        rebRelease(value);
     }
 
     SQLRETURN rc;
@@ -609,7 +577,7 @@ SQLRETURN ODBC_GetCatalog(
 
     for (arg = 0; arg < 4; arg++) {
         if (pattern[arg] != NULL)
-            Free_SqlWChar(pattern[arg], length[arg]);
+            OS_FREE(pattern[arg]);
     }
 
     return rc;
@@ -662,7 +630,7 @@ SQLRETURN ODBC_DescribeResults(
     SQLHSTMT hstmt,
     int num_columns,
     COLUMN *columns
-) {
+){
     SQLSMALLINT col;
     for (col = 0; col < num_columns; ++col) {
         COLUMN *column = &columns[col];
@@ -717,17 +685,7 @@ SQLRETURN ODBC_DescribeResults(
         //
         // int length = ODBC_UnCamelCase(column->title, title);
 
-        // We get back wide characters, but want to make a WORD!, and the
-        // WORD!-interning mechanics require UTF-8 at present.
-
-        assert(sizeof(REBUNI) == sizeof(SQLWCHAR));
-        REBSER *title_utf8 =
-            Make_UTF8_Binary(title, title_length, 0, OPT_ENC_0);
-        
-        column->title =
-            Intern_UTF8_Managed(BIN_HEAD(title_utf8), BIN_LEN(title_utf8));
-
-        Free_Series(title_utf8);
+        column->title_word = rebSizedWordUCS2(title, title_length);
     }
 
     return SQL_SUCCESS;
@@ -744,7 +702,7 @@ SQLRETURN ODBC_BindColumns(
     SQLHSTMT hstmt,
     int num_columns,
     COLUMN *columns
-) {    
+){    
     SQLSMALLINT col_num;
     for (col_num = 0; col_num < num_columns; ++col_num) {
         COLUMN *c = &columns[col_num];
@@ -922,9 +880,13 @@ REBNATIVE(insert_odbc)
     //
     // The block passed in is used to form a query.
 
-    RELVAL *value = VAL_ARRAY_AT(ARG(sql));
-    if (IS_END(value))
+    REBCNT sql_index = 1;
+    REBVAL *value = rebPickIndexed(ARG(sql), sql_index);
+
+    if (IS_VOID(value)) {
+        rebRelease(value);
         fail ("Empty array passed for SQL dialect");
+    }
 
     REBOOL use_cache = FALSE;
 
@@ -960,25 +922,23 @@ REBNATIVE(insert_odbc)
             assert(IS_BLANK(previous));
 
         if (NOT(use_cache)) {
-            SQLSMALLINT length;
-            SQLWCHAR *sql_string = Make_SqlWChar_From_String(&length, value);
+            REBCNT length;
+            SQLWCHAR *sql_string = rebSpellingOfAllocUCS2(&length, value);
 
-            rc = SQLPrepareW(hstmt, sql_string, length);
+            rc = SQLPrepareW(hstmt, sql_string, cast(SQLSMALLINT, length));
             if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
                 fail (Error_ODBC_Stmt(hstmt));
 
-            Free_SqlWChar(sql_string, length);
+            OS_FREE(sql_string);
 
             // Remember statement string handle, but keep a copy since it
             // may be mutated by the user.
             //
             // !!! Could re-use value with existing series if read only
             //
-            Init_String(
+            Move_Value(
                 Sink_Field(statement, ODBC_WORD_STRING),
-                Copy_Sequence_At_Len(
-                    VAL_SERIES(value), VAL_INDEX(value), VAL_LEN_AT(value)
-                )
+                rebCopyExtra(value, 0)
             );
         }
 
@@ -987,25 +947,30 @@ REBNATIVE(insert_odbc)
         // different quarantined part of the query is to protect against SQL
         // injection.
 
-        REBCNT num_params = VAL_LEN_AT(ARG(sql)) - 1; // don't count the sql
-        ++value;
+        REBCNT num_params = rebLengthOf(ARG(sql)) - 1; // don't count the sql
+        rebRelease(value);
+        value = rebPickIndexed(ARG(sql), ++sql_index);
 
         PARAMETER *params = NULL;
         if (num_params != 0) {
-            params = ALLOC_N(PARAMETER, num_params);
+            params = OS_ALLOC_N(PARAMETER, num_params);
             if (params == NULL)
                 fail ("Couldn't allocate parameter buffer!");
 
-            REBCNT n;
-            for (n = 0; n < num_params; ++n, ++value) {
+            REBCNT n = 0;
+            while (n < num_params) {
                 rc = ODBC_BindParameter(
                     hstmt,
                     &params[n],
                     n + 1,
                     value
                 );
+                rebRelease(value);
                 if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
                     fail (Error_ODBC_Stmt(hstmt));
+                
+                ++n;
+                value = rebPickIndexed(ARG(sql), ++sql_index);
             }
 
             assert(IS_END(value));
@@ -1020,9 +985,9 @@ REBNATIVE(insert_odbc)
             REBCNT n;
             for (n = 0; n < num_params; ++n) {
                 if (params[n].buffer != NULL)
-                    FREE_N(char, params[n].buffer_size, cast(char*, params[n].buffer));
+                    OS_FREE(params[n].buffer);
             }
-            FREE_N(PARAMETER, num_params, params);
+            OS_FREE(params);
         }
 
         if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
@@ -1079,19 +1044,19 @@ REBNATIVE(insert_odbc)
     REBVAL *field = Get_Field(statement, ODBC_WORD_COLUMNS);
     if (IS_HANDLE(field)) {
         columns = VAL_HANDLE_POINTER(COLUMN, field);
-        free(columns);
+        OS_FREE(columns);
     }
     else
         assert(IS_BLANK(field));
 
-    columns = cast(COLUMN*, malloc(sizeof(COLUMN) * num_columns));
+    columns = OS_ALLOC_N(COLUMN, num_columns);
     if (columns == NULL)
         fail ("Couldn't allocate column buffers!");
 
     Init_Handle_Simple(
         Sink_Field(statement, ODBC_WORD_COLUMNS),
         columns,
-        0
+        num_columns
     );
 
     rc = ODBC_DescribeResults(hstmt, num_columns, columns);
@@ -1105,7 +1070,7 @@ REBNATIVE(insert_odbc)
     REBARR *titles = Make_Array(num_columns);
     int col;
     for (col = 0; col < num_columns; ++col)
-        Init_Word(ARR_AT(titles, col), columns[col].title);
+        Move_Value(ARR_AT(titles, col), columns[col].title_word);
     TERM_ARRAY_LEN(titles, num_columns);
 
     // remember column titles if next call matches, return them as the result
@@ -1121,16 +1086,9 @@ REBNATIVE(insert_odbc)
 // reinterpreted as a Rebol value.  Successive queries for records reuse the
 // buffer for a column.
 //
-void ODBC_Column_To_Rebol_Value(
-    RELVAL *out, // input cell may be relative, but output will be specific
-    COLUMN *col
-){
-    TRASH_CELL_IF_DEBUG(out);
-
-    if (col->length == SQL_NULL_DATA) {
-        Init_Blank(out);
-        return;
-    }
+REBVAL *ODBC_Column_To_Rebol_Value(COLUMN *col) {
+    if (col->length == SQL_NULL_DATA)
+        return rebBlank();
 
     switch (col->sql_type) {
     case SQL_TINYINT: // signed: –128..127, unsigned: 0..255
@@ -1141,10 +1099,9 @@ void ODBC_Column_To_Rebol_Value(
         // types as SQL_C_SLONG or SQL_C_ULONG, regardless of actual size.
         //
         if (col->is_unsigned)
-            Init_Integer(out, *cast(unsigned long*, col->buffer));
-        else
-            Init_Integer(out, *cast(signed long*, col->buffer));
-        break;
+            return rebInteger(*cast(unsigned long*, col->buffer));
+
+        return rebInteger(*cast(signed long*, col->buffer));
 
     case SQL_BIGINT: // signed: –2[63]..2[63] – 1, unsigned: 0..2[64] – 1
         //
@@ -1154,11 +1111,10 @@ void ODBC_Column_To_Rebol_Value(
             if (*cast(REBU64*, col->buffer) > MAX_I64)
                 fail ("INTEGER! can't hold some unsigned 64-bit values");
 
-            Init_Integer(out, *cast(REBU64*, col->buffer));
+            return rebInteger(*cast(REBU64*, col->buffer));
         }
-        else
-            Init_Integer(out, *cast(REBI64*, col->buffer));
-        break;
+
+        return rebInteger(*cast(REBI64*, col->buffer));
 
     case SQL_REAL: // precision 24
     case SQL_DOUBLE: // precision 53
@@ -1169,17 +1125,11 @@ void ODBC_Column_To_Rebol_Value(
         // ODBC was asked at column binding time to give back all floating
         // point types as SQL_C_DOUBLE, regardless of actual size.
         //
-        Init_Decimal(out, *cast(double*, col->buffer));
-        break;
+        return rebDecimal(*cast(double*, col->buffer));
 
     case SQL_TYPE_DATE: {
         DATE_STRUCT *date = cast(DATE_STRUCT*, col->buffer);
-
-        VAL_RESET_HEADER(out, REB_DATE); // no time or time zone flags
-        VAL_YEAR(out)  = date->year;
-        VAL_MONTH(out) = date->month;
-        VAL_DAY(out) = date->day;
-        break; }
+        return rebDateYMD(date->year, date->month, date->day); }
 
     case SQL_TYPE_TIME: {
         //
@@ -1188,14 +1138,7 @@ void ODBC_Column_To_Rebol_Value(
         // but when it is retrieved it will just be 17:32:19
         //
         TIME_STRUCT *time = cast(TIME_STRUCT*, col->buffer);
-
-        VAL_RESET_HEADER(out, REB_TIME);
-        VAL_NANO(out) = SECS_TO_NANO(
-            time->hour * 3600
-            + time->minute * 60
-            + time->second
-        );
-        break; }
+        return rebTimeHMS(time->hour, time->minute, time->second); }
 
     // Note: It's not entirely clear how to work with timezones in ODBC, there
     // is a datatype called SQL_SS_TIMESTAMPOFFSET_STRUCT which extends
@@ -1205,25 +1148,22 @@ void ODBC_Column_To_Rebol_Value(
     case SQL_TYPE_TIMESTAMP: {
         TIMESTAMP_STRUCT *stamp = cast(TIMESTAMP_STRUCT*, col->buffer);
 
-        VAL_RESET_HEADER(out, REB_DATE);
-        SET_VAL_FLAG(out, DATE_FLAG_HAS_TIME);
-        VAL_YEAR(out) = stamp->year;
-        VAL_MONTH(out) = stamp->month;
-        VAL_DAY(out) = stamp->day;
+        REBVAL *date = rebDateYMD(stamp->year, stamp->month, stamp->day);
 
         // stamp->fraction is billionths of a second, e.g. nanoseconds
         //
-        VAL_NANO(out) = stamp->fraction + SECS_TO_NANO(
-            stamp->hour * 3600
-            + stamp->minute * 60
-            + stamp->second
+        REBVAL *time = rebTimeNano(
+            stamp->fraction + SECS_TO_NANO(
+                stamp->hour * 3600
+                + stamp->minute * 60
+                + stamp->second
+            )
         );
         
-        // if we had a timezone, we'd need to set DATE_FLAG_HAS_ZONE and
-        // then INIT_VAL_ZONE().  But since DATE_FLAG_HAS_ZONE is not set,
-        // the timezone bitfield in the date is ignored.
-        //
-        break; }
+        REBVAL *datetime = rebDateTime(date, time);
+        rebRelease(date);
+        rebRelease(time);
+        return datetime; }
 
     case SQL_BIT:
         //
@@ -1233,18 +1173,13 @@ void ODBC_Column_To_Rebol_Value(
         //
         if (col->column_size != 1)
             fail ("BIT(n) fields are only supported for n = 1");
-        Init_Logic(out, LOGICAL(*cast(unsigned char*, col->buffer)));
-        break;
+
+        return rebLogic(LOGICAL(*cast(unsigned char*, col->buffer)));
 
     case SQL_BINARY:
     case SQL_VARBINARY:
-    case SQL_LONGVARBINARY: {
-        REBSER *bin = Make_Binary(col->length);
-
-        memcpy(s_cast(BIN_HEAD(bin)), col->buffer, col->length);
-        TERM_BIN_LEN(bin, col->length);
-        Init_Binary(out, bin);
-        break; }
+    case SQL_LONGVARBINARY:
+        return rebBinary(col->buffer, col->length);
 
     case SQL_CHAR:
     case SQL_VARCHAR:
@@ -1252,17 +1187,17 @@ void ODBC_Column_To_Rebol_Value(
     case SQL_WCHAR:
     case SQL_WVARCHAR:
     case SQL_WLONGVARCHAR:
-    case SQL_GUID: {
-        REBSER *ser = Make_String_From_SqlWchar(cast(SQLWCHAR*, col->buffer));
-        Init_String(out, ser);
-        break; }
+    case SQL_GUID:
+        return rebStringUCS2(cast(SQLWCHAR*, col->buffer)); // !!! pass size?
 
     default:
-        // Note: This happens with BIT(2) and the MySQL ODBC driver, which
-        // reports a sql_type of -2 for some reason.
-        //
-        fail ("Unsupported SQL_XXX type returned from query");
+        break;
     }
+
+    // Note: This happens with BIT(2) and the MySQL ODBC driver, which
+    // reports a sql_type of -2 for some reason.
+    //
+    fail ("Unsupported SQL_XXX type returned from query");
 }
 
 
@@ -1319,8 +1254,11 @@ REBNATIVE(copy_odbc)
         REBARR *record = Make_Array(num_columns);
 
         SQLSMALLINT col;
-        for (col = 0; col < num_columns; ++col)
-            ODBC_Column_To_Rebol_Value(ARR_AT(record, col), &columns[col]);
+        for (col = 0; col < num_columns; ++col) {
+            REBVAL *temp = ODBC_Column_To_Rebol_Value(&columns[col]);
+            Move_Value(ARR_AT(record, col), temp);
+            rebRelease(temp);
+        }
         TERM_ARRAY_LEN(record, num_columns);
 
         DS_PUSH_TRASH;
@@ -1418,7 +1356,13 @@ REBNATIVE(close_statement)
     if (IS_HANDLE(field)) {
         COLUMN *columns = VAL_HANDLE_POINTER(COLUMN, field);
         assert(columns != NULL);
-        free(columns);
+        REBCNT num_columns = VAL_HANDLE_LEN(field);
+
+        REBCNT col;
+        for (col = 0; col < num_columns; ++col)
+            rebRelease(columns[col].title_word);
+
+        OS_FREE(columns);
         SET_HANDLE_POINTER(field, NULL);
         Init_Blank(field);
     }

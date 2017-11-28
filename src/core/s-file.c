@@ -186,7 +186,7 @@ REBSER *To_Local_Path(
             Append_UTF8_May_Fail(result, lpath_utf8, lpath_size);
 
             OS_FREE(lpath_utf8);
-            rebFree(lpath);
+            rebRelease(lpath);
         }
         else
             result = Make_Unicode(len + FN_PAD);

@@ -70,7 +70,7 @@ static REBARR *Read_Dir_May_Fail(struct devreq_file *dir)
         // "devreq" is can protect its own state, e.g. be a Rebol object,
         // so there'd not be any API handles to free here.
         //
-        rebFree(file.path);
+        rebRelease(file.path);
     }
 
     if (
@@ -172,7 +172,7 @@ static void Init_Dir_Path(
     } else {
         // Path did not end with /, so we better be wild:
         if (wild == 0) {
-            rebFree(dir->path);
+            rebRelease(dir->path);
             fail (Error_Bad_File_Path_Raw(path));
         }
 
@@ -199,7 +199,7 @@ static void Init_Dir_Path(
 static void Cleanup_Dir_Path(struct devreq_file *dir)
 {
     assert(dir->path != NULL);
-    rebFree(dir->path);
+    rebRelease(dir->path);
 }
 
 

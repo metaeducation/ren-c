@@ -330,6 +330,34 @@ ATTRIBUTE_NO_RETURN void Fail_Core(const void *p)
 }
 
 
+
+//
+//  fail: native [
+//
+//  {Interrupts execution by reporting an error (a TRAP can intercept it).}
+//
+//      reason [error! string! block!]
+//          "ERROR! value, message string, or failure spec"
+//      /where
+//          "Specify an originating location other than the FAIL itself"
+//      location [frame! any-word!]
+//          "Frame or parameter at which to indicate the error originated"
+//  ]
+//
+REBNATIVE(fail)
+//
+// FAIL is made a native so that the rebFail() API can call it.  This way,
+// usermode code can hijack FAIL with its own handlers.  Early in bootstrap
+// a better handler than panic is introduced which forms the block.
+{
+    INCLUDE_PARAMS_OF_FAIL;
+
+    UNUSED(REF(where));
+    UNUSED(ARG(location));
+    panic (ARG(reason));
+}
+
+
 //
 //  Stack_Depth: C
 //

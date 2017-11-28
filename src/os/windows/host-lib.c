@@ -152,7 +152,7 @@ i64 OS_Delta_Time(i64 base)
 //  OS_Get_Current_Dir: C
 //
 // Return the current directory path as a FILE!.  Result should be freed
-// with rebFree()
+// with rebRelease()
 //
 REBVAL *OS_Get_Current_Dir(void)
 {
@@ -312,7 +312,7 @@ REBVAL *OS_GOB_To_Image(REBGOB *gob)
 //  OS_Get_Current_Exec: C
 //
 // Return the current executable path as a FILE!.  The result should be freed
-// with rebFree()
+// with rebRelease()
 //
 REBVAL *OS_Get_Current_Exec(void)
 {

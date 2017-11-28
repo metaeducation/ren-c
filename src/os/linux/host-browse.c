@@ -76,7 +76,7 @@ void OS_Destroy_Graphics(void);
 //  OS_Get_Current_Dir: C
 //
 // Return the current directory path as a FILE!.  The result should be freed
-// with rebFree()
+// with rebRelease()
 //
 REBVAL *OS_Get_Current_Dir(void)
 {

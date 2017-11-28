@@ -336,7 +336,7 @@ int main(int argc, char **argv_ansi)
 
         REBVAL *str = rebStringW(argv_utf16[i]);
         Append_Value(argv, str);
-        rebFree(str);
+        rebRelease(str);
     }
 #else
     // Assume no wide character support, and just take the ANSI C args, which
@@ -349,7 +349,7 @@ int main(int argc, char **argv_ansi)
 
         REBVAL *str = rebString(argv_ansi[i]);
         Append_Value(argv, str);
-        rebFree(str);
+        rebRelease(str);
     }
 #endif
 
@@ -490,7 +490,7 @@ int main(int argc, char **argv_ansi)
     REBVAL *code = rebVoid();
     REBVAL *status = rebVoid();
     REBVAL *result = rebBlock(exec_path, argv_value, ext_value, END);
-    rebFree(exec_path); // ...value in BLOCK! keeps series alive now...
+    rebRelease(exec_path); // ...value in BLOCK! keeps series alive now...
 
     // The DO and APPLY hooks are used to implement things like tracing
     // or debugging.  If they were allowed to run during the host
@@ -525,9 +525,9 @@ int main(int argc, char **argv_ansi)
             status, // BLANK! if no error, BAR! if halt, or the ERROR!
             END
         );
-        rebFree(code);
-        rebFree(result);
-        rebFree(status);
+        rebRelease(code);
+        rebRelease(result);
+        rebRelease(status);
 
         if ((code = new_code) == NULL) {
             //
@@ -609,9 +609,9 @@ int main(int argc, char **argv_ansi)
 
     int exit_status = VAL_INT32(status);
 
-    rebFree(status);
-    rebFree(code);
-    rebFree(result);
+    rebRelease(status);
+    rebRelease(code);
+    rebRelease(result);
 
     DROP_GUARD_VALUE(argv_value);
 

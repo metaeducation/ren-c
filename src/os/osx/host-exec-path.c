@@ -46,7 +46,7 @@ int _NSGetExecutablePath(char* buf, uint32_t* bufsize);
 //  OS_Get_Current_Exec: C
 //
 // Return the current executable path as a STRING!.  The result should be
-// freed with rebFree()
+// freed with rebRelease()
 //
 REBVAL *OS_Get_Current_Exec(void)
 {

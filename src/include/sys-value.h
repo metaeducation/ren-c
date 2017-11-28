@@ -1043,6 +1043,7 @@ inline static void Init_Char(RELVAL *v, REBUNI uni) {
 inline static void Init_Integer(RELVAL *v, REBI64 i64) {
     VAL_RESET_HEADER(v, REB_INTEGER);
     v->payload.integer = i64;
+    v->extra.binding = NULL; // !!! avoids compiler warnings, better way?
 }
 
 #define VAL_INT32(v) \

@@ -130,16 +130,27 @@ static void Add_Event_XY(REBGOB *gob, REBINT id, REBINT xy, REBINT flags)
 
 static void Update_Event_XY(REBGOB *gob, REBINT id, REBINT xy, REBINT flags)
 {
-    REBEVT evt;
+    // !!! This used to use a RL_API for event updating which said:
+    //
+    // "Updates an application event (e.g. GUI) to the event port.
+    // Returns 1 if updated, or 0 if event appended, and -1 if full.
+    // Arguments:
+    //    evt - A properly initialized event structure. The model and type of
+    //          the event are used to address the unhandled event in the
+    //          queue, when it is found, it will be replaced with this one
+    //
+    // The return result was not heeded here.
+    //
+    REBVAL *event = Find_Last_Event(EVM_GUI, id);
 
-    memset(&evt, 0, sizeof(evt));
-    evt.type  = id;
-    evt.flags = cast(u8, flags | EVF_HAS_XY);
-    evt.model = EVM_GUI;
-    evt.data  = xy;
-    evt.eventee.ser = gob;
-
-    rebUpdateEvent(&evt);
+    if (event != NULL) {
+        event->extra.eventee = evt->eventee;
+        event->payload.event.type = id;
+        event->payload.event.flags = cast(u8, flags | EVF_HAS_XY);
+        event->payload.event.win = NULL;
+        event->payload.event.model = EVM_GUI;
+        event->payload.event.data = xy;
+    }
 }
 
 static void Add_Event_Key(REBGOB *gob, REBINT id, REBINT key, REBINT flags)
