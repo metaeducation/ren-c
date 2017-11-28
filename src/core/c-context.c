@@ -209,11 +209,9 @@ REBVAL *Append_Context(
     );
     TERM_ARRAY_LEN(keylist, ARR_LEN(keylist));
 
-    // Add an unset value to var list
+    // Add a slot to the var list
     //
     EXPAND_SERIES_TAIL(SER(CTX_VARLIST(context)), 1);
-    REBVAL *value = SINK(ARR_LAST(CTX_VARLIST(context)));
-    Init_Void(value);
     TERM_ARRAY_LEN(CTX_VARLIST(context), ARR_LEN(CTX_VARLIST(context)));
 
     if (opt_any_word) {
@@ -235,11 +233,9 @@ REBVAL *Append_Context(
     else
         assert(opt_name != NULL);
 
-    // The variable value location for the key we just added.  It's currently
-    // unset (maybe trash someday?) but in either case, known to not be
-    // a relative any-word or any-array
+    // The variable value location for the key we just added (unset).
     //
-    return value;
+    return Init_Void(ARR_LAST(CTX_VARLIST(context)));
 }
 
 

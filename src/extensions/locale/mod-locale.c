@@ -83,6 +83,7 @@ REBNATIVE(locale)
 
     int len_check = GetLocaleInfo(0, type, buffer, len_plus_term);
     assert(len_check == len_plus_term);
+    UNUSED(len_check);
 
     REBVAL *str = rebSizedStringW(buffer, len_plus_term - 1);
     Move_Value(D_OUT, str);

@@ -697,6 +697,103 @@ inline static void VAL_SET_TYPE_BITS(RELVAL *v, enum Reb_Kind kind) {
     NOT(IS_END(v))
 
 
+//=////////////////////////////////////////////////////////////////////////=//
+//
+//  RELATIVE AND SPECIFIC VALUES
+//
+//=////////////////////////////////////////////////////////////////////////=//
+//
+// Some value types use their `->extra` field in order to store a pointer to
+// a REBNOD which constitutes their notion of "binding".
+//
+// At time of writing, this can be either a pointer to EMPTY_ARRAY (which
+// indicates UNBOUND), or to a function's paramlist (which indicates a
+// relative binding), or to a context's varlist (which indicates a specific
+// binding.)
+//
+// The ordering of %types.r is chosen specially so that all bindable types
+// are at lower values than the unbindable types.
+//
+
+// An ANY-WORD! is relative if it refers to a local or argument of a function,
+// and has its bits resident in the deep copy of that function's body.
+//
+// An ANY-ARRAY! in the deep copy of a function body must be relative also to
+// the same function if it contains any instances of such relative words.
+//
+inline static REBOOL IS_RELATIVE(const RELVAL *v) {
+    if (Not_Bindable(v)) // uses VAL_TYPE_RAW(), don't check unreadable blank
+        return FALSE;
+    return LOGICAL(v->extra.binding->header.bits & ARRAY_FLAG_PARAMLIST);
+}
+
+#if defined(__cplusplus) && __cplusplus >= 201103L
+    //
+    // Take special advantage of the fact that C++ can help catch when we are
+    // trying to see if a REBVAL is specific or relative (it will always
+    // be specific, so the call is likely in error).  In the C build, they
+    // are the same type so there will be no error.
+    //
+    REBOOL IS_RELATIVE(const REBVAL *v);
+#endif
+
+#define IS_SPECIFIC(v) \
+    NOT(IS_RELATIVE(v))
+
+inline static REBFUN *VAL_RELATIVE(const RELVAL *v) {
+    assert(IS_RELATIVE(v));
+    return cast(REBFUN*, v->extra.binding);
+}
+
+inline static REBCTX *VAL_SPECIFIC_COMMON(const RELVAL *v) {
+    assert(IS_SPECIFIC(v));
+    return cast(REBCTX*, v->extra.binding);
+}
+
+#ifdef NDEBUG
+    #define VAL_SPECIFIC(v) \
+        VAL_SPECIFIC_COMMON(v)
+#else
+    #define VAL_SPECIFIC(v) \
+        VAL_SPECIFIC_Debug(v)
+#endif
+
+// When you have a RELVAL* (e.g. from a REBARR) that you "know" to be specific,
+// the KNOWN macro can be used for that.  Checks to make sure in debug build.
+//
+// Use for: "invalid conversion from 'Reb_Value*' to 'Reb_Specific_Value*'"
+
+inline static const REBVAL *const_KNOWN(const RELVAL *value) {
+    assert(IS_END(value) || IS_SPECIFIC(value));
+    return cast(const REBVAL*, value); // we asserted it's actually specific
+}
+
+inline static REBVAL *KNOWN(RELVAL *value) {
+    //
+    // Trash is tolerated for KNOWN() because it is often used to indicate
+    // a cell which may be targeted for writing or reading, which when read
+    // can't be relative.  This only applies to mutable slots, so it's *not*
+    // tolerated in the const_KNOWN() case.
+    //
+    // Because this is called so often, though, we speed it up and don't do
+    // a full trash-validity or end-validity check.  Just check the bits.
+    //
+    assert(
+        (value->header.bits & (NODE_FLAG_END | NODE_FLAG_FREE)) != 0
+        || IS_SPECIFIC(value)
+    );
+    return cast(REBVAL*, value); // we asserted it's actually specific
+}
+
+inline static const RELVAL *const_REL(const REBVAL *v) {
+    return cast(const RELVAL*, v); // cast w/input restricted to REBVAL
+}
+
+inline static RELVAL *REL(REBVAL *v) {
+    return cast(RELVAL*, v); // cast w/input restricted to REBVAL
+}
+
+
 
 //=////////////////////////////////////////////////////////////////////////=//
 //
@@ -728,8 +825,10 @@ inline static void VAL_SET_TYPE_BITS(RELVAL *v, enum Reb_Kind kind) {
 #define IS_VOID(v) \
     LOGICAL(VAL_TYPE(v) == REB_MAX_VOID)
 
-#define Init_Void(v) \
-    VAL_RESET((v), REB_MAX_VOID, VALUE_FLAG_FALSEY) // see note above!
+inline static REBVAL *Init_Void(RELVAL *out) {
+    VAL_RESET(out, REB_MAX_VOID, VALUE_FLAG_FALSEY); // see note above!
+    return KNOWN(out);
+}
 
 #define IS_VOID_OR_FALSEY(v) \
     GET_VAL_FLAG((v), VALUE_FLAG_FALSEY)
@@ -755,11 +854,15 @@ inline static void VAL_SET_TYPE_BITS(RELVAL *v, enum Reb_Kind kind) {
 #define BAR_VALUE \
     c_cast(const REBVAL*, &PG_Bar_Value[0])
 
-#define Init_Bar(v) \
-    VAL_RESET((v), REB_BAR, 0)
+inline static REBVAL *Init_Bar(RELVAL *out) {
+    VAL_RESET(out, REB_BAR, 0);
+    return KNOWN(out);
+}
 
-#define Init_Lit_Bar(v) \
-    VAL_RESET((v), REB_LIT_BAR, 0)
+inline static REBVAL *Init_Lit_Bar(RELVAL *out) {
+    VAL_RESET(out, REB_LIT_BAR, 0);
+    return KNOWN(out);
+}
 
 
 //=////////////////////////////////////////////////////////////////////////=//
@@ -792,12 +895,14 @@ inline static void VAL_SET_TYPE_BITS(RELVAL *v, enum Reb_Kind kind) {
 #define BLANK_VALUE \
     c_cast(const REBVAL*, &PG_Blank_Value[0])
 
-#define Init_Blank(v) \
-    VAL_RESET((v), REB_BLANK, VALUE_FLAG_FALSEY)
+inline static REBVAL *Init_Blank(RELVAL *out) {
+    VAL_RESET(out, REB_BLANK, VALUE_FLAG_FALSEY);
+    return KNOWN(out);
+}
 
 #ifdef NDEBUG
-    #define Init_Unreadable_Blank(v) \
-        Init_Blank(v)
+    #define Init_Unreadable_Blank(out) \
+        Init_Blank(out)
 
     #define IS_BLANK_RAW(v) \
         IS_BLANK(v)
@@ -808,9 +913,12 @@ inline static void VAL_SET_TYPE_BITS(RELVAL *v, enum Reb_Kind kind) {
     #define SINK(v) \
         cast(REBVAL*, (v))
 #else
-    #define Init_Unreadable_Blank(v) \
-        VAL_RESET((v), REB_BLANK, \
-            VALUE_FLAG_FALSEY | BLANK_FLAG_UNREADABLE_DEBUG)
+    inline static REBVAL *Init_Unreadable_Blank(RELVAL *out) {
+        VAL_RESET(
+            out, REB_BLANK, VALUE_FLAG_FALSEY | BLANK_FLAG_UNREADABLE_DEBUG
+        );
+        return KNOWN(out);
+    }
 
     inline static REBOOL IS_BLANK_RAW(const RELVAL *v) {
         return LOGICAL(VAL_TYPE_RAW(v) == REB_BLANK);
@@ -886,8 +994,10 @@ inline static void VAL_SET_TYPE_BITS(RELVAL *v, enum Reb_Kind kind) {
 #define TRUE_VALUE \
     c_cast(const REBVAL*, &PG_True_Value[0])
 
-#define Init_Logic(v,b) \
-    VAL_RESET((v), REB_LOGIC, (b) ? 0 : VALUE_FLAG_FALSEY)
+inline static REBVAL *Init_Logic(RELVAL *out, REBOOL b) {
+    VAL_RESET(out, REB_LOGIC, b ? 0 : VALUE_FLAG_FALSEY);
+    return KNOWN(out);
+}
 
 #ifdef NDEBUG
     #define IS_FALSEY(v) \
@@ -995,9 +1105,10 @@ inline static enum Reb_Kind KIND_FROM_SYM(REBSYM s) {
 #define VAL_CHAR(v) \
     ((v)->payload.character)
 
-inline static void Init_Char(RELVAL *v, REBUNI uni) {
-    VAL_RESET_HEADER(v, REB_CHAR);
-    VAL_CHAR(v) = uni;
+inline static REBVAL *Init_Char(RELVAL *out, REBUNI uni) {
+    VAL_RESET_HEADER(out, REB_CHAR);
+    VAL_CHAR(out) = uni;
+    return KNOWN(out);
 }
 
 #define SPACE_VALUE \
@@ -1040,10 +1151,11 @@ inline static void Init_Char(RELVAL *v, REBUNI uni) {
     }
 #endif
 
-inline static void Init_Integer(RELVAL *v, REBI64 i64) {
-    VAL_RESET_HEADER(v, REB_INTEGER);
-    v->payload.integer = i64;
-    v->extra.binding = NULL; // !!! avoids compiler warnings, better way?
+inline static REBVAL *Init_Integer(RELVAL *out, REBI64 i64) {
+    VAL_RESET_HEADER(out, REB_INTEGER);
+    out->payload.integer = i64;
+    out->extra.binding = NULL; // !!! avoids compiler warnings, better way?
+    return KNOWN(out);
 }
 
 #define VAL_INT32(v) \
@@ -1086,14 +1198,16 @@ inline static void Init_Integer(RELVAL *v, REBI64 i64) {
     }
 #endif
 
-inline static void Init_Decimal(RELVAL *v, REBDEC d) {
-    VAL_RESET_HEADER(v, REB_DECIMAL);
-    v->payload.decimal = d;
+inline static REBVAL *Init_Decimal(RELVAL *out, REBDEC d) {
+    VAL_RESET_HEADER(out, REB_DECIMAL);
+    out->payload.decimal = d;
+    return KNOWN(out);
 }
 
-inline static void Init_Percent(RELVAL *v, REBDEC d) {
-    VAL_RESET_HEADER(v, REB_PERCENT);
-    v->payload.decimal = d;
+inline static REBVAL *Init_Percent(RELVAL *out, REBDEC d) {
+    VAL_RESET_HEADER(out, REB_PERCENT);
+    out->payload.decimal = d;
+    return KNOWN(out);
 }
 
 
@@ -1141,13 +1255,13 @@ inline static deci VAL_MONEY_AMOUNT(const RELVAL *v) {
     return amount;
 }
 
-inline static void Init_Money(RELVAL *v, deci amount) {
-    VAL_RESET_HEADER(v, REB_MONEY);
-    v->extra.m0 = amount.m0;
-    v->payload.money.m1 = amount.m1;
-    v->payload.money.m2 = amount.m2;
-    v->payload.money.s = amount.s;
-    v->payload.money.e = amount.e;
+inline static void Init_Money(RELVAL *out, deci amount) {
+    VAL_RESET_HEADER(out, REB_MONEY);
+    out->extra.m0 = amount.m0;
+    out->payload.money.m1 = amount.m1;
+    out->payload.money.m2 = amount.m2;
+    out->payload.money.s = amount.s;
+    out->payload.money.e = amount.e;
 }
 
 
@@ -1360,8 +1474,8 @@ inline static void SET_EVENT_KEY(RELVAL *v, REBCNT k, REBCNT c) {
 #define VAL_IMAGE_LEN(v) \
     VAL_LEN_AT(v)
 
-#define Init_Image(v,s) \
-    Init_Any_Series((v), REB_IMAGE, (s));
+#define Init_Image(out,s) \
+    Init_Any_Series((out), REB_IMAGE, (s));
 
 //tuple to image! pixel order bytes
 #define TO_PIXEL_TUPLE(t) \
@@ -1425,10 +1539,9 @@ inline static void SET_GOB(RELVAL *v, REBGOB *g) {
 }
 
 
-
 //=////////////////////////////////////////////////////////////////////////=//
 //
-//  RELATIVE AND SPECIFIC VALUES
+//  BINDING
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
@@ -1444,83 +1557,6 @@ inline static void SET_GOB(RELVAL *v, REBGOB *g) {
 // are at lower values than the unbindable types.
 //
 
-// An ANY-WORD! is relative if it refers to a local or argument of a function,
-// and has its bits resident in the deep copy of that function's body.
-//
-// An ANY-ARRAY! in the deep copy of a function body must be relative also to
-// the same function if it contains any instances of such relative words.
-//
-inline static REBOOL IS_RELATIVE(const RELVAL *v) {
-    if (Not_Bindable(v)) // uses VAL_TYPE_RAW(), don't check unreadable blank
-        return FALSE;
-    return LOGICAL(v->extra.binding->header.bits & ARRAY_FLAG_PARAMLIST);
-}
-
-#if defined(__cplusplus) && __cplusplus >= 201103L
-    //
-    // Take special advantage of the fact that C++ can help catch when we are
-    // trying to see if a REBVAL is specific or relative (it will always
-    // be specific, so the call is likely in error).  In the C build, they
-    // are the same type so there will be no error.
-    //
-    REBOOL IS_RELATIVE(const REBVAL *v);
-#endif
-
-#define IS_SPECIFIC(v) \
-    NOT(IS_RELATIVE(v))
-
-inline static REBFUN *VAL_RELATIVE(const RELVAL *v) {
-    assert(IS_RELATIVE(v));
-    return cast(REBFUN*, v->extra.binding);
-}
-
-inline static REBCTX *VAL_SPECIFIC_COMMON(const RELVAL *v) {
-    assert(IS_SPECIFIC(v));
-    return cast(REBCTX*, v->extra.binding);
-}
-
-#ifdef NDEBUG
-    #define VAL_SPECIFIC(v) \
-        VAL_SPECIFIC_COMMON(v)
-#else
-    #define VAL_SPECIFIC(v) \
-        VAL_SPECIFIC_Debug(v)
-#endif
-
-// When you have a RELVAL* (e.g. from a REBARR) that you "know" to be specific,
-// the KNOWN macro can be used for that.  Checks to make sure in debug build.
-//
-// Use for: "invalid conversion from 'Reb_Value*' to 'Reb_Specific_Value*'"
-
-inline static const REBVAL *const_KNOWN(const RELVAL *value) {
-    assert(IS_END(value) || IS_SPECIFIC(value));
-    return cast(const REBVAL*, value); // we asserted it's actually specific
-}
-
-inline static REBVAL *KNOWN(RELVAL *value) {
-    //
-    // Trash is tolerated for KNOWN() because it is often used to indicate
-    // a cell which may be targeted for writing or reading, which when read
-    // can't be relative.  This only applies to mutable slots, so it's *not*
-    // tolerated in the const_KNOWN() case.
-    //
-    // Because this is called so often, though, we speed it up and don't do
-    // a full trash-validity or end-validity check.  Just check the bits.
-    //
-    assert(
-        (value->header.bits & (NODE_FLAG_END | NODE_FLAG_FREE)) != 0
-        || IS_SPECIFIC(value)
-    );
-    return cast(REBVAL*, value); // we asserted it's actually specific
-}
-
-inline static const RELVAL *const_REL(const REBVAL *v) {
-    return cast(const RELVAL*, v); // cast w/input restricted to REBVAL
-}
-
-inline static RELVAL *REL(REBVAL *v) {
-    return cast(RELVAL*, v); // cast w/input restricted to REBVAL
-}
 
 // Originally a NULL pointer was used to indicate when a value was specified
 // by its nature.  However, by using something that is a valid REBNOD there

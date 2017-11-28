@@ -130,7 +130,7 @@ inline static void Unbind_Any_Word(RELVAL *v) {
 #endif
 }
 
-inline static void Init_Any_Word(
+inline static REBVAL *Init_Any_Word(
     RELVAL *out,
     enum Reb_Kind kind,
     REBSTR *spelling
@@ -147,6 +147,7 @@ inline static void Init_Any_Word(
 
     assert(ANY_WORD(out));
     assert(IS_WORD_UNBOUND(out));
+    return KNOWN(out);
 }
 
 #define Init_Word(out,spelling) \
@@ -169,7 +170,7 @@ inline static void Init_Any_Word(
 
 // Initialize an ANY-WORD! type with a binding to a context.
 //
-inline static void Init_Any_Word_Bound(
+inline static REBVAL *Init_Any_Word_Bound(
     REBVAL *out,
     enum Reb_Kind type,
     REBSTR *spelling,
@@ -186,6 +187,7 @@ inline static void Init_Any_Word_Bound(
 
     assert(ANY_WORD(out));
     assert(IS_WORD_BOUND(out));
+    return KNOWN(out);
 }
 
 inline static void Canonize_Any_Word(REBVAL *any_word) {

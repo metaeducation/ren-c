@@ -117,7 +117,7 @@ inline static void Enter_Api_Clear_Last_Error(void) {
     } while (0)
 
 
-inline static REBVAL *Alloc_Api_Value(void)
+inline static REBVAL *Alloc_Value(void)
 {
     REBVAL *pairing = Alloc_Pairing(NULL);
 
@@ -158,7 +158,7 @@ void Startup_Api(void)
     // means no error.
     //
     assert(PG_last_error == NULL);
-    PG_last_error = Alloc_Api_Value();
+    PG_last_error = Alloc_Value();
     SET_END(PG_last_error);
 
     // These tables used to be built by overcomplicated Rebol scripts.  It's
@@ -379,9 +379,7 @@ REBVAL *RL_rebBlock(
     UNUSED(p4);
     TERM_ARRAY_LEN(array, 3);
 
-    REBVAL *result = Alloc_Api_Value();
-    Init_Block(result, array);
-    return result;
+    return Init_Block(Alloc_Value(), array);
 }
 
 
@@ -469,7 +467,7 @@ REBVAL *RL_rebDo(const void *p, ...)
     // just say a BLANK! means that for now.  Assume caller has to explicitly
     // rebRelease() the result.
     //
-    REBVAL *result = Alloc_Api_Value();
+    REBVAL *result = Alloc_Value();
     assert(IS_TRASH_DEBUG(result)); // ok: Do_Va_Core() will set to END
 
     va_list va;
@@ -540,9 +538,7 @@ REBVAL *RL_rebLastError(void)
     // API calls might error and overwrite it during their inspection.
     // Allocate a new API handle cell.
     //
-    REBVAL *result = Alloc_Api_Value();
-    Move_Value(result, PG_last_error);
-    return result;
+    return Move_Value(Alloc_Value(), PG_last_error);
 }
 
 
@@ -568,7 +564,7 @@ void *RL_rebEval(const REBVAL *v)
     // something to distinguish them.
     //
     REBARR *result = Alloc_Singular_Array();
-    Move_Value(KNOWN(ARR_HEAD(result)), v);
+    Move_Value(ARR_HEAD(result), v);
     SET_VAL_FLAG(ARR_HEAD(result), VALUE_FLAG_EVAL_FLIP);
 
     // !!! The intent for the long term is that these rebEval() instructions
@@ -588,10 +584,7 @@ void *RL_rebEval(const REBVAL *v)
 REBVAL *RL_rebVoid(void)
 {
     Enter_Api_Clear_Last_Error();
-
-    REBVAL *result = Alloc_Api_Value();
-    Init_Void(result);
-    return result;
+    return Init_Void(Alloc_Value());
 }
 
 
@@ -601,10 +594,7 @@ REBVAL *RL_rebVoid(void)
 REBVAL *RL_rebBlank(void)
 {
     Enter_Api_Clear_Last_Error();
-
-    REBVAL *result = Alloc_Api_Value();
-    Init_Blank(result);
-    return result;
+    return Init_Blank(Alloc_Value());
 }
 
 
@@ -619,10 +609,7 @@ REBVAL *RL_rebBlank(void)
 REBVAL *RL_rebLogic(long logic)
 {
     Enter_Api_Clear_Last_Error();
-
-    REBVAL *result = Alloc_Api_Value();
-    Init_Logic(result, LOGICAL(logic));
-    return result;
+    return Init_Logic(Alloc_Value(), LOGICAL(logic));
 }
 
 
@@ -635,10 +622,7 @@ REBVAL *RL_rebLogic(long logic)
 REBVAL *RL_rebInteger(REBI64 i)
 {
     Enter_Api_Clear_Last_Error();
-
-    REBVAL *result = Alloc_Api_Value();
-    Init_Integer(result, i);
-    return result;
+    return Init_Integer(Alloc_Value(), i);
 }
 
 
@@ -648,10 +632,7 @@ REBVAL *RL_rebInteger(REBI64 i)
 REBVAL *RL_rebDecimal(REBDEC dec)
 {
     Enter_Api_Clear_Last_Error();
-
-    REBVAL *result = Alloc_Api_Value();
-    Init_Decimal(result, dec);
-    return result;
+    return Init_Decimal(Alloc_Value(), dec);
 }
 
 
@@ -665,7 +646,7 @@ REBVAL *RL_rebTimeHMS(
 ){
     Enter_Api_Clear_Last_Error();
 
-    REBVAL *result = Alloc_Api_Value();
+    REBVAL *result = Alloc_Value();
     VAL_RESET_HEADER(result, REB_TIME);
     VAL_NANO(result) = SECS_TO_NANO(hour * 3600 + minute * 60 + second);
     return result;
@@ -678,7 +659,7 @@ REBVAL *RL_rebTimeHMS(
 REBVAL *RL_rebTimeNano(long nanoseconds) {
     Enter_Api_Clear_Last_Error();
 
-    REBVAL *result = Alloc_Api_Value();
+    REBVAL *result = Alloc_Value();
     VAL_RESET_HEADER(result, REB_TIME);
     VAL_NANO(result) = nanoseconds;
     return result;
@@ -695,7 +676,7 @@ REBVAL *RL_rebDateYMD(
 ){
     Enter_Api_Clear_Last_Error();
 
-    REBVAL *result = Alloc_Api_Value();
+    REBVAL *result = Alloc_Value();
     VAL_RESET_HEADER(result, REB_DATE); // no time or time zone flags
     VAL_YEAR(result) = year;
     VAL_MONTH(result) = month;
@@ -720,7 +701,7 @@ REBVAL *RL_rebDateTime(const REBVAL *date, const REBVAL *time)
     // then INIT_VAL_ZONE().  But since DATE_FLAG_HAS_ZONE is not set,
     // the timezone bitfield in the date is ignored.
 
-    REBVAL *result = Alloc_Api_Value();
+    REBVAL *result = Alloc_Value();
     VAL_RESET_HEADER(result, REB_DATE);
     SET_VAL_FLAG(result, DATE_FLAG_HAS_TIME);
     VAL_YEAR(result) = VAL_YEAR(date);
@@ -1208,9 +1189,7 @@ REBVAL *RL_rebBinary(void *bytes, size_t size)
     memcpy(BIN_HEAD(bin), bytes, size);
     TERM_BIN_LEN(bin, size);
 
-    REBVAL *result = Alloc_Api_Value();
-    Init_Binary(result, bin);
-    return result;
+    return Init_Binary(Alloc_Value(), bin);
 }
 
 
@@ -1221,9 +1200,7 @@ REBVAL *RL_rebSizedString(const char *utf8, size_t size)
 {
     Enter_Api_Clear_Last_Error();
 
-    REBVAL *result = Alloc_Api_Value();
-    Init_String(result, Append_UTF8_May_Fail(NULL, utf8, size));
-    return result;
+    return Init_String(Alloc_Value(), Append_UTF8_May_Fail(NULL, utf8, size));
 }
 
 
@@ -1269,9 +1246,7 @@ REBVAL *RL_rebSizedStringW(const wchar_t *wstr, REBCNT len)
             Append_Utf8_Codepoint(mo->series, *wstr);
     }
 
-    REBVAL *result = Alloc_Api_Value();
-    Init_String(result, Pop_Molded_String(mo));
-    return result;
+    return Init_String(Alloc_Value(), Pop_Molded_String(mo));
 }
 
 
@@ -1324,9 +1299,7 @@ REBVAL *RL_rebSizedStringUCS2(const u16 *ucs2, REBCNT len)
             Append_Utf8_Codepoint(mo->series, *ucs2);
     }
 
-    REBVAL *result = Alloc_Api_Value();
-    Init_String(result, Pop_Molded_String(mo));
-    return result;
+    return Init_String(Alloc_Value(), Pop_Molded_String(mo));
 }
 
 
@@ -1354,9 +1327,7 @@ REBVAL *RL_rebSizedWordUCS2(const u16 *ucs2, REBCNT len)
     REBSER *bin = Pop_Molded_UTF8(mo);
     REBSTR *spelling = Intern_UTF8_Managed(BIN_HEAD(bin), BIN_LEN(bin));
 
-    REBVAL *result = Alloc_Api_Value();
-    Init_Word(result, spelling);
-    return result;
+    return Init_Word(Alloc_Value(), spelling);
 }
 
 
@@ -1375,10 +1346,7 @@ REBVAL *RL_rebStringUCS2(const u16 *ucs2)
 REBVAL *RL_rebError(const char *msg)
 {
     Enter_Api_Clear_Last_Error();
-
-    REBVAL *result = Alloc_Api_Value();
-    Init_Error(result, Error_User(msg));
-    return result;
+    return Init_Error(Alloc_Value(), Error_User(msg));;
 }
 
 
@@ -1397,9 +1365,8 @@ REBVAL *RL_rebCopyExtra(const REBVAL *v, REBCNT extra)
     if (NOT(ANY_STRING(v)))
         return_api_error ("rebCopy() only supports ANY-STRING! for now");
 
-    REBVAL *result = Alloc_Api_Value();
-    Init_Any_Series(
-        result,
+    return Init_Any_Series(
+        Alloc_Value(),
         VAL_TYPE(v),
         Copy_Sequence_At_Len_Extra(
             VAL_SERIES(v),
@@ -1408,7 +1375,6 @@ REBVAL *RL_rebCopyExtra(const REBVAL *v, REBCNT extra)
             extra
         )
     );
-    return result;
 }
 
 
@@ -1441,17 +1407,14 @@ REBVAL *RL_rebPickIndexed(const REBVAL *series, long index)
         );
 
     DECLARE_LOCAL (picker);
-    Init_Integer(picker, index);
-
-    DECLARE_LOCAL (get_path);
     REBARR *array = Make_Array(2);
     Append_Value(array, series);
-    Append_Value(array, picker);
-    Init_Any_Array(get_path, REB_GET_PATH, array);
+    Append_Value(array, Init_Integer(picker, index));
 
+    DECLARE_LOCAL (get_path);
     return rebDo(
         BLANK_VALUE, // temporary hack, can't rebEval() first rebDo() slot
-        rebEval(get_path),
+        rebEval(Init_Any_Array(get_path, REB_GET_PATH, array)),
         END
     );
 }
@@ -1668,12 +1631,13 @@ char *RL_rebFileToLocalAlloc(size_t *size_out, const REBVAL *file, REBOOL full)
         return_api_error ("rebFileToLocalAlloc() only works on FILE!");
 
     DECLARE_LOCAL (local);
-    Init_String(
-        local,
-        To_Local_Path(VAL_UNI_AT(file), VAL_LEN_AT(file), full)
+    return rebSpellingOfAlloc(
+        size_out,
+        Init_String(
+            local,
+            To_Local_Path(VAL_UNI_AT(file), VAL_LEN_AT(file), full)
+        )
     );
-
-    return rebSpellingOfAlloc(size_out, local);
 }
 
 
@@ -1696,12 +1660,13 @@ wchar_t *RL_rebFileToLocalAllocW(
         return_api_error ("rebFileToLocalAllocW() only works on FILE!");
 
     DECLARE_LOCAL (local);
-    Init_String(
-        local,
-        To_Local_Path(VAL_UNI_AT(file), VAL_LEN_AT(file), full)
+    return rebSpellingOfAllocW(
+        len_out,
+        Init_String(
+            local,
+            To_Local_Path(VAL_UNI_AT(file), VAL_LEN_AT(file), full)
+        )
     );
-
-    return rebSpellingOfAllocW(len_out, local);
 }
 
 
@@ -1725,9 +1690,8 @@ REBVAL *RL_rebLocalToFile(const char *local, REBOOL is_dir)
     //
     REBVAL *string = rebString(local);
 
-    REBVAL *result = Alloc_Api_Value();
-    Init_File(
-        result,
+    REBVAL *result = Init_File(
+        Alloc_Value(),
         To_REBOL_Path(
             VAL_UNI_AT(string),
             VAL_LEN_AT(string),
@@ -1754,16 +1718,14 @@ REBVAL *RL_rebLocalToFileW(const wchar_t *local, REBOOL is_dir)
 
 #ifdef OS_WIDE_CHAR
     assert(sizeof(REBUNI) == sizeof(wchar_t));
-    REBVAL *result = Alloc_Api_Value();
-    Init_File(
-        result,
+    return Init_File(
+        Alloc_Value(),
         To_REBOL_Path(
             cast(const REBUNI*, local), // C++ demands cast
             Strlen_Uni(cast(const REBUNI*, local)), // C++ demands cast
             is_dir ? PATH_OPT_SRC_IS_DIR : 0
         )
     );
-    return result;
 #else
     UNUSED(local);
     UNUSED(is_dir);
