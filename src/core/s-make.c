@@ -493,17 +493,19 @@ REBSER *Join_Binary(const REBVAL *blk, REBINT limit)
         case REB_EMAIL:
         case REB_URL:
         case REB_TAG: {
-            REBCNT len = VAL_LEN_AT(val);
-            REBCNT bl = Length_As_UTF8(VAL_UNI_AT(val), len, OPT_ENC_0);
+            REBCNT val_len = VAL_LEN_AT(val);
+            size_t val_size = Size_As_UTF8(
+                VAL_UNI_AT(val), val_len, OPT_ENC_0
+            );
 
-            EXPAND_SERIES_TAIL(series, bl);
+            EXPAND_SERIES_TAIL(series, val_size);
             SET_SERIES_LEN(
                 series,
                 tail + Encode_UTF8(
                     BIN_AT(series, tail),
-                    bl,
+                    val_size,
                     VAL_UNI_AT(val),
-                    &len,
+                    &val_len,
                     OPT_ENC_0
                 )
             );

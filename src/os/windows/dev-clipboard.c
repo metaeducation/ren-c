@@ -74,50 +74,51 @@ DEVICE_CMD Close_Clipboard(REBREQ *req)
 //
 DEVICE_CMD Read_Clipboard(REBREQ *req)
 {
-    HANDLE data;
-    wchar_t *cp;
-    wchar_t *bin;
-    REBINT len;
-
     req->actual = 0;
 
-    // If there is no clipboard data:
-    if (!IsClipboardFormatAvailable(CF_UNICODETEXT)) {
+    if (NOT(IsClipboardFormatAvailable(CF_UNICODETEXT))) {
         req->error = 10;
-        return DR_ERROR;
+        return DR_ERROR; // not necessarily an "error", just no data
     }
 
-    if (!OpenClipboard(NULL)) {
-        req->error = 20;
-        return DR_ERROR;
-    }
+    if (NOT(OpenClipboard(NULL)))
+        rebFail ("OpenClipboard() failed while reading");
 
-    // Read the UTF-8 data:
-    if ((data = GetClipboardData(CF_UNICODETEXT)) == NULL) {
+    HANDLE h = GetClipboardData(CF_UNICODETEXT);
+    if (h == NULL) {
         CloseClipboard();
-        req->error = 30;
-        return DR_ERROR;
+        rebFail ("IsClipboardFormatAvailable()/GetClipboardData() mismatch");
     }
 
-    cp = cast(wchar_t*, GlobalLock(data));
-    if (!cp) {
-        GlobalUnlock(data);
+    wchar_t *wide = cast(wchar_t*, GlobalLock(h));
+    if (wide == NULL) {
         CloseClipboard();
-        req->error = 40;
-        return DR_ERROR;
+        rebFail ("Couldn't GlobalLock() UTF-16 clipboard data");
     }
 
-    len = wcslen(cp);
-    bin = OS_ALLOC_N(wchar_t, len + 1);
-    wcsncpy(bin, cp, len);
+    REBVAL *str = rebStringW(wide);
 
-    GlobalUnlock(data);
-
+    GlobalUnlock(h);
     CloseClipboard();
 
-    req->flags |= RRF_WIDE;
-    req->common.data = cast(REBYTE *, bin);
-    req->actual = len * sizeof(wchar_t);
+    // !!! We got wide character data back, which had to be made into a
+    // string.  But READ wants BINARY! data.  With UTF-8 Everywhere, the
+    // underlying byte representation of the string could be locked andaliased
+    // as a UTF-8 binary series.  But a conversion is needed for the moment.
+
+    size_t size;
+    char *utf8 = rebSpellingOfAlloc(&size, str);
+    rebRelease(str);
+
+    REBVAL *binary = rebBinary(utf8, size);
+    OS_FREE(utf8);
+
+    // !!! The REBREQ and Device model is being gutted and replaced.  Formerly
+    // this would return OS_ALLOC()'d wide character data and set a RRF_WIDE
+    // flag to indicate that, now we slip a REBVAL* in.
+    //
+    req->common.data = cast(REBYTE*, binary); // !!! Hack
+    req->actual = 0; // !!! not needed (REBVAL* knows its size)
     Signal_Device(req, EVT_READ);
     return DR_DONE;
 }
@@ -126,52 +127,56 @@ DEVICE_CMD Read_Clipboard(REBREQ *req)
 //
 //  Write_Clipboard: C
 //
-// Works for Unicode and ASCII strings.
 // Length is number of bytes passed (not number of chars).
 //
 DEVICE_CMD Write_Clipboard(REBREQ *req)
 {
-    REBINT len = req->length; // in bytes
+    // !!! Traditionally the currency of READ and WRITE is binary data.
+    // This intermediate stage hacks that up a bit by having the port send
+    // string data, in which the LEN makes sense.  This should be reviewed,
+    // but since to the user it appears compatible with R3-Alpha behavior it
+    // is kept as is.
+    //
+    REBVAL *str = cast(REBVAL*, req->common.data);
+    assert(RXT_STRING == rebTypeOf(str));
+
+    REBCNT len = req->length; // may only want /PART of the string to write
 
     req->actual = 0;
 
-    HANDLE data = GlobalAlloc(GHND, len + 4);
-    if (data == NULL) {
-        req->error = 5;
-        return DR_ERROR;
-    }
+    if (NOT(OpenClipboard(NULL)))
+        rebFail ("OpenClipboard() failed during write to clipboard");
 
-    // Lock and copy the string:
-    REBYTE *bin = cast(REBYTE*, GlobalLock(data));
-    if (bin == NULL) {
-        req->error = 10;
-        return DR_ERROR;
-    }
+    if (NOT(EmptyClipboard())) // !!! is this superfluous?
+        rebFail ("EmptyClipboard() failed during write to clipboard");
 
-    memcpy(bin, req->common.data, len);
-    bin[len] = 0;
-    GlobalUnlock(data);
+    // Clipboard wants a Windows memory handle with wchar_t UTF-16 data.  So
+    // allocate sufficienctly sized handle, decode Rebol STRING! into it, and
+    // transfer ownership of that handle to the clipboard.
 
-    if (!OpenClipboard(NULL)) {
-        req->error = 20;
-        return DR_ERROR;
-    }
+    HANDLE h = GlobalAlloc(GHND, sizeof(wchar_t) * (len + 1));
+    if (h == NULL) // per documentation, not INVALID_HANDLE_VALUE
+        rebFail ("GlobalAlloc() failed during write to clipboard");
 
-    EmptyClipboard();
+    wchar_t *wide = cast(wchar_t*, GlobalLock(h));
+    if (wide == NULL)
+        rebFail ("GlobalLock() failed during write to clipboard");
 
-    REBCNT err = !SetClipboardData(
-        LOGICAL(req->flags & RRF_WIDE) ? CF_UNICODETEXT : CF_TEXT,
-        data
-    );
+    REBCNT len_check = rebSpellingOfW(wide, len, str); // UTF-16 extraction
+    assert(len <= len_check); // may only be writing /PART of the string
+    UNUSED(len_check);
 
+    GlobalUnlock(h);
+
+    HANDLE h_check = SetClipboardData(CF_UNICODETEXT, h);
     CloseClipboard();
 
-    if (err) {
-        req->error = 50;
-        return DR_ERROR;
-    }
+    if (h_check == NULL)
+        rebFail ("SetClipboardData() failed.");
 
-    req->actual = len;
+    assert(h_check == h);
+
+    req->actual = len; // !!! Pointless... str is released by ON_WAKE_UP
     Signal_Device(req, EVT_WROTE);
     return DR_DONE;
 }

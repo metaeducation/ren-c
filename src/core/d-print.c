@@ -111,13 +111,6 @@ void Prin_OS_String(const REBUNI *up, REBCNT len, REBFLGS opts)
     REBYTE *buf = &buffer[0];
     REBCNT len2;
 
-    if (up == NULL)
-        fail (Error_No_Print_Ptr_Raw());
-
-    // Determine length if not provided:
-    if (len == UNKNOWN)
-        len = Strlen_Uni(up);
-
     Req_SIO->flags |= RRF_FLUSH;
 
     Req_SIO->actual = 0;

@@ -706,51 +706,13 @@ ConversionResult ConvertUTF8toUTF32 (
 ************************************************************************
 ***********************************************************************/
 
-//
-//  What_UTF: C
-//
-// Tell us what UTF encoding the byte stream has, as integer # of bits.
-// 0 is unknown, negative for Little Endian.
-//
-// !!! Currently only uses the Byte-Order-Mark for detection (which is not
-// necessarily present)
-//
-// !!! Note that UTF8 is not prescribed to have a byte order mark by the
-// standard.  Writing routines will not add it by default, hence if it is
-// present it is to be considered part of the in-band data stream...so that
-// reading and writing back out will preserve the input.
-//
-REBINT What_UTF(const REBYTE *bp, REBCNT len)
-{
-    if (len >= 3 && bp[0] == 0xef && bp[1] == 0xbb && bp[2] == 0xbf)
-        return 8; // UTF8 (endian agnostic)
-
-    if (len >= 2) {
-        if (bp[0] == 0xfe && bp[1] == 0xff)
-            return 16; // UTF16 big endian
-
-        if (bp[0] == 0xff && bp[1] == 0xfe) {
-            if (len >= 4 && bp[2] == 0 && bp[3] == 0)
-                return -32; // UTF32 little endian
-            return -16; // UTF16 little endian
-        }
-
-        if (
-            len >= 4
-            && bp[0] == 0 && bp[1] == 0 && bp[2] == 0xfe && bp[3] == 0xff
-        ){
-            return 32; // UTF32 big endian
-        }
-    }
-
-    return 0; // unknown
-}
-
 
 //
 //  Legal_UTF8_Char: C
 //
 // Returns TRUE if char is legal.
+//
+// !!! Not currently used.
 //
 REBOOL Legal_UTF8_Char(const REBYTE *str, REBCNT len)
 {
@@ -761,19 +723,23 @@ REBOOL Legal_UTF8_Char(const REBYTE *str, REBCNT len)
 //
 //  Check_UTF8: C
 //
-// Returns 0 for success, else str where error occurred.
+// Returns NULL for success, else pointer in the data where error occurred.
 //
-REBYTE *Check_UTF8(REBYTE *str, REBCNT len)
+// Currently not used in the system (all UTF-8 checking is done on the fly)
+// but provided as a native via INVALID-UTF8?
+//
+REBYTE *Check_UTF8(REBYTE *utf8, size_t size)
 {
-    REBINT n;
-    REBYTE *end = str + len;
+    REBYTE *end = utf8 + size;
 
-    for (;str < end; str += n) {
-        n = trailingBytesForUTF8[*str] + 1;
-        if (str + n > end || !isLegalUTF8(str, n)) return str;
+    REBCNT trail;
+    for (; utf8 < end; utf8 += trail) {
+        trail = trailingBytesForUTF8[*utf8] + 1;
+        if (utf8 + trail > end || !isLegalUTF8(utf8, trail))
+            return utf8;
     }
 
-    return 0;
+    return NULL;
 }
 
 
@@ -915,79 +881,19 @@ int Decode_UTF8_Negative_If_ASCII(
 
 
 //
-//  Decode_UTF16_Negative_If_ASCII: C
-//
-// dst: the desination array, must always be large enough!
-// src: source binary data
-// len: byte-length of source (not number of chars)
-// little_endian: little endian encoded
-// crlf_to_lf: convert CRLF/CR to LF
-//
-// Returns length in chars (negative if all chars are ASCII).
-// No terminator is added.
-//
-int Decode_UTF16_Negative_If_ASCII(
-    REBUNI *dst,
-    const REBYTE *src,
-    REBCNT len,
-    REBOOL little_endian,
-    REBOOL crlf_to_lf
-) {
-    REBOOL expect_lf = FALSE;
-    REBOOL ascii = TRUE;
-    UTF32 ch;
-    REBUNI *start = dst;
-
-    for (; len > 0; len--, src++) {
-        //
-        // Combine bytes in big or little endian format
-        //
-        ch = *src;
-        if (!little_endian) ch <<= 8;
-        if (--len <= 0) break;
-        src++;
-        ch |= little_endian ? (cast(UTF32, *src) << 8) : *src;
-
-        if (crlf_to_lf) {
-            //
-            // Skip CR, but add LF (even if missing)
-            //
-            if (expect_lf && ch != LF) {
-                expect_lf = FALSE;
-                *dst++ = LF;
-            }
-            if (ch == CR) {
-                expect_lf = TRUE;
-                continue;
-            }
-        }
-
-        // !!! "check for surrogate pair" ??
-
-        if (ch > 127)
-            ascii = FALSE;
-
-        *dst++ = cast(REBUNI, ch);
-    }
-
-    return ascii ? -(dst - start) : (dst - start);
-}
-
-
-//
-//  Length_As_UTF8: C
+//  Size_As_UTF8: C
 //
 // Returns how long the UTF8 encoded string would be.
 //
 // !!! There's a hardcoded table of byte lengths which is used other places,
 // it would probably speed this up.
 //
-REBCNT Length_As_UTF8(const REBUNI *up, REBCNT len, REBFLGS opts)
+size_t Size_As_UTF8(const REBUNI *up, REBCNT len, REBFLGS opts)
 {
-    REBCNT size = 0;
+    size_t size = 0;
 
     for (; len > 0; len--) {
-        REBCNT c = *up++;
+        UTF32 c = *up++;
         if (c < cast(UTF32, 0x80)) {
         #ifdef TO_WINDOWS
             if (LOGICAL(opts & OPT_ENC_CRLF) && c == LF)
@@ -1076,11 +982,7 @@ REBCNT Encode_UTF8(
 ) {
     REBYTE buf[8];
 
-    REBCNT cnt;
-    if (len)
-        cnt = *len;
-    else
-        cnt = Strlen_Uni(src);
+    REBCNT cnt = *len;
 
     REBYTE *bs = dst; // save start
     const REBUNI *up = src;
@@ -1117,82 +1019,16 @@ REBCNT Encode_UTF8(
         }
     }
 
-    if (len)
-        *len = up - src;
+    *len = up - src;
 
     return dst - bs;
 }
 
 
 //
-//  Encode_UTF8_Line: C
-//
-// Encode a unicode source buffer into a binary line of UTF8.
-// Include the LF terminator in the result.
-// Return the length of the line buffer.
-//
-int Encode_UTF8_Line(REBSER *dst, REBSER *src, REBCNT idx)
-{
-    REBUNI *up = UNI_HEAD(src);
-    REBCNT len  = SER_LEN(src);
-    REBCNT tail;
-    REBUNI c;
-    REBINT n;
-    REBYTE buf[8];
-
-    SET_SERIES_LEN(dst, 0);
-    tail = 0;
-
-    while (idx < len) {
-        if ((c = up[idx]) < 0x80) {
-            EXPAND_SERIES_TAIL(dst, 1);
-            BIN_HEAD(dst)[tail++] = (REBYTE)c;
-        }
-        else {
-            n = Encode_UTF8_Char(buf, c);
-            EXPAND_SERIES_TAIL(dst, n);
-            memcpy(BIN_AT(dst, tail), buf, n);
-            tail += n;
-        }
-        idx++;
-        if (c == LF) break;
-    }
-
-    BIN_HEAD(dst)[tail] = 0;
-    SET_SERIES_LEN(dst, tail);
-    return idx;
-}
-
-
-//
-//  Make_UTF8_Binary: C
-//
-// Convert REBUNI-sized data to UTF8-encoded null-terminated series. Can
-// reserve extra bytes of space.
-//
-// Resulting series must be either freed or handed to the GC.
-//
-REBSER *Make_UTF8_Binary(
-    const REBUNI *data,
-    REBCNT len,
-    REBCNT extra,
-    REBFLGS opts
-) {
-    REBCNT size = Length_As_UTF8(data, len, opts);
-    REBSER *s = Make_Binary(size + extra);
-    SET_SERIES_LEN(s, Encode_UTF8(BIN_HEAD(s), size, data, &len, opts));
-    assert(SER_LEN(s) == size);
-    TERM_SEQUENCE(s);
-    return s;
-}
-
-
-//
 //  Make_UTF8_From_Any_String: C
 //
-// !!! In the future, this could take advantage of special knowledge had by
-// the value, such as that all bytes were ASCII, which might be cached in the
-// series node.
+// !!! With UTF-8 Everywhere, strings will already be in UTF-8.
 //
 REBSER *Make_UTF8_From_Any_String(
     const RELVAL *any_string,
@@ -1200,33 +1036,12 @@ REBSER *Make_UTF8_From_Any_String(
     REBFLGS opts
 ){
     assert(ANY_STRING(any_string));
-    return Make_UTF8_Binary(VAL_UNI_AT(any_string), len, 0, opts);
+
+    const REBUNI *data = VAL_UNI_AT(any_string);
+    size_t size = Size_As_UTF8(data, len, opts);
+    REBSER *bin = Make_Binary(size);
+    SET_SERIES_LEN(bin, Encode_UTF8(BIN_HEAD(bin), size, data, &len, opts));
+    assert(SER_LEN(bin) == size);
+    TERM_SEQUENCE(bin);
+    return bin;
 }
-
-
-//
-//  Strlen_Uni: C
-//
-// Rebol's current choice is to use UCS-2 internally, such that
-// a REBUNI is an unsigned 16-bit number.  This means that you
-// cannot use wcslen() to determine a REBUNI* string size, as
-// wchar_t is not guaranteed to be 2 bytes on every platform.
-//
-// Note: ideally this would use a routine like memmem() to look
-// for two sequential zero bytes and then match only those aligned
-// on an even byte boundary (to prevent spanning characters).  But
-// memmem() is not POSIX and only on GNU.  So this uses a simple
-// byte-by-byte search.
-//
-REBCNT Strlen_Uni(const REBUNI *up)
-{
-    const char *cp = cast(const char *, up) + 1; // "C"har vs. "U"nicode
-    assert(sizeof(REBUNI) == 2);
-    assert(cast(REBUPT, up) % 2 == 0);
-
-    while (*cp || *(cp - 1)) cp += 2;
-
-    assert(cast(REBUPT, cp - 1) % 2 == 0);
-    return cast(const REBUNI*, cp - 1) - up;
-}
-

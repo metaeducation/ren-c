@@ -620,6 +620,7 @@ REBNATIVE(dehex)
 //
 //  {Converts string terminators to standard format, e.g. CRLF to LF.}
 //
+//      return: [any-string! block!]
 //      string [any-string!]
 //          "Will be modified (unless /LINES used)"
 //      /lines
@@ -653,20 +654,20 @@ REBNATIVE(deline)
 //
 //  {Converts string terminators to native OS format, e.g. LF to CRLF.}
 //
-//      series [any-string! block!] "(modified)"
+//      return: [any-string!]
+//      string [any-string!] "(modified)"
 //  ]
 //
 REBNATIVE(enline)
 {
     INCLUDE_PARAMS_OF_ENLINE;
 
-    REBVAL *val = ARG(series);
+    REBVAL *val = ARG(string);
     REBSER *ser = VAL_SERIES(val);
 
-    if (SER_LEN(ser) != 0)
-       Enline_Uni(ser, VAL_INDEX(val), VAL_LEN_AT(val));
+    Enline_Uni(ser, VAL_INDEX(val), VAL_LEN_AT(val));
 
-    Move_Value(D_OUT, ARG(series));
+    Move_Value(D_OUT, ARG(string));
     return R_OUT;
 }
 
@@ -864,14 +865,6 @@ REBNATIVE(find_script)
 
     REBVAL *arg = ARG(script);
 
-    REBINT n = What_UTF(VAL_BIN_AT(arg), VAL_LEN_AT(arg));
-
-    if (n != 0 && n != 8)
-        return R_BLANK;  // UTF8 only
-
-    if (n == 8)
-        VAL_INDEX(arg) += 3;  // BOM8 length
-
     REBINT offset = Scan_Header(VAL_BIN_AT(arg), VAL_LEN_AT(arg));
     if (offset == -1)
         return R_BLANK;
@@ -879,24 +872,6 @@ REBNATIVE(find_script)
     VAL_INDEX(arg) += offset;
 
     Move_Value(D_OUT, ARG(script));
-    return R_OUT;
-}
-
-
-//
-//  utf?: native [
-//
-//  {Returns UTF BOM (byte order marker) encoding; + for BE, - for LE.}
-//
-//      data [binary!]
-//  ]
-//
-REBNATIVE(utf_q)
-{
-    INCLUDE_PARAMS_OF_UTF_Q;
-
-    REBINT utf = What_UTF(VAL_BIN_AT(ARG(data)), VAL_LEN_AT(ARG(data)));
-    Init_Integer(D_OUT, utf);
     return R_OUT;
 }
 
@@ -916,7 +891,7 @@ REBNATIVE(invalid_utf8_q)
     REBVAL *arg = ARG(data);
 
     REBYTE *bp = Check_UTF8(VAL_BIN_AT(arg), VAL_LEN_AT(arg));
-    if (bp == 0)
+    if (bp == NULL)
         return R_BLANK;
 
     VAL_INDEX(arg) = bp - VAL_BIN_HEAD(arg);

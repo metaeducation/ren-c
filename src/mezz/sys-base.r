@@ -223,13 +223,3 @@ export: func [
 ][
     for-each word words [join lib [word get word]]
 ]
-
-assert-utf8: function [
-    "If binary data is UTF-8, returns it, else throws an error."
-    data [binary!]
-][
-    unless find [0 8] tmp: utf? data [ ; Not UTF-8
-        cause-error 'script 'no-decode unspaced ["UTF-" abs tmp]
-    ]
-    data
-]

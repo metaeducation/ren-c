@@ -1722,7 +1722,7 @@ REBVAL *RL_rebLocalToFileW(const wchar_t *local, REBOOL is_dir)
         Alloc_Value(),
         To_REBOL_Path(
             cast(const REBUNI*, local), // C++ demands cast
-            Strlen_Uni(cast(const REBUNI*, local)), // C++ demands cast
+            wcslen(local), // C++ demands cast
             is_dir ? PATH_OPT_SRC_IS_DIR : 0
         )
     );

@@ -42,6 +42,107 @@
 
 
 //
+//  What_UTF: C
+//
+// Tell us what UTF encoding the byte stream has, as integer # of bits.
+// 0 is unknown, negative for Little Endian.
+//
+// !!! Currently only uses the Byte-Order-Mark for detection (which is not
+// necessarily present)
+//
+// !!! Note that UTF8 is not prescribed to have a byte order mark by the
+// standard.  Writing routines will not add it by default, hence if it is
+// present it is to be considered part of the in-band data stream...so that
+// reading and writing back out will preserve the input.
+//
+REBINT What_UTF(const REBYTE *bp, REBCNT len)
+{
+    if (len >= 3 && bp[0] == 0xef && bp[1] == 0xbb && bp[2] == 0xbf)
+        return 8; // UTF8 (endian agnostic)
+
+    if (len >= 2) {
+        if (bp[0] == 0xfe && bp[1] == 0xff)
+            return 16; // UTF16 big endian
+
+        if (bp[0] == 0xff && bp[1] == 0xfe) {
+            if (len >= 4 && bp[2] == 0 && bp[3] == 0)
+                return -32; // UTF32 little endian
+            return -16; // UTF16 little endian
+        }
+
+        if (
+            len >= 4
+            && bp[0] == 0 && bp[1] == 0 && bp[2] == 0xfe && bp[3] == 0xff
+        ){
+            return 32; // UTF32 big endian
+        }
+    }
+
+    return 0; // unknown
+}
+
+
+//
+//  Decode_UTF16_Negative_If_ASCII: C
+//
+// dst: the desination array, must always be large enough!
+// src: source binary data
+// len: byte-length of source (not number of chars)
+// little_endian: little endian encoded
+// crlf_to_lf: convert CRLF/CR to LF
+//
+// Returns length in chars (negative if all chars are ASCII).
+// No terminator is added.
+//
+int Decode_UTF16_Negative_If_ASCII(
+    REBUNI *dst,
+    const REBYTE *src,
+    REBCNT len,
+    REBOOL little_endian,
+    REBOOL crlf_to_lf
+){
+    REBOOL expect_lf = FALSE;
+    REBOOL ascii = TRUE;
+    u32 ch;
+    REBUNI *start = dst;
+
+    for (; len > 0; len--, src++) {
+        //
+        // Combine bytes in big or little endian format
+        //
+        ch = *src;
+        if (!little_endian) ch <<= 8;
+        if (--len <= 0) break;
+        src++;
+        ch |= little_endian ? (cast(u32, *src) << 8) : *src;
+
+        if (crlf_to_lf) {
+            //
+            // Skip CR, but add LF (even if missing)
+            //
+            if (expect_lf && ch != LF) {
+                expect_lf = FALSE;
+                *dst++ = LF;
+            }
+            if (ch == CR) {
+                expect_lf = TRUE;
+                continue;
+            }
+        }
+
+        // !!! "check for surrogate pair" ??
+
+        if (ch > 127)
+            ascii = FALSE;
+
+        *dst++ = cast(REBUNI, ch);
+    }
+
+    return ascii ? -(dst - start) : (dst - start);
+}
+
+
+//
 //  identify-text?: native [
 //
 //  {Codec for identifying BINARY! data for a .TXT file}

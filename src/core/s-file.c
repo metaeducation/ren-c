@@ -55,9 +55,6 @@ REBSER *To_REBOL_Path(const REBUNI *up, REBCNT len, REBFLGS flags)
     REBOOL saw_slash = FALSE; // have we hit a '/' yet?
 #endif
 
-    if (len == 0)
-        len = Strlen_Uni(up);
-
     REBSER *dst = Make_Unicode(len + FN_PAD);
 
     REBUNI c = '\0'; // for test after loop (in case loop does not run)
@@ -124,9 +121,6 @@ REBSER *To_Local_Path(
     REBOOL full
 ){
     REBCNT n = 0;
-
-    if (len == 0)
-        len = Strlen_Uni(up);
 
     // Prescan for: /c/dir = c:/dir, /vol/dir = //vol/dir, //dir = ??
     //

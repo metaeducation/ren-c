@@ -69,24 +69,11 @@ static REB_R Clipboard_Actor(REBFRM *frame_, REBCTX *port, REBSYM action)
             if (req->common.data == NULL)
                 return R_BLANK;
 
-            REBINT len = req->actual;
-            if (req->flags & RRF_WIDE) {
-                // convert to UTF8, so that it can be converted back to string!
-                Init_Binary(arg, Make_UTF8_Binary(
-                    cast(const REBUNI*, req->common.data),
-                    len / sizeof(REBUNI),
-                    0, // extra
-                    OPT_ENC_0
-                ));
-            }
-            else {
-                REBSER *ser = Make_Binary(len);
-                memcpy(BIN_HEAD(ser), req->common.data, len);
-                SET_SERIES_LEN(ser, len);
-                Init_Binary(arg, ser);
-            }
-            OS_FREE(req->common.data); // release the copy buffer
-            req->common.data = 0;
+            REBVAL *data = cast(REBVAL*, req->common.data); // Hack!
+            Move_Value(arg, data);
+            rebRelease(data);
+
+            req->common.data = NULL;
         }
         else if (req->command == RDC_WRITE) {
             Init_Blank(arg);  // Write is done.
@@ -113,8 +100,6 @@ static REB_R Clipboard_Actor(REBFRM *frame_, REBCTX *port, REBSYM action)
             if (OS_DO_DEVICE(req, RDC_OPEN))
                 fail (Error_On_Port(RE_CANNOT_OPEN, port, req->error));
         }
-        // Issue the read request:
-        req->flags &= ~RRF_WIDE; // allow byte or wide chars
 
         REBINT result = OS_DO_DEVICE(req, RDC_READ);
         if (result < 0)
@@ -125,24 +110,13 @@ static REB_R Clipboard_Actor(REBFRM *frame_, REBCTX *port, REBSYM action)
         // Copy and set the string result:
         arg = CTX_VAR(port, STD_PORT_DATA);
 
-        REBINT len = req->actual;
-        if (req->flags & RRF_WIDE) {
-            // convert to UTF8, so that it can be converted back to string!
-            Init_Binary(arg, Make_UTF8_Binary(
-                cast(const REBUNI*, req->common.data),
-                len / sizeof(REBUNI),
-                0, // extra
-                OPT_ENC_0
-            ));
-        }
-        else {
-            REBSER *ser = Make_Binary(len);
-            memcpy(BIN_HEAD(ser), req->common.data, len);
-            SET_SERIES_LEN(ser, len);
-            Init_Binary(arg, ser);
-        }
+        REBVAL *data = cast(REBVAL*, req->common.data); // !!! Hack
+        assert(req->actual == 0); // !!! Unused
 
-        Move_Value(D_OUT, arg);
+        assert(IS_BINARY(data));
+        Move_Value(D_OUT, data);
+        rebRelease(data);
+
         return R_OUT; }
 
     case SYM_WRITE: {
@@ -178,36 +152,8 @@ static REB_R Clipboard_Actor(REBFRM *frame_, REBCTX *port, REBSYM action)
         if (REF(part) && VAL_INT32(ARG(limit)) < len)
             len = VAL_INT32(ARG(limit));
 
-        // If bytes, see if we can fit it:
-        if (SER_WIDE(VAL_SERIES(arg)) == 1) {
-        #ifdef ARG_STRINGS_ALLOWED
-            if (!All_Bytes_ASCII(VAL_BIN_AT(arg), len)) {
-                REBSER *copy = Copy_Bytes_To_Unicode(VAL_BIN_AT(arg), len);
-                Init_String(arg, copy);
-            } else
-                req->common.data = VAL_BIN_AT(arg);
-            #endif
-
-            // Temp conversion:!!!
-            REBSER *ser = Make_Unicode(len);
-            len = Decode_UTF8_Negative_If_ASCII(
-                UNI_HEAD(ser), VAL_BIN_AT(arg), len, FALSE
-            );
-            len = abs(len);
-            TERM_UNI_LEN(ser, len);
-            Init_String(arg, ser);
-            req->common.data = cast(REBYTE*, UNI_HEAD(ser));
-            req->flags |= RRF_WIDE;
-        }
-        else
-        // If unicode (may be from above conversion), handle it:
-        if (SER_WIDE(VAL_SERIES(arg)) == sizeof(REBUNI)) {
-            req->common.data = cast(REBYTE *, VAL_UNI_AT(arg));
-            req->flags |= RRF_WIDE;
-        }
-
-        // Temp!!!
-        req->length = len * sizeof(REBUNI);
+        req->common.data = cast(REBYTE*, arg);
+        req->length = len;
 
         // Setup the write:
         Move_Value(CTX_VAR(port, STD_PORT_DATA), arg); // keep it GC safe

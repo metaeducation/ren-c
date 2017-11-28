@@ -44,7 +44,6 @@ Internal: [
     bad-sys-func:       [{invalid or missing system function:} :arg1]
     invalid-error:      [{error object or fields were not valid:} :arg1]
     hash-overflow:      {Hash ran out of space}
-    no-print-ptr:       {print is missing string pointer}
 
     bad-utf8:           {invalid UTF-8 byte sequence found during decoding}
     codepoint-too-high: [{codepoint} :arg1 {too large (or data is not UTF-8)}]
@@ -167,7 +166,6 @@ Script: [
     bad-bad:            [:arg1 {error:} :arg2]
 
     bad-make-arg:       [{cannot MAKE/TO} :arg1 {from:} :arg2]
-;   no-decode:          [{cannot decode} :arg1 {encoding}]
     wrong-denom:        [:arg1 {not same denomination as} :arg2]
 ;   bad-convert:        [{invalid conversion value:} :arg1]
     bad-compression:    [{invalid compressed data - problem:} :arg1]

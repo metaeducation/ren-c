@@ -105,8 +105,7 @@ enum {
 //  RRF_PREWAKE,    // C-callback before awake happens (to update port object)
     RRF_PENDING = 1 << 3, // Request is attached to pending list
     RRF_ALLOC = 1 << 4, // Request is allocated, not a temp on stack
-    RRF_WIDE = 1 << 5, // Wide char IO
-    RRF_ACTIVE = 1 << 6, // Port is active, even no new events yet
+    RRF_ACTIVE = 1 << 5, // Port is active, even no new events yet
 
     // !!! This was a "local flag to mark null device" which when not managed
     // here was confusing.  Given the need to essentially replace the whole

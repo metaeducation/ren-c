@@ -98,6 +98,9 @@ mixin?: func [
 
 load-header: function [
     "Loads script header object and body binary (not loaded)."
+
+    return: [block! word!]
+        "length 3 BLOCK! (header OBJECT!, body BINARY!, end), or error WORD!" 
     source [binary! string!]
         "Source code (string! will be UTF-8 encoded)"
     /only
@@ -138,13 +141,16 @@ load-header: function [
     ;    bad-checksum
     ;    bad-compress
     ;
-    ; Note: set and :var used - prevent malicious code errors.
-    ; Commented assert statements are for documentation and testing.
-    ;
     end: _ ;-- locals are now unset by default, added after that change
 
     case/all [
-        binary? source [tmp: assert-utf8 source]
+        binary? source [
+            ;
+            ; Used to "assert this was UTF-8", which was a weak check.
+            ; If it's not UTF-8 the decoding will find that out.
+            ;
+            tmp: source
+        ]
 
         string? source [tmp: to binary! source]
 
