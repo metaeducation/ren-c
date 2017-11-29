@@ -93,25 +93,6 @@ REBSER *Copy_Bytes(const REBYTE *src, REBINT len)
 
 
 //
-//  Copy_Bytes_To_Unicode: C
-//
-// Convert a byte string to a unicode string. This can
-// be used for ASCII or LATIN-8 strings.
-//
-REBSER *Copy_Bytes_To_Unicode(REBYTE *src, REBINT len)
-{
-    REBSER *series = Make_Unicode(len);
-    REBUNI *dst = UNI_HEAD(series);
-
-    for (; len > 0; len--)
-        *dst++ = cast(REBUNI, *src++);
-
-    TERM_UNI_LEN(series, len);
-    return series;
-}
-
-
-//
 //  Copy_Wide_Str: C
 //
 // Create a REBOL string series from a wide char string.

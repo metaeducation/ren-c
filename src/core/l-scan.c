@@ -747,19 +747,14 @@ static REBCTX *Error_Extra(SCAN_STATE *ss, char seen) {
 // only pointed out the location of the start token.
 //
 static REBCTX *Error_Mismatch(SCAN_STATE *ss, char wanted, char seen) {
-    REBYTE tmp_buf[2];  // Temporary error string
-    tmp_buf[0] = wanted;
-    tmp_buf[1] = 0;
-
     DECLARE_LOCAL (expected);
-    Init_String(expected, Copy_Bytes(tmp_buf, 1));
-
-    tmp_buf[0] = seen;
-
     DECLARE_LOCAL (unexpected);
-    Init_String(unexpected, Copy_Bytes(tmp_buf, 1));
-
-    REBCTX *error = Error(RE_SCAN_MISMATCH, expected, unexpected, END);
+    REBCTX *error = Error(
+        RE_SCAN_MISMATCH,
+        Init_String(expected, Make_Series_Codepoint(wanted)),
+        Init_String(unexpected, Make_Series_Codepoint(seen)),
+        END
+    );
     Update_Error_Near_For_Line(error, ss->start_line, ss->start_line_head);
     return error;
 }

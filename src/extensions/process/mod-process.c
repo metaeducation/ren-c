@@ -76,127 +76,6 @@
 #include "tmp-mod-process-first.h"
 
 
-#define MAX_POSIX_ERROR_LEN 1024
-
-//
-//  Error_OS: C
-//
-// Produce an error from an OS error code, by asking the OS for textual
-// information it knows internally from its database of error strings.
-//
-// !!! This is a generally useful error generator which one might be tempted
-// to use in many different extensions.  Yet because it is sensitive to the
-// details of the OS, it's considered to be poor practice to put it in the
-// core--which is supposed to be platform agnostic.  There's no really known
-// good way to share C code across extensions at this moment in time--it used
-// to be by making it a service of the "host"--but that is going away.
-// Perhaps sharing by an .inc file or similar would be better.
-//
-REBCTX *Error_OS(int errnum)
-{
-#ifdef TO_WINDOWS
-    if (errnum == 0)
-        errnum = GetLastError();
-
-    wchar_t *lpMsgBuf; // FormatMessage writes allocated buffer address here
-
-     // Specific errors have %1 %2 slots, and if you know the error ID and
-     // that it's one of those then this lets you pass arguments to fill
-     // those in.  But since this is a generic error, we have no more
-     // parameterization (hence FORMAT_MESSAGE_IGNORE_INSERTS)
-     //
-    va_list *Arguments = NULL;
-
-    // Apparently FormatMessage can find its error strings in a variety of
-    // DLLs, but we don't have any context here so just use the default.
-    //
-    LPCVOID lpSource = NULL;
-
-    DWORD ok = FormatMessage(
-        FORMAT_MESSAGE_ALLOCATE_BUFFER // see lpMsgBuf
-            | FORMAT_MESSAGE_FROM_SYSTEM // e.g. ignore lpSource
-            | FORMAT_MESSAGE_IGNORE_INSERTS, // see Arguments
-        lpSource,
-        errnum, // message identifier
-        MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), // default language
-        cast(wchar_t*, &lpMsgBuf), // allocated buffer address written here
-        0, // buffer size (not used since FORMAT_MESSAGE_ALLOCATE_BUFFER)
-        Arguments
-    );
-
-    if (ok == 0) {
-        //
-        // Might want to show the value of GetLastError() in this message,
-        // but trying to FormatMessage() on *that* would be excessive.
-        //
-        return Error_User("FormatMessage() failed to give error description");
-    }
-
-    DECLARE_LOCAL (message);
-    Init_String(message, Copy_Wide_Str(lpMsgBuf, wcslen(lpMsgBuf)));
-    LocalFree(lpMsgBuf);
-
-    return Error(RE_USER, message, END);
-#else
-    // strerror() is not thread-safe, but strerror_r is. Unfortunately, at
-    // least in glibc, there are two different protocols for strerror_r(),
-    // depending on whether you are using the POSIX-compliant implementation
-    // or the GNU implementation.
-    //
-    // The convoluted test below is the inversion of the actual test glibc
-    // suggests to discern the version of strerror_r() provided. As other,
-    // non-glibc implementations (such as OS X's libSystem) also provide the
-    // POSIX-compliant version, we invert the test: explicitly use the
-    // older GNU implementation when we are sure about it, and use the
-    // more modern POSIX-compliant version otherwise. Finally, we only
-    // attempt this feature detection when using glibc (__GNU_LIBRARY__),
-    // as this particular combination of the (more widely standardised)
-    // _POSIX_C_SOURCE and _XOPEN_SOURCE defines might mean something
-    // completely different on non-glibc implementations.
-    //
-    // (Note that undefined pre-processor names arithmetically compare as 0,
-    // which is used in the original glibc test; we are more explicit.)
-
-    #ifdef USE_STRERROR_NOT_STRERROR_R
-        char *shared = strerror(errnum);
-        return Error_User(shared);
-    #elif defined(__GNU_LIBRARY__) \
-            && (defined(_GNU_SOURCE) \
-                || ((!defined(_POSIX_C_SOURCE) || _POSIX_C_SOURCE < 200112L) \
-                    && (!defined(_XOPEN_SOURCE) || _XOPEN_SOURCE < 600)))
-
-        // May return an immutable string instead of filling the buffer
-
-        char buffer[MAX_POSIX_ERROR_LEN];
-        char *maybe_str = strerror_r(errnum, buffer, MAX_POSIX_ERROR_LEN);
-        if (maybe_str != buffer)
-            strncpy(buffer, maybe_str, MAX_POSIX_ERROR_LEN);
-        return Error_User(buffer);
-    #else
-        // Quoting glibc's strerror_r manpage: "The XSI-compliant strerror_r()
-        // function returns 0 on success. On error, a (positive) error number
-        // is returned (since glibc 2.13), or -1 is returned and errno is set
-        // to indicate the error (glibc versions before 2.13)."
-
-        char buffer[MAX_POSIX_ERROR_LEN];
-        int result = strerror_r(errnum, buffer, MAX_POSIX_ERROR_LEN);
-
-        // Alert us to any problems in a debug build.
-        assert(result == 0);
-
-        if (result == 0)
-            return Error_User(buffer);
-        else if (result == EINVAL)
-            return Error_User("EINVAL: bad error num passed to strerror_r()");
-        else if (result == ERANGE)
-            return Error_User("ERANGE: insufficient buffer size for error");
-        else
-            return Error_User("Unknown problem getting strerror_r() message");
-    #endif
-#endif
-}
-
-
 // !!! %mod-process.c is now the last file that uses this REBCHR definition.
 // Excise as soon as possible.
 //
@@ -1810,7 +1689,7 @@ REBNATIVE(call)
     }
 
     if (r != 0)
-        fail (Error_OS(r));
+        rebFail_OS (r);
 
     // We may have waited even if they didn't ask us to explicitly, but
     // we only return a process ID if /WAIT was not explicitly used

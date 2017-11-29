@@ -1181,7 +1181,7 @@ REBYTE *RL_rebBytesOfBinaryAlloc(REBCNT *len_out, const REBVAL *binary)
 //
 //  rebBinary: RL_API
 //
-REBVAL *RL_rebBinary(void *bytes, size_t size)
+REBVAL *RL_rebBinary(const void *bytes, size_t size)
 {
     Enter_Api_Clear_Last_Error();
 
@@ -1467,22 +1467,27 @@ void RL_rebRelease(REBVAL *v)
 
 
 //
-//  rebFail: RL_API
+//  rebFail: RL_API [
+//      #noreturn
+//  ]
 //
 // The rebFail() API actually chains through to the FAIL native itself, which
 // means it can be passed errors or blocks.  It understands the case of
 // being passed a UTF-8 string from code as well.
 //
+// !!! This probably needs a /WHERE variant, as well as some way for the
+// caller to slip their C file and line information through.
+//
 void RL_rebFail(const void *p)
 {
     Enter_Api_Cant_Error();
 
-    // !!! Should allow caller to pass these in via macro.
-    //
-#if !defined(NDEBUG)
-    TG_Erroring_C_File = __FILE__;
-    TG_Erroring_C_Line = __LINE__;
-#endif
+    // !!! It's not great to encourage an unnamed error, but then again it's
+    // better to have all unnamed errors be easy to find.  By convention that
+    // is done with `rebFail (NULL)`.
+
+    if (p == NULL)
+        p = "Generic Failure -- rebFail () called with NULL as parameter";
 
     // !!! Should there be a special bit or dispatcher used on the FAIL to
     // ensure it does not continue running?  If it were a dispatcher then
@@ -1492,51 +1497,55 @@ void RL_rebFail(const void *p)
 
     const void *p2 = p; // keep original p for examining in the debugger
 
+    DECLARE_LOCAL (reason);
+
     switch (Detect_Rebol_Pointer(p)) {
     case DETECTED_AS_UTF8: {
-        DECLARE_LOCAL (message);
-
-        REBVAL *temp = rebString(cast(const char*, p));
-        Move_Value(message, temp);
+        REBVAL *temp = rebString(cast(const char*, p2));
+        Move_Value(reason, temp);
         rebRelease(temp); // would leak an API handle if we passed directly
-
-        rebDo(
-            BLANK_VALUE, // temp workaround, can't rebEval() first slot yet
-            rebEval(NAT_VALUE(fail)),
-            message,
-            END
-        );
-        p2 = "HIJACK'd FAIL function did not interrupt execution";
-        break; }
+        p2 = reason;
+        goto fail_on_value; }
 
     case DETECTED_AS_SERIES:
     case DETECTED_AS_FREED_SERIES:
         //
         // !!! Is there any valid reason for this?
         //
-        panic (p);
+        break;
 
-    case DETECTED_AS_VALUE:
-        rebDo(
+    case DETECTED_AS_VALUE: {
+    fail_on_value:;
+        REBVAL *result = rebDo(
             BLANK_VALUE, // temp workaround, can't rebEval() first slot yet
             rebEval(NAT_VALUE(fail)),
-            cast(const REBVAL*, p),
+            cast(const REBVAL*, p2),
             END
         );
-        p2 = "HIJACK'd FAIL function did not interrupt execution";
-        break;
+        if (result == NULL) { // we *expect* it to fail (we called FAIL!)
+            REBVAL *temp = rebLastError();
+            DECLARE_LOCAL (e);
+            Move_Value(e, temp);
+            rebRelease(temp);
+            fail (e); // bounce the failure
+        }
+        p2 = "HIJACK'd FAIL function did not interrupt execution"; // uh oh
+        rebRelease(result);
+        break; }
 
     case DETECTED_AS_END:
     case DETECTED_AS_TRASH_CELL:
-        panic (p);
+        break;
     };
 
-    Fail_Core(p2);
+    rebPanic (p2); // just PANIC, as the fallthrough situations are all bad
 }
 
 
 //
-//  rebPanic: RL_API
+//  rebPanic: RL_API [
+//      #noreturn
+//  ]
 //
 // panic() and panic_at() are used internally to the interpreter for
 // situations which are so corrupt that the interpreter cannot safely run
@@ -1731,6 +1740,154 @@ REBVAL *RL_rebLocalToFileW(const wchar_t *local, REBOOL is_dir)
     UNUSED(is_dir);
     return_api_error ("wchar_t support not available on non-Windows (yet)");
 #endif
+}
+
+
+// !!! Although it is very much the goal to get all OS-specific code out of
+// the core (including the API), this particular hook is extremely useful to
+// have available to all clients.  It might be done another way (e.g. by
+// having hosts HIJACK the FAIL native with an adaptation that processes
+// integer arguments).  But for now, stick it in the API just to get the
+// wide availability.
+//
+#ifdef TO_WINDOWS
+    #undef IS_ERROR // windows has its own meaning for this.
+    #include <windows.h>
+#else
+    #include <errno.h>
+    #define MAX_POSIX_ERROR_LEN 1024
+#endif
+
+//
+//  rebFail_OS: RL_API [
+//      #noreturn
+//  ]
+//
+// Produce an error from an OS error code, by asking the OS for textual
+// information it knows internally from its database of error strings.
+//
+// This function is called via a macro which adds DEAD_END; after it.
+//
+// Note that error codes coming from WSAGetLastError are the same as codes
+// coming from GetLastError in 32-bit and above Windows:
+//
+// https://stackoverflow.com/q/15586224/
+//
+// !!! Should not be in core, but extensions need a way to trigger the
+// common functionality one way or another.
+//
+void RL_rebFail_OS(int errnum)
+{
+    REBCTX *error;
+
+#ifdef TO_WINDOWS
+    if (errnum == 0)
+        errnum = GetLastError();
+
+    wchar_t *lpMsgBuf; // FormatMessage writes allocated buffer address here
+
+    // Specific errors have %1 %2 slots, and if you know the error ID and
+    // that it's one of those then this lets you pass arguments to fill
+    // those in.  But since this is a generic error, we have no more
+    // parameterization (hence FORMAT_MESSAGE_IGNORE_INSERTS)
+    //
+    va_list *Arguments = NULL;
+
+    // Apparently FormatMessage can find its error strings in a variety of
+    // DLLs, but we don't have any context here so just use the default.
+    //
+    LPCVOID lpSource = NULL;
+
+    DWORD ok = FormatMessage(
+        FORMAT_MESSAGE_ALLOCATE_BUFFER // see lpMsgBuf
+            | FORMAT_MESSAGE_FROM_SYSTEM // e.g. ignore lpSource
+            | FORMAT_MESSAGE_IGNORE_INSERTS, // see Arguments
+        lpSource,
+        errnum, // message identifier
+        MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), // default language
+        cast(wchar_t*, &lpMsgBuf), // allocated buffer address written here
+        0, // buffer size (not used since FORMAT_MESSAGE_ALLOCATE_BUFFER)
+        Arguments
+    );
+
+    if (ok == 0) {
+        //
+        // Might want to show the value of GetLastError() in this message,
+        // but trying to FormatMessage() on *that* would be excessive.
+        //
+        error = Error_User("FormatMessage() gave no error description");
+    }
+    else {
+        REBVAL *temp = rebStringW(lpMsgBuf);
+        LocalFree(lpMsgBuf);
+
+        DECLARE_LOCAL (message);
+        Move_Value(message, temp);
+        rebRelease(temp);
+
+        error = Error(RE_USER, message, END);
+    }
+#else
+    // strerror() is not thread-safe, but strerror_r is. Unfortunately, at
+    // least in glibc, there are two different protocols for strerror_r(),
+    // depending on whether you are using the POSIX-compliant implementation
+    // or the GNU implementation.
+    //
+    // The convoluted test below is the inversion of the actual test glibc
+    // suggests to discern the version of strerror_r() provided. As other,
+    // non-glibc implementations (such as OS X's libSystem) also provide the
+    // POSIX-compliant version, we invert the test: explicitly use the
+    // older GNU implementation when we are sure about it, and use the
+    // more modern POSIX-compliant version otherwise. Finally, we only
+    // attempt this feature detection when using glibc (__GNU_LIBRARY__),
+    // as this particular combination of the (more widely standardised)
+    // _POSIX_C_SOURCE and _XOPEN_SOURCE defines might mean something
+    // completely different on non-glibc implementations.
+    //
+    // (Note that undefined pre-processor names arithmetically compare as 0,
+    // which is used in the original glibc test; we are more explicit.)
+
+    #ifdef USE_STRERROR_NOT_STRERROR_R
+        char *shared = strerror(errnum);
+        error = Error_User(shared);
+    #elif defined(__GNU_LIBRARY__) \
+            && (defined(_GNU_SOURCE) \
+                || ((!defined(_POSIX_C_SOURCE) || _POSIX_C_SOURCE < 200112L) \
+                    && (!defined(_XOPEN_SOURCE) || _XOPEN_SOURCE < 600)))
+
+        // May return an immutable string instead of filling the buffer
+
+        char buffer[MAX_POSIX_ERROR_LEN];
+        char *maybe_str = strerror_r(errnum, buffer, MAX_POSIX_ERROR_LEN);
+        if (maybe_str != buffer)
+            strncpy(buffer, maybe_str, MAX_POSIX_ERROR_LEN);
+        error = Error_User(buffer);
+    #else
+        // Quoting glibc's strerror_r manpage: "The XSI-compliant strerror_r()
+        // function returns 0 on success. On error, a (positive) error number
+        // is returned (since glibc 2.13), or -1 is returned and errno is set
+        // to indicate the error (glibc versions before 2.13)."
+
+        char buffer[MAX_POSIX_ERROR_LEN];
+        int result = strerror_r(errnum, buffer, MAX_POSIX_ERROR_LEN);
+
+        // Alert us to any problems in a debug build.
+        assert(result == 0);
+
+        if (result == 0)
+            error = Error_User(buffer);
+        else if (result == EINVAL)
+            error = Error_User("EINVAL: bad errno passed to strerror_r()");
+        else if (result == ERANGE)
+            error = Error_User("ERANGE: insufficient buffer size for error");
+        else
+            error = Error_User("Unknown problem with strerror_r() message");
+    #endif
+#endif
+
+    DECLARE_LOCAL (temp);
+    Init_Error(temp, error);
+    rebFail (temp);
 }
 
 
