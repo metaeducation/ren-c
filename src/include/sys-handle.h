@@ -123,7 +123,7 @@ inline static void SET_HANDLE_CFUNC(RELVAL *v, CFUNC *cfunc) {
         v->payload.handle.data.cfunc = cfunc;
 }
 
-inline static void Init_Handle_Simple(
+inline static REBVAL *Init_Handle_Simple(
     RELVAL *out,
     void *pointer,
     REBUPT length
@@ -132,9 +132,10 @@ inline static void Init_Handle_Simple(
     out->extra.singular = NULL;
     out->payload.handle.data.pointer = pointer;
     out->payload.handle.length = length;
+    return KNOWN(out);
 }
 
-inline static void Init_Handle_Cfunc(
+inline static REBVAL *Init_Handle_Cfunc(
     RELVAL *out,
     CFUNC *cfunc,
     REBUPT length
@@ -143,6 +144,7 @@ inline static void Init_Handle_Cfunc(
     out->extra.singular = NULL;
     out->payload.handle.data.cfunc = cfunc;
     out->payload.handle.length = length;
+    return KNOWN(out);
 }
 
 inline static void Init_Handle_Managed_Common(
@@ -177,7 +179,7 @@ inline static void Init_Handle_Managed_Common(
     TRASH_POINTER_IF_DEBUG(out->payload.handle.data.pointer);
 }
 
-inline static void Init_Handle_Managed(
+inline static REBVAL *Init_Handle_Managed(
     RELVAL *out,
     void *pointer,
     REBUPT length,
@@ -191,9 +193,10 @@ inline static void Init_Handle_Managed(
 
     VAL_RESET_HEADER(ARR_HEAD(out->extra.singular), REB_HANDLE);
     ARR_HEAD(out->extra.singular)->payload.handle.data.pointer = pointer;
+    return KNOWN(out);
 }
 
-inline static void Init_Handle_Managed_Cfunc(
+inline static REBVAL *Init_Handle_Managed_Cfunc(
     RELVAL *out,
     CFUNC *cfunc,
     REBUPT length,
@@ -211,4 +214,5 @@ inline static void Init_Handle_Managed_Cfunc(
         HANDLE_FLAG_CFUNC
     );
     ARR_HEAD(out->extra.singular)->payload.handle.data.cfunc = cfunc;
+    return KNOWN(out);
 }

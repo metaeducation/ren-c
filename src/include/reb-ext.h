@@ -115,6 +115,7 @@ enum REBOL_Ext_Types
     RXT_GOB = 47,
     RXT_OBJECT = 48,
     RXT_MODULE = 49,
+    RXT_ERROR = 50,
 
     RXT_MAX
 };

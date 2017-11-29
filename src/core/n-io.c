@@ -243,15 +243,17 @@ REBNATIVE(now)
 {
     INCLUDE_PARAMS_OF_NOW;
 
-    REBVAL *ret = D_OUT;
-    OS_GET_TIME(D_OUT);
+    REBVAL *timestamp = OS_GET_TIME();
 
     // However OS-level date and time is plugged into the system, it needs to
     // have enough granularity to give back date, time, and time zone.
     //
-    assert(IS_DATE(D_OUT));
-    assert(GET_VAL_FLAG(D_OUT, DATE_FLAG_HAS_TIME));
-    assert(GET_VAL_FLAG(D_OUT, DATE_FLAG_HAS_ZONE));
+    assert(IS_DATE(timestamp));
+    assert(GET_VAL_FLAG(timestamp, DATE_FLAG_HAS_TIME));
+    assert(GET_VAL_FLAG(timestamp, DATE_FLAG_HAS_ZONE));
+
+    Move_Value(D_OUT, timestamp);
+    rebRelease(timestamp);
 
     if (NOT(REF(precise))) {
         //
@@ -260,7 +262,7 @@ REBNATIVE(now)
         // seconds portion (with the nanoseconds set to 0).  This achieves
         // that by extracting the seconds and then multiplying by nanoseconds.
         //
-        VAL_NANO(ret) = SECS_TO_NANO(VAL_SECS(ret));
+        VAL_NANO(D_OUT) = SECS_TO_NANO(VAL_SECS(D_OUT));
     }
 
     if (REF(utc)) {
@@ -268,12 +270,13 @@ REBNATIVE(now)
         // Say it has a time zone component, but it's 0:00 (as opposed
         // to saying it has no time zone component at all?)
         //
-        INIT_VAL_ZONE(ret, 0);
+        INIT_VAL_ZONE(D_OUT, 0);
     }
     else if (REF(local)) {
+        //
         // Clear out the time zone flag
         //
-        CLEAR_VAL_FLAG(ret, DATE_FLAG_HAS_ZONE);
+        CLEAR_VAL_FLAG(D_OUT, DATE_FLAG_HAS_ZONE);
     }
     else {
         if (
@@ -285,35 +288,36 @@ REBNATIVE(now)
             || REF(weekday)
             || REF(yearday)
         ){
-            Adjust_Date_Zone(ret, FALSE); // Add time zone, adjust date/time
+            const REBOOL to_utc = FALSE;
+            Adjust_Date_Zone(D_OUT, to_utc); // Add timezone, adjust date/time
         }
     }
 
     REBINT n = -1;
 
     if (REF(date)) {
-        CLEAR_VAL_FLAGS(ret, DATE_FLAG_HAS_TIME | DATE_FLAG_HAS_ZONE);
+        CLEAR_VAL_FLAGS(D_OUT, DATE_FLAG_HAS_TIME | DATE_FLAG_HAS_ZONE);
     }
     else if (REF(time)) {
-        VAL_RESET_HEADER(ret, REB_TIME); // reset clears date flags
+        VAL_RESET_HEADER(D_OUT, REB_TIME); // reset clears date flags
     }
     else if (REF(zone)) {
-        VAL_NANO(ret) = VAL_ZONE(ret) * ZONE_MINS * MIN_SEC;
-        VAL_RESET_HEADER(ret, REB_TIME); // reset clears date flags
+        VAL_NANO(D_OUT) = VAL_ZONE(D_OUT) * ZONE_MINS * MIN_SEC;
+        VAL_RESET_HEADER(D_OUT, REB_TIME); // reset clears date flags
     }
     else if (REF(weekday))
-        n = Week_Day(VAL_DATE(ret));
+        n = Week_Day(VAL_DATE(D_OUT));
     else if (REF(yearday))
-        n = Julian_Date(VAL_DATE(ret));
+        n = Julian_Date(VAL_DATE(D_OUT));
     else if (REF(year))
-        n = VAL_YEAR(ret);
+        n = VAL_YEAR(D_OUT);
     else if (REF(month))
-        n = VAL_MONTH(ret);
+        n = VAL_MONTH(D_OUT);
     else if (REF(day))
-        n = VAL_DAY(ret);
+        n = VAL_DAY(D_OUT);
 
     if (n > 0)
-        Init_Integer(ret, n);
+        Init_Integer(D_OUT, n);
 
     return R_OUT;
 }

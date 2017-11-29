@@ -120,7 +120,7 @@ static int Get_Timezone(struct tm *utc_tm_unused)
 // Convert local format of system time into standard date
 // and time structure (for date/time and file timestamps).
 //
-void Convert_Date(REBVAL *out, time_t *stime, long usec)
+REBVAL *Convert_Date(time_t *stime, long usec)
 {
     // gmtime() is badly named.  It's utc time.  Note we have to be careful as
     // it returns a system static buffer, so we have to copy the result
@@ -134,8 +134,7 @@ void Convert_Date(REBVAL *out, time_t *stime, long usec)
 
     int zone = Get_Timezone(&utc_tm);
 
-    rebInitDate(
-        out,
+    return rebInitDate(
         utc_tm.tm_year + 1900, // year
         utc_tm.tm_mon + 1, // month
         utc_tm.tm_mday, // day
@@ -153,7 +152,7 @@ void Convert_Date(REBVAL *out, time_t *stime, long usec)
 //
 // Get the current system date/time in UTC plus zone offset (mins).
 //
-void OS_Get_Time(REBVAL *out)
+REBVAL *OS_Get_Time(void)
 {
     struct timeval tv;
     struct timezone * const tz_ptr = NULL; // obsolete
@@ -167,7 +166,7 @@ void OS_Get_Time(REBVAL *out)
     //
     time_t stime = tv.tv_sec;
 
-    Convert_Date(out, &stime, tv.tv_usec);
+    return Convert_Date(&stime, tv.tv_usec);
 }
 
 
@@ -200,15 +199,14 @@ i64 OS_Delta_Time(i64 base)
 // Convert file.time to REBOL date/time format.
 // Time zone is UTC.
 //
-void OS_File_Time(REBVAL *out, struct devreq_file *file)
+REBVAL *OS_File_Time(struct devreq_file *file)
 {
     if (sizeof(time_t) > sizeof(file->time.l)) {
         REBI64 t = file->time.l;
         t |= cast(REBI64, file->time.h) << 32;
-        Convert_Date(out, cast(time_t*, &t), 0);
+        return Convert_Date(cast(time_t*, &t), 0);
     }
-    else {
-        Convert_Date(out, cast(time_t *, &file->time.l), 0);
-    }
+
+    return Convert_Date(cast(time_t *, &file->time.l), 0);
 }
 

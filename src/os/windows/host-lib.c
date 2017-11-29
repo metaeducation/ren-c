@@ -64,10 +64,9 @@ REBSER* Gob_To_Image(REBGOB *gob);
 // Convert local format of system time into standard date
 // and time structure.
 //
-void Convert_Date(REBVAL *out, long zone, const SYSTEMTIME *stime)
+REBVAL *Convert_Date(long zone, const SYSTEMTIME *stime)
 {
-    rebInitDate(
-        out,
+    return rebInitDate(
         stime->wYear, // year
         stime->wMonth, // month
         stime->wDay, // day
@@ -110,7 +109,7 @@ REBINT OS_Config(int id, REBYTE *result)
 //
 // Get the current system date/time in UTC plus zone offset (mins).
 //
-void OS_Get_Time(REBVAL *out)
+REBVAL *OS_Get_Time(void)
 {
     SYSTEMTIME stime;
     TIME_ZONE_INFORMATION tzone;
@@ -120,7 +119,7 @@ void OS_Get_Time(REBVAL *out)
     if (TIME_ZONE_ID_DAYLIGHT == GetTimeZoneInformation(&tzone))
         tzone.Bias += tzone.DaylightBias;
 
-    Convert_Date(out, -tzone.Bias, &stime);
+    return Convert_Date(-tzone.Bias, &stime);
 }
 
 
@@ -192,7 +191,7 @@ REBOOL OS_Set_Current_Dir(const REBVAL *path)
 // Convert file.time to REBOL date/time format.
 // Time zone is UTC.
 //
-void OS_File_Time(REBVAL *out, struct devreq_file *file)
+REBVAL *OS_File_Time(struct devreq_file *file)
 {
     SYSTEMTIME stime;
     TIME_ZONE_INFORMATION tzone;
@@ -201,7 +200,7 @@ void OS_File_Time(REBVAL *out, struct devreq_file *file)
         tzone.Bias += tzone.DaylightBias;
 
     FileTimeToSystemTime(cast(FILETIME *, &file->time), &stime);
-    Convert_Date(out, -tzone.Bias, &stime);
+    return Convert_Date(-tzone.Bias, &stime);
 }
 
 

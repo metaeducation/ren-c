@@ -213,7 +213,7 @@ void Startup_Api(void)
     Reb_To_RXT[REB_OBJECT] = RXT_OBJECT;
     // REB_FRAME unsupported?
     Reb_To_RXT[REB_MODULE] = RXT_MODULE;
-    // REB_ERROR unsupported?
+    Reb_To_RXT[REB_ERROR] = RXT_ERROR;
     // REB_PORT unsupported?
     Reb_To_RXT[REB_GOB] = RXT_GOB;
     // REB_EVENT unsupported?
@@ -289,9 +289,8 @@ void RL_rebVersion(REBYTE vers[])
 // take for granted--and assumes a host must provide to operate.  An example
 // of this would be that getting the current UTC date and time varies from OS
 // to OS, so for the NOW native to be implemented it has to call something
-// outside of standard C...e.g. OS_GET_CURRENT_TIME().  So even though NOW
-// is in the core, it will be incomplete without having that function
-// supplied.
+// outside of standard C...e.g. OS_GET_TIME().  So even though NOW is in the
+// core, it will be incomplete without having that function supplied.
 //
 // !!! Increased modularization of the core, and new approaches, are making
 // this concept obsolete.  For instance, the NOW native might not even live
@@ -895,21 +894,6 @@ long RL_rebIndexOf(const REBVAL *v) {
 //
 //  rebInitDate: RL_API
 //
-// There was a data structure called a REBOL_DAT in R3-Alpha which was defined
-// in %reb-defs.h, and it appeared in the host callbacks to be used in
-// `os_get_time()` and `os_file_time()`.  This allowed the host to pass back
-// date information without actually knowing how to construct a date REBVAL.
-//
-// Today "host code" (which may all become "port code") is expected to either
-// be able to speak in terms of Rebol values through linkage to the internal
-// API or the more minimal RL_Api.  Either way, it should be able to make
-// REBVALs corresponding to dates...even if that means making a string of
-// the date to load and then RL_Do_String() to produce the value.
-//
-// This routine is a quick replacement for the format of the struct, as a
-// temporary measure while it is considered whether things like os_get_time()
-// will have access to the full internal API or not.
-//
 // !!! Note this doesn't allow you to say whether the date has a time
 // or zone component at all.  Those could be extra flags, or if Rebol values
 // were used they could be blanks vs. integers.  Further still, this kind
@@ -918,8 +902,7 @@ long RL_rebIndexOf(const REBVAL *v) {
 // the internal API is available for clients who need that performance,
 // who can call date initialization themselves.
 //
-void RL_rebInitDate(
-    REBVAL *out,
+REBVAL *RL_rebInitDate(
     int year,
     int month,
     int day,
@@ -929,16 +912,18 @@ void RL_rebInitDate(
 ){
     Enter_Api_Clear_Last_Error();
 
-    VAL_RESET_HEADER(out, REB_DATE);
-    VAL_YEAR(out)  = year;
-    VAL_MONTH(out) = month;
-    VAL_DAY(out) = day;
+    REBVAL *result = Alloc_Value();
+    VAL_RESET_HEADER(result, REB_DATE);
+    VAL_YEAR(result) = year;
+    VAL_MONTH(result) = month;
+    VAL_DAY(result) = day;
 
-    SET_VAL_FLAG(out, DATE_FLAG_HAS_ZONE);
-    INIT_VAL_ZONE(out, zone / ZONE_MINS);
+    SET_VAL_FLAG(result, DATE_FLAG_HAS_ZONE);
+    INIT_VAL_ZONE(result, zone / ZONE_MINS);
 
-    SET_VAL_FLAG(out, DATE_FLAG_HAS_TIME);
-    VAL_NANO(out) = SECS_TO_NANO(seconds) + nano;
+    SET_VAL_FLAG(result, DATE_FLAG_HAS_TIME);
+    VAL_NANO(result) = SECS_TO_NANO(seconds) + nano;
+    return result;
 }
 
 
