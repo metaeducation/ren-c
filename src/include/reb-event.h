@@ -100,6 +100,3 @@ enum {
     EVM_CALLBACK,   // Callback event uses system/ports/callback port
     EVM_MAX
 };
-
-// Special messages
-#define WM_DNS (WM_USER+100)

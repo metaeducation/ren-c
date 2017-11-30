@@ -134,11 +134,7 @@ DEVICE_CMD Poll_Events(REBREQ *req)
         flag = DR_PEND;
         if (msg.message == WM_TIMER)
             break;
-        if (msg.message == WM_DNS)
-            Done_Device(msg.wParam, msg.lParam>>16); // error code
-        else {
-            DispatchMessage(&msg);
-        }
+        DispatchMessage(&msg);
     }
 
     return flag;    // different meaning compared to most commands
@@ -154,20 +150,14 @@ DEVICE_CMD Poll_Events(REBREQ *req)
 //
 DEVICE_CMD Query_Events(REBREQ *req)
 {
-    MSG msg;
-
     // Set timer (we assume this is very fast):
     Timer_Id = SetTimer(0, Timer_Id, req->length, 0);
 
     // Wait for message or the timer:
-    if (GetMessage(&msg, NULL, 0, 0)) {
-        //printf("Msg: %d\n", msg.message);
-        if (msg.message == WM_DNS)
-            Done_Device(msg.wParam, msg.lParam>>16); // error code
-        else {
-            DispatchMessage(&msg);
-        }
-    }
+    //
+    MSG msg;
+    if (GetMessage(&msg, NULL, 0, 0))
+        DispatchMessage(&msg);
 
     // Quickly check for other events:
     Poll_Events(0);

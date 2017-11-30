@@ -254,7 +254,6 @@ DEVICE_CMD Close_Socket(REBREQ *req)
 //
 // Initiate the GetHost request and return immediately.
 // This is very similar to the DNS device.
-// The request will pend until the main event handler gets WM_DNS.
 // Note the temporary results buffer (must be freed later).
 // Note we use the sock->requestee.handle for the DNS handle. During use,
 // we store the TCP socket in the length field.
