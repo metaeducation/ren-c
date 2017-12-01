@@ -65,7 +65,7 @@ inline static REBVAL *PAIRING_KEY(REBVAL *pairing) {
 
 inline static void SET_PAIR(RELVAL *v, float x, float y) {
     VAL_RESET_HEADER(v, REB_PAIR);
-    v->payload.pair = Alloc_Pairing(NULL);
+    v->payload.pair = Alloc_Pairing();
     Init_Decimal(PAIRING_KEY((v)->payload.pair), x);
     Init_Decimal((v)->payload.pair, y);
     Manage_Pairing((v)->payload.pair);

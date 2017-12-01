@@ -41,8 +41,6 @@
 
 #include "reb-host.h"
 
-extern void Signal_Device(REBREQ *req, REBINT type);
-
 #define MAX_SERIAL_PATH 128
 
 /* BXXX constants are defined in termios.h */
@@ -135,10 +133,12 @@ static REBINT Set_Serial_Settings(int ttyfd, REBREQ *req)
             attr.c_cflag |= PARENB;
             attr.c_cflag |= PARODD;
             break;
+
         case SERIAL_PARITY_EVEN:
             attr.c_cflag |= PARENB;
             attr.c_cflag &= ~PARODD;
             break;
+
         case SERIAL_PARITY_NONE:
         default:
             attr.c_cflag &= ~PARENB;
@@ -202,10 +202,7 @@ DEVICE_CMD Open_Serial(REBREQ *req)
 {
     struct devreq_serial *serial = DEVREQ_SERIAL(req);
 
-    if (serial->path == NULL) {
-        req->error = -RFE_BAD_PATH;
-        return DR_ERROR;
-    }
+    assert(serial->path != NULL);
 
     char path_utf8[MAX_SERIAL_PATH];
     REBCNT size = rebSpellingOf(path_utf8, MAX_SERIAL_PATH, serial->path);
@@ -216,22 +213,22 @@ DEVICE_CMD Open_Serial(REBREQ *req)
     }
 
     int h = open(path_utf8, O_RDWR | O_NOCTTY | O_NONBLOCK);
-    if (h < 0) {
-        req->error = -RFE_OPEN_FAIL;
-        return DR_ERROR;
-    }
+    if (h < 0)
+        rebFail_OS (errno);
 
-    //Getting prior atttributes:
+    // Getting prior attributes:
+
     serial->prior_attr = Get_Serial_Settings(h);
-    if (tcgetattr(h, cast(struct termios*, serial->prior_attr))) {
+    if (tcgetattr(h, cast(struct termios*, serial->prior_attr)) != 0) {
+        int errno_cache = errno;
         close(h);
-        return DR_ERROR;
+        rebFail_OS (errno_cache);
     }
 
-    if (Set_Serial_Settings(h, req)) {
+    if (Set_Serial_Settings(h, req) == 0) {
+        int errno_cache = errno;
         close(h);
-        req->error = -RFE_OPEN_FAIL;
-        return DR_ERROR;
+        rebFail_OS (errno_cache);
     }
 
     req->requestee.id = h;
@@ -264,27 +261,22 @@ DEVICE_CMD Close_Serial(REBREQ *req)
 //
 DEVICE_CMD Read_Serial(REBREQ *req)
 {
-    ssize_t result = 0;
-    if (!req->requestee.id) {
-        req->error = -RFE_NO_HANDLE;
-        return DR_ERROR;
-    }
+    assert(req->requestee.id != 0);
 
-    result = read(req->requestee.id, req->common.data, req->length);
+    ssize_t result = read(req->requestee.id, req->common.data, req->length);
+
 #ifdef DEBUG_SERIAL
     printf("read %d ret: %d\n", req->length, result);
 #endif
-    if (result < 0) {
-        req->error = -RFE_BAD_READ;
-        Signal_Device(req, EVT_ERROR);
-        return DR_ERROR;
-    } else if (result == 0) {
-        return DR_PEND;
-    } else {
-        req->actual = result;
-        Signal_Device(req, EVT_READ);
-    }
 
+    if (result < 0)
+        rebFail_OS (errno);
+
+    if (result == 0)
+        return DR_PEND;
+
+    req->actual = result;
+    OS_SIGNAL_DEVICE(req, EVT_READ);
     return DR_DONE;
 }
 
@@ -294,36 +286,35 @@ DEVICE_CMD Read_Serial(REBREQ *req)
 //
 DEVICE_CMD Write_Serial(REBREQ *req)
 {
-    REBINT result = 0, len = 0;
-    len = req->length - req->actual;
-    if (!req->requestee.id) {
-        req->error = -RFE_NO_HANDLE;
-        return DR_ERROR;
-    }
+    REBINT len = req->length - req->actual;
 
-    if (len <= 0) return DR_DONE;
+    assert(req->requestee.id != 0);
 
-    result = write(req->requestee.id, req->common.data, len);
+    if (len <= 0)
+        return DR_DONE;
+
+    REBINT result = write(req->requestee.id, req->common.data, len);
+
 #ifdef DEBUG_SERIAL
     printf("write %d ret: %d\n", len, result);
 #endif
+
     if (result < 0) {
-        if (errno == EAGAIN) {
+        if (errno == EAGAIN)
             return DR_PEND;
-        }
-        req->error = -RFE_BAD_WRITE;
-        Signal_Device(req, EVT_ERROR);
-        return DR_ERROR;
+
+        rebFail_OS (errno);
     }
+
     req->actual += result;
     req->common.data += result;
     if (req->actual >= req->length) {
-        Signal_Device(req, EVT_WROTE);
+        OS_SIGNAL_DEVICE(req, EVT_WROTE);
         return DR_DONE;
-    } else {
-        req->flags |= RRF_ACTIVE; // notify OS_WAIT of activity
-        return DR_PEND;
     }
+
+    req->flags |= RRF_ACTIVE; // notify OS_WAIT of activity
+    return DR_PEND;
 }
 
 

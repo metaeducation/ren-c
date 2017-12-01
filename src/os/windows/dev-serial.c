@@ -26,14 +26,27 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
+// !!! The serial port code was derived from code originally by Carl
+// Sassenrath and used for home automation:
+//
+// https://www.youtube.com/watch?v=Axus6jF6YOQ
+//
+// It was added to R3-Alpha by Joshua Shireman, and incorporated into the
+// Ren-C branch when it was launched.  Due to the fact that few developers
+// have serial interfaces on their current machines (or serial devices to
+// use them with), it has had limited testing--despite needing continuous
+// modification to stay in sync with core changes.
+//
+// (At one point it was known to be broken due to variances in handling of
+// character widths on Windows vs. UNIX, but the "UTF-8 Everywhere" initiative
+// should help with that.)
+//
 
 #include <windows.h>
 #include <stdio.h>
 #include <assert.h>
 
 #include "reb-host.h"
-
-extern void Signal_Device(REBREQ *req, REBINT type);
 
 #define MAX_SERIAL_DEV_PATH 128
 
@@ -56,54 +69,6 @@ const int speeds[] = {
 };
 
 
-/***********************************************************************
-**
-**  Local Functions
-**
-***********************************************************************/
-static REBINT Set_Serial_Settings(HANDLE h, struct devreq_serial *serial)
-{
-    DCB dcbSerialParams;
-    REBINT n;
-    int speed = serial->baud;
-
-    memset(&dcbSerialParams, '\0', sizeof(dcbSerialParams));
-    dcbSerialParams.DCBlength = sizeof(dcbSerialParams);
-    if (GetCommState(h, &dcbSerialParams) == 0) return 1;
-
-
-    for (n = 0; speeds[n]; n += 2) {
-        if (speed == speeds[n]) {
-            dcbSerialParams.BaudRate = speeds[n+1];
-            break;
-        }
-    }
-    if (speeds[n] == 0) dcbSerialParams.BaudRate = CBR_115200; // invalid, use default
-
-    dcbSerialParams.ByteSize = serial->data_bits;
-    dcbSerialParams.StopBits = serial->stop_bits == 1? ONESTOPBIT : TWOSTOPBITS;
-    switch (serial->parity) {
-        case SERIAL_PARITY_ODD:
-            dcbSerialParams.Parity = ODDPARITY;
-            break;
-        case SERIAL_PARITY_EVEN:
-            dcbSerialParams.Parity = EVENPARITY;
-            break;
-        case SERIAL_PARITY_NONE:
-        default:
-            dcbSerialParams.Parity = NOPARITY;
-            break;
-    }
-
-
-    if(SetCommState(h, &dcbSerialParams) == 0) {
-        return 1;
-    }
-
-    PurgeComm(h,PURGE_RXCLEAR|PURGE_TXCLEAR);  //make sure buffers are clean
-    return 0;
-}
-
 //
 //  Open_Serial: C
 //
@@ -112,20 +77,14 @@ static REBINT Set_Serial_Settings(HANDLE h, struct devreq_serial *serial)
 //
 DEVICE_CMD Open_Serial(REBREQ *req)
 {
-    COMMTIMEOUTS timeouts; //add in timeouts? Currently unused
     struct devreq_serial *serial = DEVREQ_SERIAL(req);
-
-    memset(&timeouts, '\0', sizeof(timeouts));
 
     // req->special.serial.path should be prefixed with "\\.\" to allow for
     // higher com port numbers
     //
     wchar_t fullpath[MAX_SERIAL_DEV_PATH] = L"\\\\.\\";
 
-    if (serial->path == NULL) {
-        req->error = -RFE_BAD_PATH;
-        return DR_ERROR;
-    }
+    assert(serial->path != NULL);
 
     // Concatenate the "spelling" of the serial port request by asking it
     // to be placed at the end of the buffer.
@@ -148,28 +107,82 @@ DEVICE_CMD Open_Serial(REBREQ *req)
         0,
         NULL
     );
-    if (h == INVALID_HANDLE_VALUE) {
-        req->error = -RFE_OPEN_FAIL;
-        return DR_ERROR;
-    }
+    if (h == INVALID_HANDLE_VALUE)
+        rebFail_OS (GetLastError());
 
-    if (Set_Serial_Settings(h, serial)==0) {
+    DCB dcbSerialParams;
+    memset(&dcbSerialParams, '\0', sizeof(dcbSerialParams));
+    dcbSerialParams.DCBlength = sizeof(dcbSerialParams);
+
+    if (NOT(GetCommState(h, &dcbSerialParams))) {
         CloseHandle(h);
-        req->error = -RFE_OPEN_FAIL;
-        return DR_ERROR;
+        rebFail_OS (GetLastError());
     }
 
+    int speed = serial->baud;
+
+    REBINT n;
+    for (n = 0; speeds[n]; n += 2) {
+        if (speed == speeds[n]) {
+            dcbSerialParams.BaudRate = speeds[n+1];
+            break;
+        }
+    }
+
+    if (speeds[n] == 0) // invalid, use default
+        dcbSerialParams.BaudRate = CBR_115200;
+
+    dcbSerialParams.ByteSize = serial->data_bits;
+    if (serial->stop_bits == 1)
+        dcbSerialParams.StopBits = ONESTOPBIT;
+    else
+        dcbSerialParams.StopBits = TWOSTOPBITS;
+
+    switch (serial->parity) {
+    case SERIAL_PARITY_ODD:
+        dcbSerialParams.Parity = ODDPARITY;
+        break;
+
+    case SERIAL_PARITY_EVEN:
+        dcbSerialParams.Parity = EVENPARITY;
+        break;
+
+    case SERIAL_PARITY_NONE:
+    default:
+        dcbSerialParams.Parity = NOPARITY;
+        break;
+    }
+
+    if (NOT(SetCommState(h, &dcbSerialParams))) {
+        CloseHandle(h);
+        rebFail_OS (GetLastError());
+    }
+
+    // Make sure buffers are clean
+
+    if (NOT(PurgeComm(h, PURGE_RXCLEAR | PURGE_TXCLEAR))) {
+        CloseHandle(h);
+        rebFail_OS (GetLastError());
+    }
+
+    // !!! Comment said "add in timeouts? currently unused".  This might
+    // suggest a question of whether the request itself have some way of
+    // asking for custom timeouts, while the initialization of the timeouts
+    // below is the same for every request.
+    //
     // http://msdn.microsoft.com/en-us/library/windows/desktop/aa363190%28v=vs.85%29.aspx
     //
+    COMMTIMEOUTS timeouts;
+    memset(&timeouts, '\0', sizeof(timeouts));
     timeouts.ReadIntervalTimeout = MAXDWORD;
     timeouts.ReadTotalTimeoutMultiplier = 0;
     timeouts.ReadTotalTimeoutConstant = 0;
     timeouts.WriteTotalTimeoutMultiplier = 1; // !!! should this be 0?
     timeouts.WriteTotalTimeoutConstant = 1; // !!! should this be 0?
-    if (!SetCommTimeouts(h, &timeouts)) {
+
+    if (NOT(SetCommTimeouts(h, &timeouts))) {
         CloseHandle(h);
-        req->error = -RFE_OPEN_FAIL;
-        return DR_ERROR;
+        rebFail_OS (GetLastError());
     }
 
     req->requestee.handle = h;
@@ -182,10 +195,12 @@ DEVICE_CMD Open_Serial(REBREQ *req)
 //
 DEVICE_CMD Close_Serial(REBREQ *req)
 {
-    if (req->requestee.handle) {
+    if (req->requestee.handle != NULL) {
+        //
         // !!! Should we free req->special.serial.prior_attr termios struct?
+        //
         CloseHandle(req->requestee.handle);
-        req->requestee.handle = 0;
+        req->requestee.handle = NULL;
     }
     return DR_DONE;
 }
@@ -196,26 +211,22 @@ DEVICE_CMD Close_Serial(REBREQ *req)
 //
 DEVICE_CMD Read_Serial(REBREQ *req)
 {
-    DWORD result = 0;
-    if (!req->requestee.handle) {
-        req->error = -RFE_NO_HANDLE;
-        return DR_ERROR;
-    }
+    assert(req->requestee.handle != NULL);
 
     //printf("reading %d bytes\n", req->length);
-    if (!ReadFile(req->requestee.handle, req->common.data, req->length, &result, 0)) {
-        req->error = -RFE_BAD_READ;
-        Signal_Device(req, EVT_ERROR);
-        return DR_ERROR;
-    } else {
-        if (result == 0) {
-            return DR_PEND;
-        } else if (result > 0){
-            //printf("read %d bytes\n", req->actual);
-            req->actual = result;
-            Signal_Device(req, EVT_READ);
-        }
+
+    DWORD result;
+    if (NOT(ReadFile(
+        req->requestee.handle, req->common.data, req->length, &result, 0
+    ))){
+        rebFail_OS (GetLastError());
     }
+
+    if (result == 0)
+        return DR_PEND;
+
+    req->actual = result;
+    OS_SIGNAL_DEVICE(req, EVT_READ);
 
 #ifdef DEBUG_SERIAL
     printf("read %d ret: %d\n", req->length, req->actual);
@@ -230,21 +241,18 @@ DEVICE_CMD Read_Serial(REBREQ *req)
 //
 DEVICE_CMD Write_Serial(REBREQ *req)
 {
-    DWORD result = 0;
     DWORD len = req->length - req->actual;
-    if (!req->requestee.handle) {
-        req->error = -RFE_NO_HANDLE;
-        return DR_ERROR;
-    }
 
-    if (len <= 0) return DR_DONE;
+    assert(req->requestee.handle != NULL);
 
-    if (!WriteFile(
+    if (len <= 0)
+        return DR_DONE;
+
+    DWORD result;
+    if (NOT(WriteFile(
         req->requestee.handle, req->common.data, len, &result, NULL
-    )) {
-        req->error = -RFE_BAD_WRITE;
-        Signal_Device(req, EVT_ERROR);
-        return DR_ERROR;
+    ))){
+        rebFail_OS (GetLastError());
     }
 
 #ifdef DEBUG_SERIAL
@@ -254,12 +262,12 @@ DEVICE_CMD Write_Serial(REBREQ *req)
     req->actual += result;
     req->common.data += result;
     if (req->actual >= req->length) {
-        Signal_Device(req, EVT_WROTE);
+        OS_SIGNAL_DEVICE(req, EVT_WROTE);
         return DR_DONE;
-    } else {
-        req->flags |= RRF_ACTIVE; // notify OS_WAIT of activity
-        return DR_PEND;
     }
+
+    req->flags |= RRF_ACTIVE; // notify OS_WAIT of activity
+    return DR_PEND;
 }
 
 
@@ -309,4 +317,3 @@ DEFINE_DEV(
     Dev_Serial,
     "Serial IO", 1, Dev_Cmds, RDC_MAX, sizeof(struct devreq_serial)
 );
-

@@ -102,13 +102,10 @@ make-dir: func [
     /deep "Create subdirectories too"
     <local> dirs end created
 ][
-    if empty? path [return path]
-    if slash <> last path [path: dirize path]
+    path: dirize path ;-- append slash (if needed)
+    assert [dir? path]
 
-    if exists? path [
-        if dir? path [return path]
-        cause-error 'access 'cannot-open path
-    ]
+    if exists? path [return path]
 
     if any [not deep url? path] [
         create path

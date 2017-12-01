@@ -38,7 +38,6 @@
 
 #include "reb-host.h"
 
-extern void Signal_Device(REBREQ *req, REBINT type);
 
 //
 //  Open_Signal: C
@@ -49,33 +48,26 @@ DEVICE_CMD Open_Signal(REBREQ *req)
 
 #ifdef CHECK_MASK_OVERLAP //doesn't work yet
     sigset_t mask;
-    if (sigprocmask(SIG_BLOCK, NULL, &mask) < 0) {
-        goto error;
-    }
+    if (sigprocmask(SIG_BLOCK, NULL, &mask) < 0)
+        rebFail_OS (errno);
 
     sigset_t overlap;
-    if (sigandset(&overlap, &mask, &signal->mask) < 0) {
-        goto error;
-    }
-    if (!sigisemptyset(&overlap)) {
-        req->error = EBUSY;
-        return DR_ERROR;
-    }
+    if (sigandset(&overlap, &mask, &signal->mask) < 0)
+        rebFail_OS (errno);
+
+    if (!sigisemptyset(&overlap))
+        rebFail_OS (EBUSY);
 #endif
 
-    if (sigprocmask(SIG_BLOCK, &signal->mask, NULL) < 0) {
-        goto error;
-    }
+    if (sigprocmask(SIG_BLOCK, &signal->mask, NULL) < 0)
+        rebFail_OS (errno);
 
     req->flags |= RRF_OPEN;
-    Signal_Device(req, EVT_OPEN);
+    OS_SIGNAL_DEVICE(req, EVT_OPEN);
 
     return DR_DONE;
-
-error:
-    req->error = errno;
-    return DR_ERROR;
 }
+
 
 //
 //  Close_Signal: C
@@ -83,16 +75,13 @@ error:
 DEVICE_CMD Close_Signal(REBREQ *req)
 {
     struct devreq_posix_signal *signal = DEVREQ_POSIX_SIGNAL(req);
-    if (sigprocmask(SIG_UNBLOCK, &signal->mask, NULL) < 0) {
-        goto error;
-    }
+    if (sigprocmask(SIG_UNBLOCK, &signal->mask, NULL) < 0)
+        rebFail_OS (errno);
+
     req->flags &= ~RRF_OPEN;
     return DR_DONE;
-
-error:
-    req->error = errno;
-    return DR_ERROR;
 }
+
 
 //
 //  Read_Signal: C
@@ -113,23 +102,19 @@ DEVICE_CMD Read_Signal(REBREQ *req)
         );
 
         if (result < 0) {
-            if (errno != EAGAIN && i == 0) {
-                Signal_Device(req, EVT_ERROR);
-                return DR_ERROR;
-            } else {
-                break;
-            }
+            if (errno != EAGAIN && i == 0)
+                rebFail_OS (errno);
+            break;
         }
     }
 
     req->actual = i;
-    if (i > 0) {
-    //printf("read %d signals\n", req->actual);
-        Signal_Device(req, EVT_READ);
-        return DR_DONE;
-    } else {
+    if (i <= 0)
         return DR_PEND;
-    }
+
+    //printf("read %d signals\n", req->actual);
+    OS_SIGNAL_DEVICE(req, EVT_READ);
+    return DR_DONE;
 }
 
 

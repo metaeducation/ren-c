@@ -233,10 +233,8 @@ static REB_R Event_Actor(REBFRM *frame_, REBCTX *port, REBSYM action)
 
         if (req == NULL) { //!!!
             req = OS_MAKE_DEVREQ(RDI_EVENT);
-            if (req != NULL) {
-                req->flags |= RRF_OPEN;
-                OS_DO_DEVICE(req, RDC_CONNECT);     // stays queued
-            }
+            req->flags |= RRF_OPEN;
+            OS_DO_DEVICE(req, RDC_CONNECT); // stays queued
         }
         goto return_port; }
 

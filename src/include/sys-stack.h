@@ -538,7 +538,7 @@ inline static void Drop_Chunk_Of_Values(REBVAL *opt_head)
         (cast(REBUPT, address_of_local_var) <= Stack_Limit)
 #endif
 
-#define STACK_BOUNDS (4*1024*1000) // note: need a better way to set it !!
+#define STACK_BOUNDS (2*1024*1024) // note: need a better way to set it !!
 // Also: made somewhat smaller than linker setting to allow trapping it
 
 #define Trap_Stack_Overflow() \

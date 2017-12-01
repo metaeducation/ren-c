@@ -54,13 +54,10 @@ static REBREQ *Req_SIO;
 //
 void Startup_StdIO(void)
 {
-    //OS_CALL_DEVICE(RDI_STDIO, RDC_INIT);
     Req_SIO = OS_MAKE_DEVREQ(RDI_STDIO);
-    if (!Req_SIO)
-        fail (Error_Io_Error_Raw());
 
-    // The device is already open, so this call will just setup
-    // the request fields properly.
+    // !!! "The device is already open, so this call will just setup the
+    // request fields properly.
     OS_DO_DEVICE(Req_SIO, RDC_OPEN);
 }
 
@@ -84,6 +81,7 @@ void Shutdown_StdIO(void)
 void Print_OS_Line(void)
 {
     // !!! Don't put const literal directly into mutable Req_SIO->data
+
     static REBYTE newline[] = "\n";
 
     Req_SIO->common.data = newline;
@@ -91,9 +89,6 @@ void Print_OS_Line(void)
     Req_SIO->actual = 0;
 
     OS_DO_DEVICE(Req_SIO, RDC_WRITE);
-
-    if (Req_SIO->error)
-        panic ("IO error in Print_OS_Line"); // !!! could/should this fail()?
 }
 
 
@@ -136,8 +131,6 @@ void Prin_OS_String(const REBUNI *up, REBCNT len, REBFLGS opts)
         Req_SIO->common.data = m_cast(REBYTE *, cast(const REBYTE*, up));
 
         OS_DO_DEVICE(Req_SIO, RDC_WRITE);
-        if (Req_SIO->error)
-            fail (Error_Io_Error_Raw());
     }
     else {
         while ((len2 = len) > 0) {
@@ -158,8 +151,6 @@ void Prin_OS_String(const REBUNI *up, REBCNT len, REBFLGS opts)
             len -= len2;
 
             OS_DO_DEVICE(Req_SIO, RDC_WRITE);
-            if (Req_SIO->error)
-                fail (Error_Io_Error_Raw());
         }
     }
 }

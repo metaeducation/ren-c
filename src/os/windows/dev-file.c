@@ -48,10 +48,10 @@
 **
 ***********************************************************************/
 
-static BOOL Seek_File_64(struct devreq_file *file)
+static REBOOL Seek_File_64(struct devreq_file *file)
 {
-    // Performs seek and updates index value. TRUE on scuccess.
-    // On error, returns FALSE and sets file->error field.
+    // Performs seek and updates index value.
+
     REBREQ *req = AS_REBREQ(file);
     HANDLE h = req->requestee.handle;
     DWORD result;
@@ -70,9 +70,10 @@ static BOOL Seek_File_64(struct devreq_file *file)
         );
     }
 
-    if (result == INVALID_SET_FILE_POINTER && GetLastError() != NO_ERROR) {
-        req->error = -RFE_NO_SEEK;
-        return 0;
+    if (result == INVALID_SET_FILE_POINTER) {
+        DWORD last_error = GetLastError();
+        if (last_error != NO_ERROR)
+            return FALSE; // GetLastError() should still hold the error
     }
 
     file->index = (cast(i64, highint) << 32) + result;
@@ -149,11 +150,10 @@ static int Read_Directory(struct devreq_file *dir, struct devreq_file *file)
         h = FindFirstFile(dir_wide, &info);
         OS_FREE(dir_wide);
 
+        if (h == INVALID_HANDLE_VALUE)
+            rebFail_OS (GetLastError());
+
         got_info = TRUE;
-        if (h == INVALID_HANDLE_VALUE) {
-            dir_req->error = -RFE_OPEN_FAIL;
-            return DR_ERROR;
-        }
         dir_req->requestee.handle = h;
         dir_req->flags &= ~RRF_DONE;
         cp = info.cFileName;
@@ -165,13 +165,14 @@ static int Read_Directory(struct devreq_file *dir, struct devreq_file *file)
         || (cp[0] == '.' && (cp[1] == 0 || (cp[1] == '.' && cp[2] == '\0')))
     ){
         // Read next file_req entry, or error:
-        if (!FindNextFile(h, &info)) {
-            dir_req->error = GetLastError();
+        if (NOT(FindNextFile(h, &info))) {
+            DWORD last_error_cache = GetLastError();
             FindClose(h);
-            dir_req->requestee.handle = 0;
-            if (dir_req->error != ERROR_NO_MORE_FILES)
-                return DR_ERROR;
-            dir_req->error = 0;
+            dir_req->requestee.handle = NULL;
+
+            if (last_error_cache != ERROR_NO_MORE_FILES)
+                rebFail_OS (last_error_cache);
+
             dir_req->flags |= RRF_DONE; // no more file_reqs
             return DR_DONE;
         }
@@ -181,7 +182,7 @@ static int Read_Directory(struct devreq_file *dir, struct devreq_file *file)
 
     if (NOT(got_info)) {
         assert(FALSE); // see above for why this R3-Alpha code had a "hole"
-        return DR_ERROR;
+        rebFail ("NOT(got_info) issue in %dev-clipboard, please report");
     }
 
     file_req->modes = 0;
@@ -245,10 +246,8 @@ DEVICE_CMD Open_File(REBREQ *req)
     if (req->modes & RFM_READONLY)
         attrib |= FILE_ATTRIBUTE_READONLY;
 
-    if (!access) {
-        req->error = -RFE_NO_MODES;
-        return DR_ERROR;
-    }
+    if (access == 0)
+        rebFail ("No access modes provided to Open_File()");
 
     REBOOL full = TRUE;
     wchar_t *path_wide = rebFileToLocalAllocW(NULL, file->path, full);
@@ -265,22 +264,23 @@ DEVICE_CMD Open_File(REBREQ *req)
 
     OS_FREE(path_wide);
 
-    if (h == INVALID_HANDLE_VALUE) {
-        req->error = -RFE_OPEN_FAIL;
-        return DR_ERROR;
-    }
+    if (h == INVALID_HANDLE_VALUE)
+        rebFail_OS (GetLastError());
 
-    // Confirm that a seek-mode req is actually seekable:
     if (req->modes & RFM_SEEK) {
-        // Below should work because we are seeking to 0:
+        //
+        // Confirm that a seek-mode req is actually seekable, by seeking the
+        // file to 0 (which should always work if it is)
+        //
         if (SetFilePointer(h, 0, 0, FILE_BEGIN) == INVALID_SET_FILE_POINTER) {
+            DWORD last_error_cache = GetLastError();
             CloseHandle(h);
-            req->error = -RFE_BAD_SEEK;
-            return DR_ERROR;
+            rebFail_OS (last_error_cache);
         }
     }
 
-    // Fetch req size (if fails, then size is assumed zero):
+    // Fetch req size (if fails, then size is assumed zero)
+    //
     if (GetFileInformationByHandle(h, &info)) {
         file->size =
             (cast(i64, info.nFileSizeHigh) << 32) + info.nFileSizeLow;
@@ -315,36 +315,33 @@ DEVICE_CMD Close_File(REBREQ *file)
 DEVICE_CMD Read_File(REBREQ *req)
 {
     struct devreq_file *file = DEVREQ_FILE(req);
-    if (req->modes & RFM_DIR) {
-        return Read_Directory(file, cast(struct devreq_file*, req->common.data));
-    }
+    if (req->modes & RFM_DIR)
+        return Read_Directory(
+            file,
+            cast(struct devreq_file*, req->common.data)
+        );
 
-    if (!req->requestee.handle) {
-        req->error = -RFE_NO_HANDLE;
-        return DR_ERROR;
-    }
+    assert(req->requestee.handle != 0);
 
     if ((req->modes & (RFM_SEEK | RFM_RESEEK)) != 0) {
         req->modes &= ~RFM_RESEEK;
-        if (!Seek_File_64(file))
-            return DR_ERROR;
+        if (NOT(Seek_File_64(file)))
+            rebFail_OS (GetLastError());
     }
 
     assert(sizeof(DWORD) == sizeof(req->actual));
 
-    if (!ReadFile(
+    if (NOT(ReadFile(
         req->requestee.handle,
         req->common.data,
         req->length,
         cast(DWORD*, &req->actual),
         0
-    )) {
-        req->error = -RFE_BAD_READ;
-        return DR_ERROR;
-    } else {
-        file->index += req->actual;
+    ))){
+        rebFail_OS (GetLastError());
     }
 
+    file->index += req->actual;
     return DR_DONE;
 }
 
@@ -356,14 +353,9 @@ DEVICE_CMD Read_File(REBREQ *req)
 //
 DEVICE_CMD Write_File(REBREQ *req)
 {
-    DWORD result;
-    DWORD size_high, size_low;
     struct devreq_file *file = DEVREQ_FILE(req);
 
-    if (req->requestee.handle == NULL) {
-        req->error = -RFE_NO_HANDLE;
-        return DR_ERROR;
-    }
+    assert(req->requestee.handle != NULL);
 
     if (req->modes & RFM_APPEND) {
         req->modes &= ~RFM_APPEND;
@@ -372,34 +364,35 @@ DEVICE_CMD Write_File(REBREQ *req)
 
     if ((req->modes & (RFM_SEEK | RFM_RESEEK | RFM_TRUNCATE)) != 0) {
         req->modes &= ~RFM_RESEEK;
-        if (!Seek_File_64(file))
-            return DR_ERROR;
+        if (NOT(Seek_File_64(file)))
+            rebFail_OS (GetLastError());
         if (req->modes & RFM_TRUNCATE)
             SetEndOfFile(req->requestee.handle);
     }
 
     if (req->length != 0) {
-        if (!WriteFile(
+        if (NOT(WriteFile(
             req->requestee.handle,
             req->common.data,
             req->length,
             cast(LPDWORD, &req->actual),
             0
-        )){
-            result = GetLastError();
-            if (result == ERROR_HANDLE_DISK_FULL)
-                req->error = -RFE_DISK_FULL;
-            else
-                req->error = -RFE_BAD_WRITE;
-            return DR_ERROR;
+        ))){
+            // !!! This used to special-case ERROR_HANDLE_DISK_FULL, for some
+            // reason (?)
+            //
+            rebFail_OS (GetLastError());
         }
     }
 
-    size_low = GetFileSize(req->requestee.handle, &size_high);
+    DWORD size_high;
+    DWORD size_low = GetFileSize(req->requestee.handle, &size_high);
     if (size_low == 0xffffffff) {
-        result = GetLastError();
-        req->error = -RFE_BAD_WRITE;
-        return DR_ERROR;
+        DWORD last_error = GetLastError();
+        if (last_error != NO_ERROR)
+            rebFail_OS (last_error);
+
+        // ...else the file size really is 0xffffffff
     }
 
     file->size =
@@ -431,10 +424,8 @@ DEVICE_CMD Query_File(REBREQ *req)
 
     OS_FREE(path_wide);
 
-    if (NOT(success)) {
-        req->error = GetLastError();
-        return DR_ERROR;
-    }
+    if (NOT(success))
+        rebFail_OS (GetLastError());
 
     if (info.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
         req->modes |= RFM_DIR;
@@ -467,11 +458,10 @@ DEVICE_CMD Create_File(REBREQ *req)
 
     OS_FREE(path_wide);
 
-    if (success)
-        return DR_DONE;
+    if (NOT(success))
+        rebFail_OS (GetLastError());
 
-    req->error = GetLastError();
-    return DR_ERROR;
+    return DR_DONE;
 }
 
 
@@ -497,11 +487,10 @@ DEVICE_CMD Delete_File(REBREQ *req)
     else
         success = DeleteFile(path_wide);
 
-    if (success)
-        return DR_DONE;
+    if (NOT(success))
+        rebFail_OS (GetLastError());
 
-    req->error = GetLastError();
-    return DR_ERROR;
+    return DR_DONE;
 }
 
 
@@ -526,11 +515,10 @@ DEVICE_CMD Rename_File(REBREQ *req)
     OS_FREE(to_wide);
     OS_FREE(from_wide);
 
-    if (success)
-        return DR_DONE;
+    if (NOT(success))
+        rebFail_OS (GetLastError());
 
-    req->error = GetLastError();
-    return DR_ERROR;
+    return DR_DONE;
 }
 
 

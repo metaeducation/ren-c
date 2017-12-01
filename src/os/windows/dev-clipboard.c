@@ -47,7 +47,6 @@
 
 #include "reb-host.h"
 
-extern void Signal_Device(REBREQ *req, REBINT type);
 
 //
 //  Open_Clipboard: C
@@ -76,9 +75,19 @@ DEVICE_CMD Read_Clipboard(REBREQ *req)
 {
     req->actual = 0;
 
+    SetLastError(NO_ERROR);
     if (NOT(IsClipboardFormatAvailable(CF_UNICODETEXT))) {
-        req->error = 10;
-        return DR_ERROR; // not necessarily an "error", just no data
+        //
+        // This is not necessarily an "error", it just may be the clipboard
+        // doesn't have text on it (an image, or maybe nothing at all);
+        //
+        DWORD last_error = GetLastError();
+        if (last_error != NO_ERROR)
+            rebFail_OS (last_error);
+
+        req->common.data = cast(REBYTE*, rebBlank());
+        req->actual = 0; // !!! not needed (REBVAL* knows its size)
+        return DR_DONE;
     }
 
     if (NOT(OpenClipboard(NULL)))
@@ -119,7 +128,7 @@ DEVICE_CMD Read_Clipboard(REBREQ *req)
     //
     req->common.data = cast(REBYTE*, binary); // !!! Hack
     req->actual = 0; // !!! not needed (REBVAL* knows its size)
-    Signal_Device(req, EVT_READ);
+    OS_SIGNAL_DEVICE(req, EVT_READ);
     return DR_DONE;
 }
 
@@ -177,7 +186,7 @@ DEVICE_CMD Write_Clipboard(REBREQ *req)
     assert(h_check == h);
 
     req->actual = len; // !!! Pointless... str is released by ON_WAKE_UP
-    Signal_Device(req, EVT_WROTE);
+    OS_SIGNAL_DEVICE(req, EVT_WROTE);
     return DR_DONE;
 }
 

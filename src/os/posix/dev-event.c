@@ -98,10 +98,9 @@ DEVICE_CMD Query_Events(REBREQ *req)
         // of EINTR, but still returns the error code.  :-/
         //
         if (errno == EINTR)
-            return DR_ERROR;
+            return DR_DONE;
 
-        printf("select() returned -1 in dev-event.c (I/O error!)\n");
-        return DR_ERROR;
+        rebFail_OS (errno);
     }
 
     return DR_DONE;

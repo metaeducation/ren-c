@@ -1107,7 +1107,7 @@ const REBYTE *Scan_Pair(
         return_NULL;
 
     VAL_RESET_HEADER(out, REB_PAIR);
-    out->payload.pair = Alloc_Pairing(NULL);
+    out->payload.pair = Alloc_Pairing();
     VAL_RESET_HEADER(out->payload.pair, REB_DECIMAL);
     VAL_RESET_HEADER(PAIRING_KEY(out->payload.pair), REB_DECIMAL);
 

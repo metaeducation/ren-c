@@ -88,8 +88,10 @@ DEVICE_CMD Init_Events(REBREQ *dr)
     wc.lpszClassName = L"REBOL-Events";
     wc.hInstance     = App_Instance;
     wc.lpfnWndProc   = REBOL_Event_Proc;
-    if (!RegisterClassEx(&wc))
-        return DR_ERROR;
+
+    ATOM atom = RegisterClassEx(&wc);
+    if (atom == 0)
+        rebFail_OS (GetLastError());
 
     // Create the hidden window:
     Event_Handle = CreateWindowEx(
@@ -101,8 +103,8 @@ DEVICE_CMD Init_Events(REBREQ *dr)
         NULL, App_Instance, NULL
     );
 
-    if (!Event_Handle)
-        return DR_ERROR;
+    if (Event_Handle == NULL)
+        rebFail_OS (GetLastError());
 
     dev->flags |= RDF_INIT;
     return DR_DONE;

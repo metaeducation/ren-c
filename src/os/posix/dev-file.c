@@ -126,7 +126,7 @@ static int Is_Dir(const char *path_utf8, const char *name_utf8)
 static REBOOL Seek_File_64(struct devreq_file *file)
 {
     // Performs seek and updates index value. TRUE on success.
-    // On error, returns FALSE and sets req->error field.
+
     REBREQ *req = AS_REBREQ(file);
 
     int h = req->requestee.id;
@@ -140,10 +140,8 @@ static REBOOL Seek_File_64(struct devreq_file *file)
         result = lseek(h, file->index, SEEK_SET);
     }
 
-    if (result < 0) {
-        req->error = -RFE_NO_SEEK;
-        return FALSE;
-    }
+    if (result < 0)
+        return FALSE; // errno should still be good for caller to use
 
     file->index = result;
 
@@ -163,10 +161,8 @@ static int Get_File_Info(struct devreq_file *file)
 
     REBREQ *req = AS_REBREQ(file);
 
-    if (stat_result != 0) {
-        req->error = errno;
-        return DR_ERROR;
-    }
+    if (stat_result != 0)
+        rebFail_OS (errno);
 
     if (S_ISDIR(info.st_mode)) {
         req->modes |= RFM_DIR;
@@ -249,9 +245,9 @@ static int Read_Directory(struct devreq_file *dir, struct devreq_file *file)
 
         if (h == NULL) {
             OS_FREE(dir_utf8);
-            dir_req->error = errno;
-            return DR_ERROR;
+            rebFail_OS (errno);
         }
+
         dir_req->requestee.handle = h;
         dir_req->flags &= ~RRF_DONE;
     }
@@ -262,12 +258,16 @@ static int Read_Directory(struct devreq_file *dir, struct devreq_file *file)
     struct dirent *d;
     do {
         // Read next file entry or error:
+        errno = 0; // set errno to 0 to test if it changes
         if ((d = readdir(h)) == NULL) {
+            int errno_cache = errno; // in case closedir() changes it
             OS_FREE(dir_utf8);
-            //dir->error = errno;
             closedir(h);
             dir_req->requestee.handle = 0;
-            //if (dir->error) return DR_ERROR;
+
+            if (errno_cache != 0)
+                rebFail_OS (errno_cache);
+
             dir_req->flags |= RRF_DONE; // no more files
             return DR_DONE;
         }
@@ -329,12 +329,9 @@ DEVICE_CMD Open_File(REBREQ *req)
 {
     struct devreq_file *file = DEVREQ_FILE(req);
 
-    // Posix file names should be compatible with REBOL file paths:
-    //
-    if (file->path == NULL) {
-        req->error = -RFE_BAD_PATH;
-        return DR_ERROR;
-    }
+    // "Posix file names should be compatible with REBOL file paths"
+
+    assert(file->path != NULL);
 
     int modes = O_BINARY | ((req->modes & RFM_READ) ? O_RDONLY : O_RDWR);
 
@@ -367,17 +364,15 @@ DEVICE_CMD Open_File(REBREQ *req)
 
     OS_FREE(path_utf8);
 
-    if (h < 0) {
-        req->error = -RFE_OPEN_FAIL;
-        return DR_ERROR;
-    }
+    if (h < 0)
+        rebFail_OS (errno);
 
     // Confirm that a seek-mode file is actually seekable:
     if (req->modes & RFM_SEEK) {
         if (lseek(h, 0, SEEK_CUR) < 0) {
+            int errno_cache = errno;
             close(h);
-            req->error = -RFE_BAD_SEEK;
-            return DR_ERROR;
+            rebFail_OS (errno_cache);
         }
     }
 
@@ -413,36 +408,34 @@ DEVICE_CMD Close_File(REBREQ *req)
 //
 DEVICE_CMD Read_File(REBREQ *req)
 {
-    ssize_t bytes = 0;
-
     struct devreq_file *file = DEVREQ_FILE(req);
 
     if (req->modes & RFM_DIR) {
-        return Read_Directory(file, cast(struct devreq_file*, req->common.data));
+        return Read_Directory(
+            file,
+            cast(struct devreq_file*, req->common.data)
+        );
     }
 
-    if (!req->requestee.id) {
-        req->error = -RFE_NO_HANDLE;
-        return DR_ERROR;
-    }
+    assert(req->requestee.id != 0);
 
     if ((req->modes & (RFM_SEEK | RFM_RESEEK)) != 0) {
         req->modes &= ~RFM_RESEEK;
-        if (!Seek_File_64(file))
-            return DR_ERROR;
+        if (NOT(Seek_File_64(file)))
+            rebFail_OS (errno);
     }
 
     // printf("read %d len %d\n", req->requestee.id, req->length);
 
-    bytes = read(req->requestee.id, req->common.data, req->length);
-    if (bytes < 0) {
-        req->error = -RFE_BAD_READ;
-        return DR_ERROR;
-    } else {
-        req->actual = bytes;
-        file->index += req->actual;
-    }
+    ssize_t bytes = read(
+        req->requestee.id, req->common.data, req->length
+    );
 
+    if (bytes < 0)
+        rebFail_OS (errno);
+
+    req->actual = bytes;
+    file->index += req->actual;
     return DR_DONE;
 }
 
@@ -454,14 +447,9 @@ DEVICE_CMD Read_File(REBREQ *req)
 //
 DEVICE_CMD Write_File(REBREQ *req)
 {
-    ssize_t bytes = 0;
-
     struct devreq_file *file = DEVREQ_FILE(req);
 
-    if (!req->requestee.id) {
-        req->error = -RFE_NO_HANDLE;
-        return DR_ERROR;
-    }
+    assert(req->requestee.id != 0);
 
     if (req->modes & RFM_APPEND) {
         req->modes &= ~RFM_APPEND;
@@ -470,22 +458,22 @@ DEVICE_CMD Write_File(REBREQ *req)
 
     if ((req->modes & (RFM_SEEK | RFM_RESEEK | RFM_TRUNCATE)) != 0) {
         req->modes &= ~RFM_RESEEK;
-        if (!Seek_File_64(file))
-            return DR_ERROR;
+        if (NOT(Seek_File_64(file)))
+            rebFail_OS (errno);
+
         if (req->modes & RFM_TRUNCATE)
-            if (ftruncate(req->requestee.id, file->index))
-                return DR_ERROR;
+            if (ftruncate(req->requestee.id, file->index) != 0)
+                rebFail_OS (errno);
     }
 
-    if (req->length == 0) return DR_DONE;
+    if (req->length == 0)
+        return DR_DONE;
 
-    req->actual = bytes = write(req->requestee.id, req->common.data, req->length);
-    if (bytes < 0) {
-        if (errno == ENOSPC) req->error = -RFE_DISK_FULL;
-        else req->error = -RFE_BAD_WRITE;
-        return DR_ERROR;
-    }
+    ssize_t bytes = write(req->requestee.id, req->common.data, req->length);
+    if (bytes < 0)
+        rebFail_OS (errno);
 
+    req->actual = bytes;
     return DR_DONE;
 }
 
@@ -494,7 +482,6 @@ DEVICE_CMD Write_File(REBREQ *req)
 //  Query_File: C
 //
 // Obtain information about a file. Return TRUE on success.
-// On error, return FALSE and set req->error code.
 //
 // Note: time is in local format and must be converted
 //
@@ -520,10 +507,10 @@ DEVICE_CMD Create_File(REBREQ *req)
 
     OS_FREE(path_utf8);
 
-    if (mkdir_result == 0)
-        return DR_DONE;
-    req->error = errno;
-    return DR_ERROR;
+    if (mkdir_result != 0)
+        rebFail_OS (errno);
+
+    return DR_DONE;
 }
 
 
@@ -532,7 +519,6 @@ DEVICE_CMD Create_File(REBREQ *req)
 //
 // Delete a file or directory. Return TRUE if it was done.
 // The file->path provides the directory path and name.
-// For errors, return FALSE and set req->error to error code.
 //
 // Note: Dirs must be empty to succeed
 //
@@ -551,11 +537,10 @@ DEVICE_CMD Delete_File(REBREQ *req)
 
     OS_FREE(path_utf8);
 
-    if (removal_result == 0)
-        return DR_DONE;
+    if (removal_result != 0)
+        rebFail_OS (errno);
 
-    req->error = errno;
-    return DR_ERROR;
+    return DR_DONE;
 }
 
 
@@ -582,10 +567,10 @@ DEVICE_CMD Rename_File(REBREQ *req)
     OS_FREE(to_utf8);
     OS_FREE(from_utf8);
 
-    if (rename_result == 0)
-        return DR_DONE;
-    req->error = errno;
-    return DR_ERROR;
+    if (rename_result != 0)
+        rebFail_OS (errno);
+
+    return DR_DONE;
 }
 
 

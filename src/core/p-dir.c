@@ -54,11 +54,11 @@ static REBARR *Read_Dir_May_Fail(struct devreq_file *dir)
 
     REBDSP dsp_orig = DSP;
 
-    REBINT result;
-    while (
-        (result = OS_DO_DEVICE(req, RDC_READ)) == 0
-        && NOT(req->flags & RRF_DONE)
-    ){
+    while (TRUE) {
+        OS_DO_DEVICE(req, RDC_READ);
+        if (req->flags & RRF_DONE)
+            break;
+
         DS_PUSH_TRASH;
         Move_Value(DS_TOP, file.path);
 
@@ -73,9 +73,9 @@ static REBARR *Read_Dir_May_Fail(struct devreq_file *dir)
         rebRelease(file.path);
     }
 
-    if (
-        result < 0
-        && req->error != -RFE_OPEN_FAIL
+    // !!! This is some kind of error tolerance, review what it is for.
+    //
+    if (FALSE
         && (
             NOT_FOUND != Find_Str_Char(
                 '*',
@@ -98,13 +98,8 @@ static REBARR *Read_Dir_May_Fail(struct devreq_file *dir)
             )
         )
     ){
-        result = 0;  // no matches found, but not an error
+        // no matches found, but not an error
     }
-
-    if (result < 0)
-        fail (Error_On_Port(
-            RE_CANNOT_OPEN, cast(REBCTX*, req->port), dir->devreq.error
-        ));
 
     return Pop_Stack_Values(dsp_orig);
 }
@@ -184,8 +179,12 @@ static void Init_Dir_Path(
 
     TERM_UNI_LEN(VAL_SERIES(dir->path), len + VAL_INDEX(dir->path));
 
-    // !!! For the moment, dir->path's lifetime is managed explicitly, and
-    // must be freed in Cleanup_Dir_Path()
+    // Because an error can occur during the directory dispatch, the code may
+    // not be able to get to the rebRelease() of the allocated FILE!.  Rather
+    // than trap for the errors to do the cleanup, make it managed.  (It is
+    // still legal to release a managed value if you know it's not needed.)
+    //
+    rebManage(dir->path);
 }
 
 
@@ -198,7 +197,6 @@ static void Init_Dir_Path(
 //
 static void Cleanup_Dir_Path(struct devreq_file *dir)
 {
-    assert(dir->path != NULL);
     rebRelease(dir->path);
 }
 
@@ -331,12 +329,26 @@ static REB_R Dir_Actor(REBFRM *frame_, REBCTX *port, REBSYM action)
 
         UNUSED(ARG(from)); // implicit
         dir.devreq.common.data = cast(REBYTE*, ARG(to)); // !!! hack!
+
+        // !!! If this encounters an error, it will fail and thus not run
+        // the cleanup code.  Theory is that API handles can have lifetimes
+        // attached to frames, and so when this port action is done it would
+        // be GC'd, but that mechanic isn't there yet.  If there were a more
+        // serious amount of state there'd have to be a PUSH_UNHALTABLE_TRAP
+        // here to catch any errors and clean up.
+        //
+        // Another issue is that the error message may not be detailed enough
+        // if it's just giving a device IO error.  Looking at the stack is
+        // one way to tell what rename went wrong, but features to allow
+        // examining the stack at the moment of error haven't been implemented
+        // at time of writing.  The previous error delivered here would be:
+        //
+        //     fail (Error_No_Rename_Raw(path));
+
         OS_DO_DEVICE(&dir.devreq, RDC_RENAME);
 
-        Cleanup_Dir_Path(&dir);
+        Cleanup_Dir_Path(&dir); // !!! Not run if error, see notes above
 
-        if (dir.devreq.error)
-            fail (Error_No_Rename_Raw(path));
         goto return_port; }
 
     case SYM_DELETE: {

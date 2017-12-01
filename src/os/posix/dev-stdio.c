@@ -159,10 +159,8 @@ DEVICE_CMD Write_IO(REBREQ *req)
 
         total = write(Std_Out, req->common.data, req->length);
 
-        if (total < 0) {
-            req->error = errno;
-            return DR_ERROR;
-        }
+        if (total < 0)
+            rebFail_OS(errno);
 
         //if (req->flags & RRF_FLUSH) {
             //FLUSH();
@@ -206,10 +204,8 @@ DEVICE_CMD Read_IO(REBREQ *req)
 #endif
             total = read(Std_Inp, req->common.data, len); /* will be restarted in case of signal */
 
-        if (total < 0) {
-            req->error = errno;
-            return DR_ERROR;
-        }
+        if (total < 0)
+            rebFail_OS (errno);
 
         req->actual = total;
     }

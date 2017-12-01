@@ -987,6 +987,28 @@ REBSER *Make_Series_Core(REBCNT capacity, REBYTE wide, REBUPT flags)
 
 
 //
+//  Init_Pairing_Key_Owner: C
+//
+// !!! Currently this reifies the frame... but it would not have to do so if
+// FRAME! could hold a non-reified REBFRM* and if Move_Value() and
+// Derelativize() were sensitive to reifying those frames on demand.  This
+// general concept could be used for transient contexts as well.
+//
+void Init_Pairing_Key_Owner(REBVAL *pairing, REBFRM *owner)
+{
+    Init_Any_Context(
+        PAIRING_KEY(pairing),
+        REB_FRAME,
+        Context_For_Frame_May_Reify_Managed(owner)
+    );
+    SET_VAL_FLAGS(
+        PAIRING_KEY(pairing),
+        ANY_CONTEXT_FLAG_OWNS_PAIRED | NODE_FLAG_ROOT
+    );
+}
+
+
+//
 //  Alloc_Pairing: C
 //
 // Allocate a paired set of values.  The "key" is in the cell *before* the
@@ -1003,38 +1025,22 @@ REBSER *Make_Series_Core(REBCNT capacity, REBYTE wide, REBUPT flags)
 // This provides an alternate mechanism for plain C code to do cleanup besides
 // handlers based on PUSH_TRAP().
 //
-REBVAL *Alloc_Pairing(REBFRM *opt_owning_frame) {
+REBVAL *Alloc_Pairing(void) {
     REBSER *s = cast(REBSER*, Make_Node(SER_POOL)); // 2x REBVAL size
 
     REBVAL *key = cast(REBVAL*, s);
     REBVAL *paired = key + 1;
 
     Prep_Non_Stack_Cell(key);
-    if (opt_owning_frame != NULL) {
-        //
-        // !!! Currently this reifies the frame... but it would not have to do
-        // so if FRAME! could hold a non-reified REBFRM* and if Move_Value()
-        // and Derelativize() were sensitive to reifying those frames on
-        // demand.  This general concept could be used for transient contexts
-        // as well--consider it
-        //
-        Init_Any_Context(
-            key,
-            REB_FRAME,
-            Context_For_Frame_May_Reify_Managed(opt_owning_frame)
-        );
-        SET_VAL_FLAGS(
-            key, ANY_CONTEXT_FLAG_OWNS_PAIRED | NODE_FLAG_ROOT
-        );
-    }
-    else {
-        // Client will need to put *something* in the key slot (accessed with
-        // PAIRING_KEY).  Whatever they end up writing should be acceptable
-        // to avoid a GC, since the header is not purely 0...and it works out
-        // that all "ordinary" values will just act as unmanaged metadata.
-        //
-        TRASH_CELL_IF_DEBUG(key);
-    }
+
+    // Client will need to put *something* in the key slot (accessed with
+    // PAIRING_KEY).  Whatever they end up writing should be acceptable
+    // to avoid a GC, since the header is not purely 0...and it works out
+    // that all "ordinary" values will just act as unmanaged metadata.
+    //
+    // Init_Pairing_Key_Owner is one option.
+    //
+    TRASH_CELL_IF_DEBUG(key);
 
     Prep_Non_Stack_Cell(paired);
     TRASH_CELL_IF_DEBUG(paired);

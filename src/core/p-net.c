@@ -160,8 +160,7 @@ static REB_R Transport_Actor(
             REBVAL *arg = Obj_Value(spec, STD_PORT_SPEC_NET_HOST);
             REBVAL *val = Obj_Value(spec, STD_PORT_SPEC_NET_PORT_ID);
 
-            if (OS_DO_DEVICE(sock, RDC_OPEN))
-                fail (Error_On_Port(RE_CANNOT_OPEN, port, -12));
+            OS_DO_DEVICE(sock, RDC_OPEN);
             sock->flags |= RRF_OPEN;
 
             // Lookup host name (an extra TCP device step):
@@ -177,12 +176,8 @@ static REB_R Transport_Actor(
 
                 // Note: sets remote_ip field
                 //
-                REBINT result = OS_DO_DEVICE(sock, RDC_LOOKUP);
+                OS_DO_DEVICE(sock, RDC_LOOKUP);
                 DROP_GUARD_SERIES(arg_utf8);
-
-                if (result < 0)
-                    fail (Error_On_Port(RE_NO_CONNECT, port, sock->error));
-
                 goto return_port;
             }
             else if (IS_TUPLE(arg)) { // Host IP specified:
@@ -314,10 +309,7 @@ static REB_R Transport_Actor(
 
         // Note: recv can happen immediately
         //
-        REBINT result = OS_DO_DEVICE(sock, RDC_READ);
-        if (result < 0)
-            fail (Error_On_Port(RE_READ_ERROR, port, sock->error));
-
+        OS_DO_DEVICE(sock, RDC_READ);
         goto return_port; }
 
     case SYM_WRITE: {
@@ -367,11 +359,9 @@ static REB_R Transport_Actor(
 
         // Note: send can happen immediately
         //
-        REBINT result = OS_DO_DEVICE(sock, RDC_WRITE);
-        if (result < 0)
-            fail (Error_On_Port(RE_WRITE_ERROR, port, sock->error));
+        OS_DO_DEVICE(sock, RDC_WRITE);
 
-        if (result == DR_DONE)
+        if (TRUE && DR_DONE) // !!! Used to check "result"
             Init_Blank(CTX_VAR(port, STD_PORT_DATA));
 
         goto return_port; }
@@ -410,20 +400,7 @@ static REB_R Transport_Actor(
         goto return_port; }
 
     case SYM_OPEN: {
-        REBINT result = OS_DO_DEVICE(sock, RDC_CONNECT);
-        if (result < 0)
-            fail (Error_On_Port(RE_NO_CONNECT, port, sock->error));
-        goto return_port; }
-
-    case SYM_DELETE: {
-        //
-        // !!! Comment said "Temporary to TEST error handler!"
-        //
-        REBVAL *event = Append_Event(); // sets signal
-        VAL_RESET_HEADER(event, REB_EVENT); // has more space, if needed
-        VAL_EVENT_TYPE(event) = EVT_ERROR;
-        VAL_EVENT_DATA(event) = 101;
-        VAL_EVENT_REQ(event) = sock;
+        OS_DO_DEVICE(sock, RDC_CONNECT);
         goto return_port; }
 
     default:

@@ -96,16 +96,10 @@ static REB_R Clipboard_Actor(REBFRM *frame_, REBCTX *port, REBSYM action)
         UNUSED(PAR(lines)); // handled in dispatcher
 
         // This device is opened on the READ:
-        if (NOT(req->flags & RRF_OPEN)) {
-            if (OS_DO_DEVICE(req, RDC_OPEN))
-                fail (Error_On_Port(RE_CANNOT_OPEN, port, req->error));
-        }
+        if (NOT(req->flags & RRF_OPEN))
+            OS_DO_DEVICE(req, RDC_OPEN);
 
-        REBINT result = OS_DO_DEVICE(req, RDC_READ);
-        if (result < 0)
-            fail (Error_On_Port(RE_READ_ERROR, port, req->error));
-        if (result > 0)
-            return R_BLANK; // pending
+        OS_DO_DEVICE(req, RDC_READ);
 
         // Copy and set the string result:
         arg = CTX_VAR(port, STD_PORT_DATA);
@@ -113,10 +107,19 @@ static REB_R Clipboard_Actor(REBFRM *frame_, REBCTX *port, REBSYM action)
         REBVAL *data = cast(REBVAL*, req->common.data); // !!! Hack
         assert(req->actual == 0); // !!! Unused
 
-        assert(IS_BINARY(data));
-        Move_Value(D_OUT, data);
-        rebRelease(data);
+        if (IS_BLANK(data)) {
+            //
+            // What means will READ have for differentiating "no data" from
+            // "empty"?  BLANK is one way...
+            //
+            Move_Value(D_OUT, data);
+        }
+        else {
+            assert(IS_BINARY(data));
+            Move_Value(D_OUT, data);
+        }
 
+        rebRelease(data);
         return R_OUT; }
 
     case SYM_WRITE: {
@@ -142,10 +145,8 @@ static REB_R Clipboard_Actor(REBFRM *frame_, REBCTX *port, REBSYM action)
             fail (Error_Invalid_Port_Arg_Raw(arg));
 
         // This device is opened on the WRITE:
-        if (NOT(req->flags & RRF_OPEN)) {
-            if (OS_DO_DEVICE(req, RDC_OPEN))
-                fail (Error_On_Port(RE_CANNOT_OPEN, port, req->error));
-        }
+        if (NOT(req->flags & RRF_OPEN))
+            OS_DO_DEVICE(req, RDC_OPEN);
 
         // Handle /part refinement:
         REBINT len = VAL_LEN_AT(arg);
@@ -159,11 +160,9 @@ static REB_R Clipboard_Actor(REBFRM *frame_, REBCTX *port, REBSYM action)
         Move_Value(CTX_VAR(port, STD_PORT_DATA), arg); // keep it GC safe
         req->actual = 0;
 
-        REBINT result = OS_DO_DEVICE(req, RDC_WRITE);
+        OS_DO_DEVICE(req, RDC_WRITE);
         Init_Blank(CTX_VAR(port, STD_PORT_DATA)); // GC can collect it
 
-        if (result < 0)
-            fail (Error_On_Port(RE_WRITE_ERROR, port, req->error));
         goto return_port; }
 
     case SYM_OPEN: {
@@ -183,8 +182,7 @@ static REB_R Clipboard_Actor(REBFRM *frame_, REBCTX *port, REBSYM action)
             fail (Error_Bad_Refines_Raw());
         }
 
-        if (OS_DO_DEVICE(req, RDC_OPEN))
-            fail (Error_On_Port(RE_CANNOT_OPEN, port, req->error));
+        OS_DO_DEVICE(req, RDC_OPEN);
         goto return_port; }
 
     case SYM_CLOSE:

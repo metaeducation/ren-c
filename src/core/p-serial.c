@@ -40,11 +40,6 @@ static REB_R Serial_Actor(REBFRM *frame_, REBCTX *port, REBSYM action)
 {
     FAIL_IF_BAD_PORT(port);
 
-    REBVAL *arg;    // action argument value
-    REBINT result;  // IO result
-    REBCNT len;     // generic length
-    REBSER *ser;    // simplifier
-
     REBVAL *spec = CTX_VAR(port, STD_PORT_SPEC);
     REBVAL *path = Obj_Value(spec, STD_PORT_SPEC_HEAD_REF);
     if (path == NULL)
@@ -73,79 +68,84 @@ static REB_R Serial_Actor(REBFRM *frame_, REBCTX *port, REBSYM action)
 
             fail (Error_On_Port(RE_NOT_OPEN, port, -12)); }
 
-        case SYM_OPEN:
-            arg = Obj_Value(spec, STD_PORT_SPEC_SERIAL_PATH);
-            if (NOT(IS_FILE(arg) || IS_STRING(arg) || IS_BINARY(arg)))
-                fail (Error_Invalid_Port_Arg_Raw(arg));
+        case SYM_OPEN: {
+            REBVAL *path = Obj_Value(spec, STD_PORT_SPEC_SERIAL_PATH);
+            if (NOT(IS_FILE(path) || IS_STRING(path) || IS_BINARY(path)))
+                fail (Error_Invalid_Port_Arg_Raw(path));
 
-            serial->path = arg;
+            serial->path = path;
 
-            arg = Obj_Value(spec, STD_PORT_SPEC_SERIAL_SPEED);
-            if (NOT(IS_INTEGER(arg)))
-                fail (Error_Invalid_Port_Arg_Raw(arg));
+            REBVAL *speed = Obj_Value(spec, STD_PORT_SPEC_SERIAL_SPEED);
+            if (NOT(IS_INTEGER(speed)))
+                fail (Error_Invalid_Port_Arg_Raw(speed));
 
-            serial->baud = VAL_INT32(arg);
-            //Secure_Port(SYM_SERIAL, ???, path, ser);
-            arg = Obj_Value(spec, STD_PORT_SPEC_SERIAL_DATA_SIZE);
-            if (!IS_INTEGER(arg)
-                || VAL_INT64(arg) < 5
-                || VAL_INT64(arg) > 8
-            ) {
-                fail (Error_Invalid_Port_Arg_Raw(arg));
+            serial->baud = VAL_INT32(speed);
+
+            REBVAL *size = Obj_Value(spec, STD_PORT_SPEC_SERIAL_DATA_SIZE);
+            if (!IS_INTEGER(size)
+                || VAL_INT64(size) < 5
+                || VAL_INT64(size) > 8
+            ){
+                fail (Error_Invalid_Port_Arg_Raw(size));
             }
-            serial->data_bits = VAL_INT32(arg);
+            serial->data_bits = VAL_INT32(size);
 
-            arg = Obj_Value(spec, STD_PORT_SPEC_SERIAL_STOP_BITS);
-            if (!IS_INTEGER(arg)
-                || VAL_INT64(arg) < 1
-                || VAL_INT64(arg) > 2
-            ) {
-                fail (Error_Invalid_Port_Arg_Raw(arg));
+            REBVAL *stop = Obj_Value(spec, STD_PORT_SPEC_SERIAL_STOP_BITS);
+            if (!IS_INTEGER(stop)
+                || VAL_INT64(stop) < 1
+                || VAL_INT64(stop) > 2
+            ){
+                fail (Error_Invalid_Port_Arg_Raw(stop));
             }
-            serial->stop_bits = VAL_INT32(arg);
+            serial->stop_bits = VAL_INT32(stop);
 
-            arg = Obj_Value(spec, STD_PORT_SPEC_SERIAL_PARITY);
-            if (IS_BLANK(arg)) {
+            REBVAL *parity = Obj_Value(spec, STD_PORT_SPEC_SERIAL_PARITY);
+            if (IS_BLANK(parity)) {
                 serial->parity = SERIAL_PARITY_NONE;
-            } else {
-                if (!IS_WORD(arg))
-                    fail (Error_Invalid_Port_Arg_Raw(arg));
+            }
+            else {
+                if (!IS_WORD(parity))
+                    fail (Error_Invalid_Port_Arg_Raw(parity));
 
-                switch (VAL_WORD_SYM(arg)) {
-                    case SYM_ODD:
-                        serial->parity = SERIAL_PARITY_ODD;
-                        break;
-                    case SYM_EVEN:
-                        serial->parity = SERIAL_PARITY_EVEN;
-                        break;
-                    default:
-                        fail (Error_Invalid_Port_Arg_Raw(arg));
+                switch (VAL_WORD_SYM(parity)) {
+                case SYM_ODD:
+                    serial->parity = SERIAL_PARITY_ODD;
+                    break;
+
+                case SYM_EVEN:
+                    serial->parity = SERIAL_PARITY_EVEN;
+                    break;
+
+                default:
+                    fail (Error_Invalid_Port_Arg_Raw(parity));
                 }
             }
 
-            arg = Obj_Value(spec, STD_PORT_SPEC_SERIAL_FLOW_CONTROL);
-            if (IS_BLANK(arg)) {
+            REBVAL *flow = Obj_Value(spec, STD_PORT_SPEC_SERIAL_FLOW_CONTROL);
+            if (IS_BLANK(flow)) {
                 serial->flow_control = SERIAL_FLOW_CONTROL_NONE;
-            } else {
-                if (!IS_WORD(arg))
-                    fail (Error_Invalid_Port_Arg_Raw(arg));
+            }
+            else {
+                if (!IS_WORD(flow))
+                    fail (Error_Invalid_Port_Arg_Raw(flow));
 
-                switch (VAL_WORD_SYM(arg)) {
-                    case SYM_HARDWARE:
-                        serial->flow_control = SERIAL_FLOW_CONTROL_HARDWARE;
-                        break;
-                    case SYM_SOFTWARE:
-                        serial->flow_control = SERIAL_FLOW_CONTROL_SOFTWARE;
-                        break;
-                    default:
-                        fail (Error_Invalid_Port_Arg_Raw(arg));
+                switch (VAL_WORD_SYM(flow)) {
+                case SYM_HARDWARE:
+                    serial->flow_control = SERIAL_FLOW_CONTROL_HARDWARE;
+                    break;
+
+                case SYM_SOFTWARE:
+                    serial->flow_control = SERIAL_FLOW_CONTROL_SOFTWARE;
+                    break;
+
+                default:
+                    fail (Error_Invalid_Port_Arg_Raw(flow));
                 }
             }
 
-            if (OS_DO_DEVICE(req, RDC_OPEN))
-                fail (Error_On_Port(RE_CANNOT_OPEN, port, -12));
+            OS_DO_DEVICE(req, RDC_OPEN);
             req->flags |= RRF_OPEN;
-            goto return_port;
+            goto return_port; }
 
         case SYM_CLOSE:
             goto return_port;
@@ -191,27 +191,26 @@ static REB_R Serial_Actor(REBFRM *frame_, REBCTX *port, REBSYM action)
         UNUSED(PAR(lines)); // handled in dispatcher
 
         // Setup the read buffer (allocate a buffer if needed):
-        arg = CTX_VAR(port, STD_PORT_DATA);
-        if (!IS_STRING(arg) && !IS_BINARY(arg)) {
-            Init_Binary(arg, Make_Binary(32000));
-        }
-        ser = VAL_SERIES(arg);
+        REBVAL *data = CTX_VAR(port, STD_PORT_DATA);
+        if (!IS_BINARY(data))
+            Init_Binary(data, Make_Binary(32000));
+
+        REBSER *ser = VAL_SERIES(data);
         req->length = SER_AVAIL(ser); // space available
-        if (req->length < 32000/2) Extend_Series(ser, 32000);
+        if (req->length < 32000 / 2)
+            Extend_Series(ser, 32000);
         req->length = SER_AVAIL(ser);
 
-        // This used STR_TAIL (obsolete, equivalent to BIN_TAIL) but was it
-        // sure the series was byte sized?  Added in a check.
-        assert(BYTE_SIZE(ser));
         req->common.data = BIN_TAIL(ser); // write at tail
 
-        //if (SER_LEN(ser) == 0)
-        req->actual = 0;  // Actual for THIS read, not for total.
+        req->actual = 0; // Actual for THIS read, not for total.
+
 #ifdef DEBUG_SERIAL
         printf("(max read length %d)", req->length);
 #endif
-        result = OS_DO_DEVICE(req, RDC_READ); // recv can happen immediately
-        if (result < 0) fail (Error_On_Port(RE_READ_ERROR, port, req->error));
+
+        OS_DO_DEVICE(req, RDC_READ); // recv can happen immediately
+
 #ifdef DEBUG_SERIAL
         for (len = 0; len < req->actual; len++) {
             if (len % 16 == 0) printf("\n");
@@ -239,42 +238,42 @@ static REB_R Serial_Actor(REBFRM *frame_, REBCTX *port, REBSYM action)
         if (REF(lines))
             fail (Error_Bad_Refines_Raw());
 
-        // Determine length. Clip /PART to size of string if needed.
+        // Determine length. Clip /PART to size of binary if needed.
+
         REBVAL *data = ARG(data);
-        len = VAL_LEN_AT(data);
+        REBCNT len = VAL_LEN_AT(data);
         if (REF(part)) {
             REBCNT n = Int32s(ARG(limit), 0);
-            if (n <= len) len = n;
+            if (n <= len)
+                len = n;
         }
 
-        // Setup the write:
         Move_Value(CTX_VAR(port, STD_PORT_DATA), data); // keep it GC safe
         req->length = len;
         req->common.data = VAL_BIN_AT(data);
         req->actual = 0;
 
         //Print("(write length %d)", len);
-        result = OS_DO_DEVICE(req, RDC_WRITE); // send can happen immediately
-        if (result < 0)
-            fail (Error_On_Port(RE_WRITE_ERROR, port, req->error));
+        OS_DO_DEVICE(req, RDC_WRITE); // send can happen immediately
         goto return_port; }
 
-    case SYM_ON_WAKE_UP:
+    case SYM_ON_WAKE_UP: {
         // Update the port object after a READ or WRITE operation.
         // This is normally called by the WAKE-UP function.
-        arg = CTX_VAR(port, STD_PORT_DATA);
+
+        REBVAL *data = CTX_VAR(port, STD_PORT_DATA);
         if (req->command == RDC_READ) {
-            if (ANY_BINSTR(arg)) {
+            if (IS_BINARY(data)) {
                 SET_SERIES_LEN(
-                    VAL_SERIES(arg),
-                    VAL_LEN_HEAD(arg) + req->actual
+                    VAL_SERIES(data),
+                    VAL_LEN_HEAD(data) + req->actual
                 );
             }
         }
         else if (req->command == RDC_WRITE) {
-            Init_Blank(arg);  // Write is done.
+            Init_Blank(data);  // Write is done.
         }
-        return R_BLANK;
+        return R_BLANK; }
 
     case SYM_CLOSE:
         if (req->flags & RRF_OPEN) {

@@ -219,10 +219,8 @@ DEVICE_CMD Write_IO(REBREQ *req)
             }
         }
 
-        if (!ok) {
-            req->error = GetLastError();
-            return DR_ERROR;
-        }
+        if (NOT(ok))
+            rebFail_OS (GetLastError());
 
         req->actual = req->length; // want byte count written, assume success
 
@@ -263,10 +261,8 @@ DEVICE_CMD Read_IO(REBREQ *req)
 
         DWORD total;
         REBOOL ok = ReadFile(Std_Inp, req->common.data, len, &total, 0);
-        if (NOT(ok)) {
-            req->error = GetLastError();
-            return DR_ERROR;
-        }
+        if (NOT(ok))
+            rebFail_OS (GetLastError());
 
         req->actual = total;
         return DR_DONE;
@@ -322,10 +318,8 @@ DEVICE_CMD Read_IO(REBREQ *req)
 
     DWORD total;
     REBOOL ok = ReadConsoleW(Std_Inp, Std_Buf, BUF_SIZE - 1, &total, &ctl);
-    if (NOT(ok)) {
-        req->error = GetLastError();
-        return DR_ERROR;
-    }
+    if (NOT(ok))
+        rebFail_OS (GetLastError());
 
     // Ctrl-C and Ctrl-D will terminate input without the newline that is
     // expected by code calling INPUT.  If these forms of cancellation are
@@ -396,10 +390,8 @@ DEVICE_CMD Read_IO(REBREQ *req)
     // result for the encoded length is how errors are signaled, as it could
     // not happen any other way.
     //
-    if (encoded_len == 0) {
-        req->error = GetLastError();
-        return DR_ERROR;
-    }
+    if (encoded_len == 0)
+        rebFail_OS (GetLastError());
 
     req->actual = encoded_len;
     return DR_DONE;

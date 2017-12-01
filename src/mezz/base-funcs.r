@@ -1154,7 +1154,8 @@ cause-error: func [
 ;    location [frame! any-word!]
 ;        "Frame or parameter at which to indicate the error originated"
 ;
-hijack 'fail copy adapt 'fail [
+hijack 'fail copy adapt 'fail [use [error] [
+    ;
     ; By default, make the originating frame the FAIL's frame
     ;
     unless where [location: context of 'reason]
@@ -1192,4 +1193,4 @@ hijack 'fail copy adapt 'fail [
     do error
 
     ; Should not fall through to the default FAIL which just panics
-]
+]]

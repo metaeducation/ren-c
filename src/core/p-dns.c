@@ -39,7 +39,6 @@ static REB_R DNS_Actor(REBFRM *frame_, REBCTX *port, REBSYM action)
 {
     FAIL_IF_BAD_PORT(port);
 
-    REBINT result;
     REBVAL *arg = D_ARGC > 1 ? D_ARG(2) : NULL;
 
     REBOOL sync = FALSE; // act synchronously
@@ -88,8 +87,7 @@ static REB_R DNS_Actor(REBFRM *frame_, REBCTX *port, REBSYM action)
         UNUSED(PAR(lines)); // handled in dispatcher
 
         if (NOT(sock->flags & RRF_OPEN)) {
-            if (OS_DO_DEVICE(sock, RDC_OPEN))
-                fail (Error_On_Port(RE_CANNOT_OPEN, port, sock->error));
+            OS_DO_DEVICE(sock, RDC_OPEN);
             sync = TRUE;
         }
 
@@ -119,24 +117,17 @@ static REB_R DNS_Actor(REBFRM *frame_, REBCTX *port, REBSYM action)
         else
             fail (Error_On_Port(RE_INVALID_SPEC, port, -10));
 
-        result = OS_DO_DEVICE(sock, RDC_READ);
-        if (result < 0)
-            fail (Error_On_Port(RE_READ_ERROR, port, sock->error));
+        OS_DO_DEVICE(sock, RDC_READ);
 
-        if (sync && result == DR_PEND) {
+        if (FALSE && sync && DR_PEND) {
             assert(FALSE); // asynchronous R3-Alpha DNS code removed
             len = 0;
-            for (; LOGICAL(sock->flags & RRF_PENDING) && len < 10; ++len) {
+            for (; LOGICAL(sock->flags & RRF_PENDING) && len < 10; ++len)
                 OS_WAIT(2000, 0);
-            }
-            len = 1;
-            goto pick;
         }
-        if (result == DR_DONE) {
-            len = 1;
-            goto pick;
-        }
-        goto return_port; }
+
+        len = 1;
+        goto pick; }
 
     case SYM_PICK_P:  // FIRST - return result
         if (NOT(sock->flags & RRF_OPEN))
@@ -148,11 +139,6 @@ static REB_R DNS_Actor(REBFRM *frame_, REBCTX *port, REBSYM action)
             fail (Error_Out_Of_Range(arg));
 
         assert(sock->flags & RRF_DONE); // R3-Alpha async DNS removed
-
-        if (sock->error) {
-            OS_DO_DEVICE(sock, RDC_CLOSE);
-            fail (Error_On_Port(RE_READ_ERROR, port, sock->error));
-        }
 
         if (DEVREQ_NET(sock)->host_info == NULL) {
             Init_Blank(D_OUT); // HOST_NOT_FOUND or NO_ADDRESS blank vs. error
@@ -188,8 +174,7 @@ static REB_R DNS_Actor(REBFRM *frame_, REBCTX *port, REBSYM action)
             fail (Error_Bad_Refines_Raw());
         }
 
-        if (OS_DO_DEVICE(sock, RDC_OPEN))
-            fail (Error_On_Port(RE_CANNOT_OPEN, port, -12));
+        OS_DO_DEVICE(sock, RDC_OPEN);
         goto return_port; }
 
     case SYM_CLOSE:

@@ -432,7 +432,7 @@ REBNATIVE(alloc_value_pointer)
 {
     INCLUDE_PARAMS_OF_ALLOC_VALUE_POINTER;
 
-    REBVAL *paired = Alloc_Pairing(NULL); // no owning frame
+    REBVAL *paired = Alloc_Pairing(); // no owning frame
     Move_Value(paired, ARG(value));
 
     // We didn't put a FRAME! in the pairing's key, so instead put a blank.

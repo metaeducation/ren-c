@@ -64,9 +64,6 @@ void Open_StdIO(void)
 
     OS_Do_Device(&Std_IO_Req, RDC_OPEN);
 
-    if (Std_IO_Req.error)
-        rebPanic ("Could not Open_StdIO()");
-
     inbuf = OS_ALLOC_N(REBYTE, inbuf_len);
     inbuf[0] = 0;
 }

@@ -125,8 +125,7 @@ static void Open_File_Port(REBCTX *port, struct devreq_file *file, REBVAL *path)
     if (Is_Port_Open(port))
         fail (Error_Already_Open_Raw(path));
 
-    if (OS_DO_DEVICE(req, RDC_OPEN) < 0)
-        fail (Error_On_Port(RE_CANNOT_OPEN, port, req->error));
+    OS_DO_DEVICE(req, RDC_OPEN);
 
     Set_Port_Open(port, TRUE);
 }
@@ -165,6 +164,7 @@ static void Read_File_Port(
     assert(IS_FILE(path));
 #endif
     UNUSED(flags);
+    UNUSED(port);
 
     REBREQ *req = AS_REBREQ(file);
 
@@ -174,8 +174,7 @@ static void Read_File_Port(
     // Do the read, check for errors:
     req->common.data = BIN_HEAD(ser);
     req->length = len;
-    if (OS_DO_DEVICE(req, RDC_READ) < 0)
-        fail (Error_On_Port(RE_READ_ERROR, port, req->error));
+    OS_DO_DEVICE(req, RDC_READ);
 
     SET_SERIES_LEN(ser, req->actual);
     TERM_SEQUENCE(ser);
@@ -275,7 +274,7 @@ static REB_R File_Actor(REBFRM *frame_, REBCTX *port, REBSYM action)
         fail (Error_Invalid_Spec_Raw(spec));
 
     REBVAL *path = Obj_Value(spec, STD_PORT_SPEC_HEAD_REF);
-    if (!path)
+    if (path == NULL)
         fail (Error_Invalid_Spec_Raw(spec));
 
     if (IS_URL(path))
@@ -379,9 +378,6 @@ static REB_R File_Actor(REBFRM *frame_, REBCTX *port, REBSYM action)
             Cleanup_File(file);
         }
 
-        if (req->error)
-            fail (Error_On_Port(RE_READ_ERROR, port, req->error));
-
         return R_OUT; }
 
     case SYM_APPEND:
@@ -446,14 +442,7 @@ static REB_R File_Actor(REBFRM *frame_, REBCTX *port, REBSYM action)
             Cleanup_File(file);
         }
 
-        if (req->error) {
-            DECLARE_LOCAL(i);
-            Init_Integer(i, req->error);
-            fail (Error_Write_Error_Raw(path, i));
-        }
-
-        Move_Value(D_OUT, CTX_VALUE(port));
-        return R_OUT; }
+        goto return_port; }
 
     case SYM_OPEN: {
         INCLUDE_PARAMS_OF_OPEN;
@@ -477,8 +466,7 @@ static REB_R File_Actor(REBFRM *frame_, REBCTX *port, REBSYM action)
 
         Open_File_Port(port, file, path);
 
-        Move_Value(D_OUT, CTX_VALUE(port));
-        return R_OUT; }
+        goto return_port; }
 
     case SYM_COPY: {
         INCLUDE_PARAMS_OF_COPY;
@@ -507,8 +495,7 @@ static REB_R File_Actor(REBFRM *frame_, REBCTX *port, REBSYM action)
             OS_DO_DEVICE(req, RDC_CLOSE);
             Cleanup_File(file);
         }
-        Move_Value(D_OUT, CTX_VALUE(port));
-        return R_OUT; }
+        goto return_port; }
 
     case SYM_DELETE: {
         INCLUDE_PARAMS_OF_DELETE;
@@ -517,11 +504,9 @@ static REB_R File_Actor(REBFRM *frame_, REBCTX *port, REBSYM action)
         if (req->flags & RRF_OPEN)
             fail (Error_No_Delete_Raw(path));
         Setup_File(file, 0, path);
-        if (OS_DO_DEVICE(req, RDC_DELETE) < 0)
-            fail (Error_No_Delete_Raw(path));
+        OS_DO_DEVICE(req, RDC_DELETE);
 
-        Move_Value(D_OUT, CTX_VALUE(port));
-        return R_OUT; }
+        goto return_port; }
 
     case SYM_RENAME: {
         INCLUDE_PARAMS_OF_RENAME;
@@ -532,9 +517,7 @@ static REB_R File_Actor(REBFRM *frame_, REBCTX *port, REBSYM action)
         Setup_File(file, 0, path);
 
         req->common.data = cast(REBYTE*, ARG(to)); // !!! hack!
-
-        if (req->error)
-            fail (Error_No_Rename_Raw(path));
+        OS_DO_DEVICE(req, RDC_RENAME);
 
         Move_Value(D_OUT, ARG(from));
         return R_OUT; }
@@ -542,15 +525,13 @@ static REB_R File_Actor(REBFRM *frame_, REBCTX *port, REBSYM action)
     case SYM_CREATE: {
         if (NOT(req->flags & RRF_OPEN)) {
             Setup_File(file, AM_OPEN_WRITE | AM_OPEN_NEW, path);
-            if (OS_DO_DEVICE(req, RDC_CREATE) < 0)
-                fail (Error_On_Port(RE_CANNOT_OPEN, port, req->error));
+            OS_DO_DEVICE(req, RDC_CREATE);
             OS_DO_DEVICE(req, RDC_CLOSE);
         }
 
         // !!! should it leave file open???
 
-        Move_Value(D_OUT, CTX_VALUE(port));
-        return R_OUT; }
+        goto return_port; }
 
     case SYM_QUERY: {
         INCLUDE_PARAMS_OF_QUERY;
@@ -563,7 +544,9 @@ static REB_R File_Actor(REBFRM *frame_, REBCTX *port, REBSYM action)
 
         if (NOT(req->flags & RRF_OPEN)) {
             Setup_File(file, 0, path);
-            if (OS_DO_DEVICE(req, RDC_QUERY) < 0) return R_BLANK;
+            OS_DO_DEVICE(req, RDC_QUERY);
+            if (FALSE) // used to check for less than zero result for this
+                return R_BLANK;
         }
         Ret_Query_File(port, file, D_OUT);
 
@@ -581,7 +564,9 @@ static REB_R File_Actor(REBFRM *frame_, REBCTX *port, REBSYM action)
         // !!! Set_Mode_Value() was called here, but a no-op in R3-Alpha
         if (NOT(req->flags & RRF_OPEN)) {
             Setup_File(file, 0, path);
-            if (OS_DO_DEVICE(req, RDC_MODIFY) < 0) return R_BLANK;
+            OS_DO_DEVICE(req, RDC_MODIFY);
+            if (FALSE) // !!! used to check for less than zero result for this
+                return R_BLANK;
         }
         return R_TRUE; }
 
@@ -592,26 +577,25 @@ static REB_R File_Actor(REBFRM *frame_, REBCTX *port, REBSYM action)
 
         file->index += Get_Num_From_Arg(ARG(offset));
         req->modes |= RFM_RESEEK;
-        Move_Value(D_OUT, CTX_VALUE(port));
-        return R_OUT; }
+        goto return_port;}
 
     case SYM_CLEAR:
         // !! check for write enabled?
         req->modes |= RFM_RESEEK;
         req->modes |= RFM_TRUNCATE;
         req->length = 0;
-        if (OS_DO_DEVICE(req, RDC_WRITE) < 0) {
-            DECLARE_LOCAL(i);
-            Init_Integer(i, req->error);
-            fail (Error_Write_Error_Raw(path, i));
-        }
-        return R_OUT;
+        OS_DO_DEVICE(req, RDC_WRITE);
+        goto return_port;
 
     default:
         break;
     }
 
     fail (Error_Illegal_Action(REB_PORT, action));
+
+return_port:
+    Move_Value(D_OUT, CTX_VALUE(port));
+    return R_OUT;
 }
 
 

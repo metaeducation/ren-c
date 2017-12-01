@@ -119,7 +119,7 @@ inline static void Enter_Api_Clear_Last_Error(void) {
 
 inline static REBVAL *Alloc_Value(void)
 {
-    REBVAL *pairing = Alloc_Pairing(NULL);
+    REBVAL *pairing = Alloc_Pairing();
 
     // The long term goal is to have diverse and sophisticated memory
     // management options for API handles...where there is some automatic
@@ -1406,6 +1406,35 @@ REBVAL *RL_rebPickIndexed(const REBVAL *series, long index)
 
 
 //
+//  rebManage: RL_API
+//
+// The "friendliest" default for the API is to assume you want handles to be
+// tied to the lifetime of the frame they're in.  Long-running top-level
+// processes like the C code running the console would eventually exhaust
+// memory if that were the case...so there should be some options for metrics
+// as a form of "leak detection" even so.
+//
+// While the API is being developed and used in core code, the default is to
+// be "unfriendly"...and you have to explicitly ask for management.
+//
+REBVAL *RL_rebManage(REBVAL *v)
+{
+    Enter_Api_Clear_Last_Error();
+
+    REBVAL *key = PAIRING_KEY(v);
+    assert(NOT(key->header.bits & NODE_FLAG_ROOT));
+    UNUSED(key);
+
+    if (FS_TOP == NULL)
+        fail ("rebManage() temporarily disallowed in top level C for safety");
+
+    Init_Pairing_Key_Owner(v, FS_TOP);
+    return v;
+
+}
+
+
+//
 //  rebUnmanage: RL_API
 //
 REBVAL *RL_rebUnmanage(REBVAL *v)
@@ -1444,7 +1473,7 @@ void RL_rebRelease(REBVAL *v)
     //
     REBVAL *key = PAIRING_KEY(v);
     assert(NOT(key->header.bits & NODE_FLAG_MANAGED));
-    if (NOT(IS_BLANK(key)))
+    if (NOT(IS_BLANK(key)) && NOT(IS_FRAME(key)))
         panic ("Attempt to rebRelease() a non-API handle");
 
     Free_Pairing(v);
@@ -1500,6 +1529,17 @@ void RL_rebFail(const void *p)
         break;
 
     case DETECTED_AS_VALUE: {
+        //
+        // Passed in pointer is const because it may be a char*, but if it's
+        // an API handle we currently need to free it...mutability cast :-/
+        //
+        {
+        REBVAL *arg = m_cast(REBVAL*, cast(const REBVAL *, p));
+        Move_Value(reason, arg);
+        rebRelease(arg);
+        p2 = reason;
+        }
+
     fail_on_value:;
         REBVAL *result = rebDo(
             BLANK_VALUE, // temp workaround, can't rebEval() first slot yet
@@ -1728,6 +1768,39 @@ REBVAL *RL_rebLocalToFileW(const wchar_t *local, REBOOL is_dir)
 }
 
 
+//
+//  rebTrapHackOS: RL_API
+//
+// !!! The OS_Do_Device function is dependent on %reb-host.h, not %sys-core.h
+// which means it can't call PUSH_UNHALTABLE_TRAP.  However, it wishes to
+// dispatch to arbitrary code which may trigger a failure, and it wants to
+// do some cleanup if it does fail.  Switching to include %sys-core.h causes
+// linker headaches that are not immediately obvious how to sort out, so the
+// interim trick to give it the trapping mechanism is to add a hook to the
+// RL_API it already has and uses.  It's not terribly elegant but works for
+// now, as the mechanism is rethought.
+//
+REBVAL *RL_rebTrapHackOS(DEVICE_CMD_FUNC cmd, REBREQ *req)
+{
+    struct Reb_State state;
+    REBCTX *error;
+
+    PUSH_UNHALTABLE_TRAP(&error, &state); // must catch HALTs
+
+// The first time through the following code 'error' will be NULL, but...
+// `fail` can longjmp here, so 'error' won't be NULL *if* that happens!
+
+    if (error != NULL)
+        return Init_Error(Alloc_Value(), error);
+
+    int result = cmd(req);
+
+    DROP_TRAP_SAME_STACKLEVEL_AS_PUSH(&state);
+
+    return rebInteger(result);
+}
+
+
 // !!! Although it is very much the goal to get all OS-specific code out of
 // the core (including the API), this particular hook is extremely useful to
 // have available to all clients.  It might be done another way (e.g. by
@@ -1870,9 +1943,7 @@ void RL_rebFail_OS(int errnum)
     #endif
 #endif
 
-    DECLARE_LOCAL (temp);
-    Init_Error(temp, error);
-    rebFail (temp);
+    rebFail (Init_Error(Alloc_Value(), error));
 }
 
 

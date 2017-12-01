@@ -43,8 +43,6 @@
 extern DEVICE_CMD Init_Net(REBREQ *); // Share same init
 extern DEVICE_CMD Quit_Net(REBREQ *);
 
-extern void Signal_Device(REBREQ *req, REBINT type);
-
 
 //
 //  Open_DNS: C
@@ -121,26 +119,26 @@ DEVICE_CMD Read_DNS(REBREQ *req)
     sock->host_info = NULL;
 
     switch (h_errno) {
-        case HOST_NOT_FOUND: // The specified host is unknown
-        case NO_ADDRESS: // (or NO_DATA) name is valid but has no IP
-            //
-            // The READ should return a blank in these cases, vs. raise an
-            // error, for convenience in handling.
-            //
-            req->flags |= RRF_DONE;
-            return DR_DONE;
+    case HOST_NOT_FOUND: // The specified host is unknown
+    case NO_ADDRESS: // (or NO_DATA) name is valid but has no IP
+        //
+        // The READ should return a blank in these cases, vs. raise an
+        // error, for convenience in handling.
+        //
+        break;
 
-        case NO_RECOVERY: // A nonrecoverable name server error occurred
-        case TRY_AGAIN: // Temporary error on authoritative name server
-            break;
+    case NO_RECOVERY:
+        rebFail ("A nonrecoverable name server error occurred");
 
-        default:
-            assert(FALSE);
-        }
+    case TRY_AGAIN:
+        rebFail ("Temporary error on authoritative name server");
 
-    req->error = GET_ERROR;
-    //Signal_Device(req, EVT_ERROR);
-    return DR_ERROR; // Remove it from pending list
+    default:
+        rebFail (NULL);
+    }
+
+    req->flags |= RRF_DONE;
+    return DR_DONE;
 }
 
 
@@ -164,21 +162,17 @@ DEVICE_CMD Poll_DNS(REBREQ *dr)
     for (req = *prior; req; req = *prior) {
 
         // If done or error, remove command from list:
-        if (req->flags & RRF_DONE) { // req->error may be set
+        if (req->flags & RRF_DONE) {
             *prior = req->next;
             req->next = 0;
             req->flags &= ~RRF_PENDING;
 
-            if (!req->error) { // success!
-                host = cast(HOSTENT*, DEVREQ_NET(req)->host_info);
-                if (req->modes & RST_REVERSE)
-                    req->common.data = b_cast(host->h_name);
-                else
-                    memcpy(&(DEVREQ_NET(req)->remote_ip), *host->h_addr_list, 4); //he->h_length);
-                Signal_Device(req, EVT_READ);
-            }
+            host = cast(HOSTENT*, DEVREQ_NET(req)->host_info);
+            if (req->modes & RST_REVERSE)
+                req->common.data = b_cast(host->h_name);
             else
-                Signal_Device(req, EVT_ERROR);
+                memcpy(&(DEVREQ_NET(req)->remote_ip), *host->h_addr_list, 4); //he->h_length);
+            OS_SIGNAL_DEVICE(req, EVT_READ);
             change = TRUE;
         }
         else prior = &req->next;

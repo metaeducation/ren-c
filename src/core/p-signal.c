@@ -203,8 +203,7 @@ static REB_R Signal_Actor(REBFRM *frame_, REBCTX *port, REBSYM action)
                 }
             }
 
-            if (OS_DO_DEVICE(req, RDC_OPEN))
-                fail (Error_On_Port(RE_CANNOT_OPEN, port, req->error));
+            OS_DO_DEVICE(req, RDC_OPEN);
 
             if (action == SYM_OPEN)
                 goto return_port;
@@ -263,11 +262,9 @@ static REB_R Signal_Actor(REBFRM *frame_, REBCTX *port, REBSYM action)
         REBSER *ser = Make_Binary(len * sizeof(siginfo_t));
         req->common.data = BIN_HEAD(ser);
 
-        REBINT result = OS_DO_DEVICE(req, RDC_READ);
-        if (result < 0) {
-            Free_Series(ser);
-            fail (Error_On_Port(RE_READ_ERROR, port, req->error));
-        }
+        OS_DO_DEVICE(req, RDC_READ);
+        //
+        // !!! ^-- If failure, series needs to be freed, should be automatic.
 
         arg = CTX_VAR(port, STD_PORT_DATA);
         if (!IS_BLOCK(arg))

@@ -438,7 +438,6 @@ view: construct [] [
         device          ; misc device request
         callback        ; callback event
         custom          ; custom events
-        error
         init
 
         open

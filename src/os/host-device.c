@@ -48,7 +48,6 @@
 
 #include "reb-host.h"
 
-
 /***********************************************************************
 **
 **  REBOL Device Table
@@ -110,33 +109,31 @@ static int Poll_Default(REBDEV *dev)
 {
     // The default polling function for devices.
     // Retries pending requests. Return TRUE if status changed.
+
+    REBOOL change = FALSE;
+
     REBREQ **prior = &dev->pending;
     REBREQ *req;
-    REBOOL change = FALSE;
-    int result;
-
     for (req = *prior; req; req = *prior) {
+        assert(req->command < RDC_MAX);
 
         // Call command again:
-        if (req->command < RDC_MAX) {
-            req->flags &= ~RRF_ACTIVE;
-            result = dev->commands[req->command](req);
-        } else {
-            result = -1;    // invalid command, remove it
-            req->error = ((REBCNT)-1);
-        }
 
-        // If done or error, remove command from list:
-        if (result <= 0) {
+        req->flags &= ~RRF_ACTIVE;
+        int result = dev->commands[req->command](req);
+
+        if (result == DR_DONE) { // if done, remove from pending list
             *prior = req->next;
             req->next = 0;
             req->flags &= ~RRF_PENDING;
             change = TRUE;
-        } else {
+        }
+        else {
+            assert(result == DR_PEND);
+
             prior = &req->next;
-            if (req->flags & RRF_ACTIVE) {
+            if (req->flags & RRF_ACTIVE)
                 change = TRUE;
-            }
         }
     }
 
@@ -153,15 +150,6 @@ static int Poll_Default(REBDEV *dev)
 void Attach_Request(REBREQ **node, REBREQ *req)
 {
     REBREQ *r;
-
-#ifdef special_debug
-    if (req->device == 5) {
-        printf("Attach: %x %x %x %x\n",
-            req, req->device, req->port, req->next
-        );
-        fflush(stdout);
-    }
-#endif
 
     // See if its there, and get last req:
     for (r = *node; r; r = *node) {
@@ -186,22 +174,7 @@ void Detach_Request(REBREQ **node, REBREQ *req)
 {
     REBREQ *r;
 
-#ifdef special_debug
-    if (req->device == 5) {
-        printf("Detach= n: %x r: %x p: %x %x\n",
-            *node, req, req->port, &req->next);
-        fflush(stdout);
-    }
-#endif
-
-    // See if its there, and get last req:
     for (r = *node; r; r = *node) {
-#ifdef special_debug
-    if (req->device == 5) {
-        printf("Detach: r: %x n: %x\n", r, r->next);
-        fflush(stdout);
-    }
-#endif
         if (r == req) {
             *node = req->next;
             req->next = 0;
@@ -213,145 +186,117 @@ void Detach_Request(REBREQ **node, REBREQ *req)
 }
 
 
-extern void Done_Device(REBUPT handle, int error);
-
 //
-//  Done_Device: C
-//
-// Given a handle mark the related request as done.
-// (Used by DNS device).
-//
-void Done_Device(REBUPT handle, int error)
-{
-    REBINT d;
-    for (d = RDI_NET; d <= RDI_DNS; d++) {
-        REBDEV *dev = Devices[d];
-        REBREQ **prior = &dev->pending;
-
-        // Scan the pending requests, mark the one we got:
-
-        REBREQ *req;
-        for (req = *prior; req; req = *prior) {
-            if (cast(REBUPT, req->requestee.handle) == handle) {
-                req->error = error; // zero when no error
-                req->flags |= RRF_DONE;
-                return;
-            }
-            prior = &req->next;
-        }
-    }
-}
-
-
-//
-//  Signal_Device: C
+//  OS_Signal_Device: C
 //
 // Generate a device event to awake a port on REBOL.
 //
-void Signal_Device(REBREQ *req, REBINT type)
+// !!! R3-Alpha had this explicitly imported in some files by having an extern
+// definition, but just put it in as another OS_XXX function for now.
+//
+void OS_Signal_Device(REBREQ *req, REBYTE type)
 {
     REBEVT evt;
 
     CLEARS(&evt);
 
-    evt.type = (REBYTE)type;
+    evt.type = type;
     evt.model = EVM_DEVICE;
     evt.eventee.req = req;
-    if (type == EVT_ERROR) evt.data = req->error;
 
     rebEvent(&evt); // (returns 0 if queue is full, ignored)
 }
 
 
 //
-//  OS_Call_Device: C
-//
-// Shortcut for non-request calls to device.
-//
-// Init - Initialize any device-related resources (e.g. libs).
-// Quit - Cleanup any device-related resources.
-// Make - Create and initialize a request for a device.
-// Free - Free a device request structure.
-// Poll - Poll device for activity.
-//
-int OS_Call_Device(REBINT device, REBCNT command)
-{
-    REBDEV *dev;
-    REBREQ req;
-
-    // Validate device:
-    if (device >= RDI_MAX || !(dev = Devices[device]))
-        return -1;
-
-    // Validate command:
-    if (command > dev->max_command || dev->commands[command] == 0)
-        return -2;
-
-    // Do command, return result:
-    /* fake a request, not all fields are set */
-    req.device = device;
-    req.command = command;
-    return dev->commands[command](&req);
-}
-
-
-//
 //  OS_Do_Device: C
 //
-// Tell a device to perform a command. Non-blocking in many
-// cases and will attach the request for polling.
+// Tell a device to perform a command.  Non-blocking in many cases and will
+// attach the request for polling.
 //
 // Returns:
-//     =0: for command success
-//     >0: for command still pending
-//     <0: for command error
+//     0: for command success (DR_DONE)
+//     1: for command still pending (DR_PEND)
 //
 int OS_Do_Device(REBREQ *req, REBCNT command)
 {
-    REBDEV *dev;
-    REBINT result;
+    if (req->device >= RDI_MAX)
+        rebFail ("Rebol Device Number Too Large");
 
-    req->error = 0; // A94 - be sure its cleared
+    REBDEV *dev = Devices[req->device];
+    if (dev == NULL)
+        rebFail ("Rebol Device Not Found");
 
-    // Validate device:
-    if (req->device >= RDI_MAX || !(dev = Devices[req->device])) {
-        req->error = RDE_NO_DEVICE;
-        return -1;
-    }
-
-    // Confirm device is initialized. If not, return an error or init
-    // it if auto init option is set.
     if (NOT(dev->flags & RDF_INIT)) {
-        if (dev->flags & RDO_MUST_INIT) {
-            req->error = RDE_NO_INIT;
-            return -1;
-        }
+        if (dev->flags & RDO_MUST_INIT)
+            rebFail ("Rebol Device Uninitialized (has RDO_MUST_INIT flag)");
+
         if (
             !dev->commands[RDC_INIT]
-            || !dev->commands[RDC_INIT]((REBREQ*)dev)
+            || !dev->commands[RDC_INIT](cast(REBREQ*, dev))
         ){
             dev->flags |= RDF_INIT;
         }
     }
 
-    // Validate command:
-    if (command > dev->max_command || dev->commands[command] == 0) {
-        req->error = RDE_NO_COMMAND;
-        return -1;
+    if (command > dev->max_command || dev->commands[command] == NULL)
+        rebFail ("Invalid Command for Rebol Device");
+
+    req->command = command;
+
+    // !!! Currently the StdIO port is initialized before Rebol's startup
+    // code ever runs.  This is to allow debug messages to be printed during
+    // boot.  That means it's too early to be pushing traps, having errors,
+    // or really using any REBVALs at all.  Review the dependency, but in
+    // the meantime just don't try and push trapping of errors if there's
+    // not at least one Rebol state pushed.
+    //
+    if (req->device == RDI_STDIO && command == RDC_OPEN) {
+        int result = (dev->commands[command])(req);
+        assert(result == DR_DONE);
+        UNUSED(result);
+        return DR_DONE;
     }
 
-    // Do the command:
-    req->command = command;
-    result = dev->commands[command](req);
+    // Do the command.
+    //
+    // !!! R3-Alpha had it so when an error was raised from a "device request"
+    // it would give back DR_ERROR and the caller would have to interpret an
+    // integer error code that was filled into the request.  Sometimes these
+    // were OS-specific, and hence not readable to most people...and sometimes
+    // they were just plain made up (e.g. search for `req->error = -18` in the
+    // R3-Alpha sources.)
+    //
+    // The plan here is to use the fail() mechanic to let literate error
+    // messages be produced.  However, there was code here that would react
+    // to DR_ERROR in order to allow for cleanup in the case that a request
+    // was flagged with RRF_ALLOC.  New lifetime management strategies that
+    // attach storage to stack frames should make that aspect obsolete.
+    //
+    // There was one other aspect of presumed pending removal, however.  For
+    // now, preserve that behavior by always running the device code with
+    // a trap in effect.
+
+    REBVAL *error_or_int = rebTrapHackOS(dev->commands[command], req);
+
+    if (rebTypeOf(error_or_int) == RXT_ERROR) {
+        if (dev->pending)
+            Detach_Request(&dev->pending, req); // "often a no-op", it said
+        rebFail (error_or_int); // propagate error up the stack
+    }
+
+    assert(rebTypeOf(error_or_int) == RXT_INTEGER);
+
+    int result = rebUnboxInteger(error_or_int);
+    rebRelease(error_or_int);
 
     // If request is pending, attach it to device for polling:
-    if (result > 0) Attach_Request(&dev->pending, req);
-    else if (dev->pending) {
-        Detach_Request(&dev->pending, req); // often a no-op
-        if (result == DR_ERROR && LOGICAL(req->flags & RRF_ALLOC)) {
-            // not on stack
-            Signal_Device(req, EVT_ERROR);
-        }
+    if (result == DR_PEND)
+        Attach_Request(&dev->pending, req);
+    else {
+        assert(result == DR_DONE);
+        if (dev->pending)
+            Detach_Request(&dev->pending, req); // often a no-op
     }
 
     return result;
@@ -363,15 +308,13 @@ int OS_Do_Device(REBREQ *req, REBCNT command)
 //
 REBREQ *OS_Make_Devreq(int device)
 {
-    REBDEV *dev;
+    assert(device < RDI_MAX);
 
-    // Validate device:
-    if (device >= RDI_MAX || !(dev = Devices[device]))
-        return 0;
+    REBDEV *dev = Devices[device];
+    assert(dev != NULL);
 
-    REBREQ *req = cast (REBREQ *, OS_ALLOC_MEM(dev->req_size));
+    REBREQ *req = cast(REBREQ *, OS_ALLOC_MEM(dev->req_size));
     memset(req, 0, dev->req_size);
-    req->flags |= RRF_ALLOC;
     req->device = device;
 
     return req;
@@ -385,9 +328,10 @@ REBREQ *OS_Make_Devreq(int device)
 //
 int OS_Abort_Device(REBREQ *req)
 {
-    REBDEV *dev;
+    REBDEV *dev = Devices[req->device];
+    assert(dev != NULL);
 
-    if ((dev = Devices[req->device]) != 0) Detach_Request(&dev->pending, req);
+    Detach_Request(&dev->pending, req);
     return 0;
 }
 
@@ -493,19 +437,19 @@ REBINT OS_Wait(REBCNT millisec, REBCNT res)
 
     // printf("OS_Wait %d\n", millisec);
 
-    base = OS_Delta_Time(0); // start timing
+    base = OS_DELTA_TIME(0); // start timing
 
     // Setup for timing:
     CLEARS(&req);
     req.device = RDI_EVENT;
 
-    OS_Reap_Process(-1, NULL, 0);
+    OS_REAP_PROCESS(-1, NULL, 0);
 
     // Let any pending device I/O have a chance to run:
     if (OS_Poll_Devices()) return -1;
 
     // Nothing, so wait for period of time
-    delta = cast(REBCNT, OS_Delta_Time(base)) / 1000 + res;
+    delta = cast(REBCNT, OS_DELTA_TIME(base)) / 1000 + res;
     if (delta >= millisec) return 0;
     millisec -= delta;  // account for time lost above
     req.length = millisec;

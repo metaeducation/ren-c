@@ -97,7 +97,6 @@ REBREQ *Ensure_Port_State(REBCTX *port, REBCNT device)
         TERM_BIN_LEN(data, req_size);
 
         REBREQ *req = cast(REBREQ*, BIN_HEAD(data));
-        req->flags |= RRF_ALLOC; // not on stack
         req->port = port;
         req->device = device;
         Init_Binary(state, data);

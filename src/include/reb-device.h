@@ -85,7 +85,6 @@ enum {
 // Device Request (Command) Return Codes:
 #define DR_PEND   1 // request is still pending
 #define DR_DONE   0 // request is complete w/o errors
-#define DR_ERROR -1 // request had an error
 
 // REBOL Device Flags and Options (bitnums):
 enum {
@@ -104,7 +103,6 @@ enum {
     RRF_FLUSH = 1 << 2, // Flush WRITE
 //  RRF_PREWAKE,    // C-callback before awake happens (to update port object)
     RRF_PENDING = 1 << 3, // Request is attached to pending list
-    RRF_ALLOC = 1 << 4, // Request is allocated, not a temp on stack
     RRF_ACTIVE = 1 << 5, // Port is active, even no new events yet
 
     // !!! This was a "local flag to mark null device" which when not managed
@@ -114,14 +112,21 @@ enum {
     SF_DEV_NULL = 1 << 31
 };
 
-// REBOL Device Errors:
+
+// RFM - REBOL File Modes
 enum {
-    RDE_NONE,
-    RDE_NO_DEVICE,  // command did not provide device
-    RDE_NO_COMMAND, // command past end
-    RDE_NO_INIT,    // device has not been inited
-    RDE_MAX
+    RFM_READ = 1 << 0,
+    RFM_WRITE = 1 << 1,
+    RFM_APPEND = 1 << 2,
+    RFM_SEEK = 1 << 3,
+    RFM_NEW = 1 << 4,
+    RFM_READONLY = 1 << 5,
+    RFM_TRUNCATE = 1 << 6,
+    RFM_RESEEK = 1 << 7, // file index has moved, reseek
+    RFM_DIR = 1 << 8
 };
+
+#define MAX_FILE_NAME 1022
 
 enum {
     RDM_NULL = 1 << 0 // !!! "Null device", can this just be a boolean?
@@ -183,7 +188,6 @@ struct rebol_devreq {
 
     // Command info:
     i32  command;           // command code
-    i32  error;             // error code
     u32  modes;             // special modes, types or attributes
     u16  flags;             // request flags
     u16  state;             // device process flags
@@ -256,8 +260,3 @@ inline static struct devreq_serial *DEVREQ_SERIAL(struct rebol_devreq *req) {
     assert(req->device == RDI_SERIAL);
     return cast(struct devreq_serial*, req);
 }
-
-#define OS_ENA -1
-#define OS_EINVAL -2
-#define OS_EPERM -3
-#define OS_ESRCH -4
