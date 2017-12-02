@@ -207,6 +207,24 @@ REB_R Do_Vararg_Op_May_Throw(
         if (r != R_UNHANDLED)
             goto type_check_and_return;
 
+        if (GET_VAL_FLAG(vararg, VARARGS_FLAG_ENFIXED)) {
+            //
+            // See notes on VARARGS_FLAG_ENFIXED about how the left hand side
+            // is synthesized into an array-style varargs with either 0 or
+            // 1 item to be taken.  But any evaluation has already happened
+            // before the TAKE.  So although we honor the pclass to disallow
+            // TAIL? or FIRST testing on evaluative parameters, we don't
+            // want to double evaluation...so return that single element.
+            //
+            assert(VAL_ARRAY_LEN_AT(shared) == 1);
+            Derelativize(out, VAL_ARRAY_AT(shared), SPECIFIED);
+            if (GET_VAL_FLAG(VAL_ARRAY_AT(shared), VALUE_FLAG_UNEVALUATED))
+                SET_VAL_FLAG(out, VALUE_FLAG_UNEVALUATED); // not auto-copied
+            VAL_INDEX(shared) += 1;
+            r = R_OUT;
+            goto type_check_and_return;
+        }
+
         switch (pclass) {
         case PARAM_CLASS_NORMAL:
         case PARAM_CLASS_TIGHT: {
@@ -272,6 +290,11 @@ REB_R Do_Vararg_Op_May_Throw(
         //
         // "Ordinary" case... use the original frame implied by the VARARGS!
         // (so long as it is still live on the stack)
+
+        // The enfixed case always synthesizes an array to hold the evaluated
+        // left hand side value.  (See notes on VARARGS_FLAG_ENFIXED.)
+        //
+        assert(NOT_VAL_FLAG(vararg, VARARGS_FLAG_ENFIXED));
 
         opt_vararg_frame = f;
         arg = FRM_ARG(f, vararg->payload.varargs.param_offset + 1);

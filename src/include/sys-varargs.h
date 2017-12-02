@@ -54,6 +54,28 @@
 #endif
 
 
+// While it would be possible to say that enfixing a function whose first
+// argument is a VARARGS! is plainly illegal, we experimentally allow the
+// left hand side of an evaluation to be a source of "0 or 1" arguments for
+// a VARARGS!.
+//
+// !!! This is a bit shady (in cases besides an <end> on the left being a
+// varargs that reports TAIL? as TRUE).  That's because most variadics expect
+// their evaluation to happen when they TAKE a VARARGS!, and not beforehand.
+// But you can't defer the evaluation of a left-hand expression, because it's
+// usually too late.  Even if it isn't technically too late for some reason
+// (e.g. it's #tight, or quoted) there's still a bit of an oddity, because
+// variadics on the right have the option to *not* do a TAKE and leave the
+// value for consumption by the next operation.  That doesn't apply when the
+// variadic is being "faked in" from the left.
+//
+// But despite the lack of "purity", one might argue it's better to do
+// something vs. just give an error.  Especially since people are unlikely to
+// enfix a variadic on accident, and may be fine with these rules.
+//
+#define VARARGS_FLAG_ENFIXED VARARGS_FLAG(0)
+
+
 inline static REBOOL Is_Block_Style_Varargs(
     REBVAL **shared_out,
     RELVAL *vararg
