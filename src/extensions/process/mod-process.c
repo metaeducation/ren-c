@@ -80,7 +80,7 @@
 // Excise as soon as possible.
 //
 #ifdef TO_WINDOWS
-    #define REBCHR wchar_t
+    #define REBCHR WCHAR
 #else
     #define REBCHR char
 #endif
@@ -108,24 +108,42 @@ REBCHR *rebValSpellingAllocOS(REBCNT *len_out, REBVAL *any_string)
 
 
 //
-//  Copy_OS_Str: C
+//  Append_OS_Str: C
 //
-// Create a REBOL string series from an OS native string.
+// The data which came back from the piping interface may be UTF-8 on Linux,
+// or WCHAR on windows.  Yet we want to append that data to an existing
+// Rebol string, whose size may vary.
 //
-// For example, in Win32 with the wide char interface, we must
-// convert wide char strings, minimizing to bytes if possible.
+// !!! Note: With UTF-8 Everywhere as the native Rebol string format, it
+// *might* be more efficient to try using that string's buffer...however
+// there can be issues of permanent wasted space if the buffer is made too
+// large and not shrunk.
 //
-// For Linux the char string could be UTF-8, so that must be
-// converted to REBOL Unicode or Latin byte strings.
-//
-REBSER *Copy_OS_Str(const void *src, REBINT len)
+void Append_OS_Str(REBVAL *dest, const void *src, REBINT len)
 {
-#ifdef OS_WIDE_CHAR
-    return Copy_Wide_Str(cast(const wchar_t*, src), len);
+    REBSER *ser;
+
+#ifdef TO_WINDOWS
+    assert(sizeof(REBUNI) == sizeof(REBWCHAR));
+
+    ser = Make_Unicode(len);
+    SET_SERIES_LEN(ser, len);
+
+    const REBWCHAR* wsrc = cast(const REBWCHAR*, src);
+    REBUNI *up = UNI_HEAD(ser);
+    while (len-- > 0)
+        *up++ = *cast(const REBWCHAR*, wsrc++);
+    *up = '\0';
+    ASSERT_SERIES_TERM(ser);
 #else
-    return Append_UTF8_May_Fail(NULL, cast(const char*, src), len);
+    ser = Append_UTF8_May_Fail(NULL, cast(const char*, src), len);
 #endif
+
+    Append_String(VAL_SERIES(dest), ser, 0, SER_LEN(ser));
+    
+    Free_Series(ser);
 }
+
 
 // !!! The original implementation of CALL from Atronix had to communicate
 // between the CALL native (defined in the core) and the host routine
@@ -149,9 +167,9 @@ REBSER *Copy_OS_Str(const void *src, REBINT len)
 //
 int OS_Create_Process(
     REBFRM *frame_, // stopgap: allows access to CALL's ARG() and REF()
-    const wchar_t *call,
+    const WCHAR *call,
     int argc,
-    const wchar_t * argv[],
+    const WCHAR * argv[],
     REBOOL flag_wait,
     u64 *pid,
     int *exit_code,
@@ -187,7 +205,7 @@ int OS_Create_Process(
     HANDLE hOutputRead = 0, hOutputWrite = 0;
     HANDLE hInputWrite = 0, hInputRead = 0;
     HANDLE hErrorWrite = 0, hErrorRead = 0;
-    wchar_t *cmd = NULL;
+    WCHAR *cmd = NULL;
     char *oem_input = NULL;
 
     UNUSED(REF(info));
@@ -227,7 +245,7 @@ int OS_Create_Process(
 
     case REB_FILE: {
         REBOOL full = FALSE;
-        wchar_t *local_wide = rebFileToLocalAllocW(NULL, ARG(in), full);
+        WCHAR *local_wide = rebFileToLocalAllocW(NULL, ARG(in), full);
 
         hInputRead = CreateFile(
             local_wide,
@@ -275,7 +293,7 @@ int OS_Create_Process(
 
     case REB_FILE: {
         const REBOOL full = FALSE;
-        wchar_t *local_wide = rebFileToLocalAllocW(NULL, ARG(out), full);
+        WCHAR *local_wide = rebFileToLocalAllocW(NULL, ARG(out), full);
 
         si.hStdOutput = CreateFile(
             local_wide,
@@ -337,7 +355,7 @@ int OS_Create_Process(
 
     case REB_FILE: {
         const REBOOL full = FALSE;
-        wchar_t *local_wide = rebFileToLocalAllocW(NULL, ARG(out), full);
+        WCHAR *local_wide = rebFileToLocalAllocW(NULL, ARG(out), full);
 
         si.hStdError = CreateFile(
             local_wide,
@@ -381,10 +399,10 @@ int OS_Create_Process(
 
     if (REF(shell)) {
         // command to cmd.exe needs to be surrounded by quotes to preserve the inner quotes
-        const wchar_t *sh = L"cmd.exe /C \"";
+        const WCHAR *sh = L"cmd.exe /C \"";
         size_t len = wcslen(sh) + wcslen(call) + 3;
 
-        cmd = cast(wchar_t*, malloc(len * sizeof(wchar_t)));
+        cmd = cast(WCHAR*, malloc(len * sizeof(WCHAR)));
         cmd[0] = L'\0';
         wcscat(cmd, sh);
         wcscat(cmd, call);
@@ -434,11 +452,11 @@ int OS_Create_Process(
             if (IS_STRING(ARG(in))) {
                 DWORD dest_len = 0;
                 /* convert input encoding from UNICODE to OEM */
-                // !!! Is cast to wchar_t here legal?
+                // !!! Is cast to WCHAR here legal?
                 dest_len = WideCharToMultiByte(
                     CP_OEMCP,
                     0,
-                    cast(wchar_t*, input),
+                    cast(WCHAR*, input),
                     input_len,
                     oem_input,
                     dest_len,
@@ -451,7 +469,7 @@ int OS_Create_Process(
                         WideCharToMultiByte(
                             CP_OEMCP,
                             0,
-                            cast(wchar_t*, input),
+                            cast(WCHAR*, input),
                             input_len,
                             oem_input,
                             dest_len,
@@ -617,7 +635,7 @@ int OS_Create_Process(
         if (IS_STRING(ARG(out)) && *output != NULL && *output_len > 0) {
             /* convert to wide char string */
             int dest_len = 0;
-            wchar_t *dest = NULL;
+            WCHAR *dest = NULL;
             dest_len = MultiByteToWideChar(
                 CP_OEMCP, 0, *output, *output_len, dest, 0
             );
@@ -626,7 +644,7 @@ int OS_Create_Process(
                 *output = NULL;
                 *output_len = 0;
             }
-            dest = cast(wchar_t*, malloc(*output_len * sizeof(wchar_t)));
+            dest = cast(WCHAR*, malloc(*output_len * sizeof(WCHAR)));
             if (dest == NULL)
                 goto cleanup;
             MultiByteToWideChar(
@@ -640,7 +658,7 @@ int OS_Create_Process(
         if (IS_STRING(ARG(err)) && *err != NULL && *err_len > 0) {
             /* convert to wide char string */
             int dest_len = 0;
-            wchar_t *dest = NULL;
+            WCHAR *dest = NULL;
             dest_len = MultiByteToWideChar(
                 CP_OEMCP, 0, *err, *err_len, dest, 0
             );
@@ -649,7 +667,7 @@ int OS_Create_Process(
                 *err = NULL;
                 *err_len = 0;
             }
-            dest = cast(wchar_t*, malloc(*err_len * sizeof(wchar_t)));
+            dest = cast(WCHAR*, malloc(*err_len * sizeof(WCHAR)));
             if (dest == NULL) goto cleanup;
             MultiByteToWideChar(CP_OEMCP, 0, *err, *err_len, dest, dest_len);
             free(*err);
@@ -1638,11 +1656,8 @@ REBNATIVE(call)
 
     if (IS_STRING(ARG(out))) {
         if (output_len > 0) {
-            // !!! Somewhat inefficient: should there be Append_OS_Str?
-            REBSER *ser = Copy_OS_Str(os_output, output_len);
-            Append_String(VAL_SERIES(ARG(out)), ser, 0, SER_LEN(ser));
+            Append_OS_Str(ARG(out), os_output, output_len);
             free(os_output);
-            Free_Series(ser);
         }
     }
     else if (IS_BINARY(ARG(out))) {
@@ -1654,11 +1669,8 @@ REBNATIVE(call)
 
     if (IS_STRING(ARG(err))) {
         if (err_len > 0) {
-            // !!! Somewhat inefficient: should there be Append_OS_Str?
-            REBSER *ser = Copy_OS_Str(os_err, err_len);
-            Append_String(VAL_SERIES(ARG(err)), ser, 0, SER_LEN(ser));
+            Append_OS_Str(ARG(err), os_err, err_len);
             free(os_err);
-            Free_Series(ser);
         }
     } else if (IS_BINARY(ARG(err))) {
         if (err_len > 0) {
@@ -1737,8 +1749,6 @@ REBNATIVE(get_os_browsers)
         fail ("Could not open registry key for http\\shell\\open\\command");
     }
 
-    static_assert_c(sizeof(REBUNI) == sizeof(wchar_t));
-
     DWORD num_bytes = 0; // pass NULL and use 0 for initial length, to query
 
     DWORD type;
@@ -1756,7 +1766,7 @@ REBNATIVE(get_os_browsers)
 
     REBCNT len = num_bytes / 2;
 
-    wchar_t *buffer = OS_ALLOC_N(wchar_t, len + 1); // include terminator
+    WCHAR *buffer = OS_ALLOC_N(WCHAR, len + 1); // include terminator
 
     flag = RegQueryValueEx(
         key, L"", 0, &type, cast(LPBYTE, buffer), &num_bytes
@@ -1947,7 +1957,7 @@ static REBNATIVE(get_env)
 #ifdef TO_WINDOWS
     // Note: The Windows variant of this API is NOT case-sensitive
 
-    wchar_t *key = rebSpellingOfAllocW(NULL, variable);
+    WCHAR *key = rebSpellingOfAllocW(NULL, variable);
 
     DWORD val_len_plus_one = GetEnvironmentVariable(key, NULL, 0);
     if (val_len_plus_one == 0) { // some failure...
@@ -1957,12 +1967,15 @@ static REBNATIVE(get_env)
             error = Error_User("Unknown error when requesting variable size");
     }
     else {
-        wchar_t *val = OS_ALLOC_N(wchar_t, val_len_plus_one);
+        WCHAR *val = OS_ALLOC_N(WCHAR, val_len_plus_one);
         DWORD result = GetEnvironmentVariable(key, val, val_len_plus_one);
         if (result == 0)
             error = Error_User("Unknown error fetching variable to buffer");
-        else
-            Init_String(D_OUT, Copy_Wide_Str(val, val_len_plus_one - 1));
+        else {
+            REBVAL *temp = rebSizedStringW(val, val_len_plus_one - 1);
+            Move_Value(D_OUT, temp);
+            rebRelease(temp);
+        }
         OS_FREE(val);
     }
 
@@ -2020,7 +2033,7 @@ static REBNATIVE(set_env)
     REBCTX *error = NULL;
 
 #ifdef TO_WINDOWS
-    wchar_t *key_wide = rebSpellingOfAllocW(NULL, variable);
+    WCHAR *key_wide = rebSpellingOfAllocW(NULL, variable);
 
     REBOOL success;
 
@@ -2030,7 +2043,7 @@ static REBNATIVE(set_env)
     else {
         assert(IS_STRING(value) || IS_WORD(value));
         
-        wchar_t *val_wide = rebSpellingOfAllocW(NULL, value);
+        WCHAR *val_wide = rebSpellingOfAllocW(NULL, value);
         success = SetEnvironmentVariable(key_wide, val_wide);
         OS_FREE(val_wide);
     }
@@ -2157,10 +2170,10 @@ static REBNATIVE(list_env)
     //
     // !!! Adding to a map as we go along would probably be better.
 
-    wchar_t *env = GetEnvironmentStrings();
+    WCHAR *env = GetEnvironmentStrings();
 
     REBCNT num_pairs = 0;
-    const wchar_t *key_equals_val = env;
+    const WCHAR *key_equals_val = env;
     REBCNT len;
     while ((len = wcslen(key_equals_val)) != 0) {
         ++num_pairs;
@@ -2171,16 +2184,20 @@ static REBNATIVE(list_env)
 
     key_equals_val = env;
     while ((len = wcslen(key_equals_val)) != 0) {
-        const wchar_t *eq_pos = wcschr(key_equals_val, '=');
+        const WCHAR *eq_pos = wcschr(key_equals_val, '=');
 
-        Init_String(
-            Alloc_Tail_Array(array),
-            Copy_Wide_Str(key_equals_val, eq_pos - key_equals_val)
+        REBVAL *key = rebSizedStringW(
+            key_equals_val,
+            eq_pos - key_equals_val
         );
-        Init_String(
-            Alloc_Tail_Array(array),
-            Copy_Wide_Str(eq_pos + 1, len - (eq_pos - key_equals_val) - 1)
+        REBVAL *val = rebSizedStringW(
+            eq_pos + 1,
+            len - (eq_pos - key_equals_val) - 1
         );
+        Append_Value(array, key);
+        Append_Value(array, val);
+        rebRelease(key);
+        rebRelease(val);
 
         key_equals_val += len + 1; // next
     }

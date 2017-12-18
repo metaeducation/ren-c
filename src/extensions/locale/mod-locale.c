@@ -79,7 +79,7 @@ REBNATIVE(locale)
 
     int len_plus_term = GetLocaleInfo(0, type, 0, 0); // fetch needed length
 
-    wchar_t *buffer = OS_ALLOC_N(wchar_t, len_plus_term);
+    WCHAR *buffer = OS_ALLOC_N(WCHAR, len_plus_term);
 
     int len_check = GetLocaleInfo(0, type, buffer, len_plus_term);
     assert(len_check == len_plus_term);

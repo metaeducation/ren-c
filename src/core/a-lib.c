@@ -991,9 +991,7 @@ char *RL_rebSpellingOfAlloc(size_t *size_out, const REBVAL *v)
 //
 //  rebSpellingOfW: RL_API
 //
-// Extract wchar_t data from an ANY-STRING! or ANY-WORD!.  Note that while
-// the size of a wchar_t varies on Linux, it is part of the windows platform
-// standard to be two bytes.
+// Extract UCS2 data from an ANY-STRING! or ANY-WORD!
 //
 // !!! Although the rebSpellingOf API deals in bytes, this deals in count of
 // characters.  (The use of REBCNT instead of size_t indicates this.)  It may
@@ -1001,7 +999,7 @@ char *RL_rebSpellingOfAlloc(size_t *size_out, const REBVAL *v)
 // for now.
 //
 REBCNT RL_rebSpellingOfW(
-    wchar_t *buf,
+    REBWCHAR *buf, // see notes in %reb-c.h on REBWCHAR
     REBCNT buf_chars, // characters buffer can hold (not including terminator)
     const REBVAL *v
 ){
@@ -1042,76 +1040,13 @@ REBCNT RL_rebSpellingOfW(
 //
 //  rebSpellingOfAllocW: RL_API
 //
-wchar_t *RL_rebSpellingOfAllocW(REBCNT *len_out, const REBVAL *v)
+REBWCHAR *RL_rebSpellingOfAllocW(REBCNT *len_out, const REBVAL *v)
 {
     Enter_Api_Clear_Last_Error();
 
     REBCNT len = rebSpellingOfW(NULL, 0, v);
-    wchar_t *result = OS_ALLOC_N(wchar_t, len + 1);
+    REBWCHAR *result = OS_ALLOC_N(REBWCHAR, len + 1);
     rebSpellingOfW(result, len, v);
-    if (len_out != NULL)
-        *len_out = len;
-    return result;
-}
-
-
-//
-//  rebSpellingOfUCS2: RL_API
-//
-// !!! Although the rebSpellingOf API deals in bytes, this deals in count of
-// characters.  (The use of REBCNT instead of size_t indicates this.)  It may
-// be more useful for the wide string APIs to do this so leaving it that way
-// for now.
-//
-REBCNT RL_rebSpellingOfUCS2(
-    u16 *buf,
-    REBCNT buf_chars, // characters buffer can hold (not including terminator)
-    const REBVAL *v
-){
-    Enter_Api_Clear_Last_Error();
-
-    REBSER *s;
-    REBCNT index;
-    REBCNT len;
-    if (ANY_STRING(v)) {
-        s = VAL_SERIES(v);
-        index = VAL_INDEX(v);
-        len = VAL_LEN_AT(v);
-    }
-    else {
-        assert(ANY_WORD(v));
-
-        REBSTR *spelling = VAL_WORD_SPELLING(v);
-        s = Append_UTF8_May_Fail(NULL, STR_HEAD(spelling), STR_SIZE(spelling));
-        index = 0;
-        len = SER_LEN(s);
-    }
-
-    if (buf == NULL) { // querying for size
-        assert(buf_chars == 0);
-        return len; // caller must now allocate buffer of len + 1
-    }
-
-    REBCNT limit = MIN(buf_chars, len);
-    REBCNT n = 0;
-    for (; index < limit; ++n, ++index)
-        buf[n] = GET_ANY_CHAR(s, index);
-
-    buf[limit] = 0;
-    return len;
-}
-
-
-//
-//  rebSpellingOfAllocUCS2: RL_API
-//
-u16 *RL_rebSpellingOfAllocUCS2(REBCNT *len_out, const REBVAL *v)
-{
-    Enter_Api_Clear_Last_Error();
-
-    REBCNT len = rebSpellingOfUCS2(NULL, 0, v);
-    u16 *result = OS_ALLOC_N(u16, len + 1);
-    rebSpellingOfUCS2(result, len, v);
     if (len_out != NULL)
         *len_out = len;
     return result;
@@ -1215,7 +1150,7 @@ REBVAL *RL_rebFile(const char *utf8)
 //
 //  rebSizedStringW: RL_API
 //
-REBVAL *RL_rebSizedStringW(const wchar_t *wstr, REBCNT len)
+REBVAL *RL_rebSizedStringW(const REBWCHAR *wstr, REBCNT len)
 {
     Enter_Api_Clear_Last_Error();
 
@@ -1238,7 +1173,7 @@ REBVAL *RL_rebSizedStringW(const wchar_t *wstr, REBCNT len)
 //
 //  rebStringW: RL_API
 //
-REBVAL *RL_rebStringW(const wchar_t *wstr)
+REBVAL *RL_rebStringW(const REBWCHAR *wstr)
 {
     return rebSizedStringW(wstr, UNKNOWN);
 }
@@ -1247,7 +1182,7 @@ REBVAL *RL_rebStringW(const wchar_t *wstr)
 //
 //  rebFileW: RL_API
 //
-REBVAL *RL_rebFileW(const wchar_t *wstr)
+REBVAL *RL_rebFileW(const REBWCHAR *wstr)
 {
     REBVAL *result = rebStringW(wstr);
     VAL_RESET_HEADER(result, REB_FILE);
@@ -1256,44 +1191,11 @@ REBVAL *RL_rebFileW(const wchar_t *wstr)
 
 
 //
-//  rebSizedStringUCS2: RL_API
-//
-// Some libraries (e.g. unixODBC's treatment of SQLWCHAR) use 16-bit UCS2
-// for compatibility with Windows, even when wchar_t is a possibly larger
-// type.  While annoying, it's not that difficult to support one more.
-//
-// !!! Support for UTF16 would require decoding pairs, and that is not a
-// priority at this point in time.  If someone wants to do the work, it is
-// probably not that difficult and this routine could be renamed.  Note
-// with such a change the `len` would become a `size`, as it no longer is
-// the length of the string in question (see rebSizedString())
-//
-REBVAL *RL_rebSizedStringUCS2(const u16 *ucs2, REBCNT len)
-{
-    Enter_Api_Clear_Last_Error();
-
-    DECLARE_MOLD (mo);
-    Push_Mold(mo);
-
-    if (len == UNKNOWN) {
-        for (; *ucs2 != 0; ++ucs2)
-            Append_Utf8_Codepoint(mo->series, *ucs2);
-    }
-    else {
-        for (; len != 0; --len, ++ucs2)
-            Append_Utf8_Codepoint(mo->series, *ucs2);
-    }
-
-    return Init_String(Alloc_Value(), Pop_Molded_String(mo));
-}
-
-
-//
-//  rebSizedWordUCS2: RL_API
+//  rebSizedWordW: RL_API
 //
 // !!! Currently needed by ODBC module to make column titles.
 //
-REBVAL *RL_rebSizedWordUCS2(const u16 *ucs2, REBCNT len)
+REBVAL *RL_rebSizedWordW(const REBWCHAR *ucs2, REBCNT len)
 {
     Enter_Api_Clear_Last_Error();
 
@@ -1313,15 +1215,6 @@ REBVAL *RL_rebSizedWordUCS2(const u16 *ucs2, REBCNT len)
     REBSTR *spelling = Intern_UTF8_Managed(BIN_HEAD(bin), BIN_LEN(bin));
 
     return Init_Word(Alloc_Value(), spelling);
-}
-
-
-//
-//  rebStringUCS2: RL_API
-//
-REBVAL *RL_rebStringUCS2(const u16 *ucs2)
-{
-    return rebSizedStringUCS2(ucs2, UNKNOWN);
 }
 
 
@@ -1679,11 +1572,11 @@ char *RL_rebFileToLocalAlloc(size_t *size_out, const REBVAL *file, REBOOL full)
 //  rebFileToLocalAllocW: RL_API
 //
 // This is the API exposure of TO-LOCAL-FILE.  It takes in a FILE! and
-// returns an allocated wchar_t buffer.
+// returns an allocated UCS2 buffer.
 //
 // !!! Should MAX_FILE_NAME be taken into account for the OS?
 //
-wchar_t *RL_rebFileToLocalAllocW(
+REBWCHAR *RL_rebFileToLocalAllocW(
     REBCNT *len_out,
     const REBVAL *file,
     REBOOL full
@@ -1741,30 +1634,35 @@ REBVAL *RL_rebLocalToFile(const char *local, REBOOL is_dir)
 //
 //  rebLocalToFileW: RL_API
 //
-// This is the API exposure of TO-REBOL-FILE.  It takes in a wchar_t buffer and
+// This is the API exposure of TO-REBOL-FILE.  It takes in a UCS2 buffer and
 // returns a FILE!.
 //
 // !!! Should MAX_FILE_NAME be taken into account for the OS?
 //
-REBVAL *RL_rebLocalToFileW(const wchar_t *local, REBOOL is_dir)
+REBVAL *RL_rebLocalToFileW(const REBWCHAR *local, REBOOL is_dir)
 {
     Enter_Api_Clear_Last_Error();
 
-#ifdef OS_WIDE_CHAR
-    assert(sizeof(REBUNI) == sizeof(wchar_t));
+    assert(sizeof(REBUNI) == sizeof(REBWCHAR));
+
+    // The wcslen() routine is a Windows routine, there's no generic REBWCHAR
+    // string length function.
+    //
+    REBCNT len = 0;
+    const REBWCHAR *tmp = local;
+    while (*tmp != '\0') {
+        ++len;
+        ++tmp;
+    }
+
     return Init_File(
         Alloc_Value(),
         To_REBOL_Path(
             cast(const REBUNI*, local), // C++ demands cast
-            wcslen(local), // C++ demands cast
+            len,
             is_dir ? PATH_OPT_SRC_IS_DIR : 0
         )
     );
-#else
-    UNUSED(local);
-    UNUSED(is_dir);
-    return_api_error ("wchar_t support not available on non-Windows (yet)");
-#endif
 }
 
 
@@ -1842,7 +1740,7 @@ void RL_rebFail_OS(int errnum)
     if (errnum == 0)
         errnum = GetLastError();
 
-    wchar_t *lpMsgBuf; // FormatMessage writes allocated buffer address here
+    WCHAR *lpMsgBuf; // FormatMessage writes allocated buffer address here
 
     // Specific errors have %1 %2 slots, and if you know the error ID and
     // that it's one of those then this lets you pass arguments to fill
@@ -1863,7 +1761,7 @@ void RL_rebFail_OS(int errnum)
         lpSource,
         errnum, // message identifier
         MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), // default language
-        cast(wchar_t*, &lpMsgBuf), // allocated buffer address written here
+        cast(WCHAR*, &lpMsgBuf), // allocated buffer address written here
         0, // buffer size (not used since FORMAT_MESSAGE_ALLOCATE_BUFFER)
         Arguments
     );

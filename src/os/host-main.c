@@ -321,13 +321,12 @@ int main(int argc, char **argv_ansi)
 #ifdef TO_WINDOWS
     UNUSED(argv_ansi);
 
-    //
     // Were we using WinMain we'd be getting our arguments in Unicode, but
     // since we're using an ordinary main() we do not.  However, this call
     // lets us slip out and pick up the arguments in Unicode form.
     //
-    wchar_t **argv_utf16 = cast(
-        wchar_t**, CommandLineToArgvW(GetCommandLineW(), &argc)
+    WCHAR **argv_utf16 = cast(
+        WCHAR**, CommandLineToArgvW(GetCommandLineW(), &argc)
     );
     int i = 0;
     for (; i < argc; ++i) {

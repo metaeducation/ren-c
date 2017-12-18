@@ -99,7 +99,7 @@ DEVICE_CMD Read_Clipboard(REBREQ *req)
         rebFail ("IsClipboardFormatAvailable()/GetClipboardData() mismatch");
     }
 
-    wchar_t *wide = cast(wchar_t*, GlobalLock(h));
+    WCHAR *wide = cast(WCHAR*, GlobalLock(h));
     if (wide == NULL) {
         CloseClipboard();
         rebFail ("Couldn't GlobalLock() UTF-16 clipboard data");
@@ -159,15 +159,15 @@ DEVICE_CMD Write_Clipboard(REBREQ *req)
     if (NOT(EmptyClipboard())) // !!! is this superfluous?
         rebFail ("EmptyClipboard() failed during write to clipboard");
 
-    // Clipboard wants a Windows memory handle with wchar_t UTF-16 data.  So
+    // Clipboard wants a Windows memory handle with WCHAR data (UCS2).  So
     // allocate sufficienctly sized handle, decode Rebol STRING! into it, and
     // transfer ownership of that handle to the clipboard.
 
-    HANDLE h = GlobalAlloc(GHND, sizeof(wchar_t) * (len + 1));
+    HANDLE h = GlobalAlloc(GHND, sizeof(WCHAR) * (len + 1));
     if (h == NULL) // per documentation, not INVALID_HANDLE_VALUE
         rebFail ("GlobalAlloc() failed during write to clipboard");
 
-    wchar_t *wide = cast(wchar_t*, GlobalLock(h));
+    WCHAR *wide = cast(WCHAR*, GlobalLock(h));
     if (wide == NULL)
         rebFail ("GlobalLock() failed during write to clipboard");
 

@@ -47,20 +47,6 @@ REBOOL All_Bytes_ASCII(REBYTE *bp, REBCNT len)
 
 
 //
-//  All_Codepoints_Latin1: C
-//
-// Returns TRUE if uni string needs 16 bits.
-//
-REBOOL All_Codepoints_Latin1(const REBUNI *up, REBCNT len)
-{
-    for (; len > 0; len--, up++)
-        if (*up >= 0x100) return TRUE;
-
-    return FALSE;
-}
-
-
-//
 //  Temp_Byte_Chars_May_Fail: C
 //
 // NOTE: This function returns a temporary result, and uses an internal

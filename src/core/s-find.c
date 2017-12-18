@@ -635,13 +635,6 @@ REBCNT Find_Str_Char(
     else {
         REBUNI *up = UNI_HEAD(series);
 
-        // Can't actually use wchar_t routines in the general case, because
-        // REBUNI and wchar_t may not be the same size...though on Win32
-        // compilers must guarantee `sizeof(wchar_t) == 2`.  But consider
-        // adapting `casings` for a similar optimization to what's being
-        // done for byte-sized strings at some later date, perhaps based
-        // on a check of `sizeof(wchar_t) == sizeof(REBUNI)`.
-        //
         while (TRUE) {
             if (up[index] == casings[0] || up[index] == casings[1])
                 goto return_index;

@@ -82,7 +82,7 @@ DEVICE_CMD Open_Serial(REBREQ *req)
     // req->special.serial.path should be prefixed with "\\.\" to allow for
     // higher com port numbers
     //
-    wchar_t fullpath[MAX_SERIAL_DEV_PATH] = L"\\\\.\\";
+    WCHAR fullpath[MAX_SERIAL_DEV_PATH] = L"\\\\.\\";
 
     assert(serial->path != NULL);
 

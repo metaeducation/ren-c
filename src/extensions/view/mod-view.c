@@ -143,7 +143,7 @@ REBNATIVE(request_file_p)
     ofn.hwndOwner = NULL; // !!! Should be set to something for modality
     ofn.hInstance = NULL; // !!! Also should be set for context (app type)
 
-    wchar_t *lpstrFilter;
+    WCHAR *lpstrFilter;
     if (REF(filter)) {
         DECLARE_MOLD (mo);
         Push_Mold(mo);
@@ -184,7 +184,7 @@ REBNATIVE(request_file_p)
     //
     ofn.nFilterIndex = 0;
 
-    wchar_t* lpstrFile = OS_ALLOC_N(wchar_t, MAX_FILE_REQ_BUF);
+    WCHAR* lpstrFile = OS_ALLOC_N(WCHAR, MAX_FILE_REQ_BUF);
     ofn.lpstrFile = lpstrFile;
     ofn.lpstrFile[0] = '\0'; // may be filled with ARG(name) below
     ofn.nMaxFile = MAX_FILE_REQ_BUF - 1; // size in characters, space for NULL
@@ -192,11 +192,11 @@ REBNATIVE(request_file_p)
     ofn.lpstrFileTitle = NULL; // can be used to get file w/o path info...
     ofn.nMaxFileTitle = 0; // ...but we want the full path
 
-    wchar_t *lpstrInitialDir;
+    WCHAR *lpstrInitialDir;
     if (REF(file)) {
         REBCNT path_len;
         const REBOOL full = TRUE;
-        wchar_t *path = rebFileToLocalAllocW(&path_len, ARG(name), full);
+        WCHAR *path = rebFileToLocalAllocW(&path_len, ARG(name), full);
 
         // If the last character doesn't indicate a directory, that means
         // we are trying to pre-select a file, which we do by copying the
@@ -226,7 +226,7 @@ REBNATIVE(request_file_p)
         lpstrInitialDir = NULL;
     ofn.lpstrInitialDir = lpstrInitialDir;
 
-    wchar_t *lpstrTitle;
+    WCHAR *lpstrTitle;
     if (REF(title))
         lpstrTitle = rebSpellingOfAllocW(NULL, ARG(text));
     else
@@ -279,7 +279,7 @@ REBNATIVE(request_file_p)
             rebRelease(solo);
         }
         else {
-            const wchar_t *item = ofn.lpstrFile;
+            const WCHAR *item = ofn.lpstrFile;
 
             REBCNT item_len = wcslen(item);
             assert(item_len != 0); // must have at least one item for success
@@ -306,11 +306,11 @@ REBNATIVE(request_file_p)
 
                 REBCNT dir_len;
                 const REBOOL full = TRUE;
-                wchar_t *dir_wide = rebFileToLocalAllocW(&dir_len, dir, full);
+                WCHAR *dir_wide = rebFileToLocalAllocW(&dir_len, dir, full);
 
                 while ((item_len = wcslen(item)) != 0) {
-                    wchar_t *buffer = OS_ALLOC_N(
-                        wchar_t, dir_len + item_len + 1 // null terminator
+                    WCHAR *buffer = OS_ALLOC_N(
+                        WCHAR, dir_len + item_len + 1 // null terminator
                     );
 
                     wcscpy(buffer, dir_wide);
@@ -516,7 +516,7 @@ int CALLBACK ReqDirCallbackProc(
 ){
     UNUSED(lParam);
 
-    const wchar_t* dir = cast(wchar_t*, lpData);
+    const WCHAR* dir = cast(WCHAR*, lpData);
 
     static REBOOL inited = FALSE; 
     switch (uMsg) {
@@ -587,7 +587,7 @@ REBNATIVE(request_dir_p)
     bi.hwndOwner = NULL;
     bi.pidlRoot = NULL;
 
-    wchar_t display[MAX_PATH];
+    WCHAR display[MAX_PATH];
     display[0] = '\0';
     bi.pszDisplayName = display; // assumed length is MAX_PATH
 
@@ -620,7 +620,7 @@ REBNATIVE(request_dir_p)
     LPCITEMIDLIST pFolder = SHBrowseForFolder(&bi);
     osDialogOpen = FALSE;
 
-    wchar_t folder[MAX_PATH];
+    WCHAR folder[MAX_PATH];
     if (pFolder == NULL)
         Init_Blank(D_OUT);
     else if (NOT(SHGetPathFromIDList(pFolder, folder)))
@@ -632,9 +632,9 @@ REBNATIVE(request_dir_p)
     }
 
     if (REF(title))
-        OS_FREE(cast(wchar_t*, bi.lpszTitle));
+        OS_FREE(cast(WCHAR*, bi.lpszTitle));
     if (REF(path))
-        OS_FREE(cast(wchar_t*, bi.lParam));
+        OS_FREE(cast(WCHAR*, bi.lParam));
 #else
     UNUSED(REF(title));
     UNUSED(ARG(text));

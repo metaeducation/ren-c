@@ -572,6 +572,43 @@ typedef struct sInt64 {
 
 //=////////////////////////////////////////////////////////////////////////=//
 //
+// "WIDE" CHARACTER DEFINITION (UCS2)
+//
+//=////////////////////////////////////////////////////////////////////////=//
+//
+// Consensus about the wchar_t datatype is generally that it's a pre-Unicode
+// abstraction that should be avoided unless you absolutely need it.  It
+// varies in size by platform...though it is standardized to 2 bytes in size
+// on Windows, where there is `#define WCHAR wchar_t`
+//
+// Some APIs (such as unixodbc) use UCS2 for wide character handling in order
+// to be compatible with Windows, vs. using the native wchar_t type.  It thus
+// defines SQLWCHAR as an unsigned short integer (itself not *guaranteed* to
+// be 16-bits in size).  However, such a definition cannot be used if
+// compiling as C++ and be compatible with Windows's #define:
+//
+// https://stackoverflow.com/q/1238609
+//
+// The primary focus of Ren-C is on UTF-8, but it does grudgingly provide
+// some UCS2 APIs.  To avoid duplicating a u16-based "UCS2" API and a wchar_t
+// API, the API is exposed as being REBWCHAR based, which does a #define
+// based on the platform.
+//
+// *** However, don't use REBWCHAR in client code.  If the client code is
+// on Windows, use WCHAR.  If it's in a unixodbc client use SQLWCHAR.  In
+// general, try and use UTF8 if you possibly can. ***
+//
+
+#ifdef TO_WINDOWS
+    #define REBWCHAR wchar_t
+#else
+    #define REBWCHAR u16
+#endif
+
+
+
+//=////////////////////////////////////////////////////////////////////////=//
+//
 // C FUNCTION TYPE (__cdecl)
 //
 //=////////////////////////////////////////////////////////////////////////=//

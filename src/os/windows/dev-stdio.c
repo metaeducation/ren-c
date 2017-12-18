@@ -44,7 +44,7 @@
 
 static HANDLE Std_Out = NULL;
 static HANDLE Std_Inp = NULL;
-static wchar_t *Std_Buf = NULL; // Used for UTF-8 conversion of stdin/stdout.
+static WCHAR *Std_Buf = NULL; // Used for UTF-8 conversion of stdin/stdout.
 
 static BOOL Redir_Out = 0;
 static BOOL Redir_Inp = 0;
@@ -106,7 +106,7 @@ DEVICE_CMD Open_IO(REBREQ *req)
         if (!Redir_Inp || !Redir_Out) {
             // If either input or output is not redirected, preallocate
             // a buffer for conversion from/to UTF-8.
-            Std_Buf = OS_ALLOC_N(wchar_t, BUF_SIZE);
+            Std_Buf = OS_ALLOC_N(WCHAR, BUF_SIZE);
         }
 
         if (!Redir_Inp) {
@@ -325,7 +325,7 @@ DEVICE_CMD Read_IO(REBREQ *req)
     // expected by code calling INPUT.  If these forms of cancellation are
     // encountered, we write a line to maintain the visual invariant.
     //
-    wchar_t cr_lf_term[3];
+    WCHAR cr_lf_term[3];
     cr_lf_term[0] = CR;
     cr_lf_term[1] = LF;
     cr_lf_term[2] = '\0';

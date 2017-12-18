@@ -141,7 +141,7 @@ REBCTX *Error_ODBC(SQLSMALLINT handleType, SQLHANDLE handle) {
     DECLARE_LOCAL (string);
 
     if (rc == SQL_SUCCESS || rc == SQL_SUCCESS_WITH_INFO) {
-        REBVAL *temp = rebSizedStringUCS2(message, message_len);
+        REBVAL *temp = rebSizedStringW(message, message_len);
         Move_Value(string, temp);
         rebRelease(temp);
     }
@@ -221,12 +221,12 @@ REBNATIVE(open_connection)
     //  UCS2 encoded. iODBC I believe uses wchar_t (this is based on
     //  attempting to support iODBC in DBD::ODBC)"
     //
-    // This requirement meant adding UCS2 support to the API.  There are
-    // wchar_t-based APIs as well, so a motivated individual could make some
-    // shims to allow picking which Rebol string API to use if they wanted
-    // it to work with char_t-based ODBC where sizeof(wchar_t) != sizeof(u32)
+    // The consensus about wchar_t is that it preceded Unicode and mostly
+    // exists for backward compatibility.  Ren-C's APIs are "UTF-8 Everywhere"
+    // and only grudgingly support UCS2 for Windows compatibility, where the
+    // exposed datatype for the 16-bit character is REBWCHAR.
     //
-    assert(sizeof(SQLWCHAR) == sizeof(u32));
+    assert(sizeof(SQLWCHAR) == sizeof(REBWCHAR));
 
     SQLRETURN rc;
 
@@ -270,7 +270,7 @@ REBNATIVE(open_connection)
     // Connect to the Driver, using the converted connection string
     //
     REBCNT connect_len;
-    SQLWCHAR *connect = rebSpellingOfAllocUCS2(&connect_len, ARG(spec));
+    SQLWCHAR *connect = rebSpellingOfAllocW(&connect_len, ARG(spec));
 
     SQLSMALLINT out_connect_len;
     rc = SQLDriverConnectW(
@@ -468,7 +468,7 @@ SQLRETURN ODBC_BindParameter(
 
     case REB_STRING: {
         REBCNT length;
-        SQLWCHAR *chars = rebSpellingOfAllocUCS2(&length, v);
+        SQLWCHAR *chars = rebSpellingOfAllocW(&length, v);
 
         p->buffer_size = sizeof(SQLWCHAR) * length;
         
@@ -534,7 +534,7 @@ SQLRETURN ODBC_GetCatalog(
         REBVAL *value = rebPickIndexed(block, arg + 1);
         if (IS_STRING(value)) {
             REBCNT len;
-            pattern[arg] = rebSpellingOfAllocUCS2(&len, KNOWN(value));
+            pattern[arg] = rebSpellingOfAllocW(&len, KNOWN(value));
             length[arg] = len;
         }
         else {
@@ -685,7 +685,7 @@ SQLRETURN ODBC_DescribeResults(
         //
         // int length = ODBC_UnCamelCase(column->title, title);
 
-        column->title_word = rebSizedWordUCS2(title, title_length);
+        column->title_word = rebSizedWordW(title, title_length);
     }
 
     return SQL_SUCCESS;
@@ -923,7 +923,7 @@ REBNATIVE(insert_odbc)
 
         if (NOT(use_cache)) {
             REBCNT length;
-            SQLWCHAR *sql_string = rebSpellingOfAllocUCS2(&length, value);
+            SQLWCHAR *sql_string = rebSpellingOfAllocW(&length, value);
 
             rc = SQLPrepareW(hstmt, sql_string, cast(SQLSMALLINT, length));
             if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
@@ -1188,7 +1188,7 @@ REBVAL *ODBC_Column_To_Rebol_Value(COLUMN *col) {
     case SQL_WVARCHAR:
     case SQL_WLONGVARCHAR:
     case SQL_GUID:
-        return rebStringUCS2(cast(SQLWCHAR*, col->buffer)); // !!! pass size?
+        return rebStringW(cast(SQLWCHAR*, col->buffer)); // !!! pass size?
 
     default:
         break;
