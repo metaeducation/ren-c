@@ -334,6 +334,138 @@ inline static void Recover_Frame(REBFRM *f)
 }
 
 
+// Ordinary Rebol internals deal with REBVAL* that are resident in arrays.
+// But a va_list can contain UTF-8 string components or special instructions
+// that are other Detect_Rebol_Pointer() types.  Anyone who wants to set or
+// preload a frame's state for a va_list has to do this detection, so this
+// code has to be factored out (because a C va_list cannot have its first
+// parameter in the variadic).
+//
+inline static void Set_Frame_Detected_Fetch(REBFRM *f, const void *p)
+{
+detect_again:
+
+#if !defined(NDEBUG)
+    if (p == NULL)
+        panic ("NULL should not be used to terminate C va_lists, use END");
+#endif
+
+    switch (Detect_Rebol_Pointer(p)) {
+    case DETECTED_AS_UTF8: {
+        SCAN_STATE ss;
+        const REBUPT start_line = 1;
+        Init_Va_Scan_State_Core(
+            &ss,
+            STR("sys-do.h"),
+            start_line,
+            cast(const REBYTE*, p),
+            f->source.vaptr
+        );
+
+        // This scan may advance the va_list across several units,
+        // incorporating REBVALs into the scanned array as it goes.  It could
+        // stop when it completed just some tokens, e.g. it doesn't need to
+        // include `b` in the array here, it could stop at "]":
+        //
+        //     rebDo("[", a, "]", b, END);
+        //
+        // But if scanning is to be done anyway to produce a REBARR*, it would
+        // be wasteful to create individual arrays for each string section,
+        // not to mention wasteful to repeat binding for each string.
+        //
+        // !!! There may be special "binding instructions" or otherwise, as
+        // well.  This is an area to be investigated, and tight integration
+        // between this code and the scanner may be needed.
+        //
+        f->source.array = Scan_Array(&ss, 0);
+
+        if (IS_END(ARR_HEAD(f->source.array))) {
+            //
+            // This happens when somone says rebDo(..., "", ...) or similar,
+            // and gets an empty array from a string scan.  It's not legal
+            // to put an END in f->value, and it's unknown if the variadic
+            // feed is actually over so as to put NULL... so get another
+            // value out of the va_list and keep going.
+            //
+            p = va_arg(*f->source.vaptr, const void*);
+            goto detect_again;
+        }
+
+        f->value = ARR_HEAD(f->source.array);
+        f->source.pending = f->value + 1; // may be END
+        f->source.index = 1;
+
+        panic ("String-based rebDo() not actually ready yet.");
+    }
+
+    case DETECTED_AS_SERIES: {
+        //
+        // Currently the only kind of series we handle here are the
+        // result of the rebEval() instruction, which is assumed to only
+        // provide a value and then be automatically freed.  (The system
+        // exposes EVAL the primitive but not a generalized EVAL bit on
+        // values, so this is a hack to make rebDo() slightly more
+        // palatable.)
+        //
+        REBARR *eval = ARR(m_cast(void*, p));
+        assert(NOT_SER_INFO(eval, SERIES_INFO_HAS_DYNAMIC));
+        assert(GET_VAL_FLAG(ARR_HEAD(eval), VALUE_FLAG_EVAL_FLIP));
+
+        Move_Value(&f->cell, KNOWN(ARR_HEAD(eval)));
+        SET_VAL_FLAG(&f->cell, VALUE_FLAG_EVAL_FLIP);
+        f->value = &f->cell;
+    #if !defined(NDEBUG)
+        f->kind = VAL_TYPE(f->value);
+    #endif
+
+        // !!! Ideally we would free the array here, but since the free
+        // would occur during a Do_Core() it would appear to be happening
+        // outside of a checkpoint.  It's an important enough assert to
+        // not disable lightly just for this case, so the instructions
+        // are managed for now...but the intention is to free them as
+        // they are encountered.
+        //
+        /* Free_Array(eval); */
+        break; }
+
+    case DETECTED_AS_FREED_SERIES:
+        panic (p);
+
+    case DETECTED_AS_VALUE:
+        f->source.array = NULL;
+        f->value = cast(const RELVAL*, p); // not END, detected separately
+    #if !defined(NDEBUG)
+        f->kind = VAL_TYPE(f->value);
+    #endif
+        assert(
+            (
+                IS_VOID(f->value)
+                && (f->flags.bits & DO_FLAG_EXPLICIT_EVALUATE)
+            ) || NOT(IS_RELATIVE(f->value))
+        );
+        break;
+        
+    case DETECTED_AS_END: {
+        //
+        // We're at the end of the variadic input, so this is the end of
+        // the line.  va_end() is taken care of by Drop_Frame_Core()
+        //
+        f->value = NULL;
+    #if !defined(NDEBUG)
+        f->kind = REB_0;
+        TRASH_POINTER_IF_DEBUG(f->source.pending);
+    #endif
+        break; }
+
+    case DETECTED_AS_TRASH_CELL:
+        panic (p);
+
+    default:
+        assert(FALSE);
+    }
+}
+
+
 //
 // Fetch_Next_In_Frame() (see notes above)
 //
@@ -373,7 +505,6 @@ inline static void Fetch_Next_In_Frame(REBFRM *f) {
         // We're not processing a C variadic at all, so the first END we hit
         // is the full stop end.
         //
-    end_of_input:
         f->value = NULL;
     #if !defined(NDEBUG)
         f->kind = REB_0;
@@ -385,111 +516,13 @@ inline static void Fetch_Next_In_Frame(REBFRM *f) {
         // and handled in different ways.  Notably, a UTF-8 string can be
         // differentiated and loaded.
         //
-    feed_variadic:;
         const void *p = va_arg(*f->source.vaptr, const void*);
 
     #if !defined(NDEBUG)
         f->source.index = TRASHED_INDEX;
     #endif
 
-        switch (Detect_Rebol_Pointer(p)) {
-        case DETECTED_AS_UTF8: {
-            SCAN_STATE ss;
-            const REBUPT start_line = 1;
-            Init_Va_Scan_State_Core(
-                &ss,
-                STR("sys-do.h"),
-                start_line,
-                cast(const REBYTE*, p),
-                f->source.vaptr
-            );
-
-            // This scan may advance the va_list across several units,
-            // incorporating REBVALs into the scanned array as it goes.  It
-            // also may fail.
-            //
-            f->source.array = Scan_Array(&ss, 0);
-
-            if (IS_END(ARR_HEAD(f->source.array))) // e.g. "" as a fragment
-                goto feed_variadic;
-
-            f->value = ARR_HEAD(f->source.array);
-            f->source.pending = f->value + 1; // may be END
-            f->source.index = 1;
-
-            // !!! Right now the variadic scans all the way to the end of
-            // the array.  That might be too much, or skip over instructions
-            // we want to handle which are neither REBVAL* nor UTF-8* nor
-            // END.  But if scanning is to be done anyway to produce a
-            // REBARR*, it would be wasteful to create individual arrays for
-            // each string section, not to mention wasteful to repeat the
-            // binding process for each string.  These open questions will
-            // take time to answer, but this partial code points toward
-            // where the bridge to the scanner would be.
-            //
-            panic ("String-based rebDo() not actually ready yet.");
-        }
-
-        case DETECTED_AS_SERIES: {
-            //
-            // Currently the only kind of series we handle here are the
-            // result of the rebEval() instruction, which is assumed to only
-            // provide a value and then be automatically freed.  (The system
-            // exposes EVAL the primitive but not a generalized EVAL bit on
-            // values, so this is a hack to make rebDo() slightly more
-            // palatable.)
-            //
-            REBARR *eval = ARR(m_cast(void*, p));
-            assert(NOT_SER_INFO(eval, SERIES_INFO_HAS_DYNAMIC));
-            assert(GET_VAL_FLAG(ARR_HEAD(eval), VALUE_FLAG_EVAL_FLIP));
-
-            Move_Value(&f->cell, KNOWN(ARR_HEAD(eval)));
-            SET_VAL_FLAG(&f->cell, VALUE_FLAG_EVAL_FLIP);
-            f->value = &f->cell;
-        #if !defined(NDEBUG)
-            f->kind = VAL_TYPE(f->value);
-        #endif
-
-            // !!! Ideally we would free the array here, but since the free
-            // would occur during a Do_Core() it would appear to be happening
-            // outside of a checkpoint.  It's an important enough assert to
-            // not disable lightly just for this case, so the instructions
-            // are managed for now...but the intention is to free them as
-            // they are encountered.
-            //
-            /* Free_Array(eval); */
-            break; }
-
-        case DETECTED_AS_FREED_SERIES:
-            panic (p);
-
-        case DETECTED_AS_VALUE:
-            f->source.array = NULL;
-            f->value = cast(const RELVAL*, p); // not END, detected separately
-        #if !defined(NDEBUG)
-            f->kind = VAL_TYPE(f->value);
-        #endif
-            assert(
-                (
-                    IS_VOID(f->value)
-                    && (f->flags.bits & DO_FLAG_EXPLICIT_EVALUATE)
-                ) || NOT(IS_RELATIVE(f->value))
-            );
-            break;
-        
-        case DETECTED_AS_END: {
-            //
-            // We're at the end of the variadic input, so this is the end of
-            // the line.  va_end() is taken care of by Drop_Frame_Core()
-            //
-            goto end_of_input; }
-
-        case DETECTED_AS_TRASH_CELL:
-            panic (p);
-
-        default:
-            assert(FALSE);
-        };
+        Set_Frame_Detected_Fetch(f, p);
     }
 }
 
@@ -910,8 +943,8 @@ inline static REBIXO Do_Va_Core(
     f->source.array = NULL;
     f->source.vaptr = vaptr;
     f->source.pending = END; // signal next fetch should come from va_list
-    if (opt_first)
-        SET_FRAME_VALUE(f, opt_first); // no specifier, not relative
+    if (opt_first != NULL)
+        Set_Frame_Detected_Fetch(f, opt_first);
     else {
     #if !defined(NDEBUG)
         //

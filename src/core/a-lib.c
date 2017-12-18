@@ -507,11 +507,9 @@ REBVAL *RL_rebDoValue(const REBVAL *v)
     // loaded and bound each time.
     //
     // As with much of the API it could be more optimal, but this is a test
-    // of the concept.  BLANK_VALUE has to be used for the moment as the
-    // first instruction since rebEval() instructions are not allowed in
-    // the preload slot of a variadic yet.
+    // of the concept.
     //
-    return rebDo(BLANK_VALUE, rebEval(NAT_VALUE(do)), v, END);
+    return rebDo(rebEval(NAT_VALUE(do)), v, END);
 }
 
 
@@ -1257,6 +1255,35 @@ REBVAL *RL_rebCopyExtra(const REBVAL *v, REBCNT extra)
 
 
 //
+//  rebAppend: RL_API
+//
+REBVAL *RL_rebAppend(REBVAL *series, const REBVAL *value)
+{
+    Enter_Api_Clear_Last_Error();
+
+    // !!! There is no ACT_VALUE() like there is NAT_VALUE() for accessing
+    // the actual natives.  So we'd need to add that, bind via a potentially
+    // flaky word or string, or find some other way to do it.  This only
+    // exists for a very narrow purpose at time of writing...the appending
+    // of strings to each other, so that client code isn't calling UNI_HEAD()
+    // and looking at string series internals.  So temporarily hack this
+    // in as a call to the internal routine for string appending.
+    //
+    if (NOT(ANY_STRING(series)) || NOT(ANY_STRING(value)))
+        fail ("rebAppend() very temporarily only supports strings");
+
+    Append_String(
+        VAL_SERIES(series),
+        VAL_SERIES(value),
+        VAL_INDEX(value),
+        VAL_LEN_AT(value)
+    );
+
+    return series;
+}
+
+
+//
 //  rebLengthOf: RL_API
 //
 long RL_rebLengthOf(const REBVAL *series)
@@ -1281,7 +1308,7 @@ REBVAL *RL_rebPickIndexed(const REBVAL *series, long index)
 
     if (NOT(ANY_SERIES(series)))
         return_api_error (
-            "rebPickAtIndex() requires series argument to be ANY-SERIES!"
+            "rebPickIndexed() requires series argument to be ANY-SERIES!"
         );
 
     DECLARE_LOCAL (picker);
@@ -1291,7 +1318,6 @@ REBVAL *RL_rebPickIndexed(const REBVAL *series, long index)
 
     DECLARE_LOCAL (get_path);
     return rebDo(
-        BLANK_VALUE, // temporary hack, can't rebEval() first rebDo() slot
         rebEval(Init_Any_Array(get_path, REB_GET_PATH, array)),
         END
     );
@@ -1398,9 +1424,8 @@ void RL_rebFail(const void *p)
 
     // !!! Should there be a special bit or dispatcher used on the FAIL to
     // ensure it does not continue running?  If it were a dispatcher then
-    // HIJACK would have to be aware of it and preserve it.
-    //
-    // !!! Could this be the meaning of `return: []` ?
+    // HIJACK would have to be aware of it and preserve it.  This is something
+    // like ATTRIBUTE_NO_RETURN in C, which could be enforced.
 
     const void *p2 = p; // keep original p for examining in the debugger
 
@@ -1435,7 +1460,6 @@ void RL_rebFail(const void *p)
 
     fail_on_value:;
         REBVAL *result = rebDo(
-            BLANK_VALUE, // temp workaround, can't rebEval() first slot yet
             rebEval(NAT_VALUE(fail)),
             cast(const REBVAL*, p2),
             END
@@ -1505,7 +1529,6 @@ void RL_rebPanic(const void *p)
     switch (Detect_Rebol_Pointer(p)) {
     case DETECTED_AS_UTF8:
         rebDo(
-            BLANK_VALUE, // temp workaround, can't rebEval() first slot yet
             rebEval(NAT_VALUE(panic)),
             rebString(cast(const char*, p)), // leaks (but we're crashing)
             END
@@ -1525,7 +1548,6 @@ void RL_rebPanic(const void *p)
 
     case DETECTED_AS_VALUE:
         rebDo(
-            BLANK_VALUE, // temp workaround, can't rebEval() first slot yet
             rebEval(NAT_VALUE(panic_value)),
             cast(const REBVAL*, p),
             END

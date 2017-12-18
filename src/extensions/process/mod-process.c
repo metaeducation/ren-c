@@ -121,27 +121,17 @@ REBCHR *rebValSpellingAllocOS(REBCNT *len_out, REBVAL *any_string)
 //
 void Append_OS_Str(REBVAL *dest, const void *src, REBINT len)
 {
-    REBSER *ser;
+    REBVAL *src_str;
 
 #ifdef TO_WINDOWS
-    assert(sizeof(REBUNI) == sizeof(REBWCHAR));
-
-    ser = Make_Unicode(len);
-    SET_SERIES_LEN(ser, len);
-
-    const REBWCHAR* wsrc = cast(const REBWCHAR*, src);
-    REBUNI *up = UNI_HEAD(ser);
-    while (len-- > 0)
-        *up++ = *cast(const REBWCHAR*, wsrc++);
-    *up = '\0';
-    ASSERT_SERIES_TERM(ser);
+    src_str = rebSizedStringW(cast(const REBWCHAR*, src), len);
 #else
-    ser = Append_UTF8_May_Fail(NULL, cast(const char*, src), len);
+    src_str = rebSizedString(cast(const char*, src), len);
 #endif
 
-    Append_String(VAL_SERIES(dest), ser, 0, SER_LEN(ser));
-    
-    Free_Series(ser);
+    rebAppend(dest, src_str);
+
+    rebRelease(src_str);
 }
 
 
