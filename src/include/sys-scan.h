@@ -283,3 +283,159 @@ enum {
 **  Externally Accessed Variables
 */
 extern const REBYTE Lex_Map[256];
+
+
+//=////////////////////////////////////////////////////////////////////////=//
+//
+// REBCHR(*) or REBCHR(const *)- UTF-8 EVERYWHERE UNICODE HELPER MACROS
+//
+//=////////////////////////////////////////////////////////////////////////=//
+//
+// R3-Alpha historically expected constant character widths in strings, of
+// either 1 or 2 bytes per character.  This idea of varying the storage widths
+// is being replaced by embracing the concept of "UTF-8 Everywhere":
+//
+// http://utf8everywhere.org
+//
+// In order to assist in retrofitting code under the old expectations, the C++
+// build uses a class that disables the ability to directly increment or
+// decrement pointers to REBCHR without going through helper routines.  To get
+// this checking, raw pointers cannot be used.  So a technique described here
+// was used to create the REBCHR(*) macro to be used in place of REBUNI*:
+//
+// http://blog.hostilefork.com/kinda-smart-pointers-in-c/
+//
+// So for instance: instead of simply saying:
+//
+//     REBUNI *ptr = UNI_HEAD(string_series);
+//     REBUNI c = *ptr++;
+//
+// ...one must instead write:
+//
+//     REBCHR(*) ptr = CHR_HEAD(string_series);
+//     ptr = NEXT_CHR(&c, ptr); // ++ptr or ptr[n] will error in C++ build
+//
+// The code that runs behind the scenes is currently equivalent to the pointer
+// incrementing and decrementing.  But it will become typical UTF-8 forward
+// and backward scanning code after the conversion.
+//
+
+#if defined(__cplusplus) && __cplusplus >= 201103L
+    template<class T>
+    class RebchrPtr;
+
+    template<>
+    class RebchrPtr<const void*> {
+    protected:
+        REBWCHAR *p;
+
+    public:
+        RebchrPtr () {}
+        RebchrPtr (const REBWCHAR *p) : p (const_cast<REBWCHAR *>(p)) {}
+
+        RebchrPtr back(REBWCHAR *codepoint_out) {
+            if (codepoint_out != NULL)
+                *codepoint_out = *p;
+            return p - 1;
+        }
+
+        RebchrPtr next(REBWCHAR *codepoint_out) {
+            if (codepoint_out != NULL)
+                *codepoint_out = *p;
+            return p + 1;
+        }
+
+        REBWCHAR code() {
+            REBWCHAR temp;
+            next(&temp);
+            return temp;
+        }
+    };
+
+    template<>
+    class RebchrPtr<void *> : public RebchrPtr<const void *> {
+    
+    public:
+        RebchrPtr () : RebchrPtr<const void*>() {}
+        RebchrPtr (REBWCHAR *p) : RebchrPtr<const void*> (p) {}
+
+        RebchrPtr back(REBWCHAR *codepoint_out) {
+            if (codepoint_out != NULL)
+                *codepoint_out = *p;
+            return p - 1;
+        }
+
+        RebchrPtr next(REBWCHAR *codepoint_out) {
+            if (codepoint_out != NULL)
+                *codepoint_out = *p;
+            return p + 1;
+        }
+
+        RebchrPtr write(REBWCHAR codepoint) {
+            *p = codepoint;
+            return p + 1;
+        }
+    };
+
+    #define REBCHR(x) RebchrPtr<void x>
+
+    #define CHR_CODE(p) \
+        (p).code()
+
+    #define const_BACK_CHR(codepoint_out, p) \
+        (p).back(codepoint_out)
+
+    #define BACK_CHR(codepoint_out, p) \
+        (p).back(codepoint_out)
+
+    #define const_NEXT_CHR(codepoint_out, p) \
+        (p).next(codepoint_out)
+
+    #define NEXT_CHR(codepoint_out, p) \
+        (p).next(codepoint_out)
+
+    #define WRITE_CHR(p, codepoint) \
+        (p).write(codepoint)
+#else
+    #define REBCHR(x) REBWCHAR x
+
+    #define CHR_CODE(p) \
+        (*p)
+
+    inline static REBCHR(const *) const_BACK_CHR(
+        REBWCHAR *codepoint_out,
+        REBCHR(const *) p
+    ){
+        if (codepoint_out != NULL)
+            *codepoint_out = *p;
+        return p - 1;
+    }
+
+    inline static REBCHR(*) BACK_CHR(
+        REBWCHAR *codepoint_out,
+        REBCHR(*) p
+    ){
+        return m_cast(REBCHR(*), const_BACK_CHR(codepoint_out, p));
+    }
+
+    inline static REBCHR(const *) const_NEXT_CHR(
+        REBWCHAR *codepoint_out,
+        REBCHR(const *) p
+    ){
+        if (codepoint_out != NULL)
+            *codepoint_out = *p;
+        return p + 1;
+    }
+
+    inline static REBCHR(*) NEXT_CHR(
+        REBWCHAR *codepoint_out,
+        REBCHR(*) p
+    ){
+        return m_cast(REBCHR(*), const_NEXT_CHR(codepoint_out, p));
+    }
+
+    inline static REBCHR(*) WRITE_CHR(REBCHR(*) p, REBWCHAR codepoint) {
+        *p = codepoint;
+        return p + 1;
+    }
+#endif

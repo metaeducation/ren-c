@@ -76,13 +76,13 @@
 #include "tmp-mod-process-first.h"
 
 
-// !!! %mod-process.c is now the last file that uses this REBCHR definition.
-// Excise as soon as possible.
+// !!! %mod-process.c is now the last file that uses this cross platform OS
+// character definition.  Excise as soon as possible.
 //
 #ifdef TO_WINDOWS
-    #define REBCHR WCHAR
+    #define OSCHR WCHAR
 #else
-    #define REBCHR char
+    #define OSCHR char
 #endif
 
 
@@ -93,7 +93,7 @@
 // On Windows, the result is a wide-char pointer, but on Linux, its UTF-8.
 // The returned pointer must be freed with OS_FREE.
 //
-REBCHR *rebValSpellingAllocOS(REBCNT *len_out, REBVAL *any_string)
+OSCHR *rebValSpellingAllocOS(REBCNT *len_out, REBVAL *any_string)
 {
 #ifdef OS_WIDE_CHAR
     return rebSpellingOfAllocW(len_out, any_string);
@@ -1516,9 +1516,9 @@ REBNATIVE(call)
     // we do dynamic allocations of argc strings through the API.  These need
     // to be freed before we return.
     //
-    REBCHR *cmd;
+    OSCHR *cmd;
     int argc;
-    const REBCHR **argv;
+    const OSCHR **argv;
     REBSER *argv_ser;
 
     if (IS_STRING(ARG(command))) {
@@ -1531,9 +1531,9 @@ REBNATIVE(call)
         cmd = rebValSpellingAllocOS(NULL, ARG(command));
 
         argc = 1;
-        argv_ser = Make_Series(argc + 1, sizeof(REBCHR*));
+        argv_ser = Make_Series(argc + 1, sizeof(OSCHR*));
 
-        argv = SER_HEAD(const REBCHR*, argv_ser);
+        argv = SER_HEAD(const OSCHR*, argv_ser);
 
         // !!! Make two copies because it frees cmd and all the argv.  Review.
         //
@@ -1550,8 +1550,8 @@ REBNATIVE(call)
         if (argc <= 0)
             fail (Error_Too_Short_Raw());
 
-        argv_ser = Make_Series(argc + 1, sizeof(REBCHR*));
-        argv = SER_HEAD(const REBCHR*, argv_ser);
+        argv_ser = Make_Series(argc + 1, sizeof(OSCHR*));
+        argv = SER_HEAD(const OSCHR*, argv_ser);
 
         int i;
         for (i = 0; i < argc; i ++) {
@@ -1578,9 +1578,9 @@ REBNATIVE(call)
         cmd = NULL;
 
         argc = 1;
-        argv_ser = Make_Series(argc + 1, sizeof(REBCHR*));
+        argv_ser = Make_Series(argc + 1, sizeof(OSCHR*));
 
-        argv = SER_HEAD(const REBCHR*, argv_ser);
+        argv = SER_HEAD(const OSCHR*, argv_ser);
 
         const REBOOL full = FALSE;
 
@@ -1616,9 +1616,9 @@ REBNATIVE(call)
 
     REBINT r = OS_Create_Process(
         frame_,
-        cast(const REBCHR*, cmd),
+        cast(const OSCHR*, cmd),
         argc,
-        cast(const REBCHR**, argv),
+        cast(const OSCHR**, argv),
         flag_wait,
         &pid,
         &exit_code,
@@ -1637,7 +1637,7 @@ REBNATIVE(call)
 
     int i;
     for (i = 0; i < argc; ++i)
-        OS_FREE(m_cast(REBCHR*, argv[i]));
+        OS_FREE(m_cast(OSCHR*, argv[i]));
 
     if (cmd != NULL)
         OS_FREE(cmd);

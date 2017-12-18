@@ -80,37 +80,22 @@ typedef u8 REBYTE; // unsigned byte data
 
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// UNICODE CHARACTER TYPE
+// UNICODE CODEPOINT
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// REBUNI is a two-byte UCS-2 representation of a Unicode codepoint.  Some
-// routines once errantly conflated wchar_t with REBUNI, but a wchar_t is not
-// 2 bytes on all platforms (it's 4 on GCC in 64-bit Linux, for instance).
-// Routines for handling UCS-2 must be custom-coded or come from a library.
-// (For example: you can't use wcslen() so Strlen_Uni() is implemented inside
-// of Rebol.)
+// REBUNI is currently a two-byte representation of a Unicode codepoint.  It
+// is not UCS2...it's simply limited to 16-bit codepoints.  R3-Alpha did not
+// have CHAR! values higher than that.
 //
-// Rebol is able to have its strings start out as UCS-1, with a single byte
-// per character.  For that it uses REBYTEs.  But when you insert something
-// requiring a higher codepoint, it goes to UCS-2 with REBUNI and will not go
-// back (at time of writing).
-//
-// !!! BEWARE that several lower level routines don't do this widening, so be
-// sure that you check which are which.
-//
-// Longer term, the growth of emoji usage in Internet communication has led
-// to supporting higher "astral" codepoints as being a priority.  This means
-// either being able to "double-widen" to UCS-4, as is Red's strategy:
-//
-// http://www.red-lang.org/2012/09/plan-for-unicode-support.html
-//
-// Or it could also mean shifting to "UTF-8 everywhere":
-//
-// http://utf8everywhere.org
+// Ren-C is being adapted to where this will become a full 32-bit value.  The
+// goal is to retrofit the code to use "UTF-8 Everywhere".  In the meantime,
+// REBUNI is used internally to store Rebol ANY-STRING!s.  When all references
+// to it have been changed to use the REBCHR(*) interface for safe variable
+// sized encoding enumeration, a switch can be flipped and it can be upgraded.
 //
 
-typedef u16 REBUNI;
+typedef REBWCHAR REBUNI;
 
 #define MAX_UNI \
     ((1 << (8 * sizeof(REBUNI))) - 1)
