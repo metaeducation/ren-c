@@ -279,3 +279,13 @@ inline static REBSER *Copy_Sequence_At_Len(
 ){
     return Copy_Sequence_At_Len_Extra(s, index, len, 0);
 }
+
+
+// This is a speculative routine, which is based on the idea that it will be
+// common for UTF-8 anywhere strings to cache a bit saying whether they are
+// in ASCII range and fixed size.  If this is the case, different algorithms
+// might be applied, for instance a standard C qsort() to sort the characters.
+//
+inline static REBOOL Is_String_ASCII(const RELVAL *str) {
+    return FALSE; // currently all strings are 16-bit REBUNI characters
+}

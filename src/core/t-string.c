@@ -93,21 +93,6 @@ static void swap_chars(REBVAL *val1, REBVAL *val2)
     SET_ANY_CHAR(s2, VAL_INDEX(val2), c1);
 }
 
-
-static void reverse_string(REBVAL *value, REBCNT len)
-{
-    REBUNI *up = VAL_UNI_AT(value);
-
-    REBCNT n = 0;
-    REBCNT m = len - 1;
-    for (; n < len / 2; n++, m--) {
-        REBUNI c = up[n];
-        up[n] = up[m];
-        up[m] = c;
-    }
-}
-
-
 static void reverse_binary(REBVAL *v, REBCNT len)
 {
     REBYTE *bp = VAL_BIN_AT(v);
@@ -120,6 +105,59 @@ static void reverse_binary(REBVAL *v, REBCNT len)
         bp[m] = b;
     }
 }
+
+
+static void reverse_string(REBVAL *v, REBCNT len)
+{
+    if (len == 0)
+        return; // if non-zero, at least one character in the string
+
+    if (Is_String_ASCII(v))
+        reverse_binary(v, len);
+    else {
+        // !!! This is an inefficient method for reversing strings with
+        // variable size codepoints.  Better way could work in place:
+        //
+        // https://stackoverflow.com/q/199260/
+
+        DECLARE_MOLD (mo);
+        Push_Mold(mo);
+
+        REBCNT val_len_head = VAL_LEN_HEAD(v);
+
+        REBSER *ser = VAL_SERIES(v);
+        REBCHR(const *) up = UNI_LAST(ser); // last exists due to len != 0
+        REBCNT n;
+        for (n = 0; n < len; ++n) {
+            REBUNI c;
+            up = const_BACK_CHR(&c, up);
+            Append_Utf8_Codepoint(mo->series, c);
+        }
+
+        DECLARE_LOCAL (temp);
+        Init_String(temp, Pop_Molded_String(mo));
+
+        // Effectively do a CHANGE/PART to overwrite the reversed portion of
+        // the string (from the input value's index to the tail).
+
+        Modify_String(
+            SYM_CHANGE,
+            VAL_SERIES(v),
+            VAL_INDEX(v),
+            temp,
+            0, // not AM_PART, we want to change all len bytes
+            len,
+            1 // dup count
+        );
+
+        // Regardless of whether the whole string was reversed or just some
+        // part from the index to the tail, the length shouldn't change.
+        //
+        assert(VAL_LEN_HEAD(v) == val_len_head);
+        UNUSED(val_len_head);
+    }
+}
+
 
 static REBCNT find_string(
     REBSER *series,
@@ -439,9 +477,8 @@ void TO_String(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 
 
 enum COMPARE_CHR_FLAGS {
-    CC_FLAG_WIDE = 1 << 0, // String is REBUNI[] and not REBYTE[]
-    CC_FLAG_CASE = 1 << 1, // Case sensitive sort
-    CC_FLAG_REVERSE = 1 << 2 // Reverse sort order
+    CC_FLAG_CASE = 1 << 0, // Case sensitive sort
+    CC_FLAG_REVERSE = 1 << 1 // Reverse sort order
 };
 
 
@@ -453,20 +490,14 @@ enum COMPARE_CHR_FLAGS {
 // and given to us by the sort routine, which tells us about the string
 // and the kind of sort that was requested.
 //
+// !!! As of UTF-8 everywhere, this will only work on all-ASCII strings.
+//
 static int Compare_Chr(void *thunk, const void *v1, const void *v2)
 {
     REBCNT * const flags = cast(REBCNT*, thunk);
 
-    REBUNI c1;
-    REBUNI c2;
-    if (*flags & CC_FLAG_WIDE) {
-        c1 = *cast(const REBUNI*, v1);
-        c2 = *cast(const REBUNI*, v2);
-    }
-    else {
-        c1 = cast(REBUNI, *cast(const REBYTE*, v1));
-        c2 = cast(REBUNI, *cast(const REBYTE*, v2));
-    }
+    REBUNI c1 = cast(REBUNI, *cast(const REBYTE*, v1));
+    REBUNI c2 = cast(REBUNI, *cast(const REBYTE*, v2));
 
     if (*flags & CC_FLAG_CASE) {
         if (*flags & CC_FLAG_REVERSE)
@@ -503,7 +534,12 @@ static void Sort_String(
     REBVAL *compv,
     REBVAL *part,
     REBOOL rev
-) {
+){
+    // !!! System appears to boot without a sort of a string.  A different
+    // method will be needed for UTF-8... qsort() cannot work with variable
+    // sized codepoints.  However, it could work if all the codepoints were
+    // known to be ASCII range in the memory of interest, maybe common case.
+
     if (!IS_VOID(compv))
         fail (Error_Bad_Refine_Raw(compv)); // !!! didn't seem to be supported (?)
 
@@ -526,7 +562,6 @@ static void Sort_String(
     // Use fast quicksort library function:
     if (skip > 1) len /= skip, size *= skip;
 
-    if (!VAL_BYTE_SIZE(string)) thunk |= CC_FLAG_WIDE;
     if (ccase) thunk |= CC_FLAG_CASE;
     if (rev) thunk |= CC_FLAG_REVERSE;
 
@@ -722,11 +757,13 @@ static void Sniff_String(REBSER *ser, REBCNT idx, REB_STRF *sf)
 {
     // Scan to find out what special chars the string contains?
 
-    REBUNI *up = UNI_HEAD(ser);
+    REBCHR(const *) up = UNI_AT(ser, idx);
 
     REBCNT n;
-    for (n = idx; n < SER_LEN(ser); n++) {
-        REBUNI c = up[n];
+    for (n = idx; n < UNI_LEN(ser); n++) {
+        REBUNI c;
+        up = const_NEXT_CHR(&c, up);
+
         switch (c) {
         case '{':
             sf->brace_in++;
@@ -863,7 +900,7 @@ static void Mold_String_Series(REB_MOLD *mo, const RELVAL *v)
     if (NOT_MOLD_FLAG(mo, MOLD_FLAG_NON_ANSI_PARENED))
         sf.paren = 0;
 
-    REBUNI *up = UNI_HEAD(series);
+    REBCHR(const *) up = UNI_AT(series, index);
 
     // If it is a short quoted string, emit it as "string"
     //
@@ -878,8 +915,10 @@ static void Mold_String_Series(REB_MOLD *mo, const RELVAL *v)
 
         REBCNT n;
         for (n = index; n < VAL_LEN_HEAD(v); n++) {
+            REBUNI c;
+            up = const_NEXT_CHR(&c, up);
             dp = Emit_Uni_Char(
-                dp, up[n], GET_MOLD_FLAG(mo, MOLD_FLAG_NON_ANSI_PARENED)
+                dp, c, GET_MOLD_FLAG(mo, MOLD_FLAG_NON_ANSI_PARENED)
             );
         }
 
@@ -906,7 +945,8 @@ static void Mold_String_Series(REB_MOLD *mo, const RELVAL *v)
 
     REBCNT n;
     for (n = index; n < VAL_LEN_HEAD(v); n++) {
-        REBUNI c = up[n];
+        REBUNI c;
+        up = const_NEXT_CHR(&c, up);
 
         switch (c) {
         case '{':
@@ -1005,16 +1045,10 @@ static void Mold_Tag(REB_MOLD *mo, const RELVAL *v)
 {
     Append_Utf8_Codepoint(mo->series, '<');
 
-    REBCNT tail = BIN_LEN(mo->series);
-    REBCNT estimate = 4 * VAL_LEN_AT(v);
-    REBYTE *dp = Prep_Mold_Overestimated(mo, estimate);
-
+    REBCNT index = VAL_INDEX(v);
     REBCNT len = VAL_LEN_AT(v);
-    REBCNT encoded_len = Encode_UTF8(
-        dp, estimate, VAL_UNI_AT(v), &len, OPT_ENC_0
-    );
-    assert(len == VAL_LEN_AT(v)); // should have encoded everything
-    TERM_BIN_LEN(mo->series, tail + encoded_len);
+    REBSER *temp = Temp_UTF8_At_Managed(v, &index, &len);
+    Append_Utf8_Utf8(mo->series, cs_cast(BIN_AT(temp, index)), len);
 
     Append_Utf8_Codepoint(mo->series, '>');
 }
@@ -1090,16 +1124,11 @@ void MF_String(REB_MOLD *mo, const RELVAL *v, REBOOL form)
     // would form with no delimiters, e.g. `form #foo` is just foo
     //
     if (form && NOT(IS_TAG(v))) {
-        REBCNT tail = BIN_LEN(mo->series);
-        REBCNT estimate = 4 * VAL_LEN_AT(v);
-        REBYTE *dp = Prep_Mold_Overestimated(mo, estimate);
-
+        REBCNT index = VAL_INDEX(v);
         REBCNT len = VAL_LEN_AT(v);
-        REBCNT encoded_len = Encode_UTF8(
-            dp, estimate, VAL_UNI_AT(v), &len, OPT_ENC_0
-        );
-        assert(len == VAL_LEN_AT(v)); // should have encoded everything
-        TERM_BIN_LEN(mo->series, tail + encoded_len);
+        REBSER *temp = Temp_UTF8_At_Managed(v, &index, &len);
+
+        Append_Utf8_Utf8(mo->series, cs_cast(BIN_AT(temp, index)), len);
         return;
     }
 
@@ -1548,9 +1577,11 @@ REBTYPE(String)
         UNUSED(REF(compare));
         UNUSED(REF(part));
 
-        if (REF(all)) {// Not Supported
+        if (REF(all)) // Not Supported
             fail (Error_Bad_Refine_Raw(ARG(all)));
-        }
+
+        if (ANY_STRING(v) && NOT(Is_String_ASCII(v)))
+            fail ("UTF-8 Everywhere: String sorting temporarily unavailable");
 
         Sort_String(
             v,
@@ -1600,6 +1631,10 @@ REBTYPE(String)
                 str_to_char(D_OUT, v, index);
             return R_OUT;
         }
+
+        if (ANY_STRING(v) && NOT(Is_String_ASCII(v)))
+            fail ("UTF-8 Everywhere: String shuffle temporarily unavailable");
+
         Shuffle_String(v, REF(secure));
         break; }
 
