@@ -59,7 +59,7 @@ struct Reb_Array {
 // them type incompatible for most purposes, some operations require treating
 // one kind of pointer as the other (and they are both Reb_Series)
 //
-#if !defined(NDEBUG) && defined(__cplusplus) && __cplusplus >= 201103L
+#if !defined(NDEBUG) && defined(CPLUSPLUS_11)
     template <class T>
     inline REBARR *ARR(T *p) {
         static_assert(

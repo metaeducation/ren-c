@@ -200,7 +200,7 @@ inline static void Canonize_Any_Word(REBVAL *any_word) {
 //
 // !!! Should VOID_CELL or other arguments make anonymous symbols?
 //
-#if defined(__cplusplus) && __cplusplus >= 201103L
+#ifdef CPLUSPLUS_11
 template<typename T>
 inline static REBSTR* STR(const T *p)
 {

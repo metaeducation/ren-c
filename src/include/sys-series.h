@@ -99,7 +99,7 @@
 // cast in the C build.)
 //
 
-#if !defined(NDEBUG) && defined(__cplusplus) && __cplusplus >= 201103L
+#if !defined(NDEBUG) && defined(CPLUSPLUS_11)
     template <class T>
     inline REBSER *SER(T *p) {
         static_assert(
@@ -641,7 +641,7 @@ inline static void INIT_VAL_SERIES(RELVAL *v, REBSER *s) {
     v->payload.any_series.series = s;
 }
 
-#if defined(NDEBUG) || !defined(__cplusplus)
+#if defined(NDEBUG) || !defined(CPLUSPLUS_11)
     #define VAL_INDEX(v) \
         ((v)->payload.any_series.index)
 #else

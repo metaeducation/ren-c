@@ -287,5 +287,6 @@ inline static REBSER *Copy_Sequence_At_Len(
 // might be applied, for instance a standard C qsort() to sort the characters.
 //
 inline static REBOOL Is_String_ASCII(const RELVAL *str) {
+    UNUSED(str);
     return FALSE; // currently all strings are 16-bit REBUNI characters
 }

@@ -110,7 +110,7 @@
 #define GOBF_FULLSCREEN \
     FLAGIT_LEFT(20) // Window is fullscreen
 
-#if defined(__cplusplus) && (__cplusplus >= 201103L)
+#if defined(CPLUSPLUS_11)
     static_assert(20 < 32, "GOBF_XXX too high"); // 32 bits on 32 bit platform
 #endif
 

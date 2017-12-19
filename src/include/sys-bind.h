@@ -87,7 +87,7 @@ struct Reb_Binder {
     REBCNT count;
 #endif
 
-#if !defined(NDEBUG) && defined(__cplusplus)
+#if defined(CPLUSPLUS_11)
     //
     // The C++ debug build can help us make sure that no binder ever fails to
     // get an INIT_BINDER() and SHUTDOWN_BINDER() pair called on it, which
@@ -106,7 +106,7 @@ inline static void INIT_BINDER(struct Reb_Binder *binder) {
 #if !defined(NDEBUG)
     binder->count = 0;
 
-    #if defined(__cplusplus)
+    #ifdef CPLUSPLUS_11
         binder->initialized = TRUE;
     #endif
 #endif
@@ -119,7 +119,7 @@ inline static void SHUTDOWN_BINDER(struct Reb_Binder *binder) {
 #else
     assert(binder->count == 0);
 
-    #if defined(__cplusplus)
+    #ifdef CPLUSPLUS_11
         binder->initialized = FALSE;
     #endif
 #endif
@@ -324,7 +324,7 @@ inline static REBVAL *Derelativize(
 // a RELVAL*, and then not defining it...will tell you that you do not need
 // to use Derelativize.  Juse Move_Value() if your source is a REBVAL!
 //
-#if defined(__cplusplus) && __cplusplus >= 201103L
+#ifdef CPLUSPLUS_11
     REBVAL *Derelativize(RELVAL *dest, const REBVAL *v, REBSPC *specifier);
 #endif
 

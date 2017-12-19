@@ -46,6 +46,26 @@
 
 //=////////////////////////////////////////////////////////////////////////=//
 //
+// CPLUSPLUS_11
+//
+//=////////////////////////////////////////////////////////////////////////=//
+//
+// Because the goal of Ren-C is ultimately to be built with C, the C++ build
+// is just for static analysis and debug checks.  This means there's not much
+// value in trying to tailor reduced versions of the checks to old ANSI C++98
+// compilers, so the "C++ build" is an "at least C++11 build".
+//
+// Besides being a little less verbose to use, it allows override when using
+// with Microsoft Visual Studio via a command line definition.  For some
+// reason they didn't bump the version number from 1997, even by MSVC 2017!!!
+//
+#if defined(__cplusplus) && __cplusplus >= 201103L
+    #define CPLUSPLUS_11
+#endif
+
+
+//=////////////////////////////////////////////////////////////////////////=//
+//
 // FEATURE TESTING AND ATTRIBUTE MACROS
 //
 //=////////////////////////////////////////////////////////////////////////=//
@@ -106,7 +126,7 @@
 // and compilers that implement it make it a perfect tool for checking a C
 // codebase on the fly to see if it follows certain rules.
 //
-#if defined(__cplusplus) && __cplusplus >= 201103L
+#ifdef CPLUSPLUS_11
     #include <type_traits>
 #endif
 
@@ -129,7 +149,7 @@
 // http://stackoverflow.com/questions/3385515/static-assert-in-c
 // or http://stackoverflow.com/a/809465/211160
 //
-#if defined(__cplusplus) && __cplusplus >= 201103L
+#ifdef CPLUSPLUS_11
     #define static_assert_c(e) \
         static_assert((e), "compile-time static assert failure")
 #else
@@ -202,7 +222,7 @@
 // non-const `char` with plain `cast()`.  Investigate as time allows, but
 // in the meantime SYM_FUNC() uses a plain C-style cast.
 
-#if !defined(__cplusplus) || !defined(NDEBUG)
+#if !defined(CPLUSPLUS_11) || !defined(NDEBUG)
     /* These macros are easier-to-spot variants of the parentheses cast.
      * The 'm_cast' is when getting [M]utablity on a const is okay (RARELY!)
      * Plain 'cast' can do everything else (except remove volatile)
@@ -484,7 +504,7 @@ typedef struct sInt64 {
     #define FALSE cast(struct Bool_Dummy*, 0x6466AE99)
     #define TRUE cast(struct Bool_Dummy*, 0x0421BD75)
 
-    #if defined(__cplusplus) && __cplusplus >= 201103L
+    #ifdef CPLUSPLUS_11
         //
         // In the C++ build, we can help reduce confusion by making sure that
         // LOGICAL and NOT are only applied to integral types.  Using it on
@@ -714,7 +734,7 @@ typedef struct sInt64 {
 #if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L
     // C99 or later
     #define FINITE isfinite
-#elif defined(__cplusplus) && __cplusplus >= 199711L
+#elif defined(CPLUSPLUS_11)
     // C++11 or later
     #define FINITE isfinite
 #else
@@ -784,7 +804,7 @@ typedef struct sInt64 {
     #define TRASH_CFUNC_IF_DEBUG(p) \
         NOOP
 #else
-    #if defined(__cplusplus)
+    #if defined(__cplusplus) // needed even if not C++11
         template<class T>
         inline static void TRASH_POINTER_IF_DEBUG(T* &p) {
             p = reinterpret_cast<T*>(static_cast<REBUPT>(0xDECAFBAD));
@@ -845,7 +865,7 @@ typedef struct sInt64 {
 // Though the version here is more verbose, it uses the specializations to
 // avoid excessive calls to memset() in the debug build.
 //
-#if defined(NDEBUG) || !defined(__cplusplus) || __cplusplus < 201103L
+#if defined(NDEBUG) || !defined(CPLUSPLUS_11)
     #define UNUSED(x) \
         ((void)(x))
 #else

@@ -230,7 +230,7 @@
     #define SET_VAL_FLAGS(v,f) \
         (v)->header.bits |= (f)
 
-    #if defined(__cplusplus) && __cplusplus >= 201103L
+    #ifdef CPLUSPLUS_11
         //
         // In the C++ release build we sanity check that only one bit is set.
         // The assert is done at compile-time, you must use a constant flag.
@@ -647,7 +647,7 @@ inline static void VAL_SET_TYPE_BITS(RELVAL *v, enum Reb_Kind kind) {
         return FALSE;
     }
 
-#if defined(__cplusplus) && __cplusplus >= 201103L
+#ifdef CPLUSPLUS_11
     //
     // Disable teseting a RELVAL marked that it can't be END for endness-in
     // the C++ build.  (ordinary version takes a RELVAL.)
@@ -727,7 +727,7 @@ inline static REBOOL IS_RELATIVE(const RELVAL *v) {
     return LOGICAL(v->extra.binding->header.bits & ARRAY_FLAG_PARAMLIST);
 }
 
-#if defined(__cplusplus) && __cplusplus >= 201103L
+#ifdef CPLUSPLUS_11
     //
     // Take special advantage of the fact that C++ can help catch when we are
     // trying to see if a REBVAL is specific or relative (it will always
@@ -1135,7 +1135,7 @@ inline static REBVAL *Init_Char(RELVAL *out, REBUNI uni) {
 // for these cases.
 //
 
-#if defined(NDEBUG) || !defined(__cplusplus) 
+#if defined(NDEBUG) || !defined(CPLUSPLUS11) 
     #define VAL_INT64(v) \
         ((v)->payload.integer)
 #else
@@ -1182,7 +1182,7 @@ inline static REBVAL *Init_Integer(RELVAL *out, REBI64 i64) {
 // FLOAT! which may be a good idea.
 //
 
-#if defined(NDEBUG) || !defined(__cplusplus)
+#if defined(NDEBUG) || !defined(CPLUSPLUS11)
     #define VAL_DECIMAL(v) \
         ((v)->payload.decimal)
 #else
@@ -1504,7 +1504,7 @@ inline static void SET_EVENT_KEY(RELVAL *v, REBCNT k, REBCNT c) {
 // would hook the memory pools directly.
 //
 
-#if defined(NDEBUG) || !defined(__cplusplus)
+#if defined(NDEBUG) || !defined(CPLUSPLUS11)
     #define VAL_GOB(v) \
         (v)->payload.gob.gob
 

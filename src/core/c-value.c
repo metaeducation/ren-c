@@ -129,7 +129,7 @@ REBCTX *VAL_SPECIFIC_Debug(const REBVAL *v)
 }
 
 
-#if defined(__cplusplus) && __cplusplus >= 201103L
+#ifdef CPLUSPLUS_11
 //
 // This destructor checks to make sure that any cell that was created via
 // DECLARE_LOCAL got properly initialized.

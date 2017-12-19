@@ -37,7 +37,7 @@ struct Reb_Func {
     struct Reb_Array paramlist;
 };
 
-#if !defined(NDEBUG) && defined(__cplusplus) && __cplusplus >= 201103L
+#if !defined(NDEBUG) && defined(CPLUSPLUS_11)
     template <class T>
     inline REBFUN *FUN(T *p) {
         static_assert(

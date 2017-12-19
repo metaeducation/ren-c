@@ -57,7 +57,7 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 
-#if defined(NDEBUG) || !defined(__cplusplus)
+#if defined(NDEBUG) || !defined(CPLUSPLUS_11)
     #define VAL_NANO(v) \
         ((v)->payload.time.nanoseconds)
 #else

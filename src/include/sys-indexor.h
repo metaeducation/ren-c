@@ -48,7 +48,7 @@
 // https://github.com/metaeducation/ren-c/wiki/
 //
 
-#if defined(NDEBUG) || !defined(__cplusplus) || (__cplusplus < 201103L)
+#if defined(NDEBUG) || !defined(CPLUSPLUS_11)
     typedef REBUPT REBIXO;
 
     #define END_FLAG 0x80000000  // end of block as index

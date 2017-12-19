@@ -841,7 +841,7 @@ struct Reb_Cell
 // to be combined with any relative words that are seen later.
 //
 
-#if defined(__cplusplus) && __cplusplus >= 201103L
+#ifdef CPLUSPLUS_11
     //
     // Since a RELVAL may be either specific or relative, there's not a whole
     // lot to check in the C++ build.  However, it does disable bitwise

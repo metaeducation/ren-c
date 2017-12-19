@@ -244,7 +244,7 @@
 // like the ->eval_type, but performance is probably better to put such
 // information in a platform aligned position of the frame.
 //
-#if defined(__cplusplus) && (__cplusplus >= 201103L)
+#ifdef CPLUSPLUS_11
     static_assert(14 < 32, "DO_FLAG_XXX too high");
 #endif
 

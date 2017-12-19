@@ -114,7 +114,7 @@ typedef REBWCHAR REBUNI;
 #ifdef REB_DEF
     struct Reb_Cell;
 
-    #if !defined(__cplusplus) || __cplusplus < 201103L
+    #if !defined(CPLUSPLUS_11)
         #define RELVAL struct Reb_Cell
         #define REBVAL struct Reb_Cell
         #define const_RELVAL_NO_END_PTR const struct Reb_Cell *
