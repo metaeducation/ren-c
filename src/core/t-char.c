@@ -96,17 +96,6 @@ void MAKE_Char(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
         } // case REB_BINARY
         break;
 
-#ifdef removed
-//      case REB_ISSUE:
-        // Scan 8 or 16 bit hex str, will throw on error...
-        REBINT n = Scan_Hex_Value(
-            VAL_RAW_DATA_AT(arg), VAL_LEN_AT(arg), !VAL_BYTE_SIZE(arg)
-        );
-        if (n > MAX_UNI || n < 0) goto bad_make;
-        chr = n;
-        break;
-#endif
-
     case REB_STRING:
         if (VAL_INDEX(arg) >= VAL_LEN_HEAD(arg))
             goto bad_make;

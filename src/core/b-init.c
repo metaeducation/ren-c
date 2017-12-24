@@ -790,7 +790,7 @@ static void Init_Root_Vars(void)
     assert(IS_BLOCK(ROOT_EMPTY_BLOCK));
 
     REBSER *empty_series = Make_Unicode(1);
-    *UNI_AT(empty_series, 0) = '\0';
+    *SER_AT(REBUNI, empty_series, 0) = '\0';
     Init_String(ROOT_EMPTY_STRING, empty_series);
     Freeze_Sequence(VAL_SERIES(ROOT_EMPTY_STRING));
 

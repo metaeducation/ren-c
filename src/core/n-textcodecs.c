@@ -218,39 +218,41 @@ REBNATIVE(encode_text)
 
 static void Encode_Utf16_Core(
     REBVAL *out,
-    REBUNI *data,
+    REBCHR(const *) data,
     REBCNT len,
     REBOOL little_endian
 ){
+    REBCHR(const *) cp = data;
+
     REBSER *bin = Make_Binary(sizeof(u16) * len);
     u16* up = cast(u16*, BIN_HEAD(bin));
 
-    // Currently only supports UCS2, which is close to UTF16 :-/
-#ifdef ENDIAN_LITTLE
-    if (little_endian) {
-        memcpy(up, data, len * sizeof(u16));
-    } else {
-        REBCNT i = 0;
-        for (i = 0; i < len; i ++) {
-            REBUNI c = data[i];
-            up[i] = ((c & 0xff) << 8) | ((c & 0xff00) >> 8);
-        }
-    }
-#elif defined (ENDIAN_BIG)
-    if (little_endian) {
-        REBCNT i = 0;
-        for (i = 0; i < len; i ++) {
-            REBUNI c = data[i];
-            up[i] = ((c & 0xff) << 8) | ((c & 0xff00) >> 8);
-        }
-    } else {
-        memcpy(up, data, len * sizeof(u16));
-    }
-#else
-    #error "Unsupported CPU endian"
-#endif
+    REBCNT i = 0;
+    for (i = 0; i < len; ++i) {
+        REBUNI c;
+        cp = const_NEXT_CHR(&c, cp);
 
-    TERM_BIN_LEN(bin, len * sizeof(u16));
+        // !!! TBD: handle large codepoints bigger than 0xffff, and encode
+        // as UTF16.  (REBUNI is only 16 bits at time of writing)
+
+    #if defined(ENDIAN_LITTLE)
+        if (little_endian)
+            up[i] = c;
+        else
+            up[i] = ((c & 0xff) << 8) | ((c & 0xff00) >> 8);
+    #elif defined(ENDIAN_BIG)
+        if (little_endian)
+            up[i] = ((c & 0xff) << 8) | ((c & 0xff00) >> 8);
+        else
+            up[i] = c;
+    #else
+        #error "Unsupported CPU endian"
+    #endif
+    }
+
+    up[i] = '\0'; // needs two bytes worth of NULL, not just one.
+
+    SET_SERIES_LEN(bin, len * sizeof(u16));
     Init_Binary(out, bin);
 }
 
@@ -320,8 +322,12 @@ REBNATIVE(decode_utf16le)
 
     // Drop byte-order marker, if present
     //
-    if (VAL_LEN_AT(D_OUT) > 0 && *VAL_UNI_AT(D_OUT) == 0xFEFF)
+    if (
+        VAL_LEN_AT(D_OUT) > 0
+        && GET_ANY_CHAR(VAL_SERIES(D_OUT), VAL_INDEX(D_OUT)) == 0xFEFF
+    ){
         Remove_Series(VAL_SERIES(D_OUT), VAL_INDEX(D_OUT), 1);
+    }
 
     return R_OUT;
 }
@@ -401,8 +407,12 @@ REBNATIVE(decode_utf16be)
 
     // Drop byte-order marker, if present
     //
-    if (VAL_LEN_AT(D_OUT) > 0 && *VAL_UNI_AT(D_OUT) == 0xFEFF)
+    if (
+        VAL_LEN_AT(D_OUT) > 0
+        && GET_ANY_CHAR(VAL_SERIES(D_OUT), VAL_INDEX(D_OUT)) == 0xFEFF
+    ){
         Remove_Series(VAL_SERIES(D_OUT), VAL_INDEX(D_OUT), 1);
+    }
 
     return R_OUT;
 }

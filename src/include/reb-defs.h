@@ -58,7 +58,8 @@
 //
 
 typedef i32 REBINT; // 32 bit (64 bit defined below)
-typedef u32 REBCNT; // 32 bit (counting number)
+typedef u32 REBCNT; // 32 bit (counting number, should be called REBLEN)
+typedef u32 REBSIZ; // 32 bit (size in bytes, as opposed to codepoint lengths)
 typedef i64 REBI64; // 64 bit integer
 typedef u64 REBU64; // 64 bit unsigned integer
 typedef float REBD32; // 32 bit decimal

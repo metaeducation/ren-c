@@ -206,7 +206,7 @@ REBINT Compare_String_Vals(const RELVAL *v1, const RELVAL *v2, REBOOL uncase)
     REBCNT l1  = VAL_LEN_AT(v1);
     REBCNT l2  = VAL_LEN_AT(v2);
     REBCNT len = MIN(l1, l2);
-    
+
     REBINT n = Compare_Uni_Str(VAL_UNI_AT(v1), VAL_UNI_AT(v2), len, uncase);
 
     if (n != 0)

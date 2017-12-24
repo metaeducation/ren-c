@@ -168,21 +168,18 @@ REBINT Find_Max_Bit(const RELVAL *val)
     case REB_FILE:
     case REB_EMAIL:
     case REB_URL:
-    case REB_TAG:
 //  case REB_ISSUE:
+    case REB_TAG: {
         n = VAL_INDEX(val);
-        if (VAL_BYTE_SIZE(val)) {
-            REBYTE *bp = VAL_BIN(val);
-            for (; n < cast(REBINT, VAL_LEN_HEAD(val)); n++)
-                if (bp[n] > maxi) maxi = bp[n];
-        }
-        else {
-            REBUNI *up = VAL_UNI(val);
-            for (; n < cast(REBINT, VAL_LEN_HEAD(val)); n++)
-                if (up[n] > maxi) maxi = up[n];
+        REBCHR(const *) up = VAL_UNI_AT(val);
+        for (; n < cast(REBINT, VAL_LEN_HEAD(val)); n++) {
+            REBUNI c;
+            up = const_NEXT_CHR(&c, up);
+            if (c > maxi)
+                maxi = c;
         }
         maxi++;
-        break;
+        break; }
 
     case REB_BINARY:
         maxi = VAL_LEN_AT(val) * 8 - 1;
@@ -244,29 +241,6 @@ retry:
 
 
 //
-//  Check_Bit_Str: C
-//
-// If uncased is TRUE, try to match either upper or lower case.
-//
-REBOOL Check_Bit_Str(REBSER *bset, const REBVAL *val, REBOOL uncased)
-{
-    REBCNT n = VAL_INDEX(val);
-
-    if (VAL_BYTE_SIZE(val)) {
-        REBYTE *bp = VAL_BIN(val);
-        for (; n < VAL_LEN_HEAD(val); n++)
-            if (Check_Bit(bset, bp[n], uncased)) return TRUE;
-    }
-    else {
-        REBUNI *up = VAL_UNI(val);
-        for (; n < VAL_LEN_HEAD(val); n++)
-            if (Check_Bit(bset, up[n], uncased)) return TRUE;
-    }
-    return FALSE;
-}
-
-
-//
 //  Set_Bit: C
 //
 // Set/clear a single bit. Expand if needed.
@@ -293,26 +267,6 @@ void Set_Bit(REBSER *bset, REBCNT n, REBOOL set)
 
 
 //
-//  Set_Bit_Str: C
-//
-void Set_Bit_Str(REBSER *bset, const REBVAL *val, REBOOL set)
-{
-    REBCNT n = VAL_INDEX(val);
-
-    if (VAL_BYTE_SIZE(val)) {
-        REBYTE *bp = VAL_BIN(val);
-        for (; n < VAL_LEN_HEAD(val); n++)
-            Set_Bit(bset, bp[n], set);
-    }
-    else {
-        REBUNI *up = VAL_UNI(val);
-        for (; n < VAL_LEN_HEAD(val); n++)
-            Set_Bit(bset, up[n], set);
-    }
-}
-
-
-//
 //  Set_Bits: C
 //
 // Set/clear bits indicated by strings and chars and ranges.
@@ -321,23 +275,38 @@ REBOOL Set_Bits(REBSER *bset, const REBVAL *val, REBOOL set)
 {
     FAIL_IF_READ_ONLY_SERIES(bset);
 
-    REBCNT n;
-    REBCNT c;
-
     if (IS_CHAR(val)) {
         Set_Bit(bset, VAL_CHAR(val), set);
         return TRUE;
     }
 
     if (IS_INTEGER(val)) {
-        n = Int32s(val, 0);
-        if (n > MAX_BITSET) return FALSE;
+        REBCNT n = Int32s(val, 0);
+        if (n > MAX_BITSET)
+            return FALSE;
         Set_Bit(bset, n, set);
         return TRUE;
     }
 
-    if (ANY_BINSTR(val)) {
-        Set_Bit_Str(bset, val, set);
+    if (IS_BINARY(val)) {
+        REBCNT i = VAL_INDEX(val);
+
+        REBYTE *bp = VAL_BIN(val);
+        for (; i < VAL_LEN_HEAD(val); i++)
+            Set_Bit(bset, bp[i], set);
+
+        return TRUE;
+    }
+
+    if (ANY_STRING(val)) {
+        REBCNT i = VAL_INDEX(val);
+        REBCHR(const *) up = VAL_UNI_AT(val);
+        for (; i < VAL_LEN_HEAD(val); ++i) {
+            REBUNI c;
+            up = const_NEXT_CHR(&c, up);
+            Set_Bit(bset, c, set);
+        }
+
         return TRUE;
     }
 
@@ -356,11 +325,12 @@ REBOOL Set_Bits(REBSER *bset, const REBVAL *val, REBOOL set)
     }
 
     // Loop through block of bit specs:
+
     for (; NOT_END(item); item++) {
 
         switch (VAL_TYPE(item)) {
-        case REB_CHAR:
-            c = VAL_CHAR(item);
+        case REB_CHAR: {
+            REBUNI c = VAL_CHAR(item);
             if (
                 NOT_END(item + 1)
                 && IS_WORD(item + 1)
@@ -368,32 +338,38 @@ REBOOL Set_Bits(REBSER *bset, const REBVAL *val, REBOOL set)
             ){
                 item += 2;
                 if (IS_CHAR(item)) {
-                    n = VAL_CHAR(item);
-span_bits:
-                    if (n < c) fail (Error_Past_End_Raw());
-                    for (; c <= n; c++) Set_Bit(bset, c, set);
+                    REBCNT n = VAL_CHAR(item);
+                    if (n < c)
+                        fail (Error_Past_End_Raw());
+                    for (; c <= n; c++)
+                        Set_Bit(bset, c, set);
                 }
                 else
                     fail (Error_Invalid_Arg_Core(item, VAL_SPECIFIER(val)));
             }
-            else Set_Bit(bset, c, set);
-            break;
+            else
+                Set_Bit(bset, c, set);
+            break; }
 
-        case REB_INTEGER:
-            n = Int32s(KNOWN(item), 0);
+        case REB_INTEGER: {
+            REBCNT n = Int32s(KNOWN(item), 0);
             if (n > MAX_BITSET) return FALSE;
             if (IS_WORD(item + 1) && VAL_WORD_SYM(item + 1) == SYM_HYPHEN) {
-                c = n;
+                REBUNI c = n;
                 item += 2;
                 if (IS_INTEGER(item)) {
                     n = Int32s(KNOWN(item), 0);
-                    goto span_bits;
+                    if (n < c)
+                        fail (Error_Past_End_Raw());
+                    for (; c <= n; c++)
+                        Set_Bit(bset, c, set);
                 }
                 else
                     fail (Error_Invalid_Arg_Core(item, VAL_SPECIFIER(val)));
             }
-            else Set_Bit(bset, n, set);
-            break;
+            else
+                Set_Bit(bset, n, set);
+            break; }
 
         case REB_BINARY:
         case REB_STRING:
@@ -402,23 +378,23 @@ span_bits:
         case REB_URL:
         case REB_TAG:
 //      case REB_ISSUE:
-            Set_Bit_Str(bset, KNOWN(item), set);
+            Set_Bits(bset, KNOWN(item), set);
             break;
 
-        case REB_WORD:
+        case REB_WORD: {
             // Special: BITS #{000...}
             if (!IS_WORD(item) || VAL_WORD_SYM(item) != SYM_BITS)
                 return FALSE;
             item++;
             if (!IS_BINARY(item)) return FALSE;
-            n = VAL_LEN_AT(item);
-            c = SER_LEN(bset);
+            REBCNT n = VAL_LEN_AT(item);
+            REBUNI c = SER_LEN(bset);
             if (n >= c) {
                 Expand_Series(bset, c, (n - c));
                 CLEAR(BIN_AT(bset, c), (n - c));
             }
             memcpy(BIN_HEAD(bset), VAL_BIN_AT(item), n);
-            break;
+            break; }
 
         default:
             return FALSE;
@@ -437,61 +413,85 @@ span_bits:
 //
 REBOOL Check_Bits(REBSER *bset, const REBVAL *val, REBOOL uncased)
 {
-    REBCNT n;
-    REBUNI c;
-    RELVAL *item;
-
     if (IS_CHAR(val))
         return Check_Bit(bset, VAL_CHAR(val), uncased);
 
     if (IS_INTEGER(val))
         return Check_Bit(bset, Int32s(val, 0), uncased);
 
-    if (ANY_BINSTR(val))
-        return Check_Bit_Str(bset, val, uncased);
+    if (IS_BINARY(val)) {
+        REBCNT i = VAL_INDEX(val);
+        REBYTE *bp = VAL_BIN(val);
+        for (; i < VAL_LEN_HEAD(val); ++i)
+            if (Check_Bit(bset, bp[i], uncased))
+                return TRUE;
+        return FALSE;
+    }
+
+    if (ANY_STRING(val)) {
+        REBCNT i = VAL_INDEX(val);
+        REBCHR(const *) up = VAL_UNI_AT(val);
+        for (; i < VAL_LEN_HEAD(val); ++i) {
+            REBUNI c;
+            up = const_NEXT_CHR(&c, up);
+            if (Check_Bit(bset, c, uncased))
+                return TRUE;
+        }
+
+        return FALSE;
+    }
 
     if (!ANY_ARRAY(val))
         fail (Error_Invalid_Type(VAL_TYPE(val)));
 
-    // Loop through block of bit specs:
+    // Loop through block of bit specs
+
+    RELVAL *item;
     for (item = VAL_ARRAY_AT(val); NOT_END(item); item++) {
 
         switch (VAL_TYPE(item)) {
 
-        case REB_CHAR:
-            c = VAL_CHAR(item);
+        case REB_CHAR: {
+            REBUNI c = VAL_CHAR(item);
             if (IS_WORD(item + 1) && VAL_WORD_SYM(item + 1) == SYM_HYPHEN) {
                 item += 2;
                 if (IS_CHAR(item)) {
-                    n = VAL_CHAR(item);
-scan_bits:
-                    if (n < c) fail (Error_Past_End_Raw());
+                    REBCNT n = VAL_CHAR(item);
+                    if (n < c)
+                        fail (Error_Past_End_Raw());
                     for (; c <= n; c++)
-                        if (Check_Bit(bset, c, uncased)) goto found;
+                        if (Check_Bit(bset, c, uncased))
+                            return TRUE;
                 }
                 else
                     fail (Error_Invalid_Arg_Core(item, VAL_SPECIFIER(val)));
             }
             else
-                if (Check_Bit(bset, c, uncased)) goto found;
-            break;
+                if (Check_Bit(bset, c, uncased))
+                    return TRUE;
+            break; }
 
-        case REB_INTEGER:
-            n = Int32s(KNOWN(item), 0);
+        case REB_INTEGER: {
+            REBCNT n = Int32s(KNOWN(item), 0);
             if (n > 0xffff) return FALSE;
             if (IS_WORD(item + 1) && VAL_WORD_SYM(item + 1) == SYM_HYPHEN) {
-                c = n;
+                REBUNI c = n;
                 item += 2;
                 if (IS_INTEGER(item)) {
                     n = Int32s(KNOWN(item), 0);
-                    goto scan_bits;
+                    if (n < c)
+                        fail (Error_Past_End_Raw());
+                    for (; c <= n; c++)
+                        if (Check_Bit(bset, c, uncased))
+                            return TRUE;
                 }
                 else
                     fail (Error_Invalid_Arg_Core(item, VAL_SPECIFIER(val)));
             }
             else
-                if (Check_Bit(bset, n, uncased)) goto found;
-            break;
+                if (Check_Bit(bset, n, uncased))
+                    return TRUE;
+            break; }
 
         case REB_BINARY:
         case REB_STRING:
@@ -500,7 +500,8 @@ scan_bits:
         case REB_URL:
         case REB_TAG:
 //      case REB_ISSUE:
-            if (Check_Bit_Str(bset, KNOWN(item), uncased)) goto found;
+            if (Check_Bits(bset, KNOWN(item), uncased))
+                return TRUE;
             break;
 
         default:
@@ -508,9 +509,6 @@ scan_bits:
         }
     }
     return FALSE;
-
-found:
-    return TRUE;
 }
 
 

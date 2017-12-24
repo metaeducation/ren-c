@@ -72,18 +72,35 @@ void Whitespace_Replace_With(
         wlen = 1;
         *up++ = Int32s(with, 0);
     }
-    else {
-        assert(ANY_BINSTR(with));
+    else if (IS_BINARY(with)) {
         n = VAL_LEN_AT(with);
         if (n >= MAX_WITH)
             n = MAX_WITH - 1;
         wlen = n;
-        if (VAL_BYTE_SIZE(with)) {
-            bp = VAL_BIN_AT(with);
-        } else {
-            memcpy(up, VAL_UNI_AT(with), n * sizeof(REBUNI));
-            n = 0;
+
+        REBYTE *tmp = VAL_BIN_AT(with);
+        REBCNT i;
+        for (i = 0; i < n; ++i)
+            up[i] = *tmp++;
+
+        n = 0;
+    }
+    else {
+        assert(ANY_STRING(with));
+        n = VAL_LEN_AT(with);
+        if (n >= MAX_WITH)
+            n = MAX_WITH - 1;
+        wlen = n;
+
+        REBCHR(const *) cp = VAL_UNI_AT(with);
+        REBCNT i;
+        for (i = 0; i < n; ++i) {
+            REBUNI c;
+            cp = const_NEXT_CHR(&c, cp);
+            up[i] = c;
         }
+
+        n = 0;
     }
 
     if (bp == NULL)

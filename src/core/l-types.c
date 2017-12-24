@@ -378,43 +378,6 @@ REBOOL Scan_Hex2(REBUNI *out, const void *p, REBOOL unicode)
 
 
 //
-//  Scan_Hex_Value: C
-//
-// Given a string, scan it as hex. Chars can be 8 or 16 bit.
-// Result is 32 bits max.
-// Throw errors.
-//
-REBCNT Scan_Hex_Value(const void *p, REBCNT len, REBOOL unicode)
-{
-    REBUNI c;
-    REBCNT n;
-    REBYTE lex;
-    REBCNT num = 0;
-    const REBYTE *bp = unicode ? NULL : cast(const REBYTE *, p);
-    const REBUNI *up = unicode ? cast(const REBUNI *, p) : NULL;
-
-    if (len > 8) goto bad_hex;
-
-    for (n = 0; n < len; n++) {
-        c = unicode ? up[n] : cast(REBUNI, bp[n]);
-
-        if (c > 255) goto bad_hex;
-
-        lex = Lex_Map[c];
-        if (lex <= LEX_WORD) goto bad_hex;
-
-        c = lex & LEX_VALUE;
-        if (!c && lex < LEX_NUMBER) goto bad_hex;
-        num = (num << 4) + c;
-    }
-    return num;
-
-bad_hex:
-    fail (Error_Invalid_Chars_Raw());
-}
-
-
-//
 //  Scan_Dec_Buf: C
 //
 // Validate a decimal number. Return on first invalid char (or end).
@@ -1021,7 +984,9 @@ const REBYTE *Scan_Email(
     TRASH_CELL_IF_DEBUG(out);
 
     REBSER *s = Make_Unicode(len);
-    REBUNI *up = UNI_HEAD(s);
+    REBCHR(*) up = UNI_HEAD(s);
+
+    REBCNT num_chars = 0;
 
     REBOOL found_at = FALSE;
     for (; len > 0; len--) {
@@ -1036,18 +1001,23 @@ const REBYTE *Scan_Email(
             REBUNI ch;
             if (len <= 2 || !Scan_Hex2(&ch, cp + 1, unicode))
                 return_NULL;
-            *up++ = ch;
+
+            up = WRITE_CHR(up, ch);
+            ++num_chars;
+
             cp += 3;
             len -= 2;
         }
-        else
-            *up++ = *cp++;
+        else {
+            up = WRITE_CHR(up, *cp++);
+            ++num_chars;
+        }
     }
 
     if (NOT(found_at))
         return_NULL;
 
-    TERM_UNI_LEN(s, cast(REBCNT, up - UNI_HEAD(s)));
+    TERM_UNI_LEN(s, num_chars);
 
     Init_Email(out, s);
     return cp;
@@ -1261,7 +1231,7 @@ const REBYTE *Scan_Any(
 //  scan-net-header: native [
 //      {Scan an Internet-style header (HTTP, SMTP).}
 //
-//      header [string! binary!]
+//      header [binary!]
 //          {Fields with duplicate words will be merged into a block.}
 //  ]
 //
@@ -1272,10 +1242,6 @@ REBNATIVE(scan_net_header)
 // object, a STRING! or BINARY! could be provided which would be turned
 // into a block by this routine.
 //
-// The only reason it seemed to support BINARY! was to optimize the case
-// where the binary only contained ASCII codepoints to dodge a string
-// conversion.
-//
 // It doesn't make much sense to have this coded in C rather than using PARSE
 // It's only being converted into a native to avoid introducing bugs by
 // rewriting it as Rebol in the middle of other changes.
@@ -1284,20 +1250,9 @@ REBNATIVE(scan_net_header)
 
     REBARR *result = Make_Array(10); // Just a guess at size (use STD_BUF?)
 
-    // Convert string if necessary. Store back for GC safety.
-    //
     REBVAL *header = ARG(header);
-    REBCNT index;
-    REBSER *utf8;
-    if (IS_BINARY(header)) {
-        //
-        // If it's a BINARY! then assume it's already in UTF-8.
-        //
-        utf8 = VAL_SERIES(header);
-        index = VAL_INDEX(header);
-    }
-    else
-        utf8 = Temp_UTF8_At_Managed(header, &index, NULL);
+    REBCNT index = VAL_INDEX(header);
+    REBSER *utf8 = VAL_SERIES(header);
 
     INIT_VAL_SERIES(header, utf8); // GC protect, unnecessary?
 
@@ -1371,36 +1326,48 @@ REBNATIVE(scan_net_header)
         }
         // Is it continued on next line?
         while (*cp) {
-            if (*cp == CR) cp++;
-            if (*cp == LF) cp++;
-            if (IS_LEX_SPACE(*cp)) {
-                while (IS_LEX_SPACE(*cp)) cp++;
-                while (!ANY_CR_LF_END(*cp)) {
-                    len++;
-                    cp++;
-                }
+            if (*cp == CR)
+                ++cp;
+            if (*cp == LF)
+                ++cp;
+            if (!IS_LEX_SPACE(*cp))
+                break;
+            while (IS_LEX_SPACE(*cp))
+                ++cp;
+            while (!ANY_CR_LF_END(*cp)) {
+                ++len;
+                ++cp;
             }
-            else break;
         }
 
         // Create string value (ignoring lines and indents):
+        //
+        // !!! This is written to deal with unicode lengths in terms of *size*
+        // in bytes, not *length* in characters.  If it were to be done
+        // correctly, it would need to use NEXT_CHR to count the characters
+        // in the loop above.  Better to convert to usermode.
+
         REBSER *string = Make_Unicode(len);
-        SET_SERIES_LEN(string, len);
-        REBUNI *str = UNI_HEAD(string);
+        REBCHR(*) str = UNI_HEAD(string);
         cp = start;
-        // Code below *MUST* mirror that above:
-        while (!ANY_CR_LF_END(*cp)) *str++ = *cp++;
-        while (*cp) {
-            if (*cp == CR) cp++;
-            if (*cp == LF) cp++;
-            if (IS_LEX_SPACE(*cp)) {
-                while (IS_LEX_SPACE(*cp)) cp++;
-                while (!ANY_CR_LF_END(*cp))
-                    *str++ = *cp++;
-            }
-            else break;
+
+        // "Code below *MUST* mirror that above:"
+
+        while (!ANY_CR_LF_END(*cp))
+            str = WRITE_CHR(str, *cp++);
+        while (*cp != '\0') {
+            if (*cp == CR)
+                ++cp;
+            if (*cp == LF)
+                ++cp;
+            if (!IS_LEX_SPACE(*cp))
+                break;
+            while (IS_LEX_SPACE(*cp))
+                ++cp;
+            while (!ANY_CR_LF_END(*cp))
+                str = WRITE_CHR(str, *cp++);
         }
-        *str = '\0';
+        TERM_UNI_LEN(string, len);
         Init_String(val, string);
     }
 
