@@ -173,8 +173,8 @@ REBINT Compare_Uni_Str(
         REBUNI c1;
         REBUNI c2;
 
-        u1 = const_NEXT_CHR(&c1, u1);
-        u2 = const_NEXT_CHR(&c2, u2);
+        u1 = NEXT_CHR(&c1, u1);
+        u2 = NEXT_CHR(&c2, u2);
 
         REBINT d;
         if (uncase && c1 < UNICODE_CASES && c2 < UNICODE_CASES)

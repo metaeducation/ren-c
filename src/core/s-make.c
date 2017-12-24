@@ -174,17 +174,19 @@ REBSER *Append_Unencoded(REBSER *dst, const char *src)
 //
 //  Append_Codepoint: C
 //
-// Optimized function to append a non-encoded character.
+// Append a non-encoded character to a string.
 //
-REBSER *Append_Codepoint(REBSER *dst, REBCNT codepoint)
+REBSER *Append_Codepoint(REBSER *dst, REBUNI codepoint)
 {
     assert(SER_WIDE(dst) == sizeof(REBUNI)); // invariant for "Latin1 Nowhere"
-    assert(codepoint < (1 << 16)); // not supported...yet
 
     REBCNT tail = SER_LEN(dst);
     EXPAND_SERIES_TAIL(dst, 1);
-    *UNI_AT(dst, tail) = cast(REBUNI, codepoint);
-    TERM_UNI_LEN(dst, tail + 1);
+
+    REBCHR(*) cp = UNI_AT(dst, tail);
+    cp = WRITE_CHR(cp, codepoint);
+    cp = WRITE_CHR(cp, '\0'); // should always be capacity for terminator
+
     return dst;
 }
 

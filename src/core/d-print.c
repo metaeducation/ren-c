@@ -115,43 +115,24 @@ void Prin_OS_String(const REBUNI *up, REBCNT len, REBFLGS opts)
     DECLARE_LOCAL (result);
     SET_END(result);
 
-    if (opts & OPT_ENC_RAW) {
-        assert(FALSE); // !!! Temporarily disabled
-
+    while ((len2 = len) > 0) {
         if (Do_Signals_Throws(result))
             fail (Error_No_Catch_For_Throw(result));
 
         assert(IS_END(result));
 
-        // Used by verbatim terminal output, e.g. print of a BINARY!
-        Req_SIO->length = len;
+        Req_SIO->length = Encode_UTF8(
+            buf,
+            BUF_SIZE - 4,
+            up,
+            &len2,
+            opts
+        );
 
-        // Mutability cast, but RDC_WRITE should not be modifying the buffer
-        // (doing so could yield undefined behavior)
-        Req_SIO->common.data = m_cast(REBYTE *, cast(const REBYTE*, up));
+        up += len2;
+        len -= len2;
 
         OS_DO_DEVICE(Req_SIO, RDC_WRITE);
-    }
-    else {
-        while ((len2 = len) > 0) {
-            if (Do_Signals_Throws(result))
-                fail (Error_No_Catch_For_Throw(result));
-
-            assert(IS_END(result));
-
-            Req_SIO->length = Encode_UTF8(
-                buf,
-                BUF_SIZE - 4,
-                up,
-                &len2,
-                opts
-            );
-
-            up += len2;
-            len -= len2;
-
-            OS_DO_DEVICE(Req_SIO, RDC_WRITE);
-        }
     }
 }
 
@@ -245,7 +226,7 @@ void Debug_Values(const RELVAL *value, REBCNT count, REBCNT limit)
                 pc = uc;
             }
             SET_ANY_CHAR(mo->series, i2, '\0');
-            assert(SER_WIDE(mo->series) == sizeof(REBUNI));
+
             Debug_String(UNI_AT(mo->series, mo->start), i2 - mo->start);
 
             Drop_Mold(mo);

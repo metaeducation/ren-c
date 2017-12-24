@@ -96,7 +96,7 @@ void Whitespace_Replace_With(
         REBCNT i;
         for (i = 0; i < n; ++i) {
             REBUNI c;
-            cp = const_NEXT_CHR(&c, cp);
+            cp = NEXT_CHR(&c, cp);
             up[i] = c;
         }
 

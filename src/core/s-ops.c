@@ -374,10 +374,9 @@ void Change_Case(REBVAL *out, REBVAL *val, REBVAL *part, REBOOL upper)
 //
 //  Split_Lines: C
 //
-// Given a string series, split lines on CR-LF.
-// Series can be bytes or Unicode.
+// Given a string series, split lines on CR-LF.  Give back array of strings.
 //
-REBARR *Split_Lines(REBVAL *str)
+REBARR *Split_Lines(const REBVAL *str)
 {
     REBDSP dsp_orig = DSP;
 
@@ -385,31 +384,55 @@ REBARR *Split_Lines(REBVAL *str)
     REBCNT len = VAL_LEN_AT(str);
     REBCNT i = VAL_INDEX(str);
 
-    REBCNT start = i;
+    REBCHR(const *) start = VAL_UNI_AT(str);
+    REBCHR(const *) up = start;
+
+    if (i == len)
+        return Make_Array(0);
+
+    REBUNI c;
+    up = NEXT_CHR(&c, up);
+    ++i;
 
     while (i < len) {
-        REBUNI c = GET_ANY_CHAR(s, i);
         if (c == LF || c == CR) {
             DS_PUSH_TRASH;
             Init_String(
                 DS_TOP,
-                Copy_String_At_Len(s, start, i - start)
+                Copy_Sequence_At_Len(
+                    s,
+                    AS_REBUNI(start) - UNI_HEAD(s),
+                    AS_REBUNI(up) - AS_REBUNI(start) - 1
+                )
             );
             SET_VAL_FLAG(DS_TOP, VALUE_FLAG_LINE);
             ++i;
-            if (c == CR && GET_ANY_CHAR(s, i) == LF)
+            start = up;
+            if (c == CR) {
+                up = NEXT_CHR(&c, up);
                 ++i;
-            start = i;
+                if (c == LF)
+                    start = up; // remark start, fall through and fetch again
+                else
+                    continue; // already did next character fetch
+            }
         }
-        else
-            ++i;
+
+        ++i;
+        up = NEXT_CHR(&c, up);
     }
+
     // Possible remainder (no terminator)
-    if (i > start) {
+
+    if (AS_REBUNI(up) > AS_REBUNI(start)) {
         DS_PUSH_TRASH;
         Init_String(
             DS_TOP,
-            Copy_String_At_Len(s, start, i - start)
+            Copy_Sequence_At_Len(
+                s,
+                AS_REBUNI(start) - UNI_HEAD(s),
+                AS_REBUNI(up) - AS_REBUNI(start) // no -1, wasn't terminated
+            )
         );
         SET_VAL_FLAG(DS_TOP, VALUE_FLAG_LINE);
     }

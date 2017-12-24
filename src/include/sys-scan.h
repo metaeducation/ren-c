@@ -390,14 +390,8 @@ extern const REBYTE Lex_Map[256];
     #define CHR_CODE(p) \
         (p).code()
 
-    #define const_BACK_CHR(codepoint_out, p) \
-        (p).back(codepoint_out)
-
     #define BACK_CHR(codepoint_out, p) \
         (p).back(codepoint_out)
-
-    #define const_NEXT_CHR(codepoint_out, p) \
-        (p).next(codepoint_out)
 
     #define NEXT_CHR(codepoint_out, p) \
         (p).next(codepoint_out)
@@ -413,36 +407,22 @@ extern const REBYTE Lex_Map[256];
     #define CHR_CODE(p) \
         (*p)
 
-    inline static REBCHR(const *) const_BACK_CHR(
-        REBWCHAR *codepoint_out,
-        REBCHR(const *) p
-    ){
-        if (codepoint_out != NULL)
-            *codepoint_out = *p;
-        return p - 1;
-    }
-
     inline static REBCHR(*) BACK_CHR(
         REBWCHAR *codepoint_out,
-        REBCHR(*) p
-    ){
-        return m_cast(REBCHR(*), const_BACK_CHR(codepoint_out, p));
-    }
-
-    inline static REBCHR(const *) const_NEXT_CHR(
-        REBWCHAR *codepoint_out,
         REBCHR(const *) p
     ){
         if (codepoint_out != NULL)
             *codepoint_out = *p;
-        return p + 1;
+        return m_cast(REBCHR(*), p - 1); // don't write if input was const!
     }
 
     inline static REBCHR(*) NEXT_CHR(
         REBWCHAR *codepoint_out,
-        REBCHR(*) p
+        REBCHR(const *) p
     ){
-        return m_cast(REBCHR(*), const_NEXT_CHR(codepoint_out, p));
+        if (codepoint_out != NULL)
+            *codepoint_out = *p;
+        return m_cast(REBCHR(*), p + 1);
     }
 
     inline static REBCHR(*) WRITE_CHR(REBCHR(*) p, REBWCHAR codepoint) {

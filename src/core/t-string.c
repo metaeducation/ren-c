@@ -139,7 +139,7 @@ static void reverse_string(REBVAL *v, REBCNT len)
         REBCNT n;
         for (n = 0; n < len; ++n) {
             REBUNI c;
-            up = const_BACK_CHR(&c, up);
+            up = BACK_CHR(&c, up);
             Append_Utf8_Codepoint(mo->series, c);
         }
 
@@ -771,7 +771,7 @@ static void Sniff_String(REBSER *ser, REBCNT idx, REB_STRF *sf)
     REBCNT n;
     for (n = idx; n < UNI_LEN(ser); n++) {
         REBUNI c;
-        up = const_NEXT_CHR(&c, up);
+        up = NEXT_CHR(&c, up);
 
         switch (c) {
         case '{':
@@ -925,7 +925,7 @@ static void Mold_String_Series(REB_MOLD *mo, const RELVAL *v)
         REBCNT n;
         for (n = index; n < VAL_LEN_HEAD(v); n++) {
             REBUNI c;
-            up = const_NEXT_CHR(&c, up);
+            up = NEXT_CHR(&c, up);
             dp = Emit_Uni_Char(
                 dp, c, GET_MOLD_FLAG(mo, MOLD_FLAG_NON_ANSI_PARENED)
             );
@@ -955,7 +955,7 @@ static void Mold_String_Series(REB_MOLD *mo, const RELVAL *v)
     REBCNT n;
     for (n = index; n < VAL_LEN_HEAD(v); n++) {
         REBUNI c;
-        up = const_NEXT_CHR(&c, up);
+        up = NEXT_CHR(&c, up);
 
         switch (c) {
         case '{':

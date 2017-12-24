@@ -109,9 +109,13 @@ REBNATIVE(write_stdout)
 
     REBVAL *v = ARG(value);
 
-    if (IS_BINARY(v)) { // raw output
-        assert(FALSE); // temporarily disabled
-        Prin_OS_String(NULL, 0, OPT_ENC_RAW);
+    if (IS_BINARY(v)) {
+        //
+        // It is sometimes desirable to write raw binary data to stdout.  e.g.
+        // e.g. CGI scripts may be hooked up to stream data for a download,
+        // and not want the bytes translated.
+        //
+        fail ("Raw output to stdout is temporarily disabled");
     }
     else if (IS_CHAR(v)) { // useful for `write-stdout newline`, etc.
         Prin_OS_String(&VAL_CHAR(v), 1, OPT_ENC_CRLF_MAYBE);

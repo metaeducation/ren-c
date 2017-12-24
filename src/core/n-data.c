@@ -46,7 +46,7 @@ static REBOOL Check_Char_Range(const REBVAL *val, REBINT limit)
 
     for (; len > 0; len--) {
         REBUNI c;
-        up = const_NEXT_CHR(&c, up);
+        up = NEXT_CHR(&c, up);
 
         if (c > limit)
             return FALSE;

@@ -487,8 +487,7 @@ enum {
 // Encoding options:
 enum encoding_opts {
     OPT_ENC_0 = 0,
-    OPT_ENC_CRLF = 1 << 1, // CR line termination, see OPT_ENC_CRLF_MAYBE
-    OPT_ENC_RAW = 1 << 2 // raw binary, no encoding
+    OPT_ENC_CRLF = 1 << 1 // CR line termination, see OPT_ENC_CRLF_MAYBE
 };
 
 #if OS_CRLF

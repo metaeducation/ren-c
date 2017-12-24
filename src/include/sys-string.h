@@ -182,7 +182,7 @@ inline static REBSIZ VAL_SIZE_AT_LIMIT(const REBVAL *v, REBINT limit) {
     else {
         tail = at;
         for (; limit > 0; --limit)
-            tail = const_NEXT_CHR(NULL, tail);
+            tail = NEXT_CHR(NULL, tail);
     }
 
     return AS_REBUNI(tail) - AS_REBUNI(at);

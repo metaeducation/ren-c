@@ -174,7 +174,7 @@ REBINT Find_Max_Bit(const RELVAL *val)
         REBCHR(const *) up = VAL_UNI_AT(val);
         for (; n < cast(REBINT, VAL_LEN_HEAD(val)); n++) {
             REBUNI c;
-            up = const_NEXT_CHR(&c, up);
+            up = NEXT_CHR(&c, up);
             if (c > maxi)
                 maxi = c;
         }
@@ -303,7 +303,7 @@ REBOOL Set_Bits(REBSER *bset, const REBVAL *val, REBOOL set)
         REBCHR(const *) up = VAL_UNI_AT(val);
         for (; i < VAL_LEN_HEAD(val); ++i) {
             REBUNI c;
-            up = const_NEXT_CHR(&c, up);
+            up = NEXT_CHR(&c, up);
             Set_Bit(bset, c, set);
         }
 
@@ -433,7 +433,7 @@ REBOOL Check_Bits(REBSER *bset, const REBVAL *val, REBOOL uncased)
         REBCHR(const *) up = VAL_UNI_AT(val);
         for (; i < VAL_LEN_HEAD(val); ++i) {
             REBUNI c;
-            up = const_NEXT_CHR(&c, up);
+            up = NEXT_CHR(&c, up);
             if (Check_Bit(bset, c, uncased))
                 return TRUE;
         }

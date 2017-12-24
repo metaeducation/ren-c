@@ -230,7 +230,7 @@ static void Encode_Utf16_Core(
     REBCNT i = 0;
     for (i = 0; i < len; ++i) {
         REBUNI c;
-        cp = const_NEXT_CHR(&c, cp);
+        cp = NEXT_CHR(&c, cp);
 
         // !!! TBD: handle large codepoints bigger than 0xffff, and encode
         // as UTF16.  (REBUNI is only 16 bits at time of writing)
