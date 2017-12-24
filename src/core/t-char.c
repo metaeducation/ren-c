@@ -76,9 +76,8 @@ void MAKE_Char(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
         }
         break;
 
-    case REB_BINARY:
-        {
-        const REBYTE *bp = VAL_BIN(arg);
+    case REB_BINARY: {
+        const REBYTE *bp = VAL_BIN_HEAD(arg);
         REBCNT len = VAL_LEN_AT(arg);
         if (len == 0) goto bad_make;
         if (*bp <= 0x80) {
@@ -93,8 +92,7 @@ void MAKE_Char(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
             if (!bp || len != 0) // must be valid UTF8 and consume all data
                 goto bad_make;
         }
-        } // case REB_BINARY
-        break;
+        break; }
 
     case REB_STRING:
         if (VAL_INDEX(arg) >= VAL_LEN_HEAD(arg))

@@ -31,7 +31,7 @@
 #include "sys-core.h"
 
 // For reference to port/state series that holds the file structure:
-#define AS_FILE(s) ((REBREQ*)VAL_BIN(s))
+#define AS_FILE(s) cast(REBREQ*, VAL_BIN_HEAD(s))
 #define READ_MAX ((REBCNT)(-1))
 #define HL64(v) (v##l + (v##h << 32))
 #define MAX_READ_MASK 0x7FFFFFFF // max size per chunk

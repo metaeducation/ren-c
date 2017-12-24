@@ -144,13 +144,63 @@ inline static void SET_UNI_LEN(REBSER *s, REBCNT len) {
 #define UNI_LAST(s) \
     SER_LAST(REBUNI, (s))
 
-inline static void TERM_UNI(REBSER *s) {
-    *UNI_AT(s, SER_LEN(s)) = '\0';
-}
-
 inline static void TERM_UNI_LEN(REBSER *s, REBCNT len) {
     SET_SERIES_LEN(s, len);
-    *UNI_AT(s, len) = '\0';
+    *SER_AT(REBUNI, s, len) = '\0';
+}
+
+#define VAL_UNI_HEAD(v) \
+    UNI_HEAD(VAL_SERIES(v))
+
+#define VAL_UNI_TAIL(v) \
+    UNI_TAIL(VAL_SERIES(v))
+
+// This should be an updating operation, which may refresh the cache in the
+// value.  It would look something like:
+//
+//     if (s->stamp == v->extra.utfcache.stamp)
+//          return v->extra.utfcache.offset;
+//     ...else calculate...
+//    m_cast(REBVAL*, v)->extra.utfcache.stamp = s->stamp;
+//    m_cast(REBVAL*, v)->extra.utfcache.offset = offset;
+//
+// One should thus always prefer to use VAL_UNI_AT() if possible, over trying
+// to calculate a position from scratch.
+//
+inline static REBUNI *VAL_UNI_AT(const RELVAL *v) {
+    return UNI_AT(VAL_SERIES(v), VAL_INDEX(v));
+}
+
+inline static REBSIZ VAL_SIZE_AT_LIMIT(const REBVAL *v, REBINT limit) {
+    assert(ANY_STRING(v));
+
+    REBCHR(const *) at = VAL_UNI_AT(v); // !!! update cache if needed
+    REBCHR(const *) tail;
+
+    if (limit == -1)
+        tail = VAL_UNI_TAIL(v); // byte count known (fast)
+    else {
+        tail = at;
+        for (; limit > 0; --limit)
+            tail = const_NEXT_CHR(NULL, tail);
+    }
+
+    return AS_REBUNI(tail) - AS_REBUNI(at);
+}
+
+// This routine is a workaround needed so long as routines processing binaries
+// and strings are in the same general code.
+//
+inline static REBSIZ SER_SIZE_LIMIT(REBSER *s, REBINT limit) {
+    if (SER_WIDE(s) == sizeof(REBYTE))
+        return SER_LEN(s);
+
+    assert(SER_WIDE(s) == sizeof(REBUNI));
+
+    if (limit == -1)
+        return limit * sizeof(REBUNI);
+
+    return SER_LEN(s) * sizeof(REBUNI);
 }
 
 
@@ -167,7 +217,7 @@ inline static void TERM_UNI_LEN(REBSER *s, REBCNT len) {
 //
 
 inline static REBUNI GET_ANY_CHAR(REBSER *s, REBCNT n) {
-    return BYTE_SIZE(s) ? *BIN_AT(s, n) : *UNI_AT(s, n);
+    return BYTE_SIZE(s) ? *BIN_AT(s, n) : *SER_AT(REBUNI, s, n);
 }
 
 inline static void SET_ANY_CHAR(REBSER *s, REBCNT n, REBUNI c) {
@@ -176,9 +226,11 @@ inline static void SET_ANY_CHAR(REBSER *s, REBCNT n, REBUNI c) {
         *BIN_AT(s, n) = c;
     }
     else
-        *UNI_AT(s, n) = c;
+        *SER_AT(REBUNI, s, n) = c;
 }
 
+#define VAL_ANY_CHAR(v) \
+    GET_ANY_CHAR(VAL_SERIES(v), VAL_INDEX(v))
 
 
 //=////////////////////////////////////////////////////////////////////////=//
@@ -201,18 +253,6 @@ inline static void SET_ANY_CHAR(REBSER *s, REBCNT n, REBUNI c) {
 
 #define Init_Url(v,s) \
     Init_Any_Series((v), REB_URL, (s))
-
-#define VAL_UNI(v) \
-    UNI_HEAD(VAL_SERIES(v))
-
-#define VAL_UNI_HEAD(v) \
-    UNI_HEAD(VAL_SERIES(v))
-
-#define VAL_UNI_AT(v) \
-    UNI_AT(VAL_SERIES(v), VAL_INDEX(v))
-
-#define VAL_ANY_CHAR(v) \
-    GET_ANY_CHAR(VAL_SERIES(v), VAL_INDEX(v))
 
 
 // R3-Alpha did not support unicode codepoints higher than 0xFFFF, because

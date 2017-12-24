@@ -320,116 +320,6 @@ void Trim_Tail(REBSER *src, REBYTE chr)
 
 
 //
-//  Make_Entabbed_String: C
-//
-// Entab a string and return a new series.
-//
-REBSER *Make_Entabbed_String(
-    const REBUNI *up,
-    REBCNT index,
-    REBCNT len,
-    REBINT tabsize
-){
-    DECLARE_MOLD (mo);
-    Push_Mold(mo);
-
-    REBYTE *dp = Prep_Mold_Overestimated(mo, len * 4); // max UTF-8 charsize
-
-    REBINT n = 0;
-    for (; index < len; index++) {
-        REBUNI c = up[index];
-
-        // Count leading spaces, insert TAB for each tabsize:
-        if (c == ' ') {
-            if (++n >= tabsize) {
-                *dp++ = '\t';
-                n = 0;
-            }
-            continue;
-        }
-
-        // Hitting a leading TAB resets space counter:
-        if (c == '\t') {
-            *dp++ = cast(REBYTE, c);
-            n = 0;
-        }
-        else {
-            // Incomplete tab space, pad with spaces:
-            for (; n > 0; n--)
-                *dp++ = ' ';
-
-            // Copy chars thru end-of-line (or end of buffer):
-            for (; index < len; ++index) {
-                if (up[index] == '\n') {
-                    *dp = '\n';
-                    break;
-                }
-                dp += Encode_UTF8_Char(dp, up[index]);
-            }
-        }
-    }
-
-    TERM_BIN_LEN(mo->series, dp - BIN_HEAD(mo->series));
-
-    return Pop_Molded_String(mo);
-}
-
-
-//
-//  Make_Detabbed_String: C
-//
-// Detab a unicode string and return a new series.
-//
-REBSER *Make_Detabbed_String(
-    const REBUNI *up,
-    REBCNT index,
-    REBCNT len,
-    REBINT tabsize
-){
-    DECLARE_MOLD (mo);
-
-    // Estimate new length based on tab expansion:
-    REBCNT count = 0;
-    REBCNT n;
-    for (n = index; n < len; n++)
-        if (up[n] == '\t') // tab character
-            ++count;
-
-    Push_Mold(mo);
-
-    REBYTE *dp = Prep_Mold_Overestimated(
-        mo,
-        (len * 4) // assume worst case, all characters encode UTF-8 4 bytes
-            + (count * (tabsize - 1)) // expanded tabs add tabsize - 1 to len
-    );
-
-    n = 0;
-    for (; index < len; ++index) {
-        REBUNI c = up[index];
-
-        if (c == '\t') {
-            *dp++ = ' ';
-            n++;
-            for (; n % tabsize != 0; n++)
-                *dp++ = ' ';
-            continue;
-        }
-
-        if (c == '\n')
-            n = 0;
-        else
-            ++n;
-
-        dp += Encode_UTF8_Char(dp, c);
-    }
-
-    TERM_BIN_LEN(mo->series, dp - BIN_HEAD(mo->series));
-
-    return Pop_Molded_String(mo);
-}
-
-
-//
 //  Change_Case: C
 //
 // Common code for string case handling.
@@ -459,14 +349,14 @@ void Change_Case(REBVAL *out, REBVAL *val, REBVAL *part, REBOOL upper)
     len += n;
 
     if (VAL_BYTE_SIZE(val)) {
-        REBYTE *bp = VAL_BIN(val);
+        REBYTE *bp = VAL_BIN_HEAD(val);
         if (upper)
             for (; n < len; n++) bp[n] = (REBYTE)UP_CASE(bp[n]);
         else {
             for (; n < len; n++) bp[n] = (REBYTE)LO_CASE(bp[n]);
         }
     } else {
-        REBUNI *up = VAL_UNI(val);
+        REBUNI *up = VAL_UNI_HEAD(val);
         if (upper) {
             for (; n < len; n++) {
                 if (up[n] < UNICODE_CASES) up[n] = UP_CASE(up[n]);

@@ -111,8 +111,8 @@ static REB_R DNS_Actor(REBFRM *frame_, REBCTX *port, REBSYM action)
                 sock->modes |= RST_REVERSE;
                 memcpy(&(DEVREQ_NET(sock)->remote_ip), VAL_TUPLE(tmp), 4);
             }
-            else
-                sock->common.data = VAL_BIN(arg); // lookup string's IP address
+            else // lookup string's IP address
+                sock->common.data = VAL_BIN_HEAD(arg);
         }
         else
             fail (Error_On_Port(RE_INVALID_SPEC, port, -10));

@@ -291,7 +291,7 @@ REBOOL Set_Bits(REBSER *bset, const REBVAL *val, REBOOL set)
     if (IS_BINARY(val)) {
         REBCNT i = VAL_INDEX(val);
 
-        REBYTE *bp = VAL_BIN(val);
+        REBYTE *bp = VAL_BIN_HEAD(val);
         for (; i < VAL_LEN_HEAD(val); i++)
             Set_Bit(bset, bp[i], set);
 
@@ -421,7 +421,7 @@ REBOOL Check_Bits(REBSER *bset, const REBVAL *val, REBOOL uncased)
 
     if (IS_BINARY(val)) {
         REBCNT i = VAL_INDEX(val);
-        REBYTE *bp = VAL_BIN(val);
+        REBYTE *bp = VAL_BIN_HEAD(val);
         for (; i < VAL_LEN_HEAD(val); ++i)
             if (Check_Bit(bset, bp[i], uncased))
                 return TRUE;

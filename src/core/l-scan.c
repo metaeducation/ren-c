@@ -2605,7 +2605,7 @@ REBNATIVE(transcode)
     // (Returning a length 2 block is how TRANSCODE does a "multiple
     // return value, but #1916 discusses a possible "revamp" of this.)
 
-    VAL_INDEX(ARG(source)) = ss.end - VAL_BIN(ARG(source));
+    VAL_INDEX(ARG(source)) = ss.end - VAL_BIN_HEAD(ARG(source));
     Append_Value(VAL_ARRAY(D_OUT), ARG(source));
 
     return R_OUT;

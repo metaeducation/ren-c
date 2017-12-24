@@ -380,7 +380,7 @@ static REBSER *make_binary(const REBVAL *arg, REBOOL make)
 
     // MAKE/TO BINARY! <bitset!>
     case REB_BITSET:
-        ser = Copy_Bytes(VAL_BIN(arg), VAL_LEN_HEAD(arg));
+        ser = Copy_Bytes(VAL_BIN_HEAD(arg), VAL_LEN_HEAD(arg));
         break;
 
     // MAKE/TO BINARY! <image!>

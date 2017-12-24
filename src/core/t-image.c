@@ -746,7 +746,9 @@ REBVAL *Modify_Image(REBFRM *frame_, REBCNT action)
     if (action == SYM_INSERT) {
         if (index > tail) index = tail;
         Expand_Series(VAL_SERIES(value), index, dup * part);
-        RESET_IMAGE(VAL_BIN(value) + (index * 4), dup * part); //length in 'pixels'
+
+        //length in 'pixels'
+        RESET_IMAGE(VAL_BIN_HEAD(value) + (index * 4), dup * part);
         Reset_Height(value);
         tail = VAL_LEN_HEAD(value);
         only = FALSE;

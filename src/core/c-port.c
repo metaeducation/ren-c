@@ -106,7 +106,7 @@ REBREQ *Ensure_Port_State(REBCTX *port, REBCNT device)
         assert(VAL_LEN_HEAD(state) == req_size); // should be right size
     }
 
-    return cast(REBREQ*, VAL_BIN(state));
+    return cast(REBREQ*, VAL_BIN_HEAD(state));
 }
 
 
@@ -124,7 +124,7 @@ REBOOL Pending_Port(REBVAL *port)
     if (IS_PORT(port)) {
         state = CTX_VAR(VAL_CONTEXT(port), STD_PORT_STATE);
         if (IS_BINARY(state)) {
-            req = (REBREQ*)VAL_BIN(state);
+            req = cast(REBREQ*, VAL_BIN_HEAD(state));
             if (NOT(req->flags & RRF_PENDING))
                 return FALSE;
         }

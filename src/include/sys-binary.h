@@ -82,9 +82,6 @@ inline static void TERM_BIN_LEN(REBSER *s, REBCNT len) {
 //
 //=////////////////////////////////////////////////////////////////////////=//
 
-#define VAL_BIN(v) \
-    BIN_HEAD(VAL_SERIES(v))
-
 #define VAL_BIN_HEAD(v) \
     BIN_HEAD(VAL_SERIES(v))
 

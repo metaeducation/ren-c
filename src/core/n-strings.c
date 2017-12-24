@@ -762,21 +762,60 @@ REBNATIVE(entab)
 
     REBVAL *val = ARG(string);
 
-    REBCNT len = VAL_LEN_AT(val);
-
     REBINT tabsize;
     if (REF(size))
         tabsize = Int32s(ARG(number), 1);
     else
         tabsize = TAB_SIZE;
 
-    Init_Any_Series(
-        D_OUT,
-        VAL_TYPE(val),
-        Make_Entabbed_String(VAL_UNI(val), VAL_INDEX(val), len, tabsize)
-    );
+    DECLARE_MOLD (mo);
+    Push_Mold(mo);
 
+    REBCNT len = VAL_LEN_AT(val);
+    REBYTE *dp = Prep_Mold_Overestimated(mo, len * 4); // max UTF-8 charsize
 
+    REBCHR(const *) up = VAL_UNI_AT(val);
+    REBCNT index = VAL_INDEX(val);
+
+    REBINT n = 0;
+    for (; index < len; index++) {
+        REBUNI c;
+        up = const_NEXT_CHR(&c, up);
+
+        // Count leading spaces, insert TAB for each tabsize:
+        if (c == ' ') {
+            if (++n >= tabsize) {
+                *dp++ = '\t';
+                n = 0;
+            }
+            continue;
+        }
+
+        // Hitting a leading TAB resets space counter:
+        if (c == '\t') {
+            *dp++ = cast(REBYTE, c);
+            n = 0;
+        }
+        else {
+            // Incomplete tab space, pad with spaces:
+            for (; n > 0; n--)
+                *dp++ = ' ';
+
+            // Copy chars thru end-of-line (or end of buffer):
+            for (; index < len; ++index) {
+                if (c == '\n') {
+                    *dp = '\n';
+                    break;
+                }
+                dp += Encode_UTF8_Char(dp, c);
+                up = const_NEXT_CHR(&c, up);
+            }
+        }
+    }
+
+    TERM_BIN_LEN(mo->series, dp - BIN_HEAD(mo->series));
+
+    Init_Any_Series(D_OUT, VAL_TYPE(val), Pop_Molded_String(mo));
     return R_OUT;
 }
 
@@ -807,12 +846,56 @@ REBNATIVE(detab)
     else
         tabsize = TAB_SIZE;
 
-    Init_Any_Series(
-        D_OUT,
-        VAL_TYPE(val),
-        Make_Detabbed_String(VAL_UNI(val), VAL_INDEX(val), len, tabsize)
+    DECLARE_MOLD (mo);
+
+    // Estimate new length based on tab expansion:
+
+    REBCHR(const *) cp = VAL_UNI_AT(val);
+    REBCNT index = VAL_INDEX(val);
+
+    REBCNT count = 0;
+    REBCNT n;
+    for (n = index; n < len; n++) {
+        REBUNI c;
+        cp = const_NEXT_CHR(&c, cp);
+        if (c == '\t') // tab character
+            ++count;
+    }
+
+    Push_Mold(mo);
+
+    REBYTE *dp = Prep_Mold_Overestimated(
+        mo,
+        (len * 4) // assume worst case, all characters encode UTF-8 4 bytes
+            + (count * (tabsize - 1)) // expanded tabs add tabsize - 1 to len
     );
 
+    cp = VAL_UNI_AT(val);
+
+    n = 0;
+    for (; index < len; ++index) {
+        REBUNI c;
+        cp = const_NEXT_CHR(&c, cp);
+
+        if (c == '\t') {
+            *dp++ = ' ';
+            n++;
+            for (; n % tabsize != 0; n++)
+                *dp++ = ' ';
+            continue;
+        }
+
+        if (c == '\n')
+            n = 0;
+        else
+            ++n;
+
+        dp += Encode_UTF8_Char(dp, c);
+    }
+
+    TERM_BIN_LEN(mo->series, dp - BIN_HEAD(mo->series));
+
+    Init_Any_Series(D_OUT, VAL_TYPE(val), Pop_Molded_String(mo));
     return R_OUT;
 }
 

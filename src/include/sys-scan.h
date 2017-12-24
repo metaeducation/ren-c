@@ -350,6 +350,10 @@ extern const REBYTE Lex_Map[256];
             next(&temp);
             return temp;
         }
+
+        const REBWCHAR *as_rebuni() {
+            return p;
+        }
     };
 
     template<>
@@ -375,6 +379,10 @@ extern const REBYTE Lex_Map[256];
             *p = codepoint;
             return p + 1;
         }
+
+        REBWCHAR *as_rebuni() {
+            return p;
+        }
     };
 
     #define REBCHR(x) RebchrPtr<void x>
@@ -396,6 +404,9 @@ extern const REBYTE Lex_Map[256];
 
     #define WRITE_CHR(p, codepoint) \
         (p).write(codepoint)
+
+    #define AS_REBUNI(p) \
+        (p).as_rebuni()
 #else
     #define REBCHR(x) REBWCHAR x
 
@@ -438,4 +449,7 @@ extern const REBYTE Lex_Map[256];
         *p = codepoint;
         return p + 1;
     }
+
+    #define AS_REBUNI(p) \
+        (p)
 #endif
