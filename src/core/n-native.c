@@ -510,12 +510,7 @@ REBNATIVE(compile)
             RELVAL *name = VAL_ARRAY_AT_HEAD(info, 1);
 
             Append_Unencoded(mo->series, "REB_R ");
-            Append_String(
-                mo->series,
-                VAL_SERIES(name),
-                VAL_INDEX(name),
-                VAL_LEN_AT(name)
-            );
+            Append_Utf8_String(mo->series, name, VAL_LEN_AT(name));
             Append_Unencoded(mo->series, "(REBFRM *frame_)\n{\n");
 
             REBVAL *param = VAL_FUNC_PARAMS_HEAD(var);
@@ -554,12 +549,7 @@ REBNATIVE(compile)
             if (num != 1)
                 Append_Unencoded(mo->series, "\n");
 
-            Append_String(
-                mo->series,
-                VAL_SERIES(source),
-                VAL_INDEX(source),
-                VAL_LEN_AT(source)
-            );
+            Append_Utf8_String(mo->series, source, VAL_LEN_AT(source));
             Append_Unencoded(mo->series, "\n}\n\n");
         }
         else if (IS_STRING(var)) {
@@ -568,12 +558,7 @@ REBNATIVE(compile)
             // for writing things like C functions or macros that are shared
             // between multiple user natives.
             //
-            Append_String(
-                mo->series,
-                VAL_SERIES(var),
-                VAL_INDEX(var),
-                VAL_LEN_AT(var)
-            );
+            Append_Utf8_String(mo->series, var, VAL_LEN_AT(var));
             Append_Unencoded(mo->series, "\n");
         }
         else {

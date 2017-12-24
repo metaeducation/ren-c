@@ -150,9 +150,8 @@ static void reverse_string(REBVAL *v, REBCNT len)
         // the string (from the input value's index to the tail).
 
         Modify_String(
+            v,
             SYM_CHANGE,
-            VAL_SERIES(v),
-            VAL_INDEX(v),
             temp,
             0, // not AM_PART, we want to change all len bytes
             len,
@@ -689,11 +688,12 @@ REB_R PD_String(REBPVS *pvs, const REBVAL *picker, const REBVAL *opt_setval)
         // !!! Would be nice if there was a better way of doing this that didn't
         // involve reaching into mo.start and mo.series.
         //
-        Append_String(
+        const REBOOL crlf_to_lf = FALSE;
+        Append_UTF8_May_Fail(
             copy, // dst
-            mo->series, // src
-            mo->start + skip, // i
-            SER_LEN(mo->series) - mo->start - skip // len
+            cs_cast(BIN_AT(mo->series, mo->start + skip)), // src
+            SER_LEN(mo->series) - mo->start - skip, // len
+            crlf_to_lf
         );
 
         Drop_Mold(mo);
@@ -1096,7 +1096,10 @@ void MF_Binary(REB_MOLD *mo, const RELVAL *v, REBOOL form)
         break; }
     }
 
-    Emit(mo, "#{E}", enbased);
+    Append_Unencoded(mo->series, "#{");
+    Append_Utf8_Utf8(mo->series, cs_cast(BIN_HEAD(enbased)), BIN_LEN(enbased));
+    Append_Unencoded(mo->series, "}");
+
     Free_Series(enbased);
 
     if (GET_MOLD_FLAG(mo, MOLD_FLAG_ALL) && VAL_INDEX(v) != 0)
@@ -1221,24 +1224,30 @@ REBTYPE(String)
             ARG(limit),
             cast(REBCNT*, &len)
         );
-        index = VAL_INDEX(v);
 
         REBFLGS flags = 0;
-        if (IS_BINARY(v))
-            flags |= AM_BINARY_SERIES;
         if (REF(part))
             flags |= AM_PART;
-        index = Modify_String(
-            action,
-            VAL_SERIES(v),
-            index,
-            arg,
-            flags,
-            len,
-            REF(dup) ? Int32(ARG(count)) : 1
-        );
-        ENSURE_SERIES_MANAGED(VAL_SERIES(v));
-        VAL_INDEX(v) = index;
+
+        if (IS_BINARY(v))
+            VAL_INDEX(v) = Modify_Binary(
+                v,
+                action,
+                arg,
+                flags,
+                len,
+                REF(dup) ? Int32(ARG(count)) : 1
+            );
+        else
+            VAL_INDEX(v) = Modify_String(
+                v,
+                action,
+                arg,
+                flags,
+                len,
+                REF(dup) ? Int32(ARG(count)) : 1
+            );
+
         break; }
 
     //-- Search:

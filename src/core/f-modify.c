@@ -135,19 +135,21 @@ REBCNT Modify_Array(
 
 
 //
-//  Modify_String: C
+//  Modify_Binary: C
 //
 // Returns new dst_idx.
 //
-REBCNT Modify_String(
-    REBCNT action,          // INSERT, APPEND, CHANGE
-    REBSER *dst_ser,        // target
-    REBCNT dst_idx,         // position
+REBCNT Modify_Binary(
+    REBVAL *dst_val,        // target
+    REBSYM action,          // INSERT, APPEND, CHANGE
     const REBVAL *src_val,  // source
-    REBFLGS flags,          // AM_PART, AM_BINARY_SERIES
+    REBFLGS flags,          // AM_PART
     REBINT dst_len,         // length to remove
     REBINT dups             // dup count
-) {
+){
+    REBSER *dst_ser = VAL_SERIES(dst_val);
+    REBCNT dst_idx = VAL_INDEX(dst_val);
+
     // For INSERT/PART and APPEND/PART
     //
     REBINT limit;
@@ -169,69 +171,52 @@ REBCNT Modify_String(
     REBCNT src_len;
     REBSER *src_ser;
     REBOOL needs_free;
-    if (flags & AM_BINARY_SERIES) {
-        if (IS_INTEGER(src_val)) {
-            REBI64 i = VAL_INT64(src_val);
-            if (i > 255 || i < 0)
-                fail ("Inserting out-of-range INTEGER! into BINARY!");
+    if (IS_INTEGER(src_val)) {
+        REBI64 i = VAL_INT64(src_val);
+        if (i > 255 || i < 0)
+            fail ("Inserting out-of-range INTEGER! into BINARY!");
 
-            src_ser = Make_Binary(1);
-            *BIN_HEAD(src_ser) = cast(REBYTE, i);
-            TERM_BIN_LEN(src_ser, 1);
-            needs_free = TRUE;
-            limit = -1;
-        }
-        else if (IS_BLOCK(src_val)) {
-            src_ser = Join_Binary(src_val, limit); // NOTE: shared FORM buffer
-            needs_free = FALSE;
-            limit = -1;
-        }
-        else if (IS_CHAR(src_val)) {
-            //
-            // "UTF-8 was originally specified to allow codepoints with up to
-            // 31 bits (or 6 bytes). But with RFC3629, this was reduced to 4
-            // bytes max. to be more compatible to UTF-16."  So depending on
-            // which RFC you consider "the UTF-8", max size is either 4 or 6.
-            //
-            src_ser = Make_Binary(6);
-            SET_SERIES_LEN(
-                src_ser,
-                Encode_UTF8_Char(BIN_HEAD(src_ser), VAL_CHAR(src_val))
-            );
-            needs_free = TRUE;
-            limit = -1;
-        }
-        else if (ANY_STRING(src_val)) {
-            src_len = VAL_LEN_AT(src_val);
-            if (limit >= 0 && src_len > cast(REBCNT, limit))
-                src_len = limit;
-            src_ser = Make_UTF8_From_Any_String(src_val, src_len, OPT_ENC_0);
-            needs_free = TRUE;
-            limit = -1;
-        }
-        else if (IS_BINARY(src_val)) {
-            src_ser = NULL;
-            needs_free = FALSE;
-        }
-        else
-            fail (src_val);
-    }
-    else if (IS_CHAR(src_val)) {
-        src_ser = Make_Series_Codepoint(VAL_CHAR(src_val));
+        src_ser = Make_Binary(1);
+        *BIN_HEAD(src_ser) = cast(REBYTE, i);
+        TERM_BIN_LEN(src_ser, 1);
         needs_free = TRUE;
+        limit = -1;
     }
     else if (IS_BLOCK(src_val)) {
-        src_ser = Form_Tight_Block(src_val);
-        needs_free = TRUE;
+        src_ser = Join_Binary(src_val, limit); // NOTE: shared FORM buffer
+        needs_free = FALSE;
+        limit = -1;
     }
-    else if (!ANY_STRING(src_val) || IS_TAG(src_val)) {
-        src_ser = Copy_Form_Value(src_val, 0);
+    else if (IS_CHAR(src_val)) {
+        //
+        // "UTF-8 was originally specified to allow codepoints with up to
+        // 31 bits (or 6 bytes). But with RFC3629, this was reduced to 4
+        // bytes max. to be more compatible to UTF-16."  So depending on
+        // which RFC you consider "the UTF-8", max size is either 4 or 6.
+        //
+        src_ser = Make_Binary(6);
+        SET_SERIES_LEN(
+            src_ser,
+            Encode_UTF8_Char(BIN_HEAD(src_ser), VAL_CHAR(src_val))
+        );
         needs_free = TRUE;
+        limit = -1;
     }
-    else {
+    else if (ANY_STRING(src_val)) {
+        REBCNT len_at = VAL_LEN_AT(src_val);
+        if (limit >= 0 && len_at > cast(REBCNT, limit))
+            src_ser = Make_UTF8_From_Any_String(src_val, limit, OPT_ENC_0);
+        else
+            src_ser = Make_UTF8_From_Any_String(src_val, len_at, OPT_ENC_0);
+        needs_free = TRUE;
+        limit = -1;
+    }
+    else if (IS_BINARY(src_val)) {
         src_ser = NULL;
         needs_free = FALSE;
     }
+    else
+        fail (src_val);
 
     // Use either new src or the one that was passed:
     if (src_ser != NULL) {
@@ -276,7 +261,124 @@ REBCNT Modify_String(
 
     // For dup count:
     for (; dups > 0; dups--) {
-        Insert_String(dst_ser, dst_idx, src_ser, src_idx, src_len, TRUE);
+        memcpy(BIN_AT(dst_ser, dst_idx), BIN_AT(src_ser, src_idx), src_len);
+        dst_idx += src_len;
+    }
+
+    TERM_SEQUENCE(dst_ser);
+
+    if (needs_free) {
+        // If we did not use the series that was passed in, but rather
+        // created an internal temporary one, we need to free it.
+        Free_Series(src_ser);
+    }
+
+    return (action == SYM_APPEND) ? 0 : dst_idx;
+}
+
+
+//
+//  Modify_String: C
+//
+// Returns new dst_idx.
+//
+REBCNT Modify_String(
+    REBVAL *dst_val,        // target
+    REBSYM action,          // INSERT, APPEND, CHANGE
+    const REBVAL *src_val,  // source
+    REBFLGS flags,          // AM_PART
+    REBINT dst_len,         // length to remove
+    REBINT dups             // dup count
+){
+    REBSER *dst_ser = VAL_SERIES(dst_val);
+    REBCNT dst_idx = VAL_INDEX(dst_val);
+
+    // For INSERT/PART and APPEND/PART
+    //
+    REBINT limit;
+    if (action != SYM_CHANGE && (flags & AM_PART))
+        limit = dst_len; // should be non-negative
+    else
+        limit = -1;
+
+    if (IS_VOID(src_val) || limit == 0 || dups < 0)
+        return action == SYM_APPEND ? 0 : dst_idx;
+
+    REBCNT tail = SER_LEN(dst_ser);
+    if (action == SYM_APPEND || dst_idx > tail)
+        dst_idx = tail;
+
+    // If the src_val is not a string, then we need to create a string:
+
+    REBCNT src_idx = 0;
+    REBSER *src_ser;
+    REBCNT src_len;
+    REBOOL needs_free;
+    if (IS_CHAR(src_val)) {
+        src_ser = Make_Series_Codepoint(VAL_CHAR(src_val));
+        src_len = SER_LEN(src_ser);
+
+        needs_free = TRUE;
+    }
+    else if (IS_BLOCK(src_val)) {
+        src_ser = Form_Tight_Block(src_val);
+        src_len = SER_LEN(src_ser);
+
+        needs_free = TRUE;
+    }
+    else if (ANY_STRING(src_val) && NOT(IS_TAG(src_val))) {
+        src_ser = VAL_SERIES(src_val);
+        src_idx = VAL_INDEX(src_val);
+        src_len = VAL_LEN_AT(src_val);
+
+        needs_free = FALSE;
+    }
+    else {
+        src_ser = Copy_Form_Value(src_val, 0);
+        src_len = SER_LEN(src_ser);
+
+        needs_free = TRUE;
+    }
+
+    if (limit >= 0)
+        src_len = limit;
+
+    // If Source == Destination we need to prevent possible conflicts.
+    // Clone the argument just to be safe.
+    // (Note: It may be possible to optimize special cases like append !!)
+    //
+    if (dst_ser == src_ser) {
+        assert(!needs_free);
+        src_ser = Copy_Sequence_At_Len(src_ser, src_idx, src_len);
+        needs_free = TRUE;
+        src_idx = 0;
+    }
+
+    // Total to insert:
+    //
+    REBINT size = dups * src_len;
+
+    if (action != SYM_CHANGE) {
+        // Always expand dst_ser for INSERT and APPEND actions:
+        Expand_Series(dst_ser, dst_idx, size);
+    } else {
+        if (size > dst_len)
+            Expand_Series(dst_ser, dst_idx, size - dst_len);
+        else if (size < dst_len && (flags & AM_PART))
+            Remove_Series(dst_ser, dst_idx, dst_len - size);
+        else if (size + dst_idx > tail) {
+            EXPAND_SERIES_TAIL(dst_ser, size - (tail - dst_idx));
+        }
+    }
+
+    // For dup count:
+    for (; dups > 0; dups--) {
+        memcpy(
+            UNI_AT(dst_ser, dst_idx),
+            UNI_AT(src_ser, src_idx),
+            sizeof(REBUNI) * src_len
+        );
+
         dst_idx += src_len;
     }
 

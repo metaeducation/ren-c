@@ -2232,18 +2232,26 @@ REBNATIVE(subparse)
                         DECLARE_LOCAL (specified);
                         Derelativize(specified, rule, P_RULE_SPECIFIER);
 
+                        P_POS = begin;
                         if (P_TYPE == REB_BINARY)
-                            mod_flags |= AM_BINARY_SERIES;
+                            P_POS = Modify_Binary(
+                                P_INPUT_VALUE,
+                                (flags & PF_CHANGE) ? SYM_CHANGE : SYM_INSERT,
+                                specified,
+                                mod_flags,
+                                count,
+                                1
+                            );
+                        else
+                            P_POS = Modify_String(
+                                P_INPUT_VALUE,
+                                (flags & PF_CHANGE) ? SYM_CHANGE : SYM_INSERT,
+                                specified,
+                                mod_flags,
+                                count,
+                                1
+                            );
 
-                        P_POS = Modify_String(
-                            (flags & PF_CHANGE) ? SYM_CHANGE : SYM_INSERT,
-                            P_INPUT,
-                            begin,
-                            specified,
-                            mod_flags,
-                            count,
-                            1
-                        );
                     }
                 }
 

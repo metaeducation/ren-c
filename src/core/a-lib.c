@@ -1259,7 +1259,7 @@ REBVAL *RL_rebCopyExtra(const REBVAL *v, REBCNT extra)
 //
 //  rebAppend: RL_API
 //
-REBVAL *RL_rebAppend(REBVAL *series, const REBVAL *value)
+void RL_rebAppend(REBVAL *series, const REBVAL *value)
 {
     Enter_Api_Clear_Last_Error();
 
@@ -1274,14 +1274,20 @@ REBVAL *RL_rebAppend(REBVAL *series, const REBVAL *value)
     if (NOT(ANY_STRING(series)) || NOT(ANY_STRING(value)))
         fail ("rebAppend() very temporarily only supports strings");
 
-    Append_String(
-        VAL_SERIES(series),
-        VAL_SERIES(value),
-        VAL_INDEX(value),
-        VAL_LEN_AT(value)
+    REBCNT index = Modify_String(
+        series,
+        SYM_APPEND,
+        value,
+        0, // no flags
+        0, // no partial append
+        0 // no dups
     );
 
-    return series;
+    // !!! The invariant for APPEND is to return the value at its head, but
+    // this would mean producing a new API value that would have to be worried
+    // about...most API-wise APPENDs probably don't want to use the result.
+    //
+    UNUSED(index);
 }
 
 

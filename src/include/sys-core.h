@@ -410,9 +410,8 @@ enum {
 
 // Move these things:
 enum act_modify_mask {
-    AM_BINARY_SERIES = 1 << 0,
-    AM_PART = 1 << 1,
-    AM_ONLY = 1 << 2
+    AM_PART = 1 << 0,
+    AM_ONLY = 1 << 1
 };
 enum act_find_mask {
     AM_FIND_ONLY = 1 << 0,

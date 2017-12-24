@@ -72,19 +72,19 @@ static REBSER *Make_Set_Operation_Series(
             //
             // The type of the result will match the first value.
         }
-        else if (!IS_BINARY(val1)) {
+        else if (ANY_STRING(val1)) {
 
             // We will similarly do any two ANY-STRING! types:
             //
             //      >> union <abc> "bde"
             //      <abcde>
 
-            if (IS_BINARY(val2))
+            if (NOT(ANY_STRING((val2))))
                 fail (Error_Unexpected_Type(VAL_TYPE(val1), VAL_TYPE(val2)));
         }
         else {
             // Binaries only operate with other binaries
-
+            assert(IS_BINARY(val1));
             if (!IS_BINARY(val2))
                 fail (Error_Unexpected_Type(VAL_TYPE(val1), VAL_TYPE(val2)));
         }
@@ -185,16 +185,8 @@ static REBSER *Make_Set_Operation_Series(
         out_ser = SER(Copy_Array_Shallow(ARR(buffer), SPECIFIED));
         Free_Array(ARR(buffer));
     }
-    else {
+    else if (ANY_STRING(val1)) {
         DECLARE_MOLD (mo);
-
-        if (IS_BINARY(val1)) {
-            //
-            // All binaries use "case-sensitive" comparison (e.g. each byte
-            // is treated distinctly)
-            //
-            cased = TRUE;
-        }
 
         // ask mo->series to have at least `i` capacity beyond mo->start
         //
@@ -236,9 +228,11 @@ static REBSER *Make_Set_Operation_Series(
                         SER_LEN(mo->series), // tail
                         skip, // skip
                         cased ? AM_FIND_CASE : 0 // flags
-        )
-                ) {
-                    Append_String(mo->series, ser, i, skip);
+                    )
+                ){
+                    DECLARE_LOCAL (temp);
+                    Init_Any_Series_At(temp, REB_STRING, ser, i);
+                    Append_Utf8_String(mo->series, temp, skip);
                 }
             }
 
@@ -255,6 +249,81 @@ static REBSER *Make_Set_Operation_Series(
         } while (i);
 
         out_ser = Pop_Molded_String(mo);
+    }
+    else {
+        assert(IS_BINARY(val1) && IS_BINARY(val2));
+
+        DECLARE_MOLD (mo);
+
+        // All binaries use "case-sensitive" comparison (e.g. each byte
+        // is treated distinctly)
+        //
+        cased = TRUE;
+
+        // ask mo->series to have at least `i` capacity beyond mo->start
+        //
+        SET_MOLD_FLAG(mo, MOLD_FLAG_RESERVE);
+        mo->reserve = i;
+        Push_Mold(mo);
+
+        do {
+            REBSER *ser = VAL_SERIES(val1); // val1 and val2 swapped 2nd pass!
+            REBUNI uc;
+
+            // Iterate over first series
+            //
+            i = VAL_INDEX(val1);
+            for (; i < SER_LEN(ser); i += skip) {
+                uc = GET_ANY_CHAR(ser, i);
+                if (flags & SOP_FLAG_CHECK) {
+                    h = (NOT_FOUND != Find_Str_Char(
+                        uc,
+                        VAL_SERIES(val2),
+                        0,
+                        VAL_INDEX(val2),
+                        VAL_LEN_HEAD(val2),
+                        skip,
+                        cased ? AM_FIND_CASE : 0
+                    ));
+
+                    if (flags & SOP_FLAG_INVERT) h = !h;
+                }
+
+                if (!h) continue;
+
+                if (
+                    NOT_FOUND == Find_Str_Char(
+                        uc, // c2 (the character to find)
+                        mo->series, // ser
+                        mo->start, // head
+                        mo->start, // index
+                        SER_LEN(mo->series), // tail
+                        skip, // skip
+                        cased ? AM_FIND_CASE : 0 // flags
+                    )
+                ){
+                    // This would append non-valid UTF-8 to the mold buffer.
+                    // There should probably be a byte buffer.
+                    //
+                    fail ("Binary set operations temporarily unsupported.");
+
+                    // Append_String(mo->series, ser, i, skip);
+                }
+            }
+
+            if (!first_pass) break;
+            first_pass = FALSE;
+
+            // Iterate over second series?
+            //
+            if ((i = ((flags & SOP_FLAG_BOTH) != 0))) {
+                const REBVAL *temp = val1;
+                val1 = val2;
+                val2 = temp;
+            }
+        } while (i);
+
+        out_ser = Pop_Molded_Binary(mo);
     }
 
     return out_ser;

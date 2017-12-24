@@ -123,12 +123,6 @@ void Emit(REB_MOLD *mo, const char *fmt, ...)
             Append_Utf8_Codepoint(s, va_arg(va, u32));
             break;
 
-        case 'E': { // Series (used by mold of BINARY!, currently)
-            REBSER *src = va_arg(va, REBSER*);
-            assert(SER_WIDE(src) == sizeof(REBYTE));
-            Insert_String(s, SER_LEN(s), src, 0, SER_LEN(src), FALSE);
-            break; }
-
         case 'I': // Integer
             Append_Int(s, va_arg(va, REBINT));
             break;

@@ -107,72 +107,6 @@ void Insert_Char(REBSER *dst, REBCNT index, REBCNT chr)
 
 
 //
-//  Insert_String: C
-//
-// Insert a non-encoded string into a series at given index.
-// Source and/or destination can be 1 or 2 bytes wide.
-// If destination is not wide enough, it will be widened.
-//
-void Insert_String(
-    REBSER *dst,
-    REBCNT idx,
-    REBSER *src,
-    REBCNT pos,
-    REBCNT len,
-    REBOOL no_expand
-){
-    assert(idx <= SER_LEN(dst));
-
-    if (NOT(no_expand))
-        Expand_Series(dst, idx, len); // tail changed too
-
-    // Src and dst have same width (8 or 16).  Currently that means BINARY!
-    // inserted in BINARY! or STRING! inserted in STRING!
-    //
-    if (SER_WIDE(dst) == SER_WIDE(src)) {
-        if (BYTE_SIZE(dst))
-            memcpy(BIN_AT(dst, idx), BIN_AT(src, pos), len);
-        else
-            memcpy(UNI_AT(dst, idx), UNI_AT(src, pos), sizeof(REBUNI) * len);
-        return;
-    }
-
-    // Src is 8 and dst is 16.  This only happens at the moment when inserting
-    // BINARY! into STRING!  Should this be a UTF8 decoding?  :-/
-    //
-    // !!! Not implemented yet.
-    //
-    if (!BYTE_SIZE(dst)) {
-        REBUNI *up = UNI_AT(dst, idx);
-        REBYTE *bp = BIN_AT(src, pos);
-
-        REBCNT n;
-        for (n = 0; n < len; n++) {
-            if (bp[n] > 127)
-                fail ("BINARY! insert high-bit UTF-8 encoding into STRING!");
-            up[n] = cast(REBUNI, bp[n]);
-        }
-        return;
-    }
-
-    // Src is 16 and dst is 8.  This only happens when inserting strings
-    // into binaries, and needs a UTF8 encoding.
-    //
-    // !!! Not implemented yet.
-    //
-    REBYTE *bp = BIN_AT(dst, idx);
-    REBUNI *up = UNI_AT(src, pos);
-
-    REBCNT n;
-    for (n = 0; n < len; n++) {
-        if (up[n] > 127)
-            fail ("Inserting non-ASCII codepoint into BINARY! from STRING!");
-        bp[n] = cast(REBYTE, up[n]);
-    }
-}
-
-
-//
 //  Copy_String_At_Len: C
 //
 // !!! With UTF-8 Everywhere, copying strings will still be distinct from
@@ -190,7 +124,7 @@ REBSER *Copy_String_At_Len(REBSER *src, REBCNT index, REBINT length)
         length = SER_LEN(src) - index;
 
     REBSER *dst = Make_Unicode(length);
-    Insert_String(dst, 0, src, index, length, TRUE);
+    memcpy(UNI_AT(dst, 0), UNI_AT(src, index), sizeof(REBUNI) * length);
     TERM_SEQUENCE_LEN(dst, length);
 
     return dst;
@@ -304,13 +238,33 @@ void Append_Utf8_Utf8(REBSER *dst, const char *utf8, size_t size)
 
 
 //
-//  Append_String: C
+//  Append_Utf8_String: C
 //
-// Append a byte or unicode string to a unicode string.
+// Append a partial string to a UTF-8 binary series.
 //
-void Append_String(REBSER *dst, REBSER *src, REBCNT i, REBCNT len)
+// !!! Used only with mold series at the moment.
+//
+void Append_Utf8_String(REBSER *dst, const RELVAL *src, REBCNT part)
 {
-    Insert_String(dst, SER_LEN(dst), src, i, len, FALSE);
+    assert(
+        SER_WIDE(dst) == sizeof(REBYTE)
+        && SER_WIDE(VAL_SERIES(src)) == sizeof(REBUNI)
+    );
+
+    REBCNT index = VAL_INDEX(src);
+    REBCNT len = VAL_LEN_AT(src);
+
+    if (part != len)
+        fail ("Append_Utf8_String currently doesn't support 'part'");
+
+    REBSER *temp = Temp_UTF8_At_Managed(src, &index, &len);
+
+    REBSIZ part_size = len;
+
+    REBCNT tail = SER_LEN(dst);
+    Expand_Series(dst, tail, part_size); // tail changed too
+
+    memcpy(BIN_AT(dst, tail), BIN_AT(temp, index), part_size);
 }
 
 
