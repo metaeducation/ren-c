@@ -78,8 +78,17 @@ REBINT Compare_Bytes(const REBYTE *b1, const REBYTE *b2, REBCNT len, REBOOL unca
 
     for (; len > 0; len--, b1++, b2++) {
 
-        if (uncase)
+        if (uncase) {
+            //
+            // !!! This routine is being possibly preserved for when faster
+            // compare can be done on UTF-8 strings if the series caches if
+            // all bytes are ASCII.  It is not meant to do "case-insensitive"
+            // processing of binaries, however.
+            //
+            assert(*b1 < 0x80 && *b2 < 0x80);
+
             d = LO_CASE(*b1) - LO_CASE(*b2);
+        }
         else
             d = *b1 - *b2;
 
@@ -148,59 +157,33 @@ REBOOL Match_Sub_Path(REBSER *s1, REBSER *s2)
 
 
 //
-//  Compare_Uni_Byte: C
-//
-// Compare unicode and byte-wide strings. Return lexical difference.
-//
-// Uncase: compare is case-insensitive.
-//
-REBINT Compare_Uni_Byte(REBUNI *u1, REBYTE *b2, REBCNT len, REBOOL uncase)
-{
-    REBINT d;
-    REBUNI c1;
-    REBUNI c2;
-
-    for (; len > 0; len--) {
-
-        c1 = *u1++;
-        c2 = *b2++;
-
-        if (uncase && c1 < UNICODE_CASES)
-            d = LO_CASE(c1) - LO_CASE(c2);
-        else
-            d = c1 - c2;
-
-        if (d != 0) return d;
-    }
-
-    return 0;
-}
-
-
-//
 //  Compare_Uni_Str: C
 //
-// Compare two unicode-wide strings. Return lexical difference.
+// Compare two ranges of string data.  Return lexical difference.
 //
 // Uncase: compare is case-insensitive.
 //
-REBINT Compare_Uni_Str(REBUNI *u1, REBUNI *u2, REBCNT len, REBOOL uncase)
-{
-    REBINT d;
-    REBUNI c1;
-    REBUNI c2;
-
+REBINT Compare_Uni_Str(
+    REBCHR(const *) u1,
+    REBCHR(const *) u2,
+    REBCNT len,
+    REBOOL uncase
+){
     for (; len > 0; len--) {
+        REBUNI c1;
+        REBUNI c2;
 
-        c1 = *u1++;
-        c2 = *u2++;
+        u1 = const_NEXT_CHR(&c1, u1);
+        u2 = const_NEXT_CHR(&c2, u2);
 
+        REBINT d;
         if (uncase && c1 < UNICODE_CASES && c2 < UNICODE_CASES)
             d = LO_CASE(c1) - LO_CASE(c2);
         else
             d = c1 - c2;
 
-        if (d != 0) return d;
+        if (d != 0)
+            return d;
     }
 
     return 0;
@@ -218,27 +201,17 @@ REBINT Compare_Uni_Str(REBUNI *u1, REBUNI *u2, REBCNT len, REBOOL uncase)
 //
 REBINT Compare_String_Vals(const RELVAL *v1, const RELVAL *v2, REBOOL uncase)
 {
+    assert(NOT(IS_BINARY(v1)) && NOT(IS_BINARY(v2)));
+
     REBCNT l1  = VAL_LEN_AT(v1);
     REBCNT l2  = VAL_LEN_AT(v2);
     REBCNT len = MIN(l1, l2);
-    REBINT n;
+    
+    REBINT n = Compare_Uni_Str(VAL_UNI_AT(v1), VAL_UNI_AT(v2), len, uncase);
 
-    if (IS_BINARY(v1) || IS_BINARY(v2)) uncase = FALSE;
+    if (n != 0)
+        return n;
 
-    if (VAL_BYTE_SIZE(v1)) { // v1 is 8
-        if (VAL_BYTE_SIZE(v2))
-            n = Compare_Bytes(VAL_BIN_AT(v1), VAL_BIN_AT(v2), len, uncase);
-        else
-            n = -Compare_Uni_Byte(VAL_UNI_AT(v2), VAL_BIN_AT(v1), len, uncase);
-    }
-    else { // v1 is 16
-        if (VAL_BYTE_SIZE(v2))
-            n = Compare_Uni_Byte(VAL_UNI_AT(v1), VAL_BIN_AT(v2), len, uncase);
-        else
-            n = Compare_Uni_Str(VAL_UNI_AT(v1), VAL_UNI_AT(v2), len, uncase);
-    }
-
-    if (n != 0) return n;
     return l1 - l2;
 }
 

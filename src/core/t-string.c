@@ -58,7 +58,16 @@ REBINT CT_String(const RELVAL *a, const RELVAL *b, REBINT mode)
 {
     REBINT num;
 
-    num = Compare_String_Vals(a, b, NOT(mode == 1));
+    if (IS_BINARY(a)) {
+        if (NOT(IS_BINARY(b)))
+            fail ("Can't compare binary to string, use AS STRING/BINARY!");
+
+        num = Compare_Binary_Vals(a, b);
+    }
+    else if (IS_BINARY(b))
+        fail ("Can't compare binary to string, use AS STRING!/BINARY!");
+    else
+        num = Compare_String_Vals(a, b, NOT(mode == 1));
 
     if (mode >= 0) return (num == 0) ? 1 : 0;
     if (mode == -1) return (num >= 0) ? 1 : 0;
