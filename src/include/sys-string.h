@@ -246,11 +246,19 @@ inline static const REBYTE *Back_Scan_UTF8_Char(
 
 
 // Basic string initialization from UTF8.  (Most clients should be using the
-// rebStringXXX() APIs for this)
-//
-inline static REBSER *Make_UTF8_May_Fail(const char *utf8)
+// rebStringXXX() APIs for this).  Note that these routines may fail() if the
+// data they are given is not UTF-8.
+
+inline static REBSER *Make_String_UTF8(const char *utf8)
 {
-    return Append_UTF8_May_Fail(NULL, utf8, strsize(utf8));
+    const REBOOL crlf_to_lf = FALSE;
+    return Append_UTF8_May_Fail(NULL, utf8, strsize(utf8), crlf_to_lf);
+}
+
+inline static REBSER *Make_Sized_String_UTF8(const char *utf8, size_t size)
+{
+    const REBOOL crlf_to_lf = FALSE;
+    return Append_UTF8_May_Fail(NULL, utf8, size, crlf_to_lf);
 }
 
 

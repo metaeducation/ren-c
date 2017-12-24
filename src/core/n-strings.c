@@ -553,9 +553,7 @@ REBNATIVE(enbase)
 
     Init_String(
         D_OUT,
-        Append_UTF8_May_Fail(
-            NULL, cs_cast(BIN_HEAD(enbased)), BIN_LEN(enbased)
-        )
+        Make_Sized_String_UTF8(cs_cast(BIN_HEAD(enbased)), BIN_LEN(enbased))
     );
     Free_Series(enbased);
 
@@ -638,11 +636,30 @@ REBNATIVE(deline)
         return R_OUT;
     }
 
-    REBINT len = VAL_LEN_AT(val);
-    REBUNI *up = VAL_UNI_AT(val);
-    REBINT n = Deline_Uni(up, len);
+    REBSER *s = VAL_SERIES(val);
+    REBCNT len_head = SER_LEN(s);
 
-    SET_SERIES_LEN(VAL_SERIES(val), VAL_LEN_HEAD(val) - (len - n));
+    REBCNT len_at = VAL_LEN_AT(val);
+
+    REBCHR(*) dest = VAL_UNI_AT(val);
+    REBCHR(const *) src = dest;
+
+    REBCNT n;
+    for (n = 0; n < len_at; ++n) {
+        REBUNI c;
+        src = const_NEXT_CHR(&c, src);
+        if (c == CR) {
+            dest = WRITE_CHR(dest, LF);
+            src = const_NEXT_CHR(&c, src);
+            if (c == LF) {
+                --len_head; // don't write carraige return, note loss of char
+                continue;
+            }
+        }
+        dest = WRITE_CHR(dest, c);
+    }
+
+    TERM_UNI_LEN(s, len_head);
 
     Move_Value(D_OUT, ARG(string));
     return R_OUT;
@@ -663,9 +680,64 @@ REBNATIVE(enline)
     INCLUDE_PARAMS_OF_ENLINE;
 
     REBVAL *val = ARG(string);
-    REBSER *ser = VAL_SERIES(val);
 
-    Enline_Uni(ser, VAL_INDEX(val), VAL_LEN_AT(val));
+    REBSER *ser = VAL_SERIES(val);
+    REBCNT idx = VAL_INDEX(val);
+    REBCNT len = VAL_LEN_AT(val);
+
+    REBCNT delta = 0;
+
+    // Calculate the size difference by counting the number of LF's
+    // that have no CR's in front of them.
+    //
+    // !!! The REBCHR(*) interface isn't technically necessary if one is
+    // counting to the end (one could just go by bytes instead of characters)
+    // but this would not work if someone added, say, an ENLINE/PART...since
+    // the byte ending position of interest might not be end of the string.
+
+    REBCHR(*) cp = UNI_AT(ser, idx);
+
+    REBUNI c_prev = '\0';
+
+    REBCNT n;
+    for (n = 0; n < len; ++n) {
+        REBUNI c;
+        cp = NEXT_CHR(&c, cp);
+        if (c == LF && c_prev != CR)
+            ++delta;
+        c_prev = c;
+    }
+
+    if (delta == 0) { // nothing to do
+        Move_Value(D_OUT, ARG(string));
+        return R_OUT;
+    }
+
+    EXPAND_SERIES_TAIL(ser, delta);
+
+    // !!! After the UTF-8 Everywhere conversion, this will be able to stay
+    // a byte-oriented process..because UTF-8 doesn't reuse ASCII chars in
+    // longer codepoints, and CR and LF are ASCII.  So as long as the
+    // "sliding" is done in terms of byte sizes and not character lengths,
+    // it should be all right.
+    //
+    // Prior to UTF-8 Everywhere, sliding can't be done bytewise, because
+    // UCS2 has the CR/LF bytes in codepoint sequences that aren't CR/LF.
+    // So sliding is done in full character counts.
+
+    REBUNI *up = UNI_HEAD(ser); // expand may change the pointer
+    REBCNT tail = SER_LEN(ser); // length after expansion
+
+    // Add missing CRs
+
+    while (delta > 0) {
+        up[tail--] = up[len]; // Copy src to dst.
+        if (up[len] == LF && (len == 0 || up[len - 1] != CR)) {
+            up[tail--] = CR;
+            --delta;
+        }
+        --len;
+    }
 
     Move_Value(D_OUT, ARG(string));
     return R_OUT;

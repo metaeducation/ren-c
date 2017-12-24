@@ -836,8 +836,7 @@ REBSER *Pop_Molded_String_Core(REB_MOLD *mo, REBCNT len)
         (len == UNKNOWN) || (len <= SER_LEN(mo->series) - mo->start)
     );
 
-    REBSER *result = Append_UTF8_May_Fail(
-        NULL, // make new series
+    REBSER *result = Make_Sized_String_UTF8(
         cs_cast(BIN_AT(mo->series, mo->start)),
         (len == UNKNOWN)
             ? SER_LEN(mo->series) - mo->start

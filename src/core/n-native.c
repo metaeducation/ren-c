@@ -93,7 +93,7 @@ static void tcc_error_report(void *opaque, const char *msg_utf8)
     UNUSED(opaque);
 
     DECLARE_LOCAL (msg);
-    Init_String(msg, Make_UTF8_May_Fail(msg_utf8));
+    Init_String(msg, Make_String_UTF8(msg_utf8));
     fail (Error_Tcc_Error_Warn_Raw(msg));
 }
 

@@ -184,7 +184,7 @@ REBNATIVE(decode_text)
     // is to UTF-8 for source code, a .TXT file is a different beast, so
     // having wider format support might be a good thing.
 
-    Init_String(D_OUT, Make_UTF8_May_Fail(cs_cast(VAL_BIN_AT(ARG(data)))));
+    Init_String(D_OUT, Make_String_UTF8(cs_cast(VAL_BIN_AT(ARG(data)))));
     return R_OUT;
 }
 

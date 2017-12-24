@@ -444,7 +444,7 @@ static void Add_Lib_Keys_R3Alpha_Cant_Make(void)
 //
 static void Init_Function_Tag(RELVAL *slot, const char *name)
 {
-    Init_Tag(slot, Make_UTF8_May_Fail(name));
+    Init_Tag(slot, Make_String_UTF8(name));
     Freeze_Sequence(VAL_SERIES(slot));
 }
 

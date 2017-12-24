@@ -349,17 +349,20 @@ void Append_Int_Pad(REBSER *dst, REBINT num, REBINT digs)
 //
 //  Append_UTF8_May_Fail: C
 //
-// Append (or create) decoded UTF8 to a string.
+// Append UTF-8 data to a series underlying an ANY-STRING!.
 //
-// dst = null means make a new string.
+// `dst = NULL` means make a new string.
 //
-REBSER *Append_UTF8_May_Fail(REBSER *dst, const char *utf8, size_t size)
-{
+REBSER *Append_UTF8_May_Fail(
+    REBSER *dst,
+    const char *utf8,
+    size_t size,
+    REBOOL crlf_to_lf
+){
     REBSER *temp = BUF_UTF8; // buffer is Unicode width
 
     Resize_Series(temp, size + 1); // needs at most this many unicode chars
 
-    const REBOOL crlf_to_lf = FALSE;
     REBINT len = Decode_UTF8_Negative_If_ASCII(
         UNI_HEAD(temp),
         cb_cast(utf8),

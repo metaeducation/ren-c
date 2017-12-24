@@ -267,8 +267,8 @@ static REBSER *MAKE_TO_String_Common(const REBVAL *arg)
 
     // MAKE/TO <type> <binary!>
     if (IS_BINARY(arg)) {
-        ser = Append_UTF8_May_Fail(
-            NULL, cs_cast(VAL_BIN_AT(arg)), VAL_LEN_AT(arg)
+        ser = Make_Sized_String_UTF8(
+            cs_cast(VAL_BIN_AT(arg)), VAL_LEN_AT(arg)
         );
     }
     // MAKE/TO <type> <any-string>

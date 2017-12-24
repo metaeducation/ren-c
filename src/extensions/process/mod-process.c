@@ -1983,7 +1983,7 @@ static REBNATIVE(get_env)
 
         /* assert(size != 0); */ // True?  Should it return BLANK!?
 
-        Init_String(D_OUT, Append_UTF8_May_Fail(NULL, val, size));
+        Init_String(D_OUT, Make_Sized_String_UTF8(val, size));
     }
 
     OS_FREE(key);
@@ -2221,22 +2221,19 @@ static REBNATIVE(list_env)
         const char *eq_pos = strchr(key_equals_val, '=');
 
         REBCNT size = strlen(key_equals_val);
-        Init_String(
-            Alloc_Tail_Array(array),
-            Append_UTF8_May_Fail(
-                NULL,
-                key_equals_val,
-                eq_pos - key_equals_val
-            )
+ 
+        REBVAL *key = rebSizedString(
+            key_equals_val,
+            eq_pos - key_equals_val
         );
-        Init_String(
-            Alloc_Tail_Array(array),
-            Append_UTF8_May_Fail(
-                NULL,
-                eq_pos + 1,
-                size - (eq_pos - key_equals_val) - 1
-            )
+        REBVAL *val = rebSizedString(
+            eq_pos + 1,
+            size - (eq_pos - key_equals_val) - 1
         );
+        Append_Value(array, key);
+        Append_Value(array, val);
+        rebRelease(key);
+        rebRelease(val);
     }
 
     REBMAP *map = Mutate_Array_Into_Map(array);

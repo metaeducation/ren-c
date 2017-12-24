@@ -1237,14 +1237,20 @@ const REBYTE *Scan_Any(
 ) {
     TRASH_CELL_IF_DEBUG(out);
 
-    REBSER *s = Append_UTF8_May_Fail(NULL, cs_cast(cp), num_bytes);
-
-    REBCNT delined_len = Deline_Uni(UNI_HEAD(s), SER_LEN(s));
-
-    // We hand it over to management by the GC, but don't run the GC before
-    // the source has been scanned and put somewhere safe!
+    // The range for a curly braced string may span multiple lines, and some
+    // files may have CR and LF in the data:
     //
-    SET_SERIES_LEN(s, delined_len);
+    //     {line one ;-- imagine this is CR LF...not just LF
+    //     line two}
+    //
+    // Despite the presence of the CR in the source file, the scanned literal
+    // should only support LF (if it supports files with it at all)
+    //
+    // http://blog.hostilefork.com/death-to-carriage-return/
+    //
+    REBOOL crlf_to_lf = TRUE;
+
+    REBSER *s = Append_UTF8_May_Fail(NULL, cs_cast(cp), num_bytes, crlf_to_lf);
     Init_Any_Series(out, type, s);
 
     return cp + num_bytes;

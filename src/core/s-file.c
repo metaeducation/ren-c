@@ -177,7 +177,9 @@ REBSER *To_Local_Path(
             // number of codepoints.
             //
             result = Make_Unicode(len + lpath_size + FN_PAD);
-            Append_UTF8_May_Fail(result, lpath_utf8, lpath_size);
+
+            const REBOOL crlf_to_lf = FALSE;
+            Append_UTF8_May_Fail(result, lpath_utf8, lpath_size, crlf_to_lf);
 
             OS_FREE(lpath_utf8);
             rebRelease(lpath);

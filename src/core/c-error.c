@@ -1053,7 +1053,7 @@ REBCTX *Error(REBCNT num, ... /* REBVAL *arg1, REBVAL *arg2, ... */)
 //
 REBCTX *Error_User(const char *utf8) {
     DECLARE_LOCAL (message);
-    Init_String(message, Make_UTF8_May_Fail(utf8));
+    Init_String(message, Make_String_UTF8(utf8));
     return Error(RE_USER, message, END);
 }
 

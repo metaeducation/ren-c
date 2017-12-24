@@ -685,14 +685,14 @@ static REBCTX *Error_Syntax(SCAN_STATE *ss) {
     DECLARE_LOCAL (token_name);
     Init_String(
         token_name,
-        Make_UTF8_May_Fail(Token_Names[ss->token])
+        Make_String_UTF8(Token_Names[ss->token])
     );
 
     DECLARE_LOCAL (token_text);
     Init_String(
         token_text,
-        Append_UTF8_May_Fail(
-            NULL, cs_cast(ss->begin), cast(REBCNT, ss->end - ss->begin)
+        Make_Sized_String_UTF8(
+            cs_cast(ss->begin), cast(REBCNT, ss->end - ss->begin)
         )
     );
 
