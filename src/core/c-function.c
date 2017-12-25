@@ -227,20 +227,11 @@ REBARR *Make_Paramlist_Managed_May_Fail(
 
             if (IS_BLOCK(DS_TOP)) { // we're in right spot to push notes/title
                 DS_PUSH_TRASH;
-                Init_String(
-                    DS_TOP,
-                    Copy_String_At_Len(VAL_SERIES(item), VAL_INDEX(item), -1)
-                );
+                Init_String(DS_TOP, Copy_String_At_Len(item, -1));
             }
-            else {
+            else { // !!! A string was already pushed.  Should we append?
                 assert(IS_STRING(DS_TOP));
-
-                // !!! A string was already pushed.  Should we append?
-                //
-                Init_String(
-                    DS_TOP,
-                    Copy_String_At_Len(VAL_SERIES(item), VAL_INDEX(item), -1)
-                );
+                Init_String(DS_TOP, Copy_String_At_Len(item, -1));
             }
 
             if (DS_TOP == DS_AT(dsp_orig + 3))

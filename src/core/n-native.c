@@ -267,11 +267,7 @@ REBNATIVE(make_native)
         //
         Init_String(
             Alloc_Tail_Array(info),
-            Copy_String_At_Len(
-                VAL_SERIES(source),
-                VAL_INDEX(source),
-                VAL_LEN_AT(source)
-            )
+            Copy_String_At_Len(source, -1)
         );
     }
 
@@ -283,11 +279,7 @@ REBNATIVE(make_native)
         else {
             Init_String(
                 Alloc_Tail_Array(info),
-                Copy_String_At_Len(
-                    VAL_SERIES(name),
-                    VAL_INDEX(name),
-                    VAL_LEN_AT(name)
-                )
+                Copy_String_At_Len(name, -1)
             );
         }
     }

@@ -143,15 +143,17 @@ REBNATIVE(spelling_of)
 
     REBSER *series;
 
-    if (ANY_BINSTR(value)) {
+    if (ANY_STRING(value)) {
         assert(!IS_BINARY(value)); // Shouldn't accept binary types...
 
         // Grab the data out of all string types, which has no delimiters
         // included (they are added in the forming process)
         //
-        series = Copy_String_At_Len(VAL_SERIES(value), VAL_INDEX(value), -1);
+        series = Copy_String_At_Len(value, -1);
     }
     else {
+        assert(ANY_WORD(value));
+
         // turn all words into regular words so they'll have no delimiters
         // during the FORMing process.  Use SET_TYPE and not reset header
         // because the binding bits need to stay consistent

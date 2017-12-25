@@ -304,15 +304,13 @@ void Shuffle_String(REBVAL *value, REBOOL secure)
 //
 void Trim_Tail(REBSER *src, REBYTE chr)
 {
-    assert(NOT_SER_FLAG(src, SERIES_FLAG_ARRAY));
+    assert(BYTE_SIZE(src)); // mold buffer
 
-    REBOOL unicode = NOT(BYTE_SIZE(src));
     REBCNT tail;
-    REBUNI c;
-
     for (tail = SER_LEN(src); tail > 0; tail--) {
-        c = unicode ? *UNI_AT(src, tail - 1) : *BIN_AT(src, tail - 1);
-        if (c != chr) break;
+        REBUNI c = *BIN_AT(src, tail - 1);
+        if (c != chr)
+            break;
     }
     SET_SERIES_LEN(src, tail);
     TERM_SEQUENCE(src);

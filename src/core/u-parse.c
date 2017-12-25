@@ -2089,10 +2089,14 @@ REBNATIVE(subparse)
                     }
                     else {
                         assert(ANY_STRING(P_INPUT_VALUE));
+
+                        DECLARE_LOCAL (begin_val);
+                        Init_Any_Series_At(begin_val, P_TYPE, P_INPUT, begin);
+
                         Init_Any_Series(
                             temp,
                             P_TYPE,
-                            Copy_String_At_Len(P_INPUT, begin, count)
+                            Copy_String_At_Len(begin_val, count)
                         );
                     }
 
@@ -2135,18 +2139,27 @@ REBNATIVE(subparse)
                     // See notes in PARSE native on handling of SYM_RETURN
                     //
                     DECLARE_LOCAL (captured);
-                    Init_Any_Series(
-                        captured,
-                        P_TYPE,
-                        GET_SER_FLAG(P_INPUT, SERIES_FLAG_ARRAY)
-                            ? SER(Copy_Array_At_Max_Shallow(
+                    if (GET_SER_FLAG(P_INPUT, SERIES_FLAG_ARRAY)) {
+                        Init_Any_Array(
+                            captured,
+                            P_TYPE,
+                            Copy_Array_At_Max_Shallow(
                                 ARR(P_INPUT),
                                 begin,
                                 P_INPUT_SPECIFIER,
                                 count
-                            ))
-                            : Copy_String_At_Len(P_INPUT, begin, count)
-                    );
+                            )
+                        );
+                    }
+                    else {
+                        DECLARE_LOCAL (begin_val);
+                        Init_Any_Series_At(begin_val, P_TYPE, P_INPUT, begin);
+                        Init_Any_Series(
+                            captured,
+                            P_TYPE,
+                            Copy_String_At_Len(begin_val, count)
+                        );
+                    }
 
                     Move_Value(P_OUT, NAT_VALUE(parse));
                     CONVERT_NAME_TO_THROWN(P_OUT, captured);

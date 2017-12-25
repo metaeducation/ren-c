@@ -125,20 +125,23 @@ DEVICE_CMD Read_DNS(REBREQ *req)
         // The READ should return a blank in these cases, vs. raise an
         // error, for convenience in handling.
         //
-        break;
+        req->flags |= RRF_DONE;
+        return DR_DONE;
 
     case NO_RECOVERY:
         rebFail ("A nonrecoverable name server error occurred");
+        DEAD_END;
 
     case TRY_AGAIN:
         rebFail ("Temporary error on authoritative name server");
+        DEAD_END;
 
     default:
-        rebFail (NULL);
+        break;
     }
 
-    req->flags |= RRF_DONE;
-    return DR_DONE;
+    rebFail (NULL);
+    DEAD_END;
 }
 
 

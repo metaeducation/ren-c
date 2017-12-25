@@ -171,36 +171,33 @@ inline static REBUNI *VAL_UNI_AT(const RELVAL *v) {
     return UNI_AT(VAL_SERIES(v), VAL_INDEX(v));
 }
 
-inline static REBSIZ VAL_SIZE_AT_LIMIT(const REBVAL *v, REBINT limit) {
+inline static REBSIZ VAL_SIZE_LIMIT_AT(
+    REBCNT *length, // length in chars to end (including limit)
+    const RELVAL *v,
+    REBINT limit // -1 for no limit
+){
     assert(ANY_STRING(v));
 
     REBCHR(const *) at = VAL_UNI_AT(v); // !!! update cache if needed
     REBCHR(const *) tail;
 
-    if (limit == -1)
+    if (limit == -1) {
+        if (length != NULL)
+            *length = VAL_LEN_AT(v);
         tail = VAL_UNI_TAIL(v); // byte count known (fast)
+    }
     else {
+        if (length != NULL)
+            *length = limit;
         tail = at;
         for (; limit > 0; --limit)
             tail = NEXT_CHR(NULL, tail);
     }
 
-    return AS_REBUNI(tail) - AS_REBUNI(at);
-}
-
-// This routine is a workaround needed so long as routines processing binaries
-// and strings are in the same general code.
-//
-inline static REBSIZ SER_SIZE_LIMIT(REBSER *s, REBINT limit) {
-    if (SER_WIDE(s) == sizeof(REBYTE))
-        return SER_LEN(s);
-
-    assert(SER_WIDE(s) == sizeof(REBUNI));
-
-    if (limit == -1)
-        return limit * sizeof(REBUNI);
-
-    return SER_LEN(s) * sizeof(REBUNI);
+    return (
+        cast(const REBYTE*, AS_REBUNI(tail))
+        - cast(const REBYTE*, AS_REBUNI(at))
+    );
 }
 
 
