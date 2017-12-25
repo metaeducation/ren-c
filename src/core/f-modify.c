@@ -374,8 +374,8 @@ REBCNT Modify_String(
     // For dup count:
     for (; dups > 0; dups--) {
         memcpy(
-            UNI_AT(dst_ser, dst_idx),
-            UNI_AT(src_ser, src_idx),
+            AS_REBUNI(UNI_AT(dst_ser, dst_idx)),
+            AS_REBUNI(UNI_AT(src_ser, src_idx)),
             sizeof(REBUNI) * src_len
         );
 

@@ -133,7 +133,7 @@ inline static void SET_UNI_LEN(REBSER *s, REBCNT len) {
 }
 
 #define UNI_AT(s,n) \
-    SER_AT(REBUNI, (s), (n))
+    cast(REBCHR(*), SER_AT(REBUNI, (s), (n)))
 
 #define UNI_HEAD(s) \
     SER_HEAD(REBUNI, (s))
@@ -168,7 +168,7 @@ inline static void TERM_UNI_LEN(REBSER *s, REBCNT len) {
 // to calculate a position from scratch.
 //
 inline static REBUNI *VAL_UNI_AT(const RELVAL *v) {
-    return UNI_AT(VAL_SERIES(v), VAL_INDEX(v));
+    return AS_REBUNI(UNI_AT(VAL_SERIES(v), VAL_INDEX(v)));
 }
 
 inline static REBSIZ VAL_SIZE_LIMIT_AT(

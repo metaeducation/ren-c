@@ -120,7 +120,7 @@ REBSER *Copy_String_At_Len(const RELVAL *src, REBINT limit)
     assert(length_limit * 2 == size); // !!! Temporary
 
     REBSER *dst = Make_Unicode(size / 2);
-    memcpy(UNI_AT(dst, 0), VAL_UNI_AT(src), size);
+    memcpy(AS_REBUNI(UNI_AT(dst, 0)), VAL_UNI_AT(src), size);
     TERM_SEQUENCE_LEN(dst, length_limit);
 
     return dst;
@@ -364,7 +364,7 @@ REBSER *Append_UTF8_May_Fail(
         EXPAND_SERIES_TAIL(dst, num_codepoints);
     }
 
-    REBUNI *dp = UNI_AT(dst, old_len);
+    REBUNI *dp = AS_REBUNI(UNI_AT(dst, old_len));
     SET_SERIES_LEN(dst, old_len + num_codepoints); // counted down to 0 below
 
     for (; num_codepoints > 0; --num_codepoints)

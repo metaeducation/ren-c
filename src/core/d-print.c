@@ -227,7 +227,9 @@ void Debug_Values(const RELVAL *value, REBCNT count, REBCNT limit)
             }
             SET_ANY_CHAR(mo->series, i2, '\0');
 
-            Debug_String(UNI_AT(mo->series, mo->start), i2 - mo->start);
+            Debug_String(
+                AS_REBUNI(UNI_AT(mo->series, mo->start)), i2 - mo->start
+            );
 
             Drop_Mold(mo);
         }

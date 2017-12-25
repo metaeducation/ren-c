@@ -540,11 +540,7 @@ REBNATIVE(local_to_file)
     const REBOOL is_dir = FALSE;
     Init_File(
         D_OUT,
-        To_REBOL_Path(
-            VAL_UNI_AT(path),
-            VAL_LEN_AT(path),
-            is_dir ? PATH_OPT_SRC_IS_DIR : 0
-        )
+        To_REBOL_Path(path, is_dir ? PATH_OPT_SRC_IS_DIR : 0)
     );
     return R_OUT;
 }
@@ -585,10 +581,7 @@ REBNATIVE(file_to_local)
         return R_OUT;
     }
 
-    Init_String(
-        D_OUT,
-        To_Local_Path(VAL_UNI_AT(path), VAL_LEN_AT(path), REF(full))
-    );
+    Init_String(D_OUT, To_Local_Path(path, REF(full)));
     return R_OUT;
 }
 

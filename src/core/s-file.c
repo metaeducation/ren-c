@@ -48,8 +48,13 @@
 // volume when no root slash was provided.  It was an odd case to support
 // the MSDOS convention of `c:file`.  That is not done here.
 //
-REBSER *To_REBOL_Path(const REBUNI *up, REBCNT len, REBFLGS flags)
+REBSER *To_REBOL_Path(const RELVAL *string, REBFLGS flags)
 {
+    assert(IS_STRING(string));
+
+    const REBUNI *up = VAL_UNI_AT(string);
+    REBCNT len = VAL_LEN_AT(string);
+
 #ifdef TO_WINDOWS
     REBOOL saw_colon = FALSE;  // have we hit a ':' yet?
     REBOOL saw_slash = FALSE; // have we hit a '/' yet?
@@ -115,11 +120,12 @@ REBSER *To_REBOL_Path(const REBUNI *up, REBCNT len, REBFLGS flags)
 //
 // Expands width for OS's that require it.
 //
-REBSER *To_Local_Path(
-    const REBUNI *up,
-    REBCNT len,
-    REBOOL full
-){
+REBSER *To_Local_Path(const RELVAL *file, REBOOL full) {
+    assert(IS_FILE(file));
+
+    const REBUNI *up = VAL_UNI_AT(file);
+    REBCNT len = VAL_LEN_AT(file);
+
     REBCNT n = 0;
 
     // Prescan for: /c/dir = c:/dir, /vol/dir = //vol/dir, //dir = ??

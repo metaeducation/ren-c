@@ -1590,10 +1590,7 @@ char *RL_rebFileToLocalAlloc(size_t *size_out, const REBVAL *file, REBOOL full)
     DECLARE_LOCAL (local);
     return rebSpellingOfAlloc(
         size_out,
-        Init_String(
-            local,
-            To_Local_Path(VAL_UNI_AT(file), VAL_LEN_AT(file), full)
-        )
+        Init_String(local, To_Local_Path(file, full))
     );
 }
 
@@ -1619,10 +1616,7 @@ REBWCHAR *RL_rebFileToLocalAllocW(
     DECLARE_LOCAL (local);
     return rebSpellingOfAllocW(
         len_out,
-        Init_String(
-            local,
-            To_Local_Path(VAL_UNI_AT(file), VAL_LEN_AT(file), full)
-        )
+        Init_String(local, To_Local_Path(file, full))
     );
 }
 
@@ -1649,11 +1643,7 @@ REBVAL *RL_rebLocalToFile(const char *local, REBOOL is_dir)
 
     REBVAL *result = Init_File(
         Alloc_Value(),
-        To_REBOL_Path(
-            VAL_UNI_AT(string),
-            VAL_LEN_AT(string),
-            is_dir ? PATH_OPT_SRC_IS_DIR : 0
-        )
+        To_REBOL_Path(string, is_dir ? PATH_OPT_SRC_IS_DIR : 0)
     );
 
     rebRelease(string);
@@ -1675,24 +1665,18 @@ REBVAL *RL_rebLocalToFileW(const REBWCHAR *local, REBOOL is_dir)
 
     assert(sizeof(REBUNI) == sizeof(REBWCHAR));
 
-    // The wcslen() routine is a Windows routine, there's no generic REBWCHAR
-    // string length function.
-    //
-    REBCNT len = 0;
-    const REBWCHAR *tmp = local;
-    while (*tmp != '\0') {
-        ++len;
-        ++tmp;
-    }
+    REBVAL *string = rebStringW(local);
 
-    return Init_File(
+    REBVAL *result = Init_File(
         Alloc_Value(),
         To_REBOL_Path(
-            cast(const REBUNI*, local), // C++ demands cast
-            len,
+            string,
             is_dir ? PATH_OPT_SRC_IS_DIR : 0
         )
     );
+
+    rebRelease(string);
+    return result;
 }
 
 
