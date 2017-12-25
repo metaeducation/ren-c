@@ -840,47 +840,6 @@ const REBYTE *Back_Scan_UTF8_Char_Core(
 
 
 //
-//  Decode_UTF8_Negative_If_ASCII: C
-//
-// Decode UTF8 byte string into a 16 bit preallocated array.
-//
-// dst: the desination array, must always be large enough!
-// src: source binary data
-// len: byte-length of source (not number of chars)
-// crlf_to_lf: convert CRLF/CR to LF
-//
-// Returns length in chars (negative if all chars are ASCII).
-// No terminator is added.
-//
-int Decode_UTF8_Negative_If_ASCII(
-    REBUNI *dst,
-    const REBYTE *src,
-    REBCNT len,
-    REBOOL crlf_to_lf
-) {
-    int flag = -1;
-    REBUNI ch;
-    REBUNI *start = dst;
-
-    for (; len > 0; len--, src++) {
-        if ((ch = *src) >= 0x80) {
-            if (!(src = Back_Scan_UTF8_Char(&ch, src, &len)))
-                fail (Error_Bad_Utf8_Raw());
-
-            if (ch > 0xff) flag = 1;
-        }
-        else if (ch == CR && crlf_to_lf) {
-            if (src[1] == LF) continue;
-            ch = LF;
-        }
-        *dst++ = ch;
-    }
-
-    return (dst - start) * flag;
-}
-
-
-//
 //  Size_As_UTF8: C
 //
 // Returns how long the UTF8 encoded string would be.

@@ -1374,6 +1374,7 @@ REBTYPE(String)
         }
 
         ser = VAL_SERIES(v);
+        index = VAL_INDEX(v);
 
         // if no /PART, just return value, else return string
         //
@@ -1387,7 +1388,7 @@ REBTYPE(String)
             enum Reb_Kind kind = VAL_TYPE(v);
             Init_Any_Series(v, kind, Copy_String_At_Len(v, len));
         }
-        Remove_Series(ser, VAL_INDEX(v), len);
+        Remove_Series(ser, index, len);
         break; }
 
     case SYM_CLEAR: {

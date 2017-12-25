@@ -120,7 +120,7 @@ REBSER *Copy_String_At_Len(const RELVAL *src, REBINT limit)
     assert(length_limit * 2 == size); // !!! Temporary
 
     REBSER *dst = Make_Unicode(size / 2);
-    memcpy(AS_REBUNI(UNI_AT(dst, 0)), VAL_UNI_AT(src), size);
+    memcpy(UNI_AT(dst, 0), VAL_UNI_AT(src), size);
     TERM_SEQUENCE_LEN(dst, length_limit);
 
     return dst;
@@ -311,43 +311,68 @@ REBSER *Append_UTF8_May_Fail(
     size_t size,
     REBOOL crlf_to_lf
 ){
+    // This routine does not just append bytes blindly because:
+    //
+    // * We want to check for invalid codepoints (this can be called with
+    //   arbitrary outside data from the API.
+    // * It's needed to know how many characters (length) are in the series,
+    //   not just how many bytes.  The higher level concept of "length" gets
+    //   stored in the series LINK() field.
+    // * In the future, some operations will be accelerated by knowing that
+    //   a string only contains ASCII codepoints.
+
     REBSER *temp = BUF_UTF8; // buffer is Unicode width
 
     Resize_Series(temp, size + 1); // needs at most this many unicode chars
 
-    REBINT len = Decode_UTF8_Negative_If_ASCII(
-        UNI_HEAD(temp),
-        cb_cast(utf8),
-        size,
-        crlf_to_lf
-    );
+    REBUNI *up = UNI_HEAD(temp);
+    const REBYTE *src = cb_cast(utf8);
 
-    const REBUNI *up = UNI_HEAD(temp);
+    REBOOL all_ascii = TRUE;
 
-    // !!! Previously it was interesting to know if all characters being
-    // added were Latin1.  In the post-UTF8-everywhere world, the interesting
-    // thing will be caching if they're all ASCII (for quick indexing)
-    //
-    if (len < 0)
-        len = -len;
+    REBCNT num_codepoints = 0;
+
+    REBSIZ bytes_left = size; // see remarks on Back_Scan_UTF8_Char's 3rd arg
+    for (; bytes_left > 0; --bytes_left, ++src) {
+        REBUNI ch = *src;
+        if (ch >= 0x80) {
+            src = Back_Scan_UTF8_Char(&ch, src, &bytes_left);
+            if (src == NULL)
+                fail (Error_Bad_Utf8_Raw());
+
+            all_ascii = FALSE;
+        }
+        else if (ch == CR && crlf_to_lf) {
+            if (src[1] == LF)
+                continue; // skip the CR, do the decrement and get the LF
+            ch = LF;
+        }
+
+        ++num_codepoints;
+        *up++ = ch;
+    }
+
+    up = UNI_HEAD(temp);
 
     REBCNT old_len;
     if (dst == NULL) {
-        dst = Make_Unicode(len);
+        dst = Make_Unicode(num_codepoints);
         old_len = 0;
     }
     else {
         old_len = SER_LEN(dst);
-        EXPAND_SERIES_TAIL(dst, len);
+        EXPAND_SERIES_TAIL(dst, num_codepoints);
     }
 
-    REBUNI *dp = AS_REBUNI(UNI_AT(dst, old_len));
-    SET_SERIES_LEN(dst, old_len + len); // len is counted down to 0 below
+    REBUNI *dp = UNI_AT(dst, old_len);
+    SET_SERIES_LEN(dst, old_len + num_codepoints); // counted down to 0 below
 
-    for (; len > 0; len--)
+    for (; num_codepoints > 0; --num_codepoints)
         *dp++ = *up++;
 
     *dp = '\0';
+
+    UNUSED(all_ascii);
 
     return dst;
 }
