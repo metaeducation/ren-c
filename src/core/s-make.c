@@ -421,9 +421,7 @@ REBSER *Join_Binary(const REBVAL *blk, REBINT limit)
         case REB_URL:
         case REB_TAG: {
             REBCNT val_len = VAL_LEN_AT(val);
-            size_t val_size = Size_As_UTF8(
-                VAL_UNI_AT(val), val_len, OPT_ENC_0
-            );
+            size_t val_size = Size_As_UTF8(VAL_UNI_AT(val), val_len);
 
             EXPAND_SERIES_TAIL(series, val_size);
             SET_SERIES_LEN(
@@ -432,8 +430,7 @@ REBSER *Join_Binary(const REBVAL *blk, REBINT limit)
                     BIN_AT(series, tail),
                     val_size,
                     VAL_UNI_AT(val),
-                    &val_len,
-                    OPT_ENC_0
+                    &val_len
                 )
             );
             break; }

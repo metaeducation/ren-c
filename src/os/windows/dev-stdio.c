@@ -176,27 +176,91 @@ DEVICE_CMD Write_IO(REBREQ *req)
         return DR_DONE;
     }
 
-    BOOL ok = FALSE; // Note: Windows BOOL, not REBOOL
+    if (Std_Out == NULL)
+        return DR_DONE;
 
-    if (Std_Out) {
+    if (Redir_Out) {
+        if (req->modes & RFM_TEXT) {
+            //
+            // Writing UTF-8 text.  Currently no actual check is done to make
+            // sure that it's valid UTF-8, even invalid bytes would be written
+            // but this could be changed.
+            //
+            // !!! Historically, Rebol on Windows would "enline" strings
+            // as UTF-8 in order to turn LF to CRLF.  This was done in the
+            // Prin_OS_String function.  However, the current idea is to
+            // make the core more agnostic and just pass UTF-8 data here.
+            //
+            // (Note: If we were using <stdio.h>, then opening a file in
+            // "text mode" with fopen()...as opposed to binary...would
+            // take care of this translation.  But we don't link against
+            // those functions, and WriteFile is too low level to do this
+            // translation.  Do it one line at a time.)
+            //
+            REBCNT start = 0;
+            REBCNT end = 0;
 
-        if (Redir_Out) { // Always UTF-8
+            while (TRUE) {
+                while (end < req->length && req->common.data[end] != LF)
+                    ++end;
+                DWORD total_bytes;
+
+                if (start != end) {
+                    BOOL ok = WriteFile(
+                        Std_Out,
+                        req->common.data + start,
+                        end - start,
+                        &total_bytes,
+                        0
+                    );
+                    if (NOT(ok))
+                        rebFail_OS (GetLastError());
+                    UNUSED(total_bytes);
+                }
+
+                if (req->common.data[end] == '\0')
+                    break;
+
+                assert(req->common.data[end] == LF);
+                BOOL ok = WriteFile(
+                    Std_Out,
+                    "\r\n",
+                    2,
+                    &total_bytes,
+                    0
+                );
+                if (NOT(ok))
+                    rebFail_OS (GetLastError());
+                UNUSED(total_bytes);
+
+                ++end;
+                start = end;
+            }
+        }
+        else {
+            // No LF => CR LF translation, e.g. write of a BINARY!.  Also
+            // means no validity check for UTF-8...illegal byte sequences are
+            // guaranteed to be allowed.
+            //
             DWORD total_bytes;
-            ok = WriteFile(
+            BOOL ok = WriteFile(
                 Std_Out,
                 req->common.data,
                 req->length,
                 &total_bytes,
                 0
             );
+            if (NOT(ok))
+                rebFail_OS (GetLastError());
             UNUSED(total_bytes);
         }
-        else {
+    }
+    else {
+        if (req->modes & RFM_TEXT) {
+            //
             // Convert UTF-8 buffer to Win32 wide-char format for console.
-            // Thankfully, MS provides something other than mbstowcs();
-            // however, if our buffer overflows, it's an error. There's no
-            // efficient way at this level to split-up the input data,
-            // because its UTF-8 with variable char sizes.
+            // When not redirected, the default seems to be able to translate
+            // LF to CR LF automatically (assuming that's what you wanted).
             //
             DWORD len = MultiByteToWideChar(
                 CP_UTF8,
@@ -208,26 +272,71 @@ DEVICE_CMD Write_IO(REBREQ *req)
             );
             if (len > 0) { // no error
                 DWORD total_wide_chars;
-                ok = WriteConsoleW(
+                BOOL ok = WriteConsoleW(
                     Std_Out,
                     Std_Buf,
                     len,
                     &total_wide_chars,
                     0
                 );
+                if (NOT(ok))
+                    rebFail_OS (GetLastError());
                 UNUSED(total_wide_chars);
             }
         }
+        else {
+            // !!! Writing a BINARY! to a redirected console, e.g. a CGI
+            // script, makes sense--e.g. it might be some full bandwidth data
+            // being downloaded that's neither UTF-8 nor UTF-16.  And it makes
+            // some sense on UNIX, as the terminal will just have to figure
+            // out what to do with those bytes.  But on Windows, there's a
+            // problem...since the console API takes wide characters.
+            //
+            // We *could* assume the user meant to write UTF-16 data, and only
+            // fail if it's an odd number of bytes.  But that means that the
+            // write of the BINARY! would have different meanings if directed
+            // at a file as opposed to not redirected.  If there was a true
+            // need to write UTF-16 data directly to the console, that should
+            // be a distinct console-oriented function.
+            //
+            // Instead, we can do something like change the color and write
+            // out some information.  Ideally this would be something like
+            // the data in hexadecimal, but since this is a niche leave it
+            // as a placeholder.
+            //
+            // !!! The caller currently breaks up binary data into chunks to
+            // pass in order to handle cancellation, so that should also be
+            // taken into account.
 
-        if (NOT(ok))
-            rebFail_OS (GetLastError());
+            CONSOLE_SCREEN_BUFFER_INFO csbi;
+            GetConsoleScreenBufferInfo(Std_Out, &csbi); // save color
+            
+            SetConsoleTextAttribute(
+                Std_Out, BACKGROUND_GREEN | FOREGROUND_BLUE
+            );
 
-        req->actual = req->length; // want byte count written, assume success
+            WCHAR message[] = L"Binary Data Sent to Non-Redirected Console";
 
-        //if (req->flags & RRF_FLUSH) {
-        //  FLUSH();
-        //}
+            DWORD total_wide_chars;
+            BOOL ok = WriteConsoleW(
+                Std_Out,
+                message,
+                wcslen(message), // wants wide character count
+                &total_wide_chars,
+                0
+            );
+            SetConsoleTextAttribute(Std_Out, csbi.wAttributes); // restore
+
+            if (NOT(ok))
+                rebFail_OS (GetLastError());
+            UNUSED(total_wide_chars);
+        }
     }
+
+    req->actual = req->length; // want byte count written, assume success
+
+    // !!! There was some code in R3-Alpha here which checked req->flags for
+    // "RRF_FLUSH" and would flush, but it was commented out (?)
 
     return DR_DONE;
 }

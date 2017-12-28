@@ -359,7 +359,7 @@ static REBSER *make_binary(const REBVAL *arg, REBOOL make)
     case REB_URL:
     case REB_TAG:
 //  case REB_ISSUE:
-        ser = Make_UTF8_From_Any_String(arg, VAL_LEN_AT(arg), OPT_ENC_0);
+        ser = Make_UTF8_From_Any_String(arg, VAL_LEN_AT(arg));
         break;
 
     case REB_BLOCK:

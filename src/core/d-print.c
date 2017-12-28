@@ -99,40 +99,57 @@ void Print_OS_Line(void)
 //
 // The encoding options are OPT_ENC_XXX flags OR'd together.
 //
-void Prin_OS_String(const REBUNI *up, REBCNT len, REBFLGS opts)
+void Prin_OS_String(const REBYTE *utf8, REBSIZ size, REBFLGS opts)
 {
-    #define BUF_SIZE 1024
-    REBYTE buffer[BUF_SIZE]; // on stack
-    REBYTE *buf = &buffer[0];
-    REBCNT len2;
-
     Req_SIO->flags |= RRF_FLUSH;
+    if (opts & OPT_ENC_RAW)
+        Req_SIO->modes &= ~RFM_TEXT;
+    else
+        Req_SIO->modes |= RFM_TEXT;
 
     Req_SIO->actual = 0;
-    Req_SIO->common.data = buf;
-    buffer[0] = 0; // for debug tracing
 
     DECLARE_LOCAL (result);
     SET_END(result);
 
-    while ((len2 = len) > 0) {
+    // !!! The historical division of labor between the "core" and the "host"
+    // is that the host doesn't know how to poll for cancellation.  So data
+    // gets broken up into small batches and it's this loop that has access
+    // to the core "Do_Signals_Throws" query.  Hence one can send a giant
+    // string to the OS_DO_DEVICE with RDC_WRITE and be able to interrupt it,
+    // even though that device request could block forever in theory.
+    //
+    // There may well be a better way to go about this.
+    //
+    Req_SIO->common.data = m_cast(REBYTE*, utf8); // !!! promises to not write
+    while (size > 0) {
         if (Do_Signals_Throws(result))
             fail (Error_No_Catch_For_Throw(result));
 
         assert(IS_END(result));
 
-        Req_SIO->length = Encode_UTF8(
-            buf,
-            BUF_SIZE - 4,
-            up,
-            &len2,
-            opts
-        );
-
-        up += len2;
-        len -= len2;
+        // !!! Req_SIO->length is actually the "size", e.g. number of bytes.
+        //
+        if (size <= 1024)
+            Req_SIO->length = size;
+        else if (NOT(opts & OPT_ENC_RAW))
+            Req_SIO->length = 1024;
+        else {
+            // Correct for UTF-8 batching so we don't span an encoded
+            // character, back off until we hit a valid leading character.
+            // Start by scanning 4 bytes back since that's the longest valid
+            // UTF-8 encoded character.
+            //
+            Req_SIO->length = 1020;
+            while ((Req_SIO->common.data[Req_SIO->length] & 0xC0) == 0x80)
+                ++Req_SIO->length;
+            assert(Req_SIO->length <= 1024);
+        }
 
         OS_DO_DEVICE(Req_SIO, RDC_WRITE);
+
+        Req_SIO->common.data += Req_SIO->length;
+        size -= Req_SIO->length;
     }
 }
 
@@ -140,12 +157,12 @@ void Prin_OS_String(const REBUNI *up, REBCNT len, REBFLGS opts)
 //
 //  Debug_String: C
 //
-void Debug_String(const REBUNI *up, REBCNT len)
+void Debug_String(const REBYTE *utf8, REBSIZ size)
 {
     REBOOL disabled = GC_Disabled;
     GC_Disabled = TRUE;
 
-    Prin_OS_String(up, len, OPT_ENC_CRLF_MAYBE);
+    Prin_OS_String(utf8, size, OPT_ENC_0);
     Print_OS_Line();
 
     assert(GC_Disabled == TRUE);
@@ -158,10 +175,7 @@ void Debug_String(const REBUNI *up, REBCNT len)
 //
 void Debug_Line(void)
 {
-    REBUNI wstr[2];
-    wstr[0] = '\n';
-    wstr[1] = '\0';
-    Debug_String(wstr, 2);
+    Debug_String(cb_cast("\n"), 1);
 }
 
 
@@ -174,7 +188,7 @@ void Debug_Chars(REBYTE chr, REBCNT num)
 {
     assert(num < 100);
 
-    REBUNI buffer[100];
+    REBYTE buffer[100];
     REBCNT i;
     for (i = 0; i < num; ++i)
         buffer[i] = chr;
@@ -227,9 +241,7 @@ void Debug_Values(const RELVAL *value, REBCNT count, REBCNT limit)
             }
             SET_ANY_CHAR(mo->series, i2, '\0');
 
-            Debug_String(
-                AS_REBUNI(UNI_AT(mo->series, mo->start)), i2 - mo->start
-            );
+            Debug_String(BIN_AT(mo->series, mo->start), i2 - mo->start);
 
             Drop_Mold(mo);
         }
@@ -264,14 +276,16 @@ void Debug_Buf(const char *fmt, va_list *vaptr)
 
     DECLARE_MOLD (mo);
     Push_Mold(mo);
+
     Form_Args_Core(mo, fmt, vaptr);
 
-    REBSER *ser = Pop_Molded_String_Core(mo, UNKNOWN);
+    Debug_String(
+        BIN_AT(mo->series, mo->start), SER_LEN(mo->series) - mo->start
+    );
 
-    Debug_String(UNI_HEAD(ser), UNI_LEN(ser));
+    Drop_Mold(mo);
+
     Debug_Line();
-
-    Free_Series(ser);
 
     assert(GC_Disabled == TRUE);
     GC_Disabled = disabled;

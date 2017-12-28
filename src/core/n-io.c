@@ -113,20 +113,43 @@ REBNATIVE(write_stdout)
         //
         // It is sometimes desirable to write raw binary data to stdout.  e.g.
         // e.g. CGI scripts may be hooked up to stream data for a download,
-        // and not want the bytes translated.
+        // and not want the bytes interpreted in any way.  (e.g. not changed
+        // from UTF-8 to wide characters, or not having CR turned into CR LF
+        // sequences).
         //
-        fail ("Raw output to stdout is temporarily disabled");
+        Prin_OS_String(VAL_BIN_HEAD(v), VAL_LEN_AT(v), OPT_ENC_RAW);
     }
-    else if (IS_CHAR(v)) { // useful for `write-stdout newline`, etc.
-        Prin_OS_String(&VAL_CHAR(v), 1, OPT_ENC_CRLF_MAYBE);
+    else if (IS_CHAR(v)) {
+        //
+        // Useful for `write-stdout newline`, etc.
+        //
+        // !!! Temporarily just support ASCII codepoints, since making a
+        // codepoint out of a string pre-UTF8-everywhere makes a REBUNI string.
+        //
+        if (VAL_CHAR(v) > 0x7f)
+            fail ("non-ASCII CHAR! output temporarily disabled.");
+        Prin_OS_String(cast(REBYTE*, &VAL_CHAR(v)), 1, OPT_ENC_0);
     }
-    else { // string output translated to OS format
+    else {
+        // !!! Temporary until UTF-8 Everywhere: translate string into UTF-8.
+        // We don't put CRLF in, as this is a proxy for the string that won't
+        // have CR in it.  (And even if it did, that's only really needed on
+        // Windows, which will need to do a UCS2 transformation anyway...so
+        // might as well put the CR codepoints in then.)
+        //
+        // !!! Don't use mold buffer, because we're passing a raw pointer, and
+        // it may be that the print layer runs arbitrary Rebol code that
+        // might move that buffer.
+        //
         assert(IS_STRING(v));
-        Prin_OS_String(
-            VAL_UNI_AT(v),
-            VAL_LEN_AT(v),
-            OPT_ENC_CRLF_MAYBE
-        );
+
+        REBCNT offset = VAL_INDEX(v); // transformed to offset
+        REBCNT size = VAL_LEN_AT(v); // transformed to size
+        REBSER *temp = Temp_UTF8_At_Managed(v, &offset, &size);
+
+        Prin_OS_String(BIN_AT(temp, offset), size, OPT_ENC_0);
+
+        // let temp string GC
     }
 
     return R_VOID;

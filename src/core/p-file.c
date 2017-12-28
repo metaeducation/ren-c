@@ -202,15 +202,16 @@ static void Write_File_Port(struct devreq_file *file, REBVAL *data, REBCNT len, 
         len = VAL_LEN_HEAD(data);
     }
 
-    // Auto convert string to UTF-8
     if (IS_STRING(data)) {
-        ser = Make_UTF8_From_Any_String(data, len, OPT_ENC_CRLF_MAYBE);
+        ser = Make_UTF8_From_Any_String(data, len);
         MANAGE_SERIES(ser);
         req->common.data = BIN_HEAD(ser);
         len = SER_LEN(ser);
+        req->modes |= RFM_TEXT; // do LF => CRLF, e.g. on Windows
     }
     else {
         req->common.data = VAL_BIN_AT(data);
+        req->modes &= ~RFM_TEXT; // don't do LF => CRLF, e.g. on Windows
     }
     req->length = len;
     OS_DO_DEVICE(req, RDC_WRITE);

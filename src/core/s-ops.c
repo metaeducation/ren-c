@@ -160,11 +160,7 @@ REBSER *Temp_UTF8_At_Managed(const RELVAL *str, REBCNT *index, REBCNT *length)
 
     REBCNT len = (length != NULL && *length) ? *length : VAL_LEN_AT(str);
 
-    // We do not want the temporary string to use OPT_ENC_CRLF_MAYBE...because
-    // this is used for things like COMPRESS, and the Windows version of
-    // Rebol needs to generate compatible compression with the Linux version.
-    //
-    REBSER *s = Make_UTF8_From_Any_String(str, len, OPT_ENC_0);
+    REBSER *s = Make_UTF8_From_Any_String(str, len);
     MANAGE_SERIES(s);
     SET_SER_INFO(s, SERIES_INFO_FROZEN);
 

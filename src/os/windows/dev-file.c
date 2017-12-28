@@ -370,18 +370,64 @@ DEVICE_CMD Write_File(REBREQ *req)
             SetEndOfFile(req->requestee.handle);
     }
 
-    if (req->length != 0) {
-        if (NOT(WriteFile(
-            req->requestee.handle,
-            req->common.data,
-            req->length,
-            cast(LPDWORD, &req->actual),
-            0
-        ))){
-            // !!! This used to special-case ERROR_HANDLE_DISK_FULL, for some
-            // reason (?)
-            //
-            rebFail_OS (GetLastError());
+    if (NOT(req->modes & RFM_TEXT)) { // e.g. no LF => CRLF translation needed
+        if (req->length != 0) {
+            BOOL ok = WriteFile(
+                req->requestee.handle,
+                req->common.data,
+                req->length,
+                cast(LPDWORD, &req->actual),
+                0
+            );
+            
+            if (NOT(ok))
+                rebFail_OS (GetLastError());
+        }
+    }
+    else {
+        // !!! This repeats code used in %dev-stdio.c, which is needed when
+        // console output is redirected to a file.  It should be shareable.
+
+        REBCNT start = 0;
+        REBCNT end = 0;
+
+        req->actual = 0; // count actual bytes written as we go along
+
+        while (TRUE) {
+            while (end < req->length && req->common.data[end] != LF)
+                ++end;
+            DWORD total_bytes;
+
+            if (start != end) {
+                BOOL ok = WriteFile(
+                    req->requestee.handle,
+                    req->common.data + start,
+                    end - start,
+                    &total_bytes,
+                    0
+                );
+                if (NOT(ok))
+                    rebFail_OS (GetLastError());
+                req->actual += total_bytes;
+            }
+
+            if (req->common.data[end] == '\0')
+                break;
+
+            assert(req->common.data[end] == LF);
+            BOOL ok = WriteFile(
+                req->requestee.handle,
+                "\r\n",
+                2,
+                &total_bytes,
+                0
+            );
+            if (NOT(ok))
+                rebFail_OS (GetLastError());
+            req->actual += total_bytes;
+
+            ++end;
+            start = end;
         }
     }
 

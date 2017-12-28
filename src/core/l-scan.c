@@ -428,6 +428,7 @@ static const REBYTE *Scan_Quote_Push_Mold(
         switch (chr) {
 
         case 0:
+            TERM_BIN(mo->series);
             return NULL; // Scan_state shows error location.
 
         case '^':

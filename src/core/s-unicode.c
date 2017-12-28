@@ -847,21 +847,14 @@ const REBYTE *Back_Scan_UTF8_Char_Core(
 // !!! There's a hardcoded table of byte lengths which is used other places,
 // it would probably speed this up.
 //
-size_t Size_As_UTF8(const REBUNI *up, REBCNT len, REBFLGS opts)
+size_t Size_As_UTF8(const REBUNI *up, REBCNT len)
 {
     size_t size = 0;
 
     for (; len > 0; len--) {
         UTF32 c = *up++;
-        if (c < cast(UTF32, 0x80)) {
-        #ifdef TO_WINDOWS
-            if (LOGICAL(opts & OPT_ENC_CRLF) && c == LF)
-                size++; // since we will add a CR to it
-        #else
-            UNUSED(opts);
-        #endif
+        if (c < cast(UTF32, 0x80))
             size++;
-        }
         else if (c < cast(UTF32, 0x800))
             size += 2;
         else if (c < cast(UTF32, 0x10000))
@@ -936,9 +929,8 @@ REBCNT Encode_UTF8(
     REBYTE *dst,
     REBCNT max,
     const REBUNI *src,
-    REBCNT *len,
-    REBFLGS opts
-) {
+    REBCNT *len
+){
     REBYTE buf[8];
 
     REBCNT cnt = *len;
@@ -949,20 +941,6 @@ REBCNT Encode_UTF8(
     for (; max > 0 && cnt > 0; cnt--) {
         REBUNI c = *up++;
         if (c < 0x80) {
-        #if defined(TO_WINDOWS)
-            if (LOGICAL(opts & OPT_ENC_CRLF) && c == LF) {
-                // If there's not room, don't try to output CRLF
-                if (2 > max) {
-                    up--;
-                    break;
-                }
-                *dst++ = CR;
-                max--;
-                c = LF;
-            }
-        #else
-            UNUSED(opts);
-        #endif
             *dst++ = cast(REBYTE, c);
             max--;
         }
@@ -989,17 +967,13 @@ REBCNT Encode_UTF8(
 //
 // !!! With UTF-8 Everywhere, strings will already be in UTF-8.
 //
-REBSER *Make_UTF8_From_Any_String(
-    const RELVAL *any_string,
-    REBCNT len,
-    REBFLGS opts
-){
+REBSER *Make_UTF8_From_Any_String(const RELVAL *any_string, REBCNT len) {
     assert(ANY_STRING(any_string));
 
     const REBUNI *data = VAL_UNI_AT(any_string);
-    size_t size = Size_As_UTF8(data, len, opts);
+    size_t size = Size_As_UTF8(data, len);
     REBSER *bin = Make_Binary(size);
-    SET_SERIES_LEN(bin, Encode_UTF8(BIN_HEAD(bin), size, data, &len, opts));
+    SET_SERIES_LEN(bin, Encode_UTF8(BIN_HEAD(bin), size, data, &len));
     assert(SER_LEN(bin) == size);
     TERM_SEQUENCE(bin);
     return bin;

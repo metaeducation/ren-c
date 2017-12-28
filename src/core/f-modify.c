@@ -205,9 +205,9 @@ REBCNT Modify_Binary(
     else if (ANY_STRING(src_val)) {
         REBCNT len_at = VAL_LEN_AT(src_val);
         if (limit >= 0 && len_at > cast(REBCNT, limit))
-            src_ser = Make_UTF8_From_Any_String(src_val, limit, OPT_ENC_0);
+            src_ser = Make_UTF8_From_Any_String(src_val, limit);
         else
-            src_ser = Make_UTF8_From_Any_String(src_val, len_at, OPT_ENC_0);
+            src_ser = Make_UTF8_From_Any_String(src_val, len_at);
         needs_free = TRUE;
         limit = -1;
     }

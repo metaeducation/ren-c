@@ -484,17 +484,12 @@ enum {
     POL_MAX
 };
 
-// Encoding options:
+// Encoding options (reduced down to just being used by WRITE-STDOUT)
+//
 enum encoding_opts {
     OPT_ENC_0 = 0,
-    OPT_ENC_CRLF = 1 << 1 // CR line termination, see OPT_ENC_CRLF_MAYBE
+    OPT_ENC_RAW = 1 << 0
 };
-
-#if OS_CRLF
-    #define OPT_ENC_CRLF_MAYBE OPT_ENC_CRLF
-#else
-    #define OPT_ENC_CRLF_MAYBE 0
-#endif
 
 
 // These 3 operations are the current legal set of what can be done with a
