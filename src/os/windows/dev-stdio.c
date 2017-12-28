@@ -310,7 +310,7 @@ DEVICE_CMD Write_IO(REBREQ *req)
 
             CONSOLE_SCREEN_BUFFER_INFO csbi;
             GetConsoleScreenBufferInfo(Std_Out, &csbi); // save color
-            
+
             SetConsoleTextAttribute(
                 Std_Out, BACKGROUND_GREEN | FOREGROUND_BLUE
             );

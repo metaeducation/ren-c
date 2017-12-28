@@ -34,11 +34,10 @@
     Init_Any_Series((v), REB_VECTOR, (s))
 
 // Encoding Format:
-//      stored in series->size for now
+//      stored in series->vect_type for now
 //      [d d d d   d d d d   0 0 0 0   t s b b]
 
-// Encoding identifiers:
-enum {
+enum Reb_Vect_Type {
     VTSI08 = 0,
     VTSI16,
     VTSI32,
@@ -55,7 +54,8 @@ enum {
     VTSF64
 };
 
-#define VECT_TYPE(s) (MISC(s).size & 0xff)
+#define VECT_TYPE(s) \
+    MISC(s).vect_info.type
 
 static REBCNT bit_sizes[4] = {8, 16, 32, 64};
 
@@ -310,18 +310,12 @@ void Set_Vector_Value(REBVAL *var, REBSER *series, REBCNT index)
 //
 //  Make_Vector: C
 //
-// type: the datatype
-// sign: signed or unsigned
-// dims: number of dimensions
-// bits: number of bits per unit (8, 16, 32, 64)
-// size: size of array ?
-//
-REBSER *Make_Vector(
-    REBINT type,
-    REBINT sign,
-    REBINT dims,
-    REBINT bits,
-    REBINT size
+static REBSER *Make_Vector(
+    REBINT type, // actually a Reb_Vect_Type
+    REBINT sign, // signed or unsigned
+    REBINT dims, // number of dimensions
+    REBINT bits, // number of bits per unit (8, 16, 32, 64)
+    REBINT size // !!! "size of array ?"
 ){
     REBCNT len = size * dims;
     if (len > 0x7fffffff)
@@ -331,15 +325,28 @@ REBSER *Make_Vector(
     CLEAR(SER_DATA_RAW(s), (len * bits) / 8);
     SET_SERIES_LEN(s, len);
 
-    // Store info about the vector (could be moved to flags if necessary):
+    MISC(s).vect_info.type = type;
+
     switch (bits) {
-    case  8: bits = 0; break;
-    case 16: bits = 1; break;
-    case 32: bits = 2; break;
-    case 64: bits = 3; break;
+    case 8:
+        MISC(s).vect_info.bits = 0;
+        break;
+
+    case 16:
+        MISC(s).vect_info.bits = 1;
+        break;
+
+    case 32:
+        MISC(s).vect_info.bits = 2;
+        break;
+
+    case 64:
+        MISC(s).vect_info.bits = 3;
+        break;
     }
 
-    MISC(s).size = (dims << 8) | (type << 3) | (sign << 2) | bits;
+    MISC(s).vect_info.sign = sign;
+    MISC(s).vect_info.dims = dims;
 
     return s;
 }
@@ -671,7 +678,7 @@ REBTYPE(Vector)
         }
 
         ser = Copy_Sequence(vect);
-        MISC(ser).size = MISC(vect).size; // attributes
+        MISC(ser).vect_info = MISC(vect).vect_info; // attributes
         Init_Vector(value, ser);
         goto return_vector; }
 

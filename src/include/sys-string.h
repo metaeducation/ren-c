@@ -90,9 +90,9 @@ inline static const char *STR_HEAD(REBSTR *str) {
 }
 
 inline static REBSTR *STR_CANON(REBSTR *str) {
-    if (GET_SER_INFO(str, STRING_INFO_CANON))
-        return str;
-    return MISC(str).canon;
+    while (NOT(GET_SER_INFO(str, STRING_INFO_CANON)))
+        str = LINK(str).synonym; // circularly linked list
+    return str;
 }
 
 inline static OPT_REBSYM STR_SYMBOL(REBSTR *str) {

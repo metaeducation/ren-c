@@ -269,7 +269,6 @@ REBSTR *Intern_UTF8_Managed(const REBYTE *utf8, size_t size)
         //
         REBSTR *synonym = LINK(canon).synonym;
         while (synonym != canon) {
-            assert(MISC(synonym).canon == canon);
             assert(NOT_SER_INFO(synonym, STRING_INFO_CANON));
 
             // Exact match for a synonym also means no new allocation needed.
@@ -361,7 +360,7 @@ new_interning: ; // semicolon needed for statement
         // This is a synonym for an existing canon.  Link it into the synonyms
         // circularly linked list, and direct link the canon form.
         //
-        MISC(intern).canon = canon;
+        MISC(intern).length = 0; // !!! TBD: codepoint count
         LINK(intern).synonym = LINK(canon).synonym;
         LINK(canon).synonym = intern;
 
@@ -402,11 +401,8 @@ void GC_Kill_Interning(REBSTR *intern)
     // Note synonym and intern may be the same here.
     //
     REBSER *temp = synonym;
-    while (LINK(temp).synonym != intern) {
-        if (GET_SER_INFO(intern, STRING_INFO_CANON))
-            MISC(temp).canon = synonym;
+    while (LINK(temp).synonym != intern)
         temp = LINK(temp).synonym;
-    }
     LINK(temp).synonym = synonym; // cut intern out of chain (or no-op)
 
     if (NOT_SER_INFO(intern, STRING_INFO_CANON))

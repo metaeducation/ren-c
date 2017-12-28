@@ -606,9 +606,21 @@ union Reb_Series_Link {
     //
     REBARR *facade;
 
-    // For REBSTR, circularly linked list of othEr-CaSed string forms
+    // For a *read-only* REBSTR, circularly linked list of othEr-CaSed string
+    // forms.  It should be relatively quick to find the canon form on
+    // average, since many-cased forms are somewhat rare.
     //
     REBSTR *synonym;
+
+    // For a writable REBSTR, this mutation stamp is used to track how many
+    // times it has changed in ways that could affect an extant character
+    // positioning in a REBVAL* somewhere.  The stamp is mirrored in the
+    // REBVAL, and if it doesn't match the value must re-seek instead of
+    // using an offset in the value.
+    //
+    // !!! Work in progress.
+    //
+    REBUPT stamp;
 
     // On Reb_Function body_holders, this is the specialization frame for
     // a function--or NULL if none.
@@ -660,11 +672,12 @@ union Reb_Series_Misc {
     //
     REBUPT line;
 
-    // For REBSTR the canon cased form of this symbol, if it isn't canon
-    // itself.  If it *is* a canon, then the field is free and is used
-    // instead for `bind_index`
+    // Under UTF-8 everywhere, strings are byte-sized...so the series "size"
+    // is actually counting *bytes*, not logical character codepoint units.
+    // SER_SIZE() and SER_LEN() can therefore be different...where SER_LEN()
+    // on a string series comes from here, vs. just report the size.
     //
-    REBSTR *canon;
+    REBSIZ length;
 
     // When binding words into a context, it's necessary to keep a table
     // mapping those words to indices in the context's keylist.  R3-Alpha
@@ -723,10 +736,6 @@ union Reb_Series_Misc {
     //
     REBOOL negated;
 
-    // used for vectors and bitsets
-    //
-    REBCNT size;
-
     // used for IMAGE!
     //
     // !!! The optimization by which images live in a single REBSER vs.
@@ -738,6 +747,16 @@ union Reb_Series_Misc {
         int wide:16; // Note: bitfields can only be int
         int high:16;
     } area;
+
+    // !!! used for VECTOR!, which also should be a user defined type and not
+    // micro-optimizing with putting bits into the REBSER node like this.
+    //
+    struct {
+        unsigned int type:5; // see Reb_Vect_Type
+        unsigned int bits:2; // 0 = 8bit, 1 = 16bit, 2 = 32bit, 3 = 64bit
+        unsigned int sign:1;
+        unsigned int dims:24;
+    } vect_info;
 };
 
 
