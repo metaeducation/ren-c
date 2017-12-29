@@ -942,13 +942,13 @@ size_t RL_rebSpellingOf(
     Enter_Api_Clear_Last_Error();
 
     const char *utf8;
-    size_t utf8_size;
+    REBSIZ utf8_size;
     if (ANY_STRING(v)) {
-        REBCNT index = VAL_INDEX(v);
-        REBCNT len = VAL_LEN_AT(v);
-        REBSER *temp = Temp_UTF8_At_Managed(v, &index, &len);
-        utf8 = cs_cast(BIN_AT(temp, index));
-        utf8_size = len;
+        REBSIZ offset;
+        REBSER *temp = Temp_UTF8_At_Managed(
+            &offset, &utf8_size, v, VAL_LEN_AT(v)
+        );
+        utf8 = cs_cast(BIN_AT(temp, offset));
     }
     else {
         assert(ANY_WORD(v));
@@ -963,7 +963,7 @@ size_t RL_rebSpellingOf(
         return utf8_size; // caller must allocate a buffer of size + 1
     }
 
-    size_t limit = MIN(buf_size, utf8_size);
+    REBSIZ limit = MIN(buf_size, utf8_size);
     memcpy(buf, utf8, limit);
     buf[limit] = '\0';
     return utf8_size;

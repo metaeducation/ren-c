@@ -72,9 +72,9 @@ void MAKE_Tuple(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
     // URL! here fixes it, though there are still open questions.
     //
     if (IS_STRING(arg) || IS_URL(arg)) {
-        REBCNT len;
-        REBYTE *ap = Temp_Byte_Chars_May_Fail(arg, MAX_SCAN_TUPLE, &len, FALSE);
-        if (Scan_Tuple(out, ap, len) != NULL)
+        REBSIZ size;
+        REBYTE *bp = Analyze_String_For_Scan(&size, arg, MAX_SCAN_TUPLE);
+        if (Scan_Tuple(out, bp, size) != NULL)
             return;
         fail (arg);
     }

@@ -165,19 +165,21 @@ static REB_R Transport_Actor(
 
             // Lookup host name (an extra TCP device step):
             if (IS_STRING(arg)) {
-                REBCNT index = VAL_INDEX(arg);
-                REBCNT len = VAL_LEN_AT(arg);
-                REBSER *arg_utf8 = Temp_UTF8_At_Managed(arg, &index, &len);
-                PUSH_GUARD_SERIES(arg_utf8);
+                REBSIZ offset;
+                REBSIZ size;
+                REBSER *temp = Temp_UTF8_At_Managed(
+                    &offset, &size, arg, VAL_LEN_AT(arg)
+                );
+                PUSH_GUARD_SERIES(temp);
 
-                sock->common.data = BIN_AT(arg_utf8, index);
+                sock->common.data = BIN_AT(temp, offset);
                 DEVREQ_NET(sock)->remote_port =
                     IS_INTEGER(val) ? VAL_INT32(val) : 80;
 
                 // Note: sets remote_ip field
                 //
                 OS_DO_DEVICE(sock, RDC_LOOKUP);
-                DROP_GUARD_SERIES(arg_utf8);
+                DROP_GUARD_SERIES(temp);
                 goto return_port;
             }
             else if (IS_TUPLE(arg)) { // Host IP specified:

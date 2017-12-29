@@ -648,23 +648,28 @@ REBNATIVE(sha256)
 {
     INCLUDE_PARAMS_OF_SHA256;
 
-    REBCNT index;
-    REBCNT len;
-    REBSER *series;
-    if (IS_STRING(ARG(data)))
-        series = Temp_UTF8_At_Managed(ARG(data), &index, &len);
-    else {
-        series = VAL_SERIES(ARG(data));
-        index = VAL_INDEX(ARG(data));
-        len = VAL_LEN_AT(ARG(data));
-    }
+    REBVAL *data = ARG(data);
 
-    REBYTE *data = BIN_AT(series, index);
+    REBYTE *bp;
+    REBSIZ size;
+    if (IS_STRING(data)) {
+        REBSIZ offset;
+        REBSER *temp = Temp_UTF8_At_Managed(
+            &offset, &size, data, VAL_LEN_AT(data)
+        );
+        bp = BIN_AT(temp, offset);
+    }
+    else {
+        assert(IS_BINARY(data));
+
+        bp = VAL_BIN_AT(data);
+        size = VAL_LEN_AT(data);
+    }
 
     SHA256_CTX ctx;
 
     sha256_init(&ctx);
-    sha256_update(&ctx, data, len);
+    sha256_update(&ctx, bp, size);
 
     REBSER *buf = Make_Binary(SHA256_BLOCK_SIZE);
     sha256_final(&ctx, BIN_HEAD(buf));
@@ -692,51 +697,51 @@ static REBYTE seed_str[SEED_LEN] = {
 //
 // The key (kp) is passed as a REBVAL or REBYTE (when klen is !0).
 //
-static REBOOL Cloak(
+static void Cloak(
     REBOOL decode,
     REBYTE *cp,
     REBCNT dlen,
-    REBYTE *kp,
-    REBCNT klen,
+    const REBVAL *key,
     REBOOL as_is
-) {
+){
     REBYTE src[20];
     REBYTE dst[20];
 
     if (dlen == 0)
-        return TRUE;
+        return;
+
+    REBYTE *kp;
+    REBSIZ klen;
+
+    switch (VAL_TYPE(key)) {
+    case REB_BINARY:
+        kp = VAL_BIN_AT(key);
+        klen = VAL_LEN_AT(key);
+        break;
+
+    case REB_STRING: {
+        REBSIZ offset;
+        REBSER *temp = Temp_UTF8_At_Managed(
+            &offset, &klen, key, VAL_LEN_AT(key)
+        );
+        kp = BIN_AT(temp, offset);
+        break; }
+
+    case REB_INTEGER:
+        INT_TO_STR(VAL_INT64(key), dst);
+        kp = dst;
+        klen = LEN_BYTES(dst);
+        as_is = FALSE;
+        break;
+
+    default:
+        panic ("Invalid key type passed to Cloak()");
+    }
+
+    if (klen == 0)
+        fail (key);
 
     REBCNT i;
-
-    // Decode KEY as VALUE field (binary, string, or integer)
-    if (klen == 0) {
-        REBVAL *val = cast(REBVAL*, kp);
-        REBSER *ser;
-
-        switch (VAL_TYPE(val)) {
-        case REB_BINARY:
-            kp = VAL_BIN_AT(val);
-            klen = VAL_LEN_AT(val);
-            break;
-
-        case REB_STRING:
-            ser = Temp_UTF8_At_Managed(val, &i, &klen);
-            kp = BIN_AT(ser, i);
-            break;
-
-        case REB_INTEGER:
-            INT_TO_STR(VAL_INT64(val), dst);
-            klen = LEN_BYTES(dst);
-            as_is = FALSE;
-            break;
-
-        default:
-            assert(FALSE);
-        }
-
-        if (klen == 0)
-            return FALSE;
-    }
 
     if (!as_is) {
         for (i = 0; i < 20; i++)
@@ -764,8 +769,6 @@ static REBOOL Cloak(
         for (i = 1; i < dlen; i++)
             cp[i] ^= cp[i - 1] ^ kp[i % klen];
     }
-
-    return TRUE;
 }
 
 
@@ -786,16 +789,13 @@ static REBNATIVE(decloak)
 {
     INCLUDE_PARAMS_OF_DECLOAK;
 
-    if (NOT(Cloak(
+    Cloak(
         TRUE,
         VAL_BIN_AT(ARG(data)),
         VAL_LEN_AT(ARG(data)),
-        cast(REBYTE*, ARG(key)),
-        0,
+        ARG(key),
         REF(with)
-    ))){
-        fail (ARG(key));
-    }
+    );
 
     Move_Value(D_OUT, ARG(data));
     return R_OUT;
@@ -819,16 +819,13 @@ static REBNATIVE(encloak)
 {
     INCLUDE_PARAMS_OF_ENCLOAK;
 
-    if (NOT(Cloak(
+    Cloak(
         FALSE,
         VAL_BIN_AT(ARG(data)),
         VAL_LEN_AT(ARG(data)),
-        cast(REBYTE*, ARG(key)),
-        0,
-        REF(with))
-    )){
-        fail (ARG(key));
-    }
+        ARG(key),
+        REF(with)
+    );
 
     Move_Value(D_OUT, ARG(data));
     return R_OUT;

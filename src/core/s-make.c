@@ -242,27 +242,21 @@ void Append_Utf8_Utf8(REBSER *dst, const char *utf8, size_t size)
 //
 // !!! Used only with mold series at the moment.
 //
-void Append_Utf8_String(REBSER *dst, const RELVAL *src, REBCNT part)
+void Append_Utf8_String(REBSER *dst, const RELVAL *src, REBCNT length_limit)
 {
     assert(
         SER_WIDE(dst) == sizeof(REBYTE)
         && SER_WIDE(VAL_SERIES(src)) == sizeof(REBUNI)
     );
 
-    REBCNT index = VAL_INDEX(src);
-    REBCNT len = VAL_LEN_AT(src);
-
-    if (part != len)
-        fail ("Append_Utf8_String currently doesn't support 'part'");
-
-    REBSER *temp = Temp_UTF8_At_Managed(src, &index, &len);
-
-    REBSIZ part_size = len;
+    REBSIZ offset;
+    REBSIZ size;
+    REBSER *temp = Temp_UTF8_At_Managed(&offset, &size, src, length_limit);
 
     REBCNT tail = SER_LEN(dst);
-    Expand_Series(dst, tail, part_size); // tail changed too
+    Expand_Series(dst, tail, size); // tail changed too
 
-    memcpy(BIN_AT(dst, tail), BIN_AT(temp, index), part_size);
+    memcpy(BIN_AT(dst, tail), BIN_AT(temp, offset), size);
 }
 
 

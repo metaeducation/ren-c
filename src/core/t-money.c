@@ -73,15 +73,14 @@ void MAKE_Money(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
         Move_Value(out, arg);
         return;
 
-    case REB_STRING:
-    {
+    case REB_STRING: {
+        REBYTE *bp = Analyze_String_For_Scan(NULL, arg, MAX_SCAN_MONEY);
+
         const REBYTE *end;
-        REBYTE *str = Temp_Byte_Chars_May_Fail(arg, MAX_SCAN_MONEY, 0, FALSE);
-        Init_Money(out, string_to_deci(str, &end));
-        if (end == str || *end != 0)
+        Init_Money(out, string_to_deci(bp, &end));
+        if (end == bp || *end != '\0')
             goto bad_make;
-        break;
-    }
+        break; }
 
 //      case REB_ISSUE:
     case REB_BINARY:

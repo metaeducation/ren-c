@@ -186,16 +186,19 @@ void TO_Array(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg) {
         // characters, it may have to be converted to UTF8 before being
         // used with the scanner.
         //
-        REBCNT index;
-        REBSER *utf8 = Temp_UTF8_At_Managed(arg, &index, NULL);
-        PUSH_GUARD_SERIES(utf8);
+        REBSIZ offset;
+        REBSIZ size;
+        REBSER *temp = Temp_UTF8_At_Managed(
+            &offset, &size, arg, VAL_LEN_AT(arg)
+        );
+        PUSH_GUARD_SERIES(temp);
         REBSTR * const filename = Canon(SYM___ANONYMOUS__);
         Init_Any_Array(
             out,
             kind,
-            Scan_UTF8_Managed(filename, BIN_HEAD(utf8), BIN_LEN(utf8))
+            Scan_UTF8_Managed(filename, BIN_AT(temp, offset), size)
         );
-        DROP_GUARD_SERIES(utf8);
+        DROP_GUARD_SERIES(temp);
     }
     else if (IS_BINARY(arg)) {
         //

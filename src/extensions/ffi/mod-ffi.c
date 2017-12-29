@@ -140,21 +140,19 @@ REBNATIVE(make_routine)
     if (lib == NULL)
         fail (ARG(lib));
 
-    // Try to find the C function pointer in the DLL, if it's there.
-    // OS_FIND_FUNCTION takes a char* on both Windows and Posix.  The
-    // string that gets here could be REBUNI wide or BYTE_SIZE(), so
-    // make sure it's turned into a char* before passing.
+    // OS_FIND_FUNCTION takes a char* on both Windows and Posix.
     //
-    // !!! Should it error if any bytes need to be UTF8 encoded?
+    // !!! Should it error if any bytes aren't ASCII?
     //
-    REBVAL *name = ARG(name);
-    REBCNT b_index = VAL_INDEX(name);
-    REBCNT b_len = VAL_LEN_AT(name);
-    REBSER *byte_sized = Temp_UTF8_At_Managed(name, &b_index, &b_len);
+    REBSIZ offset;
+    REBSIZ size;
+    REBSER *temp = Temp_UTF8_At_Managed(
+        &offset, &size, ARG(name), VAL_LEN_AT(ARG(name))
+    );
 
     CFUNC *cfunc = OS_FIND_FUNCTION(
         LIB_FD(lib),
-        SER_AT(char, byte_sized, b_index) // name may not be at head index
+        SER_AT(char, temp, offset) // name may not be at head index
     );
     if (cfunc == NULL)
         fail ("FFI: Couldn't find function in library");

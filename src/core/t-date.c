@@ -438,9 +438,9 @@ void MAKE_Date(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg) {
     }
 
     if (IS_STRING(arg)) {
-        REBCNT len;
-        REBYTE *bp = Temp_Byte_Chars_May_Fail(arg, MAX_SCAN_DATE, &len, FALSE);
-        if (NULL == Scan_Date(out, bp, len))
+        REBSIZ size;
+        REBYTE *bp = Analyze_String_For_Scan(&size, arg, MAX_SCAN_DATE);
+        if (NULL == Scan_Date(out, bp, size))
             goto bad_make;
         return;
     }

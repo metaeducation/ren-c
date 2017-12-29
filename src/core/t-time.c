@@ -235,10 +235,10 @@ void MAKE_Time(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
         return;
 
     case REB_STRING: { // scan using same decoding as LOAD would
-        REBCNT len;
-        REBYTE *bp = Temp_Byte_Chars_May_Fail(arg, MAX_SCAN_TIME, &len, FALSE);
+        REBSIZ size;
+        REBYTE *bp = Analyze_String_For_Scan(&size, arg, MAX_SCAN_TIME);
 
-        if (Scan_Time(out, bp, len) == NULL)
+        if (Scan_Time(out, bp, size) == NULL)
             goto no_time;
 
         return; }

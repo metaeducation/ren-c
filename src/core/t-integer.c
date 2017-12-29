@@ -281,17 +281,16 @@ void Value_To_Int64(REBVAL *out, const REBVAL *value, REBOOL no_sign)
         return;
     }
     else if (ANY_STRING(value)) {
-        REBCNT len;
-        REBYTE *bp = Temp_Byte_Chars_May_Fail(
-            value, VAL_LEN_AT(value), &len, FALSE
-        );
+        REBSIZ size;
+        const REBCNT max_len = VAL_LEN_AT(value); // e.g. "no maximum"
+        REBYTE *bp = Analyze_String_For_Scan(&size, value, max_len);
         if (
-            memchr(bp, '.', len)
-            || memchr(bp, 'e', len)
-            || memchr(bp, 'E', len)
-        ) {
+            memchr(bp, '.', size)
+            || memchr(bp, 'e', size)
+            || memchr(bp, 'E', size)
+        ){
             DECLARE_LOCAL (d);
-            if (Scan_Decimal(d, bp, len, TRUE)) {
+            if (Scan_Decimal(d, bp, size, TRUE)) {
                 if (VAL_DECIMAL(d) < MAX_I64 && VAL_DECIMAL(d) >= MIN_I64) {
                     Init_Integer(out, cast(REBI64, VAL_DECIMAL(d)));
                     goto check_sign;
@@ -300,7 +299,7 @@ void Value_To_Int64(REBVAL *out, const REBVAL *value, REBOOL no_sign)
                 fail (Error_Overflow_Raw());
             }
         }
-        if (Scan_Integer(out, bp, len))
+        if (Scan_Integer(out, bp, size))
             goto check_sign;
 
         fail (Error_Bad_Make(REB_INTEGER, value));

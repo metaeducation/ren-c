@@ -102,12 +102,14 @@ static REB_R DNS_Actor(REBFRM *frame_, REBCTX *port, REBSYM action)
             memcpy(&(DEVREQ_NET(sock)->remote_ip), VAL_TUPLE(arg), 4);
         }
         else if (IS_STRING(arg)) {
-            REBCNT index = VAL_INDEX(arg);
-            REBCNT string_len = VAL_LEN_AT(arg);
-            REBSER *utf8 = Temp_UTF8_At_Managed(arg, &index, &string_len);
+            REBSIZ offset;
+            REBSIZ size;
+            REBSER *temp = Temp_UTF8_At_Managed(
+                &offset, &size, arg, VAL_LEN_AT(arg)
+            );
 
             DECLARE_LOCAL (tmp);
-            if (Scan_Tuple(tmp, BIN_AT(utf8, index), string_len) != NULL) {
+            if (Scan_Tuple(tmp, BIN_AT(temp, offset), size) != NULL) {
                 sock->modes |= RST_REVERSE;
                 memcpy(&(DEVREQ_NET(sock)->remote_ip), VAL_TUPLE(tmp), 4);
             }

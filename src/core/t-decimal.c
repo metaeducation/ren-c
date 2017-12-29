@@ -170,19 +170,15 @@ void MAKE_Decimal(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg) {
         d = VAL_NANO(arg) * NANO;
         break;
 
-    case REB_STRING:
-        {
-        REBCNT len;
-        REBYTE *bp = Temp_Byte_Chars_May_Fail(
-            arg, MAX_SCAN_DECIMAL, &len, FALSE
-        );
+    case REB_STRING: {
+        REBSIZ size;
+        REBYTE *bp = Analyze_String_For_Scan(&size, arg, MAX_SCAN_DECIMAL);
 
-        if (NULL == Scan_Decimal(out, bp, len, LOGICAL(kind != REB_PERCENT)))
+        if (NULL == Scan_Decimal(out, bp, size, LOGICAL(kind != REB_PERCENT)))
             goto bad_make;
 
         d = VAL_DECIMAL(out); // may need to divide if percent, fall through
-        break;
-        }
+        break; }
 
     case REB_BINARY:
         if (VAL_LEN_AT(arg) < 8)

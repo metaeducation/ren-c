@@ -84,23 +84,15 @@ void MAKE_Word(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
     }
 
     if (IS_STRING(arg)) {
-        REBCNT len;
-        const REBOOL allow_utf8 = TRUE;
-
-        // Set name. Rest is set below.  If characters in the source
-        // string are > 0x80 they will be encoded to UTF8 to be stored
-        // in the symbol.
-        //
-        REBYTE *bp = Temp_Byte_Chars_May_Fail(
-            arg, MAX_SCAN_WORD, &len, allow_utf8
-        );
+        REBSIZ size;
+        REBYTE *bp = Analyze_String_For_Scan(&size, arg, MAX_SCAN_WORD);
 
         if (kind == REB_ISSUE) {
-            if (NULL == Scan_Issue(out, bp, len))
+            if (NULL == Scan_Issue(out, bp, size))
                 fail (Error_Bad_Char_Raw(arg));
         }
         else {
-            if (NULL == Scan_Any_Word(out, kind, bp, len))
+            if (NULL == Scan_Any_Word(out, kind, bp, size))
                 fail (Error_Bad_Char_Raw(arg));
             }
     }

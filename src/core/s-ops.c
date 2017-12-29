@@ -47,86 +47,86 @@ REBOOL All_Bytes_ASCII(REBYTE *bp, REBCNT len)
 
 
 //
-//  Temp_Byte_Chars_May_Fail: C
+//  Analyze_String_For_Scan: C
 //
-// NOTE: This function returns a temporary result, and uses an internal
-// buffer.  Do not use it recursively.  Also, it will Trap on errors.
+// Locate beginning byte pointer and number of bytes to prepare a string
+// into a form that can be used with a Scan_XXX routine.  Used for instance
+// to MAKE DATE! from a STRING!.  Rules are:
 //
-// Prequalifies a string before using it with a function that
-// expects it to be 8-bits.  It would be used for instance to convert
-// a string that is potentially REBUNI-wide into a form that can be used
-// with a Scan_XXX routine, that is expecting ASCII or UTF-8 source.
-// (Many TO-XXX conversions from STRING re-use that scanner logic.)
+//     1. it's actual content (less space, newlines) <= max len
+//     2. it does not contain other values ("123 456")
+//     3. it's not empty or only whitespace
 //
-// Returns a temporary string and sets the length field.
+// !!! Strings are in transition to becoming "UTF-8 Everywhere" but are not
+// there yet.  So this routine can't actually give back a pointer compatible
+// with the scan.  Leverages Temp_UTF8_At_Managed, so the pointer that is
+// returned could be GC'd if it's not guarded and evaluator logic runs.
 //
-// If `allow_utf8`, the constructed result is converted to UTF8.
-//
-// Checks or converts it:
-//
-//     1. it is byte string (not unicode)
-//     2. if unicode, copy and return as temp byte string
-//     3. it's actual content (less space, newlines) <= max len
-//     4. it does not contain other values ("123 456")
-//     5. it's not empty or only whitespace
-//
-REBYTE *Temp_Byte_Chars_May_Fail(
-    const REBVAL *val,
-    REBINT max_len,
-    REBCNT *length,
-    REBOOL allow_utf8
-) {
-    REBCNT tail = VAL_LEN_HEAD(val);
-    REBCNT index = VAL_INDEX(val);
-    REBCNT len;
+REBYTE *Analyze_String_For_Scan(
+    REBSIZ *opt_size_out,
+    const REBVAL *any_string,
+    REBCNT max_len // maximum length in *codepoints*
+){
+    REBCHR(const *) up = VAL_UNI_AT(any_string);
+    REBCNT index = VAL_INDEX(any_string);
+    REBCNT len = VAL_LEN_AT(any_string);
+    if (len == 0)
+        fail (Error_Past_End_Raw());
+
     REBUNI c;
-    REBYTE *bp;
-    REBSER *src = VAL_SERIES(val);
 
-    if (index > tail) fail (Error_Past_End_Raw());
-
-    Resize_Series(BYTE_BUF, max_len+1);
-    bp = BIN_HEAD(BYTE_BUF);
-
-    // Skip leading whitespace:
-    for (; index < tail; index++) {
-        c = GET_ANY_CHAR(src, index);
-        if (!IS_SPACE(c)) break;
+    // Skip leading whitespace
+    //
+    for (; index < len; ++index, --len) {
+        up = NEXT_CHR(&c, up);
+        if (NOT(IS_SPACE(c)))
+            break;
     }
 
-    // Copy chars that are valid:
-    for (; index < tail; index++) {
-        c = GET_ANY_CHAR(src, index);
-        if (c >= 0x80) {
-            if (!allow_utf8) fail (Error_Invalid_Chars_Raw());
+    // Skip up to max_len non-space characters.
+    //
+    REBCNT num_chars = 0;
+    for (; len > 0;) {
+        ++num_chars;
+        --len;
 
-            len = Encode_UTF8_Char(bp, c);
-            max_len -= len;
-            bp += len;
-        }
-        else if (!IS_SPACE(c)) {
-            *bp++ = (REBYTE)c;
-            max_len--;
-        }
-        else break;
-        if (max_len < 0)
+        // The R3-Alpha code would fail with Error_Invalid_Chars_Raw() if
+        // there were UTF-8 characters in most calls.  Only ANY-WORD! from
+        // ANY-STRING! allowed it.  Though it's not clear why it wouldn't be
+        // better to delegate to the scanning routine itself to give a
+        // more pointed error... allow c >= 0x80 for now.
+
+        if (num_chars > max_len)
             fail (Error_Too_Long_Raw());
+
+        up = NEXT_CHR(&c, up);
+        if (IS_SPACE(c)) {
+            --len;
+            break;
+        }
     }
 
-    // Rest better be just spaces:
-    for (; index < tail; index++) {
-        c = GET_ANY_CHAR(src, index);
-        if (!IS_SPACE(c)) fail (Error_Invalid_Chars_Raw());
+    // Rest better be just spaces
+    //
+    for (; len > 0; --len) {
+        up = NEXT_CHR(&c, up);
+        if (!IS_SPACE(c))
+            fail (Error_Invalid_Chars_Raw());
     }
 
-    *bp = '\0';
+    if (num_chars == 0)
+        fail (Error_Past_End_Raw());
 
-    len = bp - BIN_HEAD(BYTE_BUF);
-    if (len == 0) fail (Error_Too_Short_Raw());
+    DECLARE_LOCAL (reindexed);
+    Move_Value(reindexed, any_string);
+    VAL_INDEX(reindexed) = index;
 
-    if (length) *length = len;
+    REBSIZ offset;
+    REBSER *temp = Temp_UTF8_At_Managed(
+        &offset, opt_size_out, reindexed, VAL_LEN_AT(reindexed)
+    );
 
-    return BIN_HEAD(BYTE_BUF);
+    return BIN_AT(temp, offset);
 }
 
 
@@ -149,8 +149,12 @@ REBYTE *Temp_Byte_Chars_May_Fail(
 // is eliminated, use of the original string will mean getting whatever
 // mutability characteristics the original had.
 //
-REBSER *Temp_UTF8_At_Managed(const RELVAL *str, REBCNT *index, REBCNT *length)
-{
+REBSER *Temp_UTF8_At_Managed(
+    REBSIZ *offset_out,
+    REBSIZ *opt_size_out,
+    const RELVAL *str,
+    REBCNT length_limit
+){
 #if !defined(NDEBUG)
     if (NOT(ANY_STRING(str))) {
         printf("Temp_UTF8_At_Managed() called on non-ANY-STRING!");
@@ -158,18 +162,17 @@ REBSER *Temp_UTF8_At_Managed(const RELVAL *str, REBCNT *index, REBCNT *length)
     }
 #endif
 
-    REBCNT len = (length != NULL && *length) ? *length : VAL_LEN_AT(str);
+    assert(length_limit <= VAL_LEN_AT(str));
 
-    REBSER *s = Make_UTF8_From_Any_String(str, len);
+    REBSER *s = Make_UTF8_From_Any_String(str, length_limit);
+    assert(BYTE_SIZE(s));
+
     MANAGE_SERIES(s);
     SET_SER_INFO(s, SERIES_INFO_FROZEN);
 
-    if (index != NULL)
-        *index = 0;
-    if (length != NULL)
-        *length = SER_LEN(s);
-
-    assert(BYTE_SIZE(s));
+    *offset_out = 0;
+    if (opt_size_out != NULL)
+        *opt_size_out = SER_LEN(s);
     return s;
 }
 

@@ -63,11 +63,10 @@ void MAKE_Pair(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
         //
         // -1234567890x-1234567890
         //
-        REBCNT len;
-        REBYTE *bp
-            = Temp_Byte_Chars_May_Fail(arg, VAL_LEN_AT(arg), &len, FALSE);
+        REBCNT size;
+        REBYTE *bp = Analyze_String_For_Scan(&size, arg, VAL_LEN_AT(arg));
 
-        if (NULL == Scan_Pair(out, bp, len))
+        if (NULL == Scan_Pair(out, bp, size))
             goto bad_make;
 
         return;

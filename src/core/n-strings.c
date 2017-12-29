@@ -262,21 +262,21 @@ REBNATIVE(checksum)
 
                 REBYTE tmpdigest[20]; // size must be max of all digest[].len
 
-                REBSER *temp;
                 REBYTE *keycp;
-                REBCNT keylen;
+                REBSIZ keylen;
                 if (IS_BINARY(key)) {
-                    temp = NULL;
                     keycp = VAL_BIN_AT(key);
                     keylen = VAL_LEN_AT(key);
                 }
                 else {
                     assert(IS_STRING(key));
 
-                    REBCNT index = VAL_INDEX(key);
-                    temp = Temp_UTF8_At_Managed(key, &index, &keylen);
+                    REBSIZ offset;
+                    REBSER *temp = Temp_UTF8_At_Managed(
+                        &offset, &keylen, key, VAL_LEN_AT(key)
+                    );
                     PUSH_GUARD_SERIES(temp);
-                    keycp = BIN_AT(temp, index);
+                    keycp = BIN_AT(temp, offset);
                 }
 
                 if (keylen > blocklen) {
@@ -310,9 +310,6 @@ REBNATIVE(checksum)
                 digests[i].final(BIN_HEAD(digest),ctx);
 
                 FREE_N(char, digests[i].ctxsize(), ctx);
-
-                if (temp != NULL)
-                    DROP_GUARD_SERIES(temp);
             }
 
             TERM_BIN_LEN(digest, digests[i].len);
@@ -371,25 +368,29 @@ REBNATIVE(compress)
     UNUSED(PAR(part)); // checked by if limit is void
     Partial1(data, ARG(limit), &len);
 
-    REBCNT index;
-    REBSER *ser;
+    REBSIZ size;
+    REBYTE *bp;
     if (IS_BINARY(data)) {
-        ser = VAL_SERIES(data);
-        index = VAL_INDEX(data);
+        bp = VAL_BIN_AT(data);
+        size = len; // width = sizeof(REBYTE), so limit = len
     }
-    else
-        ser = Temp_UTF8_At_Managed(data, &index, &len);
+    else {
+        REBSIZ offset;
+        REBSER *temp = Temp_UTF8_At_Managed(&offset, &size, data, len);
+        bp = BIN_AT(temp, offset);
+    }
 
     const REBOOL raw = REF(only); // use /ONLY to signal raw too?
-    REBSER *compressed = Deflate_To_Series(
-        BIN_AT(ser, index),
-        len,
-        REF(gzip),
-        raw,
-        REF(only)
+    Init_Binary(
+        D_OUT,
+        Deflate_To_Series(
+            bp,
+            size,
+            REF(gzip),
+            raw,
+            REF(only)
+        )
     );
-    Init_Binary(D_OUT, compressed);
-
     return R_OUT;
 }
 
@@ -473,9 +474,11 @@ REBNATIVE(debase)
 {
     INCLUDE_PARAMS_OF_DEBASE;
 
-    REBCNT index;
-    REBCNT len = 0;
-    REBSER *ser = Temp_UTF8_At_Managed(ARG(value), &index, &len);
+    REBSIZ offset;
+    REBSIZ size;
+    REBSER *temp = Temp_UTF8_At_Managed(
+        &offset, &size, ARG(value), VAL_LEN_AT(ARG(value))
+    );
 
     REBINT base = 64;
     if (REF(base))
@@ -483,7 +486,7 @@ REBNATIVE(debase)
     else
         base = 64;
 
-    if (!Decode_Binary(D_OUT, BIN_AT(ser, index), len, base, 0))
+    if (!Decode_Binary(D_OUT, BIN_AT(temp, offset), size, base, 0))
         fail (Error_Invalid_Data_Raw(ARG(value)));
 
     return R_OUT;
@@ -516,33 +519,32 @@ REBNATIVE(enbase)
 
     REBVAL *v = ARG(value);
 
-    REBCNT index;
-    REBCNT len;
-    REBSER *bin;
+    REBSIZ size;
+    REBYTE *bp;
     if (IS_BINARY(v)) {
-        bin = VAL_SERIES(v);
-        index = VAL_INDEX(v);
-        len = VAL_LEN_AT(v);
+        bp = VAL_BIN_AT(v);
+        size = VAL_LEN_AT(v);
     }
     else { // Convert the string to UTF-8
         assert(ANY_STRING(v));
-        len = VAL_LEN_AT(v);
-        bin = Temp_UTF8_At_Managed(v, &index, &len);
+        REBSIZ offset;
+        REBSER *temp = Temp_UTF8_At_Managed(&offset, &size, v, VAL_LEN_AT(v));
+        bp = BIN_AT(temp, offset);
     }
 
     REBSER *enbased;
     const REBOOL brk = FALSE;
     switch (base) {
     case 64:
-        enbased = Encode_Base64(BIN_AT(bin, index), len, brk);
+        enbased = Encode_Base64(bp, size, brk);
         break;
 
     case 16:
-        enbased = Encode_Base16(BIN_AT(bin, index), len, brk);
+        enbased = Encode_Base16(bp, size, brk);
         break;
 
     case 2:
-        enbased = Encode_Base2(BIN_AT(bin, index), len, brk);
+        enbased = Encode_Base2(bp, size, brk);
         break;
 
     default:

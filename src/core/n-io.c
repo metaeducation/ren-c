@@ -143,9 +143,9 @@ REBNATIVE(write_stdout)
         //
         assert(IS_STRING(v));
 
-        REBCNT offset = VAL_INDEX(v); // transformed to offset
-        REBCNT size = VAL_LEN_AT(v); // transformed to size
-        REBSER *temp = Temp_UTF8_At_Managed(v, &offset, &size);
+        REBSIZ offset;
+        REBSIZ size;
+        REBSER *temp = Temp_UTF8_At_Managed(&offset, &size, v, VAL_LEN_AT(v));
 
         Prin_OS_String(BIN_AT(temp, offset), size, OPT_ENC_0);
 

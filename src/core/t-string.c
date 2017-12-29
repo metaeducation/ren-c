@@ -1054,10 +1054,10 @@ static void Mold_Tag(REB_MOLD *mo, const RELVAL *v)
 {
     Append_Utf8_Codepoint(mo->series, '<');
 
-    REBCNT index = VAL_INDEX(v);
-    REBCNT len = VAL_LEN_AT(v);
-    REBSER *temp = Temp_UTF8_At_Managed(v, &index, &len);
-    Append_Utf8_Utf8(mo->series, cs_cast(BIN_AT(temp, index)), len);
+    REBSIZ offset;
+    REBSIZ size;
+    REBSER *temp = Temp_UTF8_At_Managed(&offset, &size, v, VAL_LEN_AT(v));
+    Append_Utf8_Utf8(mo->series, cs_cast(BIN_AT(temp, offset)), size);
 
     Append_Utf8_Codepoint(mo->series, '>');
 }
@@ -1136,11 +1136,11 @@ void MF_String(REB_MOLD *mo, const RELVAL *v, REBOOL form)
     // would form with no delimiters, e.g. `form #foo` is just foo
     //
     if (form && NOT(IS_TAG(v))) {
-        REBCNT index = VAL_INDEX(v);
-        REBCNT len = VAL_LEN_AT(v);
-        REBSER *temp = Temp_UTF8_At_Managed(v, &index, &len);
+        REBSIZ offset;
+        REBSIZ size;
+        REBSER *temp = Temp_UTF8_At_Managed(&offset, &size, v, VAL_LEN_AT(v));
 
-        Append_Utf8_Utf8(mo->series, cs_cast(BIN_AT(temp, index)), len);
+        Append_Utf8_Utf8(mo->series, cs_cast(BIN_AT(temp, offset)), size);
         return;
     }
 

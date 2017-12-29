@@ -242,13 +242,12 @@ inline static REBSTR* STR(const void *p)
         // You would not want the change of `file` to affect the filename
         // references in x's loaded source.  So the series shouldn't be used
         // directly, and as long as another reference is needed, use an
-        // interned one (the same mechanic words use).  Since the source
-        // filename may be a wide string it is converted to UTF-8 first.
+        // interned one (the same mechanic words use).
         //
-        REBCNT index = VAL_INDEX(v);
-        REBCNT len = VAL_LEN_AT(v);
-        REBSER *temp = Temp_UTF8_At_Managed(v, &index, &len);
-        return Intern_UTF8_Managed(BIN_AT(temp, index), len); }
+        REBSIZ offset;
+        REBSIZ size;
+        REBSER *temp = Temp_UTF8_At_Managed(&offset, &size, v, VAL_LEN_AT(v));
+        return Intern_UTF8_Managed(BIN_AT(temp, offset), size); }
 
     default:
         panic ("Bad pointer type passed to STR()");

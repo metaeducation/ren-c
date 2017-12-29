@@ -250,10 +250,13 @@ REBNATIVE(panic)
     // string cell...but panic() on UTF-8 character data assumes you mean to
     // report the contained message.  Use PANIC* if the latter is the intent.
     //
-    REBCNT len = VAL_LEN_AT(ARG(value));
-    REBCNT index = VAL_INDEX(ARG(value));
-    REBSER *temp = Temp_UTF8_At_Managed(ARG(value), &index, &len);
-    REBYTE *utf8 = BIN_HEAD(temp);
+    REBSIZ offset;
+    REBSIZ size;
+    REBSER *temp = Temp_UTF8_At_Managed(
+        &offset, &size, ARG(value), VAL_LEN_AT(ARG(value))
+    );
+
+    REBYTE *utf8 = BIN_AT(temp, offset);
 
     // Note that by using the frame's tick instead of TG_Tick, we don't count
     // the evaluation of the value argument.  Hence the tick count shown in
