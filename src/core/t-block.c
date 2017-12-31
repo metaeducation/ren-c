@@ -519,11 +519,17 @@ void Shuffle_Block(REBVAL *value, REBOOL secure)
     for (n = VAL_LEN_AT(value); n > 1;) {
         k = idx + (REBCNT)Random_Int(secure) % n;
         n--;
-        swap.header = data[k].header;
-        swap.payload = data[k].payload;
-        swap.extra = data[k].extra;
-        Blit_Cell(&data[k], &data[n + idx]);
-        Blit_Cell(&data[n + idx], &swap);
+
+        // Only do the following block when an actual swap occurs.
+        // Otherwise an assertion will fail when trying to Blit_Cell() a
+	// value to itself.
+        if (k != (n + idx)) {
+            swap.header = data[k].header;
+            swap.payload = data[k].payload;
+            swap.extra = data[k].extra;
+            Blit_Cell(&data[k], &data[n + idx]);
+            Blit_Cell(&data[n + idx], &swap);
+	}
     }
 }
 
