@@ -111,7 +111,7 @@ enum parse_flags {
     PF_NOT = 1 << 2,
     PF_NOT2 = 1 << 3,
     PF_THEN = 1 << 4,
-    PF_AND = 1 << 5,
+    PF_AHEAD = 1 << 5,
     PF_REMOVE = 1 << 6,
     PF_INSERT = 1 << 7,
     PF_CHANGE = 1 << 8,
@@ -156,11 +156,7 @@ static REBOOL Subparse_Throws(
     const RELVAL *rules,
     REBSPC *rules_specifier,
     REBCNT find_flags
-) {
-    DECLARE_FRAME (f);
-
-    SET_END(out);
-
+){
     assert(ANY_ARRAY(rules));
     assert(ANY_SERIES(input));
 
@@ -180,10 +176,13 @@ static REBOOL Subparse_Throws(
         return FALSE;
     }
 
+    DECLARE_FRAME (f);
+
+    SET_END(out);
     f->out = out;
 
     f->gotten = END;
-    SET_FRAME_VALUE(f, VAL_ARRAY_AT(rules)); // not an END due to test
+    SET_FRAME_VALUE(f, VAL_ARRAY_AT(rules)); // not an END due to test above
     f->specifier = Derive_Specifier(rules_specifier, rules);
 
     f->source.vaptr = NULL;
@@ -207,9 +206,9 @@ static REBOOL Subparse_Throws(
     f->special = NULL;
 
 #if defined(NDEBUG)
-    assert(FUNC_NUM_PARAMS(NAT_FUNC(subparse)) == 2);
+    assert(FUNC_NUM_PARAMS(NAT_FUNC(subparse)) == 2); // elides RETURN:
 #else
-    assert(FUNC_NUM_PARAMS(NAT_FUNC(subparse)) == 3);
+    assert(FUNC_NUM_PARAMS(NAT_FUNC(subparse)) == 3); // checks RETURN:
     Prep_Stack_Cell(&f->args_head[2]);
     Init_Void(&f->args_head[2]);
 #endif
@@ -225,12 +224,11 @@ static REBOOL Subparse_Throws(
 
     f->varlist = NULL;
 
-    SET_END(&f->cell); // GC requires some initialization of cell
-
-    SET_END(f->out);
-
+    // !!! By calling the subparse native here directly from its C function
+    // vs. going through the evaluator, we don't get the opportunity to do
+    // things like HIJACK it.  Consider code in Apply_Def_Or_Exemplar().
+    //
     REB_R r = N_subparse(f);
-
     assert(NOT_END(out));
 
     // Can't just drop f->data.stackvars because the debugger may have
@@ -1483,7 +1481,8 @@ REBNATIVE(subparse)
                         continue;
 
                     case SYM_AND:
-                        flags |= PF_AND;
+                    case SYM_AHEAD:
+                        flags |= PF_AHEAD;
                         FETCH_NEXT_RULE_MAYBE_END(f);
                         continue;
 
@@ -1886,6 +1885,12 @@ REBNATIVE(subparse)
                     if (!IS_BLOCK(subrule))
                         fail (Error_Parse_Rule());
 
+                    // parse ["aa"] [into ["a" "a"]] ; is legal
+                    // parse "aa" [into ["a" "a"]] ; is not...already "into"
+                    //
+                    if (NOT_SER_FLAG(P_INPUT, SERIES_FLAG_ARRAY))
+                        fail (Error_Parse_Rule());
+
                     RELVAL *into = ARR_AT(ARR(P_INPUT), P_POS);
 
                     if (
@@ -2233,7 +2238,8 @@ REBNATIVE(subparse)
                     }
                 }
 
-                if (flags & PF_AND) P_POS = begin;
+                if (flags & PF_AHEAD)
+                    P_POS = begin;
             }
 
             flags = 0;

@@ -630,7 +630,7 @@ REBNATIVE(poke)
     if (IS_PORT(location))
         return Do_Port_Action(frame_, VAL_CONTEXT(location), SYM_POKE);
 
-    DECLARE_FRAME(pvs);
+    DECLARE_FRAME (pvs);
 
     Move_Value(D_OUT, location);
     pvs->out = D_OUT;

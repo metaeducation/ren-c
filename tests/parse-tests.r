@@ -155,3 +155,12 @@
 [not parse [1 + 2] [do [quote 100]]]
 [parse [reverse copy [a b c]] [do [into ['c 'b 'a]]]]
 [not parse [reverse copy [a b c]] [do [into ['a 'b 'c]]]]
+
+; AHEAD and AND are synonyms
+;
+[parse ["aa"] [ahead string! into ["a" "a"]]]
+[parse ["aa"] [and string! into ["a" "a"]]]
+
+; INTO is not legal if a string parse is already running
+;
+[error? trap [parse "aa" [into ["a" "a"]]]]
