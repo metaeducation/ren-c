@@ -132,7 +132,7 @@ assert-debug: function [
             ]
 
             result: do/next conditions quote pos:
-            if active and any [not set? 'result | not :result] [
+            if active and (any [not set? 'result | not :result]) [
                 failure-helper (copy/part conditions pos) :result
             ]
 

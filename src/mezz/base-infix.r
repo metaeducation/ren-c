@@ -218,18 +218,19 @@ also-do: enfix :after ;-- temporarily %mezz-legacy.r defines ALSO as error
 
 ; SHORT-CIRCUIT BOOLEAN OPERATORS
 ;
-; Traditionally Rebol didn't have the ability to "short circuit" expressions,
-; because you could never find the end of an expression without running it.
-; By means of the DON'T operation, Ren-C can (sometimes) find the end of an
-; expression while disabling side-effects from it.  This is used to implement
-; boolean short-circuit ops, as an alternative to ALL [...], ANY [...], etc.
+; Traditionally Rebol's AND/OR/XOR infix operations were bitwise operations,
+; not logical ones.  Because bitwise math is relatively uncommon, and most
+; languages would use the words to mean "conditional" operations, it was a
+; rather popular proposal to change the behavior:
 ;
-; The way they work is that they are enfixed functions with one left argument,
-; and a variadic right hand argument.  So they only have access to their
-; left argument at first.  They examine that left argument and if there's no
-; chance for the right hand side to change their answer, they DON'T it.
-; Otherwise, they DO the right hand argument and examine it to get the final
-; answer.
+; https://github.com/rebol/rebol-issues/issues/1879
+;
+; However, many languages have "short-circuit" behavior, e.g. the right hand
+; side of an AND will not be evaluated if the left hand side is false.  In
+; Rebol this can't be done without using a BLOCK! or a quoted group.  For the
+; moment, Ren-C experiments with requiring the right hand side of a short
+; circuit operation to be a GROUP! so that it may be quoted and then either
+; executed or not.
 
 and: enfix func [
     {Short-circuit boolean AND}
@@ -237,18 +238,10 @@ and: enfix func [
     return: [logic!]
     left [any-value!]
         {Expression which will always be evaluated}
-    right [any-value! <...>]
-        {Expression will be evaluated if LEFT is TRUTHY?, skipped if FALSEY?}
+    :right [group!]
+        {Quoted expression, that will be evaluated only if LEFT is TRUTHY?}
 ][
-    case [
-        left [to-logic do/next right blank]
-        don't/next right blank [false]
-    ] else [
-        fail [
-            "Right hand of short-circuit AND must not be variadic."
-            "Use ALL [...] instead, or put right-hand side in a GROUP! ()"
-        ]
-    ]
+    either left [to-logic do right] [false]
 ]
 
 or: enfix func [
@@ -257,18 +250,10 @@ or: enfix func [
     return: [logic!]
     left [any-value!]
         {Expression which will always be evaluated}
-    right [any-value! <...>]
-        {Expression will be evaluated if LEFT is FALSEY?, skipped if TRUTHY?}
+    :right [group!]
+        {Quoted expression, that will be evaluated only if LEFT is FALSEY?}
 ][
-    case [
-        not left [to-logic do/next right blank]
-        don't/next right blank [true]
-    ] else [
-        fail [
-            "Right hand of short-circuit OR must not be variadic."
-            "Use ANY [...] instead, or put right-hand side in a GROUP! ()"
-        ]
-    ]
+    either left [true] [to-logic do right]
 ]
 
 nor: enfix func [
@@ -277,18 +262,10 @@ nor: enfix func [
     return: [logic!]
     left [any-value!]
         {Expression which will always be evaluated}
-    right [any-value! <...>]
-        {Expression will be evaluated if LEFT is FALSEY?, skipped if TRUTHY?}
+    :right [group!]
+        {Quoted expression, that will be evaluated only if LEFT is FALSEY?}
 ][
-    case [
-        not left [not do/next right blank]
-        don't/next right blank [false]
-    ] else [
-        fail [
-            "Right hand of short-circuit NOR must not be variadic."
-            "Use NONE [...] instead, or put right-hand side in a GROUP! ()"
-        ]
-    ]
+    either left [false] [not do right]
 ]
 
 nand: enfix func [
@@ -297,20 +274,10 @@ nand: enfix func [
     return: [logic!]
     left [any-value!]
         {Expression which will always be evaluated}
-    right [any-value! <...>]
-        {Expression will be evaluated if LEFT is FALSEY?, skipped if TRUTHY?}
+    :right [group!]
+        {Quoted expression, that will be evaluated only if LEFT is FALSEY?}
 ][
-    case [
-        left [not do/next right blank]
-        don't/next right blank [false]
-    ] else [
-        fail [
-            "Right hand of short-circuit NAND must not be variadic."
-            "Put right-hand side in a GROUP! ()"
-
-            ;-- is there a good ANY/ALL/NONE-like parallel for NAND?
-        ]
-    ]
+    either left [not do right] [true]
 ]
 
 
