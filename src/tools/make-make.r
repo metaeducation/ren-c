@@ -1,39 +1,118 @@
 REBOL []
+
+;;;; DO & IMPORT ;;;;
 do %r2r3-future.r
 do %common.r
 do %systems.r
 file-base: make object! load %file-base.r
 
-; !!! Since %rebmake.r is a module, it presents a challenge for the "shim"
-; code when it depends on a change.  This needs to be addressed in a generic
-; way, but that requires foundational work on modules.
-;
+; !!! Since %rebmake.r is a module,
+    ; it presents a challenge for the "shim" code
+    ; when it depends on a change.
+    ; This needs to be addressed in a generic way,
+    ; but that requires foundational work on modules.
+
 append lib compose [
     file-to-local-hack: (:file-to-local)
     local-to-file-hack: (:local-to-file)
 ]
 rebmake: import %rebmake.r
 
+;;;; GLOBALS 
 config-dir: %../../make
 base-dir: pwd
 user-config: make object! load config-dir/default-config.r
 
-; Load user defined config.r
-args: parse-args/all system/options/args
-if targets: find args '| [
-    args: copy/part args targets
-    targets: next targets
+;;;; TARGETS
+; I need targets here, for gathering names
+; and use they with --help targets ...
+targets: [
+    clean [
+        change-dir %../../make
+        rebmake/execution/run make rebmake/solution-class [
+            depends: reduce [
+                clean
+            ]
+        ]
+        change-dir base-dir
+    ]
+    prep [
+        change-dir %../../make
+        rebmake/execution/run make rebmake/solution-class [
+            depends: flatten reduce [
+                vars
+                prep
+                t-folders
+                dynamic-libs
+            ]
+        ]
+        change-dir base-dir
+    ]
+    r3
+    execution [
+        change-dir %../../make
+        rebmake/execution/run make rebmake/solution-class [
+            depends: flatten reduce [
+                vars
+                prep
+                t-folders
+                app
+                dynamic-libs
+            ]
+        ]
+        change-dir base-dir
+    ]
+    makefile [
+        rebmake/makefile/generate %../../make/makefile solution
+    ]
+    nmake [
+        rebmake/nmake/generate %../../make/makefile solution
+    ]
+    vs2017
+    visual-studio [
+        rebmake/visual-studio/generate/(all [system-config/os-name = 'Windows-x86 'x86]) %../../make solution
+    ]
+    vs2015 [
+        rebmake/vs2015/generate/(all [system-config/os-name = 'Windows-x86 'x86]) %../../make solution
+    ]
 ]
-while [a: find args 'CONFIG] [
-    args: next a
-    user-config: make user-config load config-dir/(args/1)
+target-names: make block! 16
+for-each x targets [
+    either word? x [
+        append target-names x
+        append target-names '|
+    ][
+        take/last target-names
+        append target-names
+        newline
+    ]
 ]
-args: head args
 
-; Allow any of the settings in user-config to be overwritten by command line
-; options
-for-each [name value] args [
-    if name = '| [break] ; begin of standalone args
+;;;; PROCESS ARGS
+; args are:
+; [CONFIG | OPTION | COMMAND] ...
+; COMMAND = WORD
+; OPTION = 'NAME=VALUE' | 'NAME: VALUE'
+; CONFIG = 'config=CONFIG-FILE'
+args: parse-args/all system/options/args
+; now args are ordered and separated by bar:
+; [NAME VALUE ... '| COMMAND ...]
+either commands: find args '| [
+    options: copy/part args commands
+    commands: next commands
+] [options: args]
+; now args are splitted in options and commands
+
+; process configs first
+for-each [name value] options [
+    if name = 'CONFIG [
+        user-config: make user-config load config-dir/:value
+    ]
+]
+
+; Allow any of the settings in user-config
+; to be overwritten by command line options
+for-each [name value] options [
     switch/default name [
         CONFIG [
             ;pass
@@ -69,11 +148,94 @@ for-each [name value] args [
             load value
     ]
 ]
-; process standalone args
-if not empty? targets [user-config/target: load targets]
 
-dump user-config
+;;;; HELP ;;;;
+indent: func [
+    text [string!]
+    /space
+][
+    replace/all text ;\
+        either space [" "] [newline]
+        "^/    "
+]
 
+help-topics: reduce [
+;; !! Only 1 indentation level in help strings !!
+'usage {USAGE:
+    > cd PATH/TO/REN-C/make
+    then:
+    > ./r3-make make.r [TARGET | OPTION | CONFIG ...]
+
+    MORE HELP:
+    > {-h | -help | --help} targets | options | configs | os-id | all
+    }
+'targets unspaced [{TARGETS:
+    }
+    indent form target-names
+    ]
+'configs unspaced [ {CONFIGS:
+    config: CONFIG-FILE
+    
+    Files in config/ subfolder are:
+    
+    }
+    indent/space form map-each x ;\
+        load join-of pwd %../../make/configs/
+        [to-string x]
+    newline ]
+'options unspaced [ {OPTIONS:
+    
+    CURRENT VALUES:
+    }
+    indent mold/only body-of user-config
+    {
+
+    NOTES:
+    - names are case-insensitive
+    - `_` instead of '-' is ok
+    - NAME=VALUE is the same as NAME: VALUE
+    - e.g `OS_ID=0.4.3` === `os-id: 0.4.3`
+    } ]
+'os-id unspaced [ {OS-ID:
+
+    CURRENT OS:
+    }
+    indent mold/only body-of config-system user-config/os-id
+    {
+
+    OS-ID:  OS-NAME:}
+    indent form collect [for-each-system s [
+        keep unspaced [
+            newline format 8 s/id s/os-name
+        ]
+    ]]
+    ]
+]
+
+help: function [topic [string! blank!]] [
+    topic: attempt [to-word topic]
+    print ""
+    case [
+        topic = 'all [forskip help-topics 2 [
+            print help-topics/2
+        ] ]
+        msg: select help-topics topic [
+            print msg
+        ]
+        /else [print help-topics/usage]
+    ]
+]
+
+; process help: {-h | -help | --help} [TOPIC]
+if all [
+    not empty? commands
+    find ["-h" "-help" "--help"] first commands
+] [help second commands quit]
+
+; process other commands as targets
+if not empty? commands [user-config/target: load commands]
+
+;;;;
 app-config: make object! [
     cflags: make block! 8
     ldflags: make block! 8
@@ -1826,59 +1988,14 @@ solution: make rebmake/solution-class [
 
 target: user-config/target
 if not block? target [target: reduce [target]]
-forall target [switch/default target/1 [
-    clean [
-        change-dir %../../make
-        rebmake/execution/run make rebmake/solution-class [
-            depends: reduce [
-                clean
-            ]
-        ]
-        change-dir base-dir
-    ]
-    prep [
-        change-dir %../../make
-        rebmake/execution/run make rebmake/solution-class [
-            depends: flatten reduce [
-                vars
-                prep
-                t-folders
-                dynamic-libs
-            ]
-        ]
-        change-dir base-dir
-    ]
-    r3
-    execution [
-        change-dir %../../make
-        rebmake/execution/run make rebmake/solution-class [
-            depends: flatten reduce [
-                vars
-                prep
-                t-folders
-                app
-                dynamic-libs
-            ]
-        ]
-        change-dir base-dir
-    ]
-    makefile [
-        rebmake/makefile/generate %../../make/makefile solution
-    ]
-    nmake [
-        rebmake/nmake/generate %../../make/makefile solution
-    ]
-    vs2017
-    visual-studio [
-        rebmake/visual-studio/generate/(all [system-config/os-name = 'Windows-x86 'x86]) %../../make solution
-    ]
-    vs2015 [
-        rebmake/vs2015/generate/(all [system-config/os-name = 'Windows-x86 'x86]) %../../make solution
-    ]
-][
-    fail [
-        "Unsupported target"
+forall target [
+    switch/default target/1 targets [fail [
+        newline
+        newline
+        "UNSUPPORTED TARGET"
         user-config/target
-        "^/Choose between: clean prep r3 execution makefile nmake vs2017 visual-studio vs2015"
-    ]
-]]
+        newline
+        "TRY --HELP TARGETS"
+        newline
+    ] ]
+]
