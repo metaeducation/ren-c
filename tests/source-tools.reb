@@ -8,7 +8,7 @@ REBOL [
         See: http://www.apache.org/licenses/LICENSE-2.0
     }
     Author: "Brett Handley"
-    Purpose: {Process Rebol C source.}
+    Purpose: {Process the source of Rebol.}
 ]
 
 ren-c-repo: any [
@@ -22,6 +22,8 @@ do ren-c-repo/src/tools/common.r
 do ren-c-repo/src/tools/common-parsers.r
 do %lib/text-lines.reb
 
+; rebsource is organised along the lines of a context sensitive vocabulary.
+;
 
 rebsource: context [
 
@@ -48,8 +50,12 @@ rebsource: context [
         function-spacing: [3 eol]
     ]
 
+    ; Fixed source paths are used instead of a recursive read to avoid a read
+    ; folder bug in the linux version of R3-Alpha.
+    ;
     fixed-source-paths: [
         %core/
+        %mezz/
         %os/
         %os/generic/
         %os/linux/
