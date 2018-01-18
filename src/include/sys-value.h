@@ -64,8 +64,10 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // The PROBE macro can be used in debug builds to mold a REBVAL much like the
-// Rebol `probe` operation.  It's actually polymorphic, and if you have
-// a REBSER*, REBCTX*, or REBARR* it can be used with those as well.
+// Rebol `probe` operation.  But it's actually polymorphic, and if you have
+// a REBSER*, REBCTX*, or REBARR* it can be used with those as well.  In C++,
+// you can even get the same value and type out as you put in...just like in
+// Rebol, permitting things like `return PROBE(Make_Some_Series(...));`
 //
 // In order to make it easier to find out where a piece of debug spew is
 // coming from, the file and line number will be output as well.
@@ -75,8 +77,18 @@
 //
 
 #if !defined(NDEBUG)
-    #define PROBE(v) \
-        Probe_Core_Debug((v), __FILE__, __LINE__)
+    #ifdef CPLUSPLUS_11
+        template <typename T>
+        T Probe_Cpp_Helper(T v, const char *file, int line) {
+            return cast(T, Probe_Core_Debug(v, file, line));
+        }
+
+        #define PROBE(v) \
+            Probe_Cpp_Helper((v), __FILE__, __LINE__) // passes input as-is
+    #else
+        #define PROBE(v) \
+            Probe_Core_Debug((v), __FILE__, __LINE__) // just returns void* :(
+    #endif
 #endif
 
 

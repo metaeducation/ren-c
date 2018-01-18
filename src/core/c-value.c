@@ -177,7 +177,9 @@ void Assert_No_Relative(REBARR *array, REBU64 types)
 //
 //  Probe_Core_Debug: C
 //
-void Probe_Core_Debug(
+// Use PROBE() to invoke, see notes there.
+//
+void* Probe_Core_Debug(
     const void *p,
     const char *file,
     int line
@@ -245,6 +247,8 @@ void Probe_Core_Debug(
             GC_Disabled = disabled;
         }
     }
+
+    return m_cast(void*, p); // must be cast back to const if source was const
 }
 
 #endif

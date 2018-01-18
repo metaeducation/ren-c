@@ -61,13 +61,43 @@
 //
 
 
+// !!! Find a better place for this!
+//
+inline static REBOOL IS_QUOTABLY_SOFT(const RELVAL *v) {
+    return LOGICAL(IS_GROUP(v) || IS_GET_WORD(v) || IS_GET_PATH(v));
+}
+
+
+//=////////////////////////////////////////////////////////////////////////=//
+//
+//  TICK-RELATED FUNCTIONS <== **THESE ARE VERY USEFUL**
+//
+//=////////////////////////////////////////////////////////////////////////=//
+//
 // Each iteration of DO bumps a global count, that in deterministic repro
 // cases can be very helpful in identifying the "tick" where certain problems
-// are occurring.  The SPORADICALLY() macro uses this to allow flipping
-// between different behaviors in debug builds--usually to run the release
-// behavior some of the time, and the debug behavior some of the time.  This
-// exercises the release code path even when doing a debug build.
+// are occurring.  The debug build pokes this ticks lots of places--into
+// value cells when they are formatted, into series when they are allocated
+// or freed, or into stack frames each time they perform a new operation.
 //
+// If you have a reproducible tick count, then BREAK_ON_TICK() is useful,
+// since you can put it anywhere.  It's a macro so that it doesn't make a
+// new C stack frame, leaving your debugger right at the callsite.
+//
+// The SPORADICALLY() macro uses the count to allow flipping between different
+// behaviors in debug builds--usually to run the release behavior some of the
+// time, and the debug behavior some of the time.  This exercises the release
+// code path even when doing a debug build.
+//
+
+#define BREAK_ON_TICK(tick) \
+    if (tick == TG_Tick) { \
+        printf("BREAK_ON_TICK at %d\n", tick); /* double eval of tick! */ \
+        fflush(stdout); \
+        Dump_Frame_Location(NULL, FS_TOP); \
+        debug_break(); /* see %debug_break.h */ \
+    } \
+
 #ifdef NDEBUG
     #define SPORADICALLY(modulus) \
         FALSE
@@ -75,10 +105,6 @@
     #define SPORADICALLY(modulus) \
         (TG_Tick % modulus == 0)
 #endif
-
-inline static REBOOL IS_QUOTABLY_SOFT(const RELVAL *v) {
-    return LOGICAL(IS_GROUP(v) || IS_GET_WORD(v) || IS_GET_PATH(v));
-}
 
 
 //=////////////////////////////////////////////////////////////////////////=//
