@@ -23,7 +23,7 @@ print "------ Generate tmp-natives.r"
 r3: system/version > 2.100.0
 
 args: parse-args system/options/args
-output-dir: fix-win32-path to file! any [:args/OUTDIR %../]
+output-dir: fix-win32-path to file! any [:args/OUTDIR %../src/]
 mkdir/deep output-dir/boot
 
 verbose: false
@@ -50,7 +50,7 @@ output-buffer: make string! 20000
 
 proto-count: 0
 
-files: sort read core-folder: %../core/
+files: sort read core-folder: %../src/core/
 
 remove-each file files [
 
@@ -91,9 +91,9 @@ append output-buffer {REBOL [
 
 }
 
-boot-types: load %../boot/types.r
+boot-types: load %../src/boot/types.r
 
-append output-buffer mold/only load %../boot/actions.r
+append output-buffer mold/only load %../src/boot/actions.r
 
 append output-buffer unspaced [newline newline]
 

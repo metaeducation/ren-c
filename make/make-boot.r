@@ -27,6 +27,9 @@ do %common.r
 do %common-emitter.r
 
 do %systems.r
+
+change-dir %../src/boot/
+
 args: parse-args system/options/args
 config: config-system to-value :args/OS_ID
 
@@ -53,10 +56,8 @@ either args/GIT_COMMIT = "unknown" [
     ]
 ]
 
-
 ;-- SETUP --------------------------------------------------------------
 
-change-dir %../boot/
 ;dir: %../core/temp/  ; temporary definition
 output-dir: fix-win32-path to file! any [:args/OUTDIR %../]
 mkdir/deep output-dir/include

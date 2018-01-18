@@ -24,21 +24,17 @@ do %r2r3-future.r
 do %common.r
 do %common-emitter.r
 
+; This script starts running in the %make/ directory, but the %host-main.c
+; file which wants to #include "tmp-host-start.inc" currently lives in the
+; %os/ directory.  (That's also where host-start.r is.)
+;
+change-dir %../src/os
+
 args: parse-args system/options/args
 output-dir: fix-win32-path to file! any [:args/OUTDIR %../]
 mkdir/deep output-dir/os
 
 print "--- Make Host Init Code ---"
-
-; Output directory for temp files:
-dir: %os/
-
-; This script starts running in the %tools/ directory, but the %host-main.c
-; file which wants to #include "tmp-host-start.inc" currently lives in the
-; %os/ directory.  (That's also where host-start.r is.)
-;
-change-dir %../os/
-
 
 write-c-file: function [
     c-file
@@ -119,8 +115,7 @@ host-start: load-files [
 ;
 append host-start [:host-console]
 
-
-file-base: has load %../tools/file-base.r
+file-base: has load %../../make/file-base.r
 
 ; copied from make-boot.r
 host-protocols: make block! 2

@@ -47,7 +47,7 @@ c-src: fix-win32-path to file! really string! args/SRC
 
 print ["building" m-name "from" c-src]
 
-output-dir: fix-win32-path to file! any [:args/OUTDIR %../]
+output-dir: fix-win32-path to file! any [:args/OUTDIR %../src/]
 mkdir/deep output-dir/include
 
 e-first: (make-emitter "Module C Header File Preface"

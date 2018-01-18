@@ -44,7 +44,6 @@ make/objs/
 # directories (such as make-win32 or make-osx-x64) so they don't erase
 # each other's state
 #
-make-*
 !tests/**/make-*
 !scripts/**/make-*
 

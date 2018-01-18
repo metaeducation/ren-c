@@ -24,6 +24,8 @@ args: parse-args system/options/args
 
 print "------ Building headers"
 
+change-dir %../src/core/
+
 output-dir: fix-win32-path to file! any [:args/OUTDIR %../]
 mkdir/deep output-dir/include
 mkdir/deep output-dir/core
@@ -33,8 +35,6 @@ e-funcs: make-emitter "Function Prototypes" output-dir/include/tmp-funcs.h
 e-syms: make-emitter "Function Symbols" output-dir/core/tmp-symbols.c
 
 prototypes: make block! 10000 ; MAP! is buggy in R3-Alpha
-
-change-dir %../core/
 
 emit-proto: proc [proto] [
     if any [
@@ -204,7 +204,7 @@ e-funcs/emit {
 }
 e-funcs/emit newline
 
-file-base: has load %../tools/file-base.r
+file-base: has load %../../make/file-base.r
 
 for-each item file-base/core [
     ;

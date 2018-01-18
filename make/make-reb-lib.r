@@ -26,13 +26,12 @@ lib-ver: 2
 preface: "RL_"
 
 args: parse-args system/options/args
-output-dir: to file! any [:args/OUTDIR %../]
+output-dir: to file! any [:args/OUTDIR %../src/]
 output-dir: fix-win32-path output-dir
 out-dir: output-dir/include
 mkdir/deep out-dir
 
-
-ver: load %../boot/version.r
+ver: load %../src/boot/version.r
 
 ;-----------------------------------------------------------------------------
 
@@ -152,7 +151,7 @@ e-lib/emit-lines [
 ; (such as by adding new routines to the end of the list, so as not to break
 ; binary compatibility with code built to the old ordered interface).
 
-src-dir: %../core/
+src-dir: %../src/core/
 
 e-lib/emit-line [
     {// Function entry points for reb-lib (used for MACROS below):}

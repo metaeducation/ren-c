@@ -9,7 +9,7 @@ REBOL [
         Licensed under the Apache License, Version 2.0
         See: http://www.apache.org/licenses/LICENSE-2.0
     }
-    Note: "Used by tools/make-boot.r"
+    Note: "Used by %make/make-boot.r"
 ]
 
 ;-- base: low-level boot in lib context:

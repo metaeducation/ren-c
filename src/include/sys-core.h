@@ -585,7 +585,7 @@ enum Reb_Vararg_Op {
 // naturally in individual includes, it could be cleaner...at the cost of
 // needing to update prototypes separately from the definitions.
 //
-// See %tools/make-headers.r for the generation of this list.
+// See %make/make-headers.r for the generation of this list.
 //
 #include "tmp-funcs.h"
 

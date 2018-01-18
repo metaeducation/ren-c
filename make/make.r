@@ -1,6 +1,5 @@
 REBOL []
 
-change-dir %../src/tools
 ;;;; DO & IMPORT ;;;;
 do %r2r3-future.r
 do %common.r
@@ -20,7 +19,7 @@ append lib compose [
 rebmake: import %rebmake.r
 
 ;;;; GLOBALS 
-config-dir: %../../make
+config-dir: %.
 base-dir: pwd
 user-config: make object! load config-dir/default-config.r
 
@@ -629,16 +628,13 @@ extension-names: map-each x available-extensions [to-lit-word x/name]
 ; and use they with --help targets ...
 targets: [
     clean [
-        change-dir %../../make
         rebmake/execution/run make rebmake/solution-class [
             depends: reduce [
                 clean
             ]
         ]
-        change-dir base-dir
     ]
     prep [
-        change-dir %../../make
         rebmake/execution/run make rebmake/solution-class [
             depends: flatten reduce [
                 vars
@@ -647,11 +643,9 @@ targets: [
                 dynamic-libs
             ]
         ]
-        change-dir base-dir
     ]
     r3
     execution [
-        change-dir %../../make
         rebmake/execution/run make rebmake/solution-class [
             depends: flatten reduce [
                 vars
@@ -661,20 +655,19 @@ targets: [
                 dynamic-libs
             ]
         ]
-        change-dir base-dir
     ]
     makefile [
-        rebmake/makefile/generate %../../make/makefile solution
+        rebmake/makefile/generate %makefile solution
     ]
     nmake [
-        rebmake/nmake/generate %../../make/makefile solution
+        rebmake/nmake/generate %makefile solution
     ]
     vs2017
     visual-studio [
-        rebmake/visual-studio/generate/(all [system-config/os-name = 'Windows-x86 'x86]) %../../make solution
+        rebmake/visual-studio/generate/(all [system-config/os-name = 'Windows-x86 'x86]) %make solution
     ]
     vs2015 [
-        rebmake/vs2015/generate/(all [system-config/os-name = 'Windows-x86 'x86]) %../../make solution
+        rebmake/vs2015/generate/(all [system-config/os-name = 'Windows-x86 'x86]) %make solution
     ]
 ]
 target-names: make block! 16
@@ -720,7 +713,7 @@ MORE HELP:^/
 FILES IN config/ SUBFOLDER:^/
     }
     indent/space form sort map-each x ;\
-        load join-of pwd %../../make/configs/
+        load %configs/
         [to-string x]
     newline ]
 
@@ -1688,19 +1681,19 @@ vars: reduce [
 prep: make rebmake/entry-class [
     target: "prep"
     commands: compose [
-        {$(REBOL) $T/make-natives.r}
-        {$(REBOL) $T/make-headers.r}
-        (unspaced [ {$(REBOL) $T/make-boot.r OS_ID=} system-config/id { GIT_COMMIT=$(GIT_COMMIT)}])
-        {$(REBOL) $T/make-host-init.r}
-        {$(REBOL) $T/make-os-ext.r}
-        {$(REBOL) $T/make-host-ext.r}
-        {$(REBOL) $T/make-reb-lib.r}
+        {$(REBOL) make-natives.r}
+        {$(REBOL) make-headers.r}
+        (unspaced [ {$(REBOL) make-boot.r OS_ID=} system-config/id { GIT_COMMIT=$(GIT_COMMIT)}])
+        {$(REBOL) make-host-init.r}
+        {$(REBOL) make-os-ext.r}
+        {$(REBOL) make-host-ext.r}
+        {$(REBOL) make-reb-lib.r}
         (
             cmds: make block! 8
             for-each ext all-extensions [
                 for-each mod ext/modules [
                     append cmds unspaced [
-                        {$(REBOL) $T/make-ext-natives.r MODULE=} mod/name { SRC=../extensions/}
+                        {$(REBOL) make-ext-natives.r MODULE=} mod/name { SRC=../src/extensions/}
                             case [
                                 file? mod/source [
                                     mod/source
@@ -1717,7 +1710,7 @@ prep: make rebmake/entry-class [
                 ]
                 if ext/init [
                     append cmds unspaced [
-                        {$(REBOL) $T/make-ext-init.r SRC=../extensions/} ext/init
+                        {$(REBOL) make-ext-init.r SRC=../src/extensions/} ext/init
                     ]
                 ]
             ]
@@ -1725,7 +1718,7 @@ prep: make rebmake/entry-class [
         )
         (
             unspaced [
-                {$(REBOL) $T/make-boot-ext-header.r EXTENSIONS=}
+                {$(REBOL) make-boot-ext-header.r EXTENSIONS=}
                 delimit map-each ext builtin-extensions [
                     to string! ext/name
                 ] #","
@@ -1919,6 +1912,7 @@ clean: make rebmake/entry-class [
         use [s][
             map-each s [
                 %host-lib.h
+                %host-table.inc
                 %reb-evtypes.h
                 %reb-lib.h
                 %tmp-reb-lib-table.inc
