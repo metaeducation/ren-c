@@ -1781,22 +1781,30 @@ void Manage_Series(REBSER *s)
 // with either managed or unmanaged value states for variables w/o needing
 // this test to know which it has.)
 //
-REBOOL Is_Value_Managed(const RELVAL *value)
+REBOOL Is_Value_Managed(const RELVAL *v)
 {
-    assert(!THROWN(value));
+    assert(!THROWN(v));
 
-    if (ANY_CONTEXT(value)) {
-        REBCTX *context = VAL_CONTEXT(value);
-        if (IS_ARRAY_MANAGED(CTX_VARLIST(context))) {
-            ASSERT_ARRAY_MANAGED(CTX_KEYLIST(context));
+    // Generally this is called by GC code, and that code is supposed to be
+    // tolerant of unreadable blanks in the debug build.  If a non-GC client
+    // happens to not catch the alarm in this routine, they'll catch it as
+    // soon as they try to do pretty much anything else with the value.
+    //
+    if (IS_UNREADABLE_IF_DEBUG(v))
+        return TRUE;
+
+    if (ANY_CONTEXT(v)) {
+        REBCTX *c = VAL_CONTEXT(v);
+        if (IS_ARRAY_MANAGED(CTX_VARLIST(c))) {
+            ASSERT_ARRAY_MANAGED(CTX_KEYLIST(c));
             return TRUE;
         }
-        assert(NOT(IS_ARRAY_MANAGED(CTX_KEYLIST(context)))); // !!! untrue?
+        assert(NOT(IS_ARRAY_MANAGED(CTX_KEYLIST(c)))); // !!! untrue?
         return FALSE;
     }
 
-    if (ANY_SERIES(value))
-        return IS_SERIES_MANAGED(VAL_SERIES(value));
+    if (ANY_SERIES(v))
+        return IS_SERIES_MANAGED(VAL_SERIES(v));
 
     return TRUE;
 }
