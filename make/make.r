@@ -1738,7 +1738,7 @@ prep: make rebmake/entry-class [
                 ]
                 reduce [
                     sys-core-i/command/E
-                    {$(REBOL) $T/make-embedded-header.r}
+                    {$(REBOL) make-embedded-header.r}
                 ]
             ]
         )
