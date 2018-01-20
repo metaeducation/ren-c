@@ -30,7 +30,7 @@ change-dir %../src/os/
 
 args: parse-args system/options/args
 config: config-system to-value :args/OS_ID
-output-dir: fix-win32-path to file! any [:args/OUTDIR %../]
+output-dir: fix-win32-path to file! any [:args/OUTDIR %../../make/prep/]
 mkdir/deep output-dir/include
 
 file-base: has load %../../make/file-base.r

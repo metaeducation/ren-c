@@ -1,4 +1,3 @@
-
 REBOL [
     System: "REBOL [R3] Language Interpreter and Run-time Environment"
     Title: "Generate extention native header files"
@@ -22,7 +21,7 @@ do %common-emitter.r
 r3: system/version > 2.100.0
 
 args: parse-args system/options/args
-output-dir: fix-win32-path to file! any [:args/OUTDIR %../src/]
+output-dir: fix-win32-path to file! any [:args/OUTDIR %prep]
 mkdir/deep output-dir/include
 
 extensions: either any-string? :args/EXTENSIONS [split args/EXTENSIONS #","][[]]

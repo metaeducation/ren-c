@@ -275,6 +275,7 @@ available-modules: reduce [
             ; and `#include "rsa/rsa.h" can be found by %dh.c
             ;
             %../src/extensions/crypt
+            %prep/extensions/crypt ;for %tmp-extensions-view-init.inc
         ]
         depends: [
             %crypt/aes/aes.c
@@ -289,11 +290,17 @@ available-modules: reduce [
     mod-process: make module-class [
         name: 'Process
         source: %process/mod-process.c
+        includes: copy [
+            %prep/extensions/process ;for %tmp-extensions-process-init.inc
+        ]
     ]
 
     mod-view: make module-class [
         name: 'View
         source: %view/mod-view.c
+        includes: copy [
+            %prep/extensions/view ;for %tmp-extensions-view-init.inc
+        ]
 
         ; The Windows REQUEST-FILE does not introduce any new dependencies.
         ; REQUEST-DIR depends on OLE32 for CoInitialize() because it is done
@@ -408,6 +415,9 @@ available-modules: reduce [
             ;
             <msc:/wd4204>
         ]
+        includes: copy [
+            %prep/extensions/locale ;for %tmp-extensions-locale-init.inc
+        ]
     ]
 
     mod-jpg: make module-class [
@@ -435,7 +445,10 @@ available-modules: reduce [
     mod-uuid: make module-class [
         name: 'UUID
         source: %uuid/mod-uuid.c
-        includes: [%../src/extensions/uuid/libuuid]
+        includes: [
+            %../src/extensions/uuid/libuuid
+            %prep/extensions/uuid ;for %tmp-extensions-uuid-init.inc
+        ]
         depends: to-value switch system-config/os-base [
             linux [
                 libuuid-objs
@@ -508,7 +521,7 @@ available-modules: reduce [
         name: 'Debugger
         source: %debugger/mod-debugger.c
         includes: copy [
-            %../src/extensions/debugger
+            %prep/extensions/debugger ;for %tmp-extensions-debugger-init.inc
         ]
         depends: [
         ]
@@ -880,7 +893,7 @@ app-config: make object! [
     debug: off
     optimization: 2
     definitions: copy []
-    includes: copy [%../src/include]
+    includes: copy [%../src/include %prep/include]
     searches: make block! 8
 ]
 
@@ -1401,12 +1414,15 @@ append app-config/definitions reduce [
 libr3-core: make rebmake/object-library-class [
     name: 'libr3-core
     definitions: join-of ["REB_API"] app-config/definitions
-    includes: copy app-config/includes ;might be modified by the generator, thus copying
+    includes: append-of app-config/includes %prep/core ;might be modified by the generator, thus copying
     cflags: copy app-config/cflags ;might be modified by the generator, thus copying
     optimization: app-config/optimization
     debug: app-config/debug
-    depends: map-each w append-of file-base/core file-base/generated [
+    depends: map-each w file-base/core [
         gen-obj/dir w "../src/core/"
+    ]
+    append depends map-each w file-base/generated [
+        gen-obj/dir w "prep/core/"
     ]
 ]
 
@@ -1419,7 +1435,7 @@ remove-each plus file-base/os [plus = '+] ;remove the '+ sign, we don't care her
 libr3-os: make libr3-core [
     name: 'libr3-os
     definitions: join-of ["REB_CORE"] app-config/definitions
-    includes: copy app-config/includes ;might be modified by the generator, thus copying
+    includes: append-of app-config/includes %prep/os ;might be modified by the generator, thus copying
     cflags: copy app-config/cflags ;might be modified by the generator, thus copying
     depends: map-each s append copy file-base/os os-file-block [
         gen-obj/dir s "../src/os/"
@@ -1697,7 +1713,7 @@ prep: make rebmake/entry-class [
         (unspaced [ {$(REBOL) make-boot.r OS_ID=} system-config/id { GIT_COMMIT=$(GIT_COMMIT)}])
         {$(REBOL) make-host-init.r}
         {$(REBOL) make-os-ext.r}
-        {$(REBOL) make-host-ext.r}
+        ;{$(REBOL) make-host-ext.r} ;; does nothing ???
         {$(REBOL) make-reb-lib.r}
         (
             cmds: make block! 8
@@ -1741,7 +1757,7 @@ prep: make rebmake/entry-class [
                     compiler: make rebmake/tcc [
                         exec-file: cfg-tcc/exec-file
                     ]
-                    output: %../src/include/sys-core.i
+                    output: %prep/include/sys-core.i
                     source: %../src/include/sys-core.h
                     definitions: join-of app-config/definitions [ {REN_C_STDIO_OK} ]
                     includes: append-of app-config/includes [%../external/tcc %../external/tcc/include]
@@ -1916,37 +1932,10 @@ t-folders: make rebmake/entry-class [
 
 clean: make rebmake/entry-class [
     target: "clean"
-    commands: append flatten reduce [
+    commands: flatten reduce [
         make rebmake/cmd-delete-class [file: %objs/]
+        make rebmake/cmd-delete-class [file: %prep/]
         make rebmake/cmd-delete-class [file: join-of %r3 opt rebmake/target-platform/exe-suffix]
-        make rebmake/cmd-delete-class [file: %../src/include/tmp-*.h]
-        use [s][
-            map-each s [
-                %host-lib.h
-                %host-table.inc
-                %reb-evtypes.h
-                %reb-lib.h
-                %tmp-reb-lib-table.inc
-                %reb-types.h
-            ][
-                make rebmake/cmd-delete-class [file: join-of %../src/include/ s]
-            ]
-        ]
-        use [s][
-            map-each s file-base/generated [
-                make rebmake/cmd-delete-class [file: join-of %../src/core/ s]
-            ]
-        ]
-        use [s][
-            map-each s dynamic-libs [
-                make rebmake/cmd-delete-class [file: join-of s/output opt rebmake/target-platform/dll-suffix]
-            ]
-        ]
-    ] if system-config/os-base != 'Windows [
-        [
-            {find ../src -name 'tmp-*' -exec rm -f {} \;}
-            {grep -l "AUTO-GENERATED FILE" ../src/include/*.h |grep -v sys-zlib.h|xargs rm 2>/dev/null || true}
-        ]
     ]
 ]
 

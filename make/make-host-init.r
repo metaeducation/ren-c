@@ -31,7 +31,7 @@ do %common-emitter.r
 change-dir %../src/os
 
 args: parse-args system/options/args
-output-dir: fix-win32-path to file! any [:args/OUTDIR %../]
+output-dir: fix-win32-path to file! any [:args/OUTDIR %../../make/prep/]
 mkdir/deep output-dir/os
 
 print "--- Make Host Init Code ---"

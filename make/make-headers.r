@@ -26,7 +26,7 @@ print "------ Building headers"
 
 change-dir %../src/core/
 
-output-dir: fix-win32-path to file! any [:args/OUTDIR %../]
+output-dir: fix-win32-path to file! any [:args/OUTDIR %../../make/prep/]
 mkdir/deep output-dir/include
 mkdir/deep output-dir/core
 

@@ -23,7 +23,7 @@ do %r2r3-future.r
 do %common.r
 
 args: parse-args system/options/args
-output-dir: fix-win32-path to file! any [:args/OUTDIR %../]
+output-dir: fix-win32-path to file! any [:args/OUTDIR %prep/]
 mkdir/deep output-dir/include
 
 ;-- Collect Sources ----------------------------------------------------------

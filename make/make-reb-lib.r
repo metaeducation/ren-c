@@ -26,10 +26,9 @@ lib-ver: 2
 preface: "RL_"
 
 args: parse-args system/options/args
-output-dir: to file! any [:args/OUTDIR %../src/]
-output-dir: fix-win32-path output-dir
-out-dir: output-dir/include
-mkdir/deep out-dir
+output-dir: fix-win32-path to file! any [:args/OUTDIR %prep/]
+output-dir: output-dir/include
+mkdir/deep output-dir
 
 ver: load %../src/boot/version.r
 
@@ -122,7 +121,7 @@ process: func [file] [
 ;-----------------------------------------------------------------------------
 
 e-lib: (make-emitter
-    "Lightweight Rebol Interface Library" out-dir/reb-lib.h)
+    "Lightweight Rebol Interface Library" output-dir/reb-lib.h)
 
 e-lib/emit-lines [
     {#ifdef __cplusplus}
@@ -224,7 +223,7 @@ e-lib/write-emitted
 ;-----------------------------------------------------------------------------
 
 e-table: (make-emitter
-    "REBOL Interface Table Singleton" out-dir/tmp-reb-lib-table.inc)
+    "REBOL Interface Table Singleton" output-dir/tmp-reb-lib-table.inc)
 
 e-table/emit-line "RL_LIB Ext_Lib = {"
 e-table/emit-line/indent table-init-items

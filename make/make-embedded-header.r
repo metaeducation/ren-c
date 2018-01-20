@@ -21,7 +21,7 @@ do %common-parsers.r
 
 print "------ Building embedded header file"
 args: parse-args system/options/args
-output-dir: fix-win32-path to file! any [:args/OUTDIR %../src/]
+output-dir: fix-win32-path to file! any [:args/OUTDIR %prep/]
 mkdir/deep output-dir/core
 
 inp: read fix-win32-path to file! output-dir/include/sys-core.i

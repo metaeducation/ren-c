@@ -38,6 +38,7 @@
 make/makefile
 make/r3*
 make/objs/
+make/prep/
 
 # It can be convenient if you are doing multiple builds of the same Rebol
 # codebase for different platforms to put them in separate make
@@ -46,28 +47,6 @@ make/objs/
 #
 !tests/**/make-*
 !scripts/**/make-*
-
-# While some generated files are intended to be semi-persistent products
-# (e.g. an API file), many generated files are temporary and not meant to be
-# the concern of users.  Over time, these have been standardized to start
-# with "tmp-".  Ignore any such file in any directory.
-#
-tmp-*
-
-src/boot/boot-code.r
-src/boot/host-init.r
-
-src/core/b-boot.c
-
-src/include/host-ext-*
-src/include/host-init.h
-src/include/host-lib.h
-src/include/host-table.inc
-src/include/reb-dialect.h
-src/include/reb-evtypes.h
-src/include/reb-lib-lib.h
-src/include/reb-lib.h
-src/include/reb-types.h
 
 #################
 ## Eclipse

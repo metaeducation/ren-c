@@ -28,6 +28,7 @@ args: parse-args system/options/args
 src: fix-win32-path to file! :args/SRC
 set [in-dir file-name] split-path src
 output-dir: fix-win32-path to file! any [:args/OUTDIR in-dir]
+replace output-dir "../src" "prep"
 mkdir/deep output-dir
 
 dest: either select args 'DEST [

@@ -59,12 +59,12 @@ either args/GIT_COMMIT = "unknown" [
 ;-- SETUP --------------------------------------------------------------
 
 ;dir: %../core/temp/  ; temporary definition
-output-dir: fix-win32-path to file! any [:args/OUTDIR %../]
+output-dir: fix-win32-path to file! any [:args/OUTDIR %../../make/prep]
 mkdir/deep output-dir/include
 mkdir/deep output-dir/boot
 mkdir/deep output-dir/core
 inc: output-dir/include
-src: output-dir/core
+core: output-dir/core
 boot: output-dir/boot
 
 version: load %version.r
@@ -133,7 +133,7 @@ build: context [features: [help-strings]]
 
 boot-types: load %types.r
 
-e-dispatch: make-emitter "Dispatchers" src/tmp-dispatchers.c
+e-dispatch: make-emitter "Dispatchers" core/tmp-dispatchers.c
 e-dispatch/emit newline
 
 e-dispatch/emit-line {#include "sys-core.h"}
@@ -837,7 +837,7 @@ e-sysctx/write-emitted
 ;
 ;----------------------------------------------------------------------------
 
-e-bootblock: make-emitter "Natives and Bootstrap" src/tmp-boot-block.c
+e-bootblock: make-emitter "Natives and Bootstrap" core/tmp-boot-block.c
 
 e-bootblock/emit-line {#include "sys-core.h"}
 e-bootblock/emit newline
