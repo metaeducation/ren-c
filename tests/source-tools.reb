@@ -21,14 +21,15 @@ ren-c-repo: clean-path ren-c-repo
 do ren-c-repo/src/tools/common.r
 do ren-c-repo/src/tools/common-parsers.r
 do %lib/text-lines.reb
+do %read-deep.reb
 
 ; rebsource is organised along the lines of a context sensitive vocabulary.
 ;
 
 rebsource: context [
 
-    src-folder: clean-path ren-c-repo/(%src/)
-    ; Path to src/
+    src-folder: clean-path ren-c-repo
+    ; Path to rebol source files.
 
     logfn: func [message][print mold new-line/all compose/only message false]
     log: :logfn
@@ -50,17 +51,11 @@ rebsource: context [
         function-spacing: [3 eol]
     ]
 
-    ; Fixed source paths are used instead of a recursive read to avoid a read
-    ; folder bug in the linux version of R3-Alpha.
+    ; Source paths are recursively read.
     ;
-    fixed-source-paths: [
-        %core/
-        %mezz/
-        %os/
-        %os/generic/
-        %os/linux/
-        %os/posix/
-        %os/windows/
+    source-paths: [
+        %src/
+        %tests/
     ]
 
     extensions: [
@@ -70,14 +65,14 @@ rebsource: context [
     ]
 
     whitelisted: [
-        %core/u-bmp.c
-        %core/u-compress.c
-        %core/u-gif.c
-        %core/u-jpg.c
-        %core/u-md5.c
-        %core/u-png.c
-        %core/u-sha1.c
-        %core/u-zlib.c
+        %src/core/u-bmp.c
+        %src/core/u-compress.c
+        %src/core/u-gif.c
+        %src/core/u-jpg.c
+        %src/core/u-md5.c
+        %src/core/u-png.c
+        %src/core/u-sha1.c
+        %src/core/u-zlib.c
     ] ; Not analysed ...
 
 
@@ -362,22 +357,34 @@ rebsource: context [
         source-files: function [
             {Retrieves a list of source files (relative paths).}
         ][
-            if not src-folder [fail {Configuration required.}]
+            if not src-folder [fail {Configuration of src-folder required.}]
 
-            files: make block! 1 + (2 * length of fixed-source-paths)
-
-            for-each path fixed-source-paths [
-                for-each file read join-of src-folder path [
-                    if find extensions extension-of file [
-                        append files join-of path file
-                    ]
-                ]
-            ]
+            files: read-deep/full/strategy source-paths :source-files-seq
 
             sort files
             new-line/all files true
 
             files
+        ]
+
+        source-files-seq: function [
+            {Take next file from a sequence that is represented by a queue.}
+            return: [<opt> file!]
+            queue [block!]
+        ][
+            item: take queue
+
+            if equal? #"/" last item [
+                contents: read join-of src-folder item
+                insert queue map-each x contents [join-of item x]
+                unset 'item
+            ] else [
+                unless find? extensions extension-of item [
+                    unset 'item
+                ]
+            ]
+
+            :item ; Voided items are to be filtered out.
         ]
     ]
 
