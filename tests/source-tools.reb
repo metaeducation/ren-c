@@ -379,7 +379,10 @@ rebsource: context [
                 insert queue map-each x contents [join-of item x]
                 unset 'item
             ] else [
-                unless find? extensions extension-of item [
+                if any [
+                    parse second split-path item ["tmp-" to end]
+                    not find? extensions extension-of item
+                ][
                     unset 'item
                 ]
             ]
