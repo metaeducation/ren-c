@@ -11,15 +11,14 @@ REBOL [
     Purpose: {Process the source of Rebol.}
 ]
 
-ren-c-repo: any [
-    if exists? %../src/tools/ [%../]
-    if exists? %../ren-c/src/tools/ [%../ren-c/]
-]
+; Root folder of the repository.
+; This script makes some assumptions about the structure of the repo.
+;
 
-ren-c-repo: clean-path ren-c-repo
+ren-c-repo: clean-path %../
 
-do ren-c-repo/src/tools/common.r
-do ren-c-repo/src/tools/common-parsers.r
+do ren-c-repo/make/common.r
+do ren-c-repo/make/common-parsers.r
 do %lib/text-lines.reb
 do %read-deep.reb
 
