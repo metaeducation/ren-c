@@ -1032,6 +1032,25 @@ append app-config/cflags opt switch/default user-config/standard [
     ]
 ]
 
+; pre-vista switch
+; Example. Mingw32 does not have access to windows console api prior to vista.
+;
+cfg-pre-vista: false
+append app-config/definitions opt switch/default user-config/pre-vista [
+    #[true] yes on true [
+        cfg-pre-vista: true
+        compose [
+            "PRE_VISTA"
+        ]
+    ]
+    _ #[false] no off false [
+        cfg-pre-vista: false
+        _
+    ]
+][
+    fail ["PRE-VISTA must be yes, no, or logic! not" (user-config/pre-vista)]
+]
+
 cfg-rigorous: false
 append app-config/cflags opt switch/default user-config/rigorous [
     #[true] yes on true [
