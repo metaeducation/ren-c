@@ -154,14 +154,15 @@ REBNATIVE(new_line)
     RELVAL *v = VAL_ARRAY_AT(ARG(position));
     REBOOL mark = VAL_LOGIC(ARG(mark));
 
+    // Are we at the tail?
     // Given that VALUE_FLAG_LINE means "put a newline *before* this value is
     // output", there's no value cell on which to put an end-of-line marker
     // at the tail of an array.  Red and R3-Alpha ignore this.  It would be
-    // mechanically possible to add an ARRAY_FLAG_XXX for this case, but
-    // currently it is thrown out--tell user this will have no effect.
+    // mechanically possible to add an ARRAY_FLAG_XXX for this case.
+    // Previously an alternate strategy was tried where an error was raised
+    // for this case but it meant that client code had to test for tail? in
+    // order to avoid the error.
     //
-    if (IS_END(v))
-        fail ("Attempt to set end-of-line marker at tail of array.");
 
     REBINT skip;
     if (REF(all))
