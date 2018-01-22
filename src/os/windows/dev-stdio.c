@@ -314,6 +314,12 @@ DEVICE_CMD Read_IO(REBREQ *req)
     // aware cursoring/backspacing/line-editing to the OS.  Which also means
     // a smaller executable than trying to rewrite it oneself.
     //
+
+#ifdef PRE_VISTA
+    // Console api not available prior to Vista (e.g Mingw32).
+    DWORD total;
+    REBOOL ok = ReadConsoleW(Std_Inp, Std_Buf, BUF_SIZE - 1, &total, NULL);
+#else
     CONSOLE_READCONSOLE_CONTROL ctl;
     ctl.nLength = sizeof(CONSOLE_READCONSOLE_CONTROL);
     ctl.nInitialChars = 0; // when hit, empty buffer...no CR LF
@@ -322,6 +328,8 @@ DEVICE_CMD Read_IO(REBREQ *req)
 
     DWORD total;
     REBOOL ok = ReadConsoleW(Std_Inp, Std_Buf, BUF_SIZE - 1, &total, &ctl);
+#endif
+
     if (NOT(ok)) {
         req->error = GetLastError();
         return DR_ERROR;

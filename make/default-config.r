@@ -53,6 +53,11 @@ odbc-requires-ltdl: no
 
 with-tcc: no
 
+; Console API for windows does not exist before vista.
+;
+pre-vista: no
+
+
 git-commit: _
 
 includes: _
