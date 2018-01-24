@@ -261,7 +261,7 @@ start-console: procedure [
     ] else [
        loud-print [
             space space
-            either proto-skin/loaded? {Loaded skin} {Skin does not exist}
+            either proto-skin/loaded? [{Loaded skin}] [{Skin does not exist}]
             "-" skin-file
             spaced ["(CONSOLE" unless proto-skin/updated? {not} "updated)"]
         ]
