@@ -22,8 +22,8 @@ print "------ Generate tmp-natives.r"
 
 r3: system/version > 2.100.0
 
-args: parse-args system/options/args
-output-dir: fix-win32-path to file! any [:args/OUTDIR %prep/]
+src-dir: %../../src
+output-dir: system/options/path/prep
 mkdir/deep output-dir/boot
 
 verbose: false
@@ -37,7 +37,7 @@ process: func [
     the-file: file
     if verbose [probe [file]]
 
-    source.text: read join-of core-folder file
+    source.text: read join-of src-dir/core/% file
     if r3 [source.text: deline to-string source.text]
     proto-parser/emit-proto: :emit-native-proto
     proto-parser/process source.text
@@ -50,7 +50,7 @@ output-buffer: make string! 20000
 
 proto-count: 0
 
-files: sort read core-folder: %../src/core/
+files: sort read src-dir/core/%
 
 remove-each file files [
 
@@ -91,9 +91,9 @@ append output-buffer {REBOL [
 
 }
 
-boot-types: load %../src/boot/types.r
+boot-types: load src-dir/boot/types.r
 
-append output-buffer mold/only load %../src/boot/actions.r
+append output-buffer mold/only load src-dir/boot/actions.r
 
 append output-buffer unspaced [newline newline]
 

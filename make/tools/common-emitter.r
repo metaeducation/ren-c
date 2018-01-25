@@ -32,7 +32,7 @@ REBOL [
     }
 ]
 
-boot-version: load %../src/boot/version.r
+boot-version: load %../../src/boot/version.r
 
 make-emitter: function [
     {Create a buffered output text file emitter}

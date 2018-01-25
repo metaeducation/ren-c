@@ -1,10 +1,10 @@
 REBOL []
 
 ;;;; DO & IMPORT ;;;;
-do %r2r3-future.r
-do %common.r
-do %systems.r
-file-base: make object! load %file-base.r
+do %tools/r2r3-future.r
+do %tools/common.r
+do %tools/systems.r
+file-base: make object! load %tools/file-base.r
 
 ; !!! Since %rebmake.r is a module,
     ; it presents a challenge for the "shim" code
@@ -16,12 +16,17 @@ append lib compose [
     file-to-local-hack: (:file-to-local)
     local-to-file-hack: (:local-to-file)
 ]
-rebmake: import %rebmake.r
+rebmake: import %tools/rebmake.r
 
-;;;; GLOBALS 
-config-dir: %.
-base-dir: pwd
-user-config: make object! load config-dir/default-config.r
+;;;; GLOBALS
+
+make-dir: system/options/current-path
+tools-dir: make-dir/tools
+change-dir output-dir: system/options/path 
+src-dir: append copy make-dir %../src
+src-dir: src-dir relative-to output-dir
+
+user-config: make object! load make-dir/default-config.r
 
 ;;;; PROCESS ARGS
 ; args are:
@@ -41,7 +46,7 @@ either commands: find args '| [
 ; process configs first
 for-each [name value] options [
     if name = 'CONFIG [
-        user-config: make user-config load config-dir/:value
+        user-config: make user-config load to-file value
     ]
 ]
 
@@ -57,7 +62,7 @@ for-each [name value] options [
             use [ext-file user-ext][
                 either any [
                     exists? ext-file: to file! value
-                    exists? ext-file: to file! config-dir/(value)
+                    exists? ext-file: to file! tools-dir/(value)
                 ][
                     user-ext: make object! load ext-file
                     unless all [
@@ -158,7 +163,7 @@ gen-obj: func [
     ]
 
     make rebmake/object-file-class compose/only [
-        source: to-file join-of either dir [directory][%../src/] s
+        source: to-file join-of either dir [directory][src-dir] s
         output: to-obj-path to string! s
         cflags: either empty? flags [_] [flags]
         definitions: (to-value :definitions)
@@ -171,7 +176,7 @@ libuuid-objs: map-each s [
     %uuid/libuuid/pack.c
     %uuid/libuuid/randutils.c
 ][
-    gen-obj/dir s "../src/extensions/"
+    gen-obj/dir s src-dir/extensions/%
 ]
 
 module-class: make object! [
@@ -269,12 +274,12 @@ available-modules: reduce [
     mod-crypt: make module-class [
         name: 'Crypt
         source: %crypt/mod-crypt.c
-        includes: copy [
+        includes: reduce [
             ;
             ; Added so `#include "bigint/bigint.h` can be found by %rsa.h
             ; and `#include "rsa/rsa.h" can be found by %dh.c
             ;
-            %../src/extensions/crypt
+            src-dir/extensions/crypt
             %prep/extensions/crypt ;for %tmp-extensions-view-init.inc
         ]
         depends: [
@@ -445,8 +450,8 @@ available-modules: reduce [
     mod-uuid: make module-class [
         name: 'UUID
         source: %uuid/mod-uuid.c
-        includes: [
-            %../src/extensions/uuid/libuuid
+        includes: reduce [
+            src-dir/extensions/uuid/libuuid
             %prep/extensions/uuid ;for %tmp-extensions-uuid-init.inc
         ]
         depends: to-value switch system-config/os-base [
@@ -722,9 +727,11 @@ help-topics: reduce [
 ;; !! Only 1 indentation level in help strings !!
 
 'usage copy {=== USAGE ===^/
-    > cd PATH/TO/REN-C/make
-    then:
-    > ./r3-make make.r [CONFIG | OPTION | TARGET ...]^/
+    > PATH/TO/r3-make PATH/TO/make.r [CONFIG | OPTION | TARGET ...]^/
+NOTE: current dir is the build dir,
+    that will contain all generated stuff
+    (%prep/, %objs/, %makefile, %r3 ...)
+    You can have multiple build dirs.^/
 MORE HELP:^/
     { -h | -help | --help } { HELP-TOPICS }
     }
@@ -735,11 +742,11 @@ MORE HELP:^/
     ]
 
 'configs unspaced [ {=== CONFIGS ===^/
-    config: CONFIG-FILE^/
-FILES IN config/ SUBFOLDER:^/
+    config: PATH/TO/CONFIG-FILE^/
+FILES IN %make/configs/ SUBFOLDER:^/
     }
     indent/space form sort map-each x ;\
-        load %configs/
+        load make-dir/configs/%
         [to-string x]
     newline ]
 
@@ -896,7 +903,7 @@ app-config: make object! [
     debug: off
     optimization: 2
     definitions: copy []
-    includes: copy [%../src/include %prep/include]
+    includes: reduce [src-dir/include %prep/include]
     searches: make block! 8
 ]
 
@@ -1441,7 +1448,7 @@ libr3-core: make rebmake/object-library-class [
     optimization: app-config/optimization
     debug: app-config/debug
     depends: map-each w file-base/core [
-        gen-obj/dir w "../src/core/"
+        gen-obj/dir w src-dir/core/%
     ]
     append depends map-each w file-base/generated [
         gen-obj/dir w "prep/core/"
@@ -1460,7 +1467,7 @@ libr3-os: make libr3-core [
     includes: append-of app-config/includes %prep/os ;might be modified by the generator, thus copying
     cflags: copy app-config/cflags ;might be modified by the generator, thus copying
     depends: map-each s append copy file-base/os os-file-block [
-        gen-obj/dir s "../src/os/"
+        gen-obj/dir s src-dir/os/%
     ]
 ]
 
@@ -1607,7 +1614,7 @@ process-module: func [
         depends: map-each s (append reduce [mod/source] opt mod/depends) [
             case [
                 any [file? s block? s][
-                    gen-obj/dir s "../src/extensions/"
+                    gen-obj/dir s src-dir/extensions/%
                 ]
                 all [object? s
                     find? [
@@ -1700,7 +1707,7 @@ for-each ext builtin-extensions [
             app-config/debug
     ]
     if ext/source [
-        append any [all [mod-obj mod-obj/depends] ext-objs] gen-obj/dir ext/source "../src/extensions/"
+        append any [all [mod-obj mod-obj/depends] ext-objs] gen-obj/dir ext/source src-dir/extensions/%
     ]
 ]
 
@@ -1719,7 +1726,7 @@ vars: reduce [
     ]
     make rebmake/var-class [
         name: {T}
-        value: {../src/tools}
+        value: src-dir/tools
     ]
     make rebmake/var-class [
         name: {GIT_COMMIT}
@@ -1730,19 +1737,18 @@ vars: reduce [
 prep: make rebmake/entry-class [
     target: 'prep ; phony target
     commands: compose [
-        {$(REBOL) make-natives.r}
-        {$(REBOL) make-headers.r}
-        (unspaced [ {$(REBOL) make-boot.r OS_ID=} system-config/id { GIT_COMMIT=$(GIT_COMMIT)}])
-        {$(REBOL) make-host-init.r}
-        {$(REBOL) make-os-ext.r}
-        ;{$(REBOL) make-host-ext.r} ;; does nothing ???
-        {$(REBOL) make-reb-lib.r}
+        (unspaced [{$(REBOL) } tools-dir/make-natives.r])
+        (unspaced [{$(REBOL) } tools-dir/make-headers.r])
+        (unspaced [{$(REBOL) } tools-dir/make-boot.r { OS_ID=} system-config/id { GIT_COMMIT=$(GIT_COMMIT)}])
+        (unspaced [{$(REBOL) } tools-dir/make-host-init.r])
+        (unspaced [{$(REBOL) } tools-dir/make-os-ext.r])
+        (unspaced [{$(REBOL) } tools-dir/make-reb-lib.r])
         (
             cmds: make block! 8
             for-each ext all-extensions [
                 for-each mod ext/modules [
                     append cmds unspaced [
-                        {$(REBOL) make-ext-natives.r MODULE=} mod/name { SRC=../src/extensions/}
+                        {$(REBOL) } tools-dir/make-ext-natives.r { MODULE=} mod/name { SRC=} %extensions/
                             case [
                                 file? mod/source [
                                     mod/source
@@ -1759,7 +1765,7 @@ prep: make rebmake/entry-class [
                 ]
                 if ext/init [
                     append cmds unspaced [
-                        {$(REBOL) make-ext-init.r SRC=../src/extensions/} ext/init
+                        {$(REBOL) } tools-dir/make-ext-init.r { SRC=} %extensions/ ext/init
                     ]
                 ]
             ]
@@ -1767,7 +1773,7 @@ prep: make rebmake/entry-class [
         )
         (
             unspaced [
-                {$(REBOL) make-boot-ext-header.r EXTENSIONS=}
+                {$(REBOL) } tools-dir/make-boot-ext-header.r { EXTENSIONS=}
                 delimit map-each ext builtin-extensions [
                     to string! ext/name
                 ] #","
@@ -1780,14 +1786,14 @@ prep: make rebmake/entry-class [
                         exec-file: cfg-tcc/exec-file
                     ]
                     output: %prep/include/sys-core.i
-                    source: %../src/include/sys-core.h
+                    source: src-dir/include/sys-core.h
                     definitions: join-of app-config/definitions [ {REN_C_STDIO_OK} ]
                     includes: append-of app-config/includes [%../external/tcc %../external/tcc/include]
                     cflags: append-of append-of [ {-dD} {-nostdlib} ] opt cfg-ffi/cflags opt cfg-tcc/cpp-flags
                 ]
                 reduce [
                     sys-core-i/command/E
-                    {$(REBOL) make-embedded-header.r}
+                    unspaced [{$(REBOL) } tools-dir/make-embedded-header.r]
                 ]
             ]
         )
@@ -1910,7 +1916,7 @@ for-each ext dynamic-extensions [
     append ext-dynamic-objs copy mod-objs
 
     if ext/source [
-        append mod-objs gen-obj/dir/D ext/source "../src/extensions/" ["EXT_DLL"]
+        append mod-objs gen-obj/dir/D ext/source src-dir/extensions/% ["EXT_DLL"]
     ]
     append dynamic-libs ext-proj: make rebmake/dynamic-library-class [
         name: join-of either system-config/os-base = 'windows ["r3-"]["libr3-"]

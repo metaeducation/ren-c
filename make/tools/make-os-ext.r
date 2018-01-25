@@ -15,7 +15,7 @@ REBOL [
 
 verbose: false
 
-version: load %../src/boot/version.r
+version: load %../../src/boot/version.r
 
 lib-version: version/3
 print ["--- Make OS Ext Lib --- Version:" lib-version]
@@ -26,14 +26,14 @@ do %common-emitter.r
 do %common-parsers.r
 do %systems.r
 
-change-dir %../src/os/
+change-dir %../../src/os/
 
 args: parse-args system/options/args
 config: config-system to-value :args/OS_ID
-output-dir: fix-win32-path to file! any [:args/OUTDIR %../../make/prep/]
+output-dir: system/options/path/prep
 mkdir/deep output-dir/include
 
-file-base: has load %../../make/file-base.r
+file-base: has load %../../make/tools/file-base.r
 
 ; Collect OS-specific host files:
 unless (

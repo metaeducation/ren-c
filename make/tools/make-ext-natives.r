@@ -43,11 +43,11 @@ m-name: really string! args/MODULE
 l-m-name: lowercase copy m-name
 u-m-name: uppercase copy m-name
 
-c-src: fix-win32-path to file! really string! args/SRC
+c-src: join-of %../../src/ fix-win32-path to file! really string! args/SRC
 
 print ["building" m-name "from" c-src]
 
-output-dir: fix-win32-path to file! any [:args/OUTDIR %prep/]
+output-dir: system/options/path/prep
 mkdir/deep output-dir/include
 
 e-first: (make-emitter "Module C Header File Preface"

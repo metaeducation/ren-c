@@ -28,7 +28,7 @@ do %common-emitter.r
 
 do %systems.r
 
-change-dir %../src/boot/
+change-dir %../../src/boot/
 
 args: parse-args system/options/args
 config: config-system to-value :args/OS_ID
@@ -59,13 +59,13 @@ either args/GIT_COMMIT = "unknown" [
 ;-- SETUP --------------------------------------------------------------
 
 ;dir: %../core/temp/  ; temporary definition
-output-dir: fix-win32-path to file! any [:args/OUTDIR %../../make/prep]
-mkdir/deep output-dir/include
-mkdir/deep output-dir/boot
-mkdir/deep output-dir/core
+output-dir: system/options/path/prep
 inc: output-dir/include
 core: output-dir/core
 boot: output-dir/boot
+mkdir/deep probe inc
+mkdir/deep probe boot
+mkdir/deep probe core
 
 version: load %version.r
 version/4: config/id/2

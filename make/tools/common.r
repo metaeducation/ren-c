@@ -393,3 +393,24 @@ write-if-changed: procedure [
         write dest content
     ]
 ]
+
+relative-to: enfix func [
+    target [file!]
+    base [file!]
+][
+    target: split clean-path target "/"
+    base: split clean-path base "/"
+    if "" = last base [take/last base]
+    while [all [
+        not tail? target
+        not tail? base
+        base/1 = target/1
+    ]] [
+        base: next base
+        target: next target
+    ]
+    forall base [base/1: %..]
+    append base target
+    to-file delimit base "/"
+]
+

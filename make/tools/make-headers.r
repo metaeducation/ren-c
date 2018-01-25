@@ -19,16 +19,18 @@ do %common.r
 do %common-emitter.r
 do %common-parsers.r
 do %native-emitters.r ; for emit-include-params-macro
+file-base: has load %file-base.r
 
-args: parse-args system/options/args
+tools-dir: system/options/current-path
+output-dir: system/options/path/prep
+mkdir/deep output-dir/include
 
-print "------ Building headers"
-
-change-dir %../src/core/
-
-output-dir: fix-win32-path to file! any [:args/OUTDIR %../../make/prep/]
 mkdir/deep output-dir/include
 mkdir/deep output-dir/core
+
+change-dir %../../src/core/
+
+print "------ Building headers"
 
 e-funcs: make-emitter "Function Prototypes" output-dir/include/tmp-funcs.h
 
@@ -203,8 +205,6 @@ e-funcs/emit {
 //
 }
 e-funcs/emit newline
-
-file-base: has load %../../make/file-base.r
 
 for-each item file-base/core [
     ;
