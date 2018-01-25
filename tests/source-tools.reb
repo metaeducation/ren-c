@@ -17,8 +17,8 @@ REBOL [
 
 ren-c-repo: clean-path %../
 
-do ren-c-repo/make/common.r
-do ren-c-repo/make/common-parsers.r
+do ren-c-repo/make/tools/common.r
+do ren-c-repo/make/tools/common-parsers.r
 do %lib/text-lines.reb
 do %read-deep.reb
 
