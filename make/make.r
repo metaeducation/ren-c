@@ -24,7 +24,7 @@ make-dir: system/options/current-path
 tools-dir: make-dir/tools
 change-dir output-dir: system/options/path 
 src-dir: append copy make-dir %../src
-src-dir: src-dir relative-to output-dir
+src-dir: relative-to-path src-dir output-dir
 
 user-config: make object! load make-dir/default-config.r
 

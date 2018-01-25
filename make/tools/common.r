@@ -394,7 +394,7 @@ write-if-changed: procedure [
     ]
 ]
 
-relative-to: enfix func [
+relative-to-path: func [
     target [file!]
     base [file!]
 ][
