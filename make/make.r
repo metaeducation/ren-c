@@ -1881,19 +1881,26 @@ ext-libs: make block! 8
 ext-ldflags: make block! 8
 ext-dynamic-objs: make block! 8
 for-each ext dynamic-extensions [
+    ext-includes: make block! 8
     mod-objs: make block! 8
     for-each mod ext/modules [
         append mod-objs mod-obj: process-module mod
         append ext-libs opt mod-obj/libraries
+        append ext-includes app-config/includes
 
         if mod/ldflags [
             assert-no-blank-inside mod/ldflags
             append ext-ldflags mod/ldflags
         ]
 
+        if mod/includes [
+            assert-no-blank-inside mod/includes
+            append ext-includes mod/includes
+        ]
+
         ; Modify module properties
         add-project-flags/I/D/c/O/g mod-obj
-            app-config/includes
+            ext-includes
             join-of ["EXT_DLL"] app-config/definitions
             app-config/cflags
             app-config/optimization
@@ -1929,7 +1936,7 @@ for-each ext dynamic-extensions [
     ]
 
     add-project-flags/I/D/c/O/g ext-proj
-        app-config/includes
+        ext-includes
         join-of ["EXT_DLL"] app-config/definitions
         app-config/cflags
         app-config/optimization
