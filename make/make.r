@@ -1714,11 +1714,17 @@ for-each ext builtin-extensions [
 vars: reduce [
     reb-tool: make rebmake/var-class [
         name: {REBOL_TOOL}
-        value: really file! any [
-            user-config/rebol-tool
-            system/options/boot
-            to-file unspaced [{./r3-make} rebmake/target-platform/exe-suffix]
-        ]
+        if not any [
+            'file = exists? value: system/options/boot
+            all [
+                user-config/rebol-tool
+                'file = exists? value: join-of make-dir user-config/rebol-tool
+            ]
+            'file = exists? value: join-of make-dir unspaced [
+                {r3-make}
+                rebmake/target-platform/exe-suffix
+            ]
+        ] [fail "^/^/!! Cannot find a valid REBOL_TOOL !!^/"]
     ]
     make rebmake/var-class [
         name: {REBOL}

@@ -20,8 +20,7 @@ extensions: [
     - ODBC _
 ]
 
-; use ./r3-make
-rebol-tool: _ ;%r3-make.exe
+rebol-tool: _ ; fallback value if system/options/boot fails
 
 ; possible combination:
 ; [gcc _ ld _]
