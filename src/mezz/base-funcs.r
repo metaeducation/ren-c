@@ -638,6 +638,12 @@ all?: redescribe [
     chain [:all | :to-value | :to-logic]
 )
 
+skip*: redescribe [
+    {Variant of SKIP that returns BLANK! instead of cliping to series bounds}
+](
+    specialize 'skip [only: true]
+)
+
 maybe: redescribe [
    {Check value using tests (match types, TRUE? or FALSE?, filter function)}
 ](

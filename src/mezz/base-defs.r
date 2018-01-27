@@ -70,11 +70,19 @@ set/enfix quote of: func [ ;-- NOTE can't be (quote of:), OF: top-level...
     reflect :value property
 ]
 
-; While NEXT and BACK might be seen as somewhat "noun-like" themselves, it
-; doesn't seem NEXT-OF or BACK-OF are as necessary.
+; !!! NEXT and BACK seem somewhat "noun-like" and desirable to use as variable
+; names, but are very entrenched in Rebol history.  Also, since they are
+; specializations they don't fit easily into the NEXT OF SERIES model--this
+; is a problem which hasn't been addressed.
 ;
-next: specialize 'skip [offset: 1]
-back: specialize 'skip [offset: -1]
+next: specialize 'skip [
+    offset: 1
+    only: true ;-- don't clip (return BLANK! if already at head of series)
+]
+back: specialize 'skip [
+    offset: -1
+    only: true ;-- don't clip (return BLANK! if already at tail of series)
+]
 
 unspaced: specialize 'delimit [delimiter: blank]
 spaced: specialize 'delimit [delimiter: space]

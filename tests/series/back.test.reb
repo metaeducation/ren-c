@@ -1,7 +1,7 @@
 ; functions/series/back.r
 [
     a: [1]
-    same? a back a
+    blank? back a
 ]
 [
     a: tail of [1]
@@ -10,7 +10,7 @@
 ; path
 [
     a: 'b/c
-    same? a back a
+    blank? back a
 ]
 [
     a: tail of 'b/c
@@ -23,5 +23,5 @@
 ]
 [
     a: "1"
-    same? a back a
+    blank? back a
 ]

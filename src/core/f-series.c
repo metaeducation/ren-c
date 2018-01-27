@@ -112,21 +112,55 @@ REB_R Series_Common_Action_Maybe_Unhandled(
 
     case SYM_SKIP:
     case SYM_AT: {
+        INCLUDE_PARAMS_OF_SKIP; // must be compatible with AT
+
+        UNUSED(ARG(series)); // is already `value`
+        UNUSED(ARG(offset)); // is already `arg` (AT calls this ARG(index))
+
         REBINT len = Get_Num_From_Arg(arg);
-        REBI64 i = cast(REBI64, index) + cast(REBI64, len);
+        REBI64 i;
         if (action == SYM_SKIP) {
-            if (IS_LOGIC(arg))
-                --i;
+            //
+            // `skip x logic` means `either logic [skip x] [x]` (this is
+            // reversed from R3-Alpha and Rebol2, which skipped when false)
+            //
+            if (IS_LOGIC(arg)) {
+                if (VAL_LOGIC(arg))
+                    i = cast(REBI64, index) + 1;
+                else
+                    i = cast(REBI64, index);
+            }
+            else {
+                // `skip series 1` means second element, add the len as-is
+                //
+                i = cast(REBI64, index) + cast(REBI64, len);
+            }
         }
         else {
             assert(action == SYM_AT);
+
+            // `at series 1` means first element, adjust index
+            //
+            // !!! R3-Alpha did this differently for values > 0 vs not, is
+            // this what's intended?
+            //
             if (len > 0)
-                --i;
+                i = cast(REBI64, index) + cast(REBI64, len) - 1;
+            else
+                i = cast(REBI64, index) + cast(REBI64, len);
         }
-        if (i > cast(REBI64, tail))
-            i = cast(REBI64, tail);
-        else if (i < 0)
-            i = 0;
+
+        if (i > cast(REBI64, tail)) {
+            if (REF(only))
+                return R_BLANK;
+            i = cast(REBI64, tail); // past tail clips to tail if not /ONLY
+        }
+        else if (i < 0) {
+            if (REF(only))
+                return R_BLANK;
+            i = 0; // past head clips to head if not /ONLY
+        }
+
         VAL_INDEX(value) = cast(REBCNT, i);
         Move_Value(D_OUT, value);
         return R_OUT; }

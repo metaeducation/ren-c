@@ -87,31 +87,21 @@ tenth: redescribe [
 
 last: func [
     {Returns the last value of a series.}
-    return: [<opt> any-value!]
+    return: [any-value!]
     value [any-series! tuple! gob!]
-    <local> len
 ][
-    case* [ ;-- returns <opt>, can't use "blankifying" convention
-
-        any-series? value [pick back tail of value 1]
-        tuple? value [pick value length of value]
-        gob? value [
-            ; The C code effectively used 'pick value t' with:
-            ;
-            ; t = GOB_PANE(VAL_GOB(val)) ? GOB_LEN(VAL_GOB(val)) : 0;
-            ; VAL_GOB_INDEX(val) = 0;
-            ;
-            ; Try getting same result with what series does.  :-/
-
-            pick back tail of value 1
-        ]
-        'else [
-            ; C code said "let the action throw the error", but by virtue
-            ; of type checking this case should not happen.
-            ;
-            pick value 0
-        ]
+    if gob? value [
+        ;
+        ; The C code effectively used 'pick value t' with:
+        ;
+        ; t = GOB_PANE(VAL_GOB(val)) ? GOB_LEN(VAL_GOB(val)) : 0;
+        ; VAL_GOB_INDEX(val) = 0;
+        ;
+        print "Caution: LAST on GOB! may not work, look over the code"
+        wait 2
     ]
+
+    pick value length of value
 ]
 
 ;

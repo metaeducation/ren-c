@@ -201,7 +201,7 @@ spec-of: function [
         select original-meta 'description
     ][
         append spec description
-        new-line back spec true
+        new-line spec true
     ]
 
     return-type: maybe block! any [
