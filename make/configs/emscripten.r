@@ -11,6 +11,8 @@ toolset: [
 
 optimize: "z"
 
+ldflags: reduce [unspaced["-O" optimize]]
+
 extensions: [
     - crypt _
     - process _

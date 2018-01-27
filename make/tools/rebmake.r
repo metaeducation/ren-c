@@ -466,6 +466,7 @@ gcc: make compiler-class [
                     opt-level = true ["-O2"]
                     opt-level = false ["-O0"]
                     integer? opt-level [unspaced ["-O" opt-level]]
+                    find ["s" "z" 's 'z] opt-level [unspaced ["-O" opt-level]]
                     true [fail ["unrecognized optimization level:" opt-level]]
                 ]
             ]

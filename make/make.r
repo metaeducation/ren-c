@@ -965,11 +965,10 @@ switch user-config/optimize [
     #[false] false no off 0 [
         app-config/optimization: false
     ]
-    1 2 3 4 "s" [
+    1 2 3 4 "s" "z" 's 'z [
         app-config/optimization: user-config/optimize
     ]
 ]
-
 
 cfg-cplusplus: false
 ;standard
