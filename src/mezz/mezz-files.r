@@ -145,12 +145,14 @@ confirm: function [
 
     unless with [choices: [["y" "yes"] ["n" "no"]]]
 
-    to-value case [
+    to-logic case [
         empty? choices [true]
-        string? choices [find?/match response choices]
-        2 > length of choices [find?/match response first choices]
-        find? first choices response [true]
-        find? second choices response [false]
+        string? choices [find/match response choices]
+        2 > length of choices [find/match response first choices]
+        find first choices response [true]
+        find second choices response [false]
+    ] else [
+         false
     ]
 ]
 

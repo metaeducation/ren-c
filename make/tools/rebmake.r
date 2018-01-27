@@ -718,7 +718,7 @@ ld: make linker-class [
     ][
         switch/default dep/class-name [
             object-file-class [
-                ;if find? words-of dep 'depends [
+                ;if find words-of dep 'depends [
                     ;for-each ddep dep/depends [
                     ;    dump ddep
                     ;]
@@ -732,7 +732,7 @@ ld: make linker-class [
                     ]
                 ][
                     unspaced [
-                        if find? dep/flags 'static ["-static "]
+                        if find dep/flags 'static ["-static "]
                         "-l" dep/output
                     ]
                 ]
@@ -830,7 +830,7 @@ llvm-link: make linker-class [
     ][
         switch/default dep/class-name [
             object-file-class [
-                ;if find? words-of dep 'depends [
+                ;if find words-of dep 'depends [
                     ;for-each ddep dep/depends [
                     ;    dump ddep
                     ;]
@@ -924,7 +924,7 @@ link: make linker-class [
     ][
         switch/default dep/class-name [
             object-file-class [
-                ;if find? words-of dep 'depends [
+                ;if find words-of dep 'depends [
                     ;for-each ddep dep/depends [
                     ;    dump ddep
                     ;]
@@ -1073,7 +1073,7 @@ object-file-class: make object! [
         args
     ][
         assert [
-            find? [
+            find [
                 application-class
                 dynamic-library-class
                 static-library-class
@@ -1172,7 +1172,11 @@ generator-class: make object! [
         localize (func [v][either file? v [file-to-local v][v]])
     ][
         if object? cmd [
-            assert [find? [cmd-create-class cmd-delete-class cmd-strip-class] cmd/class-name]
+            assert [
+                find [
+                    cmd-create-class cmd-delete-class cmd-strip-class
+                ] cmd/class-name
+            ]
             cmd: gen-cmd cmd
         ]
         unless cmd [return _]
@@ -1202,12 +1206,12 @@ generator-class: make object! [
         <local>
         dep
     ][
-        if find? words-of solution 'output [
+        if find words-of solution 'output [
             setup-outputs solution
         ]
         flip-flag solution false
 
-        if find? words-of solution 'depends [
+        if find words-of solution 'depends [
             for-each dep solution/depends [
                 if dep/class-name = 'var-class [
                     append vars reduce [
@@ -1229,11 +1233,11 @@ generator-class: make object! [
         dep
     ][
         if all [
-            find? words-of project 'generated?
+            find words-of project 'generated?
             to != project/generated?
         ][
             project/generated?: to
-            if find? words-of project 'depends [
+            if find words-of project 'depends [
                 for-each dep project/depends [
                     flip-flag dep to
                 ]
@@ -1440,7 +1444,7 @@ makefile: make generator-class [
         for-each dep project/depends [
             unless object? dep [continue]
             ;dump dep
-            unless find? [ext-dynamic-class ext-static-class] dep/class-name [
+            unless find [ext-dynamic-class ext-static-class] dep/class-name [
                 either dep/generated? [
                     continue
                 ][
@@ -1592,7 +1596,7 @@ Execution: make generator-class [
 
         prepare project
 
-        unless find? [ext-dynamic-class ext-static-class] project/class-name [
+        unless find [ext-dynamic-class ext-static-class] project/class-name [
             either project/generated? [
                 leave
             ][
@@ -1731,7 +1735,7 @@ visual-studio: make generator-class [
         ;dump project
         depends: make block! 8
         for-each dep project/depends [
-            if find? [
+            if find [
                 object-library-class
                 dynamic-library-class
                 static-library-class
@@ -1838,7 +1842,7 @@ visual-studio: make generator-class [
     find-optimization?: func [
         optimization
     ][
-        not find? [0 _ no false off #[false]] optimization
+        not find [0 _ no false off #[false]] optimization
     ]
 
     generate-project: procedure [
@@ -1862,7 +1866,7 @@ visual-studio: make generator-class [
         project/generated?: true
         ;print mold project
 
-        either find? [
+        either find [
             dynamic-library-class
             static-library-class
             application-class
@@ -1920,7 +1924,7 @@ visual-studio: make generator-class [
             ]
             remove back tail-of lib ;move the trailing ";"
 
-            if find? [dynamic-library-class application-class] project/class-name [
+            if find [dynamic-library-class application-class] project/class-name [
                 for-each i project/searches [
                     if i: filter-flag/leading-char i "msc" "" [
                         append searches unspaced [file-to-local i ";"]
@@ -2024,7 +2028,7 @@ visual-studio: make generator-class [
   ] {
     </ClCompile>}
     case [
-        find? [dynamic-library-class application-class] project/class-name [
+        find [dynamic-library-class application-class] project/class-name [
             unspaced [ {
     <Link>
       <AdditionalOptions> /machine:} cpu { %(AdditionalOptions)</AdditionalOptions>
@@ -2044,7 +2048,7 @@ visual-studio: make generator-class [
     </Link>}
             ]
         ]
-        find? [static-library-class object-library-class] project/class-name [
+        find [static-library-class object-library-class] project/class-name [
             unspaced [ {
     <Lib>
       <AdditionalOptions> /machine:} cpu { %(AdditionalOptions)</AdditionalOptions>
@@ -2052,7 +2056,7 @@ visual-studio: make generator-class [
             ]
         ]
         all [
-            find? [entry-class] project/class-name
+            find [entry-class] project/class-name
             project/commands
         ][
             unspaced [ {
@@ -2064,7 +2068,7 @@ visual-studio: make generator-class [
         ]
     ]
     if all [
-        find? words-of project 'post-build-commands
+        find words-of project 'post-build-commands
         project/post-build-commands
     ][
         unspaced [ {
@@ -2167,7 +2171,7 @@ visual-studio: make generator-class [
   use [o refs][
     refs: make string! 1024
     for-each o project/depends [
-        if find? words-of o 'id [
+        if find words-of o 'id [
             unless o/id [o/id: take uuid-pool]
             append refs unspaced [ {    <ProjectReference Include="} o/name {.vcxproj" >
       <Project>} o/id {</Project>
@@ -2226,7 +2230,7 @@ visual-studio: make generator-class [
         ; Project section
         projects: make block! 8
         for-each dep solution/depends [
-            if find? [
+            if find [
                 dynamic-library-class
                 static-library-class
                 object-library-class

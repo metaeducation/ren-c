@@ -586,8 +586,8 @@ pe-format: context [
             word [any-word!]
         ][
             unless any [
-                find? words to word! word
-                find? def to set-word! word
+                find words to word! word
+                find def to set-word! word
             ][
                 append def reduce [to set-word! word]
             ]

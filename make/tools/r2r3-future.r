@@ -237,11 +237,7 @@ proc: func [spec body] [
 ]
 
 
-; No specializations in R3-Alpha, cover simple cases
-;
-find?: func [series value] [
-    true? find :series :value
-]
+did: :to-logic
 
 ; Ren-C replaces the awkward term PAREN! with GROUP!  (Retaining PAREN!
 ; for compatibility as pointing to the same datatype).  Older Rebols

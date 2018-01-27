@@ -10,11 +10,11 @@
 [
     a: 10
     b: 20
-    all? [blank = set [a b] blank | blank? a | blank? b]
+    did all [blank = set [a b] blank | blank? a | blank? b]
 ][
     a: 10
     b: 20
-    all? [
+    did all [
         [x y] = set/single [a b] [x y]
         a = [x y]
         b = [x y]
@@ -24,11 +24,11 @@
     b: 20
     c: 30
     set [a b c] [_ 99]
-    all? [a = _ | b = 99 | c = _]
+    did all [a = _ | b = 99 | c = _]
 ][
     a: 10
     b: 20
     c: 30
     set/some [a b c] [_ 99]
-    all? [a = 10 | b = 99 | c = 30]
+    did all [a = 10 | b = 99 | c = 30]
 ]

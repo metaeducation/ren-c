@@ -475,18 +475,17 @@ unless 'Windows = first system/platform [
         ]
 
         case [
-            find? [language language*] type [
+            find [language language*] type [
                 any [
-                    all [find? ["C" "POSIX"] lang "English"]
+                    all [find ["C" "POSIX"] lang "English"]
                     select iso-639 lang
                 ]
             ]
-            find? [territory territory*] type [
+            find [territory territory*] type [
                 all [territory select iso-3166 territory]
             ]
-            true [
-                fail ["Invalid locale type:" type]
-            ]
+        ] else [
+            fail ["Invalid locale type:" type]
         ]
     ]
 

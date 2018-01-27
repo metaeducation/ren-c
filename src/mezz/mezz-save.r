@@ -112,7 +112,7 @@ save: function [
             append header-data reduce [(quote length:) (true)]
         ]
 
-        unless compress: find? (select header-data 'options) 'compress [
+        unless compress: did find (select header-data 'options) 'compress [
             method: _
         ]
 

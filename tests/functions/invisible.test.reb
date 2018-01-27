@@ -16,14 +16,14 @@
 ][
     pos: _
     val: do/next [1 comment "a" + comment "b" 2 * 3 fail "didn't stop"] 'pos
-    all? [
+    did all [
         val = 1
         pos = [+ comment "b" 2 * 3 fail "didn't stop"]
     ]
 ][
     pos: _
     val: do/next [1 comment "a" comment "b" + 2 * 3 fail "didn't stop"] 'pos
-    all? [
+    did all [
         val = 1
         pos = [+ 2 * 3 fail "didn't stop"] 'pos
     ]
@@ -57,14 +57,14 @@
 [
     unset 'x
     x: 1 + 2 * 3 elide (y: :x)
-    all? [
+    did all [
         x = 9
         not set? 'y
     ]
 ][
     unset 'x
     x: 1 + elide (y: 10) 2 * 3
-    all? [
+    did all [
         x = 9
         y = 10
     ]
@@ -79,7 +79,7 @@
     y: 1 elide [+ 2
     z: 30] + 7
 
-    all? [
+    did all [
         x = 10
         y = 8
         not set? 'z

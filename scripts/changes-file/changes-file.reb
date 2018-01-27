@@ -138,7 +138,7 @@ notable?: function [
         cherry-pick (load-cherry-pick-map)
         related (make block! 0)
 ][
-    if find? related c/commit [return false]    ;; related commits are not notable
+    if find related c/commit [return false]    ;; related commits are not notable
 
     numbers: charset "1234567890"
 

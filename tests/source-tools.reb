@@ -379,7 +379,7 @@ rebsource: context [
             ] else [
                 if any [
                     parse second split-path item ["tmp-" to end]
-                    not find? extensions extension-of item
+                    not find extensions extension-of item
                 ][
                     unset 'item
                 ]
@@ -439,6 +439,6 @@ rebsource: context [
         {Returns true if file should not be analysed.}
         file
     ][
-        find? whitelisted file
+        did find whitelisted file
     ]
 ]

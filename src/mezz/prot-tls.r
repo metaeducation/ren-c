@@ -1332,7 +1332,7 @@ sys/make-scheme [
         ]
 
         open?: func [port [port!]] [
-            all? [port/state open? port/state/connection]
+            port/state and (open? port/state/connection)
         ]
 
         close: func [port [port!] <local> ctx] [

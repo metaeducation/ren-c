@@ -87,7 +87,7 @@
 ;
 [
     x: _
-    all? [
+    did all [
         error? trap [do-all [
             x: 10
                 |
@@ -101,7 +101,7 @@
 
 [
     x: _
-    all? [
+    did all [
         30 = catch [do-all [
             x: 10
                 |

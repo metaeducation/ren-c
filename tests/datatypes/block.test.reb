@@ -14,7 +14,7 @@
 
 [
     data: [a 10 b 20]
-    all? [
+    did all [
         10 = data/a
         10 = select data 'a
         10 = select* data 'a

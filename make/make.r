@@ -66,7 +66,7 @@ for-each [name value] options [
                 ][
                     user-ext: make object! load ext-file
                     unless all [
-                        find? words-of user-ext 'extensions
+                        find words-of user-ext 'extensions
                         block? user-ext/extensions
                     ][
                         fail ["Malformated extension selection file, it needs to be 'EXTENSIONS: []'" (mold user-ext)]
@@ -1306,7 +1306,7 @@ cfg-tcc: _
 case [
     any [
         file? user-config/with-tcc
-        find? [yes on true #[true]] user-config/with-tcc
+        find [yes on true #[true]] user-config/with-tcc
     ][
         tcc-rootdir: either file? user-config/with-tcc [
             first split-path user-config/with-tcc
@@ -1348,7 +1348,7 @@ case [
             %tmp-embedded-header.c
         ]
     ]
-    find? [no off false #[false] _] user-config/with-tcc [
+    find [no off false #[false] _] user-config/with-tcc [
         ;pass
     ]
     true [
@@ -1510,7 +1510,7 @@ for-each [action name modules] user-config/extensions [
                     item/modules
                 ][
                     map-each m item/modules [
-                        if find? modules m/name [
+                        if find modules m/name [
                             m
                         ]
                     ]
@@ -1559,7 +1559,7 @@ add-project-flags: proc [
     /g debug
 ][
     assert [
-        find? [
+        find [
             dynamic-library-class
             object-library-class
             static-library-class
@@ -1620,7 +1620,7 @@ process-module: func [
                     gen-obj/dir s src-dir/extensions/%
                 ]
                 all [object? s
-                    find? [
+                    find [
                         object-library-class
                         object-file-class
                     ] s/class-name
@@ -1644,7 +1644,7 @@ process-module: func [
                         ]
                     ]
                     all [object? lib
-                        find? [
+                        find [
                             ext-dynamic-class
                             ext-static-class
                         ] lib/class-name
@@ -1838,7 +1838,7 @@ add-new-obj-folders: procedure [
 
         for-each obj lib [
             dir: first split-path obj/output
-            unless find? folders dir [
+            unless find folders dir [
                 append folders dir
             ]
         ]

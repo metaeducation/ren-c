@@ -33,8 +33,7 @@
         ;; extra large (500K+)
         data: copy {}
         call/wait/output [%/usr/bin/git "log" {--pretty=format:'[commit: {%h} author: {%an} email: {%ae} date-string: {%ai} summary: {%s}]'}] data
-        and?
-            (length of data) > 500'000
-            find? data "summary: {Initial commit}]"  ;; bottom of log
+        length of data > 500'000 and (find data "summary: {Initial commit}]")
+        ;; bottom of log
     ] else [true] ;; test wasn't run but no way to skip :(
 ]

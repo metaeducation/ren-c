@@ -241,7 +241,7 @@ reword: function [
     case_REWORD: case
     case: :lib/case
 
-    unless into [output: make (type of source) length of source]
+    output: default [make (type of source) length of source]
 
     prefix: _
     suffix: _
@@ -284,7 +284,7 @@ reword: function [
     ; to figure this out based on copying data out of the source series would
     ; need to do a lot of reverse-engineering of the types.
     ;
-    match: _
+    keyword-match: _
 
     ; Note that the enclosing rule has to account for `prefix` and `suffix`,
     ; this just matches the keywords themselves, setting `match` if one did.
@@ -317,7 +317,7 @@ reword: function [
                 ; match necessarily happened, as the enclosing rule may have
                 ; a `suffix` left to take into account.
                 ;
-                as group! compose [match: quote (keyword)]
+                as group! compose [keyword-match: quote (keyword)]
             ]
 
             keep [
@@ -330,8 +330,8 @@ reword: function [
     ; Note that `any-keyword-rule` will look something like:
     ;
     ; [
-    ;     "keyword1" (match: quote keyword1)
-    ;     | "keyword2" (match: quote keyword2)
+    ;     "keyword1" (keyword-match: quote keyword1)
+    ;     | "keyword2" (keyword-match: quote keyword2)
     ;     | fail
     ; ]
 
@@ -372,9 +372,9 @@ reword: function [
                         ;
                         output: insert/part output a b
 
-                        v: select values match
+                        v: select values keyword-match
                         output: insert output case [
-                            function? :v [v :match]
+                            function? :v [v :keyword-match]
                             block? :v [do :v]
                             true [:v]
                         ]
@@ -491,8 +491,11 @@ alter: func [
             append series :value true
         ]
     ]
-    unless? remove (find/(all [case_ALTER ['case]]) series :value) [
-        append series :value ;-- returns true if this branch runs, false if not
+    either remove (find/(all [case_ALTER ['case]]) series :value) [
+        append series :value
+        true
+    ][
+        false
     ]
 ]
 

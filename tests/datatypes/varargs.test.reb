@@ -60,14 +60,14 @@
 
     3 = (value: 1 + 2 <| 30 + 40 x: value  () ())
 
-    all? [value = 3 | x = 3]
+    did all [value = 3 | x = 3]
 ][
     value: ()
     x: ()
 
     70 = (value: 1 + 2 |> 30 + 40 x: value () () ())
 
-    all? [value = 3 | x = 3]
+    did all [value = 3 | x = 3]
 ]
 
 [

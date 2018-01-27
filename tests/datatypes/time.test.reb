@@ -9,7 +9,7 @@
 
 ; small value
 [
-    any? [
+    did any [
         error? try [t: -596522:0:0 - 1:00]
         t = load mold t
     ]
@@ -17,7 +17,7 @@
 
 ; big value
 [
-    any? [
+    did any [
         error? try [t: 596522:0:0 + 1:00]
         t = load mold t
     ]

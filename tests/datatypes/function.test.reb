@@ -309,7 +309,7 @@
 [
     a: func [b] [a: _ c: b]
     f: func [d] [a [d] do c]
-    all? [
+    did all [
         1 = f 1
         error? try [2 = f 2]
     ]

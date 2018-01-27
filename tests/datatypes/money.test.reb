@@ -12,14 +12,14 @@
 ; check, whether these are moldable
 [
     x: $999999999999999
-    any? [
+    did any [
         error? try [x: x + $1]
         not error? try [mold x]
     ]
 ]
 [
     x: -$999999999999999
-    any? [
+    did any [
         error? try [x: x - $1]
         not error? try [mold x]
     ]
@@ -27,7 +27,7 @@
 ; alternative form
 [$1.1 == $1,1]
 [
-    any? [
+    did any [
         error? try [x: $1234567890123456]
         not error? try [mold x]
     ]

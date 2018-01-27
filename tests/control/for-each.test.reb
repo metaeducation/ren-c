@@ -79,18 +79,18 @@
     x: 10
     sum: 0
     for-each x [1 2 3] [sum: sum + x]
-    all? [x = 10 | sum = 6]
+    did all [x = 10 | sum = 6]
 ][
     x: 10
     sum: 0
     for-each 'x [1 2 3] [sum: sum + x]
-    all? [x = 3 | sum = 6]
+    did all [x = 3 | sum = 6]
 ][
     x: 10
     y: 20
     sum: 0
     for-each ['x y] [1 2 3 4] [sum: sum + x + y]
-    all? [x = 3 | y = 20 | sum = 10]
+    did all [x = 3 | y = 20 | sum = 10]
 ]
 
 ; Redundancy is checked for.  LIT-WORD! redundancy is legal because those
@@ -106,7 +106,7 @@
     obj1: make object! [x: 20]
     obj2: make object! [x: 30]
     sum: 0
-    all? [
+    did all [
         error? trap [for-each [x x] [1 2 3 4] [sum: sum + x]]
         error? trap [
             for-each (compose [ ;-- see above

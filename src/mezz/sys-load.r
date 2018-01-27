@@ -87,7 +87,7 @@ mixin?: func [
 ][
     ; Note: Unnamed modules DO NOT default to being mixins.
     if module? mod [mod: meta-of mod]  ; Get the header object
-    all? [
+    did all [
         find select mod 'options 'private
         ; If there are no exports, there's no difference
         block? select mod 'exports
@@ -760,7 +760,7 @@ load-module: function [
                 import [
                     ; /import overrides 'delay option
                 ]
-                not delay [delay: find? hdr/options 'delay]
+                not delay [delay: did find hdr/options 'delay]
             ]
             if hdr/checksum [modsum: copy hdr/checksum]
         ]

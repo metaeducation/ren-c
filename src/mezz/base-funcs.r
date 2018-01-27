@@ -91,7 +91,7 @@ maybe: enfix func [
     <local> gotten
 ][
     ; While DEFAULT requires a BLOCK!, MAYBE does not.  Catch mistakes such
-    ; as `x: maybe [...]` 
+    ; as `x: maybe [...]`
     ;
     if semiquoted? 'value [
         fail/where [
@@ -344,7 +344,7 @@ dig-function-meta-fields: function [value [function!]] [
             ; sensitive to it here.
             ;
             temp: select meta 'return-type
-            if all [not set? 'temp | fields | select? fields 'return-type] [
+            if all [not set? 'temp | fields | select fields 'return-type] [
                 temp: copy fields/return-type
             ]
             :temp
@@ -556,29 +556,10 @@ set*: redescribe [
 )
 
 
-; LOGIC VERSIONS OF CONTROL STRUCTURES
-;
-; Control structures evaluate to either void (if no branches taken) or the
-; last value of any evaluated blocks.  This applies to everything from IF
-; to CASE to WHILE.  The ? versions are tailored to return whether a branch
-; was taken at all, and always return either TRUE or FALSE.
-
-if?: redescribe [
-    {Variation of IF which returns TRUE if the branch runs, FALSE if not}
-](
-    chain [:if | :any-value?]
-)
-
 if*: redescribe [
     {Same as IF/ONLY (void, not blank, if branch evaluates to void)}
 ](
     specialize 'if [only: true]
-)
-
-unless?: redescribe [
-    {Variation of UNLESS which returns TRUE if the branch runs, FALSE if not}
-](
-    chain [:unless | :any-value?]
 )
 
 unless*: redescribe [
@@ -593,28 +574,10 @@ either*: redescribe [
     specialize 'either [only: true]
 )
 
-while?: redescribe [
-    {Variation of WHILE which returns TRUE if the body ever runs, FALSE if not}
-](
-    chain [:while | :any-value?]
-)
-
-case?: redescribe [
-    {Variation of CASE which returns TRUE if any cases run, FALSE if not}
-](
-    chain [:case | :any-value?]
-)
-
 case*: redescribe [
     {Same as CASE/ONLY (void, not blank, if branch evaluates to void)}
 ](
     specialize 'case [only: true]
-)
-
-switch?: redescribe [
-    {Variation of SWITCH which returns TRUE if any cases run, FALSE if not}
-](
-    chain [:switch | :any-value?]
 )
 
 switch*: redescribe [
@@ -633,18 +596,6 @@ catch?: redescribe [
     {Variation of CATCH which returns TRUE if a throw is caught, FALSE if not}
 ](
     specialize 'catch [?: true]
-)
-
-any?: redescribe [
-    {Shortcut OR, ignores voids. Unlike plain ANY, forces result to LOGIC!}
-](
-    chain [:any | :to-value | :to-logic]
-)
-
-all?: redescribe [
-    {Shortcut AND, ignores voids. Unlike plain ALL, forces result to LOGIC!}
-](
-    chain [:all | :to-value | :to-logic]
 )
 
 match: redescribe [
@@ -721,7 +672,7 @@ really: func [
         {Just make sure the value isn't void, pass through BLANK!}
 ][
     ; While DEFAULT requires a BLOCK!, REALLY does not.  Catch mistakes such
-    ; as `x: really [...]` 
+    ; as `x: really [...]`
     ;
     if semiquoted? 'value [
         fail/where [
@@ -741,22 +692,10 @@ really: func [
 really*: specialize 'really [only: true]
 
 
-find?: redescribe [
-    {Variant of FIND that returns TRUE if present and FALSE if not.}
-](
-    chain [:find | :something?]
-)
-
 select: redescribe [
     {Variant of SELECT* that returns BLANK when not found, instead of void}
 ](
     chain [:select* | :to-value]
-)
-
-select?: redescribe [
-    {Variant of SELECT that returns TRUE if a value was selected, else FALSE.}
-](
-    chain [:select | :any-value?]
 )
 
 pick: redescribe [
@@ -774,23 +713,6 @@ take: redescribe [
         specialize 'either-test-value [
             branch: [
                 fail "Can't TAKE from series end (see TAKE* to get void)"
-            ]
-        ]
-    ]
-)
-
-parse?: redescribe [
-    {Variant of PARSE that enforces a TRUE or FALSE result from the rules.}
-](
-    chain [
-        :parse
-            |
-        specialize 'either-test [
-            test: :logic?
-            branch: [
-                fail [
-                    "Rules passed to PARSE? returned non-LOGIC!:" (mold :x)
-                ]
             ]
         ]
     ]

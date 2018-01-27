@@ -32,7 +32,7 @@
         return if i < 15 [30] else [4]
     ]
 
-    a: all? [
+    a: did all [
         30 = c 10
         4 = c 20
     ]

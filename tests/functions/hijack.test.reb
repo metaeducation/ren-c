@@ -6,7 +6,7 @@
 
     old-foo: copy :foo
 
-    all? [
+    did all [
         (old-foo 10) = 11
         hijack 'foo func [x] [(old-foo x) + 20]
         (old-foo 10) = 11
@@ -56,7 +56,7 @@
 
     step10: (two-30 10 20) ; 60
 
-    all? [
+    did all [
         step1 = 60
         step2 = 60
         step3 = 6000

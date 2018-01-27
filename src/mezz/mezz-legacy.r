@@ -735,7 +735,7 @@ set 'r3-legacy* func [<local> if-flags] [
             apply 'lib-set [
                 target: either any-context? target [words of target] [target]
                 value: :value
-                only: any? [set_ANY only]
+                only: set_ANY or (only)
                 some: set_SOME
                 enfix: enfix
             ]
@@ -775,12 +775,12 @@ set 'r3-legacy* func [<local> if-flags] [
 
                 apply 'lib-get [
                     source: words of source
-                    opt: any? [any_GET opt_GET] ;-- will error if voids found
+                    opt: any_GET or (opt_GET) ;-- will error if voids found
                 ]
             ][
                 apply 'lib-get [
                     source: source
-                    opt: any? [any_GET opt_GET]
+                    opt: any_GET or (opt_GET)
                 ]
             ]
         ]
@@ -1092,7 +1092,7 @@ set 'r3-legacy* func [<local> if-flags] [
             return-value
         ][
             apply 'lib/quit [
-                with: any? [with | return]
+                with: with or (return)
                 value: case [with [value] return [return-value]]
             ]
         ])
