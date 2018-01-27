@@ -182,6 +182,11 @@ android: make linux [
     name: 'Android
 ]
 
+emscripten: make posix [
+    name: 'Emscripten
+    exe-suffix: ".js"
+]
+
 osx: make posix [
     name: 'OSX
     dll-suffix: ".dyn"
@@ -243,6 +248,9 @@ set-target-platform: func [
         ]
         osx [
             target-platform: osx
+        ]
+        emscripten [
+            target-platform: emscripten
         ]
     ][
         ;unknown

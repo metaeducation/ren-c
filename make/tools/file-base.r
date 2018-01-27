@@ -302,6 +302,23 @@ os-android: [
     ; linux/dev-signal.c
 ]
 
+os-emscripten: [
+    + generic/host-memory.c
+    + generic/host-gob.c
+
+    posix/host-readline.c
+    posix/dev-stdio.c
+    posix/dev-event.c
+    posix/dev-file.c
+
+    + posix/host-browse.c
+    + posix/host-config.c
+    + posix/host-library.c
+    + posix/host-process.c
+    + posix/host-time.c
+    + posix/host-exec-path.c
+]
+
 boot-files: [
     version.r
 ]
