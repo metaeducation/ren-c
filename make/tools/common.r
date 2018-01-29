@@ -23,6 +23,18 @@ REBOL [
 ; disabled if you *are* running Ren-C (e.g. the tests)
 
 
+;; Repostory meta data.
+;; - Good for keeping fixed paths out of scripts.
+;;
+
+repo: context [
+    root: clean-path %../../
+    source-root: root
+    tools: what-dir
+]
+
+;;
+
 spaced-tab: unspaced [space space space space]
 
 to-c-name: function [

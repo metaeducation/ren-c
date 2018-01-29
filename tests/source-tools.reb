@@ -17,17 +17,17 @@ REBOL [
 
 ren-c-repo: clean-path %../
 
-do ren-c-repo/make/tools/common.r
-do ren-c-repo/make/tools/common-parsers.r
-do ren-c-repo/make/tools/text-lines.reb
-do ren-c-repo/make/tools/read-deep.reb
+do %../make/tools/common.r
+do repo/tools/common-parsers.r
+do repo/tools/text-lines.reb
+do repo/tools/%read-deep.reb
 
 ; rebsource is organised along the lines of a context sensitive vocabulary.
 ;
 
 rebsource: context [
 
-    src-folder: clean-path ren-c-repo
+    src-folder: clean-path repo/source-root
     ; Path to rebol source files.
 
     logfn: func [message][print mold new-line/all compose/only message false]

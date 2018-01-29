@@ -16,7 +16,7 @@ REBOL [
     Needs: 2.100.100
     Purpose: {
         These are some common routines used by the utilities
-        that build the system, which are found in %src/tools/
+        that build and test the system.
     }
 ]
 
