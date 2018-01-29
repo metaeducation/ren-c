@@ -89,6 +89,8 @@ REBNATIVE(eval)
 //          {Value to preload as the left hand-argument (won't reevaluate)}
 //      rest [varargs!]
 //          {The code stream to execute (head element must be enfixed)}
+//      /prefix
+//          {Variant used when rest is prefix (e.g. for MY operator vs. ME)}
 //  ]
 //
 REBNATIVE(eval_enfix)
@@ -125,6 +127,37 @@ REBNATIVE(eval_enfix)
         fail ("EVAL-ENFIX is not made to support MAKE VARARGS! [...] rest");
     }
 
+    if (FRM_AT_END(f) || VAL_TYPE(f->value) != REB_WORD) // no PATH! yet...
+        fail ("ME and MY only work if right hand side starts with WORD!");
+
+    if (f->gotten == END)
+        f->gotten = Get_Opt_Var_Else_End(f->value, f->specifier);
+    else 
+        assert(f->gotten == Get_Opt_Var_Else_End(f->value, f->specifier));
+
+    if (f->gotten == END || NOT(IS_FUNCTION(f->gotten)))
+        fail ("ME and MY only work if right hand WORD! is a FUNCTION!");
+
+    if (GET_VAL_FLAG(f->gotten, VALUE_FLAG_ENFIXED)) {
+        if (REF(prefix))
+            fail ("Use ME instead of MY with infix functions");
+
+        // Already set up to work using our tricky technique.
+    }
+    else {
+        if (NOT(REF(prefix)))
+            fail ("Use MY instead of ME with prefix functions");
+
+        // Here we do something devious.  We subvert the system by setting
+        // f->gotten to an enfixed version of the function even if it is
+        // not enfixed.  This lets us slip in a first argument to a function
+        // *as if* it were enfixed, e.g. `series: my next`.
+        //
+        Move_Value(D_CELL, f->gotten);
+        SET_VAL_FLAG(D_CELL, VALUE_FLAG_ENFIXED);
+        f->gotten = D_CELL;
+    }
+
     // Simulate as if the passed-in value was calculated into the output slot,
     // which is where enfix functions usually find their left hand values.
     //
@@ -139,7 +172,7 @@ REBNATIVE(eval_enfix)
     // the frame of EVAL-ENFIX that is invoking it.
     //
     assert(FS_TOP->deferred == NULL);
-    FS_TOP->deferred = D_OUT;
+    FS_TOP->deferred = m_cast(REBVAL*, BLANK_VALUE); // !!! signal our hack
 
     REBFLGS flags = DO_FLAG_FULFILLING_ARG | DO_FLAG_POST_SWITCH;
     if (Do_Next_In_Subframe_Throws(D_OUT, f, flags))

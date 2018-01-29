@@ -2432,10 +2432,19 @@ post_switch:;
 
     if (f->gotten == END)
         f->gotten = Get_Opt_Var_Else_End(f->value, f->specifier);
-    else
+    else {
+        // !!! a particularly egregious hack in EVAL-ENFIX lets us simulate
+        // enfix for a function whose value is not enfix.  This means the
+        // value in f->gotten isn't the fetched function, but the function
+        // plus a VALUE_FLAG_ENFIXED.  We discern this hacky case by noting
+        // if f->deferred is precisely equal to BLANK_VALUE.
+        //
         assert(
             f->gotten == Get_Opt_Var_Else_End(f->value, f->specifier)
+            || (f->prior && f->prior->deferred == BLANK_VALUE) // !!! for hack
+
         );
+    }
 
 //=//// NEW EXPRESSION IF UNBOUND, NON-FUNCTION, OR NON-ENFIX /////////////=//
 
