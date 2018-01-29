@@ -190,9 +190,13 @@ rebsource: context [
                             ; ... ? (not a native)
                             ;
                             unless (
-                                equal?
-                                proto-parser/proto.id
-                                form to word! proto-parser/data/1
+                                any [
+                                    equal? proto-parser/proto.id (
+                                        form to word! proto-parser/data/1)
+                                    equal? proto-parser/proto.id (
+                                        join-of "RL_"
+                                        form to word! proto-parser/data/1)
+                                ]
                             ) [
                                 line: text-line-of proto-parser/parse.position
                                 emit analysis [
