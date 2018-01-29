@@ -44,7 +44,13 @@ encode-lines: func [
     ; Note: Preserves newline formatting of the block.
 
     ; Encode newlines.
-    replace/all text newline unspaced [newline line-prefix indent]
+    bol: join-of line-prefix indent
+    parse text [
+        any [
+            thru newline pos:
+            [newline (pos: insert pos line-prefix) | (pos: insert pos bol)] :pos
+        ]
+    ]
 
     ; Indent head if original text did not start with a newline.
     pos: insert text line-prefix
@@ -93,7 +99,7 @@ lines-exceeding: function [
     count-line: [
         (
             line: 1 + any [line 0]
-            if line-length < subtract index-of eol index of bol [
+            if line-length < subtract index-of eol index-of bol [
                 append line-list: any [line-list copy []] line
             ]
         )
