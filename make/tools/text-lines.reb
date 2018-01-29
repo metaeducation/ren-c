@@ -116,8 +116,8 @@ text-line-of: function [
     ; No counting performed for empty text.
     ; Line 0 does not exist.
 
-    text: head of position
-    idx: index of position
+    text: head-of position
+    idx: index-of position
     line: 0
 
     advance: [skip (line: line + 1)]
@@ -125,7 +125,7 @@ text-line-of: function [
     parse text [
         any [
             to newline cursor:
-            if (lesser? index? cursor idx)
+            if (lesser? index-of cursor idx)
             advance
         ]
         advance
