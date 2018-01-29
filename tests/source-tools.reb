@@ -19,8 +19,8 @@ ren-c-repo: clean-path %../
 
 do ren-c-repo/make/tools/common.r
 do ren-c-repo/make/tools/common-parsers.r
-do %lib/text-lines.reb
-do %read-deep.reb
+do ren-c-repo/make/tools/text-lines.reb
+do ren-c-repo/make/tools/read-deep.reb
 
 ; rebsource is organised along the lines of a context sensitive vocabulary.
 ;

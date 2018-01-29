@@ -15,32 +15,32 @@ REBOL [
 ]
 
 decode-lines: function [
-    {Decode text previously encoded using a line prefix, e.g. comments (modifies).}
+    {Decode text previously encoded using a line prefix e.g. comments (modifies).}
     text [string!]
-    line-prefix [string!] {Usually "**" or "//".}
-    indent [string!] {Usually "  ".}
+    line-prefix [string! block!] {Usually "**" or "//". Matched using parse.}
+    indent [string! block!] {Usually "  ". Matched using parse.}
 ] [
-    if not parse text [any [line-prefix thru newline]] [
-        fail [{decode-lines expects each line to begin with} (mold line-prefix) { and finish with a newline.}]
+    pattern: compose/only [(line-prefix)]
+    if not empty? indent [append pattern compose/only [opt (indent)]]
+    line: [pos: pattern rest: (rest: remove/part pos rest) :rest thru newline]
+    if not parse text [any line] [
+        fail [
+            {Expected line} (line-of text pos)
+            {to begin with} (mold line-prefix)
+            {and end with newline.}
+        ]
     ]
-    insert text newline
-    replace/all text join-of newline line-prefix newline
-    if not empty? indent [
-        replace/all text join-of newline indent newline
-    ]
-    remove text
-    remove back tail of text
+    remove back tail-of text
     text
 ]
 
 encode-lines: func [
-    {Encode text using a line prefix, e.g. comments (modifies).}
+    {Encode text using a line prefix (e.g. comments).}
     text [string!]
     line-prefix [string!] {Usually "**" or "//".}
     indent [string!] {Usually "  ".}
-    /local bol pos
-] [
-
+    <local> bol pos
+][
     ; Note: Preserves newline formatting of the block.
 
     ; Encode newlines.
@@ -48,10 +48,10 @@ encode-lines: func [
 
     ; Indent head if original text did not start with a newline.
     pos: insert text line-prefix
-    if not equal? newline pos/1 [insert pos indent]
+    if not equal? newline :pos/1 [insert pos indent]
 
     ; Clear indent from tail if present.
-    if indent = pos: skip tail of text 0 - length of indent [clear pos]
+    if indent = pos: skip tail-of text 0 - length-of indent [clear pos]
     append text newline
 
     text
@@ -109,8 +109,8 @@ lines-exceeding: function [
 
 line-from-pos: function [
     {Returns line number of position within text.}
-    text [string! binary!]
-    position [string! binary! integer!]
+    text [string!]
+    position [string! integer!]
 ] [
 
     if integer? position [

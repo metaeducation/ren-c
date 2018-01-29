@@ -21,6 +21,7 @@ REBOL [
 ]
 
 do %c-lexicals.r
+do %text-lines.reb
 
 decode-key-value-text: function [
     {Decode key value formatted text.}
@@ -68,72 +69,6 @@ decode-key-value-text: function [
     new-line/all/skip meta true 2
 ]
 
-
-decode-lines: function [
-    {Decode text previously encoded using a line prefix e.g. comments (modifies).}
-    text [string!]
-    line-prefix [string! block!] {Usually "**" or "//". Matched using parse.}
-    indent [string! block!] {Usually "  ". Matched using parse.}
-] [
-    pattern: compose/only [(line-prefix)]
-    if not empty? indent [append pattern compose/only [opt (indent)]]
-    line: [pos: pattern rest: (rest: remove/part pos rest) :rest thru newline]
-    if not parse text [any line] [
-        fail [
-            {Expected line} (line-of text pos)
-            {to begin with} (mold line-prefix)
-            {and end with newline.}
-        ]
-    ]
-    remove back tail-of text
-    text
-]
-
-
-encode-lines: func [
-    {Encode text using a line prefix (e.g. comments).}
-    text [string!]
-    line-prefix [string!] {Usually "**" or "//".}
-    indent [string!] {Usually "  ".}
-    <local> bol pos
-][
-    ; Note: Preserves newline formatting of the block.
-
-    ; Encode newlines.
-    replace/all text newline unspaced [newline line-prefix indent]
-
-    ; Indent head if original text did not start with a newline.
-    pos: insert text line-prefix
-    if not equal? newline :pos/1 [insert pos indent]
-
-    ; Clear indent from tail if present.
-    if indent = pos: skip tail-of text 0 - length-of indent [clear pos]
-    append text newline
-
-    text
-]
-
-
-line-from-pos: function [
-    {Returns line number of position within text.}
-    text [string!]
-    position [string! integer!]
-] [
-
-    if integer? position [
-        position: at text position
-    ]
-
-    line: _
-
-    count-line: [(line: 1 + any [line 0])]
-
-    parse copy/part text next position [
-        any [to newline skip count-line] skip count-line
-    ]
-
-    line
-]
 
 load-next: function [
     {Load the next value. Return block with value and new position.}
