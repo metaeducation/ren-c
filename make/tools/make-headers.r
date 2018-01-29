@@ -106,7 +106,7 @@ process-conditional: procedure [
 ][
     emitter/emit-line [
         directive
-        ;;; " // " the-file " #" line-from-pos head of dir-position dir-position
+        ;;; " // " the-file " #" text-line-of dir-position
     ]
 
     ; Minimise conditionals for the reader - unnecessary for compilation.

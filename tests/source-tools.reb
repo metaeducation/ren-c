@@ -124,7 +124,7 @@ rebsource: context [
 
                 malloc-check: [
                     and identifier "malloc" (
-                        append malloc-found line-from-pos head of position position
+                        append malloc-found text-line-of position
                     )
                 ]
 
@@ -159,11 +159,11 @@ rebsource: context [
                                     ]
                                     same? position proto-parser/parse.position
                                 ][
-                                    line: line-from-pos data proto-parser/parse.position
+                                    line: text-line-of proto-parser/parse.position
                                     append any [
                                         non-std-func-space
                                         set 'non-std-func-space copy []
-                                    ] line-from-pos data proto-parser/parse.position
+                                    ] text-line-of proto-parser/parse.position
                                 ]
                             ]
                         ]
@@ -179,7 +179,7 @@ rebsource: context [
                                 proto-parser/proto.arg.1
                                 (to-c-name to word! proto-parser/data/1)
                             ) [
-                                line: line-of data proto-parser/parse.position
+                                line: text-line-of proto-parser/parse.position
                                 emit analysis [
                                     id-mismatch
                                     (mold proto-parser/data/1) (file) (line)
@@ -194,7 +194,7 @@ rebsource: context [
                                 proto-parser/proto.id
                                 form to word! proto-parser/data/1
                             ) [
-                                line: line-from-pos data proto-parser/parse.position
+                                line: text-line-of proto-parser/parse.position
                                 emit analysis [
                                     id-mismatch
                                     (mold proto-parser/data/1) (file) (line)
@@ -332,7 +332,7 @@ rebsource: context [
             ][
                 emit analysis [
                     eof-eol-missing (file) (
-                        reduce [line-from-pos data tail of data]
+                        reduce [text-line-of tail of data]
                     )
                 ]
             ]

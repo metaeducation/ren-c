@@ -222,4 +222,5 @@
 %system/file.test.reb
 %system/gc.test.reb
 %call/call.test.reb
+%source/text-lines.test.reb
 %source/analysis.test.reb

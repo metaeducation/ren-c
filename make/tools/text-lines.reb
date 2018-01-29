@@ -25,7 +25,7 @@ decode-lines: function [
     line: [pos: pattern rest: (rest: remove/part pos rest) :rest thru newline]
     if not parse text [any line] [
         fail [
-            {Expected line} (line-of text pos)
+            {Expected line} (text-line-of text pos)
             {to begin with} (mold line-prefix)
             {and end with newline.}
         ]
@@ -107,23 +107,31 @@ lines-exceeding: function [
     line-list
 ]
 
-line-from-pos: function [
+text-line-of: function [
     {Returns line number of position within text.}
-    text [string!]
-    position [string! integer!]
+    position [string!]
 ] [
 
-    if integer? position [
-        position: at text position
+    ; Here newline is considered last character of a line.
+    ; No counting performed for empty text.
+    ; Line 0 does not exist.
+
+    text: head of position
+    idx: index of position
+    line: 0
+
+    advance: [skip (line: line + 1)]
+
+    parse text [
+        any [
+            to newline cursor:
+            if (lesser? index? cursor idx)
+            advance
+        ]
+        advance
     ]
 
-    line: _
-
-    count-line: [(line: 1 + any [line 0])]
-
-    parse copy/part text next position [
-        any [to newline skip count-line] skip count-line
-    ]
-
+    if zero? line [line: _]
+   
     line
 ]

@@ -61,7 +61,7 @@ decode-key-value-text: function [
     
     if not parse text data-fields [
         fail [
-            {Expected key value format on line} (line-of text position)
+            {Expected key value format on line} (text-line-of position)
             {and lines must end with newline.}
         ]
     ]
