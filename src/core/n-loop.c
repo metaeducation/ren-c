@@ -796,7 +796,7 @@ REBNATIVE(forever)
     INCLUDE_PARAMS_OF_FOREVER;
 
     do {
-        const REBOOL only = FALSE;
+        const REBOOL only = TRUE;
         if (Run_Branch_Throws(D_OUT, END, ARG(body), only)) {
             REBOOL stop;
             if (Catching_Break_Or_Continue(D_OUT, &stop)) {
@@ -1368,8 +1368,8 @@ inline static REB_R Loop_While_Until_Core(REBFRM *frame_, REBOOL trigger)
     do {
     skip_check:;
 
-        const REBOOL only = FALSE;
-        if (Run_Branch_Throws(D_OUT, END, ARG(body), only)) {
+        const REBOOL only_true = TRUE; // want actual voids, blanks...
+        if (Run_Branch_Throws(D_OUT, END, ARG(body), only_true)) {
             REBOOL stop;
             if (Catching_Break_Or_Continue(D_OUT, &stop)) {
                 if (stop)
@@ -1458,12 +1458,12 @@ inline static REB_R While_Until_Core(REBFRM *frame_, REBOOL trigger)
 {
     INCLUDE_PARAMS_OF_WHILE;
 
-    const REBOOL only = FALSE; // while/only [cond] [body] is meaningless
-
     assert(IS_END(D_OUT)); // guaranteed by the evaluator
 
     do {
-        if (Run_Branch_Throws(D_CELL, END, ARG(condition), only)) {
+        const REBOOL only_true = TRUE; // need to se void and blank condition
+
+        if (Run_Branch_Throws(D_CELL, END, ARG(condition), only_true)) {
             //
             // A while loop should only look for breaks and continues in its
             // body, not in its condition.  So `while [break] []` is a
@@ -1486,11 +1486,13 @@ inline static REB_R While_Until_Core(REBFRM *frame_, REBOOL trigger)
             return R_OUT_VOID_IF_UNWRITTEN_TRUTHIFY;
         }
 
-        if (Run_Branch_Throws(D_OUT, D_CELL, ARG(body), only)) {
+        const REBOOL only_false = FALSE; // body return should be barified
+
+        if (Run_Branch_Throws(D_OUT, D_CELL, ARG(body), only_false)) {
             REBOOL stop;
             if (Catching_Break_Or_Continue(D_OUT, &stop)) {
                 if (stop)
-                    return R_BLANK;
+                    return R_FALSE; // so ELSE won't run on broken loops...
 
                 continue;
             }

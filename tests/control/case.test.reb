@@ -16,7 +16,7 @@
     #2246
     void? case* [true []]
 ][
-    blank? case [true []]
+    '| = case [true []]
 ]
 
 ; case results

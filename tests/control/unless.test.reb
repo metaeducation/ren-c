@@ -14,7 +14,7 @@
 [void? unless* true [1]]
 [void? unless* false []]
 [void? unless true [1]]
-[blank? unless false []]
+['| = unless false []]
 
 [error? unless false [try [1 / 0]]]
 

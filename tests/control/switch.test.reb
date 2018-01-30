@@ -13,7 +13,7 @@
 ]
 
 [void? switch* 1 [1 []]]
-[blank? switch 1 [1 []]]
+['| = switch 1 [1 []]]
 
 [
     cases: reduce [1 head of insert copy [] try [1 / 0]]

@@ -17,8 +17,11 @@
     while [false] [success: false]
     success
 ]
-; Test break and continue
-[cycle?: true blank? while [cycle?] [break cycle?: false]]
+; Test break and continue (breaks force loop result to false)
+[
+    cycle?: true
+    false = while [cycle?] [break cycle?: false]
+]
 ; Test reactions to break and continue in the condition
 [
     was-stopped: true

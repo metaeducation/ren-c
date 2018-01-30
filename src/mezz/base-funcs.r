@@ -570,12 +570,6 @@ unless*: redescribe [
     specialize 'unless [only: true]
 )
 
-either*: redescribe [
-    {Same as EITHER/ONLY (void, not blank, if branch evaluates to void)}
-](
-    specialize 'either [only: true]
-)
-
 case*: redescribe [
     {Same as CASE/ONLY (void, not blank, if branch evaluates to void)}
 ](
@@ -608,8 +602,8 @@ match: redescribe [
         ; return blank on test failure (can't be plain _ due to "evaluative
         ; bit" rules...should this be changed so exemplars clear the bit?)
         ;
-        branch: []
-        only: false ;-- no /ONLY, hence void branch returns BLANK!
+        branch: [_]
+        only: true ;-- we want to deliberately return BLANK! from the branch
     ][
         if void? :value [ ; !!! TBD: filter this via REDESCRIBE when possible
             fail "Cannot use MATCH on void values (try using EITHER-TEST)"

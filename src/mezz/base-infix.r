@@ -169,7 +169,7 @@ for-each [comparison-op function-name] [
 ; hence these are not meant as a generic substitute for IF and ELSE.
 ;
 ??: enfix func [
-    {If left is true, return value on the right (as-is)}
+    {If left is conditionally true, return value on the right (as-is)}
 
     return: [<opt> any-value!]
         {Void if the condition is FALSEY?, else value}
@@ -190,6 +190,17 @@ for-each [comparison-op function-name] [
     either-test-value/only :left [:right]
 ]
 
+?!: enfix func [
+    {If left is conditionally false, return value on the right (as-is)}
+
+    return: [<opt> any-value!]
+        {Void if the condition is FALSEY?, else value}
+    condition [any-value!]
+    value [<opt> any-value!]
+][
+    unless/only :condition [:value]
+]
+
 
 ; THEN is an enfixed form of IF, which gives a branch running parallel for ??.
 ; Since it has a longer name it may not seem useful--but it can occasionally
@@ -208,39 +219,41 @@ then*: enfix specialize :if [ ;-- THEN/ONLY is a path, can't dispatch infix
 
 
 ; ALSO and ELSE are "non-TIGHTened" enfix functions which either pass through
-; an argument or run a branch, based on void-ness of the argument.  They take
+; an argument or run a branch, based on nothing-ness of a value.  They take
 ; advantage of the pattern of conditionals such as `if condition [...]` to
-; only return void if the branch does not run, and never return void if it
-; does run (void branch evaluations are forced to BLANK!)
+; only return void if the branch does not run, and never return void or blank
+; if it does run (void branch evaluations are forced to FALSE)  Forcing to
+; false also makes them work with ANY and ALL, which use BLANK! as their
+; no-match result.
 ;
 ; These could be implemented as specializations of the generic EITHER-TEST
 ; native.  But due to their common use they are hand-optimized into their own
-; specialized natives: EITHER-TEST-VOID and EITHER-TEST-VALUE.
+; specialized natives: EITHER-TEST-NOTHING and EITHER-TEST-SOMETHING.
 
 also: enfix redescribe [
-    "Evaluate the branch if the left hand side expression is not void"
+    "Evaluate the branch if the left hand side expression isn't void or blank"
 ](
-    comment [specialize 'either-test [test: :void?]]
-    :either-test-void
+    comment [specialize 'either-test [test: :nothing?]]
+    :either-test-nothing
 )
 
 also*: enfix redescribe [
-    "Would be the same as ALSO/ONLY, if infix functions dispatched from paths"
+    "Evaluate branch if left hand side isn't void, return branch result as-is"
 ](
-    specialize 'also [only: true]
+    specialize 'either-test-void [only: true]
 )
 
 else: enfix redescribe [
-    "Evaluate the branch if the left hand side expression is void"
+    "Evaluate the branch if the left hand side expression is void or blank"
 ](
-    comment [specialize 'either-test [test: :any-value?]]
-    :either-test-value
+    comment [specialize 'either-test [test: :something?]]
+    :either-test-something
 )
 
 else*: enfix redescribe [
-    "Would be the same as ELSE/ONLY, if infix functions dispatched from paths"
+    "Evaluate branch if left hand side is void, return branch result as-is"
 ](
-    specialize 'else [only: true]
+    specialize 'either-test-value [only: true]
 )
 
 

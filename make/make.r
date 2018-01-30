@@ -129,7 +129,7 @@ gen-obj: func [
 
     if block? s [
         for-each flag next s [
-            append flags opt switch/default flag [
+            append flags opt switch*/default flag [
                 <no-uninitialized> [
                     [
                         <gnu:-Wno-uninitialized>
@@ -975,7 +975,7 @@ switch user-config/optimize [
 
 cfg-cplusplus: false
 ;standard
-append app-config/cflags opt switch/default user-config/standard [
+append app-config/cflags opt switch*/default user-config/standard [
     c [
         _
     ]
@@ -1048,7 +1048,7 @@ append app-config/cflags opt switch/default user-config/standard [
 ; Example. Mingw32 does not have access to windows console api prior to vista.
 ;
 cfg-pre-vista: false
-append app-config/definitions opt switch/default user-config/pre-vista [
+append app-config/definitions opt switch*/default user-config/pre-vista [
     #[true] yes on true [
         cfg-pre-vista: true
         compose [
@@ -1064,7 +1064,7 @@ append app-config/definitions opt switch/default user-config/pre-vista [
 ]
 
 cfg-rigorous: false
-append app-config/cflags opt switch/default user-config/rigorous [
+append app-config/cflags opt switch*/default user-config/rigorous [
     #[true] yes on true [
         cfg-rigorous: true
         compose [
@@ -1284,7 +1284,7 @@ append app-config/cflags opt switch/default user-config/rigorous [
     fail ["RIGOROUS must be yes, no, or logic! not" (user-config/rigorous)]
 ]
 
-append app-config/ldflags opt switch/default user-config/static [
+append app-config/ldflags opt switch*/default user-config/static [
     _ no off false #[false] [
         ;pass
         _

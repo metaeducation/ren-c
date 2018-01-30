@@ -75,7 +75,7 @@ REBNATIVE(if)
 {
     INCLUDE_PARAMS_OF_IF;
 
-    if (IS_CONDITIONAL_FALSE(ARG(condition), REF(only)))
+    if (IS_CONDITIONAL_FALSE(ARG(condition)))
         return R_VOID;
 
     if (Run_Branch_Throws(D_OUT, ARG(condition), ARG(branch), REF(only)))
@@ -102,7 +102,7 @@ REBNATIVE(unless)
 {
     INCLUDE_PARAMS_OF_UNLESS;
 
-    if (IS_CONDITIONAL_TRUE(ARG(condition), REF(only)))
+    if (IS_CONDITIONAL_TRUE(ARG(condition)))
         return R_VOID;
 
     if (Run_Branch_Throws(D_OUT, ARG(condition), ARG(branch), REF(only)))
@@ -121,21 +121,26 @@ REBNATIVE(unless)
 //      condition [any-value!]
 //      true-branch [block! function!]
 //      false-branch [block! function!]
-//      /only
-//          "If branch runs and returns void, do not convert it to BLANK!"
 //  ]
 //
 REBNATIVE(either)
 {
     INCLUDE_PARAMS_OF_EITHER;
 
+    // Rather than be compatible with the "barification" and other conventions
+    // required to make the mechanics behind IF and ELSE work, EITHER just
+    // returns its branches as-is...providing an anchor for those looking for
+    // a construct that acts just as in Rebol2/R3-Alpha/Red.
+    //
+    const REBOOL only = TRUE;
+
     if (Run_Branch_Throws(
         D_OUT,
         ARG(condition),
-        IS_CONDITIONAL_TRUE(ARG(condition), REF(only))
+        IS_CONDITIONAL_TRUE(ARG(condition))
             ? ARG(true_branch)
             : ARG(false_branch),
-        REF(only)
+        only
     )){
         return R_OUT_IS_THROWN;
     }
@@ -266,6 +271,71 @@ test_failed:
 
 
 //
+//  either-test-nothing: native [
+//
+//  {If value is nothing, return it, otherwise take the branch.}
+//
+//      return: [<opt> any-value!]
+//          {Void if input is void, or branch result (FALSE if nothing)}
+//      value [<opt> any-value!]
+//      branch [block! function!]
+//      /only
+//          "If branch runs and returns nothing, do not convert it to FALSE"
+//  ]
+//
+REBNATIVE(either_test_nothing)
+//
+// Native optimization of `specialize 'either-test [test: :nothing?]`
+// Worth it to write because this is the functionality enfixed as ALSO.
+{
+    INCLUDE_PARAMS_OF_EITHER_TEST_NOTHING;
+
+    if (IS_VOID(ARG(value)))
+        return R_VOID;
+
+    if (IS_BLANK(ARG(value)))
+        return R_BLANK;
+
+    if (Run_Branch_Throws(D_OUT, ARG(value), ARG(branch), REF(only)))
+        return R_OUT_IS_THROWN;
+
+    return R_OUT;
+}
+
+
+//
+//  either-test-something: native [
+//
+//  {If value is something, return it, otherwise take the branch.}
+//
+//      return: [<opt> any-value!]
+//          {Input value if not nothing, or branch result (FALSE if nothing)}
+//      value [<opt> any-value!]
+//      branch [block! function!]
+//      /only
+//          "If branch runs and returns nothing, do not convert it to FALSE"
+//  ]
+//
+REBNATIVE(either_test_something)
+//
+// Native optimization of `specialize 'either-test [test: :any-value?]`
+// Worth it to write because this is the functionality enfixed as ELSE.
+{
+    INCLUDE_PARAMS_OF_EITHER_TEST_SOMETHING;
+
+    if (NOT(IS_VOID(ARG(value))) && NOT(IS_BLANK(ARG(value)))) {
+        Move_Value(D_OUT, ARG(value));
+        return R_OUT;
+    }
+
+    if (Run_Branch_Throws(D_OUT, ARG(value), ARG(branch), REF(only)))
+        return R_OUT_IS_THROWN;
+
+    return R_OUT;
+}
+
+
+//
 //  either-test-void: native [
 //
 //  {If value is void, return void, otherwise take the branch.}
@@ -281,7 +351,7 @@ test_failed:
 REBNATIVE(either_test_void)
 //
 // Native optimization of `specialize 'either-test-value [test: :void?]`
-// Worth it to write because this is the functionality enfixed as ALSO.
+// Worth it to write because this is used by ALSO*.
 {
     INCLUDE_PARAMS_OF_EITHER_TEST_VOID;
 
@@ -310,12 +380,12 @@ REBNATIVE(either_test_void)
 //
 REBNATIVE(either_test_value)
 //
-// Native optimization of `specialize 'either-test-value [test: :any-value?]`
-// Worth it to write because this is the functionality enfixed as ELSE.
+// Native optimization of `specialize 'either-test [test: :any-value?]`
+// Worth it to write because this is used by ELSE* and GET-VALUE
 {
     INCLUDE_PARAMS_OF_EITHER_TEST_VALUE;
 
-    if (!IS_VOID(ARG(value))) {
+    if (NOT(IS_VOID(ARG(value)))) {
         Move_Value(D_OUT, ARG(value));
         return R_OUT;
     }
@@ -550,7 +620,7 @@ static REB_R Case_Choose_Core(
         // code might get more efficient if the data were already in D_OUT.
         //
         if (choose) {
-            if (IS_CONDITIONAL_FALSE(block, only))
+            if (IS_CONDITIONAL_FALSE(block))
                 continue;
 
             Move_Value(out, cell);
@@ -563,7 +633,7 @@ static REB_R Case_Choose_Core(
             if (NOT(IS_FUNCTION(cell)) && NOT(IS_BLOCK(cell)))
                 fail (Error_Invalid_Arg_Raw(cell));
 
-            if (IS_CONDITIONAL_FALSE(block, only))
+            if (IS_CONDITIONAL_FALSE(block))
                 continue;
 
             // Note that block now holds the cached evaluated condition
