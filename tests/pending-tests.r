@@ -452,8 +452,6 @@
 
 ['group! == apply/only :type? [() true]]
 
-;-- CC#2246
-[blank? case [true []]]
 
 ; #1906
 [

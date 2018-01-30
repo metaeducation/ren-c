@@ -198,7 +198,7 @@ load-header: function [
         ]
 
         sum: hdr/checksum [
-            ; blank saved to simplify later code
+            ; !!! "blank saved to simplify later code" -- what?
             blank ;[print sum]
         ]
 
@@ -344,10 +344,10 @@ load: function [
             line: 1
 
             sftype: file-type? source
-            ftype: case [
+            ftype: case* [
                 all [:ftype = 'unbound | :sftype = 'extension] [sftype]
                 type [ftype]
-            ] else [
+            ] else* [
                 sftype
             ]
             data: read-decode source ftype

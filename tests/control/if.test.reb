@@ -12,7 +12,7 @@
 [1 = if true [1]]
 
 [void? if* true []]
-[blank? if true []]
+['| = if true []]
 
 [error? if true [try [1 / 0]]]
 ; RETURN stops the evaluation
@@ -81,7 +81,7 @@
 
 ; recursive behaviour
 
-[blank? if true [if false [1]]]
+['| = if true [if false [1]]]
 [void? if* true [if* false [1]]]
 [1 = if true [if true [1]]]
 

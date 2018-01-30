@@ -406,7 +406,7 @@ try: func [
         "On exception, evaluate code"
     code [block! function!]
 ][
-    either* except [trap/with block :code] [trap block]
+    either except [trap/with block :code] [trap block]
 ]
 
 
@@ -456,7 +456,7 @@ r3-alpha-apply: function [
     using-args: true
 
     until [tail? block] [
-        arg: either* only [
+        arg: either only [
             block/1
             elide (block: next block)
         ][
@@ -777,7 +777,7 @@ set 'r3-legacy* func [<local> if-flags] [
             any_GET: any
             any: :lib/any
 
-            either* any-context? source [
+            either any-context? source [
                 ;
                 ; In R3-Alpha, this was vars of the context put into a BLOCK!:
                 ;

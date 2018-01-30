@@ -1155,11 +1155,13 @@ inline static REBOOL Eval_Value_Core_Throws(
 //     >> case [false "a" false "b"] then func [x] [print x] else [print "*"]
 //     *
 //
-// Also, Ren-C does something called "blankification", unless the /ONLY
-// refinement is used.  This is the process by which a void-producing branch
-// is forced to be a BLANK! instead, allowing void to be reserved for the
-// result when no branch ran.  This gives a uniform way of determining
-// whether a branch ran or not (utilized by ELSE, THEN, etc.)
+// Also, Ren-C does something called "barification", unless the /ONLY
+// refinement is used.  This is the process by which a void or BLANK! branch
+// result is forced to be BAR! instead, allowing void to be reserved for the
+// result when no branch ran, and BLANK! to be reserved by constructs like
+// ANY and ALL to signal failure that can be used in a condition.  This gives
+// a uniform way of determining whether a branch ran or not (utilized by ELSE,
+// THEN, etc.)
 //
 // Note: Tolerance of non-BLOCK! and non-FUNCTION! branches to act as literal
 // values was proven to cause more harm than good.
@@ -1187,8 +1189,8 @@ inline static REBOOL Run_Branch_Throws(
             return TRUE;
     }
 
-    if (NOT(only) && IS_VOID(out))
-        Init_Blank(out); // "blankification", see comment above
+    if (NOT(only) && (IS_VOID(out) || IS_BLANK(out)))
+        Init_Bar(out); // "barification", see comment above
 
     return FALSE;
 }

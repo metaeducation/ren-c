@@ -40,8 +40,8 @@
        b: take args
        either tail? args [b] ["not at end"]
     ]
-    x: make varargs! [_]
-    blank? apply :f [args: x]
+    x: make varargs! [1020]
+    1020 = apply :f [args: x]
 ]
 
 [

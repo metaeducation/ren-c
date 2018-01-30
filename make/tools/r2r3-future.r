@@ -514,7 +514,7 @@ opt: func [
     {Turns blanks to voids, all other value types pass through.}
     value [<opt> any-value!]
 ][
-    either* blank? :value [()] [:value]
+    either blank? :value [()] [:value]
 ]
 
 to-value: func [
