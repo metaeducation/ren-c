@@ -1,5 +1,5 @@
 #
-# .travis.yaml contains YAML-formatted (http://www.yaml.org/) instructions
+# .travis.yml contains YAML-formatted (http://www.yaml.org/) instructions
 # for building Rebol for continuous integration via Travis CI:
 #
 # http://docs.travis-ci.com/
@@ -346,6 +346,22 @@ matrix:
         - ODBC_REQUIRES_LTDL="no"
 
 
+    # Emscripten, Node, debug
+    #
+    - os: osx
+      osx_image: xcode9.1
+      language: c
+      env:
+        - CONFIG=emscripten.r
+        - OS_ID=0.16.1
+        - DEBUG=asserts
+        - STANDARD=c
+        - RIGOROUS=no
+        - STATIC=no
+        - FFI="no"
+        - ODBC_REQUIRES_LTDL="no"
+
+
 # The install step occurs before the `script:` step runs.  The language that
 # was specified in the `matrix:` entry for each instance will guide certain
 # default tools that will be installed.  But you can add custom steps:
@@ -386,6 +402,18 @@ install:
       brew install unixodbc
     fi
 
+  - |
+    if [[ ${OS_ID} = "0.16.1" || ${OS_ID} = "0.16.2" ]]; then
+      wget https://s3.amazonaws.com/mozilla-games/emscripten/releases/emsdk-portable.tar.gz
+      tar xf emsdk-portable.tar.gz 
+      cd emsdk-portable
+      ./emsdk update
+      ./emsdk install latest 2> emsdk.err > emsdk.log
+      ./emsdk activate latest
+      . emsdk_env.sh
+      cd ..
+      echo pwd
+    fi
 
 script:
     # Temporary--looking for llvm symbolizer
@@ -620,9 +648,9 @@ script:
       fi
     - echo ${R3_EXIT_STATUS}
 
-    # Delete the obj file directory so we don't upload those to S3
+    # Delete the obj and prep file directory so we don't upload those to S3
     #
-    - rm -rf objs
+    - rm -rf objs prep
     
     - rm -f makefile*
     - rm -f Toolchain*
@@ -658,7 +686,11 @@ script:
     - |
       if [[ -e "r3.exe" ]]; then
            mv r3.exe ${NEW_NAME}.exe;
-      else
+      fi
+      if [[ -e "r3.js" ]]; then
+           mv r3.js ${NEW_NAME}.js;
+      fi
+      if [[ -e "r3" ]]; then
            mv r3 ${NEW_NAME};
       fi
 
