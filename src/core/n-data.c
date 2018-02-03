@@ -348,7 +348,7 @@ REBOOL Get_Context_Of(REBVAL *out, const REBVAL *v)
             return FALSE;
 
         REBCTX *c;
-        if (n->header.bits & NODE_FLAG_CELL) {
+        if (IS_CELL(n)) {
             REBFRM *f = cast(REBFRM*, n);
             c = Context_For_Frame_May_Reify_Managed(f);
         }

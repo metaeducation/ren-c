@@ -217,9 +217,7 @@ REBNATIVE(near_of)
 {
     INCLUDE_PARAMS_OF_NEAR_OF;
 
-    REBFRM *f = CTX_FRAME_IF_ON_STACK(VAL_CONTEXT(ARG(frame)));
-    if (f == NULL)
-        fail (Error_Frame_Not_On_Stack_Raw());
+    REBFRM *f = CTX_FRAME_MAY_FAIL(VAL_CONTEXT(ARG(frame)));
 
     Init_Near_For_Frame(D_OUT, f);
     return R_OUT;
@@ -239,9 +237,7 @@ REBNATIVE(label_of)
 {
     INCLUDE_PARAMS_OF_LABEL_OF;
 
-    REBFRM *f = CTX_FRAME_IF_ON_STACK(VAL_CONTEXT(ARG(frame)));
-    if (f == NULL)
-        fail (Error_Frame_Not_On_Stack_Raw());
+    REBFRM *f = CTX_FRAME_MAY_FAIL(VAL_CONTEXT(ARG(frame)));
 
     if (f->opt_label == NULL)
         return R_BLANK;
@@ -310,9 +306,7 @@ REBNATIVE(running_q)
 
     REBCTX *frame_ctx = VAL_CONTEXT(ARG(frame));
 
-    REBFRM *f = CTX_FRAME_IF_ON_STACK(frame_ctx);
-    if (f == NULL)
-        return R_FALSE;
+    REBFRM *f = CTX_FRAME_MAY_FAIL(frame_ctx);
 
     if (Is_Function_Frame_Fulfilling(f))
         return R_FALSE;
@@ -335,9 +329,7 @@ REBNATIVE(pending_q)
 
     REBCTX *frame_ctx = VAL_CONTEXT(ARG(frame));
 
-    REBFRM *f = CTX_FRAME_IF_ON_STACK(frame_ctx);
-    if (f == NULL)
-        return R_FALSE;
+    REBFRM *f = CTX_FRAME_MAY_FAIL(frame_ctx);
 
     if (Is_Function_Frame_Fulfilling(f))
         return R_TRUE;

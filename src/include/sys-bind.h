@@ -55,20 +55,77 @@ inline static REBOOL Same_Binding(void *a_ptr, void *b_ptr) {
     REBNOD *b = NOD(b_ptr);
     if (a == b)
         return TRUE;
-    if (a->header.bits & NODE_FLAG_CELL) {
-        if (b->header.bits & NODE_FLAG_CELL)
+    if (IS_CELL(a)) {
+        if (IS_CELL(b))
             return FALSE;
         REBFRM *f_a = cast(REBFRM*, a);
         if (f_a->varlist != NULL && NOD(f_a->varlist) == b)
             return TRUE;
         return FALSE;
     }
-    if (b->header.bits & NODE_FLAG_CELL) {
+    if (IS_CELL(b)) {
         REBFRM *f_b = cast(REBFRM*, b);
         if (f_b->varlist != NULL && NOD(f_b->varlist) == a)
             return TRUE;
         return FALSE;
     }
+    return FALSE;
+}
+
+
+// Tells whether when a FUNCTION! has a binding to a context, if that binding
+// should override the stored binding inside of a WORD! being looked up.
+//
+//    o1: make object! [a: 10 f: does [print a]]
+//    o2: make o1 [a: 20 b: 22]
+//    o3: make o2 [b: 30]
+//
+// In the scenario above, when calling `f` bound to o2 stored in o2, or the
+// call to `f` bound to o3 and stored in o3, the `a` in the relevant objects
+// must be found from the override.  This is done by checking to see if a
+// walk from the derived keylist makes it down to the keylist for a.
+//
+// Note that if a new keylist is not made, it's not possible to determine a
+// "parent/child" relationship.  There is no information stored which could
+// tell that o3 was made from o2 vs. vice-versa.  The only thing that happens
+// is at MAKE-time, o3 put its binding into any functions bound to o2 or o1,
+// thus getting its overriding behavior.
+//
+inline static REBOOL Is_Overriding_Context(REBCTX *stored, REBCTX *override)
+{
+    REBNOD *stored_keysource = LINK(CTX_VARLIST(stored)).keysource;
+    REBNOD *temp = LINK(CTX_VARLIST(override)).keysource;
+
+    // In a FRAME! the "keylist" is actually a paramlist, and the LINK.facade
+    // field is used in paramlists (precluding a LINK.ancestor).  Plus, since
+    // frames are tied to a function they invoke, they cannot be expanded.
+    // For now, deriving from FRAME! is just disabled.
+    //
+    // Use a faster check for REB_FRAME than CTX_TYPE() == REB_FRAME, since
+    // we were extracting keysources anyway. 
+    //
+    if (
+        (
+            stored_keysource->header.bits
+            & (ARRAY_FLAG_PARAMLIST | NODE_FLAG_CELL)
+        ) || (
+            temp->header.bits
+            & (ARRAY_FLAG_PARAMLIST | NODE_FLAG_CELL)
+        )
+    ){
+        return FALSE; // one or the other are actually FRAME!s
+    }
+
+    while (TRUE) {
+        if (temp == stored_keysource)
+            return TRUE;
+
+        if (NOD(LINK(temp).ancestor) == temp)
+            break;
+
+        temp = NOD(LINK(temp).ancestor);
+    }
+
     return FALSE;
 }
 
@@ -258,6 +315,12 @@ struct Reb_Collector {
 //
 // Interface designed to line up with Move_Value()
 //
+// !!! At the moment, there is a fair amount of overlap in this code with
+// Get_Var_Core().  One of them resolves a value's real binding and then
+// fetches it, while the other resolves a value's real binding but then stores
+// that back into another value without fetching it.  This suggests sharing
+// a mechanic between both...TBD.
+//
 
 inline static REBVAL *Derelativize(
     RELVAL *out, // relative destinations are overwritten with specified value
@@ -266,9 +329,26 @@ inline static REBVAL *Derelativize(
 ){
     Move_Value_Header(out, v);
 
-    if (IS_SPECIFIC(v))
-        out->extra = v->extra;
-    else {
+    if (Not_Bindable(v)) {
+        out->extra = v->extra; // extra.binding union field isn't even active
+    }
+    else if (v->extra.binding == UNBOUND) {
+        out->extra.binding = UNBOUND;
+    }
+    else if (IS_CELL(v->extra.binding)) {
+        //
+        // This would happen if we allowed cells to point directly to REBFRM*.
+        // You could only do this safely for frame variables in the case where
+        // that frame wouldn't outlive the frame pointer it was storing...so
+        // it wouldn't count when appending cells to BLOCK!s.
+        //
+        assert(FALSE); // Optimization not yet implemented
+    }
+    else if (v->extra.binding->header.bits & ARRAY_FLAG_PARAMLIST) {
+        //
+        // The stored binding is relative to a function, and so the specifier
+        // needs to be a frame to have a precise invocation to lookup in.
+
         assert(ANY_WORD(v) || ANY_ARRAY(v));
 
     #if !defined(NDEBUG)
@@ -278,7 +358,7 @@ inline static REBVAL *Derelativize(
         }
     #endif
 
-        if (specifier->header.bits & NODE_FLAG_CELL) {
+        if (IS_CELL(specifier)) {
             REBFRM *f = cast(REBFRM*, specifier);
 
         #if !defined(NDEBUG)
@@ -309,6 +389,36 @@ inline static REBVAL *Derelativize(
         #endif
             INIT_BINDING(out, specifier);
         }
+    }
+    else if (specifier == SPECIFIED) { // no potential override
+        assert(v->extra.binding->header.bits & ARRAY_FLAG_VARLIST);
+        out->extra.binding = v->extra.binding;
+    }
+    else {
+        assert(v->extra.binding->header.bits & ARRAY_FLAG_VARLIST);
+
+        REBNOD *f_binding;
+        if (IS_CELL(specifier))
+            f_binding = cast(REBFRM*, specifier)->binding;
+        else {
+            // !!! Repeats code in Get_Var_Core, see explanation there
+            //
+            REBVAL *frame_value = CTX_VALUE(CTX(specifier));
+            assert(IS_FRAME(frame_value));
+            f_binding = frame_value->extra.binding;
+        }
+
+        if (
+            f_binding != UNBOUND
+            && NOT_CELL(f_binding)
+            && Is_Overriding_Context(CTX(v->extra.binding), CTX(f_binding))
+        ){
+            // !!! Repeats code in Get_Var_Core, see explanation there
+            //
+            INIT_BINDING(out, f_binding);
+        }
+        else
+            out->extra.binding = v->extra.binding;
     }
 
     out->payload = v->payload;
@@ -399,12 +509,12 @@ inline static REBVAL *Get_Var_Core(
     const RELVAL *any_word,
     REBSPC *specifier,
     REBFLGS flags
-) {
+){
     assert(ANY_WORD(any_word));
 
     REBNOD *binding = VAL_BINDING(any_word);
 
-    if (binding->header.bits & NODE_FLAG_CELL) {
+    if (IS_CELL(binding)) {
         //
         // DIRECT BINDING: This will be the case hit when a REBFRM* is used
         // in a word's binding.  The frame should still be on the stack.
@@ -441,7 +551,7 @@ inline static REBVAL *Get_Var_Core(
         }
     #endif
 
-        if (specifier->header.bits & NODE_FLAG_CELL) {
+        if (IS_CELL(specifier)) {
             REBFRM *f = cast(REBFRM*, specifier);
 
             assert(Same_Binding(FRM_UNDERLYING(f), binding));
@@ -467,8 +577,52 @@ inline static REBVAL *Get_Var_Core(
     else if (binding->header.bits & ARRAY_FLAG_VARLIST) {
         //
         // SPECIFIC BINDING: The context the word is bound to is explicitly
-        // contained in the `any_word` REBVAL payload.  Just extract it.
+        // contained in the `any_word` REBVAL payload.  Extract it, but check
+        // to see if there is an override via "DERIVED BINDING", e.g.:
         //
+        //    o1: make object [a: 10 f: does [print a]]
+        //    o2: make object [a: 20]
+        //
+        // O2 doesn't copy F's body, but it does tweak a single pointer in the
+        // FUNCTION! value cell (->binding) to point at o2.  When f is called,
+        // the frame captures that pointer, and we take it into account here.
+
+        if (specifier == SPECIFIED) {
+            //
+            // Lookup must be determined solely from bits in the value
+        }
+        else {
+            REBNOD *f_binding;
+            if (IS_CELL(specifier))
+                f_binding = cast(REBFRM*, specifier)->binding;
+            else {
+                // Regardless of whether the frame is still on the stack
+                // or not, the FRAME! value embedded into the REBSER ndoe
+                // should still contain the binding that was inside the cell
+                // of the FUNCTION! that was invoked to make the frame.  See
+                // INIT_BINDING() in Context_For_Frame_May_Reify_Managed().
+                //
+                REBVAL *frame_value = CTX_VALUE(CTX(specifier));
+                assert(IS_FRAME(frame_value));
+                f_binding = frame_value->extra.binding;
+            }
+
+            if (
+                f_binding != UNBOUND
+                && NOT_CELL(f_binding)
+                && Is_Overriding_Context(CTX(binding), CTX(f_binding))
+            ){
+                // The frame's binding overrides--because what's happening is
+                // that this cell came from a function's body, where the
+                // particular FUNCTION! value triggering it held a binding
+                // of a more derived version of the object to which the
+                // instance in the function body refers.
+                //
+                context = CTX(f_binding);
+                goto have_context;
+            }
+        }
+
         // We use VAL_SPECIFIC_COMMON() here instead of the heavy-checked
         // VAL_WORD_CONTEXT(), because const_KNOWN() checks for specificity
         // and the context operations will ensure it's a context.
@@ -511,6 +665,7 @@ inline static REBVAL *Get_Var_Core(
         fail (Error_No_Relative_Core(any_word));
     }
 
+have_context:;
     REBCNT i = VAL_WORD_INDEX(any_word);
     REBVAL *var = CTX_VAR(context, i);
 

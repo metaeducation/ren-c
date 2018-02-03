@@ -173,7 +173,7 @@ REB_R Do_Vararg_Op_May_Throw(
         // parameter.
         //
         assert(
-            NOT(vararg->extra.binding->header.bits & NODE_FLAG_CELL)
+            NOT_CELL(vararg->extra.binding)
             && NOT(vararg->extra.binding->header.bits & ARRAY_FLAG_VARLIST)
         );
         pclass = PARAM_CLASS_NORMAL;
@@ -620,7 +620,7 @@ void MF_Varargs(REB_MOLD *mo, const RELVAL *v, REBOOL form) {
 
     REBFRM *f;
 
-    if (VAL_BINDING(v)->header.bits & NODE_FLAG_CELL) {
+    if (IS_CELL(VAL_BINDING(v))) {
         f = cast(REBFRM*, VAL_BINDING(v));
         goto have_f;
     }

@@ -579,16 +579,24 @@ union Reb_Series_Link {
     // frame...but that prevented the ability to SET-META on a frame.  While
     // that feature may not be essential, it seems awkward to not allow it
     // since it's allowed for other ANY-CONTEXT!s.  Also, it turns out that
-    // FRAME! values have to get their keylist via the specifically applicable
-    // ->phase field anyway, and it's a faster test to check this for
-    // NODE_FLAG_CELL than to separately extract the CTX_TYPE() and treat
-    // frames differently.)
+    // heap-based FRAME! values--such as those that come from MAKE FRAME!--
+    // have to get their keylist via the specifically applicable ->phase field
+    // anyway, and it's a faster test to check this for NODE_FLAG_CELL than to
+    // separately extract the CTX_TYPE() and treat frames differently.)
     //
     // It is done as a base-class REBNOD* as opposed to a union in order to
     // not run afoul of C's rules, by which you cannot assign one member of
     // a union and then read from another.
     //
     REBNOD *keysource;
+
+    // On the keylist of an object, this points at a keylist which has the
+    // same number of keys or fewer, which represents an object which this
+    // object is derived from.  Note that when new object instances are
+    // created which do not require expanding the object, their keylist will
+    // be the same as the object they are derived from.
+    //
+    REBARR *ancestor;
 
     // The facade is a REBARR which is a proxy for the paramlist of the
     // underlying frame which is pushed when a function is called.  For

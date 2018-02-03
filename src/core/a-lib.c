@@ -873,16 +873,12 @@ int RL_rebEvent(REBEVT *evt)
 //
 
 inline static REBFRM *Extract_Live_Rebfrm_May_Fail(const REBVAL *frame) {
-    if (!IS_FRAME(frame))
+    if (NOT(IS_FRAME(frame)))
         fail ("Not a FRAME!");
 
-    REBCTX *frame_ctx = VAL_CONTEXT(frame);
-    REBFRM *f = CTX_FRAME_IF_ON_STACK(frame_ctx);
-    if (f == NULL)
-        fail ("FRAME! is no longer on stack.");
+    REBFRM *f = CTX_FRAME_MAY_FAIL(VAL_CONTEXT(frame));
 
-    assert(Is_Function_Frame(f));
-    assert(NOT(Is_Function_Frame_Fulfilling(f)));
+    assert(Is_Function_Frame(f) && NOT(Is_Function_Frame_Fulfilling(f)));
     return f;
 }
 

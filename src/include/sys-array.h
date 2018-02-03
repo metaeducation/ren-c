@@ -399,11 +399,10 @@ inline static REBARR* Copy_Array_At_Extra_Deep_Managed(
     ROOT_EMPTY_STRING
 
 inline static REBSPC* AS_SPECIFIER(void *p) {
-    assert(p != NULL);
     REBSPC *specifier = cast(REBSPC*, p);
 
 #if !defined(NDEBUG)
-    if (specifier->header.bits & NODE_FLAG_CELL) {
+    if (IS_CELL(specifier)) {
         REBFRM *f = cast(REBFRM*, specifier);
         assert(f->eval_type == REB_FUNCTION);
     }

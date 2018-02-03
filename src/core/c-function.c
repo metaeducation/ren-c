@@ -1660,94 +1660,6 @@ REBOOL Specialize_Function_Throws(
 
 
 //
-//  Clonify_Function: C
-//
-// (A "Clonify" interface takes in a raw duplicate value that one wishes to
-// mutate in-place into a full-fledged copy of the value it is a clone of.
-// This interface can be more efficient than a "source in, dest out" copy...
-// and clarifies the dangers when the source and destination are the same.)
-//
-// !!! Function bodies in R3-Alpha were mutable.  This meant that you could
-// effectively have static data in cases like:
-//
-//     foo: does [static: [] | append static 1]
-//
-// Hence, it was meaningful to be able to COPY a function; because that copy
-// would get any such static state snapshotted at wherever it was in time.
-//
-// Ren-C eliminated this idea.  But functions are still copied in the special
-// case of object "member functions", so that each "derived" object will
-// have functions with bindings to its specific context variables.  Some
-// plans are in the work to use function REBVAL's `binding` parameter to
-// make a lighter-weight way of connecting methods to objects without actually
-// needing to mutate the archetypal REBFUN to do so ("virtual binding").
-//
-void Clonify_Function(REBVAL *value)
-{
-    assert(IS_FUNCTION(value));
-
-    // Function compositions point downwards through their layers in a linked
-    // list.  Each step in the chain has identity, and we need a copied
-    // identity for all steps that require a copy and everything *above* it.
-    // So for instance, although R3-Alpha did not see a need to copy natives,
-    // if you ADAPT a native with code, the adapting Rebol code may need to
-    // take into account new bindings to a derived object...just as the body
-    // to an interpreted function would.
-    //
-    // !!! For the moment, this work is not done...and only functions that
-    // are raw interpreted functions are cloned.  That means old code will
-    // stay compatible but new features won't necessarily work the same way
-    // with object binding.  All of this needs to be rethought in light of
-    // "virtual binding" anyway!
-    //
-    if (!IS_FUNCTION_INTERPRETED(value))
-        return;
-
-    REBFUN *original_fun = VAL_FUNC(value);
-    REBARR *paramlist = Copy_Array_Shallow(
-        FUNC_PARAMLIST(original_fun),
-        SPECIFIED
-    );
-    SET_SER_FLAG(paramlist, ARRAY_FLAG_PARAMLIST);
-    MANAGE_ARRAY(paramlist);
-    ARR_HEAD(paramlist)->payload.function.paramlist = paramlist;
-
-    LINK(paramlist).facade = paramlist;
-
-    // !!! Meta: copy, inherit?
-    //
-    MISC(paramlist).meta = FUNC_META(original_fun);
-
-    REBFUN *new_fun = Make_Function(
-        paramlist,
-        FUNC_DISPATCHER(original_fun),
-        NULL, // no facade (use paramlist)
-        NULL // no specialization exemplar (or inherited exemplar)
-    );
-
-    RELVAL *body = FUNC_BODY(new_fun);
-
-    // Since we rebind the body, we need to instruct the interpreted dispatcher
-    // that it's o.k. to tell the frame lookup that it can find variables
-    // under the "new paramlist".
-    //
-    VAL_RESET_HEADER(body, REB_BLOCK);
-    INIT_VAL_ARRAY(
-        body,
-        Copy_Rerelativized_Array_Deep_Managed(
-            VAL_ARRAY(FUNC_BODY(original_fun)),
-            original_fun,
-            FUN(paramlist)
-        )
-    );
-    VAL_INDEX(body) = 0;
-    INIT_BINDING(body, paramlist); // relative binding
-
-    Move_Value(value, FUNC_VALUE(new_fun));
-}
-
-
-//
 //  REBTYPE: C
 //
 // This handler is used to fail for a type which cannot handle actions.
@@ -2282,7 +2194,7 @@ REB_R Apply_Def_Or_Exemplar(
     Push_Function(f, opt_label, fun, binding);
     f->refine = NULL;
 
-    if (NOT(def_or_exemplar->header.bits & NODE_FLAG_CELL)) {
+    if (NOT_CELL(def_or_exemplar)) {
         //
         // When you DO a FRAME!, it feeds its varlist in to be copied into
         // the stack positions.

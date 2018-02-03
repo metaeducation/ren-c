@@ -333,16 +333,49 @@ void Rebind_Values_Deep(
                 );
             }
         }
-        else if (IS_FUNCTION(v) && IS_FUNCTION_INTERPRETED(v)) {
+        else if (IS_FUNCTION(v)) {
             //
-            // !!! Extremely questionable feature--walking into function
-            // bodies and changing them.  This R3-Alpha concept was largely
-            // broken (didn't work for closures) and created a lot of extra
-            // garbage (inheriting an object's methods meant making deep
-            // copies of all that object's method bodies...each time).
-            // Ren-C has a different idea in the works.
+            // !!! This is a new take on R3-Alpha's questionable feature of
+            // deep copying function bodies and rebinding them when a
+            // derived object was made.  Instead, if a function is bound to
+            // a "base class" of the object we are making, that function's
+            // binding pointer (in the function's value cell) is changed to
+            // be this object.
             //
-            Rebind_Values_Deep(src, dst, VAL_FUNC_BODY(v), opt_binder);
+            REBSPC *binding = VAL_BINDING(v);
+            if (binding == UNBOUND) {
+                //
+                // !!! For starters, we try saying that if a function has no
+                // binding, we default to adding one to the object.  This
+                // could mean that things like `make object! [a: :append]`
+                // will add a useless binding...but, it may still have an
+                // effect if there's a hijacking, and members from this
+                // object get used in the hijacking code.
+                //
+                // This may be the wrong way to do it, and something more
+                // explicit might be needed, via a METHOD type or more complex
+                // mechanism.
+                //
+                INIT_BINDING(v, dst);
+            }
+            else if (IS_CELL(binding)) {
+                //
+                // Direct binding to a REBFRM* (e.g. it may be some kind of
+                // definitional RETURN), don't override that.
+            }
+            else {
+                REBCTX *stored = CTX(binding);
+                if (
+                    NOT(REB_FRAME == CTX_TYPE(stored))
+                    && Is_Overriding_Context(stored, dst)
+                ){
+                    INIT_BINDING(v, dst);
+                }
+                else {
+                    // Could be bound to a reified frame context, or just
+                    // to some other object not related to this derivation.
+                }
+            }
         }
     }
 }

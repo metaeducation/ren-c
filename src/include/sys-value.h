@@ -1692,7 +1692,7 @@ inline static void INIT_BINDING(RELVAL *v, void *p) {
     REBNOD *binding = NOD(p);
 
 #if !defined(NDEBUG)
-    if (binding->header.bits & NODE_FLAG_CELL) {
+    if (IS_CELL(binding)) {
         //
         // !!! This is a good assert but it is limiting the applications of
         // trying to do evaluations into API cells.  Review.
@@ -1762,7 +1762,7 @@ inline static REBVAL *Move_Value(RELVAL *out, const REBVAL *v)
     #if !defined(NDEBUG)
         if (Is_Bindable(v)) {
             if (NOT(v->header.bits & VALUE_FLAG_STACK))
-                assert(NOT(v->extra.binding->header.bits & NODE_FLAG_CELL));
+                assert(NOT_CELL(v->extra.binding));
         }
     #endif
         out->extra = v->extra;
@@ -1773,7 +1773,7 @@ inline static REBVAL *Move_Value(RELVAL *out, const REBVAL *v)
     // binding of some kind.  Check to see if the target stack level will
     // outlive the stack level of the non-reified material in the binding. 
 
-    assert(v->extra.binding->header.bits & NODE_FLAG_CELL);
+    assert(IS_CELL(v->extra.binding));
     REBFRM *f = cast(REBFRM*, v->extra.binding);
 
     REBCNT bind_depth = 1; // !!! need to determine v's binding stack level

@@ -81,7 +81,7 @@ ATTRIBUTE_NO_RETURN void Panic_Value_Debug(const RELVAL *v) {
     printf("Kind=%d\n", cast(int, VAL_TYPE_RAW(v)));
     fflush(stdout);
 
-    if (containing != NULL && NOT(containing->header.bits & NODE_FLAG_CELL)) {
+    if (containing != NULL && NOT_CELL(containing)) {
         printf("Containing series for value pointer found, panicking it:\n");
         Panic_Series_Debug(SER(containing));
     }

@@ -174,13 +174,7 @@ REBNATIVE(make)
         }
         else {
             REBCTX *context = CTX(arg->extra.binding);
-            REBFRM *param_frame = CTX_FRAME_IF_ON_STACK(context);
-
-            // If the VARARGS! has a call frame, then ensure that the call
-            // frame where the VARARGS! originated is still on the stack.
-            //
-            if (param_frame == NULL)
-                fail (Error_Varargs_No_Stack_Raw());
+            REBFRM *param_frame = CTX_FRAME_MAY_FAIL(context);
 
             REBVAL *param = FUNC_FACADE_HEAD(param_frame->phase)
                 + arg->payload.varargs.param_offset;

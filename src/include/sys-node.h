@@ -38,10 +38,30 @@
 inline static REBNOD *NOD(void *p) {
     assert(p != NULL);
 
-    REBNOD *n = cast(REBNOD*, p);
+    REBNOD *node = cast(REBNOD*, p);
     assert(
-        (n->header.bits & NODE_FLAG_NODE)
-        && NOT(n->header.bits & NODE_FLAG_FREE)
+        (node->header.bits & NODE_FLAG_NODE)
+        && NOT(node->header.bits & NODE_FLAG_FREE)
     );
-    return n;
+    return node;
 }
+
+#ifdef NDEBUG
+    inline static REBOOL IS_CELL(REBNOD *node) {
+        return LOGICAL(node->header.bits & NODE_FLAG_CELL);
+    }
+
+    inline static REBOOL NOT_CELL(REBNOD *node) {
+        return NOT(node->header.bits & NODE_FLAG_CELL);
+    }
+#else
+    // We want to get a compile-time check on whether the argument is a
+    // REBNOD (and not, say, a REBSER or REBVAL).  But we don't want to pay
+    // for the function call in debug builds, so only check in release builds.
+    //
+    #define IS_CELL(node) \
+        LOGICAL((node)->header.bits & NODE_FLAG_CELL)
+
+    #define NOT_CELL(node) \
+        NOT((node)->header.bits & NODE_FLAG_CELL)
+#endif

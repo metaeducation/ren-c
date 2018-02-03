@@ -221,13 +221,11 @@ REBNATIVE(return)
     // in the specific FUNCTION! value that was invoked.
     //
     REBFRM *target_frame;
-    if (f->binding->header.bits & NODE_FLAG_CELL) {
+    if (IS_CELL(f->binding)) {
         target_frame = cast(REBFRM*, f->binding);
     }
     else if (f->binding->header.bits & ARRAY_FLAG_VARLIST) {
-        target_frame = CTX_FRAME_IF_ON_STACK(CTX(f->binding));
-        if (target_frame == NULL)
-            fail (Error_Frame_Not_On_Stack_Raw());
+        target_frame = CTX_FRAME_MAY_FAIL(CTX(f->binding));
     }
     else {
         assert(f->binding == UNBOUND);

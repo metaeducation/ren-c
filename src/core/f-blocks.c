@@ -229,8 +229,17 @@ void Clonify_Values_Len_Managed(
         }
         else if (
             types & FLAGIT_KIND(VAL_TYPE(v)) & FLAGIT_KIND(REB_FUNCTION)
-        ) {
-            Clonify_Function(KNOWN(v)); // functions never "relative"
+        ){
+            // !!! While Ren-C has abandoned the concept of copying the body
+            // of functions (they are black boxes which may not *have* a
+            // body), it would still theoretically be possible to do what
+            // COPY does and make a function with a new and independently
+            // hijackable identity.  Assume for now it's better that the
+            // HIJACK of a method for one object will hijack it for all
+            // objects, and one must filter in the hijacking's body if one
+            // wants to take more specific action.
+            //
+            assert(FALSE);
         }
         else {
             // The value is not on our radar as needing to be processed,

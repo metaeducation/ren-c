@@ -208,12 +208,7 @@ REBTYPE(Function)
             // !!! always "deep", allow it?
         }
 
-        // !!! The R3-Alpha theory was that functions could modify "their
-        // bodies" while running, effectively accruing state that one might
-        // want to snapshot.  See notes on Clonify_Function about why that
-        // idea is a bad one.
-        //
-        // Instead we create another handle which executes the same function
+        // Copying functions creates another handle which executes the same
         // code, yet has a distinct identity.  This means it would not be
         // HIJACK'd if the function that it was copied from was.
 

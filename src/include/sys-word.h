@@ -89,10 +89,9 @@ inline static void INIT_WORD_CONTEXT(RELVAL *v, REBCTX *context) {
 inline static REBCTX *VAL_WORD_CONTEXT(const REBVAL *v) {
     assert(IS_WORD_BOUND(v));
     REBNOD *binding = VAL_BINDING(v);
-    if (binding->header.bits & NODE_FLAG_CELL) {
+    if (IS_CELL(binding)) {
         //
-        // Bound specifically to a REBFRM* that isn't reified.  Force
-        // a reification, for now.
+        // Bound directly to un-reified REBFRM*.  Force reification, for now.
         //
         REBFRM *f = cast(REBFRM*, binding);
         return Context_For_Frame_May_Reify_Managed(f);

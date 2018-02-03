@@ -102,6 +102,10 @@ REBCTX *Alloc_Context(enum Reb_Kind kind, REBCNT capacity)
     );
     Init_Unreadable_Blank(Alloc_Tail_Array(keylist));
 
+    // Default the ancestor link to be to this keylist itself.
+    //
+    LINK(keylist).ancestor = keylist;
+
     // varlists link keylists via LINK().keysource, sharable hence managed
 
     INIT_CTX_KEYLIST_UNIQUE(CTX(varlist), keylist);
@@ -136,10 +140,24 @@ REBOOL Expand_Context_Keylist_Core(REBCTX *context, REBCNT delta)
         //
         // Keylists are only typesets, so no need for a specifier.
 
-        keylist = Copy_Array_Extra_Shallow(keylist, SPECIFIED, delta);
+        REBARR *copy = Copy_Array_Extra_Shallow(keylist, SPECIFIED, delta);
 
-        MANAGE_ARRAY(keylist);
-        INIT_CTX_KEYLIST_UNIQUE(context, keylist);
+        // Preserve link to ancestor keylist.  Note that if it pointed to
+        // itself, we update this keylist to point to itself.
+        //
+        // !!! Any extant derivations to the old keylist will still point to
+        // that keylist at the time the derivation was performed...it will not
+        // consider this new keylist to be an ancestor match.  Hence expanded
+        // objects are essentially all new objects as far as derivation are
+        // concerned, though they can still run against ancestor methods.
+        //
+        if (LINK(keylist).ancestor == keylist)
+            LINK(copy).ancestor = copy;
+        else
+            LINK(copy).ancestor = LINK(keylist).ancestor;
+
+        MANAGE_ARRAY(copy);
+        INIT_CTX_KEYLIST_UNIQUE(context, copy);
 
         return TRUE;
     }
@@ -263,6 +281,9 @@ REBCTX *Copy_Context_Shallow_Extra(REBCTX *src, REBCNT extra) {
         SET_SER_FLAG(varlist, ARRAY_FLAG_VARLIST);
 
         dest = CTX(varlist);
+
+        // Leave ancestor link as-is in shared keylist.
+        //
         INIT_CTX_KEYLIST_SHARED(dest, CTX_KEYLIST(src));
     }
     else {
@@ -275,6 +296,9 @@ REBCTX *Copy_Context_Shallow_Extra(REBCTX *src, REBCNT extra) {
         SET_SER_FLAG(varlist, ARRAY_FLAG_VARLIST);
 
         dest = CTX(varlist);
+
+        LINK(keylist).ancestor = CTX_KEYLIST(src);
+
         INIT_CTX_KEYLIST_UNIQUE(dest, keylist);
         MANAGE_ARRAY(CTX_KEYLIST(dest));
     }
@@ -811,10 +835,24 @@ REBCTX *Make_Selfish_Context_Detect(
     // else, so it could probably be inlined here and it would be more
     // obvious what's going on.
     //
-    if (opt_parent != NULL && keylist == CTX_KEYLIST(opt_parent))
-        INIT_CTX_KEYLIST_SHARED(context, keylist);
-    else
+    if (opt_parent == NULL) {
         INIT_CTX_KEYLIST_UNIQUE(context, keylist);
+        LINK(keylist).ancestor = keylist;
+    }
+    else {
+        if (keylist == CTX_KEYLIST(opt_parent)) {
+            INIT_CTX_KEYLIST_SHARED(context, keylist);
+
+            // We leave the ancestor link as-is in the shared keylist--so
+            // whatever the parent had...if we didn't have to make a new
+            // keylist.  This means that an object may be derived, even if you
+            // look at its keylist and its ancestor link points at itself.
+        }
+        else {
+            INIT_CTX_KEYLIST_UNIQUE(context, keylist);
+            LINK(keylist).ancestor = CTX_KEYLIST(opt_parent);
+        }
+    }
 
     // context[0] is an instance value of the OBJECT!/PORT!/ERROR!/MODULE!
     //
@@ -826,11 +864,8 @@ REBCTX *Make_Selfish_Context_Detect(
 
     ++var;
 
-    // !!! For Ren-C we probably want to go with void default intead of
-    // blanks.  Also the filling of parent vars will overwrite the work here.
-    //
-    for (; len > 1; --len, ++var) // 1 is rootvar (context), already done
-        Init_Blank(var);
+    for (; len > 1; --len, ++var) // [0] is rootvar (context), already done
+        Init_Void(var);
 
     if (opt_parent != NULL) {
         //
@@ -1016,7 +1051,10 @@ REBARR *Context_To_Array(REBCTX *context, REBINT mode)
 //
 REBCTX *Merge_Contexts_Selfish(REBCTX *parent1, REBCTX *parent2)
 {
-    assert(CTX_TYPE(parent1) == CTX_TYPE(parent2));
+    if (parent2 != NULL) {
+        assert(CTX_TYPE(parent1) == CTX_TYPE(parent2));
+        fail ("Multiple inheritance of object support removed from Ren-C");
+    }
 
     // Merge parent1 and parent2 words.
     // Keep the binding table.
@@ -1057,6 +1095,11 @@ REBCTX *Merge_Contexts_Selfish(REBCTX *parent1, REBCTX *parent2)
     REBARR *keylist = Copy_Array_Shallow(BUF_COLLECT, SPECIFIED);
     MANAGE_ARRAY(keylist);
     Init_Unreadable_Blank(ARR_HEAD(keylist)); // Currently no rootkey usage
+
+    if (parent1 == NULL)
+        LINK(keylist).ancestor = keylist;
+    else
+        LINK(keylist).ancestor = CTX_KEYLIST(parent1);
 
     REBARR *varlist = Make_Array_Core(ARR_LEN(keylist), ARRAY_FLAG_VARLIST);
     MISC(varlist).meta = NULL; // GC sees this, it must be initialized

@@ -263,7 +263,7 @@ inline static void Queue_Mark_Binding_Deep(const RELVAL *v) {
     REBNOD *binding = v->extra.binding;
 
 #if !defined(NDEBUG)
-    if (binding->header.bits & NODE_FLAG_CELL) {
+    if (IS_CELL(binding)) {
         // assert(GET_VAL_FLAG(v, VALUE_FLAG_STACK));
 
         REBFRM *f = cast(REBFRM*, binding);
@@ -297,7 +297,7 @@ inline static void Queue_Mark_Binding_Deep(const RELVAL *v) {
     }
 #endif
 
-    if (NOT(binding->header.bits & NODE_FLAG_CELL))
+    if (NOT_CELL(binding))
         Queue_Mark_Array_Subclass_Deep(ARR(binding));
 }
 
@@ -792,7 +792,7 @@ static void Propagate_All_GC_Marks(void)
             // to Queue_Mark_Context_Deep.
 
             REBNOD *keysource = LINK(a).keysource;
-            if (keysource->header.bits & NODE_FLAG_CELL) {
+            if (IS_CELL(keysource)) {
                 //
                 // Must be a FRAME! and it must be on the stack running.  If
                 // it has stopped running, then the keylist must be set to
@@ -812,10 +812,16 @@ static void Propagate_All_GC_Marks(void)
                     // has to be a FUNCTION!.
                     //
                     assert(IS_FUNCTION(ARR_HEAD(keylist)));
+
+                    // Frames use paramlists as their "keylist", there is no
+                    // place to put an ancestor link.
                 }
                 else {
                     assert(NOT_SER_FLAG(keylist, ARRAY_FLAG_PARAMLIST));
                     ASSERT_UNREADABLE_IF_DEBUG(ARR_HEAD(keylist));
+
+                    REBARR *ancestor = LINK(keylist).ancestor;
+                    Queue_Mark_Array_Subclass_Deep(ancestor); // maybe keylist
                 }
                 Queue_Mark_Array_Subclass_Deep(keylist);
             }
@@ -1093,7 +1099,7 @@ static void Mark_Guarded_Nodes(void)
     REBCNT n = SER_LEN(GC_Guarded);
     for (; n > 0; --n, ++np) {
         REBNOD *node = *np;
-        if (node->header.bits & NODE_FLAG_CELL) { // a value cell
+        if (IS_CELL(node)) { // a value cell
             if (NOT(node->header.bits & NODE_FLAG_END))
                 Queue_Mark_Opt_Value_Deep(cast(REBVAL*, node));
         }
@@ -1161,7 +1167,7 @@ static void Mark_Frame_Stack_Deep(void)
                 Mark_Rebser_Only(cast(REBSER*, Singular_From_Cell(f->value)));
         }
 
-        if (NOT(f->specifier->header.bits & NODE_FLAG_CELL)) {
+        if (NOT_CELL(f->specifier)) {
             assert(
                 f->specifier == SPECIFIED
                 || (f->specifier->header.bits & ARRAY_FLAG_VARLIST)
@@ -1643,7 +1649,7 @@ REBCNT Recycle(void)
 void Guard_Node_Core(const REBNOD *node)
 {
 #if !defined(NDEBUG)
-    if (node->header.bits & NODE_FLAG_CELL) {
+    if (IS_CELL(node)) {
         //
         // It is a value.  Cheap check: require that it already contain valid
         // data when the guard call is made (even if GC isn't necessarily

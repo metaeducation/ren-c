@@ -148,9 +148,7 @@ REBNATIVE(set_location_of_error)
     else
         context = VAL_CONTEXT(ARG(location));
 
-    REBFRM *where = CTX_FRAME_IF_ON_STACK(context);
-    if (where == NULL)
-        fail (Error_Frame_Not_On_Stack_Raw());
+    REBFRM *where = CTX_FRAME_MAY_FAIL(context);
 
     REBCTX *error = VAL_CONTEXT(ARG(error));
     Set_Location_Of_Error(error, where);

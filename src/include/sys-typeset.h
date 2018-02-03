@@ -295,7 +295,7 @@ inline static void INIT_VAL_PARAM_CLASS(RELVAL *v, enum Reb_Param_Class c) {
     ((TS_ARRAY | TS_CONTEXT) & ~TS_NOT_COPIED)
 
 #define TS_CLONE \
-    ((TS_SERIES | FLAGIT_KIND(REB_FUNCTION)) & ~TS_NOT_COPIED)
+    (TS_SERIES & ~TS_NOT_COPIED) // currently same as TS_NOT_COPIED
 
 #define TS_ANY_WORD \
     (FLAGIT_KIND(REB_WORD) \

@@ -93,7 +93,7 @@ inline static REBCTX *CTX(void *p) {
 // possible--even in an unoptimized build.  Use VAL_TYPE_RAW, plain C cast.
 //
 inline static REBARR *CTX_KEYLIST(REBCTX *c) {
-    if (NOT(LINK(CTX_VARLIST(c)).keysource->header.bits & NODE_FLAG_CELL)) {
+    if (NOT_CELL(LINK(CTX_VARLIST(c)).keysource)) {
         //
         // Ordinarily, we want to use the keylist pointer that is stored in
         // the link field of the varlist.
@@ -173,6 +173,13 @@ inline static REBFRM *CTX_FRAME_IF_ON_STACK(REBCTX *c) {
     //
     assert(f->eval_type == REB_FUNCTION && f->phase != NULL);
 
+    return f;
+}
+
+inline static REBFRM *CTX_FRAME_MAY_FAIL(REBCTX *c) {
+    REBFRM *f = CTX_FRAME_IF_ON_STACK(c);
+    if (f == NULL)
+        fail (Error_Frame_Not_On_Stack_Raw());
     return f;
 }
 

@@ -61,7 +61,7 @@ inline static REBOOL Is_Block_Style_Varargs(
     assert(IS_VARARGS(vararg));
 
     if (
-        (vararg->extra.binding->header.bits & NODE_FLAG_CELL)
+        IS_CELL(vararg->extra.binding)
         || (vararg->extra.binding->header.bits & ARRAY_FLAG_VARLIST)
     ){
         TRASH_POINTER_IF_DEBUG(*shared_out);
@@ -90,7 +90,7 @@ inline static REBOOL Is_Frame_Style_Varargs_May_Fail(
     assert(IS_VARARGS(vararg));
 
     if (
-        NOT(vararg->extra.binding->header.bits & NODE_FLAG_CELL)
+        NOT_CELL(vararg->extra.binding)
         && NOT(vararg->extra.binding->header.bits & ARRAY_FLAG_VARLIST)
     ){
         TRASH_POINTER_IF_DEBUG(*f);
@@ -100,14 +100,10 @@ inline static REBOOL Is_Frame_Style_Varargs_May_Fail(
     // "Ordinary" case... use the original frame implied by the VARARGS!
     // (so long as it is still live on the stack)
 
-    if (vararg->extra.binding->header.bits & NODE_FLAG_CELL) {
+    if (IS_CELL(vararg->extra.binding))
         *f = cast(REBFRM*, vararg->extra.binding);
-    }
-    else {
-        *f = CTX_FRAME_IF_ON_STACK(CTX(vararg->extra.binding));
-        if (*f == NULL)
-            fail (Error_Varargs_No_Stack_Raw());
-    }
+    else
+        *f = CTX_FRAME_MAY_FAIL(CTX(vararg->extra.binding));
 
     return TRUE;
 }

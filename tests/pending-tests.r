@@ -651,21 +651,20 @@
 ; bug#1675
 [files: read %fixtures mold files block? files]
 
-; empty string rule
-; bug#1880
-; NOTE: It would seem that considering this a match violates the "parse
-; must make progress" rule.
-[parse "12" ["" to end]]
+; !!! Considering empty strings a match would violate the "parse rules must
+; advance input" rule.  Yet this seems like it should work (?)
+[
+    #1880
+    parse "12" ["" to end]
+]
 
-; bug#2214
-[not parse "abcd" rule: ["ab" (clear rule) "cd"]]
-
-; !!! The general issue of tying up Rebol with more notions of equality
-; without getting the existing ones right is suspect.  Ren-C simplified matters
-; and left EQUIV? as a synonym for EQUAL? at the present time, with the option
-; that it may be a form of equality that returns in the future.
-;
-; With EQUIV? as a synonym for EQUAL, the following test (whatever it was
-; supposed to test) started to fail.
-;
-[not equiv? 'a use [a] ['a]]
+; !!! Multiple inheritance was removed from Ren-C.  It was not well defined,
+; and won't work with derived binding unless more work is done...and that work
+; would involve defining exactly what it is supposed to do in the first place.
+[
+    #1863
+    o1: make object! [a: 1 f: does [a]]
+    o2: make object! [a: 2]
+    o3: make o1 o2
+    2 == o3/f
+]

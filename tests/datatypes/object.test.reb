@@ -64,14 +64,6 @@
     p: make o [a: 3]
     1 == do p/c
 ]
-; multiple inheritance
-; bug#1863
-[
-    o1: make object! [a: 1 f: does [a]]
-    o2: make object! [a: 2]
-    o3: make o1 o2
-    2 == o3/f
-]
 ; appending to objects
 ; bug#1979
 [

@@ -311,6 +311,11 @@ REBCTX *Context_For_Frame_May_Reify_Managed(REBFRM *f)
     VAL_RESET_HEADER(rootvar, REB_FRAME);
     rootvar->payload.any_context.varlist = f->varlist;
     rootvar->payload.any_context.phase = f->phase;
+
+    // The binding on the rootvar is important...this is how Get_Var_Core()
+    // can know what the binding in the FUNCTION! value that spawned the
+    // frame, even after the frame is expired.
+    //
     INIT_BINDING(rootvar, f->binding);
 
     // A reification of a frame for native code should not allow changing
