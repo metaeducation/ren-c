@@ -37,7 +37,7 @@
         Enable diagnostics. Most of the extra size in this mode is
         due to the storage of various strings that are used.
 */
-#undef CONFIG_BIGINT_DEBUG
+#undef CONFIG_SSL_FULL_MODE
 
 /*
         CONFIG_BIGINT_CLASSICAL

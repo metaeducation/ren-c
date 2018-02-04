@@ -124,7 +124,7 @@ void bi_terminate(BI_CTX *ctx)
 
     if (ctx->active_count != 0)
     {
-#ifdef CONFIG_BIGINT_DEBUG
+#ifdef CONFIG_SSL_FULL_MODE
         printf("bi_terminate: there were %d un-freed bigints\n",
                        ctx->active_count);
 #endif
@@ -181,7 +181,7 @@ void bi_permanent(bigint *bi)
     check(bi);
     if (bi->refs != 1)
     {
-#ifdef CONFIG_BIGINT_DEBUG
+#ifdef CONFIG_SSL_FULL_MODE
         printf("bi_permanent: refs was not 1\n");
 #endif
         abort();
@@ -199,7 +199,7 @@ void bi_depermanent(bigint *bi)
     check(bi);
     if (bi->refs != PERMANENT)
     {
-#ifdef CONFIG_BIGINT_DEBUG
+#ifdef CONFIG_SSL_FULL_MODE
         printf("bi_depermanent: bigint was not permanent\n");
 #endif
         abort();
@@ -234,7 +234,7 @@ void bi_free(BI_CTX *ctx, bigint *bi)
 
     if (--ctx->active_count < 0)
     {
-#ifdef CONFIG_BIGINT_DEBUG
+#ifdef CONFIG_SSL_FULL_MODE
         printf("bi_free: active_count went negative "
                 "- double-freed bigint?\n");
 #endif
@@ -407,7 +407,7 @@ bigint *bi_divide(BI_CTX *ctx, bigint *u, bigint *v, int is_mod)
     quotient = alloc(ctx, m+1);
     tmp_u = alloc(ctx, n+1);
     v = trim(v);        /* make sure we have no leading 0's */
-    d = (comp)((long_comp)COMP_RADIX/(((long_comp)V1)+1));
+    d = (comp)((long_comp)COMP_RADIX/(V1+1));
 
     /* clear things to start with */
     memset(quotient->comps, 0, ((quotient->size)*COMP_BYTE_SIZE));
@@ -510,8 +510,6 @@ bigint *bi_divide(BI_CTX *ctx, bigint *u, bigint *v, int is_mod)
  */
 static bigint *bi_int_divide(BI_CTX *ctx, bigint *biR, comp denom)
 {
-    (void)ctx; // !!! Not used?
-
     int i = biR->size - 1;
     long_comp r = 0;
 
@@ -644,9 +642,9 @@ bigint *bi_import(BI_CTX *ctx, const uint8_t *data, int size)
     return trim(biR);
 }
 
-#ifdef CONFIG_BIGINT_DEBUG
+#ifdef CONFIG_SSL_FULL_MODE
 /**
- * @brief The testharness uses this code to import text hex-streams and
+ * @brief The testharness uses this code to import text hex-streams and 
  * convert them into bigints.
  * @param ctx [in]  The bigint session context.
  * @param data [in] A string consisting of hex characters. The characters must
@@ -752,7 +750,7 @@ buf_done:
 void bi_set_mod(BI_CTX *ctx, bigint *bim, int mod_offset)
 {
     int k = bim->size;
-    comp d = (comp)((long_comp)COMP_RADIX/(((long_comp)bim->comps[k-1])+1));
+    comp d = (comp)((long_comp)COMP_RADIX/(bim->comps[k-1]+1));
 #ifdef CONFIG_BIGINT_MONTGOMERY
     bigint *R, *R2;
 #endif
@@ -1101,7 +1099,7 @@ static bigint *alloc(BI_CTX *ctx, int size)
 
         if (biR->refs != 0)
         {
-#ifdef CONFIG_BIGINT_DEBUG
+#ifdef CONFIG_SSL_FULL_MODE
             printf("alloc: refs was not 0\n");
 #endif
             abort();    /* create a stack trace from a core dump */
