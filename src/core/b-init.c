@@ -469,6 +469,7 @@ static void Init_Function_Tags(void)
     Init_Function_Tag(ROOT_OPT_TAG, "opt");
     Init_Function_Tag(ROOT_END_TAG, "end");
     Init_Function_Tag(ROOT_LOCAL_TAG, "local");
+    Init_Function_Tag(ROOT_SKIP_TAG, "skip");
 }
 
 
@@ -802,13 +803,14 @@ static void Init_Root_Vars(void)
     Init_Char(ROOT_NEWLINE_CHAR, '\n');
 
     // BUF_UTF8 not initialized, can't init function tags yet
-    //(at least not how Init_Function_Tags() is written)
+    // (at least not how Init_Function_Tags() is written)
     //
     Init_Unreadable_Blank(ROOT_WITH_TAG);
     Init_Unreadable_Blank(ROOT_ELLIPSIS_TAG);
     Init_Unreadable_Blank(ROOT_OPT_TAG);
     Init_Unreadable_Blank(ROOT_END_TAG);
     Init_Unreadable_Blank(ROOT_LOCAL_TAG);
+    Init_Unreadable_Blank(ROOT_SKIP_TAG);
 
     // Evaluator not initialized, can't do system construction yet
     //

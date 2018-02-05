@@ -21,3 +21,24 @@
     ]
     foo = 5
 ]
+
+
+; doubles as a test for <skip>
+[
+    test: func [f [<skip> file!] b [block!] i [integer!]] [
+        reduce [
+            either set? 'f [f] [blank]
+            b
+            i
+        ]
+    ]
+    
+    sp-test: specialize 'test [b: [x y z]]
+
+    all? [
+        [_ [x y z] 10] = test [x y z] 10
+        [%foo.txt [x y z] 10] = test %foo.txt [x y z] 10
+        [_ [x y z] 10] = sp-test 10
+        [%foo.txt [x y z] 10] = sp-test %foo.txt 10
+    ]
+]

@@ -209,6 +209,22 @@ enum Reb_Param_Class {
 //
 #define TYPESET_FLAG_ENDABLE TYPESET_FLAG(3)
 
+// "Skippability" is an experimental feature which allows a function to
+// specify that if an argument isn't the right type, it should just be skipped
+// and jump to the next one.  e.g.:
+//
+//     emit: func [file [<skip> file!] block [block!]] [...]
+//
+//     emit [a b c]
+//     emit %foo.txt [a b c]
+//
+// As with <end>, this is something that can be done with variadics.  But
+// standardizing this in the function prototype language makes it possible
+// to use conventional APPLY operations, and provides better documentation.
+//
+#define TYPESET_FLAG_SKIPPABLE TYPESET_FLAG(4)
+
+
 // Operations when typeset is done with a bitset (currently all typesets)
 
 #define VAL_TYPESET_BITS(v) ((v)->payload.typeset.bits)

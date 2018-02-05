@@ -187,6 +187,15 @@ REBOOL Update_Typeset_Bits_Core(
             //
             SET_VAL_FLAG(typeset, TYPESET_FLAG_ENDABLE);
         }
+        else if (keywords && IS_TAG(item) && (
+                0 == Compare_String_Vals(item, ROOT_SKIP_TAG, TRUE)
+            )
+        ){
+            // <skip> is an experiment for ignoring values where the type
+            // does not match, and just going on to the next argument.
+            //
+            SET_VAL_FLAG(typeset, TYPESET_FLAG_SKIPPABLE);
+        }
         else if (
             IS_BLANK(item) || (keywords && IS_TAG(item) && (
                 0 == Compare_String_Vals(item, ROOT_OPT_TAG, TRUE)

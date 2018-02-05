@@ -1356,8 +1356,88 @@ reevaluate:;
             }
 
             if (NOT_VAL_FLAG(f->param, TYPESET_FLAG_VARIADIC)) {
-                if (NOT(TYPE_CHECK(f->param, VAL_TYPE(f->arg))))
-                    fail (Error_Arg_Type(f, f->param, VAL_TYPE(f->arg)));
+                if (NOT(TYPE_CHECK(f->param, VAL_TYPE(f->arg)))) {
+                    if (
+                        NOT_VAL_FLAG(f->param, TYPESET_FLAG_SKIPPABLE)
+                        || LOGICAL(f->flags.bits & DO_FLAG_APPLYING)
+                        || f->special == f->arg
+                    ){
+                        fail (Error_Arg_Type(f, f->param, VAL_TYPE(f->arg)));
+                    }
+
+                    // !!! Experimental feature!  <skip> parameters.  If we
+                    // are doing ordinary fulfillment (and not type checking
+                    // or applying) which do not type match will be rolled
+                    // over into a valid subsequent argument.
+                    //
+                    assert(IS_END(f->out));
+                    assert(IS_END(&f->cell));
+                    Move_Value(f->out, f->arg);
+                    Move_Value(&f->cell, const_KNOWN(f->param));
+                    Init_Void(f->arg);
+                    while (TRUE) {
+                        ++f->arg;
+                        if (IS_END(f->arg))
+                            fail ("<skip> argument rolled over to end");
+
+                        ++f->param;
+                        pclass = VAL_PARAM_CLASS(f->param);
+                        if (pclass == PARAM_CLASS_REFINEMENT) {
+                            //
+                            // You don't want to have a LOGIC! variable
+                            // being interpreted as "take this refinement".
+                            // Also, f->refine would need to be updated.
+                            //
+                            fail ("<skip> argument rolled into refinement");
+                        }
+
+                        // Specialization already incremented on usage, so
+                        // f->special points to what we should be considering.
+                        // No worries about refinement revocation since voids
+                        // do not mean that, due to check above that we are
+                        // not applying...
+                        //
+                        if (f->special != NULL) {
+                            if (IS_VOID(f->special))
+                                ++f->special;
+                            else {
+                                Prep_Stack_Cell(f->arg);
+                                Move_Value(f->arg, f->special);
+                                ++f->special;
+
+                                // !!! Need better factoring of type checking
+                                // if <skip> feature is to be kept, so that
+                                // varargs type checking works properly.
+                                //
+                                if (TYPE_CHECK(f->param, VAL_TYPE(f->arg)))
+                                    continue;
+
+                                fail (Error_Arg_Type(
+                                    f, f->param, VAL_TYPE(f->arg)
+                                ));
+                            }
+                        }
+
+                        break;
+                    }
+
+                    // !!! This may be stricter than it needs to be, but the
+                    // fundamental idea is that if the argument being skipped
+                    // was evaluated, then the one you roll into can't be
+                    // quoted...because any side-effects from the evaluation
+                    // already happened.  It may be possible for a failed
+                    // quote to roll over to an evaluated parameter, but the
+                    // code isn't set up for that.
+                    //
+                    if (VAL_PARAM_CLASS(&f->cell) != pclass)
+                        fail ("<skip> argument rolled to mismatched class");
+
+                    Prep_Stack_Cell(f->arg);
+                    Move_Value(f->arg, f->out);
+                    SET_END(f->out);
+                    SET_END(&f->cell);
+                    goto check_arg;
+                }
             }
             else {
                 // Varargs are odd, because the type checking doesn't
