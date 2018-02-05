@@ -324,8 +324,7 @@ static REBNATIVE(rsa)
                 dataBuffer,
                 data_len,
                 BIN_HEAD(binary),
-                REF(private) ? 1 : 0,
-                padding ? 1 : 0
+                REF(private) ? 1 : 0
             )
         ){
             bi_free(rsa_ctx->bi_ctx, data_bi);

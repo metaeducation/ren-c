@@ -34,6 +34,8 @@
  * RC4 declarations
  **************************************************************************/
 
+#define CONFIG_SSL_USE_PKCS12 1
+
 typedef struct
 {
     uint8_t x, y, m[256];

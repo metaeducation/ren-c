@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, Cameron Rich
+ * Copyright (c) 2007-2016, Cameron Rich
  *
  * All rights reserved.
  *
@@ -200,7 +200,6 @@ void AES_set_key(AES_CTX *ctx, const uint8_t *key,
             return;
     }
 
-    ctx->key_mode = AES_MODE_ENCRYPT; //default mode
     ctx->rounds = i;
     ctx->key_size = words;
     W = ctx->ks;
@@ -256,8 +255,6 @@ void AES_convert_key(AES_CTX *ctx)
 {
     int i;
     uint32_t *k,w,t1,t2,t3,t4;
-
-    ctx->key_mode = AES_MODE_DECRYPT; //change mode
 
     k = ctx->ks;
     k += 4;
@@ -315,11 +312,11 @@ void AES_cbc_encrypt(AES_CTX *ctx, const uint8_t *msg, uint8_t *out, int length)
 void AES_cbc_decrypt(AES_CTX *ctx, const uint8_t *msg, uint8_t *out, int length)
 {
     int i;
-    uint32_t tin[4], xxor[4], tout[4], data[4], iv[4];
+    uint32_t tin[4], xor[4], tout[4], data[4], iv[4];
 
     memcpy(iv, ctx->iv, AES_IV_SIZE);
     for (i = 0; i < 4; i++)
-        xxor[i] = ntohl(iv[i]);
+        xor[i] = ntohl(iv[i]);
 
     for (length -= 16; length >= 0; length -= 16)
     {
@@ -338,8 +335,8 @@ void AES_cbc_decrypt(AES_CTX *ctx, const uint8_t *msg, uint8_t *out, int length)
 
         for (i = 0; i < 4; i++)
         {
-            tout[i] = data[i]^xxor[i];
-            xxor[i] = tin[i];
+            tout[i] = data[i]^xor[i];
+            xor[i] = tin[i];
             out_32[i] = htonl(tout[i]);
         }
 
@@ -348,7 +345,7 @@ void AES_cbc_decrypt(AES_CTX *ctx, const uint8_t *msg, uint8_t *out, int length)
     }
 
     for (i = 0; i < 4; i++)
-        iv[i] = htonl(xxor[i]);
+        iv[i] = htonl(xor[i]);
     memcpy(ctx->iv, iv, AES_IV_SIZE);
 }
 
