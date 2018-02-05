@@ -152,7 +152,7 @@ inline static REB_R Vararg_Op_If_No_Advance(
 //
 REB_R Do_Vararg_Op_May_Throw(
     REBVAL *out,
-    RELVAL *vararg,
+    const RELVAL *vararg,
     enum Reb_Vararg_Op op
 ){
 #if !defined(NDEBUG)
@@ -192,9 +192,7 @@ REB_R Do_Vararg_Op_May_Throw(
     if (Is_Block_Style_Varargs(&shared, vararg)) {
         //
         // We are processing an ANY-ARRAY!-based varargs, which came from
-        // either a MAKE VARARGS! on an ANY-ARRAY! value -or- from a
-        // MAKE ANY-ARRAY! on a varargs (which reified the varargs into an
-        // array during that creation, flattening its entire output).
+        // a MAKE VARARGS! on an ANY-ARRAY! value
 
         opt_vararg_frame = NULL;
         arg = NULL; // no corresponding varargs argument either
@@ -220,8 +218,8 @@ REB_R Do_Vararg_Op_May_Throw(
                 VAL_INDEX(shared),
                 VAL_SPECIFIER(shared),
                 pclass == PARAM_CLASS_NORMAL
-                    ? DO_FLAG_FULFILLING_ARG
-                    : DO_FLAG_FULFILLING_ARG | DO_FLAG_NO_LOOKAHEAD
+                    ? DO_FLAG_VARIADIC_TAKE
+                    : DO_FLAG_VARIADIC_TAKE | DO_FLAG_NO_LOOKAHEAD
             );
 
             // Note: Do_Next_In_Subframe_Throws() is not needed here because
@@ -296,17 +294,27 @@ REB_R Do_Vararg_Op_May_Throw(
         //
         switch (pclass) {
         case PARAM_CLASS_NORMAL:
-            if (Do_Next_In_Subframe_Throws(out, f, DO_FLAG_FULFILLING_ARG))
+            f->flags.bits &= ~DO_FLAG_AMBIGUOUS_DEFER; // see flag notes
+            if (Do_Next_In_Subframe_Throws(out, f, DO_FLAG_VARIADIC_TAKE))
                 return R_OUT_IS_THROWN;
+            if (FS_TOP->flags.bits & DO_FLAG_AMBIGUOUS_DEFER) {
+                f->flags.bits |= DO_FLAG_AMBIGUOUS_DEFER;
+                FS_TOP->flags.bits &= ~DO_FLAG_AMBIGUOUS_DEFER;
+            }
             break;
 
         case PARAM_CLASS_TIGHT:
+            f->flags.bits &= ~DO_FLAG_AMBIGUOUS_DEFER; // see flag notes
             if (Do_Next_In_Subframe_Throws(
                 out,
                 f,
-                DO_FLAG_FULFILLING_ARG | DO_FLAG_NO_LOOKAHEAD
+                DO_FLAG_VARIADIC_TAKE | DO_FLAG_NO_LOOKAHEAD
             )){
                 return R_OUT_IS_THROWN;
+            }
+            if (FS_TOP->flags.bits & DO_FLAG_AMBIGUOUS_DEFER) {
+                f->flags.bits |= DO_FLAG_AMBIGUOUS_DEFER;
+                FS_TOP->flags.bits &= ~DO_FLAG_AMBIGUOUS_DEFER;
             }
             break;
 

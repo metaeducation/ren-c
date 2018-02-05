@@ -197,38 +197,37 @@ REBOOL Do_Or_Dont_Shared_Throws(
 
     REBVAL *position;
     if (IS_VARARGS(source)) {
-        if (Is_Block_Style_Varargs(&position, source)) {
-            //
-            // We can execute the array, but we must "consume" elements out
-            // of it (e.g. advance the index shared across all instances)
-            // This is done by the REB_BLOCK case, which we jump to.
-            //
-            // !!! If any VARARGS! op does not honor the "locked" flag on the
-            // array during execution, there will be problems if it is TAKE'n
-            // or DO'd while this operation is in progress.
-            //
-            goto do_and_update_position;
+        //
+        // !!! Initially this would be optimized code that would just run the
+        // frame normally vs. go through the Do_Vararg_Op() logic one step
+        // at a time.  However, there was a desire to make a 2-arg function
+        // behave the same as a variadic which happened to decide to take
+        // two arguments, else error.  Doing this requires detection of
+        // "ambiguous deferments", and for the moment code setting that flag
+        // is in the Do_Vararg_Op_May_Throw(), and the code receiving it is
+        // when the variadic function itself is off the stack.  Rather than
+        // repeat the logic, we just call the vararg machinery in a loop
+        // here...at the cost of creating a new frame for each step in a
+        // BLOCK!-based varargs.
+        //
+        Init_Void(out); // should DO-ing a finished VARARGS! error, or void?
+        while (TRUE) {
+            REB_R r = Do_Vararg_Op_May_Throw(out, source, VARARG_OP_TAIL_Q);
+            assert(r == R_TRUE || r == R_FALSE); // cannot throw
+            if (r == R_TRUE)
+                break;
+
+            r = Do_Vararg_Op_May_Throw(out, source, VARARG_OP_TAKE);
+            if (r == R_OUT_IS_THROWN)
+                return TRUE;
+            if (r == R_VOID)
+                Init_Void(out);
+            else
+                assert(r == R_OUT);
+
+            if (NOT(flags & DO_FLAG_TO_END))
+                break;
         }
-
-        REBFRM *f;
-        if (NOT(Is_Frame_Style_Varargs_May_Fail(&f, source)))
-            panic(source); // Frame is the only other type
-
-        // Pretty much by definition, we are in the middle of a function call
-        // in the frame the varargs came from.  It's still on the stack, and
-        // we don't want to disrupt its state.  Use a subframe.
-        //
-        if (FRM_AT_END(f))
-            Init_Void(out);
-        else if (Do_Next_In_Subframe_Throws(out, f, flags))
-            return TRUE;
-
-        // The variable passed in /NEXT is just set to the vararg itself,
-        // which has its positioning updated automatically by virtue of the
-        // evaluation performing a "consumption" of VARARGS! content.
-        //
-        if (NOT(IS_BLANK(var)))
-            Move_Value(Sink_Var_May_Fail(var, SPECIFIED), source);
 
         return FALSE;
     }
@@ -236,9 +235,6 @@ REBOOL Do_Or_Dont_Shared_Throws(
         Move_Value(temp, source);
         position = temp;
     }
-
-do_and_update_position:
-    assert(IS_BLOCK(position) || IS_GROUP(position));
 
     REBIXO indexor = Do_Array_At_Core(
         out,

@@ -133,6 +133,15 @@
 #define DO_FLAG_7_IS_FALSE FLAGIT_LEFT(7) // NOT(NODE_FLAG_CELL)
 
 
+//=//// DO_FLAG_FULFILLING_SET ////////////////////////////////////////////=//
+//
+// Similar to DO_FLAG_FULFILLING_ARG, this allows evaluator sensitivity to
+// noticing when a frame is being used to fulfill a SET-WORD! or a SET-PATH!
+//
+#define DO_FLAG_FULFILLING_SET \
+    FLAGIT_LEFT(8)
+
+
 //=//// DO_FLAG_FULFILLING_ARG ////////////////////////////////////////////=//
 //
 // Deferred lookback operations need to know when they are dealing with an
@@ -140,17 +149,55 @@
 // be `(summation 1 2 3) |> 100` and not `summation 1 2 (3 |> 100)`.  This
 // also means that `add 1 <| 2` will act as an error.
 //
+// Note that variadics should not pass DO_FLAG_FULFILLING_ARG, rather they
+// should use DO_FLAG_VARIADIC_TAKE instead.
+//
 #define DO_FLAG_FULFILLING_ARG \
-    FLAGIT_LEFT(8)
-
-
-//=//// DO_FLAG_FULFILLING_SET ////////////////////////////////////////////=//
-//
-// Similar to DO_FLAG_FULFILLING_ARG, this allows evaluator sensitivity to
-// noticing when a frame is being used to fulfill a SET-WORD! or a SET-PATH!
-//
-#define DO_FLAG_FULFILLING_SET \
     FLAGIT_LEFT(9)
+
+
+//=//// DO_FLAG_VARIADIC_TAKE /////////////////////////////////////////////=//
+//
+// Due to "trickery", left-normal enfix is able to notice when a left hand
+// expression can be completed, and defer to that completion.
+//
+//     if condition [print "A"] else [print "B"]
+//
+//     if not condition print ["A"] else [print "B"]
+//
+// The "one complete evaluation" rule allows NOT to run in this circumstance,
+// but it doesn't try to run the incomplete IF.  This mechanic involves the
+// REBFRM->deferred member and DO_FLAG_FULFILLING_ARG.
+//
+// Variadics face a problem, though, since it's not known in advance how many
+// arguments they plan to take.  Imagine that IF were variadic, and taking
+// the block as its second argument.  ELSE doesn't know it's not going to
+// take a third.
+//
+// For purposes of rigor, what's done is to treat a variadic TAKE always as
+// if more arguments will be requested later.  But if that behavior leads an
+// enfix normal function to complete, that is remembered...and then if another
+// argument is *not* taken after that, an error is reported at that time,
+// which will force disambiguation via a GROUP! one way or the other at the
+// callsite.  This means something like:
+//
+//    do [all-true-variadic? 1 = 1 2 = 2 3 = 3] ;-- error, ambiguous
+//    do [all-true-variadic? 1 = 1 2 = 2 (3 = 3)] ;-- ok
+//    do [(all-true-variadic? 1 = 1 2 = 2 3) = 3] ;-- ok
+//    do [all-true-variadic? 1 = 1 2 = 2 add 1 2 = 3] ;-- not ambiguous
+//
+#define DO_FLAG_VARIADIC_TAKE \
+    FLAGIT_LEFT(10)
+
+
+//=//// DO_FLAG_AMBIGUOUS_DEFER ///////////////////////////////////////////=//
+//
+// This flag is used in conjunction with DO_FLAG_VARIADIC_TAKE, allowing a
+// frame to be marked with a bit if the last variadic take had a potentially
+// ambiguous 
+
+#define DO_FLAG_AMBIGUOUS_DEFER \
+    FLAGIT_LEFT(11)
 
 
 //=//// DO_FLAG_EXPLICIT_EVALUATE /////////////////////////////////////////=//
@@ -167,7 +214,7 @@
 // !!! This feature is in the process of being designed.
 //
 #define DO_FLAG_EXPLICIT_EVALUATE \
-    FLAGIT_LEFT(10)
+    FLAGIT_LEFT(12)
 
 
 //=//// DO_FLAG_NO_LOOKAHEAD //////////////////////////////////////////////=//
@@ -183,7 +230,7 @@
 // adds this flag to its argument gathering call.
 //
 #define DO_FLAG_NO_LOOKAHEAD \
-    FLAGIT_LEFT(11)
+    FLAGIT_LEFT(13)
 
 
 //=//// DO_FLAG_NATIVE_HOLD ///////////////////////////////////////////////=//
@@ -207,7 +254,7 @@
 // the reification happens.
 //
 #define DO_FLAG_NATIVE_HOLD \
-    FLAGIT_LEFT(12)
+    FLAGIT_LEFT(14)
 
 
 //=//// DO_FLAG_NEUTRAL ///////////////////////////////////////////////////=//
@@ -222,7 +269,7 @@
 // GROUP!s should not be executed, and may wind up just serving that purpose.
 //
 #define DO_FLAG_NEUTRAL \
-    FLAGIT_LEFT(13)
+    FLAGIT_LEFT(15)
 
 
 //=//// DO_FLAG_SET_PATH_ENFIXED //////////////////////////////////////////=//
@@ -236,7 +283,7 @@
 // a frame used with SET-PATH! semantics to make its final assignment enfix.
 //
 #define DO_FLAG_SET_PATH_ENFIXED \
-    FLAGIT_LEFT(14)
+    FLAGIT_LEFT(16)
 
 
 //=//// DO_FLAG_VALUE_IS_INSTRUCTION //////////////////////////////////////=//
@@ -255,7 +302,7 @@
 // duration that f->value points into the singular array's data.
 //
 #define DO_FLAG_VALUE_IS_INSTRUCTION \
-    FLAGIT_LEFT(15)
+    FLAGIT_LEFT(17)
 
 
 
@@ -265,7 +312,7 @@
 // information in a platform aligned position of the frame.
 //
 #ifdef CPLUSPLUS_11
-    static_assert(15 < 32, "DO_FLAG_XXX too high");
+    static_assert(17 < 32, "DO_FLAG_XXX too high");
 #endif
 
 

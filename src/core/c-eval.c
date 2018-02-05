@@ -2583,22 +2583,34 @@ post_switch:;
     //
     if (
         GET_VAL_FLAG(f->gotten, FUNC_FLAG_DEFERS_LOOKBACK)
-        && (f->flags.bits & DO_FLAG_FULFILLING_ARG)
-        && f->prior->deferred == NULL
         && f->deferred == NULL
     ){
-        assert(NOT(f->flags.bits & DO_FLAG_TO_END));
-        assert(Is_Function_Frame_Fulfilling(f->prior));
+        if (
+            (f->flags.bits & DO_FLAG_FULFILLING_ARG)
+            && f->prior->deferred == NULL
+        ){
+            assert(NOT(f->flags.bits & DO_FLAG_TO_END));
+            assert(Is_Function_Frame_Fulfilling(f->prior));
 
-        f->prior->deferred = f->out; // see remarks on deferred in REBFRM
+            f->prior->deferred = f->out; // see remarks on deferred in REBFRM
 
-        // Leave the enfix operator pending in the frame, and it's up to the
-        // parent frame to decide whether to use DO_FLAG_POST_SWITCH to jump
-        // back in and finish fulfilling this arg or not.  If it does resume
-        // and we get to this check again, f->prior->deferred can't be NULL,
-        // otherwise it would be an infinite loop.
-        //
-        goto finished;
+            // Leave enfix operator pending in the frame, and it's up to the
+            // parent frame to decide whether to use DO_FLAG_POST_SWITCH to
+            // jump back in and finish fulfilling this arg or not.  If it does
+            // resume and we get to this check again, f->prior->deferred can't
+            // be NULL, otherwise it would be an infinite loop.
+            //
+            goto finished;
+        }
+        else if (f->flags.bits & DO_FLAG_VARIADIC_TAKE) {
+            //
+            // We assume all variadic arg TAKEs don't defer, but this can
+            // lead to ambiguity.  Set this bit, which each variadic TAKE will
+            // clear before running, and the bit is checked when the function
+            // completes.
+            //
+            f->prior->flags.bits |= DO_FLAG_AMBIGUOUS_DEFER;
+        }
     }
 
     f->deferred = NULL;

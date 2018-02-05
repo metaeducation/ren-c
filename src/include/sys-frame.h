@@ -531,6 +531,16 @@ inline static void Drop_Function_Core(
     REBFRM *f,
     REBOOL drop_chunks
 ){
+    if (f->flags.bits & DO_FLAG_AMBIGUOUS_DEFER) {
+        //
+        // This failure will call back into Drop_Function_Core, which may
+        // not be the best design...but for the moment we go with it.  So
+        // the flag has to be cleared to prevent an infinite loop.
+        //
+        f->flags.bits &= ~DO_FLAG_AMBIGUOUS_DEFER;
+        fail ("Ambiguous variadic deferment");
+    }
+
     assert(
         f->opt_label == NULL
         || GET_SER_FLAG(f->opt_label, SERIES_FLAG_UTF8_STRING)

@@ -77,8 +77,17 @@
 ]
 
 [
-    2 = (1 |> 2 | 3 + 4 | 5 + 6)
+    11 = (1 |> 2 | 3 + 4 | 5 + 6)
 ][
-    1 = (1 <| 2 | 3 + 4 | 5 + 6)
+    1 = (3 + 4 | 5 + 6 | 1 <| 2)
 ]
 
+[
+    error? trap [(|> 1 + 1 true = false) = 2] ;-- ambiguous deferment
+][
+    (|> 1 + 1 (true = false)) = 2 ;-- ok
+][
+    (|> 1 + 1 false) = 2 ;-- ok
+][
+    did |> not true = false
+]
