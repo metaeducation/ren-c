@@ -1,0 +1,6 @@
+[equal? charset #"*" charset 42]
+[equal? charset #"*" charset {*}]
+[equal? charset #"*" charset #{2A}]
+[equal? charset #"*" charset [42]]
+[equal? charset #"*" charset [{*}]]
+[equal? charset #"*" charset [#{2A}]]

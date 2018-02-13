@@ -90,24 +90,6 @@ remold: func [
 ]
 
 
-charset: function [
-    "Makes a bitset of chars for the parse function."
-    chars [string! block! binary! char! integer!]
-    /length "Preallocate this many bits"
-    len [integer!] "Must be > 0"
-][
-    ;-- CHARSET function historically has a refinement called /LENGTH, that
-    ;-- is used to preallocate bits.  Yet the LENGTH? function has been
-    ;-- changed to use just the word LENGTH.  We could change this to
-    ;-- /CAPACITY SIZE or something similar, but keep it working for now.
-    ;--
-    length_CHARSET: length      ; refinement passed in
-    unset 'length               ; helps avoid overlooking the ambiguity
-
-    either length_CHARSET [append make bitset! len chars] [make bitset! chars]
-]
-
-
 array: func [
     "Makes and initializes a series of a given size."
     size [integer! block!] "Size or block of sizes for each dimension"

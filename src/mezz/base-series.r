@@ -166,6 +166,28 @@ append-of: redescribe [
 )
 
 
+; CHARSET was moved from "Mezzanine" because it is called by TRIM which is
+; in "Base" - see TRIM.
+;
+charset: function [
+    "Makes a bitset of chars for the parse function."
+    chars [string! block! binary! char! integer!]
+    /length "Preallocate this many bits"
+    len [integer!] "Must be > 0"
+][
+    ;-- CHARSET function historically has a refinement called /LENGTH, that
+    ;-- is used to preallocate bits.  Yet the LENGTH? function has been
+    ;-- changed to use just the word LENGTH.  We could change this to
+    ;-- /CAPACITY SIZE or something similar, but keep it working for now.
+    ;--
+    length_CHARSET: length      ; refinement passed in
+    unset 'length               ; helps avoid overlooking the ambiguity
+
+    init: either length_CHARSET [len][[]]
+    append make bitset! init chars
+]
+
+
 ; TRIM is used by PORT! implementations, which currently rely on "Base" and
 ; not "Mezzanine", so this can't be in %mezz-series at the moment.  Review.
 ;
