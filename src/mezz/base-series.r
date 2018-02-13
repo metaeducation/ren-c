@@ -208,7 +208,7 @@ trim: function [
         {Removes all whitespace}
     /with
         {Same as /all, but removes characters in 'str'}
-    str [char! string! binary! integer!]
+    str [char! string! binary! integer! block! bitset!]
 ][
     tail_TRIM: :tail
     tail: :lib/tail
@@ -255,7 +255,27 @@ trim: function [
         ]
 
         any-string? series [
-            rule: make bitset! if with [str] else [reduce [space tab]]
+            ; These are errors raised by the C version of TRIM in R3-Alpha.
+            ; One could question why /with implies /all.
+            ;
+            if any [
+                all [
+                    auto
+                    any [head_TRIM tail_TRIM lines]
+                ]
+                all [
+                    any [all_TRIM with]
+                    any [auto head_TRIM tail_TRIM lines]
+                ]
+            ][
+                fail "Invalid refinements for TRIM of STRING!"
+            ]
+
+            rule: either with [
+                either bitset? str [str] [charset str]
+            ][
+                charset reduce [space tab]
+            ]
 
             if any [all_TRIM lines head_TRIM tail_TRIM] [append rule newline]
         ]
@@ -265,23 +285,11 @@ trim: function [
                 fail "Invalid refinements for TRIM of BINARY!"
             ]
 
-            rule: case [
-                with and (binary? str) [
-                    ;
-                    ; !!! MAKE BITSET! of a BINARY! doesn't treat it as a set
-                    ; of bytes, rather as the raw data underlying a bitset.
-                    ; Work around it by using MAKE BITSET! on an array of
-                    ; integer! values.
-                    ;
-                    ; !!! Can't use COLLECT because that's in "Mezzanine" and
-                    ; this is in "Base".  Review these locations.
-                    ;
-                    array: make block! length of str
-                    for-each b str [append array b]
-                    make bitset! array
-                ]
-                with [make bitset! str]
-            ] else [#{00}]
+            rule: either with [
+                either bitset? str [str] [charset str]
+            ][
+                #{00}
+            ]
 
             if not any [head_TRIM tail_TRIM] [
                 head_TRIM: tail_TRIM: true ;-- plain TRIM => TRIM/HEAD/TAIL
@@ -330,7 +338,7 @@ trim: function [
     if auto [
         parse series [
             (indent: 0)
-            s: rule e:
+            s: some rule e:
             (indent: (index of e) - (index of s))
         ]
     ]
