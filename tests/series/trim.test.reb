@@ -10,11 +10,27 @@
 [#{BFD3} = trim #{0000BFD30000}]
 [#{10200304} = trim/with #{AEAEAE10200304BDBDBD} #{AEBD}]
 
+; Incompatible refinement errors.
+[error? try [trim/auto/head {}]]
+[error? try [trim/auto/tail {}]]
+[error? try [trim/auto/lines {}]]
+[error? try [trim/auto/all {}]]
+[error? try [trim/all/head {}]]
+[error? try [trim/all/tail {}]]
+[error? try [trim/all/lines {}]]
+[error? try [trim/auto/with {} {*}]]
+[error? try [trim/head/with {} {*}]]
+[error? try [trim/tail/with {} {*}]]
+[error? try [trim/lines/with {} {*}]]
+
 ["a  ^/  b  " = trim/head "  a  ^/  b  "]
 ["  a  ^/  b" = trim/tail "  a  ^/  b  "]
 ["foo^/^/bar^/" = trim "  foo  ^/ ^/  bar  ^/  ^/  "]
 ["foobar" = trim/all "  foo  ^/ ^/  bar  ^/  ^/  "]
 ["foo bar" = trim/lines "  foo  ^/ ^/  bar  ^/  ^/  "]
+["x^/" = trim/auto "^/  ^/x^/"]
+["x^/" = trim/auto "  ^/x^/"]
+["x^/y^/ z^/" = trim/auto "  x^/ y^/   z^/"]
 
 [[a b] = trim [a b]]
 [[a b] = trim [a b _]]
