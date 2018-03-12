@@ -968,7 +968,8 @@ REBNATIVE(semiquoted_q)
 //  {Function for returning the same value that it got in (identity function)}
 //
 //      return: [<opt> any-value!]
-//      value [<opt> any-value!]
+//      value [<opt> <end> any-value!]
+//          {Accepting <end> means it also limits enfix reach to the left}
 //      /quote
 //          {Make it seem that the return result was quoted}
 //  ]
@@ -979,6 +980,9 @@ REBNATIVE(identity)
 // https://stackoverflow.com/q/3136338
 //
 // !!! Quoting version is currently specialized as SEMIQUOTE, for convenience.
+//
+// This is assigned to <- for convenience, but cannot be used under that name
+// in bootstrap.  It uses the <end>-ability to stop left reach.
 {
     INCLUDE_PARAMS_OF_IDENTITY;
 

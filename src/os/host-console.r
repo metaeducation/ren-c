@@ -91,7 +91,11 @@ console!: make object! [
         ; We don't want to use PRINT here because it would put the cursor on
         ; a new line.
         ;
-        write-stdout block? prompt then [unspaced prompt] else [form prompt]
+        write-stdout identity block? prompt then [
+            unspaced prompt
+        ] else [
+            form prompt
+        ]
         write-stdout space
     ]
 

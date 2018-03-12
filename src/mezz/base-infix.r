@@ -404,10 +404,12 @@ my: enfix func [
 ]
 
 
-; Lambdas are experimental quick function generators via a symbol
+; Lambdas are experimental quick function generators via a symbol.  The
+; identity is used to shake up enfix ordering.
 ;
 set/enfix (r3-alpha-quote "->") :lambda
-set/enfix (r3-alpha-quote "<-") (specialize :lambda [only: true])
+set (r3-alpha-quote "<-") :identity ;-- not enfix, just affects enfix
+
 
 
 ; These constructs used to be enfix to complete their left hand side.  Yet

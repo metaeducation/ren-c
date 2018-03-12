@@ -2424,17 +2424,25 @@ post_switch:;
         fail (Error_Lookback_Quote_Too_Late(f->value, f->specifier));
     }
 
-    // Note that we're only willing to defer any given lookback *once*.
-    // If we get there and there's a deferral, it doesn't matter if it was
-    // this frame or the parent frame who deferred it...it's the same enfix
-    // function in the same spot, and it's only willing to give up *one*
-    // of its chances to run.
+    // !!! This once checked `f->deferred == NULL` because it was only
+    // willing to defer any given lookback once: "If we get there and there's
+    // a deferral, it doesn't matter if it was this frame or the parent frame
+    // who deferred it...it's the same enfix function in the same spot, and
+    // it's only willing to give up *one* of its chances to run."  That was
+    // changed, and it now defers indefinitely so long as it is fulfilling
+    // arguments, until it finds an <end>able one...which <- (identity) is.
+    // Having endability control this may not be the best idea, but it keeps
+    // from introducing a new parameter convention or recognizing the
+    // specific function.  It's a rare enough property that one might imagine
+    // it to be unlikely such functions would want to run before deferred
+    // enfix clauses.
     //
     if (
         GET_VAL_FLAG(f->gotten, FUNC_FLAG_DEFERS_LOOKBACK)
         && (f->flags.bits & DO_FLAG_FULFILLING_ARG)
         && f->prior->deferred == NULL
-        && f->deferred == NULL
+        && NOT_VAL_FLAG(f->prior->param, TYPESET_FLAG_ENDABLE)
+        /* && f->deferred == NULL */ // !!! see notes above...
     ){
         assert(NOT(f->flags.bits & DO_FLAG_TO_END));
         assert(Is_Function_Frame_Fulfilling(f->prior));

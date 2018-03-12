@@ -251,10 +251,10 @@ eval proc [
 print: proc [
     "Textually output value (evaluating elements if a block), adds newline"
 
-     value [any-value!]
-          "Value or BLOCK! literal (BLANK! means print nothing)"
-     /eval
-          "Allow value to be a block and evaluated (even if not literal)"
+    value [any-value!]
+        "Value or BLOCK! literal (BLANK! means print nothing)"
+    /eval
+        "Allow value to be a block and evaluated (even if not literal)"
     <local> eval_PRINT ;quote_PRINT
 ][
     eval_PRINT: eval
@@ -262,7 +262,7 @@ print: proc [
 
     if blank? :value [leave]
 
-    write-stdout case [
+    write-stdout identity case [
         not block? value [
             form :value
         ]
@@ -271,7 +271,9 @@ print: proc [
             spaced value
         ]
     ] else [
-        fail "PRINT called on non-literal block without /EVAL switch"
+        fail/where
+            "PRINT called on non-literal block without /EVAL switch"
+            'value
     ]
 
     write-stdout newline

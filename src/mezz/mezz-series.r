@@ -625,7 +625,7 @@ split: function [
         size: dlm   ; alias for readability
 
         res: collect [
-            parse series case [
+            parse series identity case [
                 all [integer? size | into] [
                     if size < 1 [cause-error 'Script 'invalid-arg size]
                     count: size - 1
