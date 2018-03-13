@@ -44,8 +44,6 @@ struct Reb_State {
 
     struct Reb_State *last_state;
 
-    REBUPT stack_limit; // See Set_Stack_Limit() for why this is captured
-
     REBDSP dsp;
     struct Reb_Chunk *top_chunk;
     REBFRM *frame;

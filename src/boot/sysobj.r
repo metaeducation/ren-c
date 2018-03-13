@@ -141,7 +141,6 @@ options: construct [] [  ; Options supplied to REBOL during startup
     module-paths: [%./]
     default-suffix: %.reb ; Used by IMPORT if no suffix is provided
     file-types: []
-    result-types: _
 
     ; Legacy Behaviors Options (paid attention to only by debug builds)
 

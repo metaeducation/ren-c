@@ -178,7 +178,7 @@ gen-obj: func [
         ]
         output: to-obj-path to string! ;\
             either main [
-                join-of %main/ last s
+                join-of %main/ (last ensure path! s)
             ] [s]
         cflags: either empty? flags [_] [flags]
         definitions: (to-value :definitions)

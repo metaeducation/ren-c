@@ -1008,21 +1008,36 @@ void Startup_Task(void)
 }
 
 
+#if !defined(OS_STACK_GROWS_UP) && !defined(OS_STACK_GROWS_DOWN)
+    //
+    // This is a naive guess with no guarantees.  If there *is* a "real"
+    // answer, it would be fairly nuts:
+    //
+    // http://stackoverflow.com/a/33222085/211160
+    //
+    // Prefer using a build configuration #define, if possible (although
+    // emscripten doesn't necessarily guarantee up or down):
+    //
+    // https://github.com/kripken/emscripten/issues/5410
+    //
+    REBOOL Guess_If_Stack_Grows_Up(int *p) {
+        int i;
+        if (p == NULL)
+            return Guess_If_Stack_Grows_Up(&i); // RECURSION: avoids inlining
+        else if (p < &i) // !!! this comparison is undefined behavior
+            return TRUE; // upward
+        else
+            return FALSE; // downward
+    }
+#endif
+
+
 //
 //  Set_Stack_Limit: C
 //
 // See C_STACK_OVERFLOWING for remarks on this **non-standard** technique of
 // stack overflow detection.  Note that each thread would have its own stack
 // address limits, so this has to be updated for threading.
-//
-// Note that R3-Alpha tried to use a trick to determine whether the stack grew
-// up or down.  This is even less likely to work, and the solutions that might
-// actually work are too wacky to justify using:
-//
-// http://stackoverflow.com/a/33222085/211160
-//
-// So it's better to go with a build configuration #define.  Note that stacks
-// growing up is uncommon (e.g. Debian hppa architecture)
 //
 // Currently, this is called every time PUSH_TRAP() is called when Saved_State
 // is NULL, and hopefully only one instance of it per thread will be in effect
@@ -1034,10 +1049,16 @@ void Set_Stack_Limit(void *base) {
     if (bounds == 0)
         bounds = cast(REBUPT, STACK_BOUNDS);
 
-  #ifdef OS_STACK_GROWS_UP
-    Stack_Limit = cast(REBUPT, base) + bounds;
+  #if defined(OS_STACK_GROWS_UP)
+    TG_Stack_Limit = cast(REBUPT, base) + bounds;
+  #elif defined(OS_STACK_GROWS_DOWN)
+    TG_Stack_Limit = cast(REBUPT, base) - bounds;
   #else
-    Stack_Limit = cast(REBUPT, base) - bounds;
+    TG_Stack_Grows_Up = Guess_If_Stack_Grows_Up(NULL);
+    if (TG_Stack_Grows_Up)
+        TG_Stack_Limit = cast(REBUPT, base) + bounds;
+    else
+        TG_Stack_Limit = cast(REBUPT, base) - bounds;
   #endif
 }
 

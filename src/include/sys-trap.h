@@ -165,6 +165,8 @@
 #define PUSH_TRAP(e,s) \
     do { \
         assert(Saved_State != NULL || (DSP == 0 && FS_TOP == NULL)); \
+        if (Saved_State == NULL) \
+            Set_Stack_Limit(s); \
         Snap_State_Core(s); \
         (s)->last_state = Saved_State; \
         Saved_State = (s); \

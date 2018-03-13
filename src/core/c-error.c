@@ -42,12 +42,6 @@
 //
 void Snap_State_Core(struct Reb_State *s)
 {
-    // See remarks in Set_Stack_Limit() for why this is needed as part of
-    // multithreading as in Ren Garden.  It's not ideal, but it works around
-    // a problem for the moment.
-    //
-    s->stack_limit = Stack_Limit;
-
     s->dsp = DSP;
     s->top_chunk = TG_Top_Chunk;
 
@@ -215,7 +209,6 @@ void Trapped_Helper(struct Reb_State *s)
     SET_SERIES_LEN(TG_Mold_Stack, s->mold_loop_tail);
 
     Saved_State = s->last_state;
-    Stack_Limit = s->stack_limit;
 }
 
 

@@ -447,7 +447,7 @@ REBNATIVE(test)
     INCLUDE_PARAMS_OF_TEST;
     UNUSED(ARG(value));
 
-    REBVAL *temp = rebRun("trap [x: 10]", END);
+    REBVAL *temp = rebRun("print mold trap [foo: does [foo] foo]", END);
 
     Move_Value(D_OUT, temp);
     rebRelease(temp);

@@ -275,7 +275,11 @@ probe: func [
     value [<opt> any-value!]
         {Value to display.}
 ][
-    print mold :value
+    if set? 'value [
+        print mold :value
+    ] else [
+        print "!!! PROBE of void !!!!" ;-- MOLD won't take voids
+    ]
     :value
 ]
 
@@ -296,11 +300,6 @@ immediate!: make typeset! [
     ; Does not include internal datatypes
     blank! logic! any-scalar! date! any-word! datatype! typeset! event!
 ]
-
-system/options/result-types: make typeset! [
-    immediate! any-series! bitset! image! object! map! gob!
-]
-
 
 ok?: func [
     "Returns TRUE on all values that are not ERROR!"

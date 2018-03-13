@@ -150,7 +150,10 @@ TVAR REBSER *TG_Mold_Stack; // Used to prevent infinite loop in cyclical molds
 // would represent a memory leak in the release build.
 TVAR REBSER *GC_Manuals;    // Manually memory managed (not by GC)
 
-TVAR REBUPT Stack_Limit;    // Limit address for CPU stack.
+#if !defined(OS_STACK_GROWS_UP) && !defined(OS_STACK_GROWS_DOWN)
+    TVAR REBOOL TG_Stack_Grows_Up; // Will be detected via questionable method
+#endif
+TVAR REBUPT TG_Stack_Limit;    // Limit address for CPU stack.
 
 #ifdef DEBUG_COUNT_TICKS
     //

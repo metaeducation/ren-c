@@ -530,22 +530,18 @@ inline static void Drop_Chunk_Of_Values(REBVAL *opt_head)
 // http://stackoverflow.com/questions/5013806/
 //
 
-#ifdef TO_EMSCRIPTEN
-    //
-    // !!! The Emscripten emulation of C, in particular, can't use this trick.
-    // Until there's some way of knowing how to stop stack overflows, just
-    // overflow... :-(
-    //
+
+#if defined(OS_STACK_GROWS_UP)
     #define C_STACK_OVERFLOWING(address_of_local_var) \
-        FALSE
+        (cast(REBUPT, (address_of_local_var)) >= TG_Stack_Limit)
+#elif defined(OS_STACK_GROWS_DOWN)
+    #define C_STACK_OVERFLOWING(address_of_local_var) \
+        (cast(REBUPT, (address_of_local_var)) <= TG_Stack_Limit)
 #else
-    #ifdef OS_STACK_GROWS_UP
-        #define C_STACK_OVERFLOWING(address_of_local_var) \
-            (cast(REBUPT, address_of_local_var) >= Stack_Limit)
-    #else
-        #define C_STACK_OVERFLOWING(address_of_local_var) \
-            (cast(REBUPT, address_of_local_var) <= Stack_Limit)
-    #endif
+    #define C_STACK_OVERFLOWING(address_of_local_var) \
+        (TG_Stack_Grows_Up \
+            ? cast(REBUPT, (address_of_local_var)) >= TG_Stack_Limit \
+            : cast(REBUPT, (address_of_local_var)) <= TG_Stack_Limit)
 #endif
 
 #define STACK_BOUNDS (4*1024*1000) // note: need a better way to set it !!

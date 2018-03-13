@@ -1105,8 +1105,7 @@ static void Free_Unbiased_Series_Data(char *unbiased, REBCNT size_unpooled)
 //
 //  Expand_Series: C
 //
-// Expand a series at a particular index point by the number
-// number of units specified by delta.
+// Expand a series at a particular index point by `delta` units.
 //
 //     index - where space is expanded (but not cleared)
 //     delta - number of UNITS to expand (keeping terminator)

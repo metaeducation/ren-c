@@ -61,7 +61,7 @@ systems: [
         ; was: "Amiga V2.0-3.1 68000"
 
     0.1.03 amiga/posix "ppc"
-        #BEN #LLC #F64 <NPS> <HID> /HID /DYN %M
+        #SGD #BEN #LLC #F64 <NPS> <HID> /HID /DYN %M
 
     Macintosh: 2
     ;-------------------------------------------------------------------------
@@ -75,25 +75,25 @@ systems: [
         ; was: "Macintosh, FAT PPC, 68K"
 
     0.2.04 osx-ppc/osx "osx-ppc"
-        #BEN #LLC #F64 <NCM> /HID /DYN %M ;originally targeted OS/X 10.2
+        #SGD #BEN #LLC #F64 <NCM> /HID /DYN %M ;originally targeted OS/X 10.2
 
     0.2.05 osx-x86/osx "osx-x86"
-        #LEN #LLC #NSER #F64 <NCM> <NPS> <ARC> /HID /ARC /DYN %M
+        #SGD #LEN #LLC #NSER #F64 <NCM> <NPS> <ARC> /HID /ARC /DYN %M
 
     0.2.40 osx-x64/osx _
-        #LEN #LLC #NSER #F64 <NCM> <NPS> /HID /DYN %M
+        #SGD #LEN #LLC #NSER #F64 <NCM> <NPS> /HID /DYN %M
 
     Windows: 3
     ;-------------------------------------------------------------------------
     0.3.01 windows-x86/windows "win32-x86"
-        #LEN #UNI #F64 #W32 #NSEC <WLOSS> /CON /S4M %W32 %M
+        #SGD #LEN #UNI #F64 #W32 #NSEC <WLOSS> /CON /S4M %W32 %M
         ; was: "Microsoft Windows XP/NT/2K/9X iX86"
 
     0.3.02 _ "dec-alpha"
         ; was: "Windows Alpha NT DEC Alpha"
 
     0.3.40 windows-x64/windows "win32-x64"
-        #LEN #UNI #F64 #W32 #LLP64 #NSEC <WLOSS> /CON /S4M %W32 %M
+        #SGD #LEN #UNI #F64 #W32 #LLP64 #NSEC <WLOSS> /CON /S4M %W32 %M
 
     Linux: 4
     ;-------------------------------------------------------------------------
@@ -101,13 +101,13 @@ systems: [
         ; was: "Linux Libc5 iX86 1.2.1.4.1 view-pro041.tar.gz"
 
     0.4.02 linux-x86/linux "libc6-2-3-x86"
-        #LEN #LLC #NSER #F64 <M32> <NSP> <UFS> /M32 %M %DL ;gliblc-2.3
+        #SGD #LEN #LLC #NSER #F64 <M32> <NSP> <UFS> /M32 %M %DL ;gliblc-2.3
 
     0.4.03 linux-x86/linux "libc6-2-5-x86"
-        #LEN #LLC #F64 <M32> <UFS> /M32 %M %DL ;gliblc-2.5
+        #SGD #LEN #LLC #F64 <M32> <UFS> /M32 %M %DL ;gliblc-2.5
 
     0.4.04 linux-x86/linux "libc6-2-11-x86"
-        #LEN #LLC #F64 #PIP2 <M32> <HID> /M32 /HID /DYN %M %DL ;glibc-2.11
+        #SGD #LEN #LLC #F64 #PIP2 <M32> <HID> /M32 /HID /DYN %M %DL ;glibc-2.11
 
     0.4.05 _ _
         ; was: "Linux 68K"
@@ -125,34 +125,34 @@ systems: [
         ; was: "Linux Cobalt Qube MIPS"
 
     0.4.10 linux-ppc/linux "libc6-ppc"
-        #BEN #LLC #F64 #PIP2 <HID> /HID /DYN %M %DL
+        #SGD #BEN #LLC #F64 #PIP2 <HID> /HID /DYN %M %DL
 
     0.4.11 linux-ppc64/linux "libc6-ppc64"
-        #BEN #LLC #F64 #PIP2 #LP64 <HID> /HID /DYN %M %DL
+        #SGD #BEN #LLC #F64 #PIP2 #LP64 <HID> /HID /DYN %M %DL
 
     0.4.20 linux-arm/linux "libc6-arm"
-        #LEN #LLC #F64 #PIP2 <HID> /HID /DYN %M %DL
+        #SGD #LEN #LLC #F64 #PIP2 <HID> /HID /DYN %M %DL
 
     0.4.21 linux-arm/linux _
-        #LEN #LLC #F64 #PIP2 <HID> <PIE> /HID /DYN %M %DL ;android
+        #SGD #LEN #LLC #F64 #PIP2 <HID> <PIE> /HID /DYN %M %DL ;android
 
     0.4.22 linux-aarch64/linux "libc6-aarch64"
-        #LEN #LLC #F64 #PIP2 #LP64 <HID> /HID /DYN %M %DL
+        #SGD #LEN #LLC #F64 #PIP2 #LP64 <HID> /HID /DYN %M %DL
 
     0.4.30 linux-mips/linux "libc6-mips"
-        #LEN #LLC #F64 #PIP2 <HID> /HID /DYN %M %DL
+        #SGD #LEN #LLC #F64 #PIP2 <HID> /HID /DYN %M %DL
 
     0.4.31 linux-mips32be/linux "libc6-mips32be"
-        #BEN #LLC #F64 #PIP2 <HID> /HID /DYN %M %DL
+        #SGD #BEN #LLC #F64 #PIP2 <HID> /HID /DYN %M %DL
 
     0.4.40 linux-x64/linux "libc-x64"
-        #LEN #LLC #F64 #PIP2 #LP64 <HID> /HID /DYN %M %DL
+        #SGD #LEN #LLC #F64 #PIP2 #LP64 <HID> /HID /DYN %M %DL
 
     0.4.60 linux-axp/linux "dec-alpha"
-        #LEN #LLC #F64 #PIP2 #LP64 <HID> /HID /DYN %M %DL
+        #SGD #LEN #LLC #F64 #PIP2 #LP64 <HID> /HID /DYN %M %DL
 
     0.4.61 linux-ia64/linux "libc-ia64"
-        #LEN #LLC #F64 #PIP2 #LP64 <HID> /HID /DYN %M %DL
+        #SGD #LEN #LLC #F64 #PIP2 #LP64 <HID> /HID /DYN %M %DL
 
     BeOS: 5
     ;-------------------------------------------------------------------------
@@ -163,7 +163,7 @@ systems: [
         ; was: "BeOS R5 iX86"
 
     0.5.75 haiku/posix "x86-32"
-        #LEN #LLC %NWK
+        #SGD #LEN #LLC %NWK
 
     BSDi: 6
     ;-------------------------------------------------------------------------
@@ -176,10 +176,10 @@ systems: [
         ; was: "Free BSD iX86"
 
     0.7.02 freebsd-x86/posix "elf-x86"
-        #LEN #LLC #F64 %M
+        #SGD #LEN #LLC #F64 %M
 
     0.7.40 freebsd-x64/posix _
-        #LEN #LLC #F64 #LP64 %M
+        #SGD #LEN #LLC #F64 #LP64 %M
 
     NetBSD: 8
     ;-------------------------------------------------------------------------
@@ -210,13 +210,13 @@ systems: [
         ; was: "OpenBSD 68K"
 
     0.9.04 openbsd-x86/posix "elf-x86"
-        #LEN #LLC #F64 %M
+        #SGD #LEN #LLC #F64 %M
 
     0.9.05 _ "sparc"
         ; was: "OpenBSD Sparc"
 
     0.9.40 openbsd-x64/posix "elf-x64"
-        #LEN #LLC #F64 #LP64 %M
+        #SGD #LEN #LLC #F64 #LP64 %M
 
     Sun: 10
     ;-------------------------------------------------------------------------
@@ -239,18 +239,18 @@ systems: [
     Android: 13
     ;-------------------------------------------------------------------------
     0.13.01 android-arm/android "arm"
-        #LEN #LLC #F64 <HID> <PIC> /HID /DYN %M %DL %LOG
+        #SGD #LEN #LLC #F64 <HID> <PIC> /HID /DYN %M %DL %LOG
 
     0.13.02 android5-arm/android _
-        #LEN #LLC #F64 <HID> <PIC> /HID /PIE /DYN %M %DL %LOG
+        #SGD #LEN #LLC #F64 <HID> <PIC> /HID /PIE /DYN %M %DL %LOG
 
     Syllable: 14
     ;-------------------------------------------------------------------------
     0.14.01 syllable-dtp/posix _
-        #LEN #LLC #F64 <HID> /HID /DYN %M %DL
+        #SGD #LEN #LLC #F64 <HID> /HID /DYN %M %DL
 
     0.14.02 syllable-svr/linux _
-        #LEN #LLC #F64 <M32> <HID> /HID /DYN %M %DL
+        #SGD #LEN #LLC #F64 <M32> <HID> /HID /DYN %M %DL
 
     WindowsCE: 15
     ;-------------------------------------------------------------------------
@@ -269,9 +269,9 @@ systems: [
     Emscripten: 16
     ;-------------------------------------------------------------------------
     0.16.01 emscripten-asm/emscripten "asm.js"
-        #LEN
+        #SG? #LEN
     0.16.02 emscripten-wasm/emscripten "webassembly"
-        #LEN /WASM
+        #SG? #LEN /WASM
 
     AIX: 17
     ;-------------------------------------------------------------------------
@@ -318,6 +318,13 @@ system-definitions: make object! [
 
     LLC: "HAS_LL_CONSTS"          ; supports e.g. 0xffffffffffffffffLL
     ;LL?: _                       ; might have LL consts, reb-config.h checks
+
+    ; See C_STACK_OVERFLOWING for an explanation of the dodgy technique used
+    ; to try and preempt a C stackoverflow crash with a trappable error. 
+    ;
+    SGD: "OS_STACK_GROWS_DOWN"    ; most widespread choice in C compilers
+    ;SGU: "OS_STACK_GROWS_UP"     ; rarer (Debian HPPA, some emscripten/wasm)
+    SG?: _                        ; try to detect growth direction at runtime
 
     W32: <msc:WIN32>              ; aes.c requires this
     UNI: "UNICODE"                ; win32 wants it
