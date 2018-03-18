@@ -487,7 +487,7 @@ help: procedure [
             ]
             if match [object! port!] value [
                 keep newline
-                keep dump-obj value
+                keep unspaced dump-obj value
             ] else [
                 keep mold value
             ]
