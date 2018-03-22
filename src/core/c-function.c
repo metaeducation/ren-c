@@ -1172,11 +1172,12 @@ REBARR *Get_Maybe_Fake_Func_Body(REBOOL *is_fake, const REBVAL *func)
     REBCNT body_index;
     if (GET_VAL_FLAG(func, FUNC_FLAG_RETURN)) {
         if (GET_VAL_FLAG(func, FUNC_FLAG_LEAVE)) {
-            example = Get_System(SYS_STANDARD, STD_FUNC_BODY);
+            assert(FALSE); // !!! none of these actually exist
+            example = Get_System(SYS_STANDARD, STD_FUNC_WITH_LEAVE_BODY);
             body_index = 8;
         }
         else {
-            example = Get_System(SYS_STANDARD, STD_FUNC_NO_LEAVE_BODY);
+            example = Get_System(SYS_STANDARD, STD_FUNC_BODY);
             body_index = 4;
         }
         *is_fake = TRUE;
@@ -1231,7 +1232,7 @@ REBARR *Get_Maybe_Fake_Func_Body(REBOOL *is_fake, const REBVAL *func)
 //
 //     return: make function! [
 //         [{Returns a value from a function.} value [<opt> any-value!]]
-//         [exit/from/with (context of 'return) :value]
+//         [unwind/with (context of 'return) :value]
 //     ]
 //     (body goes here)
 //
@@ -1247,12 +1248,9 @@ REBARR *Get_Maybe_Fake_Func_Body(REBOOL *is_fake, const REBVAL *func)
 // the edge to pretend to add containing code and simulate its effects, while
 // really only holding onto the body the caller provided.
 //
-// While MAKE FUNCTION! has no RETURN, all functions still have EXIT as a
-// non-definitional alternative.  Ren/C adds a /WITH refinement so it can
-// behave equivalently to old-non-definitonal return.  There is even a way to
-// identify specific points up the call stack to exit from via EXIT/FROM, so
-// not having definitional return has several alternate options for generators
-// that wish to use them.
+// While plain MAKE FUNCTION! has no RETURN, UNWIND can be used to exit frames
+// but must be explicit about what frame is being exited.  This can be used
+// by usermode generators that want to create something return-like.
 //
 REBFUN *Make_Interpreted_Function_May_Fail(
     const REBVAL *spec,

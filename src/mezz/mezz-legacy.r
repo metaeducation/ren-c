@@ -310,6 +310,17 @@ clos: closure: func [dummy:] [
     ] 'dummy
 ]
 
+exit: func [dummy:] [
+    fail/where [
+        {EXIT as an arity-1 form of RETURN was replaced in *definitional*}
+        {returns by LEAVE, and is only available in PROC and PROCEDURE.  The}
+        {goal for EXIT long term is to take a process exit code, and access}
+        {the same function as C's exit()...namely a way to terminate the}
+        {process without being catchable the way that QUIT is.  For now,}
+        {that functionality is accessed with EXIT-REBOL.}
+    ] 'dummy
+]
+
 
 ; The legacy PRIN construct is replaced by WRITE-STDOUT SPACED and similar
 ;

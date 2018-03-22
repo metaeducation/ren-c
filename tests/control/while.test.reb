@@ -68,14 +68,14 @@
 ; EXIT/FROM the IF should stop the loop
 [
     cycle?: true
-    f1: does [if 1 < 2 [while [cycle?] [cycle?: false exit/from :if] 2]]
+    f1: does [if 1 < 2 [while [cycle?] [cycle?: false unwind :if] 2]]
     void? f1
 ]
 [  ; bug#1519
     cycle?: true
     f1: does [
         unless 1 > 2 [
-            while [if cycle? [exit/from :unless] cycle?] [cycle?: false 2]
+            while [if cycle? [unwind :unless] cycle?] [cycle?: false 2]
         ]
     ]
     void? f1

@@ -1526,13 +1526,12 @@ reevaluate:;
 
             if (IS_FUNCTION(f->out)) {
                 if (
-                    VAL_FUNC(f->out) == NAT_FUNC(exit)
+                    VAL_FUNC(f->out) == NAT_FUNC(unwind)
                     && Same_Binding(VAL_BINDING(f->out), f)
                 ){
-                    // Do_Core catches "definitional exits" to current frame,
-                    // e.g. throws where the "/name" is the EXIT native with a
-                    // binding to this frame, and the thrown value is the
-                    // return code.
+                    // Do_Core catches unwinds to the current frame, so throws
+                    // where the "/name" is the JUMP native with a binding to
+                    // this frame, and the thrown value is the return code.
                     //
                     // !!! This might be a little more natural if the name of
                     // the throw was a FRAME! value.  But that also would mean

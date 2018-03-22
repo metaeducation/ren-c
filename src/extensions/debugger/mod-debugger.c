@@ -887,7 +887,7 @@ return_temp:
     // natives do not currently respond to definitional returns...though
     // they can do so just as well as FUNCTION! can.
     //
-    Make_Thrown_Exit_Value(out, target, temp, NULL);
+    Make_Thrown_Unwind_Value(out, target, temp, NULL);
     return TRUE; // TRUE = thrown
 }
 

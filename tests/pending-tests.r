@@ -81,30 +81,6 @@
     same? word bind 'x word
 ]
 
-; !!! This former bug is now an "issue", regarding what the nature and
-; intent of non-definitional return should be.  A fair argument could be
-; that EXIT should never be able to escape a DO or CATCH or other DO-like
-; construct, and only be used in the core implementation of transparent
-; (e.g. MAKE FUNCTION!) code.  In any case, there will not be a definitional
-; EXIT (in the default generators) so one should use RETURN (), or if the
-; generator offers a definitional return
-; bug#539
-; EXIT out of USE
-[
-    f: func [] [
-        use [] [exit]
-        42
-    ]
-    unset? f
-]
-
-; "exit should not be caught by try"
-;; This is another issue where EXIT, if it is meant to be non-definitional,
-;; would mean EXIT whatever function is running".  Saying that EXIT shouldn't
-;; exit try assumes TRY isn't a function.  If you use RETURN () then you'll
-;; be just fine.
-;;
-[a: 1 eval does [a: error? try [exit]] :a =? 1]
 
 ; You basically can't do this when FUNC is a generator and adds RETURN.
 ; Until such time as there's a way to make locals truly out of band, (such

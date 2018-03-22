@@ -29,3 +29,7 @@
 [try/except [true] func [e] [false]]
 ; bug#1514
 [error? try [try/except [1 / 0] :add]]
+
+[#1506 (
+    10 = eval does [try [return 10] 20]
+)]

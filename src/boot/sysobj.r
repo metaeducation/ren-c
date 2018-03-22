@@ -183,30 +183,30 @@ standard: construct [] [
     ; The substitution location is hardcoded at index 5.  It does not "scan"
     ; to find #BODY, just asserts the position is an ISSUE!.
     ;
-    func-body: [
+    func-with-leave-body: [ ;-- not actually used
         return: make function! [
             [{Returns a value from a function.} value [<opt> any-value!]]
-            [exit/from/with (context of 'return) :value]
+            [unwind/with (context of 'return) :value]
         ]
         leave: make function! [
             [{Leaves a function, giving no result to the caller.}]
-            [exit/from (context of 'leave)]
+            [unwind (context of 'leave)]
         ] #BODY
     ]
 
-    func-no-leave-body: [
+    func-body: [
         return: make function! [
             [{Returns a value from a function.} value [<opt> any-value!]]
-            [exit/from/with (context of 'return) :value]
+            [unwind/with (context of 'return) :value]
         ] #BODY
     ]
 
     proc-body: [
         leave: make function! [
             [{Leaves a procedure, giving no result to the caller.}]
-            [exit/from (context of 'leave)]
+            [unwind (context of 'leave)]
         ] #BODY
-        comment {No return value.}
+        ()
     ]
 
     ; !!! The PORT! and actor code is deprecated, but this bridges it so

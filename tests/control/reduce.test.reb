@@ -15,7 +15,7 @@
 [1 = catch [reduce [throw 1]]]
 [1 = catch/name [reduce [throw/name 1 'a]] 'a]
 [1 = eval does [reduce [return 1 2] 2]]
-[void? if 1 < 2 [eval does [reduce [exit/from :if 1] 2]]]
+[void? if 1 < 2 [eval does [reduce [unwind :if 1] 2]]]
 ; recursive behaviour
 [1 = first reduce [first reduce [1]]]
 ; infinite recursion

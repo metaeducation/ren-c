@@ -164,7 +164,7 @@ backtrace*: function [
             ; instead of a number.
             ;
             ; !!! This may be too restrictive; though it is true you can't
-            ; resume/from or exit/from a pending frame (due to the index
+            ; RESUME/FROM or UNWIND a pending frame (due to the index
             ; not knowing how many values it would have consumed if a
             ; call were to complete), inspecting the existing args could
             ; be okay.  Disallowing it offers more flexibility in the

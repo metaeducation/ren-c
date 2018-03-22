@@ -98,20 +98,20 @@ REBNATIVE(proc)
 
 
 //
-//  Make_Thrown_Exit_Value: C
+//  Make_Thrown_Unwind_Value: C
 //
 // This routine will generate a THROWN() value that can be used to indicate
-// a desire to exit from a particular level in the stack with a value (or void)
+// a desire to jump to a particular level in the stack with a value (or void)
 //
-// It is used in the implementation of the EXIT native.
+// It is used in the implementation of the UNWIND native.
 //
-void Make_Thrown_Exit_Value(
+void Make_Thrown_Unwind_Value(
     REBVAL *out,
     const REBVAL *level, // FRAME!, FUNCTION! (or INTEGER! relative to frame)
     const REBVAL *value,
     REBFRM *frame // required if level is INTEGER! or FUNCTION!
 ) {
-    Move_Value(out, NAT_VALUE(exit));
+    Move_Value(out, NAT_VALUE(unwind));
 
     if (IS_FRAME(level)) {
         INIT_BINDING(out, VAL_CONTEXT(level));
@@ -165,37 +165,32 @@ void Make_Thrown_Exit_Value(
 
 
 //
-//  exit: native [
+//  unwind: native [
 //
-//  {Leave enclosing function, or jump /FROM.}
+//  {Jump up the stack to return from a specific frame or call.}
 //
+//      level [frame! function! integer!]
+//          "Frame, function, or index to exit from"
 //      /with
 //          "Result for enclosing state (default is no value)"
 //      value [any-value!]
-//      /from
-//          "Jump the stack to return from a specific frame or call"
-//      level [frame! function! integer!]
-//          "Frame, function, or stack index to exit from"
 //  ]
 //
-REBNATIVE(exit)
+REBNATIVE(unwind)
 //
-// EXIT is implemented via a THROWN() value that bubbles up through the stack.
-// Using EXIT's function REBVAL with a target `binding` field is the
+// UNWIND is implemented via a THROWN() value that bubbles through the stack.
+// Using UNWIND's function REBVAL with a target `binding` field is the
 // protocol understood by Do_Core to catch a throw itself.
 //
-// !!! Allowing to pass an INTEGER! to exit from a function based on its
+// !!! Allowing to pass an INTEGER! to jump from a function based on its
 // BACKTRACE number is a bit low-level, and perhaps should be restricted to
 // a debugging mode (though it is a useful tool in "code golf").
 {
-    INCLUDE_PARAMS_OF_EXIT;
+    INCLUDE_PARAMS_OF_UNWIND;
 
     UNUSED(REF(with)); // implied by non-void value
 
-    if (NOT(REF(from)))
-        Init_Integer(ARG(level), 1); // default--exit one function stack level
-
-    Make_Thrown_Exit_Value(D_OUT, ARG(level), ARG(value), frame_);
+    Make_Thrown_Unwind_Value(D_OUT, ARG(level), ARG(value), frame_);
 
     return R_OUT_IS_THROWN;
 }
@@ -273,7 +268,7 @@ REBNATIVE(return)
     if (!TYPE_CHECK(typeset, VAL_TYPE(value)))
         fail (Error_Bad_Return_Type(target_frame, VAL_TYPE(value)));
 
-    Move_Value(D_OUT, NAT_VALUE(exit)); // see also Make_Thrown_Exit_Value
+    Move_Value(D_OUT, NAT_VALUE(unwind)); // see also Make_Thrown_Unwind_Value
     INIT_BINDING(D_OUT, f->binding);
 
     CONVERT_NAME_TO_THROWN(D_OUT, value);
@@ -295,7 +290,7 @@ REBNATIVE(leave)
     if (frame_->binding == UNBOUND) // raw native, not variant PROCEDURE made
         fail (Error_Return_Archetype_Raw());
 
-    Move_Value(D_OUT, NAT_VALUE(exit)); // see also Make_Thrown_Exit_Value
+    Move_Value(D_OUT, NAT_VALUE(unwind)); // see also Make_Thrown_Unwind_Value
     INIT_BINDING(D_OUT, frame_->binding);
 
     CONVERT_NAME_TO_THROWN(D_OUT, VOID_CELL);
