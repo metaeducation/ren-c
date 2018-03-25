@@ -62,8 +62,13 @@ REBCNT Modify_Array(
 
     if (action == SYM_APPEND || dst_idx > tail) dst_idx = tail;
 
-    // Check /PART, compute LEN:
-    if (NOT(flags & AM_ONLY) && ANY_ARRAY(src_val)) {
+    // Check /PART, compute LEN.  Note that in Rebol2/R3-Alpha, ANY_ARRAY
+    // was the test for whether splicing would be done.  Ren-C considers
+    // BLOCK! to be the only type that will implicitly splice, and you must
+    // alias other types to a BLOCK! with AS to get the behavior.  This means
+    // that `block: [a b c] | append block 'd/e` will give `[a b c d/e]`
+    //
+    if (NOT(flags & AM_ONLY) && IS_BLOCK(src_val)) {
         // Adjust length of insertion if changing /PART:
         if (action != SYM_CHANGE && (flags & AM_PART))
             ilen = dst_len;
