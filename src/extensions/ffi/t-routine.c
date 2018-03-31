@@ -298,7 +298,7 @@ static REBUPT arg_to_ffi(
 
     switch (VAL_WORD_SYM(schema)) {
     case SYM_UINT8:{
-        u8 u;
+        uint8_t u;
         if (!dest)
             dest = Expand_And_Align(&offset, store, sizeof(u));
         if (!arg) break;
@@ -306,12 +306,12 @@ static REBUPT arg_to_ffi(
         if (!IS_INTEGER(arg))
             fail (Error_Arg_Type(D_FRAME, param, VAL_TYPE(arg)));
 
-        u = cast(u8, VAL_INT64(arg));
+        u = cast(uint8_t, VAL_INT64(arg));
         memcpy(dest, &u, sizeof(u));
         break;}
 
     case SYM_INT8:{
-        i8 i;
+        int8_t i;
         if (!dest)
             dest = Expand_And_Align(&offset, store, sizeof(i));
         if (!arg) break;
@@ -319,12 +319,12 @@ static REBUPT arg_to_ffi(
         if (!IS_INTEGER(arg))
             fail (Error_Arg_Type(D_FRAME, param, VAL_TYPE(arg)));
 
-        i = cast(i8, VAL_INT64(arg));
+        i = cast(int8_t, VAL_INT64(arg));
         memcpy(dest, &i, sizeof(i));
         break;}
 
     case SYM_UINT16:{
-        u16 u;
+        uint16_t u;
         if (!dest)
             dest = Expand_And_Align(&offset, store, sizeof(u));
         if (!arg) break;
@@ -332,12 +332,12 @@ static REBUPT arg_to_ffi(
         if (!IS_INTEGER(arg))
             fail (Error_Arg_Type(D_FRAME, param, VAL_TYPE(arg)));
 
-        u = cast(u16, VAL_INT64(arg));
+        u = cast(uint16_t, VAL_INT64(arg));
         memcpy(dest, &u, sizeof(u));
         break;}
 
     case SYM_INT16:{
-        i16 i;
+        int16_t i;
         if (!dest)
             dest = Expand_And_Align(&offset, store, sizeof(i));
         if (!arg) break;
@@ -345,12 +345,12 @@ static REBUPT arg_to_ffi(
         if (!IS_INTEGER(arg))
             fail (Error_Arg_Type(D_FRAME, param, VAL_TYPE(arg)));
 
-        i = cast(i16, VAL_INT64(arg));
+        i = cast(int16_t, VAL_INT64(arg));
         memcpy(dest, &i, sizeof(i));
         break;}
 
     case SYM_UINT32:{
-        u32 u;
+        uint32_t u;
         if (!dest)
             dest = Expand_And_Align(&offset, store, sizeof(u));
         if (!arg) break;
@@ -358,12 +358,12 @@ static REBUPT arg_to_ffi(
         if (!IS_INTEGER(arg))
             fail (Error_Arg_Type(D_FRAME, param, VAL_TYPE(arg)));
 
-        u = cast(u32, VAL_INT64(arg));
+        u = cast(uint32_t, VAL_INT64(arg));
         memcpy(dest, &u, sizeof(u));
         break;}
 
     case SYM_INT32:{
-        i32 i;
+        int32_t i;
         if (!dest)
             dest = Expand_And_Align(&offset, store, sizeof(i));
         if (!arg) break;
@@ -371,13 +371,13 @@ static REBUPT arg_to_ffi(
         if (!IS_INTEGER(arg))
             fail (Error_Arg_Type(D_FRAME, param, VAL_TYPE(arg)));
 
-        i = cast(i32, VAL_INT64(arg));
+        i = cast(int32_t, VAL_INT64(arg));
         memcpy(dest, &i, sizeof(i));
         break;}
 
     case SYM_UINT64:
     case SYM_INT64:{
-        REBI64 i;
+        int64_t i;
         if (!dest)
             dest = Expand_And_Align(&offset, store, sizeof(i));
         if (!arg) break;
@@ -386,7 +386,7 @@ static REBUPT arg_to_ffi(
             fail (Error_Arg_Type(D_FRAME, param, VAL_TYPE(arg)));
 
         i = VAL_INT64(arg);
-        memcpy(dest, &i, sizeof(REBI64));
+        memcpy(dest, &i, sizeof(int64_t));
         break;}
 
     case SYM_POINTER:{
@@ -527,39 +527,39 @@ static void ffi_to_rebol(
 
     switch (VAL_WORD_SYM(schema)) {
     case SYM_UINT8:
-        Init_Integer(out, *cast(u8*, ffi_rvalue));
+        Init_Integer(out, *cast(uint8_t*, ffi_rvalue));
         break;
 
     case SYM_INT8:
-        Init_Integer(out, *cast(i8*, ffi_rvalue));
+        Init_Integer(out, *cast(int8_t*, ffi_rvalue));
         break;
 
     case SYM_UINT16:
-        Init_Integer(out, *cast(u16*, ffi_rvalue));
+        Init_Integer(out, *cast(uint16_t*, ffi_rvalue));
         break;
 
     case SYM_INT16:
-        Init_Integer(out, *cast(i16*, ffi_rvalue));
+        Init_Integer(out, *cast(int16_t*, ffi_rvalue));
         break;
 
     case SYM_UINT32:
-        Init_Integer(out, *cast(u32*, ffi_rvalue));
+        Init_Integer(out, *cast(uint32_t*, ffi_rvalue));
         break;
 
     case SYM_INT32:
-        Init_Integer(out, *cast(i32*, ffi_rvalue));
+        Init_Integer(out, *cast(int32_t*, ffi_rvalue));
         break;
 
     case SYM_UINT64:
-        Init_Integer(out, *cast(u64*, ffi_rvalue));
+        Init_Integer(out, *cast(uint64_t*, ffi_rvalue));
         break;
 
     case SYM_INT64:
-        Init_Integer(out, *cast(i64*, ffi_rvalue));
+        Init_Integer(out, *cast(int64_t*, ffi_rvalue));
         break;
 
     case SYM_POINTER:
-        Init_Integer(out, cast(REBUPT, *cast(void**, ffi_rvalue)));
+        Init_Integer(out, cast(uintptr_t, *cast(void**, ffi_rvalue)));
         break;
 
     case SYM_FLOAT:

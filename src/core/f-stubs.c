@@ -44,14 +44,14 @@ REBINT Get_Num_From_Arg(const REBVAL *val)
     REBINT n;
 
     if (IS_INTEGER(val)) {
-        if (VAL_INT64(val) > (i64)MAX_I32 || VAL_INT64(val) < (i64)MIN_I32)
+        if (VAL_INT64(val) > INT32_MAX || VAL_INT64(val) < INT32_MIN)
             fail (Error_Out_Of_Range(val));
         n = VAL_INT32(val);
     }
     else if (IS_DECIMAL(val) || IS_PERCENT(val)) {
-        if (VAL_DECIMAL(val) > MAX_I32 || VAL_DECIMAL(val) < MIN_I32)
+        if (VAL_DECIMAL(val) > INT32_MAX || VAL_DECIMAL(val) < INT32_MIN)
             fail (Error_Out_Of_Range(val));
-        n = (REBINT)VAL_DECIMAL(val);
+        n = cast(REBINT, VAL_DECIMAL(val));
     }
     else if (IS_LOGIC(val))
         n = (VAL_LOGIC(val) ? 1 : 2);
@@ -83,7 +83,7 @@ REBINT Float_Int16(REBD32 f)
 REBINT Int32(const RELVAL *val)
 {
     if (IS_DECIMAL(val)) {
-        if (VAL_DECIMAL(val) > MAX_I32 || VAL_DECIMAL(val) < MIN_I32)
+        if (VAL_DECIMAL(val) > INT32_MAX || VAL_DECIMAL(val) < INT32_MIN)
             goto out_of_range;
 
         return cast(REBINT, VAL_DECIMAL(val));
@@ -91,12 +91,8 @@ REBINT Int32(const RELVAL *val)
 
     assert(IS_INTEGER(val));
 
-    if (
-        VAL_INT64(val) > cast(i64, MAX_I32)
-        || VAL_INT64(val) < cast(i64, MIN_I32)
-    ) {
+    if (VAL_INT64(val) > INT32_MAX || VAL_INT64(val) < INT32_MIN)
         goto out_of_range;
-    }
 
     return VAL_INT32(val);
 
@@ -119,14 +115,14 @@ REBINT Int32s(const RELVAL *val, REBINT sign)
     REBINT n;
 
     if (IS_DECIMAL(val)) {
-        if (VAL_DECIMAL(val) > MAX_I32 || VAL_DECIMAL(val) < MIN_I32)
+        if (VAL_DECIMAL(val) > INT32_MAX || VAL_DECIMAL(val) < INT32_MIN)
             goto out_of_range;
 
         n = cast(REBINT, VAL_DECIMAL(val));
     } else {
         assert(IS_INTEGER(val));
 
-        if (VAL_INT64(val) > cast(i64, MAX_I32))
+        if (VAL_INT64(val) > INT32_MAX)
             goto out_of_range;
 
         n = VAL_INT32(val);
@@ -191,7 +187,7 @@ REBI64 Int64s(const REBVAL *val, REBINT sign)
     REBI64 n;
 
     if (IS_DECIMAL(val)) {
-        if (VAL_DECIMAL(val) > MAX_I64 || VAL_DECIMAL(val) < MIN_I64)
+        if (VAL_DECIMAL(val) > INT64_MAX || VAL_DECIMAL(val) < INT64_MIN)
             fail (Error_Out_Of_Range(val));
         n = (REBI64)VAL_DECIMAL(val);
     } else {
@@ -215,7 +211,7 @@ REBI64 Int64s(const REBVAL *val, REBINT sign)
 //
 REBINT Int8u(const REBVAL *val)
 {
-    if (VAL_INT64(val) > cast(i64, 255) || VAL_INT64(val) < cast(i64, 0))
+    if (VAL_INT64(val) > 255 || VAL_INT64(val) < 0)
         fail (Error_Out_Of_Range(val));
 
     return VAL_INT32(val);
@@ -629,11 +625,12 @@ int Clip_Int(int val, int mini, int maxi)
 //
 //  Add_Max: C
 //
-i64 Add_Max(enum Reb_Kind type, i64 n, i64 m, i64 maxi)
+int64_t Add_Max(enum Reb_Kind type, int64_t n, int64_t m, int64_t maxi)
 {
-    i64 r = n + m;
+    int64_t r = n + m;
     if (r < -maxi || r > maxi) {
-        if (type != REB_0) fail (Error_Type_Limit_Raw(Get_Type(type)));
+        if (type != REB_0)
+            fail (Error_Type_Limit_Raw(Get_Type(type)));
         r = r > 0 ? maxi : -maxi;
     }
     return r;
@@ -643,10 +640,11 @@ i64 Add_Max(enum Reb_Kind type, i64 n, i64 m, i64 maxi)
 //
 //  Mul_Max: C
 //
-int Mul_Max(enum Reb_Kind type, i64 n, i64 m, i64 maxi)
+int64_t Mul_Max(enum Reb_Kind type, int64_t n, int64_t m, int64_t maxi)
 {
-    i64 r = n * m;
-    if (r < -maxi || r > maxi) fail (Error_Type_Limit_Raw(Get_Type(type)));
-    return (int)r;
+    int64_t r = n * m;
+    if (r < -maxi || r > maxi)
+        fail (Error_Type_Limit_Raw(Get_Type(type)));
+    return (int)r; // !!! (?) review this cast
 }
 

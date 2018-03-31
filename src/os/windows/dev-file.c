@@ -75,7 +75,7 @@ static BOOL Seek_File_64(struct devreq_file *file)
         return 0;
     }
 
-    file->index = (cast(i64, highint) << 32) + result;
+    file->index = (cast(int64_t, highint) << 32) + result;
 
     return 1;
 }
@@ -183,7 +183,7 @@ static int Read_Directory(struct devreq_file *dir, struct devreq_file *file)
         file_req->modes |= RFM_DIR;
     wcsncpy(file->path, info.cFileName, MAX_FILE_NAME);
     file->size =
-        (cast(i64, info.nFileSizeHigh) << 32) + info.nFileSizeLow;
+        (cast(int64_t, info.nFileSizeHigh) << 32) + info.nFileSizeLow;
 
     return DR_DONE;
 }
@@ -271,7 +271,7 @@ DEVICE_CMD Open_File(REBREQ *req)
     // Fetch req size (if fails, then size is assumed zero):
     if (GetFileInformationByHandle(h, &info)) {
         file->size =
-            (cast(i64, info.nFileSizeHigh) << 32) + info.nFileSizeLow;
+            (cast(int64_t, info.nFileSizeHigh) << 32) + info.nFileSizeLow;
         file->time.l = info.ftLastWriteTime.dwLowDateTime;
         file->time.h = info.ftLastWriteTime.dwHighDateTime;
     }
@@ -394,7 +394,7 @@ DEVICE_CMD Write_File(REBREQ *req)
     }
 
     file->size =
-        (cast(i64, size_high) << 32) + cast(i64, size_low);
+        (cast(int64_t, size_high) << 32) + cast(int64_t, size_low);
 
     return DR_DONE;
 }
@@ -424,7 +424,8 @@ DEVICE_CMD Query_File(REBREQ *req)
         req->modes &= ~RFM_DIR;
 
     file->size =
-        (cast(i64, info.nFileSizeHigh) << 32) + cast(i64, info.nFileSizeLow);
+        (cast(int64_t, info.nFileSizeHigh) << 32)
+            + cast(int64_t, info.nFileSizeLow);
     file->time.l = info.ftLastWriteTime.dwLowDateTime;
     file->time.h = info.ftLastWriteTime.dwHighDateTime;
     return DR_DONE;

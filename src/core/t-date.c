@@ -352,7 +352,8 @@ void Adjust_Date_Zone(REBVAL *d, REBOOL to_utc)
 
     // (compiler should fold the constant)
 
-    REBI64 secs = cast(i64, VAL_ZONE(d)) * (cast(i64, ZONE_SECS) * SEC_SEC);
+    REBI64 secs =
+        cast(int64_t, VAL_ZONE(d)) * (cast(int64_t, ZONE_SECS) * SEC_SEC);
     if (to_utc)
         secs = -secs;
     secs += VAL_NANO(d);
@@ -623,7 +624,7 @@ void Pick_Or_Poke_Date(
 
                 Init_Time_Nanoseconds(
                     opt_out,
-                    cast(i64, VAL_ZONE(v)) * ZONE_MINS * MIN_SEC
+                    cast(int64_t, VAL_ZONE(v)) * ZONE_MINS * MIN_SEC
                 );
             }
             break;

@@ -489,7 +489,7 @@ REBINT OS_Wait(REBCNT millisec, REBCNT res)
 {
     REBREQ req;     // OK: QUERY below does not store it
     REBCNT delta;
-    i64 base;
+    int64_t base;
 
     // printf("OS_Wait %d\n", millisec);
 

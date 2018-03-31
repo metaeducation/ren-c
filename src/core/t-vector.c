@@ -77,38 +77,38 @@ REBU64 get_vect(
             return f_to_u64(((float*)data)[n]);
 
         case 64:
-            return ((REBU64*)data)[n];
+            return cast(uint64_t*, data)[n];
         }
     }
     else {
         if (sign) {
             switch (bits) {
             case 8:
-                return (REBI64) ((i8*)data)[n];
+                return cast(int64_t, cast(int8_t*, data)[n]);
 
             case 16:
-                return (REBI64) ((i16*)data)[n];
+                return cast(int64_t, cast(int16_t*, data)[n]);
 
             case 32:
-                return (REBI64) ((i32*)data)[n];
+                return cast(int64_t, cast(int32_t*, data)[n]);
 
             case 64:
-                return (REBI64) ((i64*)data)[n];
+                return cast(int64_t, cast(int64_t*, data)[n]);
             }
         }
         else {
             switch (bits) {
             case 8:
-                return (REBU64) ((u8*)data)[n];
+                return cast(uint64_t, cast(uint8_t*, data)[n]);
 
             case 16:
-                return (REBU64) ((u16*)data)[n];
+                return cast(uint64_t, cast(uint16_t*, data)[n]);
 
             case 32:
-                return (REBU64) ((u32*)data)[n];
+                return cast(uint64_t, cast(uint32_t*, data)[n]);
 
             case 64:
-                return (REBU64) ((i64*)data)[n];
+                return cast(uint64_t, cast(int64_t*, data)[n]); // !!! signed?
             }
         }
     }
@@ -137,38 +137,38 @@ void set_vect(
         if (sign) {
             switch (bits) {
             case 8:
-                ((i8*)data)[n] = (i8)i;
+                cast(int8_t*, data)[n] = cast(int8_t, i);
                 return;
 
             case 16:
-                ((i16*)data)[n] = (i16)i;
+                cast(int16_t*, data)[n] = cast(int16_t, i);
                 return;
 
             case 32:
-                ((i32*)data)[n] = (i32)i;
+                cast(int32_t*, data)[n] = cast(int32_t, i);
                 return;
 
             case 64:
-                ((i64*)data)[n] = (i64)i;
+                cast(int64_t*, data)[n] = cast(int64_t, i);
                 return;
             }
         }
         else {
             switch (bits) {
             case 8:
-                ((u8*)data)[n] = (u8)i;
+                cast(uint8_t*, data)[n] = cast(uint8_t, i);
                 return;
 
             case 16:
-                ((u16*)data)[n] = (u16)i;
+                cast(uint16_t*, data)[n] = cast(uint16_t, i);
                 return;
 
             case 32:
-                ((u32*)data)[n] = (u32)i;
+                cast(uint32_t*, data)[n] = cast(uint32_t, i);
                 return;
 
             case 64:
-                ((i64*)data)[n] = (u64)i;
+                cast(int64_t*, data)[n] = cast(uint64_t, i); // !!! signed?
                 return;
             }
         }

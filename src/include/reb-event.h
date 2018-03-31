@@ -42,11 +42,11 @@
 
 #pragma pack(4)
 struct Reb_Event {
-    u8  type;       // event id (mouse-move, mouse-button, etc)
-    u8  flags;      // special flags
-    u8  win;        // window id
-    u8  model;      // port, object, gui, callback
-    u32 data;       // an x/y position or keycode (raw/decoded)
+    uint8_t type;   // event id (mouse-move, mouse-button, etc)
+    uint8_t flags;  // special flags
+    uint8_t win;    // window id
+    uint8_t model;  // port, object, gui, callback
+    uint32_t data;  // an x/y position or keycode (raw/decoded)
 };
 
 union Reb_Eventee {
@@ -61,14 +61,14 @@ union Reb_Eventee {
 typedef struct {
     void *header;
     union Reb_Eventee eventee;
-    u8 type;
-    u8 flags;
-    u8 win;
-    u8 model;
-    u32 data;
-#if defined(__LP64__) || defined(__LLP64__)
+    uint8_t type;
+    uint8_t flags;
+    uint8_t win;
+    uint8_t model;
+    uint32_t data;
+  #if defined(__LP64__) || defined(__LLP64__)
     void *padding;
-#endif
+  #endif
 } REBEVT; // mirrors REBVAL holding a Reb_Event payload, should be compatible
 
 // Note: the "eventee" series and the "request" live in the REBVAL

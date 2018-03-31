@@ -100,10 +100,10 @@ REBOOL almost_equal(REBDEC a, REBDEC b, REBCNT max_diff) {
     ub.d = b;
 
     /* Make ua.i a twos-complement ordinal number */
-    if (ua.i < 0) ua.i = MIN_I64 - ua.i;
+    if (ua.i < 0) ua.i = INT64_MIN - ua.i;
 
     /* Make ub.i a twos-complement ordinal number */
-    if (ub.i < 0) ub.i = MIN_I64 - ub.i;
+    if (ub.i < 0) ub.i = INT64_MIN - ub.i;
 
     int_diff = ua.i - ub.i;
     if (int_diff < 0) int_diff = -int_diff;

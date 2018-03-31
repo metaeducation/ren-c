@@ -1320,7 +1320,7 @@ REBNATIVE(loop)
         // code jumps up here, re-seeds it, and loops again.
         //
     restart:
-        count = MAX_I64;
+        count = INT64_MAX;
     }
     else
         count = Int64(ARG(count));

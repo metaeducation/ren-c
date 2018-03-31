@@ -1575,7 +1575,12 @@ inline static REBVAL *SET_TUPLE(RELVAL *out, const void *data) {
 #define IS_EVENT_MODEL(v,f) \
     (VAL_EVENT_MODEL(v) == (f))
 
-inline static void SET_EVENT_INFO(RELVAL *val, u8 type, u8 flags, u8 win) {
+inline static void SET_EVENT_INFO(
+    RELVAL *val,
+    uint8_t type,
+    uint8_t flags,
+    uint8_t win
+){
     VAL_EVENT_TYPE(val) = type;
     VAL_EVENT_FLAGS(val) = flags;
     VAL_EVENT_WIN(val) = win;
@@ -1597,7 +1602,7 @@ inline static void SET_EVENT_XY(RELVAL *v, REBINT x, REBINT y) {
     // !!! "conversion to u32 from REBINT may change the sign of the result"
     // Hence cast.  Not clear what the intent is.
     //
-    VAL_EVENT_DATA(v) = cast(u32, ((y << 16) | (x & 0xffff)));
+    VAL_EVENT_DATA(v) = cast(uint32_t, ((y << 16) | (x & 0xffff)));
 }
 
 // Key event data

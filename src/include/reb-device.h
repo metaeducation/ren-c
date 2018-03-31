@@ -147,19 +147,19 @@ typedef struct rebol_device REBDEV;
 typedef struct rebol_devreq REBREQ;
 
 // Commands:
-typedef i32 (*DEVICE_CMD_FUNC)(REBREQ *req);
-#define DEVICE_CMD i32 // Used to define
+typedef int32_t (*DEVICE_CMD_FUNC)(REBREQ *req);
+#define DEVICE_CMD int32_t // Used to define
 
 // Device structure:
 struct rebol_device {
     const char *title;      // title of device
-    u32 version;            // version, revision, release
-    u32 date;               // year, month, day, hour
-    DEVICE_CMD_FUNC *commands;  // command dispatch table
-    u32 max_command;        // keep commands in bounds
-    u32 req_size;            // size of the request state
+    uint32_t version;       // version, revision, release
+    uint32_t date;          // year, month, day, hour
+    DEVICE_CMD_FUNC *commands; // command dispatch table
+    uint32_t max_command;   // keep commands in bounds
+    uint32_t req_size;      // size of the request state
     REBREQ *pending;        // pending requests
-    u32 flags;              // state: open, signal
+    uint32_t flags;         // state: open, signal
 };
 
 // Inializer (keep ordered same as above)
@@ -171,7 +171,7 @@ struct rebol_device {
 struct rebol_devreq {
 
     // Linkages:
-    u32 device;             // device id (dev table)
+    uint32_t device;        // device id (dev table)
     REBREQ *next;           // linked list (pending or done lists)
     void *port;             // link back to REBOL port object
     union {
@@ -183,12 +183,12 @@ struct rebol_devreq {
                             // to change.  See also Reb_Event->eventee
 
     // Command info:
-    i32  command;           // command code
-    i32  error;             // error code
-    u32  modes;             // special modes, types or attributes
-    u16  flags;             // request flags
-    u16  state;             // device process flags
-    i32  timeout;           // request timeout
+    int32_t command;        // command code
+    int32_t error;          // error code
+    uint32_t modes;         // special modes, types or attributes
+    uint16_t flags;         // request flags
+    uint16_t state;         // device process flags
+    int32_t timeout;        // request timeout
 //  int (*prewake)(void *); // callback before awake
 
     // Common fields:
@@ -196,8 +196,8 @@ struct rebol_devreq {
         REBYTE *data;       // data to transfer
         REBREQ *sock;       // temp link to related socket
     } common;
-    u32  length;            // length to transfer
-    u32  actual;            // length actually transferred
+    uint32_t length;        // length to transfer
+    uint32_t actual;        // length actually transferred
 };
 
 #define AS_REBREQ(req) (&(req)->devreq)
@@ -215,32 +215,47 @@ struct devreq_posix_signal {
 #endif
 #endif
 
+// !!! Hack used for making a 64-bit value as a struct, which works in
+// 32-bit modes.  64 bits, even in 32 bit mode.  Based on the deprecated idea
+// that "devices" would not have access to Rebol datatypes, and hence would
+// not be able to communicate with Rebol directly with a TIME! or DATE!.
+// To be replaced.
+//
+// (Note: compatible with FILETIME used in Windows)
+//
+#pragma pack(4)
+typedef struct sInt64 {
+    int32_t l;
+    int32_t h;
+} FILETIME_DEVREQ;
+#pragma pack()
+
 struct devreq_file {
     struct rebol_devreq devreq;
     REBCHR *path;           // file string (in OS local format)
-    i64  size;              // file size
-    i64  index;             // file index position
-    I64  time;              // file modification time (struct)
+    int64_t size;           // file size
+    int64_t index;          // file index position
+    FILETIME_DEVREQ time;   // file modification time (struct)
 };
 
 struct devreq_net {
     struct rebol_devreq devreq;
-    u32  local_ip;          // local address used
-    u32  local_port;        // local port used
-    u32  remote_ip;         // remote address
-    u32  remote_port;       // remote port
+    uint32_t local_ip;      // local address used
+    uint32_t local_port;    // local port used
+    uint32_t remote_ip;     // remote address
+    uint32_t remote_port;   // remote port
     void *host_info;        // for DNS usage
-    };
+};
 
 struct devreq_serial {
     struct rebol_devreq devreq;
     REBCHR *path;           //device path string (in OS local format)
-    void *prior_attr;           // termios: retain previous settings to revert on close
-    i32 baud;               // baud rate of serial port
-    u8  data_bits;          // 5, 6, 7 or 8
-    u8  parity;             // odd, even, mark or space
-    u8  stop_bits;          // 1 or 2
-    u8  flow_control;       // hardware or software
+    void *prior_attr;       // termios: retain previous settings to revert on close
+    int32_t baud;           // baud rate of serial port
+    uint8_t data_bits;      // 5, 6, 7 or 8
+    uint8_t parity;         // odd, even, mark or space
+    uint8_t stop_bits;      // 1 or 2
+    uint8_t flow_control;   // hardware or software
 };
 
 inline static struct devreq_file* DEVREQ_FILE(struct rebol_devreq *req) {

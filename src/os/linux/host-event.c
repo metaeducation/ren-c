@@ -342,9 +342,9 @@ static void handle_button(XEvent *ev, REBGOB *gob)
         if (ev->type == ButtonRelease) {
             evt = RL_Find_Event(EVM_GUI,
                                 ev->xbutton.state & ControlMask? EVT_SCROLL_PAGE: EVT_SCROLL_LINE);
-            u32 data = 0;
-            u32 *pdata = NULL;
-            i16 tmp = 0;
+            uint32_t data = 0;
+            uint32_t *pdata = NULL;
+            int16_t tmp = 0;
             if (evt != NULL) {
                 pdata = &evt->data;
             } else {

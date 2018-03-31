@@ -113,7 +113,9 @@ static void Assert_Basics(void)
     }
   #endif
 
-    assert(sizeof(u32) == 4);
+    // !!! Should runtime debug be double-checking all of <stdint.h>?
+    //
+    assert(sizeof(uint32_t) == 4);
 
     // Although the system is designed to be able to function with REBVAL at
     // any size, the optimization of it being 4x(32-bit) on 32-bit platforms

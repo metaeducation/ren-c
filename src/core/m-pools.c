@@ -864,7 +864,7 @@ REBSER *Make_Series_Core(REBCNT capacity, REBYTE wide, REBUPT flags)
 {
     assert(wide != 0 && capacity != 0); // not allowed
 
-    if (cast(REBU64, capacity) * wide > MAX_I32)
+    if (cast(REBU64, capacity) * wide > INT32_MAX)
         fail (Error_No_Memory(cast(REBU64, capacity) * wide));
 
   #if !defined(NDEBUG)
@@ -1527,7 +1527,7 @@ void GC_Kill_Series(REBSER *s)
         // level" allocations.
 
         int tmp;
-        GC_Ballast = REB_I32_ADD_OF(GC_Ballast, size, &tmp) ? MAX_I32 : tmp;
+        GC_Ballast = REB_I32_ADD_OF(GC_Ballast, size, &tmp) ? INT32_MAX : tmp;
     }
     else {
         // Special GC processing for HANDLE! when the handle is implemented as

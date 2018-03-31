@@ -589,7 +589,7 @@ REBI64 deci_to_int(const deci a) {
     result = cast(REBI64, (cast(REBU64, sa[1]) << 32) | cast(REBU64, sa[0]));
 
     /* handle sign */
-    if (a.s && result > MIN_I64) result = -result;
+    if (a.s && result > INT64_MIN) result = -result;
     if (!a.s && (result < 0)) fail (Error_Overflow_Raw());
 
     return result;

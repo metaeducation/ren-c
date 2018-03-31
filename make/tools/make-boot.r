@@ -698,7 +698,7 @@ for-each [category info] boot-errors [
 
 e-errnums/emit-end
 
-e-errnums/emit-line {#define RE_USER MAX_I32}
+e-errnums/emit-line {#define RE_USER INT32_MAX}
 e-errnums/emit-annotation {Hardcoded, update in %make-boot.r}
 
 e-errnums/emit-line {#define RE_CATEGORY_SIZE 1000}

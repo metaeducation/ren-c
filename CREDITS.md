@@ -141,6 +141,11 @@ not be complete.  Please amend with any corrections.
   Carnegie Mellon University, and Bell Communications Research, Inc (Bellcore).
 - `%src/core/u-md5.c`
 
+**pstdint.h**
+- Copyright (c) 2005-2016 Paul Hsieh
+- BSD License
+- `%src/include/pstdint.h`
+
 **qsort**
 - Copyright (c) 1992, 1993 The Regents of the University of California.
 - `%src/core/f-qsort.c`

@@ -315,111 +315,58 @@
 #endif
 
 
-/***********************************************************************
-**
-**  C-Code Types
-**
-**      One of the biggest flaws in the C language was not
-**      to indicate bitranges of integers. So, we do that here.
-**      You cannot "abstractly remove" the range of a number.
-**      It is a critical part of its definition.
-**
-***********************************************************************/
+//=////////////////////////////////////////////////////////////////////////=//
+//
+// <stdint.h> INCLUDE -OR- SHIM FOR PRE-C99 COMPILERS THAT DON'T HAVE IT
+//
+//=////////////////////////////////////////////////////////////////////////=//
+//
+// Rebol's initial design targeted C89 and old-ish compilers on a variety of
+// systems.  A comment here said:
+//
+//     "One of the biggest flaws in the C language was not
+//      to indicate bitranges of integers. So, we do that here.
+//      You cannot 'abstractly remove' the range of a number.
+//      It is a critical part of its definition."
+//
+// Once C99 arrived, the file <stdint.h> offered several basic types, and
+// basically covered the needs:
+//
+// http://en.cppreference.com/w/c/types/integer
+//
+// The code was changed to use either the C99 types -or- a portable shim that
+// could mimic the types (with the same names) on older compilers.
+//
 
 #if defined (__STDC_VERSION__) && __STDC_VERSION__ >= 199901L
-/* C-code types: use C99 */
-
-#include <stdint.h>
-
-typedef int8_t          i8;
-typedef uint8_t         u8;
-typedef int16_t         i16;
-typedef uint16_t        u16;
-typedef int32_t         i32;
-typedef uint32_t        u32;
-typedef int64_t         i64;
-typedef uint64_t        u64;
-typedef intptr_t        REBIPT;     // integral counterpart of void*
-typedef uintptr_t       REBUPT;     // unsigned counterpart of void*
-
-#define MAX_I32 INT32_MAX
-#define MIN_I32 INT32_MIN
-#define MAX_I64 INT64_MAX
-#define MIN_I64 INT64_MIN
-
-#define I8_C(c)         INT8_C(c)
-#define U8_C(c)         UINT8_C(c)
-
-#define I16_C(c)        INT16_C(c)
-#define U16_C(c)        UINT16_C(c)
-
-#define I32_C(c)        INT32_C(c)
-#define U32_C(c)        UINT32_C(c)
-
-#define I64_C(c)        INT64_C(c)
-#define U64_C(c)        UINT64_C(c)
-
+    #include <stdint.h> // It's C99 or above, use as-is
+#elif defined (CPLUSPLUS_11)
+    #include <stdint.h> // should also work in conforming C++11 (or later)
 #else
-/* C-code types: C99 definitions unavailable, do it ourselves */
+    #include "pstdint.h" // use "portable" standard int, by Paul Hsieh et al.
 
-typedef signed char     i8;
-typedef unsigned char   u8;
-#define I8(c)           c
-#define U8(c)           c
+    // Note: INT32_MAX and INT32_C can be missing in C++ builds on some older
+    // compilers without __STDC_LIMIT_MACROS and __STDC_CONSTANT_MACROS:
+    //
+    // https://sourceware.org/bugzilla/show_bug.cgi?id=15366
+    //
+    // You can run into this since pstdint.h falls back on stdint.h if it
+    // thinks it can.  Put those on the command line if needed.
 
-typedef short           i16;
-typedef unsigned short  u16;
-#define I16(c)          c
-#define U16(c)          c
-
-#ifdef __LP64__
-typedef int             i32;
-typedef unsigned int    u32;
-#else
-typedef long            i32;
-typedef unsigned long   u32;
+    // !!! One aspect of pstdint.h is that it considers 64-bit "optional".
+    // Some esoteric platforms may have a more hidden form of 64-bit support,
+    // e.g. this case from R3-Alpha for "Windows VC6 nonstandard typing":
+    //
+    //     #ifdef WEIRD_INT_64
+    //         typedef _int64 i64;
+    //         typedef unsigned _int64 u64;
+    //         #define I64_C(c) c ## I64
+    //         #define U64_C(c) c ## U64
+    //     #endif
+    //
+    // If %pstdint.h isn't trying hard enough for an unsupported platform of
+    // interest to get 64-bit integers, then patches should be made there.
 #endif
-#define I32_C(c) c
-#define U32_C(c) c ## U
-
-#ifdef WEIRD_INT_64       // Windows VC6 nonstandard typing for 64 bits
-typedef _int64          i64;
-typedef unsigned _int64 u64;
-#define I64_C(c) c ## I64
-#define U64_C(c) c ## U64
-#else
-typedef long long       i64;
-typedef unsigned long long u64;
-#define I64_C(c) c ## LL
-#define U64_C(c) c ## ULL
-#endif
-#ifdef __LLP64__
-typedef long long       REBIPT;     // integral counterpart of void*
-typedef unsigned long long  REBUPT;     // unsigned counterpart of void*
-#else
-typedef long            REBIPT;     // integral counterpart of void*
-typedef unsigned long   REBUPT;     // unsigned counterpart of void*
-#endif
-
-#define MAX_I32 I32_C(0x7fffffff)
-#define MIN_I32 ((i32)I32_C(0x80000000)) //compiler treats the hex literal as unsigned without casting
-#define MAX_I64 I64_C(0x7fffffffffffffff)
-#define MIN_I64 ((i64)I64_C(0x8000000000000000)) //compiler treats the hex literal as unsigned without casting
-
-#endif
-
-#define MAX_U32 U32_C(0xffffffff)
-#define MAX_U64 U64_C(0xffffffffffffffff)
-
-// Used for cases where we need 64 bits, even in 32 bit mode.
-// (Note: compatible with FILETIME used in Windows)
-#pragma pack(4)
-typedef struct sInt64 {
-    i32 l;
-    i32 h;
-} I64;
-#pragma pack()
-
 
 
 //=////////////////////////////////////////////////////////////////////////=//
@@ -658,7 +605,7 @@ typedef struct sInt64 {
 #ifdef TO_WINDOWS
     #define REBWCHAR wchar_t
 #else
-    #define REBWCHAR u16
+    #define REBWCHAR uint16_t
 #endif
 
 
@@ -843,39 +790,39 @@ typedef struct sInt64 {
     #if defined(__cplusplus) // needed even if not C++11
         template<class T>
         inline static void TRASH_POINTER_IF_DEBUG(T* &p) {
-            p = reinterpret_cast<T*>(static_cast<REBUPT>(0xDECAFBAD));
+            p = reinterpret_cast<T*>(static_cast<uintptr_t>(0xDECAFBAD));
         }
 
         template<class T>
         inline static void TRASH_CFUNC_IF_DEBUG(T* &p) {
-            p = reinterpret_cast<T*>(static_cast<REBUPT>(0xDECAFBAD));
+            p = reinterpret_cast<T*>(static_cast<uintptr_t>(0xDECAFBAD));
         }
 
         template<class T>
         inline static REBOOL IS_POINTER_TRASH_DEBUG(T* p) {
             return LOGICAL(
-                p == reinterpret_cast<T*>(static_cast<REBUPT>(0xDECAFBAD))
+                p == reinterpret_cast<T*>(static_cast<uintptr_t>(0xDECAFBAD))
             );
         }
 
         template<class T>
         inline static REBOOL IS_CFUNC_TRASH_DEBUG(T* p) {
             return LOGICAL(
-                p == reinterpret_cast<T*>(static_cast<REBUPT>(0xDECAFBAD))
+                p == reinterpret_cast<T*>(static_cast<uintptr_t>(0xDECAFBAD))
             );
         }
     #else
         #define TRASH_POINTER_IF_DEBUG(p) \
-            ((p) = cast(void*, cast(REBUPT, 0xDECAFBAD)))
+            ((p) = cast(void*, cast(uintptr_t, 0xDECAFBAD)))
 
         #define TRASH_CFUNC_IF_DEBUG(p) \
-            ((p) = cast(CFUNC*, cast(REBUPT, 0xDECAFBAD)))
+            ((p) = cast(CFUNC*, cast(uintptr_t, 0xDECAFBAD)))
             
         #define IS_POINTER_TRASH_DEBUG(p) \
-            LOGICAL((p) == cast(void*, cast(REBUPT, 0xDECAFBAD)))
+            LOGICAL((p) == cast(void*, cast(uintptr_t, 0xDECAFBAD)))
 
         #define IS_CFUNC_TRASH_DEBUG(p) \
-            LOGICAL((p) == cast(CFUNC*, cast(REBUPT, 0xDECAFBAD)))
+            LOGICAL((p) == cast(CFUNC*, cast(uintptr_t, 0xDECAFBAD)))
     #endif
 #endif
 
@@ -1042,19 +989,19 @@ typedef struct sInt64 {
 #if defined(ENDIAN_BIG) // Byte w/most significant bit first
 
     #define FLAGIT_LEFT(n) \
-        ((REBUPT)1 << (PLATFORM_BITS - (n) - 1)) // 63,62,61.. or 32,31,30..
+        ((uintptr_t)1 << (PLATFORM_BITS - (n) - 1)) // 63,62,61..or..32,31,30
 
     #define FLAGBYTE_FIRST(val) \
-        ((REBUPT)val << (PLATFORM_BITS - 8)) // val <= 255
+        ((uintptr_t)val << (PLATFORM_BITS - 8)) // val <= 255
 
     #define FLAGBYTE_RIGHT(val) \
-        ((REBUPT)val) // little endian needs val <= 255
+        ((uintptr_t)val) // little endian needs val <= 255
 
     #define FLAGBYTE_MID(val) \
-        (((REBUPT)val) << 8) // little endian needs val <= 255
+        (((uintptr_t)val) << 8) // little endian needs val <= 255
 
     #define FLAGUINT16_RIGHT(val) \
-        ((REBUPT)val) // litte endian needs val <= 65535
+        ((uintptr_t)val) // litte endian needs val <= 65535
 
     #define RIGHT_16_BITS(flags) \
         ((flags) & 0xFFFF)
@@ -1062,19 +1009,19 @@ typedef struct sInt64 {
 #elif defined(ENDIAN_LITTLE) // Byte w/least significant bit first (e.g. x86)
 
     #define FLAGIT_LEFT(n) \
-        ((REBUPT)1 << (7 + ((n) / 8) * 8 - (n) % 8)) // 7,6,5..0,15,14..8,23..
+        ((uintptr_t)1 << (7 + ((n) / 8) * 8 - (n) % 8)) // 7,6,..0|15,14..8|..
 
     #define FLAGBYTE_FIRST(val) \
-        ((REBUPT)val) // val <= 255
+        ((uintptr_t)val) // val <= 255
 
     #define FLAGBYTE_RIGHT(val) \
-        ((REBUPT)(val) << (PLATFORM_BITS - 8)) // val <= 255
+        ((uintptr_t)(val) << (PLATFORM_BITS - 8)) // val <= 255
 
     #define FLAGBYTE_MID(val) \
-        ((REBUPT)(val) << (PLATFORM_BITS - 16)) // val <= 255
+        ((uintptr_t)(val) << (PLATFORM_BITS - 16)) // val <= 255
 
     #define FLAGUINT16_RIGHT(val) \
-        ((REBUPT)(val) << (PLATFORM_BITS - 16))
+        ((uintptr_t)(val) << (PLATFORM_BITS - 16))
 
     #define RIGHT_16_BITS(flags) \
         ((flags) >> (PLATFORM_BITS - 16)) // unsigned, should zero fill left
@@ -1103,38 +1050,38 @@ typedef struct sInt64 {
 //
 
 #define LEFT_8_BITS(flags) \
-    (((const u8*)&flags)[0]) // reminds that 8 is faster
+    (((const uint8_t*)&flags)[0]) // reminder: 8 is faster
 
-#define LEFT_N_BITS(flags,n) \
-    (((const u8*)&flags)[0] >> (8 - (n))) // n <= 8
+#define LEFT_N_BITS(flags,n) /* n <= 8 */ \
+    (((const uint8_t*)&flags)[0] >> (8 - (n)))
 
-#define RIGHT_N_BITS(flags,n) \
-    (((const u8*)&flags)[sizeof(REBUPT) - 1] & ((1 << (n)) - 1)) // n <= 8
+#define RIGHT_N_BITS(flags,n) /* n <= 8 */ \
+    (((const uint8_t*)&flags)[sizeof(uintptr_t) - 1] & ((1 << (n)) - 1))
 
 #define RIGHT_8_BITS(flags) \
-    (((const u8*)&flags)[sizeof(REBUPT) - 1]) // reminds that 8 is faster
+    (((const uint8_t*)&flags)[sizeof(uintptr_t) - 1]) // reminder: 8 is faster
 
-#define CLEAR_N_RIGHT_BITS(flags,n) \
-    (((u8*)&flags)[sizeof(REBUPT) - 1] &= ~((1 << (n)) - 1)) // n <= 8
+#define CLEAR_N_RIGHT_BITS(flags,n) /* n <= 8 */ \
+    (((uint8_t*)&flags)[sizeof(uintptr_t) - 1] &= ~((1 << (n)) - 1))
 
 #define CLEAR_8_RIGHT_BITS(flags) \
-    (((u8*)&flags)[sizeof(REBUPT) - 1] = 0) // reminds that 8 is faster
+    (((uint8_t*)&flags)[sizeof(uintptr_t) - 1] = 0) // reminder: 8 is faster
 
-#define MID_N_BITS(flags,n) \
-    (((const u8*)&flags)[sizeof(REBUPT) - 2] & ((1 << (n)) - 1)) // n <= 8
+#define MID_N_BITS(flags,n) /* n <= 8 */ \
+    (((const uint8_t*)&flags)[sizeof(uintptr_t) - 2] & ((1 << (n)) - 1))
 
 #define MID_8_BITS(flags) \
-    (((const u8*)&flags)[sizeof(REBUPT) - 2]) // reminds that 8 is faster
+    (((const uint8_t*)&flags)[sizeof(uintptr_t) - 2]) // reminder: 8 is faster
 
-#define CLEAR_N_MID_BITS(flags,n) \
-    (((u8*)&flags)[sizeof(REBUPT) - 2] &= ~((1 << (n)) - 1)) // n <= 8
+#define CLEAR_N_MID_BITS(flags,n) /* n <= 8 */ \
+    (((uint8_t*)&flags)[sizeof(uintptr_t) - 2] &= ~((1 << (n)) - 1))
 
 #define CLEAR_8_MID_BITS(flags) \
-    (((u8*)&flags)[sizeof(REBUPT) - 2] = 0) // reminds that 8 is faster
+    (((uint8_t*)&flags)[sizeof(uintptr_t) - 2] = 0) // reminder: 8 is faster
 
 #define CLEAR_16_RIGHT_BITS(flags) \
-    (((u8*)&flags)[sizeof(REBUPT) - 1] = \
-        ((u8*)&flags)[sizeof(REBUPT) - 2] = 0)
+    (((uint8_t*)&flags)[sizeof(uintptr_t) - 1] = \
+        ((uint8_t*)&flags)[sizeof(uintptr_t) - 2] = 0)
 
 
 //=////////////////////////////////////////////////////////////////////////=//
@@ -1183,8 +1130,8 @@ typedef struct sInt64 {
      */
     #define s_cast(b)       ((char *)(b))
     #define cs_cast(b)      ((const char *)(b))
-    #define b_cast(s)       ((unsigned char *)(s))
-    #define cb_cast(s)      ((const unsigned char *)(s))
+    #define b_cast(s)       ((uint8_t *)(s))
+    #define cb_cast(s)      ((const uint8_t *)(s))
 
     #define LEN_BYTES(s) \
         strlen((const char*)(s))
@@ -1199,24 +1146,35 @@ typedef struct sInt64 {
      * particularly not the already-flipped type.  Instead of type_traits, 4
      * functions check in both C and C++ (here only during Debug builds):
      */
-    inline static u8 *b_cast(char *s) { return (u8*)s; }
-    inline static const u8 *cb_cast(const char *s) { return (const u8*)s; }
-    inline static char *s_cast(u8 *s) { return (char*)s; }
-    inline static const char *cs_cast(const u8 *s) { return (const char*)s; }
+    inline static uint8_t *b_cast(char *s)
+        { return (uint8_t*)s; }
 
-    // Debug build uses inline function stubs to ensure you pass in u8 *
+    inline static const uint8_t *cb_cast(const char *s)
+        { return (const uint8_t*)s; }
+
+    inline static char *s_cast(uint8_t *s)
+        { return (char*)s; }
+
+    inline static const char *cs_cast(const uint8_t *s)
+        { return (const char*)s; }
+
+    // Debug build uses inline function stubs to ensure you pass in uint8_t *
     //
-    inline static u8 *COPY_BYTES(u8 *dest, const u8 *src, size_t count)
-        { return b_cast(strncpy(s_cast(dest), cs_cast(src), count)); }
+    inline static uint8_t *COPY_BYTES(
+        uint8_t *dest, const uint8_t *src, size_t count
+    ){
+        return b_cast(strncpy(s_cast(dest), cs_cast(src), count));
+    }
 
-    inline static size_t LEN_BYTES(const u8 *str)
+    inline static size_t LEN_BYTES(const uint8_t *str)
         { return strlen(cs_cast(str)); }
 
-    inline static int COMPARE_BYTES(const u8 *lhs, const u8 *rhs)
+    inline static int COMPARE_BYTES(const uint8_t *lhs, const uint8_t *rhs)
         { return strcmp(cs_cast(lhs), cs_cast(rhs)); }
 
-    inline static u8 *APPEND_BYTES_LIMIT(u8 *dest, const u8 *src, size_t max)
-    {
+    inline static uint8_t *APPEND_BYTES_LIMIT(
+        uint8_t *dest, const uint8_t *src, size_t max
+    ){
         return b_cast(strncat(
             s_cast(dest), cs_cast(src), MAX(max - LEN_BYTES(dest) - 1, 0)
         ));
@@ -1239,10 +1197,10 @@ typedef struct sInt64 {
 
 #ifdef ENDIAN_BIG // ARGB pixel format on big endian systems
     #define TO_RGBA_COLOR(r,g,b,a) \
-        (cast(u32, (r)) << 24 \
-        | cast(u32, (g)) << 16 \
-        | cast(u32, (b)) << 8 \
-        | cast(u32, (a)))
+        (cast(uint32_t, (r)) << 24 \
+        | cast(uint32_t, (g)) << 16 \
+        | cast(uint32_t, (b)) << 8 \
+        | cast(uint32_t, (a)))
 
     #define C_A 0
     #define C_R 1
@@ -1250,16 +1208,16 @@ typedef struct sInt64 {
     #define C_B 3
 
     #define TO_PIXEL_COLOR(r,g,b,a) \
-        (cast(u32, (a)) << 24 \
-        | cast(u32, (r)) << 16 \
-        | cast(u32, (g)) << 8 \
-        | cast(u32, (b)))
+        (cast(uint32_t, (a)) << 24 \
+        | cast(uint32_t, (r)) << 16 \
+        | cast(uint32_t, (g)) << 8 \
+        | cast(uint32_t, (b)))
 #else
     #define TO_RGBA_COLOR(r,g,b,a) \
-        (cast(u32, (a)) << 24 \
-        | cast(u32, (b)) << 16 \
-        | cast(u32, (g)) << 8 \
-        | cast(u32, (r)))
+        (cast(uint32_t, (a)) << 24 \
+        | cast(uint32_t, (b)) << 16 \
+        | cast(uint32_t, (g)) << 8 \
+        | cast(uint32_t, (r)))
 
     #ifdef TO_ANDROID_ARM // RGBA pixel format on Android
         #define C_R 0
@@ -1268,10 +1226,10 @@ typedef struct sInt64 {
         #define C_A 3
 
         #define TO_PIXEL_COLOR(r,g,b,a) \
-            (cast(u32, (a)) << 24 \
-            | cast(u32, (b)) << 16 \
-            | cast(u32, (g)) << 8 \
-            | cast(u32, (r)))
+            (cast(uint32_t, (a)) << 24 \
+            | cast(uint32_t, (b)) << 16 \
+            | cast(uint32_t, (g)) << 8 \
+            | cast(uint32_t, (r)))
 
     #else // BGRA pixel format on Windows
         #define C_B 0
@@ -1280,9 +1238,9 @@ typedef struct sInt64 {
         #define C_A 3
 
         #define TO_PIXEL_COLOR(r,g,b,a) \
-            (cast(u32, (a)) << 24 \
-            | cast(u32, (r)) << 16 \
-            | cast(u32, (g)) << 8 \
-            | cast(u32, (b)))
+            (cast(uint32_t, (a)) << 24 \
+            | cast(uint32_t, (r)) << 16 \
+            | cast(uint32_t, (g)) << 8 \
+            | cast(uint32_t, (b)))
     #endif
 #endif

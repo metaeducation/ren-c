@@ -180,12 +180,12 @@ REBVAL *OS_Get_Time(void)
 // provide a precise time sampling method. So, if the target
 // posix OS does, add the ifdef code in here.
 //
-i64 OS_Delta_Time(i64 base)
+int64_t OS_Delta_Time(int64_t base)
 {
     struct timeval tv;
     gettimeofday(&tv,0);
 
-    i64 time = cast(i64, tv.tv_sec * 1000000) + tv.tv_usec;
+    int64_t time = cast(int64_t, tv.tv_sec * 1000000) + tv.tv_usec;
     if (base == 0)
         return time;
 

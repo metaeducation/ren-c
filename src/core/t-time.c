@@ -581,20 +581,30 @@ REBTYPE(Time)
 
             switch(action) {
             case SYM_ADD:
-                secs = Add_Max(REB_TIME, secs, (i64)(dec * SEC_SEC), MAX_TIME);
+                secs = Add_Max(
+                    REB_TIME,
+                    secs,
+                    cast(int64_t, dec * SEC_SEC),
+                    MAX_TIME
+                );
                 goto fixTime;
 
             case SYM_SUBTRACT:
-                secs = Add_Max(REB_TIME, secs, (i64)(dec * -SEC_SEC), MAX_TIME);
+                secs = Add_Max(
+                    REB_TIME,
+                    secs,
+                    cast(int64_t, dec * -SEC_SEC),
+                    MAX_TIME
+                );
                 goto fixTime;
 
             case SYM_MULTIPLY:
-                secs = (REBI64)(secs * dec);
+                secs = cast(int64_t, secs * dec);
                 goto setTime;
 
             case SYM_DIVIDE:
                 if (dec == 0.0) fail (Error_Zero_Divide_Raw());
-                secs = (REBI64)(secs / dec);
+                secs = cast(int64_t, secs / dec);
                 goto setTime;
 
 //          case SYM_REMAINDER:

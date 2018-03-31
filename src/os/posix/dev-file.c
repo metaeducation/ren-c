@@ -126,7 +126,7 @@ static REBOOL Seek_File_64(struct devreq_file *file)
     REBREQ *req = AS_REBREQ(file);
 
     int h = req->requestee.id;
-    i64 result;
+    int64_t result;
 
     if (file->index == -1) {
         // Append:

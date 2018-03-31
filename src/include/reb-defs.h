@@ -57,24 +57,30 @@
 // a specific size int (instead of deferring to C's generic `int`).
 //
 
-typedef i32 REBINT; // 32 bit (64 bit defined below)
-typedef u32 REBCNT; // 32 bit (counting number, length in units)
-typedef u32 REBSIZ; // 32 bit (size in bytes)
-typedef i64 REBI64; // 64 bit integer
-typedef u64 REBU64; // 64 bit unsigned integer
+typedef int32_t REBINT; // 32 bit signed integer
+typedef uint32_t REBCNT; // 32 bit (counting number, length in "units")
+typedef uint32_t REBSIZ; // 32 bit (size in bytes)
+typedef int64_t REBI64; // 64 bit integer
+typedef uint64_t REBU64; // 64 bit unsigned integer
 typedef float REBD32; // 32 bit decimal
 typedef double REBDEC; // 64 bit decimal
-typedef i8 REBOOL8; // Small for struct packing (memory optimization vs CPU)
 
-typedef REBUPT REBFLGS; // platform-pointer-size unsigned (like `uintptr_t`)
+typedef intptr_t REBIPT; // integral counterpart of void*
+typedef uintptr_t REBUPT; // unsigned counterpart of void*
+
+typedef uintptr_t REBFLGS; // platform-pointer-size unsigned for bit flags
 
 // Using unsigned characters is good for conveying information is not limited
 // to textual data.  It provides type-checking that helps discern between
 // single-codepoint null terminated data (on which you might legitimately
 // use `strlen()`, for instance) and something like UTF-8 data.
 //
-typedef u8 REBYTE; // unsigned byte data
+typedef uint8_t REBYTE; // unsigned byte data
 
+// !!! Review this choice from R3-Alpha:
+//
+// https://stackoverflow.com/q/1153548/
+//
 #define MIN_D64 ((double)-9.2233720368547758e18)
 #define MAX_D64 ((double) 9.2233720368547758e18)
 
@@ -111,7 +117,7 @@ typedef u8 REBYTE; // unsigned byte data
 // http://utf8everywhere.org
 //
 
-typedef u16 REBUNI;
+typedef uint16_t REBUNI;
 
 #define MAX_UNI \
     ((1 << (8 * sizeof(REBUNI))) - 1)
@@ -311,6 +317,6 @@ typedef int cmp_t(void *, const void *, const void *);
 extern void reb_qsort_r(void *a, size_t n, size_t es, void *thunk, cmp_t *cmp);
 
 #define ROUND_TO_INT(d) \
-    (i32)(floor((MAX(MIN_I32, MIN(MAX_I32, d))) + 0.5))
+    cast(int32_t, floor((MAX(INT32_MIN, MIN(INT32_MAX, d))) + 0.5))
 
 #endif

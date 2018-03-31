@@ -32,9 +32,14 @@
 
 #define CRC_DEFINED
 
-#define CRCBITS 24          /* may be 16, 24, or 32 */
-#define MASK_CRC(crc) ((crc) & I32_C(0x00ffffff))     /* if CRCBITS is 24 */
-#define CRCHIBIT ((REBCNT) (I32_C(1)<<(CRCBITS-1))) /* 0x8000 if CRCBITS is 16 */
+#define CRCBITS 24 // may be 16, 24, or 32
+
+#define MASK_CRC(crc) \
+    ((crc) & INT32_C(0x00ffffff)) // if CRCBITS is 24
+
+#define CRCHIBIT \
+    cast(REBCNT, INT32_C(1) << (CRCBITS - 1)) // 0x8000 if CRCBITS is 16
+
 #define CRCSHIFTS (CRCBITS-8)
 #define CCITTCRC 0x1021     /* CCITT's 16-bit CRC generator polynomial */
 #define PRZCRC   0x864cfb   /* PRZ's 24-bit CRC generator polynomial */
@@ -169,7 +174,7 @@ REBINT Hash_Word(const REBYTE *str, REBCNT len)
     return hash;
 }
 
-static u32 *crc32_table = 0;
+static uint32_t *crc32_table = NULL;
 
 static void Make_CRC32_Table(void);
 
@@ -512,28 +517,28 @@ REBINT Compute_IPC(REBYTE *data, REBCNT length)
 
 
 static void Make_CRC32_Table(void) {
-    u32 c;
-    int n,k;
+    crc32_table = ALLOC_N(uint32_t, 256);
 
-    crc32_table = ALLOC_N(u32, 256);
+    int n;
+    for (n = 0; n < 256; ++n) {
+        uint32_t c = cast(uint32_t, n);
 
-    for(n=0;n<256;n++) {
-        c=(u32)n;
-        for(k=0;k<8;k++) {
-            if(c&1)
-                c=U32_C(0xedb88320)^(c>>1);
+        int k;
+        for(k = 0; k < 8; ++k) {
+            if ((c & 1) != 0)
+                c = UINT32_C(0xedb88320) ^ (c >> 1);
             else
-                c=c>>1;
+                c= c >> 1;
         }
-        crc32_table[n]=c;
+        crc32_table[n] = c;
     }
 }
 
 
-REBCNT Update_CRC32(u32 crc, REBYTE *buf, int len) {
-    u32 c = ~crc;
-    int n;
+REBCNT Update_CRC32(uint32_t crc, REBYTE *buf, int len) {
+    uint32_t c = ~crc;
 
+    int n;
     for(n = 0; n < len; n++)
         c = crc32_table[(c^buf[n])&0xff]^(c>>8);
 
@@ -546,7 +551,7 @@ REBCNT Update_CRC32(u32 crc, REBYTE *buf, int len) {
 //
 REBCNT CRC32(REBYTE *buf, REBCNT len)
 {
-    return Update_CRC32(U32_C(0x00000000), buf, len);
+    return Update_CRC32(UINT32_C(0x00000000), buf, len);
 }
 
 
@@ -561,8 +566,8 @@ REBINT Hash_String(
         REBCNT len, // chars, not bytes
         REBCNT wide // 1 = byte-sized, 2 = Unicode
 ) {
-    u32 c = 0x00000000;
-    u32 c2 = 0x00000000; // don't change, see [1] below
+    uint32_t c = 0x00000000;
+    uint32_t c2 = 0x00000000; // don't change, see [1] below
     REBCNT n;
     const REBYTE *b = cast(const REBYTE*, data);
     const REBUNI *u = cast(const REBUNI*, data);
@@ -611,7 +616,7 @@ void Startup_CRC(void)
 //
 void Shutdown_CRC(void)
 {
-    FREE_N(u32, 256, crc32_table);
+    FREE_N(uint32_t, 256, crc32_table);
 
     FREE_N(REBCNT, 256, CRC_Table);
 }

@@ -291,7 +291,10 @@ void Value_To_Int64(REBVAL *out, const REBVAL *value, REBOOL no_sign)
         ) {
             DECLARE_LOCAL (d);
             if (Scan_Decimal(d, bp, len, TRUE)) {
-                if (VAL_DECIMAL(d) < MAX_I64 && VAL_DECIMAL(d) >= MIN_I64) {
+                if (
+                    VAL_DECIMAL(d) < INT64_MAX
+                    && VAL_DECIMAL(d) >= INT64_MIN
+                ){
                     Init_Integer(out, cast(REBI64, VAL_DECIMAL(d)));
                     goto check_sign;
                 }
@@ -472,7 +475,7 @@ REBTYPE(Integer)
     case SYM_DIVIDE:
         if (arg == 0)
             fail (Error_Zero_Divide_Raw());
-        if (num == MIN_I64 && arg == -1)
+        if (num == INT64_MIN && arg == -1)
             fail (Error_Overflow_Raw());
         if (num % arg == 0) {
             num = num / arg;
@@ -503,7 +506,7 @@ REBTYPE(Integer)
         break;
 
     case SYM_NEGATE:
-        if (num == MIN_I64)
+        if (num == INT64_MIN)
             fail (Error_Overflow_Raw());
         num = -num;
         break;
@@ -513,7 +516,7 @@ REBTYPE(Integer)
         break;
 
     case SYM_ABSOLUTE:
-        if (num == MIN_I64)
+        if (num == INT64_MIN)
             fail (Error_Overflow_Raw());
         if (num < 0)
             num = -num;

@@ -1581,7 +1581,7 @@ REBCNT Recycle_Core(REBOOL shutdown, REBSER *sweeplist)
         // https://github.com/zsx/r3/issues/32
         //
         /*if (GC_Ballast <= TG_Ballast / 2
-            && TG_Task_Ballast < MAX_I32) {
+            && TG_Task_Ballast < INT32_MAX) {
             //increasing ballast by half
             TG_Ballast /= 2;
             TG_Ballast *= 3;
@@ -1593,9 +1593,9 @@ REBCNT Recycle_Core(REBOOL shutdown, REBSER *sweeplist)
         // avoid overflow
         if (
             TG_Ballast < 0
-            || TG_Ballast >= MAX_I32
+            || TG_Ballast >= INT32_MAX
         ) {
-            TG_Ballast = MAX_I32;
+            TG_Ballast = INT32_MAX;
         }*/
 
         GC_Ballast = TG_Ballast;
@@ -1861,7 +1861,7 @@ static REBCNT Sweep_Gobs(void)
                 int tmp;
                 GC_Ballast = REB_I32_ADD_OF(
                     GC_Ballast, Mem_Pools[GOB_POOL].wide, &tmp
-                ) ? MAX_I32 : tmp;
+                ) ? INT32_MAX : tmp;
 
                 if (GC_Ballast > 0)
                     CLR_SIGNAL(SIG_RECYCLE);

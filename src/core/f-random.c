@@ -148,12 +148,24 @@ REBI64 Random_Int(REBOOL secure)
 //
 REBI64 Random_Range(REBI64 r, REBOOL secure)
 {
-    REBU64 s, m, u;
-    if (r == 0) return 0;
-    s = (r < 0) ? -r : r;
-    if (!secure && s > MM) fail (Error_Overflow_Raw());
-    m = secure ? MAX_U64 - (MAX_U64 - s + 1) % s : MM - MM % s - 1; /* rejection limit */
-    do u = Random_Int(secure); while (u > m); /* get a random below the limit */
+    if (r == 0)
+        return 0;
+
+    REBU64 s = (r < 0) ? -r : r;
+    if (NOT(secure) && s > MM)
+        fail (Error_Overflow_Raw());
+
+    REBU64 m; // rejection limit
+    if (secure)
+        m = UINT64_MAX - (UINT64_MAX - s + 1) % s;
+    else
+        m = MM - MM % s - 1; 
+
+    REBU64 u;
+    do {
+        u = Random_Int(secure);
+    } while (u > m); // get a random value below the limit
+
     u = u % s + 1;
     return (r > 0) ? cast(REBI64, u) : -cast(REBI64, u);
 }
