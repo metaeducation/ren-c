@@ -121,8 +121,8 @@ static void Encode_Utf16_Core(
     REBYTE wide,
     REBOOL little_endian
 ){
-    REBSER *bin = Make_Binary(sizeof(u16) * len);
-    u16* up = cast(u16*, BIN_HEAD(bin));
+    REBSER *bin = Make_Binary(sizeof(uint16_t) * len);
+    uint16_t* up = cast(uint16_t*, BIN_HEAD(bin));
 
     if (wide == 1) { // Latin1
         REBCNT i = 0;
@@ -147,7 +147,7 @@ static void Encode_Utf16_Core(
     else if (wide == 2) { // UCS2, which is close to UTF16 :-/
     #ifdef ENDIAN_LITTLE
         if (little_endian) {
-            memcpy(up, data, len * sizeof(u16));
+            memcpy(up, data, len * sizeof(uint16_t));
         } else {
             REBCNT i = 0;
             for (i = 0; i < len; i ++) {
@@ -163,7 +163,7 @@ static void Encode_Utf16_Core(
                 up[i] = ((uni & 0xff) << 8) | ((uni & 0xff00) >> 8);
             }
         } else {
-            memcpy(up, data, len * sizeof(u16));
+            memcpy(up, data, len * sizeof(uint16_t));
         }
     #else
         #error "Unsupported CPU endian"
@@ -173,7 +173,7 @@ static void Encode_Utf16_Core(
         fail ("Unicode width > 2 reserved for future expansion.");
     }
 
-    TERM_BIN_LEN(bin, len * sizeof(u16));
+    TERM_BIN_LEN(bin, len * sizeof(uint16_t));
     Init_Binary(out, bin);
 }
 

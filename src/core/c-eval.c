@@ -147,10 +147,10 @@ static inline REBOOL Start_New_Expression_Throws(REBFRM *f) {
     //
     #define UPDATE_TICK_DEBUG(cur) \
         do { \
-            if (TG_Tick < MAX_U32) \
+            if (TG_Tick < UINT32_MAX) \
                 tick = f->tick = ++TG_Tick; \
             else \
-                tick = f->tick = MAX_U32; \
+                tick = f->tick = UINT32_MAX; \
             if ( \
                 (TG_Break_At_Tick != 0 && tick >= TG_Break_At_Tick) \
                 || tick == TICK_BREAKPOINT \

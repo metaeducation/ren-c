@@ -764,7 +764,7 @@ const REBYTE *Scan_Date(
 
         // !!! Clang static analyzer doesn't know from test of `day` below
         // how it connects with year being set or not.  Suppress warning.
-        year = MIN_I32; // !!! Garbage, should not be read.
+        year = INT32_MIN; // !!! Garbage, should not be read.
     }
     else
         return_NULL;

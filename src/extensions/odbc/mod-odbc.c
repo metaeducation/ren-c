@@ -1151,7 +1151,7 @@ void ODBC_Column_To_Rebol_Value(
         // Special exception made for big integers.
         //
         if (col->is_unsigned) {
-            if (*cast(REBU64*, col->buffer) > MAX_I64)
+            if (*cast(REBU64*, col->buffer) > INT64_MAX)
                 fail ("INTEGER! can't hold some unsigned 64-bit values");
 
             Init_Integer(out, *cast(REBU64*, col->buffer));

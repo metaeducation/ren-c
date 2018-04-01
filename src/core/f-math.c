@@ -131,7 +131,7 @@ REBINT Form_Int_Len(REBYTE *buf, REBI64 val, REBINT maxl)
     }
 
 #define MIN_I64_STR "-9223372036854775808"
-    if (val == MIN_I64) {
+    if (val == INT64_MIN) {
         len = strlen(MIN_I64_STR);
         if (maxl < len + 1) return 0;
         memcpy(buf, MIN_I64_STR, len + 1);

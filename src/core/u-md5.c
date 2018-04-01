@@ -12,7 +12,7 @@
 #define MD5_LENGTH_BLOCK 8
 #define MD5_DIGEST_LENGTH 16
 
-#define MD5_LONG u32
+#define MD5_LONG uint32_t
 
 typedef struct MD5state_st {
     MD5_LONG A,B,C,D;

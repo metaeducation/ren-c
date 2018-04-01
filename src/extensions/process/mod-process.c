@@ -223,14 +223,14 @@ int OS_Create_Process(
     int argc,
     const WCHAR * argv[],
     REBOOL flag_wait,
-    u64 *pid,
+    uint64_t *pid,
     int *exit_code,
     char *input,
-    u32 input_len,
+    uint32_t input_len,
     char **output,
-    u32 *output_len,
+    uint32_t *output_len,
     char **err,
-    u32 *err_len
+    uint32_t *err_len
 ) {
     PROCESS_INCLUDE_PARAMS_OF_CALL;
 
@@ -861,14 +861,14 @@ int OS_Create_Process(
     int argc,
     const char* argv[],
     REBOOL flag_wait, // distinct from REF(wait)
-    u64 *pid,
+    uint64_t *pid,
     int *exit_code,
     char *input,
-    u32 input_len,
+    uint32_t input_len,
     char **output,
-    u32 *output_len,
+    uint32_t *output_len,
     char **err,
-    u32 *err_len
+    uint32_t *err_len
 ) {
     PROCESS_INCLUDE_PARAMS_OF_CALL;
 
@@ -893,7 +893,7 @@ int OS_Create_Process(
     //
     char *info = NULL;
     off_t info_size = 0;
-    u32 info_len = 0;
+    uint32_t info_len = 0;
 
     // suppress unused warnings but keep flags for future use
     UNUSED(REF(info));
@@ -1268,7 +1268,7 @@ child_error: ;
                 else if (pfds[i].revents & POLLIN) {
                     /* printf("POLLIN: %d [%d/%d]\n", pfds[i].fd, i, nfds); */
                     char **buffer = NULL;
-                    u32 *offset;
+                    uint32_t *offset;
                     ssize_t to_read = 0;
                     off_t *size;
                     if (pfds[i].fd == stdout_pipe[R]) {

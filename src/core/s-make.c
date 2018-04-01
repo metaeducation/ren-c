@@ -601,7 +601,7 @@ REBSER *Join_Binary(const REBVAL *blk, REBINT limit)
     for (val = VAL_ARRAY_AT(blk); limit > 0; val++, limit--) {
         switch (VAL_TYPE(val)) {
         case REB_INTEGER:
-            if (VAL_INT64(val) > cast(i64, 255) || VAL_INT64(val) < 0)
+            if (VAL_INT64(val) > 255 || VAL_INT64(val) < 0)
                 fail (Error_Out_Of_Range(KNOWN(val)));
             EXPAND_SERIES_TAIL(series, 1);
             *BIN_AT(series, tail) = (REBYTE)VAL_INT32(val);

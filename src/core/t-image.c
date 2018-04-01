@@ -31,13 +31,16 @@
 
 #include "sys-core.h"
 
-#define CLEAR_IMAGE(p, x, y) memset(p, 0, x * y * sizeof(u32))
+#define CLEAR_IMAGE(p, x, y) \
+    memset(p, 0, x * y * sizeof(uint32_t))
 
-#define RESET_IMAGE(p, l) do { \
-    REBCNT *start = (REBCNT*)p; \
-    REBCNT *stop = start + l; \
-    while (start < stop) *start++ = 0xff000000; \
-} while(0)
+#define RESET_IMAGE(p, l) \
+    do { \
+        uint32_t *start = cast(uint32_t*, p); /* !!! Review using bytes! */ \
+        uint32_t *stop = start + l; \
+        while (start < stop) \
+            *start++ = 0xff000000; /* opaque alpha, R=G=B as 0 for black */ \
+    } while(0)
 
 
 //
@@ -580,7 +583,7 @@ REBSER *Make_Image(REBCNT w, REBCNT h, REBOOL error)
         return NULL;
     }
 
-    REBSER *img = Make_Series(w * h + 1, sizeof(u32));
+    REBSER *img = Make_Series(w * h + 1, sizeof(uint32_t));
     SET_SERIES_LEN(img, w * h);
     RESET_IMAGE(SER_DATA_RAW(img), SER_LEN(img)); //length in 'pixels'
     IMG_WIDE(img) = w;

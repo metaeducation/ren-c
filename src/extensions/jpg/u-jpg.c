@@ -61,7 +61,7 @@ extern void jpeg_load(char *buffer, int nbytes, char *output);
 //#include "jpeglib.h"
 //#include "jerror.h"
 
-typedef u32 uinteger32;
+typedef uint32_t uinteger32;
 
 /* Expanded data source object for stdio input */
 

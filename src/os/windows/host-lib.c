@@ -132,7 +132,7 @@ REBVAL *OS_Get_Time(void)
 // Note: Requires high performance timer.
 //      Q: If not found, use timeGetTime() instead ?!
 //
-i64 OS_Delta_Time(i64 base)
+int64_t OS_Delta_Time(int64_t base)
 {
     LARGE_INTEGER time;
     if (!QueryPerformanceCounter(&time))

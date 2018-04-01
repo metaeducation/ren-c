@@ -1442,7 +1442,7 @@ REBNATIVE(subparse)
                         mincount = 0;
                         // falls through
                     case SYM_SOME:
-                        maxcount = MAX_I32;
+                        maxcount = INT32_MAX;
                         FETCH_NEXT_RULE_MAYBE_END(f);
                         continue;
 
@@ -2011,7 +2011,7 @@ REBNATIVE(subparse)
                 count++; // may overflow to negative
 
                 if (count < 0)
-                    count = MAX_I32; // the forever case
+                    count = INT32_MAX; // the forever case
 
                 if (i == P_POS && NOT(flags & PF_WHILE)) {
                     //

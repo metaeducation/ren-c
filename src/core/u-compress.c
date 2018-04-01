@@ -59,7 +59,7 @@
 //
 // Get endian-independent encoding of a 32-bit unsigned integer to 4 bytes
 //
-static void U32_To_Bytes(REBYTE *out, u32 in)
+static void U32_To_Bytes(REBYTE *out, uint32_t in)
 {
     out[0] = cast(REBYTE, in);
     out[1] = cast(REBYTE, in >> 8);
@@ -73,12 +73,12 @@ static void U32_To_Bytes(REBYTE *out, u32 in)
 //
 // Decode endian-independent sequence of 4 bytes back into a 32-bit unsigned
 //
-static u32 Bytes_To_U32(const REBYTE * const in)
+static uint32_t Bytes_To_U32(const REBYTE * const in)
 {
-    return cast(u32, in[0])
-        | cast(u32, in[1] << 8)
-        | cast(u32, in[2] << 16)
-        | cast(u32, in[3] << 24);
+    return cast(uint32_t, in[0])
+        | cast(uint32_t, in[1] << 8)
+        | cast(uint32_t, in[2] << 16)
+        | cast(uint32_t, in[3] << 24);
 }
 
 
@@ -208,7 +208,7 @@ REBYTE *rebDeflateAlloc(
     //
     REBCNT buf_size = deflateBound(&strm, in_len);
     if (NOT(gzip) && NOT(only))
-        buf_size += sizeof(u32); // for 32-bit length (gzip's is implicit)
+        buf_size += sizeof(uint32_t); // 32-bit length (gzip already added)
 
     strm.avail_in = in_len;
     strm.next_in = input;
@@ -237,9 +237,9 @@ REBYTE *rebDeflateAlloc(
         // clients who wanted to decompress to a known allocation size would
         // have to save the size somewhere.
         //
-        assert(strm.avail_out >= sizeof(u32));
-        U32_To_Bytes(output + strm.total_out, cast(u32, in_len));
-        overall_size = strm.total_out + sizeof(u32);
+        assert(strm.avail_out >= sizeof(uint32_t));
+        U32_To_Bytes(output + strm.total_out, cast(uint32_t, in_len));
+        overall_size = strm.total_out + sizeof(uint32_t);
     }
     else {
       #if !defined(NDEBUG)
@@ -249,8 +249,8 @@ REBYTE *rebDeflateAlloc(
         // same format that R3-Alpha and Rebol2 used.  Double-check it.
         //
         if (gzip) {
-            u32 gzip_len = Bytes_To_U32(
-                output + strm.total_out - sizeof(u32)
+            uint32_t gzip_len = Bytes_To_U32(
+                output + strm.total_out - sizeof(uint32_t)
             );
             assert(in_len == gzip_len);
         }
@@ -322,15 +322,15 @@ REBYTE *rebInflateAlloc(
         // Both gzip and Rebol's envelope have the uncompressed size living in
         // the last 4 bytes of the payload.
         //
-        if (len_in <= sizeof(u32))
+        if (len_in <= sizeof(uint32_t))
             fail (Error_Past_End_Raw()); // !!! Better error?
 
-        buf_size = Bytes_To_U32(input + len_in - sizeof(u32));
+        buf_size = Bytes_To_U32(input + len_in - sizeof(uint32_t));
 
         // If we know the size is too big go ahead and report an error
         // before doing the buffer allocation
         //
-        if (max >= 0 && buf_size > cast(u32, max)) {
+        if (max >= 0 && buf_size > cast(uint32_t, max)) {
             DECLARE_LOCAL (temp);
             Init_Integer(temp, max);
             fail (Error_Size_Limit_Raw(temp));

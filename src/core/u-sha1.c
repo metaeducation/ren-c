@@ -74,7 +74,7 @@
 #define SHA_LENGTH_BLOCK 8
 #define SHA_DIGEST_LENGTH 20
 
-#define SHA_LONG u32
+#define SHA_LONG uint32_t
 
 typedef struct SHAstate_st
     {

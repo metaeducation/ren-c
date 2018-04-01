@@ -385,7 +385,7 @@ REBNATIVE(shift)
             if (REF(logical))
                 VAL_INT64(a) = cast(REBU64, VAL_INT64(a)) << b;
             else {
-                REBU64 c = cast(REBU64, MIN_I64) >> b;
+                REBU64 c = cast(REBU64, INT64_MIN) >> b;
                 REBU64 d = VAL_INT64(a) < 0
                     ? - cast(REBU64, VAL_INT64(a)) // again, see #pragma
                     : cast(REBU64, VAL_INT64(a));
@@ -393,7 +393,7 @@ REBNATIVE(shift)
                     if ((c < d) || (VAL_INT64(a) >= 0))
                         fail (Error_Overflow_Raw());
 
-                    VAL_INT64(a) = MIN_I64;
+                    VAL_INT64(a) = INT64_MIN;
                 }
                 else
                     VAL_INT64(a) <<= b;

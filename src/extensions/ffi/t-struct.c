@@ -115,35 +115,35 @@ static void get_scalar(
 
     switch (FLD_TYPE_SYM(field)) {
     case SYM_UINT8:
-        Init_Integer(out, *cast(u8*, p));
+        Init_Integer(out, *cast(uint8_t*, p));
         break;
 
     case SYM_INT8:
-        Init_Integer(out, *cast(i8*, p));
+        Init_Integer(out, *cast(int8_t*, p));
         break;
 
     case SYM_UINT16:
-        Init_Integer(out, *cast(u16*, p));
+        Init_Integer(out, *cast(uint16_t*, p));
         break;
 
     case SYM_INT16:
-        Init_Integer(out, *cast(i8*, p));
+        Init_Integer(out, *cast(int8_t*, p));
         break;
 
     case SYM_UINT32:
-        Init_Integer(out, *cast(u32*, p));
+        Init_Integer(out, *cast(uint32_t*, p));
         break;
 
     case SYM_INT32:
-        Init_Integer(out, *cast(i32*, p));
+        Init_Integer(out, *cast(int32_t*, p));
         break;
 
     case SYM_UINT64:
-        Init_Integer(out, *cast(u64*, p));
+        Init_Integer(out, *cast(uint64_t*, p));
         break;
 
     case SYM_INT64:
-        Init_Integer(out, *cast(i64*, p));
+        Init_Integer(out, *cast(int64_t*, p));
         break;
 
     case SYM_FLOAT:
@@ -384,13 +384,13 @@ static REBOOL assign_scalar_core(
 
     // All other types take numbers
 
-    i64 i;
+    int64_t i;
     double d;
 
     switch (VAL_TYPE(val)) {
     case REB_DECIMAL:
         d = VAL_DECIMAL(val);
-        i = cast(i64, d);
+        i = cast(int64_t, d);
         break;
 
     case REB_INTEGER:
@@ -417,47 +417,47 @@ static REBOOL assign_scalar_core(
     case SYM_INT8:
         if (i > 0x7f || i < -128)
             fail (Error_Overflow_Raw());
-        *cast(i8*, data) = cast(i8, i);
+        *cast(int8_t*, data) = cast(int8_t, i);
         break;
 
     case SYM_UINT8:
         if (i > 0xff || i < 0)
             fail (Error_Overflow_Raw());
-        *cast(u8*, data) = cast(u8, i);
+        *cast(uint8_t*, data) = cast(uint8_t, i);
         break;
 
     case SYM_INT16:
         if (i > 0x7fff || i < -0x8000)
             fail (Error_Overflow_Raw());
-        *cast(i16*, data) = cast(i16, i);
+        *cast(int16_t*, data) = cast(int16_t, i);
         break;
 
     case SYM_UINT16:
         if (i > 0xffff || i < 0)
             fail (Error_Overflow_Raw());
-        *cast(u16*, data) = cast(u16, i);
+        *cast(uint16_t*, data) = cast(uint16_t, i);
         break;
 
     case SYM_INT32:
-        if (i > MAX_I32 || i < MIN_I32)
+        if (i > INT32_MAX || i < INT32_MIN)
             fail (Error_Overflow_Raw());
-        *cast(i32*, data) = cast(i32, i);
+        *cast(int32_t*, data) = cast(int32_t, i);
         break;
 
     case SYM_UINT32:
-        if (i > MAX_U32 || i < 0)
+        if (i > UINT32_MAX || i < 0)
             fail (Error_Overflow_Raw());
-        *cast(u32*, data) = cast(u32, i);
+        *cast(uint32_t*, data) = cast(uint32_t, i);
         break;
 
     case SYM_INT64:
-        *cast(i64*, data) = i;
+        *cast(int64_t*, data) = i;
         break;
 
     case SYM_UINT64:
         if (i < 0)
             fail (Error_Overflow_Raw());
-        *cast(u64*, data) = cast(u64, i);
+        *cast(uint64_t*, data) = cast(uint64_t, i);
         break;
 
     case SYM_FLOAT:
@@ -470,7 +470,7 @@ static REBOOL assign_scalar_core(
 
     case SYM_POINTER: {
         size_t sizeof_void_ptr = sizeof(void*); // avoid constant conditional
-        if (sizeof_void_ptr == 4 && i > MAX_U32)
+        if (sizeof_void_ptr == 4 && i > UINT32_MAX)
             fail (Error_Overflow_Raw());
         *cast(void**, data) = cast(void*, cast(REBUPT, i));
         break; }
@@ -1185,9 +1185,9 @@ void MAKE_Struct(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg) {
 
         // !!! Why does the fail take out as an argument?  (Copied from below)
 
-        if (FLD_WIDE(field) > MAX_U32)
+        if (FLD_WIDE(field) > UINT32_MAX)
             fail (Error_Size_Limit_Raw(out));
-        if (dimension > MAX_U32)
+        if (dimension > UINT32_MAX)
             fail (Error_Size_Limit_Raw(out));
 
         u64 step = cast(u64, FLD_WIDE(field)) * cast(u64, dimension);

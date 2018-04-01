@@ -219,7 +219,7 @@ inline static ffi_type* SCHEMA_FFTYPE(const RELVAL *schema) {
 }
 
 
-#define VAL_STRUCT_LIMIT MAX_U32
+#define VAL_STRUCT_LIMIT UINT32_MAX
 
 
 //=////////////////////////////////////////////////////////////////////////=//
