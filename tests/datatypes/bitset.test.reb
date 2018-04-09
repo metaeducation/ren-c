@@ -1,8 +1,8 @@
 ; datatypes/bitset.r
-[bitset? make bitset! "a"]
-[not bitset? 1]
-[bitset! = type of make bitset! "a"]
+(bitset? make bitset! "a")
+(not bitset? 1)
+(bitset! = type of make bitset! "a")
 ; minimum, literal representation
-[bitset? #[bitset! #{}]]
+(bitset? #[bitset! #{}])
 ; TS crash
-[bitset? charset reduce [to-char "^(A0)"]]
+(bitset? charset reduce [to-char "^(A0)"])

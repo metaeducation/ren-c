@@ -1,27 +1,23 @@
 ; functions/convert/mold.r
-; bug#860
-; bug#6
 ; cyclic block
-[
+[#860 #6 (
     a: copy []
     insert/only a a
     string? mold a
-]
+)]
 ; cyclic paren
-[
+(
     a: first [()]
     insert/only a a
     string? mold a
-]
+)
 ; cyclic object
-; bug#69
-[
+[#69 (
     a: make object! [a: self]
     string? mold a
-]
+)]
 ; deep nested block mold
-; bug#876
-[
+[#876 (
     n: 1
     catch [forever [
         a: copy []
@@ -31,11 +27,21 @@
         ] [throw true]
         n: n * 2
     ]]
+)]
+[#719
+    ("()" = mold quote ())
 ]
-[#719 | "()" = mold quote ()]
 
-[#77 | "#[block! [[1 2] 2]]" == mold/all next [1 2]]
-[#77 | blank? find mold/flat make object! [a: 1] "    "]
+[#77
+    ("#[block! [[1 2] 2]]" == mold/all next [1 2])
+]
+[#77
+    (blank? find mold/flat make object! [a: 1] "    ")
+]
 
-[#84 | equal? mold make bitset! "^(00)" "make bitset! #{80}"]
-[#84 | equal? mold/all make bitset! "^(00)" "#[bitset! #{80}]"]
+[#84
+    (equal? mold make bitset! "^(00)" "make bitset! #{80}")
+]
+[#84
+    (equal? mold/all make bitset! "^(00)" "#[bitset! #{80}]")
+]

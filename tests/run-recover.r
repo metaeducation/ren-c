@@ -21,8 +21,8 @@ do %test-framework.r
 do-core-tests: procedure [] [
     ; Check if we run R3 or R2.
     flags: pick [
-        [#64bit #r3only #r3]
-        [#32bit #r2only]
+        [<64bit> <r3only> <r3>]
+        [<32bit> <r2only>]
     ] not blank? in system 'catalog
 
     ; calculate interpreter checksum

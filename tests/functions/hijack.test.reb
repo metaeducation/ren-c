@@ -1,6 +1,6 @@
 ; better than-nothing HIJACK tests
 
-[
+(
     foo: func [x] [x + 1]
     another-foo: :foo
 
@@ -13,12 +13,12 @@
         (foo 10) = 31
         (another-foo 10) = 31
     ]
-]
+)
 
 
 ; Hijacking and un-hijacking out from under specializations, as well as
 ; specializing hijacked functions afterward.
-[
+(
     three: func [x y z /available add-me] [
         x + y + z + either available [add-me] [0]
     ]
@@ -68,4 +68,4 @@
         step9 = 60
         step10 = 60
     ]
-]
+)

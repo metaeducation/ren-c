@@ -137,6 +137,7 @@
 %file/existsq.test.reb
 %file/make-dir.test.reb
 %file/open.test.reb
+%file/split-path.test.reb
 %file/file-typeq.test.reb
 %functions/adapt.test.reb
 %functions/apply.test.reb
@@ -187,8 +188,10 @@
 %series/at.test.reb
 %series/back.test.reb
 %series/change.test.reb
+%series/charset.test.reb
 %series/clear.test.reb
 %series/copy.test.reb
+%series/delimit.test.reb
 %series/difference.test.reb
 %series/emptyq.test.reb
 %series/exclude.test.reb
@@ -202,6 +205,7 @@
 %series/ordinals.test.reb
 %series/pick.test.reb
 %series/poke.test.reb
+%series/rejoin.test.reb
 %series/remove.test.reb
 %series/reverse.test.reb
 %series/select.test.reb
@@ -211,6 +215,7 @@
 %series/tailq.test.reb
 %series/trim.test.reb
 %series/union.test.reb
+%series/unique.test.reb
 %string/checksum.test.reb
 %string/compress.test.reb
 %string/decloak.test.reb

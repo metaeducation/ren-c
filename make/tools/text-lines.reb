@@ -115,7 +115,7 @@ lines-exceeding: function [
 
 text-line-of: function [
     {Returns line number of position within text.}
-    position [string!]
+    position [string! binary!]
 ] [
 
     ; Here newline is considered last character of a line.
@@ -138,6 +138,37 @@ text-line-of: function [
     ]
 
     if zero? line [line: _]
+   
+    line
+]
+
+text-location-of: function [
+    {Returns line and column of position within text.}
+    position [string! binary!]
+] [
+
+    ; Here newline is considered last character of a line.
+    ; No counting performed for empty text.
+    ; Line 0 does not exist.
+
+    text: head-of position
+    idx: index-of position
+    line: 0
+
+    advance: [eol: skip (line: line + 1)]
+
+    parse text [
+        any [
+            to newline cursor:
+            if (lesser? index-of cursor idx)
+            advance
+        ]
+        advance
+    ]
+
+    if zero? line [line: _] else [
+        line: reduce [line 1 + subtract index? position index? eol]
+    ]
    
     line
 ]

@@ -11,17 +11,17 @@
 ;; with the automated checking.
 ;;
 
-[
+(
     do %source-tools.reb
     source-analysis: rebsource/analyse/files
     save %source-analysis.log source-analysis
     true
-]
-[not find source-analysis 'eol-wsp]
-[not find source-analysis 'eof-eol-missing]
-[not find source-analysis 'tabbed]
-[not find source-analysis 'id-mismatch]
-[not find source-analysis 'inconsistent-eol]
+)
+(not find source-analysis 'eol-wsp)
+(not find source-analysis 'eof-eol-missing)
+(not find source-analysis 'tabbed)
+(not find source-analysis 'id-mismatch)
+(not find source-analysis 'inconsistent-eol)
 ;; Currently failing. Uncomment, to work on cleaning this up.
 ;[not find source-analysis [line-exceeds 127]]
 ;; Currently failing. Uncomment, to work on cleaning this up.

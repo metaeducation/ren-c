@@ -22,6 +22,7 @@ REBOL [
 
 do %c-lexicals.r
 do %text-lines.reb
+do %parsing-tools.reb
 
 decode-key-value-text: function [
     {Decode key value formatted text.}
@@ -105,26 +106,6 @@ load-until-blank: function [
         reduce [values position]
     ][
         blank
-    ]
-]
-
-
-parsing-at: func [
-    {Defines a rule which evaluates a block for the next input position, fails otherwise.}
-    'word [word!] {Word set to input position (will be local).}
-    block [block!]
-        {Block to evaluate. Return next input position, or blank/false.}
-    /end {Drop the default tail check (allows evaluation at the tail).}
-] [
-    use [result position][
-        block: compose/only [to-value (to group! block)]
-        if not end [
-            block: compose/deep [all [not tail? (word) (block)]]
-        ]
-        block: compose/deep [result: either position: (block) [[:position]] [[end skip]]]
-        use compose [(word)] compose/deep [
-            [(to set-word! :word) (to group! block) result]
-        ]
     ]
 ]
 

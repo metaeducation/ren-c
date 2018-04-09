@@ -1,7 +1,7 @@
 ; Better-than-nothing REDO tests
 
 ; REDO via a direct FRAME! value
-[
+(
     foo: func [n] [
         frame: context of 'n
         if n = 0 [
@@ -12,11 +12,11 @@
     ]
 
     <success> = foo 100
-]
+)
 
 ; REDO via extraction of FRAME! from an ANY-WORD!
 ; (has binding to a FRAME! to lookup variable value)
-[
+(
     foo: func [n] [
         if n = 0 [
            return <success>
@@ -26,11 +26,11 @@
     ]
 
     <success> = foo 100
-]
+)
 
 ; REDO locals clearing test
 ; (locals should be cleared on each redo)
-[
+(
     foo: func [n <local> unset-me] [
         if set? 'unset-me [
             return "local not cleared"
@@ -44,11 +44,11 @@
     ]
 
     <success> = foo 100
-]
+)
 
 ; REDO type checking test
 ; (args and refinements must pass function's type checking)
-[
+(
     foo: func [n i [integer!]] [
         if n = 0 [
             return <success> ;-- impossible for this case
@@ -59,11 +59,11 @@
     ]
 
     error? trap [foo 100]
-]
+)
 
 ; REDO phase test
 ; (shared frame compositions should redo the appropriate "phase")
-[
+(
     inner: func [n] [
         if n = 0 [
             return <success>
@@ -80,7 +80,8 @@
     ]
 
     <success> = outer 1
-][
+)
+(
     inner: func [n /captured-frame f] [
         if n = 0 [
            return "inner phase run by redo"
@@ -103,7 +104,7 @@
     ]
 
     <success> = outer 1
-]
+)
 
 ; "Sibling" tail-call with compatible function
 ;
@@ -159,7 +160,7 @@
 ; bouncing around on that single frame and come to a completion, which means
 ; the chained functions will get that result.  The string is translated to
 ; a tag and signals success.
-[
+(
     log: (
         func ['x] [] ;-- no-op
         elide (:dump) ;-- un-elide to get output
@@ -204,4 +205,4 @@
     ]
 
     <success> = c 11 0
-]
+)

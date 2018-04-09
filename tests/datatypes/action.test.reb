@@ -1,8 +1,9 @@
 ; datatypes/action.r
 
-[action? :abs]
-[not action? 1]
-[function! = type of :abs]
-; bug#1659
+(action? :abs)
+(not action? 1)
+(function! = type of :abs)
 ; actions are active
-[1 == do reduce [:abs -1]]
+[#1659
+    (1 == do reduce [:abs -1])
+]

@@ -42,18 +42,31 @@ The first character of the log file name, #"r" is common to all run-recover log 
 
 # Test File Format
 
-The test file format was originally designed by Carl Sassenrath to be Rebol compatible, and as simple as possible.  Here are some tests cases for the closure! datatype, notice that only some of them are marked as #r3only, suggesting they are meant just for the R3 interpreter:
+The test file format was originally designed by Carl Sassenrath to be Rebol compatible, and as simple as possible.  Here are some tests cases for the closure! datatype, notice that only some of them are marked as <r3only>, suggesting they are meant just for the R3 interpreter:
 
     ; datatypes/closure.r
-    [closure? closure [] ["OK"]]
-    [not closure? 1]
-    #r3only
-    [closure! = type? closure [] ["OK"]]
+    (closure? closure [] ["OK"])
+    (not closure? 1)
+    <r3only>
+    (closure! = type? closure [] ["OK"])
     ; minimum
-    [closure? closure [] []]
+    (closure? closure [] [])
     ; literal form
-    #r3only
-    [closure? first [#[closure! [[] []]]]]
+    <r3only>
+    (closure? first [#[closure! [[] []]]])
+
+The Ren-C project has modified the original block test format by Carl to
+support grouped tests. Test groups are encoded as BLOCK! while individual
+tests are encoded as GROUP!. References to issues (bugs) are encoded as ISSUE!
+within the test group's BLOCK!. Here is a sample of parse tests, note that the
+grouped test here only contains one test vector:
+
+    (parse "abcd" [to 5])
+    (parse "abcd" [to 128])
+
+    [#1965
+        (parse "abcd" [thru 3 "d"])
+    ]
 
 Despite its Rebol appearance, the test file is not LOAD-ed in its entirety by the interpreter.  This complicates test file parsing a bit, but it brings significant advantages:
 
@@ -75,6 +88,9 @@ Despite its Rebol appearance, the test file is not LOAD-ed in its entirety by th
 Test cases have to be enclosed in properly matched square brackets
 
 A test is successful only if it can be correctly loaded and it yields LOGIC! TRUE when evaluated.
+When writing tests to meet this requirement, DID and NOT are useful, for example:
+
+    did find "x" #"x"
 
 Breaks, throws, errors, returns, etc. leading out of the test code are detected and marked as test failures.  The test framework is built in such a way that it can recover from any kind of crash and finish the testing after the restart.
 
@@ -84,25 +100,25 @@ Comments following the semicolon character until the end of the line are allowed
 
 ### Flags
 
-Issues are used to signal special handling of the test. They are handled by the environment as flags excluding the marked test from processing. Only if all flags used are in the set of acceptable flags, the specific test is processed by the environment, otherwise it is skipped.
+Tags are used to signal special handling of the test. They are handled by the environment as flags excluding the marked test from processing. Only if all flags used are in the set of acceptable flags, the specific test is processed by the environment, otherwise it is skipped.
 
-Issues are used to indicate special character of tests. For example,
+Tags are used to indicate special character of tests. For example,
 
-    #64bit
+    <64bit>
 
 ...indicates that the test is meant to be used only in 64-bit builds. Any test may be marked by as many flags as desired.
 
-Flags restrict the usage of tests. If the DO-RECOVER function is called without a specific flag being mentioned in the FLAGS argument, all tests marked using that flag are ignored. For example, if the above #64bit flag is not mentioned in the FLAGS argument, no #64bit test is run.
+Flags restrict the usage of tests. If the DO-RECOVER function is called without a specific flag being mentioned in the FLAGS argument, all tests marked using that flag are ignored. For example, if the above <64bit> flag is not mentioned in the FLAGS argument, no <64bit> test is run.
 
 Currently available flags are:
 
     ; the flag influences only the test immediately following it,
     ; if not explicitly stated otherwise
 
-    #32bit
+    <32bit>
     ; the test is meant to be used only when integers are 32bit
 
-    #64bit
+    <64bit>
     ; the test is meant to be used only when integers are 64bit
 
 *(Note: Originally flags existed for selecting if tests ran in R3-Alpha vs. Rebol2, but these were removed in the Ren-C fork.)*

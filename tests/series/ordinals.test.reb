@@ -1,21 +1,21 @@
 ; functions/series/ordinals.r
-[blank? first []]
-[blank? second []]
-[blank? third []]
-[blank? fourth []]
-[blank? fifth []]
-[blank? sixth []]
-[blank? seventh []]
-[blank? eighth []]
-[blank? ninth []]
-[blank? tenth []]
-[1 = first [1 2 3 4 5 6 7 8 9 10 11]]
-[2 = second [1 2 3 4 5 6 7 8 9 10 11]]
-[3 = third [1 2 3 4 5 6 7 8 9 10 11]]
-[4 = fourth [1 2 3 4 5 6 7 8 9 10 11]]
-[5 = fifth [1 2 3 4 5 6 7 8 9 10 11]]
-[6 = sixth [1 2 3 4 5 6 7 8 9 10 11]]
-[7 = seventh [1 2 3 4 5 6 7 8 9 10 11]]
-[8 = eighth [1 2 3 4 5 6 7 8 9 10 11]]
-[9 = ninth [1 2 3 4 5 6 7 8 9 10 11]]
-[10 = tenth [1 2 3 4 5 6 7 8 9 10 11]]
+(blank? first [])
+(blank? second [])
+(blank? third [])
+(blank? fourth [])
+(blank? fifth [])
+(blank? sixth [])
+(blank? seventh [])
+(blank? eighth [])
+(blank? ninth [])
+(blank? tenth [])
+(1 = first [1 2 3 4 5 6 7 8 9 10 11])
+(2 = second [1 2 3 4 5 6 7 8 9 10 11])
+(3 = third [1 2 3 4 5 6 7 8 9 10 11])
+(4 = fourth [1 2 3 4 5 6 7 8 9 10 11])
+(5 = fifth [1 2 3 4 5 6 7 8 9 10 11])
+(6 = sixth [1 2 3 4 5 6 7 8 9 10 11])
+(7 = seventh [1 2 3 4 5 6 7 8 9 10 11])
+(8 = eighth [1 2 3 4 5 6 7 8 9 10 11])
+(9 = ninth [1 2 3 4 5 6 7 8 9 10 11])
+(10 = tenth [1 2 3 4 5 6 7 8 9 10 11])

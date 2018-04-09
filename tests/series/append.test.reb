@@ -1,18 +1,17 @@
 ; functions/series/append.r
-; bug#75
-[
+[#75 (
     o: make object! [a: 1]
     p: make o []
     append p [b 2]
     not in o 'b
-]
+)]
 
-[block? append copy [] ()]
+(block? append copy [] ())
 
 
 ; Slipstream in some tests of MY (there don't seem to be a lot of tests here)
 ;
-[
+(
     data: [1 2 3 4]
     data: my next
     data: my skip 2
@@ -24,4 +23,4 @@
     block: my head
 
     block = [a 3 4 b c d]
-]
+)

@@ -52,7 +52,7 @@ make object! compose [
             leave
         ]
 
-        if error? try [test-block: load source] [
+        if error? try [test-block: to block! load source] [
             set 'test-failures (test-failures + 1)
             log [{ "failed, cannot load test source"^/}]
             leave
@@ -159,7 +159,7 @@ make object! compose [
                             {"} thru {"}
                             (dialect-failures: dialect-failures + 1)
                                 |
-                            copy last-vector ["[" test-source-rule "]"]
+                            copy last-vector ["(" test-source-rule ")"]
                             any whitespace
                             [
                                 end (
@@ -198,7 +198,7 @@ make object! compose [
                             |
                         :position
                     ]
-                    end | (fail "log file parsing problem")
+                    end | (fail "do-recover log file parsing problem")
                 ]
                 last-vector
                 test-sources: find/last/tail test-sources last-vector

@@ -1,2 +1,2 @@
 ; datatypes/event.r
-[not event? 1]
+(not event? 1)

@@ -1,26 +1,25 @@
 ; functions/control/while.r
-[
+(
     num: 0
     while [num < 10] [num: num + 1]
     num = 10
-]
-; bug#37
+)
 ; Test body-block return values
-[
+[#37 (
     num: 0
     1 = while [num < 1] [num: num + 1]
-]
-[void? while [false] []]
+)]
+(void? while [false] [])
 ; zero repetition
-[
+(
     success: true
     while [false] [success: false]
     success
-]
+)
 ; Test break and continue
-[cycle?: true blank? while [cycle?] [break cycle?: false]]
+(cycle?: true blank? while [cycle?] [break cycle?: false])
 ; Test reactions to break and continue in the condition
-[
+(
     was-stopped: true
     while [true] [
         while [break] []
@@ -28,8 +27,8 @@
         break
     ]
     was-stopped
-]
-[
+)
+(
     first-time: true
     was-continued: false
     while [true] [
@@ -42,37 +41,37 @@
         break
     ]
     was-continued
-]
-[
+)
+(
     success: true
     cycle?: true
     while [cycle?] [cycle?: false continue success: false]
     success
-]
-[
+)
+(
     num: 0
     while [true] [num: 1 break num: 2]
     num = 1
-]
+)
 ; RETURN should stop the loop
-[
+(
     cycle?: true
     f1: does [while [cycle?] [cycle?: false return 1] 2]
     1 = f1
-]
-[  ; bug#1519
+)
+(  ; bug#1519
     cycle?: true
     f1: does [while [if cycle? [return 1] cycle?] [cycle?: false 2]]
     1 = f1
-]
+)
 ; UNWIND the IF should stop the loop
-[
+(
     cycle?: true
     f1: does [if 1 < 2 [while [cycle?] [cycle?: false unwind :if] 2]]
     void? f1
-]
+)
 
-[  ; bug#1519
+(  ; bug#1519
     cycle?: true
     f1: does [
         unless 1 > 2 [
@@ -80,11 +79,11 @@
         ]
     ]
     void? f1
-]
+)
 
 ; CONTINUE out of a condition continues any enclosing loop (it does not mean
 ; continue the WHILE whose condition it appears in)
-[
+(
     n: 1
     sum: 0
     while [n < 10] [
@@ -98,27 +97,27 @@
         sum: sum + 1
     ]
     sum = 9
-]
+)
 
 ; THROW should stop the loop
-[1 = catch [cycle?: true while [cycle?] [throw 1 cycle?: false]]]
-[  ; bug#1519
+(1 = catch [cycle?: true while [cycle?] [throw 1 cycle?: false]])
+(  ; bug#1519
     cycle?: true
     1 = catch [while [if cycle? [throw 1] false] [cycle?: false]]
-]
-[1 = catch/name [cycle?: true while [cycle?] [throw/name 1 'a cycle?: false]] 'a]
-[  ; bug#1519
+)
+(1 = catch/name [cycle?: true while [cycle?] [throw/name 1 'a cycle?: false]] 'a)
+(  ; bug#1519
     cycle?: true
     1 = catch/name [while [if cycle? [throw/name 1 'a] false] [cycle?: false]] 'a
-]
+)
 ; Test that disarmed errors do not stop the loop and errors can be returned
-[
+(
     num: 0
     e: while [num < 10] [num: num + 1 try [1 / 0]]
     all [error? e num = 10]
-]
+)
 ; Recursion check
-[
+(
     num1: 0
     num3: 0
     while [num1 < 5] [
@@ -130,4 +129,4 @@
         num1: num1 + 1
     ]
     10 = num3
-]
+)
