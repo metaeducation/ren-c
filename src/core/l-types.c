@@ -985,12 +985,14 @@ const REBYTE *Scan_Date(
     RESET_VAL_HEADER(out, REB_DATE, CELL_MASK_NONE);
     // payload.time.nanoseconds is set, may be NO_DATE_TIME, don't RESET_CELL
 
-    VAL_YEAR(out)  = year;
+    VAL_YEAR(out) = year;
     VAL_MONTH(out) = month;
     VAL_DAY(out) = day;
-    VAL_DATE(out).zone = tz; // may be NO_DATE_ZONE
+    VAL_DATE(out).zone = NO_DATE_ZONE;  // Adjust_Date_Zone() requires this
 
-    Adjust_Date_Zone(out, true); // no effect if NO_DATE_ZONE
+    Adjust_Date_Zone_Core(out, tz);
+
+    VAL_DATE(out).zone = tz;
 
     return cp;
 }

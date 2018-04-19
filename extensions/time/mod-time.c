@@ -97,8 +97,7 @@ REBNATIVE(now)
             or REF(weekday)
             or REF(yearday)
         ){
-            const bool to_utc = false;
-            Adjust_Date_Zone(D_OUT, to_utc); // Add timezone, adjust date/time
+            Fold_Zone_Into_Date(D_OUT);
         }
     }
 
