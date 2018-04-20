@@ -18,6 +18,10 @@ extensions: [
     ;
     - FFI _
     - ODBC _
+
+    ; Clipboard is only implemented in Windows at the moment.
+    ;
+    - Clipboard _
 ]
 
 rebol-tool: _ ; fallback value if system/options/boot fails

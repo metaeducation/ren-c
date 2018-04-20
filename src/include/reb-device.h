@@ -46,7 +46,6 @@ enum {
     RDI_EVENT,
     RDI_NET,
     RDI_DNS,
-    RDI_CLIPBOARD,
     RDI_SERIAL,
 #ifdef HAS_POSIX_SIGNAL
     RDI_SIGNAL,

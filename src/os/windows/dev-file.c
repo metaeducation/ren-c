@@ -185,7 +185,7 @@ static int Read_Directory(struct devreq_file *dir, struct devreq_file *file)
 
     if (NOT(got_info)) {
         assert(FALSE); // see above for why this R3-Alpha code had a "hole"
-        rebFail ("{%dev-clipboard: NOT(got_info), please report}", rebEnd());
+        rebFail ("{%dev-file: NOT(got_info), please report}", rebEnd());
     }
 
     file_req->modes = 0;

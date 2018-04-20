@@ -327,12 +327,6 @@ init-schemes: func [
         awake: func [event] [print ['UDP-event event/type] true]
     ]
 
-    make-scheme [
-        title: "Clipboard"
-        name: 'clipboard
-        actor: get-clipboard-actor-handle
-    ]
-
     if 4 == fourth system/version [
         make-scheme [
             title: "Signal"

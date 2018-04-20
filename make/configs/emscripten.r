@@ -31,4 +31,5 @@ extensions: [
     - odbc _
     - ffi _
     - debugger _
+    - Clipboard _
 ]

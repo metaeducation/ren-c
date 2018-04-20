@@ -63,10 +63,6 @@ EXTERN_C REBDEV Dev_Event;
 EXTERN_C REBDEV Dev_Net;
 EXTERN_C REBDEV Dev_DNS;
 
-#ifdef TO_WINDOWS
-EXTERN_C REBDEV Dev_Clipboard;
-#endif
-
 // There should be a better decoupling of these devices so the core
 // does not need to know about them...
 #if defined(TO_WINDOWS) || defined(TO_LINUX)
@@ -86,11 +82,6 @@ REBDEV *Devices[RDI_LIMIT] =
     &Dev_Event,
     &Dev_Net,
     &Dev_DNS,
-#ifdef TO_WINDOWS
-    &Dev_Clipboard,
-#else
-    0,
-#endif
 
 #if defined(TO_WINDOWS) || defined(TO_LINUX)
     &Dev_Serial,
