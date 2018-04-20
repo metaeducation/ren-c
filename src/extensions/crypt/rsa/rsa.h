@@ -47,7 +47,12 @@ extern "C" {
     extern int rng_fd; // file descriptor for random number generator
 #endif
 
-
+#ifndef STDCALL
+#define STDCALL
+#endif
+#ifndef EXP_FUNC
+#define EXP_FUNC
+#endif
 /*
  * RSA Options
  */
@@ -100,27 +105,30 @@ void RSA_priv_key_new(RSA_CTX **rsa_ctx,
         const uint8_t *qInv, int qInv_len
 #endif
         );
-void RSA_pub_key_new(RSA_CTX **rsa_ctx,
+void RSA_pub_key_new(RSA_CTX **rsa_ctx, 
         const uint8_t *modulus, int mod_len,
         const uint8_t *pub_exp, int pub_len);
 void RSA_free(RSA_CTX *ctx);
 int RSA_decrypt(const RSA_CTX *ctx, const uint8_t *in_data, uint8_t *out_data,
-        int is_decryption, int padding);
+        int out_len, int is_decryption);
 bigint *RSA_private(const RSA_CTX *c, bigint *bi_msg);
 #if defined(CONFIG_SSL_CERT_VERIFICATION) || defined(CONFIG_SSL_GENERATE_X509_CERT)
 bigint *RSA_sign_verify(BI_CTX *ctx, const uint8_t *sig, int sig_len,
         bigint *modulus, bigint *pub_exp);
 bigint *RSA_public(const RSA_CTX * c, bigint *bi_msg);
-int RSA_encrypt(const RSA_CTX *ctx, const uint8_t *in_data, uint16_t in_len,
-        uint8_t *out_data, int is_signing, int padding);
+int RSA_encrypt(const RSA_CTX *ctx, const uint8_t *in_data, uint16_t in_len, 
+        uint8_t *out_data, int is_signing);
 void RSA_print(const RSA_CTX *ctx);
 #endif
 
 /**************************************************************************
- * RNG declarations
+ * RNG declarations 
  **************************************************************************/
-void get_random(int num_rand_bytes, uint8_t *rand_data);
-void get_random_NZ(int num_rand_bytes, uint8_t *rand_data);
+EXP_FUNC void STDCALL RNG_initialize(void);
+EXP_FUNC void STDCALL RNG_custom_init(const uint8_t *seed_buf, int size);
+EXP_FUNC void STDCALL RNG_terminate(void);
+EXP_FUNC int STDCALL get_random(int num_rand_bytes, uint8_t *rand_data);
+int get_random_NZ(int num_rand_bytes, uint8_t *rand_data);
 
 
 #ifdef __cplusplus
