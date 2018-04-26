@@ -377,7 +377,7 @@ REBNATIVE(value_q)
 {
     INCLUDE_PARAMS_OF_VALUE_Q;
 
-    return R_FROM_BOOL(NOT(IS_VOID(ARG(cell))));
+    return R_FROM_BOOL(ANY_VALUE(ARG(cell)));
 }
 
 
@@ -1074,11 +1074,11 @@ REBNATIVE(aliases_q)
 inline static REBOOL Is_Set(const REBVAL *location)
 {
     if (ANY_WORD(location))
-        return IS_ANY_VALUE(Get_Opt_Var_May_Fail(location, SPECIFIED));
+        return ANY_VALUE(Get_Opt_Var_May_Fail(location, SPECIFIED));
 
     DECLARE_LOCAL (temp); // result may be generated
     Get_Path_Core(temp, location, SPECIFIED);
-    return IS_ANY_VALUE(temp);
+    return ANY_VALUE(temp);
 }
 
 

@@ -1,9 +1,9 @@
 REBOL [
     System: "REBOL [R3] Language Interpreter and Run-time Environment"
-    Title: "Datatype definitions"
+    Title: "Rebol datatypes and their related attributes"
     Rights: {
         Copyright 2012 REBOL Technologies
-        Copyright 2012-2017 Rebol Open Source Developers
+        Copyright 2012-2018 Rebol Open Source Developers
         REBOL is a trademark of REBOL Technologies
     }
     License: {
@@ -11,32 +11,32 @@ REBOL [
         See: http://www.apache.org/licenses/LICENSE-2.0
     }
     Purpose: {
-        These words define the REBOL datatypes and their related attributes.
-        This table generates a variety of C defines and intialization tables.
-        During build, when this file is processed, this section is changed to
-        hold just the datatype words - the initial entries the word table.
+        This table is used to make C defines and intialization tables.
 
         name        - name of datatype (generates words)
-        class       - how type actions are dispatched (T_type), + is extension
+        class       - how type actions are dispatched (T_type), * is extension
         path        - it supports various path forms (+ for same as typeclass)
         make        - It can be made with #[datatype] method
         typesets    - what typesets the type belongs to
 
         Note that if there is `somename` in the class column, that means you
         will find the ACTION! dispatch for that type in `REBTYPE(Somename)`.
-
-        Also included in this file are macros which are not automatically
-        generated (though perhaps some of them could be?).  They are in the
-        header of this file because all the type concerns tie together...if
-        they are reordered then tests using > or < might start failing.  It's
-        easier not to forget the importance of the order by keeping the
-        macros here.
     }
     Macros: {
-        // We use VAL_TYPE_RAW() for checking the bindable flag because it
-        // is called *extremely often*; the extra debug checks in VAL_TYPE()
-        // make it prohibitively more expensive than a simple check of a
-        // flag, while these tests are very fast.
+        /*
+        ** ORDER-DEPENDENT TYPE MACROS, e.g. ANY_BLOCK_KIND() or IS_BINDABLE()
+        **
+        ** These macros embed specific knowledge of the type ordering.  They
+        ** are specified in %types.r, so anyone changing the order of types is
+        ** more likely to notice the impact, and adjust them.
+        **
+        ** !!! Review how these might be auto-generated from the table.
+        */
+
+        /* We use VAL_TYPE_RAW() for checking the bindable flag because it
+           is called *extremely often*; the extra debug checks in VAL_TYPE()
+           make it prohibitively more expensive than a simple check of a
+           flag, while these tests are very fast. */
 
         #define Is_Bindable(v) \
             (VAL_TYPE_RAW(v) < REB_BAR)
@@ -44,23 +44,39 @@ REBOL [
         #define Not_Bindable(v) \
             (VAL_TYPE_RAW(v) >= REB_BAR)
 
-        // For other checks, we pay the cost in the debug build of all the
-        // associated baggage that VAL_TYPE() carries over VAL_TYPE_RAW()
+        /* For other checks, we pay the cost in the debug build of all the
+           associated baggage that VAL_TYPE() carries over VAL_TYPE_RAW() */
 
-        #define IS_ANY_VALUE(v) \
+        #define ANY_VALUE(v) \
             DID(VAL_TYPE(v) != REB_MAX_VOID)
 
+        inline static REBOOL ANY_SCALAR_KIND(enum Reb_Kind k) {
+            return DID(k >= REB_LOGIC && k <= REB_DATE);
+        }
+
         #define ANY_SCALAR(v) \
-            DID(VAL_TYPE(v) >= REB_LOGIC && VAL_TYPE(v) <= REB_DATE)
+            ANY_SCALAR_KIND(VAL_TYPE(v))
+
+        inline static REBOOL ANY_SERIES_KIND(enum Reb_Kind k) {
+            return DID(k >= REB_PATH && k <= REB_VECTOR);
+        }
 
         #define ANY_SERIES(v) \
-            DID(VAL_TYPE(v) >= REB_PATH && VAL_TYPE(v) <= REB_VECTOR)
+            ANY_SERIES_KIND(VAL_TYPE(v))
+
+        inline static REBOOL ANY_STRING_KIND(enum Reb_Kind k) {
+            return DID(k >= REB_STRING && k <= REB_TAG);
+        }
 
         #define ANY_STRING(v) \
-            DID(VAL_TYPE(v) >= REB_STRING && VAL_TYPE(v) <= REB_TAG)
+            ANY_STRING_KIND(VAL_TYPE(v))
+
+        inline static REBOOL ANY_BINSTR_KIND(enum Reb_Kind k) {
+            return DID(k >= REB_BINARY && k <= REB_TAG);
+        }
 
         #define ANY_BINSTR(v) \
-            DID(VAL_TYPE(v) >= REB_BINARY && VAL_TYPE(v) <= REB_TAG)
+            ANY_BINSTR_KIND(VAL_TYPE(v))
 
         inline static REBOOL ANY_ARRAY_KIND(enum Reb_Kind k) {
             return DID(k >= REB_PATH && k <= REB_BLOCK);
@@ -76,11 +92,12 @@ REBOL [
         #define ANY_WORD(v) \
             ANY_WORD_KIND(VAL_TYPE(v))
 
-        #define ANY_PATH(v) \
-            DID(VAL_TYPE(v) >= REB_PATH && VAL_TYPE(v) <= REB_LIT_PATH)
+        inline static REBOOL ANY_PATH_KIND(enum Reb_Kind k) {
+            return DID(k >= REB_PATH && k <= REB_LIT_PATH);
+        }
 
-        #define ANY_EVAL_BLOCK(v) \
-            DID(VAL_TYPE(v) == REB_BLOCK || VAL_TYPE(v) == REB_GROUP)
+        #define ANY_PATH(v) \
+            ANY_PATH_KIND(VAL_TYPE(v))
 
         inline static REBOOL ANY_CONTEXT_KIND(enum Reb_Kind k) {
             return DID(k >= REB_OBJECT && k <= REB_PORT);

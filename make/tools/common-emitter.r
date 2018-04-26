@@ -32,6 +32,70 @@ REBOL [
     }
 ]
 
+cscape: function [
+    "Escape Rebol expressions in templated C source, optionally changing case"
+
+    return: [string!]
+        "New string, ${...} TO-C-NAME, $(...) UNSPACED"
+    template [string!]
+        "${Expr} result left alone, ${expr} lowercased, ${EXPR} is uppercased"
+    /with
+        "Lookup var words in additional context (besides user context)"
+    context [blank! any-word! any-context!]
+][
+    list: unique/case collect [
+        parse template [any [
+            "${" copy expr: to "}" (keep/only compose [#cname (expr)])
+                |
+            "$(" copy expr: to ")" (keep/only compose [#unspaced (expr)])
+                |
+            "$[" copy expr: to "]" (fail "$[...] not defined yet")
+                |
+            skip
+        ]]
+    ]
+
+    if empty? list [
+        return trim/auto copy template ;-- caller expects new string, trimmed
+    ]
+
+    substitutions: collect [
+        for-each item list [
+            set [mode: expr:] item
+
+            any-upper: did find/case expr charset [#"A" - #"Z"]
+            any-lower: did find/case expr charset [#"a" - #"z"]
+            keep expr
+
+            code: load/all expr
+            if with [bind code context]
+            sub: do code
+
+            switch/default mode [
+                #cname [
+                    sub: to-c-name sub
+                ]
+                #unspaced [
+                    sub: either block? sub [unspaced sub] [form sub]
+                ]
+            ][
+                fail ["Invalid CSCAPE mode:" mode]
+            ]
+            case [
+                any-upper and (not any-lower) [uppercase sub]
+                any-lower and (not any-upper) [lowercase sub]
+            ]
+            keep sub
+        ]
+    ]
+
+    string: trim/auto copy template
+    string: reword/case/escape string substitutions ["${" "}"]
+    string: reword/case/escape string substitutions ["$(" ")"]
+    return string
+]
+
+
 boot-version: load %../../src/boot/version.r
 
 make-emitter: function [
@@ -75,8 +139,34 @@ make-emitter: function [
         file: (file)
         title: (title)
 
-        emit: proc [data] [
-            adjoin buf-emit data
+        emit: procedure [
+            {Write data to the emitter using CSCAPE templating (see HELP)}
+
+            :look [any-value! <...>]
+            data [string! char! block! <...>]
+                {If a BLOCK!, then it's output as a line, otherwise as-is}
+        ][
+            context: ()
+            if lit-word? first look [
+                context: take look
+            ]
+
+            data: take data
+            case [
+                block? data [
+                    if 1 <> length-of data [
+                        dump data
+                        fail "1-item BLOCK! to emit means newline, only"
+                    ]
+                    emit-line cscape/with first data :context
+                ]
+                string? data [
+                    adjoin buf-emit cscape/with data :context
+                ]
+                char? data [
+                    adjoin buf-emit data
+                ]
+            ]
         ]
 
 
@@ -106,9 +196,9 @@ make-emitter: function [
                 probe data
                 fail "Data passed to EMIT-LINE had trailing whitespace"
             ]
-            if indent [emit spaced-tab]
-            emit data
-            emit newline
+            if indent [adjoin buf-emit spaced-tab]
+            adjoin buf-emit data
+            adjoin buf-emit newline
         ]
 
 
@@ -147,11 +237,12 @@ make-emitter: function [
 
 
         emit-annotation: procedure [
-            {Adds a C++ "//"-style comment to end of the last line emitted.}
+            {Comment using "/**/" (chosen over "//" to cue code is generated)}
             note [word! string! integer!]
+                {Note to add to the end of the last line emitted.}
         ][
             unemit newline
-            emit [space "//" space note newline]
+            adjoin buf-emit [space "/*" space note space "*/" newline]
         ]
 
 
@@ -191,32 +282,35 @@ make-emitter: function [
     ]
 
     either any [is-c is-js] [
-        e/emit-lines [
-            {/***********************************************************************}
-            {**}
-            {**  REBOL [R3] Language Interpreter and Run-time Environment}
-            {**  Copyright 2012 REBOL Technologies}
-            {**  REBOL is a trademark of REBOL Technologies}
-            {**  Licensed under the Apache License, Version 2.0}
-            {**}
-            {************************************************************************}
-            {**}
-            [{**  Title: } title]
-            [{**  Build: A} boot-version/3]
-            [{**  File:  } stem]
-            {**}
-        ]
+        e/emit 'return {
+            /**********************************************************************
+            **
+            **  REBOL [R3] Language Interpreter and Run-time Environment
+            **  Copyright 2012 REBOL Technologies
+            **  Copyright 2012-2018 Rebol Open Source Contributors
+            **  REBOL is a trademark of REBOL Technologies
+            **  Licensed under the Apache License, Version 2.0
+            **
+            ************************************************************************
+            **
+            **  Title: $(Mold Title)
+            **  Build: A$(Boot-Version/3)
+            **  File: $(Mold Stem)
+            **  Author: $(Mold By)
+            **  License: {
+            **      Licensed under the Apache License, Version 2.0.
+            **      See: http://www.apache.org/licenses/LICENSE-2.0
+            **  }
+        }
         if temporary [
-            e/emit-lines [
-                [{**  !!!}]
-                [{**  !!! **WARNING!**  DO NOT EDIT THIS FILE DIRECTLY}]
-                [{**  !!! IT IS GENERATED BY} by]
-                [{**  !!!}]
-            ]
+            e/emit {
+                **  Note: {AUTO-GENERATED FILE - Do not modify.}
+            }
         ]
-        e/emit-line [
-            {***********************************************************************/}
-        ]
+        e/emit {
+            **
+            ***********************************************************************/
+        }
         e/emit newline
     ][
         e/emit mold/only compose/deep [
@@ -226,7 +320,7 @@ make-emitter: function [
                 File: (stem)
                 Rights: {
                     Copyright 2012 REBOL Technologies
-                    Copyright 2012-2017 Rebol Open Source Contributors
+                    Copyright 2012-2018 Rebol Open Source Contributors
                     REBOL is a trademark of REBOL Technologies
                 }
                 License: {

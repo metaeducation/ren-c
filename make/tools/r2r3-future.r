@@ -125,25 +125,20 @@ if true = attempt [void? :some-undefined-thing] [
         fail "Don't use UNTIL-NOT when you want R3-Alpha compatibility"
     ]
 
-    case [
-        () = :really [
-            ;-- Ren-Cs up to around Jan 27, 2018
+    either () = :really [
+        ;-- Ren-Cs up to around Jan 27, 2018
 
-            assert [find words-of :ensure 'test]
-            really: func [cell [<opt> any-value!]] [
-                if any [void? :cell blank? :cell] [
-                    fail/where [
-                        "REALLY expects argument to be SOMETHING?"
-                    ] 'cell
-                ]
-                :cell
+        assert [find words-of :ensure 'test]
+        really: func [cell [<opt> any-value!]] [
+            if any [void? :cell blank? :cell] [
+                fail/where [
+                    "REALLY expects argument to be SOMETHING?"
+                ] 'cell
             ]
+            :cell
         ]
-
-        true [
-            assert [find words-of :ensure 'test]
-            assert [1 = length-of words-of :really]
-        ]
+    ][
+        assert [find words-of :ensure 'test]
     ]
 
     did: func [cell [<opt> any-value!]] [

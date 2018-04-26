@@ -4,7 +4,7 @@ REBOL [
     File: %make-ext-native.r ;-- EMIT-HEADER uses to indicate emitting script
     Rights: {
         Copyright 2017 Atronix Engineering
-        Copyright 2017 Rebol Open Source Contributors
+        Copyright 2017-2018 Rebol Open Source Contributors
         REBOL is a trademark of REBOL Technologies
     }
     License: {
@@ -39,7 +39,8 @@ args: parse-args system/options/args
 
 config: config-system get 'args/OS_ID
 
-m-name: ensure string! args/MODULE
+mod: ensure string! args/MODULE
+m-name: mod
 l-m-name: lowercase copy m-name
 u-m-name: uppercase copy m-name
 
@@ -50,10 +51,10 @@ print ["building" m-name "from" c-src]
 output-dir: system/options/path/prep
 mkdir/deep output-dir/include
 
-e-first: (make-emitter "Module C Header File Preface"
+e1: (make-emitter "Module C Header File Preface"
     ensure file! join-all [output-dir/include/tmp-mod- l-m-name %-first.h])
 
-e-last: (make-emitter "Module C Header File Epilogue"
+e2: (make-emitter "Module C Header File Epilogue"
     ensure file! join-all [output-dir/include/tmp-mod- l-m-name %-last.h])
 
 
@@ -210,7 +211,9 @@ for-each native native-specs [
 
     num-native: num-native + 1
     ;dump (to block! first native/spec)
-    if find to block! first native/spec 'export [append export-list to word! native/name]
+    if find to block! first native/spec 'export [
+        append export-list to word! native/name
+    ]
     unless blank? native/errors [append error-list native/errors]
     unless blank? native/words [append word-list native/words]
     append native-list reduce [to set-word! native/name]
@@ -239,79 +242,74 @@ append spec native-list
 comp-data: gzip data: to-binary mold spec
 ;print ["buf:" to string! data]
 
-e-last/emit-lines [
-    [{int Module_Init_} m-name {(RELVAL *out);}]
-    [{int Module_Quit_} m-name {(void);}]
-    ["#if !defined(MODULE_INCLUDE_DECLARATION_ONLY)"]
-    ["#define EXT_NUM_NATIVES_" u-m-name space num-native]
-    ["#define EXT_NAT_COMPRESSED_SIZE_" u-m-name space length-of comp-data]
-    [
-        "const REBYTE Ext_Native_Specs_" m-name
-        "[EXT_NAT_COMPRESSED_SIZE_" u-m-name "] = {"
-    ]
-]
+e2/emit {
+    int Module_Init_${Mod}(RELVAL *out);
+    int Module_Quit_${Mod}(void);
+    
+    #if !defined(MODULE_INCLUDE_DECLARATION_ONLY)
+    
+    #define EXT_NUM_NATIVES_${MOD} $(num-native)
+    #define EXT_NAT_COMPRESSED_SIZE_${MOD} $(length-of comp-data)
+    
+    const REBYTE Ext_Native_Specs_${Mod}[EXT_NAT_COMPRESSED_SIZE_${MOD}] = ^{
+}
 
 ;-- Convert UTF-8 binary to C-encoded string:
-e-last/emit binary-to-c comp-data
-e-last/emit-line "};" ;-- EMIT-END erases last comma, but there's no extra
+e2/emit binary-to-c comp-data
+e2/emit-line "};" ;-- EMIT-END erases last comma, but there's no extra
 
 either num-native > 0 [
-    e-last/emit-line [
-        "REBNAT Ext_Native_C_Funcs_" m-name
-        "[EXT_NUM_NATIVES_" u-m-name "] = {"
-    ]
+    e2/emit ["REBNAT Ext_Native_C_Funcs_${Mod}[EXT_NUM_NATIVES_${MOD}] = {"]
     for-each item native-list [
         if set-word? item [
-            e-last/emit-item ["N_" u-m-name "_" to word! item]
+            e2/emit-item ["N_" u-m-name "_" to word! item]
         ]
     ]
-    e-last/emit-end
+    e2/emit-end
 ][
-    e-last/emit-line [
-        "REBNAT *Ext_Native_C_Funcs_" m-name space "= NULL;"
-    ]
+    e2/emit ["REBNAT *Ext_Native_C_Funcs_${Mod} = NULL;"]
 ]
 
-e-last/emit-line [ {
-int Module_Init_} m-name {(RELVAL *out)
-^{
-    INIT_} u-m-name {_WORDS;}
-either empty? error-list [ unspaced [ {
-    REBARR * arr = Make_Extension_Module_Array(
-        Ext_Native_Specs_} m-name {, EXT_NAT_COMPRESSED_SIZE_} u-m-name {,
-        Ext_Native_C_Funcs_} m-name {, EXT_NUM_NATIVES_} u-m-name {,
-        0);} ]
-    ][
-        unspaced [ {
-    Ext_} m-name {_Error_Base = Find_Next_Error_Base_Code();
-    assert(Ext_} m-name {_Error_Base > 0);
-    REBARR * arr = Make_Extension_Module_Array(
-        Ext_Native_Specs_} m-name {, EXT_NAT_COMPRESSED_SIZE_} u-m-name {,
-        Ext_Native_C_Funcs_} m-name {, EXT_NUM_NATIVES_} u-m-name {,
-        Ext_} m-name {_Error_Base);}]
-    ] {
-    if (!IS_BLOCK(out)) {
-        Init_Block(out, arr);
-    } else {
-        Append_Values_Len(VAL_ARRAY(out), KNOWN(ARR_HEAD(arr)), ARR_LEN(arr));
-        Free_Array(arr);
+e2/emit {
+    int Module_Init_${Mod}(RELVAL *out) {
+        INIT_${MOD}_WORDS;
+
+        Ext_${Mod}_Error_Base = Find_Next_Error_Base_Code();
+        assert(Ext_${Mod}_Error_Base > 0);
+        REBARR *arr = Make_Extension_Module_Array(
+            Ext_Native_Specs_${Mod}, EXT_NAT_COMPRESSED_SIZE_${MOD},
+            Ext_Native_C_Funcs_${Mod}, EXT_NUM_NATIVES_${MOD},
+            Ext_${Mod}_Error_Base
+        );
+        if (!IS_BLOCK(out))
+            Init_Block(out, arr);
+        else {
+            Append_Values_Len(
+                VAL_ARRAY(out),
+                KNOWN(ARR_HEAD(arr)),
+                ARR_LEN(arr)
+            );
+            Free_Array(arr);
+        }
+        return 0;
     }
 
-    return 0;
-^}
+    int Module_Quit_${Mod}(void) {
+        return 0;
+    }
 
-int Module_Quit_} m-name {(void)
-{
-    return 0;
+    #endif // MODULE_INCLUDE_DECLARATION_ONLY
 }
-#endif //MODULE_INCLUDE_DECLARATION_ONLY
+
+e2/write-emitted
+
+
+e1/emit {
+    /*
+    ** INCLUDE_PARAMS_OF MACROS: DEFINING PARAM(), REF(), ARG()
+    */
 }
-]
-
-e-last/write-emitted
-
-;--------------------------------------------------------------
-; args
+e1/emit-line []
 
 for-next native-list [
     if tail? next native-list [break]
@@ -321,77 +319,81 @@ for-next native-list [
         all [path? native-list/2 | 'native = first native-list/2]
     ][
         assert [set-word? native-list/1]
-        (emit-include-params-macro/ext e-first
+        (emit-include-params-macro/ext e1
             (to-word native-list/1) (native-list/3)
             u-m-name)
-        e-first/emit newline
+        e1/emit newline
     ]
 ]
 
-;-------------------------------------------------------------
-;
-e-first/emit-lines [
-    ["// redefine REBNATIVE to avoid name conflict"]
-    ["#undef REBNATIVE"]
-    ["#define REBNATIVE(n) \"]
-]
-e-first/emit-line/indent
-    ["REB_R N_" u-m-name "_ ##n(REBFRM *frame_)"]
 
-;--------------------------------------------------------------
-; words
+e1/emit {
+    /*
+    ** REDEFINE REBNATIVE MACRO LOCALLY TO INCLUDE EXTENSION NAME
+    **
+    ** This avoids name collisions with the core, or with other extensions.
+    **/
 
-e-first/emit-lines [
-    ["//  Local words"]
-    ["#define NUM_EXT_" u-m-name "_WORDS" space length-of word-list]
-]
+    #undef REBNATIVE
+    #define REBNATIVE(n) \
+        REB_R N_${MOD}_##n(REBFRM *frame_)
+}
+e1/emit-line []
+
+
+e1/emit {
+    /*
+    ** DEFINE WORDS TO BE USED BY THE EXTENSION FROM ITS C CODE
+    **
+    ** !!! These use REBSTR* pointers, which are not protected from garbage
+    ** collection.  They should be Alloc_Value()'d WORD!s, or WORD!s living
+    ** in an array that was Alloc_Value()'d...and rebRelease()'d on unload.
+    */
+
+    #define NUM_EXT_${MOD}_WORDS $(length-of word-list)
+}
+e1/emit-line []
 
 either empty? word-list [
-    e-first/emit-line ["#define INIT_" u-m-name "_WORDS"]
+    e1/emit ["#define INIT_${MOD}_WORDS"]
 ][
-    e-first/emit-line [
-        "static const char* Ext_Words_" m-name
-        "[NUM_EXT_" u-m-name "_WORDS] = {"
-    ]
+    e1/emit ["static const char* Ext_Words_${Mod}[NUM_EXT_${MOD}_WORDS] = {"]
     for-next word-list [
-        e-first/emit-line/indent [ {"} to string! word-list/1 {",} ]
+        e1/emit-line/indent [ {"} to string! word-list/1 {",} ]
     ]
-    e-first/emit-end
+    e1/emit-end
 
-    e-first/emit-line [
-        "static REBSTR* Ext_Canons_" m-name
-        "[NUM_EXT_" u-m-name "_WORDS];"
-    ]
+    e1/emit ["static REBSTR* Ext_Canons_${Mod}[NUM_EXT_${MOD}_WORDS];"]
 
-    word-seq: 0
+    seq: 0
     for-next word-list [
-        e-first/emit-line [
-            "#define"
-            space
-            u-m-name {_WORD_} uppercase to-c-name word-list/1
-            space
-            {Ext_Canons_} m-name {[} word-seq {]}
+        e1/emit [
+            "#define ${MOD}_WORD_${WORD-LIST/1} Ext_Canons_${Mod}[$(seq)]"
         ]
-        word-seq: word-seq + 1
+        seq: seq + 1
     ]
-    e-first/emit-line ["#define INIT_" u-m-name "_WORDS" space "\"]
-    e-first/emit-line/indent [
-        "Init_Extension_Words("
-            "cast(const REBYTE**, Ext_Words_" m-name ")"
-            "," space
-            "Ext_Canons_" m-name
-            "," space
-            "NUM_EXT_" u-m-name "_WORDS"
-        ")"
-    ]
+
+    e1/emit {
+        #define INIT_${MOD}_WORDS \
+            Init_Extension_Words( \
+                cast(const REBYTE**, Ext_Words_${Mod}), \
+                Ext_Canons_${Mod}, \
+                NUM_EXT_${MOD}_WORDS \
+            )
+    }
 ]
 
-;--------------------------------------------------------------
-; errors
 
-e-first/emit-line ["//  Local errors"]
-unless empty? error-list [
-    e-first/emit-line [ {enum Ext_} m-name {_Errors ^{}]
+e1/emit {
+    /*
+    ** EXTENSION-DEFINED ERRORS
+    */
+
+    static REBINT Ext_${Mod}_Error_Base;
+}
+
+if not empty? error-list [
+    e1/emit ["enum Ext_${Mod}_Errors {"]
     error-collected: copy []
     for-each [key val] error-list [
         unless set-word? key [
@@ -401,24 +403,20 @@ unless empty? error-list [
             fail ["Duplicate error key" (to word! key)]
         ]
         append error-collected key
-        e-first/emit-item/upper [
+        e1/emit-item/upper [
             {RE_EXT_ENUM_} u-m-name {_} to-c-name to word! key
         ]
     ]
-    e-first/emit-end
-    e-first/emit-line ["static REBINT Ext_" m-name "_Error_Base;"]
-
-    e-first/emit-line []
-    for-each [key val] error-list [
-        key: uppercase to-c-name to word! key
-        e-first/emit-line [
-            {#define RE_EXT_} u-m-name {_} key
-            space
-            {(}
-            {Ext_} m-name {_Error_Base + RE_EXT_ENUM_} u-m-name {_} key
-            {)}
-        ]
-    ]
+    e1/emit-end
 ]
 
-e-first/write-emitted
+e1/emit-line []
+for-each [key val] error-list [
+    key: to-word key
+    e1/emit 'key {
+        #define RE_EXT_${MOD}_${KEY} \
+            (Ext_${Mod}_Error_Base + RE_EXT_ENUM_${MOD}_${KEY})
+    }
+]
+
+e1/write-emitted

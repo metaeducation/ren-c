@@ -177,7 +177,7 @@ e-lib/emit-lines [
     [{#define HOST_LIB_SIZE} space proto-count]
 ]
 
-e-lib/emit reduce [
+e-lib/emit unspaced [
 {
 // !!! SEE **WARNING** BEFORE EDITING
 

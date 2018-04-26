@@ -26,22 +26,24 @@ mkdir/deep output-dir/include
 
 extensions: either any-string? :args/EXTENSIONS [split args/EXTENSIONS #":"][[]]
 
-e-ext: (make-emitter
+e: (make-emitter
     "Boot Modules" output-dir/include/tmp-boot-extensions.h)
 
 remove-each ext extensions [empty? ext] ;SPLIT in r3-a111 gives an empty "" at the end
 
 for-each ext extensions [
-    e-ext/emit-line ["DECLARE_EXT_INIT(" ext ");"]
-    e-ext/emit-line ["DECLARE_EXT_QUIT(" ext ");"]
+    e/emit 'ext {
+        DECLARE_EXT_INIT(${Ext});
+        DECLARE_EXT_QUIT(${Ext});
+    }
 ]
+e/emit-line []
 
-e-ext/emit-line []
-e-ext/emit-line ["static CFUNC *Boot_Extensions [] = {"]
+e/emit ["static CFUNC *Boot_Extensions [] = {"]
 for-each ext extensions [
-    e-ext/emit-line/indent ["cast(CFUNC *, EXT_INIT(" ext ")),"]
-    e-ext/emit-line/indent ["cast(CFUNC *, EXT_QUIT(" ext ")),"]
+    e/emit-line/indent ["cast(CFUNC *, EXT_INIT(" ext ")),"]
+    e/emit-line/indent ["cast(CFUNC *, EXT_QUIT(" ext ")),"]
 ]
-e-ext/emit-end
+e/emit-end
 
-e-ext/write-emitted
+e/write-emitted

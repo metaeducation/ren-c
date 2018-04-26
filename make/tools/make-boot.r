@@ -130,277 +130,250 @@ build: context [features: [help-strings]]
 ;build: platform-data/builds/:product
 
 
-boot-types: load %types.r
+type-table: load %types.r
 
 e-dispatch: make-emitter "Dispatchers" core/tmp-dispatchers.c
 e-dispatch/emit newline
 
-e-dispatch/emit-line {#include "sys-core.h"}
+
+e-dispatch/emit [{#include "sys-core.h"}]
 e-dispatch/emit newline
 
+
 e-dispatch/emit {
-//=////////////////////////////////////////////////////////////////////////=//
-//
-//  VALUE DISPATCHERS (auto-generated, edit in %make-boot.r)
-//
-///////////////////////////////////////////////////////////////////////////=//
+    /*
+    ** VALUE DISPATCHERS: e.g. for `append value x` or `select value y`
+    */
+
+    REBACT Value_Dispatch[REB_MAX] = ^{
 }
-e-dispatch/emit newline
-e-dispatch/emit-line "REBACT Value_Dispatch[REB_MAX] = {"
-for-each-record type boot-types [
-    switch/default type/class [
-        0 [ ; REB_0 should not ever be dispatched, bad news
-            e-dispatch/emit-item "NULL"
-        ]
-        * [ ; Extension types just fail until registered
-            e-dispatch/emit-item "T_Unhooked"
-        ]
-    ][ ; All other types should have handlers
-        e-dispatch/emit-item ["T_" propercase-of ensure word! type/class]
+for-each-record t type-table [
+    switch/default t/class [
+        0 [e-dispatch/emit-item "NULL"] ;-- never dispatch on REB_0
+        * [e-dispatch/emit-item "T_Unhooked"] ;-- extensions replace this
+    ][
+        e-dispatch/emit-item ["T_" propercase-of ensure word! t/class]
     ]
-    e-dispatch/emit-annotation ensure [word! integer!] type/name
+    e-dispatch/emit-annotation ensure [word! integer!] t/name
 ]
 e-dispatch/emit-end
 
 
 e-dispatch/emit {
-//=////////////////////////////////////////////////////////////////////////=//
-//
-//  PATH DISPATCHERS (auto-generated, edit in %make-boot.r)
-//
-///////////////////////////////////////////////////////////////////////////=//
+    /*
+    ** PATH DISPATCHERS: for `a/b`, `:a/b`, `a/b:`, `pick a b`, `poke a b`
+    */
+
+    REBPEF Path_Dispatch[REB_MAX] = ^{
 }
-e-dispatch/emit newline
-e-dispatch/emit-line "REBPEF Path_Dispatch[REB_MAX] = {"
-for-each-record type boot-types [
-    switch/default type/path [
+for-each-record t type-table [
+    switch/default t/path [
         - [e-dispatch/emit-item "PD_Fail"]
-        + [e-dispatch/emit-item [
-            "PD_" propercase-of ensure word! type/class]
-        ]
+        + [e-dispatch/emit-item ["PD_" propercase-of ensure word! t/class]]
         * [e-dispatch/emit-item "PD_Unhooked"]
     ][
-        ; !!! Today's PORT! path dispatches through context even though that
-        ; isn't its technical "class" for responding to actions.
+        ; !!! Today's PORT! path dispatches through context even though
+        ; that isn't its technical "class" for responding to actions.
         ;
-        e-dispatch/emit-item ["PD_" propercase-of ensure word! type/path]
+        e-dispatch/emit-item ["PD_" propercase-of ensure word! t/path]
     ]
-    e-dispatch/emit-annotation ensure [word! integer!] type/name
+    e-dispatch/emit-annotation ensure [word! integer!] t/name
 ]
 e-dispatch/emit-end
 
 
 e-dispatch/emit {
-//=////////////////////////////////////////////////////////////////////////=//
-//
-//  MAKE DISPATCHERS (auto-generated, edit in %make-boot.r)
-//
-///////////////////////////////////////////////////////////////////////////=//
+    /*
+    ** MAKE DISPATCHERS: for `make datatype def`
+    */
+
+    MAKE_FUNC Make_Dispatch[REB_MAX] = ^{
 }
-e-dispatch/emit newline
-e-dispatch/emit-line "MAKE_FUNC Make_Dispatch[REB_MAX] = {"
-for-each-record type boot-types [
-    switch/default type/make [
+for-each-record t type-table [
+    switch/default t/make [
         - [e-dispatch/emit-item "MAKE_Fail"]
-        + [e-dispatch/emit-item [
-            "MAKE_" propercase-of ensure word! type/class]
-        ]
+        + [e-dispatch/emit-item ["MAKE_" propercase-of ensure word! t/class]]
         * [e-dispatch/emit-item "MAKE_Unhooked"]
     ][
         fail "MAKE in %types.r should be, -, +, or *"
     ]
-    e-dispatch/emit-annotation ensure [word! integer!] type/name
+    e-dispatch/emit-annotation ensure [word! integer!] t/name
 ]
 e-dispatch/emit-end
 
 
 e-dispatch/emit {
-//=////////////////////////////////////////////////////////////////////////=//
-//
-//  TO DISPATCHERS (auto-generated, edit in %make-boot.r)
-//
-///////////////////////////////////////////////////////////////////////////=//
+    /*
+    ** TO DISPATCHERS: for `to datatype value`
+    */
+
+    TO_FUNC To_Dispatch[REB_MAX] = ^{
 }
-e-dispatch/emit newline
-e-dispatch/emit-line "TO_FUNC To_Dispatch[REB_MAX] = {"
-for-each-record type boot-types [
-    switch/default type/make [
+for-each-record t type-table [
+    switch/default t/make [
         - [e-dispatch/emit-item "TO_Fail"]
-        + [e-dispatch/emit-item [
-            "TO_" propercase-of ensure word! type/class
-        ]]
+        + [e-dispatch/emit-item ["TO_" propercase-of ensure word! t/class]]
         * [e-dispatch/emit-item "TO_Unhooked"]
     ][
         fail "TO in %types.r should be -, +, or *"
     ]
-    e-dispatch/emit-annotation ensure [word! integer!] type/name
+    e-dispatch/emit-annotation ensure [word! integer!] t/name
 ]
 e-dispatch/emit-end
 
 
 e-dispatch/emit {
-//=////////////////////////////////////////////////////////////////////////=//
-//
-//  MOLD DISPATCHERS (auto-generated, edit in %make-boot.r)
-//
-///////////////////////////////////////////////////////////////////////////=//
+    /*
+    ** MOLD DISPATCHERS: for `mold value`
+    */
+
+    MOLD_FUNC Mold_Or_Form_Dispatch[REB_MAX] = ^{
 }
-e-dispatch/emit newline
-e-dispatch/emit-line "MOLD_FUNC Mold_Or_Form_Dispatch[REB_MAX] = {"
-for-each-record type boot-types [
-    switch/default type/mold [
+for-each-record t type-table [
+    switch/default t/mold [
         - [e-dispatch/emit-item "MF_Fail"]
-        + [e-dispatch/emit-item [
-            "MF_" propercase-of ensure word! type/class
-        ]]
+        + [e-dispatch/emit-item ["MF_" propercase-of ensure word! t/class]]
         * [e-dispatch/emit-item "MF_Unhooked"]
     ][
         ; ERROR! may be a context, but it has its own special forming
         ; beyond the class (falls through to ANY-CONTEXT! for mold), and
         ; BINARY! has a different handler than strings
         ;
-        e-dispatch/emit-item ["MF_" propercase-of ensure word! type/mold]
+        e-dispatch/emit-item ["MF_" propercase-of ensure word! t/mold]
     ]
-    e-dispatch/emit-annotation ensure [word! integer!] type/name
+    e-dispatch/emit-annotation ensure [word! integer!] t/name
 ]
 e-dispatch/emit-end
 
 
 e-dispatch/emit {
-//=////////////////////////////////////////////////////////////////////////=//
-//
-//  COMPARISON DISPATCHERS (auto-generated, edit in %make-boot.r)
-//
-///////////////////////////////////////////////////////////////////////////=//
+    /*
+    ** COMPARISON DISPATCHERS, to support GREATER?, EQUAL?, LESSER?...
+    */
+
+    REBCTF Compare_Types[REB_MAX] = ^{
 }
-e-dispatch/emit newline
-e-dispatch/emit-line "REBCTF Compare_Types[REB_MAX] = {"
-for-each-record type boot-types [
-    switch/default type/class [
+for-each-record t type-table [
+    switch/default t/class [
         0 [e-dispatch/emit-item "NULL"]
         * [e-dispatch/emit-item "CT_Unhooked"]
     ][
-        e-dispatch/emit-item ["CT_" propercase-of ensure word! type/class]
+        e-dispatch/emit-item ["CT_" propercase-of ensure word! t/class]
     ]
-    e-dispatch/emit-annotation ensure [word! integer!] type/name
+    e-dispatch/emit-annotation ensure [word! integer!] t/name
 ]
 e-dispatch/emit-end
+
 
 e-dispatch/write-emitted
 
 
+
 ;----------------------------------------------------------------------------
 ;
-; Bootdefs.h - Boot include file
+; %reb-types.h - Datatype Definitions
 ;
 ;----------------------------------------------------------------------------
 
 e-types: make-emitter "Datatype Definitions" inc/reb-types.h
 
+
 e-types/emit {
-/***********************************************************************
-**
-*/  enum Reb_Kind
-/*
-**      Internal datatype numbers. These change. Do not export.
-**
-***********************************************************************/
+    /*
+    ** INTERNAL DATATYPE CONSTANTS, e.g. REB_BLOCK or REB_TAG
+    **
+    ** Do not export these values via libRebol, as the numbers can change.
+    ** Their ordering is for supporting certain optimizations, such as being
+    ** able to quickly check if a type IS_BINDABLE().  When types are added,
+    ** or removed, the numbers must shuffle around to preserve invariants.
+    **
+    ** Note: REB_0 is reserved for internal purposes...0 is not a "type".
+    ** But to make it easier to build the dispatch tables (which must have
+    ** an entry for index 0) it appears in %types.r
+    */
+
+    enum Reb_Kind ^{
 }
-e-types/emit-line "{"
 
-datatypes: copy []
 n: 0
-
-for-each-record type boot-types [
-    append datatypes type/name
-
-    either type/name = 0 [
+for-each-record t type-table [
+    either t/name = 0 [
         e-types/emit-item/assign "REB_0" 0
     ][
-        e-types/emit-item/assign/upper ["REB_" ensure word! type/name] n
+        ensure word! t/name
+        e-types/emit-item/upper ["REB_" t/name]
+        e-types/emit-annotation n
     ]
-    e-types/emit-annotation n
-
     n: n + 1
 ]
 
 e-types/emit-item/assign "REB_MAX" n
-e-types/emit-annotation n
 e-types/emit-end
 
+
 e-types/emit {
-/***********************************************************************
-**
-**  REBOL Type Check Macros
-**
-***********************************************************************/
+    /*
+    ** SINGLE TYPE CHECK MACROS, e.g. IS_BLOCK() or IS_TAG()
+    **
+    ** These routines are based on VAL_TYPE(), which does much more checking
+    ** than VAL_TYPE_RAW() in the debug build.  In some commonly called
+    ** routines, it may be worth it to use the less checked version.
+    **
+    ** Note: There's no IS_0() test for REB_0.  Usages alias it and test
+    ** against the alias for clarity, e.g. `VAL_TYPE(v) == REB_0_PARTIAL`
+    */
 }
+e-types/emit newline
 
-new-types: copy []
+boot-types: copy []
 n: 0
-for-each-record type boot-types [
-    ;
-    ; Type #0 is reserved for special purposes
-    ;
+for-each-record t type-table [
     if n != 0 [
-        ;
-        ; Emit the IS_INTEGER() / etc. test for the datatype.  Use DID()
-        ; so that `REBOOL b = IS_INTEGER(value);` passes the tests in the
-        ; build guaranteeing all REBOOL are 1 or 0, despite the fact that
-        ; there are other values that C considers "truthy".
-        ;
-        e-types/emit-line [
-            {#define IS_} (uppercase to-c-name type/name) "(v)" space
-            "DID(VAL_TYPE(v)==REB_" (uppercase to-c-name type/name) ")"
-        ]
+        e-types/emit 't {
+            #define IS_${T/NAME}(v) \
+                DID(VAL_TYPE(v) == REB_${T/NAME}) /* $(n) */
+        }
+        e-types/emit newline
 
-        append new-types to-word adjoin form type/name "!"
+        append boot-types to-word adjoin form t/name "!"
     ]
-
     n: n + 1
 ]
 
-; Emit the macros that embed specific knowledge of the type ordering.  These
-; are best kept in the header of %types.r, so anyone changing the order is
-; reminded of the importance of adjusting them.
-;
 types-header: first load/header %types.r
 e-types/emit trim/auto copy ensure string! types-header/macros
 
 
 e-types/emit {
-/***********************************************************************
-**
-**  REBOL Typeset Defines
-**
-***********************************************************************/
+    /*
+    ** TYPESET DEFINITIONS (e.g. TS_ANY_ARRAY or TS_ANY_STRING)
+    **
+    ** Note: User-facing typesets, such as ANY-VALUE!, do not include void
+    ** (absence of a value), nor do they include the internal "REB_0" type.
+    */
 
-// User-facing typesets, such as ANY-VALUE!, do not include void (absence of
-// a value) nor the internal "REB_0" type
-//
-#define TS_VALUE ((FLAGIT_KIND(REB_MAX_VOID) - 1) - FLAGIT_KIND(REB_0))
+    #define TS_VALUE ((FLAGIT_KIND(REB_MAX_VOID) - 1) - FLAGIT_KIND(REB_0))
 }
-
 typeset-sets: copy []
 
-for-each-record type boot-types [
-    for-each ts compose [(type/typesets)] [
+for-each-record t type-table [
+    for-each ts compose [(t/typesets)] [
         spot: any [
             to-value select typeset-sets ts
             first back insert tail-of typeset-sets reduce [ts copy []]
         ]
-        append spot type/name
+        append spot t/name
     ]
 ]
 remove/part typeset-sets 2 ; the - markers
 
 for-each [ts types] typeset-sets [
-    e-types/emit ["#define" space uppercase to-c-name ["TS_" ts] space "("]
+    e-types/emit 'ts "#define TS_${TS} ("
     for-each t types [
-        e-types/emit ["FLAGIT_KIND(" uppercase to-c-name ["REB_" t] ")|"]
+        e-types/emit 't "FLAGIT_KIND(REB_${T})|"
     ]
     e-types/unemit #"|" ;-- remove the last | added
-    e-types/emit [")" newline]
+    e-types/emit unspaced [")" newline]
 ]
 
 e-types/write-emitted
@@ -414,69 +387,75 @@ e-types/write-emitted
 
 e-bootdefs: make-emitter "Boot Definitions" inc/tmp-bootdefs.h
 
-e-bootdefs/emit-line [{#define REBOL_VER} space (version/1)]
-e-bootdefs/emit-line [{#define REBOL_REV} space (version/2)]
-e-bootdefs/emit-line [{#define REBOL_UPD} space (version/3)]
-e-bootdefs/emit-line [{#define REBOL_SYS} space (version/4)]
-e-bootdefs/emit-line [{#define REBOL_VAR} space (version/5)]
-
-;-- Generate Canonical Words (must follow datatypes above!) ------------------
 
 e-bootdefs/emit {
-/***********************************************************************
-**
-*/  enum REBOL_Symbols
-/*
-**      REBOL static canonical words (symbols) used with the code.
-**
-***********************************************************************/
+    /*
+    ** VERSION INFORMATION
+    **
+    ** !!! While using 5 byte-sized integers to denote a Rebol version might
+    ** not be ideal, it's a standard that's been around a long time.
+    */
+
+    #define REBOL_VER $(version/1)
+    #define REBOL_REV $(version/2)
+    #define REBOL_UPD $(version/3)
+    #define REBOL_SYS $(version/4)
+    #define REBOL_VAR $(version/5)
 }
-e-bootdefs/emit-line "{"
+e-bootdefs/emit-line []
+
+
+e-bootdefs/emit {
+    /*
+    ** CONSTANTS FOR BUILT-IN SYMBOLS: e.g. SYM_THRU or SYM_INTEGER_X
+    **
+    ** ANY-WORD! uses internings of UTF-8 character strings.  An arbitrary
+    ** number of these are created at runtime, and can be garbage collected
+    ** when no longer in use.  But a pre-determined set of internings are
+    ** assigned small integer "SYM" compile-time-constants, to be used in
+    ** switch() for efficiency in the core.
+    **
+    ** Datatypes are given symbol numbers at the start of the list, so that
+    ** their SYM_XXX values will be identical to their REB_XXX values.
+    **
+    ** Note: SYM_0 is not a symbol of the string "0".  It's the "SYM" constant
+    ** that is returned for any interning that *does not have* a compile-time
+    ** constant assigned to it.  Since VAL_WORD_SYM() will return SYM_0 for
+    ** all user (and extension) defined words, don't try to check equality
+    ** with `VAL_WORD_SYM(word1) == VAL_WORD_SYM(word2)`.
+    */
+
+    enum REBOL_Symbols ^{
+}
+
 e-bootdefs/emit-item/assign "SYM_0" 0
 
-n: 0
-boot-words: copy []
+n: 1
+boot-words: copy [] ;-- MAP! in R3-Alpha is unreliable
 add-word: func [
-    ; LEAVE is not available in R3-Alpha compatibility PROC
-    ; RETURN () is not legal in R3-Alpha compatibility FUNC (no RETURN: [...])
-    ; Make it a FUNC and just RETURN blank to appease both
-
     word
     /skip-if-duplicate
-    /type
 ][
-    ;
-    ; Horribly inefficient linear search, but MAP! in R3-Alpha is unreliable
-    ; and implemented differently, and we want this code to work in it too.
-    ;
     if find boot-words word [
         if skip-if-duplicate [return blank]
         fail ["Duplicate word specified" word]
     ]
 
-    ; Although TO-C-NAME is used on the SYM_XXX string as a whole, in order
-    ; to get names like SYM_ELLIPSIS the escaping has to be done on the
-    ; individual word first in this case, as opposed to something more generic
-    ; which would also turn SYM_.a. into "SYM__DOTA_DOT" (or similar) 
-    ;
-    e-bootdefs/emit-item/upper ["SYM_" (to-c-name word)]
+    e-bootdefs/emit-item/upper [
+        comment [to-cname ("SYM_" word)] ;-- `...` would be SYM__DOT_DOT_DOT
+        "SYM_" (to-c-name word) ;-- `...` is recognized to make SYM_ELLIPSIS
+    ]
     e-bootdefs/emit-annotation spaced [n "-" word]
     n: n + 1
 
-    ; The types make a SYM_XXX entry, but they're kept in a separate block
-    ; in the boot object (see `boot-types` in `sections`)
-    ;
-    ; !!! Update--temporarily to make word numbering easier, they are
-    ; duplicated.  Consider a better way longer term.
-    ;
-    append boot-words word ;-- was `unless type [...]`
+    append boot-words word
     return blank
 ]
 
-for-each-record type boot-types [
-    if n = 0 [n: n + 1 | continue]
-
-    add-word/type to-word unspaced [to-string type/name "!"]
+for-each-record t type-table [
+    if t/name != 0 [
+        add-word to-word unspaced [ensure word! t/name "!"]
+    ]
 ]
 
 wordlist: load %words.r
@@ -879,15 +858,13 @@ e-bootblock/emit newline
 
 boot-typespecs: make block! 100
 specs: load %typespec.r
-for-each type datatypes [
-    if type = 0 [continue]
-    verify [spec: select specs type]
-    append/only boot-typespecs spec
+for-each-record t type-table [
+    if t/name <> 0 [
+        append/only boot-typespecs really select specs to-word t/name
+    ]
 ]
 
 ;-- Create main code section (compressed):
-
-boot-types: new-types
 
 write-if-changed boot/tmp-boot-block.r mold reduce sections
 data: mold/flat reduce sections

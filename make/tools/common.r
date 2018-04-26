@@ -23,7 +23,18 @@ REBOL [
 ; disabled if you *are* running Ren-C (e.g. the tests)
 
 
-;; Repostory meta data.
+; Simple "divider-style" thing for remarks.  At a certain verbosity level,
+; it could dump those remarks out...perhaps based on how many == there are.
+; (This is a good reason for retaking ==, as that looks like a divider.)
+;
+===: func [:remarks [any-value! <...>]] [
+    until [
+        equal? '=== take remarks
+    ]
+]
+
+
+;; Repository meta data.
 ;; - Good for keeping fixed paths out of scripts.
 ;;
 
