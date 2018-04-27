@@ -175,14 +175,19 @@ static inline void Abort_Function(REBFRM *f) {
     DS_DROP_TO(f->dsp_orig); // any unprocessed refinements or chains on stack
 }
 
-static inline void Link_Vararg_Param_To_Frame(REBFRM *f, REBOOL make) {
-    assert(GET_VAL_FLAG(f->param, TYPESET_FLAG_VARIADIC));
+static inline void Link_Vararg_Param_To_Frame(
+    REBFRM *f_state,
+    const RELVAL *param,
+    REBVAL *arg,
+    REBOOL make
+){
+    assert(GET_VAL_FLAG(param, TYPESET_FLAG_VARIADIC));
 
-    // Store the offset so that both the f->arg and f->param locations can
+    // Store the offset so that both the arg and param locations can
     // be quickly recovered, while using only a single slot in the REBVAL.
     //
-    f->arg->payload.varargs.param_offset = f->arg - f->args_head;
-    f->arg->payload.varargs.facade = FUNC_FACADE(f->phase);
+    arg->payload.varargs.param_offset = arg - f_state->args_head;
+    arg->payload.varargs.facade = FUNC_FACADE(f_state->phase);
 
     // The data feed doesn't necessarily come from the frame
     // that has the parameter and the argument.  A varlist may be
@@ -190,16 +195,16 @@ static inline void Link_Vararg_Param_To_Frame(REBFRM *f, REBOOL make) {
     // an ordinary array.
     //
     if (make) {
-        RESET_VAL_HEADER(f->arg, REB_VARARGS);
+        RESET_VAL_HEADER(arg, REB_VARARGS);
 
         // !!! Doesn't use INIT_BINDING() because that conservatively reifies,
         // and not only do we know we don't have to here, it would assert
         // trying to reify a fulfilling frame.
         //
-        f->arg->extra.binding = NOD(f);
+        arg->extra.binding = NOD(f_state);
     }
     else
-        assert(VAL_TYPE(f->arg) == REB_VARARGS);
+        assert(VAL_TYPE(arg) == REB_VARARGS);
 }
 
 
@@ -234,6 +239,101 @@ inline static REBOOL In_Typecheck_Mode(REBFRM *f) {
 
 inline static REBOOL In_Unspecialized_Mode(REBFRM *f) {
     return DID(f->special == f->param);
+}
+
+
+// Typechecking has to be broken out into a subroutine because it is not
+// always the case that one is typechecking the current argument.  See the
+// documentation on REB_0_DEFERRED for why.
+//
+inline static void Check_Arg(
+    REBFRM *f_state, // name helps avoid accidental references to f->arg, etc.
+    const RELVAL *param,
+    REBVAL *arg,
+    REBVAL *refine
+){
+    if (IS_END(arg)) {
+        //
+        // This can happen, e.g. with `do [1 + comment "foo"]`.  It should act
+        // no differently from `do [1 +]`, so argument fulfillment may have
+        // to signal END (e.g. Do_Core() may fill a slot with END)
+        //
+        if (NOT_VAL_FLAG(param, TYPESET_FLAG_ENDABLE))
+            fail (Error_No_Arg(f_state, param));
+
+        Init_Endish_Void(arg);
+        return;
+    }
+
+    ASSERT_VALUE_MANAGED(arg);
+
+    // refine may point to the applicable refinement slot for the current
+    // arg being fulfilled, or it might just be a signal of information about
+    // the mode (see comments on `Reb_Frame.refine`)
+    //
+    assert(
+        refine == ORDINARY_ARG ||
+        refine == LOOKBACK_ARG ||
+        refine == ARG_TO_UNUSED_REFINEMENT ||
+        refine == ARG_TO_REVOKED_REFINEMENT ||
+        (IS_LOGIC(refine) && IS_TRUTHY(refine)) // used
+    );
+
+    if (IS_VOID(arg)) {
+        if (IS_LOGIC(refine)) {
+            //
+            // We can only revoke the refinement if this is the 1st
+            // refinement arg.  If it's a later arg, then the first
+            // didn't trigger revocation, or refine wouldn't be logic.
+            //
+            if (refine + 1 != arg)
+                fail (Error_Bad_Refine_Revoke(param, arg));
+
+            Init_Logic(refine, FALSE); // can't re-enable...
+            refine = ARG_TO_REVOKED_REFINEMENT;
+            return; // don't type check for optionality
+        }
+
+        if (IS_FALSEY(refine)) {
+            //
+            // FALSE -> refinement already revoked, void is okay
+            // BLANK! -> refinement was never in use, so also okay
+            //
+            return;
+        }
+
+        // fall through to check arg for if <opt> is ok
+        //
+        assert(refine == ORDINARY_ARG || refine == LOOKBACK_ARG);
+    }
+    else {
+        // If the argument is set, then the refinement shouldn't be
+        // in a revoked or unused state.
+        //
+        if (IS_FALSEY(refine))
+            fail (Error_Bad_Refine_Revoke(param, arg));
+    }
+
+    if (NOT_VAL_FLAG(param, TYPESET_FLAG_VARIADIC)) {
+        if (NOT(TYPE_CHECK(param, VAL_TYPE(arg))))
+            fail (Error_Arg_Type(f_state, param, VAL_TYPE(arg)));
+
+        return;
+    }
+
+    // Varargs are odd, because the type checking doesn't actually check the
+    // types inside the parameter--it always has to be a VARARGS!.
+    //
+    if (!IS_VARARGS(arg))
+        fail (Error_Not_Varargs(f_state, param, VAL_TYPE(arg)));
+
+    // While "checking" the variadic argument we actually re-stamp it with
+    // this parameter and frame's signature.  It reuses whatever the original
+    // data feed was (this frame, another frame, or just an array from MAKE
+    // VARARGS!)
+    //
+    const REBOOL make = FALSE; // reuse feed in arg
+    Link_Vararg_Param_To_Frame(f_state, param, arg, make);
 }
 
 
@@ -307,7 +407,6 @@ void Do_Core(REBFRM * const f)
         //
         assert(f->prior->deferred != NULL);
 
-        f->deferred = NULL;
         assert(NOT_END(f->out));
         f->flags.bits &= ~DO_FLAG_POST_SWITCH; // !!! unnecessary?
         goto post_switch;
@@ -326,7 +425,6 @@ void Do_Core(REBFRM * const f)
     if (f->flags.bits & DO_FLAG_APPLYING) {
         evaluating = NOT(f->flags.bits & DO_FLAG_EXPLICIT_EVALUATE);
 
-        f->deferred = NULL;
         assert(f->refine == ORDINARY_ARG); // APPLY infix not (yet?) supported
         goto process_function;
     }
@@ -375,8 +473,6 @@ reevaluate:;
 
     UPDATE_TICK_DEBUG(current);
     // v-- This is the TICK_BREAKPOINT or C-DEBUG-BREAK landing spot --v
-
-    f->deferred = NULL;
 
     if (NOT(evaluating) == NOT_VAL_FLAG(current, VALUE_FLAG_EVAL_FLIP)) {
         //
@@ -622,7 +718,6 @@ reevaluate:;
         Do_Process_Function_Checks_Debug(f);
       #endif
 
-        assert(f->deferred == NULL);
         assert(DSP >= f->dsp_orig); // REFINEMENT!s pushed by path processing
         assert(f->refine == LOOKBACK_ARG || f->refine == ORDINARY_ARG);
 
@@ -998,7 +1093,7 @@ reevaluate:;
             if (GET_VAL_FLAG(f->param, TYPESET_FLAG_VARIADIC)) {
                 const REBOOL make = TRUE;
                 Prep_Stack_Cell(f->arg);
-                Link_Vararg_Param_To_Frame(f, make);
+                Link_Vararg_Param_To_Frame(f, f->param, f->arg, make);
                 goto continue_arg_loop; // new value, type guaranteed correct
             }
 
@@ -1011,27 +1106,20 @@ reevaluate:;
 
     //=//// START BY HANDLING ANY DEFERRED ENFIX PROCESSING //////////////=//
 
-            // With an expression like `if 10 and 20` we may have filled IF's
-            // first arg slot with 10 then returned, hoping `if 10` could
-            // form a complete expression, and take care of the enfix after
-            // the function call is finished (at the end of the switch).
+            // `if 10 and 20` starts by filling the first arg slot with 10,
+            // because AND has a "non-tight" (normal) left hand argument.
+            // Were `if 10` a complete expression, it would allow that.
             //
-            // But if we looped back to here, it would mean we're now trying
-            // to consume another argument at the callsite.  That means we
-            // won't be getting to the end of the switch before handling
-            // this deferred enfix.  In the case of `if 10 and 20`, we'd be
-            // trying to fill the `body` slot with `and 20`...which will fail,
-            // saying AND has no left hand argument.
-            //
-            // Rather than raise an error, we kept a `f->deferred` field that
-            // points at the previously filled f->arg slot.  We go back and
-            // re-enter a sub-frame for the argument via DO_FLAG_POST_SWITCH.
-            // Continuing the example, this gives the IF's `condition` slot a
-            // second chance to be fulfilled--this time using the 10 as the
-            // AND's left-hand argument.
+            // But now we're consuming another argument at  the callsite, so
+            // by definition `if 10` wasn't finished.  We kept a `f->deferred`
+            // field that points at the previously filled f->arg slot.  So we
+            // can re-enter a sub-frame and give the IF's `condition` slot a
+            // second chance to run the enfix processing it put off before,
+            // this time using the 10 as the AND's left-hand argument.
             //
             if (f->deferred != NULL) {
-                //
+                assert(VAL_TYPE(&f->cell) == REB_0_DEFERRED);
+
                 // The GC's understanding of how far to protect parameters is
                 // based on how far f->param has gotten.  Yet we've advanced
                 // f->param and f->arg, with END in arg, but are rewinding
@@ -1061,9 +1149,19 @@ reevaluate:;
                     goto finished;
                 }
 
-                // Don't clear until after the call (not being NULL is how the
-                // subframe knows not to defer again.)
+                // This frame's cell shouldn't have been disturbed by the
+                // subframe processing, so it can still provide context for
+                // typechecking the argument (it wasn't previously checked).
                 //
+                assert(VAL_TYPE(&f->cell) == REB_0_DEFERRED);
+                Check_Arg(
+                    f,
+                    f->cell.payload.deferred.param,
+                    f->deferred,
+                    f->cell.payload.deferred.refine
+                );
+
+                Init_Unreadable_Blank(&f->cell);
                 f->deferred = NULL;
 
                 // Compensate for the param and arg change earlier.
@@ -1194,94 +1292,11 @@ reevaluate:;
 
         check_arg:;
 
-            if (IS_END(f->arg)) {
-                //
-                // This can happen, e.g. with `do [1 + comment "foo"]`.  The
-                // theory being that it should behave no differently than
-                // `do [1 +]`, so Do_Core() has to be able to return END.
-                //
-                if (NOT_VAL_FLAG(f->param, TYPESET_FLAG_ENDABLE))
-                    fail (Error_No_Arg(f, f->param));
-
-                Init_Endish_Void(f->arg);
-                goto continue_arg_loop;
-            }
-
-            ASSERT_VALUE_MANAGED(f->arg);
             assert(pclass != PARAM_CLASS_REFINEMENT);
             assert(pclass != PARAM_CLASS_LOCAL);
 
-            // f->refine may point to the applicable refinement slot for the
-            // current arg being fulfilled, or it might just be a signal of
-            // information about the mode (see `Reb_Frame.refine` in %sys-do.h)
-            //
-            assert(
-                f->refine == ORDINARY_ARG ||
-                f->refine == LOOKBACK_ARG ||
-                f->refine == ARG_TO_UNUSED_REFINEMENT ||
-                f->refine == ARG_TO_REVOKED_REFINEMENT ||
-                (IS_LOGIC(f->refine) && IS_TRUTHY(f->refine)) // used
-            );
-
-            if (IS_VOID(f->arg)) {
-                if (IS_LOGIC(f->refine)) {
-                    //
-                    // We can only revoke the refinement if this is the 1st
-                    // refinement arg.  If it's a later arg, then the first
-                    // didn't trigger revocation, or refine wouldn't be logic.
-                    //
-                    if (f->refine + 1 != f->arg)
-                        fail (Error_Bad_Refine_Revoke(f->param, f->arg));
-
-                    Init_Logic(f->refine, FALSE); // can't re-enable...
-                    f->refine = ARG_TO_REVOKED_REFINEMENT;
-                    goto continue_arg_loop; // don't type check for optionality
-                }
-                else if (IS_FALSEY(f->refine)) {
-                    //
-                    // FALSE means the refinement has already been revoked so
-                    // the void is okay.  BLANK! means the refinement was
-                    // never in use in the first place.  Don't type check.
-                    //
-                    goto continue_arg_loop;
-                }
-                else {
-                    // fall through to check arg for if <opt> is ok
-                    //
-                    assert(
-                        f->refine == ORDINARY_ARG
-                        || f->refine == LOOKBACK_ARG
-                    );
-                }
-            }
-            else {
-                // If the argument is set, then the refinement shouldn't be
-                // in a revoked or unused state.
-                //
-                if (IS_FALSEY(f->refine))
-                    fail (Error_Bad_Refine_Revoke(f->param, f->arg));
-            }
-
-            if (NOT_VAL_FLAG(f->param, TYPESET_FLAG_VARIADIC)) {
-                if (NOT(TYPE_CHECK(f->param, VAL_TYPE(f->arg))))
-                    fail (Error_Arg_Type(f, f->param, VAL_TYPE(f->arg)));
-            }
-            else {
-                // Varargs are odd, because the type checking doesn't
-                // actually check the types inside the parameter--it always
-                // has to be a VARARGS!.
-                //
-                if (!IS_VARARGS(f->arg))
-                    fail (Error_Not_Varargs(f, f->param, VAL_TYPE(f->arg)));
-
-                // While "checking" the variadic argument we actually re-stamp
-                // it with this parameter and frame's signature.  It reuses
-                // whatever the original data feed was (this frame, another
-                // frame, or just an array from MAKE VARARGS!)
-                //
-                const REBOOL make = FALSE; // reuse feed in f->arg
-                Link_Vararg_Param_To_Frame(f, make);
-            }
+            if (f->deferred == NULL)
+                Check_Arg(f, f->param, f->arg, f->refine);
 
         continue_arg_loop:;
 
@@ -1334,12 +1349,31 @@ reevaluate:;
         if (In_Typecheck_Mode(f)) {
             if (f->varlist != NULL)
                 assert(NOT_SER_INFO(f->varlist, SERIES_INFO_INACCESSIBLE));
+
+            assert(IS_POINTER_TRASH_DEBUG(f->deferred));
         }
         else { // was fulfilling...
             if (f->varlist != NULL) {
                 assert(GET_SER_INFO(f->varlist, SERIES_INFO_INACCESSIBLE));
                 CLEAR_SER_INFO(f->varlist, SERIES_INFO_INACCESSIBLE);
             }
+
+            if (f->deferred != NULL) {
+                //
+                // We deferred typechecking, but still need to do it...
+                // f->cell holds the necessary context for typechecking
+                //
+                assert(VAL_TYPE(&f->cell) == REB_0_DEFERRED);
+                Check_Arg(
+                    f,
+                    f->cell.payload.deferred.param,
+                    f->deferred,
+                    f->cell.payload.deferred.refine
+                );
+                Init_Unreadable_Blank(&f->cell);
+            }
+
+            TRASH_POINTER_IF_DEBUG(f->deferred);
         }
 
     //==////////////////////////////////////////////////////////////////==//
@@ -1532,7 +1566,6 @@ reevaluate:;
             f->special = f->arg;
             f->refine = ORDINARY_ARG; // no gathering, but need for assert
             deny(GET_FUN_FLAG(f->phase, FUNC_FLAG_INVISIBLE));
-            f->deferred = NULL; // frame filling decisions already made
             SET_END(f->out);
             goto process_function;
 
@@ -1543,7 +1576,6 @@ reevaluate:;
             // value of what f->phase is, for instance.
             //
             deny(GET_FUN_FLAG(f->phase, FUNC_FLAG_INVISIBLE));
-            f->deferred = NULL; // frame filling decisions already made
             SET_END(f->out);
             goto redo_unchecked;
 
@@ -2269,6 +2301,8 @@ reevaluate:;
 
 post_switch:;
 
+    assert(IS_POINTER_TRASH_DEBUG(f->deferred));
+
     f->eval_type = VAL_TYPE(f->value);
 
 //=//// IF NOT A WORD!, IT DEFINITELY STARTS A NEW EXPRESSION /////////////=//
@@ -2441,12 +2475,19 @@ post_switch:;
         && (f->flags.bits & DO_FLAG_FULFILLING_ARG)
         && f->prior->deferred == NULL
         && NOT_VAL_FLAG(f->prior->param, TYPESET_FLAG_ENDABLE)
-        /* && f->deferred == NULL */ // !!! see notes above...
     ){
         assert(NOT(f->flags.bits & DO_FLAG_TO_END));
         assert(Is_Function_Frame_Fulfilling(f->prior));
 
-        f->prior->deferred = f->out; // see remarks on deferred in REBFRM
+        // Must be true if fulfilling an argument that is *not* a deferral
+        //
+        assert(f->out == f->prior->arg);
+
+        f->prior->deferred = f->prior->arg; // see deferred comments in REBFRM
+        
+        RESET_VAL_HEADER(&f->prior->cell, REB_0_DEFERRED);
+        f->prior->cell.payload.deferred.param = f->prior->param;
+        f->prior->cell.payload.deferred.refine = f->prior->refine;
 
         // Leave the enfix operator pending in the frame, and it's up to the
         // parent frame to decide whether to use DO_FLAG_POST_SWITCH to jump
@@ -2456,8 +2497,6 @@ post_switch:;
         //
         goto finished;
     }
-
-    f->deferred = NULL;
 
     // This is a case for an evaluative lookback argument we don't want to
     // defer, e.g. a #tight argument or a normal one which is not being

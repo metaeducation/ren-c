@@ -164,6 +164,8 @@ inline static void Push_Frame_Core(REBFRM *f)
     //
     f->phase = NULL;
 
+    TRASH_POINTER_IF_DEBUG(f->deferred);
+
     TRASH_POINTER_IF_DEBUG(f->opt_label);
   #if defined(DEBUG_FRAME_LABELS)
     TRASH_POINTER_IF_DEBUG(f->label_utf8);

@@ -270,6 +270,11 @@ void Do_Process_Function_Checks_Debug(REBFRM *f) {
         ASSERT_NOT_TRASH_IF_DEBUG(f->out);
     }
 
+    if (f->special == f->arg)
+        assert(IS_POINTER_TRASH_DEBUG(f->deferred));
+    else
+        assert(f->deferred == NULL);
+
     // DECLARE_FRAME() starts out f->cell as valid GC-visible bits, and as
     // it's used for various temporary purposes it should remain valid.  But
     // its contents could be anything, based on that temporary purpose.  Help

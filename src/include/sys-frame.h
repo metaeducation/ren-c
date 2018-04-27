@@ -491,6 +491,8 @@ inline static void Push_Function(
     else
         f->special = const_KNOWN(f->param);
 
+    f->deferred = NULL;
+
     // A REBFRM* for a function call may-or-may-not need an associated REBCTX*
     // dynamically allocated.  Whether it does or not depends on if bindings
     // to the args or locals wind up "leaking" into slots that have a lifetime

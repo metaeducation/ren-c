@@ -37,15 +37,21 @@
     length of data = 80'000
 )
 
-;; git log crash (inconsistent)
-;; fixed by https://github.com/metaeducation/ren-c/commit/c2221bffa2815dd074dc00080e1a29816ad7f5e2
+;; extra large CALL/OUTPUT (500K+), test only run if can find git binary
 (
-    ;; only going to run if can find git binary
-    if exists? %/usr/bin/git [
-        ;; extra large (500K+)
+    not exists? %/usr/bin/git or [
         data: copy {}
-        call/wait/output [%/usr/bin/git "log" {--pretty=format:'[commit: {%h} author: {%an} email: {%ae} date-string: {%ai} summary: {%s}]'}] data
+        call/wait/output compose [
+            %/usr/bin/git "log" (spaced [
+                "--pretty=format:'["
+                    "commit: {%h}"
+                    "author: {%an}"
+                    "email: {%ae}"
+                    "date-string: {%ai}"
+                    "summary: {%s}"
+                "]'"
+            ])
+        ] data
         length of data > 500'000 and (find data "summary: {Initial commit}]")
-        ;; bottom of log
-    ] else [true] ;; test wasn't run but no way to skip :(
+    ]
 )

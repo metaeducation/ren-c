@@ -185,7 +185,7 @@ REBNATIVE(eval_enfix)
     // this frame...so when it asserts about "f->prior->deferred" it means
     // the frame of EVAL-ENFIX that is invoking it.
     //
-    assert(FS_TOP->deferred == NULL);
+    assert(IS_POINTER_TRASH_DEBUG(FS_TOP->deferred));
     FS_TOP->deferred = m_cast(REBVAL*, BLANK_VALUE); // !!! signal our hack
 
     REBFLGS flags = DO_FLAG_FULFILLING_ARG | DO_FLAG_POST_SWITCH;
@@ -666,6 +666,7 @@ REBNATIVE(apply)
     f->param = FUNC_FACADE_HEAD(f->phase); // reset
 
     f->special = f->arg; // now signal only type-check the existing data
+    TRASH_POINTER_IF_DEBUG(f->deferred); // invariant for checking mode
 
     (*PG_Do)(f);
 

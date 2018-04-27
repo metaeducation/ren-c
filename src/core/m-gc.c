@@ -1168,8 +1168,12 @@ static void Mark_Frame_Stack_Deep(void)
         // Frame temporary cell should always contain initialized bits, as
         // DECLARE_FRAME sets it up and no one is supposed to trash it.
         //
-        if (NOT_END(&f->cell))
-            Queue_Mark_Opt_Value_Deep(&f->cell);
+        if (NOT_END(&f->cell)) {
+            if (VAL_TYPE_RAW(&f->cell) == REB_0_DEFERRED)
+                assert(f->deferred != NULL);
+            else
+                Queue_Mark_Opt_Value_Deep(&f->cell);
+        }
 
         if (NOT(Is_Function_Frame(f))) {
             //
