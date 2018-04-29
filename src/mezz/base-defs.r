@@ -65,7 +65,7 @@ void: func [
 set/enfix quote enfix: proc [ ;-- `x: y: enfix :z` wouldn't enfix x
     "Convenience version of SET/ENFIX, e.g `+: enfix :add`"
     :target [set-word! set-path!]
-    action [function!]
+    action [action!]
 ][
     set/enfix target :action
 ]
@@ -184,7 +184,7 @@ eval proc [
         tester: typechecker (get bind (to word! type-name) set-word)
         set set-word :tester
 
-        set-meta :tester construct system/standard/function-meta [
+        set-meta :tester construct system/standard/action-meta [
             description: spaced [{Returns TRUE if the value is} an type-name]
             return-type: [logic!]
         ]
@@ -227,7 +227,7 @@ eval proc [
     map?:
     datatype?:
     typeset?:
-    function?:
+    action?:
     varargs?:
     object?:
     frame?:

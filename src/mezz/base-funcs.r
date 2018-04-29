@@ -30,39 +30,25 @@ assert: proc [
 ]
 
 
-
-
-
 default: enfix func [
-    "Set word or path to a default value if it is not set yet or blank."
+    {Set word or path to a default value if it is not set yet or blank.}
 
     return: [any-value!]
-    'target [set-word! set-path!]
-        "The word to which might be set"
-    branch [block! function!]
-        "Will be evaluated and used as value to set only if not set already"
-    /only
-        "Consider target being BLANK! to be a value not to overwrite"
-
+    'target "The word or path which might be set"
+        [set-word! set-path!]
+    branch "If target is not set already, this is evaluated and stored there"
+        [block! action!]
+    /only "Consider target being BLANK! to be a value not to overwrite"
     <local> gotten
 ][
-    ; A lookback quoting function that quotes a SET-WORD! on its left is
-    ; responsible for setting the value if it wants it to change since the
-    ; SET-WORD! is not actually active.  But if something *looks* like an
-    ; assignment, it's good practice to evaluate the whole expression to
-    ; the result the SET-WORD! was set to, so `x: y: op z` makes `x = y`.
-    ;
-    ; Note: This overwrites the variable with SET* even if it's setting it
-    ; back to its old value.  That's potentially wasteful, but also might
-    ; bother a data breakpoint.  Though you might see it either way, if a
-    ; variable -could- be modified by a line, you may want to know that...
-    ; perhaps the debugger could monitor for *changes*.  Either way, this
-    ; should be a native, so it's not worth worrying about.
-    ;
-    set* target either-test/only
-        (only ?? :value? !! :something?) ;-- test function
-        get* target ;-- value to test, and to return if passes test
-        :branch ;-- branch to use if test fails
+    either all [
+        value? gotten: get* target
+        any [only | not blank? :gotten]
+    ][
+        :gotten ;; so that `x: y: default z` leads to `x = y`
+    ][
+        set target do branch
+    ]
 ]
 
 maybe: enfix func [
@@ -111,8 +97,8 @@ was: func [
 
 make-action: func [
     {Internal generator used by FUNCTION and PROCEDURE specializations.}
-    return: [function!]
-    generator [function!]
+    return: [action!]
+    generator [action!]
         {Arity-2 "lower"-level function generator to use (e.g. FUNC or PROC)}
     spec [block!]
         {Help string (opt) followed by arg words (and opt type and string)}
@@ -279,16 +265,16 @@ function: specialize :make-action [generator: :func]
 procedure: specialize :make-action [generator: :proc]
 
 
-; Functions can be chained, adapted, and specialized--repeatedly.  The meta
+; Actions can be chained, adapted, and specialized--repeatedly.  The meta
 ; information from which HELP is determined can be inherited through links
 ; in that meta information.  Though in order to mutate the information for
-; the purposes of distinguishing a derived function, it must be copied.
+; the purposes of distinguishing a derived action, it must be copied.
 ;
-dig-function-meta-fields: function [value [function!]] [
+dig-action-meta-fields: function [value [action!]] [
     meta: meta-of :value
 
     unless meta [
-        return construct system/standard/function-meta [
+        return construct system/standard/action-meta [
             description: _
             return_type: _
             return_note: _
@@ -297,13 +283,13 @@ dig-function-meta-fields: function [value [function!]] [
         ]
     ]
 
-    underlying: match function! any [
+    underlying: match action! any [
         get 'meta/specializee
         get 'meta/adaptee
         all [block? :meta/chainees | to-value first meta/chainees]
     ]
 
-    fields: all [:underlying | dig-function-meta-fields :underlying]
+    fields: all [:underlying | dig-action-meta-fields :underlying]
 
     inherit-frame: function [parent [blank! frame!]] [
         if blank? parent [return blank]
@@ -315,7 +301,7 @@ dig-function-meta-fields: function [value [function!]] [
         return child
     ]
 
-    return construct system/standard/function-meta [
+    return construct system/standard/action-meta [
         description: (
             match string! any* [
                 select meta 'description
@@ -358,14 +344,14 @@ dig-function-meta-fields: function [value [function!]] [
 ]
 
 redescribe: function [
-    {Mutate function description with new title and/or new argument notes.}
+    {Mutate action description with new title and/or new argument notes.}
 
-    return: [function!]
-        {The input function, with its description now updated.}
+    return: [action!]
+        {The input action, with its description now updated.}
     spec [block!]
         {Either a string description, or a spec block (without types).}
-    value [function!]
-        {(modified) Function whose description is to be updated.}
+    value [action!]
+        {(modified) Action whose description is to be updated.}
 ][
     meta: meta-of :value
     notes: _
@@ -377,7 +363,7 @@ redescribe: function [
 
     on-demand-meta: does [
         if not meta [
-            meta: copy system/standard/function-meta
+            meta: copy system/standard/action-meta
             set-meta :value meta
         ]
 
@@ -390,7 +376,7 @@ redescribe: function [
                 fail [{PARAMETER-NOTES in META-OF is not a FRAME!} notes]
             ]
 
-            if :value != function-of notes [
+            if :value != action-of notes [
                 fail [{PARAMETER-NOTES in META-OF frame mismatch} notes]
             ]
         ]
@@ -409,7 +395,7 @@ redescribe: function [
 
         if find meta 'parameter-notes [throw ()]
 
-        fields: dig-function-meta-fields :value
+        fields: dig-action-meta-fields :value
 
         meta: _ ;-- need to get a parameter-notes field in the OBJECT!
         on-demand-meta ;-- ...so this loses SPECIALIZEE, etc.
@@ -598,7 +584,7 @@ all*: redescribe [
 )
 
 match: redescribe [
-   {Check value using tests (match types, TRUE? or FALSE?, filter function)}
+   {Check value using tests (match types, TRUE or FALSE, or filter action)}
 ](
     adapt specialize 'either-test [
         ;
@@ -614,7 +600,7 @@ match: redescribe [
         ; by returning blank on failure, but void on success...to help cue
         ; a problem to conditionals.  That is not easy to do with a
         ; specialization in this style, so just let people deal with it for
-        ; now...e.g. `match [function! block!] blank` will be blank, but so
+        ; now...e.g. `match [action! block!] blank` will be blank, but so
         ; will be `match [blank!] blank`.
     ]
 )
@@ -727,17 +713,17 @@ lock-of: redescribe [
 
 arity-of: function [
     "Get the number of fixed parameters (not refinements or refinement args)"
-    value [any-word! any-path! function!]
+    value [any-word! any-path! action!]
 ][
     if path? :value [fail "arity-of for paths is not yet implemented."]
 
-    unless function? :value [
+    unless action? :value [
         value: get value
-        unless function? :value [return 0]
+        unless action? :value [return 0]
     ]
 
     if variadic? :value [
-        fail "arity-of cannot give reliable answer for variadic functions"
+        fail "arity-of cannot give reliable answer for variadic actions"
     ]
 
     ; !!! Should willingness to take endability cause a similar error?
@@ -793,7 +779,7 @@ infix?: redescribe [
 lambda: function [
     {Convenience variadic wrapper for FUNC and FUNCTION constructors}
 
-    return: [function!]
+    return: [action!]
     :args [<end> word! path! block!]
         {Block of argument words, or a single word (passed via LIT-WORD!)}
     :body [any-value! <...>]
@@ -1048,7 +1034,7 @@ cause-error: func [
 
     ; Filter out functional values:
     for-next args [
-        if function? first args [
+        if action? first args [
             change/only args meta-of first args
         ]
     ]

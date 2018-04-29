@@ -44,7 +44,7 @@
 // Obviously, an arbitrary long string won't fit into the remaining 3*32 bits,
 // or even 3*64 bits!  You can fit the data for an INTEGER or DECIMAL in that
 // (at least until they become arbitrary precision) but it's not enough for
-// a generic BLOCK! or a FUNCTION! (for instance).  So the remaining bits
+// a generic BLOCK! or an ACTION! (for instance).  So the remaining bits
 // often will point to one or more Rebol "nodes" (see %sys-series.h for an
 // explanation of REBSER, REBARR, REBCTX, and REBMAP.)
 //
@@ -312,7 +312,7 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// `struct Reb_Track` is the value payload in debug builds for any REBVAL
+// `Reb_Track_Payload` is the value payload in debug builds for any REBVAL
 // whose VAL_TYPE() doesn't need any information beyond the header.  This
 // offers a chance to inject some information into the payload to help
 // know where the value originated.  It is used by voids (and void trash),
@@ -326,13 +326,13 @@
 //
 
 #if defined(DEBUG_TRACK_CELLS)
-    struct Reb_Track {
+    struct Reb_Track_Payload {
         const char *file; // is REBYTE (UTF-8), but char* for debug watch
         int line;
     };
 #endif
 
-struct Reb_Datatype {
+struct Reb_Datatype_Payload {
     enum Reb_Kind kind;
     REBARR *spec;
 };
@@ -343,7 +343,7 @@ struct Reb_Datatype {
 // aligned "payload" and 32-bit aligned "extra" were broken out independently,
 // so that setting one union member would not disengage the other.)
 
-struct Reb_Money {
+struct Reb_Money_Payload {
     unsigned m1:32; /* significand, continuation */
     unsigned m2:23; /* significand, highest part */
     unsigned s:1;   /* sign, 0 means nonnegative, 1 means nonpositive */
@@ -379,16 +379,16 @@ typedef union reb_date {
 // DATE! (as REBYMD) fit into 32 bits, so can live in the ->extra field,
 // which is the size of a platform pointer.
 //
-struct Reb_Time {
+struct Reb_Time_Payload {
     REBI64 nanoseconds;
 };
 
-typedef struct Reb_Tuple {
+typedef struct Reb_Tuple_Payload {
     REBYTE tuple[8];
 } REBTUP;
 
 
-struct Reb_Any_Series {
+struct Reb_Series_Payload {
     //
     // `series` represents the actual physical underlying data, which is
     // essentially a vector of equal-sized items.  The length of the item
@@ -412,12 +412,12 @@ struct Reb_Any_Series {
     REBCNT index;
 };
 
-struct Reb_Typeset {
+struct Reb_Typeset_Payload {
     REBU64 bits; // One bit for each DATATYPE! (use with FLAGIT_KIND)
 };
 
 
-struct Reb_Any_Word {
+struct Reb_Word_Payload {
     //
     // This is the word's non-canonized spelling.  It is a UTF-8 string.
     //
@@ -440,7 +440,7 @@ struct Reb_Any_Word {
 };
 
 
-struct Reb_Function {
+struct Reb_Action_Payload {
     //
     // `paramlist` is a Rebol Array whose 1..NUM_PARAMS values are all
     // TYPESET! values, with an embedded symbol (a.k.a. a "param") as well
@@ -448,14 +448,14 @@ struct Reb_Function {
     // is the list that is processed to produce WORDS-OF, and which is
     // consulted during invocation to fulfill the arguments
     //
-    // In addition, its [0]th element contains a FUNCTION! value which is
+    // In addition, its [0]th element contains an ACTION! value which is
     // self-referentially the function itself.  This means that the paramlist
     // can be passed around as a single pointer from which a whole REBVAL
     // for the function can be found (although this value is archetypal, and
     // loses the `binding` property--which must be preserved other ways)
     //
     // See LINK().facade for a description of how the paramlist's link field
-    // is used to calculate FUNC_FACADE() and FUNC_UNDERLYING().
+    // is used to calculate ACT_FACADE() and ACT_UNDERLYING().
     //
     // The `misc.meta` field of the paramlist holds a meta object (if any)
     // that describes the function.  This is read by help.
@@ -483,12 +483,12 @@ struct Reb_Function {
     REBARR *body_holder;
 };
 
-struct Reb_Any_Context {
+struct Reb_Context_Payload {
     //
     // `varlist` is a Rebol Array that from 1..NUM_VARS contains REBVALs
     // representing the stored values in the context.
     //
-    // As with the `paramlist` of a FUNCTION!, the varlist uses the [0]th
+    // As with the `paramlist` of an ACTION!, the varlist uses the [0]th
     // element specially.  It stores a copy of the ANY-CONTEXT! value that
     // refers to itself.
     //
@@ -519,11 +519,11 @@ struct Reb_Any_Context {
     // binding, and try to MAKE FRAME! on it, the paramlist alone is not
     // enough to remember which specific frame that function should exit.
     //
-    REBFUN *phase;
+    REBACT *phase;
 };
 
 
-struct Reb_Varargs {
+struct Reb_Varargs_Payload {
     //
     // If the extra->binding of the varargs is not UNBOUND, it represents the
     // frame in which this VARARGS! was tied to a parameter.  This 0-based
@@ -538,7 +538,7 @@ struct Reb_Varargs {
     //
     REBCNT param_offset;
 
-    // The "facade" (see FUNC_FACADE) is a paramlist-shaped entity that may
+    // The "facade" (see ACT_FACADE) is a paramlist-shaped entity that may
     // or may not be the actual paramlist of a function.  It allows for the
     // ability of phases of functions to have modified typesets or parameter
     // classes from those of the underlying frame.  This is where to look
@@ -556,7 +556,7 @@ struct Reb_Varargs {
 // or converted into an extraction of the cell's value.
 //
 #define REB_0_REFERENCE REB_0
-struct Reb_Reference {
+struct Reb_Reference_Payload {
     RELVAL *cell;
     // specifier is kept in the extra->binding portion of the value
 };
@@ -570,7 +570,7 @@ struct Reb_Reference {
 // payload is used along with a singly linked list via extra.next_partial
 //
 #define REB_0_PARTIAL REB_0
-struct Reb_Partial {
+struct Reb_Partial_Payload {
     REBDSP dsp; // the DSP of this partial slot (if ordered on the stack)
     REBCNT index; // maps to the index of this parameter in the paramlist
 };
@@ -583,7 +583,7 @@ struct Reb_Partial {
 // at the moment of deferral in the frame's cell in order to return to it.
 //
 #define REB_0_DEFERRED REB_0
-struct Reb_Deferred {
+struct Reb_Deferred_Payload {
     const RELVAL *param;
     REBVAL *refine;
 };
@@ -598,7 +598,7 @@ struct Reb_Deferred {
 // Note that the ->extra field of the REBVAL may contain a singular REBARR
 // that is leveraged for its GC-awareness.
 //
-struct Reb_Handle {
+struct Reb_Handle_Payload {
     union {
         void *pointer;
         CFUNC *cfunc;
@@ -611,7 +611,7 @@ struct Reb_Handle {
 // File descriptor in singular->link.fd
 // Meta information in singular->misc.meta
 //
-struct Reb_Library {
+struct Reb_Library_Payload {
     REBARR *singular; // singular array holding this library value
 };
 
@@ -634,7 +634,7 @@ typedef REBARR REBLIB;
 // the potential for memory instability of content pointers may not be a
 // match for the needs of an FFI interface.
 //
-struct Reb_Struct {
+struct Reb_Struct_Payload {
     REBARR *stu; // [0] is canon self value, ->misc.schema is schema
     REBSER *data; // binary data series (may be shared with other structs)
 };
@@ -648,7 +648,7 @@ typedef REBARR REBFLD;
 
 #include "reb-gob.h"
 
-struct Reb_Gob {
+struct Reb_Gob_Payload {
     REBGOB *gob;
     REBCNT index;
 };
@@ -690,7 +690,7 @@ struct Reb_Gob {
 
 union Reb_Value_Extra {
     //
-    // The binding will be either a REBFUN (relative to a function) or a
+    // The binding will be either a REBACT (relative to a function) or a
     // REBCTX (specific to a context), or simply a plain REBARR such as
     // EMPTY_ARRAY which indicates UNBOUND.  ARRAY_FLAG_VARLIST and
     // ARRAY_FLAG_PARAMLIST can be used to tell which it is.
@@ -701,7 +701,7 @@ union Reb_Value_Extra {
     // which can be found inside of the frame (for recursive resolution
     // of ANY-WORD!s)
     //
-    // FUNCTION!: binding is the instance data for archetypal invocation, so
+    // ACTION!: binding is the instance data for archetypal invocation, so
     // although all the RETURN instances have the same paramlist, it is
     // the binding which is unique to the REBVAL specifying which to exit
     //
@@ -757,7 +757,7 @@ union Reb_Value_Extra {
 union Reb_Value_Payload {
 
   #if defined(DEBUG_TRACK_CELLS)
-    struct Reb_Track track; // only for void/trash, BLANK!, LOGIC!, BAR!
+    struct Reb_Track_Payload track; // in void/trash, BLANK!, LOGIC!, BAR!
   #endif
 
     REBUNI character; // It's CHAR! (for now), but 'char' is a C keyword
@@ -765,32 +765,32 @@ union Reb_Value_Payload {
     REBDEC decimal;
 
     REBVAL *pair; // actually a "pairing" pointer
-    struct Reb_Money money;
-    struct Reb_Handle handle;
-    struct Reb_Time time;
-    struct Reb_Tuple tuple;
-    struct Reb_Datatype datatype;
-    struct Reb_Typeset typeset;
+    struct Reb_Money_Payload money;
+    struct Reb_Handle_Payload handle;
+    struct Reb_Time_Payload time;
+    struct Reb_Tuple_Payload tuple;
+    struct Reb_Datatype_Payload datatype;
+    struct Reb_Typeset_Payload typeset;
 
-    struct Reb_Library library;
-    struct Reb_Struct structure; // It's STRUCT!, but 'struct' is a C keyword
+    struct Reb_Library_Payload library;
+    struct Reb_Struct_Payload structure; // STRUCT!, but 'struct' is C keyword
 
-    struct Reb_Event event;
-    struct Reb_Gob gob;
+    struct Reb_Event_Payload event;
+    struct Reb_Gob_Payload gob;
 
     // These use `specific` or `relative` in `binding`, based on IS_RELATIVE()
 
-    struct Reb_Any_Word any_word;
-    struct Reb_Any_Series any_series;
-    struct Reb_Function function;
-    struct Reb_Any_Context any_context;
-    struct Reb_Varargs varargs;
+    struct Reb_Word_Payload any_word;
+    struct Reb_Series_Payload any_series;
+    struct Reb_Action_Payload action;
+    struct Reb_Context_Payload any_context;
+    struct Reb_Varargs_Payload varargs;
 
     // Internal-only payloads for cells that use 0 as the VAL_TYPE()
     //
-    struct Reb_Reference reference; // used with REB_0_REFERENCE
-    struct Reb_Partial partial; // used with REB_0_PARTIAL
-    struct Reb_Deferred deferred; // used with REB_0_DEFERRED
+    struct Reb_Reference_Payload reference; // used with REB_0_REFERENCE
+    struct Reb_Partial_Payload partial; // used with REB_0_PARTIAL
+    struct Reb_Deferred_Payload deferred; // used with REB_0_DEFERRED
 };
 
 struct Reb_Cell
@@ -808,7 +808,7 @@ struct Reb_Cell
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // A RELVAL is an equivalent struct layout to to REBVAL, but is allowed to
-// have a REBFUN* as its binding.  A relative value pointer can point to a
+// have a REBACT* as its binding.  A relative value pointer can point to a
 // specific value, but a relative word or array cannot be pointed to by a
 // plain REBVAL*.  The RELVAL-vs-REBVAL distinction is purely commentary
 // in the C build, but the C++ build makes REBVAL a type derived from RELVAL.

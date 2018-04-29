@@ -15,8 +15,8 @@
 #define EXT_QUIT(e) RX_Quit_ ## e
 #endif
 
-typedef int (*INIT_FUNC)(REBVAL *, REBVAL *);
-typedef int (*QUIT_FUNC)(void);
+typedef int (*INIT_CFUNC)(REBVAL *, REBVAL *);
+typedef int (*QUIT_CFUNC)(void);
 
 // Extension macros
 #define DECLARE_EXT_INIT(e) \

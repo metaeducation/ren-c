@@ -41,7 +41,7 @@
 //
 
 #pragma pack(4)
-struct Reb_Event {
+struct Reb_Event_Payload {
     uint8_t type;   // event id (mouse-move, mouse-button, etc)
     uint8_t flags;  // special flags
     uint8_t win;    // window id

@@ -530,7 +530,7 @@ REBNATIVE(wake_up)
     REBOOL woke_up = TRUE; // start by assuming success
 
     REBVAL *awake = CTX_VAR(port, STD_PORT_AWAKE);
-    if (IS_FUNCTION(awake)) {
+    if (IS_ACTION(awake)) {
         const REBOOL fully = TRUE; // error if not all arguments consumed
 
         if (Apply_Only_Throws(D_OUT, fully, awake, ARG(event), END))

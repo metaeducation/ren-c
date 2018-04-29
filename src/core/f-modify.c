@@ -141,7 +141,7 @@ REBCNT Modify_Array(
 //
 REBCNT Modify_Binary(
     REBVAL *dst_val,        // target
-    REBSYM action,          // INSERT, APPEND, CHANGE
+    REBSYM verb,            // INSERT, APPEND, CHANGE
     const REBVAL *src_val,  // source
     REBFLGS flags,          // AM_PART
     REBINT dst_len,         // length to remove
@@ -153,16 +153,16 @@ REBCNT Modify_Binary(
     // For INSERT/PART and APPEND/PART
     //
     REBINT limit;
-    if (action != SYM_CHANGE && (flags & AM_PART))
+    if (verb != SYM_CHANGE && (flags & AM_PART))
         limit = dst_len; // should be non-negative
     else
         limit = -1;
 
     if (IS_VOID(src_val) || limit == 0 || dups < 0)
-        return action == SYM_APPEND ? 0 : dst_idx;
+        return verb == SYM_APPEND ? 0 : dst_idx;
 
     REBCNT tail = SER_LEN(dst_ser);
-    if (action == SYM_APPEND || dst_idx > tail)
+    if (verb == SYM_APPEND || dst_idx > tail)
         dst_idx = tail;
 
     // If the src_val is not a string, then we need to create a string:
@@ -246,7 +246,7 @@ REBCNT Modify_Binary(
     //
     REBINT size = dups * src_len;
 
-    if (action != SYM_CHANGE) {
+    if (verb != SYM_CHANGE) {
         // Always expand dst_ser for INSERT and APPEND actions:
         Expand_Series(dst_ser, dst_idx, size);
     } else {
@@ -273,7 +273,7 @@ REBCNT Modify_Binary(
         Free_Series(src_ser);
     }
 
-    return (action == SYM_APPEND) ? 0 : dst_idx;
+    return (verb == SYM_APPEND) ? 0 : dst_idx;
 }
 
 
@@ -284,7 +284,7 @@ REBCNT Modify_Binary(
 //
 REBCNT Modify_String(
     REBVAL *dst_val,        // target
-    REBSYM action,          // INSERT, APPEND, CHANGE
+    REBSYM verb,            // INSERT, APPEND, CHANGE
     const REBVAL *src_val,  // source
     REBFLGS flags,          // AM_PART
     REBINT dst_len,         // length to remove
@@ -296,16 +296,16 @@ REBCNT Modify_String(
     // For INSERT/PART and APPEND/PART
     //
     REBINT limit;
-    if (action != SYM_CHANGE && (flags & AM_PART))
+    if (verb != SYM_CHANGE && (flags & AM_PART))
         limit = dst_len; // should be non-negative
     else
         limit = -1;
 
     if (IS_VOID(src_val) || limit == 0 || dups < 0)
-        return action == SYM_APPEND ? 0 : dst_idx;
+        return verb == SYM_APPEND ? 0 : dst_idx;
 
     REBCNT tail = SER_LEN(dst_ser);
-    if (action == SYM_APPEND || dst_idx > tail)
+    if (verb == SYM_APPEND || dst_idx > tail)
         dst_idx = tail;
 
     // If the src_val is not a string, then we need to create a string:
@@ -358,10 +358,11 @@ REBCNT Modify_String(
     //
     REBINT size = dups * src_len;
 
-    if (action != SYM_CHANGE) {
+    if (verb != SYM_CHANGE) {
         // Always expand dst_ser for INSERT and APPEND actions:
         Expand_Series(dst_ser, dst_idx, size);
-    } else {
+    }
+    else {
         if (size > dst_len)
             Expand_Series(dst_ser, dst_idx, size - dst_len);
         else if (size < dst_len && (flags & AM_PART))
@@ -390,5 +391,5 @@ REBCNT Modify_String(
         Free_Series(src_ser);
     }
 
-    return (action == SYM_APPEND) ? 0 : dst_idx;
+    return (verb == SYM_APPEND) ? 0 : dst_idx;
 }

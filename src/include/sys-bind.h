@@ -73,7 +73,7 @@ inline static REBOOL Same_Binding(void *a_ptr, void *b_ptr) {
 }
 
 
-// Tells whether when a FUNCTION! has a binding to a context, if that binding
+// Tells whether when an ACTION! has a binding to a context, if that binding
 // should override the stored binding inside of a WORD! being looked up.
 //
 //    o1: make object! [a: 10 f: does [print a]]
@@ -369,12 +369,9 @@ inline static REBVAL *Derelativize(
         }
         else {
         #if !defined(NDEBUG)
-            if (
-                VAL_RELATIVE(v) !=
-                VAL_FUNC(CTX_FRAME_FUNC_VALUE(CTX(specifier)))
-            ){
+            if (VAL_RELATIVE(v) != VAL_ACTION(CTX_ROOTKEY(CTX(specifier)))) {
                 printf("Function mismatch in specific binding, expected:\n");
-                PROBE(FUNC_VALUE(VAL_RELATIVE(v)));
+                PROBE(ACT_ARCHETYPE(VAL_RELATIVE(v)));
                 printf("Panic on relative value\n");
                 panic (v);
             }
@@ -395,7 +392,7 @@ inline static REBVAL *Derelativize(
         else {
             // !!! Repeats code in Get_Var_Core, see explanation there
             //
-            REBVAL *frame_value = CTX_VALUE(CTX(specifier));
+            REBVAL *frame_value = CTX_ARCHETYPE(CTX(specifier));
             assert(IS_FRAME(frame_value));
             f_binding = frame_value->extra.binding;
         }
@@ -531,7 +528,7 @@ inline static REBVAL *Get_Var_Core(
         //
         // RELATIVE BINDING: The word was made during a deep copy of the block
         // that was given as a function's body, and stored a reference to that
-        // FUNCTION! as its binding.  To get a variable for the word, we must
+        // ACTION! as its binding.  To get a variable for the word, we must
         // find the right function call on the stack (if any) for the word to
         // refer to (the FRAME!)
         //
@@ -562,9 +559,9 @@ inline static REBVAL *Get_Var_Core(
         }
 
         context = CTX(specifier);
-        REBFUN *frm_func = VAL_FUNC(CTX_FRAME_FUNC_VALUE(context));
-        assert(Same_Binding(binding, frm_func));
-        UNUSED(frm_func);
+        REBACT *action = VAL_ACTION(CTX_ROOTKEY(context));
+        assert(Same_Binding(binding, action));
+        UNUSED(action);
     }
     else if (binding->header.bits & ARRAY_FLAG_VARLIST) {
         //
@@ -576,7 +573,7 @@ inline static REBVAL *Get_Var_Core(
         //    o2: make object [a: 20]
         //
         // O2 doesn't copy F's body, but it does tweak a single pointer in the
-        // FUNCTION! value cell (->binding) to point at o2.  When f is called,
+        // ACTION! value cell (->binding) to point at o2.  When f is called,
         // the frame captures that pointer, and we take it into account here.
 
         if (specifier == SPECIFIED) {
@@ -591,10 +588,10 @@ inline static REBVAL *Get_Var_Core(
                 // Regardless of whether the frame is still on the stack
                 // or not, the FRAME! value embedded into the REBSER ndoe
                 // should still contain the binding that was inside the cell
-                // of the FUNCTION! that was invoked to make the frame.  See
+                // of the ACTION! that was invoked to make the frame.  See
                 // INIT_BINDING() in Context_For_Frame_May_Reify_Managed().
                 //
-                REBVAL *frame_value = CTX_VALUE(CTX(specifier));
+                REBVAL *frame_value = CTX_ARCHETYPE(CTX(specifier));
                 assert(IS_FRAME(frame_value));
                 f_binding = frame_value->extra.binding;
             }
@@ -606,7 +603,7 @@ inline static REBVAL *Get_Var_Core(
             ){
                 // The frame's binding overrides--because what's happening is
                 // that this cell came from a function's body, where the
-                // particular FUNCTION! value triggering it held a binding
+                // particular ACTION! value triggering it held a binding
                 // of a more derived version of the object to which the
                 // instance in the function body refers.
                 //

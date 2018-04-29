@@ -171,8 +171,8 @@ static void Do_Core_Shared_Checks_Debug(REBFRM *f) {
     //
     if (f->eval_type != VAL_TYPE(f->value))
         assert(
-            f->eval_type == REB_FUNCTION
-            and (IS_WORD(f->value) or IS_FUNCTION(f->value))
+            f->eval_type == REB_ACTION
+            and (IS_WORD(f->value) or IS_ACTION(f->value))
         );
 
     assert(f->value);
@@ -254,14 +254,14 @@ void Do_Core_Expression_Checks_Debug(REBFRM *f) {
 
 
 //
-//  Do_Process_Function_Checks_Debug: C
+//  Do_Process_Action_Checks_Debug: C
 //
-void Do_Process_Function_Checks_Debug(REBFRM *f) {
-    assert(f->param == FUNC_FACADE_HEAD(f->phase));
+void Do_Process_Action_Checks_Debug(REBFRM *f) {
+    assert(f->param == ACT_FACADE_HEAD(f->phase));
 
     if (f->refine == ORDINARY_ARG) {
         if (NOT_END(f->out))
-            assert(GET_FUN_FLAG(f->phase, FUNC_FLAG_INVISIBLE));
+            assert(GET_ACT_FLAG(f->phase, ACTION_FLAG_INVISIBLE));
     }
     else {
         assert(f->refine == LOOKBACK_ARG);
@@ -294,10 +294,10 @@ void Do_Process_Function_Checks_Debug(REBFRM *f) {
 
 
 //
-//  Do_After_Function_Checks_Debug: C
+//  Do_After_Action_Checks_Debug: C
 //
-void Do_After_Function_Checks_Debug(REBFRM *f) {
-    assert(f->eval_type == REB_FUNCTION);
+void Do_After_Action_Checks_Debug(REBFRM *f) {
+    assert(f->eval_type == REB_ACTION);
     assert(NOT_END(f->out));
     assert(not THROWN(f->out));
     assert(not Is_Bindable(f->out) or f->out->extra.binding != NULL);
@@ -307,10 +307,10 @@ void Do_After_Function_Checks_Debug(REBFRM *f) {
     // double checks any function marked with RETURN in the debug build,
     // so native return types are checked instead of just trusting the C.
     //
-    if (GET_FUN_FLAG(f->phase, FUNC_FLAG_RETURN)) {
-        REBVAL *typeset = FUNC_PARAM(f->phase, FUNC_NUM_PARAMS(f->phase));
+    if (GET_ACT_FLAG(f->phase, ACTION_FLAG_RETURN)) {
+        REBVAL *typeset = ACT_PARAM(f->phase, ACT_NUM_PARAMS(f->phase));
         assert(VAL_PARAM_SYM(typeset) == SYM_RETURN);
-        if (!TYPE_CHECK(typeset, VAL_TYPE(f->out))) {
+        if (not TYPE_CHECK(typeset, VAL_TYPE(f->out))) {
             printf("Native code violated return type contract!\n");
             panic (Error_Bad_Return_Type(f, VAL_TYPE(f->out)));
         }

@@ -29,7 +29,7 @@
 ([1] == head of r3-alpha-apply :insert [copy [] [1] blank blank blank])
 ([1] == head of r3-alpha-apply :insert [copy [] [1] blank blank false])
 ([[1]] == head of r3-alpha-apply :insert [copy [] [1] blank blank true])
-(function! == r3-alpha-apply (specialize 'of [property: 'type]) [:print])
+(action! == r3-alpha-apply (specialize 'of [property: 'type]) [:print])
 (get-word! == r3-alpha-apply/only (specialize 'of [property: 'type]) [:print])
 
 ;-- #1760 --

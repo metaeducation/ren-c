@@ -28,9 +28,9 @@ register-codec*: func [
         {Descriptive name of the codec.}
     suffixes [file! block!]
         {File extension or block of file extensions the codec processes}
-    identify? [function! blank!]
-    decode [function! blank!]
-    encode [function! blank!]
+    identify? [action! blank!]
+    decode [action! blank!]
+    encode [action! blank!]
     <local> codec
 ][
     unless block? suffixes [suffixes: reduce [suffixes]]

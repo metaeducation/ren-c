@@ -141,7 +141,7 @@ REBOOL Next_Path_Throws(REBPVS *pvs)
             Move_Value(VAL_REFERENCE(pvs->out), pvs->special);
 
             if (pvs->flags.bits & DO_FLAG_SET_PATH_ENFIXED) {
-                assert(IS_FUNCTION(pvs->special));
+                assert(IS_ACTION(pvs->special));
                 SET_VAL_FLAG(VAL_REFERENCE(pvs->out), VALUE_FLAG_ENFIXED);
             }
             break; }
@@ -248,7 +248,7 @@ REBOOL Next_Path_Throws(REBPVS *pvs)
     // be captured the first time the function is seen, otherwise it would
     // capture the last refinement's name, so check label for non-NULL.
     //
-    if (IS_FUNCTION(pvs->out) and IS_WORD(pvs->refine)) {
+    if (IS_ACTION(pvs->out) and IS_WORD(pvs->refine)) {
         if (pvs->opt_label == NULL)
             pvs->opt_label = VAL_WORD_SPELLING(pvs->refine);
     }
@@ -271,7 +271,7 @@ REBOOL Next_Path_Throws(REBPVS *pvs)
 // If label_sym is passed in as being non-null, then the caller is implying
 // readiness to process a path which may be a function with refinements.
 // These refinements will be left in order on the data stack in the case
-// that `out` comes back as IS_FUNCTION().  If it is NULL then a new FUNCTION!
+// that `out` comes back as IS_ACTION().  If it is NULL then a new ACTION!
 // will be allocated, in the style of the REFINE native, which will have the
 // behavior of refinement partial specialization.
 //
@@ -346,7 +346,7 @@ REBOOL Do_Path_Throws_Core(
 
         Move_Value(pvs->out, pvs->deferred);
 
-        if (IS_FUNCTION(pvs->out))
+        if (IS_ACTION(pvs->out))
             pvs->opt_label = VAL_WORD_SPELLING(pvs->value);
     }
     else if (IS_GROUP(pvs->value)) {
@@ -422,16 +422,16 @@ REBOOL Do_Path_Throws_Core(
             bottom++;
         }
 
-        assert(IS_FUNCTION(pvs->out));
+        assert(IS_ACTION(pvs->out));
 
         if (pvs->flags.bits & DO_FLAG_PUSH_PATH_REFINEMENTS) {
             //
             // The caller knows how to handle the refinements-pushed-to-stack
             // in-reverse-order protocol, and doesn't want to pay for making
-            // a new FUNCTION!.
+            // a new ACTION!.
         }
         else {
-            // The caller actually wants a FUNCTION! value to store or use
+            // The caller actually wants an ACTION! value to store or use
             // for later, as opposed to just calling it once.  It costs a
             // bit to do this, but unlike in R3-Alpha, it's possible to do!
             //
@@ -439,7 +439,7 @@ REBOOL Do_Path_Throws_Core(
             // data stack.  (It can't use direct value pointers because it
             // pushes to the stack itself, hence may move it on expansion.)
             //
-            if (Specialize_Function_Throws(
+            if (Specialize_Action_Throws(
                 pvs->refine, // set to pvs cell
                 pvs->out,
                 pvs->opt_label,

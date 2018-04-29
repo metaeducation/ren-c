@@ -1,7 +1,7 @@
 ; datatypes/datatype.r
 (not datatype? 1)
-(datatype! = type of function!)
-(datatype? function!)
+(datatype! = type of action!)
+(datatype? action!)
 (datatype? binary!)
 (datatype? bitset!)
 (datatype? block!)
@@ -13,7 +13,6 @@
 (datatype? error!)
 (datatype? event!)
 (datatype? file!)
-(datatype? function!)
 (datatype? get-path!)  ; get-path! =? path! in R2/Forward, R2 2.7.7+
 (datatype? get-word!)
 (datatype? gob!)
@@ -48,4 +47,4 @@
 (datatype? vector!)
 (datatype? word!)
 ; alternative literal representation
-(datatype? #[datatype! function!])
+(datatype? #[datatype! action!])

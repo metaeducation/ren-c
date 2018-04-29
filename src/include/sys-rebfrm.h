@@ -45,7 +45,7 @@
 // To provide even greater flexibility, it allows the very first element's
 // pointer in an evaluation to come from an arbitrary source.  It doesn't
 // have to be resident in the same sequence from which ensuing values are
-// pulled, allowing a free head value (such as a FUNCTION! REBVAL in a local
+// pulled, allowing a free head value (such as an ACTION! REBVAL in a local
 // C variable) to be evaluated in combination from another source (like a
 // va_list or series representing the arguments.)  This avoids the cost and
 // complexity of allocating a series to combine the values together.
@@ -254,7 +254,7 @@
 
 //=//// DO_FLAG_PUSH_PATH_REFINEMENTS /////////////////////////////////////=//
 //
-// It is technically possible to produce a new specialized FUNCTION! each
+// It is technically possible to produce a new specialized ACTION! each
 // time you used a PATH!.  This is needed for `apdo: :append/dup/only` as a
 // method of partial specialization, but would be costly if just invoking
 // a specialization once.  So path dispatch can be asked to push the path
@@ -262,7 +262,7 @@
 //
 // This mechanic is also used by SPECIALIZE, so that specializing refinements
 // in order via a path and values via a block of code can be done in one
-// step, vs needing to make an intermediate FUNCTION!.
+// step, vs needing to make an intermediate ACTION!.
 //
 #define DO_FLAG_PUSH_PATH_REFINEMENTS \
     FLAGIT_LEFT(16)
@@ -480,7 +480,7 @@ struct Reb_Frame {
     //
     // This is the enumerated type upon which the evaluator's main switch
     // statement is driven, to indicate what the frame is actually doing.
-    // e.g. REB_FUNCTION means "running a function".
+    // e.g. REB_ACTION means "running a function".
     //
     // It may not always tell the whole story due to frame reuse--a running
     // state may have stored enough information to not worry about a recursion
@@ -488,8 +488,8 @@ struct Reb_Frame {
     //
     // Additionally, the actual dispatch may not have started, so if a fail()
     // or other operation occurs it may not be able to assume that eval_type
-    // of REB_FUNCTION implies that the arguments have been pushed yet.
-    // See Is_Function_Frame() for notes on this detection.
+    // of REB_ACTION implies that the arguments have been pushed yet.
+    // See Is_Action_Frame() for notes on this detection.
     //
     enum Reb_Kind eval_type;
 
@@ -497,10 +497,10 @@ struct Reb_Frame {
     //
     // There is a lookahead step to see if the next item in an array is a
     // WORD!.  If so it is checked to see if that word is a "lookback word"
-    // (e.g. one that refers to a FUNCTION! value set with SET/ENFIX).
+    // (e.g. one that refers to an ACTION! value set with SET/ENFIX).
     // Performing that lookup has the same cost as getting the variable value.
     // Considering that the value will need to be used anyway--infix or not--
-    // the pointer is held in this field for WORD!s (and sometimes FUNCTION!)
+    // the pointer is held in this field for WORD!s (and sometimes ACTION!)
     //
     // This carries a risk if a DO_NEXT is performed--followed by something
     // that changes variables or the array--followed by another DO_NEXT.
@@ -514,19 +514,19 @@ struct Reb_Frame {
     // If a function call is currently in effect, `phase` holds a pointer to
     // the function being run.  Because functions are identified and passed
     // by a platform pointer as their paramlist REBSER*, you must use
-    // `FUNC_VALUE(c->phase)` to get a pointer to a canon REBVAL representing
+    // `ACT_ARCHETYPE(c->phase)` to get a pointer to a canon REBVAL representing
     // that function (to examine its function flags, for instance).
     //
     // Compositions of functions (adaptations, specializations, hijacks, etc)
     // update `f->phase` in their dispatcher and then signal to resume the
     // evaluation in that same frame in some way.  The `original` function
     //
-    REBFUN *original;
-    REBFUN *phase;
+    REBACT *original;
+    REBACT *phase;
 
     // `binding`
     //
-    // A REBFUN* alone is not enough to fully specify a function, because
+    // A REBACT* alone is not enough to fully specify a function, because
     // it may be an "archetype".  For instance, the archetypal RETURN native
     // doesn't have enough specific information in it to know *which* function
     // to exit.  The additional pointer of context is binding, and it is

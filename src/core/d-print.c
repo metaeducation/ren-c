@@ -93,7 +93,7 @@ void Print_OS_Line(void)
 
     REBVAL *result = OS_DO_DEVICE(Req_SIO, RDC_WRITE);
     assert(result != NULL);
-    assert(rebTypeOf(result) != RXT_ERROR);
+    assert(not IS_ERROR(result));
     rebRelease(result);
 }
 
@@ -154,7 +154,7 @@ void Prin_OS_String(const REBYTE *utf8, REBSIZ size, REBFLGS opts)
 
         REBVAL *result = OS_DO_DEVICE(Req_SIO, RDC_WRITE);
         assert(result != NULL); // should be synchronous
-        if (rebTypeOf(result) == RXT_ERROR)
+        if (rebDid("lib/error?", result, END))
             rebFail (result, END);
         rebRelease(result); // ignore result
 

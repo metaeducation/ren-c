@@ -163,7 +163,7 @@ inline static int FRM_LINE(REBFRM *f) {
 // ID ran.  Consider when reviewing the future of ACTION!.
 //
 #define FRM_NUM_ARGS(f) \
-    FUNC_FACADE_NUM_PARAMS((f)->phase)
+    ACT_FACADE_NUM_PARAMS((f)->phase)
 
 inline static REBVAL *FRM_CELL(REBFRM *f) {
     //
@@ -179,9 +179,9 @@ inline static REBVAL *FRM_CELL(REBFRM *f) {
 #define FRM_PRIOR(f) \
     ((f)->prior)
 
-inline static REBFUN *FRM_UNDERLYING(REBFRM *f) {
-    assert(FUNC_UNDERLYING(f->phase) == FUNC_UNDERLYING(f->original));
-    return FUNC_UNDERLYING(f->phase);
+inline static REBACT *FRM_UNDERLYING(REBFRM *f) {
+    assert(ACT_UNDERLYING(f->phase) == ACT_UNDERLYING(f->original));
+    return ACT_UNDERLYING(f->phase);
 }
 
 #define FRM_DSP_ORIG(f) \
@@ -230,8 +230,8 @@ inline static REBFUN *FRM_UNDERLYING(REBFRM *f) {
 
 #define D_PROTECT_X(v)      PROTECT_FRM_X(frame_, (v))
 
-inline static REBOOL Is_Function_Frame(REBFRM *f) {
-    if (f->eval_type == REB_FUNCTION) {
+inline static REBOOL Is_Action_Frame(REBFRM *f) {
+    if (f->eval_type == REB_ACTION) {
         //
         // Do not count as a function frame unless its gotten to the point
         // of pushing arguments.
@@ -246,15 +246,15 @@ inline static REBOOL Is_Function_Frame(REBFRM *f) {
 // `f->param` will *not* be a typeset when the function is actually in the
 // process of running.  (So no need to set/clear/test another "mode".)
 //
-inline static REBOOL Is_Function_Frame_Fulfilling(REBFRM *f)
+inline static REBOOL Is_Action_Frame_Fulfilling(REBFRM *f)
 {
-    assert(Is_Function_Frame(f));
+    assert(Is_Action_Frame(f));
     return NOT_END(f->param);
 }
 
 
 inline static void Get_Frame_Label_Or_Blank(REBVAL *out, REBFRM *f) {
-    assert(f->eval_type == REB_FUNCTION);
+    assert(f->eval_type == REB_ACTION);
     if (f->opt_label != NULL)
         Init_Word(out, f->opt_label); // invoked via WORD! or PATH!
     else
@@ -262,7 +262,7 @@ inline static void Get_Frame_Label_Or_Blank(REBVAL *out, REBFRM *f) {
 }
 
 inline static const char* Frame_Label_Or_Anonymous_UTF8(REBFRM *f) {
-    assert(f->eval_type == REB_FUNCTION);
+    assert(f->eval_type == REB_ACTION);
     if (f->opt_label != NULL)
         return STR_HEAD(f->opt_label);
     return "[anonymous]";
@@ -335,7 +335,7 @@ inline static void SET_FRAME_VALUE(REBFRM *f, const RELVAL* value) {
         FRM_ARG(frame_, (p_##name))
 
     #define PAR(name) \
-        FUNC_PARAM(frame_->phase, (p_##name)) /* a TYPESET! */
+        ACT_PARAM(frame_->phase, (p_##name)) /* a TYPESET! */
 
     #define REF(name) \
         IS_TRUTHY(ARG(name))
@@ -371,7 +371,7 @@ inline static void SET_FRAME_VALUE(REBFRM *f, const RELVAL* value) {
         FRM_ARG(frame_, (p_##name).num)
 
     #define PAR(name) \
-        FUNC_PARAM(frame_->phase, (p_##name).num) /* a TYPESET! */
+        ACT_PARAM(frame_->phase, (p_##name).num) /* a TYPESET! */
 
     #define REF(name) \
         ((p_##name).used_cache /* used_cache use stops REF() on PARAM()s */ \
@@ -424,19 +424,19 @@ inline static void Enter_Native(REBFRM *f) {
 // function or the specialization's exemplar frame, those properties are
 // cached during the creation process.
 //
-inline static void Push_Function(
+inline static void Push_Action(
     REBFRM *f,
     REBSTR *opt_label,
-    REBFUN *fun,
+    REBACT *a,
     REBSPC *binding
 ){
-    f->eval_type = REB_FUNCTION;
+    f->eval_type = REB_ACTION;
 
     assert(
         opt_label == NULL
         or GET_SER_FLAG(opt_label, SERIES_FLAG_UTF8_STRING)
     );
-    assert(IS_POINTER_TRASH_DEBUG(f->opt_label)); // only valid w/REB_FUNCTION
+    assert(IS_POINTER_TRASH_DEBUG(f->opt_label)); // only valid w/REB_ACTION
     f->opt_label = opt_label;
 
   #if defined(DEBUG_FRAME_LABELS)
@@ -447,7 +447,7 @@ inline static void Push_Function(
     f->label_utf8 = cast(const char*, Frame_Label_Or_Anonymous_UTF8(f));
   #endif
 
-    f->original = f->phase = fun;
+    f->original = f->phase = a;
 
     f->binding = binding; // e.g. how a RETURN knows where to return to
 
@@ -467,7 +467,7 @@ inline static void Push_Function(
     // *look* like a paramlist, with the underlying function in slot 0 instead
     // of a canon value which points back to itself.
     //
-    REBCNT num_args = FUNC_FACADE_NUM_PARAMS(fun);
+    REBCNT num_args = ACT_FACADE_NUM_PARAMS(a);
 
     // Allocate the data for the args and locals on the chunk stack.  The
     // addresses of these values will be stable for the duration of the
@@ -477,7 +477,7 @@ inline static void Push_Function(
     assert(CHUNK_LEN_FROM_VALUES(f->args_head) == num_args);
     assert(IS_END(f->args_head + num_args)); // guaranteed by chunk stack
 
-    f->param = FUNC_FACADE_HEAD(f->phase);
+    f->param = ACT_FACADE_HEAD(f->phase);
 
     // Each layer of specialization of a function can only add specializaitons
     // of arguments which have not been specialized already.  For efficiency,
@@ -485,7 +485,7 @@ inline static void Push_Function(
     // specialization together.  This means only the outermost specialization
     // is needed to fill all the specialized slots contributed by later phases.
     //
-    REBCTX *exemplar = FUNC_EXEMPLAR(fun);
+    REBCTX *exemplar = ACT_EXEMPLAR(a);
     if (exemplar != NULL)
         f->special = CTX_VARS_HEAD(exemplar);
     else
@@ -522,7 +522,7 @@ inline static void Push_Function(
 // because there are other clients of the chunk stack that may be running.
 // Hence the chunks will be freed by the error trap helper.
 //
-inline static void Drop_Function_Core(
+inline static void Drop_Action_Core(
     REBFRM *f,
     REBOOL drop_chunks
 ){
@@ -574,7 +574,7 @@ inline static void Drop_Function_Core(
     // in the keysource slot.
     //
     assert(cast(REBFRM*, LINK(f->varlist).keysource) == f);
-    LINK(f->varlist).keysource = NOD(FUNC_PARAMLIST(f->original));
+    LINK(f->varlist).keysource = NOD(ACT_PARAMLIST(f->original));
 
     if (NOT_SER_FLAG(f->varlist, CONTEXT_FLAG_STACK)) {
         //

@@ -693,7 +693,7 @@ DEVICE_CMD Accept_Socket(REBREQ *req)
 **
 ***********************************************************************/
 
-static DEVICE_CMD_FUNC Dev_Cmds[RDC_MAX] = {
+static DEVICE_CMD_CFUNC Dev_Cmds[RDC_MAX] = {
     Init_Net,
     Quit_Net,
     Open_Socket,

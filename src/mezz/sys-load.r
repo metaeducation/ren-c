@@ -387,9 +387,9 @@ load: function [
 
         ;-- Bind code to user context:
         not any [
-            | 'unbound = :ftype ;-- may be void
-            | 'module = select hdr 'type
-            | find select hdr 'options 'unbound
+            'unbound = :ftype ;-- may be void
+            'module = select hdr 'type
+            find to-value select hdr 'options 'unbound
         ][
             data: intern data
         ]
@@ -527,7 +527,7 @@ load-ext-module: function [
     hdr: take code
     tmp-ctx: make object! [
         native: function [
-            return: [function!]
+            return: [action!]
             spec
             /export
                 "this refinement is ignored here"
@@ -1082,8 +1082,8 @@ unload-extension: procedure [
         ;print ["words of m:" words of m]
         for-each w words of m [
             v: get w
-            if all [function? :v 1 = func-class-of :v] [
-                unload-native :v
+            if action? :v [
+                unload-native/relax :v ;; !!! Should only unload if sure :-/
             ]
         ]
     ]

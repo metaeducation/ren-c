@@ -28,7 +28,7 @@
 //
 // The primary routine that performs DO and DO/NEXT is called Do_Core().  It
 // takes a single parameter which holds the running state of the evaluator.
-// This state may be allocated on the C variable stack:  Do_Core() is
+// This state may be allocated on the C variable stack:  fail() is
 // written such that a longjmp up to a failure handler above it can run
 // safely and clean up even though intermediate stacks have vanished.
 //
@@ -40,7 +40,7 @@
 // To provide even greater flexibility, it allows the very first element's
 // pointer in an evaluation to come from an arbitrary source.  It doesn't
 // have to be resident in the same sequence from which ensuing values are
-// pulled, allowing a free head value (such as a FUNCTION! REBVAL in a local
+// pulled, allowing a free head value (such as an ACTION! REBVAL in a local
 // C variable) to be evaluated in combination from another source (like a
 // va_list or series representing the arguments.)  This avoids the cost and
 // complexity of allocating a series to combine the values together.
@@ -147,9 +147,9 @@ inline static void Push_Frame_Core(REBFRM *f)
   #if !defined(NDEBUG)
     REBFRM *ftemp = FS_TOP;
     for (; ftemp != NULL; ftemp = ftemp->prior) {
-        if (not Is_Function_Frame(ftemp))
+        if (not Is_Action_Frame(ftemp))
             continue;
-        if (Is_Function_Frame_Fulfilling(ftemp))
+        if (Is_Action_Frame_Fulfilling(ftemp))
             continue;
         assert(
             f->out < ftemp->args_head
@@ -160,9 +160,9 @@ inline static void Push_Frame_Core(REBFRM *f)
 
     // Some initialized bit pattern is needed to check to see if a
     // function call is actually in progress, or if eval_type is just
-    // REB_FUNCTION but doesn't have valid args/state.  The phase is a
+    // REB_ACTION but doesn't have valid args/state.  The phase is a
     // good choice because it is only affected by the function call case,
-    // see Is_Function_Frame_Fulfilling().
+    // see Is_Action_Frame_Fulfilling().
     //
     f->phase = NULL;
 
@@ -687,7 +687,7 @@ inline static REBOOL Do_Next_In_Subframe_Throws(
     // more efficient to call Do_Next_In_Frame_Throws(), or the also lighter
     // Do_Next_In_Mid_Frame_Throws() used by REB_SET_WORD and REB_SET_PATH.
     //
-    assert(parent->eval_type == REB_FUNCTION);
+    assert(parent->eval_type == REB_ACTION);
 
     child->out = out;
 
@@ -1181,7 +1181,7 @@ inline static REBOOL Eval_Value_Core_Throws(
 
 
 // When running a "branch" of code in conditional execution, Rebol has
-// traditionally executed BLOCK!s.  But Ren-C also executes FUNCTION!s that
+// traditionally executed BLOCK!s.  But Ren-C also executes ACTION!s that
 // are arity 0 or 1:
 //
 //     >> foo: does [print "Hello"]
@@ -1209,7 +1209,7 @@ inline static REBOOL Eval_Value_Core_Throws(
 // result when no branch ran.  This gives a uniform way of determining
 // whether a branch ran or not (utilized by ELSE, ALSO, etc.)
 //
-// Note: Tolerance of non-BLOCK! and non-FUNCTION! branches to act as literal
+// Note: Tolerance of non-BLOCK! and non-ACTION! branches to act as literal
 // values was proven to cause more harm than good.
 //
 // https://forum.rebol.info/t/backpedaling-on-non-block-branches/476
@@ -1228,7 +1228,7 @@ inline static REBOOL Run_Branch_Throws(
             return TRUE;
     }
     else {
-        assert(IS_FUNCTION(branch));
+        assert(IS_ACTION(branch));
 
         const REBOOL fully = FALSE; // arity-0 functions can ignore condition
         if (Apply_Only_Throws(out, fully, branch, condition, END))

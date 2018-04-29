@@ -184,7 +184,7 @@ REBVAL *Init_Near_For_Frame(RELVAL *out, REBFRM *f)
     // yet.  This needs some way of differentiation, consider it.
     //
     /*
-    if (Is_Function_Frame(f) and Is_Function_Frame_Fulfilling(f)) {
+    if (Is_Action_Frame(f) and Is_Action_Frame_Fulfilling(f)) {
         ???
     }
     */
@@ -248,17 +248,17 @@ REBNATIVE(label_of)
 
 
 //
-//  function-of: native [
+//  action-of: native [
 //
-//  "Get the FUNCTION! for a frame"
+//  {Get the action for a frame}
 //
-//      return: [function!]
+//      return: [action!]
 //      frame [frame!]
 //  ]
 //
-REBNATIVE(function_of)
+REBNATIVE(action_of)
 {
-    INCLUDE_PARAMS_OF_FUNCTION_OF;
+    INCLUDE_PARAMS_OF_ACTION_OF;
 
     REBVAL *frame = ARG(frame);
 
@@ -269,7 +269,7 @@ REBNATIVE(function_of)
     // binding of the FRAME! value.  Otherwise you'd know (for instance) that
     // you had a RETURN, but you wouldn't know where to return *from*.
     //
-    Move_Value(D_OUT, FUNC_VALUE(frame->payload.any_context.phase));
+    Move_Value(D_OUT, ACT_ARCHETYPE(frame->payload.any_context.phase));
     D_OUT->extra.binding = frame->extra.binding;
 
     return R_OUT;
@@ -296,7 +296,7 @@ REBNATIVE(parent_of)
     //
     REBFRM *f = CTX_FRAME_MAY_FAIL(VAL_CONTEXT(frame));
     while ((f = f->prior) != NULL) {
-        if (Is_Function_Frame(f)) {
+        if (Is_Action_Frame(f)) {
             Init_Any_Context(
                 D_OUT, REB_FRAME, Context_For_Frame_May_Reify_Managed(f)
             );
@@ -318,7 +318,7 @@ REBOOL Is_Context_Running_Or_Pending(REBCTX *frame_ctx)
     if (f == NULL)
         return FALSE;
 
-    if (Is_Function_Frame_Fulfilling(f))
+    if (Is_Action_Frame_Fulfilling(f))
         return FALSE;
 
     return TRUE;
@@ -341,7 +341,7 @@ REBNATIVE(running_q)
 
     REBFRM *f = CTX_FRAME_MAY_FAIL(frame_ctx);
 
-    if (Is_Function_Frame_Fulfilling(f))
+    if (Is_Action_Frame_Fulfilling(f))
         return R_FALSE;
 
     return R_TRUE;
@@ -364,7 +364,7 @@ REBNATIVE(pending_q)
 
     REBFRM *f = CTX_FRAME_MAY_FAIL(frame_ctx);
 
-    if (Is_Function_Frame_Fulfilling(f))
+    if (Is_Action_Frame_Fulfilling(f))
         return R_TRUE;
 
     return R_FALSE;

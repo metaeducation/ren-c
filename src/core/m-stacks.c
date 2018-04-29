@@ -274,7 +274,7 @@ void Pop_Stack_Values_Into(REBVAL *into, REBDSP dsp_start) {
 //
 REBCTX *Context_For_Frame_May_Reify_Managed(REBFRM *f)
 {
-    assert(Is_Function_Frame(f));
+    assert(Is_Action_Frame(f));
     if (f->varlist != NULL)
         return CTX(f->varlist);
 
@@ -290,7 +290,7 @@ REBCTX *Context_For_Frame_May_Reify_Managed(REBFRM *f)
     rootvar->payload.any_context.phase = f->phase;
 
     // The binding on the rootvar is important...this is how Get_Var_Core()
-    // can know what the binding in the FUNCTION! value that spawned the
+    // can know what the binding in the ACTION! value that spawned the
     // frame, even after the frame is expired.
     //
     INIT_BINDING(rootvar, f->binding);
@@ -305,7 +305,7 @@ REBCTX *Context_For_Frame_May_Reify_Managed(REBFRM *f)
     if (f->flags.bits & DO_FLAG_NATIVE_HOLD)
         SET_SER_INFO(f->varlist, SERIES_INFO_HOLD);
 
-    if (Is_Function_Frame_Fulfilling(f)) {
+    if (Is_Action_Frame_Fulfilling(f)) {
         //
         // Generally only the debugger should be able to reify a function
         // frame that is still fulfilling.  (TBD: Enforce this?)  However it

@@ -108,13 +108,13 @@ static ffi_abi Abi_From_Word(const REBVAL *word) {
 //
 //  {Create a bridge for interfacing with arbitrary C code in a DLL}
 //
-//      return: [function!]
+//      return: [action!]
 //      lib [library!]
-//          {Library DLL that function lives in (get with MAKE LIBRARY!)}
+//          {Library DLL that C function lives in (get with MAKE LIBRARY!)}
 //      name [string!]
-//          {Linker name of the function in the DLL}
+//          {Linker name of the C function in the DLL}
 //      ffi-spec [block!]
-//          {Description of what C argument types the function takes}
+//          {Description of what C argument types the C function takes}
 //      /abi
 //          {Specify the Application Binary Interface (vs. using default)}
 //      abi-type [word!]
@@ -159,13 +159,13 @@ REBNATIVE(make_routine)
 
     // Process the parameter types into a function, then fill it in
 
-    REBFUN *fun = Alloc_Ffi_Function_For_Spec(ARG(ffi_spec), abi);
-    REBRIN *r = FUNC_ROUTINE(fun);
+    REBACT *routine = Alloc_Ffi_Action_For_Spec(ARG(ffi_spec), abi);
+    REBRIN *r = VAL_ARRAY(ACT_BODY(routine));
 
     Init_Handle_Cfunc(RIN_AT(r, IDX_ROUTINE_CFUNC), cfunc, 0);
     Move_Value(RIN_AT(r, IDX_ROUTINE_ORIGIN), ARG(lib));
 
-    Move_Value(D_OUT, FUNC_VALUE(fun));
+    Move_Value(D_OUT, ACT_ARCHETYPE(routine));
     return R_OUT;
 }
 
@@ -175,11 +175,11 @@ REBNATIVE(make_routine)
 //
 //  {Create a bridge for interfacing with a C function, by pointer}
 //
-//      return: [function!]
+//      return: [action!]
 //      pointer [integer!]
-//          {Raw address of function in memory}
+//          {Raw address of C function in memory}
 //      ffi-spec [block!]
-//          {Description of what C argument types the function takes}
+//          {Description of what C argument types the C function takes}
 //      /abi
 //          {Specify the Application Binary Interface (vs. using default)}
 //      abi-type [word!]
@@ -206,13 +206,13 @@ REBNATIVE(make_routine_raw)
     if (cfunc == NULL)
         fail ("FFI: NULL pointer not allowed for raw MAKE-ROUTINE");
 
-    REBFUN *fun = Alloc_Ffi_Function_For_Spec(ARG(ffi_spec), abi);
-    REBRIN *r = FUNC_ROUTINE(fun);
+    REBACT *routine = Alloc_Ffi_Action_For_Spec(ARG(ffi_spec), abi);
+    REBRIN *r = VAL_ARRAY(ACT_BODY(routine));
 
     Init_Handle_Cfunc(RIN_AT(r, IDX_ROUTINE_CFUNC), cfunc, 0);
     Init_Blank(RIN_AT(r, IDX_ROUTINE_ORIGIN)); // no LIBRARY! in this case.
 
-    Move_Value(D_OUT, FUNC_VALUE(fun));
+    Move_Value(D_OUT, ACT_ARCHETYPE(routine));
     return R_OUT;
 }
 
@@ -220,11 +220,11 @@ REBNATIVE(make_routine_raw)
 //
 //  wrap-callback: native/export [
 //
-//  {Wrap function so it can be called by raw C code via a memory address.}
+//  {Wrap an ACTION! so it can be called by raw C code via a memory address.}
 //
-//      return: [function!]
-//      action [function!]
-//          {The existing Rebol function whose behavior is being wrapped}
+//      return: [action!]
+//      action [action!]
+//          {The existing Rebol action whose behavior is being wrapped}
 //      ffi-spec [block!]
 //          {Description of what C types each Rebol argument should map to}
 //      /abi
@@ -243,8 +243,8 @@ REBNATIVE(wrap_callback)
     else
         abi = FFI_DEFAULT_ABI;
 
-    REBFUN *fun = Alloc_Ffi_Function_For_Spec(ARG(ffi_spec), abi);
-    REBRIN *r = FUNC_ROUTINE(fun);
+    REBACT *callback = Alloc_Ffi_Action_For_Spec(ARG(ffi_spec), abi);
+    REBRIN *r = VAL_ARRAY(ACT_BODY(callback));
 
     void *thunk; // actually CFUNC (FFI uses void*, may not be same size!)
     ffi_closure *closure = cast(ffi_closure*, ffi_closure_alloc(
@@ -285,7 +285,7 @@ REBNATIVE(wrap_callback)
     );
     Move_Value(RIN_AT(r, IDX_ROUTINE_ORIGIN), ARG(action));
 
-    Move_Value(D_OUT, FUNC_VALUE(fun));
+    Move_Value(D_OUT, ACT_ARCHETYPE(callback));
     return R_OUT;
 }
 
@@ -297,7 +297,7 @@ REBNATIVE(wrap_callback)
 //
 //      return: [integer!]
 //          {Memory address expressed as an up-to-64-bit integer}
-//      value [function! struct!]
+//      value [action! struct!]
 //          {Fixed address structure or routine to get the address of}
 //  ]
 //
@@ -306,15 +306,15 @@ REBNATIVE(addr_of) {
 
     REBVAL *v = ARG(value);
 
-    if (IS_FUNCTION(v)) {
-        if (!IS_FUNCTION_RIN(v))
-            fail ("Can only take address of FUNCTION!s created though FFI");
+    if (IS_ACTION(v)) {
+        if (!IS_ACTION_RIN(v))
+            fail ("Can only take address of ACTION!s created though FFI");
 
         // The CFUNC is fabricated by the FFI if it's a callback, or
         // just the wrapped DLL function if it's an ordinary routine
         //
         Init_Integer(
-            D_OUT, cast(intptr_t, RIN_CFUNC(VAL_FUNC_ROUTINE(v)))
+            D_OUT, cast(intptr_t, RIN_CFUNC(VAL_ACT_ROUTINE(v)))
         );
         return R_OUT;
     }
@@ -379,7 +379,7 @@ REBNATIVE(make_similar_struct)
 //      struct [struct!]
 //      /free
 //          {Specify the function to free the memory}
-//      free-func [function!]
+//      free-func [action!]
 //  ]
 //
 REBNATIVE(destroy_struct_storage)
@@ -403,7 +403,7 @@ REBNATIVE(destroy_struct_storage)
     SET_HANDLE_LEN(handle, 0);
 
     if (REF(free)) {
-        if (!IS_FUNCTION_RIN(ARG(free_func)))
+        if (!IS_ACTION_RIN(ARG(free_func)))
             fail (Error_Free_Needs_Routine_Raw());
 
         if (Do_Va_Throws(D_OUT, ARG(free_func), pointer, END))

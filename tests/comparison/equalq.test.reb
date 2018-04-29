@@ -7,11 +7,9 @@
 ; reflexivity test for infix
 (equal? :+ :+)
 (not equal? :+ :-)
-; reflexivity test for function!
-; Uses func instead of make function! so the test is compatible.
+; reflexivity test for action!
 (equal? a-value: func [] [] :a-value)
-; No structural equivalence for function!
-; Uses FUNC instead of make function! so the test is compatible.
+; No structural equivalence for action!
 (not equal? func [] [] func [] [])
 (equal? a-value: #{00} a-value)
 ; binary!

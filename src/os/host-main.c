@@ -325,7 +325,7 @@ struct sandbox_info {
 REBVAL *Run_Sandboxed_Code(struct sandbox_info *info) {
     //
     // Don't want to use DO here, because that would add an extra stack
-    // level of Rebol FUNCTION! in the backtrace.  See notes on rebRunInline()
+    // level of Rebol ACTION! in the backtrace.  See notes on rebRunInline()
     // for its possible future.
     //
     info->result = rebRunInline(info->group_or_block);
@@ -441,7 +441,7 @@ int main(int argc, char *argv_ansi[])
     Bind_Values_Deep(VAL_ARRAY_HEAD(host_code), console_ctx);
 
     // The new policy for source code in Ren-C is that it loads read only.
-    // This didn't go through the LOAD Rebol function or anything like it, so
+    // This didn't go through the LOAD Rebol action or anything like it, so
     // go ahead and lock it manually.
     //
     // !!! This file is supposed to be based on libRebol APIs, and the method
@@ -452,10 +452,10 @@ int main(int argc, char *argv_ansi[])
     //
     rebElide("lib/lock", host_code, END);
 
-    REBVAL *host_console = rebRunInline(host_code); // console is a FUNCTION!
+    REBVAL *host_console = rebRunInline(host_code); // console is an ACTION!
     rebRelease(host_code);
 
-    if (rebNot("lib/function?", host_console, END))
+    if (rebNot("lib/action?", host_console, END))
         rebPanicValue (host_console, END);
 
     // The config file used by %make.r marks extensions to be built into the

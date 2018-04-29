@@ -42,14 +42,12 @@ use [word] [
         ; overwrite any NATIVE! implementations.  (e.g. TO-INTEGER is a
         ; native with a refinement for interpreting as unsigned.)
 
-        if all [
-            word: in lib word
-            blank? get word
-        ][
-            set word make function! compose/deep [
-                [(spaced ["Converts to" form type "value."]) value]
-                [to (type) :value]
-            ]
+        if (word: in lib word) and (blank? get word) [
+            set word redescribe compose [
+                (spaced ["Converts to" form type "value."])
+            ](
+                specialize 'to [type: get type]
+            )
         ]
     ]
 ]

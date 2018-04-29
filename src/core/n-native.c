@@ -26,7 +26,7 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// A user native is a FUNCTION! whose body is not a Rebol block, but a textual
+// A user native is an ACTION! whose body is not a Rebol block, but a textual
 // string of C code.  It is compiled on the fly by an embedded C compiler
 // which is linked in with those Rebol builds supporting user natives:
 //
@@ -63,9 +63,9 @@
 
 extern const REBYTE core_header_source[];
 
-struct rebol_sym_func_t {
+struct rebol_sym_cfunc_t {
     const char *name;
-    CFUNC *func;
+    CFUNC *cfunc;
 };
 
 struct rebol_sym_data_t {
@@ -73,7 +73,7 @@ struct rebol_sym_data_t {
     void *data;
 };
 
-extern const struct rebol_sym_func_t rebol_sym_funcs[];
+extern const struct rebol_sym_cfunc_t rebol_sym_cfuncs[];
 extern const struct rebol_sym_data_t rebol_sym_data[];
 extern
 #ifdef __cplusplus
@@ -197,12 +197,12 @@ static void cleanup(const REBVAL *val)
 //
 REB_R Pending_Native_Dispatcher(REBFRM *f) {
     REBARR *array = Make_Array(1);
-    Append_Value(array, FUNC_VALUE(f->phase));
+    Append_Value(array, ACT_ARCHETYPE(f->phase));
 
     DECLARE_LOCAL (natives);
     Init_Block(natives, array);
 
-    assert(FUNC_DISPATCHER(f->phase) == &Pending_Native_Dispatcher);
+    assert(ACT_DISPATCHER(f->phase) == &Pending_Native_Dispatcher);
 
     if (Do_Va_Throws(f->out, NAT_VALUE(compile), &natives, END))
         return R_OUT_IS_THROWN;
@@ -216,7 +216,7 @@ REB_R Pending_Native_Dispatcher(REBFRM *f) {
     // function pointer that lives in the TCC_State.  Use REDO, and don't
     // bother re-checking the argument types.
     //
-    assert(FUNC_DISPATCHER(f->phase) != &Pending_Native_Dispatcher);
+    assert(ACT_DISPATCHER(f->phase) != &Pending_Native_Dispatcher);
     return R_REDO_UNCHECKED;
 }
 
@@ -226,9 +226,9 @@ REB_R Pending_Native_Dispatcher(REBFRM *f) {
 //
 //  make-native: native [
 //
-//  {Create a "user native" function compiled from C source}
+//  {Create an ACTION! which is compiled from a C source STRING!}
 //
-//      return: [function!]
+//      return: [action!]
 //          "Function value, will be compiled on demand or by COMPILE"
 //      spec [block!]
 //          "The spec of the native"
@@ -257,7 +257,7 @@ REBNATIVE(make_native)
     if (VAL_LEN_AT(source) == 0)
         fail (Error_Tcc_Empty_Source_Raw());
 
-    REBFUN *fun = Make_Function(
+    REBACT *native = Make_Action(
         Make_Paramlist_Managed_May_Fail(ARG(spec), MKF_NONE),
         &Pending_Native_Dispatcher, // will be replaced e.g. by COMPILE
         NULL, // no facade (use paramlist)
@@ -291,15 +291,16 @@ REBNATIVE(make_native)
     }
     else {
         // Auto-generate a linker name based on the numeric value of the
-        // function pointer.  Just "N_" followed by the hexadecimal value.
+        // paramlist pointer.  Just "N_" followed by the hexadecimal value.
         // So 2 chars per byte, plus 2 for "N_", and account for the
         // terminator (even though it's set implicitly).
         //
         // Note: This repeats some work in ENBASE.
 
-        REBCNT len = 2 + (sizeof(REBFUN*) * 2);
+        REBCNT len = 2 + (sizeof(REBACT*) * 2);
         REBSER *ser = Make_Unicode(len);
-        const char *src = cast(const char*, &fun);
+        REBARR *paramlist = ACT_PARAMLIST(native); // unique for this action!
+        const char *src = cast(const char*, &paramlist);
         REBUNI *dest = UNI_HEAD(ser);
 
         *dest ='N';
@@ -308,7 +309,7 @@ REBNATIVE(make_native)
         ++dest;
 
         REBCNT n = 0;
-        while (n < sizeof(REBFUN*)) {
+        while (n < sizeof(REBACT*)) {
             Form_Hex2_Uni(dest, *src); // terminates each time
             ++src;
             dest += 2;
@@ -321,15 +322,15 @@ REBNATIVE(make_native)
 
     Init_Blank(Alloc_Tail_Array(info)); // no TCC_State, yet...
 
-    Init_Block(FUNC_BODY(fun), info);
+    Init_Block(ACT_BODY(native), info);
 
     // We need to remember this is a user native, because we won't over the
     // long run be able to tell it is when the dispatcher is replaced with an
     // arbitrary compiled function pointer!
     //
-    SET_VAL_FLAG(FUNC_VALUE(fun), FUNC_FLAG_USER_NATIVE);
+    SET_VAL_FLAG(ACT_ARCHETYPE(native), ACTION_FLAG_USER_NATIVE);
 
-    Move_Value(D_OUT, FUNC_VALUE(fun));
+    Move_Value(D_OUT, ACT_ARCHETYPE(native));
     return R_OUT;
 #endif
 }
@@ -497,8 +498,8 @@ REBNATIVE(compile)
                 fail (Error_No_Value_Core(item, VAL_SPECIFIER(natives)));
         }
 
-        if (IS_FUNCTION(var)) {
-            assert(GET_VAL_FLAG(var, FUNC_FLAG_USER_NATIVE));
+        if (IS_ACTION(var)) {
+            assert(GET_VAL_FLAG(var, ACTION_FLAG_USER_NATIVE));
 
             // Remember this function, because we're going to need to come
             // back and fill in its dispatcher and TCC_State after the
@@ -506,7 +507,7 @@ REBNATIVE(compile)
             //
             DS_PUSH(const_KNOWN(var));
 
-            RELVAL *info = VAL_FUNC_BODY(var);
+            RELVAL *info = VAL_ACT_BODY(var);
             RELVAL *source = VAL_ARRAY_AT_HEAD(info, 0);
             RELVAL *name = VAL_ARRAY_AT_HEAD(info, 1);
 
@@ -514,7 +515,7 @@ REBNATIVE(compile)
             Append_Utf8_String(mo->series, name, VAL_LEN_AT(name));
             Append_Unencoded(mo->series, "(REBFRM *frame_)\n{\n");
 
-            REBVAL *param = VAL_FUNC_PARAMS_HEAD(var);
+            REBVAL *param = VAL_ACT_PARAMS_HEAD(var);
             REBCNT num = 1;
             for (; NOT_END(param); ++param) {
                 REBSTR *spelling = VAL_PARAM_SPELLING(param);
@@ -602,19 +603,19 @@ REBNATIVE(compile)
     // this uses `tcc_add_symbol()` to work the same way on Windows/Linux/OSX
     //
     const struct rebol_sym_data_t *sym_data = &rebol_sym_data[0];
-    for (; sym_data->name != NULL; sym_data ++) {
+    for (; sym_data->name != NULL; ++sym_data) {
         if (tcc_add_symbol(state, sym_data->name, sym_data->data) < 0)
             fail (Error_Tcc_Relocate_Raw());
     }
 
-    const struct rebol_sym_func_t *sym_func = &rebol_sym_funcs[0];
-    for (; sym_func->name != NULL; sym_func ++) {
+    const struct rebol_sym_cfunc_t *sym_cfunc = &rebol_sym_cfuncs[0];
+    for (; sym_cfunc->name != NULL; ++sym_cfunc) {
         // ISO C++ forbids casting between pointer-to-function and
         // pointer-to-object, use memcpy to circumvent.
         void *ptr;
-        assert(sizeof(ptr) == sizeof(sym_func->func));
-        memcpy(&ptr, &sym_func->func, sizeof(ptr));
-        if (tcc_add_symbol(state, sym_func->name, ptr) < 0)
+        assert(sizeof(ptr) == sizeof(sym_cfunc->cfunc));
+        memcpy(&ptr, &sym_cfunc->cfunc, sizeof(ptr));
+        if (tcc_add_symbol(state, sym_cfunc->name, ptr) < 0)
             fail (Error_Tcc_Relocate_Raw());
     }
 
@@ -654,10 +655,10 @@ REBNATIVE(compile)
     while (DSP != dsp_orig) {
         REBVAL *var = DS_TOP;
 
-        assert(IS_FUNCTION(var));
-        assert(GET_VAL_FLAG(var, FUNC_FLAG_USER_NATIVE));
+        assert(IS_ACTION(var));
+        assert(GET_VAL_FLAG(var, ACTION_FLAG_USER_NATIVE));
 
-        REBVAL *info = KNOWN(VAL_FUNC_BODY(var));
+        REBVAL *info = KNOWN(VAL_ACT_BODY(var));
         REBVAL *name = KNOWN(VAL_ARRAY_AT_HEAD(info, 1));
         assert(IS_STRING(name));
         REBVAL *stored_state = KNOWN(VAL_ARRAY_AT_HEAD(info, 2));
@@ -675,7 +676,7 @@ REBNATIVE(compile)
         assert(sizeof(c_func) == sizeof(void*));
         memcpy(&c_func, &sym, sizeof(c_func));
 
-        FUNC_DISPATCHER(VAL_FUNC(var)) = c_func;
+        ACT_DISPATCHER(VAL_ACTION(var)) = c_func;
         Move_Value(stored_state, handle);
 
         DS_DROP;

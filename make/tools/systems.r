@@ -419,7 +419,7 @@ for-each-system: function [
     {Use PARSE to enumerate the systems, and set 'var to a record object}
 
     'var [word!]
-    body [block! function!]
+    body [block! action!]
         {Body of code to run for each system}
 ][
     s: make object! [

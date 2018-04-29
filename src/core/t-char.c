@@ -118,7 +118,7 @@ void TO_Char(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 }
 
 
-static REBINT Math_Arg_For_Char(REBVAL *arg, REBSYM action)
+static REBINT Math_Arg_For_Char(REBVAL *arg, REBSYM verb)
 {
     switch (VAL_TYPE(arg)) {
     case REB_CHAR:
@@ -131,7 +131,7 @@ static REBINT Math_Arg_For_Char(REBVAL *arg, REBSYM action)
         return cast(REBINT, VAL_DECIMAL(arg));
 
     default:
-        fail (Error_Math_Args(REB_CHAR, action));
+        fail (Error_Math_Args(REB_CHAR, verb));
     }
 }
 
@@ -179,15 +179,15 @@ REBTYPE(Char)
     REBI64 chr = cast(REBI64, VAL_CHAR(D_ARG(1)));
     REBI64 arg;
 
-    switch (action) {
+    switch (verb) {
 
     case SYM_ADD: {
-        arg = Math_Arg_For_Char(D_ARG(2), action);
+        arg = Math_Arg_For_Char(D_ARG(2), verb);
         chr += arg;
         break; }
 
     case SYM_SUBTRACT: {
-        arg = Math_Arg_For_Char(D_ARG(2), action);
+        arg = Math_Arg_For_Char(D_ARG(2), verb);
 
         // Rebol2 and Red return CHAR! values for subtraction from another
         // CHAR! (though Red checks for overflow and errors on something like
@@ -205,34 +205,36 @@ REBTYPE(Char)
         break; }
 
     case SYM_MULTIPLY:
-        arg = Math_Arg_For_Char(D_ARG(2), action);
+        arg = Math_Arg_For_Char(D_ARG(2), verb);
         chr *= arg;
         break;
 
     case SYM_DIVIDE:
-        arg = Math_Arg_For_Char(D_ARG(2), action);
-        if (arg == 0) fail (Error_Zero_Divide_Raw());
+        arg = Math_Arg_For_Char(D_ARG(2), verb);
+        if (arg == 0)
+            fail (Error_Zero_Divide_Raw());
         chr /= arg;
         break;
 
     case SYM_REMAINDER:
-        arg = Math_Arg_For_Char(D_ARG(2), action);
-        if (arg == 0) fail (Error_Zero_Divide_Raw());
+        arg = Math_Arg_For_Char(D_ARG(2), verb);
+        if (arg == 0)
+            fail (Error_Zero_Divide_Raw());
         chr %= arg;
         break;
 
     case SYM_INTERSECT:
-        arg = Math_Arg_For_Char(D_ARG(2), action);
+        arg = Math_Arg_For_Char(D_ARG(2), verb);
         chr &= cast(REBUNI, arg);
         break;
 
     case SYM_UNION:
-        arg = Math_Arg_For_Char(D_ARG(2), action);
+        arg = Math_Arg_For_Char(D_ARG(2), verb);
         chr |= cast(REBUNI, arg);
         break;
 
     case SYM_DIFFERENCE:
-        arg = Math_Arg_For_Char(D_ARG(2), action);
+        arg = Math_Arg_For_Char(D_ARG(2), verb);
         chr ^= cast(REBUNI, arg);
         break;
 
@@ -262,7 +264,7 @@ REBTYPE(Char)
         break; }
 
     default:
-        fail (Error_Illegal_Action(REB_CHAR, action));
+        fail (Error_Illegal_Action(REB_CHAR, verb));
     }
 
     if (chr < 0 || chr > 0xffff) // DEBUG_UTF8_EVERYWHERE

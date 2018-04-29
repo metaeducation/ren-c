@@ -128,7 +128,7 @@ REBNATIVE(make)
     else
         kind = VAL_TYPE(type);
 
-    MAKE_FUNC dispatcher = Make_Dispatch[kind];
+    MAKE_CFUNC dispatcher = Make_Dispatch[kind];
     if (dispatcher == NULL)
         fail (Error_Bad_Make(kind, arg));
 
@@ -176,7 +176,7 @@ REBNATIVE(make)
             REBCTX *context = CTX(arg->extra.binding);
             REBFRM *param_frame = CTX_FRAME_MAY_FAIL(context);
 
-            REBVAL *param = FUNC_FACADE_HEAD(param_frame->phase)
+            REBVAL *param = ACT_FACADE_HEAD(param_frame->phase)
                 + arg->payload.varargs.param_offset;
 
             if (TYPE_CHECK(param, REB_MAX_VOID))
@@ -260,7 +260,7 @@ REBNATIVE(to)
     else
         kind = VAL_TYPE(type);
 
-    TO_FUNC dispatcher = To_Dispatch[kind];
+    TO_CFUNC dispatcher = To_Dispatch[kind];
     if (dispatcher == NULL)
         fail (Error_Invalid(arg));
 
@@ -279,7 +279,7 @@ REBNATIVE(to)
 REBTYPE(Unhooked)
 {
     UNUSED(frame_);
-    UNUSED(action);
+    UNUSED(verb);
 
     fail ("Datatype does not have its REBTYPE() handler loaded by extension");
 }

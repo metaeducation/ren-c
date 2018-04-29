@@ -112,6 +112,7 @@ head-of: specialize 'reflect [property: 'head]
 tail-of: specialize 'reflect [property: 'tail]
 file-of: specialize 'reflect [property: 'file]
 line-of: specialize 'reflect [property: 'line]
+body-of: specialize 'reflect [property: 'body]
 
 
 ; General renamings away from non-LOGIC!-ending-in-?-functions
@@ -260,7 +261,7 @@ found?: func [dummy:] [
 
 op?: func [dummy:] [
     fail/where [
-        {OP? can't work in Ren-C because there are no "infix FUNCTION!s"}
+        {OP? can't work in Ren-C because there are no "infix ACTION!s"}
         {"infixness" is a property of a word binding, made via SET/ENFIX}
         {See: ENFIXED? (which takes a WORD! parameter)}
     ] 'dummy
@@ -295,7 +296,7 @@ compress: decompress: func [dummy:] [
 
 clos: closure: func [dummy:] [
     fail/where [
-        {One feature of R3-Alpha's CLOSURE! is now available in all FUNCTION!}
+        {One feature of R3-Alpha's CLOSURE! is now available in all ACTION!}
         {which is to specifically distinguish variables in recursions.  The}
         {other feature of indefinite lifetime of "leaked" args and locals is}
         {under review.  If one wishes to create an OBJECT! on each function}
@@ -442,8 +443,8 @@ r3-alpha-apply: function [
     "Apply a function to a reduced block of arguments."
 
     return: [<opt> any-value!]
-    action [function!]
-        "Function value to apply"
+    action [action!]
+        "Action to apply"
     block [block!]
         "Block of args, reduced first (unless /only)"
     /only
@@ -496,23 +497,14 @@ apply: adapt 'apply [
     ]
 ]
 
-; All other function classes are also folded into the one FUNCTION! type ATM.
-
-any-function!: :function!
-any-function?: :function?
-
-native!: function!
-native?: func [f [<opt> any-value!]] [
-    all [function? :f | 1 = func-class-of :f]
-]
-
-;-- If there were a test for user-written functions, what would it be called?
-;-- it would be function class 2 ATM
-
-action!: function!
-action?: func [f [<opt> any-value!]] [
-    all [function? :f | 3 = func-class-of :f]
-]
+; Ren-C has standardized on one type of "invokable", which is ACTION!.  For
+; the rationale, see: https://forum.rebol.info/t/596
+;
+; These FUNCTION! synonyms are kept working since they aren't needed for other
+; purposes, but new code should not use them.
+;
+any-function!: function!: :action!
+any-function?: function?: :action?
 
 
 ; In Ren-C, MAKE for OBJECT! does not use the "type" slot for parent
@@ -593,7 +585,7 @@ make: function [
 ;
 blankify-refinement-args: procedure [f [frame!]] [
     seen-refinement: false
-    for-each w (words of function-of f) [
+    for-each w (words of action-of f) [
         case [
             refinement? w [
                 seen-refinement: true
@@ -616,7 +608,7 @@ blankify-refinement-args: procedure [f [frame!]] [
 
 r3-alpha-func: function [
     {FUNC <r3-legacy>}
-    return: [function!]
+    return: [action!]
     spec [block!]
     body [block!]
 ][
@@ -642,14 +634,14 @@ r3-alpha-func: function [
         <local> exit
     ] compose [
         blankify-refinement-args context of 'return
-        exit: make function! [[] [unwind context of 'return]]
+        exit: make action! [[] [unwind context of 'return]]
         (body)
     ]
 ]
 
 r3-alpha-function: function [
     {FUNCTION <r3-legacy>}
-    return: [function!]
+    return: [action!]
     spec [block!]
     body [block!]
     /with
@@ -681,7 +673,7 @@ r3-alpha-function: function [
         ;-- <local> exit, picked up since using FUNCTION as generator
     ] compose [
         blankify-refinement-args context of 'return
-        exit: make function! [[] [unwind context of 'return]]
+        exit: make action! [[] [unwind context of 'return]]
         (body)
     ]
 ]
@@ -738,14 +730,24 @@ set 'r3-legacy* func [<local>] [
         none!: (:blank!)
         none?: (:blank?)
 
+        any-function!: action!
+        any-function?: :action?
+
+        native!: action!
+        native?: :action?
+
+        function!: action!
+        function?: :action?
+
         ; Some of CLOSURE's functionality was subsumed into all FUNCTIONs, but
         ; the indefinite lifetime of all locals and arguments was not.
         ; https://forum.rebol.info/t/234
         ;
         closure: :function
         clos: :func
-        closure!: :function!
-        closure?: :function?
+
+        closure!: action!
+        closure?: :action?
 
         ; TRUE? and FALSE? were considered misleading, and DID and NOT should
         ; be used for testing for "truthiness" and "falsiness", while testing
@@ -892,10 +894,9 @@ set 'r3-legacy* func [<local>] [
         ])
 
         ; R3-Alpha and Rebol2's DO was effectively variadic.  If you gave it
-        ; a function, it could "reach out" to grab arguments from after the
-        ; call.  While Ren-C permits this in variadic functions, the system
-        ; functions should be "well behaved" and there will even likely be
-        ; a security setting to turn variadics off (system-wide or per module)
+        ; an action, it could "reach out" to grab arguments from after the
+        ; call.  While Ren-C permits this in variadic actions, the system
+        ; natives should be "well behaved".
         ;
         ; https://trello.com/c/YMAb89dv
         ;
@@ -906,7 +907,7 @@ set 'r3-legacy* func [<local>] [
 
             return: [<opt> any-value!]
             source [<opt> blank! block! group! string! binary! url! file! tag!
-                error! function!
+                error! action!
             ]
             normals [any-value! <...>]
                 {Normal variadic parameters if function (<r3-legacy> only)}
@@ -926,7 +927,7 @@ set 'r3-legacy* func [<local>] [
             next_DO: next
             next: :lib/next
 
-            either function? :source [
+            if action? :source [
                 code: reduce [:source]
                 params: words of :source
                 for-next params [
@@ -941,7 +942,7 @@ set 'r3-legacy* func [<local>] [
                     ]
                 ]
                 do code
-            ][
+            ] else [
                 apply 'do [
                     source: :source
                     if args: args [
@@ -963,7 +964,7 @@ set 'r3-legacy* func [<local>] [
             block [block!]
             /except
                 "On exception, evaluate code"
-            code [block! function!]
+            code [block! action!]
         ][
             trap/(all [except 'with]) block :code
         ])
@@ -1235,7 +1236,7 @@ set 'r3-legacy* func [<local>] [
         apply: (:r3-alpha-apply)
 
         does: (func [
-            return: [function!]
+            return: [action!]
             :code [group! block!]
         ][
             func [<local> return:] compose [
@@ -1253,7 +1254,7 @@ set 'r3-legacy* func [<local>] [
         ;
         has: (func [
             {Shortcut for function with local variables but no arguments.}
-            return: [function!]
+            return: [action!]
             vars [block!] {List of words that are local to the function}
             body [block!] {The body block of the function}
         ][

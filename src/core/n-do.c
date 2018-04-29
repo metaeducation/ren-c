@@ -47,7 +47,7 @@
 //
 //      return: [<opt> any-value!]
 //      value [<opt> any-value!]
-//          {BLOCK! passes-thru, FUNCTION! runs, SET-WORD! assigns...}
+//          {BLOCK! passes-thru, ACTION! runs, SET-WORD! assigns...}
 //      expressions [<opt> any-value! <...>]
 //          {Depending on VALUE, more expressions may be consumed}
 //      /only
@@ -153,8 +153,8 @@ REBNATIVE(eval_enfix)
     //
     f->gotten = D_CELL;
 
-    if (not IS_FUNCTION(f->gotten))
-        fail ("ME and MY only work if right hand WORD! is a FUNCTION!");
+    if (not IS_ACTION(f->gotten))
+        fail ("ME and MY only work if right hand WORD! is an ACTION!");
 
     DECLARE_LOCAL (word);
 
@@ -214,7 +214,7 @@ REBNATIVE(eval_enfix)
 //          file! ;-- load code from file on local disk
 //          tag! ;-- module name (URL! looked up from table)
 //          error! ;-- should use FAIL instead
-//          function! ;-- will only run arity 0 functions (avoids DO variadic)
+//          action! ;-- will only run arity 0 actions (avoids DO variadic)
 //          frame! ;-- acts like APPLY (voids are optionals, not unspecialized)
 //          varargs! ;-- simulates as if frame! or block! is being executed
 //      ]
@@ -351,11 +351,14 @@ REBNATIVE(do)
         //
         // See code called in system/intrinsic/do*
         //
+        REBVAL *sys_do_helper = CTX_VAR(Sys_Context, SYS_CTX_DO_P);
+        assert(IS_ACTION(sys_do_helper));
+
         const REBOOL fully = TRUE; // error if not all arguments consumed
         if (Apply_Only_Throws(
             D_OUT,
             fully,
-            Sys_Func(SYS_CTX_DO_P),
+            sys_do_helper,
             source,
             REF(args) ? TRUE_VALUE : FALSE_VALUE,
             REF(args) ? ARG(arg) : BLANK_VALUE, // can't put void in block
@@ -379,12 +382,12 @@ REBNATIVE(do)
         //
         fail (VAL_CONTEXT(source));
 
-    case REB_FUNCTION: {
+    case REB_ACTION: {
         //
         // Ren-C will only run arity 0 functions from DO, otherwise EVAL
         // must be used.  Look for the first non-local parameter to tell.
         //
-        REBVAL *param = FUNC_PARAMS_HEAD(VAL_FUNC(source));
+        REBVAL *param = ACT_PARAMS_HEAD(VAL_ACTION(source));
         while (
             NOT_END(param)
             and (VAL_PARAM_CLASS(param) == PARAM_CLASS_LOCAL)
@@ -416,7 +419,7 @@ REBNATIVE(do)
         Push_Frame_For_Apply(f);
 
         REBSTR *label = NULL;
-        Push_Function(
+        Push_Action(
             f,
             label,
             source->payload.any_context.phase,
@@ -427,7 +430,7 @@ REBNATIVE(do)
         // When you DO a FRAME!, it feeds its varlist in to be copied into
         // the stack positions.
         //
-        // Push_Function() defaults f->special to the exemplar of the function
+        // Push_Action() defaults f->special to the exemplar of the function
         // but we wish to override it (with a maybe more filled frame)
         //
         f->special = CTX_VARS_HEAD(VAL_CONTEXT(source));
@@ -449,7 +452,7 @@ REBNATIVE(do)
 
     // Note: it is not possible to write a wrapper function in Rebol
     // which can do what EVAL can do for types that consume arguments
-    // (like SET-WORD!, SET-PATH! and FUNCTION!).  DO used to do this for
+    // (like SET-WORD!, SET-PATH! and ACTION!).  DO used to do this for
     // functions only, EVAL generalizes it.
     //
     fail (Error_Use_Eval_For_Eval_Raw());
@@ -459,16 +462,15 @@ REBNATIVE(do)
 //
 //  redo: native [
 //
-//  {Restart the function of a FRAME! from the top with its current state}
+//  {Restart a frame's action from the top with its current state}
 //
-//      return: [<opt>]
-//          {Does not return at all (either errors or restarts).}
-//      restartee [frame! any-word!]
-//          {FRAME! to restart, or WORD! bound to FRAME! (e.g. REDO 'RETURN)}
-//      /other
-//          {Restart in a frame-compatible function ("Sibling Tail-Call")}
-//      sibling [function!]
-//          {A FUNCTION! derived from the same underlying FRAME! as restartee}
+//      return: "Does not return at all (either errors or restarts)"
+//          [<opt>]
+//      restartee "Frame to restart, or bound word (e.g. REDO 'RETURN)"
+//          [frame! any-word!]
+//      /other "Restart in a frame-compatible function (sibling tail-call)"
+//      sibling "Action derived from the same underlying frame as restartee"
+//          [action!]
 //  ]
 //
 REBNATIVE(redo)
@@ -513,17 +515,17 @@ REBNATIVE(redo)
     //
     if (REF(other)) {
         REBVAL *sibling = ARG(sibling);
-        if (FRM_UNDERLYING(f) != FUNC_UNDERLYING(VAL_FUNC(sibling)))
+        if (FRM_UNDERLYING(f) != ACT_UNDERLYING(VAL_ACTION(sibling)))
             fail ("/OTHER function passed to REDO has incompatible FRAME!");
 
-        restartee->payload.any_context.phase = VAL_FUNC(sibling);
+        restartee->payload.any_context.phase = VAL_ACTION(sibling);
         INIT_BINDING(restartee, VAL_BINDING(sibling));
     }
 
     // Phase needs to always be initialized in FRAME! values.
     //
     assert(
-        SER(FUNC_PARAMLIST(restartee->payload.any_context.phase))->header.bits
+        SER(ACT_PARAMLIST(restartee->payload.any_context.phase))->header.bits
         & ARRAY_FLAG_PARAMLIST
     );
 
@@ -546,13 +548,13 @@ REBNATIVE(redo)
 //
 //  apply: native [
 //
-//  {Invoke a function with all required arguments specified.}
+//  {Invoke an ACTION! with all required arguments specified}
 //
 //      return: [<opt> any-value!]
-//      applicand [function! word! path!]
-//          {Function or specifying word (preserves word name for debug info)}
-//      def [block!]
-//          {Frame definition block (will be bound and evaluated)}
+//      applicand "Literal action, or location to find one (preserves name)"
+//          [action! word! path!]
+//      def "Frame definition block (will be bound and evaluated)"
+//          [block!]
 //  ]
 //
 REBNATIVE(apply)
@@ -590,14 +592,14 @@ REBNATIVE(apply)
         return R_OUT_IS_THROWN;
     }
 
-    if (not IS_FUNCTION(D_OUT))
+    if (not IS_ACTION(D_OUT))
         fail (Error_Invalid(applicand));
     Move_Value(applicand, D_OUT);
 
-    Push_Function(f, opt_label, VAL_FUNC(applicand), VAL_BINDING(applicand));
+    Push_Action(f, opt_label, VAL_ACTION(applicand), VAL_BINDING(applicand));
     f->refine = ORDINARY_ARG;
 
-    // For a one-off APPLY, we don't want Make_Frame_For_Function() to get a
+    // For a one-off APPLY, we don't want Make_Frame_For_Action() to get a
     // heap object just for one use.  Better to DO the block directly into
     // stack cells that will be used in the function application.  But the
     // code from the blcok that fills the frame can't see garbage, so go
@@ -614,7 +616,7 @@ REBNATIVE(apply)
     }
     else {
         // !!! This needs more complex logic now with partial refinements;
-        // code needs to be unified with Make_Frame_For_Function().  The
+        // code needs to be unified with Make_Frame_For_Action().  The
         // main difference is that this formats stack cells for direct use
         // vs. creating a heap object, but the logic is the same.
 
@@ -663,7 +665,7 @@ REBNATIVE(apply)
     }
 
     f->arg = f->args_head; // reset
-    f->param = FUNC_FACADE_HEAD(f->phase); // reset
+    f->param = ACT_FACADE_HEAD(f->phase); // reset
 
     f->special = f->arg; // now signal only type-check the existing data
     TRASH_POINTER_IF_DEBUG(f->deferred); // invariant for checking mode

@@ -106,7 +106,7 @@ REBCTX *VAL_SPECIFIC_Debug(const REBVAL *v)
         or ANY_WORD(v)
         or ANY_ARRAY(v)
         or IS_VARARGS(v)
-        or IS_FUNCTION(v)
+        or IS_ACTION(v)
         or ANY_CONTEXT(v)
     );
 
@@ -124,10 +124,10 @@ REBCTX *VAL_SPECIFIC_Debug(const REBVAL *v)
         // While an ANY-WORD! can be bound specifically to an arbitrary
         // object, an ANY-ARRAY! only becomes bound specifically to frames.
         // The keylist for a frame's context should come from a function's
-        // paramlist, which should have a FUNCTION! value in keylist[0]
+        // paramlist, which should have an ACTION! value in keylist[0]
         //
         if (ANY_ARRAY(v))
-            assert(IS_FUNCTION(CTX_ROOTKEY(specific)));
+            assert(IS_ACTION(CTX_ROOTKEY(specific)));
     }
 
     return specific;
@@ -214,7 +214,7 @@ void* Probe_Core_Debug(
 
         if (GET_SER_FLAG(s, ARRAY_FLAG_VARLIST)) {
             Probe_Print_Helper(p, "Context Varlist", file, line);
-            Probe_Molded_Value(CTX_VALUE(CTX(s)));
+            Probe_Molded_Value(CTX_ARCHETYPE(CTX(s)));
         }
         else {
             // This routine is also a little catalog of the outlying series

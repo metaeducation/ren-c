@@ -1538,7 +1538,7 @@ REBTYPE(Struct)
     REBVAL *arg;
 
     // unary actions
-    switch(action) {
+    switch (verb) {
 
     case SYM_CHANGE: {
         arg = D_ARG(2);
@@ -1593,5 +1593,5 @@ REBTYPE(Struct)
         break;
     }
 
-    fail (Error_Illegal_Action(REB_STRUCT, action));
+    fail (Error_Illegal_Action(REB_STRUCT, verb));
 }

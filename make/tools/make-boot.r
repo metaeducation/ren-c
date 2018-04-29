@@ -145,7 +145,7 @@ e-dispatch/emit {
     ** VALUE DISPATCHERS: e.g. for `append value x` or `select value y`
     */
 
-    REBACT Value_Dispatch[REB_MAX] = ^{
+    REBTAF Value_Dispatch[REB_MAX] = ^{
 }
 for-each-record t type-table [
     switch/default t/class [
@@ -187,7 +187,7 @@ e-dispatch/emit {
     ** MAKE DISPATCHERS: for `make datatype def`
     */
 
-    MAKE_FUNC Make_Dispatch[REB_MAX] = ^{
+    MAKE_CFUNC Make_Dispatch[REB_MAX] = ^{
 }
 for-each-record t type-table [
     switch/default t/make [
@@ -207,7 +207,7 @@ e-dispatch/emit {
     ** TO DISPATCHERS: for `to datatype value`
     */
 
-    TO_FUNC To_Dispatch[REB_MAX] = ^{
+    TO_CFUNC To_Dispatch[REB_MAX] = ^{
 }
 for-each-record t type-table [
     switch/default t/make [
@@ -227,7 +227,7 @@ e-dispatch/emit {
     ** MOLD DISPATCHERS: for `mold value`
     */
 
-    MOLD_FUNC Mold_Or_Form_Dispatch[REB_MAX] = ^{
+    MOLD_CFUNC Mold_Or_Form_Dispatch[REB_MAX] = ^{
 }
 for-each-record t type-table [
     switch/default t/mold [
@@ -928,7 +928,7 @@ EXTERN_C const REBYTE Native_Specs[]; // size is Nat_Compressed_Size
 //
 EXTERN_C const REBNAT Native_C_Funcs[]; // size is Num_Natives
 
-// A canon FUNCTION! REBVAL of the native, accessible by the native's index #.
+// A canon ACTION! REBVAL of the native, accessible by the native's index #.
 //
 EXTERN_C REBVAL Natives[]; // size is Num_Natives
 }

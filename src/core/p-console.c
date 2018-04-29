@@ -36,11 +36,11 @@
 //
 //  Console_Actor: C
 //
-static REB_R Console_Actor(REBFRM *frame_, REBCTX *port, REBSYM action)
+static REB_R Console_Actor(REBFRM *frame_, REBCTX *port, REBSYM verb)
 {
     REBREQ *req = Ensure_Port_State(port, RDI_STDIO);
 
-    switch (action) {
+    switch (verb) {
 
     case SYM_REFLECT: {
         INCLUDE_PARAMS_OF_REFLECT;
@@ -79,7 +79,7 @@ static REB_R Console_Actor(REBFRM *frame_, REBCTX *port, REBSYM action)
         if (not (req->flags & RRF_OPEN)) {
             REBVAL *o_result = OS_DO_DEVICE(req, RDC_OPEN);
             assert(o_result != NULL);
-            if (rebTypeOf(o_result) == RXT_ERROR)
+            if (rebDid("lib/error?", o_result, END))
                 rebFail (o_result, END);
             rebRelease(o_result); // ignore result
         }
@@ -99,7 +99,7 @@ static REB_R Console_Actor(REBFRM *frame_, REBCTX *port, REBSYM action)
 
         REBVAL *r_result = OS_DO_DEVICE(req, RDC_READ);
         assert(r_result != NULL);
-        if (rebTypeOf(r_result) == RXT_ERROR)
+        if (rebDid("lib/error?", r_result, END))
             rebFail (r_result, END);
         rebRelease(r_result); // ignore result
 
@@ -121,7 +121,7 @@ static REB_R Console_Actor(REBFRM *frame_, REBCTX *port, REBSYM action)
         break;
     }
 
-    fail (Error_Illegal_Action(REB_PORT, action));
+    fail (Error_Illegal_Action(REB_PORT, verb));
 
 return_port:
     Move_Value(D_OUT, D_ARG(1));

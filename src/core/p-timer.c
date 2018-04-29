@@ -47,7 +47,7 @@
 //
 //  Timer_Actor: C
 //
-static REB_R Timer_Actor(REBFRM *frame_, REBCTX *port, REBCNT action)
+static REB_R Timer_Actor(REBFRM *frame_, REBCTX *port, REBSYM verb)
 {
     REBVAL *arg = D_ARGC > 1 ? D_ARG(2) : NULL;
 
@@ -62,7 +62,7 @@ static REB_R Timer_Actor(REBFRM *frame_, REBCTX *port, REBCNT action)
     if (!IS_BLOCK(state))
         Init_Block(state, Make_Array(127));
 
-    switch (action) {
+    switch (verb) {
 
     case SYM_REFLECT: {
         INCLUDE_PARAMS_OF_REFLECT;
@@ -102,12 +102,12 @@ static REB_R Timer_Actor(REBFRM *frame_, REBCTX *port, REBCNT action)
         Move_Value(&save_port, D_ARG(1)); // save for return
         Move_Value(D_ARG(1), state);
 
-        REB_R r = T_Block(ds, action);
+        REB_R r = T_Block(ds, verb);
         SET_SIGNAL(SIG_EVENT_PORT);
         if (
-            action == SYM_INSERT
-            || action == SYM_APPEND
-            || action == SYM_REMOVE
+            verb == SYM_INSERT
+            or verb == SYM_APPEND
+            or verb == SYM_REMOVE
         ){
             Move_Value(D_OUT, save_port);
             return R_OUT;
@@ -127,7 +127,7 @@ static REB_R Timer_Actor(REBFRM *frame_, REBCTX *port, REBCNT action)
 
             REBVAL *result = OS_DO_DEVICE(req, RDC_CONNECT); // stays queued
             assert(result != NULL); // !!! or stays queued means it's pending?
-            if (rebTypeOf(result) == RXT_ERROR)
+            if (rebDid("lib/error?", result, END))
                 rebFail (result, END);
             rebRelease(result); // ignore result
         }
@@ -137,7 +137,7 @@ static REB_R Timer_Actor(REBFRM *frame_, REBCTX *port, REBCNT action)
         break;
     }
 
-    fail (Error_Illegal_Action(REB_PORT, action));
+    fail (Error_Illegal_Action(REB_PORT, verb));
 
 return_port:
     Move_Value(D_OUT, D_ARG(1));

@@ -241,12 +241,12 @@
 #include "sys-rebval.h" // REBVAL structure definition
 #include "sys-action.h"
 
-typedef void (*CLEANUP_FUNC)(const REBVAL*); // for some HANDLE!s GC callback
+typedef void (*CLEANUP_CFUNC)(const REBVAL*); // for some HANDLE!s GC callback
 
 #include "sys-rebser.h" // REBSER series definition (embeds REBVAL definition)
 
-typedef void (*MAKE_FUNC)(REBVAL*, enum Reb_Kind, const REBVAL*);
-typedef void (*TO_FUNC)(REBVAL*, enum Reb_Kind, const REBVAL*);
+typedef void (*MAKE_CFUNC)(REBVAL*, enum Reb_Kind, const REBVAL*);
+typedef void (*TO_CFUNC)(REBVAL*, enum Reb_Kind, const REBVAL*);
 
 #include "sys-state.h"
 #include "sys-rebfrm.h" // `REBFRM` definition (also used by value)
@@ -255,7 +255,7 @@ typedef void (*TO_FUNC)(REBVAL*, enum Reb_Kind, const REBVAL*);
 //-- Port actions (for native port schemes):
 
 typedef struct rebol_port_action_map {
-    REBSYM action;
+    REBSYM verb;
     REBPAF func;
 } PORT_ACTION;
 
@@ -356,7 +356,7 @@ enum Boot_Levels {
 
 // Modes allowed by Make_Function:
 enum {
-    MKF_NONE        = 0,        // no special handling (e.g. MAKE FUNCTION!)
+    MKF_NONE        = 0,        // no special handling (e.g. MAKE ACTION!)
     MKF_RETURN      = 1 << 0,   // has definitional RETURN
     MKF_LEAVE       = 1 << 1,   // has definitional LEAVE
     MKF_KEYWORDS    = 1 << 2,   // respond to tags like <opt>, <with>, <local>
@@ -454,7 +454,7 @@ enum REB_Mold_Opts {
 #define CLEAR_MOLD_FLAG(mo,f) \
     ((mo)->opts &= ~(f))
 
-typedef void (*MOLD_FUNC)(REB_MOLD *mo, const RELVAL *v, REBOOL form);
+typedef void (*MOLD_CFUNC)(REB_MOLD *mo, const RELVAL *v, REBOOL form);
 
 // Special flags for decimal formatting:
 enum {
@@ -681,8 +681,8 @@ enum Reb_Vararg_Op {
 
 #include "sys-handle.h"
 
-#include "sys-context.h"
 #include "sys-function.h"
+#include "sys-context.h"
 #include "sys-word.h"
 
 #include "sys-pair.h"
@@ -775,12 +775,12 @@ enum {
 // as these will be "user defined types" that are more like a context than
 // a built-in "kind".
 
-extern REBACT Value_Dispatch[REB_MAX];
+extern REBTAF Value_Dispatch[REB_MAX];
 extern REBPEF Path_Dispatch[REB_MAX];
 extern REBCTF Compare_Types[REB_MAX];
-extern MAKE_FUNC Make_Dispatch[REB_MAX];
-extern TO_FUNC To_Dispatch[REB_MAX];
-extern MOLD_FUNC Mold_Or_Form_Dispatch[REB_MAX];
+extern MAKE_CFUNC Make_Dispatch[REB_MAX];
+extern TO_CFUNC To_Dispatch[REB_MAX];
+extern MOLD_CFUNC Mold_Or_Form_Dispatch[REB_MAX];
 
 
 #include "sys-do.h"

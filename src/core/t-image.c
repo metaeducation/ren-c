@@ -1000,12 +1000,7 @@ REBTYPE(Image)
     if (index > tail)
         index = tail;
 
-    // Check must be in this order (to avoid checking a non-series value);
-    if (action >= SYM_TAKE_P && action <= SYM_SORT)
-        FAIL_IF_READ_ONLY_SERIES(series);
-
-    // Dispatch action:
-    switch (action) {
+    switch (verb) {
 
     case SYM_REFLECT: {
         INCLUDE_PARAMS_OF_REFLECT;
@@ -1062,17 +1057,21 @@ REBTYPE(Image)
         // This logic is somewhat complicated by the fact that INTEGER args use
         // base-1 indexing, but PAIR args use base-0.
         if (IS_PAIR(arg)) {
-            if (action == SYM_AT) action = SYM_SKIP;
-            diff = (VAL_PAIR_Y_INT(arg) * VAL_IMAGE_WIDE(value) + VAL_PAIR_X_INT(arg)) +
-                ((action == SYM_SKIP) ? 0 : 1);
+            if (verb == SYM_AT)
+                verb = SYM_SKIP;
+            diff = (VAL_PAIR_Y_INT(arg) * VAL_IMAGE_WIDE(value))
+                + VAL_PAIR_X_INT(arg) + (verb == SYM_SKIP ? 0 : 1);
         } else
             diff = Get_Num_From_Arg(arg);
 
         index += diff;
-        if (action == SYM_SKIP) {
-            if (IS_LOGIC(arg)) index--;
-        } else {
-            if (diff > 0) index--; // For at, pick, poke.
+        if (verb == SYM_SKIP) {
+            if (IS_LOGIC(arg))
+                --index;
+        }
+        else {
+            if (diff > 0)
+                --index; // For at, pick, poke.
         }
 
         if (index > tail)
@@ -1084,7 +1083,8 @@ REBTYPE(Image)
         Move_Value(D_OUT, value);
         return R_OUT;
 
-    case SYM_CLEAR:   // clear series
+    case SYM_CLEAR:
+        FAIL_IF_READ_ONLY_SERIES(series);
         if (index < tail) {
             SET_SERIES_LEN(VAL_SERIES(value), cast(REBCNT, index));
             Reset_Height(value);
@@ -1093,6 +1093,8 @@ REBTYPE(Image)
         return R_OUT;
 
     case SYM_REMOVE: {
+        FAIL_IF_READ_ONLY_SERIES(series);
+
         INCLUDE_PARAMS_OF_REMOVE;
 
         UNUSED(PAR(series));
@@ -1128,7 +1130,8 @@ REBTYPE(Image)
     case SYM_APPEND:
     case SYM_INSERT:  // insert ser val /part len /only /dup count
     case SYM_CHANGE:  // change ser val /part len /only /dup count
-        value = Modify_Image(frame_, action); // sets DS_OUT
+        FAIL_IF_READ_ONLY_SERIES(series);
+        value = Modify_Image(frame_, verb); // sets DS_OUT
         Move_Value(D_OUT, value);
         return R_OUT;
 
@@ -1199,7 +1202,7 @@ makeCopy2:
         break;
     }
 
-    fail (Error_Illegal_Action(VAL_TYPE(value), action));
+    fail (Error_Illegal_Action(VAL_TYPE(value), verb));
 }
 
 

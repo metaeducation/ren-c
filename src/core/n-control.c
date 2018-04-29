@@ -8,7 +8,7 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Copyright 2012 REBOL Technologies
-// Copyright 2012-2017 Rebol Open Source Contributors
+// Copyright 2012-2018 Rebol Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information.
@@ -29,30 +29,21 @@
 //
 // Control constructs in Ren-C differ from R3-Alpha in some ways:
 //
-// * If they do not run their body, they evaluate to void ("unset!") and not
-//   blank ("none!").  Otherwise the last result of the body evaluation, as
-//   in R3-Alpha and Rebol2...but this is forced to blank if it was void,
-//   so that THEN and ELSE can distinguish whether a condition ran.
+// * If they do not run any branches, they evaluate to void ("unset!") and not
+//   BLANK! ("none!").  But if a branch does run, and evaluates to void, then
+//   the result is altered to be BLANK!.  Hence void can cue other functions
+//   (like THEN and ELSE) to be sure no branch ran, and respond appropriately.
 //
 // * It is possible to ask the return result to not be "blankified", but
 //   give back the possibly-void value, with the /ONLY refinement.  This is
 //   specialized as functions ending in *.  (IF*, EITHER*, CASE*, SWITCH*...)
 //
-// * Other specializations exist returning a logic of whether the body ever
-//   ran by using the /? refinement.  So CASE? does not return the branch
-//   values, just true or false based on whether a branch ran.  This is
-//   based on testing the result for void.
-//
 // * Zero-arity function values used as branches will be executed, and
 //   single-arity functions used as branches will also be executed--but passed
 //   the value of the triggering condition.  See Run_Branch_Throws().
 //
-// * If the /ONLY option is not used, then there is added checking on the
-//   condition and branches.  The condition is not allowed to be a literal
-//   block, e.g. `[x = 10]`, but may be an expression evaluating to a block.
-//   The branches are not allowed to be evaluative *unless* they evaluate to
-//   a block...literals such as strings or integers may be used, but not
-//   variables or expressions that evaluate to strings or integers.
+// * There is added checking that a literal block is not used as a condition,
+//   to catch common mistakes like `if [x = 10] [...]`.
 //
 
 #include "sys-core.h"
@@ -61,14 +52,14 @@
 //
 //  if: native [
 //
-//  {If TRUTHY? condition, take branch (blocks and functions evaluated)}
+//  {When TO-LOGIC CONDITION is true, execute branch}
 //
-//      return: [<opt> any-value!]
-//          {void on FALSEY? condition, else branch result (BLANK! if void)}
+//      return: "void if branch not run, else branch result"
+//          [<opt> any-value!]
 //      condition [any-value!]
-//      branch [block! function!]
-//      /only
-//          "If branch runs and returns void, do not convert it to BLANK!"
+//      branch "If arity-1 action, receives the evaluated condition"
+//          [block! action!]
+//      /only "If branch runs and returns void, do not convert it to BLANK!"
 //  ]
 //
 REBNATIVE(if)
@@ -88,14 +79,13 @@ REBNATIVE(if)
 //
 //  unless: native [
 //
-//  {If FALSEY? condition, take branch (blocks and functions evaluated)}
+//  {When TO-LOGIC CONDITION is false, execute branch}
 //
-//      return: [<opt> any-value!]
-//          {void on TRUTHY? condition, else branch result (BLANK! if void)}
+//      return: "void if branch not run, else branch result"
+//          [<opt> any-value!]
 //      condition [any-value!]
-//      branch [block! function!]
-//      /only
-//          "If branch runs and returns void, do not convert it to BLANK!"
+//      branch [block! action!]
+//      /only "If branch runs and returns void, do not convert it to BLANK!"
 //  ]
 //
 REBNATIVE(unless)
@@ -115,14 +105,14 @@ REBNATIVE(unless)
 //
 //  either: native [
 //
-//  {If TRUTHY? condition, take first branch, else take second branch.}
+//  {Choose a branch to execute, based on TO-LOGIC of the condition value}
 //
 //      return: [<opt> any-value!]
 //      condition [any-value!]
-//      true-branch [block! function!]
-//      false-branch [block! function!]
-//      /only
-//          "If branch runs and returns void, do not convert it to BLANK!"
+//      true-branch "If arity-1 action, receives the evaluated condition"
+//          [block! action!]
+//      false-branch [block! action!]
+//      /only "If branch runs and returns void, do not convert it to BLANK!"
 //  ]
 //
 REBNATIVE(either)
@@ -149,14 +139,13 @@ REBNATIVE(either)
 //
 //  {If value passes test, return that value, otherwise take the branch.}
 //
-//      return: [<opt> any-value!]
-//          {Input value if it matched, or branch result (BLANK! if void)}
-//      test [function! datatype! typeset! block! logic!]
-//          {Typeset membership, LOGIC! to test TRUTHY?, filter function}
+//      return: "Input value if it matched, or branch result (BLANK! if void)"
+//          [<opt> any-value!]
+//      test "Typeset membership, LOGIC! to test TRUTHY?, filter function"
+//          [action! datatype! typeset! block! logic!]
 //      value [<opt> any-value!]
-//      branch [block! function!]
-//      /only
-//          "If branch runs and returns void, do not convert it to BLANK!"
+//      branch [block! action!]
+//      /only "If branch runs and returns void, do not convert it to BLANK!"
 //  ]
 //
 REBNATIVE(either_test)
@@ -223,7 +212,7 @@ REBNATIVE(either_test)
             else if (r == R_UNHANDLED)
                 r = R_FALSE; // at least one type has to speak up now
         }
-        else if (IS_FUNCTION(var)) {
+        else if (IS_ACTION(var)) {
             const REBOOL fully = TRUE;
             if (Apply_Only_Throws(D_OUT, fully, const_KNOWN(var), value, END))
                 return R_OUT_IS_THROWN;
@@ -284,7 +273,7 @@ test_failed:
 //      return: [<opt> any-value!]
 //          {Void if input is void, or branch result (BLANK! if void)}
 //      value [<opt> any-value!]
-//      branch [block! function!]
+//      branch [block! action!]
 //      /only
 //          "If branch runs and returns void, do not convert it to BLANK!"
 //  ]
@@ -314,7 +303,7 @@ REBNATIVE(either_test_void)
 //      return: [<opt> any-value!]
 //          {Input value if not void, or branch result (BLANK! if void)}
 //      value [<opt> any-value!]
-//      branch [block! function!]
+//      branch [block! action!]
 //      /only
 //          "If branch runs and returns void, do not convert it to BLANK!"
 //  ]
@@ -566,16 +555,16 @@ static REB_R Case_Choose_Core(
             //
             // The condition did not match.  If it's a CHOOSE operation, we
             // willingly skip any kind of value in the next slot.  For a
-            // CASE be more picky--skip blocks and literal FUNCTION! values,
+            // CASE be more picky--skip blocks and literal ACTION! values,
             // and soft quoted things, but error otherwise.
             //
             // !!! We want to skip evaluating GROUP!s for false clauses, but
             // should GET-PATH! and GET-WORD! be looked up to see if they are
-            // BLOCK! or FUNCTION!?
+            // BLOCK! or ACTION!?
             //
             if (
                 choose
-                or IS_BLOCK(f->value) or IS_FUNCTION(f->value)
+                or IS_BLOCK(f->value) or IS_ACTION(f->value)
                 or IS_QUOTABLY_SOFT(f->value)
             ){
                 Fetch_Next_In_Frame(f); // skip the soft-quoted slot
@@ -602,7 +591,7 @@ static REB_R Case_Choose_Core(
         }
         else {
             // We need to hang onto the condition, in case the branch is an
-            // arity-1 FUNCTION! and wants to be passed what that condition
+            // arity-1 ACTION! and wants to be passed what that condition
             // evaluated to.  Move it into the block cell, which we no longer
             // need (the frame captured it).  Note that evaluating directly
             // into frame slots is not allowed.
@@ -614,7 +603,7 @@ static REB_R Case_Choose_Core(
                 return R_OUT_IS_THROWN;
             }
 
-            if (not IS_FUNCTION(cell) and not IS_BLOCK(cell))
+            if (not IS_ACTION(cell) and not IS_BLOCK(cell))
                 fail (Error_Invalid_Arg_Raw(cell));
 
             // Note that block now holds the cached evaluated condition
@@ -703,22 +692,18 @@ REBNATIVE(choose)
 //
 //  {Selects a choice and evaluates the block that follows it.}
 //
-//      return: [<opt> any-value!]
-//          {Last case evaluation, or void if no cases matched}
-//      value [any-value!]
-//          "Target value"
-//      cases [block!]
-//          "Block of cases (comparison lists followed by block branches)"
-//      /default
-//          "Default case if no others found"
-//      default-case [function! block!]
-//          "Block to execute or function to run if no cases match"
-//      /all
-//          "Evaluate all matches (not just first one)"
-//      /strict
-//          {Use STRICT-EQUAL? when comparing cases instead of EQUAL?}
-//      /only
-//          "If branch runs and returns void, do not convert it to BLANK!"
+//      return: "Last case evaluation, or void if no cases matched"
+//          [<opt> any-value!]
+//      value "Target value"
+//          [any-value!]
+//      cases "Block of cases (comparison lists followed by block branches)"
+//          [block!]
+//      /default "Default case if no others found"
+//      default-case "Block to execute or function to run if no cases match"
+//          [action! block!]
+//      /all "Evaluate all matches (not just first one)"
+//      /strict "Use STRICT-EQUAL? when comparing cases instead of EQUAL?"
+//      /only "If branch runs and returns void, do not convert it to BLANK!"
 //  ]
 //
 REBNATIVE(switch)
@@ -754,7 +739,7 @@ REBNATIVE(switch)
         //
         if (
             IS_BLOCK(f->value)
-            || IS_FUNCTION(f->value) // literal FUNCTION!, likely COMPOSE'd in
+            || IS_ACTION(f->value) // literal ACTION!, likely COMPOSE'd in
         ){
             Init_Void(D_CELL);
             Fetch_Next_In_Frame(f);
@@ -799,16 +784,16 @@ REBNATIVE(switch)
             Fetch_Next_In_Frame(f);
             if (FRM_AT_END(f))
                 goto return_defaulted;
-        } while (not IS_BLOCK(f->value) and not IS_FUNCTION(f->value));
+        } while (not IS_BLOCK(f->value) and not IS_ACTION(f->value));
 
         // Run the code if it was found.  Because it writes D_OUT with a value
         // (or void), it won't be END--we'll know at least one case has run.
         //
-        // Derelativize the FUNCTION! or BLOCK! into the cases cell, which is
+        // Derelativize the ACTION! or BLOCK! into the cases cell, which is
         // available because the frame already captured it.
         //
         // !!! We only have to derelativize because we're not using plain
-        // Do_At_Throws()...which takes a specifier.  If the literal-FUNCTION!
+        // Do_At_Throws()...which takes a specifier.  If the literal-ACTION!
         // in the cases feature turns out to be superfluous, use that instead.
         //
         Derelativize(ARG(cases), f->value, f->specifier);
@@ -859,19 +844,16 @@ return_defaulted:
 //  {Catches a throw from a block and returns its value.}
 //
 //      return: [<opt> any-value!]
-//      block [block!] "Block to evaluate"
-//      /name
-//          "Catches a named throw" ;-- should it be called /named ?
-//      names [block! word! function! object!]
-//          "Names to catch (single name if not block)"
-//      /quit
-//          "Special catch for QUIT native"
-//      /any
-//          {Catch all throws except QUIT (can be used with /QUIT)}
-//      /with
-//          "Handle thrown case with code"
-//      handler [block! function!]
-//          "If FUNCTION!, spec matches [value name]"
+//      block "Block to evaluate"
+//          [block!]
+//      /name "Catches a named throw" ;-- should it be called /named ?
+//      names "Names to catch (single name if not block)"
+//          [block! word! action! object!]
+//      /quit "Special catch for QUIT native"
+//      /any "Catch all throws except QUIT (can be used with /QUIT)"
+//      /with "Handle thrown case with code"
+//      handler "If action, the spec matches [value name]"
+//          [block! action!]
 //  ]
 //
 REBNATIVE(catch)
@@ -889,15 +871,15 @@ REBNATIVE(catch)
 
     if (Do_Any_Array_At_Throws(D_OUT, ARG(block))) {
         if (REF(any) and not (
-            IS_FUNCTION(D_OUT)
-            and VAL_FUNC_DISPATCHER(D_OUT) == &N_quit
+            IS_ACTION(D_OUT)
+            and VAL_ACT_DISPATCHER(D_OUT) == &N_quit
         )){
             goto was_caught;
         }
 
         if (REF(quit) and (
-            IS_FUNCTION(D_OUT)
-            and VAL_FUNC_DISPATCHER(D_OUT) == &N_quit
+            IS_ACTION(D_OUT)
+            and VAL_ACT_DISPATCHER(D_OUT) == &N_quit
         )){
             goto was_caught;
         }
@@ -982,7 +964,7 @@ was_caught:
 
             return R_OUT;
         }
-        else if (IS_FUNCTION(handler)) {
+        else if (IS_ACTION(handler)) {
             //
             // This calls the function but only does a DO/NEXT.  Hence the
             // function might be arity 0, arity 1, or arity 2.  If it has
@@ -1016,11 +998,10 @@ was_caught:
 //
 //  "Throws control back to a previous catch."
 //
-//      value [<opt> any-value!]
-//          "Value returned from catch"
-//      /name
-//          "Throws to a named catch"
-//      name-value [word! function! object!]
+//      value "Value returned from catch"
+//          [<opt> any-value!]
+//      /name "Throws to a named catch"
+//      name-value [word! action! object!]
 //  ]
 //
 REBNATIVE(throw)

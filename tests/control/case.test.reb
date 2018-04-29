@@ -50,7 +50,7 @@
 (
     error? trap [
         case [
-            true add 1 2 ;-- branch slots must be BLOCK!, FUNCTION!, softquote
+            true add 1 2 ;-- branch slots must be BLOCK!, ACTION!, softquote
         ]
     ]
 )

@@ -44,7 +44,7 @@ read-deep: function [
         {Include root path, retains full paths vs. returning relative paths.}
     /strategy
         {Allows Queue building to be overridden.}
-    take [function!]
+    take [action!]
         {TAKE next item from queue, building the queue as necessary.}
 ][
     take: default [:read-deep-seq]

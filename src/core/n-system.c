@@ -276,9 +276,9 @@ REBNATIVE(check)
     else if (ANY_CONTEXT(value)) {
         ASSERT_CONTEXT(VAL_CONTEXT(value));
     }
-    else if (IS_FUNCTION(value)) {
-        ASSERT_ARRAY(VAL_FUNC_PARAMLIST(value));
-        ASSERT_ARRAY(VAL_ARRAY(VAL_FUNC_BODY(value)));
+    else if (IS_ACTION(value)) {
+        ASSERT_ARRAY(VAL_ACT_PARAMLIST(value));
+        ASSERT_ARRAY(VAL_ARRAY(VAL_ACT_BODY(value)));
     }
 
     return R_TRUE;

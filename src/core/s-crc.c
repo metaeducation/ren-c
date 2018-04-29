@@ -332,13 +332,13 @@ uint32_t Hash_Value(const RELVAL *v)
         hash = Hash_String(VAL_WORD_SPELLING(v));
         break; }
 
-    case REB_FUNCTION:
+    case REB_ACTION:
         //
         // Because function equality is by identity only and they are
         // immutable once created, it is legal to put them in hashes.  The
-        // VAL_FUNC is the paramlist series, guaranteed unique per function
+        // VAL_ACT is the paramlist series, guaranteed unique per function
         //
-        hash = cast(REBCNT, cast(uintptr_t, VAL_FUNC(v)) >> 4);
+        hash = cast(REBCNT, cast(uintptr_t, VAL_ACTION(v)) >> 4);
         break;
 
     case REB_FRAME:

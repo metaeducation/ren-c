@@ -182,7 +182,7 @@ REBSER *Temp_UTF8_At_Managed(
 //
 // Only valid for BINARY data.
 //
-REBSER *Xandor_Binary(REBCNT action, REBVAL *value, REBVAL *arg)
+REBSER *Xandor_Binary(REBCNT verb, REBVAL *value, REBVAL *arg)
 {
     REBYTE *p0 = VAL_BIN_AT(value);
     REBYTE *p1 = VAL_BIN_AT(arg);
@@ -195,7 +195,7 @@ REBSER *Xandor_Binary(REBCNT action, REBVAL *value, REBVAL *arg)
     // !!! This used to say "For AND - result is size of shortest input:" but
     // the code was commented out
     /*
-        if (action == A_AND || (action == 0 && t1 >= t0))
+        if (verb == A_AND || (verb == 0 && t1 >= t0))
             t2 = mt;
         else
             t2 = MAX(t0, t1);
@@ -224,7 +224,7 @@ REBSER *Xandor_Binary(REBCNT action, REBVAL *value, REBVAL *arg)
 
     REBYTE *p2 = BIN_HEAD(series);
 
-    switch (action) {
+    switch (verb) {
     case SYM_INTERSECT: { // and
         REBCNT i;
         for (i = 0; i < mt; i++)

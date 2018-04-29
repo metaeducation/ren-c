@@ -219,8 +219,7 @@
 //
 // !!! C++14 gcc release builds seem to trigger bad behavior on cast() to
 // a CFUNC*, and non-C++14 builds are allowing cast of `const void*` to
-// non-const `char` with plain `cast()`.  Investigate as time allows, but
-// in the meantime SYM_FUNC() uses a plain C-style cast.
+// non-const `char` with plain `cast()`.  Investigate as time allows.
 
 #if !defined(CPLUSPLUS_11) || !defined(NDEBUG)
     /* These macros are easier-to-spot variants of the parentheses cast.

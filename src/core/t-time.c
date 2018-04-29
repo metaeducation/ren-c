@@ -504,11 +504,11 @@ REBTYPE(Time)
     // the symbol-based dispatch.  Consider doing another way.
     //
     if (
-        action == SYM_ADD
-        || action == SYM_SUBTRACT
-        || action == SYM_MULTIPLY
-        || action == SYM_DIVIDE
-        || action == SYM_REMAINDER
+        verb == SYM_ADD
+        or verb == SYM_SUBTRACT
+        or verb == SYM_MULTIPLY
+        or verb == SYM_DIVIDE
+        or verb == SYM_REMAINDER
     ){
         REBINT  type = VAL_TYPE(arg);
 
@@ -517,8 +517,7 @@ REBTYPE(Time)
         if (type == REB_TIME) {     // handle TIME - TIME cases
             REBI64 secs2 = VAL_NANO(arg);
 
-            switch (action) {
-
+            switch (verb) {
             case SYM_ADD:
                 secs = Add_Max(REB_TIME, secs, secs2, MAX_TIME);
                 goto fixTime;
@@ -528,25 +527,27 @@ REBTYPE(Time)
                 goto fixTime;
 
             case SYM_DIVIDE:
-                if (secs2 == 0) fail (Error_Zero_Divide_Raw());
+                if (secs2 == 0)
+                    fail (Error_Zero_Divide_Raw());
                 //secs /= secs2;
                 RESET_VAL_HEADER(D_OUT, REB_DECIMAL);
-                VAL_DECIMAL(D_OUT) = (REBDEC)secs / (REBDEC)secs2;
+                VAL_DECIMAL(D_OUT) = cast(REBDEC, secs) / cast(REBDEC, secs2);
                 return R_OUT;
 
             case SYM_REMAINDER:
-                if (secs2 == 0) fail (Error_Zero_Divide_Raw());
+                if (secs2 == 0)
+                    fail (Error_Zero_Divide_Raw());
                 secs %= secs2;
                 goto setTime;
 
             default:
-                fail (Error_Math_Args(REB_TIME, action));
+                fail (Error_Math_Args(REB_TIME, verb));
             }
         }
         else if (type == REB_INTEGER) {     // handle TIME - INTEGER cases
             REBI64 num = VAL_INT64(arg);
 
-            switch(action) {
+            switch (verb) {
             case SYM_ADD:
                 secs = Add_Max(REB_TIME, secs, num * SEC_SEC, MAX_TIME);
                 goto fixTime;
@@ -562,24 +563,26 @@ REBTYPE(Time)
                 goto setTime;
 
             case SYM_DIVIDE:
-                if (num == 0) fail (Error_Zero_Divide_Raw());
+                if (num == 0)
+                    fail (Error_Zero_Divide_Raw());
                 secs /= num;
                 Init_Integer(D_OUT, secs);
                 goto setTime;
 
             case SYM_REMAINDER:
-                if (num == 0) fail (Error_Zero_Divide_Raw());
+                if (num == 0)
+                    fail (Error_Zero_Divide_Raw());
                 secs %= num;
                 goto setTime;
 
             default:
-                fail (Error_Math_Args(REB_TIME, action));
+                fail (Error_Math_Args(REB_TIME, verb));
             }
         }
         else if (type == REB_DECIMAL) {     // handle TIME - DECIMAL cases
             REBDEC dec = VAL_DECIMAL(arg);
 
-            switch(action) {
+            switch (verb) {
             case SYM_ADD:
                 secs = Add_Max(
                     REB_TIME,
@@ -603,7 +606,8 @@ REBTYPE(Time)
                 goto setTime;
 
             case SYM_DIVIDE:
-                if (dec == 0.0) fail (Error_Zero_Divide_Raw());
+                if (dec == 0.0)
+                    fail (Error_Zero_Divide_Raw());
                 secs = cast(int64_t, secs / dec);
                 goto setTime;
 
@@ -612,21 +616,21 @@ REBTYPE(Time)
 //              goto decTime;
 
             default:
-                fail (Error_Math_Args(REB_TIME, action));
+                fail (Error_Math_Args(REB_TIME, verb));
             }
         }
-        else if (type == REB_DATE && action == SYM_ADD) { // TIME + DATE case
+        else if (type == REB_DATE and verb == SYM_ADD) { // TIME + DATE case
             // Swap args and call DATE datatupe:
             Move_Value(D_ARG(3), val); // (temporary location for swap)
             Move_Value(D_ARG(1), arg);
             Move_Value(D_ARG(2), D_ARG(3));
-            return T_Date(frame_, action);
+            return T_Date(frame_, verb);
         }
-        fail (Error_Math_Args(REB_TIME, action));
+        fail (Error_Math_Args(REB_TIME, verb));
     }
     else {
         // unary actions
-        switch(action) {
+        switch (verb) {
 
         case SYM_ODD_Q:
             return ((SECS_FROM_NANO(secs) & 1) != 0) ? R_TRUE : R_FALSE;
@@ -706,7 +710,7 @@ REBTYPE(Time)
             break;
         }
     }
-    fail (Error_Illegal_Action(REB_TIME, action));
+    fail (Error_Illegal_Action(REB_TIME, verb));
 
 fixTime:
 setTime:

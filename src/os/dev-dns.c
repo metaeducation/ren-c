@@ -188,7 +188,7 @@ DEVICE_CMD Poll_DNS(REBREQ *dr)
 **
 ***********************************************************************/
 
-static DEVICE_CMD_FUNC Dev_Cmds[RDC_MAX] =
+static DEVICE_CMD_CFUNC Dev_Cmds[RDC_MAX] =
 {
     Init_Net,   // Shared init - called only once
     Quit_Net,   // Shared

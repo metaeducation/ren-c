@@ -95,11 +95,11 @@ inline static REB_R Vararg_Op_If_No_Advance(
 
         const REBVAL *child_gotten = Get_Opt_Var_Else_End(opt_look, specifier);
 
-        if (VAL_TYPE_OR_0(child_gotten) == REB_FUNCTION) {
+        if (VAL_TYPE_OR_0(child_gotten) == REB_ACTION) {
             if (GET_VAL_FLAG(child_gotten, VALUE_FLAG_ENFIXED)) {
                 if (
                     pclass == PARAM_CLASS_TIGHT
-                    || GET_VAL_FLAG(child_gotten, FUNC_FLAG_DEFERS_LOOKBACK)
+                    or GET_VAL_FLAG(child_gotten, ACTION_FLAG_DEFERS_LOOKBACK)
                 ){
                     return R_For_Vararg_End(op);
                 }
@@ -464,9 +464,7 @@ REBTYPE(Varargs)
 {
     REBVAL *value = D_ARG(1);
 
-    switch (action) {
-    // !!! SYM_PICK moved into PD_Varargs functionality, which PICK* uses
-
+    switch (verb) {
     case SYM_REFLECT: {
         INCLUDE_PARAMS_OF_REFLECT;
 
@@ -534,7 +532,7 @@ REBTYPE(Varargs)
         break;
     }
 
-    fail (Error_Illegal_Action(REB_VARARGS, action));
+    fail (Error_Illegal_Action(REB_VARARGS, verb));
 }
 
 
@@ -589,7 +587,7 @@ void MF_Varargs(REB_MOLD *mo, const RELVAL *v, REBOOL form) {
         }
         else {
             const RELVAL *param
-                = FUNC_FACADE_HEAD(param_frame->phase)
+                = ACT_FACADE_HEAD(param_frame->phase)
                     + v->payload.varargs.param_offset;
 
             enum Reb_Param_Class pclass = VAL_PARAM_CLASS(param);

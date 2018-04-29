@@ -1280,8 +1280,9 @@ generator-class: make object! [
                 ][
                     fail ["Unexpected project class:" (project/class-name)]
                 ]
-                output-ext: find/last project/output #"."
-                remove output-ext
+                if output-ext: find/last project/output #"." [
+                    remove output-ext
+                ]
                 basename: project/output
                 project/output: join-of basename suffix
             ]

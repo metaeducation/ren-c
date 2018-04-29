@@ -34,13 +34,13 @@
 //
 //  Clipboard_Actor: C
 //
-static REB_R Clipboard_Actor(REBFRM *frame_, REBCTX *port, REBSYM action)
+static REB_R Clipboard_Actor(REBFRM *frame_, REBCTX *port, REBSYM verb)
 {
     REBVAL *arg = D_ARGC > 1 ? D_ARG(2) : NULL;
 
     REBREQ *req = Ensure_Port_State(port, RDI_CLIPBOARD);
 
-    switch (action) {
+    switch (verb) {
 
     case SYM_REFLECT: {
         INCLUDE_PARAMS_OF_REFLECT;
@@ -99,14 +99,14 @@ static REB_R Clipboard_Actor(REBFRM *frame_, REBCTX *port, REBSYM action)
         if (not (req->flags & RRF_OPEN)) {
             REBVAL *o_result = OS_DO_DEVICE(req, RDC_OPEN);
             assert(o_result != NULL);
-            if (rebTypeOf(o_result) == RXT_ERROR)
+            if (rebDid("lib/error?", o_result, END))
                 rebFail (o_result, END);
             rebRelease(o_result); // ignore result
         }
 
         REBVAL *r_result = OS_DO_DEVICE(req, RDC_READ);
         assert(r_result != NULL);
-        if (rebTypeOf(r_result) == RXT_ERROR)
+        if (rebDid("lib/error?", r_result, END))
             rebFail (r_result, END);
         rebRelease(r_result); // ignore result
 
@@ -157,7 +157,7 @@ static REB_R Clipboard_Actor(REBFRM *frame_, REBCTX *port, REBSYM action)
         if (not (req->flags & RRF_OPEN)) {
             REBVAL *o_result = OS_DO_DEVICE(req, RDC_OPEN);
             assert(o_result != NULL);
-            if (rebTypeOf(o_result) == RXT_ERROR)
+            if (rebDid("lib/error?", o_result, END))
                 rebFail (o_result, END);
         }
 
@@ -175,7 +175,7 @@ static REB_R Clipboard_Actor(REBFRM *frame_, REBCTX *port, REBSYM action)
 
         REBVAL *w_result = OS_DO_DEVICE(req, RDC_WRITE);
         assert(w_result != NULL);
-        if (rebTypeOf(w_result) == RXT_ERROR)
+        if (rebDid("lib/error?", w_result, END))
             rebFail (w_result, END);
 
         Init_Blank(CTX_VAR(port, STD_PORT_DATA)); // GC can collect it
@@ -201,7 +201,7 @@ static REB_R Clipboard_Actor(REBFRM *frame_, REBCTX *port, REBSYM action)
 
         REBVAL *result = OS_DO_DEVICE(req, RDC_OPEN);
         assert(result != NULL);
-        if (rebTypeOf(result) == RXT_ERROR)
+        if (rebDid("lib/error?", result, END))
             rebFail (result, END);
         rebRelease(result); // ignore result
         goto return_port; }
@@ -209,7 +209,7 @@ static REB_R Clipboard_Actor(REBFRM *frame_, REBCTX *port, REBSYM action)
     case SYM_CLOSE: {
         REBVAL *result = OS_DO_DEVICE(req, RDC_CLOSE);
         assert(result != NULL);
-        if (rebTypeOf(result) == RXT_ERROR)
+        if (rebDid("lib/error?", result, END))
             rebFail (result, END);
         rebRelease(result); // ignore result
         goto return_port; }
@@ -218,7 +218,7 @@ static REB_R Clipboard_Actor(REBFRM *frame_, REBCTX *port, REBSYM action)
         break;
     }
 
-    fail (Error_Illegal_Action(REB_PORT, action));
+    fail (Error_Illegal_Action(REB_PORT, verb));
 
 return_port:
     Move_Value(D_OUT, D_ARG(1));

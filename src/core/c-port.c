@@ -164,7 +164,7 @@ REBINT Awake_System(REBARR *ports, REBOOL only)
 
     // Get the system port AWAKE function:
     REBVAL *awake = VAL_CONTEXT_VAR(port, STD_PORT_AWAKE);
-    if (!IS_FUNCTION(awake))
+    if (not IS_ACTION(awake))
         return -1;
 
     DECLARE_LOCAL (tmp);
@@ -362,37 +362,15 @@ void Sieve_Ports(REBARR *ports)
 
 
 //
-//  Find_Action: C
+//  Redo_Action_Throws: C
 //
-// Given an action number, return the action's index in
-// the specified object. If not found, a zero is returned.
+// This code takes a running call frame that has been built for one action
+// and then tries to map its parameters to invoke another action.  The new
+// action may have different orders and names of parameters.
 //
-REBCNT Find_Action(REBVAL *object, REBSYM action)
-{
-    return Find_Canon_In_Context(VAL_CONTEXT(object), Canon(action), FALSE);
-}
-
-
-//
-//  Redo_Func_Throws: C
-//
-// This code takes a running call frame that has been built for one function
-// and then tries to map its parameters to another call.  It is used to
-// dispatch some ACTION!s (an archetypal function spec with no implementation)
-// from a native C invocation to be "bounced" out into user code.
-//
-// In the origins of this function's active usage in R3-Alpha, it was allowed
-// for the target function to have a parameterization that was a superset of
-// the original frame's function (adding refinements, etc.)  The greater
-// intentions of how it was supposed to work are not known--as there was
-// little error checking, given there were few instances.
-//
-// !!! Due to the historical brittleness of this function, very rare calls,
-// and need for an additional repetition of dispatch logic from Do_Core,
-// this code has been replaced with a straightforward implementation.  It
-// builds a PATH! of the target function and refinements from the original
-// frame.  Then it uses this in the DO_FLAG_EVAL_ONLY mode to suppress
-// re-evaluation of the frame's "live" args.
+// R3-Alpha had a rather brittle implementation, that had no error checking
+// and repetition of logic in Do_Core.  Ren-C more simply builds a PATH! of
+// the target function and refinements, passing args with DO_FLAG_EVAL_ONLY.
 //
 // !!! This won't stand up in the face of targets that are "adversarial"
 // to the archetype:
@@ -400,19 +378,13 @@ REBCNT Find_Action(REBVAL *object, REBSYM action)
 //     foo: func [a /b c] [...]  =>  bar: func [/b d e] [...]
 //                    foo/b 1 2  =>  bar/b 1 2
 //
-// However, it is still *much* better than the R3-Alpha situation for error
-// checking, and significantly less confusing.  A real solution to this kind
-// of dispatch--if it is to be used--seems like it should be a language
-// feature available to users themselves.  So leaning on the evaluator in
-// one way or another is the best course to keep this functionality going.
-//
-REBOOL Redo_Func_Throws(REBFRM *f, REBFUN *func_new)
+REBOOL Redo_Action_Throws(REBFRM *f, REBACT *run)
 {
     // Upper bound on the length of the args we might need for a redo
     // invocation is the total number of parameters to the *old* function's
     // invocation (if it had no refinements or locals).
     //
-    REBARR *code_array = Make_Array(FUNC_NUM_PARAMS(f->phase));
+    REBARR *code_array = Make_Array(ACT_NUM_PARAMS(f->phase));
     RELVAL *code = ARR_HEAD(code_array);
 
     // We'll walk through the original functions param and arglist only, and
@@ -421,7 +393,7 @@ REBOOL Redo_Func_Throws(REBFRM *f, REBFUN *func_new)
     //
     // !!! See note in function description about arity mismatches.
     //
-    f->param = FUNC_FACADE_HEAD(f->phase);
+    f->param = ACT_FACADE_HEAD(f->phase);
     f->arg = f->args_head;
     REBOOL ignoring = FALSE;
 
@@ -430,10 +402,10 @@ REBOOL Redo_Func_Throws(REBFRM *f, REBFUN *func_new)
     // opposite case where it had only refinements and then the function
     // at the head...
     //
-    REBARR *path_array = Make_Array(FUNC_NUM_PARAMS(f->phase) + 1);
+    REBARR *path_array = Make_Array(ACT_NUM_PARAMS(f->phase) + 1);
     RELVAL *path = ARR_HEAD(path_array);
 
-    Move_Value(path, FUNC_VALUE(func_new));
+    Move_Value(path, ACT_ARCHETYPE(run)); // !!! What if there's a binding?
     ++path;
 
     for (; NOT_END(f->param); ++f->param, ++f->arg) {
@@ -522,7 +494,7 @@ REBOOL Redo_Func_Throws(REBFRM *f, REBFUN *func_new)
 // NOTE: stack must already be setup correctly for action, and
 // the caller must cleanup the stack.
 //
-REB_R Do_Port_Action(REBFRM *frame_, REBCTX *port, REBSYM action)
+REB_R Do_Port_Action(REBFRM *frame_, REBCTX *port, REBSYM verb)
 {
     FAIL_IF_BAD_PORT(port);
 
@@ -536,30 +508,32 @@ REB_R Do_Port_Action(REBFRM *frame_, REBCTX *port, REBSYM action)
     // it's some other kind of handle value this could crash.
     //
     if (Is_Native_Port_Actor(actor)) {
-        r = cast(REBPAF, VAL_HANDLE_CFUNC(actor))(frame_, port, action);
+        r = cast(REBPAF, VAL_HANDLE_CFUNC(actor))(frame_, port, verb);
         goto post_process_output;
     }
 
-    // actor must be an object:
-    if (!IS_OBJECT(actor))
+    if (not IS_OBJECT(actor))
         fail (Error_Invalid_Actor_Raw());
 
     // Dispatch object function:
 
     REBCNT n; // goto would cross initialization
-    n = Find_Action(actor, action);
-    if (n) actor = Obj_Value(actor, n);
-    if (!n || !actor || !IS_FUNCTION(actor)) {
-        DECLARE_LOCAL (action_word);
-        Init_Word(action_word, Canon(action));
+    n = Find_Canon_In_Context(
+        VAL_CONTEXT(actor),
+        Canon(verb),
+        FALSE // !always
+    );
 
-        fail (Error_No_Port_Action_Raw(action_word));
+    REBVAL *action;
+    if (n == 0 or not IS_ACTION(action = VAL_CONTEXT_VAR(actor, n))) {
+        DECLARE_LOCAL (verb_word);
+        Init_Word(verb_word, Canon(verb));
+
+        fail (Error_No_Port_Action_Raw(verb_word));
     }
 
-    if (Redo_Func_Throws(frame_, VAL_FUNC(actor))) {
-        // The throw name will be in D_OUT, with thrown value in task vars
+    if (Redo_Action_Throws(frame_, VAL_ACTION(action)))
         return R_OUT_IS_THROWN;
-    }
 
     r = R_OUT; // result should be in frame_->out
 
@@ -571,7 +545,7 @@ REB_R Do_Port_Action(REBFRM *frame_, REBCTX *port, REBSYM action)
     // !!! Note this code is incorrect for files read in chunks!!!
 
 post_process_output:
-    if (action == SYM_READ) {
+    if (verb == SYM_READ) {
         INCLUDE_PARAMS_OF_READ;
 
         UNUSED(PAR(source));

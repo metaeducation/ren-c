@@ -297,7 +297,7 @@ inline static REBOOL IS_REFINEMENT_SPECIALIZED(const RELVAL *param)
 
 // !!! R3-Alpha made frequent use of these predefined typesets.  In Ren-C
 // they have been called into question, as to exactly how copying mechanics
-// should work...whether a FUNCTION! should be duplicated when an object
+// should work...whether an ACTION! should be duplicated when an object
 // is made with one in its fields, for instance.
  
 #define TS_NOT_COPIED \

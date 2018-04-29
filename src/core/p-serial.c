@@ -36,7 +36,7 @@
 //
 //  Serial_Actor: C
 //
-static REB_R Serial_Actor(REBFRM *frame_, REBCTX *port, REBSYM action)
+static REB_R Serial_Actor(REBFRM *frame_, REBCTX *port, REBSYM verb)
 {
     FAIL_IF_BAD_PORT(port);
 
@@ -50,7 +50,7 @@ static REB_R Serial_Actor(REBFRM *frame_, REBCTX *port, REBSYM action)
 
     // Actions for an unopened serial port:
     if (not (req->flags & RRF_OPEN)) {
-        switch (action) {
+        switch (verb) {
 
         case SYM_REFLECT: {
             INCLUDE_PARAMS_OF_REFLECT;
@@ -150,7 +150,7 @@ static REB_R Serial_Actor(REBFRM *frame_, REBCTX *port, REBSYM action)
 
             REBVAL *result = OS_DO_DEVICE(req, RDC_OPEN);
             assert(result != NULL); // should be synchronous
-            if (rebTypeOf(result) == RXT_ERROR)
+            if (rebDid("lib/error?", result, END))
                 rebFail (result, END);
             rebRelease(result); // ignore result
 
@@ -166,7 +166,7 @@ static REB_R Serial_Actor(REBFRM *frame_, REBCTX *port, REBSYM action)
     }
 
     // Actions for an open socket:
-    switch (action) {
+    switch (verb) {
 
     case SYM_REFLECT: {
         INCLUDE_PARAMS_OF_REFLECT;
@@ -223,7 +223,7 @@ static REB_R Serial_Actor(REBFRM *frame_, REBCTX *port, REBSYM action)
         //
         REBVAL *result = OS_DO_DEVICE(req, RDC_READ);
         assert(result != NULL);
-        if (rebTypeOf(result) != RXT_ERROR)
+        if (rebDid("lib/error?", result, END))
             rebFail (result, END);
         rebRelease(result);
 
@@ -273,7 +273,7 @@ static REB_R Serial_Actor(REBFRM *frame_, REBCTX *port, REBSYM action)
         //
         REBVAL *result = OS_DO_DEVICE(req, RDC_WRITE);
         assert(result != NULL);
-        if (rebTypeOf(result) == RXT_ERROR)
+        if (rebDid("lib/error?", result, END))
             rebFail (result, END);
         rebRelease(result); // ignore result
 
@@ -301,7 +301,7 @@ static REB_R Serial_Actor(REBFRM *frame_, REBCTX *port, REBSYM action)
         if (req->flags & RRF_OPEN) {
             REBVAL *result = OS_DO_DEVICE(req, RDC_CLOSE);
             assert(result != NULL);
-            if (rebTypeOf(result) == RXT_ERROR)
+            if (rebDid("lib/error?", result, END))
                 rebFail (result, END);
             rebRelease(result); // ignore result
 
@@ -313,7 +313,7 @@ static REB_R Serial_Actor(REBFRM *frame_, REBCTX *port, REBSYM action)
         break;
     }
 
-    fail (Error_Illegal_Action(REB_PORT, action));
+    fail (Error_Illegal_Action(REB_PORT, verb));
 
 return_port:
     Move_Value(D_OUT, D_ARG(1));

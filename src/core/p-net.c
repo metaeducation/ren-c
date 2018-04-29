@@ -115,7 +115,7 @@ static void Accept_New_Port(REBVAL *out, REBCTX *port, struct devreq_net *sock)
 static REB_R Transport_Actor(
     REBFRM *frame_,
     REBCTX *port,
-    REBSYM action,
+    REBSYM verb,
     enum Transport_Types proto
 ){
     FAIL_IF_BAD_PORT(port);
@@ -137,7 +137,7 @@ static REB_R Transport_Actor(
 
     if (not (sock->flags & RRF_OPEN)) {
 
-        switch (action) { // Ordered by frequency
+        switch (verb) { // Ordered by frequency
 
         case SYM_REFLECT: {
             INCLUDE_PARAMS_OF_REFLECT;
@@ -175,7 +175,7 @@ static REB_R Transport_Actor(
 
             REBVAL *o_result = OS_DO_DEVICE(sock, RDC_OPEN);
             assert(o_result != NULL);
-            if (rebTypeOf(o_result) == RXT_ERROR)
+            if (rebDid("lib/error?", o_result, END))
                 rebFail (o_result, END);
             rebRelease(o_result); // ignore result
 
@@ -200,7 +200,7 @@ static REB_R Transport_Actor(
                 DROP_GUARD_SERIES(temp);
 
                 assert(l_result != NULL);
-                if (rebTypeOf(l_result) == RXT_ERROR)
+                if (rebDid("lib/error?", l_result, END))
                     rebFail (l_result, END);
                 rebRelease(l_result); // ignore result
 
@@ -224,7 +224,7 @@ static REB_R Transport_Actor(
             break; }
 
         case SYM_CLOSE:
-            Move_Value(D_OUT, CTX_VALUE(port));
+            Move_Value(D_OUT, CTX_ARCHETYPE(port));
             return R_OUT;
 
         case SYM_ON_WAKE_UP:  // allowed after a close
@@ -237,7 +237,7 @@ static REB_R Transport_Actor(
 
     // Actions for an open socket:
 
-    switch (action) { // Ordered by frequency
+    switch (verb) { // Ordered by frequency
 
     case SYM_REFLECT: {
         INCLUDE_PARAMS_OF_REFLECT;
@@ -339,7 +339,7 @@ static REB_R Transport_Actor(
             // Request pending
         }
         else {
-            if (rebTypeOf(result) == RXT_ERROR)
+            if (rebDid("lib/error?", result, END))
                 rebFail (result, END);
 
             // a note said "recv CAN happen immediately"
@@ -432,7 +432,7 @@ static REB_R Transport_Actor(
             // Write pending !!! old comment said "do we get here?"
         }
         else {
-            if (rebTypeOf(result) == RXT_ERROR)
+            if (rebDid("lib/error?", result, END))
                 rebFail (result, END);
 
             // Note here said "send CAN happen immediately"
@@ -474,7 +474,7 @@ static REB_R Transport_Actor(
         if (sock->flags & RRF_OPEN) {
             REBVAL *result = OS_DO_DEVICE(sock, RDC_CLOSE);
             assert(result != NULL); // should be synchronous
-            if (rebTypeOf(result) == RXT_ERROR)
+            if (rebDid("lib/error?", result, END))
                 rebFail (result, END);
             rebRelease(result); // ignore result
 
@@ -489,7 +489,7 @@ static REB_R Transport_Actor(
             // Asynchronous connect, this happens in TCP_Actor
         }
         else {
-            if (rebTypeOf(result) == RXT_ERROR)
+            if (rebDid("lib/error?", result, END))
                 rebFail (result, END);
             else {
                 // This can happen with UDP, which is connectionless so it
@@ -507,10 +507,10 @@ static REB_R Transport_Actor(
         break;
     }
 
-    fail (Error_Illegal_Action(REB_PORT, action));
+    fail (Error_Illegal_Action(REB_PORT, verb));
 
 return_port:
-    Move_Value(D_OUT, CTX_VALUE(port));
+    Move_Value(D_OUT, CTX_ARCHETYPE(port));
     return R_OUT;
 }
 
@@ -518,18 +518,18 @@ return_port:
 //
 //  TCP_Actor: C
 //
-static REB_R TCP_Actor(REBFRM *frame_, REBCTX *port, REBSYM action)
+static REB_R TCP_Actor(REBFRM *frame_, REBCTX *port, REBSYM verb)
 {
-    return Transport_Actor(frame_, port, action, TRANSPORT_TCP);
+    return Transport_Actor(frame_, port, verb, TRANSPORT_TCP);
 }
 
 
 //
 //  UDP_Actor: C
 //
-static REB_R UDP_Actor(REBFRM *frame_, REBCTX *port, REBSYM action)
+static REB_R UDP_Actor(REBFRM *frame_, REBCTX *port, REBSYM verb)
 {
-    return Transport_Actor(frame_, port, action, TRANSPORT_UDP);
+    return Transport_Actor(frame_, port, verb, TRANSPORT_UDP);
 }
 
 
@@ -618,7 +618,7 @@ REBNATIVE(set_udp_multicast)
 
     REBVAL *result = OS_DO_DEVICE(sock, RDC_MODIFY);
     assert(result != NULL); // should be synchronous
-    if (rebTypeOf(result) == RXT_ERROR)
+    if (rebDid("lib/error?", result, END))
         rebFail (result, END); // !!! chain as "SET-UDP-MULTICAST failure"?
 
     rebRelease(result); // ignore result
@@ -657,7 +657,7 @@ REBNATIVE(set_udp_ttl)
 
     REBVAL *result = OS_DO_DEVICE(sock, RDC_MODIFY);
     assert(result != NULL);
-    if (rebTypeOf(result) == RXT_ERROR)
+    if (rebDid("lib/error?", result, END))
         rebFail (result, END); // !!! should chain as "SET-UDP-TTL failure"?
 
     rebRelease(result); // ignore result

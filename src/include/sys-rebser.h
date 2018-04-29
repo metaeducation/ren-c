@@ -64,7 +64,7 @@
 //   concerns specific to special treatment and handling, in interaction with
 //   the garbage collector as well as handling "relative vs specific" values.
 //
-// * Several related types (REBFUN for function, REBCTX for context) are
+// * Several related types (REBACT for function, REBCTX for context) are
 //   actually stylized arrays.  They are laid out with special values in their
 //   content (e.g. at the [0] index), or by links to other series in their
 //   `->misc` field of the REBSER node.  Hence series are the basic building
@@ -228,7 +228,7 @@
 //=//// ARRAY_FLAG_PARAMLIST //////////////////////////////////////////////=//
 //
 // ARRAY_FLAG_PARAMLIST indicates the array is the parameter list of a
-// FUNCTION! (the first element will be a canon value of the function)
+// ACTION! (the first element will be a canon value of the function)
 //
 #define ARRAY_FLAG_PARAMLIST \
     FLAGIT_LEFT(GENERAL_ARRAY_BIT + 2)
@@ -695,8 +695,8 @@ union Reb_Series_Link {
     //
     uintptr_t stamp;
 
-    // On Reb_Function body_holders, this is the specialization frame for
-    // a function--or NULL if none.
+    // On Reb_Action_Payload's body_holders, this is the specialization frame
+    // for a function--or NULL if none.
     //
     REBCTX *exemplar;
 
@@ -773,7 +773,7 @@ union Reb_Series_Misc {
         int low:16;
     } bind_index;
 
-    // FUNCTION! paramlists and ANY-CONTEXT! varlists can store a "meta"
+    // ACTION! paramlists and ANY-CONTEXT! varlists can store a "meta"
     // object.  It's where information for HELP is saved, and it's how modules
     // store out-of-band information that doesn't appear in their body.
     //
@@ -800,7 +800,7 @@ union Reb_Series_Misc {
 
     // some HANDLE!s use this for GC finalization
     //
-    CLEANUP_FUNC cleaner;
+    CLEANUP_CFUNC cleaner;
 
     // Because a bitset can get very large, the negation state is stored
     // as a boolean in the series.  Since negating a bitset is intended

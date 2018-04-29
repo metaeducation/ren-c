@@ -435,7 +435,7 @@ REBTYPE(Event)
 {
     UNUSED(frame_);
 
-    fail (Error_Illegal_Action(REB_EVENT, action));
+    fail (Error_Illegal_Action(REB_EVENT, verb));
 }
 
 

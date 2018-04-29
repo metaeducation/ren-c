@@ -147,7 +147,7 @@ void Do_Core_Traced(REBFRM * const f)
     while (TRUE) {
         if (not (
             (f->flags.bits & DO_FLAG_APPLYING) // only value is END
-            or IS_FUNCTION(f->value)
+            or IS_ACTION(f->value)
             or (Trace_Flags & TRACE_FLAG_FUNCTION)
         )){
             Debug_Space(cast(REBCNT, 4 * depth));
@@ -173,7 +173,7 @@ void Do_Core_Traced(REBFRM * const f)
                 if (IS_END(var) || IS_VOID(var)) {
                     Debug_Fmt_(" :"); // just show nothing
                 }
-                else if (IS_FUNCTION(var)) {
+                else if (IS_ACTION(var)) {
                     const REBOOL locals = FALSE;
                     const char *type_utf8 = STR_HEAD(Get_Type_Name(var));
                     REBARR *words = List_Func_Words(var, locals);
@@ -247,7 +247,7 @@ REB_R Apply_Core_Traced(REBFRM * const f)
     // We can only tell if it's the last phase *before* the apply, because if
     // we check *after* it may change to become the last and need R_REDO_XXX.
     //
-    REBOOL last_phase = (FUNC_UNDERLYING(f->phase) == f->phase);
+    REBOOL last_phase = (ACT_UNDERLYING(f->phase) == f->phase);
 
     REB_R r = Apply_Core(f);
 

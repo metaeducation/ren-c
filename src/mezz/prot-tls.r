@@ -591,7 +591,7 @@ parse-messages: function [
        110 "Unsupported extension"
     ])
 
-    ; The structure has a field called LENGTH, so when a FUNCTION! is used
+    ; The structure has a field called LENGTH, so when an ACTION! is used
     ; that field is picked up.
     ;
     <with> length

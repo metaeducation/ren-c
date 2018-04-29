@@ -186,7 +186,7 @@ unset 'function ;-- we'll define it later, use FUNC until then
 
 
 ; Ren-C changed the function spec dialect to use TAG!s.  Although MAKE of
-; a FUNCTION! as a fundamental didn't know keywords (e.g. RETURN), FUNC
+; an ACTION! as a fundamental didn't know keywords (e.g. RETURN), FUNC
 ; was implemented as a native that could also be implemented in usermode.
 ; FUNCTION added some more features.
 ;
@@ -233,7 +233,7 @@ func: old-func [
         ]
     ]]
 
-    ; R3-Alpha did not copy the spec or body in MAKE FUNCTION!, but FUNC and
+    ; R3-Alpha did not copy the spec or body in MAKE ACTION!, but FUNC and
     ; FUNCTION would do it.  Since we copied above in order to mutate to
     ; account for differences in the spec language, don't do it again.
     ;
@@ -688,13 +688,11 @@ join-all: :rejoin
 
 make-action: func [
     {Internal generator used by FUNCTION and PROCEDURE specializations.}
-    return: [function!]
-    generator [function!]
-        {Arity-2 "lower"-level function generator to use (e.g. FUNC or PROC)}
+    return: [action!]
+    generator [action!]
+        {Arity-2 "lower"-level generator to use (e.g. FUNC or PROC)}
     spec [block!]
-        {Help string (opt) followed by arg words (and opt type and string)}
     body [block!]
-        {The body block of the function}
     <local>
         new-spec var other
         new-body exclusions locals defaulters statics

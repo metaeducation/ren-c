@@ -103,10 +103,6 @@ console!: make object! [
         last-result: :v
         case [
             unset? 'v [] ;-- void evaluation, just don't print anything
-
-            function? :v [ ;-- fully molded function output is too much
-                print [result "#[function!" (mold words-of :v) "...]"]
-            ]
         ]
         else [
             print [result (mold :v)]
@@ -324,7 +320,7 @@ host-console: function [
         block? first prior [first prior]
     ] !! []
 
-    ; QUIT handling (uncaught THROW/NAME with the name as the QUIT FUNCTION!)
+    ; QUIT handling (uncaught THROW/NAME with the name as the QUIT ACTION!)
     ;
     ; !!! R3-Alpha permitted arbitrary values for parameterized QUIT, which
     ; would be what DO of a script would return.  But if not an integer,
@@ -368,7 +364,7 @@ host-console: function [
         ] !! 1
     ]
 
-    ; HALT handling (uncaught THROW/NAME with the name as the HALT FUNCTION!)
+    ; HALT handling (uncaught THROW/NAME with the name as the HALT ACTION!)
     ;
     all [
         error? status
@@ -410,8 +406,8 @@ host-console: function [
             ; has a chance to be initialized.
             ;
             all [
-                function? :system/console ;-- starts as BLANK!
-                function? :system/console/print-error ;-- may not be set
+                action? :system/console ;-- starts as BLANK!
+                action? :system/console/print-error ;-- may not be set
             ] then [
                 system/console/print-error (status)
             ] else [
@@ -453,7 +449,7 @@ host-console: function [
         if block? prior [
             case [
                 find directives #host-console-error [
-                    print "** HOST-CONSOLE FUNCTION! ITSELF RAISED ERROR"
+                    print "** HOST-CONSOLE ACTION! ITSELF RAISED ERROR"
                     print "** SAFE RECOVERY NOT LIKELY, BUT TRYING ANYWAY"
                 ]
                 not find directives #no-unskin-if-error [
@@ -481,7 +477,7 @@ host-console: function [
         ]
         return compose/deep/only [
             ;
-            ; Can't pass `result` in directly, because it might be a FUNCTION!
+            ; Can't pass `result` in directly, because it might be an ACTION!
             ; (which when composed in will execute instead of be passed as a
             ; parameter).  Can't use QUOTE because it would not allow BAR!.
             ; Use UNEVAL, which is a stronger QUOTE created for this purpose.
@@ -812,7 +808,7 @@ echo: procedure [
     ensure-echo-on: default [does [
         ;
         ; Hijacking is a NO-OP if the functions are the same.
-        ; (this is indicated by a BLANK! return vs a FUNCTION!)
+        ; (this is indicated by a BLANK! return vs an ACTION!)
         ;
         hijack 'write-stdout 'hook-out
         hijack 'input 'hook-in

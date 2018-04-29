@@ -108,7 +108,7 @@ http-awake: function [event] [
     port: event/port
     http-port: port/locals
     state: http-port/state
-    if function? :http-port/awake [state/awake: :http-port/awake]
+    if action? :http-port/awake [state/awake: :http-port/awake]
     awake: :state/awake
     switch event/type [
         read [
@@ -625,7 +625,7 @@ sys/make-scheme [
             /string
             <local> foo
         ][
-            foo: either function? :port/awake [
+            foo: if action? :port/awake [
                 unless open? port [
                     cause-error 'Access 'not-open port/spec/ref
                 ]
@@ -634,7 +634,7 @@ sys/make-scheme [
                 ]
                 port/state/awake: :port/awake
                 do-request port
-            ][
+            ] else [
                 sync-op port []
             ]
             if lines or (string) [
@@ -664,7 +664,7 @@ sys/make-scheme [
                     value
                 ]
             ]
-            either function? :port/awake [
+            if action? :port/awake [
                 unless open? port [
                     cause-error 'Access 'not-open port/spec/ref
                 ]
@@ -675,7 +675,7 @@ sys/make-scheme [
                 parse-write-dialect port value
                 do-request port
                 port
-            ][
+            ] else [
                 sync-op port [parse-write-dialect port value]
             ]
         ]

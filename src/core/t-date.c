@@ -894,22 +894,22 @@ REBTYPE(Date)
 
     REBVAL *arg = D_ARGC > 1 ? D_ARG(2) : NULL;
 
-    if (action == SYM_SUBTRACT || action == SYM_ADD) {
+    if (verb == SYM_SUBTRACT || verb == SYM_ADD) {
         REBINT  type = VAL_TYPE(arg);
 
         if (type == REB_DATE) {
-            if (action == SYM_SUBTRACT) {
+            if (verb == SYM_SUBTRACT) {
                 Init_Integer(D_OUT, Diff_Date(date, VAL_DATE(arg)));
                 return R_OUT;
             }
         }
         else if (type == REB_TIME) {
-            if (action == SYM_ADD) {
+            if (verb == SYM_ADD) {
                 SET_VAL_FLAG(D_OUT, DATE_FLAG_HAS_TIME);
                 secs += VAL_NANO(arg);
                 goto fixTime;
             }
-            if (action == SYM_SUBTRACT) {
+            if (verb == SYM_SUBTRACT) {
                 SET_VAL_FLAG(D_OUT, DATE_FLAG_HAS_TIME);
                 secs -= VAL_NANO(arg);
                 goto fixTime;
@@ -917,23 +917,23 @@ REBTYPE(Date)
         }
         else if (type == REB_INTEGER) {
             REBINT num = Int32(arg);
-            if (action == SYM_ADD) {
+            if (verb == SYM_ADD) {
                 day += num;
                 goto fixDate;
             }
-            if (action == SYM_SUBTRACT) {
+            if (verb == SYM_SUBTRACT) {
                 day -= num;
                 goto fixDate;
             }
         }
         else if (type == REB_DECIMAL) {
             REBDEC dec = Dec64(arg);
-            if (action == SYM_ADD) {
+            if (verb == SYM_ADD) {
                 SET_VAL_FLAG(D_OUT, DATE_FLAG_HAS_TIME);
                 secs += (REBI64)(dec * TIME_IN_DAY);
                 goto fixTime;
             }
-            if (action == SYM_SUBTRACT) {
+            if (verb == SYM_SUBTRACT) {
                 SET_VAL_FLAG(D_OUT, DATE_FLAG_HAS_TIME);
                 secs -= (REBI64)(dec * TIME_IN_DAY);
                 goto fixTime;
@@ -941,7 +941,7 @@ REBTYPE(Date)
         }
     }
     else {
-        switch (action) {
+        switch (verb) {
         case SYM_EVEN_Q:
             return ((~day) & 1) == 0 ? R_TRUE : R_FALSE;
 
@@ -1012,10 +1012,10 @@ REBTYPE(Date)
             return R_OUT; }
 
         default:
-            fail (Error_Illegal_Action(REB_DATE, action));
+            fail (Error_Illegal_Action(REB_DATE, verb));
         }
     }
-    fail (Error_Illegal_Action(REB_DATE, action));
+    fail (Error_Illegal_Action(REB_DATE, verb));
 
 fixTime:
     Normalize_Time(&secs, &day);

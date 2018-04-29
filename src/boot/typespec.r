@@ -15,6 +15,7 @@ REBOL [
     }
 ]
 
+action      ["an invokable Rebol subroutine" action]
 bar         ["expression evaluation barrier" internal]
 binary      ["string series of bytes" string]
 bitset      ["set of bit flags" string]
@@ -28,8 +29,7 @@ email       ["email address" string]
 error       ["errors and throws" context]
 event       ["user interface event (efficiently sized)" opt-object]
 file        ["file name or path" string]
-frame       ["arguments and locals of a specific function invocation" context]
-function    ["interpreted function (user-defined or mezzanine)" function]
+frame       ["arguments and locals of a specific action invocation" context]
 get-path    ["the value of a path" block]
 get-word    ["the value of a word (variable)" word]
 gob         ["graphical object" opt-object]
@@ -64,5 +64,4 @@ unicode     ["string of unicoded characters" string]
 url         ["uniform resource locator or identifier" string]
 varargs     ["evaluator position for variable numbers of arguments" internal]
 vector      ["high performance arrays (single datatype)" vector]
-;-- Note that VOID is not a type of value, and should not be in this list
 word        ["word (symbol or variable)" word]

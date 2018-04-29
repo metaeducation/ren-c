@@ -384,15 +384,15 @@ REBTYPE(Integer)
     // in the symbol based dispatch.  Consider doing another way.
     //
     if (
-        action == SYM_ADD
-        || action == SYM_SUBTRACT
-        || action == SYM_MULTIPLY
-        || action == SYM_DIVIDE
-        || action == SYM_POWER
-        || action == SYM_INTERSECT
-        || action == SYM_UNION
-        || action == SYM_DIFFERENCE
-        || action == SYM_REMAINDER
+        verb == SYM_ADD
+        or verb == SYM_SUBTRACT
+        or verb == SYM_MULTIPLY
+        or verb == SYM_DIVIDE
+        or verb == SYM_POWER
+        or verb == SYM_INTERSECT
+        or verb == SYM_UNION
+        or verb == SYM_DIFFERENCE
+        or verb == SYM_REMAINDER
     ){
         if (IS_INTEGER(val2))
             arg = VAL_INT64(val2);
@@ -401,7 +401,7 @@ REBTYPE(Integer)
         else {
             // Decimal or other numeric second argument:
             REBCNT n = 0; // use to flag special case
-            switch(action) {
+            switch (verb) {
             // Anything added to an integer is same as adding the integer:
             case SYM_ADD:
             case SYM_MULTIPLY:
@@ -409,7 +409,7 @@ REBTYPE(Integer)
                 Move_Value(D_OUT, val2);  // Use as temp workspace
                 Move_Value(val2, val);
                 Move_Value(val, D_OUT);
-                return Value_Dispatch[VAL_TYPE(val)](frame_, action);
+                return Value_Dispatch[VAL_TYPE(val)](frame_, verb);
 
             // Only type valid to subtract from, divide into, is decimal/money:
             case SYM_SUBTRACT:
@@ -419,33 +419,33 @@ REBTYPE(Integer)
             case SYM_REMAINDER:
             case SYM_POWER:
                 if (IS_DECIMAL(val2) || IS_PERCENT(val2)) {
-                    Init_Decimal(val, (REBDEC)num); // convert main arg
-                    return T_Decimal(frame_, action);
+                    Init_Decimal(val, cast(REBDEC, num)); // convert main arg
+                    return T_Decimal(frame_, verb);
                 }
                 if (IS_MONEY(val2)) {
                     Init_Money(val, int_to_deci(VAL_INT64(val)));
-                    return T_Money(frame_, action);
+                    return T_Money(frame_, verb);
                 }
                 if (n > 0) {
                     if (IS_TIME(val2)) {
                         VAL_NANO(val) = SEC_TIME(VAL_INT64(val));
                         VAL_SET_TYPE_BITS(val, REB_TIME);
-                        return T_Time(frame_, action);
+                        return T_Time(frame_, verb);
                     }
                     if (IS_DATE(val2))
-                        return T_Date(frame_, action);
+                        return T_Date(frame_, verb);
                 }
 
             default:
                 break;
             }
-            fail (Error_Math_Args(REB_INTEGER, action));
+            fail (Error_Math_Args(REB_INTEGER, verb));
         }
     }
     else
         arg = 0xDECAFBAD; // wasteful, but avoid maybe unassigned warning
 
-    switch (action) {
+    switch (verb) {
 
     case SYM_COPY:
         Move_Value(D_OUT, val);
@@ -483,9 +483,9 @@ REBTYPE(Integer)
         }
         // Fall thru
     case SYM_POWER:
-        Init_Decimal(val, (REBDEC)num);
-        Init_Decimal(val2, (REBDEC)arg);
-        return T_Decimal(frame_, action);
+        Init_Decimal(val, cast(REBDEC, num));
+        Init_Decimal(val2, cast(REBDEC, arg));
+        return T_Decimal(frame_, verb);
 
     case SYM_REMAINDER:
         if (arg == 0)
@@ -588,7 +588,7 @@ REBTYPE(Integer)
         break; }
 
     default:
-        fail (Error_Illegal_Action(REB_INTEGER, action));
+        fail (Error_Illegal_Action(REB_INTEGER, verb));
     }
 
     Init_Integer(D_OUT, num);

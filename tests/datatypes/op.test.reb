@@ -1,7 +1,7 @@
 ; datatypes/op.r
 (enfixed? '+)
 (error? trap [enfixed? 1])
-(function? get '+)
+(action? get '+)
 
 ; #1934
 (error? trap [do reduce [1 get '+ 2]])

@@ -185,8 +185,8 @@ static void Startup_Base(REBARR *boot_base)
     // top-level SET-WORD! in the base block to Lib_Context as well.
     //
     // Without this shallow walk looking for set words, an assignment like
-    // `function: func [...] [...]` would not have a slot in the Lib_Context
-    // for FUNCTION to bind to.  So FUNCTION: would be an unbound SET-WORD!,
+    // `foo: func [...] [...]` would not have a slot in the Lib_Context
+    // for FOO to bind to.  So FOO: would be an unbound SET-WORD!,
     // and give an error on the assignment.
     //
     Bind_Values_Set_Midstream_Shallow(head, Lib_Context);
@@ -248,7 +248,7 @@ static void Startup_Sys(REBARR *boot_sys) {
 // the integer datatype value).  Returns an array of words for the added
 // datatypes to use in SYSTEM/CATALOG/DATATYPES
 //
-// Note the type enum starts at 1 (REB_FUNCTION), given that REB_0 is used
+// Note the type enum starts at 1 (REB_ACTION), given that REB_0 is used
 // for special purposes and not correspond to a user-visible type.  REB_MAX is
 // used for void, and also not value type.  Hence the total number of types is
 // REB_MAX - 1.
@@ -260,8 +260,8 @@ static REBARR *Startup_Datatypes(REBARR *boot_types, REBARR *boot_typespecs)
 
     RELVAL *word = ARR_HEAD(boot_types);
 
-    if (VAL_WORD_SYM(word) != SYM_FUNCTION_X)
-        panic (word); // First type should be FUNCTION!
+    if (VAL_WORD_SYM(word) != SYM_ACTION_X)
+        panic (word); // First type should be ACTION!
 
     REBARR *catalog = Make_Array(REB_MAX - 1);
 
@@ -324,7 +324,7 @@ static void Startup_True_And_False(void)
 //
 //  {Creates datatype action (for internal usage only).}
 //
-//      return: [function!]
+//      return: [action!]
 //      :verb [set-word! word!]
 //      spec [block!]
 //  ]
@@ -349,14 +349,14 @@ REBNATIVE(action)
     //
     REBFLGS flags = MKF_KEYWORDS | MKF_FAKE_RETURN;
 
-    REBFUN *fun = Make_Function(
+    REBACT *a = Make_Action(
         Make_Paramlist_Managed_May_Fail(spec, flags),
-        &Action_Dispatcher,
+        &Type_Action_Dispatcher,
         NULL, // no facade (use paramlist)
         NULL // no specialization exemplar (or inherited exemplar)
     );
 
-    Move_Value(FUNC_BODY(fun), ARG(verb));
+    Move_Value(ACT_BODY(a), ARG(verb));
 
     // A lookback quoting function that quotes a SET-WORD! on its left is
     // responsible for setting the value if it wants it to change since the
@@ -364,8 +364,8 @@ REBNATIVE(action)
     // assignment, it's good practice to evaluate the whole expression to
     // the result the SET-WORD! was set to, so `x: y: op z` makes `x = y`.
     //
-    Move_Value(Sink_Var_May_Fail(ARG(verb), SPECIFIED), FUNC_VALUE(fun));
-    Move_Value(D_OUT, FUNC_VALUE(fun));
+    Move_Value(Sink_Var_May_Fail(ARG(verb), SPECIFIED), ACT_ARCHETYPE(a));
+    Move_Value(D_OUT, ACT_ARCHETYPE(a));
 
     // !!! A very hacky (yet less hacky than R3-Alpha) re-dispatch of APPEND
     // as WRITE/APPEND on ports requires knowing what the WRITE action is.
@@ -440,15 +440,13 @@ static void Add_Lib_Keys_R3Alpha_Cant_Make(void)
 
 
 //
-//  Init_Function_Tags: C
+//  Init_Action_Spec_Tags: C
 //
 // FUNC and PROC search for these tags, like <opt> and <local>.  They are
 // natives and run during bootstrap, so these string comparisons are
 // needed.
 //
-// Note: Not done with a table, because older TCCs don't support that.
-//
-static void Init_Function_Tags(void)
+static void Init_Action_Spec_Tags(void)
 {
     Root_With_Tag = rebLock(rebTag("with"), END);
     Root_Ellipsis_Tag = rebLock(rebTag("..."), END);
@@ -457,7 +455,7 @@ static void Init_Function_Tags(void)
     Root_Local_Tag = rebLock(rebTag("local"), END);
 }
 
-static void Shutdown_Function_Tags(void)
+static void Shutdown_Action_Spec_Tags(void)
 {
     rebRelease(Root_With_Tag);
     rebRelease(Root_Ellipsis_Tag);
@@ -468,42 +466,40 @@ static void Shutdown_Function_Tags(void)
 
 
 //
-//  Init_Function_Meta_Shim: C
+//  Init_Action_Meta_Shim: C
 //
-// Make_Paramlist_Managed_May_Fail() needs the object archetype FUNCTION-META
+// Make_Paramlist_Managed_May_Fail() needs the object archetype ACTION-META
 // from %sysobj.r, to have the keylist to use in generating the info used
 // by HELP for the natives.  However, natives themselves are used in order
 // to run the object construction in %sysobj.r
 //
 // To break this Catch-22, this code builds a field-compatible version of
-// FUNCTION-META.  After %sysobj.r is loaded, an assert checks to make sure
+// ACTION-META.  After %sysobj.r is loaded, an assert checks to make sure
 // that this manual construction actually matches the definition in the file.
 //
-static void Init_Function_Meta_Shim(void) {
+static void Init_Action_Meta_Shim(void) {
     REBSYM field_syms[6] = {
         SYM_SELF, SYM_DESCRIPTION, SYM_RETURN_TYPE, SYM_RETURN_NOTE,
         SYM_PARAMETER_TYPES, SYM_PARAMETER_NOTES
     };
-    REBCTX *function_meta = Alloc_Context(REB_OBJECT, 6);
+    REBCTX *meta = Alloc_Context(REB_OBJECT, 6);
     REBCNT i = 1;
     for (; i <= 6; ++i) {
         //
         // BLANK! is used for the fields instead of void (required for
         // R3-Alpha compatibility to load the object)
         //
-        Init_Blank(
-            Append_Context(function_meta, NULL, Canon(field_syms[i - 1]))
-        );
+        Init_Blank(Append_Context(meta, NULL, Canon(field_syms[i - 1])));
     }
 
-    Init_Object(CTX_VAR(function_meta, 1), function_meta); // it's "selfish"
+    Init_Object(CTX_VAR(meta, 1), meta); // it's "selfish"
 
-    Root_Function_Meta = Init_Object(Alloc_Value(), function_meta);
-    rebLock(Root_Function_Meta, END);
+    Root_Action_Meta = Init_Object(Alloc_Value(), meta);
+    rebLock(Root_Action_Meta, END);
 }
 
-static void Shutdown_Function_Meta_Shim(void) {
-    rebRelease(Root_Function_Meta);
+static void Shutdown_Action_Meta_Shim(void) {
+    rebRelease(Root_Action_Meta);
 }
 
 
@@ -533,7 +529,7 @@ static REBARR *Startup_Natives(REBARR *boot_natives)
 {
     // Must be called before first use of Make_Paramlist_Managed_May_Fail()
     //
-    Init_Function_Meta_Shim();
+    Init_Action_Meta_Shim();
 
     RELVAL *item = ARR_HEAD(boot_natives);
 
@@ -614,7 +610,7 @@ static REBARR *Startup_Natives(REBARR *boot_natives)
         //
         REBFLGS flags = MKF_KEYWORDS | MKF_FAKE_RETURN;
 
-        REBFUN *fun = Make_Function(
+        REBACT *act = Make_Action(
             Make_Paramlist_Managed_May_Fail(KNOWN(spec), flags),
             Native_C_Funcs[n], // "dispatcher" is unique to this "native"
             NULL, // no facade (use paramlist)
@@ -629,11 +625,11 @@ static REBARR *Startup_Natives(REBARR *boot_natives)
             ++item;
             if (not IS_BLOCK(body))
                 panic (body);
-            Move_Value(FUNC_BODY(fun), body);
+            Move_Value(ACT_BODY(act), body);
         }
 
         Prep_Non_Stack_Cell(&Natives[n]);
-        Move_Value(&Natives[n], FUNC_VALUE(fun));
+        Move_Value(&Natives[n], ACT_ARCHETYPE(act));
 
         // Append the native to the Lib_Context under the name given.
         //
@@ -876,15 +872,15 @@ static void Init_System_Object(
     //
     Root_System = Init_Object(Alloc_Value(), system);
 
-    // Init_Function_Meta_Shim() made Root_Function_Meta as a bootstrap hack
+    // Init_Action_Meta_Shim() made Root_Action_Meta as a bootstrap hack
     // since it needed to make function meta information for natives before
     // %sysobj.r's code could run using those natives.  But make sure what it
     // made is actually identical to the definition in %sysobj.r.
     //
     assert(
         0 == CT_Context(
-            Get_System(SYS_STANDARD, STD_FUNCTION_META),
-            Root_Function_Meta,
+            Get_System(SYS_STANDARD, STD_ACTION_META),
+            Root_Action_Meta,
             1 // "strict equality"
         )
     );
@@ -899,6 +895,17 @@ static void Init_System_Object(
     // Create system/codecs object
     //
     Init_Object(Get_System(SYS_CODECS, 0), Alloc_Context(REB_OBJECT, 10));
+
+    // The "standard error" template was created as an OBJECT!, because the
+    // `make error!` functionality is not ready when %sysobj.r runs.  Fix
+    // up its archetype so that it is an actual ERROR!.
+    //
+    REBVAL *std_error = Get_System(SYS_STANDARD, STD_ERROR);
+    assert(IS_OBJECT(std_error));
+    VAL_SET_TYPE_BITS(std_error, REB_ERROR);
+    VAL_SET_TYPE_BITS(CTX_ARCHETYPE(VAL_CONTEXT(std_error)), REB_ERROR);
+    assert(CTX_KEY_SYM(VAL_CONTEXT(std_error), 1) == SYM_SELF);
+    VAL_SET_TYPE_BITS(VAL_CONTEXT_VAR(std_error, 1), REB_ERROR);
 }
 
 void Shutdown_System_Object(void)
@@ -1155,7 +1162,7 @@ void Startup_Core(void)
 
     Startup_Task();
 
-    Init_Function_Tags(); // !!! Note: uses BUF_UTF8, not available until here
+    Init_Action_Spec_Tags(); // Note: uses BUF_UTF8, not available until here
 
 //==//////////////////////////////////////////////////////////////////////==//
 //
@@ -1239,7 +1246,7 @@ void Startup_Core(void)
 //==//////////////////////////////////////////////////////////////////////==//
 
     // Initialize the "Do" handler to the default, Do_Core(), and the "Apply"
-    // of a FUNCTION! handler to Apply_Core().  These routines have no
+    // of an ACTION! handler to Apply_Core().  These routines have no
     // tracing, no debug handling, etc.  If those features are needed, an
     // augmented function must be substituted.
     //
@@ -1356,6 +1363,9 @@ static REBVAL *Startup_Mezzanine(BOOT_BLK *boot)
 
     Startup_Sys(VAL_ARRAY(&boot->sys));
 
+    REBVAL *finish_init = CTX_VAR(Sys_Context, SYS_CTX_FINISH_INIT_CORE);
+    assert(IS_ACTION(finish_init));
+
     // The FINISH-INIT-CORE function should likely do very little.  But right
     // now it is where the user context is created from the lib context (a
     // copy with some omissions), and where the mezzanine definitions are
@@ -1366,7 +1376,7 @@ static REBVAL *Startup_Mezzanine(BOOT_BLK *boot)
     if (Apply_Only_Throws(
         result,
         fully,
-        Sys_Func(SYS_CTX_FINISH_INIT_CORE), // %sys-start.r function to call
+        finish_init, // %sys-start.r function to call
         KNOWN(&boot->mezz), // boot-mezz argument
         END
     )){
@@ -1411,8 +1421,8 @@ void Shutdown_Core(void)
     Shutdown_System_Object();
     Shutdown_Typesets();
 
-    Shutdown_Function_Meta_Shim();
-    Shutdown_Function_Tags();
+    Shutdown_Action_Meta_Shim();
+    Shutdown_Action_Spec_Tags();
     Shutdown_Root_Vars();
 
     const REBOOL shutdown = TRUE; // go ahead and free all managed series

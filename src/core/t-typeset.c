@@ -172,7 +172,7 @@ REBOOL Update_Typeset_Bits_Core(
         if (var == NULL)
             var = item;
 
-        // Though MAKE FUNCTION! at its lowest level attempts to avoid any
+        // Though MAKE ACTION! at its lowest level attempts to avoid any
         // keywords, there are native-optimized function generators that do
         // use them.  Since this code is shared by both, it may or may not
         // set typeset flags as a parameter.  Default to always for now.
@@ -296,7 +296,7 @@ REBARR *Typeset_To_Array(const REBVAL *tset)
                 //
                 // !!! A NONE! value is currently supported in typesets to
                 // indicate that they take optional values.  This may wind up
-                // as a feature of MAKE FUNCTION! only.
+                // as a feature of MAKE ACTION! only.
                 //
                 Init_Blank(value);
             }
@@ -382,13 +382,16 @@ REBTYPE(Typeset)
     REBVAL *val = D_ARG(1);
     REBVAL *arg = D_ARGC > 1 ? D_ARG(2) : NULL;
 
-    switch (action) {
+    switch (verb) {
 
     case SYM_FIND:
-        if (IS_DATATYPE(arg))
-            return R_FROM_BOOL(TYPE_CHECK(val, VAL_TYPE_KIND(arg)));
+        if (not IS_DATATYPE(arg))
+            fail (Error_Invalid(arg));
 
-        fail (Error_Invalid(arg));
+        if (TYPE_CHECK(val, VAL_TYPE_KIND(arg)))
+            return R_BAR;
+
+        return R_BLANK;
 
     case SYM_INTERSECT:
     case SYM_UNION:
@@ -399,12 +402,12 @@ REBTYPE(Typeset)
         else if (not IS_TYPESET(arg))
             fail (Error_Invalid(arg));
 
-        if (action == SYM_UNION)
+        if (verb == SYM_UNION)
             VAL_TYPESET_BITS(val) |= VAL_TYPESET_BITS(arg);
-        else if (action == SYM_INTERSECT)
+        else if (verb == SYM_INTERSECT)
             VAL_TYPESET_BITS(val) &= VAL_TYPESET_BITS(arg);
         else {
-            assert(action == SYM_DIFFERENCE);
+            assert(verb == SYM_DIFFERENCE);
             VAL_TYPESET_BITS(val) ^= VAL_TYPESET_BITS(arg);
         }
         Move_Value(D_OUT, D_ARG(1));
@@ -416,6 +419,6 @@ REBTYPE(Typeset)
         return R_OUT;
 
     default:
-        fail (Error_Illegal_Action(REB_TYPESET, action));
+        fail (Error_Illegal_Action(REB_TYPESET, verb));
     }
 }

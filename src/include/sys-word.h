@@ -114,17 +114,12 @@ inline static REBCTX *VAL_WORD_CONTEXT(const REBVAL *v) {
     return CTX(binding);
 }
 
-inline static REBFUN *VAL_WORD_FUNC(const RELVAL *v) {
-    assert(IS_WORD_BOUND(v));
-    return VAL_RELATIVE(v);
-}
-
 inline static void INIT_WORD_INDEX(RELVAL *v, REBCNT i) {
     assert(IS_WORD_BOUND(v));
     assert(SAME_STR(
         VAL_WORD_SPELLING(v),
         IS_RELATIVE(v)
-            ? VAL_KEY_SPELLING(FUNC_PARAM(VAL_WORD_FUNC(v), i))
+            ? VAL_KEY_SPELLING(ACT_PARAM(VAL_RELATIVE(v), i))
             : CTX_KEY_SPELLING(VAL_WORD_CONTEXT(KNOWN(v)), i)
     ));
     v->payload.any_word.index = cast(REBINT, i);

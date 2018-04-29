@@ -307,9 +307,9 @@ ATTRIBUTE_NO_RETURN void Fail_Core(const void *p)
     //
     REBFRM *f = FS_TOP;
     while (f != Saved_State->frame) {
-        if (Is_Function_Frame(f)) {
+        if (Is_Action_Frame(f)) {
             const REBOOL drop_chunks = FALSE;
-            Drop_Function_Core(f, drop_chunks);
+            Drop_Action_Core(f, drop_chunks);
         }
 
         // See notes in Do_Va_Core() about how it is required by C standard
@@ -348,8 +348,8 @@ REBCNT Stack_Depth(void)
 
     REBFRM *f = FS_TOP;
     while (f) {
-        if (Is_Function_Frame(f))
-            if (not Is_Function_Frame_Fulfilling(f)) {
+        if (Is_Action_Frame(f))
+            if (not Is_Action_Frame_Fulfilling(f)) {
                 //
                 // We only count invoked functions (not group or path
                 // evaluations or "pending" functions that are building their
@@ -475,9 +475,9 @@ void Set_Location_Of_Error(
         //
         // Only invoked functions (not pending functions, groups, etc.)
         //
-        if (not Is_Function_Frame(f))
+        if (not Is_Action_Frame(f))
             continue;
-        if (Is_Function_Frame_Fulfilling(f))
+        if (Is_Action_Frame_Fulfilling(f))
             continue;
 
         DS_PUSH_TRASH;
@@ -603,10 +603,6 @@ REBOOL Make_Error_Object_Throws(
 
         error = Copy_Context_Shallow(root_error);
 
-        // !!! fix in Startup_Errors()?
-        //
-        RESET_VAL_HEADER(CTX_VALUE(error), REB_ERROR);
-
         vars = ERR_VARS(error);
         assert(IS_BLANK(&vars->code));
         assert(IS_BLANK(&vars->type));
@@ -687,15 +683,15 @@ REBOOL Make_Error_Object_Throws(
 
         if (category) {
             assert(IS_OBJECT(category));
-            assert(VAL_CONTEXT_KEY_SYM(category, 1) == SYM_SELF);
-            assert(VAL_CONTEXT_KEY_SYM(category, SELFISH(1)) == SYM_CODE);
+            assert(CTX_KEY_SYM(VAL_CONTEXT(category), 1) == SYM_SELF);
+            assert(CTX_KEY_SYM(VAL_CONTEXT(category), SELFISH(1)) == SYM_CODE);
             assert(IS_INTEGER(VAL_CONTEXT_VAR(category, SELFISH(1))));
 
             REBCNT code = cast(REBCNT,
                 VAL_INT32(VAL_CONTEXT_VAR(category, SELFISH(1)))
             );
 
-            assert(VAL_CONTEXT_KEY_SYM(category, SELFISH(2)) == SYM_TYPE);
+            assert(CTX_KEY_SYM(VAL_CONTEXT(category), SELFISH(2)) == SYM_TYPE);
             assert(IS_STRING(VAL_CONTEXT_VAR(category, SELFISH(2))));
 
             // Find correct message for ID: (if any)
@@ -734,7 +730,7 @@ REBOOL Make_Error_Object_Throws(
                 //
                 //     make error! [type: 'script id: 'set-self]
 
-                fail (Error_Invalid_Error_Raw(CTX_VALUE(error)));
+                fail (Error_Invalid_Error_Raw(CTX_ARCHETYPE(error)));
             }
             assert(IS_INTEGER(&vars->code));
         }
@@ -756,7 +752,7 @@ REBOOL Make_Error_Object_Throws(
         // not already there.
 
         if (not IS_BLANK(&vars->code))
-            fail (Error_Invalid_Error_Raw(CTX_VALUE(error)));
+            fail (Error_Invalid_Error_Raw(CTX_ARCHETYPE(error)));
 
         // !!! Because we will experience crashes in the molding logic,
         // we put some level of requirement besides "code # not 0".
@@ -771,7 +767,7 @@ REBOOL Make_Error_Object_Throws(
                 or IS_BLANK(&vars->message)
             )
         )){
-            fail (Error_Invalid_Error_Raw(CTX_VALUE(error)));
+            fail (Error_Invalid_Error_Raw(CTX_ARCHETYPE(error)));
         }
     }
 
@@ -850,16 +846,11 @@ REBCTX *Make_Error_Managed_Core(REBCNT code, va_list *vaptr)
 
     REBCTX *error;
     if (expected_args == 0) {
+
         // If there are no arguments, we don't need to make a new keylist...
-        // just a new varlist to hold this instance's settings. (root
-        // error keylist is already managed)
+        // just a new varlist to hold this instance's settings.
 
         error = Copy_Context_Shallow(root_error);
-
-        // !!! Should tweak root error during boot so it actually is an ERROR!
-        // (or use literal error construction syntax, if it worked?)
-        //
-        RESET_VAL_HEADER(CTX_VALUE(error), REB_ERROR);
     }
     else {
         // !!! See remarks on how the modern way to handle this may be to
@@ -873,11 +864,6 @@ REBCTX *Make_Error_Managed_Core(REBCNT code, va_list *vaptr)
         // expected values *and* their new keys in the keylist.
         //
         error = Copy_Context_Shallow_Extra(root_error, expected_args);
-
-        // !!! Should tweak root error during boot so it actually is an ERROR!
-        // (or use literal error construction syntax, if it worked?)
-        //
-        RESET_VAL_HEADER(CTX_VALUE(error), REB_ERROR);
 
         // Fix up the tail first so CTX_KEY and CTX_VAR don't complain
         // in the debug build that they're accessing beyond the error length

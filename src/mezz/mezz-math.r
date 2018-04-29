@@ -79,7 +79,7 @@ extreme-of: func [
 
     return: [any-series!] {Position where the extreme value was found}
     series [any-series!] {Series to search}
-    comparator [function!] {Comparator to use, e.g. LESSER? for MINIMUM-OF}
+    comparator [action!] {Comparator to use, e.g. LESSER? for MINIMUM-OF}
     /skip {Treat the series as records of fixed size}
     size [integer!]
     <local> spot

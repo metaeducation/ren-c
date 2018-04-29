@@ -66,7 +66,7 @@ REBEXT Ext_List[64];
 REBCNT Ext_Next = 0;
 
 
-typedef REBYTE *(INFO_FUNC)(REBINT opts, void *lib);
+typedef REBYTE *(INFO_CFUNC)(REBINT opts, void *lib);
 
 //
 // Just an ID for the handler
@@ -176,7 +176,7 @@ REBNATIVE(load_extension_helper)
         }
 
         // Call its RX_Init function for header and code body:
-        if (cast(INIT_FUNC, RX_Init)(CTX_VAR(context, STD_EXTENSION_SCRIPT),
+        if (cast(INIT_CFUNC, RX_Init)(CTX_VAR(context, STD_EXTENSION_SCRIPT),
             CTX_VAR(context, STD_EXTENSION_MODULES)) < 0) {
             OS_CLOSE_LIBRARY(VAL_LIBRARY_FD(lib));
             fail(Error_Extension_Init_Raw(path));
@@ -188,7 +188,7 @@ REBNATIVE(load_extension_helper)
         if (VAL_HANDLE_CLEANER(handle) != cleanup_extension_init_handler)
             fail(Error_Bad_Extension_Raw(handle));
 
-        INIT_FUNC RX_Init = cast(INIT_FUNC, VAL_HANDLE_CFUNC(handle));
+        INIT_CFUNC RX_Init = cast(INIT_CFUNC, VAL_HANDLE_CFUNC(handle));
         context = Copy_Context_Shallow(std_ext_ctx);
         if (
             RX_Init(
@@ -244,8 +244,8 @@ REBNATIVE(unload_extension_helper)
         if (IS_LIB_CLOSED(VAL_LIBRARY(lib)))
             fail (Error_Bad_Library_Raw());
 
-        QUIT_FUNC quitter = cast(
-            QUIT_FUNC, OS_FIND_FUNCTION(VAL_LIBRARY_FD(lib), "RX_Quit")
+        QUIT_CFUNC quitter = cast(
+            QUIT_CFUNC, OS_FIND_FUNCTION(VAL_LIBRARY_FD(lib), "RX_Quit")
         );
 
         if (quitter == NULL)
@@ -259,7 +259,7 @@ REBNATIVE(unload_extension_helper)
         if (VAL_HANDLE_CLEANER(ARG(cleaner)) != cleanup_extension_quit_handler)
             fail (Error_Invalid(ARG(cleaner)));
 
-        QUIT_FUNC quitter = cast(QUIT_FUNC, VAL_HANDLE_CFUNC(ARG(cleaner)));
+        QUIT_CFUNC quitter = cast(QUIT_CFUNC, VAL_HANDLE_CFUNC(ARG(cleaner)));
         assert(quitter != NULL);
 
         ret = quitter();
@@ -362,7 +362,7 @@ REBVAL *Prepare_Boot_Extensions(CFUNC **funcs, REBCNT n)
 void Shutdown_Boot_Extensions(CFUNC **funcs, REBCNT n)
 {
     for (; n > 1; n -= 2) {
-        cast(QUIT_FUNC, funcs[n - 1])();
+        cast(QUIT_CFUNC, funcs[n - 1])();
     }
 }
 
@@ -372,19 +372,17 @@ void Shutdown_Boot_Extensions(CFUNC **funcs, REBCNT n)
 //
 //  "Load a native from a built-in extension"
 //
-//      return: [function!]
-//          "function value, will be created from the native implementation"
-//      spec [block!]
-//          "spec of the native"
-//      impl [handle!]
-//          "a handle returned from RX_Init_ of the extension"
-//      index [integer!]
-//          "Index of the native"
-//      /body
+//      return: "Action created from the native C function"
+//          [action!]
+//      spec "spec of the native"
+//          [block!]
+//      impl "a handle returned from RX_Init_ of the extension"
+//          [handle!]
+//      index "Index of the native"
+//          [integer!]
+//      /body "Provide a user-equivalent body"
 //      code [block!]
-//          "User-equivalent body"
-//      /unloadable
-//          "The native can be unloaded later (when extension is unloaded)"
+//      /unloadable "Can be unloaded later (when extension is unloaded)"
 //  ]
 //
 REBNATIVE(load_native)
@@ -399,7 +397,7 @@ REBNATIVE(load_native)
         fail ("Index of native is outside range specified by RX_Init");
 
     REBNAT dispatcher = VAL_HANDLE_POINTER(REBNAT, ARG(impl))[index];
-    REBFUN *fun = Make_Function(
+    REBACT *native = Make_Action(
         Make_Paramlist_Managed_May_Fail(
             ARG(spec),
             MKF_KEYWORDS | MKF_FAKE_RETURN
@@ -410,12 +408,12 @@ REBNATIVE(load_native)
     );
 
     if (REF(unloadable))
-        SET_VAL_FLAG(FUNC_VALUE(fun), FUNC_FLAG_UNLOADABLE_NATIVE);
+        SET_VAL_FLAG(ACT_ARCHETYPE(native), ACTION_FLAG_UNLOADABLE_NATIVE);
 
-    if (REF(body)) {
-        Move_Value(FUNC_BODY(fun), ARG(code));
-    }
-    Move_Value(D_OUT, FUNC_VALUE(fun));
+    if (REF(body))
+        Move_Value(ACT_BODY(native), ARG(code));
+
+    Move_Value(D_OUT, ACT_ARCHETYPE(native));
     return R_OUT;
 }
 
@@ -430,7 +428,7 @@ static REB_R Unloaded_Dispatcher(REBFRM *f)
 {
     UNUSED(f);
 
-    fail (Error_Native_Unloaded_Raw(FUNC_VALUE(f->phase)));
+    fail (Error_Native_Unloaded_Raw(ACT_ARCHETYPE(f->phase)));
 }
 
 
@@ -440,19 +438,41 @@ static REB_R Unloaded_Dispatcher(REBFRM *f)
 //  "Unload a native when the containing extension is unloaded"
 //
 //      return: [<opt>]
-//      nat [function!] "The native function to be unloaded"
+//      native "The native function to be unloaded"
+//          [action!]
+//      /relax "Don't error if it's not actually unloadable (REVIEW!)"
 //  ]
 //
 REBNATIVE(unload_native)
 {
     INCLUDE_PARAMS_OF_UNLOAD_NATIVE;
 
-    REBFUN *fun = VAL_FUNC(ARG(nat));
-    if (NOT_VAL_FLAG(FUNC_VALUE(fun), FUNC_FLAG_UNLOADABLE_NATIVE))
-        fail (Error_Non_Unloadable_Native_Raw(ARG(nat)));
+    REBACT *action = VAL_ACTION(ARG(native));
+    if (not GET_ACT_FLAG(action, ACTION_FLAG_UNLOADABLE_NATIVE)) {
+        if (REF(relax)) {
+            //
+            // !!! Under the "OneAction" policy, there is no usermode visible
+            // way to distinguish an unloadable native from a user function.
+            // There could be a property written onto functions with META-OF,
+            // but the system doesn't prohibit users from tweaking that, so
+            // it isn't currently reliable.
+            //
+            // In this case, it should probably be rethought to where the
+            // loading process remembers a list of natives it loaded, instead
+            // of trying to unload every function.  But as a general premise,
+            // even though the evaluator only cares about one ACTION! as an
+            // interface, things like SOURCE or UNLOAD-NATIVE will have
+            // specific interactions with sublcasses based on the dispatcher.
+            // For minimal invasiveness right now, the /RELAX refinement just
+            // documents the issue in the unloading process.
+            //
+            return R_VOID;
+        }
 
-    FUNC_DISPATCHER(VAL_FUNC(ARG(nat))) = Unloaded_Dispatcher;
+        fail (Error_Non_Unloadable_Native_Raw(ARG(native)));
+    }
 
+    ACT_DISPATCHER(action) = &Unloaded_Dispatcher;
     return R_VOID;
 }
 
@@ -489,12 +509,12 @@ void Init_Extension_Words(const REBYTE* strings[], REBSTR *canons[], REBCNT n)
 //
 void Hook_Datatype(
     enum Reb_Kind kind,
-    REBACT act,
+    REBTAF taf,
     REBPEF pef,
     REBCTF ctf,
-    MAKE_FUNC make_func,
-    TO_FUNC to_func,
-    MOLD_FUNC mold_func
+    MAKE_CFUNC make_func,
+    TO_CFUNC to_func,
+    MOLD_CFUNC mold_func
 ) {
     if (Value_Dispatch[kind] != &T_Unhooked)
         fail ("Value_Dispatch already hooked.");
@@ -509,7 +529,7 @@ void Hook_Datatype(
     if (Mold_Or_Form_Dispatch[kind] != &MF_Unhooked)
         fail ("Mold_Or_Form_Dispatch already hooked.");
 
-    Value_Dispatch[kind] = act;
+    Value_Dispatch[kind] = taf;
     Path_Dispatch[kind] = pef;
     Compare_Types[kind] = ctf;
     Make_Dispatch[kind] = make_func;

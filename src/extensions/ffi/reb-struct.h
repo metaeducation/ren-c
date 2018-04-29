@@ -340,7 +340,7 @@ inline static REBOOL VAL_STRUCT_INACCESSIBLE(const RELVAL *v) {
 // natural vocabulary of Rebol values.  What enables the transition is that
 // arbitrary C allocations (such as an ffi_closure*) can use the new freeing
 // handler feature of a GC'd HANDLE! value.  So now "routine info" is just
-// a BLOCK! REBVAL*, which lives in the FUNC_BODY of a routine, and has some
+// a BLOCK! REBVAL*, which lives in the ACT_BODY of a routine, and has some
 // HANDLE!s in it that array.
 //
 // !!! An additional benefit is that if the structures used internally
@@ -350,8 +350,8 @@ inline static REBOOL VAL_STRUCT_INACCESSIBLE(const RELVAL *v) {
 // internal API C code.
 //
  
-inline static REBRIN *VAL_FUNC_ROUTINE(const RELVAL *v) {
-    return VAL_ARRAY(VAL_FUNC_BODY(v));
+inline static REBRIN *VAL_ACT_ROUTINE(const RELVAL *v) {
+    return VAL_ARRAY(VAL_ACT_BODY(v));
 }
 
 enum {
@@ -360,7 +360,7 @@ enum {
     // in the DLL that the routine intends to wrap.  If a callback, then
     // it's a fabricated function pointer returned by ffi_closure_alloc,
     // which presents the "thunk"...a C function that other C functions can
-    // call which will then delegate to Rebol to call the wrapped FUNCTION!.
+    // call which will then delegate to Rebol to call the wrapped ACTION!.
     //
     // Additionally, callbacks poke a data pointer into the HANDLE! with
     // ffi_closure*.  (The closure allocation routine gives back a void* and
@@ -376,7 +376,7 @@ enum {
     //
     IDX_ROUTINE_ABI = 1,
 
-    // The LIBRARY! the CFUNC* lives in if a routine, or the FUNCTION! to
+    // The LIBRARY! the CFUNC* lives in if a routine, or the ACTION! to
     // be called if this is a callback.
     //
     IDX_ROUTINE_ORIGIN = 2,
@@ -409,7 +409,7 @@ enum {
     IDX_ROUTINE_ARG_FFTYPES = 6,
 
     // A LOGIC! of whether this routine is variadic.  Since variadic-ness is
-    // something that gets exposed in the FUNCTION! interface itself, this
+    // something that gets exposed in the ACTION! interface itself, this
     // may become redundant as an internal property of the implementation.
     //
     IDX_ROUTINE_IS_VARIADIC = 7,
@@ -432,7 +432,7 @@ inline static ffi_abi RIN_ABI(REBRIN *r)
     { return cast(ffi_abi, VAL_INT32(RIN_AT(r, IDX_ROUTINE_ABI))); }
 
 inline static REBOOL RIN_IS_CALLBACK(REBRIN *r) {
-    if (IS_FUNCTION(RIN_AT(r, IDX_ROUTINE_ORIGIN)))
+    if (IS_ACTION(RIN_AT(r, IDX_ROUTINE_ORIGIN)))
         return TRUE;
     assert(
         IS_LIBRARY(RIN_AT(r, IDX_ROUTINE_ORIGIN))
@@ -453,9 +453,9 @@ inline static REBLIB *RIN_LIB(REBRIN *r) {
     return VAL_LIBRARY(RIN_AT(r, IDX_ROUTINE_ORIGIN));
 }
 
-inline static REBFUN *RIN_CALLBACK_FUNC(REBRIN *r) {
+inline static REBACT *RIN_CALLBACK_ACTION(REBRIN *r) {
     assert(RIN_IS_CALLBACK(r));
-    return VAL_FUNC(RIN_AT(r, IDX_ROUTINE_ORIGIN));
+    return VAL_ACTION(RIN_AT(r, IDX_ROUTINE_ORIGIN));
 }
 
 inline static REBVAL *RIN_RET_SCHEMA(REBRIN *r)
@@ -488,7 +488,7 @@ inline static REBOOL RIN_IS_VARIADIC(REBRIN *r)
 
 extern REBSTU *Copy_Struct_Managed(REBSTU *src);
 extern void Init_Struct_Fields(REBVAL *ret, REBVAL *spec);
-extern REBFUN *Alloc_Ffi_Function_For_Spec(REBVAL *ffi_spec, ffi_abi abi);
+extern REBACT *Alloc_Ffi_Action_For_Spec(REBVAL *ffi_spec, ffi_abi abi);
 extern void callback_dispatcher(
     ffi_cif *cif,
     void *ret,
@@ -506,6 +506,6 @@ extern void MF_Struct(REB_MOLD *mo, const RELVAL *v, REBOOL form);
 
 extern REB_R Routine_Dispatcher(REBFRM *f);
 
-inline static REBOOL IS_FUNCTION_RIN(const RELVAL *v)
-    { return VAL_FUNC_DISPATCHER(v) == &Routine_Dispatcher; }
+inline static REBOOL IS_ACTION_RIN(const RELVAL *v)
+    { return VAL_ACT_DISPATCHER(v) == &Routine_Dispatcher; }
 

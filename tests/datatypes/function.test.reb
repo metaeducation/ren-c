@@ -1,11 +1,11 @@
 ; datatypes/function.r
-(function? does ["OK"])
-(not function? 1)
-(function! = type of does ["OK"])
+(action? does ["OK"])
+(not action? 1)
+(action! = type of does ["OK"])
 ; minimum
-(function? does [])
+(action? does [])
 ; literal form
-(function? first [#[function! [[] []]]])
+(action? first [#[action! [[] []]]])
 ; return-less return value tests
 (
     f: does []
@@ -192,7 +192,7 @@
 )
 ; two-function return tests
 (
-    g: func [f [function!]] [f [return 1] 2]
+    g: func [f [action!]] [f [return 1] 2]
     1 = g :do
 )
 ; BREAK out of a function
@@ -269,7 +269,7 @@
 (lf: func ['x] [:x] (quote a:) == lf a:)
 (lf: func ['x] [:x] 30 == lf (10 + 20))
 (lf: func ['x] [:x] o: context [f: 10] 10 == lf :o/f)
-; basic test for recursive function! invocation
+; basic test for recursive action! invocation
 (
     i: 0
     countdown: proc [n] [if n > 0 [i: i + 1 | countdown n - 1]]
@@ -316,7 +316,7 @@
     ]
 )
 [#1528
-    (function? func [self] [])
+    (action? func [self] [])
 ]
 [#1756
     (eval does [reduce reduce [:self] true])
@@ -328,8 +328,8 @@
     unset 'y
 
     body: [x + y]
-    f: make function! reduce [[x] body]
-    g: make function! reduce [[y] body]
+    f: make action! reduce [[x] body]
+    g: make action! reduce [[y] body]
     error? trap [f 1]
 )]
 [#2044 (

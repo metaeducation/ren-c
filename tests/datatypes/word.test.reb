@@ -92,7 +92,7 @@
     :a-value == a-value
 )
 ; natives are word-active
-(native! == type of :reduce)
+(action! == type of :reduce)
 (:blank == blank)
 ; library test?
 (

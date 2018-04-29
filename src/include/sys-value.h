@@ -488,8 +488,8 @@ inline static REBVAL *RESET_VAL_HEADER_EXTRA_Core(
     ASSERT_CELL_WRITABLE(v, file, line);
 
     // The debug build puts some extra type information onto flags
-    // which needs to be cleared out.  (e.g. FUNC_FLAG_XXX has the bit
-    // pattern for REB_FUNCTION inside of it, to help make sure that flag
+    // which needs to be cleared out.  (e.g. ACTION_FLAG_XXX has the bit
+    // pattern for REB_ACTION inside of it, to help make sure that flag
     // doesn't get used with things that aren't words).
     //
     CHECK_VALUE_FLAGS_EVIL_MACRO_DEBUG(extra);
@@ -844,9 +844,9 @@ inline static REBOOL IS_RELATIVE(const RELVAL *v) {
 #define IS_SPECIFIC(v) \
     cast(REBOOL, not IS_RELATIVE(v))
 
-inline static REBFUN *VAL_RELATIVE(const RELVAL *v) {
+inline static REBACT *VAL_RELATIVE(const RELVAL *v) {
     assert(IS_RELATIVE(v));
-    return cast(REBFUN*, v->extra.binding);
+    return cast(REBACT*, v->extra.binding);
 }
 
 inline static REBCTX *VAL_SPECIFIC_COMMON(const RELVAL *v) {
@@ -1346,7 +1346,7 @@ inline static REBVAL *Init_Char(RELVAL *out, REBUNI uni) {
 inline static REBVAL *Init_Integer(RELVAL *out, REBI64 i64) {
     RESET_VAL_HEADER(out, REB_INTEGER);
     out->payload.integer = i64;
-    out->extra.binding = NULL; // !!! avoids compiler warnings, better way?
+    UNUSED(out->extra.binding);
     return cast(REBVAL*, out);
 }
 

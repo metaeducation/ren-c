@@ -197,7 +197,7 @@ REB_R Apply_Core_Measured(REBFRM * const f)
     // We can only tell if it's the last phase *before* the apply; because if
     // we check *after* it may change to become the last and need R_REDO_XXX.
     //
-    REBOOL is_last_phase = (FUNC_UNDERLYING(f->phase) == f->phase);
+    REBOOL is_last_phase = (ACT_UNDERLYING(f->phase) == f->phase);
 
     if (is_first_phase) {
         //
@@ -223,7 +223,7 @@ REB_R Apply_Core_Measured(REBFRM * const f)
         const REBOOL cased = FALSE;
         REBINT n = Find_Map_Entry(
             m,
-            FUNC_VALUE(f->original),
+            ACT_ARCHETYPE(f->original),
             SPECIFIED,
             NULL, // searching now, not inserting, so pass NULL
             SPECIFIED,
@@ -232,7 +232,7 @@ REB_R Apply_Core_Measured(REBFRM * const f)
 
         if (n == 0) {
             //
-            // There's no entry yet for this FUNCTION!, initialize one.
+            // There's no entry yet for this ACTION!, initialize one.
 
             REBARR *a = Make_Array(IDX_STATS_MAX);
             if (f->opt_label != NULL)
@@ -247,7 +247,7 @@ REB_R Apply_Core_Measured(REBFRM * const f)
 
             n = Find_Map_Entry(
                 m,
-                FUNC_VALUE(f->original),
+                ACT_ARCHETYPE(f->original),
                 SPECIFIED,
                 stats, // inserting now, so don't pass NULL
                 SPECIFIED,

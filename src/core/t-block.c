@@ -443,8 +443,8 @@ static int Compare_Val_Custom(void *arg, const void *v1, const void *v2)
 // /case {Case sensitive sort}
 // /skip {Treat the series as records of fixed size}
 // size [integer!] {Size of each record}
-// /compare  {Comparator offset, block or function}
-// comparator [integer! block! function!]
+// /compare  {Comparator offset, block or action}
+// comparator [integer! block! action!]
 // /part {Sort only part of a series}
 // limit [any-number! any-series!] {Length of series to sort}
 // /all {Compare all fields}
@@ -464,7 +464,7 @@ static void Sort_Block(
     flags.reverse = rev;
     flags.all = all; // !!! not used?
 
-    if (IS_FUNCTION(compv)) {
+    if (IS_ACTION(compv)) {
         flags.comparator = compv;
         flags.offset = 0;
     }
@@ -741,7 +741,7 @@ REBTYPE(Array)
 
     // Common operations for any series type (length, head, etc.)
     {
-        REB_R r = Series_Common_Action_Maybe_Unhandled(frame_, action);
+        REB_R r = Series_Common_Action_Maybe_Unhandled(frame_, verb);
         if (r != R_UNHANDLED)
             return r;
     }
@@ -752,7 +752,7 @@ REBTYPE(Array)
     REBCNT index = VAL_INDEX(value);
     REBSPC *specifier = VAL_SPECIFIER(value);
 
-    switch (action) {
+    switch (verb) {
 
     case SYM_TAKE_P: {
         INCLUDE_PARAMS_OF_TAKE_P;
@@ -802,7 +802,9 @@ REBTYPE(Array)
 
     case SYM_FIND:
     case SYM_SELECT: {
-        INCLUDE_PARAMS_OF_FIND;
+        INCLUDE_PARAMS_OF_FIND; // must be same as select
+
+        const REB_R r_not_found = (verb == SYM_FIND) ? R_BLANK : R_VOID;
 
         UNUSED(PAR(series));
         UNUSED(PAR(value)); // aliased as arg
@@ -829,16 +831,13 @@ REBTYPE(Array)
             array, index, limit, arg, len, flags, skip
         );
 
-        if (ret >= limit) {
-            if (action == SYM_FIND)
-                return R_BLANK;
-            return R_VOID;
-        }
+        if (ret >= limit)
+            return r_not_found;
 
         if (REF(only))
             len = 1;
 
-        if (action == SYM_FIND) {
+        if (verb == SYM_FIND) {
             if (REF(tail) || REF(match))
                 ret += len;
             VAL_INDEX(value) = ret;
@@ -846,11 +845,9 @@ REBTYPE(Array)
         }
         else {
             ret += len;
-            if (ret >= limit) {
-                if (action == SYM_FIND)
-                    return R_BLANK;
-                return R_VOID;
-            }
+            if (ret >= limit)
+                return r_not_found;
+
             Derelativize(D_OUT, ARR_AT(array, ret), specifier);
         }
         return R_OUT;
@@ -869,7 +866,7 @@ REBTYPE(Array)
         //
         REBCNT len;
         Partial1(
-            (action == SYM_CHANGE)
+            (verb == SYM_CHANGE)
                 ? value
                 : arg,
             ARG(limit),
@@ -886,7 +883,7 @@ REBTYPE(Array)
             flags |= AM_PART;
 
         index = Modify_Array(
-            action,
+            verb,
             array,
             index,
             arg,
@@ -1068,7 +1065,7 @@ REBTYPE(Array)
     // The symbol-based action dispatch is more open-ended.  Trying this
     // to see how it works.
 
-    return T_Port(frame_, action);
+    return T_Port(frame_, verb);
 
 return_empty_block:
     Init_Block(D_OUT, Make_Array(0));

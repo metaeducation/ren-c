@@ -160,7 +160,7 @@ static inline void Unmark_Rebser(REBSER *rebser) {
 // during the propagation.  This is to prevent recursion from within the
 // subclass queueing routine itself.  Hence this routine is the workhorse for
 // the subclasses, but there are type-checked specializations for clarity
-// if you have a REBFUN*, REBCTX*, etc.
+// if you have a REBACT*, REBCTX*, etc.
 //
 // (Note: The data structure used for this processing is a "stack" and not
 // a "queue".  But when you use 'queue' as a verb, it has more leeway than as
@@ -227,36 +227,36 @@ inline static void Queue_Mark_Context_Deep(REBCTX *c) {
     // being a recursion.  (e.g. marking the context for this context's meta)
 }
 
-inline static void Queue_Mark_Function_Deep(REBFUN *f) {
-    REBARR *a = FUNC_PARAMLIST(f);
+inline static void Queue_Mark_Action_Deep(REBACT *a) {
+    REBARR *paramlist = ACT_PARAMLIST(a);
     assert(
-        ARRAY_FLAG_PARAMLIST == (SER(a)->header.bits & (
+        ARRAY_FLAG_PARAMLIST == (SER(paramlist)->header.bits & (
             ARRAY_FLAG_VARLIST | ARRAY_FLAG_PAIRLIST | ARRAY_FLAG_PARAMLIST
             | ARRAY_FLAG_FILE_LINE
         ))
     );
 
-    Queue_Mark_Array_Subclass_Deep(a);
+    Queue_Mark_Array_Subclass_Deep(paramlist);
 
-    // Further handling is in Propagate_All_GC_Marks() for ARRAY_FLAG_PARAMLIST
-    // where it can safely call Queue_Mark_Function_Deep() again without it
-    // being a recursion.  (e.g. marking underlying function for this function)
+    // Further handling in Propagate_All_GC_Marks() for ARRAY_FLAG_PARAMLIST
+    // where it can safely call Queue_Mark_Actionn_Deep() again without it
+    // being a recursion (e.g. marking underlying action for this action)
 }
 
 inline static void Queue_Mark_Map_Deep(REBMAP *m) {
-    REBARR *a = MAP_PAIRLIST(m);
+    REBARR *pairlist = MAP_PAIRLIST(m);
     assert(
-        ARRAY_FLAG_PAIRLIST == (SER(a)->header.bits & (
+        ARRAY_FLAG_PAIRLIST == (SER(pairlist)->header.bits & (
             ARRAY_FLAG_VARLIST | ARRAY_FLAG_PAIRLIST | ARRAY_FLAG_PARAMLIST
             | ARRAY_FLAG_FILE_LINE
         ))
     );
 
-    Queue_Mark_Array_Subclass_Deep(a);
+    Queue_Mark_Array_Subclass_Deep(pairlist);
 
     // Further handling is in Propagate_All_GC_Marks() for ARRAY_FLAG_PAIRLIST
     // where it can safely call Queue_Mark_Map_Deep() again without it
-    // being a recursion.  (e.g. marking underlying function for this function)
+    // being a recursion (e.g. marking underlying action for this action)
 }
 
 inline static void Queue_Mark_Binding_Deep(const RELVAL *v) {
@@ -269,7 +269,7 @@ inline static void Queue_Mark_Binding_Deep(const RELVAL *v) {
         assert(v->header.bits & CELL_FLAG_STACK);
 
         REBFRM *f = cast(REBFRM*, binding);
-        assert(f->eval_type == REB_FUNCTION);
+        assert(f->eval_type == REB_ACTION);
 
         // must be on the stack still, also...
         //
@@ -283,7 +283,7 @@ inline static void Queue_Mark_Binding_Deep(const RELVAL *v) {
     }
     else if (binding->header.bits & ARRAY_FLAG_PARAMLIST) {
         //
-        // It's a function, any reasonable added check?
+        // It's an action, any reasonable added check?
     }
     else if (binding->header.bits & ARRAY_FLAG_VARLIST) {
         //
@@ -363,37 +363,37 @@ static void Queue_Mark_Opt_Value_Deep(const RELVAL *v)
         //
         panic (v);
 
-    case REB_FUNCTION: {
-        REBFUN *func = VAL_FUNC(v);
-        Queue_Mark_Function_Deep(func);
+    case REB_ACTION: {
+        REBACT *a = VAL_ACTION(v);
+        Queue_Mark_Action_Deep(a);
         Queue_Mark_Binding_Deep(v);
 
-    #if !defined(NDEBUG)
+      #if !defined(NDEBUG)
         //
         // Make sure the [0] slot of the paramlist holds an archetype that is
         // consistent with the paramlist itself.
         //
-        REBVAL *archetype = FUNC_VALUE(func);
-        assert(FUNC_PARAMLIST(func) == VAL_FUNC_PARAMLIST(archetype));
-        assert(FUNC_BODY(func) == VAL_FUNC_BODY(archetype));
+        REBVAL *archetype = ACT_ARCHETYPE(a);
+        assert(ACT_PARAMLIST(a) == VAL_ACT_PARAMLIST(archetype));
+        assert(ACT_BODY(a) == VAL_ACT_BODY(archetype));
 
         // It would be prohibitive to do validity checks on the facade of
-        // a function on each call to FUNC_FACADE, so it is checked here.
+        // a function on each call to ACT_FACADE, so it is checked here.
         //
         // Though a facade *may* be a paramlist, it could just be an array
-        // that *looks* like a paramlist, holding the underlying function the
+        // that *looks* like a paramlist, holding the underlying action the
         // facade is "fronting for" in the head slot.  The facade must always
-        // hold the same number of parameters as the underlying function.
+        // hold the same number of parameters as the underlying action.
         //
-        REBARR *facade = LINK(FUNC_PARAMLIST(func)).facade;
-        assert(IS_FUNCTION(ARR_HEAD(facade)));
-        REBARR *underlying = ARR_HEAD(facade)->payload.function.paramlist;
+        REBARR *facade = LINK(ACT_PARAMLIST(a)).facade;
+        assert(IS_ACTION(ARR_HEAD(facade)));
+        REBARR *underlying = ARR_HEAD(facade)->payload.action.paramlist;
         if (underlying != facade) {
             assert(NOT_SER_FLAG(facade, ARRAY_FLAG_PARAMLIST));
             assert(GET_SER_FLAG(underlying, ARRAY_FLAG_PARAMLIST));
             assert(ARR_LEN(facade) == ARR_LEN(underlying));
         }
-    #endif
+      #endif
         break; }
 
     case REB_BAR:
@@ -565,7 +565,7 @@ static void Queue_Mark_Opt_Value_Deep(const RELVAL *v)
         // been passed through any parameter.
         //
         if (v->payload.varargs.facade != NULL)
-            Queue_Mark_Function_Deep(FUN(v->payload.varargs.facade));
+            Queue_Mark_Action_Deep(ACT(v->payload.varargs.facade));
 
         Queue_Mark_Binding_Deep(v);
         break; }
@@ -579,7 +579,7 @@ static void Queue_Mark_Opt_Value_Deep(const RELVAL *v)
         Queue_Mark_Context_Deep(context);
 
         // Currently the "binding" in a context is only used by FRAME! to
-        // preserve the binding of the FUNCTION! value that spawned that
+        // preserve the binding of the ACTION! value that spawned that
         // frame.  Currently that binding is typically NULL inside of a
         // function's REBVAL unless it is a definitional RETURN or LEAVE.
         //
@@ -611,18 +611,18 @@ static void Queue_Mark_Opt_Value_Deep(const RELVAL *v)
         }
     #endif
 
-        REBFUN *phase = v->payload.any_context.phase;
+        REBACT *phase = v->payload.any_context.phase;
         if (phase != NULL) {
             if (CTX_TYPE(context) != REB_FRAME)
                 panic (context);
-            Queue_Mark_Function_Deep(phase);
+            Queue_Mark_Action_Deep(phase);
         }
 
-    #if !defined(NDEBUG)
-        REBVAL *archetype = CTX_VALUE(context);
-        assert(CTX_TYPE(context) == VAL_TYPE(v));
+      #if !defined(NDEBUG)
+        REBVAL *archetype = CTX_ARCHETYPE(context);
+        assert(CTX_TYPE(context) == kind);
         assert(VAL_CONTEXT(archetype) == context);
-    #endif
+      #endif
 
         // Note: for VAL_CONTEXT_FRAME, the FRM_CALL is either on the stack
         // (in which case it's already taken care of for marking) or it
@@ -761,14 +761,14 @@ static void Propagate_All_GC_Marks(void)
         RELVAL *v = ARR_HEAD(a);
 
         if (GET_SER_FLAG(a, ARRAY_FLAG_PARAMLIST)) {
-            assert(IS_FUNCTION(v));
+            assert(IS_ACTION(v));
             assert(v->extra.binding == UNBOUND); // archetypes have no binding
 
             // These queueings cannot be done in Queue_Mark_Function_Deep
             // because of the potential for overflowing the C stack with calls
             // to Queue_Mark_Function_Deep.
 
-            REBARR *body_holder = v->payload.function.body_holder;
+            REBARR *body_holder = v->payload.action.body_holder;
             Queue_Mark_Singular_Array(body_holder);
 
             REBARR *facade = LINK(a).facade;
@@ -813,9 +813,9 @@ static void Propagate_All_GC_Marks(void)
                     //
                     // Keylist is the "facade", it may not be a paramlist but
                     // it needs to be "paramlist shaped"...and the [0] element
-                    // has to be a FUNCTION!.
+                    // has to be an ACTION!.
                     //
-                    assert(IS_FUNCTION(ARR_HEAD(keylist)));
+                    assert(IS_ACTION(ARR_HEAD(keylist)));
 
                     // Frames use paramlists as their "keylist", there is no
                     // place to put an ancestor link.
@@ -1056,7 +1056,7 @@ static void Mark_Symbol_Series(void)
 //  Mark_Natives: C
 //
 // For each native C implemenation, a REBVAL is created during init to
-// represent it as a FUNCTION!.  These are kept in a global array and are
+// represent it as an ACTION!.  These are kept in a global array and are
 // protected from GC.  It might not technically be necessary to do so for
 // all natives, but at least some have their paramlists referenced by the
 // core code (such as RETURN).
@@ -1077,7 +1077,7 @@ static void Mark_Natives(void)
 // Mark series and values that have been temporarily protected from garbage
 // collection with PUSH_GUARD_SERIES and PUSH_GUARD_VALUE.
 //
-// Note: If the REBSER is actually a REBCTX, REBFUN, or REBARR then the
+// Note: If the REBSER is actually a REBCTX, REBACT, or REBARR then the
 // reachable values for the series will be guarded appropriate to its type.
 // (e.g. guarding a REBSER of an array will mark the values in that array,
 // not just shallow mark the REBSER node)
@@ -1176,7 +1176,7 @@ static void Mark_Frame_Stack_Deep(void)
                 Queue_Mark_Opt_Value_Deep(&f->cell);
         }
 
-        if (not Is_Function_Frame(f)) {
+        if (not Is_Action_Frame(f)) {
             //
             // Consider something like `eval copy quote (recycle)`, because
             // while evaluating the group it has no anchor anywhere in the
@@ -1185,11 +1185,11 @@ static void Mark_Frame_Stack_Deep(void)
             continue;
         }
 
-        Queue_Mark_Function_Deep(f->phase); // never NULL
+        Queue_Mark_Action_Deep(f->phase); // never NULL
         if (f->opt_label != NULL) // will be NULL if no symbol
             Mark_Rebser_Only(f->opt_label);
 
-        if (!Is_Function_Frame_Fulfilling(f)) {
+        if (!Is_Action_Frame_Fulfilling(f)) {
             assert(IS_END(f->param)); // indicates function is running
 
             // refine and special can be used to GC protect an arbitrary
@@ -1236,7 +1236,7 @@ static void Mark_Frame_Stack_Deep(void)
         // of if this is the "doing pickups" or not.  If doing pickups
         // then skip the cells for pending refinement arguments.
         //
-        REBVAL *param = FUNC_FACADE_HEAD(f->phase);
+        REBVAL *param = ACT_FACADE_HEAD(f->phase);
         REBVAL *arg = f->args_head;
         for (; NOT_END(param); ++param, ++arg) {
             //
@@ -1688,14 +1688,14 @@ void Guard_Node_Core(const REBNOD *node)
 
 
 //
-//  Snapshot_All_Functions: C
+//  Snapshot_All_Actions: C
 //
 // This routine can be used to get a list of all the functions in the system
 // at a given moment in time.  Be sure to protect this array from GC when
 // enumerating if there is any chance the GC might run (e.g. if user code
 // is called to process the function list)
 //
-REBARR *Snapshot_All_Functions(void)
+REBARR *Snapshot_All_Actions(void)
 {
     REBDSP dsp_orig = DSP;
 
@@ -1714,7 +1714,7 @@ REBARR *Snapshot_All_Functions(void)
                 assert(IS_SERIES_MANAGED(s));
                 if (GET_SER_FLAG(s, ARRAY_FLAG_PARAMLIST)) {
                     REBVAL *v = KNOWN(ARR_HEAD(ARR(s)));
-                    assert(IS_FUNCTION(v));
+                    assert(IS_ACTION(v));
                     DS_PUSH(v);
                 }
                 break;

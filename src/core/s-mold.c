@@ -560,7 +560,7 @@ void Mold_Or_Form_Value(REB_MOLD *mo, const RELVAL *v, REBOOL form)
     #endif
     }
 
-    MOLD_FUNC dispatcher = Mold_Or_Form_Dispatch[VAL_TYPE(v)];
+    MOLD_CFUNC dispatcher = Mold_Or_Form_Dispatch[VAL_TYPE(v)];
     dispatcher(mo, v, form); // all types have a hook, even if it just fails
 
 #if !defined(NDEBUG)

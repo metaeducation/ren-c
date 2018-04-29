@@ -34,7 +34,7 @@ dump-obj: function [
         if any-block? :val [return spaced ["length:" length of val]]
         if image? :val [return spaced ["size:" val/size]]
         if datatype? :val [return form val]
-        if function? :val [
+        if action? :val [
             return clip-str any [title-of :val mold spec-of :val]
         ]
         if object? :val [val: words of val]
@@ -58,7 +58,7 @@ dump-obj: function [
         for-each [word val] obj [
             type: type of :val
 
-            str: if lib/match [function! object!] :type [
+            str: if lib/match [action! object!] :type [
                 spaced [word _ mold spec-of :val _ words of :val]
             ] else [
                 form word
@@ -185,59 +185,56 @@ dump: func [
 
 
 spec-of: function [
-    {Generate a block which could be used as a "spec block" from a function.}
+    {Generate a block which could be used as a "spec block" from an action.}
 
-    value [function!]
+    action [action!]
 ][
-    meta: match object! meta-of :value
+    meta: match object! meta-of :action
 
-    specializee: match function! select meta 'specializee
-    adaptee: match function! select meta 'specializee
+    specializee: match action! select meta 'specializee
+    adaptee: match action! select meta 'adaptee
     original-meta: match object! any [
-        set? 'specializee then [meta-of :specializee]
-        set? 'adaptee then [meta-of :adaptee]
+        :specializee and [meta-of :specializee]
+        :adaptee and [meta-of :adaptee]
     ]
 
-    spec: copy []
+    return collect [
+        keep compose [
+            (opt match string! any [
+                to-value select meta 'description
+                to-value select original-meta 'description
+            ])
+        ]
 
-    if description: match string! any* [
-        select meta 'description
-        select original-meta 'description
-    ][
-        append spec description
-        new-line spec true
-    ]
+        return-type: match block! any [
+            to-value select meta 'return-type
+            to-value select original-meta 'return-type
+        ]
+        return-note: match string! any [
+            to-value select meta 'return-note
+            to-value select original-meta 'return-note
+        ]
+        if return-type or (return-note) [
+            keep compose/only [
+                return: (opt return-type) (opt return_note)
+            ]
+        ]
 
-    return-type: match block! any* [
-        select meta 'return-type
-        select original-meta 'return-type
-    ]
-    return-note: match string! any* [
-        select meta 'return-note
-        select original-meta 'return-note
-    ]
-    if return-type or (return-note) [
-        append spec quote return:
-        if return-type [append/only spec return-type]
-        if return-note [append spec return-note]
-    ]
+        types: match frame! any [
+            to-value select meta 'parameter-types
+            to-value select original-meta 'parameter-types
+        ]
+        notes: match frame! any [
+            to-value select meta 'parameter-notes
+            to-value select original-meta 'parameter-notes
+        ]
 
-    types: match frame! any* [
-        select meta 'parameter-types
-        select original-meta 'parameter-types
+        for-each param words of :action [
+            keep compose/only [
+                (param) (select types param) (select notes param)
+            ]
+        ]
     ]
-    notes: match frame! any* [
-        select meta 'parameter-notes
-        select original-meta 'parameter-notes
-    ]
-
-    for-each param words of :value [
-        append spec param
-        append/only spec select types param ;-- may be void
-        append spec select notes param ;-- may be void
-    ]
-
-    return spec
 ]
 
 
@@ -247,7 +244,7 @@ title-of: function [
     value [any-value!]
 ][
     to-value switch type of :value [
-        (function!) [
+        (action!) [
             all [
                 object? meta: meta-of :value
                 string? description: select meta 'description
@@ -309,10 +306,10 @@ help: procedure [
             To see all words of a specific datatype:
 
                 help object!
-                help function!
+                help action!
                 help datatype!
 
-            Other debug functions:
+            Other debug helpers:
 
                 docs - open browser to web documentation
                 dump - display a variable and its value
@@ -371,10 +368,10 @@ help: procedure [
     if all [
         doc
         word? :topic
-        match [function! datatype!] get :topic
+        match [action! datatype!] get :topic
     ][
         item: form :topic
-        if function? get :topic [
+        if action? get :topic [
             ;
             ; !!! The logic here repeats somewhat the same thing that is done
             ; by TO-C-NAME for generating C identifiers.  It might be worth it
@@ -482,7 +479,7 @@ help: procedure [
         value: get :topic
     ]
 
-    unless function? :value [
+    unless action? :value [
         print spaced collect [
             keep [
                 (uppercase mold topic) "is" (type-name :value) "of value:"
@@ -527,7 +524,7 @@ help: procedure [
 
     ; Dig deeply, but try to inherit the most specific meta fields available
     ;
-    fields: dig-function-meta-fields :value
+    fields: dig-action-meta-fields :value
 
     description: fields/description
     return-type: :fields/return-type
@@ -547,8 +544,8 @@ help: procedure [
         original-name: uppercase mold original-name
     ]
 
-    specializee: match function! select meta 'specializee
-    adaptee: match function! select meta 'adaptee
+    specializee: match action! select meta 'specializee
+    adaptee: match action! select meta 'adaptee
     chainees: match block! select meta 'chainees
 
     classification: case [
@@ -635,8 +632,8 @@ help: procedure [
 
 
 source: procedure [
-    "Prints the source code for a function."
-    'arg [word! path! function! tag!]
+    "Prints the source code for an ACTION! (if available)"
+    'arg [word! path! action! tag!]
 ][
     case [
         tag? :arg [
@@ -659,20 +656,46 @@ source: procedure [
     ]
 
     case [
-        function? :f [
-            print unspaced [mold name ":" space mold :f]
-        ]
-        any [string? :f url? :f][
+        match [string! url!] :f [
             print f
         ]
+        not action? :f [
+            print [name "is" an mold type of :f "and not an ACTION!"]
+        ]
+    ] also [
+        leave
+    ]
+
+    ;; ACTION!
+    ;;
+    ;; The system doesn't preserve the literal spec, so it must be rebuilt
+    ;; from combining the the META-OF information.
+
+    write-stdout unspaced [
+        mold name ":" space "make action!" space mold spec-of :f
+    ]
+
+    ; While all interfaces as far as invocation is concerned has been unified
+    ; under the single ACTION! interface, the issue of getting things like
+    ; some kind of displayable "source" would have to depend on the dispatcher
+    ; used.  For the moment, BODY OF hands back limited information.  Review.
+    ;
+    switch type of body: body of :f [
+        (block!) [ ;-- FUNC, FUNCTION, PROC, PROCEDURE or (DOES of a BLOCK!)
+            print mold body
+        ]
+
+        (frame!) [ ;-- SPECIALIZE (or DOES of an ACTION!)
+            print mold body
+        ]
     ] else [
-        print [name "is a" mold type of :f "and not a FUNCTION!"]
+        print "...native code, no source available..."
     ]
 ]
 
 
 what: procedure [
-    {Prints a list of known functions.}
+    {Prints a list of known actions}
     'name [<opt> word! lit-word!]
         "Optional module name"
     /args
@@ -684,7 +707,7 @@ what: procedure [
     ctx: any [select system/modules :name | lib]
 
     for-each [word val] ctx [
-        if function? :val [
+        if action? :val [
             arg: either args [
                 arg: words of :val
                 clear find arg /local

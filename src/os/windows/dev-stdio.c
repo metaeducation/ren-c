@@ -526,7 +526,7 @@ DEVICE_CMD Read_IO(REBREQ *req)
 **
 ***********************************************************************/
 
-static DEVICE_CMD_FUNC Dev_Cmds[RDC_MAX] =
+static DEVICE_CMD_CFUNC Dev_Cmds[RDC_MAX] =
 {
     0,  // init
     Quit_IO,

@@ -90,7 +90,7 @@
 // the frame and postfix it by showing the evaluative result.
 //
 REB_R Apply_Core(REBFRM * const f) {
-    return FUNC_DISPATCHER(f->phase)(f);
+    return ACT_DISPATCHER(f->phase)(f);
 }
 
 
@@ -160,21 +160,6 @@ static inline REBOOL Start_New_Expression_Throws(REBFRM *f) {
 #endif
 
 
-static inline void Drop_Function(REBFRM *f) {
-    assert(not THROWN(f->out));
-
-    const REBOOL drop_chunks = TRUE;
-    Drop_Function_Core(f, drop_chunks);
-}
-
-static inline void Abort_Function(REBFRM *f) {
-    assert(THROWN(f->out));
-
-    const REBOOL drop_chunks = TRUE;
-    Drop_Function_Core(f, drop_chunks);
-    DS_DROP_TO(f->dsp_orig); // any unprocessed refinements or chains on stack
-}
-
 static inline void Link_Vararg_Param_To_Frame(
     REBFRM *f_state,
     const RELVAL *param,
@@ -188,7 +173,7 @@ static inline void Link_Vararg_Param_To_Frame(
     // be quickly recovered, while using only a single slot in the REBVAL.
     //
     arg->payload.varargs.param_offset = arg - f_state->args_head;
-    arg->payload.varargs.facade = FUNC_FACADE(f_state->phase);
+    arg->payload.varargs.facade = ACT_FACADE(f_state->phase);
 
     // The data feed doesn't necessarily come from the frame
     // that has the parameter and the argument.  A varlist may be
@@ -254,11 +239,10 @@ inline static void Check_Arg(
     REBVAL *refine
 ){
     if (IS_END(arg)) {
-        //
-        // This can happen, e.g. with `do [1 + comment "foo"]`.  It should act
-        // no differently from `do [1 +]`, so argument fulfillment may have
-        // to signal END (e.g. Do_Core() may fill a slot with END)
-        //
+
+        // Consider Do_Core() result for COMMENT in `do [1 + comment "foo"]`.
+        // Should be no different from `do [1 +]`, when Do_Core() gives END.
+
         if (NOT_VAL_FLAG(param, TYPESET_FLAG_ENDABLE))
             fail (Error_No_Arg(f_state, param));
 
@@ -266,18 +250,12 @@ inline static void Check_Arg(
         return;
     }
 
-    ASSERT_VALUE_MANAGED(arg);
-
-    // refine may point to the applicable refinement slot for the current
-    // arg being fulfilled, or it might just be a signal of information about
-    // the mode (see comments on `Reb_Frame.refine`)
-    //
     assert(
-        refine == ORDINARY_ARG
-        or refine == LOOKBACK_ARG
-        or refine == ARG_TO_UNUSED_REFINEMENT
-        or refine == ARG_TO_REVOKED_REFINEMENT
-        or (IS_LOGIC(refine) and IS_TRUTHY(refine)) // used
+        refine == ORDINARY_ARG // check arg type
+        or refine == LOOKBACK_ARG // check arg type
+        or refine == ARG_TO_UNUSED_REFINEMENT // ensure arg void
+        or refine == ARG_TO_REVOKED_REFINEMENT // ensure arg void
+        or (IS_LOGIC(refine) and IS_TRUTHY(refine)) // ensure arg not void
     );
 
     if (IS_VOID(arg)) {
@@ -316,10 +294,10 @@ inline static void Check_Arg(
     }
 
     if (NOT_VAL_FLAG(param, TYPESET_FLAG_VARIADIC)) {
-        if (not TYPE_CHECK(param, VAL_TYPE(arg)))
-            fail (Error_Arg_Type(f_state, param, VAL_TYPE(arg)));
+        if (TYPE_CHECK(param, VAL_TYPE(arg)))
+            return;
 
-        return;
+        fail (Error_Arg_Type(f_state, param, VAL_TYPE(arg)));
     }
 
     // Varargs are odd, because the type checking doesn't actually check the
@@ -414,20 +392,20 @@ void Do_Core(REBFRM * const f)
     }
 
     // END signals no evaluations have produced a result yet, even if some
-    // functions have run (e.g. COMMENT with FUNC_FLAG_INVISIBLE).  It also
+    // functions have run (e.g. COMMENT with ACTION_FLAG_INVISIBLE).  It also
     // is initialized bits to be safe for the GC to inspect and protect, and
     // triggers noisy alarms to help detect when someone attempts to evaluate
     // into a cell in an array (which may have its memory moved).
     //
     SET_END(f->out);
 
-    // APPLY and a DO of a FRAME! both use process_function.
+    // APPLY and a DO of a FRAME! both use process_action.
     //
     if (f->flags.bits & DO_FLAG_APPLYING) {
         evaluating = not (f->flags.bits & DO_FLAG_EXPLICIT_EVALUATE);
 
         assert(f->refine == ORDINARY_ARG); // APPLY infix not (yet?) supported
-        goto process_function;
+        goto process_action;
     }
 
     f->eval_type = VAL_TYPE(f->value);
@@ -526,9 +504,9 @@ reevaluate:;
                 );
 
             if (
-                VAL_TYPE_OR_0(current_gotten) == REB_FUNCTION // END is REB_0
+                VAL_TYPE_OR_0(current_gotten) == REB_ACTION // END is REB_0
                 and NOT_VAL_FLAG(current_gotten, VALUE_FLAG_ENFIXED)
-                and GET_VAL_FLAG(current_gotten, FUNC_FLAG_QUOTES_FIRST_ARG)
+                and GET_VAL_FLAG(current_gotten, ACTION_FLAG_QUOTES_FIRST_ARG)
             ){
                 // Yup, it quotes.  We could look for a conflict and call
                 // it an error, but instead give the left hand side precedence
@@ -547,21 +525,21 @@ reevaluate:;
                 //
                 //     foo: ('quote) -> [print quote]
                 //
-                Push_Function(
+                Push_Action(
                     f,
                     VAL_WORD_SPELLING(current),
-                    VAL_FUNC(current_gotten),
+                    VAL_ACTION(current_gotten),
                     VAL_BINDING(current_gotten)
                 );
 
                 f->refine = ORDINARY_ARG;
-                if (NOT_VAL_FLAG(current_gotten, FUNC_FLAG_INVISIBLE)) {
+                if (NOT_VAL_FLAG(current_gotten, ACTION_FLAG_INVISIBLE)) {
                   #if defined(DEBUG_UNREADABLE_BLANKS)
                     assert(IS_UNREADABLE_DEBUG(f->out) or IS_END(f->out));
                   #endif
                     SET_END(f->out);
                 }
-                goto process_function;
+                goto process_action;
             }
         }
         else if (
@@ -595,9 +573,9 @@ reevaluate:;
             const REBVAL *var_at = Get_Opt_Var_Else_End(path_at, derived);
 
             if (
-                VAL_TYPE_OR_0(var_at) == REB_FUNCTION // END is REB_0
+                VAL_TYPE_OR_0(var_at) == REB_ACTION // END is REB_0
                 and NOT_VAL_FLAG(var_at, VALUE_FLAG_ENFIXED)
-                and GET_VAL_FLAG(var_at, FUNC_FLAG_QUOTES_FIRST_ARG)
+                and GET_VAL_FLAG(var_at, ACTION_FLAG_QUOTES_FIRST_ARG)
             ){
                 goto do_path_in_current;
             }
@@ -606,16 +584,16 @@ reevaluate:;
         f->gotten = Get_Opt_Var_Else_End(f->value, f->specifier);
 
         if (
-            VAL_TYPE_OR_0(f->gotten) == REB_FUNCTION // END is REB_0
+            VAL_TYPE_OR_0(f->gotten) == REB_ACTION // END is REB_0
             and ALL_VAL_FLAGS(
                 f->gotten,
-                VALUE_FLAG_ENFIXED | FUNC_FLAG_QUOTES_FIRST_ARG
+                VALUE_FLAG_ENFIXED | ACTION_FLAG_QUOTES_FIRST_ARG
             )
         ){
-            Push_Function(
+            Push_Action(
                 f,
                 VAL_WORD_SPELLING(f->value),
-                VAL_FUNC(f->gotten),
+                VAL_ACTION(f->gotten),
                 VAL_BINDING(f->gotten)
             );
 
@@ -644,7 +622,7 @@ reevaluate:;
             //
             f->gotten = END;
             Fetch_Next_In_Frame(f);
-            goto process_function;
+            goto process_action;
         }
     }
 
@@ -666,58 +644,58 @@ reevaluate:;
 
 //==//////////////////////////////////////////////////////////////////////==//
 //
-// [FUNCTION!] (lookback or non-lookback)
+// [ACTION!] (lookback or non-lookback)
 //
-// If a function makes it to the SWITCH statement, that means it is either
-// literally a function value in the array (`do compose [(:+) 1 2]`) or is
+// If an action makes it to the SWITCH statement, that means it is either
+// literally an action value in the array (`do compose [(:+) 1 2]`) or is
 // being retriggered via EVAL
 //
-// Most function evaluations are triggered from a SWITCH on a WORD! or PATH!,
-// which jumps in at the `process_function` label.
+// Most action evaluations are triggered from a SWITCH on a WORD! or PATH!,
+// which jumps in at the `process_action` label.
 //
 //==//////////////////////////////////////////////////////////////////////==//
 
-    case REB_FUNCTION: // literal function in a block
-        Push_Function(
+    case REB_ACTION: // literal action in a block
+        Push_Action(
             f,
-            NULL, // no label, nameless literal function direct in source
-            VAL_FUNC(current),
+            NULL, // no label, nameless literal action direct in source
+            VAL_ACTION(current),
             VAL_BINDING(current)
         );
 
-        // It should not be possible to encounter a literal FUNCTION! value
+        // It should not be possible to encounter a literal ACTION! value
         // with the enfix bit set, as this bit can only be retrieved from
         // words that are assigned in contexts via SET/ENFIX.
         //
         assert(NOT_VAL_FLAG(current, VALUE_FLAG_ENFIXED));
 
-        if (NOT_VAL_FLAG(current, FUNC_FLAG_INVISIBLE))
+        if (NOT_VAL_FLAG(current, ACTION_FLAG_INVISIBLE))
             SET_END(f->out); // clear out previous result
         f->refine = ORDINARY_ARG;
 
     //==////////////////////////////////////////////////////////////////==//
     //
-    // FUNCTION! ARGUMENT FULFILLMENT AND/OR TYPE CHECKING PROCESS
+    // ACTION! ARGUMENT FULFILLMENT AND/OR TYPE CHECKING PROCESS
     //
     //==////////////////////////////////////////////////////////////////==//
 
-        // This one processing loop is able to handle ordinary function
+        // This one processing loop is able to handle ordinary action
         // invocation, specialization, and type checking of an already filled
-        // function frame.  It walks through both the formal parameters (in
+        // action frame.  It walks through both the formal parameters (in
         // the spec) and the actual arguments (in the call frame) using
         // pointer incrementation.
         //
         // Based on the parameter type, it may be necessary to "consume" an
         // expression from values that come after the invocation point.  But
-        // not all params will consume arguments for all calls.
+        // not all parameters will consume arguments for all calls.
 
-    process_function:;
+    process_action:;
 
         TRASH_POINTER_IF_DEBUG(current); // shouldn't be used below
         TRASH_POINTER_IF_DEBUG(current_gotten);
 
       #if !defined(NDEBUG)
-        Do_Process_Function_Checks_Debug(f);
+        Do_Process_Action_Checks_Debug(f);
       #endif
 
         assert(DSP >= f->dsp_orig); // REFINEMENT!s pushed by path processing
@@ -910,7 +888,7 @@ reevaluate:;
             case PARAM_CLASS_RETURN:
                 assert(VAL_PARAM_SYM(f->param) == SYM_RETURN);
 
-                if (NOT_VAL_FLAG(FUNC_VALUE(f->phase), FUNC_FLAG_RETURN)) {
+                if (not GET_ACT_FLAG(f->phase, ACTION_FLAG_RETURN)) {
                     Prep_Stack_Cell(f->arg);
                     Init_Void(f->arg);
                     goto continue_arg_loop;
@@ -924,7 +902,7 @@ reevaluate:;
             case PARAM_CLASS_LEAVE:
                 assert(VAL_PARAM_SYM(f->param) == SYM_LEAVE);
 
-                if (NOT_VAL_FLAG(FUNC_VALUE(f->phase), FUNC_FLAG_LEAVE)) {
+                if (not GET_ACT_FLAG(f->phase, ACTION_FLAG_LEAVE)) {
                     Prep_Stack_Cell(f->arg);
                     Init_Void(f->arg);
                     goto continue_arg_loop;
@@ -1066,8 +1044,7 @@ reevaluate:;
                     if (IS_QUOTABLY_SOFT(f->out)) {
                         if (Eval_Value_Throws(f->arg, f->out)) {
                             Move_Value(f->out, f->arg);
-                            Abort_Function(f);
-                            goto finished;
+                            goto abort_action;
                         }
                     }
                     else {
@@ -1080,14 +1057,14 @@ reevaluate:;
                     assert(FALSE);
                 }
 
-                if (not GET_FUN_FLAG(f->phase, FUNC_FLAG_INVISIBLE))
+                if (not GET_ACT_FLAG(f->phase, ACTION_FLAG_INVISIBLE))
                     SET_END(f->out);
                 goto check_arg;
             }
 
     //=//// VARIADIC ARG (doesn't consume anything *yet*) /////////////////=//
 
-            // Evaluation argument "hook" parameters (marked in MAKE FUNCTION!
+            // Evaluation argument "hook" parameters (marked in MAKE ACTION!
             // by a `[[]]` in the spec, and in FUNC by `<...>`).  They point
             // back to this call through a reified FRAME!, and are able to
             // consume additional arguments during the function run.
@@ -1147,8 +1124,7 @@ reevaluate:;
                     child
                 )){
                     Move_Value(f->out, f->deferred);
-                    Abort_Function(f);
-                    goto finished;
+                    goto abort_action;
                 }
 
                 // This frame's cell shouldn't have been disturbed by the
@@ -1228,8 +1204,7 @@ reevaluate:;
                 DECLARE_FRAME (child); // capture DSP *now*
                 if (Do_Next_In_Subframe_Throws(f->arg, f, flags, child)) {
                     Move_Value(f->out, f->arg);
-                    Abort_Function(f);
-                    goto finished;
+                    goto abort_action;
                 }
                 break; }
 
@@ -1250,8 +1225,7 @@ reevaluate:;
                 DECLARE_FRAME (child);
                 if (Do_Next_In_Subframe_Throws(f->arg, f, flags, child)) {
                     Move_Value(f->out, f->arg);
-                    Abort_Function(f);
-                    goto finished;
+                    goto abort_action;
                 }
                 break; }
 
@@ -1274,8 +1248,7 @@ reevaluate:;
                 Prep_Stack_Cell(f->arg);
                 if (Eval_Value_Core_Throws(f->arg, f->value, f->specifier)) {
                     Move_Value(f->out, f->arg);
-                    Abort_Function(f);
-                    goto finished;
+                    goto abort_action;
                 }
 
                 Fetch_Next_In_Frame(f);
@@ -1346,7 +1319,7 @@ reevaluate:;
 
     arg_loop_and_any_pickups_done:;
 
-        assert(IS_END(f->param)); // signals !Is_Function_Frame_Fulfilling()
+        assert(IS_END(f->param)); // signals !Is_Action_Frame_Fulfilling()
 
         if (In_Typecheck_Mode(f)) {
             if (f->varlist != NULL)
@@ -1380,7 +1353,7 @@ reevaluate:;
 
     //==////////////////////////////////////////////////////////////////==//
     //
-    // FUNCTION! ARGUMENTS NOW GATHERED, DISPATCH PHASE
+    // ACTION! ARGUMENTS NOW GATHERED, DISPATCH PHASE
     //
     //==////////////////////////////////////////////////////////////////==//
 
@@ -1403,7 +1376,7 @@ reevaluate:;
         // has written the out slot yet or not.
         //
         assert(
-            IS_END(f->out) or GET_FUN_FLAG(f->phase, FUNC_FLAG_INVISIBLE)
+            IS_END(f->out) or GET_ACT_FLAG(f->phase, ACTION_FLAG_INVISIBLE)
         );
 
         // While you can't evaluate into an array cell (because it may move)
@@ -1459,9 +1432,9 @@ reevaluate:;
         case R_OUT_IS_THROWN: {
             assert(THROWN(f->out));
 
-            if (IS_FUNCTION(f->out)) {
+            if (IS_ACTION(f->out)) {
                 if (
-                    VAL_FUNC(f->out) == NAT_FUNC(unwind)
+                    VAL_ACTION(f->out) == NAT_ACTION(unwind)
                     and Same_Binding(VAL_BINDING(f->out), f)
                 ){
                     // Do_Core catches unwinds to the current frame, so throws
@@ -1478,7 +1451,7 @@ reevaluate:;
                     goto apply_completed;
                 }
                 else if (
-                    VAL_FUNC(f->out) == NAT_FUNC(redo)
+                    VAL_ACTION(f->out) == NAT_ACTION(redo)
                     and Same_Binding(VAL_BINDING(f->out), f)
                 ){
                     // This was issued by REDO, and should be a FRAME! with
@@ -1516,7 +1489,7 @@ reevaluate:;
                     REBCTX *exemplar;
                     if (
                         f->phase != f->out->payload.any_context.phase
-                        and NULL != (exemplar = FUNC_EXEMPLAR(
+                        and NULL != (exemplar = ACT_EXEMPLAR(
                             f->out->payload.any_context.phase
                         ))
                     ){
@@ -1537,8 +1510,7 @@ reevaluate:;
 
             // Stay THROWN and let stack levels above try and catch
             //
-            Abort_Function(f);
-            goto finished; }
+            goto abort_action; }
 
         case R_OUT_TRUE_IF_WRITTEN:
             if (IS_END(f->out))
@@ -1563,13 +1535,13 @@ reevaluate:;
 
         redo_checked:
 
-            f->param = FUNC_FACADE_HEAD(f->phase);
+            f->param = ACT_FACADE_HEAD(f->phase);
             f->arg = f->args_head;
             f->special = f->arg;
             f->refine = ORDINARY_ARG; // no gathering, but need for assert
-            assert(not GET_FUN_FLAG(f->phase, FUNC_FLAG_INVISIBLE));
+            assert(not GET_ACT_FLAG(f->phase, ACTION_FLAG_INVISIBLE));
             SET_END(f->out);
-            goto process_function;
+            goto process_action;
 
         case R_REDO_UNCHECKED:
             //
@@ -1577,7 +1549,7 @@ reevaluate:;
             // run the f->phase again.  The dispatcher may have changed the
             // value of what f->phase is, for instance.
             //
-            assert(not GET_FUN_FLAG(f->phase, FUNC_FLAG_INVISIBLE));
+            assert(not GET_ACT_FLAG(f->phase, ACTION_FLAG_INVISIBLE));
             SET_END(f->out);
             goto redo_unchecked;
 
@@ -1590,7 +1562,7 @@ reevaluate:;
             goto prep_for_reevaluate;
 
         case R_INVISIBLE: {
-            assert(GET_FUN_FLAG(f->phase, FUNC_FLAG_INVISIBLE));
+            assert(GET_ACT_FLAG(f->phase, ACTION_FLAG_INVISIBLE));
 
             // It is possible that when the elider ran, that there really was
             // no output in the cell yet (e.g. `do [comment "hi" ...]`) so it
@@ -1637,7 +1609,7 @@ reevaluate:;
             //
             f->gotten = END;
 
-            Drop_Function(f);
+            Drop_Action_Core(f, TRUE); // drop_chunks = TRUE
             goto reevaluate; // we don't move index!
 
         case R_UNHANDLED: // internal use only, shouldn't be returned
@@ -1652,18 +1624,18 @@ reevaluate:;
 
     //==////////////////////////////////////////////////////////////////==//
     //
-    // FUNCTION! CALL COMPLETION
+    // ACTION! CALL COMPLETION
     //
     //==////////////////////////////////////////////////////////////////==//
 
         // Here we know the function finished and nothing threw past it or
-        // FAIL / fail()'d.  It should still be in REB_FUNCTION evaluation
+        // FAIL / fail()'d.  It should still be in REB_ACTION evaluation
         // type, and overwritten the f->out with a non-thrown value.  If the
         // function composition is a CHAIN, the chained functions are still
         // pending on the stack to be run.
 
       #if !defined(NDEBUG)
-        Do_After_Function_Checks_Debug(f);
+        Do_After_Action_Checks_Debug(f);
       #endif
 
     skip_output_check:;
@@ -1671,7 +1643,7 @@ reevaluate:;
         // If we have functions pending to run on the outputs, then do so.
         //
         while (DSP != f->dsp_orig) {
-            assert(IS_FUNCTION(DS_TOP));
+            assert(IS_ACTION(DS_TOP));
 
             Move_Value(&f->cell, f->out);
 
@@ -1683,10 +1655,8 @@ reevaluate:;
             Move_Value(fun, DS_TOP);
 
             const REBOOL fully = TRUE;
-            if (Apply_Only_Throws(f->out, fully, fun, &f->cell, END)) {
-                Abort_Function(f);
-                goto finished;
-            }
+            if (Apply_Only_Throws(f->out, fully, fun, &f->cell, END))
+                goto abort_action;
 
             DS_DROP;
         }
@@ -1696,7 +1666,7 @@ reevaluate:;
         // this frame that could be even more optimal.  However, having the
         // original function still on the stack helps make errors clearer.
         //
-        Drop_Function(f);
+        Drop_Action_Core(f, TRUE); // drop_chunks = TRUE
         break;
 
 //==//////////////////////////////////////////////////////////////////////==//
@@ -1706,7 +1676,7 @@ reevaluate:;
 // A plain word tries to fetch its value through its binding.  It will fail
 // and longjmp out of this stack if the word is unbound (or if the binding is
 // to a variable which is not set).  Should the word look up to a function,
-// then that function will be called by jumping to the ANY-FUNCTION! case.
+// then that function will be called by jumping to the ANY-ACTION! case.
 //
 //==//////////////////////////////////////////////////////////////////////==//
 
@@ -1714,11 +1684,11 @@ reevaluate:;
         if (current_gotten == END)
             current_gotten = Get_Opt_Var_May_Fail(current, f->specifier);
 
-        if (IS_FUNCTION(current_gotten)) { // before IS_VOID() is common case
-            Push_Function(
+        if (IS_ACTION(current_gotten)) { // before IS_VOID() is common case
+            Push_Action(
                 f,
                 VAL_WORD_SPELLING(current),
-                VAL_FUNC(current_gotten),
+                VAL_ACTION(current_gotten),
                 VAL_BINDING(current_gotten)
             );
 
@@ -1727,7 +1697,7 @@ reevaluate:;
                 // Note: The usual dispatch of enfix functions is not via a
                 // REB_WORD in this switch, it's by some code at the end of
                 // the switch.  So you only see this in cases like `(+ 1 2)`,
-                // -OR- after FUNC_FLAG_INVISIBLE e.g. `10 comment "hi" + 20`.
+                // or after ACTION_FLAG_INVISIBLE e.g. `10 comment "hi" + 20`.
                 //
                 f->refine = LOOKBACK_ARG;
 
@@ -1737,11 +1707,11 @@ reevaluate:;
             }
             else {
                 f->refine = ORDINARY_ARG;
-                if (NOT_VAL_FLAG(current_gotten, FUNC_FLAG_INVISIBLE))
+                if (NOT_VAL_FLAG(current_gotten, ACTION_FLAG_INVISIBLE))
                     SET_END(f->out);
             }
 
-            goto process_function;
+            goto process_action;
         }
 
         if (IS_VOID(current_gotten)) // need `:x` if `x` is unset
@@ -1919,7 +1889,7 @@ reevaluate:;
         if (IS_VOID(f->out)) // need `:x/y` if `y` is unset
             fail (Error_No_Value_Core(current, f->specifier));
 
-        if (IS_FUNCTION(f->out)) {
+        if (IS_ACTION(f->out)) {
             //
             // !!! While it is (or would be) possible to fetch an enfix or
             // invisible function from a PATH!, at this point it would be too
@@ -1927,27 +1897,27 @@ reevaluate:;
             // honors WORD!.  PATH! support is expected for the future, but
             // requires overhaul of the R3-Alpha path implementation.
             //
-            // Note this error must come *before* Push_Function(), as fail()
-            // expects f->param to be valid for f->eval_type = REB_FUNCTION,
-            // and Push_Function() trashes that.
+            // Note this error must come *before* Push_Action(), as fail()
+            // expects f->param to be valid for f->eval_type = REB_ACTION,
+            // and Push_Action() trashes that.
             //
             if (ANY_VAL_FLAGS(
                 f->out,
-                FUNC_FLAG_INVISIBLE | VALUE_FLAG_ENFIXED
+                ACTION_FLAG_INVISIBLE | VALUE_FLAG_ENFIXED
             )){
                 fail ("ENFIX/INVISIBLE dispatch w/PATH! not yet supported");
             }
 
-            Push_Function(
+            Push_Action(
                 f,
                 opt_label, // NULL label means anonymous
-                VAL_FUNC(f->out),
+                VAL_ACTION(f->out),
                 VAL_BINDING(f->out)
             );
 
             f->refine = ORDINARY_ARG; // paths are never enfixed (for now)
             SET_END(f->out); // loses enfix left hand side, invisible passthru
-            goto process_function;
+            goto process_action;
         }
 
         CLEAR_VAL_FLAG(f->out, VALUE_FLAG_UNEVALUATED);
@@ -2135,7 +2105,7 @@ reevaluate:;
 //
 // If an expression barrier is seen in-between expressions (as it will always
 // be if hit in this switch), it evaluates to void.  It only errors in
-// argument fulfillment during the switch case for ANY-FUNCTION!.
+// argument fulfillment during the switch case for ANY-ACTION!.
 //
 // Note that `DO/NEXT [| | | | 1 + 2]` will skip the bars and yield 3.  This
 // helps give BAR!s their lightweight character.  It also means that code
@@ -2277,14 +2247,14 @@ reevaluate:;
     // We want that to come back as 9, with `pos = []`.  So the evaluator
     // cannot just dispatch on REB_INTEGER in the switch() above, give you 1,
     // and consider its job done.  It has to notice that the variable `+`
-    // looks up to has been set with VALUE_FLAG_ENFIX, and keep going.
+    // looks up to is an ACTION! assigned with SET/ENFIX, and keep going.
     //
     // Next, there's a subtlety with DO_FLAG_NO_LOOKAHEAD which explains why
     // processing of the 2 argument doesn't greedily continue to advance, but
     // waits for `1 + 2` to finish.  This is because the right hand argument
     // of math operations tend to be declared #tight.
     //
-    // Slightly more nuanced is why FUNC_FLAG_INVISIBLE functions have to be
+    // Slightly more nuanced is why ACTION_FLAG_INVISIBLE functions have to be
     // considered in the lookahead also.  Consider this case:
     //
     //    do/next [1 + 2 * 3 comment ["hi"] 4 / 5] 'pos
@@ -2332,7 +2302,7 @@ post_switch:;
 //=//// FETCH WORD! TO PERFORM SPECIAL HANDLING FOR ENFIX/INVISIBLES //////=//
 
     // First things first, we fetch the WORD! (if not previously fetched) so
-    // we can see if it looks up to any kind of FUNCTION! at all.
+    // we can see if it looks up to any kind of ACTION! at all.
 
     if (f->gotten == END)
         f->gotten = Get_Opt_Var_Else_End(f->value, f->specifier);
@@ -2359,7 +2329,7 @@ post_switch:;
     // unbound word).  It'll be an error, but that code path raises it for us.
 
     if (
-        VAL_TYPE_OR_0(f->gotten) != REB_FUNCTION // END is REB_0 (UNBOUND)
+        VAL_TYPE_OR_0(f->gotten) != REB_ACTION // END is REB_0 (UNBOUND)
         or NOT_VAL_FLAG(f->gotten, VALUE_FLAG_ENFIXED)
     ){
         if (not (f->flags.bits & DO_FLAG_TO_END)) {
@@ -2367,8 +2337,8 @@ post_switch:;
             // Since it's a new expression, a DO/NEXT doesn't want to run it
             // *unless* it's "invisible"
             if (
-                VAL_TYPE_OR_0(f->gotten) != REB_FUNCTION
-                or NOT_VAL_FLAG(f->gotten, FUNC_FLAG_INVISIBLE)
+                VAL_TYPE_OR_0(f->gotten) != REB_ACTION
+                or NOT_VAL_FLAG(f->gotten, ACTION_FLAG_INVISIBLE)
             ){
                 goto finished;
             }
@@ -2397,8 +2367,8 @@ post_switch:;
             f->flags.bits |= DO_FLAG_NO_LOOKAHEAD; // might have set already
         }
         else if (
-            VAL_TYPE_OR_0(f->gotten) == REB_FUNCTION
-            and GET_VAL_FLAG(f->gotten, FUNC_FLAG_INVISIBLE)
+            VAL_TYPE_OR_0(f->gotten) == REB_ACTION
+            and GET_VAL_FLAG(f->gotten, ACTION_FLAG_INVISIBLE)
         ){
             // Even if not a DO/NEXT, we do not want START_NEW_EXPRESSION on
             // "invisible" functions.  e.g. `do [1 + 2 comment "hi"]` should
@@ -2437,7 +2407,7 @@ post_switch:;
 
     if (
         (f->flags.bits & DO_FLAG_NO_LOOKAHEAD)
-        and NOT_VAL_FLAG(f->gotten, FUNC_FLAG_INVISIBLE)
+        and NOT_VAL_FLAG(f->gotten, ACTION_FLAG_INVISIBLE)
     ){
         // Don't do enfix lookahead if asked *not* to look.  See the
         // PARAM_CLASS_TIGHT parameter convention for the use of this, as
@@ -2447,7 +2417,7 @@ post_switch:;
         goto finished;
     }
 
-    if (GET_VAL_FLAG(f->gotten, FUNC_FLAG_QUOTES_FIRST_ARG)) {
+    if (GET_VAL_FLAG(f->gotten, ACTION_FLAG_QUOTES_FIRST_ARG)) {
         //
         // Left-quoting by enfix needs to be done in the lookahead before an
         // evaluation, not this one that's after.  This happens in cases like:
@@ -2474,13 +2444,13 @@ post_switch:;
     // enfix clauses.
     //
     if (
-        GET_VAL_FLAG(f->gotten, FUNC_FLAG_DEFERS_LOOKBACK)
+        GET_VAL_FLAG(f->gotten, ACTION_FLAG_DEFERS_LOOKBACK)
         and (f->flags.bits & DO_FLAG_FULFILLING_ARG)
         and f->prior->deferred == NULL
         and NOT_VAL_FLAG(f->prior->param, TYPESET_FLAG_ENDABLE)
     ){
         assert(not (f->flags.bits & DO_FLAG_TO_END));
-        assert(Is_Function_Frame_Fulfilling(f->prior));
+        assert(Is_Action_Frame_Fulfilling(f->prior));
 
         // Must be true if fulfilling an argument that is *not* a deferral
         //
@@ -2506,17 +2476,24 @@ post_switch:;
     // requested in the context of parameter fulfillment.  We want to reuse
     // the f->out value and get it into the new function's frame.
 
-    Push_Function(
+    Push_Action(
         f,
         VAL_WORD_SPELLING(f->value),
-        VAL_FUNC(f->gotten),
+        VAL_ACTION(f->gotten),
         VAL_BINDING(f->gotten)
     );
     f->refine = LOOKBACK_ARG;
 
     f->gotten = END;
     Fetch_Next_In_Frame(f); // advances f->value
-    goto process_function;
+    goto process_action;
+
+abort_action:;
+
+    assert(THROWN(f->out));
+
+    Drop_Action_Core(f, TRUE); // drop_chunks = TRUE
+    DS_DROP_TO(f->dsp_orig); // any unprocessed refinements or chains on stack
 
 finished:;
 

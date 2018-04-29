@@ -54,12 +54,11 @@ void MAKE_Port(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 
     const REBOOL fully = TRUE; // error if not all arguments consumed
 
-    if (Apply_Only_Throws(
-        out, fully, Sys_Func(SYS_CTX_MAKE_PORT_P), arg, END
-    )){
-        // Gave back an unhandled RETURN, BREAK, CONTINUE, etc...
+    REBVAL *make_port_helper = CTX_VAR(Sys_Context, SYS_CTX_MAKE_PORT_P);
+    assert(IS_ACTION(make_port_helper));
+
+    if (Apply_Only_Throws(out, fully, make_port_helper, arg, END))
         fail (Error_No_Catch_For_Throw(out));
-    }
 
     // !!! Shouldn't this be testing for !IS_PORT( ) ?
     if (IS_BLANK(out))
@@ -84,7 +83,7 @@ void TO_Port(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
     // system/standard/port is made with CONTEXT and not with MAKE PORT!
     //
     REBCTX *context = Copy_Context_Shallow(VAL_CONTEXT(arg));
-    RESET_VAL_HEADER(CTX_VALUE(context), REB_PORT);
+    RESET_VAL_HEADER(CTX_ARCHETYPE(context), REB_PORT);
     Init_Port(out, context);
 }
 
@@ -159,7 +158,7 @@ REBTYPE(Port)
 {
     REBVAL *value = D_ARG(1);
 
-    switch (action) {
+    switch (verb) {
 
     case SYM_READ:
     case SYM_WRITE:
@@ -173,7 +172,7 @@ REBTYPE(Port)
         // are going to read the D_ARG(1) slot *implicitly* regardless of
         // what value points to.
         //
-        if (!IS_PORT(D_ARG(1))) {
+        if (not IS_PORT(D_ARG(1))) {
             DECLARE_LOCAL (temp);
             MAKE_Port(temp, REB_PORT, value);
             Move_Value(value, temp);
@@ -201,11 +200,11 @@ REBTYPE(Port)
     // This prevents a crash but doesn't address the design issue.
     //
     if (not IS_PORT(D_ARG(1)))
-        fail (Error_Illegal_Action(VAL_TYPE(D_ARG(1)), action));
+        fail (Error_Illegal_Action(VAL_TYPE(D_ARG(1)), verb));
 
-    REB_R r = Context_Common_Action_Maybe_Unhandled(frame_, action);
+    REB_R r = Context_Common_Action_Maybe_Unhandled(frame_, verb);
     if (r != R_UNHANDLED)
         return r;
 
-    return Do_Port_Action(frame_, VAL_CONTEXT(value), action);
+    return Do_Port_Action(frame_, VAL_CONTEXT(value), verb);
 }

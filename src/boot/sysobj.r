@@ -160,7 +160,7 @@ script: construct [] [
 ]
 
 standard: construct [] [
-    ; FUNC+PROC implement a native-optimized variant of a function generator.
+    ; FUNC+PROC implement a native-optimized variant of an action generator.
     ; This is the body template that it provides as the code *equivalent* of
     ; what it is doing (via a more specialized/internal method).  Though
     ; the only "real" body stored and used is the one the user provided
@@ -169,27 +169,16 @@ standard: construct [] [
     ;
     ; The substitution location is hardcoded at index 5.  It does not "scan"
     ; to find #BODY, just asserts the position is an ISSUE!.
-    ;
-    func-with-leave-body: [ ;-- not actually used
-        return: make function! [
-            [{Returns a value from a function.} value [<opt> any-value!]]
-            [unwind/with (context of 'return) :value]
-        ]
-        leave: make function! [
-            [{Leaves a function, giving no result to the caller.}]
-            [unwind (context of 'leave)]
-        ] #BODY
-    ]
 
     func-body: [
-        return: make function! [
+        return: make action! [
             [{Returns a value from a function.} value [<opt> any-value!]]
             [unwind/with (context of 'return) :value]
         ] #BODY
     ]
 
     proc-body: [
-        leave: make function! [
+        leave: make action! [
             [{Leaves a procedure, giving no result to the caller.}]
             [unwind (context of 'leave)]
         ] #BODY
@@ -203,7 +192,7 @@ standard: construct [] [
 
     ; !!! The %sysobj.r initialization currently runs natives (notably the
     ; natives for making objects, and here using COMMENT because it can).
-    ; This means that if the FUNCTION-META information is going to be produced
+    ; This means that if the ACTION-META information is going to be produced
     ; from a spec block for natives, it wouldn't be available while the
     ; natives are getting initialized.
     ;
@@ -212,7 +201,7 @@ standard: construct [] [
     ; the archetypal context has to be created "by hand" for natives to use,
     ; with this archetype used by the REDESCRIBE Mezzanine.
     ;
-    function-meta: construct [] [
+    action-meta: construct [] [
         description:
         return-type:
         return-note:
@@ -221,9 +210,9 @@ standard: construct [] [
             _
     ]
 
-    ; The common case is that derived functions will not need to be
+    ; The common case is that derived actions will not need to be
     ; REDESCRIBE'd besides their title.  If they are, then they switch the
-    ; meta archetype to `function-meta` and subset the parameters.  Otherwise
+    ; meta archetype to `action-meta` and subset the parameters.  Otherwise
     ; HELP just follows the link (`specializee`, `adaptee`) and gets
     ; descriptions there.
     ;
@@ -395,8 +384,7 @@ standard: construct [] [
     stats: construct [] [ ; port stats
         timer:      ; timer (nanos)
         evals:      ; evaluations
-        eval-natives:
-        eval-functions:
+        eval-actions:
         series-made:
         series-freed:
         series-expanded:

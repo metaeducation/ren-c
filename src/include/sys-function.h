@@ -1,13 +1,13 @@
 //
 //  File: %sys-function.h
-//  Summary: {Definitions for REBFUN}
+//  Summary: {Definitions for REBACT}
 //  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
 //  Homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Copyright 2012 REBOL Technologies
-// Copyright 2012-2017 Rebol Open Source Contributors
+// Copyright 2012-2018 Rebol Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information
@@ -26,26 +26,27 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Using a technique strongly parallel to CONTEXT, a function is identified
-// by a series which acts as its paramlist, in which the 0th element is an
-// ANY-FUNCTION! value.  Unlike a CONTEXT, a FUNC does not have values of its
-// own... only parameter definitions (or "params").  The arguments ("args")
-// come from finding a function instantiation on the stack.
+// Using a technique strongly parallel to contexts, an action is identified
+// by a series which is also its paramlist, in which the 0th element is an
+// archetypal value of that ACTION!.  Unlike contexts, an action does not
+// have values of its own...only parameter definitions (or "params").  The
+// arguments ("args") come from finding an action's instantiation on the
+// stack, and can be viewed as a context using a FRAME!.
 //
 
-struct Reb_Func {
+struct Reb_Action {
     struct Reb_Array paramlist;
 };
 
 #if !defined(NDEBUG) && defined(CPLUSPLUS_11)
     template <class T>
-    inline REBFUN *FUN(T *p) {
+    inline REBACT *ACT(T *p) {
         static_assert(
             std::is_same<T, void>::value
             or std::is_same<T, REBNOD>::value
             or std::is_same<T, REBSER>::value
             or std::is_same<T, REBARR>::value,
-            "FUN() works on: void*, REBNOD*, REBSER*, REBARR*"
+            "ACT() works on: void*, REBNOD*, REBSER*, REBARR*"
         );
         assert(
             (NODE_FLAG_NODE | SERIES_FLAG_ARRAY | ARRAY_FLAG_PARAMLIST)
@@ -54,66 +55,62 @@ struct Reb_Func {
                 | NODE_FLAG_FREE | NODE_FLAG_CELL | NODE_FLAG_END // bad!
             ))
         );
-        return reinterpret_cast<REBFUN*>(p);
+        return reinterpret_cast<REBACT*>(p);
     }
 #else
-    #define FUN(p) \
-        cast(REBFUN*, (p))
+    #define ACT(p) \
+        cast(REBACT*, (p))
 #endif
 
 
-inline static REBARR *FUNC_PARAMLIST(REBFUN *f) {
-    assert(GET_SER_FLAG(&f->paramlist, ARRAY_FLAG_PARAMLIST));
-    return &f->paramlist;
+inline static REBARR *ACT_PARAMLIST(REBACT *a) {
+    assert(GET_SER_FLAG(&a->paramlist, ARRAY_FLAG_PARAMLIST));
+    return &a->paramlist;
 }
 
-inline static REBVAL *FUNC_VALUE(REBFUN *f) {
-    return SER_AT(REBVAL, SER(FUNC_PARAMLIST(f)), 0);
-}
+#define ACT_ARCHETYPE(a) \
+    SER_AT(REBVAL, SER(ACT_PARAMLIST(a)), 0) // binding should be UNBOUND
 
 // Functions hold their flags in their canon value, some of which are cached
-// flags put there during Make_Function().
+// flags put there during Make_Action().
 //
 // !!! Review if (and how) a HIJACK might affect these flags (?)
 //
-#define GET_FUN_FLAG(fun, flag) \
-    GET_VAL_FLAG(FUNC_VALUE(fun), (flag))
+#define GET_ACT_FLAG(fun, flag) \
+    GET_VAL_FLAG(ACT_ARCHETYPE(fun), (flag))
 
-// Note: On Windows, FUNC_DISPATCH is already defined in the header files
-//
-#define FUNC_DISPATCHER(f) \
-    (MISC(FUNC_VALUE(f)->payload.function.body_holder).dispatcher)
+#define ACT_DISPATCHER(a) \
+    (MISC(ACT_ARCHETYPE(a)->payload.action.body_holder).dispatcher)
 
-#define FUNC_BODY(f) \
-    ARR_SINGLE(FUNC_VALUE(f)->payload.function.body_holder)
+#define ACT_BODY(a) \
+    ARR_SINGLE(ACT_ARCHETYPE(a)->payload.action.body_holder)
 
-inline static REBVAL *FUNC_PARAM(REBFUN *f, REBCNT n) {
-    assert(n != 0 and n < ARR_LEN(FUNC_PARAMLIST(f)));
-    return SER_AT(REBVAL, SER(FUNC_PARAMLIST(f)), n);
+inline static REBVAL *ACT_PARAM(REBACT *a, REBCNT n) {
+    assert(n != 0 and n < ARR_LEN(ACT_PARAMLIST(a)));
+    return SER_AT(REBVAL, SER(ACT_PARAMLIST(a)), n);
 }
 
-inline static REBCNT FUNC_NUM_PARAMS(REBFUN *f) {
-    return ARR_LEN(FUNC_PARAMLIST(f)) - 1;
-}
+#define ACT_NUM_PARAMS(a) \
+    (ARR_LEN(ACT_PARAMLIST(a)) - 1)
 
-inline static REBCTX *FUNC_META(REBFUN *f) {
-    return MISC(FUNC_PARAMLIST(f)).meta;
-}
+#define ACT_META(a) \
+    (MISC(ACT_PARAMLIST(a)).meta)
 
-// *** These FUNC_FACADE fetchers are called VERY frequently, so it is best
+
+// *** These ACT_FACADE fetchers are called VERY frequently, so it is best
 // to keep them light (as the debug build does not inline).  Integrity checks
-// of the function facades are deferred to the GC, see the REB_FUNCTION case
-// in the switch(), and don't turn these into inline functions without a
-// really good reason...and seeing the impact on the debug build!!! ***
+// of the facades are deferred to the GC, see the REB_ACTION case in the
+// switch(), and don't turn these into inline functions without a really good
+// reason...and seeing the impact on the debug build!!! ***
 
-#define FUNC_FACADE(f) \
-    LINK(FUNC_PARAMLIST(f)).facade
+#define ACT_FACADE(a) \
+    LINK(ACT_PARAMLIST(a)).facade
 
-#define FUNC_FACADE_NUM_PARAMS(f) \
-    (ARR_LEN(FUNC_FACADE(f)) - 1)
+#define ACT_FACADE_NUM_PARAMS(a) \
+    (ARR_LEN(ACT_FACADE(a)) - 1)
 
-#define FUNC_FACADE_HEAD(f) \
-    KNOWN(ARR_AT(FUNC_FACADE(f), 1))
+#define ACT_FACADE_HEAD(a) \
+    KNOWN(ARR_AT(ACT_FACADE(a), 1))
 
 
 // The concept of the "underlying" function is that which has the right
@@ -133,73 +130,58 @@ inline static REBCTX *FUNC_META(REBFUN *f) {
 // For efficiency, the underlying pointer can be derived from the "facade".
 // Though the facade may not be the underlying paramlist (it could have its
 // parameter types tweaked for the purposes of that composition), it will
-// always have a FUNCTION! value in its 0 slot as the underlying function.
+// always have an ACTION! value in its 0 slot as the underlying function.
 //
-inline static REBFUN *FUNC_UNDERLYING(REBFUN *f) {
-    return FUN(ARR_HEAD(FUNC_FACADE(f))->payload.function.paramlist);
-}
+#define ACT_UNDERLYING(a) \
+    ACT(ARR_HEAD(ACT_FACADE(a))->payload.action.paramlist)
 
-inline static REBCTX *FUNC_EXEMPLAR(REBFUN *f) {
-    REBCTX *exemplar = 
-        LINK(FUNC_VALUE(f)->payload.function.body_holder).exemplar;
-
-#if !defined(NDEBUG)
-    if (exemplar != NULL) {
-        assert(FUNC_FACADE_NUM_PARAMS(f) == CTX_LEN(exemplar));
-    };
-#endif
-    return exemplar;
-}
+#define ACT_EXEMPLAR(a) \
+    (LINK(ACT_ARCHETYPE(a)->payload.action.body_holder).exemplar)
 
 
 // There is no binding information in a function parameter (typeset) so a
 // REBVAL should be okay.
 //
-inline static REBVAL *FUNC_PARAMS_HEAD(REBFUN *f) {
-    return SER_AT(REBVAL, SER(FUNC_PARAMLIST(f)), 1);
-}
-
-inline static REBRIN *FUNC_ROUTINE(REBFUN *f) {
-    return VAL_ARRAY(FUNC_BODY(f));
-}
+#define ACT_PARAMS_HEAD(a) \
+    SER_AT(REBVAL, SER(ACT_PARAMLIST(a)), 1)
 
 
 
 //=////////////////////////////////////////////////////////////////////////=//
 //
-//  FUNCTION! (`struct Reb_Function`)
+//  ACTION!
 //
 //=////////////////////////////////////////////////////////////////////////=//
 
 #ifdef NDEBUG
-    #define FUNC_FLAG(n) \
+    #define ACTION_FLAG(n) \
         FLAGIT_LEFT(TYPE_SPECIFIC_BIT + (n))
 #else
-    #define FUNC_FLAG(n) \
-        (FLAGIT_LEFT(TYPE_SPECIFIC_BIT + (n)) | HEADERIZE_KIND(REB_FUNCTION))
+    #define ACTION_FLAG(n) \
+        (FLAGIT_LEFT(TYPE_SPECIFIC_BIT + (n)) | HEADERIZE_KIND(REB_ACTION))
 #endif
 
 // RETURN will always be in the last paramlist slot (if present)
 //
-#define FUNC_FLAG_RETURN FUNC_FLAG(0)
+#define ACTION_FLAG_RETURN ACTION_FLAG(0)
 
 // LEAVE will always be in the last paramlist slot (if present)
 //
-#define FUNC_FLAG_LEAVE FUNC_FLAG(1)
+#define ACTION_FLAG_LEAVE ACTION_FLAG(1)
 
 // DEFERS_LOOKBACK_ARG flag is a cached property, which tells you whether a
 // function defers its first real argument when used as a lookback.  Because
 // lookback dispatches cannot use refinements at this time, the answer is
 // static for invocation via a plain word.  This property is calculated at
-// the time of Make_Function().
+// the time of Make_Action().
 //
-#define FUNC_FLAG_DEFERS_LOOKBACK FUNC_FLAG(2)
+#define ACTION_FLAG_DEFERS_LOOKBACK ACTION_FLAG(2)
 
 // This is another cached property, needed because lookahead/lookback is done
 // so frequently, and it's quicker to check a bit on the function than to
 // walk the parameter list every time that function is called.
 //
-#define FUNC_FLAG_QUOTES_FIRST_ARG FUNC_FLAG(3)
+#define ACTION_FLAG_QUOTES_FIRST_ARG ACTION_FLAG(3)
 
 // The COMPILE-NATIVES command wants to operate on user natives, and be able
 // to recompile unchanged natives as part of a unit even after they were
@@ -207,11 +189,11 @@ inline static REBRIN *FUNC_ROUTINE(REBFUN *f) {
 // arbitrary function, they can't be recognized to know they have the specific
 // body structure of a user native.  So this flag is used.
 //
-#define FUNC_FLAG_USER_NATIVE FUNC_FLAG(4)
+#define ACTION_FLAG_USER_NATIVE ACTION_FLAG(4)
 
 // This flag is set when the native (e.g. extensions) can be unloaded
 //
-#define FUNC_FLAG_UNLOADABLE_NATIVE FUNC_FLAG(5)
+#define ACTION_FLAG_UNLOADABLE_NATIVE ACTION_FLAG(5)
 
 // An "invisible" function is one that does not touch its frame output cell,
 // leaving it completely alone.  This is how `10 comment ["hi"] + 20` can
@@ -222,7 +204,7 @@ inline static REBRIN *FUNC_ROUTINE(REBFUN *f) {
 // quoted in soft-quoted positions.  This would require fetching something
 // that might not otherwise need to be fetched, to test the flag.  Review.
 //
-#define FUNC_FLAG_INVISIBLE FUNC_FLAG(6)
+#define ACTION_FLAG_INVISIBLE ACTION_FLAG(6)
 
 #if !defined(NDEBUG)
     //
@@ -232,96 +214,55 @@ inline static REBRIN *FUNC_ROUTINE(REBFUN *f) {
     // to double-check.  So when MKF_FAKE_RETURN is used in a debug build,
     // it leaves this flag on the function.
     //
-    #define FUNC_FLAG_RETURN_DEBUG FUNC_FLAG(7)
+    #define ACTION_FLAG_RETURN_DEBUG ACTION_FLAG(7)
 #endif
 
-// These are the flags which are scanned for and set during Make_Function
+// These are the flags which are scanned for and set during Make_Action
 //
-#define FUNC_FLAG_CACHED_MASK \
-    (FUNC_FLAG_DEFERS_LOOKBACK | FUNC_FLAG_QUOTES_FIRST_ARG \
-        | FUNC_FLAG_INVISIBLE)
+#define ACTION_FLAG_CACHED_MASK \
+    (ACTION_FLAG_DEFERS_LOOKBACK | ACTION_FLAG_QUOTES_FIRST_ARG \
+        | ACTION_FLAG_INVISIBLE)
 
 
-inline static REBFUN *VAL_FUNC(const RELVAL *v) {
-    assert(IS_FUNCTION(v));
-    return FUN(v->payload.function.paramlist);
+inline static REBACT *VAL_ACTION(const RELVAL *v) {
+    assert(IS_ACTION(v));
+    return ACT(v->payload.action.paramlist);
 }
 
-inline static REBARR *VAL_FUNC_PARAMLIST(const RELVAL *v)
-    { return FUNC_PARAMLIST(VAL_FUNC(v)); }
+#define VAL_ACT_PARAMLIST(v) \
+    ACT_PARAMLIST(VAL_ACTION(v))
 
-inline static REBCNT VAL_FUNC_NUM_PARAMS(const RELVAL *v)
-    { return FUNC_NUM_PARAMS(VAL_FUNC(v)); }
+#define VAL_ACT_NUM_PARAMS(v) \
+    ACT_NUM_PARAMS(VAL_ACTION(v))
 
-inline static REBVAL *VAL_FUNC_PARAMS_HEAD(const RELVAL *v)
-    { return FUNC_PARAMS_HEAD(VAL_FUNC(v)); }
+#define VAL_ACT_PARAMS_HEAD(v) \
+    ACT_PARAMS_HEAD(VAL_ACTION(v))
 
-inline static REBVAL *VAL_FUNC_PARAM(const RELVAL *v, REBCNT n)
-    { return FUNC_PARAM(VAL_FUNC(v), n); }
+#define VAL_ACT_PARAM(v,n) \
+    ACT_PARAM(VAL_ACTION(v), n)
 
-inline static RELVAL *VAL_FUNC_BODY(const RELVAL *v)
-    { return ARR_HEAD(v->payload.function.body_holder); }
-
-inline static REBNAT VAL_FUNC_DISPATCHER(const RELVAL *v)
-    { return MISC(v->payload.function.body_holder).dispatcher; }
-
-inline static REBCTX *VAL_FUNC_META(const RELVAL *v)
-    { return MISC(v->payload.function.paramlist).meta; }
-
-inline static REBOOL IS_FUNCTION_INTERPRETED(const RELVAL *v) {
-    //
-    // !!! Review cases where this is supposed to matter, because they are
-    // probably all bad.  With the death of function categories, code should
-    // be able to treat functions as "black boxes" and not know which of
-    // the dispatchers they run on...with only the dispatch itself caring.
-    //
-    return (
-        VAL_FUNC_DISPATCHER(v) == &Noop_Dispatcher
-        or VAL_FUNC_DISPATCHER(v) == &Unchecked_Dispatcher
-        or VAL_FUNC_DISPATCHER(v) == &Voider_Dispatcher
-        or VAL_FUNC_DISPATCHER(v) == &Returner_Dispatcher
-        or VAL_FUNC_DISPATCHER(v) == &Block_Dispatcher
-    );
+inline static RELVAL *VAL_ACT_BODY(const RELVAL *v) {
+    assert(IS_ACTION(v));
+    return ARR_HEAD(v->payload.action.body_holder);
 }
 
-inline static REBOOL IS_FUNCTION_ACTION(const RELVAL *v)
-    { return VAL_FUNC_DISPATCHER(v) == &Action_Dispatcher; }
+inline static REBNAT VAL_ACT_DISPATCHER(const RELVAL *v) {
+    assert(IS_ACTION(v));
+    return MISC(v->payload.action.body_holder).dispatcher;
+}
 
-inline static REBOOL IS_FUNCTION_SPECIALIZER(const RELVAL *v)
-    { return VAL_FUNC_DISPATCHER(v) == &Specializer_Dispatcher; }
-
-inline static REBOOL IS_FUNCTION_CHAINER(const RELVAL *v)
-    { return VAL_FUNC_DISPATCHER(v) == &Chainer_Dispatcher; }
-
-inline static REBOOL IS_FUNCTION_ADAPTER(const RELVAL *v)
-    { return VAL_FUNC_DISPATCHER(v) == &Adapter_Dispatcher; }
-
-inline static REBOOL IS_FUNCTION_HIJACKER(const RELVAL *v)
-    { return VAL_FUNC_DISPATCHER(v) == &Hijacker_Dispatcher; }
+inline static REBCTX *VAL_ACT_META(const RELVAL *v) {
+    assert(IS_ACTION(v));
+    return MISC(v->payload.action.paramlist).meta;
+}
 
 
-// Native values are stored in an array at boot time.  This is a convenience
-// accessor for getting the "FUNC" portion of the native--e.g. the paramlist.
-// It should compile to be as efficient as fetching any global pointer.
+// Native values are stored in an array at boot time.  These are convenience
+// routines for accessing them, which should compile to be as efficient as
+// fetching any global pointer.
 
 #define NAT_VALUE(name) \
     (&Natives[N_##name##_ID])
 
-#define NAT_FUNC(name) \
-    VAL_FUNC(NAT_VALUE(name))
-
-
-
-// The %sys-xxx.r Rebol files contain service routines in Rebol that are known
-// to the system, and can be called by from C as "helpers".  They are
-// identified by enumerated type values as SYS_CTX_XXX
-//
-inline static REBVAL *Sys_Func(REBCNT inum)
-{
-    REBVAL *value = CTX_VAR(Sys_Context, inum);
-
-    if (not IS_FUNCTION(value))
-        fail (Error_Bad_Sys_Func_Raw(value));
-
-    return value;
-}
+#define NAT_ACTION(name) \
+    VAL_ACTION(NAT_VALUE(name))

@@ -801,9 +801,9 @@ pe-format: context [
         offset [integer!]
         align [integer!]
     ][
-        either zero? rem: offset // align [
+        if zero? rem: remainder offset align [
             offset
-        ][
+        ] else [
             offset + align - rem
         ]
     ]
@@ -1076,7 +1076,7 @@ pe-format: context [
         ]
         insert pos section-data
 
-        (head of exe-data) <| reset
+        return ((head of exe-data) elide reset)
     ]
 
     remove-section: function [
@@ -1133,9 +1133,7 @@ pe-format: context [
 
         remove/part skip exe-data target-sec/physical-offset target-sec/physical-size
 
-        head of exe-data ;-- return value
-
-        elide (reset)
+        return ((head of exe-data) elide reset)
     ]
 
     update-embedding: specialize 'update-section [section-name: encap-section-name]
@@ -1145,9 +1143,8 @@ pe-format: context [
     ][
         ;print ["Geting embedded from" mold file]
         exe-data: read file
-        find-section/data exe-data encap-section-name ;--return value
 
-        elide (reset)
+        return ((find-section/data exe-data encap-section-name) elide reset)
     ]
 ]
 

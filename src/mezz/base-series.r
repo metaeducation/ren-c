@@ -139,10 +139,14 @@ join: func [ ;-- renamed to ADJOIN in %sys-start.r for user context, temporary
     case [
         block? :value [repend series :value]
         group? :value [
-            fail/where "Can't JOIN a GROUP! onto a series (use APPEND)."
+            fail/where
+                <- "Can't JOIN a GROUP! onto a series (use APPEND)."
+                <- 'value
         ]
-        function? :value [
-            fail/where "Can't JOIN a FUNCTION! onto a series (use APPEND)."
+        action? :value [
+            fail/where
+                <- "Can't JOIN an ACTION! onto a series (use APPEND)."
+                <- 'value
         ]
     ] else [
         append/only series :value ;-- paths, words, not in block
@@ -217,7 +221,7 @@ trim: function [
     all_TRIM: :all
     all: :lib/all
 
-    ; FUNCTION!s in the new object will still refer to fields in the original
+    ; ACTION!s in the new object will still refer to fields in the original
     ; object.  That was true in R3-Alpha as well.  Fixing this would require
     ; new kinds of binding overrides.  The feature itself is questionable.
     ;

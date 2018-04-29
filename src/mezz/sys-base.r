@@ -99,7 +99,7 @@ do*: function [
 
     finalizer: func [
         value [<opt> any-value!]
-        name [any-value!] ;-- can be a FUNCTION!
+        name [any-value!] ;-- can be an ACTION!
         <with> return
     ][
         ; Restore system/script and the dir if they were changed

@@ -26,12 +26,12 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// A specialization is a FUNCTION! which has some of its parameters fixed.
+// A specialization is an ACTION! which has some of its parameters fixed.
 // e.g. `ap10: specialize 'append [value: 5 + 5]` makes ap10 have all the same
 // refinements available as APPEND, but otherwise just takes one series arg,
 // as it will always be appending 10.
 //
-// The method used is to store a FRAME! in the specialization's FUNC_BODY.
+// The method used is to store a FRAME! in the specialization's ACT_BODY.
 // It contains non-void values for any arguments that have been specialized.
 // Do_Core() heeds these when walking the parameters (see `f->special`),
 // and processes slots with voids in them normally.
@@ -112,24 +112,24 @@
 //     specialize 'append/dup [dup: false] ; Note DUP: isn't frame /DUP
 //
 REBCTX *Make_Context_For_Specialization(
-    const REBVAL *specializee, // need ->binding, can't just be REBFUN*
+    const REBVAL *specializee, // need ->binding, can't just be REBACT*
     REBDSP lowest_ordered_dsp,
     struct Reb_Binder *opt_binder
 ){
     REBDSP highest_ordered_dsp = DSP;
 
-    REBFUN *fun = VAL_FUNC(specializee);
+    REBACT *unspecialized = VAL_ACTION(specializee);
 
     // See LINK().facade for details.  [0] cell is underlying function, then
     // there is a parameter for each slot, possibly hidden by specialization.
     //
-    REBCNT num_slots = FUNC_FACADE_NUM_PARAMS(fun) + 1;
+    REBCNT num_slots = ACT_FACADE_NUM_PARAMS(unspecialized) + 1;
     REBARR *facade = Make_Array_Core(num_slots, SERIES_FLAG_FIXED_SIZE);
     REBVAL *rootkey = SINK(ARR_HEAD(facade));
-    Move_Value(rootkey, FUNC_VALUE(FUNC_UNDERLYING(fun)));
+    Move_Value(rootkey, ACT_ARCHETYPE(ACT_UNDERLYING(unspecialized)));
 
     REBARR *varlist = Make_Array_Core(
-        num_slots, // includes +1 for the CTX_VALUE() at [0]
+        num_slots, // includes +1 for the CTX_ARCHETYPE() at [0]
         ARRAY_FLAG_VARLIST | SERIES_FLAG_FIXED_SIZE
     );
 
@@ -146,9 +146,9 @@ REBCTX *Make_Context_For_Specialization(
     REBVAL *alias = rootkey + 1;
     REBVAL *arg = rootvar + 1;
 
-    const REBVAL *param = FUNC_FACADE_HEAD(fun);
+    const REBVAL *param = ACT_FACADE_HEAD(unspecialized);
 
-    REBCTX *exemplar = FUNC_EXEMPLAR(fun); // may be NULL
+    REBCTX *exemplar = ACT_EXEMPLAR(unspecialized); // may be NULL
     const REBVAL *special = exemplar != NULL ? CTX_VARS_HEAD(exemplar) : param;
 
     REBCNT index = 1;
@@ -299,7 +299,9 @@ REBCTX *Make_Context_For_Specialization(
     MISC(varlist).meta = NULL; // GC sees this, we must initialize
 
     // This facade is not final--when code runs bound into this context, it
-    // might wind up needing to hide more fields.
+    // might wind up needing to hide more fields.  But also, it will be
+    // patched out and in as the function's facade, with the unspecialized
+    // keylist taking its place, at the end of specialization.
     //
     TERM_ARRAY_LEN(facade, num_slots);
     MANAGE_ARRAY(facade);
@@ -341,11 +343,11 @@ inline static REBOOL Saw_Void_Arg_Of(const REBVAL *p) {
 
 
 //
-//  Specialize_Function_Throws: C
+//  Specialize_Action_Throws: C
 //
-// Create a new FUNCTION! value that uses the same implementation as another,
+// Create a new ACTION! value that uses the same implementation as another,
 // but just takes fewer arguments or refinements.  It does this by storing a
-// heap-based "exemplar" FRAME! in the specialized function; this stores the
+// heap-based "exemplar" FRAME! in the specialized action; this stores the
 // values to preload in the stack frame cells when it is invoked.
 //
 // The caller may provide information on the order in which refinements are
@@ -353,7 +355,7 @@ inline static REBOOL Saw_Void_Arg_Of(const REBVAL *p) {
 // pushed in the *reverse* order of their invocation, so append/dup/part
 // has /DUP at DS_TOP, and /PART under it.  List stops at lowest_ordered_dsp.
 //
-REBOOL Specialize_Function_Throws(
+REBOOL Specialize_Action_Throws(
     REBVAL *out,
     REBVAL *specializee,
     REBSTR *opt_specializee_name,
@@ -365,6 +367,8 @@ REBOOL Specialize_Function_Throws(
     struct Reb_Binder binder;
     if (opt_def != NULL)
         INIT_BINDER(&binder);
+
+    REBACT *unspecialized = VAL_ACTION(specializee);
 
     // This produces a context where partially specialized refinement slots
     // will be INTEGER! pointing into the stack at the partial order position.
@@ -407,7 +411,7 @@ REBOOL Specialize_Function_Throws(
         // !!! Only one binder can be in effect, and we're calling arbitrary
         // code.  Must clean up now vs. in loop we do at the end.  :-(
         //
-        RELVAL *key = FUNC_FACADE_HEAD(VAL_FUNC(specializee));
+        RELVAL *key = ACT_FACADE_HEAD(unspecialized);
         REBVAL *var = CTX_VARS_HEAD(exemplar);
         for (; NOT_END(key); ++key, ++var) {
             if (GET_VAL_FLAG(key, TYPESET_FLAG_UNBINDABLE))
@@ -442,7 +446,7 @@ REBOOL Specialize_Function_Throws(
     // arguments for whether they become fully specialized or not.
 
     REBDSP dsp_paramlist = DSP;
-    DS_PUSH(FUNC_VALUE(VAL_FUNC(specializee)));
+    DS_PUSH(ACT_ARCHETYPE(unspecialized));
 
     REBVAL *param = rootkey + 1;
     REBVAL *arg = CTX_VARS_HEAD(exemplar);
@@ -490,17 +494,17 @@ REBOOL Specialize_Function_Throws(
                 last_partial = refine;
 
                 if (partial_dsp == 0)
-                    goto unspecialized_but_may_evoke;
+                    goto unspecialized_arg_but_may_evoke;
 
                 // Though Make_Frame_For_Specialization() knew this slot was
                 // partial when it ran, user code might have run to fill in
                 // all the void arguments.  We need to know the stack position
                 // of the ordering, to BLANK! it from the partial stack if so.
                 //
-                goto specialized_no_typecheck;
+                goto specialized_arg_no_typecheck;
             }
             else if (IS_LOGIC(refine))
-                goto specialized_no_typecheck;
+                goto specialized_arg_no_typecheck;
 
             fail (Error_Non_Logic_Refinement(param, refine)); }
 
@@ -508,7 +512,7 @@ REBOOL Specialize_Function_Throws(
         case PARAM_CLASS_LEAVE:
         case PARAM_CLASS_LOCAL:
             assert(IS_VOID(arg)); // no bindings, you can't set these
-            goto unspecialized;
+            goto unspecialized_arg;
 
         default:
             break;
@@ -518,21 +522,21 @@ REBOOL Specialize_Function_Throws(
 
         if (refine == ORDINARY_ARG) {
             if (IS_VOID(arg))
-                goto unspecialized;
-            goto specialized;
+                goto unspecialized_arg;
+            goto specialized_arg;
         }
 
         if (VAL_TYPE(refine) == REB_0_PARTIAL) {
             if (IS_VOID(arg)) {
                 Mark_Void_Arg_Seen(refine); // we *know* it's not fulfilled
-                goto unspecialized;
+                goto unspecialized_arg;
             }
 
             if (refine->payload.partial.dsp != 0) // started true
-                goto specialized;
+                goto specialized_arg;
 
             if (evoked == refine)
-                goto specialized; // already evoking this refinement
+                goto specialized_arg; // already evoking this refinement
 
             // If we started out with a void refinement this arg "evokes" it.
             // (Opposite of void "revocation" at callsites).
@@ -551,7 +555,7 @@ REBOOL Specialize_Function_Throws(
             DS_DROP; // added at `unspecialized_but_may_evoke`, but drop it
 
             evoked = refine; // gets reset to NULL if ends up fulfilled
-            goto specialized;
+            goto specialized_arg;
         }
 
         assert(IS_LOGIC(refine));
@@ -563,11 +567,11 @@ REBOOL Specialize_Function_Throws(
             assert(VAL_LOGIC(refine) == FALSE);
             if (not IS_VOID(arg))
                 fail (Error_Bad_Refine_Revoke(param, arg));
-            goto specialized_no_typecheck;
+            goto specialized_arg_no_typecheck;
         }
 
         if (not IS_VOID(arg))
-            goto unspecialized;
+            goto unspecialized_arg;
 
         // A previously fully-specialized TRUE should not have any void args.
         // But code run for the specialization may have set the refinement
@@ -595,19 +599,19 @@ REBOOL Specialize_Function_Throws(
 
         Mark_Void_Arg_Seen(refine); // void arg, so can't be completely filled
         evoked = refine; // ...so we won't ever set this back to NULL later
-        goto unspecialized;
+        goto unspecialized_arg;
 
-    unspecialized_but_may_evoke:;
+    unspecialized_arg_but_may_evoke:;
 
         assert(refine->payload.partial.dsp == 0);
         assert(not IS_REFINEMENT_SPECIALIZED(param));
 
-    unspecialized:;
+    unspecialized_arg:;
 
         DS_PUSH(param); // if evoked, will get DS_DROP'd from the paramlist
         continue;
 
-    specialized:;
+    specialized_arg:;
 
         assert(VAL_PARAM_CLASS(param) != PARAM_CLASS_REFINEMENT);
         if (GET_VAL_FLAG(param, TYPESET_FLAG_UNBINDABLE)) {
@@ -625,7 +629,7 @@ REBOOL Specialize_Function_Throws(
                 fail (Error_Invalid(arg)); // !!! merge w/Error_Invalid_Arg()
         }
 
-    specialized_no_typecheck:;
+    specialized_arg_no_typecheck:;
 
         SET_VAL_FLAGS(param, TYPESET_FLAG_HIDDEN | TYPESET_FLAG_UNBINDABLE);
         continue;
@@ -642,7 +646,7 @@ REBOOL Specialize_Function_Throws(
     );
     MANAGE_ARRAY(paramlist);
     RELVAL *rootparam = ARR_HEAD(paramlist);
-    rootparam->payload.function.paramlist = paramlist;
+    rootparam->payload.action.paramlist = paramlist;
 
     // The exemplar frame slots now contain a linked list of REB_0_PARTIAL
     // slots.  These slots need to be converted into TRUE if they are actually
@@ -765,31 +769,32 @@ REBOOL Specialize_Function_Throws(
 
     REBARR *facade = CTX_KEYLIST(exemplar);
 
-    REBFUN *fun = Make_Function(
+    REBACT *specialized = Make_Action(
         paramlist,
         &Specializer_Dispatcher,
         facade, // use facade with specialized parameters flagged hidden
         exemplar // also provide a context of specialization values
     );
 
-    // The "body" is the FRAME! value of the specialization.  We aren't able
-    // to touch the keylist of that frame to update the "archetype" binding,
-    // so patch this cell in the "body array" to hold it.
+    // We patch the facade of the unspecialized action in as the keylist
+    // for the frame.  When the frame is molded, it will now show the
+    // specialized keys and values (some of which may have been suppressed
+    // when the facade was being used as the keylist)
     //
-    Move_Value(FUNC_BODY(fun), CTX_VALUE(exemplar));
-    assert(VAL_BINDING(FUNC_BODY(fun)) == VAL_BINDING(specializee));
+    INIT_CTX_KEYLIST_SHARED(exemplar, ACT_FACADE(unspecialized));
 
-    // !!! Specializer_Dispatcher() needs to know the function to call, so we
-    // put it into the ->phase.  This is not a situation that usually comes
-    // up for heap-based FRAME!s, to have a "view" through another function.
-    // But it saves on space vs. adding another cell to the body.
+    // The "body" is the FRAME! value of the specialization.  It takes on the
+    // binding we want to use (which we can't put in the exemplar archetype,
+    // that binding has to be UNBOUND).  It also remembers the original
+    // action in the phase, so Specializer_Dispatcher() knows what to call.
     //
-    FUNC_BODY(fun)->payload.any_context.phase = VAL_FUNC(specializee);
+    RELVAL *body = ACT_BODY(specialized);
+    Move_Value(body, CTX_ARCHETYPE(exemplar));
+    INIT_BINDING(body, VAL_BINDING(specializee));
+    body->payload.any_context.phase = unspecialized;
 
-    Move_Value(out, FUNC_VALUE(fun));
-    assert(VAL_BINDING(out) == UNBOUND);
-
-    return FALSE;
+    Move_Value(out, ACT_ARCHETYPE(specialized));
+    return FALSE; // code block did not throw
 }
 
 
@@ -804,7 +809,7 @@ REBOOL Specialize_Function_Throws(
 //
 REB_R Specializer_Dispatcher(REBFRM *f)
 {
-    REBVAL *exemplar = KNOWN(FUNC_BODY(f->phase));
+    REBVAL *exemplar = KNOWN(ACT_BODY(f->phase));
     f->phase = exemplar->payload.any_context.phase;
     f->binding = VAL_BINDING(exemplar);
 
@@ -815,10 +820,10 @@ REB_R Specializer_Dispatcher(REBFRM *f)
 //
 //  specialize: native [
 //
-//  {Create a new function through partial or full specialization of another}
+//  {Create a new action through partial or full specialization of another}
 //
-//      return: [function!]
-//      specializee [function! word! path!]
+//      return: [action!]
+//      specializee [action! word! path!]
 //          {Function or specifying word (preserves word name for debug info)}
 //      def [block!]
 //          {Definition for FRAME! fields for args and refinements}
@@ -852,11 +857,11 @@ REBNATIVE(specialize)
     // Note: Even if there was a PATH! doesn't mean there were refinements
     // used, e.g. `specialize 'lib/append [...]`.
 
-    if (not IS_FUNCTION(D_OUT))
+    if (not IS_ACTION(D_OUT))
         fail (Error_Invalid(specializee));
     Move_Value(specializee, D_OUT); // Frees D_OUT, and GC safe (in ARG slot)
 
-    if (Specialize_Function_Throws(
+    if (Specialize_Action_Throws(
         D_OUT,
         specializee,
         opt_name,
@@ -890,7 +895,7 @@ REBNATIVE(specialize)
 //
 REB_R Block_Dispatcher(REBFRM *f)
 {
-    RELVAL *block = FUNC_BODY(f->phase);
+    RELVAL *block = ACT_BODY(f->phase);
     assert(IS_BLOCK(block));
 
     if (IS_SPECIFIC(block)) {
@@ -911,7 +916,7 @@ REB_R Block_Dispatcher(REBFRM *f)
         //     o2: make o1 [a: 20]
         //     o2/b = 20
         //
-        // While o2/b's FUNCTION! has a ->binding to o2, the only way for the
+        // While o2/b's ACTION! has a ->binding to o2, the only way for the
         // [a] block to get the memo is if it is relative to o2/b.  It won't
         // be relative to o2/b if it didn't have its existing relativism
         // Derelativize()'d out to make it specific, and then re-relativized
@@ -919,7 +924,7 @@ REB_R Block_Dispatcher(REBFRM *f)
 
         REBARR *body_array = Copy_And_Bind_Relative_Deep_Managed(
             KNOWN(block),
-            FUNC_PARAMLIST(f->phase),
+            ACT_PARAMLIST(f->phase),
             TS_ANY_WORD
         );
 
@@ -955,7 +960,7 @@ REB_R Block_Dispatcher(REBFRM *f)
 //
 //  {Specializes DO for a value (or for args of another named function)}
 //
-//      return: [function!]
+//      return: [action!]
 //      'specializee [any-value!]
 //          {WORD! or PATH! names function to specialize, else arg to DO}
 //      :args [<opt> any-value! <...>]
@@ -974,8 +979,8 @@ REBNATIVE(does)
     REBARR *paramlist = Make_Array_Core(1, ARRAY_FLAG_PARAMLIST);
 
     REBVAL *archetype = Alloc_Tail_Array(paramlist);
-    RESET_VAL_HEADER(archetype, REB_FUNCTION);
-    archetype->payload.function.paramlist = paramlist;
+    RESET_VAL_HEADER(archetype, REB_ACTION);
+    archetype->payload.action.paramlist = paramlist;
     INIT_BINDING(archetype, UNBOUND);
 
     LINK(paramlist).facade = paramlist;
@@ -984,14 +989,14 @@ REBNATIVE(does)
     if (IS_BLOCK(specializee)) {
         //
         // `does [...]` and `does do [...]` are not exactly the same.  The
-        // generated FUNCTION! of the first form uses Block_Dispatcher() and
+        // generated ACTION! of the first form uses Block_Dispatcher() and
         // does on-demand relativization, so it's "kind of like" a `func []`
         // in forwarding references to members of derived objects.  Also, it
         // is optimized to not run the block with the DO native...hence a
         // HIJACK of DO won't be triggered by invocations of the first form.
         //
         MANAGE_ARRAY(paramlist);
-        REBFUN *fun = Make_Function(
+        REBACT *doer = Make_Action(
             paramlist,
             &Block_Dispatcher, // **SEE COMMENTS**, not quite like plain DO!
             NULL, // no facade (use paramlist)
@@ -1001,12 +1006,12 @@ REBNATIVE(does)
         // Block_Dispatcher() *may* copy at an indeterminate time, so to keep
         // things invariant we have to lock it.
         //
-        RELVAL *body = FUNC_BODY(fun);
+        RELVAL *body = ACT_BODY(doer);
         REBSER *locker = NULL;
         Ensure_Value_Immutable(specializee, locker);
         Move_Value(body, specializee);
 
-        Move_Value(D_OUT, FUNC_VALUE(fun));
+        Move_Value(D_OUT, ACT_ARCHETYPE(doer));
         return R_OUT;
     }
 
@@ -1037,7 +1042,7 @@ REBNATIVE(does)
             return R_OUT_IS_THROWN;
         }
 
-        if (not IS_FUNCTION(D_OUT))
+        if (not IS_ACTION(D_OUT))
             fail (Error_Invalid(specializee));
         Move_Value(specializee, D_OUT); // Frees D_OUT, GC safe (in ARG slot)
 
@@ -1132,7 +1137,7 @@ REBNATIVE(does)
         // On all other types, we just make it act like a specialized call to
         // DO for that value.
 
-        Make_Frame_For_Function(D_OUT, NAT_VALUE(do));
+        Make_Frame_For_Action(D_OUT, NAT_VALUE(do));
         assert(VAL_BINDING(D_OUT) == UNBOUND);
         exemplar = VAL_CONTEXT(D_OUT);
 
@@ -1140,12 +1145,14 @@ REBNATIVE(does)
         Move_Value(specializee, NAT_VALUE(do));
     }
 
-    REBCNT num_slots = FUNC_FACADE_NUM_PARAMS(VAL_FUNC(specializee)) + 1;
+    REBACT *unspecialized = VAL_ACTION(specializee);
+
+    REBCNT num_slots = ACT_FACADE_NUM_PARAMS(unspecialized) + 1;
     facade = Make_Array_Core(num_slots, SERIES_FLAG_FIXED_SIZE);
     REBVAL *rootkey = SINK(ARR_HEAD(facade));
-    Move_Value(rootkey, FUNC_VALUE(FUNC_UNDERLYING(VAL_FUNC(specializee))));
+    Move_Value(rootkey, ACT_ARCHETYPE(ACT_UNDERLYING(unspecialized)));
 
-    REBVAL *param = FUNC_FACADE_HEAD(VAL_FUNC(specializee));
+    REBVAL *param = ACT_FACADE_HEAD(unspecialized);
     RELVAL *alias = rootkey + 1;
     for (; NOT_END(param); ++param, ++alias) {
         Move_Value(alias, param);
@@ -1159,22 +1166,22 @@ REBNATIVE(does)
 
     MANAGE_ARRAY(paramlist);
 
-    // This code parallels Specialize_Function_Throws()
+    // This code parallels Specialize_Action_Throws(), see comments there
 
-    REBFUN *fun = Make_Function(
+    REBACT *doer = Make_Action(
         paramlist,
         &Specializer_Dispatcher,
         facade, // no facade, use paramlist
         exemplar // also provide a context of specialization values
     );
 
-    Move_Value(FUNC_BODY(fun), CTX_VALUE(exemplar));
-    assert(VAL_BINDING(FUNC_BODY(fun)) == VAL_BINDING(specializee));
+    INIT_CTX_KEYLIST_SHARED(exemplar, ACT_FACADE(unspecialized));
 
-    FUNC_BODY(fun)->payload.any_context.phase = VAL_FUNC(specializee);
+    RELVAL *body = ACT_BODY(doer);
+    Move_Value(ACT_BODY(doer), CTX_ARCHETYPE(exemplar));
+    INIT_BINDING(body, VAL_BINDING(specializee));
+    body->payload.any_context.phase = unspecialized;
 
-    Move_Value(D_OUT, FUNC_VALUE(fun));
-    assert(VAL_BINDING(D_OUT) == UNBOUND);
-
+    Move_Value(D_OUT, ACT_ARCHETYPE(doer));
     return R_OUT;
 }

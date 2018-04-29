@@ -353,29 +353,28 @@ REBTYPE(Decimal)
     // symbol-based dispatch.  Consider doing this another way.
     //
     if (
-        action == SYM_ADD
-        || action == SYM_SUBTRACT
-        || action == SYM_MULTIPLY
-        || action == SYM_DIVIDE
-        || action == SYM_REMAINDER
-        || action == SYM_POWER
+        verb == SYM_ADD
+        || verb == SYM_SUBTRACT
+        || verb == SYM_MULTIPLY
+        || verb == SYM_DIVIDE
+        || verb == SYM_REMAINDER
+        || verb == SYM_POWER
     ){
         arg = D_ARG(2);
         type = VAL_TYPE(arg);
-        if (type != REB_DECIMAL && (
-                type == REB_PAIR ||
-                type == REB_TUPLE ||
-                type == REB_MONEY ||
-                type == REB_TIME
-            ) && (
-                action == SYM_ADD ||
-                action == SYM_MULTIPLY
-            )
-        ){
+        if ((
+            type == REB_PAIR
+            or type == REB_TUPLE
+            or type == REB_MONEY
+            or type == REB_TIME
+        ) and (
+            verb == SYM_ADD ||
+            verb == SYM_MULTIPLY
+        )){
             Move_Value(D_OUT, D_ARG(2));
             Move_Value(D_ARG(2), D_ARG(1));
             Move_Value(D_ARG(1), D_OUT);
-            return Value_Dispatch[VAL_TYPE(D_ARG(1))](frame_, action);
+            return Value_Dispatch[VAL_TYPE(D_ARG(1))](frame_, verb);
         }
 
         // If the type of the second arg is something we can handle:
@@ -387,22 +386,28 @@ REBTYPE(Decimal)
         ){
             if (type == REB_DECIMAL) {
                 d2 = VAL_DECIMAL(arg);
-            } else if (type == REB_PERCENT) {
+            }
+            else if (type == REB_PERCENT) {
                 d2 = VAL_DECIMAL(arg);
-                if (action == SYM_DIVIDE) type = REB_DECIMAL;
-                else if (!IS_PERCENT(val)) type = VAL_TYPE(val);
-            } else if (type == REB_MONEY) {
+                if (verb == SYM_DIVIDE)
+                    type = REB_DECIMAL;
+                else if (not IS_PERCENT(val))
+                    type = VAL_TYPE(val);
+            }
+            else if (type == REB_MONEY) {
                 Init_Money(val, decimal_to_deci(VAL_DECIMAL(val)));
-                return T_Money(frame_, action);
-            } else if (type == REB_CHAR) {
-                d2 = (REBDEC)VAL_CHAR(arg);
+                return T_Money(frame_, verb);
+            }
+            else if (type == REB_CHAR) {
+                d2 = cast(REBDEC, VAL_CHAR(arg));
                 type = REB_DECIMAL;
-            } else {
-                d2 = (REBDEC)VAL_INT64(arg);
+            }
+            else {
+                d2 = cast(REBDEC, VAL_INT64(arg));
                 type = REB_DECIMAL;
             }
 
-            switch (action) {
+            switch (verb) {
 
             case SYM_ADD:
                 d1 += d2;
@@ -418,13 +423,17 @@ REBTYPE(Decimal)
 
             case SYM_DIVIDE:
             case SYM_REMAINDER:
-                if (d2 == 0.0) fail (Error_Zero_Divide_Raw());
-                if (action == SYM_DIVIDE) d1 /= d2;
-                else d1 = fmod(d1, d2);
+                if (d2 == 0.0)
+                    fail (Error_Zero_Divide_Raw());
+                if (verb == SYM_DIVIDE)
+                    d1 /= d2;
+                else
+                    d1 = fmod(d1, d2);
                 goto setDec;
 
             case SYM_POWER:
-                if (d1 == 0) goto setDec;
+                if (d1 == 0)
+                    goto setDec;
                 if (d2 == 0) {
                     d1 = 1.0;
                     goto setDec;
@@ -435,16 +444,16 @@ REBTYPE(Decimal)
                 goto setDec;
 
             default:
-                fail (Error_Math_Args(VAL_TYPE(val), action));
+                fail (Error_Math_Args(VAL_TYPE(val), verb));
             }
         }
-        fail (Error_Math_Args(VAL_TYPE(val), action));
+        fail (Error_Math_Args(VAL_TYPE(val), verb));
     }
 
     type = VAL_TYPE(val);
 
     // unary actions
-    switch (action) {
+    switch (verb) {
 
     case SYM_COPY:
         Move_Value(D_OUT, val);
@@ -502,7 +511,8 @@ REBTYPE(Decimal)
                 VAL_INT64(D_OUT) = cast(REBI64, d1);
                 return R_OUT;
             }
-            if (IS_PERCENT(arg)) type = REB_PERCENT;
+            if (IS_PERCENT(arg))
+                type = REB_PERCENT;
         }
         else
             d1 = Round_Dec(
@@ -529,17 +539,18 @@ REBTYPE(Decimal)
         goto setDec; }
 
     case SYM_COMPLEMENT:
-        Init_Integer(D_OUT, ~(REBINT)d1);
+        Init_Integer(D_OUT, ~cast(REBINT, d1));
         return R_OUT;
 
     default:
         ; // put fail outside switch() to catch any leaks
     }
 
-    fail (Error_Illegal_Action(VAL_TYPE(val), action));
+    fail (Error_Illegal_Action(VAL_TYPE(val), verb));
 
 setDec:
-    if (!FINITE(d1)) fail (Error_Overflow_Raw());
+    if (not FINITE(d1))
+        fail (Error_Overflow_Raw());
 
     RESET_VAL_HEADER(D_OUT, type);
     VAL_DECIMAL(D_OUT) = d1;

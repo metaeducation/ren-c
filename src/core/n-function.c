@@ -1,6 +1,6 @@
 //
 //  File: %n-function.c
-//  Summary: "native functions for creating and interacting with functions"
+//  Summary: "Natives for creating and interacting with ACTION!s"
 //  Section: natives
 //  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
 //  Homepage: https://github.com/metaeducation/ren-c/
@@ -8,7 +8,7 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Copyright 2012 REBOL Technologies
-// Copyright 2012-2017 Rebol Open Source Contributors
+// Copyright 2012-2018 Rebol Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information.
@@ -27,14 +27,11 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Ren-C follows a concept of a single FUNCTION! type, instead of the
-// subcategories from Rebol2 and R3-Alpha.  This simplifies matters from the
-// user's point of view, and also moves to the idea of a different C native
-// "dispatcher" functions which are attached to the function's definition
-// itself.  Not only does this allow a variety of performant customized
-// native dispatchers, but having the dispatcher accessed through an indirect
-// pointer instead of in the function REBVALs themselves lets them be
-// dynamically changed.  This is used by HIJACK and by user natives.
+// Ren-C implements a concept of a single ACTION! type, instead of the many
+// subcategories of ANY-FUNCTION! from Rebol2 and R3-Alpha.  The categories
+// unified under the name "ACTION!" instead of "FUNCTION!" for good reasons:
+//
+// https://forum.rebol.info/t/taking-action-on-function-vs-action/596
 //
 
 #include "sys-core.h"
@@ -42,27 +39,26 @@
 //
 //  func: native [
 //
-//  "Defines a user function with given spec and body."
+//  "Defines an ACTION! with given spec and body"
 //
-//      return: [function!]
-//      spec [block!]
-//          {Help string (opt) followed by arg words (and opt type + string)}
-//      body [block!]
-//          "The body block of the function"
+//      return: [action!]
+//      spec "Help string (opt) followed by arg words (and opt type + string)"
+//          [block!]
+//      body "Code implementing the function--use RETURN to yield a result"
+//          [block!]
 //  ]
 //
 REBNATIVE(func)
-//
-// Native optimized implementation of a "definitional return" function
-// generator.  See comments on Make_Function_May_Fail for full notes.
 {
     INCLUDE_PARAMS_OF_FUNC;
 
-    REBFUN *fun = Make_Interpreted_Function_May_Fail(
-        ARG(spec), ARG(body), MKF_RETURN | MKF_KEYWORDS
+    REBACT *func = Make_Interpreted_Action_May_Fail(
+        ARG(spec),
+        ARG(body),
+        MKF_RETURN | MKF_KEYWORDS
     );
 
-    Move_Value(D_OUT, FUNC_VALUE(fun));
+    Move_Value(D_OUT, ACT_ARCHETYPE(func));
     return R_OUT;
 }
 
@@ -70,29 +66,26 @@ REBNATIVE(func)
 //
 //  proc: native [
 //
-//  "Defines a user function with given spec and body and no return result."
+//  "Defines an ACTION! with given spec and body, but no return result"
 //
-//      return: [function!]
-//      spec [block!]
-//          {Help string (opt) followed by arg words (and opt type + string)}
-//      body [block!]
-//          "The body block of the function, use LEAVE to exit"
+//      return: [action!]
+//      spec "Help string (opt) followed by arg words (and opt type + string)"
+//          [block!]
+//      body "Code implementing the function--use LEAVE to exit"
+//          [block!]
 //  ]
 //
 REBNATIVE(proc)
-//
-// Short for "PROCedure"; inspired by the Pascal language's discernment in
-// terminology of a routine that returns a value vs. one that does not.
-// Provides convenient interface similar to FUNC that will not accidentally
-// leak values to the caller.
 {
     INCLUDE_PARAMS_OF_PROC;
 
-    REBFUN *fun = Make_Interpreted_Function_May_Fail(
-        ARG(spec), ARG(body), MKF_LEAVE | MKF_KEYWORDS
+    REBACT *proc = Make_Interpreted_Action_May_Fail(
+        ARG(spec),
+        ARG(body),
+        MKF_LEAVE | MKF_KEYWORDS
     );
 
-    Move_Value(D_OUT, FUNC_VALUE(fun));
+    Move_Value(D_OUT, ACT_ARCHETYPE(proc));
     return R_OUT;
 }
 
@@ -107,9 +100,9 @@ REBNATIVE(proc)
 //
 void Make_Thrown_Unwind_Value(
     REBVAL *out,
-    const REBVAL *level, // FRAME!, FUNCTION! (or INTEGER! relative to frame)
+    const REBVAL *level, // FRAME!, ACTION! (or INTEGER! relative to frame)
     const REBVAL *value,
-    REBFRM *frame // required if level is INTEGER! or FUNCTION!
+    REBFRM *frame // required if level is INTEGER! or ACTION!
 ) {
     Move_Value(out, NAT_VALUE(unwind));
 
@@ -126,10 +119,10 @@ void Make_Thrown_Unwind_Value(
             if (f == NULL)
                 fail (Error_Invalid_Exit_Raw());
 
-            if (not Is_Function_Frame(f))
+            if (not Is_Action_Frame(f))
                 continue; // only exit functions
 
-            if (Is_Function_Frame_Fulfilling(f))
+            if (Is_Action_Frame_Fulfilling(f))
                 continue; // not ready to exit
 
             --count;
@@ -140,20 +133,20 @@ void Make_Thrown_Unwind_Value(
         }
     }
     else {
-        assert(IS_FUNCTION(level));
+        assert(IS_ACTION(level));
 
         REBFRM *f = frame->prior;
         for (; TRUE; f = f->prior) {
             if (f == NULL)
                 fail (Error_Invalid_Exit_Raw());
 
-            if (not Is_Function_Frame(f))
+            if (not Is_Action_Frame(f))
                 continue; // only exit functions
 
-            if (Is_Function_Frame_Fulfilling(f))
+            if (Is_Action_Frame_Fulfilling(f))
                 continue; // not ready to exit
 
-            if (VAL_FUNC(level) == f->original) {
+            if (VAL_ACTION(level) == f->original) {
                 INIT_BINDING(out, f);
                 break;
             }
@@ -169,17 +162,16 @@ void Make_Thrown_Unwind_Value(
 //
 //  {Jump up the stack to return from a specific frame or call.}
 //
-//      level [frame! function! integer!]
-//          "Frame, function, or index to exit from"
-//      /with
-//          "Result for enclosing state (default is no value)"
+//      level "Frame, action, or index to exit from"
+//          [frame! action! integer!]
+//      /with "Result for enclosing state (default is void)"
 //      value [any-value!]
 //  ]
 //
 REBNATIVE(unwind)
 //
 // UNWIND is implemented via a THROWN() value that bubbles through the stack.
-// Using UNWIND's function REBVAL with a target `binding` field is the
+// Using UNWIND's action REBVAL with a target `binding` field is the
 // protocol understood by Do_Core to catch a throw itself.
 //
 // !!! Allowing to pass an INTEGER! to jump from a function based on its
@@ -213,7 +205,7 @@ REBNATIVE(return)
     // The frame this RETURN is being called from may well not be the target
     // function of the return (that's why it's a "definitional return").  The
     // binding field of the frame contains a copy of whatever the binding was
-    // in the specific FUNCTION! value that was invoked.
+    // in the specific ACTION! value that was invoked.
     //
     REBFRM *target_frame;
     if (IS_CELL(f->binding)) {
@@ -244,14 +236,14 @@ REBNATIVE(return)
     // that an ENCLOSE'd function can't return any types the original function
     // could not.  :-(
     //
-    REBFUN *target_fun = FRM_UNDERLYING(target_frame);
+    REBACT *target_fun = FRM_UNDERLYING(target_frame);
 
     // If it's a definitional return, the associated function's frame must
     // have a SYM_RETURN in it, which is also a local.  The trick used is
     // that the type bits in that local are used to store the legal types
     // for the return value.
     //
-    REBVAL *typeset = FUNC_PARAM(target_fun, FUNC_NUM_PARAMS(target_fun));
+    REBVAL *typeset = ACT_PARAM(target_fun, ACT_NUM_PARAMS(target_fun));
     assert(VAL_PARAM_SYM(typeset) == SYM_RETURN);
 
     // Check the type *NOW* instead of waiting and letting Do_Core() check it.
@@ -301,9 +293,9 @@ REBNATIVE(leave)
 //
 //  typechecker: native [
 //
-//  {Function generator for an optimized typechecking routine.}
+//  {Generator for an optimized typechecking ACTION!}
 //
-//      return: [function!]
+//      return: [action!]
 //      type [datatype! typeset!]
 //  ]
 //
@@ -316,8 +308,8 @@ REBNATIVE(typechecker)
     REBARR *paramlist = Make_Array_Core(2, ARRAY_FLAG_PARAMLIST);
 
     REBVAL *archetype = Alloc_Tail_Array(paramlist);
-    RESET_VAL_HEADER(archetype, REB_FUNCTION);
-    archetype->payload.function.paramlist = paramlist;
+    RESET_VAL_HEADER(archetype, REB_ACTION);
+    archetype->payload.action.paramlist = paramlist;
     INIT_BINDING(archetype, UNBOUND);
 
     REBVAL *param = Alloc_Tail_Array(paramlist);
@@ -328,11 +320,9 @@ REBNATIVE(typechecker)
 
     LINK(paramlist).facade = paramlist;
 
-    // for now, no help...use REDESCRIBE
-    //
-    MISC(paramlist).meta = NULL;
+    MISC(paramlist).meta = NULL; // !!! auto-generate info for HELP?
 
-    REBFUN *fun = Make_Function(
+    REBACT *typechecker = Make_Action(
         paramlist,
         IS_DATATYPE(type)
             ? &Datatype_Checker_Dispatcher
@@ -341,9 +331,9 @@ REBNATIVE(typechecker)
         NULL // no specialization exemplar (or inherited exemplar)
     );
 
-    Move_Value(FUNC_BODY(fun), type);
+    Move_Value(ACT_BODY(typechecker), type);
 
-    Move_Value(D_OUT, FUNC_VALUE(fun));
+    Move_Value(D_OUT, ACT_ARCHETYPE(typechecker));
 
     return R_OUT;
 }
@@ -352,11 +342,11 @@ REBNATIVE(typechecker)
 //
 //  chain: native [
 //
-//  {Create a processing pipeline of functions that consume the last's result}
+//  {Create a processing pipeline of actions, each consuming the last result}
 //
-//      return: [function!]
+//      return: [action!]
 //      pipeline [block!]
-//          {List of functions to apply.  Reduced by default.}
+//          {List of actions to apply.  Reduced by default.}
 //      /quote
 //          {Do not reduce the pipeline--use the values as-is.}
 //  ]
@@ -365,7 +355,7 @@ REBNATIVE(chain)
 {
     INCLUDE_PARAMS_OF_CHAIN;
 
-    REBVAL *out = D_OUT; // plan ahead for factoring into Chain_Function(out..
+    REBVAL *out = D_OUT; // plan ahead for factoring into Chain_Action(out..
 
     REBVAL *pipeline = ARG(pipeline);
     REBARR *chainees;
@@ -388,20 +378,18 @@ REBNATIVE(chain)
     //
     REBVAL *check = first;
     while (NOT_END(check)) {
-        if (not IS_FUNCTION(check))
+        if (not IS_ACTION(check))
             fail (Error_Invalid(check));
         ++check;
     }
 
-    // The paramlist needs to be unique to designate this function, but
-    // will be identical typesets to the first function in the chain.  It's
-    // [0] element must identify the function we're creating vs the original,
-    // however.
+    // Paramlist needs to be unique to identify the new function, but will be
+    // a compatible interface with the first function in the chain.
     //
     REBARR *paramlist = Copy_Array_Shallow(
-        VAL_FUNC_PARAMLIST(ARR_HEAD(chainees)), SPECIFIED
+        VAL_ACT_PARAMLIST(ARR_HEAD(chainees)), SPECIFIED
     );
-    ARR_HEAD(paramlist)->payload.function.paramlist = paramlist;
+    ARR_HEAD(paramlist)->payload.action.paramlist = paramlist;
     SET_SER_FLAG(paramlist, ARRAY_FLAG_PARAMLIST);
     MANAGE_ARRAY(paramlist);
 
@@ -421,22 +409,18 @@ REBNATIVE(chain)
     Init_Block(CTX_VAR(meta, STD_CHAINED_META_CHAINEES), chainees);
     Init_Void(CTX_VAR(meta, STD_CHAINED_META_CHAINEE_NAMES));
     MANAGE_ARRAY(CTX_VARLIST(meta));
-    MISC(paramlist).meta = meta; // must initialize before Make_Function
+    MISC(paramlist).meta = meta; // must initialize before Make_Action
 
-    REBFUN *fun = Make_Function(
+    REBACT *chain = Make_Action(
         paramlist,
         &Chainer_Dispatcher,
-        FUNC_FACADE(VAL_FUNC(first)), // same interface as first function
-        FUNC_EXEMPLAR(VAL_FUNC(first)) // same exemplar as first function
+        ACT_FACADE(VAL_ACTION(first)), // same interface as first action
+        ACT_EXEMPLAR(VAL_ACTION(first)) // same exemplar as first action
     );
 
-    // "body" is the chainees array, available to the dispatcher when called
-    //
-    Init_Block(FUNC_BODY(fun), chainees);
+    Init_Block(ACT_BODY(chain), chainees); // used by Chainer_Dispatcher
 
-    Move_Value(D_OUT, FUNC_VALUE(fun));
-    assert(VAL_BINDING(D_OUT) == UNBOUND);
-
+    Move_Value(out, ACT_ARCHETYPE(chain));
     return R_OUT;
 }
 
@@ -444,10 +428,10 @@ REBNATIVE(chain)
 //
 //  adapt: native [
 //
-//  {Create a variant of a function that preprocesses its arguments}
+//  {Create a variant of an ACTION! that preprocesses its arguments}
 //
-//      return: [function!]
-//      adaptee [function! word! path!]
+//      return: [action!]
+//      adaptee [action! word! path!]
 //          {Function or specifying word (preserves word name for debug info)}
 //      prelude [block!]
 //          {Code to run in constructed frame before adapted function runs}
@@ -471,7 +455,7 @@ REBNATIVE(adapt)
         return R_OUT_IS_THROWN;
     }
 
-    if (not IS_FUNCTION(D_OUT))
+    if (not IS_ACTION(D_OUT))
         fail (Error_Invalid(adaptee));
     Move_Value(adaptee, D_OUT); // Frees D_OUT, and GC safe (in ARG slot)
 
@@ -484,7 +468,7 @@ REBNATIVE(adapt)
     // Hence you must bind relative to that deeper function...e.g. the function
     // behind the frame of the specialization which gets pushed.
     //
-    REBFUN *underlying = FUNC_UNDERLYING(VAL_FUNC(adaptee));
+    REBACT *underlying = ACT_UNDERLYING(VAL_ACTION(adaptee));
 
     // !!! In a future branch it may be possible that specific binding allows
     // a read-only input to be "viewed" with a relative binding, and no copy
@@ -492,7 +476,7 @@ REBNATIVE(adapt)
     //
     REBARR *prelude = Copy_And_Bind_Relative_Deep_Managed(
         ARG(prelude),
-        FUNC_PARAMLIST(underlying),
+        ACT_PARAMLIST(underlying),
         TS_ANY_WORD
     );
 
@@ -501,9 +485,9 @@ REBNATIVE(adapt)
     // identify the function we're creating vs the original, however.
     //
     REBARR *paramlist = Copy_Array_Shallow(
-        VAL_FUNC_PARAMLIST(adaptee), SPECIFIED
+        VAL_ACT_PARAMLIST(adaptee), SPECIFIED
     );
-    ARR_HEAD(paramlist)->payload.function.paramlist = paramlist;
+    ARR_HEAD(paramlist)->payload.action.paramlist = paramlist;
     SET_SER_FLAG(paramlist, ARRAY_FLAG_PARAMLIST);
     MANAGE_ARRAY(paramlist);
 
@@ -525,40 +509,40 @@ REBNATIVE(adapt)
     MANAGE_ARRAY(CTX_VARLIST(meta));
     MISC(paramlist).meta = meta;
 
-    REBFUN *fun = Make_Function(
+    REBACT *adaptation = Make_Action(
         paramlist,
         &Adapter_Dispatcher,
-        FUNC_FACADE(VAL_FUNC(adaptee)), // same interface as adaptee
-        FUNC_EXEMPLAR(VAL_FUNC(adaptee)) // same exemplar as adaptee
+        ACT_FACADE(VAL_ACTION(adaptee)), // same interface as adaptee
+        ACT_EXEMPLAR(VAL_ACTION(adaptee)) // same exemplar as adaptee
     );
 
     // We need to store the 2 values describing the adaptation so that the
-    // dispatcher knows what to do when it gets called and inspects FUNC_BODY.
+    // dispatcher knows what to do when it gets called and inspects ACT_BODY.
     //
-    // [0] is the prelude BLOCK!, [1] is the FUNCTION! we've adapted.
+    // [0] is the prelude BLOCK!, [1] is the ACTION! we've adapted.
     //
-    // !!! We could avoid this array allocation by putting the FUNCTION! in
+    // !!! We could avoid this array allocation by putting the ACTION! in
     // the prelude as the first element, then index the prelude after that.
     // It wouldn't be seen by the execution.  Worth doing, someday...
     //
-    REBARR *adaptation = Make_Array(2);
+    REBARR *info = Make_Array(2);
 
-    REBVAL *block = Alloc_Tail_Array(adaptation);
+    REBVAL *block = Alloc_Tail_Array(info);
     RESET_VAL_HEADER(block, REB_BLOCK);
     INIT_VAL_ARRAY(block, prelude);
     VAL_INDEX(block) = 0;
     INIT_BINDING(block, underlying); // relative binding
 
-    Append_Value(adaptation, adaptee);
+    Append_Value(info, adaptee);
 
-    RELVAL *body = FUNC_BODY(fun);
+    RELVAL *body = ACT_BODY(adaptation);
     RESET_VAL_HEADER(body, REB_BLOCK);
-    INIT_VAL_ARRAY(body, adaptation);
+    INIT_VAL_ARRAY(body, info);
     VAL_INDEX(body) = 0;
     INIT_BINDING(body, underlying); // relative binding
-    MANAGE_ARRAY(adaptation);
+    MANAGE_ARRAY(info);
 
-    Move_Value(D_OUT, FUNC_VALUE(fun));
+    Move_Value(D_OUT, ACT_ARCHETYPE(adaptation));
     assert(VAL_BINDING(D_OUT) == UNBOUND);
 
     return R_OUT;
@@ -568,12 +552,12 @@ REBNATIVE(adapt)
 //
 //  enclose: native [
 //
-//  {Wrap code around a FUNCTION! with access to its FRAME! and return value}
+//  {Wrap code around an ACTION! with access to its FRAME! and return value}
 //
-//      return: [function!]
-//      inner [function! word! path!]
-//          {Function that a FRAME! will be built for (and optionally called)}
-//      outer [function! word! path!]
+//      return: [action!]
+//      inner [action! word! path!]
+//          {Action that a FRAME! will be built for, then passed to OUTER}
+//      outer [action! word! path!]
 //          {Gets a FRAME! for INNER before invocation, can DO it (or not)}
 //  ]
 //
@@ -594,7 +578,7 @@ REBNATIVE(enclose)
         return R_OUT_IS_THROWN;
     }
 
-    if (not IS_FUNCTION(D_OUT))
+    if (not IS_ACTION(D_OUT))
         fail (Error_Invalid(inner));
     Move_Value(inner, D_OUT); // Frees D_OUT, and GC safe (in ARG slot)
 
@@ -610,7 +594,7 @@ REBNATIVE(enclose)
         return R_OUT_IS_THROWN;
     }
 
-    if (not IS_FUNCTION(D_OUT))
+    if (not IS_ACTION(D_OUT))
         fail (Error_Invalid(outer));
     Move_Value(outer, D_OUT); // Frees D_OUT, and GC safe (in ARG slot)
 
@@ -619,9 +603,9 @@ REBNATIVE(enclose)
     // identify the function we're creating vs the original, however.
     //
     REBARR *paramlist = Copy_Array_Shallow(
-        VAL_FUNC_PARAMLIST(inner), SPECIFIED
+        VAL_ACT_PARAMLIST(inner), SPECIFIED
     );
-    ARR_HEAD(paramlist)->payload.function.paramlist = paramlist;
+    ARR_HEAD(paramlist)->payload.action.paramlist = paramlist;
     SET_SER_FLAG(paramlist, ARRAY_FLAG_PARAMLIST);
     MANAGE_ARRAY(paramlist);
 
@@ -651,25 +635,25 @@ REBNATIVE(enclose)
     MANAGE_ARRAY(CTX_VARLIST(meta));
     MISC(paramlist).meta = meta;
 
-    REBFUN *fun = Make_Function(
+    REBACT *enclosure = Make_Action(
         paramlist,
         &Encloser_Dispatcher,
-        FUNC_FACADE(VAL_FUNC(inner)), // same interface as inner
-        FUNC_EXEMPLAR(VAL_FUNC(inner)) // same exemplar as inner
+        ACT_FACADE(VAL_ACTION(inner)), // same interface as inner
+        ACT_EXEMPLAR(VAL_ACTION(inner)) // same exemplar as inner
     );
 
     // We need to store the 2 values describing the enclosure so that the
-    // dispatcher knows what to do when it gets called and inspects FUNC_BODY.
+    // dispatcher knows what to do when it gets called and inspects ACT_BODY.
     //
-    // [0] is the inner FUNCTION!, [2] is the outer FUNCTION!
+    // [0] is the inner ACTION!, [2] is the outer ACTION!
     //
-    REBARR *enclosure = Make_Array(2);
-    Append_Value(enclosure, inner);
-    Append_Value(enclosure, outer);
+    REBARR *info = Make_Array(2);
+    Append_Value(info, inner);
+    Append_Value(info, outer);
 
-    Init_Block(FUNC_BODY(fun), enclosure);
+    Init_Block(ACT_BODY(enclosure), info);
 
-    Move_Value(D_OUT, FUNC_VALUE(fun));
+    Move_Value(D_OUT, ACT_ARCHETYPE(enclosure));
     assert(VAL_BINDING(D_OUT) == UNBOUND);
 
     return R_OUT;
@@ -679,22 +663,19 @@ REBNATIVE(enclose)
 //
 //  hijack: native [
 //
-//  {Cause all existing references to a function to invoke another function.}
+//  {Cause all existing references to an ACTION! to invoke another ACTION!}
 //
-//      return: [function! blank!]
-//          {The hijacked function value, blank if self-hijack (no-op).}
-//      victim [function! word! path!]
-//          {Function value whose references are to be affected.}
-//      hijacker [function! word! path!]
-//          {The function to run in its place.}
+//      return: [action! blank!]
+//          {The hijacked action value, blank if self-hijack (no-op)}
+//      victim [action! word! path!]
+//          {Action value whose references are to be affected.}
+//      hijacker [action! word! path!]
+//          {The action to run in its place}
 //  ]
 //
 REBNATIVE(hijack)
 //
-// The HIJACK operation replaces one function completely with another, such
-// that references to the old function value will now call a new one.
-//
-// Hijacking a function does not change its interface--and cannot.  While
+// Hijacking an action does not change its interface--and cannot.  While
 // it may seem tempting to use low-level tricks to keep the same paramlist
 // but add or remove parameters, parameter lists can be referenced many
 // places in the system (frames, specializations, adaptations) and can't
@@ -717,8 +698,8 @@ REBNATIVE(hijack)
         return R_OUT_IS_THROWN;
     }
 
-    if (not IS_FUNCTION(D_OUT))
-        fail ("Victim of HIJACK must be a FUNCTION!");
+    if (not IS_ACTION(D_OUT))
+        fail ("Victim of HIJACK must be an ACTION!");
     Move_Value(victim, D_OUT); // Frees D_OUT, and GC safe (in ARG slot)
 
     REBVAL *hijacker = ARG(hijacker);
@@ -733,11 +714,11 @@ REBNATIVE(hijack)
         return R_OUT_IS_THROWN;
     }
 
-    if (not IS_FUNCTION(D_OUT))
-        fail ("Hijacker in HIJACK must be a FUNCTION!");
+    if (not IS_ACTION(D_OUT))
+        fail ("Hijacker in HIJACK must be an ACTION!");
     Move_Value(hijacker, D_OUT); // Frees D_OUT, and GC safe (in ARG slot)
 
-    if (VAL_FUNC(victim) == VAL_FUNC(hijacker)) {
+    if (VAL_ACTION(victim) == VAL_ACTION(hijacker)) {
         //
         // Permitting a no-op hijack has some applications...but offer a
         // distinguished result for those who want to detect the condition.
@@ -745,30 +726,30 @@ REBNATIVE(hijack)
         return R_BLANK;
     }
 
-    REBARR *victim_paramlist = VAL_FUNC_PARAMLIST(victim);
-    REBARR *hijacker_paramlist = VAL_FUNC_PARAMLIST(hijacker);
+    REBARR *victim_paramlist = VAL_ACT_PARAMLIST(victim);
+    REBARR *hijacker_paramlist = VAL_ACT_PARAMLIST(hijacker);
 
     if (
-        FUNC_UNDERLYING(VAL_FUNC(hijacker))
-        == FUNC_UNDERLYING(VAL_FUNC(victim))
+        ACT_UNDERLYING(VAL_ACTION(hijacker))
+        == ACT_UNDERLYING(VAL_ACTION(victim))
     ){
-        // Should the underlying functions of the hijacker and victim match,
-        // that means any ADAPT or CHAIN or SPECIALIZE of the victim can
-        // work equally well if we just use the hijacker's dispatcher
-        // directly.  This is a reasonably common case, and especially
-        // common when putting the originally hijacked function back.
+        // Should the underliers of the hijacker and victim match, that means
+        // any ADAPT or CHAIN or SPECIALIZE of the victim can work equally
+        // well if we just use the hijacker's dispatcher directly.  This is a
+        // reasonably common case, and especially common when putting the
+        // originally hijacked function back.
 
         LINK(victim_paramlist).facade = LINK(hijacker_paramlist).facade;
-        LINK(victim->payload.function.body_holder).exemplar =
-            LINK(hijacker->payload.function.body_holder).exemplar;
+        LINK(victim->payload.action.body_holder).exemplar =
+            LINK(hijacker->payload.action.body_holder).exemplar;
 
         // All function bodies should live in cells with the same underlying
         // formatting.  Blit_Cell ensures that's the case.
         //
-        Blit_Cell(VAL_FUNC_BODY(victim), VAL_FUNC_BODY(hijacker));
+        Blit_Cell(VAL_ACT_BODY(victim), VAL_ACT_BODY(hijacker));
 
-        MISC(victim->payload.function.body_holder).dispatcher =
-            MISC(hijacker->payload.function.body_holder).dispatcher;
+        MISC(victim->payload.action.body_holder).dispatcher =
+            MISC(hijacker->payload.action.body_holder).dispatcher;
     }
     else {
         // A mismatch means there could be someone out there pointing at this
@@ -781,8 +762,8 @@ REBNATIVE(hijack)
         // process of building a new frame.  But in general one basically
         // needs to do a new function call.
         //
-        Move_Value(VAL_FUNC_BODY(victim), hijacker);
-        MISC(victim->payload.function.body_holder).dispatcher =
+        Move_Value(VAL_ACT_BODY(victim), hijacker);
+        MISC(victim->payload.action.body_holder).dispatcher =
             &Hijacker_Dispatcher;
     }
 
@@ -799,16 +780,17 @@ REBNATIVE(hijack)
 //
 //  variadic?: native [
 //
-//  {Returns TRUE if a function may take a variable number of arguments.}
+//  {Returns TRUE if an ACTION! may take a variable number of arguments.}
 //
-//      func [function!]
+//      return: [logic!]
+//      action [action!]
 //  ]
 //
 REBNATIVE(variadic_q)
 {
     INCLUDE_PARAMS_OF_VARIADIC_Q;
 
-    REBVAL *param = VAL_FUNC_PARAMS_HEAD(ARG(func));
+    REBVAL *param = VAL_ACT_PARAMS_HEAD(ARG(action));
     for (; NOT_END(param); ++param) {
         if (GET_VAL_FLAG(param, TYPESET_FLAG_VARIADIC))
             return R_TRUE;
@@ -821,10 +803,10 @@ REBNATIVE(variadic_q)
 //
 //  tighten: native [
 //
-//  {Returns alias of a function whose "normal" args are gathered "tightly"}
+//  {Returns alias of an ACTION! whose "normal" args are gathered "tightly"}
 //
-//      return: [function!]
-//      action [function!]
+//      return: [action!]
+//      action [action!]
 //  ]
 //
 REBNATIVE(tighten)
@@ -842,18 +824,18 @@ REBNATIVE(tighten)
 {
     INCLUDE_PARAMS_OF_TIGHTEN;
 
-    REBFUN *original = VAL_FUNC(ARG(action));
+    REBACT *original = VAL_ACTION(ARG(action));
 
     // Copy the paramlist, which serves as the function's unique identity,
     // and set the tight flag on all the parameters.
 
     REBARR *paramlist = Copy_Array_Shallow(
-        FUNC_PARAMLIST(original),
+        ACT_PARAMLIST(original),
         SPECIFIED // no relative values in parameter lists
     );
     SET_SER_FLAG(paramlist, ARRAY_FLAG_PARAMLIST); // flags not auto-copied
 
-    RELVAL *param = ARR_AT(paramlist, 1); // first parameter (0 is FUNCTION!)
+    RELVAL *param = ARR_AT(paramlist, 1); // first parameter (0 is ACTION!)
     for (; NOT_END(param); ++param) {
         enum Reb_Param_Class pclass = VAL_PARAM_CLASS(param);
         if (pclass == PARAM_CLASS_NORMAL)
@@ -861,15 +843,15 @@ REBNATIVE(tighten)
     }
 
     RELVAL *rootparam = ARR_HEAD(paramlist);
-    CLEAR_VAL_FLAGS(rootparam, FUNC_FLAG_CACHED_MASK);
-    rootparam->payload.function.paramlist = paramlist;
+    CLEAR_VAL_FLAGS(rootparam, ACTION_FLAG_CACHED_MASK);
+    rootparam->payload.action.paramlist = paramlist;
     INIT_BINDING(rootparam, UNBOUND);
 
     // !!! This does not make a unique copy of the meta information context.
     // Hence updates to the title/parameter-descriptions/etc. of the tightened
     // function will affect the original, and vice-versa.
     //
-    MISC(paramlist).meta = FUNC_META(original);
+    MISC(paramlist).meta = ACT_META(original);
 
     MANAGE_ARRAY(paramlist);
 
@@ -888,11 +870,11 @@ REBNATIVE(tighten)
     // Note: Do NOT set the ARRAY_FLAG_PARAMLIST on this facade.  It holds
     // whatever function value in the [0] slot the original had, and that is
     // used for the identity of the "underlying function".  (In order to make
-    // this a real FUNCTION!'s paramlist, the paramlist in the [0] slot would
+    // this a real ACTION!'s paramlist, the paramlist in the [0] slot would
     // have to be equal to the facade's pointer.)
     //
     REBARR *facade = Copy_Array_Shallow(
-        FUNC_FACADE(original),
+        ACT_FACADE(original),
         SPECIFIED // no relative values in facades, either
     );
     RELVAL *facade_param = ARR_AT(facade, 1);
@@ -911,11 +893,11 @@ REBNATIVE(tighten)
 
     MANAGE_ARRAY(facade);
 
-    REBFUN *fun = Make_Function(
+    REBACT *tightened = Make_Action(
         paramlist,
-        FUNC_DISPATCHER(original),
+        ACT_DISPATCHER(original),
         facade, // use the new, tightened facade
-        FUNC_EXEMPLAR(original) // don't add to the original's specialization
+        ACT_EXEMPLAR(original) // don't add to the original's specialization
     );
 
     // We're reusing the original dispatcher, so we also reuse the original
@@ -923,9 +905,9 @@ REBNATIVE(tighten)
     // on the source and target are the same, and it preserves relative
     // value information (rarely what you meant, but it's meant here).
     //
-    Blit_Cell(FUNC_BODY(fun), FUNC_BODY(original));
+    Blit_Cell(ACT_BODY(tightened), ACT_BODY(original));
 
-    Move_Value(D_OUT, FUNC_VALUE(fun));
+    Move_Value(D_OUT, ACT_ARCHETYPE(tightened));
 
     // Currently esoteric case if someone chose to tighten a definitional
     // return, so `return 1 + 2` would return 1 instead of 3.  Would need to

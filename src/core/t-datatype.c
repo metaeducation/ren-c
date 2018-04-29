@@ -88,7 +88,7 @@ REBTYPE(Datatype)
     REBVAL *arg = D_ARG(2);
     enum Reb_Kind kind = VAL_TYPE_KIND(value);
 
-    switch (action) {
+    switch (verb) {
 
     case SYM_REFLECT: {
         REBSYM sym = VAL_WORD_SYM(arg);
@@ -136,7 +136,7 @@ REBTYPE(Datatype)
         break;}
 
     default:
-        fail (Error_Illegal_Action(REB_DATATYPE, action));
+        fail (Error_Illegal_Action(REB_DATATYPE, verb));
     }
 
     return R_OUT;

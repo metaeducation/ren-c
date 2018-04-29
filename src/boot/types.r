@@ -126,9 +126,10 @@ REBOL [
 
 0           0           -       -       -       -
 
-; There is only one FUNCTION! type in Ren-C
+; There is only one "invokable" type in Ren-C, and it takes the name ACTION!
+; instead of the name FUNCTION!: https://forum.rebol.info/t/596
 
-function    function    +       +       +       -
+action      action      +       +       +       -
 
 ; ANY-WORD!, order matters (tests like ANY_WORD use >= REB_WORD, <= REB_ISSUE)
 ;

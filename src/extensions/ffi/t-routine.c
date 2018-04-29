@@ -153,7 +153,7 @@ static void Schema_From_Block_May_Fail(
                     | FLAGIT_KIND(REB_STRING)
                     | FLAGIT_KIND(REB_BINARY)
                     | FLAGIT_KIND(REB_VECTOR)
-                    | FLAGIT_KIND(REB_FUNCTION), // legal if routine or callback
+                    | FLAGIT_KIND(REB_ACTION), // legal if routine or callback
                 NULL
             );
             break;
@@ -429,11 +429,11 @@ static uintptr_t arg_to_ffi(
             memcpy(dest, &raw_ptr, sizeof(raw_ptr)); // copies a *pointer*!
             break;}
 
-        case REB_FUNCTION:{
-            if (!IS_FUNCTION_RIN(arg))
+        case REB_ACTION:{
+            if (!IS_ACTION_RIN(arg))
                 fail (Error_Only_Callback_Ptr_Raw()); // actually routines too
 
-            CFUNC* cfunc = RIN_CFUNC(VAL_FUNC_ROUTINE(arg));
+            CFUNC* cfunc = RIN_CFUNC(VAL_ACT_ROUTINE(arg));
             size_t sizeof_cfunc = sizeof(cfunc); // avoid conditional const
             if (sizeof_cfunc != sizeof(void*)) // not necessarily true
                 fail ("Void pointer size not equal to function pointer size");
@@ -601,7 +601,7 @@ static void ffi_to_rebol(
 //
 REB_R Routine_Dispatcher(REBFRM *f)
 {
-    REBRIN *rin = FUNC_ROUTINE(f->phase);
+    REBRIN *rin = VAL_ARRAY(ACT_BODY(f->phase));
 
     if (RIN_IS_CALLBACK(rin) || RIN_LIB(rin) == NULL) {
         //
@@ -624,7 +624,7 @@ REB_R Routine_Dispatcher(REBFRM *f)
         // The function specification should have one extra parameter for
         // the variadic source ("...")
         //
-        assert(FUNC_NUM_PARAMS(f->phase) == num_fixed + 1);
+        assert(ACT_NUM_PARAMS(f->phase) == num_fixed + 1);
 
         REBVAL *vararg = FRM_ARG(f, num_fixed + 1); // 1-based
         assert(IS_VARARGS(vararg) && f->binding == NULL);
@@ -723,7 +723,7 @@ REB_R Routine_Dispatcher(REBFRM *f)
                 NULL, // dest pointer must be NULL if store is non-NULL
                 FRM_ARG(f, i + 1), // 1-based
                 RIN_ARG_SCHEMA(rin, i), // 0-based
-                FUNC_PARAM(f->phase, i + 1) // 1-based
+                ACT_PARAM(f->phase, i + 1) // 1-based
             );
 
             // We will convert the offset to a pointer later
@@ -875,7 +875,7 @@ REB_R Routine_Dispatcher(REBFRM *f)
 //
 // The GC-able HANDLE! used by callbacks contains a ffi_closure pointer that
 // needs to be freed when the handle references go away (really only one
-// reference is likely--in the FUNC_BODY of the callback, but still this is
+// reference is likely--in the ACT_BODY of the callback, but still this is
 // how the GC gets hooked in Ren-C)
 //
 void cleanup_ffi_closure(const REBVAL *v) {
@@ -906,7 +906,7 @@ static void callback_dispatcher_core(struct Reb_Callback_Invocation *inv)
     //
     REBARR *code = Make_Array(1 + inv->cif->nargs);
     RELVAL *elem = ARR_HEAD(code);
-    Move_Value(elem, FUNC_VALUE(RIN_CALLBACK_FUNC(inv->rin)));
+    Move_Value(elem, ACT_ARCHETYPE(RIN_CALLBACK_ACTION(inv->rin)));
     ++elem;
 
     REBCNT i;
@@ -980,10 +980,10 @@ void callback_dispatcher(
 
 
 //
-//  Alloc_Ffi_Function_For_Spec: C
+//  Alloc_Ffi_Action_For_Spec: C
 //
-// This allocates a REBFUN designed for using with the FFI--though it does
-// not fill in the actual code to call.  That is done by the caller, which
+// This allocates a REBACT designed for using with the FFI--though it does
+// not fill in the actual code to run.  That is done by the caller, which
 // needs to be done differently if it runs a C function (routine) or if it
 // makes Rebol code callable as if it were a C function (callback).
 //
@@ -1004,7 +1004,7 @@ void callback_dispatcher(
 //     return: [type] "note"
 // ]
 //
-REBFUN *Alloc_Ffi_Function_For_Spec(REBVAL *ffi_spec, ffi_abi abi) {
+REBACT *Alloc_Ffi_Action_For_Spec(REBVAL *ffi_spec, ffi_abi abi) {
     assert(IS_BLOCK(ffi_spec));
 
     REBRIN *r = Make_Array(IDX_ROUTINE_MAX);
@@ -1015,7 +1015,7 @@ REBFUN *Alloc_Ffi_Function_For_Spec(REBVAL *ffi_spec, ffi_abi abi) {
     //
     Init_Unreadable_Blank(RIN_AT(r, IDX_ROUTINE_CFUNC));
     Init_Unreadable_Blank(RIN_AT(r, IDX_ROUTINE_CLOSURE));
-    Init_Unreadable_Blank(RIN_AT(r, IDX_ROUTINE_ORIGIN)); // LIBRARY!/FUNCTION!
+    Init_Unreadable_Blank(RIN_AT(r, IDX_ROUTINE_ORIGIN)); // LIBRARY!/ACTION!
 
     Init_Blank(RIN_AT(r, IDX_ROUTINE_RET_SCHEMA)); // returns void as default
 
@@ -1052,7 +1052,7 @@ REBFUN *Alloc_Ffi_Function_For_Spec(REBVAL *ffi_spec, ffi_abi abi) {
     RELVAL *item = VAL_ARRAY_AT(ffi_spec);
     for (; NOT_END(item); ++item) {
         if (IS_STRING(item))
-            continue; // !!! TBD: extract FUNC_META information from spec notes
+            continue; // !!! TBD: extract ACT_META information from spec notes
 
         switch (VAL_TYPE(item)) {
         case REB_WORD:{
@@ -1196,12 +1196,12 @@ REBFUN *Alloc_Ffi_Function_For_Spec(REBVAL *ffi_spec, ffi_abi abi) {
 
     DROP_GUARD_ARRAY(args_schemas);
 
-    // Now fill in the canon value of the paramlist so it is an actual REBFUN
+    // Now fill in the canon value of the paramlist so it is an actual REBACT
     // Note: address may have moved if the array was resized.
     //
     RELVAL *rootparam = ARR_HEAD(paramlist);
-    RESET_VAL_HEADER(rootparam, REB_FUNCTION);
-    rootparam->payload.function.paramlist = paramlist;
+    RESET_VAL_HEADER(rootparam, REB_ACTION);
+    rootparam->payload.action.paramlist = paramlist;
     INIT_BINDING(rootparam, UNBOUND);
 
     LINK(paramlist).facade = paramlist;
@@ -1209,16 +1209,13 @@ REBFUN *Alloc_Ffi_Function_For_Spec(REBVAL *ffi_spec, ffi_abi abi) {
 
     MANAGE_ARRAY(paramlist);
 
-    REBFUN *fun = Make_Function(
+    REBACT *action = Make_Action(
         paramlist,
         &Routine_Dispatcher,
         NULL, // no facade (use paramlist)
         NULL // no specialization exemplar (or inherited exemplar)
     );
 
-    // The "body" value of a routine is the routine info array.
-    //
-    Init_Block(FUNC_BODY(fun), r);
-
-    return fun; // still needs to have function or callback info added!
+    Init_Block(ACT_BODY(action), r); // still needs routine or callback info!
+    return action;
 }

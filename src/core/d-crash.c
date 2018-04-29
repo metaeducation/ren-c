@@ -258,7 +258,7 @@ REBNATIVE(panic)
     // Note that by using the frame's tick instead of TG_Tick, we don't count
     // the evaluation of the value argument.  Hence the tick count shown in
     // the dump would be the one that would queue up right to the exact moment
-    // *before* the PANIC FUNCTION! was invoked.
+    // *before* the PANIC ACTION! was invoked.
     //
   #ifdef DEBUG_COUNT_TICKS
     Panic_Core(p, frame_->tick, FRM_FILE_UTF8(frame_), FRM_LINE(frame_));
@@ -285,7 +285,7 @@ REBNATIVE(panic_value)
   #ifdef DEBUG_TRACK_TICKS
     //
     // Use frame tick (if available) instead of TG_Tick, so tick count dumped
-    // is the exact moment before the PANIC-VALUE FUNCTION! was invoked.
+    // is the exact moment before the PANIC-VALUE ACTION! was invoked.
     //
     Panic_Core(
         ARG(value), frame_->tick, FRM_FILE_UTF8(frame_), FRM_LINE(frame_)

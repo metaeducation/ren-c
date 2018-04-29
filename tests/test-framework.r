@@ -83,7 +83,7 @@ make object! compose [
 
     process-tests: procedure [
         test-sources [block!]
-        emit-test [function!]
+        emit-test [action!]
     ][
         parse test-sources [
             any [

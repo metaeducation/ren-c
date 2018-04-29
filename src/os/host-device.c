@@ -294,7 +294,7 @@ REBVAL *OS_Do_Device(REBREQ *req, REBCNT command)
 
     REBVAL *error_or_int = rebRescue(cast(REBDNG*, &Dangerous_Command), req);
 
-    if (rebTypeOf(error_or_int) == RXT_ERROR) {
+    if (rebDid("lib/error?", error_or_int, rebEnd())) {
         if (dev->pending)
             Detach_Request(&dev->pending, req); // "often a no-op", it said
 
@@ -305,7 +305,7 @@ REBVAL *OS_Do_Device(REBREQ *req, REBCNT command)
         /* rebFail (error_or_int, rebEnd()); // propagate error up the stack*/
     }
 
-    assert(rebTypeOf(error_or_int) == RXT_INTEGER);
+    assert(rebDid("lib/integer?", error_or_int, rebEnd()));
 
     int result = rebUnboxInteger(error_or_int);
     rebRelease(error_or_int);
@@ -485,7 +485,7 @@ REBINT OS_Wait(REBCNT millisec, REBCNT res)
     //
     REBVAL *result = OS_DO_DEVICE(&req, RDC_QUERY);
     assert(result != NULL); // should be synchronous
-    if (rebTypeOf(result) == RXT_ERROR)
+    if (rebDid("lib/error?", result, rebEnd()))
         rebFail (result, rebEnd());
     rebRelease(result); // ignore result
 

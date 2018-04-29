@@ -276,7 +276,7 @@ REBNATIVE(use)
 REBOOL Get_Context_Of(REBVAL *out, const REBVAL *v)
 {
     switch (VAL_TYPE(v)) {
-    case REB_FUNCTION: {
+    case REB_ACTION: {
         //
         // The only examples of functions bound to contexts that exist at the
         // moment are RETURN and LEAVE.  While there are archetypal natives
@@ -297,7 +297,7 @@ REBOOL Get_Context_Of(REBVAL *out, const REBVAL *v)
             assert(n->header.bits & (SERIES_FLAG_ARRAY | ARRAY_FLAG_VARLIST));
             c = cast(REBCTX*, n);
         }
-        Move_Value(out, CTX_VALUE(c));
+        Move_Value(out, CTX_ARCHETYPE(c));
         assert(IS_FRAME(out));
         break; }
 
@@ -320,7 +320,7 @@ REBOOL Get_Context_Of(REBVAL *out, const REBVAL *v)
         // have a longer lifetime than the REBFRM* or other node)
         //
         REBCTX *c = VAL_WORD_CONTEXT(v);
-        Move_Value(out, CTX_VALUE(c));
+        Move_Value(out, CTX_ARCHETYPE(c));
         break; }
 
     default:
@@ -355,9 +355,11 @@ REBOOL Get_Context_Of(REBVAL *out, const REBVAL *v)
         }
 
         assert(
-            (out->payload.any_context.phase == NULL) ||
-            (SER(FUNC_PARAMLIST(out->payload.any_context.phase))->header.bits
-            & ARRAY_FLAG_PARAMLIST)
+            out->payload.any_context.phase == NULL
+            or GET_SER_FLAG(
+                ACT_PARAMLIST(out->payload.any_context.phase),
+                ARRAY_FLAG_PARAMLIST
+            )
         );
     }
 
@@ -813,7 +815,7 @@ REBNATIVE(set)
                 continue;
         }
 
-        if (REF(enfix) and not IS_FUNCTION(ARG(value)))
+        if (REF(enfix) and not IS_ACTION(ARG(value)))
             fail ("Attempt to SET/ENFIX on a non-function");
 
         if (IS_BAR(target)) {
@@ -915,7 +917,7 @@ REBNATIVE(enfixed_q)
             source, SPECIFIED, GETVAR_READ_ONLY // may fail()
         );
 
-        if (not IS_FUNCTION(var))
+        if (not IS_ACTION(var))
             return R_FALSE;
 
         return R_FROM_BOOL(GET_VAL_FLAG(var, VALUE_FLAG_ENFIXED));

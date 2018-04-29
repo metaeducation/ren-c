@@ -227,7 +227,7 @@ void Clonify_Values_Len_Managed(
             }
         }
         else if (
-            types & FLAGIT_KIND(VAL_TYPE(v)) & FLAGIT_KIND(REB_FUNCTION)
+            types & FLAGIT_KIND(VAL_TYPE(v)) & FLAGIT_KIND(REB_ACTION)
         ){
             // !!! While Ren-C has abandoned the concept of copying the body
             // of functions (they are black boxes which may not *have* a
@@ -352,8 +352,8 @@ REBARR *Copy_Array_Core_Managed(
 //
 REBARR *Copy_Rerelativized_Array_Deep_Managed(
     REBARR *original,
-    REBFUN *before, // references to `before` will be changed to `after`
-    REBFUN *after
+    REBACT *before, // references to `before` will be changed to `after`
+    REBACT *after
 ){
     const REBFLGS flags = 0;
 

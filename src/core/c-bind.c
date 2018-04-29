@@ -239,7 +239,7 @@ static void Bind_Relative_Inner_Loop(
 //
 //  Copy_And_Bind_Relative_Deep_Managed: C
 //
-// This routine is called by Make_Function in order to take the raw material
+// This routine is called by Make_Action in order to take the raw material
 // given as a function body, and de-relativize any IS_RELATIVE(value)s that
 // happen to be in it already (as any Copy does).  But it also needs to make
 // new relative references to ANY-WORD! that are referencing function
@@ -273,7 +273,7 @@ REBARR *Copy_And_Bind_Relative_Deep_Managed(
     // Setup binding table from the argument word list
     //
     REBCNT index = 1;
-    RELVAL *param = ARR_AT(paramlist, 1); // [0] is FUNCTION! value
+    RELVAL *param = ARR_AT(paramlist, 1); // [0] is ACTION! value
     for (; NOT_END(param); param++, index++)
         Add_Binder_Index(&binder, VAL_KEY_CANON(param), index);
 
@@ -281,7 +281,7 @@ REBARR *Copy_And_Bind_Relative_Deep_Managed(
 
     // Reset binding table
     //
-    param = ARR_AT(paramlist, 1); // [0] is FUNCTION! value
+    param = ARR_AT(paramlist, 1); // [0] is ACTION! value
     for (; NOT_END(param); param++)
         Remove_Binder_Index(&binder, VAL_KEY_CANON(param));
 
@@ -317,7 +317,7 @@ void Rebind_Values_Deep(
                 );
             }
         }
-        else if (IS_FUNCTION(v)) {
+        else if (IS_ACTION(v)) {
             //
             // !!! This is a new take on R3-Alpha's questionable feature of
             // deep copying function bodies and rebinding them when a

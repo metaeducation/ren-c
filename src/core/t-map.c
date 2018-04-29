@@ -713,7 +713,7 @@ REBTYPE(Map)
     REBMAP *map = VAL_MAP(val);
     REBCNT tail;
 
-    switch (action) {
+    switch (verb) {
 
     case SYM_REFLECT: {
         INCLUDE_PARAMS_OF_REFLECT;
@@ -784,15 +784,15 @@ REBTYPE(Map)
         );
 
         if (n == 0)
-            return action == SYM_FIND ? R_FALSE : R_VOID;
+            return verb == SYM_FIND ? R_BLANK : R_VOID;
 
         Move_Value(
             D_OUT,
             KNOWN(ARR_AT(MAP_PAIRLIST(map), ((n - 1) * 2) + 1))
         );
 
-        if (action == SYM_FIND)
-            return IS_VOID(D_OUT) ? R_FALSE : R_TRUE;
+        if (verb == SYM_FIND)
+            return IS_VOID(D_OUT) ? R_BLANK : R_BAR;
 
         return R_OUT; }
 
@@ -855,7 +855,7 @@ REBTYPE(Map)
             fail (Error_Bad_Refines_Raw());
         }
         if (not REF(map))
-            fail (Error_Illegal_Action(REB_MAP, action));
+            fail (Error_Illegal_Action(REB_MAP, verb));
 
         Move_Value(D_OUT, val);
         Find_Map_Entry(
@@ -904,5 +904,5 @@ REBTYPE(Map)
         break;
     }
 
-    fail (Error_Illegal_Action(REB_MAP, action));
+    fail (Error_Illegal_Action(REB_MAP, verb));
 }

@@ -34,21 +34,21 @@
 // The REBCTX* is how contexts are passed around as a single pointer.  This
 // pointer is actually just an array REBSER which represents the variable
 // values.  The keylist can be reached through the ->link field of that
-// REBSER, and the [0] value of the variable array is a "canon instance" of
-// whatever kind of REBVAL the context represents.
+// REBSER, and the [0] value of the variable array is an "archetype instance"
+// of whatever kind of REBVAL the context represents.
 //
 //
-//      VARLIST ARRAY:                ---Link-> KEYLIST ARRAY:
-//      +----------------------------+          +----------------------------+
-//      +          "ROOTVAR"         |          |          "ROOTKEY"         |
-//      |  Canon ANY-CONTEXT! Value  |          | Canon FUNCTION!, or blank  |
-//      +----------------------------+          +----------------------------+
-//      |          Value 1           |          |    Typeset w/symbol 1      |
-//      +----------------------------+          +----------------------------+
-//      |          Value 2           |          |    Typeset w/symbol 2      |
-//      +----------------------------+          +----------------------------+
-//      |          Value ...         |          |    Typeset w/symbol 3 ...  |
-//      +----------------------------+          +----------------------------+
+//             VARLIST ARRAY       ---Link-->         KEYLIST ARRAY
+//  +------------------------------+        +-------------------------------+
+//  +            "ROOTVAR"         |        |           "ROOTKEY"           |
+//  | Archetype ANY-CONTEXT! Value |        |  Archetype ACTION!, or blank  |
+//  +------------------------------+        +-------------------------------+
+//  |             Value 1          |        |     Typeset (w/symbol) 1      |
+//  +------------------------------+        +-------------------------------+
+//  |             Value 2          |        |     Typeset (w/symbol) 2      |
+//  +------------------------------+        +-------------------------------+
+//  |             Value ...        |        |     Typeset (w/symbol) ...    |
+//  +------------------------------+        +-------------------------------+
 //
 // While R3-Alpha used a special kind of WORD! known as an "unword" for the
 // keys, Ren-C uses a special kind of TYPESET! which can also hold a symbol.
@@ -307,7 +307,7 @@ REBCTX *Copy_Context_Shallow_Extra(REBCTX *src, REBCNT extra) {
         MANAGE_ARRAY(CTX_KEYLIST(dest));
     }
 
-    CTX_VALUE(dest)->payload.any_context.varlist = CTX_VARLIST(dest);
+    CTX_ARCHETYPE(dest)->payload.any_context.varlist = CTX_VARLIST(dest);
 
     // !!! Should the new object keep the meta information, or should users
     // have to copy that manually?  If it's copied would it be a shallow or
@@ -897,7 +897,7 @@ REBCTX *Make_Selfish_Context_Detect(
     // won't destroy the integrity of the context.)
     //
     assert(CTX_KEY_SYM(context, self_index) == SYM_SELF);
-    Move_Value(CTX_VAR(context, self_index), CTX_VALUE(context));
+    Move_Value(CTX_VAR(context, self_index), CTX_ARCHETYPE(context));
 
     // We manage the context because binding in the Rebind operation below
     // does not allow the binding into an unmanaged context.
@@ -1172,7 +1172,7 @@ REBCTX *Merge_Contexts_Selfish(REBCTX *parent1, REBCTX *parent2)
     REBCNT self_index = Find_Canon_In_Context(merged, Canon(SYM_SELF), TRUE);
     assert(self_index != 0);
     assert(CTX_KEY_SYM(merged, self_index) == SYM_SELF);
-    Move_Value(CTX_VAR(merged, self_index), CTX_VALUE(merged));
+    Move_Value(CTX_VAR(merged, self_index), CTX_ARCHETYPE(merged));
 
     return merged;
 }
@@ -1458,8 +1458,8 @@ void Assert_Context_Core(REBCTX *c)
     if (keylist == NULL)
         panic (c);
 
-    REBVAL *rootvar = CTX_VALUE(c);
-    if (!ANY_CONTEXT(rootvar))
+    REBVAL *rootvar = CTX_ARCHETYPE(c);
+    if (not ANY_CONTEXT(rootvar))
         panic (rootvar);
 
     REBCNT keys_len = ARR_LEN(keylist);
@@ -1499,9 +1499,9 @@ void Assert_Context_Core(REBCTX *c)
         if (IS_FRAME(rootvar))
             panic (c);
     }
-    else if (IS_FUNCTION(rootkey)) {
+    else if (IS_ACTION(rootkey)) {
         //
-        // At the moment, only FRAME! is able to reuse a FUNCTION!'s keylist.
+        // At the moment, only FRAME! is able to reuse an ACTION!'s keylist.
         // There may be reason to relax this, if you wanted to make an
         // ordinary object that was a copy of a FRAME! but not a FRAME!.
         //
@@ -1513,8 +1513,8 @@ void Assert_Context_Core(REBCTX *c)
         // the "phase" field...held in the rootvar.
         //
         if (
-            FUNC_UNDERLYING(rootvar->payload.any_context.phase)
-            != VAL_FUNC(rootkey)
+            ACT_UNDERLYING(rootvar->payload.any_context.phase)
+            != VAL_ACTION(rootkey)
         ){
             panic (rootvar);
         }
@@ -1526,8 +1526,8 @@ void Assert_Context_Core(REBCTX *c)
             // with the same underlying function as the rootkey.
             //
             if (
-                FUNC_UNDERLYING(rootvar->payload.any_context.phase)
-                != VAL_FUNC(rootkey)
+                ACT_UNDERLYING(rootvar->payload.any_context.phase)
+                != VAL_ACTION(rootkey)
             ){
                 panic (rootvar);
             }

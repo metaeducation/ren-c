@@ -75,17 +75,17 @@ const REBVAL *HG_Host_Repl = NULL; // needs to be a GC-protecting reference
 //
 //  init-debugger: native/export [
 //
-//  {Tell the debugger what function to use as a REPL.}
+//  {Tell the debugger what action to use as a REPL.}
 //
 //      return: [<opt>]
-//      console [function!]
+//      console [action!]
 //  ]
 //
 static REBNATIVE(init_debugger)
 {
     DEBUGGER_INCLUDE_PARAMS_OF_INIT_DEBUGGER;
 
-    HG_Host_Repl = FUNC_VALUE(VAL_FUNC(ARG(console)));
+    HG_Host_Repl = ACT_ARCHETYPE(VAL_ACTION(ARG(console)));
     return R_VOID;
 }
 
@@ -167,7 +167,7 @@ static REBNATIVE(pause)
 //
 //  Frame_For_Stack_Level: C
 //
-// Level can be a void, an INTEGER!, an ANY-FUNCTION!, or a FRAME!.  If
+// Level can be a void, an INTEGER!, an ANY-ACTION!, or a FRAME!.  If
 // level is void then it means give whatever the first call found is.
 //
 // Returns NULL if the given level number does not correspond to a running
@@ -211,7 +211,7 @@ REBFRM *Frame_For_Stack_Level(
         frame = frame->prior;
 
     for (; frame != NULL; frame = frame->prior) {
-        if (not Is_Function_Frame(frame)) {
+        if (not Is_Action_Frame(frame)) {
             //
             // Don't consider pending calls, or GROUP!, or any non-invoked
             // function as a candidate to target.
@@ -227,13 +227,13 @@ REBFRM *Frame_For_Stack_Level(
             continue;
         }
 
-        REBOOL pending = Is_Function_Frame_Fulfilling(frame);
+        REBOOL pending = Is_Action_Frame_Fulfilling(frame);
         if (not pending) {
             if (first) {
                 if (
-                    FUNC_DISPATCHER(frame->phase) == &N_DEBUGGER_pause
-                    || FUNC_DISPATCHER(frame->phase) == N_DEBUGGER_breakpoint
-                ) {
+                    ACT_DISPATCHER(frame->phase) == &N_DEBUGGER_pause
+                    or ACT_DISPATCHER(frame->phase) == N_DEBUGGER_breakpoint
+                ){
                     // this is considered the "0".  Return it only if 0
                     // requested specifically (you don't "count down to it")
                     //
@@ -274,8 +274,8 @@ REBFRM *Frame_For_Stack_Level(
             }
         }
         else {
-            assert(IS_FUNCTION(level));
-            if (VAL_FUNC(level) == frame->phase)
+            assert(IS_ACTION(level));
+            if (VAL_ACTION(level) == frame->phase)
                 goto return_maybe_set_number_out;
         }
     }
@@ -306,7 +306,7 @@ return_maybe_set_number_out:
 //          "Code to evaluate"
 //      /at
 //          "Return from another call up stack besides the breakpoint"
-//      level [frame! function! integer!]
+//      level [frame! action! integer!]
 //          "Stack level to target in unwinding (can be BACKTRACE #)"
 //  ]
 //
@@ -390,14 +390,14 @@ static REBNATIVE(resume)
 
         frame = FS_TOP;
         for (; frame != NULL; frame = frame->prior) {
-            if (not Is_Function_Frame(frame))
+            if (not Is_Action_Frame(frame))
                 continue;
-            if (Is_Function_Frame_Fulfilling(frame))
+            if (Is_Action_Frame_Fulfilling(frame))
                 continue;
 
             if (
-                FUNC_DISPATCHER(frame->phase) == &N_DEBUGGER_pause
-                || FUNC_DISPATCHER(frame->phase) == &N_DEBUGGER_breakpoint
+                ACT_DISPATCHER(frame->phase) == &N_DEBUGGER_pause
+                || ACT_DISPATCHER(frame->phase) == &N_DEBUGGER_breakpoint
             ) {
                 break;
             }
@@ -426,7 +426,7 @@ static REBNATIVE(resume)
 
     // Throw the instruction with the name of the RESUME function
     //
-    Move_Value(D_OUT, FUNC_VALUE(frame_->phase));
+    Move_Value(D_OUT, ACT_ARCHETYPE(frame_->phase));
     CONVERT_NAME_TO_THROWN(D_OUT, cell);
     return R_OUT_IS_THROWN;
 }
@@ -576,8 +576,8 @@ REBOOL Host_Breakpoint_Quitting_Hook(
 
         if (Do_Any_Array_At_Throws(instruction_out, code)) {
             if (
-                IS_FUNCTION(instruction_out)
-                && VAL_FUNC_DISPATCHER(instruction_out) == &N_DEBUGGER_resume
+                IS_ACTION(instruction_out)
+                && VAL_ACT_DISPATCHER(instruction_out) == &N_DEBUGGER_resume
             ){
                 // This means we're done with the embedded REPL.  We want
                 // to resume and may be returning a piece of code that
@@ -596,8 +596,8 @@ REBOOL Host_Breakpoint_Quitting_Hook(
             }
 
             if (
-                IS_FUNCTION(instruction_out)
-                && VAL_FUNC_DISPATCHER(instruction_out) == &N_quit
+                IS_ACTION(instruction_out)
+                && VAL_ACT_DISPATCHER(instruction_out) == &N_quit
             ){
                 // It would be frustrating if the system did not respond
                 // to QUIT and forced you to do `resume/with [quit]`.  So
@@ -744,7 +744,7 @@ REBOOL Do_Breakpoint_Throws(
             REBOOL found = FALSE;
         #endif
 
-        assert(THROWN(inst) && IS_FUNCTION(inst));
+        assert(THROWN(inst) && IS_ACTION(inst));
 
         DECLARE_LOCAL(resume_native);
         Move_Value(resume_native, inst);
@@ -772,16 +772,16 @@ REBOOL Do_Breakpoint_Throws(
         //
         REBFRM *frame;
         for (frame = FS_TOP; frame != NULL; frame = frame->prior) {
-            if (not Is_Function_Frame(frame))
+            if (not Is_Action_Frame(frame))
                 continue;
-            if (Is_Function_Frame_Fulfilling(frame))
+            if (Is_Action_Frame_Fulfilling(frame))
                 continue;
 
             if (
                 frame != FS_TOP
                 && (
-                    FUNC_DISPATCHER(frame->phase) == &N_DEBUGGER_pause
-                    || FUNC_DISPATCHER(frame->phase) == &N_DEBUGGER_breakpoint
+                    ACT_DISPATCHER(frame->phase) == &N_DEBUGGER_pause
+                    || ACT_DISPATCHER(frame->phase) == &N_DEBUGGER_breakpoint
                 )
             ) {
                 // We hit a breakpoint (that wasn't this call to
@@ -881,11 +881,11 @@ return_temp:
     // from something up the stack.  This uses the same mechanic as
     // definitional returns--a throw named by the function frame.
     //
-    // !!! There is a weak spot in definitional returns for FUNCTION! that
+    // !!! There is a weak spot in definitional returns for ACTION! that
     // they can only return to the most recent invocation; which is a weak
-    // spot of FUNCTION! in general with stack relative variables.  Also,
+    // spot of ACTION! in general with stack relative variables.  Also,
     // natives do not currently respond to definitional returns...though
-    // they can do so just as well as FUNCTION! can.
+    // they can do so just as well as ACTION! can.
     //
     Make_Thrown_Unwind_Value(out, target, temp, NULL);
     return TRUE; // TRUE = thrown
@@ -897,8 +897,10 @@ return_temp:
 //
 //  "Get the index of a given frame or function as BACKTRACE shows it"
 //
-//      level [function! frame!]
-//          {The function or frame to get an index for (NONE! if not running)}
+//      return: [integer! blank!]
+//          {BLANK! if no match}
+//      level [action! frame!]
+//          {The action or frame to get an index for}
 //  ]
 //
 static REBNATIVE(backtrace_index)
@@ -941,7 +943,7 @@ void Shutdown_Debugger(void)
 //
 //  {Dialect for interactive debugging, see documentation for details}
 //
-//      'value [_ integer! frame! function! block!]
+//      'value [<opt> integer! frame! action! block!]
 //          {Stack level to inspect or dialect block, or enter debug mode}
 //
 //  ]
@@ -968,7 +970,7 @@ static REBNATIVE(debug)
         goto modify_with_confidence;
     }
 
-    if (IS_INTEGER(value) || IS_FRAME(value) || IS_FUNCTION(value)) {
+    if (IS_INTEGER(value) || IS_FRAME(value) || IS_ACTION(value)) {
         REBFRM *frame;
 
         // We pass TRUE here to account for an extra stack level... the one
@@ -985,7 +987,7 @@ static REBNATIVE(debug)
 
     Debug_Fmt(
         "Sorry, but the `debug [...]` dialect is not defined yet.\n"
-        "Change the stack level (integer!, frame!, function!)\n"
+        "Change the stack level (integer!, frame!, action!)\n"
         "Or try out these commands:\n"
         "\n"
         "    BREAKPOINT, RESUME, BACKTRACE\n"

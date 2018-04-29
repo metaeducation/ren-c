@@ -60,16 +60,15 @@ static REBVAL *Trap_Dangerous(REBFRM *frame_) {
 //
 //  trap: native [
 //
-//  {Tries to DO a block, trapping error as return value (if one is raised).}
+//  {Tries to DO a block, trapping raised errors}
 //
-//      return: [<opt> any-value!]
-//          {If ERROR!, error was raised (void if non-raised ERROR! result)}
-//      code [block! function!]
-//          {Block or zero-arity function to execute}
-//      /with
-//          "Handle error case with more code (overrides voiding behavior)"
-//      handler [block! function!]
-//          "If FUNCTION!, spec allows [error [error!]]"
+//      return: "ERROR! if raised, else result (void if non-raised ERROR!)"
+//          [<opt> any-value!]
+//      code "Code to execute and monitor"
+//          [block! action!]
+//      /with "Handle error case with more code"
+//      handler "If an arity-1 ACTION!, then it will be passed the ERROR!"
+//          [block! action!]
 //  ]
 //
 REBNATIVE(trap)

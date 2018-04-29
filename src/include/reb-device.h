@@ -152,7 +152,7 @@ typedef struct rebol_device REBDEV;
 typedef struct rebol_devreq REBREQ;
 
 // Commands:
-typedef int32_t (*DEVICE_CMD_FUNC)(REBREQ *req);
+typedef int32_t (*DEVICE_CMD_CFUNC)(REBREQ *req);
 #define DEVICE_CMD int32_t // Used to define
 
 // Device structure:
@@ -160,7 +160,7 @@ struct rebol_device {
     const char *title;      // title of device
     uint32_t version;       // version, revision, release
     uint32_t date;          // year, month, day, hour
-    DEVICE_CMD_FUNC *commands; // command dispatch table
+    DEVICE_CMD_CFUNC *commands; // command dispatch table
     uint32_t max_command;   // keep commands in bounds
     uint32_t req_size;      // size of the request state
     REBREQ *pending;        // pending requests

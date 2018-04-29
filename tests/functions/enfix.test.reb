@@ -1,6 +1,6 @@
 ; %enfix.test.reb
 
-(function! = type-of :+)
+(action! = type-of :+)
 (true = enfixed? '+)
 
 (

@@ -238,7 +238,7 @@ static void Get_Math_Arg_For_Pair(
     REBDEC *x_out,
     REBDEC *y_out,
     REBVAL *arg,
-    REBSYM action
+    REBSYM verb
 ){
     switch (VAL_TYPE(arg)) {
     case REB_PAIR:
@@ -256,7 +256,7 @@ static void Get_Math_Arg_For_Pair(
         break;
 
     default:
-        fail (Error_Math_Args(REB_PAIR, action));
+        fail (Error_Math_Args(REB_PAIR, verb));
     }
 }
 
@@ -302,35 +302,35 @@ REBTYPE(Pair)
     REBDEC x2;
     REBDEC y2;
 
-    switch (action) {
+    switch (verb) {
 
     case SYM_COPY: {
         goto setPair;
     }
 
     case SYM_ADD:
-        Get_Math_Arg_For_Pair(&x2, &y2, D_ARG(2), action);
+        Get_Math_Arg_For_Pair(&x2, &y2, D_ARG(2), verb);
         x1 += x2;
         y1 += y2;
         goto setPair;
 
     case SYM_SUBTRACT:
-        Get_Math_Arg_For_Pair(&x2, &y2, D_ARG(2), action);
+        Get_Math_Arg_For_Pair(&x2, &y2, D_ARG(2), verb);
         x1 -= x2;
         y1 -= y2;
         goto setPair;
 
     case SYM_MULTIPLY:
-        Get_Math_Arg_For_Pair(&x2, &y2, D_ARG(2), action);
+        Get_Math_Arg_For_Pair(&x2, &y2, D_ARG(2), verb);
         x1 *= x2;
         y1 *= y2;
         goto setPair;
 
     case SYM_DIVIDE:
     case SYM_REMAINDER:
-        Get_Math_Arg_For_Pair(&x2, &y2, D_ARG(2), action);
+        Get_Math_Arg_For_Pair(&x2, &y2, D_ARG(2), verb);
         if (x2 == 0 || y2 == 0) fail (Error_Zero_Divide_Raw());
-        if (action == SYM_DIVIDE) {
+        if (verb == SYM_DIVIDE) {
             x1 /= x2;
             y1 /= y2;
         }
@@ -399,7 +399,7 @@ REBTYPE(Pair)
         break;
     }
 
-    fail (Error_Illegal_Action(REB_PAIR, action));
+    fail (Error_Illegal_Action(REB_PAIR, verb));
 
 setPair:
     SET_PAIR(D_OUT, x1, y1);

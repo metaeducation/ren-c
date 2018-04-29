@@ -187,7 +187,7 @@ REBTYPE(Word)
     REBVAL *val = D_ARG(1);
     assert(ANY_WORD(val));
 
-    switch (action) {
+    switch (verb) {
     case SYM_REFLECT: {
         INCLUDE_PARAMS_OF_REFLECT;
 
@@ -225,5 +225,5 @@ REBTYPE(Word)
         break;
     }
 
-    fail (Error_Illegal_Action(VAL_TYPE(val), action));
+    fail (Error_Illegal_Action(VAL_TYPE(val), verb));
 }

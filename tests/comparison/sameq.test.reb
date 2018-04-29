@@ -5,12 +5,12 @@
 (same? :all :all)
 ; reflexivity test for infix
 (same? :+ :+)
-; reflexivity test for function!
+; reflexivity test for action!
 (
     a-value: func [] []
     same? :a-value :a-value
 )
-; no structural equality for function!
+; no structural equality for action!
 (not same? func [] [] func [] [])
 ; binary!
 (not same? #{00} #{00})

@@ -193,10 +193,10 @@ static REBOOL Subparse_Throws(
     Init_Endlike_Header(&f->flags, 0); // implicitly terminate f->cell
 
     Push_Frame_Core(f); // checks for C stack overflow
-    Push_Function(
+    Push_Action(
         f,
         Canon(SYM_SUBPARSE),
-        NAT_FUNC(subparse),
+        NAT_ACTION(subparse),
         UNBOUND
     );
 
@@ -206,9 +206,9 @@ static REBOOL Subparse_Throws(
     f->special = NULL;
 
   #if defined(NDEBUG)
-    assert(FUNC_NUM_PARAMS(NAT_FUNC(subparse)) == 2); // elides RETURN:
+    assert(ACT_NUM_PARAMS(NAT_ACTION(subparse)) == 2); // elides RETURN:
   #else
-    assert(FUNC_NUM_PARAMS(NAT_FUNC(subparse)) == 3); // checks RETURN:
+    assert(ACT_NUM_PARAMS(NAT_ACTION(subparse)) == 3); // checks RETURN:
     Prep_Stack_Cell(&f->args_head[2]);
     Init_Void(&f->args_head[2]);
   #endif
@@ -236,7 +236,7 @@ static REBOOL Subparse_Throws(
     // the f->data.context field.
     //
     const REBOOL drop_chunks = TRUE;
-    Drop_Function_Core(f, drop_chunks);
+    Drop_Action_Core(f, drop_chunks);
 
     Drop_Frame_Core(f);
 
@@ -254,15 +254,15 @@ static REBOOL Subparse_Throws(
         // or not found.  This returns the interrupted flag which is still
         // ignored by most callers, but makes that fact more apparent.
         //
-        if (IS_FUNCTION(out)) {
-            if (VAL_FUNC(out) == NAT_FUNC(parse_reject)) {
+        if (IS_ACTION(out)) {
+            if (VAL_ACTION(out) == NAT_ACTION(parse_reject)) {
                 CATCH_THROWN(out, out);
                 assert(IS_BLANK(out));
                 *interrupted_out = TRUE;
                 return FALSE;
             }
 
-            if (VAL_FUNC(out) == NAT_FUNC(parse_accept)) {
+            if (VAL_ACTION(out) == NAT_ACTION(parse_accept)) {
                 CATCH_THROWN(out, out);
                 assert(IS_INTEGER(out));
                 *interrupted_out = TRUE;
@@ -2353,8 +2353,8 @@ REBNATIVE(parse)
         // as case-insensitive bytes for ASCII characters.
     )) {
         if (
-            IS_FUNCTION(D_OUT)
-            and NAT_FUNC(parse) == VAL_FUNC(D_OUT)
+            IS_ACTION(D_OUT)
+            and NAT_ACTION(parse) == VAL_ACTION(D_OUT)
         ){
             // Note the difference:
             //

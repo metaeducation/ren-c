@@ -146,7 +146,7 @@ static int sig_word_num(REBSTR *canon)
 //
 //  Signal_Actor: C
 //
-static REB_R Signal_Actor(REBFRM *frame_, REBCTX *port, REBSYM action)
+static REB_R Signal_Actor(REBFRM *frame_, REBCTX *port, REBSYM verb)
 {
     REBREQ *req = Ensure_Port_State(port, RDI_SIGNAL);
     struct devreq_posix_signal *signal = DEVREQ_POSIX_SIGNAL(req);
@@ -154,7 +154,7 @@ static REB_R Signal_Actor(REBFRM *frame_, REBCTX *port, REBSYM action)
     REBVAL *spec = CTX_VAR(port, STD_PORT_SPEC);
 
     if (not (req->flags & RRF_OPEN)) {
-        switch (action) {
+        switch (verb) {
         case SYM_REFLECT: {
             INCLUDE_PARAMS_OF_REFLECT;
 
@@ -205,14 +205,14 @@ static REB_R Signal_Actor(REBFRM *frame_, REBCTX *port, REBSYM action)
 
             REBVAL *result = OS_DO_DEVICE(req, RDC_OPEN);
             assert(result != NULL);
-            if (rebTypeOf(result) == RXT_ERROR)
+            if (rebDid("lib/error?", result, END))
                 rebFail (result, END);
             rebRelease(result); // ignore result
 
-            if (action == SYM_OPEN)
+            if (verb == SYM_OPEN)
                 goto return_port;
 
-            assert((req->flags & RRF_OPEN) and action == SYM_READ);
+            assert((req->flags & RRF_OPEN) and verb == SYM_READ);
             break; } // fallthrough
 
         case SYM_CLOSE:
@@ -226,7 +226,7 @@ static REB_R Signal_Actor(REBFRM *frame_, REBCTX *port, REBSYM action)
         }
     }
 
-    switch (action) {
+    switch (verb) {
     case SYM_REFLECT: {
         INCLUDE_PARAMS_OF_REFLECT;
 
@@ -268,7 +268,7 @@ static REB_R Signal_Actor(REBFRM *frame_, REBCTX *port, REBSYM action)
 
         REBVAL *result = OS_DO_DEVICE(req, RDC_READ);
         assert(result != NULL);
-        if (rebTypeOf(result) == RXT_ERROR)
+        if (rebDid("lib/error?", result, END))
             rebFail (result, END); // frees ser implicitly
         rebRelease(result); // ignore result
 
@@ -290,7 +290,7 @@ static REB_R Signal_Actor(REBFRM *frame_, REBCTX *port, REBSYM action)
     case SYM_CLOSE: {
         REBVAL *result = OS_DO_DEVICE(req, RDC_CLOSE);
         assert(result != NULL); // should be synchronous
-        if (rebTypeOf(result) == RXT_ERROR)
+        if (rebDid("lib/error?", result, END))
             rebFail (result, END);
         rebRelease(result); // ignore result
         goto return_port; }
@@ -302,7 +302,7 @@ static REB_R Signal_Actor(REBFRM *frame_, REBCTX *port, REBSYM action)
         break;
     }
 
-    fail (Error_Illegal_Action(REB_PORT, action));
+    fail (Error_Illegal_Action(REB_PORT, verb));
 
 return_port:
     Move_Value(D_OUT, D_ARG(1));

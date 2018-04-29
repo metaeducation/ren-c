@@ -54,16 +54,16 @@ REBOOL Catching_Break_Or_Continue(REBVAL *val, REBOOL *stop)
 
     // Throw /NAME-s used by CONTINUE and BREAK are the actual native
     // function values of the routines themselves.
-    if (not IS_FUNCTION(val))
+    if (not IS_ACTION(val))
         return FALSE;
 
-    if (VAL_FUNC_DISPATCHER(val) == &N_break) {
+    if (VAL_ACT_DISPATCHER(val) == &N_break) {
         *stop = TRUE; // was BREAK or BREAK/WITH
         CATCH_THROWN(val, val); // will be void if no /WITH was used
         return TRUE;
     }
 
-    if (VAL_FUNC_DISPATCHER(val) == &N_continue) {
+    if (VAL_ACT_DISPATCHER(val) == &N_continue) {
         *stop = FALSE; // was CONTINUE or CONTINUE/WITH
         CATCH_THROWN(val, val); // will be void if no /WITH was used
         return TRUE;
@@ -440,14 +440,14 @@ static REB_R Loop_Each(REBFRM *frame_, LOOP_MODE mode)
         // debug/instrumentation feature anyway.
         //
         switch (VAL_TYPE_KIND(data)) {
-        case REB_FUNCTION:
-            series = SER(Snapshot_All_Functions());
+        case REB_ACTION:
+            series = SER(Snapshot_All_Actions());
             index = 0;
             PUSH_GUARD_ARRAY_CONTENTS(ARR(series));
             break;
 
         default:
-            fail ("FUNCTION! is the only type with global enumeration");
+            fail ("ACTION! is the only type with global enumeration");
         }
     }
     else
@@ -880,8 +880,8 @@ REBNATIVE(for_skip)
 //
 //      return: [<opt> any-value!]
 //          {Void if plain BREAK, or arbitrary value using BREAK/WITH}
-//      body [block! function!]
-//          "Block or function to evaluate each time"
+//      body [block! action!]
+//          "Block or action to evaluate each time"
 //  ]
 //
 REBNATIVE(forever)
@@ -1348,8 +1348,8 @@ REBNATIVE(every)
 //          {Last body result or BREAK value, will also be void if never run}
 //      count [any-number! logic! blank!]
 //          "Repetitions (true loops infinitely, FALSE? doesn't run)"
-//      body [block! function!]
-//          "Block to evaluate or function to run."
+//      body [block! action!]
+//          "Block to evaluate or action to run."
 //  ]
 //
 REBNATIVE(loop)
@@ -1516,11 +1516,11 @@ inline static REB_R Until_Core(REBFRM *frame_, REBOOL trigger)
 //
 //  until: native [
 //
-//  "Evaluates a block until it is conditionally true"
+//  "Evaluates the body until it evaluates to a conditionally true value"
 //
 //      return: [<opt> any-value!]
 //          {Last body result or BREAK value.}
-//      body [block! function!]
+//      body [block! action!]
 //  ]
 //
 REBNATIVE(until)
@@ -1535,11 +1535,11 @@ REBNATIVE(until)
 //
 //  until-not: native [
 //
-//  "Evaluates a block until it is conditionally false"
+//  "Evaluates the body until it evaluates to a conditionally false value"
 //
 //      return: [<opt> any-value!]
 //          {Last body result or BREAK value.}
-//      body [block! function!]
+//      body [block! action!]
 //  ]
 //
 REBNATIVE(until_not)
@@ -1604,12 +1604,12 @@ inline static REB_R While_Core(REBFRM *frame_, REBOOL trigger)
 //
 //  while: native [
 //
-//  {While a condition block is conditionally true, evaluates another block.}
+//  {While a condition is conditionally true, evaluates the body.}
 //
 //      return: [<opt> any-value!]
-//          {Last body result or BREAK value, will also be void if never run}
-//      condition [block! function!]
-//      body [block! function!]
+//          {Last body result or BREAK/WITH value, will be void if never run}
+//      condition [block! action!]
+//      body [block! action!]
 //  ]
 //
 REBNATIVE(while)
@@ -1621,12 +1621,12 @@ REBNATIVE(while)
 //
 //  while-not: native [
 //
-//  {While a condition block is conditionally false, evaluates another block.}
+//  {While a condition is conditionally false, evaluate the body.}
 //
 //      return: [<opt> any-value!]
-//          {Last body result or BREAK value, will also be void if never run}
-//      condition [block! function!]
-//      body [block! function!]
+//          {Last body result or BREAK/WITH value, will be void if never run}
+//      condition [block! action!]
+//      body [block! action!]
 //  ]
 //
 REBNATIVE(while_not)

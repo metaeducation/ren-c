@@ -135,7 +135,7 @@ REBVAL *Find_Last_Event(REBINT model, REBINT type)
 //
 // Internal port handler for events.
 //
-static REB_R Event_Actor(REBFRM *frame_, REBCTX *port, REBSYM action)
+static REB_R Event_Actor(REBFRM *frame_, REBCTX *port, REBSYM verb)
 {
     REBVAL *arg = D_ARGC > 1 ? D_ARG(2) : NULL;
 
@@ -151,7 +151,7 @@ static REB_R Event_Actor(REBFRM *frame_, REBCTX *port, REBSYM action)
     if (!IS_BLOCK(state))
         Init_Block(state, Make_Array(EVENTS_CHUNK - 1));
 
-    switch (action) {
+    switch (verb) {
 
     case SYM_REFLECT: {
         INCLUDE_PARAMS_OF_REFLECT;
@@ -197,12 +197,12 @@ static REB_R Event_Actor(REBFRM *frame_, REBCTX *port, REBSYM action)
         Move_Value(save_port, D_ARG(1));
         Move_Value(D_ARG(1), state);
 
-        REB_R r = T_Array(frame_, action);
+        REB_R r = T_Array(frame_, verb);
         SET_SIGNAL(SIG_EVENT_PORT);
         if (
-            action == SYM_INSERT
-            || action == SYM_APPEND
-            || action == SYM_REMOVE
+            verb == SYM_INSERT
+            || verb == SYM_APPEND
+            || verb == SYM_REMOVE
         ){
             Move_Value(D_OUT, save_port);
             return R_OUT;
@@ -240,7 +240,7 @@ static REB_R Event_Actor(REBFRM *frame_, REBCTX *port, REBSYM action)
                 // comment said "stays queued", hence seems pending happens
             }
             else {
-                if (rebTypeOf(result) == RXT_ERROR)
+                if (rebDid("lib/error?", result, END))
                     rebFail (result, END);
                 else {
                     assert(FALSE); // !!! can this happen?
@@ -255,7 +255,7 @@ static REB_R Event_Actor(REBFRM *frame_, REBCTX *port, REBSYM action)
 
         REBVAL *result = OS_DO_DEVICE(req, RDC_CLOSE);
         assert(result != NULL); // should be synchronous
-        if (rebTypeOf(result) == RXT_ERROR)
+        if (rebDid("lib/error?", result, END))
             rebFail (result, END);
         rebRelease(result);
 
@@ -271,7 +271,7 @@ static REB_R Event_Actor(REBFRM *frame_, REBCTX *port, REBSYM action)
         break;
     }
 
-    fail (Error_Illegal_Action(REB_PORT, action));
+    fail (Error_Illegal_Action(REB_PORT, verb));
 
 return_port:
     Move_Value(D_OUT, D_ARG(1));

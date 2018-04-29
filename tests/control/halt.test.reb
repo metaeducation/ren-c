@@ -1,2 +1,2 @@
 ; functions/control/halt.r
-(function? :halt)
+(action? :halt)

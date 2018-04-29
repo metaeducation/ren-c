@@ -91,7 +91,7 @@ void MF_Library(REB_MOLD *mo, const RELVAL *v, REBOOL form)
 
     REBCTX *meta = VAL_LIBRARY_META(v);
     if (meta)
-        MF_Context(mo, CTX_VALUE(meta), form);
+        MF_Context(mo, CTX_ARCHETYPE(meta), form);
 
     End_Mold(mo);
 }
@@ -102,7 +102,7 @@ void MF_Library(REB_MOLD *mo, const RELVAL *v, REBOOL form)
 //
 REBTYPE(Library)
 {
-    switch(action) {
+    switch (verb) {
     case SYM_CLOSE: {
         INCLUDE_PARAMS_OF_CLOSE;
 
@@ -121,5 +121,5 @@ REBTYPE(Library)
         break;
     }
 
-    fail (Error_Illegal_Action(REB_LIBRARY, action));
+    fail (Error_Illegal_Action(REB_LIBRARY, verb));
 }

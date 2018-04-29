@@ -127,7 +127,7 @@ about: procedure [
 ;
 ; There has been some talk about generalizing command-line argument handling
 ; in a way that a module can declare what its arguments and types are, much
-; like an ordinary FUNCTION!, and all the proxying is handled for the user.
+; like an ordinary ACTION!, and all the proxying is handled for the user.
 ; Work done on the dialect here could be shared in common.
 ;
 usage: procedure [
@@ -249,12 +249,12 @@ host-start: function [
     ; them just to show we can...use I/O to print a message.
     ;
     hijack 'panic adapt (copy :panic) [
-        print "PANIC FUNCTION! called (explicitly or by rebPanic() API)"
+        print "PANIC ACTION! called (explicitly or by rebPanic() API)"
         ;
         ; ...adaptation falls through to our copy of the original PANIC
     ]
     hijack 'panic-value adapt (copy :panic-value) [
-        print "PANIC-VALUE FUNCTION! called (explicitly or by rebPanic() API)"
+        print "PANIC-VALUE ACTION! called (explicitly or by rebPanic() API)"
         ;
         ; ...adaptation falls through to our copy of the original PANIC-VALUE
     ]

@@ -105,7 +105,7 @@ enum Reb_Result {
     R_REEVALUATE_CELL,
     R_REEVALUATE_CELL_ONLY,
 
-    // See FUNC_FLAG_INVISIBLE...this is what any function with that flag
+    // See ACTION_FLAG_INVISIBLE...this is what any function with that flag
     // needs to return.
     //
     // It is also used by path dispatch when it has taken performing a
@@ -239,18 +239,22 @@ inline static REBOOL SAME_SYM_NONZERO(REBSYM a, REBSYM b) {
     return cast(REBCNT, a) == cast(REBCNT, b);
 }
 
-// NATIVE! function
+// C function implementing a native ACTION!
+//
 typedef REB_R (*REBNAT)(REBFRM *frame_);
 #define REBNATIVE(n) \
     REB_R N_##n(REBFRM *frame_)
 
-// ACTION! function (one per each DATATYPE!)
-typedef REB_R (*REBACT)(REBFRM *frame_, REBSYM a);
+// Type-Action-Function: implementing a "verb" ACTION! for a particular type
+// (or class of types).
+//
+typedef REB_R (*REBTAF)(REBFRM *frame_, REBSYM verb);
 #define REBTYPE(n) \
-    REB_R T_##n(REBFRM *frame_, REBSYM action)
+    REB_R T_##n(REBFRM *frame_, REBSYM verb)
 
-// PORT!-action function
-typedef REB_R (*REBPAF)(REBFRM *frame_, REBCTX *p, REBSYM a);
+// Port-Action-Function: for implementing "verb" ACTION!s on a PORT! class
+// 
+typedef REB_R (*REBPAF)(REBFRM *frame_, REBCTX *p, REBSYM verb);
 
 // Path evaluator function
 //

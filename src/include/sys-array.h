@@ -399,7 +399,7 @@ inline static REBSPC* SPC(void *p) {
 #if !defined(NDEBUG)
     if (IS_CELL(specifier)) {
         REBFRM *f = cast(REBFRM*, specifier);
-        assert(f->eval_type == REB_FUNCTION);
+        assert(f->eval_type == REB_ACTION);
     }
     else if (not (specifier->header.bits & ARRAY_FLAG_VARLIST)) {
         assert(specifier == SPECIFIED);

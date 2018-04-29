@@ -21,7 +21,7 @@ backtrace*: function [
         "Nothing if printing, if specific level a frame! else block"
     start [frame!]
         "Where to consider the trace point as starting from"
-    level [blank! integer! function!]
+    level [blank! integer! action!]
         "Stack level to return frame for (blank to list)"
     /limit
         "Limit the length of the backtrace"
@@ -66,8 +66,8 @@ backtrace*: function [
     stack: collect [while [f: parent-of f] [
         if not pending? f [
             if first-frame and (any [
-                function-of f = :pause
-                function-of f = :breakpoint
+                action-of f = :pause
+                action-of f = :breakpoint
             ])[
                 ; Omitting breakpoints from the list entirely presents a
                 ; skewed picture of what's going on.  But giving them
@@ -99,8 +99,8 @@ backtrace*: function [
                     continue
                 ]
             ] else [
-                assert [function? :level]
-                if function-of f <> :level [
+                assert [action? :level]
+                if action-of f <> :level [
                     continue
                 ]
             ]
@@ -134,7 +134,7 @@ backtrace*: function [
             ;
             ; If we were fetching a single stack level, then our result will
             ; be a FRAME! (which can be queried for further properties via
-            ; `near-of`, `label-of`, `function-of`, etc.)
+            ; `near-of`, `label-of`, `action-of`, etc.)
             ;
             return f
         ]

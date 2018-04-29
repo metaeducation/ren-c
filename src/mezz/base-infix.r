@@ -17,7 +17,7 @@ REBOL [
         of all infix ops would appear to process left-to-right, e.g.
         `1 + 2 * 3` would be 9.
 
-        Ren-C does not have an "OP!" function type, it just has FUNCTION!, but
+        Ren-C does not have an "OP!" function type, it just has ACTION!, but
         a WORD! can be SET with the /ENFIX refinement.  This indicates that
         when the function is dispatched through that word, it should get its
         first parameter from the left.  However it will obey the parameter

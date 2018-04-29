@@ -90,9 +90,9 @@ void MF_Unit(REB_MOLD *mo, const RELVAL *v, REBOOL form)
 REBTYPE(Unit)
 {
     REBVAL *val = D_ARG(1);
-    assert(!IS_VOID(val));
+    assert(not IS_VOID(val));
 
-    switch (action) {
+    switch (verb) {
 
     case SYM_REFLECT: {
         INCLUDE_PARAMS_OF_REFLECT;
@@ -116,10 +116,9 @@ REBTYPE(Unit)
         break; }
 
     case SYM_SELECT:
+        return R_VOID;
+
     case SYM_FIND:
-    case SYM_REMOVE:
-    case SYM_CLEAR:
-    case SYM_TAKE_P:
         return R_BLANK;
 
     case SYM_COPY: {
@@ -131,7 +130,7 @@ REBTYPE(Unit)
         break;
     }
 
-    fail (Error_Illegal_Action(VAL_TYPE(val), action));
+    fail (Error_Illegal_Action(VAL_TYPE(val), verb));
 }
 
 
@@ -171,5 +170,5 @@ REBTYPE(Handle)
 {
     UNUSED(frame_);
 
-    fail (Error_Illegal_Action(REB_HANDLE, action));
+    fail (Error_Illegal_Action(REB_HANDLE, verb));
 }

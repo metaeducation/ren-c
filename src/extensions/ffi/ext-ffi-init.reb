@@ -30,10 +30,10 @@ ffi-type-mappings: [
     float [decimal!]
     double [decimal!]
 
-    ; Note: FUNCTION! is only legal to pass to pointer arguments if it is was
+    ; Note: ACTION! is only legal to pass to pointer arguments if it is was
     ; created with MAKE-ROUTINE or WRAP-CALLBACK
     ;
-    pointer [integer! string! binary! vector! function!]
+    pointer [integer! string! binary! vector! action!]
 
     rebval [any-value!]
 
@@ -42,9 +42,9 @@ ffi-type-mappings: [
 
 
 make-callback: function [
-    {Helper for WRAP-CALLBACK that auto-generates the wrapped function}
+    {Helper for WRAP-CALLBACK that auto-generates the action to be wrapped}
 
-    return: [function!]
+    return: [action!]
     args [block!]
     body [block!]
     /fallback
@@ -72,31 +72,33 @@ make-callback: function [
     ;
     attr-rule: [
         set-word! block!
-        | word!
-        | copy a [tag! some word!](append r-args a)
+            |
+        word!
+            |
+        copy a [tag! some word!] (append r-args a)
     ]
 
-    if not parse args [
+    parse args [
         opt string!
-        any [ arg-rule | attr-rule ]
-    ][
+        any [arg-rule | attr-rule]
+    ] or [
         fail ["Unrecognized pattern in MAKE-CALLBACK function spec" args]
     ]
 
     ; print ["args:" mold args]
 
-    wrapped-func: function r-args either fallback [
-        compose/deep [
-            trap/with [(body)] func [error] [
-                print "** TRAPPED CRITICAL ERROR DURING FFI CALLBACK:"
-                print mold error
-                (fallback-value)
+    safe: function r-args
+        <- (if fallback [
+            compose/deep [
+                trap/with [(body)] func [error] [
+                    print "** TRAPPED CRITICAL ERROR DURING FFI CALLBACK:"
+                    print mold error
+                    (fallback-value)
+                ]
             ]
-        ]
-    ][
-        body
-    ]
-    ; print ["wrapped-func:" mold :wrapped-func]
+        ] else [
+            body
+        ])
 
     parse args [
         while [
@@ -105,5 +107,5 @@ make-callback: function [
         ]
     ]
 
-    wrap-callback :wrapped-func args
+    wrap-callback :safe args
 ]

@@ -2151,7 +2151,7 @@ REBVAL *Scan_To_Stack(SCAN_STATE *ss) {
             if (IS_KIND_SYM(sym)) {
                 enum Reb_Kind kind = KIND_FROM_SYM(sym);
 
-                MAKE_FUNC dispatcher = Make_Dispatch[kind];
+                MAKE_CFUNC dispatcher = Make_Dispatch[kind];
 
                 if (dispatcher == NULL or ARR_LEN(array) != 2) {
                     DECLARE_LOCAL (temp);

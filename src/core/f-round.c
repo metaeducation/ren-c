@@ -62,7 +62,7 @@ REBDEC Round_Dec(REBDEC dec, REBCNT flags, REBDEC scale)
     int e;
     if (v) {
         dec = dec / scale;
-        e = 646699; // avoid uninitialized warning, but it shouldn't be used
+        UNUSED(e);
     }
     else {
         r = frexp(scale, &e);

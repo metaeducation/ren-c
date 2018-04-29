@@ -264,16 +264,16 @@ void MAKE_Context(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
         // was not valid after the block has been run.  This could offer
         // more efficiency than an OBJECT! for some scenarios.
         //
-        // But for now, just allow MAKE FRAME! for a specific FUNCTION!.
+        // But for now, just allow MAKE FRAME! for a specific ACTION!.
         //
-        if (not IS_FUNCTION(arg))
+        if (not IS_ACTION(arg))
             fail (Error_Bad_Make(kind, arg));
 
         // In order to have the frame survive the call to MAKE and be
         // returned to the user it can't be stack allocated, because it
         // would immediately become useless.  Allocate dynamically.
         //
-        Make_Frame_For_Function(out, arg);
+        Make_Frame_For_Action(out, arg);
 
         // The frame's keylist is the same as the function's facade, and
         // the [0] canon value of that array can be used to find the
@@ -371,7 +371,7 @@ void MAKE_Context(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
         /*
         REBINT n = Int32s(arg, 0);
         context = Alloc_Context(kind, n);
-        RESET_VAL_HEADER(CTX_VALUE(context), target);
+        RESET_VAL_HEADER(CTX_ARCHETYPE(context), target);
         CTX_SPEC(context) = NULL;
         CTX_BODY(context) = NULL; */
         Init_Any_Context(out, kind, context);
@@ -469,7 +469,7 @@ REB_R PD_Context(REBPVS *pvs, const REBVAL *picker, const REBVAL *opt_setval)
 //
 //  {Get a reference to the "meta" object associated with a value.}
 //
-//      value [function! any-context!]
+//      value [action! any-context!]
 //  ]
 //
 REBNATIVE(meta_of)
@@ -481,8 +481,8 @@ REBNATIVE(meta_of)
     REBVAL *v = ARG(value);
 
     REBCTX *meta;
-    if (IS_FUNCTION(v))
-        meta = VAL_FUNC_META(v);
+    if (IS_ACTION(v))
+        meta = VAL_ACT_META(v);
     else {
         assert(ANY_CONTEXT(v));
         meta = MISC(CTX_VARLIST(VAL_CONTEXT(v))).meta;
@@ -502,7 +502,7 @@ REBNATIVE(meta_of)
 //  {Set "meta" object associated with all references to a value.}
 //
 //      return: [<opt>]
-//      value [function! any-context!]
+//      value [action! any-context!]
 //      meta [object! blank!]
 //  ]
 //
@@ -523,8 +523,8 @@ REBNATIVE(set_meta)
 
     REBVAL *v = ARG(value);
 
-    if (IS_FUNCTION(v))
-        MISC(VAL_FUNC_PARAMLIST(v)).meta = meta;
+    if (IS_ACTION(v))
+        MISC(VAL_ACT_PARAMLIST(v)).meta = meta;
     else {
         assert(ANY_CONTEXT(v));
         MISC(CTX_VARLIST(VAL_CONTEXT(v))).meta = meta;
@@ -559,7 +559,7 @@ REBCTX *Copy_Context_Core(REBCTX *original, REBU64 types)
     // get filled in with a copy, but the varlist needs to be updated in the
     // copied rootvar to the one just created.
     //
-    Move_Value(dest, CTX_VALUE(original));
+    Move_Value(dest, CTX_ARCHETYPE(original));
     dest->payload.any_context.varlist = varlist;
 
     ++dest;
@@ -697,12 +697,15 @@ void MF_Context(REB_MOLD *mo, const RELVAL *v, REBOOL form)
     else
         vars_head = CTX_VARS_HEAD(VAL_CONTEXT(v));
 
+    REBOOL first = TRUE;
     REBVAL *key = keys_head;
     for (; NOT_END(key); ++key) {
         if (GET_VAL_FLAG(key, TYPESET_FLAG_HIDDEN))
             continue;
 
-        if (key != keys_head)
+        if (first)
+            first = FALSE;
+        else
             Append_Utf8_Codepoint(out, ' ');
 
         // !!! Feature of "private" words in object specs not yet implemented,
@@ -763,20 +766,20 @@ void MF_Context(REB_MOLD *mo, const RELVAL *v, REBOOL form)
 //
 //  Context_Common_Action_Maybe_Unhandled: C
 //
-// Similar to Series_Common_Action_Maybe_Unhandled.  Introduced because
-// PORT! wants to act like a context for some things, but if you ask an
-// ordinary object if it's OPEN? it doesn't know how to do that.
+// Similar to Series_Common_Action_Maybe_Unhandled.  Introduced because PORT!
+// wants to act like a context for some things, but if you ask an ordinary
+// object if it's OPEN? it doesn't know how to do that.
 //
 REB_R Context_Common_Action_Maybe_Unhandled(
     REBFRM *frame_,
-    REBSYM action
+    REBSYM verb
 ){
     REBVAL *value = D_ARG(1);
     REBVAL *arg = D_ARGC > 1 ? D_ARG(2) : NULL;
 
     REBCTX *c = VAL_CONTEXT(value);
 
-    switch (action) {
+    switch (verb) {
 
     case SYM_REFLECT: {
         REBSYM property = VAL_WORD_SYM(arg);
@@ -826,7 +829,7 @@ REB_R Context_Common_Action_Maybe_Unhandled(
 //
 REBTYPE(Context)
 {
-    REB_R r = Context_Common_Action_Maybe_Unhandled(frame_, action);
+    REB_R r = Context_Common_Action_Maybe_Unhandled(frame_, verb);
     if (r != R_UNHANDLED)
         return r;
 
@@ -835,7 +838,7 @@ REBTYPE(Context)
 
     REBCTX *c = VAL_CONTEXT(value);
 
-    switch (action) {
+    switch (verb) {
 
     case SYM_REFLECT:
         // should be handled by the common handler
@@ -843,8 +846,8 @@ REBTYPE(Context)
 
     case SYM_APPEND:
         FAIL_IF_READ_ONLY_CONTEXT(c);
-        if (!IS_OBJECT(value) && !IS_MODULE(value))
-            fail (Error_Illegal_Action(VAL_TYPE(value), action));
+        if (not IS_OBJECT(value) and not IS_MODULE(value))
+            fail (Error_Illegal_Action(VAL_TYPE(value), verb));
         Append_To_Context(c, arg);
         Move_Value(D_OUT, D_ARG(1));
         return R_OUT;
@@ -876,18 +879,21 @@ REBTYPE(Context)
 
     case SYM_SELECT:
     case SYM_FIND: {
-        if (!IS_WORD(arg))
-            return R_BLANK;
+        const REB_R r_not_found = (verb == SYM_FIND) ? R_BLANK : R_VOID;
+
+        if (not IS_WORD(arg))
+            return r_not_found;
 
         REBCNT n = Find_Canon_In_Context(c, VAL_WORD_CANON(arg), FALSE);
 
         if (n == 0)
-            return R_BLANK;
+            return r_not_found;
 
         if (cast(REBCNT, n) > CTX_LEN(c))
-            return R_BLANK;
+            return r_not_found;
 
-        if (action == SYM_FIND) return R_TRUE;
+        if (verb == SYM_FIND)
+            return R_BAR; // synthesizing TRUE would obscure non-LOGIC! result
 
         Move_Value(D_OUT, CTX_VAR(c, n));
         return R_OUT;
@@ -897,7 +903,7 @@ REBTYPE(Context)
         break;
     }
 
-    fail (Error_Illegal_Action(VAL_TYPE(value), action));
+    fail (Error_Illegal_Action(VAL_TYPE(value), verb));
 }
 
 
@@ -1015,8 +1021,9 @@ REBNATIVE(construct)
     // uniformity to MAKE.
     //
     if (
-        (target == REB_OBJECT || target == REB_MODULE)
-        && (IS_BLOCK(body) || IS_BLANK(body))) {
+        (target == REB_OBJECT or target == REB_MODULE)
+        and (IS_BLOCK(body) or IS_BLANK(body))
+    ){
 
         // First we scan the object for top-level set words in
         // order to make an appropriately sized context.  Then

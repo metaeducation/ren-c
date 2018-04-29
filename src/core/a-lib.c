@@ -76,10 +76,6 @@
 #endif
 
 
-static REBRXT Reb_To_RXT[REB_MAX];
-static enum Reb_Kind RXT_To_Reb[RXT_MAX];
-
-
 // !!! Review how much checking one wants to do when calling API routines,
 // and what the balance should be of debug vs. release.  Right now, this helps
 // in particular notice if the core tries to use an API function before the
@@ -306,75 +302,6 @@ REBVAL *RL_rebRepossess(void *ptr, REBCNT size)
 //
 void Startup_Api(void)
 {
-    // These tables used to be built by overcomplicated Rebol scripts.  It's
-    // less hassle to have them built on initialization.
-
-    REBCNT n;
-    for (n = 0; n < REB_MAX; ++n)
-        Reb_To_RXT[n] = 0;
-
-    // The values are deliberately skewed from REB_XXX based on the idea that
-    // these values are not connected.  +10 from the Rebol counterparts at
-    // time of writing.
-    //
-    Reb_To_RXT[REB_0] = 255; // REB_0 is internal use only
-    Reb_To_RXT[REB_FUNCTION] = RXT_FUNCTION;
-    Reb_To_RXT[REB_WORD] = RXT_WORD;
-    Reb_To_RXT[REB_SET_WORD] = RXT_SET_WORD;
-    Reb_To_RXT[REB_GET_WORD] = RXT_GET_WORD;
-    Reb_To_RXT[REB_LIT_WORD] = RXT_LIT_WORD;
-    Reb_To_RXT[REB_REFINEMENT] = RXT_REFINEMENT;
-    Reb_To_RXT[REB_ISSUE] = RXT_ISSUE;
-    Reb_To_RXT[REB_PATH] = RXT_PATH;
-    Reb_To_RXT[REB_SET_PATH] = RXT_SET_PATH;
-    Reb_To_RXT[REB_GET_PATH] = RXT_GET_PATH;
-    Reb_To_RXT[REB_LIT_PATH] = RXT_LIT_PATH;
-    Reb_To_RXT[REB_GROUP] = RXT_GROUP;
-    Reb_To_RXT[REB_BLOCK] = RXT_BLOCK;
-    Reb_To_RXT[REB_BINARY] = RXT_BINARY;
-    Reb_To_RXT[REB_STRING] = RXT_STRING;
-    Reb_To_RXT[REB_FILE] = RXT_FILE;
-    Reb_To_RXT[REB_EMAIL] = RXT_EMAIL;
-    Reb_To_RXT[REB_URL] = RXT_URL;
-    Reb_To_RXT[REB_TAG] = RXT_TAG;
-    Reb_To_RXT[REB_BITSET] = RXT_BITSET;
-    Reb_To_RXT[REB_IMAGE] = RXT_IMAGE;
-    Reb_To_RXT[REB_VECTOR] = RXT_VECTOR;
-    Reb_To_RXT[REB_MAP] = RXT_MAP;
-    Reb_To_RXT[REB_VARARGS] = RXT_VARARGS;
-    Reb_To_RXT[REB_OBJECT] = RXT_OBJECT;
-    Reb_To_RXT[REB_FRAME] = RXT_FRAME;
-    Reb_To_RXT[REB_MODULE] = RXT_MODULE;
-    Reb_To_RXT[REB_ERROR] = RXT_ERROR;
-    Reb_To_RXT[REB_PORT] = RXT_PORT;
-    Reb_To_RXT[REB_BAR] = RXT_BAR;
-    Reb_To_RXT[REB_LIT_BAR] = RXT_LIT_BAR;
-    Reb_To_RXT[REB_BLANK] = RXT_BLANK;
-    Reb_To_RXT[REB_LOGIC] = RXT_LOGIC;
-    Reb_To_RXT[REB_INTEGER] = RXT_INTEGER;
-    Reb_To_RXT[REB_DECIMAL] = RXT_DECIMAL;
-    Reb_To_RXT[REB_PERCENT] = RXT_PERCENT;
-    Reb_To_RXT[REB_MONEY] = RXT_MONEY;
-    Reb_To_RXT[REB_CHAR] = RXT_CHAR;
-    Reb_To_RXT[REB_PAIR] = RXT_PAIR;
-    Reb_To_RXT[REB_TUPLE] = RXT_TUPLE;
-    Reb_To_RXT[REB_TIME] = RXT_TIME;
-    Reb_To_RXT[REB_DATE] = RXT_DATE;
-    Reb_To_RXT[REB_DATATYPE] = RXT_DATATYPE;
-    Reb_To_RXT[REB_TYPESET] = RXT_TYPESET;
-    Reb_To_RXT[REB_GOB] = RXT_GOB;
-    Reb_To_RXT[REB_EVENT] = RXT_EVENT;
-    Reb_To_RXT[REB_HANDLE] = RXT_HANDLE;
-    Reb_To_RXT[REB_STRUCT] = RXT_STRUCT;
-    Reb_To_RXT[REB_LIBRARY] = RXT_LIBRARY;
-
-  #if !defined(NDEBUG)
-    for (n = 1; n < REB_MAX; ++n)
-        assert(Reb_To_RXT[n] != 0); // make sure all have a value
-  #endif
-
-    for (n = 1; n < REB_MAX; ++n)
-        RXT_To_Reb[Reb_To_RXT[n]] = cast(enum Reb_Kind, n); // reverse lookup
 }
 
 
@@ -836,7 +763,7 @@ REBOOL RL_rebPrint(const void *p, ...)
 //
 // This instruction is used with rebRun() in order to mark a value as being
 // evaluated.  So `rebRun(rebEval(some_word), ...)` will execute that word
-// if it's bound to a FUNCTION! and dereference if it's a variable.
+// if it's bound to an ACTION! and dereference if it's a variable.
 //
 void *RL_rebEval(const REBVAL *v)
 {
@@ -1206,7 +1133,7 @@ inline static REBFRM *Extract_Live_Rebfrm_May_Fail(const REBVAL *frame) {
 
     REBFRM *f = CTX_FRAME_MAY_FAIL(VAL_CONTEXT(frame));
 
-    assert(Is_Function_Frame(f) and not Is_Function_Frame_Fulfilling(f));
+    assert(Is_Action_Frame(f) and not Is_Action_Frame_Fulfilling(f));
     return f;
 }
 
@@ -1229,21 +1156,6 @@ REBVAL *RL_rebFrmArg(const REBVAL *frame, REBCNT n) {
 
     REBFRM *f = Extract_Live_Rebfrm_May_Fail(frame);
     return FRM_ARG(f, n);
-}
-
-
-//
-//  rebTypeOf: RL_API
-//
-// !!! Among the few concepts from the original host kit API that may make
-// sense, it could be a good idea to abstract numbers for datatypes from the
-// REB_XXX numbering scheme.  So for the moment, REBRXT is being kept as is.
-//
-REBRXT RL_rebTypeOf(const REBVAL *v) {
-    Enter_Api();
-
-    enum Reb_Kind kind = VAL_TYPE(v);
-    return IS_VOID(v) ? 0 : Reb_To_RXT[kind];
 }
 
 

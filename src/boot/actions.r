@@ -192,7 +192,7 @@ at: action [
 
 find: action [
     {Searches for a value; for series returns where found, else blank.}
-    return: [any-series! blank! logic!]
+    return: [any-series! blank! bar!]
     series [any-series! any-context! map! gob! bitset! typeset! blank!]
     value [<opt> any-value!]
     /part {Limits the search to a given length or position}
@@ -344,8 +344,8 @@ sort: action [
     /case {Case sensitive sort}
     /skip {Treat the series as records of fixed size}
     size [integer!] {Size of each record}
-    /compare  {Comparator offset, block or function}
-    comparator [integer! block! function!]
+    /compare  {Comparator offset, block or action}
+    comparator [integer! block! action!]
     /part {Sort only part of a series}
     limit [any-number! any-series!] {Length of series to sort}
     /all {Compare all fields}

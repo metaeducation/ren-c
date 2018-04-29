@@ -150,7 +150,7 @@ DEVICE_CMD Write_Clipboard(REBREQ *req)
     // is kept as is.
     //
     REBVAL *str = cast(REBVAL*, req->common.data);
-    assert(RXT_STRING == rebTypeOf(str));
+    assert(rebDid("lib/string?", str, rebEnd()));
 
     REBCNT len = req->length; // may only want /PART of the string to write
 
@@ -209,7 +209,7 @@ DEVICE_CMD Poll_Clipboard(REBREQ *req)
 **
 ***********************************************************************/
 
-static DEVICE_CMD_FUNC Dev_Cmds[RDC_MAX] =
+static DEVICE_CMD_CFUNC Dev_Cmds[RDC_MAX] =
 {
     0,
     0,

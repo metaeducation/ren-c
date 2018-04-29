@@ -112,7 +112,7 @@ array: func [
         any-series? :value [
             loop size [block: insert/only block copy/deep value]
         ]
-        function? :value [ ; So value can be a thunk :)
+        action? :value [
             loop size [block: insert/only block value] ; Called every time
         ]
     ] else [
@@ -352,7 +352,7 @@ reword: function [
 
                         v: select/(all [case_REWORD 'case]) values keyword-match
                         output: insert output case [
-                            function? :v [v :keyword-match]
+                            action? :v [v :keyword-match]
                             block? :v [do :v]
                             true [:v]
                         ]
@@ -510,14 +510,14 @@ collect-with: func [
         :value
     ]
 
-    either word? name [
+    if word? name [
         ;
         ; A word `name` indicates that the body is not already bound to
         ; that word.  FUNC does binding and variable creation so let it
         ; do the work.
         ;
-        eval func compose [(name) [function!] <with> return] body :keeper
-    ][
+        eval func compose [(name) [action!] <with> return] body :keeper
+    ] else [
         ; A lit-word `name` indicates that the word for the keeper already
         ; exists.  Set the variable and DO the body bound as-is.
         ;

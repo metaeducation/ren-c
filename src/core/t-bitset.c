@@ -580,7 +580,7 @@ REBTYPE(Bitset)
     // !!! Set_Bits does locked series check--what should the more general
     // responsibility be for checking?
 
-    switch (action) {
+    switch (verb) {
 
     case SYM_REFLECT: {
         INCLUDE_PARAMS_OF_REFLECT;
@@ -631,9 +631,9 @@ REBTYPE(Bitset)
         if (REF(match))
             fail (Error_Bad_Refines_Raw());
 
-        if (!Check_Bits(VAL_SERIES(value), arg, REF(case)))
+        if (not Check_Bits(VAL_SERIES(value), arg, REF(case)))
             return R_BLANK;
-        return R_TRUE;
+        return R_BAR;
     }
 
     case SYM_COMPLEMENT:
@@ -705,8 +705,8 @@ REBTYPE(Bitset)
     case SYM_UNION:
     case SYM_DIFFERENCE:
         if (!IS_BITSET(arg) && !IS_BINARY(arg))
-            fail (Error_Math_Args(VAL_TYPE(arg), action));
-        ser = Xandor_Binary(action, value, arg);
+            fail (Error_Math_Args(VAL_TYPE(arg), verb));
+        ser = Xandor_Binary(verb, value, arg);
         Trim_Tail_Zeros(ser);
         Init_Any_Series(D_OUT, VAL_TYPE(value), ser);
         return R_OUT;
@@ -715,7 +715,7 @@ REBTYPE(Bitset)
         break;
     }
 
-    fail (Error_Illegal_Action(REB_BITSET, action));
+    fail (Error_Illegal_Action(REB_BITSET, verb));
 
 return_bitset:
     Move_Value(D_OUT, value);

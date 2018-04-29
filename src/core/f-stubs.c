@@ -404,8 +404,9 @@ REBVAL *Init_Any_Context_Core(
     // REB_ERROR, for instance.)  It's a point for several other integrity
     // checks as well.
     //
-    REBVAL *archetype = CTX_VALUE(c);
+    REBVAL *archetype = CTX_ARCHETYPE(c);
     assert(VAL_CONTEXT(archetype) == c);
+    assert(VAL_BINDING(archetype) == UNBOUND);
 
     assert(CTX_TYPE(c) == kind);
 
@@ -417,15 +418,15 @@ REBVAL *Init_Any_Context_Core(
     assert(NOT_SER_FLAG(varlist, ARRAY_FLAG_FILE_LINE));
     assert(NOT_SER_FLAG(keylist, ARRAY_FLAG_FILE_LINE));
 
-    if (IS_FRAME(CTX_VALUE(c)))
-        assert(IS_FUNCTION(CTX_FRAME_FUNC_VALUE(c)));
+    if (kind == REB_ACTION)
+        assert(IS_ACTION(CTX_ROOTKEY(c)));
 
     // !!! Currently only a context can serve as the "meta" information,
     // though the interface may expand.
     //
     assert(
         MISC(varlist).meta == NULL
-        or ANY_CONTEXT(CTX_VALUE(MISC(varlist).meta))
+        or ANY_CONTEXT(CTX_ARCHETYPE(MISC(varlist).meta))
     );
   #endif
 
@@ -449,7 +450,7 @@ REBVAL *Init_Any_Context_Core(
     //
     ASSERT_ARRAY_MANAGED(CTX_KEYLIST(c));
 
-    Move_Value(out, CTX_VALUE(c));
+    Move_Value(out, CTX_ARCHETYPE(c));
 
     // Currently only FRAME! uses the ->binding field, in order to capture the
     // ->binding of the function value it links to (which is in ->phase)

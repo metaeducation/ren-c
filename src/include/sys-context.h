@@ -88,11 +88,10 @@ struct Reb_Context {
 
 // There may not be any dynamic or stack allocation available for a stack
 // allocated context, and in that case it will have to come out of the
-// REBSER node data itself.  This is called very often, so use a raw C cast
-// and not cast() or KNOWN(), which slow down the debug build.
+// REBSER node data itself.
 //
-#define CTX_VALUE(c) \
-    cast(REBVAL*, ARR_HEAD(CTX_VARLIST(c)))
+#define CTX_ARCHETYPE(c) \
+    cast(REBVAL*, ARR_HEAD(CTX_VARLIST(c))) // binding should be UNBOUND
 
 // CTX_KEYLIST is called often, and it's worth it to make it as fast as
 // possible--even in an unoptimized build.  Use VAL_TYPE_RAW, plain C cast.
@@ -114,14 +113,9 @@ inline static REBARR *CTX_KEYLIST(REBCTX *c) {
     // phase changes, a fixed value can't be put into the keylist...that is
     // just the keylist of the underlying function.
     //
-    // Note: FUNC_FACADE and VAL_FUNC_PARAMLIST macros not defined yet.  Also
-    // uses low level access since this is called so much...less "safe" than
-    // SER() or MISC() but worth it for this case.
-    //
-    assert(VAL_TYPE_RAW(CTX_VALUE(c)) == REB_FRAME);
-    return (
-        (REBSER*)CTX_VALUE(c)->payload.any_context.phase
-    )->link_private.facade;
+    REBVAL *archetype = CTX_ARCHETYPE(c);
+    assert(VAL_TYPE_RAW(archetype) == REB_FRAME);
+    return LINK(ACT_PARAMLIST(archetype->payload.any_context.phase)).facade;
 }
 
 static inline void INIT_CTX_KEYLIST_SHARED(REBCTX *c, REBARR *keylist) {
@@ -149,24 +143,15 @@ static inline void INIT_CTX_KEYLIST_UNIQUE(REBCTX *c, REBARR *keylist) {
     SER_HEAD(REBVAL, SER(CTX_KEYLIST(c)))
 
 #define CTX_TYPE(c) \
-    VAL_TYPE(CTX_VALUE(c))
+    VAL_TYPE(CTX_ARCHETYPE(c))
 
-// The keys and vars are accessed by positive integers starting at 1.  If
-// indexed access is used then the debug build will check to be sure that
-// the indexing is legal.  To get a pointer to the first key or value
-// regardless of length (e.g. will be an END if 0 keys/vars) use HEAD
+// The keys and vars are accessed by positive integers starting at 1
 //
-// Rather than use ARR_AT (which returns RELVAL*) for the vars, this uses
-// SER_AT to get REBVALs back, because the values of the context are known to
-// not live in function body arrays--hence they can't hold relative words.
-// Keys can't hold relative values either.
-//
-inline static REBVAL *CTX_KEYS_HEAD(REBCTX *c) {
-    return SER_AT(REBVAL, SER(CTX_KEYLIST(c)), 1);
-}
+#define CTX_KEYS_HEAD(c) \
+    SER_AT(REBVAL, SER(CTX_KEYLIST(c)), 1) // a CTX_KEY can't hold a RELVAL
 
 inline static REBFRM *CTX_FRAME_IF_ON_STACK(REBCTX *c) {
-    assert(IS_FRAME(CTX_VALUE(c)));
+    assert(IS_FRAME(CTX_ARCHETYPE(c)));
 
     REBNOD *keysource = LINK(CTX_VARLIST(c)).keysource;
     if (not (keysource->header.bits & NODE_FLAG_CELL))
@@ -174,9 +159,9 @@ inline static REBFRM *CTX_FRAME_IF_ON_STACK(REBCTX *c) {
 
     REBFRM *f = cast(REBFRM*, keysource);
 
-    // Note: inlining of Is_Function_Frame() to break dependency
+    // Note: inlining of Is_Action_Frame() to break dependency
     //
-    assert(f->eval_type == REB_FUNCTION and f->phase != NULL);
+    assert(f->eval_type == REB_ACTION and f->phase != NULL);
 
     return f;
 }
@@ -290,13 +275,6 @@ inline static void INIT_VAL_CONTEXT(REBVAL *v, REBCTX *c) {
 #define VAL_CONTEXT_KEY(v,n) \
     CTX_KEY(VAL_CONTEXT(v), (n))
 
-#define VAL_CONTEXT_KEY_SYM(v,n) \
-    CTX_KEY_SYM(VAL_CONTEXT(v), (n))
-
-inline static REBVAL *CTX_FRAME_FUNC_VALUE(REBCTX *c) {
-    assert(IS_FUNCTION(CTX_ROOTKEY(c)));
-    return CTX_ROOTKEY(c);
-}
 
 // The movement of the SELF word into the domain of the object generators
 // means that an object may wind up having a hidden SELF key (and it may not).

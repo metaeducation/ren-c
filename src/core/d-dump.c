@@ -257,7 +257,7 @@ void Dump_Stack(REBFRM *f, REBCNT level)
         f->eval_type // note: this is now an ordinary Reb_Kind, stringify it
     );
 
-    if (not Is_Function_Frame(f)) {
+    if (not Is_Action_Frame(f)) {
         printf("(no function call pending or in progress)\n");
         fflush(stdout);
         return;
@@ -272,7 +272,7 @@ void Dump_Stack(REBFRM *f, REBCNT level)
 
     REBINT n = 1;
     REBVAL *arg = FRM_ARG(f, 1);
-    REBVAL *param = FUNC_PARAMS_HEAD(f->phase);
+    REBVAL *param = ACT_PARAMS_HEAD(f->phase);
 
     for (; NOT_END(param); ++param, ++arg, ++n) {
         if (IS_VOID(arg))

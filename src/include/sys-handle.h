@@ -91,7 +91,7 @@ inline static CFUNC *VAL_HANDLE_CFUNC(const RELVAL *v) {
         return v->payload.handle.data.cfunc;
 }
 
-inline static CLEANUP_FUNC VAL_HANDLE_CLEANER(const RELVAL *v) {
+inline static CLEANUP_CFUNC VAL_HANDLE_CLEANER(const RELVAL *v) {
     assert(IS_HANDLE(v));
     REBARR *singular = v->extra.singular;
     return singular != NULL ? MISC(singular).cleaner : NULL;
@@ -150,7 +150,7 @@ inline static REBVAL *Init_Handle_Cfunc(
 inline static void Init_Handle_Managed_Common(
     RELVAL *out,
     uintptr_t length,
-    CLEANUP_FUNC cleaner
+    CLEANUP_CFUNC cleaner
 ){
     REBARR *singular = Alloc_Singular_Array();
     MISC(singular).cleaner = cleaner;
@@ -183,7 +183,7 @@ inline static REBVAL *Init_Handle_Managed(
     RELVAL *out,
     void *pointer,
     uintptr_t length,
-    CLEANUP_FUNC cleaner
+    CLEANUP_CFUNC cleaner
 ){
     Init_Handle_Managed_Common(out, length, cleaner);
 
@@ -200,7 +200,7 @@ inline static REBVAL *Init_Handle_Managed_Cfunc(
     RELVAL *out,
     CFUNC *cfunc,
     uintptr_t length,
-    CLEANUP_FUNC cleaner
+    CLEANUP_CFUNC cleaner
 ){
     Init_Handle_Managed_Common(out, length, cleaner);
 

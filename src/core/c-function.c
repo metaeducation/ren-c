@@ -38,8 +38,8 @@
 //
 REBARR *List_Func_Words(const RELVAL *func, REBOOL pure_locals)
 {
-    REBARR *array = Make_Array(VAL_FUNC_NUM_PARAMS(func));
-    REBVAL *param = VAL_FUNC_PARAMS_HEAD(func);
+    REBARR *array = Make_Array(VAL_ACT_NUM_PARAMS(func));
+    REBVAL *param = VAL_ACT_PARAMS_HEAD(func);
 
     for (; NOT_END(param); param++) {
         enum Reb_Kind kind;
@@ -96,8 +96,8 @@ REBARR *List_Func_Words(const RELVAL *func, REBOOL pure_locals)
 //
 REBARR *List_Func_Typesets(REBVAL *func)
 {
-    REBARR *array = Make_Array(VAL_FUNC_NUM_PARAMS(func));
-    REBVAL *typeset = VAL_FUNC_PARAMS_HEAD(func);
+    REBARR *array = Make_Array(VAL_ACT_NUM_PARAMS(func));
+    REBVAL *typeset = VAL_ACT_PARAMS_HEAD(func);
 
     for (; NOT_END(typeset); typeset++) {
         assert(IS_TYPESET(typeset));
@@ -138,7 +138,7 @@ enum Reb_Spec_Mode {
 //     [foo {doc string1 :-/} {doc string2 :-(} [type!]]
 //
 // Ren-C breaks this into two parts: one is the mechanical understanding of
-// MAKE FUNCTION! for parameters in the evaluator.  Then it is the job
+// MAKE ACTION! for parameters in the evaluator.  Then it is the job
 // of a generator to tag the resulting function with a "meta object" with any
 // descriptions.  As a proxy for the work of a usermode generator, this
 // routine tries to fill in FUNCTION-META (see %sysobj.r) as well as to
@@ -171,7 +171,7 @@ REBARR *Make_Paramlist_Managed_May_Fail(
     // frame would be in a release build (e.g. for a FRM_CELL() assert)
     //
     if (flags & MKF_FAKE_RETURN) {
-        header_bits |= FUNC_FLAG_RETURN_DEBUG;
+        header_bits |= ACTION_FLAG_RETURN_DEBUG;
         flags &= ~MKF_FAKE_RETURN;
         assert(not (flags & MKF_RETURN));
         flags |= MKF_RETURN;
@@ -192,7 +192,7 @@ REBARR *Make_Paramlist_Managed_May_Fail(
     // the function description--it will be extracted from the slot before
     // it is turned into a rootkey for param_notes.
     //
-    DS_PUSH_TRASH; // paramlist[0] (will become FUNCTION! canon value)
+    DS_PUSH_TRASH; // paramlist[0] will become ACT_ARCHETYPE()
     Init_Unreadable_Blank(DS_TOP);
     DS_PUSH(EMPTY_BLOCK); // param_types[0] (to be OBJECT! canon value, if any)
     DS_PUSH(EMPTY_STRING); // param_notes[0] (holds description, then canon)
@@ -298,11 +298,7 @@ REBARR *Make_Paramlist_Managed_May_Fail(
 
                 if (IS_BLANK_RAW(DS_TOP - 2)) {
                     //
-                    // No typesets pushed yet, so this is a block before any
-                    // parameters have been named.  This was legal in Rebol2
-                    // for e.g. `func [[catch] x y][...]`, and R3-Alpha
-                    // ignored it.  Ren-C only tolerates this in <r3-legacy>,
-                    // (with the tolerance implemented in compatibility FUNC)
+                    // No parameters pushed, e.g. func [[integer!] {<-- bad}]
                     //
                     fail (Error_Bad_Func_Def_Core(item, VAL_SPECIFIER(spec)));
                 }
@@ -391,7 +387,7 @@ REBARR *Make_Paramlist_Managed_May_Fail(
             typeset,
             (flags & MKF_ANY_VALUE)
                 ? ALL_64
-                : ALL_64 & ~(FLAGIT_KIND(REB_MAX_VOID) | FLAGIT_KIND(REB_FUNCTION)),
+                : ALL_64 & ~(FLAGIT_KIND(REB_MAX_VOID) | FLAGIT_KIND(REB_ACTION)),
             VAL_WORD_SPELLING(item)
         );
 
@@ -502,7 +498,7 @@ REBARR *Make_Paramlist_Managed_May_Fail(
     assert((DSP - dsp_orig) % 3 == 0); // must be a multiple of 3
 
     // Definitional RETURN and LEAVE slots must have their argument values
-    // fulfilled with FUNCTION! values specific to the function being called
+    // fulfilled with ACTION! values specific to the function being called
     // on *every instantiation*.  They are marked with special parameter
     // classes to avoid needing to separately do canon comparison of their
     // symbols to find them.  In addition, since RETURN's typeset holds
@@ -530,7 +526,7 @@ REBARR *Make_Paramlist_Managed_May_Fail(
             assert(VAL_PARAM_CLASS(definitional_leave) == PARAM_CLASS_LOCAL);
             INIT_VAL_PARAM_CLASS(definitional_leave, PARAM_CLASS_LEAVE);
         }
-        header_bits |= FUNC_FLAG_LEAVE;
+        header_bits |= ACTION_FLAG_LEAVE;
     }
 
     if (flags & MKF_RETURN) {
@@ -562,7 +558,7 @@ REBARR *Make_Paramlist_Managed_May_Fail(
                 or not (has_description or has_types or has_notes)
                     ? ALL_64
                     : ALL_64 & ~(
-                        FLAGIT_KIND(REB_MAX_VOID) | FLAGIT_KIND(REB_FUNCTION)
+                        FLAGIT_KIND(REB_MAX_VOID) | FLAGIT_KIND(REB_ACTION)
                     ),
                 canon_return
             );
@@ -581,7 +577,7 @@ REBARR *Make_Paramlist_Managed_May_Fail(
             // definitional_return handled specially when paramlist copied
             // off of the stack...
         }
-        header_bits |= FUNC_FLAG_RETURN;
+        header_bits |= ACTION_FLAG_RETURN;
     }
 
     // Slots, which is length +1 (includes the rootvar or rootparam)
@@ -616,7 +612,7 @@ REBARR *Make_Paramlist_Managed_May_Fail(
     );
 
     // In order to use this paramlist as a ->phase in a frame below, it must
-    // have a valid facade so CTX_KEYLIST() will work.  The Make_Function()
+    // have a valid facade so CTX_KEYLIST() will work.  The Make_Action()
     // calls that provide facades all currently build the full function before
     // trying to add any meta information that includes frames, so they do
     // not have to do this.
@@ -625,9 +621,9 @@ REBARR *Make_Paramlist_Managed_May_Fail(
 
     if (TRUE) {
         RELVAL *dest = ARR_HEAD(paramlist); // canon function value
-        RESET_VAL_HEADER(dest, REB_FUNCTION);
+        RESET_VAL_HEADER(dest, REB_ACTION);
         SET_VAL_FLAGS(dest, header_bits);
-        dest->payload.function.paramlist = paramlist;
+        dest->payload.action.paramlist = paramlist;
         INIT_BINDING(dest, UNBOUND);
         ++dest;
 
@@ -706,12 +702,12 @@ REBARR *Make_Paramlist_Managed_May_Fail(
     //
     //=///////////////////////////////////////////////////////////////////=//
 
-    // !!! See notes on FUNCTION-META in %sysobj.r
+    // !!! See notes on ACTION-META in %sysobj.r
 
     REBCTX *meta = NULL;
 
     if (has_description or has_types or has_notes) {
-        meta = Copy_Context_Shallow(VAL_CONTEXT(Root_Function_Meta));
+        meta = Copy_Context_Shallow(VAL_CONTEXT(Root_Action_Meta));
         MANAGE_ARRAY(CTX_VARLIST(meta));
     }
 
@@ -723,19 +719,19 @@ REBARR *Make_Paramlist_Managed_May_Fail(
     if (has_description) {
         assert(IS_STRING(DS_AT(dsp_orig + 3)));
         Move_Value(
-            CTX_VAR(meta, STD_FUNCTION_META_DESCRIPTION),
+            CTX_VAR(meta, STD_ACTION_META_DESCRIPTION),
             DS_AT(dsp_orig + 3)
         );
     }
     else if (meta)
-        Init_Void(CTX_VAR(meta, STD_FUNCTION_META_DESCRIPTION));
+        Init_Void(CTX_VAR(meta, STD_ACTION_META_DESCRIPTION));
 
     // Only make `parameter-types` if there were blocks in the spec
     //
     if (not has_types) {
         if (meta) {
-            Init_Void(CTX_VAR(meta, STD_FUNCTION_META_PARAMETER_TYPES));
-            Init_Void(CTX_VAR(meta, STD_FUNCTION_META_RETURN_TYPE));
+            Init_Void(CTX_VAR(meta, STD_ACTION_META_PARAMETER_TYPES));
+            Init_Void(CTX_VAR(meta, STD_ACTION_META_RETURN_TYPE));
         }
     }
     else {
@@ -748,7 +744,7 @@ REBARR *Make_Paramlist_Managed_May_Fail(
         REBVAL *dest = SINK(ARR_HEAD(types_varlist)); // "rootvar"
         RESET_VAL_HEADER(dest, REB_FRAME);
         dest->payload.any_context.varlist = types_varlist; // canon FRAME!
-        dest->payload.any_context.phase = FUN(paramlist);
+        dest->payload.any_context.phase = ACT(paramlist);
         INIT_BINDING(dest, UNBOUND);
 
         ++dest;
@@ -777,10 +773,10 @@ REBARR *Make_Paramlist_Managed_May_Fail(
             // the function.)
             //
             if (VAL_ARRAY_LEN_AT(definitional_return + 1) == 0)
-                Init_Void(CTX_VAR(meta, STD_FUNCTION_META_RETURN_TYPE));
+                Init_Void(CTX_VAR(meta, STD_ACTION_META_RETURN_TYPE));
             else {
                 Move_Value(
-                    CTX_VAR(meta, STD_FUNCTION_META_RETURN_TYPE),
+                    CTX_VAR(meta, STD_ACTION_META_RETURN_TYPE),
                     &definitional_return[1]
                 );
             }
@@ -795,7 +791,7 @@ REBARR *Make_Paramlist_Managed_May_Fail(
         MANAGE_ARRAY(types_varlist);
 
         Init_Any_Context(
-            CTX_VAR(meta, STD_FUNCTION_META_PARAMETER_TYPES),
+            CTX_VAR(meta, STD_ACTION_META_PARAMETER_TYPES),
             REB_FRAME,
             CTX(types_varlist)
         );
@@ -805,8 +801,8 @@ REBARR *Make_Paramlist_Managed_May_Fail(
     //
     if (not has_notes) {
         if (meta) {
-            Init_Void(CTX_VAR(meta, STD_FUNCTION_META_PARAMETER_NOTES));
-            Init_Void(CTX_VAR(meta, STD_FUNCTION_META_RETURN_NOTE));
+            Init_Void(CTX_VAR(meta, STD_ACTION_META_PARAMETER_NOTES));
+            Init_Void(CTX_VAR(meta, STD_ACTION_META_RETURN_NOTE));
         }
     }
     else {
@@ -819,7 +815,7 @@ REBARR *Make_Paramlist_Managed_May_Fail(
         REBVAL *dest = SINK(ARR_HEAD(notes_varlist)); // "rootvar"
         RESET_VAL_HEADER(dest, REB_FRAME);
         dest->payload.any_context.varlist = notes_varlist; // canon FRAME!
-        dest->payload.any_context.phase = FUN(paramlist);
+        dest->payload.any_context.phase = ACT(paramlist);
         INIT_BINDING(dest, UNBOUND);
 
         ++dest;
@@ -845,10 +841,10 @@ REBARR *Make_Paramlist_Managed_May_Fail(
             // parameter in the list
             //
             if (SER_LEN(VAL_SERIES(definitional_return + 2)) == 0)
-                Init_Void(CTX_VAR(meta, STD_FUNCTION_META_RETURN_NOTE));
+                Init_Void(CTX_VAR(meta, STD_ACTION_META_RETURN_NOTE));
             else {
                 Move_Value(
-                    CTX_VAR(meta, STD_FUNCTION_META_RETURN_NOTE),
+                    CTX_VAR(meta, STD_ACTION_META_RETURN_NOTE),
                     &definitional_return[2]
                 );
             }
@@ -863,7 +859,7 @@ REBARR *Make_Paramlist_Managed_May_Fail(
         MANAGE_ARRAY(notes_varlist);
 
         Init_Any_Context(
-            CTX_VAR(meta, STD_FUNCTION_META_PARAMETER_NOTES),
+            CTX_VAR(meta, STD_ACTION_META_PARAMETER_NOTES),
             REB_FRAME,
             CTX(notes_varlist)
         );
@@ -908,24 +904,24 @@ REBCNT Find_Param_Index(REBARR *paramlist, REBSTR *spelling)
 
 
 //
-//  Make_Function: C
+//  Make_Action: C
 //
 // Create an archetypal form of a function, given C code implementing a
 // dispatcher that will be called by Do_Core.  Dispatchers are of the form:
 //
 //     REB_R Dispatcher(REBFRM *f) {...}
 //
-// The REBFUN returned is "archetypal" because individual REBVALs which hold
-// the same REBFUN may differ in a per-REBVAL piece of "instance" data.
-// (This is how one RETURN is distinguished from another--the instance
-// data stored in the REBVAL identifies the pointer of the FRAME! to exit).
+// The REBACT returned is "archetypal" because individual REBVALs which hold
+// the same REBACT may differ in a per-REBVAL "binding".  (This is how one
+// RETURN is distinguished from another--the binding data stored in the REBVAL
+// identifies the pointer of the FRAME! to exit).
 //
-// Functions have an associated REBVAL-sized cell of data, accessible via
-// FUNC_BODY().  This is where they can store information that will be
+// Actions have an associated REBVAL-sized cell of data, accessible via
+// ACT_BODY().  This is where they can store information that will be
 // available when the dispatcher is called.  Despite being called "body", it
 // doesn't have to be an array--it can be any REBVAL.
 //
-REBFUN *Make_Function(
+REBACT *Make_Action(
     REBARR *paramlist,
     REBNAT dispatcher, // native C function called by Do_Core
     REBARR *opt_facade, // if provided, 0 element must be underlying function
@@ -934,13 +930,13 @@ REBFUN *Make_Function(
     ASSERT_ARRAY_MANAGED(paramlist);
 
     RELVAL *rootparam = ARR_HEAD(paramlist);
-    assert(IS_FUNCTION(rootparam)); // !!! body not fully formed...
-    assert(rootparam->payload.function.paramlist == paramlist);
+    assert(IS_ACTION(rootparam)); // !!! body not fully formed...
+    assert(rootparam->payload.action.paramlist == paramlist);
     assert(VAL_BINDING(rootparam) == UNBOUND); // archetype
 
     // Precalculate cached function flags.
     //
-    // Note: FUNC_FLAG_DEFERS_LOOKBACK is only relevant for un-refined-calls.
+    // Note: ACTION_FLAG_DEFERS_LOOKBACK is only relevant for un-refined-calls.
     // No lookback function calls trigger from PATH!.  HOWEVER: specialization
     // does come into play because it may change what the first "real"
     // argument is.  But again, we're only interested in specialization's
@@ -957,10 +953,10 @@ REBFUN *Make_Function(
         case PARAM_CLASS_RETURN: {
             assert(VAL_PARAM_SYM(param) == SYM_RETURN);
 
-            // See notes on FUNC_FLAG_INVISIBLE.
+            // See notes on ACTION_FLAG_INVISIBLE.
             //
             if (VAL_TYPESET_BITS(param) == 0)
-                SET_VAL_FLAG(rootparam, FUNC_FLAG_INVISIBLE);
+                SET_VAL_FLAG(rootparam, ACTION_FLAG_INVISIBLE);
             break; }
 
         case PARAM_CLASS_LEAVE: {
@@ -981,7 +977,7 @@ REBFUN *Make_Function(
             // to report that fact.
             //
             if (first_arg and NOT_VAL_FLAG(param, TYPESET_FLAG_HIDDEN)) {
-                SET_VAL_FLAG(rootparam, FUNC_FLAG_DEFERS_LOOKBACK);
+                SET_VAL_FLAG(rootparam, ACTION_FLAG_DEFERS_LOOKBACK);
                 first_arg = FALSE;
             }
             break;
@@ -1000,7 +996,7 @@ REBFUN *Make_Function(
         case PARAM_CLASS_HARD_QUOTE:
         case PARAM_CLASS_SOFT_QUOTE:
             if (first_arg and NOT_VAL_FLAG(param, TYPESET_FLAG_HIDDEN)) {
-                SET_VAL_FLAG(rootparam, FUNC_FLAG_QUOTES_FIRST_ARG);
+                SET_VAL_FLAG(rootparam, ACTION_FLAG_QUOTES_FIRST_ARG);
                 first_arg = FALSE;
             }
             break;
@@ -1017,7 +1013,7 @@ REBFUN *Make_Function(
     Init_Blank(ARR_SINGLE(body_holder));
     MANAGE_ARRAY(body_holder);
 
-    rootparam->payload.function.body_holder = body_holder;
+    rootparam->payload.action.body_holder = body_holder;
 
     // The C function pointer is stored inside the REBSER node for the body.
     // Hence there's no need for a `switch` on a function class in Do_Core,
@@ -1064,7 +1060,7 @@ REBFUN *Make_Function(
         // be incompatible, but these don't exist yet.)  So just check it's
         // compatible with the underlying frame.
         //
-        // Base it off the facade since FUNC_NUM_PARAMS(FUNC_UNDERLYING())
+        // Base it off the facade since ACT_NUM_PARAMS(ACT_UNDERLYING())
         // would assert, since the function we're making is incomplete..
         //
         assert(
@@ -1092,136 +1088,188 @@ REBFUN *Make_Function(
     assert(NOT_SER_FLAG(paramlist, ARRAY_FLAG_FILE_LINE));
     assert(NOT_SER_FLAG(body_holder, ARRAY_FLAG_FILE_LINE));
 
-    return FUN(paramlist);
+    return ACT(paramlist);
 }
 
 
 //
 //  Make_Expired_Frame_Ctx_Managed: C
 //
-// Function bodies contain relative words and relative arrays.  Arrays from
+// FUNC/PROC bodies contain relative words and relative arrays.  Arrays from
 // this relativized body may only be put into a specified REBVAL once they
 // have been combined with a frame.
 //
-// Reflection asks for function body data, when no instance is called.  Hence
+// Reflection asks for action body data, when no instance is called.  Hence
 // a REBVAL must be produced somehow.  If the body is being copied, then the
 // option exists to convert all the references to unbound...but this isn't
 // representative of the actual connections in the body.
 //
 // There could be an additional "archetype" state for the relative binding
-// machinery.  But making a one-off expired frame is an inexpensive option,
-// at least while the specific binding is coming online.
+// machinery.  But making a one-off expired frame is an inexpensive option.
 //
-// !!! To be written...was started for MOLD of function, and realized it's
-// really only needed for the BODY-OF reflector that gives back REBVAL*
-//
-REBCTX *Make_Expired_Frame_Ctx_Managed(REBFUN *func)
+REBCTX *Make_Expired_Frame_Ctx_Managed(REBACT *a)
 {
     REBARR *varlist = Alloc_Singular_Array_Core(
         ARRAY_FLAG_VARLIST | CONTEXT_FLAG_STACK
     );
-    MISC(varlist).meta = NULL; // seen by GC, must be initialized
+    MISC(varlist).meta = NULL;
     MANAGE_ARRAY(varlist);
 
     RELVAL *rootvar = ARR_SINGLE(varlist);
     RESET_VAL_HEADER(rootvar, REB_FRAME);
     rootvar->payload.any_context.varlist = varlist;
-    rootvar->payload.any_context.phase = func;
+    rootvar->payload.any_context.phase = a;
     INIT_BINDING(rootvar, UNBOUND); // !!! is a binding relevant?
 
-    // func stored by the link field of a REB_FRAME context's varlist which
-    // indicates that the frame has finished running.  If it is stack-based,
-    // then that also means the data values are unavailable.
-    //
     REBCTX *expired = CTX(varlist);
     SET_SER_INFO(varlist, SERIES_INFO_INACCESSIBLE);
-    INIT_CTX_KEYLIST_SHARED(expired, FUNC_PARAMLIST(func));
+    INIT_CTX_KEYLIST_SHARED(expired, ACT_PARAMLIST(a));
 
     return expired;
 }
 
 
 //
-//  Get_Maybe_Fake_Func_Body: C
+//  Get_Maybe_Fake_Action_Body: C
 //
-// The FUNC_FLAG_LEAVE and FUNC_FLAG_RETURN tricks used for definitional
-// scoping make it seem like a generator authored more code in the function's
-// body...but the code isn't *actually* there and an optimized internal
-// trick is used.
+// !!! While the interface as far as the evaluator is concerned is satisfied
+// with the OneAction ACTION!, the various dispatchers have different ideas
+// of what "source" would be like.  There should be some mapping from the
+// dispatchers to code to get the BODY OF an ACTION.  For the moment, just
+// handle common kinds so the SOURCE command works adquately, revisit later.
 //
-// If the body is fake, it needs to be freed by the caller with
-// Free_Series.  This means that the body must currently be shallow
-// copied, and the splicing slot must be in the topmost series.
-//
-REBARR *Get_Maybe_Fake_Func_Body(REBOOL *is_fake, const REBVAL *func)
+void Get_Maybe_Fake_Action_Body(REBVAL *out, const REBVAL *action)
 {
-    REBARR *fake_body;
-    REBVAL *example = NULL;
+    REBSPC *binding = VAL_BINDING(action);
+    REBACT *a = VAL_ACTION(action);
 
-    assert(IS_FUNCTION(func) and IS_FUNCTION_INTERPRETED(func));
+    // A Hijacker *might* not need to splice itself in with a dispatcher.
+    // But if it does, bypass it to get to the "real" action implementation.
+    //
+    // !!! Should the source inject messages like {This is a hijacking} at
+    // the top of the returned body?
+    //
+    while (ACT_DISPATCHER(a) == &Hijacker_Dispatcher) {
+        a = VAL_ACTION(ACT_BODY(a));
+        // !!! Review what should happen to binding
+    }
 
-    REBCNT body_index;
-    if (GET_VAL_FLAG(func, FUNC_FLAG_RETURN)) {
-        if (GET_VAL_FLAG(func, FUNC_FLAG_LEAVE)) {
-            assert(FALSE); // !!! none of these actually exist
-            example = Get_System(SYS_STANDARD, STD_FUNC_WITH_LEAVE_BODY);
-            body_index = 8;
+    // !!! Should the binding make a difference in the returned body?  It is
+    // exposed programmatically via CONTEXT OF.
+    //
+    UNUSED(binding);
+
+    if (
+        ACT_DISPATCHER(a) == &Noop_Dispatcher
+        or ACT_DISPATCHER(a) == &Unchecked_Dispatcher
+        or ACT_DISPATCHER(a) == &Voider_Dispatcher
+        or ACT_DISPATCHER(a) == &Returner_Dispatcher
+        or ACT_DISPATCHER(a) == &Block_Dispatcher
+    ){
+        // Interpreted code, the body is a block with some bindings relative
+        // to the action.
+
+        // The ACTION_FLAG_LEAVE/ACTION_FLAG_RETURN tricks for definitional
+        // scoping make it seem like a generator authored more code in the
+        // action's body...but the code isn't *actually* there and an
+        // optimized internal trick is used.  Fake the code if needed.
+
+        REBVAL *example;
+        REBCNT real_body_index;
+        if (GET_ACT_FLAG(a, ACTION_FLAG_RETURN)) {
+            assert(not GET_ACT_FLAG(a, ACTION_FLAG_LEAVE)); // can't have both
+            example = Get_System(SYS_STANDARD, STD_FUNC_BODY);
+            real_body_index = 4;
+        }
+        else if (GET_ACT_FLAG(a, ACTION_FLAG_LEAVE)) {
+            example = Get_System(SYS_STANDARD, STD_PROC_BODY);
+            real_body_index = 4;
         }
         else {
-            example = Get_System(SYS_STANDARD, STD_FUNC_BODY);
-            body_index = 4;
+            example = NULL;
+            UNUSED(real_body_index);
         }
-        *is_fake = TRUE;
-    }
-    else if (GET_VAL_FLAG(func, FUNC_FLAG_LEAVE)) {
-        example = Get_System(SYS_STANDARD, STD_PROC_BODY);
-        body_index = 4;
-        *is_fake = TRUE;
-    }
-    else {
-        *is_fake = FALSE;
-        return VAL_ARRAY(VAL_FUNC_BODY(func));
+
+        REBARR *real_body = VAL_ARRAY(ACT_BODY(a));
+        assert(GET_SER_INFO(real_body, SERIES_INFO_FROZEN));
+
+        REBARR *maybe_fake_body;
+        if (example == NULL) {
+            maybe_fake_body = real_body;
+            assert(GET_SER_INFO(maybe_fake_body, SERIES_INFO_FROZEN));
+        }
+        else {
+            // See %sysobj.r for STANDARD/FUNC-BODY and STANDARD/PROC-BODY
+            //
+            maybe_fake_body = Copy_Array_Shallow(
+                VAL_ARRAY(example),
+                VAL_SPECIFIER(example)
+            );
+            SET_SER_INFO(maybe_fake_body, SERIES_INFO_FROZEN);
+
+            // Index 5 (or 4 in zero-based C) should be #BODY, a "real" body.
+            // To give it the appearance of executing code in place, we use
+            // a GROUP!.
+
+            RELVAL *slot = ARR_AT(maybe_fake_body, real_body_index); // #BODY
+            assert(IS_ISSUE(slot));
+
+            RESET_VAL_HEADER_EXTRA(slot, REB_GROUP, 0); // clear VAL_FLAG_LINE
+            INIT_VAL_ARRAY(slot, VAL_ARRAY(ACT_BODY(a)));
+            VAL_INDEX(slot) = 0;
+            INIT_BINDING(slot, a); // relative binding
+
+            MANAGE_ARRAY(maybe_fake_body);
+        }
+
+        // Cannot give user a relative value back, so make the relative
+        // body specific to a fabricated expired frame.  See #2221
+
+        RESET_VAL_HEADER_EXTRA(out, REB_BLOCK, 0);
+        INIT_VAL_ARRAY(out, maybe_fake_body);
+        VAL_INDEX(out) = 0;
+        INIT_BINDING(out, Make_Expired_Frame_Ctx_Managed(a));
+        return;
     }
 
-    // See comments in sysobj.r on standard/func-body and standard/proc-body
-    //
-    fake_body = Copy_Array_Shallow(VAL_ARRAY(example), VAL_SPECIFIER(example));
-
-    // Index 5 (or 4 in zero-based C) should be #BODY, a "real" body.  Since
-    // the body has relative words and relative arrays and this is not pairing
-    // that with a frame from any specific invocation, the value must be
-    // marked as relative.
-    {
-        RELVAL *slot = ARR_AT(fake_body, body_index); // #BODY
-        assert(IS_ISSUE(slot));
-
-        RESET_VAL_HEADER_EXTRA(slot, REB_GROUP, 0); // clear VAL_FLAG_LINE
-        INIT_VAL_ARRAY(slot, VAL_ARRAY(VAL_FUNC_BODY(func)));
-        VAL_INDEX(slot) = 0;
-        INIT_BINDING(slot, VAL_FUNC(func)); // relative binding
+    if (ACT_DISPATCHER(a) == &Specializer_Dispatcher) {
+        //
+        // The FRAME! stored in the body for the specialization has a phase
+        // which is actually the function to be run.
+        //
+        assert(IS_FRAME(ACT_BODY(a)));
+        Move_Value(out, KNOWN(ACT_BODY(a)));
+        return;
     }
 
-    return fake_body;
+    if (ACT_DISPATCHER(a) == &Type_Action_Dispatcher) {
+        assert(IS_WORD(ACT_BODY(a)));
+        Move_Value(out, KNOWN(ACT_BODY(a)));
+        return;
+    }
+
+    Init_Blank(out); // natives, ffi routines, etc.
+    return;
 }
 
 
 //
-//  Make_Interpreted_Function_May_Fail: C
+//  Make_Interpreted_Action_May_Fail: C
 //
-// This is the support routine behind `MAKE FUNCTION!`, FUNC, and PROC.
+// This is the support routine behind `MAKE ACTION!`, FUNC, and PROC.
 //
 // Ren-C's schematic for the FUNC and PROC generators is *very* different
 // from R3-Alpha, whose definition of FUNC was simply:
 //
 //     make function! copy/deep reduce [spec body]
 //
-// Ren-C's `make function!` doesn't need to copy the spec (it does not save
+// Ren-C's `make action!` doesn't need to copy the spec (it does not save
 // it--parameter descriptions are in a meta object).  It also copies the body
 // by virtue of the need to relativize it.  They also have "definitional
 // return" constructs so that the body introduces RETURN and LEAVE constructs
-// specific to each function invocation, so the body acts more like:
+// specific to each action invocation, so the body acts more like:
 //
-//     return: make function! [
+//     return: make action! [
 //         [{Returns a value from a function.} value [<opt> any-value!]]
 //         [unwind/with (context of 'return) :value]
 //     ]
@@ -1229,7 +1277,7 @@ REBARR *Get_Maybe_Fake_Func_Body(REBOOL *is_fake, const REBVAL *func)
 //
 // This pattern addresses "Definitional Return" in a way that does not
 // technically require building RETURN or LEAVE in as a language keyword in
-// any specific form (in the sense that MAKE FUNCTION! does not itself
+// any specific form (in the sense that MAKE ACTION! does not itself
 // require it, and one can pretend FUNC and PROC don't exist).
 //
 // FUNC and PROC optimize by not internally building or executing the
@@ -1239,19 +1287,18 @@ REBARR *Get_Maybe_Fake_Func_Body(REBOOL *is_fake, const REBVAL *func)
 // the edge to pretend to add containing code and simulate its effects, while
 // really only holding onto the body the caller provided.
 //
-// While plain MAKE FUNCTION! has no RETURN, UNWIND can be used to exit frames
+// While plain MAKE ACTION! has no RETURN, UNWIND can be used to exit frames
 // but must be explicit about what frame is being exited.  This can be used
 // by usermode generators that want to create something return-like.
 //
-REBFUN *Make_Interpreted_Function_May_Fail(
+REBACT *Make_Interpreted_Action_May_Fail(
     const REBVAL *spec,
     const REBVAL *code,
     REBFLGS mkf_flags // MKF_RETURN, MKF_LEAVE, etc.
 ) {
-    assert(IS_BLOCK(spec));
-    assert(IS_BLOCK(code));
+    assert(IS_BLOCK(spec) and IS_BLOCK(code));
 
-    REBFUN *fun = Make_Function(
+    REBACT *a = Make_Action(
         Make_Paramlist_Managed_May_Fail(spec, mkf_flags),
         &Noop_Dispatcher, // will be overwritten if non-NULL body
         NULL, // no facade (use paramlist)
@@ -1260,84 +1307,65 @@ REBFUN *Make_Interpreted_Function_May_Fail(
 
     // We look at the *actual* function flags; e.g. the person may have used
     // the FUNC generator (with MKF_RETURN) but then named a parameter RETURN
-    // which overrides it, so the value won't have FUNC_FLAG_RETURN.
+    // which overrides it, so the value won't have ACTION_FLAG_RETURN.
     //
-    REBVAL *value = FUNC_VALUE(fun);
+    REBVAL *value = ACT_ARCHETYPE(a);
 
-    REBARR *body_array;
-    if (VAL_ARRAY_LEN_AT(code) == 0) {
-        if (GET_VAL_FLAG(value, FUNC_FLAG_INVISIBLE))
-            FUNC_DISPATCHER(fun) = &Commenter_Dispatcher;
-        else if (GET_VAL_FLAG(value, FUNC_FLAG_RETURN)) {
-            //
-            // Since we're bypassing type checking in the dispatcher for
-            // speed, we need to make sure that the return type allows void
-            // (which is all the Noop dispatcher will return).  If not, we
-            // don't want to fail here (it would reveal the optimization)...
-            // just fall back on the Returner_Dispatcher instead.
-            //
-            REBVAL *typeset = FUNC_PARAM(fun, FUNC_NUM_PARAMS(fun));
+    REBARR *copy;
+    if (VAL_ARRAY_LEN_AT(code) == 0) { // optimize empty body case
+
+        if (GET_VAL_FLAG(value, ACTION_FLAG_INVISIBLE)) {
+            ACT_DISPATCHER(a) = &Commenter_Dispatcher;
+        }
+        else if (GET_VAL_FLAG(value, ACTION_FLAG_RETURN)) {
+            REBVAL *typeset = ACT_PARAM(a, ACT_NUM_PARAMS(a));
             assert(VAL_PARAM_SYM(typeset) == SYM_RETURN);
-            if (!TYPE_CHECK(typeset, REB_MAX_VOID))
-                FUNC_DISPATCHER(fun) = &Returner_Dispatcher;
+            if (not TYPE_CHECK(typeset, REB_MAX_VOID)) // all do [] can return
+                ACT_DISPATCHER(a) = &Returner_Dispatcher; // error when run
+        }
+        else {
+            // Keep the Noop_Dispatcher passed in above
         }
 
-        // We could reuse the EMPTY_ARRAY, however that would be a fairly
-        // esoteric optimization...and also, it would not give us anywhere to
-        // put the ARRAY_FLAG_FILE_LINE bits.
+        // Reusing EMPTY_ARRAY won't allow adding ARRAY_FLAG_FILE_LINE bits
         //
-        body_array = Make_Array_Core(1, NODE_FLAG_MANAGED);
+        copy = Make_Array_Core(1, NODE_FLAG_MANAGED);
     }
-    else {
-        // Body is not empty, so we need to pick the right dispatcher based
-        // on how the output value is to be handled.
-        //
-        if (GET_VAL_FLAG(value, FUNC_FLAG_INVISIBLE))
-            FUNC_DISPATCHER(fun) = &Elider_Dispatcher; // no f->out mutation
-        else if (GET_VAL_FLAG(value, FUNC_FLAG_RETURN))
-            FUNC_DISPATCHER(fun) = &Returner_Dispatcher; // type checks f->out
-        else if (GET_VAL_FLAG(value, FUNC_FLAG_LEAVE))
-            FUNC_DISPATCHER(fun) = &Voider_Dispatcher; // forces f->out void
-        else
-            FUNC_DISPATCHER(fun) = &Unchecked_Dispatcher; // unchecked f->out
+    else { // body not empty, pick dispatcher based on output disposition
 
-        // We need to copy the body in order to relativize its references to
-        // args and locals to refer to the parameter list.  Future work
-        // might be able to "image" the bindings virtually, and not require
-        // this to be copied if the input code is read-only.
-        //
-        body_array = Copy_And_Bind_Relative_Deep_Managed(
-            code,
-            FUNC_PARAMLIST(fun),
+        if (GET_VAL_FLAG(value, ACTION_FLAG_INVISIBLE))
+            ACT_DISPATCHER(a) = &Elider_Dispatcher; // no f->out mutation
+        else if (GET_VAL_FLAG(value, ACTION_FLAG_RETURN))
+            ACT_DISPATCHER(a) = &Returner_Dispatcher; // type checks f->out
+        else if (GET_VAL_FLAG(value, ACTION_FLAG_LEAVE))
+            ACT_DISPATCHER(a) = &Voider_Dispatcher; // forces f->out void
+        else
+            ACT_DISPATCHER(a) = &Unchecked_Dispatcher; // unchecked f->out
+
+        copy = Copy_And_Bind_Relative_Deep_Managed(
+            code, // new copy has locals bound relatively to the new action
+            ACT_PARAMLIST(a),
             TS_ANY_WORD
         );
     }
 
-    // We need to do a raw initialization of this block RELVAL because it is
-    // relative to a function.  (Init_Block assumes all specific values.)
-    //
-    RELVAL *body = FUNC_BODY(fun);
-    RESET_VAL_HEADER(body, REB_BLOCK);
-    INIT_VAL_ARRAY(body, body_array);
+    RELVAL *body = ACT_BODY(a);
+    RESET_VAL_HEADER(body, REB_BLOCK); // Init_Block() assumes specific values
+    INIT_VAL_ARRAY(body, copy);
     VAL_INDEX(body) = 0;
-    INIT_BINDING(body, fun); // relative binding
+    INIT_BINDING(body, a); // Record that block is relative to a function
 
-    // The body array series ->misc and ->link fields are used for function
-    // specific features.  But if the array *content* of a body array is a
-    // series then the ->misc and ->link can be used to get FILE OF or LINE OF
-    // a FUNCTION!, as it is usermode.
-    //
-    // Favor the spec first, then the body.
+    // Favor the spec first, then the body, for file and line information.
     //
     if (GET_SER_FLAG(VAL_ARRAY(spec), ARRAY_FLAG_FILE_LINE)) {
-        LINK(body_array).file = LINK(VAL_ARRAY(spec)).file;
-        MISC(body_array).line = MISC(VAL_ARRAY(spec)).line;
-        SET_SER_FLAG(body_array, ARRAY_FLAG_FILE_LINE);
+        LINK(copy).file = LINK(VAL_ARRAY(spec)).file;
+        MISC(copy).line = MISC(VAL_ARRAY(spec)).line;
+        SET_SER_FLAG(copy, ARRAY_FLAG_FILE_LINE);
     }
     else if (GET_SER_FLAG(VAL_ARRAY(code), ARRAY_FLAG_FILE_LINE)) {
-        LINK(body_array).file = LINK(VAL_ARRAY(code)).file;
-        MISC(body_array).line = MISC(VAL_ARRAY(code)).line;
-        SET_SER_FLAG(body_array, ARRAY_FLAG_FILE_LINE);
+        LINK(copy).file = LINK(VAL_ARRAY(code)).file;
+        MISC(copy).line = MISC(VAL_ARRAY(code)).line;
+        SET_SER_FLAG(copy, ARRAY_FLAG_FILE_LINE);
     }
     else {
         // Ideally all source series should have a file and line numbering
@@ -1352,45 +1380,45 @@ REBFUN *Make_Interpreted_Function_May_Fail(
     // it...hence the series must be read only to keep modifying a view
     // that seems to have one identity but then affecting another.
     //
-#if defined(NDEBUG)
+  #if defined(NDEBUG)
     Deep_Freeze_Array(VAL_ARRAY(body));
-#else
-    if (!LEGACY(OPTIONS_UNLOCKED_SOURCE))
+  #else
+    if (not LEGACY(OPTIONS_UNLOCKED_SOURCE))
         Deep_Freeze_Array(VAL_ARRAY(body));
-#endif
+  #endif
 
-    return fun;
+    return a;
 }
 
 
 //
-//  Make_Frame_For_Function: C
+//  Make_Frame_For_Action: C
 //
 // This creates a *non-stack-allocated* FRAME!, which can be used in function
 // applications or specializations.  It reuses the keylist of the function
 // but makes a new varlist.
 //
-void Make_Frame_For_Function(
+void Make_Frame_For_Action(
     REBVAL *out,
-    const REBVAL *value // need the binding, can't just be a REBFUN*
+    const REBVAL *action // need the binding, can't just be a REBACT*
 ){
-    REBFUN *func = VAL_FUNC(value);
-    REBCTX *exemplar = FUNC_EXEMPLAR(func); // may be NULL
+    REBACT *a = VAL_ACTION(action);
+    REBCTX *exemplar = ACT_EXEMPLAR(a); // may be NULL
 
-    REBCNT facade_len = FUNC_FACADE_NUM_PARAMS(func) + 1;
+    REBCNT facade_len = ACT_FACADE_NUM_PARAMS(a) + 1;
     REBARR *varlist = Make_Array_Core(
-        facade_len, // +1 for the CTX_VALUE() at [0]
+        facade_len, // +1 for the CTX_ARCHETYPE() at [0]
         ARRAY_FLAG_VARLIST | SERIES_FLAG_FIXED_SIZE
     );
 
     REBVAL *rootvar = SINK(ARR_HEAD(varlist));
     RESET_VAL_HEADER(rootvar, REB_FRAME);
     rootvar->payload.any_context.varlist = varlist;
-    rootvar->payload.any_context.phase = func;
-    INIT_BINDING(rootvar, VAL_BINDING(value));
+    rootvar->payload.any_context.phase = a;
+    INIT_BINDING(rootvar, UNBOUND);
 
     REBVAL *arg = rootvar + 1;
-    REBVAL *param = FUNC_FACADE_HEAD(func);
+    REBVAL *param = ACT_FACADE_HEAD(a);
 
     if (exemplar == NULL) {
         //
@@ -1440,7 +1468,7 @@ void Make_Frame_For_Function(
 
     MISC(varlist).meta = NULL; // GC sees this, we must initialize
 
-    // The facade of the function is used as the keylist of the frame, as
+    // The facade of the action is used as the keylist of the frame, as
     // that is how many values the frame must ultimately have.  Since this
     // is not a stack frame, there will be no ->phase to override it...the
     // FRAME! will always be viewed with those keys.
@@ -1452,11 +1480,12 @@ void Make_Frame_For_Function(
     // Note that this precludes the LINK().keysource from holding a REBFRM*,
     // since it is holding a parameter list instead.
     //
-    INIT_CTX_KEYLIST_SHARED(CTX(varlist), FUNC_FACADE(func));
+    INIT_CTX_KEYLIST_SHARED(CTX(varlist), ACT_FACADE(a));
     ASSERT_ARRAY_MANAGED(CTX_KEYLIST(CTX(varlist)));
 
     Init_Any_Context(out, REB_FRAME, CTX(varlist));
-    out->payload.any_context.phase = func;
+    INIT_BINDING(out, VAL_BINDING(action));
+    out->payload.any_context.phase = a;
 }
 
 
@@ -1474,26 +1503,42 @@ void Make_Frame_For_Function(
 REBTYPE(Fail)
 {
     UNUSED(frame_);
-    UNUSED(action);
+    UNUSED(verb);
 
     fail ("Datatype does not have a dispatcher registered.");
 }
 
 
 //
-//  Action_Dispatcher: C
+//  Type_Action_Dispatcher: C
 //
-// "actions" are historically a kind of dispatch based on the first argument's
-// type, and then calling a common function for that type parameterized with
-// a word for the action.  e.g. APPEND X [...] would look at the type of X,
-// and call a function based on that parameterized with APPEND and the list
-// of arguments.
+// A "type action" is what R3-Alpha/Rebol2 had just called "actions" (until
+// Ren-C took that as the umbrella term for all "invokables").  This kind of
+// dispatch is based on the first argument's type, with the idea being a
+// single C function for the type has a switch() statement in it and can
+// handle many different such actions for that type.
 //
-REB_R Action_Dispatcher(REBFRM *f)
+// (e.g. APPEND copy [a b c] [d] would look at the type of the first argument,
+// notice it was a BLOCK!, and call the common C function for arrays with an
+// append instruction--where that instruction also handles insert, length,
+// etc. for BLOCK!s.)
+//
+// !!! This mechanism is a very primitive kind of "multiple dispatch".  Rebol
+// will certainly need to borrow from other languages to develop a more
+// flexible idea for user-defined types, vs. this very limited concept.
+//
+// https://en.wikipedia.org/wiki/Multiple_dispatch
+//
+// Note: R3-Alpha had an enum type for "action numbers", so that they could be
+// handled in a switch statement.  Ren-C just unified that with the REBSYM
+// number mechanism, so it leverages words that have compile-time constants
+// (like SYM_APPEND, etc.)  Using a symbol in this way is called a "verb".
+//
+REB_R Type_Action_Dispatcher(REBFRM *f)
 {
     enum Reb_Kind kind = VAL_TYPE(FRM_ARG(f, 1));
-    REBSYM sym = VAL_WORD_SYM(FUNC_BODY(f->phase));
-    assert(sym != SYM_0);
+    REBSYM verb = VAL_WORD_SYM(ACT_BODY(f->phase));
+    assert(verb != SYM_0);
 
     // !!! Some reflectors are more general and apply to all types (e.g. TYPE)
     // while others only apply to some types (e.g. LENGTH or HEAD only to
@@ -1503,7 +1548,7 @@ REB_R Action_Dispatcher(REBFRM *f)
     // The series common code is in Series_Common_Action_Maybe_Unhandled(),
     // but that is only called from series.  Handle a few extra cases here.
     //
-    if (sym == SYM_REFLECT) {
+    if (verb == SYM_REFLECT) {
         REBFRM *frame_ = f;
         INCLUDE_PARAMS_OF_REFLECT;
 
@@ -1541,8 +1586,8 @@ REB_R Action_Dispatcher(REBFRM *f)
 
     assert(kind < REB_MAX);
 
-    REBACT subdispatch = Value_Dispatch[kind];
-    return subdispatch(f, sym);
+    REBTAF subdispatch = Value_Dispatch[kind];
+    return subdispatch(f, verb);
 }
 
 
@@ -1558,7 +1603,7 @@ REB_R Action_Dispatcher(REBFRM *f)
 //
 REB_R Noop_Dispatcher(REBFRM *f)
 {
-    assert(VAL_LEN_AT(FUNC_BODY(f->phase)) == 0);
+    assert(VAL_LEN_AT(ACT_BODY(f->phase)) == 0);
     UNUSED(f);
     return R_VOID;
 }
@@ -1571,7 +1616,7 @@ REB_R Noop_Dispatcher(REBFRM *f)
 //
 REB_R Datatype_Checker_Dispatcher(REBFRM *f)
 {
-    RELVAL *datatype = FUNC_BODY(f->phase);
+    RELVAL *datatype = ACT_BODY(f->phase);
     assert(IS_DATATYPE(datatype));
     if (VAL_TYPE(FRM_ARG(f, 1)) == VAL_TYPE_KIND(datatype))
         return R_TRUE;
@@ -1586,7 +1631,7 @@ REB_R Datatype_Checker_Dispatcher(REBFRM *f)
 //
 REB_R Typeset_Checker_Dispatcher(REBFRM *f)
 {
-    RELVAL *typeset = FUNC_BODY(f->phase);
+    RELVAL *typeset = ACT_BODY(f->phase);
     assert(IS_TYPESET(typeset));
     if (TYPE_CHECK(typeset, VAL_TYPE(FRM_ARG(f, 1))))
         return R_TRUE;
@@ -1597,13 +1642,13 @@ REB_R Typeset_Checker_Dispatcher(REBFRM *f)
 //
 //  Unchecked_Dispatcher: C
 //
-// This is the default MAKE FUNCTION! dispatcher for interpreted functions
+// This is the default MAKE ACTION! dispatcher for interpreted functions
 // (whose body is a block that runs through DO []).  There is no return type
 // checking done on these simple functions.
 //
 REB_R Unchecked_Dispatcher(REBFRM *f)
 {
-    RELVAL *body = FUNC_BODY(f->phase);
+    RELVAL *body = ACT_BODY(f->phase);
     assert(IS_BLOCK(body) and IS_RELATIVE(body) and VAL_INDEX(body) == 0);
 
     if (Do_At_Throws(f->out, VAL_ARRAY(body), 0, SPC(f)))
@@ -1622,7 +1667,7 @@ REB_R Unchecked_Dispatcher(REBFRM *f)
 //
 REB_R Voider_Dispatcher(REBFRM *f)
 {
-    RELVAL *body = FUNC_BODY(f->phase);
+    RELVAL *body = ACT_BODY(f->phase);
     assert(IS_BLOCK(body) and IS_RELATIVE(body) and VAL_INDEX(body) == 0);
 
     if (Do_At_Throws(f->out, VAL_ARRAY(body), 0, SPC(f)))
@@ -1641,13 +1686,13 @@ REB_R Voider_Dispatcher(REBFRM *f)
 //
 REB_R Returner_Dispatcher(REBFRM *f)
 {
-    RELVAL *body = FUNC_BODY(f->phase);
+    RELVAL *body = ACT_BODY(f->phase);
     assert(IS_BLOCK(body) and IS_RELATIVE(body) and VAL_INDEX(body) == 0);
 
     if (Do_At_Throws(f->out, VAL_ARRAY(body), 0, SPC(f)))
         return R_OUT_IS_THROWN;
 
-    REBVAL *typeset = FUNC_PARAM(f->phase, FUNC_NUM_PARAMS(f->phase));
+    REBVAL *typeset = ACT_PARAM(f->phase, ACT_NUM_PARAMS(f->phase));
     assert(VAL_PARAM_SYM(typeset) == SYM_RETURN);
 
     // Typeset bits for locals in frames are usually ignored, but the RETURN:
@@ -1671,7 +1716,7 @@ REB_R Returner_Dispatcher(REBFRM *f)
 //
 REB_R Elider_Dispatcher(REBFRM *f)
 {
-    RELVAL *body = FUNC_BODY(f->phase);
+    RELVAL *body = ACT_BODY(f->phase);
     assert(IS_BLOCK(body) and IS_RELATIVE(body) and VAL_INDEX(body) == 0);
 
     // !!! It would be nice to use the frame's spare "cell" for the thrownaway
@@ -1697,7 +1742,7 @@ REB_R Elider_Dispatcher(REBFRM *f)
 //
 REB_R Commenter_Dispatcher(REBFRM *f)
 {
-    assert(VAL_LEN_AT(FUNC_BODY(f->phase)) == 0);
+    assert(VAL_LEN_AT(ACT_BODY(f->phase)) == 0);
     UNUSED(f);
     return R_INVISIBLE;
 }
@@ -1718,12 +1763,12 @@ REB_R Commenter_Dispatcher(REBFRM *f)
 //
 REB_R Hijacker_Dispatcher(REBFRM *f)
 {
-    RELVAL *hijacker = FUNC_BODY(f->phase);
+    RELVAL *hijacker = ACT_BODY(f->phase);
 
     // We need to build a new frame compatible with the hijacker, and
     // transform the parameters we've gathered to be compatible with it.
     //
-    if (Redo_Func_Throws(f, VAL_FUNC(hijacker)))
+    if (Redo_Action_Throws(f, VAL_ACTION(hijacker)))
         return R_OUT_IS_THROWN;
 
     return R_OUT;
@@ -1737,7 +1782,7 @@ REB_R Hijacker_Dispatcher(REBFRM *f)
 //
 REB_R Adapter_Dispatcher(REBFRM *f)
 {
-    RELVAL *adaptation = FUNC_BODY(f->phase);
+    RELVAL *adaptation = ACT_BODY(f->phase);
     assert(ARR_LEN(VAL_ARRAY(adaptation)) == 2);
 
     RELVAL* prelude = VAL_ARRAY_AT_HEAD(adaptation, 0);
@@ -1754,7 +1799,7 @@ REB_R Adapter_Dispatcher(REBFRM *f)
     if (Do_At_Throws(f->out, VAL_ARRAY(prelude), VAL_INDEX(prelude), SPC(f)))
         return R_OUT_IS_THROWN;
 
-    f->phase = VAL_FUNC(adaptee);
+    f->phase = VAL_ACTION(adaptee);
     f->binding = VAL_BINDING(adaptee);
     return R_REDO_CHECKED; // Have Do_Core run the adaptee updated into f->phase
 }
@@ -1767,13 +1812,13 @@ REB_R Adapter_Dispatcher(REBFRM *f)
 //
 REB_R Encloser_Dispatcher(REBFRM *f)
 {
-    RELVAL *enclosure = FUNC_BODY(f->phase);
+    RELVAL *enclosure = ACT_BODY(f->phase);
     assert(ARR_LEN(VAL_ARRAY(enclosure)) == 2);
 
     RELVAL* inner = KNOWN(VAL_ARRAY_AT_HEAD(enclosure, 0)); // same args as f
-    assert(IS_FUNCTION(inner));
+    assert(IS_ACTION(inner));
     REBVAL* outer = KNOWN(VAL_ARRAY_AT_HEAD(enclosure, 1)); // 1 FRAME! arg
-    assert(IS_FUNCTION(outer));
+    assert(IS_ACTION(outer));
 
     // We want to call OUTER with a FRAME! value that will dispatch to INNER
     // when it runs DO on it.  The contents of the arguments for that call to
@@ -1807,7 +1852,7 @@ REB_R Encloser_Dispatcher(REBFRM *f)
     // to work.  We know that when `outer` tries to DO its frame argument,
     // it needs to run inner with the correct binding.
     //
-    arg->payload.any_context.phase = VAL_FUNC(inner);
+    arg->payload.any_context.phase = VAL_ACTION(inner);
     INIT_BINDING(arg, VAL_BINDING(inner));
 
     const REBOOL fully = TRUE;
@@ -1825,7 +1870,7 @@ REB_R Encloser_Dispatcher(REBFRM *f)
 //
 REB_R Chainer_Dispatcher(REBFRM *f)
 {
-    REBVAL *pipeline = KNOWN(FUNC_BODY(f->phase)); // array of functions
+    REBVAL *pipeline = KNOWN(ACT_BODY(f->phase)); // array of functions
 
     // Before skipping off to find the underlying non-chained function
     // to kick off the execution, the post-processing pipeline has to
@@ -1834,14 +1879,14 @@ REB_R Chainer_Dispatcher(REBFRM *f)
     //
     REBVAL *value = KNOWN(ARR_LAST(VAL_ARRAY(pipeline)));
     while (value != VAL_ARRAY_HEAD(pipeline)) {
-        assert(IS_FUNCTION(value));
+        assert(IS_ACTION(value));
         DS_PUSH(KNOWN(value));
         --value;
     }
 
     // Extract the first function, itself which might be a chain.
     //
-    f->phase = VAL_FUNC(value);
+    f->phase = VAL_ACTION(value);
     f->binding = VAL_BINDING(value);
 
     return R_REDO_UNCHECKED; // signatures should match

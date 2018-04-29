@@ -359,7 +359,7 @@ REBOOL Is_Value_Immutable(const RELVAL *v) {
         || IS_LIT_BAR(v)
         || ANY_SCALAR(v)
         || ANY_WORD(v)
-        || IS_FUNCTION(v) // paramlist is identity, hash
+        || IS_ACTION(v) // paramlist is identity, hash
     ){
         return TRUE;
     }

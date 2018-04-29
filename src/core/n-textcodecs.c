@@ -29,7 +29,7 @@
 //
 // R3-Alpha had an incomplete model for doing codecs, that required C coding
 // to implement...even though the input and output types to DO-CODEC were
-// Rebol values.  Under Ren-C these are done as plain FUNCTION!s, which can
+// Rebol values.  Under Ren-C these are done as plain ACTION!s, which can
 // be coded in either C as natives or Rebol.
 //
 // A few incomplete text codecs were included in R3-Alpha, and have been

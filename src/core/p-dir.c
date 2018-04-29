@@ -54,7 +54,7 @@ static REBARR *Read_Dir_May_Fail(struct devreq_file *dir)
     while (TRUE) {
         REBVAL *result = OS_DO_DEVICE(req, RDC_READ);
         assert(result != NULL); // should be synchronous
-        if (rebTypeOf(result) == RXT_ERROR)
+        if (rebDid("lib/error?", result, END))
             rebFail (result, END);
         rebRelease(result); // ignore result
 
@@ -138,7 +138,7 @@ static void Init_Dir_Path(
 //
 // Internal port handler for file directories.
 //
-static REB_R Dir_Actor(REBFRM *frame_, REBCTX *port, REBSYM action)
+static REB_R Dir_Actor(REBFRM *frame_, REBCTX *port, REBSYM verb)
 {
     REBVAL *spec = CTX_VAR(port, STD_PORT_SPEC);
     if (not IS_OBJECT(spec))
@@ -168,7 +168,7 @@ static REB_R Dir_Actor(REBFRM *frame_, REBCTX *port, REBSYM action)
     //
     Move_Value(D_OUT, D_ARG(1));
 
-    switch (action) {
+    switch (verb) {
 
     case SYM_REFLECT: {
         INCLUDE_PARAMS_OF_REFLECT;
@@ -237,14 +237,14 @@ static REB_R Dir_Actor(REBFRM *frame_, REBCTX *port, REBSYM action)
         REBVAL *result = OS_DO_DEVICE(&dir.devreq, RDC_CREATE);
         assert(result != NULL); // should be synchronous
 
-        if (rebTypeOf(result) == RXT_ERROR) {
+        if (rebDid("lib/error?", result, END)) {
             rebRelease(result); // !!! throws away details
             fail (Error_No_Create_Raw(path)); // higher level error
         }
 
         rebRelease(result); // ignore result
 
-        if (action == SYM_CREATE) {
+        if (verb == SYM_CREATE) {
             Move_Value(D_OUT, D_ARG(1));
             return R_OUT;
         }
@@ -265,7 +265,7 @@ static REB_R Dir_Actor(REBFRM *frame_, REBCTX *port, REBSYM action)
         REBVAL *result = OS_DO_DEVICE(&dir.devreq, RDC_RENAME);
         assert(result != NULL); // should be synchronous
 
-        if (rebTypeOf(result) == RXT_ERROR) {
+        if (rebDid("lib/error?", result, END)) {
             rebRelease(result); // !!! throws away details
             fail (Error_No_Rename_Raw(path)); // higher level error
         }
@@ -283,7 +283,7 @@ static REB_R Dir_Actor(REBFRM *frame_, REBCTX *port, REBSYM action)
         REBVAL *result = OS_DO_DEVICE(&dir.devreq, RDC_DELETE);
         assert(result != NULL); // should be synchronous
 
-        if (rebTypeOf(result) == RXT_ERROR) {
+        if (rebDid("lib/error?", result, END)) {
             rebRelease(result); // !!! throws away details
             fail (Error_No_Delete_Raw(path)); // higher level error
         }
@@ -328,7 +328,7 @@ static REB_R Dir_Actor(REBFRM *frame_, REBCTX *port, REBSYM action)
         REBVAL *result = OS_DO_DEVICE(&dir.devreq, RDC_QUERY);
         assert(result != NULL); // should be synchronous
 
-        if (rebTypeOf(result) == RXT_ERROR) {
+        if (rebDid("lib/error?", result, END)) {
             rebRelease(result); // !!! R3-Alpha threw out error, returns blank
             return R_BLANK;
         }
@@ -342,7 +342,7 @@ static REB_R Dir_Actor(REBFRM *frame_, REBCTX *port, REBSYM action)
         break;
     }
 
-    fail (Error_Illegal_Action(REB_PORT, action));
+    fail (Error_Illegal_Action(REB_PORT, verb));
 
 return_port:
     Move_Value(D_OUT, D_ARG(1));

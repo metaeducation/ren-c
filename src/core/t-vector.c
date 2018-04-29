@@ -684,14 +684,14 @@ REBTYPE(Vector)
 
     // Common operations for any series type (length, head, etc.)
     {
-        REB_R r = Series_Common_Action_Maybe_Unhandled(frame_, action);
+        REB_R r = Series_Common_Action_Maybe_Unhandled(frame_, verb);
         if (r != R_UNHANDLED)
             return r;
     }
 
     REBSER *vect = VAL_SERIES(value);
 
-    switch (action) {
+    switch (verb) {
 
     case SYM_REFLECT: {
         INCLUDE_PARAMS_OF_REFLECT;
@@ -749,7 +749,7 @@ REBTYPE(Vector)
         break;
     }
 
-    fail (Error_Illegal_Action(VAL_TYPE(value), action));
+    fail (Error_Illegal_Action(VAL_TYPE(value), verb));
 
 return_vector:
     Move_Value(D_OUT, value);

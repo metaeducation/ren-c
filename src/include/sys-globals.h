@@ -120,7 +120,7 @@ PVAR REBARR* PG_Empty_Array; // optimization of VAL_ARRAY(Root_Empty_Block)
 PVAR REBVAL *Root_Space_Char; // ' ' as a CHAR!
 PVAR REBVAL *Root_Newline_Char; // '\n' as a CHAR!
 
-PVAR REBVAL *Root_Function_Meta;
+PVAR REBVAL *Root_Action_Meta;
 
 PVAR REBVAL *Root_Stats_Map;
 

@@ -189,7 +189,7 @@ DEVICE_CMD Connect_Events(REBREQ *req)
 **
 ***********************************************************************/
 
-static DEVICE_CMD_FUNC Dev_Cmds[RDC_MAX] = {
+static DEVICE_CMD_CFUNC Dev_Cmds[RDC_MAX] = {
     Init_Events,            // init device driver resources
     0,  // RDC_QUIT,        // cleanup device driver resources
     0,  // RDC_OPEN,        // open device unit (port)

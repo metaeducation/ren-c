@@ -324,14 +324,14 @@ REBTYPE(Tuple)
     // elegant mechanism.
     //
     if (
-        action == SYM_ADD
-        || action == SYM_SUBTRACT
-        || action == SYM_MULTIPLY
-        || action == SYM_DIVIDE
-        || action == SYM_REMAINDER
-        || action == SYM_INTERSECT
-        || action == SYM_UNION
-        || action == SYM_DIFFERENCE
+        verb == SYM_ADD
+        or verb == SYM_SUBTRACT
+        or verb == SYM_MULTIPLY
+        or verb == SYM_DIVIDE
+        or verb == SYM_REMAINDER
+        or verb == SYM_INTERSECT
+        or verb == SYM_UNION
+        or verb == SYM_DIFFERENCE
     ){
         assert(vp);
 
@@ -354,14 +354,14 @@ REBTYPE(Tuple)
             a = 646699; // unused but avoid maybe uninitialized warning
         }
         else
-            fail (Error_Math_Args(REB_TUPLE, action));
+            fail (Error_Math_Args(REB_TUPLE, verb));
 
         for (;len > 0; len--, vp++) {
             REBINT v = *vp;
             if (ap)
                 a = (REBINT) *ap++;
 
-            switch (action) {
+            switch (verb) {
             case SYM_ADD: v += a; break;
 
             case SYM_SUBTRACT: v -= a; break;
@@ -406,23 +406,25 @@ REBTYPE(Tuple)
                 break;
 
             default:
-                fail (Error_Illegal_Action(REB_TUPLE, action));
+                fail (Error_Illegal_Action(REB_TUPLE, verb));
             }
 
-            if (v > 255) v = 255;
-            else if (v < 0) v = 0;
-            *vp = (REBYTE) v;
+            if (v > 255)
+                v = 255;
+            else if (v < 0)
+                v = 0;
+            *vp = cast(REBYTE, v);
         }
         goto ret_value;
     }
 
     // !!!! merge with SWITCH below !!!
-    if (action == SYM_COMPLEMENT) {
-        for (;len > 0; len--, vp++)
-            *vp = (REBYTE)~*vp;
+    if (verb == SYM_COMPLEMENT) {
+        for (; len > 0; len--, vp++)
+            *vp = cast(REBYTE, ~*vp);
         goto ret_value;
     }
-    if (action == SYM_RANDOM) {
+    if (verb == SYM_RANDOM) {
         INCLUDE_PARAMS_OF_RANDOM;
 
         UNUSED(PAR(value));
@@ -439,7 +441,7 @@ REBTYPE(Tuple)
         goto ret_value;
     }
 
-    switch (action) {
+    switch (verb) {
 
     case SYM_REFLECT: {
         INCLUDE_PARAMS_OF_REFLECT;
@@ -506,7 +508,7 @@ REBTYPE(Tuple)
         break;
     }
 
-    fail (Error_Illegal_Action(REB_TUPLE, action));
+    fail (Error_Illegal_Action(REB_TUPLE, verb));
 
 ret_value:
     Move_Value(D_OUT, value);

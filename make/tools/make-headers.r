@@ -93,9 +93,13 @@ emit-proto: proc [proto] [
 
     e-funcs/emit-line ["RL_API " proto "; // " the-file]
     either "REBTYPE" = proto-parser/proto.id [
-        e-syms/emit-line ["    SYM_FUNC(T_" proto-parser/proto.arg.1 "), // " the-file]
+        e-syms/emit-line [
+            "    SYM_CFUNC(T_" proto-parser/proto.arg.1 "), // " the-file
+        ]
     ][
-        e-syms/emit-line ["    SYM_FUNC(" proto-parser/proto.id "), // " the-file]
+        e-syms/emit-line [
+            "    SYM_CFUNC(" proto-parser/proto.id "), // " the-file
+        ]
     ]
 ]
 
@@ -147,12 +151,12 @@ e-syms/emit {#include "sys-core.h"
 // !!! Also, void pointers and function pointers are not guaranteed to be
 // the same size, even if TCC assumes so for these symbol purposes.
 //
-#define SYM_FUNC(x) {#x, (CFUNC*)(x)}
+#define SYM_CFUNC(x) {#x, (CFUNC*)(x)}
 #define SYM_DATA(x) {#x, &x}
 
-struct rebol_sym_func_t {
+struct rebol_sym_cfunc_t {
     const char *name;
-    CFUNC *func;
+    CFUNC *cfunc;
 };
 
 struct rebol_sym_data_t {
@@ -160,8 +164,8 @@ struct rebol_sym_data_t {
     void *data;
 };
 
-extern const struct rebol_sym_func_t rebol_sym_funcs [];
-const struct rebol_sym_func_t rebol_sym_funcs [] = ^{
+extern const struct rebol_sym_cfunc_t rebol_sym_cfuncs [];
+const struct rebol_sym_cfunc_t rebol_sym_cfuncs [] = ^{
 }
 
 e-funcs/emit {
@@ -181,7 +185,7 @@ extern "C" ^{
 // are included in a system-wide header in order to allow recognizing a
 // given native by identity in the C code, e.g.:
 //
-//     if (VAL_FUNC_DISPATCHER(native) == &N_parse) { ... }
+//     if (VAL_ACT_DISPATCHER(native) == &N_parse) { ... }
 //
 }
 e-funcs/emit newline

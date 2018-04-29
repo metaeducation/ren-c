@@ -127,7 +127,7 @@ static void Open_File_Port(REBCTX *port, struct devreq_file *file, REBVAL *path)
 
     REBVAL *result = OS_DO_DEVICE(req, RDC_OPEN);
     assert(result != NULL); // should be synchronous
-    if (rebTypeOf(result) == RXT_ERROR)
+    if (rebDid("lib/error?", result, END))
         rebFail (result, END);
     rebRelease(result); // ignore result
 
@@ -181,7 +181,7 @@ static void Read_File_Port(
 
     REBVAL *result = OS_DO_DEVICE(req, RDC_READ);
     assert(result != NULL); // !!! nothing here tested for async
-    if (rebTypeOf(result) == RXT_ERROR)
+    if (rebDid("lib/error?", result, END))
         rebFail (result, END);
     rebRelease(result); // ignore result
 
@@ -226,7 +226,7 @@ static void Write_File_Port(struct devreq_file *file, REBVAL *data, REBCNT len, 
 
     REBVAL *result = OS_DO_DEVICE(req, RDC_WRITE);
     assert(result != NULL); // !!! nothing here suggested async handling
-    if (rebTypeOf(result) == RXT_ERROR)
+    if (rebDid("lib/error?", result, END))
         rebFail (result, END);
     rebRelease(result); // ignore result
 }
@@ -282,7 +282,7 @@ static void Set_Seek(struct devreq_file *file, REBVAL *arg)
 //
 // Internal port handler for files.
 //
-static REB_R File_Actor(REBFRM *frame_, REBCTX *port, REBSYM action)
+static REB_R File_Actor(REBFRM *frame_, REBCTX *port, REBSYM verb)
 {
     REBVAL *spec = CTX_VAR(port, STD_PORT_SPEC);
     if (!IS_OBJECT(spec))
@@ -303,7 +303,7 @@ static REB_R File_Actor(REBFRM *frame_, REBCTX *port, REBSYM action)
     // !!! R3-Alpha never implemented quite a number of operations on files,
     // including FLUSH, POKE, etc.
 
-    switch (action) {
+    switch (verb) {
 
     case SYM_REFLECT: {
         INCLUDE_PARAMS_OF_REFLECT;
@@ -327,13 +327,13 @@ static REB_R File_Actor(REBFRM *frame_, REBCTX *port, REBSYM action)
         case SYM_HEAD:
             file->index = 0;
             req->modes |= RFM_RESEEK;
-            Move_Value(D_OUT, CTX_VALUE(port));
+            Move_Value(D_OUT, CTX_ARCHETYPE(port));
             return R_OUT;
 
         case SYM_TAIL:
             file->index = file->size;
             req->modes |= RFM_RESEEK;
-            Move_Value(D_OUT, CTX_VALUE(port));
+            Move_Value(D_OUT, CTX_ARCHETYPE(port));
             return R_OUT;
 
         case SYM_HEAD_Q:
@@ -389,7 +389,7 @@ static REB_R File_Actor(REBFRM *frame_, REBCTX *port, REBSYM action)
             Cleanup_File(file);
 
             assert(result != NULL); // should be synchronous
-            if (rebTypeOf(result) == RXT_ERROR)
+            if (rebDid("lib/error?", result, END))
                 rebFail (result, END);
             rebRelease(result); // ignore result
         }
@@ -458,7 +458,7 @@ static REB_R File_Actor(REBFRM *frame_, REBCTX *port, REBSYM action)
             Cleanup_File(file);
 
             assert(result != NULL);
-            if (rebTypeOf(result) == RXT_ERROR)
+            if (rebDid("lib/error?", result, END))
                 rebFail (result, END);
             rebRelease(result);
         }
@@ -517,7 +517,7 @@ static REB_R File_Actor(REBFRM *frame_, REBCTX *port, REBSYM action)
             Cleanup_File(file);
 
             assert(result != NULL); // should be synchronous
-            if (rebTypeOf(result) == RXT_ERROR)
+            if (rebDid("lib/error?", result, END))
                 rebFail (result, END);
             rebRelease(result); // ignore error
         }
@@ -533,7 +533,7 @@ static REB_R File_Actor(REBFRM *frame_, REBCTX *port, REBSYM action)
 
         REBVAL *result = OS_DO_DEVICE(req, RDC_DELETE);
         assert(result != NULL); // should be synchronous
-        if (rebTypeOf(result) == RXT_ERROR)
+        if (rebDid("lib/error?", result, END))
             rebFail (result, END);
         rebRelease(result); // ignore result
 
@@ -551,7 +551,7 @@ static REB_R File_Actor(REBFRM *frame_, REBCTX *port, REBSYM action)
 
         REBVAL *result = OS_DO_DEVICE(req, RDC_RENAME);
         assert(result != NULL); // should be synchronous
-        if (rebTypeOf(result) == RXT_ERROR)
+        if (rebDid("lib/error?", result, END))
             rebFail (result, END);
         rebRelease(result); // ignore result
 
@@ -564,13 +564,13 @@ static REB_R File_Actor(REBFRM *frame_, REBCTX *port, REBSYM action)
 
             REBVAL *cr_result = OS_DO_DEVICE(req, RDC_CREATE);
             assert(cr_result != NULL);
-            if (rebTypeOf(cr_result) == RXT_ERROR)
+            if (rebDid("lib/error?", cr_result, END))
                 rebFail (cr_result, END);
             rebRelease(cr_result);
 
             REBVAL *cl_result = OS_DO_DEVICE(req, RDC_CLOSE);
             assert(cl_result != NULL);
-            if (rebTypeOf(cl_result) == RXT_ERROR)
+            if (rebDid("lib/error?", cl_result, END))
                 rebFail (cl_result, END);
             rebRelease(cl_result);
         }
@@ -592,7 +592,7 @@ static REB_R File_Actor(REBFRM *frame_, REBCTX *port, REBSYM action)
             Setup_File(file, 0, path);
             REBVAL *result = OS_DO_DEVICE(req, RDC_QUERY);
             assert(result != NULL);
-            if (rebTypeOf(result) == RXT_ERROR) {
+            if (rebDid("lib/error?", result, END)) {
                 rebRelease(result); // !!! R3-Alpha returned blank on error
                 return R_BLANK;
             }
@@ -617,7 +617,7 @@ static REB_R File_Actor(REBFRM *frame_, REBCTX *port, REBSYM action)
 
             REBVAL *result = OS_DO_DEVICE(req, RDC_MODIFY);
             assert(result != NULL);
-            if (rebTypeOf(result) == RXT_ERROR) {
+            if (rebDid("lib/error?", result, END)) {
                 rebRelease(result); // !!! R3-Alpha returned blank on error
                 return R_BLANK;
             }
@@ -643,7 +643,7 @@ static REB_R File_Actor(REBFRM *frame_, REBCTX *port, REBSYM action)
 
         REBVAL *result = OS_DO_DEVICE(req, RDC_WRITE);
         assert(result != NULL);
-        if (rebTypeOf(result) == RXT_ERROR)
+        if (rebDid("lib/error?", result, END))
             rebFail (result, END);
         rebRelease(result); // ignore result
         goto return_port; }
@@ -652,10 +652,10 @@ static REB_R File_Actor(REBFRM *frame_, REBCTX *port, REBSYM action)
         break;
     }
 
-    fail (Error_Illegal_Action(REB_PORT, action));
+    fail (Error_Illegal_Action(REB_PORT, verb));
 
 return_port:
-    Move_Value(D_OUT, CTX_VALUE(port));
+    Move_Value(D_OUT, CTX_ARCHETYPE(port));
     return R_OUT;
 }
 

@@ -213,8 +213,8 @@ typedef REBWCHAR REBUNI;
     struct Reb_Context; // parallel REBARR key/var arrays + ANY-CONTEXT! value
     typedef struct Reb_Context REBCTX;
 
-    struct Reb_Func;  // function parameters + FUNCTION! value
-    typedef struct Reb_Func REBFUN;
+    struct Reb_Action;  // function parameters + ACTION! value
+    typedef struct Reb_Action REBACT;
 
     struct Reb_Map; // REBARR listing key/value pairs with hash
     typedef struct Reb_Map REBMAP;
@@ -291,6 +291,24 @@ typedef REBWCHAR REBUNI;
     #define END \
         ((const REBVAL*)&PG_End_Node) // sizeof(REBVAL) but not NODE_FLAG_CELL
 #endif
+
+
+// "Dangerous Function" which is called by rebRescue().  Argument can be a
+// REBVAL* but does not have to be.  Result must be a REBVAL* or NULL.
+//
+// !!! If the dangerous function returns an ERROR!, it will currently be
+// converted to void, in a behavior which parallels TRAP without a handler.
+// voids will also be converted to BLANK!s.
+//
+typedef REBVAL* (REBDNG)(void *opaque);
+
+// "Rescue Function" which is called as the handler in rebRescueWith().  It
+// receives the REBVAL* of the error that occurred, and the opaque pointer.
+//
+// !!! If either the dangerous function or the rescuing function return an
+// ERROR! value, that is not interfered with the way rebRescue() does.
+//
+typedef REBVAL* (REBRSC)(REBVAL *error, void *opaque);
 
 
 //

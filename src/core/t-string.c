@@ -1191,7 +1191,7 @@ REBTYPE(String)
 
     // Common operations for any series type (length, head, etc.)
     {
-        REB_R r = Series_Common_Action_Maybe_Unhandled(frame_, action);
+        REB_R r = Series_Common_Action_Maybe_Unhandled(frame_, verb);
         if (r != R_UNHANDLED)
             return r;
     }
@@ -1201,7 +1201,7 @@ REBTYPE(String)
     REBINT index = cast(REBINT, VAL_INDEX(v));
     REBINT tail = cast(REBINT, VAL_LEN_HEAD(v));
 
-    switch (action) {
+    switch (verb) {
 
     //-- Modification:
     case SYM_APPEND:
@@ -1220,7 +1220,7 @@ REBTYPE(String)
 
         REBINT len;
         Partial1(
-            (action == SYM_CHANGE) ? v : arg,
+            (verb == SYM_CHANGE) ? v : arg,
             ARG(limit),
             cast(REBCNT*, &len)
         );
@@ -1232,7 +1232,7 @@ REBTYPE(String)
         if (IS_BINARY(v))
             VAL_INDEX(v) = Modify_Binary(
                 v,
-                action,
+                verb,
                 arg,
                 flags,
                 len,
@@ -1241,7 +1241,7 @@ REBTYPE(String)
         else
             VAL_INDEX(v) = Modify_String(
                 v,
-                action,
+                verb,
                 arg,
                 flags,
                 len,
@@ -1254,6 +1254,8 @@ REBTYPE(String)
     case SYM_SELECT:
     case SYM_FIND: {
         INCLUDE_PARAMS_OF_FIND;
+
+        const REB_R r_not_found = (verb == SYM_FIND) ? R_BLANK : R_VOID;
 
         UNUSED(PAR(series));
         UNUSED(PAR(value));
@@ -1315,12 +1317,12 @@ REBTYPE(String)
         );
 
         if (ret >= cast(REBCNT, tail))
-            return R_BLANK;
+            return r_not_found;
 
         if (REF(only))
             len = 1;
 
-        if (action == SYM_FIND) {
+        if (verb == SYM_FIND) {
             if (REF(tail) || REF(match))
                 ret += len;
             VAL_INDEX(v) = ret;
@@ -1328,7 +1330,8 @@ REBTYPE(String)
         else {
             ret++;
             if (ret >= cast(REBCNT, tail))
-                return R_BLANK;
+                return r_not_found;
+
             if (IS_BINARY(v)) {
                 Init_Integer(v, *BIN_AT(VAL_SERIES(v), ret));
             }
@@ -1447,7 +1450,7 @@ REBTYPE(String)
         if (VAL_INDEX(arg) > VAL_LEN_HEAD(arg))
             VAL_INDEX(arg) = VAL_LEN_HEAD(arg);
 
-        ser = Xandor_Binary(action, v, arg);
+        ser = Xandor_Binary(verb, v, arg);
         goto return_ser; }
 
     case SYM_COMPLEMENT: {
@@ -1494,7 +1497,7 @@ REBTYPE(String)
         else
             fail (Error_Invalid(arg)); // what about other types?
 
-        if (action == SYM_SUBTRACT)
+        if (verb == SYM_SUBTRACT)
             amount = -amount;
 
         if (amount == 0) { // adding or subtracting 0 works, even #{} + 0
@@ -1639,10 +1642,10 @@ REBTYPE(String)
     default:
         // Let the port system try the action, e.g. OPEN %foo.txt
         //
-        if ((IS_FILE(v) || IS_URL(v)))
-            return T_Port(frame_, action);
+        if ((IS_FILE(v) or IS_URL(v)))
+            return T_Port(frame_, verb);
 
-        fail (Error_Illegal_Action(VAL_TYPE(v), action));
+        fail (Error_Illegal_Action(VAL_TYPE(v), verb));
     }
 
     Move_Value(D_OUT, v);

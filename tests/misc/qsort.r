@@ -16,7 +16,7 @@ Rebol [
         be read by the C code.  *But* the comparison operation needs to be
         passed to qsort() as a C function pointer.  Because while the C code
         is running, it doesn't know how to invoke the Rebol interpreter to
-        run a FUNCTION! directly.
+        run an ACTION! directly.
 
         LibFFI provides a "closure" facility, which allows the dynamic
         creation of an artificial C function pointer at runtime:
@@ -34,7 +34,7 @@ Rebol [
         to functions passed by pointer.  This means when a function takes a
         function pointer as an argument, there's not enough information in
         that function's annotated specification to automatically "callbackify"
-        a Rebol FUNCTION! used as an argument.
+        a Rebol ACTION! used as an argument.
 
         While Rebol's routine spec language could try and remedy this by
         forcing function pointer arguments to state precise typing, this

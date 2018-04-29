@@ -284,7 +284,7 @@ REBTYPE(Logic)
     REBOOL val1 = VAL_LOGIC(D_ARG(1));
     REBOOL val2;
 
-    switch (action) {
+    switch (verb) {
 
     case SYM_INTERSECT:
         val2 = Math_Arg_For_Logic(D_ARG(2));
@@ -323,7 +323,7 @@ REBTYPE(Logic)
         return R_FALSE; }
 
     default:
-        fail (Error_Illegal_Action(REB_LOGIC, action));
+        fail (Error_Illegal_Action(REB_LOGIC, verb));
     }
 
     return val1 ? R_TRUE : R_FALSE;
