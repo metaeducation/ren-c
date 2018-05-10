@@ -478,25 +478,6 @@ REBNATIVE(unload_native)
 
 
 //
-//  Init_Extension_Words: C
-//
-// Intern strings and save their canonical forms.
-//
-// !!! Are these protected from GC?  If not, then they need to be--one of the
-// better ways to do so might be to load them as API WORD!s and give them
-// a lifetime until they are explicitly freed.
-//
-void Init_Extension_Words(const REBYTE* strings[], REBSTR *canons[], REBCNT n)
-{
-    REBCNT i;
-    for (i = 0; i < n; ++i) {
-        REBSTR* s = Intern_UTF8_Managed(strings[i], LEN_BYTES(strings[i]));
-        canons[i] = STR_CANON(s);
-    }
-}
-
-
-//
 //  Hook_Datatype: C
 //
 // Poor-man's user-defined type hack: this really just gives the ability to
