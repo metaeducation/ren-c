@@ -12,7 +12,7 @@ REBOL [
     Name: http
     Type: module
     File: %prot-http.r
-    Version: 0.1.47
+    Version: 0.1.48
     Purpose: {
         This program defines the HTTP protocol scheme for REBOL 3.
     }
@@ -346,9 +346,11 @@ check-response: function [port] [
                     ]
                     |
                     #"3" [
+                        (if spec/follow = 'ok [throw 'ok])
+
                         "02" (throw spec/follow)
                         |
-                        "03" (throw either spec/follow = 'ok ['ok] [see-other])
+                        "03" (throw 'see-other)
                         |
                         "04" (throw 'not-modified)
                         |
