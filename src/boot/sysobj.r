@@ -209,7 +209,7 @@ standard: construct [] [
         return-note:
         parameter-types:
         parameter-notes:
-            _
+            _ ;-- changed to null below
     ]
 
     ; The common case is that derived actions will not need to be
@@ -217,23 +217,19 @@ standard: construct [] [
     ; meta archetype to `action-meta` and subset the parameters.  Otherwise
     ; HELP just follows the link (`specializee`, `adaptee`) and gets
     ; descriptions there.
-    ;
-    ; !!! Due to wanting R3-Alpha to be able to run the bootstrap build,
-    ; these objects can't unset these fields.  (make object! [x: ()] fails)
-    ; Hence the code has to overwrite the missing fields with voids.
 
     specialized-meta: construct [] [
         description:
         specializee:
         specializee-name:
-            _
+            _ ;-- changed to null below
     ]
 
     adapted-meta: construct [] [
         description:
         adaptee:
         adaptee-name:
-            _
+            _ ;-- changed to null below
     ]
 
     enclosed-meta: construct [] [
@@ -242,15 +238,30 @@ standard: construct [] [
         inner-name:
         outer:
         outer-name:
-            _
+            _ ;-- changed to null below
     ]
 
     chained-meta: construct [] [
         description:
         chainees:
         chainee-names:
-            _
+            _ ;-- changed to null below
     ]
+
+    (
+        ; !!! Due to wanting R3-Alpha to be able to run the bootstrap build,
+        ; objects can't unset these fields, `make object! [x: ()]` fails).
+        ; Hence the code has to overwrite the missing fields with nulls.
+        ;
+        for-each m reduce [
+            action-meta specialized-meta adapted-meta
+            enclosed-meta chained-meta
+        ][
+            for-each [key val] m [
+                m/(key): opt m/(key)
+            ]
+        ]
+    )
 
     ; !!! This is the template used for all errors, to which extra fields are
     ; added if the error has parameters.  It likely makes sense to put this

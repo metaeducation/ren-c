@@ -217,7 +217,7 @@ write-stdout: func [value] [prin :value]
 print-newline: does [prin newline]
 
 
-; Running R3-Alpha/Rebol2, bootstrap VOID? into existence and continue
+; Running R3-Alpha/Rebol2, bootstrap NULL? into existence and continue
 ;
 null?: :unset?
 null: does []
@@ -485,7 +485,7 @@ unset!: does [
 ]
 
 unset?: does [
-    fail "UNSET? reserved for future use, use VOID? to test no value"
+    fail "UNSET? reserved for future use, use NULL? to test no value"
 ]
 
 

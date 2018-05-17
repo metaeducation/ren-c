@@ -394,7 +394,7 @@ REBNATIVE(match)
     case REB_LIT_WORD:
     case REB_LIT_PATH: {
         if (NOT_VAL_FLAG(test, VALUE_FLAG_UNEVALUATED)) // soft quote eval'd
-            fail (Error_Invalid(test)); // disallow `MATCH (QUOTE 'VOID?) ...`
+            fail (Error_Invalid(test)); // disallow `MATCH (QUOTE 'NULL?) ...`
 
         if (IS_LIT_WORD(test))
             VAL_SET_TYPE_BITS(test, REB_WORD);
@@ -405,7 +405,7 @@ REBNATIVE(match)
     case REB_WORD:
     case REB_PATH: {
         if (NOT_VAL_FLAG(test, VALUE_FLAG_UNEVALUATED)) // soft quote eval'd
-            goto either_test; // allow `MATCH ('VOID?) ...`
+            goto either_test; // allow `MATCH ('NULL?) ...`
 
         REBSTR *opt_label = NULL;
         REBDSP lowest_ordered_dsp = DSP;

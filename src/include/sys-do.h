@@ -1302,7 +1302,7 @@ inline static REBOOL Run_Branch_Throws(
         assert(IS_ACTION(branch));
 
         const REBOOL fully = FALSE; // arity-0 functions can ignore condition
-        if (Apply_Only_Throws(out, fully, branch, condition, END))
+        if (Apply_Only_Throws(out, fully, branch, DEVOID(condition), END))
             return TRUE;
     }
 

@@ -20,9 +20,10 @@ REBOL [
         are inter-related.
 
         The fledgling module system in R3-Alpha was never widely used or
-        tested, but there's a description page here:
+        tested, but here is some information:
 
         http://www.rebol.com/r3/docs/concepts/modules-defining.html
+        https://github.com/revault/rebol-wiki/wiki/Module-Design-Details
     }
 ]
 

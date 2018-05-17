@@ -723,18 +723,10 @@ REBARR *Make_Paramlist_Managed_May_Fail(
             DS_AT(dsp_orig + 3)
         );
     }
-    else if (meta)
-        Init_Void(CTX_VAR(meta, STD_ACTION_META_DESCRIPTION));
 
     // Only make `parameter-types` if there were blocks in the spec
     //
-    if (not has_types) {
-        if (meta) {
-            Init_Void(CTX_VAR(meta, STD_ACTION_META_PARAMETER_TYPES));
-            Init_Void(CTX_VAR(meta, STD_ACTION_META_RETURN_TYPE));
-        }
-    }
-    else {
+    if (has_types) {
         REBARR *types_varlist = Make_Array_Core(
             num_slots, ARRAY_FLAG_VARLIST
         );
@@ -772,9 +764,7 @@ REBARR *Make_Paramlist_Managed_May_Fail(
             // argument while having nothing to do with the exit value of
             // the function.)
             //
-            if (VAL_ARRAY_LEN_AT(definitional_return + 1) == 0)
-                Init_Void(CTX_VAR(meta, STD_ACTION_META_RETURN_TYPE));
-            else {
+            if (VAL_ARRAY_LEN_AT(definitional_return + 1) != 0) {
                 Move_Value(
                     CTX_VAR(meta, STD_ACTION_META_RETURN_TYPE),
                     &definitional_return[1]
@@ -799,13 +789,7 @@ REBARR *Make_Paramlist_Managed_May_Fail(
 
     // Only make `parameter-notes` if there were strings (besides description)
     //
-    if (not has_notes) {
-        if (meta) {
-            Init_Void(CTX_VAR(meta, STD_ACTION_META_PARAMETER_NOTES));
-            Init_Void(CTX_VAR(meta, STD_ACTION_META_RETURN_NOTE));
-        }
-    }
-    else {
+    if (has_notes) {
         REBARR *notes_varlist = Make_Array_Core(
             num_slots, ARRAY_FLAG_VARLIST
         );

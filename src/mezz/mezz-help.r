@@ -31,7 +31,7 @@ dump-obj: function [
 
     form-val: func [val [any-value!]] [
         ; Form a limited string from the value provided.
-        if any-block? :val [return spaced ["length:" length of val]]
+        if any-array? :val [return spaced ["length:" length of val]]
         if image? :val [return spaced ["size:" val/size]]
         if datatype? :val [return form val]
         if action? :val [
@@ -187,43 +187,44 @@ spec-of: function [
 
     specializee: try match action! try select meta 'specializee
     adaptee: try match action! try select meta 'adaptee
-    original-meta: match object! any [
+    original-meta: try match object! any [
         :specializee and [meta-of :specializee]
         :adaptee and [meta-of :adaptee]
     ]
 
     return collect [
-        keep/line match text! any [
-            try select meta 'description
-            try select original-meta 'description
+        keep/line ensure* text! any* [
+            select meta 'description
+            select original-meta 'description
         ]
 
-        return-type: try match block! any [
-            try select meta 'return-type
-            try select original-meta 'return-type
+        ; BLANK! return type (procedure) is distinct from null (undocumented)
+        return-type: ensure* [block! blank!] any* [
+            select meta 'return-type
+            select original-meta 'return-type
         ]
-        return-note: try match text! any [
-            try select meta 'return-note
-            try select original-meta 'return-note
+        return-note: ensure* text! any* [
+            select meta 'return-note
+            select original-meta 'return-note
         ]
-        if return-type or (return-note) [
+        if set? 'return-type or (set? 'return-note) [
             keep compose/only [
-                return: (opt return-type) (opt return-note)
+                return: (:return-type) (:return-note)
             ]
         ]
 
-        types: match frame! any [
-            to-value select meta 'parameter-types
-            to-value select original-meta 'parameter-types
+        types: ensure* frame! any* [
+            select meta 'parameter-types
+            select original-meta 'parameter-types
         ]
-        notes: match frame! any [
-            to-value select meta 'parameter-notes
-            to-value select original-meta 'parameter-notes
+        notes: ensure* frame! any* [
+            select meta 'parameter-notes
+            select original-meta 'parameter-notes
         ]
 
         for-each param words of :action [
             keep compose/only [
-                (param) (select types param) (select notes param)
+                (param) (select try :types param) (select try :notes param)
             ]
         ]
     ]
@@ -334,7 +335,7 @@ help: procedure [
     ; must hard quote and simulate its own soft quote semantics.
     ;
     if match [group! get-word! get-path!] :topic [
-        topic: reduce target
+        topic: eval topic
     ]
 
     r3n: https://r3n.github.io/
@@ -504,9 +505,9 @@ help: procedure [
     ; Output exemplar calling string, e.g. LEFT + RIGHT or FOO A B C
     ; !!! Should refinement args be shown for enfixed case??
     ;
-    either enfixed [
+    if enfixed and (not empty? args) [
         print [space4 args/1 (uppercase mold topic) next args]
-    ][
+    ] else [
         print [space4 (uppercase mold topic) args refinements]
     ]
 
@@ -524,21 +525,21 @@ help: procedure [
     ; look at the meta information of the function being asked about
     ;
     meta: meta-of :value
-    all [
-        original-name: try match word! any [
-            try select meta 'specializee-name
-            try select meta 'adaptee-name
-        ]
-        original-name: uppercase mold original-name
+
+    original-name: ensure* word! any* [
+        select meta 'specializee-name
+        select meta 'adaptee-name
+    ] also lambda name [
+        uppercase mold name
     ]
 
-    specializee: match action! try select meta 'specializee
-    adaptee: match action! try select meta 'adaptee
-    chainees: match block! try select meta 'chainees
+    specializee: ensure* action! select meta 'specializee
+    adaptee: ensure* action! select meta 'adaptee
+    chainees: ensure* block! select meta 'chainees
 
     classification: {a function} unless case [
         set? 'specializee [
-            either original-name [
+            either set? 'original-name [
                 spaced [{a specialization of} original-name]
             ][
                 {a specialized function}
@@ -546,7 +547,7 @@ help: procedure [
         ]
 
         set? 'adaptee [
-            either original-name [
+            either set? 'original-name [
                 spaced [{an adaptation of} original-name]
             ][
                 {an adapted function}
@@ -562,14 +563,14 @@ help: procedure [
 
     print [
         "DESCRIPTION:" LF
-        space4 (any [description | "(undocumented)"]) LF
+        space4 ("(undocumented)" unless get 'description) LF
         space4 (uppercase mold topic) {is} classification
     ]
 
     print-args: procedure [list /indent-words] [
         for-each param list [
-            note: match text! try select notes to-word param
-            type: match [block! any-word!] try select types to-word param
+            note: ensure* text! select try :notes to-word param
+            type: ensure* [block! any-word!] select try :types to-word param
 
             ;-- parameter name and type line
             if set? 'type and (not refinement? param) [

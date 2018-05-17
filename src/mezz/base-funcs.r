@@ -584,15 +584,19 @@ ensure: redescribe [
     {Pass through value if it matches test, otherwise trigger a FAIL}
 ](
     specialize 'either-test [
-        branch: func [value [<opt> any-value!]] [
+        branch: func [arg [<opt> any-value!]] [
             ;
             ; !!! Can't use FAIL/WHERE until there is a good way to SPECIALIZE
             ; a conditional with a branch referring to invocation parameters:
             ;
             ; https://github.com/metaeducation/ren-c/issues/587
             ;
-            fail [
-                "ENSURE did not expect argument of type" type of :value
+            if null? :arg [
+                fail "ENSURE doesn't allow null arguments, see ENSURE*"
+            ] else [
+                fail [
+                    "ENSURE failed with argument of type" type of :arg
+                ]
             ]
         ]
         opt: false ;-- Doesn't matter (it fails) just hide the refinement
@@ -603,20 +607,22 @@ ensure*: redescribe [
     {Pass through value if it matches test -or- if it is null}
 ](
     specialize 'either-test [
-        branch: func [optional [<opt> any-value!]] [
-            ;
+        branch: func [
+            return: [<opt>]
+            arg [<opt> any-value!]
+        ][
             ; !!! Can't use FAIL/WHERE until there is a good way to SPECIALIZE
             ; a conditional with a branch referring to invocation parameters:
             ;
             ; https://github.com/metaeducation/ren-c/issues/587
             ;
-            if value? :optional [
+            if value? :arg [
                 fail [
-                    "ENSURE* did not expect argument of type" type of :value
+                    "ENSURE* failed with argument of type" type of :arg
                 ]
             ]
         ]
-        opt: false ;-- Doesn't matter (it fails) just hide the refinement
+        opt: true ;-- Doesn't matter (it fails) just hide the refinement
     ]
 )
 

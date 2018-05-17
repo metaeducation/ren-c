@@ -65,8 +65,8 @@ finish-init-core: proc [
         unset?: (func [dummy:] [
             fail/where [
                 {UNSET? is reserved in Ren-C for future use}
-                {(Will mean VOID? GET, like R3-Alpha VALUE? for WORDs/PATHs)}
-                {Use VOID? for a similar test, but there is no UNSET! type}
+                {(Will mean NULL? GET, like R3-Alpha VALUE? for WORDs/PATHs)}
+                {Use NULL? for a similar test, but there is no UNSET! type}
                 {If in <r3-legacy> mode, old UNSET? meaning is available}
             ] 'dummy
         ])

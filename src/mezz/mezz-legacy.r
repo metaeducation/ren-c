@@ -168,7 +168,7 @@ selfless?: func [context [any-context!]] [
 unset!: func [dummy:] [
     fail/where [
         {UNSET! is not a datatype in Ren-C.}
-        {You can test with VOID? (), but the TYPE-OF () is a NONE! *value*}
+        {You can test with NULL? (), but the TYPE-OF () is a NONE! *value*}
         {So NONE? TYPE-OF () will be TRUE.}
     ] 'dummy
 ]

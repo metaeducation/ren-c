@@ -367,7 +367,7 @@ REBNATIVE(action)
         NULL // no specialization exemplar (or inherited exemplar)
     );
 
-    Move_Value(ACT_BODY(a), ARG(verb));
+    Init_Word(ACT_BODY(a), VAL_WORD_CANON(ARG(verb)));
 
     // A lookback quoting function that quotes a SET-WORD! on its left is
     // responsible for setting the value if it wants it to change since the
@@ -495,12 +495,12 @@ static void Init_Action_Meta_Shim(void) {
     };
     REBCTX *meta = Alloc_Context(REB_OBJECT, 6);
     REBCNT i = 1;
-    for (; i <= 6; ++i) {
+    for (; i != 7; ++i) {
         //
-        // BLANK! is used for the fields instead of void (required for
-        // R3-Alpha compatibility to load the object)
+        // void is used as the default for fields (R3-Alpha makes them as
+        // BLANK! on initialization, e.g. `make object! [x: ()]` is illegal).
         //
-        Init_Blank(Append_Context(meta, NULL, Canon(field_syms[i - 1])));
+        Init_Void(Append_Context(meta, NULL, Canon(field_syms[i - 1])));
     }
 
     Init_Object(CTX_VAR(meta, 1), meta); // it's "selfish"
