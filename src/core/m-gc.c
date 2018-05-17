@@ -1971,7 +1971,7 @@ static void Mark_Devices_Deep(void)
     REBDEV **devices = Host_Lib->devices;
 
     int d;
-    for (d = 0; d < RDI_MAX; d++) {
+    for (d = 0; d != RDI_MAX; d++) {
         REBREQ *req;
         REBDEV *dev = devices[d];
         if (!dev)

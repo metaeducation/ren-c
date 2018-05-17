@@ -144,7 +144,7 @@ static void Expand_Word_Table(void)
     REBSTR **new_canons_by_hash = SER_HEAD(REBSER*, ser);
 
     REBCNT n;
-    for (n = 0; n < old_size; ++n) {
+    for (n = 0; n != old_size; ++n) {
         REBSTR *canon = old_canons_by_hash[n];
 
         if (canon == NULL) continue;

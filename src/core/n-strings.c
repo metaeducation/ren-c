@@ -246,7 +246,7 @@ REBNATIVE(checksum)
         }
 
         REBCNT i;
-        for (i = 0; i < sizeof(digests) / sizeof(digests[0]); i++) {
+        for (i = 0; i != sizeof(digests) / sizeof(digests[0]); i++) {
             if (!SAME_SYM_NONZERO(digests[i].sym, sym))
                 continue;
 
@@ -729,7 +729,7 @@ REBNATIVE(enhex)
       #endif
 
         REBCNT n;
-        for (n = 0; n < encoded_size; ++n) {
+        for (n = 0; n != encoded_size; ++n) {
             *dp++ = '%';
 
             // Use uppercase hex digits, per RFC 3896 2.1, which is also
@@ -1263,7 +1263,7 @@ REBNATIVE(to_hex)
         ){
             len = 2 * VAL_TUPLE_LEN(arg);
         }
-        for (n = 0; n < VAL_TUPLE_LEN(arg); n++)
+        for (n = 0; n != VAL_TUPLE_LEN(arg); n++)
             buf = Form_Hex2_UTF8(buf, VAL_TUPLE(arg)[n]);
         for (; n < 3; n++)
             buf = Form_Hex2_UTF8(buf, 0);

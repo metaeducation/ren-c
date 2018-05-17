@@ -548,11 +548,11 @@ REBINT Hash_Bytes_Or_Uni(
     const REBUNI *u = cast(const REBUNI*, data);
 
     if (wide == 1) {
-        for(n = 0; n < len; n++) {
+        for(n = 0; n != len; n++) {
             c = (c >> 8) ^ crc32_table[(c ^ LO_CASE(b[n])) & 0xff];
         }
     } else if (wide == 2) {
-        for(n = 0; n < len; n++) {
+        for(n = 0; n != len; n++) {
             c = (c >> 8) ^ crc32_table[(c ^ LO_CASE(u[n])) & 0xff];
 
             c2 = (c2 >> 8) ^ crc32_table[

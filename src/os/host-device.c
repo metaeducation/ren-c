@@ -400,7 +400,7 @@ int OS_Poll_Devices(void)
     //printf("Polling Devices\n");
 
     // Check each device:
-    for (d = 0; d < RDI_MAX; d++) {
+    for (d = 0; d != RDI_MAX; d++) {
         dev = Devices[d];
         if (
             dev != NULL
@@ -438,7 +438,7 @@ int OS_Quit_Devices(int flags)
     UNUSED(flags);
 
     int d;
-    for (d = RDI_MAX - 1; d >= 0; d--) {
+    for (d = RDI_MAX - 1; d != -1; d--) {
         REBDEV *dev = Devices[d];
         if (
             dev != NULL

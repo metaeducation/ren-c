@@ -733,7 +733,7 @@ REBYTE *Check_UTF8(REBYTE *utf8, size_t size)
     REBYTE *end = utf8 + size;
 
     REBCNT trail;
-    for (; utf8 < end; utf8 += trail) {
+    for (; utf8 != end; utf8 += trail) {
         trail = trailingBytesForUTF8[*utf8] + 1;
         if (utf8 + trail > end || !isLegalUTF8(utf8, trail))
             return utf8;

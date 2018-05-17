@@ -363,20 +363,24 @@ void Change_Case(REBVAL *out, REBVAL *val, REBVAL *part, REBOOL upper)
     if (VAL_BYTE_SIZE(val)) {
         REBYTE *bp = VAL_BIN_HEAD(val);
         if (upper)
-            for (; n < len; n++) bp[n] = (REBYTE)UP_CASE(bp[n]);
+            for (; n != len; n++)
+                bp[n] = cast(REBYTE, UP_CASE(bp[n]));
         else {
-            for (; n < len; n++) bp[n] = (REBYTE)LO_CASE(bp[n]);
+            for (; n != len; n++)
+                bp[n] = cast(REBYTE, LO_CASE(bp[n]));
         }
     } else {
         REBUNI *up = VAL_UNI_HEAD(val);
         if (upper) {
-            for (; n < len; n++) {
-                if (up[n] < UNICODE_CASES) up[n] = UP_CASE(up[n]);
+            for (; n != len; n++) {
+                if (up[n] < UNICODE_CASES)
+                    up[n] = UP_CASE(up[n]);
             }
         }
         else {
-            for (; n < len; n++) {
-                if (up[n] < UNICODE_CASES) up[n] = LO_CASE(up[n]);
+            for (; n != len; n++) {
+                if (up[n] < UNICODE_CASES)
+                    up[n] = LO_CASE(up[n]);
             }
         }
     }

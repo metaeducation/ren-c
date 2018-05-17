@@ -562,7 +562,7 @@ SQLRETURN ODBC_GetCatalog(
         panic ("Invalid GET_CATALOG_XXX value");
     }
 
-    for (arg = 0; arg < 4; arg++) {
+    for (arg = 0; arg != 4; arg++) {
         if (pattern[arg] != NULL)
             rebFree(pattern[arg]);
     }
@@ -950,7 +950,7 @@ REBNATIVE(insert_odbc)
 
         if (num_params != 0) {
             REBCNT n;
-            for (n = 0; n < num_params; ++n) {
+            for (n = 0; n != num_params; ++n) {
                 if (params[n].buffer != NULL)
                     rebFree(params[n].buffer);
             }
@@ -1030,7 +1030,7 @@ REBNATIVE(insert_odbc)
 
     REBVAL *titles = rebRun("make block!", rebI(num_columns), END);
     int col;
-    for (col = 0; col < num_columns; ++col)
+    for (col = 0; col != num_columns; ++col)
         rebElide("append", titles, columns[col].title_word, END);
 
     // remember column titles if next call matches, return them as the result
@@ -1310,7 +1310,7 @@ REBNATIVE(close_statement)
 
         REBCNT num_columns = VAL_HANDLE_LEN(columns_value);
         REBCNT col;
-        for (col = 0; col < num_columns; ++col)
+        for (col = 0; col != num_columns; ++col)
             rebRelease(columns[col].title_word);
 
         free(columns);

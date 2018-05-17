@@ -1633,13 +1633,13 @@ REBNATIVE(call)
     assert(argc > 0);
 
     int i;
-    for (i = 0; i < argc; ++i)
+    for (i = 0; i != argc; ++i)
         rebFree(m_cast(OSCHR*, argv[i]));
 
     if (cmd != NULL)
         rebFree(cmd);
 
-    rebFree(argv);
+    rebFree(m_cast(OSCHR**, argv));
 
     if (IS_TEXT(ARG(out))) {
         if (output_len > 0) {

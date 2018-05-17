@@ -121,6 +121,18 @@ gen-obj: func [
 
     append flags <msc:/wd4255>
 
+    ; The May 2018 update of Visual Studio 2017 added a warning for when you
+    ; use an #ifdef on something that is #define'd, but 0.  Then the internal
+    ; %yvals.h in MSVC tests #ifdef __has_builtin, which has to be defined
+    ; to 0 to work in MSVC.  Disable the warning for now.
+    ;
+    append flags <msc:/wd4754>
+
+    ; The May 2018 update also added a warning for when Spectre mitigation
+    ; code might be inserted by the compiler, if-and-when you enable Spectre
+    ; mitigation in the compilation.  This can be tripped by pretty much any
+    ; C-style loop over indice
+
     if block? s [
         for-each flag next s [
             append flags opt switch/default flag [

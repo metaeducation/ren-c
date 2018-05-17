@@ -325,9 +325,11 @@ REBARR *Make_Extension_Module_Array(
 //
 REBVAL *Prepare_Boot_Extensions(CFUNC **funcs, REBCNT n)
 {
+    assert(n % 2 == 0);
+
     REBARR *arr = Make_Array(n);
     REBCNT i;
-    for (i = 0; i < n; i += 2) {
+    for (i = 0; i != n; i += 2) {
         Init_Handle_Managed_Cfunc(
             Alloc_Tail_Array(arr),
             funcs[i],
@@ -489,7 +491,7 @@ REBNATIVE(unload_native)
 void Init_Extension_Words(const REBYTE* strings[], REBSTR *canons[], REBCNT n)
 {
     REBCNT i;
-    for (i = 0; i < n; ++i) {
+    for (i = 0; i != n; ++i) {
         REBSTR* s = Intern_UTF8_Managed(strings[i], LEN_BYTES(strings[i]));
         canons[i] = STR_CANON(s);
     }

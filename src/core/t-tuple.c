@@ -192,8 +192,18 @@ void Pick_Tuple(REBVAL *out, const REBVAL *value, const REBVAL *picker)
         len = 3;
 
     REBINT n = Get_Num_From_Arg(picker);
-    if (n > 0 && n <= len)
-        Init_Integer(out, dat[n - 1]);
+
+    // This uses modulus to avoid having a conditional access into the array,
+    // which would trigger Spectre mitigation:
+    //
+    // https://stackoverflow.com/questions/50399940/
+    //
+    // By always accessing the array and always being in bounds, there's no
+    // speculative execution accessing unbound locations.
+    //
+    REBYTE byte = dat[(n - 1) % len];
+    if (n > 0 and n <= len)
+        Init_Integer(out, byte);
     else
         Init_Void(out);
 }

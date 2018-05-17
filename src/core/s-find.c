@@ -316,7 +316,7 @@ REBCNT Find_Byte_Str(REBSER *series, REBCNT index, REBYTE *b2, REBCNT l2, REBOOL
 
         while (b1 != e1) {
             if (LO_CASE(*b1) == c) { // matched first char
-                for (n = 1; n < l2; n++) {
+                for (n = 1; n != l2; n++) {
                     if (LO_CASE(b1[n]) != LO_CASE(b2[n])) break;
                 }
                 if (n == l2) return (b1 - BIN_HEAD(series));

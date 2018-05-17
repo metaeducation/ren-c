@@ -1179,6 +1179,7 @@ void Get_Maybe_Fake_Action_Body(REBVAL *out, const REBVAL *action)
         }
         else {
             example = NULL;
+            real_body_index = 0; // avoid compiler warning
             UNUSED(real_body_index);
         }
 

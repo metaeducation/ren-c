@@ -373,15 +373,16 @@ int main(int argc, char *argv_ansi[])
 
     Determine_Hinstance_May_Respawn(argc > 1 ? nullptr : argv_ucs2[0]);
 
+    WCHAR *wargv = argv_ucs2[0];
     int i;
-    for (i = 0; i < argc; ++i) {
-        if (argv_ucs2[i] == nullptr)
+    for (i = 0; i < argc; ++i, ++wargv) {
+        if (wargv == nullptr)
             continue; // !!! Comment here said "shell bug" (?)
 
         // Note: rebTextW() currently only supports UCS-2, so codepoints that
         // need more than two bytes to be represented will cause a failure.
         //
-        rebElide("append", argv_block, rebR(rebTextW(argv_ucs2[i])), END);
+        rebElide("append", argv_block, rebR(rebTextW(wargv)), END);
     }
   #else
     // Just take the ANSI C "char*" args...which should ideally be in UTF8.

@@ -51,9 +51,36 @@ core: [
 
     ; (F)???
     f-blocks.c
-    f-deci.c
-    [f-dtoa.c <no-uninitialized> <implicit-fallthru>]
-    f-enbase.c
+    [
+        f-deci.c
+
+        ; May 2018 update to MSVC 2017 added warnings for Spectre mitigation.
+        ; %f-deci.c is a lot of twiddly cusotm C code for implementing a fixed
+        ; precision math type, that was for some reason a priority in R3-Alpha
+        ; but isn't very central to Ren-C.  It is not a priority to audit
+        ; it for speed, so allow it to be slow if MSVC compiles with /Qspectre
+        ;
+        <msc:/wd5045> ;-- https://stackoverflow.com/q/50399940
+    ]
+    [
+        f-dtoa.c
+        
+        ; f-dtoa.c comes from a third party, and should be updated from their
+        ; code if they change their policies, including Spectre mitigation:
+        ;
+        <msc:/wd5045> ;-- https://stackoverflow.com/q/50399940
+
+        <no-uninitialized>
+        <implicit-fallthru>
+    ]
+    [
+        f-enbase.c
+
+        ; At time of writing there are 4 Spectre mitigations, which should
+        ; be looked at and rewritten when there is time:
+        ;
+        <msc:/wd5045> ;-- https://stackoverflow.com/q/50399940
+    ]
     f-extension.c
     f-int.c
     f-math.c
@@ -151,9 +178,15 @@ core: [
         <no-hidden-local>
     ][
         u-zlib.c
+
         <no-make-header>
         <implicit-fallthru>
         <no-constant-conditional>
+
+        ; Zlib is an active project so it would be worth it to check to see
+        ; if minor patches for suverting Spectre mitigation would be taken.
+        ;
+        <msc:/wd5045> ;-- https://stackoverflow.com/q/50399940
     ]
 ]
 

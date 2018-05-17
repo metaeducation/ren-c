@@ -2360,7 +2360,7 @@ unsigned lodepng_crc32(const unsigned char* data, size_t length)
 {
   unsigned r = 0xffffffffu;
   size_t i;
-  for(i = 0; i < length; ++i)
+  for(i = 0; i != length; ++i)
   {
     r = lodepng_crc32_table[(r ^ data[i]) & 0xff] ^ (r >> 8);
   }

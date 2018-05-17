@@ -164,27 +164,18 @@ void Free_Mem(void *mem, size_t size)
 }
 
 
-#define POOL_MAP
+inline static REBCNT FIND_POOL(size_t size) {
+  #if !defined(NDEBUG)
+    if (PG_Always_Malloc)
+        return SYSTEM_POOL;
+  #endif
 
-#ifdef POOL_MAP
-    #ifdef NDEBUG
-        #define FIND_POOL(n) \
-            ((n <= 4 * MEM_BIG_SIZE) \
-                ? cast(REBCNT, PG_Pool_Map[n]) \
-                : cast(REBCNT, SYSTEM_POOL))
-    #else
-        #define FIND_POOL(n) \
-            ((not PG_Always_Malloc and (n <= 4 * MEM_BIG_SIZE)) \
-                ? cast(REBCNT, PG_Pool_Map[n]) \
-                : cast(REBCNT, SYSTEM_POOL))
-    #endif
-#else
-    #ifdef NDEBUG
-        #define FIND_POOL(n) Find_Pool(n)
-    #else
-        #define FIND_POOL(n) (PG_Always_Malloc ? SYSTEM_POOL : Find_Pool(n))
-    #endif
-#endif
+    if (size > 4 * MEM_BIG_SIZE)
+        return SYSTEM_POOL;
+
+    return PG_Pool_Map[size]; // ((4 * MEM_BIG_SIZE) + 1) entries
+}
+
 
 /***********************************************************************
 **
@@ -1844,7 +1835,7 @@ REBCNT Check_Memory_Debug(void)
     REBCNT total_free_nodes = 0;
 
     REBCNT pool_num;
-    for (pool_num = 0; pool_num < SYSTEM_POOL; pool_num++) {
+    for (pool_num = 0; pool_num != SYSTEM_POOL; pool_num++) {
         REBCNT pool_free_nodes = 0;
 
         REBNOD *node = Mem_Pools[pool_num].first;
@@ -1962,7 +1953,7 @@ void Dump_Pools(void)
     REBCNT tused = 0;
 
     REBCNT n;
-    for (n = 0; n < SYSTEM_POOL; n++) {
+    for (n = 0; n != SYSTEM_POOL; n++) {
         REBCNT segs = 0;
         REBCNT size = 0;
 
@@ -2075,7 +2066,7 @@ REBU64 Inspect_Series(REBOOL show)
     //
     REBU64 fre_size = 0;
     REBINT pool_num;
-    for (pool_num = 0; pool_num < SYSTEM_POOL; pool_num++) {
+    for (pool_num = 0; pool_num != SYSTEM_POOL; pool_num++) {
         fre_size += Mem_Pools[pool_num].free * Mem_Pools[pool_num].wide;
     }
 

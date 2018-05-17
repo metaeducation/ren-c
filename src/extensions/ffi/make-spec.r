@@ -30,11 +30,16 @@ modules: [
 options: [
     with-ffi [block! word! logic! blank!] (
         cfg-ffi: make object! [
-            cflags:
-            includes:
-            definitions:
-            ldflags:
-            libraries:
+            cflags: [
+                ; ffi_closure has an alignment specifier, which causes
+                ; padding, and MSVC warns about that.
+                ;
+                <msc:/wd4324>
+            ]
+            includes: _
+            definitions: _
+            ldflags: _
+            libraries: _
             searches: _
         ]
         either block? user-config/with-ffi [

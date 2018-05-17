@@ -31,6 +31,13 @@ modules: [
             [
                 %png/lodepng.c
 
+                ; May 2018 update to MSVC 2017 added warnings about Spectre
+                ; mitigation.  The JPG code contains a lot of code that would
+                ; trigger slowdown.  It is not a priority to rewrite, given
+                ; that some other vetted 3rd party JPG code should be used.
+                ;
+                <msc:/wd5045> ;-- https://stackoverflow.com/q/50399940
+
                 ; The LodePNG module has local scopes with declarations that
                 ; alias declarations in outer scopes.  This can be confusing,
                 ; so it's avoided in the core, but LodePNG is maintained by
