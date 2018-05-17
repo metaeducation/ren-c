@@ -681,7 +681,7 @@ source: procedure [
 
 what: procedure [
     {Prints a list of known actions}
-    'name [<opt> word! lit-word!]
+    'name [<end> word! lit-word!]
         "Optional module name"
     /args
         "Show arguments not titles"
@@ -689,7 +689,7 @@ what: procedure [
     list: make block! 400
     size: 0
 
-    ctx: any [select system/modules :name | lib]
+    ctx: all [set? 'name try select system/modules :name ] or [lib]
 
     for-each [word val] ctx [
         if action? :val [
